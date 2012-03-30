@@ -242,6 +242,42 @@ def createETomoBoundaryModelEDF(processdir, templatedir, seriesname, sample_thic
 	outfile.writelines(lines)
 	outfile.close()
 
+def getETomoExcludeTiltNumber(processdir):
+	values = getETomoParam(processdir,'tilt.com',['EXCLUDELIST ','EXCLUDELIST2 '])
+	excludenumbers = set([])
+	for value in values:
+		bits = value.split(',')
+		excludenumbers = excludenumbers.union(bits)
+	print excludenumbers
+	return ','.join(excludenumbers)
+
+def getETomoThickness(processdir,seriesname):
+	values = getETomoParam(processdir,'tilt.com',['THICKNESS '])
+	if len(values) != 1:
+		apDisplay.printError('Tomogram Thickness not found')
+	return int(values[0])
+
+def getETomoBin(processdir,seriesname):
+	edfname = '%s.edf' % (seriesname) 
+	values = getETomoParam(processdir,edfname,['Setup.TomoGenBinningA=','Setup.FinalStackBinningA='])
+	bin = 1
+	for value in values:
+		bin *= int(value)
+	print bin
+	return bin
+		
+def getETomoParam(processdir, filename, searchkeys):
+	paramfile = open(os.path.join(processdir,filename),'r')
+	lines = paramfile.readlines()
+	paramfile.close()
+	values = []
+	for line in lines:
+		for key in searchkeys:
+			if key in line:
+				bits = line.split(key)
+				values.append(bits[-1][:-1])
+	return values
+
 def writeETomoNewstComTemplate(processdir, seriesname):
 	'''
 	etomo needs this template to continue after sampling.

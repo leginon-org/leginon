@@ -1821,7 +1821,6 @@ class ApFullTomogramRunData(Data):
 			('runname', str),
 			('path', ApPathData),
 			('method', str),
-			('excluded', list),
 		)
 	typemap = classmethod(typemap)
 
@@ -1855,6 +1854,7 @@ class ApFullTomogramData(Data):
 			('description', str),
 			('zprojection', leginon.leginondata.AcquisitionImageData),
 			('hidden', bool),
+			('excluded', list),
 		)
 	typemap = classmethod(typemap)
 

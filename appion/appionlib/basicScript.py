@@ -191,7 +191,7 @@ class BasicScriptInstanceRun(object):
 		self.jobtype = self.getJobType(command)
 		self.app = self.createInst(self.jobtype,command)
 		if self.app is None:
-			apDisplay.PrintError('not BasicScript subclass instance created')
+			apDisplay.printError('No BasicScript subclass instance created')
 		else:
 			self.app.start()
 			self.run()
