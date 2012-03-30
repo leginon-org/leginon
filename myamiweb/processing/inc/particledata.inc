@@ -529,6 +529,30 @@ class particledata {
 		return $this->mysql->getSQLResult($q);
 	}
 
+	function getUnfinishedETomoRunsFromSession($sessionId) {
+		$q =  "SELECT t.* "
+			.", p.path as rundir "
+			."FROM `ApFullTomogramRunData` t "
+			."LEFT JOIN `ApPathData` p "
+			."ON p.`DEF_id` = t.`REF|ApPathData|path` "
+			."WHERE t.`REF|leginondata|SessionData|session` = " .$sessionId." "
+			."AND t.`method` LIKE 'etomo' ";
+		$runs = $this->mysql->getSQLResult($q);
+		if (!is_array($runs) || count($runs)==0) return array();
+
+		$ready_for_etomo = array();
+		// only include ones with no full tomogram record in the database
+		foreach ($runs as $r) {
+			$q = "SELECT `DEF_id` "
+				."FROM `ApFullTomogramData` "
+				."WHERE `REF|ApFullTomogramRunData|reconrun`=".$r['DEF_id'];
+			$tomos = $this->mysql->getSQLResult($q);
+			if ( !is_array($tomos) || count($tomos) == 0)
+				$ready_for_etomo[]= $r;
+		}
+		return $ready_for_etomo;
+	}
+
 	function getTomogramsFromSession($sessionId){
 		$q =  "SELECT t.`DEF_id` as DEF_id "
 			."FROM `ApTomogramData` t "
@@ -5057,6 +5081,16 @@ echo $q;
 		return $r;
 	}
 
+	function getProgramRunFromJob ($jobid) {
+		$q = "SELECT "
+			."  progrun.`DEF_id` AS id "
+			."FROM ScriptProgramRun as progrun "
+			."WHERE `REF|ApAppionJobData|job` = ".$jobid." "
+			."ORDER BY progrun.`DEF_timestamp` DESC "
+			."LIMIT 1 ";
+		list($r) = $this->mysql->getSQLResult($q);
+		return $r;
+	}
 	function getProgramRunParams ($progrunid) {
 		$q = "SELECT "
 			."  progrun.`DEF_id` AS id,  "
@@ -5107,6 +5141,14 @@ echo $q;
 		return $r;
 	}
 
+	function getJobCommandParams($jobid) {
+		$progrun = $this-> getProgramRunFromJob ($jobid);
+		$samplecommand = $this->getProgramCommands ($progrun['id']);
+		$s = array();
+		if (is_array($samplecommand) && count($samplecommand) > 0)
+			foreach ($samplecommand as $c) $s[$c['name']] = $c['value'];
+		return $s;
+	}
 }
 
 // For euler angles, takes alpha beta gamma and returns a,b,c, maybe?

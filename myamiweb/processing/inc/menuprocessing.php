@@ -116,6 +116,9 @@ if (is_numeric($expId)) {
 	if ($fulltomograms = $particle->getFullTomogramsFromSession($sessionId)) {
 		$fulltomoruns=count($fulltomograms);
 	}
+	if ($etomoruns = $particle->getUnfinishedETomoRunsFromSession($sessionId)) {
+		$etomo_sample=count($etomoruns);
+	};
 	if ($tomograms = $particle->getTomogramsFromSession($sessionId)) {
 		$tomoruns=count($tomograms);
 	}
@@ -701,12 +704,13 @@ if (is_numeric($expId)) {
 		
 		// get full tomogram making stats:
 		$tmresults=array();
-		$tmdone = $fulltomoruns;
+		$tmdone = $fulltomoruns - $etomo_sample;
 		$tmrun = count($subclusterjobs['tomomaker']['running']);
 		$tmq = count($subclusterjobs['tomomaker']['queued']);
 		$tmresults[] = ($tmdone==0) ? "" : "<a href='tomosummary.php?expId=$sessionId'>$tmdone complete</a>";
 		$tmresults[] = ($tmrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=tomomaker'>$tmrun running</a>";
 		$tmresults[] = ($tmq==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=tomomaker'>$tmq queued</a>";
+		$tmresults[] = ($etomo_sample==0) ? "" : "<a href='runETomoMaker.php?expId=$sessionId'>$etomo_sample ready for eTomo</a>";
 		// get subtomogram making stats:
 		$stresults=array();
 		$stdone = $tomoruns;
