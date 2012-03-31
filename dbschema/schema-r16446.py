@@ -2,7 +2,7 @@
 import schemabase
 import leginon.leginondata
 import leginon.projectdata
-from appionlib import appiondata
+from appionlib import appiondata, apDisplay
 import sys,os
 
 class SchemaUpdate16446(schemabase.SchemaUpdate):
@@ -13,7 +13,7 @@ class SchemaUpdate16446(schemabase.SchemaUpdate):
 	def upgradeAppionDB(self):
 		if self.appion_dbupgrade.tableExists('ApFullTomogramRunData') and self.appion_dbupgrade.tableExists('ApFullTomogramData'):
 			if (not self.appion_dbupgrade.columnExists('ApFullTomogramRunData','SEQ|excluded')):
-				apDisplay.displayWarning('No excluded image column available, not need for column move')
+				apDisplay.printWarning('No excluded image column available, not need for column move')
 				return
 
 			if (not self.appion_dbupgrade.columnExists('ApFullTomogramData','SEQ|excluded')):
@@ -22,7 +22,11 @@ class SchemaUpdate16446(schemabase.SchemaUpdate):
 			results = q.query()
 			for qdata in results:
 				rundata = qdata['reconrun']
-				runid = rundata.dbid
+				try:
+					runid = rundata.dbid
+				except:
+					apDisplay.printWarning('No associated ApFullTomgramRunData. Skip')
+					continue
 				tid = qdata.dbid
 				query = "Select `SEQ|excluded` from %s.`ApFullTomogramRunData` where `DEF_id`=%d;" % (self.appion_dbupgrade.dbname,runid)
 				results = self.appion_dbupgrade.returnCustomSQL(query)
@@ -30,7 +34,7 @@ class SchemaUpdate16446(schemabase.SchemaUpdate):
 				try:
 					existing_excludetext = results[0][0]
 				except IndexError:
-					apDisplay.displayWarning('No excluded image info available, not need for column move')
+					apDisplay.printWarning('No excluded image info available, not need for column move')
 					continue
 
 				# only do the schema upgrade if ApFullTomogramData has no value in SEQ|excluded'
