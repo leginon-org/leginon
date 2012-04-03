@@ -112,9 +112,8 @@ class ContourPickerPanel(TargetPanel.TraceTargetImagePanel):
 		if self.selectedtype is not None:
 			x, y = self.view2image((evt.X, evt.Y))
 			has_tracetooltarget = False
-			for xy in self.tracetool.xypath:
-						self.addTarget(self.selectedtype.name, xy[0], xy[1])
-						has_tracetooltarget = True
+			old = self.getTargets(self.selectedtype.name)
+			self.setTargets(self.selectedtype.name, old + self.tracetool.xypath)
 			if not has_tracetooltarget:
 				self.addTarget(self.selectedtype.name, x, y)
 			
