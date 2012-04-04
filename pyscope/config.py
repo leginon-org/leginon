@@ -66,7 +66,6 @@ def parse():
 				z_str = configparser.get(name, 'zplane')
 				z_value = int(z_str)
 			except:
-				print '** WARNING:  you need to configure the camera zplane in your instruments.cfg... assuming 0'
 				z_value = 0
 			configured[name]['zplane'] = z_value
 			cameraclasses.append(cls)
