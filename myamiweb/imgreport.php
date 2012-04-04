@@ -163,9 +163,9 @@ $mrcmode = array (
 		0=>'MRC_MODE_BYTE',
 		1=>'MRC_MODE_SHORT',
 		2=>'MRC_MODE_FLOAT',
-		3=>'MRC_MODE_UNSIGNED_SHORT',
 		// 3=>'MRC_MODE_SHORT_COMPLEX',
-		4=>'MRC_MODE_FLOAT_COMPLEX'
+		4=>'MRC_MODE_FLOAT_COMPLEX',
+		6=>'MRC_MODE_UNSIGNED_SHORT'
 		);
 ?>
 <table border=0>
