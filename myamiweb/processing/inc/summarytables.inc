@@ -787,7 +787,7 @@ function modelsummarytable($modelid, $mini=false) {
 	$display_keys['date time'] = $modeldata['DEF_timestamp'];
 	$display_keys['description'] = $modeldata['description'];
 	$modelfile = $modeldata['path']."/".$modelname;
-	$modellink .= "&nbsp;(<font size='-2'><a href='download.php?file=$modelfile'>\n";
+	$modellink .= "&nbsp;(<font size='-2'><a href='download.php?expId=$expId&file=$modelfile'>\n";
 	$modellink .= "  <img style='vertical-align:middle' src='img/download_arrow.png' border='0' width='16' height='17' alt='download model'>";
 	$modellink .= "  &nbsp;download model\n";
 	$modellink .= "</a></font>)\n";
