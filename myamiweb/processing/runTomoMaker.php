@@ -63,8 +63,8 @@ function createTomoMakerForm($extra=false, $title='tomomaker.py Launcher', $head
 	$description = $_POST['description'];
 	$defaultmethod = 'imodwbp';
 	$reconmethod = ($_POST['reconmethod']) ? $_POST['reconmethod'] : $defaultmethod;
-	$imodwbpcheck = ($_POST['reconmethod'] == 'imodwbp') ? "CHECKED" : "";
-	$samplecheck = ($_POST['reconmethod'] == 'etomosample'||!$_POST['reconmethod']) ? "CHECKED" : "";
+	$imodwbpcheck = ($reconmethod == 'imodwbp') ? "CHECKED" : "";
+	$samplecheck = ($reconmethod == 'etomosample') ? "CHECKED" : "";
 
 
 	$alltiltseries = $particle->getTiltSeries($expId);
@@ -217,7 +217,7 @@ function runTomoMaker() {
 	$extrabin=$_POST['extrabin'];
 	$thickness=$_POST['thickness'];
 	$excludenumber=$_POST['exclude'];
-	$jobtype = $_POST['reconmethod'];
+	$reconmethod = $_POST['reconmethod'];
 
 	/* *******************
 	PART 2: Check for conflicts, if there is an error display the form again
@@ -231,9 +231,10 @@ function runTomoMaker() {
 	/* *******************
 	PART 3: Create program command
 	******************** */
-	$command = "tomomaker.py ";
+	$prognames = array('imodwbp'=>'imod_wbprecon.py','etomosample'=>'etomo_samplerecon.py','etomorecon'=>'etomo_recon');
+	$command = $prognames[$reconmethod]." ";
 	$command.="--session=$sessionname ";
-	if ($jobtype != 'etomosample')
+	if ($reconmethod != 'etomosample')
 		$command.="--bin=$extrabin ";
 	$command.="--alignerid=$alignerId ";
 	$command.="--projectid=$projectId ";
@@ -256,7 +257,7 @@ function runTomoMaker() {
 	******************** */
 
 	// submit command
-	$errors = showOrSubmitCommand($command, $headinfo, $jobtype, $nproc);
+	$errors = showOrSubmitCommand($command, $headinfo, 'tomomaker', $nproc);
 
 	// if error display them
 	if ($errors)

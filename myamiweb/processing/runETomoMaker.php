@@ -148,13 +148,12 @@ function runETomoMaker() {
 
 	$particle = new particledata();
 
-	$command = "tomomaker.py ";
+	$command = "etomo_recon.py ";
 	$command.="--session=$sessionname ";
 	$command.="--projectid=$projectId ";
-	$command.="--samplerunId=$sampletomorunId ";
+	$command.="--samplerunid=$sampletomorunId ";
 	#$command.="--rundir=".$outdir.'/'.$runname." ";
-	if ($description)
-		$command.="--description=\"$description\" ";
+	$command.="--description=\"$description\" ";
 	$command.="--commit ";
 
 	/* *******************
