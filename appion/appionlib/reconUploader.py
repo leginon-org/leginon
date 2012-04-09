@@ -584,7 +584,9 @@ class generalReconUploader(appionScript.AppionScript):
 			try:
 				resolution = apRecon.getResolutionFromGenericFSCFile(newfscfile, self.runparams['boxsize'], self.runparams['apix'])
 			except:
+				apDisplay.printWarning("Failed to get resolution from generic FSC file: "+newfscfile)
 				resolution = 30
+		apDisplay.printWarning("Running Chimera Snapshot with resolution: %d " % resolution)
 		apChimera.filterAndChimera(volume, resolution, self.runparams['apix'], 
 			self.runparams['boxsize'], 'snapshot', self.params['contour'], self.params['zoom'],
 			sym='c1', mass=self.params['mass'])	
