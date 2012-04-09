@@ -25,7 +25,7 @@ from appionlib import apDisplay
 #=====================
 def getAppionDirectory():
 	"""
-	Used by appionLoop
+	Used by appionLoop and ScriptProgramRun logging in all appionScript
 	"""
 	appiondir = None
 	this_file = inspect.currentframe().f_code.co_filename
