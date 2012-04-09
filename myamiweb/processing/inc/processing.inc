@@ -736,7 +736,7 @@ $xvfb=False, $xtra=False, $nproc=1, $ppn=0, $nodes=0, $walltime="240", $cputime=
 	global $DATA_DIRS;
 
 	$allow_processing = checkExptAdminPrivilege($expId,'data');
-	if (!$allow_processing) return "processing not allowed by this user";
+	if (!$allow_processing) return "processing not allowed by this user for experiment id: $expId";
 
 	$processhost = getSelectedProcessingHost();
 	$webserver = $_SERVER['SERVER_ADDR'];
