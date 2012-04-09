@@ -339,7 +339,11 @@ class filePathModifier:
 	def checkSelOrDocFileRootDirectory(self, sel_doc_file, old_rootdir, new_rootdir):
 		''' necessary when files are transferred from one file system to another, e.g., the root directory on Garibaldi is different from that on Guppy'''
 
-		f = open(sel_doc_file, "r")
+		try:
+			f = open(sel_doc_file, "r")
+		except:
+			apDisplay.printWarning("Unable to open file: %s" % sel_doc_file)
+			return
 		lines = f.readlines()
 		newlines = []
 		f.close()
