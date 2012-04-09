@@ -175,3 +175,7 @@ class TomoMaker(appionScript.AppionScript):
 			self.postProcessingRecon()
 			self.commitToDatabase()
 
+if __name__ == '__main__':
+	app = TomoMaker()
+	app.start()
+	app.close()
