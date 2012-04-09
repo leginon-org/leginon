@@ -45,7 +45,6 @@ function checkJobs($showjobs=False, $showall=False, $extra=False) {
 		$refineJobs = new RefineJobsSingleModel($expId);
 	}
 	$jobs = $refineJobs->getUnfinishedRefineJobs($showall);
-
 	
 	// if clicked button, list jobs in queue
 	if ($showjobs && $_SESSION['loggedin'] == true) {
@@ -54,7 +53,7 @@ function checkJobs($showjobs=False, $showall=False, $extra=False) {
 	
 	
 	// loop over jobs and show info
-	foreach ($jobs as $job) {		
+	foreach ($jobs as $job) {	
 		$jobid = $job['DEF_id'];
 		$jobinfo = $particle->getJobInfoFromId($jobid);
 		
@@ -98,13 +97,13 @@ function checkJobs($showjobs=False, $showall=False, $extra=False) {
 			if ($jobinfo['status']=='R' || $jobinfo['status']=='D') {
 				if ($jobinfo['jobtype'] == 'emanrecon') {
 					// if recon is of type EMAN
-					showEMANJobInfo($jobinfo);
+					//showEMANJobInfo($jobinfo);
 				} elseif ($jobinfo['jobtype'] == 'frealignrecon') {
 					// if recon is of type FREALIGN
-					showFrealignJobInfo($jobinfo);
+					//showFrealignJobInfo($jobinfo);
 				} elseif ($jobinfo['jobtype'] == 'xmipprecon') {
 					// if recon is of type XMIPP
-					showXmippJobInfo($jobinfo);	
+					//showXmippJobInfo($jobinfo);	
 				} else {
 					print_r($jobinfo);
 				}
@@ -136,44 +135,54 @@ function showClusterJobTables($jobs) {
 		if (!in_array($job['cluster'], $clusters))
 			$clusters[] = $job['cluster'];
 	}
-	if ($clusters[0]) {
-		foreach ($clusters as $c) {
-			// from inc/processing.inc
-			$queue = checkClusterJobs($c, $user, $pass);
-			if ($queue) {
-				echo "";
-				// START TABLE
-				echo "<table class='tableborder' border=1 cellspacing=0, cellpadding=5>\n";
-
-				// TABLE HEADER
-				echo "<tr><td colspan='15'><font size='+1'>Jobs currently running on the "
-					."<font color='#339933'><b>$c</b></font>"
-					." cluster</font></td></tr>";
-
-				// LABEL FIELDS
-				echo "<tr>\n";
-				$dispkeys = array('Job ID','User','Queue','Jobname','SessId','NDS','TSK','ReqMem','ReqTime','S','ElapTime');
-				foreach ($dispkeys as $key) {
-					echo "<td><span class='datafield0'>$key</span></td>";
-				}
-				echo "</tr>\n";
-
-				// SHOW DATA
-				$list = streamToArray($queue);
-				foreach ($list as $line) {
+	
+	// compare this list with what we find in the config file
+	// and query each host for jobs belonging to the user.
+	global $PROCESSING_HOSTS;
+	
+	if (!$clusters[0]) {
+		echo "<i>No jobs found on any cluster.</i><br/><br/>\n";
+	} else {
+		foreach ($PROCESSING_HOSTS as $host) {
+			$hostname = $host['host'];
+			
+			if ( in_array($hostname, $clusters) ) {
+				$jobs = checkClusterJobs($hostname, $user, $pass);
+				
+				if ($jobs) {
+					echo "";
+					// START TABLE
+					echo "<table class='tableborder' border=1 cellspacing=0, cellpadding=5>\n";
+	
+					// TABLE HEADER
+					echo "<tr><td colspan='15'><font size='+1'>Jobs currently running on the "
+						."<font color='#339933'><b>$hostname</b></font>"
+						." cluster</font></td></tr>";
+	
+					// LABEL FIELDS
 					echo "<tr>\n";
-					foreach ($line as $i) {echo "<td>$i</td>\n";}
+					$dispkeys = array('Job ID','User','Queue','Jobname','SessId','NDS','TSK','ReqMem','ReqTime','S','ElapTime');
+					foreach ($dispkeys as $key) {
+						echo "<td><span class='datafield0'>$key</span></td>";
+					}
 					echo "</tr>\n";
-				}
-				// CLOSE TABLE
-				echo "</table><br/><br/>\n";
-			} else {
-				echo "<i>no queue on $c cluster</i><br/><br/>\n";
+	
+					// SHOW DATA
+					$list = streamToArray($jobs);
+					foreach ($list as $line) {
+						echo "<tr>\n";
+						foreach ($line as $i) {echo "<td>$i</td>\n";}
+						echo "</tr>\n";
+					}
+					// CLOSE TABLE
+					echo "</table><br/><br/>\n";
+				} else {
+					echo "<i>No jobs found on $hostname cluster for user $user.</i><br/><br/>\n";
+				}								
 			}
 		}
-	} else {
-		echo "<i>no jobs found on any cluster</i><br/><br/>\n";
 	}
+			
 	echo "\n";
 };
 
@@ -190,7 +199,9 @@ function showStatus($jobinfo) {
 		if ($user == $job['user'] || is_null($job['user']))
 			$dlbuttons .= "<input type='BUTTON' onclick=\"parent.location="
 				."('abortjob.php?expId=$expId&jobId=$jobid')\" value='Abort job'>\n";
-		$status='Queued';
+			$dlbuttons .= "<input type='BUTTON' onclick=\"parent.location="
+				."('forcejobstatus.php?expId=$expId&jobId=$jobid')\" value='Force Status to Done'>\n";
+				$status='Queued';
 	} elseif ($jobinfo['status']=='R') {
 		if ($user == $job['user'] || is_null($job['user']))
 			$dlbuttons .= "<input type='BUTTON' onclick=\"parent.location="
