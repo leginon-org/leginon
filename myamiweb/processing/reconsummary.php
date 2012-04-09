@@ -89,6 +89,7 @@ if ($reconRuns) {
 
 		//print_r($reconrun);
 //		$bestimages = glob($reconrun['path'].'/threed.*'.$res['iter'].'a.mrc.1.png');
+		$pathtoimage = $reconrun['path'].'/'.$iterinfo[0]['volumeDensity'].'.1.png';
 		$bestimages = glob($reconrun['path'].'/'.$iterinfo[0]['volumeDensity'].'.1.png');
 		if ($bestimages)
 			$bestimage = $bestimages[0];
@@ -100,7 +101,7 @@ if ($reconRuns) {
 			$html .= "<td><a href='loadimg.php?filename=$bestimage' target='snapshot'>"
 				."<img src='loadimg.php?filename=$bestimage&h=64' height='64'></a></td>\n";
 		else
-			$html .= "<td></td>\n";
+			$html .= "<td>could not find $pathtoimage</td>\n";
 
 		# add edit button to description if logged in
 		$descDiv = ($_SESSION['username']) ? editButton($reconid,$reconrun['description']) : $reconrun['description'];
