@@ -34,8 +34,7 @@ class imagicMultivariateStatisticalAnalysisScript(appionScript.AppionScript):
 			+"[options]")
 
 		### basic params
-		self.parser.add_option("--nproc", dest="nproc", type="int", default=8,
-			help="number of processors to use", metavar="int")
+		self.parser.set_defaults(nproc=8)
 		self.parser.add_option("--alignid", dest="alignid",
 			help="ID of particle stack", metavar="int")
 

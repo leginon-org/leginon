@@ -33,8 +33,6 @@ class CL2D(appionScript.AppionScript):
 		self.parser.set_usage("Usage: %prog --stack=ID [ --num-part=# ]")
 		self.parser.add_option("-s", "--stack", dest="stackid", type="int",
 			help="Stack database id", metavar="ID#")
-		self.parser.add_option("--nproc", dest="nproc", type="int",
-			help="Number of processors to use", metavar="ID#")
 		self.parser.add_option("-j", "--jobid", dest="jobid", type="int",
 			help="CL2D jobid", metavar="#")
 		self.parser.add_option("-t", "--timestamp", dest="timestamp",

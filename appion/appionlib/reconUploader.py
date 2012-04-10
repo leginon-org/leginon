@@ -38,8 +38,7 @@ class generalReconUploader(appionScript.AppionScript):
 			help="upload specified iteration(s), comma delimited. e.g. --uploadIterations=1 or --uploadIterations=1,2,3", metavar="list")
 			
 		### standard refinement parameters: these are optional and should only be specified in the absence of a pickle file
-		self.parser.add_option("--nproc", dest="nproc", type="int", default=1,
-			help="number of processors used in upload", metavar="INT")
+		self.parser.set_defaults(nproc=1)
 		self.parser.add_option("--jobid", dest="jobid", type="int",
 			help="jobid of refinement", metavar="INT")
 		self.parser.add_option("--timestamp", dest="timestamp", type="str",

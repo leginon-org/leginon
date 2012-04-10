@@ -41,8 +41,6 @@ class imagic3dRefineScript(appionScript.AppionScript):
 			help="ID of 3d model used for refinement", metavar="int")
 
 		### basic params
-		self.parser.add_option("--nproc", dest="nproc", type="int",
-			help="number of processors to use", metavar="int")
 		self.parser.add_option("--numiters", dest="numiters", type="int",
 			help="total number of iterations", metavar="int")
 		self.parser.add_option("--itn", dest="itn", type="int",

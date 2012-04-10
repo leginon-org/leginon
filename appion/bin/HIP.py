@@ -40,8 +40,6 @@ class HipScript(appionScript.AppionScript):
 			help="Directory containing mandatory files", metavar="DIR")
 		self.parser.add_option("-s", "--id", "--stackid", dest="stackid", type="int",
 			help="Stack ID", metavar="ID")
-		self.parser.add_option("--nproc", dest="nproc", type="int",
-			help="Number of processors to use", metavar="#")
 		self.parser.add_option("-N", "--num-part", dest="numpart", type="int",
 			help="Number of filament segments to use", metavar="#")
 		self.parser.add_option("--rep-len", dest="replen", type="int",

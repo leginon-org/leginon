@@ -35,8 +35,6 @@ class TopologyRepScript(appionScript.AppionScript):
 		self.parser.add_option("-s", "--stack", dest="stackid", type="int",
 			help="Stack database id", metavar="ID#")
 
-		self.parser.add_option("--nproc", dest="nproc", type="int",
-			help="Number of processor to use", metavar="#")
 		self.parser.add_option("--msaproc", dest="msaproc", type="int", default=1,
 			help="Number of processor to use for MSA", metavar="#")
 

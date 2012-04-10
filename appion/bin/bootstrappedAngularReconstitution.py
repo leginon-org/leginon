@@ -51,8 +51,7 @@ class automatedAngularReconstitution(appionScript.AppionScript):
 			+"[options]")		
 			
 		### basic params
-		self.parser.add_option("--nproc", dest="nproc", type="int", default=1,
-			help="number of processors to use", metavar="int")
+		self.parser.set_defaults(nproc=1)
 		self.parser.add_option("--templatestackid", dest="templatestackid",
 			help="ID of template stack used for iterative model creation", metavar="int")
 		self.parser.add_option("--clusterid", dest="clusterid",

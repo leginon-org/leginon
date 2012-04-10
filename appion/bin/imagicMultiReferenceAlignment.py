@@ -89,8 +89,7 @@ class imagicAlignmentScript(appionScript.AppionScript):
 			default="rotation_first", help="which alignment routine is performed first? \
 				specify 'rotation_first' or 'translation_first'", metavar="CHOICE")
 
-		self.parser.add_option("--nproc", dest="nproc", type="int", default="8",
-			help="number of processors to use", metavar="int")
+		self.parser.set_defaults(nproc=8)
 
 		return 
 

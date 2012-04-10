@@ -55,8 +55,6 @@ class EdIterAlignScript(appionScript.AppionScript):
 		#self.parser.add_option("-f", "--freealigns", dest="freealigns",
 			#type="int", default=1, help="Number of ref-free alignment rounds per class",
 			#metavar="#")
-		self.parser.add_option("--nproc", dest="nproc", type="int",
-			help="Number of processor to use", metavar="ID#")
 
 	#=====================
 	def checkConflicts(self):
