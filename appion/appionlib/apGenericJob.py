@@ -9,6 +9,7 @@ class genericJob(object):
         self.wallTime = 2 #2 hours
         self.nodes = 1
         self.ppn = 1
+        self.nproc = self.nodes * self.ppn
         self.cpuTime = 0
         self.mem = 0
         self.jobid = 0
@@ -68,7 +69,8 @@ class genericJob(object):
                     options[key](value)                
             else:
                 #Just pass along any options not in the format expected
-                newCommandLine.append(opt)                                
+                newCommandLine.append(opt)                             
+				newCommandLine.append(self.setNProc(self.getNodes() * self.getPPN()))
         return newCommandLine
     
                     
@@ -89,8 +91,13 @@ class genericJob(object):
         
     def getPPN(self):
         return self.ppn
-    def setPPN (self, numProcs):
+    def setPPN(self, numProcs):
         self.ppn = numProcs
+        
+    def getNProc(self):
+        return self.nproc
+    def setNProc(self, totalNumProcs):
+        self.nproc = totalNumProcs
         
     def getCpuTime(self):
         return self.cpuTime

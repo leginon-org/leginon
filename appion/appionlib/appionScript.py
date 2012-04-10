@@ -316,8 +316,6 @@ class AppionScript(basicScript.BasicScript):
 
 	#=====================
 	def close(self):
-		### run custom closing functions
-		self.onClose()
 		### run basic script closing functions
 		basicScript.BasicScript.close(self)
 		apDisplay.printMsg("Run directory:\n "+self.params['rundir'])
@@ -357,8 +355,14 @@ class AppionScript(basicScript.BasicScript):
 
 		self.parser.add_option("--expid", "--expId", dest="expid", type="int",
 			help="Session id associated with processing run, e.g. --expId=7159", metavar="#")
+		self.parser.add_option("--nproc", dest="nproc", type="int",
+			help="Number of processor to use", metavar="#")
+
+		# jobtype is a dummy option for now so that it is possible to use the same command line that
+		# is fed to runJob.py to direct command line running.  Do not use the resulting param.
 		self.parser.add_option("--jobtype", dest="jobtype",
 			help="Job Type of processing run, e.g., partalign", metavar="X")
+
 
 
 	#=====================
