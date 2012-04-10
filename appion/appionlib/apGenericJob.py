@@ -28,7 +28,8 @@ class genericJob(object):
         lineToAdd ="webcaller.py \'"
         #Reconstruct the command line to pass to webcaller in the job file.
         for opt in optList:
-            lineToAdd += opt + " "
+            if opt:
+                lineToAdd += opt + " "
         
         lineToAdd += "\' " + logFileName
         #Add the reconstructed line to the command list
