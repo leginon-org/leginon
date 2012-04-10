@@ -77,6 +77,7 @@ class TomoMaker(appionScript.AppionScript):
 		pieces = self.params['rundir'].split('/')
 		self.params['tiltseriesdir'] = '/'.join(pieces[:-1])
 		self.params['fulltomodir'] = self.params['rundir']
+		self.fullrundata = None
 
 	def setupExcludeList(self):
 		### list of tilt images to be excluded
@@ -121,7 +122,7 @@ class TomoMaker(appionScript.AppionScript):
 		processdir = self.params['rundir']
 		runname = self.params['runname']
 		# insertTomoRun
-		fullrundata = apTomo.insertFullTomoRun(self.sessiondata,processdir,runname,self.params['method'])
+		self.fullrundata = apTomo.insertFullTomoRun(self.sessiondata,processdir,runname,self.params['method'])
 		reconname = self.seriesname+"_full"
 		if os.path.exists(os.path.join(processdir,reconname+'.rec')):
 			#insertTomograma and z projection
@@ -133,7 +134,7 @@ class TomoMaker(appionScript.AppionScript):
 			zimagedata = apTomo.uploadZProjection(runname,zerotiltimage,zprojectfile)
 			excludeimages = apTomo.getExcludedImageIds(self.ordered_imagelist,self.excludelist)
 			fulltomodata = apTomo.insertFullTomogram(self.sessiondata,self.tiltdatalist[0],self.alignerdata,
-					fullrundata,reconname,self.params['description'],zimagedata,self.params['thickness'],bin,excludeimages)
+					self.fullrundata,reconname,self.params['description'],zimagedata,self.params['thickness'],bin,excludeimages)
 
 	def prepareRecon(self):
 		''' 

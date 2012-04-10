@@ -38,15 +38,17 @@ class SampleMaker(apTomoMakerBase.TomoMaker):
 			if self.alignerdata['refine_cycle']['cycle'] > 0:
 				has_rotation = True
 		apImod.makeFilesForETomoSampleRecon(processdir, stackdir,aligndir, templatedir, self.seriesname, thickness, self.pixelsize,has_rotation)
-		apDisplay.printMsg('------------------------')
-		apDisplay.printWarning('You should run etomo and continue on "Tomogram Positioning" in %s with the .edf file of the tile series like this' % processdir)
-		apDisplay.printColor('cd %s' % processdir,'cyan')
-		apDisplay.printColor('etomo %s.edf' % self.seriesname,'cyan')
-		apDisplay.printMsg('------------------------')
 		paramfile = os.path.join(processdir,'%s_sample.params' % (self.params['runname']))
 		apParam.dumpParameters(self.params, paramfile)
 		return
 
+	def onClose(self):
+		if self.fullrundata:
+			apDisplay.printMsg('------------------------')
+			apDisplay.printWarning('To create full tomogram reconstruction and commit the result to database with these sampled tomograms, you need to use etomo_recon.py to start eTOMO and continue at "Tomogram Positioning" in %s with the .edf file by running this AppionScript:')
+			apDisplay.printColor('etomo_recon.py --session=%s --projectid=%d --samplerunid=%d --description="" --commit --expId=%d --jobtype=%s' % (self.params['sessionname'],self.params['projectid'],self.fullrundata.dbid,self.params['expid'],'etomo_recon'),'cyan')
+			apDisplay.printMsg('------------------------')
+		
 #=====================
 #=====================
 if __name__ == '__main__':
