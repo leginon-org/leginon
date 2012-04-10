@@ -73,8 +73,10 @@ class genericJob(object):
                 newCommandLine.append(opt) 
         # nproc need to be set according to the input nodes and ppn
         self.setNProc(int(self.getNodes()) * int(self.getPPN()))
-        if self.getNProc():
-            newCommandLine.append('--nproc=%d' % (self.getNProc()))
+				# We will not insert --nproc now so that those script that need different default can use
+				# its own default.
+        #if self.getNProc():
+        #    newCommandLine.append('--nproc=%d' % (self.getNProc()))
         return newCommandLine
     
                     
