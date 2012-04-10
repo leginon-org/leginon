@@ -70,7 +70,7 @@ class genericJob(object):
             else:
                 #Just pass along any options not in the format expected
                 newCommandLine.append(opt)                             
-				newCommandLine.append(self.setNProc(self.getNodes() * self.getPPN()))
+                newCommandLine.append(self.setNProc(self.getNodes() * self.getPPN()))
         return newCommandLine
     
                     
