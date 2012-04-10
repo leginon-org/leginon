@@ -70,8 +70,11 @@ class genericJob(object):
                     options[key](value)                
             else:
                 #Just pass along any options not in the format expected
-                newCommandLine.append(opt)                             
-                newCommandLine.append(self.setNProc(self.getNodes() * self.getPPN()))
+                newCommandLine.append(opt) 
+        # nproc need to be set according to the input nodes and ppn
+        self.setNProc(int(self.getNodes()) * int(self.getPPN()))
+        if self.getNProc():
+            newCommandLine.append('--nproc=%d' % (self.getNProc()))
         return newCommandLine
     
                     
