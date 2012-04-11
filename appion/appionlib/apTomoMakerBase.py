@@ -117,6 +117,9 @@ class TomoMaker(appionScript.AppionScript):
 		imodlocalaffines = apTomo.convertGlobalToLocalAffines(imodaffines)
 		apImod.writeTransformFile(processdir, self.seriesname,imodlocalaffines,ext='prexf')
 
+	def getReconParams(self):
+		return apTomo.insertFullReconParams()
+		
 	#=====================
 	def commitToDatabase(self):
 		processdir = self.params['rundir']
@@ -133,8 +136,9 @@ class TomoMaker(appionScript.AppionScript):
 			q=leginon.leginondata.AcquisitionImageData()
 			zimagedata = apTomo.uploadZProjection(runname,zerotiltimage,zprojectfile)
 			excludeimages = apTomo.getExcludedImageIds(self.ordered_imagelist,self.excludelist)
+			reconparamdata = self.getReconParams()
 			fulltomodata = apTomo.insertFullTomogram(self.sessiondata,self.tiltdatalist[0],self.alignerdata,
-					self.fullrundata,reconname,self.params['description'],zimagedata,self.params['thickness'],bin,excludeimages)
+					self.fullrundata,reconname,self.params['description'],zimagedata,self.params['thickness'],reconparamdata,bin,excludeimages)
 
 	def prepareRecon(self):
 		''' 

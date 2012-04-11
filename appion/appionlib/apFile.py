@@ -6,6 +6,7 @@ import glob
 import subprocess
 import shutil
 from appionlib import apDisplay
+from pyami import mrc
 
 ####
 # This is a low-level file with NO database connections
@@ -213,6 +214,30 @@ def safeCopy(source, destination):
 		shutil.copy(source,destination)
 	return True
 
+def replaceUniqueLinePatternInTxtFile(filepath,search_string,new_linetext):
+	infile = open(filepath,'r')
+	lines = infile.readlines()
+	infile.close()
+	if new_linetext[-1] != '\n':
+		new_linetext += '\n'
+	newlines = []
+	for line in lines:
+		if search_string in line:
+			apDisplay.printWarning('%s will be replaced by %s in %s' % (line[:-1],new_linetext[:-1],filepath))
+			newline = new_linetext
+		else:
+			newline = line
+		newlines.append(newline)
+	tmppath = filepath+'.tmp'
+	outfile = open(filepath+'.tmp','w')
+	outfile.writelines(newlines)
+	outfile.close()
+	shutil.move(tmppath,filepath)
+
+
+def getMrcFileShape(mrcpath):
+	header = mrc.readHeaderFromFile(mrcpath)
+	return header['shape']
 ####
 # This is a low-level file with NO database connections
 # Please keep it this way

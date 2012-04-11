@@ -84,6 +84,13 @@ class ETomoMaker(ImodMaker):
 		if not os.path.exists(reconfilepath):
 			apDisplay.printError('%s not generated, can not commit to database.' % (reconfilepath))
 
+	def getReconParams(self):
+		tilt_angle_offset = float(apImod.getETomoParam(self.params['rundir'], 'tilt.com', ['OFFSET'])[0])
+		z_shift = apImod.getImodZShift(self.params['rundir'])
+		tilt_axis_tilt = float(apImod.getETomoParam(self.params['rundir'], 'tilt.com', ['XAXISTILT'])[0])
+		image_rotation = float(apImod.getETomoParam(self.params['rundir'], self.seriesname+'.edf', ['Setup.ImageRotationA='])[0])
+		return apTomo.insertFullReconParams(tilt_angle_offset,z_shift,tilt_axis_tilt,image_rotation)
+
 	def commitToDatabase(self):
 		self.params['bin'] = apImod.getETomoBin(self.params['rundir'],self.seriesname)
 		self.params['thickness'] = apImod.getETomoThickness(self.params['rundir'],self.seriesname)

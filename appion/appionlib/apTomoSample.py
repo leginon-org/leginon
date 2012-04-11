@@ -5,6 +5,7 @@ import shutil
 from appionlib import apTomoMakerBase
 from appionlib import apImod
 from appionlib import apParam
+from appionlib import apFile
 from appionlib import apDisplay
 
 #=====================
@@ -32,12 +33,15 @@ class SampleMaker(apTomoMakerBase.TomoMaker):
 		# Make Sample Tomogram for etomo manual positioning and exit
 		aligndir = self.alignerdata['alignrun']['path']['path']
 		templatedir = os.path.join(os.path.dirname(apImod.__file__),'data')
+		yspacing_fraction = 0.66
 		apImod.sampleRecon(stackdir, processdir, aligndir, self.seriesname, 10, 0.66, thickness, self.excludelist)
+		stackpath = os.path.join(stackdir, self.seriesname+".st")
+		yspacing_pixel = apFile.getMrcFileShape(stackpath)[1] * yspacing_fraction * 0.5
 		has_rotation = False
 		if self.alignerdata['protomo']:
 			if self.alignerdata['refine_cycle']['cycle'] > 0:
 				has_rotation = True
-		apImod.makeFilesForETomoSampleRecon(processdir, stackdir,aligndir, templatedir, self.seriesname, thickness, self.pixelsize,has_rotation)
+		apImod.makeFilesForETomoSampleRecon(processdir, stackdir,aligndir, templatedir, self.seriesname, thickness, self.pixelsize,yspacing_pixel,has_rotation)
 		paramfile = os.path.join(processdir,'%s_sample.params' % (self.params['runname']))
 		apParam.dumpParameters(self.params, paramfile)
 		return
