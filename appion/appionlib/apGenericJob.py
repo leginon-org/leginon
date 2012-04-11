@@ -47,11 +47,13 @@ class genericJob(object):
 				   'cput'	  : self.setCpuTime, 
 				   'nodes'	 : self.setNodes,
 				   'ppn'	   : self.setPPN,
+				   'nproc'	   : self.setNProc,
 				   'projectid' : self.setProjectId, 
 				   'expid'	 : self.setExpId, 
 				   'jobtype'   : self.setJobType}
 		excludeList = ['jobid', 'walltime', 'cput', 'nodes', 'ppn', 'jobtype']
 		optionKeys = options.keys()
+		has_nproc = False
 		for opt in optList:
 			matchedLine = re.match(r'--(\S+)=(.*)', opt)
 			if matchedLine:
@@ -67,16 +69,22 @@ class genericJob(object):
 					newCommandLine.append(opt)
 
 				if key in optionKeys:
-					options[key](value)				
+					options[key](value)	
+				if key == 'nproc':
+					has_nproc = True
 			else:
 				#Just pass along any options not in the format expected
 				newCommandLine.append(opt) 
-		# nproc need to be set according to the input nodes and ppn
-		self.setNProc(int(self.getNodes()) * int(self.getPPN()))
-				# We will not insert --nproc now so that those script that need different default can use
-				# its own default.
-		#if self.getNProc():
-		#	newCommandLine.append('--nproc=%d' % (self.getNProc()))
+		nodeppn_nproc = int(self.getNodes()) * int(self.getPPN())
+		if has_nproc and int(self.getNProc()) > nodeppn_nproc:
+			raise Exception('You can not specify more nproc than nodes * ppn')
+		else:
+			# nproc need to be set according to the input nodes and ppn if not already in the command line
+			self.setNProc(nodeppn_nproc)
+			# We will not insert --nproc now so that those script that need different default can use
+			# its own default.
+			#if self.getNProc():
+			#	newCommandLine.append('--nproc=%d' % (int(self.getNProc())))
 		return newCommandLine
 	
 					
@@ -152,4 +160,5 @@ class genericJob(object):
 		return self.rundir
 	def getJobName(self):
 		return self.runname + ".job"
+
 
