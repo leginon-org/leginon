@@ -439,11 +439,18 @@ class particledata {
 			."WHERE t.`DEF_id` = " .$tomogramId;
 		list($r) = $this->mysql->getSQLResult($q);
 		if ($r['REF|ApFullTomogramRunData|reconrun']) $has_run=True;
+		if ($r['REF|ApTomoReconParamsData|reconparam']) $has_param=True;
 
 		$q =  "SELECT t.`DEF_id` as DEF_id, ";
 		if ($has_run) {
 			$q .= "r.`runname` as runname, "
 				."r.`method` as `recon method`, ";
+		}
+		if ($has_param) {
+			$q .= "pa.`tilt_angle_offset`, "
+				."pa.`z_shift`, "
+				."pa.`tilt_axis_tilt_out_xyplane`, "
+				."pa.`tilt_axis_rotation_in_xyplane`, ";
 		}
 		$q .= "t.name as tomofilename, "
 			."t.description as description, "
@@ -462,8 +469,12 @@ class particledata {
 		} else {
 			$q .= "LEFT JOIN `ApPathData` p ON t.`REF|ApPathData|path` = p.`DEF_id` ";
 		}
+		if ($has_param) {
+			$q .= "LEFT JOIN `ApTomoReconParamsData` pa ON t.`REF|ApTomoReconParamsData|reconparam` = pa.`DEF_id` ";
+		}
 		$q .= "LEFT JOIN ".DB_LEGINON.".`TiltSeriesData` tilt ON t.`REF|leginonData|TiltSeriesData|tiltseries` = tilt.`DEF_id` "
 			."WHERE t.`DEF_id` = " .$tomogramId;
+
 		list($r) = $this->mysql->getSQLResult($q);
 		if (!$r['runname']) {
 			$r['runname'] = array_pop(explode('/',$r['path']));
