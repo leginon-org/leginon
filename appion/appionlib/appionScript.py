@@ -29,7 +29,7 @@ from pyami import version
 #=====================
 class AppionScript(basicScript.BasicScript):
 	#=====================
-	def __init__(self,optargs=sys.argv[1:],quiet=False,useglobalparams=True):
+	def __init__(self,optargs=sys.argv[1:],quiet=False,useglobalparams=True,maxnproc=None):
 		"""
 		Starts a new function and gets all the parameters
 		"""
@@ -38,7 +38,8 @@ class AppionScript(basicScript.BasicScript):
 		self.clusterjobdata = None
 		self.params = {}
 		sys.stdout.write("\n\n")
-		self.quiet = False
+		self.quiet = quiet
+		self.maxnproc = maxnproc
 		self.startmem = mem.active()
 		self.t0 = time.time()
 		self.createDefaultStats()
@@ -374,6 +375,10 @@ class AppionScript(basicScript.BasicScript):
 			apDisplay.printError("enter a runname, e.g. --runname=run1")
 		if self.params['projectid'] is None:
 			apDisplay.printError("enter a project id, e.g. --projectid=159")
+		if self.maxnproc is not None and self.params['nproc'] is not None:
+			if self.params['nproc'] > self.maxnproc:
+				apDisplay.printWarning('You have specify --nproc=%d.\n  However,we know from experience larger than %d processors in this script can cause problem.\n  We have therefore changed --nproc to %d for you.' % (self.params['nproc'],self.maxnproc,self.maxnproc))
+				self.params['nproc'] = self.maxnproc
 
 	#######################################################
 	#### ITEMS BELOW CAN BE SPECIFIED IN A NEW PROGRAM ####

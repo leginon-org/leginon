@@ -48,7 +48,7 @@ class uploadExternalPackageScript(reconUploader.generalReconUploader):
 		
 #=====================
 if __name__ == "__main__":
-	refine3d = uploadExternalPackageScript()
+	refine3d = uploadExternalPackageScript(maxnproc=1)
 	refine3d.start()
 	refine3d.close()
 
