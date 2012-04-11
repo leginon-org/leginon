@@ -250,9 +250,22 @@ class CentosInstallation(object):
 		self.runCommand('./pysetup.sh install')
 
 		# install the appion python packages
+		# For the bin scripts, we add an extra directory level below
+		# the default location to keep all appion scripts in their
+		# own place, rather than cluttering up /usr/bin or whatever.
+		pyprefix = self.runCommand('python -c "import sys;print sys.prefix"')
+		apbin = os.path.join(pyprefix, 'bin', 'appion')
 		os.chdir(self.svnMyamiDir + 'appion')
-		self.runCommand('python setup.py install')
+		self.runCommand('python setup.py install --install-scripts=%s' % (apbin,))
 		
+		# add a custom search path to appion.sh and appion.csh in profile.d
+		for ext,cmd,eq in (('sh','export','='),('csh','setenv',' ')):
+			fname = '/etc/profile.d/appion.%s' % (ext,)
+			f = open(fname, 'w')
+			setcmd = '%s PATH%s${PATH}:%s' % (cmd, eq, apbin,)
+			f.write(setcmd)
+			f.close()
+
 		# setup Leginon configure file
 		self.writeToLog("setup Leginon configure file")
 		leginonDir = self.runCommand('python -c "import leginon; print leginon.__path__[0]"')		
