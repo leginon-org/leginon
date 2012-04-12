@@ -36,7 +36,7 @@ $projectId = getProjectId();
 $javascript = "<script src='../js/viewer.js'></script>\n";
 $javascript.= editTextJava();
 
-processing_header("Protomo Alignment Iteration Report","Tilt Series Alignment Report Page", $javascript);
+processing_header("Alignment Iteration Report","Tilt Series Alignment Report Page", $javascript);
 
 // edit description form
 echo "<form name='templateform' method='post' action='$formAction'>\n";
@@ -73,7 +73,7 @@ if ($refinedata) {
 		//Report parameters
 		$s = $refinedata[0];
 	if ($is_protomo) {
-		$title = "Protomo alignment cycle parameters";
+		$title = "Alignment cycle parameters";
 	} else {
 		$title = "Alignment parameters";
 	}
