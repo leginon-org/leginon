@@ -46,6 +46,7 @@ function runCtfEstimate() {
 	$resmin=$_POST['resmin'];
 	$resmax=$_POST['resmax'];
 	$defstep=$_POST['defstep'];
+	$dast=$_POST['dast'];
 	//$nominal=$_POST['nominal'];
 	//$reprocess=$_POST['reprocess'];
 	
@@ -84,6 +85,7 @@ function runCtfEstimate() {
 	$command.="--resmin=$resmin ";
 	$command.="--resmax=$resmax ";
 	$command.="--defstep=$defstep ";
+	$command.="--dast=$dast ";
 
 	$progname = "CtfFind";
 	if ($ctftilt) {
@@ -176,6 +178,7 @@ function createCtfEstimateForm($extra=false) {
 	$form_resmin = ($_POST['resmin']) ? $_POST['resmin'] : '400.0';
 	$form_resmax = ($_POST['resmax']) ? $_POST['resmax'] : '8.0';
 	$form_defstep = ($_POST['defstep']) ? $_POST['defstep'] : '5000.0';
+	$form_dast = ($_POST['dast']) ? $_POST['dast'] : '100';
 
 	echo"
 	<TABLE BORDER=0 CLASS=tableborder CELLPADDING=15>
@@ -216,6 +219,9 @@ function createCtfEstimateForm($extra=false) {
 	echo "<br />\n";
 	echo "<input type='text' name='defstep' value='$form_defstep' size='6'>\n";
 	echo docpop('defstep','Search step (Ang)');
+	echo "<br />\n";
+	echo "<input type='text' name='dast' value='$form_dast' size='6'>\n";
+	echo docpop('dast','Expected astigmatism (Ang)');
 	echo "<br />\n";
 	echo "<br />\n";
 	//echo "<INPUT TYPE='checkbox' NAME='confcheck' onclick='enableconf(this)'>\n";

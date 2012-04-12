@@ -52,6 +52,7 @@ var help = {
 		'resmin' : 'This is the lowest resolution (in Angstroms) that will be considered when fitting the CTF.',
 		'resmax' : 'This is the highest resolution (in Angstroms) that will be considered when fitting the CTF.',
 		'defstep' : 'Initial step size (in Angstroms) used when searching for the defocus.',
+		'dast' : 'Expected amount of astigmatism in Angstrom. This is an additional parameter that was added to CARD 4 to restrain the amount of astigmatism in the CTF fit. This makes the fitting procedure more robust, especially in cases where the Thon rings are not easily visible',
 		'cs' : 'Spherical abberation, abbreviated as Cs, it corresponds to the imperfection produced by the lenses in the electron microscope.  This is a physical property of a microscope and does not change.',
 		'hpmask': 'Optional filter that sets all signal below a low frequency set point to zero, and all signal above a high frequency set point passed at 100%.  Signal between these two points is linearly ramped.  This can be used mask out strong signal from particle structure that can cause the algorithm to fail.', 
 		'hpzero': 'signal set to zero below this frequency. For example, use 60 &Aring;ngstr&ouml;m for negatively-stained GroEL where the particle structure signal drops off',
