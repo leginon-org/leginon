@@ -63,9 +63,10 @@ function createAppionScriptForm($extra=false, $title=FORM_TITLE, $heading=FORM_H
 	$outdir = ($_POST['outdir']) ? $_POST['outdir']: $outdir;
 	$description = ($_POST['description']) ? $_POST['description']: $description;
 	$wait = ($_POST['wait']=="on") ? "CHECKED" : "";
+	$leginoncheck = ($_POST['alignmethod'] == 'leginon'|| !($_POST['alignmethod'])) ? "CHECKED" : "";
 	$protomocheck = ($_POST['alignmethod'] == 'protomo' ) ? "CHECKED" : "";
 	$imodcheck = ($_POST['alignmethod'] == 'imod-shift') ? "CHECKED" : "";
-	$raptorcheck = ($_POST['alignmethod'] == 'raptor'|| !($_POST['alignmethod'])) ? "CHECKED" : "";
+	$raptorcheck = ($_POST['alignmethod'] == 'raptor') ? "CHECKED" : "";
 	$sample = ($_POST['sample']) ? $_POST['sample'] : 4;
 	$region = ($_POST['region']) ? $_POST['region'] : 50;
 	$extrabin = ($_POST['extrabin']) ? $_POST['extrabin'] : '1';
@@ -107,6 +108,8 @@ function createAppionScriptForm($extra=false, $title=FORM_TITLE, $heading=FORM_H
 	//Alignment Parameters
 	echo "<p><b>Alignment Parameters</b><p>";
 	echo docpop('tomoalignmethod', 'Method');
+	echo "&nbsp;<input type='radio'onClick=submit() name='alignmethod' value='leginon' $leginoncheck>\n";
+	echo "Leginon alignment\n";
 	echo "&nbsp;<input type='radio'onClick=submit() name='alignmethod' value='protomo' $protomocheck>\n";
 	echo "Protomo refinement\n";
 	echo "&nbsp;<input type='radio' onClick=submit() name='alignmethod' value='imod-shift' $imodcheck>\n";
