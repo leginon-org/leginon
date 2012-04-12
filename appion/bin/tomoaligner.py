@@ -54,7 +54,7 @@ class protomoAligner(appionScript.AppionScript):
 			help="tilt series number in the session", metavar="int")
 		self.parser.add_option("--othertilt", dest="othertilt", type="int",
 			help="2nd tilt group series number if needed", metavar="int")
-		self.alignmethods = ( "imod-shift", "protomo", "protomo2" )
+		self.alignmethods = ( "imod-shift", "protomo", "protomo2", "leginon" )
 		self.parser.add_option("--alignmethod", dest="alignmethod",
 			help="aligning method, e.g. --alignmethod=protomo or imod-shift", metavar="Method",
 			type="choice", choices=self.alignmethods, default="protomo" )
@@ -188,6 +188,9 @@ class protomoAligner(appionScript.AppionScript):
 				self.params['othertiltseries'] = othertiltdata
 			else:
 				self.params['othertiltseries'] = None
+			if self.params['alignmethod'] == 'leginon':
+				self.params['cycle'] = 0
+				self.params['region'] = 100
 		else:
 			self.createParamsFromGoodAligner(self.params['goodalignerid'])
 			if self.params['goodcycle'] is None:
@@ -302,9 +305,7 @@ class protomoAligner(appionScript.AppionScript):
 		# Write input parameters and results to DB
 		if commit:
 			apProtomo2.commitResultsToDB()
-			
-		
-	
+
 	#=====================
 	def start(self):
 		commit = self.params['commit']
@@ -367,7 +368,7 @@ class protomoAligner(appionScript.AppionScript):
 			# also process and commit protomo cycle 0 if doing cycle 1
 			cycles=[0,1]
 		for cycle in cycles:
-			if alignmethod == 'protomo':
+			if alignmethod == 'protomo' or alignmethod == 'leginon':
 				self.params['aligndir'],self.params['imagedir'] =	apProTomo.setProtomoDir(self.params['rundir'],cycle)
 				aligndir = self.params['aligndir']
 				# Link images into rundir/raw
@@ -431,7 +432,7 @@ class protomoAligner(appionScript.AppionScript):
 			# Create Aligned Stack for record
 			bin = int(math.ceil(min(imgshape) / 512.0))
 			apImod.createAlignedStack(stackdir, aligndir, imodseriesname,bin)
-			if alignmethod == 'protomo':
+			if alignmethod == 'protomo' or alignmethod == 'leginon':
 				alifilename = imodseriesname+'-%02d.ali' % cycle
 				os.rename(imodseriesname+'.ali',alifilename)
 			else:
@@ -439,7 +440,7 @@ class protomoAligner(appionScript.AppionScript):
 			alifilepath = os.path.join(aligndir,alifilename)
 			# commit to database
 			if commit:
-				if alignmethod == 'protomo':
+				if alignmethod == 'protomo' or alignmethod == 'leginon':
 					# -- Commit Parameters --
 					protomodata = apProTomo.insertProtomoParams(seriesname)
 					alignrun = apTomo.insertTomoAlignmentRun(sessiondata,leginonxcorrlist[0],None,protomodata,None,1,self.params['runname'],self.params['rundir'],self.params['description'])
