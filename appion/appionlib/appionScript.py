@@ -498,6 +498,8 @@ class AppionScript(basicScript.BasicScript):
 			time.wait(60)
 			stdout_value = proc.communicate()[0]
 		try:
+			logdir = os.path.dirname(logfilepath)
+			apParam.createDirectory(logdir)
 			file = open(logfilepath,'w')
 		except:
 			apDisplay.printError('Log file can not be created, process did not run.')
