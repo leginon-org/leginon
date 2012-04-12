@@ -15,7 +15,7 @@ from appionlib import apDisplay
 class ImodMaker(apTomoMakerBase.TomoMaker):
 	#=====================
 	def checkConflicts(self):
-		super(TomoImodFullMaker,self).checkConflicts()
+		super(ImodMaker,self).checkConflicts()
 		if self.params['method'] not in self.methods:
 			apDisplay.printError("No valid recon method specified")
 
