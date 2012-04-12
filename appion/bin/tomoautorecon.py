@@ -21,9 +21,9 @@ from appionlib import apDisplay
 #=====================
 class TomoAlignReconLooper(appionTiltSeriesLoop.AppionTiltSeriesLoop):
 	def setupParserOptions(self):
-		self.alignmethods = ( "imod-shift", "protomo","raptor" )
+		self.alignmethods = ( "leginon","imod-shift", "protomo","raptor" )
 		self.parser.add_option("--alignmethod", dest="alignmethod",
-			type="choice", choices=self.alignmethods, default="protomo" )
+			type="choice", choices=self.alignmethods, default="leginon" )
 		# general parameters
 		self.parser.add_option("--reconthickness", dest="reconthickness", default=100, type="int",
 			help="Full tomo reconstruction thickness before binning, e.g. --thickness=200", metavar="int")
