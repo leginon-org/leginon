@@ -51,7 +51,7 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 		if unames[-1].find('64') >= 0:
 			exename += '64.exe'
 		else:
-			exename += '32.exe'
+			exename += "3.exe"
 		ctfprgmexe = subprocess.Popen("which "+exename, shell=True, stdout=subprocess.PIPE).stdout.read().strip()
 		if not os.path.isfile(ctfprgmexe):
 			ctfprgmexe = os.path.join(apParam.getAppionDirectory(), 'bin', exename)
@@ -96,7 +96,7 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 		CARD 1: Input file name for image
 		CARD 2: Output file name to check result
 		CARD 3: CS[mm], HT[kV], AmpCnst, XMAG, DStep[um],PAve
-		CARD 4: Box, ResMin[A], ResMax[A], dFMin[A], dFMax[A], FStep
+		CARD 4: Box, ResMin[A], ResMax[A], dFMin[A], dFMax[A], FStep,  dAst[A]
 		CTFTILT also asks for TiltA[deg], TiltR[deg] at CARD4
 
 		The output image file to check the result of the fitting
@@ -128,6 +128,10 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 			precision.
 		dFMax: End defocus value for grid search in Angstrom.
 		FStep: Step width for grid search in Angstrom.
+		dAst: An additional parameter, dAst, was added to CARD 4 to restrain 
+			the amount of astigmatism in the CTF fit. This makes the 
+			fitting procedure more robust, especially in cases where 
+			the Thon rings are not easily visible.
 		TiltA: guessed tilt angle
 		TiltR: angular range for initial coarse search 
 		"""
@@ -152,6 +156,7 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 			'resmin': self.params['resmin'],
 			'resmax': self.params['resmax'],
 			'defstep': self.params['defstep'], #round(defocus/32.0, 1),
+			'dast': self.params['dast'],
 		}
 		if bestdef<10000:
 			inputparams['defmin']=2000.0
@@ -181,7 +186,8 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 			+ str(inputparams['resmax'])+","
 			+ str(inputparams['defmin'])+","
 			+ str(inputparams['defmax'])+","
-			+ str(inputparams['defstep']))
+			+ str(inputparams['defstep'])+","
+			+ str(inputparams['dast']))
 
 		### additional ctftilt parameters
 		if self.params['ctftilt'] is True:
@@ -295,7 +301,7 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 
 		# first create an aceparam object
 		paramq = appiondata.ApCtfTiltParamsData()
-		copyparamlist = ('medium','ampcarbon','ampice','fieldsize','cs','bin','resmin','resmax','defstep')
+		copyparamlist = ('medium','ampcarbon','ampice','fieldsize','cs','bin','resmin','resmax','defstep','dast')
 		for p in copyparamlist:
 			if p in self.params:
 				paramq[p] = self.params[p]
@@ -372,6 +378,10 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 			help="High resolution end of data to be fitted", metavar="#")
 		self.parser.add_option("--defstep", dest="defstep", type="float", default=5000.0,
 			help="Step width for grid search in Angstroms", metavar="#")
+		self.parser.add_option("--dast", dest="dast", type="float", default=100.0,
+			help="dAst was added to CARD 4 to restrain the amount of astigmatism in \
+				the CTF fit. This makes the fitting procedure more robust, especially \
+				in cases where the Thon rings are not easily visible", metavar="#")
 		self.parser.add_option("--ctftilt", dest="ctftilt", default=False,
 			action="store_true", help="Run ctftilt instead of ctffind")
 
