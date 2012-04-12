@@ -137,7 +137,7 @@ class Tomography {
 			."LEFT JOIN TomographyPredictionData p "
 			."ON (a.DEF_id = p.`REF|AcquisitionImageData|image`) "
 			."WHERE a.`REF|TiltSeriesData|tilt series`=$tiltSeriesId "
-			."AND a.`label` IS NULL "
+			."AND (a.`label` is null or a.`label` like 'Tomography') "
 			."ORDER BY stage_alpha";
 
 		return $this->mysql->getSQLResult($query);
@@ -211,7 +211,6 @@ class Tomography {
 			.'AND p1.`REF|InstrumentData|ccdcamera`=c.`REF|InstrumentData|ccdcamera` '
 			.'AND p1.DEF_timestamp <= a.DEF_timestamp '
 			."WHERE a.`REF|TiltSeriesData|tilt series`=$tiltSeriesId "
-			."AND a.`label` IS NULL "
 			.'AND '
 			.'p1.DEF_timestamp=(SELECT MAX(p2.DEF_timestamp) '
 			.'FROM PixelSizeCalibrationData p2 '
