@@ -103,6 +103,17 @@ def numberStackFile(oldheadfile, startnum=0):
 	apDisplay.printMsg("completed %d particles in %s"%(numimg, apDisplay.timeString(time.time()-t0)))
 	return True
 
+def getPartSegmentLimit(filename):
+	root=os.path.splitext(filename)[0]
+	headerfilename=root + ".hed"
+	headerdict = readImagicHeader(headerfilename)
+	partbytes = 4*headerdict['rows']*headerdict['lines']
+	maxnumpart = int(math.floor(bytelimit / partbytes))
+	maxnumpart = 2 ** int(math.log(maxnumpart)/math.log(2))
+	if maxnumpart < 1:
+		apDisplay.printError("Single image in the stack exceeds %d byte.  This can not be processed. Please bin it down first." % bytelimit)
+	return maxnumpart 
+
 #===============
 def readImagic(filename, first=1, last=None, msg=True):
 	"""
