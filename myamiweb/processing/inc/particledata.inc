@@ -1109,7 +1109,7 @@ class particledata {
 			."		c.`noise1`, c.`noise2`, c.`noise3`, c.`noise4`, "
 			."		c.`envelope1`, c.`envelope2`, c.`envelope3`, c.`envelope4`, c.`lowercutoff`, c.`uppercutoff`, c.`snr`, "
 			."		c.`confidence`,c.`confidence_d` , c.`cross_correlation`, "
-			."		(c.`defocus1`+c.`defocus2`)/2+s.`defocus` as difference "
+			."		abs(c.`defocus1`+c.`defocus2`)/2-abs(s.`defocus`) as difference "
 			."	from `ApCtfData` c "
 			."	left join ".DB_LEGINON.".`AcquisitionImageData` i on (i.`DEF_id` = c.`REF|leginondata|AcquisitionImageData|image`) "
 			."	left join ".DB_LEGINON.".`PresetData` p on (p.DEF_id = i.`REF|PresetData|preset`) "

@@ -22,6 +22,8 @@ class dbemGraph {
 	var $datay=array();
 	var $scatterplot=true;
 	var $lineplot=true;
+	var $baselineplot=false;
+	var $baselinevalue=0;
 
 	function dbemGraph($data, $xname, $yname) {
 		$this->data=&$data;
@@ -120,6 +122,14 @@ class dbemGraph {
 				$p1 = new LinePlot($this->datay,$this->datax);
 				$p1->SetColor("blue");
 				$graph->Add($p1);
+			}
+
+			if ($this->baselineplot) {
+				$yarray = array($this->baselinevalue,$this->baselinevalue);
+				$xarray = array(min($this->datax),max($this->datax));
+				$p2 = new LinePlot($yarray,$xarray);
+				$p2->SetColor("blue");
+				$graph->Add($p2);
 			}
 		}
 		$source = $graph->Stroke(_IMG_HANDLER);
