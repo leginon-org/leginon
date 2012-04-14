@@ -8,12 +8,13 @@
  *	Simple viewer to view a image using mrcmodule
  */
 
-require "inc/particledata.inc";
-require "inc/leginon.inc";
-require "inc/project.inc";
-require "inc/viewer.inc";
-require "inc/processing.inc";
-require "inc/appionloop.inc";
+require_once "inc/particledata.inc";
+require_once "inc/leginon.inc";
+require_once "inc/project.inc";
+require_once "inc/viewer.inc";
+require_once "inc/processing.inc";
+require_once "inc/appionloop.inc";
+require_once "inc/path.inc";
   
 // IF VALUES SUBMITTED, EVALUATE DATA
 if ($_POST['process']) {
@@ -226,14 +227,20 @@ function runDogPicker() {
 		$results.= "</td></tr></table>\n";
 		$results.= "<br />\n";
 		$testjpg = ereg_replace(".mrc","",$_POST['testfilename']);
-		$jpgimg = $outdir.$runname."/jpgs/".$testjpg.".prtl.jpg";
+		$testResultFile = $testjpg.".prtl.jpg";
+		$jpgimg = Path::join($outdir, $runname, "jpgs", $testResultFile);
+		
+		$pathToMaps = Path::join($outdir, $runname, "maps");
 		
 		if ($_POST['process'] != "Just Show Command") {
-			$dogmaplist = glob($outdir.$runname."/maps/".$testjpg."*.jpg");
+			$filePattern = $testjpg."*.jpg";
+			$pathPattern = Path::join($pathToMaps, $filePattern);
+			$dogmaplist = glob($pathPattern);
 			$results .= writeTestResults($jpgimg, $dogmaplist, $_POST['bin']);
 		} else {
-			$ccclist=array();
-			$cccimg=$outdir.$runname."/maps/".$testjpg.".dogmap1.jpg";
+			$mapFile = $testjpg.".dogmap1.jpg";
+			$ccclist = array();
+			$cccimg = Path::join($pathToMaps, $mapFile);
 			$ccclist[]=$cccimg;
 			$results.= writeTestResults($jpgimg,$ccclist,$bin=$_POST['bin']);			
 		}		
