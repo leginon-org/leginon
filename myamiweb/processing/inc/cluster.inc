@@ -173,7 +173,7 @@ class Cluster
 		return $path;
 	}
 	
-	function executeOnHost ($username, $password, $command, $port=22)
+	function executeOnHost ($username, $password, $command, $returnResult=false, $port=22)
 	{
 		$result = false;
 				
@@ -186,15 +186,44 @@ class Cluster
 			throw new Exception($msg);
 		}
 		
-		sleep(25.1);
-
+		// return now if it is not important to know that a result was returned in the stream
+		if (!$returnResult)
+			return true;
+		
+	  	// Setting blocking to true can cause it to hang.
 		stream_set_blocking($stream, false);
-		if (function_exists("stream_get_contents")) {		
-			$result = stream_get_contents($stream);
-		} else {
-			$result = fread($stream,4096);
-			fclose($stream);
+		
+		// TODO: This is crazy. PHP must provide a better solution. 
+		// Setting timeout function doesn't work.
+		// not positive this sleep is necessary. needs more testing.
+		sleep(1); //seconds. 
+
+		// This block will wait a given time to get a result from the output stream.
+		$start_time = time();
+	  	$max_time = 10; // max time to wait for a result in seconds. I've seen it take 4 seconds, but this may need to be higher.
+	  	while (empty($result) && (( time() - $start_time ) < $max_time )) { 
+			if (function_exists("stream_get_contents")) {		
+				$result = stream_get_contents($stream);
+			} else {
+				$result = fread($stream,4096);
+			}	  		
+	  	}	
+	  	
+	  	// This is just for testing
+//	  	$totalTime = time() - $start_time;
+//	  	echo " <----------> Time in execute running $command: ---> ";
+//	  	echo $totalTime;
+				
+	  	// We get here if we timed out before getting a result. Not throwing an
+	  	// exception because some commands like mkdir will never return a result.
+	  	// In this case, the command should be executed with $returnResult set to false.
+		if ( empty($result) ) {
+			$msg = "Command timed out on remote host ".$this->getHostName().".";
+			//throw new Exception($msg);
 		}
+				
+		// close the stream
+		fclose($stream);
 		
 		return $result;
 	}
@@ -244,7 +273,7 @@ class Cluster
 					$auth_methods = ssh2_auth_none($connection, $username);
 					
 					if ($auth_methods === false) {
-	  					$msg = "Failure authenticating login to ".$this->getHostName().", for user ".$username.".";
+	  					$msg = "Failure authenticating login to ".$this->getHostName().", for user ".$username.". Unable to determine available host login methods.";
 					} else if (in_array('password', $auth_methods)) {
 	  					$msg = "Failure authenticating login to ".$this->getHostName().", verify login credentials for user ".$username;
 					} else {

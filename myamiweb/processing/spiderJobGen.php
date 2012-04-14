@@ -112,7 +112,7 @@ elseif ($_POST['submitjob']) {
 	// create appion directory & copy job file
 	$cmd = "mkdir -p $clusterpath;\n";
 	
-	$rvalue = exec_over_ssh($host, $user, $pass, $cmd, True);
+	$rvalue = exec_over_ssh($host, $user, $pass, $cmd, false);
 	if ($rvalue === false ){
 		$errMsg = "Error: Could not create run directory on $host: ";
 		$errMsg .= pconnError();

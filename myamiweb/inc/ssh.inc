@@ -28,7 +28,7 @@ function exec_over_ssh($host, $username, $password, $command, $result=false, $po
 		$cluster = new Cluster($host);
 		if ( $cluster->usesLoginMethod() ) {			
 			try {
-				$sshResult = $cluster->executeOnHost($username, $password, $command, $port);
+				$sshResult = $cluster->executeOnHost($username, $password, $command, $result, $port);
 			} catch(Exception $e) {
 	  			$errorMessage = 'Error executing over ssh on host: '.$host.' sending command: '.$command.' username: '.$username.' Error Message: ' .$e->getMessage();
 	  			$sshResult = false;

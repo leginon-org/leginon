@@ -1,4 +1,6 @@
 <?php
+// compress this file if the browser accepts it.
+if (substr_count($_SERVER['HTTP_ACCEPT_ENCODING'], 'gzip')) ob_start("ob_gzhandler"); else ob_start();
 /**
  *      The Leginon software is Copyright 2007
  *      The Scripps Research Institute, La Jolla, CA
@@ -415,7 +417,7 @@ function copyFilesToCluster( $host )
 	// TODO: where exactly should files be copied to?
 	$cmd = "mkdir -p $clusterpath;\n";
 	
-	$rvalue = exec_over_ssh($host, $user, $pass, $cmd, True);
+	$rvalue = exec_over_ssh($host, $user, $pass, $cmd, false);
 	if ($rvalue === false ){
 		$errMsg = "Error: Could not create run directory on $host: ";
 		$errMsg .= pconnError();
