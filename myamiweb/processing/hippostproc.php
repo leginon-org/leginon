@@ -15,6 +15,8 @@ require_once "inc/viewer.inc";
 require_once "inc/processing.inc";
 require_once "inc/summarytables.inc";
 require_once "inc/appionloop.inc";
+require_once "inc/cluster.inc";
+require_once "../inc/path.inc";
 
 // --- check if reconstruction is specified
 
@@ -28,7 +30,12 @@ function createform($extra=False) {
 	$expId = $_GET['expId'];
 	$refIterId = $_GET['refineIter'];
 
-	$appionlibdir = "/ami/sw/leginon/betaleginon/appion/appionlib";
+	// Get the appionlib directory to load the amplitude file from "data" directory
+	// It does not matter which processing host we use
+	// since they all have the same "data" directory
+	$processhosts = (array)getHosts();
+	$cluster = new Cluster( $processhosts[0]["host"] );
+	$appionlibdir = $cluster->getAppionLibDir();
 
 	$particle = new particledata();
 
@@ -173,7 +180,7 @@ function createform($extra=False) {
 	echo "</td></tr>\n";
 
 	foreach ($amplist as $amp) {
-		$ampfile = $appionlibdir.'/data/'.$amp['name'];
+		$ampfile = Path::join($appionlibdir, 'data', $amp['name'] );
 		echo "<TR><td>\n";
 		if (file_exists($ampfile)) {
 			echo "<A HREF='ampcorplot.php?file=$ampfile&width=800&height=600'>";

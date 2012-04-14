@@ -10,6 +10,7 @@
  * Note: each cluster file must be register in config_processing.php
  **/
 require_once "inc/leginon.inc";
+require_once "inc/path.inc";
 
 class Cluster 
 {
@@ -25,6 +26,7 @@ class Cluster
 	private $cpuTimeMax;
 	private $memoryMax;
 	private $appionBin; // location of appion scripts on cluster, must end in slash, e.g., /usr/local/appion/bin/
+	private $appionLibDir; // location of appionlib directory on cluster, must end in slash, e.g., /usr/local/appion/appionlib/
 	private $dirSeparator; // eg. "/"
 	private $remoteOutputPath;
 	private $baseoutdir;
@@ -63,6 +65,7 @@ class Cluster
 		$this->cpuTimeMax 		= $hostconfig['cputimemax'];
 		$this->memoryMax 		= $hostconfig['memorymax'];
 		$this->appionBin 		= $hostconfig['appionbin']; // location of appion scripts on cluster, must end in slash, e.g., /usr/local/appion/bin/
+		$this->appionLibDir 	= $hostconfig['appionlibdir']; // location of appionlib directory on cluster, must end in slash, e.g., /usr/local/appion/appionlib
 		$this->baseoutdir		= $hostconfig['baseoutdir'];
 		$this->localHelperHost 	= $hostconfig['localhelperhost'];
 		$this->dirSeparator 	= $hostconfig['dirsep']; // eg. "/"	
@@ -86,6 +89,7 @@ class Cluster
 	function getCpuTimeMax() 	{ return $this->cpuTimeMax; }
 	function getMemoryMax() 	{ return $this->memoryMax; }
 	function getAppionBinDir() 	{ return $this->appionBin; }
+	function getAppionLibDir() 	{ return $this->appionLibDir; }
 	function getWrapperPath()   { return $this->wrapperPath; }
 	function getRemoteOutputPath() 	{ return $this->remoteOutputPath; }
 	function getLocalHelperHost()   { return $this->localHelperHost; }
@@ -169,8 +173,7 @@ class Cluster
 	// uses the separator defined in the config file specific to this cluster instance.
 	function formatEndPath($path) 
 	{
-		$path = ereg($this->dirSeparator."$", $path) ? $path : $path.$this->dirSeparator;
-		return $path;
+		return Path::formatEndPath($path, $this->dirSeparator);
 	}
 	
 	function executeOnHost ($username, $password, $command, $returnResult=false, $port=22)

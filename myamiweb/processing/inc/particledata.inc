@@ -18,6 +18,7 @@ if( !file_exists(dirname(__FILE__).'/../../config.php') ){
 
 require_once dirname(__FILE__).'/../../config.php';
 require_once "inc/mysql.inc";
+require_once "inc/path.inc";
 
 class particledata {
 
@@ -5269,10 +5270,7 @@ function getBaseAppionPath($sessioninfo,$new_base='appion') {
 }
 
 function formatEndPath($path) {
-	$path = ereg(DIRECTORY_SEPARATOR."$", $path) ? $path : $path.DIRECTORY_SEPARATOR;
-	//if (substr($path,-1,1)!='/')
-	//	$path.='/';
-	return $path;
+	return Path::formatEndPath($path);
 }
 
 ?>
