@@ -83,6 +83,7 @@ function getProcessString()
 	return $_POST['process'];
 }
 
+// consider making this a static function in cluster.inc
 function getHosts(){
 	global $PROCESSING_HOSTS;
 	if (is_array($PROCESSING_HOSTS))
@@ -905,6 +906,16 @@ $xvfb=False, $xtra=False, $nproc=1, $ppn=0, $nodes=0, $walltime="240", $cputime=
 /**************************************/
 function writeTestResults($jpg,$ccclist,$bin,$process_str='')
 {
+	// First, see if we are just showing the command
+	if ($process_str === '') {
+		$process_str = getProcessString();
+	}
+	$fileExists = file_exists($jpg);
+  	if ( ($fileExists===false) && (preg_match('/[Ss]how/',$process_str)) ) {
+		return "<font color='#990000'>The test results are not ready for display. Refresh the page after the command is run successfully. </font><br />\n";
+  	}
+	
+	
 	// refs #1706. Give the test command a chance to complete. For some reason,
 	// the file_exists() function does not seem to detect the existance of the file
 	// in a timely manner. This will often loop for 30 seconds, even if the file 
@@ -936,15 +947,10 @@ function writeTestResults($jpg,$ccclist,$bin,$process_str='')
   	if ($fileExists===false) {
 		$base = basename($jpg);
 		$dir = dirname($jpg);
-		if ($process_str === '') {
-			$process_str = getProcessString();
-		}
-		if (preg_match('/[Ss]how/',$process_str)) {
-			return "<font color='#990000'>The test results are not ready for display. Refresh the page after the command is run successfully. </font><br />\n";
-		} else {
-			return "<font color='#990000' size='+2'>An Error occurred - the image $base was not found in folder $dir. Try refreshing this page.</font><br />\n";
-		}
+		return "<font color='#990000' size='+2'>An Error occurred - the image $base was not found in folder $dir. Try refreshing this page.</font><br />\n";
 	}
+
+	// The results are ready, display them.
 	$html = "<center>\n";
 	$html.= "<a href='loadimg.php?filename=$jpg' target='blank'>\n";
 	$html.= "<img src='loadimg.php?filename=$jpg&h=256'></a>\n";
