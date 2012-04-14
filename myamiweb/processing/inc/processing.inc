@@ -413,16 +413,12 @@ function streamToArray($stream) {
 }
 
 
-function getNumberOfProcsPerNode($processingHost) {
-	global $PROCESSING_HOSTS;
-
-	foreach ($PROCESSING_HOSTS as $host){
-		if ($host['host'] == $processingHost){
-			$numOfNode = $host['nproc'];
-			break;
-		}
-	}
-	return $numOfNode;
+function getNumberOfProcsPerNode( $processingHost ) 
+{
+	$cluster = new Cluster( $processingHost );
+	$ppn = $cluster->getPpnDef();
+	
+	return $ppn;
 }
 
 function getNumberOfRequiredNodes($nproc, $ppn) 
@@ -803,7 +799,7 @@ $xvfb=False, $xtra=False, $nproc=1, $ppn=0, $nodes=0, $walltime="240", $cputime=
 	// create run directory on processing host only.  Do not do anything on
 	// the webserver, doing so requires making poor assumptions. 
 	$cmd = "mkdir -p $rundir;";
-	$rvalue = exec_over_ssh($processhost, $user, $pass, $cmd, True);
+	$rvalue = exec_over_ssh($processhost, $user, $pass, $cmd, false);
 	if ($rvalue === false ){
 		$errMsg = "Could not create run directory on $processhost: ";
 		$errMsg .= pconnError();
@@ -907,8 +903,37 @@ $xvfb=False, $xtra=False, $nproc=1, $ppn=0, $nodes=0, $walltime="240", $cputime=
 }
 
 /**************************************/
-function writeTestResults($jpg,$ccclist,$bin,$process_str=''){
-	if (!file_exists($jpg)) {
+function writeTestResults($jpg,$ccclist,$bin,$process_str='')
+{
+	// refs #1706. Give the test command a chance to complete. For some reason,
+	// the file_exists() function does not seem to detect the existance of the file
+	// in a timely manner. This will often loop for 30 seconds, even if the file 
+	// existed 7 seconds into the loop. Not sure why.
+	$start_time 	= time();
+  	$max_time 		= 60; // constant, max time in seconds that we will wait for processing to complete 
+  	$curr_wait_time = 0; // the number of seconds this function has waited for the processing to complete
+	$mod_time 		= 0; // seconds since an existing file was modified 
+	// $max_mod_time : constant, if the file was modified within this many seconds of the current time, 
+	// assume it is new and not the result of a previous run. In my testing, the actual time got up to 24 seconds.
+	$max_mod_time	= 35;  
+  	
+  	// Make sure we don't show the user a previous test result, and processing has completed.
+	// Wait for 1. the file to exist, 2. an existing file to be modified, or 3. timer to run out
+	do {
+  		clearstatcache(); // filemtime() and file_exists() results are cached, clear it.
+		$fileExists = file_exists($jpg);
+  		if ($fileExists) {
+			$file_time = filemtime($jpg);
+			$mod_time = abs($start_time - $file_time);
+  		}
+
+		$curr_wait_time = time() - $start_time;	
+	
+	} while ( (($fileExists===false) || ($mod_time > 35)) && ($curr_wait_time < $max_time ) );
+  	  	
+  	clearstatcache(); // filetime() and file_exists() results are cached, clear it.
+  	$fileExists = file_exists($jpg);
+  	if ($fileExists===false) {
 		$base = basename($jpg);
 		$dir = dirname($jpg);
 		if ($process_str === '') {
@@ -917,7 +942,7 @@ function writeTestResults($jpg,$ccclist,$bin,$process_str=''){
 		if (preg_match('/[Ss]how/',$process_str)) {
 			return "<font color='#990000'>The test results are not ready for display. Refresh the page after the command is run successfully. </font><br />\n";
 		} else {
-			return "<font color='#990000' size='+2'>An Error occurred - the image $base was not found in folder $dir</font><br />\n";
+			return "<font color='#990000' size='+2'>An Error occurred - the image $base was not found in folder $dir. Try refreshing this page.</font><br />\n";
 		}
 	}
 	$html = "<center>\n";
