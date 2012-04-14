@@ -15,7 +15,6 @@
 class Path 
 {
 	// make sure a path ends with a single path separator.
-	// uses the separator defined in the config file specific to this cluster instance.
 	public static function formatEndPath( $path, $dirSeparator=DIRECTORY_SEPARATOR ) 
 	{
 		$formattedPath = ereg($dirSeparator."$", $path) ? $path : $path.$dirSeparator;

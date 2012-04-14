@@ -10,6 +10,7 @@
 require_once "config.php";
 require_once "inc/util.inc";
 require_once "inc/mysql.inc";
+require_once "inc/path.inc";
 
 require_once "inc/dbemauth.inc";
 
@@ -224,7 +225,7 @@ function login_header($title="", $javascript="", $onload="",$athome=false) {
 		$username = $login_check[0];
 	}
 	$url = "ln=".urlencode($_SERVER['REQUEST_URI']);
-	$path = getPathFromString($_SERVER['SCRIPT_NAME']);
+	$path = Path::getPathFromString($_SERVER['SCRIPT_NAME']);
 	$onload = (empty($onload)) ? '' : 'onload="'.$onload.'"';
 	echo '
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"  "http://www.w3.org/TR/html4/strict.dtd">

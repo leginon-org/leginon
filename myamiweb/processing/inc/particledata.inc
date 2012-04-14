@@ -5249,7 +5249,7 @@ function getBaseAppionPath($sessioninfo,$new_base='appion') {
 	}
 
 	if (defined('DEFAULT_APPION_PATH') && DEFAULT_APPION_PATH !='') {
-		return formatEndPath(DEFAULT_APPION_PATH).$sessioninfo['Name'];
+		return Path::formatEndPath(DEFAULT_APPION_PATH).$sessioninfo['Name'];
 	} else {
 		// get from leginon session image path
 		$leginon_imagepath = $sessioninfo['Image path'];
@@ -5267,10 +5267,6 @@ function getBaseAppionPath($sessioninfo,$new_base='appion') {
 		}
 	}
 	return $appion_basepath;
-}
-
-function formatEndPath($path) {
-	return Path::formatEndPath($path);
 }
 
 ?>

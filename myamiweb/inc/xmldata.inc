@@ -1,6 +1,7 @@
 <?php
 require_once 'config.php';
 require_once 'inc/util.inc';
+require_once 'inc/path.inc';
 
 define('XML_DATA', $XML_DATA);
 
@@ -104,7 +105,7 @@ class xmldata {
 
 	function getImagepath() {
 		$imagepath = $this->__get_tag_value('imagepath');
-		return formatPath($imagepath);
+		return Path::formatPath($imagepath);
 	}
 
 	function getFilenamefromId($id) {

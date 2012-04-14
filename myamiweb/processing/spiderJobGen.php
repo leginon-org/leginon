@@ -14,6 +14,7 @@ require_once "inc/leginon.inc";
 require_once "inc/viewer.inc";
 require_once "inc/project.inc";
 require_once "inc/summarytables.inc";
+require_once "inc/path.inc";
 
 $selectedcluster=$CLUSTER_CONFIGS[0];
 if ($_POST['cluster']) {
@@ -49,7 +50,7 @@ if ($_POST['write']) {
 	if (($_POST['xysearch']+$lastring) > $halfbox) jobForm("ERROR: lastring + xysearch must be less than $halfbox");
 
 	// check that job file doesn't already exist
-	$outdir = formatEndPath($_POST['outdir']);
+	$outdir = Path::formatEndPath($_POST['outdir']);
 	$outdir .= $_POST['jobname'];
 
 	// jobname ends with .job
@@ -137,7 +138,7 @@ elseif ($_POST['submitjob']) {
 	//$clusterdata->cluster_cmd($host, $user, $pass);
 	
 	
-	$path = formatEndPath($clusterdata->get_path()).$jobname;
+	$path = Path::formatEndPath($clusterdata->get_path()).$jobname;
 	echo "<table width='600'>\n";
 	echo "<tr><td>Appion Directory</td><td>$outdir</td></tr>\n";
 	echo "<tr><td>Cluster Job File</td><td>$path.job</td></tr>\n";
@@ -481,10 +482,10 @@ function writeJobFile ($extra=False) {
 	$logfile ="$jobname.log";
 	
 	$clustername = C_NAME;
-	$outdir = formatEndPath($_POST['outdir']);
+	$outdir = Path::formatEndPath($_POST['outdir']);
 
 	$clusterpath=$clusterdata->get_path();
-	$clusterpath = formatEndPath($clusterpath);
+	$clusterpath = Path::formatEndPath($clusterpath);
 
 	$clusterdata->post_data();
 

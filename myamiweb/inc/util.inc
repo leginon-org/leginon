@@ -492,12 +492,6 @@ function formatArrayHtmlRow() {
 	return $row;
 }
 
-function formatPath($path) {
-	$npath = ereg_replace('[\\]','/',$path);
-	$npath = ereg("/$", $npath) ? $npath : $npath."/";
-	return $npath;
-}
-
 function dumpData($data, $keys="") {
 	if (!is_array($data))
 		return;
@@ -652,15 +646,6 @@ function js_vars_from_post() {
 		$str .= 'var js_post_'.$k.'= '.$v.";\n";
 	}
 	return $str;
-}
-
-function getPathFromString($str) {
-	//--- return path from a string
-	$parts = explode('/',$str);
-	if (!is_array($parts))
-		return $str;
-	array_pop($parts);
-	return implode('/',$parts);
 }
 
 function ls($dir, $filter="") {

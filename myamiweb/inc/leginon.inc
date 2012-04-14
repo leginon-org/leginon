@@ -27,6 +27,7 @@ require_once "inc/login.inc";
 require_once "inc/util.inc";
 require_once "inc/xmlapplicationimport.inc";
 require_once "inc/mysql.inc";
+require_once "inc/path.inc";
 
 class leginondata {
 
@@ -699,7 +700,7 @@ class leginondata {
 				." where `DEF_id`='$sessionId' ";
 		$Rpath=$this->mysql->SQLQuery($q);
 		$path = mysql_fetch_array($Rpath);
-		return formatPath($path['path']);
+		return Path::formatPath($path['path']);
 	}
 
 	function getImagePathFromImageId($imageId) {
