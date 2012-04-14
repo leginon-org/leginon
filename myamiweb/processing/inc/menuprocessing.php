@@ -638,7 +638,7 @@ if (is_numeric($expId)) {
 //		);
 		$data[] = array(
 			'action' => array($action, $celloption),
-			'result' => array($totresult),
+			'result' => array(),
 			'newrun' => array($nruns, $celloption),
 		);
 	}
@@ -852,13 +852,31 @@ if (is_numeric($expId)) {
 	//Crud Finding is not yet working for 2.0 release
 	if (!HIDE_FEATURE)
 	{
-		$nrun = "<a href='runMaskMaker.php?expId=$sessionId'>Crud Finding</a>";
-		$nruns[]=$nrun;
+		$results=array();
+		$cruddone = count($subclusterjobs['maskmaker']['done']);
+		$crudrun = count($subclusterjobs['maskmaker']['running']);
+		$crudqueued = count($subclusterjobs['maskmaker']['queued']);
+		
+		// We can get an inflated count for done if the same job was run more than once.
+		// Not sure yet if $maskruns is for all methods of mask making or just this one...
+		if ( $maskruns < $cruddone )  {
+			$cruddone = $maskruns;
+		}
+
+		$results[] = ($cruddone==0) ? "" : "<a href='maskreport.php?expId=$sessionId'>$cruddone complete</a>";
+		$results[] = ($crudrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=maskmaker'>$crudrun running</a>";
+		$results[] = ($crudqueued==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=maskmaker'>$crudqueued queued</a>";		
+		
+		$nruns[] = array(
+			'name'=>"<a href='runMaskMaker.php?expId=$sessionId'>Crud Finding</a>",
+			'result'=>$results,
+		);
 	}
+	
 	$nrun = "<a href='manualMaskMaker.php?expId=$sessionId'>";
 	$nrun .= "Manual Masking";
 	$nrun .= "</a>";
-	$nruns[]=$nrun;
+	$nruns[] = $nrun;
 
 	$data[] = array(
 		'action' => array($action, $celloption),
