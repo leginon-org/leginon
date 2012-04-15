@@ -197,7 +197,7 @@ class leginondata {
 		return true;
 	}
 		
-	function getSessionInfo($name) {
+	function getSessionInfo($name,$reject_projection=false) {
 
 		if (!is_array($name)) {
 			$name = array($name);
@@ -209,7 +209,13 @@ class leginondata {
 				$ids[] = "s.`Name` like '$n'";
 		}
 		$sqlwhere = "where (".join(" OR ", $ids).")";
-		$sqlwhere .= " and a.`label`!='projection'";
+		if ($reject_projection === true)
+			// z projection images from tomography is not part of Leginon run.
+			// This part of the query is needed to ensure settings is only considered within
+			// data collection time frame for reverting settings per session.
+			// However, it slows down this general function too much.
+			// Therefore, it is only included in the query if asked specifically
+			$sqlwhere .= " and a.`label`!='projection'";
 
 		$q="select "
 		."s.`DEF_id` as SessionId, "

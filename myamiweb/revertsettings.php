@@ -49,7 +49,7 @@ function revertToSession($user_id,$sessionid,$test=false) {
 	global $code_string;
 	global $leginondata;
 	global $is_admin;
-	$sessioninfo = $leginondata->getSessionInfo($sessionid);
+	$sessioninfo = $leginondata->getSessionInfo($sessionid,true);
 	if ($sessioninfo['userId']!=$user_id && !$is_admin) return 'Error: Session does not belong to the user';
 	$array = defaultsettings_fileheader($user_id,$admin_init=false,$sessionname=$sessioninfo['Name']);
 	addToGlobalString($array,$test);
