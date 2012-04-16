@@ -390,5 +390,9 @@ parametermapping = (
 	('save frames', 'SaveRawFrames'),
 	('frames name', 'PreviousRawFramesName'),
 	('use frames', 'UseFrames'),
+	('frame rate', 'FrameRate'),
+	('readout delay', 'ReadoutDelay'),
+	('temperature', 'Temperature'),
+	('temperature status', 'TemperatureStatus'),
 )
 

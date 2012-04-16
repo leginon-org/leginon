@@ -276,11 +276,27 @@ class DECameraBase(ccdcamera.CCDCamera):
 	def getFrameRate(self):
 		return self.getProperty('Frames Per Second')
 
+	#def setFrameRate(self, fps):
+	#	return self.setProperty('Frames Per Second', fps)
+
 	def getReadoutDelay(self):
 		return self.getProperty('Sensor Readout Delay (milliseconds)')
 
 	def setReadoutDelay(self, milliseconds):
 		self.setProperty('Sensor Readout Delay (milliseconds)', milliseconds)
+
+	def getTemperatureStatus(self):
+		return self.getProperty('Temperature Control')
+
+	#def setTemperatureControl(self, state):
+	#	return self.getProperty('Temperature Control', state)
+		
+	def getTemperature(self):
+		return self.getProperty('Temperature - Detector (Celsius)')
+
+	#def setTemperature(self, degrees):
+	#	return self.setProperty('Temperature Control - Setpoint (Celsius)', degrees)
+
 
 #### Classes for specific cameras
 

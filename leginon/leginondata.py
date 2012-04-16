@@ -176,6 +176,10 @@ camera_params = (
 	('save frames', bool),
 	('frames name', str),
 	('use frames', tuple),
+	('frame rate', float),
+	('temperature', float),
+	('temperature status', str),
+	('readout delay', int),
 )
 
 class ScopeEMData(EMData):
