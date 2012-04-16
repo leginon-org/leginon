@@ -7,7 +7,8 @@ import threading
 
 logger = logging.getLogger('method_logger')
 logger.setLevel(logging.INFO)
-rothandler = logging.handlers.TimedRotatingFileHandler('methods.log', when='h', backupCount=72)
+logname = 'methods.log'
+rothandler = logging.handlers.TimedRotatingFileHandler(logname, when='h', backupCount=72)
 rothandler.setLevel(logging.INFO)
 formatter = logging.Formatter('%(asctime)s\t%(message)s')
 rothandler.setFormatter(formatter)
@@ -20,8 +21,8 @@ def logged_method(f, classname, fname):
 	def new_f(*args, **kwargs):
 		mylock.acquire()
 		try:
-			if mylock._RLock__count == 1 and args[0].__class__.__name__ == classname and args[0].logged_methods_on:
-				message = '%s\t%s\t%s\t%s' % (classname, fname, args[1:], kwargs)
+			if mylock._RLock__count == 1 and args[0].logged_methods_on:
+				message = '%s\t%s\t%s\t%s\t%s' % (args[0].__class__.__name__, classname, fname, args[1:], kwargs)
 				logger.info(message)
 			result = f(*args, **kwargs)
 			return result
