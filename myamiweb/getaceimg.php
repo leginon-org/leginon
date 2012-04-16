@@ -64,8 +64,7 @@ if ($ctfmethod==='') {
 	// we need to set ctfmethod to ctffind in order to get the image path
 	if ($aceparams['REF|ApCtfTiltParamsData|ctftilt_params'] !== null) {
 		$ctfmethod='ctffind';
-		// Need to obtain new ctfdata with method specified as ctffind
-		list($ctfdata)  = $ctf->getCtfInfoFromImageId($imgId, $order=False, $method='ctffind');
+		$graph="graph1";
 	}
 }
 if ($ctfmethod==='ctffind') {
