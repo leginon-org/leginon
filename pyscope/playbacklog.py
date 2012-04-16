@@ -28,3 +28,4 @@ for line in f:
 	f = getattr(inst, fname)
 	print fname, args, kwargs
 	f(*args, **kwargs)
+raw_input('enter to quit')
