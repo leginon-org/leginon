@@ -56,15 +56,25 @@ $sessionId = $imageinfo['sessionId'];
 $filename = $leginondata->getFilenameFromId($imgId);
 $normfile = trim($filename).'.norm.txt';
 $ctf = new particledata();
+list($ctfdata)  = $ctf->getCtfInfoFromImageId($imgId, $order=False, $ctfmethod);
+$aceparams = $ctf->getAceParams($ctfdata['acerunId']);
+
+if ($ctfmethod==='') {
+	// If the best CtfInfo found for the ImageId is from ctffind,
+	// we need to set ctfmethod to ctffind in order to get the image path
+	if ($aceparams['REF|ApCtfTiltParamsData|ctftilt_params'] !== null) {
+		$ctfmethod='ctffind';
+		// Need to obtain new ctfdata with method specified as ctffind
+		list($ctfdata)  = $ctf->getCtfInfoFromImageId($imgId, $order=False, $method='ctffind');
+	}
+}
 if ($ctfmethod==='ctffind') {
-	list($ctfdata)  = $ctf->getCtfInfoFromImageId($imgId, $order=False, $method='ctffind');
 	$path=$ctfdata['path'].'/';
 }
 else {
-	list($ctfdata)  = $ctf->getCtfInfoFromImageId($imgId, $order=False, $ctfmethod);
 	$path=$ctfdata['path'].'/opimages/';
-	$aceparams = $ctf->getAceParams($ctfdata['acerunId']);
 }
+
 $filename=$path.$ctfdata[$graph];
 (array)$ctfimageinfo = @getimagesize($filename);
 $imagecreate = 'imagecreatefrompng';
@@ -76,7 +86,7 @@ switch ($ctfimageinfo['mime']) {
 	break;
 }
 if ($img=@$imagecreate($filename)) {
-		resample($img, $imgsize);
+	resample($img, $imgsize);
 } else {
 	$acedatafile =$ctfdata['path'].'/'.$normfile;
 	if (file_exists($acedatafile)) {
