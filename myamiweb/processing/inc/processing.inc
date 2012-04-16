@@ -714,15 +714,7 @@ function addJobSubmitParams( $command, $processhost, $nproc, $ppn, $nodes, $wall
 	}
 	
 	// Add processing host parameters to the command
-	// TODO: when is the command ever an array??? should it always be an array that sometimes has len=1??
-	// Commenting this out for now, if no problems it can be removed
-//	if (is_array($command)) {
-//		foreach ($command as $cmd) {
-//			$cmd = addProcessingHostParams($cmd, $processhost, $nproc, $ppn, $nodes, $walltime, $cputime);
-//		}
-//	} else {
-		$command = addProcessingHostParams($command, $processhost, $nproc, $ppn, $nodes, $walltime, $cputime);
-//	}
+	$command = addProcessingHostParams($command, $processhost, $nproc, $ppn, $nodes, $walltime, $cputime);
 	
 	return $command;
 }
@@ -788,13 +780,20 @@ $xvfb=False, $xtra=False, $nproc=1, $ppn=0, $nodes=0, $walltime="240", $cputime=
 		$errMsg .= pconnError();
 		return $errMsg;
 	}
+	// check that the directory was created successfully
+	$fileExists = file_exists($rundir);
+  	if ($fileExists===false) {
+  		$errMsg = "Warning: The output directory (<font color=black>$rundir</font>) may not have been created on $processhost.  <br>";
+  		// Don't return yet, perhaps we don't have access to the dir from the web server.
+  		// This message will be prepended to a later occuring error.
+  	}
 	
 	if ($testimg) {
 		//submit directly to head node on cluster if testing 1 image
 		$cmd = "cd $rundir; $command; exit;";
 		$jobdata = exec_over_ssh($processhost, $user, $pass, $cmd, True);
 		if ( empty($jobdata) ) {		
-			$errMsg = "Job submission to $processhost failed for command: $command Message: ";
+			$errMsg .= "Job submission to $processhost failed for command:<br> <font color=black size='-1'>$command</font> <br> ";
 			$errMsg .= pconnError();
 			return $errMsg;
 		} else {
@@ -802,14 +801,10 @@ $xvfb=False, $xtra=False, $nproc=1, $ppn=0, $nodes=0, $walltime="240", $cputime=
 		}
 	}
 
-	// set names of cluster job file and output log
-	// Changing this, not sure why appionsub is being added to the name...AH
-	// May need to change back in case of Armageddon
+	// Set names of cluster job file and output log
+	// These should match the names being assigned on the python side where the files are created
 	$jobfile = "$runname.appionsub.job";
 	$logfile = "$runname.appionsub.log";
-	// These should match the names being assigned on the python side where the files are created
-	//$jobfile = "$runname.job";
-	//$logfile = "$runname.log";
 	
 	// insert cluster job data and set job as queued
 	$particle = new particleData();
@@ -836,7 +831,7 @@ $xvfb=False, $xtra=False, $nproc=1, $ppn=0, $nodes=0, $walltime="240", $cputime=
 	// submit job to cluster
 	$jobdata = exec_over_ssh($processhost, $user, $pass, $cmd, True);
 	if ( empty($jobdata) ) {		
-		$errMsg = "Error: Job submission to $processhost failed:  ";
+		$errMsg .= "Error: Job submission to $processhost failed. <br>  ";
 		$errMsg .= pconnError();
 		echo "</table><p>\n";
 		echo "<hr>\n<font color='#CC3333' size='+1'>$errMsg</font>\n";
