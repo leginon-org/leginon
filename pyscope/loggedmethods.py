@@ -22,7 +22,7 @@ def logged_method(f, classname, fname):
 		mylock.acquire()
 		try:
 			if mylock._RLock__count == 1 and args[0].logged_methods_on:
-				message = '%s\t%s\t%s\t%s\t%s' % (args[0].__class__.__name__, classname, fname, args[1:], kwargs)
+				message = '%s\t%s\t%s\t%s\t%s' % (args[0].__class__.name, classname, fname, args[1:], kwargs)
 				logger.info(message)
 			result = f(*args, **kwargs)
 			return result
