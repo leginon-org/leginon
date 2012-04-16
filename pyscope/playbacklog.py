@@ -3,20 +3,28 @@
 import sys
 import pyscope.registry
 
-logfilename = sys.argv[1]
-classname = sys.argv[2]
+logfilename = 'methods.log'
+classname = 'SimCCDCamera'
 
-inst = pyscope.registry.getClass(classname)()
+# Create the instance, but first turn off logging during playback
+# to avoid infinitely growing log file
+cls = pyscope.registry.getClass(classname)
+cls.logged_methods_on = False
+inst = cls()
 
 f = open(logfilename)
 
 for line in f:
-	parts = line.split('\t')
-	if parts[1] != classname:
+	# parse line of tabbed values
+	timestamp,caller,base,fname,args,kwargs = line.split('\t')
+	if caller != classname:
 		continue
-	if parts[2] == '__init__':
+	if fname == '__init__':
 		continue
-	methodname = parts[2]
-	args = eval(parts[3])
-	kwargs = eval(parts[4])
-	getattr(inst, methodname)(*args, **kwargs)
+	# recreate args
+	args = eval(args)
+	kwargs = eval(kwargs)
+	# call method
+	f = getattr(inst, fname)
+	print fname, args, kwargs
+	f(*args, **kwargs)
