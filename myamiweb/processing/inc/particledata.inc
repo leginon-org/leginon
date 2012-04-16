@@ -2747,7 +2747,7 @@ echo $q;
 		return $r2;
 	}
 
-	function getPixelSizeFromImgId ($imgid) {
+	function getPixelSizeFromImgIdPresetQuery($imgid) {
 		$q="SELECT pd.`SUBD|binning|x` as imgbin, "
 			."  pc.`pixelsize` as ccdpixelsize  "
 			."FROM ".DB_LEGINON.".`AcquisitionImageData` AS a "
@@ -2765,9 +2765,43 @@ echo $q;
 			."AND "
 			."  pc.`DEF_timestamp` <= a.`DEF_timestamp` "
 			."ORDER BY pc.`DEF_timestamp` DESC ";
+		return $q;
+	}
+
+	function getPixelSizeFromImgIdEMQuery($imgid) {
+		// This is the more reliable query for pixel size but may take longer?
+		$q="SELECT ce.`SUBD|binning|x` as imgbin, "
+			."  pc.`pixelsize` as ccdpixelsize  "
+			."FROM ".DB_LEGINON.".`AcquisitionImageData` AS a "
+			."LEFT JOIN ".DB_LEGINON.".`CameraEMData` AS ce "
+			."  ON (a.`REF|CameraEMData|camera` = ce.`DEF_id`) "
+			."LEFT JOIN ".DB_LEGINON.".`ScopeEMData` AS se "
+			."  ON (a.`REF|ScopeEMData|scope` = se.`DEF_id`) "
+			.", ".DB_LEGINON.".PixelSizeCalibrationData pc "
+			."WHERE "
+			."  a.`DEF_id`='$imgid' "
+			."AND "
+			."  pc.`REF|InstrumentData|tem` = se.`REF|InstrumentData|tem` "
+			."AND "
+			."  pc.`magnification` = se.`magnification` "
+			."AND "
+			."  pc.`REF|InstrumentData|ccdcamera` = ce.`REF|InstrumentData|ccdcamera` "
+			."AND "
+			."  pc.`DEF_timestamp` <= a.`DEF_timestamp` "
+			."ORDER BY pc.`DEF_timestamp` DESC ";
+		return $q;
+	}
+
+	function getPixelSizeFromImgId ($imgid) {
+		$q = $this->getPixelSizeFromImgIdPresetQuery($imgid);
 		//echo $q."<br/>\n";
 		list($r2)=$this->mysql->getSQLResult($q);
 		//echo print_r($r2)."<br/>\n";
+		if ($r2 === null) {
+			// If the session has only manual images, there is no preset.
+			$q = $this->getPixelSizeFromImgIdEMQuery($imgid);
+			list($r2)=$this->mysql->getSQLResult($q);
+		}
 		if ($r2['imgbin']) {
 			$pixelsize = $r2['ccdpixelsize']*$r2['imgbin'];
 		} else {
