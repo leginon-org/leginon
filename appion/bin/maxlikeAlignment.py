@@ -316,7 +316,7 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		f = open("readyupload.sql", "w")
 		f.write(query)
 		f.close()
-		apDisplay.printMsg("mysql -u usr_object -h cronus4 ap"+str(self.params['projectid'])+" < readyupload.sql")
+		apDisplay.printMsg("mysql -u usr_object -h database_host ap"+str(self.params['projectid'])+" < readyupload.sql")
 		apDisplay.printMsg("tar cf particles.tar partlist.sel partfiles/")
 		apDisplay.printMsg("rsync -vaP "+jobfile+" cluster:"+rundir+"/")
 		apDisplay.printMsg("rsync -vaP particles.tar cluster:"+rundir+"/")
