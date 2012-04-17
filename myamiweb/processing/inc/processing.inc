@@ -15,6 +15,7 @@ require_once "inc/ssh.inc";
 require_once "inc/session.inc";
 require_once "inc/project.inc";
 require_once "inc/cluster.inc";
+require_once "html_elements.inc";
 
 define('DONE_PIC','img/green_circle.gif');
 define('NONE_PIC','img/red_circle.gif');
@@ -1281,43 +1282,12 @@ function showReference( $method )
 }
 
 /**************************************/
-function referenceBox($title, $year, $authorlist, $journal, $volume=false, $issue=false, $pmid=false, $pmcid=false, $doi=false, $logo=false) {
-	$refbox = "<br/>";
-	$refbox .= "<table class='tablebubble' border='0'><tr><td>\n";
-	if ($logo)
-	$refbox .= "<img height='80' src='$logo'>";
-	$refbox .= "</td><td width='480'>\n";
-	$refbox .= "<h4>If you find this software useful please cite:</h4>\n";
-	$refbox .= "\n";
-	// add period at end of certain fields
-	if (substr($title,-1,1)!='.')
-	$title.='.';
-	if (substr($authorlist,-1,1)!='.')
-	$authorlist.='.';
-	if (substr($journal,-1,1)!='.')
-	$journal.='.';
-
-	$refbox .= "<i>\"$title\"</i>&nbsp;($year)\n";
-	$refbox .= "$authorlist\n";
-	$refbox .= "$journal";
-	if ($volume)
-	$refbox .= " v$volume";
-	if ($issue)
-	$refbox .= "<i>($issue)</i>";
-	$refbox .= ".&nbsp;\n";
-	if ($pmid)
-	$refbox .= "PMID:&nbsp;<a href='http://www.ncbi.nlm.nih.gov/pubmed/$pmid'>$pmid</a>&nbsp;\n";
-	if ($pmcid)
-	$refbox .= "Free text:&nbsp;<a href='http://www.ncbi.nlm.nih.gov/pmc/articles/PMC$pmcid'>PMC$pmcid</a>&nbsp;\n";
-	if ($doi)
-	$refbox .= "DOI:&nbsp;<a href='http://dx.doi.org/$doi'>$doi</a>&nbsp;\n";
-	$refbox .= "\n";
-	$refbox .= "</td></tr></table><br/>\n";
-	return ($refbox);
-	//echo referenceBox(title, year, authorlist, journal, volume, issue, pmid, pmc, doi, logo);
-
+// Moved this function to html_elements class. 
+// TODO: Since this function is called from everywhere, will wait to 
+// remove this wrapper until after 2.2 release.
+function referenceBox($title, $year, $authorlist, $journal, $volume=false, $issue=false, $pmid=false, $pmcid=false, $doi=false, $logo=false) 
+{
+	return html_elements::referenceBox($title, $year, $authorlist, $journal, $volume, $issue, $pmid, $pmcid, $doi, $logo);
 }
-
-
 
 ?>

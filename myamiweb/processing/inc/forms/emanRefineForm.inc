@@ -17,6 +17,11 @@ class EmanRefineForm extends BasicRefineForm
 {
 	public function createFormParams() { return new EmanParams(); }
 	
+	public function showReference()
+	{
+		return showReference("eman");
+	}
+	
 	public function advancedParamForm()
 	{
 		// classes extended from BasicRefineForm should get the selected default values

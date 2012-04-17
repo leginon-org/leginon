@@ -75,7 +75,14 @@ class BasicForm
 	{
 		return $this->defaultParamSets;
 	}
-	
+
+	// use this function in the form constructor
+	// to completely hide the parameter in the form.	
+	public function hideParam( $name )
+	{
+		$this->formParams->hideParam( $name );
+	}
+		
 	public function disableAllParams()
 	{
 		$this->formParams->disableAllParams();

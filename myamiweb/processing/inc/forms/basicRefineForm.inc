@@ -18,6 +18,7 @@ require_once "inc/project.inc";
 require_once "inc/summarytables.inc";
 require_once "inc/forms/basicForm.inc";
 require_once "../inc/formParameters.inc";
+require_once "inc/html_elements.inc"; //for referenceBox()
 
 
 abstract class BasicRefineForm extends BasicForm
@@ -44,6 +45,13 @@ abstract class BasicRefineForm extends BasicForm
 	function __destruct() 
 	{
 		unset( $this->particle );
+	}
+	
+	// Extending classes should override this using the 
+	// referenceBox() function in processing.inc
+	public function showReference()
+	{
+		return showReference("appion");
 	}
 	
 	// Extending classes should override this function to return the appropriate

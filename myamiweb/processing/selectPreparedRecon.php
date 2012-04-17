@@ -305,7 +305,7 @@ function jobForm($extra=false)
 	$html.= "</table>\n";
 	
 	// Add reference for selected refinement method
-	$html.= showReference( $method );
+	$html.= $selectedRefineForm->showReference();
 
 	// end form
 	$html.="</form><br/>\n";

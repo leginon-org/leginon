@@ -17,6 +17,15 @@ class XmippML3DRefineForm extends BasicRefineForm
 {
 	public function createFormParams() { return new XmippML3DParams(); }
 	
+	public function showReference()
+	{
+		$html =  showReference("xmipp");
+		$html .= html_elements::referenceBox("Disentangling conformational states of macromolecules in 3D-EM through likelihood optimization.", 2007, "Scheres, S. H., H. Gao, et al.", "Nat Methods", 4, 1, false, false, false, "img/xmipp_logo.png");
+		$html .= html_elements::referenceBox("Classification of structural heterogeneity by maximum-likelihood methods." , 2010, "Scheres, S. H.", "Methods Enzymol", 482, false, false, false, false, "img/xmipp_logo.png");
+		
+		return $html;
+	}
+	
 	public function advancedParamForm()
 	{
 		// classes extended from BasicRefineForm should get the selected default values

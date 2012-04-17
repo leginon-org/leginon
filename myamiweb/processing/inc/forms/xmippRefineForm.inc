@@ -17,6 +17,11 @@ class XmippRefineForm extends BasicRefineForm
 {
 	public function createFormParams() { return new XmippParams(); }
 	
+	public function showReference()
+	{
+		return showReference("xmipp");
+	}
+	
 	public function advancedParamForm()
 	{
 		// classes extended from BasicRefineForm should get the selected default values

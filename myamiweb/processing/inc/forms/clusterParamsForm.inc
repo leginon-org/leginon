@@ -154,6 +154,19 @@ class ClusterParamsForm extends BasicForm
 		$html.= "</select>\n";
 				
 		return $html;
-	}	
+	}
+
+	// returns the total number of processors requested by the 
+	public function addNProcToCommand( $command )
+	{
+		// calculate the total number of nodes requested
+		$params = $this->getFormParams();
+		$numNodes = $params->getParamValue("nodes");
+		$ppn = $params->getParamValue("ppn");
+		$nproc = $numNodes * $ppn;
+		
+		$command = $this->addCommandFlag( $command, "nproc", "", $nproc );
+		return $command;
+	}
 }
 ?>
