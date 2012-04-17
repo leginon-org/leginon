@@ -409,7 +409,8 @@ class RefineFormParameters extends FormParameters
 	{
 		// NULL values should be added as empty, in case 
 		// early iterations are NULL and later ones are set.
-		//if ( $newIterValue == NULL ) return;
+		// TODO: python side can't handle "1x" yet so just return on null for now.
+		if ( $newIterValue == NULL ) return;
 		
 		$currValue = $this->getParamValue( $name );
 		
