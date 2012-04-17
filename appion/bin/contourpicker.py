@@ -707,12 +707,17 @@ class PickerApp(wx.App):
 	def onQuit(self, evt):
 		wx.Exit()
 
-	def onSelected(self, evt):#event for the add particle button - clears the main 'manually select particle' tool and calls 'addPolyParticle' to handel the data
+	def onSelected(self, evt):
+		'''event for the add particle button. 
+		It clears the main 'manually select particle' tool and calls 'addPolyParticle' to handel the data
+		'''
 		vertices = []
 		vertices = self.panel.getTargetPositions('Manually Create Contours');
 		if len(vertices)>0:
-			# reduce the number of vertices before saving
-			vertices = self.appionloop.minimizeVerticesByDP(vertices)
+			# Minimization is not done to object of small number of vertices because it may be distorted
+			if len(vertices)>10:
+				# reduce the number of vertices before saving
+				vertices = self.appionloop.minimizeVerticesByDP(vertices)
 			self.addPolyParticle(vertices)
 		self.panel.setTargets('Manually Create Contours', [])
 		self.panel.xypath = []
