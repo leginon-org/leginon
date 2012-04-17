@@ -16,6 +16,7 @@ require_once "inc/session.inc";
 require_once "inc/project.inc";
 require_once "inc/cluster.inc";
 require_once "html_elements.inc";
+require_once "publication.inc";
 
 define('DONE_PIC','img/green_circle.gif');
 define('NONE_PIC','img/red_circle.gif');
@@ -1209,76 +1210,23 @@ function getPngList($dir) {
 	return $pngimages;
 }
 
-/**************************************/
-function emanRef() {
-	return referenceBox("EMAN: semiautomated software for high-resolution single-particle reconstructions.", 1999, "Ludtke SJ, Baldwin PR, Chiu W.", "J Struct Biol.", 128, 1, 10600563, false, false, "img/eman_logo.png");
-}
-
-/**************************************/
-function spiderRef() {
-	return referenceBox("SPIDER and WEB: processing and visualization of images in 3D electron microscopy and related fields.", 1996, "Frank J, Radermacher M, Penczek P, Zhu J, Li Y, Ladjadj M, Leith A.", "J Struct Biol.", 116, 1, 8742743, false, false, "img/spider_logo.png");
-}
-
-/**************************************/
-function imagicRef() {
-	return referenceBox("A New Generation of the IMAGIC Image Processing System.", 1996,
-		"van Heel M., Harauz G., Orlova E. V., Schmidt R. & Schatz M", "J Struct Biol", 116, 1, 8742718, false, false, "img/imagic_logo.png");
-}
-
-/**************************************/
-function appionRef() {
-	return referenceBox("Appion: an integrated, database-driven pipeline to facilitate EM image processing.", 2009, "Lander GC, Stagg SM, Voss NR, <i>et&nbsp;al.</i>", "J Struct Biol.", 166, 1, 19263523, 2775544, "10.1016/j.jsb.2009.01.002", "img/topbarbackgrnd.jpg");
-}
-
-/**************************************/
-function frealignRef() {
-	return referenceBox("FREALIGN: high-resolution refinement of single particle structures.", 2007, "Grigorieff, N.", "J Struct Biol.", 157, 1, 16828314, false, "10.1016/j.jsb.2006.05.004", "img/grigorieff_lab.png");
-}
-
-/**************************************/
-function initModelRef() {
-	return referenceBox("A toolbox for ab initio 3-D reconstructions in single-particle electron microscopy.", 2010, "Voss NR, Lyumkis D, Cheng A, <i>et&nbsp;al.</i>", "J Struct Biol.", 169, 3, 20018246, false, false, "img/topbarbackgrnd.jpg");
-}
-
-function imodWeightedBackProjRef() {
-	return referenceBox("Dual-axis tomography: an approach with alignment methods that preserve resolution.", 1997, "D.N. Mastronarde", "J. Struct. Biol.", 120,3, 9441937, false, "doi:10.1006/jsbi.1997.3919", false);
-}
-
-function protomoRef() {
-	return referenceBox("Accurate marker-free alignment with simultaneous geometry determination and reconstruction of tilt series in electron tomography.", 2006, "Winkler H, Taylor KA", "Ultramicroscopy.", 106, 3, 16137829, false, "doi:10.1016/j.ultramic.2005.07.007", false);
-}
-
-function imodRef() {
-	return referenceBox("Computer visualization of three-dimensional image data using IMOD", 1996, "Kremer J.R., D.N. Mastronarde and J.R. McIntosh", "J. Struct. Biol.", 116, 1, 8742726, false, "doi:10.1006/jsbi.1996.0013", false);
-}
-
-function xmippRef() 
-{
-	return referenceBox("XMIPP: a new generation of an open-source image processing package for electron microscopy", 2004, "Sorzano CO, Marabini R, Velázquez-Muriel J, Bilbao-Castro JR, Scheres SH, Carazo JM, Pascual-Montano A.", "J Struct Biol.", 148, 2, 15477099, false, "10.1016/j.jsb.2004.06.006", "img/xmipp_logo.png");
-}
+// These functions return html reference citation boxes
+function emanRef() { return showReference("eman"); }
+function spiderRef() { return showReference("spider"); }
+function imagicRef() { return showReference("imagic"); }
+function appionRef() { return showReference("appion"); }
+function frealignRef() { return showReference("frealign"); }
+function initModelRef() { return showReference("initmodel"); }
+function imodWeightedBackProjRef() { return showReference("imodweightedbackproj"); }
+function protomoRef() { return showReference("protomo"); }
+function imodRef() { return showReference("imod"); }
+function xmippRef() { return showReference("xmipp"); }
 
 // TODO: This should be revisited. 
 function showReference( $method )
 {
-	switch ( $method ){
-		case "eman":
-			return emanRef();
-			break;
-		case "xmipp":
-			return xmippRef();
-			break;
-		case "frealign":
-			return frealignRef();
-			break;
-		case "imagic":
-			return imagicRef();
-			break;
-		case "spider":
-			return spiderRef();
-			break;
-		default:
-			return appionRef();
-	}
+	$pub = new Publication($method);
+	return $pub->getHtmlTable();
 }
 
 /**************************************/

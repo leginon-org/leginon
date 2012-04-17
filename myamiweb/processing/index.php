@@ -14,6 +14,7 @@ require_once "inc/processing.inc";
 require_once "inc/leginon.inc";
 require_once "inc/project.inc";
 require_once "inc/summarytables.inc";
+require_once "inc/publication.inc";
 
 function getNumClassesFromFile ($imagicfile) {
 	$hedfile = $imagicfile;
@@ -321,7 +322,7 @@ foreach ($reconRuns as $recon) {
 	echo "<h4>Data collection info</h4>\n";
 	echo "<hr/></p>\n";
 
-	$m .= "<table class='tableborder' border='1' width='600'><tr><td>\n";
+	$m = "<table class='tableborder' border='1' width='600'><tr><td>\n";
 	$m .= "Data were acquired using a $scope transmission electron microscope operating at $kvolt&nbsp;kV, \n";
 	$m .= "using a dose of ~".$dose."&nbsp;e-/&Aring;&sup2; and a nominal underfocus ranging from $maxNomDF to $minNomDF&nbsp;&micro;m.\n";
 	//	$m .= "A Gatan side-entry cryostage/room temp stage was used for data collection.\n";
@@ -347,21 +348,37 @@ foreach ($reconRuns as $recon) {
 		if ($stackparams['phaseFlipped']==1)
 			$m .= "Phase correction of the single particles was carried out by ".$stackparams['fliptype']." during creation of the particle stack. \n";
 	}
-	if ($stackparams['bin']) $m .= "Stacked particles were binned by a factor of ".$stackparams['bin']." for the final reconstruction. \n";
-	$m .= "The final stack contained ".commafy($stackparticles)."&nbsp;particles. \n";
-	if ($clsavgs['SpiCoran']) {
-	  $m .= "The 3D reconstruction was carried out using a combination of both the SPIDER and EMAN reconstruction packages ";
-	  $m .= "(Frank <i>et al.</i>, 1996; Ludtke <i>et al.</i>, 1999). \n";
-	  $m .= "Creation of projections of the 3D model and subsequent classification of the particles was performed by EMAN, \n";
-	  $m .= "after which a SPIDER script was employed to perform a reference-free hierarchical clustering analysis of the particles in each class\n";
-	  $m .= "The resulting SPIDER class that exhibited the highest cross-correlation value to the original model projection of the given class was\n";
-	  $m .= "used in the creation of the 3D density for the following iteration by using EMAN.\n";
+	if ($stackparams['bin']) {
+		$m .= "Stacked particles were binned by a factor of ".$stackparams['bin']." for the final reconstruction. \n";
 	}
-	else $m .= "The 3D reconstruction was carried out using the EMAN reconstruction package (Ludtke <i>et al.</i>, 1999). \n";
-	$m .= "Resolution was assessed by calculating the Fourier Shell Correlation (FSC) at a cutoff of 0.5, \n";
-	$m .= "which provided a value of $halfres&nbsp;&Aring; resolution.\n";
-	$m .= "Calculation of the resolution by Rmeasure (Sousa & Gridgorieff, 2007) at a 0.5 cutoff yielded a resolution of $rmeasureres&nbsp;&Aring;. \n";
-
+	$m .= "The final stack contained ".commafy($stackparticles)."&nbsp;particles. \n";
+	
+	if ($clsavgs['SpiCoran']) {
+		$m .= "The 3D reconstruction was carried out using a combination of both the SPIDER and EMAN reconstruction packages ";
+		$m .= "(Frank <i>et al.</i>, 1996; Ludtke <i>et al.</i>, 1999). \n";
+		$m .= "Creation of projections of the 3D model and subsequent classification of the particles was performed by EMAN, \n";
+		$m .= "after which a SPIDER script was employed to perform a reference-free hierarchical clustering analysis of the particles in each class\n";
+		$m .= "The resulting SPIDER class that exhibited the highest cross-correlation value to the original model projection of the given class was\n";
+		$m .= "used in the creation of the 3D density for the following iteration by using EMAN.\n";
+	}
+	else if ($recon["REF|ApEmanRefineIterData|emanParams"]) {
+		$m .= "The 3D reconstruction was carried out using the EMAN reconstruction package (Ludtke <i>et al.</i>, 1999). \n";
+		$m .= "Resolution was assessed by calculating the Fourier Shell Correlation (FSC) at a cutoff of 0.5, \n";
+		$m .= "which provided a value of $halfres&nbsp;&Aring; resolution.\n";
+		$m .= "Calculation of the resolution by Rmeasure (Sousa & Gridgorieff, 2007) at a 0.5 cutoff yielded a resolution of $rmeasureres&nbsp;&Aring;. \n";
+	} else if ($recon["REF|ApXmippRefineIterData|xmippParams"]) {
+		$m .= "The 3D reconstruction was carried out using the XMIPP reconstruction package (Sorzano <i>et al.</i>, 2004). \n";
+		$m .= "Resolution was assessed by calculating the Fourier Shell Correlation (FSC) at a cutoff of 0.5, \n";
+		$m .= "which provided a value of $halfres&nbsp;&Aring; resolution.\n";
+	} else if ($recon["REF|ApFrealignIterData|frealignParams"]) {
+		$m .= "The 3D reconstruction was carried out using the Frealign reconstruction package (Grigorieff <i>et al.</i>, 2007). \n";
+		$m .= "Resolution was assessed by calculating the Fourier Shell Correlation (FSC) at a cutoff of 0.5, \n";
+		$m .= "which provided a value of $halfres&nbsp;&Aring; resolution.\n";
+	} else if ($recon["REF|ApXmippML3DRefineIterData|xmippML3DParams"]) {	
+		$m .= "The 3D reconstruction was carried out using the XMIPP ML3D reconstruction package (Scheres <i>et al.</i>, 2010). \n";
+		$m .= "Resolution was assessed by calculating the Fourier Shell Correlation (FSC) at a cutoff of 0.5, \n";
+		$m .= "which provided a value of $halfres&nbsp;&Aring; resolution.\n";
+	}
 
 	$m .= "</td></tr><tr><td>\n";
 	$m .= "<ul>\n";
@@ -371,10 +388,9 @@ foreach ($reconRuns as $recon) {
 	<i>“SPIDER and WEB: processing and visualization of images in 3D electron microscopy and related fields.”</i>
 	J Struct Biol v116(1): pp. 190-9.";
 
-	$m .= "<li>
-	Lander, Stagg, Voss, Cheng, <i>et al.</i>, Potter, and Carragher (2009).
-	<i>“Appion: an integrated, database-driven pipeline to facilitate EM image processing.”</i>
-	J Struct Biol v166(1): pp. 95-102.";
+	$pub = new Publication("appion");
+	$ref = $pub->getShortRef();
+	$m .= "<li> $ref";
 
 	$m .= "<li>
 	Ludtke, Baldwin, and Chiu (1999).
