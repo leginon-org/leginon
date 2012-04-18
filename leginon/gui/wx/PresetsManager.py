@@ -239,7 +239,7 @@ class EditPresetDialog(leginon.gui.wx.Dialog.Dialog):
     		('intensity', 'Intensity'),
     		('image shift', 'Image shift'),
     		('beam shift', 'Beam shift'),
-    		('ccdcamera', 'CCD Camera'),
+    		('ccdcamera', 'Digital Camera'),
     		('energy filter width', 'Energy filter width'),
     		('pre exposure', 'Pre-exposure'),
 		)
@@ -1127,7 +1127,7 @@ class AlignDialog(leginon.gui.wx.Dialog.Dialog):
 		szref.Add(sz, 1, wx.ALIGN_CENTER|wx.ALL, 5)
 		szmode = wx.BoxSizer(wx.HORIZONTAL)
 		szmode.Add(szref, 1)
-		self.choiceacquiremode = wx.Choice(self, -1, choices=(['Full CCD','Similar look across mags']))	
+		self.choiceacquiremode = wx.Choice(self, -1, choices=(['Full Camera','Similar look across mags']))	
 		szmode.Add(self.choiceacquiremode, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.ALL, 5)
 
 		preset_names = self.node.presets.keys()
@@ -1506,7 +1506,7 @@ class Parameters(wx.StaticBoxSizer):
 
 		labels = (
 			('tem', 'TEM:'),
-			('ccdcamera', 'CCD Camera:'),
+			('ccdcamera', 'Digital Camera:'),
 			('magnification', 'Magnification:'),
 			('defocus', 'Defocus:'),
 			('defocus range', 'Random Defocus Range:'),
