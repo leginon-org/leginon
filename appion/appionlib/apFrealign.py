@@ -52,7 +52,48 @@ def parseFrealignParamFile(paramfile):
 	apDisplay.printMsg("Processed %d particles"%(len(parttree)))
 	return parttree
 
+#===============
+def parseFrealign9ParamFile(paramfile):
+	'''
+	parse typical Frealign parameter file from v9 -- returns a dict entry: 
+	each key is particle number, value is parameter dictionary
+	'''
+	if not os.path.isfile(paramfile):
+		apDisplay.printError("Parameter file does not exist: %s" % (paramfile))
 
+	f = open(paramfile, "r")
+	partdict = {}
+	apDisplay.printMsg("Processing parameter file: %s" % (paramfile))
+	for line in f:
+		sline = line.strip().split()
+		if sline[0][0] == "C":
+			### comment line
+			continue
+		paramdict = {
+			'partnum' : int(sline[0]),   ### partnum starts with 1, not 0
+			'psi' : float(sline[1]),
+			'theta' : float(sline[2]),
+			'phi' : float(sline[3]),
+			'shiftx' : float(sline[4]),
+			'shifty' : float(sline[5]),
+			'mag' : float(sline[6]),
+			'micn' : float(sline[7]),
+			'defx' : float(sline[8]),
+			'defy' : float(sline[9]),
+			'astig' : float(sline[10]),
+			'occ' : float(sline[11]),
+			'logp' : float(sline[2]),
+			'score' : float(sline[13]),
+			'change' : float(sline[4]),
+		}
+		partdict[paramdict['partnum']] = paramdict
+	f.close()
+
+	if len(partdict) < 2:
+		apDislay.printError("No particles found in parameter file %s" % (paramfile))
+
+	apDisplay.printMsg("Processed %d particles" % (len(partdict)))
+	return partdict
 
 #===============
 def generateParticleParams(params,initparfile='params.0.par'):
