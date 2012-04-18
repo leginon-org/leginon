@@ -88,20 +88,27 @@ class CameraPanel(wx.Panel):
 		sz.Add(stms, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		self.szmain.Add(sz, (4, 1), (1, 2), wx.ALIGN_CENTER|wx.EXPAND)
 
+		sb = wx.StaticBox(self, -1, 'Frame-Saving Camera Only')
+		ddsb = wx.StaticBoxSizer(sb, wx.VERTICAL)
+		ddsz = wx.GridBagSizer(5, 5)
 		# save raw frames
 		self.saveframes = wx.CheckBox(self, -1, 'Save raw frames')
-		self.szmain.Add(self.saveframes, (5, 0), (1, 2), wx.ALIGN_CENTER|wx.EXPAND)
+		ddsz.Add(self.saveframes, (0, 0), (1, 2), wx.ALIGN_CENTER|wx.EXPAND)
 
 		# use raw frames
 		label = wx.StaticText(self, -1, 'Frames to use:')
 		self.useframes = Entry(self, -1)
-		self.szmain.Add(label, (6, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		self.szmain.Add(self.useframes, (6, 1), (1, 1), wx.ALIGN_CENTER|wx.EXPAND)
+		ddsz.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		ddsz.Add(self.useframes, (1, 1), (1, 1), wx.ALIGN_CENTER|wx.EXPAND)
 
+		ddsb.Add(ddsz, 0, wx.EXPAND|wx.ALL, 2)
+		self.szmain.Add(ddsb, (5, 0), (1, 3), wx.ALIGN_CENTER|wx.EXPAND)
+
+		ddsz.AddGrowableCol(1)
 		self.szmain.AddGrowableCol(1)
 		self.szmain.AddGrowableCol(2)
 
-		self.sbsz.Add(self.szmain, 0, wx.EXPAND|wx.ALL, 5)
+		self.sbsz.Add(self.szmain, 0, wx.EXPAND|wx.ALL, 2)
 
 		self.SetSizerAndFit(self.sbsz)
 
