@@ -382,45 +382,15 @@ foreach ($reconRuns as $recon) {
 
 	$m .= "</td></tr><tr><td>\n";
 	$m .= "<ul>\n";
-
-	$m .= "<li>
-	Frank, Radermacher, Penczek, Zhu, Li, Ladjadj, and Leith. (1996).
-	<i>“SPIDER and WEB: processing and visualization of images in 3D electron microscopy and related fields.”</i>
-	J Struct Biol v116(1): pp. 190-9.";
-
-	$pub = new Publication("appion");
-	$ref = $pub->getShortRef();
-	$m .= "<li> $ref";
-
-	$m .= "<li>
-	Ludtke, Baldwin, and Chiu (1999).
-	<i>“EMAN: semiautomated software for high-resolution single-particle reconstructions.”</i>
-	J Struct Biol v128(1): pp. 82-97.";
-
-	$m .= "<li>
-	Mallick, Carragher, Potter, and Kriegman (2005).
-	<i>“ACE: automated CTF estimation.”</i>
-	Ultramicroscopy v104(1): pp. 8-29.";
-
-	$m .= "<li>
-	Roseman (2003).
-	<i>“Particle finding in electron micrographs using a fast local correlation algorithm.”</i>
-	Ultramicroscopy v94(3-4): pp. 225-36.";
-
-	$m .= "<li>
-	Sousa and Grigorieff (2007).
-	<i>“Ab initio resolution measurement for single particle structures.”</i>
-	J Struct Biol v157(1): pp. 201-10.";
-
-	$m .= "<li>
-	Suloway, Pulokas, Fellmann, Cheng, Guerra, Quispe, Stagg, Potter, and Carragher (2005).
-	<i>“Automated molecular microscopy: the new Leginon system.”</i>
-	J Struct Biol v151(1): pp. 41-60.";
-
-	$m .= "<li>
-	Voss, Yoshioka, Radermacher, Potter, and Carragher (2009).
-	<i>“DoG Picker and TiltPicker: tools to facilitate particle selection in single particle electron microscopy.”</i>
-	J Struct Biol v166(2): pp. 205-13.";
+	
+	// Display relevant publication references
+	$pubKeyList = array("spider", "appion", "eman", "ace", "roseman03", "sousa07", "leginon", "dog", "xmipp", "scheres07", "scheres10" );
+	
+	foreach ($pubKeyList as $pubKey ) {
+		$pub = new Publication($pubKey);
+		$ref = $pub->getShortRef();
+		$m .= "<li> $ref";
+	}
 
 	$m .= "</ul>\n";
 	$m .= "</td></tr></table>\n";

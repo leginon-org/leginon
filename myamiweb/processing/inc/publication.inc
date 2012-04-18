@@ -55,7 +55,7 @@ class Publication
 
 	public function getShortRef()
 	{
-		return  $this->authorList.'.('.$this->year.').<i>"'.$this->title.'"</i> '.$this->journal.' v'.$this->volume.'('.$this->issue.'): pp. '.$this->pages.'.';
+		return  $this->authorList.'. ('.$this->year.'). <i>"'.$this->title.'"</i> '.$this->journal.' v'.$this->volume.'('.$this->issue.'): pp. '.$this->pages.'.';
 	}
 }
 

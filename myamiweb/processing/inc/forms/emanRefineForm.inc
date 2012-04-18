@@ -17,9 +17,9 @@ class EmanRefineForm extends BasicRefineForm
 {
 	public function createFormParams() { return new EmanParams(); }
 	
-	public function showReference()
+	protected function setPublications()
 	{
-		return showReference("eman");
+		$this->pubKeyList = array("eman");
 	}
 	
 	public function advancedParamForm()

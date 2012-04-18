@@ -17,9 +17,9 @@ class XmippRefineForm extends BasicRefineForm
 {
 	public function createFormParams() { return new XmippParams(); }
 	
-	public function showReference()
+	protected function setPublications()
 	{
-		return showReference("xmipp");
+		$this->pubKeyList = array("xmipp");
 	}
 	
 	public function advancedParamForm()

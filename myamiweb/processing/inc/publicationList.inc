@@ -27,7 +27,7 @@ $PUBLICATIONS['eman'] = array(
 'pmcid' => '',
 'doi' => '',
 'logo' => 'img/eman_logo.png',
-'pages' => '');
+'pages' => '82-97');
 
 $PUBLICATIONS['spider'] = array(
 'title' => 'SPIDER and WEB: processing and visualization of images in 3D electron microscopy and related fields.',
@@ -40,7 +40,7 @@ $PUBLICATIONS['spider'] = array(
 'pmcid' => '',
 'doi' => '',
 'logo' => 'img/spider_logo.png',
-'pages' => '');
+'pages' => '190-9');
 
 $PUBLICATIONS['imagic'] = array(
 'title' => 'A New Generation of the IMAGIC Image Processing System.',
@@ -81,7 +81,7 @@ $PUBLICATIONS['frealign'] = array(
 'logo' => 'img/grigorieff_lab.png',
 'pages' => '');
 
- $PUBLICATIONS['initmodel'] = array(
+$PUBLICATIONS['initmodel'] = array(
 'title' => 'A toolbox for ab initio 3-D reconstructions in single-particle electron microscopy.',
 'year' => '2010',
 'authorlist' => 'Voss NR, Lyumkis D, Cheng A, et al.</i>',
@@ -94,7 +94,7 @@ $PUBLICATIONS['frealign'] = array(
 'logo' => 'img/topbarbackgrnd.jpg',
 'pages' => '');
  
- $PUBLICATIONS['imodweightedbackproj'] = array(
+$PUBLICATIONS['imodweightedbackproj'] = array(
 'title' => 'Dual-axis tomography: an approach with alignment methods that preserve resolution.',
 'year' => '1997',
 'authorlist' => 'D.N. Mastronarde',
@@ -107,7 +107,7 @@ $PUBLICATIONS['frealign'] = array(
 'logo' => '',
 'pages' => '');
  
- $PUBLICATIONS['protomo'] = array(
+$PUBLICATIONS['protomo'] = array(
 'title' => 'Accurate marker-free alignment with simultaneous geometry determination and reconstruction of tilt series in electron tomography.',
 'year' => '2006',
 'authorlist' => 'Winkler H, Taylor KA',
@@ -120,7 +120,7 @@ $PUBLICATIONS['frealign'] = array(
 'logo' => '',
 'pages' => '');
  
- $PUBLICATIONS['imod'] = array(
+$PUBLICATIONS['imod'] = array(
 'title' => 'Computer visualization of three-dimensional image data using IMOD',
 'year' => '1996',
 'authorlist' => 'Kremer J.R., D.N. Mastronarde and J.R. McIntosh',
@@ -133,6 +133,97 @@ $PUBLICATIONS['frealign'] = array(
 'logo' => '',
 'pages' => '');
 	
-	
+$PUBLICATIONS['ace'] = array(
+'title' => 'ACE: automated CTF estimation.',
+'year' => '2005',
+'authorlist' => 'Mallick, Carragher, Potter, and Kriegman',
+'journal' => 'Ultramicroscopy',
+'volume' => '104',
+'issue' => '1',
+'pmid' => '',
+'pmcid' => '',
+'doi' => '',
+'logo' => '',
+'pages' => '8-29');
+ 
+$PUBLICATIONS['roseman03'] = array(
+'title' => 'Particle finding in electron micrographs using a fast local correlation algorithm.',
+'year' => '2003',
+'authorlist' => 'Roseman',
+'journal' => 'Ultramicroscopy',
+'volume' => '94',
+'issue' => '3-4',
+'pmid' => '',
+'pmcid' => '',
+'doi' => '',
+'logo' => '',
+'pages' => '225-36');
+
+$PUBLICATIONS['sousa07'] = array(
+'title' => 'Ab initio resolution measurement for single particle structures.',
+'year' => '2007',
+'authorlist' => 'Sousa and Grigorieff',
+'journal' => 'J Struct Biol',
+'volume' => '157',
+'issue' => '1',
+'pmid' => '',
+'pmcid' => '',
+'doi' => '',
+'logo' => '',
+'pages' => '201-10');
+
+$PUBLICATIONS['leginon'] = array(
+'title' => 'Automated molecular microscopy: the new Leginon system.',
+'year' => '2005',
+'authorlist' => 'Suloway, Pulokas, Fellmann, Cheng, Guerra, Quispe, Stagg, Potter, and Carragher',
+'journal' => 'J Struct Biol',
+'volume' => '151',
+'issue' => '1',
+'pmid' => '',
+'pmcid' => '',
+'doi' => '',
+'logo' => '',
+'pages' => '41-60');
+
+$PUBLICATIONS['dog'] = array(
+'title' => 'DoG Picker and TiltPicker: tools to facilitate particle selection in single particle electron microscopy.',
+'year' => '2009',
+'authorlist' => 'Voss, Yoshioka, Radermacher, Potter, and Carragher',
+'journal' => 'J Struct Biol',
+'volume' => '166',
+'issue' => '2',
+'pmid' => '',
+'pmcid' => '',
+'doi' => '',
+'logo' => '',
+'pages' => '205-13');
+
+$PUBLICATIONS['scheres07'] = array(
+'title' => 'Disentangling conformational states of macromolecules in 3D-EM through likelihood optimization.',
+'year' => '2007',
+'authorlist' => 'Scheres, S. H., H. Gao, et al.',
+'journal' => 'Nat Methods',
+'volume' => '4',
+'issue' => '1',
+'pmid' => '',
+'pmcid' => '',
+'doi' => '',
+'logo' => 'img/xmipp_logo.png',
+'pages' => '');
+
+$PUBLICATIONS['scheres10'] = array(
+'title' => 'Classification of structural heterogeneity by maximum-likelihood methods.',
+'year' => '2010',
+'authorlist' => 'Scheres, S. H.',
+'journal' => 'Methods Enzymol',
+'volume' => '482',
+'issue' => '',
+'pmid' => '',
+'pmcid' => '',
+'doi' => '',
+'logo' => 'img/xmipp_logo.png',
+'pages' => '');
+
+
 
 ?>

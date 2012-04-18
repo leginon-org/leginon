@@ -18,7 +18,7 @@ require_once "inc/project.inc";
 require_once "inc/summarytables.inc";
 require_once "inc/forms/basicForm.inc";
 require_once "../inc/formParameters.inc";
-require_once "inc/html_elements.inc"; //for referenceBox()
+require_once "inc/publication.inc";
 
 
 abstract class BasicRefineForm extends BasicForm
@@ -26,6 +26,7 @@ abstract class BasicRefineForm extends BasicForm
 	private $stackInfo;
 	private $defaultSym;
 	protected $particle;
+	protected $pubKeyList;
 	
 	function __construct( $method, $stacks='', $models='' ) 
 	{
@@ -36,6 +37,7 @@ abstract class BasicRefineForm extends BasicForm
 		$this->method = $method;
 		$this->models = $models;
 		$this->setParticleSymmetry( $models );
+		$this->setPublications();
 		
 		if ( $stacks ) {
 			$this->setStackInfo( $stacks );
@@ -45,13 +47,26 @@ abstract class BasicRefineForm extends BasicForm
 	function __destruct() 
 	{
 		unset( $this->particle );
+		unset( $this->pubKeyList );
 	}
 	
-	// Extending classes should override this using the 
-	// referenceBox() function in processing.inc
+	// extending classes should override this function and set the 
+	// publication key list with key values that have been added 
+	// to the array in publicationList.inc
+	protected function setPublications()
+	{
+		$this->pubKeyList = array("appion");
+	}
+	
+	// TODO: we may want to move this to BasicForm class
 	public function showReference()
 	{
-		return showReference("appion");
+		foreach ( $this->pubKeyList as $pubKey ) {
+			$pub = new Publication($pubKey);
+			$html .= $pub->getHtmlTable();
+		}
+		
+		return $html;
 	}
 	
 	// Extending classes should override this function to return the appropriate
