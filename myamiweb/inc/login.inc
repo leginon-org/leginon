@@ -247,6 +247,12 @@ function login_header($title="", $javascript="", $onload="",$athome=false) {
 	</head>
 	<body '.$onload.' >
 ';
+	// To display a notice to users on the processing header, add the following line to the myami/config.php file:
+	// define('STARTUP_MESSAGE', "Your Message here");
+	if (defined('STARTUP_MESSAGE') && STARTUP_MESSAGE != '') {
+		echo "<font size=-1><b>Important Notice:</b> ".STARTUP_MESSAGE."</font><br><br>\n";
+	}	
+	
 	if (!$athome)
 		echo '<a class="header" href="'.BASE_URL.'index.php">[Home]</a>';	
 	if (ENABLE_LOGIN) {
@@ -260,6 +266,8 @@ function login_header($title="", $javascript="", $onload="",$athome=false) {
 			echo '<a class="header" href="register.php?'.$url.'">[register]</a>';
 		}
 	}
+
+	
 }
 
 function login_footer() {

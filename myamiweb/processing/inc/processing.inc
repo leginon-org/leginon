@@ -265,6 +265,12 @@ function processing_header($title,$heading=false,$headerstuff=false,$pleaseWait=
 	$html.= "<li><b>Project:</font></b> ".$proj_link."</li>\n";
 	if ($session_link) $html.= "<li><b>Session:</b> ".$session_link."</li>\n";
 	if ($expinfo) $html.= "<li><b>Image Path:</b> ".$expinfo['Image path']."</li>\n";
+	
+	// To display a notice to users on the processing header, add the following line to the myami/config.php file:
+	// define('STARTUP_MESSAGE', "Your Message here");
+	if (defined('STARTUP_MESSAGE') && STARTUP_MESSAGE != '') {
+		$html.= "<li><b>Important Notice:</b> ".STARTUP_MESSAGE."</li>\n";
+	}
 
 	$html.= "</ul>\n";
 	$html.= "</div>\n"; // close bottomcontent div
