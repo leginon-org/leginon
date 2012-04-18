@@ -1082,7 +1082,6 @@ class Panel(leginon.gui.wx.Node.Panel):
 					self.tempanel.clearParameters()
 				self.ccdcamerapanel.setParameters(self.ccdcameras[string])
 				self.szmain.Add(self.ccdcamerapanel, (1, 0), (1, 1), wx.ALIGN_CENTER)
-				self.szmain.AddGrowableRow(1)
 				self.ccdcamerapanel.Show(True)
 		self.szmain.Layout()
 
