@@ -29,7 +29,6 @@ require_once('../inc/formValidator.php');
 			$validator->addValidation("def_processing_prefix", $_POST['def_processing_prefix'], "maxlen=10");
 			$validator->addValidation("def_processing_prefix", $_POST['def_processing_prefix'], "alpha");
 			
-			$validator->addValidation("defaultcs", $_POST['defaultcs'], "float");
 			$validator->addValidation("temp_images_dir", $_POST['temp_images_dir'], "abs_path");
 			$validator->addValidation("temp_images_dir", $_POST['temp_images_dir'], "path_exist");
 			$validator->addValidation("temp_images_dir", $_POST['temp_images_dir'], "folder_permission");
@@ -105,8 +104,6 @@ require_once('../inc/formValidator.php');
 				wizard_form.temp_images_dir.readOnly = false;
 				wizard_form.default_appion_path.style.backgroundColor = "#ffffff";
 				wizard_form.default_appion_path.readOnly = false;
-				wizard_form.defaultcs.style.backgroundColor = "#ffffff";
-				wizard_form.defaultcs.readOnly = false;
 				wizard_form.addHost.disabled = false;
 				wizard_form.removeHost.disabled = false;
 				wizard_form.addCluster.disabled = false;
@@ -128,9 +125,6 @@ require_once('../inc/formValidator.php');
 				wizard_form.default_appion_path.style.backgroundColor = "#eeeeee";
 				wizard_form.default_appion_path.readOnly = true;
 				wizard_form.default_appion_path.value = "";
-				wizard_form.defaultcs.style.backgroundColor = "#eeeeee";
-				wizard_form.defaultcs.readOnly = true;
-				wizard_form.defaultcs.value = "";
 				wizard_form.addHost.disabled = true;
 				wizard_form.removeHost.disabled = true;
 				wizard_form.addCluster.disabled = true;
@@ -278,19 +272,6 @@ require_once('../inc/formValidator.php');
 
 		<br />
 
-		<h3>Enter the spherical aberration (Cs) constant for the microscope (in millimeters). <a target='_blank' href='http://en.wikipedia.org/wiki/Spherical_aberration'>Wikipedia</a> description.</h3>
-		<p>Example: 2.0  </p>
-		<div id="error"><?php if($errMsg['defaultcs']) echo $errMsg['defaultcs']; ?></div>
-		<input type="text" size=5 name="defaultcs" 
-		<?php 
-			if($_POST){
-				($_POST['processing'] == 'true') ? print("value='".$_POST['defaultcs']."'") : print("readOnly=\"true\" style=\"background:#eeeeee\"");
-			}else{
-				($update && PROCESSING === true) ? print("value='".DEFAULTCS."'") : print("readOnly=\"true\" style=\"background:#eeeeee\" value=''"); 
-			}
-		?> /><br /><br />
-		<br />
-		
 		<h3>Enter a temporary upload directory location.</h3>
 		<p>This is a temporary directory that is accessible to both the web server and the processing servers for uploading images, templates, or models.</p>
 		<div id="error"><?php if($errMsg['temp_images_dir']) echo $errMsg['temp_images_dir']; ?></div>

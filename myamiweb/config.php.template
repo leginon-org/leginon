@@ -114,10 +114,6 @@ set_include_path(dirname(__FILE__).PATH_SEPARATOR
 // $PROCESSING_HOSTS[] = array('host' => 'myhost.inst.edu',	'nproc' => 32,'nodesdef' => '4','nodesmax' => '280','ppndef' => '32','ppnmax' => '32','reconpn' => '16','walltimedef' => '48','walltimemax' => '240','cputimedef' => '1536','cputimemax' => '10000','memorymax' => '','appionbin' => 'bin/','appionlibdir' => 'appion/','baseoutdir' => 'appion','localhelperhost' => '','dirsep' => '/','wrapperpath' => 'appion','loginmethod' => 'SHAREDKEY','loginusername' => '','passphrase' => '','publickey' => 'rsa.pub','privatekey' => 'rsa'	);
 
 
-// --- Microscope spherical aberration constant
-// --- Example : 2.0 --- //
-define('DEFAULTCS', "");
-
 // --- Restrict file server if you want --- //
 // --- Add your allowed processing directory as string in the array
 $DATA_DIRS = array();
