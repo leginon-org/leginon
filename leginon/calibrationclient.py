@@ -241,11 +241,11 @@ class CalibrationClient(object):
 			if not self.rpixelsize:
 				self.rpixelsize = self.getImageReciprocalPixelSize(imagedata)
 			ctfdata = fftfun.fitFirstCTFNode(pow,self.rpixelsize['x'], None, self.ht)
-			self.node.logger.info('tabeau defocus: %.3f um, zast: %.3f um' % (ctfdata[0]*1e6,ctfdata[1]*1e6))
 			self.ctfdata.append(ctfdata)
 
 			# show defocus estimate on tableau
 			if ctfdata:
+				self.node.logger.info('tabeau defocus: %.3f um, zast: %.3f um' % (ctfdata[0]*1e6,ctfdata[1]*1e6))
 				s = '%d' % int(ctfdata[0]*1e9)
 				eparams = ctfdata[4]
 				self.node.logger.info('eparams a:%.3f, b:%.3f, alpha:%.3f' % (eparams['a'],eparams['b'],eparams['alpha']))
@@ -925,10 +925,14 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 				if angle == 0.0 and tsign == -1:
 					angle = math.pi
 				self.insertTableau(im1, angle, 1/math.sqrt(2))
-			tlength = math.hypot(tiltvector[0],tiltvector[1])
-			d_diff = numpy.multiply((d[1]-d[0])/tlength, tiltvector)
 			self.renderTableau()
+			if None in d:
+				d_diff = d
+			else:
+				tlength = math.hypot(tiltvector[0],tiltvector[1])
+				d_diff = numpy.multiply((d[1]-d[0])/tlength, tiltvector)
 		finally:
+			self.node.logger.info('Setting beam tilt back')
 			self.setBeamTilt(btorig)
 		return d_diff
 
@@ -961,9 +965,9 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 					tvect = [0, 0]
 					tvect[axisn] = t
 					diff = self.measureDefocusDifference(tvect, settle)
-					if diff is None:
-						raise RuntimeError('Defocus Difference is None')
-					if not self.confirmDefocusInRange():
+					if None in diff:
+						raise RuntimeError('Can not determine Defocus Difference with failed ctf estimation')
+					elif not self.confirmDefocusInRange():
 						raise RuntimeError('Deofucs Range confirmation failed')
 					diffs[axisname][msign] = diff
 		finally:
@@ -1004,7 +1008,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 			coma0[axis2] /= len(ordered_axes)
 		return matrix, coma0
 
-	def measureComaFree(self, tilt_value, settle):
+	def measureComaFree(self, tilt_value, settle, raise_error=False):
 		tem = self.instrument.getTEMData()
 		cam = self.instrument.getCCDCameraData()
 		ht = self.instrument.tem.HighTension
@@ -1017,25 +1021,34 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		cmatrix = self.retrieveMatrix(tem, cam, 'beam-tilt coma', ht, mag)
 
 		dc = [0,0]
+		failed_measurement = False
 		for axisn, axisname in ((0,'x'),(1,'y')):
 			tvect = [0, 0]
 			tvect[axisn] = tilt_value
-			dc[axisn] = self.measureDefocusDifference(tvect, settle)
-		dc = numpy.array(dc) / tilt_value
-		cftilt = numpy.linalg.solve(cmatrix, dc)
-		if not self.confirmDefocusInRange():
-			cftilt[(0,0)] = 0
-			cftilt[(1,1)] = 0
+			def_diff = self.measureDefocusDifference(tvect, settle)
+			if None in def_diff:
+				failed_measurement = True
+			dc[axisn] = def_diff
+		if not failed_measurement:
+			dc = numpy.array(dc) / tilt_value
+			cftilt = numpy.linalg.solve(cmatrix, dc)
+			if not self.confirmDefocusInRange():
+				cftilt[(0,0)] = 0
+				cftilt[(1,1)] = 0
+		else:
+			cftilt = numpy.zeros((2,2))
+			if raise_error:
+				raise Exception('Coma Free Beam Tilt Measurement Failed')
 		return cftilt
 
-	def repeatMeasureComaFree(self, tilt_value, settle, repeat=1):
+	def repeatMeasureComaFree(self, tilt_value, settle, repeat=1,raise_error=False):
 		'''repeat measuremnet to increase precision'''
 		tilts = {'x':[],'y':[]}
 		self.measured_defocii = []
 		self.node.logger.debug("===================")
 		for i in range(0,repeat):
 			try:
-				cftilt = self.measureComaFree(tilt_value, settle)
+				cftilt = self.measureComaFree(tilt_value, settle, raise_error)
 			except Exception, e:
 				cftilt = None
 				raise
