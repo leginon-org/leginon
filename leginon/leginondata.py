@@ -1581,6 +1581,7 @@ class BeamTiltFixerSettingsData(AcquisitionSettingsData):
 			('beam tilt', float),
 			('min threshold', float),
 			('max threshold', float),
+			('correct', bool),
 		)
 	typemap = classmethod(typemap)
 

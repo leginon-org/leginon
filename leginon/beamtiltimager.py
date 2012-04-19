@@ -56,7 +56,8 @@ class BeamTiltImager(manualfocuschecker.ManualFocusChecker):
 		self.btcalclient = calibrationclient.BeamTiltCalibrationClient(self)
 		self.imageshiftcalclient = calibrationclient.ImageShiftCalibrationClient(self)
 		self.euclient = calibrationclient.EucentricFocusClient(self)
-		self.ace2exe = self.getACE2Path()
+		# ace2 is not used for now.
+		#self.ace2exe = self.getACE2Path()
 
 	def alignRotationCenter(self, defocus1, defocus2):
 		try:
@@ -350,6 +351,8 @@ class BeamTiltImager(manualfocuschecker.ManualFocusChecker):
 	def addCTFlabel(self, image, ht, rpixelsize, binning=1, defocus=None):
 		pow = imagefun.power(image)
 		binned = imagefun.bin(pow, binning)
+		# No ctf estimation until it works better so that this node does not
+		# depend on coma beam-tilt calibration
 		s = None
 		ctfdata = None
 		'''

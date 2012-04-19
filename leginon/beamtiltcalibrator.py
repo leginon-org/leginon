@@ -218,7 +218,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 			comatilt = {'x':cftiltsx.mean(),'y':cftiltsy.mean()}
 			self.comameasurement = comatilt
 		except Exception, e:
-			self.logger.error('Measurement failed: %s' % e)
+			self.logger.error('ComaFree Measurement failed: %s' % e)
 		self.instrument.tem.BeamTilt = tilt0
 		self.panel.comaMeasurementDone(self.comameasurement)
 
