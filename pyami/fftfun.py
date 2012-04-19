@@ -140,6 +140,8 @@ def fitFirstCTFNode(pow, rpixelsize, defocus, ht):
 	if eparams:
 		z0, zast, ast_ratio, alpha = getAstigmaticDefocii(eparams,rpixelsize, ht)
 		return z0,zast,ast_ratio, alpha, eparams
+	else:
+		return None
 
 def getBeamTiltPhaseShiftCorrection(imgshape,beamtilt,Cs,wavelength,pixelsize):
 		beamtilt_size = math.sqrt(beamtilt[0]*beamtilt[0]+beamtilt[1]*beamtilt[1])
