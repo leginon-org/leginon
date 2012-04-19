@@ -129,14 +129,15 @@ require_once('../inc/formValidator.php');
 			}
 		}
 
+		// TODO: there must be a way to improve this so it is easier to add new parameters
 		function addRowToTable(host, nodesdef,nodesmax,ppndef,ppnmax,reconpn,walltimedef,
-				walltimemax,cputimedef,cputimemax,memorymax,appionbin,baseoutdir,
+				walltimemax,cputimedef,cputimemax,memorymax,appionbin,appionlibdir,baseoutdir,
 				localhelperhost,dirsep,wrapperpath,loginmethod,loginusername,passphrase,publickey,privatekey)
 		{
 			var tbl = document.getElementById('hosts');
 			var lastRow = tbl.rows.length;
 
-			var rowsPerIter = 21;
+			var rowsPerIter = 22;
 
 			// if there's no header row in the table, then iteration = lastRow + 1
 			var iteration = lastRow / rowsPerIter;
@@ -319,6 +320,21 @@ require_once('../inc/formValidator.php');
 		  	el.type = 'text';
 		  	el.name = 'processing_hosts['+iteration+'][appionbin]';
 		  	el.value = appionbin;
+		  	el.size = 30;
+		  	cellRight.appendChild(el);
+
+		  	// get the path to the appion lib dir, must end in slash, e.g., /usr/local/appion/appionlib/
+			var rowLib = tbl.insertRow(lastRow);
+			lastRow = lastRow +1;
+			var cellFirst = rowLib.insertCell(0);
+		  	var textNode = document.createTextNode("Path to appionlib directory :");
+		  	cellFirst.appendChild(textNode);
+		  
+		  	var cellRight = rowLib.insertCell(1);
+		  	var el = document.createElement('input');
+		  	el.type = 'text';
+		  	el.name = 'processing_hosts['+iteration+'][appionlibdir]';
+		  	el.value = appionlibdir;
 		  	el.size = 30;
 		  	cellRight.appendChild(el);
 
@@ -528,6 +544,7 @@ require_once('../inc/formValidator.php');
 			'".$processingHost['cputimemax']."', 
 			'".$processingHost['memorymax']."', 
 			'".$processingHost['appionbin']."', 
+			'".$processingHost['appionlibdir']."', 
 			'".$processingHost['baseoutdir']."', 
 			'".$processingHost['localhelperhost']."', 
 			'".$processingHost['dirsep']."', 

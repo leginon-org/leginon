@@ -258,6 +258,7 @@ class setupUtils{
 						$inputString .= "'cputimemax' => '".$name['cputimemax']."',\n";
 						$inputString .= "'memorymax' => '".$name['memorymax']."',\n";
 						$inputString .= "'appionbin' => '".$name['appionbin']."',\n";
+						$inputString .= "'appionlibdir' => '".$name['appionlibdir']."',\n";
 						$inputString .= "'baseoutdir' => '".$name['baseoutdir']."',\n";
 						$inputString .= "'localhelperhost' => '".$name['localhelperhost']."',\n";
 						$inputString .= "'dirsep' => '".$name['dirsep']."',\n";
