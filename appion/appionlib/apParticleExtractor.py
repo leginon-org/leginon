@@ -260,6 +260,8 @@ class ParticleExtractLoop(appionLoop2.AppionLoop):
 			action="store_true", help="Check masks")
 		self.parser.add_option("--keepall", dest="keepall", default=False,
 			action="store_true", help="Do not delete CTF corrected MRC files when finishing")
+		self.parser.add_option("--usedownmrc", dest="usedownmrc", default=False,
+			action="store_true", help="Use existing *.down.mrc in processing")
 
 		### option based
 		self.parser.add_option("--ctfmethod", dest="ctfmethod",
@@ -357,7 +359,13 @@ class ParticleExtractLoop(appionLoop2.AppionLoop):
 
 		### first remove any existing boxed files
 		shortfileroot = os.path.join(self.params['rundir'], shortname)
-		rmfiles = glob.glob(shortfileroot+"*")
+		if not self.params['usedownmrc']:
+			# remove all previous temp files
+			rmfiles = glob.glob(shortfileroot+"*")
+		else:
+			# limit the files to be removed
+			rmfiles = glob.glob(shortfileroot+".*")
+
 		for rmfile in rmfiles:
 			apFile.removeFile(rmfile)
 
