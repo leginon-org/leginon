@@ -155,6 +155,11 @@ function makeSettingsCode($dest_user_id,$latest_timestamp=false,$session_user_id
 		'BeamFixerSettingsData',
 		'GonModelerSettingsData',
 		'BeamTiltImagerSettingsData',
+		'BeamTiltCalibratorSettingsData',
+		'MatrixCalibratorSettingsData',
+		'PixelSizeCalibratorSettingsData',
+		'DoseCalibratorSettingsData',
+		'GonModelerSettingsData',
 	);
 	$nodenames = array();
 	foreach ($tables_to_search as $settings_table) 
