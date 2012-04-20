@@ -1231,6 +1231,17 @@ class leginondata {
 			return NULL;
 	}
 
+	function getMinimalImageInfo($imgId) {
+		//getImageInfo can fail easily.  Add to this one
+		//to get minimal Image Info
+		//sessionId is needed to get image path and to pass privillage test.
+		$q = "select `REF|SessionData|session` as sessionId "
+				."from `AcquisitionImageData` "
+				."where `DEF_id` = ".$imgId;
+		list($r) = $this->mysql->getSQLResult($q);
+		return $r;
+	}
+
 	function getImageInfo($imgId) {
 		// --- grid query
 		$gridtable = $this->mysql->isTable('GridData');
