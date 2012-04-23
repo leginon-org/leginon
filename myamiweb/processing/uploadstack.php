@@ -8,12 +8,12 @@
  *      Simple viewer to view a image using mrcmodule
  */
 
-require "inc/particledata.inc";
-require "inc/leginon.inc";
-require "inc/project.inc";
-require "inc/viewer.inc";
-require "inc/processing.inc";
-require "inc/summarytables.inc";
+require_once "inc/particledata.inc";
+require_once "inc/leginon.inc";
+require_once "inc/project.inc";
+require_once "inc/viewer.inc";
+require_once "inc/processing.inc";
+require_once "inc/summarytables.inc";
 
 // IF VALUES SUBMITTED, EVALUATE DATA
 if ($_POST['process']) {
@@ -183,11 +183,9 @@ function runUploadStack() {
 	if (!$apix)
 		createUploadStackForm("<B>ERROR:</B> Enter the pixel size");
 
-	//check if the stack is an existing file (wild type is not searched)
+	//do not check if the stack is an existing file because the web server may not have access to the file (wild type is not searched)
 	if (!$stackfile)
 		createUploadStackForm("<B>ERROR:</B> Enter a the root name of the stack");
-	if (!file_exists($stackfile))
-		createUploadStackForm("<B>ERROR:</B> File ".$stackfile." does not exist");
 
 	/* *******************
 	PART 3: Create program command
