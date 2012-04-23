@@ -267,15 +267,15 @@ function stacksummarytable($stackid, $mini=false, $tiny=false, $showOptions=True
 	if (substr($stackdata['name'], -4) == ".hed") {
 		$imgfile = $stackdata['path']."/".substr($stackdata['name'], 0, -4).".img";
 		$hedfile = $stackdata['path']."/".substr($stackdata['name'], 0, -4).".hed";
-		$stacklink .= "<font size='-2'><a href='download.php?file=$hedfile'>\n";
+		$stacklink .= "<font size='-2'><a href='download.php?expId=$expId&file=$hedfile'>\n";
 		$stacklink .= "  <img style='vertical-align:middle' src='img/download_arrow.png' border='0' width='16' height='17' alt='download hed file'>hed\n";
 		$stacklink .= "</a>\n";
-		$stacklink .= "&nbsp;<a href='download.php?file=$imgfile'>\n";
+		$stacklink .= "&nbsp;<a href='download.php?expId=$expId&file=$imgfile'>\n";
 		$stacklink .= "  <img style='vertical-align:middle' src='img/download_arrow.png' border='0' width='16' height='17' alt='download img file'>img\n";
 		$stacklink .= "</a></font>\n";
 	} else {
 		$ext = substr($stackdata['name'], -3);
-		$stacklink .= "<font size='-2'><a href='download.php?file=$stackfile'>\n";
+		$stacklink .= "<font size='-2'><a href='download.php?expId=$expId&file=$stackfile'>\n";
 		$stacklink .= "  <img style='vertical-align:middle' src='img/download_arrow.png' border='0' width='16' height='17' alt='download stack'>$ext\n";
 		$stacklink .= "</a></font>\n";
 	}
