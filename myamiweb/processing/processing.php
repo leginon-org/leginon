@@ -8,11 +8,11 @@
  *  Simple viewer to view a image using mrcmodule
  */
 
-require "inc/particledata.inc";
-require "inc/viewer.inc";
-require "inc/processing.inc";
-require "inc/leginon.inc";
-require "inc/project.inc";
+require_once "inc/particledata.inc";
+require_once "inc/viewer.inc";
+require_once "inc/processing.inc";
+require_once "inc/leginon.inc";
+require_once "inc/project.inc";
 
 if ($_POST['login']) {
   $errors = checkLogin();
@@ -357,7 +357,7 @@ if ($sessionId) {
   // in.  Then you can submit a job
   if ($stackruns == 0) $nrun = "<font size=-1><i>Create a stack first</i></font>"; 
   elseif (!$_SESSION['loggedin']) {$nrun = "<font size=-1><i>Log in to submit a job</i>\n";}
-  else $nrun = "<a href='emanJobGen.php?expId=$sessionId'>EMAN Reconstruction</a>";
+  else $nrun = "<a href='selectRefinementType.php?expId=$sessionId'>Run Reconstruction</a>";
   if ($stackruns>0) {
     $nrun .= "<br /><a href='uploadrecon.php?expId=$sessionId'>Upload Reconstruction</a>";
   }

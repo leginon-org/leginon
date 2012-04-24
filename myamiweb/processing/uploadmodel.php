@@ -93,7 +93,6 @@ function createUploadModelForm($extra=false, $title='UploadModel.py Launcher', $
   <TABLE BORDER=3 CLASS=tableborder>
   <TR>
     <TD VALIGN='TOP'>\n";
-	if (!$densityid &&!$rescale) echo"<A HREF='emanJobGen.php?expId=$expId&modelonly=True'>[rescale an existing model]</A><P>\n";
 	echo"<table>
     <TR>
       <TD VALIGN='TOP'>";
