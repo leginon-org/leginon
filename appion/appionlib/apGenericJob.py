@@ -76,8 +76,9 @@ class genericJob(object):
 				#Just pass along any options not in the format expected
 				newCommandLine.append(opt) 
 		nodeppn_nproc = int(self.getNodes()) * int(self.getPPN())
-		if has_nproc and int(self.getNProc()) > nodeppn_nproc:
-			raise Exception('You can not specify more nproc than nodes * ppn')
+		if has_nproc:
+			if  int(self.getNProc()) > nodeppn_nproc:
+				raise Exception('You can not specify more nproc than nodes * ppn')
 		else:
 			# nproc need to be set according to the input nodes and ppn if not already in the command line
 			self.setNProc(nodeppn_nproc)
