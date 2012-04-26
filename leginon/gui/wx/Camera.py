@@ -40,16 +40,19 @@ class CameraPanel(wx.Panel):
 		self.defaultexptime = 1000.0
 		self.defaultsaveframes = False
 		self.defaultuseframes = ''
+		self.defaultreadoutdelay= 0
 		self.common = {}
 		self.setfuncs = {
 			'exposure time': self._setExposureTime,
 			'save frames': self._setSaveFrames,
 			'use frames': self._setUseFrames,
+			'readout delay': self._setReadoutDelay,
 		}
 		self.getfuncs = {
 			'exposure time': self._getExposureTime,
 			'save frames': self._getSaveFrames,
 			'use frames': self._getUseFrames,
+			'readout delay': self._getReadoutDelay,
 		}
 
 		# geometry
@@ -137,6 +140,7 @@ class CameraPanel(wx.Panel):
 		self.Bind(EVT_ENTRY, self.onExposureTime, self.feexposuretime)
 		self.Bind(wx.EVT_CHECKBOX, self.onSaveFrames, self.saveframes)
 		self.Bind(EVT_ENTRY, self.onUseFrames, self.useframes)
+		self.Bind(EVT_ENTRY, self.onReadoutDelay, self.readoutdelay)
 		self.Bind(EVT_SET_CONFIGURATION, self.onSetConfiguration)
 
 		#self.Enable(False)
@@ -177,6 +181,7 @@ class CameraPanel(wx.Panel):
 		self.feexposuretime.SetValue(self.defaultexptime)
 		self.saveframes.SetValue(self.defaultsaveframes)
 		self.useframes.SetValue(self.defaultuseframes)
+		self.readoutdelay.SetValue(self.defaultreadoutdelay)
 		#self.Enable(False)
 		self.Thaw()
 
@@ -191,6 +196,9 @@ class CameraPanel(wx.Panel):
 		self.onConfigurationChanged()
 
 	def onUseFrames(self, evt):
+		self.onConfigurationChanged()
+
+	def onReadoutDelay(self, evt):
 		self.onConfigurationChanged()
 
 	def setCommonChoice(self):
