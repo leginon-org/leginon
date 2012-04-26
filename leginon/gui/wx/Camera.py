@@ -41,6 +41,16 @@ class CameraPanel(wx.Panel):
 		self.defaultsaveframes = False
 		self.defaultuseframes = ''
 		self.common = {}
+		self.setfuncs = {
+			'exposure time': self._setExposureTime,
+			'save frames': self._setSaveFrames,
+			'use frames': self._setUseFrames,
+		}
+		self.getfuncs = {
+			'exposure time': self._getExposureTime,
+			'save frames': self._getSaveFrames,
+			'use frames': self._getUseFrames,
+		}
 
 		# geometry
 		self.ccommon = wx.Choice(self, -1, choices = ['(None)'])
@@ -100,6 +110,16 @@ class CameraPanel(wx.Panel):
 		self.useframes = Entry(self, -1)
 		ddsz.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		ddsz.Add(self.useframes, (1, 1), (1, 1), wx.ALIGN_CENTER|wx.EXPAND)
+
+		# readout delay
+		strd = wx.StaticText(self, -1, 'Readout delay:')
+		self.readoutdelay = IntEntry(self, -1, chars=7)
+		stms = wx.StaticText(self, -1, 'ms')
+		sz = wx.BoxSizer(wx.HORIZONTAL)
+		sz.Add(strd)
+		sz.Add(self.readoutdelay)
+		sz.Add(stms)
+		ddsz.Add(sz, (2, 0), (1, 2), wx.ALIGN_CENTER|wx.EXPAND)
 
 		ddsb.Add(ddsz, 0, wx.EXPAND|wx.ALL, 2)
 		self.szmain.Add(ddsb, (5, 0), (1, 3), wx.ALIGN_CENTER|wx.EXPAND)
@@ -239,6 +259,12 @@ class CameraPanel(wx.Panel):
 			value = ''
 		self.useframes.SetValue(value)
 
+	def _getReadoutDelay(self):
+		return self.readoutdelay.GetValue()
+
+	def _setReadoutDelay(self, value):
+		return self.readoutdelay.SetValue(value)
+
 	def onCommonChoice(self, evt):
 		key = evt.GetString()
 		if key == '(Custom)' or key.startswith('-'):
@@ -372,9 +398,8 @@ class CameraPanel(wx.Panel):
 		if g is None:	
 			return None
 		c = copy.deepcopy(g)
-		c['exposure time'] = self._getExposureTime()
-		c['save frames'] = self._getSaveFrames()
-		c['use frames'] = self._getUseFrames()
+		for key,func in self.getfuncs.items():
+			c[key] = func()
 		return c
 
 	def _setGeometry(self, geometry):
@@ -402,21 +427,16 @@ class CameraPanel(wx.Panel):
 		return True
 
 	def _setConfiguration(self, value):
-		setfuncs = {
-			'exposure time': self._setExposureTime,
-			'save frames': self._setSaveFrames,
-			'use frames': self._setUseFrames,
-		}
-		for key, func in setfuncs.items():
+		for key, func in self.setfuncs.items():
 			if key in value:
 				func(value[key])
 		self._setGeometry(value)
 		self.setCommonChoice()
 
 	def setConfiguration(self, value):
-		self._setExposureTime(value['exposure time'])
-		self._setSaveFrames(value['save frames'])
-		self._setUseFrames(value['use frames'])
+		for key, func in self.setfuncs.items():
+			if key in value:
+				func(value[key])
 		self.setGeometry(value)
 		if self.size is not None:
 			self.setCommonChoice()

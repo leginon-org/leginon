@@ -8,6 +8,7 @@ default_settings['binning'] = {'x': 1, 'y': 1}
 default_settings['exposure time'] = 200
 default_settings['save frames'] = False
 default_settings['use frames'] = ''
+default_settings['readout delay'] = 0
 
 class CameraClient(object):
 	def __init__(self):
