@@ -300,6 +300,7 @@ class leginondata {
 		."gh.`name` "
 		."from `SessionData` s "
 		."left join `GridHolderData` gh on (gh.`DEF_id`=s.`REF|GridHolderData|holder`) "
+		."left join AcquisitionImageData a on (a.`REF|SessionData|session`=s.`DEF_id`) "
 		.$sqlwhere
 		."group by gh.`DEF_id`";
 		$holderinfo = $this->mysql->getSQLResult($q);
