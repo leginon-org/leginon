@@ -39,7 +39,7 @@ def copy_and_delete(src, dst):
 	## ensure a trailing / on src
 	if src[-1] != '/':
 		src = src + '/'
-	cmd = 'rsync -av --remove-source-files %s %s' % (src, dst)
+	cmd = 'rsync -av --remove-sent-files %s %s' % (src, dst)
 	print cmd
 	p = subprocess.Popen(cmd, shell=True)
 	p.wait()
