@@ -1777,7 +1777,6 @@ class particledata {
 			."on p.`REF|leginondata|AcquisitionImageData|image` = a.`DEF_id` "
 			."where p.`REF|ApSelectionRunData|selectionrun` = '$runId' ";
 		$r=$this->mysql->getSQLResult($q);
-echo $q;
 		return $r;
 	}
 	
