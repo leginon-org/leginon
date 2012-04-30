@@ -575,7 +575,8 @@ class Tietz(object):
 	def getTemperature(self):
 		return self._getParameterValue('cpCurrentTemperature')/1000.0
 
-	def setTemperature(self, value):
+	# method name altered to prevent Leginon from setting temperature
+	def _set_Temperature(self, value):
 		#	{'type': float}
 		self._setParameterValue('cpTemperatureSetpoint', int(value*1000))
 
