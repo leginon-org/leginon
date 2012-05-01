@@ -177,6 +177,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 		partmeantree = []
 		t0 = time.time()
 		imagicdata = apImagicFile.readImagic(imgstackfile)
+		apDisplay.printMsg("gathering mean and stdev data")
 		### loop over the particles and read data
 		for i in range(len(boxedpartdatas)):
 			partdata = boxedpartdatas[i]
@@ -225,6 +226,10 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 			"""
 			partmeantree.append(partmeandict)
 		self.meanreadtimes.append(time.time()-t0)
+
+		### if xmipp-norm before phaseflip:
+		if self.params['xmipp-norm'] is not None and self.params['xmipp-norm-before'] is True:
+			self.xmippNormStack(imgstackfile)
 
 		### phase flipping
 		t0 = time.time()
@@ -636,7 +641,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 			elif p=='aceCutoff' and self.params['ctfcutoff']:
 				stparamq[p] = self.params['ctfcutoff']	
 			else:
-				print "missing", p.lower()
+				apDisplay.printMsg("missing "+p.lower())
 		if self.params['phaseflipped'] is True:
 			stparamq['phaseFlipped'] = True
 			stparamq['fliptype'] = self.params['fliptype']
@@ -770,6 +775,8 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 			action="store_true", help="create a spider stack")
 		self.parser.add_option("--normalized", dest="normalized", default=False,
 			action="store_true", help="normalize the entire stack")
+		self.parser.add_option("--xmipp-norm-before", dest="xmipp-norm-before", default=False,
+			action="store_true", help="xmipp normalize before phaseflipping")
 
 		self.parser.add_option("--no-meanplot", dest="meanplot", default=True,
 			action="store_false", help="do not make stack mean plot")
@@ -815,7 +822,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 		if self.params['fliptype'] == 'ace2image' and self.params['ctfmethod'] is None:
 			apDisplay.printMsg("setting ctf method to ace2")
 			self.params['ctfmethod'] = 'ace2'
-		if self.params['xmipp-norm'] is not None:
+		if self.params['xmipp-norm'] is not None or self.params['xmipp-norm-before'] is not None:
 			self.xmippexe = apParam.getExecPath("xmipp_normalize", die=True)
 		if self.params['particlelabel'] == 'user' and self.params['rotate'] is True:
 			apDisplay.printError("User selected targets do not have rotation angles")
@@ -876,7 +883,18 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 			if stackid is not None:
 				apStackMeanPlot.makeStackMeanPlot(stackid)
 		### apply xmipp normalization
-		if self.params['xmipp-norm'] is not None:
+		if self.params['xmipp-norm'] is not None and self.params['xmipp-norm-before'] is False:
+			self.xmippNormStack(stackpath)
+
+		apDisplay.printColor("Timing stats", "blue")
+		self.printTimeStats("Batch Boxer", self.batchboxertimes)
+		self.printTimeStats("Ctf Correction", self.ctftimes)
+		self.printTimeStats("Stack Merging", self.mergestacktimes)
+		self.printTimeStats("Mean/Std Read", self.meanreadtimes)
+		self.printTimeStats("DB Insertion", self.insertdbtimes)
+
+	#=======================
+	def xmippNormStack(self, stackpath):
 			### convert stack into single spider files
 			selfile = apXmipp.breakupStackIntoSingleFiles(stackpath)	
 
@@ -906,13 +924,6 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 			apFile.removeFile(selfile)
 			apFile.removeDir("partfiles")
 			
-		apDisplay.printColor("Timing stats", "blue")
-		self.printTimeStats("Batch Boxer", self.batchboxertimes)
-		self.printTimeStats("Ctf Correction", self.ctftimes)
-		self.printTimeStats("Stack Merging", self.mergestacktimes)
-		self.printTimeStats("Mean/Std Read", self.meanreadtimes)
-		self.printTimeStats("DB Insertion", self.insertdbtimes)
-
 	#=======================
 	def printTimeStats(self, name, timelist):
 		if len(timelist) < 2:
