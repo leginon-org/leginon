@@ -342,7 +342,7 @@ def getBestTiltCtfValueForImage(imgdata):
 	bestctftiltvalue = None
 	cross_correlation = 0.0
 	for ctfvalue in ctfvalues:
-		if ctfvalue['ctftiltrun'] is not None:
+		if ctfvalue['acerun'] is not None:
 			if bestctftiltvalue is None:
 				cross_correlation = ctfvalue['cross_correlation']
 				bestctftiltvalue = ctfvalue
@@ -353,6 +353,41 @@ def getBestTiltCtfValueForImage(imgdata):
 
 	return bestctftiltvalue
 
+#=====================
+def getParticleTiltDefocus(ctfdata,imgdata,NX,NY):
+	### calculate defocus at given position
+	dimx = imgdata['camera']['dimension']['x']
+	dimy = imgdata['camera']['dimension']['y']
+	CX = dimx/2
+	CY = dimy/2
+
+	if ctfdata['tilt_axis_angle'] is not None:
+		N1 = -1.0 * math.sin( math.radians(ctfdata['tilt_axis_angle']) )
+		N2 = math.cos( math.radians(ctfdata['tilt_axis_angle']) )
+	else:
+		N1 = 0.0
+		N2 = 1.0
+
+	PSIZE = apDatabase.getPixelSize(imgdata)	
+	### High tension on CM is given in kv instead of v so do not divide by 1000 in that case
+	if imgdata['scope']['tem']['name'] == "CM":
+		voltage = imgdata['scope']['high tension']
+	else:
+		voltage = (imgdata['scope']['high tension'])/1000
+
+	# flip Y axis due to reversal of y coordinates
+	NY = dimy-NY
+
+	DX = CX - NX
+	DY = CY - NY
+	DF = (N1*DX + N2*DY) * PSIZE * math.tan( math.radians(ctfdata['tilt_angle']) )
+	#print "using tilt axis: %.02f, angle: %.02f"%(ctfdata['tilt_axis_angle'],ctfdata['tilt_angle'])
+	#print "df1: %.2f, df2: %.2f, offset is %.2f"%(ctfdata['defocus1']*-1e10,ctfdata['defocus2']*-1e10,DF)
+	DFL1 = abs(ctfdata['defocus1'])*1.0e10 + DF
+	DFL2 = abs(ctfdata['defocus2'])*1.0e10 + DF
+
+	return DFL1,DFL2
+	
 #=====================
 def ctfValuesToParams(ctfvalue, params, msg=True):
 	if ctfvalue['acerun'] is not None:

@@ -278,9 +278,13 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 		apix = apDatabase.getPixelSize(imgdata)
 		ctfimgstackfile = os.path.join(self.params['rundir'], apDisplay.short(imgdata['filename'])+"-ctf.hed")
 
+		ampconst = ctfvalue['amplitude_contrast']
+
 		### calculate defocus at given position
-		CX = imgdata['camera']['dimension']['x']
-		CY = imgdata['camera']['dimension']['y']
+		dimx = imgdata['camera']['dimension']['x']
+		dimy = imgdata['camera']['dimension']['y']
+		CX = dimx/2
+		CY = dimy/2
 
 		if ctfvalue['tilt_axis_angle'] is not None:
 			N1 = -1.0 * math.sin( math.radians(ctfvalue['tilt_axis_angle']) )
@@ -306,20 +310,25 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 			prepartarray = imagicdata['images'][i]
 			prepartmrc = "rawpart.dwn.mrc"
 			postpartmrc = "ctfpart.dwn.mrc"
-			apImage.arrayToMrc(partarray, prepartmrc, msg=False)
+			apImage.arrayToMrc(prepartarray, prepartmrc, msg=False)
 
 			### calculate ctf based on position
-			DX = CX - partdata['xcoord']
-			DY = CY - partdata['ycoord']
+			NX = partdata['xcoord']
+			NY = dimy-partdata['ycoord'] # reverse due to boxer flip
+
+			DX = CX - NX
+			DY = CY - NY
 			DF = (N1*DX + N2*DY) * PSIZE * math.tan( math.radians(ctfvalue['tilt_angle']) )
-			DFL1 = ctfvalue['defocus1']*-1.0e4 + DF
-			DFL2 = ctfvalue['defocus2']*-1.0e4 + DF
+			### defocus is in Angstroms
+			DFL1 = abs(ctfvalue['defocus1'])*1.0e10 + DF
+			DFL2 = abs(ctfvalue['defocus2'])*1.0e10 + DF
 			DF_final = (DFL1+DFL2)/2.0
 
-			### convert defocus to meters
+			### convert defocus to microns
 			defocus = DF_final*-1.0e-4
 
-			self.checkDefocus(defocus, shortname)
+			### check to make sure defocus is a reasonable value for applyctf
+			self.checkDefocus(defocus, apDisplay.short(imgdata['filename']))
 
 			parmstr = ("parm=%f,200,1,%.3f,0,17.4,9,1.53,%i,%.1f,%f" %(defocus, ampconst, voltage, cs, apix))
 			emancmd = ("applyctf %s %s %s setparm flipphase" % (prepartmrc, postpartmrc, parmstr))
@@ -329,6 +338,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 			ctfpartstack.append(ctfpartarray)
 
 		apImagicFile.writeImagic(ctfpartstack, ctfimgstackfile)
+		return ctfimgstackfile
 
 	#=======================
 	def phaseFlipParticles(self, imgdata, imgstackfile):

@@ -13,6 +13,7 @@ from appionlib import apDisplay
 from appionlib import appiondata
 from appionlib import apDefocalPairs
 from appionlib import apRecon
+from appionlib import apDatabase
 
 #=====================
 def parseFrealignParamFile(paramfile):
@@ -131,15 +132,30 @@ def generateParticleParams(params,initparfile='params.0.par'):
 		if params['noctf'] is False:
 			if params['defocpair'] is True:
 				imagedata = apDefocalPairs.getDefocusPair(imagedata)
-			# first see if there are ctf values
-			ctfdata, confidence=apCtf.getBestCtfValueForImage(imagedata, msg=False)
-			if ctfdata is None:
-				ctfdata, confidence=apCtf.getBestCtfValueForImage(imagedata, msg=False)
-			if ctfdata is not None:
+			# get tilted parameters first:
+			if params['ctftilt'] is True:
+				ctfdata = apCtf.getBestTiltCtfValueForImage(imagedata)
+				if ctfdata is None:
+					apDisplay.printError("Failed to get ctf parameters")
+				# get x,y coordinate of the particle
+				nx = particle['particle']['xcoord']
+				ny = particle['particle']['ycoord']
+				df1,df2 = apCtf.getParticleTiltDefocus(ctfdata,imagedata,nx,ny)
 				# use defocus & astigmatism values
-				particleparams['df1']=abs(ctfdata['defocus1']*1e10)
-				particleparams['df2']=abs(ctfdata['defocus2']*1e10)
+				particleparams['df1']=abs(df1)
+				particleparams['df2']=abs(df2)
 				particleparams['angast']=-ctfdata['angle_astigmatism']
+
+			else:
+				# first see if there are ctf values
+				ctfdata, confidence=apCtf.getBestCtfValueForImage(imagedata, msg=False)
+				if ctfdata is None:
+					ctfdata, confidence=apCtf.getBestCtfValueForImage(imagedata, msg=False)
+				if ctfdata is not None:
+					# use defocus & astigmatism values
+					particleparams['df1']=abs(ctfdata['defocus1']*1e10)
+					particleparams['df2']=abs(ctfdata['defocus2']*1e10)
+					particleparams['angast']=-ctfdata['angle_astigmatism']
 
 		# if using parameters from previous reconstruction
 		if params['reconiterid'] is not None:
