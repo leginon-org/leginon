@@ -22,6 +22,7 @@ class StackPrepFormFrealign extends StackPrepForm
 		$params->addParam( "noctf", $noctf, "Allow Frealign to determine ctf estimation" );
 		$params->addParam( "emaninit", $emaninit, "Import initial orientations from EMAN reconstruction:" );
 		$params->addParam( "ctffindonly", $ctffindonly, "Only use CTFFIND values" );
+		$params->addParam( "ctftilt", $ctftilt, "Only use CTFTilt values" );
 		$params->addParam( "paramonly", $paramonly, "Only create the Frealign paramter file, not the stack");
 		
 		$this->stackid = $stackid;
@@ -52,6 +53,12 @@ class StackPrepFormFrealign extends StackPrepForm
 		if ( $showCTFFind ) {
 			$html .=  "<br/>\n";
 			$html .=  $params->insertCheckboxField( "ctffindonly" );
+		}
+		// find if there are ctftilt runs (for frealign option)
+		$showCTFTilt = $particle->hasCtfTiltData($_GET['expId']);
+		if ( $showCTFTilt ) {
+			$html .=  "<br>\n";
+			$html .=  $params->insertCheckboxField( "ctftilt" );
 		}
 
 		$html.= "<br/>\n";
