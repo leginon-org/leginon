@@ -37,6 +37,8 @@ class FrealignPrep3DRefinement(apPrepRefine.Prep3DRefinement):
 			type="choice", choices=self.ctfestopts)
 		self.parser.add_option('--paramonly', dest='paramonly', default=False, action='store_true',
 			help="only create parameter file")
+		self.parser.add_option('--ctftilt', dest='ctftilt', default=False, action='store_true',
+			help="Use ctftilt values")
 
 	def setRefineMethod(self):
 		self.refinemethod = 'frealignrecon'
