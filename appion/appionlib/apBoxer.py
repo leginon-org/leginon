@@ -31,7 +31,10 @@ def processParticleData(imgdata, boxsize, partdatas, shiftdata, boxfile, rotate=
 	
 	replaces writeParticlesToBoxfile()
 	"""
-	imgdims = imgdata['camera']['dimension']
+	imgdims={}
+	imgdims['x'] = imgdata['image'].shape[1]
+	imgdims['y'] = imgdata['image'].shape[0]
+	#imgdims = imgdata['camera']['dimension']
 	if rotate is True:
 		### with rotate we use a bigger boxsize
 		halfbox = int(1.5*boxsize/2)
@@ -48,7 +51,6 @@ def processParticleData(imgdata, boxsize, partdatas, shiftdata, boxfile, rotate=
 	f = open(boxfile, 'w')
 	for i in range(len(partdatas)):
 		partdata = partdatas[i]
-
 		### require particle with rotation
 		if rotate is True and partdata['angle'] is None:
 			noangle += 1

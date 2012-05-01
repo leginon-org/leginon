@@ -370,7 +370,6 @@ class ParticleExtractLoop(appionLoop2.AppionLoop):
 			apFile.removeFile(rmfile)
 
 		### convert contours to particles
-		print self.params['particlelabel']
 		if self.selectiondata and self.params['particlelabel'] == '_trace':
 			self.convertTraceToParticlePeaks(imgdata)
 
@@ -441,6 +440,10 @@ class ParticleBoxLoop(ParticleExtractLoop):
 	def getParticlesInImage(self,imgdata):
 		partdatas,shiftdata = super(ParticleBoxLoop,self).getParticlesInImage(imgdata)
 		imgdims = imgdata['camera']['dimension']
+		# if using a helical step, particles will be filled between picks,
+		# so don't want to throw picks out right now
+		if self.params['helicalstep'] is not None:
+			return partdatas,shiftdata
 		newpartdatas = []
 		for partdata in partdatas:
 			start_x,start_y = apBoxer.getBoxStartPosition(imgdata,self.half_box,partdata, shiftdata)

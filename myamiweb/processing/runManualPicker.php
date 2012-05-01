@@ -86,6 +86,16 @@ function createManualPickerForm($extra=false, $title='Manual Picker Launcher', $
                                  document.viewerform.testfilename.value='mrc file name';
                          }
                  }
+                 function disableHsteps(){
+			if (document.viewerform.helicalcheck.checked){
+				document.viewerform.helicalstep.disabled=true;
+				document.viewerform.ovrlp.disabled=true;
+			}
+			else {
+				document.viewerform.helicalstep.disabled=false;
+				document.viewerform.ovrlp.disabled=false;
+			}
+                 }
         </SCRIPT>\n";
   $javafunctions .= writeJavaPopupFunctions('appion');
   processing_header("Manual Picker Launcher","Manual Particle Selection and Editing",$javafunctions);
@@ -110,6 +120,7 @@ function createManualPickerForm($extra=false, $title='Manual Picker Launcher', $
   $testcheck = ($_POST['testimage']=='on') ? 'CHECKED' : '';
   $testdisabled = ($_POST['testimage']=='on') ? '' : 'DISABLED';
   $testvalue = ($_POST['testimage']=='on') ? $_POST['testfilename'] : 'mrc file name';
+  $helicalcheck = ($_POST['helicalcheck']=='on') ? 'CHECKED' : '';
 
   echo"
   <table BORDER=0 CLASS=tableborder CELLPADDING=15>
@@ -218,6 +229,9 @@ function createManualPickerForm($extra=false, $title='Manual Picker Launcher', $
 		<I>16 pixels is best</I>
     <br /><br />";    
   echo "<b>Helical Parameters:</b><br />\n";
+	echo "<input type='checkbox' name='helicalcheck' onclick='disableHsteps()' $helicalcheck >\n";
+	echo docpop('alonghelices','Pick along helices');
+	echo "<br>\n";
   $helicalstep = ($_POST['helicalstep']) ? $_POST['helicalstep'] : "";
   echo "<input type='text' NAME='helicalstep' VALUE='$helicalstep' SIZE='4'>\n";
   echo docpop('helicalstep','Stepsize for Helical Insert');
@@ -282,9 +296,11 @@ function runManualPicker() {
     $command .= " --shapesize=$shapesize";
   } 
 
+  $helicalcheck=($_POST['helicalcheck']=='on') ? True: False;
   $helicalstep=$_POST['helicalstep'];
   $ovrlp=$_POST['ovrlp'];
-  if($helicalstep) {
+  if ($helicalcheck) $command .= " --helix";
+  elseif($helicalstep) {
     $command .= " --helicalstep=$helicalstep";
     $command .= " --ovrlp=$ovrlp";
   }

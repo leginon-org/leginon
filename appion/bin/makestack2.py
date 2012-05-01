@@ -10,6 +10,7 @@ import glob
 import socket
 import numpy
 import subprocess
+import copy
 from scipy import stats
 from scipy import ndimage
 #appion
@@ -64,6 +65,13 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 	#=======================
 	def processParticles(self,imgdata,partdatas,shiftdata):
 		shortname = apDisplay.short(imgdata['filename'])
+
+		### if only selected points along helix,
+		### fill in points with helical step
+		if self.params['helicalstep']:
+			apix = apDatabase.getPixelSize(imgdata)
+			partdatas=self.fillWithHelicalStep(partdatas,apix)
+
 		### run batchboxer
 		self.boxedpartdatas, self.imgstackfile, self.partmeantree = self.boxParticlesFromImage(imgdata,partdatas,shiftdata)
 		if self.boxedpartdatas is None:
@@ -90,10 +98,73 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 				apStack.averageStack(stack=stackpath)
 		return totalpart
 
+	#=======================
+	def fillWithHelicalStep(self,partdatas,apix):
+		"""
+		each helix should be distinguished by a different angle number,
+		fill in particles along the helices using the specified step size
+		return a new copy of the partdatas
+		"""
+		newpartdatas=[]
+		## convert helicalstep to pixels
+		steppix=self.params['helicalstep']/apix
+		try:
+			lasthelix=partdatas[0]['helixnum']
+			lastx=partdatas[0]['xcoord']
+			lasty=partdatas[0]['ycoord']
+			leftover=0
+		except:
+			return
+		numhelices=1
+		for part in partdatas:
+			currenthelix=part['helixnum']
+			currentx=part['xcoord']
+			currenty=part['ycoord']
+			if currentx==lastx and currenty==lasty:
+				continue
+			### only fill in within the same helix
+			if currenthelix==lasthelix:
+				angle = math.atan2((currentx-lastx),(currenty-lasty))
+				### in order for helix to be continuous, we can't simply
+				### start exactly from the current point
+				### we have to figure out what was leftover from the last
+				### portion of the helix, and redefine the starting point
+				if leftover > 0:
+					d=steppix-leftover
+					lastx=(d*math.sin(angle))+lastx
+					lasty=(d*math.cos(angle))+lasty
+				pixdistance = math.hypot(lastx-currentx, lasty-currenty)
+				# get number of particles between the two points
+				numsteps=int(math.floor(pixdistance/steppix))
+				# keep remainder to continue the helix
+				leftover = pixdistance-(numsteps*steppix)
+				#print "should take %i steps at %i pixels per step, (leftover:%i)"%(numsteps,steppix,leftover)
+				for step in range(numsteps+1):
+					pointx=lastx+(step*(steppix*math.sin(angle)))
+					pointy=lasty+(step*(steppix*math.cos(angle)))
+					newpartinfo=copy.copy(part)	
+					newpartinfo['xcoord']=int(pointx)
+					newpartinfo['ycoord']=int(pointy)
+					# convert angle for appion database
+					newpartinfo['angle']=math.degrees(-angle)-90
+					newpartinfo['label']='helical'
+					newpartinfo['selectionrun']=self.newselectiondata
+					newpartdatas.append(newpartinfo)
+			else:
+				numhelices+=1
+				leftover=0
+			lastx=currentx
+			lasty=currenty
+			lasthelix=currenthelix
+		apDisplay.printMsg("Filled %i helices with %i helical segments"%(numhelices,len(newpartdatas)))
+		return newpartdatas
+
+	#=======================
 	def getDDImageArray(self,imgdata):
 		self.dd.setImageData(imgdata)
 		return self.dd.correctFrameImage(self.params['startframe'],self.params['nframe'])
 
+	#=======================
 	def getOriginalImagePath(self, imgdata):
 		imgname = imgdata['filename']
 		shortname = apDisplay.short(imgdata['filename'])
@@ -150,6 +221,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 		#emancmd = ("batchboxer input=%s dbbox=%s output=%s newsize=%i" 
 		#	%(imgpath, emanboxfile, imgstackfile, self.params['boxsize']))
 		apDisplay.printMsg("boxing "+str(len(parttree))+" particles into temp file: "+imgstackfile)
+
 		t0 = time.time()
 		if self.params['rotate'] is True:
 			apBoxer.boxerRotate(imgpath, parttree, imgstackfile, self.boxsize)
@@ -282,7 +354,6 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 			apDisplay.printError("Failed to get ctf parameters")
 		apix = apDatabase.getPixelSize(imgdata)
 		ctfimgstackfile = os.path.join(self.params['rundir'], apDisplay.short(imgdata['filename'])+"-ctf.hed")
-
 		ampconst = ctfvalue['amplitude_contrast']
 
 		### calculate defocus at given position
@@ -337,7 +408,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 
 			parmstr = ("parm=%f,200,1,%.3f,0,17.4,9,1.53,%i,%.1f,%f" %(defocus, ampconst, voltage, cs, apix))
 			emancmd = ("applyctf %s %s %s setparm flipphase" % (prepartmrc, postpartmrc, parmstr))
-			apEMAN.executeEmanCmd(emancmd, showcmd=True)
+			apEMAN.executeEmanCmd(emancmd, showcmd=False)
 
 			ctfpartarray = apImage.mrcToArray(postpartmrc)
 			ctfpartstack.append(ctfpartarray)
@@ -663,7 +734,12 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 		runq = appiondata.ApStackRunData()
 		runq['stackRunName'] = self.params['runname']
 		runq['session'] = sessiondata
-		runq['selectionrun'] = self.selectiondata
+
+		if self.params['helicalstep']:
+			runq['selectionrun'] = self.newselectiondata
+		else:
+			runq['selectionrun'] = self.selectiondata
+
       	### see if stack run already exists in the database (just checking runname & session)
 		uniqrundatas = runq.query(results=1)
 
@@ -763,6 +839,8 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 			help="high pass filter")
 		self.parser.add_option("--xmipp-normalize", dest="xmipp-norm", type="float",
 			help="normalize the entire stack using xmipp")
+		self.parser.add_option("--helicalstep", dest="helicalstep", type="float",
+			help="helical step, in Angstroms")
 
 		### true/false
 		self.parser.add_option("--phaseflip", dest="phaseflipped", default=False,
@@ -831,6 +909,15 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 			
 
 	def resetStack(self):
+		if self.params['helicalstep'] is not None:
+			### a new set of ApParticleData are stored, in case
+			### the inserted particles will be used to create future stacks
+			### So new selection run name has the helical step size
+			oldsrn = self.selectiondata['name']
+			newsrn = "%s_%i"%(oldsrn,self.params['helicalstep'])
+			self.newselectiondata = copy.copy(self.selectiondata)
+			self.newselectiondata['name'] = newsrn
+
 		if self.params['commit'] is True:
 			self.insertStackRun()
 		else:
@@ -882,6 +969,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 			stackid = apStack.getStackIdFromPath(stackpath)
 			if stackid is not None:
 				apStackMeanPlot.makeStackMeanPlot(stackid)
+
 		### apply xmipp normalization
 		if self.params['xmipp-norm'] is not None and self.params['xmipp-norm-before'] is False:
 			self.xmippNormStack(stackpath)

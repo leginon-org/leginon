@@ -218,6 +218,7 @@ var help = {
 		'magnification' : 'Nominal instrument magnification of images (i.e. 50000)',
 		'defocus' : 'Nominal defocus of images in microns (i.e. -1.5)',
 		'kev' : 'High tension of the microscope in kilovolts (i.e. 120)',
+		'alonghelices' : 'Place points along a helix, you will define stepsize and overlap when you make the stack',
 		'helicalstep' : 'Distance between picks on helical filaments that will be automatically inserted with Helical Insert. Leave blank if you are not picking filaments.',
 		'stackfile' : 'The full path of stack, including filename. Stacks must be in IMAGIC format (i.e. filename ending in .img/.hed)',
 

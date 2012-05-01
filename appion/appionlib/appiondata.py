@@ -116,6 +116,7 @@ class ApParticleData(Data):
 			('peakarea', int),
 			('diameter', float),
 			('label', str),
+			('helixnum', int),
 		)
 	typemap = classmethod(typemap)
 

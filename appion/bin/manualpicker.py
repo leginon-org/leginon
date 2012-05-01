@@ -92,13 +92,23 @@ class PickerApp(wx.App):
 		self.panel = ManualPickerPanel(self.frame, -1)
 		self.panel.originaltargets = {}
 
-		self.panel.addTargetTool('Region to Remove', color=wx.Colour(20,220,20),
-			target=True, shape='polygon')
-		self.panel.setTargets('Region to Remove', [])
-		self.panel.selectiontool.setDisplayed('Region to Remove', True)
+		if self.labels[0] == 'Add Helix':
+			self.panel.addTargetTool('Add Helix', color=wx.Colour(20,220,20),
+				target=True, shape='spline')
+			self.panel.setTargets('Add Helix', [])
+			self.panel.selectiontool.setDisplayed('Add Helix', True)
+			self.panel.addTargetTool('Stored Helices', color=wx.Colour(200,0,0),
+				target=True, shape='spline')
+			self.panel.setTargets('Stored Helices', [])
+			self.panel.selectiontool.setDisplayed('Stored Helices', True)
+		else:
+			self.panel.addTargetTool('Region to Remove', color=wx.Colour(20,220,20),
+				target=True, shape='polygon')
+			self.panel.setTargets('Region to Remove', [])
+			self.panel.selectiontool.setDisplayed('Region to Remove', True)
 
-		for label in self.labels:
-			self.addLabelPicker(label)
+			for label in self.labels:
+				self.addLabelPicker(label)
 
 		# make first target type the initial targeting selection
 		if self.labels:
@@ -131,9 +141,14 @@ class PickerApp(wx.App):
 		self.Bind(wx.EVT_BUTTON, self.onRevert, self.revert)
 		self.buttonrow.Add(self.revert, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 
-		self.helicalinsert = wx.Button(self.frame, -1, '&Helical insert')
-		self.helicalinsert.SetMinSize((120,40))
-		self.Bind(wx.EVT_BUTTON, self.onHelicalInsert, self.helicalinsert)
+		if self.labels[0] == 'Add Helix':
+			self.helicalinsert = wx.Button(self.frame, -1, '&Add Helix')
+			self.helicalinsert.SetMinSize((120,40))
+			self.Bind(wx.EVT_BUTTON, self.addHelix, self.helicalinsert)
+		else:
+			self.helicalinsert = wx.Button(self.frame, -1, '&Helical insert')
+			self.helicalinsert.SetMinSize((120,40))
+			self.Bind(wx.EVT_BUTTON, self.onHelicalInsert, self.helicalinsert)
 		self.buttonrow.Add(self.helicalinsert, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 
 		label = wx.StaticText(self.frame, -1, "Image Assessment:  ", style=wx.ALIGN_RIGHT)
@@ -212,10 +227,11 @@ class PickerApp(wx.App):
 		#targets = self.panel.getTargets('Select Particles')
 		#for target in targets:
 		#	print '%s\t%s' % (target.x, target.y)
-		vertices = self.panel.getTargetPositions('Region to Remove')
-		if len(vertices) > 0:
-			apDisplay.printMsg("Clearing %d polygon vertices"%(len(vertices)))
-			self.panel.setTargets('Region to Remove', [])
+		if self.labels[0]!="Add Helix":
+			vertices = self.panel.getTargetPositions('Region to Remove')
+			if len(vertices) > 0:
+				apDisplay.printMsg("Clearing %d polygon vertices"%(len(vertices)))
+				self.panel.setTargets('Region to Remove', [])
 		self.appionloop.targets = {}
 		for label in self.labels:
 			self.appionloop.targets[label] = self.panel.getTargets(label)
@@ -282,8 +298,50 @@ class PickerApp(wx.App):
 		for t in targets:
 			if t.x and t.y:
 				a.append([ int(t.x), int(t.y) ])
+				
 		na = numpy.array(a, dtype=numpy.int32)
 		return na
+
+	def addHelix(self,evt):
+		"""
+		store list of points as a new helix, and add
+		to list of helices
+		"""
+		### determine which particle label to operate on
+		userlabel = 'Add Helix'
+		helicallabel = 'Stored Helices'
+		### get the selected user targets
+		usertargets = self.panel.getTargets(userlabel)
+		helicaltargets = self.panel.getTargets(helicallabel)
+
+		if len(usertargets) < 2:
+			apDisplay.printWarning("not enough targets")
+			return
+		userarray = self.targetsToArray(usertargets)
+		helicalarray = self.targetsToArray(helicaltargets)
+		if len(helicalarray)==0:
+			self.hnums={}
+			hnum=1
+		else:
+			hnum = helicaltargets[-1].stats['helixnum']+1
+		## set the helix number for these new coordinates
+		helicalpoints = list(helicalarray)
+		for c in userarray:
+			x = c[0]
+			y = c[1]
+			helicalpoints.append((x,y))
+			try:
+				self.hnums[x,y]
+			except:
+				self.hnums[x,y]=hnum
+		newhelicalpoints = []
+		for point in helicalpoints:
+			x = point[0]
+			y = point[1]
+			h = {'helixnum':self.hnums[x,y]}
+			newhelicalpoints.append({'x':x,'y':y,'stats':h})
+		self.panel.setTargets(helicallabel, newhelicalpoints)
+		self.panel.setTargets(userlabel, [])
 
 	def onHelicalInsert(self, evt):
 		"""
@@ -291,8 +349,8 @@ class PickerApp(wx.App):
 		copied from EMAN1 boxer
 		"""
 		### determine which particle label to operate on
-		userlabel = 'user'
-		helicallabel = 'helical'
+		userlabel = 'User'
+		helicallabel = 'Helical'
 		### get last two user targets
 		usertargets = self.panel.getTargets(userlabel)
 		helicaltargets = self.panel.getTargets(helicallabel)
@@ -391,7 +449,9 @@ class ManualPicker(particleLoop2.ParticleLoop):
 			self.labels = []
 
 		if self.params['helicalstep']:
-			self.labels = ['user', 'helical']
+			self.labels = ['User', 'Helical']
+		if self.params['helix'] is True:
+			self.labels = ['Add Helix', 'Stored Helices']
 
 		## If no labels specified or previous picks to get labels from,
 		##   then use default label 'particle'.
@@ -452,6 +512,8 @@ class ManualPicker(particleLoop2.ParticleLoop):
 			help="shape size")
 		self.parser.add_option("--helicalstep", dest="helicalstep", type="float",
 			help="helical step size (in Angstroms)")
+		self.parser.add_option("--helix", dest="helix", default=False, action="store_true",
+			help="draw lines along helices instead of particles")
 		self.parser.add_option("--ovrlp", dest="ovrlp", type="int",
 			help="percent overlap")
 		self.parser.add_option("--mask", dest="checkMask", default=False,
@@ -612,11 +674,15 @@ class ManualPicker(particleLoop2.ParticleLoop):
 		peaktree=[]
 		for label,targets in self.targets.items():
 			for target in targets:	
+				angle=None
+				helixnum=None
 				if isinstance(target, leginon.gui.wx.TargetPanelTools.StatsTarget):
-					angle = target.stats['angle']
-					peaktree.append(self.XY2particle(target.x, target.y, angle, label))
-				else:
-					peaktree.append(self.XY2particle(target.x, target.y, None, label))
+					t = target.stats
+					if t.has_key('angle'):
+						angle = target.stats['angle']
+					if t.has_key('helixnum'):
+						helixnum = target.stats['helixnum']
+				peaktree.append(self.XY2particle(target.x, target.y, angle, helixnum, label))
 
 		# if any peak has an angle, then remove all peaks that do not have an angle
 		#if peaktree:
@@ -636,12 +702,14 @@ class ManualPicker(particleLoop2.ParticleLoop):
 
 		return peaktree
 
-	def XY2particle(self, binx, biny, angle, label=None):
+	def XY2particle(self, binx, biny, angle, helixnum, label=None):
 		peak={}
 		peak['xcoord'] = binx*self.params['bin']
 		peak['ycoord'] = biny*self.params['bin']
 		if angle is not None:
 			peak['angle'] = angle
+		if helixnum is not None:
+			peak['helixnum'] = helixnum
 		peak['correlation'] = None
 		peak['peakmoment'] = None
 		peak['peakstddev'] = None

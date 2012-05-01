@@ -343,6 +343,14 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 		$traceconverted = false;
 		if ($partrundata[0]['trace'] == 1)
 			$particlelabels[]=array('label'=>'fromtrace');
+		// if "Stored Helices" label, remove from list
+		$particlelabelsEdit=array();
+		foreach ($particlelabels as $row) {
+			$label = $row['label'];
+			if ($label == 'Stored Helices') {$storedhelices = True; continue;}
+			$particlelabelsEdit[]=$row;
+		}
+		$particlelabels=$particlelabelsEdit;
 		if (!empty($particlelabels)) {
 			echo "<br/>\n";
 			echo"<input type='checkbox' name='labelcheck' onclick='enablelabel()' $labelcheck >\n";
@@ -418,6 +426,14 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	echo "<br/>\n";
 	echo "<br/>\n";
 
+	// for boxing helical segments
+	if ($storedhelices) {
+		$hstep = ($_POST['boxhstep']) ? $_POST['boxhstep']:'';
+		echo "<input type='text' name='boxhstep' size='5' value='$hstep'>\n";
+		echo docpop('helicalstep', 'Helical Step');
+		echo " <font SIZE=-2><I>(in &Aring;ngstroms)</I></font>\n";
+		echo "<br>\n";
+	}
 
 	// Determine best box size...
 
@@ -597,6 +613,7 @@ function runMakestack() {
 	$commit = ($_POST['commit']=="on") ? 'commit' : '';
 	$stackdfpair = ($_POST['stackdfpair']=="on") ? True : False;
 	$boxfiles = ($_POST['boxfiles']);
+	$boxhstep = ($_POST['boxhstep']);
 	$helicalcheck = ($_POST['helicalcheck']);
 	$finealigncheck = ($_POST['finealigncheck']);
 	$ctffindonly = ($_POST['ctffindonly'])=='on' ? True : False;
@@ -755,6 +772,7 @@ function runMakestack() {
 	$command.="--description=\"$description\" ";
 	if (!empty($partlabel)) $command.="--label=\"$partlabel\" ";
 	if ($ctffindonly) $command.="--ctfmethod=ctffind ";
+	if ($boxhstep) $command.="--helicalstep=$boxhstep ";
 	if ($helicalcheck == 'on') $command.="--rotate ";
 	elseif ($finealigncheck == 'on') $command.="--rotate --finealign ";
 
