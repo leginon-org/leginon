@@ -533,7 +533,7 @@ function showOrSubmitCommand($command, $headinfo, $jobtype, $nproc, $testimg=Fal
 	if (!preg_match("/--projectid=/", $command))
 	$command .= "--projectid=$projectid ";
 	if (!preg_match("/--expid=/", $command) && !empty($expId))
-	$command .= "--expId=$expId ";
+	$command .= "--expid=$expId ";
 	if (!preg_match("/--jobtype=/", $command))
 	$command .= "--jobtype=$jobtype ";
 	
