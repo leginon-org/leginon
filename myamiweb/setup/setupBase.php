@@ -49,7 +49,7 @@ require_once('../inc/formValidator.php');
 		<p>This title will appear on all the tools web pages.</p>	
 		<p>example: Appion and Leginon DB Tools</p><br />
 
-		<div id="error"><?php if($errMsg['project_title']) echo $errMsg['project_title']; ?></div>
+		<div id="error"><?php if (!empty($errMsg) && $errMsg['project_title']) echo $errMsg['project_title']; ?></div>
 		
 		<input type="text" size=50 name="project_title" value="<?php 	if($_POST){ 
 						print($_POST['project_title']); 
