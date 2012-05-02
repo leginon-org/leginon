@@ -84,6 +84,7 @@ class mysql {
 	function SQLTableExists($name) {
 		$table_exists=false;
 		$Rtables = $this->SQLQuery("SHOW TABLES");
+		#if ($Rtables === false) return false;
 	    	while($table = mysql_fetch_array($Rtables))
 			if ($table[0] == $name) {
 				$table_exists=true;
