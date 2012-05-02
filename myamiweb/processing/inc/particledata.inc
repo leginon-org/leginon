@@ -947,7 +947,8 @@ class particledata {
 
 	function getLastCtfTiltRun($sessionId) {
 		$q = "select max(DEF_id) as runId "
-			."from `ApCtfTiltRunData` where `REF|leginondata|SessionData|session`='$sessionId'";
+			."from `ApAceRunData` where (`REF|leginondata|SessionData|session`='$sessionId' "
+			."AND `REF|ApCtfTiltParamsData|ctftilt_params` IS NOT NULL) ";
 		list($r) = $this->mysql->getSQLResult($q);
 		return $r['runId'];
 	}
@@ -4692,6 +4693,66 @@ class particledata {
 		return $r;
 	}
 
+	function hasHelicalInfo($alignid) {
+		$q="SELECT p.helixnum FROM ApAlignParticleData AS a "
+			."LEFT JOIN ApStackParticleData as s "
+			."ON (a.`REF|ApStackParticleData|stackpart`=s.`DEF_id`) "
+			."LEFT JOIN ApParticleData AS p "
+			."ON (s.`REF|ApParticleData|particle`=p.`DEF_id`) "
+			."WHERE "
+			."  a.`REF|ApAlignStackData|alignstack` = '$alignid' "
+			."limit 1";
+		//echo $q;
+		$r = $this->mysql->getSQLResult($q);
+		if ($r[0]['helixnum']) return True;
+		return False;
+	}
+
+	function getNumImagesInAlignment($alignid) {
+		$q="SELECT count(*) as img "
+			." FROM ApAlignParticleData AS a "
+			."LEFT JOIN ApStackParticleData as s "
+			."ON (a.`REF|ApStackParticleData|stackpart`=s.`DEF_id`) "
+			."LEFT JOIN ApParticleData AS p "
+			."ON (s.`REF|ApParticleData|particle`=p.`DEF_id`) "
+			."WHERE "
+			."  a.`REF|ApAlignStackData|alignstack` = '$alignid' "
+			."GROUP BY p.`REF|leginondata|AcquisitionImageData|image` ";
+		$r = $this->mysql->getSQLResult($q);
+		return count($r);
+	}
+
+	function getHelicalInfoForClasses($alignid,$classnums,$onlyNumImgs=False){
+		if ($onlyNumImgs) $q = "SELECT count(*) as img ";
+		else $q="SELECT a.partnum, "
+			." a.xshift, "
+			." a.yshift, "
+			." a.rotation, "
+			." p.`REF|leginondata|AcquisitionImageData|image` as image, "
+			." p.angle, "
+			." p.helixnum ";
+		$q.= " FROM ApAlignParticleData AS a "
+			."LEFT JOIN ApStackParticleData as s "
+			."ON (a.`REF|ApStackParticleData|stackpart`=s.`DEF_id`) "
+			."LEFT JOIN ApParticleData AS p "
+			."ON (s.`REF|ApParticleData|particle`=p.`DEF_id`) "
+			."LEFT JOIN ApAlignReferenceData as ar "
+			."ON (a.`REF|ApAlignReferenceData|ref` = ar.`DEF_id`) "
+			."WHERE "
+			."  a.`REF|ApAlignStackData|alignstack` = '$alignid' "
+			."  AND (";
+		foreach ($classnums as $cnum) {
+			$refnum = strval(intval($cnum)+1);
+			$q .= " ar.`refnum` = '$refnum' OR ";
+		}
+		$q = substr($q, 0, -3);
+		$q .= ")";
+		if ($onlyNumImgs) $q.= "GROUP BY p.`REF|leginondata|AcquisitionImageData|image`";
+		$r = $this->mysql->getSQLResult($q);
+		if ($onlyNumImgs) return count($r);
+		return $r;
+	}
+
 	function getClusteringParticleNumber($clusterId) {
 		$q="SELECT part.`refnum` AS classNumber, "
 			."  COUNT(part.`DEF_id`) AS number, "
@@ -5293,7 +5354,7 @@ function getBaseAppionPath($sessioninfo,$new_base='appion') {
 			$pieces_count = count($path_pieces);
 			$appion_basepath = implode('leginon',array_slice($path_pieces,0,$pieces_count-1)).$new_base.$path_pieces[$pieces_count-1]; 
 			$appion_basepath=ereg_replace("/rawdata","",$appion_basepath);		
-			$appion_basepath=ereg_replace("/appion2/","/appion/",$appion_basepath);		
+			$appion_basepath=preg_replace('/appion\d/',"appion",$appion_basepath);		
 		} else {
 			$extra="ERROR: could not determine Appion Path directory automatically. Please enter manually";
 			echo $extra;
