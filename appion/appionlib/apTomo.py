@@ -498,6 +498,9 @@ def checkExistingFullTomoData(path,name):
 	else:
 		return results[0]
 
+def getFullTomoRunData(fulltomorunId):
+	return appiondata.ApFullTomogramRunData.direct_query(fulltomorunId)
+
 def getFullTomoData(fulltomoId):
 	return appiondata.ApFullTomogramData.direct_query(fulltomoId)
 
