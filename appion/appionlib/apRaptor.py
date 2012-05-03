@@ -20,7 +20,7 @@ def alignAndRecon(stackdir, stackname, processdir, markersize_pixel, reconbin, t
 	raptorbin = os.getenv('RAPTORBIN')
 	if raptorbin[-1] != '/':
 		raptorbin = raptorbin +'/'	
-	cmd = 'RAPTOR -execPath ' + raptorbin  + ' -path '+stackdir+' -input '+stackname+' -output '+processdir
+	cmd = raptorbin + 'RAPTOR -execPath ' + raptorbin  + ' -path '+stackdir+' -input '+stackname+' -output '+processdir
 	cmd += ' -diameter %d' % (markersize_pixel)+' -bin %d' % (reconbin)+ ' -rec 0 -thickness %d' % (thickness_binnedpixel)
 	if markernumber != 0:
 		cmd += ' -markers %d' % markernumber
