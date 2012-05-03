@@ -126,7 +126,7 @@ class ParticleExtractLoop(appionLoop2.AppionLoop):
 	def getCtfValueConfidenceForImage(self,imgdata,msg=False):
 		method = self.params['ctfmethod']
 		ctfrunid = self.params['ctfrunid']
-		if ctfrunid is not None:
+		if ctfrunid is None:
 			return apCtf.getBestCtfValueForImage(imgdata,msg,method=method)
 		else:
 			return apCtf.getCtfValueForImage(imgdata, ctfrunid, msg=msg, method=method)
@@ -134,7 +134,7 @@ class ParticleExtractLoop(appionLoop2.AppionLoop):
 	def getDefocusAmpConstForImage(self,imgdata,msg=False):
 		method = self.params['ctfmethod']
 		ctfrunid = self.params['ctfrunid']
-		if ctfrunid is not None:
+		if ctfrunid is None:
 			return apCtf.getBestDefocusAndAmpConstForImage(imgdata, msg=msg, method=method)
 		else:
 			return apCtf.getDefocusAndAmpConstForImage(imgdata, ctf_estimation_runid=ctfrunid, msg=msg, method=method)
