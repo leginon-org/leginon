@@ -123,9 +123,25 @@ class ParticleExtractLoop(appionLoop2.AppionLoop):
 	def checkRequireCtf(self):
 			return self.params['ctfcutoff'] or self.params['mindefocus'] or self.params['maxdefocus']
 
+	def getCtfValueConfidenceForImage(self,imgdata,msg=False):
+		method = self.params['ctfmethod']
+		ctfrunid = self.params['ctfrunid']
+		if ctfrunid is not None:
+			return apCtf.getBestCtfValueForImage(imgdata,msg,method=method)
+		else:
+			return apCtf.getCtfValueForImage(imgdata, ctfrunid, msg=msg, method=method)
+
+	def getDefocusAmpConstForImage(self,imgdata,msg=False):
+		method = self.params['ctfmethod']
+		ctfrunid = self.params['ctfrunid']
+		if ctfrunid is not None:
+			return apCtf.getBestDefocusAndAmpConstForImage(imgdata, msg=msg, method=method)
+		else:
+			return apCtf.getDefocusAndAmpConstForImage(imgdata, ctf_estimation_runid=ctfrunid, msg=msg, method=method)
+
 	def checkCtfParams(self, imgdata):
 		shortname = apDisplay.short(imgdata['filename'])
-		ctfvalue, conf = apCtf.getBestCtfValueForImage(imgdata,msg=False,method=self.params['ctfmethod'])
+		ctfvalue, conf = self.getCtfValueConfidenceForImage(imgdata,False)
 
 		### check if we have values and if we care
 		if ctfvalue is None:
@@ -239,6 +255,8 @@ class ParticleExtractLoop(appionLoop2.AppionLoop):
 			help="particle picking runid")
 		self.parser.add_option("--fromstackid", dest="fromstackid", type="int",
 			help="redo a stack from a previous stack")
+		self.parser.add_option("--ctfrunid", dest="ctfrunid", type="int",
+			help="consider only specific ctfrun")
 		self.parser.add_option("--partlimit", dest="partlimit", type="int",
 			help="particle limit")
 		self.parser.add_option("--mag", dest="mag", type="int",

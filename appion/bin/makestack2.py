@@ -430,12 +430,12 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 
 		apix = apDatabase.getPixelSize(imgdata)
 		### get the adjusted defocus value for no astigmatism
-		defocus, ampconst = apCtf.getBestDefocusAndAmpConstForImage(imgdata, msg=True, method=self.params['ctfmethod'])
+		defocus, ampconst = self.getDefocusAmpConstForImage(imgdata,True)
 		defocus *= 1.0e6
 		### check to make sure defocus is a reasonable value for applyctf
 		self.checkDefocus(defocus, shortname)
 		### get all CTF parameters, we also need to get the CS value from the database
-		ctfdata, score = apCtf.getBestCtfValueForImage(imgdata, msg=False, method=self.params['ctfmethod'])
+		ctfdata, score = self.getCtfValueConfidenceForImage(imgdata, False)
 		#ampconst = ctfdata['amplitude_contrast'] ### we could use this too
 
 		# find cs
@@ -461,11 +461,11 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 			voltage = (imgdata['scope']['high tension'])/1000
 
 		apix = apDatabase.getPixelSize(imgdata)
-		defocus, ampconst = apCtf.getBestDefocusAndAmpConstForImage(imgdata, msg=True, method=self.params['ctfmethod'])
+		defocus, ampconst = self.getDefocusAmpConstForImage(imgdata, True)
 		defocus *= 1.0e6
 		self.checkDefocus(defocus, shortname)
 		### get all CTF parameters, we also need to get the CS value from the database
-		ctfdata, score = apCtf.getBestCtfValueForImage(imgdata, msg=False, method=self.params['ctfmethod'])
+		ctfdata, score = self.getCtfValueConfidenceForImage(imgdata,False)
 		#ampconst = ctfdata['amplitude_contrast'] ### we could use this too
 
 		# find cs
@@ -492,7 +492,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 	def phaseFlipAceTwo(self, inimgpath, imgdata):
 
 		apix = apDatabase.getPixelSize(imgdata)
-		bestctfvalue, bestconf = apCtf.getBestCtfValueForImage(imgdata, msg=True, method=self.params['ctfmethod'])
+		bestctfvalue, bestconf = self.getCtfValueConfidenceForImage(imgdata, True)
 
 		if bestctfvalue is None:
 			apDisplay.printWarning("No ctf estimation for current image")
@@ -599,7 +599,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 		phaseflip whole image using spider
 		"""
 
-		bestctfvalue, bestconf = apCtf.getBestCtfValueForImage(imgdata,msg=True,method=self.params['ctfmethod'])
+		bestctfvalue, bestconf = self.getCtfValueConfidenceForImage(imgdata, True)
 
 		if bestctfvalue is None:
 			apDisplay.printWarning("No ctf estimation for current image")
