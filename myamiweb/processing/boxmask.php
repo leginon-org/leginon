@@ -49,8 +49,8 @@ function createBoxMask($extra=false, $title='BoxMask Launcher', $heading='Mask p
 	$runname = ($_POST['runname']) ? $_POST['runname'] : 'boxmask'.$stackid;
 	$mask = ($_POST['mask']) ? $_POST['mask'] : intval($boxang/2)-ceil(2*$apix);
 	$imask = ($_POST['imask']) ? $_POST['imask'] : '0';
-	$len = ($_POST['len']) ? $_POST['len'] : '240';
-	$falloff = ($_POST['falloff']) ? $_POST['falloff'] : '90';
+	$len = ($_POST['len']) ? $_POST['len'] : '300';
+	$falloff = ($_POST['falloff']) ? $_POST['falloff'] : '60';
 	$commitcheck = ($_POST['commit']=='on' || !$_POST['process']) ? 'checked' : '';		
 
 	// get outdir path
