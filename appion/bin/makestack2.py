@@ -410,7 +410,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 			emancmd = ("applyctf %s %s %s setparm flipphase" % (prepartmrc, postpartmrc, parmstr))
 			apEMAN.executeEmanCmd(emancmd, showcmd=False)
 
-			ctfpartarray = apImage.mrcToArray(postpartmrc)
+			ctfpartarray = apImage.mrcToArray(postpartmrc, msg=False)
 			ctfpartstack.append(ctfpartarray)
 
 		apImagicFile.writeImagic(ctfpartstack, ctfimgstackfile)
