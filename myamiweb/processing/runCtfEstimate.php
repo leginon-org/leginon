@@ -36,6 +36,7 @@ function runCtfEstimate() {
 
 	// ctffind or ctftilt
 	$ctftilt = $_GET['ctftilt'];
+	if (!$ctftilt) $ctftilt = ($_POST['runctftilt']=='on') ? True : '';
 	
 	// parse params
 	$ampcarbon=$_POST['ampcarbon'];
@@ -178,6 +179,8 @@ function createCtfEstimateForm($extra=false) {
 	$form_resmin = ($_POST['resmin']) ? $_POST['resmin'] : '400.0';
 	$form_resmax = ($_POST['resmax']) ? $_POST['resmax'] : '8.0';
 	$form_defstep = ($_POST['defstep']) ? $_POST['defstep'] : '5000.0';
+	// check if ctftilt is set
+	$ctftiltcheck = ($_POST['runctftilt']=='on') ? 'CHECKED' : '';
 	$form_dast = ($_POST['dast']) ? $_POST['dast'] : '100';
 
 	echo"
@@ -223,6 +226,12 @@ function createCtfEstimateForm($extra=false) {
 	echo "<input type='text' name='dast' value='$form_dast' size='6'>\n";
 	echo docpop('dast','Expected astigmatism (Ang)');
 	echo "<br />\n";
+	// give user option to run ctftilt (useful for film data)
+	if (!$ctftilt) { 
+		echo "<input type='checkbox' name='runctftilt' $ctftiltcheck>\n";
+		echo docpop('ctftilt','Run CtfTilt');
+		echo "<br>\n";
+	}
 	echo "<br />\n";
 	//echo "<INPUT TYPE='checkbox' NAME='confcheck' onclick='enableconf(this)'>\n";
 	//echo "Reprocess Below Confidence Value<br />\n";
