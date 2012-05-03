@@ -76,7 +76,7 @@ $totimgs = $particle->getNumImagesInAlignment($alignId);
 echo "Total number of images used in alignment: $totimgs";
 $hinfo = $particle->getHelicalInfoForClasses($alignId,$classes);
 // reverse order of results, to start with first image
-#$hinfo = array_reverse($hinfo);
+$hinfo = array_reverse($hinfo);
 
 $nimgs = $particle->getHelicalInfoForClasses($alignId,$classes,$onlyNumImgs=True);
 $nimgp=($nimgs/$totimgs*100);
