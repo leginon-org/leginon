@@ -506,8 +506,9 @@ require_once('../inc/formValidator.php');
 	
 		<h3>Enter Image Processing Host(s) information:</h3>
 		<p>Please enter your processing host name and the number of processors on individual nodes of this host.</p>
-		<input name="addHost" type="button" value="Add" <?php ($update && PROCESSING === true) ? print("") : print("disabled"); ?> onclick="addRowToTable('','','','','','','','','','','','','','','','','','','','','');" />
-		<input name="removeHost" type="button" value="Remove"  <?php ($update && PROCESSING === true) ? print("") : print("disabled"); ?> onclick="removeRowFormTable('hosts');" />
+		<input name="addHost" type="button" value="Add" <?php /*($update && PROCESSING === true) ? print("") : print("disabled"); */?> onclick="addRowToTable('','','','','','','','','','','','','','','','','','','','','');" />
+		<!-- leave the remove button out, does not work -->
+		<!-- <input name="removeHost" type="button" value="Remove"  <?php /*($update && PROCESSING === true) ? print("") : print("disabled");*/ ?> onclick="removeRowFormTable('hosts');" />-->
 		Please Click the "Add" Button to start. If you don't have a processing host, leave it empty.<br />
 		
 		<table border=0 cellspacing=8 style="font-size: 12px" id="hosts">
