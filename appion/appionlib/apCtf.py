@@ -283,7 +283,9 @@ def getCtfValueForImage(imgdata, ctf_estimation_runid=None, ctfavg=True, msg=Tru
 def calculateConfidenceScore(ctfdata,ctfavg=True):
 	# get ctf confidence values
 	# accepts negative cross_correlation as well
-	conf1 = max(ctfdata['confidence'],abs(ctfdata['cross_correlation']))
+	conf1 = ctfdata['confidence']
+	if ctfdata['cross_correlation'] is not None:
+		conf1 = max(ctfdata['confidence'],abs(ctfdata['cross_correlation']))
 	conf2 = ctfdata['confidence_d']
 
 	if conf1 >= 0 and conf2 >= 0:
