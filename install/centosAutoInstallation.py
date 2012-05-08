@@ -852,7 +852,7 @@ setenv SPBIN_DIR ${SPIDERDIR}/bin/''')
 			elif "addplugin(\"processing\");" in line:
 				outf.write("addplugin(\"processing\");\n")
 			elif "// $PROCESSING_HOSTS[]" in line:
-				outf.write("$PROCESSING_HOSTS[] = array('host' => '%s', 'nproc' => %d);\n"%(self.dbHost, self.nproc))
+				outf.write("$PROCESSING_HOSTS[] = array('host' => '%s', 'nproc' => %d,'nodesmax' => '1','ppndef' => '1','ppnmax' => '1','reconpn' => '1','walltimedef' => '48','walltimemax' => '240','cputimedef' => '1000','cputimemax' => '10000','memorymax' => '','appionbin' => '/usr/','appionlibdir' => '/usr/lib/python2.4/site-packages/','baseoutdir' => '/appion','localhelperhost' => '','dirsep' => '/','wrapperpath' => '','loginmethod' => 'USERPASSWORD','loginusername' => '','passphrase' => '','publickey' => '','privatekey' => ''	);\n"%(self.dbHost, self.nproc))
 			elif "// $CLUSTER_CONFIGS[]" in line:
 				outf.write("$CLUSTER_CONFIGS[] = 'default_cluster';\n")
 			elif line.startswith("define('TEMP_IMAGES_DIR', "):
