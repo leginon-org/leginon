@@ -16,7 +16,7 @@ class CentosInstallation(object):
 
 	def setReleaseDependantValues(self):
 		# need to change to branch when release
-		self.svnCmd = "svn co http://ami.scripps.edu/svn/myami/branches/myami-2.1 " + self.svnMyamiDir
+		self.svnCmd = "svn co http://ami.scripps.edu/svn/myami/branches/myami-2.2 " + self.svnMyamiDir
 		
 		#self.svnCmd = "svn co http://ami.scripps.edu/svn/myami/trunk " + self.svnMyamiDir
 
