@@ -17,7 +17,7 @@ class Path
 	// make sure a path ends with a single path separator.
 	public static function formatEndPath( $path, $dirSeparator=DIRECTORY_SEPARATOR ) 
 	{
-		$formattedPath = ereg($dirSeparator."$", $path) ? $path : $path.$dirSeparator;
+		$formattedPath = preg_match("%".$dirSeparator."$%", $path) ? $path : $path.$dirSeparator;
 		return $formattedPath;
 	}
 	
