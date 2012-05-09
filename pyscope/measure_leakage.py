@@ -6,8 +6,7 @@ import numextension
 cam = pyscope.registry.getClass('DE12')()
 
 # Measure Dark Noise
-exp_time = ???
-cam.setExposureTime(exp_time)  # only one frame
+cam.setExposureTime(0)
 dark_images = []
 for i in (0,1):
 	cam.setUseFrames((0,))
@@ -38,3 +37,6 @@ timediff = exposure_times[1] - exposure_times[0]
 mean = numextension.allstats(diff, mean=True)['mean']
 leakage = mean / timediff
 print 'Leakage: ', leakage
+
+print ''
+raw_input('Enter to quit.')
