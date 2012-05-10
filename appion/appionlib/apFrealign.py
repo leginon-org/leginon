@@ -124,7 +124,20 @@ def generateParticleParams(params,initparfile='params.0.par'):
 		particleparams['mag'] = 10000 # workaround to get around dstep
 		particleparams['shx']=0
 		particleparams['shy']=0
-		particleparams['film']=1
+		# for helical reconstructions, film is helix number
+		if particle['particle']['helixnum']:
+			imgid=particle['particle']['image'].dbid
+			helix=particle['particle']['helixnum']
+			try:
+				if params['lastimgid']!=imgid or params['lasthelix']!=helix:
+					params['totalHelix']+=1
+			except:
+				params['totalHelix']=1
+			params['lastimgid']=imgid
+			params['lasthelix']=helix
+			particleparams['film']=params['totalHelix']
+		else:
+			particleparams['film']=1
 		particleparams['presa']=0
 		particleparams['dpres']=0
 
