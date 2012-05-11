@@ -43,11 +43,21 @@ class Cluster
 		global $PROCESSING_HOSTS;
 		
 		foreach ( $PROCESSING_HOSTS as $hostconfig ) {
-			if ( $hostconfig['host'] == $hostname ) {
+			// We have an issue with machines that have multiple host names.
+			// as a quick fix, we added an 'alias' field in the 
+			// config file. This alias name will only be used for
+			// identification during this cluster object construction.
+			if ( $hostconfig['host'] == $hostname || $hostconfig['alias'] == $hostname ) {
 				$this->loadConfig( $hostconfig );
 				break;
 			}
 		}
+		
+		// Error if the hostname was not found in the config file
+		if ( is_null($this->hostname) ) {
+			throw new Exception("Trying to establish a connection with an unknown host ($hostname). Ask your sys admin to add this host to your configuration file.");
+		}
+		
 		$this->setRemoteOutputPath();
 	}
 
