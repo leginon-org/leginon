@@ -21,11 +21,11 @@ function exec_over_ssh($host, $username, $password, $command, $result=false, $po
 	global $errorMessage;		
 	$sshResult = true;
 	
-	$cluster = new Cluster($host);
 	try {
+		$cluster = new Cluster($host);
 		$sshResult = $cluster->executeOnHost($username, $password, $command, $port);
 	} catch(Exception $e) {
-  		$errorMessage = 'Error executing over ssh on host: '.$host.' sending command: '.$command.' username: '.$username.' Error Message: ' .$e->getMessage();
+  		$errorMessage = 'Failed to execute command ('.$command.') on host ('.$host.') for user ('.$username.'). Message: ' .$e->getMessage();
   		$sshResult = false;
 	}
 	
@@ -38,8 +38,8 @@ function scp($host, $username, $password, $localfile, $remotefile, $mode=0644, $
 	
 	$sshResult = true;
 	
-	$cluster = new Cluster($host);
 	try {
+		$cluster = new Cluster($host);
 		$sshResult = $cluster->copyToHost($username, $password, $localfile, $remotefile, $mode, $port);
 	} catch(Exception $e) {
   		$errorMessage = 'Error copying file over ssh on host: '.$host.' local file: '.$localfile.' remote file: '.$remotefile.' username: '.$username.' Error Message: ' .$e->getMessage();
