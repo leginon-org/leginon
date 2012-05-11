@@ -1407,6 +1407,8 @@ def _sqltype(t):
 		return "INT(20)"
 	elif t is datetime.datetime:
 		return "TIMESTAMP"
+	elif t is datetime.date:
+		return "DATE"
 	else:
 		return None
 

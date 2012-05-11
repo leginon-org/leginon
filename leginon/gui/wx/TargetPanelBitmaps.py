@@ -80,6 +80,9 @@ def targetIcon(color, shape):
 			dc.DrawLine(13, 1, 13, 13)
 			dc.DrawLine(13, 13, 7, 13)
 			dc.DrawLine(7, 13, 3, 1)
+		elif shape == 'spline':
+			dc.DrawLine(3, 1, 10, 6)
+			dc.DrawLine(10, 6, 13, 13)
 		dc.EndDrawing()
 		dc.SelectObject(wx.NullBitmap)
 		bitmap.SetMask(wx.Mask(bitmap, wx.WHITE))

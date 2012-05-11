@@ -182,7 +182,7 @@ class TargetType(object):
 		self.shape = shape
 		self.color = color
 		self.size = size
-		if shape != 'polygon' and shape != 'numbers':
+		if shape != 'polygon' and shape !='spline' and shape != 'numbers':
 			self.bitmaps = {}
 			self.bitmaps['default'], self.bitmaps['selected'] = leginon.gui.wx.TargetPanelBitmaps.getTargetBitmaps(color, shape, size)
 		self.targets = None
@@ -245,7 +245,7 @@ class TargetType(object):
 	#--------------------
 	def changeCursorSize(self, newsize):
 		self.size = newsize
-		if self.shape != 'polygon' and self.shape != 'numbers':
+		if self.shape != 'polygon' and self.shape != 'spline' and self.shape != 'numbers':
 			self.bitmaps['default'], self.bitmaps['selected'] = leginon.gui.wx.TargetPanelBitmaps.getTargetBitmaps(self.color, self.shape, newsize)
 
 

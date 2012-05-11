@@ -98,7 +98,7 @@ def setControl(control, value):
 			if 'x' in keys and 'y' in keys:
 				control.setSize(value)
 			else:
-				for i in ['dimension', 'offset', 'binning', 'exposure time', 'save frames']:
+				for i in ['dimension', 'offset', 'binning', 'exposure time', 'save frames', 'use frames', 'readout delay']:
 					if i not in keys:
 						raise ValueError
 				control._setConfiguration(value)

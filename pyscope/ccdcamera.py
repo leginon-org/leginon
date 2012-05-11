@@ -92,6 +92,10 @@ class CCDCamera(baseinstrument.BaseInstrument):
 			settings['use frames'] = self.getUseFrames()
 		except:
 			settings['use frames'] = ()
+		try:
+			settings['readout delay'] = self.getReadoutDelay()
+		except:
+			settings['readout delay'] = 0
 		return settings
 
 	def setSettings(self, settings):
@@ -103,6 +107,10 @@ class CCDCamera(baseinstrument.BaseInstrument):
 			pass
 		try:
 			self.setUseFrames(settings['use frames'])
+		except:
+			pass
+		try:
+			self.setReadoutDelay(settings['readout delay'])
 		except:
 			pass
 

@@ -174,6 +174,8 @@ class TargetImagePanel(leginon.gui.wx.ImagePanel.ImagePanel):
 			if targets:
 				if type.shape == 'polygon':
 					self.drawPolygon(dc, type.color, targets)
+				elif type.shape == 'spline':
+					self.drawPolygon(dc, type.color, targets, close=False)
 				else:
 					if type.shape == 'numbers':
 						self.drawNumbers(dc, type.color, targets)
@@ -183,7 +185,7 @@ class TargetImagePanel(leginon.gui.wx.ImagePanel.ImagePanel):
 						self._drawTargets(dc, type.bitmaps['default'], targets, scale)
 
 		if self.selectedtarget is not None:
-			if self.selectedtarget.type in self.targets and type.shape != 'polygon' and type.shape != 'numbers' and type.shape != 'area':
+			if self.selectedtarget.type in self.targets and type.shape != 'polygon' and type.shape != 'spline' and type.shape != 'numbers' and type.shape != 'area':
 				try:
 					bitmap = self.selectedtarget.type.bitmaps['selected']
 					self._drawTargets(dc, bitmap, [self.selectedtarget], scale)
@@ -191,7 +193,7 @@ class TargetImagePanel(leginon.gui.wx.ImagePanel.ImagePanel):
 					pass
 
 	#--------------------
-	def drawPolygon(self, dc, color, targets):
+	def drawPolygon(self, dc, color, targets, close=True):
 		dc.SetPen(wx.Pen(color, 3))
 		dc.SetBrush(wx.Brush(color, 1))
 		#if self.scaleImage():
@@ -204,24 +206,31 @@ class TargetImagePanel(leginon.gui.wx.ImagePanel.ImagePanel):
 				point = target.x/xscale, target.y/yscale
 				scaledpoints.append(point)
 		else:
-			scaledpoints = [(target.x,target.y) for target in targets]
-
+			if isinstance(targets[-1], leginon.gui.wx.TargetPanelTools.StatsTarget) and close is False:
+				scaledpoints=[]
+				for target in targets:
+					scaledpoints.append([target.x,target.y,target.stats])
+			else:
+				scaledpoints = [(target.x,target.y,0) for target in targets]
 		if len(scaledpoints)>=1:
 			p1 = self.image2view(scaledpoints[0])
 			dc.DrawCircle(p1[0],p1[1],1)
 			
 		for i,p1 in enumerate(scaledpoints[:-1]):
 			p2 = scaledpoints[i+1]
+			pi1 = self.image2view(p1)
+			pi2 = self.image2view(p2)
+			dc.DrawCircle(pi2[0],pi2[1],1)
+			# for multiple splines
+			if p1[2]==p2[2]:
+				dc.DrawLine(pi1[0], pi1[1], pi2[0], pi2[1])
+		# close it with final edge if not a spline
+		if close is True:
+			p1 = scaledpoints[-1]
+			p2 = scaledpoints[0]
 			p1 = self.image2view(p1)
 			p2 = self.image2view(p2)
-			dc.DrawCircle(p2[0],p2[1],1)
 			dc.DrawLine(p1[0], p1[1], p2[0], p2[1])
-		# close it with final edge
-		p1 = scaledpoints[-1]
-		p2 = scaledpoints[0]
-		p1 = self.image2view(p1)
-		p2 = self.image2view(p2)
-		dc.DrawLine(p1[0], p1[1], p2[0], p2[1])
 
 	#--------------------
 	def drawNumbers(self, dc, color, targets):
@@ -335,11 +344,14 @@ class TargetImagePanel(leginon.gui.wx.ImagePanel.ImagePanel):
 				boxsum = self._getIntegratedIntensity(position[0],position[1])
 				strings.append('%s (%g, %g) %e' % (name, position[0], position[1],boxsum))
 			if isinstance(selectedtarget, leginon.gui.wx.TargetPanelTools.StatsTarget):
-				for key, value in selectedtarget.stats.items():
-					if type(value) is float:
-						strings.append('%s: %g' % (key, value))
-					else:
-						strings.append('%s: %s' % (key, value))
+				try:
+					for key, value in selectedtarget.stats.items():
+						if type(value) is float:
+							strings.append('%s: %g' % (key, value))
+						else:
+							strings.append('%s: %s' % (key, value))
+				except:
+					pass
 		return strings
 
 	def _getIntegratedIntensity(self,x,y):

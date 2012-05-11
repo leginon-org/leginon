@@ -288,9 +288,10 @@ class DECameraBase(ccdcamera.CCDCamera):
 	def getTemperatureStatus(self):
 		return self.getProperty('Temperature Control')
 
-	def setTemperatureStatus(self, state):
+	## method name altered to prevent Leginon from setting temperature
+	def _set_TemperatureStatus(self, state):
 		return self.setProperty('Temperature Control', state)
-		
+
 	def getTemperature(self):
 		return self.getProperty('Temperature - Detector (Celsius)')
 

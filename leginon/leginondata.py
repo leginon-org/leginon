@@ -484,6 +484,7 @@ class PresetData(InSessionData):
 			('skip', bool),
 			('save frames', bool),
 			('use frames', tuple),
+			('readout delay', int),
 		)
 	typemap = classmethod(typemap)
 
@@ -1092,6 +1093,7 @@ class CameraSettingsData(Data):
 			('exposure time', float),
 			('save frames', bool),
 			('use frames', tuple),
+			('readout delay', int),
 		)
 	typemap = classmethod(typemap)
 
