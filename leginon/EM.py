@@ -90,6 +90,9 @@ class EM(node.Node):
 				def getHostname(self):
 					return self._hostname
 
+				def getCs(self):
+					return self.cs
+
 			tries = 3
 			instance = None
 			for i in range(1,tries+1):
@@ -158,6 +161,7 @@ class EM(node.Node):
 		instrumentdata = leginondata.InstrumentData()
 		instrumentdata['name'] = name
 		instrumentdata['hostname'] = instance.getHostname()
+		instrumentdata['cs'] = instance.getCs()
 		magnificationsdata = leginondata.MagnificationsData()
 		magnificationsdata['instrument'] = instrumentdata
 		magnificationsdata['magnifications'] = instance.getMagnifications()
