@@ -80,7 +80,7 @@ def getSVNInfo(module_path=''):
 	return infodict
 
 def getTextVersion():
-	return 'pre2.2'
+	return '2.2'
 
 def getVersion(module_path=''):
 	svninfo = getSVNInfo(module_path)
