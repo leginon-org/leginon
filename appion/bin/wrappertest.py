@@ -10,6 +10,12 @@ def getThisFileDir():
 	dirname = os.path.dirname(fullmod)
 	return dirname
 
+# check sinedon.cfg
+from leginon import configcheck
+configcheck.checkSinedonConfig()
+configcheck.checkLeginonConfig()
+
+print '----------------------------------------'
 print 'appion bin is from %s' % (getThisFileDir())
 
 from appionlib import appiondata
