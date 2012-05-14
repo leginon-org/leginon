@@ -254,6 +254,7 @@ class CentosInstallation(object):
 		# the default location to keep all appion scripts in their
 		# own place, rather than cluttering up /usr/bin or whatever.
 		pyprefix = self.runCommand('python -c "import sys;print sys.prefix"')
+		pyprefix = pyprefix.strip()
 		apbin = os.path.join(pyprefix, 'bin', 'appion')
 		os.chdir(self.svnMyamiDir + 'appion')
 		self.runCommand('python setup.py install --install-scripts=%s' % (apbin,))
@@ -265,18 +266,24 @@ class CentosInstallation(object):
 			setcmd = '%s PATH%s${PATH}:%s' % (cmd, eq, apbin,)
 			f.write(setcmd)
 			f.close()
+			os.chmod(fname, 0755)
 
-		# setup Leginon configure file
-		self.writeToLog("setup Leginon configure file")
+
+		# setup Leginon configuration file
+		self.writeToLog("setup Leginon configuration file")
 		leginonDir = self.runCommand('python -c "import leginon; print leginon.__path__[0]"')		
 		leginonDir = leginonDir.strip()
 		self.setupLeginonCfg(leginonDir + '/config')
 
-		# setup Sinedon configure file
-		self.writeToLog("setup Sinedon configure file")
+		# setup Sinedon configuration file
+		self.writeToLog("setup Sinedon configuration file")
 		sinedonDir = self.runCommand('python -c "import sinedon; print sinedon.__path__[0]"')
 		sinedonDir = sinedonDir.strip()
 		self.setupSinedonCfg(sinedonDir)
+
+		# setup .appion.cfg configuration file
+		self.writeToLog("setup .appion.cfg configuration file")
+		self.setupAppionCfg("/usr/bin")
 
 		# setup instruments configuration
 		pyscopeDir = self.runCommand('python -c "import pyscope; print pyscope.__path__[0]"')
@@ -394,7 +401,11 @@ class CentosInstallation(object):
 		self.runCommand(command)
 		
 		# move the unzipped folder to a global location
-		shutil.move("spider", "/usr/local/spider")
+		try:
+			shutil.move("spider", "/usr/local/spider")
+		except:
+			self.writeToLog("--- Spider installation failed: could not copy spider directory tp /usr/local/spider")
+			return False
 		#self.runCommand("mv -v spider /usr/local/")
 
 		# select 32 or 64 bit file to install
@@ -671,6 +682,19 @@ setenv SPBIN_DIR ${SPIDERDIR}/bin/''')
 		inf.close()
 		outf.close()		
 
+	def setupAppionCfg(self, appionCfgDir):
+		outf = open(appionCfgDir + '/.appion.cfg', 'w')
+		
+		outf.write("ProcessingHostType=Torque\n")
+		outf.write("Shell=/bin/csh\n")
+		outf.write("ScriptPrefix=\n")
+		outf.write("ExecCommand=/usr/bin/qsub\n")
+		outf.write("StatusCommand=/usr/bin/qstat\n")
+		outf.write("AdditionalHeaders= -m e, -j oe\n")
+		outf.write("PreExecuteLines=\n")
+
+		outf.close()		
+
 	def editHosts(self):
 
 		# make a back up file
@@ -852,7 +876,7 @@ setenv SPBIN_DIR ${SPIDERDIR}/bin/''')
 			elif "addplugin(\"processing\");" in line:
 				outf.write("addplugin(\"processing\");\n")
 			elif "// $PROCESSING_HOSTS[]" in line:
-				outf.write("$PROCESSING_HOSTS[] = array('host' => '%s', 'nproc' => %d,'nodesmax' => '1','ppndef' => '1','ppnmax' => '1','reconpn' => '1','walltimedef' => '48','walltimemax' => '240','cputimedef' => '1000','cputimemax' => '10000','memorymax' => '','appionbin' => '/usr/','appionlibdir' => '/usr/lib/python2.4/site-packages/','baseoutdir' => '/appion','localhelperhost' => '','dirsep' => '/','wrapperpath' => '','loginmethod' => 'USERPASSWORD','loginusername' => '','passphrase' => '','publickey' => '','privatekey' => ''	);\n"%(self.dbHost, self.nproc))
+				outf.write("$PROCESSING_HOSTS[] = array('host' => '%s', 'nproc' => %d,'nodesmax' => '1','ppndef' => '1','ppnmax' => '1','reconpn' => '1','walltimedef' => '48','walltimemax' => '240','cputimedef' => '1000','cputimemax' => '10000','memorymax' => '','appionbin' => '/usr/','appionlibdir' => '/usr/lib/python2.4/site-packages/','baseoutdir' => '/appion','localhelperhost' => 'localhost','dirsep' => '/','wrapperpath' => '','loginmethod' => 'USERPASSWORD','loginusername' => '','passphrase' => '','publickey' => '','privatekey' => ''	);\n"%(self.dbHost, self.nproc))
 			elif "// $CLUSTER_CONFIGS[]" in line:
 				outf.write("$CLUSTER_CONFIGS[] = 'default_cluster';\n")
 			elif line.startswith("define('TEMP_IMAGES_DIR', "):
@@ -1016,10 +1040,11 @@ setenv SPBIN_DIR ${SPIDERDIR}/bin/''')
 		if result is False:
 			sys.exit(1)
 
+		self.downloadSampleImages()
+
 		if (self.doInstallExternalPackages):
 			self.installExternalPackages()
 					
-		self.downloadSampleImages()
 
 		self.writeToLog("Installation Complete.")
 
