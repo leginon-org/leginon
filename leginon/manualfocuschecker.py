@@ -75,10 +75,8 @@ class ManualFocusChecker(acquisition.Acquisition):
 
 	def manualNow(self):
 		errstr = 'Manual focus failed: %s'
-		presetnames = self.settings['preset order']
-		try:
-			presetname = presetnames[0]
-		except IndexError:
+		presetname = self.settings['manual focus preset']
+		if not presetname:
 			message = 'no presets specified for manual focus'
 			self.logger.error(errstr % message)
 			return

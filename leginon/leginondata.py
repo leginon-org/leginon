@@ -1649,6 +1649,7 @@ class FocuserSettingsData(AcquisitionSettingsData):
 			('melt preset', str),
 			('melt time', float),
 			('acquire final', bool),
+			('manual focus preset', str),
 		)
 	typemap = classmethod(typemap)
 
