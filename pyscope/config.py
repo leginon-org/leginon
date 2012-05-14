@@ -4,6 +4,7 @@ import sys
 import ConfigParser
 import imp
 import os
+import inspect
 import pyscope
 import pyscope.tem
 import pyscope.ccdcamera
@@ -93,6 +94,7 @@ def getCameraClasses():
 	
 def getNameByClass(cls):
 	conf = getConfigured()
-	for name,value in conf.items():
-		if issubclass(cls, value['class']):
-			return name
+	for bcls in inspect.getmro(cls):
+		for name,value in conf.items():
+			if bcls is value['class']:
+				return name
