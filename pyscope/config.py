@@ -12,9 +12,10 @@ import pyscope.ccdcamera
 configured = None
 temclasses = None
 cameraclasses = None
+configfiles = None
 
 def parse():
-	global configured, temclasses, cameraclasses
+	global configured, temclasses, cameraclasses, configfiles
 
 	configparser = ConfigParser.SafeConfigParser()
 
@@ -22,14 +23,21 @@ def parse():
 	modpath = pyscope.__path__
 
 	# read instruments.cfg
-	filename = os.path.join(modpath[0], 'instruments.cfg')
-	if not os.path.exists(filename):
-		print 'please configure %s' % (filename,)
+	filenames = [
+		os.path.join('/etc/myami', 'instruments.cfg'),
+		os.path.join(modpath[0], 'instruments.cfg')
+	]
+	one_exists = False
+	for filename in filenames:
+		if os.path.exists(filename):
+			one_exists = True
+	if not one_exists:
+		print 'please configure at least one of these:  %s' % (filenames,)
 		sys.exit()
 	try:
-		configparser.read([filename])
+		configfiles = configparser.read(filenames)
 	except:
-		print 'error reading %s' % (filename,)
+		print 'error reading %s' % (filenames,)
 		sys.exit()
 
 	# parse
