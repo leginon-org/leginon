@@ -1148,3 +1148,9 @@ class Tecnai(tem.TEM):
 
 	def getEmission(self):
 		return self.tom.Gun.Emission
+
+	def getExpWaitTime(self):
+		try:
+			return self.lowdose.WaitTime
+		except:
+			raise RuntimeError('no low dose interface')
