@@ -131,7 +131,7 @@ class Corrector(imagewatcher.ImageWatcher):
 			self.instrument.ccdcamera.Settings = self.settings['camera settings']
 			self.stopTimer('set cam')
 			self.startTimer('get image')
-			image = self.instrument.ccdcamera.Image
+			image = self.acquireCameraImageData()['image']
 			self.stopTimer('get image')
 		except Exception, e:
                         raise
@@ -186,7 +186,7 @@ class Corrector(imagewatcher.ImageWatcher):
 		series = []
 		for i in range(n):
 			self.logger.info('Acquiring reference image (%s of %s)' % (i+1, n))
-			image = self.instrument.ccdcamera.Image
+			image = self.acquireCameraImageData()['image']
 			series.append(image)
 		return series
 
@@ -378,7 +378,7 @@ class Corrector(imagewatcher.ImageWatcher):
 
 		raise NotImplementedError('need to work out the details of configuring the camera here')
 
-		im = self.instrument.ccdcamera.Image
+		im = self.acquireCameraImageData()['image']
 		mean = darkmean = arraystats.mean(im)
 		self.displayImage(im)
 		self.logger.info('Dark reference mean: %s' % str(darkmean))
@@ -393,7 +393,7 @@ class Corrector(imagewatcher.ImageWatcher):
 		for i in range(tries):
 			config = { 'exposure time': trial_exp }
 			raise NotImplementedError('need to work out the details of configuring the camera here')
-			im = self.instrument.ccdcamera.Image
+			im = self.acquireCameraImageData()['image']
 			mean = arraystats.mean(im)
 			self.displayImage(im)
 			self.logger.info('Image mean: %s' % str(mean))
