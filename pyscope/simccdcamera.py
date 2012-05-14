@@ -158,3 +158,18 @@ class SimOtherCCDCamera(SimCCDCamera):
 		im = SimCCDCamera._getImage(self)
 		im = 10 * im
 		return im
+
+	def getRetractable(self):
+		return True
+
+	def setInserted(self, value):
+		if value == self.getInserted():
+			return
+		self.inserted = value
+		time.sleep(10)
+
+	def getInserted(self):
+		if not hasattr(self, 'inserted'):
+			self.inserted = True
+		return self.inserted
+
