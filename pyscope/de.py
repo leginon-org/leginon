@@ -192,6 +192,9 @@ class DECameraBase(ccdcamera.CCDCamera):
 		return True
 		
 	def setInserted(self, value):
+		# return if already at this insertion state
+		if not (value ^ self.getInserted()):
+			return
 		if value:
 			de12value = 'Extended'
 			sleeptime = 20
