@@ -118,7 +118,7 @@ function createTiltAlignerForm($extra=false, $title='Tilt Aligner Launcher', $he
 		<br>";
 
 	echo docpop('tiltaxis',' Initial Tilt Axis');
-	echo "<INPUT TYPE='text' NAME='tiltaxis' VALUE='$tiltaxis' SIZE='4'>\n";\
+	echo "<INPUT TYPE='text' NAME='tiltaxis' VALUE='$tiltaxis' SIZE='4'>\n";
 	echo "<FONT SIZE=-2><I>(in degrees)</I></FONT>
 		<br><br>";
 	/*echo"
