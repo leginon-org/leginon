@@ -662,7 +662,60 @@ class AppionLoop(appionScript.AppionScript):
 				apDisplay.printWarning("substantial memory leak "+str(round(memleak,2))+"MB")
 				print "(",str(n),round(slope,5),round(rho,5),round(gain,2),")"
 
-	#=====================
+	def skipTestOnImage(self,imgdata):
+		imgname = imgdata['filename']
+		skip = False
+		reason = None
+		#tiltskip is default to None since it might not need evaluation
+		tiltskip = None
+
+		if imgname in self.donedict:
+			skip = True
+			reason = 'done'
+		elif self.reprocessImage(imgdata) is False:
+			self._writeDoneDict(imgname)
+			reason = 'reproc'
+			skip = True
+
+		if skip is True:
+			return skip, reason
+		else:
+		# image not done or reprocessing allowed
+			# check sibling status instead if wanted
+			if self.params['sibassess'] is True:
+				status=apDatabase.getSiblingImgCompleteStatus(imgdata)
+			else:
+				status=apDatabase.getImgCompleteStatus(imgdata) 
+
+			if self.params['norejects'] is True and status is False:
+				reason = 'reject'
+				skip = True
+		
+			elif self.params['bestimages'] is True and status is not True:
+				reason = 'reject'
+				skip = True
+
+			elif ( self.params['tiltangle'] is not None or self.params['tiltangle'] != 'all' ):
+				tiltangle = apDatabase.getTiltAngleDeg(imgdata)
+
+				tiltangle = apDatabase.getTiltAngleDeg(imgdata)
+				if (self.params['tiltangle'] == 'notilt' and abs(tiltangle) > 3.0 ):
+					skip = True
+				elif (self.params['tiltangle'] == 'hightilt' and abs(tiltangle) < 30.0 ):
+					skip = True
+				elif (self.params['tiltangle'] == 'lowtilt' and abs(tiltangle) >= 30.0 ):
+					skip = True
+				### the reason why -2.0 and 2.0 are used is because the tilt angle is saved as 0 +/- a small amount
+				elif (self.params['tiltangle'] == 'minustilt' and tiltangle > -2.0 ):
+					skip = True
+				elif (self.params['tiltangle'] == 'plustilt' and tiltangle < 2.0 ):
+					skip = True
+				if skip == True:
+					reason = 'tilt'
+
+		return skip, reason
+
+#=====================
 	def _removeProcessedImages(self):
 		startlen = len(self.imgtree)
 		donecount = 0
@@ -672,56 +725,14 @@ class AppionLoop(appionScript.AppionScript):
 		self.stats['skipcount'] = 0
 		newimgtree = []
 		for imgdata in self.imgtree:
+			skip, reason = self.skipTestOnImage(imgdata)
 			imgname = imgdata['filename']
-			skip = False
-
-			if imgname in self.donedict:
-				donecount += 1
-				skip = True
-
-			elif self.reprocessImage(imgdata) is False:
-				self._writeDoneDict(imgname)
-				reproccount += 1
-				skip = True
-
-			# image not done or reprocessing allowed
-			if skip is False:
-				# check sibling status instead if wanted
-				if self.params['sibassess'] is True:
-					status=apDatabase.getSiblingImgCompleteStatus(imgdata)
-				else:
-					status=apDatabase.getImgCompleteStatus(imgdata) 
-
-				if self.params['norejects'] is True and status is False:
+			if skip is True:
+				if reason == 'reproc':
+					reproccount += 1
+				elif reason == 'reject' or reason == 'tilt':
 					self._writeDoneDict(imgname)
 					rejectcount += 1
-					skip = True
-			
-				elif self.params['bestimages'] is True and status is not True:
-					self._writeDoneDict(imgname)
-					rejectcount += 1
-					skip = True
-
-				elif ( self.params['tiltangle'] is not None or self.params['tiltangle'] != 'all' ):
-					tiltangle = apDatabase.getTiltAngleDeg(imgdata)
-					tiltskip = False
-					if (self.params['tiltangle'] == 'notilt' and abs(tiltangle) > 3.0 ):
-						tiltskip = True
-					elif (self.params['tiltangle'] == 'hightilt' and abs(tiltangle) < 30.0 ):
-						tiltskip = True
-					elif (self.params['tiltangle'] == 'lowtilt' and abs(tiltangle) >= 30.0 ):
-						tiltskip = True
-					### the reason why -2.0 and 2.0 are used is because the tilt angle is saved as 0 +/- a small amount
-					elif (self.params['tiltangle'] == 'minustilt' and tiltangle > -2.0 ):
-						tiltskip = True
-					elif (self.params['tiltangle'] == 'plustilt' and tiltangle < 2.0 ):
-						tiltskip = True
-					### skip this tilt?
-					if tiltskip is True:
-						#print "reject:", tiltangle
-						self._writeDoneDict(imgname)
-						tiltcount += 1
-						skip = True
 
 			if skip is True:
 				if self.stats['skipcount'] == 0:
