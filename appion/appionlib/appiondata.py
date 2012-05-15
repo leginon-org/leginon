@@ -655,6 +655,24 @@ class ApParticleMovieData(Data):
 		)
 	typemap = classmethod(typemap)
 
+class ApDDStackRunData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('runname', str),
+			('params', ApDDStackParamsData),
+			('session', leginon.leginondata.SessionData),
+			('path', ApPathData),
+		)
+	typemap = classmethod(typemap)
+
+class ApDDStackParamsData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('preset', str),
+		)
+	typemap = classmethod(typemap)
+
+
 ### END Stack tables ###
 ### START alignment tables  ###
 
