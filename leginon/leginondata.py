@@ -683,6 +683,13 @@ class AcquisitionImageData(CameraImageData):
 		)
 	typemap = classmethod(typemap)
 
+class DoseImageData(CameraImageData):
+	def typemap(cls):
+		return CameraImageData.typemap() + (
+			('preset', PresetData),
+		)
+	typemap = classmethod(typemap)
+
 class ViewerImageStatus(Data):
 	def typemap(cls):
 		return Data.typemap() + (

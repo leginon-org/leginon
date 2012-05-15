@@ -1002,6 +1002,7 @@ class PresetsManager(node.Node):
 		binning = preset['binning']
 		smallsize = self.settings['smallsize']
 		imagedata =  self._acquireSpecialImage(preset, acquirestr, mode='center', imagelength=smallsize, binning=binning)
+		self.imagedata = imagedata
 		
 		if imagedata is None:
 			return
@@ -1030,6 +1031,12 @@ class PresetsManager(node.Node):
 		params = {'dose': dose}
 		self.updatePreset(presetname, params)
 		self.old_time = None
+		self.saveDoseImage(presetname)
+
+	def saveDoseImage(self, presetname):
+		doseimage = leginondata.DoseImageData(initializer=self.imagedata)
+		doseimage['preset'] = self.presets[presetname]
+		doseimage.insert(force=True)
 
 	def matchDose(self,presetname,dose_to_match,old_dose):
 		preset = self.presetByName(presetname)
