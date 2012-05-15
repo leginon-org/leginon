@@ -24,7 +24,7 @@ except IOError:
 	raise LeginonConfigError('cannot find configuration file default.cfg')
 ## process configs in this order (later ones overwrite earlier ones)
 config_locations = [
-	'leginon.cfg',
+	os.path.join('/etc/myami', 'leginon.cfg'),
 	os.path.join(MODULE, 'config', 'leginon.cfg'),
 	os.path.join(HOME, 'leginon.cfg'),
 ]
