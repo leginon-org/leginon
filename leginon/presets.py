@@ -1270,7 +1270,8 @@ class PresetsManager(node.Node):
 					camdata1['dimension'][axis] = imagelength
 					camdata1['offset'][axis] = (camdata0['offset'][axis]*camdata0['binning'][axis]+(change / 2))/binning[axis]
 					camdata1['binning'][axis] = binning[axis]
-					camdata1['exposure time'] = camdata1['exposure time']*camdata0['binning'][axis]/camdata1['binning'][axis]
+			camdata1['exposure time'] = camdata1['exposure time'] * (camdata0['binning']['x'] * camdata0['binning']['y'] / camdata0['binned multiplier'])
+			camdata1['exposure time'] = camdata1['exposure time'] / (camdata1['binning']['x'] * camdata1['binning']['y'] / camdata1['binned multiplier'])
 		if mode == 'bin':
 			## at maximum bin using as much camera as possible to at most imagelength x imagelength
 			## with exposure time adjustment
@@ -1282,8 +1283,9 @@ class PresetsManager(node.Node):
 				camdata1['dimension'][axis] = new_camdim
 				camdata1['binning'][axis] = new_bin
 				camdata1['exposure time'] = camdata1['exposure time'] / extrabin
-				if camdata1['exposure time']< 5.0:
-					camdata1['exposure time'] = 5.0
+			camdata1['exposure time'] = camdata1['exposure time'] * camdata1['binned multiplier'] / camdata0['binned multiplier']
+			if camdata1['exposure time']< 5.0:
+				camdata1['exposure time'] = 5.0
 		
 		try:
 			self.instrument.setData(camdata1)
@@ -1724,6 +1726,11 @@ class PresetsManager(node.Node):
 		temp_mag = self.temp_mag
 		if temp_mag is None:
 			return
+
+		# set preset binning so we can get binned multiplier
+		self.instrument.ccdcamera.Binning = preset['binning']
+		orig_mult = self.instrument.ccdcamera.BinnedMultiplier
+
 		# go to temporary mag
 		original_mag = preset['magnification']
 		self.instrument.tem.Magnification = temp_mag
@@ -1740,11 +1747,13 @@ class PresetsManager(node.Node):
 		self.instrument.ccdcamera.Binning = {'x': temp_bin, 'y': temp_bin}
 		self.instrument.ccdcamera.Offset = {'x': 0, 'y': 0}
 		self.logger.info('Temporary Dimension, Binning: %d, %d' % (temp_dim, temp_bin,))
+		temp_mult = self.instrument.ccdcamera.BinnedMultiplier
 		# calculate temporary exposure time
 		orig_unbinned_dim = orig_bin * orig_dim
 		orig_zoom = fullcamdim / orig_unbinned_dim 
 		expscale = (temp_mag / float(original_mag)) ** 2
 		binscale = (orig_bin / float(temp_bin)/orig_zoom) ** 2
+		binscale = binscale * temp_mult / orig_mult   ## Is this right?
 		original_exptime = preset['exposure time']
 		temp_exptime = int(expscale * binscale * original_exptime)
 		if temp_exptime < 5:

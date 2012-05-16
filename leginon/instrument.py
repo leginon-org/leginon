@@ -394,5 +394,6 @@ parametermapping = (
 	('readout delay', 'ReadoutDelay'),
 	('temperature', 'Temperature'),
 	('temperature status', 'TemperatureStatus'),
+	('binned multiplier', 'BinnedMultiplier'),
 )
 

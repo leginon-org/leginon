@@ -162,6 +162,7 @@ scope_params = (
 camera_params = (
 	('dimension', dict),
 	('binning', dict),
+	('binned multiplier', float),
 	('offset', dict),
 	('exposure time', float),
 	('exposure type', str),
