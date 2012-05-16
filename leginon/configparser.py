@@ -8,24 +8,9 @@
 
 import os
 import ConfigParser
-import inspect
-
-HOME = os.path.expanduser('~')
-CURRENT = os.getcwd()
-this_file = inspect.currentframe().f_code.co_filename
-MODULE = os.path.dirname(this_file)
+import pyami.fileutil
 
 configparser = ConfigParser.SafeConfigParser()
-# look in the same directory as this module
-defaultfilename = os.path.join(MODULE, 'config', 'default.cfg')
-try:
-	configparser.readfp(open(defaultfilename), defaultfilename)
-except IOError:
-	raise LeginonConfigError('cannot find configuration file default.cfg')
-## process configs in this order (later ones overwrite earlier ones)
-config_locations = [
-	os.path.join('/etc/myami', 'leginon.cfg'),
-	os.path.join(MODULE, 'config', 'leginon.cfg'),
-	os.path.join(HOME, 'leginon.cfg'),
-]
-configfiles = configparser.read(config_locations)
+confdirs = pyami.fileutil.get_config_dirs()
+conf_files = [os.path.join(confdir, 'leginon.cfg') for confdir in confdirs]
+configfiles = configparser.read(conf_files)

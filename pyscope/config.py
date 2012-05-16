@@ -8,6 +8,7 @@ import inspect
 import pyscope
 import pyscope.tem
 import pyscope.ccdcamera
+import pyami.fileutil
 
 configured = None
 temclasses = None
@@ -23,10 +24,8 @@ def parse():
 	modpath = pyscope.__path__
 
 	# read instruments.cfg
-	filenames = [
-		os.path.join('/etc/myami', 'instruments.cfg'),
-		os.path.join(modpath[0], 'instruments.cfg')
-	]
+	confdirs = pyami.fileutil.get_config_dirs()
+	filenames = [os.path.join(confdir, 'instruments.cfg') for confdir in confdirs]
 	one_exists = False
 	for filename in filenames:
 		if os.path.exists(filename):
