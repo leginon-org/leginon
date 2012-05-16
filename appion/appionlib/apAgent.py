@@ -118,7 +118,7 @@ class Agent (object):
             jobInstance = jobtest.jobtestClass()
         else:
             jobInstance = apGenericJob.genericJob(command)
-        
+        print jobType, command
         return jobInstance
 
     ##
