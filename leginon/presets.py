@@ -1265,11 +1265,11 @@ class PresetsManager(node.Node):
 		camdata1 = copy.copy(camdata0)
 		fullcamdim = self.instrument.camerasizes[camdata1['ccdcamera']['name']]
 
-		## send new binning to camera to get binned multiplier
-		self.instrument.ccdcamera.Binning = binning
-		camdata1['binned multiplier'] = self.instrument.ccdcamera.BinnedMultiplier
 
 		if mode == 'center':
+			## send new binning to camera to get binned multiplier
+			self.instrument.ccdcamera.Binning = binning
+			camdata1['binned multiplier'] = self.instrument.ccdcamera.BinnedMultiplier
 			## center of the preset without exposure adjustment
 			## figure out if we want to cut down to imagelength x imagelength
 			for axis in ('x','y'):
@@ -1284,6 +1284,11 @@ class PresetsManager(node.Node):
 			## at maximum bin using as much camera as possible to at most imagelength x imagelength
 			## with exposure time adjustment
 			new_bin = max((fullcamdim['x']/imagelength,fullcamdim['y']/imagelength))
+
+			## send new binning to camera to get binned multiplier
+			self.instrument.ccdcamera.Binning = {'x': new_bin, 'y': new_bin}
+			camdata1['binned multiplier'] = self.instrument.ccdcamera.BinnedMultiplier
+
 			for axis in ('x','y'):
 				new_camdim = int(math.floor( fullcamdim[axis] / new_bin ))
 				extrabin = float(new_bin) / camdata0['binning'][axis]
