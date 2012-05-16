@@ -46,11 +46,26 @@ def versionAtLeast(version, minimum):
 		# else equal, so check next digit
 	return True
 
+import pyami.fileutil
+import sinedon
+import pyscope
+import leginon
+def print_config_paths():
+	confdirs = set()
+	for module in (sinedon,pyscope,leginon):
+		confdirs.update(pyami.fileutil.get_config_dirs(module))
+	print 'These are the locations where various config files will be searched.'
+	print 'Please review any existing config files and update them if necessary.'
+	for confdir in confdirs:
+		print '   ', confdir
+
 ######################################################################
 ## Python
 ######################################################################
 print '--------------------------------------------------------------'
 leginonInstalled()
+print ''
+print_config_paths()
 print ''
 
 ######################################################################
@@ -70,6 +85,8 @@ for dir in sys.path:
 	print '        %s' % (dir,)
 if not sys.path:
 	print '        (Empty)'
+
+## config files
 
 ## minimum python version
 minpyver = (2, 3, 4)
@@ -258,3 +275,5 @@ else:
 		except:
 			print '        Failed to start wx application.  This is usually because you do not have display permission'
 		print '    wxPython test successful'
+
+
