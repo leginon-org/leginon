@@ -98,6 +98,7 @@ class DECameraBase(ccdcamera.CCDCamera):
 	Subclasses should define an attribute "de_name"
 	to inform this base class how to set the active camera.
 	'''
+	logged_methods_on = True
 	def __init__(self):
 		ccdcamera.CCDCamera.__init__(self)
 
@@ -304,13 +305,13 @@ class DECameraBase(ccdcamera.CCDCamera):
 		return self.getProperty('Temperature Control')
 
 	## method name altered to prevent Leginon from setting temperature
-	def _set_TemperatureStatus(self, state):
+	def set_TemperatureStatus(self, state):
 		return self.setProperty('Temperature Control', state)
 
 	def getTemperature(self):
 		return self.getProperty('Temperature - Detector (Celsius)')
 
-	def setTemperature(self, degrees):
+	def set_Temperature(self, degrees):
 		return self.setProperty('Temperature Control - Setpoint (Celsius)', degrees)
 
 #### Classes for specific cameras

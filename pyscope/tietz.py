@@ -158,7 +158,7 @@ class Tietz(object):
 		'getImageTransform': [('cpImageGeometry', 'r')],
 		'setImageTransform': [('cpImageGeometry', 'w')],
 		'getTemperature': [('cpCurrentTemperature', 'r')],
-		'setTemperature': [('cpTemperatureSetpoint', 'w')],
+		'set_Temperature': [('cpTemperatureSetpoint', 'w')],
 		'getShutterOpenDelay': [('cpShutterOpenDelay', 'r')],
 		'setShutterOpenDelay': [('cpShutterOpenDelay', 'w')],
 		'getShutterCloseDelay': [('cpShutterCloseDelay', 'r')],
@@ -576,7 +576,7 @@ class Tietz(object):
 		return self._getParameterValue('cpCurrentTemperature')/1000.0
 
 	# method name altered to prevent Leginon from setting temperature
-	def _set_Temperature(self, value):
+	def set_Temperature(self, value):
 		#	{'type': float}
 		self._setParameterValue('cpTemperatureSetpoint', int(value*1000))
 
