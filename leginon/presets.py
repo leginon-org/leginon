@@ -1257,9 +1257,17 @@ class PresetsManager(node.Node):
 		self.logger.info('Acquiring %s image' %(acquirestr))
 		camdata0 = leginondata.CameraEMData()
 		camdata0.friendly_update(preset)
+		
+		## send preset binning to camera to get binned multiplier
+		self.instrument.ccdcamera.Binning = preset['binning']
+		camdata0['binned multiplier'] = self.instrument.ccdcamera.BinnedMultiplier
 
 		camdata1 = copy.copy(camdata0)
 		fullcamdim = self.instrument.camerasizes[camdata1['ccdcamera']['name']]
+
+		## send new binning to camera to get binned multiplier
+		self.instrument.ccdcamera.Binning = binning
+		camdata1['binned multiplier'] = self.instrument.ccdcamera.BinnedMultiplier
 
 		if mode == 'center':
 			## center of the preset without exposure adjustment
