@@ -21,7 +21,7 @@ logger = None
 def log_info(message):
 	global logger
 	if logger is None:
-		logger = make_loger()
+		logger = make_logger()
 	logger.info(message)
 
 ## hack to keep track of our recursion level
