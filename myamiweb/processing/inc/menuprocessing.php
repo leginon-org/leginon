@@ -762,6 +762,25 @@ if (is_numeric($expId)) {
 		);
 	}
 
+	// display the direct detector menu
+	// TODO: would be nice to hide this if there is a way to see if the data is not DD
+	if (true) {
+		$action = "Direct Detector Tools";
+
+		// TODO: Add results
+
+		$nruns=array();
+		$nruns[] = array(
+			'name'=>"<a href='runMakeDDRawFrameStack.php?expId=$sessionId'>Create raw frame stack</a>",
+			'result'=>$tarresults,
+		);
+
+		$data[] = array(
+			'action' => array($action, $celloption),
+			'newrun' => array($nruns, $celloption),
+		);
+	}
+	
 	// upload model & template tools
 	$action = "Import tools";
 
