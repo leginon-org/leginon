@@ -9,6 +9,7 @@ import subprocess
 #appion
 from appionlib import apDisplay
 from appionlib import apImage
+from appionlib import apDBImage
 from appionlib import apParam
 from appionlib import apFile
 
@@ -221,7 +222,7 @@ def processAndSaveImage(imgdata, params):
 
 	#downsize and filter leginon image
 	if params['uncorrected']:
-		imgarray = apImage.correctImage(imgdata, params)
+		imgarray = apDBImage.correctImage(imgdata)
 	else:
 		imgarray = imgdata['image']
 	imgarray = apImage.preProcessImage(imgarray, params=params, msg=False)

@@ -14,6 +14,7 @@ from appionlib import apParam
 from appionlib import apDisplay
 from appionlib import apCtf
 from appionlib import apImage
+from appionlib import apDBImage
 from appionlib import apDatabase
 
 try:
@@ -33,7 +34,7 @@ def runAce(matlab, imgdata, params, showprev=True):
 
 	if params['uncorrected']:
 		tmpname='temporaryCorrectedImage.mrc'
-		imgarray = apImage.correctImage(imgdata, params)
+		imgarray = apDBImage.correctImage(imgdata)
 		imgpath = os.path.join(params['rundir'],tmpname)
 		apImage.arrayToMrc(imgarray, imgpath)
 		print "processing", imgpath

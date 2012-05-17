@@ -363,30 +363,6 @@ def scaleImage(imgdata, scale):
 		apDisplay.printError("Image would be scaled to less than 1 pixel in length, aborted")
 	return ndimage.zoom(imgdata, scale, order=1)
 
-#=========================
-def correctImage(imgdata, sessionname,start_frame=0,nframe=0):
-	"""
-	Correct an image using the old method:
-	- no bias correction
-	- dark correction is not time dependent in the normal mode
-	"""
-	digital_camera_name = imgdata['camera']['ccdcamera']['name']
-	if not digital_camera_name.upper().startswith('DE') and nframe > 0:
-		apDisplay.printWarning("Image not taken with direct detection camera, raw frame correction ignored")
-		normal_mode = True
-	elif nframe == 0:
-		normal_mode = True
-	else:
-		normal_mode = False
-	if normal_mode == True or dd_imported==False:
-		rawimgarray = imgdata['image']
-		from appionlib import apDatabase
-		darkarray, normarray = apDatabase.getDarkNorm(sessionname, imgdata['camera'])
-		correctedimgarray = normarray * (rawimgarray - darkarray)
-		return correctedimgarray
-	else:
-		dd.setImageData(imgdata)
-		return dd.correctFrameImage(start_frame,nframe)
 
 #=========================
 def frame_cut(a, newshape):

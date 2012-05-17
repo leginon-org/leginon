@@ -8,6 +8,7 @@ from PIL import Image
 from PIL import ImageDraw
 #appion
 from appionlib import apImage
+from appionlib import apDBImage
 from appionlib import apFile
 from appionlib import apDisplay
 from appionlib import apParam
@@ -444,7 +445,7 @@ def createPeakJpeg(imgdata, peaktree, params, procimgarray=None):
 	apParam.createDirectory(jpegdir, warning=False)
 
 	if params['uncorrected']:
-		imgarray = apImage.correctImage(imgdata, params)
+		imgarray = apDBImage.correctImage(imgdata)
 	else:
 		imgarray = imgdata['image']
 
