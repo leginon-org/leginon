@@ -176,6 +176,7 @@ var help = {
 		'batchcheck' : 'By default the existence and the number of text fields are checked before proceeding.  However, the checking process requires read privilege into your file system not as your computer login but as a user in a group specified in your web server configuration.  If read privilege is not set, you can by-pass the process by unchecking this.',
 		'tiltlist' : 'List the nominal tilt angles in the tilt series in degrees, separated by commas.  (ex. 0,10,20,30).',
 		'defociilist' : 'List the nominal defocii in the defocal series in microns, separated by commas.  (ex. -1,-2).',
+		'rctmask' : 'SPIDER mask radius around the particle.  The maximum is (boxsize/2 - 2) pixels.',
 		'rctcenter' : 'In RCT, the particle Euler angles are fixed, but the particles are not centered. Through an interative process the volume is projected in the direction of the particle and cross-correlated, then the particle is shifted to its correct location.',
 		'rctpartlp' : 'low-pass filter the tilted particles prior to reconstructing (0=off, do not low-pass filter particles)',
 		'rctparthp' : 'high-pass filter the tilted particles prior to reconstructing (0=off, do not high-pass filter particles)',

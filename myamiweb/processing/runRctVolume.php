@@ -219,7 +219,7 @@ function createRctVolumeForm($extra=false, $title='rctVolume.py Launcher', $head
 	echo "<table border='0' cellspacing='8' cellpading='8'><tr><td>\n";
 
 	//Mask radius & boxsize (for error checking)
-	echo docpop('mask','Mask Radius:<br/>');
+	echo docpop('rctmask','Mask Radius:<br/>');
 	echo "<INPUT TYPE='text' NAME='maskrad' SIZE='5' VALUE='$maskrad'>";
 	echo "<FONT SIZE='-2'>(in pixels)</FONT>\n";
 	echo "\n<br/>\n<br/>\n";
