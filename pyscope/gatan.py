@@ -66,7 +66,7 @@ class Gatan(ccdcamera.CCDCamera):
 				self.unsupported.append(method_name)
 
 	def __getattribute__(self, attr_name):
-		if attr_name in object.__getattribute__(self, 'unsupported'):
+		if hasattr(self, 'unsupported') and attr_name in object.__getattribute__(self, 'unsupported'):
 			raise AttributeError('attribute not supported')
 		return object.__getattribute__(self, attr_name)
 
