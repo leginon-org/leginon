@@ -255,6 +255,12 @@ class Focuser(acquisition.Acquisition):
 			self.logger.info('Eucentric focus set')
 			self.eucset = True
 		else:
+			# Make sure defocus is set according to the preset
+			# Otherwise two defocus correction sequence 
+			# using the same preset would have close
+			# to zero defocus after the first correction
+			p = self.presetsclient.getCurrentPreset()
+			self.instrument.tem.Defocus = p['defocus']
 			self.eucset = False
 		self.reset = True
 
