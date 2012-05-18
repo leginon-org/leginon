@@ -8,6 +8,13 @@ import ToTEM
 import gatan
 import tem
 
+"""
+The file ToTEM.pyd is required, which is the exactly same ToTEM.dll but changed file extension to .pyd for python.  
+
+Some python versions take .pyd extension instead of .dll.
+Put ToTEM,pyd or ToTEM.dll in <python dir>/DLLs
+"""
+
 class Jeol(tem.TEM):
 	name = 'Jeol'
 	def __init__(self):
