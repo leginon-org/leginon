@@ -69,6 +69,11 @@ def imageToArray(im, convertType='uint8', dtype=None, msg=True):
 		grey = im.convert('L')
 		a = numpy.fromstring(grey.tostring(), numpy.uint8)
 		a = numpy.reshape(a, (grey.size[1], grey.size[0]))
+	elif (im.mode=='LA'):
+		apDisplay.printMsg("reading LA and converting to L")
+		grey = im.convert('L')
+		a = numpy.fromstring(grey.tostring(), numpy.uint8)
+		a = numpy.reshape(a, (grey.size[1], grey.size[0]))
 	else:
 		raise ValueError, im.mode+" mode not considered"
 
