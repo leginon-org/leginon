@@ -459,7 +459,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 			 float apix;		// in Angstroms per pixel
 		};
 
-		noise follows (noise3*exp(-((pi/2*noise4*x0)^2)-x0*noise2-sqrt(fabs(x0))*noise1))
+		noise follows noise3*exp[ -1*(pi/2*noise4*x0)^2 - x0*noise2 - sqrt(fabs(x0))*noise1]
 		"""
 		parmstr = ("parm=%f,200,1,%.3f,0,17.4,9,1.53,%i,%.1f,%f" 
 			%(defocus, ampconst, voltage, cs, apix))
