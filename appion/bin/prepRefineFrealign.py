@@ -168,6 +168,7 @@ makestack2.py --single=start.hed --fromstackid=%d %s %s %s %s %s --no-invert --n
 
 		if returncode > 0:
 			apDisplay.printError('Error in Frealign specific stack making')
+		self.ImagicStackToFrealignMrcStack()
 		self.setFrealignStack()
 		# use the same complex equation as in eman clip
 		clipsize = self.calcClipSize(self.stack['boxsize'],self.params['bin'])
