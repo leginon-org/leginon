@@ -406,7 +406,8 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 			### check to make sure defocus is a reasonable value for applyctf
 			self.checkDefocus(defocus, apDisplay.short(imgdata['filename']))
 
-			parmstr = ("parm=%f,200,1,%.3f,0,17.4,9,1.53,%i,%.1f,%f" %(defocus, ampconst, voltage, cs, apix))
+			parmstr = ("parm=%f,200,1,%.3f,0,17.4,9,1.53,%i,%.1f,%f" 
+				%(defocus, ampconst, voltage, cs, apix))
 			emancmd = ("applyctf %s %s %s setparm flipphase" % (prepartmrc, postpartmrc, parmstr))
 			apEMAN.executeEmanCmd(emancmd, showcmd=False)
 
@@ -441,8 +442,30 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 		# find cs
 		cs = self.getCS(ctfdata)
 
-		parmstr = ("parm=%f,200,1,%.3f,0,17.4,9,1.53,%i,%.1f,%f" %(defocus, ampconst, voltage, cs, apix))
-		emancmd = ("applyctf %s %s %s setparm flipphase" % (imgstackfile, ctfimgstackfile, parmstr))
+		"""
+		// from EMAN1 source code: EMAN/src/eman/libEM/EMTypes.h 
+			and EMAN/src/eman/libEM/EMDataA.C
+		struct CTFParam {
+			 float defocus;	// in microns, negative underfocus
+			 float bfactor;	// not needed for phaseflip, envelope function width (Pi/2 * Wg)^2
+			 float amplitude; // ??? ctf amplitude, mutliplied times the entire equation
+			 float ampcont;	// number from 0 to 1, sqrt(1 - a^2) format
+			 float noise1;		// not needed for phaseflip, noise exponential decay amplitude
+			 float noise2;		// not needed for phaseflip, width
+			 float noise3;		// not needed for phaseflip, noise gaussian amplitude
+			 float noise4;		// not needed for phaseflip, noide gaussian width
+			 float voltage;	// in kilovolts
+			 float cs;			// in millimeters
+			 float apix;		// in Angstroms per pixel
+		};
+
+		noise follows (noise3*exp(-((pi/2*noise4*x0)^2)-x0*noise2-sqrt(fabs(x0))*noise1))
+		"""
+		parmstr = ("parm=%f,200,1,%.3f,0,17.4,9,1.53,%i,%.1f,%f" 
+			%(defocus, ampconst, voltage, cs, apix))
+
+		emancmd = ("applyctf %s %s %s setparm flipphase" 
+			%(imgstackfile, ctfimgstackfile, parmstr))
 
 		apDisplay.printMsg("phaseflipping particles with defocus "+str(round(defocus,3))+" microns")
 		apEMAN.executeEmanCmd(emancmd, showcmd=True)
