@@ -30,6 +30,12 @@ def getProjectIdFromSessionId(sessionid):
 	return projectid
 
 #========================
+def getProjectIdFromImageData(imgdata):
+	sessiondata = imgdata['session']
+	projectid = getProjectIdFromSessionData(sessiondata)
+	return projectid
+
+#========================
 def getProjectIdFromSessionName(sessionname):
 	t0 = time.time()
 	### get session
