@@ -448,9 +448,10 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 		struct CTFParam {
 			 float defocus;	// in microns, negative underfocus
 			 float bfactor;	// not needed for phaseflip, envelope function width (Pi/2 * Wg)^2
-			 float amplitude; // ??? ctf amplitude, mutliplied times the entire equation
+			 float amplitude; // not needed for phaseflip, 
+										ctf amplitude, mutliplied times the entire equation
 			 float ampcont;	// number from 0 to 1, sqrt(1 - a^2) format
-			 float noise1;		// not needed for phaseflip, noise exponential decay amplitude
+			 float noise1/exps4;	// not needed for phaseflip, noise exponential decay amplitude
 			 float noise2;		// not needed for phaseflip, width
 			 float noise3;		// not needed for phaseflip, noise gaussian amplitude
 			 float noise4;		// not needed for phaseflip, noide gaussian width
