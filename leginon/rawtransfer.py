@@ -60,7 +60,6 @@ def run_once(parent_src_path):
 	for name in names:
 		imdata = query_image_by_frames_name(name)
 		if imdata is None:
-			print 'No database entry for: %s' % (name,)
 			continue
 		image_path = imdata['session']['image path']
 		imname = imdata['filename'] + '.frames'
