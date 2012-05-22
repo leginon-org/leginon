@@ -2253,3 +2253,21 @@ class AlignmentManagerSettingsData(TargetRepeaterSettingsData):
 class FixAlignmentData(ReferenceRequestData):
 	pass
 
+class DDinfoKeyData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('name', str),
+		)
+	typemap = classmethod(typemap)
+
+class DDinfoValueData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('image', AcquisitionImageData),
+			('bright', BrightImageData),
+			('dark', DarkImageData),
+			('infokey', DDinfoKeyData),
+			('infovalue', str),
+		)
+	typemap = classmethod(typemap)
+
