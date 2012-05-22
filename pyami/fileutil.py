@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import inspect
 import os
+import sys
 import errno
 
 def getMyFilename(up=1):
@@ -41,6 +42,33 @@ def mkdirs(newdir):
 		if err.errno != errno.EEXIST or not os.path.isdir(newdir) and os.path.splitdrive(newdir)[1]:
 			raise
 	os.umask(originalumask)
+
+def get_config_dirs(module=None):
+	'''
+	Determine a list of directories where config files may be located.
+	One of the directories will be the installed module directory, but
+	this only works automatically if this function is called from that
+	module.  If you want to force a certain module, pass it to this
+	function in the optional argument.
+	'''
+	# system config location is /etc/myami on unix like systems or
+	# under PROGRAMFILES on windows
+	if sys.platform == 'win32':
+		system_dir = os.path.join(os.environ('PROGRAMFILES'), 'myami')
+	else:
+		system_dir = '/etc/myami'
+
+	# installed module directory, specified by argument, or auto detected
+	if module is None:
+		# not this function, but the caller of this function, so up=2
+		installed_dir = getMyDir(up=2)
+	else:
+		installed_dir = os.path.dirname(os.path.abspath(module.__file__))
+
+	# user home dir
+	user_dir = os.path.expanduser('~')
+
+	return [system_dir, installed_dir, user_dir]
 
 if __name__ == '__main__':
 	print getMyFilename()

@@ -4,9 +4,11 @@ import sys
 import ConfigParser
 import imp
 import os
+import inspect
 import pyscope
 import pyscope.tem
 import pyscope.ccdcamera
+import pyami.fileutil
 
 configured = None
 temclasses = None
@@ -22,10 +24,8 @@ def parse():
 	modpath = pyscope.__path__
 
 	# read instruments.cfg
-	filenames = [
-		os.path.join('/etc/myami', 'instruments.cfg'),
-		os.path.join(modpath[0], 'instruments.cfg')
-	]
+	confdirs = pyami.fileutil.get_config_dirs()
+	filenames = [os.path.join(confdir, 'instruments.cfg') for confdir in confdirs]
 	one_exists = False
 	for filename in filenames:
 		if os.path.exists(filename):
@@ -101,6 +101,7 @@ def getCameraClasses():
 	
 def getNameByClass(cls):
 	conf = getConfigured()
-	for name,value in conf.items():
-		if issubclass(cls, value['class']):
-			return name
+	for bcls in inspect.getmro(cls):
+		for name,value in conf.items():
+			if bcls is value['class']:
+				return name

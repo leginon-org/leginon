@@ -487,6 +487,8 @@ class CheckPackages(object):
     # directory in the specified folder. It will also look in the users home
     # directory. 
     # Returns the paths to any config files found with the specified name.
+		# NOTE:  This function could be broken...
+		#    See pyami.fileutil.get_config_dirs() for the latest.
     #==========================================================================
     def findConfigFiles(self, configfilename, folder):
         # get the python site-packages directory

@@ -14,7 +14,7 @@ import os
 
 try:
     import MySQLdb
-    import dbconfig
+    import sinedon
 except ImportError, e:
     sys.stderr.write("Warning: %s, status updates will be disabled\n" % (e))
     statusUpdatesEnabled = False
@@ -196,7 +196,7 @@ class Agent (object):
     #
     def __updateStatusInDB (self, jobid, status):
         retVal = True   #initialize return value to True
-        dbConfig = dbconfig.getConfig('appiondata')
+        dbConfig = sinedon.getConfig('appiondata')
         dbConnection = MySQLdb.connect(**dbConfig)
         cursor = dbConnection.cursor()
            
@@ -216,7 +216,7 @@ class Agent (object):
             
         try:
             #Determine the appion project database name using the project id.
-            projDBConfig = dbconfig.getConfig('projectdata')
+            projDBConfig = sinedon.getConfig('projectdata')
             dbConnection = MySQLdb.connect(**projDBConfig)
             cursor =  dbConnection.cursor()
                                           
@@ -224,7 +224,7 @@ class Agent (object):
             queryResult=cursor.execute(query)
             if queryResult:
                 projDB = cursor.fetchone()[0]
-                projDBConfig = dbconfig.setConfig('appiondata', db=projDB)
+                projDBConfig = sinedon.setConfig('appiondata', db=projDB)
                 retValue = projDB
                 
             cursor.close()
