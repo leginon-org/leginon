@@ -66,7 +66,7 @@ def run_once(parent_src_path):
 		src_path = os.path.join(parent_src_path, name)
 		dst_path = os.path.join(image_path, imname)
 		copy_and_delete(src_path, dst_path)
-		leginon.ddinfo.saveDDinfoTODatabase(imdata,os.path.join(dst_path,'info.txt'))
+		leginon.ddinfo.saveImageDDinfoToDatabase(imdata,os.path.join(dst_path,'info.txt'))
 
 def run():
 	src_path = get_source_path()
