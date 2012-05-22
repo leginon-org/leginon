@@ -18,6 +18,12 @@ from appionlib import appiondata
 
 class MakeDDParticleMovieLoop(apParticleExtractor.ParticleBoxLoop):
 	#=======================
+	def setMovieFormat(self,format):
+		self.movieformat = format
+
+	def getMovieFormat(self):
+		return self.movieformat
+
 	def setupParserOptions(self):
 		super(MakeDDParticleMovieLoop,self).setupParserOptions()
 		self.parser.add_option("--frameavg", dest="frameavg", type="int", default=1,
@@ -26,6 +32,11 @@ class MakeDDParticleMovieLoop(apParticleExtractor.ParticleBoxLoop):
 			help="interval of raw frames used as starting frame for averaging")
 		self.parser.remove_option("--uncorrected")
 		self.parser.remove_option("--reprocess")
+
+	def checkConflicts(self):
+		super(MakeDDParticleMovieLoop,self).checkConflicts()
+		if self.params['bin'] != 1:
+			apDisplay.printError('binning is not yet implemented, please use bin=1')
 
 	def checkIsDD(self):
 		self.is_dd_frames = True
@@ -42,6 +53,24 @@ class MakeDDParticleMovieLoop(apParticleExtractor.ParticleBoxLoop):
 		self.movieparticles = {}
 		super(MakeDDParticleMovieLoop,self).processImage(imgdata)
 
+	def saveFrameFromArray(self,array,fileprefix,particleid,frameid):
+		filenamebase = '%s_%03d_%03d' % (fileprefix,particleid,frameid)
+		apTomo.array2jpg(filenamebase,array,imin=None,imax=None,size=self.boxsize)
+		print filenamebase
+		return filenamebase
+
+	def makeMovie(self,framepaths_wild,moviepath):
+		raise NotImplementedError
+
+	def combineFramesToMovie(self,partdatas,framepath_prefix,moviepath_prefix):
+		''' Combine frames to movie.  framepath_prefix and moviepath_prefix should
+		include be absolute'''
+		for p in range(len(partdatas)):
+			framepath = '%s_%03d_*.jpg' % (framepath_prefix,p)
+			moviepath = '%s_%03d' % (moviepath_prefix,p)
+			self.makeMovie(framepath,moviepath)
+			self.movieparticles[p] = partdatas[p]
+
 	#=======================
 	def processParticles(self,imgdata,partdatas,shiftdata):
 		# need to avoid non-frame saved image for proper caching
@@ -52,10 +81,11 @@ class MakeDDParticleMovieLoop(apParticleExtractor.ParticleBoxLoop):
 		### first remove any existing files
 		rundir = self.params['rundir']
 		imgname = imgdata['filename']
-		moviegrouppath = os.path.join(rundir, '%s_*.flv' % (imgname))
+		moviegrouppath = os.path.join(rundir, '%s_*.%s' % (imgname,self.movieformat))
 		apFile.removeFile(moviegrouppath)
 		
 		shortname = apDisplay.short(imgdata['filename'])
+		
 		apFile.removeFile(os.path.join(rundir,'%s*.jpg' % (shortname)))
 
 		### set processing image
@@ -75,16 +105,11 @@ class MakeDDParticleMovieLoop(apParticleExtractor.ParticleBoxLoop):
 				col_end = col_start + self.boxsize
 				array = corrected[row_start:row_end,col_start:col_end]
 				# bin is not used for now
-				filenamebase = '%s_%03d_%03d' % (shortname,p,start_frame)
-				apTomo.array2jpg(filenamebase,array,imin=None,imax=None,size=self.boxsize)
-				print filenamebase
-
+				movieframe_number = start_frame
+				self.saveFrameFromArray(array,shortname,p,movieframe_number)
+		
 		# make movies
-		for p in range(len(partdatas)):
-			framepath = os.path.join(rundir,'%s_%03d_*.jpg' % (shortname,p))
-			moviepath = os.path.join(rundir,'%s_%03d.flv' % (imgname,p))
-			apMovie.makeflv('jpg',framepath,moviepath)
-			self.movieparticles[p] = partdatas[p]
+		self.combineFramesToMovie(partdatas,shortname,imgname)
 
 	def fakeprocessParticles(self,imgdata,partdatas,shiftdata):
 		self.movieparticles = {}
@@ -110,12 +135,8 @@ class MakeDDParticleMovieLoop(apParticleExtractor.ParticleBoxLoop):
 		keys = self.movieparticles.keys()
 		keys.sort()
 		for p in keys:
-			q = appiondata.ApParticleMovieData(movieNumber=p,movieRun=self.rundata,particle=self.movieparticles[p],format='flv')
+			q = appiondata.ApParticleMovieData(movieNumber=p,movieRun=self.rundata,particle=self.movieparticles[p],format=self.movieformat)
 			q.insert()
-
-if __name__ == '__main__':
-	makeMovie = MakeDDParticleMovieLoop()
-	makeMovie.run()
 
 
 
