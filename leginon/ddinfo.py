@@ -26,6 +26,24 @@ def saveImageDDinfoToDatabase(imagedata,infopath):
 	if params:
 		commitToDatabase(imagedata,params)
 
+def saveAllPreviousToDatabase():
+	qcam = leginondata.CameraEMData()
+	qcam['save frames'] = True
+	acqimages = leginondata.AcquisitionImageData(camera=qcam).query()
+	for imagedata in acqimages:
+		# check for frames dir
+		camdata = imagedata['camera']
+		session = imagedata['session']
+		impath = session['image path']
+		fname = imagedata['filename']
+		infoname = os.path.join(impath, fname+'.frames', 'info.txt')
+		if os.path.exists(infoname):
+			# check for existing ddinfo in db
+			info = leginondata.DDinfoValueData(camera=camdata).query()
+			if not info:
+				print 'saving:', infoname
+				saveImageDDinfoToDatabase(imagedata, infoname)
+
 def saveSessionDDinfoToDatabase(sessiondata):
 	qcam = leginondata.CameraEMData(session=sessiondata)
 	qcam['save frames'] = True
@@ -36,6 +54,9 @@ def saveSessionDDinfoToDatabase(sessiondata):
 
 if __name__ == '__main__':
 	infopath = sys.argv[1]
+	if infopath == 'all':
+		saveAllPreviousToDatabase()
+		sys.exit()
 	imagename = sys.argv[2]
 	imagename = imagename.split('.mrc')[0]
 	imagedata = leginondata.AcquisitionImageData(filename=imagename).query(results=1)[0]
