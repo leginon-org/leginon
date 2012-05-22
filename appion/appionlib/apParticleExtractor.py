@@ -457,17 +457,16 @@ class ParticleBoxLoop(ParticleExtractLoop):
 
 	def getParticlesInImage(self,imgdata):
 		partdatas,shiftdata = super(ParticleBoxLoop,self).getParticlesInImage(imgdata)
+		return self.removeBoxOutOfImage(imgdata,partdatas,shiftdata),shiftdata
+
+	def removeBoxOutOfImage(self,imgdata,partdatas,shiftdata):
 		imgdims = imgdata['camera']['dimension']
-		# if using a helical step, particles will be filled between picks,
-		# so don't want to throw picks out right now
-		if self.params['helicalstep'] is not None:
-			return partdatas,shiftdata
 		newpartdatas = []
 		for partdata in partdatas:
 			start_x,start_y = apBoxer.getBoxStartPosition(imgdata,self.half_box,partdata, shiftdata)
 			if apBoxer.checkBoxInImage(imgdims,start_x,start_y,self.boxsize):
 				newpartdatas.append(partdata)
-		return newpartdatas,shiftdata
+		return newpartdatas
 
 class Test(ParticleExtractLoop):
 	def processParticles(self,imgdata,partdatas,shiftdata):

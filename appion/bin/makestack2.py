@@ -98,6 +98,14 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 				apStack.averageStack(stack=stackpath)
 		return totalpart
 
+	def removeBoxOutOfImage(self,imgdata,partdatas,shiftdata):
+		# if using a helical step, particles will be filled between picks,
+		# so don't want to throw picks out right now
+		if self.params['helicalstep'] is not None:
+			return partdatas
+		else:
+			return super(Makestack2Loop,self).removeBoxOutOfImage(imgdata,partdatas,shiftdata)
+
 	#=======================
 	def fillWithHelicalStep(self,partdatas,apix):
 		"""
