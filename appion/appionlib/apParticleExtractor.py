@@ -127,7 +127,7 @@ class ParticleExtractLoop(appionLoop2.AppionLoop):
 		method = self.params['ctfmethod']
 		ctfrunid = self.params['ctfrunid']
 		if ctfrunid is None:
-			return apCtf.getBestCtfValueForImage(imgdata,msg,method=method)
+			return apCtf.getBestCtfValueForImage(imgdata,msg=msg,method=method)
 		else:
 			return apCtf.getCtfValueForImage(imgdata, ctfrunid, msg=msg, method=method)
 
