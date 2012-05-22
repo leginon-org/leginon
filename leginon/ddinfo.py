@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import os
 from leginon import leginondata
 import sys
@@ -6,28 +7,18 @@ def parseInfoTxt(infopath):
 	if not os.path.isfile(infopath):
 		return False
 	infile = open(infopath,'r')
-	lines = infile.readlines()
 	params = {}
-	for line in lines:
-		bits = line[:-2].split('=')
-		params[bits[0]]='='.join(bits[1:])
+	for line in infile:
+		bits = line.split('=', 1)  # split on first =
+		bits = map(str.strip, bits)  # strip off white space
+		params[bits[0]]=bits[1]
 	return params
 
 def commitToDatabase(imagedata,params):
+	cameradata = imagedata['camera']
 	for key in params.keys():
 		qkey = leginondata.DDinfoKeyData(name=key)
-		qvalue = leginondata.DDinfoValueData(infokey=qkey,infovalue=params[key])
-		if imagedata.__class__ == leginondata.AcquisitionImageData:
-			qvalue['image']=imagedata
-		elif imagedata.__class__ == leginondata.BrightImageData:
-			qvalue['bright']=imagedata
-		elif imagedata.__class__ == leginondata.DarkImageData:
-			qvalue['dark']=imagedata
-		elif imagedata.__class__ == leginondata.NormImageData:
-			qvalue['norm']=imagedata
-		else:
-			print 'image data class unknown',imagedata
-			sys.exit(1)
+		qvalue = leginondata.DDinfoValueData(camera=cameradata, infokey=qkey,infovalue=params[key])
 		qvalue.insert()
 
 def saveImageDDinfoToDatabase(imagedata,infopath):

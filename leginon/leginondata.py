@@ -2263,9 +2263,7 @@ class DDinfoKeyData(Data):
 class DDinfoValueData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
-			('image', AcquisitionImageData),
-			('bright', BrightImageData),
-			('dark', DarkImageData),
+			('camera', CameraEMData),
 			('infokey', DDinfoKeyData),
 			('infovalue', str),
 		)
