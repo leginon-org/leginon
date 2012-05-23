@@ -36,26 +36,31 @@ function createMakestackForm($extra=false, $title='makeDDRawFrameStack.py Launch
 		$formAction=$_SERVER['PHP_SELF'];
 	}
 	$projectId=getProjectId();
+	
+	// Get the session path
+	$sessiondata = getSessionList($projectId,$sessionId);
+	$sessioninfo = $sessiondata['info'];
+	$sessionpath = getBaseAppionPath($sessioninfo).'/ddstack';
 
-	// TODO: update this code to use a query into the DD database table instead of normal stacks
-	// connect to particle and ctf databases
+	// Set the runname
+	// the default run name is "ddstack" followed by an ever incrementing number
+	$jobtype = "makeddrawframestack";
 	$particle = new particledata();
-	$stackruninfos = $particle->getStackIds($sessionId, True);
-	$nohidestackruninfos = $particle->getStackIds($sessionId, False);
-	$stackruns = ($stackruninfos) ? count($stackruninfos):0;
-
-	$sessiondata=getSessionList($projectId,$sessionId);
-	$sessioninfo=$sessiondata['info'];
-	$sessionpath=getBaseAppionPath($sessioninfo).'/ddstacks';
-
+	$stackruns = $particle->getMaxRunNumber( $jobtype, $expId );
+	
+	// sanity check - make certain we are not going to overwrite data
+	$sessionpathval = ($_POST['outdir']) ? $_POST['outdir'] : $sessionpath;
+	$sessionpathval = (substr($sessionpathval, -1) == '/')? $sessionpathval : $sessionpathval.'/';
+	
+	while (file_exists($sessionpathval.'ddstack'.($stackruns+1))) {
+		$stackruns += 1;
+	}
+	$defrunname = "ddstack".($stackruns+1);
+	$runnameval = ($_POST['runname']) ? $_POST['runname'] : $defrunname;	
+	
 	// Set any existing parameters in form
 	$single = ($_POST['single']) ? $_POST['single'] : 'start.hed';
 	$rundescrval = ($_POST['description']) ? $_POST['description'] : True;
-	$sessionpathval = ($_POST['outdir']) ? $_POST['outdir'] : $sessionpath;
-	$sessionpathval = (substr($sessionpathval, -1) == '/')? $sessionpathval : $sessionpathval.'/';
-	while (file_exists($sessionpathval.'stack'.($stackruns+1)))
-		$stackruns += 1;
-	$runnameval = ($_POST['runname']) ? $_POST['runname'] : 'ddstack'.($stackruns+1);
 	$commitcheck = ($_POST['commit']=='on' || !$_POST['process']) ? 'CHECKED' : '';
 
 	$javascript .= writeJavaPopupFunctions('appion');
@@ -79,8 +84,8 @@ function createMakestackForm($extra=false, $title='makeDDRawFrameStack.py Launch
 #	echo docpop('stackname','<b>Stack File Name:</b>');
 	echo "<input type='hidden' name='single' value='start.hed'>\n";
 
-	createAppionLoopTable($sessiondata, $runnameval, "ddstacks", 0, $rundescrval);
-
+	createAppionLoopTable($sessiondata, $runnameval, "ddstack", 0, $rundescrval);
+ 
 	echo "</td>";
 	echo "</tr>\n";
 	echo "<tr>\n";
@@ -169,7 +174,7 @@ function runMakestack() {
 	PART 5: Show or Run Command
 	******************** */
 	// submit command
-	$errors = showOrSubmitCommand($command, $headinfo, 'ddstack', $nproc, $testimage);
+	$errors = showOrSubmitCommand($command, $headinfo, 'makeddrawframestack', $nproc, $testimage);
 
 	// if error display them
 	if ($errors) {

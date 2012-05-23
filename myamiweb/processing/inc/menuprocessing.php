@@ -768,11 +768,19 @@ if (is_numeric($expId)) {
 		$action = "Direct Detector Tools";
 
 		// TODO: Add results
-
+		// get tomography auto reconstruction stats:
+		$ddresults = array();
+		$dddone = count($subclusterjobs['makeddrawframestack']['done']);
+		$ddrun = count($subclusterjobs['makeddrawframestack']['running']);
+		$ddq = count($subclusterjobs['makeddrawframestack']['queued']);
+		$ddresults[] = ($dddone==0) ? "" : "<a href='rawFrameStackReport.php?expId=$sessionId'>$dddone complete</a>";
+		$ddresults[] = ($ddrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=makeddrawframestack'>$ddrun running</a>";
+		$ddresults[] = ($ddq==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=makeddrawframestack'>$ddq queued</a>";
+		
 		$nruns=array();
 		$nruns[] = array(
 			'name'=>"<a href='runMakeDDRawFrameStack.php?expId=$sessionId'>Create raw frame stack</a>",
-			'result'=>$tarresults,
+			'result'=>$ddresults,
 		);
 
 		$data[] = array(

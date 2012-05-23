@@ -39,6 +39,8 @@ class BasicReport {
 		$this->jobtype 	  = $jobtype;
 		$this->tableCount = 0;  // used to ensure recursive table display methods do not run indefinatly.
 		$this->MAX_TABLES = 30;	// the max number of sub-tables that will display before cutting off display recursion.	
+		$this->allDisplayKeys = array();
+		$this->allDisplayKeys['DEF_id'] = 1; //supress this field from showing in reports
 		$this->mysql 	  = new mysql(
 							DB_HOST,
 							DB_USER,
@@ -179,9 +181,11 @@ class BasicReport {
 	//                  the $runData provided will also be displayed to the user recursively.
 	// $runReportLink - defines the URL path that should be used if the user wants to display more detailed 
 	//					information about the run. ex. 'testsuiterunreport.php?expId='.$expId.'&rId='.$runData['DEF_id']
+	// $verbose - set to True to show every field of every table. For simple reports, Set to False to show each field once, 
+	//				removing repeats like DEF_timestamp.
 	// Returns - A string with the HTML code to display the run data in a table with an appion formatted header
 	//--------------------------------------------------------------------------------------
-	function displaySummaryTable( $runData, $runReportLink, $showSubTables=False )
+	function displaySummaryTable( $runData, $runReportLink, $showSubTables=False, $verbose=True )
 	{
 		// Don't display hidden entries
 		//if ( $runData['hidden'] == 1 ) return "";
@@ -209,7 +213,16 @@ class BasicReport {
 			.$runname."</a></span> (ID: $runId)\n";
 	
 		$selectiontable.= apdivtitle($j);
-		$selectiontable.= $this->fillHtmlTable($runData,"", $showSubTables);
+		
+		// if we are returning a streamlined table, add the table tag at this level rather than recursivly below.
+		if ( !$verbose ) {
+			$selectiontable.= "<table class='tableborder' border='1' cellspacing='1' cellpadding='2'>\n";
+		}
+		$selectiontable.= $this->fillHtmlTable($runData,"", $showSubTables, $verbose);
+		// if we are returning a streamlined table, add the table tag at this level rather than recursivly below.
+		if ( !$verbose ) {
+			$selectiontable.= "</table>\n";
+		}
 		
 		return $selectiontable;
 	}
@@ -225,11 +238,13 @@ class BasicReport {
 	//                  be used to display databse entries from related tables.
 	// Returns - the html for the table as a string 
 	//--------------------------------------------------------------------------------------
-	function fillHtmlTable( $keyedData, $title="", $showSubTables=False )
+	function fillHtmlTable( $keyedData, $title="", $showSubTables=False, $verbose=True )
 	{
-		// Create the title and border of the table
-		$table = "<h4>".$title."</h4>";
-		$table.= "<table class='tableborder' border='1' cellspacing='1' cellpadding='2'>\n";
+		if ($verbose) {
+			// Create the title and border of the table
+			$table = "<h4>".$title."</h4>";
+			$table.= "<table class='tableborder' border='1' cellspacing='1' cellpadding='2'>\n";
+		}
 			
 		// Parse the column names of the DB table. If it is a reference to another table
 		// and $showSubTables is set, build the display code for the referenced table.
@@ -245,7 +260,7 @@ class BasicReport {
 
 				if ( $value && $showSubTables ) {
 					// Add the html formatted sub table to a list to display it after closing out the current table html tag. 
-					$subtableList[] = $this->displayTable( $tablename, $value, $key, $showSubTables);
+					$subtableList[] = $this->displayTable( $tablename, $value, $key, $showSubTables, $verbose);
 				}
 			} else {
 				if ( $value ) $display_keys[$key] = $value;
@@ -254,12 +269,18 @@ class BasicReport {
 		
 		// Format all the column names and values as rows in an html table.
 		foreach($display_keys as $k=>$v) {
-		        $table.= formatHtmlRow($k,$v);
+			// if we want to display all keys, even repeats, or we have not displayed this key yet, print it
+			if ( $verbose || !isset($this->allDisplayKeys[$k]) ) {
+				$table.= formatHtmlRow($k,$v);
+				$this->allDisplayKeys[$k] = $v;
+			}
 		}
 		
-		// Close out the html table tag
-		$table.= "</table>\n";
-		$table.= "<p>\n";
+		if ( $verbose ) {
+			// Close out the html table tag
+			$table.= "</table>\n";
+			$table.= "<p>\n";
+		}
 
 		// Finally, add any sub-tables to our html code.
 		if ($subtableList) {
@@ -284,7 +305,7 @@ class BasicReport {
 	//	This situation could lead to this recursive method going on indefinatly. To avoid this, 
 	//	there is a MAX_TABLES value that will halt everything if too many tables have been created.
 	//--------------------------------------------------------------------------------------
-	function displayTable( $tablename, $defId, $title="" , $showSubTables=False)
+	function displayTable( $tablename, $defId, $title="" , $showSubTables=False, $verbose=True)
 	{
 		// not sure if the DB has any circular references...
 		// Fail gracefully.
@@ -299,7 +320,7 @@ class BasicReport {
 		// Create the HTML to display the data
 		$formattedTable = "";
 		if ( $tableRow ) {
-			$formattedTable = $this->fillHtmlTable( $tableRow , $title, $showSubTables);
+			$formattedTable = $this->fillHtmlTable( $tableRow , $title, $showSubTables, $verbose);
 		}
 		return $formattedTable;
 	}
