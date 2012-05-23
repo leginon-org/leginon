@@ -56,7 +56,7 @@ class RefineJob(basicScript.BasicScript):
 			help="Path for the remote run directory accessable by remotehost and will not be erased at the beginning of the run, e.g. --remoterundir=/home/you/sessionname/rundir/", metavar="PATH")
 		# Standard Web Form Appion parameters
 		self.parser.add_option('--runname', dest='runname')
-		self.parser.add_option("--expId", dest="expid", type="int",
+		self.parser.add_option("--expid", dest="expid", type="int",
 			help="Experiment session id standard from web form.  Not used here", metavar="#")
 		self.parser.add_option("-p", "--projectid", dest="projectid", type="int",
 			help="Project id associated with processing run. Used for updating run status in the database", metavar="#")
