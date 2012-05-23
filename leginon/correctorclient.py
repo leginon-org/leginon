@@ -11,7 +11,6 @@
 from leginon import leginondata
 import numpy
 import scipy.ndimage
-import instrument
 from pyami import arraystats, imagefun
 import time
 import cameraclient
@@ -567,6 +566,8 @@ class CorrectorClient(cameraclient.CameraClient):
 		return self.settings['camera settings']
 
 	def storeCorrectorPlan(self, plan):
+		# import instrument here so that wx is not required unless Leginon is running
+		import instrument
 		camsettings = self.settings['camera settings']
 		ccdname = self.settings['instruments']['ccdcamera']
 		ccdcamera = self.instrument.getCCDCameraData(ccdname)
