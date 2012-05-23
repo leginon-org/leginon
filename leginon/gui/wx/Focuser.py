@@ -184,16 +184,22 @@ class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 				wx.CheckBox(self, -1, 'Acquire post-focus image')
 
 		presetnames = self.node.presetsclient.getPresetNames()
+		self.widgets['manual focus preset'] = leginon.gui.wx.Presets.PresetChoice(self, -1)
+		self.widgets['manual focus preset'].setChoices(presetnames)
+		label = wx.StaticText(self, -1, 'Manual focus tool preset:')
+		sizer.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sizer.Add(self.widgets['manual focus preset'], (0, 1), (1, 1), wx.ALIGN_CENTER)
+
 		self.widgets['melt preset'] = leginon.gui.wx.Presets.PresetChoice(self, -1)
 		self.widgets['melt preset'].setChoices(presetnames)
 		label = wx.StaticText(self, -1, 'Melt preset:')
-		sizer.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sizer.Add(self.widgets['melt preset'], (0, 1), (1, 1), wx.ALIGN_CENTER)
+		sizer.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sizer.Add(self.widgets['melt preset'], (1, 1), (1, 1), wx.ALIGN_CENTER)
 
 		label = wx.StaticText(self, -1, 'Melt time:')
-		sizer.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sizer.Add(melt_sizer, (1, 1), (1, 1), wx.ALIGN_CENTER)
-		sizer.Add(self.widgets['acquire final'], (2, 0), (1, 2),
+		sizer.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sizer.Add(melt_sizer, (2, 1), (1, 1), wx.ALIGN_CENTER)
+		sizer.Add(self.widgets['acquire final'], (3, 0), (1, 2),
 				  wx.ALIGN_CENTER)
 
 		sbsz.Add(sizer, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 5)

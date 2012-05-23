@@ -27,6 +27,7 @@ class Focuser(manualfocuschecker.ManualFocusChecker):
 		'process target type': 'focus',
 		'melt time': 0.0,
 		'melt preset': '',
+		'manual focus preset': '',
 		'acquire final': True,
         'process target type': 'focus',
 	})
