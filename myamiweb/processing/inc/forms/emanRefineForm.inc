@@ -222,7 +222,7 @@ class EmanRefineForm extends BasicRefineForm
 	      obj.outerMaskRadius.value = $rad;
 	      obj.innerMaskRadius.value = 0;
 	      obj.angSampRate.value = '4x10:2x5:2x3:2x2';
-	      obj.symmetry.value = $sym;
+	      obj.symmetry.value = '$sym';
 	      obj.endIter.value = '10';
 	      obj.percentDiscard.value = '10';
 	      obj.filterEstimated.checked = false;
