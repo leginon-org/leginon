@@ -19,6 +19,8 @@ class FrealignRefineForm extends BasicRefineForm
 	// an extension of the FormParameters class.
 	public function createFormParams() { return new FrealignParams(); }
 
+	// Add to the pubKeyList any publications that should be referenced by papers using this method.
+	// The keys added here must match the ones found in the publicationList.inc file.
 	protected function setPublications()
 	{
 		$this->pubKeyList = array("frealign");
@@ -36,13 +38,11 @@ class FrealignRefineForm extends BasicRefineForm
 			
 		// set field sizes
 		$shortSize = 4;
-		$longSize = 20;
-		
 		
 		// display form title
 		$html .= "
 	    <br />
-	    <H4>Frealign Reconstruction Parameters</H4>
+	    <H4>Frealign Processing Parameters</H4>
 	    <hr />";
 				
 		// find each stack entry in database
@@ -62,33 +62,33 @@ class FrealignRefineForm extends BasicRefineForm
 		}				
 		
 		$html .=  "<br />\n";
-		$html .=  "<b>Card #2</b>\n";
-		$html .=  "<br />\n";
 	
-		$html .=  $paramSet->insertTextField( "wgh", $longSize );
-		$html .=  $paramSet->insertTextField( "xstd", $longSize, "(0 = no filtering)" );
-		$html .=  $paramSet->insertTextField( "pbc", $longSize );
-		$html .=  $paramSet->insertTextField( "boff", $longSize );
-		$html .=  $paramSet->insertTextField( "dang", $longSize );
-		$html .=  $paramSet->insertTextField( "itmax", $longSize );
-		$html .=  $paramSet->insertTextField( "ipmax", $longSize );
+		$html .=  $paramSet->insertCheckboxField( "fmag" );
+		$html .=  $paramSet->insertCheckboxField( "fdef" );
+		$html .=  $paramSet->insertCheckboxField( "fpart" );
+		$html .=  $paramSet->insertCheckboxField( "fbeaut" );
+		$html .=  $paramSet->insertCheckboxField( "ffilt" );
+		$html .=  $paramSet->insertCheckboxField( "fbfact" );
+		$html .=  $paramSet->insertCheckboxField( "pbc" );
+		$html .=  $paramSet->insertTextField( "hp", $shortSize, "(in &Aring;ngstroms)" );
+		$html .=  $paramSet->insertTextField( "lp", $shortSize, "(in &Aring;ngstroms; default 2*Nyquist)" );
+		$html .=  $paramSet->insertTextField( "wgh", $shortSize );
+		// These parameters may be added back in when we add the search feature
+		//$html .=  $paramSet->insertTextField( "dang", $shortSize );
+		//$html .=  $paramSet->insertTextField( "itmax", $shortSize );
+		//$html .=  $paramSet->insertTextField( "ipmax", $shortSize );
 				
 		$html .=  "<br />\n";
-		$html .=  "<b>Card #6</b>\n";
+		$html .=  "<b>Refine (MASK):</b>\n";
 		$html .=  "<br />\n";
 	
-		$html .=  $paramSet->insertTextField( "target", $longSize );
-		$html .=  $paramSet->insertTextField( "thresh", $longSize );
-				
-		$html .=  "<br />\n";
-		$html .=  "<b>Card #7</b>\n";
-		$html .=  "<br />\n";
-	
-		$html .=  $paramSet->insertTextField( "rrec", $longSize, "(in &Aring;ngstroms; default Nyquist)" );
-		$html .=  $paramSet->insertTextField( "hp", $longSize, "(in &Aring;ngstroms)" );
-		$html .=  $paramSet->insertTextField( "lp", $longSize, "(in &Aring;ngstroms; default 2*Nyquist)" );
-		$html .=  $paramSet->insertTextField( "rbfact", $longSize, "(0 = off)" );
-						
+		$html .=  $paramSet->insertCheckboxField( "psi" );
+		$html .=  $paramSet->insertCheckboxField( "theta" );
+		$html .=  $paramSet->insertCheckboxField( "phi" );
+		$html .=  $paramSet->insertCheckboxField( "x" );
+		$html .=  $paramSet->insertCheckboxField( "y" );
+		
+								
 		return $html;
 	}
 	
@@ -102,20 +102,18 @@ class FrealignRefineForm extends BasicRefineForm
 		$html .=  "<SELECT NAME='reconstackid' >\n";
 		$html .=  "<OPTION VALUE='' style='color:green;' >Same as refinement</option>\n";
 		foreach ($stackIds as $stackid){
-			// get stack parameters from database
-			$s = $this->particle->getStackParams($stackid['stackid']);
 			// get number of particles in each stack
 			$totalp = $this->particle->getNumStackParticles($stackid['stackid']);
-			$nump = commafy($totalp);
+			$nump = $totalp; //commafy($totalp);
 			// get pixel size of stack
 			$apix = ($this->particle->getStackPixelSizeFromStackId($stackid['stackid']))*1e10;
 			// truncated pixel size
 			$showapix = sprintf("%.2f",$apix);
 			// get box size
-			$box = $s['boxsize'];
-
+			$box = $stackid['boxsize'];
+			
 			// if this is not a valid stack, don't add it to the list
-			if ( $nump != $refineStack['lastPart'] || $apix != $refineStack['apix'] || $box != $refineStack['boxsize'] ) {
+			if ( $nump != $refineStack['lastPart'] || (string)$apix != $refineStack['apix'] || $box != $refineStack['boxsize'] ) {
 				continue;
 			}
 
@@ -138,38 +136,43 @@ class FrealignRefineForm extends BasicRefineForm
 		// add default value sets to populate the import parameters form 
 		$id 				= 'asymm';
 		$label 				= 'asymmetric particles';
-		$outerMaskRadius 	= round($apix*$box/3.0);
+		$outerMaskRadius 	= round(($apix*$box/2.0) - (3.0*$apix)); // Nico's formula for beginners
 		$innerMaskRadius 	= '0';
 		$outerAlignRadius 	= '';	 
 		$innerAlignRadius 	= ''; 
 		$symmetry 			= $sym; 
 		$endIter 			= '10'; 
 		$angSampRate 		= '';
-		$percentDiscard 	= '';  
+		$percentDiscard 	= '20';  
 		$filterEstimated 	= ''; 
 		$filterResolution	= ''; 
 		$filterComputed 	= ''; 
 		$filterConstant 	= '';
 		$wgh 				= '0.07';
-		$xstd 				= '0';
 		$pbc  				= '100';
-		$boff  				= '70';
 		$itmax 				= '10';
 		$ipmax				= '0';
-		$target				= '15';
-		$thresh				= '85';
-		$rrec 				= (ceil($apix*20))/10;
-		$hp 				= '50';
-		$lp 				= (ceil($apix*40))/10;
-		$rbfact 			= '0';
+		$hp 				= '10';
+		$lp 				= '300';
 		$reconstackid		= '';
+		$fmag				= ''; 
+		$fdef				= ''; 
+		$fpart				= ''; 
+		$fbeaut				= ''; 
+		$ffilt				= 'CHECKED'; 
+		$fbfact				= ''; 
+		$psi				= 'CHECKED'; 
+		$theta				= 'CHECKED'; 
+		$phi				= 'CHECKED'; 
+		$x					= 'CHECKED'; 
+		$y					= 'CHECKED';
 		
 		// Create a parameter set with the values defined above.
 		$asymmSet = new FrealignParams( $id, $label, $outerMaskRadius, $innerMaskRadius, $outerAlignRadius, 
 							$innerAlignRadius, $symmetry, $endIter, $angSampRate, $percentDiscard,  
 							$filterEstimated, $filterResolution, $filterComputed, $filterConstant,
-							$wgh, $xstd, $pbc, $boff, $itmax, $ipmax, $target,
-							$thresh, $rrec, $hp, $lp, $rbfact, $reconstackid, $dang );
+							$wgh, $pbc, $itmax, $ipmax, $hp, $lp, $reconstackid, $dang, 
+							$fmag, $fdef, $fpart, $fbeaut, $ffilt, $fbfact, $psi, $theta, $phi, $x, $y );
 							
 		// Add this param set to the list that shows up in the GUI.
 		$this->addDefaultParams( $asymmSet );
@@ -179,18 +182,23 @@ class FrealignRefineForm extends BasicRefineForm
 	protected function addImportedRefineIter( $paramSet, $iter ) 
 	{
 		$paramSet->addIterationToValue( "wgh", $iter['wgh'] );
-		$paramSet->addIterationToValue( "xstd", $iter['xstd'] );
 		$paramSet->addIterationToValue( "pbc", $iter['pbc'] );
-		$paramSet->addIterationToValue( "boff", $iter['boff'] );
 		$paramSet->addIterationToValue( "itmax", $iter['itmax'] );
 		$paramSet->addIterationToValue( "ipmax", $iter['ipmax'] );
-		$paramSet->addIterationToValue( "target", $iter['target'] );
-		$paramSet->addIterationToValue( "thresh", $iter['thresh'] );
 		$paramSet->addIterationToValue( "cs", $iter['cs'] );
-		$paramSet->addIterationToValue( "rrec", $iter['rrec'] );
 		$paramSet->addIterationToValue( "hp", $iter['highpass'] );
 		$paramSet->addIterationToValue( "lp", $iter['lowpass'] );
-		$paramSet->addIterationToValue( "rbfact", $iter['rbfact'] );		
+		$paramSet->addIterationToValue( "fmag", $iter['fmag'] );
+		$paramSet->addIterationToValue( "fdef", $iter['fdef'] );
+		$paramSet->addIterationToValue( "fpart", $iter['fpart'] );
+		$paramSet->addIterationToValue( "fbeaut", $iter['fbeaut'] );
+		$paramSet->addIterationToValue( "ffilt", $iter['ffilt'] );
+		$paramSet->addIterationToValue( "fbfact", $iter['fbfact'] );
+		$paramSet->addIterationToValue( "psi", $iter['psi'] );
+		$paramSet->addIterationToValue( "theta", $iter['theta'] );
+		$paramSet->addIterationToValue( "phi", $iter['phi'] );
+		$paramSet->addIterationToValue( "x", $iter['x'] );
+		$paramSet->addIterationToValue( "y", $iter['y'] );
 	}	
 	
 	// set the default values that are populated
@@ -207,55 +215,40 @@ class FrealignRefineForm extends BasicRefineForm
 		// calculate default parameters
 		$outerMaskRadius 	= round($apix * $box / 3.0);
 		$rrec 				= (ceil($apix * 20)) / 10;
-		$lp 				= (ceil($apix * 40)) / 10;
 		
 		$javafunc = "
 	  <script type='text/javascript'>
 	    function setDefaults(obj) {
 	      if (obj.outerMaskRadius) obj.outerMaskRadius.value = $outerMaskRadius;
 	      if (obj.innerMaskRadius) obj.innerMaskRadius.value = 0;
-	      if (obj.symmetry) obj.symmetry.value = $sym;
+	      if (obj.symmetry) obj.symmetry.value = '$sym';
 	      if (obj.endIter) obj.endIter.value = '10';
+	      if (obj.percentDiscard) obj.percentDiscard.value = '15';
 	      if (obj.wgh) obj.wgh.value = '0.07';
-	      if (obj.xstd) obj.xstd.value = '0';
 	      if (obj.pbc) obj.pbc.value = '100';
-	      if (obj.boff) obj.boff.value = '70';
 	      if (obj.itmax) obj.itmax.value = '10';
-	      if (obj.ipmax) obj.ipmax.value = '0';
-	      if (obj.target) obj.target.value = '15';
-	      if (obj.thresh) obj.thresh.value = '85';
-	      if (obj.rrec) obj.rrec.value = $rrec;
-	      if (obj.hp) obj.hp.value = '50';
-	      if (obj.lp) obj.lp.value = $lp;
-	      if (obj.rbfact) obj.rbfact.value = '0';
+	      if (obj.ipmax) obj.ipmax.value = '10';
+	      if (obj.hp) obj.hp.value = '10';
+	      if (obj.lp) obj.lp.value = '300';
 	      if (obj.reconstackval) obj.reconstackid.value = '';
-	      if (obj.reconstackval) obj.dang.value = '';
+	      if (obj.dang) obj.dang.value = '5';
+	      if (obj.fmag) obj.fmag.checked = false;
+	      if (obj.fdef) obj.fdef.checked = false;
+	      if (obj.fpart) obj.fpart.checked = false;
+	      if (obj.fbeaut) obj.fbeaut.checked = false;
+	      if (obj.ffilt) obj.ffilt.checked = true;
+	      if (obj.fbfact) obj.fbfact.checked = false;
+	      if (obj.psi) obj.psi.checked = true;
+	      if (obj.theta) obj.theta.checked = true;
+	      if (obj.phi) obj.phi.checked = true;
+	      if (obj.x) obj.x.checked = true;
+	      if (obj.y) obj.y.checked = true;
 	      
 	      return;
 	    }
 	  </script>\n";
 		return $javafunc;
-	}
-	
-	// Override the basic build command function to include the mode flag.
-	public function buildCommand( $postArray )
-	{
-		$command = parent::buildCommand($postArray);
-		$params = $this->getFormParams();
-						
-		// figure out if the user selected an iteration during the prep step to
-		// import initial orientations
-		$dang = $params->getParamValue("dang");
-		if ( $dang == '' ) {
-			$command.= "--mode=1 ";
-		} else {
-			$command.= "--mode=3 ";
-		}
-			
-		return $command;
-	}		
-	
-		
+	}	
 }
 
 // extend the RefineFormParameters class so that we can add the frealign 
@@ -265,33 +258,40 @@ class FrealignParams extends RefineFormParameters
 	function __construct( $id='', $label='', $outerMaskRadius='', $innerMaskRadius='', $outerAlignRadius='', 
 							$innerAlignRadius='', $symmetry='', $endIter='', $angSampRate='', $percentDiscard='',  
 							$filterEstimated='', $filterResolution='', $filterComputed='', $filterConstant='',
-							$wgh='', $xstd='', $pbc='', $boff='', $itmax='', $ipmax='', $target='', 
-							$thresh='', $rrec='', $hp='', $lp='', $rbfact='', $reconstackid='', $dang='') 
+							$wgh='', $pbc='', $itmax='', $ipmax='', $hp='', $lp='', $reconstackid='', 
+							$dang='', $fmag='', $fdef='', $fpart='', $fbeaut='', $ffilt='', $fbfact='', 
+							$psi='', $theta='', $phi='', $x='', $y='') 
 	{
 		parent::__construct($id, $label, $outerMaskRadius, $innerMaskRadius, $outerAlignRadius, 
 							$innerAlignRadius, $symmetry, $endIter, $angSampRate, $percentDiscard,  
 							$filterEstimated, $filterResolution, $filterComputed, $filterConstant );
 		
 		$this->addParam( "wgh", $wgh, "Amplitude contrast (WGH)" );
-		$this->addParam( "xstd", $xstd, "Standard deviation filtering (XSTD)" );
-		$this->addParam( "pbc", $pbc, "Phase B-factor weighting constant (PBC)" );
-		$this->addParam( "boff", $boff, "B-factor offset (BOFF)" );
+		$this->addParam( "pbc", $pbc, "Weight particles in reconstruction (PBC)" );
 		$this->addParam( "itmax", $itmax, "Number of randomized search trials (ITMAX)" );
 		$this->addParam( "ipmax", $ipmax, "Number of potential matches to refine (IPMAX)" );
-		$this->addParam( "target", $target, "Target phase residual (TARGET)" );
-		$this->addParam( "thresh", $thresh, "Worst phase residual for inclusion (THRESH)" );
-		$this->addParam( "rrec", $rrec, "Resolution limit of reconstruction (RREC)" );
-		$this->addParam( "hp", $hp, "Lower resolution limit or high-pass filter (RMAX1)" );
-		$this->addParam( "lp", $lp, "Higher resolution limit or low-pass filter (RMAX2)" );
-		$this->addParam( "rbfact", $rbfact, "B-factor correction (RBFACT)" );
+		$this->addParam( "lp", $lp, "Lower resolution limit or high-pass filter (RMAX1)" );
+		$this->addParam( "hp", $hp, "Higher resolution limit or low-pass filter (RMAX2)" );
 		$this->addParam( "reconstackid", $reconstackid, "Reconstruction Stack" );
 		$this->addParam( "dang", $dang, "Angular increment (DANG)" );
+		
+		// new parameters per Niko's redesign
+		$this->addParam( "fmag", $fmag, "Magnification refinement (FMAG)" );
+		$this->addParam( "fdef", $fdef, "Defocus refinement (FDEF)" );
+		$this->addParam( "fpart", $fpart, "per particle (FPART)" );
+		$this->addParam( "fbeaut", $fbeaut, "Apply symmetry in real space (FBEAUT)" );
+		$this->addParam( "ffilt", $ffilt, "Apply SSNR filter to reconstruction (FFILT)" );
+		$this->addParam( "fbfact", $fbfact, "Correct B-factor in reconstruction (FBFACT)" );
+		$this->addParam( "psi", $psi, "Psi" );
+		$this->addParam( "theta", $theta, "Theta" );
+		$this->addParam( "phi", $phi, "Phi" );
+		$this->addParam( "x", $x, "X" );
+		$this->addParam( "y", $y, "Y" );
 		
 		// disable any general params that do not apply to this method
 		$this->hideParam("outerAlignRadius");
 		$this->hideParam("innerAlignRadius");
 		$this->hideParam("angSampRate");
-		$this->hideParam("percentDiscard");
 		$this->hideParam("filterEstimated");
 		$this->hideParam("filterResolution");
 		$this->hideParam("filterComputed");
