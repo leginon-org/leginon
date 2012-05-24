@@ -15,9 +15,11 @@ class FrealignRefineJob(apRefineJob.RefineJob):
 	def setupParserOptions(self):
 		super(FrealignRefineJob,self).setupParserOptions()
 		self.parser.add_option('--recononly', dest='recononly', default=False, action='store_true',
-		help="run recon part only, allowed only if startiter=enditer")
+			help="run recon part only, allowed only if startiter=enditer")
 		self.parser.add_option('--refineonly', dest='refineonly', default=False, action='store_true',
-		help="run refine part only, allowed only if startiter=enditer")
+			help="run refine part only, allowed only if startiter=enditer")
+		self.parser.add_option('--fpbc', dest='fpbc', default=False, action='store_true',
+			help="phase residual weighting of particles. False gives 100 (equal weighting), True gives 4.0")
 
 	#================
 	def setIterationParamList(self):
@@ -26,44 +28,54 @@ class FrealignRefineJob(apRefineJob.RefineJob):
 				####card 1
 				# cform is determined by stackname extension
 				{'name':"mode" , 'default':1,
-					'help':"refine and reconstruct. (=IFLAG in frealign documentation)"},
+					'help':"refine or reconstruct. (=IFLAG in frealign documentation)"},
 				{'name':"fmag", 'default':False,
 					 'help':"Refine the magnification"},
 				{'name':"fdef", 'default':False,
 					 'help':"Refine the defocus"},
-				{'name':"fastig", 'default':False,
-					 'help':"Refine the defocus astigmatism"},
+				#fastig is always False
 				{'name':"fpart", 'default':False,
 					 'help':"Refine the defocus per particle"},
-				{'name':'iewald', 'default':0, 'help':'Ewald sphere distortion correction (0:disable,1:simple,2:reference-base etc.'},
-				{'name':'fbeaut', 'default': True,'help':'real-space symmetrization'},
-				{'name':"fcref", 'default':False,
-					 'help':"apply FOM filter to final reconstruction"},
-				{'name':'fmatch', 'default':False, 'help':'make matching projection for each particle'},
-				{'name':'ifsc','default': 0, 'help':'memory saving function (0:disable)'},
-				{'name':'fstat','default': False, 'help':'memory saving function, calculates many stats, such as SSNR'},
-				{'name':"iblow", 'default':4,
-					'help':"1,2, or 4. Padding factor for reference structure. iblow=4 requires the most memory but results in the fastest search & refinement."},
+				# iewald is always 0
+					#{'name':'iewald', 'default':0, 'help':'Ewald sphere distortion correction (0:disable,1:simple,2:reference-base etc.'},
+				{'name':'fbeaut', 'default': False,'help':'real-space symmetrization'},
+				{'name':"ffilt", 'default':True,
+					 'help':"apply SSNR filter to reconstruction"},
+				{'name':"fbfact", 'default':False,
+					 'help':"correct B-factor in reconstruction"},
+				#fmatch is always False
+					#{'name':'fmatch', 'default':False, 'help':'make matching projection for each particle'},
+				#ifsc is always 0
+					#{'name':'ifsc','default': 0, 'help':'memory saving function (0:disable)'},
+				#fstat is always False
+					#{'name':'fstat','default': False, 'help':'memory saving function, calculates many stats, such as SSNR'},
+				#iblow is determined by memory requirement
+					#{'name':"iblow", 'default':4,
+					#	'help':"1,2, or 4. Padding factor for reference structure. iblow=4 requires the most memory but results in the fastest search & refinement."},
 
 				####card 2
 				#{'name':"outerMaskRadius", 
-				#	'help':"mask from center of particle to outer edge"},
+					#	'help':"mask from center of particle to outer edge"},
 				#{'name':"innerMaskRadius", 'default':0, 
-				#	'help':"inner mask radius"},
+					#	'help':"inner mask radius"},
 				{'name':"wgh", 'default':0.07, 
 					'help':"amplitude contrast"},
-				{'name':"xstd", 'default':0.0, 
-					'help':"standard deviations above mean for masking of input model"},
-				{'name':"pbc", 'default':100.0, 
-					'help':"conversion constant for phase residual weighting of particles. 100 gives equal weighting"},
-				{'name':"boff", 'default':75.0,
-					'help':"average phase residual of all particles. used for weighting"},
-				{'name':"dang" , 'default':5.0, 
-					'help':"step size if using modes 3 and 4"},
-				{'name':"itmax", 'default':10,
-					'help':"number of iterations of randomization. used for modes 2 and 4"},
-				{'name':"ipmax", 'default':0,
-					'help':"number of potential matches in a search that should be tested further in local refinement"},
+				#xstd is always 0.0
+					#{'name':"xstd", 'default':0.0, 
+					#	'help':"standard deviations above mean for masking of input model"},
+				#fpbc is the same for all iteration
+				# boff is always 0.0
+					#{'name':"boff", 'default':75.0,
+					#	'help':"average phase residual of all particles. used for weighting"},
+				# dang is always 5.0
+					#{'name':"dang" , 'default':5.0, 
+					#	'help':"step size if using modes 3 and 4"},
+				# itmax is always 10
+					#{'name':"itmax", 'default':10,
+					#	'help':"number of iterations of randomization. used for modes 2 and 4"},
+				# ipmax is always 10
+					#{'name':"ipmax", 'default':0,
+					#	'help':"number of potential matches in a search that should be tested further in local refinement"},
 
 				####card 4
 				{'name':"last", 'default':'',
@@ -73,27 +85,33 @@ class FrealignRefineJob(apRefineJob.RefineJob):
 				#{'name':"sym", 'default':'', 'help':"symmetry. Options are I, O, Dx (e.g. D7), or Cx (e.g. C7)"},
 
 				####card 6
-				{'name':"target", 'default':15.0, 
-					'help':"target phase residual during refinement"},
-				{'name':"thresh", 'default':90.0, 
-					'help':"phase residual threshold cut-off"},
+				# target is always 30.0
+					#{'name':"target", 'default':30.0, 
+					#	'help':"target phase residual during refinement"},
+				{'name':"thresh", 'default':0.8,
+					'help':"percent to include"},
 				{'name':"cs", 'default':2.0, 
 					'help':"spherical aberation"},
 				{'name':"kv", 'default':120.0, 
 					'help':"accelerlating voltage"},
-				{'name':'beamtiltx', 'default': 0.0, 'help':'beam tilt in x direction'},
-				{'name':'beamtilty', 'default': 0.0, 'help':'beam tilt in y direction'},
+				# beamtiltx is always 0.0
+					#{'name':'beamtiltx', 'default': 0.0, 'help':'beam tilt in x direction'},
+				# beamtilty is always 0.0
+					#{'name':'beamtilty', 'default': 0.0, 'help':'beam tilt in y direction'},
 
 				####card 7
-				{'name':"rrec", 'default':10.0,   
-					'help':"resolution to which to limit the reconstruction"},
-				{'name':"hp", 'default':100.0, 
+				# rrec is set to 2 * Nyquist limit
+					#{'name':"rrec", 'default':10.0,   
+					#	'help':"resolution to which to limit the reconstruction"},
+				{'name':"hp", 'default':300.0, 
 					'help':"upper limit for low resolution signal"},
 				{'name':"lp", 'default':10.0, 
 					'help':"lower limit for high resolution signal"},
-				{'name':'dfstd', 'default': 100, 'help':'defocus standard deviation (in Angstroms), usually +/- 100 A, only for defocus refinement'},
-				{'name':"rbfact", 'default':0.0, 
-					'help':"rbfact to apply to particles before classification."},
+				# dfstd is always 100.0
+					#{'name':'dfstd', 'default': 100, 'help':'defocus standard deviation (in Angstroms), usually +/- 100 A, only for defocus refinement'},
+				# rbfact is always 30.0
+					#{'name':"rbfact", 'default':0.0, 
+					#	'help':"rbfact to apply to particles before classification."},
 
 				####card 10
 				{'name':"inpar", 'default':'',
@@ -105,31 +123,44 @@ class FrealignRefineJob(apRefineJob.RefineJob):
 		
 				])
 
+	def setConstantParams(self):
+		self.params['cform'] = 'M'
+		self.params['fastig'] = False
+		self.params['iewald'] = 0
+		self.params['fmatch'] = False
+		self.params['ifsc'] = 0
+		self.params['fstat'] = False
+		self.params['xstd'] = 0.0
+		self.params['boff'] = 0.0
+		self.params['dang'] = 5.0
+		self.params['itmax'] = 10
+		self.params['ipmax'] = 10
+		self.params['ifirst'] = 1
+		self.params['relmag'] = 1.0
+		self.params['target'] = 30.0
+		self.params['beamtiltx'] = 0.0
+		self.params['beamtilty'] = 0.0
+		self.params['dfstd'] = 100.0
+		self.params['rbfact'] = 0.0
+
 	#=====================
 	def checkPackageConflicts(self):
+		self.setConstantParams()
 		if self.params['startiter'] != self.params['enditer']:
 			if self.params['recononly'] or self.params['refineonly']:
 				apDisplay.printError("partial iteration only allowed if startiter==enditer.")
-		self.params['relmag'] = 1.0
-		pieces = self.params['stackname'].split('.')
-		ext = pieces[-1]
-		if ext == 'mrc':
-			self.params['cform'] = 'M'
-		elif ext == 'hed':
-			self.params['cform'] = 'I'
+		if self.params['fpbc'] == False:
+			self.params['pbc'] = 100.0
 		else:
-			self.params['cform'] = 'S'
+			self.params['pbc'] = 0.0
+		self.recon_mem,self.params['iblow'] = self.calcRefineMem(self.params['ppn'],self.params['boxsize'],self.params['mem'])
+		self.params['rrec'] = self.params['apix'] * 2
 
 	def checkIterationConflicts(self):
 		''' 
 		Conflict checking of per-iteration parameters
 		'''
 		super(FrealignRefineJob,self).checkIterationConflicts()
-
-		self.recon_mem,iblow = self.calcRefineMem(self.params['ppn'],self.params['boxsize'],self.params['mem'])
-		if iblow < max(self.params['iblow']):
-			apDisplay.printWarning("iblow will be reduced to %d due to lack of memory" % iblow)
-			self.params['iblow'] = map((lambda x: min(iblow,x)), self.params['iblow'])
 
 	def convertSymmetryNameForPackage(self,inputname):
 		'''
@@ -150,7 +181,7 @@ class FrealignRefineJob(apRefineJob.RefineJob):
 	def setFrealignRefineParams(self):
 		frealign_inputparams = []
 		# card 1
-		card = ("cform", "mode" , "fmag", "fdef", "fastig", "fpart", "iewald","fbeaut", "fcref", "fmatch", "ifsc", "fstat", "iblow",)
+		card = ("cform", "mode" , "fmag", "fdef", "fastig", "fpart", "iewald","fbeaut", "ffilt","fbfact", "fmatch", "ifsc", "fstat", "iblow",)
 		frealign_inputparams.append(card)
 		####card 2
 		card = ("outerMaskRadius", "innerMaskRadius", "apix", "wgh", "xstd", "pbc", "boff", "angSampRate", "itmax", "ipmax",)
@@ -241,7 +272,7 @@ class FrealignRefineJob(apRefineJob.RefineJob):
 			'hostname'
 			'',
 			'### START FREALIGN ###',
-			'frealign_mp << EOF > frealign.recon.out',
+			'frealign.exe << EOF > frealign.recon.out',
 			]
 		lines_after_input=[
 			'EOF',
@@ -286,7 +317,7 @@ class FrealignRefineJob(apRefineJob.RefineJob):
 				'',
 				'',
 				'### START FREALIGN ###',
-				'frealign_mp << EOF > frealign.proc%03d.out' % proc,
+				'frealign.exe << EOF > frealign.proc%03d.out' % proc,
 				]
 			lines_after_input=[
 				'EOF',
