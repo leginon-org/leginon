@@ -375,9 +375,9 @@ class DirectDetectorProcessing(object):
 
 		# BAD PIXEL FIXING
 		# This is commented out because it interferes with Gram-Schmidt process
-		#plan = self.c_client.retrieveCorrectorPlan(self.camerainfo)
-		#self.c_client.fixBadPixels(corrected,plan)
-		#corrected = numpy.clip(corrected,0,10000)
+		plan = self.c_client.retrieveCorrectorPlan(self.camerainfo)
+		self.c_client.fixBadPixels(corrected,plan)
+		corrected = numpy.clip(corrected,0,10000)
 		#if save_jpg:
 			#numpil.write(corrected,'%s_gain_corrected.jpg' % ddtype,'jpeg')
 		print 'corrected',arraystats.mean(corrected),corrected.min(),corrected.max()
