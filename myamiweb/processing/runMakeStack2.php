@@ -58,6 +58,7 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	// connect to particle and ctf databases
 	$particle = new particledata();
 	$ctfdata=$particle->hasCtfData($sessionId);
+	$ctftiltdata=$particle->hasCtfTiltData($sessionId);
 	$ctffindids = $particle->getCtfRunIds($sessionId,$showHidden=False,$ctffind=True);
 	$partrunids = $particle->getParticleRunIds($sessionId);
 	$massessrunIds = $particle->getMaskAssessRunIds($sessionId);
@@ -128,14 +129,16 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 		'ace2imagephase'=>'Ace 2 PhaseFlip Whole Image',
 		'spiderimage'=>'SPIDER PhaseFlip Whole Image',
 		'emanpart'=>'EMAN PhaseFlip by Boxed Stack per Image',
-		'emanimage'=>'EMAN PhaseFlip Whole Image',
-		'emantilt'=>'EMAN PhaseFlip by Tilt Location'
+		'emanimage'=>'EMAN PhaseFlip Whole Image'
 	);
 	$limitedctfoptions=array(
-		'emanpart'=>'EMAN PhaseFlip by Boxed Stack per Image',
-		'emantilt'=>'EMAN PhaseFlip by Tilt Location'
+		'emanpart'=>'EMAN PhaseFlip by Boxed Stack per Image'
 	);
-
+	if ($ctftiltdata) {
+		$ctfoptions['emantilt'] = 'EMAN PhaseFlip by Tilt Location';
+		$limitedctfoptions['emantilt'] = 'EMAN PhaseFlip by Tilt Location';
+	}
+ 
 	$javascript="<script src='../js/viewer.js'></script>
 	<script type='text/javascript'>
 
