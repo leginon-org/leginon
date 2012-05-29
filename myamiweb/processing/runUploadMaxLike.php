@@ -53,19 +53,19 @@ function createMaxLikeAlignForm($extra=false, $title='uploadMaxlikeAlignment.py 
 		echo "<font color='red'><B>No Maximum Likelihood Jobs for this Project</B></FONT>\n";
 	} else {
 		foreach ($maxlikejobs as $maxlikejob) {
-			$jobid = $maxlikejob['DEF_id'];
-			echo "<form name='viewerform' method='POST' action='$formAction&jobid=$jobid'>\n";
+			$maxlikeid = $maxlikejob['DEF_id'];
+			echo "<form name='viewerform' method='POST' action='$formAction&maxlikeid=$maxlikeid'>\n";
 			
 			// Post values needed for showOrSubmitCommand()
-			echo "<input type='hidden' name='runname' value='$jobid'>\n";
-			$outdir = $maxlikejob['path'].$jobid;
+			echo "<input type='hidden' name='runname' value='$maxlikeid'>\n";
+			$outdir = $maxlikejob['path'].$maxlikeid;
 			echo "<input type='hidden' name='outdir' value='$outdir'>\n";
 			
-			if ($_POST['hideJob'.$jobid] == 'hide') {
-				$particle->updateHide('ApMaxLikeJobData', $jobid, '1');
+			if ($_POST['hideJob'.$maxlikeid] == 'hide') {
+				$particle->updateHide('ApMaxLikeJobData', $maxlikeid, '1');
 				$maxlikejob['hidden']='1';
-			} elseif ($_POST['hideUndoJob'.$jobid] == 'unhide') {
-				$particle->updateHide('ApMaxLikeJobData', $jobid, '0');
+			} elseif ($_POST['hideUndoJob'.$maxlikeid] == 'unhide') {
+				$particle->updateHide('ApMaxLikeJobData', $maxlikeid, '0');
 				$maxlikejob['hidden']='0';
 			}
 
@@ -74,14 +74,14 @@ function createMaxLikeAlignForm($extra=false, $title='uploadMaxlikeAlignment.py 
 
 			echo "<tr><td colspan='5'>\n";
 			$nameline = "<span style='font-size: larger; color:#111111;'>\n";
-			$nameline .= "Job Id: $jobid &nbsp;\n";
+			$nameline .= "Job Id: $maxlikeid &nbsp;\n";
 			$nameline .= " ".$maxlikejob['runname'];
 			$nameline .= "</span>\n";
 			if ($maxlikejob['hidden'] == 1) {
 				$nameline.= " <font color='#cc0000'>HIDDEN</font>\n";
-				$nameline.= " <input class='edit' type='submit' name='hideUndoJob".$jobid."' value='unhide'>\n";
+				$nameline.= " <input class='edit' type='submit' name='hideUndoJob".$maxlikeid."' value='unhide'>\n";
 				$display_keys['hidden'] = "<font color='#cc0000'>HIDDEN</font>";
-			} else $nameline.= " <input class='edit' type='submit' name='hideJob".$jobid."' value='hide'>\n";
+			} else $nameline.= " <input class='edit' type='submit' name='hideJob".$maxlikeid."' value='hide'>\n";
 
 			echo apdivtitle($nameline);
 			echo "</td></tr>\n";
@@ -99,7 +99,7 @@ function createMaxLikeAlignForm($extra=false, $title='uploadMaxlikeAlignment.py 
 			//echo "</td></tr>\n";
 
 			$display_keys['date time'] = $maxlikejob['DEF_timestamp'];
-			$display_keys['path'] = "<input type='text' name='path".$jobid."' value='".$maxlikejob['path']."' size='40'>\n";
+			$display_keys['path'] = "<input type='text' name='path".$maxlikeid."' value='".$maxlikejob['path']."' size='40'>\n";
 			$display_keys['file prefix'] = $maxlikejob['timestamp'];
 
 			$refstackname = "part".$maxlikejob['timestamp']."_average.hed";
@@ -108,7 +108,7 @@ function createMaxLikeAlignForm($extra=false, $title='uploadMaxlikeAlignment.py 
 				$display_keys['reference stack'] = "<a target='stackview' HREF='viewstack.php?"
 					."file=$refstack&expId=$expId'>".$refstackname."</a>";
 
-			echo "<input type='hidden' name='timestamp".$jobid."' value='".$maxlikejob['timestamp']."'>\n";
+			echo "<input type='hidden' name='timestamp".$maxlikeid."' value='".$maxlikejob['timestamp']."'>\n";
 			foreach($display_keys as $k=>$v) {
 				echo formatHtmlRow($k,$v);
 			}
@@ -119,7 +119,7 @@ function createMaxLikeAlignForm($extra=false, $title='uploadMaxlikeAlignment.py 
 			echo "</td></tr>\n";
 
 			echo "<tr><td colspan='2'>\n";
-			echo getSubmitForm("Upload Job $jobid");
+			echo getSubmitForm("Upload Job $maxlikeid");
 			echo "</td></tr>\n";
 
 			echo "</table>\n";
@@ -148,9 +148,9 @@ function runMaxLikeAlign() {
 	PART 1: Get variables
 	******************** */
 	$expId=$_GET['expId'];
-	$jobid = $_GET['jobid'];
-	$timestamp=$_POST['timestamp'.$jobid];
-	$rundir=$_POST['path'.$jobid];
+	$maxlikeid = $_GET['maxlikeid'];
+	$timestamp=$_POST['timestamp'.$maxlikeid];
+	$rundir=$_POST['path'.$maxlikeid];
 	$commit = ($_POST['commit']=="on") ? true : false;
 
 	//make sure a stack was selected
@@ -186,7 +186,7 @@ function runMaxLikeAlign() {
 	PART 5: Show or Run Command
 	******************** */
 	// submit command
-	$errors = showOrSubmitCommand($command, $headinfo, 'maxlikeali', $nproc);
+	$errors = showOrSubmitCommand($command, $headinfo, 'partalign', $nproc);
 
 	// if error display them
 	if ($errors)
