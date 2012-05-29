@@ -16,8 +16,7 @@ function createAppionLoopTable ($sessiondata, $defrunname, $outdirname, $leginon
 	$reverse = ($_POST['reverse']=="on") ? "CHECKED" : "";
 	$limit = $_POST[limit];
 	$tiltangle = $_POST['tiltangle'];
-	$ddnframe = $_POST['ddnframe'];
-	$ddstartframe = $_POST['ddstartframe'];
+
 	// commit is checkmarked by default
 	$commit = ($_POST['commit']=="on" || !$_POST['process']) ? "CHECKED" : "";
 	$apcontinue = $_POST['apcontinue'];
@@ -93,12 +92,6 @@ function createAppionLoopTable ($sessiondata, $defrunname, $outdirname, $leginon
 		echo"<input type='hidden' name='alldbimages' VALUE=1>\n";
 		echo"<I>No presets for this session<br/>\n"
 			."processing ALL images</I><br/>\n";
-	}
-	// temporary raw frame processing gui assuming presetname is ed
-	if ($has_ed) {
-		echo "<b>Raw frame processing if available: </b><br/>\n";
-		echo "start frame:<input type='text' name='ddstartframe' value='$ddstartframe' size='3'>\n";
-		echo "total frame:<input type='text' name='ddnframe' value='$ddnframe' size='3'>\n";
 	}
 	echo "<hr/>\n";
 	echo "<input type='hidden' name='sessionname' value='$sessionname'>\n";
@@ -248,8 +241,6 @@ function parseAppionLoopParams () {
 	$commit = ($_POST['commit']=='on') ? true : false;
 	$runname = $_POST['runname'];
 	$outdir = $_POST['outdir'];
-	$ddstartframe = $_POST['ddstartframe'];
-	$ddnframe = $_POST['ddnframe'];
 	
 	if ($outdir) {
 		// make sure outdir ends with '/' and append run name
@@ -283,8 +274,6 @@ function parseAppionLoopParams () {
 	if ($reverse) $command.=" --reverse";
 	if ($shuffle) $command.=" --shuffle";
 	if ($limit) $command.=" --limit=$limit";
-	if ($ddstartframe) $command.=" --ddstartframe=$ddstartframe";
-	if ($ddnframe) $command.=" --ddnframe=$ddnframe";
 
 	if ($tiltangle != '' && $tiltangle != 'all') $command.=" --tiltangle=$tiltangle";
 	if (!$apcontinue) $command.=" --no-continue";
