@@ -273,7 +273,7 @@ class CentosInstallation(object):
 		self.writeToLog("setup Leginon configuration file")
 		leginonDir = self.runCommand('python -c "import leginon; print leginon.__path__[0]"')		
 		leginonDir = leginonDir.strip()
-		self.setupLeginonCfg(leginonDir + '/config')
+		self.setupLeginonCfg(leginonDir)
 
 		# setup Sinedon configuration file
 		self.writeToLog("setup Sinedon configuration file")
@@ -655,7 +655,7 @@ setenv SPBIN_DIR ${SPIDERDIR}/bin/''')
 		self.yumInstall(packagelist)
 	
 	def setupLeginonCfg(self, leginonCfgDir):
-		inf = open(leginonCfgDir + '/default.cfg', 'r')
+		inf = open(leginonCfgDir + '/leginon.cfg.template', 'r')
 		outf = open(leginonCfgDir + '/leginon.cfg', 'w')
 
 		for line in inf:
@@ -671,7 +671,7 @@ setenv SPBIN_DIR ${SPIDERDIR}/bin/''')
 
 
 	def setupSinedonCfg(self, sinedonDir):
-		inf = open(self.svnMyamiDir + 'sinedon/examples/sinedon.cfg', 'r')
+		inf = open(self.svnMyamiDir + 'sinedon/sinedon.cfg.template', 'r')
 		outf = open(sinedonDir + '/sinedon.cfg', 'w')
 
 		for line in inf:
