@@ -24,7 +24,6 @@ setup(
 		('leginon', ['holetemplate.mrc']),
 		('leginon', ['sq_example.jpg']),
 		('leginon', ['hl_example.jpg']),
-		('leginon/config', ['config/default.cfg']),
 		('leginon/icons', glob.glob('icons/*.png')),
 		('leginon/icons/processing', glob.glob('icons/processing/*.png')),
 		('leginon/applications', glob.glob('applications/*.xml')),
