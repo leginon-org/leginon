@@ -655,7 +655,7 @@ setenv SPBIN_DIR ${SPIDERDIR}/bin/''')
 		self.yumInstall(packagelist)
 	
 	def setupLeginonCfg(self, leginonCfgDir):
-		inf = open(leginonCfgDir + '/leginon.cfg.template', 'r')
+		inf = open(self.svnMyamiDir + 'leginon/leginon.cfg.template', 'r')
 		outf = open(leginonCfgDir + '/leginon.cfg', 'w')
 
 		for line in inf:
@@ -671,7 +671,7 @@ setenv SPBIN_DIR ${SPIDERDIR}/bin/''')
 
 
 	def setupSinedonCfg(self, sinedonDir):
-		inf = open(self.svnMyamiDir + 'sinedon/sinedon.cfg.template', 'r')
+		inf = open(self.svnMyamiDir + 'sinedon/examples/sinedon.cfg', 'r')
 		outf = open(sinedonDir + '/sinedon.cfg', 'w')
 
 		for line in inf:
