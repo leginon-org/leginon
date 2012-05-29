@@ -2067,24 +2067,53 @@ class particledata {
 		return $r['num'];
 	}
 
-	function getLastParticleRun ($sessionId) {
+	// return the last Def_id value in the provided table
+	function getLastDefId($sessionId, $table) 
+	{
 		$q = "select DEF_id as runId "
-			."from `ApSelectionRunData` "
+			."from `".$table."` "
 			."where `REF|leginondata|SessionData|session` = '$sessionId' "
 			."order by DEF_id desc limit 1";
 		list($r) = $this->mysql->getSQLResult($q);
 		return $r['runId'];
 	}
+	
+	function getLastParticleRun($sessionId) 
+	{
+		return $this->getLastDefId($sessionId, "ApSelectionRunData");
+	}
 
-	function getParticleRunData ($partRunId) {
+	function getLastDDStackRun($sessionId) 
+	{
+		return $this->getLastDefId($sessionId, "ApDDStackRunData");
+	}
+	
+	function hasDDstackData($sessionId) 
+	{
+		$r= ($this->getLastDDStackRun($sessionId)) ? true : false;
+		return $r;
+	}
+		
+	function getParticleRunData($partRunId) 
+	{
+		return getRunData($partRunId, "ApSelectionRunData" );
+	}
+	
+	function getDDStackRunData($partRunId) 
+	{
+		return getRunData($partRunId, "ApSelectionRunData" );
+	}
+	
+	function getRunData($runId, $table) 
+	{
 		$q = "SELECT r.*, p.path "
-			."FROM `ApSelectionRunData` AS r "
+			."FROM `".$table."` AS r "
 			."LEFT JOIN ApPathData AS p ON (r.`REF|ApPathData|path` = p.`DEF_id`) "
-			."WHERE r.`DEF_id` = '$partRunId'";
+			."WHERE r.`DEF_id` = '$runId'";
 		list($r) = $this->mysql->getSQLResult($q);
 		return $r;
 	}
-
+	
 	// Warning: this counts the number of runs, it does not return the 
 	// last run id number used. Since a user can modify the runname,
 	// this is not a safe number to use for a defualt run name. Try
@@ -2102,9 +2131,10 @@ class particledata {
 		return 0;
 	}
 
-	function getParticleRunIds ($sessionId,$showHidden=False) {
+	function getRunIds($sessionId, $table, $showHidden=False) 
+	{
 		$q = "SELECT r.*, p.path "
-			."FROM `ApSelectionRunData` AS r "
+			."FROM `".$table."` AS r "
 			."LEFT JOIN ApPathData AS p "
 			."ON (r.`REF|ApPathData|path` = p.`DEF_id`) "
 			."WHERE r.`REF|leginondata|SessionData|session` = '$sessionId' ";
@@ -2115,7 +2145,17 @@ class particledata {
 		//echo print_r($r)."<br/>\n";
 		return $r;
 	}
-
+	
+	function getParticleRunIds($sessionId,$showHidden=False) 
+	{
+		return $this->getRunIds($sessionId, "ApSelectionRunData", $showHidden);
+	}
+	
+	function getDDStackRunIds($sessionId,$showHidden=False) 
+	{
+		return $this->getRunIds($sessionId, "ApDDStackRunData", $showHidden);
+	}
+	
 	#--------- MAKE STACK FUNCTIONS---------------#
 
 	function getParticleRunsFromStack($stackid) {
