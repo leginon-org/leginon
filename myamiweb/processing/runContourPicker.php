@@ -8,12 +8,12 @@
  *  Simple viewer to view a image using mrcmodule
  */
 
-require "inc/particledata.inc";
-require "inc/leginon.inc";
-require "inc/project.inc";
-require "inc/viewer.inc";
-require "inc/processing.inc";
-require "inc/appionloop.inc";
+require_once "inc/particledata.inc";
+require_once "inc/leginon.inc";
+require_once "inc/project.inc";
+require_once "inc/viewer.inc";
+require_once "inc/processing.inc";
+require_once "inc/appionloop.inc";
   
 /**
  * Handle Particle pick Label
@@ -200,9 +200,9 @@ function createContourPickerForm($extra=false, $title='Manual Object Tracer Laun
 	}
 	*/
 	// pick and image parameters
-	$diam = ($_POST['diam']) ? $_POST['diam'] : "";
 	echo "<TD CLASS='tablebg'>\n";
 	echo "<b>Particle Diameter:</b><br />\n";
+	$diam = ($_POST['diam']) ? $_POST['diam'] : "";
 	echo "<input type='text' NAME='diam' VALUE='$diam' SIZE='4'>\n";
 	echo docpop('pdiam','Particle diameter for result images');
 	echo "<font SIZE=-2><I>(in &Aring;ngstroms)</I></font>\n";
@@ -228,7 +228,7 @@ function createContourPickerForm($extra=false, $title='Manual Object Tracer Laun
 		</tr>
 		<TR>
 		<TD COLSPAN='2' ALIGN='CENTER'><hr>";
-	echo getSubmitForm("Run ContourPicker", false, true);
+	echo getSubmitForm("Run ContourPicker", true, true);
 	echo "</TD>
 		</tr>
 		</table>
@@ -285,21 +285,24 @@ function runContourPicker() {
 			$command .= " --label=$picklabel";
 	}
 
-	processing_header("Object Tracing Results","Object Tracing Results");
+	/* *******************
+	PART 4: Create header info, i.e., references
+	******************** */
 
-	echo appionRef();
+	// Add reference to top of the page
+	$headinfo .= appionRef(); // main appion ref
 
-	echo"
-		<table WIDTH='600'>
-		<TR><TD COLSPAN='2'>
-		<B>Contour Picker Command:</B><br />
-		$command<HR>
-		</TD></tr>";
+	/* *******************
+	PART 5: Show or Run Command
+	******************** */
 
-	appionLoopSummaryTable();
-	particleLoopSummaryTable();
-	echo"</table>\n";
-	processing_footer();
+	// submit command
+	$errors = showOrSubmitCommand($command, $headinfo, 'contourpicker', 1);
+
+	// if error display them
+	if ($errors)
+		createContourPickerForm($errors);
+	exit;
 }
 
 ?>
