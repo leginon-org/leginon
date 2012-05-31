@@ -469,7 +469,7 @@ function addAppionWrapper($command, $processhost=false)
 
 
 /**************************************/
-function showOrSubmitCommand($command, $headinfo, $jobtype, $nproc, $testimg=False) 
+function showOrSubmitCommand($command, $headinfo, $jobtype, $nproc, $testimg=False, $nodes=0, $ppn=0) 
 {
 	/*
 		If user clicked run button it launches job on appion cluster
@@ -549,7 +549,7 @@ function showOrSubmitCommand($command, $headinfo, $jobtype, $nproc, $testimg=Fal
 			return "<B>ERROR:</B> Enter a user name and password";
 		}
 
-		$errors = submitAppionJob($command, $outdir, $runname, $expId, $jobtype, $testimg, False, False, $nproc);
+		$errors = submitAppionJob($command, $outdir, $runname, $expId, $jobtype, $testimg, False, False, $nproc, $ppn, $nodes);
 		
 		// if errors:
 		if ($errors) {
