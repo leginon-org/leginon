@@ -895,6 +895,7 @@ function writeTestResults($jpg,$ccclist,$bin,$process_str='')
 	if ($process_str === '') {
 		$process_str = getProcessString();
 	}
+	clearstatcache(); // clear cache
 	$fileExists = file_exists($jpg);
   	if ( ($fileExists===false) && (preg_match('/[Ss]how/',$process_str)) ) {
 		return "<font color='#990000'>The test results are not ready for display. Refresh the page after the command is run successfully. </font><br />\n";
