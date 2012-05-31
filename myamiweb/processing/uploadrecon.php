@@ -417,7 +417,9 @@ function runUploadRecon() {
 	//$command.="--package=EMAN ";
 	//if (!$jobId) $command.="--rundir=$runpath ";
 	//if ($jobId) $command.="--rundir=$runpath ";
-	if ($jobId) $command.="--jobid=$jobId ";
+	// The parameter --jobid is normally used for current job and will be stripped off by apAgent
+	// Therefore, --refinejobid is used to keep it unique
+	if ($jobId) $command.="--refinejobid=$jobId ";
 	if ($contour) $command.="--contour=$contour ";
 	if ($mass) $command.="--mass=$mass ";
 	if ($zoom) $command.="--zoom=$zoom ";

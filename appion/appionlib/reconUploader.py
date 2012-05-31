@@ -30,7 +30,7 @@ class generalReconUploader(appionScript.AppionScript):
 	def setupParserOptions(self):
 		
 		self.parser.set_usage("Usage: %prog --runname=<name> --stackid=<int> --modelid=<int>\n\t "
-			+"--description='<quoted text>'\n\t [ --package=EMAN --jobid=<int> --oneiter=<iter> --startiter=<iter> --zoom=<float> "
+			+"--description='<quoted text>'\n\t [ --package=EMAN --refinejobid=<int> --oneiter=<iter> --startiter=<iter> --zoom=<float> "
 			+"--contour=<contour> --rundir=/path/ --commit ]")
 		
 		### if job did not finish or if you only want to upload certain iterations, specify here
@@ -39,7 +39,7 @@ class generalReconUploader(appionScript.AppionScript):
 			
 		### standard refinement parameters: these are optional and should only be specified in the absence of a pickle file
 		self.parser.set_defaults(nproc=1)
-		self.parser.add_option("--jobid", dest="jobid", type="int",
+		self.parser.add_option("--refinejobid", dest="jobid", type="int",
 			help="jobid of refinement", metavar="INT")
 		self.parser.add_option("--timestamp", dest="timestamp", type="str",
 			help="timestampe associated with refinement, e.g. --timestamp=08nov25c07", metavar="INT")
