@@ -197,8 +197,8 @@ function createManualPickerForm($extra=false, $title='Manual Picker Launcher', $
 	// pick and image parameters
   echo "<TD CLASS='tablebg'>\n";
   echo "<b>Particle Diameter:</b><br />\n";
-  echo "<input type='text' NAME='diam' VALUE='$diam' SIZE='4'>\n";
   $diam = ($_POST['diam']) ? $_POST['diam'] : "";
+  echo "<input type='text' NAME='diam' VALUE='$diam' SIZE='4'>\n";
   echo docpop('pdiam','Particle diameter for result images');
   echo "<font SIZE=-2><I>(in &Aring;ngstroms)</I></font>\n";
   echo "<br /><br />\n";
