@@ -202,3 +202,22 @@ acquisition.
 
 	def getEnergyFiltered(self):
 		return False
+
+# Note:  only known to work with 4kx4k Eagle.
+# Multiplier, "M" determined by acquiring a series of dark/bright pairs
+# at different binning values.  Nothing else should change
+# during the series (constant beam intensity, exposure time...)
+# For each pair, subtract dark from bright, calc the mean value.
+# The value "M" is determined for each binning.  M=1.0 for binning=1.
+# For binning = x:
+# M = binning^2 * mean_of_bin1_image / mean_of_binx_image
+	def getBinnedMultiplier(self):
+		binning = self.binning['x']
+		if binning == 1:
+			return 1.0
+		elif binning == 2:
+			return 2.9
+		elif binning == 4:
+			return 6.6
+		elif binning == 8:
+			return 7.8
