@@ -162,10 +162,10 @@ class UploadImages(appionScript.AppionScript):
 	def getUnusedSessionName(self):
 		### get standard appion time stamp, e.g., 10jun30
 		sessionq = leginon.leginondata.SessionData()
-		sessionq['name'] = self.timestamp
+		sessionq['name'] = self.params['runname']
 		sessiondatas = sessionq.query(results=1)
 		if not sessiondatas:
-			return self.timestamp
+			return self.params['runname']
 
 		for char in string.lowercase:
 			sessionname = self.timestamp+char
