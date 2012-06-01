@@ -96,7 +96,7 @@ class XmippML3DRefineForm extends BasicRefineForm
 		$javafunc = "
 	  <script type='text/javascript'>
 	    function setDefaults(obj) {
-	      if (obj.symmetry) obj.symmetry.value = $sym;
+	      if (obj.symmetry) obj.symmetry.value = '$sym';
 	      if (obj.endIter) obj.endIter.value = '10';
 	      if (obj.angSampRate) obj.angSampRate.value = '4x10:2x5:2x3:2x2';
 		if (obj.ImagesArePhaseFlipped) obj.ImagesArePhaseFlipped.checked = '';

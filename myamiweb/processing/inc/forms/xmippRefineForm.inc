@@ -178,7 +178,7 @@ class XmippRefineForm extends BasicRefineForm
 	      if (obj.innerMaskRadius) obj.innerMaskRadius.value = 0;
 	      if (obj.innerAlignRadius) obj.innerAlignRadius.value = '4';
 	      if (obj.outerAlignRadius) obj.outerAlignRadius.value = $rad;
-	      if (obj.symmetry) obj.symmetry.value = $sym;
+	      if (obj.symmetry) obj.symmetry.value = '$sym';
 	      if (obj.endIter) obj.endIter.value = '10';
 	      if (obj.angSampRate) obj.angSampRate.value = '4x10:2x5:2x3:2x2';
 	      if (obj.percentDiscard) obj.percentDiscard.value = '10';
