@@ -384,7 +384,7 @@ function createCommand ($extra=False)
 	 PART 4: Create header info, i.e., references
 	 ******************** */
 	// Add reference to top of the page
-	$headinfo .= showReference( $method );
+	$headinfo .= $selectedRefineForm->showReference();
 
 	/* *******************
 	 PART 5: Show or Run Command
