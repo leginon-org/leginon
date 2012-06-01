@@ -451,7 +451,10 @@ function runUploadRecon() {
 	******************** */
 
 	// Add reference to top of the page
-	$headinfo .= showReference( $method );
+	// Our methods have been postpended with the word "recon"
+	// remove it so our references show up correctly.
+	$refType = str_replace("recon", "", $method);
+	$headinfo .= showReference( $refType );
 	
 	/* *******************
 	PART 5: Show or Run Command
