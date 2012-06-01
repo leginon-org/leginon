@@ -392,8 +392,10 @@ class DoseCalibrationClient(CalibrationClient):
 		camera_mag = camera_pixel_size / specimen_pixel_size
 		self.node.logger.info('CCD Camera magnification %.1f' % camera_mag)
 		exposure_time = imagedata['camera']['exposure time'] / 1000.0
-		binning = imagedata['camera']['binning']['x']
-		mean_counts = arraystats.mean(imagedata['image']) / (binning**2)
+		binningx = imagedata['camera']['binning']['x']
+		binningy = imagedata['camera']['binning']['y']
+		binmult = imagdata['camera']['binned multiplier']
+		mean_counts = binmult * arraystats.mean(imagedata['image']) / (binningx*binningy)
 		return self.sensitivity(dose_rate, camera_mag, camera_pixel_size,
 														exposure_time, mean_counts)
 
@@ -434,12 +436,14 @@ class DoseCalibrationClient(CalibrationClient):
 		tem,ccdcamera = self.getTemCCDCameraFromImageData(imagedata)
 		camera_pixel_size = imagedata['camera']['pixel size']['x']
 		ht = imagedata['scope']['high tension']
-		binning = imagedata['camera']['binning']['x']
+		binningx = imagedata['camera']['binning']['x']
+		binningy = imagedata['camera']['binning']['y']
+		binmult = imagedata['camera']['binned multiplier']
 		exp_time = imagedata['camera']['exposure time'] / 1000.0
 		numdata = imagedata['image']
 		sensitivity = self.retrieveSensitivity(ht, tem, ccdcamera)
 		self.node.logger.debug('Sensitivity %.2f' % sensitivity)
-		mean_counts = arraystats.mean(numdata) / (binning**2)
+		mean_counts = binmult * arraystats.mean(numdata) / (binningx*binningy)
 		self.node.logger.debug('Mean counts %.1f' % mean_counts)
 		pixel_totaldose = mean_counts / sensitivity
 		return pixel_totaldose

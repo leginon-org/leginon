@@ -181,8 +181,20 @@ class DECameraBase(ccdcamera.CCDCamera):
 		nobin_image = image[row_start:row_end, col_start:col_end]
 		assert self.binning['x'] == self.binning['y']
 		binning = self.binning['x']
+		## NOTE:  non-standard binning: mean, not sum
+		## See method getBinnedMultiplier below.
 		bin_image = pyami.imagefun.bin(nobin_image, binning)
 		return bin_image
+
+	def getBinnedMultiplier(self):
+		'''
+		Our software binning calculates a binned pixel
+		as the average of the component pixels, which is
+		different that typical hardware binning.  This will
+		return a multiplier that can be used to calculate
+		a "standard" binned pixel.
+		'''
+		return self.binning['x'] * self.binning['y']
 
 	def getPixelSize(self):
 		psize = 6e-6
@@ -297,7 +309,6 @@ class DECameraBase(ccdcamera.CCDCamera):
 
 	def setTemperature(self, degrees):
 		return self.setProperty('Temperature Control - Setpoint (Celsius)', degrees)
-
 
 #### Classes for specific cameras
 
