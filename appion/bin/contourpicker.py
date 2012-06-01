@@ -110,7 +110,7 @@ class ContourPickerPanel(TargetPanel.TraceTargetImagePanel):
 
 	def _onLeftClick(self, evt):
 		if self.selectedtype is not None:
-			x, y = self.view2image((evt.X, evt.Y))
+			x, y = self.view2image((evt.GetX(), evt.GetY()))
 			has_tracetooltarget = False
 			old = self.getTargets(self.selectedtype.name)
 			self.setTargets(self.selectedtype.name, old + self.tracetool.xypath)
@@ -120,6 +120,8 @@ class ContourPickerPanel(TargetPanel.TraceTargetImagePanel):
 		self.picker.onEdgeFinding(evt)
 		#if self.selectedtype.name == self.picker.s:
 		#	self.picker.addManualPoint()
+		if self.picker.autoadd.GetValue():
+			self.picker.onSelected(evt)
 
 	def Draw(self, dc):
 	#	now = time.time()
@@ -637,6 +639,9 @@ class PickerApp(wx.App):
 		self.Bind(wx.EVT_BUTTON, self.onSelected, self.add)
 		self.buttonrow.Add(self.add, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 
+		self.autoadd = wx.CheckBox(self.frame, -1, 'Auto Add')
+		#self.add.SetMinSize((200,40))
+		self.buttonrow.Add(self.autoadd, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 
 		self.removeLast = wx.Button(self.frame, wx.ID_REMOVE, 'Remove &Last Object')
 		self.add.SetMinSize((200,40))
