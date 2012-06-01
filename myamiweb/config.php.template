@@ -156,7 +156,7 @@ define('TEMP_IMAGES_DIR', "");
 define('USE_APPION_WRAPPER', false);
 // --- define('APPION_WRAPPER_PATH', ""); --- //
 
-// --- default appion base directory to store processing results (parallel to leginon image directory defined in leginon/config/default.cfg) --- //
+// --- default appion base directory to store processing results (parallel to leginon image directory defined in leginon/leginon.cfg) --- //
 define('DEFAULT_APPION_PATH',"");
 
 // --- sample tracking ---//
