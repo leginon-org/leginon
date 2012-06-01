@@ -278,7 +278,10 @@ function createUploadReconForm( $extra=false, $title='UploadRecon.py Launcher', 
 	echo "</form>\n";
 	echo "</center>\n";
 
-	echo showReference( $method );
+	// Our methods have been postpended with the word "recon"
+	// remove it so our references show up correctly.
+	$refType = str_replace("recon", "", $method);
+	echo showReference( $refType );
 
 	processing_footer();
 	exit;

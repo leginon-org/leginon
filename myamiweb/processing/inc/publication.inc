@@ -20,6 +20,13 @@ class Publication
 	{
 		global $PUBLICATIONS;
 		
+		// if we got a key that we don't know, fail gracefully and 
+		// display the appion reference. We can throw an exception here
+		// instead, but that will require more testing, too close to release.
+		if ( empty($PUBLICATIONS[$key])) {
+			$key = "appion";
+		}
+		
 		$this->setTitle( $PUBLICATIONS[$key]['title'] );
 		$this->setYear( $PUBLICATIONS[$key]['year'] );
 		$this->setAuthorList( $PUBLICATIONS[$key]['authorlist'] );
