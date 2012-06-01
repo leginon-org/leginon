@@ -718,7 +718,7 @@ class PickerApp(wx.App):
 		'''
 		vertices = []
 		vertices = self.panel.getTargetPositions('Manually Create Contours');
-		if len(vertices)>0:
+		if len(vertices)>2:   # ignore and erase contours of 2 or less points
 			# Minimization is not done to object of small number of vertices because it may be distorted
 			if len(vertices)>10:
 				# reduce the number of vertices before saving
