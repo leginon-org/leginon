@@ -214,7 +214,7 @@ class FrealignRefineForm extends BasicRefineForm
 	    function setDefaults(obj) {
 	      if (obj.outerMaskRadius) obj.outerMaskRadius.value = $outerMaskRadius;
 	      if (obj.innerMaskRadius) obj.innerMaskRadius.value = 0;
-	      if (obj.symmetry) obj.symmetry.value = $sym;
+	      if (obj.symmetry) obj.symmetry.value = '$sym';
 	      if (obj.endIter) obj.endIter.value = '10';
 	      if (obj.wgh) obj.wgh.value = '0.07';
 	      if (obj.xstd) obj.xstd.value = '0';
