@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 
-from appionlib import appionScript
-from appionlib import apDisplay
 import os
 from appionlib import apRecon
+from appionlib import apDisplay
+from appionlib import basicScript
 
-class getResScript(appionScript.AppionScript):
+class getResScript(basicScript.BasicScript):
 
 	#=====================
 	def setupParserOptions(self):
