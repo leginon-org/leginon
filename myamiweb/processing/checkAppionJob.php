@@ -63,6 +63,15 @@ function checkJobs($showjob=False,$showall=False,$extra=False) {
 		$jobinfo = $particle->getJobInfoFromId($jobId);
 	}
 	
+	// mark the job done if requested
+	if ($_POST['donejob']) {
+		// only same user can abort job
+		$particle->markDoneAppionJob($jobId,$user);
+		echo "<font class='apcomment'>Done job \"".$jobinfo['name']."\" has been marked as done</font><br />\n";
+		// get updated job info
+		$jobinfo = $particle->getJobInfoFromId($jobId);
+	}
+
 	// if clicked button, list job in queue
 	$queue = checkClusterJobs($host,$user, $pass);
 	if ($queue) {
@@ -130,6 +139,7 @@ function checkJobs($showjob=False,$showall=False,$extra=False) {
 			if (!$queue) {
 				echo "<form name='jobform' method='post' action='$formAction'>\n";
 				if ($status=='Running') echo "<center><input type='submit' name='brokenjob' value='Mark this broken job as aborted'></center>\n";
+				if ($status=='Running') echo "<center><input type='submit' name='donejob' value='Mark this finished job as completed'></center>\n";
 				echo "</form>\n";
 			}
 		}

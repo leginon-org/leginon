@@ -3812,18 +3812,20 @@ class particledata {
 		$this->mysql->SQLUpdate('ApAppionJobData',$data,$where);
 	}
 
-	function updateClusterJobStatus($jobid, $status) {
+	function updateClusterJobStatus($jobid, $status, $user=false) {
 		$data = array('status'=>$status);
 		$where = array('DEF_id'=>$jobid);
+		if ($user)
+			$where['user'] = $user;
 		$this->mysql->SQLUpdate('ApAppionJobData',$data, $where);
 	}
 
 	function abortClusterJob($jobid, $user=false) {
-		$data = array('status'=>'A');
-		$where = array('DEF_id'=>$jobid);
-		if ($user)
-			$where['user'] = $user;
-		$this->mysql->SQLUpdate('ApAppionJobData', $data, $where);
+		$this->updateClusterJobStatus($jobid,'A',$user);
+	}
+
+	function markDoneAppionJob($jobid, $user=false) {
+		$this->updateClusterJobStatus($jobid,'D',$user);
 	}
 
 	function getSubmittedJobs($expId) {
