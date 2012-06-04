@@ -47,7 +47,7 @@ function checkJobs($showjob=False,$showall=False,$extra=False) {
 			$particle->updateClusterQueue($jobId,$clusterjobid,'D');
 		} else {
 			// only same user can abort job
-			$particle->abortClusterJob($jobId,$cluster,$user);
+			$particle->abortClusterJob($jobId,$user);
 		}
 		echo "<font class='apcomment'>Job \"$clusterjobid\" has been removed from the cluster</font><br />\n";
 		// get updated job info
@@ -57,7 +57,7 @@ function checkJobs($showjob=False,$showall=False,$extra=False) {
 	// mark the job broken if requested
 	if ($_POST['brokenjob']) {
 		// only same user can abort job
-		$particle->abortClusterJob($jobId,$cluster,$user);
+		$particle->abortClusterJob($jobId,$user);
 		echo "<font class='apcomment'>Broken job \"".$jobinfo['name']."\" has been marked as aborted</font><br />\n";
 		// get updated job info
 		$jobinfo = $particle->getJobInfoFromId($jobId);
