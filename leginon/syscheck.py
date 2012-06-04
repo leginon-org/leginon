@@ -186,24 +186,32 @@ else:
 ######################################################################
 ## Python XML module
 ######################################################################
-minxmlver = (0, 8, 2)
-minstr = '.'.join(map(str,minxmlver))
+
 print '--------------------------------------------------------------'
 print 'Python XML module:'
-print '    importing xml module...'
-try:
-	import xml
-except:
-	print '    *** Could not import xml module.'
-	print '      You must install Python xml version %s or greater' % (minstr,)
+
+minxmlpyver = (2, 5, 0)
+if versionAtLeast(mypyver, minxmlpyver):
+	print ' ...included in standard library in this version of python.'
 else:
-	mystr = xml.__version__
-	myxmlver = map(int, mystr.split('.'))
-	print '    Python XML version: %s' % (mystr,)
-	if versionAtLeast(myxmlver, minxmlver):
-		print '        OK (at least %s required)' % (minstr ,)
+	minxmlver = (0, 8, 2)
+	minstr = '.'.join(map(str,minxmlver))
+	print '--------------------------------------------------------------'
+	print 'Python XML module:'
+	print '    importing xml module...'
+	try:
+		import xml
+	except:
+		print '    *** Could not import xml module.'
+		print '      You must install Python xml version %s or greater' % (minstr,)
 	else:
-		print '        *** FAILED (at least %s required)' % (minstr,)
+		mystr = xml.__version__
+		myxmlver = map(int, mystr.split('.'))
+		print '    Python XML version: %s' % (mystr,)
+		if versionAtLeast(myxmlver, minxmlver):
+			print '        OK (at least %s required)' % (minstr ,)
+		else:
+			print '        *** FAILED (at least %s required)' % (minstr,)
 
 ######################################################################
 ## wxPython
