@@ -67,7 +67,7 @@ class Panel(leginon.gui.wx.Calibrator.Panel):
 		self.szmain.AddGrowableRow(0)
 		self.szmain.AddGrowableCol(0)
 		# tools
-		choices = ['Defocus', 'Stigmator', 'Beam-Tilt Coma','Image-Shift Coma']
+		choices = ['Defocus', 'Stigmator', 'Beam-Tilt Coma']
 		self.parameter = wx.Choice(self.toolbar, -1, choices=choices)
 		self.parameter.SetSelection(0)
 

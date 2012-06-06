@@ -249,8 +249,8 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 						wx.ALIGN_CENTER_VERTICAL)
 		sz_tilt.Add(self.widgets['reset tilt'], (2, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
-		sz_tilt.Add(self.widgets['correct image shift coma'], (3, 0), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL)
+		#sz_tilt.Add(self.widgets['correct image shift coma'], (3, 0), (1, 1),
+		#				wx.ALIGN_CENTER_VERTICAL)
 
 		self.widgets['bad stats response'] = Choice(self, -1, choices=['Continue', 'Pause', 'Abort one','Abort all'])
 		self.widgets['low mean'] = FloatEntry(self, -1, chars=4)

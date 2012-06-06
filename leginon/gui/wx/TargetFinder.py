@@ -148,8 +148,8 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 						wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.widgets['sort target'], (3, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['allow append'], (4, 0), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL)
+		#sz.Add(self.widgets['allow append'], (4, 0), (1, 1),
+		#				wx.ALIGN_CENTER_VERTICAL)
 
 		return sz
 

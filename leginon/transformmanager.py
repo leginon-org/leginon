@@ -277,9 +277,9 @@ class TransformManager(node.Node, TargetTransformer):
 
 		self.registrations = {
 			'correlation': CorrelationRegistration(self),
-			'keypoints': KeyPointsRegistration(self),
-			'logpolar': LogPolarRegistration(self),
-			'identity': IdentityRegistration(self),
+			#'keypoints': KeyPointsRegistration(self),
+			#'logpolar': LogPolarRegistration(self),
+			#'identity': IdentityRegistration(self),
 		}
 
 		self.abortevent = threading.Event()
