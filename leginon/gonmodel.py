@@ -101,9 +101,6 @@ class GonData:
 		self.maginfo['data angle'][self.axis] = self.angle
 		self.maginfo['data mean'][self.axis] = self.avg
 
-		print "maginfo set:"
-		print "   angle:", self.angle
-		print "   datavg:", self.avg
 
 class GonModel:
 	def __init__(self):
@@ -280,7 +277,6 @@ class GonModel:
 		best_period = minp
 		while incp > precision:
 			incp = (maxp - minp) / search_periods
-			print 'current precision:', incp
 			## this loop searches for the best period in the current range
 			for period in numpy.arange(minp, maxp+incp, incp):
 				a = self.design_matrix(gondata,terms,period)
@@ -302,10 +298,6 @@ class GonModel:
 		if 'model mean' not in gondata.maginfo:
 			gondata.maginfo['model mean'] = {}
 		gondata.maginfo['model mean'][gondata.axis] = self.a0
-		print 'maginfo set:'
-		print '  modavg:  ' + gondata.axis, self.a0
-		print '  period:  ', self.period
-		print '  resids:  ', best_resids
 
 		if terms:
 			self.a = numpy.zeros(terms)
@@ -316,8 +308,6 @@ class GonModel:
 		for i in range(terms):
 			self.a[i] = best_x[2*i+1]
 			self.b[i] = best_x[2*i+2]
-		print 'A', self.a
-		print 'B', self.b
 
 		## normalize
 		self.a = self.a0 * self.a
