@@ -41,12 +41,11 @@ function jobForm($extra=false) {
 	$reconMethod 	= $_POST['method'];
 	
 	// find any selected models
-	// we expect both the key and the value to be "model_#"
+	// we expect the key to be "model_" for single model, the value to be "model_#"
+	// for multi-model, the value and key are both "model_#"
 	foreach( $_POST as $key=>$value ) {
 		if (strpos($key,"model_" ) !== False) {
-			preg_match('/(\D+)_(\d+)/', $value, $matches);
-			$id = $matches[2];
-			
+			$id = getModelId($value);
 			$modelArray[] = array( 'name'=>$value, 'id'=>$id );
 		}
 	}
@@ -106,7 +105,7 @@ function jobForm($extra=false) {
 	
 	// post hidden values
 	foreach ( $modelArray as $model ) {
-		echo "<input type='hidden' name='".$model['name']."' value='".$model['id']."'>\n";
+		echo "<input type='hidden' name='".$model['name']."' value='".$model['name']."'>\n";
 	}
 	echo "<input type='hidden' name='stackval' value='".$_POST['stackval']."'>\n";
 	echo "<input type='hidden' name='method' value='".$_POST['method']."'>\n";
@@ -204,7 +203,8 @@ function createCommand ($extra=False)
 	// collect the user selected model id(s)
 	foreach( $_POST as $key=>$value ) {
 		if (strpos($key,"model_" ) !== False) {
-			$modelids.= "$value,";
+			$id = getModelId($value);
+			$modelids.= "$id,";
 		}
 	}
 	$modelids = trim($modelids, ",");
@@ -225,7 +225,20 @@ function createCommand ($extra=False)
 	$errors = showOrSubmitCommand( $command, $headinfo, $jobtype, $nproc );
 	// if error display them
 	if ( $errors ) jobForm( $errors );
-};
+}
+
+// Parse "model_#" to return #
+function getModelId($value)
+{
+	$id = 0; //default
+	
+	if (strpos($value,"model_" ) !== False) {
+		preg_match('/(\D+)_(\d+)/', $value, $matches);
+		$id = $matches[2];
+	}
+	
+	return $id;
+}
 
 ?>
 

@@ -51,6 +51,7 @@ if (is_array($models) && count($models)>0) {
 		} else {
 			$controlType = "radio";
 			// ensure that only a single model is selected for single model methods
+			// The radio control needs the name to be the same for all models
 			$name = "model_";
 		}
 				
