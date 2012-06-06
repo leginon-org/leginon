@@ -18,8 +18,20 @@ class FrealignRefineJob(apRefineJob.RefineJob):
 			help="run recon part only, allowed only if startiter=enditer")
 		self.parser.add_option('--refineonly', dest='refineonly', default=False, action='store_true',
 			help="run refine part only, allowed only if startiter=enditer")
+		self.parser.add_option('--ffilt', dest='ffilt', default=False, action='store_true',
+			help="apply SSNR filter to reconstruction")
 		self.parser.add_option('--fpbc', dest='fpbc', default=False, action='store_true',
 			help="phase residual weighting of particles. False gives 100 (equal weighting), True gives 4.0")
+		self.parser.add_option('--psi', dest='psi', default=False, action='store_true',
+			help="include phi in refinement if set to True")
+		self.parser.add_option('--theta', dest='theta', default=False, action='store_true',
+			help="include phi in refinement if set to True")
+		self.parser.add_option('--phi', dest='phi', default=False, action='store_true',
+			help="include phi in refinement if set to True")
+		self.parser.add_option('--x', dest='x', default=False, action='store_true',
+			help="include phi in refinement if set to True")
+		self.parser.add_option('--y', dest='y', default=False, action='store_true',
+			help="include phi in refinement if set to True")
 
 	#================
 	def setIterationParamList(self):
@@ -39,8 +51,7 @@ class FrealignRefineJob(apRefineJob.RefineJob):
 				# iewald is always 0
 					#{'name':'iewald', 'default':0, 'help':'Ewald sphere distortion correction (0:disable,1:simple,2:reference-base etc.'},
 				{'name':'fbeaut', 'default': False,'help':'real-space symmetrization'},
-				{'name':"ffilt", 'default':True,
-					 'help':"apply SSNR filter to reconstruction"},
+				# ffilt is set globally
 				{'name':"fbfact", 'default':False,
 					 'help':"correct B-factor in reconstruction"},
 				#fmatch is always False
@@ -77,6 +88,9 @@ class FrealignRefineJob(apRefineJob.RefineJob):
 					#{'name':"ipmax", 'default':0,
 					#	'help':"number of potential matches in a search that should be tested further in local refinement"},
 
+				####card 3
+				# set as global parameters
+
 				####card 4
 				{'name':"last", 'default':'',
 					'help':"last particle to process"},
@@ -88,7 +102,8 @@ class FrealignRefineJob(apRefineJob.RefineJob):
 				# target is always 30.0
 					#{'name':"target", 'default':30.0, 
 					#	'help':"target phase residual during refinement"},
-				{'name':"thresh", 'default':0.8,
+				# to be consistent with other packages, we will use percentDiscard instead of thresh as input param
+				{'name':"percentDiscard", 'default':0.2,
 					'help':"percent to include"},
 				{'name':"cs", 'default':2.0, 
 					'help':"spherical aberation"},
@@ -142,6 +157,11 @@ class FrealignRefineJob(apRefineJob.RefineJob):
 		self.params['beamtilty'] = 0.0
 		self.params['dfstd'] = 100.0
 		self.params['rbfact'] = 0.0
+		self.params['includePsi'] = int(self.params['psi'])
+		self.params['includeTheta'] = int(self.params['theta'])
+		self.params['includePhi'] = int(self.params['phi'])
+		self.params['includeX'] = int(self.params['x'])
+		self.params['includeY'] = int(self.params['y'])
 
 	#=====================
 	def checkPackageConflicts(self):
@@ -161,6 +181,7 @@ class FrealignRefineJob(apRefineJob.RefineJob):
 		Conflict checking of per-iteration parameters
 		'''
 		super(FrealignRefineJob,self).checkIterationConflicts()
+		self.params['thresh'] = map((lambda x: 100 - x), self.params['percentDiscard'])
 
 	def convertSymmetryNameForPackage(self,inputname):
 		'''
@@ -186,6 +207,9 @@ class FrealignRefineJob(apRefineJob.RefineJob):
 		####card 2
 		card = ("outerMaskRadius", "innerMaskRadius", "apix", "wgh", "xstd", "pbc", "boff", "angSampRate", "itmax", "ipmax",)
 		frealign_inputparams.append(card)
+		####card 3
+		card = ("includePsi", "includeTheta", "includePhi", "includeX", "includeY",)
+		frealign_inputparams.append(card)
 		####card 5
 		card = ("symmetry",)
 		frealign_inputparams.append(card)
@@ -199,7 +223,6 @@ class FrealignRefineJob(apRefineJob.RefineJob):
 		
 	def combineFrealignParams(self,iter_index,valid_paramkeys):
 		task_params = []
-		card = ("outerMaskRadius", "innerMaskRadius", "apix", "wgh", "xstd", "pbc", "boff", "angSampRate", "itmax", "ipmax",)
 		for key in valid_paramkeys:
 			if key in self.params.keys():
 				if type(self.params[key]) == type([]):
@@ -227,7 +250,6 @@ class FrealignRefineJob(apRefineJob.RefineJob):
 		iter_index = iter - self.params['startiter']
 		for cardkey in input_params:
 			constant_inputlines.append(','.join(self.combineFrealignParams(iter_index,cardkey)))
-		constant_inputlines.insert(2,'1,1,1,1,1')
 		constant_inputlines.insert(3,'1, %d' % self.params['totalpart'])
 		stackfile = os.path.basename(self.params['stackname'])
 		pieces = stackfile.split('.')
