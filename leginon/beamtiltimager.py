@@ -30,7 +30,7 @@ class BeamTiltImager(manualfocuschecker.ManualFocusChecker):
 	defaultsettings = manualfocuschecker.ManualFocusChecker.defaultsettings
 	defaultsettings.update({
 		'process target type': 'focus',
-		'beam tilt': 0.01,
+		'beam tilt': 0.005,
 		'beam tilt count': 1,
 		'sites': 0,
 		'startangle': 0,

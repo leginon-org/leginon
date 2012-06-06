@@ -79,7 +79,7 @@ class RCTAcquisition(acquisition.Acquisition):
 	settingsclass = leginondata.RCTAcquisitionSettingsData
 	defaultsettings = acquisition.Acquisition.defaultsettings
 	defaultsettings.update({
-		'tilts': '(-45, 45)',
+		'tilts': '(-45, 0)',
 		'stepsize': 42.0,
 		'pause': 1.0,
 		'lowfilt': 1.0,
