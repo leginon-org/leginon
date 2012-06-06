@@ -20,6 +20,7 @@ import leginon.gui.wx.Icons
 
 import leginon.targethandler
 
+hide_incomplete = True
 
 class SettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
@@ -172,7 +173,8 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		self.widgets['use parent tilt'] = wx.CheckBox(self, -1, 'Tilt the stage like its parent image')
 		self.widgets['adjust time by tilt'] = wx.CheckBox(self, -1, 'Adjust exposure time by tilt')
 		self.widgets['reset tilt'] = wx.CheckBox(self, -1, 'Reset stage when done')
-		self.widgets['correct image shift coma'] = wx.CheckBox(self, -1, 'Correct image shift coma effect')
+		if not hide_incomplete:
+			self.widgets['correct image shift coma'] = wx.CheckBox(self, -1, 'Correct image shift coma effect')
 		self.widgets['target offset row'] = IntEntry(self, -1, chars=6)
 		self.widgets['target offset col'] = IntEntry(self, -1, chars=6)
 
@@ -249,8 +251,9 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 						wx.ALIGN_CENTER_VERTICAL)
 		sz_tilt.Add(self.widgets['reset tilt'], (2, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
-		#sz_tilt.Add(self.widgets['correct image shift coma'], (3, 0), (1, 1),
-		#				wx.ALIGN_CENTER_VERTICAL)
+		if not hide_incomplete:
+			sz_tilt.Add(self.widgets['correct image shift coma'], (3, 0), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
 
 		self.widgets['bad stats response'] = Choice(self, -1, choices=['Continue', 'Pause', 'Abort one','Abort all'])
 		self.widgets['low mean'] = FloatEntry(self, -1, chars=4)

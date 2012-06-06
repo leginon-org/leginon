@@ -15,6 +15,8 @@ from leginon.gui.wx.Entry import FloatEntry, IntEntry
 import leginon.gui.wx.Settings
 import leginon.gui.wx.ToolBar
 
+hide_incomplete = True
+
 class SettingsDialog(leginon.gui.wx.Calibrator.SettingsDialog):
 	def initialize(self):
 		return ScrolledSettings(self,self.scrsize,False)
@@ -68,6 +70,8 @@ class Panel(leginon.gui.wx.Calibrator.Panel):
 		self.szmain.AddGrowableCol(0)
 		# tools
 		choices = ['Defocus', 'Stigmator', 'Beam-Tilt Coma']
+		if not hide_incomplete:
+			choices.append('Image Shift Coma')
 		self.parameter = wx.Choice(self.toolbar, -1, choices=choices)
 		self.parameter.SetSelection(0)
 
