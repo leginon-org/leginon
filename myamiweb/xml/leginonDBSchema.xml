@@ -40,6 +40,24 @@
 		<field name="target offset row" type="int(20)" />
 		<field name="target offset col" type="int(20)" />
 		<field name="correct image shift coma" type="tinyint(1)" Default="0" />
+		<field 
+			name="pause between time" 
+			type="DOUBLE" 
+			null="NULL" 
+			default="NULL" 
+		/> 
+		<field 
+			name="park after target" 
+			type="TINYINT(1)" 
+			null="NULL" 
+			default="0" 
+		/> 
+		<field 
+			name="park after list" 
+			type="TINYINT(1)" 
+			null="NULL" 
+			default="0" 
+		/> 
     <key>PRIMARY KEY (`DEF_id`)</key>
     <key>KEY `DEF_timestamp` (`DEF_timestamp`)</key>
     <key>KEY `REF|SessionData|session` (`REF|SessionData|session`)</key>
@@ -145,6 +163,24 @@
 		<field name="target offset row" type="int(20)" />
 		<field name="target offset col" type="int(20)" />
 		<field name="correct image shift coma" type="tinyint(1)" Default="0" />
+		<field 
+			name="pause between time" 
+			type="DOUBLE" 
+			null="NULL" 
+			default="NULL" 
+		/> 
+		<field 
+			name="park after target" 
+			type="TINYINT(1)" 
+			null="NULL" 
+			default="0" 
+		/> 
+		<field 
+			name="park after list" 
+			type="TINYINT(1)" 
+			null="NULL" 
+			default="0" 
+		/> 
 		<field name="beam tilt" type="double" />
 		<field name="beam tilt count" type="int(20)" />
 		<field name="sites" type="int(20)" />
@@ -394,6 +430,7 @@
 		<field name="move precision" type="double" />
 		<field name="process target type" type="text" />
 		<field name="melt preset" type="text" />
+		<field name="manual focus preset" type="text" />
 		<field name="save integer" type="int(20)" />
 		<field name="drift between" type="int(20)" />
 		<field name="final image shift" type="int(20)" />
@@ -412,6 +449,24 @@
 		<field name="target offset row" type="int(20)" />
 		<field name="target offset col" type="int(20)" />
 		<field name="correct image shift coma" type="tinyint(1)" Default="0" />
+		<field 
+			name="pause between time" 
+			type="DOUBLE" 
+			null="NULL" 
+			default="NULL" 
+		/> 
+		<field 
+			name="park after target" 
+			type="TINYINT(1)" 
+			null="NULL" 
+			default="0" 
+		/> 
+		<field 
+			name="park after list" 
+			type="TINYINT(1)" 
+			null="NULL" 
+			default="0" 
+		/> 
     <key>PRIMARY KEY (`DEF_id`)</key>
     <key>KEY `DEF_timestamp` (`DEF_timestamp`)</key>
     <key>KEY `REF|SessionData|session` (`REF|SessionData|session`)</key>
@@ -791,6 +846,8 @@
 		<field name="isdefault" type="tinyint(1)" Default="0" />
 		<field name="override preset" type="tinyint(1)" Default="0" />
 		<field name="REF|CameraSettingsData|camera settings" type="int(20)" />
+		<field name="SUBD|instruments|ccdcamera" type="text" />
+		<field name="SUBD|instruments|tem" type="text" />
 		<field name="correlation type" type="text" />
 		<field name="lattice a" type="double" />
 		<field name="lattice b" type="double" />
@@ -799,7 +856,6 @@
 		<field name="k1" type="int(20)" />
 		<field name="h2" type="int(20)" />
 		<field name="k2" type="int(20)" />
-		<field name="distance" type="double" />
     <key>PRIMARY KEY (`DEF_id`)</key>
     <key>KEY `DEF_timestamp` (`DEF_timestamp`)</key>
     <key>KEY `REF|SessionData|session` (`REF|SessionData|session`)</key>
@@ -881,6 +937,24 @@
 		<field name="target offset row" type="int(20)" />
 		<field name="target offset col" type="int(20)" />
 		<field name="correct image shift coma" type="tinyint(1)" Default="0" />
+		<field 
+			name="pause between time" 
+			type="DOUBLE" 
+			null="NULL" 
+			default="NULL" 
+		/> 
+		<field 
+			name="park after target" 
+			type="TINYINT(1)" 
+			null="NULL" 
+			default="0" 
+		/> 
+		<field 
+			name="park after list" 
+			type="TINYINT(1)" 
+			null="NULL" 
+			default="0" 
+		/> 
     <key>PRIMARY KEY (`DEF_id`)</key>
     <key>KEY `DEF_timestamp` (`DEF_timestamp`)</key>
     <key>KEY `REF|SessionData|session` (`REF|SessionData|session`)</key>
@@ -1089,6 +1163,24 @@
 		<field name="target offset row" type="int(20)" />
 		<field name="target offset col" type="int(20)" />
 		<field name="correct image shift coma" type="tinyint(1)" Default="0" />
+		<field 
+			name="pause between time" 
+			type="DOUBLE" 
+			null="NULL" 
+			default="NULL" 
+		/> 
+		<field 
+			name="park after target" 
+			type="TINYINT(1)" 
+			null="NULL" 
+			default="0" 
+		/> 
+		<field 
+			name="park after list" 
+			type="TINYINT(1)" 
+			null="NULL" 
+			default="0" 
+		/> 
 		<field name="z0" type="double" />
 		<field name="use z0" type="tinyint(1)" Default="0" />
     <key>PRIMARY KEY (`DEF_id`)</key>
@@ -1220,6 +1312,407 @@
 		<field name="url" type="text" />
     <key>PRIMARY KEY (`userId`)</key>
     <key>KEY `login` (`login`)</key>
+	</sqltable>
+
+	<sqltable name="BeamTiltFixerSettingsData" >
+		<field 
+		name="DEF_id" 
+		type="int(16)" 
+		null="NOT NULL" 
+		extra="auto_increment" 
+		/> 
+		<field 
+			name="DEF_timestamp" 
+			type="timestamp" 
+			null="NOT NULL" 
+			default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		/> 
+		<field 
+			name="REF|SessionData|session" 
+			type="INT(20)" 
+			null="NULL" 
+			default="NULL" 
+		/> 
+		<field 
+			name="name" 
+			type="TEXT" 
+			null="NULL" 
+		/> 
+		<field 
+			name="isdefault" 
+			type="TINYINT(1)" 
+			null="NULL" 
+			default="0" 
+		/> 
+		<field name="SEQ|preset order" type="text" />
+		<field 
+			name="process target type" 
+			type="TEXT" 
+			null="NULL" 
+		/> 
+		<field 
+			name="park after list" 
+			type="TINYINT(1)" 
+			null="NULL" 
+			default="0" 
+		/> 
+		<field 
+			name="pause time" 
+			type="DOUBLE" 
+			null="NULL" 
+			default="NULL" 
+		/> 
+		<field 
+			name="pause between time" 
+			type="DOUBLE" 
+			null="NULL" 
+			default="NULL" 
+		/> 
+		<field 
+			name="move type" 
+			type="TEXT" 
+			null="NULL" 
+		/> 
+		<field 
+			name="correct image" 
+			type="TINYINT(1)" 
+			null="NULL" 
+			default="0" 
+		/> 
+		<field 
+			name="display image" 
+			type="TINYINT(1)" 
+			null="NULL" 
+			default="0" 
+		/> 
+		<field 
+			name="save image" 
+			type="TINYINT(1)" 
+			null="NULL" 
+			default="0" 
+		/> 
+		<field 
+			name="wait for process" 
+			type="TINYINT(1)" 
+			null="NULL" 
+			default="0" 
+		/> 
+		<field 
+			name="wait for rejects" 
+			type="TINYINT(1)" 
+			null="NULL" 
+			default="0" 
+		/> 
+		<field 
+			name="wait for reference" 
+			type="TINYINT(1)" 
+			null="NULL" 
+			default="0" 
+		/> 
+		<field 
+			name="wait for transform" 
+			type="TINYINT(1)" 
+			null="NULL" 
+			default="0" 
+		/> 
+		<field 
+			name="wait time" 
+			type="DOUBLE" 
+			null="NULL" 
+			default="NULL" 
+		/> 
+		<field 
+			name="iterations" 
+			type="INT(20)" 
+			null="NULL" 
+			default="NULL" 
+		/> 
+		<field 
+			name="adjust for transform" 
+			type="TEXT" 
+			null="NULL" 
+		/> 
+		<field 
+			name="drift between" 
+			type="TINYINT(1)" 
+			null="NULL" 
+			default="0" 
+		/> 
+		<field 
+			name="mover" 
+			type="TEXT" 
+			null="NULL" 
+		/> 
+		<field 
+			name="move precision" 
+			type="DOUBLE" 
+			null="NULL" 
+			default="NULL" 
+		/> 
+		<field 
+			name="accept precision" 
+			type="DOUBLE" 
+			null="NULL" 
+			default="NULL" 
+		/> 
+		<field 
+			name="final image shift" 
+			type="TINYINT(1)" 
+			null="NULL" 
+			default="0" 
+		/> 
+		<field 
+			name="save integer" 
+			type="TINYINT(1)" 
+			null="NULL" 
+			default="0" 
+		/> 
+		<field 
+			name="background" 
+			type="TINYINT(1)" 
+			null="NULL" 
+			default="0" 
+		/> 
+		<field 
+			name="use parent tilt" 
+			type="TINYINT(1)" 
+			null="NULL" 
+			default="0" 
+		/> 
+		<field 
+			name="adjust time by tilt" 
+			type="TINYINT(1)" 
+			null="NULL" 
+			default="0" 
+		/> 
+		<field 
+			name="reset tilt" 
+			type="TINYINT(1)" 
+			null="NULL" 
+			default="0" 
+		/> 
+		<field 
+			name="bad stats response" 
+			type="TEXT" 
+			null="NULL" 
+		/> 
+		<field 
+			name="high mean" 
+			type="DOUBLE" 
+			null="NULL" 
+			default="NULL" 
+		/> 
+		<field 
+			name="low mean" 
+			type="DOUBLE" 
+			null="NULL" 
+			default="NULL" 
+		/> 
+		<field 
+			name="emission off" 
+			type="TINYINT(1)" 
+			null="NULL" 
+			default="0" 
+		/> 
+		<field 
+			name="target offset row" 
+			type="INT(20)" 
+			null="NULL" 
+			default="NULL" 
+		/> 
+		<field 
+			name="target offset col" 
+			type="INT(20)" 
+			null="NULL" 
+			default="NULL" 
+		/> 
+		<field 
+			name="correct image shift coma" 
+			type="TINYINT(1)" 
+			null="NULL" 
+			default="0" 
+		/> 
+		<field 
+			name="park after target" 
+			type="TINYINT(1)" 
+			null="NULL" 
+			default="0" 
+		/> 
+		<field 
+			name="beam tilt" 
+			type="DOUBLE" 
+			null="NULL" 
+			default="NULL" 
+		/> 
+		<field 
+			name="min threshold" 
+			type="DOUBLE" 
+			null="NULL" 
+			default="NULL" 
+		/> 
+		<field 
+			name="max threshold" 
+			type="DOUBLE" 
+			null="NULL" 
+			default="NULL" 
+		/> 
+		<field 
+			name="correct" 
+			type="TINYINT(1)" 
+			null="NULL" 
+			default="0" 
+		/> 
+		<key>PRIMARY KEY (`DEF_id`)</key> 
+		<key>KEY `DEF_timestamp` (`DEF_timestamp`)</key> 
+		<key>KEY `REF|SessionData|session` (`REF|SessionData|session`)</key> 
+	</sqltable>
+
+	<sqltable name="ExposureFixerSettingsData" >
+		<field 
+			name="DEF_id" 
+			type="int(16)" 
+			null="NOT NULL" 
+			extra="auto_increment" 
+		/> 
+		<field 
+			name="DEF_timestamp" 
+			type="timestamp" 
+			null="NOT NULL" 
+			default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		/> 
+		<field name="SEQ|correction presets" type="text" />
+		<field 
+			name="REF|SessionData|session" 
+			type="INT(20)" 
+			null="NULL" 
+			default="NULL" 
+		/> 
+		<field 
+			name="name" 
+			type="TEXT" 
+			null="NULL" 
+		/> 
+		<field 
+			name="isdefault" 
+			type="TINYINT(1)" 
+			null="NULL" 
+			default="0" 
+		/> 
+		<field 
+			name="move type" 
+			type="TEXT" 
+			null="NULL" 
+		/> 
+		<field 
+			name="pause time" 
+			type="DOUBLE" 
+			null="NULL" 
+			default="NULL" 
+		/> 
+		<field 
+			name="interval time" 
+			type="DOUBLE" 
+			null="NULL" 
+			default="NULL" 
+		/> 
+		<field 
+			name="override preset" 
+			type="TINYINT(1)" 
+			null="NULL" 
+			default="0" 
+		/> 
+		<field 
+			name="REF|CameraSettingsData|camera settings" 
+			type="INT(20)" 
+			null="NULL" 
+			default="NULL" 
+		/> 
+		<field 
+			name="required dose" 
+			type="DOUBLE" 
+			null="NULL" 
+			default="NULL" 
+		/> 
+		<field 
+			name="max exposure time" 
+			type="INT(20)" 
+			null="NULL" 
+			default="NULL" 
+		/> 
+		<field name="SUBD|stage position|x" type="double" />
+		<field name="SUBD|stage position|y" type="double" />
+		<field name="SUBD|stage position|z" type="double" />
+		<key>PRIMARY KEY (`DEF_id`)</key> 
+		<key>KEY `DEF_timestamp` (`DEF_timestamp`)</key> 
+		<key>KEY `REF|SessionData|session` (`REF|SessionData|session`)</key> 
+		<key>KEY `isdefault` (`isdefault`)</key> 
+		<key>KEY `override preset` (`override preset`)</key> 
+		<key>KEY `REF|CameraSettingsData|camera settings` (`REF|CameraSettingsData|camera settings`)</key> 
+	</sqltable>
+
+	<sqltable name="AlignmentManagerSettingsData" >
+		<field 
+			name="DEF_id" 
+			type="int(16)" 
+			null="NOT NULL" 
+			extra="auto_increment" 
+		/> 
+		<field 
+			name="DEF_timestamp" 
+			type="timestamp" 
+			null="NOT NULL" 
+			default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		/> 
+		<field 
+			name="REF|SessionData|session" 
+			type="INT(20)" 
+			null="NULL" 
+			default="NULL" 
+		/> 
+		<field 
+			name="name" 
+			type="TEXT" 
+			null="NULL" 
+		/> 
+		<field 
+			name="isdefault" 
+			type="TINYINT(1)" 
+			null="NULL" 
+			default="0" 
+		/> 
+		<field 
+			name="bypass" 
+			type="TINYINT(1)" 
+			null="NULL" 
+			default="0" 
+		/> 
+		<field 
+			name="reset a" 
+			type="TINYINT(1)" 
+			null="NULL" 
+			default="0" 
+		/> 
+		<field 
+			name="reset z" 
+			type="TINYINT(1)" 
+			null="NULL" 
+			default="0" 
+		/> 
+		<field 
+			name="reset xy" 
+			type="TINYINT(1)" 
+			null="NULL" 
+			default="0" 
+		/> 
+		<field 
+			name="repeat time" 
+			type="INT(20)" 
+			null="NULL" 
+			default="NULL" 
+		/> 
+		<key>PRIMARY KEY (`DEF_id`)</key> 
+		<key>KEY `DEF_timestamp` (`DEF_timestamp`)</key> 
+		<key>KEY `REF|SessionData|session` (`REF|SessionData|session`)</key> 
 	</sqltable>
 
  </definition>

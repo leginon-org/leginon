@@ -123,9 +123,12 @@ class BeamTiltFixer(acquisition.Acquisition):
 			self.logger.info('Measured beam tilt x:%8.5f, y:%8.5f' % (comatilt['x'],comatilt['y']))
 		except Exception, e:
 			comatilt = None
-			self.logger.error('No correction made: %s' % e)
+			if not self.settings['correct']:
+				self.logger.warning('No beam tilt estimated: %s' % e)
+			else:
+				self.logger.error('No beam tilt estimated: %s' % e)
 			return calibration_client.tabimage, False
-		if comatilt:
+		if self.settings['correct'] and comatilt:
 			btilt_offset = math.hypot(comatilt['x'],comatilt['y'])
 			if self.settings['min threshold'] < btilt_offset < self.settings['max threshold']:
 				try:
