@@ -12,7 +12,7 @@ require_once "inc/particledata.inc";
 
 class StackPrepFormFrealign extends StackPrepForm
 {
-	function __construct( $stackid='', $lastParticle='', $lowpass='', $highpass='', $bin='', $reconiterid='', $noctf='', $emaninit='', $ctffindonly='', $paramonly='' ) 
+	function __construct( $stackid='', $lastParticle='', $lowpass='', $highpass='', $bin='', $reconiterid='', $noctf='', $emaninit='', $ctffindonly='', $ctftilt='', $paramonly='' ) 
 	{
 		parent::__construct($lastParticle, $lowpass, $highpass, $bin);
 		$params = $this->getFormParams();
