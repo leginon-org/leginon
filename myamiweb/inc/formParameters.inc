@@ -83,7 +83,7 @@ class FormParameters
 	
 	// extending classes should use this function in the constructor
 	// to completely hide the parameter.
-	final protected function hideParam( $name ) 
+	final public function hideParam( $name ) 
 	{
 		$this->params[$name]["hidden"] = true;
 	}

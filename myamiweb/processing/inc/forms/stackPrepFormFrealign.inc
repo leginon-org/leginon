@@ -20,10 +20,15 @@ class StackPrepFormFrealign extends StackPrepForm
 		// add a couple of params to the basic prep refine params
 		$params->addParam( "reconiterid", $reconiterid, "previous EMAN refinement iteration for initializing particle orientation" );
 		$params->addParam( "noctf", $noctf, "Allow Frealign to determine ctf estimation" );
-		$params->addParam( "emaninit", $emaninit, "Import initial orientations from EMAN reconstruction:" );
+		$params->addParam( "emaninit", $emaninit, "Import initial orientations from completed reconstruction:" );
 		$params->addParam( "ctffindonly", $ctffindonly, "Only use CTFFIND values" );
 		$params->addParam( "ctftilt", $ctftilt, "Only use CTFTilt values" );
 		$params->addParam( "paramonly", $paramonly, "Only create the Frealign paramter file, not the stack");
+		
+		// Frealign does not need the filter params 
+		// that are defined in the base class
+		$params->hideParam("lowpass");
+		$params->hideParam("highpass");
 		
 		$this->stackid = $stackid;
 	}
