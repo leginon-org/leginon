@@ -43,8 +43,8 @@ if(is_dir($dir)){
 			if(!preg_match("/.xml/", $filename))
 				continue;
 
-			//don't import 'Robot' or 'SimuTomography'
-			if(preg_match("/Robot/", $filename) || preg_match("/SimuTomography/", $filename))
+			//don't import 2-client versions, 'Advanced', 'Robot' or 'SimuTomography'
+			if(preg_match("/2./", $filenam) || preg_match("/Advanced/", $filenam) || eepreg_match("/Robot/", $filename) || preg_match("/SimuTomography/", $filename))
 				continue;
 			else
 				// import application to database.

@@ -864,7 +864,6 @@ class setLeginonDefaultValues {
 		$data["park after target"] = "0";
 		$data["REF|SessionData|session"]= $this->sessionId;
 		$aid84=$this->mysqld->SQLInsert($table, $data);
-var_dump($aid84);
 
 		$table = "AcquisitionSettingsData";
 		$data=array();
@@ -905,7 +904,6 @@ var_dump($aid84);
 		$data["park after target"] = "0";
 		$data["REF|SessionData|session"]= $this->sessionId;
 		$aid191=$this->mysqld->SQLInsert($table, $data);
-var_dump($aid191);
 
 		$table = "FocuserSettingsData";
 		$data=array();
