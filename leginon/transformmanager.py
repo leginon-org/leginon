@@ -30,6 +30,8 @@ import targethandler
 import tiltcorrector
 import cameraclient
 
+hide_incomplete = False
+
 class InvalidStagePosition(Exception):
 	pass
 
@@ -277,10 +279,13 @@ class TransformManager(node.Node, TargetTransformer):
 
 		self.registrations = {
 			'correlation': CorrelationRegistration(self),
-			'keypoints': KeyPointsRegistration(self),
-			'logpolar': LogPolarRegistration(self),
-			'identity': IdentityRegistration(self),
 		}
+		if not hide_incomplete:
+			self.registrations.update({
+				'keypoints': KeyPointsRegistration(self),
+				'logpolar': LogPolarRegistration(self),
+				'identity': IdentityRegistration(self),
+			})
 
 		self.abortevent = threading.Event()
 

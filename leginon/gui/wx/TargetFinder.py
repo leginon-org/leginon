@@ -17,6 +17,8 @@ import leginon.gui.wx.Settings
 import leginon.gui.wx.ToolBar
 import leginon.gui.wx.ImagePanelTools
 
+hide_incomplete = False
+
 class Panel(leginon.gui.wx.Node.Panel):
 	def __init__(self, *args, **kwargs):
 		leginon.gui.wx.Node.Panel.__init__(self, *args, **kwargs)
@@ -148,8 +150,9 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 						wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.widgets['sort target'], (3, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['allow append'], (4, 0), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL)
+		if not hide_incomplete:
+			sz.Add(self.widgets['allow append'], (4, 0), (1, 1),
+							wx.ALIGN_CENTER_VERTICAL)
 
 		return sz
 

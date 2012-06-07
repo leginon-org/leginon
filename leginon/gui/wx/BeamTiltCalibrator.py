@@ -15,6 +15,9 @@ from leginon.gui.wx.Entry import FloatEntry, IntEntry
 import leginon.gui.wx.Settings
 import leginon.gui.wx.ToolBar
 
+hide_stig = True
+hide_incomplete = False
+
 class SettingsDialog(leginon.gui.wx.Calibrator.SettingsDialog):
 	def initialize(self):
 		return ScrolledSettings(self,self.scrsize,False)
@@ -67,7 +70,9 @@ class Panel(leginon.gui.wx.Calibrator.Panel):
 		self.szmain.AddGrowableRow(0)
 		self.szmain.AddGrowableCol(0)
 		# tools
-		choices = ['Defocus', 'Stigmator', 'Beam-Tilt Coma','Image-Shift Coma']
+		choices = ['Defocus', 'Beam-Tilt Coma']
+		if not hide_stig:
+			choices.append('Stigmator')
 		self.parameter = wx.Choice(self.toolbar, -1, choices=choices)
 		self.parameter.SetSelection(0)
 
@@ -127,7 +132,8 @@ class Panel(leginon.gui.wx.Calibrator.Panel):
 		self.measure_dialog.scrsettings.measure.Enable(enable)
 		if self.node.measurement:
 			self.measure_dialog.scrsettings.correctdefocus.Enable(enable)
-			self.measure_dialog.scrsettings.correctstig.Enable(enable)
+			if not hide_stig:
+				self.measure_dialog.scrsettings.correctstig.Enable(enable)
 		self.measure_dialog.scrsettings.resetdefocus.Enable(enable)
 
 		self.comafree_dialog.measure.Enable(enable)
