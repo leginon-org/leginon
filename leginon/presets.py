@@ -1036,7 +1036,7 @@ class PresetsManager(node.Node):
 		smallsize = self.settings['smallsize']
 		timestamp = time.strftime('%d%H%M%S', time.localtime())
 		nextid = idcounter.next()
-		f = '%s_%s_%s_%s_%s' % (sessionname, pname, smallsize, timestamp, nextid)
+		f = '%s_dose_%s_%s_%s_%s' % (sessionname, pname, smallsize, timestamp, nextid)
 		imagedata['filename'] = f
 
 	def saveDose(self, dose, presetname):
