@@ -26,6 +26,10 @@ import random
 import math
 import numpy
 
+## counter for dose images
+import itertools
+idcounter = itertools.cycle(range(100))
+
 class PresetChangeError(Exception):
 	pass
 
@@ -1026,6 +1030,15 @@ class PresetsManager(node.Node):
 			else:
 				self.saveDose(dose, self.currentpreset['name'])
 
+	def setDoseImageFilename(self, imagedata):
+		sessionname = self.session['name']
+		pname = imagedata['preset']['name']
+		smallsize = self.settings['smallsize']
+		timestamp = time.strftime('%d%H%M%S', time.localtime())
+		nextid = idcounter.next()
+		f = '%s_%s_%s_%s_%s' % (sessionname, pname, smallsize, timestamp, nextid)
+		imagedata['filename'] = f
+
 	def saveDose(self, dose, presetname):
 		## store the dose in the current preset
 		params = {'dose': dose}
@@ -1036,6 +1049,7 @@ class PresetsManager(node.Node):
 	def saveDoseImage(self, presetname):
 		doseimage = leginondata.DoseImageData(initializer=self.imagedata)
 		doseimage['preset'] = self.presets[presetname]
+		self.setDoseImageFilename(doseimage)
 		doseimage.insert(force=True)
 
 	def matchDose(self,presetname,dose_to_match,old_dose):
