@@ -55,6 +55,7 @@ def checkLeginonConfig():
 			image_path = configparser.configparser.get('Images','path')
 		except:
 			printError('Default image path required')
+			return
 		if not image_path:
 			printError('Default image path required')
 
