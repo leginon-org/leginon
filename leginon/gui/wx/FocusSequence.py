@@ -13,6 +13,8 @@ import leginon.gui.wx.Entry
 import leginon.gui.wx.ListBox
 import leginon.gui.wx.Presets
 
+hide_incomplete = True
+
 class DialogSettings(object):
 	def __init__(self, preset_names,
 					   focus_methods,
@@ -128,9 +130,11 @@ class Dialog(leginon.gui.wx.Dialog.Dialog):
 		setting['delta max'] = self.delta_max_entry.GetValue()
 		setting['correction type'] = \
 			self.correction_type_choice.GetStringSelection()
-		setting['stig correction'] = self.correct_astig_checkbox.GetValue()
-		setting['stig defocus min'] = self.stig_defocus_min_entry.GetValue()
-		setting['stig defocus max'] = self.stig_defocus_max_entry.GetValue()
+
+		if not hide_incomplete:
+			setting['stig correction'] = self.correct_astig_checkbox.GetValue()
+			setting['stig defocus min'] = self.stig_defocus_min_entry.GetValue()
+			setting['stig defocus max'] = self.stig_defocus_max_entry.GetValue()
 		setting['check drift'] = self.check_drift_checkbox.GetValue()
 		setting['drift threshold'] = self.drift_threshold_entry.GetValue()
 		setting['reset defocus'] = self.getResetSetting()
@@ -179,9 +183,10 @@ class Dialog(leginon.gui.wx.Dialog.Dialog):
 		self.delta_max_entry.SetValue(setting['delta max'])
 		self.correction_type_choice.SetStringSelection(
 													setting['correction type'])
-		self.correct_astig_checkbox.SetValue(setting['stig correction'])
-		self.stig_defocus_min_entry.SetValue(setting['stig defocus min'])
-		self.stig_defocus_max_entry.SetValue(setting['stig defocus max'])
+		if not hide_incomplete:
+			self.correct_astig_checkbox.SetValue(setting['stig correction'])
+			self.stig_defocus_min_entry.SetValue(setting['stig defocus min'])
+			self.stig_defocus_max_entry.SetValue(setting['stig defocus max'])
 		self.check_drift_checkbox.SetValue(setting['check drift'])
 		self.drift_threshold_entry.SetValue(setting['drift threshold'])
 		self.setResetSetting(setting['reset defocus'])
@@ -206,13 +211,17 @@ class Dialog(leginon.gui.wx.Dialog.Dialog):
 			self.delta_min_entry,
 			self.delta_max_entry,
 			self.correction_type_choice,
-			self.correct_astig_checkbox,
-			self.stig_defocus_min_entry,
-			self.stig_defocus_max_entry,
 			self.check_drift_checkbox,
 			self.drift_threshold_entry,
 #			self.reset_choice,
 		]
+
+		if not hide_incomplete:
+			widgets.extend([
+				self.correct_astig_checkbox,
+				self.stig_defocus_min_entry,
+				self.stig_defocus_max_entry,
+			])
 
 		[widget.Enable(enable) for widget in widgets]
 
@@ -331,28 +340,29 @@ class Dialog(leginon.gui.wx.Dialog.Dialog):
 		driftsizer.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		autosizer.Add(driftsizer, (6, 0), (1, 3), wx.ALIGN_CENTER_VERTICAL)
 
-		### Frame for stig related items
-		stigsizer = wx.GridBagSizer(3, 3)
-		self.correct_astig_checkbox = wx.CheckBox(self, -1,
+		if not hide_incomplete:
+			### Frame for stig related items
+			stigsizer = wx.GridBagSizer(3, 3)
+			self.correct_astig_checkbox = wx.CheckBox(self, -1,
 									  'Correct astigmatism for defocus between')
-		self.stig_defocus_min_entry = leginon.gui.wx.Entry.FloatEntry(self, -1, chars=6, min=0.0)
-		self.stig_defocus_max_entry = leginon.gui.wx.Entry.FloatEntry(self, -1, chars=6, min=0.0)
-		stigsizer.Add(self.correct_astig_checkbox, (0, 0), (1, 1),
+			self.stig_defocus_min_entry = leginon.gui.wx.Entry.FloatEntry(self, -1, chars=6, min=0.0)
+			self.stig_defocus_max_entry = leginon.gui.wx.Entry.FloatEntry(self, -1, chars=6, min=0.0)
+			stigsizer.Add(self.correct_astig_checkbox, (0, 0), (1, 1),
 					   wx.ALIGN_CENTER_VERTICAL)
-		self.autowidgets.append(self.correct_astig_checkbox)
-		stigsizer.Add(self.stig_defocus_min_entry, (0, 1), (1, 1),
+			self.autowidgets.append(self.correct_astig_checkbox)
+			stigsizer.Add(self.stig_defocus_min_entry, (0, 1), (1, 1),
 					   wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
-		self.autowidgets.append(self.stig_defocus_min_entry)
-		label = wx.StaticText(self, -1, 'and')
-		self.autowidgets.append(label)
-		stigsizer.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER)
-		stigsizer.Add(self.stig_defocus_max_entry, (0, 3), (1, 1),
+			self.autowidgets.append(self.stig_defocus_min_entry)
+			label = wx.StaticText(self, -1, 'and')
+			self.autowidgets.append(label)
+			stigsizer.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER)
+			stigsizer.Add(self.stig_defocus_max_entry, (0, 3), (1, 1),
 					   wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
-		self.autowidgets.append(self.stig_defocus_max_entry)
-		label = wx.StaticText(self, -1, 'meters')
-		self.autowidgets.append(label)
-		stigsizer.Add(label, (0, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		autosizer.Add(stigsizer, (7, 0), (1, 3), wx.ALIGN_CENTER_VERTICAL)
+			self.autowidgets.append(self.stig_defocus_max_entry)
+			label = wx.StaticText(self, -1, 'meters')
+			self.autowidgets.append(label)
+			stigsizer.Add(label, (0, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+			autosizer.Add(stigsizer, (7, 0), (1, 3), wx.ALIGN_CENTER_VERTICAL)
 
 		self.autowidgets.append(sbauto)
 		self.autobox = wx.StaticBoxSizer(sbauto, wx.VERTICAL)
@@ -391,10 +401,11 @@ class Dialog(leginon.gui.wx.Dialog.Dialog):
 			if self.correction_type_choice.GetStringSelection()=='Defocus':
 				self.correction_type_choice.SetStringSelection('Stage Z') 
 			self.fit_limit_entry.Disable()
-			self.correct_astig_checkbox.SetValue(False)
-			self.correct_astig_checkbox.Disable()
-			self.stig_defocus_max_entry.Disable()
-			self.stig_defocus_min_entry.Disable()
+			if not hide_incomplete:
+				self.correct_astig_checkbox.SetValue(False)
+				self.correct_astig_checkbox.Disable()
+				self.stig_defocus_max_entry.Disable()
+				self.stig_defocus_min_entry.Disable()
 			self.tiltlabel.SetLabel('degrees')
 		elif method == 'Beam Tilt':
 			self.enableAuto(True)

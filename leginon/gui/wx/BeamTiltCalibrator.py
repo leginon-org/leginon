@@ -69,8 +69,9 @@ class Panel(leginon.gui.wx.Calibrator.Panel):
 		self.szmain.AddGrowableRow(0)
 		self.szmain.AddGrowableCol(0)
 		# tools
-		choices = ['Defocus', 'Stigmator', 'Beam-Tilt Coma']
+		choices = ['Defocus', 'Beam-Tilt Coma']
 		if not hide_incomplete:
+			choices.append('Stigmator')
 			choices.append('Image Shift Coma')
 		self.parameter = wx.Choice(self.toolbar, -1, choices=choices)
 		self.parameter.SetSelection(0)
@@ -131,7 +132,8 @@ class Panel(leginon.gui.wx.Calibrator.Panel):
 		self.measure_dialog.scrsettings.measure.Enable(enable)
 		if self.node.measurement:
 			self.measure_dialog.scrsettings.correctdefocus.Enable(enable)
-			self.measure_dialog.scrsettings.correctstig.Enable(enable)
+			if not hide_incomplete:
+				self.measure_dialog.scrsettings.correctstig.Enable(enable)
 		self.measure_dialog.scrsettings.resetdefocus.Enable(enable)
 
 		self.comafree_dialog.measure.Enable(enable)
