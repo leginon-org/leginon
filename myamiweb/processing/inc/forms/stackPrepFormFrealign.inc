@@ -12,14 +12,13 @@ require_once "inc/particledata.inc";
 
 class StackPrepFormFrealign extends StackPrepForm
 {
-	function __construct( $stackid='', $lastParticle='', $lowpass='', $highpass='', $bin='', $reconiterid='', $noctf='', $emaninit='', $ctffindonly='', $ctftilt='', $paramonly='' ) 
+	function __construct( $stackid='', $lastParticle='', $lowpass='', $highpass='', $bin='', $reconiterid='', $emaninit='', $ctffindonly='', $ctftilt='', $paramonly='' ) 
 	{
 		parent::__construct($lastParticle, $lowpass, $highpass, $bin);
 		$params = $this->getFormParams();
 				
 		// add a couple of params to the basic prep refine params
 		$params->addParam( "reconiterid", $reconiterid, "previous EMAN refinement iteration for initializing particle orientation" );
-		$params->addParam( "noctf", $noctf, "Allow Frealign to determine ctf estimation" );
 		$params->addParam( "emaninit", $emaninit, "Import initial orientations from EMAN reconstruction:" );
 		$params->addParam( "ctffindonly", $ctffindonly, "Only use CTFFIND values" );
 		$params->addParam( "paramonly", $paramonly, "Only create the Frealign paramter file, not the stack");
@@ -41,8 +40,6 @@ class StackPrepFormFrealign extends StackPrepForm
 		$html .=  $this->addReconSelectBox();
 					
 		$html.= "<br/>\n";
-
-		$html.= $params->insertCheckboxField("noctf");
 		
 		// find if there are ctffind runs (for frealign option)
 		$particle = new particledata();
