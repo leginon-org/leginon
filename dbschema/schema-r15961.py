@@ -1,9 +1,5 @@
 #!/usr/bin/env python
 import schemabase
-import leginon.leginondata
-import leginon.projectdata
-from appionlib import apParticle
-from appionlib import appiondata
 
 class SchemaUpdate15961(schemabase.SchemaUpdate):
 	'''

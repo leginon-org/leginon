@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 import schemabase
 import leginon.leginondata
-import leginon.projectdata
-from appionlib import appiondata
 import sys,os
 
 class SchemaUpdate16182(schemabase.SchemaUpdate):

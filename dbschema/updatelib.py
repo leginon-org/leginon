@@ -3,6 +3,7 @@ import time
 import os
 import xml.dom.minidom as dom
 from leginon import version
+from leginon import projectdata
 
 def getPackageVersion():
 	# getSVNBranch gives branch name from either svn or text
@@ -15,16 +16,33 @@ def getPackageVersion():
 		raise "Unknown svn branch"
 	return version_log
 
+def checkProcessingDB():
+	appiondbs = projectdata.processingdb().query()
+	if appiondbs:
+		return True
+	return False
+
 def getUpdateRevisionSequence():
 	svn_branch = version.getSVNBranch('.')
+	has_appiondbs = checkProcessingDB()
+
 	if svn_branch == 'trunk':
-		schema_revisions = [12857,13713,14077,14891,15069,15248,15251,15293,15526,15653,15961,16182,16412,16446,16607]
+		schema_revisions = [12857,13713,14077,14891,15069,15526,15653,16182,16607]
+		appion_only_revisions = [15248,15251,15293,15961,16412,16446]
+	elif svn_branch == 'myami-2.2':
+		schema_revisions = [12857,13713,14077,14891,15069,15526,15653,16182,16607]
+		appion_only_revisions = [15248,15251,15293,15961,16412,16446]
 	elif svn_branch == 'myami-2.1':
 		schema_revisions = [12857,13713,14077,14891,15293]
+		appion_only_revisions = []
 	elif svn_branch == 'myami-2.0':
 		schema_revisions = [12857,13713,14077,14380,15293]
+		appion_only_revisions = []
 	else:
 		raise "Unknown svn branch"
+	if has_appiondbs:
+		schema_revisions.extend(appion_only_revisions)
+		schema_revisions.sort()
 	return schema_revisions
 
 def getCheckOutRevision(module_path='.'):
