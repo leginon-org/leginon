@@ -58,8 +58,8 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	// connect to particle and ctf databases
 	$particle = new particledata();
 	$ctfdata=$particle->hasCtfData($sessionId);
-	$ctftiltdata=$particle->hasCtfTiltData($sessionId);
 	$ctffindids = $particle->getCtfRunIds($sessionId,$showHidden=False,$ctffind=True);
+	$ctfruns = $particle->getCtfRunIds($sessionId,$showHidden=False,$ctffind=False);
 	$partrunids = $particle->getParticleRunIds($sessionId);
 	$massessrunIds = $particle->getMaskAssessRunIds($sessionId);
 	$stackruninfos = $particle->getStackIds($sessionId, True);
@@ -121,24 +121,20 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	$overridecheck = ($_POST['override']=='on') ? 'CHECKED' : '';
 	// defocus pair check
 	$defocpaircheck = ($_POST['stackdfpair']=='on') ? 'checked' : '';
-	$ddnframe = $_POST['ddnframe'];
-	$ddstartframe = $_POST['ddstartframe'];
 
 	$ctfoptions = array(
 		'ace2image'=>'Ace 2 Wiener Filter Whole Image',
 		'ace2imagephase'=>'Ace 2 PhaseFlip Whole Image',
 		'spiderimage'=>'SPIDER PhaseFlip Whole Image',
 		'emanpart'=>'EMAN PhaseFlip by Boxed Stack per Image',
-		'emanimage'=>'EMAN PhaseFlip Whole Image'
+		'emanimage'=>'EMAN PhaseFlip Whole Image',
+		'emantilt'=>'EMAN PhaseFlip by Tilt Location'
 	);
 	$limitedctfoptions=array(
-		'emanpart'=>'EMAN PhaseFlip by Boxed Stack per Image'
+		'emanpart'=>'EMAN PhaseFlip by Boxed Stack per Image',
+		'emantilt'=>'EMAN PhaseFlip by Tilt Location'
 	);
-	if ($ctftiltdata) {
-		$ctfoptions['emantilt'] = 'EMAN PhaseFlip by Tilt Location';
-		$limitedctfoptions['emantilt'] = 'EMAN PhaseFlip by Tilt Location';
-	}
- 
+
 	$javascript="<script src='../js/viewer.js'></script>
 	<script type='text/javascript'>
 
@@ -262,7 +258,7 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 #	echo "<textarea name='description' rows='2' cols='50'>$rundescrval</textarea>\n";
 #	echo "<br/>\n";
 #	echo "<br/>\n";
-	
+
 	createAppionLoopTable($sessiondata, $runnameval, "stacks", 0, $rundescrval);
 
 	echo "<b>Density modifications:</b><br/>";
@@ -317,7 +313,7 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	//echo "</td></tr></table>";
 	echo "</td><td class='tablebg'>";
 	//echo "<table cellpadding='5' border='0'><tr><td valign='TOP'>";
-	
+
 	$partruns=count($partrunids);
 
 	if (!$partrunids) {
@@ -430,17 +426,7 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	}
 	echo "<br/>\n";
 	echo "<br/>\n";
-	
-	if (!HIDE_FEATURE)
-	{	
-		// raw frame processing gui assuming presetname is ed
-		// This feature only works with Python 2.6
-		echo "<b>Raw frame processing if available: </b><br/>\n";
-		echo "start frame:<input type='text' name='ddstartframe' value='$ddstartframe' size='3'>\n";
-		echo "total frame:<input type='text' name='ddnframe' value='$ddnframe' size='3'>\n";
-		echo "<br/><br/>\n";
-	}
-	
+
 	// for boxing helical segments
 	if ($storedhelices) {
 		$hstep = ($_POST['boxhstep']) ? $_POST['boxhstep']:'';
@@ -512,6 +498,21 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 //		(between 0.0 - 1.0)\n";
 
 	if ($ctfdata) {
+		$empty_array=array(array('DEF_id'=> 0,'name' => 'all'));
+                $ctfruns=array_merge ($empty_array,$ctfruns);
+                var_dump($ctfruns);
+		echo "Choice of Ctf run:\n";
+                echo "&nbsp;&nbsp;<select name='ctfrunID' ";
+                echo ">\n";
+		foreach ($ctfruns as $ctfrun) {
+                        $ID=$ctfrun['DEF_id'];
+			$ctfname=$ctfrun['name'];
+			$selected = ($_POST['ctfrunID']==$ID) ? 'SELECTED':'';
+                        echo "<option value='$ID' $selected>$ctfname ($ID)</option>";
+                }
+                echo "</select>\n";
+                echo "<br/>\n";
+	
 		// give option of only using ctffind values
 		if ($ctffindids) {
 			echo "<input type='checkbox' name='ctffindonly' $ctffindcheck>\n";
@@ -624,6 +625,7 @@ function runMakestack() {
 	$stacknorm = ($_POST['stacknorm']=='on') ? True : False;
 	$ctfcorrect = ($_POST['ctfcorrect']=='on') ? 'ctfcorrect' : '';
 	$ctfcorrecttype = $_POST['ctfcorrecttype'];
+	$ctfrunID = $_POST['ctfrunID'];
 	$stig = ($_POST['stig']=='on') ? 'stig' : '';
 	$commit = ($_POST['commit']=="on") ? 'commit' : '';
 	$stackdfpair = ($_POST['stackdfpair']=="on") ? True : False;
@@ -632,9 +634,6 @@ function runMakestack() {
 	$helicalcheck = ($_POST['helicalcheck']);
 	$finealigncheck = ($_POST['finealigncheck']);
 	$ctffindonly = ($_POST['ctffindonly'])=='on' ? True : False;
-	$ddstartframe = $_POST['ddstartframe'];
-	$ddnframe = $_POST['ddnframe'];
-	
 	
 	// set image inspection selection
 	$norejects=$inspected=0;
@@ -793,9 +792,7 @@ function runMakestack() {
 	if ($boxhstep) $command.="--helicalstep=$boxhstep ";
 	if ($helicalcheck == 'on') $command.="--rotate ";
 	elseif ($finealigncheck == 'on') $command.="--rotate --finealign ";
-	if ($ddstartframe) $command.=" --ddstartframe=$ddstartframe";
-	if ($ddnframe) $command.=" --ddnframe=$ddnframe";
-	
+	if ($ctfrunID) $command.="--ctfrunid=$ctfrunID ";
 
 	$apcommand = parseAppionLoopParams($_POST);
 	if ($apcommand[0] == "<") {
