@@ -3,6 +3,7 @@
 import pyscope.registry
 import numextension
 import numpy
+import time
 
 cam = pyscope.registry.getClass('DE12')()
 
@@ -17,8 +18,8 @@ for i in (0,1):
 	im = im.astype(numpy.float32)
 	dark_images.append(im)
 diff = dark_images[1] - dark_images[0]
-std = diff.std()
-print 'Dark Noise: ', std
+dark_noise = diff.std()
+print 'Dark Noise: ', dark_noise
 
 # Measure Leakage Current
 # acquire two dark frames, one at 5 fps, on at 20 fps
@@ -42,6 +43,12 @@ timediff = (exposure_times[1] - exposure_times[0]) / 1000.0
 mean = imdiff.mean()
 leakage = mean / timediff
 print 'Leakage: ', leakage
+
+logname = 'leakage.log'
+f = open(logname, 'a+')
+timestamp = time.asctime()
+f.write('%s\t%s\t%s\n' % (timestamp, dark_noise, leakage))
+print 'Values appended to %s' % (logname,)
 
 print ''
 raw_input('Enter to quit.')
