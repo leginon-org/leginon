@@ -58,6 +58,7 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	// connect to particle and ctf databases
 	$particle = new particledata();
 	$ctfdata=$particle->hasCtfData($sessionId);
+	$ctftiltdata=$particle->hasCtfTiltData($sessionId);
 	$ctffindids = $particle->getCtfRunIds($sessionId,$showHidden=False,$ctffind=True);
 	$ctfruns = $particle->getCtfRunIds($sessionId,$showHidden=False,$ctffind=False);
 	$partrunids = $particle->getParticleRunIds($sessionId);
@@ -121,20 +122,24 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	$overridecheck = ($_POST['override']=='on') ? 'CHECKED' : '';
 	// defocus pair check
 	$defocpaircheck = ($_POST['stackdfpair']=='on') ? 'checked' : '';
+	$ddnframe = $_POST['ddnframe'];
+	$ddstartframe = $_POST['ddstartframe'];
 
 	$ctfoptions = array(
 		'ace2image'=>'Ace 2 Wiener Filter Whole Image',
 		'ace2imagephase'=>'Ace 2 PhaseFlip Whole Image',
 		'spiderimage'=>'SPIDER PhaseFlip Whole Image',
 		'emanpart'=>'EMAN PhaseFlip by Boxed Stack per Image',
-		'emanimage'=>'EMAN PhaseFlip Whole Image',
-		'emantilt'=>'EMAN PhaseFlip by Tilt Location'
+		'emanimage'=>'EMAN PhaseFlip Whole Image'
 	);
 	$limitedctfoptions=array(
-		'emanpart'=>'EMAN PhaseFlip by Boxed Stack per Image',
-		'emantilt'=>'EMAN PhaseFlip by Tilt Location'
+		'emanpart'=>'EMAN PhaseFlip by Boxed Stack per Image'
 	);
-
+	if ($ctftiltdata) {
+		$ctfoptions['emantilt'] = 'EMAN PhaseFlip by Tilt Location';
+		$limitedctfoptions['emantilt'] = 'EMAN PhaseFlip by Tilt Location';
+	}
+ 
 	$javascript="<script src='../js/viewer.js'></script>
 	<script type='text/javascript'>
 
@@ -258,7 +263,7 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 #	echo "<textarea name='description' rows='2' cols='50'>$rundescrval</textarea>\n";
 #	echo "<br/>\n";
 #	echo "<br/>\n";
-
+	
 	createAppionLoopTable($sessiondata, $runnameval, "stacks", 0, $rundescrval);
 
 	echo "<b>Density modifications:</b><br/>";
@@ -313,7 +318,7 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	//echo "</td></tr></table>";
 	echo "</td><td class='tablebg'>";
 	//echo "<table cellpadding='5' border='0'><tr><td valign='TOP'>";
-
+	
 	$partruns=count($partrunids);
 
 	if (!$partrunids) {
@@ -426,7 +431,17 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	}
 	echo "<br/>\n";
 	echo "<br/>\n";
-
+	
+	if (!HIDE_FEATURE)
+	{	
+		// raw frame processing gui assuming presetname is ed
+		// This feature only works with Python 2.6
+		echo "<b>Raw frame processing if available: </b><br/>\n";
+		echo "start frame:<input type='text' name='ddstartframe' value='$ddstartframe' size='3'>\n";
+		echo "total frame:<input type='text' name='ddnframe' value='$ddnframe' size='3'>\n";
+		echo "<br/><br/>\n";
+	}
+	
 	// for boxing helical segments
 	if ($storedhelices) {
 		$hstep = ($_POST['boxhstep']) ? $_POST['boxhstep']:'';
@@ -634,6 +649,9 @@ function runMakestack() {
 	$helicalcheck = ($_POST['helicalcheck']);
 	$finealigncheck = ($_POST['finealigncheck']);
 	$ctffindonly = ($_POST['ctffindonly'])=='on' ? True : False;
+	$ddstartframe = $_POST['ddstartframe'];
+	$ddnframe = $_POST['ddnframe'];
+	
 	
 	// set image inspection selection
 	$norejects=$inspected=0;
@@ -792,7 +810,10 @@ function runMakestack() {
 	if ($boxhstep) $command.="--helicalstep=$boxhstep ";
 	if ($helicalcheck == 'on') $command.="--rotate ";
 	elseif ($finealigncheck == 'on') $command.="--rotate --finealign ";
+	if ($ddstartframe) $command.=" --ddstartframe=$ddstartframe";
+	if ($ddnframe) $command.=" --ddnframe=$ddnframe";
 	if ($ctfrunID) $command.="--ctfrunid=$ctfrunID ";
+	
 
 	$apcommand = parseAppionLoopParams($_POST);
 	if ($apcommand[0] == "<") {
