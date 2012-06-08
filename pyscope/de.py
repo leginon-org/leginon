@@ -324,7 +324,7 @@ class DE12(DECameraBase):
 		DECameraBase.__init__(self)
 		self.dimension = {'x': 4096, 'y': 3072}
 		self.setProperty('Ignore Number of Frames', 0)
-		self.setProperty('Preexposure Time (seconds)', 0.043)		
+		self.setProperty('Preexposure Time (seconds)', 0.000)		
 
 	def finalizeGeometry(self, image):
 		image = DECameraBase.finalizeGeometry(self, image)
