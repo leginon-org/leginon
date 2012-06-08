@@ -2,16 +2,21 @@
 
 import pyscope.registry
 import numextension
+import numpy
 
 cam = pyscope.registry.getClass('DE12')()
 
 # Measure Dark Noise
+cam.setFrameRate(24.57)
 cam.setExposureTime(0)
 dark_images = []
 for i in (0,1):
 	cam.setUseFrames((0,))
 	cam.setExposureType('dark')
 	im = cam.getImage()
+	im = im.astype(numpy.float32)
+	print 'STD', im.std()
+	print 'MEAN', im.mean()
 	dark_images.append(im)
 diff = dark_images[1] - dark_images[0]
 std = diff.std()
@@ -30,6 +35,7 @@ for fps in (20,5):
 	cam.setUseFrames((0,))   # just to be sure there is only one frame
 	cam.setExposureType('dark')
 	im = cam.getImage()
+	im = im.astype(numpy.float32)
 	print 'IM MEAN', im.mean()
 	dark_images.append(im)
 	exposure_times.append(exp_time)
