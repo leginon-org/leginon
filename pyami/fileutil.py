@@ -54,7 +54,7 @@ def get_config_dirs(module=None):
 	# system config location is /etc/myami on unix like systems or
 	# under PROGRAMFILES on windows
 	if sys.platform == 'win32':
-		system_dir = os.path.join(os.environ('PROGRAMFILES'), 'myami')
+		system_dir = os.path.join(os.environ['PROGRAMFILES'], 'myami')
 	else:
 		system_dir = '/etc/myami'
 
