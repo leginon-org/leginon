@@ -12,7 +12,7 @@ from appionlib import appionLoop2
 from appionlib import apImage
 from appionlib import apDisplay
 from appionlib import apDatabase
-from appionlib import apCtf
+from appionlib.apCtf import ctfdb
 from appionlib import apMatlab
 from appionlib import apParam
 from appionlib import apInstrument
@@ -63,7 +63,7 @@ class aceLoop(appionLoop2.AppionLoop):
 
 	def postLoopFunctions(self):
 		pymat.close(self.matlab)
-		apCtf.printCtfSummary(self.params, self.imgtree)
+		ctfdb.printCtfSummary(self.params, self.imgtree)
 
 	def reprocessImage(self, imgdata):
 		"""
@@ -75,7 +75,7 @@ class aceLoop(appionLoop2.AppionLoop):
 		"""
 		if self.params['reprocess'] is None:
 			return None
-		ctfvalue, conf = apCtf.getBestCtfValueForImage(imgdata)
+		ctfvalue, conf = ctfdb.getBestCtfValueForImage(imgdata)
 		if ctfvalue is None:
 			return None
 
@@ -109,8 +109,8 @@ class aceLoop(appionLoop2.AppionLoop):
 
 
 	def commitToDatabase(self, imgdata):
-		apCtf.insertAceParams(imgdata, self.params)
-		apCtf.commitCtfValueToDatabase(imgdata, self.matlab, self.ctfvalue, self.params)
+		ctfdb.insertAceParams(imgdata, self.params)
+		ctfdb.commitCtfValueToDatabase(imgdata, self.matlab, self.ctfvalue, self.params)
 
 	def setupParserOptions(self):
 		self.parser.add_option("--edgethcarbon", dest="edgethcarbon", type="float", default=0.8,

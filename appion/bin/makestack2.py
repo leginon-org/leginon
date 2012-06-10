@@ -19,7 +19,7 @@ from appionlib import apParticleExtractor
 from appionlib import apImage
 from appionlib import apDisplay
 from appionlib import apDatabase
-from appionlib import apCtf
+from appionlib.apCtf import ctfdb
 from appionlib import apStack
 from appionlib import apDefocalPairs
 from appionlib import appiondata
@@ -357,7 +357,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 
 	#=======================
 	def tiltPhaseFlipParticles(self, imgdata, imgstackfile, partdatas):
-		ctfvalue = apCtf.getBestTiltCtfValueForImage(imgdata)
+		ctfvalue = ctfdb.getBestTiltCtfValueForImage(imgdata)
 		if ctfvalue is None:
 			apDisplay.printError("Failed to get ctf parameters")
 		apix = apDatabase.getPixelSize(imgdata)

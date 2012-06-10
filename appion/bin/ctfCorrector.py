@@ -12,7 +12,7 @@ from appionlib import apImage
 from appionlib import apDisplay
 from appionlib import apDatabase
 from appionlib import apMatlab
-from appionlib import apCtf
+from appionlib.apCtf import ctfdb
 from appionlib import apParam
 from appionlib import apInstrument
 try:
@@ -47,7 +47,7 @@ class aceLoop(appionLoop2.AppionLoop):
 		except:
 			apDisplay.environmentError()
 			raise
-		apCtf.mkTempDir(self.params['tempdir'])
+		ctfdb.mkTempDir(self.params['tempdir'])
 		apMatlab.setAceConfig(self.matlab, self.params)
 
 	#======================
@@ -56,7 +56,7 @@ class aceLoop(appionLoop2.AppionLoop):
 
 	#======================
 	def processImage(self, imgdata):
-		apCtf.runAceCorrect(matlab,img,params)
+		ctfdb.runAceCorrect(matlab,img,params)
 
 	#======================
 	def setupParserOptions(self):

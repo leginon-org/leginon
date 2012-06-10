@@ -12,7 +12,7 @@ import subprocess
 from appionlib import appiondata
 from appionlib import apParam
 from appionlib import apDisplay
-from appionlib import apCtf
+from appionlib.apCtf import ctfdb
 from appionlib import apImage
 from appionlib import apDBImage
 from appionlib import apDatabase
@@ -26,7 +26,7 @@ def runAce(matlab, imgdata, params, showprev=True):
 	imgname = imgdata['filename']
 
 	if showprev is True:
-		bestctfvalue, bestconf = apCtf.getBestCtfValueForImage(imgdata)
+		bestctfvalue, bestconf = ctfdb.getBestCtfValueForImage(imgdata)
 		if bestctfvalue:
 			print ( "Prev best: '"+bestctfvalue['acerun']['name']+"', conf="+
 				apDisplay.colorProb(bestconf)+", defocus="+str(round(-1.0*abs(bestctfvalue['defocus1']*1.0e6),2))+
@@ -45,7 +45,7 @@ def runAce(matlab, imgdata, params, showprev=True):
 	if params['nominal'] is not None:
 		nominal=params['nominal']
 	elif params['newnominal'] is True:
-		nominal = apCtf.getBestDefocusForImage(imgdata, msg=True)
+		nominal = ctfdb.getBestDefocusForImage(imgdata, msg=True)
 	if nominal is None:
 		nominal = imgdata['scope']['defocus']
 
@@ -84,7 +84,7 @@ def runAce(matlab, imgdata, params, showprev=True):
 	ctfvalue = pymat.get(matlab, 'ctfparams')
 	ctfvalue=ctfvalue[0]
 
-	apCtf.printResults(params, nominal, ctfvalue)
+	ctfdb.printResults(params, nominal, ctfvalue)
 
 	return ctfvalue
 
@@ -116,7 +116,7 @@ def runAceCorrect(imgdict,params):
 	voltage = (imgdict['scope']['high tension'])
 	apix    = apDatabase.getPixelSize(imgdict)
 
-	ctfvalues, conf = apCtf.getBestCtfValueForImage(imgdict)
+	ctfvalues, conf = ctfdb.getBestCtfValueForImage(imgdict)
 
 	ctdimname = imgname
 	ctdimpath = os.path.join(params['rundir'],ctdimname)

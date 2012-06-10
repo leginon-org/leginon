@@ -15,7 +15,6 @@ from appionlib import apParticle
 from appionlib import apStack
 from appionlib import apParam
 from appionlib import apFile
-from appionlib import apCtf
 from appionlib import apAlignment
 from appionlib import apDatabase
 from appionlib import appiondata

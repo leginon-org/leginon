@@ -7,7 +7,7 @@ import subprocess
 #pyami
 from pyami import mrc
 #appionlib
-from appionlib import apCtf
+from appionlib.apCtf import ctfdb
 from appionlib import apStack
 from appionlib import apDisplay
 from appionlib import appiondata
@@ -147,13 +147,13 @@ def generateParticleParams(params,initparfile='params.0.par'):
 				imagedata = apDefocalPairs.getDefocusPair(imagedata)
 			# get tilted parameters first:
 			if params['ctftilt'] is True:
-				ctfdata = apCtf.getBestTiltCtfValueForImage(imagedata)
+				ctfdata = ctfdb.getBestTiltCtfValueForImage(imagedata)
 				if ctfdata is None:
 					apDisplay.printError("Failed to get ctf parameters")
 				# get x,y coordinate of the particle
 				nx = particle['particle']['xcoord']
 				ny = particle['particle']['ycoord']
-				df1,df2 = apCtf.getParticleTiltDefocus(ctfdata,imagedata,nx,ny)
+				df1,df2 = ctfdb.getParticleTiltDefocus(ctfdata,imagedata,nx,ny)
 				# use defocus & astigmatism values
 				particleparams['df1']=abs(df1)
 				particleparams['df2']=abs(df2)
@@ -161,9 +161,9 @@ def generateParticleParams(params,initparfile='params.0.par'):
 
 			else:
 				# first see if there are ctf values
-				ctfdata, confidence=apCtf.getBestCtfValueForImage(imagedata, msg=False)
+				ctfdata, confidence=ctfdb.getBestCtfValueForImage(imagedata, msg=False)
 				if ctfdata is None:
-					ctfdata, confidence=apCtf.getBestCtfValueForImage(imagedata, msg=False)
+					ctfdata, confidence=ctfdb.getBestCtfValueForImage(imagedata, msg=False)
 				if ctfdata is not None:
 					# use defocus & astigmatism values
 					particleparams['df1']=abs(ctfdata['defocus1']*1e10)

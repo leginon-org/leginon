@@ -15,7 +15,7 @@ from appionlib import apParticle
 from appionlib import apStack
 from appionlib import apParam
 from appionlib import apFile
-from appionlib import apCtf
+from appionlib.apCtf import ctfdb
 from appionlib import apAlignment
 from appionlib import apDatabase
 from appionlib import appiondata
@@ -217,7 +217,7 @@ class testScript(appionScript.AppionScript):
 
 	#=====================
 	def aceTwo(self, bin, blur=10):
-		runnum = apCtf.getNumCtfRunsFromSession(self.sessionname)
+		runnum = ctfdb.getNumCtfRunsFromSession(self.sessionname)
 		acetwoname = "acetwo%d-%s"%(runnum+1, self.timestamp)
 
 		script = os.path.join(self.appiondir, "bin", "pyace2.py ")

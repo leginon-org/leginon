@@ -6,7 +6,7 @@ import time
 from appionlib import appionLoop2
 from appionlib import apDatabase
 from appionlib import apParticle
-from appionlib import apCtf
+from appionlib.apCtf import ctfdb
 from appionlib.apTilt import apTiltPair
 from appionlib import apDisplay
 
@@ -137,7 +137,7 @@ class ImageRejector(appionLoop2.AppionLoop):
 		shortname = apDisplay.short(imgdata['filename'])
 
 		### get best defocus value
-		ctfvalue, conf = apCtf.getBestCtfValueForImage(imgdata)
+		ctfvalue, conf = ctfdb.getBestCtfValueForImage(imgdata)
 
 		if ctfvalue is None:
 			if self.params['noace'] is True:

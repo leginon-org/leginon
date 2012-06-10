@@ -9,7 +9,7 @@ import subprocess
 from appionlib import apParam
 from appionlib import apStack
 from appionlib import apModel
-from appionlib import apCtf
+from appionlib.apCtf import ctfdb
 from appionlib import apImagicFile
 from appionlib import appionScript
 from appionlib import apProject
@@ -294,7 +294,7 @@ class frealignJob(appionScript.AppionScript):
 			}
 			imagedata = particle['particle']['image']
 			if self.params['noctf'] is False:
-				ctfdata, confidence = apCtf.getBestCtfValueForImage(imagedata, msg=False, method=self.params['ctfmethod'])
+				ctfdata, confidence = ctfdb.getBestCtfValueForImage(imagedata, msg=False, method=self.params['ctfmethod'])
 				if ctfdata is not None:
 					### use defocus and astigmatism values
 					particleparams['df1'] = abs(ctfdata['defocus1']*1e10)

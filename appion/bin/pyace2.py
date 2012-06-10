@@ -15,7 +15,7 @@ from appionlib import appiondata
 from appionlib import apImage
 from appionlib import apDisplay
 from appionlib import apDatabase
-from appionlib import apCtf
+from appionlib.apCtf import ctfdb
 from appionlib import apParam
 from appionlib import apFile
 from appionlib import apInstrument
@@ -54,7 +54,7 @@ class Ace2Loop(appionLoop2.AppionLoop):
 	def postLoopFunctions(self):
 		pattern = os.path.join(self.params['rundir'], self.params['sessionname']+'*.corrected.mrc')
 		apFile.removeFilePattern(pattern)
-		apCtf.printCtfSummary(self.params, self.imgtree)
+		ctfdb.printCtfSummary(self.params, self.imgtree)
 
 	#======================
 	def reprocessImage(self, imgdata):
@@ -68,7 +68,7 @@ class Ace2Loop(appionLoop2.AppionLoop):
 		if self.params['reprocess'] is None:
 			return True
 
-		ctfvalue, conf = apCtf.getBestCtfValueForImage(imgdata, msg=False, method="ace2")
+		ctfvalue, conf = ctfdb.getBestCtfValueForImage(imgdata, msg=False, method="ace2")
 
 		if ctfvalue is None:
 			return True
@@ -83,7 +83,7 @@ class Ace2Loop(appionLoop2.AppionLoop):
 
 	def processImage(self, imgdata):
 
-		bestdef, bestconf = apCtf.getBestCtfValueForImage(imgdata, msg=True, method="ace2")
+		bestdef, bestconf = ctfdb.getBestCtfValueForImage(imgdata, msg=True, method="ace2")
 		apix = apDatabase.getPixelSize(imgdata)
 		if (not (self.params['onepass'] and self.params['zeropass'])):
 			maskhighpass = False

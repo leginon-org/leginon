@@ -15,7 +15,7 @@ from appionlib import appiondata
 from appionlib import apImage
 from appionlib import apDisplay
 from appionlib import apDatabase
-from appionlib import apCtf
+from appionlib.apCtf import ctfdb
 from appionlib import apParam
 from appionlib import apFile
 from appionlib import apInstrument
@@ -62,7 +62,7 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 
 	#======================
 	def postLoopFunctions(self):
-		apCtf.printCtfSummary(self.params, self.imgtree)
+		ctfdb.printCtfSummary(self.params, self.imgtree)
 
 	#======================
 	def reprocessImage(self, imgdata):
@@ -75,7 +75,7 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 		"""
 		if self.params['reprocess'] is None:
 			return None
-		ctfvalue, conf = apCtf.getBestCtfValueForImage(imgdata)
+		ctfvalue, conf = ctfdb.getBestCtfValueForImage(imgdata)
 		if ctfvalue is None:
 			return None
 		if conf > self.params['reprocess']:
@@ -139,7 +139,7 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 		#get Defocus in Angstroms
 		self.ctfrun = None
 		defocus = imgdata['scope']['defocus']*-1.0e10
-		bestdef = apCtf.getBestDefocusForImage(imgdata, msg=True)*-1.0e10
+		bestdef = ctfdb.getBestDefocusForImage(imgdata, msg=True)*-1.0e10
 		inputparams = {
 			'orig': os.path.join(imgdata['session']['image path'], imgdata['filename']+".mrc"),
 			'input': apDisplay.short(imgdata['filename'])+".mrc",
@@ -289,9 +289,9 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 	#======================
 	def commitToDatabase(self, imgdata):
 		print ""
-		#apCtf.insertAceParams(imgdata, self.params)
+		#ctfdb.insertAceParams(imgdata, self.params)
 		self.insertCtfTiltRun(imgdata)
-		#apCtf.commitCtfValueToDatabase(imgdata, self.matlab, self.ctfvalue, self.params)
+		#ctfdb.commitCtfValueToDatabase(imgdata, self.matlab, self.ctfvalue, self.params)
 		self.insertCtfValues(imgdata)
 
 	#======================

@@ -14,7 +14,7 @@ from appionlib import appionLoop2
 from appionlib import apImage
 from appionlib import apDisplay
 from appionlib import apDatabase
-from appionlib import apCtf
+from appionlib.apCtf import ctfdb
 from appionlib import apDefocalPairs
 from appionlib import appiondata
 from appionlib import apParticle
@@ -127,17 +127,17 @@ class ParticleExtractLoop(appionLoop2.AppionLoop):
 		method = self.params['ctfmethod']
 		ctfrunid = self.params['ctfrunid']
 		if ctfrunid is None:
-			return apCtf.getBestCtfValueForImage(imgdata,msg=msg,method=method)
+			return ctfdb.getBestCtfValueForImage(imgdata,msg=msg,method=method)
 		else:
-			return apCtf.getCtfValueForImage(imgdata, ctfrunid, msg=msg, method=method)
+			return ctfdb.getCtfValueForImage(imgdata, ctfrunid, msg=msg, method=method)
 
 	def getDefocusAmpConstForImage(self,imgdata,msg=False):
 		method = self.params['ctfmethod']
 		ctfrunid = self.params['ctfrunid']
 		if ctfrunid is None:
-			return apCtf.getBestDefocusAndAmpConstForImage(imgdata, msg=msg, method=method)
+			return ctfdb.getBestDefocusAndAmpConstForImage(imgdata, msg=msg, method=method)
 		else:
-			return apCtf.getDefocusAndAmpConstForImage(imgdata, ctf_estimation_runid=ctfrunid, msg=msg, method=method)
+			return ctfdb.getDefocusAndAmpConstForImage(imgdata, ctf_estimation_runid=ctfrunid, msg=msg, method=method)
 
 	def checkCtfParams(self, imgdata):
 		shortname = apDisplay.short(imgdata['filename'])
