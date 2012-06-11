@@ -95,7 +95,7 @@ distutils.core.setup(
 	name='Appion',
 	version=version,
 	author_email='appion@scripps.edu',
-	packages=['appionlib', 'appionlib.apSpider', 'appionlib.apTilt', 'appionlib.apImage', 'appionlib.apImagic'],
+	packages=['appionlib', 'appionlib.apSpider', 'appionlib.apTilt', 'appionlib.apImage', 'appionlib.apImagic', 'appionlib.apCtf'],
 	package_data={'appionlib': ['data/*.*', 'version.txt']},
 	scripts=binfiles,
 )
