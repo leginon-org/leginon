@@ -433,91 +433,25 @@ var help = {
 	},
 	
 	'frealign' : {
-
-
-
-		// script parameters
-		'nodes' : 'Nodes refers to the number of computer to process on simultaneously.  The more nodes you get the faster things will get process, but more nodes requires that you wait longer before being allowed to begin processing.',
-		'ppn' : 'Processors per node.  If each computer (node) has 4 processors (procs), then proc/node=4.',
-		'rpn' : 'Reconstructions per node.  For some cases, you may want to use less processors on each node, leaving more memory and system resources for each process. If each computer (node) has 4 processors (procs), but you want to use 2, then ppn=4 and rpn=2.  ',
-
-		'dang' : 'angular increment used in creating projections for determining initial aligments',
-		'numiter' : 'number of refinement iterations to perform',
-		'outdir' : 'The base output directory to which files will be stored. A subdirectory of the run name will be appended for actual output',
-		'runname' : 'Specifies the name associated with the processing results unique to the specified session and parameters. The default is automatically incremented',
-
-		/* paste results from runFrealign.convertParserToJSHelp here */
-
-		// card 2
-		'mask' : 'RO -- Radius from center of particle to outer edge (in &Aring;ngstr&ouml;ms)',
-		'imask' : 'RI -- Inner mask radius (in &Aring;ngstr&ouml;ms)',
-		'apix' : 'Pixel size in &Aring;ngstr&ouml;ms',
-		'wgh' : 'WGH -- Amplitude contrast (0.07 for ice; 0.15 for stain)',
-		'xstd' : 'XSTD -- Standard deviations above mean for masking of input model.  0.0 gives no masking.',
-		'pbc' : 'PBC -- Phase b-factor constant -- Conversion constant for phase residual weighting of particles. 100 gives equal weighting; 5 gives a strong weighting.',
-		'boff' : 'BOFF -- Average phase residual of all particles.  Used for weighting',
-		'itmax' : 'ITMAX -- Number of iterations of randomization.  Used for modes 2 and 4',
-		'ipmax' : 'IPMAX -- Number of potential matches in a search that should be tested further in local refinement',
-		// card 5
-		'sym' : 'ASYM -- Symmetry.  Cn, Dn, T, O, I, I1, I2',
-		// card 6
-		'target' : 'TARGET -- Target phase residual during refinement',
-		'thresh' : 'THRESH -- Phase residual threshold cut-off.  Particles with residuals above threshold are not included in the reconstruction, if the value is less than 1 it keeps a percentage of the particles',
-		'cs' : 'Also referred to as Cs, it corresponds to the imperfection produced by the lenses in the electron microscope.  This is specific to the microscope',
-		// card 7
-		'rrec' : 'RREC -- <b>Resolution of reconstruction in &Aring;ngstr&ouml;ms</b><br /> Resolution to which the reconstruction is calculated. If several datasets have different values, the data is individually limited in the summation to the resolution limit but symmetry is applied, statistics output and the final map calculated to the maximum resolution requested for any dataset.',
-		'hp' : 'RMAX1 -- Lower resolution limit of the data to be included in the search/refinement.',
-		'lp' : 'RMAX2 -- High resolution limit of the data to be included in the search/refinement.',
-		'rbfact' : 'RBFACT -- Bfactor to apply to particles before classification.  0.0 applies no bfactor.',
-
-		// unused
-		'copy' : 'Duplicate the parameters for this iteration',	
-		'itn' : 'Iteration Number',
-		// card 1 
-		'format' : 'MRC',
-		'mode' : 'Run mode.  0: use input parameters and reconstruct with no refinement.  1: refine and reconstruct.  2: randomise particle params and reconstruct.  3: systematic param search and refinement 4: fancy systematic param search and refinement.',
-		'magrefine' : 'Magnification refinement',
-		'defocusrefine' : 'Defocus refinement',
-		'astigrefine' : 'Astigmatism refinemet',
-		'fliptilt' : 'Rotation of theta by 180 degrees',
-		'ewald' : 'Ewald curvature correction.  0: no correction.  1: correction by insertion method.  2: correction by ref-based method',
-		'matches' : 'Write out particles with matching projections',
-		'history' : 'Write out history of itmax randomization trials',
-		'finalsym' : 'Apply final real space symmetrization to beautify reconstruction',
-		'fomfilter' : 'Apply FOM filter to final reconstruction',
-		'fsc' : 'Internally calculate FSC between even and odd particles',
-
-		'psi' : 'Refine psi',
-		'theta' : 'Refine theta',
-		'phi' : 'Refine phi',
-		'deltax' : 'Refine delta X',
-		'deltay' : 'Refine delta Y',
-		'first' : 'First particle',
-		'last' : 'Last particle',
-		'ctffindonly' : 'Only CTF values estimated using CTFFIND or CTFTILT will be used for correcting the CTF',
-
-		'relmag' : 'RELMAG -- lative magnification of dataset?',
-
-		'kv' : 'Accelerlating voltage',
-		'beamtiltx' : 'Beam tilt x (mrad)',
-		'beamtilty' : 'Beam tilt y (mrad)',
-
-		'stack' : 'Input particles to be classified',
-		'matchstack' : 'Output projection matches',
-		'inpar' : 'Input particle parameter file',
-		'outpar' : 'Output particle parameter file',
-		'outshiftpar' : 'Output particle shift parameter file',
-		'invol' : 'Input reference volume',
-		'weight3d' : '???',
-		'oddvol' : 'Output odd volume',
-		'evenvol' : 'Output even volume',
-		'outresidual' : '3d phase residuals',
-		'pointspreadvol' : 'Output 3d point spread function',
-		'stackid' : 'Stack id from database',
-		'mrchack' : 'Hack to fix machine stamp in mrc header',
-		'outvol' : 'Name of output volume',
-
-		'setuponly' : 'If setuponly is specified, everything will be set up but frealign will not be run',
+		'emaninit' : 'Converts Euler angles and shifts from earlier processing (using EMAN, XMIPP etc.). This should be done whenever possible as Frealigns global search may introduce alignment errors and it requires substantial computing power.',
+		'ctffindonly' : 'Only CTF values estimated using CTFFIND3 will be used for correcting the CTF',
+		'ctftilt' : 'Only CTF values estimated using CTFTILT will be used for correcting the CTF',
+		'paramonly' : 'Exports a Frealign particle parameter file to further use outside of Appion.',
+		'fmag' : 'Enables refinement of magnification on a per micrograph basis. Should only be used in rare cases when the signal in the images is sufficiently strong, such as with large virus particles.',
+		'fdef' : 'Enables refinement of defocus. Should only be used in rare cases when the signal in the images is sufficiently strong, such as with large virus particles.',
+		'fpart' : 'Enables defocus refinement on a per particle basis. This option is only active when Defocus refinement is active.',
+		'fbeaut' : 'Applies particle symmetry in real space. Symmetry is always applied in reciprocal space but depending on the symmetry, there are small interpolation errors that might be visible when examining the density map in real space. This should not affect the refinement and quality of the map but is not ideal when making figures for publications. Therefore, this option should be off during refinement but could be switched on for the final reconstruction (if deviations from symmetry are noticeable in the map).',
+		'ffilt' : 'Applies a low-pass filter to the reconstruction based on signal-to-noise estimates from the data. This should be used to generate an optimally filtered map. See Sindelar & Grigorieff (JSB 2012) for more details. IMPORTANT: If further averaging is done after Frealign reconstruction (e.g. non-icosahedral averaging on icosahedral viruses), this option should be disabled.',
+		'fbfact' : 'Corrects the reconstruction for any B-factor that attenuates high-resolution signal. It also imposes a resolution cut-off based on the FSC curve (FSC = 0.143). This option should be used with caution as the B-factor estimation sometimes fails. If it fails a B-factor should be applied separately (using bfactor.exe, for example, see Grigorieff lab software download page).',
+		'pbc' : 'Enables per particle weighting during reconstruction. This may improve the quality of the reconstruction if particles differ noticeably in their phase residual determined by Frealign. Alternatively, a certain percentage of particles can be excluded (see box "percentage of worst images to discard").',
+		'hp' : 'Low-pass filter applied by Frealign to the particle images before refinement. As a rule, this limit should not significantly exceed 10 Å in most cases because it will worsen the alignment. It also helps limit over-fitting of noise. For example, if the FSC curve suggests a resolution that exceeds 10 Å even though no data beyond this resolution was used in the refinement, one can assume that the FSC curve is unbiased and that the reconstruction contains true signal at higher resolution.',
+		'lp' : 'High-pass filter applied by Frealign to the particle images before refinement. As a rule, this filter should be set approximately to match the diameter of the particle.',
+		'wgh' : 'Amplitude contrast used by Frealign to correct for the CTF. A value of 0.07 is commonly assumed for protein in ice while a value of 0.1 could be used for a protein-nucleic acid complex and 0.15 for negative stain. IMPORTANT: Choosing a negative value here will switch off CTF correction in Frealign. In this case, a CTF-corrected (e.g. phase flipped) particle image stack should be supplied on input with particle density light on dark background.',
+		'psi' : 'Enables refinement of the Psi Euler angles (in-plane angle).',
+		'theta' : 'Enables refinement of the Theta Euler angles (out-of-plane angle).',
+		'phi' : 'Enables refinement of the Phi Euler angles.',
+		'x' : 'Enables refinement of the X shifts.',
+		'y' : 'Enables refinement of the Y shifts.',
 	},
 	'cluster' : {
 		'processinghost' : 'The name of the processing computer to send this job to. ',

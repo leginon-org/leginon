@@ -20,7 +20,7 @@ class StackPrepFormFrealign extends StackPrepForm
 		// add a couple of params to the basic prep refine params
 		$params->addParam( "reconiterid", $reconiterid, "previous EMAN refinement iteration for initializing particle orientation" );
 		$params->addParam( "emaninit", $emaninit, "Import initial orientations from completed reconstruction:" );
-		$params->addParam( "ctffindonly", $ctffindonly, "Only use CTFFIND values" );
+		$params->addParam( "ctffindonly", $ctffindonly, "Only use CTFFIND3 values" );
 		$params->addParam( "ctftilt", $ctftilt, "Only use CTFTilt values" );
 		$params->addParam( "paramonly", $paramonly, "Only create the Frealign paramter file, not the stack");
 		
@@ -40,7 +40,9 @@ class StackPrepFormFrealign extends StackPrepForm
 		// get the html for the basic prep refine form
 		$html = parent::generateForm();
 		$params = $this->getFormParams();
-	
+		
+		// make sure we are using the appropriate pop-up help messages
+		$params->setHelpSection( "frealign" );	
 				
 		$html .=  $params->insertCheckboxField( "emaninit");
 		$html .=  $this->addReconSelectBox();

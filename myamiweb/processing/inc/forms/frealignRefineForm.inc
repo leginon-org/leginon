@@ -46,25 +46,27 @@ class FrealignRefineForm extends BasicRefineForm
 	    <hr />";
 				
 		// find each stack entry in database
-		$reconstackid = $paramSet->getParamValue( 'reconstackid' );
-		$stackIds = $this->particle->getStackIds( $_GET['expId'] );
-		if (count($stackIds) > 0) {
-			$html .=  "<br />\n";
-			$html .=  "<b>Select Reconstruction Stack:</b>\n";
-			$html .=  "<br />\n";
-			$html .=  $this->reconStackSelector($stackIds, $reconstackid);
-			$html .=  "<br />\n";
-		}
-		
-		// TODO: add javascript so that this updates when a stack is selected
-		if ( $reconstackid ) {
-			$html .=  stacksummarytable( $reconstackid, true);
-		}				
-		
-		$html .=  "<br />\n";
+// This section is commented out for now until we support more features of Frealign
+//		$reconstackid = $paramSet->getParamValue( 'reconstackid' );
+//		$stackIds = $this->particle->getStackIds( $_GET['expId'] );
+//		if (count($stackIds) > 0) {
+//			$html .=  "<br />\n";
+//			$html .=  "<b>Select Reconstruction Stack:</b>\n";
+//			$html .=  "<br />\n";
+//			$html .=  $this->reconStackSelector($stackIds, $reconstackid);
+//			$html .=  "<br />\n";
+//		}
+//		
+//		// TODO: add javascript so that this updates when a stack is selected
+//		if ( $reconstackid ) {
+//			$html .=  stacksummarytable( $reconstackid, true);
+//		}				
+//		
+//		$html .=  "<br />\n";
 	
 		$html .=  $paramSet->insertCheckboxField( "fmag" );
 		$html .=  $paramSet->insertCheckboxField( "fdef" );
+		$html .=  "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";
 		$html .=  $paramSet->insertCheckboxField( "fpart" );
 		$html .=  $paramSet->insertCheckboxField( "fbeaut" );
 		$html .=  $paramSet->insertCheckboxField( "ffilt" );
@@ -72,7 +74,7 @@ class FrealignRefineForm extends BasicRefineForm
 		$html .=  $paramSet->insertCheckboxField( "pbc" );
 		$html .=  $paramSet->insertTextField( "hp", $shortSize, "(in &Aring;ngstroms)" );
 		$html .=  $paramSet->insertTextField( "lp", $shortSize, "(in &Aring;ngstroms; default 2*Nyquist)" );
-		$html .=  $paramSet->insertTextField( "wgh", $shortSize );
+		$html .=  $paramSet->insertTextField( "wgh", $shortSize, "(percent)");
 		// These parameters may be added back in when we add the search feature
 		//$html .=  $paramSet->insertTextField( "dang", $shortSize );
 		//$html .=  $paramSet->insertTextField( "itmax", $shortSize );
