@@ -514,19 +514,17 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 
 	if ($ctfdata) {
 		$empty_array=array(array('DEF_id'=> 0,'name' => 'all'));
-                $ctfruns=array_merge ($empty_array,$ctfruns);
-                var_dump($ctfruns);
+		$ctfruns=array_merge ($empty_array,$ctfruns);
 		echo "Choice of Ctf run:\n";
-                echo "&nbsp;&nbsp;<select name='ctfrunID' ";
-                echo ">\n";
+		echo "&nbsp;&nbsp;<select name='ctfrunID'>\n";
 		foreach ($ctfruns as $ctfrun) {
-                        $ID=$ctfrun['DEF_id'];
+			$ID=$ctfrun['DEF_id'];
 			$ctfname=$ctfrun['name'];
 			$selected = ($_POST['ctfrunID']==$ID) ? 'SELECTED':'';
-                        echo "<option value='$ID' $selected>$ctfname ($ID)</option>";
-                }
-                echo "</select>\n";
-                echo "<br/>\n";
+			echo "<option value='$ID' $selected>$ctfname ($ID)</option>";
+		}
+		echo "</select>\n";
+		echo "<br/>\n";
 	
 		// give option of only using ctffind values
 		if ($ctffindids) {
