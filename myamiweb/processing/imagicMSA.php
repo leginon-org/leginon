@@ -35,7 +35,6 @@ function jobform($extra=false)	{
 	$particle = new particledata();
 	
 	// get session info
-	echo "<form name='viewerform' method='POST' action='$formaction'>\n";
 	$expId=$_GET['expId'];
 	$projectId=getProjectId();
 	$alignId=$_GET['alignId'];
@@ -75,6 +74,8 @@ function jobform($extra=false)	{
 	$numiters = ($_POST['numiters']) ? $_POST['numiters'] : '50';
 	$overcorrection = ($_POST['overcorrection']) ? $_POST['overcorrection'] : '0.8';
 	
+	echo "<form name='viewerform' method='POST' action='$formaction'>\n";
+
 	echo"
 	<table border='0' class='tableborder'>
 	<TR>

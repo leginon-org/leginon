@@ -28,7 +28,6 @@ function jobform($extra=false)	{
 	$particle = new particledata();
 	
 	// get session info
-	echo "<form name='viewerform' method='POST' action='$formaction'>\n";
 	$expId=$_GET['expId'];
 	$projectId=getProjectId();
 	$analysisId=$_GET['analysisId'];
@@ -60,6 +59,7 @@ function jobform($extra=false)	{
 	$num_classes = ($_POST['num_classes']) ? $_POST['num_classes'] : '4,16,64';
 	$num_factors = ($_POST['num_factors']) ? $_POST['num_factors'] : '8';
 	
+	echo "<form name='viewerform' method='POST' action='$formaction'>\n";
 	echo"
 	<table border='0' class='tableborder'>
 	<TR>
