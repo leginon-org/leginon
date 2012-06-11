@@ -50,30 +50,20 @@ def subtractNoiseModel(zdata2d, ringwidth, innercutradius, angle, ratio, filenam
 	smooth = 0.67
 	numiter = 10
 
-	lowessnoisedata = lowess.lowess(rdata**2, zdata, smooth, numiter)
-	lowessnoisedatae = lowess.lowess(rdatae**2, zdatae, smooth, numiter)
+	#lowessnoisedata = lowess.lowess(rdata**2, zdata, smooth, numiter)
+	#lowessnoisedatae = lowess.lowess(rdatae**2, zdatae, smooth, numiter)
 
-	noisefitparams = ctfnoise.modelCTFNoise(rdata, zdata, "below")
-	noisedata = ctfnoise.noiseModel(noisefitparams, rdata)
-	noisefitparamse = ctfnoise.modelCTFNoise(rdatae, zdatae, "below")
-	noisedatae = ctfnoise.noiseModel(noisefitparamse, rdatae)
+	CtfNoise = ctfnoise.CtfNoise()
 
-	#pyplot.figure(1)
+	noisefitparams = CtfNoise.modelCTFNoise(rdata, zdata, "below")
+	noisedata = CtfNoise.noiseModel(noisefitparams, rdata)
+	noisefitparamse = CtfNoise.modelCTFNoise(rdatae, zdatae, "below")
+	noisedatae = CtfNoise.noiseModel(noisefitparamse, rdatae)
 
 	rdatasq = rdata**2
 	rdatasqe = rdatae**2
 	rdatasqe /= rdatasq.min()
 	rdatasq /= rdatasq.min()
-
-	pyplot.subplot(3,2,1) # 3 rows, 2 columns, plot 1
-	pyplot.plot(rdatasq, zdata, 'b.', )
-	pyplot.plot(rdatasq, lowessnoisedata, 'g-', )
-	pyplot.plot(rdatasq, noisedata, 'k-', )
-
-	pyplot.subplot(3,2,2) # 3 rows, 2 columns, plot 2
-	pyplot.plot(rdatasqe, zdatae, 'r.', )
-	pyplot.plot(rdatasqe, lowessnoisedatae, 'g-', )
-	pyplot.plot(rdatasqe, noisedatae, 'k-', )
 
 	normzdata = numpy.exp(zdata) - numpy.exp(noisedata)
 	lognormzdata = numpy.log( numpy.abs( normzdata ) )
@@ -81,37 +71,60 @@ def subtractNoiseModel(zdata2d, ringwidth, innercutradius, angle, ratio, filenam
 	normzdatae = numpy.exp(zdatae) - numpy.exp(noisedatae)
 	lognormzdatae = numpy.log( numpy.abs( normzdatae ) )
 
-	noisefitparams = ctfnoise.modelCTFNoise(rdata, lognormzdata, "above")
-	noisedata = ctfnoise.noiseModel(noisefitparams, rdata)
+	envelopfitparams = CtfNoise.modelCTFNoise(rdata, lognormzdata, "above")
+	envelopdata = CtfNoise.noiseModel(envelopfitparams, rdata)
 
-	noisefitparamse = ctfnoise.modelCTFNoise(rdatae, lognormzdatae, "above")
-	noisedatae = ctfnoise.noiseModel(noisefitparamse, rdatae)
+	envelopfitparamse = CtfNoise.modelCTFNoise(rdatae, lognormzdatae, "above")
+	envelopdatae = CtfNoise.noiseModel(envelopfitparamse, rdatae)
+
+
+
+	normnormzdata = normzdata / numpy.exp(envelopdata)
+	normnormzdatae = normzdatae / numpy.exp(envelopdatae)
+
+	#=====================
+	# Make Figure
+	#=====================
+	pyplot.subplot(3,2,1) # 3 rows, 2 columns, plot 1
+	pyplot.plot(rdatasq, zdata, 'b-', )
+	#pyplot.plot(rdatasq, lowessnoisedata, 'g-', )
+	pyplot.plot(rdatasq, noisedata, 'k-', )
+
+	pyplot.subplot(3,2,2) # 3 rows, 2 columns, plot 2
+	pyplot.plot(rdatasqe, zdatae, 'r-', )
+	#pyplot.plot(rdatasqe, lowessnoisedatae, 'g-', )
+	pyplot.plot(rdatasqe, noisedatae, 'k-', )
 
 	pyplot.subplot(3,2,3) # 3 rows, 2 columns, plot 3
 	pyplot.plot(rdatasq, numpy.log(numpy.abs(normzdata)), 'b.', )
-	pyplot.plot(rdatasq, noisedata, 'k-', )
+	pyplot.plot(rdatasq, envelopdata, 'k-', )
 	pyplot.ylim(ymin=0)
 
 	pyplot.subplot(3,2,4) # 3 rows, 2 columns, plot 4
 	pyplot.plot(rdatasqe, numpy.log(numpy.abs(normzdatae)), 'r.', )
-	pyplot.plot(rdatasqe, noisedatae, 'k-', )
+	pyplot.plot(rdatasqe, envelopdatae, 'k-', )
 	pyplot.ylim(ymin=0)
-
-	normnormzdata = normzdata / numpy.exp(noisedata)
-	normnormzdatae = normzdatae / numpy.exp(noisedatae)
 
 	pyplot.subplot(3,2,5) # 3 rows, 2 columns, plot 5
 	pyplot.plot(rdatasq, normnormzdata, 'b.', )
-	pyplot.plot(rdatasqe, normnormzdatae, 'r.', )
+	pyplot.plot(rdatasqe, normnormzdatae, 'r-', )
 	pyplot.ylim(-0.1, 1.1)
 
 	pyplot.subplot(3,2,6) # 3 rows, 2 columns, plot 6
 	pyplot.plot(rdatasqe, normnormzdatae, 'r.', )
 	pyplot.ylim(-0.1, 1.1)
 
-	pyplot.savefig("plots_%.1f.png"%(ringwidth), format="png", dpi=200)
+	pyplot.savefig("plots.png", format="png", dpi=200)
 	pyplot.show()
 	#sys.exit(1)
+	#=====================
+	# End Figure
+	#=====================
+
+	numpy.savez("xdata.npz", rdatasqe)
+	numpy.savez("ydata.npz", normnormzdatae)
+	print "saved files"
+	sys.exit(1)
 
 	fitdata = imagefun.fromRadialFunction(funcrad, zdata2d.shape, rdata=rdata, zdata=noisedata)
 	#imagefile.arrayToJpeg(fitdata, "fitdata.jpg")
@@ -123,7 +136,7 @@ def subtractNoiseModel(zdata2d, ringwidth, innercutradius, angle, ratio, filenam
 
 #====================
 #====================
-def CTFpowerspec(imgdata, ctfdata, jpgfile, outerbound=6e-10):
+def CTFpowerspec(imgdata, ctfdata, jpgfile, outerbound=6.5e-10):
 	"""
 	Make a nice looking powerspectra with lines for location of Thon rings
 
@@ -196,7 +209,7 @@ def CTFpowerspec(imgdata, ctfdata, jpgfile, outerbound=6e-10):
 		ampconst, cols=numcols, numzeros=numzeros)
 
 	print radii1[0]," > ",radii2[0], radii1[0] > radii2[0]
-	innercutradius = min(radii2[0],radii1[0])/2.
+	innercutradius = min(radii2[0],radii1[0])
 
 	### more processing
 	print powerspec.shape
@@ -321,8 +334,11 @@ if __name__ == "__main__":
 		#ctfdata, bestconf = apCtf.getBestCtfValueForImage(imgdata, method="ctffind")
 		#ctfdata, bestconf = apCtf.getBestCtfValueForImage(imgdata, method="ace2")
 		CTFpowerspec(imgdata, ctfdata, jpgfile)
+
 		if count > 2:
 			sys.exit(1)
+
+
 
 
 
