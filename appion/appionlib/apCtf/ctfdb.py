@@ -148,8 +148,9 @@ def insertCtfValue(imgdata, params, matfile, ctfvalue, opimfile1, opimfile2):
 	ctfq['graph2']=opimfile2
 	ctfq['mat_file']=matfile
 	ctfq['cs']=params['cs']
-	ctfvaluelist = ('defocus1','defocus2','defocusinit','amplitude_contrast','angle_astigmatism',\
-		'noise1','noise2','noise3','noise4','envelope1','envelope2','envelope3','envelope4',\
+	ctfq['angle_astigmatism'] = math.degrees(ctfvalue['angle_astigmatism'])
+	ctfvaluelist = ('defocus1','defocus2','defocusinit','amplitude_contrast',
+		'noise1','noise2','noise3','noise4','envelope1','envelope2','envelope3','envelope4',
 		'lowercutoff','uppercutoff','snr','confidence','confidence_d')
 
 	# test for failed ACE estimation

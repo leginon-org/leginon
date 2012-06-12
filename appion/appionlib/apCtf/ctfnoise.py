@@ -16,7 +16,7 @@ class CtfNoise(object):
 
 	#============
 	def __init__(self):
-		self.debug = True
+		self.debug = False
 
 	#============
 	def runMinimization(self, xdata, ctfdata, initfitparams, noiseModel, contraintFunction, maxfun=1e4):
@@ -500,26 +500,22 @@ class CtfNoise(object):
 			if self.debug is True:
 				print "constrained above function"
 			contraintFunction = self.modelConstFunAbove
-			"""
 			filterctfdata = scipy.ndimage.maximum_filter(ctfdata, size=20)
-			for i in range(10):
+			for i in range(1):
 				filterctfdata = (filterctfdata + scipy.ndimage.maximum_filter(filterctfdata, size=20))/2.0
-			firstmax = filterctfdata[0:250].max()
-			filterctfdata = numpy.where(filterctfdata>firstmax, firstmax, filterctfdata)
-			"""
-			filterctfdata = self.upwardLeftMonotonicFilter(ctfdata)
+			#firstmax = filterctfdata[0:250].max()
+			#filterctfdata = numpy.where(filterctfdata>firstmax, firstmax, filterctfdata)
+			#filterctfdata = self.upwardLeftMonotonicFilter(ctfdata)
 		else:
 			if self.debug is True:
 				print "constrained below function"
 			contraintFunction = self.modelConstFunBelow
-			"""
 			filterctfdata = scipy.ndimage.minimum_filter(ctfdata, size=20)
-			for i in range(10):
+			for i in range(1):
 				filterctfdata = (filterctfdata + scipy.ndimage.minimum_filter(filterctfdata, size=20))/2.0
-			firstmin = filterctfdata[0:250].min()
-			filterctfdata = numpy.where(filterctfdata>firstmin, firstmin, filterctfdata)
-			"""
-			filterctfdata = self.downwardRightMonotonicFilter(ctfdata)
+			#firstmin = filterctfdata[0:250].min()
+			#filterctfdata = numpy.where(filterctfdata>firstmin, firstmin, filterctfdata)
+			#filterctfdata = self.downwardRightMonotonicFilter(ctfdata)
 
 		### run the initial minimizations
 		namelist, valuelist, fitparamslist = self.getAllInitialParameters(xdata, filterctfdata, contraintFunction)
@@ -556,10 +552,10 @@ class CtfNoise(object):
 
 		### run the full minimization
 		rhobeg = (numpy.where(numpy.abs(midfitparams)<1e-20, 1e20, numpy.abs(midfitparams))).min()/1e7
-		print "RHO begin", rhobeg
+		if self.debug: print "RHO begin", rhobeg
 		fitparams = scipy.optimize.fmin_cobyla( self.modelFitFun, midfitparams, 
 			args=(xdata, ctfdata), cons=[contraintFunction,],
-			consargs=(xdata, ctfdata), rhobeg=rhobeg, rhoend=rhobeg/1e4, iprint=1, maxfun=1e8)
+			consargs=(xdata, ctfdata), rhobeg=rhobeg, rhoend=rhobeg/1e4, iprint=0, maxfun=1e8)
 		if self.debug is True: 
 			print ( "final parameters (%.4e, %.4e, %.4e, %.4e, %.4e)"
 				%(fitparams[0], fitparams[1], fitparams[2], fitparams[3], fitparams[4]))
@@ -567,15 +563,15 @@ class CtfNoise(object):
 		if self.debug is True: 
 			print "final function value %.10f"%(finalvalue)
 		#writeDatFile("finalvalue.dat", fitparams, xdata, ctfdata)
-		if self.debug is True:
-			if finalvalue < midvalue:
+		
+		if finalvalue <= midvalue:
+			if self.debug is True:
 				apDisplay.printColor("Final value is better", "green")
-				bestfitparams = fitparams
-			elif finalvalue > midvalue:
+			bestfitparams = fitparams
+		else:
+			if self.debug is True:
 				apDisplay.printColor("Final value is worse", "red")
-				bestfitparams = midfitparams
-			else:
-				bestfitparams = fitparams
+			bestfitparams = midfitparams
 
 		z = numpy.polyfit(xdata, filterctfdata, 3)
 		polyfitparams = [z[3], 0.0, z[2], z[1], z[0]]
@@ -595,14 +591,17 @@ class CtfNoise(object):
 			pyplot.show()
 			pyplot.clf()
 
+			"""
 			datadiff1  = scipy.ndimage.median_filter(numpy.diff(ctfdata), 3)
 			datadiff2  = scipy.ndimage.median_filter(numpy.diff(datadiff1), 27)
 			pyplot.plot(xdatasq[:500], (datadiff2/datadiff2.std())[:500], 'y-', )
 			pyplot.plot(xdatasq[:500], (ctfdata - ctfdata.mean())[:500], 'r-', )
 			pyplot.plot(xdatasq[:500], (datadiff1/datadiff1.std())[:500], 'c-', )
-
 			pyplot.show()
 			pyplot.clf()
+			"""
+
+
 
 		return bestfitparams
 
