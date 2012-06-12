@@ -211,7 +211,7 @@ void printFinalCTFParams( CTFParams p, char path[] ) {
 	if ( fp == NULL ) return;
 	
 	fprintf(fp,"Image Path: %s\n",p->img_path);
-	fprintf(fp,"APIX: %le KV: %le CS(mm): %le\n",p->apix,p->kv,p->cs);
+	fprintf(fp,"APIX: %le KV: %le CS(m): %le\n",p->apix,p->kv,p->cs);
 	fprintf(fp,"Defocus(X): %le Defocus(Y): %le Astigmatism Angle: %le\n",p->defocus_x,p->defocus_y,p->astig_angle);
 	fprintf(fp,"Amplitude Contrast: %le\n",p->amp_c);
 	
