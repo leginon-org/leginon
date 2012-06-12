@@ -46,7 +46,7 @@ def getCTFpeaks(focus=-1.0e-6, pixelsize=1.0e-10, cs=2e-2,
 	for i in range(numzeros):
 		#innerroot = b**2. - 4. * a * (c + (i/2.0+1)*math.pi) ## all extrema
 		#innerroot = b**2. - 4. * a * (c + (i+1)*math.pi)     ## just valleys/minima
-		innerroot = b**2. - 4. * a * (c + (i+1.5)*math.pi)    ## just peaks/maxima
+		innerroot = b**2. - 4. * a * (c + (i+0.5)*math.pi)    ## just peaks/maxima
 		if innerroot < 0:
 			continue
 		root = math.sqrt(innerroot)
