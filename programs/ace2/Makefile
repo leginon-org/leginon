@@ -2,7 +2,7 @@
 # ------------------ Compilation options ------------------------
 
 # Loads math library.  
-CVLIBS = -lfftw3 -lgsl -lgslcblas -lobjc -lm
+CVLIBS = -lfftw3 -lgsl -lgslcblas -lobjc -lm -static
 
 # Flags for the C compiler:
 #   -Wall for strict gcc warnings (requires prototypes for all functions).
