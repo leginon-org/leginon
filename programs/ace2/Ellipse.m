@@ -273,7 +273,8 @@
 	
 	// Ax, Bx, Cx, Dx, Ex, Fx are ellipse parameters in general conic form:
 	// Ax*x^2 + Bx*x*y + Cx*y*y + Dx*x + Ex*y + Fx = 0
-	
+	// for an ellipse: Dx=0, Ex=0 and Fx=-1	
+
 	f64 Ax = general[AX];
 	f64 Bx = general[BX];
 	f64 Cx = general[CX];
@@ -282,10 +283,14 @@
 	f64 Fx = general[FX];
 	
 	// We can determine the ellipse rotation angle, u, using the general conic parameters A, B, and C and
-	// the double angle identities sin(2u) = 2sin(u)cos(u) and cos(2u) = cos(u)^2 - sin(u)^2
-	// so that tan(2u) = B / ( A - C ) = sin(2u)/cos(2u) and u = atan(2u)/2
+	// the double angle identities sin(2x) = 2sin(x)cos(y) and cos(2x) = cos(x)^2 - sin(x)^2
+	// so that tan(2x) = B / ( A - C ) = sin(2x)/cos(2x) and phi = atan2(B, A-C)/2
+	// Note: it works by shifting your coorinate system to an unrotated ellipse using:
+	// s = x*cos(phi) + y*sin(phi)
+	// t = x*sin(phi) + y*cos(phi)
 	
-	f64 phi = atan(Bx/(Cx-Ax))/2;
+	//f64 phi = atan(Bx/(Cx-Ax))/2;
+	f64 phi = atan2(Bx,Cx-Ax)/2; // This was corrected by Neil on June 13, 2012 to get the full angle
 	
 	f64 c = cos(phi);
 	f64 s = sin(phi);
