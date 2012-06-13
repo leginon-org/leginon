@@ -241,7 +241,7 @@ int main (int argc, char **argv) {
 	f64 snr = ctfp->wiener;
 	f64 df1 = ctfp->defocus_x;
 	f64 df2 = ctfp->defocus_y;
-	f64 dfr = ctfp->astig_angle;
+	f64 dfr = ctfp->astig_angle - 1.570796327;
 	f64 ac 	= ctfp->amp_c;
 	f64 apix = ctfp->apix;
 	f64 cs = ctfp->cs;
@@ -282,7 +282,7 @@ int main (int argc, char **argv) {
 	u32 rows = [image sizeOfDimension:1];
 	u32 cols = [image sizeOfDimension:0];
 
-	ArrayP ctf = g2DCTF(df2,df1,-dfr,rows,cols,apix,cs,kv,ac);
+	ArrayP ctf = g2DCTF(df2,df1,dfr,rows,cols,apix,cs,kv,ac);
 	
 	fprintf(stderr,"\t\t\tDONE in %2.2f secs\n",CPUTIME-t1);
 	

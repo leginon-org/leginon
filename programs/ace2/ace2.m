@@ -299,7 +299,7 @@ int main (int argc, char **argv) {
 	FILE * fp = fopen(name,"w");
 	
 	fprintf(fp,"\tFinal Params for image: %s\n",[image name]);	
-	fprintf(fp,"\tFinal Defocus: %e %e %e\n",df1,df2,[ellipse rotation]);
+	fprintf(fp,"\tFinal Defocus: %e %e %f\n",df1,df2,[ellipse rotation]);
 	fprintf(fp,"\tAmplitude Contrast: %e\n",ac1);
 	fprintf(fp,"\tVoltage: %e\n",getTEMVoltage(lm1)/1.0e3);
 	fprintf(fp,"\tSpherical Aberration: %e\n",cs1);
