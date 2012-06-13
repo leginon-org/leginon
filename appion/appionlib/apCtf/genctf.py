@@ -6,10 +6,10 @@ import numpy
 from appionlib import apDisplay
 from appionlib.apCtf import ctftools
 
-debug = False
+debug = True
 
 #===================
-def generateCTF1d(radii=None, focus=-1.0e-6, numpoints=256, 
+def generateCTF1d(radii=None, numpoints=256, focus=-1.0e-6, 
 	pixelsize=1.5e-10, cs=2e-3, volts=120000, ampconst=0.07):
 	"""
 	calculates a CTF function based on the input details
@@ -18,21 +18,35 @@ def generateCTF1d(radii=None, focus=-1.0e-6, numpoints=256,
 	Focus is negative, if under focused (defocused) 
 	"""
 	t0 = time.time()
+	checkParams(focus1=focus, focus2=focus, pixelsize=pixelsize, cs=cs, 
+		volts=volts, ampconst=ampconst)
+	minres = 1e10/radii.min()
+	maxres = 1e10/radii.max()
+	if debug is True:
+		print "** CTF limits %.1f A -->> %.1fA"%(minres, maxres)
+	if maxres < 2.0 or maxres > 50.0:
+		apDisplay.printError("CTF limits are incorrect %.1f A -->> %.1fA"%(minres, maxres))
+
+	if radii is None:
+		radii = generateRadii1d(numpoints, pixelsize)
+	else:
+		numpoints = len(radii)
 
 	wavelength = ctftools.getTEMLambda(volts)
 
 	ctf = numpy.zeros((numpoints), dtype=numpy.float64)
 
 	t1 = math.pi * wavelength
-	t2 = wavelength**2 * cs / 2.0
-	t3 = -1.0*math.asin(ampconst)
+	t2 = 0 #wavelength**2 * cs / 2.0
+	t3 = -1.0*math.asin(ampconst) #CORRECT
+	#t3 = 1.0*math.asin(ampconst)  #WRONG
+	print "t3 shift %.1f degrees"%(math.degrees(t3))
 
-	if radii is None:
-		radii = generateRadii1d(numpoints, pixelsize)
 	radiisq = radii**2
 
 	gamma = t1*radiisq * (focus + t2*radiisq) + t3
-	ctf = -1.0*numpy.sin(gamma)
+	ctf = -1.0*numpy.cos(gamma) #WRONG
+	#ctf = -1.0*numpy.sin(gamma) #CORRECT
 
 	print "generate 1D ctf complete in %.4f sec"%(time.time()-t0)
 
@@ -167,6 +181,32 @@ def generateRadial2d(shape, xfreq, yfreq):
 	print "radial 2 complete in %.4f sec"%(time.time()-t0)
 	return circular
 
+#===================
+def checkParams(focus1=-1.0e-6, focus2=-1.0e-6, pixelsize=1.5e-10, 
+	cs=2e-3, volts=120000, ampconst=0.07):
+	if debug is True:
+		print "  Defocus1 %.2f microns (underfocus is negative)"%(focus1*1e6)
+		if focus1 != focus2:
+			print "  Defocus2 %.2f microns (underfocus is negative)"%(focus2*1e6)
+		print "  Pixelsize %.3f Angstroms"%(pixelsize*1e10)
+		print "  C_s %.1f mm"%(cs*1e3)
+		print "  High tension %.1f kV"%(volts*1e-3)
+		print "  Amp Contrast %.3f"%(ampconst)
+	if focus1*1e6 < -10.0 or focus1*1e6 > -0.1:
+		apDisplay.printError("atypical defocus #1 value %.1f microns (underfocus is negative)"
+			%(focus1*1e6))
+	if focus2*1e6 < -10.0 or focus2*1e6 > -0.1:
+		apDisplay.printError("atypical defocus #2 value %.1f microns (underfocus is negative)"
+			%(focus2*1e6))
+	if cs*1e3 > 4.0 or cs*1e3 < 0.4:
+		apDisplay.printError("atypical C_s value %.1f mm"%(cs*1e3))
+	if pixelsize*1e10 > 20.0 or pixelsize*1e10 < 0.1:
+		apDisplay.printError("atypical pixel size value %.1f Angstroms"%(pixelsize*1e10))
+	if volts*1e-3 > 400.0 or volts*1e-3 < 60:
+		apDisplay.printError("atypical high tension value %.1f kiloVolts"%(volts*1e-3))
+	if ampconst < 0.0 or ampconst > 0.4:
+		apDisplay.printError("atypical amplitude contrast value %.3f"%(ampconst))
+	return
 
 #===================
 #===================

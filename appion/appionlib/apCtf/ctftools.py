@@ -13,16 +13,25 @@ from appionlib.apImage import imagefile
 from appionlib.apImage import imagefilter
 from appionlib import lowess
 
-debug = False
+debug = True
 
 #===================
-def getCTFpeaks(focus=-1.0e-6, pixelsize=1.0e-10, cs=2e-2, 
-		volts=120000, ampconst=0.000, numzeros=3, cols=2048):
+def getCtfExtrema(focus=-1.0e-6, pixelsize=1.0e-10, cs=2e-2, 
+		volts=120000, ampconst=0.000, numzeros=3, cols=2048, type="peaks"):
 	if debug is True:
 		print "defocus %.2f microns (underfocus is negative)"%(focus*1e6)
 		print "pixelsize %.3f Angstroms"%(pixelsize*1e10)
-		print "C_s %.1f mm"%(cs*1e2)
+		print "C_s %.1f mm"%(cs*1e3)
 		print "High tension %.1f kV"%(volts*1e-3)
+	if focus*1e6 < -10.0 or focus*1e6 > -0.1:
+		apDisplay.printWarning("atypical defocus value %.1f microns (underfocus is negative)"
+			%(focus*1e6))
+	if cs*1e3 > 4.0 or cs*1e3 < 0.4:
+		apDisplay.printWarning("atypical C_s value %.1f mm"%(cs*1e3))
+	if pixelsize*1e10 > 20.0 or pixelsize*1e10 < 0.1:
+		apDisplay.printWarning("atypical pixel size value %.1f Angstroms"%(pixelsize*1e10))
+	if volts*1e-3 > 400.0 or volts*1e-3 < 60:
+		apDisplay.printWarning("atypical high tension value %.1f kiloVolts"%(volts*1e-3))
 
 	xfreq = 1.0/( (cols-1)*2.*pixelsize )
 	xorigin = cols/2. - 0.5
@@ -40,13 +49,17 @@ def getCTFpeaks(focus=-1.0e-6, pixelsize=1.0e-10, cs=2e-2,
 
 	## after a certain point the peaks switch direction
 	peakswitch = (2.0*math.sqrt(-focus/(cs*wavelength**2)))/math.pi + 0.9
-	print "Peak switch", peakswitch
+	if debug is True:
+		print "Peak switch", peakswitch
 
 	distances = []
 	for i in range(numzeros):
-		#innerroot = b**2. - 4. * a * (c + (i/2.0+1)*math.pi) ## all extrema
-		#innerroot = b**2. - 4. * a * (c + (i+1)*math.pi)     ## just valleys/minima
-		innerroot = b**2. - 4. * a * (c + (i+0.5)*math.pi)    ## just peaks/maxima
+		if type == "valleys":	
+			innerroot = b**2. - 4. * a * (c + (i+1)*math.pi)	## just valleys/minima
+		elif type == "peaks":
+			innerroot = b**2. - 4. * a * (c + (i+0.5)*math.pi)	## just peaks/maxima
+		else:
+			innerroot = b**2. - 4. * a * (c + (i/2.0+0.5)*math.pi)	## all extrema
 		if innerroot < 0:
 			continue
 		root = math.sqrt(innerroot)
@@ -157,9 +170,9 @@ def trimPowerSpectraToOuterResolution(powerspec, outerresolution, pixelsize):
 	cols = powerspec.shape[0]
 	initresolution = pixelsize*2
 	if debug is True:
-		print "Pixel size", pixelsize
-		print "Resolution request   %.3f"%(outerresolution)
-		print "Init max resolution  %.3f"%(initresolution)
+		print "  Pixel size", pixelsize
+		print "  Resolution request   %.3f"%(outerresolution)
+		print "  Init max resolution  %.3f"%(initresolution)
 	if initresolution > outerresolution:
 		apDisplay.printError("Requested resolution (%.3f) is not available (%.3f)"
 			%(outerresolution, initresolution))
@@ -168,7 +181,7 @@ def trimPowerSpectraToOuterResolution(powerspec, outerresolution, pixelsize):
 	pixellimitdim = apPrimeFactor.getNextEvenPrime(pixellimitdiameter)
 	if debug is True:
 		print "Pixel limit dimension: ", pixellimitdim
-		print ("Final max resolution %.3f"
+		print ("  Final max resolution %.3f"
 			%(pixelsize*(cols-1)/float(pixellimitdim/2)))
 	newshape = (pixellimitdim, pixellimitdim)
 	if debug is True:
