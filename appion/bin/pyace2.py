@@ -173,11 +173,19 @@ class Ace2Loop(appionLoop2.AppionLoop):
 		for line in logf:
 			sline = line.strip()
 			if re.search("^Final Defocus:", sline):
+				### old ACE2
+				apDisplay.printError("This old version of ACE2 has a bug in the astigmastism, please upgrade ACE2 now")
+				#parts = sline.split()
+				#self.ctfvalues['defocus1'] = float(parts[2])
+				#self.ctfvalues['defocus2'] = float(parts[3])
+				### convert to degrees
+				#self.ctfvalues['angle_astigmatism'] = math.degrees(float(parts[4]))
+			elif re.search("^Final Defocus (m,m,deg):", sline):
+				### new ACE2
 				parts = sline.split()
 				self.ctfvalues['defocus1'] = float(parts[2])
 				self.ctfvalues['defocus2'] = float(parts[3])
-				### convert to degrees
-				self.ctfvalues['angle_astigmatism'] = math.degrees(float(parts[4]))
+				self.ctfvalues['angle_astigmatism'] = float(parts[4])
 			elif re.search("^Amplitude Contrast:",sline):
 				parts = sline.split()
 				self.ctfvalues['amplitude_contrast'] = float(parts[2])
