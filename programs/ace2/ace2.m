@@ -282,7 +282,7 @@ int main (int argc, char **argv) {
 	fprintf(stderr,"\t\t\tDONE, Total Time: %2.2f\n",CPUTIME-t0);
 	
 	fprintf(stderr,"\tFinal Params:\n");
-	fprintf(stderr,"\tDefocus: %2.5f %2.5f %2.5f\n",df1*1e6,df2*1e6,[ellipse rotation]*DEG);
+	fprintf(stderr,"\tDefocus: %2.5f %2.5f %2.5f\n",df2*1e6,df1*1e6,[ellipse rotation]*DEG);
 	fprintf(stderr,"\tAmplitude Contrast: %2.2f%%\n",ac1*100);
 	fprintf(stderr,"\tVoltage: %3.0f kv\n",getTEMVoltage(lm1)/1000.0);
 	fprintf(stderr,"\tSpherical Aberration: %2.2fmm\n",cs1*1000.0);
@@ -299,7 +299,7 @@ int main (int argc, char **argv) {
 	FILE * fp = fopen(name,"w");
 	
 	fprintf(fp,"\tFinal Params for image: %s\n",[image name]);	
-	fprintf(fp,"\tFinal Defocus: %e %e %f\n",df1,df2,[ellipse rotation]);
+	fprintf(fp,"\tFinal Defocus: %e %e %f\n",df2,df1,[ellipse rotation]);
 	fprintf(fp,"\tAmplitude Contrast: %e\n",ac1);
 	fprintf(fp,"\tVoltage: %e\n",getTEMVoltage(lm1)/1.0e3);
 	fprintf(fp,"\tSpherical Aberration: %e\n",cs1);
