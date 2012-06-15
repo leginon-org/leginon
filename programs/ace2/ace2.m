@@ -630,7 +630,7 @@ void radialGradients( f64 * data, u32 rows, u32 cols, u32 ang_search, f64 ang_sp
 			f64 p3 = interpolate2d(data,y+3,x,rows,cols);
 			f64 p4 = interpolate2d(data,y-3,x,rows,cols);
 			
-			f64 angle = (atan((p1-p2)/(p3-p4))+rot*ang_spacing*RAD)*DEG;
+			f64 angle = (atan2((p1-p2),(p3-p4))+rot*ang_spacing*RAD)*DEG;
 			if ( angle < 0 ) angle = angle + 360.0;
 			if ( angle >= 360.0 ) angle = angle - 360.0;
 			if ( angle >= 180.0 ) angle = 360.0 - angle;

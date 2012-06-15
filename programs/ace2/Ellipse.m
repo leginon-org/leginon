@@ -607,7 +607,7 @@ void generateBoundEllipses( f64 e[], f64 b1[], f64 b2[], f64 treshold ) {
 	f64 Bx = e[1];
 	f64 Cx = e[2];
 
-	f64 phi = atan(Bx/(Cx-Ax))/2;
+	f64 phi = atan2(Bx,(Cx-Ax))/2;
 	
 	f64 c = cos(phi);
 	f64 s = sin(phi);
@@ -645,7 +645,7 @@ void generateBoundEllipses( f64 e[], f64 b1[], f64 b2[], f64 treshold ) {
 
 f64 ellipseCircumference( f64 e[] ) {
 		
-	f64 phi = atan(e[1]/(e[2]-e[0]))/2;
+	f64 phi = atan2(e[1],(e[2]-e[0]))/2;
 	
 	f64 c = cos(phi);
 	f64 s = sin(phi);

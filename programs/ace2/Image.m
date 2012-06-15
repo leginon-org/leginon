@@ -145,7 +145,7 @@ static char fftw_wisdom_path[256] = ".fftw_wisdom";
 			if (niter > 100)
 				niter = 100 + sqrt (niter-100);
 			if (xrad != 0.0) {
-				phi = atan(yrad/xrad);
+				phi = atan2(yrad,xrad);
 				if (xrad < 0.0)
 					phi = PI + phi;
 			} else {
