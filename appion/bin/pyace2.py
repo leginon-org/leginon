@@ -170,9 +170,10 @@ class Ace2Loop(appionLoop2.AppionLoop):
 		### parse log file
 		self.ctfvalues = {}
 		logf = open(imagelog, "r")
+		apDisplay.printMsg("reading log file %s"%(imagelog))
 		for line in logf:
 			sline = line.strip()
-			if re.search("^Final Defocus:", sline):
+			if re.search("^Final Defocus: ", sline):
 				### old ACE2
 				apDisplay.printError("This old version of ACE2 has a bug in the astigmastism, please upgrade ACE2 now")
 				#parts = sline.split()
@@ -180,12 +181,14 @@ class Ace2Loop(appionLoop2.AppionLoop):
 				#self.ctfvalues['defocus2'] = float(parts[3])
 				### convert to degrees
 				#self.ctfvalues['angle_astigmatism'] = math.degrees(float(parts[4]))
-			elif re.search("^Final Defocus (m,m,deg):", sline):
+			elif re.search("^Final Defocus \(m,m,deg\):", sline):
 				### new ACE2
+				apDisplay.printMsg("Reading new ACE2 defocus")
 				parts = sline.split()
-				self.ctfvalues['defocus1'] = float(parts[2])
-				self.ctfvalues['defocus2'] = float(parts[3])
-				self.ctfvalues['angle_astigmatism'] = float(parts[4])
+				#print parts
+				self.ctfvalues['defocus1'] = float(parts[3])
+				self.ctfvalues['defocus2'] = float(parts[4])
+				self.ctfvalues['angle_astigmatism'] = float(parts[5])
 			elif re.search("^Amplitude Contrast:",sline):
 				parts = sline.split()
 				self.ctfvalues['amplitude_contrast'] = float(parts[2])
@@ -214,7 +217,7 @@ class Ace2Loop(appionLoop2.AppionLoop):
 
 		### double check that the values are reasonable
 
-		if avgdf < self.params['maxdefocus'] or avgdf > self.params['mindefocus']:
+		if avgdf > self.params['maxdefocus'] or avgdf < self.params['mindefocus']:
 			apDisplay.printWarning("bad defocus estimate, not committing values to database")
 			self.badprocess = True
 
@@ -262,28 +265,6 @@ class Ace2Loop(appionLoop2.AppionLoop):
 
 		#print self.ctfvalues
 		return
-
-
-		self.parser.add_option("--mindefocus", dest="mindefocus", type="float", default=-0.1e-6,
-			help="Minimal acceptable defocus (in meters)", metavar="#")
-		self.parser.add_option("--maxdefocus", dest="maxdefocus", type="float", default=-10e-6,
-			help="Maximal acceptable defocus (in meters)", metavar="#")
-		self.parser.add_option("--edge1", dest="edge_b", type="float", default=12.0,
-			help="Canny edge parameters Blur Sigma", metavar="#")
-		self.parser.add_option("--edge2", dest="edge_t", type="float", default=0.001,
-			help="Canny edge parameters Edge Treshold(0.0-1.0)", metavar="#")
-		self.parser.add_option("--rotblur", dest="rotblur", type="float", default=0.0,
-			help="Rotational blur for low contrast CTF (in degrees), default 0", metavar="#")
-		### true/false
-		self.parser.add_option("--refine2d", dest="refine2d", default=False,
-			action="store_true", help="Refine the defocus after initial ACE with 2d cross-correlation")
-		self.parser.add_option("--verbose", dest="verbose", default=False,
-			action="store_true", help="Show all ace2 messages")
-		self.parser.add_option("--onepass", dest="onepass", type="float",
-			help="Mask High pass filter radius for end of gradient mask in Angstroms", metavar="FLOAT")
-		self.parser.add_option("--zeropass", dest="zeropass", type="float",
-			help="Mask High pass filter radius for zero mask in Angstroms", metavar="FLOAT")
-
 
 	#======================
 	def commitToDatabase(self, imgdata):
@@ -337,9 +318,9 @@ class Ace2Loop(appionLoop2.AppionLoop):
 		### values
 		self.parser.add_option("-b", "--bin", dest="bin", type="int", default=1,
 			help="Binning of the image before FFT", metavar="#")
-		self.parser.add_option("--mindefocus", dest="mindefocus", type="float", default=-0.1e-6,
+		self.parser.add_option("--mindefocus", dest="mindefocus", type="float", default=0.1e-6,
 			help="Minimal acceptable defocus (in meters)", metavar="#")
-		self.parser.add_option("--maxdefocus", dest="maxdefocus", type="float", default=-10e-6,
+		self.parser.add_option("--maxdefocus", dest="maxdefocus", type="float", default=10e-6,
 			help="Maximal acceptable defocus (in meters)", metavar="#")
 		self.parser.add_option("--edge1", dest="edge_b", type="float", default=12.0,
 			help="Canny edge parameters Blur Sigma", metavar="#")
@@ -364,11 +345,11 @@ class Ace2Loop(appionLoop2.AppionLoop):
 		if self.params['bin'] < 1:
 			apDisplay.printError("bin must be positive")
 		if (self.params['mindefocus'] is not None and
-				(self.params['mindefocus'] < -1e-3 or self.params['mindefocus'] > 1e-9)):
-			apDisplay.printError("min defocus is not in an acceptable range, e.g. mindefocus=-1.5e-6")
+				(self.params['mindefocus'] > 1e-3 or self.params['mindefocus'] < 1e-9)):
+			apDisplay.printError("min defocus is not in an acceptable range, e.g. mindefocus=1.5e-6")
 		if (self.params['maxdefocus'] is not None and
-				(self.params['maxdefocus'] < -1e-3 or self.params['maxdefocus'] > -1e-9)):
-			apDisplay.printError("max defocus is not in an acceptable range, e.g. maxdefocus=-1.5e-6")
+				(self.params['maxdefocus'] > 1e-3 or self.params['maxdefocus'] < 1e-9)):
+			apDisplay.printError("max defocus is not in an acceptable range, e.g. maxdefocus=1.5e-6")
 		### set cs value
 		self.params['cs'] = apInstrument.getCsValueFromSession(self.getSessionData())
 
