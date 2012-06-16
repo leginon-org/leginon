@@ -6,6 +6,7 @@ require "inc/particledata.inc";
 require "inc/ace.inc";
 
 $imgId=$_GET['id'];
+$runId=$_GET['r'];
 $preset=$_GET['preset'];
 $imgsize=$_GET['s'];
 $graphsc_x=$_GET['scx'];
@@ -56,7 +57,7 @@ $sessionId = $imageinfo['sessionId'];
 $filename = $leginondata->getFilenameFromId($imgId);
 $normfile = trim($filename).'.norm.txt';
 $ctf = new particledata();
-list($ctfdata)  = $ctf->getCtfInfoFromImageId($imgId, $order=False, $ctfmethod);
+list($ctfdata)  = $ctf->getCtfInfoFromImageId($imgId, $order=False, $ctfmethod,$runId);
 $aceparams = $ctf->getAceParams($ctfdata['acerunId']);
 
 if ($ctfmethod==='') {
@@ -153,6 +154,7 @@ if ($img=@$imagecreate($filename)) {
 		imagedestroy($blkimg);
 	}
 }
+
 function rescaleArray($vals,$scx,$scy) {
 	// need to add a selection for scaling
 	$maxval = max($vals)*$scy;

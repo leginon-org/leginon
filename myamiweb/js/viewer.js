@@ -572,6 +572,7 @@ function newfile(view){
 	pselp = (cpselpar = eval("jsptclpick"+view)) ? "&psel="+cpselpar : ""
 	ag = (cacepar = eval("jsaceparam"+view)) ? "&g="+cacepar : ""
 	am = (cacemethod = eval("jsacemethod"+view)) ? "&m="+cacemethod : ""
+	ar = (cacerun = eval("jsacerun"+view)) ? "&r="+cacerun : ""
 	ao = (caceopt = eval("jsaceopt"+view)) ? "&opt="+caceopt : ""
 	sb = (eval(view+"scale_bt_st")) ? "&sb=1" : ""
 	tg = (eval(view+"target_bt_st")) ? "&tg=1" : ""
@@ -603,7 +604,7 @@ function newfile(view){
 		"&preset="+selpreset+
 		"&session="+jsSessionId+
 		"&id="+jsimgId+
-		"&s="+jssize+quality+tg+sb+fft+np+xp+flt+fftbin+binning+autoscale+displayfilename+loadjpg+pselp+nptcl+pcb+dlbl+am+ag+ao+gradient+scx+scy
+		"&s="+jssize+quality+tg+sb+fft+np+xp+flt+fftbin+binning+autoscale+displayfilename+loadjpg+pselp+nptcl+pcb+dlbl+am+ar+ag+ao+gradient+scx+scy
 
 	if (options == lastoptions[vid])
 		return
@@ -642,6 +643,9 @@ function newfile(view){
 			iflink = iflink+"&ctf=ace2"
 		if (eval("jsacemethod"+view)==4)
 			iflink = iflink+"&ctf=ctffind"
+		// --- for specific acerun
+		if ((rid=eval("jsacerun"+view))>0)
+			iflink = iflink+"&r="+rid
 		cif.document.location.replace(iflink)
 	}
 	if (cmt=eval("this."+view+"cmt")) {
@@ -667,6 +671,11 @@ function setAceParam(view) {
 	if (method = document.getElementById(view+"acemethod")) {
 		acem = method.options[method.selectedIndex].value
 		eval("jsacemethod"+view+"="+acem)
+		newfile(view)
+	}
+	if (acerun = document.getElementById(view+"acerun")) {
+		acer = acerun.options[acerun.selectedIndex].value
+		eval("jsacerun"+view+"="+acer)
 		newfile(view)
 	}
 	if (param = document.getElementById(view+"aceparam")) {

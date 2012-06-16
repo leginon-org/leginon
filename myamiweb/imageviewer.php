@@ -38,6 +38,7 @@ if ($ptcl) {
 	list ($jsdata, $particleruns) = getParticleInfo($sessionId);
 	$particle = new particledata();
 	$filenames = $particle->getFilenamesFromLabel($runId, $preset);
+	$aceruns = $particle-> getCtfRunIds($sessionId);
 }
 
 // --- update SessionId while a project is selected
@@ -88,6 +89,7 @@ $javascript = $viewer->getJavascript();
 $view1 = new view('Main View', 'v1');
 $view1->setControl();
 $view1->setParam('ptclparams',$particleruns);
+$view1->setParam('aceruns',$aceruns);
 $view1->displayComment(true); 
 $view1->addMenuItems($playbackcontrol);
 $view1->setDataTypes($datatypes);

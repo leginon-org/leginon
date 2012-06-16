@@ -38,6 +38,7 @@ if ($ptcl) {
 	list ($jsdata, $particleruns) = getParticleInfo($sessionId);
 	$particle = new particledata();
 	$filenames = $particle->getFilenamesFromLabel($runId, $preset);
+	$aceruns = $particle-> getCtfRunIds($sessionId);
 }
 
 // --- update SessionId while a project is selected
@@ -85,12 +86,14 @@ $javascript = $viewer->getJavascript();
 $view1 = new view('View 1', 'v1');
 $view1->setDataTypes($datatypes);
 $view1->setParam('ptclparams',$particleruns);
+$view1->setParam('aceruns',$aceruns);
 $view1->displayDeqIcon(true);
 $viewer->add($view1);
 
 $view2 = new view('Main View', 'v2');
 $view2->setControl();
 $view2->setParam('ptclparams',$particleruns);
+$view2->setParam('aceruns',$aceruns);
 $view2->setDataTypes($datatypes);
 $view2->setSize(512);
 $view2->setSpan(2,2);
@@ -100,6 +103,7 @@ $viewer->add($view2);
 $view3 = new view('View 3', 'v3');
 $view3->setDataTypes($datatypes);
 $view3->setParam('ptclparams',$particleruns);
+$view3->setParam('aceruns',$aceruns);
 $view3->displayDeqIcon(true);
 $viewer->add($view3);
 

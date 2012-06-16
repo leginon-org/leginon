@@ -14,6 +14,7 @@ require "inc/particledata.inc";
 $imgId=$_GET['id'];
 $preset=$_GET['preset'];
 $ctftype = $_GET['ctf'];
+$runId = $_GET['r'];
 
 $newimage = $leginondata->findImage($imgId, $preset);
 $imgId = $newimage['id'];
@@ -38,7 +39,7 @@ require "inc/project.inc";
 <?php
 
 $ctf = new particledata();
-list($ctfdata) = $ctf->getCtfInfoFromImageId($imgId,$order=False,$ctftype);
+list($ctfdata) = $ctf->getCtfInfoFromImageId($imgId,$order=False,$ctftype,$runId);
 
 $keys[]='runname';
 $keys[]='defocus';

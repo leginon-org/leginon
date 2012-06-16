@@ -36,6 +36,7 @@ if ($ptcl) {
 	list ($jsdata, $particleruns) = getParticleInfo($sessionId);
 	$particle = new particledata();
 	$filenames = $particle->getFilenamesFromLabel($runId, $preset);
+	$aceruns = $particle-> getCtfRunIds($sessionId);
 }
 
 // --- update SessionId while a project is selected
@@ -79,6 +80,7 @@ $view1 = new view('View 1', 'v1');
 $view1->setDataTypes($datatypes);
 $view1->selectDataType($presetv1);
 $view1->setParam('ptclparams',$particleruns);
+$view1->setParam('aceruns',$aceruns);
 $view1->setSize(512);
 $view1->displayTag(true);
 $viewer->add($view1);
@@ -87,6 +89,7 @@ $view2 = new view('Main View', 'v2');
 $view2->setControl();
 $view2->displayTag(true);
 $view2->setParam('ptclparams',$particleruns);
+$view2->setParam('aceruns',$aceruns);
 $view2->setDataTypes($datatypes);
 $view2->selectDataType($preset);
 $view2->addMenuItems($playbackcontrol);

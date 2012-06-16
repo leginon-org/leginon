@@ -1055,7 +1055,7 @@ class particledata {
 		
 	}
 
-	function getCtfInfoFromImageId($imageId, $order=false, $method='') {
+	function getCtfInfoFromImageId($imageId, $order=false, $method='', $acerunId='') {
 		$q =	"select "
 			."c.`DEF_id`, "
 			."c.`REF|leginondata|AcquisitionImageData|image`, "
@@ -1084,16 +1084,22 @@ class particledata {
 			."where c.`REF|leginondata|AcquisitionImageData|image`='$imageId' ";
 		$q .= " AND c.`graph1` IS NOT NULL ";
 
-		if ($method === 'ace1') $q .= "AND r.`REF|ApAceParamsData|aceparams` IS NOT NULL ";
-		elseif ($method === 'ace2') $q .= "AND r.`REF|ApAce2ParamsData|ace2_params` IS NOT NULL ";
-		elseif ($method === 'ctffind') $q .= "AND r.`REF|ApCtfTiltParamsData|ctftilt_params` IS NOT NULL ";
+		if (is_numeric($acerunId) && $acerunId > 0) {
+			$q .= "AND r.`DEF_id`=".$acerunId." ";
+		} else {
+			if ($method === 'ace1') $q .= "AND r.`REF|ApAceParamsData|aceparams` IS NOT NULL ";
+			elseif ($method === 'ace2') $q .= "AND r.`REF|ApAce2ParamsData|ace2_params` IS NOT NULL ";
+			elseif ($method === 'ctffind') $q .= "AND r.`REF|ApCtfTiltParamsData|ctftilt_params` IS NOT NULL ";
 
-		if ($method === 'ctffind') $q .="ORDER BY (c.`cross_correlation`) DESC";
-		else $q .= "ORDER BY (c.`confidence`*c.`confidence_d`) DESC";
+			if ($method === 'ctffind') $q .="ORDER BY (c.`cross_correlation`) DESC";
+			else $q .= "ORDER BY (c.`confidence`*c.`confidence_d`) DESC";
+		}
+
 		if ($order) {
 			$fields = $order['fields'];
 			$q .= " order by ".join(", ",$fields);
 		}
+
 		return $this->mysql->getSQLResult($q);
 	}
 
