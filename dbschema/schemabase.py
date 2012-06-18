@@ -13,6 +13,7 @@ class SchemaUpdate:
 	def __init__(self,backup=False):
 		self.project_dbupgrade = dbupgrade.DBUpgradeTools('projectdata', drop=True)
 		self.leginon_dbupgrade = dbupgrade.DBUpgradeTools('leginondata', drop=True)
+		self.updatelib = updatelib.UpdateLib(self.project_dbupgrade)
 		self.selected_revision = self.getSchemaRevision()
 		self.backup = backup
 		self.valid_upgrade = ['leginon','project','appion']
@@ -90,10 +91,9 @@ class SchemaUpdate:
 			print "\033[31mNothing to do\033[0m"
 			return
 		divider = "-------------------------------------------"
-		checkout_revision = updatelib.getCheckOutRevision()
-		revision_in_database = updatelib.getDatabaseRevision(self.project_dbupgrade)
-		print checkout_revision, revision_in_database
-		if updatelib.needUpdate(self.project_dbupgrade,checkout_revision,self.selected_revision) == 'now':
+		checkout_revision = self.updatelib.getCheckOutRevision()
+		revision_in_database = self.updatelib.getDatabaseRevision()
+		if self.updatelib.needUpdate(checkout_revision,self.selected_revision) == 'now':
 			try:
 				if 'leginon' in self.required_upgrade:
 					# leginon part
@@ -128,7 +128,7 @@ class SchemaUpdate:
 				raise
 			print divider
 			print "\033[35mSuccessful Update\033[0m"
-			updatelib.updateDatabaseRevision(self.project_dbupgrade,self.selected_revision)
+			self.updatelib.updateDatabaseRevision(self.selected_revision)
 
 if __name__ == "__main__":
 	update = SchemaUpdate(backup=False)
