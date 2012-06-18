@@ -281,16 +281,22 @@ int main (int argc, char **argv) {
 	
 	fprintf(stderr,"\t\t\tDONE, Total Time: %2.2f\n",CPUTIME-t0);
 	
+	if ( isnan([ellipse rotation]) || isinf([ellipse rotation]) ) [ellipse setRotation:0.0];
+	f64 astigangle = [ellipse rotation]/DEG;
+	// if astig < 1 Angstrom, set angle to zero
+	if ( fabs(df2 - df1)*1e10 < 1) {
+		astigangle = 0.0;
+	}
+
 	fprintf(stderr,"\tFinal Params:\n");
 	//write out positive underfocus and degrees - per convention
-	fprintf(stderr,"\tDefocus: %2.5f %2.5f %2.5f\n",-df2*1e6,-df1*1e6,[ellipse rotation]/DEG);
+	fprintf(stderr,"\tDefocus: %2.5f %2.5f %2.5f\n",-df2*1e6,-df1*1e6,astigangle);
 	fprintf(stderr,"\tAmplitude Contrast: %2.2f%%\n",ac1*100);
 	fprintf(stderr,"\tVoltage: %3.0f kV\n",getTEMVoltage(lm1)/1000.0);
 	fprintf(stderr,"\tSpherical Aberration: %2.2fmm\n",cs1*1000.0);
 	fprintf(stderr,"\tAngstroms per pixel: %2.2f\n",1e10*0.5/([radial_average numberOfElements]*ap1));
 	fprintf(stderr,"\tConfidence Score: %2.2f\n",confidence);
 	
-	if ( isnan([ellipse rotation]) || isinf([ellipse rotation]) ) [ellipse setRotation:0.0];
 	if ( isnan(df1) || isinf(df1) ) df1 = 0.0;
 	if ( isnan(df2) || isinf(df2) ) df2 = 0.0;
 	if ( isnan(ac1) || isinf(ac1) ) ac1 = 0.0;
@@ -301,7 +307,7 @@ int main (int argc, char **argv) {
 	
 	fprintf(fp,"\tFinal Params for image: %s\n",[image name]);
 	//write out positive underfocus and degrees - per convention	
-	fprintf(fp,"\tFinal Defocus (m,m,deg): %e %e %f\n",-df2,-df1,[ellipse rotation]*DEG);
+	fprintf(fp,"\tFinal Defocus (m,m,deg): %e %e %f\n",-df2,-df1,astigangle);
 	fprintf(fp,"\tAmplitude Contrast: %f\n",ac1);
 	fprintf(fp,"\tVoltage (kV): %f\n",getTEMVoltage(lm1)/1.0e3);
 	fprintf(fp,"\tSpherical Aberration (mm): %f\n",cs1*1.0e3);
