@@ -5,13 +5,14 @@ import updatelib
 project_dbupgrade = dbupgrade.DBUpgradeTools('projectdata', drop=True)
 
 if __name__ == "__main__":
-	checkout_version = updatelib.getPackageVersion()
-	checkout_revision = updatelib.getCheckOutRevision()
-	revision_in_database = updatelib.getDatabaseRevision(project_dbupgrade)
+	updatelib_inst = updatelib.UpdateLib(project_dbupgrade)
+	checkout_version = updatelib_inst.getPackageVersion()
+	checkout_revision = updatelib_inst.getCheckOutRevision()
+	revision_in_database = updatelib_inst.getDatabaseRevision()
 	if checkout_revision < 1000000000:
-		updatelib.updateDatabaseVersion(project_dbupgrade,checkout_version)
-		if updatelib.allowVerisionLog(project_dbupgrade,checkout_revision):
-			updatelib.updateDatabaseRevision(project_dbupgrade,checkout_revision)
+		updatelib_inst.updateDatabaseVersion(checkout_version)
+		if updatelib_inst.allowVersionLog(checkout_revision):
+			updatelib_inst.updateDatabaseRevision(checkout_revision)
 			print "\033[35mRevision Updated in the database\033[0m"
 	else:
 		print "\033[35mUnknown Revision, nothing to do\033[0m"
