@@ -553,7 +553,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 			df2 = bestctfvalue['defocus2']
 			angast = bestctfvalue['angle_astigmatism']*math.pi/180.0
 			amp = bestctfvalue['amplitude_contrast']
-			kev = imgdata['scope']['high tension']/1000
+			kv = imgdata['scope']['high tension']/1000
 			cs = bestctfvalue['cs']/1000
 			conf = bestctfvalue['confidence_d']
 
@@ -561,10 +561,10 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 				os.remove(ctfvaluesfile)
 			f = open(ctfvaluesfile,'w')
 			f.write("\tFinal Params for image: %s.mrc\n"%imgdata['filename'])
-			f.write("\tFinal Defocus: %.6e %.6e %.6e\n"%(df1,df2,angast))
-			f.write("\tAmplitude Contrast: %.6e\n"%amp)
-			f.write("\tVoltage: %.6e\n"%kev)
-			f.write("\tSpherical Aberration: %.6e\n"%cs)
+			f.write("\tFinal Defocus (m,m,deg): %.6e %.6e %.6f\n"%(df1,df2,math.degrees(angast)))
+			f.write("\tAmplitude Contrast: %.6f\n"%amp)
+			f.write("\tVoltage (kV): %.6f\n"%kv)
+			f.write("\tSpherical Aberration (mm): %.6e\n"%cs)
 			f.write("\tAngstroms per pixel: %.6e\n"%apix)
 			f.write("\tConfidence: %.6e\n"%conf)
 			f.close()
