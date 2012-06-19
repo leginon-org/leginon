@@ -143,7 +143,7 @@ class DBUpgradeTools(object):
 		return False
 
 	#==============
-	def validColumnName(self, column, allowspace=False):
+	def validColumnName(self, column, allowspace=True):
 		"""
 		check name of column for security reasons
 		"""
@@ -351,7 +351,7 @@ class DBUpgradeTools(object):
 		"""
 		if self.validTableName(table) is False:
 			return False
-		if self.validColumnName(column1, allowspace=True) is False:
+		if self.validColumnName(column1) is False:
 			return False
 		if self.validColumnName(column2) is False:
 			return False
@@ -509,7 +509,7 @@ class DBUpgradeTools(object):
 			return False
 		if self.validTableName(table) is False:
 			return False
-		if self.validColumnName(column, allowspace=True) is False:
+		if self.validColumnName(column) is False:
 			return False
 		if self.columnExists(table, column) is False:
 			if messaging['not exist'] is True:
@@ -605,7 +605,7 @@ class DBUpgradeTools(object):
 		"""
 		if self.validTableName(table) is False:
 			return False
-		if self.validColumnName(column, allowspace=True) is False:
+		if self.validColumnName(column) is False:
 			return False
 		if self.columnExists(table, column) is False:
 			if messaging['not exist'] is True:
