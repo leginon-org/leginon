@@ -13,18 +13,18 @@ from appionlib.apImage import imagefile
 from appionlib.apImage import imagefilter
 from appionlib import lowess
 
-debug = True
+debug = False
 
 #===================
-def getCtfExtrema(focus=-1.0e-6, pixelsize=1.0e-10, cs=2e-2, 
-		volts=120000, ampconst=0.000, numzeros=3, cols=2048, type="peaks"):
+def getCtfExtrema(focus=1.0e-6, pixelsize=1.0e-10, cs=2e-2, 
+		volts=120000, ampconst=0.000, numzeros=3, cols=2048, zerotype="peaks"):
 	if debug is True:
-		print "defocus %.2f microns (underfocus is negative)"%(focus*1e6)
+		print "defocus %.2f microns (underfocus is positive)"%(focus*1e6)
 		print "pixelsize %.3f Angstroms"%(pixelsize*1e10)
 		print "C_s %.1f mm"%(cs*1e3)
 		print "High tension %.1f kV"%(volts*1e-3)
-	if focus*1e6 < -10.0 or focus*1e6 > -0.1:
-		apDisplay.printWarning("atypical defocus value %.1f microns (underfocus is negative)"
+	if focus*1e6 > 10.0 or focus*1e6 < 0.1:
+		apDisplay.printWarning("atypical defocus value %.1f microns (underfocus is positive)"
 			%(focus*1e6))
 	if cs*1e3 > 4.0 or cs*1e3 < 0.4:
 		apDisplay.printWarning("atypical C_s value %.1f mm"%(cs*1e3))
@@ -38,25 +38,25 @@ def getCtfExtrema(focus=-1.0e-6, pixelsize=1.0e-10, cs=2e-2,
 	wavelength = getTEMLambda(volts)
 
 	a = 0.5*cs*math.pi*wavelength**3
-	b = focus*math.pi*wavelength
+	b = -focus*math.pi*wavelength
 	c = -math.asin(ampconst)
 	if debug is True:
 		print "quadradtic parameters %.3e, %.3e, %.3e"%(a,b,c)
-	#eq: sin (a r^4 + b r^2 + c) = 0
-	#==> a r^4 + b r^2 + c - n*pi = 0
-	#quadradtic: r^2 = [ -b +/- sqrt( b^2 - 4*a*(c + n*pi)) ] / 2*a
+	#eq: sin^2 (a r^4 + b r^2 + c) = 0
+	#==> a r^4 + b r^2 + c - n*pi/2 = 0
+	#quadradtic: r^2 = [ -b +/- sqrt( b^2 - 4*a*(c + n*pi/2)) ] / 2*a
 	# note: "-b + sqrt(..)" is always the positive (non-imaginary) root 
 
 	## after a certain point the peaks switch direction
-	peakswitch = (2.0*math.sqrt(-focus/(cs*wavelength**2)))/math.pi + 0.9
-	if debug is True:
-		print "Peak switch", peakswitch
+	#peakswitch = (2.0*math.sqrt(focus/(cs*wavelength**2)))/math.pi + 0.9
+	#if debug is True:
+	#	print "Peak switch", peakswitch
 
 	distances = []
 	for i in range(numzeros):
-		if type == "valleys":	
+		if zerotype.startswith("valley"):	
 			innerroot = b**2. - 4. * a * (c + (i+1)*math.pi)	## just valleys/minima
-		elif type == "peaks":
+		elif zerotype.startswith("peak"):
 			innerroot = b**2. - 4. * a * (c + (i+0.5)*math.pi)	## just peaks/maxima
 		else:
 			innerroot = b**2. - 4. * a * (c + (i/2.0+0.5)*math.pi)	## all extrema
@@ -71,6 +71,8 @@ def getCtfExtrema(focus=-1.0e-6, pixelsize=1.0e-10, cs=2e-2,
 		elif radsq2 > 0 and radsq2 < radsq1:
 			rad2 = math.sqrt(radsq2)
 			pixeldist = rad2/xfreq
+		else:
+			print "ERROR"
 		distances.append(pixeldist)
 		if debug is True:
 			print "radius of zero number %d is %d pixels"%(i+1, pixeldist)
@@ -133,66 +135,82 @@ def getTEMLambda(volts):
 	return wavelength
 
 #============
-def getPowerSpectraPreBin(outerresolution, pixelsize):
+def getPowerSpectraPreBin(outerresolution, apix):
 	if debug is True:
 		print "Resolution request   %.3f"%(outerresolution)
-		print "Init max resolution  %.3f"%(pixelsize*2)
-	powertwo = math.log(outerresolution/pixelsize)/math.log(2.0)-1
+		print "Init max resolution  %.3f"%(apix*2)
+	powertwo = math.log(outerresolution/apix)/math.log(2.0)-1
 	prebin = int(2**math.floor(powertwo))
 	if prebin < 1:
 		prebin = 1
 	if debug is True:
 		print "Pre-Binning", prebin
-		print "Final max resolution %.3f"%(pixelsize*prebin*2)
+		print "Final max resolution %.3f"%(apix*prebin*2)
 	return prebin
 
 #============
-def powerSpectraToOuterResolution(image, outerresolution, pixelsize):
+def powerSpectraToOuterResolution(image, outerresolution, apix):
 	"""
-	pixelsize and outerresolution must have same units (e.g., Anstroms or meters)
+	apix and outerresolution must have same units (e.g., Anstroms or meters)
 	"""
 	if debug is True:
 		print "Computing power spectra..."
 	data = imagefun.power(image, mask_radius=1)
 	#data = numpy.exp(data)
-	powerspec = trimPowerSpectraToOuterResolution(data, outerresolution, pixelsize)
-	return powerspec
+	powerspec, trimapix = trimPowerSpectraToOuterResolution(data, outerresolution, apix)
+	return powerspec, trimapix
 
 #============
-def trimPowerSpectraToOuterResolution(powerspec, outerresolution, pixelsize):
+def trimPowerSpectraToOuterResolution(powerspec, outerresolution, apix):
 	"""
-	pixelsize and outerresolution must have same units (e.g., Anstroms or meters)
+	apix and outerresolution must have same units (e.g., Anstroms or meters)
 
-		resolution = (# columns) * pixelsize / (pixel distance from center)
+		resolution = (# columns) * apix / (pixel distance from center)
 	therefore:
-		pixel distance from center = (# columns) * pixelsize / resolution
+		pixel distance from center = (# columns) * apix / resolution
 	"""
-	cols = powerspec.shape[0]
-	initresolution = pixelsize*2
 	if debug is True:
-		print "  Pixel size", pixelsize
-		print "  Resolution request   %.3f"%(outerresolution)
-		print "  Init max resolution  %.3f"%(initresolution)
+		print "trimPowerSpectraToOuterResolution()"
+	#initresolution = apix*2
+	freq = 1./(apix*powerspec.shape[0])
+	initresolution = apix * 2
+	if debug is True:
+		print "__Pixel size", apix
+		print "__Image shape   %d x %d"%(powerspec.shape[0], powerspec.shape[1])
+		print "__Frequeny   %.3e"%(freq)
+		print "__Resolution request   %.3f"%(outerresolution)
+		print "__Init max resolution  %.3f"%(initresolution)
 	if initresolution > outerresolution:
 		apDisplay.printError("Requested resolution (%.3f) is not available (%.3f)"
 			%(outerresolution, initresolution))
-	cols = powerspec.shape[0]
-	pixellimitdiameter = int(math.ceil(pixelsize*(cols-1)/outerresolution))*2
-	pixellimitdim = apPrimeFactor.getNextEvenPrime(pixellimitdiameter)
+	#pixrad = # of pixels from center
+	#res = [imagewidth*apix]/pixrad = 1/(freq * pixrad)
+	# ==> pixrad = 1/(freq*res)
+	pixellimitradius = int(math.ceil(1./(freq * outerresolution)))
+	goodpixellimitradius = apPrimeFactor.getNextEvenPrime(pixellimitradius)
+	finalres = 1./(freq * goodpixellimitradius)
 	if debug is True:
-		print "Pixel limit dimension: ", pixellimitdim
-		print ("  Final max resolution %.3f"
-			%(pixelsize*(cols-1)/float(pixellimitdim/2)))
-	newshape = (pixellimitdim, pixellimitdim)
+		print "__Pixel limit dimension: ", goodpixellimitradius
+		print "__Final max resolution %.3f"%(finalres)
+	### convert to diameter and trim
+	newshape = (goodpixellimitradius*2, goodpixellimitradius*2)
 	if debug is True:
-		print "trimming image"	
+		print "__Trimming image"	
 	trimpowerspec = imagefilter.frame_cut(powerspec, newshape)
 	if newshape != trimpowerspec.shape:
 		apDisplay.printError("shape mismatch for frame_cut (%d,%d) --> (%d,%d) = (%d,%d)"
 			%(powerspec.shape[0],powerspec.shape[1],
 			newshape[0],newshape[1],
 			trimpowerspec.shape[0],trimpowerspec.shape[1]))
-	return trimpowerspec
+	if debug is True:
+		print "original image size %d x %d"%(powerspec.shape)
+		print "trimmed  image size %d x %d"%(trimpowerspec.shape)
+	trimapix = apix * powerspec.shape[0] / float(trimpowerspec.shape[0])
+	if debug is True:
+		print "original pixel size %.3f"%(apix)
+		print "trimmed  pixel size %.3f"%(trimapix)
+	trimfreq = powerspec.shape[0]*trimapix
+	return trimpowerspec, trimapix
 
 #============
 def draw_ellipse_to_file(jpgfile, imgarray, major, minor, angle, center=None, 
@@ -296,6 +314,9 @@ def rotationalAverage(image, ringwidth=3.0, innercutradius=None, full=False, med
 
 	if debug is True:
 		print "... finish rotational average"
+		apDisplay.printMsg("  expected size of rotational average: %d"%(image.shape[0]/2))
+		apDisplay.printMsg("actual max size of rotational average: %d"%(xdata.max())) 
+
 	return xdata, ydata
 
 #============
@@ -323,7 +344,8 @@ def ellipticalAverage(image, ellipratio, ellipangle, ringwidth=3.0, innercutradi
 	while ellipangle < 0:
 		ellipangle += 180
 
-	apDisplay.printColor("ellipangle = %.3f (file = %s)"%(ellipangle, filename), "cyan")
+	if debug is True:
+		apDisplay.printColor("ellipangle = %.3f (file = %s)"%(ellipangle, filename), "cyan")
 
 	if debug is True:
 		print "ring width %.2f pixels"%(ringwidth)
@@ -366,9 +388,10 @@ def ellipticalAverage(image, ellipratio, ellipangle, ringwidth=3.0, innercutradi
 
 	if full is False:
 		### trims any edge artifacts from rotational average
-		print "ellipratio", ellipratio
+		if debug is True:
+			print "ellipratio", ellipratio
 		outercutsize = (shape[0]/2-2)/ringwidth*math.sqrt(2)/2.
-		if True is True:
+		if debug is True:
 			apDisplay.printColor("Num X points %d, Half image size %d, Outer cut size %d, Ringwidth %.2f, Percent trim %.1f"
 				%(xdataint.shape[0], shape[0]/2-2, outercutsize, ringwidth, 100.*outercutsize/float(xdataint.shape[0])), "yellow")
 		if outercutsize > xdataint.shape[0]:
@@ -399,4 +422,8 @@ def ellipticalAverage(image, ellipratio, ellipangle, ringwidth=3.0, innercutradi
 
 	if debug is True:
 		print "... finish elliptical average"
+		apDisplay.printMsg("  expected size of elliptical average: %d"%(image.shape[0]/2))
+		apDisplay.printMsg("actual max size of elliptical average: %d"%(xdata.max())) 
+
+
 	return xdata, ydata

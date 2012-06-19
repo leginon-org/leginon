@@ -6,17 +6,19 @@ import numpy
 from appionlib import apDisplay
 from appionlib.apCtf import ctftools
 
-debug = True
+debug = False
 
 #===================
-def generateCTF1d(radii=None, numpoints=256, focus=-1.0e-6, 
+def generateCTF1d(radii=None, numpoints=256, focus=1.0e-6, 
 	pixelsize=1.5e-10, cs=2e-3, volts=120000, ampconst=0.07):
 	"""
 	calculates a CTF function based on the input details
 
 	Use SI units: meters, radians, volts
-	Focus is negative, if under focused (defocused) 
+	Underfocus is postive (defocused) 
 	"""
+	if debug is True:
+		print "generateCTF1d()"
 	t0 = time.time()
 	checkParams(focus1=focus, focus2=focus, pixelsize=pixelsize, cs=cs, 
 		volts=volts, ampconst=ampconst)
@@ -36,25 +38,28 @@ def generateCTF1d(radii=None, numpoints=256, focus=-1.0e-6,
 
 	ctf = numpy.zeros((numpoints), dtype=numpy.float64)
 
-	t1 = math.pi * wavelength
-	t2 = 0 #wavelength**2 * cs / 2.0
-	t3 = -1.0*math.asin(ampconst) #CORRECT
-	#t3 = 1.0*math.asin(ampconst)  #WRONG
-	print "t3 shift %.1f degrees"%(math.degrees(t3))
+	x4 = math.pi/2.0 * wavelength**3 * cs
+	x2 = math.pi * wavelength
+	x0 = -1.0*math.asin(ampconst) #CORRECT
+	#x0 = 1.0*math.asin(ampconst)   #MAYBE CORRECT
+	if debug is True:
+		print "x0 shift %.1f degrees"%(math.degrees(x0))
 
 	radiisq = radii**2
 
-	gamma = t1*radiisq * (focus + t2*radiisq) + t3
-	ctf = -1.0*numpy.cos(gamma) #WRONG
+	gamma = (x4 * radiisq**2) + (-focus * x2 * radiisq) + (x0)
+	#ctf = -1.0*numpy.cos(gamma) #WRONG
 	#ctf = -1.0*numpy.sin(gamma) #CORRECT
+	ctf = 1.0*numpy.sin(gamma) #MAYBE CORRECT
 
-	print "generate 1D ctf complete in %.4f sec"%(time.time()-t0)
+	if debug is True:
+		print "generate 1D ctf complete in %.4f sec"%(time.time()-t0)
 
 	return ctf
 
 #===================
 def generateRadii1d(numpoints=256, pixelsize=1e-10):
-	radfreq = 1.0/( (numpoints-1)*2.*pixelsize )
+	radfreq = 1.0/( numpoints*pixelsize )
 	radii = numpy.arange(numpoints) * radfreq
 	return radii
 
@@ -65,7 +70,7 @@ def generateCTF2d(focus1=-1.0e-6, focus2=-1.0e-6, theta=0.0,
 	calculates a CTF function based on the input details
 
 	Use SI units: meters, radians, volts
-	Focus is negative, if under focused (defocused) 
+	Underfocus is postive (defocused) 
 	"""
 	t0 = time.time()
 
@@ -92,7 +97,8 @@ def generateCTF2d(focus1=-1.0e-6, focus2=-1.0e-6, theta=0.0,
 	gauss = circle.generateGaussion2d(shape)
 	imagefile.arrayToJpeg(gauss, "gauss2.jpg")
 
-	print "generate ctf 2 complete in %.4f sec"%(time.time()-t0)
+	if debug is True:
+		print "generate ctf 2d complete in %.4f sec"%(time.time()-t0)
 
 	return ctf*gauss
 
@@ -185,18 +191,19 @@ def generateRadial2d(shape, xfreq, yfreq):
 def checkParams(focus1=-1.0e-6, focus2=-1.0e-6, pixelsize=1.5e-10, 
 	cs=2e-3, volts=120000, ampconst=0.07):
 	if debug is True:
-		print "  Defocus1 %.2f microns (underfocus is negative)"%(focus1*1e6)
+		print "  Defocus1 %.2f microns (underfocus is positive)"%(focus1*1e6)
 		if focus1 != focus2:
-			print "  Defocus2 %.2f microns (underfocus is negative)"%(focus2*1e6)
+			print "  Defocus2 %.2f microns (underfocus is positive)"%(focus2*1e6)
 		print "  Pixelsize %.3f Angstroms"%(pixelsize*1e10)
 		print "  C_s %.1f mm"%(cs*1e3)
 		print "  High tension %.1f kV"%(volts*1e-3)
-		print "  Amp Contrast %.3f"%(ampconst)
-	if focus1*1e6 < -10.0 or focus1*1e6 > -0.1:
-		apDisplay.printError("atypical defocus #1 value %.1f microns (underfocus is negative)"
+		print ("  Amp Contrast %.3f (shift %.1f degrees)"
+			%(ampconst, math.degrees(-math.asin(ampconst))))
+	if focus1*1e6 > 10.0 or focus1*1e6 < 0.1:
+		apDisplay.printError("atypical defocus #1 value %.1f microns (underfocus is positve)"
 			%(focus1*1e6))
-	if focus2*1e6 < -10.0 or focus2*1e6 > -0.1:
-		apDisplay.printError("atypical defocus #2 value %.1f microns (underfocus is negative)"
+	if focus2*1e6 > 10.0 or focus2*1e6 < 0.1:
+		apDisplay.printError("atypical defocus #2 value %.1f microns (underfocus is positve)"
 			%(focus2*1e6))
 	if cs*1e3 > 4.0 or cs*1e3 < 0.4:
 		apDisplay.printError("atypical C_s value %.1f mm"%(cs*1e3))

@@ -390,20 +390,12 @@ class CtfNoise(object):
 		valuelist.append(value)
 		fitparamslist.append(fitparams)
 
-		fitparams, value = self.fitTwoSlopeFunction(xdata, ctfdata, contraintFunction)
-		namelist.append("two slope 2/5")
-		valuelist.append(value)
-		fitparamslist.append(fitparams)
-
-		fitparams, value = self.fitTwoSlopeFunction(xdata, ctfdata, contraintFunction, cutoffper=1/2.)
-		namelist.append("two slope 1/2")
-		valuelist.append(value)
-		fitparamslist.append(fitparams)
-
-		fitparams, value = self.fitTwoSlopeFunction(xdata, ctfdata, contraintFunction, cutoffper=2/3.)
-		namelist.append("two slope 2/3")
-		valuelist.append(value)
-		fitparamslist.append(fitparams)
+		for cutoffper in numpy.arange(0.1, 0.99, 0.1):
+			fitparams, value = self.fitTwoSlopeFunction(xdata, ctfdata, 
+				contraintFunction, cutoffper=cutoffper)
+			namelist.append("two slope %d"%(cutoffper*100))
+			valuelist.append(value)
+			fitparamslist.append(fitparams)		
 
 		## does a bad job
 		fitparams, value = self.fitTwoSlopeSquareFunction(xdata, ctfdata, contraintFunction, cutoffper=1/5.)
@@ -495,6 +487,9 @@ class CtfNoise(object):
 		"""
 		Master control function to fit the CTF noise function
 		"""
+		if self.debug is True:
+			apDisplay.printColor("CTF limits %.1f A -->> %.1fA"
+				%(1./xdata.min(), 1./xdata.max()), "cyan")
 
 		if contraint == "above":
 			if self.debug is True:
@@ -518,25 +513,31 @@ class CtfNoise(object):
 			#filterctfdata = self.downwardRightMonotonicFilter(ctfdata)
 
 		### run the initial minimizations
-		namelist, valuelist, fitparamslist = self.getAllInitialParameters(xdata, filterctfdata, contraintFunction)
+		namelist, valuelist, fitparamslist = self.getAllInitialParameters(xdata, 
+			filterctfdata, contraintFunction)
 
 		### figure out which initial fit was best
 		if self.debug is True:
 			namestr = "|"
 			valstr = "|"
+			conststr = "|"
 			for i in range(len(valuelist)):
+				constrainval = contraintFunction(fitparamslist[i], xdata, filterctfdata)
 				namestr += apDisplay.rightPadString("%s"%(namelist[i][:15]), 15)+"|"
 				valstr += apDisplay.leftPadString("%.4f"%(valuelist[i]), 15)+"|"
+				conststr += apDisplay.leftPadString("%.4e"%(constrainval), 15)+"|"
 			print namestr
 			print valstr
-
-		if self.debug is True:
-			for i in range(len(fitparamslist)):
-				constrainval = contraintFunction(fitparamslist[i], xdata, filterctfdata)
-				print "constrained value of %.4e for %s"%(constrainval, namelist[i])
+			print conststr
 
 		### lowest is best
 		minvalindex = numpy.argmin(valuelist)
+		constrainval = contraintFunction(fitparamslist[minvalindex], xdata, filterctfdata)
+		while abs(constrainval) > 0.1:
+			apDisplay.printWarning("Constraint violation")
+			valuelist[minvalindex] = 1e10
+			minvalindex = numpy.argmin(valuelist)
+			constrainval = contraintFunction(fitparamslist[minvalindex], xdata, filterctfdata)
 		if self.debug is True:
 			apDisplay.printColor( namelist[minvalindex]+" is best" , "cyan")
 		midfitparams = fitparamslist[minvalindex]
@@ -578,6 +579,7 @@ class CtfNoise(object):
 
 		if self.debug is True:
 			xdatasq = xdata**2
+			xdatasq = numpy.arange(0, len(xdata), 1)
 
 			from matplotlib import pyplot
 			pyplot.plot(xdatasq, ctfdata, 'r-', )

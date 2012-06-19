@@ -23,6 +23,7 @@ from appionlib.apCtf import genctf
 from PIL import Image
 from PIL import ImageDraw
 from scipy import ndimage
+import scipy.stats
 
 class CtfDisplay(object):
 	#====================
@@ -50,14 +51,22 @@ class CtfDisplay(object):
 		"""
 		inner cut radius - radius for number of pixels to clip in the center of image
 		"""
-		numzeros = 2
-		numcols = self.origimageshape[0]/(2*self.prebin)
-		radii2 = ctftools.getCtfExtrema(self.defocus2, self.binapix*1e-10, self.cs, self.volts, 
-			self.ampconst, cols=numcols, numzeros=numzeros, type="all")
+		numcols = (zdata2d.shape[0])/2 #column in radial sense
+		radii2 = ctftools.getCtfExtrema(self.defocus2, self.trimapix*1e-10, self.cs, self.volts, 
+			self.ampconst, cols=numcols, numzeros=4, zerotype="all")
 		firstpeak = radii2[0]
 		firstvalley = radii2[1]
 
-		print "Subtract noise model..."
+		print "MIN/MAX peaks", 1./firstpeak, 1./firstvalley
+
+		### get all peaks (not valleys)
+		peaks = ctftools.getCtfExtrema(self.defocus2, self.trimapix*1e-10, self.cs, self.volts, 
+			self.ampconst, cols=numcols, numzeros=12, zerotype="peak")
+		resradii = self.freq*numpy.array(peaks, dtype=numpy.float32)
+		resradiisq = resradii**2
+		if self.debug is True:
+			print "MIN/MAX peaks", 1./resradii.min(), 1./resradii.max()
+
 		pixelrdata, zdata = ctftools.rotationalAverage(zdata2d, self.ringwidth, 
 			firstpeak, full=False)
 		pixelrdatae, zdatae = ctftools.ellipticalAverage(zdata2d, self.ratio, self.angle,
@@ -65,13 +74,12 @@ class CtfDisplay(object):
 		if self.debug is True:
 			print "  Pixel MIN/MAX:", pixelrdata.min(), pixelrdata.max()
 			print "  Pixel # points", len(pixelrdata)
-			print "  Pixel Size", self.binapix
+			print "  Pixel Size", self.trimapix
 			print "  Orig Shape", zdata2d.shape[0]
 			print "  Ring width", self.ringwidth
-		xfreq = 1.0/( (self.origimageshape[0]-1)*self.binapix )
-		rdata = pixelrdata*xfreq
-		rdatae = pixelrdatae*xfreq
-		if True or self.debug is True:
+		rdata = pixelrdata*self.freq
+		rdatae = pixelrdatae*self.freq
+		if self.debug is True:
 			print "Rotational CTF limits %.1f A -->> %.1fA"%(1./rdata.min(), 1./rdata.max())
 			print "Elliptical CTF limits %.1f A -->> %.1fA"%(1./rdatae.min(), 1./rdatae.max())
 		#print "Rdata", rdata.min(), rdata.max()
@@ -80,46 +88,59 @@ class CtfDisplay(object):
 			apDisplay.printWarning("rotational Average failed")
 			return zdata2d
 
-		smooth = 0.67
-		numiter = 10
-
+		#smooth = 0.67
+		#numiter = 10
 		#lowessnoisedata = lowess.lowess(rdata**2, zdata, smooth, numiter)
 		#lowessnoisedatae = lowess.lowess(rdatae**2, zdatae, smooth, numiter)
 
+		print "Determine and subtract noise model..."
 		CtfNoise = ctfnoise.CtfNoise()
-
-		noisefitparams = CtfNoise.modelCTFNoise(rdata[firstvalley:], zdata[firstvalley:], "below")
-		noisedata = CtfNoise.noiseModel(noisefitparams, rdata)
-		noisefitparamse = CtfNoise.modelCTFNoise(rdatae[firstvalley:], zdatae[firstvalley:], "below")
-		noisedatae = CtfNoise.noiseModel(noisefitparamse, rdatae)
-
 		rdatasq = rdata**2
 		rdatasqe = rdatae**2
-		#rdatasqe /= rdatasq.min()
-		#rdatasq /= rdatasq.min()
 
+		### fit function below log(CTF), i.e., noise model
+		firstvalleyindex = numpy.searchsorted(rdata, self.freq*firstvalley)
+		firstvalleyindexe = numpy.searchsorted(rdatae, self.freq*firstvalley)
+		noisefitparams = CtfNoise.modelCTFNoise(rdata[firstvalleyindex:], zdata[firstvalleyindex:], "below")
+		noisedata = CtfNoise.noiseModel(noisefitparams, rdata)
+		noisefitparamse = CtfNoise.modelCTFNoise(rdatae[firstvalleyindexe:], zdatae[firstvalleyindexe:], "below")
+		noisedatae = CtfNoise.noiseModel(noisefitparamse, rdatae)
+
+		### subtract noise model
 		normzdata = numpy.exp(zdata) - numpy.exp(noisedata)
 		lognormzdata = numpy.log( numpy.abs( normzdata ) )
-
 		normzdatae = numpy.exp(zdatae) - numpy.exp(noisedatae)
 		lognormzdatae = numpy.log( numpy.abs( normzdatae ) )
 
+		print "Determine and normalize envelope model..."
+		### fit function above log(CTF), i.e., envelop model
 		envelopfitparams = CtfNoise.modelCTFNoise(rdata, lognormzdata, "above")
 		envelopdata = CtfNoise.noiseModel(envelopfitparams, rdata)
-
 		envelopfitparamse = CtfNoise.modelCTFNoise(rdatae, lognormzdatae, "above")
 		envelopdatae = CtfNoise.noiseModel(envelopfitparamse, rdatae)
 
+		### divide by envelop (normalize)
 		normnormzdata = normzdata / numpy.exp(envelopdata)
 		normnormzdatae = normzdatae / numpy.exp(envelopdatae)
 
-		### THIS IS WRONG...
-		ctfe = genctf.generateCTF1d(rdatae*1e10*1.414, focus=self.defocus2, cs=self.cs,
-			pixelsize=self.binapix*1e-10, volts=self.volts, ampconst=self.ampconst)
-		normctfe = (ctfe + 1.0)/2.0
-		ctf = genctf.generateCTF1d(rdata*1e10*1.414, focus=self.defocus2, cs=self.cs,
-			pixelsize=self.binapix*1e-10, volts=self.volts, ampconst=self.ampconst)
-		normctf = (ctf + 1.0)/2.0
+		print "Generating CTF fit..."
+		### everything in mks units, because rdata is 1/A multiply be 1e10 to get 1/m
+		ctfe = genctf.generateCTF1d(rdatae*1e10, focus=self.defavg, cs=self.cs,
+			pixelsize=self.trimapix*1e-10, volts=self.volts, ampconst=self.ampconst)
+		normctfe = ctfe**2 #(ctfe + 1.0)/2.0
+
+		ctf = genctf.generateCTF1d(rdata*1e10, focus=self.defavg, cs=self.cs,
+			pixelsize=self.trimapix*1e-10, volts=self.volts, ampconst=self.ampconst)
+		normctf = ctf**2 #(ctf + 1.0)/2.0
+
+		rotconf = scipy.stats.pearsonr(normnormzdata, normctf)[0]
+		ellipconf = scipy.stats.pearsonr(normnormzdatae, normctfe)[0]
+		print "Rotational confidence is %.3f"%(rotconf)
+		print "Elliptical confidence is %.3f"%(ellipconf)
+
+		#self.resolutionBins(rdatasq, normnormzdata, normctf)
+		#self.resolutionBins(rdatasqe, normnormzdatae, normctfe)
+		#sys.exit(1)
 
 		#=====================
 		# Make Figure
@@ -131,7 +152,7 @@ class CtfDisplay(object):
 		pyplot.plot(rdatasq, zdata, 'b-', )
 		#pyplot.plot(rdatasq, lowessnoisedata, 'g-', )
 		pyplot.plot(rdatasq, noisedata, 'k-', )
-		self.setPyPlotXLabels(rdatasq)
+		self.setPyPlotXLabels(rdatasq, resradiisq)
 		pyplot.ylabel("Log(PSD)", fontsize=axisfontsize)
 		pyplot.title("Noise Fit (Circular)", fontsize=titlefontsize)
 
@@ -139,14 +160,14 @@ class CtfDisplay(object):
 		pyplot.plot(rdatasqe, zdatae, 'r-', )
 		#pyplot.plot(rdatasqe, lowessnoisedatae, 'g-', )
 		pyplot.plot(rdatasqe, noisedatae, 'k-', )
-		self.setPyPlotXLabels(rdatasqe)
+		self.setPyPlotXLabels(rdatasqe, resradiisq)
 		pyplot.ylabel("Log(PSD)", fontsize=axisfontsize)
 		pyplot.title("Noise Fit (Elliptical)", fontsize=titlefontsize)
 
 		pyplot.subplot(3,2,3) # 3 rows, 2 columns, plot 3
 		pyplot.plot(rdatasq, numpy.log(numpy.abs(normzdata)), 'b.', markersize=1,)
 		pyplot.plot(rdatasq, envelopdata, 'k-', )
-		self.setPyPlotXLabels(rdatasq)
+		self.setPyPlotXLabels(rdatasq, resradiisq)
 		pyplot.ylabel("Log(PSD)-Log(Noise)", fontsize=axisfontsize)
 		pyplot.title("Envelope Fit (Circular)", fontsize=titlefontsize)
 		#pyplot.ylim(ymin=0)
@@ -155,7 +176,7 @@ class CtfDisplay(object):
 		pyplot.plot(rdatasqe, numpy.log(numpy.abs(normzdatae)), 'r.', markersize=1,)
 		pyplot.plot(rdatasqe, envelopdatae, 'k-', )
 		#pyplot.ylim(ymin=0)
-		self.setPyPlotXLabels(rdatasqe)
+		self.setPyPlotXLabels(rdatasqe, resradiisq)
 		pyplot.ylabel("Log(PSD)-Log(Noise)", fontsize=axisfontsize)
 		pyplot.title("Envelope Fit (Elliptical)", fontsize=titlefontsize)
 
@@ -163,7 +184,7 @@ class CtfDisplay(object):
 		#pyplot.plot(rdatasqe, normnormzdatae, 'r-', )
 		pyplot.plot(rdatasq, normctf, '-', linewidth=1, color="#222222")
 		pyplot.plot(rdatasq, normnormzdata, 'b.', markersize=1.5,)
-		self.setPyPlotXLabels(rdatasq)
+		self.setPyPlotXLabels(rdatasq, resradiisq)
 		pyplot.ylim(-0.1, 1.1)
 		pyplot.yticks([0.0, 0.5, 1.0])
 		pyplot.ylabel("Normalized PSD", fontsize=axisfontsize)
@@ -173,7 +194,7 @@ class CtfDisplay(object):
 		pyplot.subplot(3,2,6) # 3 rows, 2 columns, plot 6
 		pyplot.plot(rdatasqe, normctfe, '-', linewidth=1, color="#222222")
 		pyplot.plot(rdatasqe, normnormzdatae, 'r.', markersize=1.5,)
-		self.setPyPlotXLabels(rdatasqe)
+		self.setPyPlotXLabels(rdatasqe, resradiisq)
 		pyplot.ylim(-0.1, 1.1)
 		pyplot.yticks([0.0, 0.5, 1.0])
 		pyplot.ylabel("Normalized PSD", fontsize=axisfontsize)
@@ -183,14 +204,17 @@ class CtfDisplay(object):
 		pyplot.subplots_adjust(wspace=0.22, hspace=0.55, 
 			bottom=0.08, left=0.07, top=0.95, right=0.965, )
 		self.plotsfile = apDisplay.short(self.imgname)+"-plots.png"
-		pyplot.savefig(self.plotsfile, format="png", dpi=200)
+		print "Saving 1D graph to file", self.plotsfile
+		pyplot.savefig(self.plotsfile, format="png", dpi=150)
+
+		if self.debug is True:
+			print "Showing results"
+			#pyplot.show()
+			plotspng = Image.open(self.plotsfile)
+			plotspng.show()
+		pyplot.clf()
 
 
-
-		plotspng = Image.open(self.plotsfile)
-		plotspng.show()
-
-		sys.exit(1)
 		#=====================
 		# End Figure
 		#=====================
@@ -200,23 +224,56 @@ class CtfDisplay(object):
 		#print "saved files"
 		#sys.exit(1)
 
+		### 1D FINISHED, NOW PROCESS 2D IMAGE
 		noise2d = imagefun.fromRadialFunction(self.funcrad, zdata2d.shape, 
-			rdata=rdata/xfreq, zdata=noisedata)
+			rdata=rdata/self.freq, zdata=noisedata)
 		envelop2d = imagefun.fromRadialFunction(self.funcrad, zdata2d.shape, 
-			rdata=rdata/xfreq, zdata=envelopdata)
+			rdata=rdata/self.freq, zdata=envelopdata)
 		#imagefile.arrayToJpeg(fitdata, "fitdata.jpg")
 		normal2d = numpy.exp(zdata2d) - numpy.exp(noise2d)
 		#normnormal2d = normal2d / numpy.exp(envelop2d)
 		envelop2d = numpy.exp(envelop2d)
 		normnormal2d = numpy.where(normal2d > envelop2d, envelop2d, normal2d)
 		mincut = normnormal2d.std()
-		print "Minimum cut...", mincut
-		return numpy.where(normnormal2d < 0.0, 0.0, normnormal2d+mincut)
+		if self.debug is True:
+			print "Minimum cut...", mincut
+		cutnormal = numpy.where(normnormal2d < 0.0, 0.0, normnormal2d+mincut)
+		return cutnormal
+
+	#====================
+	#====================
+	def resolutionBins(self, xdatasq, rawdata, fitdata):
+		"""
+		break data into bins and calculate Pearson Correlation
+		"""
+		xmin = xdatasq.min()
+		xmax = xdatasq.max()
+		numbins = 10
+		xstep = (xmax - xmin)/float(numbins)
+		apDisplay.printColor("Resolution Bins", "purple")
+		print " low  --  high  | #pts |  corr  | chi^2"
+		indexmax = 0
+		for i in range(numbins):
+			binmin = xmin + i*xstep
+			binmax = xmin + (i+1)*xstep
+			indexmin = indexmax
+			indexmax = numpy.searchsorted(xdatasq, binmax)
+			binminlabel = apDisplay.leftPadString("%.1f"%(1/math.sqrt(binmin)), 4)
+			binmaxlabel = apDisplay.leftPadString("%.1f"%(1/math.sqrt(binmax)), 4)
+			numptslabel = apDisplay.leftPadString(str(indexmax-indexmin), 4)
+			corr = scipy.stats.pearsonr(rawdata[indexmin:indexmax], fitdata[indexmin:indexmax])[0]
+			corrlabel = apDisplay.leftPadString("%.3f"%(corr), 6)
+			chisq = 0
+			print (" %s -- %s A | %s | %s | %.3f"
+				%(binminlabel, binmaxlabel, numptslabel, corrlabel, chisq))
 
 
 	#====================
 	#====================
-	def setPyPlotXLabels(self, xdata):
+	def setPyPlotXLabels(self, xdata, radiisq=None):
+		"""
+		assumes xdata is in units of 1/Angstroms
+		"""
 		minloc = xdata.min()
 		maxloc = xdata.max()
 		xstd = xdata.std()/2.
@@ -229,7 +286,7 @@ class CtfDisplay(object):
 		newlabels = []
 		#print "maxloc=", maxloc
 		for loc in locs:
-			if loc == 0:
+			if loc < minloc + xstd/4:
 				continue
 			origres = 1.0/math.sqrt(loc)
 			if origres > 50:
@@ -269,6 +326,18 @@ class CtfDisplay(object):
 		pyplot.xticks(newlocs, newlabels, fontsize=8)
 
 		pyplot.xlabel("Resolution (s^2)", fontsize=9)
+		if radiisq is not None:
+			for i, radsq in enumerate(radiisq):
+				if radsq < minloc:
+					continue
+				elif radsq > maxloc:
+					break
+				elif i % 1 == 0:
+					pyplot.axvline(x=radsq, linewidth=1, color="cyan", alpha=0.5)
+				else:
+					#pyplot.axvline(x=radsq, linewidth=1, color="yellow", alpha=0.5)
+					pass
+
 		return
 
 	#====================
@@ -277,16 +346,19 @@ class CtfDisplay(object):
 		if max(origpowerspec.shape) > maxsize:
 			scale = maxsize/float(max(origpowerspec.shape))
 			#scale = (random.random()+random.random())/2.0
-			print "scaling image by %.3f"%(scale)
+			if self.debug is True:
+				print "scaling image by %.3f"%(scale)
 			powerspec = imagefilter.scaleImage(origpowerspec, scale)
 		else:
 			scale = 1.0
 			powerspec = origpowerspec.copy()
 
 		self.scaleapix = self.binapix #/scale
-		#print "orig pixel", self.apix
-		#print "bin pixel", self.binapix
-		#print "scale pixel", self.scaleapix
+		if self.debug is True:
+			print "orig pixel", self.apix
+			print "bin pixel", self.binapix
+			print "trim pixel", self.trimapix
+			print "scale pixel", self.scaleapix
 
 		numzeros = 10
 		numcols = self.origimageshape[0]/(2*self.prebin)*scale #**2
@@ -307,7 +379,8 @@ class CtfDisplay(object):
 
 		## draw an axis line, if astig > 5%
 		perdiff = 2*abs(self.defocus1-self.defocus2)/abs(self.defocus1+self.defocus2)
-		print "Percent Difference %.1f"%(perdiff*100)
+		if self.debug is True:
+			print "Percent Difference %.1f"%(perdiff*100)
 		if perdiff > 0.05:
 			#print self.angle, radii2[0], center
 			x = -1*firstpeak*math.cos(math.radians(self.angle))
@@ -363,12 +436,13 @@ class CtfDisplay(object):
 
 		## create an alpha blend effect
 		originalimage = Image.blend(originalimage, pilimage, 0.95)
-		print "savefile", self.powerspecfile
+		print "Saving 2D powerspectra to file", self.powerspecfile
 		#pilimage.save(self.powerspecfile, "JPEG", quality=85)
 		originalimage.save(self.powerspecfile, "JPEG", quality=85)
-
-		originalimage.show()
-		time.sleep(3)
+		if self.debug is True:
+			originalimage.show()
+			time.sleep(3)
+		return
 
 	#====================
 	#====================
@@ -397,6 +471,8 @@ class CtfDisplay(object):
 			# correct, ratio > 1
 			self.defocus1 = ctfdata['defocus1']
 			self.defocus2 = ctfdata['defocus2']
+		self.defavg = (self.defocus1 + self.defocus2)/2.0
+		self.defdiff = self.defocus1 - self.defocus2
 		self.ratio = self.defocus2/self.defocus1
 
 		# get angle within range -90 < angle <= 90
@@ -409,8 +485,7 @@ class CtfDisplay(object):
 			(self.defocus1, self.defocus2, self.angle, self.ratio), "cyan")
 
 		perdiff = abs(self.defocus1-self.defocus2)/abs(self.defocus1+self.defocus2)
-		if self.debug is True: 
-			print ("Defocus Astig Percent Diff %.2f -- %.3e, %.3e"
+		print ("Defocus Astig Percent Diff %.2f -- %.3e, %.3e"
 				%(perdiff*100,self.defocus1,self.defocus2))
 
 		return
@@ -432,7 +507,8 @@ class CtfDisplay(object):
 		"""
 		### setup initial parameters for image
 		self.imgname = imgdata['filename']
-		print apDisplay.short(self.imgname)
+		if self.debug is True:
+			print apDisplay.short(self.imgname)
 		self.powerspecfile = apDisplay.short(self.imgname)+"-powerspec.jpg"
 
 		### get correct data
@@ -445,25 +521,37 @@ class CtfDisplay(object):
 
 		### process power spectra
 		self.apix = apDatabase.getPixelSize(imgdata)
-		print "Pixelsize (A/pix)", self.apix
 
-		self.prebin = 1 #ctftools.getPowerSpectraPreBin(outerbound*1e10, self.apix)
+		if self.debug is True:
+			print "Pixelsize (A/pix)", self.apix
+
+		self.prebin = ctftools.getPowerSpectraPreBin(outerbound*1e10, self.apix)
 		print "Reading image..."
 		image = imgdata['image']
+		self.freq = 1./(self.apix * image.shape[0])
 		self.origimageshape = image.shape
 		print "Binning image by %d..."%(self.prebin)
 		binimage = imagefun.bin2(image, self.prebin)
 		self.binapix = self.prebin * self.apix
+		self.binfreq = 1./(self.apix * binimage.shape[0] * self.prebin)
+		self.binfreq2 = 1./(self.binapix * binimage.shape[0])
 		print "Computing power spectra..."
-		powerspec = ctftools.powerSpectraToOuterResolution(binimage, 
+		powerspec, self.trimapix = ctftools.powerSpectraToOuterResolution(binimage, 
 			outerbound*1e10, self.binapix)
+		self.trimfreq = 1./(self.trimapix * powerspec.shape[0])
 		print "Median filter image..."
-		powerspec = ndimage.median_filter(powerspec, 5)
+		powerspec = ndimage.median_filter(powerspec, 2)
 
 		### get peaks of CTF
 		self.cs = ctfdata['cs']*1e-3
 		self.volts = imgdata['scope']['high tension']
 		self.ampconst = ctfdata['amplitude_contrast']
+
+		if self.debug is True:
+			print "\torig pixel %.3f freq %.3e"%(self.apix, self.freq)
+			print "\tbin  pixel %.3f freq %.3e"%(self.binapix, self.binfreq)
+			print "\tbin  pixel %.3f freq %.3e"%(self.binapix, self.binfreq2)
+			print "\ttrim pixel %.3f freq %.3e"%(self.trimapix, self.trimfreq)
 
 		### more processing
 
@@ -471,9 +559,10 @@ class CtfDisplay(object):
 
 		self.drawPowerSpecImage(normpowerspec)
 
-		time.sleep(10)
+		if self.debug is True:
+			time.sleep(10)
 
-		return							
+		return self.powerspecfile, self.plotsfile	
 
 #====================
 #====================
@@ -487,7 +576,7 @@ if __name__ == "__main__":
 
 	#=====================
 	### CNV data
-	imagelist = glob.glob("/data01/leginon/12may17y/rawdata/12may17y*.mrc")
+	imagelist = glob.glob("/data01/leginon/10apr19a/rawdata/10apr19a_10apr19a_*en_1.mrc")
 	### Pick-wei images with lots of rings
 	#imagelist = glob.glob("/data01/leginon/09sep20a/rawdata/09*en.mrc")
 	### Something else, ice data
@@ -497,9 +586,9 @@ if __name__ == "__main__":
 	#=====================
 
 	print "# of images", len(imagelist)
-	#imagelist.sort()
-	random.shuffle(imagelist)
-
+	imagelist.sort()
+	imagelist.reverse()
+	#random.shuffle(imagelist)
 
 	imageint = int(random.random()*len(imagelist))
 	imagename = os.path.basename(imagelist[imageint])
@@ -522,21 +611,29 @@ if __name__ == "__main__":
 	count = 0
 	for imgfile in imagelist:
 		count += 1
-		#print "\n\n\n\n"
 		imagename = os.path.basename(imgfile)
-		#print imagename
 		imagename = re.sub(".mrc", "", imagename)
 		imgdata = apDatabase.getImageData(imagename)
+		print ""
+		print "**********************************"
+		print "IMAGE: ", apDisplay.short(imagename)
+		print "**********************************"
 		ctfdata, bestconf = ctfdb.getBestCtfValueForImage(imgdata)
 		#ctfdata, bestconf = ctfdb.getBestCtfValueForImage(imgdata, method="ctffind")
 		#ctfdata, bestconf = ctfdb.getBestCtfValueForImage(imgdata, method="ace2")
 		a = CtfDisplay()
-		a.CTFpowerspec(imgdata, ctfdata)
+		powerspecfile, plotsfile	= a.CTFpowerspec(imgdata, ctfdata)
 
 		if count > 8:
 			sys.exit(1)
 
-
+#====================
+#====================
+#====================
+def makeCtfImages(imgdata, ctfdata):
+	a = CtfDisplay()
+	powerspecfile, plotsfile = a.CTFpowerspec(imgdata, ctfdata)
+	return powerspecfile, plotsfile
 
 
 
