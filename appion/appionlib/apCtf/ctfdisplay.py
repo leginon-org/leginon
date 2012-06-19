@@ -56,8 +56,8 @@ class CtfDisplay(object):
 			self.ampconst, cols=numcols, numzeros=4, zerotype="all")
 		firstpeak = radii2[0]
 		firstvalley = radii2[1]
-
-		print "MIN/MAX peaks", 1./firstpeak, 1./firstvalley
+		if self.debug is True:
+			print "MIN/MAX peaks", 1./firstpeak, 1./firstvalley
 
 		### get all peaks (not valleys)
 		peaks = ctftools.getCtfExtrema(self.defocus2, self.trimapix*1e-10, self.cs, self.volts, 
@@ -464,13 +464,18 @@ class CtfDisplay(object):
 		#by convention: abs(ctfdata['defocus1']) < abs(ctfdata['defocus2'])
 		if abs(ctfdata['defocus1']) > abs(ctfdata['defocus2']):
 			# incorrect, need to shift angle by 90 degrees
+			apDisplay.printWarning("|def1| > |def2|, flipping defocus axes")
 			self.defocus1 = ctfdata['defocus2']
-			self.defocus2 = ctfdata['defocus1']		
+			self.defocus2 = ctfdata['defocus1']
 			self.angle += 90
 		else:
 			# correct, ratio > 1
 			self.defocus1 = ctfdata['defocus1']
 			self.defocus2 = ctfdata['defocus2']
+		if self.defocus1 < 0 and self.defocus2 < 0:
+			apDisplay.printWarning("Negative defocus values, taking absolute value")
+			self.defocus1 = abs(self.defocus1)
+			self.defocus2 = abs(self.defocus2)
 		self.defavg = (self.defocus1 + self.defocus2)/2.0
 		self.defdiff = self.defocus1 - self.defocus2
 		self.ratio = self.defocus2/self.defocus1
@@ -576,9 +581,9 @@ if __name__ == "__main__":
 
 	#=====================
 	### CNV data
-	imagelist = glob.glob("/data01/leginon/10apr19a/rawdata/10apr19a_10apr19a_*en_1.mrc")
+	#imagelist = glob.glob("/data01/leginon/10apr19a/rawdata/10apr19a_10apr19a_*en_1.mrc")
 	### Pick-wei images with lots of rings
-	#imagelist = glob.glob("/data01/leginon/09sep20a/rawdata/09*en.mrc")
+	imagelist = glob.glob("/data01/leginon/09sep20a/rawdata/09*en.mrc")
 	### Something else, ice data
 	#imagelist = glob.glob("/data01/leginon/09feb20d/rawdata/09*en.mrc")
 	### images of Hassan with 1.45/1.65 astig at various angles
@@ -586,9 +591,9 @@ if __name__ == "__main__":
 	#=====================
 
 	print "# of images", len(imagelist)
-	imagelist.sort()
-	imagelist.reverse()
-	#random.shuffle(imagelist)
+	#imagelist.sort()
+	#imagelist.reverse()
+	random.shuffle(imagelist)
 
 	imageint = int(random.random()*len(imagelist))
 	imagename = os.path.basename(imagelist[imageint])
@@ -618,9 +623,12 @@ if __name__ == "__main__":
 		print "**********************************"
 		print "IMAGE: ", apDisplay.short(imagename)
 		print "**********************************"
-		ctfdata, bestconf = ctfdb.getBestCtfValueForImage(imgdata)
-		#ctfdata, bestconf = ctfdb.getBestCtfValueForImage(imgdata, method="ctffind")
+		#ctfdata, bestconf = ctfdb.getBestCtfValueForImage(imgdata)
+		ctfdata, bestconf = ctfdb.getBestCtfValueForImage(imgdata, method="ctffind")
 		#ctfdata, bestconf = ctfdb.getBestCtfValueForImage(imgdata, method="ace2")
+		if ctfdata is None:
+			print "Skipping image, no CTF data"
+			continue
 		a = CtfDisplay()
 		powerspecfile, plotsfile	= a.CTFpowerspec(imgdata, ctfdata)
 
@@ -634,14 +642,5 @@ def makeCtfImages(imgdata, ctfdata):
 	a = CtfDisplay()
 	powerspecfile, plotsfile = a.CTFpowerspec(imgdata, ctfdata)
 	return powerspecfile, plotsfile
-
-
-
-
-
-
-
-
-
 
 
