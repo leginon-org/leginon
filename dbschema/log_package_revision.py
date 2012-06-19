@@ -13,6 +13,7 @@ if __name__ == "__main__":
 		updatelib_inst.updateDatabaseVersion(checkout_version)
 		if updatelib_inst.allowVersionLog(checkout_revision):
 			updatelib_inst.updateDatabaseRevision(checkout_revision)
+			updatelib_inst.deletDatabaseReset()
 			print "\033[35mRevision Updated in the database\033[0m"
 	else:
 		print "\033[35mUnknown Revision, nothing to do\033[0m"
