@@ -128,6 +128,7 @@ class SchemaUpdate:
 				raise
 			print divider
 			print "\033[35mSuccessful Update\033[0m"
+			self.updatelib.updateDatabaseReset(self.updatelib.db_revision)
 			self.updatelib.updateDatabaseRevision(self.selected_revision)
 
 if __name__ == "__main__":

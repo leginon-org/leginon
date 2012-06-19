@@ -48,17 +48,20 @@ class UpdateLib:
 		may have a necessary schema update prior to the most recent version
 		of the older branch.  Please add the revision number for new branch
 		'''
-		if svn_branch == 'trunk':
-			branch_reset_revision = 16446
-		elif svn_branch == 'myami-2.2':
-			branch_reset_revision = 16607
-		elif svn_branch == 'myami-2.1':
-			branch_reset_revision = 14891
-		elif svn_branch == 'myami-2.0':
-			# schema-r14380 in myami-2.0 and schema-r14891 in later are equivalent
-			branch_reset_revision = 14891
-		else:
-			raise "Unknown svn branch"
+		branch_reset_revision = self.db_revision
+		if not self.getDatabaseReset():
+			if svn_branch == 'trunk':
+				branch_reset_revision = 16607
+			elif svn_branch == 'myami-2.2':
+				branch_reset_revision = 16607
+			elif svn_branch == 'myami-2.1':
+				if self.db_revision >= 15293:
+					branch_reset_revision = 14891
+			elif svn_branch == 'myami-2.0':
+				# schema-r14380 in myami-2.0 and schema-r14891 in later are equivalent
+				branch_reset_revision = 14891
+			else:
+				raise "Unknown svn branch"
 		return branch_reset_revision
 
 	def getPackageVersion(self):
@@ -168,6 +171,7 @@ class UpdateLib:
 		schema_revisions = self.getBranchUpdateRevisionSequence()
 		schema_revisions.sort()
 		schema_revisions.reverse()
+		minimal_revision_in_database = revision_in_database
 		for revision in schema_revisions:
 			if revision < checkout_revision:
 				minimal_revision_in_database = revision
@@ -255,3 +259,29 @@ class UpdateLib:
 		if values:
 			self.project_dbupgrade.updateColumn("install", "value", "'%s'" % (current_version), 
 				"install.key = 'version'",timestamp=False)
+
+	def getDatabaseReset(self):
+		selectq = " SELECT * FROM `install` WHERE `key`='resetfrom'"
+		values = self.project_dbupgrade.returnCustomSQL(selectq)
+		if values:
+			print int(values[0][1])
+			return int(values[0][1])
+		else:
+			return False
+
+	def deletDatabaseReset(self):
+		if self.getDatabaseReset():
+			self.project_dbupgrade.updateColumn("install", "value", "'0'", 
+					"install.key = 'resetfrom'",timestamp=False)
+
+	def updateDatabaseReset(self,reset_from_revision):
+		### set version of database
+		selectq = " SELECT * FROM `install` WHERE `key`='resetfrom'"
+		values = self.project_dbupgrade.returnCustomSQL(selectq)
+		if values:
+			if int(values[0][1]) == 0:
+				self.project_dbupgrade.updateColumn("install", "value", "'%d'" % (reset_from_revision), 
+					"install.key = 'resetfrom'",timestamp=False)
+		else:
+			insertq = "INSERT INTO `install` (`key`, `value`) VALUES ('resetfrom', %d)"% (reset_from_revision)
+			self.project_dbupgrade.executeCustomSQL(insertq)
