@@ -30,7 +30,7 @@ class BeamTiltFixer(acquisition.Acquisition):
 	defaultsettings = acquisition.Acquisition.defaultsettings
 	defaultsettings.update({
 		'process target type': 'acquisition',
-		'beam tilt': 0.01,
+		'beam tilt': 0.005,
 		'min threshold': 0.00015,
 		'max threshold': 0.0015,
 		'correct': False,
