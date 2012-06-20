@@ -225,6 +225,7 @@ class CtfDisplay(object):
 			plotspng.show()
 		pyplot.clf()
 
+		#sys.exit(1)
 
 		#=====================
 		# End Figure
@@ -696,8 +697,8 @@ if __name__ == "__main__":
 		print "**********************************"
 		print "IMAGE: ", apDisplay.short(imagename)
 		print "**********************************"
-		#ctfdata, bestconf = ctfdb.getBestCtfValueForImage(imgdata)
-		ctfdata, bestconf = ctfdb.getBestCtfValueForImage(imgdata, method="ctffind")
+		ctfdata, bestconf = ctfdb.getBestCtfValueForImage(imgdata)
+		#ctfdata, bestconf = ctfdb.getBestCtfValueForImage(imgdata, method="ctffind")
 		#ctfdata, bestconf = ctfdb.getBestCtfValueForImage(imgdata, method="ace2")
 		if ctfdata is None:
 			print "Skipping image, no CTF data"
