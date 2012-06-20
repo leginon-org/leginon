@@ -630,9 +630,6 @@ function runMakestack() {
 	$expId   = $_GET['expId'];
 	$outdir  = $_POST['outdir'];
 	$runname = $_POST['runname'];
-	//Do not allow not alphanumeric characters in stack runname
-	if ($runname != preg_replace("/[^A-Za-z0-9]/", "", $runname))
-		createMakestackForm("<b>ERROR:</b> Only alphanumeric characters in runname");
 
 	$single=$_POST['single'];
 	$description = $_POST['description'];

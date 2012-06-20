@@ -480,7 +480,7 @@ function showOrSubmitCommand($command, $headinfo, $jobtype, $nproc, $testimg=Fal
 		$_POST['runname']
 		$_POST['outdir']
 		need to be defined and correct
-		*/
+	*/
 	$expId=$_GET['expId'];
 	// uploadimage jobtype need to be handled differently since it has none of these
 	if ($jobtype != 'uploadimage' && $jobtype != 'etomorecon') {
@@ -489,8 +489,11 @@ function showOrSubmitCommand($command, $headinfo, $jobtype, $nproc, $testimg=Fal
 			return "<B>ERROR:</B> undefined expId";
 		$allow_processing = checkExptAdminPrivilege($expId,'data');
 		$runname=$_POST['runname'];
+		//Do not allow not alphanumeric characters in stack runname
 		if (empty($runname))
 			return "<B>ERROR:</B> undefined runname";
+		if ($runname != preg_replace("/[^A-Za-z0-9]/", "", $runname))
+			return "<b>ERROR:</b> Only alphanumeric characters in runname";
 		$outdir=$_POST['outdir'];
 		if (empty($outdir))
 			return "<B>ERROR:</B> undefined outdir";
