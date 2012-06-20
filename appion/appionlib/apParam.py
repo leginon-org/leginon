@@ -112,6 +112,7 @@ def getHostname():
 			#host = socket.gethostbyaddr(socket.gethostname())[0]
 		except:
 			host = "unknown"
+	apDisplay.printMsg("Running on host: "+host)
 	return host
 
 #=====================
