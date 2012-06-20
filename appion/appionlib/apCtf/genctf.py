@@ -199,10 +199,10 @@ def checkParams(focus1=-1.0e-6, focus2=-1.0e-6, pixelsize=1.5e-10,
 		print "  High tension %.1f kV"%(volts*1e-3)
 		print ("  Amp Contrast %.3f (shift %.1f degrees)"
 			%(ampconst, math.degrees(-math.asin(ampconst))))
-	if focus1*1e6 > 10.0 or focus1*1e6 < 0.1:
+	if focus1*1e6 > 15.0 or focus1*1e6 < 0.1:
 		apDisplay.printError("atypical defocus #1 value %.1f microns (underfocus is positve)"
 			%(focus1*1e6))
-	if focus2*1e6 > 10.0 or focus2*1e6 < 0.1:
+	if focus2*1e6 > 15.0 or focus2*1e6 < 0.1:
 		apDisplay.printError("atypical defocus #2 value %.1f microns (underfocus is positve)"
 			%(focus2*1e6))
 	if cs*1e3 > 4.0 or cs*1e3 < 0.4:

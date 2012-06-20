@@ -23,7 +23,7 @@ def getCtfExtrema(focus=1.0e-6, pixelsize=1.0e-10, cs=2e-2,
 		print "pixelsize %.3f Angstroms"%(pixelsize*1e10)
 		print "C_s %.1f mm"%(cs*1e3)
 		print "High tension %.1f kV"%(volts*1e-3)
-	if focus*1e6 > 10.0 or focus*1e6 < 0.1:
+	if focus*1e6 > 15.0 or focus*1e6 < 0.1:
 		apDisplay.printWarning("atypical defocus value %.1f microns (underfocus is positive)"
 			%(focus*1e6))
 	if cs*1e3 > 4.0 or cs*1e3 < 0.4:
