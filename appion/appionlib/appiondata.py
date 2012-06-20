@@ -413,22 +413,22 @@ class ApCtfData(Data):
 		return Data.typemap() + (
 			('acerun', ApAceRunData),
 			('image', leginon.leginondata.AcquisitionImageData),
-			('defocus1', float),
-			('defocus2', float),
-			('defocusinit', float),
-			('amplitude_contrast', float),
-			('angle_astigmatism', float),
-			('tilt_angle', float),
-			('tilt_axis_angle', float),
-			('snr', float),
+			('cs', float), # in millimeters
+			('defocusinit', float), #initial defocus
+			('amplitude_contrast', float), #sqrt(1-A^2)sin + A*cos format
+			('defocus1', float), #in negative meters for underfocus |def1| < |def2|
+			('defocus2', float), #in negative meters for underfocus
+			('angle_astigmatism', float), # in counter-clockwise degrees from x-axis
 			('confidence', float),
 			('confidence_d', float),
-			('graph1', str),
-			('graph2', str),
-			('mat_file', str),
-			('cross_correlation', float),
-			('ctfvalues_file', str),
-			('cs', float),
+			('graph1', str), #2d powerspectra
+			('graph2', str), #1d plot showing fit
+			('cross_correlation', float), #direct from ctffind
+			('ctfvalues_file', str), #used for ace2correct
+			('mat_file', str), #from ACE1
+			('tilt_angle', float), #from ctftilt
+			('tilt_axis_angle', float), #from ctftilt
+			('snr', float),
 			('noise1', float),
 			('noise2', float),
 			('noise3', float),
