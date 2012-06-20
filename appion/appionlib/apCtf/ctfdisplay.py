@@ -13,9 +13,9 @@ from appionlib import apDisplay
 from appionlib import lowess
 from appionlib.apImage import imagefile
 from appionlib.apImage import imagefilter
-
+from matplotlib import use
+use('Agg')
 from matplotlib import pyplot
-from matplotlib import mlab
 
 from appionlib.apCtf import ctfnoise
 from appionlib.apCtf import ctftools
