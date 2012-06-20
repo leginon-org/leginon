@@ -489,10 +489,10 @@ function showOrSubmitCommand($command, $headinfo, $jobtype, $nproc, $testimg=Fal
 			return "<B>ERROR:</B> undefined expId";
 		$allow_processing = checkExptAdminPrivilege($expId,'data');
 		$runname=$_POST['runname'];
-		//Do not allow not alphanumeric characters in stack runname
 		if (empty($runname))
 			return "<B>ERROR:</B> undefined runname";
-		if ($runname != preg_replace("/[^A-Za-z0-9]/", "", $runname))
+		//Only allow alphanumeric _- characters in runname
+		if ($runname != preg_replace("/[^A-Za-z0-9_-]/", "", $runname))
 			return "<b>ERROR:</b> Only alphanumeric characters in runname";
 		$outdir=$_POST['outdir'];
 		if (empty($outdir))
