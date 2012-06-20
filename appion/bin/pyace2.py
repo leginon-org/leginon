@@ -305,7 +305,8 @@ class Ace2Loop(appionLoop2.AppionLoop):
 		if os.path.isfile(jpegfile):
 			ctfq['graph1'] = imgdata['filename']+".jpg"
 		ctfq['ctfvalues_file'] = imgdata['filename']+".mrc.norm.txt"
-		ctfvaluelist = ('defocus1','defocus2','amplitude_contrast','angle_astigmatism','confidence','confidence_d')
+		ctfvaluelist = ('defocus1','defocus2','amplitude_contrast','angle_astigmatism',
+			'confidence','confidence_d')
 		for i in range(len(ctfvaluelist)):
 			key = ctfvaluelist[i]
 			ctfq[key] = self.ctfvalues[key]
