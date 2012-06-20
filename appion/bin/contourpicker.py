@@ -839,6 +839,11 @@ class ContourPicker(manualpicker.ManualPicker):
 		c = None
 		counter = 0
 		for i in range(len(targetsList)):
+			# safe-guard from 1 or 2 point target
+			if len(targetsList[i]) < 3:
+				apDisplay.printWarning('contour %d has only %d points....IGNORED' % (i,len(targetsList[i])))
+				counter += 1
+				continue
 			c=appiondata.ApContourData(name="contour"+str(int(self.startPoint)+i), image=imgdata, x=contourTargets[counter].x, y=contourTargets[counter].y,version=self.maxVersion+1, method='auto', particleType=self.app.particleTypeList[counter], selectionrun=rundata)
 			c.insert()
 			counter += 1
