@@ -92,6 +92,7 @@ function checkJobs($showjobs=False, $showall=False, $extra=False) {
 		}
 		echo "</table>\n";
 		
+		echo "<a href='checkAppionJob.php?expId=$expId&jobId=$jobid'>[check logfile]</a><br />\n";
 		
 		if ($_SESSION['loggedin'] == true && $showjobs) {
 			if ($jobinfo['status']=='R' || $jobinfo['status']=='D') {
