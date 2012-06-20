@@ -72,7 +72,7 @@ $title='uploadParticles.py Launcher', $heading='Upload particle selection') {
 	$sessioninfo=$sessiondata['info'];
 
 	// get path for submission
-	$sessionpath=getBaseAppionPath($sessioninfo).'/extract';
+	$sessionpath=getBaseAppionPath($sessioninfo).'/extract/';
 	$sessionname=$sessioninfo['Name'];
 
 	//query the database for parameters

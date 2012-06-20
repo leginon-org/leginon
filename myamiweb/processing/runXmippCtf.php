@@ -122,7 +122,7 @@ function createCtfEstimateForm($extra=false) {
 	$sessioninfo=$sessiondata['info'];
 	$presets=$sessiondata['presets'];
 	if (!empty($sessioninfo)) {
-		$sessionpath=getBaseAppionPath($sessioninfo).'/ctf';
+		$sessionpath=getBaseAppionPath($sessioninfo).'/ctf/';
 	}
 	$ctf = new particledata();
 	$lastrunnumber = $ctf->getLastRunNumberForType($sessionId,'ApAceRunData','name'); 

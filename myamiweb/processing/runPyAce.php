@@ -228,7 +228,7 @@ function createPyAceForm($extra=false) {
 	$sessiondata=getSessionList($projectId,$expId);
 	$sessioninfo=$sessiondata['info'];
 	$presets=$sessiondata['presets'];
-	$sessionpath=getBaseAppionPath($sessioninfo).'/ctf';
+	$sessionpath=getBaseAppionPath($sessioninfo).'/ctf/';
 
 	$ctf = new particledata();
 	$ctfruns = count($ctf->getCtfRunIds($sessionId));

@@ -87,7 +87,7 @@ function createJMForm($extra=false, $title='JPEG Maker', $heading='Automated JPE
 	#<input type='HIDDEN' name='lastSessionId' value='$sessionId'>\n";
 	$sessiondata=getSessionList($projectId,$sessionId);
 	$sessioninfo=$sessiondata['info'];
-	$sessionpath=getBaseAppionPath($sessioninfo).'/jpgs';
+	$sessionpath=getBaseAppionPath($sessioninfo).'/jpgs/';
 
 	// Set any existing parameters in form
 	$sessionpathval = ($_POST['outdir']) ? $_POST['outdir'] : $sessionpath;
