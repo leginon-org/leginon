@@ -2,23 +2,24 @@
 
 #pythonlib
 import os
-import sys
 import re
+import sys
 import math
-import cPickle
 import time
-import subprocess
 import shutil
+import cPickle
+import subprocess
 #appion
-from appionlib import appionLoop2
-from appionlib import appiondata
+from appionlib import apFile
 from appionlib import apImage
+from appionlib import apParam
 from appionlib import apDisplay
 from appionlib import apDatabase
-from appionlib.apCtf import ctfdb
-from appionlib import apParam
-from appionlib import apFile
+from appionlib import appiondata
+from appionlib import appionLoop2
 from appionlib import apInstrument
+from appionlib.apCtf import ctfdb
+from appionlib.apCtf import ctfdisplay
 
 class ctfEstimateLoop(appionLoop2.AppionLoop):
 	"""
@@ -139,7 +140,7 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 		#get Defocus in Angstroms
 		self.ctfrun = None
 		defocus = imgdata['scope']['defocus']*-1.0e10
-		bestdef = ctfdb.getBestDefocusForImage(imgdata, msg=True)*-1.0e10
+		bestdef = ctfdb.getBestDefocusForImage(imgdata, msg=True)*1.0e10
 		inputparams = {
 			'orig': os.path.join(imgdata['session']['image path'], imgdata['filename']+".mrc"),
 			'input': apDisplay.short(imgdata['filename'])+".mrc",
@@ -240,15 +241,23 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 				for i,bit in enumerate(bits[0:(numvals-2)]):
 					bits[i] = float(bit)
 				self.ctfvalues = {
-					'defocus1':	-float(bits[0])*1e-10,
-					'defocus2':	-float(bits[1])*1e-10,
+					'defocus1':	float(bits[0])*1e-10,
+					'defocus2':	float(bits[1])*1e-10,
 					'angle_astigmatism':	-float(bits[2]),
-					'amplitude_contrast':	inputparams['ampcnst'],
+					'amplitude_contrast': inputparams['ampcnst'],
 					'cross_correlation':	float(bits[numvals-3]),
 					'nominal':	defocus*1e-10,
-					'defocusinit':	-bestdef*1e-10,
-					'confidence_d':	round(math.sqrt(abs(float(bits[numvals-3]))), 5)
+					'defocusinit':	bestdef*1e-10,
+					'cs': self.params['cs'],
+					'kv': imgdata['scope']['high tension']/1000.0,
+					'confidence_d': round(math.sqrt(abs(float(bits[numvals-3]))), 5)
 				}
+				powerspec, plots, conf = ctfdisplay.makeCtfImages(imgdata, self.ctfvalues)
+				shutil.move(powerspec, "opimages/"+powerspec)
+				shutil.move(plots, "opimages/"+plots)
+				self.ctfvalues['graph1'] = "opimages/"+powerspec
+				self.ctfvalues['graph2'] = "opimages/"+plots
+				self.ctfvalues['confidence'] = conf
 				if self.params['ctftilt'] is True:
 					self.ctfvalues['tilt_axis_angle']=float(bits[3])
 					self.ctfvalues['tilt_angle']=float(bits[4])
@@ -276,10 +285,10 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 		#convert powerspectra to JPEG
 		outputjpgbase = os.path.basename(os.path.splitext(inputparams['output'])[0]+".jpg")
 		self.lastjpg = outputjpgbase
-		outputjpg = os.path.join(self.params['rundir'], self.lastjpg)
+		outputjpg = os.path.join(self.powerspecdir, self.lastjpg)
 		powspec = apImage.mrcToArray(inputparams['output'])
 		apImage.arrayToJpeg(powspec, outputjpg)
-		shutil.move(inputparams['output'], os.path.join(self.powerspecdir,inputparams['output']))
+		shutil.move(inputparams['output'], os.path.join(self.powerspecdir, inputparams['output']))
 		#apFile.removeFile(inputparams['input'])
 
 		#sys.exit(1)
@@ -343,11 +352,12 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 		ctfq = appiondata.ApCtfData()
 		ctfq['acerun'] = self.ctfrun
 		ctfq['image']      = imgdata
-		ctfq['graph1']     = self.lastjpg
+		#ctfq['graph1']     = os.path.join("opimages", self.lastjpg)
 		ctfq['cs']     = self.params['cs']
 
-		ctfvaluelist = ('defocus1','defocus2','defocusinit','angle_astigmatism',\
-			'amplitude_contrast','cross_correlation','confidence_d')
+		ctfvaluelist = ('defocus1','defocus2','defocusinit','angle_astigmatism',
+			'amplitude_contrast','cross_correlation','confidence', 'confidence_d',
+			'graph1', 'graph2',)
 		if self.params['ctftilt'] is True:
 			ctfvaluelist+= ('tilt_angle','tilt_axis_angle')
 		for i in range(len(ctfvaluelist)):
