@@ -124,9 +124,9 @@ class ProcessingHost (object):
     
         try:
             #open the job file for writing
-            jobFile = file(jobfileName, 'w')
+            jobFile = open(jobfileName, 'w')
         except IOError, e:
-            sys.stderr.write("Could not open file to create job file: " + str(e))
+            sys.stderr.write("Could not open file to create job file: " + str(e) + "\n")
             return False
         
         self.createJobFile(jobFile)
