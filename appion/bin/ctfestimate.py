@@ -159,12 +159,9 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 			'defstep': self.params['defstep'], #round(defocus/32.0, 1),
 			'dast': self.params['dast'],
 		}
-		if bestdef<10000:
-			inputparams['defmin']=2000.0
-			inputparams['defmax']=20000.0
-		else:
-			inputparams['defmin']= round(bestdef*0.5, 1)
-			inputparams['defmax']= round(bestdef*1.5, 1)
+		defrange = self.params['defstep'] * self.params['numstep'] ## do 25 steps in either direction
+		inputparams['defmin']= round(bestdef-defrange, 1) #in meters
+		inputparams['defmax']= round(bestdef+defrange, 1) #in meters
 		### create local link to image
 		if not os.path.exists(inputparams['input']):
 			cmd = "ln -s "+inputparams['orig']+" "+inputparams['input']+"\n"
@@ -388,6 +385,8 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 			help="High resolution end of data to be fitted", metavar="#")
 		self.parser.add_option("--defstep", dest="defstep", type="float", default=5000.0,
 			help="Step width for grid search in Angstroms", metavar="#")
+		self.parser.add_option("--numstep", dest="numstep", type="int", default=25,
+			help="Number of steps to search in grid", metavar="#")
 		self.parser.add_option("--dast", dest="dast", type="float", default=100.0,
 			help="dAst was added to CARD 4 to restrain the amount of astigmatism in \
 				the CTF fit. This makes the fitting procedure more robust, especially \
@@ -403,8 +402,8 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 			apDisplay.printError("Please choose a lower resolution for resmin")
 		if self.params['resmax'] > 50.0:
 			apDisplay.printError("Please choose a higher resolution for resmax")
-		if self.params['defstep'] < 300.0 or self.params['defstep'] > 10000.0:
-			apDisplay.printError("Please keep the defstep between 300 & 10000 Angstroms")
+		if self.params['defstep'] < 1.0 or self.params['defstep'] > 10000.0:
+			apDisplay.printError("Please keep the defstep between 1 & 10000 Angstroms")
 		### set cs value
 		self.params['cs'] = apInstrument.getCsValueFromSession(self.getSessionData())
 		return
