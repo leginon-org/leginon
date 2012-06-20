@@ -17,15 +17,15 @@ require "inc/appionloop.inc";
 
 // IF VALUES SUBMITTED, EVALUATE DATA
 if ($_POST['process']) {
-	runCtfEstimate();
+	runCtfFind();
 }
 // CREATE FORM PAGE
 else {
-	createCtfEstimateForm();
+	createCtfFindForm();
 }
 
 // --- parse data and process on submit
-function runCtfEstimate() {
+function runCtfFind() {
 
 	/* *******************
 	PART 1: Get variables
@@ -56,14 +56,14 @@ function runCtfEstimate() {
 	******************** */
 	$leginondata = new leginondata();
 	if ($leginondata->getCsValueFromSession($expId) === false) {
-		createCtfEstimateForm("Cs value of the images in this session is not unique or known, can't process");
+		createCtfFindForm("Cs value of the images in this session is not unique or known, can't process");
 		exit;
 	}
 	// Error checking:
-	if (!$fieldsize) createCtfEstimateForm("Enter a fieldsize");
-	if (!$defstep) createCtfEstimateForm("Enter a search step");
-	if ($resmin<50) createCtfEstimateForm("Minimum resolution is too high");
-	if (($resmax>50)||(!$resmax)) createCtfEstimateForm("Maximum resolution is too low");
+	if (!$fieldsize) createCtfFindForm("Enter a fieldsize");
+	if (!$defstep) createCtfFindForm("Enter a search step");
+	if ($resmin<50) createCtfFindForm("Minimum resolution is too high");
+	if (($resmax>50)||(!$resmax)) createCtfFindForm("Maximum resolution is too low");
 	
 	
 	/* *******************
@@ -73,7 +73,7 @@ function runCtfEstimate() {
 
 	$apcommand = parseAppionLoopParams($_POST);
 	if ($apcommand[0] == "<") {
-		createCtfEstimateForm($apcommand);
+		createCtfFindForm($apcommand);
 		exit;
 	}
 	$command .= $apcommand;
@@ -109,20 +109,20 @@ function runCtfEstimate() {
 
 	// if error display them
 	if ($errors)
-		createCtfEstimateForm("<b>ERROR:</b> $errors");
+		createCtfFindForm("<b>ERROR:</b> $errors");
 }
 
 
 /*
 **
 **
-** CtfEstimate FORM
+** CtfFind FORM
 **
 **
 */
 
 // CREATE FORM PAGE
-function createCtfEstimateForm($extra=false) {
+function createCtfFindForm($extra=false) {
 	// check if coming directly from a session
 	$expId = $_GET['expId'];
 	if ($expId) {
@@ -163,10 +163,10 @@ function createCtfEstimateForm($extra=false) {
 	$sessioninfo=$sessiondata['info'];
 	$presets=$sessiondata['presets'];
 	if (!empty($sessioninfo)) {
-		$sessionpath=getBaseAppionPath($sessioninfo).'/ctf';
+		$sessionpath=getBaseAppionPath($sessioninfo).'/ctf/';
 	}
 	$ctf = new particledata();
-	$lastrunnumber = $ctf->getLastRunNumberForType($sessionId,'ApAceRunData','name'); 
+	$lastrunnumber = $ctf->getLastRunNumberForType($sessionId,'ApAceRunData','name');
 	while (file_exists($sessionpath.$runbase.'run'.($lastrunnumber+1)))
 		$lastrunnumber += 1;
 	$defrunname = ($_POST['runname']) ? $_POST['runname'] : $runbase.'run'.($lastrunnumber+1);
