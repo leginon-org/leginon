@@ -127,6 +127,7 @@ class ApSelectionRunData(Data):
 			('hidden', bool),
 			('path', ApPathData),
 			('session', leginon.leginondata.SessionData),
+			('description', str),
 			('params', ApSelectionParamsData),
 			('dogparams', ApDogParamsData),
 			('manparams', ApManualParamsData),
