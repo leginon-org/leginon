@@ -357,14 +357,11 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 		#ctfq['graph1']     = os.path.join("opimages", self.lastjpg)
 		ctfq['cs']     = self.params['cs']
 
-		ctfvaluelist = ('defocus1','defocus2','defocusinit','angle_astigmatism',
-			'amplitude_contrast','cross_correlation','confidence', 'confidence_d',
-			'graph1', 'graph2',)
-		if self.params['ctftilt'] is True:
-			ctfvaluelist+= ('tilt_angle','tilt_axis_angle')
-		for i in range(len(ctfvaluelist)):
-			key = ctfvaluelist[i]
-			ctfq[ key ] = self.ctfvalues[key]
+		for key in self.ctfvalues.keys():
+			if key in ctfq.keys():
+				ctfq[key] = self.ctfvalues[key]
+			else:
+				apDisplay.printMsg("Skipping ctfvalue key, %s"%(key))
 		ctfq.insert()
 		return True
 
