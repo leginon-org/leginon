@@ -347,6 +347,7 @@ class ApAceRunData(Data):
 		return Data.typemap() + (
 			('aceparams', ApAceParamsData),
 			('ctftilt_params', ApCtfTiltParamsData),
+			('xmipp_ctf_params', ApXmippCtfParamsData),
 			('ace2_params', ApAce2ParamsData),
 			('session', leginon.leginondata.SessionData),
 			('path', ApPathData),
@@ -391,6 +392,14 @@ class ApAce2ParamsData(Data):
 			('zeropass', float),
 		)
 	typemap = classmethod(typemap)
+
+class ApXmippCtfParamsData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('fieldsize', int),
+		)
+	typemap = classmethod(typemap)
+
 
 class ApCtfTiltParamsData(Data):
 	def typemap(cls):
