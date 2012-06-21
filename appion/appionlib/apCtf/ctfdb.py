@@ -238,11 +238,14 @@ def getBestDefocusAndAmpConstForImage(imgdata, msg=False, method=None):
 	return getDefocusAndAmpConstForImage(imgdata, msg=msg, method=method)
 
 #=====================
-def getCtfValueForImage(imgdata, ctf_estimation_runid=None, ctfavg=True, msg=True, method=False):
+def getCtfValueForImage(imgdata, ctf_estimation_runid=None, ctfavg=True, msg=True, method=None):
 	"""
 	takes an image and get the ctf value for that image for the specified ctf estimation run
 	specified methods can be: ace2 or ctffind
 	"""
+	if ctf_estimation_runid is None:
+		apDisplay.printError("This function requires a ctf_estimation_runid")
+
 	### get all ctf values
 	ctfq = appiondata.ApCtfData()
 	ctfq['image'] = imgdata
@@ -298,7 +301,7 @@ def calculateConfidenceScore(ctfdata,ctfavg=True):
 	return conf
 
 #=====================
-def getBestCtfValueForImage(imgdata, ctfavg=True, msg=True, method=False):
+def getBestCtfValueForImage(imgdata, ctfavg=True, msg=True, method=None):
 	"""
 	takes an image and get the best ctfvalues for that image
 	specified methods can be: ace2 or ctffind
