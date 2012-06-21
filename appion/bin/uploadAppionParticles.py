@@ -85,9 +85,12 @@ class UploadParticles(appionScript.AppionScript):
 			cols = sline.split('\t')
 
 			### must have 3 columns
-			if len(cols) != 3:
+			if len(cols) == 4:
+				partid, xcoord, ycoord, filename = cols
+			elif len(cols) == 3:
+				xcoord, ycoord, filename = cols
+			else:
 				continue
-			xcoord, ycoord, filename = cols
 
 			### check to make sure our x,y are integers, if not skip to next line in file
 			try:
@@ -115,6 +118,9 @@ class UploadParticles(appionScript.AppionScript):
 		f.close()
 		apDisplay.printColor("Found %d particles in %d images"%
 			(count, len(imgfilename2peaklist.keys())), "cyan")
+
+		if count == 0:
+			apDisplay.printError("No particles were found")
 
 		return imgfilename2peaklist
 
