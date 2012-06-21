@@ -141,6 +141,11 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 		self.ctfrun = None
 		defocus = imgdata['scope']['defocus']*-1.0e10
 		bestdef = ctfdb.getBestDefocusForImage(imgdata, msg=True)*1.0e10
+		# dstep is the physical detector pixel size
+		dstep = float(imgdata['camera']['pixel size']['x'])
+		mpixelsize = apDatabase.getPixelSize(imgdata)*1e-10
+		xmag = dstep / mpixelsize
+		print xmag, dstep, mpixelsize
 		inputparams = {
 			'orig': os.path.join(imgdata['session']['image path'], imgdata['filename']+".mrc"),
 			'input': apDisplay.short(imgdata['filename'])+".mrc",
@@ -149,8 +154,8 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 			'cs': self.params['cs'],
 			'kv': imgdata['scope']['high tension']/1000.0,
 			'ampcnst': self.params['amp'+self.params['medium']],
-			'mag': float(imgdata['scope']['magnification']),
-			'dstep': apDatabase.getPixelSize(imgdata)*imgdata['scope']['magnification']/10000.0,
+			'xmag': xmag,
+			'dstep': dstep*1e6,
 			'pixavg': self.params['bin'],
 
 			'box': self.params['fieldsize'],
@@ -175,7 +180,7 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 			str(inputparams['cs'])+","
 			+ str(inputparams['kv'])+","
 			+ str(inputparams['ampcnst'])+","
-			+ str(inputparams['mag'])+","
+			+ str(inputparams['xmag'])+","
 			+ str(inputparams['dstep'])+","
 			+ str(inputparams['pixavg'])+"\n")
 		line4cmd = (
@@ -398,9 +403,9 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 	def checkConflicts(self):
 		if not (self.params['medium'] == 'carbon' or self.params['medium'] == 'ice'):
 			apDisplay.printError("medium can only be 'carbon' or 'ice'")
-		if self.params['resmin'] < 50.0:
+		if self.params['resmin'] < 20.0:
 			apDisplay.printError("Please choose a lower resolution for resmin")
-		if self.params['resmax'] > 50.0:
+		if self.params['resmax'] > 15.0 or self.params['resmax'] > self.params['resmin']:
 			apDisplay.printError("Please choose a higher resolution for resmax")
 		if self.params['defstep'] < 1.0 or self.params['defstep'] > 10000.0:
 			apDisplay.printError("Please keep the defstep between 1 & 10000 Angstroms")
