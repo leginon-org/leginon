@@ -11,7 +11,7 @@ from pyami import ellipse
 from appionlib.apCtf import ctfdb
 from appionlib import apDatabase
 from appionlib import apDisplay
-from appionlib import lowess
+#from appionlib import lowess
 from appionlib.apImage import imagefile
 from appionlib.apImage import imagefilter
 from matplotlib import use
