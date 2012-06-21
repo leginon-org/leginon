@@ -108,7 +108,6 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 		inputstr += ("defocusU=%d\n"%(-abs(ctfvalue['defocus1'])*1.0e10))
 		inputstr += ("defocusV=%d\n"%(-abs(ctfvalue['defocus2'])*1.0e10))
 		inputstr += ("Q0=%d\n"%(-ctfvalue['amplitude_contrast']))
-
 		inputstr += ("\n")
 
 		### open and write to input parameter file
