@@ -11,7 +11,7 @@ from appionlib import apPrimeFactor
 from appionlib import apDisplay
 from appionlib.apImage import imagefile
 from appionlib.apImage import imagefilter
-from appionlib import lowess
+#from appionlib import lowess
 
 debug = False
 
