@@ -1,6 +1,6 @@
 #!/bin/sh
 
-echo "************** INC files ************** "
+echo "*************** INC files ************** "
 ls `find . -name '*.inc' -type f` | xargs -ir php -l r
 
 sleep 5;
