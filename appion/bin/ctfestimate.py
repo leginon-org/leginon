@@ -139,8 +139,8 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 
 		#get Defocus in Angstroms
 		self.ctfrun = None
-		defocus = imgdata['scope']['defocus']*-1.0e10
-		bestdef = ctfdb.getBestDefocusForImage(imgdata, msg=True)*1.0e10
+		defocus = abs(imgdata['scope']['defocus']*-1.0e10)
+		bestdef = abs(ctfdb.getBestDefocusForImage(imgdata, msg=True)*1.0e10)
 		# dstep is the physical detector pixel size
 		dstep = float(imgdata['camera']['pixel size']['x'])
 		mpixelsize = apDatabase.getPixelSize(imgdata)*1e-10
@@ -166,7 +166,12 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 		}
 		defrange = self.params['defstep'] * self.params['numstep'] ## do 25 steps in either direction
 		inputparams['defmin']= round(bestdef-defrange, 1) #in meters
+		if inputparams['defmin'] < 0:
+			apDisplay.printWarning("Defocus minimum is less than zero")
+			inputparams['defmin'] = inputparams['defstep']
 		inputparams['defmax']= round(bestdef+defrange, 1) #in meters
+		apDisplay.printColor("Defocus search range: %.2f um to %.2f um"
+			%(inputparams['defmin'], inputparams['defmax']), "cyan")
 		### create local link to image
 		if not os.path.exists(inputparams['input']):
 			cmd = "ln -s "+inputparams['orig']+" "+inputparams['input']+"\n"
