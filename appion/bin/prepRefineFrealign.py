@@ -82,6 +82,8 @@ class FrealignPrep3DRefinement(apPrepRefine.Prep3DRefinement):
 			self.params['defocpair'] = True
 		else:
 			self.params['defocpair'] = False
+		if self.params['paramonly'] is True:
+			return self.stack['file']
 		if not self.stackparamdata['phaseFlipped']:
 			# non-ctf-corrected stack can use proc2d to prepare
 			self.no_ctf_correction = True
