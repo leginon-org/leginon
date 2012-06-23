@@ -42,6 +42,7 @@ class FrealignPrep3DRefinement(apPrepRefine.Prep3DRefinement):
 
 	def setRefineMethod(self):
 		self.refinemethod = 'frealignrecon'
+		self.parentstacks = []
 
 	def checkPackageConflicts(self):
 		if len(self.modelids) != 1:
@@ -56,9 +57,20 @@ class FrealignPrep3DRefinement(apPrepRefine.Prep3DRefinement):
 		extname = 'mrc'
 		return extname
 
-	def getStackRunParams(self):
+	def getOriginalStackMadeByMakeStack(self):
+		if self.parentstacks:
+			return self.parentstacks[-1]
 		stackdata = self.stack['data']
+		#Handle Substack
+		while stackdata['oldstack']:
+			stackdata = stackdata['oldstack']
+			self.parentstacks.append(stackdata)
+		return stackdata
+
+	def getStackRunParams(self):
+		stackdata = self.getOriginalStackMadeByMakeStack()
 		stackruns = apStack.getStackRunsFromStack(stackdata)
+		# To Do: need to handle combined stack
 		stackrun = stackruns[0]
 		self.stackparamdata = stackrun['stackParams']
 		self.stackrunlogparams = apScriptLog.getScriptParamValuesFromRunname(stackrun['stackRunName'],stackdata['path'],jobdata=None)
@@ -95,8 +107,7 @@ class FrealignPrep3DRefinement(apPrepRefine.Prep3DRefinement):
 				text = '--%s=%.3f' % (key,value)
 		return text
 
-	def ImagicStackToFrealignMrcStack(self):
-		stackfile = self.stack['file']
+	def ImagicStackToFrealignMrcStack(self,stackfile):
 		stackroot = stackfile[:-4]
 		stackbaseroot = os.path.basename(stackfile).split('.')[0]
 		apDisplay.printMsg('converting %s from default IMAGIC stack format to MRC as %s.mrc'% (stackroot,stackbaseroot))
@@ -118,19 +129,26 @@ class FrealignPrep3DRefinement(apPrepRefine.Prep3DRefinement):
 		if self.params['paramonly'] is True:
 			return
 		if self.no_ctf_correction:
-			self.ImagicStackToFrealignMrcStack()
-			self.setFrealignStack()
+			self.ImagicStackToFrealignMrcStack(self.stack['file'])
+			self.setFrealignStack(self.stack['file'][:-4])
 			return
 		# stack need to be remade without ctf correction
 		apDisplay.printWarning('Frealign needs a stack without ctf correction. A new stack is being made....')
 		stackdata = self.stack['data']
+		madestackdata = self.getOriginalStackMadeByMakeStack()
 		stackid = stackdata.dbid
-		stackruns = apStack.getStackRunsFromStack(self.stack['data'])
+		stackruns = apStack.getStackRunsFromStack(madestackdata)
+		# To Do: need to handle combined stack
 		stackrun = stackruns[0]
 		stackpathname = os.path.basename(stackdata['path']['path'])
-		numpart = apStack.getNumberStackParticlesFromId(stackid)
+		totalpart = apStack.getNumberStackParticlesFromId(stackid)
+		if not self.params['last']:
+			numpart = totalpart
+		else:
+			numpart = min(self.params['last'],totalpart)
 		newstackrunname = self.params['runname']
 		newstackrundir = self.params['rundir']
+		newstackimagicfile = os.path.join(newstackrundir,'start.hed')
 		# use first particle image to get presetname
 		oneparticle = apStack.getOneParticleFromStackId(stackid, particlenumber=1)
 		preset =oneparticle['particle']['image']['preset']
@@ -140,11 +158,12 @@ class FrealignPrep3DRefinement(apPrepRefine.Prep3DRefinement):
 			presetname = 'manual'
 		# use first stack run to get parameters
 		paramdata = stackrun['stackParams']
+		# binning is combination of the original binning of the stack and the preparation binnning
 		bin = paramdata['bin']*self.params['bin']
 		unbinnedboxsize = self.stack['boxsize']*paramdata['bin']
 		lowpasstext = self.setArgText('lowpass',(self.params['lowpass'],paramdata['lowpass']),False)
 		highpasstext = self.setArgText('highpass',(self.params['highpass'],paramdata['highpass']),True)
-		partlimittext = self.setArgText('partlimit',(numpart,self.params['last']),False)
+		partlimittext = self.setArgText('partlimit',(numpart,),False)
 		xmipp_normtext = self.setArgText('xmipp-normalize',(paramdata['xmipp-norm'],),True)
 		sessionid = int(self.params['expid'])
 		sessiondata = apDatabase.getSessionDataFromSessionId(sessionid)
@@ -161,15 +180,15 @@ class FrealignPrep3DRefinement(apPrepRefine.Prep3DRefinement):
 		else:
 			defoctext = ''
 		cmd = '''
-makestack2.py --single=start.hed --fromstackid=%d %s %s %s %s %s --no-invert --normalized %s --boxsize=%d --bin=%d --description="frealign refinestack based on %s(id=%d)" --projectid=%d --preset=%s --runname=%s --rundir=%s --no-wait --no-commit --no-continue --session=%s --expId=%d --jobtype=makestack2
-		''' % (stackid,lowpasstext,highpasstext,partlimittext,reversetext,defoctext,xmipp_normtext,unbinnedboxsize,bin,stackpathname,stackid,projectid,presetname,newstackrunname,newstackrundir,sessionname,sessionid)
+makestack2.py --single=%s --fromstackid=%d %s %s %s %s %s --no-invert --normalized %s --boxsize=%d --bin=%d --description="frealign refinestack based on %s(id=%d)" --projectid=%d --preset=%s --runname=%s --rundir=%s --no-wait --no-commit --no-continue --session=%s --expId=%d --jobtype=makestack2
+		''' % (os.path.basename(newstackimagicfile),stackid,lowpasstext,highpasstext,partlimittext,reversetext,defoctext,xmipp_normtext,unbinnedboxsize,bin,stackpathname,stackid,projectid,presetname,newstackrunname,newstackrundir,sessionname,sessionid)
 		logfilepath = os.path.join(newstackrundir,'frealignstackrun.log')
 		returncode = self.runAppionScriptInSubprocess(cmd,logfilepath)
-
 		if returncode > 0:
 			apDisplay.printError('Error in Frealign specific stack making')
-		self.ImagicStackToFrealignMrcStack()
-		self.setFrealignStack()
+
+		self.ImagicStackToFrealignMrcStack(newstackimagicfile)
+		self.setFrealignStack(newstackimagicfile[:-4])
 		# use the same complex equation as in eman clip
 		clipsize = self.calcClipSize(self.stack['boxsize'],self.params['bin'])
 		self.stack['boxsize'] = clipsize / self.params['bin']
@@ -179,8 +198,8 @@ makestack2.py --single=start.hed --fromstackid=%d %s %s %s %s %s --no-invert --n
 		for rmfile in rmfiles:
 			apFile.removeFile(rmfile)
 
-	def setFrealignStack(self):
-		self.stack['file'] = os.path.join(self.params['rundir'],'start.mrc')
+	def setFrealignStack(self,stackroot):
+		self.stack['file'] = stackroot+'.mrc'
 		self.stack['format'] = 'frealign'
 		self.stack['bin'] = self.params['bin']
 
