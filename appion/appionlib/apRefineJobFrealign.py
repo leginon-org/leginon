@@ -54,8 +54,7 @@ class FrealignRefineJob(apRefineJob.RefineJob):
 				# ffilt is set globally
 				{'name':"fbfact", 'default':False,
 					 'help':"correct B-factor in reconstruction"},
-				#fmatch is always False
-					#{'name':'fmatch', 'default':False, 'help':'make matching projection for each particle'},
+				{'name':'fmatch', 'default':False, 'help':'make matching projection for each particle'},
 				#ifsc is always 0
 					#{'name':'ifsc','default': 0, 'help':'memory saving function (0:disable)'},
 				#fstat is always False
@@ -142,7 +141,6 @@ class FrealignRefineJob(apRefineJob.RefineJob):
 		self.params['cform'] = 'M'
 		self.params['fastig'] = False
 		self.params['iewald'] = 0
-		self.params['fmatch'] = False
 		self.params['ifsc'] = 0
 		self.params['fstat'] = False
 		self.params['xstd'] = 0.0
@@ -187,7 +185,7 @@ class FrealignRefineJob(apRefineJob.RefineJob):
 		'''
 		hedral symmetry key is of possible name, value is that of this package
 		'''
-		frealign_hedral_symm_names = {'oct':'O','icos':'I'}
+		frealign_hedral_symm_names = {'oct':'O','icos (2 3 5) viper/3dem':'I','icos (2 5 3) crowther':'I2'}
 		inputname = inputname.lower()
 		if inputname[0] in ('c','d'):
 			bits = inputname.split(' ')
@@ -400,13 +398,16 @@ class FrealignRefineJob(apRefineJob.RefineJob):
 			masterfile_name = 'mpi.iter%03d.run.sh' % (iter)
 			mpi_refine = self.setupMPIRun(refine_files,self.nproc,iterpath,masterfile_name)
 			tasks = self.addToTasks(tasks,mpi_refine,self.mem,self.ppn)
+			tasks = self.logTaskStatus(tasks,'refine','recon/iter%03d/proc%03d/frealign.proc%03d.out' % (iter,self.nproc,self.nproc),iter)
 		if not self.params['refineonly']:
 			# combine and recon parallelized only on one node
 			recon_file = self.writeReconShell(iter,inputlines_template,iterpath,self.ppn)	
 			tasks = self.addToTasks(tasks,recon_file,self.recon_mem,self.ppn)
 			tasks = self.addToTasks(tasks,'cd %s' % iterpath)
 			tasks = self.addToTasks(tasks,'getRes.pl %s %d %.3f >> ../resolution.txt' % (iter,self.params['boxsize'],self.params['apix']))
+			tasks = self.logTaskStatus(tasks,'eotest','resolution.txt',iter)
 			tasks = self.addToTasks(tasks,'cd %s' % self.params['recondir'])
+			tasks = self.logTaskStatus(tasks,'recon','recon/iter%03d/proc%03d/frealign.proc%03d.out' % (iter,self.nproc,self.nproc),iter)
 		return tasks
 
 if __name__ == '__main__':

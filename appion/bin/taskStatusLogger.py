@@ -18,8 +18,8 @@ class TaskStatusLogger(basicScript.BasicScriptInstanceRun):
 			from appionlib import apTaskLogEman
 			return apTaskLogEman.EmanTaskLog(command)
 		elif "frealignrecon" == jobtype:
-			from appionlib import apTaskLog
-			return apTaskLog.TaskLog(command)
+			from appionlib import apTaskLogFrealign
+			return apTaskLogFrealign.FrealignTaskLog(command)
 		elif "xmipprecon" == jobtype:
 			from appionlib import apTaskLog
 			return apTaskLog.TaskLog(command)
