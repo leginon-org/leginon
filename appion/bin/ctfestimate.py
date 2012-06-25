@@ -359,7 +359,7 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 		ctfq = appiondata.ApCtfData()
 		ctfq['acerun'] = self.ctfrun
 		ctfq['image']      = imgdata
-		#ctfq['graph1']     = os.path.join("opimages", self.lastjpg)
+		ctfq['graph3']     = os.path.join("opimages", self.lastjpg)
 		ctfq['cs']     = self.params['cs']
 
 		for key in self.ctfvalues.keys():

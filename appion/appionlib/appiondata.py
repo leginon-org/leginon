@@ -432,6 +432,7 @@ class ApCtfData(Data):
 			('confidence_d', float),
 			('graph1', str), #2d powerspectra
 			('graph2', str), #1d plot showing fit
+			('graph3', str), #raw native plot from software 
 			('cross_correlation', float), #direct from ctffind
 			('ctfvalues_file', str), #used for ace2correct
 			('mat_file', str), #from ACE1
