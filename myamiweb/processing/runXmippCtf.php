@@ -37,7 +37,9 @@ function runCtfEstimate() {
 	
 	// parse params
 	$fieldsize=$_POST['fieldsize'];
-	
+	$resmin=$_POST['resmin'];
+	$resmax=$_POST['resmax'];
+
 	/* *******************
 	PART 2: Check for conflicts, if there is an error display the form again
 	******************** */
@@ -48,7 +50,13 @@ function runCtfEstimate() {
 	}
 	// Error checking:
 	if (!$fieldsize) createCtfEstimateForm("Enter a fieldsize");
-	
+	if (!$resmin) createCtfFindForm("Enter a minimum resolution");
+	//minimum resolution for 4k image with 1.5 Apix is: 1.5*4096 = 6144, go with 5000
+	if ($resmin>5000) createCtfFindForm("Minimum resolution is too high, maximum of 5000&Aring;");
+	if ($resmin<20) createCtfFindForm("Minimum resolution is too low, minimum of 20&Aring;");
+	if (!$resmax) createCtfFindForm("Enter a maxmimum resolution");
+	if ($resmax>15) createCtfFindForm("Maximum resolution is too high, maximum of 15&Aring;");
+	if ($resmax<3) createCtfFindForm("Maximum resolution is too low, minimum of 3&Aring;");
 	
 	/* *******************
 	PART 3: Create program command
@@ -63,6 +71,8 @@ function runCtfEstimate() {
 	$command .= $apcommand;
 
 	$command.="--fieldsize=$fieldsize ";
+	$command.="--resmin=$resmin ";
+	$command.="--resmax=$resmax ";
 
 	/* *******************
 	PART 4: Create header info, i.e., references
@@ -132,6 +142,8 @@ function createCtfEstimateForm($extra=false) {
 
 	// set defaults and check posted values
 	$form_fieldsz = ($_POST['fieldsize']) ? $_POST['fieldsize'] : 512;
+	$form_resmin = ($_POST['resmin']) ? $_POST['resmin'] : '100';
+	$form_resmax = ($_POST['resmax']) ? $_POST['resmax'] : '10';
 
 	echo"
 	<TABLE BORDER=0 CLASS=tableborder CELLPADDING=15>
@@ -146,6 +158,13 @@ function createCtfEstimateForm($extra=false) {
 	echo "<b>$progname Values</b><br/>\n";
 	echo "<INPUT TYPE='text' NAME='fieldsize' VALUE='$form_fieldsz' size='6'>\n";
 	echo docpop('field','Field Size');
+	echo "<br />\n";
+	echo "<input type='text' name='resmin' value='$form_resmin' size='6'>\n";
+	echo docpop('resmin','Minimum Resolution');
+	echo " (&Aring;ngstroms)<br />\n";
+	echo "<input type='text' name='resmax' value='$form_resmax' size='6'>\n";
+	echo docpop('resmax','Maximum Resolution');
+	echo " (&Aring;ngstroms)<br />\n";
 	echo "<br />\n";
 
 	echo"

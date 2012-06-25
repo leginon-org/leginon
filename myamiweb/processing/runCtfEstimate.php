@@ -211,7 +211,7 @@ function createCtfFindForm($extra=false) {
 	$form_ampc = ($_POST['ampcarbon']) ? $_POST['ampcarbon'] : '0.15';
 	$form_ampi = ($_POST['ampice']) ? $_POST['ampice'] : '0.07';
 	$form_resmin = ($_POST['resmin']) ? $_POST['resmin'] : '100';
-	$form_resmax = ($_POST['resmax']) ? $_POST['resmax'] : '8';
+	$form_resmax = ($_POST['resmax']) ? $_POST['resmax'] : '10';
 
 	$form_defstep = ($_POST['defstep']) ? $_POST['defstep'] : '5000';
 	$form_numstep = ($_POST['numstep']) ? $_POST['numstep'] : '50';
