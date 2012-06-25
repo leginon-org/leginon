@@ -616,7 +616,7 @@ class view {
 		$this->ptclsel = "0";
 		$this->jsacemethod= "1";
 		$this->jsacerun= "-1";
-		$this->jsacepar= "1";
+		$this->jsacepar= "3";
 		$this->jsaceopt= "2";
 		$this->jstagpar1 = "1";
 		$this->jstagpar2 = "1";

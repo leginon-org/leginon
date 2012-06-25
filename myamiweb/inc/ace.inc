@@ -47,8 +47,9 @@ function getAceViewerForm($name,$aceruns) {
 	$aceform.='<br/>';
 	$aceform.='Show ';
 	$aceform.='<select id="'.$name.'aceparam">';
-	$aceform.="<option value='1'>2D fft fit</option>";
-	$aceform.="<option value='2'>1D graph</option>";
+	$aceform.="<option value='3'>package diagnosis</option>";
+	$aceform.="<option value='1'>2D power spec overlay</option>";
+	$aceform.="<option value='2'>1D component fit graph</option>";
 	$aceform.='</select>';
 	$aceform.='<hr>';
 	$aceform.='For ACE2 1D graph only ';
