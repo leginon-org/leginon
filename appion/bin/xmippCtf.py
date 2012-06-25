@@ -70,7 +70,12 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 		spiderimage = apDisplay.short(imgdata['filename'])+".spi"
 		spider.write(imgdata['image'], spiderimage)
 
-
+		### high tension in kiloVolts
+		kvolts = imgdata['scope']['high tension']/1000.0
+		### spherical aberration in millimeters
+		cs = apInstrument.getCsValueFromSession(self.getSessionData())
+		### pixel size in Angstroms
+		apix = apDatabase.getPixelSize(imgdata)
 
 		### write image name
 		inputstr = ""
@@ -85,14 +90,24 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 		#inputstr += ("particle_horizontal=%d\n"%(128))
 		inputstr += ("show_optimization=yes\n")
 		inputstr += ("micrograph_averaging=yes\n")
-		inputstr += ("periodogram=yes\n")
 
-		### high tension in kiloVolts
-		kvolts = imgdata['scope']['high tension']/1000.0
-		### spherical aberration in millimeters
-		cs = apInstrument.getCsValueFromSession(self.getSessionData())
-		### pixel size in Angstroms
-		apix = apDatabase.getPixelSize(imgdata)
+		""" Give a value in digital frequency (i.e. between 0.0 and 0.5)
+			 This cut-off prevents the typically peak at the center of the PSD to interfere with CTF estimation.
+			 The default value is 0.05, but for micrographs with a very fine sampling this may be lowered towards 0.0
+		"""
+		#minres = apix/minfreq => minfreq = apix/minres
+		minfreq = apix/self.params['resmin']
+		inputstr += ("min_freq=%.3f\n"%(minfreq))
+
+		""" Give a value in digital frequency (i.e. between 0.0 and 0.5)
+			 This cut-off prevents high-resolution terms where only noise exists to interfere with CTF estimation.
+			 The default value is 0.35, but it should be increased for micrographs with signals extending beyond this value
+		"""
+		#maxres = apix/maxfreq => maxfreq = apix/maxres
+		maxfreq = apix/self.params['resmax']
+		inputstr += ("max_freq=%.3f\n"%(maxfreq))
+
+
 
 
 		### CTF input parameters from database
@@ -269,10 +284,10 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 	def setupParserOptions(self):
 		self.parser.add_option("--fieldsize", dest="fieldsize", type="int", default=512,
 			help="fieldsize, default=512", metavar="#")
-		#self.parser.add_option("--nominal", dest="nominal",
-		#	help="nominal")
-		#self.parser.add_option("--newnominal", dest="newnominal", default=False,
-		#	action="store_true", help="newnominal")
+		self.parser.add_option("--resmin", dest="resmin", type="float", default=100.0,
+			help="Low resolution end of data to be fitted", metavar="#")
+		self.parser.add_option("--resmax", dest="resmax", type="float", default=15.0,
+			help="High resolution end of data to be fitted", metavar="#")
 
 	#======================
 	def checkConflicts(self):
