@@ -434,7 +434,8 @@ class CtfDisplay(object):
 			minor = radii2[i]
 			if self.debug is True: 
 				print "major=%.1f, minor=%.1f, angle=%.1f"%(major, minor, self.angle)
-			if minor > powerspec.shape[0]/math.sqrt(2):
+			if minor > powerspec.shape[0]/2:
+				# this limits how far we draw out the ellipses sqrt(3) to corner, just 2 inside line
 				continue
 			width = int(math.ceil(math.sqrt(numzeros - i)))
 
