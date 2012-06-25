@@ -386,9 +386,9 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 			help="nominal")
 		self.parser.add_option("--newnominal", dest="newnominal", default=False,
 			action="store_true", help="newnominal")
-		self.parser.add_option("--resmin", dest="resmin", type="float", default=400.0,
+		self.parser.add_option("--resmin", dest="resmin", type="float", default=100.0,
 			help="Low resolution end of data to be fitted", metavar="#")
-		self.parser.add_option("--resmax", dest="resmax", type="float", default=8.0,
+		self.parser.add_option("--resmax", dest="resmax", type="float", default=15.0,
 			help="High resolution end of data to be fitted", metavar="#")
 		self.parser.add_option("--defstep", dest="defstep", type="float", default=5000.0,
 			help="Step width for grid search in Angstroms", metavar="#")
