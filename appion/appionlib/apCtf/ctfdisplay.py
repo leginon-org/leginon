@@ -386,15 +386,15 @@ class CtfDisplay(object):
 			print "trim pixel", self.trimapix
 			print "scale pixel", self.scaleapix
 
-		numzeros = 10
+		numzeros = 14
 		numcols = powerspec.shape[0]/2
 		#numcols = self.origimageshape[0]/(2*self.prebin)*scale #**2
 		#print "numcols=", numcols
 
 		radii1 = ctftools.getCtfExtrema(self.defocus1, self.scaleapix*1e-10, 
-			self.cs, self.volts, self.ampconst, cols=numcols, numzeros=numzeros)
+			self.cs, self.volts, self.ampconst, cols=numcols, numzeros=numzeros, zerotype="valleys")
 		radii2 = ctftools.getCtfExtrema(self.defocus2, self.scaleapix*1e-10, 
-			self.cs, self.volts, self.ampconst, cols=numcols, numzeros=numzeros)
+			self.cs, self.volts, self.ampconst, cols=numcols, numzeros=numzeros, zerotype="valleys")
 
 		firstpeak = radii2[0]
 
@@ -415,7 +415,7 @@ class CtfDisplay(object):
 			#print x,y
 			xy = (x+center[0], y+center[1], -x+center[0], -y+center[1])
 			#print xy
-			draw.line(xy, fill="#f23d3d", width=20)
+			draw.line(xy, fill="#f23d3d", width=10)
 		elif perdiff > 1e-6:
 			#print self.angle, radii2[0], center
 			x = -1*firstpeak*math.cos(math.radians(self.angle))
@@ -426,16 +426,17 @@ class CtfDisplay(object):
 			draw.line(xy, fill="#f23d3d", width=2)
 
 		foundzeros = min(len(radii1), len(radii2))
-		color="#3d3dd2"
+		#color="#3d3dd2" #blue
+		color="#ffd700" #gold
 		for i in range(foundzeros):
 			# because |def1| < |def2| ==> firstzero1 > firstzero2
 			major = radii1[i]
 			minor = radii2[i]
 			if self.debug is True: 
 				print "major=%.1f, minor=%.1f, angle=%.1f"%(major, minor, self.angle)
-			if minor > powerspec.shape[0]/math.sqrt(3):
+			if minor > powerspec.shape[0]/math.sqrt(2):
 				continue
-			width = int(math.ceil(2*math.sqrt(numzeros - i)))
+			width = int(math.ceil(math.sqrt(numzeros - i)))
 
 			### determine number of points to use to draw ellipse, minimize distance btw points
 			#isoceles triangle, b: radius ot CTF ring, a: distance btw points
@@ -444,9 +445,9 @@ class CtfDisplay(object):
 			#theta = 2 * asin (a/2b)
 			#numpoints = 2 pi / theta
 			## define a to be 5 pixels
-			a = 15
+			a = 10
 			theta = 2.0 * math.asin (a/(2.0*major))
-			skipfactor = 2
+			skipfactor = 3
 			numpoints = int(math.ceil(2.0*math.pi/theta/skipfactor))*skipfactor + 1
 			#print "numpoints", numpoints
 
@@ -499,7 +500,6 @@ class CtfDisplay(object):
 			draw.line(inxy, fill="black", width=2)
 			outxy = (outx[k], outy[k], outx[k+1], outy[k+1])
 			draw.line(outxy, fill="white", width=2)
-
 
 		### add text
 		fontpath = "/usr/share/fonts/liberation/LiberationSans-Regular.ttf"
@@ -658,11 +658,11 @@ if __name__ == "__main__":
 	### CNV data
 	#imagelist = glob.glob("/data01/leginon/10apr19a/rawdata/10apr19a_10apr19a_*en_1.mrc")
 	### Pick-wei images with lots of rings
-	#imagelist = glob.glob("/data01/leginon/09sep20a/rawdata/09*en.mrc")
+	imagelist = glob.glob("/data01/leginon/09sep20a/rawdata/09*en.mrc")
 	### Something else, ice data
 	#imagelist = glob.glob("/data01/leginon/09feb20d/rawdata/09*en.mrc")
 	### images of Hassan with 1.45/1.65 astig at various angles
-	imagelist = glob.glob("/data01/leginon/12jun12a/rawdata/12jun12a_ctf_image_ang*.mrc")
+	#imagelist = glob.glob("/data01/leginon/12jun12a/rawdata/12jun12a_ctf_image_ang*.mrc")
 	#=====================
 
 	print "# of images", len(imagelist)
