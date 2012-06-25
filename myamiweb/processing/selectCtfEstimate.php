@@ -25,7 +25,9 @@ echo "  <h2>CTF Estimation Procedures</h2>\n";
 echo "  <h4>\n";
 echo "    During CTF estimation the goal is to fit the \n"
 	."<a href='http://en.wikipedia.org/wiki/Contrast_transfer_function'>\n"
-	."standard CTF equation</a> to the power spectra of the electron micrographs\n";
+	."standard CTF equation</a> "
+	."<font size='-2'>(wikipedia)&nbsp;<img src='img/external.png'></font>\n"
+	."to the power spectra of the electron micrographs\n";
 echo "  </h4>\n";
 echo "</td></tr>\n";
 echo "</table>\n";
@@ -41,8 +43,8 @@ echo "<table border='1' class='tableborder' width='640'>\n";
 echo "<tr><td width='100' align='center'>\n";
 echo "  <img src='img/appionlogo.jpg' width='64'>\n";
 echo "</td><td>\n";
-echo "  <h3><a href='runAce2.php?expId=25'>ACE 2</a></h3>\n";
-echo " <p> ACE 2 is re-implementation of ACE1, but written in objective-C "
+echo "  <h3><a href='runAce2.php?expId=$expId'>ACE 2</a></h3>\n";
+echo " <p> ACE 2 is an unpublished re-implementation of ACE1, but written in objective-C "
 	."ACE2 make several improvements over ACE1 including a several speed "
 	."enhancements and a robust astigmatism estimate.<br/> "
 	."<i>Note:</i> It was designed "
@@ -56,10 +58,10 @@ echo "</td></tr>\n";
 echo "<tr><td width='100' align='center'>\n";
 echo "  <img src='img/grigorieff_sq_logo.png' width='96'>\n";
 echo "</td><td>\n";
-echo "  <h3><a href='runCtfEstimate.php?expId=25'>CTFFIND and CTFTILT</a></h3>\n";
-echo " <p>CTFFIND and CTFTILT use a robust grid search algorithm to find the optimal "
+echo "  <h3><a href='runCtfEstimate.php?expId=$expId'>CTFFIND v3</a></h3>\n";
+echo " <p>CTFFIND uses a robust grid search algorithm to find the optimal "
 	."CTF parameters. Please see the <a href='http://emlab.rose2.brandeis.edu/ctf'> "
-	."Grigorieff lab website</a><img src='img/external.png'> for more information. "
+	."Grigorieff lab website</a>&nbsp;<img src='img/external.png'> for more information. "
 	."</p>\n";
 echo "</td></tr>\n";
 
@@ -84,21 +86,40 @@ echo "</td></tr>\n";
 /*
 ** Xmipp CTF
 */
+if (!HIDE_FEATURE)
+{
+	echo "<tr><td width='100' align='center'>\n";
+	echo "  <img src='img/xmipp_logo.png' width='64'>\n";
+	echo "</td><td>\n";
+	echo "  <h3><a href='runXmippCtf.php?expId=$expId'>Xmipp CTF</a></h3>\n";
+	echo " <p> It uses the "
+		."<a href='http://xmipp.cnb.csic.es/twiki/bin/view/Xmipp/Ctf_estimate_from_micrograph_v3'>Xmipp Ctf Estimate</a>"
+		."&nbsp;<img src='img/external.png'>"
+		." program to search for the CTF parameters. "
+		."<br/><i>Note:</i> still under development for Appion. "
+		."<br/><i>Note:</i> the published ARMA method is disabled. "
+		."</p>\n";
+	echo "</td></tr>\n";
+}
 
-echo "<tr><td width='100' align='center'>\n";
-echo "  <img src='img/xmipp_logo.png' width='64'>\n";
-echo "</td><td>\n";
-echo "  <h3><a href='runXmippCtf.php?expId=$expId'>Xmipp CTF</a></h3>\n";
-echo " <p> this method builds a hierarchical classification of particles"
-	." It uses the "
-	."<a href='http://xmipp.cnb.csic.es/twiki/bin/view/Xmipp/ClassAverages'>Xmipp cl2d</a>"
-	."&nbsp;<img src='img/external.png'>"
-	." program to perform alignments. "
-	."It is a relatively fast method that aligns and classify the images at the same time. "
-	."<br/><i>Note:</i> still under development for Appion. "
-	."<br/><i>Note:</i> the published ARMA method is disabled. "
-	."</p>\n";
-echo "</td></tr>\n";
+//CTFTilt Estimation works and uploads, but fails alot; there is a warning
+if (!HIDE_FEATURE)
+{
+	$particle = new particledata();
+	$maxangle = $particle->getMaxTiltAngle($sessionId);
+	if ($maxangle > 5) {
+		echo "<tr><td width='100' align='center'>\n";
+		echo "  <img src='img/grigorieff_sq_logo.png' width='96'>\n";
+		echo "</td><td>\n";
+		echo "  <h3><a href='runCtfEstimate.php?expId=$expId&ctftilt=1'>CTFTILT</a></h3>\n";
+		echo " <p>CTFTILT uses the same robust grid search algorithm to find the optimal "
+			."CTF parameters, but also includes estimate of the tilt angle. "
+			."Please see the <a href='http://emlab.rose2.brandeis.edu/ctf'> "
+			."Grigorieff lab website</a><img src='img/external.png'> for more information. "
+			."</p>\n";
+		echo "</td></tr>\n";
+	}
+}
 
 
 echo "</table>\n";
