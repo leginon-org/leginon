@@ -269,67 +269,41 @@ if (is_numeric($expId)) {
 		}
 	}
 
+	/*
+	**
+	** CTF MENU
+	**
+	*/
+
 	$action = "CTF Estimation";
 	// number of CTF runs was determined above and stored in $ctfruns
 
-/*
+	$ace1run = count($subclusterjobs['pyace']['running']);
+	$ace1run = count($subclusterjobs['pyace']['running']);
+	$ace2run = count($subclusterjobs['ace2']['running']);
+	$ace2run += count($subclusterjobs['pyace2']['running']);
+	$ctffindrun = count($subclusterjobs['ctfestimate']['running']);
 
-		// get alignment stats:
-		$alignresults=array();
-		if ($alignstackids=$particle->getAlignStackIds($expId)) {
-			$aligndone = count($alignstackids);
-		}
-		$alignrun = count($subclusterjobs['partalign']['running']);
-		if ($maxlikejobs=$particle->getFinishedMaxLikeJobs($projectId)) {
-			$nmaxlikejobs = count($maxlikejobs);
-		}
-		if ($cl2djobs=$particle->getFinishedCL2DJobs($projectId)) {
-			$ncl2djobs = count($cl2djobs);
-		}	
-		
-		$alignqueue = count($subclusterjobs['partalign']['queued']);
+	// just add up all queued
+	$ctfqueue = count($subclusterjobs['pyace']['queued']);
+	$ctfqueue = count($subclusterjobs['ace2']['queued']);
+	$ctfqueue = count($subclusterjobs['pyace2']['queued']);
+	$ctfqueue = count($subclusterjobs['ctfestimate']['queued']);
 
-		$alignresults[] = ($aligndone==0) ? "" : "<a href='alignlist.php?expId=$sessionId'>$alignruns complete</a>";
-		$alignresults[] = ($alignrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=partalign'>$alignrun running</a>";
-		$alignresults[] = ($nmaxlikejobs==0) ? "" : "<a href='runUploadMaxLike.php?expId=$sessionId'>$nmaxlikejobs ready to upload</a>";
-//		$alignresults[] = ($ncl2djobs==0) ? "" : "<a href='runUploadCL2D.php?expId=$sessionId'>$ncl2djobs ready to upload</a>";
-		$alignresults[] = ($alignqueue==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=partalign'>$alignqueue queued</a>";
-
-		$nruns=array();
-
-		$nruns[] = array(
-			'name'=>"<a href='selectParticleAlignment.php?expId=$sessionId'>Run Alignment</a>",
-			'result'=>$alignresults,
-		);
-*/
-
-		$ace1run = count($subclusterjobs['pyace']['running']);
-		$ace1run = count($subclusterjobs['pyace']['running']);
-		$ace2run = count($subclusterjobs['ace2']['running']);
-		$ace2run += count($subclusterjobs['pyace2']['running']);
-		$ctffindrun = count($subclusterjobs['ctfestimate']['running']);
-
-		// just add up all queued
-		$ctfqueue = count($subclusterjobs['pyace']['queued']);
-		$ctfqueue = count($subclusterjobs['ace2']['queued']);
-		$ctfqueue = count($subclusterjobs['pyace2']['queued']);
-		$ctfqueue = count($subclusterjobs['ctfestimate']['queued']);
-
-		$ctfresults[] = ($ctfq==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=pyace'>$ctfq queued</a>";
+	$ctfresults[] = ($ctfq==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=pyace'>$ctfq queued</a>";
 
 
-		$ctfresults = array();
-		$ctfresults[] = ($ctfruns==0) ? "" : "<a href='ctfreport.php?expId=$sessionId'>$ctfruns complete</a>";
-		$ctfresults[] = ($ace1run==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=pyace'>$ace1run ACE1 running</a>";
-		$ctfresults[] = ($ace2run==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=pyace2'>$ace2run ACE2 running</a>";
-		$ctfresults[] = ($ctffindrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=ctfestimate'>$ctffindrun running</a>";
-		$ctfresults[] = ($ctfqueue==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId'>$ctfqueue queued</a>";
+	$ctfresults = array();
+	$ctfresults[] = ($ctfruns==0) ? "" : "<a href='ctfreport.php?expId=$sessionId'>$ctfruns complete</a>";
+	$ctfresults[] = ($ace1run==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=pyace'>$ace1run ACE1 running</a>";
+	$ctfresults[] = ($ace2run==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=pyace2'>$ace2run ACE2 running</a>";
+	$ctfresults[] = ($ctffindrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=ctfestimate'>$ctffindrun running</a>";
+	$ctfresults[] = ($ctfqueue==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId'>$ctfqueue queued</a>";
 
-
-		$nruns[] = array(
-			'name'=>"<a href='selectCtfEstimate.php?expId=$sessionId'>Estimate the CTF</a>",
-			'result'=>$ctfresults,
-		);
+	$nruns[] = array(
+		'name'=>"<a href='selectCtfEstimate.php?expId=$sessionId'>Estimate the CTF</a>",
+		'result'=>$ctfresults,
+	);
 	
 	if ($loopruns > 0) {
 		$nruns[] = array(
@@ -342,6 +316,12 @@ if (is_numeric($expId)) {
 		'result' => array($totresult),
 		'newrun' => array($nruns, $celloption),
 	);
+
+	/*
+	**
+	** STACK MENU
+	**
+	*/
 
 	// display the stack menu only if have particles picked
 	if ($totalprtlruns > 0) {
