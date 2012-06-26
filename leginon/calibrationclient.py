@@ -394,7 +394,7 @@ class DoseCalibrationClient(CalibrationClient):
 		exposure_time = imagedata['camera']['exposure time'] / 1000.0
 		binningx = imagedata['camera']['binning']['x']
 		binningy = imagedata['camera']['binning']['y']
-		binmult = imagdata['camera']['binned multiplier']
+		binmult = imagedata['camera']['binned multiplier']
 		mean_counts = binmult * arraystats.mean(imagedata['image']) / (binningx*binningy)
 		return self.sensitivity(dose_rate, camera_mag, camera_pixel_size,
 														exposure_time, mean_counts)
