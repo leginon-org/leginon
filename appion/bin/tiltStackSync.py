@@ -174,7 +174,7 @@ class tiltStackSync(appionScript.AppionScript):
 			return
 
 		# Produce new stacks
-		oldstack = apStack.getOnlyStackData(self.params['stackid'], msg=False)
+		oldstack = apStack.getOnlyStackData(self.params['notstackid'], msg=False)
 		notstack = appiondata.ApStackData()
 		notstack['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
 		notstack['name'] = self.notstackdata['name']
