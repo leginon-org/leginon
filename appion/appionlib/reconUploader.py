@@ -21,6 +21,7 @@ from appionlib import apSymmetry
 from appionlib import apXmipp
 from appionlib import apChimera
 from appionlib import apProject
+from appionlib import apFile
 
 #=====================
 #=====================
@@ -279,37 +280,8 @@ class generalReconUploader(appionScript.AppionScript):
 			apDisplay.printError("no particle text file found; this is a requirement for the upload to insert " \
 				"Euler angles, shifts, etc. Make sure that you have a particle_data_%s_it%.3d_vol%.3d.txt file with" \
 				"all parameters" % (self.params['timestamp'], iteration, reference_number))
+		return readParticleFileByFilePath(pdataf)
 		
-		f = open(pdataf,'r')
-		finfo = f.readlines()
-		f.close()
-		for i, info in enumerate(finfo):
-			if info[0] == "#":
-				pass
-			else:
-				finfo = finfo[i:]
-				break
-		
-		apDisplay.printMsg("reading particle parameters in file: %s" % os.path.basename(pdataf))
-		particledata = {}			
-		for j, info in enumerate(finfo):
-			alldata = {}			
-			data = info.strip().split()
-			alldata['partnum'] = int(float(data[0]))
-			alldata['phi'] = float(data[1])
-			alldata['theta'] = float(data[2])
-			alldata['omega'] = float(data[3])
-			alldata['shiftx'] = float(data[4])
-			alldata['shifty'] = float(data[5])
-			alldata['mirror'] = bool(data[6])
-			alldata['refnum'] = float(data[7])
-			alldata['clsnum'] = float(data[8])
-			alldata['quality'] = float(data[9])
-			alldata['refine_keep'] = bool(float(data[10]))
-			alldata['postRefine_keep'] = bool(float(data[11]))
-			particledata[j] = alldata
-
-		return particledata
 	
 	#=====================
 	def verifyUploadIterations(self, lastiter=float("inf")):
@@ -657,4 +629,36 @@ class generalReconUploader(appionScript.AppionScript):
 		return refine_complete
 		
 	
+# general function that does not need database connection
+def readParticleFileByFilePath(pdatafile):
+	f = open(pdatafilt,'r')
+	finfo = f.readlines()
+	f.close()
+	for i, info in enumerate(finfo):
+		if info[0] == "#":
+			pass
+		else:
+			finfo = finfo[i:]
+			break
+	
+	apDisplay.printMsg("reading particle parameters in file: %s" % os.path.basename(pdataf))
+	particledata = {}			
+	for j, info in enumerate(finfo):
+		alldata = {}			
+		data = info.strip().split()
+		alldata['partnum'] = int(float(data[0]))
+		alldata['phi'] = float(data[1])
+		alldata['theta'] = float(data[2])
+		alldata['omega'] = float(data[3])
+		alldata['shiftx'] = float(data[4])
+		alldata['shifty'] = float(data[5])
+		alldata['mirror'] = bool(data[6])
+		alldata['refnum'] = float(data[7])
+		alldata['clsnum'] = float(data[8])
+		alldata['quality'] = float(data[9])
+		alldata['refine_keep'] = bool(float(data[10]))
+		alldata['postRefine_keep'] = bool(float(data[11]))
+		particledata[j] = alldata
+	return particledata
+
 
