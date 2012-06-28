@@ -631,7 +631,7 @@ class generalReconUploader(appionScript.AppionScript):
 	
 # general function that does not need database connection
 def readParticleFileByFilePath(pdatafile):
-	f = open(pdatafilt,'r')
+	f = open(pdatafile,'r')
 	finfo = f.readlines()
 	f.close()
 	for i, info in enumerate(finfo):
@@ -641,7 +641,7 @@ def readParticleFileByFilePath(pdatafile):
 			finfo = finfo[i:]
 			break
 	
-	apDisplay.printMsg("reading particle parameters in file: %s" % os.path.basename(pdataf))
+	apDisplay.printMsg("reading particle parameters in file: %s" % os.path.basename(pdatafile))
 	particledata = {}			
 	for j, info in enumerate(finfo):
 		alldata = {}			
