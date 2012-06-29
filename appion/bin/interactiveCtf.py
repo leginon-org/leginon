@@ -21,6 +21,10 @@ import leginon.polygon
 from leginon.gui.wx import ImagePanel, ImagePanelTools, TargetPanel, TargetPanelTools
 from pyami import mrc, fftfun, imagefun, ellipse
 
+##################################
+##
+##################################
+
 class ManualCTFPanel(TargetPanel.TargetImagePanel):
 	def __init__(self, parent, id, callback=None, tool=True):
 		TargetPanel.TargetImagePanel.__init__(self, parent, id, callback=callback, tool=tool)
@@ -56,14 +60,108 @@ class ManualCTFPanel(TargetPanel.TargetImagePanel):
 ##
 ##################################
 
+class ThonRingTool(ImagePanelTools.ImageTool):
+	def __init__(self, app, panel, sizer):
+		self.color = wx.Colour(255,231,00) #gold, ffd700
+		self.penwidth = 2
+		bitmap = leginon.gui.wx.TargetPanelBitmaps.getTargetIconBitmap(self.color, shape='o')
+		tooltip = 'Show Thon Rings'
+		cursor = None
+		self.app = app
+		ImagePanelTools.ImageTool.__init__(self, panel, sizer, bitmap, tooltip, cursor, False)
+
+	#--------------------
+	def Draw(self, dc):
+		### check if button is depressed
+		if not self.button.GetToggle():
+			return
+		### need CTF information
+		if self.app.ctfvalues is None:
+			return
+		dc.SetPen(wx.Pen(self.color, self.penwidth))
+		width = self.imagepanel.bitmap.GetWidth()
+		height = self.imagepanel.bitmap.GetHeight()
+		if self.imagepanel.scaleImage():
+			width /= self.imagepanel.scale[0]
+			height /= self.imagepanel.scale[1]
+		center = width/2, height/2
+		x, y = self.imagepanel.image2view(center)
+		width = self.imagepanel.buffer.GetWidth()
+		height = self.imagepanel.buffer.GetHeight()
+
+		numzeros = 14
+		numcols = max(width, height)
+		radii1 = ctftools.getCtfExtrema(self.app.ctfvalues['defocus1'], self.app.ctfvalues['apix']*1e-10, 
+			self.app.ctfvalues['cs'], self.app.ctfvalues['volts'], self.app.ctfvalues['ampconst'], 
+			cols=numcols, numzeros=numzeros, zerotype="valleys")
+		radii2 = ctftools.getCtfExtrema(self.app.ctfvalues['defocus2'], self.app.ctfvalues['apix']*1e-10, 
+			self.app.ctfvalues['cs'], self.app.ctfvalues['volts'], self.app.ctfvalues['ampconst'], 
+			cols=numcols, numzeros=numzeros, zerotype="valleys")
+
+		foundzeros = min(len(radii1), len(radii2))
+		for i in range(foundzeros):
+			# because |def1| < |def2| ==> firstzero1 > firstzero2
+			major = radii1[i]
+			minor = radii2[i]
+			if self.app.debug is True: 
+				print "major=%.1f, minor=%.1f, angle=%.1f"%(major, minor, self.app.ctfvalues['angle'])
+			if minor > width/2:
+				# this limits how far we draw out the ellipses: sqrt(3) to corner, just 2 inside line
+				continue
+
+			### determine number of points to use to draw ellipse, minimize distance btw points
+			#isoceles triangle, b: radius ot CTF ring, a: distance btw points
+			#a = 2 * b sin (theta/2)
+			#a / 2b = sin(theta/2)
+			#theta = 2 * asin (a/2b)
+			#numpoints = 2 pi / theta
+			## define a to be 5 pixels
+			a = 15
+			theta = 2.0 * math.asin (a/(2.0*major))
+			skipfactor = 3
+			## multiple by skipfactor to remove unsightly seam lines
+			numpoints = int(math.ceil(2.0*math.pi/theta/skipfactor))*skipfactor + 1
+
+			### for some reason, we need to give a negative angle here
+			points = ellipse.generate_ellipse(major, minor, 
+				-math.radians(self.app.ctfvalues['angle']), center, numpoints, None, "step", True)
+			x = points[:,0]
+			y = points[:,1]
+
+			## wrap around to end
+			x = numpy.hstack((x, [x[0],]))
+			y = numpy.hstack((y, [y[0],]))
+
+			numsteps = int(math.floor((len(x)-2)/skipfactor))
+			for j in range(numsteps):
+				k = j*skipfactor
+				#xy = 
+				xk, yk = self.imagepanel.image2view((x[k], y[k]))
+				xk1, yk1 = self.imagepanel.image2view((x[k+1], y[k+1]))
+				dc.DrawLine(xk, yk, xk1, yk1)
+
+	#--------------------
+	def OnToggle(self, value):
+		self.imagepanel.UpdateDrawing()
+
+
+##################################
+##
+##################################
+
 class CTFApp(wx.App):
 	def __init__(self, shape='+', size=16):
 		self.shape = shape
 		self.size = size
 		self.ellipse_params = None
 		self.ctfvalues = None
+		self.ctfvalues = { 
+			'defocus1': 1e-6, 'defocus2': 1e-6, 
+			'volts': 120000, 'cs': 2e-3, 'angle': 45.0,
+			'ampconst': 0.07, 'apix': 1.5, }
 		self.ringwidth = 2
 		self.freq = None
+		self.debug = False
 		wx.App.__init__(self)
 
 	#---------------------------------------
@@ -81,6 +179,8 @@ class CTFApp(wx.App):
 		### BEGIN IMAGE PANEL
 		self.panel = ManualCTFPanel(self.frame, -1)
 		self.panel.originaltargets = {}
+
+		self.panel.addTool(ThonRingTool(self, self.panel, self.panel.toolsizer))
 
 		self.panel.addTargetTool('First Valley', color=wx.Color(220,20,20),
 			target=True, shape='x')
