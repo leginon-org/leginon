@@ -77,6 +77,7 @@ class CtfDisplay(object):
 			firstpeak, full=False)
 		pixelrdatae, zdatae = ctftools.ellipticalAverage(zdata2d, self.ratio, self.angle,
 			self.ringwidth, firstpeak, full=False, filename=self.powerspecfile)
+	
 		if self.debug is True:
 			print "  Pixel MIN/MAX:", pixelrdata.min(), pixelrdata.max()
 			print "  Pixel # points", len(pixelrdata)

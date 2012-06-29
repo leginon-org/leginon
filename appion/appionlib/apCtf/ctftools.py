@@ -320,6 +320,67 @@ def rotationalAverage(image, ringwidth=3.0, innercutradius=None, full=False, med
 	return xdata, ydata
 
 #============
+def funcrad(x, xdata=None, ydata=None):
+	return numpy.interp(x, xdata, ydata)
+
+#============
+def unRotationalAverage(xdata, ydata, shape):
+	"""
+	compute the rotational average of a 2D numpy array
+	"""
+	image = imagefun.fromRadialFunction(funcrad, shape, xdata=xdata, ydata=ydata)
+	return image
+
+#============
+def unEllipticalAverage(xdata, ydata, ellipratio, ellipangle, shape):
+	"""
+	compute the rotational average of a 2D numpy array
+	"""
+	radial = getEllipticalDistanceArray(ellipratio, ellipangle, shape)
+	image = imagefun.fromRadialFunction(funcrad, shape, xdata=xdata, ydata=ydata)
+	def funcrc(r, c, radial, **kwargs):
+		rr = numpy.array(numpy.floor(r), dtype=numpy.int)
+		cc = numpy.array(numpy.floor(c), dtype=numpy.int)
+		rad = radial[rr,cc]
+		return funcrad(rad, **kwargs)
+	result = numpy.fromfunction(funcrc, shape, radial=radial, xdata=xdata, ydata=ydata)
+	return result
+
+#============
+def getEllipticalDistanceArray(ellipratio, ellipangle, shape):
+	if ellipratio < 1:
+		ellipratio = 1.0/ellipratio
+		ellipangle += 90
+	while ellipangle > 180:
+		ellipangle -= 180
+	while ellipangle < 0:
+		ellipangle += 180
+
+	if debug is True:
+		apDisplay.printColor("ellipangle = %.3f"%(ellipangle), "cyan")
+
+	bigshape = numpy.array(numpy.array(shape)*math.sqrt(2)/2., dtype=numpy.int)*2
+	xhalfshape = bigshape[0]/2.0
+	x = numpy.arange(-xhalfshape, xhalfshape, 1) + 0.5
+	yhalfshape = bigshape[1]/2.0
+	y = numpy.arange(-yhalfshape, yhalfshape, 1) + 0.5
+	xx, yy = numpy.meshgrid(x, y)
+	### apply ellipse ratio
+	yy = ellipratio*yy
+	radial = xx**2 + yy**2
+	### apply ellipse rotation
+	#imagefile.arrayToPng(numpy.array(radial, dtype=numpy.float32), filename+"radial-norot.png")
+	radial = scipy.ndimage.interpolation.rotate(radial, angle=ellipangle, 
+		reshape=False, mode='wrap', order=2)
+	#imagefile.arrayToPng(numpy.array(radial, dtype=numpy.float32), filename+"radial-uncut.png")
+	radial = imagefilter.frame_cut(radial, shape)
+	if debug is True:
+		print "minimal radial distance", radial.min()
+	radial = numpy.sqrt(radial)
+
+	return radial
+
+#============
 def ellipticalAverage(image, ellipratio, ellipangle, ringwidth=3.0, innercutradius=None, full=False, median=False, filename=None):
 	"""
 	compute the elliptical average of a 2D numpy array
@@ -336,49 +397,17 @@ def ellipticalAverage(image, ellipratio, ellipangle, ringwidth=3.0, innercutradi
 	median : False -- calculate the mean of each ring
 	         True  -- calculate the median of each ring (slower)
 	"""
-	if ellipratio < 1:
-		ellipratio = 1.0/ellipratio
-		ellipangle += 90
-	while ellipangle > 180:
-		ellipangle -= 180
-	while ellipangle < 0:
-		ellipangle += 180
-
-	if debug is True:
-		apDisplay.printColor("ellipangle = %.3f (file = %s)"%(ellipangle, filename), "cyan")
-
 	if debug is True:
 		print "ring width %.2f pixels"%(ringwidth)
 
-	shape = numpy.array(numpy.array(image.shape)*math.sqrt(2)/2., dtype=numpy.int)*2
-	if debug is True:
-		print "new shape", shape
-	## create a grid of distance from the center
-	xhalfshape = shape[0]/2.0
-	x = numpy.arange(-xhalfshape, xhalfshape, 1) + 0.5
-	yhalfshape = shape[1]/2.0
-	y = numpy.arange(-yhalfshape, yhalfshape, 1) + 0.5
-	xx, yy = numpy.meshgrid(x, y)
-	### apply ellipse ratio
-	yy = ellipratio*yy
-	radial = xx**2 + yy**2
-	### apply ellipse rotation
-	#imagefile.arrayToPng(numpy.array(radial, dtype=numpy.float32), filename+"radial-norot.png")
-	radial = scipy.ndimage.interpolation.rotate(radial, angle=ellipangle, 
-		reshape=False, mode='wrap', order=2)
-	#imagefile.arrayToPng(numpy.array(radial, dtype=numpy.float32), filename+"radial-uncut.png")
-	radial = imagefilter.frame_cut(radial, image.shape)
-	if debug is True:
-		print "minimal radial distance", radial.min()
-	radial = numpy.sqrt(radial)
-
-	#imagefile.arrayToPng(image, filename+"image.png")
+	bigshape = numpy.array(numpy.array(image.shape)*math.sqrt(2)/2., dtype=numpy.int)*2
+	radial = getEllipticalDistanceArray(ellipratio, ellipangle, image.shape)
 	
-	## convert to integers
+	## need to convert to integers for scipy
 	radial = radial/ringwidth
 	radial = numpy.array(radial, dtype=numpy.int32)
 	#imagefile.arrayToPng(numpy.array(radial, dtype=numpy.float32), filename+"radial.png")
-	if shape[0] < 32:
+	if bigshape[0] < 32:
 		print radial
 
 	count = 0
@@ -388,12 +417,10 @@ def ellipticalAverage(image, ellipratio, ellipangle, ringwidth=3.0, innercutradi
 
 	if full is False:
 		### trims any edge artifacts from rotational average
-		if debug is True:
-			print "ellipratio", ellipratio
-		outercutsize = (shape[0]/2-2)/ringwidth*math.sqrt(2)/2.
+		outercutsize = (bigshape[0]/2-2)/ringwidth*math.sqrt(2)/2.
 		if debug is True:
 			apDisplay.printColor("Num X points %d, Half image size %d, Outer cut size %d, Ringwidth %.2f, Percent trim %.1f"
-				%(xdataint.shape[0], shape[0]/2-2, outercutsize, ringwidth, 100.*outercutsize/float(xdataint.shape[0])), "yellow")
+				%(xdataint.shape[0], bigshape[0]/2-2, outercutsize, ringwidth, 100.*outercutsize/float(xdataint.shape[0])), "yellow")
 		if outercutsize > xdataint.shape[0]:
 			apDisplay.printWarning("Outer cut radius is larger than X size")
 		xdataint = xdataint[:outercutsize]
@@ -402,7 +429,7 @@ def ellipticalAverage(image, ellipratio, ellipangle, ringwidth=3.0, innercutradi
 		innercutsize = int(math.floor(innercutradius/ringwidth))
 		if debug is True:
 			apDisplay.printMsg("Num X points %d, Half image size %d, Trim size %d, Ringwidth %.2f, Percent trim %.1f"
-				%(xdataint.shape[0], shape[0]/2-2, innercutsize, ringwidth, 100.*innercutsize/float(xdataint.shape[0])))
+				%(xdataint.shape[0], bigshape[0]/2-2, innercutsize, ringwidth, 100.*innercutsize/float(xdataint.shape[0])))
 		xdataint = xdataint[innercutsize:]
 	
 	### remove
@@ -422,8 +449,8 @@ def ellipticalAverage(image, ellipratio, ellipangle, ringwidth=3.0, innercutradi
 
 	if debug is True:
 		print "... finish elliptical average"
-		apDisplay.printMsg("  expected size of elliptical average: %d"%(image.shape[0]/2))
+		apDisplay.printMsg("  expected size of elliptical average: %d"%(bigshape[0]/2))
 		apDisplay.printMsg("actual max size of elliptical average: %d"%(xdata.max())) 
 
-
 	return xdata, ydata
+

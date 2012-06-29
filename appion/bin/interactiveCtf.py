@@ -8,7 +8,6 @@ import math
 import numpy
 from PIL import Image, ImageDraw
 #import subprocess
-from appionlib import power
 from appionlib import apParam
 from appionlib import apDisplay
 from appionlib import appiondata
@@ -121,6 +120,11 @@ class CTFApp(wx.App):
 		self.Bind(wx.EVT_BUTTON, self.onRotAverage, self.rotavg)
 		self.buttonrow.Add(self.rotavg, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 
+		self.ellipavg = wx.Button(self.frame, -1, '&Ellip Avg')
+		self.ellipavg.SetMinSize((80,30))
+		self.Bind(wx.EVT_BUTTON, self.onEllipAverage, self.ellipavg)
+		self.buttonrow.Add(self.ellipavg, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
+
 		self.draw = wx.Button(self.frame, -1, '&Draw')
 		self.draw.SetMinSize((70,30))
 		self.Bind(wx.EVT_BUTTON, self.onDraw, self.draw)
@@ -179,17 +183,18 @@ class CTFApp(wx.App):
 		apDisplay.printMsg("You have %d points to fit in the valley ring"%(len(points)))
 		if len(points) >= 3:
 			self.ellipse_params = ellipse.solveEllipseOLS(points, center)
-			print self.ellipse_params
+			#print self.ellipse_params
 			rmsd = None
 			epoints = ellipse.generate_ellipse(self.ellipse_params['a'], 
 				self.ellipse_params['b'], self.ellipse_params['alpha'], self.ellipse_params['center'],
 				numpoints=30, noise=None, method="step", integers=True)
+			ellipangle = -math.degrees(self.ellipse_params['alpha'])
+			apDisplay.printColor("%.2f\t%.2f\t%.2f"%(self.ellipse_params['a'], self.ellipse_params['b'], ellipangle), "magenta")
 			self.panel.setTargets('First Valley Fit', epoints)
 
 	#---------------------------------------
 	def convertEllipseToCtf(self):
 		if self.ellipse_params is None:
-			self.statbar.PushStatusText("ERROR: Please select the valley ring and click First Valley.", 0)
 			dialog = wx.MessageDialog(self.frame, "Please select the valley ring and click First Valley.",\
 				'Error', wx.OK|wx.ICON_ERROR)
 			dialog.ShowModal()
@@ -202,13 +207,30 @@ class CTFApp(wx.App):
 
 	#---------------------------------------
 	def onRotAverage(self, evt):
-		# do a rotational average to subtract
+		# do a rotational average of the image
 		imagedata = self.panel.imagedata
-		pixelrdata, self.rotdata = ctftools.rotationalAverage(imagedata, self.ringwidth, full=False)
+		pixelrdata, self.rotdata = ctftools.rotationalAverage(imagedata, self.ringwidth, full=True)
 		rotavgimage = imagefun.fromRadialFunction(self.funcrad, imagedata.shape, 
 			rdata=pixelrdata, zdata=self.rotdata)
 		self.panel.setImage(rotavgimage)
 		apDisplay.printColor("Rotational average complete", "cyan")
+
+	#---------------------------------------
+	def onEllipAverage(self, evt):
+		# do an elliptical average of the image
+		if self.ellipse_params is None:
+			dialog = wx.MessageDialog(self.frame, "Need ellipse parameters first.",\
+				'Error', wx.OK|wx.ICON_ERROR)
+			dialog.ShowModal()
+			dialog.Destroy()
+		ellipratio = self.ellipse_params['a']/self.ellipse_params['b']
+		ellipangle = -math.degrees(self.ellipse_params['alpha'])
+		apDisplay.printColor("%.2f\t%.2f\t%.2f"%(self.ellipse_params['a'], self.ellipse_params['b'], ellipangle), "magenta")
+		imagedata = self.panel.imagedata
+		pixelrdata, self.rotdata = ctftools.ellipticalAverage(imagedata, ellipratio, ellipangle, self.ringwidth, full=True)
+		ellipavgimage = ctftools.unEllipticalAverage(pixelrdata, self.rotdata, ellipratio, ellipangle, imagedata.shape)
+		self.panel.setImage(ellipavgimage)
+		apDisplay.printColor("Elliptical average complete", "cyan")
 
 	#---------------------------------------
 	def onSubtNoise(self, evt):
