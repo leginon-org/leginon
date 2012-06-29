@@ -15,7 +15,8 @@ from appionlib import appiondata
 from appionlib import apPrimeFactor
 from appionlib import apDatabase
 from appionlib import appionLoop2
-from appionlib.apImage import imagefile, imagefilter
+from appionlib.apImage import imagefile, imagefilter, imagenorm
+from appionlib.apCtf import ctftools, ctfnoise
 #Leginon
 import leginon.polygon
 from leginon.gui.wx import ImagePanel, ImagePanelTools, TargetPanel, TargetPanelTools
@@ -60,8 +61,13 @@ class CTFApp(wx.App):
 	def __init__(self, shape='+', size=16):
 		self.shape = shape
 		self.size = size
+		self.ellipse_params = None
+		self.ctfvalues = None
+		self.ringwidth = 2
+		self.freq = None
 		wx.App.__init__(self)
 
+	#---------------------------------------
 	def OnInit(self):
 		self.deselectcolor = wx.Color(240,240,240)
 
@@ -70,34 +76,23 @@ class CTFApp(wx.App):
 
 		### VITAL STATS
 		self.vitalstats = wx.StaticText(self.frame, -1, "Vital Stats:  ", style=wx.ALIGN_LEFT)
-		#self.vitalstats.SetMinSize((100,40))
+		#self.vitalstats.SetMinSize((100,30))
 		self.sizer.Add(self.vitalstats, 1, wx.EXPAND|wx.ALL, 3)
 
 		### BEGIN IMAGE PANEL
 		self.panel = ManualCTFPanel(self.frame, -1)
 		self.panel.originaltargets = {}
 
-		self.panel.addTargetTool('First Ring', color=wx.Color(220,20,20),
+		self.panel.addTargetTool('First Valley', color=wx.Color(220,20,20),
 			target=True, shape='x')
-		self.panel.setTargets('First Ring', [])
-		self.panel.selectiontool.setDisplayed('First Ring', True)
-		self.panel.selectiontool.setTargeting('First Ring', True)
+		self.panel.setTargets('First Valley', [])
+		self.panel.selectiontool.setDisplayed('First Valley', True)
+		self.panel.selectiontool.setTargeting('First Valley', True)
 
-		self.panel.addTargetTool('Second Ring', color=wx.Color(20,20,220),
-			target=True, shape='+')
-		self.panel.setTargets('Second Ring', [])
-		self.panel.selectiontool.setDisplayed('Second Ring', True)
-		self.panel.selectiontool.setTargeting('Second Ring', True)
-
-		self.panel.addTargetTool('First Ring Fit', color=wx.Color(220,20,20),
+		self.panel.addTargetTool('First Valley Fit', color=wx.Color(251,236,93),
 			target=False, shape='polygon')
-		self.panel.setTargets('First Ring Fit', [])
-		self.panel.selectiontool.setDisplayed('First Ring Fit', True)
-
-		self.panel.addTargetTool('Second Ring Fit', color=wx.Color(20,20,220),
-			target=False, shape='polygon')
-		self.panel.setTargets('Second Ring Fit', [])
-		self.panel.selectiontool.setDisplayed('Second Ring Fit', True)
+		self.panel.setTargets('First Valley Fit', [])
+		self.panel.selectiontool.setDisplayed('First Valley Fit', True)
 
 		self.panel.SetMinSize((300,300))
 		self.sizer.Add(self.panel, 1, wx.EXPAND)
@@ -107,22 +102,37 @@ class CTFApp(wx.App):
 		self.buttonrow = wx.FlexGridSizer(1,8)
 
 		self.next = wx.Button(self.frame, wx.ID_FORWARD, '&Forward')
-		self.next.SetMinSize((200,40))
+		self.next.SetMinSize((150,30))
 		self.Bind(wx.EVT_BUTTON, self.onNext, self.next)
 		self.buttonrow.Add(self.next, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 
-		self.add = wx.Button(self.frame, wx.ID_REMOVE, '&Calc CTF')
-		self.add.SetMinSize((150,40))
-		self.Bind(wx.EVT_BUTTON, self.onCalcCTF, self.add)
-		self.buttonrow.Add(self.add, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
+		self.firstvalley = wx.Button(self.frame, -1, 'First &Valley')
+		self.firstvalley.SetMinSize((90,30))
+		self.Bind(wx.EVT_BUTTON, self.onCalcFirstValley, self.firstvalley)
+		self.buttonrow.Add(self.firstvalley, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 
-		self.clear = wx.Button(self.frame, wx.ID_CLEAR, '&Clear')
-		self.clear.SetMinSize((100,40))
+		self.subtnoise = wx.Button(self.frame, -1, 'Subtract &Noise')
+		self.subtnoise.SetMinSize((120,30))
+		self.Bind(wx.EVT_BUTTON, self.onSubtNoise, self.subtnoise)
+		self.buttonrow.Add(self.subtnoise, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
+
+		self.rotavg = wx.Button(self.frame, -1, '&Rot Avg')
+		self.rotavg.SetMinSize((80,30))
+		self.Bind(wx.EVT_BUTTON, self.onRotAverage, self.rotavg)
+		self.buttonrow.Add(self.rotavg, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
+
+		self.draw = wx.Button(self.frame, -1, '&Draw')
+		self.draw.SetMinSize((70,30))
+		self.Bind(wx.EVT_BUTTON, self.onDraw, self.draw)
+		self.buttonrow.Add(self.draw, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
+
+		self.clear = wx.Button(self.frame, wx.ID_CLEAR, 'Clear')
+		self.clear.SetMinSize((90,30))
 		self.Bind(wx.EVT_BUTTON, self.onClear, self.clear)
 		self.buttonrow.Add(self.clear, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 
-		self.revert= wx.Button(self.frame, wx.ID_REVERT_TO_SAVED, 'Revert to Saved')
-		self.revert.SetMinSize((80,40))
+		self.revert= wx.Button(self.frame, wx.ID_REVERT_TO_SAVED, 'Revert')
+		self.revert.SetMinSize((90,30))
 		self.Bind(wx.EVT_BUTTON, self.onRevert, self.revert)
 		self.buttonrow.Add(self.revert, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 
@@ -133,19 +143,19 @@ class CTFApp(wx.App):
 		self.Bind(wx.EVT_TOGGLEBUTTON, self.onToggleNone, self.assessnone)
 		self.assessnone.SetValue(0)
 		#self.assessnone.SetBackgroundColour(self.selectcolor)
-		self.assessnone.SetMinSize((100,40))
+		self.assessnone.SetMinSize((80,30))
 		self.buttonrow.Add(self.assessnone, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 
 		self.assesskeep = wx.ToggleButton(self.frame, -1, "&Keep")
 		self.Bind(wx.EVT_TOGGLEBUTTON, self.onToggleKeep, self.assesskeep)
 		self.assesskeep.SetValue(0)
-		self.assesskeep.SetMinSize((100,40))
+		self.assesskeep.SetMinSize((80,30))
 		self.buttonrow.Add(self.assesskeep, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 
 		self.assessreject = wx.ToggleButton(self.frame, -1, "Re&ject")
 		self.Bind(wx.EVT_TOGGLEBUTTON, self.onToggleReject, self.assessreject)
 		self.assessreject.SetValue(0)
-		self.assessreject.SetMinSize((100,40))
+		self.assessreject.SetMinSize((80,30))
 		self.buttonrow.Add(self.assessreject, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 		### END BUTTONS ROW
 
@@ -157,35 +167,66 @@ class CTFApp(wx.App):
 		self.frame.Show(True)
 		return True
 
+	#---------------------------------------
 	def onQuit(self, evt):
 		wx.Exit()
 
-	def onCalcCTF(self, evt):
+	#---------------------------------------
+	def onCalcFirstValley(self, evt):
 		center = numpy.array(self.panel.imgshape)/2.0
 
-		points = self.panel.getTargetPositions('First Ring')
-		apDisplay.printMsg("You have %d points to fit in the first ring"%(len(points)))
+		points = self.panel.getTargetPositions('First Valley')
+		apDisplay.printMsg("You have %d points to fit in the valley ring"%(len(points)))
 		if len(points) >= 3:
-			params = ellipse.solveEllipseOLS(points, center)
-			print params
+			self.ellipse_params = ellipse.solveEllipseOLS(points, center)
+			print self.ellipse_params
 			rmsd = None
-			epoints = ellipse.generate_ellipse(params['a'], 
-				params['b'], params['alpha'], params['center'],
+			epoints = ellipse.generate_ellipse(self.ellipse_params['a'], 
+				self.ellipse_params['b'], self.ellipse_params['alpha'], self.ellipse_params['center'],
 				numpoints=30, noise=None, method="step", integers=True)
-			self.panel.setTargets('First Ring Fit', epoints)
+			self.panel.setTargets('First Valley Fit', epoints)
 
-		points = self.panel.getTargetPositions('Second Ring')
-		apDisplay.printMsg("You have %d points to fit in the second ring"%(len(points)))
-		if len(points) >= 3:
-			params = ellipse.solveEllipseOLS(points, center)
-			print params
-			rmsd = None
-			epoints = ellipse.generate_ellipse(params['a'], 
-				params['b'], params['alpha'], params['center'],
-				numpoints=30, noise=None, method="step", integers=True)
-			self.panel.setTargets('Second Ring Fit', epoints)
+	#---------------------------------------
+	def convertEllipseToCtf(self):
+		if self.ellipse_params is None:
+			self.statbar.PushStatusText("ERROR: Please select the valley ring and click First Valley.", 0)
+			dialog = wx.MessageDialog(self.frame, "Please select the valley ring and click First Valley.",\
+				'Error', wx.OK|wx.ICON_ERROR)
+			dialog.ShowModal()
+			dialog.Destroy()
+			return
 
+	#---------------------------------------
+	def funcrad(self, r, rdata=None, zdata=None):
+		return numpy.interp(r, rdata, zdata)
 
+	#---------------------------------------
+	def onRotAverage(self, evt):
+		# do a rotational average to subtract
+		imagedata = self.panel.imagedata
+		pixelrdata, self.rotdata = ctftools.rotationalAverage(imagedata, self.ringwidth, full=False)
+		rotavgimage = imagefun.fromRadialFunction(self.funcrad, imagedata.shape, 
+			rdata=pixelrdata, zdata=self.rotdata)
+		self.panel.setImage(rotavgimage)
+		apDisplay.printColor("Rotational average complete", "cyan")
+
+	#---------------------------------------
+	def onSubtNoise(self, evt):
+		# do a rotational average to subtract
+		imagedata = self.panel.imagedata
+		pixelrdata, self.rotdata = ctftools.rotationalAverage(imagedata, self.ringwidth, full=False)
+		self.raddata = pixelrdata*self.freq
+		CtfNoise = ctfnoise.CtfNoise()
+		noisefitparams = CtfNoise.modelCTFNoise(self.raddata, self.rotdata, "below")
+		noisedata = CtfNoise.noiseModel(noisefitparams, self.raddata)
+		noise2d = imagefun.fromRadialFunction(self.funcrad, imagedata.shape, 
+			rdata=self.raddata/self.freq, zdata=noisedata)
+		normaldata = imagedata - noise2d
+		normaldata = numpy.where(normaldata < 0, 0, normaldata)
+		self.panel.setImage(normaldata)
+		apDisplay.printColor("Subtract Noise complete", "cyan")
+
+	#---------------------------------------
 	def onNext(self, evt):
 		#targets = self.panel.getTargets('Select Particles')
 		#for target in targets:
@@ -198,6 +239,7 @@ class CTFApp(wx.App):
 		self.appionloop.assess = self.finalAssessment()
 		self.Exit()
 
+	#---------------------------------------
 	def finalAssessment(self):
 		if self.assessnone.GetValue() is True:
 			return None
@@ -207,6 +249,7 @@ class CTFApp(wx.App):
 			return False
 		return None
 
+	#---------------------------------------
 	def setAssessStatus(self):
 		if self.appionloop.assess is True:
 			self.onToggleKeep(None)
@@ -215,6 +258,7 @@ class CTFApp(wx.App):
 		else:
 			self.onToggleNone(None)
 
+	#---------------------------------------
 	def onToggleNone(self, evt):
 		self.assessnone.SetValue(1)
 		self.assessnone.SetBackgroundColour(wx.Color(200,200,0))
@@ -224,6 +268,7 @@ class CTFApp(wx.App):
 		self.assessreject.SetBackgroundColour(self.deselectcolor)
 		self.assess = None
 
+	#---------------------------------------
 	def onToggleKeep(self, evt):
 		self.assessnone.SetValue(0)
 		self.assessnone.SetBackgroundColour(self.deselectcolor)
@@ -233,7 +278,7 @@ class CTFApp(wx.App):
 		self.assessreject.SetBackgroundColour(self.deselectcolor)
 		self.assess = True
 
-
+	#---------------------------------------
 	def onToggleReject(self, evt):
 		self.assessnone.SetValue(0)
 		self.assessnone.SetBackgroundColour(self.deselectcolor)
@@ -243,15 +288,28 @@ class CTFApp(wx.App):
 		self.assessreject.SetBackgroundColour(wx.Color(200,0,0))
 		self.assess = False
 
+	#---------------------------------------
 	def onClear(self, evt):
-		self.panel.setTargets('First Ring', [])
-		self.panel.setTargets('Polygon', [])
+		self.panel.setTargets('First Valley', [])
 
+	#---------------------------------------
 	def onRevert(self, evt):
-		if self.panel.originaltargets:
-			for label,targets in self.panel.originaltargets.items():
-				self.panel.setTargets(label, targets)
+		self.panel.openImageFile(self.panel.filename)
 
+	#---------------------------------------
+	def onDraw(self, evt):
+		imagedata = self.panel.imagedata
+		center = numpy.array(imagedata.shape, dtype=numpy.float)/2.0
+		pilimage = imagefile.arrayToImage(imagedata, stdevLimit=2.0)
+		pilimage = pilimage.convert("RGB")
+		draw = ImageDraw.Draw(pilimage)
+		x = -60*math.cos(math.radians(30))
+		y = 60*math.sin(math.radians(30))
+		xy = (x+center[0], y+center[1], -x+center[0], -y+center[1])
+		draw.line(xy, fill="#f23d3d", width=10)
+		self.panel.setPILImage(pilimage)
+
+	#---------------------------------------
 	def targetsToArray(self, targets):
 		a = []
 		for t in targets:
@@ -259,80 +317,7 @@ class CTFApp(wx.App):
 				a.append([ int(t.x), int(t.y) ])
 		na = numpy.array(a, dtype=numpy.int32)
 		return na
-
-	def onHelicalInsert(self, evt):
-		"""
-		connect the last two targets by filling inbetween
-		copied from EMAN1 boxer
-		"""
-		### determine which particle label to operate on
-		userlabel = 'user'
-		helicallabel = 'helical'
-		### get last two user targets
-		usertargets = self.panel.getTargets(userlabel)
-		helicaltargets = self.panel.getTargets(helicallabel)
-		if len(usertargets) == 2:
-			self.angles = {}
-		if len(usertargets) < 2:
-			apDisplay.printWarning("not enough targets")
-			return
-		if len(usertargets) > 2 and not helicaltargets:
-			apDisplay.printWarning("too many targets")
-			return
-		userarray = self.targetsToArray(usertargets)
-		helicalarray = self.targetsToArray(helicaltargets)
-		### get pixelsize
-		apix = self.appionloop.params['apix']
-		if not apix or apix == 0.0:
-			apDisplay.printWarning("unknown pixel size")
-			return
-		### get helicalstep
-		ovrlp = self.appionloop.params['ovrlp']/100.00
-		if ovrlp == 0:
-			helicalstep = self.appionloop.params['helicalstep']
-		else:
-			helicalstep = int(self.appionloop.params['helicalstep']*ovrlp)
-		if not helicalstep:
-			apDisplay.printWarning("unknown helical step size")
-			return
-
-		first = userarray[-2]
-		last = userarray[-1]
-		### Do tan(y,x) to be consistend with ruler tool, convert to x,y in makestack
-		angle = math.degrees(math.atan2((last[1]*1.0 - first[1]),(last[0] - first[0])))
-		stats = {'angle': angle}	
-		pixeldistance = math.hypot(first[0] - last[0], first[1] - last[1])
-		if pixeldistance == 0:
-			### this will probably never happen since mouse does not let you click same point twice
-			apDisplay.printWarning("points have zero distance")
-			return
-		stepsize = helicalstep/(pixeldistance*apix*self.appionloop.params['bin'])
-		### parameterization of a line btw points (x1,y1) and (x2,y2):
-		# x = (1 - t)*x1 + t*x2,
-		# y = (1 - t)*y1 + t*y2,
-		# t { [0,1] ; t is a real number btw 0 and 1
-		helicalpoints = list(helicalarray)
-		t = 0.0
-		while t < 1.0:
-			x = int(round( (1.0 - t)*first[0] + t*last[0], 0))
-			y = int(round( (1.0 - t)*first[1] + t*last[1], 0))
-			helicalpoints.append((x,y))
-			self.angles[x,y] = angle
-			t += stepsize
-		newhelicalpoints = []
-		for point in helicalpoints:
-			x = point[0]
-			y = point[1]
-			stats = {'angle': self.angles[x,y]}
-			newhelicalpoints.append({'x': x, 'y': y, 'stats': stats})	
-
-		self.panel.setTargets(helicallabel, newhelicalpoints)
 		
-		
-		
-		
-
-
 ##################################
 ##################################
 ##################################
@@ -346,13 +331,14 @@ class ManualCTF(appionLoop2.AppionLoop):
 		super(ManualCTF,self).onInit()
 		self.trace = False
 		
+	#---------------------------------------
 	def setApp(self):
 		self.app = CTFApp(
 			shape = self.canonicalShape(self.params['shape']),
 			size =  self.params['shapesize'],
 		)
 
-	##=======================
+	#---------------------------------------
 	def preLoopFunctions(self):
 		apParam.createDirectory(os.path.join(self.params['rundir'], "pikfiles"),warning=False)
 		if self.params['sessionname'] is not None:
@@ -362,7 +348,7 @@ class ManualCTF(appionLoop2.AppionLoop):
 		self.app.appionloop = self
 		self.threadJpeg = True
 
-	##=======================
+	#---------------------------------------
 	def postLoopFunctions(self):
 		self.app.frame.Destroy()
 		apDisplay.printMsg("Finishing up")
@@ -370,7 +356,7 @@ class ManualCTF(appionLoop2.AppionLoop):
 		apDisplay.printMsg("finished")
 		wx.Exit()
 
-	##=======================
+	#---------------------------------------
 	def processImage(self, imgdata):
 		fftpath = os.path.join(self.params['rundir'], imgdata['filename']+'.fft.jpg')
 		if not os.path.isfile(fftpath):
@@ -379,14 +365,14 @@ class ManualCTF(appionLoop2.AppionLoop):
 
 		return peaktree
 
-	##=======================
+	#---------------------------------------
 	def commitToDatabase(self, imgdata, rundata):
 		if self.assess != self.assessold and self.assess is not None:
 			#imageaccessor run is always named run1
 			apDatabase.insertImgAssessmentStatus(imgdata, 'run1', self.assess)
 		return
 
-	##=======================
+	#---------------------------------------
 	def setupParserOptions(self):
 		### Input value options
 		self.parser.add_option("--prebin", dest="prebin", default=2, type="int",
@@ -402,7 +388,7 @@ class ManualCTF(appionLoop2.AppionLoop):
 		self.parser.add_option("--resolution-limit", dest="reslimit", type="float", default=10.0,
 			help="outer resolution limit (in A) to clip the fft image")
 
-	##=======================
+	#---------------------------------------
 	def checkConflicts(self):
 		"""
 		put in any additional conflicting parameters
@@ -433,16 +419,16 @@ class ManualCTF(appionLoop2.AppionLoop):
 		else:
 			apDisplay.printError("Unknown pointer shape: "+shape)
 
-	#==========================
+	#---------------------------------------
 	def getParticlePicks(self, imgdata):
 		return []
 
-	#==========================
+	#---------------------------------------
 	def particlesToTargets(self, particles):
 		targets = {}
 		return targets
 
-	#==========================
+	#---------------------------------------
 	def processAndSaveAllImages(self):
 		sys.stderr.write("Pre-processing image FFTs\n")
 		#print self.params
@@ -463,7 +449,7 @@ class ManualCTF(appionLoop2.AppionLoop):
 			if count % 60 == 0:
 				sys.stderr.write(" %d left\n" % (total-count))
 
-	#==========================
+	#---------------------------------------
 	def processAndSaveFFT(self, imgdata, fftpath):
 		if os.path.isfile(fftpath):
 			return False
@@ -489,12 +475,6 @@ class ManualCTF(appionLoop2.AppionLoop):
 		print newshape
 		fftarray = imagefilter.frame_cut(fftarray, newshape)
 
-		### do a LOWESS fit to subtract envelope
-		miniarray = imagefun.bin2(fftarray, 8)
-		fit = power.Lowess2D(miniarray)
-		fit = imagefilter.scaleImage(fit, 8)
-		fftarray = fftarray - fit
-
 		## preform a rotational blur
 		#fftarray = power.rotationalBlur(fftarray, nsteps=self.params['rotations'], 
 		#	stepsize=self.params['rotatestep'])
@@ -504,14 +484,12 @@ class ManualCTF(appionLoop2.AppionLoop):
 
 		return True
 
-	#==========================
+	#---------------------------------------
 	def runManualCTF(self, imgdata, fftpath):
 		#reset targets
 		self.targets = {}
-		self.app.panel.setTargets('First Ring', [])
-		self.targets['First Ring'] = []
-		self.app.panel.setTargets('Second Ring', [])
-		self.targets['Second Ring'] = []
+		self.app.panel.setTargets('First Valley', [])
+		self.targets['First Valley'] = []
 
 		#set the assessment and viewer status
 		self.assessold = apDatabase.checkInspectDB(imgdata)
@@ -520,6 +498,9 @@ class ManualCTF(appionLoop2.AppionLoop):
 
 		#open new file
 		self.app.panel.openImageFile(fftpath)
+		self.app.apix = apDatabase.getPixelSize(imgdata)
+		mindim = min(imgdata['image'].shape)
+		self.app.freq = 1./(self.app.apix * mindim)
 
 		targets = self.getParticlePicks(imgdata)
 
@@ -532,6 +513,8 @@ class ManualCTF(appionLoop2.AppionLoop):
 
 		return
 
+#---------------------------------------
+#---------------------------------------
 def draw_ellipse(imgarray, ra,rb, ang, x0,y0, numpoints=32):
 	"""
 	ra - major axis length
@@ -559,7 +542,8 @@ def draw_ellipse(imgarray, ra,rb, ang, x0,y0, numpoints=32):
 	image.save("test.jpg", "JPEG", quality=95)
 	return
 
-
+#---------------------------------------
+#---------------------------------------
 if __name__ == '__main__':
 	imgLoop = ManualCTF()
 	imgLoop.run()
