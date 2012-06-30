@@ -28,8 +28,10 @@ if ($expId && is_int($expId)){
 
 if ($projectId && is_int($projectId)) {
 	$particle=new particleData;
-	if ($_GET['type'] == 'forward') $templateStackData=$particle->getTemplateStacksFromProject($projectId,True,"forward");
-	elseif ($_GET['type'] == 'clsavg') $templateStackData=$particle->getTemplateStacksFromProject($projectId,True,"clsavg");
+	if ($_GET['type'] == 'forward') $templateStackData=$particle->getTemplateStacksFromSession($expId,True,"forward");
+	elseif ($_GET['type'] == 'clsavg') $templateStackData=$particle->getTemplateStacksFromSession($expId,True,"clsavg");
+#	if ($_GET['type'] == 'forward') $templateStackData=$particle->getTemplateStacksFromProject($projectId,True,"forward");
+#	elseif ($_GET['type'] == 'clsavg') $templateStackData=$particle->getTemplateStacksFromProject($projectId,True,"clsavg");
 }
 
 // first give the option of uploading a new template stack
@@ -72,7 +74,8 @@ if ($templateStackData) {
 if ($hidden && !$_GET['showHidden']) echo "<a href='".$formAction."&showHidden=True'>[Show Hidden Templates]</a><br />\n";
 
 if ($shown || $hidden) echo $templatetable;
-else echo "<B>Project does not contain any template stacks.</B>\n";
+#else echo "<B>Project does not contain any template stacks.</B>\n";
+else echo "<B>Session does not contain any template stacks.</B>\n";
 processing_footer();
 exit;
 

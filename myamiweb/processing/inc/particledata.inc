@@ -1519,7 +1519,7 @@ class particledata {
 		$q = "SELECT stack.*, path.path "
 			."FROM ApTemplateStackData as stack "
 			."LEFT JOIN ApPathData AS path ON "
-								."(stack.`REF|ApPathData|path`=path.`DEF_id`) "
+			."(stack.`REF|ApPathData|path`=path.`DEF_id`) "
 			."WHERE stack.`REF|leginondata|SessionData|session`='$expId' ";
 		if (!$getHidden) $q.= "AND (stack.`hidden` IS NULL OR stack.`hidden` = 0) ";
 		if ($type == "clsavg") $q.= "AND (stack.`cls_avgs` = 1) ";
