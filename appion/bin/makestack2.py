@@ -929,9 +929,6 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 		if self.params['maskassess'] is not None and not self.params['checkmask']:
 			apDisplay.printMsg("running mask assess")
 			self.params['checkmask'] = True
-		if self.params['fliptype'] == 'ace2image' and self.params['ctfmethod'] is None:
-			apDisplay.printMsg("setting ctf method to ace2")
-			self.params['ctfmethod'] = 'ace2'
 		if self.params['xmipp-norm'] is not None or self.params['xmipp-norm-before'] is not None:
 			self.xmippexe = apParam.getExecPath("xmipp_normalize", die=True)
 		if self.params['particlelabel'] == 'user' and self.params['rotate'] is True:
