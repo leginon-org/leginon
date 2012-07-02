@@ -92,7 +92,7 @@ class PickerApp(wx.App):
 		self.panel = ManualPickerPanel(self.frame, -1)
 		self.panel.originaltargets = {}
 
-		if self.labels[0] == 'Add Helix':
+		if len(self.labels) > 0 and self.labels[0] == 'Add Helix':
 			self.panel.addTargetTool('Add Helix', color=wx.Colour(20,220,20),
 				target=True, shape='spline')
 			self.panel.setTargets('Add Helix', [])
