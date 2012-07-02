@@ -301,7 +301,7 @@ class generalReconUploader(appionScript.AppionScript):
 			alldata['omega'] = float(data[3])
 			alldata['shiftx'] = float(data[4])
 			alldata['shifty'] = float(data[5])
-			alldata['mirror'] = bool(data[6])
+			alldata['mirror'] = bool(float(data[6]))
 			alldata['refnum'] = float(data[7])
 			alldata['clsnum'] = float(data[8])
 			alldata['quality'] = float(data[9])
