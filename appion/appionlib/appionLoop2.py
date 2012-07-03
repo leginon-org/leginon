@@ -94,7 +94,7 @@ class AppionLoop(appionScript.AppionScript):
 				if loadavg > 2.0:
 					apDisplay.printMsg("Load average is high "+str(round(loadavg,2)))
 					loadsquared = loadavg*loadavg
-					time.sleep(loadsquared)
+					time.sleep(loadavg)
 					apDisplay.printMsg("New load average "+str(round(os.getloadavg()[0],2)))
 
 				self._printSummary()
@@ -724,7 +724,11 @@ class AppionLoop(appionScript.AppionScript):
 		tiltcount = 0
 		self.stats['skipcount'] = 0
 		newimgtree = []
+		count = 0
 		for imgdata in self.imgtree:
+			count += 1
+			if count % 10 == 0:
+				sys.stderr.write(".")
 			skip, reason = self.skipTestOnImage(imgdata)
 			imgname = imgdata['filename']
 			if skip is True:
@@ -744,6 +748,7 @@ class AppionLoop(appionScript.AppionScript):
 				self.stats['skipcount'] += 1
 			else:
 				newimgtree.append(imgdata)
+		sys.stderr.write("\n")
 		if self.stats['skipcount'] > 0:
 			self.imgtree = newimgtree
 			sys.stderr.write("\n")

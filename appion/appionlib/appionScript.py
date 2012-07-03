@@ -54,8 +54,10 @@ class AppionScript(basicScript.BasicScript):
 		self.parsePythonPath()
 		loadavg = os.getloadavg()[0]
 		if loadavg > 2.0:
-			time.sleep(loadavg**2)
 			apDisplay.printMsg("Load average is high "+str(round(loadavg,2)))
+			loadsquared = loadavg*loadavg
+			time.sleep(loadavg)
+			apDisplay.printMsg("New load average "+str(round(os.getloadavg()[0],2)))
 
 		### setup default parser: run directory, etc.
 		self.setParams(optargs,useglobalparams)
@@ -64,7 +66,7 @@ class AppionScript(basicScript.BasicScript):
 
 		### setup correct database after we have read the project id
 		if 'projectid' in self.params and self.params['projectid'] is not None:
-			apDisplay.printWarning("Using split database")
+			apDisplay.printMsg("Using split database")
 			# use a project database
 			newdbname = apProject.getAppionDBFromProjectId(self.params['projectid'])
 			sinedon.setConfig('appiondata', db=newdbname)
