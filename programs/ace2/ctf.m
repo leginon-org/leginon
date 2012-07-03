@@ -978,6 +978,14 @@ f64 positionForPeak( f64 c[], u32 peak_num ) {
 
 ArrayP g2DCTF( f64 df1, f64 df2, f64 theta, u32 rows, u32 cols, f64 apix, f64 cs, f64 kv, f64 ac ) {
 	
+
+	if(df1 < 0 && df2 < 0) 
+		fprintf(stderr, "performing underfocus correction\n");
+	else if(df1 > 0 && df2 > 0) 
+		fprintf(stderr, "performing overfocus correction\n");
+	else
+		fprintf(stderr, "performing mixed overfocus and underfocus correction\n");
+
 	apix = apix * 1.0e-10;
 	
 	f64 lm = getTEMLambda(kv*1.0e3);
