@@ -12,6 +12,7 @@ from appionlib import apParam
 from appionlib import apDisplay
 from appionlib import appiondata
 from appionlib import apPrimeFactor
+from appionlib import apInstrument
 from appionlib import apDatabase
 from appionlib import appionLoop2
 from appionlib.apImage import imagefile, imagefilter, imagenorm
@@ -74,9 +75,12 @@ class ThonRingTool(ImagePanelTools.ImageTool):
 	def Draw(self, dc):
 		### check if button is depressed
 		if not self.button.GetToggle():
+			print "Button is off"
 			return
 		### need CTF information
-		if self.app.ctfvalues is None:
+		if not self.app.ctfvalues or not 'defocus1' in self.app.ctfvalues.keys():
+			print "No CTF info"
+			print self.app.ctfvalues
 			return
 		dc.SetPen(wx.Pen(self.color, self.penwidth))
 		width = self.imagepanel.bitmap.GetWidth()
@@ -85,12 +89,12 @@ class ThonRingTool(ImagePanelTools.ImageTool):
 			width /= self.imagepanel.scale[0]
 			height /= self.imagepanel.scale[1]
 		center = width/2, height/2
-		x, y = self.imagepanel.image2view(center)
-		width = self.imagepanel.buffer.GetWidth()
-		height = self.imagepanel.buffer.GetHeight()
+		#x, y = self.imagepanel.image2view(center)
 
 		numzeros = 14
 		numcols = max(width, height)
+		print "Getting valley locations"
+		print self.app.ctfvalues.keys()
 		radii1 = ctftools.getCtfExtrema(self.app.ctfvalues['defocus1'], self.app.ctfvalues['apix']*1e-10, 
 			self.app.ctfvalues['cs'], self.app.ctfvalues['volts'], self.app.ctfvalues['ampconst'], 
 			cols=numcols, numzeros=numzeros, zerotype="valleys")
@@ -154,11 +158,12 @@ class CTFApp(wx.App):
 		self.shape = shape
 		self.size = size
 		self.ellipse_params = None
-		self.ctfvalues = None
 		self.ctfvalues = { 
 			'defocus1': 1e-6, 'defocus2': 1e-6, 
 			'volts': 120000, 'cs': 2e-3, 'angle': 45.0,
 			'ampconst': 0.07, 'apix': 1.5, }
+		self.ctfvalues = {}
+
 		self.ringwidth = 2
 		self.freq = None
 		self.debug = False
@@ -276,6 +281,24 @@ class CTFApp(wx.App):
 		wx.Exit()
 
 	#---------------------------------------
+	def convertEllipseToCtf(self):
+		if self.ellipse_params is None:
+			return
+		self.ctfvalues['ampconst'] = 0.0
+		ellipangle = -math.degrees(self.ellipse_params['alpha'])
+		self.ctfvalues['angle'] = ellipangle
+		print "wavelength", self.wavelength
+		s = (self.ellipse_params['a']*self.freq)*1e10
+		print "s1", s
+		self.ctfvalues['defocus1'] = 1.0/(self.wavelength * s**2)
+		s = (self.ellipse_params['b']*self.freq)*1e10
+		print "s2", s
+		self.ctfvalues['defocus2'] = 1.0/(self.wavelength * s**2)
+		apDisplay.printColor("%.2f\t%.2f\t%.2f"%(self.ctfvalues['defocus1'], 
+			self.ctfvalues['defocus2'], self.ctfvalues['angle']), "magenta")
+		print "CTF", self.ctfvalues
+
+	#---------------------------------------
 	def onCalcFirstValley(self, evt):
 		center = numpy.array(self.panel.imgshape)/2.0
 
@@ -283,23 +306,12 @@ class CTFApp(wx.App):
 		apDisplay.printMsg("You have %d points to fit in the valley ring"%(len(points)))
 		if len(points) >= 3:
 			self.ellipse_params = ellipse.solveEllipseOLS(points, center)
-			#print self.ellipse_params
-			rmsd = None
+			self.convertEllipseToCtf()
 			epoints = ellipse.generate_ellipse(self.ellipse_params['a'], 
 				self.ellipse_params['b'], self.ellipse_params['alpha'], self.ellipse_params['center'],
 				numpoints=30, noise=None, method="step", integers=True)
-			ellipangle = -math.degrees(self.ellipse_params['alpha'])
-			apDisplay.printColor("%.2f\t%.2f\t%.2f"%(self.ellipse_params['a'], self.ellipse_params['b'], ellipangle), "magenta")
 			self.panel.setTargets('First Valley Fit', epoints)
-
-	#---------------------------------------
-	def convertEllipseToCtf(self):
-		if self.ellipse_params is None:
-			dialog = wx.MessageDialog(self.frame, "Please select the valley ring and click First Valley.",\
-				'Error', wx.OK|wx.ICON_ERROR)
-			dialog.ShowModal()
-			dialog.Destroy()
-			return
+			print "CTF", self.ctfvalues
 
 	#---------------------------------------
 	def funcrad(self, r, rdata=None, zdata=None):
@@ -597,9 +609,11 @@ class ManualCTF(appionLoop2.AppionLoop):
 		print newshape
 		fftarray = imagefilter.frame_cut(fftarray, newshape)
 
-		## preform a rotational blur
-		#fftarray = power.rotationalBlur(fftarray, nsteps=self.params['rotations'], 
-		#	stepsize=self.params['rotatestep'])
+		## preform a rotational average and remove peaks
+		rotfftarray = ctftools.rotationalAverage2D(fftarray)
+		stdev = rotfftarray.std()
+		rotplus = rotfftarray + stdev*5
+		fftarray = numpy.where(fftarray > rotplus, rotfftarray, fftarray)
 
 		### save to jpeg
 		imagefile.arrayToJpeg(fftarray, fftpath, msg=False)
@@ -623,6 +637,15 @@ class ManualCTF(appionLoop2.AppionLoop):
 		self.app.apix = apDatabase.getPixelSize(imgdata)
 		mindim = min(imgdata['image'].shape)
 		self.app.freq = 1./(self.app.apix * mindim)
+		self.app.volts = imgdata['scope']['high tension']
+		self.app.wavelength = ctftools.getTEMLambda(self.app.volts)
+		self.app.cs = apInstrument.getCsValueFromSession(self.getSessionData())*1e-3
+		self.app.ctfvalues.update({ 
+			'volts': self.app.volts,
+			'cs': self.app.cs,
+			'apix': self.app.apix, 
+		})
+
 
 		targets = self.getParticlePicks(imgdata)
 
