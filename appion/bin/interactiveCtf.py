@@ -101,6 +101,7 @@ class ThonRingTool(ImagePanelTools.ImageTool):
 		radii2 = ctftools.getCtfExtrema(self.app.ctfvalues['defocus2'], self.app.ctfvalues['apix']*1e-10, 
 			self.app.ctfvalues['cs'], self.app.ctfvalues['volts'], self.app.ctfvalues['ampconst'], 
 			cols=numcols, numzeros=numzeros, zerotype="valleys")
+		print radii1[0], radii2[0]
 
 		foundzeros = min(len(radii1), len(radii2))
 		for i in range(foundzeros):
@@ -220,6 +221,11 @@ class CTFApp(wx.App):
 		self.Bind(wx.EVT_BUTTON, self.onSubtNoise, self.subtnoise)
 		self.buttonrow.Add(self.subtnoise, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 
+		self.normenvel = wx.Button(self.frame, -1, '&Envelope')
+		self.normenvel.SetMinSize((120,30))
+		self.Bind(wx.EVT_BUTTON, self.onNormEnvelop, self.normenvel)
+		self.buttonrow.Add(self.normenvel, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
+
 		self.rotavg = wx.Button(self.frame, -1, '&Rot Avg')
 		self.rotavg.SetMinSize((80,30))
 		self.Bind(wx.EVT_BUTTON, self.onRotAverage, self.rotavg)
@@ -229,6 +235,11 @@ class CTFApp(wx.App):
 		self.ellipavg.SetMinSize((80,30))
 		self.Bind(wx.EVT_BUTTON, self.onEllipAverage, self.ellipavg)
 		self.buttonrow.Add(self.ellipavg, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
+
+		self.ellipdistort = wx.Button(self.frame, -1, 'Ellip &Distort')
+		self.ellipdistort.SetMinSize((80,30))
+		self.Bind(wx.EVT_BUTTON, self.onEllipDistort, self.ellipdistort)
+		self.buttonrow.Add(self.ellipdistort, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 
 		self.draw = wx.Button(self.frame, -1, '&Draw')
 		self.draw.SetMinSize((70,30))
@@ -294,7 +305,7 @@ class CTFApp(wx.App):
 		s = (self.ellipse_params['b']*self.freq)*1e10
 		print "s2", s
 		self.ctfvalues['defocus2'] = 1.0/(self.wavelength * s**2)
-		apDisplay.printColor("%.2f\t%.2f\t%.2f"%(self.ctfvalues['defocus1'], 
+		apDisplay.printColor("%.2e\t%.2e\t%.2f"%(self.ctfvalues['defocus1'], 
 			self.ctfvalues['defocus2'], self.ctfvalues['angle']), "magenta")
 		print "CTF", self.ctfvalues
 
@@ -337,18 +348,46 @@ class CTFApp(wx.App):
 			dialog.Destroy()
 		ellipratio = self.ellipse_params['a']/self.ellipse_params['b']
 		ellipangle = -math.degrees(self.ellipse_params['alpha'])
-		apDisplay.printColor("%.2f\t%.2f\t%.2f"%(self.ellipse_params['a'], self.ellipse_params['b'], ellipangle), "magenta")
 		imagedata = self.panel.imagedata
-		pixelrdata, self.rotdata = ctftools.ellipticalAverage(imagedata, ellipratio, ellipangle, self.ringwidth, full=True)
-		ellipavgimage = ctftools.unEllipticalAverage(pixelrdata, self.rotdata, ellipratio, ellipangle, imagedata.shape)
+		pixelrdata, self.rotdata = ctftools.ellipticalAverage(imagedata, 
+			ellipratio, ellipangle, self.ringwidth, full=True)
+		ellipavgimage = ctftools.unEllipticalAverage(pixelrdata, self.rotdata, 
+			ellipratio, ellipangle, imagedata.shape)
 		self.panel.setImage(ellipavgimage)
 		apDisplay.printColor("Elliptical average complete", "cyan")
+
+	#---------------------------------------
+	def onEllipDistort(self, evt):
+		# do an elliptical average of the image
+		if self.ellipse_params is None:
+			dialog = wx.MessageDialog(self.frame, "Need ellipse parameters first.",\
+				'Error', wx.OK|wx.ICON_ERROR)
+			dialog.ShowModal()
+			dialog.Destroy()
+		ellipratio = self.ellipse_params['a']/self.ellipse_params['b']
+		ellipangle = -math.degrees(self.ellipse_params['alpha'])
+		imagedata = self.panel.imagedata
+		pixelrdata, self.rotdata = ctftools.ellipticalAverage(imagedata, 
+			ellipratio, ellipangle, self.ringwidth, full=True)
+		#distort the pixelrdata
+		distortrdata = pixelrdata**2/pixelrdata.max()
+		ellipavgimage = ctftools.unEllipticalAverage(distortrdata, self.rotdata, 
+			ellipratio, ellipangle, imagedata.shape)
+		self.panel.setImage(ellipavgimage)
+		apDisplay.printColor("Elliptical distrotion complete", "cyan")
 
 	#---------------------------------------
 	def onSubtNoise(self, evt):
 		# do a rotational average to subtract
 		imagedata = self.panel.imagedata
-		pixelrdata, self.rotdata = ctftools.rotationalAverage(imagedata, self.ringwidth, full=False)
+		if self.ellipse_params is None:
+			pixelrdata, self.rotdata = ctftools.rotationalAverage(imagedata, self.ringwidth, full=False)
+		else:
+			ellipratio = self.ellipse_params['a']/self.ellipse_params['b']
+			ellipangle = -math.degrees(self.ellipse_params['alpha'])
+			imagedata = self.panel.imagedata
+			pixelrdata, self.rotdata = ctftools.ellipticalAverage(imagedata, 
+				ellipratio, ellipangle, self.ringwidth, full=True)
 		self.raddata = pixelrdata*self.freq
 		CtfNoise = ctfnoise.CtfNoise()
 		noisefitparams = CtfNoise.modelCTFNoise(self.raddata, self.rotdata, "below")
@@ -359,6 +398,30 @@ class CTFApp(wx.App):
 		normaldata = numpy.where(normaldata < 0, 0, normaldata)
 		self.panel.setImage(normaldata)
 		apDisplay.printColor("Subtract Noise complete", "cyan")
+
+	#---------------------------------------
+	def onNormEnvelop(self, evt):
+		# do a rotational average to subtract
+		imagedata = self.panel.imagedata
+		if self.ellipse_params is None:
+			pixelrdata, self.rotdata = ctftools.rotationalAverage(imagedata, self.ringwidth, full=False)
+		else:
+			ellipratio = self.ellipse_params['a']/self.ellipse_params['b']
+			ellipangle = -math.degrees(self.ellipse_params['alpha'])
+			imagedata = self.panel.imagedata
+			pixelrdata, self.rotdata = ctftools.ellipticalAverage(imagedata, 
+				ellipratio, ellipangle, self.ringwidth, full=True)
+		self.raddata = pixelrdata*self.freq
+		CtfNoise = ctfnoise.CtfNoise()
+		envelopfitparams = CtfNoise.modelCTFNoise(self.raddata, self.rotdata, "above")
+		envelopdata = CtfNoise.noiseModel(envelopfitparams, self.raddata)
+		envelop2d = imagefun.fromRadialFunction(self.funcrad, imagedata.shape, 
+			rdata=self.raddata/self.freq, zdata=envelopdata)
+		normaldata = imagedata/envelop2d
+		normaldata = numpy.where(normaldata > 1, 1, normaldata)
+		normaldata = numpy.where(normaldata < 0, 0, normaldata)
+		self.panel.setImage(normaldata)
+		apDisplay.printColor("Normalize envelope complete", "cyan")
 
 	#---------------------------------------
 	def onNext(self, evt):
