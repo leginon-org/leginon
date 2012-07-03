@@ -332,6 +332,15 @@ def unRotationalAverage(xdata, ydata, shape):
 	return image
 
 #============
+def rotationalAverage2D(image, ringwidth=3.0):
+	"""
+	compute the rotational average of a 2D numpy array
+	"""
+	xdata, ydata = rotationalAverage(image, ringwidth, full=True)
+	newimage = unRotationalAverage(xdata, ydata, image.shape)
+	return newimage
+
+#============
 def unEllipticalAverage(xdata, ydata, ellipratio, ellipangle, shape):
 	"""
 	compute the rotational average of a 2D numpy array
