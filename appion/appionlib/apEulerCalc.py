@@ -107,9 +107,18 @@ def rotationMatrixToEulersSPIDER(m):
 	return rotationMatrixToEulers3DEM(m)	
 
 
+def calculate_equivalent_XmippEulers_without_flip(phi, theta, psi):
+	''' takes transform matrix, multiplies by mirror_matrix, inverses sign of psi '''
+	m = EulersToRotationMatrixXmipp(phi, theta, psi)
+	mmirror = numpy.matrix([[-1,0,0],[0,-1,0],[0,0,-1]])
+	mnew = m * mmirror
+	newphi, newtheta, newpsi = rotationMatrixToEulersXmipp(mnew)
+	### this was assessed empirically, works on synthetic data projected with xmipp_project
+	newpsi = -newpsi
+	return newphi, newtheta, newpsi
 #======================================= 		Euler Angle Conversions			  =========================
 
-def convertXmippEulersToEman(phi, theta, psi):
+def convertXmippEulersToEman(phi, theta, psi,mirror=False):
 	''' 
 	converts Xmipp / Spider Euler angles to EMAN, according to:
 	Baldwin, P.R., and Penczek, P.A. (2007). The Transform Class in SPARX and EMAN2. Journal of Structural Biology 157, 250-261.
@@ -117,10 +126,13 @@ def convertXmippEulersToEman(phi, theta, psi):
 	http://blake.bcm.edu/eman2/doxygen_html/transform_8cpp_source.html
 	http://blake.bcm.edu/emanwiki/Eman2TransformInPython
 	'''
+	# mirror in Xmipp and Eman are not oriented in the same way, therefore, the flip needs to be done first
+	if mirror:
+		phi,theta,psi = calculate_equivalent_XmippEulers_without_flip(phi, theta, psi)
 	az = math.fmod((phi+90),360.0)
 	alt = math.fmod(theta,360.0)
 	phi = math.fmod((psi-90),360.0)
-
+	# This Eman result should not contain mirror
 	return alt, az, phi
 
 #===================

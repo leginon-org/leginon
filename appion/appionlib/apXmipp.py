@@ -291,19 +291,8 @@ def particularizeProtocol(protocolIn, parameters, protocolOut):
 
 #======================
 #======================	
-def convertXmippEulersToEman(phi, theta, psi):
-	''' 
-	converts Xmipp / Spider Euler angles to EMAN, according to:
-	Baldwin, P.R., and Penczek, P.A. (2007). The Transform Class in SPARX and EMAN2. Journal of Structural Biology 157, 250-261.
-	also see for reference:
-	http://blake.bcm.edu/eman2/doxygen_html/transform_8cpp_source.html
-	http://blake.bcm.edu/emanwiki/Eman2TransformInPython
-	'''
-	az = math.fmod((phi+90),360.0)
-	alt = theta
-	phi = math.fmod((psi-90),360.0)
-
-	return alt, az, phi
+def convertXmippEulersToEman(phi, theta, psi,mirror=False):
+	return apEulerCalc.convertXmippEulersToEman(phi, theta, psi,mirror)
 
 def convertEmanEulersToXmipp(alt, az, psi):
 	''' reverse of convertXmippEulersToEman '''
@@ -501,15 +490,7 @@ def convertSymmetryNameForPackage(inputname):
 #=======================
 #=======================
 def calculate_equivalent_Eulers_without_flip(phi, theta, psi):
-	''' takes transform matrix, multiplies by mirror_matrix, inverses sign of psi '''
-
-	m = apEulerCalc.EulersToRotationMatrixXmipp(phi, theta, psi)
-	mmirror = numpy.matrix([[-1,0,0],[0,-1,0],[0,0,-1]])
-	mnew = m * mmirror
-	newphi, newtheta, newpsi = apEulerCalc.rotationMatrixToEulersXmipp(mnew)
-	### this was assessed empirically, works on synthetic data projected with xmipp_project
-	newpsi = -newpsi
-	return newphi, newtheta, newpsi
+	return apEulerCalc.calculate_equivalent_XmippEulers_without_flip(phi, theta, psi)
 
 #=======================
 #=======================

@@ -176,13 +176,20 @@ class uploadXmippProjectionMatchingRefinementScript(reconUploader.generalReconUp
 		particledataf.write("(11) kept particle ")
 		particledataf.write("(12) postRefine kept particle \n")		
 		for i in range(len(docsplitlines)/2):
+			phi = float(docsplitlines[i*2+1][2])
+			theta = float(docsplitlines[i*2+1][3])
+			psi = float(docsplitlines[i*2+1][4])
+			mirror = bool(float(docsplitlines[i*2+1][8]))
+			if mirror is True:
+				phi, theta, psi = apXmipp.calculate_equivalent_Eulers_without_flip(phi, theta, psi)
 			particledataf.write("%.6d\t" % (int(docsplitlines[i*2][1][-10:-4])+1)) ### NOTE: IT IS IMPORTANT TO START WITH 1, OTHERWISE STACKMAPPING IS WRONG!!!
-			particledataf.write("%.6f\t" % float(docsplitlines[i*2+1][2]))
-			particledataf.write("%.6f\t" % float(docsplitlines[i*2+1][3]))
-			particledataf.write("%.6f\t" % float(docsplitlines[i*2+1][4]))
+			particledataf.write("%.6f\t" % phi)
+			particledataf.write("%.6f\t" % theta)
+			particledataf.write("%.6f\t" % psi)
 			particledataf.write("%.6f\t" % float(docsplitlines[i*2+1][5]))
 			particledataf.write("%.6f\t" % float(docsplitlines[i*2+1][6]))
-			particledataf.write("%.6d\t" % int(float(docsplitlines[i*2+1][8])))
+			# mirror is flipped already. Set to False
+			particledataf.write("%.6d\t" % 0)
 			particledataf.write("%.6d\t" % 1)
 			particledataf.write("%.6d\t" % float(docsplitlines[i*2+1][7]))
 			particledataf.write("%.6d\t" % 0)
