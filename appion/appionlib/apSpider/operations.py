@@ -6,6 +6,7 @@ import time
 ## appion
 from appionlib import apDisplay
 from appionlib import apFile
+from appionlib import spyder
 
 """
 A large collection of SPIDER functions for that are common to other SPIDER functions
@@ -33,8 +34,6 @@ def stackToSpiderStack(stack,spiderstack,apix,boxsize,lp=0,hp=0,bin=1,numpart=0)
 		apDisplay.printError("stackfile does not exist: "+stack)
 	emancmd += stack+" "
 
-	apFile.removeFile(spiderstack, warn=True)
-	emancmd += spiderstack+" "
 
 	emancmd += "apix="+str(apix)+" "
 	if lp > 0:
@@ -97,7 +96,6 @@ def spiderInLine(line):
 
 #===============================
 def addParticleToStack(partnum, partfile, stackfile, dataext=".spi"):
-	from appionlib import spyder
 	mySpider = spyder.SpiderSession(dataext=dataext, logo=False)
 	mySpider.toSpiderQuiet("CP", 
 		spyder.fileFilter(partfile), #particle file
@@ -108,7 +106,6 @@ def addParticleToStack(partnum, partfile, stackfile, dataext=".spi"):
 
 #===============================
 def averageStack(stackfile, numpart, avgfile, varfile, dataext=".spi"):
-	from appionlib import spyder
 	mySpider = spyder.SpiderSession(dataext=dataext, logo=True, log=False)
 	mySpider.toSpider("AS R", 
 		spyder.fileFilter(stackfile)+"@******", #stack file
@@ -125,7 +122,6 @@ def createMask(maskfile, maskrad, boxsize, dataext=".spi"):
 	"""
 	We should use imagefun.filled_circle() instead
 	"""
-	from appionlib import spyder
 	apDisplay.printMsg("Creating mask with diameter %.1f and boxsize %d"%(maskrad*2.0,boxsize))
 	mySpider = spyder.SpiderSession(dataext=dataext, logo=False)
 	mySpider.toSpiderQuiet("MO", 
@@ -135,6 +131,41 @@ def createMask(maskfile, maskrad, boxsize, dataext=".spi"):
 		str(maskrad),
 	)
 	mySpider.close()
+	if not os.path.isfile(maskfile) or apFile.fileSize(maskfile) < 2:
+		apDisplay.printError("Failed to create mask file")
+	return
+
+#===============================
+def createBoxMask(maskfile,boxsize,maskx,masky,falloff,imask=None,dataext=".spi"):
+	"""
+	creates a rectangular mask with soft falloff
+	"""
+	apDisplay.printMsg("Creating %i x %i box mask"%(boxsize,boxsize))
+	mySpi = spyder.SpiderSession(dataext=dataext, logo=False, nproc=1, log=False)
+	# create blank image for mask
+	mySpi.toSpiderQuiet("BL","_1","%i,%i"%(boxsize,boxsize),"N","1")
+	# mask it in X
+	mySpi.toSpiderQuiet("MA X", "_1", "_2",
+		"%i"%maskx, "C", "E", "0",
+		"%i,%i"%(boxsize/2,boxsize/2),
+		"%.2f"%falloff)
+	# inner mask in X
+	if imask is not None:
+		mySpi.toSpiderQuiet("MA X","_2","_3",
+			"%i,%i"%(boxsize/2,imask),
+			"C","E","0",
+			"%i,%i"%(boxsize/2,boxsize/2),
+			"%.2f"%(falloff/4))
+		mySpi.toSpiderQuiet("CP","_3","_2")
+	# mask in Y
+	mySpi.toSpiderQuiet("MA Y","_2",
+		spyder.fileFilter(maskfile),
+		"%i"%masky, "C", "E", "0",
+		"%i,%i"%(boxsize/2,boxsize/2),
+		"%.2f"%falloff)
+	
+	mySpi.close()
+
 	if not os.path.isfile(maskfile) or apFile.fileSize(maskfile) < 2:
 		apDisplay.printError("Failed to create mask file")
 	return

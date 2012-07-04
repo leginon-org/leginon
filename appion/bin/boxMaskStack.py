@@ -174,6 +174,7 @@ class boxMaskScript(appionScript.AppionScript):
 
 	#=====================
 	def boxMask(self,infile,outfile,spirots=None):
+		from appionlib.apSpider import operations
 		# boxmask the particles
 		apDisplay.printMsg("masking the particles with a rectangular box")
 
@@ -191,39 +192,12 @@ class boxMaskScript(appionScript.AppionScript):
 		mask -= falloff/2
 		length = (length/2)-(falloff/2)
 		
-		mySpi = spyder.SpiderSession(dataext=".spi", logo=False, log=False)
 		# create blank image for mask
-		mySpi.toSpiderQuiet("BL","_1","%i,%i"%(box,box),"N","1")
-		# mask it in X
-		mySpi.toSpiderQuiet("MA X",
-			"_1",
-			"_2",
-			"%i"%mask,
-			"C",
-			"E",
-			"0",
-			"%i,%i"%(box/2,box/2),
-			"%.2f"%falloff)
-		# inner mask in X
-		mySpi.toSpiderQuiet("MA X",
-			"_2",
-			"_3",
-			"%i,%i"%(box/2,imask),
-			"C",
-			"E",
-			"0",
-			"%i,%i"%(box/2,box/2),
-			"%.2f"%(falloff/4))
-		# mask in Y
-		mySpi.toSpiderQuiet("MA Y",
-			"_3",
-			"_4",
-			"%i"%length,
-			"C",
-			"E",
-			"0",
-			"%i,%i"%(box/2,box/2),
-			"%.2f"%falloff)
+		maskfile = "boxmask.spi"
+		operations.createBoxMask(maskfile,box,mask,length,falloff,imask)
+		mySpi = spyder.SpiderSession(dataext=".spi", logo=False, log=False)
+		mySpi.toSpiderQuiet("CP",
+			spyder.fileFilter(maskfile),"_4")
 		mySpi.toSpider("do x10=1,%i"%nump)
 		if self.params['vertical'] is not True:
 			mySpi.toSpider("UD IC x10,x30",

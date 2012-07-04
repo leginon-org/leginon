@@ -136,3 +136,35 @@ def boxerRotate(imgfile, parttree, outstack, boxsize):
 	sys.stderr.write("done\n")
 	apImagicFile.writeImagic(boxedparticles, outstack)
 	return True
+
+##=================
+def boxMaskStack(bmstackf, partdatas, box, xmask, ymask, falloff, imask=None, norotate=False):
+	from appionlib.apSpider import operations
+	from appionlib import apEMAN
+	import os
+
+	# create blank image for mask using SPIDER
+	maskfile = "boxmask.spi"
+	operations.createBoxMask(maskfile,box,xmask,ymask,falloff,imask)
+
+	# convert mask to MRC
+	apEMAN.executeEmanCmd("proc2d boxmask.spi boxmask.mrc",verbose=False,showcmd=False)
+	os.remove("boxmask.spi")
+
+	maskarray = mrc.read("boxmask.mrc")
+
+	# box particles
+	maskedparts = []
+	for i in range(len(partdatas)):
+		if norotate is True:
+			rotatemask = maskarray
+		else:
+			angle = (-partdatas[i]['angle'])-90
+			rotatemask = ndimage.rotate(maskarray, angle=angle, reshape=False, order=1)
+		maskedparts.append(rotatemask)
+
+	# write to stack
+	apImagicFile.writeImagic(maskedparts, bmstackf)
+	os.remove("boxmask.mrc")
+	return bmstackf
+
