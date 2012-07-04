@@ -139,9 +139,13 @@ class ClusterCoranScript(appionScript.AppionScript):
 
 	#=====================
 	def start(self):
+		### get original aligned stack name
+		astack = self.analysisdata['alignstack']['imagicfile']
+		### spider has problems with file name if it includes an "x#"
+		astack = re.sub(r'x(\d)',r'x-\1',astack)
 		### get original align stack
 		imagicalignedstack = os.path.join(self.analysisdata['alignstack']['path']['path'],
-			self.analysisdata['alignstack']['imagicfile'])
+			astack)
 		alignedstack = re.sub("\.", "_", imagicalignedstack)+".spi"
 		while os.path.isfile(alignedstack):
 			apFile.removeFile(alignedstack)
