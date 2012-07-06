@@ -178,6 +178,8 @@ def checkLogFileForErrors(logfile):
 	for line in loglines:
 		if re.search("ERROR in program", line):
 			apDisplay.printError("ERROR IN IMAGIC SUBROUTINE, please check the logfile: "+logfile)
+		elif re.search("ERROR: all pixels", line):
+			apDisplay.printError("ERROR IN IMAGIC SUBROUTINE, please check the logfile: "+logfile)
 	logf.close()
 
 #======================
