@@ -6,7 +6,7 @@ import sys
 import time
 import math
 import numpy
-from PIL import Image, ImageDraw
+from PIL import Image
 #import subprocess
 from appionlib import apParam
 from appionlib import apDisplay
@@ -16,7 +16,7 @@ from appionlib import apInstrument
 from appionlib import apDatabase
 from appionlib import appionLoop2
 from appionlib.apImage import imagefile, imagefilter, imagenorm
-from appionlib.apCtf import ctftools, ctfnoise
+from appionlib.apCtf import ctftools, ctfnoise, ctfdb, sinefit
 #Leginon
 import leginon.polygon
 from leginon.gui.wx import ImagePanel, ImagePanelTools, TargetPanel, TargetPanelTools
@@ -75,33 +75,38 @@ class ThonRingTool(ImagePanelTools.ImageTool):
 	def Draw(self, dc):
 		### check if button is depressed
 		if not self.button.GetToggle():
-			print "Button is off"
+			#print "Button is off"
 			return
 		### need CTF information
 		if not self.app.ctfvalues or not 'defocus1' in self.app.ctfvalues.keys():
-			print "No CTF info"
-			print self.app.ctfvalues
+			#print "No CTF info"
+			#print self.app.ctfvalues
 			return
 		dc.SetPen(wx.Pen(self.color, self.penwidth))
 		width = self.imagepanel.bitmap.GetWidth()
 		height = self.imagepanel.bitmap.GetHeight()
+
 		if self.imagepanel.scaleImage():
 			width /= self.imagepanel.scale[0]
 			height /= self.imagepanel.scale[1]
 		center = width/2, height/2
 		#x, y = self.imagepanel.image2view(center)
 
+		numcols = int(0.5/(self.app.freq*self.app.ctfvalues['apix']))
+		#print "numcols", numcols
 		numzeros = 14
-		numcols = max(width, height)
-		print "Getting valley locations"
-		print self.app.ctfvalues.keys()
+		#print "Getting valley locations"
+		#print self.app.ctfvalues.keys()
 		radii1 = ctftools.getCtfExtrema(self.app.ctfvalues['defocus1'], self.app.ctfvalues['apix']*1e-10, 
-			self.app.ctfvalues['cs'], self.app.ctfvalues['volts'], self.app.ctfvalues['ampconst'], 
+			self.app.ctfvalues['cs'], self.app.ctfvalues['volts'], self.app.ctfvalues['amplitude_contrast'], 
 			cols=numcols, numzeros=numzeros, zerotype="valleys")
 		radii2 = ctftools.getCtfExtrema(self.app.ctfvalues['defocus2'], self.app.ctfvalues['apix']*1e-10, 
-			self.app.ctfvalues['cs'], self.app.ctfvalues['volts'], self.app.ctfvalues['ampconst'], 
+			self.app.ctfvalues['cs'], self.app.ctfvalues['volts'], self.app.ctfvalues['amplitude_contrast'], 
 			cols=numcols, numzeros=numzeros, zerotype="valleys")
-		print radii1[0], radii2[0]
+		#print "rad1_0, rad2_0", radii1[0], radii2[0]
+		s1 = 1.0/math.sqrt(radii1[0]*self.app.wavelength)
+		s2 = 1.0/math.sqrt(radii2[0]*self.app.wavelength)
+		#print "calc s1, s2", s1, s2
 
 		foundzeros = min(len(radii1), len(radii2))
 		for i in range(foundzeros):
@@ -109,7 +114,7 @@ class ThonRingTool(ImagePanelTools.ImageTool):
 			major = radii1[i]
 			minor = radii2[i]
 			if self.app.debug is True: 
-				print "major=%.1f, minor=%.1f, angle=%.1f"%(major, minor, self.app.ctfvalues['angle'])
+				print "major=%.1f, minor=%.1f, angle=%.1f"%(major, minor, self.app.ctfvalues['angle_astigmatism'])
 			if minor > width/2:
 				# this limits how far we draw out the ellipses: sqrt(3) to corner, just 2 inside line
 				continue
@@ -128,8 +133,9 @@ class ThonRingTool(ImagePanelTools.ImageTool):
 			numpoints = int(math.ceil(2.0*math.pi/theta/skipfactor))*skipfactor + 1
 
 			### for some reason, we need to give a negative angle here
-			points = ellipse.generate_ellipse(major, minor, 
-				-math.radians(self.app.ctfvalues['angle']), center, numpoints, None, "step", True)
+			ellipangle = -math.radians(self.app.ctfvalues['angle_astigmatism'])
+			points = ellipse.generate_ellipse(major, minor, ellipangle, 
+				center, numpoints, None, "step", True)
 			x = points[:,0]
 			y = points[:,1]
 
@@ -140,10 +146,12 @@ class ThonRingTool(ImagePanelTools.ImageTool):
 			numsteps = int(math.floor((len(x)-2)/skipfactor))
 			for j in range(numsteps):
 				k = j*skipfactor
-				#xy = 
 				xk, yk = self.imagepanel.image2view((x[k], y[k]))
+				#if i == 0:
+				#	print j, (x[k], y[k]), (xk, yk), center
 				xk1, yk1 = self.imagepanel.image2view((x[k+1], y[k+1]))
 				dc.DrawLine(xk, yk, xk1, yk1)
+				#dc.DrawLine(x[k], y[k], x[k+1], y[k+1])
 
 	#--------------------
 	def OnToggle(self, value):
@@ -161,8 +169,8 @@ class CTFApp(wx.App):
 		self.ellipse_params = None
 		self.ctfvalues = { 
 			'defocus1': 1e-6, 'defocus2': 1e-6, 
-			'volts': 120000, 'cs': 2e-3, 'angle': 45.0,
-			'ampconst': 0.07, 'apix': 1.5, }
+			'volts': 120000, 'cs': 2e-3, 'angle_astigmatism': 45.0,
+			'amplitude_contrast': 0.07, 'apix': 1.5, }
 		self.ctfvalues = {}
 
 		self.ringwidth = 2
@@ -176,10 +184,11 @@ class CTFApp(wx.App):
 
 		self.frame = wx.Frame(None, -1, 'Manual CTF')
 		self.sizer = wx.FlexGridSizer(3,1)
+		buttonheight = 35
 
 		### VITAL STATS
 		self.vitalstats = wx.StaticText(self.frame, -1, "Vital Stats:  ", style=wx.ALIGN_LEFT)
-		#self.vitalstats.SetMinSize((100,30))
+		#self.vitalstats.SetMinSize((100, buttonheight))
 		self.sizer.Add(self.vitalstats, 1, wx.EXPAND|wx.ALL, 3)
 
 		### BEGIN IMAGE PANEL
@@ -207,54 +216,69 @@ class CTFApp(wx.App):
 		self.buttonrow = wx.FlexGridSizer(1,8)
 
 		self.next = wx.Button(self.frame, wx.ID_FORWARD, '&Forward')
-		self.next.SetMinSize((150,30))
+		self.next.SetMinSize((-1, buttonheight))
 		self.Bind(wx.EVT_BUTTON, self.onNext, self.next)
 		self.buttonrow.Add(self.next, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 
 		self.firstvalley = wx.Button(self.frame, -1, 'First &Valley')
-		self.firstvalley.SetMinSize((90,30))
+		self.firstvalley.SetMinSize((-1, buttonheight))
 		self.Bind(wx.EVT_BUTTON, self.onCalcFirstValley, self.firstvalley)
 		self.buttonrow.Add(self.firstvalley, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 
 		self.subtnoise = wx.Button(self.frame, -1, 'Subtract &Noise')
-		self.subtnoise.SetMinSize((120,30))
+		self.subtnoise.SetMinSize((-1, buttonheight))
 		self.Bind(wx.EVT_BUTTON, self.onSubtNoise, self.subtnoise)
 		self.buttonrow.Add(self.subtnoise, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 
 		self.normenvel = wx.Button(self.frame, -1, '&Envelope')
-		self.normenvel.SetMinSize((120,30))
+		self.normenvel.SetMinSize((-1, buttonheight))
 		self.Bind(wx.EVT_BUTTON, self.onNormEnvelop, self.normenvel)
 		self.buttonrow.Add(self.normenvel, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 
 		self.rotavg = wx.Button(self.frame, -1, '&Rot Avg')
-		self.rotavg.SetMinSize((80,30))
+		self.rotavg.SetMinSize((-1, buttonheight))
 		self.Bind(wx.EVT_BUTTON, self.onRotAverage, self.rotavg)
 		self.buttonrow.Add(self.rotavg, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 
-		self.ellipavg = wx.Button(self.frame, -1, '&Ellip Avg')
-		self.ellipavg.SetMinSize((80,30))
-		self.Bind(wx.EVT_BUTTON, self.onEllipAverage, self.ellipavg)
-		self.buttonrow.Add(self.ellipavg, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
+		wxbutton = wx.Button(self.frame, -1, '&Ellip Avg')
+		wxbutton.SetMinSize((-1, buttonheight))
+		self.Bind(wx.EVT_BUTTON, self.onEllipAverage, wxbutton)
+		self.buttonrow.Add(wxbutton, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 
-		self.ellipdistort = wx.Button(self.frame, -1, 'Ellip &Distort')
-		self.ellipdistort.SetMinSize((80,30))
-		self.Bind(wx.EVT_BUTTON, self.onEllipDistort, self.ellipdistort)
-		self.buttonrow.Add(self.ellipdistort, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
+		wxbutton = wx.Button(self.frame, -1, 'Ellip &Distort')
+		wxbutton.SetMinSize((-1, buttonheight))
+		self.Bind(wx.EVT_BUTTON, self.onEllipDistort, wxbutton)
+		self.buttonrow.Add(wxbutton, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 
-		self.draw = wx.Button(self.frame, -1, '&Draw')
-		self.draw.SetMinSize((70,30))
-		self.Bind(wx.EVT_BUTTON, self.onDraw, self.draw)
-		self.buttonrow.Add(self.draw, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
+		#wxbutton = wx.Button(self.frame, -1, '&Draw')
+		#wxbutton.SetMinSize((-1, buttonheight))
+		#self.Bind(wx.EVT_BUTTON, self.onDraw, wxbutton)
+		#self.buttonrow.Add(wxbutton, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 
-		self.clear = wx.Button(self.frame, wx.ID_CLEAR, 'Clear')
-		self.clear.SetMinSize((90,30))
-		self.Bind(wx.EVT_BUTTON, self.onClear, self.clear)
-		self.buttonrow.Add(self.clear, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
+		wxbutton = wx.Button(self.frame, wx.ID_OPEN, '&Load CTF')
+		wxbutton.SetMinSize((-1, buttonheight))
+		self.Bind(wx.EVT_BUTTON, self.onLoadCTF, wxbutton)
+		self.buttonrow.Add(wxbutton, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 
-		self.revert= wx.Button(self.frame, wx.ID_REVERT_TO_SAVED, 'Revert')
-		self.revert.SetMinSize((90,30))
-		self.Bind(wx.EVT_BUTTON, self.onRevert, self.revert)
-		self.buttonrow.Add(self.revert, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
+		wxbutton = wx.Button(self.frame, -1, '&Amp Contrast')
+		wxbutton.SetMinSize((-1, buttonheight))
+		self.Bind(wx.EVT_BUTTON, self.onFitAmpContrast, wxbutton)
+		self.buttonrow.Add(wxbutton, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
+
+		wxbutton = wx.Button(self.frame, -1, '&Refine CTF')
+		wxbutton.SetMinSize((-1, buttonheight))
+		self.Bind(wx.EVT_BUTTON, self.onRefineCTF, wxbutton)
+		self.buttonrow.Add(wxbutton, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
+
+		wxbutton = wx.Button(self.frame, wx.ID_CLEAR, 'Clear')
+		wxbutton.SetMinSize((-1, buttonheight))
+		self.Bind(wx.EVT_BUTTON, self.onClear, wxbutton)
+		self.buttonrow.Add(wxbutton, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
+
+		wxbutton = wx.Button(self.frame, wx.ID_REVERT_TO_SAVED, 'Revert')
+		wxbutton.SetMinSize((-1, buttonheight))
+		self.Bind(wx.EVT_BUTTON, self.onRevert, wxbutton)
+		self.buttonrow.Add(wxbutton, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 
 		label = wx.StaticText(self.frame, -1, "Image Assessment:  ", style=wx.ALIGN_RIGHT)
 		self.buttonrow.Add(label, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 3)
@@ -263,19 +287,19 @@ class CTFApp(wx.App):
 		self.Bind(wx.EVT_TOGGLEBUTTON, self.onToggleNone, self.assessnone)
 		self.assessnone.SetValue(0)
 		#self.assessnone.SetBackgroundColour(self.selectcolor)
-		self.assessnone.SetMinSize((80,30))
+		self.assessnone.SetMinSize((-1, buttonheight))
 		self.buttonrow.Add(self.assessnone, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 
 		self.assesskeep = wx.ToggleButton(self.frame, -1, "&Keep")
 		self.Bind(wx.EVT_TOGGLEBUTTON, self.onToggleKeep, self.assesskeep)
 		self.assesskeep.SetValue(0)
-		self.assesskeep.SetMinSize((80,30))
+		self.assesskeep.SetMinSize((-1, buttonheight))
 		self.buttonrow.Add(self.assesskeep, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 
 		self.assessreject = wx.ToggleButton(self.frame, -1, "Re&ject")
 		self.Bind(wx.EVT_TOGGLEBUTTON, self.onToggleReject, self.assessreject)
 		self.assessreject.SetValue(0)
-		self.assessreject.SetMinSize((80,30))
+		self.assessreject.SetMinSize((-1, buttonheight))
 		self.buttonrow.Add(self.assessreject, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 		### END BUTTONS ROW
 
@@ -292,21 +316,43 @@ class CTFApp(wx.App):
 		wx.Exit()
 
 	#---------------------------------------
+	def onLoadCTF(self, evt):
+		ctfdata, conf = ctfdb.getBestCtfValueForImage(self.imgdata)
+		if ctfdata is None:
+			dialog = wx.MessageDialog(self.frame, "No CTF values were found.",\
+				'Error', wx.OK|wx.ICON_ERROR)
+			dialog.ShowModal()
+			dialog.Destroy()
+			return
+		self.ctfvalues['defocus1'] = abs(ctfdata['defocus1'])
+		self.ctfvalues['defocus2'] = abs(ctfdata['defocus2'])
+		self.ctfvalues['amplitude_contrast'] = ctfdata['amplitude_contrast']
+		self.ctfvalues['angle_astigmatism'] = ctfdata['angle_astigmatism']
+		apDisplay.printColor("%.2e\t%.2e\t%.2f"%(self.ctfvalues['defocus1'], 
+			self.ctfvalues['defocus2'], self.ctfvalues['angle_astigmatism']), "magenta")
+
+	#---------------------------------------
 	def convertEllipseToCtf(self):
 		if self.ellipse_params is None:
 			return
-		self.ctfvalues['ampconst'] = 0.0
+
+		print self.ellipse_params
+		self.ctfvalues['amplitude_contrast'] = 0.0
 		ellipangle = -math.degrees(self.ellipse_params['alpha'])
-		self.ctfvalues['angle'] = ellipangle
+		self.ctfvalues['angle_astigmatism'] = ellipangle
 		print "wavelength", self.wavelength
+
+		#minor axis
 		s = (self.ellipse_params['a']*self.freq)*1e10
 		print "s1", s
-		self.ctfvalues['defocus1'] = 1.0/(self.wavelength * s**2)
+		self.ctfvalues['defocus1'] = 1.0/(self.wavelength * s**2) - 0.5*self.wavelength**2*self.ctfvalues['cs']*s**2
+
+		#major axis
 		s = (self.ellipse_params['b']*self.freq)*1e10
 		print "s2", s
-		self.ctfvalues['defocus2'] = 1.0/(self.wavelength * s**2)
+		self.ctfvalues['defocus2'] = 1.0/(self.wavelength * s**2) - 0.5*self.wavelength**2*self.ctfvalues['cs']*s**2
 		apDisplay.printColor("%.2e\t%.2e\t%.2f"%(self.ctfvalues['defocus1'], 
-			self.ctfvalues['defocus2'], self.ctfvalues['angle']), "magenta")
+			self.ctfvalues['defocus2'], self.ctfvalues['angle_astigmatism']), "magenta")
 		print "CTF", self.ctfvalues
 
 	#---------------------------------------
@@ -377,8 +423,28 @@ class CTFApp(wx.App):
 		apDisplay.printColor("Elliptical distrotion complete", "cyan")
 
 	#---------------------------------------
-	def onSubtNoise(self, evt):
-		# do a rotational average to subtract
+	def onFitAmpContrast(self, evt):
+		if not 'defocus1' in self.ctfvalues.keys():
+			dialog = wx.MessageDialog(self.frame, "Need a defocus estimate first.",\
+				'Error', wx.OK|wx.ICON_ERROR)
+			dialog.ShowModal()
+			dialog.Destroy()
+			return
+
+		# high pass filter the center
+		if 'defocus1' in self.ctfvalues.keys():
+			#get first zero
+			numcols = int(0.5/(self.freq*self.ctfvalues['apix']))
+			radii = ctftools.getCtfExtrema(self.ctfvalues['defocus1'], self.ctfvalues['apix']*1e-10, 
+				self.ctfvalues['cs'], self.ctfvalues['volts'], self.ctfvalues['amplitude_contrast'], 
+				cols=numcols, numzeros=1, zerotype="peaks")
+			firstpeak = radii[0]
+		else:
+			#set first zero to 1/100A
+			#1/resolution = freq * (# of pixels from center) 
+			firstpeak = 1.0/(self.freq*100)
+
+		defocus = (self.ctfvalues['defocus1'] + self.ctfvalues['defocus2'])/2.0
 		imagedata = self.panel.imagedata
 		if self.ellipse_params is None:
 			pixelrdata, self.rotdata = ctftools.rotationalAverage(imagedata, self.ringwidth, full=False)
@@ -387,16 +453,113 @@ class CTFApp(wx.App):
 			ellipangle = -math.degrees(self.ellipse_params['alpha'])
 			imagedata = self.panel.imagedata
 			pixelrdata, self.rotdata = ctftools.ellipticalAverage(imagedata, 
-				ellipratio, ellipangle, self.ringwidth, full=True)
+				ellipratio, ellipangle, self.ringwidth, full=False)
+		s = pixelrdata*self.freq*1e10
+		#requires a defocus
+		ws2 = s**2 * self.wavelength * math.pi * defocus
+		amplitudecontrast = sinefit.refineAmplitudeContrast(ws2[firstpeak:], self.rotdata[firstpeak:], self.ctfvalues['amplitude_contrast'])
+		if amplitudecontrast is None:
+			return
+		apDisplay.printColor("amplitude contrast change from %.4f to %.4f"
+			%(self.ctfvalues['amplitude_contrast'], amplitudecontrast), "cyan")
+		self.ctfvalues['amplitude_contrast'] = amplitudecontrast
+
+	#---------------------------------------
+	def onRefineCTF(self, evt):
+		if not 'defocus1' in self.ctfvalues.keys():
+			dialog = wx.MessageDialog(self.frame, "Need a defocus estimate first.",\
+				'Error', wx.OK|wx.ICON_ERROR)
+			dialog.ShowModal()
+			dialog.Destroy()
+			return
+
+		# high pass filter the center
+		if 'defocus1' in self.ctfvalues.keys():
+			#get first zero
+			numcols = int(0.5/(self.freq*self.ctfvalues['apix']))
+			radii = ctftools.getCtfExtrema(self.ctfvalues['defocus1'], self.ctfvalues['apix']*1e-10, 
+				self.ctfvalues['cs'], self.ctfvalues['volts'], self.ctfvalues['amplitude_contrast'], 
+				cols=numcols, numzeros=1, zerotype="peaks")
+			firstpeak = radii[0]
+		else:
+			#set first zero to 1/100A
+			#1/resolution = freq * (# of pixels from center) 
+			firstpeak = 1.0/(self.freq*100)
+
+		defocus = (self.ctfvalues['defocus1'] + self.ctfvalues['defocus2'])/2.0
+		imagedata = self.panel.imagedata
+		if self.ellipse_params is None:
+			pixelrdata, self.rotdata = ctftools.rotationalAverage(imagedata, self.ringwidth, full=False)
+		else:
+			ellipratio = self.ellipse_params['a']/self.ellipse_params['b']
+			ellipangle = -math.degrees(self.ellipse_params['alpha'])
+			imagedata = self.panel.imagedata
+			pixelrdata, self.rotdata = ctftools.ellipticalAverage(imagedata, 
+				ellipratio, ellipangle, self.ringwidth, full=False)
+		s = pixelrdata*self.freq*1e10
+		#requires a defocus
+		ws2 = s**2 * self.wavelength * math.pi
+		values = sinefit.refineCTF(ws2[firstpeak:], self.rotdata[firstpeak:], defocus, self.ctfvalues['amplitude_contrast'])
+		if values is None:
+			return
+		defocus, amplitudecontrast = values
+		apDisplay.printColor("amplitude contrast change from %.5f to %.5f"
+			%(self.ctfvalues['amplitude_contrast'], amplitudecontrast), "cyan")
+		self.ctfvalues['amplitude_contrast'] = amplitudecontrast
+		apDisplay.printColor("defocus 1 change from %.5e to %.5e"
+			%(self.ctfvalues['defocus1'], defocus), "cyan")
+		### elliptical ratio is preserved
+		defocus2 = defocus * self.ctfvalues['defocus1']/self.ctfvalues['defocus2']
+		self.ctfvalues['defocus1'] = defocus
+		self.ctfvalues['defocus2'] = defocus2
+		return
+
+
+
+	#---------------------------------------
+	def onSubtNoise(self, evt):
+		imagedata = self.panel.imagedata
+		# do a rotational average to subtract
+		if self.ellipse_params is None:
+			pixelrdata, self.rotdata = ctftools.rotationalAverage(imagedata, self.ringwidth, full=False)
+		else:
+			ellipratio = self.ellipse_params['a']/self.ellipse_params['b']
+			ellipangle = -math.degrees(self.ellipse_params['alpha'])
+			imagedata = self.panel.imagedata
+			pixelrdata, self.rotdata = ctftools.ellipticalAverage(imagedata, 
+				ellipratio, ellipangle, self.ringwidth, full=False)
+
+		# high pass filter the center
+		if 'defocus1' in self.ctfvalues.keys():
+			#get first zero
+			numcols = int(0.5/(self.freq*self.ctfvalues['apix']))
+			radii = ctftools.getCtfExtrema(self.ctfvalues['defocus1'], self.ctfvalues['apix']*1e-10, 
+				self.ctfvalues['cs'], self.ctfvalues['volts'], self.ctfvalues['amplitude_contrast'], 
+				cols=numcols, numzeros=1, zerotype="valleys")
+			firstvalley = radii[0]
+		else:
+			#set first zero to 1/100A
+			#1/resolution = freq * (# of pixels from center) 
+			firstvalley = int(1.0/(self.freq*100))
 		self.raddata = pixelrdata*self.freq
+		firstvalleyindex = numpy.searchsorted(self.raddata, self.freq*firstvalley)
+		apDisplay.printColor("First valley: %.1f -> %d (1/%.1f A)"%(firstvalley, firstvalleyindex, 1/(firstvalley*self.freq)), "cyan")
+	
 		CtfNoise = ctfnoise.CtfNoise()
-		noisefitparams = CtfNoise.modelCTFNoise(self.raddata, self.rotdata, "below")
+		noisefitparams = CtfNoise.modelCTFNoise(self.raddata[firstvalleyindex:], self.rotdata[firstvalleyindex:], "below")
 		noisedata = CtfNoise.noiseModel(noisefitparams, self.raddata)
+		from matplotlib import pyplot
+		pyplot.clf()
+		pyplot.plot(self.raddata**2, self.rotdata, 'k.',)
+		pyplot.plot(self.raddata[firstvalleyindex:]**2, noisedata[firstvalleyindex:], 'b-', )
+		pyplot.show()
+
 		noise2d = imagefun.fromRadialFunction(self.funcrad, imagedata.shape, 
 			rdata=self.raddata/self.freq, zdata=noisedata)
 		normaldata = imagedata - noise2d
-		normaldata = numpy.where(normaldata < 0, 0, normaldata)
+		normaldata = numpy.where(normaldata < -0.1, -0.1, normaldata)
 		self.panel.setImage(normaldata)
+
 		apDisplay.printColor("Subtract Noise complete", "cyan")
 
 	#---------------------------------------
@@ -410,16 +573,37 @@ class CTFApp(wx.App):
 			ellipangle = -math.degrees(self.ellipse_params['alpha'])
 			imagedata = self.panel.imagedata
 			pixelrdata, self.rotdata = ctftools.ellipticalAverage(imagedata, 
-				ellipratio, ellipangle, self.ringwidth, full=True)
+				ellipratio, ellipangle, self.ringwidth, full=False)
+
+		# high pass filter the center
+		if 'defocus1' in self.ctfvalues.keys():
+			#get first zero
+			numcols = int(0.5/(self.freq*self.ctfvalues['apix']))
+			radii = ctftools.getCtfExtrema(self.ctfvalues['defocus1'], self.ctfvalues['apix']*1e-10, 
+				self.ctfvalues['cs'], self.ctfvalues['volts'], self.ctfvalues['amplitude_contrast'], 
+				cols=numcols, numzeros=1, zerotype="peaks")
+			firstpeak = radii[0]
+		else:
+			#set first zero to 1/100A
+			#1/resolution = freq * (# of pixels from center) 
+			firstpeak = 1.0/(self.freq*100)
 		self.raddata = pixelrdata*self.freq
+		firstpeakindex = numpy.searchsorted(self.raddata, firstpeak*self.freq)
+		apDisplay.printColor("First peak: %.1f (1/%.1f A)"%(firstpeakindex, 1/(firstpeak*self.freq)), "cyan")
+
 		CtfNoise = ctfnoise.CtfNoise()
-		envelopfitparams = CtfNoise.modelCTFNoise(self.raddata, self.rotdata, "above")
+		envelopfitparams = CtfNoise.modelCTFNoise(self.raddata[firstpeakindex:], self.rotdata[firstpeakindex:], "above")
 		envelopdata = CtfNoise.noiseModel(envelopfitparams, self.raddata)
 		envelop2d = imagefun.fromRadialFunction(self.funcrad, imagedata.shape, 
 			rdata=self.raddata/self.freq, zdata=envelopdata)
 		normaldata = imagedata/envelop2d
-		normaldata = numpy.where(normaldata > 1, 1, normaldata)
-		normaldata = numpy.where(normaldata < 0, 0, normaldata)
+		normaldata = numpy.where(normaldata > 1.1, 1.1, normaldata)
+		normaldata = numpy.where(normaldata < -0.1, -0.1, normaldata)
+		from matplotlib import pyplot
+		pyplot.clf()
+		pyplot.plot(self.raddata**2, self.rotdata, 'k.',)
+		pyplot.plot(self.raddata[firstpeakindex:]**2, envelopdata[firstpeakindex:], 'r-', )
+		pyplot.show()
 		self.panel.setImage(normaldata)
 		apDisplay.printColor("Normalize envelope complete", "cyan")
 
@@ -492,19 +676,6 @@ class CTFApp(wx.App):
 	#---------------------------------------
 	def onRevert(self, evt):
 		self.panel.openImageFile(self.panel.filename)
-
-	#---------------------------------------
-	def onDraw(self, evt):
-		imagedata = self.panel.imagedata
-		center = numpy.array(imagedata.shape, dtype=numpy.float)/2.0
-		pilimage = imagefile.arrayToImage(imagedata, stdevLimit=2.0)
-		pilimage = pilimage.convert("RGB")
-		draw = ImageDraw.Draw(pilimage)
-		x = -60*math.cos(math.radians(30))
-		y = 60*math.sin(math.radians(30))
-		xy = (x+center[0], y+center[1], -x+center[0], -y+center[1])
-		draw.line(xy, fill="#f23d3d", width=10)
-		self.panel.setPILImage(pilimage)
 
 	#---------------------------------------
 	def targetsToArray(self, targets):
@@ -582,7 +753,7 @@ class ManualCTF(appionLoop2.AppionLoop):
 			help="rotation step size in degrees")
 		self.parser.add_option("--rotations", dest="rotations", type="int", default=61,
 			help="number of rotations to avearge")
-		self.parser.add_option("--resolution-limit", dest="reslimit", type="float", default=10.0,
+		self.parser.add_option("--resolution-limit", dest="reslimit", type="float", default=9.0,
 			help="outer resolution limit (in A) to clip the fft image")
 
 	#---------------------------------------
@@ -700,6 +871,7 @@ class ManualCTF(appionLoop2.AppionLoop):
 		self.app.apix = apDatabase.getPixelSize(imgdata)
 		mindim = min(imgdata['image'].shape)
 		self.app.freq = 1./(self.app.apix * mindim)
+		self.app.imgdata = imgdata
 		self.app.volts = imgdata['scope']['high tension']
 		self.app.wavelength = ctftools.getTEMLambda(self.app.volts)
 		self.app.cs = apInstrument.getCsValueFromSession(self.getSessionData())*1e-3
@@ -723,40 +895,10 @@ class ManualCTF(appionLoop2.AppionLoop):
 
 #---------------------------------------
 #---------------------------------------
-def draw_ellipse(imgarray, ra,rb, ang, x0,y0, numpoints=32):
-	"""
-	ra - major axis length
-	rb - minor axis length
-	ang - angle (in degrees)
-	x0,y0 - position of centre of ellipse
-	Nb - No. of points that make an ellipse
-	"""
-	#x,y = get_ellipse(ra,rb,ang,x0,y0,numpoints)
-	x,y = ellipse.generate_ellipse(ra, rb, ang, (x0,y0), numpoints, None, "step", True)
-	## wrap around to end
-	x = numpy.hstack((x, [x[0],]))
-	y = numpy.hstack((y, [y[0],]))
-	## convert image
-	image = imagefile.arrayToImage(imgarray)
-	image = image.convert("RGB")
-	image2 = image.copy()
-	draw = ImageDraw.Draw(image2)
-	for i in range(len(x)-1):
-		xy = (x[i], y[i], x[i+1], y[i+1]) 
-		draw.line(xy, fill="#3d3df2", width=3)
-
-	## create an alpha blend effect
-	image = Image.blend(image, image2, 0.9)
-	image.save("test.jpg", "JPEG", quality=95)
-	return
-
-#---------------------------------------
-#---------------------------------------
 if __name__ == '__main__':
 	imgLoop = ManualCTF()
 	imgLoop.run()
 	#a = imagefile.readJPG("/data01/appion/11jul05a/extract/manctf2/11jul05a_11jan06b_00002sq_00002hl_v01_00002en2.fft.jpg")
-	#draw_ellipse(a, 50, 100, 60, 1024, 1024)
 
 
 
