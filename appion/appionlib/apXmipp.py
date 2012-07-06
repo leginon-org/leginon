@@ -494,6 +494,42 @@ def calculate_equivalent_Eulers_without_flip(phi, theta, psi):
 
 #=======================
 #=======================
+def removeMirrorFromDocfile(docfile_old, docfile_new):
+	''' removes mirroring operation from docfile and outputs a new docfile '''
+
+	### read info
+	particles, header = readDocfile(docfile_old, returnheader=True)
+	dfn = open(docfile_new, "w")
+
+	### update header
+	headinfo = header.strip().split()
+	dfn.write(" ; Headerinfo columns: rot (1), tilt (2), psi (3), Xoff (4), Yoff (5), Ref (6)")
+	if len(headinfo) > 16:
+		count = 7
+		restheader = headinfo[17:]
+		for i in range(len(restheader)/2):
+			dfn.write(", %s (%d)" % (restheader[i*2], count))
+			count += 1
+	dfn.write("\n")
+	### modify Eulers and write to new docfile
+	for partnum, params in particles.iteritems():
+		dfn.write(" ; %s\n" % params['filename'])
+		p = params['values']
+		phi = float(p[2])
+		theta = float(p[3])
+		psi = float(p[4])
+		flip = bool(float(p[8]))
+		if flip is True:
+			phi, theta, psi = calculate_equivalent_Eulers_without_flip(phi, theta, psi)
+		dfn.write("%5d%2d %11.5f%11.5f%11.5f%11.5f%11.5f%12.5f" \
+			% (float(p[0]), float(p[1])-1, phi, theta, psi, float(p[5]), float(p[6]), float(p[7])))
+		if len(p) > 9:
+			for param in p[9:]:
+				dfn.write("%11.5f" % float(param))
+		dfn.write("\n")
+	dfn.close()
+	return
+	
 def readSelfile(selfile):
 	''' returns a list of filenames '''
 	f = open(selfile, "r")
@@ -505,11 +541,13 @@ def readSelfile(selfile):
 
 #=======================
 #=======================
-def readDocfile(docfile):
+def readDocfile(docfile, returnheader=False):
 	''' returns a nested dictionary: key=particle number (starts with 0), value=dictionary: {'values':[allvals], 'filename':'name'} '''
 	f = open(docfile, "r")
-	lines = f.readlines()[1:]
+	l = f.readlines()
 	f.close()
+	header = l[0]
+	lines = l[1:]
 	splitl = [l.strip().split() for l in lines]
 	d = {}
 	for i in range(len(splitl)/2):
@@ -518,4 +556,7 @@ def readDocfile(docfile):
 		partnum = int(float(m.group(0)[-6:]))
 		vals = splitl[i*2+1]
 		d[partnum] = {'filename':filename, 'values':vals}
-	return d
+	if returnheader is True:
+		return d, header
+	else:
+		return d
