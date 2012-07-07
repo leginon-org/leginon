@@ -301,7 +301,9 @@ class UploadFrealignScript(reconUploader.generalReconUploader):
 			self.insertRefinementIterationData(iteration, package_table, package_database_object)
 
 			###  make symlink only after successful insertion				
-			if os.path.isfile(newvol) and not os.path.islink(oldvol):
+			if os.path.isfile(newvol):
+				if os.path.isfile(oldvol):
+					apFile.removeFile(oldvol,True)
 				try:
 					os.symlink(newvol, oldvol)
 				except IOError, e:
