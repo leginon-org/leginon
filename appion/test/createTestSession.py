@@ -166,14 +166,14 @@ class testScript(appionScript.AppionScript):
 		imagedatfile = self.createImageBatchFile(imglist)
 
 		### get simulated instrument ids
-		scopeid, cameraid = self.getInstrumentIds()
+		#scopeid, cameraid = self.getInstrumentIds()
 
 		### run command
 		# assume appion program exists in PATH
 		script = os.path.join("imageloader.py ")
-		params = (" --runname=%s --projectid=%d --session=%s --batch=%s --scopeid=%d --cameraid=%d --description='%s' "
+		params = (" --runname=%s --projectid=%d --session=%s --batch=%s --description='%s' "
 			%(self.timestamp, self.params['projectid'], self.timestamp, 
-			imagedatfile, scopeid, cameraid, self.params['description']+' running test suite application'))
+			imagedatfile, self.params['description']+' running test suite application'))
 		if self.params['commit'] is True:
 			params += " --commit "
 		else:
