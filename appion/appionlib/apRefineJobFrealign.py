@@ -200,7 +200,7 @@ class FrealignRefineJob(apRefineJob.RefineJob):
 	def setFrealignRefineParams(self):
 		frealign_inputparams = []
 		# card 1
-		card = ("cform", "mode" , "fmag", "fdef", "fastig", "fpart", "iewald","fbeaut", "ffilt","fbfact", "fmatch", "ifsc", "fstat", "iblow",)
+		card = ("cform", "mode" , "fmag", "fdef", "fastig", "fpart", "iewald","fbeaut", "ffilt", "fmatch", "ifsc", "fstat", "iblow",)
 		frealign_inputparams.append(card)
 		####card 2
 		card = ("outerMaskRadius", "innerMaskRadius", "apix", "wgh", "xstd", "pbc", "boff", "angSampRate", "itmax", "ipmax",)
@@ -254,7 +254,7 @@ class FrealignRefineJob(apRefineJob.RefineJob):
 		stackfilehead = '.'.join(pieces[:len(pieces)-1])
 		appendcards = [
 				'../../%s' % stackfile,
-				'match',
+				'match.mrc',
 				'../../params.%03d.par' % (iter-1),
 				'outparams.par',
 				'shift.par',
@@ -271,7 +271,8 @@ class FrealignRefineJob(apRefineJob.RefineJob):
 
 	def writeReconShell(self,iter,inputlines,iterpath,nproc):
 		pieces = inputlines[0].split(',')
-		pieces[1] = '0'
+		pieces[1] = '0' #mode = 0 for recon
+		pieces[9] = 'F' #fmatch = F or no recon will be created
 		inputlines[0] = (',').join(pieces)
 		pieces = inputlines[7].split('../')
 		inputlines[7] = ('../').join(pieces[1:])
@@ -398,16 +399,16 @@ class FrealignRefineJob(apRefineJob.RefineJob):
 			masterfile_name = 'mpi.iter%03d.run.sh' % (iter)
 			mpi_refine = self.setupMPIRun(refine_files,self.nproc,iterpath,masterfile_name)
 			tasks = self.addToTasks(tasks,mpi_refine,self.mem,self.ppn)
-			tasks = self.logTaskStatus(tasks,'refine','recon/iter%03d/proc%03d/frealign.proc%03d.out' % (iter,self.nproc,self.nproc),iter)
+			tasks = self.logTaskStatus(tasks,'refine',os.path.join(iterpath,'proc%03d/frealign.proc%03d.out' % (self.nproc-1,self.nproc-1)),iter)
 		if not self.params['refineonly']:
 			# combine and recon parallelized only on one node
 			recon_file = self.writeReconShell(iter,inputlines_template,iterpath,self.ppn)	
 			tasks = self.addToTasks(tasks,recon_file,self.recon_mem,self.ppn)
 			tasks = self.addToTasks(tasks,'cd %s' % iterpath)
 			tasks = self.addToTasks(tasks,'getRes.pl %s %d %.3f >> ../resolution.txt' % (iter,self.params['boxsize'],self.params['apix']))
-			tasks = self.logTaskStatus(tasks,'eotest','resolution.txt',iter)
+			tasks = self.logTaskStatus(tasks,'eotest','../resolution.txt',iter)
 			tasks = self.addToTasks(tasks,'cd %s' % self.params['recondir'])
-			tasks = self.logTaskStatus(tasks,'recon','recon/iter%03d/proc%03d/frealign.proc%03d.out' % (iter,self.nproc,self.nproc),iter)
+			tasks = self.logTaskStatus(tasks,'recon',os.path.join(iterpath,'frealign.recon.out'),iter)
 		return tasks
 
 if __name__ == '__main__':
