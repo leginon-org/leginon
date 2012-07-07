@@ -22,6 +22,7 @@ from appionlib import apSymmetry
 from appionlib import apRecon
 from appionlib import apFrealign
 from appionlib import reconUploader
+from appionlib import apFile
 
 class UploadFrealignScript(reconUploader.generalReconUploader):
 	
@@ -290,12 +291,7 @@ class UploadFrealignScript(reconUploader.generalReconUploader):
 			### create mrc file of map for iteration and reference number
 			oldvol = os.path.join(self.projmatchpath, "threed.%03da.mrc" % iteration)
 			newvol = os.path.join(self.resultspath, "recon_%s_it%.3d_vol001.mrc" % (self.params['timestamp'], iteration))
-			if not os.path.isfile(newvol) and not os.path.islink(oldvol):
-				try:
-					shutil.move(oldvol, newvol)
-					os.symlink(newvol, oldvol)
-				except IOError, e:
-					print e
+			apFile.safeCopy(oldvol, newvol)
 			
 			### make chimera snapshot of volume
 			self.createChimeraVolumeSnapshot(newvol, iteration)
@@ -303,7 +299,13 @@ class UploadFrealignScript(reconUploader.generalReconUploader):
 			### instantiate database objects
 			self.insertRefinementRunData(iteration)
 			self.insertRefinementIterationData(iteration, package_table, package_database_object)
-				
+
+			###  make symlink only after successful insertion				
+			if os.path.isfile(newvol) and not os.path.islink(oldvol):
+				try:
+					os.symlink(newvol, oldvol)
+				except IOError, e:
+					print e
 		### calculate Euler jumps
 		self.calculateEulerJumpsAndGoodBadParticles(uploadIterations)	
 		
