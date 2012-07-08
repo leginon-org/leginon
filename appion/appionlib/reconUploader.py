@@ -473,12 +473,25 @@ class generalReconUploader(appionScript.AppionScript):
 			prtlq['euler3'] = float(phi)
 			prtlq['shiftx'] = particledata[i]['shiftx']
 			prtlq['shifty'] = particledata[i]['shifty']
-			prtlq['mirror'] = particledata[i]['mirror']
+			prtlq['mirror'] = 0
+#			prtlq['mirror'] = particledata[i]['mirror']
 			prtlq['3Dref_num'] = particledata[i]['refnum']
-			prtlq['2Dclass_num'] = particledata[i]['clsnum']
-			prtlq['quality_factor'] = particledata[i]['quality']
-			prtlq['refine_keep'] = particledata[i]['refine_keep']
-			prtlq['postRefine_keep'] = particledata[i]['postRefine_keep']				
+			try:
+				prtlq['2Dclass_num'] = particledata[i]['clsnum']
+			except:
+				pass
+			try:
+				prtlq['quality_factor'] = particledata[i]['quality']
+			except:
+				pass
+			try:
+				prtlq['refine_keep'] = particledata[i]['refine_keep']
+			except:
+				pass
+			try:
+				prtlq['postRefine_keep'] = particledata[i]['postRefine_keep']				
+			except:
+				pass
 			prtlq['euler_convention'] = euler_convention
 						
 			if self.params['commit'] is True:
@@ -652,12 +665,29 @@ def readParticleFileByFilePath(pdatafile):
 		alldata['omega'] = float(data[3])
 		alldata['shiftx'] = float(data[4])
 		alldata['shifty'] = float(data[5])
-		alldata['mirror'] = bool(float(data[6]))
-		alldata['refnum'] = float(data[7])
-		alldata['clsnum'] = float(data[8])
-		alldata['quality'] = float(data[9])
-		alldata['refine_keep'] = bool(float(data[10]))
-		alldata['postRefine_keep'] = bool(float(data[11]))
+		alldata['refnum'] = float(data[6])
+		try:
+			alldata['clsnum'] = float(data[7])
+		except:
+			pass
+		try:
+			alldata['quality'] = float(data[8])
+		except:
+			pass
+		try:
+			alldata['refine_keep'] = bool(float(data[9]))
+		except:
+			pass
+		try:
+			alldata['postRefine_keep'] = bool(float(data[10]))
+		except: 
+			pass
+#		alldata['mirror'] = bool(float(data[6]))
+#		alldata['refnum'] = float(data[7])
+#		alldata['clsnum'] = float(data[8])
+#		alldata['quality'] = float(data[9])
+#		alldata['refine_keep'] = bool(float(data[10]))
+#		alldata['postRefine_keep'] = bool(float(data[11]))
 		particledata[j] = alldata
 	return particledata
 
