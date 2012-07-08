@@ -137,7 +137,7 @@ def filterAndChimera(density, res=30, apix=None, box=None, chimtype='snapshot',
 		renderAnimation(tmpf, contour, zoom, sym, color, silhouette, name=density)
 	elif chimtype != 'animate':
 		renderSnapshots(tmpf, contour, zoom, sym, color, silhouette, name=density)
-	#apFile.removeFile(tmpf)
+	apFile.removeFile(tmpf)
 
 #=========================================
 #=========================================
