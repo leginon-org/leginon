@@ -17,6 +17,31 @@ def degreesToRadians(d):
 def radiansToDegrees(r):
 	return r*180/math.pi
 
+#==================
+def EulersToRotationMatrixEMAN(alt, az, phi):
+	''' 
+	this code was taken from the Transform class in Sparx and EMAN2 
+	http://blake.bcm.edu/eman2/doxygen_html/transform_8cpp_source.html#l00511	
+	'''
+#	return getEmanEulerMatrix({'euler1':alt, 'euler2':az}, phi)
+
+	alt = degreesToRadians(alt)
+	az = degreesToRadians(az)
+	phi = degreesToRadians(phi)
+	
+	m = numpy.zeros((3,3), dtype=numpy.float32)
+	m[0][0] = math.cos(phi)*math.cos(az) - math.cos(alt)*math.sin(az)*math.sin(phi)
+	m[0][1] = math.cos(phi)*math.sin(az) + math.cos(alt)*math.cos(az)*math.sin(phi)
+	m[0][2] = math.sin(alt)*math.sin(phi)
+	m[1][0] = -math.sin(phi)*math.cos(az) - math.cos(alt)*math.sin(az)*math.cos(phi)
+	m[1][1] = -math.sin(phi)*math.sin(az) + math.cos(alt)*math.cos(az)*math.cos(phi)
+	m[1][2] = math.sin(alt)*math.cos(phi)
+	m[2][0] = math.sin(alt)*math.sin(az)
+	m[2][1] = -math.sin(alt)*math.cos(az)
+	m[2][2] = math.cos(alt)
+
+	return m
+	
 #==================	
 def EulersToRotationMatrix3DEM(phi, theta, omega):
 	'''
@@ -52,6 +77,45 @@ def EulersToRotationMatrixXmipp(phi, theta, psi):
 #==================
 def EulersToRotationMatrixSPIDER(phi, theta, psi):
 	return EulersToRotationMatrix3DEM(phi, theta, psi)
+
+#==================
+def rotationMatrixToEulersEMAN(m):
+	''' 
+	this code was taken from the Transform class in Sparx and EMAN2 
+	http://blake.bcm.edu/eman2/doxygen_html/transform_8cpp_source.html#l00511
+	'''
+
+	if type(m) is not numpy.ndarray:
+		m = numpy.asarray(m)
+
+	### round off any values close to 0, default set to 0.00001 to avoid division by zero
+	default = 0.000001
+	m = numpy.where(abs(m) < default, 0, m)
+
+	cosalt = m[2][2]
+	if cosalt >= 1:
+		alt = 0
+		az = 0
+		phi = radiansToDegrees(math.atan2(m[0][1], m[0][0]))
+	elif cosalt <= -1:
+		alt = 180
+		az = 0
+		phi = radiansToDegrees(math.atan2(-m[0][1], m[0][0]))
+	else:
+		az = radiansToDegrees(math.atan2(m[2][0], -m[2][1]))
+		if m[2][2] == 0:
+			alt = 90.0
+		else:
+			alt = radiansToDegrees(math.atan(math.sqrt(m[2][0]*m[2][0]+m[2][1]*m[2][1])/(m[2][2])))
+		
+		if m[2][2] < 0:
+			alt = 180.0 - alt
+		phi = radiansToDegrees(math.atan2(m[0][2], m[1][2]))
+
+	phi = phi - 360.0 * math.floor(phi / 360.0)
+	az = az - 360.0 * math.floor(az / 360.0)
+
+	return alt, az, phi
 
 #==================
 def rotationMatrixToEulers3DEM(m):
@@ -104,9 +168,21 @@ def rotationMatrixToEulersXmipp(m):
 
 #==================
 def rotationMatrixToEulersSPIDER(m):
-	return rotationMatrixToEulers3DEM(m)	
+	return rotationMatrixToEulers3DEM(m)
 
+#==================
+def calculate_equivalent_EMANEulers_without_flip(alt, az, phi):
+	''' takes transform matrix, multiplies by mirror_matrix, inverses sign of psi '''
 
+	m = numpy.matrix(EulersToRotationMatrixEMAN(alt, az, phi))
+	mmirror = numpy.matrix([[-1,0,0],[0,-1,0],[0,0,-1]])
+	mnew = m * mmirror
+	newalt, newaz, newphi = rotationMatrixToEulersEMAN(mnew)
+	### this was assessed empirically, works on synthetic data projected with project3d
+	newphi = newphi + 180
+	return newalt, newaz, newphi
+
+#==================
 def calculate_equivalent_XmippEulers_without_flip(phi, theta, psi):
 	''' takes transform matrix, multiplies by mirror_matrix, inverses sign of psi '''
 	m = EulersToRotationMatrixXmipp(phi, theta, psi)
@@ -365,7 +441,7 @@ def getMatrix2(eulerdata):
 def getMatrix3(eulerdata, inplane=False):
 	"""
 	math from http://mathworld.wolfram.com/EulerAngles.html
-	appears to conform to EMAN conventions - could use more testing
+	EMAN conventions - could use more testing
 	tested by independently rotating object with EMAN eulers and with the
 	matrix that results from this function
 	"""
