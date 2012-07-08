@@ -298,20 +298,20 @@ class uploadEmanProjectionMatchingRefinementScript(reconUploader.generalReconUpl
 
 		### write data in appion format to input file for uploading to the database
 		particledataf = open(os.path.join(self.resultspath, "particle_data_%s_it%.3d_vol001.txt" % (self.params['timestamp'], iteration)), "w")
-		particledataf.write("### column info: ")
-		particledataf.write("(1) particle number ")
-		particledataf.write("(2) phi ")
-		particledataf.write("(3) theta ")
-		particledataf.write("(4) omega ")
-		particledataf.write("(5) shiftx ")
-		particledataf.write("(6) shifty ")
-		particledataf.write("(7) mirror ")
-		particledataf.write("(8) 3D reference # ")
-		particledataf.write("(9) 2D class # ")
-		particledataf.write("(10) quality factor ")
-		particledataf.write("(11) kept particle ")
-		particledataf.write("(12) postRefine kept particle \n")
-		
+#		particledataf.write("### column info: ")
+		particledataf.write("#%8s" % "partnum")
+		particledataf.write("%10s" % "phi")
+		particledataf.write("%10s" % "theta")
+		particledataf.write("%10s" % "omega")
+		particledataf.write("%10s" % "shiftx")
+		particledataf.write("%10s" % "shifty")
+#		particledataf.write("(7) mirror")
+		particledataf.write("%8s" % "3D_ref#")
+		particledataf.write("%8s" % "2D_cls#")
+		particledataf.write("%10s" % "qfact")
+		particledataf.write("%8s" % "keptp")
+		particledataf.write("%8s\n" % "p_keptp")
+
 		### read parameters from extracted cls files
 		eulers = self.getEulersFromProj(iteration)
 		for i, cls in enumerate(clsnames):
@@ -343,21 +343,27 @@ class uploadEmanProjectionMatchingRefinementScript(reconUploader.generalReconUpl
 						refine_keptp = bool(int(ali[4]))
 
 					### write the results to Appion format
-					phi, theta, omega = apEulerCalc.convertEmanEulersToXmipp(float(eulers[i][0]), float(eulers[i][1]), float(other[0])*180./math.pi)
-					particledataf.write("%.6d\t" % (int(prtlnum)+1)) ### NOTE: IT IS IMPORTANT TO START WITH 1, OTHERWISE STACKMAPPING IS WRONG!!!
-					particledataf.write("%.6f\t" % phi)
-					particledataf.write("%.6f\t" % theta)
-					particledataf.write("%.6f\t" % omega)
-					particledataf.write("%.6f\t" % float(other[1]))
-					particledataf.write("%.6f\t" % float(other[2]))
-					particledataf.write("%.6d\t" % int(float(other[3])))
-					particledataf.write("%.6d\t" % 1)
-					particledataf.write("%.6d\t" % float(i))
-					particledataf.write("%.6d\t" % float(ali[2].strip(',')))
-					particledataf.write("%.6f\t" % keptp)
-					particledataf.write("%.6f\n" % refine_keptp)
+					alt = float(eulers[i][0])
+					az = float(eulers[i][1])
+					Ephi = float(other[0])*180./math.pi
+					mirror = int(float(other[3]))
+					if mirror is True:
+						alt, az, Ephi = apEulerCalc.calculate_equivalent_EMANEulers_without_flip(alt, az, Ephi)
+					phi, theta, omega = apEulerCalc.convertEmanEulersToXmipp(alt, az, Ephi)
+					particledataf.write("%9d" % (int(prtlnum)+1)) ### NOTE: IT IS IMPORTANT TO START WITH 1, OTHERWISE STACKMAPPING IS WRONG!!!
+					particledataf.write("%10.4f" % phi)
+					particledataf.write("%10.4f" % theta)
+					particledataf.write("%10.4f" % omega)
+					particledataf.write("%10.4f" % float(other[1]))
+					particledataf.write("%10.4f" % float(other[2]))
+#					particledataf.write("%6d" % int(float(other[3]))) ### mirror is no longer accounted for
+					particledataf.write("%8d" % 1)
+					particledataf.write("%8d" % int(i))
+					particledataf.write("%10.2f" % float(ali[2].strip(',')))
+					particledataf.write("%8d" % keptp)
+					particledataf.write("%8d\n" % refine_keptp)
 		particledataf.close()
-		
+
 		### remove tmp directory
 		apFile.removeDir(tmpdir)
 		os.chdir(self.basepath)
@@ -477,12 +483,12 @@ class uploadEmanProjectionMatchingRefinementScript(reconUploader.generalReconUpl
 
 		### get components from parameter: e.g. 'ang = 20 15 10' for iteration 2 returns 15
 		package				= apRecon.getComponentFromVector(self.runparams['package_params']['package'], iteration-1)
-		ang					= apRecon.getComponentFromVector(self.runparams['package_params']['ang'], iteration-1)
+		ang				= apRecon.getComponentFromVector(self.runparams['package_params']['ang'], iteration-1)
 		lpfilter			= apRecon.getComponentFromVector(self.runparams['package_params']['lpfilter'], iteration-1)
 		hpfilter			= apRecon.getComponentFromVector(self.runparams['package_params']['hpfilter'], iteration-1)
 		mask				= apRecon.getComponentFromVector(self.runparams['package_params']['mask'], iteration-1)
 		imask				= apRecon.getComponentFromVector(self.runparams['package_params']['imask'], iteration-1)
-		pad					= apRecon.getComponentFromVector(self.runparams['package_params']['pad'], iteration-1)
+		pad				= apRecon.getComponentFromVector(self.runparams['package_params']['pad'], iteration-1)
 		maxshift			= apRecon.getComponentFromVector(self.runparams['package_params']['maxshift'], iteration-1)
 		hard				= apRecon.getComponentFromVector(self.runparams['package_params']['hard'], iteration-1)
 		classkeep			= apRecon.getComponentFromVector(self.runparams['package_params']['classkeep'], iteration-1)
@@ -505,12 +511,12 @@ class uploadEmanProjectionMatchingRefinementScript(reconUploader.generalReconUpl
 		
 		EMANRefineParamsq = appiondata.ApEmanRefineIterData()
 		EMANRefineParamsq['package']			= package
-		EMANRefineParamsq['ang']				= ang
+		EMANRefineParamsq['ang']			= ang
 		EMANRefineParamsq['lpfilter']			= lpfilter
 		EMANRefineParamsq['hpfilter']			= hpfilter
-		EMANRefineParamsq['mask']				= mask
-		EMANRefineParamsq['imask']				= imask
-		EMANRefineParamsq['pad']				= pad
+		EMANRefineParamsq['mask']			= mask
+		EMANRefineParamsq['imask']			= imask
+		EMANRefineParamsq['pad']			= pad
 		EMANRefineParamsq['EMAN_maxshift']		= maxshift
 		EMANRefineParamsq['EMAN_hard']			= hard
 		EMANRefineParamsq['EMAN_classkeep']		= classkeep
@@ -580,23 +586,23 @@ class uploadEmanProjectionMatchingRefinementScript(reconUploader.generalReconUpl
 			### create mrc file of map for iteration and reference number
 			oldvol = os.path.join(self.projmatchpath, "threed.%da.mrc" % iteration)
 			newvol = os.path.join(self.resultspath, "recon_%s_it%.3d_vol001.mrc" % (self.params['timestamp'], iteration))
-			if not os.path.isfile(newvol) and not os.path.islink(oldvol):
+			if not os.path.islink(newvol):
 				try:
-					shutil.move(oldvol, newvol)
-					os.symlink(newvol, oldvol)
+#					shutil.move(oldvol, newvol)
+					os.symlink(oldvol, newvol)
 				except IOError, e:
 					print e
-			
+
 			### make chimera snapshot of volume
 			self.createChimeraVolumeSnapshot(newvol, iteration)
 			
 			### instantiate database objects
 			self.insertRefinementRunData(iteration)
 			self.insertRefinementIterationData(iteration, package_table, package_database_object)
-				
+			
 		### calculate Euler jumps
-		self.calculateEulerJumpsAndGoodBadParticles(uploadIterations)		
-
+		if self.runparams['numiter'] > 1:
+			self.calculateEulerJumpsAndGoodBadParticles(uploadIterations)		
 
 #=====================
 if __name__ == "__main__":
