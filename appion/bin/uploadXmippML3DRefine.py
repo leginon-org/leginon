@@ -282,36 +282,43 @@ class uploadXmippML3DScript(reconUploader.generalReconUploader):
 		
 		### write data in appion format to input file for uploading to the database
 		particledataf = open(os.path.join(self.resultspath, "particle_data_%s_it%.3d_vol%.3d.txt" % (self.params['timestamp'], iteration, reference_number)), "w")
-		particledataf.write("### column info: ")
-		particledataf.write("(1) particle number ")
-		particledataf.write("(2) phi ")
-		particledataf.write("(3) theta ")
-		particledataf.write("(4) omega ")
-		particledataf.write("(5) shiftx ")
-		particledataf.write("(6) shifty ")
-		particledataf.write("(7) mirror ")
-		particledataf.write("(8) 3D reference # ")
-		particledataf.write("(9) 2D class # ")
-		particledataf.write("(10) quality factor ")
-		particledataf.write("(11) kept particle ")
-		particledataf.write("(12) postRefine kept particle \n")
+#		particledataf.write("### column info: ")
+		particledataf.write("#%8s" % "partnum")
+		particledataf.write("%10s" % "phi")
+		particledataf.write("%10s" % "theta")
+		particledataf.write("%10s" % "omega")
+		particledataf.write("%10s" % "shiftx")
+		particledataf.write("%10s" % "shifty")
+#		particledataf.write("(7) mirror")
+		particledataf.write("%8s" % "3D_ref#")
+		particledataf.write("%8s" % "2D_cls#")
+		particledataf.write("%10s" % "qfact")
+		particledataf.write("%8s" % "keptp")
+		particledataf.write("%8s\n" % "p_keptp")
+
 		for i in range(len(ml3dsplitlines)/2):
 			if int(float(ml3dsplitlines[i*2+1][7])) % classes_per_volume == 0:
 				n = classes_per_volume
 			else:
 				n = int(float(ml3dsplitlines[i*2+1][7])) % classes_per_volume
-			particledataf.write("%.6d\t" % (int(ml3dsplitlines[i*2][1][-10:-4])+1)) ### NOTE: IT IS IMPORTANT TO START WITH 1, OTHERWISE STACKMAPPING IS WRONG!!!
-			particledataf.write("%.6f\t" % float(ml3dsplitlines[i*2+1][2]))
-			particledataf.write("%.6f\t" % float(ml3dsplitlines[i*2+1][3]))
-			particledataf.write("%.6f\t" % float(ml3dsplitlines[i*2+1][4]))
-			particledataf.write("%.6f\t" % float(ml3dsplitlines[i*2+1][5]))
-			particledataf.write("%.6f\t" % float(ml3dsplitlines[i*2+1][6]))
-			particledataf.write("%.6d\t" % int(float(ml3dsplitlines[i*2+1][8])))
-			particledataf.write("%.6d\t" % int(reference_number))
-			particledataf.write("%.6d\t" % n)
-			particledataf.write("%.6d\t" % 0)
-			particledataf.write("%.6f\t" % 1)
-			particledataf.write("%.6f\n" % 1)
+			phi = float(ml3dsplitlines[i*2+1][2]))
+			theta = float(ml3dsplitlines[i*2+1][3]))
+			psi = float(ml3dsplitlines[i*2+1][4]))
+			mirror = bool(float(ml3dsplitlines[i*2+1][8])))
+			if mirror is True:
+				phi, theta, psi = apXmipp.calculate_equivalent_Eulers_without_flip(phi, theta, psi)
+			particledataf.write("%9d" % (int(ml3dsplitlines[i*2][1][-10:-4])+1)) ### NOTE: IT IS IMPORTANT TO START WITH 1, OTHERWISE STACKMAPPING IS WRONG!!!
+			particledataf.write("%10.4f" % phi)
+			particledataf.write("%10.4f" % theta)
+			particledataf.write("%10.4f" % psi)
+			particledataf.write("%10.4f" % float(ml3dsplitlines[i*2+1][5]))
+			particledataf.write("%10.4f" % float(ml3dsplitlines[i*2+1][6]))
+#			particledataf.write("%8d" % int(float(ml3dsplitlines[i*2+1][8]))) # deprecated: mirror is flipped already. Set to False
+			particledataf.write("%8d" % int(reference_number))
+			particledataf.write("%8d" % n)
+			particledataf.write("%10.4f" % 0)
+			particledataf.write("%8d" % 1)
+			particledataf.write("%8d\n" % 1)
 		particledataf.close()
 		
 		os.chdir(self.params['rundir'])
@@ -518,7 +525,8 @@ class uploadXmippML3DScript(reconUploader.generalReconUploader):
 				self.insertRefinementIterationData(iteration, package_table, package_database_object, j+1)
 				
 		### calculate Euler jumps
-		self.calculateEulerJumpsAndGoodBadParticles(uploadIterations)			
+		if self.runparams['numiter'] > 1:
+			self.calculateEulerJumpsAndGoodBadParticles(uploadIterations)			
 			
 		### query the database for the completed refinements BEFORE deleting any files ... returns a dictionary of lists
 		### e.g. {1: [5, 4, 3, 2, 1], 2: [6, 5, 4, 3, 2, 1]} means 5 iters completed for refine 1 & 6 iters completed for refine 2
