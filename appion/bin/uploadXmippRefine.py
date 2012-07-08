@@ -162,19 +162,19 @@ class uploadXmippProjectionMatchingRefinementScript(reconUploader.generalReconUp
 		
 		### write data in appion format to input file for uploading to the database
 		particledataf = open(os.path.join(self.resultspath, "particle_data_%s_it%.3d_vol001.txt" % (self.params['timestamp'], iteration)), "w")
-		particledataf.write("### column info: ")
-		particledataf.write("(1) particle number ")
-		particledataf.write("(2) phi ")
-		particledataf.write("(3) theta ")
-		particledataf.write("(4) omega ")
-		particledataf.write("(5) shiftx ")
-		particledataf.write("(6) shifty ")
-		particledataf.write("(7) mirror ")
-		particledataf.write("(8) 3D reference # ")
-		particledataf.write("(9) 2D class # ")
-		particledataf.write("(10) quality factor ")
-		particledataf.write("(11) kept particle ")
-		particledataf.write("(12) postRefine kept particle \n")		
+#		particledataf.write("### column info: ")
+		particledataf.write("#%8s" % "partnum")
+		particledataf.write("%10s" % "phi")
+		particledataf.write("%10s" % "theta")
+		particledataf.write("%10s" % "omega")
+		particledataf.write("%10s" % "shiftx")
+		particledataf.write("%10s" % "shifty")
+#		particledataf.write("(7) mirror")
+		particledataf.write("%8s" % "3D_ref#")
+		particledataf.write("%8s" % "2D_cls#")
+		particledataf.write("%10s" % "qfact")
+		particledataf.write("%8s" % "keptp")
+		particledataf.write("%8s\n" % "p_keptp")
 		for i in range(len(docsplitlines)/2):
 			phi = float(docsplitlines[i*2+1][2])
 			theta = float(docsplitlines[i*2+1][3])
@@ -182,22 +182,21 @@ class uploadXmippProjectionMatchingRefinementScript(reconUploader.generalReconUp
 			mirror = bool(float(docsplitlines[i*2+1][8]))
 			if mirror is True:
 				phi, theta, psi = apXmipp.calculate_equivalent_Eulers_without_flip(phi, theta, psi)
-			particledataf.write("%.6d\t" % (int(docsplitlines[i*2][1][-10:-4])+1)) ### NOTE: IT IS IMPORTANT TO START WITH 1, OTHERWISE STACKMAPPING IS WRONG!!!
-			particledataf.write("%.6f\t" % phi)
-			particledataf.write("%.6f\t" % theta)
-			particledataf.write("%.6f\t" % psi)
-			particledataf.write("%.6f\t" % float(docsplitlines[i*2+1][5]))
-			particledataf.write("%.6f\t" % float(docsplitlines[i*2+1][6]))
-			# mirror is flipped already. Set to False
-			particledataf.write("%.6d\t" % 0)
-			particledataf.write("%.6d\t" % 1)
-			particledataf.write("%.6d\t" % float(docsplitlines[i*2+1][7]))
-			particledataf.write("%.6d\t" % 0)
+			particledataf.write("%9d" % (int(docsplitlines[i*2][1][-10:-4])+1)) ### NOTE: IT IS IMPORTANT TO START WITH 1, OTHERWISE STACKMAPPING IS WRONG!!!
+			particledataf.write("%10.4f" % phi)
+			particledataf.write("%10.4f" % theta)
+			particledataf.write("%10.4f" % psi)
+			particledataf.write("%10.4f" % float(docsplitlines[i*2+1][5]))
+			particledataf.write("%10.4f" % float(docsplitlines[i*2+1][6]))
+#			particledataf.write("%8d" % 0) # deprecated: mirror is flipped already. Set to False
+			particledataf.write("%8d" % 1)
+			particledataf.write("%8d" % float(docsplitlines[i*2+1][7]))
+			particledataf.write("%10.4f" % float(docsplitlines[i*2+1][9])))
 			if i in badpartlist:
-				particledataf.write("%.6f\t" % 0)
+				particledataf.write("%8d" % 0)
 			else:
-				particledataf.write("%.6f\t" % 1)
-			particledataf.write("%.6f\n" % 1)
+				particledataf.write("%8d" % 1)
+			particledataf.write("%8d\n" % 1)
 		particledataf.close()
 		
 		os.chdir(self.params['rundir'])
@@ -214,68 +213,68 @@ class uploadXmippProjectionMatchingRefinementScript(reconUploader.generalReconUp
 		packageparams = {}
 		packageparams['NumberofIterations']					= xmipp_protocol_projmatch.NumberofIterations
 		packageparams['MaskFileName']						= xmipp_protocol_projmatch.MaskFileName
-		packageparams['MaskRadius']							= xmipp_protocol_projmatch.MaskRadius
+		packageparams['MaskRadius']						= xmipp_protocol_projmatch.MaskRadius
 		packageparams['InnerRadius']						= xmipp_protocol_projmatch.InnerRadius
 		packageparams['OuterRadius']						= xmipp_protocol_projmatch.OuterRadius
 		packageparams['SymmetryGroup']						= xmipp_protocol_projmatch.SymmetryGroup
-		packageparams['FourierMaxFrequencyOfInterest']		= xmipp_protocol_projmatch.FourierMaxFrequencyOfInterest
+		packageparams['FourierMaxFrequencyOfInterest']				= xmipp_protocol_projmatch.FourierMaxFrequencyOfInterest
 		packageparams['SelFileName']						= xmipp_protocol_projmatch.SelFileName
 		packageparams['DocFileName']						= xmipp_protocol_projmatch.DocFileName
 		packageparams['ReferenceFileName']					= xmipp_protocol_projmatch.ReferenceFileName
-		packageparams['WorkingDir']							= xmipp_protocol_projmatch.WorkingDir
+		packageparams['WorkingDir']						= xmipp_protocol_projmatch.WorkingDir
 #		packageparams['DoDeleteWorkingDir']					= xmipp_protocol_projmatch.DoDeleteWorkingDir
-#		packageparams['ContinueAtIteration']				= xmipp_protocol_projmatch.ContinueAtIteration
+#		packageparams['ContinueAtIteration']					= xmipp_protocol_projmatch.ContinueAtIteration
 		packageparams['CleanUpFiles']						= xmipp_protocol_projmatch.CleanUpFiles
-#		packageparams['ProjectDir']							= xmipp_protocol_projmatch.ProjectDir
-#		packageparams['LogDir']								= xmipp_protocol_projmatch.LogDir
+#		packageparams['ProjectDir']						= xmipp_protocol_projmatch.ProjectDir
+#		packageparams['LogDir']							= xmipp_protocol_projmatch.LogDir
 		packageparams['DoCtfCorrection']					= xmipp_protocol_projmatch.DoCtfCorrection
-		packageparams['CTFDatName']							= xmipp_protocol_projmatch.CTFDatName
+		packageparams['CTFDatName']						= xmipp_protocol_projmatch.CTFDatName
 		packageparams['DoAutoCtfGroup']						= xmipp_protocol_projmatch.DoAutoCtfGroup
 		packageparams['CtfGroupMaxDiff']					= xmipp_protocol_projmatch.CtfGroupMaxDiff
 		packageparams['CtfGroupMaxResol']					= xmipp_protocol_projmatch.CtfGroupMaxResol
-#		packageparams['SplitDefocusDocFile']				= xmipp_protocol_projmatch.SplitDefocusDocFile
+#		packageparams['SplitDefocusDocFile']					= xmipp_protocol_projmatch.SplitDefocusDocFile
 		packageparams['PaddingFactor']						= xmipp_protocol_projmatch.PaddingFactor
 		packageparams['WienerConstant']						= xmipp_protocol_projmatch.WienerConstant
-		packageparams['DataArePhaseFlipped']				= xmipp_protocol_projmatch.DataArePhaseFlipped
-		packageparams['ReferenceIsCtfCorrected']			= xmipp_protocol_projmatch.ReferenceIsCtfCorrected
-		packageparams['DoMask']								= xmipp_protocol_projmatch.DoMask
+		packageparams['DataArePhaseFlipped']					= xmipp_protocol_projmatch.DataArePhaseFlipped
+		packageparams['ReferenceIsCtfCorrected']				= xmipp_protocol_projmatch.ReferenceIsCtfCorrected
+		packageparams['DoMask']							= xmipp_protocol_projmatch.DoMask
 		packageparams['DoSphericalMask']					= xmipp_protocol_projmatch.DoSphericalMask
-#		packageparams['DoProjectionMatching']				= xmipp_protocol_projmatch.DoProjectionMatching
-#		packageparams['DisplayProjectionMatching']			= xmipp_protocol_projmatch.DisplayProjectionMatching
+#		packageparams['DoProjectionMatching']					= xmipp_protocol_projmatch.DoProjectionMatching
+#		packageparams['DisplayProjectionMatching']				= xmipp_protocol_projmatch.DisplayProjectionMatching
 #		packageparams['AvailableMemory']					= xmipp_protocol_projmatch.AvailableMemory
 		packageparams['AngSamplingRateDeg']					= xmipp_protocol_projmatch.AngSamplingRateDeg
 		packageparams['MaxChangeInAngles']					= xmipp_protocol_projmatch.MaxChangeInAngles
-		packageparams['PerturbProjectionDirections']		= xmipp_protocol_projmatch.PerturbProjectionDirections
+		packageparams['PerturbProjectionDirections']				= xmipp_protocol_projmatch.PerturbProjectionDirections
 		packageparams['MaxChangeOffset']					= xmipp_protocol_projmatch.MaxChangeOffset
 		packageparams['Search5DShift']						= xmipp_protocol_projmatch.Search5DShift
 		packageparams['Search5DStep']						= xmipp_protocol_projmatch.Search5DStep
-		packageparams['DoRetricSearchbyTiltAngle']			= xmipp_protocol_projmatch.DoRetricSearchbyTiltAngle
-		packageparams['Tilt0']								= xmipp_protocol_projmatch.Tilt0
-		packageparams['TiltF']								= xmipp_protocol_projmatch.TiltF
-		packageparams['SymmetryGroupNeighbourhood']			= xmipp_protocol_projmatch.SymmetryGroupNeighbourhood
-		packageparams['OnlyWinner']							= xmipp_protocol_projmatch.OnlyWinner
-		packageparams['MinimumCrossCorrelation']			= xmipp_protocol_projmatch.MinimumCrossCorrelation
+		packageparams['DoRetricSearchbyTiltAngle']				= xmipp_protocol_projmatch.DoRetricSearchbyTiltAngle
+		packageparams['Tilt0']							= xmipp_protocol_projmatch.Tilt0
+		packageparams['TiltF']							= xmipp_protocol_projmatch.TiltF
+		packageparams['SymmetryGroupNeighbourhood']				= xmipp_protocol_projmatch.SymmetryGroupNeighbourhood
+		packageparams['OnlyWinner']						= xmipp_protocol_projmatch.OnlyWinner
+		packageparams['MinimumCrossCorrelation']				= xmipp_protocol_projmatch.MinimumCrossCorrelation
 		packageparams['DiscardPercentage']					= xmipp_protocol_projmatch.DiscardPercentage
 		packageparams['ProjMatchingExtra']					= xmipp_protocol_projmatch.ProjMatchingExtra
-		packageparams['DoAlign2D']							= xmipp_protocol_projmatch.DoAlign2D
+		packageparams['DoAlign2D']						= xmipp_protocol_projmatch.DoAlign2D
 		packageparams['Align2DIterNr']						= xmipp_protocol_projmatch.Align2DIterNr
-		packageparams['Align2dMaxChangeOffset']				= xmipp_protocol_projmatch.Align2dMaxChangeOffset
-		packageparams['Align2dMaxChangeRot']				= xmipp_protocol_projmatch.Align2dMaxChangeRot
+		packageparams['Align2dMaxChangeOffset']					= xmipp_protocol_projmatch.Align2dMaxChangeOffset
+		packageparams['Align2dMaxChangeRot']					= xmipp_protocol_projmatch.Align2dMaxChangeRot
 #		packageparams['DoReconstruction']					= xmipp_protocol_projmatch.DoReconstruction
-#		packageparams['DisplayReconstruction']				= xmipp_protocol_projmatch.DisplayReconstruction
-		packageparams['ReconstructionMethod']				= xmipp_protocol_projmatch.ReconstructionMethod
-		packageparams['ARTLambda']							= xmipp_protocol_projmatch.ARTLambda
-		packageparams['ARTReconstructionExtraCommand']		= xmipp_protocol_projmatch.ARTReconstructionExtraCommand
-		packageparams['WBPReconstructionExtraCommand']		= xmipp_protocol_projmatch.WBPReconstructionExtraCommand
-		packageparams['FourierReconstructionExtraCommand']	= xmipp_protocol_projmatch.FourierReconstructionExtraCommand
-#		packageparams['DoSplitReferenceImages']				= xmipp_protocol_projmatch.DoSplitReferenceImages
-		packageparams['ResolSam']							= xmipp_protocol_projmatch.ResolSam
+#		packageparams['DisplayReconstruction']					= xmipp_protocol_projmatch.DisplayReconstruction
+		packageparams['ReconstructionMethod']					= xmipp_protocol_projmatch.ReconstructionMethod
+		packageparams['ARTLambda']						= xmipp_protocol_projmatch.ARTLambda
+		packageparams['ARTReconstructionExtraCommand']				= xmipp_protocol_projmatch.ARTReconstructionExtraCommand
+		packageparams['WBPReconstructionExtraCommand']				= xmipp_protocol_projmatch.WBPReconstructionExtraCommand
+		packageparams['FourierReconstructionExtraCommand']			= xmipp_protocol_projmatch.FourierReconstructionExtraCommand
+#		packageparams['DoSplitReferenceImages']					= xmipp_protocol_projmatch.DoSplitReferenceImages
+		packageparams['ResolSam']						= xmipp_protocol_projmatch.ResolSam
 #		packageparams['DisplayResolution']					= xmipp_protocol_projmatch.DisplayResolution
-		packageparams['ConstantToAddToFiltration']			= xmipp_protocol_projmatch.ConstantToAddToFiltration
+		packageparams['ConstantToAddToFiltration']				= xmipp_protocol_projmatch.ConstantToAddToFiltration
 #		packageparams['NumberOfThreads']					= xmipp_protocol_projmatch.NumberOfThreads
-#		packageparams['DoParallel']							= xmipp_protocol_projmatch.DoParallel
-#		packageparams['NumberOfMpiProcesses']				= xmipp_protocol_projmatch.NumberOfMpiProcesses
-#		packageparams['MpiJobSize']							= xmipp_protocol_projmatch.MpiJobSize
+#		packageparams['DoParallel']						= xmipp_protocol_projmatch.DoParallel
+#		packageparams['NumberOfMpiProcesses']					= xmipp_protocol_projmatch.NumberOfMpiProcesses
+#		packageparams['MpiJobSize']						= xmipp_protocol_projmatch.MpiJobSize
 #		packageparams['SystemFlavour']						= xmipp_protocol_projmatch.SystemFlavour
 #		packageparams['AnalysisScript']						= xmipp_protocol_projmatch.AnalysisScript
 
@@ -310,81 +309,81 @@ class uploadXmippProjectionMatchingRefinementScript(reconUploader.generalReconUp
 		MaxChangeInAngles			= apRecon.getComponentFromVector(self.runparams['package_params']['MaxChangeInAngles'], iteration-1)
 		Search5DShift				= apRecon.getComponentFromVector(self.runparams['package_params']['Search5DShift'], iteration-1)
 		Search5DStep				= apRecon.getComponentFromVector(self.runparams['package_params']['Search5DStep'], iteration-1)
-		MinimumCrossCorrelation		= apRecon.getComponentFromVector(self.runparams['package_params']['MinimumCrossCorrelation'], iteration-1)
+		MinimumCrossCorrelation			= apRecon.getComponentFromVector(self.runparams['package_params']['MinimumCrossCorrelation'], iteration-1)
 		DiscardPercentage			= apRecon.getComponentFromVector(self.runparams['package_params']['DiscardPercentage'], iteration-1)
-		DoAlign2D					= apRecon.getComponentFromVector(self.runparams['package_params']['DoAlign2D'], iteration-1)
-		Align2dMaxChangeOffset		= apRecon.getComponentFromVector(self.runparams['package_params']['Align2dMaxChangeOffset'], iteration-1)
+		DoAlign2D				= apRecon.getComponentFromVector(self.runparams['package_params']['DoAlign2D'], iteration-1)
+		Align2dMaxChangeOffset			= apRecon.getComponentFromVector(self.runparams['package_params']['Align2dMaxChangeOffset'], iteration-1)
 		Align2dMaxChangeRot			= apRecon.getComponentFromVector(self.runparams['package_params']['Align2dMaxChangeRot'], iteration-1)
-		ReconstructionMethod		= apRecon.getComponentFromVector(self.runparams['package_params']['ReconstructionMethod'], iteration-1)
-		ARTLambda					= apRecon.getComponentFromVector(self.runparams['package_params']['ARTLambda'], iteration-1)
-		ConstantToAddToFiltration	= apRecon.getComponentFromVector(self.runparams['package_params']['ConstantToAddToFiltration'], iteration-1)
+		ReconstructionMethod			= apRecon.getComponentFromVector(self.runparams['package_params']['ReconstructionMethod'], iteration-1)
+		ARTLambda				= apRecon.getComponentFromVector(self.runparams['package_params']['ARTLambda'], iteration-1)
+		ConstantToAddToFiltration		= apRecon.getComponentFromVector(self.runparams['package_params']['ConstantToAddToFiltration'], iteration-1)
 
 		### setup database object using components for each iteration
 		refineProtocolParamsq = appiondata.ApXmippRefineIterData()
 		refineProtocolParamsq['NumberofIterations']					= self.runparams['package_params']['NumberofIterations']
 		refineProtocolParamsq['MaskFileName']						= self.runparams['package_params']['MaskFileName']
-		refineProtocolParamsq['MaskRadius']							= self.runparams['package_params']['MaskRadius']
+		refineProtocolParamsq['MaskRadius']						= self.runparams['package_params']['MaskRadius']
 		refineProtocolParamsq['InnerRadius']						= self.runparams['package_params']['InnerRadius']
 		refineProtocolParamsq['OuterRadius']						= self.runparams['package_params']['OuterRadius']
 		refineProtocolParamsq['SymmetryGroup']						= self.runparams['package_params']['SymmetryGroup']
-		refineProtocolParamsq['FourierMaxFrequencyOfInterest']		= self.runparams['package_params']['FourierMaxFrequencyOfInterest']
+		refineProtocolParamsq['FourierMaxFrequencyOfInterest']				= self.runparams['package_params']['FourierMaxFrequencyOfInterest']
 		refineProtocolParamsq['SelFileName']						= self.runparams['package_params']['SelFileName']
 		refineProtocolParamsq['DocFileName']						= self.runparams['package_params']['DocFileName']
 		refineProtocolParamsq['ReferenceFileName']					= self.runparams['package_params']['ReferenceFileName']
-		refineProtocolParamsq['WorkingDir']							= self.runparams['package_params']['WorkingDir']
+		refineProtocolParamsq['WorkingDir']						= self.runparams['package_params']['WorkingDir']
 #		refineProtocolParamsq['DoDeleteWorkingDir']					= self.runparams['package_params']['DoDeleteWorkingDir']
-#		refineProtocolParamsq['ContinueAtIteration']				= self.runparams['package_params']['ContinueAtIteration']
+#		refineProtocolParamsq['ContinueAtIteration']					= self.runparams['package_params']['ContinueAtIteration']
 		refineProtocolParamsq['CleanUpFiles']						= self.runparams['package_params']['CleanUpFiles']
-#		refineProtocolParamsq['ProjectDir']							= self.runparams['package_params']['ProjectDir']
-#		refineProtocolParamsq['LogDir']								= self.runparams['package_params']['LogDir']
+#		refineProtocolParamsq['ProjectDir']						= self.runparams['package_params']['ProjectDir']
+#		refineProtocolParamsq['LogDir']							= self.runparams['package_params']['LogDir']
 		refineProtocolParamsq['DoCtfCorrection']					= self.runparams['package_params']['DoCtfCorrection']
-		refineProtocolParamsq['CTFDatName']							= self.runparams['package_params']['CTFDatName']
+		refineProtocolParamsq['CTFDatName']						= self.runparams['package_params']['CTFDatName']
 		refineProtocolParamsq['DoAutoCtfGroup']						= self.runparams['package_params']['DoAutoCtfGroup']
 		refineProtocolParamsq['CtfGroupMaxDiff']					= self.runparams['package_params']['CtfGroupMaxDiff']
 		refineProtocolParamsq['CtfGroupMaxResol']					= self.runparams['package_params']['CtfGroupMaxResol']
-#		refineProtocolParamsq['SplitDefocusDocFile']				= self.runparams['package_params']['SplitDefocusDocFile']
+#		refineProtocolParamsq['SplitDefocusDocFile']					= self.runparams['package_params']['SplitDefocusDocFile']
 		refineProtocolParamsq['PaddingFactor']						= self.runparams['package_params']['PaddingFactor']
 		refineProtocolParamsq['WienerConstant']						= self.runparams['package_params']['WienerConstant']
-		refineProtocolParamsq['DataArePhaseFlipped']				= self.runparams['package_params']['DataArePhaseFlipped']
-		refineProtocolParamsq['ReferenceIsCtfCorrected']			= self.runparams['package_params']['ReferenceIsCtfCorrected']
-		refineProtocolParamsq['DoMask']								= self.runparams['package_params']['DoMask']
+		refineProtocolParamsq['DataArePhaseFlipped']					= self.runparams['package_params']['DataArePhaseFlipped']
+		refineProtocolParamsq['ReferenceIsCtfCorrected']				= self.runparams['package_params']['ReferenceIsCtfCorrected']
+		refineProtocolParamsq['DoMask']							= self.runparams['package_params']['DoMask']
 		refineProtocolParamsq['DoSphericalMask']					= self.runparams['package_params']['DoSphericalMask']
-#		refineProtocolParamsq['DoProjectionMatching']				= self.runparams['package_params']['DoProjectionMatching']
-#		refineProtocolParamsq['DisplayProjectionMatching']			= self.runparams['package_params']['DisplayProjectionMatching']
+#		refineProtocolParamsq['DoProjectionMatching']					= self.runparams['package_params']['DoProjectionMatching']
+#		refineProtocolParamsq['DisplayProjectionMatching']				= self.runparams['package_params']['DisplayProjectionMatching']
 #		refineProtocolParamsq['AvailableMemory']					= self.runparams['package_params']['AvailableMemory']
 		refineProtocolParamsq['AngSamplingRateDeg']					= AngSamplingRateDeg
 		refineProtocolParamsq['MaxChangeInAngles']					= MaxChangeInAngles
-		refineProtocolParamsq['PerturbProjectionDirections']		= self.runparams['package_params']['PerturbProjectionDirections']
+		refineProtocolParamsq['PerturbProjectionDirections']				= self.runparams['package_params']['PerturbProjectionDirections']
 		refineProtocolParamsq['MaxChangeOffset']					= MaxChangeOffset
 		refineProtocolParamsq['Search5DShift']						= Search5DShift		
 		refineProtocolParamsq['Search5DStep']						= Search5DStep
-		refineProtocolParamsq['DoRetricSearchbyTiltAngle']			= self.runparams['package_params']['DoRetricSearchbyTiltAngle']
-		refineProtocolParamsq['Tilt0']								= self.runparams['package_params']['Tilt0']
-		refineProtocolParamsq['TiltF']								= self.runparams['package_params']['TiltF']
-		refineProtocolParamsq['SymmetryGroupNeighbourhood']			= self.runparams['package_params']['SymmetryGroupNeighbourhood']
-		refineProtocolParamsq['OnlyWinner']							= self.runparams['package_params']['OnlyWinner']
-		refineProtocolParamsq['MinimumCrossCorrelation']			= MinimumCrossCorrelation
+		refineProtocolParamsq['DoRetricSearchbyTiltAngle']				= self.runparams['package_params']['DoRetricSearchbyTiltAngle']
+		refineProtocolParamsq['Tilt0']							= self.runparams['package_params']['Tilt0']
+		refineProtocolParamsq['TiltF']							= self.runparams['package_params']['TiltF']
+		refineProtocolParamsq['SymmetryGroupNeighbourhood']				= self.runparams['package_params']['SymmetryGroupNeighbourhood']
+		refineProtocolParamsq['OnlyWinner']						= self.runparams['package_params']['OnlyWinner']
+		refineProtocolParamsq['MinimumCrossCorrelation']				= MinimumCrossCorrelation
 		refineProtocolParamsq['DiscardPercentage']					= DiscardPercentage
 		refineProtocolParamsq['ProjMatchingExtra']					= self.runparams['package_params']['ProjMatchingExtra']
-		refineProtocolParamsq['DoAlign2D']							= DoAlign2D
+		refineProtocolParamsq['DoAlign2D']						= DoAlign2D
 		refineProtocolParamsq['Align2DIterNr']						= self.runparams['package_params']['Align2DIterNr']
-		refineProtocolParamsq['Align2dMaxChangeOffset']				= Align2dMaxChangeOffset
-		refineProtocolParamsq['Align2dMaxChangeRot']				= Align2dMaxChangeRot
+		refineProtocolParamsq['Align2dMaxChangeOffset']					= Align2dMaxChangeOffset
+		refineProtocolParamsq['Align2dMaxChangeRot']					= Align2dMaxChangeRot
 #		refineProtocolParamsq['DoReconstruction']					= self.runparams['package_params']['DoReconstruction']
-#		refineProtocolParamsq['DisplayReconstruction']				= self.runparams['package_params']['DisplayReconstruction']
-		refineProtocolParamsq['ReconstructionMethod']				= ReconstructionMethod
-		refineProtocolParamsq['ARTLambda']							= ARTLambda
-		refineProtocolParamsq['ARTReconstructionExtraCommand']		= self.runparams['package_params']['ARTReconstructionExtraCommand']
-		refineProtocolParamsq['WBPReconstructionExtraCommand']		= self.runparams['package_params']['WBPReconstructionExtraCommand']
-		refineProtocolParamsq['FourierReconstructionExtraCommand']	= self.runparams['package_params']['FourierReconstructionExtraCommand']
-#		refineProtocolParamsq['DoSplitReferenceImages']				= self.runparams['package_params']['DoSplitReferenceImages']
-		refineProtocolParamsq['ResolSam']							= self.runparams['package_params']['ResolSam']
+#		refineProtocolParamsq['DisplayReconstruction']					= self.runparams['package_params']['DisplayReconstruction']
+		refineProtocolParamsq['ReconstructionMethod']					= ReconstructionMethod
+		refineProtocolParamsq['ARTLambda']						= ARTLambda
+		refineProtocolParamsq['ARTReconstructionExtraCommand']				= self.runparams['package_params']['ARTReconstructionExtraCommand']
+		refineProtocolParamsq['WBPReconstructionExtraCommand']				= self.runparams['package_params']['WBPReconstructionExtraCommand']
+		refineProtocolParamsq['FourierReconstructionExtraCommand']			= self.runparams['package_params']['FourierReconstructionExtraCommand']
+#		refineProtocolParamsq['DoSplitReferenceImages']					= self.runparams['package_params']['DoSplitReferenceImages']
+		refineProtocolParamsq['ResolSam']						= self.runparams['package_params']['ResolSam']
 #		refineProtocolParamsq['DisplayResolution']					= self.runparams['package_params']['DisplayResolution']
-		refineProtocolParamsq['ConstantToAddToFiltration']			= ConstantToAddToFiltration
+		refineProtocolParamsq['ConstantToAddToFiltration']				= ConstantToAddToFiltration
 #		refineProtocolParamsq['NumberOfThreads']					= self.runparams['package_params']['NumberOfThreads']
-#		refineProtocolParamsq['DoParallel']							= self.runparams['package_params']['DoParallel']
-#		refineProtocolParamsq['NumberOfMpiProcesses']				= self.runparams['package_params']['NumberOfMpiProcesses']
-#		refineProtocolParamsq['MpiJobSize']							= self.runparams['package_params']['MpiJobSize']
+#		refineProtocolParamsq['DoParallel']						= self.runparams['package_params']['DoParallel']
+#		refineProtocolParamsq['NumberOfMpiProcesses']					= self.runparams['package_params']['NumberOfMpiProcesses']
+#		refineProtocolParamsq['MpiJobSize']						= self.runparams['package_params']['MpiJobSize']
 #		refineProtocolParamsq['SystemFlavour']						= self.runparams['package_params']['SystemFlavour']
 #		refineProtocolParamsq['AnalysisScript']						= self.runparams['package_params']['AnalysisScript']
 
@@ -422,6 +421,7 @@ class uploadXmippProjectionMatchingRefinementScript(reconUploader.generalReconUp
 		
 		### set projection-matching path
 		self.projmatchpath = os.path.abspath(os.path.join(self.params['rundir'], "recon", self.runparams['package_params']['WorkingDir']))
+#		self.projmatchpath = os.path.abspath(os.path.join(self.params['rundir'], self.runparams['package_params']['WorkingDir']))
 	
 		### check for variable root directories between file systems
 		apXmipp.checkSelOrDocFileRootDirectoryInDirectoryTree(self.params['rundir'], self.runparams['remoterundir'], self.runparams['rundir'])
@@ -464,7 +464,8 @@ class uploadXmippProjectionMatchingRefinementScript(reconUploader.generalReconUp
 			self.insertRefinementIterationData(iteration, package_table, package_database_object)
 				
 		### calculate Euler jumps
-		self.calculateEulerJumpsAndGoodBadParticles(uploadIterations)	
+		if self.runparams['numiter'] > 1:
+			self.calculateEulerJumpsAndGoodBadParticles(uploadIterations)	
 		
 		### query the database for the completed refinements BEFORE deleting any files ... returns a dictionary of lists
 		### e.g. {1: [5, 4, 3, 2, 1]} means 5 iters completed for refine 1
