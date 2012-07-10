@@ -5015,12 +5015,15 @@ class particledata {
 			."FROM ApBootstrappedAngularReconstitutionRunData as ar "
 			."LEFT JOIN ApPathData AS path "
 			."  ON ar.`REF|ApPathData|path` = path.`DEF_id` "
+			
 			### add a session entry to table
 			."LEFT JOIN ApTemplateStackData AS ts "
 			."  ON ar.`REF|ApTemplateStackData|templatestackid` = ts.`DEF_id` "
-			."LEFT JOIN SessionData AS sd "
-			."  ON ts.`REF|leginondata|SessionData|session` = sd.`DEF_id` "
-
+			."WHERE "
+			."  ts.`REF|leginondata|SessionData|session` = '$sessionId' ";
+//			."LEFT JOIN leginondata|SessionData AS sd "
+//			."  ON ts.`REF|leginondata|SessionData|session` = sd.`DEF_id` "; 
+			/*	
 			."LEFT JOIN ApClusteringStackData AS clusterstack "
 			."  ON ar.`REF|ApClusteringStackData|clusterid` = clusterstack.`DEF_id` "
 			."LEFT JOIN ApClusteringRunData AS clusterrun ON "
@@ -5035,9 +5038,29 @@ class particledata {
 			."  ON stackrun.`DEF_id` = runsinstack.`REF|ApStackRunData|stackRun` "
 			."WHERE "
 			."  stackrun.`REF|leginondata|SessionData|session` = '$sessionId'";
+			*/
+//		echo $q;
 		$r=$this->mysql->getSQLResult($q);
 		return $r;
 	}
+
+	function getAutomatedCommonLinesRunInfo($aclId) {
+		$q="SELECT "
+			."  ar.*, "
+			."  path.`path` AS path "
+			."FROM ApBootstrappedAngularReconstitutionRunData as ar "
+			."LEFT JOIN ApPathData AS path "
+			."  ON ar.`REF|ApPathData|path` = path.`DEF_id` "
+			
+			### add a session entry to table
+			."LEFT JOIN ApTemplateStackData AS ts "
+			."  ON ar.`REF|ApTemplateStackData|templatestackid` = ts.`DEF_id` "
+			."WHERE "
+			."  ar.`DEF_id` = '$aclId' ";
+		$r=$this->mysql->getSQLResult($q);
+		return $r[0];
+	}
+
 
 	function getImagic3dRefinementRunsFromSessionId($sessionId) {
 		$q="SELECT "

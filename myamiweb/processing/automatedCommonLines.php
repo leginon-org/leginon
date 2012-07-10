@@ -14,6 +14,7 @@ require "inc/leginon.inc";
 require "inc/project.inc";
 require "inc/viewer.inc";
 require "inc/processing.inc";
+//require "inc/forms/basicRefineForm.inc";
 
 // IF VALUES SUBMITTED, EVALUATE DATA
 	
@@ -24,7 +25,7 @@ else {
 	createAngularReconstitutionForm();
 }
 	
-function createAngularReconstitutionForm($extra=False, $title='bootstrappedAngularReconstitution.py Launcher', $heading='Bootstrapped Angular Reconstitution') {
+function createAngularReconstitutionForm($extra=False, $title='automatedCommonLines.py Launcher', $heading='Automated Common Lines') {
 	// check if coming directly from a session
 	$expId=$_GET['expId'];
 	if ($expId){
@@ -42,8 +43,8 @@ function createAngularReconstitutionForm($extra=False, $title='bootstrappedAngul
 	$clusterIds = $particle->getClusteringStacks($sessionId, $projectId);
 //	$templateIds = $particle->getTemplateStacksFromSession($sessionId);
 	$templateIds = $particle->getTemplateStacksFromProject($projectId);
-	$barrunsarray = $particle->getAngularReconstitutionRuns($sessionId);
-	$barruns= ($barrunsarray) ? count($barrunsarray) : 0;
+	$aclrunsarray = $particle->getAngularReconstitutionRuns($sessionId);
+	$aclruns= ($aclrunsarray) ? count($aclrunsarray) : 0;
 	
 	$javascript = "<script src='../js/viewer.js'></script>\n";
 	$javascript .= writeJavaPopupFunctions('appion');	
@@ -64,9 +65,9 @@ function createAngularReconstitutionForm($extra=False, $title='bootstrappedAngul
 	
 	// Set any existing parameters in form
 	$sessionpathval = ($_POST['outdir']) ? $_POST['outdir'] : $sessionpath;
-	while (file_exists($sessionpathval.'bar'.($barruns+1)))
-		$barruns += 1;
-	$runname = ($_POST['runname']) ? $_POST['runname'] : 'bar'.($barruns+1);
+	while (file_exists($sessionpathval.'acl'.($aclruns+1)))
+		$aclruns += 1;
+	$runname = ($_POST['runname']) ? $_POST['runname'] : 'acl'.($aclruns+1);
 	$description = $_POST['description'];
 	$clusteridstr = $_POST['clustervals'];
 	list($clusterid,$apix,$boxsz,$num_classes,$totprtls) = split('\|--\|', $clusteridstr);
@@ -78,13 +79,13 @@ function createAngularReconstitutionForm($extra=False, $title='bootstrappedAngul
 	$nvol = ($_POST['nvol']) ? $_POST['nvol'] : '100';
 	$nproc = ($_POST['nproc']) ? $_POST['nproc'] : '8';
 	$asqfilt = ($_POST['asqfilt']=='on') ? 'checked' : '';
-	$linmask = ($_POST['linmask']) ? $_POST['linmask'] : '0.67';
+//	$linmask = ($_POST['linmask']) ? $_POST['linmask'] : '0.67';
 	$anginc = ($_POST['anginc']) ? $_POST['anginc'] : '2';
 	$keep_ordered = ($_POST['keep_ordered']) ? $_POST['keep_ordered'] : '90';
-	$filt3d = ($_POST['filt3d']) ? $_POST['filt3d'] : '20';
+	$filt3d = ($_POST['filt3d']) ? $_POST['filt3d'] : '30';
 	$nref = ($_POST['nref']) ? $_POST['nref'] : '1';
 	$usePCAcheck = ($_POST['usePCA']=='on' || !$_POST['usePCA']) ? 'checked' : '';	
-	$numeigens = ($_POST['numeigens']) ? $_POST['numeigens'] : '69';
+	$numeigens = ($_POST['numeigens']) ? $_POST['numeigens'] : '20';
 	$preftype = ($_POST['preftype']) ? $_POST['preftype'] : 'median';
 	$recalc = ($_POST['recalc']=='on') ? 'checked' : '';
 	
@@ -194,7 +195,7 @@ function createAngularReconstitutionForm($extra=False, $title='bootstrappedAngul
 	
 				echo "<INPUT TYPE='text' NAME='linmask' VALUE='$linmask' SIZE='4'>\n";
 				echo docpop('linmask','Linear mask radius for sinograms');
-				echo "<font size='-2'>(fraction)</font>\n";
+				echo "<font size='-2'>(&Aring;ngstroms)</font>\n";
 				echo "<br/>\n";
 	
 				echo "<INPUT TYPE='text' NAME='anginc' VALUE='$anginc' SIZE='4'>\n";
@@ -230,11 +231,11 @@ function createAngularReconstitutionForm($extra=False, $title='bootstrappedAngul
 		
 				echo "<INPUT TYPE='text' NAME='numeigens' VALUE='$numeigens' SIZE='4'>\n";
 				echo docpop('numeigens','Number of Eigenimages');
-				echo "<br/>\n";	
+				echo "<br><br/>\n";	
 
-				echo "<INPUT TYPE='checkbox' NAME='recalc' $recalc<br/>\n";
-				echo docpop('recalc','Recalculate volumes after PCA');
-				echo "<br><br>";
+//				echo "<INPUT TYPE='checkbox' NAME='recalc' $recalc<br/>\n";
+//				echo docpop('recalc','Recalculate volumes after PCA');
+//				echo "<br><br>";
 	
 				echo docpop('PreferenceType', 'Preference Type for Affinity Propagation');
 				echo "<br>\n";
@@ -243,6 +244,34 @@ function createAngularReconstitutionForm($extra=False, $title='bootstrappedAngul
 				echo "<OPTION VALUE='minimum'>Minimum correlation, normal # of classes</OPTION>";
 				echo "<OPTION VALUE='minlessrange'>Minimum correlation - range, fewest # of classes</OPTION>";
 				echo "</SELECT><br>";
+
+				echo "<br/>\n";
+				echo "<b>3D Refinement</b>\n";
+				echo "<br/>\n";
+
+				echo "<INPUT TYPE='text' NAME='mask_radius' VALUE='$mask_radius' SIZE='4'>\n";
+				echo docpop('cl_mask_radius','Radius of mask (&Aring;ngstroms)');
+				echo "<br>\n";
+
+				echo "<INPUT TYPE='text' NAME='inner_radius' VALUE='$inner_radius' SIZE='4'>\n";
+				echo docpop('cl_inner_radius','Inner alignment radius (&Aring;ngstroms)');
+				echo "<br>\n";
+
+				echo "<INPUT TYPE='text' NAME='outer_radius' VALUE='$outer_radius' SIZE='4'>\n";
+				echo docpop('cl_outer_radius','Outer alignment radius (&Aring;ngstroms)');
+				echo "<br>\n";
+
+				echo "<INPUT TYPE='text' NAME='mass' VALUE='$mass' SIZE='4'>\n";
+				echo docpop('mass','Particle mass (kDa)');
+				echo "<br><br>\n";
+
+//				echo "<br/>\n";
+//				echo "<b>Model Evaluation</b>\n";
+//				echo "<br/>\n";
+		
+//				$functions = new basicRefineForm();
+//				$functions->insertSymmetrySelectionBox("symmetry");
+	
 				echo "</TD></TR>\n";
 			echo "</table></TD></TR><TR></TR>\n";
 	
@@ -278,8 +307,13 @@ function runAngularReconstitution() {
 	$nref = $_POST['nref'];
 	$usePCA = ($_POST['usePCA']=="on") ? true : false;
 	$numeigens = $_POST['numeigens'];
-	$recalc = ($_POST['recalc']=="on") ? true : false;
+//	$recalc = ($_POST['recalc']=="on") ? true : false;
 	$preftype = $_POST['preftype'];
+	$maskradius = $_POST['mask_radius'];
+	$innerradius = $_POST['inner_radius'];
+	$outerradius = $_POST['outer_radius'];
+	$mass = $_POST['mass'];
+
 	// get selected stack parameters
 	if ($clustervals != 'select') 
 		list($clusterid,$apix,$boxsz,$num_classes,$totprtls) = split('\|--\|', $clustervals);
@@ -309,7 +343,7 @@ function runAngularReconstitution() {
 	******************** */
 
 	// setup command
-	$command ="bootstrappedAngularReconstitution.py ";
+	$command ="automatedCommonLines.py ";
 	$command.="--description=\"$description\" ";
 	if ($clusterid) $command.="--clusterid=$clusterid ";
 	elseif ($tsid) $command.="--templatestackid=$tsid ";
@@ -325,7 +359,11 @@ function runAngularReconstitution() {
 	if ($nref) $command.="--nref=$nref ";
 	if ($usePCA) $command.="--PCA ";
 	if ($numeigens) $command.="--numeigens=$numeigens ";
-	if ($recalc) $command.="--recalculate_volumes ";
+//	if ($recalc) $command.="--recalculate_volumes ";
+	if ($maskradius) $command.="--mask_radius=$maskradius ";
+	if ($innerradius) $command.="--inner_radius=$innerradius ";
+	if ($outerradius) $command.="--outer_radius=$outerradius ";
+	if ($mass) $command.="--mass=$mass ";
 	if ($preftype) $command.="--preftype=$preftype ";
 	if ($nproc && $nproc>1) $command.="--nproc=$nproc ";
 	if ($commit) $command.="--commit ";
