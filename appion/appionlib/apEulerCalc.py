@@ -18,6 +18,34 @@ def radiansToDegrees(r):
 	return r*180/math.pi
 
 #==================
+def convert3DEMIcosEulerToStandard(full_sym_name,phi,theta,omega):
+	if 'Icos' not in full_sym_name:
+		return phi,theta,omega
+	else:
+		return convert3DEMIcosEulerTo532(full_sym_name,phi,theta,omega)
+
+#==================
+def convert3DEMIcosEulerTo532(full_sym_name,phi,theta,omega):
+	if 'Icos' not in full_sym_name:
+		return phi,theta,omega
+	r_in = EulersToRotationMatrix3DEM(phi, theta, omega)
+	i_matrix = numpy.matrix([[1,0,0],[0,1,0],[0,0,1]])
+	if '3DEM' in full_sym_name:
+		# (235) to (253)
+		symr1 = EulersToRotationMatrix3DEM(90,0,0)
+	else:
+		symr1 = i_matrix
+	if 'EMAN' not in full_sym_name:
+		# (253) to (532)
+		symr2 = EulersToRotationMatrix3DEM(-90,90,-31.7174744)
+	else:
+		symr2 = i_matrix
+	symr = symr1 * symr2
+	r_out = r_in * symr
+	phi,theta,omega = rotationMatrixToEulers3DEM(r_out)
+	return phi,theta,omega
+					
+#==================
 def EulersToRotationMatrixEMAN(alt, az, phi):
 	''' 
 	this code was taken from the Transform class in Sparx and EMAN2 

@@ -23,13 +23,16 @@ def findSymmetry(symtext, msg=True):
 
 #===========================
 def getSymmetryDataFromName(symtext='c1', msg=True):
-	# find the symmetry entry in the database
-	# based on the text version from EMAN
-	# first convert to lower case
-	symtext = symtext.lower().strip()
-	if symtext == "i":
-		symtext = "icos"
-	symdataq = appiondata.ApSymmetryData(eman_name=symtext)
+	# find the symmetry entry (full symmetry name) in the database
+	if len(symtext.split()) > 1:
+		symdataq = appiondata.ApSymmetryData(symmetry=symtext.strip())
+	else:
+		# based on the text version from EMAN
+		# first convert to lower case
+		symtext = symtext.lower().strip()
+		if symtext == "i":
+			symtext = "icos"
+		symdataq = appiondata.ApSymmetryData(eman_name=symtext)
 	symdatas = symdataq.query()
 	if not symdatas:
 		apDisplay.printError("No symmetry named %s was found"%(symtext))

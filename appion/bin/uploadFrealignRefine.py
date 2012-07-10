@@ -176,7 +176,8 @@ class UploadFrealignScript(reconUploader.generalReconUploader):
 		iterparams['ipmax'] = int(data[9])
 
 		### get symmetry info from card #5
-		symmdata = apSymmetry.findSymmetry(cards[5])
+		symtext = apFrealign.convertFrealignSymToAppionSym(cards[5])
+		symmdata = apSymmetry.findSymmetry(symtext)
 		apDisplay.printMsg("Found symmetry %s with id %s"%(symmdata['eman_name'], symmdata.dbid))
 		iterparams['symmdata'] = symmdata
 

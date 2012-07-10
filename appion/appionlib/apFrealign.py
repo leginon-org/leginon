@@ -119,6 +119,15 @@ def getStackParticlesInOrder(params):
 		stpartdatas.append(apStack.getStackParticle(stackid, partnum))
 	return stpartdatas
 
+def convertFrealignSymToAppionSym(frealign_symtext):
+	if frealign_symtext[0].lower() == 'i':
+		icosdict = {'i':'Icos (5 3 2) Viper/3DEM','i2':'Icos (2 5 3) Crowther'}
+		return icosdict[frealign_symtext.lower()]
+	elif frealign_symtext[0] == 'O':
+		return 'Oct'
+	else:
+		return frealign_symtext[0].upper()+' (z)'
+
 #===============
 def generateParticleParams(params,initparfile='params.0.par'):
 	params['inpar']=os.path.join(params['rundir'],initparfile)
@@ -131,7 +140,7 @@ def generateParticleParams(params,initparfile='params.0.par'):
 	params['noClassification']=0
 	if params['reconiterid']:
 		iterdata = apRecon.getRefineIterDataFromIterationId(params['reconiterid'])
-		eman_sym_name = iterdata['symmetry']['eman_name']
+		sym_name = iterdata['symmetry']['symmetry']
 		
 	print "Writing out particle parameters"
 	if 'last' not in params:
@@ -207,8 +216,8 @@ def generateParticleParams(params,initparfile='params.0.par'):
 			e2 = fr_eulers['theta']
 			e3 = fr_eulers['psi']
 			
-			# if icos, rotate eulers to 3dem standard orientation
-			if eman_sym_name.lower == 'icos':
+			# if icos in EMAN orientation, rotate eulers to 3dem standard orientation
+			if 'icos' in sym_name.lower() and 'EMAN' in sym_name:
 				newEulers = sumEulers([90,-31.7174744,0],[e1,e2,e3])
 				fr_eulers['phi']=newEulers[0]
 				fr_eulers['theta']=newEulers[1]
@@ -342,7 +351,7 @@ def convertEmanEulersToFrealign(eman_eulers, sym='c1'):
 	if e3 > 360:
 		e3-=360*int(e3/360.0)
 
-	if sym.lower() == 'icos':
+	if sym.lower() == 'icos (5 3 2) eman':
 		(e1,e2,e3) = sumEulers([90,-31.7174744,0],[e1,e2,e3])
 
 	eulers={"phi":e1,"theta":e2,"psi":e3}
