@@ -306,6 +306,10 @@ var help = {
 		'cl_mask_radius' : 'Radius of the mask for the refinement of the initial volume calculated by angular reconstitution (Angstroms). For best results, this value should be slightly larger than the diameter of your particle (e.g. for a 200 Angstrom particle, this value can be ~240/2 ~= 120 Angstroms). The default value is "linear_mask" parameter * 1.2',
 		'cl_inner_radius' : 'inner radius for the alignment search of volume refinement (Angstroms)',
 		'cl_outer_radius' : 'outer radius for the alignment search during volume refinement (Angstroms). The default value is "mask_radius" parameter * 0.8',
+		'ccpr_weight' : 'weight assigned to the "cross-correlation between projections and re-projections" metric. In test cases, this metric has performed best',
+		'ej_weight' : 'weight assigned to the "Euler jumper" metric (the average discrepancy in final Euler angles per image within a 3D class). If your average per-image Euler jumpers are high (e.g. 30+), then this metric may have little meaning and should be set to 0',
+		'fsc_weight' : 'weight assigned to the "Fourier shell correlation" (resolution at FSC 0.5) metric. In test cases, this metric has had little correlation with the "correctness" of the final result, particularly at low resolution',
+		
 
 		/******* Angular Reconstitution Batch Refinement *********/
 		'filtering' : '<b> particle filtering (OPTIONAL) </b><br><br> PARAMETER 1: low-pass filter stack to this value (in &Aring;ngstr&ouml;ms) prior to alignment and classification <br><br> PARAMETER 2: high-pass filter stack to this value (in &Aring;ngstr&ouml;ms) prior to alignment and classification',
