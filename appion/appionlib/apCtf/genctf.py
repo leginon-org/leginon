@@ -205,7 +205,7 @@ def checkParams(focus1=-1.0e-6, focus2=-1.0e-6, pixelsize=1.5e-10,
 	if focus2*1e6 > 15.0 or focus2*1e6 < 0.1:
 		apDisplay.printError("atypical defocus #2 value %.1f microns (underfocus is positve)"
 			%(focus2*1e6))
-	if cs*1e3 > 4.0 or cs*1e3 < 0.4:
+	if cs*1e3 > 7.0 or cs*1e3 < 0.7:
 		apDisplay.printError("atypical C_s value %.1f mm"%(cs*1e3))
 	if pixelsize*1e10 > 20.0 or pixelsize*1e10 < 0.1:
 		apDisplay.printError("atypical pixel size value %.1f Angstroms"%(pixelsize*1e10))
