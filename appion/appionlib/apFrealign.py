@@ -44,6 +44,8 @@ def parseFrealignParamFile(paramfile):
 			'shifty': float(line[40:47]),
 			'phase_residual': float(line[88:94]),
 		}
+		if len(line)>=109:
+			partdict['stackpartnum'] = int(line[102:109].strip())
 		parttree.append(partdict)
 	f.close()
 	if len(parttree) < 2:
@@ -96,12 +98,34 @@ def parseFrealign9ParamFile(paramfile):
 	apDisplay.printMsg("Processed %d particles" % (len(partdict)))
 	return partdict
 
+def getStackParticlesInOrder(params):
+	partorderfile = os.path.join(params['rundir'],'stackpartorder.list')
+	stackid = params['stackid']
+	if not params['reconiterid'] :
+		return apStack.getStackParticlesFromId(stackid)
+	else:
+		if not os.path.isfile(partorderfile):
+			return apStack.getStackParticlesFromId(stackid)
+	partfile = open(partorderfile,'r')
+	lines = partfile.readlines()
+	partorder = map((lambda x:int(x[:-1])),lines)
+	partsort = list(partorder)
+	partsort.sort()
+	if partsort == partorder:
+			return apStack.getStackParticlesFromId(stackid)
+	apDisplay.printMsg("Preped stack has different order from the original stack.  Getting information by the order of the preped stack")
+	stpartdatas = []
+	for partnum in partorder:
+		stpartdatas.append(apStack.getStackParticle(stackid, partnum))
+	return stpartdatas
+
 #===============
 def generateParticleParams(params,initparfile='params.0.par'):
 	params['inpar']=os.path.join(params['rundir'],initparfile)
 	apDisplay.printMsg("Creating parameter file: "+params['inpar'])
 	params['mode']=3
-	stackdata=apStack.getStackParticlesFromId(params['stackid'])
+	stackdata=getStackParticlesInOrder(params)
+	first_imageid = stackdata[0]['particle']['image'].dbid
 	particleparams={}
 	f=open(params['inpar'],'w')
 	params['noClassification']=0
@@ -112,9 +136,10 @@ def generateParticleParams(params,initparfile='params.0.par'):
 	print "Writing out particle parameters"
 	if 'last' not in params:
 		params['last'] = len(stackdata)
-	for particle in stackdata[:params['last']]:
+	for i, particle in enumerate(stackdata[:params['last']]):
 		# defaults
-		particleparams['ptclnum']=particle['particleNumber']
+		# frealign requires that the first field to be in consecutive sequence
+		particleparams['ptclnum']=i+1
 		particleparams['psi']=0
 		particleparams['theta']=0
 		particleparams['phi']=0
@@ -137,9 +162,11 @@ def generateParticleParams(params,initparfile='params.0.par'):
 			params['lasthelix']=helix
 			particleparams['film']=params['totalHelix']
 		else:
-			particleparams['film']=1
+			particleparams['film']=particle['particle']['image'].dbid - first_imageid + 1
 		particleparams['presa']=0
 		particleparams['dpres']=0
+		# extra particle number information not read by Frealign
+		particleparams['pnumber']=particle['particleNumber']
 
 		imagedata=particle['particle']['image']
 		if params['noctf'] is False:
@@ -175,15 +202,18 @@ def generateParticleParams(params,initparfile='params.0.par'):
 			params['mode']=1
 			getStackParticleEulersForIteration(params,particle['particleNumber'])
 			fr_eulers = convertEmanEulersToFrealign(params['eman_orient'])
+			
 			e1 = fr_eulers['phi']
 			e2 = fr_eulers['theta']
 			e3 = fr_eulers['psi']
+			
 			# if icos, rotate eulers to 3dem standard orientation
 			if eman_sym_name.lower == 'icos':
 				newEulers = sumEulers([90,-31.7174744,0],[e1,e2,e3])
 				fr_eulers['phi']=newEulers[0]
 				fr_eulers['theta']=newEulers[1]
 				fr_eulers['psi']=newEulers[2]
+
 			particleparams['psi'] = fr_eulers['psi']
 			particleparams['theta'] = fr_eulers['theta']
 			particleparams['phi'] = fr_eulers['phi']
@@ -197,9 +227,9 @@ def generateParticleParams(params,initparfile='params.0.par'):
 #===============
 def writeParticleParamLine(particleparams, fileobject):
 	p=particleparams
-	fileobject.write("%7d%8.3f%8.3f%8.3f%8.3f%8.3f%9.1f%5d%9.1f%9.1f%8.2f%7.2f%8.2f\n" 
+	fileobject.write("%7d%8.3f%8.3f%8.3f%8.3f%8.3f%9.1f%5d%9.1f%9.1f%8.2f%7.2f%8.2f%7d\n" 
 		% (p['ptclnum'],p['psi'],p['theta'],p['phi'],p['shx'],p['shy'],p['mag'],
-		p['film'],p['df1'],p['df2'],p['angast'],p['presa'],p['dpres']))
+		p['film'],p['df1'],p['df2'],p['angast'],p['presa'],p['dpres'],p['pnumber']))
 
 #===============
 def createFrealignJob (params, jobname, nodenum=None, mode=None, inpar=None, invol=None, first=None, last=None, norecon=False):

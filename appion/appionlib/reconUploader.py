@@ -280,7 +280,8 @@ class generalReconUploader(appionScript.AppionScript):
 			apDisplay.printError("no particle text file found; this is a requirement for the upload to insert " \
 				"Euler angles, shifts, etc. Make sure that you have a particle_data_%s_it%.3d_vol%.3d.txt file with" \
 				"all parameters" % (self.params['timestamp'], iteration, reference_number))
-		return readParticleFileByFilePath(pdataf)
+		porderf = os.path.join(self.basepath,'stackpartorder.list')
+		return readParticleFileByFilePath(pdataf,porderf)
 		
 	
 	#=====================
@@ -459,7 +460,7 @@ class generalReconUploader(appionScript.AppionScript):
 			stackp = appiondata.ApStackParticleData.direct_query(defid)
 			if not stackp:
 				apDisplay.printError("particle "+str(prtlnum)+" not in stack id="+str(self.runparams['stackid']))
-			
+
 			### convert Euler angles to EMAN format (temporary fix)
 			alt, az, phi = apXmipp.convertXmippEulersToEman(particledata[i]['phi'], particledata[i]['theta'], particledata[i]['omega'])
 
@@ -643,7 +644,8 @@ class generalReconUploader(appionScript.AppionScript):
 		
 	
 # general function that does not need database connection
-def readParticleFileByFilePath(pdatafile):
+def readParticleFileByFilePath(pdatafile,porderfile=''):
+	# read particle file
 	f = open(pdatafile,'r')
 	finfo = f.readlines()
 	f.close()
@@ -653,13 +655,21 @@ def readParticleFileByFilePath(pdatafile):
 		else:
 			finfo = finfo[i:]
 			break
-	
 	apDisplay.printMsg("reading particle parameters in file: %s" % os.path.basename(pdatafile))
+	
+	# use saved particle order file particle number if availabe
+	if porderfile and os.path.isfile(porderfile):
+		orderf = open(porderfile,'r')
+		lines = orderf.readlines()
+		orderlist = map(lambda x:int(x[:-1]),lines)
+	else:
+		orderlist = range(1,len(finfo)+1)
+	# construct data
 	particledata = {}			
 	for j, info in enumerate(finfo):
 		alldata = {}			
 		data = info.strip().split()
-		alldata['partnum'] = int(float(data[0]))
+		alldata['partnum'] = orderlist[j]
 		alldata['phi'] = float(data[1])
 		alldata['theta'] = float(data[2])
 		alldata['omega'] = float(data[3])

@@ -52,7 +52,7 @@ class ParticleExtractLoop(appionLoop2.AppionLoop):
 		if is_defocpair is True:
 			sibling, shiftpeak = apDefocalPairs.getShiftFromImage(imgdata, self.params['sessionname'])
 			if shiftpeak is None:
-				return []
+				return [],{'shiftx':0, 'shifty':0, 'scale':1}
 			shiftdata = {'shiftx':shiftpeak['shift'][0], 'shifty':shiftpeak['shift'][1], 'scale':shiftpeak['scalefactor']}
 			searchimgdata = sibling
 		else:
@@ -69,11 +69,23 @@ class ParticleExtractLoop(appionLoop2.AppionLoop):
 		stackpartdatas = stackpartq.query()
 
 		partdatas = []
+		partorder = []
 		for stackpartdata in stackpartdatas:
+			if self.params['partlimit'] and self.params['partlimit'] < stackpartdata['particleNumber']:
+				continue
 			partdata = stackpartdata['particle']
 			partdatas.append(partdata)
+			partorder.append(stackpartdata['particleNumber'])
 		partdatas.reverse()
+		partorder.reverse()
+		self.writeStackParticleOrderFile(partorder)
 		return partdatas, shiftdata
+
+	def writeStackParticleOrderFile(self,partorder):
+		f = open(os.path.join(self.params['rundir'],'stackpartorder.list'),'a')
+		if partorder:
+			f.write('\n'.join(map((lambda x: '%d' % x),partorder))+'\n')
+		return
 
 	def getParticlesInImage(self,imgdata):
 		if self.params['defocpair'] is True and self.params['selectionid'] is not None:
