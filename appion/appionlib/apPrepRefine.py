@@ -160,7 +160,7 @@ class Prep3DRefinement(appionScript.AppionScript):
 		self.stack['apix'] = self.stack['apix'] * self.params['bin']
 		return outstack
 			
-	def preprocessModelWithProc3d(self):
+	def preprocessModelWithProc3d(self,rescale=True):
 		'''
 		Use EMAN proc3d to scale initial or mask model to that of the refinestack and format
 		'''
@@ -171,7 +171,8 @@ class Prep3DRefinement(appionScript.AppionScript):
 			modelname = "maskvol"
 		outmodelfile = os.path.join(self.params['rundir'], "%s%04d.%s" % (modelname,self.model['id'],extname))
 		apFile.removeStack(outmodelfile, warn=False)
-		apVolume.rescaleVolume(self.model['file'], outmodelfile, self.model['apix'], self.stack['apix'], self.stack['boxsize'], spider=self.modelspidersingle)
+		if rescale:
+			apVolume.rescaleVolume(self.model['file'], outmodelfile, self.model['apix'], self.stack['apix'], self.stack['boxsize'], spider=self.modelspidersingle)
 		self.model['file'] = outmodelfile
 		self.model['apix'] = self.stack['apix']
 		self.model['format'] = extname
