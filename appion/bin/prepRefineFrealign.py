@@ -75,6 +75,10 @@ class FrealignPrep3DRefinement(apPrepRefine.Prep3DRefinement):
 		self.stackparamdata = stackrun['stackParams']
 		self.stackrunlogparams = apScriptLog.getScriptParamValuesFromRunname(stackrun['stackRunName'],stackdata['path'],jobdata=None)
 
+	def preprocessModelWithProc3d(self):
+		rescale = not self.params['paramonly']
+		super(FrealignPrep3DRefinement,self).preprocessModelWithProc3d(rescale)
+
 	def preprocessStackWithProc2d(self):
 		self.getStackRunParams()
 		# use original stackrun log parameters to create preparation parameters
@@ -128,11 +132,14 @@ class FrealignPrep3DRefinement(apPrepRefine.Prep3DRefinement):
 		'''
 		The stack is remaked without ctf correction and without invertion (ccd)
 		'''
+		newstackroot = os.path.join(self.params['rundir'],os.path.basename(self.stack['file'])[:-4])
 		if self.params['paramonly'] is True:
+			print 'newstackroot',newstackroot
+			self.setFrealignStack(newstackroot)
 			return
 		if self.no_ctf_correction:
 			self.ImagicStackToFrealignMrcStack(self.stack['file'])
-			self.setFrealignStack(self.stack['file'][:-4])
+			self.setFrealignStack(newstackroot)
 			return
 		# stack need to be remade without ctf correction
 		apDisplay.printWarning('Frealign needs a stack without ctf correction. A new stack is being made....')
@@ -150,7 +157,7 @@ class FrealignPrep3DRefinement(apPrepRefine.Prep3DRefinement):
 			numpart = min(self.params['last'],totalpart)
 		newstackrunname = self.params['runname']
 		newstackrundir = self.params['rundir']
-		newstackimagicfile = os.path.join(newstackrundir,'start.hed')
+		newstackimagicfile = os.path.join(newstackrundir,'temp.hed')
 		# use first particle image to get presetname
 		oneparticle = apStack.getOneParticleFromStackId(stackid, particlenumber=1)
 		preset =oneparticle['particle']['image']['preset']
@@ -190,7 +197,8 @@ makestack2.py --single=%s --fromstackid=%d %s %s %s %s %s --no-invert --normaliz
 			apDisplay.printError('Error in Frealign specific stack making')
 
 		self.ImagicStackToFrealignMrcStack(newstackimagicfile)
-		self.setFrealignStack(newstackimagicfile[:-4])
+		os.rename(newstackimagicfile[:-4]+'.mrc',newstackroot+'.mrc')
+		self.setFrealignStack(newstackroot)
 		# use the same complex equation as in eman clip
 		clipsize = self.calcClipSize(self.stack['boxsize'],self.params['bin'])
 		self.stack['boxsize'] = clipsize / self.params['bin']

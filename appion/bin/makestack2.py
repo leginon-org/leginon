@@ -94,7 +94,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 				self.logpeaks = math.ceil(logpeaks)
 				numpeaks = math.ceil(math.exp(self.logpeaks))
 				apDisplay.printMsg("averaging stack, next average at %d particles"%(numpeaks))
-				stackpath = os.path.join(self.params['rundir'], "start.hed")
+				stackpath = os.path.join(self.params['rundir'], self.params['single'])
 				apStack.averageStack(stack=stackpath)
 		return totalpart
 
@@ -1040,7 +1040,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 		if self.noimages is True:
 			return
 		### Averaging completed stack
-		stackpath = os.path.join(self.params['rundir'], "start.hed")
+		stackpath = os.path.join(self.params['rundir'], self.params['single'])
 		apStack.averageStack(stack=stackpath)
 		### Create Stack Mean Plot
 		if self.params['commit'] is True and self.params['meanplot'] is True:
