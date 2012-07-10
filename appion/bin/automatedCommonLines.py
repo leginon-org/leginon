@@ -1744,8 +1744,8 @@ class automatedAngularReconstitution(appionScript.AppionScript):
 			for i in classes.keys():
 				if self.params['mass'] is not None:
 					apChimera.filterAndChimera(os.path.join(self.params['rundir'], "%d_r.mrc" % i), res=self.params['3d_lpfilt'], \
-						apix=self.params['refineapix'], box=self.params['refineboxsize'], chimtype="snapshot", contour=1.5, \
-						zoom=1, sym="c1", mass=self.params['mass'])
+						apix=self.params['refineapix'], box=self.params['refineboxsize'], chimtype="snapshot", contour=2, \
+						zoom=1, sym="c1", color="gold", mass=self.params['mass'])
 	
 		### cleanup
 		snapshots = glob.glob("*.png")
