@@ -461,8 +461,11 @@ class generalReconUploader(appionScript.AppionScript):
 			if not stackp:
 				apDisplay.printError("particle "+str(prtlnum)+" not in stack id="+str(self.runparams['stackid']))
 
-			### convert Euler angles to EMAN format (temporary fix)
-			alt, az, phi = apXmipp.convertXmippEulersToEman(particledata[i]['phi'], particledata[i]['theta'], particledata[i]['omega'])
+			### convert icos convention to standard convention
+			full_sym_name = iterationParamsq['symmetry']['symmetry']
+			phi,theta,omega = apEulerCalc.convert3DEMEulerToStandard(full_sym_name,particledata[i]['phi'], particledata[i]['theta'], particledata[i]['omega'])
+			### convert Euler angles from 3DEM to EMAN format (temporary fix)
+			alt, az, phi = apXmipp.convertXmippEulersToEman(phi, theta, omega)
 
 			if self.multiModelRefinementRun is True:
 				prtlq['multiModelRefineRun'] = self.multimodelq
