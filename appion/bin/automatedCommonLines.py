@@ -22,6 +22,7 @@ import operator
 #appion
 from appionlib import appionScript
 from appionlib import appiondata
+from appionlib import apChimera
 from appionlib import apEulerCalc
 from appionlib import apImagicFile
 from appionlib import apDisplay
@@ -34,6 +35,7 @@ from appionlib import apParam
 from appionlib import apThread
 from appionlib import apXmipp
 from appionlib import apXmippProtocolsProjMatchBasic as xp
+from appionlib import apCommonLines
 
 #scipy
 from scipy import stats
@@ -81,9 +83,11 @@ class automatedAngularReconstitution(appionScript.AppionScript):
 				if one does not want the sinogram (and a sine-correlation-function derived from it) \
 				to be largely dominated by low-frequency information. The ASQ filter functions largely \
 				as a high-pass filter but is based on a rather different philosophy (see paper).", metavar="BOOL")		
-		self.parser.add_option("--linear_mask", dest="linmask", type="float",
-			help="This mask is a linear mask to be imposed on the sinogram and within which the statistics will \
-				be calculated for the normalization of the sinograms (Angstroms). For NO masking answer '0'", metavar="FLOAT")
+		self.parser.add_option("--linear_mask", dest="linmask", type="float", default=0,
+			help="Radius of the linear mask (in Angstroms) to be imposed on the sinogram and within which the statistics will be calculated \
+				for the normalization of the sinograms. For best results, this value should be exactly 1/2 * the diameter of your \
+				particle. For example, for a particle of diameter 200 Angstroms, this value should be 100. For NO masking answer '0'", \
+				metavar="FLOAT")
 		self.parser.add_option("--first_image", dest="firstimage", type="int", default=None,
 			help="specify the first image (numbering starts with 0) to be used during C1 startup, rather than randomizing", metavar="INT")
 		self.parser.add_option("--symmetry", dest="symid", type="int", default=1,
@@ -98,14 +102,18 @@ class automatedAngularReconstitution(appionScript.AppionScript):
 			
 		### 3D refinement
 		self.parser.add_option("--mask_radius", dest="mask_radius", type="int",
-			help="Mask radius for the refinement of the initial volume calculated by angular reconstitution (Angstroms). \
-				The default value is the same as the 'linear_mask' parameter", metavar="INT")
+			help="Radius of the mask for the refinement of the initial volume calculated by angular reconstitution (Angstroms). \
+				For best results, this value should be slightly larger than the diameter of your particle (e.g. for a 200 \
+				Angstrom particle, this value can be ~240/2 ~= 120 Angstroms). The default value is 'linear_mask' parameter * 1.2", \
+				metavar="INT")
 		self.parser.add_option("--inner_radius", dest="inner_radius", type="int", default=0,
 			help="inner radius for the alignment search of volume refinement (Angstroms)", metavar="INT")
 		self.parser.add_option("--outer_radius", dest="outer_radius", type="int",
 			help="outer radius for the alignment search during volume refinement (Angstroms). \
 				The default value is 'mask_radius'*0.8", metavar="INT")		
-		
+		self.parser.add_option("--mass", dest="mass", type="int", 
+			help="mass of particle (in kDa). this is ONLY necessary for the chimera snapshots", metavar="INT")	
+	
 		### 3D reconstruction
 		self.parser.add_option("--ham_win", dest="ham_win", type="float", default=0.8,
 			help="similar to lp-filtering parameter, smooths out the filter used in 3d reconstruction", metavar="float")
@@ -133,13 +141,11 @@ class automatedAngularReconstitution(appionScript.AppionScript):
 				followed by 'minimum', while 'minlessrange' results in the fewest", metavar="STR")
 
 		### Final model evaluation
-		self.parser.add_option("--presumed_symmetry", dest="presumed_sym", type="str", default="c1",
-			help="presumed symmetry of the particles. This is ONLY used in the calculation of Euler jumpers during \
+		self.parser.add_option("--presumed_symid", dest="presumed_sym", type="str", default=1,
+			help="presumed symmetry id of the particles. This is ONLY used in the calculation of Euler jumpers during \
 				the evaluation of the final model and does not affect the volumes in any way. It's defaulted to c1, but \
 				if your particles have high symmetry, then the Euler jumper angles will come out higher than what they should \
-				be and may affect the selection of optimal models. The options are C#, D#, icos.", metavar="STR")
-		self.parser.add_option("--only_calculate_Rcrit", dest="Rcrit_only", default=False, action="store_true",
-			help="specify if you ONLY want to recalculate the Rcrit value, e.g. using different weights", metavar="STR")
+				be and may affect the selection of optimal models. IDs refer to database entries.", metavar="INT")
 		
 		### Miscellaneous
 		self.parser.add_option("--do_not_remove", dest="do_not_remove", default=False, action="store_true",
@@ -208,12 +214,10 @@ class automatedAngularReconstitution(appionScript.AppionScript):
 			self.params['threadnproc'] = self.params['nproc']
 			
 		### refinement parameters
-		if self.params['linmask'] is None:
-			self.params['linmask'] = self.params['boxsize'] * self.params['apix']
 		if self.params['mask_radius'] is None and self.params['linmask'] != 0:
-			self.params['mask_radius'] = self.params['linmask']
+			self.params['mask_radius'] = self.params['linmask'] * 1.2
 		elif self.params['mask_radius'] is None and self.params['linmask'] == 0:
-			self.params['mask_radius'] = self.params['boxsize']
+			self.params['mask_radius'] = self.params['boxsize'] * self.params['refineapix']
 		if self.params['outer_radius'] is None:
 			self.params['outer_radius'] = self.params['mask_radius'] * 0.8
 
@@ -572,7 +576,7 @@ class automatedAngularReconstitution(appionScript.AppionScript):
 			f.write("yes\n")
 		else:
 			f.write("no\n")
-		f.write("%.3f\n" % (self.params['linmask'] / self.params['apix'] / self.params['boxsize']))
+		f.write("%.3f\n" % (self.params['linmask'] / self.params['apix'] / self.params['boxsize'] * 2))
 		f.write("my_sine"+str(iteration)+"\n")
 		f.write("%i\n" % (self.params['ang_inc']))	
 		if lowercase == "c1":
@@ -597,7 +601,7 @@ class automatedAngularReconstitution(appionScript.AppionScript):
 					f.write("yes\n")
 				else:
 					f.write("no\n")
-				f.write("%.3f\n" % (self.params['linmask'] / self.params['apix'] / self.params['boxsize']))
+				f.write("%.3f\n" % (self.params['linmask'] / self.params['apix'] / self.params['boxsize'] * 2))
 				f.write("my_sine"+str(iteration)+"\n")
 				f.write("%i\n" % (self.params['ang_inc']))
 				f.write("yes\n")
@@ -617,7 +621,7 @@ class automatedAngularReconstitution(appionScript.AppionScript):
 				f.write("yes\n")
 			else:
 				f.write("no\n")
-			f.write("%.3f\n" % (self.params['linmask'] / self.params['apix'] / self.params['boxsize']))
+			f.write("%.3f\n" % (self.params['linmask'] / self.params['apix'] / self.params['boxsize'] * 2))
 			f.write("my_sine"+str(iteration)+"\n")
 			f.write("%i\n" % (self.params['ang_inc']))
 			f.write("yes\n")
@@ -739,23 +743,47 @@ class automatedAngularReconstitution(appionScript.AppionScript):
 		ReferenceFileName = os.path.join(self.params['rundir'], "refinement", "%d.vol" % volnum)
 		WorkingDir = os.path.basename(rundir)
 		ProjectDir = os.getcwd()
-		MaskRadius = self.params['mask_radius'] / self.params['refineapix']
-		InnerRadius = self.params['inner_radius'] / self.params['refineapix']
-		OuterRadius = self.params['outer_radius'] / self.params['refineapix']
+		MaskRadius = self.params['mask_radius'] / self.params['refineapix']   # in pixels
+		InnerRadius = self.params['inner_radius'] / self.params['refineapix'] # in pixels
+		OuterRadius = self.params['outer_radius'] / self.params['refineapix'] # in pixels
 		AvailableMemory = self.params['memory']
 		ResolSam = self.params['refineapix']
 		NumberOfMpiProcesses = self.params['nproc']
 
 		### optional parameters
 		NumberofIterations = 12
-		AngSamplingRateDeg = '14x10 4x5 4x3 2x2 2x1'
-		MaxChangeInAngles = '14x1000 4x20 4x9 2x6 2x3'
-		MaxChangeOffset = '14x1000 4x10'
-		Search5DShift = '14x5 1'
-		Search5DStep = '14x2 1'
+		AngSamplingRateDeg = '4x10 4x5 4x3 2x2 2x1'
+		MaxChangeInAngles = '4x1000 4x20 4x9 2x6 2x3'
+		MaxChangeOffset = '4x1000 4x10'
+		Search5DShift = '4x5 1'
+		Search5DStep = '4x2 1'
 		FourierMaxFrequencyOfInterest = '0.35'
 		ConstantToAddToFiltration = '0.35'
 
+		### do projection-matching
+		apDisplay.printColor("refining volume %d by projection-matching" % volnum, "cyan")
+		
+		xp.projection_matching_protocol_basic(
+					SelFileName,
+					ReferenceFileName,
+					WorkingDir,
+					ProjectDir,
+					MaskRadius,
+					InnerRadius,
+					OuterRadius,
+					AvailableMemory,
+					ResolSam,
+					NumberOfMpiProcesses,
+					_NumberofIterations=NumberofIterations,
+					_AngSamplingRateDeg=AngSamplingRateDeg,
+					_MaxChangeInAngles=MaxChangeInAngles,
+					_MaxChangeOffset=MaxChangeOffset,
+					_Search5DShift=Search5DShift,
+					_Search5DStep=Search5DStep,
+					_FourierMaxFrequencyOfInterest=FourierMaxFrequencyOfInterest,
+					_ConstantToAddToFiltration=ConstantToAddToFiltration
+					)
+		
 #		### do projection-matching
 #		apDisplay.printColor("refining volume %d by projection-matching" % volnum, "cyan")
 #		xp.projection_matching_protocol_basic(
@@ -768,31 +796,8 @@ class automatedAngularReconstitution(appionScript.AppionScript):
 #					OuterRadius,
 #					AvailableMemory,
 #					ResolSam,
-#					NumberOfMpiProcesses,
-#					_NumberofIterations=NumberofIterations,
-#					_AngSamplingRateDeg=AngSamplingRateDeg,
-#					_MaxChangeInAngles=MaxChangeInAngles,
-#					_MaxChangeOffset=MaxChangeOffset,
-#					_Search5DShift=Search5DShift,
-#					_Search5DStep=Search5DStep,
-#					_FourierMaxFrequencyOfInterest=FourierMaxFrequencyOfInterest,
-#					_ConstantToAddToFiltration=ConstantToAddToFiltration
+#					NumberOfMpiProcesses
 #					)
-
-		### do projection-matching
-		apDisplay.printColor("refining volume %d by projection-matching" % volnum, "cyan")
-		xp.projection_matching_protocol_basic(
-					SelFileName,
-					ReferenceFileName,
-					WorkingDir,
-					ProjectDir,
-					MaskRadius,
-					InnerRadius,
-					OuterRadius,
-					AvailableMemory,
-					ResolSam,
-					NumberOfMpiProcesses
-					)
 		
 		### remove unecessary files
 		os.chdir(rundir)
@@ -805,18 +810,20 @@ class automatedAngularReconstitution(appionScript.AppionScript):
 					apFile.removeFile(os.path.join(root, file), warn=False)
 					
 		### create files for model assessment
+		if count == 0:
+			count = NumberofIterations
 		self.refinement_quality_criteria(count)
 
 		### link / summarize final files
-		os.symlink(os.path.join(rundir, "Iter_%d" % count, "Iter_%d_reconstruction.vol" % count), \
+		os.symlink(os.path.join("Iter_%d" % count, "Iter_%d_reconstruction.vol" % count), \
 			os.path.join(rundir, "3d%d_refined.vol" % volnum))
-		os.symlink(os.path.join(rundir, "Iter_%d" % count, "reconstruction_2.vol.frc"), \
+		os.symlink(os.path.join("Iter_%d" % count, "reconstruction_2.vol.frc"), \
 			os.path.join(rundir, "3d%d_refined.frc" % volnum))
-		os.symlink(os.path.join(rundir, "Iter_%d" % count, "Iter_%d_projections_noflip.hed" % count), \
+		os.symlink(os.path.join("Iter_%d" % count, "Iter_%d_projections_noflip.hed" % count), \
 			os.path.join(rundir, "3d%d_refined_projections.hed" % volnum))
-		os.symlink(os.path.join(rundir, "Iter_%d" % count, "Iter_%d_projections_noflip.img" % count), \
+		os.symlink(os.path.join("Iter_%d" % count, "Iter_%d_projections_noflip.img" % count), \
 			os.path.join(rundir, "3d%d_refined_projections.img" % volnum))
-#		os.symlink(os.path.join(rundir, "Iter_%d" % count, "Iter_%d_projections_noflip.doc" % count), \
+#		os.symlink(os.path.join("Iter_%d" % count, "Iter_%d_projections_noflip.doc" % count), \
 #			os.path.join(rundir, "3d%d_refined_angles.doc" % volnum))
 		apXmipp.removeMirrorFromDocfile(os.path.join(rundir, "Iter_%d" % count, "Iter_%d_current_angles.doc" % count), \
 			os.path.join(rundir, "3d%d_refined_angles.doc" % volnum))
@@ -1331,9 +1338,15 @@ class automatedAngularReconstitution(appionScript.AppionScript):
 		
 		l = []
 		if apSymmetry.findSymmetry(self.params['presumed_sym'])['symmetry'].lower() == "c1":
-			sym = "c1"
+			symmetry = "c1"
+		elif apSymmetry.findSymmetry(self.params['presumed_sym'])['symmetry'].lower() == "oct":
+			symmetry = "oct"
 		else:
-			sym = self.params['presumed_sym']
+			try:
+				symmetry = apSymmetry.findSymmetry(self.params['presumed_sym'])['symmetry'].lower().split()[0]
+			except:
+				symmetry = "c1"
+
 		for i in range(self.params['numpart']): ### for each class average
 			for j in range(len(classes)):
 				if len(classes) == 1:
@@ -1354,11 +1367,11 @@ class automatedAngularReconstitution(appionScript.AppionScript):
 						e2 = {'euler1':alt2, 'euler2':az2, 'euler3':phi2} 
 	
 						### apply symmetry to Euler angle calculation
-						if sym == "c1":
+						if symmetry == "c1":
 #							d = apEulerCalc.computeDistance(t1,t2)
 							d = apEulerCalc.eulerCalculateDistance(e1, e2, inplane=True)
 						else:
-							d = apEulerCalc.eulerCalculateDistanceSym(e1, e2, sym=self.params['presumed_sym'], inplane=True)
+							d = apEulerCalc.eulerCalculateDistanceSym(e1, e2, sym=symmetry, inplane=True)
 						l.append(d)
 		meanjump = numpy.asarray(l).mean()
 		
@@ -1485,11 +1498,14 @@ class automatedAngularReconstitution(appionScript.AppionScript):
 				volarray[i] += mrc.read(voldict[classes[classnum][i]])
 				
 			### get FSC of volume class
-			res = apRecon.getResolutionFromGenericFSCFile(					
+			try:
+				res = apRecon.getResolutionFromGenericFSCFile(					
 					os.path.join(self.params['rundir'], "refinement", "refine_%d" % classnum, "3d%d_refined.frc" % classnum),
 					self.params['refineboxsize'], 
 					self.params['refineapix']
 					)
+			except:
+				res = 2 * self.params['refineapix']
 			
 			### assess quality of class by comparing the summed CCC between projections and reprojections
 			ordered_file = self.params['refineavgs']
@@ -1512,184 +1528,6 @@ class automatedAngularReconstitution(appionScript.AppionScript):
 		mf.close()
 		vf.close()
 			
-		return
-	
-	#=====================
-	#=====================
-	#=====================	
-	
-	def combineMetrics(self, N=False, wN=1, CCPR=True, wCCPR=1, EJ=True, wEJ=1, CCC=False, wCCC=1, STDEV=False, wSTDEV=1, SSNR=True, wSSNR=1):
-		''' 
-		takes all calculated metrics and combines them into a single Rcrit value, according to:
-		Rossmann, M. G., et al. (2001). "Combining electron microscopic with x-ray crystallographic structures." J Struct Biol 136(3): 190-200.
-		metrics are combined as follows: 
-		
-		Rcrit = sum(weight[i] * sign[i] * ((v[i] - mean(v)) / (stdev(v)))) * sqrt(sum(weight[i])), where: 
-		weight is a weight for each given criterion, 
-		v is the criterion used to evaluate data,
-		sign is (+/-)1, depending on whether the criterion has to be minimized or maximized
-		'''
-		
-		### read data
-		f = open("final_model_stats.dat", "r")
-		flines = f.readlines()[1:]
-		f.close()
-		strip = [line.strip() for line in flines]
-		split = [line.split() for line in strip]
-		
-		### set value lists
-		toEvaluate = {}
-		names = []
-		Ns = []
-		CCPRs = []
-		EJs = []
-		CCCs = []
-		STDEVs = []
-		SSNRs = []
-		if N is True:			### number of models
-			toEvaluate["N"] = {"weight": wN, "sign": 1, "vals": Ns}
-		if CCPR is True:		### cross-correlation b/w projections & reprojections
-			toEvaluate["CCPR"] = {"weight": wCCPR, "sign": 1, "vals": CCPRs}
-		if EJ is True:			### average Euler jump
-			toEvaluate["EJ"] = {"weight": wEJ, "sign": -1, "vals": EJs}
-		if CCC is True:			### avg CCC within the model class
-			toEvaluate["CCC"] = {"weight": wCCC, "sign": 1, "vals": CCCs}
-		if STDEV is True:		### avg stdev of CCC within the model class
-			toEvaluate["STDEV"] = {"weight": wSTDEV, "sign": -1, "vals": STDEVs}
-		if SSNR is True:		### SSNR of the model class
-			toEvaluate["SSNR"] = {"weight": wSSNR, "sign": -1, "vals": SSNRs}
-			
-		for list in split:
-			### put all relevant parameters to list
-			names.append(str(list[0]))
-			Ns.append(int(float(list[1])))			
-			CCPRs.append(float(list[2]))
-			EJs.append(float(list[3]))
-			CCCs.append(float(list[4]))
-			STDEVs.append(float(list[5]))
-			SSNRs.append(float(list[6]))	
-				
-		### for each model, evaluate Rcrit based on all selected criteria
-		print "using the following criteria to evaluate Rcrit: ", toEvaluate.keys()
-		Rcritdict1 = {}
-		Rcritdict2 = {}
-		weightsum = 0
-		for valnames, allvals in toEvaluate.iteritems():
-			weight = allvals['weight']
-			weightsum += weight
-		for i in range(len(names)):
-			Rcrit = 0
-			for valname, allvals in toEvaluate.iteritems():
-				weight = allvals['weight']
-				sign = allvals['sign']
-				vals = allvals['vals']
-				R = weight * sign * ((vals[i] - numpy.mean(vals)) / (numpy.std(vals))) / weightsum
-				Rcrit += R
-			Rcritdict1[names[i]] = Rcrit
-			Rcritdict2[names[i]] = \
-				{"Rcrit":Rcrit, "Mnum":names[i], "N":Ns[i], "CCPR":CCPRs[i], "EJ":EJs[i], "CCC":CCCs[i], "STDEV":STDEVs[i], "SSNR":SSNRs[i]}
-		
-		### write out values, sorted by Rcrit
-		f = open("final_model_stats_sorted_by_Rcrit.dat", "w")
-		f.write("%9s %8s %5s %8s %8s %8s %8s %8s\n" \
-			% ("MODEL", "RCRIT", "NUM", "CCPR", "EJ", "CCC", "STDEV", "SSNR"))
-		sorted_Rcritlist = sorted(Rcritdict1.iteritems(), key=operator.itemgetter(1))
-		sorted_Rcritlist.reverse()
-		for i in range(len(sorted_Rcritlist)):
-			d = Rcritdict2[sorted_Rcritlist[i][0]]
-			f.write("%9s %8.4f %5d %8.3f %8.3f %8.3f %8.3f %8.3f\n" \
-				% (d['Mnum'], d['Rcrit'], d['N'], d['CCPR'], d['EJ'], d['CCC'], d['STDEV'], d['SSNR']))
-		f.close()
-		
-		return
-	
-	#=====================
-	#=====================
-	#=====================	
-	
-	def combineMetrics2(self, N=False, wN=1, CCPR=True, wCCPR=1, EJ=True, wEJ=1, CCC=False, wCCC=1, STDEV=False, wSTDEV=1, FSC=True, wFSC=1):
-		''' 
-		takes all calculated metrics and combines them into a single Rcrit value, according to:
-		Rossmann, M. G., et al. (2001). "Combining electron microscopic with x-ray crystallographic structures." J Struct Biol 136(3): 190-200.
-		metrics are combined as follows: 
-		
-		Rcrit = sum(weight[i] * sign[i] * ((v[i] - mean(v)) / (stdev(v)))) * sqrt(sum(weight[i])), where: 
-		weight is a weight for each given criterion, 
-		v is the criterion used to evaluate data,
-		sign is (+/-)1, depending on whether the criterion has to be minimized or maximized
-		'''
-		
-		### read data
-		f = open("final_model_stats.dat", "r")
-		flines = f.readlines()[1:]
-		f.close()
-		strip = [line.strip() for line in flines]
-		split = [line.split() for line in strip]
-		
-		### set value lists
-		toEvaluate = {}
-		names = []
-		Ns = []
-		CCPRs = []
-		EJs = []
-		CCCs = []
-		STDEVs = []
-		FSCs = []
-		if N is True:			### number of models
-			toEvaluate["N"] = {"weight": wN, "sign": 1, "vals": Ns}
-		if CCPR is True:		### cross-correlation b/w projections & reprojections
-			toEvaluate["CCPR"] = {"weight": wCCPR, "sign": 1, "vals": CCPRs}
-		if EJ is True:			### average Euler jump
-			toEvaluate["EJ"] = {"weight": wEJ, "sign": -1, "vals": EJs}
-		if CCC is True:			### avg CCC within the model class
-			toEvaluate["CCC"] = {"weight": wCCC, "sign": 1, "vals": CCCs}
-		if STDEV is True:		### avg stdev of CCC within the model class
-			toEvaluate["STDEV"] = {"weight": wSTDEV, "sign": -1, "vals": STDEVs}
-		if FSC is True:		### FSC of the model class
-			toEvaluate["FSC"] = {"weight": wFSC, "sign": -1, "vals": FSCs}
-			
-		for list in split:
-			### put all relevant parameters to list
-			names.append(str(list[0]))
-			Ns.append(int(float(list[1])))			
-			CCPRs.append(float(list[2]))
-			EJs.append(float(list[3]))
-			CCCs.append(float(list[4]))
-			STDEVs.append(float(list[5]))
-			FSCs.append(float(list[6]))	
-				
-		### for each model, evaluate Rcrit based on all selected criteria
-		print "using the following criteria to evaluate Rcrit: ", toEvaluate.keys()
-		Rcritdict1 = {}
-		Rcritdict2 = {}
-		weightsum = 0
-		for valnames, allvals in toEvaluate.iteritems():
-			weight = allvals['weight']
-			weightsum += weight
-		for i in range(len(names)):
-			Rcrit = 0
-			for valname, allvals in toEvaluate.iteritems():
-				weight = allvals['weight']
-				sign = allvals['sign']
-				vals = allvals['vals']
-				R = weight * sign * ((vals[i] - numpy.mean(vals)) / (numpy.std(vals))) / weightsum
-				Rcrit += R
-			Rcritdict1[names[i]] = Rcrit
-			Rcritdict2[names[i]] = \
-				{"Rcrit":Rcrit, "Mnum":names[i], "N":Ns[i], "CCPR":CCPRs[i], "EJ":EJs[i], "CCC":CCCs[i], "STDEV":STDEVs[i], "FSC":FSCs[i]}
-		
-		### write out values, sorted by Rcrit
-		f = open("final_model_stats_sorted_by_Rcrit.dat", "w")
-		f.write("%11s %8s %5s %8s %8s %8s %8s %8s\n" \
-			% ("MODEL", "RCRIT", "NUM", "CCPR", "EJ", "CCC", "STDEV", "FSC"))
-		sorted_Rcritlist = sorted(Rcritdict1.iteritems(), key=operator.itemgetter(1))
-		sorted_Rcritlist.reverse()
-		for i in range(len(sorted_Rcritlist)):
-			d = Rcritdict2[sorted_Rcritlist[i][0]]
-			f.write("%11s %8.4f %5d %8.3f %8.3f %8.3f %8.3f %8.3f\n" \
-				% (d['Mnum'], d['Rcrit'], d['N'], d['CCPR'], d['EJ'], d['CCC'], d['STDEV'], d['FSC']))
-		f.close()
-		
 		return
 					
 	#=====================
@@ -1761,148 +1599,169 @@ class automatedAngularReconstitution(appionScript.AppionScript):
 		automated Angular Reconstitution 
 		'''
 		
-		if self.params['Rcrit_only'] is True:
-			self.combineMetrics(False,1,True,1,True,1,False,1,False,1,True,1)
-		else:
-			
-			##############################################		copy to working directory	##############################################
-			refine = True
-			### get initial parameters and copy class averages into working directory
-			shutil.copyfile(os.path.join(self.stackdata['path']['path'], self.clsname[:-4]+".hed"), self.params['avgs'][:-4]+".hed")
-			shutil.copyfile(os.path.join(self.stackdata['path']['path'], self.clsname[:-4]+".img"), self.params['avgs'][:-4]+".img")
-#			apIMAGIC.copyFile(self.params['rundir'], self.clsname, headers=True)
-			apIMAGIC.takeoverHeaders(self.params['avgs'], self.params['numpart'], self.params['refineboxsize'])
-			
-			###################################		scale & prealign class averages, if specified	 #####################################
+		##############################################		copy to working directory	##############################################
+		refine = True
+		### get initial parameters and copy class averages into working directory
+		shutil.copyfile(os.path.join(self.stackdata['path']['path'], self.clsname[:-4]+".hed"), self.params['avgs'][:-4]+".hed")
+		shutil.copyfile(os.path.join(self.stackdata['path']['path'], self.clsname[:-4]+".img"), self.params['avgs'][:-4]+".img")
+#		apIMAGIC.copyFile(self.params['rundir'], self.clsname, headers=True)
+		apIMAGIC.takeoverHeaders(self.params['avgs'], self.params['numpart'], self.params['refineboxsize'])
+		
+		###################################		scale & prealign class averages, if specified	 #####################################
 
-			### scale class averages to 64x64, if scaling is specified
-			self.params['refineavgs'] = self.params['avgs']
-			if self.params['scale'] is True:
-				emancmd = "proc2d %s %s_scaled.img scale=%.3f clip=%i,%i edgenorm" \
-					% (self.params['avgs'], self.params['avgs'][:-4], self.scalefactor, 64, 64)
-				self.params['avgs'] = self.params['avgs'][:-4]+"_scaled.img"
-				while os.path.isfile(self.params['avgs']):
-					apFile.removeStack(self.params['avgs'])
-				apParam.runCmd(emancmd, "EMAN")
-#				apIMAGIC.copyFile(self.params['rundir'], os.path.basename(self.params['avgs']), headers=True)
-				apIMAGIC.takeoverHeaders(self.params['avgs'], self.params['numpart'], self.params['boxsize'])
+		### scale class averages to 64x64, if scaling is specified
+		self.params['refineavgs'] = self.params['avgs']
+		if self.params['scale'] is True:
+			emancmd = "proc2d %s %s_scaled.img scale=%.3f clip=%i,%i edgenorm" \
+				% (self.params['avgs'], self.params['avgs'][:-4], self.scalefactor, 64, 64)
+			self.params['avgs'] = self.params['avgs'][:-4]+"_scaled.img"
+			while os.path.isfile(self.params['avgs']):
+				apFile.removeStack(self.params['avgs'])
+			apParam.runCmd(emancmd, "EMAN")
+			apIMAGIC.copyFile(self.params['rundir'], os.path.basename(self.params['avgs']), headers=True)
+			apIMAGIC.takeoverHeaders(self.params['avgs'], self.params['numpart'], self.params['boxsize'])
+			
+		if self.params['prealign'] is True:
+			self.params['avgs'] = self.prealignClassAverages()
+			apIMAGIC.checkLogFileForErrors(os.path.join(self.params['rundir'], "prealignClassAverages.log"))
+		
+		##############################################		create multiple 3d0s		##############################################
+#		'''
+		apDisplay.printColor("Calculating similarity matrix", "cyan")
+		ccc_matrix = self.calculate_ccc_matrix_2d(self.params['avgs'])
+		angrecondir = os.path.join(self.params['rundir'], "angular_reconstitution")
+		clsavgs = os.path.split(self.params['avgs'])[1][:-4]
+		if not os.path.isdir(angrecondir):
+			os.mkdir(angrecondir)
+		if not os.path.islink(os.path.join(angrecondir, clsavgs+".hed")):
+			os.symlink(os.path.join(self.params['rundir'], clsavgs+".hed"), os.path.join(angrecondir, clsavgs+".hed"))
+		if not os.path.islink(os.path.join(angrecondir, clsavgs+".img")):
+			os.symlink(os.path.join(self.params['rundir'], clsavgs+".img"), os.path.join(angrecondir, clsavgs+".img"))
+		
+		cmdlist = []
+		seqfile = open(os.path.join(self.params['rundir'], "sequences_for_angular_reconstitution.dat"), "w")
+		apDisplay.printColor("Running multiple IMAGIC 3d0 creations", "cyan")
+		for i in range(self.params['num_volumes']):
+			sequence = self.calculate_sequence_of_addition(self.params['avgs'], ccc_matrix, first=self.params['firstimage'])
+			self.check_for_duplicates_in_sequence(sequence)
+			seqfile.write(str(sequence)+"\n")
+			### create IMAGIC batch file for each model construction & append them to be threaded
+			batchfile = self.imagic_batch_file(sequence, i+1)
+			proc = subprocess.Popen('chmod 755 '+batchfile, shell=True)
+			proc.wait()
+			cmdlist.append(batchfile)
+			os.chdir(self.params['rundir'])
+		seqfile.close()
+		apThread.threadCommands(cmdlist, nproc=self.params['threadnproc'], pausetime=10)
+			
+		### check for errors after execution
+		for i in range(self.params['num_volumes']):
+			apIMAGIC.checkLogFileForErrors(os.path.join(self.params['rundir'], "angular_reconstitution", "3d"+str(i+1)+".log"))
+		
+		#####################################   convert 3-D models to SPIDER format for Xmipp   ######################################
 				
-			if self.params['prealign'] is True:
-				self.params['avgs'] = self.prealignClassAverages()
-				apIMAGIC.checkLogFileForErrors(os.path.join(self.params['rundir'], "prealignClassAverages.log"))
-			
-			##############################################		create multiple 3d0s		##############################################
-			
-			apDisplay.printColor("Calculating similarity matrix", "cyan")
-			ccc_matrix = self.calculate_ccc_matrix_2d(self.params['avgs'])
-			angrecondir = os.path.join(self.params['rundir'], "angular_reconstitution")
-			clsavgs = os.path.split(self.params['avgs'])[1][:-4]
-			if not os.path.isdir(angrecondir):
-				os.mkdir(angrecondir)
-			if not os.path.islink(os.path.join(angrecondir, clsavgs+".hed")):
-				os.symlink(os.path.join(self.params['rundir'], clsavgs+".hed"), os.path.join(angrecondir, clsavgs+".hed"))
-			if not os.path.islink(os.path.join(angrecondir, clsavgs+".img")):
-				os.symlink(os.path.join(self.params['rundir'], clsavgs+".img"), os.path.join(angrecondir, clsavgs+".img"))
-			
-			cmdlist = []
-			seqfile = open(os.path.join(self.params['rundir'], "sequences_for_angular_reconstitution.dat"), "w")
-			apDisplay.printColor("Running multiple IMAGIC 3d0 creations", "cyan")
-			for i in range(self.params['num_volumes']):
-				sequence = self.calculate_sequence_of_addition(self.params['avgs'], ccc_matrix, first=self.params['firstimage'])
-				self.check_for_duplicates_in_sequence(sequence)
-				seqfile.write(str(sequence)+"\n")
-				### create IMAGIC batch file for each model construction & append them to be threaded
-				batchfile = self.imagic_batch_file(sequence, i+1)
-				proc = subprocess.Popen('chmod 755 '+batchfile, shell=True)
-				proc.wait()
-				cmdlist.append(batchfile)
-				os.chdir(self.params['rundir'])
-			seqfile.close()
-			apThread.threadCommands(cmdlist, nproc=self.params['threadnproc'], pausetime=10)
-				
-			### check for errors after execution
-			for i in range(self.params['num_volumes']):
-				apIMAGIC.checkLogFileForErrors(os.path.join(self.params['rundir'], "angular_reconstitution", "3d"+str(i+1)+".log"))
-			
-			#####################################   convert 3-D models to SPIDER format for Xmipp   ######################################
-					
-			### create volume directory
-			volumedir = os.path.join(self.params['rundir'], "volumes")
-			if not os.path.isdir(volumedir):
-				os.mkdir(volumedir)
+		### create volume directory
+		volumedir = os.path.join(self.params['rundir'], "volumes")
+		if not os.path.isdir(volumedir):
+			os.mkdir(volumedir)
 
-			### move volumes into volume directory		
-			apDisplay.printColor("moving volumes for Xmipp 3-D Maximum Likelihood", "cyan")	
-			volumes = {}
-			cmds = []
-			for i in range(self.params['num_volumes']):
-				volume1 = os.path.join(self.params['rundir'], "angular_reconstitution", "3d%d_ordered%d_filt.vol" % (i+1,i+1))
-				volume2 = os.path.join(volumedir, "3d%d.vol" % (i+1))
-				cmds.append("proc3d %s %s spidersingle" % (volume1, volume2))
-				volumes[(i+1)] = volume2
-			apThread.threadCommands(cmds, nproc=self.params['threadnproc'])
+		### move volumes into volume directory		
+		apDisplay.printColor("moving volumes for Xmipp 3-D Maximum Likelihood", "cyan")	
+		volumes = {}
+		cmds = []
+		for i in range(self.params['num_volumes']):
+			volume1 = os.path.join(self.params['rundir'], "angular_reconstitution", "3d%d_ordered%d_filt.vol" % (i+1,i+1))
+			volume2 = os.path.join(volumedir, "3d%d.vol" % (i+1))
+			cmds.append("proc3d %s %s spidersingle" % (volume1, volume2))
+			volumes[(i+1)] = volume2
+		apThread.threadCommands(cmds, nproc=self.params['threadnproc'])
+							
+		##############################################			align 3-D models		##############################################
 								
-			##############################################			align 3-D models		##############################################
-									
-			### run Maximum Likelihood 3-D alignment & align resulting volumes
-			apDisplay.printColor("Running Xmipp maximum likelihood 3-D alignment", "cyan")
-			vol_doc_file, alignref = self.xmipp_max_like_3d_align(volumes)
-			alignparams = self.read_vol_doc_file(vol_doc_file)
-			apDisplay.printColor("Aligning volumes based on 3-D ML parameters", "cyan")
-			self.align_volumes(alignparams, alignref)
-			
-			##############################################    Principal Component Analysis   #############################################
+		### run Maximum Likelihood 3-D alignment & align resulting volumes
+		apDisplay.printColor("Running Xmipp maximum likelihood 3-D alignment", "cyan")
+		vol_doc_file, alignref = self.xmipp_max_like_3d_align(volumes)
+		alignparams = self.read_vol_doc_file(vol_doc_file)
+		apDisplay.printColor("Aligning volumes based on 3-D ML parameters", "cyan")
+		self.align_volumes(alignparams, alignref)
+#		'''
+#		vol_doc_file = '/ami/data17/appion/11jan08a/angrecon/acl3/max_like_alignment/nref1_15deg_it000005.doc'
+#		alignparams = self.read_vol_doc_file(vol_doc_file)
+		##############################################    Principal Component Analysis   #############################################
 
-			apDisplay.printColor("Calculating inter-volume similarity", "cyan")
-			aligned_volumes = {}
-			for i in range(self.params['num_volumes']):
-				aligned_volumes[(i+1)] = os.path.join(self.params['rundir'], "volumes", "3d%d.mrc" % (i+1))
-			if self.params['PCA'] is True:
-				simfile, sim_matrix = self.runPrincipalComponentAnalysis(aligned_volumes, recalculate=self.params['recalculate'])
-			else:
-				simfile, sim_matrix = self.calculate_ccc_matrix_3d(aligned_volumes)
-					
-			##############################################    3-D affinity propagation		##############################################
+		apDisplay.printColor("Calculating inter-volume similarity", "cyan")
+		aligned_volumes = {}
+		for i in range(self.params['num_volumes']):
+			aligned_volumes[(i+1)] = os.path.join(self.params['rundir'], "volumes", "3d%d.mrc" % (i+1))
+		if self.params['PCA'] is True:
+			simfile, sim_matrix = self.runPrincipalComponentAnalysis(aligned_volumes, recalculate=self.params['recalculate'])
+		else:
+			simfile, sim_matrix = self.calculate_ccc_matrix_3d(aligned_volumes)
+				
+		##############################################    3-D affinity propagation		##############################################
 
-			### 3-D Affinity Propagation
-			apDisplay.printColor("Averaging volumes with Affinity Propagation", "cyan")
-			preffile = self.set_preferences(sim_matrix, self.params['preftype'])
-			classes = self.run_affinity_propagation(aligned_volumes, simfile, preffile)
+		### 3-D Affinity Propagation
+		apDisplay.printColor("Averaging volumes with Affinity Propagation", "cyan")
+		preffile = self.set_preferences(sim_matrix, self.params['preftype'])
+		classes = self.run_affinity_propagation(aligned_volumes, simfile, preffile)
 
-			#####################################	refine volumes using Xmipp projection matching	######################################
+		#####################################	refine volumes using Xmipp projection matching	######################################
 			
-			if refine is True:
-				if not os.path.isdir("refinement"):
-					os.mkdir("refinement")
-				os.chdir("refinement")
-				apXmipp.breakupStackIntoSingleFiles(self.params['refineavgs'])
-				xmippcmd = "xmipp_normalize -i partlist.sel -method OldXmipp"
-				apParam.runCmd(xmippcmd, "Xmipp")
-				for i in classes.keys():
-					emancmd = "proc3d %s %s scale=%.3f clip=%d,%d,%d mask=%s spidersingle" \
-						% (os.path.join(self.params['rundir'], "%d.mrc" % i), "%d.vol" % i, (1/self.scalefactor), \
-							self.params['refineboxsize'], self.params['refineboxsize'], self.params['refineboxsize'], \
-							self.params['mask_radius'])
-					apParam.runCmd(emancmd, "EMAN")
-					self.refine_volume((i))
-					emancmd = "proc3d %s %s" \
-						% (os.path.join("refine_%d" % i, "3d%d_refined.vol" % i), os.path.join(self.params['rundir'], "%d_r.mrc" % i))
-					apParam.runCmd(emancmd, "EMAN")
-				os.chdir(self.params['rundir'])
-			
-			##############################################		   model evaluation	    	##############################################
-			
-			### final model assessment
-			euler_array = self.getEulerValuesForModels(alignparams)
-			if refine is True:
-				self.assess_3Dclass_quality2(aligned_volumes, sim_matrix, classes, euler_array)
-				self.combineMetrics2(False,1,True,1,True,1,False,1,False,1,True,1)
-			else:
-				self.assess_3Dclass_quality(aligned_volumes, sim_matrix, classes, euler_array)
-				self.combineMetrics(False,1,True,1,True,1,False,1,False,1,True,1)
+		if refine is True:
+			if not os.path.isdir("refinement"):
+				os.mkdir("refinement")
+			os.chdir("refinement")
+			apXmipp.breakupStackIntoSingleFiles(self.params['refineavgs'])
+			xmippcmd = "xmipp_normalize -i partlist.sel -method OldXmipp"
+			apParam.runCmd(xmippcmd, "Xmipp")
+			for i in classes.keys():
+				emancmd = "proc3d %s %s scale=%.3f clip=%d,%d,%d mask=%s spidersingle" \
+					% (os.path.join(self.params['rundir'], "%d.mrc" % i), "%d.vol" % i, (1/self.scalefactor), \
+						self.params['refineboxsize'], self.params['refineboxsize'], self.params['refineboxsize'], \
+						(self.params['mask_radius'] / self.params['refineapix']))
+				apParam.runCmd(emancmd, "EMAN")
+				self.refine_volume((i))
+				emancmd = "proc3d %s %s" \
+					% (os.path.join("refine_%d" % i, "3d%d_refined.vol" % i), os.path.join(self.params['rundir'], "%d_r.mrc" % i))
+				apParam.runCmd(emancmd, "EMAN")
+			os.chdir(self.params['rundir'])
+		
+		##############################################		   model evaluation	    	##############################################
+		
+		### final model assessment
+		euler_array = self.getEulerValuesForModels(alignparams)
+		if refine is True:
+			self.assess_3Dclass_quality2(aligned_volumes, sim_matrix, classes, euler_array)
+		else:
+			self.assess_3Dclass_quality(aligned_volumes, sim_matrix, classes, euler_array)
+		apCommonLines.combineMetrics("final_model_stats.dat", "final_model_stats_sorted_by_Rcrit.dat", **{"CCPR":(1,1)})
 
-			### upload to database, if specified
-			self.upload()
+		### upload to database, if specified
+		self.upload()
+		
+		### make chimera snapshots
+		if refine is True:
+			for i in classes.keys():
+				if self.params['mass'] is not None:
+					apChimera.filterAndChimera(os.path.join(self.params['rundir'], "%d_r.mrc" % i), res=self.params['3d_lpfilt'], \
+						apix=self.params['refineapix'], box=self.params['refineboxsize'], chimtype="snapshot", contour=1.5, \
+						zoom=1, sym="c1", mass=self.params['mass'])
+	
+		### cleanup
+		snapshots = glob.glob("*.png")
+		mtlfiles = glob.glob("*.mtl")
+		objfiles = glob.glob("*.obj")
+		pyfiles = glob.glob("*mrc.py")
+		for file in mtlfiles:
+			os.remove(file)
+		for file in objfiles:
+			os.remove(file)
+		for file in pyfiles:
+			os.remove(file)
+		if not os.path.isdir("snapshots"):
+			os.mkdir("snapshots")
+		for s in snapshots:
+			shutil.move(s, os.path.join("snapshots", s))
 			
 
 if __name__ == "__main__":
