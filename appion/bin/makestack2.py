@@ -571,8 +571,10 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 			# create ctfvalues_file from ctf run
 			ctfvaluesfile = "tmp_ctfvaluesfile.txt"
 
-			df1 = bestctfvalue['defocus1']
-			df2 = bestctfvalue['defocus2']
+			dfvals=[abs(bestctfvalue['defocus1']),abs(bestctfvalue['defocus2'])]
+			dfvals.sort()
+			df1 = dfvals[0]
+			df2 = dfvals[1]
 			angast = bestctfvalue['angle_astigmatism']*math.pi/180.0
 			amp = bestctfvalue['amplitude_contrast']
 			kv = imgdata['scope']['high tension']/1000
