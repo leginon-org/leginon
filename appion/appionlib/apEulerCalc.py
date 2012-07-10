@@ -40,7 +40,7 @@ def EulersToRotationMatrixEMAN(alt, az, phi):
 	m[2][1] = -math.sin(alt)*math.cos(az)
 	m[2][2] = math.cos(alt)
 
-	return m
+	return numpy.matrix(m)
 	
 #==================	
 def EulersToRotationMatrix3DEM(phi, theta, omega):
@@ -68,7 +68,7 @@ def EulersToRotationMatrix3DEM(phi, theta, omega):
 	default = 0.000001
 	m = numpy.where(abs(m) < default, 0, m)
 
-	return m
+	return numpy.matrix(m)
 
 #==================
 def EulersToRotationMatrixXmipp(phi, theta, psi):
