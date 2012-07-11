@@ -5020,7 +5020,8 @@ class particledata {
 			."LEFT JOIN ApTemplateStackData AS ts "
 			."  ON ar.`REF|ApTemplateStackData|templatestackid` = ts.`DEF_id` "
 			."WHERE "
-			."  ts.`REF|leginondata|SessionData|session` = '$sessionId' ";
+			."  ts.`REF|leginondata|SessionData|session` = '$sessionId' "
+			."ORDER BY ar.`DEF_id` DESC";
 //			."LEFT JOIN leginondata|SessionData AS sd "
 //			."  ON ts.`REF|leginondata|SessionData|session` = sd.`DEF_id` "; 
 			/*	
