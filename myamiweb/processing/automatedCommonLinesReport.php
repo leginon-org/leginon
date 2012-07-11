@@ -135,6 +135,10 @@ function automatedCommonLinesSummary($extra=False, $title='Common Lines Summary'
 		$html .= "<br>\n";	
 		$html .= getSubmitForm("Recalculate Statistics");
 		$html .= "<br><br><br>\n";
+
+		if ($results) {
+			$html .= "<b><font size='+1'>$results<font></b><br><br><br>\n";
+		}
 	
 		// statistics files	
 		$statfile = $path."/"."final_model_stats.dat";
@@ -171,29 +175,34 @@ function automatedCommonLinesSummary($extra=False, $title='Common Lines Summary'
 	
 		$html.= "<table class='tableborder' border='1' cellspacing='1' cellpadding='5'>\n";
 		$html.= "<TR>\n";
-		$display_keys = array ( 'snapshot', 'volume name', 'combined score', '# averaged volumes', 'CCPR', 'EJ', 'FSC (0.5)');
+		$display_keys = array ( 'volnum', 'snapshots', 'volume name', 'combined score', '# averaged volumes', 'CCPR', 'EJ', 'FSC (0.5)');
 		foreach($display_keys as $key) {
 			$html .= "<td><span class='datafield0'>".$key."</span> </TD> ";
 		}
 	
 		for ($i = 1; $i <= $length; $i++) {
 
-			// display volume & information
-			$html.= "<tr>\n";
+			// volume number & snapshots
+			$html .= "<tr>\n";
+			$html .= "<td><font size='+1'><center><b>$i</b></center></font></td>\n";
 	
 			$pathtoimage = $aclrun['path'].'/snapshots/'.$statdata_sorted[$i][0].'.slice.png';
 			$bestimages = glob($aclrun['path'].'/snapshots/'.$statdata_sorted[$i][0].'*.png');
-			if ($bestimages)
-				$bestimage = $bestimages[0];
-			else $bestimage = "";
-			// image
-			if (file_exists($bestimage)){
-				$html .= "<td><a href='loadimg.php?filename=$bestimage' target='snapshot'>"
-					."<img src='loadimg.php?filename=$bestimage&h=64' height='64'></a></td>\n";
-			} else{
-				$html .= "<td>no snapshot available</td>\n";
+			$html .= "<td>";
+			if ($bestimages) {
+				for ($j = 0 ; $j <= 4 ; $j++) {
+					if (file_exists($bestimages[$j])) {
+						$bestimage = $bestimages[$j];
+						$html .= "<a href='loadimg.php?filename=$bestimage' target='snapshot'>"
+							."<img src='loadimg.php?filename=$bestimage&h=64' height='64'></a>\n";
+					}
+				}
+			} else {
+				$html .= "<font size='+1'>no snapshots available</font>\n";
 			}
-			// volume name
+			$html .= "</td>";
+
+			// volume name & statistics
 			$volname = $statdata_sorted[$i][0];
 			$Rcrit = $statdata_sorted[$i][1];
 			$num = $statdata_sorted[$i][2];
@@ -207,6 +216,7 @@ function automatedCommonLinesSummary($extra=False, $title='Common Lines Summary'
 			$modellink .= "  &nbsp;download model\n";
 			$modellink .= "</a></font>)\n";
 		
+			// display relevant information
 			$html.= "<td>$volname$modellink</td>\n";
 			$html.= "<td>$Rcrit</td>\n";
 			$html.= "<td>$num</td>\n";
@@ -244,10 +254,14 @@ function recalculateCriteria() {
 	$command .= "'";
 
 //	$errors = showOrSubmitCommand($command, "", 'Metric Combiner', 1, false);
-	$error = processBasic($command);
-	
-	automatedCommonLinesSummary($error, $title='Common Lines Summary', $heading='Common Lines Summary', $results=False);
-	
+	if ($_POST['process'] != "Just Show Command") {
+		$error = processBasic($command);
+		automatedCommonLinesSummary($error, $title='Common Lines Summary', $heading='Common Lines Summary', false);
+	} else {
+		$processhost = getSelectedProcessingHost();
+		$results = addAppionWrapper($command, $processhost);
+		automatedCommonLinesSummary($error, $title='Common Lines Summary', $heading='Common Lines Summary', $results);
+	}
 }
 
 function processBasic($command) {

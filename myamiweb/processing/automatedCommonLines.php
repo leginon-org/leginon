@@ -73,9 +73,9 @@ function createAngularReconstitutionForm($extra=False, $title='automatedCommonLi
 	list($clusterid,$apix,$boxsz,$num_classes,$totprtls) = split('\|--\|', $clusteridstr);
 	$tsidstr = $_POST['tsvals'];
 	list($tsid,$apix,$boxsz,$totprtls,$type) = split('\|--\|', $tsidstr);
-	$weight = ($_POST['weight']=='on' || !$_POST['weight']) ? 'checked' : '';
-	$prealign = ($_POST['prealign']=='on') ? 'checked' : '';
-	$scale = ($_POST['scale']=='on' || !$_POST['scale']) ? 'checked' : '';
+	$weight = ($_POST && !$_POST['weight']) ? '' : 'checked';
+	$prealign = ($_POST && !$_POST['prealign']) ? '' : 'checked';
+	$scale = ($_POST && !$_POST['scale']) ? '' : 'checked';
 	$nvol = ($_POST['nvol']) ? $_POST['nvol'] : '100';
 	$nproc = ($_POST['nproc']) ? $_POST['nproc'] : '8';
 	$asqfilt = ($_POST['asqfilt']=='on') ? 'checked' : '';
@@ -84,10 +84,10 @@ function createAngularReconstitutionForm($extra=False, $title='automatedCommonLi
 	$keep_ordered = ($_POST['keep_ordered']) ? $_POST['keep_ordered'] : '90';
 	$filt3d = ($_POST['filt3d']) ? $_POST['filt3d'] : '30';
 	$nref = ($_POST['nref']) ? $_POST['nref'] : '1';
-	$usePCAcheck = ($_POST['usePCA']=='on' || !$_POST['usePCA']) ? 'checked' : '';	
+	$usePCA = ($_POST && !$_POST['usePCA']) ? '' : 'checked';
 	$numeigens = ($_POST['numeigens']) ? $_POST['numeigens'] : '20';
 	$preftype = ($_POST['preftype']) ? $_POST['preftype'] : 'median';
-	$recalc = ($_POST['recalc']=='on') ? 'checked' : '';
+//	$recalc = ($_POST['recalc']=='on') ? 'checked' : '';
 	
 	// options for the parameters
 	echo "<table border='0' class='tableborder'>\n<TR><TD valign='top'>\n";
@@ -173,11 +173,11 @@ function createAngularReconstitutionForm($extra=False, $title='automatedCommonLi
 				echo "<b>Preparatory Parameters</b>\n";
 				echo "<br/>\n";
 	
-				echo "<INPUT TYPE='checkbox' NAME='scale' $scale<br/>\n";
+				echo "<INPUT TYPE='checkbox' NAME='scale' $scale>\n";
 				echo docpop('scale','Scale class averages to 64x64 pixels');
 				echo "<br>";
 	
-				echo "<INPUT TYPE='checkbox' NAME='prealign' $prealign<br/>\n";
+				echo "<INPUT TYPE='checkbox' NAME='prealign' $prealign>\n";
 				echo docpop('prealign','Iteratively align class averages to each other');
 				echo "<br>";
 	
@@ -185,11 +185,11 @@ function createAngularReconstitutionForm($extra=False, $title='automatedCommonLi
 				echo "<b>Angular Reconstitution</b>\n";
 				echo "<br/>\n";
 		
-				echo "<INPUT TYPE='checkbox' NAME='weight' $weight<br/>\n";;
+				echo "<INPUT TYPE='checkbox' NAME='weight' $weight>\n";;
 				echo docpop('weight_randomization','Weight randomization based on image differences');
 				echo "<br>";
 			
-				echo "<INPUT TYPE='checkbox' NAME='asqfilt' $asqfilt<br/>\n";
+				echo "<INPUT TYPE='checkbox' NAME='asqfilt' $asqfilt>\n";
 				echo docpop('asqfilt','ASQ filter the sinogram lines');
 				echo "<br/>\n";
 	
@@ -225,7 +225,7 @@ function createAngularReconstitutionForm($extra=False, $title='automatedCommonLi
 				echo "<b>3D Classification</b>\n";
 				echo "<br/>\n";
 		
-				echo "<INPUT TYPE='checkbox' NAME='usePCA' $usePCAcheck<br/>\n";
+				echo "<INPUT TYPE='checkbox' NAME='usePCA' $usePCA>\n";
 				echo docpop('usePCA','Use Principal Components Analysis');
 				echo "<br>";
 		
@@ -276,7 +276,7 @@ function createAngularReconstitutionForm($extra=False, $title='automatedCommonLi
 			echo "</table></TD></TR><TR></TR>\n";
 	
 		echo "<TR><TD COLSPAN='2' ALIGN='CENTER'>\n";
-			echo getSubmitForm("Run Bootstrapped Angular Reconstitution");
+			echo getSubmitForm("Run Automated Common Lines");
 			echo "</TD></TR>\n";
 		echo "</table>\n";
 	echo "</form>\n";
