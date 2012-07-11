@@ -3,6 +3,7 @@ import time
 import subprocess
 import math
 import os
+import glob
 
 from appionlib import basicScript
 from appionlib import apParam
@@ -322,7 +323,11 @@ class RefineJob(basicScript.BasicScript):
 		result_tar = 'recon_results.tar.gz'
 
 		self.files_from_remote_host.append(result_tar)
-		tasks = self.addToTasks(tasks,'tar cvzf %s %s recon/' % (result_tar, "*.pickle"))
+		if not glob.glob('*.pickle'):
+			tasks = self.addToTasks(tasks,'tar cvzf %s recon/' % (result_tar))
+		else:
+			# include pickle file only if created in previous steps
+			tasks = self.addToTasks(tasks,'tar cvzf %s %s recon/' % (result_tar, "*.pickle"))
 		self.files_from_remote_host.append(self.commandfile)
 		self.__saveFileListFromRemoteHost()
 		if self.params['remoterundir'] != self.params['rundir']:
