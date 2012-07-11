@@ -163,7 +163,7 @@ function createCtfFindForm($extra=false) {
 		  obj.resmax.value = '8';
 		  obj.medium[0].checked = true;
 		  obj.medium[1].checked = false;
-		  obj.defstep.value = 5000;
+		  obj.defstep.value = 1000;
 		  return;
 		}
 		function ice_preset(obj) {
@@ -171,13 +171,13 @@ function createCtfFindForm($extra=false) {
 		  obj.resmax.value = '15';
 		  obj.medium[0].checked = false;
 		  obj.medium[1].checked = true;
-		  obj.defstep.value = 5000;
+		  obj.defstep.value = 1000;
 		  return;
 		}
 		function finetune_preset(obj) {
 		  obj.resmin.value = '100';
 		  obj.resmax.value = '10';
-		  obj.defstep.value = 500;
+		  obj.defstep.value = 100;
 		  return;
 		}
 		</script>";
@@ -213,8 +213,8 @@ function createCtfFindForm($extra=false) {
 	$form_resmin = ($_POST['resmin']) ? $_POST['resmin'] : '100';
 	$form_resmax = ($_POST['resmax']) ? $_POST['resmax'] : '10';
 
-	$form_defstep = ($_POST['defstep']) ? $_POST['defstep'] : '5000';
-	$form_numstep = ($_POST['numstep']) ? $_POST['numstep'] : '50';
+	$form_defstep = ($_POST['defstep']) ? $_POST['defstep'] : '1000';
+	$form_numstep = ($_POST['numstep']) ? $_POST['numstep'] : '25';
 	// check if ctftilt is set
 	$ctftiltcheck = ($_POST['runctftilt']=='on') ? 'CHECKED' : '';
 	$form_dast = ($_POST['dast']) ? $_POST['dast'] : '100';

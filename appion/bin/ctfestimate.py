@@ -394,7 +394,7 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 			help="Low resolution end of data to be fitted", metavar="#")
 		self.parser.add_option("--resmax", dest="resmax", type="float", default=15.0,
 			help="High resolution end of data to be fitted", metavar="#")
-		self.parser.add_option("--defstep", dest="defstep", type="float", default=5000.0,
+		self.parser.add_option("--defstep", dest="defstep", type="float", default=1000.0,
 			help="Step width for grid search in Angstroms", metavar="#")
 		self.parser.add_option("--numstep", dest="numstep", type="int", default=25,
 			help="Number of steps to search in grid", metavar="#")
