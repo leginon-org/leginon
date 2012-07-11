@@ -487,11 +487,11 @@ class RefineJob(basicScript.BasicScript):
 				self.addToLog('Done with iteration %d' % (iter))
 				self.addSimpleCommand('')
 		self.addSimpleCommand('cd %s' % self.params['remoterundir'])
-		self.__writeCommandListToFile()
 		self.addToLog('....Performing tasks after iterations....')
 		self.makePostIterationScript()
 		print self.params['remoterundir']
 		self.__makePackResultsScript()
+		self.__writeCommandListToFile()
 
 	def onClose(self):
 		self.addToLog('Done!')
