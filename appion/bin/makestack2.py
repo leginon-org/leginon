@@ -571,11 +571,16 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 			# create ctfvalues_file from ctf run
 			ctfvaluesfile = "tmp_ctfvaluesfile.txt"
 
-			dfvals=[abs(bestctfvalue['defocus1']),abs(bestctfvalue['defocus2'])]
-			dfvals.sort()
-			df1 = dfvals[0]
-			df2 = dfvals[1]
-			angast = bestctfvalue['angle_astigmatism']*math.pi/180.0
+			if abs(bestctfvalue['defocus1']) < abs(bestctfvalue['defocus2']):
+				## this is the canonical form
+				df1 = bestctfvalue['defocus1']
+				df2 = bestctfvalue['defocus2']			
+				angast = bestctfvalue['angle_astigmatism']
+			else:
+				apDisplay.printWarning("|def1| > |def2|, flipping defocus axes")
+				df1 = bestctfvalue['defocus2']
+				df2 = bestctfvalue['defocus1']			
+				angast = bestctfvalue['angle_astigmatism'] + 90			
 			amp = bestctfvalue['amplitude_contrast']
 			kv = imgdata['scope']['high tension']/1000
 			cs = bestctfvalue['cs']/1000
@@ -585,7 +590,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 				os.remove(ctfvaluesfile)
 			f = open(ctfvaluesfile,'w')
 			f.write("\tFinal Params for image: %s.mrc\n"%imgdata['filename'])
-			f.write("\tFinal Defocus (m,m,deg): %.6e %.6e %.6f\n"%(df1,df2,math.degrees(angast)))
+			f.write("\tFinal Defocus (m,m,deg): %.6e %.6e %.6f\n"%(df1,df2,angast))
 			f.write("\tAmplitude Contrast: %.6f\n"%amp)
 			f.write("\tVoltage (kV): %.6f\n"%kv)
 			f.write("\tSpherical Aberration (mm): %.6e\n"%cs)
