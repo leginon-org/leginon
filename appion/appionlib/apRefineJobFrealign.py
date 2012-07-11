@@ -200,7 +200,7 @@ class FrealignRefineJob(apRefineJob.RefineJob):
 	def setFrealignRefineParams(self):
 		frealign_inputparams = []
 		# card 1
-		card = ("cform", "mode" , "fmag", "fdef", "fastig", "fpart", "iewald","fbeaut", "ffilt", "fmatch", "ifsc", "fstat", "iblow",)
+		card = ("cform", "mode" , "fmag", "fdef", "fastig", "fpart", "iewald","fbeaut", "ffilt", "fbfact", "fmatch", "ifsc", "fstat", "iblow",)
 		frealign_inputparams.append(card)
 		####card 2
 		card = ("outerMaskRadius", "innerMaskRadius", "apix", "wgh", "xstd", "pbc", "boff", "angSampRate", "itmax", "ipmax",)
@@ -293,7 +293,7 @@ class FrealignRefineJob(apRefineJob.RefineJob):
 			'hostname'
 			'',
 			'### START FREALIGN ###',
-			'frealign.exe << EOF > frealign.recon.out',
+			'frealign_v8.exe << EOF > frealign.recon.out',
 			]
 		lines_after_input=[
 			'EOF',
@@ -338,7 +338,7 @@ class FrealignRefineJob(apRefineJob.RefineJob):
 				'',
 				'',
 				'### START FREALIGN ###',
-				'frealign.exe << EOF > frealign.proc%03d.out' % proc,
+				'frealign_v8.exe << EOF > frealign.proc%03d.out' % proc,
 				]
 			lines_after_input=[
 				'EOF',
