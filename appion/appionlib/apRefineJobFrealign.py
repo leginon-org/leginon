@@ -269,7 +269,7 @@ class FrealignRefineJob(apRefineJob.RefineJob):
 		constant_inputlines.extend(appendcards)
 		return constant_inputlines
 
-	def writeReconShell(self,iter,inputlines,iterpath,nproc):
+	def writeReconShell(self,iter,inputlines,iterpath,ppn):
 		pieces = inputlines[0].split(',')
 		pieces[1] = '0' #mode = 0 for recon
 		pieces[9] = 'F' #fmatch = F or no recon will be created
@@ -289,7 +289,7 @@ class FrealignRefineJob(apRefineJob.RefineJob):
 			'/bin/rm -fv iter%03d.???' % iter,
 			'/bin/rm -fv threed.%03da.???' % iter,
 			'/bin/rm -fv frealign.recon.out',
-			'export NCPUS=%d' % nproc,
+			'export NCPUS=%d' % ppn,
 			'hostname'
 			'',
 			'### START FREALIGN ###',
@@ -338,7 +338,7 @@ class FrealignRefineJob(apRefineJob.RefineJob):
 				'',
 				'',
 				'### START FREALIGN ###',
-				'frealign_v8.exe << EOF > frealign.proc%03d.out' % proc,
+				'frealign_v8_mp.exe << EOF > frealign.proc%03d.out' % proc,
 				]
 			lines_after_input=[
 				'EOF',
