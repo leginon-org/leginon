@@ -13,7 +13,6 @@ from appionlib import appiondata
 from appionlib import apImage
 from appionlib import apDisplay
 from appionlib import apEMAN
-from appionlib import apDatabase
 
 ##===================
 ##===================
@@ -103,6 +102,7 @@ def getShift(imgdata1 ,imgdata2):
 		apDisplay.printWarning("Images must be greater than "+finalsize+" pixels to calculate shift.")
 		return None
 
+	from appionlib import apDatabase
 	apix1 = apDatabase.getPixelSize(imgdata1)
 	apix2 = apDatabase.getPixelSize(imgdata2)
 
