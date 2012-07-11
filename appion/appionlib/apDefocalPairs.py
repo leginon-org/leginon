@@ -12,6 +12,8 @@ import leginon.leginondata
 from appionlib import appiondata
 from appionlib import apImage
 from appionlib import apDisplay
+from appionlib import apEMAN
+from appionlib import apDatabase
 
 ##===================
 ##===================
@@ -101,19 +103,30 @@ def getShift(imgdata1 ,imgdata2):
 		apDisplay.printWarning("Images must be greater than "+finalsize+" pixels to calculate shift.")
 		return None
 
+	apix1 = apDatabase.getPixelSize(imgdata1)
+	apix2 = apDatabase.getPixelSize(imgdata2)
+
+	#low pass filter 2 images to twice the final pixelsize BEFORE binning
 	shrinkfactor1=dimension1/finalsize
 	shrinkfactor2=dimension2/finalsize
-	binned1 = apImage.binImg(imgdata1['image'], shrinkfactor1)
-	binned2 = apImage.binImg(imgdata2['image'], shrinkfactor2)
+	binned1 = apImage.filterImg(imgdata1['image'],apix1,apix1*shrinkfactor1*2)
+	binned2 = apImage.filterImg(imgdata2['image'],apix2,apix2*shrinkfactor2*2)
 
+	#now bin 2 images
+	binned1 = apImage.binImg(binned1, shrinkfactor1)
+	binned2 = apImage.binImg(binned2, shrinkfactor2)
+	
 	### fix for non-square images, correlation fails on non-square images
 	mindim = min(binned1.shape)
 	binned1 = binned1[:mindim,:mindim]
 	binned2 = binned2[:mindim,:mindim]
 
-	pc=correlator.cross_correlate(binned1,binned2)
+	### use phase correlation, performs better than cross
+	pc=correlator.phase_correlate(binned1,binned2)
+	apImage.arrayToMrc(pc,"phaseCorrelate.mrc")
 
-	peak = peakfinder.findSubpixelPeak(pc, lpf=0.0)
+	### find peak, filtering to 10.0 helps
+	peak = peakfinder.findSubpixelPeak(pc, lpf=10.0)
 	subpixpeak = peak['subpixel peak']
 	shift=correlator.wrap_coord(subpixpeak, pc.shape)
 	peak['scalefactor'] = dimension2/float(dimension1)
@@ -121,6 +134,7 @@ def getShift(imgdata1 ,imgdata2):
 	xshift = int(round(shift[0]*shrinkfactor1))
 	yshift = int(round(shift[1]*shrinkfactor1))
 	peak['shift'] = numpy.array((xshift, yshift))
+	apDisplay.printMsg("Determined shifts: %f %f"%(peak['shift'][0],peak['shift'][1]))
 	#print peak['shift']
 	#sys.exit(1)
 	return peak
