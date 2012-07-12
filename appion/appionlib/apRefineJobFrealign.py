@@ -293,7 +293,7 @@ class FrealignRefineJob(apRefineJob.RefineJob):
 			'hostname'
 			'',
 			'### START FREALIGN ###',
-			'frealign_v8.exe << EOF > frealign.recon.out',
+			'frealign_v8_mp.exe << EOF > frealign.recon.out',
 			]
 		lines_after_input=[
 			'EOF',
@@ -335,6 +335,7 @@ class FrealignRefineJob(apRefineJob.RefineJob):
 				'rm -rf %s' % procpath,
 				'mkdir %s' % procpath,
 				'cd %s' % procpath,
+				'export NCPUS=%d' % 1,
 				'',
 				'',
 				'### START FREALIGN ###',
