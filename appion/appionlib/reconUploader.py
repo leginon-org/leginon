@@ -234,6 +234,10 @@ class generalReconUploader(appionScript.AppionScript):
 			
 		return
 
+	def parseFileForRunParameters(self):
+		''' PACKAGE-SPECIFIC FILE PARSER. This should be defined in subclasses if the parameters were not pickled.  Return parameters in dictionary form'''
+		raise NotImplementedError('parseFileForRunParameters is not defined')
+		
 	#=====================
 	def readRunParameters(self):
 		''' read pickled run parameters for refinement procedure '''
