@@ -18,7 +18,7 @@ def radiansToDegrees(r):
 	return r*180/math.pi
 
 #==================
-def convert3DEMIcosEulerToStandard(full_sym_name,phi,theta,omega):
+def convert3DEMEulerToStandard(full_sym_name,phi,theta,omega):
 	if 'Icos' not in full_sym_name:
 		return phi,theta,omega
 	else:

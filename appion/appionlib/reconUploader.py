@@ -14,6 +14,7 @@ from appionlib import appionScript
 from appionlib import apDisplay
 from appionlib import apEulerDraw
 from appionlib import apEulerJump
+from appionlib import apEulerCalc
 from appionlib import apParam
 from appionlib import apRecon
 from appionlib import apStack
