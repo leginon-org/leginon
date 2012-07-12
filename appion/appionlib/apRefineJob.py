@@ -463,9 +463,15 @@ class RefineJob(basicScript.BasicScript):
 		for bit in bits:
 			cmd = 'echo %s >> %s' % (bit,self.logfile)
 			self.addJobCommands(self.addToTasks({},cmd))
+
+	def isNewTrial(self):
+		'''
+		Check if clean up before start is needed.
+		'''
+		return self.params['startiter'] == 1
 		
 	def start(self):
-		if self.params['startiter'] == 1:
+		if self.isNewTrial():
 			self.addSimpleCommand('')
 			self.addToLog('....Setting up new refinement job trial....')
 			# removeReconDir is not included in NewTrialScript because it is needed 

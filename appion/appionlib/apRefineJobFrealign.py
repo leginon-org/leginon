@@ -272,7 +272,7 @@ class FrealignRefineJob(apRefineJob.RefineJob):
 	def writeReconShell(self,iter,inputlines,iterpath,ppn):
 		pieces = inputlines[0].split(',')
 		pieces[1] = '0' #mode = 0 for recon
-		pieces[9] = 'F' #fmatch = F or no recon will be created
+		pieces[10] = 'F' #fmatch = F or no recon will be created
 		inputlines[0] = (',').join(pieces)
 		pieces = inputlines[7].split('../')
 		inputlines[7] = ('../').join(pieces[1:])
@@ -411,6 +411,12 @@ class FrealignRefineJob(apRefineJob.RefineJob):
 			tasks = self.logTaskStatus(tasks,'recon',os.path.join(iterpath,'frealign.recon.out'),iter)
 		return tasks
 
+	def isNewTrial(self):
+		'''
+		Check if clean up before start is needed.
+		'''
+		return self.params['startiter'] == 1 and not self.params['recononly']
+		
 if __name__ == '__main__':
 	app = FrealignRefineJob()
 	app.start()

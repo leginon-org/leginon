@@ -157,10 +157,11 @@ class UploadFrealignScript(reconUploader.generalReconUploader):
 		iterparams['iewald'] = float(data[6])
 		iterparams['fbeaut'] = self.convertBool(data[7])
 		iterparams['fcref'] = self.convertBool(data[8])
-		iterparams['fmatch'] = self.convertBool(data[9])
-		iterparams['ifsc'] = self.convertBool(data[10])
-		iterparams['fstat'] = self.convertBool(data[11])
-		iterparams['iblow'] = int(data[12])
+		iterparams['fbfact'] = self.convertBool(data[9])
+		iterparams['fmatch'] = self.convertBool(data[10])
+		iterparams['ifsc'] = self.convertBool(data[11])
+		iterparams['fstat'] = self.convertBool(data[12])
+		iterparams['iblow'] = int(data[13])
 
 		### get lots of info from card #2
 		data = cards[2].split(",")
