@@ -672,8 +672,8 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 		spi_imgpath = os.path.join(self.params['rundir'], shortname+".spi")
 
 		
-		df1 = bestctfvalue['defocus1']
-		df2 = bestctfvalue['defocus2']
+		df1 = abs(bestctfvalue['defocus1'])
+		df2 = abs(bestctfvalue['defocus2'])
 		defocus = (df1+df2)/2*1.0e6
 
 		apix = apDatabase.getPixelSize(imgdata)
@@ -687,8 +687,8 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 		emancmd="proc2d %s %s spidersingle"%(inimgpath,spi_imgpath)
 		apEMAN.executeEmanCmd(emancmd, showcmd=True)
 		apDisplay.printMsg("phaseflipping entire micrograph with defocus "+str(round(defocus,3))+" microns")
-		# spider defocus is +, and in Angstroms
-		defocus *= -10000 
+		# spider defocus is in Angstroms
+		defocus *= 10000 
 		outimgpath = filters.phaseFlipImage(spi_imgpath,cs,defocus,voltage,imgsize,apix)
 
 		# convert image back to mrc
