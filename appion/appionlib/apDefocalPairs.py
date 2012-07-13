@@ -102,16 +102,11 @@ def getShift(imgdata1 ,imgdata2):
 		apDisplay.printWarning("Images must be greater than "+finalsize+" pixels to calculate shift.")
 		return None
 
-	#fake apix to avoid importing apDatabase to get pixel sizes in a circular call
-	fake_cam_apix = 1.0
-	apix1 = fake_cam_apix * binning1
-	apix2 = fake_cam_apix * binnning2
-
 	#low pass filter 2 images to twice the final pixelsize BEFORE binning
 	shrinkfactor1=dimension1/finalsize
 	shrinkfactor2=dimension2/finalsize
-	binned1 = apImage.filterImg(imgdata1['image'],apix1,apix1*shrinkfactor1*2)
-	binned2 = apImage.filterImg(imgdata2['image'],apix2,apix2*shrinkfactor2*2)
+	binned1 = apImage.filterImg(imgdata1['image'],1.0,shrinkfactor1*2)
+	binned2 = apImage.filterImg(imgdata2['image'],1.0,shrinkfactor2*2)
 
 	#now bin 2 images
 	binned1 = apImage.binImg(binned1, shrinkfactor1)
