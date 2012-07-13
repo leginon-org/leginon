@@ -142,7 +142,9 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 		defocus = abs(imgdata['scope']['defocus']*-1.0e10)
 		bestdef = abs(ctfdb.getBestDefocusForImage(imgdata, msg=True)*1.0e10)
 		# dstep is the physical detector pixel size
-		dstep = imgdata['camera']['pixel size']['x']
+		dstep = None
+		if 'camera' in imgdata and imgdata['camera'] and imgdata['camera']['pixel size']:
+			dstep = imgdata['camera']['pixel size']['x']
 		if dstep is None:
 			dstep = apDatabase.getPixelSize(imgdata)*imgdata['scope']['magnification']/10000.0
 			dstep /=1e6
