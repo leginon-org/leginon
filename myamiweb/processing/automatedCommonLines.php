@@ -262,7 +262,7 @@ function createAngularReconstitutionForm($extra=False, $title='automatedCommonLi
 				echo "<br>\n";
 
 				echo "<INPUT TYPE='text' NAME='mass' VALUE='$mass' SIZE='4'>\n";
-				echo docpop('mass','Particle mass (kDa)');
+				echo docpop('mass','Particle mass (kDa) - optional');
 				echo "<br><br>\n";
 
 //				echo "<br/>\n";

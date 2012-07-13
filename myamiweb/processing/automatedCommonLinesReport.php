@@ -215,9 +215,17 @@ function automatedCommonLinesSummary($extra=False, $title='Common Lines Summary'
 			$modellink .= "  <img style='vertical-align:middle' src='img/download_arrow.png' border='0' width='16' height='17' alt='download model'>";
 			$modellink .= "  &nbsp;download model\n";
 			$modellink .= "</a></font>)\n";
+
+			$volnum_temp1 = explode(".", $volname);
+			$volnum_temp2 = explode("_", $volnum_temp1[0]);
+			$volnum = $volnum_temp2[0];
+			$reprojlink = "<a target=tsview href='viewstack.php?file=$path/refinement/refine_$volnum/3d$volnum"
+					."_refined_projections.hed&expId=$expId'>reprojections stack</a>\n"; 
+			$clsavg_reprojlink = "<a target=tsview href='viewstack.php?file=$path/refinement/refine_$volnum"
+					."/clsavg_reprojection_comparison.hed&expId=$expId'>clsavg/reproj comparison</a>\n";
 		
 			// display relevant information
-			$html.= "<td>$volname$modellink</td>\n";
+			$html.= "<td>$volname$modellink<br>$reprojlink<br>$clsavg_reprojlink</td>\n";
 			$html.= "<td>$Rcrit</td>\n";
 			$html.= "<td>$num</td>\n";
 			$html.= "<td>$ccpr</td>\n";

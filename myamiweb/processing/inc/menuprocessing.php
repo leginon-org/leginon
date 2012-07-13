@@ -515,7 +515,7 @@ if (is_numeric($expId)) {
 			$angreconresults[] = ($angreconrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=angrecon'>$angreconrun running</a>";
 			$angreconresults[] = ($angreconqueue==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=angrecon'>$angreconqueue queued</a>";
 			$nruns[] = array(
-				'name'=>"<a href='automatedCommonLines.php?expId=$sessionId'>Automated Common Lines</a>",
+				'name'=>"<a href='runAutomatedCommonLines.php?expId=$sessionId'>Automated Common Lines</a>",
 				'result'=>$angreconresults,
 			);
 		}
