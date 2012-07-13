@@ -762,7 +762,7 @@ class automatedAngularReconstitution(appionScript.AppionScript):
 
 		### do projection-matching
 		apDisplay.printColor("refining volume %d by projection-matching" % volnum, "cyan")
-		
+
 		xp.projection_matching_protocol_basic(
 					SelFileName,
 					ReferenceFileName,
@@ -815,18 +815,28 @@ class automatedAngularReconstitution(appionScript.AppionScript):
 		self.refinement_quality_criteria(count)
 
 		### link / summarize final files
-		os.symlink(os.path.join("Iter_%d" % count, "Iter_%d_reconstruction.vol" % count), \
-			os.path.join(rundir, "3d%d_refined.vol" % volnum))
-		os.symlink(os.path.join("Iter_%d" % count, "reconstruction_2.vol.frc"), \
-			os.path.join(rundir, "3d%d_refined.frc" % volnum))
-		os.symlink(os.path.join("Iter_%d" % count, "Iter_%d_projections_noflip.hed" % count), \
-			os.path.join(rundir, "3d%d_refined_projections.hed" % volnum))
-		os.symlink(os.path.join("Iter_%d" % count, "Iter_%d_projections_noflip.img" % count), \
-			os.path.join(rundir, "3d%d_refined_projections.img" % volnum))
-#		os.symlink(os.path.join("Iter_%d" % count, "Iter_%d_projections_noflip.doc" % count), \
-#			os.path.join(rundir, "3d%d_refined_angles.doc" % volnum))
+		if not os.path.isfile(os.path.join(rundir, "3d%d_refined.vol" % volnum)):
+			os.symlink(os.path.join("Iter_%d" % count, "Iter_%d_reconstruction.vol" % count), \
+				os.path.join(rundir, "3d%d_refined.vol" % volnum))
+		if not os.path.isfile(os.path.join(rundir, "3d%d_refined.frc" % volnum)):
+			os.symlink(os.path.join("Iter_%d" % count, "reconstruction_2.vol.frc"), \
+				os.path.join(rundir, "3d%d_refined.frc" % volnum))
+		if not os.path.isfile(os.path.join(rundir, "3d%d_refined_projections.hed" % volnum)):
+			os.symlink(os.path.join("Iter_%d" % count, "Iter_%d_projections_noflip.hed" % count), \
+				os.path.join(rundir, "3d%d_refined_projections.hed" % volnum))
+		if not os.path.isfile(os.path.join(rundir, "3d%d_refined_projections.img" % volnum)):
+			os.symlink(os.path.join("Iter_%d" % count, "Iter_%d_projections_noflip.img" % count), \
+				os.path.join(rundir, "3d%d_refined_projections.img" % volnum))
 		apXmipp.removeMirrorFromDocfile(os.path.join(rundir, "Iter_%d" % count, "Iter_%d_current_angles.doc" % count), \
 			os.path.join(rundir, "3d%d_refined_angles.doc" % volnum))
+		avgs = apImagicFile.readImagic(self.params['refineavgs'])['images']
+		repjs = apImagicFile.readImagic(os.path.join(rundir, "3d%d_refined_projections.hed" % volnum))['images']
+		comparison = []
+		for i in range(len(avgs)):
+			comparison.append(avgs[i])
+			comparison.append(repjs[i])
+		apImagicFile.writeImagic(comparison, os.path.join(rundir, "clsavg_reprojection_comparison.hed"))
+		
 		os.chdir(basedir)
 		
 		return
@@ -1070,7 +1080,7 @@ class automatedAngularReconstitution(appionScript.AppionScript):
 		if self.params['num_volumes'] < 69:
 			numeigens = self.params['num_volumes']
 		else:
-			numeigens = 69
+			numeigens = self.params['numeigens']
 		apDisplay.printMsg("using %d Eigenvectors (Eigenvolumes) to reduce dimensionality of dataset and calculate volume similarities" % (numeigens))
 			
 		### create input array from all volumes 	
@@ -1633,9 +1643,9 @@ class automatedAngularReconstitution(appionScript.AppionScript):
 		clsavgs = os.path.split(self.params['avgs'])[1][:-4]
 		if not os.path.isdir(angrecondir):
 			os.mkdir(angrecondir)
-		if not os.path.islink(os.path.join(angrecondir, clsavgs+".hed")):
+		if not os.path.isfile(os.path.join(angrecondir, clsavgs+".hed")):
 			os.symlink(os.path.join(self.params['rundir'], clsavgs+".hed"), os.path.join(angrecondir, clsavgs+".hed"))
-		if not os.path.islink(os.path.join(angrecondir, clsavgs+".img")):
+		if not os.path.isfile(os.path.join(angrecondir, clsavgs+".img")):
 			os.symlink(os.path.join(self.params['rundir'], clsavgs+".img"), os.path.join(angrecondir, clsavgs+".img"))
 		
 		cmdlist = []
@@ -1685,7 +1695,7 @@ class automatedAngularReconstitution(appionScript.AppionScript):
 		apDisplay.printColor("Aligning volumes based on 3-D ML parameters", "cyan")
 		self.align_volumes(alignparams, alignref)
 #		'''
-#		vol_doc_file = '/ami/data17/appion/11jan08a/angrecon/acl3/max_like_alignment/nref1_15deg_it000005.doc'
+#		vol_doc_file = '/ami/data00/appion/09nov05a/angrecon/test2/max_like_alignment/nref1_15deg_it000005.doc'
 #		alignparams = self.read_vol_doc_file(vol_doc_file)
 		##############################################    Principal Component Analysis   #############################################
 
@@ -1721,8 +1731,9 @@ class automatedAngularReconstitution(appionScript.AppionScript):
 						(self.params['mask_radius'] / self.params['refineapix']))
 				apParam.runCmd(emancmd, "EMAN")
 				self.refine_volume((i))
-				emancmd = "proc3d %s %s" \
-					% (os.path.join("refine_%d" % i, "3d%d_refined.vol" % i), os.path.join(self.params['rundir'], "%d_r.mrc" % i))
+				emancmd = "proc3d %s %s apix=%.3f" \
+					% (os.path.join("refine_%d" % i, "3d%d_refined.vol" % i), os.path.join(self.params['rundir'], "%d_r.mrc" % i), \
+						self.params['refineapix'])
 				apParam.runCmd(emancmd, "EMAN")
 			os.chdir(self.params['rundir'])
 		
