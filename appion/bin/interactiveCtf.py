@@ -21,6 +21,8 @@ from appionlib.apCtf import ctftools, ctfnoise, ctfdb, sinefit
 import leginon.polygon
 from leginon.gui.wx import ImagePanel, ImagePanelTools, TargetPanel, TargetPanelTools
 from pyami import mrc, fftfun, imagefun, ellipse
+from scipy import ndimage
+from leginon.gui.wx.Entry import FloatEntry, IntEntry, EVT_ENTRY
 
 ##################################
 ##
@@ -162,6 +164,64 @@ class ThonRingTool(ImagePanelTools.ImageTool):
 ##
 ##################################
 
+class EditParamsDialog(wx.Dialog):
+	#==================
+	def __init__(self, parent):
+		self.parent = parent
+		wx.Dialog.__init__(self, self.parent.frame, -1, "Edit CTF Parameters")
+
+		inforow = wx.FlexGridSizer(2, 2, 5, 5) #row, col
+		entrywidth = 120
+
+		label = wx.StaticText(self, -1, "Defocus 1: ", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		self.def1value = FloatEntry(self, -1, allownone=False, min=0, max=100e-6, chars=16, value="0")
+		self.def1value.SetMinSize((entrywidth, -1))
+		inforow.Add(label, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		inforow.Add(self.def1value, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 3)
+
+		label = wx.StaticText(self, -1, "Defocus 2: ", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		self.def2value = FloatEntry(self, -1, allownone=False, min=0, max=100e-6, chars=16, value="0")
+		self.def2value.SetMinSize((entrywidth, -1))
+		inforow.Add(label, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		inforow.Add(self.def2value, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 3)
+
+		label = wx.StaticText(self, -1, "Amp Contrast: ", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		self.ampconvalue = FloatEntry(self, -1, allownone=False, min=0, max=0.5, chars=16, value="0")
+		self.ampconvalue.SetMinSize((entrywidth, -1))
+		inforow.Add(label, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		inforow.Add(self.ampconvalue, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 3)
+
+		label = wx.StaticText(self, -1, "Angle: ", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		self.anglevalue = FloatEntry(self, -1, allownone=False, min=-90, max=180, chars=16, value="0")
+		self.anglevalue.SetMinSize((entrywidth, -1))
+		inforow.Add(label, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		inforow.Add(self.anglevalue, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 3)
+
+		self.cancel = wx.Button(self, wx.ID_CANCEL, '&Cancel')
+		self.save = wx.Button(self, wx.ID_SAVE, '&Save')
+		self.Bind(wx.EVT_BUTTON, self.onSave, self.save)
+		buttonrow = wx.GridSizer(1,2)
+		buttonrow.Add(self.cancel, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL, 0)
+		buttonrow.Add(self.save, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL, 0)
+
+		self.sizer = wx.FlexGridSizer(2,1)
+		self.sizer.Add(inforow, 0, wx.EXPAND|wx.ALL, 10)
+		self.sizer.Add(buttonrow, 0, wx.EXPAND|wx.ALL, 5)
+		self.SetSizerAndFit(self.sizer)
+
+	#==================
+	def onSave(self, evt):
+		self.Close()
+		self.parent.ctfvalues['defocus1'] = self.def1value.GetValue()
+		self.parent.ctfvalues['defocus2'] = self.def2value.GetValue()
+		self.parent.ctfvalues['amplitude_contrast'] = self.ampconvalue.GetValue()
+		self.parent.ctfvalues['angle_astigmatism'] = self.anglevalue.GetValue()
+		self.parent.convertCtfToEllipse()
+
+##################################
+##
+##################################
+
 class CTFApp(wx.App):
 	def __init__(self, shape='+', size=16):
 		self.shape = shape
@@ -230,6 +290,16 @@ class CTFApp(wx.App):
 		self.Bind(wx.EVT_BUTTON, self.onSubtNoise, self.subtnoise)
 		self.buttonrow.Add(self.subtnoise, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 
+		wxbutton = wx.Button(self.frame, -1, 'Subtract &Box Filter')
+		wxbutton.SetMinSize((-1, buttonheight))
+		self.Bind(wx.EVT_BUTTON, self.onSubtBoxFilter, wxbutton)
+		self.buttonrow.Add(wxbutton, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
+
+		wxbutton = wx.Button(self.frame, -1, 'Subtract &Gauss Filter')
+		wxbutton.SetMinSize((-1, buttonheight))
+		self.Bind(wx.EVT_BUTTON, self.onSubtGaussFilter, wxbutton)
+		self.buttonrow.Add(wxbutton, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
+
 		self.normenvel = wx.Button(self.frame, -1, '&Envelope')
 		self.normenvel.SetMinSize((-1, buttonheight))
 		self.Bind(wx.EVT_BUTTON, self.onNormEnvelop, self.normenvel)
@@ -248,6 +318,17 @@ class CTFApp(wx.App):
 		wxbutton = wx.Button(self.frame, -1, 'Ellip &Distort')
 		wxbutton.SetMinSize((-1, buttonheight))
 		self.Bind(wx.EVT_BUTTON, self.onEllipDistort, wxbutton)
+		self.buttonrow.Add(wxbutton, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
+
+		wxbutton = wx.Button(self.frame, -1, 'Show 1D Plot')
+		wxbutton.SetMinSize((-1, buttonheight))
+		self.Bind(wx.EVT_BUTTON, self.onShowPlot, wxbutton)
+		self.buttonrow.Add(wxbutton, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
+
+		self.editparam_dialog = EditParamsDialog(self)
+		wxbutton = wx.Button(self.frame, -1, '&Edit CTF Params...')
+		wxbutton.SetMinSize((-1, buttonheight))
+		self.Bind(wx.EVT_BUTTON, self.onEditParams, wxbutton)
 		self.buttonrow.Add(wxbutton, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 
 		#wxbutton = wx.Button(self.frame, -1, '&Draw')
@@ -312,6 +393,18 @@ class CTFApp(wx.App):
 		return True
 
 	#---------------------------------------
+	def onEditParams(self, evt):
+		if 'defocus1' in self.ctfvalues:
+			self.editparam_dialog.def1value.SetValue(self.ctfvalues['defocus1'])
+		if 'defocus2' in self.ctfvalues:
+			self.editparam_dialog.def2value.SetValue(self.ctfvalues['defocus2'])
+		if 'amplitude_contrast' in self.ctfvalues:
+			self.editparam_dialog.ampconvalue.SetValue(self.ctfvalues['amplitude_contrast'])
+		if 'angle_astigmatism' in self.ctfvalues:
+			self.editparam_dialog.anglevalue.SetValue(self.ctfvalues['angle_astigmatism'])
+		self.editparam_dialog.Show()
+
+	#---------------------------------------
 	def onQuit(self, evt):
 		wx.Exit()
 
@@ -328,8 +421,34 @@ class CTFApp(wx.App):
 		self.ctfvalues['defocus2'] = abs(ctfdata['defocus2'])
 		self.ctfvalues['amplitude_contrast'] = ctfdata['amplitude_contrast']
 		self.ctfvalues['angle_astigmatism'] = ctfdata['angle_astigmatism']
+
+		self.convertCtfToEllipse()
+
 		apDisplay.printColor("%.2e\t%.2e\t%.2f"%(self.ctfvalues['defocus1'], 
 			self.ctfvalues['defocus2'], self.ctfvalues['angle_astigmatism']), "magenta")
+
+
+	#---------------------------------------
+	def convertCtfToEllipse(self):
+		if self.ctfvalues is None:
+			return
+
+		## set ellipse params
+		if self.ellipse_params is None:
+			self.ellipse_params = {}
+		numcols = int(0.5/(self.freq*self.ctfvalues['apix']))
+		a = ctftools.getCtfExtrema(self.ctfvalues['defocus1'], self.ctfvalues['apix']*1e-10, 
+				self.ctfvalues['cs'], self.ctfvalues['volts'], self.ctfvalues['amplitude_contrast'], 
+				cols=numcols, numzeros=1, zerotype="peaks")
+		self.ellipse_params['a'] = a[0]
+		b = ctftools.getCtfExtrema(self.ctfvalues['defocus2'], self.ctfvalues['apix']*1e-10, 
+				self.ctfvalues['cs'], self.ctfvalues['volts'], self.ctfvalues['amplitude_contrast'], 
+				cols=numcols, numzeros=1, zerotype="peaks")
+		self.ellipse_params['b'] = b[0]
+		#angle_astigmatism = -math.degrees(self.ellipse_params['alpha'])
+		self.ellipse_params['alpha'] = -math.radians(self.ctfvalues['angle_astigmatism'])
+
+
 
 	#---------------------------------------
 	def convertEllipseToCtf(self):
@@ -379,6 +498,7 @@ class CTFApp(wx.App):
 		# do a rotational average of the image
 		imagedata = self.panel.imagedata
 		pixelrdata, self.rotdata = ctftools.rotationalAverage(imagedata, self.ringwidth, full=True)
+		apDisplay.printWarning("doing a rotational average not elliptical")
 		rotavgimage = imagefun.fromRadialFunction(self.funcrad, imagedata.shape, 
 			rdata=pixelrdata, zdata=self.rotdata)
 		self.panel.setImage(rotavgimage)
@@ -394,6 +514,7 @@ class CTFApp(wx.App):
 			dialog.Destroy()
 		ellipratio = self.ellipse_params['a']/self.ellipse_params['b']
 		ellipangle = -math.degrees(self.ellipse_params['alpha'])
+		apDisplay.printColor("Elliptical average ratio = %.3f, angle %.3f"%(ellipratio,ellipangle), "cyan")
 		imagedata = self.panel.imagedata
 		pixelrdata, self.rotdata = ctftools.ellipticalAverage(imagedata, 
 			ellipratio, ellipangle, self.ringwidth, full=True)
@@ -448,6 +569,7 @@ class CTFApp(wx.App):
 		imagedata = self.panel.imagedata
 		if self.ellipse_params is None:
 			pixelrdata, self.rotdata = ctftools.rotationalAverage(imagedata, self.ringwidth, full=False)
+			apDisplay.printWarning("doing a rotational average not elliptical")
 		else:
 			ellipratio = self.ellipse_params['a']/self.ellipse_params['b']
 			ellipangle = -math.degrees(self.ellipse_params['alpha'])
@@ -490,6 +612,7 @@ class CTFApp(wx.App):
 		imagedata = self.panel.imagedata
 		if self.ellipse_params is None:
 			pixelrdata, self.rotdata = ctftools.rotationalAverage(imagedata, self.ringwidth, full=False)
+			apDisplay.printWarning("doing a rotational average not elliptical")
 		else:
 			ellipratio = self.ellipse_params['a']/self.ellipse_params['b']
 			ellipangle = -math.degrees(self.ellipse_params['alpha'])
@@ -509,12 +632,102 @@ class CTFApp(wx.App):
 		apDisplay.printColor("defocus 1 change from %.5e to %.5e"
 			%(self.ctfvalues['defocus1'], defocus), "cyan")
 		### elliptical ratio is preserved
-		defocus2 = defocus * self.ctfvalues['defocus1']/self.ctfvalues['defocus2']
-		self.ctfvalues['defocus1'] = defocus
-		self.ctfvalues['defocus2'] = defocus2
+		defocus2 = defocus * self.ctfvalues['defocus2']/self.ctfvalues['defocus1']
+		self.ctfvalues['defocus1'] = defocus2
+		self.ctfvalues['defocus2'] = defocus
 		return
 
 
+	#---------------------------------------
+	def onSubtBoxFilter(self, evt):
+		imagedata = self.panel.imagedata
+		# do a rotational average to subtract
+		if self.ellipse_params is None:
+			pixelrdata, self.rotdata = ctftools.rotationalAverage(imagedata, self.ringwidth, full=True)
+			apDisplay.printWarning("doing a rotational average not elliptical")
+			ellipratio = 1.0
+			ellipangle = 0.0
+		else:
+			ellipratio = self.ellipse_params['a']/self.ellipse_params['b']
+			ellipangle = -math.degrees(self.ellipse_params['alpha'])
+			imagedata = self.panel.imagedata
+			pixelrdata, self.rotdata = ctftools.ellipticalAverage(imagedata, 
+				ellipratio, ellipangle, self.ringwidth, full=True)
+
+		if self.rotdata.min() > 0:
+			newrotdata = numpy.sqrt(self.rotdata)
+			didsqrt = True
+		else:
+			didsqrt = False
+			newrotdata = self.rotdata
+
+		boxfilter = ndimage.uniform_filter1d(newrotdata, 256)
+
+		from matplotlib import pyplot
+		pyplot.clf()
+		xdata= (pixelrdata*self.freq)**2
+		pyplot.plot(xdata, newrotdata, 'k.',)
+		pyplot.plot(xdata, boxfilter, 'r-',)
+		pyplot.xlim(xmax=xdata.max())
+		pyplot.ylim(ymin=newrotdata.min(), ymax=newrotdata.max())
+		pyplot.show()
+
+		if didsqrt:
+			boxfilter = boxfilter**2
+
+		normaldata = self.rotdata - boxfilter
+		normaldata = ctftools.unEllipticalAverage(pixelrdata, normaldata, 
+			ellipratio, ellipangle, imagedata.shape)
+
+		self.panel.setImage(normaldata)
+
+		apDisplay.printColor("Subtract Box Filter complete", "cyan")
+
+
+	#---------------------------------------
+	def onSubtGaussFilter(self, evt):
+		imagedata = self.panel.imagedata
+		# do a rotational average to subtract
+		if self.ellipse_params is None:
+			pixelrdata, self.rotdata = ctftools.rotationalAverage(imagedata, self.ringwidth, full=True)
+			apDisplay.printWarning("doing a rotational average not elliptical")
+			ellipratio = 1.0
+			ellipangle = 0.0
+		else:
+			ellipratio = self.ellipse_params['a']/self.ellipse_params['b']
+			ellipangle = -math.degrees(self.ellipse_params['alpha'])
+			imagedata = self.panel.imagedata
+			pixelrdata, self.rotdata = ctftools.ellipticalAverage(imagedata, 
+				ellipratio, ellipangle, self.ringwidth, full=True)
+
+		if self.rotdata.min() > 0:
+			newrotdata = numpy.sqrt(self.rotdata)
+			didsqrt = True
+		else:
+			didsqrt = False
+			newrotdata = self.rotdata
+
+		gaussfilter = ndimage.gaussian_filter1d(newrotdata, 256)
+
+		from matplotlib import pyplot
+		pyplot.clf()
+		xdata= (pixelrdata*self.freq)**2
+		pyplot.plot(xdata, newrotdata, 'k.',)
+		pyplot.plot(xdata, gaussfilter, 'r-',)
+		pyplot.xlim(xmax=xdata.max())
+		pyplot.ylim(ymin=newrotdata.min(), ymax=newrotdata.max())
+		pyplot.show()
+
+		if didsqrt:
+			gaussfilter = gaussfilter**2
+
+		normaldata = self.rotdata - gaussfilter
+		normaldata = ctftools.unEllipticalAverage(pixelrdata, normaldata, 
+			ellipratio, ellipangle, imagedata.shape)
+
+		self.panel.setImage(normaldata)
+
+		apDisplay.printColor("Subtract Gauss Filter complete", "cyan")
 
 	#---------------------------------------
 	def onSubtNoise(self, evt):
@@ -522,6 +735,7 @@ class CTFApp(wx.App):
 		# do a rotational average to subtract
 		if self.ellipse_params is None:
 			pixelrdata, self.rotdata = ctftools.rotationalAverage(imagedata, self.ringwidth, full=False)
+			apDisplay.printWarning("doing a rotational average not elliptical")
 		else:
 			ellipratio = self.ellipse_params['a']/self.ellipse_params['b']
 			ellipangle = -math.degrees(self.ellipse_params['alpha'])
@@ -552,6 +766,8 @@ class CTFApp(wx.App):
 		pyplot.clf()
 		pyplot.plot(self.raddata**2, self.rotdata, 'k.',)
 		pyplot.plot(self.raddata[firstvalleyindex:]**2, noisedata[firstvalleyindex:], 'b-', )
+		pyplot.xlim(xmax=(self.raddata**2).max())
+		pyplot.ylim(ymin=noisedata.min(), ymax=self.rotdata[firstvalleyindex:].max())
 		pyplot.show()
 
 		noise2d = imagefun.fromRadialFunction(self.funcrad, imagedata.shape, 
@@ -568,6 +784,7 @@ class CTFApp(wx.App):
 		imagedata = self.panel.imagedata
 		if self.ellipse_params is None:
 			pixelrdata, self.rotdata = ctftools.rotationalAverage(imagedata, self.ringwidth, full=False)
+			apDisplay.printWarning("doing a rotational average not elliptical")
 		else:
 			ellipratio = self.ellipse_params['a']/self.ellipse_params['b']
 			ellipangle = -math.degrees(self.ellipse_params['alpha'])
@@ -603,9 +820,35 @@ class CTFApp(wx.App):
 		pyplot.clf()
 		pyplot.plot(self.raddata**2, self.rotdata, 'k.',)
 		pyplot.plot(self.raddata[firstpeakindex:]**2, envelopdata[firstpeakindex:], 'r-', )
+		pyplot.xlim(xmax=(self.raddata**2).max())
+		pyplot.ylim(ymin=self.rotdata.min(), ymax=envelopdata.max())
 		pyplot.show()
 		self.panel.setImage(normaldata)
 		apDisplay.printColor("Normalize envelope complete", "cyan")
+
+	#---------------------------------------
+	def onShowPlot(self, evt):
+		# do a rotational average to subtract
+		imagedata = self.panel.imagedata
+		if self.ellipse_params is None:
+			pixelrdata, self.rotdata = ctftools.rotationalAverage(imagedata, self.ringwidth, full=False)
+			apDisplay.printWarning("doing a rotational average not elliptical")
+		else:
+			ellipratio = self.ellipse_params['a']/self.ellipse_params['b']
+			ellipangle = -math.degrees(self.ellipse_params['alpha'])
+			imagedata = self.panel.imagedata
+			pixelrdata, self.rotdata = ctftools.ellipticalAverage(imagedata, 
+				ellipratio, ellipangle, self.ringwidth, full=False)
+
+		from matplotlib import pyplot
+		pyplot.clf()
+		xdata= (pixelrdata*self.freq)**2
+		pyplot.plot(xdata, self.rotdata, 'k-',)
+		pyplot.xlim(xmax=xdata.max())
+		pyplot.ylim(ymin=self.rotdata.min(), ymax=self.rotdata.max())
+		pyplot.show()
+		return
+
 
 	#---------------------------------------
 	def onNext(self, evt):

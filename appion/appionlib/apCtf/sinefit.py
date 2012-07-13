@@ -79,6 +79,8 @@ def refineAmplitudeContrast(ws2, ctfdata, original_amp_contrast=None):
 	#pyplot.plot(ws2, ctffit2b, '-', color="orange")
 	pyplot.plot(ws2, ctffit3, '-', color="green")
 	pyplot.plot(ws2, ctffit4, '-', color="blue")
+	pyplot.xlim(xmax=ws2.max())
+	pyplot.ylim(ymin=-0.05, ymax=1.05)
 	if original_amp_contrast is not None:
 		ac = original_amp_contrast
 		ctffit5 = (math.sqrt(1 - ac**2)*numpy.sin(ws2) + ac*numpy.cos(ws2))**2
@@ -170,9 +172,11 @@ def refineCTF(s2, ctfdata, initdefocus, initampcontrast):
 		from matplotlib import pyplot
 		pyplot.clf()
 		pyplot.plot(w*s2, ctfdata, '.', color="black")
-		pyplot.plot(w*s2, initctffit, '-', color="purple", linewidth=2)
+		pyplot.plot(w*s2, initctffit, '--', color="purple", linewidth=2)
 		pyplot.plot(w*s2, ctffit1, '-', color="red")
 		pyplot.plot(w*s2, ctffit4, '-', color="blue")
+		pyplot.xlim(xmax=(w*s2).max())
+		pyplot.ylim(ymin=-0.05, ymax=1.05)
 		pyplot.show()
 		pyplot.draw()
 
