@@ -1551,48 +1551,48 @@ class automatedAngularReconstitution(appionScript.AppionScript):
 		pathq = appiondata.ApPathData()
 		pathq['path'] = self.params['rundir']
 
-		### aar run object
-		aarq = appiondata.ApBootstrappedAngularReconstitutionRunData()
-		aarq['path'] = pathq
-		aarq['runname'] = self.params['runname']
+		### acl run object
+		aclq = appiondata.ApAutomatedCommonLinesRunData()
+		aclq['path'] = pathq
+		aclq['runname'] = self.params['runname']
 		### check unique run
-		uniquerun = aarq.query(results=1)
+		uniquerun = aclq.query(results=1)
 		if uniquerun:
 			apDisplay.printError("runname already exists in the database")
 		
-		### aar params object
-		aarparamq = appiondata.ApBootstrappedAngularReconstitutionParamsData()
-		aarparamq['num_averages'] = self.params['numpart']
-		aarparamq['num_volumes'] = self.params['num_volumes']
-		aarparamq['symmetry'] = appiondata.ApSymmetryData.direct_query(self.params['symid'])
-		aarparamq['num_alignment_refs'] = self.params['nref']
-		aarparamq['angular_increment'] = self.params['ang_inc']
-		aarparamq['keep_ordered'] = self.params['keep_ordered']
-		aarparamq['threed_lpfilt'] = self.params['3d_lpfilt']
-		aarparamq['hamming_window'] = self.params['ham_win']
-		aarparamq['non_weighted_sequence'] = self.params['non_weighted_sequence']
-		aarparamq['PCA'] = self.params['PCA']
-		aarparamq['numeigens'] = self.params['numeigens']
-		aarparamq['prealign_avgs'] = self.params['prealign']
-		aarparamq['scale'] = self.params['scale']
-		aarparamq['recalculate_volumes'] = self.params['recalculate']
-		aarparamq['preference_type'] = self.params['preftype']
-#		aarparamq['do_not_remove'] = self.params['do_not_remove']
+		### acl params object
+		aclparamq = appiondata.ApAutomatedCommonLinesParamsData()
+		aclparamq['num_averages'] = self.params['numpart']
+		aclparamq['num_volumes'] = self.params['num_volumes']
+		aclparamq['symmetry'] = appiondata.ApSymmetryData.direct_query(self.params['symid'])
+		aclparamq['num_alignment_refs'] = self.params['nref']
+		aclparamq['angular_increment'] = self.params['ang_inc']
+		aclparamq['keep_ordered'] = self.params['keep_ordered']
+		aclparamq['threed_lpfilt'] = self.params['3d_lpfilt']
+		aclparamq['hamming_window'] = self.params['ham_win']
+		aclparamq['non_weighted_sequence'] = self.params['non_weighted_sequence']
+		aclparamq['PCA'] = self.params['PCA']
+		aclparamq['numeigens'] = self.params['numeigens']
+		aclparamq['prealign_avgs'] = self.params['prealign']
+		aclparamq['scale'] = self.params['scale']
+		aclparamq['recalculate_volumes'] = self.params['recalculate']
+		aclparamq['preference_type'] = self.params['preftype']
+#		aclparamq['do_not_remove'] = self.params['do_not_remove']
 
-		### finish aar run object	
-		aarq['aar_params'] = aarparamq
-		aarq['pixelsize'] = self.params['apix']
-		aarq['boxsize'] = self.params['boxsize']
+		### finish acl run object	
+		aclq['acl_params'] = aclparamq
+		aclq['pixelsize'] = self.params['apix']
+		aclq['boxsize'] = self.params['boxsize']
 		if self.params['templatestackid'] is not None:
-			aarq['templatestackid'] = appiondata.ApTemplateStackData.direct_query(self.params['templatestackid'])
+			aclq['templatestackid'] = appiondata.ApTemplateStackData.direct_query(self.params['templatestackid'])
 		else:
-			aarq['clusterid'] = appiondata.ApClusteringStackData.direct_query(self.params['clusterid'])
-		aarq['description'] = self.params['description']
-		aarq['REF|projectdata|projects|project'] = self.params['projectid']
-		aarq['hidden'] = False
+			aclq['clusterid'] = appiondata.ApClusteringStackData.direct_query(self.params['clusterid'])
+		aclq['description'] = self.params['description']
+		aclq['REF|projectdata|projects|project'] = self.params['projectid']
+		aclq['hidden'] = False
 		
 		if self.params['commit'] is True:
-			aarq.insert()
+			aclq.insert()
 		else:
 			apDisplay.printWarning("NOT commiting results to database")
 			

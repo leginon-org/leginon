@@ -1623,14 +1623,14 @@ class ApMaskAssessmentData(Data):
 	typemap = classmethod(typemap)
 
 ### END Assessment tables ###
-### START Bootstrap tables ###
+### START common lines tables ###
 
-class ApBootstrappedAngularReconstitutionRunData(Data):
+class ApAutomatedCommonLinesRunData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
 			('runname', str),
 			('path', ApPathData),
-			('aar_params', ApBootstrappedAngularReconstitutionParamsData),
+			('acl_params', ApAutomatedCommonLinesParamsData),
 			('pixelsize', float),
 			('boxsize', int),
 			('templatestackid', ApTemplateStackData),
@@ -1641,7 +1641,7 @@ class ApBootstrappedAngularReconstitutionRunData(Data):
 		)
 	typemap = classmethod(typemap)
 
-class ApBootstrappedAngularReconstitutionParamsData(Data):
+class ApAutomatedCommonLinesParamsData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
 			('num_averages', int),
@@ -1662,7 +1662,7 @@ class ApBootstrappedAngularReconstitutionParamsData(Data):
 		)
 	typemap = classmethod(typemap)
 
-### END Bootstrap tables ###
+### END common lines tables ###
 ### START IMAGIC tables ###
 
 class ApImagic3dRefineRunData(Data):
