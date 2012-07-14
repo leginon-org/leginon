@@ -5012,7 +5012,7 @@ class particledata {
 		$q="SELECT "
 			."  ar.*, "
 			."  path.`path` AS path "
-			."FROM ApBootstrappedAngularReconstitutionRunData as ar "
+			."FROM ApAutomatedCommonLinesRunData as ar "
 			."LEFT JOIN ApPathData AS path "
 			."  ON ar.`REF|ApPathData|path` = path.`DEF_id` "
 			
@@ -5040,7 +5040,6 @@ class particledata {
 			."WHERE "
 			."  stackrun.`REF|leginondata|SessionData|session` = '$sessionId'";
 			*/
-//		echo $q;
 		$r=$this->mysql->getSQLResult($q);
 		return $r;
 	}
