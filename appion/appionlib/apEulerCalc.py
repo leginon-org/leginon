@@ -134,7 +134,7 @@ def rotationMatrixToEulersEMAN(m):
 		if m[2][2] == 0:
 			alt = 90.0
 		else:
-			alt = radiansToDegrees(math.atan(math.sqrt(m[2][0]*m[2][0]+m[2][1]*m[2][1])/(m[2][2])))
+			alt = radiansToDegrees(math.atan(math.sqrt(m[2][0]*m[2][0]+m[2][1]*m[2][1])/abs(m[2][2])))
 		
 		if m[2][2] < 0:
 			alt = 180.0 - alt
