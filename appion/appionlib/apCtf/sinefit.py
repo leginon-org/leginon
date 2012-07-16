@@ -73,18 +73,24 @@ def refineAmplitudeContrast(ws2, ctfdata, original_amp_contrast=None):
 
 	from matplotlib import pyplot
 	pyplot.clf()
-	pyplot.plot(ws2, ctfdata, '.', color="black")
-	pyplot.plot(ws2, ctffit1, '-', color="red")
+	conf2 = scipy.stats.pearsonr(ctfdata, ctffit4)[0]
+	pyplot.title("Refine fit, confidence %.4f"%(conf2))
+	a = pyplot.plot(ws2, ctfdata, '.', color="black")
+	b = pyplot.plot(ws2, ctffit1, '-', color="red")
 	#pyplot.plot(ws2, ctffit2a, '-', color="yellow")
 	#pyplot.plot(ws2, ctffit2b, '-', color="orange")
-	pyplot.plot(ws2, ctffit3, '-', color="green")
-	pyplot.plot(ws2, ctffit4, '-', color="blue")
-	pyplot.xlim(xmax=ws2.max())
-	pyplot.ylim(ymin=-0.05, ymax=1.05)
+	#pyplot.plot(ws2, ctffit3, '-', color="green")
+	c = pyplot.plot(ws2, ctffit4, '-', color="blue")
+	pyplot.legend([a, b, c], ["data", "raw fit", "norm fit"])
+
 	if original_amp_contrast is not None:
 		ac = original_amp_contrast
 		ctffit5 = (math.sqrt(1 - ac**2)*numpy.sin(ws2) + ac*numpy.cos(ws2))**2
-		pyplot.plot(ws2, ctffit5, '--', color="purple")
+		d = pyplot.plot(ws2, ctffit5, '--', color="purple")
+		pyplot.legend([a, b, c, d], ["data", "raw fit", "norm fit", "orig ctf"])
+	pyplot.xlim(xmin=ws2.min(), xmax=ws2.max())
+	pyplot.ylim(ymin=-0.05, ymax=1.05)
+
 	pyplot.show()
 
 	if A > 0.65 or A < 0.4:
@@ -171,17 +177,20 @@ def refineCTF(s2, ctfdata, initdefocus, initampcontrast):
 		ctffit4 = (math.sqrt(1 - ac**2)*numpy.sin(w*s2) + ac*numpy.cos(w*s2))**2
 		from matplotlib import pyplot
 		pyplot.clf()
-		pyplot.plot(w*s2, ctfdata, '.', color="black")
-		pyplot.plot(w*s2, initctffit, '--', color="purple", linewidth=2)
-		pyplot.plot(w*s2, ctffit1, '-', color="red")
-		pyplot.plot(w*s2, ctffit4, '-', color="blue")
-		pyplot.xlim(xmax=(w*s2).max())
+		ws2 = w*s2
+		conf2 = scipy.stats.pearsonr(ctfdata, ctffit4)[0]
+		pyplot.title("Refine fit, confidence %.4f"%(conf2))
+		a = pyplot.plot(ws2, ctfdata, '.', color="black")
+		b = pyplot.plot(ws2, initctffit, '--', color="purple")
+		c = pyplot.plot(ws2, ctffit1, '-', color="red")
+		d = pyplot.plot(ws2, ctffit4, '-', color="blue")
+		pyplot.legend([a, b, c, d], ["data", "orig ctf", "raw fit", "norm fit"])
+		pyplot.xlim(xmin=ws2.min(), xmax=ws2.max())
 		pyplot.ylim(ymin=-0.05, ymax=1.05)
 		pyplot.show()
 		pyplot.draw()
 
 		conf1 = scipy.stats.pearsonr(ctfdata, ctffit1)[0]
-		conf2 = scipy.stats.pearsonr(ctfdata, ctffit4)[0]
 		apDisplay.printColor("Confidence values: %.8f, %.8f"%(conf1, conf2), "green")
 
 		time.sleep(3)
@@ -196,32 +205,3 @@ def refineCTF(s2, ctfdata, initdefocus, initampcontrast):
 	apDisplay.printColor("final defocus = %.8e"%(w), "green")
 	apDisplay.printColor("final amplitude contrast = %.8f"%(amplitudecontrast), "green")
 	return w, amplitudecontrast
-
-"""
-function [x0,iter] = sinefit4par(yin,t,ts,w,onevec,TOL,MAX_ITER)
-    x0 = sinefit3par(yin,w*t,onevec);
-    x0 = [x0;0];
-    iter = 0;success = 0;
-    while success == 0
-        w=w+x0(4);
-        wt=w*t;
-        cosvec=cos(wt);
-        sinvec=sin(wt);
-        D0=[cosvec sinvec onevec -x0(1)*t.*sinvec+x0(2)*t.*cosvec];
-        x0old = x0;
-        %x0=inv(D0.'*D0)*(D0.'*yin);
-        [Q,R] = qr(D0,0);
-        x0 = R\(Q.'*yin);
-        %x0=lscov(D0,yin);
-        iter = iter + 1;
-        
-        %error term with dw normalized
-        temp=abs(x0-x0old).*[1 1 1 ts].';
-        err=max(temp);
-        
-        if err<TOL || iter > MAX_ITER %if iter>MAX_ITER, increase TOL and
-            success = 1;              %re-visit this function later.
-        end
-    end
-    x0(end)=w;  %place w in the position if w's increment
-"""

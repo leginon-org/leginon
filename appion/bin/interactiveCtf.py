@@ -16,12 +16,13 @@ from appionlib import apInstrument
 from appionlib import apDatabase
 from appionlib import appionLoop2
 from appionlib.apImage import imagefile, imagefilter, imagenorm
-from appionlib.apCtf import ctftools, ctfnoise, ctfdb, sinefit
+from appionlib.apCtf import ctftools, ctfnoise, ctfdb, sinefit, genctf
 #Leginon
 import leginon.polygon
 from leginon.gui.wx import ImagePanel, ImagePanelTools, TargetPanel, TargetPanelTools
 from pyami import mrc, fftfun, imagefun, ellipse
 from scipy import ndimage
+import scipy.stats
 from leginon.gui.wx.Entry import FloatEntry, IntEntry, EVT_ENTRY
 
 ##################################
@@ -80,7 +81,7 @@ class ThonRingTool(ImagePanelTools.ImageTool):
 			#print "Button is off"
 			return
 		### need CTF information
-		if not self.app.ctfvalues or not 'defocus1' in self.app.ctfvalues.keys():
+		if not self.app.ctfvalues or not 'defocus2' in self.app.ctfvalues.keys():
 			#print "No CTF info"
 			#print self.app.ctfvalues
 			return
@@ -305,6 +306,11 @@ class CTFApp(wx.App):
 		self.Bind(wx.EVT_BUTTON, self.onNormEnvelop, self.normenvel)
 		self.buttonrow.Add(self.normenvel, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 
+		wxbutton = wx.Button(self.frame, -1, '&Neil normalize')
+		wxbutton.SetMinSize((-1, buttonheight))
+		self.Bind(wx.EVT_BUTTON, self.onNeilNormalize, wxbutton)
+		self.buttonrow.Add(wxbutton, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
+
 		self.rotavg = wx.Button(self.frame, -1, '&Rot Avg')
 		self.rotavg.SetMinSize((-1, buttonheight))
 		self.Bind(wx.EVT_BUTTON, self.onRotAverage, self.rotavg)
@@ -323,6 +329,16 @@ class CTFApp(wx.App):
 		wxbutton = wx.Button(self.frame, -1, 'Show 1D Plot')
 		wxbutton.SetMinSize((-1, buttonheight))
 		self.Bind(wx.EVT_BUTTON, self.onShowPlot, wxbutton)
+		self.buttonrow.Add(wxbutton, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
+
+		#wxbutton = wx.Button(self.frame, -1, 'Get 1D Conf 1')
+		#wxbutton.SetMinSize((-1, buttonheight))
+		#self.Bind(wx.EVT_BUTTON, self.onGet1DConf1, wxbutton)
+		#self.buttonrow.Add(wxbutton, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
+
+		wxbutton = wx.Button(self.frame, -1, 'Get 1D Conf')
+		wxbutton.SetMinSize((-1, buttonheight))
+		self.Bind(wx.EVT_BUTTON, self.onGet1DConf2, wxbutton)
 		self.buttonrow.Add(wxbutton, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 
 		self.editparam_dialog = EditParamsDialog(self)
@@ -424,8 +440,10 @@ class CTFApp(wx.App):
 
 		self.convertCtfToEllipse()
 
-		apDisplay.printColor("%.2e\t%.2e\t%.2f"%(self.ctfvalues['defocus1'], 
-			self.ctfvalues['defocus2'], self.ctfvalues['angle_astigmatism']), "magenta")
+		apDisplay.printColor("def1=%.3e\tdef2=%.3e\tangle=%.2f\tampcont=%.4f\tconf1=%.2f\tconf2=%.2f"%(
+			self.ctfvalues['defocus1'], self.ctfvalues['defocus2'], 
+			self.ctfvalues['angle_astigmatism'], self.ctfvalues['amplitude_contrast'], 
+			ctfdata['confidence'], ctfdata['confidence_d']), "magenta")
 
 
 	#---------------------------------------
@@ -447,7 +465,6 @@ class CTFApp(wx.App):
 		self.ellipse_params['b'] = b[0]
 		#angle_astigmatism = -math.degrees(self.ellipse_params['alpha'])
 		self.ellipse_params['alpha'] = -math.radians(self.ctfvalues['angle_astigmatism'])
-
 
 
 	#---------------------------------------
@@ -544,28 +561,34 @@ class CTFApp(wx.App):
 		apDisplay.printColor("Elliptical distrotion complete", "cyan")
 
 	#---------------------------------------
-	def onFitAmpContrast(self, evt):
-		if not 'defocus1' in self.ctfvalues.keys():
+	def checkNormalized(self):
+		imagedata = self.panel.imagedata
+		if abs(imagedata.min()) > 0.5:
+			dialog = wx.MessageDialog(self.frame, "You need to subtract the noise function.",\
+				'Error', wx.OK|wx.ICON_ERROR)
+			dialog.ShowModal()
+			dialog.Destroy()
+			return False
+		if imagedata.max() > 2:
+			dialog = wx.MessageDialog(self.frame, "You need to normalize the envelop.",\
+				'Error', wx.OK|wx.ICON_ERROR)
+			dialog.ShowModal()
+			dialog.Destroy()
+			return False
+		return True
+
+	#---------------------------------------
+	def onGet1DConf2(self, env):
+		if not 'defocus2' in self.ctfvalues.keys():
 			dialog = wx.MessageDialog(self.frame, "Need a defocus estimate first.",\
 				'Error', wx.OK|wx.ICON_ERROR)
 			dialog.ShowModal()
 			dialog.Destroy()
 			return
 
-		# high pass filter the center
-		if 'defocus1' in self.ctfvalues.keys():
-			#get first zero
-			numcols = int(0.5/(self.freq*self.ctfvalues['apix']))
-			radii = ctftools.getCtfExtrema(self.ctfvalues['defocus1'], self.ctfvalues['apix']*1e-10, 
-				self.ctfvalues['cs'], self.ctfvalues['volts'], self.ctfvalues['amplitude_contrast'], 
-				cols=numcols, numzeros=1, zerotype="peaks")
-			firstpeak = radii[0]
-		else:
-			#set first zero to 1/100A
-			#1/resolution = freq * (# of pixels from center) 
-			firstpeak = 1.0/(self.freq*100)
+		if self.checkNormalized() is False:
+			return
 
-		defocus = (self.ctfvalues['defocus1'] + self.ctfvalues['defocus2'])/2.0
 		imagedata = self.panel.imagedata
 		if self.ellipse_params is None:
 			pixelrdata, self.rotdata = ctftools.rotationalAverage(imagedata, self.ringwidth, full=False)
@@ -577,10 +600,80 @@ class CTFApp(wx.App):
 			pixelrdata, self.rotdata = ctftools.ellipticalAverage(imagedata, 
 				ellipratio, ellipangle, self.ringwidth, full=False)
 		s = pixelrdata*self.freq*1e10
-		#requires a defocus
-		ws2 = s**2 * self.wavelength * math.pi * defocus
+
+		numcols = int(0.5/(self.freq*self.ctfvalues['apix']))
+		radii = ctftools.getCtfExtrema(self.ctfvalues['defocus2'], self.ctfvalues['apix']*1e-10, 
+			self.ctfvalues['cs'], self.ctfvalues['volts'], self.ctfvalues['amplitude_contrast'], 
+			cols=numcols, numzeros=1, zerotype="peaks")
+		firstpeak = radii[0]
+
+		genctfdata = genctf.generateCTF1d(s, focus=self.ctfvalues['defocus2'], cs=self.cs,
+			pixelsize=self.apix*1e-10, volts=self.volts, ampconst=self.ctfvalues['amplitude_contrast'])
+		genctfdata = genctfdata**2
+
+		confidence = scipy.stats.pearsonr(self.rotdata[firstpeak:], genctfdata[firstpeak:])[0]
+
+		from matplotlib import pyplot
+		pyplot.clf()
+		xdata= (pixelrdata*self.freq)**2
+		pyplot.plot(xdata[firstpeak:], self.rotdata[firstpeak:], '.', color="gray")
+		pyplot.plot(xdata[firstpeak:], self.rotdata[firstpeak:], 'k-',)
+		pyplot.plot(xdata[firstpeak:], genctfdata[firstpeak:], 'r--',)
+		pyplot.xlim(xmin=xdata[firstpeak-1], xmax=xdata.max())
+		pyplot.ylim(ymin=-0.05, ymax=1.05)
+		pyplot.title("Confidence value of %.4f"%(confidence))
+		pyplot.show()
+
+		return
+
+	#---------------------------------------
+	def onNeilNormalize(self, evt):
+		self.onSubtBoxFilter(evt)
+		self.onSubtNoise(evt)
+		self.onNormEnvelop(evt)
+		self.onSubtNoise(evt)
+		self.onNormEnvelop(evt)
+
+	#---------------------------------------
+	def onFitAmpContrast(self, evt):
+		if not 'defocus2' in self.ctfvalues.keys():
+			dialog = wx.MessageDialog(self.frame, "Need a defocus estimate first.",\
+				'Error', wx.OK|wx.ICON_ERROR)
+			dialog.ShowModal()
+			dialog.Destroy()
+			return
+
+		if self.checkNormalized() is False:
+			return
+
+		# high pass filter the center
+		#get first zero
+		numcols = int(0.5/(self.freq*self.ctfvalues['apix']))
+		radii = ctftools.getCtfExtrema(self.ctfvalues['defocus2'], self.ctfvalues['apix']*1e-10, 
+			self.ctfvalues['cs'], self.ctfvalues['volts'], self.ctfvalues['amplitude_contrast'], 
+			cols=numcols, numzeros=1, zerotype="peaks")
+		firstpeak = radii[0]
+
+		imagedata = self.panel.imagedata
+		if self.ellipse_params is None:
+			pixelrdata, self.rotdata = ctftools.rotationalAverage(imagedata, self.ringwidth, full=False)
+			apDisplay.printWarning("doing a rotational average not elliptical")
+		else:
+			ellipratio = self.ellipse_params['a']/self.ellipse_params['b']
+			ellipangle = -math.degrees(self.ellipse_params['alpha'])
+			imagedata = self.panel.imagedata
+			pixelrdata, self.rotdata = ctftools.ellipticalAverage(imagedata, 
+				ellipratio, ellipangle, self.ringwidth, full=False)
+		s = pixelrdata*self.freq*1e10
+		#requires a defocus, use defocus2 it is the defocus of the elliptical average
+		defocus2 = self.ctfvalues['defocus2']
+		ws2 = s**2 * self.wavelength * math.pi * defocus2
 		amplitudecontrast = sinefit.refineAmplitudeContrast(ws2[firstpeak:], self.rotdata[firstpeak:], self.ctfvalues['amplitude_contrast'])
 		if amplitudecontrast is None:
+			dialog = wx.MessageDialog(self.frame, "Ampltiude constrast adjustment failed, bad fit.",\
+				'Error', wx.OK|wx.ICON_ERROR)
+			dialog.ShowModal()
+			dialog.Destroy()
 			return
 		apDisplay.printColor("amplitude contrast change from %.4f to %.4f"
 			%(self.ctfvalues['amplitude_contrast'], amplitudecontrast), "cyan")
@@ -588,27 +681,24 @@ class CTFApp(wx.App):
 
 	#---------------------------------------
 	def onRefineCTF(self, evt):
-		if not 'defocus1' in self.ctfvalues.keys():
+		if not 'defocus2' in self.ctfvalues.keys():
 			dialog = wx.MessageDialog(self.frame, "Need a defocus estimate first.",\
 				'Error', wx.OK|wx.ICON_ERROR)
 			dialog.ShowModal()
 			dialog.Destroy()
 			return
 
-		# high pass filter the center
-		if 'defocus1' in self.ctfvalues.keys():
-			#get first zero
-			numcols = int(0.5/(self.freq*self.ctfvalues['apix']))
-			radii = ctftools.getCtfExtrema(self.ctfvalues['defocus1'], self.ctfvalues['apix']*1e-10, 
-				self.ctfvalues['cs'], self.ctfvalues['volts'], self.ctfvalues['amplitude_contrast'], 
-				cols=numcols, numzeros=1, zerotype="peaks")
-			firstpeak = radii[0]
-		else:
-			#set first zero to 1/100A
-			#1/resolution = freq * (# of pixels from center) 
-			firstpeak = 1.0/(self.freq*100)
+		if self.checkNormalized() is False:
+			return
 
-		defocus = (self.ctfvalues['defocus1'] + self.ctfvalues['defocus2'])/2.0
+		# high pass filter the center
+		#get first zero
+		numcols = int(0.5/(self.freq*self.ctfvalues['apix']))
+		radii = ctftools.getCtfExtrema(self.ctfvalues['defocus1'], self.ctfvalues['apix']*1e-10, 
+			self.ctfvalues['cs'], self.ctfvalues['volts'], self.ctfvalues['amplitude_contrast'], 
+			cols=numcols, numzeros=1, zerotype="peaks")
+		firstpeak = radii[0]
+
 		imagedata = self.panel.imagedata
 		if self.ellipse_params is None:
 			pixelrdata, self.rotdata = ctftools.rotationalAverage(imagedata, self.ringwidth, full=False)
@@ -620,23 +710,26 @@ class CTFApp(wx.App):
 			pixelrdata, self.rotdata = ctftools.ellipticalAverage(imagedata, 
 				ellipratio, ellipangle, self.ringwidth, full=False)
 		s = pixelrdata*self.freq*1e10
-		#requires a defocus
+		#requires a defocus, use defocus2 it is the defocus of the elliptical average
+		defocus2 = self.ctfvalues['defocus2']
 		ws2 = s**2 * self.wavelength * math.pi
-		values = sinefit.refineCTF(ws2[firstpeak:], self.rotdata[firstpeak:], defocus, self.ctfvalues['amplitude_contrast'])
+		values = sinefit.refineCTF(ws2[firstpeak:], self.rotdata[firstpeak:], defocus2, self.ctfvalues['amplitude_contrast'])
 		if values is None:
 			return
-		defocus, amplitudecontrast = values
+		defocus2, amplitudecontrast = values
 		apDisplay.printColor("amplitude contrast change from %.5f to %.5f"
 			%(self.ctfvalues['amplitude_contrast'], amplitudecontrast), "cyan")
 		self.ctfvalues['amplitude_contrast'] = amplitudecontrast
-		apDisplay.printColor("defocus 1 change from %.5e to %.5e"
-			%(self.ctfvalues['defocus1'], defocus), "cyan")
+		apDisplay.printColor("defocus 2 change from %.5e to %.5e"
+			%(self.ctfvalues['defocus2'], defocus2), "cyan")
 		### elliptical ratio is preserved
-		defocus2 = defocus * self.ctfvalues['defocus2']/self.ctfvalues['defocus1']
-		self.ctfvalues['defocus1'] = defocus2
-		self.ctfvalues['defocus2'] = defocus
-		return
+		defocus1 = defocus2 * self.ctfvalues['defocus1']/self.ctfvalues['defocus2']
+		apDisplay.printColor("defocus 1 change from %.5e to %.5e"
+			%(self.ctfvalues['defocus1'], defocus1), "cyan")
 
+		self.ctfvalues['defocus1'] = defocus1
+		self.ctfvalues['defocus2'] = defocus2
+		return
 
 	#---------------------------------------
 	def onSubtBoxFilter(self, evt):
