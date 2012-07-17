@@ -116,7 +116,7 @@ def rotationMatrixToEulersEMAN(m):
 	if type(m) is not numpy.ndarray:
 		m = numpy.asarray(m)
 
-	### round off any values close to 0, default set to 0.00001 to avoid division by zero
+	### round off any values close to 0, default set to 0.00001 to fit case
 	default = 0.000001
 	m = numpy.where(abs(m) < default, 0, m)
 
