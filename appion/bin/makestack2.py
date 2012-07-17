@@ -573,13 +573,13 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 
 			if abs(bestctfvalue['defocus1']) < abs(bestctfvalue['defocus2']):
 				## this is the canonical form
-				df1 = bestctfvalue['defocus1']
-				df2 = bestctfvalue['defocus2']			
+				df1 = abs(bestctfvalue['defocus1'])
+				df2 = abs(bestctfvalue['defocus2'])
 				angast = bestctfvalue['angle_astigmatism']
 			else:
 				apDisplay.printWarning("|def1| > |def2|, flipping defocus axes")
-				df1 = bestctfvalue['defocus2']
-				df2 = bestctfvalue['defocus1']			
+				df1 = abs(bestctfvalue['defocus2'])
+				df2 = abs(bestctfvalue['defocus1'])		
 				angast = bestctfvalue['angle_astigmatism'] + 90			
 			amp = bestctfvalue['amplitude_contrast']
 			kv = imgdata['scope']['high tension']/1000
