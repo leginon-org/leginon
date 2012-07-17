@@ -1,7 +1,8 @@
 import time
 import loggedmethods
 
-class BaseInstrument(loggedmethods.LoggedMethodsBase):
+#class BaseInstrument(loggedmethods.LoggedMethodsBase):
+class BaseInstrument(object):
 	logged_methods_on = False
 	capabilities = (
 		{'name': 'SystemTime', 'type': 'property'},
