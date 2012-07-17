@@ -13,10 +13,18 @@ import sys
 import pyami.fileutil
 
 def printError(str):
-	print "\033[1;31mError: %s\033[0m"%(str)
+	msg = "Failed: %s"%(str)
+	if sys.platform == 'win32':
+		print msg
+	else:
+		print "\033[1;31m"+msg+"\033[0m"
 
 def printSearch(filename):
-	print "\033[35mLooking for  %s in:\033[0m"%(filename)
+	msg = "Looking for %s in:" %(filename)
+	if sys.platform == 'win32':
+		print msg
+	else:
+		print "\033[35m"+msg+"\033[0m"
 
 def printResult(configname,allconfigfiles):
 	if len(allconfigfiles) > 0:
