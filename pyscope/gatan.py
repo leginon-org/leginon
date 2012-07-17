@@ -22,8 +22,8 @@ except ImportError:
 class Gatan(ccdcamera.CCDCamera):
 	name = 'Gatan'
 	def __init__(self):
-		ccdcamera.CCDCamera.__init__(self)
 		self.unsupported = []
+		ccdcamera.CCDCamera.__init__(self)
 
 		self.cameraid = 0
 
@@ -66,6 +66,7 @@ class Gatan(ccdcamera.CCDCamera):
 				self.unsupported.append(method_name)
 
 	def __getattribute__(self, attr_name):
+		#if hasattr(self, 'unsupported') and attr_name in object.__getattribute__(self, 'unsupported'):
 		if attr_name in object.__getattribute__(self, 'unsupported'):
 			raise AttributeError('attribute not supported')
 		return object.__getattribute__(self, attr_name)
