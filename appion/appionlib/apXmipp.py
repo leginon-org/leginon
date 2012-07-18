@@ -292,7 +292,7 @@ def particularizeProtocol(protocolIn, parameters, protocolOut):
 #======================
 #======================	
 def convertXmippEulersToEman(phi, theta, psi,mirror=False):
-	return apEulerCalc.convertXmippEulersToEman(phi, theta, psi,mirror)
+	return apEulerCalc.convertXmippEulersToEman(phi, theta, psi, mirror)
 
 def convertEmanEulersToXmipp(alt, az, psi):
 	''' reverse of convertXmippEulersToEman '''
