@@ -10,7 +10,7 @@ class TorqueHost(processingHost.ProcessingHost):
         self.scriptPrefix="#PBS"
         if configDict:
             self.configure(configDict)
-            
+
     ##generateHeaders (jobObject)
     #Takes a job object or no arguments. If jobObject is supplied it uses it to 
     #construct processing host specific resource directives.  If no argument is
@@ -110,3 +110,15 @@ class TorqueHost(processingHost.ProcessingHost):
 
         return returnStatus
     
+class MoabTorqueHost(TorqueHost):
+    def __init__ (self, configDict=None):
+        processingHost.ProcessingHost.__init__(self)  #initialize parent
+        self.type="Torque"
+        self.execCommand="msub"
+        self.statusCommand="qstat"
+        self.scriptPrefix="#MOAB"
+        if configDict:
+            self.configure(configDict)
+
+    def translateOutput (self, outputString):
+        return 1

@@ -75,6 +75,8 @@ class Agent (object):
             processingHostType = configDict['ProcessingHostType'].upper()
             if 'TORQUE' == processingHostType or 'PBS' == processingHostType:
                 processingHost = torqueHost.TorqueHost(configDict)
+            elif 'MOABTORQUE' == processingHostType or 'MOAB' == processingHostType:
+                processingHost = torqueHost.MoabTorqueHost(configDict)
             else:
                 sys.stderr.write("Unknown processing host type, using default\n")
                 processingHost = torqueHost.TorqueHost(configDict)
