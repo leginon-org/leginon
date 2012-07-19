@@ -143,12 +143,13 @@ def refineCTF(s2, ctfdata, initdefocus, initampcontrast):
 	apDisplay.printColor("initial confidence value: %.8f"%(initconf), "green")
 
 	onevec = numpy.ones(s2.shape, dtype=numpy.float) #column 1
-	numiter = 30
+	numiter = 10
 	defocus_tolerance = 1e-10
 	dw = 1e100 #big number
 	for i in range(numiter):
 		if abs(dw) < defocus_tolerance:
 			break
+		apDisplay.printColor("Iteration %d of %d"%(i+1, numiter), "purple")
 		cosvec = numpy.cos(2*w*s2) #column 2, fixed defocus from previous
 		sinvec = numpy.sin(2*w*s2) #column 3, fixed defocus from previous
 		dwvec = 2*C*s2*numpy.cos(2*w*s2) - 2*B*s2*numpy.sin(2*w*s2) #column 4: -2*Bi*s2*sin(2*wi*s2) + 2*Ci*s2*cos(2*wi*s2)
@@ -160,18 +161,18 @@ def refineCTF(s2, ctfdata, initdefocus, initampcontrast):
 		denom = numpy.dot(numpy.transpose(q), ctfdata)
 		x0 = numpy.dot(numpy.linalg.inv(r), denom)
 		A,B,C,dw = x0
-		print "A,B,C,DW = %.8f,%.8f,%.8f,%.8e"%(A,B,C,dw)
+		apDisplay.printMsg("A,B,C,DW = %.8f,%.8f,%.8f,%.8e"%(A,B,C,dw))
 
 		trig_amplitude = math.sqrt(B**2 + C**2)
-		apDisplay.printColor("trig_amplitude = %.8f"%(trig_amplitude), "cyan")
+		apDisplay.printColor("... trig_amplitude = %.8f"%(trig_amplitude), "blue")
 
 		w = w + dw
-		apDisplay.printColor("defocus = %.8e"%(w), "cyan")
+		apDisplay.printColor("... defocus = %.8e"%(w), "cyan")
 		psi = math.atan2(B,C)
 		phi = (2*psi + math.pi)/4
 		amplitudecontrast = math.sin(phi)
 		ac = amplitudecontrast
-		apDisplay.printColor("amplitude contrast = %.8f"%(amplitudecontrast), "cyan")
+		apDisplay.printColor("... amplitude contrast = %.8f"%(amplitudecontrast), "blue")
 
 		ctffit1 = A*onevec + B*cosvec + C*sinvec + dw*dwvec
 		ctffit4 = (math.sqrt(1 - ac**2)*numpy.sin(w*s2) + ac*numpy.cos(w*s2))**2
@@ -191,7 +192,7 @@ def refineCTF(s2, ctfdata, initdefocus, initampcontrast):
 		pyplot.draw()
 
 		conf1 = scipy.stats.pearsonr(ctfdata, ctffit1)[0]
-		apDisplay.printColor("Confidence values: %.8f, %.8f"%(conf1, conf2), "green")
+		apDisplay.printColor("... Confidence values: %.8f, %.8f"%(conf1, conf2), "blue")
 
 		time.sleep(3)
 
@@ -202,6 +203,7 @@ def refineCTF(s2, ctfdata, initdefocus, initampcontrast):
 		apDisplay.printWarning("Fit out of range, value trig_amplitude != 1/2: %.8f"%(trig_amplitude))
 		return None
 
+	apDisplay.printColor("final confidence = %.5f (old conf=%.5f)"%(conf1, initconf), "green")
 	apDisplay.printColor("final defocus = %.8e"%(w), "green")
 	apDisplay.printColor("final amplitude contrast = %.8f"%(amplitudecontrast), "green")
 	return w, amplitudecontrast

@@ -7,6 +7,11 @@ import time
 import math
 import numpy
 from PIL import Image
+import matplotlib
+matplotlib.use('WXAgg')
+#matplotlib.use('gtk')
+from matplotlib import pyplot
+
 #import subprocess
 from appionlib import apParam
 from appionlib import apDisplay
@@ -15,7 +20,7 @@ from appionlib import apPrimeFactor
 from appionlib import apInstrument
 from appionlib import apDatabase
 from appionlib import appionLoop2
-from appionlib.apImage import imagefile, imagefilter, imagenorm
+from appionlib.apImage import imagefile, imagefilter, imagenorm, imagestat
 from appionlib.apCtf import ctftools, ctfnoise, ctfdb, sinefit, genctf
 #Leginon
 import leginon.polygon
@@ -24,6 +29,8 @@ from pyami import mrc, fftfun, imagefun, ellipse
 from scipy import ndimage
 import scipy.stats
 from leginon.gui.wx.Entry import FloatEntry, IntEntry, EVT_ENTRY
+
+
 
 ##################################
 ##
@@ -97,7 +104,7 @@ class ThonRingTool(ImagePanelTools.ImageTool):
 
 		numcols = int(0.5/(self.app.freq*self.app.ctfvalues['apix']))
 		#print "numcols", numcols
-		numzeros = 14
+		numzeros = 28
 		#print "Getting valley locations"
 		#print self.app.ctfvalues.keys()
 		radii1 = ctftools.getCtfExtrema(self.app.ctfvalues['defocus1'], self.app.ctfvalues['apix']*1e-10, 
@@ -120,7 +127,7 @@ class ThonRingTool(ImagePanelTools.ImageTool):
 				print "major=%.1f, minor=%.1f, angle=%.1f"%(major, minor, self.app.ctfvalues['angle_astigmatism'])
 			if minor > width/2:
 				# this limits how far we draw out the ellipses: sqrt(3) to corner, just 2 inside line
-				continue
+				break
 
 			### determine number of points to use to draw ellipse, minimize distance btw points
 			#isoceles triangle, b: radius ot CTF ring, a: distance btw points
@@ -129,7 +136,7 @@ class ThonRingTool(ImagePanelTools.ImageTool):
 			#theta = 2 * asin (a/2b)
 			#numpoints = 2 pi / theta
 			## define a to be 5 pixels
-			a = 15
+			a = 5
 			theta = 2.0 * math.asin (a/(2.0*major))
 			skipfactor = 3
 			## multiple by skipfactor to remove unsightly seam lines
@@ -286,29 +293,64 @@ class CTFApp(wx.App):
 		self.Bind(wx.EVT_BUTTON, self.onCalcFirstValley, self.firstvalley)
 		self.buttonrow.Add(self.firstvalley, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 
-		self.subtnoise = wx.Button(self.frame, -1, 'Subtract &Noise')
-		self.subtnoise.SetMinSize((-1, buttonheight))
-		self.Bind(wx.EVT_BUTTON, self.onSubtNoise, self.subtnoise)
-		self.buttonrow.Add(self.subtnoise, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
+		wxbutton = wx.Button(self.frame, -1, '&Water Shed')
+		wxbutton.SetMinSize((-1, buttonheight))
+		self.Bind(wx.EVT_BUTTON, self.onWaterShed, wxbutton)
+		self.buttonrow.Add(wxbutton, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 
-		wxbutton = wx.Button(self.frame, -1, 'Subtract &Box Filter')
+		wxbutton = wx.Button(self.frame, -1, 'Subt &Noise')
+		wxbutton.SetMinSize((-1, buttonheight))
+		self.Bind(wx.EVT_BUTTON, self.onSubtNoise, wxbutton)
+		self.buttonrow.Add(wxbutton, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
+
+		wxbutton = wx.Button(self.frame, -1, 'Subt Bimodal Noise')
+		wxbutton.SetMinSize((-1, buttonheight))
+		self.Bind(wx.EVT_BUTTON, self.onSubtBimodalNoise, wxbutton)
+		self.buttonrow.Add(wxbutton, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
+
+		wxbutton = wx.Button(self.frame, -1, 'Subt Trimodal Noise')
+		wxbutton.SetMinSize((-1, buttonheight))
+		self.Bind(wx.EVT_BUTTON, self.onSubtTrimodalNoise, wxbutton)
+		self.buttonrow.Add(wxbutton, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
+
+		wxbutton = wx.Button(self.frame, -1, 'Subt &Box Filter')
 		wxbutton.SetMinSize((-1, buttonheight))
 		self.Bind(wx.EVT_BUTTON, self.onSubtBoxFilter, wxbutton)
 		self.buttonrow.Add(wxbutton, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 
-		wxbutton = wx.Button(self.frame, -1, 'Subtract &Gauss Filter')
+		wxbutton = wx.Button(self.frame, -1, 'Subt 2D &Box Filter')
+		wxbutton.SetMinSize((-1, buttonheight))
+		self.Bind(wx.EVT_BUTTON, self.onSubt2dBoxFilter, wxbutton)
+		self.buttonrow.Add(wxbutton, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
+
+		wxbutton = wx.Button(self.frame, -1, 'Subt &Gauss Filter')
 		wxbutton.SetMinSize((-1, buttonheight))
 		self.Bind(wx.EVT_BUTTON, self.onSubtGaussFilter, wxbutton)
 		self.buttonrow.Add(wxbutton, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 
-		self.normenvel = wx.Button(self.frame, -1, '&Envelope')
-		self.normenvel.SetMinSize((-1, buttonheight))
-		self.Bind(wx.EVT_BUTTON, self.onNormEnvelop, self.normenvel)
-		self.buttonrow.Add(self.normenvel, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
+		wxbutton = wx.Button(self.frame, -1, 'Norm &Envelope')
+		wxbutton.SetMinSize((-1, buttonheight))
+		self.Bind(wx.EVT_BUTTON, self.onNormEnvelop, wxbutton)
+		self.buttonrow.Add(wxbutton, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
+
+		wxbutton = wx.Button(self.frame, -1, 'Norm Trimodal &Envelope')
+		wxbutton.SetMinSize((-1, buttonheight))
+		self.Bind(wx.EVT_BUTTON, self.onNormTrimodalEnvelop, wxbutton)
+		self.buttonrow.Add(wxbutton, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 
 		wxbutton = wx.Button(self.frame, -1, '&Neil normalize')
 		wxbutton.SetMinSize((-1, buttonheight))
 		self.Bind(wx.EVT_BUTTON, self.onNeilNormalize, wxbutton)
+		self.buttonrow.Add(wxbutton, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
+
+		wxbutton = wx.Button(self.frame, -1, 'Gauss &blur')
+		wxbutton.SetMinSize((-1, buttonheight))
+		self.Bind(wx.EVT_BUTTON, self.onGaussBlur, wxbutton)
+		self.buttonrow.Add(wxbutton, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
+
+		wxbutton = wx.Button(self.frame, -1, '&Invert')
+		wxbutton.SetMinSize((-1, buttonheight))
+		self.Bind(wx.EVT_BUTTON, self.onInvert, wxbutton)
 		self.buttonrow.Add(wxbutton, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 
 		self.rotavg = wx.Button(self.frame, -1, '&Rot Avg')
@@ -341,6 +383,11 @@ class CTFApp(wx.App):
 		self.Bind(wx.EVT_BUTTON, self.onGet1DConf2, wxbutton)
 		self.buttonrow.Add(wxbutton, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 
+		wxbutton = wx.Button(self.frame, -1, 'Get 1D Res')
+		wxbutton.SetMinSize((-1, buttonheight))
+		self.Bind(wx.EVT_BUTTON, self.onGet1DResolution, wxbutton)
+		self.buttonrow.Add(wxbutton, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
+
 		self.editparam_dialog = EditParamsDialog(self)
 		wxbutton = wx.Button(self.frame, -1, '&Edit CTF Params...')
 		wxbutton.SetMinSize((-1, buttonheight))
@@ -365,6 +412,11 @@ class CTFApp(wx.App):
 		wxbutton = wx.Button(self.frame, -1, '&Refine CTF')
 		wxbutton.SetMinSize((-1, buttonheight))
 		self.Bind(wx.EVT_BUTTON, self.onRefineCTF, wxbutton)
+		self.buttonrow.Add(wxbutton, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
+
+		wxbutton = wx.Button(self.frame, -1, '&Refine 1/2 CTF')
+		wxbutton.SetMinSize((-1, buttonheight))
+		self.Bind(wx.EVT_BUTTON, self.onRefineHalfCTF, wxbutton)
 		self.buttonrow.Add(wxbutton, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 
 		wxbutton = wx.Button(self.frame, wx.ID_CLEAR, 'Clear')
@@ -419,6 +471,7 @@ class CTFApp(wx.App):
 		if 'angle_astigmatism' in self.ctfvalues:
 			self.editparam_dialog.anglevalue.SetValue(self.ctfvalues['angle_astigmatism'])
 		self.editparam_dialog.Show()
+		apDisplay.printColor("Edit params complete", "cyan")
 
 	#---------------------------------------
 	def onQuit(self, evt):
@@ -440,11 +493,11 @@ class CTFApp(wx.App):
 
 		self.convertCtfToEllipse()
 
-		apDisplay.printColor("def1=%.3e\tdef2=%.3e\tangle=%.2f\tampcont=%.4f\tconf1=%.2f\tconf2=%.2f"%(
-			self.ctfvalues['defocus1'], self.ctfvalues['defocus2'], 
+		apDisplay.printColor("def1=%.3e\tdef2=%.3e\tratio=%.3f\tangle=%.2f\tampcont=%.4f\tconf1=%.2f\tconf2=%.2f"%(
+			self.ctfvalues['defocus1'], self.ctfvalues['defocus2'], self.ctfvalues['defocus2']/self.ctfvalues['defocus1'], 
 			self.ctfvalues['angle_astigmatism'], self.ctfvalues['amplitude_contrast'], 
 			ctfdata['confidence'], ctfdata['confidence_d']), "magenta")
-
+		apDisplay.printColor("Load CTF complete", "cyan")
 
 	#---------------------------------------
 	def convertCtfToEllipse(self):
@@ -466,30 +519,29 @@ class CTFApp(wx.App):
 		#angle_astigmatism = -math.degrees(self.ellipse_params['alpha'])
 		self.ellipse_params['alpha'] = -math.radians(self.ctfvalues['angle_astigmatism'])
 
-
 	#---------------------------------------
 	def convertEllipseToCtf(self):
 		if self.ellipse_params is None:
 			return
 
-		print self.ellipse_params
+		#print self.ellipse_params
 		self.ctfvalues['amplitude_contrast'] = 0.0
 		ellipangle = -math.degrees(self.ellipse_params['alpha'])
 		self.ctfvalues['angle_astigmatism'] = ellipangle
-		print "wavelength", self.wavelength
+		#print "wavelength", self.wavelength
 
 		#minor axis
 		s = (self.ellipse_params['a']*self.freq)*1e10
-		print "s1", s
+		#print "s1", s
 		self.ctfvalues['defocus1'] = 1.0/(self.wavelength * s**2) - 0.5*self.wavelength**2*self.ctfvalues['cs']*s**2
 
 		#major axis
 		s = (self.ellipse_params['b']*self.freq)*1e10
-		print "s2", s
+		#print "s2", s
 		self.ctfvalues['defocus2'] = 1.0/(self.wavelength * s**2) - 0.5*self.wavelength**2*self.ctfvalues['cs']*s**2
-		apDisplay.printColor("%.2e\t%.2e\t%.2f"%(self.ctfvalues['defocus1'], 
-			self.ctfvalues['defocus2'], self.ctfvalues['angle_astigmatism']), "magenta")
-		print "CTF", self.ctfvalues
+		apDisplay.printColor("def1=%.3e\tdef2=%.3e\tratio=%.3f\tangle=%.2f\tampcont=%.4f"%(
+			self.ctfvalues['defocus1'], self.ctfvalues['defocus2'], self.ctfvalues['defocus2']/self.ctfvalues['defocus1'], 
+			self.ctfvalues['angle_astigmatism'], self.ctfvalues['amplitude_contrast']), "magenta")
 
 	#---------------------------------------
 	def onCalcFirstValley(self, evt):
@@ -497,14 +549,186 @@ class CTFApp(wx.App):
 
 		points = self.panel.getTargetPositions('First Valley')
 		apDisplay.printMsg("You have %d points to fit in the valley ring"%(len(points)))
-		if len(points) >= 3:
-			self.ellipse_params = ellipse.solveEllipseOLS(points, center)
-			self.convertEllipseToCtf()
-			epoints = ellipse.generate_ellipse(self.ellipse_params['a'], 
-				self.ellipse_params['b'], self.ellipse_params['alpha'], self.ellipse_params['center'],
-				numpoints=30, noise=None, method="step", integers=True)
-			self.panel.setTargets('First Valley Fit', epoints)
-			print "CTF", self.ctfvalues
+		if len(points) < 3:
+			dialog = wx.MessageDialog(self.frame, "Need to pick more than 3 points first.",\
+				'Error', wx.OK|wx.ICON_ERROR)
+			dialog.ShowModal()
+			dialog.Destroy()
+		self.ellipse_params = ellipse.solveEllipseOLS(points, center)
+		self.convertEllipseToCtf()
+		epoints = ellipse.generate_ellipse(self.ellipse_params['a'], 
+			self.ellipse_params['b'], self.ellipse_params['alpha'], self.ellipse_params['center'],
+			numpoints=30, noise=None, method="step", integers=True)
+		self.panel.setTargets('First Valley Fit', epoints)
+		apDisplay.printColor("def1=%.3e\tdef2=%.3e\tratio=%.3f\tangle=%.2f\tampcont=%.4f"%(
+			self.ctfvalues['defocus1'], self.ctfvalues['defocus2'], self.ctfvalues['defocus2']/self.ctfvalues['defocus1'], 
+			self.ctfvalues['angle_astigmatism'], self.ctfvalues['amplitude_contrast']), "magenta")
+		apDisplay.printColor("Calc first valley complete", "cyan")
+
+	#---------------------------------------
+	def onGaussBlur(self, evt):
+		imagedata = self.panel.imagedata
+		gaussdata = ndimage.gaussian_filter(imagedata, 3)
+		self.panel.setImage(gaussdata)
+		apDisplay.printColor("Gauss blur complete", "cyan")
+		return
+
+	#---------------------------------------
+	def onInvert(self, evt):
+		imagedata = self.panel.imagedata
+		self.panel.setImage(-imagedata)
+		apDisplay.printColor("Invert complete", "cyan")
+		return
+
+	#---------------------------------------
+	def onWaterShed(self, evt):
+		##requires 1 clicked point
+		points = self.panel.getTargetPositions('First Valley')
+		apDisplay.printMsg("You have %d points to fit in the valley ring"%(len(points)))
+		if len(points) < 1:
+			dialog = wx.MessageDialog(self.frame, "Need to pick a point first.",\
+				'Error', wx.OK|wx.ICON_ERROR)
+			dialog.ShowModal()
+			dialog.Destroy()
+			return
+
+		##prepare CTF data for watershed, only finds peaks so invert
+		imagedata = self.panel.imagedata
+		#TEMPORARY -- for now bin by 16
+		binning = 1
+		imagedata = imagefun.bin2(imagedata,binning)
+		imagedata = ndimage.gaussian_filter(imagedata, 16)
+		tmpdata = imagenorm.maxNormalizeImage(imagedata)
+		imagefile.arrayToPng(tmpdata, "/home/vosslab/ctf.png")
+		inputarray = -imagedata + imagedata.max()
+		#inputarray = 2.**16 / inputarray.max() * inputarray + 1
+		#imagestat.printImageInfo(inputarray)
+		#inputarray = numpy.array(inputarray, dtype=numpy.uint16)
+		print "inputarray="
+		imagestat.printImageInfo(inputarray)
+		#print inputarray
+
+		##create markers using picked point
+		center = numpy.array(self.panel.imgshape)/2
+		newcenter = (center/float(binning)).astype(numpy.uint16)
+		#print "newcenter=", newcenter
+		markers = numpy.zeros(inputarray.shape, dtype=numpy.int8)
+
+		points = numpy.array(points, dtype=numpy.int16)
+		#print points
+		## set the ring points to the highest value processed last
+		xp = numpy.array((points[:,1])/binning, dtype=numpy.uint16)
+		yp = numpy.array((points[:,0])/binning, dtype=numpy.uint16)
+		#print xp, yp
+		markers[xp, yp] = 100
+
+
+		## set inner points to 3
+		markers[newcenter[1], newcenter[0]] = 30
+		xpbad = numpy.array((points[:,1]/binning - newcenter[1])*0.4 + newcenter[1], dtype=numpy.uint16)
+		ypbad = numpy.array((points[:,0]/binning - newcenter[0])*0.4 + newcenter[0], dtype=numpy.uint16)
+		markers[xpbad, ypbad] = 30
+		xpbad = numpy.array((points[:,1]/binning - newcenter[1])*0.85 + newcenter[1], dtype=numpy.uint16)
+		ypbad = numpy.array((points[:,0]/binning - newcenter[0])*0.85 + newcenter[0], dtype=numpy.uint16)
+		markers[xpbad, ypbad] = 30
+		## set outer points to 2
+		xpbad = numpy.array((points[:,1]/binning - newcenter[1])*1.15 + newcenter[1], dtype=numpy.uint16)
+		ypbad = numpy.array((points[:,0]/binning - newcenter[0])*1.15 + newcenter[0], dtype=numpy.uint16)
+		markers[xpbad, ypbad] = 20
+		xpbad = numpy.array((points[:,1]/binning - newcenter[1])*1.6 + newcenter[1], dtype=numpy.uint16)
+		ypbad = numpy.array((points[:,0]/binning - newcenter[0])*1.6 + newcenter[0], dtype=numpy.uint16)
+		markers[xpbad, ypbad] = 20
+		markers[0,0] = 20
+
+		## do a blurring
+		markers = ndimage.maximum_filter(markers, 8/float(binning))
+		print "markers="
+		imagestat.printImageInfo(markers)
+
+		#rescale the input array
+		xp, yp = numpy.where(markers==100)
+		minmarker = inputarray[xp, yp].min()
+		maxmarker = inputarray[xp, yp].max()
+		markrange = maxmarker - minmarker
+		print "MARKER MIN/MAX: %.1f - %.1f"%(minmarker, maxmarker)
+		#min/max should be within 5 pixels for method to work
+		inputarray = 5.0/markrange * inputarray
+		minmarker = inputarray[xp, yp].min()
+		maxmarker = inputarray[xp, yp].max()
+		#make sure it falls within range of 2^16 = 65536
+		if maxmarker > 50000:
+			inputarray -= maxmarker + 2**15
+		if minmarker < 0:
+			inputarray += minmarker + 2**15
+
+		inputarray = numpy.array(inputarray, dtype=numpy.uint16)
+
+		print "inputarray="
+		imagestat.printImageInfo(inputarray)
+
+		### perform watershed
+		watershed = ndimage.measurements.watershed_ift(inputarray, markers)
+
+		pyplot.clf()
+		pyplot.subplot(1,2,1)
+		pyplot.title("selected points as input")
+		pyplot.xticks([], [])
+		pyplot.yticks([], [])
+		pyplot.imshow(markers)
+		pyplot.gray()
+		pyplot.imshow(inputarray, alpha=0.75)
+		pyplot.gray()
+		pyplot.imshow(markers, alpha=0.25)
+		pyplot.gray()
+		pyplot.subplot(1,2,2)
+		pyplot.title("final watershed area")
+		pyplot.xticks([], [])
+		pyplot.yticks([], [])
+		pyplot.imshow(watershed)
+		pyplot.gray()
+		pyplot.imshow(inputarray, alpha=0.75)
+		pyplot.gray()
+		pyplot.imshow(watershed, alpha=0.5)
+		pyplot.gray()
+		pyplot.subplots_adjust(wspace=0.01, hspace=0.01, 
+			bottom=0.01, left=0.01, top=0.99, right=0.99, )
+		pyplot.show()
+
+		print "watershed="
+		imagestat.printImageInfo(watershed)
+		#print watershed
+
+		if watershed.mean() < 1:
+			dialog = wx.MessageDialog(self.frame, "Watershed failed",
+				'Error', wx.OK|wx.ICON_ERROR)
+			dialog.ShowModal()
+			dialog.Destroy()
+			return
+
+		xwater, ywater = numpy.where(watershed==100)
+
+		points = numpy.transpose(numpy.vstack((xwater, ywater)))*binning
+		apDisplay.printMsg("You have %d points to fit in the valley ring"%(len(points)))
+		maxpoints = inputarray.shape[0]*inputarray.shape[1]*0.05 # 5% of total pixels
+		if points.shape[0] > maxpoints:
+			dialog = wx.MessageDialog(self.frame, "Too many points relative to size of the image (%d > %d)"
+				%(points.shape[0], maxpoints), 'Error', wx.OK|wx.ICON_ERROR)
+			dialog.ShowModal()
+			dialog.Destroy()
+			return
+
+		center = numpy.array(self.panel.imgshape)/2.0
+
+		self.ellipse_params = ellipse.solveEllipseOLS(points, center)
+		self.convertEllipseToCtf()
+		epoints = ellipse.generate_ellipse(self.ellipse_params['a'], 
+			self.ellipse_params['b'], self.ellipse_params['alpha'], self.ellipse_params['center'],
+			numpoints=30, noise=None, method="step", integers=True)
+		self.panel.setTargets('First Valley Fit', epoints)
+		apDisplay.printColor("def1=%.3e\tdef2=%.3e\tratio=%.3f\tangle=%.2f\tampcont=%.4f"%(
+			self.ctfvalues['defocus1'], self.ctfvalues['defocus2'], self.ctfvalues['defocus2']/self.ctfvalues['defocus1'], 
+			self.ctfvalues['angle_astigmatism'], self.ctfvalues['amplitude_contrast']), "magenta")
+		apDisplay.printColor("Water shed method complete", "cyan")
 
 	#---------------------------------------
 	def funcrad(self, r, rdata=None, zdata=None):
@@ -514,10 +738,10 @@ class CTFApp(wx.App):
 	def onRotAverage(self, evt):
 		# do a rotational average of the image
 		imagedata = self.panel.imagedata
-		pixelrdata, self.rotdata = ctftools.rotationalAverage(imagedata, self.ringwidth, full=True)
+		pixelrdata, rotdata = ctftools.rotationalAverage(imagedata, self.ringwidth, full=True)
 		apDisplay.printWarning("doing a rotational average not elliptical")
 		rotavgimage = imagefun.fromRadialFunction(self.funcrad, imagedata.shape, 
-			rdata=pixelrdata, zdata=self.rotdata)
+			rdata=pixelrdata, zdata=rotdata)
 		self.panel.setImage(rotavgimage)
 		apDisplay.printColor("Rotational average complete", "cyan")
 
@@ -533,9 +757,9 @@ class CTFApp(wx.App):
 		ellipangle = -math.degrees(self.ellipse_params['alpha'])
 		apDisplay.printColor("Elliptical average ratio = %.3f, angle %.3f"%(ellipratio,ellipangle), "cyan")
 		imagedata = self.panel.imagedata
-		pixelrdata, self.rotdata = ctftools.ellipticalAverage(imagedata, 
+		pixelrdata, rotdata = ctftools.ellipticalAverage(imagedata, 
 			ellipratio, ellipangle, self.ringwidth, full=True)
-		ellipavgimage = ctftools.unEllipticalAverage(pixelrdata, self.rotdata, 
+		ellipavgimage = ctftools.unEllipticalAverage(pixelrdata, rotdata, 
 			ellipratio, ellipangle, imagedata.shape)
 		self.panel.setImage(ellipavgimage)
 		apDisplay.printColor("Elliptical average complete", "cyan")
@@ -551,11 +775,11 @@ class CTFApp(wx.App):
 		ellipratio = self.ellipse_params['a']/self.ellipse_params['b']
 		ellipangle = -math.degrees(self.ellipse_params['alpha'])
 		imagedata = self.panel.imagedata
-		pixelrdata, self.rotdata = ctftools.ellipticalAverage(imagedata, 
+		pixelrdata, rotdata = ctftools.ellipticalAverage(imagedata, 
 			ellipratio, ellipangle, self.ringwidth, full=True)
 		#distort the pixelrdata
 		distortrdata = pixelrdata**2/pixelrdata.max()
-		ellipavgimage = ctftools.unEllipticalAverage(distortrdata, self.rotdata, 
+		ellipavgimage = ctftools.unEllipticalAverage(distortrdata, rotdata, 
 			ellipratio, ellipangle, imagedata.shape)
 		self.panel.setImage(ellipavgimage)
 		apDisplay.printColor("Elliptical distrotion complete", "cyan")
@@ -591,48 +815,122 @@ class CTFApp(wx.App):
 
 		imagedata = self.panel.imagedata
 		if self.ellipse_params is None:
-			pixelrdata, self.rotdata = ctftools.rotationalAverage(imagedata, self.ringwidth, full=False)
+			pixelrdata, rotdata = ctftools.rotationalAverage(imagedata, self.ringwidth, full=False)
 			apDisplay.printWarning("doing a rotational average not elliptical")
 		else:
 			ellipratio = self.ellipse_params['a']/self.ellipse_params['b']
 			ellipangle = -math.degrees(self.ellipse_params['alpha'])
-			imagedata = self.panel.imagedata
-			pixelrdata, self.rotdata = ctftools.ellipticalAverage(imagedata, 
+			pixelrdata, rotdata = ctftools.ellipticalAverage(imagedata, 
 				ellipratio, ellipangle, self.ringwidth, full=False)
-		s = pixelrdata*self.freq*1e10
+		raddata = pixelrdata*self.freq
 
 		numcols = int(0.5/(self.freq*self.ctfvalues['apix']))
 		radii = ctftools.getCtfExtrema(self.ctfvalues['defocus2'], self.ctfvalues['apix']*1e-10, 
 			self.ctfvalues['cs'], self.ctfvalues['volts'], self.ctfvalues['amplitude_contrast'], 
 			cols=numcols, numzeros=1, zerotype="peaks")
 		firstpeak = radii[0]
+		firstpeakindex = numpy.searchsorted(raddata, firstpeak*self.freq)
 
-		genctfdata = genctf.generateCTF1d(s, focus=self.ctfvalues['defocus2'], cs=self.cs,
+		genctfdata = genctf.generateCTF1d(raddata*1e10, focus=self.ctfvalues['defocus2'], cs=self.cs,
 			pixelsize=self.apix*1e-10, volts=self.volts, ampconst=self.ctfvalues['amplitude_contrast'])
 		genctfdata = genctfdata**2
 
-		confidence = scipy.stats.pearsonr(self.rotdata[firstpeak:], genctfdata[firstpeak:])[0]
+		confidence = scipy.stats.pearsonr(rotdata[firstpeakindex:], genctfdata[firstpeakindex:])[0]
 
-		from matplotlib import pyplot
 		pyplot.clf()
-		xdata= (pixelrdata*self.freq)**2
-		pyplot.plot(xdata[firstpeak:], self.rotdata[firstpeak:], '.', color="gray")
-		pyplot.plot(xdata[firstpeak:], self.rotdata[firstpeak:], 'k-',)
-		pyplot.plot(xdata[firstpeak:], genctfdata[firstpeak:], 'r--',)
-		pyplot.xlim(xmin=xdata[firstpeak-1], xmax=xdata.max())
+		xdata = raddata**2
+		pyplot.plot(xdata[firstpeakindex:], rotdata[firstpeakindex:], '.', color="gray")
+		pyplot.plot(xdata[firstpeakindex:], rotdata[firstpeakindex:], 'k-',)
+		pyplot.plot(xdata[firstpeakindex:], genctfdata[firstpeakindex:], 'r--',)
+		pyplot.xlim(xmin=xdata[firstpeakindex-1], xmax=xdata.max())
 		pyplot.ylim(ymin=-0.05, ymax=1.05)
 		pyplot.title("Confidence value of %.4f"%(confidence))
 		pyplot.show()
+		apDisplay.printColor("Confidence value of %.4f complete"%(confidence), "cyan")
+
+		return
+
+	#---------------------------------------
+	def onGet1DResolution(self, env):
+		if not 'defocus2' in self.ctfvalues.keys():
+			dialog = wx.MessageDialog(self.frame, "Need a defocus estimate first.",\
+				'Error', wx.OK|wx.ICON_ERROR)
+			dialog.ShowModal()
+			dialog.Destroy()
+			return
+
+		if self.checkNormalized() is False:
+			return
+
+		imagedata = self.panel.imagedata
+		if self.ellipse_params is None:
+			pixelrdata, rotdata = ctftools.rotationalAverage(imagedata, self.ringwidth, full=False)
+			apDisplay.printWarning("doing a rotational average not elliptical")
+		else:
+			ellipratio = self.ellipse_params['a']/self.ellipse_params['b']
+			ellipangle = -math.degrees(self.ellipse_params['alpha'])
+			pixelrdata, rotdata = ctftools.ellipticalAverage(imagedata, 
+				ellipratio, ellipangle, self.ringwidth, full=False)
+		raddata = pixelrdata*self.freq
+
+		numcols = int(0.5/(self.freq*self.ctfvalues['apix']))
+		radii = ctftools.getCtfExtrema(self.ctfvalues['defocus2'], self.ctfvalues['apix']*1e-10, 
+			self.ctfvalues['cs'], self.ctfvalues['volts'], self.ctfvalues['amplitude_contrast'], 
+			cols=numcols, numzeros=1, zerotype="peaks")
+		firstpeak = radii[0]
+		firstpeakindex = numpy.searchsorted(raddata, firstpeak*self.freq)
+
+		genctfdata = genctf.generateCTF1d(raddata*1e10, focus=self.ctfvalues['defocus2'], cs=self.cs,
+			pixelsize=self.apix*1e-10, volts=self.volts, ampconst=self.ctfvalues['amplitude_contrast'])
+		genctfdata = genctfdata**2
+
+		## divide the data into 8 section (by x^2 not x) and calculate the correlation correficient for each
+		numstep = 8.
+		start = (firstpeak*self.freq)**2
+		end = (raddata.max())**2
+		sqlength = (raddata.max())**2
+		step = (end-start)/numstep
+		print "1/%.1fA <-> 1/%.1fA (1/%.1fA)"%(1/math.sqrt(start), 1/math.sqrt(end), 1/math.sqrt(step))
+		limits = numpy.arange(start, end+step/2, step)
+		limitsindex = numpy.searchsorted(raddata**2, limits)-1
+		print limitsindex
+
+		pyplot.clf()
+		xdata= (pixelrdata*self.freq)**2
+		colors = ['red', 'blue', 'green', 'yellow', 'purple', 'magenta', 'cyan', 'orange',]
+		pyplot.plot(xdata[firstpeakindex:], rotdata[firstpeakindex:], '.', color="black", alpha=0.5)
+
+		confs = []
+		for i in range(limitsindex.shape[0]-1):
+			s1 = limitsindex[i]
+			s2 = limitsindex[i+1]
+			conf = scipy.stats.pearsonr(rotdata[s1:s2], genctfdata[s1:s2])[0]
+			confs.append(conf)
+			print "%d:%d"%(s1,s2)
+			print "r 1/%.1fA <-> 1/%.1fA == %.4f"%(1/math.sqrt(raddata[s1]), 1/math.sqrt(raddata[s2]), conf)
+			print "x %.4f <-> %.4f == %.4f"%(raddata[s1], raddata[s2], conf)
+			pyplot.plot(xdata[s1:s2], rotdata[s1:s2], '--', color=colors[i])
+		print confs
+
+		#pyplot.plot(xdata[firstpeakindex:], rotdata[firstpeakindex:], 'k-',)
+		pyplot.plot(xdata[firstpeakindex:], genctfdata[firstpeakindex:], 'r.',)
+		pyplot.plot(xdata[firstpeakindex:], genctfdata[firstpeakindex:], 'r--', alpha=0.5)
+		pyplot.xlim(xmin=xdata[firstpeakindex-1], xmax=xdata.max())
+		pyplot.ylim(ymin=-0.05, ymax=1.05)
+		#pyplot.title("Confidence value of %.4f"%(confidence))
+		pyplot.show()
+		#apDisplay.printColor("Confidence value of %.4f complete"%(confidence), "cyan")
 
 		return
 
 	#---------------------------------------
 	def onNeilNormalize(self, evt):
 		self.onSubtBoxFilter(evt)
-		self.onSubtNoise(evt)
-		self.onNormEnvelop(evt)
-		self.onSubtNoise(evt)
-		self.onNormEnvelop(evt)
+		self.onSubtTrimodalNoise(evt)
+		self.onNormTrimodalEnvelop(evt)
+		self.onSubtTrimodalNoise(evt)
+		self.onNormTrimodalEnvelop(evt)
+		apDisplay.printColor("Neil normalize complete", "cyan")
 
 	#---------------------------------------
 	def onFitAmpContrast(self, evt):
@@ -656,19 +954,18 @@ class CTFApp(wx.App):
 
 		imagedata = self.panel.imagedata
 		if self.ellipse_params is None:
-			pixelrdata, self.rotdata = ctftools.rotationalAverage(imagedata, self.ringwidth, full=False)
+			pixelrdata, rotdata = ctftools.rotationalAverage(imagedata, self.ringwidth, full=False)
 			apDisplay.printWarning("doing a rotational average not elliptical")
 		else:
 			ellipratio = self.ellipse_params['a']/self.ellipse_params['b']
 			ellipangle = -math.degrees(self.ellipse_params['alpha'])
-			imagedata = self.panel.imagedata
-			pixelrdata, self.rotdata = ctftools.ellipticalAverage(imagedata, 
+			pixelrdata, rotdata = ctftools.ellipticalAverage(imagedata, 
 				ellipratio, ellipangle, self.ringwidth, full=False)
 		s = pixelrdata*self.freq*1e10
 		#requires a defocus, use defocus2 it is the defocus of the elliptical average
 		defocus2 = self.ctfvalues['defocus2']
 		ws2 = s**2 * self.wavelength * math.pi * defocus2
-		amplitudecontrast = sinefit.refineAmplitudeContrast(ws2[firstpeak:], self.rotdata[firstpeak:], self.ctfvalues['amplitude_contrast'])
+		amplitudecontrast = sinefit.refineAmplitudeContrast(ws2[firstpeak:], rotdata[firstpeak:], self.ctfvalues['amplitude_contrast'])
 		if amplitudecontrast is None:
 			dialog = wx.MessageDialog(self.frame, "Ampltiude constrast adjustment failed, bad fit.",\
 				'Error', wx.OK|wx.ICON_ERROR)
@@ -678,6 +975,7 @@ class CTFApp(wx.App):
 		apDisplay.printColor("amplitude contrast change from %.4f to %.4f"
 			%(self.ctfvalues['amplitude_contrast'], amplitudecontrast), "cyan")
 		self.ctfvalues['amplitude_contrast'] = amplitudecontrast
+		apDisplay.printColor("Fit amplitude contrast complete", "cyan")
 
 	#---------------------------------------
 	def onRefineCTF(self, evt):
@@ -701,19 +999,19 @@ class CTFApp(wx.App):
 
 		imagedata = self.panel.imagedata
 		if self.ellipse_params is None:
-			pixelrdata, self.rotdata = ctftools.rotationalAverage(imagedata, self.ringwidth, full=False)
+			pixelrdata, rotdata = ctftools.rotationalAverage(imagedata, self.ringwidth, full=False)
 			apDisplay.printWarning("doing a rotational average not elliptical")
 		else:
 			ellipratio = self.ellipse_params['a']/self.ellipse_params['b']
 			ellipangle = -math.degrees(self.ellipse_params['alpha'])
-			imagedata = self.panel.imagedata
-			pixelrdata, self.rotdata = ctftools.ellipticalAverage(imagedata, 
+			pixelrdata, rotdata = ctftools.ellipticalAverage(imagedata, 
 				ellipratio, ellipangle, self.ringwidth, full=False)
 		s = pixelrdata*self.freq*1e10
 		#requires a defocus, use defocus2 it is the defocus of the elliptical average
 		defocus2 = self.ctfvalues['defocus2']
 		ws2 = s**2 * self.wavelength * math.pi
-		values = sinefit.refineCTF(ws2[firstpeak:], self.rotdata[firstpeak:], defocus2, self.ctfvalues['amplitude_contrast'])
+		ampcontrast = self.ctfvalues['amplitude_contrast']
+		values = sinefit.refineCTF(ws2[firstpeak:], rotdata[firstpeak:], defocus2, ampcontrast)
 		if values is None:
 			return
 		defocus2, amplitudecontrast = values
@@ -729,6 +1027,63 @@ class CTFApp(wx.App):
 
 		self.ctfvalues['defocus1'] = defocus1
 		self.ctfvalues['defocus2'] = defocus2
+		apDisplay.printColor("Refind CTF 1d complete", "cyan")
+		return
+
+
+	#---------------------------------------
+	def onRefineHalfCTF(self, evt):
+		if not 'defocus2' in self.ctfvalues.keys():
+			dialog = wx.MessageDialog(self.frame, "Need a defocus estimate first.",\
+				'Error', wx.OK|wx.ICON_ERROR)
+			dialog.ShowModal()
+			dialog.Destroy()
+			return
+
+		if self.checkNormalized() is False:
+			return
+
+		# high pass filter the center
+		#get first zero
+		numcols = int(0.5/(self.freq*self.ctfvalues['apix']))
+		radii = ctftools.getCtfExtrema(self.ctfvalues['defocus1'], self.ctfvalues['apix']*1e-10, 
+			self.ctfvalues['cs'], self.ctfvalues['volts'], self.ctfvalues['amplitude_contrast'], 
+			cols=numcols, numzeros=1, zerotype="peaks")
+		firstpeak = radii[0]
+
+		imagedata = self.panel.imagedata
+		if self.ellipse_params is None:
+			pixelrdata, rotdata = ctftools.rotationalAverage(imagedata, self.ringwidth, full=False)
+			apDisplay.printWarning("doing a rotational average not elliptical")
+		else:
+			ellipratio = self.ellipse_params['a']/self.ellipse_params['b']
+			ellipangle = -math.degrees(self.ellipse_params['alpha'])
+			pixelrdata, rotdata = ctftools.ellipticalAverage(imagedata, 
+				ellipratio, ellipangle, self.ringwidth, full=False)
+		s = pixelrdata*self.freq*1e10
+
+		#requires a defocus, use defocus2 it is the defocus of the elliptical average
+		defocus2 = self.ctfvalues['defocus2']
+		ws2 = s**2 * self.wavelength * math.pi
+		ampcontrast = self.ctfvalues['amplitude_contrast']
+		halfindex = len(ws2)/2
+		values = sinefit.refineCTF(ws2[firstpeak:halfindex], rotdata[firstpeak:halfindex], defocus2, ampcontrast)
+		if values is None:
+			return
+		defocus2, amplitudecontrast = values
+		apDisplay.printColor("amplitude contrast change from %.5f to %.5f"
+			%(self.ctfvalues['amplitude_contrast'], amplitudecontrast), "cyan")
+		self.ctfvalues['amplitude_contrast'] = amplitudecontrast
+		apDisplay.printColor("defocus 2 change from %.5e to %.5e"
+			%(self.ctfvalues['defocus2'], defocus2), "cyan")
+		### elliptical ratio is preserved
+		defocus1 = defocus2 * self.ctfvalues['defocus1']/self.ctfvalues['defocus2']
+		apDisplay.printColor("defocus 1 change from %.5e to %.5e"
+			%(self.ctfvalues['defocus1'], defocus1), "cyan")
+
+		self.ctfvalues['defocus1'] = defocus1
+		self.ctfvalues['defocus2'] = defocus2
+		apDisplay.printColor("Refind CTF 1d complete", "cyan")
 		return
 
 	#---------------------------------------
@@ -736,27 +1091,25 @@ class CTFApp(wx.App):
 		imagedata = self.panel.imagedata
 		# do a rotational average to subtract
 		if self.ellipse_params is None:
-			pixelrdata, self.rotdata = ctftools.rotationalAverage(imagedata, self.ringwidth, full=True)
+			pixelrdata, rotdata = ctftools.rotationalAverage(imagedata, self.ringwidth, full=True)
 			apDisplay.printWarning("doing a rotational average not elliptical")
 			ellipratio = 1.0
 			ellipangle = 0.0
 		else:
 			ellipratio = self.ellipse_params['a']/self.ellipse_params['b']
 			ellipangle = -math.degrees(self.ellipse_params['alpha'])
-			imagedata = self.panel.imagedata
-			pixelrdata, self.rotdata = ctftools.ellipticalAverage(imagedata, 
+			pixelrdata, rotdata = ctftools.ellipticalAverage(imagedata, 
 				ellipratio, ellipangle, self.ringwidth, full=True)
 
-		if self.rotdata.min() > 0:
-			newrotdata = numpy.sqrt(self.rotdata)
+		if rotdata.min() > 0:
+			newrotdata = numpy.sqrt(rotdata)
 			didsqrt = True
 		else:
 			didsqrt = False
-			newrotdata = self.rotdata
+			newrotdata = rotdata
 
 		boxfilter = ndimage.uniform_filter1d(newrotdata, 256)
 
-		from matplotlib import pyplot
 		pyplot.clf()
 		xdata= (pixelrdata*self.freq)**2
 		pyplot.plot(xdata, newrotdata, 'k.',)
@@ -768,13 +1121,68 @@ class CTFApp(wx.App):
 		if didsqrt:
 			boxfilter = boxfilter**2
 
-		normaldata = self.rotdata - boxfilter
-		normaldata = ctftools.unEllipticalAverage(pixelrdata, normaldata, 
+		box2d = ctftools.unEllipticalAverage(pixelrdata, boxfilter, 
 			ellipratio, ellipangle, imagedata.shape)
+		normaldata = imagedata - box2d
 
 		self.panel.setImage(normaldata)
 
+		imagestat.printImageInfo(normaldata)
 		apDisplay.printColor("Subtract Box Filter complete", "cyan")
+
+	#---------------------------------------
+	def onSubt2dBoxFilter(self, evt):
+		imagedata = self.panel.imagedata
+		if imagedata.min() > 0:
+			didsqrt = True
+			newdata = numpy.sqrt(imagedata)
+		else:
+			didsqrt = False
+			newdata = imagedata
+
+		boxfilter = ndimage.uniform_filter(newdata, 256)
+
+		# do a rotational average to subtract
+		if self.ellipse_params is None:
+			pixelrdata, rotdata = ctftools.rotationalAverage(newdata, self.ringwidth, full=True)
+			pixelrdata, boxdata = ctftools.rotationalAverage(boxfilter, self.ringwidth, full=True)
+			apDisplay.printWarning("doing a rotational average not elliptical")
+			ellipratio = 1.0
+			ellipangle = 0.0
+		else:
+			ellipratio = self.ellipse_params['a']/self.ellipse_params['b']
+			ellipangle = -math.degrees(self.ellipse_params['alpha'])
+			pixelrdata, rotdata = ctftools.ellipticalAverage(newdata, 
+				ellipratio, ellipangle, self.ringwidth, full=True)
+			pixelrdata, boxdata = ctftools.ellipticalAverage(boxfilter, 
+				ellipratio, ellipangle, self.ringwidth, full=True)
+
+		pyplot.clf()
+		pyplot.subplot(1,2,1)
+		xdata= (pixelrdata*self.freq)**2
+		pyplot.plot(xdata, rotdata, 'k.',)
+		pyplot.plot(xdata, boxdata, 'r-',)
+		pyplot.xlim(xmax=xdata.max())
+		pyplot.ylim(ymin=rotdata.min(), ymax=rotdata.max())
+		pyplot.subplot(1,2,2)
+		pyplot.imshow(boxfilter)
+		pyplot.xticks([], [])
+		pyplot.yticks([], [])
+		pyplot.gray()
+		pyplot.subplots_adjust(wspace=0.01, hspace=0.01, 
+			bottom=0.01, left=0.01, top=0.99, right=0.99, )
+		pyplot.show()
+
+		if didsqrt:
+			print "DID SQRT"
+			boxfilter = boxfilter**2
+
+		normaldata = imagedata - boxfilter
+
+		self.panel.setImage(normaldata)
+
+		imagestat.printImageInfo(normaldata)
+		apDisplay.printColor("Subtract 2D Box Filter complete", "cyan")
 
 
 	#---------------------------------------
@@ -782,27 +1190,25 @@ class CTFApp(wx.App):
 		imagedata = self.panel.imagedata
 		# do a rotational average to subtract
 		if self.ellipse_params is None:
-			pixelrdata, self.rotdata = ctftools.rotationalAverage(imagedata, self.ringwidth, full=True)
+			pixelrdata, rotdata = ctftools.rotationalAverage(imagedata, self.ringwidth, full=True)
 			apDisplay.printWarning("doing a rotational average not elliptical")
 			ellipratio = 1.0
 			ellipangle = 0.0
 		else:
 			ellipratio = self.ellipse_params['a']/self.ellipse_params['b']
 			ellipangle = -math.degrees(self.ellipse_params['alpha'])
-			imagedata = self.panel.imagedata
-			pixelrdata, self.rotdata = ctftools.ellipticalAverage(imagedata, 
+			pixelrdata, rotdata = ctftools.ellipticalAverage(imagedata, 
 				ellipratio, ellipangle, self.ringwidth, full=True)
 
-		if self.rotdata.min() > 0:
-			newrotdata = numpy.sqrt(self.rotdata)
+		if rotdata.min() > 0:
+			newrotdata = numpy.sqrt(rotdata)
 			didsqrt = True
 		else:
 			didsqrt = False
-			newrotdata = self.rotdata
+			newrotdata = rotdata
 
 		gaussfilter = ndimage.gaussian_filter1d(newrotdata, 256)
 
-		from matplotlib import pyplot
 		pyplot.clf()
 		xdata= (pixelrdata*self.freq)**2
 		pyplot.plot(xdata, newrotdata, 'k.',)
@@ -814,12 +1220,13 @@ class CTFApp(wx.App):
 		if didsqrt:
 			gaussfilter = gaussfilter**2
 
-		normaldata = self.rotdata - gaussfilter
-		normaldata = ctftools.unEllipticalAverage(pixelrdata, normaldata, 
+		gauss2d = ctftools.unEllipticalAverage(pixelrdata, gaussfilter,
 			ellipratio, ellipangle, imagedata.shape)
+		normaldata = imagedata - gauss2d
 
 		self.panel.setImage(normaldata)
 
+		imagestat.printImageInfo(normaldata)
 		apDisplay.printColor("Subtract Gauss Filter complete", "cyan")
 
 	#---------------------------------------
@@ -827,13 +1234,14 @@ class CTFApp(wx.App):
 		imagedata = self.panel.imagedata
 		# do a rotational average to subtract
 		if self.ellipse_params is None:
-			pixelrdata, self.rotdata = ctftools.rotationalAverage(imagedata, self.ringwidth, full=False)
+			pixelrdata, rotdata = ctftools.rotationalAverage(imagedata, self.ringwidth, full=False)
 			apDisplay.printWarning("doing a rotational average not elliptical")
+			ellipratio = 1.0
+			ellipangle = 0.0
 		else:
 			ellipratio = self.ellipse_params['a']/self.ellipse_params['b']
 			ellipangle = -math.degrees(self.ellipse_params['alpha'])
-			imagedata = self.panel.imagedata
-			pixelrdata, self.rotdata = ctftools.ellipticalAverage(imagedata, 
+			pixelrdata, rotdata = ctftools.ellipticalAverage(imagedata, 
 				ellipratio, ellipangle, self.ringwidth, full=False)
 
 		# high pass filter the center
@@ -848,41 +1256,218 @@ class CTFApp(wx.App):
 			#set first zero to 1/100A
 			#1/resolution = freq * (# of pixels from center) 
 			firstvalley = int(1.0/(self.freq*100))
-		self.raddata = pixelrdata*self.freq
-		firstvalleyindex = numpy.searchsorted(self.raddata, self.freq*firstvalley)
-		apDisplay.printColor("First valley: %.1f -> %d (1/%.1f A)"%(firstvalley, firstvalleyindex, 1/(firstvalley*self.freq)), "cyan")
+		raddata = pixelrdata*self.freq
+		firstvalleyindex = numpy.searchsorted(raddata, self.freq*firstvalley)
+		apDisplay.printColor("First valley: %.1f -> %d (1/%.1f A)"%(firstvalley, firstvalleyindex, 1/(firstvalley*self.freq)), "yellow")
 	
 		CtfNoise = ctfnoise.CtfNoise()
-		noisefitparams = CtfNoise.modelCTFNoise(self.raddata[firstvalleyindex:], self.rotdata[firstvalleyindex:], "below")
-		noisedata = CtfNoise.noiseModel(noisefitparams, self.raddata)
-		from matplotlib import pyplot
+		noisefitparams = CtfNoise.modelCTFNoise(raddata[firstvalleyindex:], rotdata[firstvalleyindex:], "below")
+		noisedata = CtfNoise.noiseModel(noisefitparams, raddata)
 		pyplot.clf()
-		pyplot.plot(self.raddata**2, self.rotdata, 'k.',)
-		pyplot.plot(self.raddata[firstvalleyindex:]**2, noisedata[firstvalleyindex:], 'b-', )
-		pyplot.xlim(xmax=(self.raddata**2).max())
-		pyplot.ylim(ymin=noisedata.min(), ymax=self.rotdata[firstvalleyindex:].max())
+		pyplot.plot(raddata**2, rotdata, 'k.',)
+		pyplot.plot(raddata[firstvalleyindex:]**2, noisedata[firstvalleyindex:], 'b-', )
+		pyplot.xlim(xmax=(raddata**2).max())
+		pyplot.ylim(ymin=noisedata.min(), ymax=rotdata[firstvalleyindex:].max())
 		pyplot.show()
 
-		noise2d = imagefun.fromRadialFunction(self.funcrad, imagedata.shape, 
-			rdata=self.raddata/self.freq, zdata=noisedata)
+		noise2d = ctftools.unEllipticalAverage(pixelrdata, noisedata,
+			ellipratio, ellipangle, imagedata.shape)
 		normaldata = imagedata - noise2d
 		normaldata = numpy.where(normaldata < -0.1, -0.1, normaldata)
 		self.panel.setImage(normaldata)
 
+		imagestat.printImageInfo(normaldata)
 		apDisplay.printColor("Subtract Noise complete", "cyan")
+
+	#---------------------------------------
+	def onSubtBimodalNoise(self, evt):
+		imagedata = self.panel.imagedata
+		# do a rotational average to subtract
+		if self.ellipse_params is None:
+			pixelrdata, rotdata = ctftools.rotationalAverage(imagedata, self.ringwidth, full=False)
+			apDisplay.printWarning("doing a rotational average not elliptical")
+			ellipratio = 1.0
+			ellipangle = 0.0
+		else:
+			ellipratio = self.ellipse_params['a']/self.ellipse_params['b']
+			ellipangle = -math.degrees(self.ellipse_params['alpha'])
+			pixelrdata, rotdata = ctftools.ellipticalAverage(imagedata, 
+				ellipratio, ellipangle, self.ringwidth, full=False)
+
+		# high pass filter the center
+		if 'defocus1' in self.ctfvalues.keys():
+			#get first zero
+			numcols = int(0.5/(self.freq*self.ctfvalues['apix']))
+			radii = ctftools.getCtfExtrema(self.ctfvalues['defocus1'], self.ctfvalues['apix']*1e-10, 
+				self.ctfvalues['cs'], self.ctfvalues['volts'], self.ctfvalues['amplitude_contrast'], 
+				cols=numcols, numzeros=1, zerotype="valleys")
+			firstvalley = radii[0]
+		else:
+			#set first zero to 1/100A
+			#1/resolution = freq * (# of pixels from center) 
+			firstvalley = int(1.0/(self.freq*100))
+		raddata = pixelrdata*self.freq
+		firstvalleyindex = numpy.searchsorted(raddata, self.freq*firstvalley)
+		apDisplay.printColor("First valley: %.1f -> %d (1/%.1f A)"%(firstvalley, firstvalleyindex, 1/(firstvalley*self.freq)), "yellow")
+	
+
+		### split the function up in first 3/5 and last 3/5 of data with 1/5 overlap
+		numpoints = len(raddata) - firstvalleyindex
+		part1start = firstvalleyindex
+		part1end = int(firstvalleyindex + numpoints*3/5.)
+		part2start = int(firstvalleyindex + numpoints*2/5.)
+		part2end = len(raddata)
+
+		CtfNoise = ctfnoise.CtfNoise()
+
+		## first 3/5 of data
+		noisefitparams1 = CtfNoise.modelCTFNoise(raddata[part1start:part1end], 
+			rotdata[part1start:part1end], "below")
+		noisedata1 = CtfNoise.noiseModel(noisefitparams1, raddata)
+
+		## second 3/5 of data
+		noisefitparams2 = CtfNoise.modelCTFNoise(raddata[part2start:part2end], 
+			rotdata[part2start:part2end], "below")
+		noisedata2 = CtfNoise.noiseModel(noisefitparams2, raddata)
+
+		## merge data
+		scale = numpy.arange(part1end-part2start, dtype=numpy.float32)
+		scale /= scale.max()
+		overlapdata = noisedata1[part2start:part1end]*(1-scale) + noisedata2[part2start:part1end]*scale
+		print scale
+		print (1-scale)
+		mergedata = numpy.hstack((noisedata1[:part2start], overlapdata, noisedata2[part1end:]))
+
+		pyplot.clf()
+		a = pyplot.plot(raddata**2, rotdata, 'k.',)
+		d = pyplot.plot(raddata**2, mergedata, '--', color="purple", linewidth=2)
+		b = pyplot.plot(raddata[part1start:part1end]**2, 
+			noisedata1[part1start:part1end], 'b-', alpha=0.5, linewidth=2)
+		c = pyplot.plot(raddata[part2start:part2end]**2, 
+			noisedata2[part2start:part2end], 'r-', alpha=0.5, linewidth=2)
+		pyplot.legend([a, b, c, d], ["data", "part 1", "part 2", "merge"])
+		pyplot.xlim(xmax=(raddata**2).max())
+		pyplot.ylim(ymin=mergedata[firstvalleyindex:].min(), ymax=rotdata[firstvalleyindex-1:].max())
+		pyplot.subplots_adjust(wspace=0.01, hspace=0.01, 
+			bottom=0.01, left=0.01, top=0.99, right=0.99, )
+		pyplot.show()
+
+		noise2d = ctftools.unEllipticalAverage(pixelrdata, mergedata,
+			ellipratio, ellipangle, imagedata.shape)
+		normaldata = imagedata - noise2d
+		normaldata = numpy.where(normaldata < -0.1, -0.1, normaldata)
+		self.panel.setImage(normaldata)
+
+		imagestat.printImageInfo(normaldata)
+		apDisplay.printColor("Subtract Bimodal Noise complete", "cyan")
+
+	#---------------------------------------
+	def onSubtTrimodalNoise(self, evt):
+		imagedata = self.panel.imagedata
+		# do a rotational average to subtract
+		if self.ellipse_params is None:
+			pixelrdata, rotdata = ctftools.rotationalAverage(imagedata, self.ringwidth, full=False)
+			apDisplay.printWarning("doing a rotational average not elliptical")
+			ellipratio = 1.0
+			ellipangle = 0.0
+		else:
+			ellipratio = self.ellipse_params['a']/self.ellipse_params['b']
+			ellipangle = -math.degrees(self.ellipse_params['alpha'])
+			pixelrdata, rotdata = ctftools.ellipticalAverage(imagedata, 
+				ellipratio, ellipangle, self.ringwidth, full=False)
+
+		# high pass filter the center
+		if 'defocus1' in self.ctfvalues.keys():
+			#get first zero
+			numcols = int(0.5/(self.freq*self.ctfvalues['apix']))
+			radii = ctftools.getCtfExtrema(self.ctfvalues['defocus1'], self.ctfvalues['apix']*1e-10, 
+				self.ctfvalues['cs'], self.ctfvalues['volts'], self.ctfvalues['amplitude_contrast'], 
+				cols=numcols, numzeros=1, zerotype="valleys")
+			firstvalley = radii[0]
+		else:
+			#set first zero to 1/100A
+			#1/resolution = freq * (# of pixels from center) 
+			firstvalley = int(1.0/(self.freq*100))
+		raddata = pixelrdata*self.freq
+		firstvalleyindex = numpy.searchsorted(raddata, self.freq*firstvalley)
+		apDisplay.printColor("First valley: %.1f -> %d (1/%.1f A)"%(firstvalley, firstvalleyindex, 1/(firstvalley*self.freq)), "yellow")
+	
+		### split the function up in first 3/5 and last 3/5 of data with 1/5 overlap
+		numpoints = len(raddata) - firstvalleyindex
+		part1start = firstvalleyindex
+		part1end = int(firstvalleyindex + numpoints*6/10.)
+		part2start = int(firstvalleyindex + numpoints*5/10.)
+		part2end = int(firstvalleyindex + numpoints*9/10.)
+		part3start = int(firstvalleyindex + numpoints*8/10.)
+		part3end = len(raddata)
+
+		CtfNoise = ctfnoise.CtfNoise()
+
+		## first part data
+		noisefitparams1 = CtfNoise.modelCTFNoise(raddata[part1start:part1end], 
+			rotdata[part1start:part1end], "below")
+		noisedata1 = CtfNoise.noiseModel(noisefitparams1, raddata)
+
+		## second part data
+		noisefitparams2 = CtfNoise.modelCTFNoise(raddata[part2start:part2end], 
+			rotdata[part2start:part2end], "below")
+		noisedata2 = CtfNoise.noiseModel(noisefitparams2, raddata)
+
+		## third part data
+		noisefitparams3 = CtfNoise.modelCTFNoise(raddata[part3start:part3end], 
+			rotdata[part3start:part3end], "below")
+		noisedata3 = CtfNoise.noiseModel(noisefitparams3, raddata)
+
+		## merge data
+		scale = numpy.arange(part1end-part2start, dtype=numpy.float32)
+		scale /= scale.max()
+		overlapdata1 = noisedata1[part2start:part1end]*(1-scale) + noisedata2[part2start:part1end]*scale
+		scale = numpy.arange(part2end-part3start, dtype=numpy.float32)
+		scale /= scale.max()
+		overlapdata2 = noisedata2[part3start:part2end]*(1-scale) + noisedata3[part3start:part2end]*scale
+
+		mergedata = numpy.hstack((noisedata1[:part2start], overlapdata1, 
+			noisedata2[part1end:part3start], overlapdata2,
+			noisedata3[part2end:]))
+
+		pyplot.clf()
+		a = pyplot.plot(raddata**2, rotdata, 'k.',)
+		b = pyplot.plot(raddata**2, mergedata, '--', color="purple", linewidth=2)
+		c = pyplot.plot(raddata[part1start:part1end]**2, 
+			noisedata1[part1start:part1end], 'b-', alpha=0.5, linewidth=2)
+		d = pyplot.plot(raddata[part2start:part2end]**2, 
+			noisedata2[part2start:part2end], 'r-', alpha=0.5, linewidth=2)
+		e = pyplot.plot(raddata[part3start:part3end]**2,
+			noisedata3[part3start:part3end], '-', alpha=0.5, linewidth=2, color="green")
+		pyplot.legend([a, b, c, d, e], ["data", "merge", "part 1", "part 2", "part 3"])
+		pyplot.xlim(xmax=(raddata**2).max())
+		pyplot.ylim(ymin=mergedata[firstvalleyindex:].min(), ymax=rotdata[firstvalleyindex-1:].max())
+		pyplot.subplots_adjust(wspace=0.01, hspace=0.01, 
+			bottom=0.05, left=0.05, top=0.99, right=0.99, )
+		pyplot.show()
+
+		noise2d = ctftools.unEllipticalAverage(pixelrdata, mergedata,
+			ellipratio, ellipangle, imagedata.shape)
+		normaldata = imagedata - noise2d
+		normaldata = numpy.where(normaldata < -0.1, -0.1, normaldata)
+		self.panel.setImage(normaldata)
+
+		imagestat.printImageInfo(normaldata)
+		apDisplay.printColor("Subtract Trimodal Noise complete", "cyan")
 
 	#---------------------------------------
 	def onNormEnvelop(self, evt):
 		# do a rotational average to subtract
 		imagedata = self.panel.imagedata
 		if self.ellipse_params is None:
-			pixelrdata, self.rotdata = ctftools.rotationalAverage(imagedata, self.ringwidth, full=False)
+			pixelrdata, rotdata = ctftools.rotationalAverage(imagedata, self.ringwidth, full=False)
 			apDisplay.printWarning("doing a rotational average not elliptical")
+			ellipratio = 1.0
+			ellipangle = 0.0
 		else:
 			ellipratio = self.ellipse_params['a']/self.ellipse_params['b']
 			ellipangle = -math.degrees(self.ellipse_params['alpha'])
-			imagedata = self.panel.imagedata
-			pixelrdata, self.rotdata = ctftools.ellipticalAverage(imagedata, 
+			pixelrdata, rotdata = ctftools.ellipticalAverage(imagedata, 
 				ellipratio, ellipangle, self.ringwidth, full=False)
 
 		# high pass filter the center
@@ -897,49 +1482,152 @@ class CTFApp(wx.App):
 			#set first zero to 1/100A
 			#1/resolution = freq * (# of pixels from center) 
 			firstpeak = 1.0/(self.freq*100)
-		self.raddata = pixelrdata*self.freq
-		firstpeakindex = numpy.searchsorted(self.raddata, firstpeak*self.freq)
-		apDisplay.printColor("First peak: %.1f (1/%.1f A)"%(firstpeakindex, 1/(firstpeak*self.freq)), "cyan")
+		raddata = pixelrdata*self.freq
+		firstpeakindex = numpy.searchsorted(raddata, firstpeak*self.freq)
+		apDisplay.printColor("First peak: %.1f (1/%.1f A)"%
+			(firstpeakindex, 1/(firstpeak*self.freq)), "yellow")
 
 		CtfNoise = ctfnoise.CtfNoise()
-		envelopfitparams = CtfNoise.modelCTFNoise(self.raddata[firstpeakindex:], self.rotdata[firstpeakindex:], "above")
-		envelopdata = CtfNoise.noiseModel(envelopfitparams, self.raddata)
-		envelop2d = imagefun.fromRadialFunction(self.funcrad, imagedata.shape, 
-			rdata=self.raddata/self.freq, zdata=envelopdata)
+		envelopfitparams = CtfNoise.modelCTFNoise(raddata[firstpeakindex:], rotdata[firstpeakindex:], "above")
+		envelopdata = CtfNoise.noiseModel(envelopfitparams, raddata)
+
+		pyplot.clf()
+		pyplot.plot(raddata**2, rotdata, 'k.',)
+		pyplot.plot(raddata[firstpeakindex:]**2, envelopdata[firstpeakindex:], 'r-', )
+		pyplot.xlim(xmax=(raddata**2).max())
+		pyplot.ylim(ymin=rotdata.min(), ymax=envelopdata.max())
+		pyplot.show()
+
+		envelop2d = ctftools.unEllipticalAverage(pixelrdata, envelopdata,
+			ellipratio, ellipangle, imagedata.shape)
 		normaldata = imagedata/envelop2d
 		normaldata = numpy.where(normaldata > 1.1, 1.1, normaldata)
 		normaldata = numpy.where(normaldata < -0.1, -0.1, normaldata)
-		from matplotlib import pyplot
-		pyplot.clf()
-		pyplot.plot(self.raddata**2, self.rotdata, 'k.',)
-		pyplot.plot(self.raddata[firstpeakindex:]**2, envelopdata[firstpeakindex:], 'r-', )
-		pyplot.xlim(xmax=(self.raddata**2).max())
-		pyplot.ylim(ymin=self.rotdata.min(), ymax=envelopdata.max())
-		pyplot.show()
+
 		self.panel.setImage(normaldata)
+		imagestat.printImageInfo(normaldata)
 		apDisplay.printColor("Normalize envelope complete", "cyan")
+
+	#---------------------------------------
+	def onNormTrimodalEnvelop(self, evt):
+		imagedata = self.panel.imagedata
+		# do a rotational average to subtract
+		if self.ellipse_params is None:
+			pixelrdata, rotdata = ctftools.rotationalAverage(imagedata, self.ringwidth, full=False)
+			apDisplay.printWarning("doing a rotational average not elliptical")
+			ellipratio = 1.0
+			ellipangle = 0.0
+		else:
+			ellipratio = self.ellipse_params['a']/self.ellipse_params['b']
+			ellipangle = -math.degrees(self.ellipse_params['alpha'])
+			pixelrdata, rotdata = ctftools.ellipticalAverage(imagedata, 
+				ellipratio, ellipangle, self.ringwidth, full=False)
+
+		# high pass filter the center
+		if 'defocus1' in self.ctfvalues.keys():
+			#get first zero
+			numcols = int(0.5/(self.freq*self.ctfvalues['apix']))
+			radii = ctftools.getCtfExtrema(self.ctfvalues['defocus1'], self.ctfvalues['apix']*1e-10, 
+				self.ctfvalues['cs'], self.ctfvalues['volts'], self.ctfvalues['amplitude_contrast'], 
+				cols=numcols, numzeros=1, zerotype="peaks")
+			firstpeak = radii[0]
+		else:
+			#set first zero to 1/100A
+			#1/resolution = freq * (# of pixels from center) 
+			firstpeak = int(1.0/(self.freq*100))
+		raddata = pixelrdata*self.freq
+		firstpeakindex = numpy.searchsorted(raddata, self.freq*firstpeak)
+		apDisplay.printColor("First peak: %.1f (1/%.1f A)"%
+			(firstpeakindex, 1/(firstpeak*self.freq)), "yellow")
+	
+		### split the function up in first 3/5 and last 3/5 of data with 1/5 overlap
+		numpoints = len(raddata) - firstpeakindex
+		part1start = firstpeakindex
+		part1end = int(firstpeakindex + numpoints*6/10.)
+		part2start = int(firstpeakindex + numpoints*5/10.)
+		part2end = int(firstpeakindex + numpoints*9/10.)
+		part3start = int(firstpeakindex + numpoints*8/10.)
+		part3end = len(raddata)
+
+		CtfNoise = ctfnoise.CtfNoise()
+
+		## first part data
+		envelopfitparams1 = CtfNoise.modelCTFNoise(raddata[part1start:part1end], 
+			rotdata[part1start:part1end], "above")
+		envelopdata1 = CtfNoise.noiseModel(envelopfitparams1, raddata)
+
+		## second part data
+		envelopfitparams2 = CtfNoise.modelCTFNoise(raddata[part2start:part2end], 
+			rotdata[part2start:part2end], "above")
+		envelopdata2 = CtfNoise.noiseModel(envelopfitparams2, raddata)
+
+		## third part data
+		envelopfitparams3 = CtfNoise.modelCTFNoise(raddata[part3start:part3end], 
+			rotdata[part3start:part3end], "above")
+		envelopdata3 = CtfNoise.noiseModel(envelopfitparams3, raddata)
+
+		## merge data
+		scale = numpy.arange(part1end-part2start, dtype=numpy.float32)
+		scale /= scale.max()
+		overlapdata1 = envelopdata1[part2start:part1end]*(1-scale) + envelopdata2[part2start:part1end]*scale
+		scale = numpy.arange(part2end-part3start, dtype=numpy.float32)
+		scale /= scale.max()
+		overlapdata2 = envelopdata2[part3start:part2end]*(1-scale) + envelopdata3[part3start:part2end]*scale
+
+		mergedata = numpy.hstack((envelopdata1[:part2start], overlapdata1, 
+			envelopdata2[part1end:part3start], overlapdata2,
+			envelopdata3[part2end:]))
+
+		pyplot.clf()
+		a = pyplot.plot(raddata**2, rotdata, 'k.',)
+		b = pyplot.plot(raddata**2, mergedata, '--', color="purple", linewidth=2)
+		c = pyplot.plot(raddata[part1start:part1end]**2, 
+			envelopdata1[part1start:part1end], 'b-', alpha=0.5, linewidth=2)
+		d = pyplot.plot(raddata[part2start:part2end]**2, 
+			envelopdata2[part2start:part2end], 'r-', alpha=0.5, linewidth=2)
+		e = pyplot.plot(raddata[part3start:part3end]**2,
+			envelopdata3[part3start:part3end], '-', alpha=0.5, linewidth=2, color="green")
+		pyplot.legend([a, b, c, d, e], ["data", "merge", "part 1", "part 2", "part 3"])
+		pyplot.xlim(xmax=(raddata**2).max())
+		pyplot.ylim(ymin=rotdata[firstpeakindex-1:].min(), ymax=mergedata[firstpeakindex-1:].max())
+		pyplot.subplots_adjust(wspace=0.01, hspace=0.01, 
+			bottom=0.05, left=0.05, top=0.99, right=0.99, )
+		pyplot.show()
+
+		envelop2d = ctftools.unEllipticalAverage(pixelrdata, mergedata,
+			ellipratio, ellipangle, imagedata.shape)
+		normaldata = imagedata/envelop2d
+		normaldata = numpy.where(normaldata > 1.1, 1.1, normaldata)
+		normaldata = numpy.where(normaldata < -0.1, -0.1, normaldata)
+		self.panel.setImage(normaldata)
+
+		imagestat.printImageInfo(normaldata)
+		apDisplay.printColor("Normalize Trimodal Envelop complete", "cyan")
+
 
 	#---------------------------------------
 	def onShowPlot(self, evt):
 		# do a rotational average to subtract
 		imagedata = self.panel.imagedata
+		imagestat.printImageInfo(imagedata)
 		if self.ellipse_params is None:
-			pixelrdata, self.rotdata = ctftools.rotationalAverage(imagedata, self.ringwidth, full=False)
+			pixelrdata, rotdata = ctftools.rotationalAverage(imagedata, self.ringwidth, full=False)
 			apDisplay.printWarning("doing a rotational average not elliptical")
 		else:
 			ellipratio = self.ellipse_params['a']/self.ellipse_params['b']
 			ellipangle = -math.degrees(self.ellipse_params['alpha'])
-			imagedata = self.panel.imagedata
-			pixelrdata, self.rotdata = ctftools.ellipticalAverage(imagedata, 
+			pixelrdata, rotdata = ctftools.ellipticalAverage(imagedata, 
 				ellipratio, ellipangle, self.ringwidth, full=False)
 
-		from matplotlib import pyplot
+		imagestat.printImageInfo(rotdata)
+
 		pyplot.clf()
 		xdata= (pixelrdata*self.freq)**2
-		pyplot.plot(xdata, self.rotdata, 'k-',)
+		pyplot.plot(xdata, rotdata, 'k-',)
 		pyplot.xlim(xmax=xdata.max())
-		pyplot.ylim(ymin=self.rotdata.min(), ymax=self.rotdata.max())
+		pyplot.ylim(ymin=rotdata.min(), ymax=rotdata.max())
 		pyplot.show()
+		apDisplay.printColor("Show plot complete", "cyan")
 		return
 
 
@@ -1008,10 +1696,12 @@ class CTFApp(wx.App):
 	#---------------------------------------
 	def onClear(self, evt):
 		self.panel.setTargets('First Valley', [])
+		apDisplay.printColor("Clear picks complete", "cyan")
 
 	#---------------------------------------
 	def onRevert(self, evt):
 		self.panel.openImageFile(self.panel.filename)
+		apDisplay.printColor("Revert image complete", "cyan")
 
 	#---------------------------------------
 	def targetsToArray(self, targets):
@@ -1176,7 +1866,7 @@ class ManualCTF(appionLoop2.AppionLoop):
 		pixellimit = int(math.ceil(pixelsize*cols/self.params['reslimit']))
 		size = apPrimeFactor.getNextEvenPrime(pixellimit*2)
 		newshape = (size, size)
-		print newshape
+		print "NEWSHAPE=", newshape
 		fftarray = imagefilter.frame_cut(fftarray, newshape)
 
 		## preform a rotational average and remove peaks
