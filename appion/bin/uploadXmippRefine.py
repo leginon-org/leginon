@@ -191,7 +191,7 @@ class uploadXmippProjectionMatchingRefinementScript(reconUploader.generalReconUp
 #			particledataf.write("%8d" % 0) # deprecated: mirror is flipped already. Set to False
 			particledataf.write("%8d" % 1)
 			particledataf.write("%8d" % float(docsplitlines[i*2+1][7]))
-			particledataf.write("%10.4f" % float(docsplitlines[i*2+1][9])))
+			particledataf.write("%10.4f" % float(docsplitlines[i*2+1][9]))
 			if i in badpartlist:
 				particledataf.write("%8d" % 0)
 			else:
