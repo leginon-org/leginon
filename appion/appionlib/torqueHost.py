@@ -115,10 +115,14 @@ class MoabTorqueHost(TorqueHost):
 		processingHost.ProcessingHost.__init__(self)  #initialize parent
 		self.type="Torque"
 		self.execCommand="msub"
-		self.statusCommand="qstat"
+		self.statusCommand="showq"
 		self.scriptPrefix="#MOAB"
 		if configDict:
 			self.configure(configDict)
 
 	def translateOutput (self, outputString):
-		return 1
+		try:
+			jobID= int(outputString.splitlines()[1])
+		except Exception:
+			return False
+		return jobID      
