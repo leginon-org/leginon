@@ -7,6 +7,7 @@ from appionlib import apGenericJob
 from appionlib import jobtest
 from appionlib import appiondata
 from appionlib import apDatabase
+from appionlib import basicAgent
 import sys
 import re
 import time
@@ -20,14 +21,12 @@ except ImportError, e:
 	statusUpdatesEnabled = False
 else:
 	statusUpdatesEnabled = True
-	
-class Agent (object):
+
+class Agent (basicAgent.BasicAgent):
 	def __init__(self, configFile=None):
-		if configFile:
-			self.configFile = configFile
+		super(Agent,self).__init__(configFile)
 		
 		self.currentJob = None
-		self.processingHost = None
 		self.statusCkInterval = 30
 	
 	def Main(self,command):
@@ -49,7 +48,7 @@ class Agent (object):
 		if not self.currentJob:
 			sys.stderr.write("Error: Could not create job for: %s\n" % (command))
 			sys.exit(1)
-			  
+
 		hostJobId = self.processingHost.launchJob(self.currentJob)
 		#if the job launched successfully print out the ID returned.
 		if not hostJobId:
@@ -64,29 +63,6 @@ class Agent (object):
 	   
 		return 0
  
-	##
-	#	
-	def createProcessingHost(self):
-		if not self.configFile:
-			raise ValueError ("Could not create processing host object, configuration file not defined") 
-		
-		configDict = self.parseConfigFile(self.configFile)
-		try:
-			processingHostType = configDict['ProcessingHostType'].upper()
-			if 'TORQUE' == processingHostType or 'PBS' == processingHostType:
-				processingHost = torqueHost.TorqueHost(configDict)
-			elif 'MOABTORQUE' == processingHostType or 'MOAB' == processingHostType:
-				processingHost = torqueHost.MoabTorqueHost(configDict)
-			else:
-				sys.stderr.write("Unknown processing host type, using default\n")
-				processingHost = torqueHost.TorqueHost(configDict)
-			
-		except (KeyError, AttributeError):
-			sys.stderr.write("Couldn't determine processing host type, using default\n")
-			processingHost = torqueHost.TorqueHost(configDict)
- 
-		return processingHost
-	   
 	##getJobType (command)
 	#Searches a list of command options , 'command',  and attempts to extract the 
 	#job type from it.  Returns the job type if successful otherwise returns None.
