@@ -127,7 +127,7 @@ class PickerApp(wx.App):
 		self.buttonrow.Add(self.next, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 
 		### Helix picker doesn't have 'remove region'
-		if self.labels[0] != 'Add Helix':
+		if len(self.labels) > 0 and self.labels[0] != 'Add Helix':
 			self.add = wx.Button(self.frame, wx.ID_REMOVE, '&Remove Region')
 			self.add.SetMinSize((150,40))
 			self.Bind(wx.EVT_BUTTON, self.onAdd, self.add)
