@@ -143,7 +143,7 @@ class PickerApp(wx.App):
 		self.Bind(wx.EVT_BUTTON, self.onRevert, self.revert)
 		self.buttonrow.Add(self.revert, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 
-		if self.labels[0] == 'Add Helix':
+		if len(self.labels) > 0 and self.labels[0] == 'Add Helix':
 			self.helicalinsert = wx.Button(self.frame, -1, '&Add Helix')
 			self.helicalinsert.SetMinSize((120,40))
 			self.Bind(wx.EVT_BUTTON, self.addHelix, self.helicalinsert)
@@ -229,7 +229,7 @@ class PickerApp(wx.App):
 		#targets = self.panel.getTargets('Select Particles')
 		#for target in targets:
 		#	print '%s\t%s' % (target.x, target.y)
-		if self.labels[0]!="Add Helix":
+		if len(self.labels) > 0 and self.labels[0]!="Add Helix":
 			vertices = self.panel.getTargetPositions('Region to Remove')
 			if len(vertices) > 0:
 				apDisplay.printMsg("Clearing %d polygon vertices"%(len(vertices)))
