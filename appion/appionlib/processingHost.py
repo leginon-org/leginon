@@ -56,11 +56,14 @@ class ProcessingHost (object):
 	#managers which provide a job submission executable which effectively returns 
 	#immediately.  However it may need to be overridden in some child classes where the
 	#command may not return right away.	  
-	def executeCommand (self, command):
+	def executeCommand (self, command, wait=True):
 		#run the command string in a subshell
 		process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True) 
-		#Wait for the process to return and set the exit code.
-		returnCode = process.wait()
+		if wait:
+			#Wait for the process to return and set the exit code.
+			returnCode = process.wait()
+		else:
+			return ''
 		
 		#if the command program did not execute normally raise an exception and 
 		#include the contents of stderr in the message.
