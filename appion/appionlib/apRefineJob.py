@@ -24,6 +24,7 @@ class RefineJob(basicScript.BasicScript):
 		super(RefineJob,self).__init__(optlist)
 		self.__gotoRemoteRunDir()
 		self.setAttributes()
+		self.launch_as_shell = False
 		self.__initializeLog()
 		self.start()
 		self.close()
@@ -202,7 +203,39 @@ class RefineJob(basicScript.BasicScript):
 		f.writelines(map((lambda x: x+'\n'),lines))
 		f.close()
 		os.chmod(masterfile, 0755)
-	
+	def wrapScript(self,scriptname):	
+		if self.params['appionwrapper'] != '':
+			return self.params['appionwrapper']+' '+scriptname
+		else:
+			return scriptname
+
+	def setupMPIRun(self,procscripts,nproc,masterfile_dir,masterfile_name):
+		'''
+		setupMPI run by making a master script in the designated path
+		'''
+		mpi_script = ''
+		wrapper_tasksender = self.wrapScript('taskSender.py')
+		subp_nproc = max(nproc / len(procscripts), 1)
+		for index, procscript in enumerate(procscripts):
+			ppn = min(subp_nproc,self.ppn)
+			nodes = subp_nproc * ppn
+			mpi_script += '%s %s %03d %d %d %d %s\n' % (wrapper_tasksender,self.params['remoterundir'],index,ppn,nodes,self.mem,procscript)
+		mpi_script += '%s %s\n' % (self.wrapScript('taskMonitor.py'),self.params['remoterundir'])
+		self.launch_as_shell = True
+		return mpi_script
+
+	def setupMPRun(self,procscript,mem,nproc):
+		'''
+		setup single node MP run
+		'''
+		mp_script = ''
+		wrapper_tasksender = self.wrapScript('taskSender.py')
+		ppn = nproc
+		mp_script += '%s %s %03d %d %d %d %s\n' % (wrapper_tasksender,self.params['remoterundir'],0,ppn,1,mem,procscript)
+		mp_script += '%s %s\n' % (self.wrapScript('taskMonitor.py'),self.params['remoterundir'])
+		self.launch_as_shell = True
+		return mp_script
+
 	def makePreIterationScript(self):
 		'''
 		Package-specific function to make job script for setup tasks to do before
@@ -540,6 +573,8 @@ class RefineJob(basicScript.BasicScript):
 		return self.expid    
 	def getRundir(self):
 		return self.rundir    
+	def getLaunchAsShell(self):
+		return self.launch_as_shell    
 	
 class Tester(RefineJob):
 	def makeRefineScript(self,iter):

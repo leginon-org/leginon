@@ -49,7 +49,12 @@ class Agent (basicAgent.BasicAgent):
 			sys.stderr.write("Error: Could not create job for: %s\n" % (command))
 			sys.exit(1)
 
-		hostJobId = self.processingHost.launchJob(self.currentJob)
+		if not self.currentJob.getLaunchAsShell():
+			# typical case that put all commands in one queued job script
+			hostJobId = self.processingHost.launchJob(self.currentJob)
+		else:
+			# need to run most commands from head node shell when multiple queued submission is needed in parallel
+			hostJobId = self.executeCommandList(self.currentJob)
 		#if the job launched successfully print out the ID returned.
 		if not hostJobId:
 			sys.stderr.write("Error: Could not execute job %s\n" % (self.currentJob.getName()))
@@ -99,40 +104,11 @@ class Agent (basicAgent.BasicAgent):
 		print jobType, command
 		return jobInstance
 
-	##
-	#
-	def parseConfigFile (self, configFile):
-		confDict ={}
-		try:
-			cFile= file(configFile, 'r')
-		except IOError, e:
-			raise IOError ("Couldn't read configuration file " + configFile + ": " + str(e))
-		
-		#for line in cFile.readlines():		  
-		line = cFile.readline()
-		while line:
-			#get rid of an leading and trailing white space
-			#line = line.strip()
-			#Only process lines of the correct format, quietly ignore all others"
-			matchedLine=re.match(r'\s*([A-Za-z]+)\s*=\s*(\S.*)\s*',line)
-			if  matchedLine:
-				#split the two parts of the line
-				(key, value) = matchedLine.groups()
-				#value strings can be spread across multiple lines if \n is escaped (\)
-				#process these lines.			  
-				while '\\' == value[-1]:	  
-					value = value[:-1]
-					line= cFile.readline()
-					value += line.rstrip('\n')
-				#split comma separated values into a list
-				if ',' in value:   
-					value = re.split(r'\s*,\s*', value)
-				#put the key/value pair in the configuration dictionary	
-				confDict[key]=value
-			line = cFile.readline()
-				
-		return confDict
-	
+	def executeCommandList(self,jobObject):
+		returncode = self.processingHost.executeCommand('rm -f agent.log')
+		returncode = self.processingHost.executeCommand('source %s >agent.log &' % (jobObject.commandfile),wait=False)
+		return 1
+
 	##
 	#
 	def updateJobStatus (self, jobObject, hostJobId ):

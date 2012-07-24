@@ -1,6 +1,6 @@
 from appionlib import torqueHost
+from appionlib import apConfig
 import sys
-import re
 
 class BasicAgent(object): 
     '''
@@ -16,7 +16,7 @@ class BasicAgent(object):
         if not self.configFile:
             raise ValueError ("Could not create processing host object, configuration file not defined") 
         
-        configDict = self.parseConfigFile(self.configFile)
+        configDict = apConfig.parseConfigFile(self.configFile)
 
         try:
             processingHostType = configDict['ProcessingHostType'].upper()
@@ -34,39 +34,7 @@ class BasicAgent(object):
  
         return processingHost
 
-    def parseConfigFile (self, configFile):
-        confDict ={}
-        try:
-            cFile= file(configFile, 'r')
-        except IOError, e:
-            raise IOError ("Couldn't read configuration file " + configFile + ": " + str(e))
-        
-        #for line in cFile.readlines():          
-        line = cFile.readline()
-        while line:
-            #get rid of an leading and trailing white space
-            #line = line.strip()
-            #Only process lines of the correct format, quietly ignore all others"
-            matchedLine=re.match(r'\s*([A-Za-z]+)\s*=\s*(\S.*)\s*',line)
-            if  matchedLine:
-                #split the two parts of the line
-                (key, value) = matchedLine.groups()
-                #value strings can be spread across multiple lines if \n is escaped (\)
-                #process these lines.              
-                while '\\' == value[-1]:      
-                    value = value[:-1]
-                    line= cFile.readline()
-                    value += line.rstrip('\n')
-                #split comma separated values into a list
-                if ',' in value:   
-                    value = re.split(r'\s*,\s*', value)
-                #put the key/value pair in the configuration dictionary    
-                confDict[key]=value
-            line = cFile.readline()
-                
-        return confDict
-    
-    ##
+##
     #
     
     def Main(self,command):
