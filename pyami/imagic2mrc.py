@@ -5,7 +5,25 @@ import numpy
 import shutil
 import pyami.imagic
 
-def imagic_to_mrc(imagic_name, mrc_name):
+def yflip_copy(mrc_header, fin, fout):
+	'''
+	copy stack data from fin to fout, but flip data on y axis
+	'''
+	nx = mrc_header['nx']
+	ny = mrc_header['ny']
+	nz = mrc_header['nz'] or 1
+	bpp = mrc_header['dtype'].itemsize
+	ystride = nx * bpp
+	zstride = nx * ny * bpp
+	inpos0 = fin.tell()
+	for z in range(nz):
+		for y in range(ny):
+			inpos = inpos0 + (z+1) * zstride - (y+1) * ystride
+			fin.seek(inpos)
+			data = fin.read(ystride)
+			fout.write(data)
+
+def imagic_to_mrc(imagic_name, mrc_name, yflip=False):
 	# read imagic header
 	hed_name = imagic_name + '.hed'
 	dat_name = imagic_name + '.img'
@@ -26,7 +44,10 @@ def imagic_to_mrc(imagic_name, mrc_name):
 
 	## append imagic data file to mrc file
 	fdat = open(dat_name)
-	shutil.copyfileobj(fdat, fmrc)
+	if yflip:
+		yflip_copy(mrc_header, fdat, fmrc)
+	else:
+		shutil.copyfileobj(fdat, fmrc)
 	fmrc.close()
 	fdat.close()
 
@@ -34,7 +55,14 @@ def run():
 	import sys
 	imagicfile = sys.argv[1]
 	mrcfile = sys.argv[2]
-	imagic_to_mrc(imagicfile, mrcfile)
+	yflip = False
+	try:
+		yflip = sys.argv[3]
+		if yflip == 'yflip':
+			yflip = True
+	except:
+		pass
+	imagic_to_mrc(imagicfile, mrcfile, yflip)
 
 if __name__ == '__main__':
 	run()
