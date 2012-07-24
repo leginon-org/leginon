@@ -15,6 +15,7 @@ class genericJob(object):
 		self.jobid = 0
 		self.projectId = 0 
 		self.rundir =""	  
+		self.launch_as_shell = False
 		if optList:
 			newOptList=self.setJobAttributes(optList)
 			self.createCommandList(newOptList)
@@ -58,7 +59,6 @@ class genericJob(object):
 			matchedLine = re.match(r'--(\S+)=(.*)', opt)
 			if matchedLine:
 				(key, value) = matchedLine.groups()
-
 				#if value is a string need to reconstruct opt value adding quotes
 				if re.search(r'\s', value):
 					opt = '--' + key + '=' + '\"' + value + '\"'
@@ -161,5 +161,7 @@ class genericJob(object):
 		return self.rundir
 	def getJobName(self):
 		return self.runname + ".job"
-
+	def getLaunchAsShell(self):
+		return self.launch_as_shell    
+	
 
