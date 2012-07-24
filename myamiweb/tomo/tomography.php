@@ -330,6 +330,32 @@ class Tomography {
 		return $results;
 	}
 
+	function getImageDose($image_id) {
+		// The exposure time in this function is in msec to match 
+		// getTiltSeriesData that is used together.
+		$query = 'SELECT p.dose/1e20 AS dose, '
+			.'p.`exposure time` as exposure_time '
+			.'FROM PresetData p '
+			.'LEFT JOIN AcquisitionImageData a '
+			.'ON a.`REF|PresetData|preset` = p.`DEF_id` '
+			.'WHERE a.`DEF_id` = '.$image_id.' ';
+		$results = $this->mysql->getSQLResult($query);
+		return $results[0];
+	}
+
+	function getTiltSeriesDose($tiltSeriesData) {
+		$first_image_dose_data = $this->getImageDose($tiltSeriesData[0]['id']);
+		$total_exposure_time = 0;
+		foreach ($tiltSeriesData as $tdata) {
+			$total_exposure_time += $tdata['exposure_time'];
+		}
+		if ($first_image_dose_data['dose']) {
+			$total_dose = $first_image_dose_data['dose'] * $total_exposure_time / $first_image_dose_data['exposure_time'];
+			return (int) $total_dose;
+		} else
+			return 'n/a';
+	}
+
 	function getEnergyShift($session_id) {
 		if($session_id == NULL)
 			return array();
