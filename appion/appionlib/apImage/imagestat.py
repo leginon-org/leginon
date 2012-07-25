@@ -73,6 +73,10 @@ def printImageInfo(im):
 	#print " ... sum:  ",im.sum()
 	avg1,stdev1,min1,max1 = getImageInfo(im)
 
+	if len(im.shape) == 2:
+		print "Image: %d x %d - type %s"%(im.shape[0], im.shape[1], im.dtype)
+	elif len(im.shape) == 1:
+		print "Image: %d - type %s"%(im.shape[0], im.dtype)
 	print " ... avg:  ",round(avg1,6),"+-",round(stdev1,6)
 	print " ... range:",round(min1,6),"<>",round(max1,6)
 
