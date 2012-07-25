@@ -69,9 +69,10 @@ class ManualPickerPanel(TargetPanel.TargetImagePanel):
 ##################################
 
 class PickerApp(wx.App):
-	def __init__(self, shape='+', size=16, mask=False, labels=[]):
+	def __init__(self, shape='+', size=16, usehelix=False, mask=False, labels=[]):
 		self.shape = shape
 		self.size = size
+		self.usehelix = usehelix
 		self.mask = mask
 		self.pick_colors = iter(pick_colors)
 		self.labels = labels
@@ -92,7 +93,7 @@ class PickerApp(wx.App):
 		self.panel = ManualPickerPanel(self.frame, -1)
 		self.panel.originaltargets = {}
 
-		if len(self.labels) > 0 and self.labels[0] == 'Add Helix':
+		if self.usehelix is True:
 			self.panel.addTargetTool('Add Helix', color=wx.Colour(20,220,20),
 				target=True, shape='spline')
 			self.panel.setTargets('Add Helix', [])
@@ -127,7 +128,7 @@ class PickerApp(wx.App):
 		self.buttonrow.Add(self.next, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 
 		### Helix picker doesn't have 'remove region'
-		if len(self.labels) > 0 and self.labels[0] != 'Add Helix':
+		if self.usehelix is False:
 			self.add = wx.Button(self.frame, wx.ID_REMOVE, '&Remove Region')
 			self.add.SetMinSize((150,40))
 			self.Bind(wx.EVT_BUTTON, self.onAdd, self.add)
@@ -143,15 +144,13 @@ class PickerApp(wx.App):
 		self.Bind(wx.EVT_BUTTON, self.onRevert, self.revert)
 		self.buttonrow.Add(self.revert, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 
-		if len(self.labels) > 0 and self.labels[0] == 'Add Helix':
+		if self.usehelix is True:
 			self.helicalinsert = wx.Button(self.frame, -1, '&Add Helix')
 			self.helicalinsert.SetMinSize((120,40))
 			self.Bind(wx.EVT_BUTTON, self.addHelix, self.helicalinsert)
-		elif len(self.labels) > 0:
 			self.helicalinsert = wx.Button(self.frame, -1, '&Helical insert')
 			self.helicalinsert.SetMinSize((120,40))
 			self.Bind(wx.EVT_BUTTON, self.onHelicalInsert, self.helicalinsert)
-		if len(self.labels) > 0:
 			self.buttonrow.Add(self.helicalinsert, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 
 		label = wx.StaticText(self.frame, -1, "Image Assessment:  ", style=wx.ALIGN_RIGHT)
@@ -230,13 +229,13 @@ class PickerApp(wx.App):
 		#targets = self.panel.getTargets('Select Particles')
 		#for target in targets:
 		#	print '%s\t%s' % (target.x, target.y)
-		if len(self.labels) > 0 and self.labels[0]!="Add Helix":
+		if self.usehelix is False:
 			vertices = self.panel.getTargetPositions('Region to Remove')
 			if len(vertices) > 0:
 				apDisplay.printMsg("Clearing %d polygon vertices"%(len(vertices)))
 				self.panel.setTargets('Region to Remove', [])
 		## add any green particle picks to 'Stored Helices'
-		elif len(self.labels) > 0:
+		else:
 			self.addHelix(evt)
 		self.appionloop.targets = {}
 		for label in self.labels:
@@ -439,6 +438,7 @@ class ManualPicker(particleLoop2.ParticleLoop):
 		self.app = PickerApp(
 			shape = self.canonicalShape(self.params['shape']),
 			size =  self.params['shapesize'],
+			usehelix =  self.params['helix'],
 			labels = self.labels,
 		)
 
@@ -454,14 +454,14 @@ class ManualPicker(particleLoop2.ParticleLoop):
 		else:
 			self.labels = []
 
+		### this is confusing and needs someone to look at it.
 		if self.params['helicalstep']:
 			self.labels = ['User', 'Helical']
 		if self.params['helix'] is True:
 			self.labels = ['Add Helix', 'Stored Helices']
-
 		## If no labels specified or previous picks to get labels from,
 		##   then use default label 'particle'.
-		if not (self.params['pickrunid'] or self.labels):
+		if not self.labels:
 			self.labels = ['particle_w/o_label']
 
 		self.setApp()
