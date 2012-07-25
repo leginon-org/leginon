@@ -1,5 +1,6 @@
-import processingHost
 import subprocess
+import sys
+from appionlib import processingHost
 
 class TorqueHost(processingHost.ProcessingHost):
 	def __init__ (self, configDict=None):
@@ -112,13 +113,10 @@ class TorqueHost(processingHost.ProcessingHost):
 	
 class MoabTorqueHost(TorqueHost):
 	def __init__ (self, configDict=None):
-		processingHost.ProcessingHost.__init__(self)  #initialize parent
-		self.type="Torque"
-		self.execCommand="msub"
-		self.statusCommand="showq"
-		self.scriptPrefix="#MOAB"
-		if configDict:
-			self.configure(configDict)
+		super(MoabTorqueHost,self).__init__(configDict)
+		if self.type !="MoabTorque":
+			sys.stderr.write("Bad processing Host configuration")
+			sys.exit(1)
 
 	def translateOutput (self, outputString):
 		try:
