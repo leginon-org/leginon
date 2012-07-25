@@ -147,11 +147,12 @@ class PickerApp(wx.App):
 			self.helicalinsert = wx.Button(self.frame, -1, '&Add Helix')
 			self.helicalinsert.SetMinSize((120,40))
 			self.Bind(wx.EVT_BUTTON, self.addHelix, self.helicalinsert)
-		else:
+		elif len(self.labels) > 0:
 			self.helicalinsert = wx.Button(self.frame, -1, '&Helical insert')
 			self.helicalinsert.SetMinSize((120,40))
 			self.Bind(wx.EVT_BUTTON, self.onHelicalInsert, self.helicalinsert)
-		self.buttonrow.Add(self.helicalinsert, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
+		if len(self.labels) > 0:
+			self.buttonrow.Add(self.helicalinsert, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 
 		label = wx.StaticText(self.frame, -1, "Image Assessment:  ", style=wx.ALIGN_RIGHT)
 		self.buttonrow.Add(label, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 3)
@@ -235,7 +236,7 @@ class PickerApp(wx.App):
 				apDisplay.printMsg("Clearing %d polygon vertices"%(len(vertices)))
 				self.panel.setTargets('Region to Remove', [])
 		## add any green particle picks to 'Stored Helices'
-		else:
+		elif len(self.labels) > 0:
 			self.addHelix(evt)
 		self.appionloop.targets = {}
 		for label in self.labels:
