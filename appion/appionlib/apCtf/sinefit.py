@@ -93,7 +93,7 @@ def refineAmplitudeContrast(ws2, ctfdata, original_amp_contrast=None):
 
 	pyplot.show()
 
-	if A > 0.65 or A < 0.4:
+	if A > 0.6 or A < 0.3:
 		apDisplay.printWarning("Fit out of range, value A != 1/2: %.8f"%(A))
 		return None
 	if trig_amplitude > 0.6 or trig_amplitude < 0.3:
@@ -144,7 +144,7 @@ def refineCTF(s2, ctfdata, initdefocus, initampcontrast):
 
 	onevec = numpy.ones(s2.shape, dtype=numpy.float) #column 1
 	numiter = 10
-	defocus_tolerance = 1e-10
+	defocus_tolerance = 9e-10
 	dw = 1e100 #big number
 	for i in range(numiter):
 		if abs(dw) < defocus_tolerance:
@@ -196,14 +196,18 @@ def refineCTF(s2, ctfdata, initdefocus, initampcontrast):
 
 		time.sleep(3)
 
-	if A > 0.65 or A < 0.4:
+	apDisplay.printColor("final confidence = %.5f (old conf=%.5f)"%(conf1, initconf), "green")
+	apDisplay.printColor("final defocus = %.8e"%(w), "green")
+	apDisplay.printColor("final amplitude contrast = %.8f"%(amplitudecontrast), "green")
+
+	if A > 0.60 or A < 0.3:
 		apDisplay.printWarning("Fit out of range, value A != 1/2: %.8f"%(A))
 		return None
 	if trig_amplitude > 0.6 or trig_amplitude < 0.3:
 		apDisplay.printWarning("Fit out of range, value trig_amplitude != 1/2: %.8f"%(trig_amplitude))
 		return None
+	if amplitudecontrast > 0.5 or amplitudecontrast < 0.0:
+		apDisplay.printWarning("Fit out of range, value amplitudecontrast: %.8f"%(amplitudecontrast))
+		return None
 
-	apDisplay.printColor("final confidence = %.5f (old conf=%.5f)"%(conf1, initconf), "green")
-	apDisplay.printColor("final defocus = %.8e"%(w), "green")
-	apDisplay.printColor("final amplitude contrast = %.8f"%(amplitudecontrast), "green")
 	return w, amplitudecontrast

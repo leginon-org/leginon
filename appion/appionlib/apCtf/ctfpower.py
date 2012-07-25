@@ -6,10 +6,13 @@ import numpy
 from pyami import mrc
 from pyami import imagefun
 from appionlib import apDisplay
-from appionlib.apCtf import ctftools
 from appionlib.apImage import imagestat, imagefile, imagefilter
 
-debug = False
+debug = True
+
+#============
+def funcrad(x, xdata=None, ydata=None):
+	return numpy.interp(x, xdata, ydata)
 
 #=============
 def twodHann(size):
@@ -18,19 +21,24 @@ def twodHann(size):
 	xdata = xdata - xdata.mean()
 	ydata = numpy.hanning(rsize)
 	#ydata = numpy.hstack(([1], ydata))
-	hanntwod = ctftools.unRotationalAverage(xdata, ydata, (size,size))
+	hanntwod = imagefun.fromRadialFunction(funcrad, (size,size), xdata=xdata, ydata=ydata)
 	return hanntwod
 
 #=============
-def getMaxFieldSize(shape):
+def getFieldSize(shape):
 	mindim = min(shape)
-	twopower = math.log(mindim)/math.log(2.0)
-	fieldsize = 2**math.floor(twopower)
+	twopower = math.log(float(mindim))/math.log(2.0)
+	fieldsize = 2**(math.floor(twopower-0.9))
+	if debug is True:
+		print "mindim=", mindim
+		print "twopower=", twopower
+		print "fieldsize=", fieldsize
+	return fieldsize
 
 #=============
-def power(image, fieldsize=None):
+def power(image, fieldsize=None, mask_radius=1):
 	if fieldsize is None:
-		fieldsize = getMaxFieldSize(image.shape)
+		fieldsize = getFieldSize(image.shape)
 
 	t0 = time.time()
 	xsize, ysize = image.shape
@@ -50,7 +58,7 @@ def power(image, fieldsize=None):
 			y2 = f*(j+1)
 			#print "%03d: %d:%d, %d:%d"%(count, x1, x2, y1, y2)
 			cutout = image[x1:x2, y1:y2]
-			powerspec = imagefun.power(cutout*envelop)
+			powerspec = imagefun.power(cutout*envelop, mask_radius)
 			powersum += powerspec
 	if xsize%fieldsize > fieldsize*0.1:
 		for j in range(ystep):
@@ -61,7 +69,7 @@ def power(image, fieldsize=None):
 			y2 = f*(j+1)
 			#print "%03d: %d:%d, %d:%d"%(count, x1, x2, y1, y2)
 			cutout = image[x1:x2, y1:y2]
-			powerspec = imagefun.power(cutout*envelop)
+			powerspec = imagefun.power(cutout*envelop, mask_radius)
 			powersum += powerspec
 	if ysize%fieldsize > fieldsize*0.1:
 		for i in range(xstep):
@@ -72,11 +80,12 @@ def power(image, fieldsize=None):
 			y2 = ysize
 			#print "%03d: %d:%d, %d:%d"%(count, x1, x2, y1, y2)
 			cutout = image[x1:x2, y1:y2]
-			powerspec = imagefun.power(cutout*envelop)
+			powerspec = imagefun.power(cutout*envelop, mask_radius)
 			powersum += powerspec
 
 	poweravg = powersum/float(count)
-	print "fieldsize %d with %d images complete in %s"%(fieldsize, count, apDisplay.timeString(time.time()-t0))
+	if debug is True:
+		print "fieldsize %d with %d images complete in %s"%(fieldsize, count, apDisplay.timeString(time.time()-t0))
 	return poweravg
 
 #===================

@@ -5,6 +5,7 @@ import math
 import numpy
 import scipy.optimize
 import scipy.ndimage
+import scipy.interpolate
 from appionlib import apDisplay
 
 
@@ -533,11 +534,11 @@ class CtfNoise(object):
 		### lowest is best
 		minvalindex = numpy.argmin(valuelist)
 		constrainval = contraintFunction(fitparamslist[minvalindex], xdata, filterctfdata)
-		while abs(constrainval) > 0.1:
-			apDisplay.printWarning("Constraint violation")
-			valuelist[minvalindex] = 1e10
-			minvalindex = numpy.argmin(valuelist)
-			constrainval = contraintFunction(fitparamslist[minvalindex], xdata, filterctfdata)
+		#while abs(constrainval) > 0.1:
+		#	apDisplay.printWarning("Constraint violation")
+		#	valuelist[minvalindex] = 1e10
+		#	minvalindex = numpy.argmin(valuelist)
+		#	constrainval = contraintFunction(fitparamslist[minvalindex], xdata, filterctfdata)
 		if self.debug is True:
 			apDisplay.printColor( namelist[minvalindex]+" is best" , "cyan")
 		midfitparams = fitparamslist[minvalindex]
@@ -608,7 +609,72 @@ class CtfNoise(object):
 		return bestfitparams
 
 
+def peakExtender(raddata, rotdata, extrema, extrematype="below"):
+	"""
+	raddata - x data in inverse Angstroms
+	rotdata - powerspectra data, almost normalized to 0 and 1
+	extrema - numpy array of peak or valley locations in inverse Angstroms
+	extrematype - type of extrema, must be either below or above
+	"""
 
+	extremeindices = numpy.searchsorted(raddata, extrema)
+
+	raddatasq = raddata**2
+
+	xdata = []
+	ydata = []
+	minx = extremeindices[0]
+	for i in range(extremeindices.shape[0]-1):
+		if extremeindices[i+1] > raddata.shape[0]-2:
+			## no more data
+			break
+		eindex = extremeindices[i]
+		if i == 0:
+			preveindex = int(eindex/2)
+		else:
+			preveindex = extremeindices[i-1]
+		nexteindex = extremeindices[i+1]
+		eindex1 = int(eindex - abs(preveindex-eindex)/3.0)
+		eindex2 = int(eindex + abs(nexteindex-eindex)/3.0)
+
+		values = rotdata[eindex1:eindex2]
+		if extrematype is "below":
+			value = values.min()
+		elif extrematype is "above":
+			value = values.max()
+
+		maxx = eindex
+		xdata.append(raddatasq[eindex])
+		ydata.append(value)
+
+	func = scipy.interpolate.interp1d(xdata, ydata, kind='slinear')
+	extremedata = func(raddatasq[minx:maxx])
+	if extrematype is "below":
+		startvalue = rotdata[int(minx*0.5):minx].min()
+		endvalue = rotdata[maxx:].min()
+	elif extrematype is "above":
+		startvalue = rotdata[int(minx*0.5):minx].max()
+		endvalue = rotdata[maxx:].max()
+
+	#print startvalue, endvalue
+
+	startdata = numpy.ones((minx)) * startvalue
+	enddata = numpy.ones((raddata.shape[0]-maxx)) * endvalue
+
+	extremedata = numpy.hstack( (startdata, extremedata, enddata) )
+
+	from matplotlib import pyplot
+	pyplot.clf()
+	pyplot.plot(raddatasq, rotdata, 'k-', )
+	pyplot.plot(raddatasq, rotdata, 'k.', )
+	pyplot.plot(raddatasq, extremedata, 'b-', )
+	for eindex in extremeindices:
+		if eindex > raddata.shape[0]-1:
+			break
+		pyplot.axvline(x=raddatasq[eindex], linewidth=2, color="gold", alpha=0.5)
+	pyplot.show()
+
+	return extremedata
 
 
 

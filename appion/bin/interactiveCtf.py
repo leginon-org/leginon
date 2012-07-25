@@ -21,7 +21,7 @@ from appionlib import apInstrument
 from appionlib import apDatabase
 from appionlib import appionLoop2
 from appionlib.apImage import imagefile, imagefilter, imagenorm, imagestat
-from appionlib.apCtf import ctftools, ctfnoise, ctfdb, sinefit, genctf
+from appionlib.apCtf import ctftools, ctfnoise, ctfdb, sinefit, genctf, ctfpower, ctfres
 #Leginon
 import leginon.polygon
 from leginon.gui.wx import ImagePanel, ImagePanelTools, TargetPanel, TargetPanelTools
@@ -65,7 +65,7 @@ class ManualCTFPanel(TargetPanel.TargetImagePanel):
 			img.load()
 			img = imagefile.imageToArray(img)
 			self.imgshape = img.shape
-			self.setImage(img)
+			self.setImage(img.astype(numpy.float32))
 
 ##################################
 ##
@@ -125,7 +125,7 @@ class ThonRingTool(ImagePanelTools.ImageTool):
 			minor = radii2[i]
 			if self.app.debug is True: 
 				print "major=%.1f, minor=%.1f, angle=%.1f"%(major, minor, self.app.ctfvalues['angle_astigmatism'])
-			if minor > width/2:
+			if minor > width/1.95:
 				# this limits how far we draw out the ellipses: sqrt(3) to corner, just 2 inside line
 				break
 
@@ -143,8 +143,8 @@ class ThonRingTool(ImagePanelTools.ImageTool):
 			numpoints = int(math.ceil(2.0*math.pi/theta/skipfactor))*skipfactor + 1
 
 			### for some reason, we need to give a negative angle here
-			ellipangle = -math.radians(self.app.ctfvalues['angle_astigmatism'])
-			points = ellipse.generate_ellipse(major, minor, ellipangle, 
+			self.ellipangle = -math.radians(self.app.ctfvalues['angle_astigmatism'])
+			points = ellipse.generate_ellipse(major, minor, self.ellipangle, 
 				center, numpoints, None, "step", True)
 			x = points[:,0]
 			y = points[:,1]
@@ -240,7 +240,10 @@ class CTFApp(wx.App):
 			'volts': 120000, 'cs': 2e-3, 'angle_astigmatism': 45.0,
 			'amplitude_contrast': 0.07, 'apix': 1.5, }
 		self.ctfvalues = {}
-
+		self.imagestatcache = {}
+		self.imagestatcachefull = {}
+		self.ellipratio = 1.0
+		self.ellipangle = 0.0
 		self.ringwidth = 2
 		self.freq = None
 		self.debug = False
@@ -313,6 +316,11 @@ class CTFApp(wx.App):
 		self.Bind(wx.EVT_BUTTON, self.onSubtTrimodalNoise, wxbutton)
 		self.buttonrow.Add(wxbutton, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 
+		wxbutton = wx.Button(self.frame, -1, 'Subt Fit Valleys')
+		wxbutton.SetMinSize((-1, buttonheight))
+		self.Bind(wx.EVT_BUTTON, self.onSubtFitValleys, wxbutton)
+		self.buttonrow.Add(wxbutton, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
+
 		wxbutton = wx.Button(self.frame, -1, 'Subt &Box Filter')
 		wxbutton.SetMinSize((-1, buttonheight))
 		self.Bind(wx.EVT_BUTTON, self.onSubtBoxFilter, wxbutton)
@@ -336,6 +344,11 @@ class CTFApp(wx.App):
 		wxbutton = wx.Button(self.frame, -1, 'Norm Trimodal &Envelope')
 		wxbutton.SetMinSize((-1, buttonheight))
 		self.Bind(wx.EVT_BUTTON, self.onNormTrimodalEnvelop, wxbutton)
+		self.buttonrow.Add(wxbutton, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
+
+		wxbutton = wx.Button(self.frame, -1, 'Norm Fit Peaks')
+		wxbutton.SetMinSize((-1, buttonheight))
+		self.Bind(wx.EVT_BUTTON, self.onNormFitPeaks, wxbutton)
 		self.buttonrow.Add(wxbutton, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 
 		wxbutton = wx.Button(self.frame, -1, '&Neil normalize')
@@ -383,9 +396,9 @@ class CTFApp(wx.App):
 		self.Bind(wx.EVT_BUTTON, self.onGet1DConf2, wxbutton)
 		self.buttonrow.Add(wxbutton, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 
-		wxbutton = wx.Button(self.frame, -1, 'Get 1D Res')
+		wxbutton = wx.Button(self.frame, -1, 'Get Res')
 		wxbutton.SetMinSize((-1, buttonheight))
-		self.Bind(wx.EVT_BUTTON, self.onGet1DResolution, wxbutton)
+		self.Bind(wx.EVT_BUTTON, self.onGetResolution, wxbutton)
 		self.buttonrow.Add(wxbutton, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 
 		self.editparam_dialog = EditParamsDialog(self)
@@ -461,6 +474,81 @@ class CTFApp(wx.App):
 		return True
 
 	#---------------------------------------
+	def getOneDProfile(self, full=False):
+		"""
+		common function to convert 2D image into 1D profile
+
+		pixelrdata, raddata, rotdata = self.getOneDProfile()
+		"""
+		t0 = time.time()
+		imagedata = self.panel.numericdata
+		if self.ellipse_params is None:
+			self.ellipratio = 1.0
+			self.ellipangle = 0.0
+		else:
+			self.ellipratio = self.ellipse_params['a']/self.ellipse_params['b']
+			self.ellipangle = -math.degrees(self.ellipse_params['alpha'])
+
+		statcache = {
+			'mean': imagedata.mean(),
+			'stdev': imagedata.std(),
+			'shape': imagedata.shape,
+			'ratio': self.ellipratio,
+			'angle': self.ellipangle,
+			'full': full,
+		}
+
+		### check to see if we can use cached value
+		useCache = False
+		if not full and self.imagestatcache:
+			useCache = True
+			for key in statcache:
+				if not full and statcache[key] != self.imagestatcache[key]:
+					#print key, statcache[key], self.imagestatcache[key]
+					useCache = False
+					break
+		if full and self.imagestatcachefull:
+			useCache = True
+			for key in statcache:
+				if full and statcache[key] != self.imagestatcachefull[key]:
+					#print key, statcache[key], self.imagestatcachefull[key]
+					useCache = False
+					break
+
+		### get the data
+		if useCache is True:
+			apDisplay.printMsg("using cache 1D profile data")
+			if full is True:
+				pixelrdata = self.pixelrdatacachefull
+				rotdata = self.rotdatacachefull
+			else:
+				pixelrdata = self.pixelrdatacache
+				rotdata = self.rotdatacache
+		elif self.ellipse_params is None:
+			apDisplay.printWarning("doing a rotational average not elliptical")
+			pixelrdata, rotdata = ctftools.rotationalAverage(imagedata, self.ringwidth, full=full)
+		else:
+			pixelrdata, rotdata = ctftools.ellipticalAverage(imagedata, 
+				self.ellipratio, self.ellipangle, self.ringwidth, full=full)
+		raddata = pixelrdata*self.freq
+
+		### cache values for next time
+		if full is True:
+			self.pixelrdatacachefull = pixelrdata
+			self.rotdatacachefull = rotdata
+			self.imagestatcachefull = statcache
+		else:
+			self.pixelrdatacache = pixelrdata
+			self.rotdatacache = rotdata
+			self.imagestatcache = statcache
+
+		### done
+		apDisplay.printColor("Get 1D profile complete in %s"
+			%(apDisplay.timeString(time.time()-t0)), "cyan")
+
+		return pixelrdata, raddata, rotdata
+
+	#---------------------------------------
 	def onEditParams(self, evt):
 		if 'defocus1' in self.ctfvalues:
 			self.editparam_dialog.def1value.SetValue(self.ctfvalues['defocus1'])
@@ -526,8 +614,8 @@ class CTFApp(wx.App):
 
 		#print self.ellipse_params
 		self.ctfvalues['amplitude_contrast'] = 0.0
-		ellipangle = -math.degrees(self.ellipse_params['alpha'])
-		self.ctfvalues['angle_astigmatism'] = ellipangle
+		self.ellipangle = -math.degrees(self.ellipse_params['alpha'])
+		self.ctfvalues['angle_astigmatism'] = self.ellipangle
 		#print "wavelength", self.wavelength
 
 		#minor axis
@@ -554,6 +642,7 @@ class CTFApp(wx.App):
 				'Error', wx.OK|wx.ICON_ERROR)
 			dialog.ShowModal()
 			dialog.Destroy()
+			return
 		self.ellipse_params = ellipse.solveEllipseOLS(points, center)
 		self.convertEllipseToCtf()
 		epoints = ellipse.generate_ellipse(self.ellipse_params['a'], 
@@ -567,15 +656,15 @@ class CTFApp(wx.App):
 
 	#---------------------------------------
 	def onGaussBlur(self, evt):
-		imagedata = self.panel.imagedata
-		gaussdata = ndimage.gaussian_filter(imagedata, 3)
+		imagedata = self.panel.numericdata
+		gaussdata = ndimage.gaussian_filter(imagedata, 2)
 		self.panel.setImage(gaussdata)
 		apDisplay.printColor("Gauss blur complete", "cyan")
 		return
 
 	#---------------------------------------
 	def onInvert(self, evt):
-		imagedata = self.panel.imagedata
+		imagedata = self.panel.numericdata
 		self.panel.setImage(-imagedata)
 		apDisplay.printColor("Invert complete", "cyan")
 		return
@@ -592,20 +681,26 @@ class CTFApp(wx.App):
 			dialog.Destroy()
 			return
 
+		imagedata = self.panel.numericdata
+
+		#16 is best for 2048
+		fsize = int(imagedata.shape[0]/2048. * 8)
+		#print "fsize=", fsize
+
 		##prepare CTF data for watershed, only finds peaks so invert
-		imagedata = self.panel.imagedata
+
 		#TEMPORARY -- for now bin by 16
 		binning = 1
 		imagedata = imagefun.bin2(imagedata,binning)
-		imagedata = ndimage.gaussian_filter(imagedata, 16)
+		imagedata = ndimage.gaussian_filter(imagedata, fsize)
 		tmpdata = imagenorm.maxNormalizeImage(imagedata)
 		imagefile.arrayToPng(tmpdata, "/home/vosslab/ctf.png")
 		inputarray = -imagedata + imagedata.max()
 		#inputarray = 2.**16 / inputarray.max() * inputarray + 1
 		#imagestat.printImageInfo(inputarray)
 		#inputarray = numpy.array(inputarray, dtype=numpy.uint16)
-		print "inputarray="
-		imagestat.printImageInfo(inputarray)
+		#print "inputarray="
+		#imagestat.printImageInfo(inputarray)
 		#print inputarray
 
 		##create markers using picked point
@@ -628,12 +723,12 @@ class CTFApp(wx.App):
 		xpbad = numpy.array((points[:,1]/binning - newcenter[1])*0.4 + newcenter[1], dtype=numpy.uint16)
 		ypbad = numpy.array((points[:,0]/binning - newcenter[0])*0.4 + newcenter[0], dtype=numpy.uint16)
 		markers[xpbad, ypbad] = 30
-		xpbad = numpy.array((points[:,1]/binning - newcenter[1])*0.85 + newcenter[1], dtype=numpy.uint16)
-		ypbad = numpy.array((points[:,0]/binning - newcenter[0])*0.85 + newcenter[0], dtype=numpy.uint16)
+		xpbad = numpy.array((points[:,1]/binning - newcenter[1])*0.8 + newcenter[1], dtype=numpy.uint16)
+		ypbad = numpy.array((points[:,0]/binning - newcenter[0])*0.8 + newcenter[0], dtype=numpy.uint16)
 		markers[xpbad, ypbad] = 30
 		## set outer points to 2
-		xpbad = numpy.array((points[:,1]/binning - newcenter[1])*1.15 + newcenter[1], dtype=numpy.uint16)
-		ypbad = numpy.array((points[:,0]/binning - newcenter[0])*1.15 + newcenter[0], dtype=numpy.uint16)
+		xpbad = numpy.array((points[:,1]/binning - newcenter[1])*1.2 + newcenter[1], dtype=numpy.uint16)
+		ypbad = numpy.array((points[:,0]/binning - newcenter[0])*1.2 + newcenter[0], dtype=numpy.uint16)
 		markers[xpbad, ypbad] = 20
 		xpbad = numpy.array((points[:,1]/binning - newcenter[1])*1.6 + newcenter[1], dtype=numpy.uint16)
 		ypbad = numpy.array((points[:,0]/binning - newcenter[0])*1.6 + newcenter[0], dtype=numpy.uint16)
@@ -641,16 +736,17 @@ class CTFApp(wx.App):
 		markers[0,0] = 20
 
 		## do a blurring
-		markers = ndimage.maximum_filter(markers, 8/float(binning))
-		print "markers="
-		imagestat.printImageInfo(markers)
+
+		markers = ndimage.maximum_filter(markers, fsize)
+		#print "markers="
+		#imagestat.printImageInfo(markers)
 
 		#rescale the input array
 		xp, yp = numpy.where(markers==100)
 		minmarker = inputarray[xp, yp].min()
 		maxmarker = inputarray[xp, yp].max()
 		markrange = maxmarker - minmarker
-		print "MARKER MIN/MAX: %.1f - %.1f"%(minmarker, maxmarker)
+		#print "MARKER MIN/MAX: %.1f - %.1f"%(minmarker, maxmarker)
 		#min/max should be within 5 pixels for method to work
 		inputarray = 5.0/markrange * inputarray
 		minmarker = inputarray[xp, yp].min()
@@ -663,8 +759,8 @@ class CTFApp(wx.App):
 
 		inputarray = numpy.array(inputarray, dtype=numpy.uint16)
 
-		print "inputarray="
-		imagestat.printImageInfo(inputarray)
+		#print "inputarray="
+		#imagestat.printImageInfo(inputarray)
 
 		### perform watershed
 		watershed = ndimage.measurements.watershed_ift(inputarray, markers)
@@ -694,8 +790,8 @@ class CTFApp(wx.App):
 			bottom=0.01, left=0.01, top=0.99, right=0.99, )
 		pyplot.show()
 
-		print "watershed="
-		imagestat.printImageInfo(watershed)
+		#print "watershed="
+		#imagestat.printImageInfo(watershed)
 		#print watershed
 
 		if watershed.mean() < 1:
@@ -708,11 +804,13 @@ class CTFApp(wx.App):
 		xwater, ywater = numpy.where(watershed==100)
 
 		points = numpy.transpose(numpy.vstack((xwater, ywater)))*binning
-		apDisplay.printMsg("You have %d points to fit in the valley ring"%(len(points)))
-		maxpoints = inputarray.shape[0]*inputarray.shape[1]*0.05 # 5% of total pixels
-		if points.shape[0] > maxpoints:
-			dialog = wx.MessageDialog(self.frame, "Too many points relative to size of the image (%d > %d)"
-				%(points.shape[0], maxpoints), 'Error', wx.OK|wx.ICON_ERROR)
+		pointpercent = 100*len(points)/float(inputarray.shape[0]*inputarray.shape[1])
+		apDisplay.printMsg("You have %d points to fit in the valley ring (%.2f percent)"
+			%(len(points), pointpercent))
+		# 8% of total pixels
+		if pointpercent > 8:
+			dialog = wx.MessageDialog(self.frame, "Too many points relative to size of the image (%.2f percent)"
+				%(pointpercent), 'Error', wx.OK|wx.ICON_ERROR)
 			dialog.ShowModal()
 			dialog.Destroy()
 			return
@@ -737,7 +835,7 @@ class CTFApp(wx.App):
 	#---------------------------------------
 	def onRotAverage(self, evt):
 		# do a rotational average of the image
-		imagedata = self.panel.imagedata
+		imagedata = self.panel.numericdata
 		pixelrdata, rotdata = ctftools.rotationalAverage(imagedata, self.ringwidth, full=True)
 		apDisplay.printWarning("doing a rotational average not elliptical")
 		rotavgimage = imagefun.fromRadialFunction(self.funcrad, imagedata.shape, 
@@ -753,14 +851,15 @@ class CTFApp(wx.App):
 				'Error', wx.OK|wx.ICON_ERROR)
 			dialog.ShowModal()
 			dialog.Destroy()
-		ellipratio = self.ellipse_params['a']/self.ellipse_params['b']
-		ellipangle = -math.degrees(self.ellipse_params['alpha'])
-		apDisplay.printColor("Elliptical average ratio = %.3f, angle %.3f"%(ellipratio,ellipangle), "cyan")
-		imagedata = self.panel.imagedata
-		pixelrdata, rotdata = ctftools.ellipticalAverage(imagedata, 
-			ellipratio, ellipangle, self.ringwidth, full=True)
+			return
+
+		pixelrdata, raddata, rotdata = self.getOneDProfile(full=True)
+		apDisplay.printColor("Elliptical average ratio = %.3f, angle %.3f"
+			%(self.ellipratio,self.ellipangle), "cyan")
+
+		imagedata = self.panel.numericdata
 		ellipavgimage = ctftools.unEllipticalAverage(pixelrdata, rotdata, 
-			ellipratio, ellipangle, imagedata.shape)
+			self.ellipratio, self.ellipangle, imagedata.shape)
 		self.panel.setImage(ellipavgimage)
 		apDisplay.printColor("Elliptical average complete", "cyan")
 
@@ -772,21 +871,22 @@ class CTFApp(wx.App):
 				'Error', wx.OK|wx.ICON_ERROR)
 			dialog.ShowModal()
 			dialog.Destroy()
-		ellipratio = self.ellipse_params['a']/self.ellipse_params['b']
-		ellipangle = -math.degrees(self.ellipse_params['alpha'])
-		imagedata = self.panel.imagedata
+			return
+		self.ellipratio = self.ellipse_params['a']/self.ellipse_params['b']
+		self.ellipangle = -math.degrees(self.ellipse_params['alpha'])
+		imagedata = self.panel.numericdata
 		pixelrdata, rotdata = ctftools.ellipticalAverage(imagedata, 
-			ellipratio, ellipangle, self.ringwidth, full=True)
+			self.ellipratio, self.ellipangle, self.ringwidth, full=True)
 		#distort the pixelrdata
 		distortrdata = pixelrdata**2/pixelrdata.max()
 		ellipavgimage = ctftools.unEllipticalAverage(distortrdata, rotdata, 
-			ellipratio, ellipangle, imagedata.shape)
+			self.ellipratio, self.ellipangle, imagedata.shape)
 		self.panel.setImage(ellipavgimage)
 		apDisplay.printColor("Elliptical distrotion complete", "cyan")
 
 	#---------------------------------------
 	def checkNormalized(self):
-		imagedata = self.panel.imagedata
+		imagedata = self.panel.numericdata
 		if abs(imagedata.min()) > 0.5:
 			dialog = wx.MessageDialog(self.frame, "You need to subtract the noise function.",\
 				'Error', wx.OK|wx.ICON_ERROR)
@@ -813,16 +913,7 @@ class CTFApp(wx.App):
 		if self.checkNormalized() is False:
 			return
 
-		imagedata = self.panel.imagedata
-		if self.ellipse_params is None:
-			pixelrdata, rotdata = ctftools.rotationalAverage(imagedata, self.ringwidth, full=False)
-			apDisplay.printWarning("doing a rotational average not elliptical")
-		else:
-			ellipratio = self.ellipse_params['a']/self.ellipse_params['b']
-			ellipangle = -math.degrees(self.ellipse_params['alpha'])
-			pixelrdata, rotdata = ctftools.ellipticalAverage(imagedata, 
-				ellipratio, ellipangle, self.ringwidth, full=False)
-		raddata = pixelrdata*self.freq
+		pixelrdata, raddata, rotdata = self.getOneDProfile(full=False)
 
 		numcols = int(0.5/(self.freq*self.ctfvalues['apix']))
 		radii = ctftools.getCtfExtrema(self.ctfvalues['defocus2'], self.ctfvalues['apix']*1e-10, 
@@ -851,7 +942,7 @@ class CTFApp(wx.App):
 		return
 
 	#---------------------------------------
-	def onGet1DResolution(self, env):
+	def onGetResolution(self, env):
 		if not 'defocus2' in self.ctfvalues.keys():
 			dialog = wx.MessageDialog(self.frame, "Need a defocus estimate first.",\
 				'Error', wx.OK|wx.ICON_ERROR)
@@ -862,64 +953,10 @@ class CTFApp(wx.App):
 		if self.checkNormalized() is False:
 			return
 
-		imagedata = self.panel.imagedata
-		if self.ellipse_params is None:
-			pixelrdata, rotdata = ctftools.rotationalAverage(imagedata, self.ringwidth, full=False)
-			apDisplay.printWarning("doing a rotational average not elliptical")
-		else:
-			ellipratio = self.ellipse_params['a']/self.ellipse_params['b']
-			ellipangle = -math.degrees(self.ellipse_params['alpha'])
-			pixelrdata, rotdata = ctftools.ellipticalAverage(imagedata, 
-				ellipratio, ellipangle, self.ringwidth, full=False)
-		raddata = pixelrdata*self.freq
+		### get the data
+		pixelrdata, raddata, rotdata = self.getOneDProfile(full=False)
 
-		numcols = int(0.5/(self.freq*self.ctfvalues['apix']))
-		radii = ctftools.getCtfExtrema(self.ctfvalues['defocus2'], self.ctfvalues['apix']*1e-10, 
-			self.ctfvalues['cs'], self.ctfvalues['volts'], self.ctfvalues['amplitude_contrast'], 
-			cols=numcols, numzeros=1, zerotype="peaks")
-		firstpeak = radii[0]
-		firstpeakindex = numpy.searchsorted(raddata, firstpeak*self.freq)
-
-		genctfdata = genctf.generateCTF1d(raddata*1e10, focus=self.ctfvalues['defocus2'], cs=self.cs,
-			pixelsize=self.apix*1e-10, volts=self.volts, ampconst=self.ctfvalues['amplitude_contrast'])
-		genctfdata = genctfdata**2
-
-		## divide the data into 8 section (by x^2 not x) and calculate the correlation correficient for each
-		numstep = 8.
-		start = (firstpeak*self.freq)**2
-		end = (raddata.max())**2
-		sqlength = (raddata.max())**2
-		step = (end-start)/numstep
-		print "1/%.1fA <-> 1/%.1fA (1/%.1fA)"%(1/math.sqrt(start), 1/math.sqrt(end), 1/math.sqrt(step))
-		limits = numpy.arange(start, end+step/2, step)
-		limitsindex = numpy.searchsorted(raddata**2, limits)-1
-		print limitsindex
-
-		pyplot.clf()
-		xdata= (pixelrdata*self.freq)**2
-		colors = ['red', 'blue', 'green', 'yellow', 'purple', 'magenta', 'cyan', 'orange',]
-		pyplot.plot(xdata[firstpeakindex:], rotdata[firstpeakindex:], '.', color="black", alpha=0.5)
-
-		confs = []
-		for i in range(limitsindex.shape[0]-1):
-			s1 = limitsindex[i]
-			s2 = limitsindex[i+1]
-			conf = scipy.stats.pearsonr(rotdata[s1:s2], genctfdata[s1:s2])[0]
-			confs.append(conf)
-			print "%d:%d"%(s1,s2)
-			print "r 1/%.1fA <-> 1/%.1fA == %.4f"%(1/math.sqrt(raddata[s1]), 1/math.sqrt(raddata[s2]), conf)
-			print "x %.4f <-> %.4f == %.4f"%(raddata[s1], raddata[s2], conf)
-			pyplot.plot(xdata[s1:s2], rotdata[s1:s2], '--', color=colors[i])
-		print confs
-
-		#pyplot.plot(xdata[firstpeakindex:], rotdata[firstpeakindex:], 'k-',)
-		pyplot.plot(xdata[firstpeakindex:], genctfdata[firstpeakindex:], 'r.',)
-		pyplot.plot(xdata[firstpeakindex:], genctfdata[firstpeakindex:], 'r--', alpha=0.5)
-		pyplot.xlim(xmin=xdata[firstpeakindex-1], xmax=xdata.max())
-		pyplot.ylim(ymin=-0.05, ymax=1.05)
-		#pyplot.title("Confidence value of %.4f"%(confidence))
-		pyplot.show()
-		#apDisplay.printColor("Confidence value of %.4f complete"%(confidence), "cyan")
+		confs = ctfres.getCorrelationProfile(raddata, rotdata, self.freq, self.ctfvalues)
 
 		return
 
@@ -952,16 +989,9 @@ class CTFApp(wx.App):
 			cols=numcols, numzeros=1, zerotype="peaks")
 		firstpeak = radii[0]
 
-		imagedata = self.panel.imagedata
-		if self.ellipse_params is None:
-			pixelrdata, rotdata = ctftools.rotationalAverage(imagedata, self.ringwidth, full=False)
-			apDisplay.printWarning("doing a rotational average not elliptical")
-		else:
-			ellipratio = self.ellipse_params['a']/self.ellipse_params['b']
-			ellipangle = -math.degrees(self.ellipse_params['alpha'])
-			pixelrdata, rotdata = ctftools.ellipticalAverage(imagedata, 
-				ellipratio, ellipangle, self.ringwidth, full=False)
-		s = pixelrdata*self.freq*1e10
+		pixelrdata, raddata, rotdata = self.getOneDProfile(full=False)
+		s = raddata*1e10
+
 		#requires a defocus, use defocus2 it is the defocus of the elliptical average
 		defocus2 = self.ctfvalues['defocus2']
 		ws2 = s**2 * self.wavelength * math.pi * defocus2
@@ -997,16 +1027,9 @@ class CTFApp(wx.App):
 			cols=numcols, numzeros=1, zerotype="peaks")
 		firstpeak = radii[0]
 
-		imagedata = self.panel.imagedata
-		if self.ellipse_params is None:
-			pixelrdata, rotdata = ctftools.rotationalAverage(imagedata, self.ringwidth, full=False)
-			apDisplay.printWarning("doing a rotational average not elliptical")
-		else:
-			ellipratio = self.ellipse_params['a']/self.ellipse_params['b']
-			ellipangle = -math.degrees(self.ellipse_params['alpha'])
-			pixelrdata, rotdata = ctftools.ellipticalAverage(imagedata, 
-				ellipratio, ellipangle, self.ringwidth, full=False)
-		s = pixelrdata*self.freq*1e10
+		pixelrdata, raddata, rotdata = self.getOneDProfile(full=False)
+		s = raddata*1e10
+
 		#requires a defocus, use defocus2 it is the defocus of the elliptical average
 		defocus2 = self.ctfvalues['defocus2']
 		ws2 = s**2 * self.wavelength * math.pi
@@ -1051,23 +1074,15 @@ class CTFApp(wx.App):
 			cols=numcols, numzeros=1, zerotype="peaks")
 		firstpeak = radii[0]
 
-		imagedata = self.panel.imagedata
-		if self.ellipse_params is None:
-			pixelrdata, rotdata = ctftools.rotationalAverage(imagedata, self.ringwidth, full=False)
-			apDisplay.printWarning("doing a rotational average not elliptical")
-		else:
-			ellipratio = self.ellipse_params['a']/self.ellipse_params['b']
-			ellipangle = -math.degrees(self.ellipse_params['alpha'])
-			pixelrdata, rotdata = ctftools.ellipticalAverage(imagedata, 
-				ellipratio, ellipangle, self.ringwidth, full=False)
-		s = pixelrdata*self.freq*1e10
+		pixelrdata, raddata, rotdata = self.getOneDProfile(full=False)
+		s = raddata*1e10
 
 		#requires a defocus, use defocus2 it is the defocus of the elliptical average
 		defocus2 = self.ctfvalues['defocus2']
 		ws2 = s**2 * self.wavelength * math.pi
 		ampcontrast = self.ctfvalues['amplitude_contrast']
-		halfindex = len(ws2)/2
-		values = sinefit.refineCTF(ws2[firstpeak:halfindex], rotdata[firstpeak:halfindex], defocus2, ampcontrast)
+		stopindex = (len(ws2)-firstpeak)/2 + firstpeak
+		values = sinefit.refineCTF(ws2[firstpeak:stopindex], rotdata[firstpeak:stopindex], defocus2, ampcontrast)
 		if values is None:
 			return
 		defocus2, amplitudecontrast = values
@@ -1088,18 +1103,8 @@ class CTFApp(wx.App):
 
 	#---------------------------------------
 	def onSubtBoxFilter(self, evt):
-		imagedata = self.panel.imagedata
-		# do a rotational average to subtract
-		if self.ellipse_params is None:
-			pixelrdata, rotdata = ctftools.rotationalAverage(imagedata, self.ringwidth, full=True)
-			apDisplay.printWarning("doing a rotational average not elliptical")
-			ellipratio = 1.0
-			ellipangle = 0.0
-		else:
-			ellipratio = self.ellipse_params['a']/self.ellipse_params['b']
-			ellipangle = -math.degrees(self.ellipse_params['alpha'])
-			pixelrdata, rotdata = ctftools.ellipticalAverage(imagedata, 
-				ellipratio, ellipangle, self.ringwidth, full=True)
+		pixelrdata, raddata, rotdata = self.getOneDProfile(full=True)
+		imagedata = self.panel.numericdata
 
 		if rotdata.min() > 0:
 			newrotdata = numpy.sqrt(rotdata)
@@ -1122,7 +1127,7 @@ class CTFApp(wx.App):
 			boxfilter = boxfilter**2
 
 		box2d = ctftools.unEllipticalAverage(pixelrdata, boxfilter, 
-			ellipratio, ellipangle, imagedata.shape)
+			self.ellipratio, self.ellipangle, imagedata.shape)
 		normaldata = imagedata - box2d
 
 		self.panel.setImage(normaldata)
@@ -1132,35 +1137,21 @@ class CTFApp(wx.App):
 
 	#---------------------------------------
 	def onSubt2dBoxFilter(self, evt):
-		imagedata = self.panel.imagedata
-		if imagedata.min() > 0:
-			didsqrt = True
-			newdata = numpy.sqrt(imagedata)
-		else:
-			didsqrt = False
-			newdata = imagedata
+		imagedata = self.panel.numericdata
+		imagestat.printImageInfo(imagedata)
 
-		boxfilter = ndimage.uniform_filter(newdata, 256)
+		boxfilter = ndimage.uniform_filter(imagedata, 256)
 
-		# do a rotational average to subtract
-		if self.ellipse_params is None:
-			pixelrdata, rotdata = ctftools.rotationalAverage(newdata, self.ringwidth, full=True)
-			pixelrdata, boxdata = ctftools.rotationalAverage(boxfilter, self.ringwidth, full=True)
-			apDisplay.printWarning("doing a rotational average not elliptical")
-			ellipratio = 1.0
-			ellipangle = 0.0
-		else:
-			ellipratio = self.ellipse_params['a']/self.ellipse_params['b']
-			ellipangle = -math.degrees(self.ellipse_params['alpha'])
-			pixelrdata, rotdata = ctftools.ellipticalAverage(newdata, 
-				ellipratio, ellipangle, self.ringwidth, full=True)
-			pixelrdata, boxdata = ctftools.ellipticalAverage(boxfilter, 
-				ellipratio, ellipangle, self.ringwidth, full=True)
+		pixelrdata, raddata, rotdata = self.getOneDProfile(full=True)
+		imagestat.printImageInfo(rotdata)
+		pixelrdata, boxdata = ctftools.ellipticalAverage(boxfilter, 
+			self.ellipratio, self.ellipangle, self.ringwidth, full=True)
+		imagestat.printImageInfo(boxdata)
 
 		pyplot.clf()
 		pyplot.subplot(1,2,1)
-		xdata= (pixelrdata*self.freq)**2
-		pyplot.plot(xdata, rotdata, 'k.',)
+		xdata= (raddata)**2
+		pyplot.plot(xdata, rotdata, 'k-', alpha=0.75)
 		pyplot.plot(xdata, boxdata, 'r-',)
 		pyplot.xlim(xmax=xdata.max())
 		pyplot.ylim(ymin=rotdata.min(), ymax=rotdata.max())
@@ -1173,10 +1164,6 @@ class CTFApp(wx.App):
 			bottom=0.01, left=0.01, top=0.99, right=0.99, )
 		pyplot.show()
 
-		if didsqrt:
-			print "DID SQRT"
-			boxfilter = boxfilter**2
-
 		normaldata = imagedata - boxfilter
 
 		self.panel.setImage(normaldata)
@@ -1187,18 +1174,7 @@ class CTFApp(wx.App):
 
 	#---------------------------------------
 	def onSubtGaussFilter(self, evt):
-		imagedata = self.panel.imagedata
-		# do a rotational average to subtract
-		if self.ellipse_params is None:
-			pixelrdata, rotdata = ctftools.rotationalAverage(imagedata, self.ringwidth, full=True)
-			apDisplay.printWarning("doing a rotational average not elliptical")
-			ellipratio = 1.0
-			ellipangle = 0.0
-		else:
-			ellipratio = self.ellipse_params['a']/self.ellipse_params['b']
-			ellipangle = -math.degrees(self.ellipse_params['alpha'])
-			pixelrdata, rotdata = ctftools.ellipticalAverage(imagedata, 
-				ellipratio, ellipangle, self.ringwidth, full=True)
+		pixelrdata, raddata, rotdata = self.getOneDProfile(full=True)
 
 		if rotdata.min() > 0:
 			newrotdata = numpy.sqrt(rotdata)
@@ -1220,8 +1196,9 @@ class CTFApp(wx.App):
 		if didsqrt:
 			gaussfilter = gaussfilter**2
 
+		imagedata = self.panel.numericdata
 		gauss2d = ctftools.unEllipticalAverage(pixelrdata, gaussfilter,
-			ellipratio, ellipangle, imagedata.shape)
+			self.ellipratio, self.ellipangle, imagedata.shape)
 		normaldata = imagedata - gauss2d
 
 		self.panel.setImage(normaldata)
@@ -1231,18 +1208,7 @@ class CTFApp(wx.App):
 
 	#---------------------------------------
 	def onSubtNoise(self, evt):
-		imagedata = self.panel.imagedata
-		# do a rotational average to subtract
-		if self.ellipse_params is None:
-			pixelrdata, rotdata = ctftools.rotationalAverage(imagedata, self.ringwidth, full=False)
-			apDisplay.printWarning("doing a rotational average not elliptical")
-			ellipratio = 1.0
-			ellipangle = 0.0
-		else:
-			ellipratio = self.ellipse_params['a']/self.ellipse_params['b']
-			ellipangle = -math.degrees(self.ellipse_params['alpha'])
-			pixelrdata, rotdata = ctftools.ellipticalAverage(imagedata, 
-				ellipratio, ellipangle, self.ringwidth, full=False)
+		pixelrdata, raddata, rotdata = self.getOneDProfile(full=False)
 
 		# high pass filter the center
 		if 'defocus1' in self.ctfvalues.keys():
@@ -1270,10 +1236,11 @@ class CTFApp(wx.App):
 		pyplot.ylim(ymin=noisedata.min(), ymax=rotdata[firstvalleyindex:].max())
 		pyplot.show()
 
+		imagedata = self.panel.numericdata
 		noise2d = ctftools.unEllipticalAverage(pixelrdata, noisedata,
-			ellipratio, ellipangle, imagedata.shape)
+			self.ellipratio, self.ellipangle, imagedata.shape)
 		normaldata = imagedata - noise2d
-		normaldata = numpy.where(normaldata < -0.1, -0.1, normaldata)
+		normaldata = numpy.where(normaldata < -0.2, -0.2, normaldata)
 		self.panel.setImage(normaldata)
 
 		imagestat.printImageInfo(normaldata)
@@ -1281,18 +1248,7 @@ class CTFApp(wx.App):
 
 	#---------------------------------------
 	def onSubtBimodalNoise(self, evt):
-		imagedata = self.panel.imagedata
-		# do a rotational average to subtract
-		if self.ellipse_params is None:
-			pixelrdata, rotdata = ctftools.rotationalAverage(imagedata, self.ringwidth, full=False)
-			apDisplay.printWarning("doing a rotational average not elliptical")
-			ellipratio = 1.0
-			ellipangle = 0.0
-		else:
-			ellipratio = self.ellipse_params['a']/self.ellipse_params['b']
-			ellipangle = -math.degrees(self.ellipse_params['alpha'])
-			pixelrdata, rotdata = ctftools.ellipticalAverage(imagedata, 
-				ellipratio, ellipangle, self.ringwidth, full=False)
+		pixelrdata, raddata, rotdata = self.getOneDProfile(full=False)
 
 		# high pass filter the center
 		if 'defocus1' in self.ctfvalues.keys():
@@ -1334,8 +1290,8 @@ class CTFApp(wx.App):
 		scale = numpy.arange(part1end-part2start, dtype=numpy.float32)
 		scale /= scale.max()
 		overlapdata = noisedata1[part2start:part1end]*(1-scale) + noisedata2[part2start:part1end]*scale
-		print scale
-		print (1-scale)
+		#print scale
+		#print (1-scale)
 		mergedata = numpy.hstack((noisedata1[:part2start], overlapdata, noisedata2[part1end:]))
 
 		pyplot.clf()
@@ -1352,10 +1308,11 @@ class CTFApp(wx.App):
 			bottom=0.01, left=0.01, top=0.99, right=0.99, )
 		pyplot.show()
 
+		imagedata = self.panel.numericdata
 		noise2d = ctftools.unEllipticalAverage(pixelrdata, mergedata,
-			ellipratio, ellipangle, imagedata.shape)
+			self.ellipratio, self.ellipangle, imagedata.shape)
 		normaldata = imagedata - noise2d
-		normaldata = numpy.where(normaldata < -0.1, -0.1, normaldata)
+		normaldata = numpy.where(normaldata < -0.2, -0.2, normaldata)
 		self.panel.setImage(normaldata)
 
 		imagestat.printImageInfo(normaldata)
@@ -1363,18 +1320,7 @@ class CTFApp(wx.App):
 
 	#---------------------------------------
 	def onSubtTrimodalNoise(self, evt):
-		imagedata = self.panel.imagedata
-		# do a rotational average to subtract
-		if self.ellipse_params is None:
-			pixelrdata, rotdata = ctftools.rotationalAverage(imagedata, self.ringwidth, full=False)
-			apDisplay.printWarning("doing a rotational average not elliptical")
-			ellipratio = 1.0
-			ellipangle = 0.0
-		else:
-			ellipratio = self.ellipse_params['a']/self.ellipse_params['b']
-			ellipangle = -math.degrees(self.ellipse_params['alpha'])
-			pixelrdata, rotdata = ctftools.ellipticalAverage(imagedata, 
-				ellipratio, ellipangle, self.ringwidth, full=False)
+		pixelrdata, raddata, rotdata = self.getOneDProfile(full=False)
 
 		# high pass filter the center
 		if 'defocus1' in self.ctfvalues.keys():
@@ -1446,29 +1392,60 @@ class CTFApp(wx.App):
 			bottom=0.05, left=0.05, top=0.99, right=0.99, )
 		pyplot.show()
 
+		imagedata = self.panel.numericdata
 		noise2d = ctftools.unEllipticalAverage(pixelrdata, mergedata,
-			ellipratio, ellipangle, imagedata.shape)
+			self.ellipratio, self.ellipangle, imagedata.shape)
 		normaldata = imagedata - noise2d
-		normaldata = numpy.where(normaldata < -0.1, -0.1, normaldata)
+		normaldata = numpy.where(normaldata < -0.2, -0.2, normaldata)
 		self.panel.setImage(normaldata)
 
-		imagestat.printImageInfo(normaldata)
+		#imagestat.printImageInfo(normaldata)
 		apDisplay.printColor("Subtract Trimodal Noise complete", "cyan")
 
 	#---------------------------------------
+	def onSubtFitValleys(self, evt):
+		pixelrdata, raddata, rotdata = self.getOneDProfile(full=True)
+		numcols = int(0.5/(self.freq*self.ctfvalues['apix']))
+		radii = ctftools.getCtfExtrema(self.ctfvalues['defocus1'], self.ctfvalues['apix']*1e-10, 
+			self.ctfvalues['cs'], self.ctfvalues['volts'], self.ctfvalues['amplitude_contrast'], 
+			cols=numcols, numzeros=50, zerotype="valleys")
+		extrema = numpy.array(radii, dtype=numpy.float64)*self.freq
+
+		extremedata = ctfnoise.peakExtender(raddata, rotdata, extrema, "below")
+
+		imagedata = self.panel.numericdata
+		extreme2d = ctftools.unEllipticalAverage(pixelrdata, extremedata,
+			self.ellipratio, self.ellipangle, imagedata.shape)
+
+		normaldata = imagedata - extreme2d
+		normaldata = numpy.where(normaldata < -0.2, -0.2, normaldata)
+		self.panel.setImage(normaldata)
+		apDisplay.printColor("Subtract Fit Valleys complete", "cyan")
+
+	#---------------------------------------
+	def onNormFitPeaks(self, evt):
+		pixelrdata, raddata, rotdata = self.getOneDProfile(full=True)
+		numcols = int(0.5/(self.freq*self.ctfvalues['apix']))
+		radii = ctftools.getCtfExtrema(self.ctfvalues['defocus1'], self.ctfvalues['apix']*1e-10, 
+			self.ctfvalues['cs'], self.ctfvalues['volts'], self.ctfvalues['amplitude_contrast'], 
+			cols=numcols, numzeros=50, zerotype="peaks")
+		extrema = numpy.array(radii, dtype=numpy.float64)*self.freq
+
+		extremedata = ctfnoise.peakExtender(raddata, rotdata, extrema, "above")
+
+		imagedata = self.panel.numericdata
+		extreme2d = ctftools.unEllipticalAverage(pixelrdata, extremedata,
+			self.ellipratio, self.ellipangle, imagedata.shape)
+
+		normaldata = imagedata / extreme2d
+		normaldata = numpy.where(normaldata > 1.2, 1.2, normaldata)
+		normaldata = numpy.where(normaldata < -0.2, -0.2, normaldata)
+		self.panel.setImage(normaldata)
+		apDisplay.printColor("Subtract Fit Valleys complete", "cyan")
+
+	#---------------------------------------
 	def onNormEnvelop(self, evt):
-		# do a rotational average to subtract
-		imagedata = self.panel.imagedata
-		if self.ellipse_params is None:
-			pixelrdata, rotdata = ctftools.rotationalAverage(imagedata, self.ringwidth, full=False)
-			apDisplay.printWarning("doing a rotational average not elliptical")
-			ellipratio = 1.0
-			ellipangle = 0.0
-		else:
-			ellipratio = self.ellipse_params['a']/self.ellipse_params['b']
-			ellipangle = -math.degrees(self.ellipse_params['alpha'])
-			pixelrdata, rotdata = ctftools.ellipticalAverage(imagedata, 
-				ellipratio, ellipangle, self.ringwidth, full=False)
+		pixelrdata, raddata, rotdata = self.getOneDProfile(full=False)
 
 		# high pass filter the center
 		if 'defocus1' in self.ctfvalues.keys():
@@ -1498,11 +1475,12 @@ class CTFApp(wx.App):
 		pyplot.ylim(ymin=rotdata.min(), ymax=envelopdata.max())
 		pyplot.show()
 
+		imagedata = self.panel.numericdata
 		envelop2d = ctftools.unEllipticalAverage(pixelrdata, envelopdata,
-			ellipratio, ellipangle, imagedata.shape)
+			self.ellipratio, self.ellipangle, imagedata.shape)
 		normaldata = imagedata/envelop2d
-		normaldata = numpy.where(normaldata > 1.1, 1.1, normaldata)
-		normaldata = numpy.where(normaldata < -0.1, -0.1, normaldata)
+		normaldata = numpy.where(normaldata > 1.2, 1.2, normaldata)
+		normaldata = numpy.where(normaldata < -0.2, -0.2, normaldata)
 
 		self.panel.setImage(normaldata)
 		imagestat.printImageInfo(normaldata)
@@ -1510,18 +1488,7 @@ class CTFApp(wx.App):
 
 	#---------------------------------------
 	def onNormTrimodalEnvelop(self, evt):
-		imagedata = self.panel.imagedata
-		# do a rotational average to subtract
-		if self.ellipse_params is None:
-			pixelrdata, rotdata = ctftools.rotationalAverage(imagedata, self.ringwidth, full=False)
-			apDisplay.printWarning("doing a rotational average not elliptical")
-			ellipratio = 1.0
-			ellipangle = 0.0
-		else:
-			ellipratio = self.ellipse_params['a']/self.ellipse_params['b']
-			ellipangle = -math.degrees(self.ellipse_params['alpha'])
-			pixelrdata, rotdata = ctftools.ellipticalAverage(imagedata, 
-				ellipratio, ellipangle, self.ringwidth, full=False)
+		pixelrdata, raddata, rotdata = self.getOneDProfile(full=False)
 
 		# high pass filter the center
 		if 'defocus1' in self.ctfvalues.keys():
@@ -1594,11 +1561,12 @@ class CTFApp(wx.App):
 			bottom=0.05, left=0.05, top=0.99, right=0.99, )
 		pyplot.show()
 
+		imagedata = self.panel.numericdata
 		envelop2d = ctftools.unEllipticalAverage(pixelrdata, mergedata,
-			ellipratio, ellipangle, imagedata.shape)
+			self.ellipratio, self.ellipangle, imagedata.shape)
 		normaldata = imagedata/envelop2d
-		normaldata = numpy.where(normaldata > 1.1, 1.1, normaldata)
-		normaldata = numpy.where(normaldata < -0.1, -0.1, normaldata)
+		normaldata = numpy.where(normaldata > 1.2, 1.2, normaldata)
+		normaldata = numpy.where(normaldata < -0.2, -0.2, normaldata)
 		self.panel.setImage(normaldata)
 
 		imagestat.printImageInfo(normaldata)
@@ -1607,25 +1575,19 @@ class CTFApp(wx.App):
 
 	#---------------------------------------
 	def onShowPlot(self, evt):
-		# do a rotational average to subtract
-		imagedata = self.panel.imagedata
-		imagestat.printImageInfo(imagedata)
-		if self.ellipse_params is None:
-			pixelrdata, rotdata = ctftools.rotationalAverage(imagedata, self.ringwidth, full=False)
-			apDisplay.printWarning("doing a rotational average not elliptical")
-		else:
-			ellipratio = self.ellipse_params['a']/self.ellipse_params['b']
-			ellipangle = -math.degrees(self.ellipse_params['alpha'])
-			pixelrdata, rotdata = ctftools.ellipticalAverage(imagedata, 
-				ellipratio, ellipangle, self.ringwidth, full=False)
+		pixelrdata, raddata, rotdata = self.getOneDProfile(full=False)
+		pixelrdata, raddatafull, rotdatafull = self.getOneDProfile(full=True)
 
 		imagestat.printImageInfo(rotdata)
 
 		pyplot.clf()
-		xdata= (pixelrdata*self.freq)**2
-		pyplot.plot(xdata, rotdata, 'k-',)
-		pyplot.xlim(xmax=xdata.max())
-		pyplot.ylim(ymin=rotdata.min(), ymax=rotdata.max())
+		pyplot.plot(raddatafull**2, rotdatafull, 'r--', alpha=0.5)
+		pyplot.plot(raddata**2, rotdata, 'k-',)
+		fullmax = (raddatafull**2).max()
+		normmax = (raddata**2).max()
+		usemax = (fullmax + normmax)/2.0
+		pyplot.xlim(xmax=usemax)
+		pyplot.ylim(ymin=rotdata[5:].min(), ymax=rotdata[5:].max())
 		pyplot.show()
 		apDisplay.printColor("Show plot complete", "cyan")
 		return
@@ -1633,13 +1595,6 @@ class CTFApp(wx.App):
 
 	#---------------------------------------
 	def onNext(self, evt):
-		#targets = self.panel.getTargets('Select Particles')
-		#for target in targets:
-		#	print '%s\t%s' % (target.x, target.y)
-		vertices = self.panel.getTargetPositions('Polygon')
-		if len(vertices) > 0:
-			apDisplay.printMsg("Clearing %d polygon vertices"%(len(vertices)))
-			self.panel.setTargets('Polygon', [])
 		self.appionloop.targets = {}
 		self.appionloop.assess = self.finalAssessment()
 		self.Exit()
@@ -1775,12 +1730,10 @@ class ManualCTF(appionLoop2.AppionLoop):
 			help="pick shape")
 		self.parser.add_option("--shapesize", dest="shapesize", type="int", default=16,
 			help="shape size")
-		self.parser.add_option("--rotatestep", dest="rotatestep", type="float", default=1,
-			help="rotation step size in degrees")
-		self.parser.add_option("--rotations", dest="rotations", type="int", default=61,
-			help="number of rotations to avearge")
 		self.parser.add_option("--resolution-limit", dest="reslimit", type="float", default=9.0,
 			help="outer resolution limit (in A) to clip the fft image")
+		self.parser.add_option("--ringwidth", dest="ringwidth", type="float", default=2.0,
+			help="number of radial pixels to average during elliptical average")
 
 	#---------------------------------------
 	def checkConflicts(self):
@@ -1856,6 +1809,7 @@ class ManualCTF(appionLoop2.AppionLoop):
 		fftarray = imagefun.bin2(imgarray, self.params['prebin'])
 
 		### calculate power spectra
+		#fftarray = ctfpower.power(fftarray, mask_radius=0.2)
 		fftarray = imagefun.power(fftarray, mask_radius=0.2)
 
 		### clip image
@@ -1866,7 +1820,7 @@ class ManualCTF(appionLoop2.AppionLoop):
 		pixellimit = int(math.ceil(pixelsize*cols/self.params['reslimit']))
 		size = apPrimeFactor.getNextEvenPrime(pixellimit*2)
 		newshape = (size, size)
-		print "NEWSHAPE=", newshape
+		#print "NEWSHAPE=", newshape
 		fftarray = imagefilter.frame_cut(fftarray, newshape)
 
 		## preform a rotational average and remove peaks
@@ -1899,6 +1853,7 @@ class ManualCTF(appionLoop2.AppionLoop):
 		self.app.freq = 1./(self.app.apix * mindim)
 		self.app.imgdata = imgdata
 		self.app.volts = imgdata['scope']['high tension']
+		self.app.ringwidth = self.params['ringwidth']
 		self.app.wavelength = ctftools.getTEMLambda(self.app.volts)
 		self.app.cs = apInstrument.getCsValueFromSession(self.getSessionData())*1e-3
 		self.app.ctfvalues.update({ 
