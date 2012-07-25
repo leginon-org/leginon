@@ -9,7 +9,9 @@ from pyami import imagefun
 from pyami import ellipse
 from appionlib import apPrimeFactor
 from appionlib import apDisplay
+from appionlib.apCtf import ctfpower
 from appionlib.apImage import imagefile
+from appionlib.apImage import imagestat
 from appionlib.apImage import imagefilter
 #from appionlib import lowess
 
@@ -155,7 +157,10 @@ def powerSpectraToOuterResolution(image, outerresolution, apix):
 	"""
 	if debug is True:
 		print "Computing power spectra..."
+	fieldsize = ctfpower.getFieldSize(image.shape)
+	binning = max(image.shape)/fieldsize
 	data = imagefun.power(image, mask_radius=1)
+	#data = ctfpower.power(image, fieldsize, mask_radius=1)
 	#data = numpy.exp(data)
 	powerspec, trimapix = trimPowerSpectraToOuterResolution(data, outerresolution, apix)
 	return powerspec, trimapix
@@ -346,6 +351,7 @@ def unEllipticalAverage(xdata, ydata, ellipratio, ellipangle, shape):
 	compute the rotational average of a 2D numpy array
 	"""
 	radial = getEllipticalDistanceArray(ellipratio, ellipangle, shape)
+	radial = radial/math.sqrt(ellipratio)
 	image = imagefun.fromRadialFunction(funcrad, shape, xdata=xdata, ydata=ydata)
 	def funcrc(r, c, radial, **kwargs):
 		rr = numpy.array(numpy.floor(r), dtype=numpy.int)
