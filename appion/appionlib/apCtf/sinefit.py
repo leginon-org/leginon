@@ -19,6 +19,21 @@ def refineAmplitudeContrast(ws2, ctfdata, original_amp_contrast=None):
 		   pi*wavelength*defocus * s^2
 		   in inverse Fourier unitless (use meters)
 	ctfdata -- elliptically averaged powerspectra data
+	
+	MATH:
+	Normal least squares: (B fit variables, X data, y = ctfvalues)
+	X B = y
+	XT X B = XT y
+	B = (XT X)^-1 XT y
+	
+	Solve with QR, by setting X = QR:
+	XT X B = XT y
+	(QR)T QR B = (QR)T y
+	RT QT Q R B = RT QT y
+	RT R B = RT QT y
+	(RT)^-1 RT R B = (RT)^-1 RT QT y
+	R B = QT y
+	B = R^-1 QT y
 	"""
 	onevec = numpy.ones(ws2.shape, dtype=numpy.float) #A
 	cosvec = numpy.cos(2*ws2) #B
