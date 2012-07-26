@@ -542,11 +542,11 @@ class CtfNoise(object):
 		### lowest is best
 		minvalindex = numpy.argmin(valuelist)
 		constrainval = contraintFunction(fitparamslist[minvalindex], xdata, filterctfdata)
-		#while abs(constrainval) > 0.1:
-		#	apDisplay.printWarning("Constraint violation")
-		#	valuelist[minvalindex] = 1e10
-		#	minvalindex = numpy.argmin(valuelist)
-		#	constrainval = contraintFunction(fitparamslist[minvalindex], xdata, filterctfdata)
+		while abs(constrainval) > 0.1:
+			apDisplay.printWarning("Constraint violation")
+			valuelist[minvalindex] = 1e10
+			minvalindex = numpy.argmin(valuelist)
+			constrainval = contraintFunction(fitparamslist[minvalindex], xdata, filterctfdata)
 		if self.debug is True:
 			apDisplay.printColor( namelist[minvalindex]+" is best" , "cyan")
 		midfitparams = fitparamslist[minvalindex]
