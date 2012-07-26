@@ -248,10 +248,9 @@ class CtfDisplay(object):
 		envelop2de = numpy.exp(envelop2d)
 		normnormal2de = normal2de / envelop2de
 		#normnormal2de = numpy.where(normal2de > envelop2de, envelop2de, normal2de)
-		mincut = normnormal2de.std()
-		if self.debug is True:
-			print "Minimum cut...", mincut
-		cutnormale = numpy.where(normnormal2de < 0.0, 0.0, normnormal2de+mincut)
+		cutnormale = numpy.where(normnormal2de < -0.2, -0.2, normnormal2de)
+		cutnormale = numpy.where(normnormal2de > 1.2, 1.2, cutnormale)
+
 		return cutnormale
 
 	#====================
@@ -681,9 +680,9 @@ if __name__ == "__main__":
 	### CNV data
 	#imagelist = glob.glob("/data01/leginon/10apr19a/rawdata/10apr19a_10apr19a_*en_1.mrc")
 	### Pick-wei images with lots of rings
-	imagelist = glob.glob("/data01/leginon/09sep20a/rawdata/09*en.mrc")
+	#imagelist = glob.glob("/data01/leginon/09sep20a/rawdata/09*en.mrc")
 	### Something else, ice data
-	#imagelist = glob.glob("/data01/leginon/09feb20d/rawdata/09*en.mrc")
+	imagelist = glob.glob("/data01/leginon/09feb20d/rawdata/09*en.mrc")
 	### images of Hassan with 1.45/1.65 astig at various angles
 	#imagelist = glob.glob("/data01/leginon/12jun12a/rawdata/12jun12a_ctf_image_ang*.mrc")
 	#=====================
