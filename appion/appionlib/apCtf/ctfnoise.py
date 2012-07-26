@@ -2,6 +2,7 @@
 
 import sys
 import math
+import time
 import numpy
 import scipy.optimize
 import scipy.ndimage
@@ -487,7 +488,14 @@ class CtfNoise(object):
 	def modelCTFNoise(self, xdata, ctfdata, contraint="below"):
 		"""
 		Master control function to fit the CTF noise function
+
+		xdata - should be in inverse Angstroms
 		"""
+		t0 = time.time()
+		### need to reduce precision of the xdata
+		### otherwise it takes too long, with no better of a fit
+		xdata = xdata.astype(numpy.float32)
+
 		if self.debug is True:
 			apDisplay.printColor("CTF limits %.1f A -->> %.1fA"
 				%(1./xdata.min(), 1./xdata.max()), "cyan")
@@ -604,7 +612,8 @@ class CtfNoise(object):
 			pyplot.clf()
 			"""
 
-
+		apDisplay.printColor("Noise Model Complete in %s"
+			%(apDisplay.timeString(time.time()-t0)), "cyan")
 
 		return bestfitparams
 
