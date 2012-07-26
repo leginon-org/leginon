@@ -101,6 +101,8 @@ class CtfNoise(object):
 		"""
 		constraint: f(x) - fit(x) < 0
 			     OR: fit(x) - f(x) > 0  -- forces to fit above function
+
+		if returns value of constraint, such that any thing below zero is bad
 		"""
 		if model is None:
 			model = self.noiseModel
@@ -115,6 +117,8 @@ class CtfNoise(object):
 	def modelConstFunBelow(self, fitparams, xdata=None, ctfdata=None, model=None):
 		"""
 		constraint: f(x) - fit(x) > 0  -- forces to fit below function
+
+		if returns value of constraint, such that any thing below zero is bad
 		"""
 		if model is None:
 			model = self.noiseModel
