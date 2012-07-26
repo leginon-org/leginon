@@ -63,11 +63,11 @@ class CtfDisplay(object):
 		### get all peaks (not valleys)
 		peaks = ctftools.getCtfExtrema(self.defocus2, self.trimapix*1e-10, self.cs, self.volts, 
 			self.ampconst, cols=numcols, numzeros=12, zerotype="peak")
-		peaksradii = self.freq*numpy.array(peaks, dtype=numpy.float32)
+		peaksradii = self.freq*numpy.array(peaks, dtype=numpy.float64)
 		peaksradiisq = peaksradii**2
 		valleys = ctftools.getCtfExtrema(self.defocus2, self.trimapix*1e-10, self.cs, self.volts, 
 			self.ampconst, cols=numcols, numzeros=12, zerotype="valley")
-		valleysradii = self.freq*numpy.array(valleys, dtype=numpy.float32)
+		valleysradii = self.freq*numpy.array(valleys, dtype=numpy.float64)
 		valleysradiisq = valleysradii**2
 
 		if self.debug is True:
@@ -244,15 +244,15 @@ class CtfDisplay(object):
 		envelop2d = imagefun.fromRadialFunction(self.funcrad, zdata2d.shape, 
 			rdata=rdata/self.freq, zdata=envelopdata)
 		#imagefile.arrayToJpeg(fitdata, "fitdata.jpg")
-		normal2d = numpy.exp(zdata2d) - numpy.exp(noise2d)
-		#normnormal2d = normal2d / numpy.exp(envelop2d)
-		envelop2d = numpy.exp(envelop2d)
-		normnormal2d = numpy.where(normal2d > envelop2d, envelop2d, normal2d)
-		mincut = normnormal2d.std()
+		normal2de = numpy.exp(zdata2d) - numpy.exp(noise2d)
+		envelop2de = numpy.exp(envelop2d)
+		normnormal2de = normal2de / envelop2de
+		#normnormal2de = numpy.where(normal2de > envelop2de, envelop2de, normal2de)
+		mincut = normnormal2de.std()
 		if self.debug is True:
 			print "Minimum cut...", mincut
-		cutnormal = numpy.where(normnormal2d < 0.0, 0.0, normnormal2d+mincut)
-		return cutnormal
+		cutnormale = numpy.where(normnormal2de < 0.0, 0.0, normnormal2de+mincut)
+		return cutnormale
 
 	#====================
 	#====================
@@ -370,14 +370,26 @@ class CtfDisplay(object):
 	#====================
 	#====================
 	def drawPowerSpecImage(self, origpowerspec, maxsize=1500):
-		if max(origpowerspec.shape) > maxsize:
-			scale = maxsize/float(max(origpowerspec.shape))
+		#compute elliptical average and merge with original image
+		pixelrdata, rotdata = ctftools.ellipticalAverage(origpowerspec, self.ratio, self.angle,
+			self.ringwidth, 1, full=True)
+		ellipavgpowerspec = ctftools.unEllipticalAverage(pixelrdata, rotdata, 
+			self.ratio, self.angle, origpowerspec.shape)
+		halfshape = origpowerspec.shape[1]/2
+		halfpowerspec = numpy.hstack( (origpowerspec[:,:halfshape] , ellipavgpowerspec[:,halfshape:] ) )
+		if halfpowerspec.shape != origpowerspec.shape:
+			apDisplay.printError("Error in power spectra creation")
+
+		if max(halfpowerspec.shape) > maxsize:
+			scale = maxsize/float(max(halfpowerspec.shape))
 			#scale = math.sqrt((random.random()+random.random()+random.random())/3.0)
 			print "Scaling final powerspec image by %.3f"%(scale)
-			powerspec = imagefilter.scaleImage(origpowerspec, scale)
+			powerspec = imagefilter.scaleImage(halfpowerspec, scale)
 		else:
 			scale = 1.0
-			powerspec = origpowerspec.copy()
+			powerspec = halfpowerspec.copy()
+
+
 
 		self.scaleapix = self.trimapix
 		self.scalefreq = self.freq/scale
@@ -485,23 +497,16 @@ class CtfDisplay(object):
 			apDisplay.printError("Too big of outer radius to draw")
 		outpixrad = math.ceil(pixrad)+1
 		inpixrad = math.floor(pixrad)-1
-		a = 15
-		theta = 2.0 * math.asin (a/(2.0*outpixrad))
-		numpoints = int(math.ceil(2.0*math.pi/theta))
-		outpoints = ellipse.generate_ellipse(outpixrad, outpixrad, 
-			0.0, center, numpoints, None, "step", True)
-		outx = outpoints[:,0]
-		outy = outpoints[:,1]
-		inpoints = ellipse.generate_ellipse(inpixrad, inpixrad, 
-			0.0, center, numpoints, None, "step", True)
-		inx = inpoints[:,0]
-		iny = inpoints[:,1]
-		numsteps = len(inx)-1
-		for k in range(numsteps):
-			inxy = (inx[k], iny[k], inx[k+1], iny[k+1])
-			draw.line(inxy, fill="black", width=2)
-			outxy = (outx[k], outy[k], outx[k+1], outy[k+1])
-			draw.line(outxy, fill="white", width=2)
+		for i in numpy.arange(-2.0,2.01,0.1):
+			r = pixrad + i
+			blackxy = numpy.array((center[0]-r,center[1]-r, 
+				center[0]+r,center[1]+r), dtype=numpy.float64)
+			draw.ellipse(tuple(blackxy), outline="black")
+		for i in numpy.arange(-0.5,0.51,0.1):
+			r = pixrad + i
+			whitexy = numpy.array((center[0]-r,center[1]-r, 
+				center[0]+r,center[1]+r), dtype=numpy.float64)
+			draw.ellipse(tuple(whitexy), outline="white")
 
 		### add text
 		fontpath = "/usr/share/fonts/liberation/LiberationSans-Regular.ttf"
@@ -514,6 +519,15 @@ class CtfDisplay(object):
 		angrad = maxrad/math.sqrt(2) + 10
 		coord = (angrad+maxrad, angrad+maxrad)
 		draw.text(coord, "%.1f A"%(bestres), font=font)
+
+		## add text about what sides of powerspec are:
+		## left - raw data; right - elliptical average data
+		leftcoord = (16, 16)
+		draw.text(leftcoord, "Raw CTF Data", font=font)
+		tsize = draw.textsize("Elliptical Average", font=font)
+		xdist = powerspec.shape[0] - 16 - tsize[0]
+		rightcoord = (xdist, 16)
+		draw.text(rightcoord, "Elliptical Average", font=font)
 
 		## create an alpha blend effect
 		originalimage = Image.blend(originalimage, pilimage, 0.95)
@@ -573,7 +587,7 @@ class CtfDisplay(object):
 
 	#====================
 	#====================
-	def CTFpowerspec(self, imgdata, ctfdata, outerbound=10e-10):
+	def CTFpowerspec(self, imgdata, ctfdata, outerbound=9e-10):
 		"""
 		Make a nice looking powerspectra with lines for location of Thon rings
 
@@ -607,7 +621,7 @@ class CtfDisplay(object):
 		if self.debug is True:
 			print "Pixelsize (A/pix)", self.apix
 
-		self.prebin = ctftools.getPowerSpectraPreBin(outerbound*1e10, self.apix)
+		self.prebin = 1 #ctftools.getPowerSpectraPreBin(outerbound*1e10, self.apix)
 		print "Reading image..."
 		image = imgdata['image']
 		self.freq = 1./(self.apix * image.shape[0])
@@ -622,12 +636,14 @@ class CtfDisplay(object):
 			outerbound*1e10, self.binapix)
 		self.trimfreq = 1./(self.trimapix * powerspec.shape[0])
 		print "Median filter image..."
-		## preform a rotational average and remove peaks
+		powerspec = ndimage.median_filter(powerspec, 2)
+		print "Preform a rotational average and remove spikes..."
 		rotfftarray = ctftools.rotationalAverage2D(powerspec)
 		stdev = rotfftarray.std()
-		rotplus = rotfftarray + stdev*5
+		rotplus = rotfftarray + stdev*4
 		powerspec = numpy.where(powerspec > rotplus, rotfftarray, powerspec)
-		powerspec = ndimage.median_filter(powerspec, 2)
+		print "Light Gaussian blur image..."
+		powerspec = ndimage.gaussian_filter1d(powerspec, 3)
 
 		### get peaks of CTF
 		self.cs = ctfdata['cs']*1e-3
