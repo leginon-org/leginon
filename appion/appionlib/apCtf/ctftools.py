@@ -162,7 +162,9 @@ def powerSpectraToOuterResolution(image, outerresolution, apix):
 	data = imagefun.power(image, mask_radius=1)
 	#data = ctfpower.power(image, fieldsize, mask_radius=1)
 	#data = numpy.exp(data)
+	data = data.astype(numpy.float64)
 	powerspec, trimapix = trimPowerSpectraToOuterResolution(data, outerresolution, apix)
+
 	return powerspec, trimapix
 
 #============
@@ -315,7 +317,7 @@ def rotationalAverage(image, ringwidth=3.0, innercutradius=None, full=False, med
 	if debug is True:
 		print "computing rotational average ydata..."
 	ydata = numpy.array(scipy.ndimage.mean(data, radial, xdataint))
-	xdata = numpy.array(xdataint, dtype=numpy.float32)*ringwidth
+	xdata = numpy.array(xdataint, dtype=numpy.float64)*ringwidth
 
 	if debug is True:
 		print "... finish rotational average"
@@ -333,7 +335,8 @@ def unRotationalAverage(xdata, ydata, shape):
 	"""
 	compute the rotational average of a 2D numpy array
 	"""
-	image = imagefun.fromRadialFunction(funcrad, shape, xdata=xdata, ydata=ydata)
+	image = imagefun.fromRadialFunction(funcrad, shape, 
+		xdata=xdata, ydata=ydata, dtype=numpy.float64)
 	return image
 
 #============
@@ -358,7 +361,8 @@ def unEllipticalAverage(xdata, ydata, ellipratio, ellipangle, shape):
 		cc = numpy.array(numpy.floor(c), dtype=numpy.int)
 		rad = radial[rr,cc]
 		return funcrad(rad, **kwargs)
-	result = numpy.fromfunction(funcrc, shape, radial=radial, xdata=xdata, ydata=ydata)
+	result = numpy.fromfunction(funcrc, shape, radial=radial, 
+		xdata=xdata, ydata=ydata, dtype=numpy.float64)
 	return result
 
 #============
@@ -384,10 +388,10 @@ def getEllipticalDistanceArray(ellipratio, ellipangle, shape):
 	yy = ellipratio*yy
 	radial = xx**2 + yy**2
 	### apply ellipse rotation
-	#imagefile.arrayToPng(numpy.array(radial, dtype=numpy.float32), filename+"radial-norot.png")
+	#imagefile.arrayToPng(numpy.array(radial, dtype=numpy.float64), filename+"radial-norot.png")
 	radial = scipy.ndimage.interpolation.rotate(radial, angle=ellipangle, 
 		reshape=False, mode='wrap', order=2)
-	#imagefile.arrayToPng(numpy.array(radial, dtype=numpy.float32), filename+"radial-uncut.png")
+	#imagefile.arrayToPng(numpy.array(radial, dtype=numpy.float64), filename+"radial-uncut.png")
 	radial = imagefilter.frame_cut(radial, shape)
 	if debug is True:
 		print "minimal radial distance", radial.min()
@@ -421,7 +425,7 @@ def ellipticalAverage(image, ellipratio, ellipangle, ringwidth=3.0, innercutradi
 	## need to convert to integers for scipy
 	radial = radial/ringwidth
 	radial = numpy.array(radial, dtype=numpy.int32)
-	#imagefile.arrayToPng(numpy.array(radial, dtype=numpy.float32), filename+"radial.png")
+	#imagefile.arrayToPng(numpy.array(radial, dtype=numpy.float64), filename+"radial.png")
 	if bigshape[0] < 32:
 		print radial
 
@@ -460,7 +464,7 @@ def ellipticalAverage(image, ellipratio, ellipangle, ringwidth=3.0, innercutradi
 		print "computing elliptical average ydata..."
 	ydata = numpy.array(scipy.ndimage.mean(data, radial, xdataint))
 	### WHAT ARE YOU DOING WITH THE SQRT ellipratio???
-	xdata = numpy.array(xdataint, dtype=numpy.float32)*ringwidth/math.sqrt(ellipratio)
+	xdata = numpy.array(xdataint, dtype=numpy.float64)*ringwidth/math.sqrt(ellipratio)
 
 	if debug is True:
 		print "... finish elliptical average"
