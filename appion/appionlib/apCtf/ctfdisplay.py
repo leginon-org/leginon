@@ -31,7 +31,7 @@ class CtfDisplay(object):
 	#====================
 	def __init__(self):
 		### global params that do NOT change with image
-		self.ringwidth = 0.5
+		self.ringwidth = 2.0
 		self.debug = False
 		return
 
@@ -586,7 +586,7 @@ class CtfDisplay(object):
 
 	#====================
 	#====================
-	def CTFpowerspec(self, imgdata, ctfdata, outerbound=9e-10):
+	def CTFpowerspec(self, imgdata, ctfdata, outerbound=10e-10):
 		"""
 		Make a nice looking powerspectra with lines for location of Thon rings
 
