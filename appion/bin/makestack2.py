@@ -855,6 +855,8 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 			return
 		elif uniqrundatas and not uniqstackdatas:
 			apDisplay.printError("Weird, run data without stack already in the database")
+		elif not uniqrundatas and uniqstackdatas:
+			apDisplay.printError("Weird, stack data without run already in the database")
 		else:
 			rinstackq['stack'] = stackq
 			rinstack = rinstackq.query(results=1)
