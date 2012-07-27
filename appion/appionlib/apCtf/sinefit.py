@@ -226,3 +226,112 @@ def refineCTF(s2, ctfdata, initdefocus, initampcontrast):
 		return None
 
 	return w, amplitudecontrast
+
+
+def weightedRefineCTF(s2, ctfdata, initdefocus, initampcontrast):
+	"""
+	takes elliptical average data and fits it to the equation
+	A + B cos(w*x) + C sin(w*x)
+	ctfdata = (sin(w*x + phi))^2
+	        = [ 1 - cos(2*w*x + 2*phi) ]/2
+	        = [ 1 - cos(2wx)*cos(2phi) + sin(2wx)*sin(2phi) ]/2
+	        = A + B cos(2wx) + C sin(2wx)
+	Taylor series:
+		cos(2*w*s2) = cos(2*wi*s2) - 2*s2*sin(2*wi*s2) * dw
+		sin(2*w*s2) = cos(2*wi*s2) + 2*s2*cos(2*wi*s2) * dw
+	Substitution:
+		A + B cos(2*w*s2) + C sin(2*w*s2) - 2*Bi*s2*sin(2*wi*s2)*dw + 2*Ci*s2*cos(2*wi*s2)*dw
+	Setup linear solve for A,B,C,dw
+		1, cos(w*s2), sin(w*s2), -2*Bi*s2*sin(2*wi*s2) + 2*Ci*s2*cos(2*wi*s2)
+	Note: in term 4: Bi,Ci,wi are estimates from previous interation
+		this makes it an iterative process
+	where A = 1/2; B = -cos(2phi)/2; C = +sin(2phi)/2
+	s2 -- s2 variable times all the parameters, except defocus
+		   pi*wavelength * s^2
+		   in inverse Fourier meters
+	ctfdata -- elliptically averaged powerspectra data
+	"""
+	## initial values
+	
+	phi = math.asin(initampcontrast)
+	B = -math.cos(2*phi)/2 #B = -cos(2phi)/2
+	C = math.sin(2*phi)/2 #C = +sin(2phi)/2
+	w = initdefocus
+	ac = initampcontrast
+	initctffit = (math.sqrt(1 - ac**2)*numpy.sin(w*s2) + ac*numpy.cos(w*s2))**2
+	initconf = scipy.stats.pearsonr(ctfdata, initctffit)[0]
+	apDisplay.printColor("initial defocus = %.8e"%(w), "cyan")
+	apDisplay.printColor("initial amplitude contrast = %.8f"%(initampcontrast), "cyan")
+	apDisplay.printColor("initial confidence value: %.8f"%(initconf), "green")
+
+	onevec = numpy.ones(s2.shape, dtype=numpy.float) #column 1
+	numiter = 10
+	defocus_tolerance = 9e-10
+	dw = 1e100 #big number
+	for i in range(numiter):
+		if abs(dw) < defocus_tolerance:
+			break
+		apDisplay.printColor("Iteration %d of %d"%(i+1, numiter), "purple")
+		cosvec = numpy.cos(2*w*s2) #column 2, fixed defocus from previous
+		sinvec = numpy.sin(2*w*s2) #column 3, fixed defocus from previous
+		dwvec = 2*C*s2*numpy.cos(2*w*s2) - 2*B*s2*numpy.sin(2*w*s2) #column 4: -2*Bi*s2*sin(2*wi*s2) + 2*Ci*s2*cos(2*wi*s2)
+		d0 = numpy.array([onevec, cosvec, sinvec, dwvec]).transpose()
+		q, r = numpy.linalg.qr(d0)
+		if numpy.linalg.det(r) == 0:
+			apDisplay.printWarning("Singular matrix in calculation")
+			return None
+		denom = numpy.dot(numpy.transpose(q), ctfdata)
+		x0 = numpy.dot(numpy.linalg.inv(r), denom)
+		A,B,C,dw = x0
+		apDisplay.printMsg("A,B,C,DW = %.8f,%.8f,%.8f,%.8e"%(A,B,C,dw))
+
+		trig_amplitude = math.sqrt(B**2 + C**2)
+		apDisplay.printColor("... trig_amplitude = %.8f"%(trig_amplitude), "blue")
+
+		w = w + dw
+		apDisplay.printColor("... defocus = %.8e"%(w), "cyan")
+		psi = math.atan2(B,C)
+		phi = (2*psi + math.pi)/4
+		amplitudecontrast = math.sin(phi)
+		ac = amplitudecontrast
+		apDisplay.printColor("... amplitude contrast = %.8f"%(amplitudecontrast), "blue")
+
+		ctffit1 = A*onevec + B*cosvec + C*sinvec + dw*dwvec
+		ctffit4 = (math.sqrt(1 - ac**2)*numpy.sin(w*s2) + ac*numpy.cos(w*s2))**2
+		from matplotlib import pyplot
+		pyplot.clf()
+		ws2 = w*s2
+		conf2 = scipy.stats.pearsonr(ctfdata, ctffit4)[0]
+		pyplot.title("Refine fit, confidence %.4f"%(conf2))
+		a = pyplot.plot(ws2, ctfdata, '.', color="black")
+		b = pyplot.plot(ws2, initctffit, '--', color="purple")
+		c = pyplot.plot(ws2, ctffit1, '-', color="red")
+		d = pyplot.plot(ws2, ctffit4, '-', color="blue")
+		pyplot.legend([a, b, c, d], ["data", "orig ctf", "raw fit", "norm fit"])
+		pyplot.xlim(xmin=ws2.min(), xmax=ws2.max())
+		pyplot.ylim(ymin=-0.05, ymax=1.05)
+		pyplot.show()
+		pyplot.draw()
+
+		conf1 = scipy.stats.pearsonr(ctfdata, ctffit1)[0]
+		apDisplay.printColor("... Confidence values: %.8f, %.8f"%(conf1, conf2), "blue")
+
+		time.sleep(3)
+
+	apDisplay.printColor("final confidence = %.5f (old conf=%.5f)"%(conf1, initconf), "green")
+	apDisplay.printColor("final defocus = %.8e"%(w), "green")
+	apDisplay.printColor("final amplitude contrast = %.8f"%(amplitudecontrast), "green")
+
+	if A > 0.60 or A < 0.3:
+		apDisplay.printWarning("Fit out of range, value A != 1/2: %.8f"%(A))
+		return None
+	if trig_amplitude > 0.6 or trig_amplitude < 0.3:
+		apDisplay.printWarning("Fit out of range, value trig_amplitude != 1/2: %.8f"%(trig_amplitude))
+		return None
+	if amplitudecontrast > 0.5 or amplitudecontrast < 0.0:
+		apDisplay.printWarning("Fit out of range, value amplitudecontrast: %.8f"%(amplitudecontrast))
+		return None
+
+	return w, amplitudecontrast
+
+
