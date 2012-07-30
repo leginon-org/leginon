@@ -468,7 +468,7 @@ class generalReconUploader(appionScript.AppionScript):
 
 			### convert icos convention to standard convention
 			full_sym_name = iterationParamsq['symmetry']['symmetry']
-			phi,theta,omega = apEulerCalc.convert3DEMEulerToStandard(full_sym_name,particledata[i]['phi'], particledata[i]['theta'], particledata[i]['omega'])
+			phi,theta,omega = apEulerCalc.convert3DEMEulerToStandardSym(full_sym_name,particledata[i]['phi'], particledata[i]['theta'], particledata[i]['omega'])
 			### convert Euler angles from 3DEM to EMAN format (temporary fix)
 			alt, az, phi = apXmipp.convertXmippEulersToEman(phi, theta, omega)
 

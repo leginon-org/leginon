@@ -18,10 +18,17 @@ def radiansToDegrees(r):
 	return r*180/math.pi
 
 #==================
-def convert3DEMEulerToStandard(full_sym_name,phi,theta,omega):
+def convert3DEMEulerToStandardSym(full_sym_name,phi,theta,omega):
+	'''
+	convert 3DEM Eulers applied to given volume at any orientation convention of any symmetry to create a projection view
+	to eulers for the same volume oriented in the orientation convention in Appion database that would give the same projection view if applied with the package that Appion database orientation convention assumed.
+	'''
 	if 'Icos' not in full_sym_name:
 		return phi,theta,omega
 	else:
+		'''
+		Current Appion Icos Eulers are saved as that need to be applied to 532 (EMAN) orientation.
+		'''
 		return convert3DEMIcosEulerTo532(full_sym_name,phi,theta,omega)
 
 #==================
@@ -44,14 +51,51 @@ def convert3DEMIcosEulerTo532(full_sym_name,phi,theta,omega):
 	r_out = r_in * symr
 	phi,theta,omega = rotationMatrixToEulers3DEM(r_out)
 	return phi,theta,omega
+
+#==================
+def convert3DEMEulerFromStandardSym(full_sym_name,phi,theta,omega):
+	'''
+	convert to 3DEM Eulers of volume at orientation convention of any symmetry 
+	from  eulers for the same volume oriented in the orientation convention in Appion database.
+	'''
+	if 'Icos' not in full_sym_name:
+		return phi,theta,omega
+	else:
+		'''
+		Current Appion Icos Eulers are saved as that need to be applied to 532 (EMAN) orientation.
+		'''
+		return convert3DEMIcosEulerFrom532(full_sym_name,phi,theta,omega)
+
+#==================
+def convert3DEMIcosEulerFrom532(full_sym_name,phi,theta,omega):
+	if 'Icos' not in full_sym_name:
+		return phi,theta,omega
+	r_in = EulersToRotationMatrix3DEM(phi, theta, omega)
+	i_matrix = numpy.matrix([[1,0,0],[0,1,0],[0,0,1]])
+	if '3DEM' in full_sym_name:
+		# (235) to (253)
+		symr1 = EulersToRotationMatrix3DEM(90,0,0).I
+	else:
+		symr1 = i_matrix
+	if 'EMAN' not in full_sym_name:
+		# (253) to (532)
+		symr2 = EulersToRotationMatrix3DEM(-90,90,-31.7174744).I
+	else:
+		symr2 = i_matrix
+	symr = symr1 * symr2
+	r_out = r_in * symr
+	phi,theta,omega = rotationMatrixToEulers3DEM(r_out)
+	return phi,theta,omega
 					
 #==================
-def EulersToRotationMatrixEMAN(alt, az, phi):
+def EulersToRotationMatrixEMAN(alt, az, phi, mirror=False):
 	''' 
 	this code was taken from the Transform class in Sparx and EMAN2 
 	http://blake.bcm.edu/eman2/doxygen_html/transform_8cpp_source.html#l00511	
 	'''
 #	return getEmanEulerMatrix({'euler1':alt, 'euler2':az}, phi)
+	if mirror == True:
+		alt, az, phi = calculate_equivalent_EMANEulers_without_flip(alt, az, phi)
 
 	alt = degreesToRadians(alt)
 	az = degreesToRadians(az)
@@ -95,7 +139,6 @@ def EulersToRotationMatrix3DEM(phi, theta, omega):
 	### round off any values close to 0, default set to 0.001
 	default = 0.000001
 	m = numpy.where(abs(m) < default, 0, m)
-
 	return numpy.matrix(m)
 
 #==================
@@ -259,12 +302,26 @@ def convertXmippEulersToFrealign(phi, theta, psi):
 	return phi, theta, psi
 
 #==================
+def convert3DEMEulersToFrealign(phi, theta, omega):
+	'''
+	Same as convertXmippEulersToFrealign
+	'''
+	return convertXmippEulersToFrealign(phi, theta, omega)
+
+#==================
 def convertFrealignEulersToXmipp(phi, theta, psi):
 	''' reverse of convertXmippEulersToFrealign '''
 	phi = math.fmod(phi,360.0)
 	theta = math.fmod((theta-180),360.0)
 	psi = math.fmod((-psi+180),360.0)
-	return phi, theta, psi
+	return phi, theta, psi 
+
+#==================
+def convertFrealignEulersTo3DEM(phi, theta, psi):
+	''' reverse of convert3DEMEulersToFrealign.
+	Output normally named, in order, phi, theta, omega
+	'''
+	return convertFrealignEulersToXmipp(phi, theta, psi)
 
 #======================================			Rest of Functions			==========================
 

@@ -14,6 +14,7 @@ from appionlib import apEMAN
 from appionlib import apDisplay
 from appionlib import apChimera
 from appionlib import apEulerJump
+from appionlib import apEulerCalc
 from appionlib import apStack
 from appionlib import apModel
 from appionlib import apDatabase
@@ -89,11 +90,11 @@ class UploadFrealignScript(reconUploader.generalReconUploader):
 			count += 1
 			if count % 500 == 0:
 				apDisplay.printMsg("Wrote %d particles to Particle Data File: %s"%(count,partdatafilepath))
-
+			phi, theta, omega = apEulerCalc.convertFrealignEulersTo3DEM(float(partdict['phi']), float(partdict['theta']), float(partdict['psi']))
 			particledataf.write("%.6d\t" % int(partdict['partnum'])) ### NOTE: IT IS IMPORTANT TO START WITH 1, OTHERWISE STACKMAPPING IS WRONG!!!
-			particledataf.write("%.6f\t" % float(partdict['euler1']))
-			particledataf.write("%.6f\t" % float(partdict['euler2']))
-			particledataf.write("%.6f\t" % float(partdict['euler3']))
+			particledataf.write("%.6f\t" % phi)
+			particledataf.write("%.6f\t" % theta)
+			particledataf.write("%.6f\t" % omega)
 			particledataf.write("%.6f\t" % float(partdict['shiftx']))
 			particledataf.write("%.6f\t" % float(partdict['shifty']))
 			particledataf.write("%.6d\t" % 0)
@@ -310,6 +311,7 @@ class UploadFrealignScript(reconUploader.generalReconUploader):
 					os.symlink(newvol, oldvol)
 				except IOError, e:
 					print e
+
 		### calculate Euler jumps
 		self.calculateEulerJumpsAndGoodBadParticles(uploadIterations)	
 		

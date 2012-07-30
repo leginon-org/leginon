@@ -224,7 +224,7 @@ makestack2.py --single=%s --fromstackid=%d %s %s %s %s %s --no-invert --normaliz
 		if 'reconiterid' not in self.params.keys() or self.params['reconiterid'] == 0:
 			self.params['reconiterid'] = None
 		paramfile = 'params.000.par'
-		apFrealign.generateParticleParams(self.params,paramfile)
+		apFrealign.generateParticleParams(self.params,self.model['data'],paramfile)
 		self.addToFilesToSend(paramfile)
 
 #=====================

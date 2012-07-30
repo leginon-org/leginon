@@ -14,6 +14,7 @@ from appionlib import appiondata
 from appionlib import apDefocalPairs
 from appionlib import apRecon
 from appionlib import apDatabase
+from appionlib import apEulerCalc
 
 #=====================
 def parseFrealignParamFile(paramfile):
@@ -37,9 +38,14 @@ def parseFrealignParamFile(paramfile):
 			continue
 		partdict = {
 			'partnum': int(line[0:7].strip()),
+			# euler1,euler2,euler3 are used by uploadFrealign.py which may be deprecated soon
 			'euler1': float(line[8:15]),
 			'euler2': float(line[16:23]),
 			'euler3': float(line[24:31]),
+			# use psi, theta, phi in uploadFrealignRefine.py and in the future
+			'psi': float(line[8:15]),
+			'theta': float(line[16:23]),
+			'phi': float(line[24:31]),
 			'shiftx': float(line[32:39]),
 			'shifty': float(line[40:47]),
 			'phase_residual': float(line[88:94]),
@@ -129,7 +135,7 @@ def convertFrealignSymToAppionSym(frealign_symtext):
 		return frealign_symtext[0].upper()+' (z)'
 
 #===============
-def generateParticleParams(params,initparfile='params.0.par'):
+def generateParticleParams(params,modeldata,initparfile='params.0.par'):
 	params['inpar']=os.path.join(params['rundir'],initparfile)
 	apDisplay.printMsg("Creating parameter file: "+params['inpar'])
 	params['mode']=3
@@ -140,7 +146,7 @@ def generateParticleParams(params,initparfile='params.0.par'):
 	params['noClassification']=0
 	if params['reconiterid']:
 		iterdata = apRecon.getRefineIterDataFromIterationId(params['reconiterid'])
-		sym_name = iterdata['symmetry']['symmetry']
+		sym_name = modeldata['symmetry']['symmetry']
 		
 	print "Writing out particle parameters"
 	if 'last' not in params:
@@ -210,19 +216,8 @@ def generateParticleParams(params,initparfile='params.0.par'):
 		if params['reconiterid'] is not None:
 			params['mode']=1
 			getStackParticleEulersForIteration(params,particle['particleNumber'])
-			fr_eulers = convertEmanEulersToFrealign(params['eman_orient'])
+			fr_eulers = convertAppionEmanEulersToFrealign(params['eman_orient'],sym_name)
 			
-			e1 = fr_eulers['phi']
-			e2 = fr_eulers['theta']
-			e3 = fr_eulers['psi']
-			
-			# if icos in EMAN orientation, rotate eulers to 3dem standard orientation
-			if 'icos' in sym_name.lower() and 'EMAN' in sym_name:
-				newEulers = sumEulers([90,-31.7174744,0],[e1,e2,e3])
-				fr_eulers['phi']=newEulers[0]
-				fr_eulers['theta']=newEulers[1]
-				fr_eulers['psi']=newEulers[2]
-
 			particleparams['psi'] = fr_eulers['psi']
 			particleparams['theta'] = fr_eulers['theta']
 			particleparams['phi'] = fr_eulers['phi']
@@ -236,7 +231,7 @@ def generateParticleParams(params,initparfile='params.0.par'):
 #===============
 def writeParticleParamLine(particleparams, fileobject):
 	p=particleparams
-	fileobject.write("%7d%8.3f%8.3f%8.3f%8.3f%8.3f%9.1f%5d%9.1f%9.1f%8.2f%7.2f%8.2f%7d\n" 
+	fileobject.write("%7d%8.2f%8.2f%8.2f%8.2f%8.2f%7.f.%6d%9.1f%9.1f%8.2f%7.2f%8.2f%7d\n" 
 		% (p['ptclnum'],p['psi'],p['theta'],p['phi'],p['shx'],p['shy'],p['mag'],
 		p['film'],p['df1'],p['df2'],p['angast'],p['presa'],p['dpres'],p['pnumber']))
 
@@ -318,6 +313,19 @@ def createFrealignJob (params, jobname, nodenum=None, mode=None, inpar=None, inv
 	os.chmod(jobname,0755)
 
 #===============
+def convertAppionEmanEulersToFrealign(eman_eulers, full_sym_name='c1'):
+	Eaz = eman_eulers['az']
+	Ealt = eman_eulers['alt']
+	Ephi = eman_eulers['phi']
+	Emirror = eman_eulers['mirror']
+	m = apEulerCalc.EulersToRotationMatrixEMAN(Ealt, Eaz, Ephi, Emirror)
+	Xphi, Xtheta, Xpsi = apEulerCalc.rotationMatrixToEulersXmipp(m)
+	Xphi, Xtheta, Xpsi = apEulerCalc.convert3DEMEulerFromStandardSym(full_sym_name,Xphi,Xtheta,Xpsi)
+	Fphi, Ftheta, Fpsi = apEulerCalc.convertXmippEulersToFrealign(Xphi, Xtheta, Xpsi)
+	Fphi, Ftheta, Fpsi = Xphi, Xtheta, Xpsi
+	eulers={"phi":Fphi,"theta":Ftheta,"psi":Fpsi}
+	return eulers
+
 def convertEmanEulersToFrealign(eman_eulers, sym='c1'):
 	e1 = eman_eulers['az']
 	e2 = eman_eulers['alt']
