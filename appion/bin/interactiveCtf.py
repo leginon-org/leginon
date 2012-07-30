@@ -1049,8 +1049,7 @@ class CTFApp(wx.App):
 
 		ws2 = s**2 * self.wavelength * math.pi
 		ampcontrast = self.ctfvalues['amplitude_contrast']
-		#requires a defocus, use geometric mean it is the defocus of the elliptical average
-		values = sinefit.refineCTF(ws2[firstpeak:], 
+		values = sinefit.weightedRefineCTF(ws2[firstpeak:], 
 			rotdata[firstpeak:], meandefocus, ampcontrast)
 		if values is None:
 			dialog = wx.MessageDialog(self.frame, "CTF refine failed, bad fit.",\
