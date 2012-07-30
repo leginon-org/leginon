@@ -120,7 +120,6 @@ def refineAmplitudeContrast(ws2, ctfdata, original_amp_contrast=None):
 
 	return amplitudecontrast
 
-
 def refineCTF(s2, ctfdata, initdefocus, initampcontrast):
 	"""
 	takes elliptical average data and fits it to the equation
