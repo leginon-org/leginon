@@ -166,14 +166,25 @@ def refineCTF(s2, ctfdata, initdefocus, initampcontrast):
 		apDisplay.printColor("Iteration %d of %d"%(i+1, numiter), "purple")
 		cosvec = numpy.cos(2*w*s2) #column 2, fixed defocus from previous
 		sinvec = numpy.sin(2*w*s2) #column 3, fixed defocus from previous
-		dwvec = 2*C*s2*numpy.cos(2*w*s2) - 2*B*s2*numpy.sin(2*w*s2) #column 4: -2*Bi*s2*sin(2*wi*s2) + 2*Ci*s2*cos(2*wi*s2)
+		#column 4: -2*Bi*s2*sin(2*wi*s2) + 2*Ci*s2*cos(2*wi*s2)
+		dwvec = 2*C*s2*numpy.cos(2*w*s2) - 2*B*s2*numpy.sin(2*w*s2) 
+
 		d0 = numpy.array([onevec, cosvec, sinvec, dwvec]).transpose()
+
+		#MATH: normal AT A x = AT y, where d0 is A and y is ctfdata
+		#      ==> x = (AT A)^-1 AT y
+		#      QR method, let A = QR
+		#      ==> AT A x = AT y --> (QR)T QR x = (QR)T y
+		#      ==> RT QT Q R x = RT QT y | QT Q = 1
+		#      ==> RT R x = RT QT y  | RT cancels out
+		#      ==> R x = QT y
+		#      ==> x = R^-1 QT y
 		q, r = numpy.linalg.qr(d0)
 		if numpy.linalg.det(r) == 0:
 			apDisplay.printWarning("Singular matrix in calculation")
 			return None
-		denom = numpy.dot(numpy.transpose(q), ctfdata)
-		x0 = numpy.dot(numpy.linalg.inv(r), denom)
+		QTy = numpy.dot(numpy.transpose(q), ctfdata) #QT y
+		x0 = numpy.dot(numpy.linalg.inv(r), QTy) #R^-1 QT y
 		A,B,C,dw = x0
 		apDisplay.printMsg("A,B,C,DW = %.8f,%.8f,%.8f,%.8e"%(A,B,C,dw))
 
@@ -274,13 +285,26 @@ def weightedRefineCTF(s2, ctfdata, initdefocus, initampcontrast):
 		cosvec = numpy.cos(2*w*s2) #column 2, fixed defocus from previous
 		sinvec = numpy.sin(2*w*s2) #column 3, fixed defocus from previous
 		dwvec = 2*C*s2*numpy.cos(2*w*s2) - 2*B*s2*numpy.sin(2*w*s2) #column 4: -2*Bi*s2*sin(2*wi*s2) + 2*Ci*s2*cos(2*wi*s2)
-		d0 = numpy.array([onevec, cosvec, sinvec, dwvec]).transpose()
-		q, r = numpy.linalg.qr(d0)
-		if numpy.linalg.det(r) == 0:
+		d0t = numpy.array([onevec, cosvec, sinvec, dwvec]) #this is actually AT not A
+		d0 = d0t.transpose() #this is A
+		weights = 1.0/math.sqrt(s2)
+		weights /= weights.max() #scale s/t max == 1
+
+		#MATH: normal AT A x = AT y, where d0 is A, y is ctfdata, and W is weights
+		#      ==> x = (AT A)^-1 AT W y
+		#      weight AT W A x = AT W y
+		#      ==> x = (AT W A)^-1 AT W y
+
+		#Step 1: get AT W A
+		ATW = numpy.dot(d0t, weights)
+		ATWA = numpy.dot(ATW, d0)
+		if numpy.linalg.det(ATWA) == 0:
 			apDisplay.printWarning("Singular matrix in calculation")
 			return None
-		denom = numpy.dot(numpy.transpose(q), ctfdata)
-		x0 = numpy.dot(numpy.linalg.inv(r), denom)
+		ATWAinv = numpy.linalg.inv(ATWA)
+		ATWAinvATW = numpy.dot(ATWAinv, ATW)
+		x0 = numpy.dot(ATWAinvATW, ctfdata)
+
 		A,B,C,dw = x0
 		apDisplay.printMsg("A,B,C,DW = %.8f,%.8f,%.8f,%.8e"%(A,B,C,dw))
 
