@@ -36,14 +36,26 @@ def getFieldSize(shape):
 	return fieldsize
 
 #=============
-def power(image, fieldsize=None, mask_radius=1):
+def power(image, pixelsize, fieldsize=None, mask_radius=0.2):
+	"""
+	computes power spectra of image using sub-field averaging
+
+	image - (2d numpy float array) image to compute power spectra
+	pixelsize - (float) used to compute frequency, freq. 
+		can be either Angstroms or meters, but freq will have same inverse units
+	fieldsize - (integer) size of box
+	mask_radius - (float) passed to imagefun.power(), 
+		creates a mask of size mask_radius in the center
+
+	TODO: add median flag, requires saving individual power spectra rather than summing
+	"""
 	if fieldsize is None:
 		fieldsize = getFieldSize(image.shape)
 
 	t0 = time.time()
 	xsize, ysize = image.shape
-	xstep = int(math.floor(xsize/float(fieldsize)))
-	ystep = int(math.floor(ysize/float(fieldsize)))
+	xstep = int(math.floor(xsize/float(fieldsize*2)))
+	ystep = int(math.floor(ysize/float(fieldsize*2)))
 	f = fieldsize
 	powersum = numpy.zeros((fieldsize,fieldsize))
 	#envelop = numpy.ones((fieldsize,fieldsize)) 
@@ -82,11 +94,13 @@ def power(image, fieldsize=None, mask_radius=1):
 			cutout = image[x1:x2, y1:y2]
 			powerspec = imagefun.power(cutout*envelop, mask_radius)
 			powersum += powerspec
+	freq = 1.0/(powerspec.shape[0]*pixelsize)
 
 	poweravg = powersum/float(count)
 	if debug is True:
-		print "fieldsize %d with %d images complete in %s"%(fieldsize, count, apDisplay.timeString(time.time()-t0))
-	return poweravg
+		apDisplay.printMsg("fieldsize %d with %d images complete in %s"
+			%(fieldsize, count, apDisplay.timeString(time.time()-t0)))
+	return poweravg, freq
 
 #===================
 #===================

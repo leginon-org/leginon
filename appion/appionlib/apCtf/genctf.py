@@ -9,8 +9,7 @@ from appionlib.apCtf import ctftools
 debug = False
 
 #===================
-def generateCTF1d(radii=None, numpoints=256, focus=1.0e-6, 
-	pixelsize=1.5e-10, cs=2e-3, volts=120000, ampconst=0.07):
+def generateCTF1d(radii=None, focus=1.0e-6, cs=2e-3, volts=120000, ampconst=0.07):
 	"""
 	calculates a CTF function based on the input details
 
@@ -18,10 +17,9 @@ def generateCTF1d(radii=None, numpoints=256, focus=1.0e-6,
 	Underfocus is postive (defocused) 
 	"""
 	if debug is True:
-		print "generateCTF1d()"
+		print "generateCTF1dFromRadii()"
 	t0 = time.time()
-	checkParams(focus1=focus, focus2=focus, pixelsize=pixelsize, cs=cs, 
-		volts=volts, ampconst=ampconst)
+	checkParams(focus1=focus, focus2=focus, cs=cs, volts=volts, ampconst=ampconst)
 	minres = 1e10/radii.min()
 	maxres = 1e10/radii.max()
 	if debug is True:
@@ -29,14 +27,7 @@ def generateCTF1d(radii=None, numpoints=256, focus=1.0e-6,
 	if maxres < 2.0 or maxres > 50.0:
 		apDisplay.printError("CTF limits are incorrect %.1f A -->> %.1fA"%(minres, maxres))
 
-	if radii is None:
-		radii = generateRadii1d(numpoints, pixelsize)
-	else:
-		numpoints = len(radii)
-
 	wavelength = ctftools.getTEMLambda(volts)
-
-	ctf = numpy.zeros((numpoints), dtype=numpy.float64)
 
 	x4 = math.pi/2.0 * wavelength**3 * cs
 	x2 = math.pi * wavelength
@@ -54,6 +45,26 @@ def generateCTF1d(radii=None, numpoints=256, focus=1.0e-6,
 
 	if debug is True:
 		print "generate 1D ctf complete in %.4f sec"%(time.time()-t0)
+
+	return ctf**2
+
+#===================
+def generateCTF1dMakePoints(numpoints=256, focus=1.0e-6, 
+	pixelsize=1.5e-10, cs=2e-3, volts=120000, ampconst=0.07):
+	"""
+	calculates a CTF function based on the input details
+
+	Use SI units: meters, radians, volts
+	Underfocus is postive (defocused) 
+	"""
+	if debug is True:
+		print "generateCTF1d()"
+	checkParams(focus1=focus, focus2=focus, pixelsize=pixelsize, cs=cs, 
+		volts=volts, ampconst=ampconst)
+
+	radii = generateRadii1d(numpoints, pixelsize)
+
+	ctf = generateCTF1dFromRadii(radii, focus, cs, volts, ampconst)
 
 	return ctf
 

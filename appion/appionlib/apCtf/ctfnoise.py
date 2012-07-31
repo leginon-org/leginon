@@ -676,17 +676,6 @@ def peakExtender(raddata, rotdata, extrema, extrematype="below"):
 
 	extremedata = numpy.hstack( (startdata, extremedata, enddata) )
 
-	from matplotlib import pyplot
-	pyplot.clf()
-	pyplot.plot(raddatasq, rotdata, 'k-', )
-	pyplot.plot(raddatasq, rotdata, 'k.', )
-	pyplot.plot(raddatasq, extremedata, 'b-', )
-	for eindex in extremeindices:
-		if eindex > raddata.shape[0]-1:
-			break
-		pyplot.axvline(x=raddatasq[eindex], linewidth=2, color="gold", alpha=0.5)
-	pyplot.show()
-
 	return extremedata
 
 

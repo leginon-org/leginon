@@ -37,21 +37,19 @@ def getCorrelationProfile(raddata, rotdata, freq, ctfvalues):
 			numzeros = 14
 		else:
 			numzeros = 2
-		numcols = int(0.5/(freq*ctfvalues['apix']))
-		peakradii = ctftools.getCtfExtrema(ctfvalues['defocus2'], ctfvalues['apix']*1e-10, 
+		peakradii = ctftools.getCtfExtrema(ctfvalues['defocus2'], freq*1e10, 
 			ctfvalues['cs'], ctfvalues['volts'], ctfvalues['amplitude_contrast'], 
-			cols=numcols, numzeros=numzeros, zerotype="peaks")
+			numzeros=numzeros, zerotype="peaks")
 		if debug is True:
-			valleyradii = ctftools.getCtfExtrema(ctfvalues['defocus2'], ctfvalues['apix']*1e-10, 
+			valleyradii = ctftools.getCtfExtrema(ctfvalues['defocus2'], freq*1e10, 
 				ctfvalues['cs'], ctfvalues['volts'], ctfvalues['amplitude_contrast'], 
-				cols=numcols, numzeros=numzeros, zerotype="valleys")
+				numzeros=numzeros, zerotype="valleys")
 		firstpeak = peakradii[0]
 		firstpeakindex = numpy.searchsorted(raddata, firstpeak*freq)
 
 		### get the ctf
 		genctfdata = genctf.generateCTF1d(raddata*1e10, focus=ctfvalues['defocus2'], cs=ctfvalues['cs'],
-			pixelsize=ctfvalues['apix']*1e-10, volts=ctfvalues['volts'], ampconst=ctfvalues['amplitude_contrast'])
-		genctfdata = genctfdata**2
+			volts=ctfvalues['volts'], ampconst=ctfvalues['amplitude_contrast'])
 
 		## divide the data into 8 section (by x^2 not x) and calculate the correlation correficient for each
 		xsqStart = (firstpeak*freq)**2

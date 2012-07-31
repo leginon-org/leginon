@@ -18,11 +18,14 @@ from appionlib.apImage import imagefilter
 debug = False
 
 #===================
-def getCtfExtrema(focus=1.0e-6, pixelsize=1.0e-10, cs=2e-2, 
-		volts=120000, ampconst=0.000, numzeros=3, cols=2048, zerotype="peaks"):
+def getCtfExtrema(focus=1.0e-6, mfreq=1.498e-04, cs=2e-2, 
+		volts=120000, ampconst=0.000, numzeros=3, zerotype="peaks"):
+	"""
+	mfreq - frequency in inverse meters = 1.0/(mpix * numcols)
+	"""
 	if debug is True:
 		print "defocus %.2f microns (underfocus is positive)"%(focus*1e6)
-		print "pixelsize %.3f Angstroms"%(pixelsize*1e10)
+		print "Freq %.1e 1/m"%(mfreq)
 		print "C_s %.1f mm"%(cs*1e3)
 		print "High tension %.1f kV"%(volts*1e-3)
 	if focus*1e6 > 15.0 or focus*1e6 < 0.1:
@@ -30,13 +33,11 @@ def getCtfExtrema(focus=1.0e-6, pixelsize=1.0e-10, cs=2e-2,
 			%(focus*1e6))
 	if cs*1e3 > 4.0 or cs*1e3 < 0.4:
 		apDisplay.printWarning("atypical C_s value %.1f mm"%(cs*1e3))
-	if pixelsize*1e10 > 20.0 or pixelsize*1e10 < 0.1:
-		apDisplay.printWarning("atypical pixel size value %.1f Angstroms"%(pixelsize*1e10))
+	if mfreq > 1e7 or mfreq < 1e5:
+		apDisplay.printWarning("atypical mfreq value %.2e 1/meters"%(mfreq))
 	if volts*1e-3 > 400.0 or volts*1e-3 < 60:
 		apDisplay.printWarning("atypical high tension value %.1f kiloVolts"%(volts*1e-3))
 
-	xfreq = 1.0/( (cols-1)*2.*pixelsize )
-	xorigin = cols/2. - 0.5
 	wavelength = getTEMLambda(volts)
 
 	a = 0.5*cs*math.pi*wavelength**3
@@ -69,17 +70,16 @@ def getCtfExtrema(focus=1.0e-6, pixelsize=1.0e-10, cs=2e-2,
 		radsq2 = (-b - root)/(2*a)
 		if radsq1 > 0 and radsq1 < radsq2:
 			rad1 = math.sqrt(radsq1)
-			pixeldist = rad1/xfreq
+			pixeldist = rad1/mfreq
 		elif radsq2 > 0 and radsq2 < radsq1:
 			rad2 = math.sqrt(radsq2)
-			pixeldist = rad2/xfreq
+			pixeldist = rad2/mfreq
 		else:
 			print "ERROR"
 		distances.append(pixeldist)
 		if debug is True:
 			print "radius of zero number %d is %d pixels"%(i+1, pixeldist)
 	return distances
-
 
 #===================
 def getFirstCTFzeroRadius(focus=-1.0e-6, pixelsize=1.0e-10, cs=2e-2, 
@@ -151,6 +151,19 @@ def getPowerSpectraPreBin(outerresolution, apix):
 	return prebin
 
 #============
+def defocusRatioToEllipseRatio(defocus1, defocus2, freq, cs, volts, ampcontrast):
+	"""
+	apix and outerresolution must have same units (e.g., Anstroms or meters)
+	"""
+	radii1 = getCtfExtrema(defocus1, freq*1e10, 
+		cs, volts, ampcontrast, numzeros=1, zerotype="valleys")
+	radii2 = getCtfExtrema(defocus2, freq*1e10, 
+		cs, volts, ampcontrast, numzeros=1, zerotype="valleys")
+	ellipratio = radii1[0]/radii2[0]
+
+	return ellipratio
+
+#============
 def powerSpectraToOuterResolution(image, outerresolution, apix):
 	"""
 	apix and outerresolution must have same units (e.g., Anstroms or meters)
@@ -159,13 +172,14 @@ def powerSpectraToOuterResolution(image, outerresolution, apix):
 		print "Computing power spectra..."
 	fieldsize = ctfpower.getFieldSize(image.shape)
 	binning = max(image.shape)/fieldsize
-	data = imagefun.power(image, mask_radius=1)
-	#data = ctfpower.power(image, fieldsize, mask_radius=1)
+	#data = imagefun.power(image, mask_radius=1)
+	data, freq = ctfpower.power(image, apix, fieldsize, mask_radius=0.2)
+	newapix = 2.0/(freq*data.shape[0])
 	#data = numpy.exp(data)
 	data = data.astype(numpy.float64)
-	powerspec, trimapix = trimPowerSpectraToOuterResolution(data, outerresolution, apix)
+	powerspec, trimapix = trimPowerSpectraToOuterResolution(data, outerresolution, newapix)
 
-	return powerspec, trimapix
+	return powerspec, freq
 
 #============
 def trimPowerSpectraToOuterResolution(powerspec, outerresolution, apix):
@@ -179,7 +193,7 @@ def trimPowerSpectraToOuterResolution(powerspec, outerresolution, apix):
 	if debug is True:
 		print "trimPowerSpectraToOuterResolution()"
 	#initresolution = apix*2
-	freq = 1./(apix*powerspec.shape[0])
+	freq = 2./(apix*powerspec.shape[0])
 	initresolution = apix * 2
 	if debug is True:
 		print "__Pixel size", apix
