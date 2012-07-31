@@ -172,7 +172,7 @@ def arrayToSpider(numer, filename, msg=True):
 	return
 
 #=========================
-def arrayToJpeg(numer,filename,normalize=True, msg=True):
+def arrayToJpeg(numer, filename, normalize=True, msg=True, quality=85):
 	"""
 	takes a numpy and writes a JPEG
 	best for micrographs and photographs
@@ -184,7 +184,7 @@ def arrayToJpeg(numer,filename,normalize=True, msg=True):
 	image = _arrayToImage(numer)
 	if msg is True:
 		apDisplay.printMsg("writing JPEG: "+apDisplay.short(filename))
-	image.save(filename, "JPEG", quality=85)
+	image.save(filename, "JPEG", quality=quality)
 	return
 
 #=========================
