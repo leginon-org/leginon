@@ -8,6 +8,7 @@
  */
 
 require "inc/leginon.inc";
+require_once "inc/imagerequest.inc";
 
 require "inc/viewer.inc";
 if (defined('PROCESSING')) {
@@ -41,12 +42,10 @@ checkExptAccessPrivilege($sessionId);
 
 $path = $leginondata->getImagePath($sessionId);
 $filename = $leginondata->getFilenameFromId($imgId);
-$filesize = getFileSize($path.$filename, 2 );
-$fileinfo = mrcinfo($path.$filename);
-$mrc = mrcread($path.$filename);
-mrcupdateheader($mrc);
-$fileinfo = mrcgetinfo($mrc);
-mrcdestroy($mrc);
+$filepath = $path.$filename;
+$filesize = getFileSize($filepath, 2 );
+$imagerequest = new imageRequester();
+$fileinfo = $imagerequest->requestInfo($filepath);
 $sessioninfo = $leginondata->getSessionInfo($sessionId);
 $presets = $leginondata->getPresets($imgId);
 
@@ -222,11 +221,11 @@ if (is_array($imageinfo)) {
 	</td>
 	<td>
 <?php
-if (is_array($fileinfo)) {
+if (is_object($fileinfo)) {
 	echo divtitle("Mrc Header Information");
 	echo "<table border='0'>";
 	foreach($fileinfokeys as $k) {
-		$v = ($k=="mode") ? $mrcmode[$fileinfo[$k]] : $fileinfo[$k];
+		$v = ($k=="mode") ? $mrcmode[$fileinfo->$k] : $fileinfo->$k;
 		echo formatHtmlRow($k, $v);
 	}
 	echo "</table>";
@@ -327,7 +326,7 @@ if (!empty($ctfdata)) {
 		foreach($r as $k=>$v) {
 			if (!in_array($k, $ctf_display_fields))
 				continue;	
-			if (eregi('defocus', $k))
+			if (preg_match('%defocus%i', $k))
 				$display = format_micro_number($v);
 			elseif ($v-floor($v)) 
 				$display = format_sci_number($v,4,2);
@@ -340,7 +339,7 @@ if (!empty($ctfdata)) {
 				$display=$graph1name=$v;
 			else
 				$display = $v;
-			if (!ereg('^graph',$k))
+			if (!preg_match('%^graph%',$k))
 				echo formatHtmlRow($k,$display);
 		}
 		$graph1=$graphpath."/".$graph1name;

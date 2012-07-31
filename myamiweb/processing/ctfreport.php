@@ -25,7 +25,7 @@ $javafunctions="
 <script LANGUAGE='JavaScript'>
 	function infopopup(";
 foreach ($aceparamsfields as $param) {
-	if (ereg("\|", $param)) {
+	if (preg_match("%\|%", $param)) {
 		$namesplit=explode("|",$param);
 		$param=end($namesplit);
 	}
@@ -41,7 +41,7 @@ $javafunctions.="){
 		newwindow.document.write(\"</HEAD><BODY><TABLE class='tableborder' border='1' cellspacing='1' cellpadding='5'>\");";
 
 foreach ($aceparamsfields as $param) {
-	if (ereg("\|", $param)) {
+	if (preg_match("%\|%", $param)) {
 		$namesplit=explode("|",$param);
 		$param=end($namesplit);
 	}

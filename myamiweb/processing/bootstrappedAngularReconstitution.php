@@ -69,9 +69,9 @@ function createAngularReconstitutionForm($extra=False, $title='bootstrappedAngul
 	$runname = ($_POST['runname']) ? $_POST['runname'] : 'bar'.($barruns+1);
 	$description = $_POST['description'];
 	$clusteridstr = $_POST['clustervals'];
-	list($clusterid,$apix,$boxsz,$num_classes,$totprtls) = split('\|--\|', $clusteridstr);
+	list($clusterid,$apix,$boxsz,$num_classes,$totprtls) = preg_split('%\|--\|%', $clusteridstr);
 	$tsidstr = $_POST['tsvals'];
-	list($tsid,$apix,$boxsz,$totprtls,$type) = split('\|--\|', $tsidstr);
+	list($tsid,$apix,$boxsz,$totprtls,$type) = preg_split('%\|--\|%', $tsidstr);
 	$weight = ($_POST['weight']=='on' || !$_POST['weight']) ? 'checked' : '';
 	$prealign = ($_POST['prealign']=='on') ? 'checked' : '';
 	$scale = ($_POST['scale']=='on' || !$_POST['scale']) ? 'checked' : '';
@@ -282,9 +282,9 @@ function runAngularReconstitution() {
 	$preftype = $_POST['preftype'];
 	// get selected stack parameters
 	if ($clustervals != 'select') 
-		list($clusterid,$apix,$boxsz,$num_classes,$totprtls) = split('\|--\|', $clustervals);
+		list($clusterid,$apix,$boxsz,$num_classes,$totprtls) = preg_split('%\|--\|%', $clustervals);
 	if ($tsvals != 'select') 
-		list($tsid,$apix,$boxsz,$totprtls,$type) = split('\|--\|', $tsvals);
+		list($tsid,$apix,$boxsz,$totprtls,$type) = preg_split('%\|--\|%', $tsvals);
 
 	/* *******************
 	PART 2: Check for conflicts, if there is an error display the form again

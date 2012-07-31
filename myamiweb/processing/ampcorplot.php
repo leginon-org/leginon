@@ -32,7 +32,7 @@ $sr = array();
 if (is_array($data))
 	foreach ($data as $line) {
 		$line=trim($line);
-		list($x,$a,$r,$y)=split("[\t ]+",$line);
+		list($x,$a,$r,$y)=preg_split("%[\t ]+%",$line);
 		$sr[]=$r;
 		$sx[]=$x;
 		$y=floatval($y);

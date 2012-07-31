@@ -401,10 +401,12 @@ def mark_image(image, coord, value, size=15):
 		if 0 <= c < image.shape[1] and 0 <= row < image.shape[0]:
 			image[row,c] = value
 
-def bin(image, binning):
-	if binning==1:
+def bin(image, binning0, binning1=0):
+	if binning1 == 0:
+		binning1 = binning0
+	if binning0==1 and binning1==1:
 		return image
-	return numextension.bin(image, binning)
+	return numextension.bin(image, binning0, binning1)
 
 def bin2(a, factor):
 	'''

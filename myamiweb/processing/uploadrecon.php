@@ -66,7 +66,7 @@ function createUploadReconForm( $extra=false, $title='UploadRecon.py Launcher', 
 		$refineID 		= $refjobdata['DEF_id'];
 		$method 		= $refjobdata['method'];
 		$rundir 		= $refjobdata['path'];
-		$outdir 		= ereg_replace($runname."$", "", $rundir); // TODO: ereg_replace deprecated
+		$outdir 		= preg_replace('%'.$runname."$%", "", $rundir); 
 		$description 	= $refjobdata['description'];
 		$refinestackid 	= $refjobdata['REF|ApStackData|stack'];
 		$reconstackid 	= $refjobdata['REF|ApStackData|reconstack'];
@@ -321,7 +321,7 @@ function runUploadRecon() {
 	if ($_POST['stackid'])
 		$refinestackid = $_POST['stackid'];
 	elseif ($_POST['stackval'])
-		list($refinestackid, $apix, $boxsize) = split('\|--\|',$_POST['stackval']);
+		list($refinestackid, $apix, $boxsize) = preg_split('%\|--\|%',$_POST['stackval']);
 	else
 		createUploadReconForm("<B>ERROR:</B> Select the image stack used");
 

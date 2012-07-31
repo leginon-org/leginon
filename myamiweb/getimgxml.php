@@ -65,13 +65,9 @@ if ($g) {
 
 	$img = getImageXML($XML_DATA, $id, $preset, $params);
 
-	Header( "Content-type: $type ");
-	Header( "Content-Disposition: inline; filename=".$filename);
-        if ($t=='png')
-                imagepng($img);
-        else
-                imagejpeg($img,'',$quality);
-	imagedestroy($img);
+	$imagerequest = new imageRequester();
+	$imagerequest->displayImageObj($img,$ext,$quality,$filename);
+
 } else {
 	Header("Content-type: image/x-png");
 	$blkimg = blankimage();

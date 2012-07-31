@@ -25,7 +25,7 @@ function imagecolorallocatehex($img, $c) {
 		#FFFFF
 		#ABC
 	*/
-        $c= ereg_replace('^\#','',$c);
+        $c= preg_replace('%^\#%','',$c);
         switch (strlen($c)) {
                 case 3:
                         $s = preg_split('//', $c, -1, PREG_SPLIT_NO_EMPTY);

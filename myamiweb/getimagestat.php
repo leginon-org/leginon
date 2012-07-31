@@ -1,26 +1,17 @@
 <?php
 require 'inc/leginon.inc';
+require_once "inc/imagerequest.inc";
 $id=$_GET['id'];
 $preset=$_GET['pr'];
 $newimage = $leginondata->findImage($id, $preset);
 $id=$newimage['id'];
-list($info) = $leginondata->getImageStat($id);
-if ($info) {
-	$min = $info['min'];
-	$max = $info['max'];
-	$mean = $info['mean'];
-	$stdev = $info['stdev'];
-} else {
-	$filename=$leginondata->getFilenameFromId($id, true);
-	$mrc = mrcread($path.$filename);
-	mrcupdateheader($mrc);
-	$info = mrcgetinfo($mrc);
-	mrcdestroy($mrc);
-	$min = $info['amin'];
-	$max = $info['amax'];
-	$mean = $info['amean'];
-	$stdev = $info['rms'];
-}
+$filename=$leginondata->getFilenameFromId($id, true);
+$imagerequest = new imageRequester();
+$imginfo = $imagerequest->requestInfo($filename);
+$min = $imginfo->amin;
+$max = $imginfo->amax;
+$mean = $imginfo->amean;
+$stdev = $imginfo->rms;
 
 function formatnumber($number) {
 	$number=number_format($number,1,'.','');

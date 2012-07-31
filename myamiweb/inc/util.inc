@@ -16,103 +16,103 @@ function browser($n)
  global $HTTP_USER_AGENT, $BName, $BVersion, $BPlatform; 
 
  // Browser 
- if(eregi("(opera) ([0-9]{1,2}.[0-9]{1,3}){0,1}",$HTTP_USER_AGENT,$match) || eregi("(opera/)([0-9]{1,2}.[0-9]{1,3}){0,1}",$HTTP_USER_AGENT,$match)) 
+ if(preg_match("/(opera) ([0-9]{1,2}.[0-9]{1,3}){0,1}/i",$HTTP_USER_AGENT,$match) || preg_match("%(opera/)([0-9]{1,2}.[0-9]{1,3}){0,1}%i",$HTTP_USER_AGENT,$match)) 
  { 
  $BName = "Opera"; $BVersion=$match[2]; 
  } 
- elseif(eregi("(konqueror)/([0-9]{1,2}.[0-9]{1,3})",$HTTP_USER_AGENT,$match)) 
+ elseif(preg_match("%(konqueror)/([0-9]{1,2}.[0-9]{1,3})%i",$HTTP_USER_AGENT,$match)) 
  { 
  $BName = "Konqueror"; $BVersion=$match[2]; 
  } 
- elseif(eregi("(lynx)/([0-9]{1,2}.[0-9]{1,2}.[0-9]{1,2})",$HTTP_USER_AGENT,$match)) 
+ elseif(preg_match("%(lynx)/([0-9]{1,2}.[0-9]{1,2}.[0-9]{1,2})%i",$HTTP_USER_AGENT,$match)) 
  { 
  $BName = "Lynx "; $BVersion=$match[2]; 
  } 
- elseif(eregi("(links) \(([0-9]{1,2}.[0-9]{1,3})",$HTTP_USER_AGENT,$match)) 
+ elseif(preg_match("%(links) \(([0-9]{1,2}.[0-9]{1,3})%",$HTTP_USER_AGENT,$match)) 
  { 
  $BName = "Links "; $BVersion=$match[2]; 
  } 
- elseif(eregi("(msie) ([0-9]{1,2}.[0-9]{1,3})",$HTTP_USER_AGENT,$match)) 
+ elseif(preg_match("%(msie) ([0-9]{1,2}.[0-9]{1,3})%",$HTTP_USER_AGENT,$match)) 
  { 
  $BName = "MSIE "; $BVersion=$match[2]; 
  } 
- elseif(eregi("(netscape6)/(6.[0-9]{1,3})",$HTTP_USER_AGENT,$match)) 
+ elseif(preg_match("%(netscape6)/(6.[0-9]{1,3})%",$HTTP_USER_AGENT,$match)) 
  { 
  $BName = "Netscape "; $BVersion=$match[2]; 
  } 
- elseif(eregi("mozilla/5",$HTTP_USER_AGENT)) 
+ elseif(preg_match("%mozilla/5%",$HTTP_USER_AGENT)) 
  { 
  $BName = "Netscape"; $BVersion="Unknown"; 
  } 
- elseif(eregi("(mozilla)/([0-9]{1,2}.[0-9]{1,3})",$HTTP_USER_AGENT,$match)) 
+ elseif(preg_match("%(mozilla)/([0-9]{1,2}.[0-9]{1,3})%i",$HTTP_USER_AGENT,$match)) 
  { 
  $BName = "Netscape "; $BVersion=$match[2]; 
  } 
- elseif(eregi("w3m",$HTTP_USER_AGENT)) 
+ elseif(preg_match("%w3m%i",$HTTP_USER_AGENT)) 
  { 
  $BName = "w3m"; $BVersion="Unknown"; 
  } 
  else{$BName = "Unknown"; $BVersion="Unknown";} 
 
  // System 
- if(eregi("linux",$HTTP_USER_AGENT)) 
+ if(preg_match("%linux%i",$HTTP_USER_AGENT)) 
  { 
  $BPlatform = "Linux"; 
  } 
- elseif(eregi("win32",$HTTP_USER_AGENT)) 
+ elseif(preg_match("%win32%i",$HTTP_USER_AGENT)) 
  { 
  $BPlatform = "Windows"; 
  } 
- elseif((eregi("(win)([0-9]{2})",$HTTP_USER_AGENT,$match)) || (eregi("(windows) ([0-9]{2})",$HTTP_USER_AGENT,$match))) 
+ elseif((preg_match("%(win)([0-9]{2})%i",$HTTP_USER_AGENT,$match)) || (preg_match("%(windows) ([0-9]{2})%i",$HTTP_USER_AGENT,$match))) 
  { 
  $BPlatform = "Windows $match[2]"; 
  } 
- elseif(eregi("(winnt)([0-9]{1,2}.[0-9]{1,2}){0,1}",$HTTP_USER_AGENT,$match)) 
+ elseif(preg_match("%(winnt)([0-9]{1,2}.[0-9]{1,2}){0,1}%i",$HTTP_USER_AGENT,$match)) 
  { 
  $BPlatform = "Windows NT $match[2]"; 
  } 
- elseif(eregi("(windows nt)(
- ){0,1}([0-9]{1,2}.[0-9]{1,2}){0,1}",$HTTP_USER_AGENT,$match)) 
+ elseif(preg_match("%(windows nt)(
+ ){0,1}([0-9]{1,2}.[0-9]{1,2}){0,1}%i",$HTTP_USER_AGENT,$match)) 
  { 
  $BPlatform = "Windows NT $match[3]"; 
  } 
- elseif(eregi("mac",$HTTP_USER_AGENT)) 
+ elseif(preg_match("%mac%i",$HTTP_USER_AGENT)) 
  { 
  $BPlatform = "Macintosh"; 
  } 
- elseif(eregi("(sunos) ([0-9]{1,2}.[0-9]{1,2}){0,1}",$HTTP_USER_AGENT,$match)) 
+ elseif(preg_match("%(sunos) ([0-9]{1,2}.[0-9]{1,2}){0,1}%i",$HTTP_USER_AGENT,$match)) 
  { 
  $BPlatform = "SunOS $match[2]"; 
  } 
- elseif(eregi("(beos) r([0-9]{1,2}.[0-9]{1,2}){0,1}",$HTTP_USER_AGENT,$match)) 
+ elseif(preg_match("%(beos) r([0-9]{1,2}.[0-9]{1,2}){0,1}%i",$HTTP_USER_AGENT,$match)) 
  { 
  $BPlatform = "BeOS $match[2]"; 
  } 
- elseif(eregi("freebsd",$HTTP_USER_AGENT)) 
+ elseif(preg_match("%freebsd%i",$HTTP_USER_AGENT)) 
  { 
  $BPlatform = "FreeBSD"; 
  } 
- elseif(eregi("openbsd",$HTTP_USER_AGENT)) 
+ elseif(preg_match("%openbsd%i",$HTTP_USER_AGENT)) 
  { 
  $BPlatform = "OpenBSD"; 
  } 
- elseif(eregi("irix",$HTTP_USER_AGENT)) 
+ elseif(preg_match("%irix%i",$HTTP_USER_AGENT)) 
  { 
  $BPlatform = "IRIX"; 
  } 
- elseif(eregi("os/2",$HTTP_USER_AGENT)) 
+ elseif(preg_match("%os/2%i",$HTTP_USER_AGENT)) 
  { 
  $BPlatform = "OS/2"; 
  } 
- elseif(eregi("plan9",$HTTP_USER_AGENT)) 
+ elseif(preg_match("%plan9%i",$HTTP_USER_AGENT)) 
  { 
  $BPlatform = "Plan9"; 
  } 
- elseif(eregi("unix",$HTTP_USER_AGENT) || eregi("hp-ux",$HTTP_USER_AGENT)) 
+ elseif(preg_match("%unix%i",$HTTP_USER_AGENT) || preg_match("%hp-ux%i",$HTTP_USER_AGENT)) 
  { 
  $BPlatform = "Unix"; 
  } 
- elseif(eregi("osf",$HTTP_USER_AGENT)) 
+ elseif(preg_match("%osf%i",$HTTP_USER_AGENT)) 
  { 
  $BPlatform = "OSF"; 
  } 
@@ -398,8 +398,8 @@ function displayMatrix($matrix) {
 }
 
 function format_filename_str($filename) {
-	$filestr = ereg_replace('[[:alnum:]]+_(.*)', '\1', $filename);
-	$filestr = ereg_replace('00', '', $filestr);
+	$filestr = preg_replace('%[[:alnum:]]+_(.*)%', '\1', $filename);
+	$filestr = preg_replace('%00%', '', $filestr);
 	return $filestr;
 }
 
@@ -490,6 +490,12 @@ function formatArrayHtmlRow() {
 	}
 	$row .= "</tr>\n";
 	return $row;
+}
+
+function formatPath($path) {
+	$npath = preg_replace('%\\\\%','/',$path);
+	$npath = preg_match("%/$%", $npath) ? $npath : $npath."/";
+	return $npath;
 }
 
 function dumpData($data, $keys="") {
@@ -654,7 +660,7 @@ function ls($dir, $filter="") {
 		$filter=".*";
 	if ($dh = opendir($dir)) {
     while (($file = readdir($dh)) !== false) {
-     if (ereg($filter,$file)) {
+     if (preg_match('%'.$filter.'%',$file)) {
 			 $files[]=$file;
      }
 		}

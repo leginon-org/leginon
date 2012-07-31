@@ -52,7 +52,7 @@ else {
 	if (is_array($data))
 		foreach ($data as $line) {
 			$line=rtrim($line);
-			list($x,$sy[])=split("\t",$line);
+			list($x,$sy[])=preg_split("%\t%",$line);
 			$sx[]=$x;
 			// convert pixels to resolution in angstroms
 			$res = $box*$apix/$x;

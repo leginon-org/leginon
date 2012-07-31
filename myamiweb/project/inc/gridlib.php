@@ -139,10 +139,10 @@ class Grid {
 	function getGridId($info) {
 		$name=$info['Name'];
 		list($proj, $packagenb, $samplenb, $grbox, $gnumber) = explode(".", $info['Purpose']);
-		$packagenb = (int) ereg_replace("P", "", $packagenb);
-		$samplenb = (int) ereg_replace("S", "", $samplenb);
-		$grboxnb = (int) ereg_replace("^[[:alpha:]]{1}", "", $grbox);
-		if (ereg("(^[[:alpha:]]{1})([0-9]{1,})", $gnumber, $r)) {
+		$packagenb = (int) preg_replace("%P%", "", $packagenb);
+		$samplenb = (int) preg_replace("%S%", "", $samplenb);
+		$grboxnb = (int) preg_replace("%^[[:alpha:]]{1}%", "", $grbox);
+		if (preg("%(^[[:alpha:]]{1})([0-9]{1,})%", $gnumber, $r)) {
 			$type=$r[1];
 			$gnumber=(int)$r[2];
 		}

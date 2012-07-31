@@ -36,7 +36,7 @@ $display_y = $displayname.'_y';
 $axes = array($display_x,$display_y);
 if ($histogram == true && $histaxis == 'x') 
 	$axes = array($display_y,$display_x);
-$dbemgraph=&new dbemgraph($imageshiftdata, $axes[0], $axes[1]);
+$dbemgraph= new dbemgraph($imageshiftdata, $axes[0], $axes[1]);
 $dbemgraph->lineplot=False;
 $dbemgraph->title=$fieldname." for preset $preset";
 $dbemgraph->yaxistitle=$axes[1]." (mrad)";

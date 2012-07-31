@@ -36,7 +36,7 @@ if ($_POST ) {
 	$data_from_post=from_POST_values(array_values($map));
 
 	foreach($map as $k=>$v) {
-		if (ereg("date$", $k)) {
+		if (preg_match("date$", $k)) {
 			$$k=mysql::format_date($data_from_post[$v]);
 		} else {
 			$$k=$data_from_post[$v];
@@ -77,7 +77,7 @@ if (empty($sampleId) || !($sample->checkSampleExistsbyId($sampleId))) {
 
 if ($_POST) {
 	foreach($_POST as $k=>$v) {
-		if (ereg("^sa",$k))
+		if (preg_match("%^sa%",$k))
 			$defaults[$k]=trim($v);
 	}
 }
@@ -100,7 +100,7 @@ foreach($map as $k=>$v) {
 	# use posted package
 	if ($v == 'sa1'  && array_key_exists('sa1',$_POST)) continue;
 	$val=$cursample[$k];
-	if (ereg("date$", $k)) {
+	if (preg_match("%date$%", $k)) {
 			$val=mysql::format_date($val, "ymd", "mdy", "-" );
 	}
 	$defaults[$v]=$val;

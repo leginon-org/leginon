@@ -1563,8 +1563,8 @@ class particledata {
 			// get stack path with name
 			$opvals = "$stackid[stackid]|--|$apix|--|$box|--|$totalp|--|$s[path]|--|$s[name]";
 			// if imagic stack, send both hed & img files for dmf
-			if (ereg('\.hed', $s['name'])) $opvals.='|--|'.ereg_replace('hed','img',$s['name']);
-			if (ereg('\.img', $s['name'])) $opvals.='|--|'.ereg_replace('img','hed',$s['name']);
+			if (preg_match('\.hed', $s['name'])) $opvals.='|--|'.preg_replace('hed','img',$s['name']);
+			if (preg_match('\.img', $s['name'])) $opvals.='|--|'.preg_replace('img','hed',$s['name']);
 		
 			echo "<OPTION VALUE='$opvals'";
 			// select previously set stack on resubmita
@@ -2297,11 +2297,11 @@ class particledata {
 		);
 		$substackname = $substackinfo['substackname'];
 		foreach (array_keys($conditions) as $key) {
-			if (ereg($key,$substackname)) {
+			if (preg_match('%'.$key.'%',$substackname)) {
 				$conditionid = str_replace($key, '', $substackname);
 				$condition = $key;
 			} else {
-			echo ereg($key,$substackname);
+			echo preg_match('%'.$key.'%',$substackname);
 			}
 		}
 		if ($condition) {
@@ -2880,7 +2880,7 @@ class particledata {
 			$html .= '<td>'.$runId.'</td>';
 			foreach($display_keys as $field) {
 				$data=$particlestats[$field];
-				if (eregi('^min|^max|^avg|^stddev', $field)) $data=format_sci_number($data,4);
+				if (preg_match('%^min|^max|^avg|^stddev%i', $field)) $data=format_sci_number($data,4);
 				$html .= "<td> $data </td> \n";
 			}
 			$html .= "</tr>\n";
@@ -3492,7 +3492,7 @@ class particledata {
 			$html .= "<td><a target='params' href='maskrunreport.php?expId=$expId&rId=$runId'>".$r0['name']."</a></td>";
 			foreach($display_keys as $field) {
 							$data=$regionstats[$field];
-				if (eregi('^areamean|^Imean|^Istddev', $field)) $data=format_sci_number($data,4);
+				if (preg_match('^areamean|^Imean|^Istddev%i', $field)) $data=format_sci_number($data,4);
 				$html .= "<td> $data </td> \n";
 			}
 			$html .= "</tr>\n";
@@ -5266,10 +5266,10 @@ function displayCTFstats($stats, $display_keys) {
 					$val = $row[$key];
 				else
 					continue;
-				if (eregi('defocus', $key))
+				if (preg_match('%defocus%i', $key))
 						$val = format_micro_number($val);
-				if (eregi('^min|^max|^avg|^stddev', $key))
-					if (eregi('defocus', $field) || eregi('nominal', $field)) {
+				if (preg_match('%^min|^max|^avg|^stddev%i', $key))
+					if (preg_match('%defocus%i', $field) || preg_match('%nominal%i', $field)) {
 							$val = format_micro_number($val);
 					} else {
 						$val = format_sci_number($val, 3);
@@ -5299,7 +5299,7 @@ function displayCTFdata($data, $display_keys) {
 		foreach($data as $row) {
 			foreach($display_keys as $key) {
 					$val = $row[$key];
-					if (eregi('defocus', $key)) {
+					if (preg_match('%defocus%i', $key)) {
 							$val = format_micro_number($val);
 					}
 				$html .= "<td>";
@@ -5327,19 +5327,26 @@ function getBaseAppionPath($sessioninfo,$new_base='appion') {
 		// get from leginon session image path
 		$leginon_imagepath = $sessioninfo['Image path'];
 		// use this in case that the word leginon is used in two parts of the path
-		ereg("(.*)leginon(.*)rawdata", $leginon_imagepath, $reg_match);
-		if (!is_null($reg_match)) {
+		preg_match("%leginon(.*)rawdata%", $leginon_imagepath, $reg_match);
+		if (!empty($reg_match)) {
 			$path_pieces = explode('leginon',$leginon_imagepath);
 			$pieces_count = count($path_pieces);
 			$appion_basepath = implode('leginon',array_slice($path_pieces,0,$pieces_count-1)).$new_base.$path_pieces[$pieces_count-1]; 
-			$appion_basepath=ereg_replace("/rawdata","",$appion_basepath);		
-			$appion_basepath=ereg_replace("/appion2/","/appion/",$appion_basepath);		
+			$appion_basepath=preg_replace("%/rawdata%","",$appion_basepath);		
+			$appion_basepath=preg_replace("%/appion2/%","/appion/",$appion_basepath);		
 		} else {
 			$extra="ERROR: could not determine Appion Path directory automatically. Please enter manually";
 			echo $extra;
 		}
 	}
 	return $appion_basepath;
+}
+
+function formatEndPath($path) {
+	$path = preg_match(DIRECTORY_SEPARATOR."$", $path) ? $path : $path.DIRECTORY_SEPARATOR;
+	//if (substr($path,-1,1)!='/')
+	//	$path.='/';
+	return $path;
 }
 
 ?>

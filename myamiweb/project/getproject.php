@@ -358,7 +358,7 @@ if (SAMPLE_TRACK) {
 			$smpn=$samplenumbers[$sampleId];
 			$gbn=$grids[$k]['grbox'];
 			$gn=$grids[$k]['number'];
-			$gn=ereg_replace("0","",$gn);
+			$gn=preg_replace("%0%","",$gn);
 			$gridinfos[$projectinfo['Name'].'.'.$pkgn.'.'.$smpn.'.'.$gbn.'.'.$gn]=$sId;
 		}
 

@@ -67,7 +67,7 @@ function chooseModel($extra=False) {
 			$pngfiles=array();
 			$modeldir= opendir($model['path']);
 			while ($f = readdir($modeldir)) {
-				if (eregi($model['name'].'.*\.png$',$f)) $pngfiles[] = $f;
+				if (preg_match('%'.$model['name'].'.*\.png$%i',$f)) $pngfiles[] = $f;
 			}
 			sort($pngfiles);
 			
@@ -260,7 +260,7 @@ function syntheticDatasetForm($extra=false, $title='Synthetic Dataset Creation',
 	$pngfiles=array();
 	$modeldir= opendir($modeldata['path']);
 	while ($f = readdir($modeldir)) {
-		if (eregi($modeldata['name'].'.*\.png$',$f)) $pngfiles[] = $f;
+		if (preg_match('%'.$modeldata['name'].'.*\.png$%i',$f)) $pngfiles[] = $f;
 	}
 	sort($pngfiles);
 	$snapshot1 = $pngfiles[0];

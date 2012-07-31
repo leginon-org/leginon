@@ -250,7 +250,7 @@ function runImagicMSA($extra=false)	{
 	$pass = $_SESSION['password'];
 	
 	// get stack id, apix, box size, and total particles from input
-	list($alignid,$apix,$boxsize,$totpartls) = split('\|~~\|',$stackvalues);
+	list($alignid,$apix,$boxsize,$totpartls) = preg_split('%\|~~\|%',$stackvalues);
 
 	// create python command for executing imagic job file	
 	$command = "imagicMSA.py";

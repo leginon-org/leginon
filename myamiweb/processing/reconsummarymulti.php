@@ -95,7 +95,7 @@ if ($reconRuns) {
 		$numIterParts	= $particle->getNumParticlesFromRefineIter( $lastiterid );
 		$numIterParts	= $numIterParts[0]['num_parts'];
 		// to convert the string $stackcount to an integer, first remove any commas or conversion chokes
-		$stackParts		= intval(ereg_replace("[^-0-9\.]","",$stackcount));
+		$stackParts		= intval(preg_replace("%[^-0-9\.]%","",$stackcount));
 		$percentParts 	= floor(($numIterParts * 100) / $stackParts);
 		
 		// See if this has the same name as the previous one

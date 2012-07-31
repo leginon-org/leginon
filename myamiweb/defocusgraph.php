@@ -29,7 +29,7 @@ if ($viewsql) {
 	exit;
 }
 
-$dbemgraph=&new dbemgraph($defocusdata, 'unix_timestamp', 'defocus');
+$dbemgraph= new dbemgraph($defocusdata, 'unix_timestamp', 'defocus');
 $dbemgraph->title="defocus for preset $preset";
 $dbemgraph->yaxistitle="defocus (um)";
 

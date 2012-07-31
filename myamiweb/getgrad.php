@@ -11,7 +11,7 @@ foreach ($gradients as $gradient=>$val) {
 	$img='<img alt="'.$gradient.'" src="'.$imgsrc.'">';
 	$html[]="$img : $gradient";
 	$styles[]=getcss($gradient);
-	$cgradient=ereg_replace('[. #]','',$gradient);
+	$cgradient=preg_replace('%[. #]%','',$gradient);
 	$gradientd = ($val) ? $val: "linear";
 	$sel = ($gradient==$_GET['gr']) ? 'selected' : '';
 	$options[]='<option class="c'.$cgradient.'" value="'.$gradient.'" '.$sel.' >'.$gradientd.'</option>'."\n";
@@ -22,7 +22,7 @@ foreach ($gradients as $gradient=>$val) {
 function getcss($gradient) {
 	
 	$imgsrc="img/dfe/grad.php?h=10&w=64&map=".$gradient;
-	$gradient=ereg_replace('[. #]','',$gradient);
+	$gradient=preg_replace('%[. #]%','',$gradient);
 	$str=".c$gradient {
 	background-repeat: no-repeat;
 	background-image: url($imgsrc);
@@ -53,7 +53,7 @@ echo '<li>
 		echo join("\n", $options);
 echo '
 </select>';
-$imgsrc=ereg_replace('map=.*','',$imgsrc);
+$imgsrc=preg_replace('%map=.*%','',$imgsrc);
 if ($_GET['gr']) {
 	$imgsrc.="map=".$_GET['gr'];
 }

@@ -36,7 +36,6 @@ if (!$alignerid) {
 	exit;
 }
 
-// --- Display Flash Movie from flv --- //
 if (!is_null($cycle)) {
 	$flvfile = $refinedata[0]['path']."/align/minialign".sprintf('%02d',$cycle).".flv";
 } else {
@@ -46,6 +45,8 @@ if (!is_null($cycle)) {
 		$flvfile = $refinedata[0]['path']."/minialign.flv";
 	}
 }
+
+// --- Display Flash Movie from flv --- //
 if (file_exists($flvfile)) {
 	echo "<table><tr><td>Alignment Stack:</td></tr>\n";
 	echo "<tr><td>".$flvfile."</td></tr>\n";

@@ -239,9 +239,9 @@ foreach ($channels as $k=>$c) {
 // Add arbitrary text to include the number of points
 $txt = new Text("$nmax points");
 if ($histogram)
-	$txt->Pos(630,380);
+	$txt->SetPos(630,380);
 else
-	$txt->Pos(630,480);
+	$txt->SetPos(630,480);
 $txt->SetColor("black");
 $graph->AddText($txt);
 

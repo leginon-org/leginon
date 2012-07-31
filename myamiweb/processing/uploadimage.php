@@ -49,7 +49,7 @@ function createUploadImageForm($extra=false, $title='UploadImage.py Launcher', $
 		$sessioninfo = $sessiondata['info'];
 		if (!empty($sessioninfo)) {
 			$outdir=$sessioninfo['Image path'];
-			$outdir=ereg_replace("/rawdata","",$outdir);
+			$outdir=preg_replace("%/rawdata%","",$outdir);
 			$sessionname=$sessioninfo['Name'];
 			$description=$sessioninfo['Purpose'];
 			$outdirinput = "<input type='hidden' name='outdir' value='".$outdir."'>\n";

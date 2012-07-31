@@ -170,7 +170,7 @@ function createLoopAgainForm($extra=false, $title='Loop Again Launcher', $headin
 		} elseif ($param['name'] == 'rundir') {
 			echo "<tr>\n";
 			echo "  <td>outdir</td>\n";
-			$newrundir = ereg_replace($param['sessionname'], $sessionname, $param['value']);
+			$newrundir = preg_replace('%'.$param['sessionname'].'%', $sessionname, $param['value']);
 			$newoutdir = dirname($newrundir);
 			echo "  <td colspan='2'>\n";
 			echo "    <input type='text' name='outdir' value='"
@@ -256,8 +256,8 @@ function runLoopAgain() {
 	for($i = 1; $i<=$count; $i++) {
 		$origarg = $_POST['param'.$i];
 		$arg = trim($origarg);
-		$arg = ereg_replace(";.*$", "", $arg);
-		$arg = ereg_replace("^[^-]*-", "-", $arg);
+		$arg = preg_replace("%;.*$%", "", $arg);
+		$arg = preg_replace("%^[^-]*-%", "-", $arg);
 		if ($arg)
 			$command .= "$arg ";
 		//echo "param$i: '$origarg' -> '$arg'<br/>\n";

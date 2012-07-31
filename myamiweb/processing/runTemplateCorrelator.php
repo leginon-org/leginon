@@ -409,11 +409,11 @@ function runTemplateCorrelator() {
 	// get the list of templates
 	$i=1;
 	$templateList = $_POST['templateList'];
-	$templates=split(",", $templateList);
+	$templates=preg_split("%,%", $templateList);
 	$templateliststr = "";
 	$rangeliststr = "";
 	foreach ($templates as $template) {
-		list($num, $templateid) = split(":",$template);
+		list($num, $templateid) = preg_split("%:%",$template);
 		$templateliststr .= $templateid.",";
 		$start = "template".$num."strt";
 		$end   = "template".$num."end";
@@ -446,7 +446,7 @@ function runTemplateCorrelator() {
 	/* *******************
 	PART 4: Create header info, i.e., references
 	******************** */
-
+		
 	// Add reference to top of the page
 	$headinfo .= referenceBox("FindEM--a fast, efficient program for automatic selection of particles from electron micrographs.", 2004, "Roseman AM.", "J Struct Biol.", 145, "1-2", 15065677, false, false, "img/findem.png");
 
@@ -470,7 +470,7 @@ function runTemplateCorrelator() {
 		$results.= "<b>Template Correlator Command:</b><br />$wrappedcmd";
 		$results.= "</td></tr></table>\n";
 		$results.= "<br />\n";
-		$testjpg=ereg_replace(".mrc","",$testimage);
+		$testjpg=preg_replace("%.mrc%","",$testimage);
 
 		$jpgimg=$outdir.$runname."/jpgs/".$testjpg.".prtl.jpg";
 		$ccclist = glob($outdir.$runname."/maps/".$testjpg."*.jpg");

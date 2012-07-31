@@ -173,7 +173,7 @@ function createAlignmentForm($extra=false, $title='edIterAlign.py Launcher', $he
 	$runnameval = ($_POST['runname']) ? $_POST['runname'] : 'editer'.($alignruns+1);
 	$rundescrval = $_POST['description'];
 	$stackidstr = $_POST['stackval'];
-	list($stackidval) = split('\|--\|',$stackidstr);
+	list($stackidval) = preg_split('%\|--\|%',$stackidstr);
 	$commitcheck = ($_POST['commit']=='on' || !$_POST['process']) ? 'checked' : '';
 	// alignment params
 	$numpart = ($_POST['numpart']) ? $_POST['numpart'] : $initparts;
@@ -217,7 +217,7 @@ function createAlignmentForm($extra=false, $title='edIterAlign.py Launcher', $he
 	} else {
 		//get template info if coming from resubmitting input
 		$templateIds = templateIds();
-		$templatearray=split(",",$templateIds);
+		$templatearray=preg_split("%,%",$templateIds);
 		$templateTable.="<table><TR>\n";
 		foreach ($templatearray as $templateId) {
 			$templateTable.="<TD VALIGN='TOP'><TABLE CLASS='tableborder'>\n";
@@ -359,7 +359,7 @@ function runAlignment() {
 	$runname = $_POST['runname'];
 
 	$stackval=$_POST['stackval'];
-	list($stackid,$apix,$boxsz) = split('\|--\|',$stackval);
+	list($stackid,$apix,$boxsz) = preg_split('%\|--\|%',$stackval);
 	$radius=$_POST['radius'];
 	$bin=$_POST['bin'];
 	$lowpass=$_POST['lowpass'];
@@ -448,9 +448,9 @@ function templateIds () {
 	$command = "";
 	// get the list of templates
 	$templateList=$_POST['templateList'];
-	$templates=split(",", $templateList);
+	$templates=preg_split("%,%", $templateList);
 	foreach ($templates as $tmplt) {
-		list($tmpltNum,$tmpltId)=split(":",$tmplt);
+		list($tmpltNum,$tmpltId)=preg_split("%:%",$tmplt);
 		$templateIds.="$tmpltId,";
 	}
 	$templateIds=substr($templateIds,0,-1);

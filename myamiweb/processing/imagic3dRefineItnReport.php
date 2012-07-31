@@ -119,14 +119,14 @@ if ($modeldata['REF|ApNoRefClassRunData|norefclass']) {
 if ($modeldata['REF|ApClusteringStackData|clusterclass']) {
 	$clsavgparams = $particle->getClusteringStackParamsFrom3d0($imagic3d0Id);
 	$clsavgpath = $clsavgparams['path'];
-	$strippedfile = ereg_replace(".hed", "", $clsavgparams['avg_imagicfile']);
+	$strippedfile = preg_replace("%.hed%", "", $clsavgparams['avg_imagicfile']);
 	$classimgfile = $clsavgpath."/".$strippedfile.".img";
 	$classhedfile = $clsavgpath."/".$strippedfile.".hed";	
 }
 if ($modeldata['REF|ApTemplateStackData|templatestack']) {
 	$clsavgparams = $particle->getTemplateStackParamsFrom3d0($imagic3d0Id);
 	$clsavgpath = $clsavgparams['path'];
-	$strippedfile = ereg_replace(".hed", "", $clsavgparams['templatename']);
+	$strippedfile = preg_replace("%.hed%", "", $clsavgparams['templatename']);
 	$classimgfile = $clsavgpath."/".$strippedfile.".img";
 	$classhedfile = $clsavgpath."/".$strippedfile.".hed";	
 }
@@ -172,7 +172,7 @@ $html.="</TD>";
 $pngfiles = array();
 $modeldir = opendir($modeldata['path']."/".$modeldata['runname']);
 while ($f = readdir($modeldir)) {
-	if (eregi($modeldata['name'].'.*\.png$',$f)) $pngfiles[] = $f;
+	if (preg_match('%'.$modeldata['name'].'.*\.png$%i',$f)) $pngfiles[] = $f;
 }
 sort($pngfiles);
 		
@@ -229,7 +229,7 @@ foreach ($refineparams as $iteration) {
 	$pngfiles = array();
 	$modeldir = opendir($iteration['path']."/".$iteration['runname']);
 	while ($f = readdir($modeldir)) {
-		if (eregi($iteration['name'].'.*\.png$',$f)) $pngfiles[] = $f;
+		if (preg_match('%'.$iteration['name'].'.*\.png$%i',$f)) $pngfiles[] = $f;
 
 	}
 	sort($pngfiles);

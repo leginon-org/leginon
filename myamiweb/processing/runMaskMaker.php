@@ -305,7 +305,7 @@ function runMaskMaker() {
 		$testjpg = ereg_replace(".mrc","",$_POST['testfilename']);
 		$jpgimg = $outdir.$runname."/jpgs/".$testjpg.".prtl.jpg";
 		
-		$testjpg=ereg_replace(".mrc","",$testimage);
+		$testjpg=preg_replace("%.mrc%","",$testimage);
 		$testdir=$outdir.$runname."/tests/";
 		if (file_exists($testdir)) {
      	// open image directory

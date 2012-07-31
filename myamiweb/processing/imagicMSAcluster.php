@@ -164,7 +164,7 @@ function runImagicMSAcluster($extra=false)	{
 	$pass = $_SESSION['password'];
 	
 	// get stack id, apix, box size, and total particles from input
-	list($stackid,$apix,$boxsize,$totpartls) = split('\|--\|',$stackvalues);
+	list($stackid,$apix,$boxsize,$totpartls) = preg_split('%\|--\|%',$stackvalues);
 	/* *******************
 	PART 2: Check for conflicts, if there is an error display the form again
 	******************** */

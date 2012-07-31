@@ -50,7 +50,7 @@ function showReport () {
 	$javascript="<script LANGUAGE='JavaScript'>
 	        function infopopup(";
 	foreach ($refine_params_fields as $param) {
-		if (ereg("\|", $param)) {
+		if (preg_match("%\|%", $param)) {
 			$namesplit=explode("|", $param);
 			$param=end($namesplit);
 		}
@@ -64,7 +64,7 @@ function showReport () {
       newwindow.document.write('<TITLE>Ace Parameters</TITLE>');
       newwindow.document.write(\"</HEAD><BODY><TABLE class='tableborder' border='1' cellspacing='1' cellpadding='5'>\");\n";
 	foreach($refine_params_fields as $param) {
-		if (ereg("\|", $param)) {
+		if (preg_match("%\|%", $param)) {
 			$namesplit=explode("|", $param);
 			$param=end($namesplit);
 		}
@@ -269,10 +269,10 @@ function showReport () {
 		$eulerSelect = "<select name='eulerplot$iternum' onChange='switchEulerImg($iternum, this.options(this.selectedIndex).value)'>\n";
 		$eulerPngFiles = glob($refinerun['path']."/euler*_$iternum.png");
 		foreach ($eulerPngFiles as $eulername) {
-			if (eregi($reconId."_".$iternum."\.png$", $eulername)) {
+			if (preg_match('%'.$reconId."_".$iternum."\.png$%", $eulername)) {
 				$eulerfile = $eulername;
-				$opname = ereg_replace("euler","",basename($eulername));
-				$opname = ereg_replace("-.*$","",$opname);
+				$opname = preg_replace("%euler%","",basename($eulername));
+				$opname = preg_replace("%-.*$%","",$opname);
 				if (file_exists($eulerfile)) {
 					$eulerSelect.= "<option value='$eulerfile'>$opname</option>\n";
 					// set the first image as the default
@@ -358,7 +358,7 @@ function showReport () {
 		// snapshot images
 		$html .= "<td bgcolor='$bg'>\n";
 		foreach ($pngimages['pngfiles'] as $snapshot) {
-			if (eregi($iteration['volumeDensity'],$snapshot)) {
+			if (preg_match('%'.$iteration['volumeDensity'].'%i',$snapshot)) {
 				$snapfile = $snapshot;
 				$html .= "<A HREF='loadimg.php?filename=$snapfile' target='snapshot'>"
 					."<img src='loadimg.php?s=80&filename=$snapfile' HEIGHT='80'></a>\n";
@@ -407,7 +407,7 @@ function showReport () {
 				$html .= "</table>\n";
 				$html .= "</td><td>\n";
 				foreach ($procimgs['pngfiles'] as $s) {
-				  	if (eregi($p['name'],$s)) {
+				  	if (preg_match('%'.$p['name'].'%i',$s)) {
 						$sfile = $s;
 						$html .= "<a href='loadimg.php?filename=$sfile' target='snapshot'>"
 							."<img src='loadimg.php?s=80&filename=$sfile' height='80'></a>\n";

@@ -17,14 +17,14 @@ class Path
 	// make sure a path ends with a single path separator.
 	public static function formatEndPath( $path, $dirSeparator=DIRECTORY_SEPARATOR ) 
 	{
-		$formattedPath = ereg($dirSeparator."$", $path) ? $path : $path.$dirSeparator;
+		$formattedPath = preg_match("%".$dirSeparator."$%", $path) ? $path : $path.$dirSeparator;
 		return $formattedPath;
 	}
 	
 	public static function formatPath($path) 
 	{
-		$npath = ereg_replace('[\\]','/',$path);
-		$npath = ereg("/$", $npath) ? $npath : $npath."/";
+		$npath = preg_replace('%\\\\%','/',$path);
+		$npath = preg_match("%/$%", $npath) ? $npath : $npath."/";
 		return $npath;
 	}
 	

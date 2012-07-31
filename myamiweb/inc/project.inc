@@ -23,7 +23,7 @@ define('PROJECT_DB', $PROJECT_DB);
 setsession();
 
 function setDatabase($expId="") {
-	$leginondata=&new leginondata;
+	$leginondata= new leginondata;
 	if (!$expId) {
 		$expId= ($_POST['sessionId']) ? $_POST['sessionId'] : $_GET['expId'];
 	}
@@ -200,8 +200,8 @@ class project {
 		if (SAMPLE_TRACK) {
 			$sessionId = ($sessioninfo['SessionId'])? $sessioninfo['SessionId'] : $sessioninfo['Id'];
 			list($proj, $packagenb, $samplenb) = explode(".", $sessioninfo['Purpose']);
-			$packagenb = (int) ereg_replace("P", "", $packagenb);
-			$samplenb = (int) ereg_replace("S", "", $samplenb);
+			$packagenb = (int) preg_replace("%P%", "", $packagenb);
+			$samplenb = (int) preg_replace("%S%", "", $samplenb);
 			/* if package number is 0, then don't join package table in this query */
 			if ($packagenb == 0) {
 				$q='select s.packageId, s.`number`, s.label from '.DB_PROJECT.'.nsample s

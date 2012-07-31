@@ -178,7 +178,7 @@ if ($sessionId) {
     $jobdone=0;
     foreach ($subjobs as $j) {
       // skip appion jobs
-      if (!(ereg('.appionsub.',$j['name']))) {
+      if (!(preg_match('%.appionsub.%',$j['name']))) {
 	if ($j['status']=='Q') $jobqueue++;
 	elseif ($j['status']=='R') $jobrun++;
 	elseif ($j['status']=='D') $jobdone++;

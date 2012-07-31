@@ -26,6 +26,7 @@ if (!$args['outpath'])
 
 $array_fct=($args['invert']==1) ? "array_diff" : "array_intersect";
 
+$cache_redux_only=$args['redux'];
 $sessionId=$args['session'];
 $preset=$args['preset'];
 $sessioninfo=$leginondata->getSessionInfo($sessionId);
@@ -50,7 +51,7 @@ if ($preset) {
 if (!$path=$sessioninfo['Image path'])
 	$path="/tmp/".$sessioninfo['Name']."/";
 
-$path = ereg_replace("rawdata", "jpegs", $path);
+$path = preg_replace("%rawdata%", "jpegs", $path);
 
 if ($args['outpath'])
 	$path=$args['outpath'];
@@ -59,7 +60,7 @@ foreach($filenames as $f) {
 	if ($id=$f['id'])
 		$imageIds[]=$id;
 }
-mkdirs($path);
+if (!$cache_redux_only) mkdirs($path);
 if (!$filenames) {
 	echo "images not found \n";
 	exit;
@@ -101,7 +102,7 @@ $existing_files = getfiles($path);
 $pbar = new Console_ProgressBar('* %fraction% %bar% %percent% %estimate% ', '#', '-',60, $n_images);
 foreach ($imageIds as $i=>$id) {
 	list($res) = $leginondata->getFilename($id);
-	$filename = ereg_replace('mrc$', $ext, $res['filename']);
+	$filename = preg_replace('%mrc$%', $ext, $res['filename']);
 
 	$filename=$path."/".$filename;
 	
@@ -117,7 +118,8 @@ foreach ($imageIds as $i=>$id) {
 		'loadtime' => $displayloadingtime,
 		'autoscale' => $autoscale,
 		'newptcl' => $displaynptcl,
-		'ptcl' => urldecode($displayparticle)
+		'ptcl' => urldecode($displayparticle),
+		'cacheonly' => $cache_redux_only,
 	);
 
 	# udpate progress bar
@@ -127,20 +129,21 @@ foreach ($imageIds as $i=>$id) {
 			# continue if exists 
 			continue;
 	}
-
 	$img = getImage($sessionId, $id, "", $params);
 	
 	// when there is no image. skip it....
+	// redux caching does not need to be displayed, either.
 	if($img == false)
 		continue;
-		
-	# write filename
-	if ($t=='png') {
-		imagepng($img, $filename);
-	} else {
-		imagejpeg($img,$filename,$quality);
+	// redux caching does not need to be displayed or written separately
+	if(!$cache_redux_only) {
+		# write filename
+		if ($t=='png') {
+			imagepng($img, $filename);
+		} else {
+			imagejpeg($img,$filename,$quality);
+		}
 	}
-
 	imagedestroy($img);
 	
 }

@@ -30,10 +30,10 @@ $html .= "<TABLE WIDTH='600' BORDER='1'>\n";
 foreach ($fileinfo as $p) {
   $html .= "<TR><td>";
   $snapfile = $p['path'].'/'.$p['name'];
-  if (ereg('\.txt$',$p['name'])){
+  if (preg_match('%\.txt$%',$p['name'])){
     $html .= "<A HREF='loadtxt.php?filename=$snapfile'>$p[name]</A>\n";
   }
-  elseif (ereg('\.html$',$p['name'])){
+  elseif (preg_match('%\.html$%',$p['name'])){
 		$txt = file_get_contents($snapfile);
     $html .= $txt;
   }

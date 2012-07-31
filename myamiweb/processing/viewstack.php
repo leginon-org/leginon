@@ -127,16 +127,17 @@ function getimagicfilenames($file) {
 	return array($file_hed, $file_img);
 }
 
-if (ereg(".spi$", $filename)) {
+if (preg_match("%.spi$%", $filename)) {
 	$file_hed=$file_img=$filename;
 	$info=spiderinfo($file_hed);
 	$n_images=$info['nimg'];
-} else if (ereg(".hdf5$", $filename)) {
+} else if (preg_match("%.hdf5$%", $filename)) {
 	$file_hed=$file_img=$filename;
 	$n_images=100;
 } else {
 	list($file_hed, $file_img)=getimagicfilenames($filename);
-	$info=imagicinfo($file_hed);
+	#$info=imagicinfo($file_hed);
+	$info = array('count'=>100);
 	$n_images=$info['count']+1;
 }
 
@@ -150,7 +151,7 @@ $sessiondata=getSessionList($projectId,$sessionId);
 $sessioninfo=$sessiondata['info'];
 $sessionname=$sessioninfo['Name'];
 
-$info=imagicinfo($file_hed);
+#$info=imagicinfo($file_hed);
 $n_images = ($substack || $substacktype || $subStackClassesString != "") ? $numbad : $info['count']+1;
 
 ?>

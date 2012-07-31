@@ -5,14 +5,17 @@ import cStringIO
 import sys
 
 # local
-import redux.cache
-import redux.pipe
+import redux.pipes
+import redux.pipelines
 
 CACHE_ON = False
 
 if CACHE_ON:
-	cache_size = 400*1024*1024  # 400 MB
-	results = redux.cache.Cache(cache_size)
+	import redux.cache
+	disk_cache_path = '/tmp/redux'
+	disk_cache_size = 200*1024*1024  # 100 MB
+	mem_cache_size = 400*1024*1024  # 400 MB
+	results = redux.cache.Cache(disk_cache_path, disk_cache_size, size_max=mem_cache_size)
 
 def log(msg):
 	sys.stderr.write(msg)
@@ -25,10 +28,31 @@ kwargs:
 	"r0.asdf=asdf&s1.asdf=asdf"
 '''
 
+def pipeline_by_pipes(pipes):
+	pl = Pipeline(pipes)
+	return pl
+
+def pipeline_by_preset(name):
+	pipes = redux.pipelines.registered[name]
+	pl = pipeline_by_pipes(pipes)
+	return pl
+
+def pipeline_by_string(pipestring):
+	pipes = pipestring.split(',')
+	pipes = [pipe.split(':') for pipe in pipes]
+	pl = pipeline_by_pipes(pipes)
+	return pl
+
 ## you have to create subclass with pipeorder attribute
+## or instantiate Pipeline class directly, giving it pipeorder arg
 class Pipeline(object):
-	def __init__(self):
-		pass
+	def __init__(self, pipes):
+		# pipeorder currenly list of pipe classes, but likely to change
+		# into something more descriptive (names, etc)
+		self.pipeorder = []
+		for pipe in pipes:
+			pcls = redux.pipes.registered[pipe[1]]
+			self.pipeorder.append(pcls)
 
 	def getOrder(self):
 		return self.pipeorder

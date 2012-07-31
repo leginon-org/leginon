@@ -123,7 +123,7 @@ for ($i = 0; $i <= $numiter; $i++) {
 		$searchstr = "volume.*".$i."\.mrc\..*.png$";
 		$gifsearchstr = "volume.*".$i."\.mrc\..*\.gif$";
 		//echo $gifsearchstr."<br/>\n";
-		if (eregi($searchstr, $snapshot)) {
+		if (preg_match('%'.$searchstr.'%i', $snapshot)) {
 			$rcttable.= "<a border='0' href='loadimg.php?filename=$snapshot' target='snapshot'>";
 			$rcttable.= "<img src='loadimg.php?h=128&filename=$snapshot' height='128'></a>\n";
 		}

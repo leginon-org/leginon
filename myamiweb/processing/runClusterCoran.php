@@ -41,7 +41,7 @@ function createClusterCoranForm($extra=false, $title='clusterCoran.py Launcher',
 	$analysisparams = $particle->getAnalysisParams($analysisid);
 	$rundir = $analysisparams['path'];
 	$runname = $analysisparams['runname'];
-	$outdir = ereg_replace($runname,'',$rundir);
+	$outdir = preg_replace('%'.$runname.'%','',$rundir);
 
 	// in case there are more than 1 '/' at the end
 	if (substr($outdir,-1,1)!='/') $outdir.='/';
@@ -214,7 +214,7 @@ function runClusterCoran() {
 	//echo print_r($analysisparams)."<br/><br/>\n";
 	$rundir = $analysisparams['path'];
 	$runname = $analysisparams['runname'];
-	$outdir = ereg_replace($runname,'',$rundir);
+	$outdir = preg_replace('%'.$runname.'%','',$rundir);
 
 	// in case there are more than 1 '/' at the end
 	if (substr($outdir,-1,1)!='/') $outdir.='/';

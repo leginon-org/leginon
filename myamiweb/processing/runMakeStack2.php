@@ -495,10 +495,10 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 		// check if user has changed values on submit
 		$minval = ($_POST['dfmin']!=$min && $_POST['dfmin']!='' && $_POST['dfmin']!='-') ? $_POST['dfmin'] : $min;
 		$maxval = ($_POST['dfmax']!=$max && $_POST['dfmax']!='' && $_POST['dfmax']!='-') ? $_POST['dfmax'] : $max;
-		$minval = ereg_replace("E","e",round($minval,8));
-		$maxval = ereg_replace("E","e",round($maxval,8));
-		$mindbval = ereg_replace("E","e",round($min,8));
-		$maxdbval = ereg_replace("E","e",round($max,8));
+		$minval = preg_replace("%E%","e",round($minval,8));
+		$maxval = preg_replace("%E%","e",round($maxval,8));
+		$mindbval = preg_replace("%E%","e",round($min,8));
+		$maxdbval = preg_replace("%E%","e",round($max,8));
 		echo"<b>Defocus Limits</b><br />
 				<input type='text' name='dfmin' value='$minval' size='25'>
 				<input type='hidden' name='dbmin' value='$mindbval'>

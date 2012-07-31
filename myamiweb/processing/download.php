@@ -6,12 +6,12 @@ require 'inc/leginon.inc';
 $filename = ($_GET['file']) ? $_GET['file']: false;
 $sessionId = ($_GET['expId']) ? $_GET['expId']: false;
 checkExptAccessPrivilege($sessionId,'data');
-ereg("(.*)config(.*)", $filename, $reg_match_config);
-ereg("(.*)dbemauth(.*)", $filename, $reg_match_auth);
+preg_match("%(.*)config(.*)%", $filename, $reg_match_config);
+preg_match("%(.*)dbemauth(.*)%", $filename, $reg_match_auth);
 
 if (is_null($reg_match_config) && is_null($reg_match_auth)) {
 	$sessioninfo = $leginondata->getSessionInfo($sessionId);
-	ereg("(.*)".$sessioninfo['name']."(.*)", $filename, $reg_match);
+	preg_match("%(.*)%".$sessioninfo['name']."(.*)", $filename, $reg_match);
 
 
 	if (file_exists($filename) && !is_null($reg_match))  {

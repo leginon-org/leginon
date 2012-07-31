@@ -235,7 +235,7 @@ function runKerDenSOM() {
 	$runname=$_POST['runname'];
 	$outdir=$_POST['outdir'];
 	$stackval=$_POST['stackid'];
-	list($stackid,$apix,$boxsz,$totpart) = split('\|--\|',$stackval);
+	list($stackid,$apix,$boxsz,$totpart) = preg_split('%\|--\|%',$stackval);
 	$maskrad=$_POST['maskrad'];
 	$xdim=$_POST['xdim'];
 	$ydim=$_POST['ydim'];

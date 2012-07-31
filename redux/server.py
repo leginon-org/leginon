@@ -2,11 +2,14 @@
 
 import SocketServer
 import logging
+import time
+import sys
+import traceback
 
 # local
 import redux.utility
-from redux.pipelines import StandardPipeline
 import redux.exceptions
+import redux.pipeline
 
 ### set up logging
 logger = logging.getLogger('redux')
@@ -25,15 +28,21 @@ class RequestHandler(SocketServer.StreamRequestHandler):
 	def run_process(self, request):
 		try:
 			kwargs = redux.utility.request_to_kwargs(request)
-			result = StandardPipeline().process(**kwargs)
-		except redux.exceptions.ArgumentError, e:
-			result = e.error_detail()
+			if 'pipeline' in kwargs:
+				pipeline = redux.pipeline.pipeline_by_preset(kwargs['pipeline'])
+			elif 'pipes' in kwargs:
+				pipeline = redux.pipeline.pipeline_by_string(kwargs['pipes'])		
+			else:
+				pipeline = redux.pipeline.pipeline_by_preset('standard')
+			result = pipeline.process(**kwargs)
 		except Exception, e:
-			raise
-			exc_str = str(e)
-			result = 'Unhandled exception:  %s' % (exc_str,)
-		self.wfile.write(result)
-		self.wfile.flush()
+			timestamp = str(time.time())
+			result = 'REDUX ERROR ' + timestamp + ' ' + str(e)
+			sys.stderr.write(timestamp+'\n')
+			traceback.print_exc(file=sys.stderr)
+		finally:
+			self.wfile.write(result)
+			self.wfile.flush()
 
 #class Server(SocketServer.ForkingMixIn, SocketServer.TCPServer):
 class Server(SocketServer.ThreadingMixIn, SocketServer.TCPServer):
@@ -50,7 +59,8 @@ def test_request():
 	request = sys.argv[2]
 	kwargs = redux.utility.request_to_kwargs(request)
 	t0 = time.time()
-	result = StandardPipeline().process(**kwargs)
+	pl = redux.pipeline.pipeline_by_preset('standard')
+	result = pl.process(**kwargs)
 	t1 = time.time()
 	sys.stderr.write('TIME: %s\n' % (t1-t0))
 	print result

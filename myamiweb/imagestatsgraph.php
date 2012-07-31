@@ -30,7 +30,7 @@ if ($viewsql) {
 	exit;
 }
 
-$dbemgraph=&new dbemgraph($thicknessdata, 'unix_timestamp', $data_name);
+$dbemgraph= new dbemgraph($thicknessdata, 'unix_timestamp', $data_name);
 $dbemgraph->lineplot=false;
 $dbemgraph->title="Pixel $data_name for preset $preset";
 $dbemgraph->yaxistitle="pixel $data_name";

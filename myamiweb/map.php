@@ -1,5 +1,6 @@
 <?php
-require 'inc/leginon.inc';
+require_once 'inc/leginon.inc';
+require_once "inc/imageutil.inc";
 // --- get image parameters from URL
 $id=$_GET['id'];
 if (!$imgscript=$_GET['imgsc'])
@@ -15,7 +16,7 @@ $fft = ($_GET['fft']) ? '&fft='.$_GET['fft'] : '';
 $fftflag = ($_GET['fft']) ? 1:0;
 $filter = ($_GET['flt']) ? '&flt='.$_GET['flt'] : '';
 $fftbin = ($_GET['fftbin']) ? '&fftbin='.$_GET['fftbin'] : '';
-$binorder = ($_GET['fftbin']) ? $_GET['fftbin'] : 'b';
+$binorder = ($_GET['fftbin']) ? $_GET['fftbin'] : 'a';
 $binning = ($_GET['binning']) ? '&binning='.$_GET['binning'] : '';
 $autoscale = ($_GET['autoscale']) ? '&autoscale='.$_GET['autoscale'] : '';
 $quality = ($_GET['t']) ? '&t='.$_GET['t']: '';
@@ -24,52 +25,42 @@ $nptcl = ($_GET['nptcl']) ? '&nptcl='.$_GET['nptcl'] : '';
 $acepar = ($_GET['g']) ? '&g='.($_GET['g']) : ''; 
 $gradient= ($_GET['gr']) ? '&gr='.$_GET['gr'] : '';
 $autoscale = ($_GET['autoscale']) ? '&autoscale='.$_GET['autoscale'] : '';
-
-$options = $tg.$sb.$minpix.$maxpix.$fft.$fftbin.$filter.$autoscale.$psel.$acepar.$gradient.$autoscale.$nptcl;
+$options = $binning.$tg.$sb.$minpix.$maxpix.$fft.$fftbin.$filter.$autoscale.$psel.$acepar.$gradient.$autoscale.$nptcl;
 
 $nimgId = $leginondata->findImage($id, $preset);
 $imginfo = $leginondata->getImageInfo($nimgId['id']);
+//xmldata has no $imginfo
+//ruler and scale bar does not work on xmldata
+//it is not worth while fixing it.
+$xmlimgsize = 1024;
+$dimx = ($imginfo) ? $imginfo['dimx']:$xmlimgsize;
+$dimy = ($imginfo) ? $imginfo['dimy']:$xmlimgsize;
 
-if (!$imgwidth = $imginfo['dimx'])
-	$imgwidth=1024;
-if (!$imgheight= $imginfo['dimy'])
-	$imgheight=1024;
-
+$imageUtil = new imageUtil();
 $imgbinning = $_GET['binning'];
-if ($_GET['binning']=='auto') {
-	$imgbinning = ($imgwidth > 1024) ? (($imgwidth > 2048) ? 4 : 2 ) : 1;
-	if ($fftflag && $binorder=='b')
-		$imgbinning = ($imgwidth > 2048) ? 2 : 1;
-}
-
-// --- set image map size and binning
-$imgmapsize=128;
-$mapbinning = ($imgwidth> 1024) ? (($imgwidth> 2048) ? 16 : 8 ) : 4;
-if ($fftflag && $binorder=='b')
-	$mapbinning = $imgbinning;
-
-$ratio = $imgwidth/$imgbinning/$imgmapsize;
+$default_size = $imageUtil->getDefaultImageSize($fftflag,$binorder);
+$xyDim = $imageUtil->imageBinning($dimx, $dimy, $imgbinning,$default_size);
+$imgwidth = $xyDim[0];
+$imgheight = $xyDim[1];
+// -- set real image binning
+$imgbinning = $dimx / $imgwidth;
+// --- set image map size
+$imgmapwidth=128;
+$mapframe_size=$imgmapwidth;
+$mapxyDim = $imageUtil->imageFitIn($dimx, $dimy, $mapframe_size);
+$imgmapheight = $mapxyDim[1];
+$ratio = $imgwidth/$imgmapwidth;
 
 // --- for colored images display area in black
 $areacolor = ($_GET['gr']=="spectrum") ? "#000000" : "#00FF00";
 
 // --- set scale
-$imgsize = ($imgbinning) ? $imgwidth/$imgbinning : $imgwidth;
-if (!$imgsize)
-	$imgsize=1;
-$imgratio = $imgwidth/$imgsize ;
-$pixelsize = $imginfo['pixelsize']*$imginfo['binning']*$imgratio;
-# binning of the display is done with power spectrum image
-if ($binorder == 'b') {
-	$fftpixelsize = $imgratio/($imgwidth*$imginfo['pixelsize']*$imgbinning*$imginfo['binning']);
-} else {
-	$fftpixelsize = $imgratio/($imgwidth*$imginfo['pixelsize']*$imginfo['binning']);
-}
+$imgratio = $imgbinning ;
+$display_pixelsize = $imageUtil->getDisplayPixelSize($imginfo['pixelsize'],$imginfo['binning'],$imginfo['dimx'],$imgwidth,$fftflag,$binorder,$imgwidth);
 $filename = $imginfo['filename'];
-
-$imgmapsrc = $imgscript."?preset=".$preset."&session=".$session."&id=".$id."&t=75&s=$imgmapsize&binning=$mapbinning".$options;
-$imgsrc = $imgscript."?preset=".$preset."&session=".$session."&id=".$id.$quality.$binning.$options;
-
+//image width is used as the first factor to determine display size
+$imgmapsrc = $imgscript."?preset=".$preset."&session=".$session."&id=".$id."&t=75&s=$imgmapwidth".$options;
+$imgsrc = $imgscript."?preset=".$preset."&session=".$session."&id=".$id.$quality."&s=$imgwidth".$options;
 ?>
 <html>
 <head>
@@ -81,15 +72,14 @@ MAP: <?php echo $filename; ?>
 <script language="javascript" src="js/scale.js"></script>
 <script>
 var filename="<?=$filename; ?>"
-var pixsize ="<?= ($fftflag) ? $fftpixelsize : $pixelsize; ?>"
+var pixsize ="<?=$display_pixelsize; ?>"
 var fftflag="<?=$fftflag; ?>"
-var jsimgwidth=<?=$imgwidth; ?>
 
-var jssize=<?=$imgsize; ?>
+var jssize=<?=$imgwidth; ?>
 
 var jsimgheight=<?=$imgheight; ?>
 
-var jsmapsize = <?=$imgmapsize; ?>
+var jsmapsize = <?=$imgmapwidth; ?>
 
 var ratio=<?=$ratio; ?>
 
@@ -397,7 +387,7 @@ function getDistance() {
 		onmousemove = "areamousemove(event)"
 		onmouseout	= "areamouseup(event)"
 	></div>
-	<div id="imgmap" style="position:relative; height:<?=$imgmapsize?>px; width:<?=$imgmapsize?>px; background:url('<?=$imgmapsrc?>')"
+	<div id="imgmap" style="position:relative; height:<?=$imgmapheight?>px; width:<?=$imgmapwidth?>px; background:url('<?=$imgmapsrc?>')"
 		onmousemove = "areamousemove(event)"
 		onmousedown	= "imgmapmousedown(event)" ></div>
 	<div	id="divcoord"
@@ -415,7 +405,7 @@ function getDistance() {
 </div>
 </div>
 <div id="divimg" style="z-index:1; position:absolute; width:100%; height:100%; overflow:auto;cursor:crosshair; ">
-<div id="img" style="position:absolute; top:0px; left:0px; width:<?=$imgsize;?>px; height:<?=$imgsize;?>; background:url('<?php echo $imgsrc; ?>')"
+<div id="img" style="position:absolute; top:0px; left:0px; width:<?=$imgwidth;?>px; height:<?=$imgheight;?>; background:url('<?php echo $imgsrc; ?>')"
 	onmousemove	=	"imgmousemove(event)";
 	onmousedown	=	"imgmousedown(event)";
 	onmouseup		=	"imgmouseup(event)";

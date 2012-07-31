@@ -80,7 +80,7 @@ if (!empty($sessioninfo)) {
 	echo "<table border='0'>\n";
 	$i=0;
 	foreach($sessioninfo as $k=>$v) {
-		if (eregi('timestamp', $k))
+		if (preg_match('%timestamp%i', $k))
 			continue;
 		echo formatHtmlRow($k, $v);
 	}

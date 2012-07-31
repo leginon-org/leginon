@@ -13,7 +13,7 @@ if(empty($_GET['q'])) {
     echo '&nbsp;';
 } else {
     //Remove whitespace from beginning & end of passed search.
-    $search = split(' ',($_GET['q']));
+    $search = preg_split('% %',($_GET['q']));
 	foreach ($search as $s) {
 		$word = trim($s);
 		if (!$word)

@@ -28,7 +28,7 @@ $javascript = addFlashPlayerJS();
 $javascript .="<script LANGUAGE='JavaScript'>
         function infopopup(";
 foreach ($align_params_fields as $param) {
-        if (ereg("\|", $param)) {
+        if (preg_match("%\|%", $param)) {
 	        $namesplit=explode("|", $param);
 		$param=end($namesplit);
 	}
@@ -42,7 +42,7 @@ $javascript.=") {
                 newwindow.document.write('<TITLE>Ace Parameters</TITLE>');
                 newwindow.document.write(\"</HEAD><BODY><TABLE class='tableborder' border='1' cellspacing='1' cellpadding='5'>\");\n";
 foreach($align_params_fields as $param) {
-	if (ereg("\|", $param)) {
+	if (preg_match("%\|%", $param)) {
 		$namesplit=explode("|", $param);
 		$param=end($namesplit);
 	}

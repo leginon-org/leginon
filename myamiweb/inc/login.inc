@@ -196,7 +196,7 @@ function login_header($title="", $javascript="", $onload="",$athome=false) {
 		$authorized_files=array(BASE_URL.'login.php', 'lostpass.php', 'register.php', 'confirm.php');
 	
 		$login_check = $dbemauth->is_logged();
-		if (!ereg(implode("|", $authorized_files), $_SERVER['PHP_SELF'])) {
+		if (!preg_match('%'.implode("|", $authorized_files).'%', $_SERVER['PHP_SELF'])) {
 	   	if (!$login_check)  {
 				//  unautorized files can only be loaded if logged in
 				redirect(BASE_URL.'login.php?ln='.$redirect);
@@ -261,7 +261,7 @@ function login_header($title="", $javascript="", $onload="",$athome=false) {
 			if($username != 'Anonymous')
 				echo '<a class="header" href="'.BASE_URL.'prefs.php">['.$username.' Profile]</a>';
 		} else {
-			if (!ereg(BASE_URL.'login.php', $_SERVER['PHP_SELF']))
+			if (!preg_match('%'.BASE_URL.'login.php%', $_SERVER['PHP_SELF']))
 				echo '<a class="header" href="'.BASE_URL.'login.php?'.$url.'">[Login]</a>';
 			echo '<a class="header" href="register.php?'.$url.'">[register]</a>';
 		}

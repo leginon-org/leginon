@@ -669,8 +669,8 @@ function specialStackSelector($stackIds, $stackidval) {
 		// get stack path with name
 		$opvals = "$stackid[stackid]|--|$apix|--|$box|--|$totalp|--|$s[path]|--|$s[name]";
 		// if imagic stack, send both hed & img files for dmf
-		if (ereg('\.hed', $s['name'])) $opvals.='|--|'.ereg_replace('hed','img',$s['name']);
-		if (ereg('\.img', $s['name'])) $opvals.='|--|'.ereg_replace('img','hed',$s['name']);
+		if (preg_match('%\.hed%', $s['name'])) $opvals.='|--|'.preg_replace('%hed%','img',$s['name']);
+		if (preg_match('%\.img%', $s['name'])) $opvals.='|--|'.preg_replace('%img%','hed',$s['name']);
 	
 		echo "<OPTION VALUE='$opvals'";
 		// select previously set stack on resubmita

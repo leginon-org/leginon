@@ -330,9 +330,9 @@ function runAlignment() {
 	******************** */
 	$nproc = $_POST['nproc'];
 	$stackval = $_POST['stackval'];
-	list($stackid,$apix_s,$boxsz_s,$totprtls_s) = split('\|--\|', $stackval);
+	list($stackid,$apix_s,$boxsz_s,$totprtls_s) = preg_split('%\|--\|%', $stackval);
 	$templatestackval=$_POST['templatestackid'];
-	list($templatestackid,$apix_t,$boxsz_t,$totprtls_t,$type) = split('\|--\|',$templatestackval);
+	list($templatestackid,$apix_t,$boxsz_t,$totprtls_t,$type) = preg_split('%\|--\|%',$templatestackval);
 	
 	// particle parameters
 	$bin=$_POST['bin'];

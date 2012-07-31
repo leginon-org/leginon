@@ -199,7 +199,7 @@ function createMaxLikeAlignForm($extra=false, $title='maxlikeAlignment.py Launch
 	$runname = ($_POST['runname']) ? $_POST['runname'] : 'maxlike'.($alignruns+1);
 	$description = $_POST['description'];
 	$stackidstr = $_POST['stackval'];
-	list($stackidval) = split('\|--\|',$stackidstr);
+	list($stackidval) = preg_split('%\|--\|%',$stackidstr);
 	$bin = ($_POST['bin']) ? $_POST['bin'] : '1';
 	$numpart = ($_POST['numpart']) ? $_POST['numpart'] : '3000';
 	$lowpass = ($_POST['lowpass']) ? $_POST['lowpass'] : '10';
@@ -243,7 +243,7 @@ function createMaxLikeAlignForm($extra=false, $title='maxlikeAlignment.py Launch
 	} else {
 		//get template info if coming from resubmitting input
 		$templateIds = templateIds();
-		$templatearray=split(",",$templateIds);
+		$templatearray=preg_split("%,%",$templateIds);
 		$templatetable.="<table><TR>\n";
 		foreach ($templatearray as $templateId) {
 			$templatetable.="<TD VALIGN='TOP'><TABLE CLASS='tableborder'>\n";
@@ -436,7 +436,7 @@ function runMaxLikeAlign() {
 	$nproc = ($_POST['nproc']) ? $_POST['nproc'] : 1;
 
 	// get stack id, apix, & box size from input
-	list($stackid,$apix,$boxsz) = split('\|--\|',$stackval);
+	list($stackid,$apix,$boxsz) = preg_split('%\|--\|%',$stackval);
 	//make sure a session was selected
 
 	/* *******************
@@ -561,9 +561,9 @@ function templateIds () {
 	$command = "";
 	// get the list of templates
 	$templatelist=$_POST['templatelist'];
-	$templates=split(",", $templatelist);
+	$templates=preg_split("%,%", $templatelist);
 	foreach ($templates as $tmplt) {
-		list($tmpltNum,$tmpltId)=split(":",$tmplt);
+		list($tmpltNum,$tmpltId)=preg_split("%:%",$tmplt);
 		$templateIds.="$tmpltId,";
 	}
 	$templateIds=substr($templateIds,0,-1);

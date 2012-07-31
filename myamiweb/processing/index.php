@@ -243,10 +243,10 @@ foreach ($reconRuns as $recon) {
 	$eulerfiles = glob($recon['path'].'/*'.$reconrunid."_".$recon['iteration']."*png");
 	//foreach ($pngimages['eulerfiles'] as $eulername) {
 	foreach ($eulerfiles as $eulername) {
-		if (eregi($reconrunid."_".$recon['iteration']."\.png$", $eulername)) {
+		if (preg_match('%'.$reconrunid."_".$recon['iteration']."\.png$%i", $eulername)) {
 			$eulerfile = $eulername;
-			$opname = ereg_replace("euler","",$eulername);
-			$opname = ereg_replace("-".$reconrunid."_".$recon['iteration']."\.png$","",$opname);
+			$opname = preg_replace("%euler%","",$eulername);
+			$opname = preg_replace("%-%".$reconrunid."_".$recon['iteration']."\.png$","",$opname);
 			if (file_exists($eulerfile)) {
 			  $eulerhtml .= "<td align='center'>\n";
 			  $eulerhtml .= "<a id='eulerlink".$iteration['iteration']."' href='loadimg.php?filename=".$eulerfile."' target='snapshot'>"
@@ -275,7 +275,7 @@ foreach ($reconRuns as $recon) {
 	$pngfiles = glob($densityfile."*png");
 	//foreach ($pngimages['pngfiles'] as $snapshot) {
 	foreach ($pngfiles as $snapshot) {
-		if (eregi($recon['volumeDensity'],$snapshot)) {
+		if (preg_match('%'.$recon['volumeDensity'].'%i',$snapshot)) {
 			$snapfile = $snapshot;
 			$modhtml .= "<A HREF='loadimg.php?filename=$snapfile' target='snapshot'><img src='loadimg.php?filename=$snapfile' HEIGHT='80'>\n";
 		}
@@ -304,7 +304,7 @@ foreach ($reconRuns as $recon) {
 
 	// get camera & scope info
 	$camera = $leginondata->getInstrumentInfo($sessioninfo['CameraId']);
-	if (eregi("tecnai", $camera[0]['hostname'])) $scope = "Tecnai F20 Twin";
+	if (preg_match("%tecnai%i", $camera[0]['hostname'])) $scope = "Tecnai F20 Twin";
 	else $scope = "Tecnai G2 Spirit Twin";
 	$cam = ($camera[0]['name'] == 'Tietz SCX') ? 'Tietz F415' : $camera[0]['name'];
 	$camsize = ($camera['0']['name'] == 'Tietz PXL') ? "2k x 2k" : "4k x 4k";

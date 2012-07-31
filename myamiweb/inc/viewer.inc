@@ -275,14 +275,14 @@ class viewer {
 		$selector .= '<select style="width: 250px" name="imageId" '.$htmlsize .' >'.$this->crlf;
 		$default = ($this->imageId) ? $this->imageId : $filenames[0][id];
 		foreach ((array)$filenames as $filename) {
-			$filestr = ereg_replace('[[:alnum:]]+_(.*)', '\1', $filename[name]);
-			$filestr = ereg_replace('_0*', '_', $filestr);
-			$filestr = ereg_replace('^0*', '', $filestr);
-			$filestr = ereg_replace('_v[0-2][0-9]_', '_', $filestr);
-			$filestr = ereg_replace('grid', 'gr', $filestr);
-			$filestr = ereg_replace('square', 'sq', $filestr);
-			$filestr = ereg_replace('hole', 'hl', $filestr);
-			$filestr = ereg_replace('focus', 'fc', $filestr);
+			$filestr = preg_replace('%[[:alnum:]]+_(.*)%', '\1', $filename[name]);
+			$filestr = preg_replace('%_0*%', '_', $filestr);
+			$filestr = preg_replace('%^0*%', '', $filestr);
+			$filestr = preg_replace('%_v[0-2][0-9]_%', '_', $filestr);
+			$filestr = preg_replace('%grid%', 'gr', $filestr);
+			$filestr = preg_replace('%square%', 'sq', $filestr);
+			$filestr = preg_replace('%hole%', 'hl', $filestr);
+			$filestr = preg_replace('%focus%', 'fc', $filestr);
 			if ($filename[id]==$default) $s='selected'; else $s='';
 				$selector .= '<option value='.$filename[id].' '.$s.' >'.$filestr.$this->crlf; 
 		}
@@ -608,7 +608,7 @@ class view {
 		$this->quality = "80";
 		$this->gradient = "";
 		$this->filter= "default";
-		$this->fftbin= "b";
+		$this->fftbin= "a";
 		$this->binning= "auto";
 		$this->autoscale = "s;3";
 		$this->displayfilename = "0";
