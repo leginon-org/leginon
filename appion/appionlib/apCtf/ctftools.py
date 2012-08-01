@@ -15,6 +15,8 @@ from appionlib.apImage import imagestat
 from appionlib.apImage import imagefilter
 #from appionlib import lowess
 
+###this file is not allowed to import any apCtf files - other than ctfpower
+
 debug = False
 
 #===================
@@ -172,8 +174,8 @@ def powerSpectraToOuterResolution(image, outerresolution, apix):
 		print "Computing power spectra..."
 	fieldsize = ctfpower.getFieldSize(image.shape)
 	binning = max(image.shape)/fieldsize
-	#data = imagefun.power(image, mask_radius=1)
-	data, freq = ctfpower.power(image, apix, fieldsize, mask_radius=0.2)
+	#data = imagefun.power(image, mask_radius=2)
+	data, freq = ctfpower.power(image, apix, fieldsize, mask_radius=2)
 	newapix = 2.0/(freq*data.shape[0])
 	#data = numpy.exp(data)
 	data = data.astype(numpy.float64)
@@ -402,10 +404,8 @@ def getEllipticalDistanceArray(ellipratio, ellipangle, shape):
 	yy = ellipratio*yy
 	radial = xx**2 + yy**2
 	### apply ellipse rotation
-	#imagefile.arrayToPng(numpy.array(radial, dtype=numpy.float64), filename+"radial-norot.png")
 	radial = scipy.ndimage.interpolation.rotate(radial, angle=ellipangle, 
 		reshape=False, mode='wrap', order=2)
-	#imagefile.arrayToPng(numpy.array(radial, dtype=numpy.float64), filename+"radial-uncut.png")
 	radial = imagefilter.frame_cut(radial, shape)
 	if debug is True:
 		print "minimal radial distance", radial.min()
@@ -414,7 +414,7 @@ def getEllipticalDistanceArray(ellipratio, ellipangle, shape):
 	return radial
 
 #============
-def ellipticalAverage(image, ellipratio, ellipangle, ringwidth=3.0, innercutradius=None, full=False, median=False, filename=None):
+def ellipticalAverage(image, ellipratio, ellipangle, ringwidth=2.0, innercutradius=None, full=False):
 	"""
 	compute the elliptical average of a 2D numpy array
 
@@ -439,11 +439,9 @@ def ellipticalAverage(image, ellipratio, ellipangle, ringwidth=3.0, innercutradi
 	## need to convert to integers for scipy
 	radial = radial/ringwidth
 	radial = numpy.array(radial, dtype=numpy.int32)
-	#imagefile.arrayToPng(numpy.array(radial, dtype=numpy.float64), filename+"radial.png")
 	if bigshape[0] < 32:
 		print radial
 
-	count = 0
 	if debug is True:
 		print "computing elliptical average xdata..."
 	xdataint = numpy.unique(radial)
@@ -468,12 +466,6 @@ def ellipticalAverage(image, ellipratio, ellipangle, ringwidth=3.0, innercutradi
 	### remove
 	data = image.copy()
 
-	if median is True:
-		print "performing very slow median calculation loop on %d values"%(len(xdataint))
-		for i in xdataint:
-			median = numpy.median(data[radial == i])
-			data[radial == i] = median
-
 	if debug is True:
 		print "computing elliptical average ydata..."
 	ydata = numpy.array(scipy.ndimage.mean(data, radial, xdataint))
@@ -486,4 +478,40 @@ def ellipticalAverage(image, ellipratio, ellipangle, ringwidth=3.0, innercutradi
 		apDisplay.printMsg("actual max size of elliptical average: %d"%(xdata.max())) 
 
 	return xdata, ydata
+
+#============
+def ellipticalArray(image, ellipratio, ellipangle):
+	"""
+	compute the elliptical average of a 2D numpy array
+
+	ellipratio: ratio of elliptical axes ( >= 1 )
+				= major / minor = a / b
+				= circle has a value of 1
+	
+	ellipangle: angle of ellipse in degrees
+			
+	full : False -- only average complete circles (no edges/corners)
+	       True  -- rotational average out to corners of image
+	"""
+
+	bigshape = numpy.array(numpy.array(image.shape)*math.sqrt(2)/2., dtype=numpy.int)*2
+	radial = getEllipticalDistanceArray(ellipratio, ellipangle, image.shape)
+	
+	xdata = numpy.ravel(radial)/math.sqrt(ellipratio)
+	ydata = numpy.ravel(image)
+
+	print "Sorting data..."
+	xargs = numpy.argsort(xdata)
+	print "Applying sort..."
+	xdatasorted = xdata[xargs]
+	ydatasorted = ydata[xargs]
+	
+	#end trim
+
+	outercutsize = image.shape[0]/2-2
+	outercutindex = numpy.searchsorted(xdatasorted, outercutsize)
+
+	print "returning values..."
+	return xdatasorted[:outercutindex], ydatasorted[:outercutindex]
+
 
