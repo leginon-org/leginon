@@ -643,8 +643,8 @@ class CtfDisplay(object):
 		stdev = rotfftarray.std()
 		rotplus = rotfftarray + stdev*4
 		powerspec = numpy.where(powerspec > rotplus, rotfftarray, powerspec)
-		print "Light Gaussian blur image..."
-		powerspec = ndimage.gaussian_filter(powerspec, 3)
+		#print "Light Gaussian blur image..."
+		#powerspec = ndimage.gaussian_filter(powerspec, 3)
 
 		if self.debug is True:
 			print "\torig pixel %.3f freq %.3e"%(self.apix, self.freq)
@@ -678,11 +678,11 @@ if __name__ == "__main__":
 	### Pick-wei images with lots of rings
 	imagelist.extend(glob.glob("/data01/leginon/09sep20a/rawdata/09*en.mrc"))
 	### Something else, ice data
-	imagelist.extend(glob.glob("/data01/leginon/09feb20d/rawdata/09*en.mrc"))
+	#imagelist.extend(glob.glob("/data01/leginon/09feb20d/rawdata/09*en.mrc"))
 	### images of Hassan with 1.45/1.65 astig at various angles
-	imagelist.extend(glob.glob("/data01/leginon/12jun12a/rawdata/12jun12a_ctf_image_ang*.mrc"))
+	#imagelist.extend(glob.glob("/data01/leginon/12jun12a/rawdata/12jun12a_ctf_image_ang*.mrc"))
 	### rectangular images
-	imagelist.extend(glob.glob("/data01/leginon/12may08eD1/rawdata/*.mrc"))
+	#imagelist.extend(glob.glob("/data01/leginon/12may08eD1/rawdata/*.mrc"))
 	#=====================
 
 	print "# of images", len(imagelist)
