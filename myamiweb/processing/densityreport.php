@@ -27,7 +27,7 @@ if ($_POST['updateDesc'.$densityId]) {
 $pngfiles=array();
 $densitydir= opendir($density['path']);
 while ($f = readdir($densitydir)) {
-	if (eregi($density['name'].'.*\.png$',$f)) $pngfiles[] = $f;
+	if (preg_match('%'.$density['name'].'.*\.png$%i',$f)) $pngfiles[] = $f;
 }
 sort($pngfiles);
 

@@ -71,7 +71,7 @@ function createEMANRefine2dForm($extra=false, $title='EMAN refine2d.py Launcher'
 	$runname = ($_POST['runname']) ? $_POST['runname'] : 'emantwod'.($alignruns+1);
 	$description = $_POST['description'];
 	$stackidstr = $_POST['stackval'];
-	list($stackidval) = split('\|--\|',$stackidstr);
+	list($stackidval) = preg_split('%\|--\|%',$stackidstr);
 	$bin = ($_POST['bin']) ? $_POST['bin'] : '1';
 	$numpart = ($_POST['numpart']) ? $_POST['numpart'] : '3000';
 	$lowpass = ($_POST['lowpass']) ? $_POST['lowpass'] : '10';
@@ -202,7 +202,7 @@ function runEMANRefine2d() {
 	$commit = ($_POST['commit']=="on") ? true : false;
 
 	// get stack id, apix, & box size from input
-	list($stackid,$apix,$boxsz) = split('\|--\|',$stackval);
+	list($stackid,$apix,$boxsz) = preg_split('%\|--\|%',$stackval);
 	//make sure a session was selected
 
 	/* *******************

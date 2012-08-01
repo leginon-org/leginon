@@ -59,7 +59,7 @@ if ($ctfdata) {
 			if (!array_key_exists($k,$ctfdata))
 				continue;
 			$v=$ctfdata[$k];
-			if (ereg('defocus',$k))
+			if (preg_match('%defocus%',$k))
 				echo " <b>$k:</b> ",($leginondata->formatDefocus($v));
 			elseif ($v-floor($v)) 
 				echo " <b>$k:</b> ".format_sci_number($v,4,2);

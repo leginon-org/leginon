@@ -38,6 +38,10 @@ class histogram {
 		return $this->histogramdata;
 	}
 
+	function getBarWidth($graph_width,$left_margin,$right_margin,$percent=0.9) {
+		return $percent * ($graph_width - $left_margin - $right_margin) / $this->nbbars;
+	}
+
 	function generateData() {
 		$start = microtime(true);
 		for($k=0; $k<=$this->nbbars; $k++ ) {

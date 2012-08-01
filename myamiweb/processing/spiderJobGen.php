@@ -161,7 +161,7 @@ elseif ($_POST['submitjob']) {
 	
 	$jobnum = trim($jobnumstr);
 	echo "<tr><td>Cluster Job Id</td><td>$jobnum</td></tr>\n";
-	$jobnum = ereg_replace('\..*','',$jobnum);
+	$jobnum = preg_replace('%\..*%','',$jobnum);
 	
 	// Chech for no-connection related error in job submission.
 	if (!is_numeric($jobnum)) {
@@ -285,7 +285,7 @@ function jobForm($extra=false) {
 	$leginondata = new leginondata();
 	$sessiondata = $leginondata->getSessionInfo($expId);
 	$sessionpath=getBaseAppionPath($sessiondata).'/recon/';
-	ereg("(.*)appion(.*)recon", $sessionpath, $reg_match);
+	preg_match("%(.*)appion(.*)recon%", $sessionpath, $reg_match);
 	$rootpath = "appion".$reg_match[2]."recon/";
 
 	$clusterdata->set_rootpath($rootpath);

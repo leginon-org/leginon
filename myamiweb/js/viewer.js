@@ -558,6 +558,9 @@ function newfile(view){
 
 	eval("jspreset"+view+"='"+selpreset+"'")
 
+	autos = eval("document.viewerform."+view+"autos")
+	if (eval(view+"fft_bt_st"))
+		setFFTScale(view);
 	setImageStatus(view)
 
 	if (eval(view+"fft_bt_st")) fft="&fft=1"; else fft=""
@@ -824,6 +827,20 @@ function isImageLoaded(view) {
 		}
 	}
 	return false
+}
+
+function setFFTScale(viewname) {
+	/* min max scale does not work for power spectrum scale
+	Therefore if previously assigned, it is replaced by stdev scale
+	*/
+	autos = eval("document.viewerform."+viewname+"autos")
+	if (autos.value!=0)
+		return autos.value
+	else {
+		state = "s;3"
+		setautoscale(viewname, state)
+		return state
+	}
 }
 
 function setImageStatus(viewname) {

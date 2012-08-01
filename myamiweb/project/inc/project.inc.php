@@ -25,7 +25,7 @@ function menu($privilege=1) {
 function project_header($title="", $javascript="") {
 	global $_SERVER, $projectauth;
 
-		if (!ereg('login.php', $_SERVER['PHP_SELF'])) {
+		if (!preg_match('%login.php%', $_SERVER['PHP_SELF'])) {
 		}
 	$username = $login_check[0];
 	$privilege = privilege('users');

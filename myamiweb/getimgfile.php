@@ -11,6 +11,11 @@
 require 'inc/leginon.inc';
 require 'inc/image.inc';
 
+class get
+
+
+
+
 $g=true;
 if (!$filename=trim($_GET['id'])) {
 	$g=false;

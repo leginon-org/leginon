@@ -194,7 +194,7 @@ function runDogPicker() {
 		
 	if ($_POST['testimage']=="on") {
 		if ($_POST['testfilename']) $testimage=$_POST['testfilename'];
-		$testimage = ereg_replace(" ","\ ",$testimage);
+		$testimage = preg_replace("% %","\ ",$testimage);
 	}
 
 	/* *******************
@@ -226,7 +226,7 @@ function runDogPicker() {
 		$results.= "<B>DogPicker Command:</B><br />$wrappedcmd";
 		$results.= "</td></tr></table>\n";
 		$results.= "<br />\n";
-		$testjpg = ereg_replace(".mrc","",$_POST['testfilename']);
+		$testjpg = preg_replace("%.mrc%","",$_POST['testfilename']);
 		$testResultFile = $testjpg.".prtl.jpg";
 		$jpgimg = Path::join($outdir, $runname, "jpgs", $testResultFile);
 		

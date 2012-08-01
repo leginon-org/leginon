@@ -117,6 +117,7 @@ if ($g) {
 		$img = $mosaic->getMosaic();
 	} else {
 		$img = getImage($sessionId, $id, $preset, $params);
+
 	}
 
 	if (!$img) {
@@ -126,25 +127,27 @@ if ($g) {
 		imagedestroy($blkimg);
 		exit();
 	}
-
+	
 	$nimgId = $leginondata->findImage($id, $preset);
 	list($res) = $leginondata->getFilename($nimgId['id']);
 	$filename = $res['filename'];
 	$filenamelen = strlen($filename);
 	$wx = imagesx($img);
 	$ypos=10;
+	$xpos0=10;
 	$pixperchar=6;
 	$margin=10;
+	$font=5;
 	if ($displayfilename) {
 		$filenamepixlen = $filenamelen * $pixperchar;
-		imagestringshadow($img, 2, 10, $ypos, $filename, imagecolorallocate($img,255,255,255));
+		imagestringshadow($img, $font, $xpos0, $ypos, $filename, imagecolorallocate($img,255,255,255));
 		// --- check if filename string fits in imagewidth --- //
 		if ($filenamepixlen>$wx) {
 			$ypos+=12;
 			// --- display rest of filename --- //
 			$strlen = -(int)(($filenamepixlen-$wx)/$pixperchar+2);
 			$subfilename=substr($filename, $strlen);
-			imagestringshadow($img, 2, 10, $ypos, $subfilename, imagecolorallocate($img,255,255,255));
+			imagestringshadow($img, $font, $xpos0, $ypos, $subfilename, imagecolorallocate($img,255,255,255));
 			// --- display sample 12 pix under, if filename is too long
 		}
 	} else {
@@ -184,30 +187,26 @@ if ($g) {
 			if (strlen($tagline) * $pixperchar + 2 * $margin > $wx) continue;
 			// append parser if not the last item
 			$tagline = $tagline.$parser;
-			imagestringshadow($img, 2, $xpos, $ypos, $tagline, imagecolorallocate($img,255,255,255));
+			imagestringshadow($img, $font, $xpos, $ypos, $tagline, imagecolorallocate($img,255,255,255));
 			$tag = substr($tag,strlen($tagline));
 			$taglen = strlen($tag);
 			$tagstrlen = $taglen*$pixperchar + 2 * $margin;
 			$ypos+=12;
 		}
-		imagestringshadow($img, 2, $xpos, $ypos, $tag, imagecolorallocate($img,255,255,255));
+		imagestringshadow($img, $font, $xpos, $ypos, $tag, imagecolorallocate($img,255,255,255));
 	}
 
-	$filename = ereg_replace('mrc$', $ext, $filename);
+	$filename = preg_replace('%mrc$%', $ext, $filename);
 
-	header( "Content-type: $type ");
-	header( "Content-Disposition: inline; filename=".$filename);
-        if ($t=='png')
-                imagepng($img);
-        else
-                imagejpeg($img,'',$quality);
-	imagedestroy($img);
+	$imagerequest = new imageRequester();
+	$imagerequest->displayImageObj($img,$ext,$quality,$filename);
 
 } else {
 	header("Content-type: image/x-png");
 	$blkimg = blankimage();
 	imagepng($blkimg);
 	imagedestroy($blkimg);
+
 }
 
 ?>

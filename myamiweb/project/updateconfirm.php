@@ -34,14 +34,14 @@ print_r($data_from_post);
 print_r($_POST);
 
 	foreach($map as $k=>$v) {
-		if (ereg("date$", $k)) {
+		if (preg_match("%date$%", $k)) {
 			$$k=mysql::format_date($data_from_post[$v]);
 		} else {
 			$$k=$data_from_post[$v];
 		}
 	}
 
-	$confirmnum=ereg_replace("^C","",$confirmnum);
+	$confirmnum=preg_replace("%^C%","",$confirmnum);
 	if ($_POST['btsubmit']=='add') {
 		$confirmId = $confirm->addConfirm($projectId, $duedate, $deliverables, $confirmnum, $note, $samplerequest, $experimentrequest);
 
@@ -73,7 +73,7 @@ $curconfirm = $confirm->getConfirmInfo($confirmId);
 print_r($curconfirm);
 foreach($map as $k=>$v) {
 	$val=$curconfirm[$k];
-	if (ereg("date$", $k)) {
+	if (preg_match("%date$%", $k)) {
 			$val=mysql::format_date($val, "ymd", "mdy", "-" );
 	}
 	if ($v=="c5") {

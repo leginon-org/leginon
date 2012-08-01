@@ -20,9 +20,9 @@ while(list($k, $v) = each($goniometer)) {
 	// --- convert NULL value to 0
 	if (!$v)
 			$v=0;
-	if (eregi("^ARRAY\|a", $k))
+	if (preg_match("%^ARRAY\|a%i", $k))
 		$A[] = $v;
-	if (eregi("^ARRAY\|b", $k))
+	if (preg_match("%^ARRAY\|b%i", $k))
 		$B[] = $v;
 	if ($k=="period")
 		$T = $v;

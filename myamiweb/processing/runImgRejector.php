@@ -174,9 +174,9 @@ function createImgRejectorForm($extra=false, $title='imgRejector.py Launcher', $
 		// check if user has changed values on submit
 		$minval = ($_POST['dfmin']!=$min && $_POST['dfmin']!='' && $_POST['dfmin']!='-') ? $_POST['dfmin'] : $min;
 		$maxval = ($_POST['dfmax']!=$max && $_POST['dfmax']!='' && $_POST['dfmax']!='-') ? $_POST['dfmax'] : $max;
-		$sessionpath=ereg_replace("E","e",$sessionpath);
-		$minval = ereg_replace("E","e",round($minval,8));
-		$maxval = ereg_replace("E","e",round($maxval,8));
+		$sessionpath=preg_replace("%E%","e",$sessionpath);
+		$minval = preg_replace("%E%","e",round($minval,8));
+		$maxval = preg_replace("%E%","e",round($maxval,8));
 		echo"
 		<tr>
 			<td valign='TOP'>

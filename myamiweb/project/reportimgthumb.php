@@ -90,7 +90,7 @@ foreach ((array)$grids as $k=>$grid) {
 		$sessionId = $info['SessionId'];
 
 		foreach ($samples as $s) {
-			if (ereg("^".$s['sample'], $info['Purpose'])) {
+			if (preg_match("%^%".$s['sample'], $info['Purpose'])) {
 
 			$filenames=getExemplars($sessionId);
 				$name='';
@@ -103,7 +103,7 @@ foreach ((array)$grids as $k=>$grid) {
 $pindex=0; 
 $datatypes=array();
 foreach ($presetinfo as $preset=>$pinfo) {
-	if (!ereg("^en[1-9]{0,}|^hl", $preset)){
+	if (!preg_match("%^en[1-9]{0,}|^hl%", $preset)){
 					continue;
 	}
 	$datatypes[$preset]=$pinfo['magnification'];	
@@ -130,7 +130,7 @@ if (is_array($datatypes)) {
 			$relId = $rel['id'];
 			### get only en's preset 
 			$preset=$rel['preset'];
-			if (!ereg("^en[1-9]{0,}", $preset)){
+			if (!preg_match("%^en[1-9]{0,}%", $preset)){
 							continue;
 			}
 			if (in_array($preset, $presetmemo)) {
@@ -181,7 +181,7 @@ if ($presetimages) {
 				$presetinfo=get_preset_mag($info, 0);
 				$ntotimg=$ndose=$ndefocus=array();
 				foreach ($presetinfo as $pr=>$pifo) {
-					if (!ereg("^en[1-9]{0,}", $pr)){
+					if (!preg_match("%^en[1-9]{0,}%", $pr)){
 							continue;
 					}
 					$totimg+=$pifo['totimg'];
@@ -202,14 +202,14 @@ if ($presetimages) {
 function get_preset_mag($info, $mag) {
 	$presetinfo=array();
 	foreach ($info as $k=>$v) {
-		if (!ereg("^Total_.* x", $k)) {
+		if (!preg_match("%^Total_.* x%", $k)) {
 			continue;
 		}
-		list($imgnb, $dose, $defocusmin, $defocusmax) = split("	", $info[$k]);
+		list($imgnb, $dose, $defocusmin, $defocusmax) = preg_split("%	%", $info[$k]);
 		
-		ereg("Total_(.*) x", $k, $match);
+		preg_match("%Total_(.*) x%", $k, $match);
 		$preset=$match[1];
-		$cmag=ereg_replace("^Total_.* x", "", $k);
+		$cmag=preg_replace("%^Total_.* x%", "", $k);
 		if ($cmag>=$mag) {
 			$presetinfo[$preset]['magnification']=$cmag;
 			$presetinfo[$preset]['totimg']=$imgnb;
@@ -223,10 +223,10 @@ function get_preset_mag($info, $mag) {
 function get_totimg_mag($info, $mag) {
 	$tot_img=0;
 	foreach ($info as $k=>$v) {
-		if (!ereg("^Total_.* x", $k)) {
+		if (!preg_match("%^Total_.* x%", $k)) {
 			continue;
 		}
-		$cmag=ereg_replace("^Total_.* x", "", $k);
+		$cmag=preg_replace("%^Total_.* x%", "", $k);
 		if ($cmag>=$mag) {
 			$tot_img+=$info[$k];
 		}

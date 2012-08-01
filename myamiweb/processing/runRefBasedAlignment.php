@@ -209,7 +209,7 @@ function createAlignmentForm($extra=false, $title='refBasedAlignment.py Launcher
 	} else {
 		//get template info if coming from resubmitting input
 		$templateIds = templateIds();
-		$templatearray=split(",",$templateIds);
+		$templatearray=preg_split("%,%",$templateIds);
 		$templateTable.="<table><TR>\n";
 		foreach ($templatearray as $templateId) {
 			$templateTable.="<TD VALIGN='TOP'><TABLE CLASS='tableborder'>\n";
@@ -362,7 +362,7 @@ function runAlignment() {
 	$runname = $_POST['runname'];
 
 	$stackval=$_POST['stackval'];
-	list($stackid,$apix,$boxsz) = split('\|--\|',$stackval);
+	list($stackid,$apix,$boxsz) = preg_split('%\|--\|%',$stackval);
 	$lastring=$_POST['lastring'];
 	$firstring=$_POST['firstring'];
 	$bin=$_POST['bin'];
@@ -460,9 +460,9 @@ function templateIds () {
 	$command = "";
 	// get the list of templates
 	$templateList=$_POST['templateList'];
-	$templates=split(",", $templateList);
+	$templates=preg_split("%,%", $templateList);
 	foreach ($templates as $tmplt) {
-		list($tmpltNum,$tmpltId)=split(":",$tmplt);
+		list($tmpltNum,$tmpltId)=preg_split("%:%",$tmplt);
 		$templateIds.="$tmpltId,";
 	}
 	$templateIds=substr($templateIds,0,-1);

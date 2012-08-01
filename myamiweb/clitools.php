@@ -17,7 +17,7 @@ function getargs($args) {
 			if (count($va)>1) {
 				$v=array_map("trim", $va);
 			}
-			$k=ereg_replace("^-|^--", "", $k);
+			$k=preg_replace("%^-|^--%", "", $k);
 			$data[$k]=$v;
 		} else {
 			$data['argv'][]=$arg;
@@ -38,7 +38,7 @@ function getdirs($dir=".") {
 	$dirs=array();
 	if ($handle = opendir($dir)) {
 			while (false !== ($file = readdir($handle))) {
-					if (is_dir($file) && !ereg("^\.{1,2}$", $file))
+					if (is_dir($file) && !preg_match("%^\.{1,2}$%", $file))
 						$dirs[]=$file;
 			}
 			closedir($handle);

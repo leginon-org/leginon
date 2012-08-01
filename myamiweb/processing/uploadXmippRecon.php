@@ -45,13 +45,13 @@ function createUploadReconForm($extra=false, $title='UploadXmippRecon.py Launche
   // if uploading a specific recon, get recon info from database & job file
   if ($jobId) {
     $jobinfo = $particle->getJobInfoFromId($jobId);
-    $runname = ereg_replace('\.job$','',$jobinfo['name']);
-    $sessionpath = ereg_replace($runname,'',$jobinfo['appath']);
+    $runname = preg_replace('%\.job$%','',$jobinfo['name']);
+    $sessionpath = preg_replace('%'.$runname.'%','',$jobinfo['appath']);
     $jobfile = $jobinfo['appath'].'/'.$jobinfo['name'];
     $f = file($jobfile);
     foreach ($f as $line) {
-      if (preg_match('/^\#\sstackId:\s/',$line)) $stackid=ereg_replace('# stackId: ','',trim($line));
-      elseif (preg_match('/^\#\smodelId:\s/',$line)) $modelid=ereg_replace('# modelId: ','',trim($line));
+      if (preg_match('/^\#\sstackId:\s/',$line)) $stackid=preg_replace('%# stackId: %','',trim($line));
+      elseif (preg_match('/^\#\smodelId:\s/',$line)) $modelid=preg_replace('%# modelId: %','',trim($line));
       if ($stackid && $modelid) break;
     }
   }
@@ -72,7 +72,7 @@ function createUploadReconForm($extra=false, $title='UploadXmippRecon.py Launche
   if (!empty($sessioninfo) && !$jobId) {
 	$sessionpath=$sessioninfo['Image path'];
 	$sessionpath=getBaseAppionPath($sessionpath);
-	$sessionpath=ereg_replace("rawdata","recon/",$sessionpath);
+	$sessionpath=preg_replace("%rawdata%","recon/",$sessionpath);
 	$sessionname=$sessioninfo['Name'];
   }
 

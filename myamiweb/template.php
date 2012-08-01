@@ -12,7 +12,7 @@ foreach ((array)$templates as $f) {
     $filename = $f['name'];
     if (!file_exists($filename)) {
       foreach ($datadrives as $drive) {
-        $nfile=ereg_replace('data..', $drive, $filename);
+        $nfile=preg_replace('%data..%', $drive, $filename);
         if (file_exists($nfile)) {
           $filename=$nfile; 
           break;  

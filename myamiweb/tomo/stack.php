@@ -363,7 +363,7 @@ $stack_header["n floats"] = $mrc_stack_extended_format_size/$float_size;
 $stack_size += $mrc_header_size;
 
 #$filename = $results[0]["filename"];
-#$filename = ereg_replace("_[0-9]*$", '_stack.mrc', $filename);
+#$filename = preg_replace("%_[0-9]*$%", '_stack.mrc', $filename);
 $filename = $session['name'].'_'.$atlas_name.'_';
 if ($tiltSeriesNumber < 10) {
 	$filename .= '00'.$tiltSeriesNumber; 
@@ -375,8 +375,8 @@ if ($tiltSeriesNumber < 10) {
 	}
 }
 
-if (!eregi("\.mrc$", $filename))
-	$filename = ereg_replace("$", ".mrc", $filename);
+if (!preg_match("%\.mrc$%i", $filename))
+	$filename = Preg_replace("%$%", ".mrc", $filename);
 
 writeHeader($filename, $stack_size);
 

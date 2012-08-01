@@ -132,7 +132,7 @@ $displaytitle=true;
 foreach (getImageSizeInfo($k) as $imgi ) {
 	$data.="<tr>";
 	foreach ($imgi as $ki=>$vi) {
-	if (eregi('size', $ki)) {
+	if (preg_match('%size%i', $ki)) {
 		$vi=number_format($vi)." kB";
 	}
 	if ($displaytitle) {

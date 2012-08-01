@@ -90,7 +90,7 @@ function createOtrVolumeForm($extra=false, $title='OtrVolume.py Launcher', $head
 	elseif ($clusterid)
 		$defotrname .= "clust".$clusterid;
 	if ($classnum!="") {
-		$classstr = ereg_replace(",","",$classnum);
+		$classstr = preg_replace("%,%","",$classnum);
 		$defotrname .= "class".$classstr;
 	}	else {
 		$defotrname .= "run";

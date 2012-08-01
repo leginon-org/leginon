@@ -42,7 +42,7 @@ class ScaleRing {
 	var $offsetbarY=20;
 
 	function ScaleRing($img, $size, $value) {
-		// --- value should be in meter --- //
+		// --- value is pixelsize should be in 1/meter --- //
 		$this->img = $img;
 		$this->size = $size;
 		$this->value = $value;
@@ -56,12 +56,12 @@ class ScaleRing {
 		$label = "";
 		if (!$this->value)
 			$this->value = 1;
-		#echo "size=".$this->size." res-limit=".$this->value." ";
 		foreach ($this->scales as $this->label=>$scale) {
-			$this->nbpixels = ($this->size * $this->value) / (2 * $scale);
-			#echo "for ".$this->label." nbpixels=".$this->nbpixels." ****";
+			$rscale = 1 / $scale;
+			$this->nbpixels = $rscale / $this->value;;
 			$r = $this->size/$this->nbpixels;
-			if ($r > 2 && $r < 4) {
+			#echo "for ".$this->label." nbpixels=".$this->nbpixels." r=".$r." ****";
+			if ($r > 2 && $r < 5) {
 				break;
 			}
 		}

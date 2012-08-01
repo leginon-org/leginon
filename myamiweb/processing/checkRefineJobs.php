@@ -293,7 +293,7 @@ function showEMANJobInfo($jobinfo) {
 	$f = file($jobfile);
 	foreach ($f as $line) {
 		if (preg_match('/^\#\sstackId:\s/',$line))
-			$stackid = ereg_replace('# stackId: ', '', trim($line));
+			$stackid = preg_replace('%# stackId: %', '', trim($line));
 	}
 	// get num of particles in stack
 	$numinstack = $particle->getNumStackParticles($stackid);
@@ -319,7 +319,7 @@ function showEMANJobInfo($jobinfo) {
 			// get final resolutions of previous iterations
 			elseif($stat['refinelog'][$i][0]=='RESOLUTIONS') {
 				for ($j=$i+1;$j<count($stat['refinelog']);$j++) {
-					$iternum = ereg_replace(':','', $stat['refinelog'][$j][1]);
+					$iternum = preg_replace('%:%','', $stat['refinelog'][$j][1]);
 					$iterres = $stat['refinelog'][$j][2];
 					$previters[$iternum].=", resolution: ".round($iterres,2)." &Aring;";
 				}
@@ -419,7 +419,7 @@ function showEMANJobInfo($jobinfo) {
 				}
 
 				// if running coran:
-				elseif (ereg('coran',$stat['refinelog'][$i][0])) {
+				elseif (preg_match('%coran%',$stat['refinelog'][$i][0])) {
 					$steps['make3d']['status'] = "<font class='green'> Done</font>";
 					$t = getlogdate($stat['refinelog'][$i]);
 					// set duration of previous run based on time stamp
@@ -539,7 +539,7 @@ function showXmippJobInfo($jobinfo) {
 	$f = file($jobfile);
 	foreach ($f as $line) {
 		if (preg_match('/^\#\sstackId:\s/',$line))
-			$stackid = ereg_replace('# stackId: ', '', trim($line));
+			$stackid = preg_replace('%# stackId: %', '', trim($line));
 	}
 	// get num of particles in stack
 	$numinstack = $particle->getNumStackParticles($stackid);

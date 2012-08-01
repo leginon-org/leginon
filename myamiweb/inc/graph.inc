@@ -75,16 +75,20 @@ class dbemGraph {
 		$graph = new Graph($this->width, $this->height,"auto");    
 		if ($this->histogram) {
 			$histogram = new histogram($this->datay);
-			$histogram->setBarsNumber(50);
+			$bars_number = 50;
+			$histogram->setBarsNumber($bars_number);
 			$rdata = $histogram->getData();
-
 			$rdatax = $rdata['x'];
 			$rdatay = $rdata['y'];
 
 			$graph->SetScale("linlin");
-			$graph->img->SetMargin(40,30,20,40);
+			$left_margin = 40;
+			$right_margin = 30;
+			$graph->img->SetMargin($left_margin,$right_margin,20,40);
 
 			$bplot = new BarPlot($rdatay, $rdatax);
+			$bwidth = $histogram->getBarWidth($this->width,$left_margin,$right_margin);
+			$bplot->SetWidth($bwidth);
 			$graph->Add($bplot);
 
 			$graph->title->Set("histogram: ".$this->title);

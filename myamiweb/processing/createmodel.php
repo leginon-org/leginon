@@ -459,10 +459,10 @@ function runCreateModel() {
 	$command.="--cluster-id=$clusterid ";
 	$command.="--symm=$symmetryid ";
 	if ($exclude != "") {
-		$exclude=ereg_replace(" ","",$exclude);
+		$exclude=preg_replace("% %","",$exclude);
 		$command.="--exclude=$exclude ";
 	} elseif ($include != "") {
-		$include=ereg_replace(" ","",$include);
+		$include=preg_replace("% %","",$include);
 		$command.="--include=$include ";
 	}
 	if ($partnum) $command.="--numkeep=$partnum ";

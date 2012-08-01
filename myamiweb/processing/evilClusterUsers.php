@@ -42,7 +42,7 @@ function searchScripps($searchstr, $eviluser) {
 	if (!$rawdata)
 		return array();
 
-	$opens = split(">", $rawdata);
+	$opens = preg_split("%>%", $rawdata);
 
 	foreach ($opens as $rawopen) {
 		if (substr($rawopen, 0, 36) != "<a href=\"index.php?operation=view&r=")

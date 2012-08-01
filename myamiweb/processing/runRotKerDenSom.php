@@ -265,7 +265,7 @@ function runrotKerDenSOM() {
 	$runname=$_POST['runname'];
 	$outdir=$_POST['outdir'];
 	$stackval=$_POST['stackid'];
-	list($stackid,$apix,$boxsz,$totpart) = split('\|--\|',$stackval);
+	list($stackid,$apix,$boxsz,$totpart) = preg_split('%\|--\|%',$stackval);
 	$xdim=$_POST['xdim'];
 	$ydim=$_POST['ydim'];
 	$numpart=$_POST['numpart'];

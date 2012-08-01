@@ -39,6 +39,7 @@ packages=(
 	pyami
 	pyscope
 	sinedon
+	redux
 	modules/radermacher
 	modules/libcv
 	modules/numextension

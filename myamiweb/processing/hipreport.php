@@ -250,7 +250,7 @@ function showReport () {
 		$html .= "<td><center>$asymsu</center></td>\n";
 		$html .= "<td bgcolor='$bg'>\n";
 		foreach ($pngimages['pngfiles'] as $snapshot) {
-			if (eregi($llsnapfile,$snapshot)) {
+			if (preg_match('%'.$llsnapfile.'%i',$snapshot)) {
 				$snapfile = $snapshot;
 				$html .= "<a href='loadps.php?filename=$llfile&path=$path'  target='Layer Lines'"
 					."<center><img src='loadimg.php?s=80&filename=$snapfile' HEIGHT='80'></center></a>\n";
@@ -262,7 +262,7 @@ function showReport () {
 			."Download Average</center></a><br/>\n";
 		$html .= "<td bgcolor='$bg'>\n";
 		foreach ($pngimages['pngfiles'] as $snapshot) {
-			if (eregi($opsnapfile,$snapshot)) {
+			if (preg_match('%'.$opsnapfile.'%i',$snapshot)) {
 				$snapfile = $snapshot;
 				$html .= "<a href='loadps.php?filename=$opfile&path=$path'  target='Overplots'"
 					."<center><img src='loadimg.php?s=80&filename=$snapfile' HEIGHT='80'></center></a>\n";
@@ -277,7 +277,7 @@ function showReport () {
 		$html .= "<td bgcolor='$bg'>\n";
 		#$html .= "<td bgcolor='$bg'>\n";
 		foreach ($pngimages['pngfiles'] as $snapshot) {
-			if (eregi($mrcfile,$snapshot)) {
+			if (preg_match('%'.$mrcfile.'%i',$snapshot)) {
 				$snapfile = $snapshot;
 				$html .= "<a href='loadimg.php?filename=$snapfile' target='snapshot'>"
 					."<img src='loadimg.php?s=80&filename=$snapfile' HEIGHT='80'></a>\n";
@@ -329,7 +329,7 @@ function showReport () {
 				$html .= "</table>\n";
 				$html .= "</td><td>\n";
 				foreach ($procimgs['pngfiles'] as $s) {
-				  	if (eregi($p['name'],$s)) {
+				  	if (preg_match('%'.$p['name'].'%i',$s)) {
 						$sfile = $s;
 						$html .= "<a href='loadimg.php?filename=$sfile' target='snapshot'>"
 							."<img src='loadimg.php?s=80&filename=$sfile' height='80'></a>\n";

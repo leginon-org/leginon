@@ -91,9 +91,9 @@ function display($r, $display_fields=False) {
 	foreach ($data as $row) {
 	echo "<tr>";
 		foreach ($row as $k=>$value) {
-			if (eregi('^DEF_id|^REF\|', $k)) 
+			if (preg_match('%^DEF_id|^REF\|%i', $k)) 
 				continue;
-			else if (eregi('^DEF_timestamp$', $k)) {
+			else if (preg_match('%^DEF_timestamp$%i', $k)) {
 				if (!$display_fields)
 					$value = date('D, j M Y G:i:s ', mysql2UnixTime($value));
 				$display_fields = False;

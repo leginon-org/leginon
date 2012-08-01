@@ -50,7 +50,7 @@ function createAppionLoopTable ($sessiondata, $defrunname, $outdirname, $leginon
 		}
 		
 		if ($leg_check) {
-			$sessionpath=ereg_replace("rawdata","",$sessionpath);		
+			$sessionpath=preg_replace("%rawdata%","",$sessionpath);		
 		}
 	}
 
@@ -195,8 +195,8 @@ function appionLoopSummaryTable () {
 	else $alldbimages = $_POST[sessionname];
 	if ($_POST['testimage']=="on") {
 		if ($_POST['testfilename']) $testimage=trim($_POST['testfilename']);
-		$testimage = ereg_replace(" ",",,", $testimage);
-		$testimage = ereg_replace(",,",",",$testimage);
+		$testimage = preg_replace("% %",",,", $testimage);
+		$testimage = preg_replace("%,,%",",",$testimage);
 	}
 
 	echo "<TR><TD>runname</TD><TD>$runname</TD></TR>\n";
@@ -250,8 +250,8 @@ function parseAppionLoopParams () {
 
 	if ($_POST['testimage']=="on") {
 		if ($_POST['testfilename']) $testimage=trim($_POST['testfilename']);
-		$testimage = ereg_replace(" ",",", $testimage);
-		$testimage = ereg_replace(",,",",", $testimage);
+		$testimage = preg_replace("% %",",", $testimage);
+		$testimage = preg_replace("%,,%",",", $testimage);
 		$apcontinue = false;
 	}
 

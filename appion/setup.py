@@ -6,7 +6,7 @@ import os
 import glob
 import distutils.core
 
-#--install-scripts=/usr/local/bin
+#--install-scripts=/usr/local/bin/appion
 
 def getSubversionRevision():
 	if not os.path.isfile(".svn/entries"):

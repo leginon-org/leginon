@@ -49,13 +49,13 @@ class authlib{
 
 		else {
 
-			if (!eregi("^[a-z ]+$", $lastname)) {
+			if (!preg_match("%^[a-z ]+$%i", $lastname)) {
 
 				return $this->error['name_invalid'];
 
 			}
 			
-			if(!eregi("^[0-9a-z ]+$", $firstname)) {
+			if(!preg_match("%^[0-9a-z ]+$%i", $firstname)) {
 
 				return $this->error['name_invalid'];
 
@@ -147,13 +147,13 @@ class authlib{
 
 		}
 
-		if (!eregi("^[a-z ]+$", $lastname)) {
+		if (!preg_match("%^[a-z ]+$%i", $lastname)) {
 
 		return $this->error['name_invalid'];
 
 		}
 		
-		if(!eregi("^[0-9a-z ]+$", $firstname)) {
+		if(!preg_match("%^[0-9a-z ]+$%i", $firstname)) {
 
 			return $this->error['name_invalid'];
 
@@ -237,7 +237,7 @@ class authlib{
 
 		}
 
-		if (!eregi("^[a-z ]+$", $lastname)) {
+		if (!preg_match("%^[a-z ]+$%i", $lastname)) {
 
 			return $this->error['name_invalid'];
 
@@ -727,7 +727,7 @@ class authlib{
 
 			}
 
-			if (!ereg("^[[:alnum:]_-]+$", $password)) {
+			if (!preg_match("%^[[:alnum:]_-]+$%", $password)) {
 
 				return $this->error[7];
 
@@ -779,7 +779,7 @@ class authlib{
 
 			}
 
-			if (!ereg("^[\*@[:alnum:]._-]+$", $val)) {
+			if (!preg_match("%^[\*@[:alnum:]._-]+$%", $val)) {
 
 				return $this->error['passwd_invalid'];
 
@@ -798,7 +798,7 @@ class authlib{
 				return $this->error['username_long'];
 
 			}
-			if (!ereg("^[[:alnum:]_]+$", $val)) {
+			if (!preg_match("%^[[:alnum:]_]+$%", $val)) {
 
 				return $this->error['username_invalid'];
 
@@ -808,7 +808,7 @@ class authlib{
 	
 	function filter_email($val) {
 
-			if (!eregi("^([a-z0-9]+)([._-]([a-z0-9]+))*[@]([a-z0-9]+)([._-]([a-z0-9]+))*[.]([a-z0-9]){2}([a-z0-9])?$", $val)) {
+			if (!preg_match("%^([a-z0-9]+)([._-]([a-z0-9]+))*[@]([a-z0-9]+)([._-]([a-z0-9]+))*[.]([a-z0-9]){2}([a-z0-9])?$%i", $val)) {
 
 				return $this->error['email_invalid'];
 

@@ -39,7 +39,7 @@ if($g) {
 <script>
 <!--
 <?php
-if (ereg("undefined",$opennodes))
+if (preg_match("%undefined%",$opennodes))
 	$opennodes=0;
 if (!empty($opennodes))
 	$opennodes = '0,'.$opennodes;

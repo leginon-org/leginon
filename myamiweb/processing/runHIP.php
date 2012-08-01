@@ -156,8 +156,8 @@ function createHIPForm($extra=false, $title='HIP.py Launcher', $heading='Helical
 	$sessioninfo=$sessiondata['info'];
 	if (!empty($sessioninfo)) {
 		$sessionpath=$sessioninfo['Image path'];
-		$sessionpath=ereg_replace("leginon","appion",$sessionpath);
-		$sessionpath=ereg_replace("rawdata","hip/",$sessionpath);
+		$sessionpath=preg_replace("%leginon%","appion",$sessionpath);
+		$sessionpath=preg_replace("%rawdata%","hip/",$sessionpath);
 		$sessionname=$sessioninfo['Name'];
 		echo "<input type='hidden' name='sessionname' value='$sessionname'>\n";
 	}
@@ -170,7 +170,7 @@ function createHIPForm($extra=false, $title='HIP.py Launcher', $heading='Helical
 	$mandir = $_POST['mandir'] ? $_POST['mandir'] : '';
 	$description = $_POST['description'];
 	$stackidstr = $_POST['stackval'];
-	list($stackidval) = split('\|--\|',$stackidstr);
+	list($stackidval) = preg_split('%\|--\|%',$stackidstr);
 	// Set commit on by default when first loading page, else set
 	$commitcheck = ($_POST['commit']=='on' || !$_POST['process']) ? 'checked' : '';
 	$nproc = ($_POST['nproc']) ? $_POST['nproc'] : '1';
@@ -493,7 +493,7 @@ function runHIP() {
 	$maxbo=$_POST['maxbo'];
 
 	// Get stack id, apix, & box size from input
-	list($stackid,$apix,$boxsz) = split('\|--\|',$stackval);
+	list($stackid,$apix,$boxsz) = preg_split('%\|--\|%',$stackval);
 
 	// Make sure all fields have been entered
 	if (!$description)

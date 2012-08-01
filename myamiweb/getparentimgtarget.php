@@ -120,7 +120,7 @@ if ($g) {
 
 	$nimgId = $leginondata->findImage($id, $preset);
 	list($res) = $leginondata->getFilename($nimgId['id']);
-	$filename = ereg_replace('mrc$', $ext, $res['filename']);
+	$filename = preg_replace('%mrc$%', $ext, $res['filename']);
 	Header( "Content-type: $type ");
 	Header( "Content-Disposition: inline; filename=".$filename);
         if ($t=='png')

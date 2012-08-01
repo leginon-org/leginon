@@ -243,7 +243,7 @@ function runAffinityProp() {
 	$runname=$_POST['runname'];
 	$outdir=$_POST['outdir'];
 	$stackval=$_POST['stackid'];
-	list($stackid,$apix,$boxsz,$totpart) = split('\|--\|',$stackval);
+	list($stackid,$apix,$boxsz,$totpart) = preg_split('%\|--\|%',$stackval);
 	$maskrad=$_POST['maskrad'];
 	$bin=$_POST['bin'];
 	$numpart=$_POST['numpart'];

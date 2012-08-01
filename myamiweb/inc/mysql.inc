@@ -131,7 +131,7 @@ class mysql {
 	            $schema_create .= " ".$row['Extra'];
 	        $schema_create .= ",$crlf";
 	    }
-	    $schema_create = ereg_replace(",".$crlf."$", "", $schema_create);
+	    $schema_create = preg_replace("%,%".$crlf."$", "", $schema_create);
 	    $result = $this->SQLQuery("SHOW KEYS FROM $table") or die(mysql_error());
 	    while($row = mysql_fetch_array($result))
 	    {
@@ -188,7 +188,7 @@ class mysql {
 	            else
 	                $schema_insert .= " '',";
 	        }
-	        $schema_insert = ereg_replace(",$", "", $schema_insert);
+	        $schema_insert = preg_replace("%,$%", "", $schema_insert);
 	        $schema_insert .= ")";
 	        $content .= trim($schema_insert).";$crlf";
 	        $i++;
@@ -408,7 +408,7 @@ class mysql {
 			if ($this->SQLTableExists($table)) {
 				$orgfieldtype = $this->getFieldTypes($table);
 				foreach ($fieldtype as $f=>$t) {
-					if (ereg('^DEF_', $f))
+					if (preg_match('%^DEF_%', $f))
 						continue;
 					if (!$orgfieldtype[$f]) {
 						$q[] = "ALTER TABLE `$table` ADD `$f` $t";

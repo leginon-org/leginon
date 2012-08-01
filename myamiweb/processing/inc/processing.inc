@@ -584,7 +584,7 @@ function showOrSubmitCommand($command, $headinfo, $jobtype, $nproc, $testimg=Fal
 		
 	} else {
 		// Option 2: just show command
-		$bits = split(" ", $command);
+		$bits = preg_split("% %", $command);
 		$function = $bits[0];
 
 		processing_header("Just Show $function Command", "Just Show $function Command");
@@ -624,7 +624,6 @@ function justShowCommandTable($command, $processhost, $skip_command=false) {
 	
 	// remove the first token, which should be the file name
 	$function = array_shift($tokens);	
-	
 	// Add the Appion wrapper to support muliple installations of Appion
 	$command =  addAppionWrapper($command, $processhost);
 
@@ -749,7 +748,7 @@ $xvfb=False, $xtra=False, $nproc=1, $ppn=0, $nodes=0, $walltime="240", $cputime=
 	//Check if filesystem is full
 	$cmd = "df $outdir";
 	$fscheck = exec_over_ssh($processhost,$user,$pass,$cmd,True);
-	$fsbits = split(" ", trim($fscheck));
+	$fsbits = preg_split("% %", trim($fscheck));
 	foreach ($fsbits as $fsbit) {
 		if (preg_match("/^[0-9]+%$/", $fsbit))
 		$percent = (float) preg_replace("/%/", "", $fsbit);
@@ -771,7 +770,7 @@ $xvfb=False, $xtra=False, $nproc=1, $ppn=0, $nodes=0, $walltime="240", $cputime=
 		if (!$gooddisk) {
 			$ingood = True;
 		} else {
-			$ingood = (ereg($gooddisk,$rundir))? True: $ingood;
+			$ingood = (preg_match('%'.$gooddisk.'%',$rundir))? True: $ingood;
 		}
 		if (!$ingood)
 		return 'could not create directory '.$rundir.'<br/> try using '.implode(' or ',$DATA_DIRS);
@@ -1209,7 +1208,7 @@ function getPngList($dir) {
 	//sort pngs
 	$eulerstr = 'euler.*\.png$';
 	foreach ($pngfiles as $pngfile) {
-		if (eregi($eulerstr, $pngfile))
+		if (preg_match('%'.$eulerstr.'%', $pngfile))
 		$pngimages['eulerfiles'][] = $pngfile;
 		else
 		$pngimages['pngfiles'][] = $pngfile;

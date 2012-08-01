@@ -87,8 +87,8 @@ affprop
 	$sessioninfo=$sessiondata['info'];
 	if (!empty($sessioninfo)) {
 		$sessionpath=$sessioninfo['Image path'];
-		$sessionpath=ereg_replace("leginon","appion",$sessionpath);
-		$sessionpath=ereg_replace("rawdata","align/",$sessionpath);
+		$sessionpath=preg_replace("%leginon%","appion",$sessionpath);
+		$sessionpath=preg_replace("%rawdata%","align/",$sessionpath);
 		$sessionname=$sessioninfo['Name'];
 	}
 
@@ -207,7 +207,7 @@ function runAppionScript() {
 
 	// get the stack info from the standard stackSelector()
 	$stackval = $_POST['stackid'];
-	list($stackid, $apix, $boxsz, $totpart) = split('\|--\|',$stackval);
+	list($stackid, $apix, $boxsz, $totpart) = preg_split('%\|--\|%',$stackval);
 	// get other variables
 	$maskrad = $_POST['maskrad'];
 	$bin = $_POST['bin'];checked

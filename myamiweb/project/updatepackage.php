@@ -49,7 +49,7 @@ if ($_POST ) {
 	$data_from_post=from_POST_values(array_values($map));
 
 	foreach($map as $k=>$v) {
-		if (ereg("date$", $k)) {
+		if (preg_match("date$", $k)) {
 			$$k=mysql::format_date($data_from_post[$v]);
 		} else {
 			$$k=$data_from_post[$v];
@@ -95,7 +95,7 @@ if ($packageId) {
 $curpackage = $package->getPackageInfo($packageId);
 foreach($map as $k=>$v) {
 	$val=$curpackage[$k];
-	if (ereg("date$", $k)) {
+	if (preg_match("%date$%", $k)) {
 			$val=mysql::format_date($val, "ymd", "mdy", "-" );
 	}
 	$defaults[$v]=$val;

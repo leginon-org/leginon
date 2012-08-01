@@ -217,7 +217,7 @@ function runSpiderCoranClassify() {
 	$runname=$_POST['runname'];
 	$outdir=$_POST['outdir'];
 	$stackval=$_POST['stackval'];
-	list($stackid,$apix,$boxsz) = split('\|--\|',$stackval);
+	list($stackid,$apix,$boxsz) = preg_split('%\|--\|%',$stackval);
 	$maskrad=$_POST['maskrad'];
 	$numfactors=$_POST['numfactors'];
 	$bin=$_POST['bin'];

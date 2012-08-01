@@ -92,7 +92,7 @@ function createRctVolumeForm($extra=false, $title='rctVolume.py Launcher', $head
 	elseif ($clusterid)
 		$defrctname .= "clust".$clusterid;
 	if ($classnum!="") {
-		$classstr = ereg_replace(",","",$classnum);
+		$classstr = preg_replace("%,%","",$classnum);
 		$defrctname .= "class".$classstr;
 	}	else {
 		$defrctname .= "run";

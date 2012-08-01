@@ -38,7 +38,7 @@ if ($_POST['addpicklabel']) {
 }
 if ($_POST['delpicklabel']) {
 	foreach ((array)$_POST as $k=>$v) {
-		if (ereg('^[0-9]{1,}i', $k)) {
+		if (preg_match('%^[0-9]{1,}i%', $k)) {
 			$index = (int)$k;
 			unset($_SESSION['picklabels'][$index]);
 		}

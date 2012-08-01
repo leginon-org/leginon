@@ -82,7 +82,7 @@ function createSpiderNoRefAlignForm($extra=false, $title='spiderNoRefAlign.py La
 	// Set any existing parameters in form
 	$rundescrval = $_POST['description'];
 	$stackidstr = $_POST['stackval'];
-	list($stackidval) = split('\|--\|',$stackidstr);
+	list($stackidval) = preg_split('%\|--\|%',$stackidstr);
 	$sessionpathval = ($_POST['outdir']) ? $_POST['outdir'] : $sessionpath;
 	while (file_exists($sessionpathval.'noref'.($alignruns+1)))
 		$alignruns += 1;
@@ -254,7 +254,7 @@ function runSpiderNoRefAlign() {
 	$templateid=$_POST['templateid'];
 
 	// get stack id, apix, & box size from input
-	list($stackid,$apix,$boxsz) = split('\|--\|',$stackval);
+	list($stackid,$apix,$boxsz) = preg_split('%\|--\|%',$stackval);
 	
 	$commit = ($_POST['commit']=="on") ? '--commit' : '';
 	$description=$_POST['description'];

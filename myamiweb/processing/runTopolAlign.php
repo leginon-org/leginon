@@ -135,7 +135,7 @@ function createTopolAlignForm($extra=false, $title='topologyAlignment.py Launche
 	$runname = ($_POST['runname']) ? $_POST['runname'] : 'topol'.($alignruns+1);
 	$description = $_POST['description'];
 	$stackidstr = $_POST['stackval'];
-	list($stackidval) = split('\|--\|',$stackidstr);
+	list($stackidval) = preg_split('%\|--\|%',$stackidstr);
 	$bin = ($_POST['bin']) ? $_POST['bin'] : '1';
 	$numpart = ($_POST['numpart']) ? $_POST['numpart'] : '3000';
 	$lowpass = ($_POST['lowpass']) ? $_POST['lowpass'] : '10';
@@ -404,7 +404,7 @@ function runTopolAlign() {
 	$msamethod = ($_POST['msamethod']);
 
 	// get stack id, apix, & box size from input
-	list($stackid,$apix,$boxsz) = split('\|--\|',$stackval);
+	list($stackid,$apix,$boxsz) = preg_split('%\|--\|%',$stackval);
 	//make sure a session was selected
 
 	/* *******************

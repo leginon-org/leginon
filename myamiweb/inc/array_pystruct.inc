@@ -129,18 +129,18 @@ function pystruct_to_array($pylist) {
 	$par_type = 'PAR_TYPE';
 	$phparray = array();
 	$pylist = trim($pylist);
-	$matchbracket1 = ereg('(^\[)(.*)(\]$)', $pylist);
-	$matchbracket2 = ereg('(^\()(.*)(\)$)', $pylist);
-	$matchbracket3 = ereg('(^\{)(.*)(\}$)', $pylist);
+	$matchbracket1 = preg_match('%(^\[)(.*)(\]$)%', $pylist);
+	$matchbracket2 = preg_match('%(^\()(.*)(\)$)%', $pylist);
+	$matchbracket3 = preg_match('%(^\{)(.*)(\}$)%', $pylist);
 
 	if (!$matchbracket1 && !$matchbracket2 && !$matchbracket3)
 		return false;
 
-	$pylist = ereg_replace('\]|\}', ')', $pylist);
-	$pylist = ereg_replace(':', '=>', $pylist);
-	$pylist = ereg_replace('\(', 'array (\''.$par_type.'\'=>\'(\', ', $pylist);
-	$pylist = ereg_replace('\[', 'array (\''.$par_type.'\'=>\'[\', ', $pylist);
-	$pylist = ereg_replace('\{', 'array (\''.$par_type.'\'=>\'{\', ', $pylist);
+	$pylist = preg_replace('%\]|\}', ')%', $pylist);
+	$pylist = preg_replace('%:%', '=>', $pylist);
+	$pylist = preg_replace('%\(%', 'array (\''.$par_type.'\'=>\'(\', ', $pylist);
+	$pylist = preg_replace('%\[%', 'array (\''.$par_type.'\'=>\'[\', ', $pylist);
+	$pylist = preg_replace('%\{%', 'array (\''.$par_type.'\'=>\'{\', ', $pylist);
 	eval("\$phparray = $pylist;");
 	return $phparray;
 }

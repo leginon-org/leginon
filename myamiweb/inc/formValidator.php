@@ -341,7 +341,7 @@ class formValidator{
 	 */
 	function validateEmail($email) {
 
-		return eregi("^[_\.0-9a-zA-Z-]+@([0-9a-zA-Z][0-9a-zA-Z-]+\.)+[a-zA-Z]{2,6}$", $email);
+		return preg_match("%^[_\.0-9a-zA-Z-]+@([0-9a-zA-Z][0-9a-zA-Z-]+\.)+[a-zA-Z]{2,6}$%i", $email);
 	}	
 	
 	
