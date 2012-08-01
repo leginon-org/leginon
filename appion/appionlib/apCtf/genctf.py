@@ -9,7 +9,7 @@ from appionlib.apCtf import ctftools
 debug = False
 
 #===================
-def generateCTF1d(radii=None, focus=1.0e-6, cs=2e-3, volts=120000, ampconst=0.07):
+def generateCTF1d(radii=None, focus=1.0e-6, cs=2e-3, volts=120000, ampconst=0.07, failParams=True):
 	"""
 	calculates a CTF function based on the input details
 
@@ -19,7 +19,7 @@ def generateCTF1d(radii=None, focus=1.0e-6, cs=2e-3, volts=120000, ampconst=0.07
 	if debug is True:
 		print "generateCTF1dFromRadii()"
 	t0 = time.time()
-	checkParams(focus1=focus, focus2=focus, cs=cs, volts=volts, ampconst=ampconst)
+	checkParams(focus1=focus, focus2=focus, cs=cs, volts=volts, ampconst=ampconst, failParams=failParams)
 	minres = 1e10/radii.min()
 	maxres = 1e10/radii.max()
 	if debug is True:
@@ -200,7 +200,7 @@ def generateRadial2d(shape, xfreq, yfreq):
 
 #===================
 def checkParams(focus1=-1.0e-6, focus2=-1.0e-6, pixelsize=1.5e-10, 
-	cs=2e-3, volts=120000, ampconst=0.07):
+	cs=2e-3, volts=120000, ampconst=0.07, failParams=True):
 	if debug is True:
 		print "  Defocus1 %.2f microns (underfocus is positive)"%(focus1*1e6)
 		if focus1 != focus2:
@@ -211,19 +211,41 @@ def checkParams(focus1=-1.0e-6, focus2=-1.0e-6, pixelsize=1.5e-10,
 		print ("  Amp Contrast %.3f (shift %.1f degrees)"
 			%(ampconst, math.degrees(-math.asin(ampconst))))
 	if focus1*1e6 > 15.0 or focus1*1e6 < 0.1:
-		apDisplay.printError("atypical defocus #1 value %.1f microns (underfocus is positve)"
-			%(focus1*1e6))
+		msg = "atypical defocus #1 value %.1f microns (underfocus is positve)"%(focus1*1e6)
+		if failParams is False:
+			apDisplay.printWarning(msg)
+		else:
+			apDisplay.printError(msg)
 	if focus2*1e6 > 15.0 or focus2*1e6 < 0.1:
-		apDisplay.printError("atypical defocus #2 value %.1f microns (underfocus is positve)"
-			%(focus2*1e6))
+		msg = "atypical defocus #2 value %.1f microns (underfocus is positve)"%(focus2*1e6)
+		if failParams is False:
+			apDisplay.printWarning(msg)
+		else:
+			apDisplay.printError(msg)
 	if cs*1e3 > 7.0 or cs*1e3 < 0.7:
-		apDisplay.printError("atypical C_s value %.1f mm"%(cs*1e3))
+		msg = "atypical C_s value %.1f mm"%(cs*1e3)
+		if failParams is False:
+			apDisplay.printWarning(msg)
+		else:
+			apDisplay.printError(msg)
 	if pixelsize*1e10 > 20.0 or pixelsize*1e10 < 0.1:
-		apDisplay.printError("atypical pixel size value %.1f Angstroms"%(pixelsize*1e10))
+		msg = "atypical pixel size value %.1f Angstroms"%(pixelsize*1e10)
+		if failParams is False:
+			apDisplay.printWarning(msg)
+		else:
+			apDisplay.printError(msg)
 	if volts*1e-3 > 400.0 or volts*1e-3 < 60:
-		apDisplay.printError("atypical high tension value %.1f kiloVolts"%(volts*1e-3))
-	if ampconst < 0.0 or ampconst > 0.4:
-		apDisplay.printError("atypical amplitude contrast value %.3f"%(ampconst))
+		msg = "atypical high tension value %.1f kiloVolts"%(volts*1e-3)
+		if failParams is False:
+			apDisplay.printWarning(msg)
+		else:
+			apDisplay.printError(msg)
+	if ampconst < 0.0 or ampconst > 0.5:
+		msg = "atypical amplitude contrast value %.3f"%(ampconst)
+		if failParams is False:
+			apDisplay.printWarning(msg)
+		else:
+			apDisplay.printError(msg)
 	return
 
 #===================
@@ -235,6 +257,8 @@ if __name__ == "__main__":
 	ctf = generateCTF1d(radii)
 	from matplotlib import pyplot
 	pyplot.plot(radii, ctf, 'r-', )
+	pyplot.subplots_adjust(wspace=0.05, hspace=0.05,
+		bottom=0.05, left=0.05, top=0.95, right=0.95, )
 	pyplot.show()
 
 
