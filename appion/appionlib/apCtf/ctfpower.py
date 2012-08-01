@@ -8,7 +8,9 @@ from pyami import imagefun
 from appionlib import apDisplay
 from appionlib.apImage import imagestat, imagefile, imagefilter
 
-debug = True
+###this file is not allowed to import any apCtf files
+
+debug = False
 
 #============
 def funcrad(x, xdata=None, ydata=None):
@@ -36,7 +38,7 @@ def getFieldSize(shape):
 	return fieldsize
 
 #=============
-def power(image, pixelsize, fieldsize=None, mask_radius=0.2):
+def power(image, pixelsize, fieldsize=None, mask_radius=2):
 	"""
 	computes power spectra of image using sub-field averaging
 
