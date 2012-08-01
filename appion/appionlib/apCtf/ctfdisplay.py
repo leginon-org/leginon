@@ -76,7 +76,7 @@ class CtfDisplay(object):
 		pixelrdata, zdata = ctftools.rotationalAverage(zdata2d, self.ringwidth, 
 			firstpeak, full=False)
 		pixelrdatae, zdatae = ctftools.ellipticalAverage(zdata2d, self.ellipratio, self.angle,
-			self.ringwidth, firstpeak, full=False, filename=self.powerspecfile)
+			self.ringwidth, firstpeak, full=False)
 	
 		if self.debug is True:
 			print "  Pixel MIN/MAX:", pixelrdata.min(), pixelrdata.max()
@@ -121,9 +121,11 @@ class CtfDisplay(object):
 
 		### subtract noise model
 		normzdata = numpy.exp(zdata) - numpy.exp(noisedata)
-		lognormzdata = numpy.log( numpy.abs( normzdata ) )
+		#lognormzdata = numpy.log( numpy.abs( normzdata ) )
+		lognormzdata = numpy.log(numpy.where(normzdata<1, 1, normzdata))
 		normzdatae = numpy.exp(zdatae) - numpy.exp(noisedatae)
-		lognormzdatae = numpy.log( numpy.abs( normzdatae ) )
+		#lognormzdatae = numpy.log( numpy.abs( normzdatae ) )
+		lognormzdatae = numpy.log(numpy.where(normzdatae<1, 1, normzdatae))
 
 		print "Determine and normalize envelope model..."
 		### fit function above log(CTF), i.e., envelop model
@@ -178,8 +180,8 @@ class CtfDisplay(object):
 		pyplot.title("Noise Fit (Elliptical)", fontsize=titlefontsize)
 
 		pyplot.subplot(3,2,3) # 3 rows, 2 columns, plot 3
-		pyplot.plot(rdatasq, numpy.log(numpy.abs(normzdata)), 'b.', markersize=1,)
-		pyplot.plot(rdatasq, numpy.log(numpy.abs(normzdata)), 'b-', alpha=0.5)
+		pyplot.plot(rdatasq, lognormzdata, 'b.', markersize=1,)
+		pyplot.plot(rdatasq, lognormzdata, 'b-', alpha=0.5)
 		pyplot.plot(rdatasq, envelopdata, 'k-', )
 		self.setPyPlotXLabels(rdatasq, peaksradiisq)
 		pyplot.ylabel("Log(PSD)-Log(Noise)", fontsize=axisfontsize)
@@ -187,8 +189,8 @@ class CtfDisplay(object):
 		#pyplot.ylim(ymin=0)
 
 		pyplot.subplot(3,2,4) # 3 rows, 2 columns, plot 4
-		pyplot.plot(rdatasqe, numpy.log(numpy.abs(normzdatae)), 'r.', markersize=1,)
-		pyplot.plot(rdatasqe, numpy.log(numpy.abs(normzdatae)), 'r-', alpha=0.5)
+		pyplot.plot(rdatasqe, lognormzdatae, 'r.', markersize=1,)
+		pyplot.plot(rdatasqe, lognormzdatae, 'r-', alpha=0.5)
 		pyplot.plot(rdatasqe, envelopdatae, 'k-', )
 		#pyplot.ylim(ymin=0)
 		self.setPyPlotXLabels(rdatasqe, peaksradiisq)
@@ -375,7 +377,7 @@ class CtfDisplay(object):
 	def drawPowerSpecImage(self, origpowerspec, maxsize=1500):
 		#compute elliptical average and merge with original image
 		pixelrdata, rotdata = ctftools.ellipticalAverage(origpowerspec, self.ellipratio, self.angle,
-			self.ringwidth, 1, full=True)
+			self.ringwidth*3, 1, full=True)
 		ellipavgpowerspec = ctftools.unEllipticalAverage(pixelrdata, rotdata, 
 			self.ellipratio, self.angle, origpowerspec.shape)
 		halfshape = origpowerspec.shape[1]/2
@@ -636,8 +638,8 @@ class CtfDisplay(object):
 			outerbound*1e10, self.apix)
 		self.trimapix = 1.0/(self.trimfreq * powerspec.shape[0])
 
-		print "Median filter image..."
-		powerspec = ndimage.median_filter(powerspec, 2)
+		#print "Median filter image..."
+		#powerspec = ndimage.median_filter(powerspec, 2)
 		print "Preform a rotational average and remove spikes..."
 		rotfftarray = ctftools.rotationalAverage2D(powerspec)
 		stdev = rotfftarray.std()
