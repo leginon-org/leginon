@@ -305,19 +305,9 @@ class CTFApp(wx.App):
 		self.Bind(wx.EVT_BUTTON, self.onFullNormalize, wxbutton)
 		self.buttonrow.Add(wxbutton, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 
-		wxbutton = wx.Button(self.frame, -1, 'Subt &Noise')
+		wxbutton = wx.Button(self.frame, -1, 'Full &TriModal Normalize')
 		wxbutton.SetMinSize((-1, buttonheight))
-		self.Bind(wx.EVT_BUTTON, self.onSubtNoise, wxbutton)
-		self.buttonrow.Add(wxbutton, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
-
-		wxbutton = wx.Button(self.frame, -1, 'Subt Bimodal Noise')
-		wxbutton.SetMinSize((-1, buttonheight))
-		self.Bind(wx.EVT_BUTTON, self.onSubtBimodalNoise, wxbutton)
-		self.buttonrow.Add(wxbutton, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
-
-		wxbutton = wx.Button(self.frame, -1, 'Subt Trimodal Noise')
-		wxbutton.SetMinSize((-1, buttonheight))
-		self.Bind(wx.EVT_BUTTON, self.onSubtTrimodalNoise, wxbutton)
+		self.Bind(wx.EVT_BUTTON, self.onFullTriModalNormalize, wxbutton)
 		self.buttonrow.Add(wxbutton, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 
 		wxbutton = wx.Button(self.frame, -1, 'Subt Fit Valleys')
@@ -325,44 +315,19 @@ class CTFApp(wx.App):
 		self.Bind(wx.EVT_BUTTON, self.onSubtFitValleys, wxbutton)
 		self.buttonrow.Add(wxbutton, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 
-		wxbutton = wx.Button(self.frame, -1, 'Subt &Box Filter')
-		wxbutton.SetMinSize((-1, buttonheight))
-		self.Bind(wx.EVT_BUTTON, self.onSubtBoxFilter, wxbutton)
-		self.buttonrow.Add(wxbutton, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
-
-		wxbutton = wx.Button(self.frame, -1, 'Subt 2D &Box Filter')
-		wxbutton.SetMinSize((-1, buttonheight))
-		self.Bind(wx.EVT_BUTTON, self.onSubt2dBoxFilter, wxbutton)
-		self.buttonrow.Add(wxbutton, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
-
-		wxbutton = wx.Button(self.frame, -1, 'Subt &Gauss Filter')
-		wxbutton.SetMinSize((-1, buttonheight))
-		self.Bind(wx.EVT_BUTTON, self.onSubtGaussFilter, wxbutton)
-		self.buttonrow.Add(wxbutton, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
-
-		wxbutton = wx.Button(self.frame, -1, 'Norm &Envelope')
-		wxbutton.SetMinSize((-1, buttonheight))
-		self.Bind(wx.EVT_BUTTON, self.onNormEnvelop, wxbutton)
-		self.buttonrow.Add(wxbutton, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
-
-		wxbutton = wx.Button(self.frame, -1, 'Norm Trimodal &Envelope')
-		wxbutton.SetMinSize((-1, buttonheight))
-		self.Bind(wx.EVT_BUTTON, self.onNormTrimodalEnvelop, wxbutton)
-		self.buttonrow.Add(wxbutton, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
-
 		wxbutton = wx.Button(self.frame, -1, 'Norm Fit Peaks')
 		wxbutton.SetMinSize((-1, buttonheight))
 		self.Bind(wx.EVT_BUTTON, self.onNormFitPeaks, wxbutton)
 		self.buttonrow.Add(wxbutton, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 
-		wxbutton = wx.Button(self.frame, -1, '&Neil normalize')
-		wxbutton.SetMinSize((-1, buttonheight))
-		self.Bind(wx.EVT_BUTTON, self.onNeilNormalize, wxbutton)
-		self.buttonrow.Add(wxbutton, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
-
 		wxbutton = wx.Button(self.frame, -1, 'Gauss &blur')
 		wxbutton.SetMinSize((-1, buttonheight))
 		self.Bind(wx.EVT_BUTTON, self.onGaussBlur, wxbutton)
+		self.buttonrow.Add(wxbutton, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
+
+		wxbutton = wx.Button(self.frame, -1, '&Median filter')
+		wxbutton.SetMinSize((-1, buttonheight))
+		self.Bind(wx.EVT_BUTTON, self.onMedianFilter, wxbutton)
 		self.buttonrow.Add(wxbutton, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 
 		wxbutton = wx.Button(self.frame, -1, '&Invert')
@@ -398,6 +363,11 @@ class CTFApp(wx.App):
 		wxbutton = wx.Button(self.frame, -1, 'Get Res')
 		wxbutton.SetMinSize((-1, buttonheight))
 		self.Bind(wx.EVT_BUTTON, self.onGetResolution, wxbutton)
+		self.buttonrow.Add(wxbutton, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
+
+		wxbutton = wx.Button(self.frame, -1, 'Get Res 2D')
+		wxbutton.SetMinSize((-1, buttonheight))
+		self.Bind(wx.EVT_BUTTON, self.onGetResolution2d, wxbutton)
 		self.buttonrow.Add(wxbutton, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 
 		self.editparam_dialog = EditParamsDialog(self)
@@ -684,6 +654,16 @@ class CTFApp(wx.App):
 		return
 
 	#---------------------------------------
+	def onMedianFilter(self, evt):
+		imagedata = self.panel.numericdata
+		meddata = ndimage.median_filter(imagedata, 2)
+		meddata = ndimage.interpolation.shift(meddata, (-0.5,-0.5), order=1)
+		self.panel.setImage(meddata)
+		apDisplay.printColor("Median filter complete", "cyan")
+		return
+
+
+	#---------------------------------------
 	def onInvert(self, evt):
 		imagedata = self.panel.numericdata
 		self.panel.setImage(-imagedata)
@@ -806,8 +786,8 @@ class CTFApp(wx.App):
 		pyplot.gray()
 		pyplot.imshow(watershed, alpha=0.5)
 		pyplot.gray()
-		pyplot.subplots_adjust(wspace=0.01, hspace=0.01,
-			bottom=0.01, left=0.01, top=0.99, right=0.99, )
+		pyplot.subplots_adjust(wspace=0.05, hspace=0.05,
+			bottom=0.05, left=0.05, top=0.95, right=0.95, )
 		pyplot.show()
 
 		#print "watershed="
@@ -960,10 +940,10 @@ class CTFApp(wx.App):
 
 		peakradii = ctftools.getCtfExtrema(meandefocus, self.freq*1e10,
 			self.ctfvalues['cs'], self.ctfvalues['volts'], self.ctfvalues['amplitude_contrast'],
-			numzeros=28, zerotype="peaks")
+			numzeros=100, zerotype="peaks")
 		valleyradii = ctftools.getCtfExtrema(meandefocus, self.freq*1e10,
 			self.ctfvalues['cs'], self.ctfvalues['volts'], self.ctfvalues['amplitude_contrast'],
-			numzeros=28, zerotype="valleys")
+			numzeros=100, zerotype="valleys")
 		firstpeak = peakradii[0]
 		firstpeakindex = numpy.searchsorted(raddata, firstpeak*self.freq)
 
@@ -990,6 +970,8 @@ class CTFApp(wx.App):
 		pyplot.xlim(xmin=raddatasq[firstpeakindex-1], xmax=raddatasq.max())
 		pyplot.ylim(ymin=-0.05, ymax=1.05)
 		pyplot.title("Confidence value of %.4f"%(confidence))
+		pyplot.subplots_adjust(wspace=0.05, hspace=0.05,
+			bottom=0.05, left=0.05, top=0.95, right=0.95, )
 		pyplot.show()
 		apDisplay.printColor("Confidence value of %.4f complete"%(confidence), "cyan")
 
@@ -1010,6 +992,35 @@ class CTFApp(wx.App):
 		### get the data
 		pixelrdata, raddata, rotdata = self.getOneDProfile(full=False)
 
+		confs = ctfres.getCorrelationProfile(raddata, rotdata, self.freq, self.ctfvalues)
+
+		return
+
+	#---------------------------------------
+	def onGetResolution2d(self, env):
+		if not 'defocus2' in self.ctfvalues.keys():
+			dialog = wx.MessageDialog(self.frame, "Need a defocus estimate first.",
+				'Error', wx.OK|wx.ICON_ERROR)
+			dialog.ShowModal()
+			dialog.Destroy()
+			return
+
+		if self.checkNormalized() is False:
+			return
+
+		### get the data
+		imagedata = self.panel.numericdata
+		if self.ellipse_params is None:
+			self.ellipratio = 1.0
+			self.ellipangle = 0.0
+		else:
+			self.ellipratio = self.ellipse_params['a']/self.ellipse_params['b']
+			self.ellipangle = -math.degrees(self.ellipse_params['alpha'])
+
+		pixelrdata, rotdata = ctftools.ellipticalArray(imagedata, self.ellipratio, self.ellipangle)
+		raddata = pixelrdata*self.freq
+
+		print "getting confidence..."
 		confs = ctfres.getCorrelationProfile(raddata, rotdata, self.freq, self.ctfvalues)
 
 		return
@@ -1086,21 +1097,15 @@ class CTFApp(wx.App):
 		firstpeak = radii[0]
 
 		pixelrdata, raddata, rotdata = self.getOneDProfile(full=False)
-		s = raddata*1e10
 
-		ws2 = s**2 * self.wavelength * math.pi
-		ampcontrast = self.ctfvalues['amplitude_contrast']
-		values = sinefit.weightedRefineCTF(ws2[firstpeak:],
-			rotdata[firstpeak:], meandefocus, ampcontrast)
+		values = sinefit.refineCTF(raddata[firstpeak:], rotdata[firstpeak:], self.ctfvalues)
+
 		if values is None:
 			dialog = wx.MessageDialog(self.frame, "CTF refine failed, bad fit.",
 				'Error', wx.OK|wx.ICON_ERROR)
 			dialog.Destroy()
 			return
 		newdefocus, amplitudecontrast = values
-		apDisplay.printColor("amplitude contrast change from %.5f to %.5f"
-			%(self.ctfvalues['amplitude_contrast'], amplitudecontrast), "cyan")
-		self.ctfvalues['amplitude_contrast'] = amplitudecontrast
 
 		if self.ellipratio < 1:
 			apDisplay.printWarning("Ellipse ratio is less than 1")
@@ -1121,12 +1126,9 @@ class CTFApp(wx.App):
 
 		self.ctfvalues['defocus1'] = defocus1
 		self.ctfvalues['defocus2'] = defocus2
+		self.ctfvalues['amplitude_contrast'] = amplitudecontrast
 
-		meandefocus = math.sqrt(self.ctfvalues['defocus1']*self.ctfvalues['defocus2'])
-		apDisplay.printMsg("Mean defocus is %.6e (from %.3e and %.3e)"
-			%(meandefocus, self.ctfvalues['defocus1'], self.ctfvalues['defocus2']))
-
-		apDisplay.printColor("Refind CTF 1d complete", "cyan")
+		apDisplay.printColor("Refind CTF complete", "cyan")
 		return
 
 	#---------------------------------------
@@ -1153,22 +1155,15 @@ class CTFApp(wx.App):
 		firstpeak = radii[0]
 
 		pixelrdata, raddata, rotdata = self.getOneDProfile(full=False)
-		s = raddata*1e10
 
-		ws2 = s**2 * self.wavelength * math.pi
-		vs4 = s**4 * self.wavelength**3 * self.cs * math.pi/2.0
-		ampcontrast = self.ctfvalues['amplitude_contrast']
-		values = sinefit.refineCTFwithCs(ws2[firstpeak:], vs4[firstpeak:],
-			rotdata[firstpeak:], meandefocus, ampcontrast)
+		values = sinefit.refineCTFwithCs(raddata[firstpeak:], rotdata[firstpeak:], self.ctfvalues)
+
 		if values is None:
 			dialog = wx.MessageDialog(self.frame, "CTF refine failed, bad fit.",
 				'Error', wx.OK|wx.ICON_ERROR)
 			dialog.Destroy()
 			return
 		newdefocus, amplitudecontrast = values
-		apDisplay.printColor("amplitude contrast change from %.5f to %.5f"
-			%(self.ctfvalues['amplitude_contrast'], amplitudecontrast), "cyan")
-		self.ctfvalues['amplitude_contrast'] = amplitudecontrast
 
 		if self.ellipratio < 1:
 			apDisplay.printWarning("Ellipse ratio is less than 1")
@@ -1189,12 +1184,9 @@ class CTFApp(wx.App):
 
 		self.ctfvalues['defocus1'] = defocus1
 		self.ctfvalues['defocus2'] = defocus2
+		self.ctfvalues['amplitude_contrast'] = amplitudecontrast
 
-		meandefocus = math.sqrt(self.ctfvalues['defocus1']*self.ctfvalues['defocus2'])
-		apDisplay.printMsg("Mean defocus is %.6e (from %.3e and %.3e)"
-			%(meandefocus, self.ctfvalues['defocus1'], self.ctfvalues['defocus2']))
-
-		apDisplay.printColor("Refind CTF 1d complete", "cyan")
+		apDisplay.printColor("Refind CTF with Cs complete", "cyan")
 		return
 
 	#---------------------------------------
@@ -1272,6 +1264,8 @@ class CTFApp(wx.App):
 		pyplot.plot(xdata, boxfilter, 'r-',)
 		pyplot.xlim(xmax=xdata.max())
 		pyplot.ylim(ymin=newrotdata.min(), ymax=newrotdata.max())
+		pyplot.subplots_adjust(wspace=0.05, hspace=0.05,
+			bottom=0.05, left=0.05, top=0.95, right=0.95, )
 		pyplot.show()
 
 		if didsqrt:
@@ -1311,8 +1305,8 @@ class CTFApp(wx.App):
 		pyplot.xticks([], [])
 		pyplot.yticks([], [])
 		pyplot.gray()
-		pyplot.subplots_adjust(wspace=0.01, hspace=0.01,
-			bottom=0.01, left=0.01, top=0.99, right=0.99, )
+		pyplot.subplots_adjust(wspace=0.05, hspace=0.05,
+			bottom=0.05, left=0.05, top=0.95, right=0.95, )
 		pyplot.show()
 
 		normaldata = imagedata - boxfilter
@@ -1341,6 +1335,8 @@ class CTFApp(wx.App):
 		pyplot.plot(xdata, gaussfilter, 'r-',)
 		pyplot.xlim(xmax=xdata.max())
 		pyplot.ylim(ymin=newrotdata.min(), ymax=newrotdata.max())
+		pyplot.subplots_adjust(wspace=0.05, hspace=0.05,
+			bottom=0.05, left=0.05, top=0.95, right=0.95, )
 		pyplot.show()
 
 		if didsqrt:
@@ -1457,16 +1453,16 @@ class CTFApp(wx.App):
 		print "normexprotdata2d="
 		imagestat.printImageInfo(normexprotdata2d)
 
-		normlogrotdata2d = numpy.log(numpy.where(normexprotdata2d<1e-3, 1e-3, normexprotdata2d))
+		normlogrotdata2d = numpy.log(numpy.where(normexprotdata2d<1, 1, normexprotdata2d))
+		#normlogrotdata2d = numpy.log(numpy.abs(normexprotdata2d))
 		print "normlogrotdata2d="
 		imagestat.printImageInfo(normlogrotdata2d)
 
-		newx, normlogrotdata = ctftools.ellipticalAverage(normlogrotdata2d, 
-			self.ellipratio, self.ellipangle, ringwidth=self.ringwidth, full=False)
+		self.panel.setImage(normlogrotdata2d)
+
+		newpixx, newx, normlogrotdata = self.getOneDProfile(full=False)
 		print "normlogrotdata="
 		imagestat.printImageInfo(normlogrotdata)
-
-		self.panel.setImage(normlogrotdata2d)
 
 		# high pass filter the center
 		if 'defocus1' in self.ctfvalues.keys():
@@ -1499,14 +1495,19 @@ class CTFApp(wx.App):
 		normnormexprotdata2d = normexprotdata2d / numpy.exp(envelopdata2d)
 		print "normnormexprotdata2d="
 		imagestat.printImageInfo(normnormexprotdata2d)
-		normnormlogrotdata2d = numpy.log(numpy.where(normnormexprotdata2d<1e-30, 1e-30, normnormexprotdata2d))
-		print "normnormlogrotdata2d="
-		imagestat.printImageInfo(normnormlogrotdata2d)
+		#normnormlogrotdata2d = numpy.log(numpy.where(normnormexprotdata2d<0.1, 0.1, normnormexprotdata2d))
+		#normnormlogrotdata2d = numpy.log(numpy.abs(normnormexprotdata2d))
+		#print "normnormlogrotdata2d="
+		#imagestat.printImageInfo(normnormexprotdata2d)
 
-		self.panel.setImage(normnormlogrotdata2d)
+		self.panel.setImage(normnormexprotdata2d)
+
+		newpixx, newx, normnormexprotdata = self.getOneDProfile(full=False)
+		print "normnormexprotdata="
+		imagestat.printImageInfo(normnormexprotdata)
 
 		pyplot.clf()
-		pyplot.subplot(2,1,1)
+		pyplot.subplot(3,1,1)
 		raddatasq = raddata**2
 		pyplot.plot(raddatasq, rotdata, 'k.',)
 		pyplot.plot(raddatasq, rotdata, 'k-', alpha=0.5)
@@ -1514,12 +1515,17 @@ class CTFApp(wx.App):
 		pyplot.xlim(xmax=raddatasq.max())
 		pyplot.ylim(ymin=noisedata.min(), ymax=rotdata[firstvalleyindex:].max())
 
-		pyplot.subplot(2,1,2)
+		pyplot.subplot(3,1,2)
 		pyplot.plot(raddatasq, normlogrotdata, 'k.',)
 		pyplot.plot(raddatasq, normlogrotdata, 'k-', alpha=0.5)
 		pyplot.plot(raddatasq[firstpeakindex:], envelopdata[firstpeakindex:], 'r-', )
 		pyplot.xlim(xmax=raddatasq.max())
-		pyplot.ylim(ymin=rotdata[firstpeakindex:].min(), ymax=envelopdata.max())
+		pyplot.ylim(ymin=normlogrotdata[firstpeakindex:].min(), ymax=envelopdata.max())
+
+		pyplot.subplot(3,1,3)
+		pyplot.plot(raddatasq, normnormexprotdata, 'k.',)
+		pyplot.plot(raddatasq, normnormexprotdata, 'k-', alpha=0.5)
+		pyplot.xlim(xmax=raddatasq.max())
 
 		pyplot.subplots_adjust(wspace=0.05, hspace=0.05,
 			bottom=0.05, left=0.05, top=0.95, right=0.95, )
@@ -1528,10 +1534,23 @@ class CTFApp(wx.App):
 		apDisplay.printColor("Full Normalize complete", "cyan")
 
 	#---------------------------------------
-	def onSubtBimodalNoise(self, evt):
+	def onFullTriModalNormalize(self, evt):
 		pixelrdata, raddata, rotdata = self.getOneDProfile(full=False)
+		imagedata2d = self.panel.numericdata
 
-		# high pass filter the center
+		if self.checkNormalized(msg=False) is True:
+			dialog = wx.MessageDialog(self.frame, "Full normalize only works on raw data.",
+				'Error', wx.OK|wx.ICON_ERROR)
+			dialog.ShowModal()
+			dialog.Destroy()
+			imagestat.printImageInfo(centerimage)
+			return
+
+		### 
+		### PART 1: BACKGROUND NOISE SUBTRACTION
+		### 
+
+		# skip the center
 		if 'defocus1' in self.ctfvalues.keys():
 			#get first zero
 			radii = ctftools.getCtfExtrema(self.ctfvalues['defocus1'], self.freq*1e10,
@@ -1539,9 +1558,9 @@ class CTFApp(wx.App):
 				numzeros=1, zerotype="valleys")
 			firstvalley = radii[0]
 		else:
-			#set first zero to 1/100A
+			#set first zero to 1/70A
 			#1/resolution = freq * (# of pixels from center)
-			firstvalley = int(1.0/(self.freq*100))
+			firstvalley = int(1.0/(self.freq*70))
 		raddata = pixelrdata*self.freq
 		firstvalleyindex = numpy.searchsorted(raddata, self.freq*firstvalley)
 		apDisplay.printColor("First valley: %.1f -> %d (1/%.1f A)"
@@ -1550,53 +1569,159 @@ class CTFApp(wx.App):
 		### split the function up in first 3/5 and last 3/5 of data with 1/5 overlap
 		numpoints = len(raddata) - firstvalleyindex
 		part1start = firstvalleyindex
-		part1end = int(firstvalleyindex + numpoints*3/5.)
-		part2start = int(firstvalleyindex + numpoints*2/5.)
-		part2end = len(raddata)
+		part1end = int(firstvalleyindex + numpoints*6/10.)
+		part2start = int(firstvalleyindex + numpoints*5/10.)
+		part2end = int(firstvalleyindex + numpoints*9/10.)
+		part3start = int(firstvalleyindex + numpoints*8/10.)
+		part3end = len(raddata)
 
 		CtfNoise = ctfnoise.CtfNoise()
 
-		## first 3/5 of data
+		## first part data
 		noisefitparams1 = CtfNoise.modelCTFNoise(raddata[part1start:part1end],
 			rotdata[part1start:part1end], "below")
 		noisedata1 = CtfNoise.noiseModel(noisefitparams1, raddata)
 
-		## second 3/5 of data
+		## second part data
 		noisefitparams2 = CtfNoise.modelCTFNoise(raddata[part2start:part2end],
 			rotdata[part2start:part2end], "below")
 		noisedata2 = CtfNoise.noiseModel(noisefitparams2, raddata)
 
+		## third part data
+		noisefitparams3 = CtfNoise.modelCTFNoise(raddata[part3start:part3end],
+			rotdata[part3start:part3end], "below")
+		noisedata3 = CtfNoise.noiseModel(noisefitparams3, raddata)
+
 		## merge data
 		scale = numpy.arange(part1end-part2start, dtype=numpy.float32)
 		scale /= scale.max()
-		overlapdata = noisedata1[part2start:part1end]*(1-scale) + noisedata2[part2start:part1end]*scale
-		#print scale
-		#print (1-scale)
-		mergedata = numpy.hstack((noisedata1[:part2start], overlapdata, noisedata2[part1end:]))
+		overlapdata1 = noisedata1[part2start:part1end]*(1-scale) + noisedata2[part2start:part1end]*scale
+		scale = numpy.arange(part2end-part3start, dtype=numpy.float32)
+		scale /= scale.max()
+		overlapdata2 = noisedata2[part3start:part2end]*(1-scale) + noisedata3[part3start:part2end]*scale
+
+		mergedata = numpy.hstack((noisedata1[:part2start], overlapdata1,
+			noisedata2[part1end:part3start], overlapdata2,
+			noisedata3[part2end:]))
+
+		noisedata = mergedata
+		noisedata2d = ctftools.unEllipticalAverage(pixelrdata, noisedata,
+			self.ellipratio, self.ellipangle, imagedata2d.shape)
+
+		### DO THE SUBTRACTION
+		normexprotdata2d = numpy.exp(imagedata2d) - numpy.exp(noisedata2d)
+		normlogrotdata2d = numpy.log(numpy.where(normexprotdata2d<1, 1, normexprotdata2d))
+
+		self.panel.setImage(normlogrotdata2d)
+		newpixx, newx, normlogrotdata = self.getOneDProfile(full=False)
+
+		### 
+		### PART 2: ENVELOPE NORMALIZATION
+		### 
+
+		# high pass filter the center
+		if 'defocus1' in self.ctfvalues.keys():
+			#get first zero
+			meandefocus = math.sqrt(self.ctfvalues['defocus1']*self.ctfvalues['defocus2'])
+			radii = ctftools.getCtfExtrema(meandefocus, self.freq*1e10,
+				self.ctfvalues['cs'], self.ctfvalues['volts'], self.ctfvalues['amplitude_contrast'],
+				numzeros=1, zerotype="peaks")
+			firstpeak = radii[0]
+		else:
+			#set first zero to 1/100A
+			#1/resolution = freq * (# of pixels from center)
+			firstpeak = 1.0/(self.freq*100)
+
+		firstpeakindex = numpy.searchsorted(raddata, firstpeak*self.freq)
+		apDisplay.printColor("First peak: %.1f (1/%.1f A)"%
+			(firstpeakindex, 1/(firstpeak*self.freq)), "yellow")
+
+		### split the function up in first 3/5 and last 3/5 of data with 1/5 overlap
+		numpoints = len(raddata) - firstpeakindex
+		part1start = firstpeakindex
+		part1end = int(firstpeakindex + numpoints*6/10.)
+		part2start = int(firstpeakindex + numpoints*5/10.)
+		part2end = int(firstpeakindex + numpoints*9/10.)
+		part3start = int(firstpeakindex + numpoints*8/10.)
+		part3end = len(raddata)
+
+		CtfNoise = ctfnoise.CtfNoise()
+
+		## first part data
+		envelopfitparams1 = CtfNoise.modelCTFNoise(raddata[part1start:part1end],
+			normlogrotdata[part1start:part1end], "above")
+		envelopdata1 = CtfNoise.noiseModel(envelopfitparams1, raddata)
+
+		## second part data
+		envelopfitparams2 = CtfNoise.modelCTFNoise(raddata[part2start:part2end],
+			normlogrotdata[part2start:part2end], "above")
+		envelopdata2 = CtfNoise.noiseModel(envelopfitparams2, raddata)
+
+		## third part data
+		envelopfitparams3 = CtfNoise.modelCTFNoise(raddata[part3start:part3end],
+			normlogrotdata[part3start:part3end], "above")
+		envelopdata3 = CtfNoise.noiseModel(envelopfitparams3, raddata)
+
+		## merge data
+		scale = numpy.arange(part1end-part2start, dtype=numpy.float32)
+		scale /= scale.max()
+		overlapdata1 = envelopdata1[part2start:part1end]*(1-scale) + envelopdata2[part2start:part1end]*scale
+		scale = numpy.arange(part2end-part3start, dtype=numpy.float32)
+		scale /= scale.max()
+		overlapdata2 = envelopdata2[part3start:part2end]*(1-scale) + envelopdata3[part3start:part2end]*scale
+
+		mergedata = numpy.hstack((envelopdata1[:part2start], overlapdata1,
+			envelopdata2[part1end:part3start], overlapdata2,
+			envelopdata3[part2end:]))
+		envelopdata = mergedata
+
+		envelopdata2d = ctftools.unEllipticalAverage(pixelrdata, envelopdata,
+			self.ellipratio, self.ellipangle, imagedata2d.shape)
+		normnormexprotdata2d = normexprotdata2d / numpy.exp(envelopdata2d)
+
+		self.panel.setImage(normnormexprotdata2d)
+		newpixx, newx, normnormexprotdata = self.getOneDProfile(full=False)
 
 		pyplot.clf()
-		a = pyplot.plot(raddata**2, rotdata, 'k.',)
-		d = pyplot.plot(raddata**2, mergedata, '--', color="purple", linewidth=2)
-		b = pyplot.plot(raddata[part1start:part1end]**2,
+		pyplot.subplot(3,1,1)
+		raddatasq = raddata**2
+		pyplot.plot(raddatasq, normnormexprotdata, 'k.',)
+		a = pyplot.plot(raddatasq, rotdata, 'k-', alpha=0.5)
+		b = pyplot.plot(raddatasq[firstvalleyindex:], noisedata[firstvalleyindex:], '--', color="purple", linewidth=2)
+		c = pyplot.plot(raddatasq[part1start:part1end],
 			noisedata1[part1start:part1end], 'b-', alpha=0.5, linewidth=2)
-		c = pyplot.plot(raddata[part2start:part2end]**2,
+		d = pyplot.plot(raddatasq[part2start:part2end],
 			noisedata2[part2start:part2end], 'r-', alpha=0.5, linewidth=2)
-		pyplot.legend([a, b, c, d], ["data", "part 1", "part 2", "merge"])
-		pyplot.xlim(xmax=(raddata**2).max())
-		pyplot.ylim(ymin=mergedata[firstvalleyindex:].min(), ymax=rotdata[firstvalleyindex-1:].max())
-		pyplot.subplots_adjust(wspace=0.01, hspace=0.01,
-			bottom=0.01, left=0.01, top=0.99, right=0.99, )
+		e = pyplot.plot(raddatasq[part3start:part3end],
+			noisedata3[part3start:part3end], '-', alpha=0.5, linewidth=2, color="green")
+		pyplot.legend([a, b, c, d, e], ["data", "merge", "part 1", "part 2", "part 3"])
+		pyplot.xlim(xmax=raddatasq.max())
+		pyplot.ylim(ymin=noisedata.min(), ymax=rotdata[part1start:].max())
+
+		pyplot.subplot(3,1,2)
+		a = pyplot.plot(raddatasq, normlogrotdata, 'k.',)
+		a = pyplot.plot(raddatasq, normlogrotdata, 'k-', alpha=0.5)
+		b = pyplot.plot(raddatasq, mergedata, '--', color="purple", linewidth=2)
+		c = pyplot.plot(raddatasq[part1start:part1end],
+			envelopdata1[part1start:part1end], 'b-', alpha=0.5, linewidth=2)
+		d = pyplot.plot(raddatasq[part2start:part2end],
+			envelopdata2[part2start:part2end], 'r-', alpha=0.5, linewidth=2)
+		e = pyplot.plot(raddatasq[part3start:part3end],
+			envelopdata3[part3start:part3end], '-', alpha=0.5, linewidth=2, color="green")
+		pyplot.legend([a, b, c, d, e], ["data", "merge", "part 1", "part 2", "part 3"])
+		pyplot.xlim(xmax=raddatasq.max())
+		pyplot.ylim(ymin=normlogrotdata[part1start:].min(), ymax=envelopdata.max())
+
+		pyplot.subplot(3,1,3)
+		pyplot.plot(raddatasq, normnormexprotdata, 'k.',)
+		pyplot.plot(raddatasq, normnormexprotdata, 'k-', alpha=0.5)
+		pyplot.xlim(xmax=raddatasq.max())
+
+		pyplot.subplots_adjust(wspace=0.05, hspace=0.05,
+			bottom=0.05, left=0.05, top=0.95, right=0.95, )
 		pyplot.show()
 
-		imagedata = self.panel.numericdata
-		noise2d = ctftools.unEllipticalAverage(pixelrdata, mergedata,
-			self.ellipratio, self.ellipangle, imagedata.shape)
-		normaldata = imagedata - noise2d
-		#normaldata = numpy.where(normaldata < -0.2, -0.2, normaldata)
-		self.panel.setImage(normaldata)
-
-		imagestat.printImageInfo(normaldata)
-		apDisplay.printColor("Subtract Bimodal Noise complete", "cyan")
+		apDisplay.printColor("Full Normalize complete", "cyan")
 
 	#---------------------------------------
 	def onSubtTrimodalNoise(self, evt):
@@ -1668,8 +1793,8 @@ class CTFApp(wx.App):
 		pyplot.legend([a, b, c, d, e], ["data", "merge", "part 1", "part 2", "part 3"])
 		pyplot.xlim(xmax=(raddata**2).max())
 		pyplot.ylim(ymin=mergedata[firstvalleyindex:].min(), ymax=rotdata[firstvalleyindex-1:].max())
-		pyplot.subplots_adjust(wspace=0.01, hspace=0.01,
-			bottom=0.05, left=0.05, top=0.99, right=0.99, )
+		pyplot.subplots_adjust(wspace=0.05, hspace=0.05,
+			bottom=0.05, left=0.05, top=0.95, right=0.95, )
 		pyplot.show()
 
 		imagedata = self.panel.numericdata
@@ -1686,32 +1811,35 @@ class CTFApp(wx.App):
 	def onSubtFitValleys(self, evt):
 		meandefocus = math.sqrt(self.ctfvalues['defocus1']*self.ctfvalues['defocus2'])
 
-		pixelrdata, raddata, rotdata = self.getOneDProfile(full=False)
-		radii = ctftools.getCtfExtrema(meandefocus, self.freq*1e10,
+		valleyradii = ctftools.getCtfExtrema(meandefocus, self.freq*1e10,
 			self.ctfvalues['cs'], self.ctfvalues['volts'], self.ctfvalues['amplitude_contrast'],
-			numzeros=50, zerotype="valleys")
-		extrema = numpy.array(radii, dtype=numpy.float64)*self.freq
+			numzeros=250, zerotype="valleys")
+		extrema = numpy.array(valleyradii, dtype=numpy.float64)*self.freq
 
+		pixelrdata, raddata, rotdata = self.getOneDProfile(full=True)
 		extremedata = ctfnoise.peakExtender(raddata, rotdata, extrema, "below")
-		extremedata = ndimage.gaussian_filter1d(extremedata, 3)
-
-		from matplotlib import pyplot
-		pyplot.clf()
-		raddatasq = raddata**2
-		pyplot.plot(raddatasq, rotdata, 'k-', )
-		pyplot.plot(raddatasq, rotdata, 'k.', )
-		pyplot.plot(raddatasq, extremedata, 'b-', )
-		pyplot.xlim(xmin=raddatasq.min(), xmax=raddatasq.max())
-		pyplot.ylim(ymin=-0.05, ymax=1.05)
-		for eindex in radii:
-			if eindex > raddata.shape[0]-1:
-				break
-			pyplot.axvline(x=raddatasq[eindex], linewidth=2, color="gold", alpha=0.5)
-		pyplot.show()
+		extremedata = ndimage.gaussian_filter1d(extremedata, 1)
 
 		imagedata = self.panel.numericdata
 		extreme2d = ctftools.unEllipticalAverage(pixelrdata, extremedata,
 			self.ellipratio, self.ellipangle, imagedata.shape)
+
+		pyplot.clf()
+		raddatasq = raddata**2
+		maxshow = int(raddatasq.shape[0]/math.sqrt(2))
+		pyplot.plot(raddatasq[:maxshow], rotdata[:maxshow], 'k-', )
+		pyplot.plot(raddatasq[:maxshow], rotdata[:maxshow], 'k.', )
+		pyplot.plot(raddatasq[:maxshow], extremedata[:maxshow], 'b-', )
+		for radius in valleyradii:
+			index = numpy.searchsorted(raddata, radius*self.freq)
+			if index > maxshow:
+				break
+			pyplot.axvline(x=raddatasq[index], linewidth=1, color="cyan", alpha=0.95)
+		pyplot.xlim(xmin=raddatasq[0], xmax=raddatasq[maxshow])
+		pyplot.ylim(ymin=-0.05, ymax=1.05)
+		pyplot.subplots_adjust(wspace=0.05, hspace=0.05,
+			bottom=0.05, left=0.05, top=0.95, right=0.95, )
+		pyplot.show()
 
 		normaldata = imagedata - extreme2d
 		#normaldata = numpy.where(normaldata < -0.2, -0.2, normaldata)
@@ -1720,33 +1848,36 @@ class CTFApp(wx.App):
 
 	#---------------------------------------
 	def onNormFitPeaks(self, evt):
-
 		meandefocus = math.sqrt(self.ctfvalues['defocus1']*self.ctfvalues['defocus2'])
-		pixelrdata, raddata, rotdata = self.getOneDProfile(full=False)
-		radii = ctftools.getCtfExtrema(meandefocus, self.freq*1e10,
-			self.ctfvalues['cs'], self.ctfvalues['volts'], self.ctfvalues['amplitude_contrast'],
-			numzeros=50, zerotype="peaks")
-		extrema = numpy.array(radii, dtype=numpy.float64)*self.freq
 
+		peakradii = ctftools.getCtfExtrema(meandefocus, self.freq*1e10,
+			self.ctfvalues['cs'], self.ctfvalues['volts'], self.ctfvalues['amplitude_contrast'],
+			numzeros=250, zerotype="peaks")
+		extrema = numpy.array(peakradii, dtype=numpy.float64)*self.freq
+
+		pixelrdata, raddata, rotdata = self.getOneDProfile(full=True)
 		extremedata = ctfnoise.peakExtender(raddata, rotdata, extrema, "above")
-		extremedata = ndimage.gaussian_filter1d(extremedata, 3)
+		extremedata = ndimage.gaussian_filter1d(extremedata, 1)
 
 		imagedata = self.panel.numericdata
 		extreme2d = ctftools.unEllipticalAverage(pixelrdata, extremedata,
 			self.ellipratio, self.ellipangle, imagedata.shape)
 
-		from matplotlib import pyplot
 		pyplot.clf()
 		raddatasq = raddata**2
-		pyplot.plot(raddatasq, rotdata, 'k-', )
-		pyplot.plot(raddatasq, rotdata, 'k.', )
-		pyplot.plot(raddatasq, extremedata, 'b-', )
-		pyplot.xlim(xmin=raddatasq.min(), xmax=raddatasq.max())
-		pyplot.ylim(ymin=-0.05, ymax=1.05)
-		for eindex in radii:
-			if eindex > raddata.shape[0]-1:
+		maxshow = int(raddatasq.shape[0]/math.sqrt(2))
+		pyplot.plot(raddatasq[:maxshow], rotdata[:maxshow], 'k-', )
+		pyplot.plot(raddatasq[:maxshow], rotdata[:maxshow], 'k.', )
+		pyplot.plot(raddatasq[:maxshow], extremedata[:maxshow], 'b-', )
+		for radius in peakradii:
+			index = numpy.searchsorted(raddata, radius*self.freq)
+			if index > maxshow:
 				break
-			pyplot.axvline(x=raddatasq[eindex], linewidth=2, color="gold", alpha=0.5)
+			pyplot.axvline(x=raddatasq[index], linewidth=1, color="gold", alpha=0.95)
+		pyplot.xlim(xmin=raddatasq[0], xmax=raddatasq[maxshow])
+		pyplot.ylim(ymin=-0.05, ymax=1.05)
+		pyplot.subplots_adjust(wspace=0.05, hspace=0.05,
+			bottom=0.05, left=0.05, top=0.95, right=0.95, )
 		pyplot.show()
 
 		normaldata = imagedata / extreme2d
@@ -1786,6 +1917,8 @@ class CTFApp(wx.App):
 		pyplot.plot(raddata[firstpeakindex:]**2, envelopdata[firstpeakindex:], 'r-', )
 		pyplot.xlim(xmax=(raddata**2).max())
 		pyplot.ylim(ymin=rotdata.min(), ymax=envelopdata.max())
+		pyplot.subplots_adjust(wspace=0.05, hspace=0.05,
+			bottom=0.05, left=0.05, top=0.95, right=0.95, )
 		pyplot.show()
 
 		imagedata = self.panel.numericdata
@@ -1868,8 +2001,8 @@ class CTFApp(wx.App):
 		pyplot.legend([a, b, c, d, e], ["data", "merge", "part 1", "part 2", "part 3"])
 		pyplot.xlim(xmax=(raddata**2).max())
 		pyplot.ylim(ymin=rotdata[firstpeakindex-1:].min(), ymax=mergedata[firstpeakindex-1:].max())
-		pyplot.subplots_adjust(wspace=0.01, hspace=0.01,
-			bottom=0.05, left=0.05, top=0.99, right=0.99, )
+		pyplot.subplots_adjust(wspace=0.05, hspace=0.05,
+			bottom=0.05, left=0.05, top=0.95, right=0.95, )
 		pyplot.show()
 
 		imagedata = self.panel.numericdata
@@ -1898,6 +2031,8 @@ class CTFApp(wx.App):
 		usemax = (fullmax + normmax)/2.0
 		pyplot.xlim(xmax=usemax)
 		pyplot.ylim(ymin=rotdata[5:].min(), ymax=rotdata[5:].max())
+		pyplot.subplots_adjust(wspace=0.05, hspace=0.05,
+			bottom=0.05, left=0.05, top=0.95, right=0.95, )
 		pyplot.show()
 		apDisplay.printColor("Show plot complete", "cyan")
 		return
@@ -2013,6 +2148,7 @@ class ManualCTF(appionLoop2.AppionLoop):
 				fftpath = bits[1].strip()
 				self.freqdict[fftpath] = freq
 			f.close()
+		apDisplay.printMsg("Read %d powerspec files from freqfile"%(len(self.freqdict)))
 		return
 
 	#---------------------------------------
@@ -2024,12 +2160,14 @@ class ManualCTF(appionLoop2.AppionLoop):
 		keys = self.freqdict.keys()
 		keys.sort()
 		for key in keys:
-			f.write("%.8e\t%s"%(self.freqdict[key], key))
+			f.write("%.8e\t%s\n"%(self.freqdict[key], key))
 		f.close()
 		return
 
 	#---------------------------------------
 	def preLoopFunctions(self):
+		self.fftsdir = os.path.join(self.params['rundir'], "ffts")
+		apParam.createDirectory(self.fftsdir, warning=(not self.quiet))
 		self.readFreqFile()
 		if self.params['sessionname'] is not None:
 			self.processAndSaveAllImages()
@@ -2046,7 +2184,7 @@ class ManualCTF(appionLoop2.AppionLoop):
 
 	#---------------------------------------
 	def processImage(self, imgdata):
-		fftpath = os.path.join(self.params['rundir'], imgdata['filename']+'.fft.jpg')
+		fftpath = os.path.join(self.fftsdir, apDisplay.short(imgdata['filename'])+'.powerspec.mrc')
 		if not os.path.isfile(fftpath):
 			self.processAndSaveFFT(imgdata, fftpath)
 		self.saveFreqFile()
@@ -2120,7 +2258,8 @@ class ManualCTF(appionLoop2.AppionLoop):
 		total = len(self.imgtree)
 		for imgdata in self.imgtree:
 			count += 1
-			fftpath = os.path.join(self.params['rundir'], imgdata['filename']+'.powerspec.mrc')
+			self.fftsdir
+			fftpath = os.path.join(self.fftsdir, apDisplay.short(imgdata['filename'])+'.powerspec.mrc')
 			if self.params['continue'] is True and os.path.isfile(fftpath):
 				sys.stderr.write(".")
 				#print "already processed: ",apDisplay.short(imgdata['filename'])
