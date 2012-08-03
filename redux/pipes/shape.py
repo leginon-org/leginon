@@ -34,6 +34,10 @@ class Shape(Pipe):
 			else:
 				binfactors.append(input.shape[i] / shape[i])
 
+			# bin <1 not allowed (when output bigger than input)
+			if binfactors[i] == 0:
+				binfactors[i] = 1
+
 			# check original shape is divisible by new shape
 			if input.shape[i] % shape[i]:
 				# binning alone will not work, try initial bin, then interp
