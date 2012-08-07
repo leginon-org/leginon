@@ -254,6 +254,8 @@ def getPixelSize(imgdata):
 	use image data object to get pixel size
 	multiplies by binning and also by 1e10 to return image pixel size in angstroms
 	shouldn't have to lookup db already should exist in imgdict
+
+	return image pixel size in Angstroms
 	"""
 	pixelsizeq = leginon.leginondata.PixelSizeCalibrationData()
 	pixelsizeq['magnification'] = imgdata['scope']['magnification']
