@@ -116,7 +116,11 @@ if ($ctfrundatas) {
 		}
 
 		//echo "ctfdata".print_r($ctfdata);
-		$fields = array('defocus1', 'defocus2', 'confidence', 'confidence_d', 'angle_astigmatism', 'amplitude_contrast', 'resolution_80_percent', 'resolution_50_percent');
+		$fields = array('defocus1', 'defocus2', 
+			'confidence', 'confidence_d', 
+			'confidence_30_10', 'confidence_5_peak',  
+			'angle_astigmatism', 'amplitude_contrast',  
+			'resolution_80_percent', 'resolution_50_percent');
 		$stats = $ctf->getCTFStats($fields, $sessionId, $ctfrunid);
 		$display_ctf=false;
 		foreach($stats as $field=>$data) {
