@@ -14,6 +14,7 @@ from appionlib import apParam
 from appionlib import apMatlab
 from appionlib import apDisplay
 from appionlib import apDatabase
+from appionlib import appiondata
 from appionlib import appionLoop2
 from appionlib import apInstrument
 from appionlib.apCtf import ctfdb
@@ -147,21 +148,16 @@ class aceLoop(appionLoop2.AppionLoop):
 
 	#=====================
 	def commitToDatabase(self, imgdata):
-		### PART 0: check if ACE was successful
-		if self.ctfvalues[0] == -1:
-			return False
-		# test for failed ACE estimation
-
 		### PART 1: insert ACE run parameters
 		if self.acerunq is None:
-			insertACErunParams()
+			self.insertACErunParams()
 
 		ctfinsert.validateAndInsertCTFData(imgdata, self.ctfvalues, self.acerunq, self.params['rundir'])
 
 		return
 
 	#=====================
-	def insertACErunParams():
+	def insertACErunParams(self):
 		# first create an aceparam object
 		aceparamq = appiondata.ApAceParamsData()
 		for key in aceparamq.keys():
@@ -179,7 +175,7 @@ class aceLoop(appionLoop2.AppionLoop):
 		self.acerunq['session'] = self.getSessionData()
 
 		# see if acerun already exists in the database
-		acerundatas = runq.query(results=1)
+		acerundatas = self.acerunq.query(results=1)
 		if (acerundatas):
 			if not (acerundatas[0]['aceparams'] == aceparamq):
 				for i in acerundatas[0]['aceparams']:
