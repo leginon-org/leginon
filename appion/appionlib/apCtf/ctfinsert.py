@@ -12,7 +12,7 @@ from appionlib import apDisplay
 from appionlib import appiondata
 from appionlib.apCtf import ctfdisplay
 
-debug = True
+debug = False
 
 #====================
 #====================
