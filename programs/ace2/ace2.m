@@ -282,7 +282,7 @@ int main (int argc, char **argv) {
 	fprintf(stderr,"\t\t\tDONE, Total Time: %2.2f\n",CPUTIME-t0);
 	
 	if ( isnan([ellipse rotation]) || isinf([ellipse rotation]) ) [ellipse setRotation:0.0];
-	f64 astigangle = [ellipse rotation]/DEG;
+	f64 astigangle = [ellipse rotation]*DEG;
 	// if astig < 1 Angstrom, set angle to zero
 	if ( fabs(df2 - df1)*1e10 < 1) {
 		astigangle = 0.0;
