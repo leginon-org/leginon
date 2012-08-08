@@ -417,6 +417,8 @@ if (SAMPLE_TRACK) {
 		$experiments[$k]['sessionid']=$info['SessionId'];
 		$experiments[$k]['user']=$info['User'];
 		$experiments[$k]['description']=$info['Purpose'];
+		$experiments[$k]['Image path']=$info['Image path'];
+		
 
 		if ($numimg > 0)
 			$experiments[$k]['totalimg']=$numimg;
@@ -478,7 +480,8 @@ $columns=array(
 	'totaltime'=>'Total Duration',
 	'numrecons'=>'Reconstructions',
 	'numruns'=>'Processing Runs',
-	'lastrundate'=>'Last Run'
+	'lastrundate'=>'Last Run',
+	'Image path'=>'Image Path'
 	);
 if ($share) {
 	$columns['share']="Sharing";
