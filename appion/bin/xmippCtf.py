@@ -19,7 +19,7 @@ from appionlib import appiondata
 from appionlib import appionLoop2
 from appionlib import apInstrument
 from appionlib.apCtf import ctfdb
-from appionlib.apCtf import ctfdisplay
+from appionlib.apCtf import ctfinsert
 
 class ctfEstimateLoop(appionLoop2.AppionLoop):
 	"""
@@ -66,6 +66,8 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 
 	#======================
 	def processImage(self, imgdata):
+		self.ctfvalues = {}
+	
 		### convert image to spider
 		spiderimage = apDisplay.short(imgdata['filename'])+".spi"
 		spider.write(imgdata['image'], spiderimage)
@@ -106,9 +108,6 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 		#maxres = apix/maxfreq => maxfreq = apix/maxres
 		maxfreq = apix/self.params['resmax']
 		inputstr += ("max_freq=%.3f\n"%(maxfreq))
-
-
-
 
 		### CTF input parameters from database
 		inputstr += ("\n")
@@ -156,6 +155,10 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 		for line in lines[-50:]:
 			if "--->" in line:
 				lastline = line
+		if not "--->" in lastline:
+			apDisplay.printWarning("Xmipp CTF failed")
+			self.badprocess = True
+			return
 		bits = lastline.split('--->')
 		confidence = float(bits[1])
 		score = round(math.sqrt(1-confidence), 5)
@@ -201,27 +204,15 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 			'defocusinit':	nominal,
 			'confidence_d': score,
 			'cs': self.params['cs'],
+			'volts': kvolts*1000.0,
 		}
-		powerspec, plots, conf = ctfdisplay.makeCtfImages(imgdata, self.ctfvalues)
-		if conf > max(ctfvalue['confidence_d'], ctfvalue['confidence']):
-			apDisplay.printColor("Confidence IMPROVED", "green")
-		self.ctfvalues['confidence'] = conf
-		shutil.move(powerspec, "opimages/"+powerspec)
-		shutil.move(plots, "opimages/"+plots)
-		self.ctfvalues['graph1'] = "opimages/"+powerspec
-		self.ctfvalues['graph2'] = "opimages/"+plots
-
-		print self.ctfvalues
 
 		return
 
 	#======================
 	def commitToDatabase(self, imgdata):
-		print ""
-		#ctfdb.insertAceParams(imgdata, self.params)
 		self.insertXmippCtfRun(imgdata)
-		#ctfdb.commitCtfValueToDatabase(imgdata, self.matlab, self.ctfvalue, self.params)
-		self.insertCtfValues(imgdata)
+		ctfinsert.validateAndInsertCTFData(imgdata, self.ctfvalues, self.ctfrun, self.params['rundir'])
 
 	#======================
 	def insertXmippCtfRun(self, imgdata):
@@ -258,26 +249,6 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 		runq['xmipp_ctf_params'] = paramq
 		runq.insert()
 		self.ctfrun = runq
-		return True
-
-	#======================
-	def insertCtfValues(self, imgdata):
-		if self.ctfvalues is None:
-			apDisplay.printWarning("ctf estimation failed to find any values")
-			return False
-
-		print "Committing ctf parameters for",apDisplay.short(imgdata['filename']), "to database."
-		ctfq = appiondata.ApCtfData()
-		ctfq['acerun'] = self.ctfrun
-		ctfq['image']  = imgdata
-		ctfq['cs']     = self.params['cs']
-
-		for key in self.ctfvalues.keys():
-			if key in ctfq.keys():
-				ctfq[key] = self.ctfvalues[key]
-			else:
-				apDisplay.printMsg("Skipping ctfvalue key, %s"%(key))
-		ctfq.insert()
 		return True
 
 	#======================

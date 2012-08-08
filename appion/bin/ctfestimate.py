@@ -19,7 +19,7 @@ from appionlib import appiondata
 from appionlib import appionLoop2
 from appionlib import apInstrument
 from appionlib.apCtf import ctfdb
-from appionlib.apCtf import ctfdisplay
+from appionlib.apCtf import ctfinsert
 
 class ctfEstimateLoop(appionLoop2.AppionLoop):
 	"""
@@ -36,6 +36,7 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 
 	#======================
 	def preLoopFunctions(self):
+		self.ctfrun = None
 		self.powerspecdir = os.path.join(self.params['rundir'], "opimages")
 		apParam.createDirectory(self.powerspecdir, warning=False)
 		self.logdir = os.path.join(self.params['rundir'], "logfiles")
@@ -138,7 +139,7 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 		"""
 
 		#get Defocus in Angstroms
-		self.ctfrun = None
+		self.ctfvalues = {}
 		defocus = abs(imgdata['scope']['defocus']*-1.0e10)
 		bestdef = abs(ctfdb.getBestDefocusForImage(imgdata, msg=True)*1.0e10)
 		# dstep is the physical detector pixel size
@@ -176,7 +177,7 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 			apDisplay.printWarning("Defocus minimum is less than zero")
 			inputparams['defmin'] = inputparams['defstep']
 		inputparams['defmax']= round(bestdef+defrange, 1) #in meters
-		apDisplay.printColor("Defocus search range: %.2f um to %.2f um"
+		apDisplay.printColor("Defocus search range: %.1f A to %.1f A"
 			%(inputparams['defmin'], inputparams['defmax']), "cyan")
 		### create local link to image
 		if not os.path.exists(inputparams['input']):
@@ -262,15 +263,9 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 					'nominal':	defocus*1e-10,
 					'defocusinit':	bestdef*1e-10,
 					'cs': self.params['cs'],
-					'kv': imgdata['scope']['high tension']/1000.0,
+					'volts': imgdata['scope']['high tension'],
 					'confidence_d': round(math.sqrt(abs(float(bits[numvals-3]))), 5)
 				}
-				powerspec, plots, conf = ctfdisplay.makeCtfImages(imgdata, self.ctfvalues)
-				shutil.move(powerspec, "opimages/"+powerspec)
-				shutil.move(plots, "opimages/"+plots)
-				self.ctfvalues['graph1'] = "opimages/"+powerspec
-				self.ctfvalues['graph2'] = "opimages/"+plots
-				self.ctfvalues['confidence'] = conf
 				if self.params['ctftilt'] is True:
 					self.ctfvalues['tilt_axis_angle']=float(bits[3])
 					self.ctfvalues['tilt_angle']=float(bits[4])
@@ -302,19 +297,16 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 		powspec = apImage.mrcToArray(inputparams['output'])
 		apImage.arrayToJpeg(powspec, outputjpg)
 		shutil.move(inputparams['output'], os.path.join(self.powerspecdir, inputparams['output']))
-		#apFile.removeFile(inputparams['input'])
+		self.ctfvalues['graph1'] = outputjpg
 
-		#sys.exit(1)
+		#apFile.removeFile(inputparams['input'])
 
 		return
 
 	#======================
 	def commitToDatabase(self, imgdata):
-		print ""
-		#ctfdb.insertAceParams(imgdata, self.params)
 		self.insertCtfTiltRun(imgdata)
-		#ctfdb.commitCtfValueToDatabase(imgdata, self.matlab, self.ctfvalue, self.params)
-		self.insertCtfValues(imgdata)
+		ctfinsert.validateAndInsertCTFData(imgdata, self.ctfvalues, self.ctfrun, self.params['rundir'])
 
 	#======================
 	def insertCtfTiltRun(self, imgdata):
@@ -353,27 +345,6 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 		runq['ctftilt_params'] = paramq
 		runq.insert()
 		self.ctfrun = runq
-		return True
-
-	#======================
-	def insertCtfValues(self, imgdata):
-		if self.ctfvalues is None:
-			apDisplay.printWarning("ctf estimation failed to find any values")
-			return False
-
-		apDisplay.printMsg("Committing ctf parameters for "+apDisplay.short(imgdata['filename'])+" to database.")
-		ctfq = appiondata.ApCtfData()
-		ctfq['acerun'] = self.ctfrun
-		ctfq['image']      = imgdata
-		ctfq['graph3']     = os.path.join("opimages", self.lastjpg)
-		ctfq['cs']     = self.params['cs']
-
-		for key in self.ctfvalues.keys():
-			if key in ctfq.keys():
-				ctfq[key] = self.ctfvalues[key]
-			else:
-				apDisplay.printMsg("Skipping ctfvalue key, %s"%(key))
-		ctfq.insert()
 		return True
 
 	#======================

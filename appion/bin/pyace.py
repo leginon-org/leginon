@@ -2,43 +2,40 @@
 
 #pythonlib
 import os
-import sys
 import re
+import sys
 import math
-import cPickle
 import time
+import shutil
+import cPickle
 #appion
-from appionlib import appionLoop2
 from appionlib import apImage
+from appionlib import apParam
+from appionlib import apMatlab
 from appionlib import apDisplay
 from appionlib import apDatabase
-from appionlib.apCtf import ctfdb
-from appionlib import apMatlab
-from appionlib import apParam
+from appionlib import appionLoop2
 from appionlib import apInstrument
-
-"""
-try:
-	import pymat
-except:
-	apDisplay.environmentError()
-	raise
-"""
+from appionlib.apCtf import ctfdb
+from appionlib.apCtf import ctfinsert
 try:
 	import mlabraw as pymat
 except:
 	print "Matlab module did not get imported"
 
 class aceLoop(appionLoop2.AppionLoop):
+	#=====================
 	def setProcessingDirName(self):
 		self.processdirname = "ace"
 
+	#=====================
 	def preLoopFunctions(self):
+		self.powerspecdir = os.path.join(self.params['rundir'], "opimages")
+		apParam.createDirectory(self.powerspecdir, warning=False)
+		self.acerunq = None
 		self.params['matdir']         = os.path.join(self.params['rundir'],"matfiles")
-		self.params['opimagedir']     = os.path.join(self.params['rundir'],"opimages")
 		self.params['tempdir']    = os.path.join(self.params['rundir'],"temp")
 		apParam.createDirectory(os.path.join(self.params['matdir']), warning=False)
-		apParam.createDirectory(os.path.join(self.params['opimagedir']), warning=False)
 		apParam.createDirectory(os.path.join(self.params['tempdir']), warning=False)
 
 		if self.params['sessionname'] is not None:
@@ -61,10 +58,12 @@ class aceLoop(appionLoop2.AppionLoop):
 			raise
 		apMatlab.setAceConfig(self.matlab, self.params)
 
+	#=====================
 	def postLoopFunctions(self):
 		pymat.close(self.matlab)
 		ctfdb.printCtfSummary(self.params, self.imgtree)
 
+	#=====================
 	def reprocessImage(self, imgdata):
 		"""
 		Returns 
@@ -84,7 +83,10 @@ class aceLoop(appionLoop2.AppionLoop):
 		else:
 			return True
 
+	#=====================
 	def processImage(self, imgdata):
+		self.ctfvalues = {}
+
 		# RESTART MATLAB EVERY 500 IMAGES OR IT RUNS OUT OF MEMORY
 		if self.stats['count'] % 500 == 0:
 			apDisplay.printWarning("processed 500 images. restarting matlab...")
@@ -105,13 +107,96 @@ class aceLoop(appionLoop2.AppionLoop):
 
 		apMatlab.setScopeParams(self.matlab, scopeparams)
 		### RUN ACE
-		self.ctfvalue = apMatlab.runAce(self.matlab, imgdata, self.params)
+		self.ctfvalues = {}
+		acevalues = apMatlab.runAce(self.matlab, imgdata, self.params)
 
+		#check if ACE was successful
+		if acevalues[0] == -1:
+			self.badprocess = True
+			return False
 
+		acevaluelist = ('defocus1','defocus2','defocusinit','amplitude_contrast','angle_astigmatism',
+			'noise1','noise2','noise3','noise4','envelope1','envelope2','envelope3','envelope4',
+			'lowercutoff','uppercutoff','snr','confidence','confidence_d')
+		for i in range(len(acevaluelist)):
+			self.ctfvalues[ acevaluelist[i] ] = acevalues[i]
+
+		### override the astig angle to be in degrees
+		self.ctfvalues['angle_astigmatism'] = math.degrees(self.ctfvalues['angle_astigmatism'])
+		self.ctfvalues['mat_file'] = imgdata['filename']+".mrc.mat"
+		self.ctfvalues['cs'] = scopeparams['cs']
+		self.ctfvalues['volts'] = scopeparams['kv']*1000.0
+
+		### RENAME/MOVE OUTPUT FILES
+		imfile1 = os.path.join(self.params['tempdir'], "im1.png")
+		imfile2 = os.path.join(self.params['tempdir'], "im2.png")
+		opimfile1 = imgdata['filename']+".mrc1.png"
+		opimfile2 = imgdata['filename']+".mrc2.png"
+		opimfilepath1 = os.path.join(self.powerspecdir, opimfile1)
+		opimfilepath2 = os.path.join(self.powerspecdir, opimfile2)
+		if os.path.isfile(imfile1):
+			shutil.copyfile(imfile1, opimfilepath1)
+		else:
+			apDisplay.printWarning("imfile1 is missing, %s"%(imfile1))
+		if os.path.isfile(imfile2):
+			shutil.copyfile(imfile2, opimfilepath2)
+		else:
+			apDisplay.printWarning("imfile2 is missing, %s"%(imfile2))
+		self.ctfvalues['graph1'] = opimfilepath1
+		self.ctfvalues['graph2'] = opimfilepath2
+
+	#=====================
 	def commitToDatabase(self, imgdata):
-		ctfdb.insertAceParams(imgdata, self.params)
-		ctfdb.commitCtfValueToDatabase(imgdata, self.matlab, self.ctfvalue, self.params)
+		### PART 0: check if ACE was successful
+		if self.ctfvalues[0] == -1:
+			return False
+		# test for failed ACE estimation
 
+		### PART 1: insert ACE run parameters
+		if self.acerunq is None:
+			insertACErunParams()
+
+		ctfinsert.validateAndInsertCTFData(imgdata, self.ctfvalues, self.acerunq, self.params['rundir'])
+
+		return
+
+	#=====================
+	def insertACErunParams():
+		# first create an aceparam object
+		aceparamq = appiondata.ApAceParamsData()
+		for key in aceparamq.keys():
+			if key in self.params:
+				aceparamq[key] = self.params[key]
+
+		# if nominal df is set, save override df to database, else don't set
+		if self.params['nominal']:
+			dfnom = abs(self.params['nominal'])
+			aceparamq['df_override'] = dfnom
+
+		# create an acerun object
+		self.acerunq = appiondata.ApAceRunData()
+		self.acerunq['name'] = self.params['runname']
+		self.acerunq['session'] = self.getSessionData()
+
+		# see if acerun already exists in the database
+		acerundatas = runq.query(results=1)
+		if (acerundatas):
+			if not (acerundatas[0]['aceparams'] == aceparamq):
+				for i in acerundatas[0]['aceparams']:
+					if acerundatas[0]['aceparams'][i] != aceparamq[i]:
+						apDisplay.printWarning("the value for parameter '"+str(i)+"' is different from before")
+				apDisplay.printError("All parameters for a single ACE run must be identical! \n"+\
+							  "please check your parameter settings.")
+
+		#create path
+		self.acerunq['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
+		self.acerunq['hidden'] = False
+		self.acerunq['aceparams'] = aceparamq
+
+		# if no run entry exists, insert new run entry into db
+		self.acerunq.insert()
+
+	#=====================
 	def setupParserOptions(self):
 		self.parser.add_option("--edgethcarbon", dest="edgethcarbon", type="float", default=0.8,
 			help="edge carbon, default=0.8", metavar="#")
@@ -142,6 +227,7 @@ class aceLoop(appionLoop2.AppionLoop):
 		self.parser.add_option("--xvfb", dest="xvfb", default=False,
 			action="store_true", help="xvfb")
 
+	#=====================
 	def checkConflicts(self):		
 		if self.params['nominal'] is not None and (self.params['nominal'] > 0 or self.params['nominal'] < -15e-6):
 			apDisplay.printError("Nominal should be of the form nominal=-1.2e-6 for -1.2 microns")

@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import sys
 import time
 import math
 import numpy
@@ -38,7 +39,7 @@ def getFieldSize(shape):
 	return fieldsize
 
 #=============
-def power(image, pixelsize, fieldsize=None, mask_radius=2):
+def power(image, pixelsize, fieldsize=None, mask_radius=1):
 	"""
 	computes power spectra of image using sub-field averaging
 
@@ -56,52 +57,66 @@ def power(image, pixelsize, fieldsize=None, mask_radius=2):
 
 	t0 = time.time()
 	xsize, ysize = image.shape
-	xstep = int(math.floor(xsize/float(fieldsize*2)))
-	ystep = int(math.floor(ysize/float(fieldsize*2)))
+	xnumstep = int(math.floor(xsize/float(fieldsize)))*2-1
+	ynumstep = int(math.floor(ysize/float(fieldsize)))*2-1
 	f = fieldsize
 	powersum = numpy.zeros((fieldsize,fieldsize))
 	#envelop = numpy.ones((fieldsize,fieldsize)) 
 	envelop = twodHann(fieldsize)
 	count = 0
-	for i in range(xstep):
-		for j in range(ystep):
+	psdlist = []
+	sys.stderr.write("Computing power spectra")
+	for i in range(xnumstep):
+		for j in range(ynumstep):
 			count += 1
-			x1 = f*i
-			x2 = f*(i+1)
-			y1 = f*j
-			y2 = f*(j+1)
-			#print "%03d: %d:%d, %d:%d"%(count, x1, x2, y1, y2)
+			x1 = f*i/2
+			x2 = x1 + f
+			y1 = f*j/2
+			y2 = y1 + f
+			if debug is True:
+				print "%03d: %d:%d, %d:%d"%(count, x1, x2, y1, y2)
+			else:
+				sys.stderr.write(".")
 			cutout = image[x1:x2, y1:y2]
 			powerspec = imagefun.power(cutout*envelop, mask_radius)
-			powersum += powerspec
+			psdlist.append(powerspec)
 	if xsize%fieldsize > fieldsize*0.1:
-		for j in range(ystep):
+		for j in range(ynumstep):
 			count += 1
 			x1 = xsize-f
 			x2 = xsize
-			y1 = f*j
-			y2 = f*(j+1)
-			#print "%03d: %d:%d, %d:%d"%(count, x1, x2, y1, y2)
+			y1 = f*j/2
+			y2 = y1 + f
+			if debug is True:
+				print "%03d: %d:%d, %d:%d"%(count, x1, x2, y1, y2)
+			else:
+				sys.stderr.write(".")
 			cutout = image[x1:x2, y1:y2]
 			powerspec = imagefun.power(cutout*envelop, mask_radius)
-			powersum += powerspec
+			psdlist.append(powerspec)
 	if ysize%fieldsize > fieldsize*0.1:
-		for i in range(xstep):
+		for i in range(xnumstep):
 			count += 1
-			x1 = f*i
-			x2 = f*(i+1)
+			x1 = f*i/2
+			x2 = x1 + f
 			y1 = ysize-f
 			y2 = ysize
-			#print "%03d: %d:%d, %d:%d"%(count, x1, x2, y1, y2)
+			if debug is True:
+				print "%03d: %d:%d, %d:%d"%(count, x1, x2, y1, y2)
+			else:
+				sys.stderr.write(".")
 			cutout = image[x1:x2, y1:y2]
 			powerspec = imagefun.power(cutout*envelop, mask_radius)
-			powersum += powerspec
+			psdlist.append(powerspec)
+	sys.stderr.write("\n")
 	freq = 1.0/(powerspec.shape[0]*pixelsize)
 
-	poweravg = powersum/float(count)
+	#poweravg = numpy.array(psdlist).mean(0)
 	if debug is True:
-		apDisplay.printMsg("fieldsize %d with %d images complete in %s"
-			%(fieldsize, count, apDisplay.timeString(time.time()-t0)))
+		print "Computing median of power spectra series"
+	poweravg = numpy.median(psdlist, axis=0)
+	apDisplay.printMsg("Compute PSD with fieldsize %d and %d images complete in %s"
+		%(fieldsize, count, apDisplay.timeString(time.time()-t0)))
 	return poweravg, freq
 
 #===================

@@ -174,19 +174,18 @@ def powerSpectraToOuterResolution(image, outerresolution, apix):
 		print "Computing power spectra..."
 	fieldsize = ctfpower.getFieldSize(image.shape)
 	binning = max(image.shape)/fieldsize
-	#data = imagefun.power(image, mask_radius=2)
-	data, freq = ctfpower.power(image, apix, fieldsize, mask_radius=2)
-	newapix = 2.0/(freq*data.shape[0])
+	#data = imagefun.power(image, mask_radius=1)
+	data, freq = ctfpower.power(image, apix, fieldsize, mask_radius=1)
 	#data = numpy.exp(data)
 	data = data.astype(numpy.float64)
-	powerspec, trimapix = trimPowerSpectraToOuterResolution(data, outerresolution, newapix)
+	powerspec = trimPowerSpectraToOuterResolution(data, outerresolution, freq)
 
 	return powerspec, freq
 
 #============
-def trimPowerSpectraToOuterResolution(powerspec, outerresolution, apix):
+def trimPowerSpectraToOuterResolution(powerspec, outerresolution, freq):
 	"""
-	apix and outerresolution must have same units (e.g., Anstroms or meters)
+	freq and outerresolution must have same units (e.g., Anstroms or meters)
 
 		resolution = (# columns) * apix / (pixel distance from center)
 	therefore:
@@ -194,21 +193,16 @@ def trimPowerSpectraToOuterResolution(powerspec, outerresolution, apix):
 	"""
 	if debug is True:
 		print "trimPowerSpectraToOuterResolution()"
-	#initresolution = apix*2
-	freq = 2./(apix*powerspec.shape[0])
-	initresolution = apix * 2
+	imagewidth = powerspec.shape[0]
+	initmaxres = 2.0/(freq*imagewidth)
 	if debug is True:
-		print "__Pixel size", apix
 		print "__Image shape   %d x %d"%(powerspec.shape[0], powerspec.shape[1])
 		print "__Frequeny   %.3e"%(freq)
 		print "__Resolution request   %.3f"%(outerresolution)
-		print "__Init max resolution  %.3f"%(initresolution)
-	if initresolution > outerresolution:
+		print "__Init max resolution  %.3f"%(initmaxres)
+	if initmaxres > outerresolution:
 		apDisplay.printError("Requested resolution (%.3f) is not available (%.3f)"
-			%(outerresolution, initresolution))
-	#pixrad = # of pixels from center
-	#res = [imagewidth*apix]/pixrad = 1/(freq * pixrad)
-	# ==> pixrad = 1/(freq*res)
+			%(outerresolution, initmaxres))
 	pixellimitradius = int(math.ceil(1./(freq * outerresolution)))
 	goodpixellimitradius = apPrimeFactor.getNextEvenPrime(pixellimitradius)
 	finalres = 1./(freq * goodpixellimitradius)
@@ -228,12 +222,7 @@ def trimPowerSpectraToOuterResolution(powerspec, outerresolution, apix):
 	if debug is True:
 		print "original image size %d x %d"%(powerspec.shape)
 		print "trimmed  image size %d x %d"%(trimpowerspec.shape)
-	trimapix = apix * powerspec.shape[0] / float(trimpowerspec.shape[0])
-	if debug is True:
-		print "original pixel size %.3f"%(apix)
-		print "trimmed  pixel size %.3f"%(trimapix)
-	trimfreq = powerspec.shape[0]*trimapix
-	return trimpowerspec, trimapix
+	return trimpowerspec
 
 #============
 def draw_ellipse_to_file(jpgfile, imgarray, major, minor, angle, center=None, 

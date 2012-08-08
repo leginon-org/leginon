@@ -9,7 +9,7 @@ from appionlib.apCtf import ctftools
 debug = False
 
 #===================
-def generateCTF1d(radii=None, focus=1.0e-6, cs=2e-3, volts=120000, ampconst=0.07, failParams=True):
+def generateCTF1d(radii=None, focus=1.0e-6, cs=2e-3, volts=120000, ampconst=0.07, failParams=False):
 	"""
 	calculates a CTF function based on the input details
 
@@ -200,7 +200,7 @@ def generateRadial2d(shape, xfreq, yfreq):
 
 #===================
 def checkParams(focus1=-1.0e-6, focus2=-1.0e-6, pixelsize=1.5e-10, 
-	cs=2e-3, volts=120000, ampconst=0.07, failParams=True):
+	cs=2e-3, volts=120000, ampconst=0.07, failParams=False):
 	if debug is True:
 		print "  Defocus1 %.2f microns (underfocus is positive)"%(focus1*1e6)
 		if focus1 != focus2:

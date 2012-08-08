@@ -116,12 +116,7 @@ if ($ctfrundatas) {
 		}
 
 		//echo "ctfdata".print_r($ctfdata);
-		if ($ctfdata['stig']!=1 && $ctfdata!=0) {
-			$fields = array('defocus1', 'confidence', 'confidence_d', 'amplitude_contrast');
-		}
-		else {
-			$fields = array('defocus1', 'defocus2', 'confidence', 'angle_astigmatism', 'amplitude_contrast');
-		}
+		$fields = array('defocus1', 'defocus2', 'confidence', 'confidence_d', 'angle_astigmatism', 'amplitude_contrast', 'resolution_80_percent', 'resolution_50_percent');
 		$stats = $ctf->getCTFStats($fields, $sessionId, $ctfrunid);
 		$display_ctf=false;
 		foreach($stats as $field=>$data) {
@@ -138,7 +133,7 @@ if ($ctfrundatas) {
 				$stats[$field][$k]['img'] = $cdf;
 			}
 		}
-		$display_keys = array ( 'preset', 'nb', 'min', 'max', 'avg', 'stddev');
+		$display_keys = array ( 'nb', 'min', 'max', 'avg', 'stddev');
 		if ($display_ctf) {
 			$popupstr = "<a href=\"javascript:infopopup(";
 			foreach ($aceparamsfields as $param) {
@@ -152,7 +147,7 @@ if ($ctfrundatas) {
 			echo "<table cellspacing='3'>";
 
 			echo "<tr>";
-				echo "<td>\n";
+				echo "<td colspan='10'>\n";
 				$j = "";
 				if ($ctfdata['hidden'] == 1) {
 					$j.= " <font color='#cc0000'>HIDDEN</font>\n";
@@ -168,16 +163,20 @@ if ($ctfrundatas) {
 			echo "</tr>\n";
 
 			echo "<tr bgcolor='#ffffff'>\n";
-				echo "<td>Path:&nbsp;<i>".$ctfdata['path']."</i></td>\n";
+				echo "<td>Time:</td><td><i>".$ctfdata['DEF_timestamp']."</i></td>\n";
+			echo "</tr>\n";
+
+			echo "<tr bgcolor='#ffffff'>\n";
+				echo "<td>Path:</td><td><i>".$ctfdata['path']."</i></td>\n";
 			echo "</tr>\n";
 
 			if ($ctfdata['resamplefr']) {
 				echo "<tr bgcolor='#ffffff'>\n";
-					echo "<td>Resample Freq:&nbsp;".$ctfdata['resamplefr']."</td>\n";
+					echo "<td>Resample Freq</td><td>".$ctfdata['resamplefr']."</td>\n";
 				echo "</tr>\n";
 			} elseif ($ctfdata['bin']) {
 				echo "<tr bgcolor='#ffffff'>\n";
-					echo "<td>Binning:&nbsp;".$ctfdata['bin']."</td>\n";
+					echo "<td>Binning</td><td>".$ctfdata['bin']."</td>\n";
 				echo "</tr>\n";
 			}
 

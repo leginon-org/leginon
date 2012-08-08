@@ -9,7 +9,6 @@ import scipy.ndimage
 import scipy.interpolate
 from appionlib import apDisplay
 
-
 ### remove warning about polyfit
 import warnings
 warnings.simplefilter('ignore', numpy.RankWarning)
@@ -161,6 +160,7 @@ class CtfNoise(object):
 		z = numpy.polyfit(numpy.sqrt(xdata), ctfdata, 2)
 		if self.debug is True:
 			print "poly fit: sqrt(x),y = ", z
+
 		initfitparams = [z[2], z[1], z[0]]
 
 		nosqfitparams = self.runMinimization(xdata, ctfdata, initfitparams, 
@@ -180,6 +180,7 @@ class CtfNoise(object):
 		z = numpy.polyfit(xdata, ctfdata, 1)
 		if self.debug is True:
 			print "poly fit: x,y = ", z
+
 		initfitparams = [z[1], z[0]]
 
 		linearfitparams = self.runMinimization(xdata, ctfdata, initfitparams, 
@@ -508,9 +509,9 @@ class CtfNoise(object):
 			if self.debug is True:
 				print "constrained above function"
 			contraintFunction = self.modelConstFunAbove
-			filterctfdata = scipy.ndimage.maximum_filter(ctfdata, size=20)
+			filterctfdata = scipy.ndimage.maximum_filter(ctfdata, size=2)
 			for i in range(1):
-				filterctfdata = (filterctfdata + scipy.ndimage.maximum_filter(filterctfdata, size=20))/2.0
+				filterctfdata = (filterctfdata + scipy.ndimage.maximum_filter(filterctfdata, size=2))/2.0
 			#firstmax = filterctfdata[0:250].max()
 			#filterctfdata = numpy.where(filterctfdata>firstmax, firstmax, filterctfdata)
 			#filterctfdata = self.upwardLeftMonotonicFilter(ctfdata)
@@ -518,9 +519,9 @@ class CtfNoise(object):
 			if self.debug is True:
 				print "constrained below function"
 			contraintFunction = self.modelConstFunBelow
-			filterctfdata = scipy.ndimage.minimum_filter(ctfdata, size=20)
+			filterctfdata = scipy.ndimage.minimum_filter(ctfdata, size=2)
 			for i in range(1):
-				filterctfdata = (filterctfdata + scipy.ndimage.minimum_filter(filterctfdata, size=20))/2.0
+				filterctfdata = (filterctfdata + scipy.ndimage.minimum_filter(filterctfdata, size=2))/2.0
 			#firstmin = filterctfdata[0:250].min()
 			#filterctfdata = numpy.where(filterctfdata>firstmin, firstmin, filterctfdata)
 			#filterctfdata = self.downwardRightMonotonicFilter(ctfdata)
@@ -546,9 +547,11 @@ class CtfNoise(object):
 		### lowest is best
 		minvalindex = numpy.argmin(valuelist)
 		constrainval = contraintFunction(fitparamslist[minvalindex], xdata, filterctfdata)
-		while abs(constrainval) > 0.1:
-			apDisplay.printWarning("Constraint violation")
-			valuelist[minvalindex] = 1e10
+		valuelist = numpy.array(valuelist)
+		minconval = -0.3
+		while constrainval < minconval and valuelist.min() < 1e6:
+			apDisplay.printMsg("Constraint violation: %.3f < %.3f"%(constrainval, minconval))
+			valuelist[minvalindex] *= 1e10
 			minvalindex = numpy.argmin(valuelist)
 			constrainval = contraintFunction(fitparamslist[minvalindex], xdata, filterctfdata)
 		if self.debug is True:
@@ -621,7 +624,9 @@ class CtfNoise(object):
 
 		return bestfitparams
 
-
+#================================================
+#================================================
+#================================================
 def peakExtender(raddata, rotdata, extrema, extrematype="below"):
 	"""
 	raddata - x data in inverse Angstroms
@@ -629,7 +634,8 @@ def peakExtender(raddata, rotdata, extrema, extrematype="below"):
 	extrema - numpy array of peak or valley locations in inverse Angstroms
 	extrematype - type of extrema, must be either below or above
 	"""
-
+	t0 = time.time()
+	apDisplay.printMsg("starting peak extension")
 	extremeindices = numpy.searchsorted(raddata, extrema)
 
 	raddatasq = raddata**2
@@ -638,17 +644,18 @@ def peakExtender(raddata, rotdata, extrema, extrematype="below"):
 	ydata = []
 	minx = extremeindices[0]
 	for i in range(extremeindices.shape[0]-1):
-		if extremeindices[i+1] > raddata.shape[0]-2:
-			## no more data
+		if extremeindices[i] > raddata.shape[0]-2:
 			break
+		if extremeindices[i+1] > raddata.shape[0]-1:
+			extremeindices[i+1] = raddata.shape[0]-1
 		eindex = extremeindices[i]
 		if i == 0:
 			preveindex = int(eindex/2)
 		else:
 			preveindex = extremeindices[i-1]
 		nexteindex = extremeindices[i+1]
-		eindex1 = int(eindex - abs(preveindex-eindex)/3.0)
-		eindex2 = int(eindex + abs(nexteindex-eindex)/3.0)
+		eindex1 = int(eindex - abs(preveindex-eindex)/2.0)
+		eindex2 = int(eindex + abs(nexteindex-eindex)/2.0)
 
 		values = rotdata[eindex1:eindex2]
 		if extrematype is "below":
@@ -660,13 +667,26 @@ def peakExtender(raddata, rotdata, extrema, extrematype="below"):
 		xdata.append(raddatasq[eindex])
 		ydata.append(value)
 
+	if len(xdata) < 2:
+		#not enough indices
+		if extrematype is "below":
+			return numpy.zeros(raddata.shape)
+		elif extrematype is "above":		
+			return numpy.ones(raddata.shape)
+
 	func = scipy.interpolate.interp1d(xdata, ydata, kind='slinear')
 	extremedata = func(raddatasq[minx:maxx])
 	if extrematype is "below":
-		startvalue = rotdata[int(minx*0.5):minx].min()
+		if minx < 3:
+			startvalue = 0.0
+		else:
+			startvalue = rotdata[int(minx*0.5):minx].min()
 		endvalue = rotdata[maxx:].min()
 	elif extrematype is "above":
-		startvalue = rotdata[int(minx*0.5):minx].max()
+		if minx < 3:
+			startvalue = 1.0
+		else:
+			startvalue = rotdata[int(minx*0.5):minx].max()
 		endvalue = rotdata[maxx:].max()
 
 	#print startvalue, endvalue
@@ -676,11 +696,8 @@ def peakExtender(raddata, rotdata, extrema, extrematype="below"):
 
 	extremedata = numpy.hstack( (startdata, extremedata, enddata) )
 
+	apDisplay.printColor("Peak Extension Complete in %s"
+		%(apDisplay.timeString(time.time()-t0)), "cyan")
+
 	return extremedata
-
-
-
-
-
-
 

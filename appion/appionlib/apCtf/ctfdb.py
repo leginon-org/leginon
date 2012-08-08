@@ -7,10 +7,10 @@ import sys
 import math
 import shutil
 #appion
-from appionlib import appiondata
 from appionlib import apParam
 from appionlib import apDisplay
 from appionlib import apDatabase
+from appionlib import appiondata
 
 ####
 # This is a database connections file with no file functions
@@ -26,35 +26,6 @@ def getNumCtfRunsFromSession(sessionname):
 	if not ctfrundatas:
 		return 0
 	return len(ctfrundatas)
-
-#=====================
-def commitCtfValueToDatabase(imgdict, matlab, ctfvalue, params):
-	imgname = imgdict['filename']
-	matfile = imgname+".mrc.mat"
-	#matfilepath = os.path.join(params['matdir'], matfile)
-
-	imfile1 = os.path.join(params['tempdir'], "im1.png")
-	imfile2 = os.path.join(params['tempdir'], "im2.png")
-	#MATLAB NEEDS PATH BUT DATABASE NEEDS FILENAME
-	opimfile1 = imgname+".mrc1.png"
-	opimfile2 = imgname+".mrc2.png"
-	opimfilepath1 = os.path.join(params['opimagedir'],opimfile1)
-	opimfilepath2 = os.path.join(params['opimagedir'],opimfile2)
-
-	if os.path.isfile(imfile1):
-		shutil.copyfile(imfile1, opimfilepath1)
-	else:
-		apDisplay.printWarning("imfile1 is missing, %s"%(imfile1))
-	if os.path.isfile(imfile2):
-		shutil.copyfile(imfile2, opimfilepath2)
-	else:
-		apDisplay.printWarning("imfile2 is missing, %s"%(imfile2))
-	#pymat.eval(matlab,"im1 = imread('"+imfile1+"');")
-	#pymat.eval(matlab,"im2 = imread('"+imfile2+"');")
-	#pymat.eval(matlab,"imwrite(im1,'"+opimfilepath1+"');")
-	#pymat.eval(matlab,"imwrite(im2,'"+opimfilepath2+"');")
-
-	insertCtfValue(imgdict, params, matfile, ctfvalue, opimfile1, opimfile2)
 
 #=====================
 def printResults(params, nominal, ctfvalue):
@@ -86,81 +57,6 @@ def printResults(params, nominal, ctfvalue):
 		numlist = [nom1,defoc1,defoc2,pererror,conf1,conf2,totconf,]
 		typelist = [0,0,0,0,1,1,1,]
 		apDisplay.printDataBox(labellist,numlist,typelist)
-	return
-
-#=====================
-def insertAceParams(imgdata, params):
-	# first create an aceparam object
-	aceparamq = appiondata.ApAceParamsData()
-	copyparamlist = ('display','stig','medium','edgethcarbon','edgethice',\
-			 'pfcarbon','pfice','overlap','fieldsize','resamplefr','drange',\
-			 'reprocess')
-	for p in copyparamlist:
-		if p in params:
-			aceparamq[p] = params[p]
-
-	# if nominal df is set, save override df to database, else don't set
-	if params['nominal']:
-		dfnom=-params['nominal']
-		aceparamq['df_override']=dfnom
-
-	# create an acerun object
-	runq=appiondata.ApAceRunData()
-	runq['name']=params['runname']
-	runq['session']=imgdata['session']
-
-	# see if acerun already exists in the database
-	acerundatas = runq.query(results=1)
-
-	if (acerundatas):
-		if not (acerundatas[0]['aceparams'] == aceparamq):
-			for i in acerundatas[0]['aceparams']:
-				if acerundatas[0]['aceparams'][i] != aceparamq[i]:
-					apDisplay.printWarning("the value for parameter '"+str(i)+"' is different from before")
-			apDisplay.printError("All parameters for a single ACE run must be identical! \n"+\
-					     "please check your parameter settings.")
-		return False
-
-	#create path
-	runq['path'] = appiondata.ApPathData(path=os.path.abspath(params['rundir']))
-	runq['hidden']=False
-	# if no run entry exists, insert new run entry into db
-	runq['aceparams']=aceparamq
-	runq.insert()
-
-	return True
-
-#=====================
-def insertCtfValue(imgdata, params, matfile, ctfvalue, opimfile1, opimfile2):
-	runq=appiondata.ApAceRunData()
-	runq['name']=params['runname']
-	runq['session']=imgdata['session']
-
-	acerun=runq.query(results=1)
-
-
-	print "Committing ctf parameters for",apDisplay.short(imgdata['filename']), "to database."
-
-	ctfq = appiondata.ApCtfData()
-	ctfq['acerun']=acerun[0]
-	ctfq['image']=imgdata
-	ctfq['graph1']=opimfile1
-	ctfq['graph2']=opimfile2
-	ctfq['mat_file']=matfile
-	ctfq['cs']=params['cs']
-	ctfq['angle_astigmatism'] = math.degrees(ctfvalue['angle_astigmatism'])
-	ctfvaluelist = ('defocus1','defocus2','defocusinit','amplitude_contrast',
-		'noise1','noise2','noise3','noise4','envelope1','envelope2','envelope3','envelope4',
-		'lowercutoff','uppercutoff','snr','confidence','confidence_d')
-
-	# test for failed ACE estimation
-	# only set params if ACE was successfull
-	if ctfvalue[0] != -1 :
-		for i in range(len(ctfvaluelist)):
-			ctfq[ ctfvaluelist[i] ] = ctfvalue[i]
-
-	ctfq.insert()
-
 	return
 
 #=====================
@@ -198,7 +94,7 @@ def getBestDefocusForImage(imgdata, msg=False):
 	return bestdf
 
 #=====================
-def getDefocusAndAmpConstForImage(imgdata, ctf_estimation_runid=None, msg=False, method=None):
+def getDefocusAndampcontrastForImage(imgdata, ctf_estimation_runid=None, msg=False, method=None):
 	"""
 	takes an image and get the defocus (in negative meters) and amplitude contrast for that image
 	"""
@@ -233,9 +129,9 @@ def getDefocusAndAmpConstForImage(imgdata, ctf_estimation_runid=None, msg=False,
 	return bestdf, bestamp
 
 #=====================
-def getBestDefocusAndAmpConstForImage(imgdata, msg=False, method=None):
+def getBestDefocusAndampcontrastForImage(imgdata, msg=False, method=None):
 	''' takes an image and get the best defocus (in negative meters) for that image '''
-	return getDefocusAndAmpConstForImage(imgdata, msg=msg, method=method)
+	return getDefocusAndampcontrastForImage(imgdata, msg=msg, method=method)
 
 #=====================
 def getCtfValueForImage(imgdata, ctf_estimation_runid=None, ctfavg=True, msg=True, method=None):

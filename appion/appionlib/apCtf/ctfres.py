@@ -9,47 +9,34 @@ from appionlib import apDisplay
 from appionlib.apCtf import genctf
 from appionlib.apCtf import ctftools
 
-debug = True
+debug = False
 
 #=======================
-def getCorrelationProfile(raddata, rotdata, freq, ctfvalues):
+def getCorrelationProfile(raddata, rotdata, defocus, freq, cs, volts, ampcontrast):
 		"""
 		raddata - x data in inverse Angstroms
 		rotdata - powerspectra data, normalized to 0 and 1
 		freq - frequency of the x data
-		ctfvalues:
-			apix - real space pixelsize in Angstroms
-			defocus2 - defocus value to use in meters, underfocus is positive
-			volts - potential of the microscope in volts
-			cs - spherical abberation of microscope in meters
-			amplitude_contrast - amplitude contrast of ctf profile
+		defocus - mean defocus value to use in meters, underfocus is positive
+		volts - potential of the microscope in volts
+		cs - spherical abberation of microscope in meters
+		ampcontrast - amplitude contrast of ctf profile
 		"""
-
-		if debug is True:
-			from matplotlib import pyplot
 
 		raddatasq = raddata**2
 
-		### get the peaks
-		if debug is True:
-			numzeros = 150
-		else:
-			numzeros = 2
-		peakradii = ctftools.getCtfExtrema(ctfvalues['defocus2'], freq*1e10, 
-			ctfvalues['cs'], ctfvalues['volts'], ctfvalues['amplitude_contrast'], 
-			numzeros=numzeros, zerotype="peaks")
-		if debug is True:
-			valleyradii = ctftools.getCtfExtrema(ctfvalues['defocus2'], freq*1e10, 
-				ctfvalues['cs'], ctfvalues['volts'], ctfvalues['amplitude_contrast'], 
-				numzeros=numzeros, zerotype="valleys")
-		firstpeak = peakradii[0]
-		firstpeakindex = numpy.searchsorted(raddata, firstpeak*freq)
-
 		### get the ctf
-		genctfdata = genctf.generateCTF1d(raddata*1e10, focus=ctfvalues['defocus2'], cs=ctfvalues['cs'],
-			volts=ctfvalues['volts'], ampconst=ctfvalues['amplitude_contrast'])
+		genctfdata = genctf.generateCTF1d(raddata*1e10, focus=defocus, cs=cs,
+			volts=volts, ampconst=ampcontrast)
+		peaks = ctftools.getCtfExtrema(defocus, freq*1e10, cs, volts, ampcontrast, 
+			numzeros=2, zerotype="peak")
+		firstpeak = peaks[0]
 
-		## divide the data into 8 section (by x^2 not x) and calculate the correlation correficient for each
+		### PART 0: create lists
+		newraddata = []
+		confs = []
+
+		### PART 1: standard data points
 		xsqStart = (firstpeak*freq)**2
 		xsqEnd = raddatasq.max()
 		## choice of step size, either:
@@ -57,30 +44,54 @@ def getCorrelationProfile(raddata, rotdata, freq, ctfvalues):
 		#numstep = 6.
 		#xsqStep = (xsqEnd-xsqStart)/numstep
 		#(2) 1 1/2 periods of the CTF
-		secondpeak = peakradii[1]
+		secondpeak = peaks[1]
 		xsqSecond = (secondpeak*freq)**2
 		xsqStep = (xsqSecond-xsqStart)*1.5
 
-		if debug is True:
-			print "getCorrelationProfile(): 1/%.1fA <-> 1/%.1fA"%(1/math.sqrt(xsqStart), 1/math.sqrt(xsqEnd))
-
 		### make sure we stay within step size
-		if debug is True:
-			print "getCorrelationProfile(): search sorted"
 		startindex = numpy.searchsorted(raddatasq, xsqStart+xsqStep/2.0)
 		endindex = numpy.searchsorted(raddatasq, xsqEnd-xsqStep/2.0)
 
-		## create empty array with zeros
-		#confs = -numpy.zeros(raddatasq.shape)
-		## make all points before checking one
-		#confs[:startindex] = 1.0
-
-		## now fill in the resolutions
+		### PART 2: initial data points, best for large defocus
 		if debug is True:
-			print "getCorrelationProfile(): starting loop"
+			print "getCorrelationProfile(): starting initial loop"
+		xsqStartPre = (firstpeak*freq)**2
+		xsqEndPre = raddatasq[startindex]
+		xsqStepPre = (xsqSecond-xsqStart)*0.5
+		preindex = numpy.searchsorted(raddatasq, xsqStartPre)
+		xsq = raddatasq[preindex]
+		if debug is True:
+			print ("%.5f (1/%.1fA) -> %.5f (1/%.1fA) + %.5f"
+				%(xsqStartPre, 1.0/math.sqrt(xsqStartPre), 
+				xsqEndPre, 1.0/math.sqrt(xsqEndPre), xsqStepPre))
+		while xsq < xsqEndPre:
+			#for index in range(startindex, endindex):
+			index = numpy.searchsorted(raddatasq, xsq)
+			xsq = raddatasq[index]
+			xsqLower = xsq - xsqStepPre/2.0
+			xsqUpper = xsq + xsqStepPre/2.0
+			ind1 = numpy.searchsorted(raddatasq, xsqLower)
+			ind2 = numpy.searchsorted(raddatasq, xsqUpper)
+			### compare CTF to data
+			conf = scipy.stats.pearsonr(rotdata[ind1:ind2], genctfdata[ind1:ind2])[0]
+			### save data and increment
+			if debug is True:
+				apDisplay.printMsg("1/%.1fA\t%.3f"%(1.0/math.sqrt(xsq), conf))
+			newraddata.append(math.sqrt(xsq))
+			### add a sqrt bonus to early points in effort to prevent false positives
+			confs.append(math.sqrt(abs(conf)))
+			xsq += xsqStep/4.0
+		if debug is True:
+			print "getCorrelationProfile(): end initial loop"
+
+		### PART 3: fill in the standard resolutions
+		if debug is True:
+			print "getCorrelationProfile(): starting main loop"
+		if debug is True:
+			print ("%.5f (1/%.1fA) -> %.5f (1/%.1fA) + %.5f"
+				%(xsqStart, 1.0/math.sqrt(xsqStart), 
+				xsqEnd, 1.0/math.sqrt(xsqEnd), xsqStep))
 		xsq = raddatasq[startindex]
-		newraddata = []
-		confs = []
 		while xsq < xsqEnd:
 			#for index in range(startindex, endindex):
 			index = numpy.searchsorted(raddatasq, xsq)
@@ -93,72 +104,19 @@ def getCorrelationProfile(raddata, rotdata, freq, ctfvalues):
 			conf = scipy.stats.pearsonr(rotdata[ind1:ind2], genctfdata[ind1:ind2])[0]
 
 			### save data and increment
+			if debug is True:
+				apDisplay.printMsg("1/%.1fA\t%.3f"%(1.0/math.sqrt(xsq), conf))
 			newraddata.append(math.sqrt(xsq))
 			confs.append(conf)
 			xsq += xsqStep/4.0
 		if debug is True:
-			print "getCorrelationProfile(): end loop"
+			print "getCorrelationProfile(): end main loop"
 
 		confs = numpy.array(confs, dtype=numpy.float64)
 		newraddata = numpy.array(newraddata, dtype=numpy.float64)
-		newraddatasq = newraddata**2
 		confs = scipy.ndimage.gaussian_filter1d(confs, 2)
 
-		res5 = getResolutionFromConf(newraddata, confs, limit=0.5)
-		res8 = getResolutionFromConf(newraddata, confs, limit=0.8)
-
-		if debug is True:
-			pyplot.clf()
-			#draw vertical lines
-			for radii in peakradii:
-				index = numpy.searchsorted(raddata, radii*freq)	
-				if index > raddata.shape[0] - 1:
-					break
-				pyplot.axvline(x=raddatasq[index], linewidth=1, color="cyan", alpha=0.25)
-			for radii in valleyradii:
-				index = numpy.searchsorted(raddata, radii*freq)
-				if index > raddata.shape[0] - 1:
-					break
-				pyplot.axvline(x=raddatasq[index], linewidth=1, color="yellow", alpha=0.25)
-			### raw powerspectra data
-			#pyplot.plot(raddatasq[firstpeakindex:], rotdata[firstpeakindex:], 'x', color="red", alpha=0.9, markersize=8)
-			pyplot.plot(raddatasq[firstpeakindex:], rotdata[firstpeakindex:], '-', color="red", alpha=0.5, linewidth=1)
-			### ctf fit data
-			#pyplot.plot(raddatasq[firstpeakindex:], genctfdata[firstpeakindex:], '.', color="black", alpha=0.9, markersize=10)
-			pyplot.plot(raddatasq[firstpeakindex:], genctfdata[firstpeakindex:], '-', color="black", alpha=0.5, linewidth=1)
-			### confidence profile
-			pyplot.plot(newraddatasq, confs, '.', color="blue", alpha=0.9, markersize=10)
-			pyplot.plot(newraddatasq, confs, '-', color="blue", alpha=0.9, linewidth=2)
-			xmin = raddatasq[firstpeakindex-1]
-			xmax = raddatasq.max()
-			pyplot.xlim(xmin=xmin, xmax=raddatasq.max())
-			pyplot.ylim(ymin=-0.05, ymax=1.05)
-			pyplot.subplots_adjust(wspace=0.01, hspace=0.01,
-				bottom=0.01, left=0.01, top=0.99, right=0.99, )
-
-			locs, labels = pyplot.xticks()
-			newlocs = []
-			newlabels = []
-			for loc in locs:
-				if loc < xmin:
-					continue
-				res = round(1.0/math.sqrt(loc),1)
-				label = "1/%.1fA"%(res)
-				newloc = 1.0/res**2
-				newlocs.append(newloc)
-				newlabels.append(label)
-			pyplot.xticks(newlocs, newlabels)
-
-			pyplot.axvline(x=1/res8**2, linewidth=2, color="gold")
-			pyplot.axvline(x=1/res5**2, linewidth=2, color="red")
-
-			pyplot.title("Resolution values of %.1fA at 0.8 and %.1fA at 0.5"%(res8,res5))
-			pyplot.subplots_adjust(wspace=0.05, hspace=0.05,
-				bottom=0.05, left=0.05, top=0.95, right=0.95, )
-			pyplot.show()
-			apDisplay.printColor("Resolution values of %.4fA at 0.8 and %.4fA at 0.5"%(res8,res5), "cyan")
-
-		return confs
+		return newraddata, confs
 
 
 #==================
@@ -170,6 +128,10 @@ def getResolutionFromConf(raddata, confs, limit=0.5):
 	lastx=0
 	lasty=0
 	x = 0
+	if confs[0] < limit:
+		apDisplay.printWarning("Res calc failed: Initial conf below desired limit %.2f"
+			%(limit))
+		return None
 	for i in range(raddata.shape[0]):
 		x = raddata[i]
 		y = confs[i]
@@ -188,7 +150,8 @@ def getResolutionFromConf(raddata, confs, limit=0.5):
 			res = 1.0/interpx
 			return res
 	# confs did not fall below limit
-	apDisplay.printWarning("Failed to determine resolution")
 	res = 1.0/raddata.max()
+	apDisplay.printWarning("Conf did not fall below %.2f, use max res of %.1fA"
+		%(limit, res))
 	return res
 
