@@ -23,8 +23,8 @@ class Path
 	
 	public static function formatPath($path) 
 	{
-		$npath = ereg_replace('[\\]','/',$path);
-		$npath = ereg("/$", $npath) ? $npath : $npath."/";
+		$npath = preg_replace('%\\\\%','/',$path);
+		$npath = preg_match("%/$%", $npath) ? $npath : $npath."/";
 		return $npath;
 	}
 	
