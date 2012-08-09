@@ -14,6 +14,7 @@ require_once "inc/overlay.inc";
 require_once "inc/cachedb.inc";
 require_once "inc/imageutil.inc";
 require_once "inc/imagerequest.inc";
+require_once "inc/path.inc";
 
 function getImageFile($leginondata,$imageId,$preset='all',$loadjpg=false,$is_fft=false) {
 	$newimageId = getImageIdFromPreset($leginondata,$imageId,$preset);
@@ -127,7 +128,7 @@ function getImageXML($xmlfile, $imageId, $preset, $params = array()) {
 	$xmldata = new xmldata($xmlfile);
 	// --- get image path
 	$path = $xmldata->getImagePath();
-	$path = str_replace('./',formatPath(WEB_ROOT),$path);
+	$path = str_replace('./',Path::formatPath(WEB_ROOT),$path);
 	// --- get filename
 	if ($p['fft']) {
 		$p['displaytargets']=false;
