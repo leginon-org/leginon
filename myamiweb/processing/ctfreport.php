@@ -157,6 +157,7 @@ if ($ctfrundatas) {
 					$j.= " <font color='#cc0000'>HIDDEN</font>\n";
 					$j.= " <input class='edit' type='submit' name='unhideRun".$ctfrunid."' value='unhide'>\n";
 				} else $j.= " <input class='edit' type='submit' name='hideRun".$ctfrunid."' value='hide'>\n";
+				$j .= "<input class='edit' type='button' onClick='parent.location=\"dropctf.php?expId=$sessionId&ctfId=$ctfrunid\"' value='delete'>\n";
 				$downloadLink = "(<font size='-2'><a href='downloadctfdata.php?expId=$sessionId&runId=$ctfrunid'>\n";
 				$downloadLink .= "  <img style='vertical-align:middle' src='img/download_arrow.png' border='0' width='16' height='17' alt='download coordinates'>";
 				$downloadLink .= "  &nbsp;download ctf data\n";

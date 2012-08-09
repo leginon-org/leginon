@@ -1065,6 +1065,8 @@ class particledata {
 			."c.`defocusinit`, "
 			."c.`amplitude_contrast`, "
 			."c.`angle_astigmatism`, "
+			."c.`tilt_angle`, "
+			."c.`tilt_axis_angle`, "
 			."c.`confidence` , "
 			."c.`confidence_d` , "
 			."c.`cross_correlation` , "
@@ -1291,6 +1293,27 @@ class particledata {
 			$stats[$k] = $r;
 		}
 		return $stats;
+	}
+
+	function removeCtfRunById($ctfId) {
+		# count the number of values for CTF run
+		$q = "SELECT count(DEF_id) as num "
+			. "FROM `ApCtfData` "
+			. "WHERE `REF|ApAceRunData|acerun` = $ctfId";
+		list($r) = $this->mysql->getSQLResult($q);
+		
+		# remove the CTF data
+		$q = "DELETE from `ApCtfData` "
+			. "WHERE `REF|ApAceRunData|acerun` = $ctfId";
+		$this->mysql->getSQLResult($q);
+		$status.= "Removed ".$r['num']." values from ApCtfData<br/>\n";
+
+		# remove the runid
+		$q = "DELETE from `ApAceRunData` "
+			. "WHERE `DEF_id` = $ctfId";
+		$this->mysql->getSQLResult($q);
+		$status.= "Removed CTF Run ID $ctfId from ApAceRunData table<br/>\n";
+		return $status;
 	}
 
 	//------ -------------------- ---------//
@@ -2556,6 +2579,19 @@ class particledata {
 			."FROM `ApStackParticleData` "
 			."WHERE `REF|ApStackData|stack` = '$stackId'"; 
 			
+		$r = $this->mysql->getSQLResult($q);
+		return $r;
+	}
+
+	function getParticlePicksFromStack($stackId) {
+		$q="SELECT s.particleNumber as particle, "
+			."p.`REF|leginondata|AcquisitionImageData|image` as imgid, "
+			."p.xcoord, p.ycoord, p.helixnum, p.angle "
+			."FROM `ApStackParticleData` AS s "
+			."LEFT JOIN `ApParticleData` AS p "
+			."ON s.`REF|ApParticleData|particle` = p.`DEF_id` "
+			."WHERE s.`REF|ApStackData|stack` = '$stackId' "
+			."ORDER BY s.particleNumber";
 		$r = $this->mysql->getSQLResult($q);
 		return $r;
 	}
