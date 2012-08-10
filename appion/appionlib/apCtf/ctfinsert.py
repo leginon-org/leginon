@@ -13,6 +13,8 @@ from appionlib import appiondata
 from appionlib.apCtf import ctfdisplay
 
 debug = False
+confirm_degrees = False
+radian_suspects = 0
 
 #====================
 #====================
@@ -150,6 +152,7 @@ def checkParams(ctfvalues):
 	cs = ctfvalues['cs']
 	volts = ctfvalues['volts']
 	ampcontrast = ctfvalues['amplitude_contrast']
+	absangle = abs(ctfvalues['angle_astigmatism'])
 	### print debug
 	if debug is True:
 		print "  Defocus1 %.2f microns (underfocus is positive)"%(focus1*1e6)
@@ -159,6 +162,22 @@ def checkParams(ctfvalues):
 		print "  High tension %.1f kV"%(volts*1e-3)
 		print ("  Amp Contrast %.3f (shift %.1f degrees)"
 			%(ampcontrast, math.degrees(-math.asin(ampcontrast))))
+
+	### check angle to make sure we reach values in range above 2*Pi and below 90
+	global confirm_degrees
+	global radian_suspects
+	if absangle > 6.3:
+		confirm_degrees = True
+		radian_suspects = 0
+	elif not confirm_degrees and absangle > 0 and absangle < 1.571:
+		msg = "suspicious angle astigmatism, may be in radians (%.4f)"%(angle)
+		radian_suspects += 1
+		apDisplay.printWarning(msg)
+		return False
+	if not confirm_degrees and radian_suspects > 5:
+		msg = "too many (> 5) suspicious angle astigmatisms, likely in radians"%(angle)
+		apDisplay.printError(msg)
+
 	### various test of data
 	if focus1*1e6 > 25.0 or focus1*1e6 < 0.01:
 		msg = "atypical defocus #1 value %.4f microns (underfocus is positve)"%(focus1*1e6)
