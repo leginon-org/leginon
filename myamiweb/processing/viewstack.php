@@ -14,7 +14,7 @@ require_once "inc/viewer.inc";
 require_once "inc/processing.inc";
 require_once "inc/viewstack.inc";
 require_once "inc/imagerequest.inc";
-require "inc/viewstack.inc";
+require_once "inc/viewstack.inc";
 
 $filename=$_GET['file'];
 $expId =$_GET['expId'];
