@@ -509,22 +509,24 @@ class CtfNoise(object):
 			if self.debug is True:
 				print "constrained above function"
 			contraintFunction = self.modelConstFunAbove
-			filterctfdata = scipy.ndimage.maximum_filter(ctfdata, size=2)
-			for i in range(1):
-				filterctfdata = (filterctfdata + scipy.ndimage.maximum_filter(filterctfdata, size=2))/2.0
+			#filterctfdata = scipy.ndimage.maximum_filter(ctfdata, size=2)
+			#for i in range(1):
+			#	filterctfdata = (filterctfdata + scipy.ndimage.maximum_filter(filterctfdata, size=2))/2.0
 			#firstmax = filterctfdata[0:250].max()
 			#filterctfdata = numpy.where(filterctfdata>firstmax, firstmax, filterctfdata)
 			#filterctfdata = self.upwardLeftMonotonicFilter(ctfdata)
+			filterctfdata = ctfdata
 		else:
 			if self.debug is True:
 				print "constrained below function"
 			contraintFunction = self.modelConstFunBelow
-			filterctfdata = scipy.ndimage.minimum_filter(ctfdata, size=2)
-			for i in range(1):
-				filterctfdata = (filterctfdata + scipy.ndimage.minimum_filter(filterctfdata, size=2))/2.0
+			#filterctfdata = scipy.ndimage.minimum_filter(ctfdata, size=2)
+			#for i in range(1):
+			#	filterctfdata = (filterctfdata + scipy.ndimage.minimum_filter(filterctfdata, size=2))/2.0
 			#firstmin = filterctfdata[0:250].min()
 			#filterctfdata = numpy.where(filterctfdata>firstmin, firstmin, filterctfdata)
 			#filterctfdata = self.downwardRightMonotonicFilter(ctfdata)
+			filterctfdata = ctfdata
 
 		### run the initial minimizations
 		namelist, valuelist, fitparamslist = self.getAllInitialParameters(xdata, 
