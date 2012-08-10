@@ -1168,9 +1168,12 @@ class particledata {
 	}
 
 	function getCTFStats($fields, $sessionId, $runId=false) {
+		$dbfields = $this->mysql->getFields('ApCtfData');
 		if (!is_array($fields))
 			return False;
 		foreach ($fields as $field) {
+			if (!in_array($field, $dbfields))
+				continue;
 			$selects[$field] = "c.`REF|leginondata|AcquisitionImageData|image` as id, s.defocus, "
 					. "count(c.DEF_id) as `nb`, "
 					. "min(c.`$field`) as `min`, "
@@ -5396,12 +5399,12 @@ function displayCTFstats($stats, $display_keys) {
 						$val = format_micro_number($val);
 				if (preg_match('%^min|^max|^avg|^stddev%i', $key))
 					if (preg_match('%defocus%i', $field) || preg_match('%nominal%i', $field)) {
-							$val = format_micro_number($val);
+						$val = format_micro_number($val);
 					} else {
 						$val = format_sci_number($val, 3);
 					}
 				$html .= "<td>";
-				$html .= " ".$val."<br>\n";
+				$html .= " ".$val."<br/>\n";
 				$html .= "</td>";
 			}
 			$html .= "</tr>\n";
