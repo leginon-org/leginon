@@ -105,21 +105,22 @@ class CtfDisplay(object):
 		part3start = int(firstvalleyindex + numpoints*8/10.)
 		part3end = len(raddata)
 		
+		valleydata = ctfnoise.peakExtender(raddata, rotdata, valleyradii, "below")
 
 		### fit function below log(CTF), i.e., noise model	
 		## first part data
 		noisefitparams1 = CtfNoise.modelCTFNoise(raddata[part1start:part1end],
-			rotdata[part1start:part1end], "below")
+			valleydata[part1start:part1end], "below")
 		noisedata1 = CtfNoise.noiseModel(noisefitparams1, raddata)
 
 		## second part data
 		noisefitparams2 = CtfNoise.modelCTFNoise(raddata[part2start:part2end],
-			rotdata[part2start:part2end], "below")
+			valleydata[part2start:part2end], "below")
 		noisedata2 = CtfNoise.noiseModel(noisefitparams2, raddata)
 
 		## third part data
 		noisefitparams3 = CtfNoise.modelCTFNoise(raddata[part3start:part3end],
-			rotdata[part3start:part3end], "below")
+			valleydata[part3start:part3end], "below")
 		noisedata3 = CtfNoise.noiseModel(noisefitparams3, raddata)
 
 		## merge data
@@ -170,19 +171,21 @@ class CtfDisplay(object):
 		part3start = int(firstpeakindex + numpoints*8/10.)
 		part3end = len(raddata)
 
+		peakdata = ctfnoise.peakExtender(raddata, normlogrotdata, peakradii, "above")
+
 		## first part data
 		envelopfitparams1 = CtfNoise.modelCTFNoise(raddata[part1start:part1end],
-			normlogrotdata[part1start:part1end], "above")
+			peakdata[part1start:part1end], "above")
 		envelopdata1 = CtfNoise.noiseModel(envelopfitparams1, raddata)
 
 		## second part data
 		envelopfitparams2 = CtfNoise.modelCTFNoise(raddata[part2start:part2end],
-			normlogrotdata[part2start:part2end], "above")
+			peakdata[part2start:part2end], "above")
 		envelopdata2 = CtfNoise.noiseModel(envelopfitparams2, raddata)
 
 		## third part data
 		envelopfitparams3 = CtfNoise.modelCTFNoise(raddata[part3start:part3end],
-			normlogrotdata[part3start:part3end], "above")
+			peakdata[part3start:part3end], "above")
 		envelopdata3 = CtfNoise.noiseModel(envelopfitparams3, raddata)
 
 		## merge data
@@ -379,7 +382,7 @@ class CtfDisplay(object):
 		pyplot.subplots_adjust(wspace=0.22, hspace=0.55, 
 			bottom=0.08, left=0.07, top=0.95, right=0.965, )
 		self.plotsfile = apDisplay.short(self.imgname)+"-plots.png"
-		print "Saving 1D graph to file", self.plotsfile
+		apDisplay.printMsg("Saving 1D graph to file %s"%(self.plotsfile))
 		pyplot.savefig(self.plotsfile, format="png", dpi=200, orientation='landscape', pad_inches=0.0)
 
 		if self.debug is True:
@@ -877,6 +880,8 @@ if __name__ == "__main__":
 	imagelist.extend(glob.glob("/data01/leginon/09sep20a/rawdata/09*en.mrc")[:10])
 	### Something else, ice data
 	imagelist.extend(glob.glob("/data01/leginon/09feb20d/rawdata/09*en.mrc")[:10])
+	### OK groEL ice data
+	imagelist.extend(glob.glob("/data01/leginon/05may19a/rawdata/05*en*.mrc")[:10])
 	### images of Hassan with 1.45/1.65 astig at various angles
 	#imagelist.extend(glob.glob("/data01/leginon/12jun12a/rawdata/12jun12a_ctf_image_ang*.mrc")[:10])
 	### rectangular images
@@ -888,6 +893,10 @@ if __name__ == "__main__":
 	#imagelist.reverse()
 	random.shuffle(imagelist)
 	random.shuffle(imagelist)
+
+	
+	for imgfile in imagelist:
+		print os.path.basename(imgfile)
 
 	imageint = int(random.random()*len(imagelist))
 	imagename = os.path.basename(imagelist[imageint])
