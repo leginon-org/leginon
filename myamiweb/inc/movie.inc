@@ -14,8 +14,8 @@ require_once('config.php');
 		}
 		$getID3 = new getID3;
 		$i = $getID3->analyze($filename);
-		$w = $i['meta']['onMetaData']['width'];
-		$h = $i['meta']['onMetaData']['height'];
+		$w = $i['flv']['meta']['onMetaData']['width'];
+		$h = $i['flv']['meta']['onMetaData']['height'];
 		return array($w, $h);
 	}
 
