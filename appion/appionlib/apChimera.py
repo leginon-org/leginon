@@ -170,7 +170,7 @@ def renderSlice(density, box=None, tmpfile=None, sym='c1'):
 #=========================================
 #=========================================
 def renderSnapshots(density, contour=None, zoom=1.0, sym=None, color=None, 
-		silhouette=True, xvfb=True, pdb=None, name=None):
+		silhouette=True, xvfb=False, pdb=None, name=None):
 	"""
 	create a few snapshots for viewing on the web
 	"""
@@ -222,7 +222,7 @@ def renderSnapshots(density, contour=None, zoom=1.0, sym=None, color=None,
 #=========================================
 #=========================================
 def renderAnimation(density, contour=None, zoom=1.0, sym=None, color=None,
-		silhouette=False, xvfb=True, name=None):
+		silhouette=False, xvfb=False, name=None):
 	"""
 	create several snapshots and merge into animated GIF
 	"""
@@ -279,7 +279,7 @@ def renderAnimation(density, contour=None, zoom=1.0, sym=None, color=None,
 
 #=========================================
 #=========================================
-def runChimeraScript(chimscript, xvfb=True):
+def runChimeraScript(chimscript, xvfb=False):
 	if not chimscript or not os.path.isfile(chimscript):
 		print chimscript
 		apDisplay.printError("Could not find file: apChimSnapshot.py")

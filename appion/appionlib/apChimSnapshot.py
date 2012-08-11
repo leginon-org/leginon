@@ -363,7 +363,7 @@ class ChimSnapShots(object):
 	# -----------------------------------------------------------------------------
 	def hideDust(self, size=100):
 		self.writeMessageToLog("Hide all dust particles less than %d voxels in size"%(size))
-		native = False
+		native = True
 		#try:
 		if True:
 			if native is True:
