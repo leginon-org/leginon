@@ -69,6 +69,10 @@ class CtfDisplay(object):
 		### get all peak (not valley)
 		peak = ctftools.getCtfExtrema(meandefocus, self.trimfreq*1e10, self.cs, self.volts, 
 			self.ampcontrast, numzeros=250, zerotype="peak")
+		apDisplay.printMsg("Number of available peaks is %d"%(len(peak)))
+		if len(peak) < 6:
+			apDisplay.printWarning("Too few peaks to work with, probably bad defocus estimate")
+			return None
 		firstpeak = peak[0]
 		peakradii = numpy.array(peak, dtype=numpy.float64)*self.trimfreq
 		### get all valley (not peak)
@@ -85,7 +89,7 @@ class CtfDisplay(object):
 		if self.debug is True:
 			print "Elliptical CTF limits %.1f A -->> %.1fA"%(1./raddata.min(), 1./raddata.max())
 
-		print "Determine and subtract noise model..."
+		apDisplay.printMsg("Determine and subtract noise model")
 		CtfNoise = ctfnoise.CtfNoise()
 
 		### 
@@ -427,7 +431,6 @@ class CtfDisplay(object):
 			index = numpy.searchsorted(xdata, exvalue)
 			trimxdata.extend(xdata[index-10:index+10])
 			trimrawdata.extend(rawdata[index-10:index+10])
-			print len(trimxdata)
 		return numpy.array(trimxdata), numpy.array(trimrawdata)
 
 	#====================
@@ -542,7 +545,7 @@ class CtfDisplay(object):
 		if max(halfpowerspec.shape) > maxsize:
 			scale = maxsize/float(max(halfpowerspec.shape))
 			#scale = math.sqrt((random.random()+random.random()+random.random())/3.0)
-			print "Scaling final powerspec image by %.3f"%(scale)
+			apDisplay.printMsg( "Scaling final powerspec image by %.3f"%(scale))
 			powerspec = imagefilter.scaleImage(halfpowerspec, scale)
 		else:
 			scale = 1.0
@@ -723,7 +726,7 @@ class CtfDisplay(object):
 
 		## create an alpha blend effect
 		originalimage = Image.blend(originalimage, pilimage, 0.95)
-		print "Saving 2D powerspectra to file", self.powerspecfile
+		apDisplay.printMsg("Saving 2D powerspectra to file: %s"%(self.powerspecfile))
 		#pilimage.save(self.powerspecfile, "JPEG", quality=85)
 		originalimage.save(self.powerspecfile, "JPEG", quality=85)
 		if self.debug is True:
@@ -775,7 +778,7 @@ class CtfDisplay(object):
 			(self.defocus1, self.defocus2, self.angle, self.defocusratio), "cyan")
 
 		perdiff = abs(self.defocus1-self.defocus2)/abs(self.defocus1+self.defocus2)
-		print ("Defocus Astig Percent Diff %.2f -- %.3e, %.3e"
+		apDisplay.printMsg("Defocus Astig Percent Diff %.2f -- %.3e, %.3e"
 				%(perdiff*100,self.defocus1,self.defocus2))
 
 		return
@@ -813,7 +816,7 @@ class CtfDisplay(object):
 		if self.debug is True:
 			print "Pixelsize (A/pix)", self.apix
 
-		print "Reading image..."
+		apDisplay.printMsg("Reading image...")
 		image = imgdata['image']
 		self.initfreq = 1./(self.apix * image.shape[0])
 		self.origimageshape = image.shape
@@ -832,7 +835,7 @@ class CtfDisplay(object):
 
 		#print "Median filter image..."
 		#powerspec = ndimage.median_filter(powerspec, 2)
-		print "Preform a rotational average and remove spikes..."
+		apDisplay.printMsg("Preform a rotational average and remove spikes...")
 		rotfftarray = ctftools.rotationalAverage2D(powerspec)
 		stdev = rotfftarray.std()
 		rotplus = rotfftarray + stdev*4
@@ -867,28 +870,27 @@ class CtfDisplay(object):
 #====================
 #====================
 if __name__ == "__main__":
-	import os
-	import re
 	import glob
-	import random
+	import sinedon
+	from appionlib import apProject
 
 	imagelist = []
 	#=====================
 	### CNV data
-	imagelist.extend(glob.glob("/data01/leginon/10apr19a/rawdata/10apr19a_10apr19a_*en_1.mrc")[:10])
+	#imagelist.extend(glob.glob("/data01/leginon/10apr19a/rawdata/10apr19a_10apr19a_*en_1.mrc")[:10])
 	### Pick-wei images with lots of rings
-	imagelist.extend(glob.glob("/data01/leginon/09sep20a/rawdata/09*en.mrc")[:10])
+	#imagelist.extend(glob.glob("/data01/leginon/09sep20a/rawdata/09*en.mrc")[:10])
 	### Something else, ice data
-	imagelist.extend(glob.glob("/data01/leginon/09feb20d/rawdata/09*en.mrc")[:10])
+	#imagelist.extend(glob.glob("/data01/leginon/09feb20d/rawdata/09*en.mrc")[:10])
 	### OK groEL ice data
-	imagelist.extend(glob.glob("/data01/leginon/05may19a/rawdata/05*en*.mrc")[:10])
+	#imagelist.extend(glob.glob("/data01/leginon/05may19a/rawdata/05*en*.mrc")[:10])
 	### images of Hassan with 1.45/1.65 astig at various angles
 	#imagelist.extend(glob.glob("/data01/leginon/12jun12a/rawdata/12jun12a_ctf_image_ang*.mrc")[:10])
 	### rectangular images
-	#imagelist.extend(glob.glob("/data01/leginon/12may08eD1/rawdata/*.mrc")[:10])
+	imagelist.extend(glob.glob("/data01/leginon/12may08eD1/rawdata/*.mrc")[:10])
 	#=====================
 
-	print "# of images", len(imagelist)
+	apDisplay.printMsg("# of images: %d"%(len(imagelist)))
 	#imagelist.sort()
 	#imagelist.reverse()
 	random.shuffle(imagelist)
@@ -896,44 +898,40 @@ if __name__ == "__main__":
 
 	
 	for imgfile in imagelist:
-		print os.path.basename(imgfile)
-
-	imageint = int(random.random()*len(imagelist))
-	imagename = os.path.basename(imagelist[imageint])
-	imagename = re.sub(".mrc", "", imagename)
-
-	imgdata = apDatabase.getImageData(imagename)
-	from appionlib import apProject
-	projid = apProject.getProjectIdFromImageData(imgdata)
-	print "Project ID: ", projid
-	newdbname = apProject.getAppionDBFromProjectId(projid)
-	import sinedon
-	sinedon.setConfig('appiondata', db=newdbname)
-	#from appionlib import appiondata
-	#ctfq = appiondata.ApCtfData()
-	#ctfq['image'] = imgdata
-	#ctfdatas = ctfq.query(results=1)
-	#ctfdata = ctfdatas[0]
-	#ctfdata, bestconf = apCtf.getBestCtfValueForImage(imgdata, method="ace2")
+		apDisplay.printMsg(apDisplay.short(os.path.basename(imgfile)))
 
 	count = 0
 	for imgfile in imagelist:
 		count += 1
 		imagename = os.path.basename(imgfile)
-		imagename = re.sub(".mrc", "", imagename)
+		imagename = imagename.replace(".mrc", "")
 		imgdata = apDatabase.getImageData(imagename)
-		print ""
-		print "**********************************"
-		print "IMAGE: ", apDisplay.short(imagename)
-		print "**********************************"
+
+		### change project
+		projid = apProject.getProjectIdFromImageData(imgdata)
+		newdbname = apProject.getAppionDBFromProjectId(projid)
+		sinedon.setConfig('appiondata', db=newdbname)
+
+		powerspecfile = apDisplay.short(imagename)+"-powerspec.jpg"
+		if os.path.isfile(powerspecfile):
+			apDisplay.printColor("Skipping image %s, already complete"%(apDisplay.short(imagename)), "cyan")
+			continue
+
 		ctfdata, bestconf = ctfdb.getBestCtfValueForImage(imgdata)
 		#ctfdata, bestconf = ctfdb.getBestCtfValueForImage(imgdata, method="ctffind")
 		#ctfdata, bestconf = ctfdb.getBestCtfValueForImage(imgdata, method="ace2")
 		if ctfdata is None:
-			print "Skipping image, no CTF data"
+			apDisplay.printColor("Skipping image %s, no CTF data"%(apDisplay.short(imagename)), "red")
 			continue
+
+		print ""
+		print "**********************************"
+		print "IMAGE: %s (%d of %d)"%(apDisplay.short(imagename), count, len(imagelist))
+		print "**********************************"
+
 		a = CtfDisplay()
 		ctfdisplaydict = a.CTFpowerspec(imgdata, ctfdata)
+		print "**********************************"
 
 		#if count > 8:
 		#	sys.exit(1)
