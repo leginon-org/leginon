@@ -365,11 +365,6 @@ class CTFApp(wx.App):
 		self.Bind(wx.EVT_BUTTON, self.onGetResolution, wxbutton)
 		self.buttonrow.Add(wxbutton, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 
-		wxbutton = wx.Button(self.frame, -1, 'Get Res 2D')
-		wxbutton.SetMinSize((-1, buttonheight))
-		self.Bind(wx.EVT_BUTTON, self.onGetResolution2d, wxbutton)
-		self.buttonrow.Add(wxbutton, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
-
 		self.editparam_dialog = EditParamsDialog(self)
 		wxbutton = wx.Button(self.frame, -1, '&Edit CTF Params...')
 		wxbutton.SetMinSize((-1, buttonheight))
@@ -991,37 +986,53 @@ class CTFApp(wx.App):
 
 		### get the data
 		pixelrdata, raddata, rotdata = self.getOneDProfile(full=False)
+		meandefocus = math.sqrt(self.ctfvalues['defocus1']*self.ctfvalues['defocus2'])
 
-		confs = ctfres.getCorrelationProfile(raddata, rotdata, self.freq, self.ctfvalues)
+		### get the confidence
+		confraddata, confdata = ctfres.getCorrelationProfile(raddata, rotdata, meandefocus, self.freq, 
+			self.ctfvalues['cs'], self.ctfvalues['volts'], self.ctfvalues['amplitude_contrast'])
 
-		return
+		res5 = ctfres.getResolutionFromConf(confraddata, confdata, limit=0.5)
+		res8 = ctfres.getResolutionFromConf(confraddata, confdata, limit=0.8)
 
-	#---------------------------------------
-	def onGetResolution2d(self, env):
-		if not 'defocus2' in self.ctfvalues.keys():
-			dialog = wx.MessageDialog(self.frame, "Need a defocus estimate first.",
-				'Error', wx.OK|wx.ICON_ERROR)
-			dialog.ShowModal()
-			dialog.Destroy()
-			return
+		### Show the data
+		raddatasq = raddata**2
+		confraddatasq = confraddata**2
+		firstpeak = peakradii[0]
+		fpi = numpy.searchsorted(raddata, peakradii[0]*self.freq) #firstpeakindex
+		pyplot.clf()
+		### raw powerspectra data
+		pyplot.plot(raddatasq[fpi:], rotdata[fpi:], '-', color="red", alpha=0.5, linewidth=1)
+		### ctf fit data
+		pyplot.plot(raddatasq[fpi:], genctfdata[fpi:], '-', color="black", alpha=0.5, linewidth=1)
+		### confidence profile
+		pyplot.plot(confraddatasq, confdata, '.', color="blue", alpha=0.9, markersize=10)
+		pyplot.plot(confraddatasq, confdata, '-', color="blue", alpha=0.9, linewidth=2)
 
-		if self.checkNormalized() is False:
-			return
+		locs, labels = pyplot.xticks()
+		newlocs = []
+		newlabels = []
+		for loc in locs:
+			if loc < xmin:
+				continue
+			res = round(1.0/math.sqrt(loc),1)
+			label = "1/%.1fA"%(res)
+			newloc = 1.0/res**2
+			newlocs.append(newloc)
+			newlabels.append(label)
+		pyplot.xticks(newlocs, newlabels)
 
-		### get the data
-		imagedata = self.panel.numericdata
-		if self.ellipse_params is None:
-			self.ellipratio = 1.0
-			self.ellipangle = 0.0
-		else:
-			self.ellipratio = self.ellipse_params['a']/self.ellipse_params['b']
-			self.ellipangle = -math.degrees(self.ellipse_params['alpha'])
+		pyplot.axvline(x=1/res8**2, linewidth=2, color="gold")
+		pyplot.axvline(x=1/res5**2, linewidth=2, color="red")
 
-		pixelrdata, rotdata = ctftools.ellipticalArray(imagedata, self.ellipratio, self.ellipangle)
-		raddata = pixelrdata*self.freq
+		pyplot.title("Resolution values of %.3fA at 0.8 and %.3fA at 0.5"%(res8,res5))
+		pyplot.xlim(xmin=raddatasq[fpi-1], xmax=raddatasq.max())
+		pyplot.ylim(ymin=-0.05, ymax=1.05)
+		pyplot.subplots_adjust(wspace=0.05, hspace=0.05,
+			bottom=0.05, left=0.05, top=0.95, right=0.95, )
+		pyplot.show()
 
-		print "getting confidence..."
-		confs = ctfres.getCorrelationProfile(raddata, rotdata, self.freq, self.ctfvalues)
+		apDisplay.printColor("Resolution values of %.4fA at 0.8 and %.4fA at 0.5"%(res8,res5), "cyan")
 
 		return
 
@@ -2285,8 +2296,8 @@ class ManualCTF(appionLoop2.AppionLoop):
 
 		### calculate power spectra
 		apix = apDatabase.getPixelSize(imgdata)
-		fftarray, freq = ctfpower.power(imgarray, apix, mask_radius=0.2)
-		#fftarray = imagefun.power(fftarray, mask_radius=0.2)
+		fftarray, freq = ctfpower.power(imgarray, apix, mask_radius=1)
+		#fftarray = imagefun.power(fftarray, mask_radius=1)
 
 		fftarray = ndimage.median_filter(fftarray, 2)
 
