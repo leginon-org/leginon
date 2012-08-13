@@ -134,7 +134,6 @@ class RCTAcquisition(acquisition.Acquisition):
 		self.logger.info('image0 tilt = %s degrees' % (degrees(tilt0),))
 
 		## loop through each tilt
-		focused = False
 		for i,tilt in enumerate(tilts):
 			if self.player.state() == 'stop':
 				break
@@ -170,16 +169,10 @@ class RCTAcquisition(acquisition.Acquisition):
 				threshold = self.settings['drift threshold']
 				self.checkDrift(presetname, emtarget, threshold)
 
-			## mark focus target done if already focused
-			'''
-			if focused:
-				self.focusDone(tiltedtargetlist)
-			'''
 			#self.declaredrifteachtarget = True
 			self.setTargets([], 'Peak')
 			acquisition.Acquisition.processTargetList(self, tiltedtargetlist)
 			#self.declaredrifteachtarget = False
-			focused = True
 
 		self.logger.info('returning to tilt0')
 		self.instrument.tem.StagePosition = {'a': tilt0}
