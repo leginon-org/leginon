@@ -89,6 +89,12 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	$phasecheck = ($_POST['ctfcorrect']=='on' || !$_POST['process']) ? 'CHECKED' : '';
 	$boxfilescheck = ($_POST['boxfiles']=='on') ? 'CHECKED' : '';
 	$helicalcheck = ($_POST['helicalcheck']=='on') ? 'CHECKED' : '';
+	$boxmaskcheck = ($_POST['boxmaskcheck']=='on') ? 'CHECKED' : '';
+	$boxdisp = ($_POST['boxmaskcheck']=='on') ? 'block' : 'none';
+	$boxmask = ($_POST['boxmask']) ? $_POST['boxmask'] : '240';
+	$iboxmask = ($_POST['iboxmask']) ? $_POST['iboxmask'] : '0';
+	$boxlen = ($_POST['boxlen']) ? $_POST['boxlen'] : '300';
+	$falloff = ($_POST['falloff']) ? $_POST['falloff'] : '90';
 	$finealigncheck = ($_POST['finealigncheck']=='on') ? 'CHECKED' : '';
 	$inspectcheck = ($_POST['inspected']=='off') ? '' : 'CHECKED';
 	$commitcheck = ($_POST['commit']=='on' || !$_POST['process']) ? 'CHECKED' : '';
@@ -160,6 +166,16 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 		} else {
 			document.viewerform.xmippnormval.disabled=true;
 			document.viewerform.xmippnormval.value='4.5';
+		}
+	}
+
+	
+	function toggleboxmask() {
+		if (document.getElementById('boxmaskopts').style.display == 'none' || document.getElementById('boxmaskopts').style.display == '') {
+			document.getElementById('boxmaskopts').style.display = 'block';
+		}
+		else {
+			document.getElementById('boxmaskopts').style.display = 'none';
 		}
 	}
 
@@ -592,6 +608,32 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	echo "<br />\n";
 
 	echo "<br />\n";
+	if ($storedhelices) {
+		echo "<input type = 'checkbox' name='boxmaskcheck' onclick='toggleboxmask(this)' $boxmaskcheck>\n";
+		echo docpop('boxmaskcheck', 'Boxmask the raw particles');
+		echo "<br />\n";
+		echo "<div id='boxmaskopts' style='display:$boxdisp;'>\n";
+		// parameters
+		echo "<input type='text' name='boxmask' value='$boxmask' size='4'>\n";
+	       	echo docpop('boxmask','Outer Mask Radius: ');
+		echo "(in Angstroms)<br/>\n";
+
+		echo "<input type='text' name='iboxmask' value='$iboxmask' size='4'>\n";
+		echo docpop('iboxmask','Inner Mask Radius');
+		echo "(in Angstroms)<br/>\n";
+
+		echo "<input type='text' name='boxlen' value='$boxlen' size='4'>\n";
+		echo docpop('boxlen','Length Mask: ');
+		echo "(in Angstroms)<br/>\n";
+
+		echo "<input type='text' name='falloff' value='$falloff' size='4'>\n";
+		echo docpop('falloff','Edge Falloff: ');
+		echo "(in Angstroms)\n";
+
+		echo "</div>\n";
+	}
+
+	echo "<br />\n";
 	echo "<b>Helical Alignment:</b>\n";
 	echo "<br />\n";
 	echo "<input type='checkbox' name='helicalcheck' $helicalcheck>\n";
@@ -649,8 +691,10 @@ function runMakestack() {
 	$ctffindonly = ($_POST['ctffindonly'])=='on' ? True : False;
 	$ddstartframe = $_POST['ddstartframe'];
 	$ddnframe = $_POST['ddnframe'];
-	
-	
+	if ($_POST['boxmaskcheck']=='on') {
+		$boxmask = $_POST['boxmask'].','.$_POST['boxlen'].','.$_POST['iboxmask'].','.$_POST['falloff'];
+	}
+
 	// set image inspection selection
 	$norejects=$inspected=0;
 	if ($_POST['checkimage']=="Non-rejected") {
@@ -811,7 +855,7 @@ function runMakestack() {
 	if ($ddstartframe) $command.=" --ddstartframe=$ddstartframe";
 	if ($ddnframe) $command.=" --ddnframe=$ddnframe";
 	if ($ctfrunID) $command.="--ctfrunid=$ctfrunID ";
-	
+	if ($boxmask) $command.="--boxmask='$boxmask' ";
 
 	$apcommand = parseAppionLoopParams($_POST);
 	if ($apcommand[0] == "<") {
