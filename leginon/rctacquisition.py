@@ -243,7 +243,7 @@ class RCTAcquisition(acquisition.Acquisition):
 		if matrix is None:
 			return None
 
-		# create new target list adjusted for new tilt
+		# transformTargets for display purposes only
 		self.transformTargets(matrix, tilt0targets)
 
 		## publish everything
@@ -292,6 +292,7 @@ class RCTAcquisition(acquisition.Acquisition):
 			arrayold = ndimage.gaussian_filter(arrayold, lowfilt)
 		self.setImage(arrayold, 'Image')
 		runningresult = numpy.identity(3, numpy.float32)
+		# transformTargets for display purposes only
 		self.transformTargets(runningresult, tilt0targets)
 		retries = 0
 
@@ -361,6 +362,7 @@ class RCTAcquisition(acquisition.Acquisition):
 			self.logger.info( "Inter Matrix: "+libCVwrapper.affineToText(result) )
 
 			runningresult = numpy.dot(runningresult, result)
+			# transformTargets for display purposes only
 			self.transformTargets(runningresult, tilt0targets)
 			self.logger.info( "Running Matrix: "+libCVwrapper.affineToText(runningresult) )
 			self.logger.info("running result matrix= "+str(numpy.asarray(runningresult*100, dtype=numpy.int8).ravel()))
