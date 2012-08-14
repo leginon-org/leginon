@@ -220,7 +220,6 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 			return False
 
 		# first create an aceparam object
-		print appiondata
 		paramq = appiondata.ApXmippCtfParamsData()
 		paramq['fieldsize'] = self.params['fieldsize']
 

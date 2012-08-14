@@ -550,7 +550,7 @@ class CtfNoise(object):
 		minvalindex = numpy.argmin(valuelist)
 		constrainval = contraintFunction(fitparamslist[minvalindex], xdata, filterctfdata)
 		valuelist = numpy.array(valuelist)
-		minconval = -0.3
+		minconval = -1e-3
 		while constrainval < minconval and valuelist.min() < 1e6:
 			apDisplay.printMsg("Constraint violation: %.3f < %.3f"%(constrainval, minconval))
 			valuelist[minvalindex] *= 1e10
