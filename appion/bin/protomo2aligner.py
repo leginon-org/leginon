@@ -4,7 +4,7 @@ import os
 import sys
 import math
 import glob
-from appionlib import appionScript
+from appionlib import basicScript
 from appionlib import apDisplay
 from appionlib import apDatabase
 from appionlib import apProTomo2Prep
@@ -18,21 +18,20 @@ except:
 	print "protomo did not get imported"
 
 #=====================
-class ProTomo2Aligner(appionScript.AppionScript):
+class ProTomo2Aligner(basicScript.BasicScript):
 	#=====================
 	def setupParserOptions(self):
 		self.parser.set_usage( "Usage: %prog --tiltseriesnumber=<#> --session=<session> "
 			+"[options]")
-
-		self.parser.add_option("-s", "--session", dest="sessionname",
-			help="Session name (e.g. 06mar12a)", metavar="SESSION")
-
-		self.parser.add_option("--tiltseries", dest="tiltseries", type="int",
-			help="tilt series number in the session", metavar="int")
 			
 		#self.parser.add_option("--refimg", dest="refimg", type="int",
 		#	help="Protomo only: custom reference image number, e.g. --refimg=20", metavar="int")
-		
+		self.parser.add_option("--seriesname", dest="seriesname", help="Name of Protomo series, e.g. --seriesname=series1")
+
+		self.parser.add_option('-R', '--rundir', dest='rundir', help="Path of run directory")
+
+		self.parser.add_option('--maxtilt', dest='maxtilt', type='int', metavar='int', help='Highest image tilt in degrees, e.g. --maxtilt=65') 
+
 		self.parser.add_option("--region_x", dest="region_x", default=512, type="int",
 			help="Pixels in x to use for region matching, e.g. --region=1024", metavar="int")
 		
@@ -187,31 +186,13 @@ class ProTomo2Aligner(appionScript.AppionScript):
 	def start(self):
 	
 		### some of this should go in preloop functions
-	
-		###do queries
-		sessiondata = apDatabase.getSessionDataFromSessionName(self.params['sessionname'])
-		self.sessiondata = sessiondata
-		tiltseriesdata = apDatabase.getTiltSeriesDataFromTiltNumAndSessionId(self.params['tiltseries'],sessiondata)
-		tiltdata=apTomo.getImageList([tiltseriesdata])
-		description = self.params['description']
-		sampling = self.params['sampling']
-		print sampling
-		iters = self.params['iters']
-		apDisplay.printMsg("getting imagelist")
-
-		tilts,ordered_imagelist,ordered_mrc_files,refimg = apTomo.orderImageList(tiltdata)
-		#tilts are tilt angles, ordered_imagelist are imagedata, ordered_mrc_files are paths to files, refimg is an int
-				
-		###set up files
-		seriesname='series'+str(self.params['tiltseries'])
-		tiltfilename=seriesname+'.tlt'
-		param_out=seriesname+'.param'
-		maxtilt=max([abs(tilts[0]),abs(tilts[-1])])
-		apDisplay.printMsg("highest tilt angle is %f" % maxtilt)
-		self.params['cos_alpha']=math.cos(maxtilt*math.pi/180)
-		self.params['raw_path']=os.path.join(self.params['rundir'],'raw')
 
 		###create param file
+		param_out=self.params['seriesname']+'.param'
+		tiltfilename=self.params['seriesname']+'.tlt'
+		iters = self.params['iters']
+		self.params['cos_alpha']=math.cos(self.params['maxtilt']*math.pi/180)
+		self.params['raw_path']=os.path.join(self.params['rundir'],'raw')
 		param_in=apProTomo2Prep.getPrototypeParamPath()
 		paramdict = apProTomo2Prep.createParamDict(self.params)
 		apProTomo2Prep.modifyParamFile(param_in, param_out, paramdict)
@@ -219,46 +200,28 @@ class ProTomo2Aligner(appionScript.AppionScript):
 
 		apDisplay.printMsg('Starting protomo alignment')
 
-		###using presence of raw directory to determine if refine has been run once already
-		rawexists=apParam.createDirectory(self.params['raw_path'])
-		if rawexists is True:
-			apDisplay.printMsg("copying raw images")
-			newfilenames=apProTomo.getImageFiles(ordered_imagelist,self.params['raw_path'], link=False)
+		###using presence of i3t to determine if protomo has been run once already
+
+		#create series object
+		i3tfile=self.params['seriesname']+'.i3t'
 		
-			###create tilt file
-
-			#get image size from the first image
-			imagesizex=tiltdata[0]['image'].shape[0]
-			imagesizey=tiltdata[0]['image'].shape[1]
-
-			#shift half tilt series relative to eachother
-			#SS I'm arbitrarily making the bin parameter here 1 because it's not necessary to sample at this point
-			shifts = apTomo.getGlobalShift(ordered_imagelist, 1, refimg)
-			
-			#OPTION: refinement might be more robust by doing one round of IMOD aligment to prealign images before doing protomo refine
-			origins=apProTomo2Prep.convertShiftsToOrigin(shifts, imagesizex, imagesizey)
-
-			#determine azimuth
-			azimuth=apTomo.getAverageAzimuthFromSeries(ordered_imagelist)
-			apProTomo2Prep.writeTileFile2(tiltfilename, seriesname, newfilenames, origins, tilts, azimuth, refimg)
-			
-			#create series object
+		if os.path.exists(i3tfile):
+			series=protomo.series(seriesparam)
+		else:
 			seriesgeom=protomo.geom(tiltfilename)
 			series=protomo.series(seriesparam,seriesgeom)
-		else:
-			series=protomo.series(seriesparam)
 
 		#figure out starting number
 		start=0
-		previters=glob.glob(seriesname+'*.corr')
+		previters=glob.glob(self.params['seriesname']+'*.corr')
 		if len(previters) > 0:
 			previters.sort()
 			lastiter=previters[-1]
-			start=int(lastiter.split(seriesname)[1].split('.')[0])+1
+			start=int(lastiter.split(self.params['seriesname'])[1].split('.')[0])+1
 		
 		for n in range(iters):
 			series.align()
-			basename='%s%02d' % (seriesname,(n+start))
+			basename='%s%02d' % (self.params['seriesname'],(n+start))
 
 			corrfile=basename+'.corr'
 			series.corr(corrfile)
