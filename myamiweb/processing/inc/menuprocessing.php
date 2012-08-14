@@ -873,6 +873,16 @@ if (is_numeric($expId)) {
 		);
 	}
 	
+	//Maskiton is not yet working
+	if (!HIDE_FEATURE)
+	{
+		$nrun = "<a href='maskiton.php?expId=$sessionId'>";
+		$nrun .= "Maskiton";
+		$nrun .= "</a>";
+		$nruns[] = $nrun;
+	
+	}
+	
 	$nrun = "<a href='manualMaskMaker.php?expId=$sessionId'>";
 	$nrun .= "Manual Masking";
 	$nrun .= "</a>";
