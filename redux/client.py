@@ -5,7 +5,6 @@ import socket
 import utility
 from optparse import OptionParser
 import redux.pipes
-import redux.pipeline
 import redux.pipelines
 
 class Client(object):
@@ -36,6 +35,9 @@ class NetworkClient(Client):
 		return self.process_request(request)
 
 class SimpleClient(Client):
+	def __init__(self, *args, **kwargs):
+		import redux.pipeline
+		Client.__init__(self, *args, **kwargs)
 	def process_request(self, request):
 		kwargs = utility.request_to_kwargs(request)
 		return self.process_kwargs(**kwargs)
