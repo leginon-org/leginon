@@ -100,7 +100,7 @@ class Prep3DRefinement(appionScript.AppionScript):
 		return clipsize
 
 
-	def preprocessStackWithProc2d(self):
+	def preprocessStack(self):
 		'''
 		Use database particle stack file to create a stack file with binning and filtering
 		ready for processing.
@@ -294,7 +294,7 @@ class Prep3DRefinement(appionScript.AppionScript):
 		Convert stack in database to refinestack in the format the refine method needs
 		'''
 		self.__initializeStack()
-		self.preprocessStackWithProc2d()
+		self.preprocessStack()
 		self.convertToRefineStack()
 		self.addStackToSend(self.stack['file'])
 		self.__commitRefineStack(prepdata)

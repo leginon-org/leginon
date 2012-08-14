@@ -79,7 +79,7 @@ class FrealignPrep3DRefinement(apPrepRefine.Prep3DRefinement):
 		rescale = not self.params['paramonly']
 		super(FrealignPrep3DRefinement,self).preprocessModelWithProc3d(rescale)
 
-	def preprocessStackWithProc2d(self):
+	def preprocessStack(self):
 		self.getStackRunParams()
 		# use original stackrun log parameters to create preparation parameters
 		if 'defocpair' in self.stackrunlogparams.keys():
@@ -93,7 +93,7 @@ class FrealignPrep3DRefinement(apPrepRefine.Prep3DRefinement):
 			self.no_ctf_correction = True
 			if self.stackparamdata['inverted']:
 				self.invert = True
-			newstackfile = super(FrealignPrep3DRefinement,self).preprocessStackWithProc2d()
+			newstackfile = super(FrealignPrep3DRefinement,self).preprocessStack()
 			return newstackfile
 		else:
 			# Need to recreate the ctf-uncorrected stack.  preprocess is not useful
