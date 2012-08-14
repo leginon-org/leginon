@@ -73,17 +73,17 @@ def runCTFdisplayTools(imgdata, ctfvalues, opimagedir):
 		return ctfvalues
 	### save the classic images as well
 	if 'graph1' in ctfvalues:
-		ctfvalues['graph3'] = ctfvalues['graph1']
+		ctfvalues['graph3'] = os.path.basename(ctfvalues['graph1'])
 	if 'graph2' in ctfvalues:
-		ctfvalues['graph4'] = ctfvalues['graph2']
+		ctfvalues['graph4'] = os.path.basename(ctfvalues['graph2'])
 	### new powerspec file
 	psfile = os.path.join(opimagedir, ctfdisplaydict['powerspecfile'])
 	shutil.move(ctfdisplaydict['powerspecfile'], psfile)
-	ctfvalues['graph1'] = psfile
+	ctfvalues['graph1'] = os.path.basename(psfile)
 	### new 1d plot file
 	plotfile = os.path.join(opimagedir, ctfdisplaydict['plotsfile'])
 	shutil.move(ctfdisplaydict['plotsfile'], plotfile)
-	ctfvalues['graph2'] = plotfile
+	ctfvalues['graph2'] = os.path.basename(plotfile)
 	ctfvalues['confidence_30_10'] = ctfdisplaydict['conf3010']
 	ctfvalues['confidence_5_peak'] = ctfdisplaydict['conf5peak']
 	ctfvalues['resolution_80_percent'] = ctfdisplaydict['res80']
@@ -175,8 +175,8 @@ def checkParams(ctfvalues):
 		apDisplay.printWarning(msg)
 		return False
 	if not confirm_degrees and radian_suspects > 5:
-		msg = "too many (> 5) suspicious angle astigmatisms, likely in radians"%(angle)
-		apDisplay.printError(msg)
+		msg = "too many (%d) suspicious angle astigmatisms, likely in radians"%(radian_suspects)
+		apDisplay.printWarning(msg)
 
 	### various test of data
 	if focus1*1e6 > 25.0 or focus1*1e6 < 0.01:
