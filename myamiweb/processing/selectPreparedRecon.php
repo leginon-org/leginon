@@ -152,8 +152,6 @@ function jobForm($extra=false)
 
 	if (!$jobid)
 		selectRefineJob("ERROR: No prepared refine job id was selected");
-	if (!($user && $pass))
-		selectRefineJob("ERROR: You are not logged in");
 	
 	// Get the selected refinement job info from the database 
 	$particle 		= new particledata();
@@ -347,7 +345,7 @@ function createCommand ($extra=False)
 	/* *******************
 	 PART 2: Copy any needed files to the cluster
 	 ******************** */
-	copyFilesToCluster( $hostname );	
+	$copyCommand = copyFilesToCluster( $hostname );
 	
 	/* *******************
 	 PART 3: Create program command
@@ -385,6 +383,8 @@ function createCommand ($extra=False)
 	 ******************** */
 	// Add reference to top of the page
 	$headinfo .= $selectedRefineForm->showReference();
+	$headinfo .= $copyCommand;
+	$headinfo .= "<br />";
 
 	/* *******************
 	 PART 5: Show or Run Command
@@ -397,13 +397,21 @@ function createCommand ($extra=False)
 };
 
 // TODO: the guts of this stuff should be moved 
+// If the user is not logged in, or there is an error
+// copying the files, this function returns a string with 
+// directions for manual copy. If the copy is successful,
+// this returns and empty string.
 function copyFilesToCluster( $host )
 {
+	$copyNeededFlag		= false; // this becomes true if files actually need to be copied 
+	$printCommandFlag 	= false; // this becomes true if we are unable to execute the copy
+	$returnCmdString	= ""; // the commands the user needs to enter manually if auto copy fails
+		
+	// if the user is not logged in, we cannot execute the copy for them
 	$user = $_SESSION['username'];
 	$pass = $_SESSION['password'];
-
 	if (!($user && $pass)) {
-		jobForm("<B>ERROR:</B> Enter a user name and password");
+		$printCommandFlag = true;
 	}
 
 	$cluster 	 = new Cluster($host);
@@ -415,18 +423,21 @@ function copyFilesToCluster( $host )
 	
 	// create appion directory & copy list of files to copy
 	// TODO: where exactly should files be copied to?
-	$cmd = "mkdir -p $clusterpath;\n";
+	$mkdircmd = "mkdir -p $clusterpath;\n";
 	
-	$rvalue = exec_over_ssh($host, $user, $pass, $cmd, false);
-	if ($rvalue === false ){
-		$errMsg = "Error: Could not create run directory on $host: ";
-		$errMsg .= pconnError();
-		jobForm("<B>ERROR:</B> $errMsg");
-		//echo "<hr>\n<font color='#CC3333' size='+1'>$errMsg</font>\n";
-		exit;
-	} else {
-		// TODO: log this to a file
-		//echo "<hr>\n<font color='#CC3333' size='+1'>Created run directory $clusterpath on $host.</font>\n";
+	if ( !$printCommandFlag ) {
+		$rvalue = exec_over_ssh($host, $user, $pass, $mkdircmd, false);
+		if ($rvalue === false ){
+			// if the mkdir failed, display the commands to the user to run manually
+			$printCommandFlag = true;
+			$errMsg = "Error: Could not create run directory on $host: ";
+			$errMsg .= pconnError();
+			$returnCmdString .= "<B>ERROR</B> $errMsg <br /><br />";
+			//echo "<hr>\n<font color='#CC3333' size='+1'>$errMsg</font>\n";
+		} else {
+			// TODO: log this to a file
+			//echo "<hr>\n<font color='#CC3333' size='+1'>Created run directory $clusterpath on $host.</font>\n";
+		}
 	}
 	
 	// Get list of files to copy
@@ -450,15 +461,11 @@ function copyFilesToCluster( $host )
 	$fileList[] = $files_to_remote_host;
 	
 	foreach ( $fileList as $filename ) {
-		
 		if ( !$filename ) {
 			//echo "<hr>\n<font color='#CC3333' size='+1'>$filename not valid.</font>\n";
 			continue;
 		}
 		
-		// get filename from path
-	    //$filename = basename($filepath);
-	    
 		// add the path to the current location of the file
 		$filepath = $rundir."/".$filename;
 
@@ -467,27 +474,39 @@ function copyFilesToCluster( $host )
 	    	    
 	    // copy the file to the cluster
 	    if ( $filepath != $remoteFilePath ) {
-			copyFile($host, $user, $pass, $filepath, $remoteFilePath);
+	    	$copyNeededFlag = true;
+	    	$cpycmd .= " cp $filepath $remoteFilePath; <br />";
+	    	// if we have not had any errors above, try the copy
+	    	if ( !$printCommandFlag ) {
+	    		$rvalue = scp($host, $user, $pass, $filepath, $remoteFilePath);	
+				if (!$rvalue) {
+					// if there is an error with the copy, let the user know and display the manual commands
+					$printCommandFlag = true;
+					$errMsg = "Failed to copy file ($filepath) to $remoteFilePath on $host: ";
+					$errMsg .= pconnError();
+					$returnCmdString .= "<B>ERROR</B> $errMsg <br /><br />";
+					//echo "<hr>\n<font color='#CC3333' size='+1'>$errMsg</font>\n";
+				} else {
+					// TODO: log this to a file
+					//echo "<hr>\n<font color='#CC3333' size='+1'>Copied $filepath to $remoteFilePath on $host.</font>\n";
+				}
+	    	}
 	    } else {
 	    	// TODO: log this to a file
 			//echo "<hr>\n<font color='#CC3333' size='+1'>No need to copy file $filepath to $remoteFilePath.</font>\n";
 	    }
 	}	
-}
-
-function copyFile( $host, $user, $pass, $filepath, $remoteFilePath )
-{	
-	$rvalue = scp($host, $user, $pass, $filepath, $remoteFilePath);	
-	if (!$rvalue) {
-		$errMsg = "Error: Copying file ($filepath) to $remoteFilePath on $host failed: ";
-		$errMsg .= pconnError();
-		jobForm("<B>ERROR:</B> $errMsg");
-		//echo "<hr>\n<font color='#CC3333' size='+1'>$errMsg</font>\n";
-		//exit;
-	} else {
-		// TODO: log this to a file
-		//echo "<hr>\n<font color='#CC3333' size='+1'>Copied $filepath to $remoteFilePath on $host.</font>\n";
+	
+	// Build the return string if needed
+	if ( $copyNeededFlag && $printCommandFlag ) {
+		$returnCmdString .= "<b>You MUST manually execute the following commands (or similar) prior to running the refinement command:</b>";
+		$returnCmdString .= "<br /><br />";
+		$returnCmdString .= $mkdircmd;
+		$returnCmdString .= "<br />";
+		$returnCmdString .= $cpycmd;
 	}
+	
+	return $returnCmdString;
 }
 
 ?>
