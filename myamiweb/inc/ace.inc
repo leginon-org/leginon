@@ -20,60 +20,37 @@ function readACENormFile($filename) {
 	return $acedata;
 }
 
-function getAceViewerForm($name,$aceruns) {
+function getAceViewerForm($name, $aceruns) {
 	global $ACE;
 
 	if (is_array($aceruns) && count($aceruns) > 1) {
-		$runselect = 'or choose run: <select id="'.$name.'acerun">';
+		$runselect = '<p>Choose run: <br/>';
+		$runselect.='<select id="'.$name.'acerun">';
 		$runselect.="<option value='-1'>all</option>";
 		foreach ($aceruns as $run) {
 			$runselect.="<option value='".$run['DEF_id']."'>".$run['name']."</option>";
 		}
 		$runselect.='</select>';
-		$runselect.='<br/>';
+		$runselect.='</p>';
 	}
 
-	$aceform='Best CTF estimation of ';
-	$aceform.='<ul style="margin:0; list-style-type:none">';
+	$aceform='<p>Choose method: <br/>';
 	$aceform.='<select id="'.$name.'acemethod">';
 	$aceform.="<option value='1'>all</option>";
 	$aceform.="<option value='2'>ace1 only</option>";
 	$aceform.="<option value='3'>ace2 only</option>";
 	$aceform.="<option value='4'>ctffind only</option>";
 	$aceform.='</select>';
-	$aceform.=' method(s)';
-	$aceform.='</ul>';
+	$aceform.='</p>';
 	$aceform.=$runselect;
-	$aceform.='<br/>';
-	$aceform.='Show ';
+	$aceform.='<p>Choose graph: <br/>';
 	$aceform.='<select id="'.$name.'aceparam">';
-	$aceform.="<option value='3'>package diagnosis</option>";
 	$aceform.="<option value='1'>2D power spec overlay</option>";
 	$aceform.="<option value='2'>1D component fit graph</option>";
+	$aceform.="<option value='3'>2D from package</option>";
+	$aceform.="<option value='4'>1D from package</option>";
 	$aceform.='</select>';
-	$aceform.='<hr>';
-	$aceform.='For ACE2 1D graph only ';
-	$aceform.='<ul style="margin:0; list-style-type:none">';
-	$aceform.='<li>';
-	$aceform.='<input type="checkbox" id="'.$name.'aceparam2">';
-	$aceform.=$ACE['d1'];
-	$aceform.='</li>';
-	$aceform.='<li>';
-	$aceform.='<input type="checkbox" id="'.$name.'aceparam3">';
-	$aceform.=$ACE['d2'];
-	$aceform.='</li>';
-	$aceform.='<li>';
-	$aceform.='<input type="checkbox" id="'.$name.'aceparam4">';
-	$aceform.=$ACE['d3'];
-	$aceform.='</li>';
-	$aceform.='<li>';
-	$aceform.='<input type="checkbox" id="'.$name.'aceparam5">';
-	$aceform.=$ACE['d4'];
-	$aceform.='</li>';
-	$aceform.='Graph Axis Scaling (0-1):<br>';
-	$aceform.='x:<input type="text" id="'.$name.'xscale" size=3> ';
-	$aceform.='y:<input type="text" id="'.$name.'yscale" size=3> ';
-	$aceform.='</ul>';
+	$aceform.='</p>';
 	$aceform.='<input type="button" value="update" onclick=setAceParam(\''.$name.'\') />';
 	return $aceform;
 }

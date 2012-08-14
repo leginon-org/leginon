@@ -51,6 +51,10 @@ if ($ctfdata['angle_astigmatism']) {
 if ($ctftype=='ctffind') $keys[]='cross_correlation';
 else $keys[]='confidence';
 $keys[]='confidence_d';
+$keys[]='confidence_30_10';
+$keys[]='confidence_5_peak';
+$keys[]='resolution_80_percent';
+$keys[]='resolution_50_percent';
 
 if ($ctfdata) {
 	echo "<font style='font-size: 12px;'>";

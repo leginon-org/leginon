@@ -518,11 +518,13 @@ function setParticleLabelParams($img,$particlelabels,$labeldata) {
 	return $particlelabelparams;
 }
 
-function blankimage($w=256, $h="") {
+function blankimage($w=256, $h="", $text="Failed") {
 	if (!$h)
 		$h=$w;
 	$blkimg = imagecreate($w, $h);
-	$w = imagecolorallocate($blkimg, 255, 255, 255);
+	$background = imagecolorallocate($blkimg, 255, 255, 255);
+	$textcolor = imagecolorallocate($blkimg, 0, 0, 255);
+	imagestring($blkimg, 5, 2, 2, $text, $textcolor);
 	return $blkimg;
 }
 
