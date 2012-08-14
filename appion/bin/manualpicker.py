@@ -148,9 +148,9 @@ class PickerApp(wx.App):
 			self.helicalinsert = wx.Button(self.frame, -1, '&Add Helix')
 			self.helicalinsert.SetMinSize((120,40))
 			self.Bind(wx.EVT_BUTTON, self.addHelix, self.helicalinsert)
-			self.helicalinsert = wx.Button(self.frame, -1, '&Helical insert')
-			self.helicalinsert.SetMinSize((120,40))
-			self.Bind(wx.EVT_BUTTON, self.onHelicalInsert, self.helicalinsert)
+			#self.helicalinsert = wx.Button(self.frame, -1, '&Helical insert')
+			#self.helicalinsert.SetMinSize((120,40))
+			#self.Bind(wx.EVT_BUTTON, self.onHelicalInsert, self.helicalinsert)
 			self.buttonrow.Add(self.helicalinsert, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 
 		label = wx.StaticText(self.frame, -1, "Image Assessment:  ", style=wx.ALIGN_RIGHT)
