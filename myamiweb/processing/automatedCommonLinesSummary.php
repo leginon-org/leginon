@@ -56,7 +56,7 @@ if ($aclRuns) {
 
 		// update description
 		if ($_POST['updateDesc'.$aclid]) {
-			updateDescription('ApRefineRunData', $aclid, $_POST['newdescription'.$aclid]);
+			updateDescription('ApAutomatedCommonLinesRunData', $aclid, $_POST['newdescription'.$aclid]);
 			$aclrun['description']=$_POST['newdescription'.$aclid];
 
 		}

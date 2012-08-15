@@ -88,12 +88,12 @@ function automatedCommonLinesSummary($extra=False, $title='Common Lines Summary'
 		// hide acl
 		if ($_POST['hideItem'.$aclid]) {
 			echo "Hiding Recon $aclid\n<br/>\n";
-			$particle->updateHide('ApRefineRunData', $aclid, '1');
+			$particle->updateHide('ApAutomatedCommonLinesRunData', $aclid, '1');
 			continue;
 		}
 		// update description
 		if ($_POST['updateDesc'.$aclid]) {
-			updateDescription('ApRefineRunData', $aclid, $_POST['newdescription'.$aclid]);
+			updateDescription('ApAutomatedCommonLinesRunData', $aclid, $_POST['newdescription'.$aclid]);
 			$aclrun['description']=$_POST['newdescription'.$aclid];
 	
 		}
