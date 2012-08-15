@@ -75,6 +75,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 		### run batchboxer
 		self.boxedpartdatas, self.imgstackfile, self.partmeantree = self.boxParticlesFromImage(imgdata,partdatas,shiftdata)
 		if self.boxedpartdatas is None:
+			self.stats['lastpeaks'] = 0
 			apDisplay.printWarning("no particles were boxed from "+shortname+"\n")
 			self.badprocess = True
 			return None
