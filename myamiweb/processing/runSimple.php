@@ -26,7 +26,8 @@ if ( $_POST ) {
 	createForm();
 }
 
-function createForm($extra=false, $title='runSimple.py Launcher', $heading='SIMPLE Common Lines') {
+function createForm($extra=false, $title='runSimple.py Launcher', $heading='SIMPLE Common Lines') 
+{
 	// check if coming directly from a session
 	$expId=$_GET['expId'];
 	if ($expId){
@@ -101,10 +102,6 @@ function createForm($extra=false, $title='runSimple.py Launcher', $heading='SIMP
 	echo openRoundBorder();
 	$runParamsForm = new RunParametersForm( $runname, $sessionpathval, $description );
 	echo $runParamsForm->generateForm();
-
-	echo "<H4 style='align=\'center\' >Processing Host Parameters</H4><hr />";
-	$clusterParamsForm = new ClusterParamsForm();
-	echo $clusterParamsForm->generateFormBasic();
 	echo closeRoundBorder();
 	echo "</td>";
 	echo "</tr>";
@@ -171,7 +168,7 @@ function createForm($extra=false, $title='runSimple.py Launcher', $heading='SIMP
 	echo "	<TD COLSPAN='2' ALIGN='CENTER'>\n";
 	echo "	<hr />\n";
 	echo "<br/>\n";	
-	echo getSubmitForm("Run SIMPLE common lines", false );
+	echo getSubmitForm("Run SIMPLE common lines");
 	echo "</td>";
 	echo "</tr>";
 	
@@ -205,10 +202,6 @@ function createCommand()
 	// validate processing run parameters
 	$runParametersForm = new RunParametersForm();
 	$errorMsg = $runParametersForm->validate( $_POST );
-
-	// verify processing host parameters
-	$clusterParamForm = new ClusterParamsForm();
-	//$errorMsg .= $clusterParamForm->validate( $_POST );
 	
 	$simpleParamsForm = new SimpleParamsForm();
 	$errorMsg .= $simpleParamsForm->validate( $_POST );
@@ -244,17 +237,14 @@ function createCommand()
 
 	// add simple parameters
 	$command .= $simpleParamsForm->buildCommand( $_POST );
-	
-	// add processing host parameters
-	$command = $clusterParamForm->addNProcToCommand( $command );
-	
+		
 	$command.="--stack=$stackid ";	
 	if ($commit) {
 		$command.="--commit ";
 	} else {
 		$command.="--no-commit ";
 	}
-
+	
 	/* *******************
 	 PART 3: Create header info, i.e., references
 	 ******************** */
@@ -267,7 +257,9 @@ function createCommand()
 	/* *******************
 	 PART 5: Show or Run Command
 	 ******************** */
-	$errors = showOrSubmitCommand($command, $headinfo, 'abinitio', $nproc);
+	$nproc = 1;
+	$jobtype = 'abinitio';
+	$errors = showOrSubmitCommand($command, $headinfo, $jobtype, $nproc);
 
 	// if error display them
 	if ($errors)
