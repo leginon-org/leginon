@@ -142,6 +142,45 @@ class ClusterParamsForm extends BasicForm
 		return $html;
 	}
 	
+	public function generateFormBasic()
+	{
+		// if the user selects a new cluster, don't bother checking the previous values
+		// or it will overwrite the new ones.
+		$clusterSelection = $_POST['changehostname'];
+		if ( !$clusterSelection ) {
+			$this->updateFormParams();
+		}
+		
+		$params = $this->getFormParams();
+		
+		// set form field size
+		$size = 4;
+		
+		//--- Cluster Parameters
+		$html.= "<table border='0' cellpadding='4' cellspacing='4'>\n";
+
+		// row 1
+		// add cluster selection box
+		$html.= "<tr><td>\n";
+		$html.= $this->instertHostSelectionBox();
+		$html.= "</td>\n";
+		$html.= "<td>\n";
+		$html.= $params->insertTextFieldInRow( "processinghost", 20 );
+		$html.= "</td></tr>\n";
+		
+		// row 2
+		$html.= "<tr><td>\n";
+		$html.= $params->insertTextFieldInRow( "nodes", $size );
+		$html.= "</td><td>\n";
+		$html.= $params->insertTextFieldInRow( "ppn", $size );
+		$html.= "</td><td>\n";
+		
+		// End table
+		$html.= "</table>\n";
+		
+		return $html;
+	}
+	
 	private function instertHostSelectionBox()
 	{
 		global $PROCESSING_HOSTS;
