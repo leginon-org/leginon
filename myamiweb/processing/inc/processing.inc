@@ -217,6 +217,24 @@ function processing_header($title,$heading=false,$headerstuff=false,$pleaseWait=
 	if ($pleaseWait) $html.= pleaseWaitJava();
 	if ($printDiv) $html.= printDivJava();
 	$html.= $headerstuff;
+	//next line is for hiding advanced features
+	$html.= "
+	<script type='text/javascript'>
+	function toggle(divID) {
+		var ele = document.getElementById(divID);
+		var text = document.getElementById(divID+'_toggle');
+		if(ele.style.display == 'block') {
+		   ele.style.display = 'none';
+		   text.innerHTML = 'Show '+divID;
+		   text.style.color = 'blue';
+		} else {
+		   ele.style.display = 'block';
+		   text.innerHTML = 'Hide '+divID;
+		   text.style.color = 'red';
+		}
+	}
+	</script>
+	";
 	$html.= "<script src='../js/lvmenu.js'></script>\n";
 	$html.= "</head>\n";
 	$html.= "<body onload='initmenu()'>\n";

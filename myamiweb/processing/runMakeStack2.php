@@ -169,7 +169,6 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 		}
 	}
 
-	
 	function toggleboxmask() {
 		if (document.getElementById('boxmaskopts').style.display == 'none' || document.getElementById('boxmaskopts').style.display == '') {
 			document.getElementById('boxmaskopts').style.display = 'block';
@@ -288,19 +287,7 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	echo docpop('stackinv','Invert image density');
 	echo "<br/>\n";
 
-	echo "<input type='checkbox' name='stacknorm' $normcheck>\n";
-	echo docpop('stacknorm','Normalize Stack Particles');
-	echo "<br/>\n";
-
-	echo "<input type='checkbox' name='xmippstacknorm' onclick='enablexmipp(this)' $xmippnormcheck>\n";
-	echo docpop('xmippstacknorm','XMIPP normalize to sigma:');
-	echo "<input type='text' name='xmippnormval' $xmippdisable value='$xmippnormval' size='4'>";
-	echo "<br/>\n";
-
 	if ($ctfdata) {
-		echo"<input type='checkbox' name='xmippbefore' onclick='normbefore(this)' $xmippbeforecheck>\n";
-		echo docpop('xmippbefore','XMIPP norm before CTF correction');
-		echo "<br/>\n";
 		echo"<input type='checkbox' name='ctfcorrect' onclick='enablectftype(this)' $phasecheck>\n";
 		echo docpop('ctfcorrect','Ctf Correct Particle Images');
 		echo "<br/>\n";
@@ -318,6 +305,28 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 		echo "<br/>\n";
 	}
 
+	//
+	// STARTING ADVANCED SECTION 1
+	//
+	echo "<a id='Advanced_Stack_Options_1_toggle' href='javascript:toggle(\"Advanced_Stack_Options_1\");' style='color:blue'>";
+	echo "Show Advanced Stack Options</a><br/>\n";
+	echo "<div id='Advanced_Stack_Options_1' style='display: none'>\n";
+
+	echo "<input type='checkbox' name='stacknorm' $normcheck>\n";
+	echo docpop('stacknorm','Normalize Stack Particles');
+	echo "<br/>\n";
+
+	echo "<input type='checkbox' name='xmippstacknorm' onclick='enablexmipp(this)' $xmippnormcheck>\n";
+	echo docpop('xmippstacknorm','XMIPP normalize to sigma:');
+	echo "<input type='text' name='xmippnormval' $xmippdisable value='$xmippnormval' size='4'>";
+	echo "<br/>\n";
+
+	if ($ctfdata) {
+		echo"<input type='checkbox' name='xmippbefore' onclick='normbefore(this)' $xmippbeforecheck>\n";
+		echo docpop('xmippbefore','XMIPP norm before CTF correction');
+		echo "<br/>\n";
+	}
+
 	echo "<i>File format:</i>";
 	echo "<br/>\n";
 
@@ -331,8 +340,13 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	echo ">\n";
 	echo "Spider: start.spi<br/>\n";
 
+	//
+	// ENDING ADVANCED SECTION 1
+	//
+	echo "</div>\n";
+
 	//echo "</td></tr></table>";
-	echo "</td><td class='tablebg'>";
+	echo "</td><td class='tablebg' valign='top'>";
 	//echo "<table cellpadding='5' border='0'><tr><td valign='TOP'>";
 	
 	$partruns=count($partrunids);
@@ -418,55 +432,6 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	echo "<br/>\n";
 	echo "<br/>\n";
 
-	$massessruns=count($massessrunIds);
-	$massessname = '';
-	$massessnames= $particle->getMaskAssessNames($sessionId);
-
-	if (!$massessnames) {
-		echo"<font size='-1'><i>No Mask Assessed for this Session</i></font>\n";
-	} else {
-		echo "Mask Assessment:
-		<select name='massessname'>\n";
-		foreach ($massessnames as $name) {
-			$massessname = $name;
-			$massessruns = $particle->getMaskAssessRunByName($sessionId,$massessname);
-			$totkeeps = 0;
-			foreach ($massessruns as $massessrun){
-				$massessrunId=$massessrun['DEF_id'];
-				$massessstats=$particle->getMaskAssessStats($massessrunId);
-				$permaskkeeps=$massessstats['totkeeps'];
-				$totkeeps = $totkeeps + $permaskkeeps;
-			}
-			echo "<OPTION value='$massessname'";
-			// select previously set assessment on resubmit
-			if ($massessval==$massessname) echo " selected";
-			$totkeepscm=commafy($totkeeps);
-			echo">$massessname ($totkeepscm regions)</OPTION>\n";
-		}
-		echo "</select>\n";
-	}
-	echo "<br/>\n";
-	echo "<br/>\n";
-	
-	if (!HIDE_FEATURE)
-	{	
-		// raw frame processing gui assuming presetname is ed
-		// This feature only works with Python 2.6
-		echo "<b>Raw frame processing if available: </b><br/>\n";
-		echo "start frame:<input type='text' name='ddstartframe' value='$ddstartframe' size='3'>\n";
-		echo "total frame:<input type='text' name='ddnframe' value='$ddnframe' size='3'>\n";
-		echo "<br/><br/>\n";
-	}
-	
-	// for boxing helical segments
-	if ($storedhelices) {
-		$hstep = ($_POST['boxhstep']) ? $_POST['boxhstep']:'';
-		echo "<input type='text' name='boxhstep' size='5' value='$hstep'>\n";
-		echo docpop('helicalstep', 'Helical Step');
-		echo " <font SIZE=-2><I>(in &Aring;ngstroms)</I></font>\n";
-		echo "<br>\n";
-	}
-
 	// Determine best box size...
 
 	if (!$_POST['boxsize']) {
@@ -505,6 +470,67 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	echo "<font size='-2'>(override boxsize)</font><br/>\n";
 	echo "<br/>\n";
 
+	echo "<input type='text' name='bin' value='$binval' size='4'>\n";
+	echo docpop('stackbin','Binning');
+	echo "<br/>\n";
+	echo "<br/>\n";
+
+	//
+	// STARTING ADVANCED SECTION 2
+	//
+	echo "<a id='Advanced_Stack_Options_2_toggle' href='javascript:toggle(\"Advanced_Stack_Options_2\");' style='color:blue'>";
+	echo "Show Advanced Stack Options</a><br/>\n";
+	echo "<div id='Advanced_Stack_Options_2' style='display: none'>\n";
+
+	$massessruns=count($massessrunIds);
+	$massessname = '';
+	$massessnames= $particle->getMaskAssessNames($sessionId);
+
+	if (!$massessnames) {
+		echo"<font size='-1'><i>No Mask Assessed for this Session</i></font>\n";
+	} else {
+		echo "Mask Assessment:
+		<select name='massessname'>\n";
+		foreach ($massessnames as $name) {
+			$massessname = $name;
+			$massessruns = $particle->getMaskAssessRunByName($sessionId,$massessname);
+			$totkeeps = 0;
+			foreach ($massessruns as $massessrun){
+				$massessrunId=$massessrun['DEF_id'];
+				$massessstats=$particle->getMaskAssessStats($massessrunId);
+				$permaskkeeps=$massessstats['totkeeps'];
+				$totkeeps = $totkeeps + $permaskkeeps;
+			}
+			echo "<OPTION value='$massessname'";
+			// select previously set assessment on resubmit
+			if ($massessval==$massessname) echo " selected";
+			$totkeepscm=commafy($totkeeps);
+			echo">$massessname ($totkeepscm regions)</OPTION>\n";
+		}
+		echo "</select>\n";
+	}
+	echo "<br/>\n";
+	echo "<br/>\n";
+
+	// for boxing helical segments
+	if ($storedhelices) {
+		$hstep = ($_POST['boxhstep']) ? $_POST['boxhstep']:'';
+		echo "<input type='text' name='boxhstep' size='5' value='$hstep'>\n";
+		echo docpop('helicalstep', 'Helical Step');
+		echo " <font SIZE=-2><I>(in &Aring;ngstroms)</I></font>\n";
+		echo "<br>\n";
+	}
+
+	if (!HIDE_FEATURE)
+	{	
+		// raw frame processing gui assuming presetname is ed
+		// This feature only works with Python 2.6
+		echo "<b>Raw frame processing if available: </b><br/>\n";
+		echo "start frame:<input type='text' name='ddstartframe' value='$ddstartframe' size='3'>\n";
+		echo "total frame:<input type='text' name='ddnframe' value='$ddnframe' size='3'>\n";
+		echo "<br/><br/>\n";
+	}
+
 	echo "<b>Filter Values:</b><br/>";
 
 	echo "<input type='text' name='lp' value='$lpval' size='4'>\n";
@@ -515,11 +541,6 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	echo "<input type='text' name='hp' value='$hpval' size='4'>\n";
 	echo docpop('hpstackval', 'High Pass');
 	echo "<font size=-2><i>(in &Aring;ngstroms)</i></font>\n";
-	echo "<br/>\n";
-
-	echo "<input type='text' name='bin' value='$binval' size='4'>\n";
-	echo docpop('stackbin','Binning');
-	echo "<br/>\n";
 	echo "<br/>\n";
 
 	// commented out for now, since not implemented
@@ -633,7 +654,6 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 		echo "</div>\n";
 	}
 
-	echo "<br />\n";
 	echo "<b>Helical Alignment:</b>\n";
 	echo "<br />\n";
 	echo "<input type='checkbox' name='helicalcheck' $helicalcheck>\n";
@@ -642,6 +662,11 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	echo "<input type='checkbox' name='finealigncheck' $finealigncheck>\n";
 	echo docpop('finealigncheck','Apply fine helical rotation angles');
 	echo "<br />\n";
+
+	//
+	// ENDING ADVANCED SECTION
+	//
+	echo "</div>\n";
 
 	echo "</td>\n";
 	echo "</tr>\n";

@@ -94,6 +94,15 @@ function createAppionLoopTable ($sessiondata, $defrunname, $outdirname, $leginon
 			."processing ALL images</I><br/>\n";
 	}
 	echo "<hr/>\n";
+
+	//
+	// STARTING ADVANCED SECTION
+	//
+	echo "<a id='Advanced_Loop_Options_toggle' href='javascript:toggle(\"Advanced_Loop_Options\");' style='color:blue'>";
+	echo "Show Advanced Options</a><br/>\n";
+	echo "<div id='Advanced_Loop_Options' style='display: none'>\n";
+
+
 	echo "<input type='hidden' name='sessionname' value='$sessionname'>\n";
 
 	$particle = new particledata();
@@ -165,6 +174,10 @@ function createAppionLoopTable ($sessiondata, $defrunname, $outdirname, $leginon
 	echo "<input type='checkbox' name='commit' $commit>\n";
 	echo docpop('commit','<b>Commit results to database</b>');
 	echo "<br/>\n";
+	//
+	// ENDING ADVANCED SECTION 1
+	//
+	echo "</div>\n";
 	echo "<hr/>\n";
 	echo "<!-- END Appion Loop Param -->\n";
 };
