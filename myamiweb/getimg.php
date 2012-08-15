@@ -62,8 +62,12 @@ $displaylabel = ($_GET['dlbl']) ? true : false;
 $colorby = ($_GET['pcb']) ? $_GET['pcb'] : false;
 $ptclparams= ($displaynptcl) ? array('colorby'=>$colorby, 'displaylabel'=>$displaylabel, 'info'=>trim($_GET['nptcl'])) : false;
 
-if ($g) {
-
+if (!$g) {
+	header("Content-type: image/x-png");
+	$blkimg = blankimage(256, 64, "missing sessionid or imgid");
+	imagepng($blkimg);
+	imagedestroy($blkimg);
+} else {
 	$params = array (
 		'size'=> $size,
 		'minpix' => $minpix,
@@ -122,7 +126,7 @@ if ($g) {
 
 	if (!$img) {
 		header("Content-type: image/x-png");
-		$blkimg = blankimage();
+		$blkimg = blankimage(256, 64, "image not found");
 		imagepng($blkimg);
 		imagedestroy($blkimg);
 		exit();
@@ -200,12 +204,6 @@ if ($g) {
 
 	$imagerequest = new imageRequester();
 	$imagerequest->displayImageObj($img,$ext,$quality,$filename);
-
-} else {
-	header("Content-type: image/x-png");
-	$blkimg = blankimage();
-	imagepng($blkimg);
-	imagedestroy($blkimg);
 
 }
 
