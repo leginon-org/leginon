@@ -133,7 +133,7 @@ class ParticleExtractLoop(appionLoop2.AppionLoop):
 	############################################################
 
 	def checkRequireCtf(self):
-		return self.params['ctfcutoff'] or self.params['mindefocus'] or self.params['maxdefocus'] or self.params['res80'] or self.params['res50']
+		return self.params['ctfcutoff'] or self.params['mindefocus'] or self.params['maxdefocus'] or self.params['ctfres80'] or self.params['ctfres50']
 
 	def getCtfValueConfidenceForImage(self, imgdata, msg=False):
 		method = self.params['ctfmethod']
@@ -165,18 +165,18 @@ class ParticleExtractLoop(appionLoop2.AppionLoop):
 			return False
 
 		### check resolution requirement for CTF fit at 0.8 threshold
-		if self.params['res80'] is not None:
+		if self.params['ctfres80'] is not None:
 			if not 'resolution_80_percent' in ctfvalue.keys():
 				return False
-			if ctfvalue['resolution_80_percent'] > self.params['res80']:
+			if ctfvalue['resolution_80_percent'] > self.params['ctfres80']:
 				### resolution is too poor
 				return False
 
 		### check resolution requirement for CTF fit at 0.5 threshold
-		if self.params['res50'] is not None:
+		if self.params['ctfres50'] is not None:
 			if not 'resolution_50_percent' in ctfvalue.keys():
 				return False
-			if ctfvalue['resolution_50_percent'] > self.params['res50']:
+			if ctfvalue['resolution_50_percent'] > self.params['ctfres50']:
 				### resolution is too poor
 				return False
 
@@ -271,9 +271,9 @@ class ParticleExtractLoop(appionLoop2.AppionLoop):
 			help="Bin the particles after extracting", metavar="#")
 		self.parser.add_option("--ctfcutoff", dest="ctfcutoff", type="float",
 			help="CTF confidence cut off")
-		self.parser.add_option("--res80", dest="res80", type="float",
+		self.parser.add_option("--ctfres80", dest="ctfres80", type="float",
 			help="resolution requirement for CTF fit at 0.8 threshold")
-		self.parser.add_option("--res50", dest="res80", type="float",
+		self.parser.add_option("--ctfres50", dest="ctfres50", type="float",
 			help="resolution requirement for CTF fit at 0.5 threshold")
 
 		self.parser.add_option("--mincc", dest="correlationmin", type="float",
