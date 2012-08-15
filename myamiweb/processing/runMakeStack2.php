@@ -112,6 +112,10 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	$ctffindcheck = ($_POST['ctffindonly'])=='on' ? 'CHECKED' : '';
 	$ctfdisable = ($_POST['aceconf']=='on') ? '' : 'DISABLED';
 	$ctfval = ($_POST['aceconf']=='on') ? $_POST['ctf'] : '0.8';
+	$ctfrescheck = ($_POST['ctfres']=='on') ? 'CHECKED' : '';
+	$ctfresdisable = ($_POST['ctfres']=='on') ? '' : 'DISABLED';
+	$ctfres80 = ($_POST['ctfres']=='on') ? $_POST['ctfres80'] : '';
+	$ctfres50 = ($_POST['ctfres']=='on') ? $_POST['ctfres50'] : '';
 	// correlation check params
 	$selexminval = ($_POST['partcutoff']=='on') ? $_POST['correlationmin'] : '0.5';
 	$selexmaxval = ($_POST['partcutoff']=='on') ? $_POST['correlationmax'] : '1.0';
@@ -158,6 +162,18 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 			document.viewerform.ctf.value='0.8';
 		}
 	}
+
+	function enablectfres() {
+		if (document.viewerform.ctfres.checked){
+			document.viewerform.ctfres80.disabled=false;
+			document.viewerform.ctfres50.disabled=false;
+			document.viewerform.ctfres50.value='';
+		} else {
+			document.viewerform.ctfres80.disabled=true;
+			document.viewerform.ctfres50.disabled=true;
+		}
+	}
+
 
 	function enablexmipp(){
 		if (document.viewerform.xmippstacknorm.checked){
@@ -475,12 +491,38 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	echo "<br/>\n";
 	echo "<br/>\n";
 
+	if ($ctfdata) {
+		echo"<input type='checkbox' name='aceconf' onclick='enablectf(this)' $ctfcheck>\n";
+		echo docpop('aceconf','CTF Confidence Cutoff');
+		echo "<br />\n";
+		echo "Use Values Above:<input type='text' name='ctf' $ctfdisable value='$ctfval' size='4'>
+		(between 0.0 - 1.0)\n";
+		echo "<br/>\n";
+		echo "<br/>\n";
+	}
+
 	//
 	// STARTING ADVANCED SECTION 2
 	//
 	echo "<a id='Advanced_Stack_Options_2_toggle' href='javascript:toggle(\"Advanced_Stack_Options_2\");' style='color:blue'>";
 	echo "Show Advanced Stack Options</a><br/>\n";
 	echo "<div id='Advanced_Stack_Options_2' style='display: none'>\n";
+	echo "<br/>\n";
+
+	if ($ctfdata) {
+		echo"<input type='checkbox' name='ctfres' onclick='enablectfres(this)' $ctfrescheck>\n";
+		echo '<b>CTF Resolution Cutoff</b>';
+		echo "<br />\n";
+		echo "&nbsp;&nbsp;Required Resolutions at 80%: ";
+			echo "<input type='text' name='ctfres80' value='$ctfres80' size='4' $ctfresdisable>";
+			echo "&nbsp; <i>(in &Aring;ngstroms)</i>\n";
+		echo "<br/>\n";
+		echo "&nbsp;&nbsp;Required Resolutions at 50%: ";
+			echo "<input type='text' name='ctfres50' value='$ctfres50' size='4' $ctfresdisable>";
+			echo "&nbsp; <i>(in &Aring;ngstroms)</i>\n";
+		echo "<br/>\n";
+		echo "<br/>\n";
+	}
 
 	$massessruns=count($massessrunIds);
 	$massessname = '';
@@ -569,13 +611,6 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 			echo docpop('ctffindonly','Only use CTFFIND values');
 			echo "<br/>\n";
 		}
-		echo"<input type='checkbox' name='aceconf' onclick='enablectf(this)' $ctfcheck>\n";
-		echo docpop('aceconf','CTF Confidence Cutoff');
-		echo "<br />\n";
-		echo "Use Values Above:<input type='text' name='ctf' $ctfdisable value='$ctfval' size='4'>
-		(between 0.0 - 1.0)\n";
-		echo "<br/>\n";
-		echo "<br/>\n";
 	}
 
 
@@ -664,7 +699,7 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	echo "<br />\n";
 
 	//
-	// ENDING ADVANCED SECTION
+	// ENDING ADVANCED SECTION 2
 	//
 	echo "</div>\n";
 
@@ -803,6 +838,16 @@ function runMakestack() {
 		if ($ctf > 1 || $ctf < 0 || !$ctf) createMakestackForm("<b>ERROR:</b> CTF cutoff must be between 0 & 1");
 	}
 
+	// ctf resolution
+	if ($_POST['ctfres']=='on') {
+		$ctfres80=$_POST['ctfres80'];
+		if ($ctfres80 && !is_numeric($ctfres80) )
+			createMakestackForm("<b>ERROR:</b> CTF resolution cutoffs must be a number");
+		$ctfres50=$_POST['ctfres50'];
+		if ($ctfres50 && !is_numeric($ctfres50) )
+			createMakestackForm("<b>ERROR:</b> CTF resolution cutoffs must be a number");
+	}
+
 	// correlation cutoff
 	if ($_POST['partcutoff']=='on') {
 		$correlationmin=$_POST['correlationmin'];
@@ -863,6 +908,13 @@ function runMakestack() {
 	$command.="--boxsize=$boxsize ";
 	if ($bin > 1) $command.="--bin=$bin ";
 	if ($ctf) $command.="--ctfcutoff=$ctf ";
+	if ($_POST['ctfres']=='on') {
+		if ($_POST['ctfres80'])
+			$command.="--ctfres80=$ctfres80 ";
+		if ($_POST['ctfres50'])
+			$command.="--ctfres50=$ctfres50 ";
+	}
+
 	if ($stackdfpair) $command.="--defocpair ";
 	if ($correlationmin) $command.="--mincc=$correlationmin ";
 	if ($correlationmax) $command.="--maxcc=$correlationmax ";
