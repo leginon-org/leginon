@@ -1024,7 +1024,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 
 	#=======================
 	def checkRequireCtf(self):
-		return apParticleExtractor.checkRequireCtf() or self.params['phaseflipped']
+		return super(Makestack2Loop,self).checkRequireCtf() or self.params['phaseflipped']
 
 	#=======================
 	def preLoopFunctions(self):
