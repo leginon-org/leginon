@@ -13,6 +13,7 @@ $sb='';
 $minpix = ($_GET['np']) ? '&np='.$_GET['np'] : '';
 $maxpix = ($_GET['xp']) ? '&xp='.$_GET['xp'] : '';
 $fft = ($_GET['fft']) ? '&fft='.$_GET['fft'] : '';
+$rid = ($_GET['r']) ? '&r='.$_GET['r'] : '';
 $fftflag = ($_GET['fft']) ? 1:0;
 $filter = ($_GET['flt']) ? '&flt='.$_GET['flt'] : '';
 $fftbin = ($_GET['fftbin']) ? '&fftbin='.$_GET['fftbin'] : '';
@@ -25,7 +26,7 @@ $nptcl = ($_GET['nptcl']) ? '&nptcl='.$_GET['nptcl'] : '';
 $acepar = ($_GET['g']) ? '&g='.($_GET['g']) : ''; 
 $gradient= ($_GET['gr']) ? '&gr='.$_GET['gr'] : '';
 $autoscale = ($_GET['autoscale']) ? '&autoscale='.$_GET['autoscale'] : '';
-$options = $binning.$tg.$sb.$minpix.$maxpix.$fft.$fftbin.$filter.$autoscale.$psel.$acepar.$gradient.$autoscale.$nptcl;
+$options = $binning.$tg.$rid.$sb.$minpix.$maxpix.$fft.$fftbin.$filter.$autoscale.$psel.$acepar.$gradient.$autoscale.$nptcl;
 
 $nimgId = $leginondata->findImage($id, $preset);
 $imginfo = $leginondata->getImageInfo($nimgId['id']);
