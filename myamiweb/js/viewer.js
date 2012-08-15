@@ -607,7 +607,7 @@ function newfile(view){
 		"&preset="+selpreset+
 		"&session="+jsSessionId+
 		"&id="+jsimgId+
-		"&s="+jssize+quality+tg+sb+fft+np+xp+flt+fftbin+binning+autoscale+displayfilename+loadjpg+pselp+nptcl+pcb+dlbl+am+ar+ag+ao+gradient+scx+scy
+		"&s="+jssize+quality+tg+sb+fft+np+xp+flt+fftbin+binning+am+ar+ag+ao+displayfilename+loadjpg+pselp+nptcl+pcb+dlbl+gradient+scx+scy+autoscale
 
 	if (options == lastoptions[vid])
 		return
