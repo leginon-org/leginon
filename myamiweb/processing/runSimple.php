@@ -208,7 +208,7 @@ function createCommand()
 
 	// verify processing host parameters
 	$clusterParamForm = new ClusterParamsForm();
-	$errorMsg .= $clusterParamForm->validate( $_POST );
+	//$errorMsg .= $clusterParamForm->validate( $_POST );
 	
 	$simpleParamsForm = new SimpleParamsForm();
 	$errorMsg .= $simpleParamsForm->validate( $_POST );
