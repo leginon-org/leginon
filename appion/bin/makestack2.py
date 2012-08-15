@@ -949,6 +949,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 		self.parser.add_option("--finealign", dest="finealign", default=False,
 			action="store_true", help="Align filaments vertically in a single interpolation")
 
+		### choice
 		self.parser.add_option("--flip-type", dest="fliptype",
 			help="CTF correction method", metavar="TYPE",
 			type="choice", choices=self.flipoptions, default="emanpart" )
@@ -995,6 +996,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 			self.params['bimask']=int(float(bxlist[2]))
 			self.params['falloff']=int(float(bxlist[3]))
 
+	#=======================
 	def resetStack(self):
 		if self.params['helicalstep'] is not None:
 			### a new set of ApParticleData are stored, in case
@@ -1011,6 +1013,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 			stackfile=os.path.join(self.params['rundir'], self.params['single'])
 			apFile.removeStack(stackfile)
 
+	#=======================
 	def setStartingParticleNumber(self):
 		self.resetStack()
 		if self.params['commit'] is True:
@@ -1019,8 +1022,9 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 		else:
 			self.particleNumber = 0
 
+	#=======================
 	def checkRequireCtf(self):
-			return self.params['ctfcutoff'] or self.params['mindefocus'] or self.params['maxdefocus'] or self.params['phaseflipped']
+		return apParticleExtractor.checkRequireCtf() or self.params['phaseflipped']
 
 	#=======================
 	def preLoopFunctions(self):
