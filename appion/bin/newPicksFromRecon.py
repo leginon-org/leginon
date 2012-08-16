@@ -59,11 +59,17 @@ class NewPicksFromRecon(appionScript.AppionScript):
 			runq[key] = firstpart['selectionrun'][key]
 		runq['name'] = self.params['runname']
 		runq['session'] = sessiondata
+		pathq = appiondata.ApPathData()
+		pathq['path'] = self.params['rundir']
+		runq['path'] = pathq
 		runq['description'] = ("Corrected particles from refine id %d iter %d and selection %d"
 			%(self.params['reconid'], self.params['iternum'], firstpart['selectionrun'].dbid))
 
+		count = 0
 		for refpartdata in refpartdatas:
-			sys.stderr.write(".")
+			count += 1
+			if count % 10 == 0:
+				sys.stderr.write(".")
 			partdata = refpartdata['particle']['particle']
 			newpartq = appiondata.ApParticleData()
 			for key in partdata.keys():
