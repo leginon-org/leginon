@@ -8,6 +8,8 @@
  *
  */
 
+// Include any files that contain needed functions or classes.
+// Be sure to use require_once instead of require.
 require_once "inc/particledata.inc";
 require_once "inc/leginon.inc";
 require_once "inc/project.inc";
@@ -17,27 +19,71 @@ require_once "inc/forms/runParametersForm.inc";
 require_once "inc/forms/clusterParamsForm.inc";
 require_once "inc/forms/simpleParamsForm.inc";
 
-
-
-if ( $_POST ) {
-	// IF VALUES SUBMITTED, EVALUATE DATA
+// Decide which method to enter. If this is our first time through, we create the form.
+// If the form values have already been submitted by the user, we create a processing run command.
+// The POST array is an associative array of variables passed to the current script via the HTTP POST method. 
+if ( $_POST ) 
+{
+	// if form values have been submitted, evaluate them and create a command
 	createCommand();
 } else {
+	// if this is the first time through, create the launch form
 	createForm();
 }
 
-function createForm($extra=false, $title='runSimple.py Launcher', $heading='SIMPLE Common Lines') 
+// createForm() will output the html code needed to display the launch form to the user
+function createForm( $extra=false, $title='runSimpleCluster.py Launcher', $heading='SIMPLE Common Lines' ) 
 {
-	// check if coming directly from a session
-	$expId=$_GET['expId'];
-	if ($expId){
-		$sessionId=$expId;
-		$projectId=getProjectId();
-		$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
+	// ------ Get Project and Session (aka Experiment) Ids ------ //
+	// This is a standard chunck of code that does not often change.
+	// Get the experiment ID that was passed to this script in the URL.
+	$expId = $_GET['expId'];
+	if ( $expId )
+	{
+		$sessionId = $expId;
+		$formAction = $_SERVER['PHP_SELF']."?expId=$expId";
 	} else {
-		$sessionId=$_POST['sessionId'];
-		$projectId=getProjectId();
-		$formAction=$_SERVER['PHP_SELF'];
+		$sessionId = $_POST['sessionId'];
+		$formAction = $_SERVER['PHP_SELF'];
+	}
+	$projectId = getProjectId();
+	
+	// ------ Create any needed Javascript ------ //
+	// Javascript allows values in the form to change within the client, 
+	// rather than reloading the page from the web server. 
+	// This line is in all Appion pages.
+	$javascript = "<script src='../js/viewer.js'></script>\n";
+	
+	// Javascript to switch the defaults based on the stack
+	// This javascript function is specific to this page, and is not required for others.
+	$javascript .= "<script>\n";
+	$javascript .= "function switchDefaults(stackval) {\n";
+	$javascript .= "	var stackArray = stackval.split('|--|');\n";
+	$javascript .= "	var boxSize = stackArray[2]\n";
+	$javascript .= "	stackArray[3] = stackArray[3].replace(/\,/g,'');\n"; // remove commas from number
+	$javascript .= "	var numpart = stackArray[3]\n";
+	$javascript .= "	document.viewerform.numpart.value = numpart;\n";
+	$javascript .= "	document.viewerform.clip.value = boxSize;\n";
+	$javascript .= "	document.viewerform.ring2.value = boxSize/2 - 2;\n";
+	$javascript .= "	document.viewerform.mask.value = boxSize/2 - 2;\n";
+	$javascript .= "	document.viewerform.ncls.value = Math.floor(numpart/document.viewerform.minp.value) ;\n";
+	$javascript .= "	var bestbin = Math.floor(stackArray[2]/64);\n";
+	$javascript .= "	if (bestbin < 1) {\n";
+	$javascript .= "		var bestbin = 1 ;}\n";
+	$javascript .= "	document.viewerform.bin.value = bestbin;\n";
+	$javascript .= "}\n";
+	$javascript .= "</script>\n";
+
+	// Enable pop-up help. 
+	// This does not change and is required for help messages.
+	$javascript .= writeJavaPopupFunctions();	
+
+	// This line does not change and is required for Appion processing pages to add the standard header and menu.
+	processing_header($title,$heading,$javascript);
+	// Write out errors, if any came up:
+	// This line should not change
+	if ($extra) {
+		echo "<font color='#cc3333' size='+2'>$extra</font>\n<hr/>\n";
 	}
 
 	// connect to particle database
@@ -45,34 +91,6 @@ function createForm($extra=false, $title='runSimple.py Launcher', $heading='SIMP
 	$stackIds = $particle->getStackIds($sessionId);
 	$alignrunsarray = $particle->getAlignStackIds($sessionId);
 	$alignruns = ($alignrunsarray) ? count($alignrunsarray) : 0;
-
-	$javascript = "<script src='../js/viewer.js'></script>\n";
-	// javascript to switch the defaults based on the stack
-	$javascript .= "<script>\n";
-	$javascript .= "function switchDefaults(stackval) {\n";
-	$javascript .= "	var stackArray = stackval.split('|--|');\n";
-	// remove commas from number
-	$javascript .= "	stackArray[3] = stackArray[3].replace(/\,/g,'');\n";
-	$javascript .= "	document.viewerform.numpart.value = stackArray[3];\n";
-	$javascript .= "	document.viewerform.clip.value = stackArray[2];\n";
-	// set max last ring radius
-	$javascript .= "	var bestbin = Math.floor(stackArray[2]/64);\n";
-	$javascript .= "	if (bestbin < 1) {\n";
-	$javascript .= "		var bestbin = 1 ;}\n";
-	$javascript .= "	document.viewerform.bin.value = bestbin;\n";
-	// set particle & mask radius and lp
-	$javascript .= "}\n";
-	$javascript .= "</script>\n";
-
-	// enable pop-up help
-	$javascript .= writeJavaPopupFunctions();	
-
-	processing_header($title,$heading,$javascript);
-	// write out errors, if any came up:
-	if ($extra) {
-		echo "<font color='#cc3333' size='+2'>$extra</font>\n<hr/>\n";
-	}
-
 	
 	$sessiondata=getSessionList($projectId,$sessionId);
 	$sessioninfo=$sessiondata['info'];
@@ -89,10 +107,11 @@ function createForm($extra=false, $title='runSimple.py Launcher', $heading='SIMP
 	$runname = ($_POST['runname']) ? $_POST['runname'] : 'simple'.($alignruns+1);
 	//$description = $_POST['description'];
 	$stackidstr = $_POST['stackval'];
-	list($stackidval) = split('\|--\|',$stackidstr);
+	var_dump($stackidstr);
+	list($stackidval,$apix,$boxsz) = split('\|--\|',$stackidstr);
 
 	// start the main form
-	echo "<form name='viewerform' method='POST' ACTION='$formAction'>\n";
+	echo "<form name='viewerform' method='POST' action='$formAction'>\n";
 	
 	// --- Row 1 --- 
 	// Add processing run parameters
@@ -119,54 +138,58 @@ function createForm($extra=false, $title='runSimple.py Launcher', $heading='SIMP
 	echo "<tr>";
 	echo "<td>";
 	if (!$stackIds) {
-		echo "<font color='red'><B>No Stacks for this Session</B></FONT>\n";
+		echo "<font color='red'><B>No Stacks for this Session</B></font>\n";
 	} else {
 		echo docpop('stack','<b>Select a stack of particles to use:</b>');
 		echo "<br/>";
 		$apix = $particle->getStackSelector($stackIds,$stackidval,'switchDefaults(this.value)');
 	}
-	echo "</TD></tr>\n";
+	echo "</td></tr>\n";
 	
 	// extra space
-	echo "<TR><TD VALIGN='TOP'>\n";
-	echo "</TD></tr>\n";
+	echo "<tr><td valign='top'>\n";
+	echo "</td></tr>\n";
 	
-	// commit checkbox
-	echo "<TR>\n";
-	echo "<TD VALIGN='TOP'>\n";
+	// Add a commit checkbox
+	echo "<tr>\n";
+	echo "<td valign='top'>\n";
 	echo "<br><br>";
-	echo "<INPUT TYPE='checkbox' NAME='commit' $commitcheck>\n";
+	echo "<input type='checkbox' name='commit' $commitcheck>\n";
+	// This is how you manually add pop-up help
 	echo docpop('commit','<B>Commit to Database</B>');
 	echo "";
 	echo "<br>";
 
-	echo "</TD></tr>\n</table>\n";
-	echo "</TD>\n";
+	echo "</td></tr>\n</table>\n";
+	echo "</td>\n";
 	
 	// Add parameters specific to the method selected
-	echo "<TD CLASS='tablebg'>\n";
-	echo "  <TABLE cellpading='5' BORDER='0'>\n";
-	echo "  <TR><TD VALIGN='TOP'>\n";
+	echo "<td class='tablebg'>\n";
+	echo "<table cellpading='5' border='0'>\n";
+	echo "<tr><td valign='top'>\n";
 	
 	if  (!$apix) {
         echo "<font color='#DD3333' size='-2'>WARNING: These values will not be checked!<br />\n";
 		echo "Make sure you are within the limitations of the box size</font><br />\n";
 	}
 
-	$simpleParamsForm = new SimpleParamsForm('','','','CHECKED','','','10','30','','20','100','2','2','10','','0.8','40','3','3');
+	// Create an instance of the SIMPLE param form, setting it's default values then display it 
+	$simpleParamsForm = new SimpleParamsForm($clip='', $bin='', $numpart='', $no_center='CHECKED',$ring2='', $ncls='',
+		$minp='10', $nvars='30', $mask='', $lp='20', $hp='100', $froms='2', $tos='2', $maxits='10',
+		$mw='', $frac='0.8', $amsklp='40', $edge='3', $trs='3');
 	echo $simpleParamsForm->generateForm();
 	
-	echo "  </td>\n";
-	echo "  </tr>\n";
+	echo "</td>\n";
+	echo "</tr>\n";
 	echo "</table>\n";
-	echo "</TD>\n";
+	echo "</td>\n";
 	echo "</tr>\n";
 	
 	// --- Row 4 --- 
 	// Add submit button
-	echo "<TR>\n";
-	echo "	<TD COLSPAN='2' ALIGN='CENTER'>\n";
-	echo "	<hr />\n";
+	echo "<tr>\n";
+	echo "<td colspan='2' align='center'>\n";
+	echo "<hr />\n";
 	echo "<br/>\n";	
 	echo getSubmitForm("Run SIMPLE common lines");
 	echo "</td>";
@@ -176,7 +199,9 @@ function createForm($extra=false, $title='runSimple.py Launcher', $heading='SIMP
 	echo "</table>\n";	
 	echo "<br />";
 
-	// Add reference for selected refinement method
+	// Add references for this processing method.
+	// Create an instance of a publication with the appropriate 
+	// key found in myami/myamiweb/processing/inc/publicationList.inc.
 	$pub = new Publication('appion');
 	echo $pub->getHtmlTable();
 
@@ -188,6 +213,7 @@ function createForm($extra=false, $title='runSimple.py Launcher', $heading='SIMP
 		echo "<script>switchDefaults(document.viewerform.stackval.options[0].value);</script>\n";
 	}
 
+	// This line is required to provide the standard Appion header and side menu
 	processing_footer();
 	exit;
 }
