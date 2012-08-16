@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import os
+import sys
 from appionlib import apDisplay
 from appionlib import appiondata
 from appionlib import appionScript
@@ -40,10 +41,10 @@ class NewPicksFromRecon(appionScript.AppionScript):
 		refrun = appiondata.ApRefineRunData.direct_query(self.params['reconid'])
 		refiterq = appiondata.ApRefineIterData()
 		refiterq['refineRun'] = refrun
-		refiterq['iteration'] = lastiter
-		refiterdata = refineiterq.query(results=1)
+		refiterq['iteration'] = self.params['iternum']
+		refiterdatas = refiterq.query(results=1)
 		refpartq = appiondata.ApRefineParticleData()
-		refpartq['refineIter'] = refiterdata	
+		refpartq['refineIter'] = refiterdatas[0]	
 		#this gets lots of data
 		refpartdatas = refpartq.query()
 		
@@ -60,12 +61,14 @@ class NewPicksFromRecon(appionScript.AppionScript):
 			%(self.params['reconid'], self.params['iternum'], firstpart['selectionrun'].dbid))
 
 		for refpartdata in refpartdatas:
+			sys.stderr.write(".")
 			partdata = refpartdata['particle']['particle']
 			newpartq = appiondata.ApParticleData()
 			for key in partdata.keys():
 				newpartq[key] = partdata[key]
 			newpartq['xcoord'] = partdata['xcoord'] + refpartdata['shiftx']
 			newpartq['ycoord'] = partdata['ycoord'] + refpartdata['shifty']
+			newpartq['selectionrun'] = runq
 			newpartq.insert()
 			
 		
