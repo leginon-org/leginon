@@ -45,7 +45,7 @@ class TomoMaker(appionScript.AppionScript):
 			help="Tilt images to be excluded,start from 1 (1,5,8)", metavar="1,2,...")
 
 		### choices
-		self.methods = ( "imodwbp", "xmippart", "upload", "etomo" )
+		self.methods = ( "imodwbp", "xmippart", "upload", "etomo","protomo2wbp" )
 		return
 
 	def setMethod(self):

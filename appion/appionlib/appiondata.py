@@ -1770,6 +1770,7 @@ class ApProtomoRefinementParamsData(Data):
 			('imgref', int),
 			('reference', leginon.leginondata.AcquisitionImageData),
 		)
+	### this needs to be expanded to include all protomo2 params
 	typemap = classmethod(typemap)
 
 class ApProtomoAlignerParamsData(Data):

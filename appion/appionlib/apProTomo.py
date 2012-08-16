@@ -140,6 +140,29 @@ def writeTiltFile(outfilename, seriesname, imagedict, parameterdict=False):
 	f.write('\n\n\n END\n\n')
 	f.close()
 
+def writeTiltFile2(outfilename, seriesname, specimen_eulers, azimuth, filenames, imagedict, referenceimage ):
+	f=open(outfilename,'w')
+	f.write('\n')
+	f.write( ' TILT SERIES %s\n' % seriesname)
+	f.write('\n\n   PARAMETER\n')
+	f.write('     PSI   %8.3f\n' % specimen_eulers['psi'])
+	f.write('     THETA %8.3f\n' % specimen_eulers['theta'])
+	f.write('     PHI   %8.3f\n' % specimen_eulers['phi'])
+	f.write('\n\n   PARAMETER\n\n')
+	f.write('     TILT AZIMUTH %8.3f\n' % azimuth)
+	f.write('\n\n')
+	for n in filenames:
+		f.write('   IMAGE %-5d FILE %s\n' % (n, filenames)
+	f.write('\n')
+	for n in keys:
+		f.write('   IMAGE %-5d ORIGIN  [ %8.3f %8.3f ]\n' % (n, imagedict[n]['x'], imagedict[n]['y']))
+	f.write('\n')
+	for n in keys:
+		f.write('   IMAGE %-5d TILT ANGLE %8.3f   ROTATION %8.3f\n' % (n, imagedict[n]['tilt'], imagedict[n]['rotation']))
+	f.write('\n   REFERENCE IMAGE %d\n' % (referenceimage)
+	f.write('\n\n\n END\n\n')
+	f.close()
+
 def resetTiltParams(tiltparams, oldtiltparams, goodstart, goodend):
 	imagedict = tiltparams[0]
 	oldimagedict = oldtiltparams[0]
@@ -393,6 +416,17 @@ def insertModel(alignerdata, results):
 	q['theta'] = results[-2]['theta']
 	q['phi'] = results[-2]['phi']
 	q['azimuth'] = results[-2]['azimuth']
+	modeldata = apTomo.publish(q)
+	return modeldata
+
+def insertModel2(alignerdata, geometrydict):
+	# general protomo2 model data
+	q = appiondata.ApProtomoModelData()
+	q['aligner'] = alignerdata
+	q['psi'] = geometrydict['psi']
+	q['theta'] = geometrydict['theta']
+	q['phi'] = geometrydict['phi']
+	q['azimuth'] = geometrydict['azimuth']
 	modeldata = apTomo.publish(q)
 	return modeldata
 

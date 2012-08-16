@@ -38,7 +38,7 @@ class ImodFullMaker(ImodMaker):
 		# Create Aligned Stack
 		apImod.createAlignedStack(stackdir, processdir, self.seriesname,bin)
 		# Reconstruction
-		apImod.recon3D(stackdir, processdir, self.seriesname, self.imgshape, self.params['thickness']/bin, False, self.excludelist)
+		#apImod.recon3D(stackdir, processdir, self.seriesname, self.imgshape, self.params['thickness']/bin, False, self.excludelist)
 
 
 class ETomoMaker(ImodMaker):

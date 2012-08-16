@@ -132,7 +132,7 @@ def orderImageList(imagelist):
 	reftilts = []
 	for i,imagedata in enumerate(imagelist):
 		tilt = imagedata['scope']['stage position']['a']*180/3.14159
-		
+
 		if tilt < start_tilt+0.02 and tilt > start_tilt-0.02:
 			if len(imagelist) >= 2:
 				qimage = leginon.leginondata.AcquisitionImageData()
