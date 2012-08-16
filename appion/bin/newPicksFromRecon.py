@@ -55,6 +55,8 @@ class NewPicksFromRecon(appionScript.AppionScript):
 		
 		### create a selection run
 		runq = appiondata.ApSelectionRunData()
+		for key in firstpart['selectionrun'].keys():
+			runq[key] = firstpart['selectionrun'][key]
 		runq['name'] = self.params['runname']
 		runq['session'] = sessiondata
 		runq['description'] = ("Corrected particles from refine id %d iter %d and selection %d"
