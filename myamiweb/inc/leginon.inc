@@ -1659,7 +1659,7 @@ class leginondata {
 						$schema_create .= "      extra=\"$row[Extra]\" $crlf";
 					$schema_create .= "    />$crlf";
 			}
-			$schema_create = preg_replace(",".$crlf."$", "", $schema_create);
+			$schema_create = preg_replace("%,".$crlf."$%", "", $schema_create);
 			$result = $this->mysql->SQLQuery("SHOW KEYS FROM $table") ;
 			while($row = mysql_fetch_array($result))
 			{
@@ -1866,7 +1866,7 @@ class leginondata {
 			continue;
 				$result = $this->mysql->SQLQuery("SHOW FIELDS FROM $table"); 
 				while($row = mysql_fetch_array($result))
-			if (preg_match("^REF\|$tbl_applicationdata", $row['Field']))
+			if (preg_match("%^REF\|$tbl_applicationdata%", $row['Field']))
 				if(!in_array($table,$ref_tables))
 					$ref_tables[]=$table;
 			}
@@ -2035,7 +2035,7 @@ class leginondata {
 		//--- Check if application exits
 		$applicationinfo = $fieldvalues['ApplicationData'];
 		foreach($applicationinfo as $k=>$v) {
-			if (preg_match('DEF_',$k) || preg_match('version',$k)) continue;
+			if (preg_match('%DEF_%',$k) || preg_match('%version%',$k)) continue;
 			$sqlwhere[] = "`$k`=$v";
 		}
 		$where = implode(" AND ", $sqlwhere);
