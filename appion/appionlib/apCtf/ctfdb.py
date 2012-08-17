@@ -88,7 +88,7 @@ def getBestDefocusForImage(imgdata, msg=False):
 
 	### print msg
 	if msg is True:
-		if 'resolution_80_percent' in ctfvalue.keys():
+		if 'resolution_80_percent' in ctfvalue.keys() and ctfvalue['resolution_80_percent'] is not None:
 			apDisplay.printMsg( "Best CTF run info: runname='%s', confidence=%.3f, res=%.1f/%.1f, defocus=%.3f um"
             %(ctfvalue['acerun']['name'], conf, ctfvalue['resolution_80_percent'], 
 				ctfvalue['resolution_50_percent'], bestdf*1.0e6) )
