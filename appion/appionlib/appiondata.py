@@ -738,6 +738,63 @@ class ApCL2DRunData(Data):
 		)
 	typemap = classmethod(typemap)
 
+class ApSIMPLEClusterRunData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('runname', str),
+			('run_seconds', int),
+			('timestamp', str),
+			('REF|projectdata|projects|project', int),
+			('path', ApPathData),
+			('finished', bool),
+			('max-iter', int),
+			('num-ref', int),
+			('kmeans', bool),
+			('center', bool),
+		)
+	typemap = classmethod(typemap)
+
+class ApSIMPLEOrigamiRunData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('runname', str),
+			('path', ApPathData),
+			('REF|projectdata|projects|project', int),
+			('timestamp', str),
+			('simple_params', ApSIMPLEOrigamiParamsData),
+			('stack', ApStackData),
+			('alignstack', ApAlignStackData),
+			('clusteringstack', ApClusteringStackData),
+			('box', int),
+			('apix', float),
+			('description', str),
+		)
+	typemap = classmethod(typemap)
+
+class ApSIMPLEOrigamiParamsData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+#			('runname', str),
+#			('timestamp', str),
+#			('REF|projectdata|projects|project', int),
+#			('path', ApPathData),
+#			('box', int),
+#			('apix', float),
+#			('stack', ApStackData),
+#			('alignstack', ApAlignStackData),
+			('lp', int),
+			('hp', int),
+			('froms', int),
+			('tos', int),
+			('maxits', int),
+			('msk', int),
+			('mw', int),
+			('amsklp', int),
+			('edge', int),
+			('trs', int),
+			('pgrp', str),
+		)
+	typemap = classmethod(typemap)
 
 class ApTopolRepJobData(Data):
 	def typemap(cls):
@@ -854,6 +911,7 @@ class ApAlignRunData(Data):
 			('editerrun', ApEdIterRunData),
 			('topreprun', ApTopolRepRunData),
 			('cl2drun', ApCL2DRunData),
+			('simplerun', ApSIMPLEClusterRunData),
 			('hidden', bool),
 			('path', ApPathData),
 		)
@@ -1025,6 +1083,7 @@ class ApClusteringRunData(Data):
 			('rotkerdenparams', ApRotKerDenSOMParamsData),
 			('affpropparams', ApAffinityPropagationClusterParamsData),
 			('cl2dparams', ApCL2DRunData),
+			('simpleparams', ApSIMPLEClusterRunData),
 		)
 	typemap = classmethod(typemap)
 

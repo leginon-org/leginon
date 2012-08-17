@@ -256,7 +256,7 @@ function createCommand()
 	/* *******************
 	 PART 2: Create program command
 	 ******************** */
-	$command = "runSimpleCluster.py ";
+	$command = "runSimpleClusterAndOrigami.py ";
 	
 	// add run parameters
 	$command .= $runParametersForm->buildCommand( $_POST );

@@ -380,7 +380,10 @@ if (is_numeric($expId)) {
 		if ($cl2djobs=$particle->getFinishedCL2DJobs($projectId)) {
 			$ncl2djobs = count($cl2djobs);
 		}	
-		
+		if ($simplejobs=$particle->getFinishedSIMPLEClusteringJobs($projectId)) {
+			$nsimplejobs = count($simplejobs);
+		}	
+	
 		$alignqueue = count($subclusterjobs['partalign']['queued']);
 
 		$alignresults[] = ($aligndone==0) ? "" : "<a href='alignlist.php?expId=$sessionId'>$alignruns complete</a>";
@@ -395,7 +398,9 @@ if (is_numeric($expId)) {
 			'name'=>"<a href='selectParticleAlignment.php?expId=$sessionId'>Run Alignment</a>",
 			'result'=>$alignresults,
 		);
-		if ($aligndone > 0 || $ncl2djobs > 0) {  // an exception is made to CL2D, because it is treated as an alignment & clustering procedure
+	
+		// an exception is made to CL2D & SIMPLE, because it is treated as an alignment & clustering procedure
+		if ($aligndone > 0 || $ncl2djobs > 0 || $nsimplejobs > 0) {  
 			// alignment analysis
 			$analysisresults=array();
 			if ($analysisruns=$particle->getAnalysisRuns($expId, $projectId)) {
@@ -508,12 +513,12 @@ if (is_numeric($expId)) {
 	/* SIMPLE Common Lines */
 	// TODO: change the jobtype below for simple
 	if ($aligndone >= 1 ) {
-		$simpledone = count($subclusterjobs['createModel']['done']);
-		$simplequeue = count($subclusterjobs['createModel']['queued']);
-		$simplerun = count($subclusterjobs['createModel']['running']);
-		$simpleresults[] = ($simpledone==0) ? "" : "<a href='densitysummary.php?expId=$sessionId&jobtype=createModel'>$simpledone complete</a>";
-		$simpleresults[] = ($simplerun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=createModel'>$simplerun running</a>";
-		$simpleresults[] = ($simplequeue==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=createModel'>$simplequeue queued</a>";
+		$simpledone = count($subclusterjobs['abinitio']['done']);
+		$simplequeue = count($subclusterjobs['abinitio']['queued']);
+		$simplerun = count($subclusterjobs['abinitio']['running']);
+		$simpleresults[] = ($simpledone==0) ? "" : "<a href='simpleCommonLinesSummary.php?expId=$sessionId&jobtype=abinitio'>$simpledone complete</a>";
+		$simpleresults[] = ($simplerun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=abinitio'>$simplerun running</a>";
+		$simpleresults[] = ($simplequeue==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=abinitio'>$simplequeue queued</a>";
 		$nruns[] = array(
 			'name'=>"<a href='runSimple.php?expId=$sessionId'>SIMPLE Common Lines</a>",
 			'result'=>$simpleresults,

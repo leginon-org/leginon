@@ -3248,6 +3248,22 @@ class particledata {
 		return $r;
 	}
 
+	function getFinishedSIMPLEClusteringJobs ($projectId) {
+		$q = "SELECT simplejob.*, path.path "
+			."FROM ApSIMPLEClusterRunData AS simplejob "
+			."LEFT JOIN ApPathData as path ON "
+			."  simplejob.`REF|ApPathData|path` = path.`DEF_id` ";
+		$q .=	"WHERE "
+			."  simplejob.`REF|projectdata|projects|project` = '$projectId' "
+			." AND "
+			."  simplejob.`finished` = '1' ";
+			$q .=	" ORDER BY simplejob.`DEF_id` DESC ";
+		//echo $q."<br/><br/>\n";
+		$r = $this->mysql->getSQLResult($q);
+		//echo print_r($r)."<br/><br/>\n";
+		return $r;
+	}
+
 	function getClusteringStacks ($sessionId, $projectId, $showHidden=False) {
 		// get session name, since original stack may be deleted
 		$q = "SELECT name from ".DB_LEGINON.".SessionData "
@@ -5104,6 +5120,50 @@ class particledata {
 		return $r[0];
 	}
 
+	function getSIMPLEOrigamiRuns($sessionId) {
+		$q="SELECT "
+			."  sr.*, "
+			."  path.`path` AS path "
+			."FROM ApSIMPLEOrigamiRunData as sr "
+			."LEFT JOIN ApPathData AS path "
+			."  ON sr.`REF|ApPathData|path` = path.`DEF_id` "
+			."LEFT JOIN ApSIMPLEOrigamiParamsData AS params "
+			."  ON sr.`REF|ApSIMPLEOrigamiParamsData|simple_params` = params.`DEF_id` "
+			
+			### add a session entry to table
+			."LEFT JOIN ApStackData AS stack "
+			."  ON sr.`REF|ApStackData|stack` = stack.`DEF_id` "
+			."LEFT JOIN ApRunsInStackData AS runsinstack "
+			."  ON stack.`DEF_id` = runsinstack.`REF|ApStackData|stack` "
+			."LEFT JOIN ApStackRunData AS stackrun "
+			."  ON stackrun.`DEF_id` = runsinstack.`REF|ApStackRunData|stackRun` "
+			."WHERE "
+			."  stackrun.`REF|leginondata|SessionData|session` = '$sessionId' "
+			."ORDER BY sr.`DEF_id` DESC";
+		$r=$this->mysql->getSQLResult($q);
+		return $r;
+	}
+	
+	function getSIMPLEOrigamiParams($paramId) {
+		$q="SELECT "
+			." * "
+			."FROM ApSIMPLEOrigamiParamsData as sp "
+			."WHERE sp.`DEF_id` = $paramId";
+		$r=$this->mysql->getSQLResult($q);
+		return $r[0];
+	} 
+
+	function getSIMPLEOrigamiRunInfo($runId) {
+		$q="SELECT "
+			." sr.*, "
+			." path.`path` AS path "
+			."FROM ApSIMPLEOrigamiRunData as sr "
+			."LEFT JOIN ApPathData AS path "
+			."  ON sr.`REF|ApPathData|path` = path.`DEF_id` "
+			."WHERE sr.`DEF_id` = $runId";
+		$r=$this->mysql->getSQLResult($q);
+		return $r[0];
+	}
 
 	function getImagic3dRefinementRunsFromSessionId($sessionId) {
 		$q="SELECT "
