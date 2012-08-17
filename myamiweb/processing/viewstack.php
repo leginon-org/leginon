@@ -12,7 +12,7 @@ require "inc/leginon.inc";
 require "inc/project.inc";
 require "inc/viewer.inc";
 require "inc/processing.inc";
-require "inc/viewstack.inc";
+require_once "inc/viewstack.inc";
 
 $filename=$_GET['file'];
 $expId =$_GET['expId'];

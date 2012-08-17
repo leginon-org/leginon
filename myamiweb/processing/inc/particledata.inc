@@ -1017,7 +1017,7 @@ class particledata {
 				$q .= "and r.`DEF_id`='$runId' ";
 			else
 				$q .= "and c.`DEF_id`=(select max(c2.`DEF_id`) from ApCtfData c2 where c2.`REF|leginondata|AcquisitionImageData|image` = c.`REF|leginondata|AcquisitionImageData|image`)";
-		echo $q."<br/><br/>\n";
+		//echo $q."<br/><br/>\n";
 		return $this->mysql->getSQLResult($q);
 	}
 
@@ -2300,8 +2300,6 @@ class particledata {
 			if (preg_match('%'.$key.'%',$substackname)) {
 				$conditionid = str_replace($key, '', $substackname);
 				$condition = $key;
-			} else {
-			echo preg_match('%'.$key.'%',$substackname);
 			}
 		}
 		if ($condition) {
