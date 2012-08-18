@@ -546,6 +546,15 @@ class ApStackRunData(Data):
 		)
 	typemap = classmethod(typemap)
 
+class ApSyncStackData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('stack1', ApStackData),
+			('stack2', ApStackData),
+			('synctype', str),
+		)
+	typemap = classmethod(typemap)
+
 class ApParticleExtractorData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
