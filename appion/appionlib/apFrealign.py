@@ -48,6 +48,11 @@ def parseFrealignParamFile(paramfile):
 			'phi': float(line[24:31]),
 			'shiftx': float(line[32:39]),
 			'shifty': float(line[40:47]),
+			'mag': int(line[47:55]),
+			'film': int(line[55:61]),
+			'defoc1': float(line[61:70]),
+			'defoc2': float(line[70:79]),
+			'astang': float(line[79:88]),
 			'phase_residual': float(line[88:94]),
 		}
 		if len(line)>=109:
