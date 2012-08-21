@@ -382,6 +382,7 @@ binning: <select id="binning">
 		<option value="2">2</option>
 		<option value="4">4</option>
 		<option value="8">8</option>
+		<option value="0.5">0.5</option>
 	</select>
 quality: <select id="quality">
 		<option value="50">jpeg 50</option>
