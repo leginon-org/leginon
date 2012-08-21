@@ -40,7 +40,11 @@ def validateAndInsertCTFData(imgdata, ctfvalues, rundata, rundir):
 	### run the main CTF display program
 	opimagedir = os.path.join(rundir, "opimages")
 	if isvalid is True:
+		oldctfvalues = ctfvalues.copy()
 		ctfvalues = runCTFdisplayTools(imgdata, ctfvalues, opimagedir)
+		# check if image creation failed
+		if ctfvalues is None:
+			ctfvalues = oldctfvalues
 
 	### clean rundir from all entries:
 	if not rundir.endswith("/"):
