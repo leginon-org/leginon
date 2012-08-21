@@ -35,12 +35,12 @@ def validateAndInsertCTFData(imgdata, ctfvalues, rundata, rundir):
 	### check to make sure parameters are valid
 	isvalid = checkParams(ctfvalues)
 	if isvalid is False:
-		apDisplay.printWarning("Bad CTF values NOT committing to database")
-		return False
+		apDisplay.printWarning("Bad CTF values, insert but not create images")
 
 	### run the main CTF display program
 	opimagedir = os.path.join(rundir, "opimages")
-	ctfvalues = runCTFdisplayTools(imgdata, ctfvalues, opimagedir)
+	if isvalid is True:
+		ctfvalues = runCTFdisplayTools(imgdata, ctfvalues, opimagedir)
 
 	### clean rundir from all entries:
 	if not rundir.endswith("/"):
@@ -55,11 +55,14 @@ def validateAndInsertCTFData(imgdata, ctfvalues, rundata, rundir):
 	ctfq['image'] = imgdata
 	if debug is True:
 		apDisplay.printMsg("CTF data values")
+		print ctfvalues
 	for key in ctfq.keys():
 		if key in ctfvalues:
 			ctfq[key] = ctfvalues[key]
 			if debug is True:
 				apDisplay.printMsg("%s :: %s"%(key, ctfvalues[key]))
+		elif debug is True:
+			apDisplay.printMsg("SKIPPING %s :: %s"%(key, ctfvalues[key]))
 	ctfq.insert()
 
 	return

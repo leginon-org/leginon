@@ -100,7 +100,8 @@ class CtfDisplay(object):
 		### split the function up in first 3/5 and last 3/5 of data with 1/5 overlap
 		firstvalleyindex = numpy.searchsorted(raddata, self.trimfreq*firstvalley)
 		numpoints = len(raddata) - firstvalleyindex
-		if numpoints < 2:
+		# require at least 10 points past first peak of CTF to perform estimation
+		if numpoints < 10:
 			return None
 		part1start = firstvalleyindex
 		part1end = int(firstvalleyindex + numpoints*6/10.)
