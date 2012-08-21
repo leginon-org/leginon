@@ -1117,15 +1117,12 @@ class particledata {
 			."	( "
 			."	select  "
 			."		i.`filename`, "
-			."		c.`REF|leginondata|AcquisitionImageData|image`, "
-			."		i.`DEF_id`, "
+			."		i.`DEF_id` AS imageid, "
 			."		p.`name`, "
 			."		s.`defocus`, "
-			."		c.`defocus1`, c.`defocus2`, c.`defocusinit`, c.`angle_astigmatism`, c.`amplitude_contrast`, "
-			."		c.`noise1`, c.`noise2`, c.`noise3`, c.`noise4`, "
-			."		c.`envelope1`, c.`envelope2`, c.`envelope3`, c.`envelope4`, c.`lowercutoff`, c.`uppercutoff`, c.`snr`, "
-			."		c.`confidence`,c.`confidence_d` , c.`cross_correlation`, "
-			."		abs(c.`defocus1`+c.`defocus2`)/2-abs(s.`defocus`) as difference "
+			."    unix_timestamp(i.`DEF_timestamp`) as unix_timestamp, "
+			."		2*ABS(c.defocus1-c.defocus2)/(c.defocus1+c.defocus2) AS difference, "
+			."		c.* "
 			."	from `ApCtfData` c "
 			."	left join ".DB_LEGINON.".`AcquisitionImageData` i on (i.`DEF_id` = c.`REF|leginondata|AcquisitionImageData|image`) "
 			."	left join ".DB_LEGINON.".`PresetData` p on (p.DEF_id = i.`REF|PresetData|preset`) "
@@ -1138,13 +1135,48 @@ class particledata {
 			."	AND  "
 			."  ABS(s.`SUBD|stage position|a`) < 0.9  "
 			."		)  "
-			."		order by (greatest(COALESCE(confidence,0),COALESCE(confidence_d,0),COALESCE(cross_correlation,0))) desc  "
+			."		order by (greatest(COALESCE(confidence,0),COALESCE(confidence_d,0),COALESCE(cross_correlation,0))) DESC "
 			."	) ctfdata ";
-			// if $limit is specified, report only values with confidences > $limit
-			if ($limit) {
-				$q .= " where ctfdata.confidence > $limit || ctfdata.confidence_d > $limit ";
-			}
-			$q .= " group by ctfdata.DEF_id ";
+		// if $limit is specified, report only values with confidences > $limit
+		if ($limit) {
+			$q .= " where ctfdata.confidence > $limit || ctfdata.confidence_d > $limit ";
+		}
+		$q .= " GROUP BY ctfdata.imageid ORDER BY ctfdata.unix_timestamp ";
+		//echo $q."<br/><br/>\n";
+		return $this->mysql->getSQLResult($q);
+	}
+
+	function getBestCtfInfoByResolution($sessionId, $limit=false) {
+		$q = "select  ctfdata.* "
+			."from "
+			."	( "
+			."	select  "
+			."		i.`filename`, "
+			."		i.`DEF_id` AS imageid, "
+			."		p.`name`, "
+			."		s.`defocus`, "
+			."    unix_timestamp(i.`DEF_timestamp`) as unix_timestamp, "
+			."		2*ABS(c.defocus1-c.defocus2)/(c.defocus1+c.defocus2) AS difference, "
+			."		c.* "
+			."	from `ApCtfData` c "
+			."	left join ".DB_LEGINON.".`AcquisitionImageData` i on (i.`DEF_id` = c.`REF|leginondata|AcquisitionImageData|image`) "
+			."	left join ".DB_LEGINON.".`PresetData` p on (p.DEF_id = i.`REF|PresetData|preset`) "
+			."	left join ".DB_LEGINON.".`ScopeEMData` s on (i.`REF|ScopeEMData|scope` = s.`DEF_id`) "
+			."	where "
+			."	c.`REF|leginondata|AcquisitionImageData|image` in  "
+			."	( "
+			."		select a.`DEF_id` from ".DB_LEGINON.".`AcquisitionImageData` a  "
+			."		where a.`REF|SessionData|session`='$sessionId'  "
+			."	AND  "
+			."  ABS(s.`SUBD|stage position|a`) < 0.9  "
+			."		)  "
+			."		order by c.`resolution_50_percent` ASC "
+			."	) ctfdata ";
+		// if $limit is specified, report only values with confidences > $limit
+		if ($limit) {
+			$q .= " where ctfdata.confidence > $limit || ctfdata.confidence_d > $limit ";
+		}
+		$q .= " GROUP BY ctfdata.imageid ORDER BY ctfdata.unix_timestamp ";
 		//echo $q."<br/><br/>\n";
 		return $this->mysql->getSQLResult($q);
 	}

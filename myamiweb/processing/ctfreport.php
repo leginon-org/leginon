@@ -9,8 +9,9 @@ require "inc/appionloop.inc";
 
 $ctf = new particledata();
 
-$sessionId = $_GET['expId'];
-$formAction=$_SERVER['PHP_SELF']."?expId=$sessionId";
+$expId = $_GET['expId'];
+$projectId =getProjectId();
+$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
 
 $fieldarray = $ctf->getCTFParameterFields();
 foreach ($fieldarray as $k=>$v) {
@@ -64,15 +65,15 @@ $javafunctions.= editTextJava();
 processing_header('CTF report','CTF Report',$javafunctions);
 
 if (!$_GET['showHidden']) {
-	$ctfrundatas = $ctf->getCtfRunIds($sessionId, False);
-	$hidectfrundatas = $ctf->getCtfRunIds($sessionId, True);
+	$ctfrundatas = $ctf->getCtfRunIds($expId, False);
+	$hidectfrundatas = $ctf->getCtfRunIds($expId, True);
 } else {
-	$ctfrundatas = $ctf->getCtfRunIds($sessionId, True);
+	$ctfrundatas = $ctf->getCtfRunIds($expId, True);
 	$hidectfrundatas = $ctfrundatas;
 }
 
 if (!$ctfrundatas && $hidectfrundatas) {
-	$ctfrundatas = $ctf->getCtfRunIds($sessionId, True);
+	$ctfrundatas = $ctf->getCtfRunIds($expId, True);
 	$hidectfrundatas = $ctfrundatas;
 }
 
@@ -87,20 +88,67 @@ if (count($ctfrundatas) != count($hidectfrundatas) && !$_GET['showHidden']) {
 
 if ($ctfrundatas) {
 	echo "<h3>Summary of confidence values from all runs</h3>\n";
-	echo "<a href='ctfgraph.php?hg=1&expId=$sessionId&s=1&f=confidence'>\n";
-	echo "<img border='0' width='400' height='300' src='ctfgraph.php?w=400&h=300&hg=1&expId=$sessionId&s=1&f=confidence'></a>\n";
-	echo "<br/>\n";
 
-	echo "<h3>Confidence values during run</h3>\n";
-	echo "<a href='ctfgraph.php?hg=0&expId=$sessionId&s=1&f=confidence'>\n";
-	echo "<img border='0' width='400' height='300' src='ctfgraph.php?w=400&h=300&hg=0&expId=$sessionId&s=1&f=confidence'></a>\n";
-	echo "<br/>\n";
-
+	echo "<table>\n";
+	// Row 0
+	echo "<tr><td>\n";
+		echo "<h3>Merged Confidence</h3>";
+		echo "<a href='ctfgraph.php?hg=1&expId=$expId&s=1&f=confidence'>\n";
+		echo "<img border='0' width='400' height='300' src='ctfgraph.php?"
+			."w=400&h=300&hg=1&expId=$expId&s=1&xmin=0.3&f=confidence' alt='please wait...'></a>\n";
+	echo "</td><td>\n";
+		echo "<h3>Confidence D</h3>";
+		echo "<a href='ctfgraph.php?hg=1&expId=$expId&s=1&f=confidence_d'>\n";
+		echo "<img border='0' width='400' height='300' src='ctfgraph.php?"
+			."w=400&h=300&hg=1&expId=$expId&s=1&xmin=0.3&f=confidence_d' alt='please wait...'></a>\n";
+	echo "</td></tr>";
+	// Row 1
+	echo "<tr><td>\n";
+		echo "<h3>Confidence 1/30&Aring; - 1/10&Aring;</h3>";
+		echo "<a href='ctfgraph.php?hg=1&expId=$expId&s=1&f=confidence_30_10'>\n";
+		echo "<img border='0' width='400' height='300' src='ctfgraph.php?"
+			."w=400&h=300&hg=1&expId=$expId&s=1&xmin=0.3&f=confidence_30_10' alt='please wait...'></a>\n";
+	echo "</td><td>\n";
+		echo "<h3>Confidence 5 Peaks</h3>";
+		echo "<a href='ctfgraph.php?hg=1&expId=$expId&s=1&f=confidence_5_peak'>\n";
+		echo "<img border='0' width='400' height='300' src='ctfgraph.php?"
+			."w=400&h=300&hg=1&expId=$expId&s=1&xmin=0.3&f=confidence_5_peak' alt='please wait...'></a>\n";
+	echo "</td></tr>";
+	// Row 2
+	echo "<tr><td>\n";
+		echo "<h3>Resolution at 0.8</h3>";
+		echo "<a href='ctfgraph.php?hg=1&expId=$expId&s=1&xmax=50&color=darkred&f=resolution_80_percent'>\n";
+		echo "<img border='0' width='400' height='300' src='ctfgraph.php?"
+			."w=400&h=300&hg=1&expId=$expId&s=1&xmax=30&f=resolution_80_percent' alt='please wait...'></a>\n";
+	echo "</td><td>\n";
+		echo "<h3>Resolution at 0.5</h3>";
+		echo "<a href='ctfgraph.php?hg=1&expId=$expId&s=1&xmax=30&color=darkred&f=resolution_50_percent'>\n";
+		echo "<img border='0' width='400' height='300' src='ctfgraph.php?"
+			."w=400&h=300&hg=1&expId=$expId&s=1&xmax=30&f=resolution_50_percent' alt='please wait...'></a>\n";
+	echo "</td></tr>";
+	// Row 3
+	echo "<tr><td>\n";
+		echo "<h3>Confidence values during run</h3>\n";
+		echo "<a href='ctfgraph.php?hg=0&expId=$expId&s=1&f=confidence'>\n";
+		echo "<img border='0' width='400' height='300' src='ctfgraph.php?"
+			."w=400&h=300&hg=0&expId=$expId&s=1&f=confidence'></a>\n";
+	echo "</td><td>\n";
+	// very hacky
+		$sessiondata = getSessionList($projectId, $expId);
+		$preset = end($sessiondata['presets']);
+		echo "<h3>Difference from Leginon for preset '$preset'</h3>\n";
+		echo "<a href='autofocacegraph.php?hg=0&expId=$expId&s=1&f=difference&preset=$preset'>\n";
+		echo "<img border='0' width='400' height='300' src='autofocacegraph.php?"
+			."hg=0&expId=$expId&s=1&f=difference&preset=$preset' alt='please wait...'></a>\n";
+	echo "</td></tr>";
+	echo "</table>";
 	$ctfdownlink .= "<h3>";
-	$ctfdownlink .= "<a href='downloadctfdata.php?expId=$sessionId'>\n";
+	$ctfdownlink .= "<a href='downloadctfdata.php?expId=$expId'>\n";
 	$ctfdownlink .= "  <img style='vertical-align:middle' src='img/download_arrow.png' border='0' width='16' height='17' alt='download best ctf data'>&nbsp;download best ctf data\n";
 	$ctfdownlink .= "</a></h3>\n";
 	echo $ctfdownlink;
+
+	echo "<hr/>\n";
 
 	foreach ($ctfrundatas as $ctfrundata) {
 		$ctfrunid=$ctfrundata['DEF_id'];
@@ -121,7 +169,7 @@ if ($ctfrundatas) {
 			'confidence_30_10', 'confidence_5_peak',  
 			'angle_astigmatism', 'amplitude_contrast',  
 			'resolution_80_percent', 'resolution_50_percent');
-		$stats = $ctf->getCTFStats($fields, $sessionId, $ctfrunid);
+		$stats = $ctf->getCTFStats($fields, $expId, $ctfrunid);
 		$display_ctf=false;
 		foreach($stats as $field=>$data) {
 			//echo $field."&nbsp;=>&nbsp;".$data."<br/>\n";
@@ -131,9 +179,9 @@ if ($ctfrundatas) {
 				$p = $leginondata->getPresetFromImageId($imageId);
 				$stats[$field][$k]['preset'] = $p['name'];
 				$cdf = '<a href="ctfgraph.php?hg=1&expId='
-						.$sessionId.'&rId='.$ctfrunid.'&f='.$field.'&preset='.$p['name'].'">'
+						.$expId.'&rId='.$ctfrunid.'&f='.$field.'&preset='.$p['name'].'">'
 					.'<img border="0" src="ctfgraph.php?w=100&hg=1&expId='
-						.$sessionId.'&rId='.$ctfrunid.'&f='.$field.'&preset='.$p['name'].'"></a>';
+						.$expId.'&rId='.$ctfrunid.'&f='.$field.'&preset='.$p['name'].'"></a>';
 				$stats[$field][$k]['img'] = $cdf;
 			}
 		}
@@ -157,8 +205,8 @@ if ($ctfrundatas) {
 					$j.= " <font color='#cc0000'>HIDDEN</font>\n";
 					$j.= " <input class='edit' type='submit' name='unhideRun".$ctfrunid."' value='unhide'>\n";
 				} else $j.= " <input class='edit' type='submit' name='hideRun".$ctfrunid."' value='hide'>\n";
-				$j .= "<input class='edit' type='button' onClick='parent.location=\"dropctf.php?expId=$sessionId&ctfId=$ctfrunid\"' value='delete'>\n";
-				$downloadLink = "(<font size='-2'><a href='downloadctfdata.php?expId=$sessionId&runId=$ctfrunid'>\n";
+				$j .= "<input class='edit' type='button' onClick='parent.location=\"dropctf.php?expId=$expId&ctfId=$ctfrunid\"' value='delete'>\n";
+				$downloadLink = "(<font size='-2'><a href='downloadctfdata.php?expId=$expId&runId=$ctfrunid'>\n";
 				$downloadLink .= "  <img style='vertical-align:middle' src='img/download_arrow.png' border='0' width='16' height='17' alt='download coordinates'>";
 				$downloadLink .= "  &nbsp;download ctf data\n";
 				$downloadLink .= "</a></font>)\n";

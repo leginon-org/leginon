@@ -24,44 +24,44 @@ $summary = ($_GET['s']==1 ) ? true : false;
 $minimum = ($_GET['mconf']) ? $_GET['mconf'] : 0.2;
 $width=$_GET['w'];
 $height=$_GET['h'];
+$xmin = ($_GET['xmin']) ? $_GET['xmin'] : false;
+$xmax = ($_GET['xmax']) ? $_GET['xmax'] : false;
+$color = ($_GET['color']) ? $_GET['color'] : false;
 
 $ctf = new particledata();
 
 //If summary is true, get only the data with the best confidence
 if ($summary) {
-	$ctfinfo = $ctf->getBestCtfInfoForSessionId($sessionId, $minimum);
+	//$ctfinfo = $ctf->getBestCtfInfoForSessionId($sessionId, $minimum);
+	$ctfinfo = $ctf->getBestCtfInfoByResolution($sessionId, $minimum);
 } else {
 	$runId= ($_GET[rId]);
 	$ctfinfo = $ctf->getCtfInfo($runId);
 }
 
 foreach($ctfinfo as $t) {
-	$id = $t['REF|leginondata|AcquisitionImageData|image'];
-	$p = $leginondata->getPresetFromImageId($id);
-	if ($preset && $p['name']!=$preset) {
-		continue;
+	if ($preset) {
+		$p = $leginondata->getPresetFromImageId($id);
+		if ($p['name']!=$preset) {
+			continue;
+		}
 	}
 	// if looking for confidence, get highest of 3
 	if ($f=='confidence') 
-		$conf = max($t['confidence'],$t['confidence_d'],$t['cross_correlation']);
-	else $conf=$t[$f];
+		$value = max($t['confidence'],$t['confidence_d'],$t['cross_correlation']);
+	else
+		$value=$t[$f];
 
-	$data[$id] = $conf;
+	if ($xmax && $value > $xmax)
+		continue;
+	if ($xmin && $value < $xmin)
+		continue;
+
+	$imageid = $t['imageid'];
+	$data[$imageid] = $value;
 	$where[] = "DEF_id=".$id;
+	$ndata[]=array('unix_timestamp' => $t['unix_timestamp'], "$f"=>$value);
 }
-$sqlwhere = "WHERE (".join(' OR ',$where).") and a.`REF|SessionData|session`=".$sessionId ;
-$q = 	"select DEF_id, unix_timestamp(DEF_timestamp) as unix_timestamp, "
-	." DEF_timestamp as timestamp from AcquisitionImageData a "
-	.$sqlwhere;
-	$r = $leginondata->getSQLResult($q);
-	foreach($r as $row) {
-		$e = $leginondata->getPresetFromImageId($row['DEF_id']);
-		$ndata[]=array("unix_timestamp" => $row['unix_timestamp'], "$f"=>$data[$row['DEF_id']]);
-		$datax[]=$row['unix_timestamp'];
-		$yval = $data[$row['DEF_id']];
-		if (!$yval) $yval='';
-		$datay[]=$yval;
-	}
 
 $display_x = 'unix_timestamp';
 $display_y = $f;
@@ -84,6 +84,9 @@ if ($histogram) {
 
 $dbemgraph->scalex(1);
 $yscale = ($f == 'defocus1' || $f == 'defocus2') ? 1e-6:1;
+if ($color)
+	$dbemgraph->mark->SetFillColor($color);
+
 $dbemgraph->scaley($yscale);
 $dbemgraph->dim($width,$height);
 $dbemgraph->graph();
