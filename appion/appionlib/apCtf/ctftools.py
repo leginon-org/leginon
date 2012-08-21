@@ -161,6 +161,8 @@ def defocusRatioToEllipseRatio(defocus1, defocus2, freq, cs, volts, ampcontrast)
 		cs, volts, ampcontrast, numzeros=1, zerotype="valleys")
 	radii2 = getCtfExtrema(defocus2, freq*1e10, 
 		cs, volts, ampcontrast, numzeros=1, zerotype="valleys")
+	if len(radii1) == 0 or len(radii2) == 0:
+		return None
 	ellipratio = radii1[0]/radii2[0]
 
 	return ellipratio

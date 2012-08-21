@@ -82,6 +82,8 @@ class CtfDisplay(object):
 		valleyradii = numpy.array(valley, dtype=numpy.float64)*self.trimfreq
 
 		### do the elliptical average
+		if self.ellipratio is None:
+			return None
 		pixelrdata, rotdata = ctftools.ellipticalAverage(zdata2d, self.ellipratio, self.angle,
 			self.ringwidth, firstpeak, full=False)
 		raddata = pixelrdata*self.trimfreq
