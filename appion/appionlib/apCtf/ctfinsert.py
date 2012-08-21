@@ -101,6 +101,11 @@ def convertDefociToConvention(ctfvalues):
 		apDisplay.printColor("Final params: def1: %.2e | def2: %.2e | angle: %.1f"%
 			(ctfvalues['defocus1'], ctfvalues['defocus2'], ctfvalues['angle_astigmatism']), "cyan")
 
+	# amplitude contrast must be btw 0.0 and 0.5
+	# sometimes we get a slightly negative number from ACE1, see bug #2003
+	if abs(ctfvalues['amplitude_contrast']) < 0.005:
+		ctfvalues['amplitude_contrast'] = 0.0
+
 	# program specific corrections?
 	angle = ctfvalues['angle_astigmatism']
 
