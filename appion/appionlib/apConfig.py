@@ -64,4 +64,6 @@ def parseConfigFile (configFile):
 			
 	return confDict
 
-
+if __name__ == '__main__':
+	print "getAppionDir()=",getAppionDir()
+	print "getAppionConfigFile=",getAppionConfigFile()
