@@ -7,10 +7,10 @@ import re
 def getAppionDir():
 	### convoluted way to get location of this file
 	appiondir = None
-	this_file = inspect.currentframe().f_code.co_filename
-	libdir = os.path.dirname(this_file)  #result: appion/bin
-	libdir = os.path.abspath(libdir)	 #result: /path/to/appion/bin
-	trypath = os.path.dirname(libdir)	#result: /path/to/appion
+	this_file = __file__
+	libdir = os.path.dirname(this_file)  #result: appion/lib/appionlib
+	libdir = os.path.abspath(libdir)	 #result: /path/to/appion/lib/appionlib
+	trypath = os.path.dirname(os.path.split(libdir)[0])	#result: /path/to/appion
 	if os.path.isdir(trypath):
 		appiondir = trypath
 	return appiondir
