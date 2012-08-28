@@ -6,12 +6,11 @@ import sys
 import time
 import math
 import numpy
-from PIL import Image
 import matplotlib
 matplotlib.use('WXAgg')
 #matplotlib.use('gtk')
 from matplotlib import pyplot
-
+from PIL import Image
 #import subprocess
 from appionlib import apParam
 from appionlib import apDisplay
@@ -21,7 +20,7 @@ from appionlib import apInstrument
 from appionlib import apDatabase
 from appionlib import appionLoop2
 from appionlib.apImage import imagefile, imagefilter, imagenorm, imagestat
-from appionlib.apCtf import ctftools, ctfnoise, ctfdb, sinefit, genctf, ctfpower, ctfres
+from appionlib.apCtf import ctftools, ctfnoise, ctfdb, sinefit, genctf, ctfpower, ctfres, ctfinsert
 #Leginon
 import leginon.polygon
 from leginon.gui.wx import ImagePanel, ImagePanelTools, TargetPanel, TargetPanelTools
@@ -55,13 +54,32 @@ class ManualCTFPanel(TargetPanel.TargetImagePanel):
 		if filename is None:
 			self.setImage(None)
 		elif filename[-4:] == '.mrc':
-			image = mrc.read(filename)
-			self.setImage(image.astype(numpy.float364))
+			image = mrc.read(filename).astype(numpy.float64)
+			self.setImage(image)
 		else:
 			img = Image.open(filename)
 			img.load()
-			img = imagefile.imageToArray(img)
-			self.setImage(img.astype(numpy.float64))
+			image = imagefile.imageToArray(img).astype(numpy.float64)
+			self.setImage(image)
+
+	#--------------------
+	def setImage(self, imagedata):
+		if isinstance(imagedata, numpy.ndarray):
+			self.numericdata = imagedata
+			self.setNumericImage(imagedata)
+		elif isinstance(imagedata, Image.Image):
+			self.setPILImage(imagedata)
+			stats = arraystats.all(imagedata)
+			self.statspanel.set(stats)
+			self.sizer.SetItemMinSize(self.statspanel, self.statspanel.GetSize())
+			self.sizer.Layout()
+		elif imagedata is None:
+			self.clearImage()
+			self.statspanel.set({})
+			self.sizer.SetItemMinSize(self.statspanel, self.statspanel.GetSize())
+			self.sizer.Layout()
+		else:
+			raise TypeError('Invalid image data type for setting image')
 
 ##################################
 ##
@@ -249,6 +267,7 @@ class CTFApp(wx.App):
 
 		self.frame = wx.Frame(None, -1, 'Manual CTF')
 		self.sizer = wx.FlexGridSizer(3,1)
+		self.ctfrun = None
 		buttonheight = 35
 
 		### VITAL STATS
@@ -280,45 +299,27 @@ class CTFApp(wx.App):
 		### BEGIN BUTTONS ROW
 		self.buttonrow = wx.FlexGridSizer(1,8)
 
-		self.next = wx.Button(self.frame, wx.ID_FORWARD, '&Forward')
-		self.next.SetMinSize((-1, buttonheight))
-		self.Bind(wx.EVT_BUTTON, self.onNext, self.next)
-		self.buttonrow.Add(self.next, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
+		label = wx.StaticText(self.frame, -1, "Database:  ", style=wx.ALIGN_RIGHT)
+		self.buttonrow.Add(label, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 3)
 
-		self.firstvalley = wx.Button(self.frame, -1, 'First &Valley')
-		self.firstvalley.SetMinSize((-1, buttonheight))
-		self.Bind(wx.EVT_BUTTON, self.onCalcFirstValley, self.firstvalley)
-		self.buttonrow.Add(self.firstvalley, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
-
-		wxbutton = wx.Button(self.frame, -1, '&Water Shed')
+		wxbutton = wx.Button(self.frame, wx.ID_REVERT_TO_SAVED, 'Revert')
 		wxbutton.SetMinSize((-1, buttonheight))
-		self.Bind(wx.EVT_BUTTON, self.onWaterShed, wxbutton)
+		self.Bind(wx.EVT_BUTTON, self.onRevert, wxbutton)
 		self.buttonrow.Add(wxbutton, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 
-		wxbutton = wx.Button(self.frame, -1, '&Clip Data')
+		self.editparam_dialog = EditParamsDialog(self)
+		wxbutton = wx.Button(self.frame, -1, '&Edit CTF Params...')
 		wxbutton.SetMinSize((-1, buttonheight))
-		self.Bind(wx.EVT_BUTTON, self.onClipData, wxbutton)
+		self.Bind(wx.EVT_BUTTON, self.onEditParams, wxbutton)
 		self.buttonrow.Add(wxbutton, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 
-		wxbutton = wx.Button(self.frame, -1, '&Full Normalize')
+		wxbutton = wx.Button(self.frame, wx.ID_OPEN, '&Load CTF')
 		wxbutton.SetMinSize((-1, buttonheight))
-		self.Bind(wx.EVT_BUTTON, self.onFullNormalize, wxbutton)
+		self.Bind(wx.EVT_BUTTON, self.onLoadCTF, wxbutton)
 		self.buttonrow.Add(wxbutton, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 
-		wxbutton = wx.Button(self.frame, -1, 'Full &TriModal Normalize')
-		wxbutton.SetMinSize((-1, buttonheight))
-		self.Bind(wx.EVT_BUTTON, self.onFullTriModalNormalize, wxbutton)
-		self.buttonrow.Add(wxbutton, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
-
-		wxbutton = wx.Button(self.frame, -1, 'Subt Fit Valleys')
-		wxbutton.SetMinSize((-1, buttonheight))
-		self.Bind(wx.EVT_BUTTON, self.onSubtFitValleys, wxbutton)
-		self.buttonrow.Add(wxbutton, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
-
-		wxbutton = wx.Button(self.frame, -1, 'Norm Fit Peaks')
-		wxbutton.SetMinSize((-1, buttonheight))
-		self.Bind(wx.EVT_BUTTON, self.onNormFitPeaks, wxbutton)
-		self.buttonrow.Add(wxbutton, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
+		label = wx.StaticText(self.frame, -1, "Filters:  ", style=wx.ALIGN_RIGHT)
+		self.buttonrow.Add(label, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 3)
 
 		wxbutton = wx.Button(self.frame, -1, 'Gauss &blur')
 		wxbutton.SetMinSize((-1, buttonheight))
@@ -335,6 +336,55 @@ class CTFApp(wx.App):
 		self.Bind(wx.EVT_BUTTON, self.onInvert, wxbutton)
 		self.buttonrow.Add(wxbutton, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 
+		label = wx.StaticText(self.frame, -1, "First Valley fit:  ", style=wx.ALIGN_RIGHT)
+		self.buttonrow.Add(label, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 3)
+
+		self.firstvalley = wx.Button(self.frame, -1, '&Fit Points')
+		self.firstvalley.SetMinSize((-1, buttonheight))
+		self.Bind(wx.EVT_BUTTON, self.onCalcFirstValley, self.firstvalley)
+		self.buttonrow.Add(self.firstvalley, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
+
+		wxbutton = wx.Button(self.frame, -1, '&Water Shed')
+		wxbutton.SetMinSize((-1, buttonheight))
+		self.Bind(wx.EVT_BUTTON, self.onWaterShed, wxbutton)
+		self.buttonrow.Add(wxbutton, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
+
+		wxbutton = wx.Button(self.frame, wx.ID_CLEAR, 'Clear')
+		wxbutton.SetMinSize((-1, buttonheight))
+		self.Bind(wx.EVT_BUTTON, self.onClear, wxbutton)
+		self.buttonrow.Add(wxbutton, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
+
+		label = wx.StaticText(self.frame, -1, "Normalization:  ", style=wx.ALIGN_RIGHT)
+		self.buttonrow.Add(label, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 3)
+
+		wxbutton = wx.Button(self.frame, -1, '&Full 1 Normalize')
+		wxbutton.SetMinSize((-1, buttonheight))
+		self.Bind(wx.EVT_BUTTON, self.onFullNormalize, wxbutton)
+		self.buttonrow.Add(wxbutton, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
+
+		wxbutton = wx.Button(self.frame, -1, 'Full &TriModal Normalize')
+		wxbutton.SetMinSize((-1, buttonheight))
+		self.Bind(wx.EVT_BUTTON, self.onFullTriModalNormalize, wxbutton)
+		self.buttonrow.Add(wxbutton, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
+
+		wxbutton = wx.Button(self.frame, -1, '&Subt Fit Valleys')
+		wxbutton.SetMinSize((-1, buttonheight))
+		self.Bind(wx.EVT_BUTTON, self.onSubtFitValleys, wxbutton)
+		self.buttonrow.Add(wxbutton, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
+
+		wxbutton = wx.Button(self.frame, -1, '&Norm Fit Peaks')
+		wxbutton.SetMinSize((-1, buttonheight))
+		self.Bind(wx.EVT_BUTTON, self.onNormFitPeaks, wxbutton)
+		self.buttonrow.Add(wxbutton, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
+
+		wxbutton = wx.Button(self.frame, -1, '&Clip Data 0-1')
+		wxbutton.SetMinSize((-1, buttonheight))
+		self.Bind(wx.EVT_BUTTON, self.onClipData, wxbutton)
+		self.buttonrow.Add(wxbutton, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
+
+		label = wx.StaticText(self.frame, -1, "Averaging:  ", style=wx.ALIGN_RIGHT)
+		self.buttonrow.Add(label, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 3)
+
 		self.rotavg = wx.Button(self.frame, -1, '&Rot Avg')
 		self.rotavg.SetMinSize((-1, buttonheight))
 		self.Bind(wx.EVT_BUTTON, self.onRotAverage, self.rotavg)
@@ -345,10 +395,13 @@ class CTFApp(wx.App):
 		self.Bind(wx.EVT_BUTTON, self.onEllipAverage, wxbutton)
 		self.buttonrow.Add(wxbutton, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 
-		wxbutton = wx.Button(self.frame, -1, 'Ellip &Distort')
+		wxbutton = wx.Button(self.frame, -1, '*Ellip &Distort*')
 		wxbutton.SetMinSize((-1, buttonheight))
 		self.Bind(wx.EVT_BUTTON, self.onEllipDistort, wxbutton)
 		self.buttonrow.Add(wxbutton, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
+
+		label = wx.StaticText(self.frame, -1, "View data:  ", style=wx.ALIGN_RIGHT)
+		self.buttonrow.Add(label, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 3)
 
 		wxbutton = wx.Button(self.frame, -1, 'Show 1D Plot')
 		wxbutton.SetMinSize((-1, buttonheight))
@@ -365,21 +418,9 @@ class CTFApp(wx.App):
 		self.Bind(wx.EVT_BUTTON, self.onGetResolution, wxbutton)
 		self.buttonrow.Add(wxbutton, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 
-		self.editparam_dialog = EditParamsDialog(self)
-		wxbutton = wx.Button(self.frame, -1, '&Edit CTF Params...')
-		wxbutton.SetMinSize((-1, buttonheight))
-		self.Bind(wx.EVT_BUTTON, self.onEditParams, wxbutton)
-		self.buttonrow.Add(wxbutton, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
-
-		#wxbutton = wx.Button(self.frame, -1, '&Draw')
-		#wxbutton.SetMinSize((-1, buttonheight))
-		#self.Bind(wx.EVT_BUTTON, self.onDraw, wxbutton)
-		#self.buttonrow.Add(wxbutton, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
-
-		wxbutton = wx.Button(self.frame, wx.ID_OPEN, '&Load CTF')
-		wxbutton.SetMinSize((-1, buttonheight))
-		self.Bind(wx.EVT_BUTTON, self.onLoadCTF, wxbutton)
-		self.buttonrow.Add(wxbutton, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
+		"""
+		label = wx.StaticText(self.frame, -1, "Refinement:  ", style=wx.ALIGN_RIGHT)
+		self.buttonrow.Add(label, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 3)
 
 		wxbutton = wx.Button(self.frame, -1, '&Amp Contrast')
 		wxbutton.SetMinSize((-1, buttonheight))
@@ -400,16 +441,7 @@ class CTFApp(wx.App):
 		wxbutton.SetMinSize((-1, buttonheight))
 		self.Bind(wx.EVT_BUTTON, self.onRefineHalfCTF, wxbutton)
 		self.buttonrow.Add(wxbutton, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
-
-		wxbutton = wx.Button(self.frame, wx.ID_CLEAR, 'Clear')
-		wxbutton.SetMinSize((-1, buttonheight))
-		self.Bind(wx.EVT_BUTTON, self.onClear, wxbutton)
-		self.buttonrow.Add(wxbutton, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
-
-		wxbutton = wx.Button(self.frame, wx.ID_REVERT_TO_SAVED, 'Revert')
-		wxbutton.SetMinSize((-1, buttonheight))
-		self.Bind(wx.EVT_BUTTON, self.onRevert, wxbutton)
-		self.buttonrow.Add(wxbutton, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
+		"""
 
 		label = wx.StaticText(self.frame, -1, "Image Assessment:  ", style=wx.ALIGN_RIGHT)
 		self.buttonrow.Add(label, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 3)
@@ -432,8 +464,16 @@ class CTFApp(wx.App):
 		self.assessreject.SetValue(0)
 		self.assessreject.SetMinSize((-1, buttonheight))
 		self.buttonrow.Add(self.assessreject, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
-		### END BUTTONS ROW
 
+		label = wx.StaticText(self.frame, -1, "Finish:  ", style=wx.ALIGN_RIGHT)
+		self.buttonrow.Add(label, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 3)
+
+		self.next = wx.Button(self.frame, wx.ID_FORWARD, '&Forward')
+		self.next.SetMinSize((-1, buttonheight))
+		self.Bind(wx.EVT_BUTTON, self.onNext, self.next)
+		self.buttonrow.Add(self.next, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
+
+		### END BUTTONS ROW
 		self.sizer.Add(self.buttonrow, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 		self.sizer.AddGrowableRow(1)
 		self.sizer.AddGrowableCol(0)
@@ -684,49 +724,37 @@ class CTFApp(wx.App):
 		#print "fsize=", fsize
 
 		##prepare CTF data for watershed, only finds peaks so invert
-
-		#TEMPORARY -- for now bin by 16
-		binning = 1
-		imagedata = imagefun.bin2(imagedata,binning)
 		imagedata = ndimage.gaussian_filter(imagedata, fsize)
-		tmpdata = imagenorm.maxNormalizeImage(imagedata)
-		imagefile.arrayToPng(tmpdata, "/home/vosslab/ctf.png")
 		inputarray = -imagedata + imagedata.max()
-		#inputarray = 2.**16 / inputarray.max() * inputarray + 1
-		#imagestat.printImageInfo(inputarray)
-		#inputarray = numpy.array(inputarray, dtype=numpy.uint16)
-		#print "inputarray="
-		#imagestat.printImageInfo(inputarray)
-		#print inputarray
 
 		##create markers using picked point
 		center = numpy.array(imagedata.shape)/2.0
-		newcenter = (center/float(binning)).astype(numpy.uint16)
+		newcenter = center.astype(numpy.uint16)
 		#print "newcenter=", newcenter
 		markers = numpy.zeros(inputarray.shape, dtype=numpy.int8)
 
 		points = numpy.array(points, dtype=numpy.int16)
 		#print points
 		## set the ring points to the highest value processed last
-		xp = numpy.array((points[:,1])/binning, dtype=numpy.uint16)
-		yp = numpy.array((points[:,0])/binning, dtype=numpy.uint16)
+		xp = numpy.array(points[:,1], dtype=numpy.uint16)
+		yp = numpy.array(points[:,0], dtype=numpy.uint16)
 		#print xp, yp
 		markers[xp, yp] = 100
 
 		## set inner points to 3
 		markers[newcenter[1], newcenter[0]] = 30
-		xpbad = numpy.array((points[:,1]/binning - newcenter[1])*0.4 + newcenter[1], dtype=numpy.uint16)
-		ypbad = numpy.array((points[:,0]/binning - newcenter[0])*0.4 + newcenter[0], dtype=numpy.uint16)
+		xpbad = numpy.array((points[:,1] - newcenter[1])*0.4 + newcenter[1], dtype=numpy.uint16)
+		ypbad = numpy.array((points[:,0] - newcenter[0])*0.4 + newcenter[0], dtype=numpy.uint16)
 		markers[xpbad, ypbad] = 30
-		xpbad = numpy.array((points[:,1]/binning - newcenter[1])*0.8 + newcenter[1], dtype=numpy.uint16)
-		ypbad = numpy.array((points[:,0]/binning - newcenter[0])*0.8 + newcenter[0], dtype=numpy.uint16)
+		xpbad = numpy.array((points[:,1] - newcenter[1])*0.8 + newcenter[1], dtype=numpy.uint16)
+		ypbad = numpy.array((points[:,0] - newcenter[0])*0.8 + newcenter[0], dtype=numpy.uint16)
 		markers[xpbad, ypbad] = 30
 		## set outer points to 2
-		xpbad = numpy.array((points[:,1]/binning - newcenter[1])*1.2 + newcenter[1], dtype=numpy.uint16)
-		ypbad = numpy.array((points[:,0]/binning - newcenter[0])*1.2 + newcenter[0], dtype=numpy.uint16)
+		xpbad = numpy.array((points[:,1] - newcenter[1])*1.2 + newcenter[1], dtype=numpy.uint16)
+		ypbad = numpy.array((points[:,0] - newcenter[0])*1.2 + newcenter[0], dtype=numpy.uint16)
 		markers[xpbad, ypbad] = 20
-		xpbad = numpy.array((points[:,1]/binning - newcenter[1])*1.6 + newcenter[1], dtype=numpy.uint16)
-		ypbad = numpy.array((points[:,0]/binning - newcenter[0])*1.6 + newcenter[0], dtype=numpy.uint16)
+		xpbad = numpy.array((points[:,1] - newcenter[1])*1.6 + newcenter[1], dtype=numpy.uint16)
+		ypbad = numpy.array((points[:,0] - newcenter[0])*1.6 + newcenter[0], dtype=numpy.uint16)
 		markers[xpbad, ypbad] = 20
 		markers[0,0] = 20
 
@@ -798,7 +826,7 @@ class CTFApp(wx.App):
 
 		xwater, ywater = numpy.where(watershed==100)
 
-		points = numpy.transpose(numpy.vstack((xwater, ywater)))*binning
+		points = numpy.transpose(numpy.vstack((xwater, ywater)))
 		pointpercent = 100*len(points)/float(inputarray.shape[0]*inputarray.shape[1])
 		apDisplay.printMsg("You have %d points to fit in the valley ring (%.2f percent)"
 			%(len(points), pointpercent))
@@ -998,6 +1026,9 @@ class CTFApp(wx.App):
 		### Show the data
 		raddatasq = raddata**2
 		confraddatasq = confraddata**2
+		peakradii = ctftools.getCtfExtrema(meandefocus, self.freq*1e10,
+			self.ctfvalues['cs'], self.ctfvalues['volts'], self.ctfvalues['amplitude_contrast'],
+			numzeros=2, zerotype="peaks")
 		firstpeak = peakradii[0]
 		fpi = numpy.searchsorted(raddata, peakradii[0]*self.freq) #firstpeakindex
 		pyplot.clf()
@@ -1375,9 +1406,9 @@ class CTFApp(wx.App):
 				numzeros=1, zerotype="valleys")
 			firstvalley = radii[0]
 		else:
-			#set first zero to 1/100A
+			#set first zero to 1/50A
 			#1/resolution = freq * (# of pixels from center)
-			firstvalley = int(1.0/(self.freq*100))
+			firstvalley = int(1.0/(self.freq*50))
 		raddata = pixelrdata*self.freq
 		firstvalleyindex = numpy.searchsorted(raddata, self.freq*firstvalley)
 		apDisplay.printColor("First valley: %.1f -> %d (1/%.1f A)"
@@ -1484,9 +1515,9 @@ class CTFApp(wx.App):
 				numzeros=1, zerotype="peaks")
 			firstpeak = radii[0]
 		else:
-			#set first zero to 1/100A
+			#set first zero to 1/50A
 			#1/resolution = freq * (# of pixels from center)
-			firstpeak = 1.0/(self.freq*100)
+			firstpeak = 1.0/(self.freq*50)
 
 		firstpeakindex = numpy.searchsorted(raddata, firstpeak*self.freq)
 		apDisplay.printColor("First peak: %.1f (1/%.1f A)"%
@@ -1564,14 +1595,16 @@ class CTFApp(wx.App):
 		# skip the center
 		if 'defocus1' in self.ctfvalues.keys():
 			#get first zero
-			radii = ctftools.getCtfExtrema(self.ctfvalues['defocus1'], self.freq*1e10,
+			valleys = ctftools.getCtfExtrema(self.ctfvalues['defocus1'], self.freq*1e10,
 				self.ctfvalues['cs'], self.ctfvalues['volts'], self.ctfvalues['amplitude_contrast'],
-				numzeros=1, zerotype="valleys")
-			firstvalley = radii[0]
+				numzeros=250, zerotype="valleys")
+			firstvalley = valleys[0]
+			valleyradii = numpy.array(valleys, dtype=numpy.float64)*self.freq
 		else:
 			#set first zero to 1/70A
 			#1/resolution = freq * (# of pixels from center)
 			firstvalley = int(1.0/(self.freq*70))
+			valleyradii = None
 		raddata = pixelrdata*self.freq
 		firstvalleyindex = numpy.searchsorted(raddata, self.freq*firstvalley)
 		apDisplay.printColor("First valley: %.1f -> %d (1/%.1f A)"
@@ -1587,20 +1620,24 @@ class CTFApp(wx.App):
 		part3end = len(raddata)
 
 		CtfNoise = ctfnoise.CtfNoise()
+		if valleyradii is None:
+			valleydata = ctfnoise.peakExtender(raddata, rotdata, valleyradii, "below")
+		else:
+			valleydata = ndimage.minimum_filter(rotdata, 4)
 
 		## first part data
 		noisefitparams1 = CtfNoise.modelCTFNoise(raddata[part1start:part1end],
-			rotdata[part1start:part1end], "below")
+			valleydata[part1start:part1end], "below")
 		noisedata1 = CtfNoise.noiseModel(noisefitparams1, raddata)
 
 		## second part data
 		noisefitparams2 = CtfNoise.modelCTFNoise(raddata[part2start:part2end],
-			rotdata[part2start:part2end], "below")
+			valleydata[part2start:part2end], "below")
 		noisedata2 = CtfNoise.noiseModel(noisefitparams2, raddata)
 
 		## third part data
 		noisefitparams3 = CtfNoise.modelCTFNoise(raddata[part3start:part3end],
-			rotdata[part3start:part3end], "below")
+			valleydata[part3start:part3end], "below")
 		noisedata3 = CtfNoise.noiseModel(noisefitparams3, raddata)
 
 		## merge data
@@ -1634,14 +1671,16 @@ class CTFApp(wx.App):
 		if 'defocus1' in self.ctfvalues.keys():
 			#get first zero
 			meandefocus = math.sqrt(self.ctfvalues['defocus1']*self.ctfvalues['defocus2'])
-			radii = ctftools.getCtfExtrema(meandefocus, self.freq*1e10,
+			peaks = ctftools.getCtfExtrema(meandefocus, self.freq*1e10,
 				self.ctfvalues['cs'], self.ctfvalues['volts'], self.ctfvalues['amplitude_contrast'],
-				numzeros=1, zerotype="peaks")
-			firstpeak = radii[0]
+				numzeros=250, zerotype="peaks")
+			firstpeak = peaks[0]
+			peakradii = numpy.array(peaks, dtype=numpy.float64)*self.freq
 		else:
-			#set first zero to 1/100A
+			#set first zero to 1/50A
 			#1/resolution = freq * (# of pixels from center)
-			firstpeak = 1.0/(self.freq*100)
+			firstpeak = 1.0/(self.freq*50)
+			peakradii = None
 
 		firstpeakindex = numpy.searchsorted(raddata, firstpeak*self.freq)
 		apDisplay.printColor("First peak: %.1f (1/%.1f A)"%
@@ -1657,20 +1696,24 @@ class CTFApp(wx.App):
 		part3end = len(raddata)
 
 		CtfNoise = ctfnoise.CtfNoise()
+		if peakradii is None:
+			peakdata = ctfnoise.peakExtender(raddata, normlogrotdata, peakradii, "above")
+		else:
+			peakdata = ndimage.maximum_filter(normlogrotdata, 4)
 
 		## first part data
 		envelopfitparams1 = CtfNoise.modelCTFNoise(raddata[part1start:part1end],
-			normlogrotdata[part1start:part1end], "above")
+			peakdata[part1start:part1end], "above")
 		envelopdata1 = CtfNoise.noiseModel(envelopfitparams1, raddata)
 
 		## second part data
 		envelopfitparams2 = CtfNoise.modelCTFNoise(raddata[part2start:part2end],
-			normlogrotdata[part2start:part2end], "above")
+			peakdata[part2start:part2end], "above")
 		envelopdata2 = CtfNoise.noiseModel(envelopfitparams2, raddata)
 
 		## third part data
 		envelopfitparams3 = CtfNoise.modelCTFNoise(raddata[part3start:part3end],
-			normlogrotdata[part3start:part3end], "above")
+			peakdata[part3start:part3end], "above")
 		envelopdata3 = CtfNoise.noiseModel(envelopfitparams3, raddata)
 
 		## merge data
@@ -1698,6 +1741,7 @@ class CTFApp(wx.App):
 		raddatasq = raddata**2
 		pyplot.plot(raddatasq, normnormexprotdata, 'k.',)
 		a = pyplot.plot(raddatasq, rotdata, 'k-', alpha=0.5)
+		a = pyplot.plot(raddatasq, valleydata, 'k-', alpha=0.5)
 		b = pyplot.plot(raddatasq[firstvalleyindex:], noisedata[firstvalleyindex:], '--', color="purple", linewidth=2)
 		c = pyplot.plot(raddatasq[part1start:part1end],
 			noisedata1[part1start:part1end], 'b-', alpha=0.5, linewidth=2)
@@ -1712,6 +1756,7 @@ class CTFApp(wx.App):
 		pyplot.subplot(3,1,2)
 		a = pyplot.plot(raddatasq, normlogrotdata, 'k.',)
 		a = pyplot.plot(raddatasq, normlogrotdata, 'k-', alpha=0.5)
+		a = pyplot.plot(raddatasq, peakdata, 'k-', alpha=0.5)
 		b = pyplot.plot(raddatasq, mergedata, '--', color="purple", linewidth=2)
 		c = pyplot.plot(raddatasq[part1start:part1end],
 			envelopdata1[part1start:part1end], 'b-', alpha=0.5, linewidth=2)
@@ -1746,9 +1791,9 @@ class CTFApp(wx.App):
 				numzeros=1, zerotype="valleys")
 			firstvalley = radii[0]
 		else:
-			#set first zero to 1/100A
+			#set first zero to 1/50A
 			#1/resolution = freq * (# of pixels from center)
-			firstvalley = int(1.0/(self.freq*100))
+			firstvalley = int(1.0/(self.freq*50))
 		raddata = pixelrdata*self.freq
 		firstvalleyindex = numpy.searchsorted(raddata, self.freq*firstvalley)
 		apDisplay.printColor("First valley: %.1f -> %d (1/%.1f A)"
@@ -1910,9 +1955,9 @@ class CTFApp(wx.App):
 				numzeros=1, zerotype="peaks")
 			firstpeak = radii[0]
 		else:
-			#set first zero to 1/100A
+			#set first zero to 1/50A
 			#1/resolution = freq * (# of pixels from center)
-			firstpeak = 1.0/(self.freq*100)
+			firstpeak = 1.0/(self.freq*50)
 		raddata = pixelrdata*self.freq
 		firstpeakindex = numpy.searchsorted(raddata, firstpeak*self.freq)
 		apDisplay.printColor("First peak: %.1f (1/%.1f A)"%
@@ -1954,9 +1999,9 @@ class CTFApp(wx.App):
 				numzeros=1, zerotype="peaks")
 			firstpeak = radii[0]
 		else:
-			#set first zero to 1/100A
+			#set first zero to 1/50A
 			#1/resolution = freq * (# of pixels from center)
-			firstpeak = int(1.0/(self.freq*100))
+			firstpeak = int(1.0/(self.freq*50))
 		raddata = pixelrdata*self.freq
 		firstpeakindex = numpy.searchsorted(raddata, self.freq*firstpeak)
 		apDisplay.printColor("First peak: %.1f (1/%.1f A)"%
@@ -2134,6 +2179,7 @@ class ManualCTF(appionLoop2.AppionLoop):
 	def onInit(self):
 		super(ManualCTF,self).onInit()
 		self.trace = False
+		self.ctfrun = None
 		return
 
 	#---------------------------------------
@@ -2204,11 +2250,49 @@ class ManualCTF(appionLoop2.AppionLoop):
 		return
 
 	#---------------------------------------
-	def commitToDatabase(self, imgdata, rundata):
+	def commitToDatabase(self, imgdata):
 		if self.assess != self.assessold and self.assess is not None:
 			#imageaccessor run is always named run1
 			apDatabase.insertImgAssessmentStatus(imgdata, 'run1', self.assess)
+		self.insertCtfRun(imgdata)
+		ctfinsert.validateAndInsertCTFData(imgdata, self.ctfvalues, self.ctfrun, self.params['rundir'])
 		return
+
+	#---------------------------------------
+	def insertCtfRun(self, imgdata):
+		if isinstance(self.ctfrun, appiondata.ApAceRunData):
+			return False
+
+		# first create an aceparam object
+		paramq = appiondata.ApXmippCtfParamsData()
+		paramq['fieldsize'] = self.params['fieldsize']
+
+		# create an acerun object
+		runq = appiondata.ApAceRunData()
+		runq['name'] = self.params['runname']
+		runq['session'] = imgdata['session'];
+
+		# see if acerun already exists in the database
+		runnames = runq.query(results=1)
+
+		if (runnames):
+			if not (runnames[0]['xmipp_ctf_params'] == paramq):
+				for i in runnames[0]['xmipp_ctf_params']:
+					if runnames[0]['xmipp_ctf_params'][i] != paramq[i]:
+						apDisplay.printWarning("the value for parameter '"+str(i)+"' is different from before")
+				apDisplay.printError("All parameters for a single CTF estimation run must be identical! \n"+\
+						     "please check your parameter settings.")
+			self.ctfrun = runnames[0]
+			return False
+
+		#create path
+		runq['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
+		runq['hidden'] = False
+		# if no run entry exists, insert new run entry into db
+		runq['xmipp_ctf_params'] = paramq
+		runq.insert()
+		self.ctfrun = runq
+		return True
 
 	#---------------------------------------
 	def setupParserOptions(self):
@@ -2217,7 +2301,9 @@ class ManualCTF(appionLoop2.AppionLoop):
 			help="pick shape")
 		self.parser.add_option("--shapesize", dest="shapesize", type="int", default=16,
 			help="shape size")
-		self.parser.add_option("--resolution-limit", dest="reslimit", type="float", default=9.0,
+		self.parser.add_option("--fieldsize", dest="fieldsize", type="int",
+			help="field size to use for sub-field averaging in power spectra calculation")
+		self.parser.add_option("--reslimit", "--resolution-limit", dest="reslimit", type="float", default=6.0,
 			help="outer resolution limit (in Angstroms) to clip the fft image")
 		self.parser.add_option("--ringwidth", dest="ringwidth", type="float", default=2.0,
 			help="number of radial pixels to average during elliptical average")
@@ -2227,6 +2313,8 @@ class ManualCTF(appionLoop2.AppionLoop):
 		"""
 		put in any additional conflicting parameters
 		"""
+		if self.params['reslimit'] > 50 or self.params['reslimit'] < 1.0:
+			apDisplay.printError("Resolution limit is in Angstroms")
 
 		return
 
@@ -2271,7 +2359,7 @@ class ManualCTF(appionLoop2.AppionLoop):
 			count += 1
 			self.fftsdir
 			fftpath = os.path.join(self.fftsdir, apDisplay.short(imgdata['filename'])+'.powerspec.mrc')
-			if self.params['continue'] is True and os.path.isfile(fftpath):
+			if self.params['continue'] is True and os.path.isfile(fftpath) and fftpath in self.freqdict.keys():
 				sys.stderr.write(".")
 				#print "already processed: ",apDisplay.short(imgdata['filename'])
 			else:
@@ -2285,7 +2373,7 @@ class ManualCTF(appionLoop2.AppionLoop):
 
 	#---------------------------------------
 	def processAndSaveFFT(self, imgdata, fftpath):
-		if os.path.isfile(fftpath):
+		if os.path.isfile(fftpath) and fftpath in self.freqdict.keys():
 			return False
 
 		### downsize and filter leginon image
@@ -2296,7 +2384,7 @@ class ManualCTF(appionLoop2.AppionLoop):
 
 		### calculate power spectra
 		apix = apDatabase.getPixelSize(imgdata)
-		fftarray, freq = ctfpower.power(imgarray, apix, mask_radius=1)
+		fftarray, freq = ctfpower.power(imgarray, apix, mask_radius=1, fieldsize=self.params['fieldsize'])
 		#fftarray = imagefun.power(fftarray, mask_radius=1)
 
 		fftarray = ndimage.median_filter(fftarray, 2)
@@ -2327,6 +2415,7 @@ class ManualCTF(appionLoop2.AppionLoop):
 
 		#open new file
 		fftarray = mrc.read(fftpath).astype(numpy.float64)
+		print self.freqdict.keys()
 		freq = self.freqdict[fftpath]
 
 		### clip image
