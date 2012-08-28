@@ -387,10 +387,26 @@ class CtfDisplay(object):
 
 		pyplot.subplot(4,2,7) # 4 rows, 2 columns, plot 7
 		tenangindex = numpy.searchsorted(raddata, 1/10.*self.trimfreq)
-		pyplot.title("Defocus 1 %.3e / Defocus 2 %.3e)"
+		pyplot.title("Defocus1= %.3e / Defocus2= %.3e"
 			%(self.defocus1, self.defocus2), fontsize=titlefontsize)
 		pyplot.ylabel("Norm PSD", fontsize=titlefontsize)
 		pyplot.plot(raddatasq[tenangindex:], ctffitdata[tenangindex:],
+			'-', color="black", alpha=0.5, linewidth=1)
+		pyplot.plot(raddatasq[tenangindex:], normpeakdata[tenangindex:],
+			'-', color="blue", alpha=0.5, linewidth=0.5)
+		pyplot.plot(raddatasq[tenangindex:], normpeakdata[tenangindex:],
+			'.', color="blue", alpha=0.75, markersize=2.0)
+		self.setPyPlotXLabels(raddatasq[tenangindex:], maxloc=1/5.**2, square=True)
+		pyplot.grid(True, linestyle=':', )
+		pyplot.ylim(-0.05, 1.05)
+
+		pyplot.subplot(4,2,8) # 4 rows, 2 columns, plot 7
+		tenangindex = numpy.searchsorted(raddata, 1/10.*self.trimfreq)
+		overctffitdata = genctf.generateCTF1d(raddata*1e10, focus=meandefocus, cs=self.cs,
+			volts=self.volts, ampconst=self.ampcontrast, failParams=False, overfocus=True)
+		pyplot.title("Overfocus check", fontsize=titlefontsize)
+		pyplot.ylabel("Norm PSD", fontsize=titlefontsize)
+		pyplot.plot(raddatasq[tenangindex:], overctffitdata[tenangindex:],
 			'-', color="black", alpha=0.5, linewidth=1)
 		pyplot.plot(raddatasq[tenangindex:], normpeakdata[tenangindex:],
 			'-', color="blue", alpha=0.5, linewidth=0.5)

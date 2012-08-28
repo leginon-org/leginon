@@ -9,7 +9,41 @@ from appionlib.apCtf import ctftools
 debug = False
 
 #===================
-def generateCTF1d(radii=None, focus=1.0e-6, cs=2e-3, volts=120000, ampconst=0.07, failParams=False):
+def generateCTF1d(radii=None, focus=1.0e-6, cs=2e-3, volts=120000, ampconst=0.07, 
+		failParams=False, overfocus=False):
+	"""
+	calculates a CTF function based on the input details
+
+	Use SI units: meters, radians, volts
+	Underfocus is postive (defocused) 
+	"""
+	if debug is True:
+		print "generateCTF1dFromRadii()"
+	t0 = time.time()
+	checkParams(focus1=focus, focus2=focus, cs=cs, volts=volts, ampconst=ampconst, failParams=failParams)
+
+	lamb = ctftools.getTEMLambda(volts)
+	s = radii
+	pi = math.pi
+
+	if overfocus is True:
+		focus = -1.0*focus
+
+	gamma = 2*pi*(0.25*cs*(lamb**3)*(s**4) + 0.5*focus*lamb*(s**2))
+
+	B = math.sqrt(1.0 - ampconst**2)
+	A = ampconst
+	prectf = B*numpy.sin(gamma) + A*numpy.cos(gamma) 
+
+	ctf = prectf**2
+
+	if debug is True:
+		print "generate 1D ctf complete in %.4f sec"%(time.time()-t0)
+
+	return ctf**2
+
+#===================
+def generateCTF1dACE2(radii=None, focus=1.0e-6, cs=2e-3, volts=120000, ampconst=0.07, failParams=False):
 	"""
 	calculates a CTF function based on the input details
 
@@ -38,7 +72,7 @@ def generateCTF1d(radii=None, focus=1.0e-6, cs=2e-3, volts=120000, ampconst=0.07
 
 	radiisq = radii**2
 
-	gamma = (x4 * radiisq**2) + (-focus * x2 * radiisq) + (x0)
+	gamma = (x4 * radiisq**2) + (focus * x2 * radiisq) + (x0)
 	#ctf = -1.0*numpy.cos(gamma) #WRONG
 	#ctf = -1.0*numpy.sin(gamma) #CORRECT
 	ctf = 1.0*numpy.sin(gamma) #MAYBE CORRECT
