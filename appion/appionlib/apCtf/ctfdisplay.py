@@ -270,8 +270,8 @@ class CtfDisplay(object):
 		### 
 		apDisplay.printColor("PART 7: MAKE 1D PLOT SUMMARY FIGURE", "magenta")
 
-		titlefontsize=10
-		axisfontsize=8
+		titlefontsize=9
+		axisfontsize=7
 		raddatasq = raddata**2
 		confraddatasq = confraddata**2
 		valleyradiisq = valleyradii**2
@@ -546,8 +546,8 @@ class CtfDisplay(object):
 
 	#====================
 	#====================
-	def drawPowerSpecImage(self, origpowerspec, maxsize=1500):
-		origpowerspec = ctftools.trimPowerSpectraToOuterResolution(origpowerspec, 9.7, self.trimfreq)
+	def drawPowerSpecImage(self, origpowerspec, maxsize=1500, outerresolution=8.7):
+		origpowerspec = ctftools.trimPowerSpectraToOuterResolution(origpowerspec, outerresolution, self.trimfreq)
 
 		#compute elliptical average and merge with original image
 		pixelrdata, rotdata = ctftools.ellipticalAverage(origpowerspec, self.ellipratio, self.angle,
