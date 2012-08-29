@@ -29,7 +29,7 @@ def generateCTF1d(radii=None, focus=1.0e-6, cs=2e-3, volts=120000, ampconst=0.07
 	if overfocus is True:
 		focus = -1.0*focus
 
-	gamma = 2*pi*(0.25*cs*(lamb**3)*(s**4) + 0.5*focus*lamb*(s**2))
+	gamma = 2*pi*(0.25*cs*(lamb**3)*(s**4) - 0.5*focus*lamb*(s**2))
 
 	B = math.sqrt(1.0 - ampconst**2)
 	A = ampconst

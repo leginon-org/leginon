@@ -270,7 +270,7 @@ class CtfDisplay(object):
 		### 
 		apDisplay.printColor("PART 7: MAKE 1D PLOT SUMMARY FIGURE", "magenta")
 
-		titlefontsize=9
+		titlefontsize=8
 		axisfontsize=7
 		raddatasq = raddata**2
 		confraddatasq = confraddata**2
@@ -396,7 +396,7 @@ class CtfDisplay(object):
 			'-', color="blue", alpha=0.5, linewidth=0.5)
 		pyplot.plot(raddatasq[tenangindex:], normpeakdata[tenangindex:],
 			'.', color="blue", alpha=0.75, markersize=2.0)
-		self.setPyPlotXLabels(raddatasq[tenangindex:], maxloc=1/5.**2, square=True)
+		self.setPyPlotXLabels(raddatasq[tenangindex:], maxloc=1/7.**2, square=True)
 		pyplot.grid(True, linestyle=':', )
 		pyplot.ylim(-0.05, 1.05)
 
@@ -412,11 +412,11 @@ class CtfDisplay(object):
 			'-', color="blue", alpha=0.5, linewidth=0.5)
 		pyplot.plot(raddatasq[tenangindex:], normpeakdata[tenangindex:],
 			'.', color="blue", alpha=0.75, markersize=2.0)
-		self.setPyPlotXLabels(raddatasq[tenangindex:], maxloc=1/5.**2, square=True)
+		self.setPyPlotXLabels(raddatasq[tenangindex:], maxloc=1/7.**2, square=True)
 		pyplot.grid(True, linestyle=':', )
 		pyplot.ylim(-0.05, 1.05)
 
-		pyplot.subplots_adjust(wspace=0.22, hspace=0.55, 
+		pyplot.subplots_adjust(wspace=0.22, hspace=0.70, 
 			bottom=0.08, left=0.07, top=0.95, right=0.965, )
 		self.plotsfile = apDisplay.short(self.imgname)+"-plots.png"
 		apDisplay.printMsg("Saving 1D graph to file %s"%(self.plotsfile))
