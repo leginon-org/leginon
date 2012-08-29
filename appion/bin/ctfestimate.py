@@ -140,8 +140,18 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 
 		#get Defocus in Angstroms
 		self.ctfvalues = {}
-		defocus = abs(imgdata['scope']['defocus']*-1.0e10)
-		bestdef = abs(ctfdb.getBestDefocusForImage(imgdata, msg=True)*1.0e10)
+		nominal = abs(imgdata['scope']['defocus']*-1.0e10)
+		ctfvalue = ctfdb.getBestCtfByResolution(imgdata)
+		if ctfvalue is not None:
+			bestdef = abs(ctfvalue['defocus1']+ctfvalue['defocus2'])/2.0*1.0e10
+		else:
+			bestdef = nominal
+		if ctfvalue is not None and self.params['bestdb'] is True:
+			bestampcontrast = ctfvalue['amplitude_contrast']
+			beststigdiff = abs(ctfvalue['defocus1'] - ctfvalue['defocus2'])*1e10
+		else:
+			bestampcontrast = self.params['amp'+self.params['medium']]
+			beststigdiff = self.params['dast']
 		# dstep is the physical detector pixel size
 		dstep = None
 		if 'camera' in imgdata and imgdata['camera'] and imgdata['camera']['pixel size']:
@@ -160,7 +170,7 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 
 			'cs': self.params['cs'],
 			'kv': imgdata['scope']['high tension']/1000.0,
-			'ampcnst': self.params['amp'+self.params['medium']],
+			'ampcnst': bestampcontrast,
 			'xmag': xmag,
 			'dstep': dstep*1e6,
 			'pixavg': self.params['bin'],
@@ -169,7 +179,7 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 			'resmin': self.params['resmin'],
 			'resmax': self.params['resmax'],
 			'defstep': self.params['defstep'], #round(defocus/32.0, 1),
-			'dast': self.params['dast'],
+			'dast': beststigdiff,
 		}
 		defrange = self.params['defstep'] * self.params['numstep'] ## do 25 steps in either direction
 		inputparams['defmin']= round(bestdef-defrange, 1) #in meters
@@ -261,10 +271,11 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 					'angle_astigmatism':	-float(bits[2]),
 					'amplitude_contrast': inputparams['ampcnst'],
 					'cross_correlation':	float(bits[numvals-3]),
-					'nominal':	defocus*1e-10,
+					'nominal':	nominal*1e-10,
 					'defocusinit':	bestdef*1e-10,
 					'cs': self.params['cs'],
 					'volts': imgdata['scope']['high tension'],
+					'confidence': float(bits[numvals-3]),
 					'confidence_d': round(math.sqrt(abs(float(bits[numvals-3]))), 5)
 				}
 				if self.params['ctftilt'] is True:
@@ -376,8 +387,12 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 			help="dAst was added to CARD 4 to restrain the amount of astigmatism in \
 				the CTF fit. This makes the fitting procedure more robust, especially \
 				in cases where the Thon rings are not easily visible", metavar="#")
+
+		## true/false
 		self.parser.add_option("--ctftilt", dest="ctftilt", default=False,
 			action="store_true", help="Run ctftilt instead of ctffind")
+		self.parser.add_option("--bestdb", "--best-database", dest="bestdb", default=False,
+			action="store_true", help="Use best amplitude contrast and astig difference from database")
 
 	#======================
 	def checkConflicts(self):
