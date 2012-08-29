@@ -331,7 +331,7 @@ f64 ctf_calc( f64 c[], f64 x ) {
 	x *= c[4];
 	x = x * x;
 		
-	f64 chi = M_PI*c[2]*x*(c[0]+0.5*c[2]*c[2]*c[3]*x)-asin(c[1]);
+	f64 chi = M_PI*c[2]*x*(c[0]+0.5*c[2]*c[2]*c[3]*x)+asin(c[1]);
 	return sin(chi);
 	
 }
@@ -856,7 +856,7 @@ f64 defocusForPeak( f64 c[], f64 peak_pos, u32 peak_num ) {
 	// in the defocus function.  This point is given by setting the derivative to 0 and solving for x:
 	
 	//		   	   __________________
-	// 	     4   /  n*pi-2asin(ac)
+	// 	     4   /  n*pi+2asin(ac)
 	// x = _   /   ----------------
 	//	    \/     pi*lm^3*ap^4*cs
 	
@@ -877,11 +877,11 @@ f64 defocusForPeak( f64 c[], f64 peak_pos, u32 peak_num ) {
 	f64 cs = c[3];
 	f64 ap = c[4];
 	
-	f64 x_limit = pow((peak_num*M_PI-2.0*asin(ac))/(M_PI*lm*lm*lm*ap*ap*ap*ap*cs),0.25);
+	f64 x_limit = pow((peak_num*M_PI+2.0*asin(ac))/(M_PI*lm*lm*lm*ap*ap*ap*ap*cs),0.25);
 	
 	if ( peak_pos > x_limit ) return 0.0;
 	
-	f64 chi = asin(ac) - 0.5*peak_num*M_PI;;
+	f64 chi = -asin(ac) - 0.5*peak_num*M_PI;;
 	
 	f64 x = pow(peak_pos*ap,2.0);
 	
@@ -914,14 +914,14 @@ f64 positionForPeak( f64 c[], u32 peak_num ) {
 	// in the CTF function.  Note that for overfocus, chi does not cross zero
 	// so there is no need to determine peak_switch.
 	// For peak numbers below peak_switch the lesser of the roots
-	// for the equation chi(x)-asin(ac) = peak_num*pi/2 must be used.  Any peak number 
+	// for the equation chi(x)+asin(ac) = peak_num*pi/2 must be used.  Any peak number 
 	// desired past peak_switch must be inverted around peak_switch and the second root used.
 	// The 0.8 is a rounding function, basically if the false peak isn't big enough 
 	// we don't count it as a peak
 	
 	f64 aq = 0.5*M_PI*lm*lm*lm*cs;
 	f64 bq = lm*df*M_PI;
-	f64 cq = -asin(ac);
+	f64 cq = asin(ac);
 	
 	if ( df >= 0.0 ) {
 		
@@ -1016,7 +1016,7 @@ ArrayP g2DCTF( f64 df1, f64 df2, f64 theta, u32 rows, u32 cols, f64 apix, f64 cs
 			f64 t = atan2(y,x);
 			f64 f = x*x+y*y;
 			f64 d = mdf+ddf*cos(2.0*(t-theta));
-			f64 chi = t1*f*(d+t2*f)-t3;
+			f64 chi = t1*f*(d+t2*f)+t3;
 			data[r*cols+c] = sin(chi);
 		}
 	}

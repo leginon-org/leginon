@@ -36,8 +36,8 @@ f64 highest_res( f64 ctf_p[], f64 size, f64 apix ) {
 		f64 x1 = ((f64)i-0.5)*ap;
 		f64 x2 = ((f64)i+0.5)*ap;
 //		f64 d1 = 2*PI*lm*x*(lm*lm*x*x*cs+df);
-		f64 v1 = PI*lm*x1*x1*(0.5*lm*lm*x1*x1*cs+df)-asin(ac);
-		f64 v2 = PI*lm*x2*x2*(0.5*lm*lm*x2*x2*cs+df)-asin(ac);
+		f64 v1 = PI*lm*x1*x1*(0.5*lm*lm*x1*x1*cs+df)+asin(ac);
+		f64 v2 = PI*lm*x2*x2*(0.5*lm*lm*x2*x2*cs+df)+asin(ac);
 		f64 d2 = v2 - v1;
 		if ( ABS(d2) > PI/2.0 ) break;
 //		if ( ABS(d1) > PI/2.0 ) break;
