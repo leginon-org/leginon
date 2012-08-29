@@ -28,6 +28,47 @@ def getNumCtfRunsFromSession(sessionname):
 	return len(ctfrundatas)
 
 #=====================
+def getCtfMethod(ctfvalue):
+	if not 'acerun' in ctfvalue:
+		return None
+	if ctfvalue['acerun']['aceparams'] is not None:
+		return "ace1"
+	elif ctfvalue['acerun']['ace2_params'] is not None:
+		return "ace2"
+	elif ctfvalue['acerun']['ctftilt_params'] is not None:
+		return "ctffind"
+	elif ctfvalue['acerun']['xmipp_ctf_params'] is not None:
+		return "xmipp_ctf"
+	return None
+
+#=====================
+def printCtfData(ctfvalue):
+	if ctfvalue is None:
+		return
+	defocusratio = ctfvalue['defocus2']/ctfvalue['defocus1']
+	method = getCtfMethod(ctfvalue)
+	if 'acerun' in ctfvalue:
+		method = getCtfMethod(ctfvalue)
+		runname = ctfvalue['acerun']['name']
+		sys.stderr.write("[%s]   method: %s | runname %s\n"%
+		(apDisplay.colorString("CTF run", "blue"), method, runname))
+	sys.stderr.write("[%s] def1: %.2e | def2: %.2e | angle: %.1f | ampcontr %.2f | defratio %.3f\n"%
+		(apDisplay.colorString("CTF param", "blue"), ctfvalue['defocus1'], 
+		ctfvalue['defocus2'], ctfvalue['angle_astigmatism'], 
+		ctfvalue['amplitude_contrast'], defocusratio))
+	if 'resolution_80_percent' in ctfvalue.keys() and ctfvalue['resolution_80_percent'] is not None:
+		sys.stderr.write("[%s] conf_30-10: %s | conf_5peak: %s | res_0.8: %.1fA | res_0.5 %.1fA\n"%
+			(apDisplay.colorString("CTF stats", "blue"), 
+			apDisplay.colorProb(ctfvalue['confidence_30_10']), 
+			apDisplay.colorProb(ctfvalue['confidence_5_peak']),
+			ctfvalue['resolution_80_percent'], ctfvalue['resolution_80_percent']))
+	sys.stderr.write("[%s] conf: %s | conf_d: %s\n"%
+		(apDisplay.colorString("CTF stats", "blue"), apDisplay.colorProb(ctfvalue['confidence']), 
+		apDisplay.colorProb(ctfvalue['confidence_d'])))
+	#apDisplay.colorProb(numlist[i])
+	return
+
+#=====================
 def printResults(params, nominal, ctfvalue):
 	nom1 = float(-nominal*1e6)
 	defoc1 = float(ctfvalue[0]*1e6)
@@ -88,13 +129,7 @@ def getBestDefocusForImage(imgdata, msg=False):
 
 	### print msg
 	if msg is True:
-		if 'resolution_80_percent' in ctfvalue.keys() and ctfvalue['resolution_80_percent'] is not None:
-			apDisplay.printMsg( "Best CTF run info: runname='%s', confidence=%.3f, res=%.1f/%.1f, defocus=%.3f um"
-            %(ctfvalue['acerun']['name'], conf, ctfvalue['resolution_80_percent'], 
-				ctfvalue['resolution_50_percent'], bestdf*1.0e6) )
-		else:
-			apDisplay.printMsg( "Best CTF run info: runname='%s', confidence=%.3f, defocus=%.3f um"
-				%(ctfvalue['acerun']['name'], conf, bestdf*1.0e6) )
+		printCtfData(ctfvalue)
 
 	return bestdf
 
@@ -127,9 +162,8 @@ def getDefocusAndampcontrastForImage(imgdata, ctf_estimation_runid=None, msg=Fal
 	bestdf = -1.0*abs(bestdf)
 
 	### print msg
-	if msg is True and ctfvalue is not None:
-		apDisplay.printMsg( "CTF run info: runname='%s', confidence=%.3f, defocus=%.3f um"
-			%(ctfvalue['acerun']['name'], conf, bestdf*1.0e6) )
+	if msg is True:
+		printCtfData(ctfvalue)
 
 	return bestdf, bestamp
 
@@ -159,9 +193,7 @@ def getCtfValueForImage(imgdata, ctf_estimation_runid=None, ctfavg=True, msg=Tru
 	ctfdata = None
 	for ctfvalue in ctfvalues:
 		### limit to specific method if requested:
-		if method=='ctffind' and ctfvalue['acerun']['ctftilt_params'] is None:
-			continue
-		if method=='ace2' and ctfvalue['ctfvalues_file'] is None:
+		if method is not None and getCtfMethod(ctfvalue) != method:
 			continue
 
 		### specify ID for CTF run
@@ -180,11 +212,11 @@ def getCtfValueForImage(imgdata, ctf_estimation_runid=None, ctfavg=True, msg=Tru
 	conf = calculateConfidenceScore(ctfvalue,ctfavg)
 
 	if msg is True:
-		apDisplay.printMsg("CTF run info for runname='%s': confidence=%.3f, defocus=%.3f um"
-			%(ctfvalue['acerun']['name'], conf, ctfvalue['defocus1']*1.0e6) )
+		printCtfData(ctfvalue)
 
 	return ctfvalue, conf
 
+#=====================
 def calculateConfidenceScore(ctfdata,ctfavg=True):
 	# get ctf confidence values
 	# accepts negative cross_correlation as well
@@ -221,7 +253,7 @@ def getBestCtfValueForImage(imgdata, ctfavg=True, msg=True, method=None):
 	bestctfvalue = None
 	for ctfvalue in ctfvalues:
 		### limit to specific method if requested:
-		if method=='ctffind' and ctfvalue['acerun']['ctftilt_params'] is None:
+		if method is not None and getCtfMethod(ctfvalue) != method:
 			continue
 
 		conf = calculateConfidenceScore(ctfvalue,ctfavg)
@@ -233,10 +265,45 @@ def getBestCtfValueForImage(imgdata, ctfavg=True, msg=True, method=None):
 		return None, None
 
 	if msg is True:
-		apDisplay.printMsg("Best CTF run info: runname='%s', confidence=%.3f, defocus=%.3f um"
-			%(bestctfvalue['acerun']['name'], bestconf, bestctfvalue['defocus1']*1.0e6) )
+		printCtfData(ctfvalue)
 
 	return bestctfvalue, bestconf
+
+
+#=====================
+def getBestCtfByResolution(imgdata, msg=True):
+	"""
+	takes an image and get the best ctfvalues for that image
+	specified methods can be: ace2 or ctffind
+	"""
+	### get all ctf values
+	ctfq = appiondata.ApCtfData()
+	ctfq['image'] = imgdata
+	ctfvalues = ctfq.query()
+
+	### check if it has values
+	if ctfvalues is None:
+		return None
+
+	### find the best values
+	bestres50 = 0.0
+	bestctfvalue = None
+	for ctfvalue in ctfvalues:
+		conf = ctfvalue['confidence']
+		if conf < 0.4:
+			continue
+		res50 = ctfvalue['resolution_50_percent']
+		if res50 < bestres50:
+			bestres50 = res50
+			bestctfvalue = ctfvalue
+
+	if bestctfvalue is None:
+		return None
+
+	if msg is True:
+		printCtfData(ctfvalue)
+
+	return bestctfvalue
 
 #=====================
 def getBestTiltCtfValueForImage(imgdata):

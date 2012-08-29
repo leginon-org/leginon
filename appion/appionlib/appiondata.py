@@ -432,6 +432,8 @@ class ApCtfData(Data):
 			('confidence_d', float), # classic confidence
 			('confidence_30_10', float), # defined as confidence between 1/30 and 1/10 Angstroms
 			('confidence_5_peak', float), # defined as conidence of the first 5 peaks of the CTF
+			('overfocus_conf_30_10', float), # defined as confidence between 1/30 and 1/10 Angstroms
+			('overfocus_conf_5_peak', float), # defined as conidence of the first 5 peaks of the CTF
 			('resolution_80_percent', float), # resolution at 80% confidence
 			('resolution_50_percent', float), # resolution at 50% confidence
 			('graph1', str), #2d powerspectra

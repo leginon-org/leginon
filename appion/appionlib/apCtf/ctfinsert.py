@@ -11,6 +11,7 @@ from appionlib import apFile
 from appionlib import apDisplay
 from appionlib import appiondata
 from appionlib.apCtf import ctfdisplay
+from appionlib.apCtf import ctfdb
 
 debug = False
 confirm_degrees = False
@@ -67,6 +68,7 @@ def validateAndInsertCTFData(imgdata, ctfvalues, rundata, rundir):
 				apDisplay.printMsg("%s :: %s"%(key, ctfvalues[key]))
 		elif debug is True:
 			apDisplay.printMsg("SKIPPING %s :: %s"%(key, ctfvalues[key]))
+	ctfdb.printCtfData(ctfq)
 	ctfq.insert()
 
 	return
@@ -93,12 +95,18 @@ def runCTFdisplayTools(imgdata, ctfvalues, opimagedir):
 	ctfvalues['graph2'] = os.path.basename(plotfile)
 	ctfvalues['confidence_30_10'] = ctfdisplaydict['conf3010']
 	ctfvalues['confidence_5_peak'] = ctfdisplaydict['conf5peak']
+	ctfvalues['overfocus_conf_30_10'] = ctfdisplaydict['overconf3010']
+	ctfvalues['overfocus_conf_5_peak'] = ctfdisplaydict['overconf5peak']
 	ctfvalues['resolution_80_percent'] = ctfdisplaydict['res80']
 	ctfvalues['resolution_50_percent'] = ctfdisplaydict['res50']
-	if not 'confidence' in ctfvalues or ctfvalues['confidence'] is None:
-		ctfvalues['confidence'] = ctfdisplaydict['conf3010']
 	if not 'confidence_d' in ctfvalues or ctfvalues['confidence_d'] is None:
 		ctfvalues['confidence_d'] = ctfdisplaydict['conf5peak']
+	if not 'confidence' in ctfvalues or ctfvalues['confidence'] is None:
+		ctfvalues['confidence'] = ctfdisplaydict['conf3010']
+
+	### override the confidence
+	ctfvalues['confidence'] = max(ctfvalues['confidence'], ctfvalues['confidence_d'], ctfdisplaydict['conf5peak'], ctfdisplaydict['conf3010'])
+
 	return ctfvalues
 
 #====================
@@ -182,7 +190,7 @@ def checkParams(ctfvalues):
 		confirm_degrees = True
 		radian_suspects = 0
 	elif not confirm_degrees and absangle > 0 and absangle < 1.571:
-		msg = "suspicious angle astigmatism, may be in radians (%.4f)"%(angle)
+		msg = "suspicious angle astigmatism, may be in radians (%.4f)"%(absangle)
 		radian_suspects += 1
 		apDisplay.printWarning(msg)
 		return False

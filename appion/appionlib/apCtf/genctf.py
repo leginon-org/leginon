@@ -38,9 +38,9 @@ def generateCTF1d(radii=None, focus=1.0e-6, cs=2e-3, volts=120000, ampconst=0.07
 	ctf = prectf**2
 
 	if debug is True:
-		print "generate 1D ctf complete in %.4f sec"%(time.time()-t0)
+		print "generate 1D ctf complete in %.9f sec"%(time.time()-t0)
 
-	return ctf**2
+	return ctf
 
 #===================
 def generateCTF1dACE2(radii=None, focus=1.0e-6, cs=2e-3, volts=120000, ampconst=0.07, failParams=False):
@@ -65,20 +65,19 @@ def generateCTF1dACE2(radii=None, focus=1.0e-6, cs=2e-3, volts=120000, ampconst=
 
 	x4 = math.pi/2.0 * wavelength**3 * cs
 	x2 = math.pi * wavelength
-	x0 = -1.0*math.asin(ampconst) #CORRECT
-	#x0 = 1.0*math.asin(ampconst)   #MAYBE CORRECT
+	x0 = 1.0*math.asin(ampconst)   #CORRECT
 	if debug is True:
 		print "x0 shift %.1f degrees"%(math.degrees(x0))
 
 	radiisq = radii**2
 
-	gamma = (x4 * radiisq**2) + (focus * x2 * radiisq) + (x0)
+	gamma = (x4 * radiisq**2) + (-focus * x2 * radiisq) + (x0)
 	#ctf = -1.0*numpy.cos(gamma) #WRONG
 	#ctf = -1.0*numpy.sin(gamma) #CORRECT
 	ctf = 1.0*numpy.sin(gamma) #MAYBE CORRECT
 
 	if debug is True:
-		print "generate 1D ctf complete in %.4f sec"%(time.time()-t0)
+		print "generate 1D ctf complete in %.9f sec"%(time.time()-t0)
 
 	return ctf**2
 

@@ -8,7 +8,7 @@ import time
 import random
 from pyami import imagefun
 from pyami import ellipse
-from appionlib.apCtf import ctfdb
+
 from appionlib import apDatabase
 from appionlib import apDisplay
 #from appionlib import lowess
@@ -20,6 +20,7 @@ from matplotlib import pyplot
 from matplotlib.patches import Ellipse
 from appionlib.apCtf import ctfnoise
 from appionlib.apCtf import ctftools
+from appionlib.apCtf import ctfdb
 from appionlib.apCtf import genctf
 from appionlib.apCtf import ctfres
 from PIL import Image
@@ -233,16 +234,26 @@ class CtfDisplay(object):
 		### everything in mks units, because rdata is 1/A multiply be 1e10 to get 1/m
 		ctffitdata = genctf.generateCTF1d(raddata*1e10, focus=meandefocus, cs=self.cs,
 			volts=self.volts, ampconst=self.ampcontrast, failParams=False)
+		#ctffitdata2 = genctf.generateCTF1dACE2(raddata*1e10, focus=meandefocus, cs=self.cs,
+		#	volts=self.volts, ampconst=self.ampcontrast, failParams=False)
+		overctffitdata = genctf.generateCTF1d(raddata*1e10, focus=meandefocus, cs=self.cs,
+			volts=self.volts, ampconst=self.ampcontrast, failParams=False, overfocus=True)
 
 		ind30 = numpy.searchsorted(raddata, 1/30.)
 		ind10 = numpy.searchsorted(raddata, 1/10.)
 		self.conf3010 = scipy.stats.pearsonr(normpeakdata[ind30:ind10], ctffitdata[ind30:ind10])[0]
-		apDisplay.printColor("1/30A - 1/10A confidence is %.3f"%(self.conf3010), "green")
+		self.overconf3010 = scipy.stats.pearsonr(normpeakdata[ind30:ind10], overctffitdata[ind30:ind10])[0]
+		apDisplay.printColor("1/30A - 1/10A confidence is %.3f (overfocus %.3f)"%(self.conf3010, self.overconf3010), "green")
+		if self.overconf3010 > self.conf3010:
+			apDisplay.printWarning("Image is possibly over-focused")
 
 		ind5peak1 = numpy.searchsorted(raddata, peakradii[0])
 		ind5peak2 = numpy.searchsorted(raddata, peakradii[5])
 		self.conf5peak = scipy.stats.pearsonr(normpeakdata[ind5peak1:ind5peak2], ctffitdata[ind5peak1:ind5peak2])[0]
-		apDisplay.printColor("5 peak confidence is %.3f"%(self.conf5peak), "green")
+		self.overconf5peak = scipy.stats.pearsonr(normpeakdata[ind5peak1:ind5peak2], overctffitdata[ind5peak1:ind5peak2])[0]
+		apDisplay.printColor("5 peak confidence is %.3f (overfocus %.3f)"%(self.conf5peak, self.overconf5peak), "green")
+		if self.overconf5peak > self.conf5peak:
+			apDisplay.printWarning("Image is possibly over-focused")
 
 		### 
 		### PART 6: CTF RESOLUTION LIMITS
@@ -361,9 +372,9 @@ class CtfDisplay(object):
 			%(self.res80, self.res50), fontsize=titlefontsize)
 		pyplot.ylabel("Correlation", fontsize=titlefontsize)
 		pyplot.plot(raddata[fpi:], ctffitdata[fpi:],
-			'-', color="black", alpha=0.1, linewidth=1)
+			'-', color="black", alpha=0.2, linewidth=1)
 		pyplot.plot(raddata[fpi:], normpeakdata[fpi:],
-			'-', color="blue", alpha=0.1, linewidth=1)
+			'-', color="blue", alpha=0.2, linewidth=1)
 		#pyplot.plot(raddata[fpi:], normpeakdata[fpi:],
 		#	'.', color="black", alpha=0.25, markersize=1.0)
 		pyplot.axvline(x=1.0/self.res80, linewidth=2, color="gold", alpha=0.95, ymin=0, ymax=0.8)
@@ -402,12 +413,13 @@ class CtfDisplay(object):
 
 		pyplot.subplot(4,2,8) # 4 rows, 2 columns, plot 7
 		tenangindex = numpy.searchsorted(raddata, 1/10.*self.trimfreq)
-		overctffitdata = genctf.generateCTF1d(raddata*1e10, focus=meandefocus, cs=self.cs,
-			volts=self.volts, ampconst=self.ampcontrast, failParams=False, overfocus=True)
-		pyplot.title("Overfocus check", fontsize=titlefontsize)
+		pyplot.title("Overfocus check (30-10A %.3f / 5-peak %.3f)"
+			%(self.overconf3010, self.overconf5peak), fontsize=titlefontsize)
 		pyplot.ylabel("Norm PSD", fontsize=titlefontsize)
-		pyplot.plot(raddatasq[tenangindex:], overctffitdata[tenangindex:],
+		pyplot.plot(raddatasq[tenangindex:], ctffitdata[tenangindex:],
 			'-', color="black", alpha=0.5, linewidth=1)
+		pyplot.plot(raddatasq[fpi:], overctffitdata[fpi:],
+			'-', color="red", alpha=0.75, linewidth=1)
 		pyplot.plot(raddatasq[tenangindex:], normpeakdata[tenangindex:],
 			'-', color="blue", alpha=0.5, linewidth=0.5)
 		pyplot.plot(raddatasq[tenangindex:], normpeakdata[tenangindex:],
@@ -771,10 +783,8 @@ class CtfDisplay(object):
 	#====================
 	#====================
 	def convertDefociToConvention(self, ctfdata):
+		ctfdb.printCtfData(ctfdata)
 		initdefocusratio = ctfdata['defocus2']/ctfdata['defocus1']
-		apDisplay.printColor("Final params: def1: %.2e | def2: %.2e | angle: %.1f | defratio %.2f"%
-			(ctfdata['defocus1'], ctfdata['defocus2'], ctfdata['angle_astigmatism'], 
-			initdefocusratio), "cyan")
 
 		# program specific corrections?
 		self.angle = ctfdata['angle_astigmatism']
@@ -892,6 +902,8 @@ class CtfDisplay(object):
 			'plotsfile': self.plotsfile,
 			'conf3010': self.conf3010,
 			'conf5peak': self.conf5peak,
+			'overconf3010': self.overconf3010,
+			'overconf5peak': self.overconf5peak,
 			'res80': self.res80,
 			'res50': self.res50,
 		}
