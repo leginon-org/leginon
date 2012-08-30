@@ -8,7 +8,7 @@
  */
 
 require "inc/jpgraph.php";
-require "inc/jpgraph_utils.inc";
+require "inc/jpgraph_utils.inc.php";
 require "inc/jpgraph_line.php";
 require "inc/jpgraph_scatter.php";
 require "inc/leginon.inc";

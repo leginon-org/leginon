@@ -9,7 +9,7 @@
 
 include ("inc/particledata.inc");
 include ("inc/jpgraph.php");
-include ("inc/jpgraph_utils.inc");
+include ("inc/jpgraph_utils.inc.php");
 include ("inc/jpgraph_line.php");
 include ("inc/jpgraph_scatter.php");
 require ("inc/leginon.inc");
@@ -40,6 +40,7 @@ $sy = array();
 if ($fscid) {
 	$particle=new particledata;
 	$data = $particle->getFscFromRefinementDataId($fscid);
+	//var_dump($data);
 	foreach ($data as $line) {
 		$sx[]=$line['pix'];
 		$sy[]=$line['value'];
@@ -81,7 +82,7 @@ if (!$nomargin) {
 	$graph->yaxis->title->Set("Correlation");
 	$graph->xaxis->SetTickLabels($xpix);
 	$graph->xaxis->SetLabelAngle(90);
-	$graph->AddLine(new PlotLine(HORIZONTAL,0.5,"black",1));
+	//$graph->AddLine(new PlotLine(HORIZONTAL,0.5,"black",1));
 } else {
 	$graph->SetScale("intlin",0.0,1.0,$sx[0],$last);
 	$graph->img->SetMargin(2,4,4,4);	
