@@ -51,7 +51,7 @@ def combineMetrics(statfilename, outfile, **kwargs):
 	weightsum = 0
 	for valnames, allvals in toEvaluate.iteritems():
 		weight = allvals['weight']
-		weightsum += abs(weight)
+		weightsum += weight
 	for i in range(len(fvals)):
 		Rcrit = 0
 		Rcritdict2[names[i]] = {}
@@ -59,11 +59,7 @@ def combineMetrics(statfilename, outfile, **kwargs):
 			weight = allvals['weight']
 			sign = allvals['sign']
 			vals = allvals['vals']
-			if float(numpy.std(vals)) == 0.0:
-				std = 1
-			else:
-				std = numpy.std(vals)
-			R = weight * sign * ((vals[i] - numpy.mean(vals)) / std) / weightsum
+			R = weight * sign * ((vals[i] - numpy.mean(vals)) / (numpy.std(vals))) / weightsum
 			Rcrit += R
 			Rcritdict2[names[i]][valname] = vals[i] 
 		Rcritdict1[names[i]] = Rcrit
