@@ -203,8 +203,9 @@ def trimPowerSpectraToOuterResolution(powerspec, outerresolution, freq):
 		print "__Resolution request   %.3f"%(outerresolution)
 		print "__Init max resolution  %.3f"%(initmaxres)
 	if initmaxres > outerresolution:
-		apDisplay.printError("Requested resolution (%.3f) is not available (%.3f)"
+		apDisplay.printWarning("Requested resolution (%.3f) is not available (%.3f)"
 			%(outerresolution, initmaxres))
+		outerresolution = initmaxres
 	pixellimitradius = int(math.ceil(1./(freq * outerresolution)))
 	goodpixellimitradius = apPrimeFactor.getNextEvenPrime(pixellimitradius)
 	finalres = 1./(freq * goodpixellimitradius)
