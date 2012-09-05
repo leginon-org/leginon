@@ -46,6 +46,21 @@ $configFileLocation = "../config.php";
 
 #####################################################################
 #
+# Display the Appion version
+#
+#####################################################################
+echo "<h3>Current Appion Version and Revision:</h3>";
+echo "<p>";
+try {
+	echo $tester->getDBVersion($configFileLocation);
+} catch(Exception $e) {
+	echo "<font color='red'>".$e->getMessage()."</font>";
+}
+echo "</p>";
+
+
+#####################################################################
+#
 # Ensure there are no blank lines at the end of config.php
 #
 #####################################################################
@@ -70,10 +85,10 @@ echo "<h3>PHP check:</h3>";
 echo "<p>";
 
 // The minimum version of PHP required for Appion/Leginon, inclusive
-$minPhpVersion = "5.0.0";
+$minPhpVersion = "5.3.0";
 
 // upper bound, exclusive. If it must be 5.2.x but not 5.3.x, the maxPhpVersion is 5.3.
-$maxPhpVersion = "5.3.0"; 
+$maxPhpVersion = "5.4.0"; 
 
 try
 {
@@ -117,7 +132,8 @@ $memoryLimitRec      = "256M";
 
 // Convert the error reporting value to something readable
 // TODO: it may be better to read the php.ini file and get the string value.
-$errorReporting = get_cfg_var('error_reporting');
+//$errorReporting = get_cfg_var('error_reporting');
+$errorReporting = ini_get('error_reporting');
 switch ($errorReporting) {
 	case 2039:
 		$errorReportingText = "E_ALL & ~E_NOTICE";
@@ -127,6 +143,9 @@ switch ($errorReporting) {
 		break;
 	case 2047:
 		$errorReportingText = "E_ALL";
+		break;
+	case 22519:
+		$errorReportingText = "E_ALL & ~E_DEPRECATED & ~E_NOTICE";
 		break;
 	default:
 		$errorReportingText = $errorReporting;
@@ -233,25 +252,6 @@ echo "</p>";
 
 #####################################################################
 #
-# Test if mrc is loaded and fftw3 is enabled
-#
-#####################################################################
-echo "<h3>MRC and FFTW check:</h3>";
-echo "<p>";
-
-try {
-	$tester->verifyMRC();
-	echo "MRC module loaded and fftw is enabled.";
-} catch(Exception $e) {
-	echo "<font color='red'>".$e->getMessage()."</font>";
-}
-echo "</p>";
-
-
-
-
-#####################################################################
-#
 # Display an mrc image as png
 #
 #####################################################################
@@ -266,31 +266,6 @@ Don't see them? For more info visit:
 <img src='ex1.php' name='MRC test 1'> &nbsp; <img src='ex2.php'
 	name='MRC test 2'></p>
 
-
-
-<!--  
-##################################################################### 
-# Display other useful information                         
-##################################################################### 
--->
-<h3>The following PHP extensions are loaded:</h3>
-<p><pre>
-<?php print_r($modules->listModules()); // List all installed modules ?>
-</pre></p>
-
-
-
-<h3>Current Appion Version and Revision:</h3>
-<p>
-<?php
-try {
-	echo $tester->getDBVersion($configFileLocation);
-} catch(Exception $e) {
-	echo "<font color='red'>".$e->getMessage()."</font>";
-}
-?>
-</p>
-
 <!--  
 #####################################################################
 #
@@ -304,8 +279,10 @@ Running the following script on the processing server will check that 3rd party 
 </p>
 
 <p>
+<pre>
 cd /your_download_area/myami/appion/test<br />
 python check3rdPartyPackages.py
+</pre>
 </p>
 <h3>Instructions for running database update scripts:</h3>
 
@@ -313,14 +290,26 @@ python check3rdPartyPackages.py
 Running the following script will indicate if you need to run any database update scripts.<br />
 </p>
 <p>
+<pre>
 cd /your_download_area/myami/dbschema<br />
 python schema_update.py
+</pre>
 </p>
 
 <p>
 This will print out a list of commands to paste into a shell which will run database update scripts.<br />
 You can re-run schema_update.py at any time to update the list of which scripts still need to be run.<br />
 </p>
+
+<!--  
+##################################################################### 
+# Display other useful information                         
+##################################################################### 
+-->
+<h3>The following PHP extensions are loaded:</h3>
+<p><pre>
+<?php print_r($modules->listModules()); // List all installed modules ?>
+</pre></p>
 
 <?php login_footer(); ?>
 
