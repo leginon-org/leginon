@@ -160,7 +160,33 @@ require_once('../inc/formValidator.php');
 		}
 	?>
 	
-		<h3>Do you want to enable image caching for faster image viewing?</h3>
+		<h3>Enter Redux Image Server location and port:</h3>
+		<p>Enter the name of the server that is running the Redux image server, ex. redux.schools.edu:</p>
+		<input type="text" size=35 name="image_server_host" 
+		<?php 			
+			if($_POST){
+				print("value='".$_POST['image_server_host']."'");
+			}else{
+				($update) ? print("value='".SERVER_HOST."'") : print("value=''"); 
+			}
+		?> /><br /><br />
+		<p>Enter the port used by the Redux image server, ex. 55123:</p>
+		<input type="text" size=35 name="image_server_port" 
+		<?php 			
+			if($_POST){
+				print("value='".$_POST['image_server_port']."'");
+			}else{
+				($update) ? print("value='".SERVER_PORT."'") : print("value=''"); 
+			}
+		?> /><br /><br />
+		<p>Would you like to enable the Redux Image Cache to speedup image load time?</p>
+		<input type="radio" name="use_redux_cache" value="true" <?php ($update) ? (defined("USE_REDUX_CACHE") && USE_REDUX_CACHE)? print("") : print("checked='yes'") : print("disabled"); ?> />
+		&nbsp;&nbsp;YES<br />
+		<input type="radio" name="use_redux_cache" value="false" <?php ($update) ? (defined("USE_REDUX_CACHE") && USE_REDUX_CACHE)? print("checked='yes'") : print("") : print("disabled checked='yes'"); ?> />
+		&nbsp;&nbsp;NO<br />
+		<br />		
+
+		<h3>Do you want to enable PHP image caching for faster image viewing?</h3>
 		<p>Note: To use image caching, you need to setup the caching location.</p>
 		<input type="radio" name="enable_cache" value="true" 
 		<?php 

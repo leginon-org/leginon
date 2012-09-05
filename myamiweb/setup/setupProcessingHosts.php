@@ -509,7 +509,7 @@ require_once('../inc/formValidator.php');
 		<input name="addHost" type="button" value="Add" <?php /*($update && PROCESSING === true) ? print("") : print("disabled"); */?> onclick="addRowToTable('','','','','','','','','','','','','','','','','','','','','');" />
 		<!-- leave the remove button out, does not work -->
 		<!-- <input name="removeHost" type="button" value="Remove"  <?php /*($update && PROCESSING === true) ? print("") : print("disabled");*/ ?> onclick="removeRowFormTable('hosts');" />-->
-		Please Click the "Add" Button to start. If you don't have a processing host, leave it empty.<br />
+		Please Click the "Add" Button to start. If this is a new installation and you have not yet set up a processing host (<a href="http://ami.scripps.edu/redmine/projects/appion/wiki/Setup_Remote_Processing">Setup Remote Processing</a>), please skip this section and return here later.<br />
 		
 		<table border=0 cellspacing=8 style="font-size: 12px" id="hosts">
 		<div id="error"><?php if($errMsg['host']) echo $errMsg['host']; ?></div>
