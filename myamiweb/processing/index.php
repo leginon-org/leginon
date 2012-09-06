@@ -246,7 +246,8 @@ foreach ($reconRuns as $recon) {
 		if (preg_match('%'.$reconrunid."_".$recon['iteration']."\.png$%i", $eulername)) {
 			$eulerfile = $eulername;
 			$opname = preg_replace("%euler%","",$eulername);
-			$opname = preg_replace("%-%".$reconrunid."_".$recon['iteration']."\.png$","",$opname);
+			// remove "-reconid_iter.png" from name
+			$opname = preg_replace("%-".$reconrunid."_".$recon['iteration']."\.png$%","",$opname);
 			if (file_exists($eulerfile)) {
 			  $eulerhtml .= "<td align='center'>\n";
 			  $eulerhtml .= "<a id='eulerlink".$iteration['iteration']."' href='loadimg.php?filename=".$eulerfile."' target='snapshot'>"
