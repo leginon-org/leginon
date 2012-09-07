@@ -79,6 +79,9 @@ function pickingsummarytable($selectionid, $mini=false) {
 	if ($selectionstats['totparticles'] > 0) {
 		$display_keys['# images'] = commafy($selectionstats['num'])." ("
 			.round($selectionstats['totparticles']/$selectionstats['num'],1)." part/img)";
+		$display_keys['view picks'] = ""
+			."<a href='multiimgassessor.php?expId=44&pickId=$selectionid'>"
+			."view picks in multi-assessor</a>";
 	}
 	if ($selectiondata['trace']) {
 		if ($selectionstats['total_object_traced'] > 0) {

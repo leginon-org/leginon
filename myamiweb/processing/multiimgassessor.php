@@ -18,6 +18,7 @@ $particle=new particledata();
 
 // check if coming directly from a session
 $expId=$_GET['expId'];
+$pickId=$_GET['pickId'];
 if ($expId) {
 	$sessionId=$expId;
 	$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
@@ -25,10 +26,16 @@ if ($expId) {
 	$sessionId=$_POST['sessionId'];
 	$formAction=$_SERVER['PHP_SELF'];	
 }
+if ($pickId) {
+	$_SERVER['PHP_SELF']."&pickId=$pickId";
+	$pickdata = $particle->getSelectionRunData($pickId);
+	$_POST['imgdir'] = $pickdata['path'];
+	$_POST['imgrun'] = 0;
+}
 $projectId=getProjectId();
 
-
 /////////// temporary fix for new database //////////////
+
 
 $hasassrun=($particle->getLastAssessmentRun($expId)) ? true : false;
 if ($hasassrun){
@@ -96,7 +103,14 @@ while ($i < $count) {
 	}
 	$run = array("label"=>"particle picking: ".$runname." (".$totprtls." prtls)",
 		"name"=>"prtl_".$prtlrun['DEF_id'],"imgtype"=>"jpg","path"=>$partpath);
-	$allruns[] = $run;
+	//echo $prtlrun['DEF_id']." == $pickId<br/>";
+	if ($prtlrun['DEF_id'] == $pickId) {
+		//echo "unshift<br/>";
+		array_unshift($allruns, $run);
+	} else {
+		$allruns[] = $run;
+	}
+	//print_r($allruns);
 	$i++;
 }
 
