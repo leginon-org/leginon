@@ -98,8 +98,9 @@ function createManualPickerForm($extra=false, $title='Manual Picker Launcher', $
                  }
         </SCRIPT>\n";
   $javafunctions .= writeJavaPopupFunctions('appion');
-  processing_header("Manual Picker Launcher","Manual Particle Selection and Editing",$javafunctions);
-
+  processing_header($title="Manual Picker Launcher", $heading="Manual Particle Selection and Editing", 
+  					$headerstuff=$javafunctions, $pleaseWait=false, $showmenu=true, $printDiv=false, 
+					$guideURL="http://ami.scripps.edu/redmine/projects/appion/wiki/Manual_Picking");
   if ($extra) {
     echo "<font color='#cc3333' size='+2'>$extra</font>\n<hr/>\n";
   }

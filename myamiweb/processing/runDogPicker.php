@@ -26,8 +26,8 @@ else {
 }
 
 
-function createDogPickerForm($extra=false, $title='DoG Picker Launcher', $heading='Automated Particle Selection with DoG Picker', $results=false) {
-
+function createDogPickerForm($extra=false, $title='DoG Picker Launcher', $heading='Automated Particle Selection with DoG Picker', $results=false) 
+{
 	// check if coming directly from a session
    $expId = $_GET['expId'];
 	if ($expId) {
@@ -60,8 +60,9 @@ function createDogPickerForm($extra=false, $title='DoG Picker Launcher', $headin
 	</SCRIPT>\n";
 	$javafunctions .= writeJavaPopupFunctions('appion');	
 
-	processing_header("DoG Picker Launcher","Automated Particle Selection with DoG Picker",$javafunctions,True);
-
+	processing_header($title, $heading, $headerstuff=$javafunctions, $pleaseWait=true, $showmenu=true, $printDiv=false, 
+						$guideURL="http://ami.scripps.edu/redmine/projects/appion/wiki/Dog_Picking");
+	
 	if ($extra) {
 		echo "<font color='#cc3333' size='+2'>$extra</font>\n<hr/>\n";
 	}

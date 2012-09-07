@@ -163,7 +163,9 @@ function apdivtitle($title) {
 	return $htmlstr;
 }
 
-function processing_header($title,$heading=false,$headerstuff=false,$pleaseWait=false,$showmenu=true,$printDiv=false) {
+function processing_header($title,$heading=false,$headerstuff=false,$pleaseWait=false,$showmenu=true,$printDiv=false, 
+							$guideURL="http://ami.scripps.edu/redmine/projects/appion/wiki/Appion_Processing") 
+{
 	$expId = $_GET['expId'];
 	if (!is_numeric($expId) || $expId == 0) {
 		// special case for uploading images to a new session coming from a known project
@@ -188,7 +190,7 @@ function processing_header($title,$heading=false,$headerstuff=false,$pleaseWait=
 	$particle = new particledata();
 	$projectdata = new project();
 	$_SESSION['projectId'] = $projectId;
-
+	
 	// Collect session info from database
 	$sessiondata=getSessionList($projectId,$expId);
 	$sessioninfo=$sessiondata['info'];
@@ -278,7 +280,8 @@ function processing_header($title,$heading=false,$headerstuff=false,$pleaseWait=
 	// bottomcontent div
 	$html.= "<ul>\n";
 	$html.= "<div style='float: right; padding-right:10px;'>\n";
-	$html.= "<a href='procsummary.php?expId=$expId'>[Appion Stats]</a>\n";
+	$html.= "<li><a href='procsummary.php?expId=$expId'>[Appion Stats]</a></li>\n";
+	$html.= "<li><font size=+1><b><a href='$guideURL'>[User Guide]</a></b></font></li>\n";
 	$html.= "</div>\n";
 	$html.= "<li><b>Project:</font></b> ".$proj_link."</li>\n";
 	if ($session_link) $html.= "<li><b>Session:</b> ".$session_link."</li>\n";
@@ -305,7 +308,7 @@ function processing_header($title,$heading=false,$headerstuff=false,$pleaseWait=
 	$helpdiv = "<div id='dhelp' class='aphelpdoc' onmouseover='overdiv=1;' onmouseout='overdiv=0;'></div>\n";
 	$html.=$helpdiv;
 	if (($expId || $projectId) && $showmenu) {
-		require "menuprocessing.php";
+		require_once "menuprocessing.php";
 		$html.= $menujs;
 		$html.= $menulink;
 	}
@@ -766,6 +769,11 @@ $xvfb=False, $xtra=False, $nproc=1, $ppn=0, $nodes=0, $walltime="240", $cputime=
 	//Check if filesystem is full
 	$cmd = "df $outdir";
 	$fscheck = exec_over_ssh($processhost,$user,$pass,$cmd,True);
+	if ($fscheck === false ){
+		$errMsg = "Could not determine if filesystem space is available for $outdir from $processhost: ";
+		$errMsg .= pconnError();
+		return $errMsg;
+	}
 	$fsbits = preg_split("% %", trim($fscheck));
 	foreach ($fsbits as $fsbit) {
 		if (preg_match("/^[0-9]+%$/", $fsbit))
@@ -802,7 +810,7 @@ $xvfb=False, $xtra=False, $nproc=1, $ppn=0, $nodes=0, $walltime="240", $cputime=
 	// create run directory on processing host only.  Do not do anything on
 	// the webserver, doing so requires making poor assumptions. 
 	$cmd = "mkdir -p $rundir;";
-	$rvalue = exec_over_ssh($processhost, $user, $pass, $cmd, false);
+	$rvalue = exec_over_ssh($processhost, $user, $pass, $cmd, False);
 	if ($rvalue === false ){
 		$errMsg = "Could not create run directory on $processhost: ";
 		$errMsg .= pconnError();
