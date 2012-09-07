@@ -174,7 +174,7 @@ function createForm( $extra=false, $title='runSimpleCluster.py Launcher', $headi
 	}
 
 	// Create an instance of the SIMPLE param form, setting it's default values then display it 
-	$simpleParamsForm = new SimpleParamsForm($clip='', $bin='', $numpart='', $no_center='CHECKED',$ring2='', $ncls='',
+	$simpleParamsForm = new SimpleParamsForm($clip='', $bin='', $numpart='', $no_center='',$ring2='', $ncls='',
 		$minp='10', $nvars='30', $mask='', $lp='20', $hp='100', $froms='2', $tos='2', $maxits='10',
 		$mw='', $frac='0.8', $amsklp='40', $edge='3', $trs='3');
 	echo $simpleParamsForm->generateForm();

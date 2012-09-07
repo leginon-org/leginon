@@ -25,7 +25,7 @@ class SimpleParamsForm extends BasicForm
 		$params->addParam( "clip", $clip, "unbinned clip diameter" );
 		$params->addParam( "bin", $bin, "particle binning" );
 		$params->addParam( "numpart", $numpart, "number of particles" );
-		$params->addParam( "no_center", $no_center, "Center Stack" );
+		$params->addParam( "no_center", $no_center, "DO NOT Center Stack" );
 		$params->addParam( "ring2", $ring2, "ring2" );
 		$params->addParam( "ncls", $ncls, "number of classes" );
 		$params->addParam( "minp", $minp, "minimum PPC" );
