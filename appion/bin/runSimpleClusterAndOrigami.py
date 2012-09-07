@@ -637,7 +637,7 @@ class SIMPLE(appionScript.AppionScript):
 		simpleopts = (""
 			+" stk=%s" % clsavgs
 			+" box=%d" % self.boxsize
-			+" nptcls=%d" % self.params['ncls']
+			+" nptcls=%d" % nptcls
 			+" smpd=%.3f" % self.apix
 			+" outbdy=%s" % projfile
 			+" msk=%d" % self.params['mask']
