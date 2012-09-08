@@ -6,6 +6,7 @@ import pyami.resultcache
 import pyami.fileutil
 import gdbm
 import cachefs
+import threading
 
 debug = True
 def debug(s):
@@ -18,6 +19,7 @@ class Cache(pyami.resultcache.ResultCache):
 	def __init__(self, disk_cache_path, disk_cache_size, *args, **kwargs):
 		self.diskcache = cachefs.CacheFS(disk_cache_path, disk_cache_size)
 		pyami.resultcache.ResultCache.__init__(self, *args, **kwargs)
+		self.lock = threading.Lock()
 
 	def check_disable(self, pipeline):
 		for pipe in pipeline:
@@ -25,14 +27,21 @@ class Cache(pyami.resultcache.ResultCache):
 				return True
 		return False
 
-	def put(self, pipeline, result):
+	def _put(self, pipeline, result):
 		if self.check_disable(pipeline):
 			return
 		pyami.resultcache.ResultCache.put(self, pipeline, result)
 		if pipeline[-1].cache_file:
 			self.file_put(pipeline, result)
 
-	def get(self, pipeline):
+	def put(self, pipeline, result):
+		self.lock.acquire()
+		try:
+			return self._put(pipeline, result)
+		finally:
+			self.lock.release()
+
+	def _get(self, pipeline):
 		if self.check_disable(pipeline):
 			return
 		## try memory cache
@@ -53,6 +62,13 @@ class Cache(pyami.resultcache.ResultCache):
 				self.file_put(pipeline, result)
 
 		return result
+
+	def get(self, pipeline):
+		self.lock.acquire()
+		try:
+			return self._get(pipeline)
+		finally:
+			self.lock.release()
 
 	def file_put(self, pipeline, result, permanent=False):
 		final_pipe = pipeline[-1]
