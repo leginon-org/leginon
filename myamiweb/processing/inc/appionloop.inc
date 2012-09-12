@@ -98,9 +98,15 @@ function createAppionLoopTable ($sessiondata, $defrunname, $outdirname, $leginon
 	//
 	// STARTING ADVANCED SECTION
 	//
-	echo "<a id='Advanced_Loop_Options_toggle' href='javascript:toggle(\"Advanced_Loop_Options\");' style='color:blue'>";
-	echo "Show Advanced Options</a><br/>\n";
-	echo "<div id='Advanced_Loop_Options' style='display: none'>\n";
+	// Only hide advanced parameters if there is not an advanced user logged in.
+	// Modify user profile to set to an advanced user. 
+	// NOTE: this assumes the Appion user name and the username that is used to log in to the processing page are the same.
+	// We may want to change that someday.
+	if ( !$_SESSION['advanced_user'] ) {
+		echo "<a id='Advanced_Loop_Options_toggle' href='javascript:toggle(\"Advanced_Loop_Options\");' style='color:blue'>";
+		echo "Show Advanced Options</a><br/>\n";
+		echo "<div id='Advanced_Loop_Options' style='display: none'>\n";
+	}
 
 
 	echo "<input type='hidden' name='sessionname' value='$sessionname'>\n";
@@ -177,7 +183,10 @@ function createAppionLoopTable ($sessiondata, $defrunname, $outdirname, $leginon
 	//
 	// ENDING ADVANCED SECTION 1
 	//
-	echo "</div>\n";
+	// if this is not an advanced user, end the advanced section
+	if ( !$_SESSION['advanced_user'] ) {
+		echo "</div>\n";
+	}
 	echo "<hr/>\n";
 	echo "<!-- END Appion Loop Param -->\n";
 };

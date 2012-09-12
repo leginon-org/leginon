@@ -32,6 +32,7 @@ class UserData(Data):
 			('email', str),
 			('group', GroupData),
 			('noleginon', bool),
+			('advanced', bool),
 		)
 	typemap = classmethod(typemap)
 

@@ -1214,6 +1214,7 @@
 		<field name="email" type="varchar(60)" />
 		<field name="REF|GroupData|group" type="int(20)" />
 		<field name="noleginon" type="tinyint(1)" Default="0" />
+		<field name="advanced" type="tinyint(1)" Default="0" />
     <key>PRIMARY KEY (`DEF_id`)</key>
     <key>KEY `DEF_timestamp` (`DEF_timestamp`)</key>
     <key>KEY `REF|GroupData|group` (`REF|GroupData|group`)</key>

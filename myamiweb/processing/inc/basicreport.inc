@@ -40,7 +40,7 @@ class BasicReport {
 		$this->tableCount = 0;  // used to ensure recursive table display methods do not run indefinatly.
 		$this->MAX_TABLES = 30;	// the max number of sub-tables that will display before cutting off display recursion.	
 		$this->allDisplayKeys = array();
-		$this->allDisplayKeys['DEF_id'] = 1; //supress this field from showing in reports
+		$this->allDisplayKeys['DEF_id'] = 1; //trick to supress this field from showing in non-verbose reports
 		$this->mysql 	  = new mysql(
 							DB_HOST,
 							DB_USER,

@@ -39,19 +39,21 @@ if($_POST){
 	//can not use addslashes on checkbox value
 	$noleginon = ($_POST['noleginon']=='on') ? 1:0;
 	$userinfo['noleginon'] = $noleginon;
-
+	$advanced = ($_POST['advanced']=='on') ? 1:0;
+	$userinfo['advanced'] = $advanced;
+	
 	if(!haspass)
 		$chpass=true;
 	if($_POST['submit']=='update'){
 		$updateProfile=$dbemauth->updateUser($userId, $username, $firstname, $lastname, $title, $institution, 
 											$dept, $address, $city, $statecountry, $zip, $phone, $fax, $email, 
-											$url, $chpass, $mypass1, $mypass2, $groupId, $noleginon);
+											$url, $chpass, $mypass1, $mypass2, $groupId, $noleginon, $advanced);
 		// username is not posted when updating user
 		$username = $userinfo['username'];
 	}else{
 		$updateProfile = $dbemauth->adminRegister($username, $firstname, $lastname, $title, $institution, 
 											$dept, $address, $city, $statecountry, $zip, $phone, $fax, $email, 
-											$url, $mypass1, $mypass2, $groupId, $noleginon);
+											$url, $mypass1, $mypass2, $groupId, $noleginon, $advanced);
 		
 	}
 	if ($updateProfile != 2) {
@@ -66,6 +68,7 @@ if($_POST){
 }
 //set checkbox value
 $noleginonval = ($userinfo['noleginon'] == 1) ? "CHECKED":"";
+$advancedval = ($userinfo['advanced'] == 1) ? "CHECKED":"";
 
 ?>
 <form name="userform" action="<?=$_SERVER['PHP_SELF'] ?>?userId=<?=$userId?>" method="POST">
@@ -216,9 +219,14 @@ $noleginonval = ($userinfo['noleginon'] == 1) ? "CHECKED":"";
 	<td>
 		<label for="url">URL: </label>
 	</td>
-	<td>
-	
+	<td>	
 		<input class="field" type="text" value="<?php echo $userinfo['url']; ?>" name="url" id="url"><br>
+	</td>
+	</tr>
+	<tr>
+	<td>
+		<input type="checkbox" name="advanced" <?=$advancedval?> >
+		<label for="advanced">Always show advanced options</label><br />
 	</td>
 	</tr>
 	<tr>

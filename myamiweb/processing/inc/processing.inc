@@ -190,7 +190,10 @@ function processing_header($title,$heading=false,$headerstuff=false,$pleaseWait=
 	$particle = new particledata();
 	$projectdata = new project();
 	$_SESSION['projectId'] = $projectId;
-	
+
+	// If the user is logged in, note if this is an advanced user
+	$_SESSION['advanced_user'] = isAdvancedUser();
+
 	// Collect session info from database
 	$sessiondata=getSessionList($projectId,$expId);
 	$sessioninfo=$sessiondata['info'];

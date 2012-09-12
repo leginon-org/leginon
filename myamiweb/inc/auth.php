@@ -140,7 +140,7 @@ class authlib{
 	 */
 	function adminRegister($username, $firstname, $lastname, $title, $institution, $dept, 
 						$address, $city, $statecountry, $zip, $phone, $fax, $email, $url, 
-						$password, $password2, $groupId){
+						$password, $password2, $groupId, $noleginon=0, $advanced=0){
 
 		if (empty($username) || empty($password) || empty($password2) || empty($email) || empty($lastname) || empty($firstname)) {
 			return $this->error['fields_empty'];
@@ -197,9 +197,9 @@ class authlib{
 		$password = md5($password);
 		
 		$q = "insert into UserData (username, firstname, lastname, 
-							`REF|GroupData|group`, password, email) 
+							`REF|GroupData|group`, password, email, noleginon, advanced) 
 				  values ('$username', '$firstname', '$lastname'," . $groupId 
-							.", '$password', '$email')";
+							.", '$password', '$email', '$noleginon', '$advanced')";
 		if(!$dbc->SQLQuery($q)){
 
 			return $this->error['database_error'];		
@@ -229,7 +229,7 @@ class authlib{
 	}
 	function updateUser($userId, $username, $firstname, $lastname, $title, $institution, $dept, 
 						$address, $city, $statecountry, $zip, $phone, $fax, $email, $url, $chpass, 
-						$password, $password2, $groupId=null, $noleginon=0) {
+						$password, $password2, $groupId=null, $noleginon=0, $advanced=0) {
 
 		if (empty($firstname) || empty($lastname) || empty($email)) {
 
@@ -265,6 +265,7 @@ class authlib{
 		$data['firstname']=$firstname;
 		$data['lastname']=$lastname;
 		$data['noleginon']= $noleginon;
+		$data['advanced']= $advanced;
 		$data['title']=$title;
 		$data['institution']=$institution;
 		$data['dept']=$dept;
@@ -293,11 +294,12 @@ class authlib{
 		$q = "update UserData set 
 				firstname = '$firstname', 
 				lastname = '$lastname', email = '$email',
-				noleginon = '$noleginon'
-			  where DEF_id = $userId";
+				noleginon = '$noleginon',
+				advanced = $advanced
+			where DEF_id = $userId";
 		if(!$dbc->SQLQuery($q)){
 
-			return $this->error['database_error'];		
+			return $dbc->getError();//$this->error['database_error'];		
 		}
 		
 		$dbp=new mysql(DB_HOST, DB_USER, DB_PASS, DB_PROJECT);
@@ -378,7 +380,7 @@ class authlib{
 
 			$dbc=new mysql(DB_HOST, DB_USER, DB_PASS, DB_LEGINON);
 			
-			$q="select du.DEF_id, du.username, du.firstname, du.lastname, du.email, du.password, 
+			$q="select du.DEF_id, du.username, du.firstname, du.lastname, du.email, du.password, du.advanced,
 					up.title, up.institution, up.dept, up.address, up.city, up.statecountry, 
 					up.zip, up.phone, up.fax, up.url, dg.name
 				from ".DB_LEGINON.".UserData du 

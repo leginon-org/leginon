@@ -57,6 +57,27 @@ function getLoginUserId() {
 	}
 }
 
+function isAdvancedUser() 
+{
+	global $dbemauth;
+	if (ENABLE_LOGIN) {
+		$login_check = $dbemauth->is_logged();
+		if (is_array($login_check)) {
+			$username = $login_check[0];
+			$q = "select u.`advanced` as advanced "
+						."from UserData as u "
+						."where u.`username` LIKE '".$username."'";
+			$dbc=new mysql(DB_HOST, DB_USER, DB_PASS, DB_LEGINON);
+			$r = $dbc->getSQLResult($q);
+			return $r[0]['advanced'];
+		} else {
+			return false;
+		}
+	} else {
+		return false;
+	}
+}
+
 function checkProjectAccessPrivilege($projectId) {
 	$userId = getLoginUserId();
 	if (is_numeric($projectId)) {	

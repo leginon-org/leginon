@@ -5,7 +5,7 @@ class user {
 		$this->mysql = ($mysql) ? $mysql : new mysql(DB_HOST, DB_USER, DB_PASS, DB_PROJECT);
 	}
 
-	function updateUser($userId, $username, $firstname, $lastname, $title, $institution, $dept, $address, $city, $statecountry, $zip, $phone, $fax, $email, $url, $groupId, $chpass, $mypass1, $mypass2) {
+	function updateUser($userId, $username, $firstname, $lastname, $title, $institution, $dept, $address, $city, $statecountry, $zip, $phone, $fax, $email, $url, $groupId, $chpass, $mypass1, $mypass2, $advanced=0) {
 		if ($chpass && $mypass1!=$mypass2)
 			return false;
 
@@ -18,6 +18,7 @@ class user {
 		$data['firstname']=$firstname;
 		$data['lastname']=$lastname;
 		$data['email']=$email;
+		$data['advanced']=$advanced;
 		$data['REF|GroupData|group']=$groupId;
 		$data = $this->addTempUserData($data,$username,$firstname,$lastname);
 		$where['DEF_id']=$userId;
@@ -170,7 +171,7 @@ class user {
 		$userId=trim($userId);
 		$sqlwhere = (is_numeric($userId)) ? "u.`DEF_id`=$userId" : "u.username='$userId'";
 		$q='select u.`DEF_id` as userId, u.*, u.`username` as username, '
-			.'g.`DEF_id` as groupId ,g.`name` as groupname, u.`noleginon` as noleginon '
+			.'g.`DEF_id` as groupId ,g.`name` as groupname, u.`noleginon` as noleginon , u.`advanced` as advanced '
 			.'from ' .DB_LEGINON.'.UserData u '
 			.'left join '.DB_LEGINON.'.GroupData g on '
 			.'u.`REF|GroupData|group` = g.`DEF_id` '
