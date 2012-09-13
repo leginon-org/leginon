@@ -224,6 +224,18 @@ $PUBLICATIONS['scheres10'] = array(
 'logo' => 'img/xmipp_logo.png',
 'pages' => '');
 
+$PUBLICATIONS['relion'] = array(
+'title' => 'A Bayesian View on Cryo-EM Structure Determination.',
+'year' => '2012',
+'authorlist' => 'Scheres, S. H.',
+'journal' => 'Journal of Molecular Biology',
+'volume' => '415',
+'issue' => '2',
+'pmid' => '',
+'pmcid' => '',
+'doi' => 'doi:10.1016/j.jmb.2011.11.010',
+'logo' => 'img/Relion_logo_v1_64x64.png',
+'pages' => '406-418');
 
 
 ?>

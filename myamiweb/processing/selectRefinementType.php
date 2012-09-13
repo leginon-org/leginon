@@ -80,6 +80,24 @@ echo " <p> This is the <a href='http://xmipp.cnb.csic.es/twiki/bin/view/Xmipp/Pr
 echo "</td></tr>\n";
 
 /*
+** RELION (for REgularised LIkelihood OptimisatioN)
+*/
+
+echo "<tr><td width='100' align='center'>\n";
+echo "  <img src='img/Relion_logo_v1_64x64.png' width='64'>\n";
+echo "</td><td>\n";
+echo "  <h3><a href='selectStackForm.php?expId=$expId&method=relion'>Relion regularized likelihood optimisation refinement</a></h3>\n";
+echo " <p> This is the <a href='http://www2.mrc-lmb.cam.ac.uk/relion/index.php/Main_Page'>
+	Relion refinement protocol.</a>&nbsp;<img src='img/external.png'> "
+	."This procedure implements so-called gold-standard FSC calculations, "
+	."where two models are refined independently for two random halves of the data to prevent overfitting. Thereby, reliable resolution estimates and clean "
+	."reconstructions are obtained without compromising reconstruction quality, see (Scheres & Chen, Nature Methods, in press) for more details. "
+	."Note that for cyclic point group symmetries (i.e. C<n>), the two half-reconstructions are averaged up to 40 Angstrom resolution to prevent diverging orientations."
+	."</p>\n";
+//echo "  <img src='img/align-smr.png' width='250'><br/>\n";
+echo "</td></tr>\n";
+
+/*
 ** Frealign projection-matching refinement protocol
 */
 echo "<tr><td width='100' align='center'>\n";
