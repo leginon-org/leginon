@@ -86,6 +86,25 @@ class FormGeneratorLib
 		
 		return $html;
 	}
+
+	public function insertSelectField( $name, $label='', $value='', $options='', $enable='', $note='', $helpkey='' )
+	{
+		$html .=  "<SELECT NAME='$name' $enable>\n";
+		foreach ($options as $option) {
+			// determine if this entry is currently selected
+			$selected = ( $value == $option ) ? " SELECTED" : "";
+			
+			// add the entry to the option list
+			$html .=  "<OPTION VALUE='$option' $selected>$option</OPTION>\n";
+		}
+		$html .=  "</SELECT>\n";		
+
+		$html.= $this->insertLabel( $name, $label, $helpkey );				
+		$html.= $this->insertNote( $note );
+		$html.= "<br/>\n";
+		
+		return $html;
+	}
 }
 
 ?>

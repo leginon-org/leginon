@@ -148,7 +148,10 @@ class FormParameters
 			$name 			= $validate["name"];
 			$requirement 	= $validate["req"];
 			
-			$validator->addValidation( $this->params[$name]['name'], $this->params[$name]['value'], $requirement );
+			// if this parameter has been hidden, skip it.
+			if ( !$this->params[$name]['hidden'] ) {
+				$validator->addValidation( $this->params[$name]['name'], $this->params[$name]['value'], $requirement );
+			}
 		}
 
 		$validator->runValidation();
@@ -282,6 +285,26 @@ class FormParameters
 														$label, 
 														$value,
 														$checked, 
+														$this->params[$name]['enable'], 
+														$note,
+														$helpkey );
+		}
+
+		return $html;
+	}		
+	
+	// $options is an array of options for the selection box
+	public function insertSelectField( $name, $options, $note='', $helpkey='' )
+	{
+		// if the parameter has been "hidden" just return an empty string.
+		if ( $this->params[$name]['hidden'] ) {
+			$html = "";
+		} else {
+			$helpkey = $this->setHelpKey( $name, $helpkey );	
+			$html = $this->formLib->insertSelectField( $this->params[$name]['name'], 
+														$this->params[$name]['label'], 
+														$this->params[$name]['value'],
+														$options, 
 														$this->params[$name]['enable'], 
 														$note,
 														$helpkey );

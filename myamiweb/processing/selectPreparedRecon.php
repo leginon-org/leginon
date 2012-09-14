@@ -19,6 +19,7 @@ require_once "inc/summarytables.inc";
 // include each refinement type file
 // todo: autodiscovery
 require_once "inc/forms/xmippRefineForm.inc";
+require_once "inc/forms/relionRefineForm.inc";
 require_once "inc/forms/frealignRefineForm.inc";
 require_once "inc/forms/emanRefineForm.inc";
 require_once "inc/forms/xmippML3DRefineForm.inc";
@@ -125,6 +126,9 @@ function createSelectedRefineForm( $method, $stacks='', $models='' )
 		case xmipp:
 		case xmipprecon:
 			$selectedRefineForm = new XmippRefineForm( $method, $stacks, $models );
+			break;
+		case relionrecon:
+			$selectedRefineForm = new RelionRefineForm( $method, $stacks, $models );
 			break;
 		case xmippml3d:
 		case xmippml3drecon:

@@ -41,7 +41,7 @@ class PrepRefineRelion(apPrepRefine.Prep3DRefinement):
 			help="Use ctftilt values")
 
 	def setRefineMethod(self):
-		self.refinemethod = 'frealignrecon'
+		self.refinemethod = 'relionrecon'
 		self.parentstacks = []
 
 	def checkPackageConflicts(self):

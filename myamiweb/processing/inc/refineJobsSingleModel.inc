@@ -7,9 +7,9 @@ class RefineJobsSingleModel extends RefineJobs
 {
 	public function setDBValues()
 	{
-		$this->methods 		= array("xmipprecon", "emanrecon", "frealignrecon");
-		$this->prepTypes 	= array("preprefinexmipp", "preprefineeman", "preprefinefrealign");
-		$this->refineTypes 	= array("xmipprecon", "emanrecon", "frealignrecon");
+		$this->methods 		= array("xmipprecon", "emanrecon", "frealignrecon", "relionrecon");
+		$this->prepTypes 	= array("preprefinexmipp", "preprefineeman", "preprefinefrealign", "preprefinerelion");
+		$this->refineTypes 	= array("xmipprecon", "emanrecon", "frealignrecon", "relionrecon");
 		$this->uploadTypes 	= array("uploadrecon");
 	}
 	public function getUploadRefineDone()
