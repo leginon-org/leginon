@@ -395,5 +395,6 @@ parametermapping = (
 	('temperature', 'Temperature'),
 	('temperature status', 'TemperatureStatus'),
 	('binned multiplier', 'BinnedMultiplier'),
+	('gain index', 'GainIndex'),
 )
 

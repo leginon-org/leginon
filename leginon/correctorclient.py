@@ -45,7 +45,7 @@ class CorrectorClient(cameraclient.CameraClient):
 
 		## query only based on certain camera parameters, not all
 		imagetemp['camera'] = leginondata.CameraEMData()
-		for key in ('ccdcamera','dimension','binning','offset'):
+		for key in ('ccdcamera','dimension','binning','offset','gain index'):
 			imagetemp['camera'][key] = cameradata[key]
 		# query only based on certain scope parameters, not all
 		imagetemp['scope'] = leginondata.ScopeEMData()
@@ -98,6 +98,7 @@ class CorrectorClient(cameraclient.CameraClient):
 				ccdcamera=normcam['ccdcamera'])
 		qcam['exposure type'] = 'normal'
 		qcam['energy filtered'] = normcam['energy filtered']
+		qcam['gain index'] = normcam['gain index']
 
 		normscope = normdata['scope']
 		qscope = leginondata.ScopeEMData(tem=normscope['tem'])
@@ -131,6 +132,7 @@ class CorrectorClient(cameraclient.CameraClient):
 				ccdcamera=refcam['ccdcamera'])
 		qcam['exposure time'] = refcam['exposure time']
 		qcam['energy filtered'] = refcam['energy filtered']
+		qcam['gain index'] = refcam['gain index']
 
 		refscope = refdata['scope']
 		qscope = leginondata.ScopeEMData(tem=refscope['tem'])
@@ -169,9 +171,9 @@ class CorrectorClient(cameraclient.CameraClient):
 				exptype = key[6]
 		except IndexError:
 			exptype = 'unknown image'
-		s = '%s, %sV, size %sx%s, bin %sx%s, offset (%s,%s), channel %s'
+		s = '%s, %sV, size %sx%s, bin %sx%s, offset (%s,%s), channel %s, gain %s'
 		try:
-			return s % (exptype, key[8], key[0], key[1], key[2], key[3], key[4], key[5], key[9])
+			return s % (exptype, key[8], key[0], key[1], key[2], key[3], key[4], key[5], key[9], key[10])
 		except IndexError:
 			return str(key)
 
@@ -188,6 +190,7 @@ class CorrectorClient(cameraclient.CameraClient):
 		mylist.append(cameradata['ccdcamera']['name'])
 		mylist.append(scopedata['high tension'])
 		mylist.append(channel)
+		mylist.append(cameradata['gain index'])
 		return tuple(mylist)
 
 	def getCorrectorImageFromCache(self, type, scopedata, cameradata, channel):
@@ -374,7 +377,7 @@ class CorrectorClient(cameraclient.CameraClient):
 		'''
 	def retrieveCorrectorPlan(self, cameradata):
 		qcamera = leginondata.CameraEMData()
-		for key in ('ccdcamera','dimension','binning','offset'):
+		for key in ('ccdcamera','dimension','binning','offset','gain index'):
 			qcamera[key] = cameradata[key]
 		qplan = leginondata.CorrectorPlanData()
 		qplan['camera'] = qcamera
