@@ -67,6 +67,8 @@ class Corrector(imagewatcher.ImageWatcher):
 		except:
 			return None
 		cameradata.update(camsettings)
+		cdata = self.instrument.getData(leginondata.CameraEMData)
+		cameradata['gain index'] = cdata['gain index']
 		scopedata = self.instrument.getData(leginondata.ScopeEMData)
 		imdata = self.retrieveCorrectorImageData(reftype, scopedata, cameradata, channel)
 		return imdata
@@ -82,6 +84,8 @@ class Corrector(imagewatcher.ImageWatcher):
 		except:
 			return None
 		cameradata.update(camsettings)
+		cdata = self.instrument.getData(leginondata.CameraEMData)
+		cameradata['gain index'] = cdata['gain index']
 		plan = self.retrieveCorrectorPlan(cameradata)
 		return plan
 
