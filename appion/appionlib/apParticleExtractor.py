@@ -149,7 +149,7 @@ class ParticleExtractLoop(appionLoop2.AppionLoop):
 		if ctfrunid is None:
 			return ctfdb.getBestDefocusAndAmpConstForImage(imgdata, msg=msg, method=method)
 		else:
-			return ctfdb.getDefocusAndAmpConstForImage(imgdata, ctf_estimation_runid=ctfrunid, msg=msg, method=method)
+			return ctfdb.getDefocusAndampcontrastForImage(imgdata, ctf_estimation_runid=ctfrunid, msg=msg, method=method)
 
 	def checkCtfParams(self, imgdata):
 		shortname = apDisplay.short(imgdata['filename'])
