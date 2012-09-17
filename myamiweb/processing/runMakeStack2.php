@@ -324,9 +324,15 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	//
 	// STARTING ADVANCED SECTION 1
 	//
-	echo "<a id='Advanced_Stack_Options_1_toggle' href='javascript:toggle(\"Advanced_Stack_Options_1\");' style='color:blue'>";
-	echo "Show Advanced Stack Options</a><br/>\n";
-	echo "<div id='Advanced_Stack_Options_1' style='display: none'>\n";
+	// Only hide advanced parameters if there is not an advanced user logged in.
+	// Modify user profile to set to an advanced user. 
+	// NOTE: this assumes the Appion user name and the username that is used to log in to the processing page are the same.
+	// We may want to change that someday.
+	if ( !$_SESSION['advanced_user'] ) {	
+		echo "<a id='Advanced_Stack_Options_1_toggle' href='javascript:toggle(\"Advanced_Stack_Options_1\");' style='color:blue'>";
+		echo "Show Advanced Stack Options</a><br/>\n";
+		echo "<div id='Advanced_Stack_Options_1' style='display: none'>\n";
+	}
 
 	echo "<input type='checkbox' name='stacknorm' $normcheck>\n";
 	echo docpop('stacknorm','Normalize Stack Particles');
@@ -504,9 +510,15 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	//
 	// STARTING ADVANCED SECTION 2
 	//
-	echo "<a id='Advanced_Stack_Options_2_toggle' href='javascript:toggle(\"Advanced_Stack_Options_2\");' style='color:blue'>";
-	echo "Show Advanced Stack Options</a><br/>\n";
-	echo "<div id='Advanced_Stack_Options_2' style='display: none'>\n";
+	// Only hide advanced parameters if there is not an advanced user logged in.
+	// Modify user profile to set to an advanced user. 
+	// NOTE: this assumes the Appion user name and the username that is used to log in to the processing page are the same.
+	// We may want to change that someday.
+	if ( !$_SESSION['advanced_user'] ) {
+		echo "<a id='Advanced_Stack_Options_2_toggle' href='javascript:toggle(\"Advanced_Stack_Options_2\");' style='color:blue'>";
+		echo "Show Advanced Stack Options</a><br/>\n";
+		echo "<div id='Advanced_Stack_Options_2' style='display: none'>\n";
+	}
 	echo "<br/>\n";
 
 	if ($ctfdata) {
