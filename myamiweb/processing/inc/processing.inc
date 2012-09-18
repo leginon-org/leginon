@@ -925,6 +925,7 @@ function writeTestResults($jpg,$ccclist,$bin,$process_str='')
 	// First, see if we are just showing the command
 	if ($process_str === '') {
 		$process_str = getProcessString();
+		$showcmd = True;
 	}
 	clearstatcache(); // clear cache
 	$fileExists = file_exists($jpg);
@@ -947,19 +948,21 @@ function writeTestResults($jpg,$ccclist,$bin,$process_str='')
   	
   	// Make sure we don't show the user a previous test result, and processing has completed.
 	// Wait for 1. the file to exist, 2. an existing file to be modified, or 3. timer to run out
-	do {
-  		clearstatcache(); // filemtime() and file_exists() results are cached, clear it.
-		$fileExists = file_exists($jpg);
-  		if ($fileExists) {
-			$file_time = filemtime($jpg);
-			$mod_time = abs($start_time - $file_time);
-  		}
+	if (!$showcmd) {
+		do {
+  			clearstatcache(); // filemtime() and file_exists() results are cached, clear it.
+			$fileExists = file_exists($jpg);
+  			if ($fileExists) {
+				$file_time = filemtime($jpg);
+				$mod_time = abs($start_time - $file_time);
+  			}
 
-		$curr_wait_time = time() - $start_time;	
-	
-	} while ( (($fileExists===false) || ($mod_time > 35)) && ($curr_wait_time < $max_time ) );
-  	  	
-  	clearstatcache(); // filetime() and file_exists() results are cached, clear it.
+			$curr_wait_time = time() - $start_time;	
+
+		} while ( (($fileExists===false) || ($mod_time > 35)) && ($curr_wait_time < $max_time ) );
+	}
+  
+	clearstatcache(); // filetime() and file_exists() results are cached, clear it.
   	$fileExists = file_exists($jpg);
   	if ($fileExists===false) {
 		$base = basename($jpg);
