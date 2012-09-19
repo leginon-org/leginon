@@ -11,6 +11,11 @@ from redux.pipe import shape_converter
 class Shape(Pipe):
 	required_args = {'shape': shape_converter}
 	def run(self, input, shape):
+
+		# that was easy
+		if input.shape == shape:
+			return input
+
 		# make sure shape is same dimensions as input image
 		# rgb input image would have one extra dimension
 		if len(shape) != len(input.shape):
