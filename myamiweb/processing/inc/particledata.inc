@@ -1091,7 +1091,7 @@ class particledata {
 			."left join ".DB_LEGINON.".ScopeEMData s on (i.`REF|ScopeEMData|scope` = s.`DEF_id`) "
 			."where c.`REF|leginondata|AcquisitionImageData|image`='$imageId' ";
 		$q .= " AND c.`graph1` IS NOT NULL ";
-
+		$q .= " AND (r.`hidden` IS NULL OR r.`hidden` = 0) ";
 		if (is_numeric($acerunId) && $acerunId > 0) {
 			$q .= "AND r.`DEF_id`=".$acerunId." ";
 		} else {
