@@ -10,7 +10,9 @@ from redux.pipe import shape_converter
 
 class Shape(Pipe):
 	required_args = {'shape': shape_converter}
-	def run(self, input, shape):
+
+	@classmethod
+	def run(cls, input, shape):
 
 		# that was easy
 		if input.shape == shape:
