@@ -65,7 +65,7 @@ def power(image, pixelsize, fieldsize=None, mask_radius=1):
 	envelop = twodHann(fieldsize)
 	count = 0
 	psdlist = []
-	sys.stderr.write("Computing power spectra")
+	sys.stderr.write("Computing power spectra in %dx%d blocks"%(fieldsize,fieldsize))
 	for i in range(xnumstep):
 		for j in range(ynumstep):
 			count += 1
@@ -112,8 +112,7 @@ def power(image, pixelsize, fieldsize=None, mask_radius=1):
 	freq = 1.0/(powerspec.shape[0]*pixelsize)
 
 	#poweravg = numpy.array(psdlist).mean(0)
-	if debug is True:
-		print "Computing median of power spectra series"
+	print "Computing median of power spectra series"
 	poweravg = numpy.median(psdlist, axis=0)
 	apDisplay.printMsg("Compute PSD with fieldsize %d and %d images complete in %s"
 		%(fieldsize, count, apDisplay.timeString(time.time()-t0)))

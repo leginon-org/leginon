@@ -270,6 +270,8 @@ class CtfDisplay(object):
 		if self.res50 is None:
 			self.res50 = 100.0
 			res50max = min(raddata.max(), 1/10.)
+		elif self.res50 > 15.0:
+			res50max = min(raddata.max(), 1/10.)
 		else:
 			res50max = min(raddata.max(), 1.5/self.res50)
 
