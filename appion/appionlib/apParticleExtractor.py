@@ -148,7 +148,6 @@ class ParticleExtractLoop(appionLoop2.AppionLoop):
 		ctfrunid = self.params['ctfrunid']
 		if ctfrunid is None:
 			ctfvalue,conf = ctfdb.getBestCtfValueForImage(imgdata,msg=msg,method=method)
-			print ctfvalue
 			return -(ctfvalue['defocus1']+ctfvalue['defocus2'])/2, ctfvalue['amplitude_contrast']
 		else:
 			return ctfdb.getDefocusAndampcontrastForImage(imgdata, ctf_estimation_runid=ctfrunid, msg=msg, method=method)
