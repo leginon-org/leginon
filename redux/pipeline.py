@@ -32,14 +32,22 @@ def pipeline_by_pipes(pipes):
 	pl = Pipeline(pipes)
 	return pl
 
-def pipeline_by_preset(name):
+def pipes_by_preset(name):
 	pipes = redux.pipelines.registered[name]
+	return pipes
+
+def pipeline_by_preset(name):
+	pipes = pipes_by_preset(name)
 	pl = pipeline_by_pipes(pipes)
 	return pl
 
-def pipeline_by_string(pipestring):
+def pipes_by_string(pipestring):
 	pipes = pipestring.split(',')
 	pipes = [pipe.split(':') for pipe in pipes]
+	return pipes
+
+def pipeline_by_string(pipestring):
+	pipes = pipes_by_string(pipestring)
 	pl = pipeline_by_pipes(pipes)
 	return pl
 
@@ -51,17 +59,34 @@ class Pipeline(object):
 		# into something more descriptive (names, etc)
 		self.pipeorder = []
 		for pipe in pipes:
+			pname = pipe[0]
 			pcls = redux.pipes.registered[pipe[1]]
-			self.pipeorder.append(pcls)
+			self.pipeorder.append((pname,pcls))
 
-	def getOrder(self):
-		return self.pipeorder
+	def filter_pipe_kwargs(self, pipename, kwargs):
+		result = {}
+		pipename_args = {}
+		for key,value in kwargs.items():
+			parts = key.split('.')
+			if len(parts) == 1:
+				result[key] = value
+			else:
+				argpipe = parts[0]
+				argname = parts[1]
+				if argpipe != pipename:
+					continue
+				pipename_args[argname] = value
+		# specifically named args will override any other
+		result.update(pipename_args)
+		return result
 
 	def kwargs_to_pipeline(self, **kwargs):
 		pipeline = []
-		for pipe_class in self.pipeorder:
+		for pipe_name, pipe_class in self.pipeorder:
+			pipe_kwargs = self.filter_pipe_kwargs(pipe_name, kwargs)
 			try:
-				pipe = pipe_class(**kwargs)
+				pipe = pipe_class(**pipe_kwargs)
+				pipe.name = pipe_name
 			except redux.exceptions.PipeDisabled:
 				continue
 			pipeline.append(pipe)
@@ -70,8 +95,13 @@ class Pipeline(object):
 	def help_string(self):
 		'''generate a help string to describe the available pipes'''
 		f = cStringIO.StringIO()
-		for pipe_class in self.pipeorder:
+		done = {}
+		for pipe_name, pipe_class in self.pipeorder:
+			if pipe_class in done:
+				continue
 			f.write(pipe_class.help_string())
+			done[pipe_class] = None
+
 		result = f.getvalue()
 		f.close()
 		return result

@@ -5,7 +5,7 @@ import socket
 import utility
 from optparse import OptionParser
 import redux.pipes
-import redux.pipelines
+import redux.pipeline
 
 class Client(object):
 	def process_request(self, request):
@@ -51,38 +51,60 @@ class SimpleClient(Client):
 			pl = redux.pipeline.pipeline_by_preset('standard')
 		return pl.process(**kwargs)
 
-def add_option(parser, optname, help):
-			dest = optname
-			arg = '--%s' % (dest,)
-			parser.add_option(arg, action='store', type='string', dest=dest, help=help)
+def add_option(parser, optname, pipename, help):
+	optnames = [optname]
+	if pipename:
+		optnames.append(pipename+'.'+optname)
+	for name in optnames:
+		arg = '--%s' % (name,)
+		if parser.has_option(arg):
+			continue
+		parser.add_option(arg, action='store', type='string', dest=name, help=help)
+
+def dummy_callback(option, opt, value, parser):
+	pass
 
 def parse_argv():
+	# initial parse to determine pipeline, with help and errors disabled
 	parser = OptionParser()
-	pipes = redux.pipelines.registered['all']
-	for name,clsname in pipes:
+	add_option(parser, 'pipeline', None, 'pipeline preset to use')
+	add_option(parser, 'pipes', None, 'pipeline defined by sequence of pipes:  name:cls,name:cls,...')
+
+	parser.remove_option('-h')
+	parser.add_option('-h', action='callback', callback=dummy_callback)
+	parser.error = lambda x: None
+	(options, args) = parser.parse_args()
+	if options.pipeline is not None:
+		pipes = redux.pipeline.pipes_by_preset(options.pipeline)
+	elif options.pipes is not None:
+		pipes = redux.pipeline.pipes_by_string(options.pipes)
+	else:
+		pipes = []
+
+	# final parse
+	parser = OptionParser()
+	add_option(parser, 'pipeline', None, 'pipeline preset to use')
+
+	add_option(parser, 'request', None, 'full request as a single URL option string')
+	add_option(parser, 'server_host', None, 'redux server host name (if not given, will start built-in redux processor)')
+	add_option(parser, 'server_port', None, 'redux server port (if not given, will use default port)')
+	add_option(parser, 'pipes', None, 'pipeline defined by sequence of pipes:  name:cls,name:cls,...')
+
+	for pipename,clsname in pipes:
 		cls = redux.pipes.registered[clsname]
 		if cls.switch_arg:
-			help = '%s: boolean switch to turn it on' % (name,)
-			add_option(parser, cls.switch_arg, help)
+			help = '%s: boolean switch to turn it on' % (pipename,)
+			add_option(parser, cls.switch_arg, pipename, help)
 		if cls.required_args:
 			for arg in cls.required_args:
-				if not parser.has_option('--%s' % arg):
-					help = '%s: required' % (name,)
-					add_option(parser, arg, help)
+				help = '%s: required' % (pipename,)
+				add_option(parser, arg, pipename, help)
 		if cls.optional_args:
 			for arg in cls.optional_args:
-				if not parser.has_option('--%s' % arg):
-					help = '%s: optional' % (name,)
-					add_option(parser, arg, help)
-
-	add_option(parser, 'request', 'full request as a single URL option string')
-	add_option(parser, 'server_host', 'redux server host name (if not given, will start built-in redux processor)')
-	add_option(parser, 'server_port', 'redux server port (if not given, will use default port)')
-	add_option(parser, 'pipeline', 'pipeline preset to use')
-	add_option(parser, 'pipes', 'pipeline defined by sequence of pipes:  name:cls,namecls,...')
+				help = '%s: optional' % (pipename,)
+				add_option(parser, arg, pipename, help)
 
 	(options, args) = parser.parse_args()
-
 
 	kwargs = {}
 	for key,value in options.__dict__.items():
