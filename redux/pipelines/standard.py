@@ -2,15 +2,13 @@
 pipes = (
 	('sim', 'Simulate'),
 	('read', 'Read'),
-	('scale1', 'Scale'),
 	('pad', 'Pad'),
-	('shape1', 'Shape'),
 	('power', 'Power'),
+	('shape', 'Shape'),
 	('mask', 'Mask'),
-	('shape2', 'Shape'),
 	('sqrt', 'Sqrt'),
 	('lpf', 'LPF'),
-	('scale2', 'Scale'),
+	('scale', 'Scale'),
 	('histogram', 'Histogram'),
 	('format', 'Format'),
 )
