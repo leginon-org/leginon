@@ -377,7 +377,8 @@ class CorrectorClient(cameraclient.CameraClient):
 		'''
 	def retrieveCorrectorPlan(self, cameradata):
 		qcamera = leginondata.CameraEMData()
-		for key in ('ccdcamera','dimension','binning','offset','gain index'):
+		# Fix Me: Ignore gain index for now because camera setting does not have it when theplan is saved.
+		for key in ('ccdcamera','dimension','binning','offset'):
 			qcamera[key] = cameradata[key]
 		qplan = leginondata.CorrectorPlanData()
 		qplan['camera'] = qcamera
