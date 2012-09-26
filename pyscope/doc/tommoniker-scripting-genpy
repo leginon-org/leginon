@@ -1,0 +1,3333 @@
+# -*- coding: mbcs -*-
+# Created by makepy.py version 0.5.00
+# By python version 2.5.4 (r254:67916, Dec 23 2008, 15:10:54) [MSC v.1310 32 bit (Intel)]
+# From type library '{3801D541-7DE6-4940-95EF-B38FC9E48128}'
+# On Sat Jan 21 02:20:41 2012
+"""TOMMoniker 1.0 Type Library"""
+makepy_version = '0.5.00'
+python_version = 0x20504f0
+
+import win32com.client.CLSIDToClass, pythoncom, pywintypes
+import win32com.client.util
+from pywintypes import IID
+from win32com.client import Dispatch
+
+# The following 3 lines may need tweaking for the particular server
+# Candidates are pythoncom.Missing, .Empty and .ArgNotFound
+defaultNamedOptArg=pythoncom.Empty
+defaultNamedNotOptArg=pythoncom.Empty
+defaultUnnamedArg=pythoncom.Empty
+
+CLSID = IID('{3801D541-7DE6-4940-95EF-B38FC9E48128}')
+MajorVersion = 1
+MinorVersion = 0
+LibraryFlags = 8
+LCID = 0x0
+
+class constants:
+	BeamStopperState_HalfIn       =2          # from enum BeamStopperStateEnum
+	BeamStopperState_In           =1          # from enum BeamStopperStateEnum
+	BeamStopperState_Moving       =4          # from enum BeamStopperStateEnum
+	BeamStopperState_Out          =3          # from enum BeamStopperStateEnum
+	BeamStopperState_Unknown      =0          # from enum BeamStopperStateEnum
+	BitsPerPixel_High             =2          # from enum BitsPerPixelEnum
+	BitsPerPixel_Low              =0          # from enum BitsPerPixelEnum
+	BitsPerPixel_Medium           =1          # from enum BitsPerPixelEnum
+	eBCSAborting                  =5          # from enum BufferCycleStatusEnum
+	eBCSAvailable                 =2          # from enum BufferCycleStatusEnum
+	eBCSNotAvailable              =1          # from enum BufferCycleStatusEnum
+	eBCSPostPoned                 =4          # from enum BufferCycleStatusEnum
+	eBCSRunning                   =3          # from enum BufferCycleStatusEnum
+	eBCSUnknown                   =6          # from enum BufferCycleStatusEnum
+	BelowScreen                   =1          # from enum CameraLocationEnum
+	GIF                           =2          # from enum CameraLocationEnum
+	WideAngle                     =0          # from enum CameraLocationEnum
+	CCDCamera                     =1          # from enum CameraTypeEnum
+	TVCamera                      =0          # from enum CameraTypeEnum
+	NEARAXIS                      =1          # from enum DetectorLocationEnum
+	OFFAXIS                       =0          # from enum DetectorLocationEnum
+	ONAXIS                        =2          # from enum DetectorLocationEnum
+	DETECTOR_BF                   =2          # from enum DetectorTypeEnum
+	DETECTOR_BFDF                 =3          # from enum DetectorTypeEnum
+	DETECTOR_BS                   =8          # from enum DetectorTypeEnum
+	DETECTOR_DF                   =1          # from enum DetectorTypeEnum
+	DETECTOR_DF2                  =9          # from enum DetectorTypeEnum
+	DETECTOR_DF4                  =10         # from enum DetectorTypeEnum
+	DETECTOR_HAADF                =4          # from enum DetectorTypeEnum
+	DETECTOR_OTHER                =7          # from enum DetectorTypeEnum
+	DETECTOR_SED                  =6          # from enum DetectorTypeEnum
+	DETECTOR_SSD                  =5          # from enum DetectorTypeEnum
+	NODETECTOR                    =0          # from enum DetectorTypeEnum
+	FACTORY_DONGLE                =4          # from enum DongleEnum
+	NoDongle                      =0          # from enum DongleEnum
+	SERVICE_DONGLE                =2          # from enum DongleEnum
+	SERVICE_FACTORY_DONGLE        =6          # from enum DongleEnum
+	USER_DONGLE                   =1          # from enum DongleEnum
+	USER_FACTORY_DONGLE           =5          # from enum DongleEnum
+	USER_FACTORY_SERVICE_DONGLE   =7          # from enum DongleEnum
+	USER_SERVICE_DONGLE           =3          # from enum DongleEnum
+	ExposureMode_None             =0          # from enum ExposureModeEnum
+	ExposureMode_PreExposure      =2          # from enum ExposureModeEnum
+	ExposureMode_PreExposurePause =3          # from enum ExposureModeEnum
+	ExposureMode_Simultaneous     =1          # from enum ExposureModeEnum
+	FC_LENS_1ST_ORDER_FOCUS_X     =1          # from enum FC_LENSEnum
+	FC_LENS_1ST_ORDER_FOCUS_Y     =2          # from enum FC_LENSEnum
+	FC_LENS_2ND_ORDER_FOCUS_X     =3          # from enum FC_LENSEnum
+	FC_LENS_2ND_ORDER_FOCUS_Y     =4          # from enum FC_LENSEnum
+	FC_LENS_AC_COMPENSATION_X     =5          # from enum FC_LENSEnum
+	FC_LENS_AC_COMPENSATION_Y     =6          # from enum FC_LENSEnum
+	FC_LENS_SPECTRUM_OR_IMAGE_SHIFT_X=7          # from enum FC_LENSEnum
+	FC_LENS_SPECTRUM_OR_IMAGE_SHIFT_Y=8          # from enum FC_LENSEnum
+	FC_LENS_UNDEFINED             =0          # from enum FC_LENSEnum
+	FC_PROPERTY_IMAGING_MODE      =1          # from enum FC_PROPERTYEnum
+	FC_PROPERTY_INTEGRATED_TV     =2          # from enum FC_PROPERTYEnum
+	FC_PROPERTY_SLIT              =3          # from enum FC_PROPERTYEnum
+	FC_PROPERTY_UNDEFINED         =0          # from enum FC_PROPERTYEnum
+	FC_STATUS_DM_CAMERAS_ONLY     =3          # from enum FC_STATUSEnum
+	FC_STATUS_STARTED             =1          # from enum FC_STATUSEnum
+	FC_STATUS_STOPPED             =2          # from enum FC_STATUSEnum
+	FC_STATUS_UNDEFINED           =0          # from enum FC_STATUSEnum
+	eFCModeImaging                =0          # from enum FilterControlModeEnum
+	eFCModeSpectroscopy           =1          # from enum FilterControlModeEnum
+	eFType_ENFINA                 =3          # from enum FilterTypeEnum
+	eFType_GHIA                   =5          # from enum FilterTypeEnum
+	eFType_GIF200X                =1          # from enum FilterTypeEnum
+	eFType_GIFX00                 =4          # from enum FilterTypeEnum
+	eFType_None                   =-1         # from enum FilterTypeEnum
+	eFType_TRIDIEM                =2          # from enum FilterTypeEnum
+	eFType_UNDEFINED              =0          # from enum FilterTypeEnum
+	Focus_C2                      =0          # from enum FocusStrategyEnum
+	Focus_Int_OL                  =2          # from enum FocusStrategyEnum
+	Focus_OL                      =1          # from enum FocusStrategyEnum
+	ePLHigh                       =4          # from enum GaugePressureLevelEnum
+	ePLLow                        =1          # from enum GaugePressureLevelEnum
+	ePLMedium                     =2          # from enum GaugePressureLevelEnum
+	ePLMediumHigh                 =3          # from enum GaugePressureLevelEnum
+	ePLUndefined                  =0          # from enum GaugePressureLevelEnum
+	eGSInvalid                    =3          # from enum GaugeStatusEnum
+	eGSOverflow                   =2          # from enum GaugeStatusEnum
+	eGSUndefined                  =0          # from enum GaugeStatusEnum
+	eGSUnderflow                  =1          # from enum GaugeStatusEnum
+	eGSValid                      =4          # from enum GaugeStatusEnum
+	High                          =2          # from enum HTModeEnum
+	Low                           =0          # from enum HTModeEnum
+	Medium                        =1          # from enum HTModeEnum
+	NonMode                       =-1         # from enum HTModeEnum
+	ConvergentIlluminationMode    =2          # from enum IlluminationModeEnum
+	ParallelIlluminationMode      =1          # from enum IlluminationModeEnum
+	UnknownIlluminationMode       =0          # from enum IlluminationModeEnum
+	ImageCorrection_Default       =1          # from enum ImageCorrectionEnum
+	ImageCorrection_Unprocessed   =0          # from enum ImageCorrectionEnum
+	STEM                          =1          # from enum InstrumentModeEnum
+	TEM                           =0          # from enum InstrumentModeEnum
+	EFTEM                         =2          # from enum LensProgramEnum
+	Regular                       =1          # from enum LensProgramEnum
+	All                           =63         # from enum NormalizeLensesEnum
+	Blanker                       =32         # from enum NormalizeLensesEnum
+	Condenser                     =3          # from enum NormalizeLensesEnum
+	Illumination                  =23         # from enum NormalizeLensesEnum
+	Intensity                     =2          # from enum NormalizeLensesEnum
+	Lenses                        =31         # from enum NormalizeLensesEnum
+	Minicondenser                 =4          # from enum NormalizeLensesEnum
+	Objective                     =16         # from enum NormalizeLensesEnum
+	ObjectivePole                 =20         # from enum NormalizeLensesEnum
+	Projector                     =8          # from enum NormalizeLensesEnum
+	Spotsize                      =1          # from enum NormalizeLensesEnum
+	BioTwin                       =1          # from enum ObjectiveLensTypeEnum
+	HighContrast                  =0          # from enum ObjectiveLensTypeEnum
+	NotDefined                    =-1         # from enum ObjectiveLensTypeEnum
+	STwin                         =3          # from enum ObjectiveLensTypeEnum
+	Twin                          =2          # from enum ObjectiveLensTypeEnum
+	UTwin                         =4          # from enum ObjectiveLensTypeEnum
+	BackGround                    =4          # from enum OffLineStrategyEnum
+	CenterBeam                    =0          # from enum OffLineStrategyEnum
+	Frame                         =3          # from enum OffLineStrategyEnum
+	SingleSpot                    =1          # from enum OffLineStrategyEnum
+	SpotList                      =2          # from enum OffLineStrategyEnum
+	MicroProbe                    =0          # from enum ProbeModeEnum
+	NanoProbe                     =1          # from enum ProbeModeEnum
+	ProductFamily_Tecnai          =0          # from enum ProductFamilyEnum
+	ProductFamily_Titan           =1          # from enum ProductFamilyEnum
+	Diffraction                   =1          # from enum ProjectionModeEnum
+	Imaging                       =0          # from enum ProjectionModeEnum
+	D                             =6          # from enum ProjectionSubModeEnum
+	Lad                           =5          # from enum ProjectionSubModeEnum
+	Lm                            =1          # from enum ProjectionSubModeEnum
+	Mh                            =4          # from enum ProjectionSubModeEnum
+	Mi                            =2          # from enum ProjectionSubModeEnum
+	Sa                            =3          # from enum ProjectionSubModeEnum
+	RefrigerantLevel_AutoloaderDewar=0          # from enum RefrigerantLevelEnum
+	RefrigerantLevel_ColumnDewar  =1          # from enum RefrigerantLevelEnum
+	RefrigerantLevel_HeliumDewar  =2          # from enum RefrigerantLevelEnum
+	ExternalMode                  =4          # from enum ScanModeEnum
+	FrameMode                     =2          # from enum ScanModeEnum
+	LineMode                      =1          # from enum ScanModeEnum
+	SpotListMode                  =3          # from enum ScanModeEnum
+	SpotMode                      =0          # from enum ScanModeEnum
+	Sync_Frame                    =2          # from enum ScanOptionEnum
+	Sync_Line                     =1          # from enum ScanOptionEnum
+	Sync_off                      =0          # from enum ScanOptionEnum
+	ScreenDown                    =0          # from enum ScreenPositionEnum
+	ScreenIsGoingDown             =2          # from enum ScreenPositionEnum
+	ScreenIsGoingUp               =3          # from enum ScreenPositionEnum
+	ScreenUnknown                 =4          # from enum ScreenPositionEnum
+	ScreenUp                      =1          # from enum ScreenPositionEnum
+	ShutterMode_Both              =2          # from enum ShutterModeEnum
+	ShutterMode_PostSpecimen      =1          # from enum ShutterModeEnum
+	ShutterMode_PreSpecimen       =0          # from enum ShutterModeEnum
+	A                             =8          # from enum StageAxisEnum
+	B                             =16         # from enum StageAxisEnum
+	X                             =1          # from enum StageAxisEnum
+	XY                            =3          # from enum StageAxisEnum
+	Y                             =2          # from enum StageAxisEnum
+	Z                             =4          # from enum StageAxisEnum
+	STATE_DIAGNOSTIC              =9          # from enum StageStatusEnum
+	STATE_DISABLED                =10         # from enum StageStatusEnum
+	STATE_FREE                    =6          # from enum StageStatusEnum
+	STATE_GOING                   =2          # from enum StageStatusEnum
+	STATE_MOVING                  =3          # from enum StageStatusEnum
+	STATE_NOT_READY               =1          # from enum StageStatusEnum
+	STATE_PULSING                 =8          # from enum StageStatusEnum
+	STATE_READY                   =0          # from enum StageStatusEnum
+	STATE_RECALLING               =4          # from enum StageStatusEnum
+	STATE_SUSPENDED               =7          # from enum StageStatusEnum
+	STATE_WOBBLING                =5          # from enum StageStatusEnum
+	Stem_HM                       =1          # from enum StemModeEnum
+	Stem_LM                       =0          # from enum StemModeEnum
+	ExcludeLowMag                 =1          # from enum SubModeChangeEnum
+	FreeChange                    =2          # from enum SubModeChangeEnum
+	NoSubModeChange               =0          # from enum SubModeChangeEnum
+	Casual                        =0          # from enum UserLevelEnum
+	Default                       =5          # from enum UserLevelEnum
+	Expert                        =1          # from enum UserLevelEnum
+	Factory                       =4          # from enum UserLevelEnum
+	LOGOFFLEVEL                   =-1         # from enum UserLevelEnum
+	Service                       =3          # from enum UserLevelEnum
+	Supervisor                    =2          # from enum UserLevelEnum
+	eVSBusy                       =4          # from enum VacuumStatusEnum
+	eVSCameraAir                  =3          # from enum VacuumStatusEnum
+	eVSElse                       =6          # from enum VacuumStatusEnum
+	eVSOff                        =2          # from enum VacuumStatusEnum
+	eVSReady                      =5          # from enum VacuumStatusEnum
+	eVSUnknown                    =1          # from enum VacuumStatusEnum
+	enMementoItemUnitAmpere       =4          # from enum __MIDL___MIDL_itf_libtommoniker_0272_0001
+	enMementoItemUnitAtomicMass   =32         # from enum __MIDL___MIDL_itf_libtommoniker_0272_0001
+	enMementoItemUnitBecquerel    =28         # from enum __MIDL___MIDL_itf_libtommoniker_0272_0001
+	enMementoItemUnitCandela      =7          # from enum __MIDL___MIDL_itf_libtommoniker_0272_0001
+	enMementoItemUnitCoulomb      =18         # from enum __MIDL___MIDL_itf_libtommoniker_0272_0001
+	enMementoItemUnitDecibel      =34         # from enum __MIDL___MIDL_itf_libtommoniker_0272_0001
+	enMementoItemUnitElectronVolt =31         # from enum __MIDL___MIDL_itf_libtommoniker_0272_0001
+	enMementoItemUnitFarad        =20         # from enum __MIDL___MIDL_itf_libtommoniker_0272_0001
+	enMementoItemUnitGray         =29         # from enum __MIDL___MIDL_itf_libtommoniker_0272_0001
+	enMementoItemUnitHenry        =25         # from enum __MIDL___MIDL_itf_libtommoniker_0272_0001
+	enMementoItemUnitHertz        =13         # from enum __MIDL___MIDL_itf_libtommoniker_0272_0001
+	enMementoItemUnitJoule        =16         # from enum __MIDL___MIDL_itf_libtommoniker_0272_0001
+	enMementoItemUnitKelvin       =5          # from enum __MIDL___MIDL_itf_libtommoniker_0272_0001
+	enMementoItemUnitKilogram     =2          # from enum __MIDL___MIDL_itf_libtommoniker_0272_0001
+	enMementoItemUnitLumen        =26         # from enum __MIDL___MIDL_itf_libtommoniker_0272_0001
+	enMementoItemUnitLux          =27         # from enum __MIDL___MIDL_itf_libtommoniker_0272_0001
+	enMementoItemUnitMeter        =1          # from enum __MIDL___MIDL_itf_libtommoniker_0272_0001
+	enMementoItemUnitMeter2       =8          # from enum __MIDL___MIDL_itf_libtommoniker_0272_0001
+	enMementoItemUnitMeter3       =9          # from enum __MIDL___MIDL_itf_libtommoniker_0272_0001
+	enMementoItemUnitMeterPerSecond=10         # from enum __MIDL___MIDL_itf_libtommoniker_0272_0001
+	enMementoItemUnitMeterPerSecond2=11         # from enum __MIDL___MIDL_itf_libtommoniker_0272_0001
+	enMementoItemUnitMol          =6          # from enum __MIDL___MIDL_itf_libtommoniker_0272_0001
+	enMementoItemUnitNewton       =14         # from enum __MIDL___MIDL_itf_libtommoniker_0272_0001
+	enMementoItemUnitOhm          =21         # from enum __MIDL___MIDL_itf_libtommoniker_0272_0001
+	enMementoItemUnitPascal       =15         # from enum __MIDL___MIDL_itf_libtommoniker_0272_0001
+	enMementoItemUnitRadian       =12         # from enum __MIDL___MIDL_itf_libtommoniker_0272_0001
+	enMementoItemUnitScalar       =33         # from enum __MIDL___MIDL_itf_libtommoniker_0272_0001
+	enMementoItemUnitSecond       =3          # from enum __MIDL___MIDL_itf_libtommoniker_0272_0001
+	enMementoItemUnitSiemens      =22         # from enum __MIDL___MIDL_itf_libtommoniker_0272_0001
+	enMementoItemUnitSievert      =30         # from enum __MIDL___MIDL_itf_libtommoniker_0272_0001
+	enMementoItemUnitTesla        =24         # from enum __MIDL___MIDL_itf_libtommoniker_0272_0001
+	enMementoItemUnitVolt         =19         # from enum __MIDL___MIDL_itf_libtommoniker_0272_0001
+	enMementoItemUnitWatt         =17         # from enum __MIDL___MIDL_itf_libtommoniker_0272_0001
+	enMementoItemUnitWeber        =23         # from enum __MIDL___MIDL_itf_libtommoniker_0272_0001
+	enMementoSection              =0          # from enum __MIDL___MIDL_itf_libtommoniker_0272_0001
+	RawImage_BGR                  =5          # from enum __MIDL___MIDL_itf_libtommoniker_0309_0001
+	RawImage_Complex_Float        =10         # from enum __MIDL___MIDL_itf_libtommoniker_0309_0001
+	RawImage_Complex_Int          =9          # from enum __MIDL___MIDL_itf_libtommoniker_0309_0001
+	RawImage_Data                 =8          # from enum __MIDL___MIDL_itf_libtommoniker_0309_0001
+	RawImage_Float                =2          # from enum __MIDL___MIDL_itf_libtommoniker_0309_0001
+	RawImage_HSV                  =7          # from enum __MIDL___MIDL_itf_libtommoniker_0309_0001
+	RawImage_RGB                  =3          # from enum __MIDL___MIDL_itf_libtommoniker_0309_0001
+	RawImage_RGBA                 =4          # from enum __MIDL___MIDL_itf_libtommoniker_0309_0001
+	RawImage_Signed               =1          # from enum __MIDL___MIDL_itf_libtommoniker_0309_0001
+	RawImage_Unsigned             =0          # from enum __MIDL___MIDL_itf_libtommoniker_0309_0001
+	RawImage_YUV                  =6          # from enum __MIDL___MIDL_itf_libtommoniker_0309_0001
+	RawImage_MultipleWriters      =2          # from enum __MIDL___MIDL_itf_libtommoniker_0309_0002
+	RawImage_ReadOnly             =0          # from enum __MIDL___MIDL_itf_libtommoniker_0309_0002
+	RawImage_SingleWriter         =1          # from enum __MIDL___MIDL_itf_libtommoniker_0309_0002
+	RawImage_Asynchronous         =1          # from enum __MIDL___MIDL_itf_libtommoniker_0315_0001
+	RawImage_Synchronous          =0          # from enum __MIDL___MIDL_itf_libtommoniker_0315_0001
+	e_bhvStemSettingAcquire       =2          # from enum bhvStemSettingType
+	e_bhvStemSettingCustom        =4          # from enum bhvStemSettingType
+	e_bhvStemSettingNone          =-1         # from enum bhvStemSettingType
+	e_bhvStemSettingPreview       =1          # from enum bhvStemSettingType
+	e_bhvStemSettingSearch        =0          # from enum bhvStemSettingType
+	AutoC2Crossover               =0          # from enum enC2CrossoverMode
+	C2Crossover                   =2          # from enum enC2CrossoverMode
+	NoC2Crossover                 =1          # from enum enC2CrossoverMode
+	ThreeLensesCondenserMode      =0          # from enum enCondenserMode
+	TwoLensesCondenserMode        =1          # from enum enCondenserMode
+	AutoMCSwitch                  =0          # from enum enMCSwitchMode
+	ManualMCSwitch                =1          # from enum enMCSwitchMode
+	gt_FEG                        =2          # from enum tag_GunType
+	gt_LaB6                       =1          # from enum tag_GunType
+	gt_Tungsten                   =0          # from enum tag_GunType
+
+from win32com.client import DispatchBaseClass
+class IAcquiredData(DispatchBaseClass):
+	"""IAcquiredData Interface"""
+	CLSID = IID('{88677A9D-D6E5-4C61-A834-D0AF0F7B97F2}')
+	coclass_clsid = None
+
+	# Result is of type IAcquiredData
+	def Clone(self):
+		"""method Clone"""
+		ret = self._oleobj_.InvokeTypes(3, LCID, 1, (9, 0), (),)
+		if ret is not None:
+			ret = Dispatch(ret, u'Clone', '{88677A9D-D6E5-4C61-A834-D0AF0F7B97F2}')
+		return ret
+
+	_prop_map_get_ = {
+		# Method 'Image' returns object of type 'IRawImage'
+		"Image": (1, 2, (13, 0), (), "Image", '{59EF4C62-8652-4A84-BFB4-B978CE577C6E}'),
+		# Method 'Memento' returns object of type 'IMemento'
+		"Memento": (2, 2, (9, 0), (), "Memento", '{547A7C34-E2E0-4545-8298-361573587878}'),
+	}
+	_prop_map_put_ = {
+	}
+
+class IAcquisition(DispatchBaseClass):
+	"""IAcquisition Interface"""
+	CLSID = IID('{E5D56C7D-9B01-45BC-A08F-3E4E2BE653D6}')
+	coclass_clsid = IID('{7681E531-D69A-429C-A592-45C084DFBC09}')
+
+	def SelectCamera(self, sCameraName=defaultNamedNotOptArg):
+		"""method SelectCamera"""
+		return self._oleobj_.InvokeTypes(3, LCID, 1, (24, 0), ((8, 1),),sCameraName
+			)
+
+	def SelectController(self, sControllerName=defaultNamedNotOptArg):
+		"""method SelectController"""
+		return self._oleobj_.InvokeTypes(2, LCID, 1, (24, 0), ((8, 1),),sControllerName
+			)
+
+	_prop_map_get_ = {
+		# Method 'Cameras' returns object of type 'ICameraControlCollection'
+		"Cameras": (5, 2, (9, 0), (), "Cameras", '{BA833E7C-2800-4EA7-8F69-F922F86D10E2}'),
+		# Method 'CurrentSelectedCamController' returns object of type 'ICameraControl'
+		"CurrentSelectedCamController": (1, 2, (9, 0), (), "CurrentSelectedCamController", '{8B95C4C7-651D-4166-955D-CC4222A8E0FB}'),
+		# Method 'CurrentSelectedScanController' returns object of type 'IScanningController'
+		"CurrentSelectedScanController": (4, 2, (9, 0), (), "CurrentSelectedScanController", '{3E20ADFB-35DF-4919-A492-34D478E8A1AB}'),
+		# Method 'ScanControllers' returns object of type 'IScanControlCollection'
+		"ScanControllers": (6, 2, (9, 0), (), "ScanControllers", '{C8C9FDB4-0711-4D29-9140-1C2099EB0374}'),
+	}
+	_prop_map_put_ = {
+	}
+
+class IArea(DispatchBaseClass):
+	"""IArea Interface"""
+	CLSID = IID('{E3A23ED4-CAF7-4EEE-A80A-DD89DF4A9B18}')
+	coclass_clsid = IID('{F544A1E0-C841-4CDC-9BCB-79B25A502247}')
+
+	_prop_map_get_ = {
+		"Bottom": (3, 2, (3, 0), (), "Bottom", None),
+		"Height": (6, 2, (3, 0), (), "Height", None),
+		"Left": (2, 2, (3, 0), (), "Left", None),
+		"Right": (4, 2, (3, 0), (), "Right", None),
+		"Top": (1, 2, (3, 0), (), "Top", None),
+		"Width": (5, 2, (3, 0), (), "Width", None),
+	}
+	_prop_map_put_ = {
+		"Bottom": ((3, LCID, 4, 0),()),
+		"Left": ((2, LCID, 4, 0),()),
+		"Right": ((4, LCID, 4, 0),()),
+		"Top": ((1, LCID, 4, 0),()),
+	}
+
+class ICCDCamera(DispatchBaseClass):
+	"""ICCDCamera Interface"""
+	CLSID = IID('{8F4715B4-A36E-4A2A-9B14-3FA1B466D366}')
+	coclass_clsid = None
+
+	def GetSize(self, pWidth=pythoncom.Missing, pHeight=pythoncom.Missing):
+		"""method Size"""
+		return self._ApplyTypes_(8, 1, (24, 0), ((16387, 2), (16387, 2)), u'GetSize', None,pWidth
+			, pHeight)
+
+	_prop_map_get_ = {
+		"Location": (3, 2, (3, 0), (), "Location", None),
+		"MaxPixelDepth": (4, 2, (3, 0), (), "MaxPixelDepth", None),
+		# Method 'MaxReadoutSize' returns object of type 'IArea'
+		"MaxReadoutSize": (5, 2, (9, 0), (), "MaxReadoutSize", '{E3A23ED4-CAF7-4EEE-A80A-DD89DF4A9B18}'),
+		"Name": (1, 2, (8, 0), (), "Name", None),
+		# Method 'PixelSize' returns object of type 'IVector'
+		"PixelSize": (7, 2, (9, 0), (), "PixelSize", '{CDD13BAF-B616-42EC-9998-B540FBFB5E1D}'),
+		"Retractable": (6, 2, (11, 0), (), "Retractable", None),
+		"Type": (2, 2, (3, 0), (), "Type", None),
+	}
+	_prop_map_put_ = {
+	}
+
+class ICameraControl(DispatchBaseClass):
+	"""ICameraControl Interface"""
+	CLSID = IID('{8B95C4C7-651D-4166-955D-CC4222A8E0FB}')
+	coclass_clsid = IID('{DAED4E3A-FCDD-4F3C-926B-BDFF3B2AA0A3}')
+
+	def AcquireImage(self, lWidth=defaultNamedNotOptArg, lHeight=defaultNamedNotOptArg, bstrMemoryFileName=defaultNamedNotOptArg):
+		"""method AcquireImage"""
+		return self._oleobj_.InvokeTypes(13, LCID, 1, (24, 0), ((3, 1), (3, 1), (8, 1)),lWidth
+			, lHeight, bstrMemoryFileName)
+
+	# Result is of type IRawImage
+	def AcquireImage2(self):
+		"""method AcquireImage2"""
+		ret = self._oleobj_.InvokeTypes(18, LCID, 1, (13, 0), (),)
+		if ret is not None:
+			# See if this IUnknown is really an IDispatch
+			try:
+				ret = ret.QueryInterface(pythoncom.IID_IDispatch)
+			except pythoncom.error:
+				return ret
+			ret = Dispatch(ret, u'AcquireImage2', '{59EF4C62-8652-4A84-BFB4-B978CE577C6E}')
+		return ret
+
+	def GetAvailableBinningValues(self, pBinningValues=pythoncom.Missing, NrValues=defaultNamedNotOptArg):
+		"""method GetAvailableBinningValues"""
+		return self._ApplyTypes_(9, 1, (24, 0), ((16387, 2), (16387, 3)), u'GetAvailableBinningValues', None,pBinningValues
+			, NrValues)
+
+	def GetAvailableGainValues(self, pGainValues=pythoncom.Missing, NrValues=defaultNamedNotOptArg):
+		"""method GetAvailableGainValues"""
+		return self._ApplyTypes_(10, 1, (24, 0), ((16389, 2), (16387, 3)), u'GetAvailableGainValues', None,pGainValues
+			, NrValues)
+
+	def GetAvailableReadoutRateValues(self, pReadoutRateValues=pythoncom.Missing, NrValues=defaultNamedNotOptArg):
+		"""method GetAvailableReadoutRateValues"""
+		return self._ApplyTypes_(8, 1, (24, 0), ((16389, 2), (16387, 3)), u'GetAvailableReadoutRateValues', None,pReadoutRateValues
+			, NrValues)
+
+	def GetAvailableShutterModes(self):
+		"""method GetAvailableShutterModes"""
+		return self._ApplyTypes_(20, 1, (8195, 0), (), u'GetAvailableShutterModes', None,)
+
+	# Result is of type ICCDCamera
+	def GetCamera(self):
+		"""method GetCamera"""
+		ret = self._oleobj_.InvokeTypes(14, LCID, 1, (9, 0), (),)
+		if ret is not None:
+			ret = Dispatch(ret, u'GetCamera', '{8F4715B4-A36E-4A2A-9B14-3FA1B466D366}')
+		return ret
+
+	def InsertCamera(self):
+		"""method InsertCamera"""
+		return self._oleobj_.InvokeTypes(11, LCID, 1, (24, 0), (),)
+
+	def RetractCamera(self):
+		"""method RetractCamera"""
+		return self._oleobj_.InvokeTypes(12, LCID, 1, (24, 0), (),)
+
+	def SelectCamera(self):
+		"""method SelectCamera"""
+		return self._oleobj_.InvokeTypes(15, LCID, 1, (24, 0), (),)
+
+	_prop_map_get_ = {
+		# Method 'AcquiredData' returns object of type 'IAcquiredData'
+		"AcquiredData": (17, 2, (9, 0), (), "AcquiredData", '{88677A9D-D6E5-4C61-A834-D0AF0F7B97F2}'),
+		"BinningValue": (3, 2, (3, 0), (), "BinningValue", None),
+		"ExposureMode": (22, 2, (3, 0), (), "ExposureMode", None),
+		"ExposureTime": (2, 2, (5, 0), (), "ExposureTime", None),
+		"Gain": (7, 2, (5, 0), (), "Gain", None),
+		"ImageCorrection": (19, 2, (3, 0), (), "ImageCorrection", None),
+		"IsCameraInserted": (5, 2, (11, 0), (), "IsCameraInserted", None),
+		"MaxPreExposurePauseTime": (27, 2, (5, 0), (), "MaxPreExposurePauseTime", None),
+		"MaxPreExposureTime": (24, 2, (5, 0), (), "MaxPreExposureTime", None),
+		"MinPreExposurePauseTime": (26, 2, (5, 0), (), "MinPreExposurePauseTime", None),
+		"MinPreExposureTime": (23, 2, (5, 0), (), "MinPreExposureTime", None),
+		"Name": (1, 2, (8, 0), (), "Name", None),
+		"PreExposurePauseTime": (28, 2, (5, 0), (), "PreExposurePauseTime", None),
+		"PreExposureTime": (25, 2, (5, 0), (), "PreExposureTime", None),
+		# Method 'ReadoutArea' returns object of type 'IArea'
+		"ReadoutArea": (4, 2, (9, 0), (), "ReadoutArea", '{E3A23ED4-CAF7-4EEE-A80A-DD89DF4A9B18}'),
+		"ReadoutRate": (6, 2, (5, 0), (), "ReadoutRate", None),
+		"ShutterMode": (21, 2, (3, 0), (), "ShutterMode", None),
+	}
+	_prop_map_put_ = {
+		"BinningValue": ((3, LCID, 4, 0),()),
+		"ExposureMode": ((22, LCID, 4, 0),()),
+		"ExposureTime": ((2, LCID, 4, 0),()),
+		"Gain": ((7, LCID, 4, 0),()),
+		"ImageCorrection": ((19, LCID, 4, 0),()),
+		"PreExposurePauseTime": ((28, LCID, 4, 0),()),
+		"PreExposureTime": ((25, LCID, 4, 0),()),
+		"ReadoutArea": ((4, LCID, 4, 0),()),
+		"ReadoutRate": ((6, LCID, 4, 0),()),
+		"ShutterMode": ((21, LCID, 4, 0),()),
+	}
+
+class ICameraControlCollection(DispatchBaseClass):
+	"""ICameraControlCollection Interface"""
+	CLSID = IID('{BA833E7C-2800-4EA7-8F69-F922F86D10E2}')
+	coclass_clsid = None
+
+	# Result is of type ICameraControl
+	# The method Item is actually a property, but must be used as a method to correctly pass the arguments
+	def Item(self, lIndex=defaultNamedNotOptArg):
+		"""property Item"""
+		ret = self._oleobj_.InvokeTypes(0, LCID, 2, (9, 0), ((12, 1),),lIndex
+			)
+		if ret is not None:
+			ret = Dispatch(ret, u'Item', '{8B95C4C7-651D-4166-955D-CC4222A8E0FB}')
+		return ret
+
+	_prop_map_get_ = {
+		"Count": (1, 2, (3, 0), (), "Count", None),
+	}
+	_prop_map_put_ = {
+	}
+	# Default method for this class is 'Item'
+	def __call__(self, lIndex=defaultNamedNotOptArg):
+		"""property Item"""
+		ret = self._oleobj_.InvokeTypes(0, LCID, 2, (9, 0), ((12, 1),),lIndex
+			)
+		if ret is not None:
+			ret = Dispatch(ret, '__call__', '{8B95C4C7-651D-4166-955D-CC4222A8E0FB}')
+		return ret
+
+	def __unicode__(self, *args):
+		try:
+			return unicode(self.__call__(*args))
+		except pythoncom.com_error:
+			return repr(self)
+	def __str__(self, *args):
+		return str(self.__unicode__(*args))
+	def __int__(self, *args):
+		return int(self.__call__(*args))
+	#This class has Count() property - allow len(ob) to provide this
+	def __len__(self):
+		return self._ApplyTypes_(*(1, 2, (3, 0), (), "Count", None))
+	#This class has a __len__ - this is needed so 'if object:' always returns TRUE.
+	def __nonzero__(self):
+		return True
+
+class IChannel(DispatchBaseClass):
+	"""IChannel Interface"""
+	CLSID = IID('{CE68A69A-3101-4710-9DB8-F541AFAED7E5}')
+	coclass_clsid = IID('{FAFF9BF1-ACD6-4475-9E2E-0CBBCA7A613D}')
+
+	def AcquireImage(self, lWidth=defaultNamedNotOptArg, lHeight=defaultNamedNotOptArg, sDataName=defaultNamedNotOptArg):
+		"""method AcquireImage"""
+		return self._oleobj_.InvokeTypes(6, LCID, 1, (24, 0), ((3, 1), (3, 1), (8, 1)),lWidth
+			, lHeight, sDataName)
+
+	# Result is of type IRawImage
+	def AcquireImage2(self):
+		"""method AcquireImage2"""
+		ret = self._oleobj_.InvokeTypes(8, LCID, 1, (13, 0), (),)
+		if ret is not None:
+			# See if this IUnknown is really an IDispatch
+			try:
+				ret = ret.QueryInterface(pythoncom.IID_IDispatch)
+			except pythoncom.error:
+				return ret
+			ret = Dispatch(ret, u'AcquireImage2', '{59EF4C62-8652-4A84-BFB4-B978CE577C6E}')
+		return ret
+
+	_prop_map_get_ = {
+		# Method 'AcquiredData' returns object of type 'IAcquiredData'
+		"AcquiredData": (7, 2, (9, 0), (), "AcquiredData", '{88677A9D-D6E5-4C61-A834-D0AF0F7B97F2}'),
+		"BitsPerPixel": (3, 2, (3, 0), (), "BitsPerPixel", None),
+		"CurrentSelectedDetector": (5, 2, (3, 0), (), "CurrentSelectedDetector", None),
+		# Method 'Detector' returns object of type 'IDetector'
+		"Detector": (4, 2, (9, 0), (), "Detector", '{CC15C43F-B7CB-4255-8482-FEA0100A4FC7}'),
+		"ElectronCounting": (2, 2, (3, 0), (), "ElectronCounting", None),
+		"Enabled": (1, 2, (3, 0), (), "Enabled", None),
+	}
+	_prop_map_put_ = {
+		"BitsPerPixel": ((3, LCID, 4, 0),()),
+		"ElectronCounting": ((2, LCID, 4, 0),()),
+		"Enabled": ((1, LCID, 4, 0),()),
+	}
+
+class IConfiguration(DispatchBaseClass):
+	"""IConfiguration Interface"""
+	CLSID = IID('{025F5A6B-3B98-4013-81BE-375FF144C936}')
+	coclass_clsid = None
+
+	_prop_map_get_ = {
+		"ProductFamily": (1, 2, (3, 0), (), "ProductFamily", None),
+	}
+	_prop_map_put_ = {
+	}
+
+class IDetector(DispatchBaseClass):
+	"""IDetector Interface"""
+	CLSID = IID('{CC15C43F-B7CB-4255-8482-FEA0100A4FC7}')
+	coclass_clsid = None
+
+	_prop_map_get_ = {
+		"Brightness": (3, 2, (5, 0), (), "Brightness", None),
+		"BrightnessResolution": (4, 2, (5, 0), (), "BrightnessResolution", None),
+		"Contrast": (5, 2, (5, 0), (), "Contrast", None),
+		"ContrastResolution": (6, 2, (5, 0), (), "ContrastResolution", None),
+		"Insertable": (8, 2, (3, 0), (), "Insertable", None),
+		"Location": (7, 2, (3, 0), (), "Location", None),
+		"Name": (1, 2, (8, 0), (), "Name", None),
+		"Type": (2, 2, (3, 0), (), "Type", None),
+	}
+	_prop_map_put_ = {
+		"Brightness": ((3, LCID, 4, 0),()),
+		"Contrast": ((5, LCID, 4, 0),()),
+	}
+
+class IEnergyFilter(DispatchBaseClass):
+	"""IEnergyFilter Interface"""
+	CLSID = IID('{C31B7DE8-E71B-4A1F-96C9-4B2945CC6FF2}')
+	coclass_clsid = IID('{A535BFBC-DA6A-4F99-A2E0-3E1EAB4F4BFA}')
+
+	def GetFirstApertureEntry(self, ApertureId=pythoncom.Missing):
+		return self._ApplyTypes_(18, 1, (24, 0), ((16387, 2),), u'GetFirstApertureEntry', None,ApertureId
+			)
+
+	def GetLensValue(self, eLens=defaultNamedNotOptArg):
+		return self._oleobj_.InvokeTypes(12, LCID, 1, (5, 0), ((3, 1),),eLens
+			)
+
+	def GetNextApertureEntry(self, ApertureId=defaultNamedNotOptArg, ApertureName=pythoncom.Missing):
+		return self._ApplyTypes_(19, 1, (24, 0), ((16387, 3), (16392, 2)), u'GetNextApertureEntry', None,ApertureId
+			, ApertureName)
+
+	def IsPropertySupported(self, eProp=defaultNamedNotOptArg):
+		return self._oleobj_.InvokeTypes(16, LCID, 1, (11, 0), ((3, 1),),eProp
+			)
+
+	def NullZeroLossPeak(self):
+		return self._oleobj_.InvokeTypes(10, LCID, 1, (24, 0), (),)
+
+	def PutLensValue(self, eLens=defaultNamedNotOptArg, newVal=defaultNamedNotOptArg):
+		return self._oleobj_.InvokeTypes(13, LCID, 1, (24, 0), ((3, 1), (5, 1)),eLens
+			, newVal)
+
+	_prop_map_get_ = {
+		"ActiveAperture": (17, 2, (3, 0), (), "ActiveAperture", None),
+		"AdjustVoltage": (20, 2, (5, 0), (), "AdjustVoltage", None),
+		"DriftTubeVoltage": (6, 2, (5, 0), (), "DriftTubeVoltage", None),
+		"EnergyShift": (4, 2, (5, 0), (), "EnergyShift", None),
+		"FilterType": (14, 2, (3, 0), (), "FilterType", None),
+		"Mode": (2, 2, (3, 0), (), "Mode", None),
+		"SlitIn": (1, 2, (11, 0), (), "SlitIn", None),
+		"SlitWidth": (3, 2, (5, 0), (), "SlitWidth", None),
+		"SpectrumOffset": (5, 2, (5, 0), (), "SpectrumOffset", None),
+		"Status": (15, 2, (3, 0), (), "Status", None),
+		"TVIn": (11, 2, (11, 0), (), "TVIn", None),
+	}
+	_prop_map_put_ = {
+		"ActiveAperture": ((17, LCID, 4, 0),()),
+		"AdjustVoltage": ((20, LCID, 4, 0),()),
+		"DriftTubeVoltage": ((6, LCID, 4, 0),()),
+		"EnergyShift": ((4, LCID, 4, 0),()),
+		"Mode": ((2, LCID, 4, 0),()),
+		"SlitIn": ((1, LCID, 4, 0),()),
+		"SlitWidth": ((3, LCID, 4, 0),()),
+		"SpectrumOffset": ((5, LCID, 4, 0),()),
+		"TVIn": ((11, LCID, 4, 0),()),
+	}
+
+class IGauge(DispatchBaseClass):
+	"""TOM IGauge Interface"""
+	CLSID = IID('{44BFFFAD-737C-4DDC-95D5-DC85262072C8}')
+	coclass_clsid = IID('{A61D5C9D-626D-45A4-B46D-F43ED8916DE7}')
+
+	_prop_map_get_ = {
+		"Name": (1, 2, (8, 0), (), "Name", None),
+		"Pressure": (2, 2, (5, 0), (), "Pressure", None),
+		"PressureLevel": (4, 2, (3, 0), (), "PressureLevel", None),
+		"Status": (3, 2, (3, 0), (), "Status", None),
+		"TriplevelValues": (5, 2, (8197, 0), (), "TriplevelValues", None),
+	}
+	_prop_map_put_ = {
+	}
+
+class IGauges(DispatchBaseClass):
+	CLSID = IID('{F8D46CE5-F80E-4187-8554-3C7CC86A9758}')
+	coclass_clsid = IID('{D6519C4E-0DFB-4E8B-B40D-B3406335379E}')
+
+	# Result is of type IGauge
+	# The method Item is actually a property, but must be used as a method to correctly pass the arguments
+	def Item(self, index=defaultNamedNotOptArg):
+		"""Get individual gauge"""
+		ret = self._oleobj_.InvokeTypes(0, LCID, 2, (9, 0), ((12, 0),),index
+			)
+		if ret is not None:
+			ret = Dispatch(ret, u'Item', '{44BFFFAD-737C-4DDC-95D5-DC85262072C8}')
+		return ret
+
+	_prop_map_get_ = {
+		"Count": (1, 2, (3, 0), (), "Count", None),
+	}
+	_prop_map_put_ = {
+	}
+	# Default method for this class is 'Item'
+	def __call__(self, index=defaultNamedNotOptArg):
+		"""Get individual gauge"""
+		ret = self._oleobj_.InvokeTypes(0, LCID, 2, (9, 0), ((12, 0),),index
+			)
+		if ret is not None:
+			ret = Dispatch(ret, '__call__', '{44BFFFAD-737C-4DDC-95D5-DC85262072C8}')
+		return ret
+
+	def __unicode__(self, *args):
+		try:
+			return unicode(self.__call__(*args))
+		except pythoncom.com_error:
+			return repr(self)
+	def __str__(self, *args):
+		return str(self.__unicode__(*args))
+	def __int__(self, *args):
+		return int(self.__call__(*args))
+	def __iter__(self):
+		"Return a Python iterator for this object"
+		ob = self._oleobj_.InvokeTypes(-4,LCID,2,(13, 10),())
+		return win32com.client.util.Iterator(ob, '{44BFFFAD-737C-4DDC-95D5-DC85262072C8}')
+	def _NewEnum(self):
+		"Create an enumerator from this object"
+		return win32com.client.util.WrapEnum(self._oleobj_.InvokeTypes(-4,LCID,2,(13, 10),()),'{44BFFFAD-737C-4DDC-95D5-DC85262072C8}')
+	def __getitem__(self, index):
+		"Allow this class to be accessed as a collection"
+		if '_enum_' not in self.__dict__:
+			self.__dict__['_enum_'] = self._NewEnum()
+		return self._enum_.__getitem__(index)
+	#This class has Count() property - allow len(ob) to provide this
+	def __len__(self):
+		return self._ApplyTypes_(*(1, 2, (3, 0), (), "Count", None))
+	#This class has a __len__ - this is needed so 'if object:' always returns TRUE.
+	def __nonzero__(self):
+		return True
+
+class IIllumination(DispatchBaseClass):
+	"""IIllumination Interface"""
+	CLSID = IID('{6DC459D2-C971-4591-AB33-3F308D26D1E8}')
+	coclass_clsid = IID('{D2DD6440-B8E5-4C8A-ADBA-EB0DAF0ED9FE}')
+
+	_prop_map_get_ = {
+		# Method 'BeamAlignShift' returns object of type 'IVector'
+		"BeamAlignShift": (18, 2, (9, 0), (), "BeamAlignShift", '{CDD13BAF-B616-42EC-9998-B540FBFB5E1D}'),
+		# Method 'BeamAlignmentTilt' returns object of type 'IVector'
+		"BeamAlignmentTilt": (11, 2, (9, 0), (), "BeamAlignmentTilt", '{CDD13BAF-B616-42EC-9998-B540FBFB5E1D}'),
+		# Method 'BeamShift' returns object of type 'IVector'
+		"BeamShift": (15, 2, (9, 0), (), "BeamShift", '{CDD13BAF-B616-42EC-9998-B540FBFB5E1D}'),
+		# Method 'BeamShiftCalibration' returns object of type 'IVector'
+		"BeamShiftCalibration": (17, 2, (9, 0), (), "BeamShiftCalibration", '{CDD13BAF-B616-42EC-9998-B540FBFB5E1D}'),
+		# Method 'BeamShiftPhysical' returns object of type 'IVector'
+		"BeamShiftPhysical": (16, 2, (9, 0), (), "BeamShiftPhysical", '{CDD13BAF-B616-42EC-9998-B540FBFB5E1D}'),
+		"C1ApertureSize": (37, 2, (5, 0), (), "C1ApertureSize", None),
+		"C2ApertureSize": (36, 2, (5, 0), (), "C2ApertureSize", None),
+		"C2CrossoverMode": (22, 2, (3, 0), (), "C2CrossoverMode", None),
+		"C3ImageDistParallel": (27, 2, (5, 0), (), "C3ImageDistParallel", None),
+		"C3ImageDistProbe": (28, 2, (5, 0), (), "C3ImageDistProbe", None),
+		"CondenserCalibration": (35, 2, (5, 0), (), "CondenserCalibration", None),
+		"CondenserMode": (21, 2, (3, 0), (), "CondenserMode", None),
+		# Method 'CondenserStigmator' returns object of type 'IVector'
+		"CondenserStigmator": (19, 2, (9, 0), (), "CondenserStigmator", '{CDD13BAF-B616-42EC-9998-B540FBFB5E1D}'),
+		# Method 'DarkFieldTiltCalibration' returns object of type 'IVector'
+		"DarkFieldTiltCalibration": (10, 2, (9, 0), (), "DarkFieldTiltCalibration", '{CDD13BAF-B616-42EC-9998-B540FBFB5E1D}'),
+		# Method 'DarkfieldTilt' returns object of type 'IVector'
+		"DarkfieldTilt": (9, 2, (9, 0), (), "DarkfieldTilt", '{CDD13BAF-B616-42EC-9998-B540FBFB5E1D}'),
+		"IlluminatedAreaDiameter": (23, 2, (5, 0), (), "IlluminatedAreaDiameter", None),
+		"IlluminatedAreaDiameterMax": (34, 2, (5, 0), (), "IlluminatedAreaDiameterMax", None),
+		"IlluminatedAreaDiameterMin": (33, 2, (5, 0), (), "IlluminatedAreaDiameterMin", None),
+		"IlluminationMode": (20, 2, (3, 0), (), "IlluminationMode", None),
+		"Intensity": (4, 2, (5, 0), (), "Intensity", None),
+		"IntensityLimitAllowed": (8, 2, (11, 0), (), "IntensityLimitAllowed", None),
+		"IntensityLimitEnabled": (7, 2, (11, 0), (), "IntensityLimitEnabled", None),
+		"IntensityZoomAllowed": (6, 2, (11, 0), (), "IntensityZoomAllowed", None),
+		"IntensityZoomEnabled": (5, 2, (11, 0), (), "IntensityZoomEnabled", None),
+		"MCOnMaxMagForParallelIllum": (26, 2, (5, 0), (), "MCOnMaxMagForParallelIllum", None),
+		"MCOnMinMagForParallelIllum": (25, 2, (5, 0), (), "MCOnMinMagForParallelIllum", None),
+		"MCSwitchModeForParallelIllum": (24, 2, (3, 0), (), "MCSwitchModeForParallelIllum", None),
+		"MaxSpotSizeIndex": (2, 2, (3, 0), (), "MaxSpotSizeIndex", None),
+		"MinSpotSizeIndex": (1, 2, (3, 0), (), "MinSpotSizeIndex", None),
+		"NanoProbeAllowed": (14, 2, (11, 0), (), "NanoProbeAllowed", None),
+		"NanoProbeAvailable": (13, 2, (11, 0), (), "NanoProbeAvailable", None),
+		"ProbeConvergenceAngle": (29, 2, (5, 0), (), "ProbeConvergenceAngle", None),
+		"ProbeConvergenceAngleMax": (32, 2, (5, 0), (), "ProbeConvergenceAngleMax", None),
+		"ProbeConvergenceAngleMin": (31, 2, (5, 0), (), "ProbeConvergenceAngleMin", None),
+		"ProbeMode": (12, 2, (3, 0), (), "ProbeMode", None),
+		"SpotSizeIndex": (3, 2, (3, 0), (), "SpotSizeIndex", None),
+	}
+	_prop_map_put_ = {
+		"BeamAlignShift": ((18, LCID, 4, 0),()),
+		"BeamAlignmentTilt": ((11, LCID, 4, 0),()),
+		"BeamShift": ((15, LCID, 4, 0),()),
+		"BeamShiftCalibration": ((17, LCID, 4, 0),()),
+		"BeamShiftPhysical": ((16, LCID, 4, 0),()),
+		"C2CrossoverMode": ((22, LCID, 4, 0),()),
+		"CondenserMode": ((21, LCID, 4, 0),()),
+		"CondenserStigmator": ((19, LCID, 4, 0),()),
+		"DarkFieldTiltCalibration": ((10, LCID, 4, 0),()),
+		"DarkfieldTilt": ((9, LCID, 4, 0),()),
+		"IlluminatedAreaDiameter": ((23, LCID, 4, 0),()),
+		"IlluminationMode": ((20, LCID, 4, 0),()),
+		"Intensity": ((4, LCID, 4, 0),()),
+		"IntensityLimitEnabled": ((7, LCID, 4, 0),()),
+		"IntensityZoomEnabled": ((5, LCID, 4, 0),()),
+		"MCOnMaxMagForParallelIllum": ((26, LCID, 4, 0),()),
+		"MCOnMinMagForParallelIllum": ((25, LCID, 4, 0),()),
+		"MCSwitchModeForParallelIllum": ((24, LCID, 4, 0),()),
+		"ProbeConvergenceAngle": ((29, LCID, 4, 0),()),
+		"ProbeMode": ((12, LCID, 4, 0),()),
+		"SpotSizeIndex": ((3, LCID, 4, 0),()),
+	}
+
+class IInstrument(DispatchBaseClass):
+	"""IInstrument Interface"""
+	CLSID = IID('{7150DFFB-C961-4425-BEDD-705387D0007A}')
+	coclass_clsid = IID('{7D82B1B8-3A42-495A-B1D9-2BE40FA497FA}')
+
+	_prop_map_get_ = {
+	}
+	_prop_map_put_ = {
+	}
+
+class IMemento(DispatchBaseClass):
+	"""IMemento Interface"""
+	CLSID = IID('{547A7C34-E2E0-4545-8298-361573587878}')
+	coclass_clsid = None
+
+	# Result is of type IMemento
+	def Clone(self):
+		ret = self._oleobj_.InvokeTypes(4, LCID, 1, (9, 0), (),)
+		if ret is not None:
+			ret = Dispatch(ret, u'Clone', '{547A7C34-E2E0-4545-8298-361573587878}')
+		return ret
+
+	# Result is of type IMementoItem
+	def Find(self, Name=defaultNamedNotOptArg):
+		"""method Find"""
+		ret = self._oleobj_.InvokeTypes(2, LCID, 1, (9, 0), ((8, 1),),Name
+			)
+		if ret is not None:
+			ret = Dispatch(ret, u'Find', '{33CF073E-7AA5-4BB0-82C0-FAE6B3F61F77}')
+		return ret
+
+	def Name(self, pIItem=defaultNamedNotOptArg):
+		"""method Name"""
+		# Result is a Unicode object
+		return self._oleobj_.InvokeTypes(3, LCID, 1, (8, 0), ((9, 1),),pIItem
+			)
+
+	_prop_map_get_ = {
+		# Method 'Items' returns object of type 'IMementoItems'
+		"Items": (1, 2, (9, 0), (), "Items", '{73460085-3CAE-49B2-97A3-AE81195A06BB}'),
+	}
+	_prop_map_put_ = {
+	}
+
+class IMementoItem(DispatchBaseClass):
+	"""IMementoItem Interface"""
+	CLSID = IID('{33CF073E-7AA5-4BB0-82C0-FAE6B3F61F77}')
+	coclass_clsid = None
+
+	_prop_map_get_ = {
+		"Name": (2, 2, (8, 0), (), "Name", None),
+		# Method 'Parent' returns object of type 'IMementoItem'
+		"Parent": (1, 2, (9, 0), (), "Parent", '{33CF073E-7AA5-4BB0-82C0-FAE6B3F61F77}'),
+		"Unit": (3, 2, (3, 0), (), "Unit", None),
+		"Value": (0, 2, (12, 0), (), "Value", None),
+	}
+	_prop_map_put_ = {
+	}
+	# Default property for this class is 'Value'
+	def __call__(self):
+		return self._ApplyTypes_(*(0, 2, (12, 0), (), "Value", None))
+	def __unicode__(self, *args):
+		try:
+			return unicode(self.__call__(*args))
+		except pythoncom.com_error:
+			return repr(self)
+	def __str__(self, *args):
+		return str(self.__unicode__(*args))
+	def __int__(self, *args):
+		return int(self.__call__(*args))
+
+class IMementoItems(DispatchBaseClass):
+	"""IMementoItems Interface"""
+	CLSID = IID('{73460085-3CAE-49B2-97A3-AE81195A06BB}')
+	coclass_clsid = None
+
+	# Result is of type IMementoItem
+	# The method Item is actually a property, but must be used as a method to correctly pass the arguments
+	def Item(self, index=defaultNamedNotOptArg):
+		ret = self._oleobj_.InvokeTypes(0, LCID, 2, (9, 0), ((3, 1),),index
+			)
+		if ret is not None:
+			ret = Dispatch(ret, u'Item', '{33CF073E-7AA5-4BB0-82C0-FAE6B3F61F77}')
+		return ret
+
+	_prop_map_get_ = {
+		"Count": (1, 2, (3, 0), (), "Count", None),
+	}
+	_prop_map_put_ = {
+	}
+	# Default method for this class is 'Item'
+	def __call__(self, index=defaultNamedNotOptArg):
+		ret = self._oleobj_.InvokeTypes(0, LCID, 2, (9, 0), ((3, 1),),index
+			)
+		if ret is not None:
+			ret = Dispatch(ret, '__call__', '{33CF073E-7AA5-4BB0-82C0-FAE6B3F61F77}')
+		return ret
+
+	def __unicode__(self, *args):
+		try:
+			return unicode(self.__call__(*args))
+		except pythoncom.com_error:
+			return repr(self)
+	def __str__(self, *args):
+		return str(self.__unicode__(*args))
+	def __int__(self, *args):
+		return int(self.__call__(*args))
+	def __iter__(self):
+		"Return a Python iterator for this object"
+		ob = self._oleobj_.InvokeTypes(-4,LCID,2,(13, 10),())
+		return win32com.client.util.Iterator(ob, '{33CF073E-7AA5-4BB0-82C0-FAE6B3F61F77}')
+	def _NewEnum(self):
+		"Create an enumerator from this object"
+		return win32com.client.util.WrapEnum(self._oleobj_.InvokeTypes(-4,LCID,2,(13, 10),()),'{33CF073E-7AA5-4BB0-82C0-FAE6B3F61F77}')
+	def __getitem__(self, index):
+		"Allow this class to be accessed as a collection"
+		if '_enum_' not in self.__dict__:
+			self.__dict__['_enum_'] = self._NewEnum()
+		return self._enum_.__getitem__(index)
+	#This class has Count() property - allow len(ob) to provide this
+	def __len__(self):
+		return self._ApplyTypes_(*(1, 2, (3, 0), (), "Count", None))
+	#This class has a __len__ - this is needed so 'if object:' always returns TRUE.
+	def __nonzero__(self):
+		return True
+
+class IMementoSection(DispatchBaseClass):
+	"""IMementoSection Interface"""
+	CLSID = IID('{7BC53359-3083-461D-BCB7-31AA43873956}')
+	coclass_clsid = None
+
+	# Result is of type IMementoItem
+	def Find(self, Name=defaultNamedNotOptArg):
+		"""method Find"""
+		ret = self._oleobj_.InvokeTypes(2, LCID, 1, (9, 0), ((8, 1),),Name
+			)
+		if ret is not None:
+			ret = Dispatch(ret, u'Find', '{33CF073E-7AA5-4BB0-82C0-FAE6B3F61F77}')
+		return ret
+
+	def Name(self, pIItem=defaultNamedNotOptArg):
+		"""method Name"""
+		# Result is a Unicode object
+		return self._oleobj_.InvokeTypes(3, LCID, 1, (8, 0), ((9, 1),),pIItem
+			)
+
+	_prop_map_get_ = {
+		# Method 'Items' returns object of type 'IMementoItems'
+		"Items": (1, 2, (9, 0), (), "Items", '{73460085-3CAE-49B2-97A3-AE81195A06BB}'),
+	}
+	_prop_map_put_ = {
+	}
+
+class IProjection(DispatchBaseClass):
+	"""IProjection Interface"""
+	CLSID = IID('{8FF5A755-42B5-4C6E-BB39-AD8E9DF3B40B}')
+	coclass_clsid = IID('{0371B137-54F8-4FAF-A283-FCBE77F6036B}')
+
+	def SelectNearestCameraLength(self, dNewCameraLength=defaultNamedNotOptArg, SubModeChange=defaultNamedNotOptArg):
+		"""method SelectNearestCameraLength"""
+		return self._oleobj_.InvokeTypes(12, LCID, 1, (24, 0), ((5, 1), (3, 1)),dNewCameraLength
+			, SubModeChange)
+
+	def SelectNearestMagnification(self, dMagnification=defaultNamedNotOptArg, bSubMode=defaultNamedNotOptArg):
+		"""method SelectNearestMagnification"""
+		return self._oleobj_.InvokeTypes(11, LCID, 1, (24, 0), ((5, 1), (3, 1)),dMagnification
+			, bSubMode)
+
+	_prop_map_get_ = {
+		"CameraLength": (21, 2, (5, 0), (), "CameraLength", None),
+		"CameraLengthIndex": (22, 2, (3, 0), (), "CameraLengthIndex", None),
+		"Defocus": (10, 2, (5, 0), (), "Defocus", None),
+		# Method 'DiffractionStigmator' returns object of type 'IVector'
+		"DiffractionStigmator": (19, 2, (9, 0), (), "DiffractionStigmator", '{CDD13BAF-B616-42EC-9998-B540FBFB5E1D}'),
+		"Focus": (9, 2, (5, 0), (), "Focus", None),
+		# Method 'ImageBeamShift' returns object of type 'IVector'
+		"ImageBeamShift": (15, 2, (9, 0), (), "ImageBeamShift", '{CDD13BAF-B616-42EC-9998-B540FBFB5E1D}'),
+		# Method 'ImageBeamShiftPhysical' returns object of type 'IVector'
+		"ImageBeamShiftPhysical": (16, 2, (9, 0), (), "ImageBeamShiftPhysical", '{CDD13BAF-B616-42EC-9998-B540FBFB5E1D}'),
+		"ImageRotation": (7, 2, (5, 0), (), "ImageRotation", None),
+		# Method 'ImageShift' returns object of type 'IVector'
+		"ImageShift": (8, 2, (9, 0), (), "ImageShift", '{CDD13BAF-B616-42EC-9998-B540FBFB5E1D}'),
+		# Method 'ImageShiftCalibration' returns object of type 'IVector'
+		"ImageShiftCalibration": (14, 2, (9, 0), (), "ImageShiftCalibration", '{CDD13BAF-B616-42EC-9998-B540FBFB5E1D}'),
+		# Method 'ImageShiftPhysical' returns object of type 'IVector'
+		"ImageShiftPhysical": (13, 2, (9, 0), (), "ImageShiftPhysical", '{CDD13BAF-B616-42EC-9998-B540FBFB5E1D}'),
+		"LensProgram": (17, 2, (3, 0), (), "LensProgram", None),
+		"Magnification": (3, 2, (5, 0), (), "Magnification", None),
+		"MagnificationIndex": (4, 2, (3, 0), (), "MagnificationIndex", None),
+		"Mode": (1, 2, (3, 0), (), "Mode", None),
+		"ObjectiveLensType": (18, 2, (3, 0), (), "ObjectiveLensType", None),
+		# Method 'ObjectiveStigmator' returns object of type 'IVector'
+		"ObjectiveStigmator": (20, 2, (9, 0), (), "ObjectiveStigmator", '{CDD13BAF-B616-42EC-9998-B540FBFB5E1D}'),
+		"SubMode": (2, 2, (3, 0), (), "SubMode", None),
+		"SubModeMaxIndex": (6, 2, (3, 0), (), "SubModeMaxIndex", None),
+		"SubModeMinIndex": (5, 2, (3, 0), (), "SubModeMinIndex", None),
+	}
+	_prop_map_put_ = {
+		"CameraLengthIndex": ((22, LCID, 4, 0),()),
+		"Defocus": ((10, LCID, 4, 0),()),
+		"DiffractionStigmator": ((19, LCID, 4, 0),()),
+		"Focus": ((9, LCID, 4, 0),()),
+		"ImageBeamShift": ((15, LCID, 4, 0),()),
+		"ImageBeamShiftPhysical": ((16, LCID, 4, 0),()),
+		"ImageShift": ((8, LCID, 4, 0),()),
+		"ImageShiftCalibration": ((14, LCID, 4, 0),()),
+		"ImageShiftPhysical": ((13, LCID, 4, 0),()),
+		"LensProgram": ((17, LCID, 4, 0),()),
+		"MagnificationIndex": ((4, LCID, 4, 0),()),
+		"Mode": ((1, LCID, 4, 0),()),
+		"ObjectiveStigmator": ((20, LCID, 4, 0),()),
+	}
+
+class IRawImageDescriptor(DispatchBaseClass):
+	"""IRawImageDescriptor Interface"""
+	CLSID = IID('{4380EAFD-EC11-4673-BF6A-206C5B2065B9}')
+	coclass_clsid = None
+
+	# The method Bits is actually a property, but must be used as a method to correctly pass the arguments
+	def Bits(self, channel=defaultNamedNotOptArg):
+		"""property bits"""
+		return self._oleobj_.InvokeTypes(4, LCID, 2, (3, 0), ((3, 1),),channel
+			)
+
+	# The method Encoding is actually a property, but must be used as a method to correctly pass the arguments
+	def Encoding(self, channel=defaultNamedNotOptArg):
+		"""property encoding"""
+		return self._oleobj_.InvokeTypes(5, LCID, 2, (3, 0), ((3, 1),),channel
+			)
+
+	# The method Offset is actually a property, but must be used as a method to correctly pass the arguments
+	def Offset(self, channel=defaultNamedNotOptArg):
+		"""property offset"""
+		return self._oleobj_.InvokeTypes(6, LCID, 2, (3, 0), ((3, 1),),channel
+			)
+
+	# The method SetBits is actually a property, but must be used as a method to correctly pass the arguments
+	def SetBits(self, channel=defaultNamedNotOptArg, arg1=defaultUnnamedArg):
+		"""property bits"""
+		return self._oleobj_.InvokeTypes(4, LCID, 4, (24, 0), ((3, 1), (3, 1)),channel
+			, arg1)
+
+	# The method SetEncoding is actually a property, but must be used as a method to correctly pass the arguments
+	def SetEncoding(self, channel=defaultNamedNotOptArg, arg1=defaultUnnamedArg):
+		"""property encoding"""
+		return self._oleobj_.InvokeTypes(5, LCID, 4, (24, 0), ((3, 1), (3, 1)),channel
+			, arg1)
+
+	# The method SetOffset is actually a property, but must be used as a method to correctly pass the arguments
+	def SetOffset(self, channel=defaultNamedNotOptArg, arg1=defaultUnnamedArg):
+		"""property offset"""
+		return self._oleobj_.InvokeTypes(6, LCID, 4, (24, 0), ((3, 1), (3, 1)),channel
+			, arg1)
+
+	# The method SetStride_x is actually a property, but must be used as a method to correctly pass the arguments
+	def SetStride_x(self, channel=defaultNamedNotOptArg, arg1=defaultUnnamedArg):
+		"""property stride_x"""
+		return self._oleobj_.InvokeTypes(7, LCID, 4, (24, 0), ((3, 1), (3, 1)),channel
+			, arg1)
+
+	# The method SetStride_y is actually a property, but must be used as a method to correctly pass the arguments
+	def SetStride_y(self, channel=defaultNamedNotOptArg, arg1=defaultUnnamedArg):
+		"""property stride_y"""
+		return self._oleobj_.InvokeTypes(8, LCID, 4, (24, 0), ((3, 1), (3, 1)),channel
+			, arg1)
+
+	# The method Stride_x is actually a property, but must be used as a method to correctly pass the arguments
+	def Stride_x(self, channel=defaultNamedNotOptArg):
+		"""property stride_x"""
+		return self._oleobj_.InvokeTypes(7, LCID, 2, (3, 0), ((3, 1),),channel
+			)
+
+	# The method Stride_y is actually a property, but must be used as a method to correctly pass the arguments
+	def Stride_y(self, channel=defaultNamedNotOptArg):
+		"""property stride_y"""
+		return self._oleobj_.InvokeTypes(8, LCID, 2, (3, 0), ((3, 1),),channel
+			)
+
+	_prop_map_get_ = {
+		"Channels": (3, 2, (3, 0), (), "Channels", None),
+		"Height": (2, 2, (3, 0), (), "Height", None),
+		"Width": (1, 2, (3, 0), (), "Width", None),
+	}
+	_prop_map_put_ = {
+		"Channels": ((3, LCID, 4, 0),()),
+		"Height": ((2, LCID, 4, 0),()),
+		"Width": ((1, LCID, 4, 0),()),
+	}
+
+class IScanControlCollection(DispatchBaseClass):
+	"""IScanControlCollection Interface"""
+	CLSID = IID('{C8C9FDB4-0711-4D29-9140-1C2099EB0374}')
+	coclass_clsid = None
+
+	# Result is of type IScanningController
+	# The method Item is actually a property, but must be used as a method to correctly pass the arguments
+	def Item(self, lIndex=defaultNamedNotOptArg):
+		"""property Item"""
+		ret = self._oleobj_.InvokeTypes(0, LCID, 2, (9, 0), ((12, 1),),lIndex
+			)
+		if ret is not None:
+			ret = Dispatch(ret, u'Item', '{3E20ADFB-35DF-4919-A492-34D478E8A1AB}')
+		return ret
+
+	_prop_map_get_ = {
+		"Count": (1, 2, (3, 0), (), "Count", None),
+	}
+	_prop_map_put_ = {
+	}
+	# Default method for this class is 'Item'
+	def __call__(self, lIndex=defaultNamedNotOptArg):
+		"""property Item"""
+		ret = self._oleobj_.InvokeTypes(0, LCID, 2, (9, 0), ((12, 1),),lIndex
+			)
+		if ret is not None:
+			ret = Dispatch(ret, '__call__', '{3E20ADFB-35DF-4919-A492-34D478E8A1AB}')
+		return ret
+
+	def __unicode__(self, *args):
+		try:
+			return unicode(self.__call__(*args))
+		except pythoncom.com_error:
+			return repr(self)
+	def __str__(self, *args):
+		return str(self.__unicode__(*args))
+	def __int__(self, *args):
+		return int(self.__call__(*args))
+	#This class has Count() property - allow len(ob) to provide this
+	def __len__(self):
+		return self._ApplyTypes_(*(1, 2, (3, 0), (), "Count", None))
+	#This class has a __len__ - this is needed so 'if object:' always returns TRUE.
+	def __nonzero__(self):
+		return True
+
+class IScanParameters(DispatchBaseClass):
+	"""IScanParameters Interface"""
+	CLSID = IID('{0AF735D1-CAEF-43B9-ADDF-2E2B4BC3367E}')
+	coclass_clsid = IID('{B431C504-00EE-4440-ABFF-481FD496E50E}')
+
+	def DecrementDwellTime(self, DwellDec=defaultNamedNotOptArg):
+		"""method DecrementDwellTime"""
+		return self._oleobj_.InvokeTypes(16, LCID, 1, (24, 0), ((5, 1),),DwellDec
+			)
+
+	def IncrementDwellTime(self, DwellInc=defaultNamedNotOptArg):
+		"""method IncrementDwellTime"""
+		return self._oleobj_.InvokeTypes(15, LCID, 1, (24, 0), ((5, 1),),DwellInc
+			)
+
+	# Result is of type IVector
+	# The method Resolution is actually a property, but must be used as a method to correctly pass the arguments
+	def Resolution(self, lIndex=defaultNamedNotOptArg):
+		"""property Resolution"""
+		ret = self._oleobj_.InvokeTypes(2, LCID, 2, (9, 0), ((3, 1),),lIndex
+			)
+		if ret is not None:
+			ret = Dispatch(ret, u'Resolution', '{CDD13BAF-B616-42EC-9998-B540FBFB5E1D}')
+		return ret
+
+	# Result is of type IVector
+	def SelectResolution(self, newVal=defaultNamedNotOptArg):
+		"""method SelectResolution"""
+		ret = self._oleobj_.InvokeTypes(21, LCID, 1, (9, 0), ((9, 1),),newVal
+			)
+		if ret is not None:
+			ret = Dispatch(ret, u'SelectResolution', '{CDD13BAF-B616-42EC-9998-B540FBFB5E1D}')
+		return ret
+
+	def SelectResolutionIndex(self, lIndex=defaultNamedNotOptArg):
+		"""method SelectResolutionIndex"""
+		return self._oleobj_.InvokeTypes(22, LCID, 1, (24, 0), ((3, 1),),lIndex
+			)
+
+	def SetSpotListDirect(self, nPoints=defaultNamedNotOptArg, pPoints=defaultNamedNotOptArg):
+		"""method SetSpotListDirect"""
+		return self._oleobj_.InvokeTypes(19, LCID, 1, (24, 0), ((3, 1), (16386, 1)),nPoints
+			, pPoints)
+
+	_prop_map_get_ = {
+		# Method 'AllowedArea' returns object of type 'IArea'
+		"AllowedArea": (3, 2, (9, 0), (), "AllowedArea", '{E3A23ED4-CAF7-4EEE-A80A-DD89DF4A9B18}'),
+		"CircleAspect": (11, 2, (5, 0), (), "CircleAspect", None),
+		"CircleRadius": (10, 2, (3, 0), (), "CircleRadius", None),
+		"CircleSpot": (12, 2, (3, 0), (), "CircleSpot", None),
+		"CircleSpotMax": (14, 2, (3, 0), (), "CircleSpotMax", None),
+		"CircleSpotMin": (13, 2, (3, 0), (), "CircleSpotMin", None),
+		"CustomSetting": (17, 2, (13, 0), (), "CustomSetting", None),
+		"DwellTime": (4, 2, (5, 0), (), "DwellTime", None),
+		"DwellTimeMax": (6, 2, (5, 0), (), "DwellTimeMax", None),
+		"DwellTimeMin": (5, 2, (5, 0), (), "DwellTimeMin", None),
+		# Method 'MaxResolution' returns object of type 'IVector'
+		"MaxResolution": (20, 2, (9, 0), (), "MaxResolution", '{CDD13BAF-B616-42EC-9998-B540FBFB5E1D}'),
+		"NumResolutions": (1, 2, (3, 0), (), "NumResolutions", None),
+		# Method 'ScanArea' returns object of type 'IArea'
+		"ScanArea": (9, 2, (9, 0), (), "ScanArea", '{E3A23ED4-CAF7-4EEE-A80A-DD89DF4A9B18}'),
+		"ScanMode": (7, 2, (3, 0), (), "ScanMode", None),
+		"ScanOptions": (8, 2, (3, 0), (), "ScanOptions", None),
+		# Method 'ScanSpotList' returns object of type 'IScanSpotListCollection'
+		"ScanSpotList": (18, 2, (9, 0), (), "ScanSpotList", '{55F7E887-5C7B-41E6-A98B-FB19383ADD92}'),
+	}
+	_prop_map_put_ = {
+		"CircleAspect": ((11, LCID, 4, 0),()),
+		"CircleRadius": ((10, LCID, 4, 0),()),
+		"CircleSpot": ((12, LCID, 4, 0),()),
+		"DwellTime": ((4, LCID, 4, 0),()),
+		"ScanArea": ((9, LCID, 4, 0),()),
+		"ScanMode": ((7, LCID, 4, 0),()),
+		"ScanOptions": ((8, LCID, 4, 0),()),
+		"ScanSpotList": ((18, LCID, 4, 0),()),
+	}
+
+class IScanSpotListCollection(DispatchBaseClass):
+	"""IScanSpotListCollection Interface"""
+	CLSID = IID('{55F7E887-5C7B-41E6-A98B-FB19383ADD92}')
+	coclass_clsid = None
+
+	def Add(self, pIVector=defaultNamedNotOptArg):
+		"""method Add"""
+		return self._oleobj_.InvokeTypes(2, LCID, 1, (24, 0), ((9, 0),),pIVector
+			)
+
+	def ClearList(self):
+		"""method ClearList"""
+		return self._oleobj_.InvokeTypes(3, LCID, 1, (24, 0), (),)
+
+	# Result is of type IVector
+	# The method Item is actually a property, but must be used as a method to correctly pass the arguments
+	def Item(self, lIndex=defaultNamedNotOptArg):
+		"""property Item"""
+		ret = self._oleobj_.InvokeTypes(0, LCID, 2, (9, 0), ((12, 1),),lIndex
+			)
+		if ret is not None:
+			ret = Dispatch(ret, u'Item', '{CDD13BAF-B616-42EC-9998-B540FBFB5E1D}')
+		return ret
+
+	_prop_map_get_ = {
+		"Count": (1, 2, (3, 0), (), "Count", None),
+	}
+	_prop_map_put_ = {
+	}
+	# Default method for this class is 'Item'
+	def __call__(self, lIndex=defaultNamedNotOptArg):
+		"""property Item"""
+		ret = self._oleobj_.InvokeTypes(0, LCID, 2, (9, 0), ((12, 1),),lIndex
+			)
+		if ret is not None:
+			ret = Dispatch(ret, '__call__', '{CDD13BAF-B616-42EC-9998-B540FBFB5E1D}')
+		return ret
+
+	def __unicode__(self, *args):
+		try:
+			return unicode(self.__call__(*args))
+		except pythoncom.com_error:
+			return repr(self)
+	def __str__(self, *args):
+		return str(self.__unicode__(*args))
+	def __int__(self, *args):
+		return int(self.__call__(*args))
+	#This class has Count() property - allow len(ob) to provide this
+	def __len__(self):
+		return self._ApplyTypes_(*(1, 2, (3, 0), (), "Count", None))
+	#This class has a __len__ - this is needed so 'if object:' always returns TRUE.
+	def __nonzero__(self):
+		return True
+
+class IScanningController(DispatchBaseClass):
+	"""IScanningController Interface"""
+	CLSID = IID('{3E20ADFB-35DF-4919-A492-34D478E8A1AB}')
+	coclass_clsid = IID('{2E4EF809-F203-431F-B5B2-B6A03E7643BD}')
+
+	# Result is of type IChannel
+	def GetChannelForDetector(self, RequestedDetector=defaultNamedNotOptArg):
+		"""method GetChannelForDetector"""
+		ret = self._oleobj_.InvokeTypes(10, LCID, 1, (9, 0), ((3, 1),),RequestedDetector
+			)
+		if ret is not None:
+			ret = Dispatch(ret, u'GetChannelForDetector', '{CE68A69A-3101-4710-9DB8-F541AFAED7E5}')
+		return ret
+
+	# Result is of type IScanParameters
+	def GetScanParams(self):
+		"""method GetScanParams"""
+		ret = self._oleobj_.InvokeTypes(7, LCID, 1, (9, 0), (),)
+		if ret is not None:
+			ret = Dispatch(ret, u'GetScanParams', '{0AF735D1-CAEF-43B9-ADDF-2E2B4BC3367E}')
+		return ret
+
+	def StartAcquisition(self, pIScanSettings=defaultNamedNotOptArg, bSingle=1):
+		"""method StartAcquisition"""
+		return self._oleobj_.InvokeTypes(5, LCID, 1, (24, 0), ((9, 1), (3, 48)),pIScanSettings
+			, bSingle)
+
+	def StartScan(self, pIScanSettings=defaultNamedNotOptArg, bSingle=1):
+		"""method StartScan"""
+		return self._oleobj_.InvokeTypes(6, LCID, 1, (24, 0), ((9, 1), (3, 48)),pIScanSettings
+			, bSingle)
+
+	def StopAcquisition(self):
+		"""method StopAcquisition"""
+		return self._oleobj_.InvokeTypes(8, LCID, 1, (24, 0), (),)
+
+	def StopScan(self):
+		"""method StopScan"""
+		return self._oleobj_.InvokeTypes(9, LCID, 1, (24, 0), (),)
+
+	# Result is of type IChannel
+	# The method channel is actually a property, but must be used as a method to correctly pass the arguments
+	def channel(self, lIndex=defaultNamedNotOptArg):
+		"""property Channel"""
+		ret = self._oleobj_.InvokeTypes(3, LCID, 2, (9, 0), ((3, 1),),lIndex
+			)
+		if ret is not None:
+			ret = Dispatch(ret, u'channel', '{CE68A69A-3101-4710-9DB8-F541AFAED7E5}')
+		return ret
+
+	_prop_map_get_ = {
+		"Channels": (2, 2, (3, 0), (), "Channels", None),
+		"Name": (1, 2, (8, 0), (), "Name", None),
+		"OfflineScanStrategy": (4, 2, (3, 0), (), "OfflineScanStrategy", None),
+		"SettingType": (11, 2, (3, 0), (), "SettingType", None),
+	}
+	_prop_map_put_ = {
+		"OfflineScanStrategy": ((4, LCID, 4, 0),()),
+	}
+
+class IScreen(DispatchBaseClass):
+	"""IScreen Interface"""
+	CLSID = IID('{D82A8680-71A7-4E71-AB78-FB9A68B1380B}')
+	coclass_clsid = IID('{6144B4D6-D565-431B-B43E-B94E771F4194}')
+
+	def SetScreenPosition(self, newPosition=defaultNamedNotOptArg):
+		"""method SetScreenPosition"""
+		return self._oleobj_.InvokeTypes(1, LCID, 1, (24, 0), ((3, 1),),newPosition
+			)
+
+	def StartSetScreenPosition(self, newPosition=defaultNamedNotOptArg):
+		"""method StartSetScreenPosition"""
+		return self._oleobj_.InvokeTypes(5, LCID, 1, (24, 0), ((3, 1),),newPosition
+			)
+
+	_prop_map_get_ = {
+		"Current": (4, 2, (5, 0), (), "Current", None),
+		"IsFocusScreenIn": (3, 2, (11, 0), (), "IsFocusScreenIn", None),
+		"Position": (2, 2, (3, 0), (), "Position", None),
+	}
+	_prop_map_put_ = {
+	}
+
+class IStage(DispatchBaseClass):
+	"""IStage Interface"""
+	CLSID = IID('{5C940107-953D-4B0D-A102-F62168040165}')
+	coclass_clsid = None
+
+	def Goto(self, pPosition=defaultNamedNotOptArg, Axis=defaultNamedNotOptArg):
+		"""method Goto"""
+		return self._oleobj_.InvokeTypes(2, LCID, 1, (24, 0), ((9, 1), (3, 1)),pPosition
+			, Axis)
+
+	def GotoWithSpeed(self, lAxis=defaultNamedNotOptArg, dNewPosition=defaultNamedNotOptArg):
+		"""method GotoWithSpeed"""
+		return self._oleobj_.InvokeTypes(5, LCID, 1, (24, 0), ((3, 1), (5, 1)),lAxis
+			, dNewPosition)
+
+	_prop_map_get_ = {
+		# Method 'Position' returns object of type 'IStagePosition'
+		"Position": (1, 2, (9, 0), (), "Position", '{A95B12AC-DF8F-4C4F-B102-27888001463A}'),
+		"Speed": (4, 2, (5, 0), (), "Speed", None),
+		"Status": (3, 2, (3, 0), (), "Status", None),
+	}
+	_prop_map_put_ = {
+		"Speed": ((4, LCID, 4, 0),()),
+	}
+
+class IStagePosition(DispatchBaseClass):
+	"""IStagePosition Interface"""
+	CLSID = IID('{A95B12AC-DF8F-4C4F-B102-27888001463A}')
+	coclass_clsid = IID('{289E36B7-23EF-4ACF-99F3-E25240CFA2F0}')
+
+	_prop_map_get_ = {
+		"A": (4, 2, (5, 0), (), "A", None),
+		"B": (5, 2, (5, 0), (), "B", None),
+		"X": (1, 2, (5, 0), (), "X", None),
+		"Y": (2, 2, (5, 0), (), "Y", None),
+		"Z": (3, 2, (5, 0), (), "Z", None),
+	}
+	_prop_map_put_ = {
+		"A": ((4, LCID, 4, 0),()),
+		"B": ((5, LCID, 4, 0),()),
+		"X": ((1, LCID, 4, 0),()),
+		"Y": ((2, LCID, 4, 0),()),
+		"Z": ((3, LCID, 4, 0),()),
+	}
+
+class IStem(DispatchBaseClass):
+	"""IStem Interface"""
+	CLSID = IID('{D03577B9-382E-4D8A-A6B8-69A3FBFB8615}')
+	coclass_clsid = None
+
+	def MoveBeam(self, dX=defaultNamedNotOptArg, dY=defaultNamedNotOptArg):
+		"""method MoveBeam"""
+		return self._oleobj_.InvokeTypes(6, LCID, 1, (24, 0), ((5, 1), (5, 1)),dX
+			, dY)
+
+	_prop_map_get_ = {
+		"AngleXY": (9, 2, (5, 0), (), "AngleXY", None),
+		"Defocus": (3, 2, (5, 0), (), "Defocus", None),
+		"Focus": (2, 2, (5, 0), (), "Focus", None),
+		"FocusStrategy": (7, 2, (3, 0), (), "FocusStrategy", None),
+		"Magnification": (1, 2, (5, 0), (), "Magnification", None),
+		"Mode": (12, 2, (3, 0), (), "Mode", None),
+		"ModeTransitionEnabled": (11, 2, (11, 0), (), "ModeTransitionEnabled", None),
+		"Rotation": (4, 2, (5, 0), (), "Rotation", None),
+		"RotationCorrection": (5, 2, (5, 0), (), "RotationCorrection", None),
+		"SensitivityRatioXY": (10, 2, (5, 0), (), "SensitivityRatioXY", None),
+	}
+	_prop_map_put_ = {
+		"AngleXY": ((9, LCID, 4, 0),()),
+		"ChangeDefocus": ((8, LCID, 4, 0),()),
+		"Defocus": ((3, LCID, 4, 0),()),
+		"Focus": ((2, LCID, 4, 0),()),
+		"FocusStrategy": ((7, LCID, 4, 0),()),
+		"Magnification": ((1, LCID, 4, 0),()),
+		"Mode": ((12, LCID, 4, 0),()),
+		"ModeTransitionEnabled": ((11, LCID, 4, 0),()),
+		"Rotation": ((4, LCID, 4, 0),()),
+		"RotationCorrection": ((5, LCID, 4, 0),()),
+		"SensitivityRatioXY": ((10, LCID, 4, 0),()),
+	}
+
+class ITemBeamStopper(DispatchBaseClass):
+	"""ITemBeamStopper Interface"""
+	CLSID = IID('{54AD0E74-4273-4CD8-BCE5-6120BED2BBE2}')
+	coclass_clsid = IID('{95D7A830-448F-4DC3-8EF5-B6C0517873F6}')
+
+	def Insert(self):
+		"""Insert beam stopper"""
+		return self._oleobj_.InvokeTypes(12, LCID, 1, (24, 0), (),)
+
+	def InsertHalfway(self):
+		"""Insert beam stopper halfway"""
+		return self._oleobj_.InvokeTypes(15, LCID, 1, (24, 0), (),)
+
+	def Retract(self):
+		"""Retract beam stopper"""
+		return self._oleobj_.InvokeTypes(14, LCID, 1, (24, 0), (),)
+
+	_prop_map_get_ = {
+		"IsAvailable": (2, 2, (11, 0), (), "IsAvailable", None),
+		"State": (1, 2, (3, 0), (), "State", None),
+	}
+	_prop_map_put_ = {
+	}
+
+class ITemGun(DispatchBaseClass):
+	"""ITemGun Interface"""
+	CLSID = IID('{9230A547-E612-4E77-AD74-71613F757C19}')
+	coclass_clsid = IID('{49AB6F9E-E330-4E08-9E50-7E39ABCE9F22}')
+
+	_prop_map_get_ = {
+		"Blanked": (3, 2, (11, 0), (), "Blanked", None),
+		# Method 'BlankerAmplitude' returns object of type 'IVector'
+		"BlankerAmplitude": (6, 2, (9, 0), (), "BlankerAmplitude", '{CDD13BAF-B616-42EC-9998-B540FBFB5E1D}'),
+		"Emission": (9, 2, (11, 0), (), "Emission", None),
+		"GunType": (8, 2, (3, 0), (), "GunType", None),
+		"HT": (11, 2, (5, 0), (), "HT", None),
+		"HTMode": (7, 2, (3, 0), (), "HTMode", None),
+		"HTState": (12, 2, (3, 0), (), "HTState", None),
+		"MaxHT": (10, 2, (5, 0), (), "MaxHT", None),
+		# Method 'Shift' returns object of type 'IVector'
+		"Shift": (1, 2, (9, 0), (), "Shift", '{CDD13BAF-B616-42EC-9998-B540FBFB5E1D}'),
+		# Method 'Tilt' returns object of type 'IVector'
+		"Tilt": (2, 2, (9, 0), (), "Tilt", '{CDD13BAF-B616-42EC-9998-B540FBFB5E1D}'),
+	}
+	_prop_map_put_ = {
+		"Blanked": ((3, LCID, 4, 0),()),
+		"BlankerAmplitude": ((6, LCID, 4, 0),()),
+		"Emission": ((9, LCID, 4, 0),()),
+		"HT": ((11, LCID, 4, 0),()),
+		"Shift": ((1, LCID, 4, 0),()),
+		"Tilt": ((2, LCID, 4, 0),()),
+	}
+
+class ITemInstrument(DispatchBaseClass):
+	"""ITemInstrument Interface"""
+	CLSID = IID('{F416E9BB-80AB-4CE3-8ED7-C05476C5B753}')
+	coclass_clsid = IID('{F7024B66-B8F4-4D6D-8E0B-4782B464B4DB}')
+
+	# The method IsFunctionAllowed is actually a property, but must be used as a method to correctly pass the arguments
+	def IsFunctionAllowed(self, lFunctionId=defaultNamedNotOptArg):
+		"""property IsFunctionAllowed"""
+		return self._oleobj_.InvokeTypes(18, LCID, 2, (11, 0), ((3, 1),),lFunctionId
+			)
+
+	def IsLocked(self):
+		"""method IsLocked"""
+		return self._oleobj_.InvokeTypes(3, LCID, 1, (11, 0), (),)
+
+	def NormalizeLenses(self, eLenses=defaultNamedNotOptArg):
+		"""method NormalizeLenses"""
+		return self._oleobj_.InvokeTypes(8, LCID, 1, (24, 0), ((3, 1),),eLenses
+			)
+
+	def ReleaseLock(self):
+		"""method ReleaseLock"""
+		return self._oleobj_.InvokeTypes(2, LCID, 1, (24, 0), (),)
+
+	def RequestLock(self):
+		"""method RequestLock"""
+		return self._oleobj_.InvokeTypes(1, LCID, 1, (11, 0), (),)
+
+	def SaveAlignments(self):
+		"""method SaveAlignments"""
+		return self._oleobj_.InvokeTypes(22, LCID, 1, (24, 0), (),)
+
+	_prop_map_get_ = {
+		# Method 'Acquisition' returns object of type 'IAcquisition'
+		"Acquisition": (15, 2, (9, 0), (), "Acquisition", '{E5D56C7D-9B01-45BC-A08F-3E4E2BE653D6}'),
+		"AutoNormalizeEnabled": (4, 2, (11, 0), (), "AutoNormalizeEnabled", None),
+		# Method 'BeamStopper' returns object of type 'ITemBeamStopper'
+		"BeamStopper": (24, 2, (9, 0), (), "BeamStopper", '{54AD0E74-4273-4CD8-BCE5-6120BED2BBE2}'),
+		# Method 'Configuration' returns object of type 'IConfiguration'
+		"Configuration": (25, 2, (9, 0), (), "Configuration", '{025F5A6B-3B98-4013-81BE-375FF144C936}'),
+		"DNumber": (5, 2, (3, 0), (), "DNumber", None),
+		# Method 'EnergyFilter' returns object of type 'IEnergyFilter'
+		"EnergyFilter": (13, 2, (9, 0), (), "EnergyFilter", '{C31B7DE8-E71B-4A1F-96C9-4B2945CC6FF2}'),
+		# Method 'Gun' returns object of type 'ITemGun'
+		"Gun": (9, 2, (9, 0), (), "Gun", '{9230A547-E612-4E77-AD74-71613F757C19}'),
+		"GunType": (21, 2, (3, 0), (), "GunType", None),
+		# Method 'Illumination' returns object of type 'IIllumination'
+		"Illumination": (10, 2, (9, 0), (), "Illumination", '{6DC459D2-C971-4591-AB33-3F308D26D1E8}'),
+		"IsDonglePresent": (17, 2, (3, 0), (), "IsDonglePresent", None),
+		"Mode": (7, 2, (3, 0), (), "Mode", None),
+		# Method 'Projection' returns object of type 'IProjection'
+		"Projection": (11, 2, (9, 0), (), "Projection", '{8FF5A755-42B5-4C6E-BB39-AD8E9DF3B40B}'),
+		# Method 'STEM' returns object of type 'IStem'
+		"STEM": (19, 2, (9, 0), (), "STEM", '{D03577B9-382E-4D8A-A6B8-69A3FBFB8615}'),
+		# Method 'Screen' returns object of type 'IScreen'
+		"Screen": (14, 2, (9, 0), (), "Screen", '{D82A8680-71A7-4E71-AB78-FB9A68B1380B}'),
+		# Method 'Stage' returns object of type 'IStage'
+		"Stage": (12, 2, (9, 0), (), "Stage", '{5C940107-953D-4B0D-A102-F62168040165}'),
+		"StemAvailable": (6, 2, (11, 0), (), "StemAvailable", None),
+		# Method 'TemperatureControl' returns object of type 'ITemperatureControl'
+		"TemperatureControl": (23, 2, (9, 0), (), "TemperatureControl", '{AF3AB413-4BC1-4CD8-A118-C6D26CE3C2CF}'),
+		# Method 'User' returns object of type 'IUser'
+		"User": (16, 2, (9, 0), (), "User", '{B08B8D60-5C4E-45FA-90F2-28BDF2AEB5F3}'),
+		# Method 'VacuumSystem' returns object of type 'IVacuumSystem'
+		"VacuumSystem": (20, 2, (9, 0), (), "VacuumSystem", '{865BB5A0-1EB3-464F-ACD4-BCB86616C228}'),
+	}
+	_prop_map_put_ = {
+		"AutoNormalizeEnabled": ((4, LCID, 4, 0),()),
+		"Mode": ((7, LCID, 4, 0),()),
+	}
+
+class ITemperatureControl(DispatchBaseClass):
+	"""ITemperatureControl Interface"""
+	CLSID = IID('{AF3AB413-4BC1-4CD8-A118-C6D26CE3C2CF}')
+	coclass_clsid = None
+
+	def ForceRefill(self):
+		"""Force refrigerant refill"""
+		return self._oleobj_.InvokeTypes(1, LCID, 1, (24, 0), (),)
+
+	# The method RefrigerantLevel is actually a property, but must be used as a method to correctly pass the arguments
+	def RefrigerantLevel(self, rl=defaultNamedNotOptArg):
+		"""Get refrigerant level"""
+		return self._oleobj_.InvokeTypes(11, LCID, 2, (5, 0), ((3, 1),),rl
+			)
+
+	_prop_map_get_ = {
+		"DewarsBusyFilling": (12, 2, (11, 0), (), "DewarsBusyFilling", None),
+		"IsAvailable": (10, 2, (11, 0), (), "IsAvailable", None),
+	}
+	_prop_map_put_ = {
+	}
+
+class IUser(DispatchBaseClass):
+	"""IUser Interface"""
+	CLSID = IID('{B08B8D60-5C4E-45FA-90F2-28BDF2AEB5F3}')
+	coclass_clsid = IID('{A19F6548-BA48-4685-8FA5-52B3A8C32C26}')
+
+	_prop_map_get_ = {
+		"Level": (3, 2, (3, 0), (), "Level", None),
+		"LoggedOn": (1, 2, (11, 0), (), "LoggedOn", None),
+		"Name": (2, 2, (8, 0), (), "Name", None),
+	}
+	_prop_map_put_ = {
+	}
+
+class IVacuumSystem(DispatchBaseClass):
+	"""TOM IVacuum interface"""
+	CLSID = IID('{865BB5A0-1EB3-464F-ACD4-BCB86616C228}')
+	coclass_clsid = IID('{8DC5805D-3C2B-4FCE-A0BD-8B41D242F62A}')
+
+	def AutoloaderBufferCycle(self):
+		"""Perform autoloader buffer cycle"""
+		return self._oleobj_.InvokeTypes(3, LCID, 1, (24, 0), (),)
+
+	def BeginRunBufferCycle(self):
+		"""Request buffer cycle"""
+		return self._oleobj_.InvokeTypes(2, LCID, 1, (24, 0), (),)
+
+	def RunBufferCycle(self):
+		"""Run complete Buffer cycle"""
+		return self._oleobj_.InvokeTypes(1, LCID, 1, (24, 0), (),)
+
+	_prop_map_get_ = {
+		"BufferCycleStatus": (14, 2, (3, 0), (), "BufferCycleStatus", None),
+		"ColumnValvesOpen": (12, 2, (11, 0), (), "ColumnValvesOpen", None),
+		# Method 'Gauges' returns object of type 'IGauges'
+		"Gauges": (13, 2, (9, 0), (), "Gauges", '{F8D46CE5-F80E-4187-8554-3C7CC86A9758}'),
+		"PVPRunning": (11, 2, (11, 0), (), "PVPRunning", None),
+		"Status": (10, 2, (3, 0), (), "Status", None),
+	}
+	_prop_map_put_ = {
+		"ColumnValvesOpen": ((12, LCID, 4, 0),()),
+	}
+
+class IVector(DispatchBaseClass):
+	"""Utility object: Vector"""
+	CLSID = IID('{CDD13BAF-B616-42EC-9998-B540FBFB5E1D}')
+	coclass_clsid = IID('{4524CDB1-68E9-4BA6-9503-96358B531619}')
+
+	def Dot(self, pIVector=defaultNamedNotOptArg):
+		"""Dot Product"""
+		return self._oleobj_.InvokeTypes(6, LCID, 1, (5, 0), ((9, 1),),pIVector
+			)
+
+	def IsEqual(self, pIVector=defaultNamedNotOptArg):
+		"""IsEqual"""
+		return self._oleobj_.InvokeTypes(5, LCID, 1, (11, 0), ((9, 1),),pIVector
+			)
+
+	_prop_map_get_ = {
+		"Angle": (4, 2, (5, 0), (), "Angle", None),
+		"Length": (3, 2, (5, 0), (), "Length", None),
+		"X": (1, 2, (5, 0), (), "X", None),
+		"Y": (2, 2, (5, 0), (), "Y", None),
+	}
+	_prop_map_put_ = {
+		"X": ((1, LCID, 4, 0),()),
+		"Y": ((2, LCID, 4, 0),()),
+	}
+
+class _IAcquisitionEvents:
+	"""_IAcquisitionEvents Interface"""
+	CLSID = CLSID_Sink = IID('{DBA6D609-614D-4483-89FE-E81F25CB31FC}')
+	coclass_clsid = IID('{7681E531-D69A-429C-A592-45C084DFBC09}')
+	_public_methods_ = [] # For COM Server support
+	_dispid_to_func_ = {
+		        1 : "OnSelectedCameraChanged",
+		        3 : "OnSelectedCameraControllerChanged",
+		        2 : "OnAvailableCameraControllersChanged",
+		        4 : "OnSelectedScanningControllerChanged",
+		        5 : "OnAvailableScanningControllerChanged",
+		}
+
+	def __init__(self, oobj = None):
+		if oobj is None:
+			self._olecp = None
+		else:
+			import win32com.server.util
+			from win32com.server.policy import EventHandlerPolicy
+			cpc=oobj._oleobj_.QueryInterface(pythoncom.IID_IConnectionPointContainer)
+			cp=cpc.FindConnectionPoint(self.CLSID_Sink)
+			cookie=cp.Advise(win32com.server.util.wrap(self, usePolicy=EventHandlerPolicy))
+			self._olecp,self._olecp_cookie = cp,cookie
+	def __del__(self):
+		try:
+			self.close()
+		except pythoncom.com_error:
+			pass
+	def close(self):
+		if self._olecp is not None:
+			cp,cookie,self._olecp,self._olecp_cookie = self._olecp,self._olecp_cookie,None,None
+			cp.Unadvise(cookie)
+	def _query_interface_(self, iid):
+		import win32com.server.util
+		if iid==self.CLSID_Sink: return win32com.server.util.wrap(self)
+
+	# Event Handlers
+	# If you create handlers, they should have the following prototypes:
+#	def OnSelectedCameraChanged(self):
+#		"""method OnSelectedCameraChanged"""
+#	def OnSelectedCameraControllerChanged(self):
+#		"""method OnSelectedCameraControllerChanged"""
+#	def OnAvailableCameraControllersChanged(self):
+#		"""method OnAvailableCameraControllersChanged"""
+#	def OnSelectedScanningControllerChanged(self):
+#		"""method OnSelectedScanningControllerChanged"""
+#	def OnAvailableScanningControllerChanged(self):
+#		"""method OnAvailableScanningControllerChanged"""
+
+
+class _ICameraControllerEvents:
+	"""_ICameraControllerEvents Interface"""
+	CLSID = CLSID_Sink = IID('{02E224BA-A74C-4C89-9098-50ADDA87A96D}')
+	coclass_clsid = IID('{DAED4E3A-FCDD-4F3C-926B-BDFF3B2AA0A3}')
+	_public_methods_ = [] # For COM Server support
+	_dispid_to_func_ = {
+		        3 : "OnImageUpdate",
+		        2 : "OnAcquisitionStop",
+		        5 : "OnShutterModeChanged",
+		        1 : "OnAcquisitionStart",
+		        4 : "OnImageCompleted",
+		}
+
+	def __init__(self, oobj = None):
+		if oobj is None:
+			self._olecp = None
+		else:
+			import win32com.server.util
+			from win32com.server.policy import EventHandlerPolicy
+			cpc=oobj._oleobj_.QueryInterface(pythoncom.IID_IConnectionPointContainer)
+			cp=cpc.FindConnectionPoint(self.CLSID_Sink)
+			cookie=cp.Advise(win32com.server.util.wrap(self, usePolicy=EventHandlerPolicy))
+			self._olecp,self._olecp_cookie = cp,cookie
+	def __del__(self):
+		try:
+			self.close()
+		except pythoncom.com_error:
+			pass
+	def close(self):
+		if self._olecp is not None:
+			cp,cookie,self._olecp,self._olecp_cookie = self._olecp,self._olecp_cookie,None,None
+			cp.Unadvise(cookie)
+	def _query_interface_(self, iid):
+		import win32com.server.util
+		if iid==self.CLSID_Sink: return win32com.server.util.wrap(self)
+
+	# Event Handlers
+	# If you create handlers, they should have the following prototypes:
+#	def OnImageUpdate(self):
+#		"""method OnImageUpdate"""
+#	def OnAcquisitionStop(self):
+#		"""method OnAcquisitionStop"""
+#	def OnShutterModeChanged(self, newVal=defaultNamedNotOptArg):
+#		"""method OnShutterModeChanged"""
+#	def OnAcquisitionStart(self):
+#		"""method OnAcquisitionStart"""
+#	def OnImageCompleted(self):
+#		"""method OnImageCompleted"""
+
+
+class _IChannelEvents:
+	"""_IChannelEvents Interface"""
+	CLSID = CLSID_Sink = IID('{3D39B640-ECC6-487A-91AA-15ABE676597D}')
+	coclass_clsid = IID('{FAFF9BF1-ACD6-4475-9E2E-0CBBCA7A613D}')
+	_public_methods_ = [] # For COM Server support
+	_dispid_to_func_ = {
+		        1 : "OnDetectorConnected",
+		        2 : "OnDetectorDisconnected",
+		}
+
+	def __init__(self, oobj = None):
+		if oobj is None:
+			self._olecp = None
+		else:
+			import win32com.server.util
+			from win32com.server.policy import EventHandlerPolicy
+			cpc=oobj._oleobj_.QueryInterface(pythoncom.IID_IConnectionPointContainer)
+			cp=cpc.FindConnectionPoint(self.CLSID_Sink)
+			cookie=cp.Advise(win32com.server.util.wrap(self, usePolicy=EventHandlerPolicy))
+			self._olecp,self._olecp_cookie = cp,cookie
+	def __del__(self):
+		try:
+			self.close()
+		except pythoncom.com_error:
+			pass
+	def close(self):
+		if self._olecp is not None:
+			cp,cookie,self._olecp,self._olecp_cookie = self._olecp,self._olecp_cookie,None,None
+			cp.Unadvise(cookie)
+	def _query_interface_(self, iid):
+		import win32com.server.util
+		if iid==self.CLSID_Sink: return win32com.server.util.wrap(self)
+
+	# Event Handlers
+	# If you create handlers, they should have the following prototypes:
+#	def OnDetectorConnected(self, pVal=defaultNamedNotOptArg):
+#		"""method OnDetectorConnected"""
+#	def OnDetectorDisconnected(self):
+#		"""method OnDetectorDisconnected"""
+
+
+class _IEnergyFilterEvents:
+	"""_IEnergyFilterEvents Interface"""
+	CLSID = CLSID_Sink = IID('{AAA5ADD7-C5A9-4710-9A74-76E4D20BA41B}')
+	coclass_clsid = IID('{A535BFBC-DA6A-4F99-A2E0-3E1EAB4F4BFA}')
+	_public_methods_ = [] # For COM Server support
+	_dispid_to_func_ = {
+		        3 : "OnSlitWidthChanged",
+		       11 : "OnStatusChanged",
+		       20 : "OnAdjustChanged",
+		        4 : "OnEnergyShiftChanged",
+		        5 : "OnSpectrumOffsetChanged",
+		        1 : "OnSlitInChanged",
+		       12 : "OnActiveApertureChanged",
+		       10 : "OnTVInChanged",
+		        6 : "OnDriftTubeVoltageChanged",
+		        2 : "OnModeChanged",
+		}
+
+	def __init__(self, oobj = None):
+		if oobj is None:
+			self._olecp = None
+		else:
+			import win32com.server.util
+			from win32com.server.policy import EventHandlerPolicy
+			cpc=oobj._oleobj_.QueryInterface(pythoncom.IID_IConnectionPointContainer)
+			cp=cpc.FindConnectionPoint(self.CLSID_Sink)
+			cookie=cp.Advise(win32com.server.util.wrap(self, usePolicy=EventHandlerPolicy))
+			self._olecp,self._olecp_cookie = cp,cookie
+	def __del__(self):
+		try:
+			self.close()
+		except pythoncom.com_error:
+			pass
+	def close(self):
+		if self._olecp is not None:
+			cp,cookie,self._olecp,self._olecp_cookie = self._olecp,self._olecp_cookie,None,None
+			cp.Unadvise(cookie)
+	def _query_interface_(self, iid):
+		import win32com.server.util
+		if iid==self.CLSID_Sink: return win32com.server.util.wrap(self)
+
+	# Event Handlers
+	# If you create handlers, they should have the following prototypes:
+#	def OnSlitWidthChanged(self, Data=defaultNamedNotOptArg):
+#	def OnStatusChanged(self, Data=defaultNamedNotOptArg):
+#	def OnAdjustChanged(self, Data=defaultNamedNotOptArg):
+#	def OnEnergyShiftChanged(self, Data=defaultNamedNotOptArg):
+#	def OnSpectrumOffsetChanged(self, Data=defaultNamedNotOptArg):
+#	def OnSlitInChanged(self, Data=defaultNamedNotOptArg):
+#	def OnActiveApertureChanged(self, Data=defaultNamedNotOptArg):
+#	def OnTVInChanged(self, Data=defaultNamedNotOptArg):
+#	def OnDriftTubeVoltageChanged(self, Data=defaultNamedNotOptArg):
+#	def OnModeChanged(self, Data=defaultNamedNotOptArg):
+
+
+class _IGaugeEvents:
+	"""_IGaugeEvents Interface"""
+	CLSID = CLSID_Sink = IID('{F339AD2D-E5BC-4E7F-902C-7D95D1571D68}')
+	coclass_clsid = IID('{A61D5C9D-626D-45A4-B46D-F43ED8916DE7}')
+	_public_methods_ = [] # For COM Server support
+	_dispid_to_func_ = {
+		        1 : "OnStatusChanged",
+		        3 : "OnPressureLevelChanged",
+		        2 : "OnPressureChanged",
+		}
+
+	def __init__(self, oobj = None):
+		if oobj is None:
+			self._olecp = None
+		else:
+			import win32com.server.util
+			from win32com.server.policy import EventHandlerPolicy
+			cpc=oobj._oleobj_.QueryInterface(pythoncom.IID_IConnectionPointContainer)
+			cp=cpc.FindConnectionPoint(self.CLSID_Sink)
+			cookie=cp.Advise(win32com.server.util.wrap(self, usePolicy=EventHandlerPolicy))
+			self._olecp,self._olecp_cookie = cp,cookie
+	def __del__(self):
+		try:
+			self.close()
+		except pythoncom.com_error:
+			pass
+	def close(self):
+		if self._olecp is not None:
+			cp,cookie,self._olecp,self._olecp_cookie = self._olecp,self._olecp_cookie,None,None
+			cp.Unadvise(cookie)
+	def _query_interface_(self, iid):
+		import win32com.server.util
+		if iid==self.CLSID_Sink: return win32com.server.util.wrap(self)
+
+	# Event Handlers
+	# If you create handlers, they should have the following prototypes:
+#	def OnStatusChanged(self, Data=defaultNamedNotOptArg):
+#	def OnPressureLevelChanged(self, Data=defaultNamedNotOptArg):
+#	def OnPressureChanged(self, Data=defaultNamedNotOptArg):
+
+
+class _IIlluminationEvents:
+	"""_IIlluminationEvents Interface"""
+	CLSID = CLSID_Sink = IID('{D48E8B26-0056-4B28-AB44-53A870978AA2}')
+	coclass_clsid = IID('{D2DD6440-B8E5-4C8A-ADBA-EB0DAF0ED9FE}')
+	_public_methods_ = [] # For COM Server support
+	_dispid_to_func_ = {
+		        5 : "OnC2CrossoverModeChanged",
+		        9 : "OnMCOnMaxMagForParallelIllumChanged",
+		        2 : "OnStigmatorValueChanged",
+		        3 : "OnIlluminationModeChanged",
+		        8 : "OnMCOnMinMagForParallelIllumChanged",
+		        7 : "OnMCSwitchModeForParallelIllumChanged",
+		        6 : "OnIlluminatedAreaDiameterChanged",
+		        4 : "OnCondenserModeChanged",
+		        1 : "OnProbeModeChange",
+		}
+
+	def __init__(self, oobj = None):
+		if oobj is None:
+			self._olecp = None
+		else:
+			import win32com.server.util
+			from win32com.server.policy import EventHandlerPolicy
+			cpc=oobj._oleobj_.QueryInterface(pythoncom.IID_IConnectionPointContainer)
+			cp=cpc.FindConnectionPoint(self.CLSID_Sink)
+			cookie=cp.Advise(win32com.server.util.wrap(self, usePolicy=EventHandlerPolicy))
+			self._olecp,self._olecp_cookie = cp,cookie
+	def __del__(self):
+		try:
+			self.close()
+		except pythoncom.com_error:
+			pass
+	def close(self):
+		if self._olecp is not None:
+			cp,cookie,self._olecp,self._olecp_cookie = self._olecp,self._olecp_cookie,None,None
+			cp.Unadvise(cookie)
+	def _query_interface_(self, iid):
+		import win32com.server.util
+		if iid==self.CLSID_Sink: return win32com.server.util.wrap(self)
+
+	# Event Handlers
+	# If you create handlers, they should have the following prototypes:
+#	def OnC2CrossoverModeChanged(self, CurrentMode=defaultNamedNotOptArg):
+#		"""method OnC2CrossoverModeChanged"""
+#	def OnMCOnMaxMagForParallelIllumChanged(self, MaxMag=defaultNamedNotOptArg):
+#		"""method OnMCOnMaxMagForParallelIllumChanged"""
+#	def OnStigmatorValueChanged(self, pStigValue=defaultNamedNotOptArg):
+#		"""method OnStigmatorValueChanged"""
+#	def OnIlluminationModeChanged(self, CurrentMode=defaultNamedNotOptArg):
+#		"""method OnIlluminationModeChanged"""
+#	def OnMCOnMinMagForParallelIllumChanged(self, MinMag=defaultNamedNotOptArg):
+#		"""method OnMCOnMinMagForParallelIllumChanged"""
+#	def OnMCSwitchModeForParallelIllumChanged(self, CurrentMode=defaultNamedNotOptArg):
+#		"""method OnMCSwitchModeForParallelIllumChanged"""
+#	def OnIlluminatedAreaDiameterChanged(self, Diameter=defaultNamedNotOptArg):
+#		"""method OnIlluminatedAreaDiameterChanged"""
+#	def OnCondenserModeChanged(self, CurrentMode=defaultNamedNotOptArg):
+#		"""method OnCondenserModeChanged"""
+#	def OnProbeModeChange(self, CurrentMode=defaultNamedNotOptArg):
+#		"""method OnProbeModeChange"""
+
+
+class _ILogicalResourceEvents:
+	"""_ILogicalResourceEvents Interface"""
+	CLSID = CLSID_Sink = IID('{9546F053-2098-4EE6-9684-7D4BD039F3EB}')
+	coclass_clsid = IID('{5835D7FC-2208-49E8-85E0-9A93BBD7CE31}')
+	_public_methods_ = [] # For COM Server support
+	_dispid_to_func_ = {
+		}
+
+	def __init__(self, oobj = None):
+		if oobj is None:
+			self._olecp = None
+		else:
+			import win32com.server.util
+			from win32com.server.policy import EventHandlerPolicy
+			cpc=oobj._oleobj_.QueryInterface(pythoncom.IID_IConnectionPointContainer)
+			cp=cpc.FindConnectionPoint(self.CLSID_Sink)
+			cookie=cp.Advise(win32com.server.util.wrap(self, usePolicy=EventHandlerPolicy))
+			self._olecp,self._olecp_cookie = cp,cookie
+	def __del__(self):
+		try:
+			self.close()
+		except pythoncom.com_error:
+			pass
+	def close(self):
+		if self._olecp is not None:
+			cp,cookie,self._olecp,self._olecp_cookie = self._olecp,self._olecp_cookie,None,None
+			cp.Unadvise(cookie)
+	def _query_interface_(self, iid):
+		import win32com.server.util
+		if iid==self.CLSID_Sink: return win32com.server.util.wrap(self)
+
+	# Event Handlers
+	# If you create handlers, they should have the following prototypes:
+
+
+class _IProjectionEvents:
+	"""_IProjectionEvents Interface"""
+	CLSID = CLSID_Sink = IID('{1C632F33-C447-4501-A0FE-8BA0659235C1}')
+	coclass_clsid = IID('{0371B137-54F8-4FAF-A283-FCBE77F6036B}')
+	_public_methods_ = [] # For COM Server support
+	_dispid_to_func_ = {
+		        3 : "OnLensProgramChanged",
+		        4 : "OnDiffractionStigmatorValueChanged",
+		        1 : "OnMagnificationChanged",
+		        6 : "OnCameraLengthChanged",
+		        5 : "OnObjectiveStigmatorValueChanged",
+		        2 : "OnProjectionModeChanged",
+		        8 : "OnNormalizationReady",
+		        7 : "OnNormalizationStart",
+		}
+
+	def __init__(self, oobj = None):
+		if oobj is None:
+			self._olecp = None
+		else:
+			import win32com.server.util
+			from win32com.server.policy import EventHandlerPolicy
+			cpc=oobj._oleobj_.QueryInterface(pythoncom.IID_IConnectionPointContainer)
+			cp=cpc.FindConnectionPoint(self.CLSID_Sink)
+			cookie=cp.Advise(win32com.server.util.wrap(self, usePolicy=EventHandlerPolicy))
+			self._olecp,self._olecp_cookie = cp,cookie
+	def __del__(self):
+		try:
+			self.close()
+		except pythoncom.com_error:
+			pass
+	def close(self):
+		if self._olecp is not None:
+			cp,cookie,self._olecp,self._olecp_cookie = self._olecp,self._olecp_cookie,None,None
+			cp.Unadvise(cookie)
+	def _query_interface_(self, iid):
+		import win32com.server.util
+		if iid==self.CLSID_Sink: return win32com.server.util.wrap(self)
+
+	# Event Handlers
+	# If you create handlers, they should have the following prototypes:
+#	def OnLensProgramChanged(self, newProgram=defaultNamedNotOptArg):
+#		"""method OnLensProgramChanged"""
+#	def OnDiffractionStigmatorValueChanged(self, pStigValue=defaultNamedNotOptArg):
+#		"""method OnDiffractionStigmatorValueChanged"""
+#	def OnMagnificationChanged(self, lIndex=defaultNamedNotOptArg):
+#		"""method OnMagnificationChanged"""
+#	def OnCameraLengthChanged(self, lIndex=defaultNamedNotOptArg):
+#		"""method OnCameraLengthChanged"""
+#	def OnObjectiveStigmatorValueChanged(self, pStigValue=defaultNamedNotOptArg):
+#		"""method OnObjectiveStigmatorValueChanged"""
+#	def OnProjectionModeChanged(self, newMode=defaultNamedNotOptArg):
+#		"""method OnProjectionModeChanged"""
+#	def OnNormalizationReady(self, lIndex=defaultNamedNotOptArg):
+#		"""method OnNormalizationReady"""
+#	def OnNormalizationStart(self, lIndex=defaultNamedNotOptArg):
+#		"""method OnNormalizationStart"""
+
+
+class _IScanningControllerEvents:
+	"""_IScanningControllerEvents Interface"""
+	CLSID = CLSID_Sink = IID('{F0753F3E-84B4-43A1-8A64-26DA1FDF22EF}')
+	coclass_clsid = IID('{2E4EF809-F203-431F-B5B2-B6A03E7643BD}')
+	_public_methods_ = [] # For COM Server support
+	_dispid_to_func_ = {
+		        3 : "OnImageUpdate",
+		        2 : "OnAcquisitionStop",
+		        1 : "OnAcquisitionStart",
+		        4 : "OnImageCompleted",
+		}
+
+	def __init__(self, oobj = None):
+		if oobj is None:
+			self._olecp = None
+		else:
+			import win32com.server.util
+			from win32com.server.policy import EventHandlerPolicy
+			cpc=oobj._oleobj_.QueryInterface(pythoncom.IID_IConnectionPointContainer)
+			cp=cpc.FindConnectionPoint(self.CLSID_Sink)
+			cookie=cp.Advise(win32com.server.util.wrap(self, usePolicy=EventHandlerPolicy))
+			self._olecp,self._olecp_cookie = cp,cookie
+	def __del__(self):
+		try:
+			self.close()
+		except pythoncom.com_error:
+			pass
+	def close(self):
+		if self._olecp is not None:
+			cp,cookie,self._olecp,self._olecp_cookie = self._olecp,self._olecp_cookie,None,None
+			cp.Unadvise(cookie)
+	def _query_interface_(self, iid):
+		import win32com.server.util
+		if iid==self.CLSID_Sink: return win32com.server.util.wrap(self)
+
+	# Event Handlers
+	# If you create handlers, they should have the following prototypes:
+#	def OnImageUpdate(self):
+#		"""method OnImageUpdate"""
+#	def OnAcquisitionStop(self):
+#		"""method OnAcquisitionStop"""
+#	def OnAcquisitionStart(self):
+#		"""method OnAcquisitionStart"""
+#	def OnImageCompleted(self):
+#		"""method OnImageCompleted"""
+
+
+class _IScreenEvents:
+	"""_IScreenEvents Interface"""
+	CLSID = CLSID_Sink = IID('{5951791E-6A03-4258-B769-1730D85B99A9}')
+	coclass_clsid = IID('{6144B4D6-D565-431B-B43E-B94E771F4194}')
+	_public_methods_ = [] # For COM Server support
+	_dispid_to_func_ = {
+		        3 : "OnScreenCurrent",
+		        1 : "OnScreenStateChanged",
+		        2 : "OnScreenError",
+		}
+
+	def __init__(self, oobj = None):
+		if oobj is None:
+			self._olecp = None
+		else:
+			import win32com.server.util
+			from win32com.server.policy import EventHandlerPolicy
+			cpc=oobj._oleobj_.QueryInterface(pythoncom.IID_IConnectionPointContainer)
+			cp=cpc.FindConnectionPoint(self.CLSID_Sink)
+			cookie=cp.Advise(win32com.server.util.wrap(self, usePolicy=EventHandlerPolicy))
+			self._olecp,self._olecp_cookie = cp,cookie
+	def __del__(self):
+		try:
+			self.close()
+		except pythoncom.com_error:
+			pass
+	def close(self):
+		if self._olecp is not None:
+			cp,cookie,self._olecp,self._olecp_cookie = self._olecp,self._olecp_cookie,None,None
+			cp.Unadvise(cookie)
+	def _query_interface_(self, iid):
+		import win32com.server.util
+		if iid==self.CLSID_Sink: return win32com.server.util.wrap(self)
+
+	# Event Handlers
+	# If you create handlers, they should have the following prototypes:
+#	def OnScreenCurrent(self, val=defaultNamedNotOptArg):
+#		"""method OnScreenCurrent"""
+#	def OnScreenStateChanged(self, val=defaultNamedNotOptArg):
+#		"""method OnScreenStateChanged"""
+#	def OnScreenError(self):
+#		"""method OnScreenError"""
+
+
+class _ITemBeamStopperEvents:
+	"""_ITemBeamStopperEvents Interface"""
+	CLSID = CLSID_Sink = IID('{A429AE6B-AF62-498D-9C5B-122D0CB0A48D}')
+	coclass_clsid = IID('{95D7A830-448F-4DC3-8EF5-B6C0517873F6}')
+	_public_methods_ = [] # For COM Server support
+	_dispid_to_func_ = {
+		        2 : "OnBeamStopperError",
+		        1 : "OnBeamStopperStateChanged",
+		}
+
+	def __init__(self, oobj = None):
+		if oobj is None:
+			self._olecp = None
+		else:
+			import win32com.server.util
+			from win32com.server.policy import EventHandlerPolicy
+			cpc=oobj._oleobj_.QueryInterface(pythoncom.IID_IConnectionPointContainer)
+			cp=cpc.FindConnectionPoint(self.CLSID_Sink)
+			cookie=cp.Advise(win32com.server.util.wrap(self, usePolicy=EventHandlerPolicy))
+			self._olecp,self._olecp_cookie = cp,cookie
+	def __del__(self):
+		try:
+			self.close()
+		except pythoncom.com_error:
+			pass
+	def close(self):
+		if self._olecp is not None:
+			cp,cookie,self._olecp,self._olecp_cookie = self._olecp,self._olecp_cookie,None,None
+			cp.Unadvise(cookie)
+	def _query_interface_(self, iid):
+		import win32com.server.util
+		if iid==self.CLSID_Sink: return win32com.server.util.wrap(self)
+
+	# Event Handlers
+	# If you create handlers, they should have the following prototypes:
+#	def OnBeamStopperError(self):
+#		"""method OnBeamStopperError"""
+#	def OnBeamStopperStateChanged(self, val=defaultNamedNotOptArg):
+#		"""method OnBeamStopperStateChanged"""
+
+
+class _ITemGunEvents:
+	"""_ITemGunEvents Interface"""
+	CLSID = CLSID_Sink = IID('{4150E0FD-67D0-4D87-9156-37B92259AA91}')
+	coclass_clsid = IID('{49AB6F9E-E330-4E08-9E50-7E39ABCE9F22}')
+	_public_methods_ = [] # For COM Server support
+	_dispid_to_func_ = {
+		        2 : "OnHTChanged",
+		        1 : "OnHTModeChanged",
+		        3 : "OnHTStateChanged",
+		}
+
+	def __init__(self, oobj = None):
+		if oobj is None:
+			self._olecp = None
+		else:
+			import win32com.server.util
+			from win32com.server.policy import EventHandlerPolicy
+			cpc=oobj._oleobj_.QueryInterface(pythoncom.IID_IConnectionPointContainer)
+			cp=cpc.FindConnectionPoint(self.CLSID_Sink)
+			cookie=cp.Advise(win32com.server.util.wrap(self, usePolicy=EventHandlerPolicy))
+			self._olecp,self._olecp_cookie = cp,cookie
+	def __del__(self):
+		try:
+			self.close()
+		except pythoncom.com_error:
+			pass
+	def close(self):
+		if self._olecp is not None:
+			cp,cookie,self._olecp,self._olecp_cookie = self._olecp,self._olecp_cookie,None,None
+			cp.Unadvise(cookie)
+	def _query_interface_(self, iid):
+		import win32com.server.util
+		if iid==self.CLSID_Sink: return win32com.server.util.wrap(self)
+
+	# Event Handlers
+	# If you create handlers, they should have the following prototypes:
+#	def OnHTChanged(self, newHt=defaultNamedNotOptArg):
+#		"""method OnHTChanged"""
+#	def OnHTModeChanged(self, newMode=defaultNamedNotOptArg):
+#		"""method OnHTModeChanged"""
+#	def OnHTStateChanged(self, newHtState=defaultNamedNotOptArg):
+#		"""method OnHTStateChanged"""
+
+
+class _IUserEvents:
+	"""_IUserEvents Interface"""
+	CLSID = CLSID_Sink = IID('{6E87E409-B51C-4C3F-9AFA-E9CD2D8BB14C}')
+	coclass_clsid = IID('{A19F6548-BA48-4685-8FA5-52B3A8C32C26}')
+	_public_methods_ = [] # For COM Server support
+	_dispid_to_func_ = {
+		        1 : "OnLoggedOnUserChanged",
+		}
+
+	def __init__(self, oobj = None):
+		if oobj is None:
+			self._olecp = None
+		else:
+			import win32com.server.util
+			from win32com.server.policy import EventHandlerPolicy
+			cpc=oobj._oleobj_.QueryInterface(pythoncom.IID_IConnectionPointContainer)
+			cp=cpc.FindConnectionPoint(self.CLSID_Sink)
+			cookie=cp.Advise(win32com.server.util.wrap(self, usePolicy=EventHandlerPolicy))
+			self._olecp,self._olecp_cookie = cp,cookie
+	def __del__(self):
+		try:
+			self.close()
+		except pythoncom.com_error:
+			pass
+	def close(self):
+		if self._olecp is not None:
+			cp,cookie,self._olecp,self._olecp_cookie = self._olecp,self._olecp_cookie,None,None
+			cp.Unadvise(cookie)
+	def _query_interface_(self, iid):
+		import win32com.server.util
+		if iid==self.CLSID_Sink: return win32com.server.util.wrap(self)
+
+	# Event Handlers
+	# If you create handlers, they should have the following prototypes:
+#	def OnLoggedOnUserChanged(self, bLoggedOn=defaultNamedNotOptArg, sUserName=defaultNamedNotOptArg, eLevel=defaultNamedNotOptArg):
+#		"""method OnLoggedOnUserChanged"""
+
+
+class _IVacuumSystemEvents:
+	"""_IVacuumSystemEvents Interface"""
+	CLSID = CLSID_Sink = IID('{B8A0A748-C56B-4813-A785-051184CABDF1}')
+	coclass_clsid = IID('{8DC5805D-3C2B-4FCE-A0BD-8B41D242F62A}')
+	_public_methods_ = [] # For COM Server support
+	_dispid_to_func_ = {
+		        4 : "OnRunBufferCycleFinished",
+		        3 : "OnPVPRunningChanged",
+		        1 : "OnStatusChanged",
+		        2 : "OnColumnValvesOpenChanged",
+		}
+
+	def __init__(self, oobj = None):
+		if oobj is None:
+			self._olecp = None
+		else:
+			import win32com.server.util
+			from win32com.server.policy import EventHandlerPolicy
+			cpc=oobj._oleobj_.QueryInterface(pythoncom.IID_IConnectionPointContainer)
+			cp=cpc.FindConnectionPoint(self.CLSID_Sink)
+			cookie=cp.Advise(win32com.server.util.wrap(self, usePolicy=EventHandlerPolicy))
+			self._olecp,self._olecp_cookie = cp,cookie
+	def __del__(self):
+		try:
+			self.close()
+		except pythoncom.com_error:
+			pass
+	def close(self):
+		if self._olecp is not None:
+			cp,cookie,self._olecp,self._olecp_cookie = self._olecp,self._olecp_cookie,None,None
+			cp.Unadvise(cookie)
+	def _query_interface_(self, iid):
+		import win32com.server.util
+		if iid==self.CLSID_Sink: return win32com.server.util.wrap(self)
+
+	# Event Handlers
+	# If you create handlers, they should have the following prototypes:
+#	def OnRunBufferCycleFinished(self):
+#	def OnPVPRunningChanged(self, Data=defaultNamedNotOptArg):
+#	def OnStatusChanged(self, Data=defaultNamedNotOptArg):
+#	def OnColumnValvesOpenChanged(self, Data=defaultNamedNotOptArg):
+
+
+from win32com.client import CoClassBaseClass
+class Acquisition(CoClassBaseClass): # A CoClass
+	# Acquisition Class
+	CLSID = IID('{7681E531-D69A-429C-A592-45C084DFBC09}')
+	coclass_sources = [
+		_IAcquisitionEvents,
+	]
+	default_source = _IAcquisitionEvents
+	coclass_interfaces = [
+		IAcquisition,
+	]
+	default_interface = IAcquisition
+
+# This CoClass is known by the name 'MathUtil.Area.1'
+class Area(CoClassBaseClass): # A CoClass
+	# Area Class
+	CLSID = IID('{F544A1E0-C841-4CDC-9BCB-79B25A502247}')
+	coclass_sources = [
+	]
+	coclass_interfaces = [
+		IArea,
+	]
+	default_interface = IArea
+
+class CameraControl(CoClassBaseClass): # A CoClass
+	# CameraControl Class
+	CLSID = IID('{DAED4E3A-FCDD-4F3C-926B-BDFF3B2AA0A3}')
+	coclass_sources = [
+		_ICameraControllerEvents,
+	]
+	default_source = _ICameraControllerEvents
+	coclass_interfaces = [
+		ICameraControl,
+	]
+	default_interface = ICameraControl
+
+class CoLogicalResource(CoClassBaseClass): # A CoClass
+	# LogicalResource Class
+	CLSID = IID('{5835D7FC-2208-49E8-85E0-9A93BBD7CE31}')
+	coclass_sources = [
+		_ILogicalResourceEvents,
+	]
+	default_source = _ILogicalResourceEvents
+	coclass_interfaces = [
+	]
+
+# This CoClass is known by the name 'BhvObjectModel.ObjectModel.1'
+class CoObjectModel(CoClassBaseClass): # A CoClass
+	# ObjectModel Class
+	CLSID = IID('{759555A2-1BCD-459D-9483-D41AE2AFB121}')
+	coclass_sources = [
+	]
+	coclass_interfaces = [
+	]
+
+class CoTemInstrument(CoClassBaseClass): # A CoClass
+	# CoTemInstrument
+	CLSID = IID('{F7024B66-B8F4-4D6D-8E0B-4782B464B4DB}')
+	coclass_sources = [
+	]
+	coclass_interfaces = [
+		ITemInstrument,
+	]
+	default_interface = ITemInstrument
+
+class EnergyFilter(CoClassBaseClass): # A CoClass
+	# EnergyFIlter Class
+	CLSID = IID('{A535BFBC-DA6A-4F99-A2E0-3E1EAB4F4BFA}')
+	coclass_sources = [
+		_IEnergyFilterEvents,
+	]
+	default_source = _IEnergyFilterEvents
+	coclass_interfaces = [
+		IEnergyFilter,
+	]
+	default_interface = IEnergyFilter
+
+class Gauge(CoClassBaseClass): # A CoClass
+	# Gauge Class
+	CLSID = IID('{A61D5C9D-626D-45A4-B46D-F43ED8916DE7}')
+	coclass_sources = [
+		_IGaugeEvents,
+	]
+	default_source = _IGaugeEvents
+	coclass_interfaces = [
+		IGauge,
+	]
+	default_interface = IGauge
+
+class Gauges(CoClassBaseClass): # A CoClass
+	# TOM Gauges Collection
+	CLSID = IID('{D6519C4E-0DFB-4E8B-B40D-B3406335379E}')
+	coclass_sources = [
+	]
+	coclass_interfaces = [
+		IGauges,
+	]
+	default_interface = IGauges
+
+class IlluminationTom(CoClassBaseClass): # A CoClass
+	# Illumination TOM Class
+	CLSID = IID('{D2DD6440-B8E5-4C8A-ADBA-EB0DAF0ED9FE}')
+	coclass_sources = [
+		_IIlluminationEvents,
+	]
+	default_source = _IIlluminationEvents
+	coclass_interfaces = [
+		IIllumination,
+	]
+	default_interface = IIllumination
+
+# This CoClass is known by the name 'TEM.Instrument.1'
+class Instrument(CoClassBaseClass): # A CoClass
+	# Instrument Class
+	CLSID = IID('{7D82B1B8-3A42-495A-B1D9-2BE40FA497FA}')
+	coclass_sources = [
+	]
+	coclass_interfaces = [
+		IInstrument,
+	]
+	default_interface = IInstrument
+
+class Projection(CoClassBaseClass): # A CoClass
+	# Projection Class
+	CLSID = IID('{0371B137-54F8-4FAF-A283-FCBE77F6036B}')
+	coclass_sources = [
+		_IProjectionEvents,
+	]
+	default_source = _IProjectionEvents
+	coclass_interfaces = [
+		IProjection,
+	]
+	default_interface = IProjection
+
+class ScanParameters(CoClassBaseClass): # A CoClass
+	# ScanParameters Class
+	CLSID = IID('{B431C504-00EE-4440-ABFF-481FD496E50E}')
+	coclass_sources = [
+	]
+	coclass_interfaces = [
+		IScanParameters,
+	]
+	default_interface = IScanParameters
+
+class ScanningController(CoClassBaseClass): # A CoClass
+	# ScanningController Class
+	CLSID = IID('{2E4EF809-F203-431F-B5B2-B6A03E7643BD}')
+	coclass_sources = [
+		_IScanningControllerEvents,
+	]
+	default_source = _IScanningControllerEvents
+	coclass_interfaces = [
+		IScanningController,
+	]
+	default_interface = IScanningController
+
+class Screen(CoClassBaseClass): # A CoClass
+	# Screen Class
+	CLSID = IID('{6144B4D6-D565-431B-B43E-B94E771F4194}')
+	coclass_sources = [
+		_IScreenEvents,
+	]
+	default_source = _IScreenEvents
+	coclass_interfaces = [
+		IScreen,
+	]
+	default_interface = IScreen
+
+# This CoClass is known by the name 'BhvObjectModel.StagePosition.1'
+class StagePosition(CoClassBaseClass): # A CoClass
+	# StagePosition Class
+	CLSID = IID('{289E36B7-23EF-4ACF-99F3-E25240CFA2F0}')
+	coclass_sources = [
+	]
+	coclass_interfaces = [
+		IStagePosition,
+	]
+	default_interface = IStagePosition
+
+class TemBeamStopper(CoClassBaseClass): # A CoClass
+	# TemBeamStopper Class
+	CLSID = IID('{95D7A830-448F-4DC3-8EF5-B6C0517873F6}')
+	coclass_sources = [
+		_ITemBeamStopperEvents,
+	]
+	default_source = _ITemBeamStopperEvents
+	coclass_interfaces = [
+		ITemBeamStopper,
+	]
+	default_interface = ITemBeamStopper
+
+class TemGun(CoClassBaseClass): # A CoClass
+	# TemGun Class
+	CLSID = IID('{49AB6F9E-E330-4E08-9E50-7E39ABCE9F22}')
+	coclass_sources = [
+		_ITemGunEvents,
+	]
+	default_source = _ITemGunEvents
+	coclass_interfaces = [
+		ITemGun,
+	]
+	default_interface = ITemGun
+
+class User(CoClassBaseClass): # A CoClass
+	# User Class
+	CLSID = IID('{A19F6548-BA48-4685-8FA5-52B3A8C32C26}')
+	coclass_sources = [
+		_IUserEvents,
+	]
+	default_source = _IUserEvents
+	coclass_interfaces = [
+		IUser,
+	]
+	default_interface = IUser
+
+class VacuumSystem(CoClassBaseClass): # A CoClass
+	# VacuumSystem Class
+	CLSID = IID('{8DC5805D-3C2B-4FCE-A0BD-8B41D242F62A}')
+	coclass_sources = [
+		_IVacuumSystemEvents,
+	]
+	default_source = _IVacuumSystemEvents
+	coclass_interfaces = [
+		IVacuumSystem,
+	]
+	default_interface = IVacuumSystem
+
+# This CoClass is known by the name 'MathUtil.Vector.1'
+class Vector(CoClassBaseClass): # A CoClass
+	# Vector Class
+	CLSID = IID('{4524CDB1-68E9-4BA6-9503-96358B531619}')
+	coclass_sources = [
+	]
+	coclass_interfaces = [
+		IVector,
+	]
+	default_interface = IVector
+
+class channel(CoClassBaseClass): # A CoClass
+	# Channel Class
+	CLSID = IID('{FAFF9BF1-ACD6-4475-9E2E-0CBBCA7A613D}')
+	coclass_sources = [
+		_IChannelEvents,
+	]
+	default_source = _IChannelEvents
+	coclass_interfaces = [
+		IChannel,
+	]
+	default_interface = IChannel
+
+IAcquiredData_vtables_dispatch_ = 1
+IAcquiredData_vtables_ = [
+	(( u'Image' , u'ppVal' , ), 1, (1, (), [ (16397, 10, None, "IID('{59EF4C62-8652-4A84-BFB4-B978CE577C6E}')") , ], 1 , 2 , 4 , 0 , 28 , (3, 0, None, None) , 0 , )),
+	(( u'Memento' , u'ppVal' , ), 2, (2, (), [ (16393, 10, None, "IID('{547A7C34-E2E0-4545-8298-361573587878}')") , ], 1 , 2 , 4 , 0 , 32 , (3, 0, None, None) , 0 , )),
+	(( u'Clone' , u'ppVal' , ), 3, (3, (), [ (16393, 10, None, "IID('{88677A9D-D6E5-4C61-A834-D0AF0F7B97F2}')") , ], 1 , 1 , 4 , 0 , 36 , (3, 0, None, None) , 0 , )),
+]
+
+IAcquisition_vtables_dispatch_ = 1
+IAcquisition_vtables_ = [
+	(( u'CurrentSelectedCamController' , u'ppICamera' , ), 1, (1, (), [ (16393, 10, None, "IID('{8B95C4C7-651D-4166-955D-CC4222A8E0FB}')") , ], 1 , 2 , 4 , 0 , 28 , (3, 0, None, None) , 0 , )),
+	(( u'SelectController' , u'sControllerName' , ), 2, (2, (), [ (8, 1, None, None) , ], 1 , 1 , 4 , 0 , 32 , (3, 0, None, None) , 0 , )),
+	(( u'SelectCamera' , u'sCameraName' , ), 3, (3, (), [ (8, 1, None, None) , ], 1 , 1 , 4 , 0 , 36 , (3, 0, None, None) , 0 , )),
+	(( u'CurrentSelectedScanController' , u'ppIScanController' , ), 4, (4, (), [ (16393, 10, None, "IID('{3E20ADFB-35DF-4919-A492-34D478E8A1AB}')") , ], 1 , 2 , 4 , 0 , 40 , (3, 0, None, None) , 0 , )),
+	(( u'Cameras' , u'ppCameraControllers' , ), 5, (5, (), [ (16393, 10, None, "IID('{BA833E7C-2800-4EA7-8F69-F922F86D10E2}')") , ], 1 , 2 , 4 , 0 , 44 , (3, 0, None, None) , 0 , )),
+	(( u'ScanControllers' , u'ppScanControllers' , ), 6, (6, (), [ (16393, 10, None, "IID('{C8C9FDB4-0711-4D29-9140-1C2099EB0374}')") , ], 1 , 2 , 4 , 0 , 48 , (3, 0, None, None) , 0 , )),
+]
+
+IArea_vtables_dispatch_ = 1
+IArea_vtables_ = [
+	(( u'Top' , u'pVal' , ), 1, (1, (), [ (16387, 10, None, None) , ], 1 , 2 , 4 , 0 , 28 , (3, 0, None, None) , 0 , )),
+	(( u'Top' , u'pVal' , ), 1, (1, (), [ (3, 1, None, None) , ], 1 , 4 , 4 , 0 , 32 , (3, 0, None, None) , 0 , )),
+	(( u'Left' , u'pVal' , ), 2, (2, (), [ (16387, 10, None, None) , ], 1 , 2 , 4 , 0 , 36 , (3, 0, None, None) , 0 , )),
+	(( u'Left' , u'pVal' , ), 2, (2, (), [ (3, 1, None, None) , ], 1 , 4 , 4 , 0 , 40 , (3, 0, None, None) , 0 , )),
+	(( u'Bottom' , u'pVal' , ), 3, (3, (), [ (16387, 10, None, None) , ], 1 , 2 , 4 , 0 , 44 , (3, 0, None, None) , 0 , )),
+	(( u'Bottom' , u'pVal' , ), 3, (3, (), [ (3, 1, None, None) , ], 1 , 4 , 4 , 0 , 48 , (3, 0, None, None) , 0 , )),
+	(( u'Right' , u'pVal' , ), 4, (4, (), [ (16387, 10, None, None) , ], 1 , 2 , 4 , 0 , 52 , (3, 0, None, None) , 0 , )),
+	(( u'Right' , u'pVal' , ), 4, (4, (), [ (3, 1, None, None) , ], 1 , 4 , 4 , 0 , 56 , (3, 0, None, None) , 0 , )),
+	(( u'Width' , u'pVal' , ), 5, (5, (), [ (16387, 10, None, None) , ], 1 , 2 , 4 , 0 , 60 , (3, 0, None, None) , 0 , )),
+	(( u'Height' , u'pVal' , ), 6, (6, (), [ (16387, 10, None, None) , ], 1 , 2 , 4 , 0 , 64 , (3, 0, None, None) , 0 , )),
+]
+
+ICCDCamera_vtables_dispatch_ = 1
+ICCDCamera_vtables_ = [
+	(( u'Name' , u'pVal' , ), 1, (1, (), [ (16392, 10, None, None) , ], 1 , 2 , 4 , 0 , 28 , (3, 0, None, None) , 0 , )),
+	(( u'Type' , u'pVal' , ), 2, (2, (), [ (16387, 10, None, None) , ], 1 , 2 , 4 , 0 , 32 , (3, 0, None, None) , 0 , )),
+	(( u'Location' , u'pVal' , ), 3, (3, (), [ (16387, 10, None, None) , ], 1 , 2 , 4 , 0 , 36 , (3, 0, None, None) , 0 , )),
+	(( u'MaxPixelDepth' , u'pVal' , ), 4, (4, (), [ (16387, 10, None, None) , ], 1 , 2 , 4 , 0 , 40 , (3, 0, None, None) , 0 , )),
+	(( u'MaxReadoutSize' , u'pVal' , ), 5, (5, (), [ (16393, 10, None, "IID('{E3A23ED4-CAF7-4EEE-A80A-DD89DF4A9B18}')") , ], 1 , 2 , 4 , 0 , 44 , (3, 0, None, None) , 0 , )),
+	(( u'Retractable' , u'pVal' , ), 6, (6, (), [ (16395, 10, None, None) , ], 1 , 2 , 4 , 0 , 48 , (3, 0, None, None) , 0 , )),
+	(( u'PixelSize' , u'pVal' , ), 7, (7, (), [ (16393, 10, None, "IID('{CDD13BAF-B616-42EC-9998-B540FBFB5E1D}')") , ], 1 , 2 , 4 , 0 , 52 , (3, 0, None, None) , 0 , )),
+	(( u'GetSize' , u'pWidth' , u'pHeight' , ), 8, (8, (), [ (16387, 2, None, None) , 
+			(16387, 2, None, None) , ], 1 , 1 , 4 , 0 , 56 , (3, 0, None, None) , 0 , )),
+]
+
+ICameraControl_vtables_dispatch_ = 1
+ICameraControl_vtables_ = [
+	(( u'Name' , u'pVal' , ), 1, (1, (), [ (16392, 10, None, None) , ], 1 , 2 , 4 , 0 , 28 , (3, 0, None, None) , 0 , )),
+	(( u'ExposureTime' , u'pVal' , ), 2, (2, (), [ (16389, 10, None, None) , ], 1 , 2 , 4 , 0 , 32 , (3, 0, None, None) , 0 , )),
+	(( u'ExposureTime' , u'pVal' , ), 2, (2, (), [ (5, 1, None, None) , ], 1 , 4 , 4 , 0 , 36 , (3, 0, None, None) , 0 , )),
+	(( u'BinningValue' , u'pVal' , ), 3, (3, (), [ (16387, 10, None, None) , ], 1 , 2 , 4 , 0 , 40 , (3, 0, None, None) , 0 , )),
+	(( u'BinningValue' , u'pVal' , ), 3, (3, (), [ (3, 1, None, None) , ], 1 , 4 , 4 , 0 , 44 , (3, 0, None, None) , 0 , )),
+	(( u'ReadoutArea' , u'ppVal' , ), 4, (4, (), [ (16393, 10, None, "IID('{E3A23ED4-CAF7-4EEE-A80A-DD89DF4A9B18}')") , ], 1 , 2 , 4 , 0 , 48 , (3, 0, None, None) , 0 , )),
+	(( u'ReadoutArea' , u'ppVal' , ), 4, (4, (), [ (9, 1, None, "IID('{E3A23ED4-CAF7-4EEE-A80A-DD89DF4A9B18}')") , ], 1 , 4 , 4 , 0 , 52 , (3, 0, None, None) , 0 , )),
+	(( u'IsCameraInserted' , u'pVal' , ), 5, (5, (), [ (16395, 10, None, None) , ], 1 , 2 , 4 , 0 , 56 , (3, 0, None, None) , 0 , )),
+	(( u'ReadoutRate' , u'pVal' , ), 6, (6, (), [ (16389, 10, None, None) , ], 1 , 2 , 4 , 0 , 60 , (3, 0, None, None) , 0 , )),
+	(( u'ReadoutRate' , u'pVal' , ), 6, (6, (), [ (5, 1, None, None) , ], 1 , 4 , 4 , 0 , 64 , (3, 0, None, None) , 0 , )),
+	(( u'Gain' , u'pVal' , ), 7, (7, (), [ (16389, 10, None, None) , ], 1 , 2 , 4 , 0 , 68 , (3, 0, None, None) , 0 , )),
+	(( u'Gain' , u'pVal' , ), 7, (7, (), [ (5, 1, None, None) , ], 1 , 4 , 4 , 0 , 72 , (3, 0, None, None) , 0 , )),
+	(( u'GetAvailableReadoutRateValues' , u'pReadoutRateValues' , u'NrValues' , ), 8, (8, (), [ (16389, 2, None, None) , 
+			(16387, 3, None, None) , ], 1 , 1 , 4 , 0 , 76 , (3, 0, None, None) , 0 , )),
+	(( u'GetAvailableBinningValues' , u'pBinningValues' , u'NrValues' , ), 9, (9, (), [ (16387, 2, None, None) , 
+			(16387, 3, None, None) , ], 1 , 1 , 4 , 0 , 80 , (3, 0, None, None) , 0 , )),
+	(( u'GetAvailableGainValues' , u'pGainValues' , u'NrValues' , ), 10, (10, (), [ (16389, 2, None, None) , 
+			(16387, 3, None, None) , ], 1 , 1 , 4 , 0 , 84 , (3, 0, None, None) , 0 , )),
+	(( u'InsertCamera' , ), 11, (11, (), [ ], 1 , 1 , 4 , 0 , 88 , (3, 0, None, None) , 0 , )),
+	(( u'RetractCamera' , ), 12, (12, (), [ ], 1 , 1 , 4 , 0 , 92 , (3, 0, None, None) , 0 , )),
+	(( u'AcquireImage' , u'lWidth' , u'lHeight' , u'bstrMemoryFileName' , ), 13, (13, (), [ 
+			(3, 1, None, None) , (3, 1, None, None) , (8, 1, None, None) , ], 1 , 1 , 4 , 0 , 96 , (3, 0, None, None) , 0 , )),
+	(( u'GetCamera' , u'ppICamera' , ), 14, (14, (), [ (16393, 10, None, "IID('{8F4715B4-A36E-4A2A-9B14-3FA1B466D366}')") , ], 1 , 1 , 4 , 0 , 100 , (3, 0, None, None) , 0 , )),
+	(( u'SelectCamera' , ), 15, (15, (), [ ], 1 , 1 , 4 , 0 , 104 , (3, 0, None, None) , 0 , )),
+	(( u'AcquiredData' , u'pVal' , ), 17, (17, (), [ (16393, 10, None, "IID('{88677A9D-D6E5-4C61-A834-D0AF0F7B97F2}')") , ], 1 , 2 , 4 , 0 , 108 , (3, 0, None, None) , 0 , )),
+	(( u'AcquireImage2' , u'ppImage' , ), 18, (18, (), [ (16397, 10, None, "IID('{59EF4C62-8652-4A84-BFB4-B978CE577C6E}')") , ], 1 , 1 , 4 , 0 , 112 , (3, 0, None, None) , 0 , )),
+	(( u'ImageCorrection' , u'pVal' , ), 19, (19, (), [ (16387, 10, None, None) , ], 1 , 2 , 4 , 0 , 116 , (3, 0, None, None) , 0 , )),
+	(( u'ImageCorrection' , u'pVal' , ), 19, (19, (), [ (3, 1, None, None) , ], 1 , 4 , 4 , 0 , 120 , (3, 0, None, None) , 0 , )),
+	(( u'GetAvailableShutterModes' , u'pVal' , ), 20, (20, (), [ (24579, 10, None, None) , ], 1 , 1 , 4 , 0 , 124 , (3, 0, None, None) , 0 , )),
+	(( u'ShutterMode' , u'pVal' , ), 21, (21, (), [ (16387, 10, None, None) , ], 1 , 2 , 4 , 0 , 128 , (3, 0, None, None) , 0 , )),
+	(( u'ShutterMode' , u'pVal' , ), 21, (21, (), [ (3, 1, None, None) , ], 1 , 4 , 4 , 0 , 132 , (3, 0, None, None) , 0 , )),
+	(( u'ExposureMode' , u'pVal' , ), 22, (22, (), [ (16387, 10, None, None) , ], 1 , 2 , 4 , 0 , 136 , (3, 0, None, None) , 0 , )),
+	(( u'ExposureMode' , u'pVal' , ), 22, (22, (), [ (3, 1, None, None) , ], 1 , 4 , 4 , 0 , 140 , (3, 0, None, None) , 0 , )),
+	(( u'MinPreExposureTime' , u'minVal' , ), 23, (23, (), [ (16389, 10, None, None) , ], 1 , 2 , 4 , 0 , 144 , (3, 0, None, None) , 0 , )),
+	(( u'MaxPreExposureTime' , u'maxVal' , ), 24, (24, (), [ (16389, 10, None, None) , ], 1 , 2 , 4 , 0 , 148 , (3, 0, None, None) , 0 , )),
+	(( u'PreExposureTime' , u'pVal' , ), 25, (25, (), [ (16389, 10, None, None) , ], 1 , 2 , 4 , 0 , 152 , (3, 0, None, None) , 0 , )),
+	(( u'PreExposureTime' , u'pVal' , ), 25, (25, (), [ (5, 1, None, None) , ], 1 , 4 , 4 , 0 , 156 , (3, 0, None, None) , 0 , )),
+	(( u'MinPreExposurePauseTime' , u'minVal' , ), 26, (26, (), [ (16389, 10, None, None) , ], 1 , 2 , 4 , 0 , 160 , (3, 0, None, None) , 0 , )),
+	(( u'MaxPreExposurePauseTime' , u'maxVal' , ), 27, (27, (), [ (16389, 10, None, None) , ], 1 , 2 , 4 , 0 , 164 , (3, 0, None, None) , 0 , )),
+	(( u'PreExposurePauseTime' , u'pVal' , ), 28, (28, (), [ (16389, 10, None, None) , ], 1 , 2 , 4 , 0 , 168 , (3, 0, None, None) , 0 , )),
+	(( u'PreExposurePauseTime' , u'pVal' , ), 28, (28, (), [ (5, 1, None, None) , ], 1 , 4 , 4 , 0 , 172 , (3, 0, None, None) , 0 , )),
+]
+
+ICameraControlCollection_vtables_dispatch_ = 1
+ICameraControlCollection_vtables_ = [
+	(( u'Count' , u'pVal' , ), 1, (1, (), [ (16387, 10, None, None) , ], 1 , 2 , 4 , 0 , 28 , (3, 0, None, None) , 0 , )),
+	(( u'Item' , u'lIndex' , u'pVal' , ), 0, (0, (), [ (12, 1, None, None) , 
+			(16393, 10, None, "IID('{8B95C4C7-651D-4166-955D-CC4222A8E0FB}')") , ], 1 , 2 , 4 , 0 , 32 , (3, 0, None, None) , 0 , )),
+]
+
+IChannel_vtables_dispatch_ = 1
+IChannel_vtables_ = [
+	(( u'Enabled' , u'pVal' , ), 1, (1, (), [ (16387, 10, None, None) , ], 1 , 2 , 4 , 0 , 28 , (3, 0, None, None) , 0 , )),
+	(( u'Enabled' , u'pVal' , ), 1, (1, (), [ (3, 1, None, None) , ], 1 , 4 , 4 , 0 , 32 , (3, 0, None, None) , 0 , )),
+	(( u'ElectronCounting' , u'pVal' , ), 2, (2, (), [ (16387, 10, None, None) , ], 1 , 2 , 4 , 0 , 36 , (3, 0, None, None) , 0 , )),
+	(( u'ElectronCounting' , u'pVal' , ), 2, (2, (), [ (3, 1, None, None) , ], 1 , 4 , 4 , 0 , 40 , (3, 0, None, None) , 0 , )),
+	(( u'BitsPerPixel' , u'pVal' , ), 3, (3, (), [ (16387, 10, None, None) , ], 1 , 2 , 4 , 0 , 44 , (3, 0, None, None) , 0 , )),
+	(( u'BitsPerPixel' , u'pVal' , ), 3, (3, (), [ (3, 1, None, None) , ], 1 , 4 , 4 , 0 , 48 , (3, 0, None, None) , 0 , )),
+	(( u'Detector' , u'pVal' , ), 4, (4, (), [ (16393, 10, None, "IID('{CC15C43F-B7CB-4255-8482-FEA0100A4FC7}')") , ], 1 , 2 , 4 , 0 , 52 , (3, 0, None, None) , 0 , )),
+	(( u'CurrentSelectedDetector' , u'pVal' , ), 5, (5, (), [ (16387, 10, None, None) , ], 1 , 2 , 4 , 0 , 56 , (3, 0, None, None) , 0 , )),
+	(( u'AcquireImage' , u'lWidth' , u'lHeight' , u'sDataName' , ), 6, (6, (), [ 
+			(3, 1, None, None) , (3, 1, None, None) , (8, 1, None, None) , ], 1 , 1 , 4 , 0 , 60 , (3, 0, None, None) , 0 , )),
+	(( u'AcquiredData' , u'pVal' , ), 7, (7, (), [ (16393, 10, None, "IID('{88677A9D-D6E5-4C61-A834-D0AF0F7B97F2}')") , ], 1 , 2 , 4 , 0 , 64 , (3, 0, None, None) , 0 , )),
+	(( u'AcquireImage2' , u'ppImage' , ), 8, (8, (), [ (16397, 10, None, "IID('{59EF4C62-8652-4A84-BFB4-B978CE577C6E}')") , ], 1 , 1 , 4 , 0 , 68 , (3, 0, None, None) , 0 , )),
+]
+
+IConfiguration_vtables_dispatch_ = 1
+IConfiguration_vtables_ = [
+	(( u'ProductFamily' , u'pVal' , ), 1, (1, (), [ (16387, 10, None, None) , ], 1 , 2 , 4 , 0 , 28 , (3, 0, None, None) , 0 , )),
+]
+
+IDetector_vtables_dispatch_ = 1
+IDetector_vtables_ = [
+	(( u'Name' , u'pVal' , ), 1, (1, (), [ (16392, 10, None, None) , ], 1 , 2 , 4 , 0 , 28 , (3, 0, None, None) , 0 , )),
+	(( u'Type' , u'pVal' , ), 2, (2, (), [ (16387, 10, None, None) , ], 1 , 2 , 4 , 0 , 32 , (3, 0, None, None) , 0 , )),
+	(( u'Brightness' , u'pVal' , ), 3, (3, (), [ (16389, 10, None, None) , ], 1 , 2 , 4 , 0 , 36 , (3, 0, None, None) , 0 , )),
+	(( u'Brightness' , u'pVal' , ), 3, (3, (), [ (5, 1, None, None) , ], 1 , 4 , 4 , 0 , 40 , (3, 0, None, None) , 0 , )),
+	(( u'BrightnessResolution' , u'pVal' , ), 4, (4, (), [ (16389, 10, None, None) , ], 1 , 2 , 4 , 0 , 44 , (3, 0, None, None) , 0 , )),
+	(( u'Contrast' , u'pVal' , ), 5, (5, (), [ (16389, 10, None, None) , ], 1 , 2 , 4 , 0 , 48 , (3, 0, None, None) , 0 , )),
+	(( u'Contrast' , u'pVal' , ), 5, (5, (), [ (5, 1, None, None) , ], 1 , 4 , 4 , 0 , 52 , (3, 0, None, None) , 0 , )),
+	(( u'ContrastResolution' , u'pVal' , ), 6, (6, (), [ (16389, 10, None, None) , ], 1 , 2 , 4 , 0 , 56 , (3, 0, None, None) , 0 , )),
+	(( u'Location' , u'pVal' , ), 7, (7, (), [ (16387, 10, None, None) , ], 1 , 2 , 4 , 0 , 60 , (3, 0, None, None) , 0 , )),
+	(( u'Insertable' , u'pVal' , ), 8, (8, (), [ (16387, 10, None, None) , ], 1 , 2 , 4 , 0 , 64 , (3, 0, None, None) , 0 , )),
+]
+
+IEnergyFilter_vtables_dispatch_ = 1
+IEnergyFilter_vtables_ = [
+	(( u'SlitIn' , u'pVal' , ), 1, (1, (), [ (16395, 10, None, None) , ], 1 , 2 , 4 , 0 , 28 , (3, 0, None, None) , 0 , )),
+	(( u'SlitIn' , u'pVal' , ), 1, (1, (), [ (11, 1, None, None) , ], 1 , 4 , 4 , 0 , 32 , (3, 0, None, None) , 0 , )),
+	(( u'Mode' , u'pVal' , ), 2, (2, (), [ (16387, 10, None, None) , ], 1 , 2 , 4 , 0 , 36 , (3, 0, None, None) , 0 , )),
+	(( u'Mode' , u'pVal' , ), 2, (2, (), [ (3, 1, None, None) , ], 1 , 4 , 4 , 0 , 40 , (3, 0, None, None) , 0 , )),
+	(( u'SlitWidth' , u'pVal' , ), 3, (3, (), [ (16389, 10, None, None) , ], 1 , 2 , 4 , 0 , 44 , (3, 0, None, None) , 0 , )),
+	(( u'SlitWidth' , u'pVal' , ), 3, (3, (), [ (5, 1, None, None) , ], 1 , 4 , 4 , 0 , 48 , (3, 0, None, None) , 0 , )),
+	(( u'EnergyShift' , u'pVal' , ), 4, (4, (), [ (16389, 10, None, None) , ], 1 , 2 , 4 , 0 , 52 , (3, 0, None, None) , 0 , )),
+	(( u'EnergyShift' , u'pVal' , ), 4, (4, (), [ (5, 1, None, None) , ], 1 , 4 , 4 , 0 , 56 , (3, 0, None, None) , 0 , )),
+	(( u'SpectrumOffset' , u'pVal' , ), 5, (5, (), [ (16389, 10, None, None) , ], 1 , 2 , 4 , 0 , 60 , (3, 0, None, None) , 0 , )),
+	(( u'SpectrumOffset' , u'pVal' , ), 5, (5, (), [ (5, 1, None, None) , ], 1 , 4 , 4 , 0 , 64 , (3, 0, None, None) , 0 , )),
+	(( u'DriftTubeVoltage' , u'pVal' , ), 6, (6, (), [ (16389, 10, None, None) , ], 1 , 2 , 4 , 0 , 68 , (3, 0, None, None) , 0 , )),
+	(( u'DriftTubeVoltage' , u'pVal' , ), 6, (6, (), [ (5, 1, None, None) , ], 1 , 4 , 4 , 0 , 72 , (3, 0, None, None) , 0 , )),
+	(( u'NullZeroLossPeak' , ), 10, (10, (), [ ], 1 , 1 , 4 , 0 , 76 , (3, 0, None, None) , 0 , )),
+	(( u'TVIn' , u'pVal' , ), 11, (11, (), [ (16395, 10, None, None) , ], 1 , 2 , 4 , 0 , 80 , (3, 0, None, None) , 0 , )),
+	(( u'TVIn' , u'pVal' , ), 11, (11, (), [ (11, 1, None, None) , ], 1 , 4 , 4 , 0 , 84 , (3, 0, None, None) , 0 , )),
+	(( u'GetLensValue' , u'eLens' , u'pVal' , ), 12, (12, (), [ (3, 1, None, None) , 
+			(16389, 10, None, None) , ], 1 , 1 , 4 , 0 , 88 , (3, 0, None, None) , 0 , )),
+	(( u'PutLensValue' , u'eLens' , u'newVal' , ), 13, (13, (), [ (3, 1, None, None) , 
+			(5, 1, None, None) , ], 1 , 1 , 4 , 0 , 92 , (3, 0, None, None) , 0 , )),
+	(( u'FilterType' , u'pVal' , ), 14, (14, (), [ (16387, 10, None, None) , ], 1 , 2 , 4 , 0 , 96 , (3, 0, None, None) , 0 , )),
+	(( u'Status' , u'pStatus' , ), 15, (15, (), [ (16387, 10, None, None) , ], 1 , 2 , 4 , 0 , 100 , (3, 0, None, None) , 0 , )),
+	(( u'IsPropertySupported' , u'eProp' , u'pbSupported' , ), 16, (16, (), [ (3, 1, None, None) , 
+			(16395, 10, None, None) , ], 1 , 1 , 4 , 0 , 104 , (3, 0, None, None) , 0 , )),
+	(( u'ActiveAperture' , u'pVal' , ), 17, (17, (), [ (16387, 10, None, None) , ], 1 , 2 , 4 , 0 , 108 , (3, 0, None, None) , 0 , )),
+	(( u'ActiveAperture' , u'pVal' , ), 17, (17, (), [ (3, 1, None, None) , ], 1 , 4 , 4 , 0 , 112 , (3, 0, None, None) , 0 , )),
+	(( u'GetFirstApertureEntry' , u'ApertureId' , ), 18, (18, (), [ (16387, 2, None, None) , ], 1 , 1 , 4 , 0 , 116 , (3, 0, None, None) , 0 , )),
+	(( u'GetNextApertureEntry' , u'ApertureId' , u'ApertureName' , ), 19, (19, (), [ (16387, 3, None, None) , 
+			(16392, 2, None, None) , ], 1 , 1 , 4 , 0 , 120 , (3, 0, None, None) , 0 , )),
+	(( u'AdjustVoltage' , u'pVal' , ), 20, (20, (), [ (16389, 10, None, None) , ], 1 , 2 , 4 , 0 , 124 , (3, 0, None, None) , 0 , )),
+	(( u'AdjustVoltage' , u'pVal' , ), 20, (20, (), [ (5, 1, None, None) , ], 1 , 4 , 4 , 0 , 128 , (3, 0, None, None) , 0 , )),
+]
+
+IGauge_vtables_dispatch_ = 1
+IGauge_vtables_ = [
+	(( u'Name' , u'pVal' , ), 1, (1, (), [ (16392, 10, None, None) , ], 1 , 2 , 4 , 0 , 28 , (3, 0, None, None) , 0 , )),
+	(( u'Pressure' , u'pPresure' , ), 2, (2, (), [ (16389, 10, None, None) , ], 1 , 2 , 4 , 0 , 32 , (3, 0, None, None) , 0 , )),
+	(( u'Status' , u'pVal' , ), 3, (3, (), [ (16387, 10, None, None) , ], 1 , 2 , 4 , 0 , 36 , (3, 0, None, None) , 0 , )),
+	(( u'PressureLevel' , u'pVal' , ), 4, (4, (), [ (16387, 10, None, None) , ], 1 , 2 , 4 , 0 , 40 , (3, 0, None, None) , 0 , )),
+	(( u'TriplevelValues' , u'TriplevelValues' , ), 5, (5, (), [ (24581, 10, None, None) , ], 1 , 2 , 4 , 0 , 44 , (3, 0, None, None) , 0 , )),
+]
+
+IGauges_vtables_dispatch_ = 1
+IGauges_vtables_ = [
+	(( u'Count' , u'pVal' , ), 1, (1, (), [ (16387, 10, None, None) , ], 1 , 2 , 4 , 0 , 28 , (3, 0, None, None) , 0 , )),
+	(( u'Item' , u'index' , u'pG' , ), 0, (0, (), [ (12, 0, None, None) , 
+			(16393, 10, None, "IID('{44BFFFAD-737C-4DDC-95D5-DC85262072C8}')") , ], 1 , 2 , 4 , 0 , 32 , (3, 0, None, None) , 0 , )),
+	(( u'_NewEnum' , u'pVal' , ), -4, (-4, (), [ (16397, 10, None, None) , ], 1 , 2 , 4 , 0 , 36 , (3, 0, None, None) , 0 , )),
+]
+
+IIllumination_vtables_dispatch_ = 1
+IIllumination_vtables_ = [
+	(( u'MinSpotSizeIndex' , u'pVal' , ), 1, (1, (), [ (16387, 10, None, None) , ], 1 , 2 , 4 , 0 , 28 , (3, 0, None, None) , 0 , )),
+	(( u'MaxSpotSizeIndex' , u'pVal' , ), 2, (2, (), [ (16387, 10, None, None) , ], 1 , 2 , 4 , 0 , 32 , (3, 0, None, None) , 0 , )),
+	(( u'SpotSizeIndex' , u'pVal' , ), 3, (3, (), [ (16387, 10, None, None) , ], 1 , 2 , 4 , 0 , 36 , (3, 0, None, None) , 0 , )),
+	(( u'SpotSizeIndex' , u'pVal' , ), 3, (3, (), [ (3, 1, None, None) , ], 1 , 4 , 4 , 0 , 40 , (3, 0, None, None) , 0 , )),
+	(( u'Intensity' , u'pVal' , ), 4, (4, (), [ (16389, 10, None, None) , ], 1 , 2 , 4 , 0 , 44 , (3, 0, None, None) , 0 , )),
+	(( u'Intensity' , u'pVal' , ), 4, (4, (), [ (5, 1, None, None) , ], 1 , 4 , 4 , 0 , 48 , (3, 0, None, None) , 0 , )),
+	(( u'IntensityZoomEnabled' , u'pVal' , ), 5, (5, (), [ (16395, 10, None, None) , ], 1 , 2 , 4 , 0 , 52 , (3, 0, None, None) , 0 , )),
+	(( u'IntensityZoomEnabled' , u'pVal' , ), 5, (5, (), [ (11, 1, None, None) , ], 1 , 4 , 4 , 0 , 56 , (3, 0, None, None) , 0 , )),
+	(( u'IntensityZoomAllowed' , u'pVal' , ), 6, (6, (), [ (16395, 10, None, None) , ], 1 , 2 , 4 , 0 , 60 , (3, 0, None, None) , 0 , )),
+	(( u'IntensityLimitEnabled' , u'pVal' , ), 7, (7, (), [ (16395, 10, None, None) , ], 1 , 2 , 4 , 0 , 64 , (3, 0, None, None) , 0 , )),
+	(( u'IntensityLimitEnabled' , u'pVal' , ), 7, (7, (), [ (11, 1, None, None) , ], 1 , 4 , 4 , 0 , 68 , (3, 0, None, None) , 0 , )),
+	(( u'IntensityLimitAllowed' , u'pVal' , ), 8, (8, (), [ (16395, 10, None, None) , ], 1 , 2 , 4 , 0 , 72 , (3, 0, None, None) , 0 , )),
+	(( u'DarkfieldTilt' , u'ppVal' , ), 9, (9, (), [ (16393, 10, None, "IID('{CDD13BAF-B616-42EC-9998-B540FBFB5E1D}')") , ], 1 , 2 , 4 , 0 , 76 , (3, 0, None, None) , 0 , )),
+	(( u'DarkfieldTilt' , u'ppVal' , ), 9, (9, (), [ (9, 1, None, "IID('{CDD13BAF-B616-42EC-9998-B540FBFB5E1D}')") , ], 1 , 4 , 4 , 0 , 80 , (3, 0, None, None) , 0 , )),
+	(( u'DarkFieldTiltCalibration' , u'ppVal' , ), 10, (10, (), [ (16393, 10, None, "IID('{CDD13BAF-B616-42EC-9998-B540FBFB5E1D}')") , ], 1 , 2 , 4 , 0 , 84 , (3, 0, None, None) , 0 , )),
+	(( u'DarkFieldTiltCalibration' , u'ppVal' , ), 10, (10, (), [ (9, 1, None, "IID('{CDD13BAF-B616-42EC-9998-B540FBFB5E1D}')") , ], 1 , 4 , 4 , 0 , 88 , (3, 0, None, None) , 0 , )),
+	(( u'BeamAlignmentTilt' , u'ppVal' , ), 11, (11, (), [ (16393, 10, None, "IID('{CDD13BAF-B616-42EC-9998-B540FBFB5E1D}')") , ], 1 , 2 , 4 , 0 , 92 , (3, 0, None, None) , 0 , )),
+	(( u'BeamAlignmentTilt' , u'ppVal' , ), 11, (11, (), [ (9, 1, None, "IID('{CDD13BAF-B616-42EC-9998-B540FBFB5E1D}')") , ], 1 , 4 , 4 , 0 , 96 , (3, 0, None, None) , 0 , )),
+	(( u'ProbeMode' , u'pVal' , ), 12, (12, (), [ (16387, 10, None, None) , ], 1 , 2 , 4 , 0 , 100 , (3, 0, None, None) , 0 , )),
+	(( u'ProbeMode' , u'pVal' , ), 12, (12, (), [ (3, 1, None, None) , ], 1 , 4 , 4 , 0 , 104 , (3, 0, None, None) , 0 , )),
+	(( u'NanoProbeAvailable' , u'pVal' , ), 13, (13, (), [ (16395, 10, None, None) , ], 1 , 2 , 4 , 0 , 108 , (3, 0, None, None) , 0 , )),
+	(( u'NanoProbeAllowed' , u'pVal' , ), 14, (14, (), [ (16395, 10, None, None) , ], 1 , 2 , 4 , 0 , 112 , (3, 0, None, None) , 0 , )),
+	(( u'BeamShift' , u'ppVal' , ), 15, (15, (), [ (16393, 10, None, "IID('{CDD13BAF-B616-42EC-9998-B540FBFB5E1D}')") , ], 1 , 2 , 4 , 0 , 116 , (3, 0, None, None) , 0 , )),
+	(( u'BeamShift' , u'ppVal' , ), 15, (15, (), [ (9, 1, None, "IID('{CDD13BAF-B616-42EC-9998-B540FBFB5E1D}')") , ], 1 , 4 , 4 , 0 , 120 , (3, 0, None, None) , 0 , )),
+	(( u'BeamShiftPhysical' , u'ppVal' , ), 16, (16, (), [ (16393, 10, None, "IID('{CDD13BAF-B616-42EC-9998-B540FBFB5E1D}')") , ], 1 , 2 , 4 , 0 , 124 , (3, 0, None, None) , 0 , )),
+	(( u'BeamShiftPhysical' , u'ppVal' , ), 16, (16, (), [ (9, 1, None, "IID('{CDD13BAF-B616-42EC-9998-B540FBFB5E1D}')") , ], 1 , 4 , 4 , 0 , 128 , (3, 0, None, None) , 0 , )),
+	(( u'BeamShiftCalibration' , u'ppVal' , ), 17, (17, (), [ (16393, 10, None, "IID('{CDD13BAF-B616-42EC-9998-B540FBFB5E1D}')") , ], 1 , 2 , 4 , 0 , 132 , (3, 0, None, None) , 0 , )),
+	(( u'BeamShiftCalibration' , u'ppVal' , ), 17, (17, (), [ (9, 1, None, "IID('{CDD13BAF-B616-42EC-9998-B540FBFB5E1D}')") , ], 1 , 4 , 4 , 0 , 136 , (3, 0, None, None) , 0 , )),
+	(( u'BeamAlignShift' , u'pVal' , ), 18, (18, (), [ (16393, 10, None, "IID('{CDD13BAF-B616-42EC-9998-B540FBFB5E1D}')") , ], 1 , 2 , 4 , 0 , 140 , (3, 0, None, None) , 0 , )),
+	(( u'BeamAlignShift' , u'pVal' , ), 18, (18, (), [ (9, 1, None, "IID('{CDD13BAF-B616-42EC-9998-B540FBFB5E1D}')") , ], 1 , 4 , 4 , 0 , 144 , (3, 0, None, None) , 0 , )),
+	(( u'CondenserStigmator' , u'ppVal' , ), 19, (19, (), [ (16393, 10, None, "IID('{CDD13BAF-B616-42EC-9998-B540FBFB5E1D}')") , ], 1 , 2 , 4 , 0 , 148 , (3, 0, None, None) , 0 , )),
+	(( u'CondenserStigmator' , u'ppVal' , ), 19, (19, (), [ (9, 1, None, "IID('{CDD13BAF-B616-42EC-9998-B540FBFB5E1D}')") , ], 1 , 4 , 4 , 0 , 152 , (3, 0, None, None) , 0 , )),
+	(( u'IlluminationMode' , u'Illumination' , ), 20, (20, (), [ (16387, 10, None, None) , ], 1 , 2 , 4 , 0 , 156 , (3, 0, None, None) , 0 , )),
+	(( u'IlluminationMode' , u'Illumination' , ), 20, (20, (), [ (3, 1, None, None) , ], 1 , 4 , 4 , 0 , 160 , (3, 0, None, None) , 0 , )),
+	(( u'CondenserMode' , u'Value' , ), 21, (21, (), [ (16387, 10, None, None) , ], 1 , 2 , 4 , 0 , 164 , (3, 0, None, None) , 0 , )),
+	(( u'CondenserMode' , u'Value' , ), 21, (21, (), [ (3, 1, None, None) , ], 1 , 4 , 4 , 0 , 168 , (3, 0, None, None) , 0 , )),
+	(( u'C2CrossoverMode' , u'Value' , ), 22, (22, (), [ (16387, 10, None, None) , ], 1 , 2 , 4 , 0 , 172 , (3, 0, None, None) , 0 , )),
+	(( u'C2CrossoverMode' , u'Value' , ), 22, (22, (), [ (3, 1, None, None) , ], 1 , 4 , 4 , 0 , 176 , (3, 0, None, None) , 0 , )),
+	(( u'IlluminatedAreaDiameter' , u'Value' , ), 23, (23, (), [ (16389, 10, None, None) , ], 1 , 2 , 4 , 0 , 180 , (3, 0, None, None) , 0 , )),
+	(( u'IlluminatedAreaDiameter' , u'Value' , ), 23, (23, (), [ (5, 1, None, None) , ], 1 , 4 , 4 , 0 , 184 , (3, 0, None, None) , 0 , )),
+	(( u'MCSwitchModeForParallelIllum' , u'pValue' , ), 24, (24, (), [ (16387, 10, None, None) , ], 1 , 2 , 4 , 0 , 188 , (3, 0, None, None) , 0 , )),
+	(( u'MCSwitchModeForParallelIllum' , u'pValue' , ), 24, (24, (), [ (3, 1, None, None) , ], 1 , 4 , 4 , 0 , 192 , (3, 0, None, None) , 0 , )),
+	(( u'MCOnMinMagForParallelIllum' , u'pValue' , ), 25, (25, (), [ (16389, 10, None, None) , ], 1 , 2 , 4 , 0 , 196 , (3, 0, None, None) , 0 , )),
+	(( u'MCOnMinMagForParallelIllum' , u'pValue' , ), 25, (25, (), [ (5, 1, None, None) , ], 1 , 4 , 4 , 0 , 200 , (3, 0, None, None) , 0 , )),
+	(( u'MCOnMaxMagForParallelIllum' , u'pValue' , ), 26, (26, (), [ (16389, 10, None, None) , ], 1 , 2 , 4 , 0 , 204 , (3, 0, None, None) , 0 , )),
+	(( u'MCOnMaxMagForParallelIllum' , u'pValue' , ), 26, (26, (), [ (5, 1, None, None) , ], 1 , 4 , 4 , 0 , 208 , (3, 0, None, None) , 0 , )),
+	(( u'C3ImageDistParallel' , u'pValue' , ), 27, (27, (), [ (16389, 10, None, None) , ], 1 , 2 , 4 , 0 , 212 , (3, 0, None, None) , 0 , )),
+	(( u'C3ImageDistProbe' , u'pValue' , ), 28, (28, (), [ (16389, 10, None, None) , ], 1 , 2 , 4 , 0 , 216 , (3, 0, None, None) , 0 , )),
+	(( u'ProbeConvergenceAngle' , u'pValue' , ), 29, (29, (), [ (16389, 10, None, None) , ], 1 , 2 , 4 , 0 , 220 , (3, 0, None, None) , 0 , )),
+	(( u'ProbeConvergenceAngle' , u'pValue' , ), 29, (29, (), [ (5, 1, None, None) , ], 1 , 4 , 4 , 0 , 224 , (3, 0, None, None) , 0 , )),
+	(( u'ProbeConvergenceAngleMin' , u'pValue' , ), 31, (31, (), [ (16389, 10, None, None) , ], 1 , 2 , 4 , 0 , 228 , (3, 0, None, None) , 0 , )),
+	(( u'ProbeConvergenceAngleMax' , u'pValue' , ), 32, (32, (), [ (16389, 10, None, None) , ], 1 , 2 , 4 , 0 , 232 , (3, 0, None, None) , 0 , )),
+	(( u'IlluminatedAreaDiameterMin' , u'pValue' , ), 33, (33, (), [ (16389, 10, None, None) , ], 1 , 2 , 4 , 0 , 236 , (3, 0, None, None) , 0 , )),
+	(( u'IlluminatedAreaDiameterMax' , u'pValue' , ), 34, (34, (), [ (16389, 10, None, None) , ], 1 , 2 , 4 , 0 , 240 , (3, 0, None, None) , 0 , )),
+	(( u'CondenserCalibration' , u'pValue' , ), 35, (35, (), [ (16389, 10, None, None) , ], 1 , 2 , 4 , 0 , 244 , (3, 0, None, None) , 0 , )),
+	(( u'C2ApertureSize' , u'pValue' , ), 36, (36, (), [ (16389, 10, None, None) , ], 1 , 2 , 4 , 0 , 248 , (3, 0, None, None) , 0 , )),
+	(( u'C1ApertureSize' , u'pValue' , ), 37, (37, (), [ (16389, 10, None, None) , ], 1 , 2 , 4 , 0 , 252 , (3, 0, None, None) , 0 , )),
+]
+
+IInstrument_vtables_dispatch_ = 1
+IInstrument_vtables_ = [
+]
+
+ILogicalResource_vtables_dispatch_ = 0
+ILogicalResource_vtables_ = [
+	(( u'RequestLock' , u'pLockObtained' , ), 1610678272, (1610678272, (), [ (16387, 10, None, None) , ], 1 , 1 , 4 , 0 , 12 , (3, 0, None, None) , 0 , )),
+	(( u'ReleaseLock' , ), 1610678273, (1610678273, (), [ ], 1 , 1 , 4 , 0 , 16 , (3, 0, None, None) , 0 , )),
+	(( u'IsLocked' , u'pbIsLocked' , ), 1610678274, (1610678274, (), [ (16387, 10, None, None) , ], 1 , 1 , 4 , 0 , 20 , (3, 0, None, None) , 0 , )),
+]
+
+IMemento_vtables_dispatch_ = 1
+IMemento_vtables_ = [
+	(( u'Clone' , u'ppIMemento' , ), 4, (4, (), [ (16393, 10, None, "IID('{547A7C34-E2E0-4545-8298-361573587878}')") , ], 1 , 1 , 4 , 0 , 40 , (3, 0, None, None) , 0 , )),
+]
+
+IMementoItem_vtables_dispatch_ = 1
+IMementoItem_vtables_ = [
+	(( u'Value' , u'pValue' , ), 0, (0, (), [ (16396, 10, None, None) , ], 1 , 2 , 4 , 0 , 28 , (3, 0, None, None) , 0 , )),
+	(( u'Parent' , u'ppParent' , ), 1, (1, (), [ (16393, 10, None, "IID('{33CF073E-7AA5-4BB0-82C0-FAE6B3F61F77}')") , ], 1 , 2 , 4 , 0 , 32 , (3, 0, None, None) , 0 , )),
+	(( u'Name' , u'pName' , ), 2, (2, (), [ (16392, 10, None, None) , ], 1 , 2 , 4 , 0 , 36 , (3, 0, None, None) , 0 , )),
+	(( u'Unit' , u'pUnit' , ), 3, (3, (), [ (16387, 10, None, None) , ], 1 , 2 , 4 , 0 , 40 , (3, 0, None, None) , 0 , )),
+]
+
+IMementoItems_vtables_dispatch_ = 1
+IMementoItems_vtables_ = [
+	(( u'_NewEnum' , u'ppIUnk' , ), -4, (-4, (), [ (16397, 10, None, None) , ], 1 , 2 , 4 , 0 , 28 , (3, 0, None, None) , 0 , )),
+	(( u'Item' , u'index' , u'ppIItem' , ), 0, (0, (), [ (3, 1, None, None) , 
+			(16393, 10, None, "IID('{33CF073E-7AA5-4BB0-82C0-FAE6B3F61F77}')") , ], 1 , 2 , 4 , 0 , 32 , (3, 0, None, None) , 0 , )),
+	(( u'Count' , u'pVal' , ), 1, (1, (), [ (16387, 10, None, None) , ], 1 , 2 , 4 , 0 , 36 , (3, 0, None, None) , 0 , )),
+]
+
+IMementoSection_vtables_dispatch_ = 1
+IMementoSection_vtables_ = [
+	(( u'Items' , u'pItems' , ), 1, (1, (), [ (16393, 10, None, "IID('{73460085-3CAE-49B2-97A3-AE81195A06BB}')") , ], 1 , 2 , 4 , 0 , 28 , (3, 0, None, None) , 0 , )),
+	(( u'Find' , u'Name' , u'ppIItem' , ), 2, (2, (), [ (8, 1, None, None) , 
+			(16393, 10, None, "IID('{33CF073E-7AA5-4BB0-82C0-FAE6B3F61F77}')") , ], 1 , 1 , 4 , 0 , 32 , (3, 0, None, None) , 0 , )),
+	(( u'Name' , u'pIItem' , u'pName' , ), 3, (3, (), [ (9, 1, None, "IID('{33CF073E-7AA5-4BB0-82C0-FAE6B3F61F77}')") , 
+			(16392, 10, None, None) , ], 1 , 1 , 4 , 0 , 36 , (3, 0, None, None) , 0 , )),
+]
+
+IProjection_vtables_dispatch_ = 1
+IProjection_vtables_ = [
+	(( u'Mode' , u'pVal' , ), 1, (1, (), [ (16387, 10, None, None) , ], 1 , 2 , 4 , 0 , 28 , (3, 0, None, None) , 0 , )),
+	(( u'Mode' , u'pVal' , ), 1, (1, (), [ (3, 1, None, None) , ], 1 , 4 , 4 , 0 , 32 , (3, 0, None, None) , 0 , )),
+	(( u'SubMode' , u'pVal' , ), 2, (2, (), [ (16387, 10, None, None) , ], 1 , 2 , 4 , 0 , 36 , (3, 0, None, None) , 0 , )),
+	(( u'Magnification' , u'pVal' , ), 3, (3, (), [ (16389, 10, None, None) , ], 1 , 2 , 4 , 0 , 40 , (3, 0, None, None) , 0 , )),
+	(( u'MagnificationIndex' , u'pVal' , ), 4, (4, (), [ (16387, 10, None, None) , ], 1 , 2 , 4 , 0 , 44 , (3, 0, None, None) , 0 , )),
+	(( u'MagnificationIndex' , u'pVal' , ), 4, (4, (), [ (3, 1, None, None) , ], 1 , 4 , 4 , 0 , 48 , (3, 0, None, None) , 0 , )),
+	(( u'SubModeMinIndex' , u'pVal' , ), 5, (5, (), [ (16387, 10, None, None) , ], 1 , 2 , 4 , 0 , 52 , (3, 0, None, None) , 0 , )),
+	(( u'SubModeMaxIndex' , u'pVal' , ), 6, (6, (), [ (16387, 10, None, None) , ], 1 , 2 , 4 , 0 , 56 , (3, 0, None, None) , 0 , )),
+	(( u'ImageRotation' , u'pVal' , ), 7, (7, (), [ (16389, 10, None, None) , ], 1 , 2 , 4 , 0 , 60 , (3, 0, None, None) , 0 , )),
+	(( u'ImageShift' , u'ppVal' , ), 8, (8, (), [ (16393, 10, None, "IID('{CDD13BAF-B616-42EC-9998-B540FBFB5E1D}')") , ], 1 , 2 , 4 , 0 , 64 , (3, 0, None, None) , 0 , )),
+	(( u'ImageShift' , u'ppVal' , ), 8, (8, (), [ (9, 1, None, "IID('{CDD13BAF-B616-42EC-9998-B540FBFB5E1D}')") , ], 1 , 4 , 4 , 0 , 68 , (3, 0, None, None) , 0 , )),
+	(( u'Focus' , u'pVal' , ), 9, (9, (), [ (16389, 10, None, None) , ], 1 , 2 , 4 , 0 , 72 , (3, 0, None, None) , 0 , )),
+	(( u'Focus' , u'pVal' , ), 9, (9, (), [ (5, 1, None, None) , ], 1 , 4 , 4 , 0 , 76 , (3, 0, None, None) , 0 , )),
+	(( u'Defocus' , u'pVal' , ), 10, (10, (), [ (16389, 10, None, None) , ], 1 , 2 , 4 , 0 , 80 , (3, 0, None, None) , 0 , )),
+	(( u'Defocus' , u'pVal' , ), 10, (10, (), [ (5, 1, None, None) , ], 1 , 4 , 4 , 0 , 84 , (3, 0, None, None) , 0 , )),
+	(( u'SelectNearestMagnification' , u'dMagnification' , u'bSubMode' , ), 11, (11, (), [ (5, 1, None, None) , 
+			(3, 1, None, None) , ], 1 , 1 , 4 , 0 , 88 , (3, 0, None, None) , 0 , )),
+	(( u'SelectNearestCameraLength' , u'dNewCameraLength' , u'SubModeChange' , ), 12, (12, (), [ (5, 1, None, None) , 
+			(3, 1, None, None) , ], 1 , 1 , 4 , 0 , 92 , (3, 0, None, None) , 0 , )),
+	(( u'ImageShiftPhysical' , u'pVal' , ), 13, (13, (), [ (16393, 10, None, "IID('{CDD13BAF-B616-42EC-9998-B540FBFB5E1D}')") , ], 1 , 2 , 4 , 0 , 96 , (3, 0, None, None) , 0 , )),
+	(( u'ImageShiftPhysical' , u'pVal' , ), 13, (13, (), [ (9, 1, None, "IID('{CDD13BAF-B616-42EC-9998-B540FBFB5E1D}')") , ], 1 , 4 , 4 , 0 , 100 , (3, 0, None, None) , 0 , )),
+	(( u'ImageShiftCalibration' , u'pVal' , ), 14, (14, (), [ (16393, 10, None, "IID('{CDD13BAF-B616-42EC-9998-B540FBFB5E1D}')") , ], 1 , 2 , 4 , 0 , 104 , (3, 0, None, None) , 0 , )),
+	(( u'ImageShiftCalibration' , u'pVal' , ), 14, (14, (), [ (9, 1, None, "IID('{CDD13BAF-B616-42EC-9998-B540FBFB5E1D}')") , ], 1 , 4 , 4 , 0 , 108 , (3, 0, None, None) , 0 , )),
+	(( u'ImageBeamShift' , u'pVal' , ), 15, (15, (), [ (16393, 10, None, "IID('{CDD13BAF-B616-42EC-9998-B540FBFB5E1D}')") , ], 1 , 2 , 4 , 0 , 112 , (3, 0, None, None) , 0 , )),
+	(( u'ImageBeamShift' , u'pVal' , ), 15, (15, (), [ (9, 1, None, "IID('{CDD13BAF-B616-42EC-9998-B540FBFB5E1D}')") , ], 1 , 4 , 4 , 0 , 116 , (3, 0, None, None) , 0 , )),
+	(( u'ImageBeamShiftPhysical' , u'pVal' , ), 16, (16, (), [ (16393, 10, None, "IID('{CDD13BAF-B616-42EC-9998-B540FBFB5E1D}')") , ], 1 , 2 , 4 , 0 , 120 , (3, 0, None, None) , 0 , )),
+	(( u'ImageBeamShiftPhysical' , u'pVal' , ), 16, (16, (), [ (9, 1, None, "IID('{CDD13BAF-B616-42EC-9998-B540FBFB5E1D}')") , ], 1 , 4 , 4 , 0 , 124 , (3, 0, None, None) , 0 , )),
+	(( u'LensProgram' , u'pVal' , ), 17, (17, (), [ (16387, 10, None, None) , ], 1 , 2 , 4 , 0 , 128 , (3, 0, None, None) , 0 , )),
+	(( u'LensProgram' , u'pVal' , ), 17, (17, (), [ (3, 1, None, None) , ], 1 , 4 , 4 , 0 , 132 , (3, 0, None, None) , 0 , )),
+	(( u'ObjectiveLensType' , u'pVal' , ), 18, (18, (), [ (16387, 10, None, None) , ], 1 , 2 , 4 , 0 , 136 , (3, 0, None, None) , 0 , )),
+	(( u'DiffractionStigmator' , u'ppVal' , ), 19, (19, (), [ (16393, 10, None, "IID('{CDD13BAF-B616-42EC-9998-B540FBFB5E1D}')") , ], 1 , 2 , 4 , 0 , 140 , (3, 0, None, None) , 0 , )),
+	(( u'DiffractionStigmator' , u'ppVal' , ), 19, (19, (), [ (9, 1, None, "IID('{CDD13BAF-B616-42EC-9998-B540FBFB5E1D}')") , ], 1 , 4 , 4 , 0 , 144 , (3, 0, None, None) , 0 , )),
+	(( u'ObjectiveStigmator' , u'ppVal' , ), 20, (20, (), [ (16393, 10, None, "IID('{CDD13BAF-B616-42EC-9998-B540FBFB5E1D}')") , ], 1 , 2 , 4 , 0 , 148 , (3, 0, None, None) , 0 , )),
+	(( u'ObjectiveStigmator' , u'ppVal' , ), 20, (20, (), [ (9, 1, None, "IID('{CDD13BAF-B616-42EC-9998-B540FBFB5E1D}')") , ], 1 , 4 , 4 , 0 , 152 , (3, 0, None, None) , 0 , )),
+	(( u'CameraLength' , u'pVal' , ), 21, (21, (), [ (16389, 10, None, None) , ], 1 , 2 , 4 , 0 , 156 , (3, 0, None, None) , 0 , )),
+	(( u'CameraLengthIndex' , u'pVal' , ), 22, (22, (), [ (16387, 10, None, None) , ], 1 , 2 , 4 , 0 , 160 , (3, 0, None, None) , 0 , )),
+	(( u'CameraLengthIndex' , u'pVal' , ), 22, (22, (), [ (3, 1, None, None) , ], 1 , 4 , 4 , 0 , 164 , (3, 0, None, None) , 0 , )),
+]
+
+IRawImage_vtables_dispatch_ = 0
+IRawImage_vtables_ = [
+	(( u'Descriptor' , u'ppIDescriptor' , ), 1610678272, (1610678272, (), [ (16393, 10, None, "IID('{4380EAFD-EC11-4673-BF6A-206C5B2065B9}')") , ], 1 , 2 , 4 , 0 , 12 , (3, 0, None, None) , 0 , )),
+	(( u'GetReadAccess' , u'ppIAccessor' , ), 1610678273, (1610678273, (), [ (16397, 10, None, "IID('{AFE367E6-3B7F-4125-8FFB-6DA650C0FAC0}')") , ], 1 , 1 , 4 , 0 , 16 , (3, 0, None, None) , 0 , )),
+	(( u'GetWriteAccess' , u'ppIAccessor' , ), 1610678274, (1610678274, (), [ (16397, 10, None, "IID('{99D0CE35-3A4B-4AB1-8CE7-3DD02341AD51}')") , ], 1 , 1 , 4 , 0 , 20 , (3, 0, None, None) , 0 , )),
+	(( u'Clone' , u'access' , u'pIRawImage' , ), 1610678275, (1610678275, (), [ (3, 1, None, None) , 
+			(16397, 10, None, "IID('{59EF4C62-8652-4A84-BFB4-B978CE577C6E}')") , ], 1 , 1 , 4 , 0 , 24 , (3, 0, None, None) , 0 , )),
+	(( u'Subscribe' , u'pIHandler' , u'Mode' , ), 1610678276, (1610678276, (), [ (13, 1, None, "IID('{7E5B7C2A-3B1B-4D79-8B06-418D328A6EAE}')") , 
+			(3, 48, '1', None) , ], 1 , 1 , 4 , 0 , 28 , (3, 0, None, None) , 0 , )),
+	(( u'Unsubscribe' , u'pIHandler' , ), 1610678277, (1610678277, (), [ (13, 1, None, "IID('{7E5B7C2A-3B1B-4D79-8B06-418D328A6EAE}')") , ], 1 , 1 , 4 , 0 , 32 , (3, 0, None, None) , 0 , )),
+]
+
+IRawImageDescriptor_vtables_dispatch_ = 1
+IRawImageDescriptor_vtables_ = [
+	(( u'Width' , u'pVal' , ), 1, (1, (), [ (16387, 10, None, None) , ], 1 , 2 , 4 , 0 , 28 , (3, 0, None, None) , 0 , )),
+	(( u'Width' , u'pVal' , ), 1, (1, (), [ (3, 1, None, None) , ], 1 , 4 , 4 , 0 , 32 , (3, 0, None, None) , 0 , )),
+	(( u'Height' , u'pVal' , ), 2, (2, (), [ (16387, 10, None, None) , ], 1 , 2 , 4 , 0 , 36 , (3, 0, None, None) , 0 , )),
+	(( u'Height' , u'pVal' , ), 2, (2, (), [ (3, 1, None, None) , ], 1 , 4 , 4 , 0 , 40 , (3, 0, None, None) , 0 , )),
+	(( u'Channels' , u'pVal' , ), 3, (3, (), [ (16387, 10, None, None) , ], 1 , 2 , 4 , 0 , 44 , (3, 0, None, None) , 0 , )),
+	(( u'Channels' , u'pVal' , ), 3, (3, (), [ (3, 1, None, None) , ], 1 , 4 , 4 , 0 , 48 , (3, 0, None, None) , 0 , )),
+	(( u'Bits' , u'channel' , u'pVal' , ), 4, (4, (), [ (3, 1, None, None) , 
+			(16387, 10, None, None) , ], 1 , 2 , 4 , 0 , 52 , (3, 0, None, None) , 0 , )),
+	(( u'Bits' , u'channel' , u'pVal' , ), 4, (4, (), [ (3, 1, None, None) , 
+			(3, 1, None, None) , ], 1 , 4 , 4 , 0 , 56 , (3, 0, None, None) , 0 , )),
+	(( u'Encoding' , u'channel' , u'pVal' , ), 5, (5, (), [ (3, 1, None, None) , 
+			(16387, 10, None, None) , ], 1 , 2 , 4 , 0 , 60 , (3, 0, None, None) , 0 , )),
+	(( u'Encoding' , u'channel' , u'pVal' , ), 5, (5, (), [ (3, 1, None, None) , 
+			(3, 1, None, None) , ], 1 , 4 , 4 , 0 , 64 , (3, 0, None, None) , 0 , )),
+	(( u'Offset' , u'channel' , u'pVal' , ), 6, (6, (), [ (3, 1, None, None) , 
+			(16387, 10, None, None) , ], 1 , 2 , 4 , 0 , 68 , (3, 0, None, None) , 0 , )),
+	(( u'Offset' , u'channel' , u'pVal' , ), 6, (6, (), [ (3, 1, None, None) , 
+			(3, 1, None, None) , ], 1 , 4 , 4 , 0 , 72 , (3, 0, None, None) , 0 , )),
+	(( u'Stride_x' , u'channel' , u'pVal' , ), 7, (7, (), [ (3, 1, None, None) , 
+			(16387, 10, None, None) , ], 1 , 2 , 4 , 0 , 76 , (3, 0, None, None) , 0 , )),
+	(( u'Stride_x' , u'channel' , u'pVal' , ), 7, (7, (), [ (3, 1, None, None) , 
+			(3, 1, None, None) , ], 1 , 4 , 4 , 0 , 80 , (3, 0, None, None) , 0 , )),
+	(( u'Stride_y' , u'channel' , u'pVal' , ), 8, (8, (), [ (3, 1, None, None) , 
+			(16387, 10, None, None) , ], 1 , 2 , 4 , 0 , 84 , (3, 0, None, None) , 0 , )),
+	(( u'Stride_y' , u'channel' , u'pVal' , ), 8, (8, (), [ (3, 1, None, None) , 
+			(3, 1, None, None) , ], 1 , 4 , 4 , 0 , 88 , (3, 0, None, None) , 0 , )),
+]
+
+IRawImageEvents_vtables_dispatch_ = 0
+IRawImageEvents_vtables_ = [
+	(( u'OnImageUpdate' , u'pIRawImage' , u'pDirty' , ), 1610678272, (1610678272, (), [ (13, 1, None, "IID('{59EF4C62-8652-4A84-BFB4-B978CE577C6E}')") , 
+			(36, 1, None, None) , ], 1 , 1 , 4 , 0 , 12 , (3, 0, None, None) , 0 , )),
+]
+
+IReadAccessor_vtables_dispatch_ = 0
+IReadAccessor_vtables_ = [
+	(( u'Ptr' , u'Offset' , ), 1610678272, (1610678272, (), [ (3, 48, '0', None) , ], 1 , 1 , 4 , 0 , 12 , (16408, 0, None, None) , 0 , )),
+]
+
+IScanControlCollection_vtables_dispatch_ = 1
+IScanControlCollection_vtables_ = [
+	(( u'Count' , u'pVal' , ), 1, (1, (), [ (16387, 10, None, None) , ], 1 , 2 , 4 , 0 , 28 , (3, 0, None, None) , 0 , )),
+	(( u'Item' , u'lIndex' , u'pVal' , ), 0, (0, (), [ (12, 1, None, None) , 
+			(16393, 10, None, "IID('{3E20ADFB-35DF-4919-A492-34D478E8A1AB}')") , ], 1 , 2 , 4 , 0 , 32 , (3, 0, None, None) , 0 , )),
+]
+
+IScanParameters_vtables_dispatch_ = 1
+IScanParameters_vtables_ = [
+	(( u'NumResolutions' , u'pVal' , ), 1, (1, (), [ (16387, 10, None, None) , ], 1 , 2 , 4 , 0 , 28 , (3, 0, None, None) , 0 , )),
+	(( u'Resolution' , u'lIndex' , u'pVal' , ), 2, (2, (), [ (3, 1, None, None) , 
+			(16393, 10, None, "IID('{CDD13BAF-B616-42EC-9998-B540FBFB5E1D}')") , ], 1 , 2 , 4 , 0 , 32 , (3, 0, None, None) , 0 , )),
+	(( u'MaxResolution' , u'pVal' , ), 20, (20, (), [ (16393, 10, None, "IID('{CDD13BAF-B616-42EC-9998-B540FBFB5E1D}')") , ], 1 , 2 , 4 , 0 , 36 , (3, 0, None, None) , 0 , )),
+	(( u'SelectResolution' , u'newVal' , u'pSelectedResolution' , ), 21, (21, (), [ (9, 1, None, "IID('{CDD13BAF-B616-42EC-9998-B540FBFB5E1D}')") , 
+			(16393, 10, None, "IID('{CDD13BAF-B616-42EC-9998-B540FBFB5E1D}')") , ], 1 , 1 , 4 , 0 , 40 , (3, 0, None, None) , 0 , )),
+	(( u'SelectResolutionIndex' , u'lIndex' , ), 22, (22, (), [ (3, 1, None, None) , ], 1 , 1 , 4 , 0 , 44 , (3, 0, None, None) , 0 , )),
+	(( u'AllowedArea' , u'pVal' , ), 3, (3, (), [ (16393, 10, None, "IID('{E3A23ED4-CAF7-4EEE-A80A-DD89DF4A9B18}')") , ], 1 , 2 , 4 , 0 , 48 , (3, 0, None, None) , 0 , )),
+	(( u'DwellTime' , u'pVal' , ), 4, (4, (), [ (16389, 10, None, None) , ], 1 , 2 , 4 , 0 , 52 , (3, 0, None, None) , 0 , )),
+	(( u'DwellTime' , u'pVal' , ), 4, (4, (), [ (5, 1, None, None) , ], 1 , 4 , 4 , 0 , 56 , (3, 0, None, None) , 0 , )),
+	(( u'DwellTimeMin' , u'pVal' , ), 5, (5, (), [ (16389, 10, None, None) , ], 1 , 2 , 4 , 0 , 60 , (3, 0, None, None) , 0 , )),
+	(( u'DwellTimeMax' , u'pVal' , ), 6, (6, (), [ (16389, 10, None, None) , ], 1 , 2 , 4 , 0 , 64 , (3, 0, None, None) , 0 , )),
+	(( u'ScanMode' , u'pVal' , ), 7, (7, (), [ (16387, 10, None, None) , ], 1 , 2 , 4 , 0 , 68 , (3, 0, None, None) , 0 , )),
+	(( u'ScanMode' , u'pVal' , ), 7, (7, (), [ (3, 1, None, None) , ], 1 , 4 , 4 , 0 , 72 , (3, 0, None, None) , 0 , )),
+	(( u'ScanOptions' , u'pVal' , ), 8, (8, (), [ (16387, 10, None, None) , ], 1 , 2 , 4 , 0 , 76 , (3, 0, None, None) , 0 , )),
+	(( u'ScanOptions' , u'pVal' , ), 8, (8, (), [ (3, 1, None, None) , ], 1 , 4 , 4 , 0 , 80 , (3, 0, None, None) , 0 , )),
+	(( u'ScanArea' , u'pVal' , ), 9, (9, (), [ (16393, 10, None, "IID('{E3A23ED4-CAF7-4EEE-A80A-DD89DF4A9B18}')") , ], 1 , 2 , 4 , 0 , 84 , (3, 0, None, None) , 0 , )),
+	(( u'ScanArea' , u'pVal' , ), 9, (9, (), [ (9, 1, None, "IID('{E3A23ED4-CAF7-4EEE-A80A-DD89DF4A9B18}')") , ], 1 , 4 , 4 , 0 , 88 , (3, 0, None, None) , 0 , )),
+	(( u'CircleRadius' , u'pVal' , ), 10, (10, (), [ (16387, 10, None, None) , ], 1 , 2 , 4 , 0 , 92 , (3, 0, None, None) , 0 , )),
+	(( u'CircleRadius' , u'pVal' , ), 10, (10, (), [ (3, 1, None, None) , ], 1 , 4 , 4 , 0 , 96 , (3, 0, None, None) , 0 , )),
+	(( u'CircleAspect' , u'pVal' , ), 11, (11, (), [ (16389, 10, None, None) , ], 1 , 2 , 4 , 0 , 100 , (3, 0, None, None) , 0 , )),
+	(( u'CircleAspect' , u'pVal' , ), 11, (11, (), [ (5, 1, None, None) , ], 1 , 4 , 4 , 0 , 104 , (3, 0, None, None) , 0 , )),
+	(( u'CircleSpot' , u'pVal' , ), 12, (12, (), [ (16387, 10, None, None) , ], 1 , 2 , 4 , 0 , 108 , (3, 0, None, None) , 0 , )),
+	(( u'CircleSpot' , u'pVal' , ), 12, (12, (), [ (3, 1, None, None) , ], 1 , 4 , 4 , 0 , 112 , (3, 0, None, None) , 0 , )),
+	(( u'CircleSpotMin' , u'pVal' , ), 13, (13, (), [ (16387, 10, None, None) , ], 1 , 2 , 4 , 0 , 116 , (3, 0, None, None) , 0 , )),
+	(( u'CircleSpotMax' , u'pVal' , ), 14, (14, (), [ (16387, 10, None, None) , ], 1 , 2 , 4 , 0 , 120 , (3, 0, None, None) , 0 , )),
+	(( u'IncrementDwellTime' , u'DwellInc' , ), 15, (15, (), [ (5, 1, None, None) , ], 1 , 1 , 4 , 0 , 124 , (3, 0, None, None) , 0 , )),
+	(( u'DecrementDwellTime' , u'DwellDec' , ), 16, (16, (), [ (5, 1, None, None) , ], 1 , 1 , 4 , 0 , 128 , (3, 0, None, None) , 0 , )),
+	(( u'CustomSetting' , u'ppIUnk' , ), 17, (17, (), [ (16397, 10, None, None) , ], 1 , 2 , 4 , 0 , 132 , (3, 0, None, None) , 0 , )),
+	(( u'ScanSpotList' , u'ppVal' , ), 18, (18, (), [ (9, 1, None, "IID('{55F7E887-5C7B-41E6-A98B-FB19383ADD92}')") , ], 1 , 4 , 4 , 0 , 136 , (3, 0, None, None) , 0 , )),
+	(( u'ScanSpotList' , u'ppVal' , ), 18, (18, (), [ (16393, 10, None, "IID('{55F7E887-5C7B-41E6-A98B-FB19383ADD92}')") , ], 1 , 2 , 4 , 0 , 140 , (3, 0, None, None) , 0 , )),
+	(( u'SetSpotListDirect' , u'nPoints' , u'pPoints' , ), 19, (19, (), [ (3, 1, None, None) , 
+			(16386, 1, None, None) , ], 1 , 1 , 4 , 0 , 144 , (3, 0, None, None) , 0 , )),
+]
+
+IScanSpotListCollection_vtables_dispatch_ = 1
+IScanSpotListCollection_vtables_ = [
+	(( u'Count' , u'pVal' , ), 1, (1, (), [ (16387, 10, None, None) , ], 1 , 2 , 4 , 0 , 28 , (3, 0, None, None) , 0 , )),
+	(( u'Add' , u'pIVector' , ), 2, (2, (), [ (9, 0, None, "IID('{CDD13BAF-B616-42EC-9998-B540FBFB5E1D}')") , ], 1 , 1 , 4 , 0 , 32 , (3, 0, None, None) , 0 , )),
+	(( u'ClearList' , ), 3, (3, (), [ ], 1 , 1 , 4 , 0 , 36 , (3, 0, None, None) , 0 , )),
+	(( u'Item' , u'lIndex' , u'ppVal' , ), 0, (0, (), [ (12, 1, None, None) , 
+			(16393, 10, None, "IID('{CDD13BAF-B616-42EC-9998-B540FBFB5E1D}')") , ], 1 , 2 , 4 , 0 , 40 , (3, 0, None, None) , 0 , )),
+]
+
+IScanningController_vtables_dispatch_ = 1
+IScanningController_vtables_ = [
+	(( u'Name' , u'pVal' , ), 1, (1, (), [ (16392, 10, None, None) , ], 1 , 2 , 4 , 0 , 28 , (3, 0, None, None) , 0 , )),
+	(( u'Channels' , u'pVal' , ), 2, (2, (), [ (16387, 10, None, None) , ], 1 , 2 , 4 , 0 , 32 , (3, 0, None, None) , 0 , )),
+	(( u'channel' , u'lIndex' , u'ppVal' , ), 3, (3, (), [ (3, 1, None, None) , 
+			(16393, 10, None, "IID('{CE68A69A-3101-4710-9DB8-F541AFAED7E5}')") , ], 1 , 2 , 4 , 0 , 36 , (3, 0, None, None) , 0 , )),
+	(( u'OfflineScanStrategy' , u'ppVal' , ), 4, (4, (), [ (16387, 10, None, None) , ], 1 , 2 , 4 , 0 , 40 , (3, 0, None, None) , 0 , )),
+	(( u'OfflineScanStrategy' , u'ppVal' , ), 4, (4, (), [ (3, 1, None, None) , ], 1 , 4 , 4 , 0 , 44 , (3, 0, None, None) , 0 , )),
+	(( u'StartAcquisition' , u'pIScanSettings' , u'bSingle' , ), 5, (5, (), [ (9, 1, None, "IID('{0AF735D1-CAEF-43B9-ADDF-2E2B4BC3367E}')") , 
+			(3, 48, '1', None) , ], 1 , 1 , 4 , 0 , 48 , (3, 0, None, None) , 0 , )),
+	(( u'StartScan' , u'pIScanSettings' , u'bSingle' , ), 6, (6, (), [ (9, 1, None, "IID('{0AF735D1-CAEF-43B9-ADDF-2E2B4BC3367E}')") , 
+			(3, 48, '1', None) , ], 1 , 1 , 4 , 0 , 52 , (3, 0, None, None) , 0 , )),
+	(( u'GetScanParams' , u'ppIScanSettings' , ), 7, (7, (), [ (16393, 10, None, "IID('{0AF735D1-CAEF-43B9-ADDF-2E2B4BC3367E}')") , ], 1 , 1 , 4 , 0 , 56 , (3, 0, None, None) , 0 , )),
+	(( u'StopAcquisition' , ), 8, (8, (), [ ], 1 , 1 , 4 , 0 , 60 , (3, 0, None, None) , 0 , )),
+	(( u'StopScan' , ), 9, (9, (), [ ], 1 , 1 , 4 , 0 , 64 , (3, 0, None, None) , 0 , )),
+	(( u'GetChannelForDetector' , u'RequestedDetector' , u'ppIChannel' , ), 10, (10, (), [ (3, 1, None, None) , 
+			(16393, 10, None, "IID('{CE68A69A-3101-4710-9DB8-F541AFAED7E5}')") , ], 1 , 1 , 4 , 0 , 68 , (3, 0, None, None) , 0 , )),
+	(( u'SettingType' , u'pVal' , ), 11, (11, (), [ (16387, 10, None, None) , ], 1 , 2 , 4 , 0 , 72 , (3, 0, None, None) , 0 , )),
+]
+
+IScreen_vtables_dispatch_ = 1
+IScreen_vtables_ = [
+	(( u'SetScreenPosition' , u'newPosition' , ), 1, (1, (), [ (3, 1, None, None) , ], 1 , 1 , 4 , 0 , 28 , (3, 0, None, None) , 0 , )),
+	(( u'Position' , u'pVal' , ), 2, (2, (), [ (16387, 10, None, None) , ], 1 , 2 , 4 , 0 , 32 , (3, 0, None, None) , 0 , )),
+	(( u'IsFocusScreenIn' , u'pVal' , ), 3, (3, (), [ (16395, 10, None, None) , ], 1 , 2 , 4 , 0 , 36 , (3, 0, None, None) , 0 , )),
+	(( u'Current' , u'pVal' , ), 4, (4, (), [ (16389, 10, None, None) , ], 1 , 2 , 4 , 0 , 40 , (3, 0, None, None) , 0 , )),
+	(( u'StartSetScreenPosition' , u'newPosition' , ), 5, (5, (), [ (3, 1, None, None) , ], 1 , 1 , 4 , 0 , 44 , (3, 0, None, None) , 0 , )),
+]
+
+IStage_vtables_dispatch_ = 1
+IStage_vtables_ = [
+	(( u'Position' , u'ppVal' , ), 1, (1, (), [ (16393, 10, None, "IID('{A95B12AC-DF8F-4C4F-B102-27888001463A}')") , ], 1 , 2 , 4 , 0 , 28 , (3, 0, None, None) , 0 , )),
+	(( u'Goto' , u'pPosition' , u'Axis' , ), 2, (2, (), [ (9, 1, None, "IID('{A95B12AC-DF8F-4C4F-B102-27888001463A}')") , 
+			(3, 1, None, None) , ], 1 , 1 , 4 , 0 , 32 , (3, 0, None, None) , 0 , )),
+	(( u'Status' , u'pVal' , ), 3, (3, (), [ (16387, 10, None, None) , ], 1 , 2 , 4 , 0 , 36 , (3, 0, None, None) , 0 , )),
+	(( u'Speed' , u'pVal' , ), 4, (4, (), [ (16389, 10, None, None) , ], 1 , 2 , 4 , 0 , 40 , (3, 0, None, None) , 0 , )),
+	(( u'Speed' , u'pVal' , ), 4, (4, (), [ (5, 1, None, None) , ], 1 , 4 , 4 , 0 , 44 , (3, 0, None, None) , 0 , )),
+	(( u'GotoWithSpeed' , u'lAxis' , u'dNewPosition' , ), 5, (5, (), [ (3, 1, None, None) , 
+			(5, 1, None, None) , ], 1 , 1 , 4 , 0 , 48 , (3, 0, None, None) , 0 , )),
+]
+
+IStagePosition_vtables_dispatch_ = 1
+IStagePosition_vtables_ = [
+	(( u'X' , u'pVal' , ), 1, (1, (), [ (16389, 10, None, None) , ], 1 , 2 , 4 , 0 , 28 , (3, 0, None, None) , 0 , )),
+	(( u'X' , u'pVal' , ), 1, (1, (), [ (5, 1, None, None) , ], 1 , 4 , 4 , 0 , 32 , (3, 0, None, None) , 0 , )),
+	(( u'Y' , u'pVal' , ), 2, (2, (), [ (16389, 10, None, None) , ], 1 , 2 , 4 , 0 , 36 , (3, 0, None, None) , 0 , )),
+	(( u'Y' , u'pVal' , ), 2, (2, (), [ (5, 1, None, None) , ], 1 , 4 , 4 , 0 , 40 , (3, 0, None, None) , 0 , )),
+	(( u'Z' , u'pVal' , ), 3, (3, (), [ (16389, 10, None, None) , ], 1 , 2 , 4 , 0 , 44 , (3, 0, None, None) , 0 , )),
+	(( u'Z' , u'pVal' , ), 3, (3, (), [ (5, 1, None, None) , ], 1 , 4 , 4 , 0 , 48 , (3, 0, None, None) , 0 , )),
+	(( u'A' , u'pVal' , ), 4, (4, (), [ (16389, 10, None, None) , ], 1 , 2 , 4 , 0 , 52 , (3, 0, None, None) , 0 , )),
+	(( u'A' , u'pVal' , ), 4, (4, (), [ (5, 1, None, None) , ], 1 , 4 , 4 , 0 , 56 , (3, 0, None, None) , 0 , )),
+	(( u'B' , u'pVal' , ), 5, (5, (), [ (16389, 10, None, None) , ], 1 , 2 , 4 , 0 , 60 , (3, 0, None, None) , 0 , )),
+	(( u'B' , u'pVal' , ), 5, (5, (), [ (5, 1, None, None) , ], 1 , 4 , 4 , 0 , 64 , (3, 0, None, None) , 0 , )),
+]
+
+IStem_vtables_dispatch_ = 1
+IStem_vtables_ = [
+	(( u'Magnification' , u'pVal' , ), 1, (1, (), [ (16389, 10, None, None) , ], 1 , 2 , 4 , 0 , 28 , (3, 0, None, None) , 0 , )),
+	(( u'Magnification' , u'pVal' , ), 1, (1, (), [ (5, 1, None, None) , ], 1 , 4 , 4 , 0 , 32 , (3, 0, None, None) , 0 , )),
+	(( u'Focus' , u'pVal' , ), 2, (2, (), [ (16389, 10, None, None) , ], 1 , 2 , 4 , 0 , 36 , (3, 0, None, None) , 0 , )),
+	(( u'Focus' , u'pVal' , ), 2, (2, (), [ (5, 1, None, None) , ], 1 , 4 , 4 , 0 , 40 , (3, 0, None, None) , 0 , )),
+	(( u'Defocus' , u'pVal' , ), 3, (3, (), [ (16389, 10, None, None) , ], 1 , 2 , 4 , 0 , 44 , (3, 0, None, None) , 0 , )),
+	(( u'Defocus' , u'pVal' , ), 3, (3, (), [ (5, 1, None, None) , ], 1 , 4 , 4 , 0 , 48 , (3, 0, None, None) , 0 , )),
+	(( u'Rotation' , u'pVal' , ), 4, (4, (), [ (16389, 10, None, None) , ], 1 , 2 , 4 , 0 , 52 , (3, 0, None, None) , 0 , )),
+	(( u'Rotation' , u'pVal' , ), 4, (4, (), [ (5, 1, None, None) , ], 1 , 4 , 4 , 0 , 56 , (3, 0, None, None) , 0 , )),
+	(( u'RotationCorrection' , u'pVal' , ), 5, (5, (), [ (16389, 10, None, None) , ], 1 , 2 , 4 , 0 , 60 , (3, 0, None, None) , 0 , )),
+	(( u'RotationCorrection' , u'pVal' , ), 5, (5, (), [ (5, 1, None, None) , ], 1 , 4 , 4 , 0 , 64 , (3, 0, None, None) , 0 , )),
+	(( u'MoveBeam' , u'dX' , u'dY' , ), 6, (6, (), [ (5, 1, None, None) , 
+			(5, 1, None, None) , ], 1 , 1 , 4 , 0 , 68 , (3, 0, None, None) , 0 , )),
+	(( u'FocusStrategy' , u'pVal' , ), 7, (7, (), [ (16387, 10, None, None) , ], 1 , 2 , 4 , 0 , 72 , (3, 0, None, None) , 0 , )),
+	(( u'FocusStrategy' , u'pVal' , ), 7, (7, (), [ (3, 1, None, None) , ], 1 , 4 , 4 , 0 , 76 , (3, 0, None, None) , 0 , )),
+	(( u'ChangeDefocus' , ), 8, (8, (), [ (5, 1, None, None) , ], 1 , 4 , 4 , 0 , 80 , (3, 0, None, None) , 0 , )),
+	(( u'AngleXY' , u'pVal' , ), 9, (9, (), [ (16389, 10, None, None) , ], 1 , 2 , 4 , 0 , 84 , (3, 0, None, None) , 0 , )),
+	(( u'AngleXY' , u'pVal' , ), 9, (9, (), [ (5, 1, None, None) , ], 1 , 4 , 4 , 0 , 88 , (3, 0, None, None) , 0 , )),
+	(( u'SensitivityRatioXY' , u'pVal' , ), 10, (10, (), [ (16389, 10, None, None) , ], 1 , 2 , 4 , 0 , 92 , (3, 0, None, None) , 0 , )),
+	(( u'SensitivityRatioXY' , u'pVal' , ), 10, (10, (), [ (5, 1, None, None) , ], 1 , 4 , 4 , 0 , 96 , (3, 0, None, None) , 0 , )),
+	(( u'ModeTransitionEnabled' , u'pVal' , ), 11, (11, (), [ (16395, 10, None, None) , ], 1 , 2 , 4 , 0 , 100 , (3, 0, None, None) , 0 , )),
+	(( u'ModeTransitionEnabled' , u'pVal' , ), 11, (11, (), [ (11, 1, None, None) , ], 1 , 4 , 4 , 0 , 104 , (3, 0, None, None) , 0 , )),
+	(( u'Mode' , u'pVal' , ), 12, (12, (), [ (16387, 10, None, None) , ], 1 , 2 , 4 , 0 , 108 , (3, 0, None, None) , 0 , )),
+	(( u'Mode' , u'pVal' , ), 12, (12, (), [ (3, 1, None, None) , ], 1 , 4 , 4 , 0 , 112 , (3, 0, None, None) , 0 , )),
+]
+
+ITemBeamStopper_vtables_dispatch_ = 1
+ITemBeamStopper_vtables_ = [
+	(( u'State' , u'pVal' , ), 1, (1, (), [ (16387, 10, None, None) , ], 1 , 2 , 4 , 0 , 28 , (3, 0, None, None) , 0 , )),
+	(( u'IsAvailable' , u'pAvail' , ), 2, (2, (), [ (16395, 10, None, None) , ], 1 , 2 , 4 , 0 , 32 , (3, 0, None, None) , 0 , )),
+	(( u'Insert' , ), 12, (12, (), [ ], 1 , 1 , 4 , 0 , 36 , (3, 0, None, None) , 0 , )),
+	(( u'Retract' , ), 14, (14, (), [ ], 1 , 1 , 4 , 0 , 40 , (3, 0, None, None) , 0 , )),
+	(( u'InsertHalfway' , ), 15, (15, (), [ ], 1 , 1 , 4 , 0 , 44 , (3, 0, None, None) , 0 , )),
+]
+
+ITemGun_vtables_dispatch_ = 1
+ITemGun_vtables_ = [
+	(( u'Shift' , u'ppGunShift' , ), 1, (1, (), [ (16393, 10, None, "IID('{CDD13BAF-B616-42EC-9998-B540FBFB5E1D}')") , ], 1 , 2 , 4 , 0 , 28 , (3, 0, None, None) , 0 , )),
+	(( u'Shift' , u'ppGunShift' , ), 1, (1, (), [ (9, 1, None, "IID('{CDD13BAF-B616-42EC-9998-B540FBFB5E1D}')") , ], 1 , 4 , 4 , 0 , 32 , (3, 0, None, None) , 0 , )),
+	(( u'Tilt' , u'ppGunTilt' , ), 2, (2, (), [ (16393, 10, None, "IID('{CDD13BAF-B616-42EC-9998-B540FBFB5E1D}')") , ], 1 , 2 , 4 , 0 , 36 , (3, 0, None, None) , 0 , )),
+	(( u'Tilt' , u'ppGunTilt' , ), 2, (2, (), [ (9, 1, None, "IID('{CDD13BAF-B616-42EC-9998-B540FBFB5E1D}')") , ], 1 , 4 , 4 , 0 , 40 , (3, 0, None, None) , 0 , )),
+	(( u'Blanked' , u'pBlanked' , ), 3, (3, (), [ (16395, 10, None, None) , ], 1 , 2 , 4 , 0 , 44 , (3, 0, None, None) , 0 , )),
+	(( u'Blanked' , u'pBlanked' , ), 3, (3, (), [ (11, 1, None, None) , ], 1 , 4 , 4 , 0 , 48 , (3, 0, None, None) , 0 , )),
+	(( u'BlankerAmplitude' , u'ppBA' , ), 6, (6, (), [ (16393, 10, None, "IID('{CDD13BAF-B616-42EC-9998-B540FBFB5E1D}')") , ], 1 , 2 , 4 , 0 , 52 , (3, 0, None, None) , 0 , )),
+	(( u'BlankerAmplitude' , u'ppBA' , ), 6, (6, (), [ (9, 1, None, "IID('{CDD13BAF-B616-42EC-9998-B540FBFB5E1D}')") , ], 1 , 4 , 4 , 0 , 56 , (3, 0, None, None) , 0 , )),
+	(( u'HTMode' , u'pVal' , ), 7, (7, (), [ (16387, 10, None, None) , ], 1 , 2 , 4 , 0 , 60 , (3, 0, None, None) , 0 , )),
+	(( u'GunType' , u'pGunType' , ), 8, (8, (), [ (16387, 10, None, None) , ], 1 , 2 , 4 , 0 , 64 , (3, 0, None, None) , 0 , )),
+	(( u'Emission' , u'pGunEmis' , ), 9, (9, (), [ (16395, 10, None, None) , ], 1 , 2 , 4 , 0 , 68 , (3, 0, None, None) , 0 , )),
+	(( u'Emission' , u'pGunEmis' , ), 9, (9, (), [ (11, 1, None, None) , ], 1 , 4 , 4 , 0 , 72 , (3, 0, None, None) , 0 , )),
+	(( u'MaxHT' , u'pMaxHtValue' , ), 10, (10, (), [ (16389, 10, None, None) , ], 1 , 2 , 4 , 0 , 76 , (3, 0, None, None) , 0 , )),
+	(( u'HT' , u'pHtValue' , ), 11, (11, (), [ (16389, 10, None, None) , ], 1 , 2 , 4 , 0 , 80 , (3, 0, None, None) , 0 , )),
+	(( u'HT' , u'pHtValue' , ), 11, (11, (), [ (5, 1, None, None) , ], 1 , 4 , 4 , 0 , 84 , (3, 0, None, None) , 0 , )),
+	(( u'HTState' , u'pHtState' , ), 12, (12, (), [ (16387, 10, None, None) , ], 1 , 2 , 4 , 0 , 88 , (3, 0, None, None) , 0 , )),
+]
+
+ITemInstrument_vtables_dispatch_ = 1
+ITemInstrument_vtables_ = [
+	(( u'RequestLock' , u'pLockObtained' , ), 1, (1, (), [ (16395, 10, None, None) , ], 1 , 1 , 4 , 0 , 28 , (3, 0, None, None) , 0 , )),
+	(( u'ReleaseLock' , ), 2, (2, (), [ ], 1 , 1 , 4 , 0 , 32 , (3, 0, None, None) , 0 , )),
+	(( u'IsLocked' , u'pbLocked' , ), 3, (3, (), [ (16395, 10, None, None) , ], 1 , 1 , 4 , 0 , 36 , (3, 0, None, None) , 0 , )),
+	(( u'AutoNormalizeEnabled' , u'pbANE' , ), 4, (4, (), [ (16395, 10, None, None) , ], 1 , 2 , 4 , 0 , 40 , (3, 0, None, None) , 0 , )),
+	(( u'AutoNormalizeEnabled' , u'pbANE' , ), 4, (4, (), [ (11, 1, None, None) , ], 1 , 4 , 4 , 0 , 44 , (3, 0, None, None) , 0 , )),
+	(( u'DNumber' , u'plDNumber' , ), 5, (5, (), [ (16387, 10, None, None) , ], 1 , 2 , 4 , 0 , 48 , (3, 0, None, None) , 0 , )),
+	(( u'StemAvailable' , u'pbSA' , ), 6, (6, (), [ (16395, 10, None, None) , ], 1 , 2 , 4 , 0 , 52 , (3, 0, None, None) , 0 , )),
+	(( u'Mode' , u'eMode' , ), 7, (7, (), [ (16387, 10, None, None) , ], 1 , 2 , 4 , 0 , 56 , (3, 0, None, None) , 0 , )),
+	(( u'Mode' , u'eMode' , ), 7, (7, (), [ (3, 1, None, None) , ], 1 , 4 , 4 , 0 , 60 , (3, 0, None, None) , 0 , )),
+	(( u'NormalizeLenses' , u'eLenses' , ), 8, (8, (), [ (3, 1, None, None) , ], 1 , 1 , 4 , 0 , 64 , (3, 0, None, None) , 0 , )),
+	(( u'SaveAlignments' , ), 22, (22, (), [ ], 1 , 1 , 4 , 0 , 68 , (3, 0, None, None) , 0 , )),
+	(( u'Gun' , u'ppG' , ), 9, (9, (), [ (16393, 10, None, "IID('{9230A547-E612-4E77-AD74-71613F757C19}')") , ], 1 , 2 , 4 , 0 , 72 , (3, 0, None, None) , 0 , )),
+	(( u'Illumination' , u'pVal' , ), 10, (10, (), [ (16393, 10, None, "IID('{6DC459D2-C971-4591-AB33-3F308D26D1E8}')") , ], 1 , 2 , 4 , 0 , 76 , (3, 0, None, None) , 0 , )),
+	(( u'Projection' , u'pVal' , ), 11, (11, (), [ (16393, 10, None, "IID('{8FF5A755-42B5-4C6E-BB39-AD8E9DF3B40B}')") , ], 1 , 2 , 4 , 0 , 80 , (3, 0, None, None) , 0 , )),
+	(( u'Stage' , u'pVal' , ), 12, (12, (), [ (16393, 10, None, "IID('{5C940107-953D-4B0D-A102-F62168040165}')") , ], 1 , 2 , 4 , 0 , 84 , (3, 0, None, None) , 0 , )),
+	(( u'EnergyFilter' , u'pVal' , ), 13, (13, (), [ (16393, 10, None, "IID('{C31B7DE8-E71B-4A1F-96C9-4B2945CC6FF2}')") , ], 1 , 2 , 4 , 0 , 88 , (3, 0, None, None) , 0 , )),
+	(( u'Screen' , u'pVal' , ), 14, (14, (), [ (16393, 10, None, "IID('{D82A8680-71A7-4E71-AB78-FB9A68B1380B}')") , ], 1 , 2 , 4 , 0 , 92 , (3, 0, None, None) , 0 , )),
+	(( u'Acquisition' , u'pVal' , ), 15, (15, (), [ (16393, 10, None, "IID('{E5D56C7D-9B01-45BC-A08F-3E4E2BE653D6}')") , ], 1 , 2 , 4 , 0 , 96 , (3, 0, None, None) , 0 , )),
+	(( u'User' , u'pVal' , ), 16, (16, (), [ (16393, 10, None, "IID('{B08B8D60-5C4E-45FA-90F2-28BDF2AEB5F3}')") , ], 1 , 2 , 4 , 0 , 100 , (3, 0, None, None) , 0 , )),
+	(( u'IsDonglePresent' , u'pVal' , ), 17, (17, (), [ (16387, 10, None, None) , ], 1 , 2 , 4 , 0 , 104 , (3, 0, None, None) , 0 , )),
+	(( u'IsFunctionAllowed' , u'lFunctionId' , u'pVal' , ), 18, (18, (), [ (3, 1, None, None) , 
+			(16395, 10, None, None) , ], 1 , 2 , 4 , 0 , 108 , (3, 0, None, None) , 0 , )),
+	(( u'STEM' , u'pVal' , ), 19, (19, (), [ (16393, 10, None, "IID('{D03577B9-382E-4D8A-A6B8-69A3FBFB8615}')") , ], 1 , 2 , 4 , 0 , 112 , (3, 0, None, None) , 0 , )),
+	(( u'VacuumSystem' , u'pVal' , ), 20, (20, (), [ (16393, 10, None, "IID('{865BB5A0-1EB3-464F-ACD4-BCB86616C228}')") , ], 1 , 2 , 4 , 0 , 116 , (3, 0, None, None) , 0 , )),
+	(( u'GunType' , u'pGunType' , ), 21, (21, (), [ (16387, 10, None, None) , ], 1 , 2 , 4 , 0 , 120 , (3, 0, None, None) , 0 , )),
+	(( u'TemperatureControl' , u'pVal' , ), 23, (23, (), [ (16393, 10, None, "IID('{AF3AB413-4BC1-4CD8-A118-C6D26CE3C2CF}')") , ], 1 , 2 , 4 , 0 , 124 , (3, 0, None, None) , 0 , )),
+	(( u'BeamStopper' , u'pVal' , ), 24, (24, (), [ (16393, 10, None, "IID('{54AD0E74-4273-4CD8-BCE5-6120BED2BBE2}')") , ], 1 , 2 , 4 , 0 , 128 , (3, 0, None, None) , 0 , )),
+	(( u'Configuration' , u'pVal' , ), 25, (25, (), [ (16393, 10, None, "IID('{025F5A6B-3B98-4013-81BE-375FF144C936}')") , ], 1 , 2 , 4 , 0 , 132 , (3, 0, None, None) , 0 , )),
+]
+
+ITemperatureControl_vtables_dispatch_ = 1
+ITemperatureControl_vtables_ = [
+	(( u'ForceRefill' , ), 1, (1, (), [ ], 1 , 1 , 4 , 0 , 28 , (3, 0, None, None) , 0 , )),
+	(( u'IsAvailable' , u'pAvail' , ), 10, (10, (), [ (16395, 10, None, None) , ], 1 , 2 , 4 , 0 , 32 , (3, 0, None, None) , 0 , )),
+	(( u'RefrigerantLevel' , u'rl' , u'pVal' , ), 11, (11, (), [ (3, 1, None, None) , 
+			(16389, 10, None, None) , ], 1 , 2 , 4 , 0 , 36 , (3, 0, None, None) , 0 , )),
+	(( u'DewarsBusyFilling' , u'pVal' , ), 12, (12, (), [ (16395, 10, None, None) , ], 1 , 2 , 4 , 0 , 40 , (3, 0, None, None) , 0 , )),
+]
+
+IUser_vtables_dispatch_ = 1
+IUser_vtables_ = [
+	(( u'LoggedOn' , u'pVal' , ), 1, (1, (), [ (16395, 10, None, None) , ], 1 , 2 , 4 , 0 , 28 , (3, 0, None, None) , 0 , )),
+	(( u'Name' , u'pVal' , ), 2, (2, (), [ (16392, 10, None, None) , ], 1 , 2 , 4 , 0 , 32 , (3, 0, None, None) , 0 , )),
+	(( u'Level' , u'pVal' , ), 3, (3, (), [ (16387, 10, None, None) , ], 1 , 2 , 4 , 0 , 36 , (3, 0, None, None) , 0 , )),
+]
+
+IVacuumSystem_vtables_dispatch_ = 1
+IVacuumSystem_vtables_ = [
+	(( u'RunBufferCycle' , ), 1, (1, (), [ ], 1 , 1 , 4 , 0 , 28 , (3, 0, None, None) , 0 , )),
+	(( u'BeginRunBufferCycle' , ), 2, (2, (), [ ], 1 , 1 , 4 , 0 , 32 , (3, 0, None, None) , 0 , )),
+	(( u'Status' , u'pVal' , ), 10, (10, (), [ (16387, 10, None, None) , ], 1 , 2 , 4 , 0 , 36 , (3, 0, None, None) , 0 , )),
+	(( u'PVPRunning' , u'pVal' , ), 11, (11, (), [ (16395, 10, None, None) , ], 1 , 2 , 4 , 0 , 40 , (3, 0, None, None) , 0 , )),
+	(( u'ColumnValvesOpen' , u'pO' , ), 12, (12, (), [ (16395, 10, None, None) , ], 1 , 2 , 4 , 0 , 44 , (3, 0, None, None) , 0 , )),
+	(( u'ColumnValvesOpen' , u'pO' , ), 12, (12, (), [ (11, 1, None, None) , ], 1 , 4 , 4 , 0 , 48 , (3, 0, None, None) , 0 , )),
+	(( u'Gauges' , u'pG' , ), 13, (13, (), [ (16393, 10, None, "IID('{F8D46CE5-F80E-4187-8554-3C7CC86A9758}')") , ], 1 , 2 , 4 , 0 , 52 , (3, 0, None, None) , 0 , )),
+	(( u'BufferCycleStatus' , u'pVal' , ), 14, (14, (), [ (16387, 10, None, None) , ], 1 , 2 , 4 , 0 , 56 , (3, 0, None, None) , 0 , )),
+	(( u'AutoloaderBufferCycle' , ), 3, (3, (), [ ], 1 , 1 , 4 , 0 , 60 , (3, 0, None, None) , 0 , )),
+]
+
+IVector_vtables_dispatch_ = 1
+IVector_vtables_ = [
+	(( u'X' , u'pVal' , ), 1, (1, (), [ (16389, 10, None, None) , ], 1 , 2 , 4 , 0 , 28 , (3, 0, None, None) , 0 , )),
+	(( u'X' , u'pVal' , ), 1, (1, (), [ (5, 1, None, None) , ], 1 , 4 , 4 , 0 , 32 , (3, 0, None, None) , 0 , )),
+	(( u'Y' , u'pVal' , ), 2, (2, (), [ (16389, 10, None, None) , ], 1 , 2 , 4 , 0 , 36 , (3, 0, None, None) , 0 , )),
+	(( u'Y' , u'pVal' , ), 2, (2, (), [ (5, 1, None, None) , ], 1 , 4 , 4 , 0 , 40 , (3, 0, None, None) , 0 , )),
+	(( u'Length' , u'pVal' , ), 3, (3, (), [ (16389, 10, None, None) , ], 1 , 2 , 4 , 0 , 44 , (3, 0, None, None) , 0 , )),
+	(( u'Angle' , u'pVal' , ), 4, (4, (), [ (16389, 10, None, None) , ], 1 , 2 , 4 , 0 , 48 , (3, 0, None, None) , 0 , )),
+	(( u'IsEqual' , u'pIVector' , u'pVal' , ), 5, (5, (), [ (9, 1, None, "IID('{CDD13BAF-B616-42EC-9998-B540FBFB5E1D}')") , 
+			(16395, 10, None, None) , ], 1 , 1 , 4 , 0 , 52 , (3, 0, None, None) , 0 , )),
+	(( u'Dot' , u'pIVector' , u'pVal' , ), 6, (6, (), [ (9, 1, None, "IID('{CDD13BAF-B616-42EC-9998-B540FBFB5E1D}')") , 
+			(16389, 10, None, None) , ], 1 , 1 , 4 , 0 , 56 , (3, 0, None, None) , 0 , )),
+]
+
+IWriteAccessor_vtables_dispatch_ = 0
+IWriteAccessor_vtables_ = [
+	(( u'Ptr' , u'Offset' , ), 1610678272, (1610678272, (), [ (3, 49, '0', None) , ], 1 , 1 , 4 , 0 , 12 , (16408, 0, None, None) , 0 , )),
+	(( u'Invalidate' , u'pDirty' , ), 1610678273, (1610678273, (), [ (36, 49, '0', None) , ], 1 , 1 , 4 , 0 , 16 , (3, 0, None, None) , 0 , )),
+]
+
+RecordMap = {
+	u'tagRECT': '{00000000-0000-0000-0000-000000000000}',
+}
+
+CLSIDToClassMap = {
+	'{4150E0FD-67D0-4D87-9156-37B92259AA91}' : _ITemGunEvents,
+	'{D2DD6440-B8E5-4C8A-ADBA-EB0DAF0ED9FE}' : IlluminationTom,
+	'{BA833E7C-2800-4EA7-8F69-F922F86D10E2}' : ICameraControlCollection,
+	'{DBA6D609-614D-4483-89FE-E81F25CB31FC}' : _IAcquisitionEvents,
+	'{A61D5C9D-626D-45A4-B46D-F43ED8916DE7}' : Gauge,
+	'{289E36B7-23EF-4ACF-99F3-E25240CFA2F0}' : StagePosition,
+	'{A429AE6B-AF62-498D-9C5B-122D0CB0A48D}' : _ITemBeamStopperEvents,
+	'{D03577B9-382E-4D8A-A6B8-69A3FBFB8615}' : IStem,
+	'{547A7C34-E2E0-4545-8298-361573587878}' : IMemento,
+	'{1C632F33-C447-4501-A0FE-8BA0659235C1}' : _IProjectionEvents,
+	'{F544A1E0-C841-4CDC-9BCB-79B25A502247}' : Area,
+	'{D48E8B26-0056-4B28-AB44-53A870978AA2}' : _IIlluminationEvents,
+	'{33CF073E-7AA5-4BB0-82C0-FAE6B3F61F77}' : IMementoItem,
+	'{5835D7FC-2208-49E8-85E0-9A93BBD7CE31}' : CoLogicalResource,
+	'{8B95C4C7-651D-4166-955D-CC4222A8E0FB}' : ICameraControl,
+	'{F7024B66-B8F4-4D6D-8E0B-4782B464B4DB}' : CoTemInstrument,
+	'{CC15C43F-B7CB-4255-8482-FEA0100A4FC7}' : IDetector,
+	'{7150DFFB-C961-4425-BEDD-705387D0007A}' : IInstrument,
+	'{F0753F3E-84B4-43A1-8A64-26DA1FDF22EF}' : _IScanningControllerEvents,
+	'{6E87E409-B51C-4C3F-9AFA-E9CD2D8BB14C}' : _IUserEvents,
+	'{B431C504-00EE-4440-ABFF-481FD496E50E}' : ScanParameters,
+	'{4380EAFD-EC11-4673-BF6A-206C5B2065B9}' : IRawImageDescriptor,
+	'{DAED4E3A-FCDD-4F3C-926B-BDFF3B2AA0A3}' : CameraControl,
+	'{A19F6548-BA48-4685-8FA5-52B3A8C32C26}' : User,
+	'{95D7A830-448F-4DC3-8EF5-B6C0517873F6}' : TemBeamStopper,
+	'{B08B8D60-5C4E-45FA-90F2-28BDF2AEB5F3}' : IUser,
+	'{B8A0A748-C56B-4813-A785-051184CABDF1}' : _IVacuumSystemEvents,
+	'{49AB6F9E-E330-4E08-9E50-7E39ABCE9F22}' : TemGun,
+	'{0AF735D1-CAEF-43B9-ADDF-2E2B4BC3367E}' : IScanParameters,
+	'{88677A9D-D6E5-4C61-A834-D0AF0F7B97F2}' : IAcquiredData,
+	'{7D82B1B8-3A42-495A-B1D9-2BE40FA497FA}' : Instrument,
+	'{AAA5ADD7-C5A9-4710-9A74-76E4D20BA41B}' : _IEnergyFilterEvents,
+	'{4524CDB1-68E9-4BA6-9503-96358B531619}' : Vector,
+	'{F8D46CE5-F80E-4187-8554-3C7CC86A9758}' : IGauges,
+	'{9230A547-E612-4E77-AD74-71613F757C19}' : ITemGun,
+	'{54AD0E74-4273-4CD8-BCE5-6120BED2BBE2}' : ITemBeamStopper,
+	'{0371B137-54F8-4FAF-A283-FCBE77F6036B}' : Projection,
+	'{E5D56C7D-9B01-45BC-A08F-3E4E2BE653D6}' : IAcquisition,
+	'{F339AD2D-E5BC-4E7F-902C-7D95D1571D68}' : _IGaugeEvents,
+	'{5C940107-953D-4B0D-A102-F62168040165}' : IStage,
+	'{9546F053-2098-4EE6-9684-7D4BD039F3EB}' : _ILogicalResourceEvents,
+	'{E3A23ED4-CAF7-4EEE-A80A-DD89DF4A9B18}' : IArea,
+	'{55F7E887-5C7B-41E6-A98B-FB19383ADD92}' : IScanSpotListCollection,
+	'{CDD13BAF-B616-42EC-9998-B540FBFB5E1D}' : IVector,
+	'{7BC53359-3083-461D-BCB7-31AA43873956}' : IMementoSection,
+	'{D82A8680-71A7-4E71-AB78-FB9A68B1380B}' : IScreen,
+	'{C31B7DE8-E71B-4A1F-96C9-4B2945CC6FF2}' : IEnergyFilter,
+	'{759555A2-1BCD-459D-9483-D41AE2AFB121}' : CoObjectModel,
+	'{D6519C4E-0DFB-4E8B-B40D-B3406335379E}' : Gauges,
+	'{AF3AB413-4BC1-4CD8-A118-C6D26CE3C2CF}' : ITemperatureControl,
+	'{8FF5A755-42B5-4C6E-BB39-AD8E9DF3B40B}' : IProjection,
+	'{73460085-3CAE-49B2-97A3-AE81195A06BB}' : IMementoItems,
+	'{44BFFFAD-737C-4DDC-95D5-DC85262072C8}' : IGauge,
+	'{865BB5A0-1EB3-464F-ACD4-BCB86616C228}' : IVacuumSystem,
+	'{6144B4D6-D565-431B-B43E-B94E771F4194}' : Screen,
+	'{CE68A69A-3101-4710-9DB8-F541AFAED7E5}' : IChannel,
+	'{FAFF9BF1-ACD6-4475-9E2E-0CBBCA7A613D}' : channel,
+	'{F416E9BB-80AB-4CE3-8ED7-C05476C5B753}' : ITemInstrument,
+	'{5951791E-6A03-4258-B769-1730D85B99A9}' : _IScreenEvents,
+	'{A95B12AC-DF8F-4C4F-B102-27888001463A}' : IStagePosition,
+	'{C8C9FDB4-0711-4D29-9140-1C2099EB0374}' : IScanControlCollection,
+	'{02E224BA-A74C-4C89-9098-50ADDA87A96D}' : _ICameraControllerEvents,
+	'{8F4715B4-A36E-4A2A-9B14-3FA1B466D366}' : ICCDCamera,
+	'{A535BFBC-DA6A-4F99-A2E0-3E1EAB4F4BFA}' : EnergyFilter,
+	'{7681E531-D69A-429C-A592-45C084DFBC09}' : Acquisition,
+	'{025F5A6B-3B98-4013-81BE-375FF144C936}' : IConfiguration,
+	'{3E20ADFB-35DF-4919-A492-34D478E8A1AB}' : IScanningController,
+	'{8DC5805D-3C2B-4FCE-A0BD-8B41D242F62A}' : VacuumSystem,
+	'{6DC459D2-C971-4591-AB33-3F308D26D1E8}' : IIllumination,
+	'{3D39B640-ECC6-487A-91AA-15ABE676597D}' : _IChannelEvents,
+	'{2E4EF809-F203-431F-B5B2-B6A03E7643BD}' : ScanningController,
+}
+CLSIDToPackageMap = {}
+win32com.client.CLSIDToClass.RegisterCLSIDsFromDict( CLSIDToClassMap )
+VTablesToPackageMap = {}
+VTablesToClassMap = {
+	'{7E5B7C2A-3B1B-4D79-8B06-418D328A6EAE}' : 'IRawImageEvents',
+	'{BA833E7C-2800-4EA7-8F69-F922F86D10E2}' : 'ICameraControlCollection',
+	'{D03577B9-382E-4D8A-A6B8-69A3FBFB8615}' : 'IStem',
+	'{547A7C34-E2E0-4545-8298-361573587878}' : 'IMemento',
+	'{33CF073E-7AA5-4BB0-82C0-FAE6B3F61F77}' : 'IMementoItem',
+	'{8B95C4C7-651D-4166-955D-CC4222A8E0FB}' : 'ICameraControl',
+	'{CC15C43F-B7CB-4255-8482-FEA0100A4FC7}' : 'IDetector',
+	'{7150DFFB-C961-4425-BEDD-705387D0007A}' : 'IInstrument',
+	'{4380EAFD-EC11-4673-BF6A-206C5B2065B9}' : 'IRawImageDescriptor',
+	'{13F49FF8-F371-4980-8D71-61CA386268CE}' : 'ILogicalResource',
+	'{99D0CE35-3A4B-4AB1-8CE7-3DD02341AD51}' : 'IWriteAccessor',
+	'{B08B8D60-5C4E-45FA-90F2-28BDF2AEB5F3}' : 'IUser',
+	'{0AF735D1-CAEF-43B9-ADDF-2E2B4BC3367E}' : 'IScanParameters',
+	'{88677A9D-D6E5-4C61-A834-D0AF0F7B97F2}' : 'IAcquiredData',
+	'{D82A8680-71A7-4E71-AB78-FB9A68B1380B}' : 'IScreen',
+	'{F8D46CE5-F80E-4187-8554-3C7CC86A9758}' : 'IGauges',
+	'{59EF4C62-8652-4A84-BFB4-B978CE577C6E}' : 'IRawImage',
+	'{AFE367E6-3B7F-4125-8FFB-6DA650C0FAC0}' : 'IReadAccessor',
+	'{9230A547-E612-4E77-AD74-71613F757C19}' : 'ITemGun',
+	'{54AD0E74-4273-4CD8-BCE5-6120BED2BBE2}' : 'ITemBeamStopper',
+	'{E5D56C7D-9B01-45BC-A08F-3E4E2BE653D6}' : 'IAcquisition',
+	'{5C940107-953D-4B0D-A102-F62168040165}' : 'IStage',
+	'{E3A23ED4-CAF7-4EEE-A80A-DD89DF4A9B18}' : 'IArea',
+	'{55F7E887-5C7B-41E6-A98B-FB19383ADD92}' : 'IScanSpotListCollection',
+	'{CDD13BAF-B616-42EC-9998-B540FBFB5E1D}' : 'IVector',
+	'{7BC53359-3083-461D-BCB7-31AA43873956}' : 'IMementoSection',
+	'{C31B7DE8-E71B-4A1F-96C9-4B2945CC6FF2}' : 'IEnergyFilter',
+	'{AF3AB413-4BC1-4CD8-A118-C6D26CE3C2CF}' : 'ITemperatureControl',
+	'{8FF5A755-42B5-4C6E-BB39-AD8E9DF3B40B}' : 'IProjection',
+	'{73460085-3CAE-49B2-97A3-AE81195A06BB}' : 'IMementoItems',
+	'{44BFFFAD-737C-4DDC-95D5-DC85262072C8}' : 'IGauge',
+	'{865BB5A0-1EB3-464F-ACD4-BCB86616C228}' : 'IVacuumSystem',
+	'{CE68A69A-3101-4710-9DB8-F541AFAED7E5}' : 'IChannel',
+	'{F416E9BB-80AB-4CE3-8ED7-C05476C5B753}' : 'ITemInstrument',
+	'{A95B12AC-DF8F-4C4F-B102-27888001463A}' : 'IStagePosition',
+	'{C8C9FDB4-0711-4D29-9140-1C2099EB0374}' : 'IScanControlCollection',
+	'{8F4715B4-A36E-4A2A-9B14-3FA1B466D366}' : 'ICCDCamera',
+	'{025F5A6B-3B98-4013-81BE-375FF144C936}' : 'IConfiguration',
+	'{3E20ADFB-35DF-4919-A492-34D478E8A1AB}' : 'IScanningController',
+	'{6DC459D2-C971-4591-AB33-3F308D26D1E8}' : 'IIllumination',
+}
+
+
+NamesToIIDMap = {
+	'_IEnergyFilterEvents' : '{AAA5ADD7-C5A9-4710-9A74-76E4D20BA41B}',
+	'IScreen' : '{D82A8680-71A7-4E71-AB78-FB9A68B1380B}',
+	'IStem' : '{D03577B9-382E-4D8A-A6B8-69A3FBFB8615}',
+	'_ICameraControllerEvents' : '{02E224BA-A74C-4C89-9098-50ADDA87A96D}',
+	'IConfiguration' : '{025F5A6B-3B98-4013-81BE-375FF144C936}',
+	'IRawImage' : '{59EF4C62-8652-4A84-BFB4-B978CE577C6E}',
+	'IArea' : '{E3A23ED4-CAF7-4EEE-A80A-DD89DF4A9B18}',
+	'ITemInstrument' : '{F416E9BB-80AB-4CE3-8ED7-C05476C5B753}',
+	'_IGaugeEvents' : '{F339AD2D-E5BC-4E7F-902C-7D95D1571D68}',
+	'_ILogicalResourceEvents' : '{9546F053-2098-4EE6-9684-7D4BD039F3EB}',
+	'ITemGun' : '{9230A547-E612-4E77-AD74-71613F757C19}',
+	'IScanParameters' : '{0AF735D1-CAEF-43B9-ADDF-2E2B4BC3367E}',
+	'_IUserEvents' : '{6E87E409-B51C-4C3F-9AFA-E9CD2D8BB14C}',
+	'IAcquiredData' : '{88677A9D-D6E5-4C61-A834-D0AF0F7B97F2}',
+	'IProjection' : '{8FF5A755-42B5-4C6E-BB39-AD8E9DF3B40B}',
+	'IGauge' : '{44BFFFAD-737C-4DDC-95D5-DC85262072C8}',
+	'IMementoItem' : '{33CF073E-7AA5-4BB0-82C0-FAE6B3F61F77}',
+	'ILogicalResource' : '{13F49FF8-F371-4980-8D71-61CA386268CE}',
+	'_IScreenEvents' : '{5951791E-6A03-4258-B769-1730D85B99A9}',
+	'_IChannelEvents' : '{3D39B640-ECC6-487A-91AA-15ABE676597D}',
+	'IDetector' : '{CC15C43F-B7CB-4255-8482-FEA0100A4FC7}',
+	'ICameraControl' : '{8B95C4C7-651D-4166-955D-CC4222A8E0FB}',
+	'IReadAccessor' : '{AFE367E6-3B7F-4125-8FFB-6DA650C0FAC0}',
+	'IInstrument' : '{7150DFFB-C961-4425-BEDD-705387D0007A}',
+	'IUser' : '{B08B8D60-5C4E-45FA-90F2-28BDF2AEB5F3}',
+	'IChannel' : '{CE68A69A-3101-4710-9DB8-F541AFAED7E5}',
+	'ICameraControlCollection' : '{BA833E7C-2800-4EA7-8F69-F922F86D10E2}',
+	'IVacuumSystem' : '{865BB5A0-1EB3-464F-ACD4-BCB86616C228}',
+	'IMementoItems' : '{73460085-3CAE-49B2-97A3-AE81195A06BB}',
+	'IIllumination' : '{6DC459D2-C971-4591-AB33-3F308D26D1E8}',
+	'IMemento' : '{547A7C34-E2E0-4545-8298-361573587878}',
+	'ITemperatureControl' : '{AF3AB413-4BC1-4CD8-A118-C6D26CE3C2CF}',
+	'ITemBeamStopper' : '{54AD0E74-4273-4CD8-BCE5-6120BED2BBE2}',
+	'_IIlluminationEvents' : '{D48E8B26-0056-4B28-AB44-53A870978AA2}',
+	'IScanSpotListCollection' : '{55F7E887-5C7B-41E6-A98B-FB19383ADD92}',
+	'_IScanningControllerEvents' : '{F0753F3E-84B4-43A1-8A64-26DA1FDF22EF}',
+	'IAcquisition' : '{E5D56C7D-9B01-45BC-A08F-3E4E2BE653D6}',
+	'_ITemGunEvents' : '{4150E0FD-67D0-4D87-9156-37B92259AA91}',
+	'IRawImageEvents' : '{7E5B7C2A-3B1B-4D79-8B06-418D328A6EAE}',
+	'IWriteAccessor' : '{99D0CE35-3A4B-4AB1-8CE7-3DD02341AD51}',
+	'IVector' : '{CDD13BAF-B616-42EC-9998-B540FBFB5E1D}',
+	'IMementoSection' : '{7BC53359-3083-461D-BCB7-31AA43873956}',
+	'ICCDCamera' : '{8F4715B4-A36E-4A2A-9B14-3FA1B466D366}',
+	'IScanControlCollection' : '{C8C9FDB4-0711-4D29-9140-1C2099EB0374}',
+	'IEnergyFilter' : '{C31B7DE8-E71B-4A1F-96C9-4B2945CC6FF2}',
+	'_ITemBeamStopperEvents' : '{A429AE6B-AF62-498D-9C5B-122D0CB0A48D}',
+	'_IAcquisitionEvents' : '{DBA6D609-614D-4483-89FE-E81F25CB31FC}',
+	'IStagePosition' : '{A95B12AC-DF8F-4C4F-B102-27888001463A}',
+	'IScanningController' : '{3E20ADFB-35DF-4919-A492-34D478E8A1AB}',
+	'IRawImageDescriptor' : '{4380EAFD-EC11-4673-BF6A-206C5B2065B9}',
+	'_IProjectionEvents' : '{1C632F33-C447-4501-A0FE-8BA0659235C1}',
+	'IStage' : '{5C940107-953D-4B0D-A102-F62168040165}',
+	'_IVacuumSystemEvents' : '{B8A0A748-C56B-4813-A785-051184CABDF1}',
+	'IGauges' : '{F8D46CE5-F80E-4187-8554-3C7CC86A9758}',
+}
+
+win32com.client.constants.__dicts__.append(constants.__dict__)
+
