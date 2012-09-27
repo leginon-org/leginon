@@ -27,6 +27,7 @@ idcounter = itertools.cycle(range(100))
 class CorrectorClient(cameraclient.CameraClient):
 	def __init__(self):
 		cameraclient.CameraClient.__init__(self)
+		self.max_badpixels = 800
 
 	def acquireCorrectedCameraImageData(self, channel=0, **kwargs):
 		imagedata = self.acquireCameraImageData(**kwargs)
@@ -411,6 +412,9 @@ class CorrectorClient(cameraclient.CameraClient):
 		## fix individual pixels (pixels are in x,y format)
 		## replace each with median of 8 neighbors, however, some neighbors
 		## are also labeled as bad, so we will not use those in the calculation
+		if len(badpixels) >= self.max_badpixels:
+			self.logger.error('Too many (%d) bad pixels will slow down image acquisition' % len(badpixels))
+			self.logger.warning('Clear bad pixel plan in Corrector to speed up')
 		for badpixel in badpixels:
 			badcol,badrow = badpixel
 			if badcol in badcols or badrow in badrows:

@@ -441,9 +441,13 @@ class Corrector(imagewatcher.ImageWatcher):
 				# convert to tuple to be consistent with plan
 				yx = bad[1], bad[0]
 				if yx not in newbadpixels:
-					newbadpixels.append(yx)
-					self.logger.info("added bad pixel point at (%d,%d) at %d" % (bad[0], bad[1],int(currentvalue)))
-					imageshown[yx]=imagemean
+					if len(newbadpixels) >= self.max_badpixels:
+						self.logger.error("Too many bad pixels, new pixels not added")
+						break
+					else:
+						newbadpixels.append(yx)
+						self.logger.info("added bad pixel point at (%d,%d) at %d" % (bad[0], bad[1],int(currentvalue)))
+						imageshown[yx]=imagemean
 
 		plan['pixels'] = newbadpixels
 		self.displayImage(imageshown)
@@ -463,8 +467,11 @@ class Corrector(imagewatcher.ImageWatcher):
 		fullbadpixelset = set()
 		fullbadpixelset = fullbadpixelset.union(oldbadpixels)
 		fullbadpixelset = fullbadpixelset.union(badpixels)
-		plan['pixels'] = list(fullbadpixelset)
-		self.storeCorrectorPlan(plan)
+		if len(fullbadpixelset) > self.max_badpixels:
+			self.logger.error("Too many bad pixels, new pixels not added")
+		else:
+			plan['pixels'] = list(fullbadpixelset)
+			self.storeCorrectorPlan(plan)
 		self.panel.setPlan(plan)
 		self.setTargets([], 'Bad_Region', block=False)
 
