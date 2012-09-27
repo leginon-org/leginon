@@ -6,6 +6,7 @@ import utility
 from optparse import OptionParser
 import redux.pipes
 import redux.pipeline
+import redux.reduxconfig
 
 class Client(object):
 	def process_request(self, request):
@@ -14,7 +15,7 @@ class Client(object):
 		raise NotImplementedError()
 
 class NetworkClient(Client):
-	def __init__(self, host, port=utility.REDUX_PORT):
+	def __init__(self, host, port):
 		self.host = host
 		self.port = port
 
@@ -121,7 +122,7 @@ def run():
 		if 'server_port' in kwargs and kwargs['server_port']:
 			port = int(kwargs['server_port'])
 		else:
-			port = utility.REDUX_PORT
+			port = redux.reduxconfig.config['server port']
 		client = NetworkClient(kwargs['server_host'], port)
 	else:
 		client = SimpleClient()

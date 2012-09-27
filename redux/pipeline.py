@@ -7,14 +7,15 @@ import sys
 # local
 import redux.pipes
 import redux.pipelines
+import redux.reduxconfig
 
-CACHE_ON = True
+CACHE_ON = redux.reduxconfig.config['cache on']
 
 if CACHE_ON:
 	import redux.cache
-	disk_cache_path = '/tmp/redux'
-	disk_cache_size = 200*1024*1024  # 100 MB
-	mem_cache_size = 400*1024*1024  # 400 MB
+	disk_cache_path = redux.reduxconfig.config['cache path']
+	disk_cache_size = redux.reduxconfig.config['cache disk size'] * 1024 * 1024
+	mem_cache_size = redux.reduxconfig.config['cache mem size'] * 1024 * 1024
 	results = redux.cache.Cache(disk_cache_path, disk_cache_size, size_max=mem_cache_size)
 
 def log(msg):

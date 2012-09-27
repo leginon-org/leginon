@@ -2,9 +2,6 @@
 functions useful to either client or server
 '''
 
-## Server accepts connections on this port
-REDUX_PORT = 55123
-
 import itertools
 import numpy
 
