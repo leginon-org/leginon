@@ -170,6 +170,7 @@ def refBasedAlignParticles(stackfile, templatestack,
 	### remove previous iterations
 	apFile.removeFile(rundir+"/paramdoc%02d%s" % (iternum, dataext))
 
+	"""
 	### perform alignment, should I use 'AP SH' instead?
 	mySpider = spyder.SpiderSession(dataext=dataext, logo=True, nproc=nproc, log=False)
 	mySpider.toSpider("AP MQ",
@@ -179,6 +180,24 @@ def refBasedAlignParticles(stackfile, templatestack,
 		str(int(firstring))+","+str(int(lastring)), # first and last ring for rotational correlation
 		spyder.fileFilter(stackfile)+"@******",     # unaligned image series
 		"1-"+str(numpart),                          # enter number of particles of doc file
+		rundir+("/paramdoc%02d" % (iternum)),       # output angles document file
+	)
+	mySpider.close()
+	"""
+
+	### perform alignment, should I use 'AP SH' instead?
+	mySpider = spyder.SpiderSession(dataext=dataext, logo=True, nproc=nproc, log=False)
+	mySpider.toSpider("AP SH",
+		spyder.fileFilter(templatestack)+"@**",     # reference image series
+		"1-"+str(numtemplate),                      # enter number of templates of doc file
+		str(int(xysearch))+","+str(int(xystep)),    # translation search range, step size
+		str(int(firstring))+","+str(int(lastring)), # first and last ring for rotational correlation
+		"*",													  # initial angles
+		spyder.fileFilter(stackfile)+"@******",     # unaligned image series
+		"1-"+str(numpart),                          # enter number of particles of doc file
+		"*",													  # initial angles
+		"0.0",												  # angle search
+		"Y",													  # check mirrors
 		rundir+("/paramdoc%02d" % (iternum)),       # output angles document file
 	)
 	mySpider.close()
