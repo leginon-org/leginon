@@ -685,12 +685,14 @@ function setAceParam(view) {
 		vf = param.options[param.selectedIndex].value
 		eval("jsaceparam"+view+"="+vf)
 
-		scx = document.getElementById(view+"xscale").value
-		scy = document.getElementById(view+"yscale").value
+		// I believe this is no longer needed in the redux era,
+		// Anchi should confirm. xscale and yscale are not defined.
+		//scx = document.getElementById(view+"xscale").value
+		//scy = document.getElementById(view+"yscale").value
 		if (!scx) scx = 1
 		if (!scy) scy = 1
-		eval("jsacescx"+view+"="+scx)
-		eval("jsacescy"+view+"="+scy)
+		eval("jsacescx"+view+"="+scx.value)
+		eval("jsacescy"+view+"="+scy.value)
 
 		aceopt=0
 		if (aceo = document.getElementById(view+"aceparam2")) {
