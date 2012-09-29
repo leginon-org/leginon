@@ -170,7 +170,6 @@ def refBasedAlignParticles(stackfile, templatestack,
 	### remove previous iterations
 	apFile.removeFile(rundir+"/paramdoc%02d%s" % (iternum, dataext))
 
-	"""
 	### perform alignment, should I use 'AP SH' instead?
 	mySpider = spyder.SpiderSession(dataext=dataext, logo=True, nproc=nproc, log=False)
 	mySpider.toSpider("AP MQ",
@@ -183,8 +182,8 @@ def refBasedAlignParticles(stackfile, templatestack,
 		rundir+("/paramdoc%02d" % (iternum)),       # output angles document file
 	)
 	mySpider.close()
-	"""
 
+	"""
 	### perform alignment, should I use 'AP SH' instead?
 	mySpider = spyder.SpiderSession(dataext=dataext, logo=True, nproc=nproc, log=False)
 	mySpider.toSpider("AP SH",
@@ -197,10 +196,11 @@ def refBasedAlignParticles(stackfile, templatestack,
 		"1-"+str(numpart),                          # enter number of particles of doc file
 		"*",													  # initial angles
 		"0.0",												  # angle search
-		"Y",													  # check mirrors
+		"1",												  # check mirrors and shift/rotate input
 		rundir+("/paramdoc%02d" % (iternum)),       # output angles document file
 	)
 	mySpider.close()
+	"""
 
 	### convert spider rotation, shift data to python
 	docfile = rundir+("/paramdoc%02d" % (iternum))+dataext
