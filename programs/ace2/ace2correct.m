@@ -301,9 +301,9 @@ int main (int argc, char **argv) {
 	u32 cols = [image sizeOfDimension:0];
 
 	fprintf(stderr,"g2DCTF(%.1e,%.1e,%.1e,%d,%d,%.1e,%.1e,%.1e,%.1f)\n",
-		-df2,-df1,dfr,rows,cols,apix,cs,kv,ac);
+		df2,df1,dfr,rows,cols,apix,cs,kv,ac);
 
-	ArrayP ctf = g2DCTF(-df1,-df2,dfr,rows,cols,apix,cs,kv,ac);
+	ArrayP ctf = g2DCTF(df1,df2,dfr,rows,cols,apix,cs,kv,ac);
 	
 	fprintf(stderr,"\t\t\tDONE in %2.2f secs\n",CPUTIME-t1);
 	
@@ -317,15 +317,26 @@ int main (int argc, char **argv) {
 	
 	if ( cty & CORRECT_PHASE ) {
 		fprintf(stderr,"Correcting image using phase flips...  ");
-		for(i=0;i<size;i++) if ( -cp[i] < 0.0 ) ip[i] = -ip[i];
+		#pragma omp for
+		for(i=0;i<size;i++) {
+			if ( cp[i] < 0.0 ) {
+				ip[i] = -ip[i];
+			}
+		}
 	}
 	if ( cty & CORRECT_WIENER ) {
 		fprintf(stderr,"Correcting image using wiener filter...");
-		for(i=0;i<size;i++) ip[i] = (-ip[i]*cp[i])/(cp[i]*cp[i]+snr);
+		#pragma omp for
+		for(i=0;i<size;i++) {
+			ip[i] = (ip[i]*cp[i])/(cp[i]*cp[i]+snr);
+		}
 	}
 	if ( cty & CORRECT_APPLY ) {
 		fprintf(stderr,"Applying the CTF for Dmitry...         ");
-		for(i=0;i<size;i++) ip[i] = -ip[i]*cp[i];
+		#pragma omp for
+		for(i=0;i<size;i++) {
+			ip[i] = ip[i]*cp[i];
+		}
 	}
 	
 	fprintf(stderr,"\tDONE in %2.2f secs\n",CPUTIME-t1);

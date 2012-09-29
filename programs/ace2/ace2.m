@@ -359,6 +359,7 @@ void ctfFromParams( ArrayP ctf_params, ArrayP curve ) {
 	u32 k;
 	u64 size = [curve sizeOfDimension:0];
 	
+	#pragma omp for
 	for(k=0;k<size;k++) values[k] = pow(ctf_calc(params,k),2.0);
 
 }

@@ -103,6 +103,7 @@ void ctf_norm2( f64 fit_data[], f64 ctf_p[], f64 ctf[], f64 norm[], u32 size );
 	// Calculate mean
 	// Compute RMSD
 	// Compute RMSD use ABS, because occasionally the sum is off slightly
+	#pragma omp for
 	for(r=0;r<a_rad;r++) avg_mean[r] = avg_mean[r] / avg_cont[r]; 
 //	for(r=0;r<a_rad;r++) avg_stdv[r] = avg_quon[r] / avg_cont[r];
 //	for(r=0;r<a_rad;r++) if ( isinf(avg_stdv[r]) ) fprintf(stderr,"INF Error\n"); 
@@ -327,12 +328,33 @@ ArrayP fitEnvelope( ArrayP fit_data ) {
 }
 
 f64 ctf_calc( f64 c[], f64 x ) {
-	
+	/*
+	Calculates the 1D ctf function, given four parameters: 
+	c = [
+			0:defocus , 
+			1:amplitude_contrast , 
+			2:wavelength, lambda, 
+			3:spherical aberration, Cs,
+		]
+	changed by Neil Voss on Sept 29, 2012 to make it more readable
+	*/
+
 	x *= c[4];
-	x = x * x;
-		
-	f64 chi = M_PI*c[2]*x*(c[0]+0.5*c[2]*c[2]*c[3]*x)+asin(c[1]);
-	return sin(chi);
+	f64 radsq = x * x;
+	f64 defocus = c[0];
+	f64 ampconst = c[1];
+	f64 lamb = c[2];
+	f64 cs = c[3];
+	f64 B = sqrt(1.0 - ampconst*ampconst);
+	f64 A = ampconst;
+
+	f64 csgamma = 0.5*cs*(lamb*lamb*lamb)*(radsq*radsq);
+	f64 defgamma = defocus*lamb*(radsq);
+	f64 gamma = -M_PI*( csgamma - defgamma );
+
+	f64 ctf = B*sin(gamma) + A*cos(gamma);
+
+	return ctf;
 	
 }
 
@@ -432,6 +454,7 @@ void fitCTF( ArrayP fit_data, ArrayP ctf_p ) {
 		gsl_vector_memcpy(e_start,minimum);
 	}
 	
+	#pragma omp for
 	for(i=0;i<c_ndim;i++) ctf_params[i] /= trials;
 	
 	fprintf(stderr,"\n\tMinimizer used %d iterations (%.2lf%%)\n",status1,status1/(trials*10000.0));
@@ -443,6 +466,7 @@ void fitCTF( ArrayP fit_data, ArrayP ctf_p ) {
 	f64 * original_values = [fit_data data];
 	f64 * c_ctf = NEWV(f64,size);
 	
+	#pragma omp for
 	for(i=0;i<size;i++) c_ctf[i] = ctf_calc(ctf_params,i);
 
 	char name[256];
@@ -497,9 +521,11 @@ void peakNormalize( f64 values[], u32 size ) {
 		f64 l_max_value = values[p1];
 		for(i=p1;i<=p2;i++) l_min_value = MIN(l_min_value,values[i]);
 		for(i=p1;i<=p2;i++) l_max_value = MAX(l_max_value,values[i]);
+		#pragma omp for
 		for(i=p1;i<=p2;i++) norm[i] = ( values[i] - l_min_value ) / ( l_max_value - l_min_value );
 	}
 	
+	#pragma omp for
 	for(i=0;i<size;i++) values[i] = norm[i];
 	
 	free(stack);
@@ -671,6 +697,7 @@ void estimateDefocus( ArrayP fit_data, ArrayP ctf_params ) {
 	
 	fprintf(stderr,"\n\tUsing limits %f %f for estimation",lcut,rcut);
 	
+	#pragma omp for
 	for(i=0;i<d_size;i++) {
 		ctf_p[0] = defoci[i];
 		ctf2_calcv(ctf_p,ctf,size);
@@ -742,6 +769,7 @@ ArrayP findCTFMinima( ArrayP radialavg, s32 nsize ) {
 	f64 * peak_positions = [peak_array getRow:0];
 	f64 * peak_values = [peak_array getRow:1];
 	
+	#pragma omp for
 	for(k=0;k<stacksize;k++) {
 		peak_positions[k] = stack[k];
 		peak_values[k] = values[stack[k]];
@@ -782,7 +810,8 @@ ArrayP findCTFMaxima( ArrayP radialavg, s32 nsize ) {
 	
 	f64 * peak_positions = [peak_array getRow:0];
 	f64 * peak_values = [peak_array getRow:1];
-	
+
+	#pragma omp for
 	for(k=0;k<stacksize;k++) {
 		peak_positions[k] = stack[k];
 		peak_values[k] = values[stack[k]];
@@ -805,6 +834,7 @@ ArrayP ctfNormalize( ArrayP fit_data, ArrayP ctf_params ) {
 	f64 * ctf_p = [ctf_params getRow:0];
 	f64 * ctf_v = [fit_data getRow:0];
 	
+	#pragma omp for
 	for(i=0;i<size;i++) ctf_v[i] = log(ctf_v[i]);
 	
 	f64 minv = ctf_v[0];
@@ -813,6 +843,7 @@ ArrayP ctfNormalize( ArrayP fit_data, ArrayP ctf_params ) {
 	for(i=0;i<size;i++) minv = MIN(ctf_v[i],minv);
 	for(i=0;i<size;i++) maxv = MAX(ctf_v[i],maxv);
 	
+	#pragma omp for
 	for(i=0;i<size;i++) ctf_v[i] = (ctf_v[i]-minv)/(maxv-minv);
 	
 	f64 t1 = CPUTIME;
@@ -828,6 +859,7 @@ ArrayP ctfNormalize( ArrayP fit_data, ArrayP ctf_params ) {
 	for(i=0;i<size;i++) fprintf(fp,"%e\t%e\t%e\n",ctf_v[i],gen_n(n_values,i),ctf_v[i]-gen_n(n_values,i));
 	fclose(fp);
 	
+	#pragma omp for
 	for(i=0;i<size;i++) ctf_v[i] = (ctf_v[i]-gen_n(n_values,i));
 		
 	[n_params release];
@@ -976,19 +1008,26 @@ f64 positionForPeak( f64 c[], u32 peak_num ) {
 	
 }
 
-ArrayP g2DCTF( f64 df1, f64 df2, f64 theta, u32 rows, u32 cols, f64 apix, f64 cs, f64 kv, f64 ac ) {
-	
+ArrayP g2DCTF( f64 df1, f64 df2, f64 angleastig, u32 rows, u32 cols, f64 apix, f64 cs, f64 kv, f64 ampconst ) {
+	/*
+	This function is only used by ace2correct
+	Generates CTF and the ace2correct uses that information to:
+		(1) Phase flip, (2) Weiner filter, (3) Multiply by CTF
 
-	if(df1 < 0 && df2 < 0) 
+	On Sept 29, 2012, Neil Voss changed this to match exactly what he has in 
+	the Appion python, it may be slower but it is much easier to read :)
+	*/	
+
+	if(df1 > 0 && df2 > 0) 
 		fprintf(stderr, "performing underfocus correction\n");
-	else if(df1 > 0 && df2 > 0) 
+	else if(df1 < 0 && df2 < 0) 
 		fprintf(stderr, "performing overfocus correction\n");
 	else
 		fprintf(stderr, "performing mixed overfocus and underfocus correction\n");
 
 	apix = apix * 1.0e-10;
 	
-	f64 lm = getTEMLambda(kv*1.0e3);
+	f64 lamb = getTEMLambda(kv*1.0e3);
 	
 	f64 x_freq = 1.0/((cols-1)*2*apix);
 	f64 y_freq = 1.0/(rows*apix);
@@ -999,25 +1038,27 @@ ArrayP g2DCTF( f64 df1, f64 df2, f64 theta, u32 rows, u32 cols, f64 apix, f64 cs
 	f64 * data = [ctf data];
 	
 	u32 r, c;
-	f64 x_ori = cols-0.5;
-	f64 y_ori = rows/2.0-0.5;
+	f64 x_origin = cols-0.5;
+	f64 y_origin = rows/2.0-0.5;
 	
-	f64 mdf = (df1+df2)/2.0;
-	f64 ddf = (df1-df2)/2.0;
-	
-	f64 t1 = M_PI*lm;
-	f64 t2 = 0.5*lm*lm*cs;
-	f64 t3 = asin(ac);
-	
+	f64 meandf = (df1+df2)/2.0;
+	f64 diffdf = (df1-df2)/2.0;
+
+	f64 B = sqrt(1.0 - ampconst*ampconst);
+	f64 A = ampconst;
+
+	#pragma omp for
 	for(r=0;r<rows;r++) {
 		for(c=0;c<cols;c++) {
-			f64 x = (c-x_ori)*x_freq;
-			f64 y = (y_ori-r)*y_freq;
-			f64 t = atan2(y,x);
-			f64 f = x*x+y*y;
-			f64 d = mdf+ddf*cos(2.0*(t-theta));
-			f64 chi = t1*f*(d+t2*f)+t3;
-			data[r*cols+c] = sin(chi);
+			f64 x = (c-x_origin)*x_freq;
+			f64 y = (y_origin-r)*y_freq;
+			f64 theta = atan2(y,x);
+			f64 radsq = x*x+y*y;
+			f64 localdefocus = meandf + diffdf*cos(2.0*(theta - angleastig));
+			f64 csgamma = 0.5*cs*(lamb*lamb*lamb)*(radsq*radsq);
+			f64 defgamma = localdefocus*lamb*(radsq);
+			f64 gamma = -M_PI*( csgamma - defgamma );
+			data[r*cols+c] = B*sin(gamma) + A*cos(gamma);
 		}
 	}
 	
