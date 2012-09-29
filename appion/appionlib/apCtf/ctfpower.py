@@ -112,7 +112,7 @@ def power(image, pixelsize, fieldsize=None, mask_radius=1):
 	freq = 1.0/(powerspec.shape[0]*pixelsize)
 
 	#poweravg = numpy.array(psdlist).mean(0)
-	print "Computing median of power spectra series"
+	apDisplay.printMsg("Computing median of power spectra series")
 	poweravg = numpy.median(psdlist, axis=0)
 	apDisplay.printMsg("Compute PSD with fieldsize %d and %d images complete in %s"
 		%(fieldsize, count, apDisplay.timeString(time.time()-t0)))

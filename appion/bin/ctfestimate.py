@@ -162,7 +162,7 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 		dstep = float(dstep)
 		mpixelsize = apDatabase.getPixelSize(imgdata)*1e-10
 		xmag = dstep / mpixelsize
-		print xmag, dstep, mpixelsize
+		apDisplay.printMsg("Xmag=%d, dstep=%.2e, mpix=%.2e"%(xmag, dstep, mpixelsize))
 		inputparams = {
 			'orig': os.path.join(imgdata['session']['image path'], imgdata['filename']+".mrc"),
 			'input': apDisplay.short(imgdata['filename'])+".mrc",
@@ -291,7 +291,7 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 		if self.params['ctftilt'] is True:
 			self.ctfvalues['origtiltang'] = tiltang
 			line1+=" tilt=%.1f,"%tiltang
-		print line1+"\n"
+		apDisplay.printMsg(line1)
 		f.write(line1)
 		line2 = ("def_1=%.1e, def_2=%.1e, astig_angle=%.1f, cross_corr=%.3f,\n" %
 			( self.ctfvalues['defocus1'], self.ctfvalues['defocus2'], self.ctfvalues['angle_astigmatism'],
@@ -299,7 +299,7 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 		if self.params['ctftilt'] is True:
 			line2+= ("tilt_angle=%.1f, tilt_axis_angle=%.1f,\n" %
 				(self.ctfvalues['tilt_angle'], self.ctfvalues['tilt_axis_angle']))
-		print line2
+		apDisplay.printMsg(line2)
 		f.write(line2)
 		f.close()
 
