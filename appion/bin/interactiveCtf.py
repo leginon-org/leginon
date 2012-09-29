@@ -242,6 +242,86 @@ class EditParamsDialog(wx.Dialog):
 ##
 ##################################
 
+class EditMicroscopeDialog(wx.Dialog):
+	#==================
+	def __init__(self, parent):
+		self.parent = parent
+		wx.Dialog.__init__(self, self.parent.frame, -1, "Edit Microscope Parameters")
+
+		inforow = wx.FlexGridSizer(2, 3, 5, 5) #row, col
+		entrywidth = 120
+
+		label = wx.StaticText(self, -1, "Cs: ", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		self.csvalue = FloatEntry(self, -1, allownone=False, min=0, max=100, chars=16, value="0")
+		self.csvalue.SetMinSize((entrywidth, -1))
+		inforow.Add(label, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		inforow.Add(self.csvalue, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 3)
+		label = wx.StaticText(self, -1, "mm", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		inforow.Add(label, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+
+		label = wx.StaticText(self, -1, "Adj. apix: ", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		self.apixvalue = FloatEntry(self, -1, allownone=False, min=0, max=100, chars=16, value="0")
+		self.apixvalue.SetMinSize((entrywidth, -1))
+		inforow.Add(label, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		inforow.Add(self.apixvalue, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 3)
+		label = wx.StaticText(self, -1, "A", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		inforow.Add(label, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+
+		label = wx.StaticText(self, -1, "high tension: ", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		self.kvoltsvalue = IntEntry(self, -1, allownone=False, min=0, max=1000, chars=16, value="0")
+		self.kvoltsvalue.SetMinSize((entrywidth, -1))
+		inforow.Add(label, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		inforow.Add(self.kvoltsvalue, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 3)
+		label = wx.StaticText(self, -1, "kV", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		inforow.Add(label, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+
+		self.cancel = wx.Button(self, wx.ID_CANCEL, '&Cancel')
+		self.save = wx.Button(self, wx.ID_SAVE, '&Save')
+		self.Bind(wx.EVT_BUTTON, self.onSave, self.save)
+		buttonrow = wx.GridSizer(1,2)
+		buttonrow.Add(self.cancel, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL, 0)
+		buttonrow.Add(self.save, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL, 0)
+
+		self.sizer = wx.FlexGridSizer(2,1)
+		self.sizer.Add(inforow, 0, wx.EXPAND|wx.ALL, 10)
+		self.sizer.Add(buttonrow, 0, wx.EXPAND|wx.ALL, 5)
+		self.SetSizerAndFit(self.sizer)
+
+	#==================
+	def onSave(self, evt):
+		self.Close()
+		#changes for cs
+		if self.parent.ctfvalues['cs'] != self.csvalue.GetValue()/1e3:
+			apDisplay.printMsg("Change Cs value")
+			self.parent.cs = self.csvalue.GetValue()/1e3
+			self.parent.ctfvalues['cs'] = self.parent.cs
+
+		#changes for volts
+		if self.parent.ctfvalues['volts'] != self.kvoltsvalue.GetValue()*1e3:
+			apDisplay.printMsg("Change kVolts value")
+			self.parent.volts = self.kvoltsvalue.GetValue()*1e3
+			self.parent.ctfvalues['volts'] = self.parent.volts
+			self.parent.wavelength = ctftools.getTEMLambda(self.parent.volts)
+
+		#changes for pixel size / freq
+		if self.parent.ctfvalues['apix'] != self.apixvalue.GetValue():
+			apDisplay.printMsg("Change apix value")
+			oldapix = self.parent.ctfvalues['apix']
+			oldfreq = self.parent.freq
+			self.parent.apix = self.apixvalue.GetValue()
+			self.parent.ctfvalues['apix'] = self.parent.apix
+			#oldfreq = 1/(width*oldpixel); width = 1/(oldfreq*oldpixel)
+			#newfreq = 1/(width*newpixel);
+			#newfreq = oldfreq*oldpixel/newpixel
+			self.parent.freq = oldfreq*oldapix/self.parent.apix
+
+		# for good measure
+		self.parent.convertCtfToEllipse()
+
+##################################
+##
+##################################
+
 class CTFApp(wx.App):
 	def __init__(self, shape='+', size=16):
 		self.shape = shape
@@ -311,6 +391,12 @@ class CTFApp(wx.App):
 		wxbutton = wx.Button(self.frame, -1, '&Edit CTF Params...')
 		wxbutton.SetMinSize((-1, buttonheight))
 		self.Bind(wx.EVT_BUTTON, self.onEditParams, wxbutton)
+		self.buttonrow.Add(wxbutton, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
+
+		self.editscope_dialog = EditMicroscopeDialog(self)
+		wxbutton = wx.Button(self.frame, -1, '&Edit Scope Params...')
+		wxbutton.SetMinSize((-1, buttonheight))
+		self.Bind(wx.EVT_BUTTON, self.onEditScope, wxbutton)
 		self.buttonrow.Add(wxbutton, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 
 		wxbutton = wx.Button(self.frame, wx.ID_OPEN, '&Load CTF')
@@ -418,7 +504,7 @@ class CTFApp(wx.App):
 		self.Bind(wx.EVT_BUTTON, self.onGetResolution, wxbutton)
 		self.buttonrow.Add(wxbutton, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 
-		"""
+
 		label = wx.StaticText(self.frame, -1, "Refinement:  ", style=wx.ALIGN_RIGHT)
 		self.buttonrow.Add(label, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 3)
 
@@ -441,7 +527,7 @@ class CTFApp(wx.App):
 		wxbutton.SetMinSize((-1, buttonheight))
 		self.Bind(wx.EVT_BUTTON, self.onRefineHalfCTF, wxbutton)
 		self.buttonrow.Add(wxbutton, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
-		"""
+
 
 		label = wx.StaticText(self.frame, -1, "Image Assessment:  ", style=wx.ALIGN_RIGHT)
 		self.buttonrow.Add(label, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 3)
@@ -569,6 +655,18 @@ class CTFApp(wx.App):
 			self.editparam_dialog.anglevalue.SetValue(self.ctfvalues['angle_astigmatism'])
 		self.editparam_dialog.Show()
 		apDisplay.printColor("Edit params complete", "cyan")
+
+	#---------------------------------------
+	def onEditScope(self, evt):
+		if 'cs' in self.ctfvalues:
+			self.editscope_dialog.csvalue.SetValue(self.ctfvalues['cs']*1e3)
+		if 'apix' in self.ctfvalues:
+			self.editscope_dialog.apixvalue.SetValue(self.ctfvalues['apix'])
+		if 'volts' in self.ctfvalues:
+			self.editscope_dialog.kvoltsvalue.SetValue(int(self.ctfvalues['volts']/1e3))
+		self.editscope_dialog.Show()
+		apDisplay.printColor("Edit microscope complete", "cyan")
+
 
 	#---------------------------------------
 	def onQuit(self, evt):
@@ -1022,6 +1120,9 @@ class CTFApp(wx.App):
 
 		res5 = ctfres.getResolutionFromConf(confraddata, confdata, limit=0.5)
 		res8 = ctfres.getResolutionFromConf(confraddata, confdata, limit=0.8)
+
+		genctfdata = genctf.generateCTF1d(raddata*1e10, focus=meandefocus, cs=self.cs,
+			volts=self.volts, ampconst=self.ctfvalues['amplitude_contrast'])
 
 		### Show the data
 		raddatasq = raddata**2
