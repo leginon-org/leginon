@@ -399,7 +399,7 @@ class CtfDisplay(object):
 			pyplot.ylim(-0.55, 1.05)
 
 		pyplot.subplot(4,2,7) # 4 rows, 2 columns, plot 7
-		tenangindex = numpy.searchsorted(raddata, 1/10.*self.trimfreq)
+		tenangindex = numpy.searchsorted(raddata, 1/10.)-1
 		pyplot.title("Defocus1= %.3e / Defocus2= %.3e"
 			%(self.defocus1, self.defocus2), fontsize=titlefontsize)
 		pyplot.ylabel("Norm PSD", fontsize=titlefontsize)
@@ -413,20 +413,22 @@ class CtfDisplay(object):
 		pyplot.grid(True, linestyle=':', )
 		pyplot.ylim(-0.05, 1.05)
 
-		pyplot.subplot(4,2,8) # 4 rows, 2 columns, plot 7
-		tenangindex = numpy.searchsorted(raddata, 1/10.*self.trimfreq)
+		pyplot.subplot(4,2,8) # 4 rows, 2 columns, plot 8
+		overdiffres = genctf.getDiffResForOverfocus(raddata*1e10, cs=self.cs, volts=self.volts)
+		overdiffindex = numpy.searchsorted(raddata, 1/overdiffres)
+
 		pyplot.title("Overfocus check (30-10A %.3f / 5-peak %.3f)"
 			%(self.overconf3010, self.overconf5peak), fontsize=titlefontsize)
 		pyplot.ylabel("Norm PSD", fontsize=titlefontsize)
-		pyplot.plot(raddatasq[tenangindex:], ctffitdata[tenangindex:],
+		pyplot.plot(raddatasq[overdiffindex:], ctffitdata[overdiffindex:],
 			'-', color="black", alpha=0.5, linewidth=1)
-		pyplot.plot(raddatasq[fpi:], overctffitdata[fpi:],
+		pyplot.plot(raddatasq[overdiffindex:], overctffitdata[overdiffindex:],
 			'-', color="red", alpha=0.75, linewidth=1)
-		pyplot.plot(raddatasq[tenangindex:], normpeakdata[tenangindex:],
+		pyplot.plot(raddatasq[overdiffindex:], normpeakdata[overdiffindex:],
 			'-', color="blue", alpha=0.5, linewidth=0.5)
-		pyplot.plot(raddatasq[tenangindex:], normpeakdata[tenangindex:],
+		pyplot.plot(raddatasq[overdiffindex:], normpeakdata[overdiffindex:],
 			'.', color="blue", alpha=0.75, markersize=2.0)
-		self.setPyPlotXLabels(raddatasq[tenangindex:], maxloc=1/7.**2, square=True)
+		self.setPyPlotXLabels(raddatasq[overdiffindex:], maxloc=1/7.**2, square=True)
 		pyplot.grid(True, linestyle=':', )
 		pyplot.ylim(-0.05, 1.05)
 
