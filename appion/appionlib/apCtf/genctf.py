@@ -19,6 +19,10 @@ def generateCTF1d(radii=None, focus=1.0e-6, cs=2e-3, volts=120000, ampconst=0.07
 	"""
 	if debug is True:
 		print "generateCTF1dFromRadii()"
+
+	if debug is True:
+		apDisplay.printColor("generateCTF radii: 1/%.2fA --> 1/%.2fA"%(1/radii[1]*1e10, 1/radii[-1]*1e10), "cyan")
+
 	t0 = time.time()
 	checkParams(focus1=focus, focus2=focus, cs=cs, volts=volts, ampconst=ampconst, failParams=failParams)
 
@@ -33,7 +37,7 @@ def generateCTF1d(radii=None, focus=1.0e-6, cs=2e-3, volts=120000, ampconst=0.07
 
 	B = math.sqrt(1.0 - ampconst**2)
 	A = ampconst
-	prectf = B*numpy.sin(gamma) + A*numpy.cos(gamma) 
+	prectf = B*numpy.sin(gamma) + A*numpy.cos(gamma)
 
 	ctf = prectf**2
 
@@ -41,6 +45,42 @@ def generateCTF1d(radii=None, focus=1.0e-6, cs=2e-3, volts=120000, ampconst=0.07
 		print "generate 1D ctf complete in %.9f sec"%(time.time()-t0)
 
 	return ctf
+
+#===================
+def getDiffResForOverfocus(radii=None, cs=2e-3, volts=120000):
+	"""
+	given Cs and kV, determine the initial resolution where the difference between
+	overfocus and underfocus is clearly visible.
+
+	value returned in Angstroms, but radii must be in meters
+	"""
+
+	if debug is True:
+		print "getDiffResForOverfocus()"
+
+	if debug is True:
+		apDisplay.printColor("getDiffRes radii: 1/%.2fA --> 1/%.2fA"%(1/radii[1]*1e10, 1/radii[-1]*1e10), "cyan")
+
+	t0 = time.time()
+	checkParams(focus1=1.0e-6, focus2=1.0e-6, cs=cs, volts=volts, ampconst=0.0, failParams=False)
+
+
+	lamb = ctftools.getTEMLambda(volts)
+	s = radii
+	pi = math.pi
+
+	csgamma = 2*pi*0.25*cs*(lamb**3)*(s**4)
+	
+	#over/under-focus difference is visible when Cs component is greater than 0.05
+	index = numpy.searchsorted(csgamma, 0.03)
+
+	diffres = 1.0/radii[index-1]*1e10
+
+	apDisplay.printColor("Overfocus/Underfocus difference resolution is: 1/%.2fA"%(diffres), "cyan")
+
+	if debug is True:
+		print "difference resolution complete in %.9f sec"%(time.time()-t0)
+	return diffres
 
 #===================
 def generateCTF1dACE2(radii=None, focus=1.0e-6, cs=2e-3, volts=120000, ampconst=0.07, failParams=False):
