@@ -333,12 +333,23 @@ f64 ctf_calc( f64 c[], f64 x ) {
 	c = [
 			0:defocus , 
 			1:amplitude_contrast , 
-			2:wavelength, lambda, 
-			3:spherical aberration, Cs,
+			2:wavelength (lambda), 
+			3:spherical aberration (Cs),
+			4:frequency (1/pixelsize)
 		]
 	changed by Neil Voss on Sept 29, 2012 to make it more readable
 	*/
+	x *= c[4];
+	x = x * x;
+	f64 chi = M_PI*c[2]*x*(c[0]+0.5*c[2]*c[2]*c[3]*x)+asin(c[1]);
 
+	return sin(chi);
+
+	/*
+	though the above equation is wrong, 
+		the correct equation screws up other search function
+	nonetheless ACE2 provides a good estimate of the CTF
+	//
 	x *= c[4];
 	f64 radsq = x * x;
 	f64 defocus = c[0];
@@ -355,6 +366,7 @@ f64 ctf_calc( f64 c[], f64 x ) {
 	f64 ctf = B*sin(gamma) + A*cos(gamma);
 
 	return ctf;
+	*/
 	
 }
 
