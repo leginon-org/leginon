@@ -521,9 +521,9 @@ class RefineJob(basicScript.BasicScript):
 		for iter in range(self.params['startiter'],self.params['enditer']+1):
 			refinetasks = self.makeRefineTasks(iter)
 			if 'scripts' in refinetasks.keys() and len(refinetasks['scripts']) >=1 and refinetasks['scripts'][0][0] !='':
-				self.addToLog('....Starting iteration %d....' % (iter))
+				self.addToLog('....Starting iteration %d at %s...' % (iter, time.asctime()))
 				self.addJobCommands(refinetasks)
-				self.addToLog('Done with iteration %d' % (iter))
+				self.addToLog('Done with iteration %d at %s' % (iter, time.asctime()))
 				self.addSimpleCommand('')
 		self.addSimpleCommand('cd %s' % self.params['remoterundir'])
 		self.addToLog('....Performing tasks after iterations....')
