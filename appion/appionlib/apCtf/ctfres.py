@@ -12,10 +12,10 @@ from appionlib.apCtf import ctftools
 debug = False
 
 #=======================
-def getCorrelationProfile(raddata, rotdata, defocus, freq, cs, volts, ampcontrast):
+def getCorrelationProfile(raddata, rawdata, ctfdata, peaks, freq):
 		"""
 		raddata - x data in inverse Angstroms
-		rotdata - powerspectra data, normalized to 0 and 1
+		rawdata - powerspectra data, normalized to 0 and 1
 		freq - frequency of the x data
 		defocus - mean defocus value to use in meters, underfocus is positive
 		volts - potential of the microscope in volts
@@ -25,18 +25,12 @@ def getCorrelationProfile(raddata, rotdata, defocus, freq, cs, volts, ampcontras
 
 		raddatasq = raddata**2
 
-		### get the ctf
-		genctfdata = genctf.generateCTF1d(raddata*1e10, focus=defocus, cs=cs,
-			volts=volts, ampconst=ampcontrast)
-		peaks = ctftools.getCtfExtrema(defocus, freq*1e10, cs, volts, ampcontrast, 
-			numzeros=2, zerotype="peak")
-		firstpeak = peaks[0]
-
 		### PART 0: create lists
 		newraddata = []
 		confs = []
 
 		### PART 1: standard data points
+		firstpeak = peaks[0]
 		xsqStart = (firstpeak*freq)**2
 		xsqEnd = raddatasq.max()
 		## choice of step size, either:
@@ -73,7 +67,7 @@ def getCorrelationProfile(raddata, rotdata, defocus, freq, cs, volts, ampcontras
 			ind1 = numpy.searchsorted(raddatasq, xsqLower)
 			ind2 = numpy.searchsorted(raddatasq, xsqUpper)
 			### compare CTF to data
-			conf = scipy.stats.pearsonr(rotdata[ind1:ind2], genctfdata[ind1:ind2])[0]
+			conf = scipy.stats.pearsonr(rawdata[ind1:ind2], ctfdata[ind1:ind2])[0]
 			### save data and increment
 			if debug is True:
 				apDisplay.printMsg("1/%.1fA\t%.3f"%(1.0/math.sqrt(xsq), conf))
@@ -101,7 +95,7 @@ def getCorrelationProfile(raddata, rotdata, defocus, freq, cs, volts, ampcontras
 			ind1 = numpy.searchsorted(raddatasq, xsqLower)
 			ind2 = numpy.searchsorted(raddatasq, xsqUpper)
 			### compare CTF to data
-			conf = scipy.stats.pearsonr(rotdata[ind1:ind2], genctfdata[ind1:ind2])[0]
+			conf = scipy.stats.pearsonr(rawdata[ind1:ind2], ctfdata[ind1:ind2])[0]
 
 			### save data and increment
 			if debug is True:
