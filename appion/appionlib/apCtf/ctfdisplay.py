@@ -244,7 +244,7 @@ class CtfDisplay(object):
 		self.conf3010 = scipy.stats.pearsonr(normpeakdata[ind30:ind10], ctffitdata[ind30:ind10])[0]
 		self.overconf3010 = scipy.stats.pearsonr(normpeakdata[ind30:ind10], overctffitdata[ind30:ind10])[0]
 		apDisplay.printColor("1/30A - 1/10A confidence is %.3f (overfocus %.3f)"%(self.conf3010, self.overconf3010), "green")
-		if self.overconf3010 > self.conf3010:
+		if self.overconf3010 > self.conf3010*1.1:
 			apDisplay.printWarning("Image is possibly over-focused")
 
 		ind5peak1 = numpy.searchsorted(raddata, peakradii[0])
@@ -252,7 +252,7 @@ class CtfDisplay(object):
 		self.conf5peak = scipy.stats.pearsonr(normpeakdata[ind5peak1:ind5peak2], ctffitdata[ind5peak1:ind5peak2])[0]
 		self.overconf5peak = scipy.stats.pearsonr(normpeakdata[ind5peak1:ind5peak2], overctffitdata[ind5peak1:ind5peak2])[0]
 		apDisplay.printColor("5 peak confidence is %.3f (overfocus %.3f)"%(self.conf5peak, self.overconf5peak), "green")
-		if self.overconf5peak > self.conf5peak:
+		if self.overconf5peak > self.conf5peak*1.1:
 			apDisplay.printWarning("Image is possibly over-focused")
 
 		### 
