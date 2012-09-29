@@ -260,12 +260,17 @@ class CtfDisplay(object):
 		### 
 		apDisplay.printColor("PART 6: CTF RESOLUTION LIMITS", "magenta")
 
-		confraddata, confdata = ctfres.getCorrelationProfile(raddata, normpeakdata,
-			meandefocus, self.trimfreq, self.cs, self.volts, self.ampcontrast)
+		confraddata, confdata = ctfres.getCorrelationProfile(raddata, 
+			normpeakdata, ctffitdata, peak, self.trimfreq)
+		overconfraddata, overconfdata = ctfres.getCorrelationProfile(raddata, 
+			normpeakdata, overctffitdata, peak, self.trimfreq)
 
 		self.res80 = ctfres.getResolutionFromConf(confraddata, confdata, limit=0.8)
 		if self.res80 is None:
 			self.res80 = 100.0
+		self.overres80 = ctfres.getResolutionFromConf(overconfraddata, overconfdata, limit=0.8)
+		if self.overres80 is None:
+			self.overres80 = 100.0
 		self.res50 = ctfres.getResolutionFromConf(confraddata, confdata, limit=0.5)
 		if self.res50 is None:
 			self.res50 = 100.0
@@ -274,6 +279,10 @@ class CtfDisplay(object):
 			res50max = min(raddata.max(), 1/10.)
 		else:
 			res50max = min(raddata.max(), 1.5/self.res50)
+		self.overres50 = ctfres.getResolutionFromConf(overconfraddata, overconfdata, limit=0.5)
+		if self.overres50 is None:
+			self.overres50 = 100.0
+
 
 		apDisplay.printColor("Resolution limit is %.2f at 0.8 and %.2f at 0.5"
 			%(self.res80, self.res50), "green")
@@ -361,6 +370,8 @@ class CtfDisplay(object):
 		pyplot.ylabel("Norm PSD", fontsize=titlefontsize)
 		pyplot.plot(raddatasq[fpi:], ctffitdata[fpi:],
 			'-', color="black", alpha=0.5, linewidth=1)
+		#pyplot.plot(raddatasq[fpi:], overctffitdata[fpi:],
+		#	'-', color="red", alpha=0.75, linewidth=1)
 		pyplot.plot(raddatasq[fpi:], normpeakdata[fpi:],
 			'-', color="blue", alpha=0.5, linewidth=0.5)
 		pyplot.plot(raddatasq[fpi:], normpeakdata[fpi:],
@@ -417,8 +428,8 @@ class CtfDisplay(object):
 		overdiffres = genctf.getDiffResForOverfocus(raddata*1e10, cs=self.cs, volts=self.volts)
 		overdiffindex = numpy.searchsorted(raddata, 1/overdiffres)
 
-		pyplot.title("Overfocus check (30-10A %.3f / 5-peak %.3f)"
-			%(self.overconf3010, self.overconf5peak), fontsize=titlefontsize)
+		pyplot.title("Overfocus check (30-10A %.2f / 5-peak %.2f / %.1fA at 0.8 / %.1fA at 0.5 )"
+			%(self.overconf3010, self.overconf5peak, self.overres80, self.overres50), fontsize=titlefontsize-1)
 		pyplot.ylabel("Norm PSD", fontsize=titlefontsize)
 		pyplot.plot(raddatasq[overdiffindex:], ctffitdata[overdiffindex:],
 			'-', color="black", alpha=0.5, linewidth=1)
@@ -910,6 +921,8 @@ class CtfDisplay(object):
 			'overconf5peak': self.overconf5peak,
 			'res80': self.res80,
 			'res50': self.res50,
+			'overres80': self.overres80,
+			'overres50': self.overres50,
 		}
 
 		return ctfdisplaydict
