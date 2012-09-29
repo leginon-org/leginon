@@ -187,8 +187,9 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 			apDisplay.printWarning("Defocus minimum is less than zero")
 			inputparams['defmin'] = inputparams['defstep']
 		inputparams['defmax']= round(bestdef+defrange, 1) #in meters
-		apDisplay.printColor("Defocus search range: %.1f A to %.1f A"
-			%(inputparams['defmin'], inputparams['defmax']), "cyan")
+		apDisplay.printColor("Defocus search range: %d A to %d A (%.2f to %.2f um)"
+			%(inputparams['defmin'], inputparams['defmax'], 
+			inputparams['defmin']*1e-4, inputparams['defmax']*1e-4), "cyan")
 		### create local link to image
 		if not os.path.exists(inputparams['input']):
 			cmd = "ln -s "+inputparams['orig']+" "+inputparams['input']+"\n"
