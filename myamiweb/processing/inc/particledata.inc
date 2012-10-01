@@ -4085,11 +4085,11 @@ class particledata {
 	}
 	
 	function getReconIterIdRelatedToStackid($stackId, $showHidden=False) {
-		// First get a three random particle ids from the stack id
+		// First get first three particle ids from the stack id
 		$q = "SELECT `REF|ApParticleData|particle` AS partid "
 			." FROM ApStackParticleData AS stpart "
 			."WHERE `REF|ApStackData|stack` = '$stackId' "
-			." ORDER BY RAND() LIMIT 3 ";
+			;
 		//echo $q."<br/><br/>\n";
 		$r1 = $this->mysql->getSQLResult($q);
 		//echo print_r($r1)."<br/><br/>\n";
