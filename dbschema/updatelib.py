@@ -22,8 +22,8 @@ class UpdateLib:
 		'''
 		has_appiondbs = self.checkProcessingDB()
 		if svn_branch == 'trunk':
-			schema_revisions = [12857,13713,14077,14891,15069,15526,15653,16182,16607,17111]
-			appion_only_revisions = [15248,15251,15293,15961,16412,16446]
+			schema_revisions = [12857,13713,14077,14891,15069,15526,15653,16182,16607,17035,17111]
+			appion_only_revisions = [15248,15251,15293,15961,16412,16446,17035]
 		elif svn_branch == 'myami-2.2':
 			schema_revisions = [12857,13713,14077,14891,15069,15526,15653,16182,16607]
 			appion_only_revisions = [15248,15251,15293,15961,16412,16446]
