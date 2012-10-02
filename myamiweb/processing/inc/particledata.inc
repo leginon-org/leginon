@@ -4089,7 +4089,7 @@ class particledata {
 		$q = "SELECT `REF|ApParticleData|particle` AS partid "
 			." FROM ApStackParticleData AS stpart "
 			."WHERE `REF|ApStackData|stack` = '$stackId' "
-			;
+			."LIMIT 3 ";
 		//echo $q."<br/><br/>\n";
 		$r1 = $this->mysql->getSQLResult($q);
 		//echo print_r($r1)."<br/><br/>\n";
