@@ -2333,6 +2333,7 @@ class leginondata {
 		."f.`stigy`, "
 		."f.`min` as fit_residual, "
 		."f.status, "
+		."f.`DEF_id` as foc_resultId, "
 		."f.method ";
 
 		$q="select  "
@@ -2584,6 +2585,21 @@ class leginondata {
 			}
 		}
 		return $presults;
+	}
+
+	function getStagePositionFromScopeReference($Id,$table='AcquisitionImageData') {
+		$q="SELECT "
+			."UNIX_TIMESTAMP(`a`.`DEF_timestamp`) AS `unix_timestamp`, "
+			."a.`DEF_id` AS imageId "
+			.",s.`SUBD|stage position|x` AS stage_x "
+			.",s.`SUBD|stage position|y` AS stage_y "
+			.",s.`SUBD|stage position|z` AS stage_z "
+			."FROM `".$table."` a "
+			."LEFT JOIN `ScopeEMData` s "
+			."ON a.`REF|ScopeEMData|scope` = s.`DEF_id` "
+			."WHERE a.`DEF_id`=".$Id ;
+		$r = $this->mysql->getSQLResult($q);
+		return $r[0];
 	}
 
 	function getImageScopeXYValues($sessionId, $preset="", $fieldname='image shift',$stats=false) {

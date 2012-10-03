@@ -295,7 +295,7 @@ if (!empty($imageshiftpresets)) {
 $defocusresults = $leginondata->getFocusResultData($expId, 'both','all','ok');
 	echo "<tr>";
 	echo "<td colspan='2'>";
-	echo divtitle("Autofocus Results - No graph display when not enough data.");
+	echo divtitle("Autofocus Results");
 	if (!empty($defocusresults)) {
 		echo "<table border='0'>\n";
 		echo "<tr>";
@@ -305,6 +305,10 @@ $defocusresults = $leginondata->getFocusResultData($expId, 'both','all','ok');
 		echo "<a href='autofocusgraph.php?Id=$expId'>";
 		echo "<img border='0' src='autofocusgraph.php?Id=$expId&w=256'>";
 		echo "</a>\n";
+		echo "</td><td>\n";
+		echo "<a href='zheightgraph.php?Id=$expId&vd=1'>[data]</a><br>";
+		echo "<a href='zheightgraph.php?Id=$expId'>";
+		echo "<img border='0' src='zheightgraph.php?Id=$expId&w=256'>";
 		echo "</td>\n";
 		echo "</tr>\n";
 		echo "</table>\n";
