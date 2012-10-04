@@ -64,6 +64,33 @@ class imageOverlay {
 		}
 	}
 
+	function drawRadialPlot($allvalues,$fftpixelsize,$xyDim,$fftbin,$scale) {
+		if ($fftpixelsize) {
+			$size = ($xyDim[0]) ? $xyDim[0]: 1;
+			$colortypes = array($this->yellow,$this->blue,$this->red,$this->white);
+			foreach($allvalues as $k => $values) {
+				$color_index = $k - ((int) ($k / 4) * 4);
+				$color = $colortypes[$color_index];
+				$radii = range(0,count($values)-1,1);
+				for ($i=0; $i<(int) (count($radii));$i++) {
+					if ($i == 0) {
+						$x0 = (int) ($xyDim[0]/2);
+						$y0 = (int) ($xyDim[1]/2);
+					}
+					$x = (int) ($radii[$i] + $size/2);
+					$y = (int) ($size/2 - $values[$i] * $scale);
+					$y = ($y < 0) ? 0: $y;
+					$y = ($y > $xyDim[1]) ? $xyDim[1]: $y;
+					imageline($this->img, $x0, $y0, $x,$y,$color);
+					imageline($this->img, $x0+1, $y0, $x+1,$y,$color);
+					imageline($this->img, $x0, $y0+1, $x,$y+1,$color);
+					imageline($this->img, $x0+1, $y0+1, $x+1,$y+1,$color);
+					$x0 = $x;
+					$y0 = $y;
+				}
+			}
+		}
+	}
 }
 
 ?>

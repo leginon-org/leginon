@@ -15,6 +15,7 @@ require_once "inc/cachedb.inc";
 require_once "inc/imageutil.inc";
 require_once "inc/imagerequest.inc";
 require_once "inc/path.inc";
+require_once "inc/fileutil.inc";
 
 function getImageFile($leginondata,$imageId,$preset='all',$loadjpg=false,$is_fft=false) {
 	$newimageId = getImageIdFromPreset($leginondata,$imageId,$preset);
@@ -210,8 +211,19 @@ function getImageFromRequester($pic,$imginfo,$p) {
 	$display_pixelsize = getDisplayPixelSize($img,$imginfo,$p['fft'],$p['fftbin'],$prefftDim);
 	if ($p['scalebar']) 
 		$img = addScaleBarRingToImage($img,$display_pixelsize,$p['fft'],$p['fftbin']);
+
+	// This is for future implementation of radialplot overlay.
+	if (false && $p['fft']) {
+		$linedata = array();
+		$linedata[] = readRadialPlotValues('corrected');
+		$linedata[] = readRadialPlotValues('sample');
+		$linedata[] = readRadialPlotValues('background');
+		if ($linedata !== false)
+			$img = addRadialPlotToImage($img,$linedata,$display_pixelsize,$p['fftbin']);
+	}
+
 	// This is a good place to add debug message as a string on the image
-	#$debug_message .= ' :getImageFromRequester ';
+	$debug_message .= '';
 	imagestring($img, 4, 11, 21, $debug_message, imagecolorallocate($img,0,0,255));
 	imagestring($img, 4, 10, 20, $debug_message, imagecolorallocate($img,255,255,255));
 	return $img;
@@ -261,6 +273,25 @@ function getIntensityScale($p,$imgheaderinfo) {
 			break;
 	}
 	return array($scaletype,$arg1,$arg2);
+}
+
+function readRadialPlotValues($datatype) {
+	$read = new fileDataRead();
+	$rtypes = array('radius','corrected','sample','background');
+	// Reading from saved CSV file n myamiweb base directory for now.
+	$read->setFile('final.csv',',',count($rtypes));
+	$index = array_search($datatype,$rtypes);
+	if ($index === false) return false;
+	return $read->getColumnFromCSV($index);
+}
+
+function addRadialPlotToImage($img,$values,$display_pixelsize,$fftbintype) {
+	// create image overlay on image object
+	$overlay = new imageOverlay($img);
+	$xyDim = array(imagesx($img),imagesy($img));
+	$scale = 0.0001;
+	$overlay->drawRadialPlot($values,$display_pixelsize,$xyDim,$fftbintype,$scale);
+	return $img;
 }
 
 function addScaleBarRingToImage($img,$display_pixelsize,$isfft,$fftbintype) {
