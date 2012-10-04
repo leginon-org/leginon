@@ -22,7 +22,7 @@ try {
         // For each run, set the URL for it's report page and display it's summary info.
         foreach ($runDatas as $runData) {
             $runReportPageLink = ''; // Don't have further info yet
-            $summaryTable .=  $report->displaySummaryTable($runData, $runReportPageLink, True, False );
+            $summaryTable .=  $report->displaySummaryTable($runData, $runReportPageLink, True, True );
         }
 
     } else {
