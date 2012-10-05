@@ -287,7 +287,9 @@ def scipyblobs(im,mask):
 		means = scipy.ndimage.mean(im,labels,range(1,n+1))
 		moments = moment_of_inertia(im,labels,range(1,n+1))
 		maxpos = scipy.ndimage.maximum_position(im,labels,range(1,n+1))
-		if n==1:
+		## scipy has changed to return array when there is one answer in 0.9
+		## This single value case for n=1 only needed for older versions
+		if n==1 and isinstance(means,float):
 			centers = [centers]
 			stds = [stds]
 			means = [means]
