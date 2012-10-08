@@ -9,6 +9,7 @@ from leginon import leginondata
 import acquisition
 import gui.wx.RCTAcquisition
 import libCVwrapper
+import pyami.timedproc
 import numpy
 import time
 import math
@@ -323,11 +324,16 @@ class RCTAcquisition(acquisition.Acquisition):
 			print 'minsize', minsize
 			print 'maxsize', maxsize
 
-			result = libCVwrapper.MatchImages(arrayold, arraynew, minsize, maxsize)
+			#result = libCVwrapper.MatchImages(arrayold, arraynew, minsize, maxsize)
+			try:
+				result = pyami.timedproc('leginon.libCVwrapper', 'MatchImages', args=(arrayold, arraynew, minsize, maxsize), timeout=timeout)
+				self.logger.info("result matrix= "+str(numpy.asarray(result*100, dtype=numpy.int8).ravel()))
+			except:
+				self.logger.error('libCV MatchImages failed')
+				return None,None
+				
 			#difftilt = degrees(abs(tilts[int(i)])-abs(tilts[int(i-1)]))
 			#result = self.apTiltShiftMethod(arrayold, arraynew, difftilt)
-
-			self.logger.info("result matrix= "+str(numpy.asarray(result*100, dtype=numpy.int8).ravel()))
 
 			check = libCVwrapper.checkLibCVResult(self, result)
 			if check is False:
@@ -579,7 +585,15 @@ class RCTAcquisition(acquisition.Acquisition):
 		# find regions
 		minsize = self.settings['minsize']
 		maxsize = self.settings['maxsize']
-		regions, image  = libCVwrapper.FindRegions(im, minsize, maxsize)
+		timeout = 15
+		#regions, image  = libCVwrapper.FindRegions(im, minsize, maxsize)
+		self.logger.info('running libCV.FindRegions, timeout = %d' % (timeout,))
+		try:
+			regions,image = pyami.timedproc.call('leginon.libCVwrapper', 'FindRegions', args=(im,minsize,maxsize), timeout=timeout)
+		except:
+			self.logger.error('libCV.FindRegions failed')
+			regions = []
+			image = None
 
 		# this is copied from targetfinder:
 		#regions,image = libCVwrapper.FindRegions(self.mosaicimage, minsize, maxsize)
