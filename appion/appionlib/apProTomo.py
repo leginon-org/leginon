@@ -152,14 +152,14 @@ def writeTiltFile2(outfilename, seriesname, specimen_eulers, azimuth, filenames,
 	f.write('     TILT AZIMUTH %8.3f\n' % azimuth)
 	f.write('\n\n')
 	for n in filenames:
-		f.write('   IMAGE %-5d FILE %s\n' % (n, filenames)
+		f.write('   IMAGE %-5d FILE %s\n' % (n, filenames))
 	f.write('\n')
 	for n in keys:
 		f.write('   IMAGE %-5d ORIGIN  [ %8.3f %8.3f ]\n' % (n, imagedict[n]['x'], imagedict[n]['y']))
 	f.write('\n')
 	for n in keys:
 		f.write('   IMAGE %-5d TILT ANGLE %8.3f   ROTATION %8.3f\n' % (n, imagedict[n]['tilt'], imagedict[n]['rotation']))
-	f.write('\n   REFERENCE IMAGE %d\n' % (referenceimage)
+	f.write('\n   REFERENCE IMAGE %d\n' % (referenceimage))
 	f.write('\n\n\n END\n\n')
 	f.close()
 
