@@ -104,7 +104,7 @@ class TomoMaker(appionScript.AppionScript):
 		self.seriesname = apTomo.getFilename(self.tiltdatalist)
 		stackdir = self.params['tiltseriesdir']
 		stackname = self.seriesname+".st"
-		apTomo.writeTiltSeriesStack(stackdir,stackname,ordered_mrc_files)
+		apTomo.writeTiltSeriesStack(stackdir,stackname,ordered_mrc_files,1e10*self.pixelsize)
 		apImod.writeRawtltFile(stackdir,self.seriesname,tilts)
 
 	def createTransformFile(self):
