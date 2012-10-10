@@ -719,6 +719,19 @@ def testHeader():
 	h = parseHeader(h)
 	printHeader(h)
 
+def updateFilePixelSize(filename,pixeldict={}):
+	'''
+	function to update mrc header xlen so that pixel size calculated
+	from xlen / nx becomes the new pixel size in Angstrom. Valid keys
+	in pixeldict are 'x','y','z'.
+	'''
+	h = readHeaderFromFile(filename)
+	for axis in pixeldict.keys():
+		naxis = 'n%s' % (axis)
+		axislen = '%slen' % (axis)
+		h[axislen] = h[naxis] * pixeldict[axis]
+	update_file_header(filename, h)
+
 def testWrite():
 	a = numpy.zeros((16,16), numpy.float32)
 	write(a, 'a.mrc')
