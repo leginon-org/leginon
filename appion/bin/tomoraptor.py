@@ -125,7 +125,7 @@ class tomoRaptor(appionScript.AppionScript):
 		# Write tilt series stack images and tilt angles
 		stackdir = self.params['tiltseriesdir']
 		stackname = imodseriesname+".st"
-		apTomo.writeTiltSeriesStack(stackdir,stackname,ordered_mrc_files)
+		apTomo.writeTiltSeriesStack(stackdir,stackname,ordered_mrc_files,1e10*pixelsize)
 		apRaptor.linkStToMrcExtension(stackdir,imodseriesname)
 		apImod.writeRawtltFile(stackdir,imodseriesname,tilts)
 		# Get Leginon tomography settings

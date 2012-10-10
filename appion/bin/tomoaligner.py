@@ -347,7 +347,7 @@ class protomoAligner(appionScript.AppionScript):
 		if alignmethod != 'protomo2':
 			stackdir = self.params['tiltseriesdir']
 			stackname = imodseriesname+".st"
-			apTomo.writeTiltSeriesStack(stackdir,stackname,ordered_mrc_files)
+			apTomo.writeTiltSeriesStack(stackdir,stackname,ordered_mrc_files,1e10*pixelsize)
 			apImod.writeRawtltFile(stackdir,imodseriesname,tilts)
 		
 		leginonxcorrlist = []

@@ -188,9 +188,10 @@ def getCorrelatorBinning(imageshape):
 		correlation_bin = 1
 	return correlation_bin
 	
-def writeTiltSeriesStack(stackdir,stackname,ordered_mrc_files):
+def writeTiltSeriesStack(stackdir,stackname,ordered_mrc_files,apix=1):
 		stackpath = os.path.join(stackdir, stackname)
 		print stackpath
+		apixdict = {'x':apix,'y':apix}
 		if os.path.exists(stackpath):
 			stheader = mrc.readHeaderFromFile(stackpath)
 			stshape = stheader['shape']
@@ -200,8 +201,10 @@ def writeTiltSeriesStack(stackdir,stackname,ordered_mrc_files):
 				apDisplay.printMsg("No need to get new stack of the tilt series")
 			else:
 				apImage.writeMrcStack(stackdir,stackname,order3dmrc_files, 1)
+				mrc.updateFilePixelSize(stackpath,apixdict)
 		else:
 			apImage.writeMrcStack(stackdir,stackname,ordered_mrc_files, 1)
+			mrc.updateFilePixelSize(stackpath,apixdict)
 
 def calcRelativeShifts(globalshift):
 	relativeshifts = []
