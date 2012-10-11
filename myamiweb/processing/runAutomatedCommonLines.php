@@ -76,7 +76,7 @@ function createAngularReconstitutionForm($extra=False, $title='automatedCommonLi
 	$weight = ($_POST && !$_POST['weight']) ? '' : 'checked';
 	$prealign = ($_POST && !$_POST['prealign']) ? '' : 'checked';
 	$scale = ($_POST && !$_POST['scale']) ? '' : 'checked';
-	$nvol = ($_POST['nvol']) ? $_POST['nvol'] : '100';
+	$nvol = ($_POST['nvol']) ? $_POST['nvol'] : '300';
 	$nproc = ($_POST['nproc']) ? $_POST['nproc'] : '8';
 	$asqfilt = ($_POST['asqfilt']=='on') ? 'checked' : '';
 //	$linmask = ($_POST['linmask']) ? $_POST['linmask'] : '0.67';
