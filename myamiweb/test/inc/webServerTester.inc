@@ -71,9 +71,11 @@ class WebServerTester
 	{
 		if (extension_loaded('gd')) {
 			// See if jpeg support is enabled
-			$jpegEnabled = $this->modules->getModuleSetting('gd','JPG Support');
+			$jpgEnabled = $this->modules->getModuleSetting('gd','JPG Support');
+			// newer versions changed the name
+			$jpegEnabled = $this->modules->getModuleSetting('gd','JPEG Support');
 			
-			if ($jpegEnabled != 'enabled') {
+			if ($jpegEnabled != 'enabled' && $jpgEnabled != 'enabled') {
 				throw new Exception("!!! WARNING !!! JPEG support is not enabled for the GD php extension. For more info about installing the jpeg library, see: http://www.php.net/manual/en/image.requirements.php");
 			}
 		} else {
@@ -177,7 +179,10 @@ class WebServerTester
 
 		// The last line should be the php close tag, anything else is unacceptable, 
 		// including white space after the tag on the same line as the tag.
-		if ($lastLine != "?>")
+		$closeTag = "?>\n";
+		$compareResult = strcmp( $lastLine, $closeTag );
+		similar_text($lastLine, $closeTag, $p);
+		if ($compareResult !== 0)
 		{
 			throw new Exception("!!! WARNING !!! The final line of your config.php file ($lastLine) may cause images to not be displayed properly. Please remove any blank lines or spaces that occur after the final tag.");
 		}
