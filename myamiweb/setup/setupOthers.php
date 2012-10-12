@@ -162,6 +162,7 @@ require_once('../inc/formValidator.php');
 	
 		<h3>Enter Redux Image Server location and port:</h3>
 		<p>Enter the name of the server that is running the Redux image server, ex. redux.schools.edu:</p>
+		<p>(Enter "localhost" if Redux server is on the webserver computer)</p>
 		<input type="text" size=35 name="server_host" 
 		<?php 			
 			if($_POST){
