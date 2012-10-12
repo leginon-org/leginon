@@ -6,5 +6,5 @@ setup(
 	description='Core Python tools for AMI Group',
 	packages=['pyami', 'pyami.fft'],
 	package_dir={'pyami': ''},
-	scripts=['mrc2any', 'any2mrc'],
+	scripts=['mrc2any', 'any2mrc', 'timedproc.py'],
 )
