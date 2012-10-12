@@ -79,20 +79,24 @@ echo " <p> This is the <a href='http://xmipp.cnb.csic.es/twiki/bin/view/Xmipp/Pr
 //echo "  <img src='img/align-smr.png' width='250'><br/>\n";
 echo "</td></tr>\n";
 
-/*
-** Frealign projection-matching refinement protocol
-*/
-echo "<tr><td width='100' align='center'>\n";
-echo "  <img src='img/grigorieff_lab.png' width='96'>\n";
-echo "</td><td>\n";
-echo "  <h3><a href='selectStackForm.php?expId=$expId&method=frealign'>Frealign projection-matching refinement</a></h3>\n";
-echo "<p>The <a href='http://emlab.rose2.brandeis.edu/frealign'>Frealign</a>&nbsp;<img src='img/external.png'> "
-	."(Fourier REconstruction and ALIGNment) projection-matching refinement protocol has been designed to refine a stack "
-	."of particles for which the alignment and classification parameters are approximately known. It therefore also "
-	."relies on a good initial model. The algorithms used in the Frealign package are designed to extract "
-	."as much high resolution information out of the data as possible."
-	."</p>\n";
-echo "</td></tr>\n";
+// Hide frealign for 2.2, as it still has serious issues.
+if (!HIDE_FEATURE)
+{
+	/*
+	** Frealign projection-matching refinement protocol
+	*/
+	echo "<tr><td width='100' align='center'>\n";
+	echo "  <img src='img/grigorieff_lab.png' width='96'>\n";
+	echo "</td><td>\n";
+	echo "  <h3><a href='selectStackForm.php?expId=$expId&method=frealign'>Frealign projection-matching refinement</a></h3>\n";
+	echo "<p>The <a href='http://emlab.rose2.brandeis.edu/frealign'>Frealign</a>&nbsp;<img src='img/external.png'> "
+		."(Fourier REconstruction and ALIGNment) projection-matching refinement protocol has been designed to refine a stack "
+		."of particles for which the alignment and classification parameters are approximately known. It therefore also "
+		."relies on a good initial model. The algorithms used in the Frealign package are designed to extract "
+		."as much high resolution information out of the data as possible."
+		."</p>\n";
+	echo "</td></tr>\n";
+}
 
 if (!HIDE_FEATURE)
 {
