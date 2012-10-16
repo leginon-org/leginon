@@ -269,7 +269,7 @@ class UpdateLib:
 		else:
 			return False
 
-	def deletDatabaseReset(self):
+	def deleteDatabaseReset(self):
 		if self.getDatabaseReset():
 			self.project_dbupgrade.updateColumn("install", "value", "'0'", 
 					"install.key = 'resetfrom'",timestamp=False)
