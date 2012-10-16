@@ -2255,6 +2255,28 @@ class AlignmentManagerSettingsData(TargetRepeaterSettingsData):
 class FixAlignmentData(ReferenceRequestData):
 	pass
 
+class ConditioningRequestData(InSessionData):
+	def typemap(cls):
+		return InSessionData.typemap() + (
+			('type', str),
+		)
+	typemap = classmethod(typemap)
+
+class ConditioningDoneData(InSessionData):
+	def typemap(cls):
+		return InSessionData.typemap() + (
+			('request', ConditioningRequestData),
+		)
+	typemap = classmethod(typemap)
+
+class ConditionerSettingsData(SettingsData):
+	def typemap(cls):
+		return SettingsData.typemap() + (
+			('bypass', bool),
+			('repeat time', int),
+		)
+	typemap = classmethod(typemap)
+
 class DDinfoKeyData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
