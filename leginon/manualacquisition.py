@@ -115,9 +115,9 @@ class ManualAcquisition(node.Node):
 		self.logger.info('Acquiring %scorrected image...' % prefix)
 		self.instrument.ccdcamera.Settings = self.settings['camera settings']
 		if self.settings['dark']:
-			self.instrument.ccdcamera.ExposureType = 'dark'
+			exposuretype = 'dark'
 		else:
-			self.instrument.ccdcamera.ExposureType = 'normal'
+			exposuretype = 'normal'
 
 
 		if self.settings['reduced params']:
@@ -127,9 +127,9 @@ class ManualAcquisition(node.Node):
 
 		try:
 			if correct:
-				imagedata = self.acquireCorrectedCameraImageData(scopeclass=scopeclass)
+				imagedata = self.acquireCorrectedCameraImageData(scopeclass=scopeclass, type=exposuretype)
 			else:
-				imagedata = self.acquireCameraImageData(scopeclass=scopeclass)
+				imagedata = self.acquireCameraImageData(scopeclass=scopeclass, type=exposuretype)
 		except Exception, e:
 			self.logger.error('Error acquiring image: %s' % e)
 			raise AcquireError

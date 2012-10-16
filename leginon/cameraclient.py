@@ -42,7 +42,7 @@ class CameraClient(object):
 		self.exposure_start_event.set()
 		t.start()
 
-	def acquireCameraImageData(self, scopeclass=leginondata.ScopeEMData, allow_retracted=False):
+	def acquireCameraImageData(self, scopeclass=leginondata.ScopeEMData, allow_retracted=False, type='normal'):
 		'''Acquire a raw image from the currently configured CCD camera'''
 
 		## Retract the cameras that are above this one (higher zplane)
@@ -65,6 +65,9 @@ class CameraClient(object):
 				camname = self.instrument.getCCDCameraName()
 				self.logger.info('inserting camera: %s' % (camname,))
 				self.instrument.ccdcamera.Inserted = True
+
+		## set type to normal or dark
+		self.instrument.ccdcamera.ExposureType = type
 
 		imagedata = leginondata.CameraImageData()
 		imagedata['session'] = self.session

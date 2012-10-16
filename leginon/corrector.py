@@ -195,10 +195,14 @@ class Corrector(imagewatcher.ImageWatcher):
 		return series
 
 	def acquireSeriesAverage(self, n, type, channel):
+		if type == 'dark':
+			exposuretype = 'dark'
+		else:
+			exposuretype = 'normal'
 		for i in range(n):
 			self.logger.info('Acquiring reference image (%s of %s)' % (i+1, n))
 			try:
-				imagedata = self.acquireCameraImageData()
+				imagedata = self.acquireCameraImageData(type=exposuretype)
 			except Exception, e:
 				self.logger.error('Error acquiring image: %s' % e)
 				raise
@@ -218,10 +222,14 @@ class Corrector(imagewatcher.ImageWatcher):
 
 	def acquireSeriesMedian(self, n, type, channel):
 		series = []
+		if type == 'dark':
+			exposuretype = 'dark'
+		else:
+			exposuretype = 'normal'
 		for i in range(n):
 			self.logger.info('Acquiring reference image (%s of %s)' % (i+1, n))
 			try:
-				imagedata = self.acquireCameraImageData()
+				imagedata = self.acquireCameraImageData(type=exposuretype)
 			except Exception, e:
 				self.logger.error('Error acquiring image: %s' % e)
 				raise
@@ -250,50 +258,15 @@ class Corrector(imagewatcher.ImageWatcher):
 	def acquireReference(self, type, channel):
 		try:
 			self.instrument.ccdcamera.Settings = self.settings['camera settings']
-			exposuretype = self.instrument.ccdcamera.ExposureType
 			if type == 'dark':
-				if exposuretype != 'dark':
-					self.instrument.ccdcamera.ExposureType = 'dark'
 				typekey = 'dark'
 				self.logger.info('Acquiring dark references...')
 			else:
-				if exposuretype != 'normal':
-					self.instrument.ccdcamera.ExposureType = 'normal'
 				typekey = 'bright'
 				self.logger.info('Acquiring bright references...')
 		except Exception, e:
 			self.logger.error('Reference acquisition failed: %s' % (e,))
-			self.instrument.ccdcamera.ExposureType = 'normal'
 			return None
-
-		'''
-		## doing this before acquireSeries because of a bug where
-		## something interrupts this method before it completes
-		scopedata = self.instrument.getData(leginondata.ScopeEMData)
-		cameradata = self.instrument.getData(leginondata.CameraEMData)
-
-		try:
-			series = self.acquireSeries(self.settings['n average'])
-		except Exception, e:
-			self.logger.error('Reference acquisition failed: %s' % (e,))
-			self.instrument.ccdcamera.ExposureType = 'normal'
-			return None
-
-		combine = self.settings['combine']
-		self.logger.info('taking %s of image series' % (combine,))
-		if combine == 'average':
-			ref = imagefun.averageSeries(series)
-		elif combine == 'median':
-			ref = imagefun.medianSeries(series)
-		else:
-			self.instrument.ccdcamera.ExposureType = 'normal'
-			raise RuntimeError('invalid setting "%s" for combine method' % (combine,))
-
-		## make if float so we can do float math later
-		ref = numpy.asarray(ref, numpy.float32)
-
-		refimagedata = self.storeCorrectorImageData(ref, typekey, scopedata, cameradata, channel)
-		'''
 
 		combine = self.settings['combine']
 		n = self.settings['n average']
@@ -306,13 +279,6 @@ class Corrector(imagewatcher.ImageWatcher):
 		if refimagedata is not None:
 			self.logger.info('Got reference image, calculating normalization')
 			self.calc_norm(refimagedata)
-
-		try:
-			self.instrument.ccdcamera.ExposureType = exposuretype
-		except Exception, e:
-			self.logger.error('Reference acquisition failed: %s' % (e,))
-			self.instrument.ccdcamera.ExposureType = 'normal'
-			return None
 
 		self.maskimg = numpy.zeros(refarray.shape)
 		return refarray
