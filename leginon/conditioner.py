@@ -3,6 +3,7 @@ import threading
 import leginon.node as node
 import leginon.gui.wx.Conditioner
 from leginon import leginondata
+from leginon import instrument
 import time
 
 class Conditioner(node.Node):
@@ -23,6 +24,8 @@ class Conditioner(node.Node):
 	def __init__(self, *args, **kwargs):
 		node.Node.__init__(self, *args, **kwargs)
 		self.addEventInput(event.FixConditionEvent, self.handleFixConditionEvent)
+		self.instrument = instrument.Proxy(self.objectservice, self.session,
+																				self.panel)
 		self.conditionlist = []
 		self.valid_ctypes = ['buffer cycle']
 		# TO DO: choose ctypes used in the node. Set to all for now
@@ -90,9 +93,10 @@ class Conditioner(node.Node):
 			self.fixCondition(ctype)
 			self.saveConditioningDone(crequest)
 
-	def fixCondition(self, type):
+	def fixCondition(self, condition_type):
 		self.logger.info('handle fix condition request')
 		self.runBufferCycle()
+		self.logger.info('done %s' % (condition_type))
 
 	def runBufferCycle(self):
 		try:
