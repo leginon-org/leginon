@@ -7,13 +7,14 @@
  *	see  http://ami.scripps.edu/software/leginon-license
  */
 
-include ("inc/particledata.inc");
-include ("inc/jpgraph.php");
-include ("inc/jpgraph_utils.inc.php");
-include ("inc/jpgraph_line.php");
-include ("inc/jpgraph_scatter.php");
-require ("inc/leginon.inc");
-require "inc/project.inc";
+include_once ("inc/particledata.inc");
+include_once ("inc/jpgraph.php");
+include_once ("inc/jpgraph_utils.inc.php");
+include_once ("inc/jpgraph_line.php");
+require_once "inc/jpgraph_plotline.php";
+include_once ("inc/jpgraph_scatter.php");
+require_once ("inc/leginon.inc");
+require_once "inc/project.inc";
 
 define (PARTICLE_DB, $_SESSION['processingdb']);
 
@@ -82,7 +83,7 @@ if (!$nomargin) {
 	$graph->yaxis->title->Set("Correlation");
 	$graph->xaxis->SetTickLabels($xpix);
 	$graph->xaxis->SetLabelAngle(90);
-	//$graph->AddLine(new PlotLine(HORIZONTAL,0.5,"black",1));
+	$graph->AddLine(new PlotLine(HORIZONTAL,0.5,"black",1));
 } else {
 	$graph->SetScale("intlin",0.0,1.0,$sx[0],$last);
 	$graph->img->SetMargin(2,4,4,4);	
