@@ -164,6 +164,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 											event.DriftMonitorRequestEvent, 
 											event.FixBeamEvent,
 											event.FixAlignmentEvent,
+											event.FixConditionEvent,
 											event.ImageListPublishEvent, event.ReferenceTargetPublishEvent] \
 											+ navigator.NavigatorClient.eventoutputs
 
@@ -1031,6 +1032,15 @@ class Acquisition(targetwatcher.TargetWatcher):
 			original_position = self.instrument.tem.getStagePosition()
 			status = self.outputEvent(evt, wait=True)
 			self.instrument.tem.setStagePosition({'z':original_position['z']})
+		except node.ConfirmationNoBinding, e:
+			self.logger.debug(e)
+		except Exception, e:
+			self.logger.error(e)
+
+	def fixCondition(self):
+		evt = event.FixConditionEvent()
+		try:
+			status = self.outputEvent(evt, wait=True)
 		except node.ConfirmationNoBinding, e:
 			self.logger.debug(e)
 		except Exception, e:
