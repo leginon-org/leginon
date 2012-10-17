@@ -17,7 +17,11 @@ def call(module_name, func_name, args=(), kwargs={}, timeout=None):
 
 	## start subprocess, give it input
 	import subprocess
-	sub = subprocess.Popen(['timedproc.py', 'call'], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+	import fileutil
+	# launch this script in a subprocess
+	executable = fileutil.getMyFilename()
+	print 'EXE', executable
+	sub = subprocess.Popen([executable, 'call'], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
 	sub.stdin.write(pickledargs)
 	sub.stdin.close()
 
