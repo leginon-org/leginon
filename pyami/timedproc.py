@@ -20,7 +20,6 @@ def call(module_name, func_name, args=(), kwargs={}, timeout=None):
 	import fileutil
 	# launch this script in a subprocess
 	executable = fileutil.getMyFilename()
-	print 'EXE', executable
 	sub = subprocess.Popen([executable, 'call'], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
 	sub.stdin.write(pickledargs)
 	sub.stdin.close()
@@ -31,7 +30,12 @@ def call(module_name, func_name, args=(), kwargs={}, timeout=None):
 		killer = threading.Timer(timeout, os.kill, args=killargs)
 		killer.start()
 	
-	## wait for subprocess to end
+
+	newstr = sub.stdout.read()
+	result = cPickle.loads(newstr)
+	if isinstance(result, Exception):
+		raise result
+
 	ret = sub.wait()
 
 	## cancel killer
@@ -39,15 +43,12 @@ def call(module_name, func_name, args=(), kwargs={}, timeout=None):
 		killer.cancel()
 
 	if ret == 0:
-		newstr = sub.stdout.read()
-		result = cPickle.loads(newstr)
-		if isinstance(result, Exception):
-			raise result
 		return result
-	elif ret == -signal.SIGKILL:
+	if ret == -signal.SIGKILL:
 		raise RuntimeError('%s ran too long and was killed' % (func_name,))
 	else:
 		raise RuntimeError('%s had unknown error' % (func_name,))
+
 
 def import_module(module_name):
 	import imp
@@ -90,6 +91,9 @@ def wrapper():
 		result = e
 	pickled_result = cPickle.dumps(result)
 	sys.stdout.write(pickled_result)
+	sys.stdout.flush()
+	sys.stdout.close()
+	sys.exit()
 
 def test_caller():
 	result = call('os', 'listdir', args=())

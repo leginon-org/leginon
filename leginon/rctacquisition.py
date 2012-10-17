@@ -324,9 +324,10 @@ class RCTAcquisition(acquisition.Acquisition):
 			print 'minsize', minsize
 			print 'maxsize', maxsize
 
+			timeout = 300
 			#result = libCVwrapper.MatchImages(arrayold, arraynew, minsize, maxsize)
 			try:
-				result = pyami.timedproc('leginon.libCVwrapper', 'MatchImages', args=(arrayold, arraynew, minsize, maxsize), timeout=timeout)
+				result = pyami.timedproc.call('leginon.libCVwrapper', 'MatchImages', args=(arrayold, arraynew, minsize, maxsize), timeout=timeout)
 				self.logger.info("result matrix= "+str(numpy.asarray(result*100, dtype=numpy.int8).ravel()))
 			except:
 				self.logger.error('libCV MatchImages failed')
@@ -585,7 +586,7 @@ class RCTAcquisition(acquisition.Acquisition):
 		# find regions
 		minsize = self.settings['minsize']
 		maxsize = self.settings['maxsize']
-		timeout = 15
+		timeout = 300
 		#regions, image  = libCVwrapper.FindRegions(im, minsize, maxsize)
 		self.logger.info('running libCV.FindRegions, timeout = %d' % (timeout,))
 		try:
