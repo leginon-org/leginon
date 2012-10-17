@@ -63,6 +63,7 @@ class Conditioner(node.Node):
 		conditiondonedata.insert(force=True)
 
 	def handleFixConditionEvent(self, evt):
+		self.logger.info('handle condition fixing')
 		self.setStatus('processing')
 		if self.settings['bypass']:
 			self.logger.info('bypass condition fixing')
@@ -71,11 +72,10 @@ class Conditioner(node.Node):
 			return
 		try:
 			self._handleFixConditionEvent(evt)
+			self.confirmEvent(evt, status='ok')
 		except Exception, e:
 			self.logger.error('handling exception %s' %(e,))
 			self.confirmEvent(evt, status='exception')
-		else:
-			self.confirmEvent(evt, status='ok')
 		self.setStatus('idle')
 
 	def _handleFixConditionEvent(self, evt):
