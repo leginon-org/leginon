@@ -334,9 +334,9 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		return sz
 
 	def addSettings(self):
-		overridebox = wx.StaticBox(self, -1, "Override Preset")
+		overridebox = wx.StaticBox(self, -1, "Override Preset during Testing")
 		overridesz = wx.StaticBoxSizer(overridebox, wx.VERTICAL)
-		errbox = wx.StaticBox(self, -1, "Error Checking and Correction")
+		errbox = wx.StaticBox(self, -1, "Error Checking and Correction during Testing")
 		errsz = wx.StaticBoxSizer(errbox, wx.VERTICAL)
 
 		# pause time
@@ -411,22 +411,22 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		hysfixsz.Add(self.widgets['cycle each'], (1, 0), (1, 1))
 
 		## 
-		sz = wx.GridBagSizer(5,5)
-		sz.Add(self.widgets['check calibration'], (0, 0), (1, 1),
+		ccsz = wx.GridBagSizer(5,5)
+		ccsz.Add(self.widgets['check calibration'], (0, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
 		#sz.Add(maxerrsz, (1, 0), (1, 1),
 		#				wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(precsz, (2, 0), (1, 1),
+		ccsz.Add(precsz, (2, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(hysfixsz, (3, 0), (1, 1),
+		ccsz.Add(hysfixsz, (3, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
-		errsz.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
+		errsz.Add(ccsz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
 
 		# settings sizer
 		sz = wx.GridBagSizer(5, 10)
-		sz.Add(overridesz, (0, 0), (1, 1))
-		sz.Add(szpausetime, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(errsz, (2,0), (1,1))
+		sz.Add(overridesz, (0, 0), (6, 1))
+		sz.Add(szpausetime, (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(errsz, (3,1), (1,1))
 		#sz.AddGrowableRow(2)
 		return sz
 
