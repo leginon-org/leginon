@@ -136,12 +136,17 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 				self.reportTargetListDone(newdata, targetliststatus)
 				self.setStatus('idle')
 				return
+
 			#tilt the stage first
 			if self.settings['use parent tilt']:
 				state1 = leginondata.ScopeEMData()
 				parentimage = newdata.special_getitem('image', True, readimages=False)
 				state1['stage position'] = {'a':parentimage['scope']['stage position']['a']}
 				self.instrument.setData(state1)
+			# start conditioner
+			self.setStatus('waiting')
+			self.fixCondition()
+			self.setStatus('processing')
 			# This is only for beamfixer now and it does not need preset_name
 			preset_name = None
 			original_position = self.instrument.tem.getStagePosition()
@@ -335,3 +340,7 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 	
 	def fixAlignment(self):
 		raise NotImplementedError()
+
+	def fixCondition(self):
+		raise NotImplementedError()
+

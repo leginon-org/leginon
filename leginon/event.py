@@ -167,6 +167,9 @@ class MeasureDosePublishEvent(PublishEvent):
 class FixAlignmentEvent(Event):
 	pass
 
+class FixConditionEvent(Event):
+	pass
+
 class FixBeamEvent(PublishEvent):
 	dataclass = leginondata.FixBeamData
 

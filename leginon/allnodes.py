@@ -122,9 +122,6 @@ noderegistry.registerNodeClass(HoleDepth,classtype)
 from fftmaker import FFTMaker
 noderegistry.registerNodeClass(FFTMaker,classtype)
 
-from alignmentmanager import AlignmentManager
-noderegistry.registerNodeClass(AlignmentManager,classtype)
-
 from autoexposure import AutoExposure
 noderegistry.registerNodeClass(AutoExposure,classtype)
 
@@ -171,6 +168,12 @@ noderegistry.registerNodeClass(MeasureDose,classtype)
 
 from EM import EM
 noderegistry.registerNodeClass(EM,classtype)
+
+from alignmentmanager import AlignmentManager
+noderegistry.registerNodeClass(AlignmentManager,classtype)
+
+from conditioner import Conditioner
+noderegistry.registerNodeClass(Conditioner,classtype)
 
 from maskassessor import MaskAssessor
 noderegistry.registerNodeClass(MaskAssessor,classtype)
