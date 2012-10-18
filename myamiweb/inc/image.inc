@@ -44,7 +44,7 @@ function __getImageFile($leginondata,$imageId,$loadjpg=false,$is_fft=false) {
 	// Use Cached jpeg image if available
 	if ($loadjpg && !$is_fft && ENABLE_CACHE) {
 		$sessioninfo=$leginondata->getSessionInfoFromImage($imageId);
-		$session=$sessioninfo['Name'];
+		$session=$sessioninfo['name'];
 		$pic = useCache($pic,$session);
 	}
 	return $pic;

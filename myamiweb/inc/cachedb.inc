@@ -69,8 +69,8 @@ function useCache($filepath,$sessionname) {
 	if (USE_REDUX_CACHE) return $filepath;
 	//search for php-mrc cache jpg file.
 	$filename = basename($filepath);
-	$jpgfilename = preg_replace('mrc$', 'jpg', $filename);
-	$jpgpath = CACHE_PATH.$session."/";
+	$jpgfilename = preg_replace('%mrc%', 'jpg', $filename);
+	$jpgpath = CACHE_PATH.$sessionname."/";
 	$jpgpic = $jpgpath.$jpgfilename;
 	if (@is_file($jpgpic)) $filepath = $jpgpic;
 	return $filepath;
