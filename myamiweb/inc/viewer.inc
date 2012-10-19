@@ -610,7 +610,7 @@ class view {
 		$this->filter= "default";
 		$this->fftbin= "a";
 		$this->binning= "auto";
-		$this->autoscale = "s;3";
+		$this->autoscale = "s;5";
 		$this->displayfilename = "0";
 		$this->loadjpg= "1";
 		$this->ptclsel = "0";
