@@ -49,7 +49,7 @@ class Format(redux.pipe.Pipe):
 		return outstring
 
 	def run_pil(self, input, oformat, rgb):
-		pil_image = scipy.misc.toimage(input)
+		pil_image = scipy.misc.toimage(input,cmin=0,cmax=255)
 		if rgb:
 			pil_image = pil_image.convert('RGB')
 		file_object = cStringIO.StringIO()
