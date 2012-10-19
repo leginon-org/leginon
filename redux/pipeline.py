@@ -5,6 +5,7 @@ import cStringIO
 import sys
 
 # local
+import redux.pipe
 import redux.pipes
 import redux.pipelines
 import redux.reduxconfig
@@ -111,13 +112,20 @@ class Pipeline(object):
 		if 'help' in kwargs and kwargs['help']:
 			return help_string()
 
+		# use cache if config file enabled it, unless request
+		# disables it
+		cache_on = CACHE_ON
+		if 'cache' in kwargs:
+			if not redux.pipe.bool_converter(kwargs['cache']):
+				cache_on = False
+
 		pipeline = self.kwargs_to_pipeline(**kwargs)
 
 		### find all or part of the pipeline result in the cache
 		n = len(pipeline)
 		for i in range(n):
 			done = pipeline[:n-i]
-			if CACHE_ON:
+			if cache_on:
 				result = results.get(done)
 			else:
 				result = None
@@ -134,7 +142,7 @@ class Pipeline(object):
 			log('Running %s' % (pipe,))
 			result = pipe(result)
 			done = done + (pipe,)
-			if CACHE_ON:
+			if cache_on:
 				results.put(done, result)
 
 		return result
