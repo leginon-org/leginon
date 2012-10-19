@@ -121,16 +121,16 @@ function createEMANInitialModelForm($extra=false, $title='createModel.py Launche
 	echo "<tr><td>\n";
 	echo "EMAN manuals: \n";
 	echo "</td><td align='center'>\n";
-	echo "<a href='http://blake.bcm.tmc.edu/eman/eman1/progs/startAny.html'>"
+	echo "<a href='http://blake.bcm.tmc.edu/emanwiki/StartAny'>"
 		."startAny</a>&nbsp;<img src='img/external.png'>\n";
 	echo "</td><td align='center'>\n";
-	echo "<a href='http://blake.bcm.tmc.edu/eman/eman1/progs/startcsym.html'>"
+	echo "<a href='http://blake.bcm.tmc.edu/emanwiki/StartCSym'>"
 		."startcsym</a>&nbsp;<img src='img/external.png'>\n";
 	echo "</td><td align='center'>\n";
-	echo "<a href='http://blake.bcm.tmc.edu/eman/eman1/progs/starticos.html'>"
+	echo "<a href='http://blake.bcm.tmc.edu/emanwiki/StartIcos'>"
 		."starticos</a>&nbsp;<img src='img/external.png'>\n";
 	echo "</td><td align='center'>\n";
-	echo "<a href='http://blake.bcm.tmc.edu/eman/eman1/progs/startoct.html'>"
+	echo "<a href='http://blake.bcm.tmc.edu/emanwiki/StartOct'>"
 		."startoct</a>&nbsp;<img src='img/external.png'>\n";
 	echo "</td></tr></table>\n";
 
