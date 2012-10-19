@@ -80,7 +80,7 @@ function pickingsummarytable($selectionid, $mini=false) {
 		$display_keys['# images'] = commafy($selectionstats['num'])." ("
 			.round($selectionstats['totparticles']/$selectionstats['num'],1)." part/img)";
 		$display_keys['view picks'] = ""
-			."<a href='multiimgassessor.php?expId=44&pickId=$selectionid'>"
+			."<a href='multiimgassessor.php?expId=$expId&pickId=$selectionid'>"
 			."view picks in multi-assessor</a>";
 	}
 	if ($selectiondata['trace']) {
