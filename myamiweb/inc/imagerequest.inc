@@ -6,7 +6,7 @@ class imageRequester {
 	// filepath is the full path to file ex: /a/b/c.d
 	// filename is the base name of file path ex: c.d
 	// fileroot is the root name of the filename ex: c
-	function requestImage($filepath,$oFormat,$shape=array(512,512),$scaleType='stdev',$scaleMin=-1,$scaleMax=1,$lpf,$rgb=false,$power=false,$frame=false) {
+	function requestImage($filepath,$oFormat,$shape=array(512,512),$scaleType='stdev',$scaleMin=-5,$scaleMax=5,$lpf,$rgb=false,$power=false,$frame=false) {
 		if (empty($filepath)) return false;
 		$redux = new redux($filepath, $oFormat);
 		$redux->setPipeline('standard');
@@ -48,13 +48,14 @@ class imageRequester {
 	}
 
 	function requestDefaultFullImage($filepath,$oformat,$fft=false) {
+		// Used so far only in downloading image
 		$imginfo = $this->requestInfo($filepath);
 		$pmin = $imginfo->amin;
 		$pmax = $imginfo->amax;
 		$height = $imginfo->ny;
 		$width = $imginfo->nx;
 		$xyDim = array($width,$height);
-		return $this->requestImage($filepath,$oformat,$xyDim,'stdev',-3,3,0,(bool)$fft);
+		return $this->requestImage($filepath,$oformat,$xyDim,'stdev',-5,5,0,(bool)$fft);
 	}
 	function requestHistdata($filepath,$number_of_bins,$min,$max) {
 		if (empty($filepath)) return false;

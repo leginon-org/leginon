@@ -1232,7 +1232,7 @@ class leginondata {
 	}
 
 	function getSessionInfoFromImage($imgId) {
-		$q = "selection s.*, s.`DEF_id` as sessionId "
+		$q = "select s.*, s.`DEF_id` as sessionId "
 			."from SessionData s "
 			."left join AcquisitionImageData a "
 			."on a.`REF|SessionData|session` = s.`DEF_id` "

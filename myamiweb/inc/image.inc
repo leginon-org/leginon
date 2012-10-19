@@ -45,7 +45,7 @@ function __getImageFile($leginondata,$imageId,$loadjpg=false,$is_fft=false) {
 	// Use Cached jpeg image if available
 	if ($loadjpg && !$is_fft && ENABLE_CACHE) {
 		$sessioninfo=$leginondata->getSessionInfoFromImage($imageId);
-		$session=$sessioninfo['Name'];
+		$session=$sessioninfo['name'];
 		$pic = useCache($pic,$session);
 	}
 	return $pic;
@@ -245,7 +245,12 @@ function getDisplayPixelSize($img,$imginfo,$isfft,$fftbintype,$prefftDim) {
 function getIntensityScale($p,$imgheaderinfo) {
 	$imageUtil = new imageUtil();
 	if ($p['autoscale']) 
-		list($type,$arg1, $arg2)=explode(";", $p['autoscale']);
+		if ($p['autoscale']===true) {
+			$type = 'stdev';
+			$arg1 = 5;
+		} else {
+			list($type,$arg1, $arg2)=explode(";", $p['autoscale']);
+		}
 	else $type = '0';
 	
 	switch($type){
@@ -268,7 +273,7 @@ function getIntensityScale($p,$imgheaderinfo) {
 		// when scale type is 'stdev'
 		default:
 			$scaletype = "stdev";
-			$arg2=($arg1>=1) ? $arg1 : 3;
+			$arg2=($arg1>=1) ? $arg1 : 5;
 			$arg1= -1 * $arg1;
 			break;
 	}
