@@ -189,16 +189,16 @@ function getImageFromRequester($pic,$imginfo,$p) {
 	if (function_exists($p['filter']))
 		$lpf_sigma = $p['filter']() * $xyDim[0] / $dimx;;
 	if (!isBinBeforeFFT($p) || $dimx==$xyDim[0]) {
-		$imgstr = $imagerequest->requestImage($pic,'JPEG',$xyDim,$scaletype,$arg1,$arg2,$lpf_sigma,false,(bool)$p['fft']);
+		$imgstr = $imagerequest->requestImage($pic,'JPEG',$xyDim,$scaletype,$arg1,$arg2,$lpf_sigma,false,(bool)$p['fft'],false);
 		$prefftDim = $xyDim;
 	} else {
 		$prefftDim = getImageXYDimFromBinningParams($imginfo,$p);
-		$imgstr = $imagerequest->requestImage($pic,'PNG',$prefftDim,$scaletype,$arg1,$arg2,0,false,false);
+		$imgstr = $imagerequest->requestImage($pic,'PNG',$prefftDim,$scaletype,$arg1,$arg2,0,false,false,false);
 		$imageId = $imginfo['imageId'];
 		if (!is_dir(TEMP_IMAGES_DIR)) mkdir(TEMP_IMAGES_DIR,0777,true);
 		$tmpfile = TEMP_IMAGES_DIR.'/tmp'.$imginfo['imageId'].'_'.$prefftDim[0].'.png';
 		file_put_contents($tmpfile,$imgstr);
-		$imgstr = $imagerequest->requestImage($tmpfile,'JPEG',$xyDim,$scaletype,$arg1,$arg2,$lpf_sigma,false,$p['fft']);
+		$imgstr = $imagerequest->requestImage($tmpfile,'JPEG',$xyDim,$scaletype,$arg1,$arg2,$lpf_sigma,false,$p['fft'],true);
 		unlink($tmpfile);
 	}
 	if (!$imgstr) {

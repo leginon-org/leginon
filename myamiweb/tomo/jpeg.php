@@ -14,7 +14,7 @@ $filename = $leginondata->getFilenameFromId($imageId);
 
 $filepath = $path.$filename;
 $imagerequest = new imageRequester();
-$imgstr = $imagerequest->requestImage($filepath,'JPEG',array(128,128),'stdev',-3,3,$sigma,false,false,0);
+$imgstr = $imagerequest->requestImage($filepath,'JPEG',array(128,128),'stdev',-3,3,$sigma,false,false,false,0);
 $img = imagecreatefromstring($imgstr);
 
 // --- create png image
