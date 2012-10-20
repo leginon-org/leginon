@@ -973,12 +973,12 @@ function writeTestResults($jpg,$ccclist,$bin,$process_str='')
 	// The results are ready, display them.
 	$html = "<center>\n";
 	$html.= "<a href='loadimg.php?filename=$jpg' target='blank'>\n";
-	$html.= "<img src='loadimg.php?filename=$jpg&h=256'></a>\n";
+	$html.= "<img src='loadimg.php?filename=$jpg&h=256&coff=1'></a>\n";
 	if (count($ccclist)>1)
 	$html.= "<br />\n";
 	foreach ($ccclist as $ccc) {
 		$html.= "<a href='loadimg.php?filename=$ccc' target='blank'>\n";
-		$html.= "<img src='loadimg.php?filename=$ccc&h=256'></a>\n";
+		$html.= "<img src='loadimg.php?filename=$ccc&h=256&coff=1'></a>\n";
 	}
 	$html.= "</center>\n";
 	return $html;

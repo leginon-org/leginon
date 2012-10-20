@@ -7,6 +7,7 @@ $s = $_GET['s'];
 $w = $_GET['w'];
 $h = $_GET['h'];
 $rawgif = $_GET['rawgif'];
+$cacheOff = $_GET['coff'];
 
 if (empty($filename)) {
 	return;
@@ -56,9 +57,9 @@ if (preg_match('`\.gif$`i',$filename) && $rawgif) {
 	$frame = (substr_compare($filename,'jpg',-3,true) || substr_compare($filename,'png',-3,true)) ? null:$frame;
 	// request image
 	if (!$rescale && $pmin != $pmax) 
-		$imgstr = $imagerequest->requestImage($filename,$oformat,$xyDim,'minmax',$pmin,$pmax,0,$rgb,false,$frame);
+		$imgstr = $imagerequest->requestImage($filename,$oformat,$xyDim,'minmax',$pmin,$pmax,0,$rgb,false,$cacheOff,$frame);
 	else
-		$imgstr = $imagerequest->requestImage($filename,$oformat,$xyDim,'stdev',-3,3,0,$rgb,false,$frame);
+		$imgstr = $imagerequest->requestImage($filename,$oformat,$xyDim,'stdev',-3,3,0,$rgb,false,$cacheOff,$frame);
 	$imagerequest->displayImageString($imgstr,$oformat,$filename);
 }
 
