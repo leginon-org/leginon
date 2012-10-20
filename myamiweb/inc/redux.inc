@@ -15,6 +15,7 @@ class redux{
 	private $padPos;		// need to be x, y array (start positions).
 	private $padValue;		// float
 	private $power;			// boolean
+	private $cacheOff;			// boolean: Force cache off
 	private $maskRadius;	// float 
 	private $shape;			// x, y array (output size)
 	private $frame;		// integer or false (means no frame selection)
@@ -66,6 +67,10 @@ class redux{
 		return $str;
 	}
 	
+	function getCacheOff(){
+		$str = $this->cacheOff ? '1' : '0'; 
+		return $str;
+	}
 	function getRGB(){
 		$str = $this->rgb ? '1' : '0'; 
 		return $str;
@@ -172,6 +177,14 @@ class redux{
 		if(!is_bool($infoflag))
 			$validator->setErrorMessage("info", "The value of info flag must be boolean (true, flase).");
 		$this->info = $infoflag; 
+	}
+
+	function setCacheOff($cacheOff){ 
+		
+		global $validator;
+		if(!is_bool($cacheOff))
+			$validator->setErrorMessage("cacheOff", "The value of cacheOff must be boolean (true, flase).");
+		$this->cacheOff = $cacheOff;
 	}
 
 	function setPower($power){ 
@@ -310,6 +323,7 @@ class redux{
 		$str .= 'filename=' . $this->getFilename();
 		//$str .= empty($this->padShape) ? '' : '&padshape=' . $this->getPadShape();
 		$str .= empty($this->power) ? '' : '&power=' . $this->getPower();
+		$str .= empty($this->cacheOff) ? '' : '&cache=' . $this->getCacheOff();
 		$str .= empty($this->info) ? '' : '&info=' . $this->getInfo();
 		$str .= empty($this->maskRadius) ? '' : '&maskradius=' . $this->getMaskRadius();
 		$str .= empty($this->rgb) ? '' : '&rgb=' . $this->getRGB();
