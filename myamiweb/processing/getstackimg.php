@@ -45,7 +45,7 @@ $dimy = $imginfo->ny;
 
 $xyDim = $imageUtil->imageBinning($dimx, $dimy, $binning);
 // request image
-$imgstr = $imagerequest->requestImage($pic,'PNG',$xyDim,$scaletype,$arg1,$arg2,0,false,false,$frame);
+$imgstr = $imagerequest->requestImage($pic,'PNG',$xyDim,$scaletype,$arg1,$arg2,0,false,false,true,$frame);
 if (empty($imgstr)) exit();
 $img = imagecreatefromstring($imgstr);
 
