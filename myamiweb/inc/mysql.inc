@@ -253,7 +253,7 @@ class mysql {
 			$res = mysql_insert_id();
 		else
 			$res = $result;
-		$this->close_db();
+		//$this->close_db();
 		return $res;
 	}
 
