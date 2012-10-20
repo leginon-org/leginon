@@ -66,4 +66,7 @@ def test_request():
 	print result
 
 if __name__ == '__main__':
-	start_server('', redux.utility.REDUX_PORT)
+	import reduxconfig
+	host = reduxconfig.config['server host']
+	port = reduxconfig.config['server port']
+	start_server(host, port)

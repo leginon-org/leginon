@@ -1,0 +1,16 @@
+## redux config file
+
+[server]
+host: localhost
+port: 55123
+
+# Enable/disable the cache by setting enable = yes or no.
+# Configure disk cache path and size
+# Configure memory cache size
+# Sizes are in MB
+
+[cache]
+enable: no
+path: /var/cache/myami/redux
+disksize:  500
+memsize: 500

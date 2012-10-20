@@ -10,7 +10,14 @@ from redux.pipe import shape_converter
 
 class Shape(Pipe):
 	required_args = {'shape': shape_converter}
-	def run(self, input, shape):
+
+	@classmethod
+	def run(cls, input, shape):
+
+		# that was easy
+		if input.shape == shape:
+			return input
+
 		# make sure shape is same dimensions as input image
 		# rgb input image would have one extra dimension
 		if len(shape) != len(input.shape):
@@ -33,6 +40,10 @@ class Shape(Pipe):
 				continue
 			else:
 				binfactors.append(input.shape[i] / shape[i])
+
+			# bin <1 not allowed (when output bigger than input)
+			if binfactors[i] == 0:
+				binfactors[i] = 1
 
 			# check original shape is divisible by new shape
 			if input.shape[i] % shape[i]:

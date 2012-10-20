@@ -2,8 +2,21 @@
 functions useful to either client or server
 '''
 
-## Server accepts connections on this port
-REDUX_PORT = 55123
+import itertools
+import numpy
+
+jsonmod = None
+try:
+	import json
+	jsonmod = 'json'
+except:
+	try:
+		import demjson
+		jsonmod = 'demjson'
+	except:
+		pass
+if jsonmod is None:
+	raise ImportError('you need either need a newer version of python (>=2.6) that includes a json module, or you can install demjson for older versions of python.')
 
 import itertools
 import numpy
