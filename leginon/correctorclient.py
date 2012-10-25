@@ -121,11 +121,24 @@ class CorrectorClient(cameraclient.CameraClient):
 		return q
 
 	def getAlternativeChannelReference(self,reftype,refdata):
+		if refdata is None:
+			return None
+		altnormdata = self.getAlternativeChannelNorm(refdata)
+		if reftype == 'norm':
+			return altnormdata
+		elif reftype == 'bright':
+			return altnormdata['bright']
+		elif reftype == 'dark':
+			return altnormdata['dark']
+		return q
+		
+	def getAlternativeChannelNorm(self,refdata):
 		'''
 		Get norm image data of the other channel closest in time
 		'''
 		if refdata is None:
 			return None
+		reftype = 'norm'
 		timestamp = refdata.timestamp
 		refcam = refdata['camera']
 		qcam = leginondata.CameraEMData(dimension=refcam['dimension'],
