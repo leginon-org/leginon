@@ -116,18 +116,7 @@ class RCTAcquisition(acquisition.Acquisition):
 			self.reportTargetListDone(tilt0targetlist, 'success')
 			return
 
-		## list of tilts entered by user in degrees, converted to radians
-		tiltstr = self.settings['tilts']
-		try:
-			tilts = eval(tiltstr)
-		except:
-			self.logger.error('Invalid tilt list')
-			return
-		## check for singular value
-		if isinstance(tilts, float) or isinstance(tilts, int):
-			tilts = (tilts,)
-		## convert to radians
-		tilts = map(radians, tilts)
+		tilts = self.convertDegreeTiltsToRadianList(self.settings['tilts'])
 
 		## parent image and tilt of parent image
 		image0 = tilt0targetlist['image']

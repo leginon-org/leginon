@@ -21,6 +21,7 @@ import socket
 import remotecall
 import time
 import numpy
+import math
 import leginonconfig
 import os
 import correctorclient
@@ -512,6 +513,20 @@ class Node(correctorclient.CorrectorClient):
 
 	def stopTimer(self, label):
 		self.storeTime(label, type='stop')
+
+	def convertDegreeTiltsToRadianList(self,tiltstr):
+		## list of tilts entered by user in degrees, converted to radians
+		try:
+			alphatilts = eval(tiltstr)
+		except:
+			self.logger.error('Invalid tilt list')
+			return
+		self.logger.info('tilts: %s' % tiltstr)
+		## check for singular value
+		if isinstance(alphatilts, float) or isinstance(alphatilts, int):
+			alphatilts = (alphatilts,)
+		alphatilts = map(math.radians, alphatilts)
+		return alphatilts
 
 ## module global for storing start times
 start_times = {}

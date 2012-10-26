@@ -1673,6 +1673,15 @@ class AutoExposureSettingsData(AcquisitionSettingsData):
 		)
 	typemap = classmethod(typemap)
 
+class TiltAcquisitionSettingsData(AcquisitionSettingsData):
+	def typemap(cls):
+		return AcquisitionSettingsData.typemap() + (
+			('tilts', str),
+			('use tilts', bool),
+			('reset per targetlist', bool),
+		)
+	typemap = classmethod(typemap)
+
 class CalibratorSettingsData(SettingsData):
 	def typemap(cls):
 		return SettingsData.typemap() + (

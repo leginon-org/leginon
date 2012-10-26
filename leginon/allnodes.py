@@ -128,6 +128,9 @@ noderegistry.registerNodeClass(AutoExposure,classtype)
 from baker import Baker
 noderegistry.registerNodeClass(Baker,classtype)
 
+from tiltacquisition import TiltAcquisition
+noderegistry.registerNodeClass(TiltAcquisition,classtype)
+
 ##############################
 # Calibrations
 ##############################
