@@ -257,6 +257,9 @@ class CtfNoise(object):
 		## divide points into fifths
 		numpoints = xdata.shape[0]
 		cutoff = int(math.floor(cutoffper*numpoints))
+		if self.debug is True: print "CUT:", numpoints, cutoff, (numpoints - cutoff)
+		if cutoff < 3 or abs(numpoints - cutoff) < 3:
+			return None, None
 		if self.debug: print "cutoff percent %.3f (%d points)"%(cutoffper, cutoff)
 		### fit first two fifths
 		firstlinearfitparams, firstlinearvalue = self.fitLinear(
@@ -288,6 +291,8 @@ class CtfNoise(object):
 		## divide points into fifths
 		numpoints = xdata.shape[0]
 		cutoff = int(math.floor(cutoffper*numpoints))
+		if cutoff < 3 or (numpoints - cutoff) < 3:
+			return None, None
 		if self.debug: print "cutoff percent %.3f (%d points)"%(cutoffper, cutoff)
 		### fit first two fifths
 		firstlinearfitparams, firstlinearvalue = self.fitLinear(
@@ -330,6 +335,8 @@ class CtfNoise(object):
 		## divide points into fifths
 		numpoints = xdata.shape[0]
 		cutoff = int(math.floor(cutoffper*numpoints/2))*2
+		if cutoff < 3 or (numpoints - cutoff) < 3:
+			return None, None
 		if self.debug: print "cutoff percent %.3f (%d points)"%(cutoffper, cutoff)
 		### fit first two fifths
 		firstlinearfitparams, firstlinearvalue = self.fitLinear(
@@ -400,15 +407,18 @@ class CtfNoise(object):
 		for cutoffper in numpy.arange(0.1, 0.99, 0.1):
 			fitparams, value = self.fitTwoSlopeFunction(xdata, ctfdata, 
 				contraintFunction, cutoffper=cutoffper)
+			if fitparams is None:
+				continue
 			namelist.append("two slope %d"%(cutoffper*100))
 			valuelist.append(value)
 			fitparamslist.append(fitparams)		
 
 		## does a bad job
 		fitparams, value = self.fitTwoSlopeSquareFunction(xdata, ctfdata, contraintFunction, cutoffper=1/5.)
-		namelist.append("two slope sq 2/5")
-		valuelist.append(value)
-		fitparamslist.append(fitparams)
+		if fitparams is not None:
+			namelist.append("two slope sq 2/5")
+			valuelist.append(value)
+			fitparamslist.append(fitparams)
 
 		## does a bad job
 		fitparams, value = self.fitFullFunction(xdata, ctfdata, contraintFunction)
