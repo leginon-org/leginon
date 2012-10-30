@@ -3228,6 +3228,7 @@ class leginondata {
 		$sql = 'SELECT name from '.$settings_table.' group by `name` ';
 		$results = $this->mysql->getSQLResult($sql);
 		$names = array();
+		if (!is_array($results) || !count($results)) return $names;
 		foreach ($results as $r)
 			if (strlen($r['name']) > 0 && substr($r['name'],0,1) === strtoupper(substr($r['name'],0,1))) 
 				$names[]=$r['name'];
