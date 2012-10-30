@@ -7,7 +7,7 @@
 
 static PyObject *call(PyObject *self, PyObject *args) {
 	PyObject *o, *pPyObject;
-    const char *s;
+	const char *s;
 	PyIDispatch *pPyIDispatch;
 	IDispatch *pIDispatch;
 	REFIID riid = IID_NULL;
@@ -24,20 +24,20 @@ static PyObject *call(PyObject *self, PyObject *args) {
 	if (!PyArg_ParseTuple(args, "Os", &o, &s))
 		return NULL;
 
-    pPyObject = PyObject_GetAttrString(o, "_oleobj_");
+	pPyObject = PyObject_GetAttrString(o, "_oleobj_");
 	if (pPyObject == NULL) {
 		PyErr_SetString(PyExc_AttributeError,
-                         "no attribute _oleobj_ for dispatch");
+						 "no attribute _oleobj_ for dispatch");
 		return NULL;
 	}
 
-    USES_CONVERSION;
+	USES_CONVERSION;
 	rgszNames[0] = A2OLE(s);
 
 	pPyIDispatch = (PyIDispatch *)pPyObject;
 	pIDispatch = pPyIDispatch->GetI(pPyIDispatch);
 
-    Py_DECREF(pPyObject);
+	Py_DECREF(pPyObject);
 
 	PY_INTERFACE_PRECALL;
 
@@ -60,7 +60,6 @@ static PyObject *call(PyObject *self, PyObject *args) {
 
 	PyObject *result;
 	char type;
-	int *dims;
 
 	SAFEARRAY *psaImage = NULL;
 	void HUGEP *pbuffer = NULL;
@@ -87,6 +86,9 @@ static PyObject *call(PyObject *self, PyObject *args) {
 		case VT_I4:
 			type = NPY_INT32;
 			break;
+		case VT_UI4:
+			type = NPY_UINT32;
+			break;
 		case VT_R4:
 			type = NPY_FLOAT32;
 			break;
@@ -94,11 +96,14 @@ static PyObject *call(PyObject *self, PyObject *args) {
 			type = NPY_FLOAT64;
 			break;
 		default:
-			PyErr_SetString(PyExc_RuntimeError, "Invalid image type");
+			char buf[40];
+			sprintf(buf, "Invalid image type: %d", vartype);
+			PyErr_SetString(PyExc_RuntimeError, buf);
 			return NULL;
 	}
 
 	int cdims = psaImage->cDims;
+	npy_intp *dims;
 	dims = new npy_intp[cdims];
 	size_t nbytes=1, elemsize;
 	for(int i = 0; i < cdims; i++)
@@ -120,7 +125,7 @@ static PyObject *call(PyObject *self, PyObject *args) {
 
 static PyObject *prop(PyObject *self, PyObject *args) {
 	PyObject *o, *pPyObject;
-    const char *s;
+	const char *s;
 	PyIDispatch *pPyIDispatch;
 	IDispatch *pIDispatch;
 	REFIID riid = IID_NULL;
@@ -137,20 +142,20 @@ static PyObject *prop(PyObject *self, PyObject *args) {
 	if (!PyArg_ParseTuple(args, "Os", &o, &s))
 		return NULL;
 
-    pPyObject = PyObject_GetAttrString(o, "_oleobj_");
+	pPyObject = PyObject_GetAttrString(o, "_oleobj_");
 	if (pPyObject == NULL) {
 		PyErr_SetString(PyExc_AttributeError,
-                         "no attribute _oleobj_ for dispatch");
+						 "no attribute _oleobj_ for dispatch");
 		return NULL;
 	}
 
-    USES_CONVERSION;
+	USES_CONVERSION;
 	rgszNames[0] = A2OLE(s);
 
 	pPyIDispatch = (PyIDispatch *)pPyObject;
 	pIDispatch = pPyIDispatch->GetI(pPyIDispatch);
 
-    Py_DECREF(pPyObject);
+	Py_DECREF(pPyObject);
 
 	PY_INTERFACE_PRECALL;
 
@@ -173,7 +178,6 @@ static PyObject *prop(PyObject *self, PyObject *args) {
 
 	PyObject *result;
 	char type;
-	int *dims;
 
 	SAFEARRAY *psaImage = NULL;
 	void HUGEP *pbuffer = NULL, *pbuffercopy=NULL;
@@ -211,6 +215,7 @@ static PyObject *prop(PyObject *self, PyObject *args) {
 			return NULL;
 	}
 
+	npy_intp *dims;
 	dims = new npy_intp[psaImage->cDims];
 	size_t nbytes = 1;
 	int e = 0;
