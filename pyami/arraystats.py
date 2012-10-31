@@ -9,11 +9,7 @@ then you must specify force=True.
 '''
 
 import weakattr
-
-import numpy
-if not hasattr(numpy, 'min'):
-	numpy.min = numpy.minimum
-	numpy.max = numpy.maximum
+import numextension
 
 debug = False
 def dprint(s):
@@ -37,13 +33,22 @@ def std(a, force=False):
 def all(a, force=False):
 	return calc_stat(a, 'all', force)
 
+def wrap_allstats(stat):
+	'''
+	returns a function to calculate a particular stat on an array
+	'''
+	if stat == 'all':
+		kwargs = {'min':True,'max':True,'mean':True,'std':True}
+	else:
+		kwargs = {stat:True}
+	def wrapped(a):
+		result = numextension.allstats(a, **kwargs)
+		if stat != 'all':
+			result = result[stat]
+		return result
+	return wrapped
+
 statnames = ('min','max','mean','std')
-stat_functions = {
-	'min': numpy.min,
-	'max': numpy.max,
-	'mean': numpy.mean,
-	'std': numpy.std,
-}
 
 def calc_stat(a, stat, force=False):
 	'''
@@ -68,11 +73,17 @@ def calc_stat(a, stat, force=False):
 	dprint('calculating: %s' % (need,))
 
 	## calculate the rest
+	if set(need) == set(statnames):
+		results = wrap_allstats('all')(a)
+	else:
+		for statname in need:
+			value = wrap_allstats(statname)(a)
+			results[statname] = value
+
+	## cache new results
 	for statname in need:
-		value = stat_functions[statname](a)
-		results[statname] = value
 		try:
-			setCachedStat(a, statname, value)
+			setCachedStat(a, statname, results[statname])
 		except:
 			pass
 
@@ -105,6 +116,7 @@ def setCachedStat(a, stat, value):
 	stats[stat] = value
 
 def test():
+	import numpy
 	a = numpy.array((1,2,3,4))
 	print all(a)
 
