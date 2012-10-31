@@ -25,7 +25,6 @@
 import time
 import math
 import wx
-from PIL import Image
 import leginon.gui.wx.ImagePanel
 import leginon.gui.wx.ImagePanelTools
 import leginon.gui.wx.TargetPanelTools
@@ -469,7 +468,17 @@ if __name__ == '__main__':
 	elif filename[-4:] == '.mrc':
 		image = mrc.read(filename)
 		app.panel.setImage(image.astype(numpy.float32))
+	elif filename[-4:] == '.tif':
+		# This is only for RawImage tiff files taken from DirectElectron DE camera
+		from pyami import tifffile
+		tif = tifffile.TIFFfile(filename)
+		a = tif.asarray()
+		a = numpy.asarray(a,dtype=numpy.float32)
+		# DE RawImage tiff files is mirrored horizontally from Leginon
+		a = a[:,::-1]
+		app.panel.setImage(a)
 	else:
-		app.panel.setImage(Image.open(filename))
+		from pyami import numpil
+		app.panel.setImage(numpil.read(filename))
 	app.MainLoop()
 
