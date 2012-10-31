@@ -257,6 +257,7 @@ def getBestCtfValueForImage(imgdata, ctfavg=True, msg=True, method=None):
 			continue
 
 		conf = calculateConfidenceScore(ctfvalue,ctfavg)
+		
 		if conf > bestconf:
 			bestconf = conf
 			bestctfvalue = ctfvalue
@@ -265,7 +266,7 @@ def getBestCtfValueForImage(imgdata, ctfavg=True, msg=True, method=None):
 		return None, None
 
 	if msg is True:
-		printCtfData(ctfvalue)
+		printCtfData(bestctfvalue)
 
 	return bestctfvalue, bestconf
 
