@@ -369,7 +369,9 @@ class CorrectorClient(cameraclient.CameraClient):
 			self.logger.warning('Image will not be normalized')
 
 		cameradata = imagedata['camera']
-		plan = self.retrieveCorrectorPlan(cameradata)
+		plan, plandata = self.retrieveCorrectorPlan(cameradata)
+		# save corrector plan for easy post-processing of raw frames
+		imagedata['corrector plan'] = plandata
 		if plan is not None:
 			self.fixBadPixels(imagedata['image'], plan)
 
@@ -389,7 +391,7 @@ class CorrectorClient(cameraclient.CameraClient):
 		final = numpy.asarray(clipped, numpy.float32)
 		return final
 		'''
-	def retrieveCorrectorPlan(self, cameradata):
+	def reseachCorrectorPlan(self, cameradata):
 		qcamera = leginondata.CameraEMData()
 		# Fix Me: Ignore gain index for now because camera setting does not have it when theplan is saved.
 		for key in ('ccdcamera','dimension','binning','offset'):
@@ -399,7 +401,16 @@ class CorrectorClient(cameraclient.CameraClient):
 		plandatalist = qplan.query()
 
 		if plandatalist:
-			plandata = plandatalist[0]
+			return plandatalist[0]
+		else:
+			return None
+
+	def retrieveCorrectorPlan(self, cameradata):
+		plandata = self.reseachCorrectorPlan(cameradata)
+		return self.formatCorrectorPlan(plandata), plandata
+
+	def formatCorrectorPlan(self, plandata=None):
+		if plandata:
 			result = {}
 			result['rows'] = list(plandata['bad_rows'])
 			result['columns'] = list(plandata['bad_cols'])

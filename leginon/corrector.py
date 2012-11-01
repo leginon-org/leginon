@@ -86,7 +86,7 @@ class Corrector(imagewatcher.ImageWatcher):
 		cameradata.update(camsettings)
 		cdata = self.instrument.getData(leginondata.CameraEMData)
 		cameradata['gain index'] = cdata['gain index']
-		plan = self.retrieveCorrectorPlan(cameradata)
+		plan, plandata = self.retrieveCorrectorPlan(cameradata)
 		return plan
 
 	def changeScreenPosition(self,state):

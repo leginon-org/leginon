@@ -588,6 +588,7 @@ class CameraImageData(ImageData):
 		return ImageData.typemap() + (
 			('scope', ScopeEMData),
 			('camera', CameraEMData),
+			('corrector plan', CorrectorPlanData),
 			('correction channel', int),
 			('channel', int),
 			('dark', DarkImageData),

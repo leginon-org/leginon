@@ -374,8 +374,7 @@ class DirectDetectorProcessing(object):
 		corrected = corrected * normarray
 
 		# BAD PIXEL FIXING
-		# This is commented out because it interferes with Gram-Schmidt process
-		plan = self.c_client.retrieveCorrectorPlan(self.camerainfo)
+		plan = self.getCorrectorPlan(self.camerainfo)
 		self.c_client.fixBadPixels(corrected,plan)
 		corrected = numpy.clip(corrected,0,10000)
 		#if save_jpg:
@@ -387,6 +386,14 @@ class DirectDetectorProcessing(object):
 			mrc.write(stripenorm,'stripenorm.mrc')
 			corrected = corrected * stripenorm
 		return corrected
+
+	def getCorrectorPlan(self,camerainfo):
+		plandata =  self.image['corrector plan']
+		if plandata:
+			plan = self.c_client.formatCorrectorPlan(plandata)
+		else:
+			plan, plandata = self.c_client.retrieveCorrectorPlan(self.camerainfo)
+		return plan
 
 	def getStripeNormArray(self,length=256,use_full_raw_area=False):
 		'''
