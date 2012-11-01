@@ -303,6 +303,8 @@ class ParticleExtractLoop(appionLoop2.AppionLoop):
 			help="starting frame for direct detector raw frame processing")
 		self.parser.add_option("--ddnframe", dest="nframe", type="int", default=0,
 			help="total frames to sum up for direct detector raw frame processing")
+		self.parser.add_option("--dduseGS", dest="useGS", default=False,
+			action="store_true", help="use Gram-Schmidt process to scale dark to frame images")
 
 		### true/false
 		self.parser.add_option("--defocpair", dest="defocpair", default=False,
@@ -358,6 +360,7 @@ class ParticleExtractLoop(appionLoop2.AppionLoop):
 		if self.is_dd_frames:
 			from appionlib import apDDprocess
 			self.dd = apDDprocess.DirectDetectorProcessing()
+			self.dd.setUseGS(self.params['useGS'])
 		if len(self.imgtree) == 0:
 			apDisplay.printWarning("No images were found to process")
 			self.noimages = True

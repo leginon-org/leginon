@@ -34,6 +34,7 @@ class DirectDetectorProcessing(object):
 		self.c_client = correctorclient.CorrectorClient()
 		# change this to True for loading bias image for correction
 		self.use_bias = False
+		self.use_GS = False
 		if debug:
 			self.log = open('newref.log','w')
 			self.scalefile = open('darkscale.log','w')
@@ -56,6 +57,9 @@ class DirectDetectorProcessing(object):
 
 	def getImageData(self):
 		return self.image
+
+	def setUseGS(self,status):
+		self.use_GS = status
 
 	def getNumberOfFrameSaved(self):
 		return self.image['camera']['nframes']
@@ -187,7 +191,8 @@ class DirectDetectorProcessing(object):
 		references can be used if not changed.
 		'''
 		# return True all the time to use Gram-Schmidt process to calculate darkarray scale
-		return True
+		if self.use_GS:
+			return True
 		if len(self.camerainfo.keys()) == 0:
 			if debug:
 				self.log.write( 'first frame image to be processed\n ')
@@ -212,9 +217,15 @@ class DirectDetectorProcessing(object):
 		'''
 		Load from rawframe_dir the chosen frame of the current image.
 		'''
-		bin = self.camerainfo['binning']
-		offset = self.camerainfo['offset']
-		dimension = self.camerainfo['dimension']
+		try:
+			bin = self.camerainfo['binning']
+			offset = self.camerainfo['offset']
+			dimension = self.camerainfo['dimension']
+		except:
+			# default
+			bin = {'x':1,'y':1}
+			offset = {'x':0,'y':0}
+			dimension = {'x':4096,'y':3072}
 		crop_end = {'x': offset['x']+dimension['x']*bin['x'], 'y':offset['y']+dimension['y']*bin['y']}
 
 		rawframe_path = os.path.join(rawframe_dir,'RawImage_%d.tif'%frame_number)
@@ -298,14 +309,20 @@ class DirectDetectorProcessing(object):
 			self.log.write('%s %s\n' % (self.image['filename'],get_new_refs))
 		return False
 
-	def darkCorrection(self,rawarray,darkarray):
+	def darkCorrection(self,rawarray,darkarray,nframe):
+		apDisplay.printMsg('Doing dark correction')
 		onedshape = rawarray.shape[0] * rawarray.shape[1]
 		b = darkarray.reshape(onedshape)
-		dark_scale = self.c_client.calculateDarkScale(rawarray,darkarray)
+		if self.use_GS:
+			apDisplay.printWarning('..Use Gram-Schmidt process to determine scale')
+			dark_scale = self.c_client.calculateDarkScale(rawarray,darkarray)
+		else:
+			dark_scale = nframe
 		corrected = (rawarray - dark_scale * darkarray)
 		return corrected,dark_scale
 
 	def makeNorm(self,brightarray,darkarray,dark_scale):
+		apDisplay.printMsg('..Making new norm array from dark scale of %.2f' % dark_scale)
 		#calculate normarray
 		normarray = self.c_client.calculateNorm(brightarray,darkarray,dark_scale)
 		# clip norm to a smaller range to filter out very big values
@@ -355,16 +372,20 @@ class DirectDetectorProcessing(object):
 		if save_jpg:
 			numpil.write(unscaled_darkarray,'%s_dark.jpg' % ddtype,'jpeg')
 			numpil.write(rawarray,'%s_raw.jpg' % ddtype,'jpeg')
-		corrected, dark_scale = self.darkCorrection(rawarray,unscaled_darkarray)
+		corrected, dark_scale = self.darkCorrection(rawarray,unscaled_darkarray,nframe)
 		if save_jpg:
 			numpil.write(corrected,'%s_dark_corrected.jpg' % ddtype,'jpeg')
 		if debug:
 			self.scalefile.write('%s\t%.4f\n' % (start_frame,dark_scale))
-		apDisplay.printMsg('Dark Scale= %.4f' % dark_scale)
+		apDisplay.printMsg('..Dark Scale= %.4f' % dark_scale)
 		# GAIN CORRECTION
+		apDisplay.printMsg('Doing gain correction')
 		if get_new_refs:
 			scaled_brightarray = self.getScaledBrightArray(nframe)
-			normarray = self.makeNorm(scaled_brightarray,unscaled_darkarray, dark_scale)
+			if not self.use_GS and self.image['norm']:
+				normarray = self.image['norm']['image']
+			else:
+				normarray = self.makeNorm(scaled_brightarray,unscaled_darkarray, dark_scale)
 			self.normarray = normarray
 		else:
 			normarray = self.normarray
@@ -375,7 +396,9 @@ class DirectDetectorProcessing(object):
 
 		# BAD PIXEL FIXING
 		plan = self.getCorrectorPlan(self.camerainfo)
+		apDisplay.printMsg('Fixing bad pixel, columns, and rows')
 		self.c_client.fixBadPixels(corrected,plan)
+		apDisplay.printMsg('Cliping corrected image')
 		corrected = numpy.clip(corrected,0,10000)
 		#if save_jpg:
 			#numpil.write(corrected,'%s_gain_corrected.jpg' % ddtype,'jpeg')

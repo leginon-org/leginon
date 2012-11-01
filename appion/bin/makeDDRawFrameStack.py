@@ -17,6 +17,8 @@ class MakeRawFrameStackLoop(appionLoop2.AppionLoop):
 	def setupParserOptions(self):
 		self.parser.add_option("--rawarea", dest="rawarea", default=False,
 			action="store_true", help="use full area of the raw frame, not leginon image area")
+		self.parser.add_option("--no-useGS", dest="useGS", default=True,
+			action="store_false", help="Do not use Gram-Schmidt process to scale dark image")
 		self.parser.add_option("--stackid", dest="stackid", type="int",
 			help="ID for particle stack (optional)", metavar="INT")
 		self.parser.remove_option("--uncorrected")
@@ -29,6 +31,7 @@ class MakeRawFrameStackLoop(appionLoop2.AppionLoop):
 	#=======================
 	def preLoopFunctions(self):
 		self.dd = apDDprocess.DirectDetectorProcessing(self.params['wait'])
+		self.dd.setUseGS(self.params['useGS'])
 		self.imageids = []
 		if self.params['stackid']:
 			self.imageids = apStack.getImageIdsFromStack(self.params['stackid'])
