@@ -54,6 +54,7 @@ def parseFrealignParamFile(paramfile):
 			'defoc2': float(line[70:79]),
 			'astang': float(line[79:88]),
 			'phase_residual': float(line[88:94]),
+			'dpres': float(line[95:102]),
 		}
 		if len(line)>=109:
 			partdict['stackpartnum'] = int(line[102:109].strip())
