@@ -9,7 +9,16 @@ def getScriptProgramRunFromRunname(runname,pathdata,jobdata=None):
 	if len(results) == 1:
 		return results[0]
 	else:
-		apDisplay.printError('More than one ScriptProgramRun is found for runname %s' % runname)
+		if len(results) == 0:
+			# Try with only runname
+			q = appiondata.ScriptProgramRun(runname=runname,job=jobdata)
+			if len(results) == 1:
+				return results[0]
+			apDisplay.printError('No ScriptProgramRun is found for runname %s' % (runname))
+		else:
+			apDisplay.printWarning('%d ScriptProgramRuns are found for runname %s' % (len(results),runname))
+			apDisplay.printWarning('Use most recent one')
+			return results[0]
 
 def getScriptParamValuesFromRunname(runname,pathdata,jobdata=None):
 	params = {}
