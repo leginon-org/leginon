@@ -16,7 +16,9 @@ def getScriptProgramRunFromRunname(runname,pathdata,jobdata=None):
 				return results[0]
 			apDisplay.printError('No ScriptProgramRun is found for runname %s' % (runname))
 		else:
-			apDisplay.printError('%d ScriptProgramRun is found for runname %s' % (len(results),runname))
+			apDisplay.printWarning('%d ScriptProgramRuns are found for runname %s' % (len(results),runname))
+			apDisplay.printWarning('Use most recent one')
+			return results[0]
 
 def getScriptParamValuesFromRunname(runname,pathdata,jobdata=None):
 	params = {}
