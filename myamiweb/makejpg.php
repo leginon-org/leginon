@@ -26,7 +26,6 @@ if (!$args['outpath'])
 
 $array_fct=($args['invert']==1) ? "array_diff" : "array_intersect";
 
-$cache_redux_only=$args['redux'];
 $sessionId=$args['session'];
 $preset=$args['preset'];
 $sessioninfo=$leginondata->getSessionInfo($sessionId);
@@ -60,7 +59,7 @@ foreach($filenames as $f) {
 	if ($id=$f['id'])
 		$imageIds[]=$id;
 }
-if (!$cache_redux_only) mkdirs($path);
+mkdirs($path);
 if (!$filenames) {
 	echo "images not found \n";
 	exit;
@@ -119,7 +118,6 @@ foreach ($imageIds as $i=>$id) {
 		'autoscale' => $autoscale,
 		'newptcl' => $displaynptcl,
 		'ptcl' => urldecode($displayparticle),
-		'cacheonly' => $cache_redux_only,
 	);
 
 	# udpate progress bar
@@ -135,14 +133,11 @@ foreach ($imageIds as $i=>$id) {
 	// redux caching does not need to be displayed, either.
 	if($img == false)
 		continue;
-	// redux caching does not need to be displayed or written separately
-	if(!$cache_redux_only) {
-		# write filename
-		if ($t=='png') {
-			imagepng($img, $filename);
-		} else {
-			imagejpeg($img,$filename,$quality);
-		}
+	# write filename
+	if ($t=='png') {
+		imagepng($img, $filename);
+	} else {
+		imagejpeg($img,$filename,$quality);
 	}
 	imagedestroy($img);
 	

@@ -1,7 +1,7 @@
 <?php
 
 /**
- *	The Leginon software is Copyright 2003 
+ *	The Leginon software is Copyright 2003
  *	The Scripps Research Institute, La Jolla, CA
  *	For terms of the license agreement see
  *	@licence http://ami.scripps.edu/software/leginon-license
@@ -12,49 +12,59 @@
  *
  *	cachedb.inc: functions to cache images using makejpg.php
  *  ENABLE_CACHE, CACHE_SCRIPT, CACHE_PATH set in config.php
- *	
+ *
  */
 require_once 'config.php';
 require_once 'inc/mysql.inc';
 
 function startcache($session) {
-	if (ENABLE_CACHE!=1) {
+	if (ENABLE_CACHE != 1) {
 		return;
 	}
-  $script=CACHE_SCRIPT;
-  if (isrunning($script, "session=$session")) {
-    return;
-  }
+	
+	$script = CACHE_SCRIPT;
+	
+	// If the cache script is already running, return
+	if (isrunning($script, "session=$session")) {
+		return;
+	}
+	
 	updateCacheTime($session);
-	// TO DO: redux caching will not be on webserver CACHE_PATH
-  $outpath=CACHE_PATH.$session;
-	if (!is_dir(CACHE_PATH)) exec("mkdir ".CACHE_PATH);
-  $log=CACHE_PATH.$session.".log";
-  $option="session='$session' s=512 outpath='$outpath'";
-	$option .= (USE_REDUX_CACHE) ? ' redux=1':'';
-	if (!USE_REDUX_CACHE && !is_dir($outpath)) exec("mkdir $outpath");
-  $cmd="/usr/bin/php -q $script $option > $log &";
+	
+	$outpath = CACHE_PATH.$session;
+	if (!is_dir(CACHE_PATH)) {
+		exec("mkdir ".CACHE_PATH);
+	}
+	$log 	= CACHE_PATH.$session.".log";
+	$option = "session='$session' s=512 outpath='$outpath'";
+	
+	if (!is_dir($outpath)) {
+		exec("mkdir $outpath");
+	}
+	
+	// This command is being sent to makejpg.php
+	$cmd = "/usr/bin/php -q $script $option > $log &";
 	exec($cmd);
 }
 
 function isrunning($cmd, $pattern) {
-  $isrunning=false;
-  $cmd="ps -ef | grep $cmd";
-  exec($cmd, $res);
-  $numOfRun = count($res);
-  
-  // not allow more than two caching processing running at the same time.
-  // the reason to put 4 is because "ps" use one and "grep" use one.
-  if($numOfRun >= 4)
-  	return true;
-$pattern = "%".$pattern."%";  	
-  foreach($res as $row) {
-    if (preg_match($pattern, $row)) {
-      $isrunning=true;
-      break;
-    }
-  }
-  return $isrunning;
+	$isrunning=false;
+	$cmd="ps -ef | grep $cmd";
+	exec($cmd, $res);
+	$numOfRun = count($res);
+
+	// not allow more than two caching processing running at the same time.
+	// the reason to put 4 is because "ps" use one and "grep" use one.
+	if($numOfRun >= 4)
+	return true;
+	$pattern = "%".$pattern."%";
+	foreach($res as $row) {
+		if (preg_match($pattern, $row)) {
+			$isrunning=true;
+			break;
+		}
+	}
+	return $isrunning;
 }
 
 function updateCacheTime($session) {
@@ -65,8 +75,6 @@ function updateCacheTime($session) {
 }
 
 function useCache($filepath,$sessionname) {
-	//redux cache is searched using the original file path.
-	if (USE_REDUX_CACHE) return $filepath;
 	//search for php-mrc cache jpg file.
 	$filename = basename($filepath);
 	$jpgfilename = preg_replace('%mrc$%', 'jpg', $filename);

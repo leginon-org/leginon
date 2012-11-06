@@ -70,8 +70,7 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 		'autoscale' => false,
 		'targettype' => false,
 		'loadjpg' => false,
-		'mrc' => false,
-		'cacheonly' => false
+		'mrc' => false
 	);
 
 	if (is_array($params))
@@ -115,8 +114,7 @@ function getImageXML($xmlfile, $imageId, $preset, $params = array()) {
 		'loadtime' => false,
 		'newptlc' => false,
 		'autoscale' => false,
-		'mrc' => false,
-		'cacheonly' => false
+		'mrc' => false
 	);
 
 	if (is_array($params))

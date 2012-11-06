@@ -180,12 +180,6 @@ require_once('../inc/formValidator.php');
 				($update) ? print("value='".SERVER_PORT."'") : print("value=''"); 
 			}
 		?> /><br /><br />
-		<p>Would you like to enable the Redux Image Cache to speedup image load time?</p>
-		<input type="radio" name="use_redux_cache" value="true" <?php ($update) ? (defined("USE_REDUX_CACHE") && USE_REDUX_CACHE)? print("") : print("checked='yes'") : print("disabled"); ?> />
-		&nbsp;&nbsp;YES<br />
-		<input type="radio" name="use_redux_cache" value="false" <?php ($update) ? (defined("USE_REDUX_CACHE") && USE_REDUX_CACHE)? print("checked='yes'") : print("") : print("disabled checked='yes'"); ?> />
-		&nbsp;&nbsp;NO<br />
-		<br />		
 
 		<h3>Do you want to enable PHP image caching for faster image viewing?</h3>
 		<p>Note: To use image caching, you need to setup the caching location.</p>
