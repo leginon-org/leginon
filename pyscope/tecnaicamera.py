@@ -33,7 +33,7 @@ class TecnaiCamera(ccdcamera.CCDCamera):
 		self.exposuretype = 'none'
 		self.geometry = self.geometryFromAcqParams()
 
-	def getCameraSize(self):
+	def _getCameraSize(self):
 		ccdinfo = self.ccd.Info
 		ccdheight = ccdinfo.Height
 		ccdwidth = ccdinfo.Width

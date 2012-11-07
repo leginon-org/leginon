@@ -33,7 +33,7 @@ class DE12(ccdcamera.CCDCamera):
 		if(self.server.connected) :
 			self.server.disconnect()
 
-	def getCameraSize(self):
+	def _getCameraSize(self):
 		return self.getDictProp('Image Size')
 
 	def getCameras(self):		

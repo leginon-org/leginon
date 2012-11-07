@@ -141,7 +141,7 @@ class DECameraBase(ccdcamera.CCDCamera):
 				new_frames_name = self.getPreviousRawFramesName()
 		return image
 
-	def getCameraSize(self):
+	def _getCameraSize(self):
 		return self.getDictProp('Sensor Size')
 
 	def getExposureTime(self):

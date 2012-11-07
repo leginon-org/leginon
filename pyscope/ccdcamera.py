@@ -34,7 +34,14 @@ class CCDCamera(baseinstrument.BaseInstrument):
 	def __init__(self):
 		baseinstrument.BaseInstrument.__init__(self)
 		self.config_name = config.getNameByClass(self.__class__)
-		self.zplane = config.getConfigured()[self.config_name]['zplane']
+		if self.config_name is None:
+			raise RuntimeError('%s was not found in your instruments.cfg' % (self.__class__.__name__,))
+		conf = config.getConfigured()[self.config_name]
+		self.zplane = conf['zplane']
+		if 'height' in conf and 'width' in conf:
+			self.configured_size = {'x': conf['width'], 'y': conf['height']}
+		else:
+			self.configured_size = None
 		self.buffer = {}
 		self.buffer_ready = {}
 		self.bufferlock = threading.Lock()
@@ -167,7 +174,13 @@ This method returns that multiplier, M.  In the standard case, returns 1.0.
 		raise NotImplementedError
 
 	def getCameraSize(self):
-		raise NotImplementedError
+		if self.configured_size is not None:
+			return dict(self.configured_size)
+		else:
+			try:
+				return self._getCameraSize()
+			except:
+				raise RuntimeError('You need to configure "width" and "height" in instruments.cfg, or implement _getCameraSize() in your camera class')
 
 	def getExposureTimestamp(self):
 		return self.exposure_timestamp

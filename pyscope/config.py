@@ -70,13 +70,23 @@ def parse():
 			configured[name]['cs'] = cs_value
 			temclasses.append(cls)
 		if issubclass(cls, pyscope.ccdcamera.CCDCamera):
+			cameraclasses.append(cls)
 			try:
 				z_str = configparser.get(name, 'zplane')
 				z_value = int(z_str)
 			except:
 				z_value = 0
 			configured[name]['zplane'] = z_value
-			cameraclasses.append(cls)
+			for key in ('height', 'width'):
+				try:
+					configured[name][key] = int(configparser.get(name, key))
+				except:
+					pass
+		try:
+			log = configparser.get(name, 'log')
+		except:
+			log = None
+		configured[name]['log'] = log
 		configured[name]['class'] = cls
 
 	return configured, temclasses, cameraclasses
@@ -103,5 +113,5 @@ def getNameByClass(cls):
 	conf = getConfigured()
 	for bcls in inspect.getmro(cls):
 		for name,value in conf.items():
-			if bcls is value['class']:
+			if bcls.__name__ == value['class'].__name__:
 				return name

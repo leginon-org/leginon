@@ -60,3 +60,5 @@ cs: 2.0e-3
 [Sim Cam]
 class: simccdcamera.SimCCDCamera
 zplane: 50
+width: 4096
+height: 4096

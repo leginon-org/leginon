@@ -136,7 +136,7 @@ acquisition.
 		## this is the Eagle 4k camera
 		return {'x': 1.5e-5, 'y': 1.5e-5}
 
-	def getCameraSize(self):
+	def _getCameraSize(self):
 		rangex = self.ccd.GetTotalPixelReadoutRange().SizeX
 		rangey = self.ccd.GetTotalPixelReadoutRange().SizeY
 		camsize = {'x':rangex, 'y':rangey}

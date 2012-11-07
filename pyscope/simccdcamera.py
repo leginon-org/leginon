@@ -9,14 +9,13 @@ class SimCCDCamera(ccdcamera.CCDCamera):
 	name = 'SimCCDCamera'
 	def __init__(self):
 		ccdcamera.CCDCamera.__init__(self)
-		self.camera_size = {'x': 4096, 'y': 4096}
 		self.binning_values = {'x': [1, 2, 4, 8], 'y': [1, 2, 4, 8]}
 		self.pixel_size = {'x': 2.5e-5, 'y': 2.5e-5}
 		self.exposure_types = ['normal', 'dark']
 
 		self.binning = {'x': 1, 'y': 1}
 		self.offset = {'x': 0, 'y': 0}
-		self.dimension = copy.copy(self.camera_size)
+		self.dimension = copy.copy(self.getCameraSize())
 		self.exposure_time = 0.01
 		self.exposure_type = 'normal'
 
@@ -46,7 +45,7 @@ class SimCCDCamera(ccdcamera.CCDCamera):
 	def setOffset(self, value):
 		for axis in self.offset.keys():
 			try:
-				if value[axis] < 0 or value[axis] >= self.camera_size[axis]:
+				if value[axis] < 0 or value[axis] >= self.getCameraSize()[axis]:
 					raise ValueError('invalid offset')
 			except KeyError:
 				pass
@@ -63,7 +62,7 @@ class SimCCDCamera(ccdcamera.CCDCamera):
 	def setDimension(self, value):
 		for axis in self.dimension.keys():
 			try:
-				if value[axis] < 1 or value[axis] > self.camera_size[axis]:
+				if value[axis] < 1 or value[axis] > self.getCameraSize()[axis]:
 					raise ValueError('invalid dimension')
 			except KeyError:
 				pass
@@ -92,9 +91,6 @@ class SimCCDCamera(ccdcamera.CCDCamera):
 		if value not in self.exposure_types:
 			raise ValueError('invalid exposure type')
 		self.exposure_type = value
-
-	def getCameraSize(self):
-		return copy.copy(self.camera_size)
 
 	def _getImage(self):
 		if not self.validateGeometry():

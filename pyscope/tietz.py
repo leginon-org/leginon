@@ -425,7 +425,7 @@ class Tietz(object):
 		# {'type': str}
 		return self._getParameterValue('cpCameraName')
 
-	def getCameraSize(self):
+	def _getCameraSize(self):
 		# {'type': dict, 'values': {'x': {'type': int}, 'y': {'type': int}}}}
 		x = self._getParameterValue('cpTotalDimensionX')
 		y = self._getParameterValue('cpTotalDimensionY')
