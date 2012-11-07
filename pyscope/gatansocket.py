@@ -217,7 +217,6 @@ class GatanSocket(object):
 		numChunks = longargs[4]
 		bytesPerPixel = 2
   		numBytes = arrSize * bytesPerPixel
-		print arrSize, width, height, numChunks, numBytes
 		chunkSize = (numBytes + numChunks - 1) / numChunks
 		imArray = numpy.zeros((height,width), numpy.short)
 		received = 0
