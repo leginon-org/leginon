@@ -344,7 +344,7 @@ function prettytable2 () {
 **
 */
 
-function createParticleLoopTable ($defthresh, $defmaxthresh) {
+function createParticleLoopTable ($defthresh, $defmaxthresh, $showCCsearchMult=False) {
 	echo "<!-- BEGIN Particle Loop Param -->\n";
 	$threshv = ($_POST['thresh']) ? $_POST['thresh'] : $defthresh;
 	$maxthreshv = ($_POST['maxthresh']) ? $_POST['maxthresh'] : $defmaxthresh;
@@ -363,7 +363,8 @@ function createParticleLoopTable ($defthresh, $defmaxthresh) {
 	$defocpairv = ($_POST['defocpair']=="on") ? "CHECKED" : "";
 	$doublesv = ($_POST['doubles']=="on") ? "CHECKED" : "";
 	$planeregv = ($_POST['planereg']=="off") ? "" : "CHECKED";
-
+	$ccsearchmult = ($_POST['ccsearchmult']) ? $_POST['ccsearchmult'] : '1.0';
+		
 	if ($defthresh != -1) {
 		echo "<B>Peak thresholds:</B><br/>\n";
 		echo "<input type='text' name='thresh' VALUE='$threshv' size='4'>\n";
@@ -411,6 +412,12 @@ function createParticleLoopTable ($defthresh, $defmaxthresh) {
 	echo "<br />\n";
 
 	echo "<b>Advanced options:</b><br />\n";
+	if ( $showCCsearchMult ) {
+		echo "<input type='text' name='ccsearchmult' VALUE='$ccsearchmult' size='4'>\n";
+		echo docpop('ccsearchmult','Cross-correlation search multiple');
+		echo "<br/>\n";
+	}
+
 	if ($defthresh != -1) {
 		echo "<input type='text' name='maxsize' VALUE='$maxsizev' size='4'>\n";
 		echo docpop('maxsize','Maximum peak area multiple');
@@ -440,6 +447,7 @@ function createParticleLoopTable ($defthresh, $defmaxthresh) {
 	echo "<input type='checkbox' name='invert' $invertv>\n";
 	echo docpop('invert',' Invert image density');
 	echo "<br />\n";
+
 	echo "<!-- END Particle Loop Param -->\n";
 }
 

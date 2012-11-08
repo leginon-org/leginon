@@ -14,6 +14,7 @@ require_once "inc/processing.inc";
 require_once "inc/appionloop.inc";
 require_once "inc/leginon.inc";
 require_once "inc/project.inc";
+require_once "inc/cluster.inc";
 
 // IF VALUES SUBMITTED, EVALUATE DATA
 if ($_POST['process']) {
@@ -252,7 +253,20 @@ function createTCForm($extra=false, $title='Template Correlator Launcher',
 				document.viewerform.commit.checked=true;
 			 }
 		 }
-	</SCRIPT>\n";
+		 function enabledGpu(){
+			 if (document.viewerform.usegpu.checked){
+				document.viewerform.threadfindem.checked=false;
+			 }	
+		 }		 
+		 function enabledMultiThread(){
+			 if (document.viewerform.threadfindem.checked){
+				document.viewerform.usegpu.checked=false;
+			 }	
+		 }		 
+		 function changeHost(){
+			 document.viewerform.submit();
+		 }		 
+		 </SCRIPT>\n";
 	$javafunctions .= writeJavaPopupFunctions('appion');
 	processing_header($title, $heading, $headerstuff=$javafunctions, $pleaseWait=true, $showmenu=true, $printDiv=false, 
 						$guideURL="http://ami.scripps.edu/redmine/projects/appion/wiki/Template_Picking");	
@@ -277,6 +291,8 @@ function createTCForm($extra=false, $title='Template Correlator Launcher',
 	$threadcheck = ($_POST['threadfindem']=='off') ? '' : 'CHECKED';
 	$keepallcheck = ($_POST['keepall']=='on') ? 'CHECKED' : '';
 	$mirrorsv = ($_POST['mirrors']=='on') ? 'CHECKED' : '';
+	$gpudevice = ($_POST['gpudevice']) ? $_POST['gpudevice'] : '';
+	$usegpu = ($_POST['usegpu']) ? $_POST['usegpu'] : False;
 
 	echo"
 	<table border=0 class=tableborder cellpadding=15>
@@ -289,15 +305,43 @@ function createTCForm($extra=false, $title='Template Correlator Launcher',
 
 	createAppionLoopTable($sessiondata, $defrunname, "extract");
 
+	// Create an instance of the cluster class
+ 	if ($_POST['processinghost']) {
+		$processinghost = $_POST['processinghost'];
+	} else {
+		global $PROCESSING_HOSTS;
+		$processinghost = ( $processinghost == '') ? $PROCESSING_HOSTS[0]['host'] : $processinghost;
+	}
+	$cluster = new Cluster( $processinghost );
 	
+	// The user can only select either multi-processor OR GPU but not both.
+	// When the user changes the processing host, there is some javascript to show or hide
+	// the GPU option depending on if there are GPUs listed in the config file for that host.
 	if ($numtemplatesused > 1) {
-		echo "<input type='checkbox' name='threadfindem' $threadcheck>\n";
+		echo "<input type='checkbox' name='threadfindem' onclick='enabledMultiThread(this)' $threadcheck>\n";
 		echo "Use multi-processor threading\n";
 		echo "<br />\n";
 	} else {
 		echo "<input type='hidden' name='threadfindem' value='off'>";
 	}
-
+	
+	if ($cluster->hasGpu()) {
+		echo "<input type='checkbox' name='usegpu' onclick='enabledGpu(this)' $usegpu>\n";
+		echo "Use GPU version\n";
+		
+		// create a selection box for the GPU devices
+		echo "<select name='gpudevice'>";
+		$gpus = $cluster->getGpus();
+		foreach ($gpus as $deviceNum => $name) {
+			$selected = ( $gpudevice == $deviceNum ) ? " SELECTED" : "";
+			echo "<option value='$deviceNum' $selected>$name</option>";
+		}
+		echo "</select>";
+		echo "<br />\n";
+	} else {
+		echo "<input type='hidden' name='usegpu' value='off'>";
+	}
+		
 	echo "<input type='checkbox' name='keepall' $keepallcheck>\n";
 	echo "Do not delete .dwn.mrc files after finishing\n";
 	echo "<br />\n";
@@ -312,7 +356,8 @@ function createTCForm($extra=false, $title='Template Correlator Launcher',
 	echo docpop('mirror','Use template mirrors');
 	echo "<br/><br/>\n";
 
-	createParticleLoopTable(0.5,"",$_POST);
+	$showCCsearhMult = $cluster->hasGpu() ? True : False; 
+	createParticleLoopTable(0.5,"", $showCCsearhMult);
 
 	echo "
 		</td>
@@ -370,7 +415,12 @@ function runTemplateCorrelator() {
 	$thread = ($_POST['threadfindem']=='on') ? "<font color='green'>true</font>" : "<font color='red'>false</font>";
 	$keepall = ($_POST['keepall']=='on') ? "<font color='green'>true</font>" : "<font color='red'>false</font>";
 	$mirrors = ($_POST['mirrors']=='on') ? "<font color='green'>true</font>" : "<font color='red'>false</font>";
-
+	
+	// GPU params
+	$ccsearchmult 	= ($_POST['ccsearchmult']) ? $_POST['ccsearchmult'] : '';
+	$gpudevice		= ($_POST['gpudevice']) ? $_POST['gpudevice'] : '';
+	$usegpu			= ($_POST['usegpu']=='on') ? True : False;
+	
 	$numtemplatesused = $_POST['numtemplatesused'];
 	
 	if ($_POST['testimage']=="on") {
@@ -391,11 +441,18 @@ function runTemplateCorrelator() {
 	PART 2: Check for conflicts, if there is an error display the form again
 	******************** */
 
+	// make sure gpu device number is an integer
+	$gpudevice = floor($gpudevice);
+	
 	/* *******************
 	PART 3: Create program command
 	******************** */
-
-	$command ="templateCorrelator.py ";
+	
+	if ( $usegpu ) {
+		$command ="templateCorrelatorG.py ";
+	} else {
+		$command ="templateCorrelator.py ";
+	}
 
 	$apcommand = parseAppionLoopParams($_POST);
 	if ($apcommand[0] == "<") {
@@ -447,6 +504,11 @@ function runTemplateCorrelator() {
 		$command.="--keepall ";
 	if ($_POST['mirrors']=='on')
 		$command.="--use-mirrors ";
+		
+	if ( $usegpu ) {
+		$command .= "--ccsearchmult=$ccsearchmult ";
+		$command .= "--gcdev=$gpudevice ";
+	}		
 
 	/* *******************
 	PART 4: Create header info, i.e., references

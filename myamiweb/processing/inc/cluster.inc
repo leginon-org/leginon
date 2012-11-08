@@ -36,6 +36,7 @@ class Cluster
 	private $publicKey;		  //Location of publickey file(s)
 	private $privateKey;	  //Location of private key file(s)
 	private $passPhrase;	  //passPhrase if it is to be stored in cluster config
+	private $gpus;	  		// a dictionary array of the gpu names and device numbers available on this host
 	
 	
 	function __construct( $hostname )
@@ -85,6 +86,7 @@ class Cluster
 		$this->passPhrase		= $hostconfig['passphrase'];
 		$this->publicKey		= $hostconfig['publickey'];
 		$this->privateKey       = $hostconfig['privatekey'];
+		$this->gpus       		= $hostconfig['gpus'];
 	}
 	
 	function getHostName() 		{ return $this->hostname; }
@@ -108,6 +110,9 @@ class Cluster
 	function getPublicKey()	{ return $this->publicKey;}
 	function getPrivateKey()	{ return $this->privateKey; }
 	function getPassPhrase()	{ return $this->passPhrase; }
+	function getGpus()			{ return $this->gpus; }
+	
+	function hasGpu()			{ return !empty($this->gpus); }
 	
 	function usesLoginMethod()
 	{
@@ -170,6 +175,8 @@ class Cluster
 
 		$remoteOutputPath = $this->formatEndPath($this->baseoutdir).$rootpath;
 		$remoteOutputPath = ($_POST['clusterpath']) ? $_POST['clusterpath'] : $remoteOutputPath;
+		// Some forms are calling this 'remoteoutdir'
+		$remoteOutputPath = ($_POST['remoteoutdir']) ? $_POST['remoteoutdir'] : $remoteOutputPath;
 		$this->remoteOutputPath = $this->formatEndPath( $remoteOutputPath ); 		
 	}
 
@@ -258,7 +265,7 @@ class Cluster
 			ssh2_exec($connection, 'exit');
 			$result = true;
 		} else {
-			$msg = "Could not copy file to host ".$this->getHostName().".  Check permissions on remote file or directory";
+			$msg = "Could not copy file to host ".$this->getHostName().".  Check permissions on remote file or directory.";
 			throw new Exception( $msg );
 		}
 	

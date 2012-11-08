@@ -112,7 +112,7 @@ function getHostForm() {
 			$s = ($host['host'] == $_POST['processinghost']) ? "selected" : "";
 			$h[]="<option value='".$host['host']."' ".$s." >".$host['host']."</option>\n";
 		}
-		$html="<select name=\"processinghost\">\n";
+		$html="<select name=\"processinghost\" onchange='changeHost()'>\n";
 		$html.=join("\n",$h);
 		$html.="</select>";
 	}
