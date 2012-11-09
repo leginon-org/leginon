@@ -92,7 +92,22 @@ class GatanK2(ccdcamera.CCDCamera):
 		}
 		return acqparams
 
+	def calculateK2Params(self):
+		params = {
+			'readMode',  # 0 linear, 2 counting, 3 superres
+			'scaling': 1.0,   # ???
+			'hardwareProc': 0, #0 none, 2 dark, 4 gain, 6 dark/gain
+			'doseFrac': False,
+			'frameTime': 0.04,
+			'alignFrames': False,
+			'saveFrames': False,
+			'filtSize': 0,
+			'filt': []:
+		}
+
 	def _getImage(self):
+		k2params = self.calculateK2Params()
+		self.camera.SetK2Parameters(**k2params)
 		acqparams = self.calculateAcquireParams()
 		t0 = time.time()
 		image = self.camera.GetImage(**acqparams)
@@ -166,3 +181,48 @@ class GatanK2(ccdcamera.CCDCamera):
 		if result < 0.0:
 			raise RuntimeError('unable to align energy filter zero loss peak')
 
+	def getNumberOfFrames(self):
+		raise NotImplementedError()
+
+	def getSaveRawFrames(self):
+		raise NotImplementedError()
+
+	def setSaveRawFrames(self, value):
+		raise NotImplementedError()
+
+	def getPreviousRawFramesName(self):
+		raise NotImplementedError()
+        
+	def getNumberOfFramesSaved(self):
+		raise NotImplementedError()
+
+	def getUseFrames(self):
+		raise NotImplementedError()
+
+	def setUseFrames(self, frames):
+		raise NotImplementedError()
+
+	def getFrameRate(self):
+		raise NotImplementedError()
+
+	def setFrameRate(self, fps):
+		raise NotImplementedError()
+
+	def getReadoutDelay(self):
+		raise NotImplementedError()
+
+	def setReadoutDelay(self, milliseconds):
+		raise NotImplementedError()
+
+	def getTemperatureStatus(self):
+		raise NotImplementedError()
+
+	## method name altered to prevent Leginon from setting temperature
+	def set_TemperatureStatus(self, state):
+		raise NotImplementedError()
+
+	def getTemperature(self):
+		raise NotImplementedError()
+
+	def set_Temperature(self, degrees):
+		raise NotImplementedError()

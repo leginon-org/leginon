@@ -164,6 +164,29 @@ class GatanSocket(object):
 		message_recv = Message(longargs=(0,))
 		self.ExchangeMessages(message_send, message_recv)
 
+	def SetK2Parameters(self, readMode, scaling, hardwareProc, doseFrac, frameTime, alignFrames, saveFrames, filtSize=0, filt=[]):
+		funcCode = enum_gs['GS_SetK2Parameters']
+
+		longs = [
+			funcCode,
+			readMode,
+			hardwareProc,
+			filtSize,
+		]
+		bools = [
+			doseFrac,
+			alignFrames,
+			saveFrames,
+		]
+		doubles = [
+			scaling,
+			frameTime,
+		]
+
+		message_send = Message(longargs=longs, boolargs=bools, dblargs=doubles, longarray=filt)
+		message_recv = Message(longargs=(0,)) # just return code
+		self.ExchangeMessages(message_send, message_recv)
+
 	def GetImage(self, processing, binning, top, left, bottom, right, exposure):
 
 		width = right - left
