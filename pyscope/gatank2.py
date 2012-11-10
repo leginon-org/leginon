@@ -94,7 +94,7 @@ class GatanK2(ccdcamera.CCDCamera):
 
 	def calculateK2Params(self):
 		params = {
-			'readMode',  # 0 linear, 2 counting, 3 superres
+			'readMode': 0,  # 0 linear, 2 counting, 3 superres
 			'scaling': 1.0,   # ???
 			'hardwareProc': 0, #0 none, 2 dark, 4 gain, 6 dark/gain
 			'doseFrac': False,
@@ -102,8 +102,9 @@ class GatanK2(ccdcamera.CCDCamera):
 			'alignFrames': False,
 			'saveFrames': False,
 			'filtSize': 0,
-			'filt': []:
+			'filt': [],
 		}
+		return params
 
 	def _getImage(self):
 		k2params = self.calculateK2Params()
