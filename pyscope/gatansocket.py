@@ -205,18 +205,22 @@ class GatanSocket(object):
 			longargs = [enum_gs['GS_GetDarkReference']]
 		elif processing == 'unprocessed':
 			longargs = [enum_gs['GS_GetAcquiredImage']]
+		elif processing == 'darksubtracted':
+			longargs = [enum_gs['GS_GetAcquiredImage']]
 		longargs.extend([
 			arrSize,  # pixels in the image
 			width, height,
 		])
 		if processing == 'unprocessed':
 			longargs.append(0)
+		elif processing == 'darksubtracted':
+			longargs.append(1)
 		longargs.extend([
 			binning,
 			top, left, bottom, right,
 			shutter,
 		])
-		if processing == 'unprocessed':
+		if processing in ('unprocessed','darksubtracted'):
 			longargs.append(shutterDelay)
 		longargs.extend([
 			divideBy2,
