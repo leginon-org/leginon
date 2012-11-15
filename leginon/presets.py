@@ -57,7 +57,6 @@ class PresetsClient(object):
 		self.pchanged = {}
 		self.dose_measured = {}
 		self.currentpreset = None
-		self.havelock = False
 
 	def getPresetFromDB(self, name):
 		session = self.node.session
@@ -107,25 +106,6 @@ class PresetsClient(object):
 			p = pdict[key]
 			namedict[p['name']] = p
 		return namedict
-
-	def lock(self):
-		'try to acquire lock on presets manager, block until I have it'
-		if self.havelock:
-			return
-		lockevent = event.PresetLockEvent()
-		self.node.logger.info('Acquiring preset lock...')
-		self.node.outputEvent(lockevent, wait=True)
-		self.node.logger.info('Have preset lock')
-		self.havelock = True
-
-	def unlock(self):
-		'release the previously acquiring lock'
-		if not self.havelock:
-			return
-		unlockevent = event.PresetUnlockEvent()
-		self.node.logger.info('Releasing preset lock...')
-		self.node.outputEvent(unlockevent, wait=True)
-		self.havelock = False
 
 	def updatePreset(self, presetname, params):
 		evt = event.UpdatePresetEvent()
@@ -240,7 +220,7 @@ class PresetsManager(node.Node):
 		'smallsize': 512,
 		'add pause in alignment': False,
 	}
-	eventinputs = node.Node.eventinputs + [event.ChangePresetEvent, event.PresetLockEvent, event.PresetUnlockEvent, event.MeasureDoseEvent, event.UpdatePresetEvent]
+	eventinputs = node.Node.eventinputs + [event.ChangePresetEvent, event.MeasureDoseEvent, event.UpdatePresetEvent]
 	eventoutputs = node.Node.eventoutputs + [event.PresetChangedEvent, event.PresetPublishEvent, event.DoseMeasuredEvent, event.MoveToTargetEvent]
 
 	def __init__(self, name, session, managerlocation, **kwargs):
@@ -278,22 +258,10 @@ class PresetsManager(node.Node):
 		self.addEventInput(event.ChangePresetEvent, self.changePreset)
 		self.addEventInput(event.MeasureDoseEvent, self.measureDose)
 		self.addEventInput(event.UpdatePresetEvent, self.handleUpdatePresetEvent)
-		self.addEventInput(event.PresetLockEvent, self.handleLock)
-		self.addEventInput(event.PresetUnlockEvent, self.handleUnlock)
 
 		## this will fill in UI with current session presets
 		self.getPresetsFromDB()
 		self.start()
-
-	def handleLock(self, ievent):
-		requesting = ievent['node']
-		self.lock(requesting)
-		self.confirmEvent(ievent)
-
-	def handleUnlock(self, ievent):
-		n = ievent['node']
-		self.unlock(n)
-		self.confirmEvent(ievent)
 
 	def lock(self, n):
 		'''many nodes could be waiting for a lock.  It is undefined which
