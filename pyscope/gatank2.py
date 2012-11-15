@@ -11,13 +11,17 @@ import sys
 import time
 import gatansocket
 
-class GatanK2(ccdcamera.CCDCamera):
-	name = 'GatanK2'
+class GatanK2Base(ccdcamera.CCDCamera):
+
+	# so subclasses can all share the same socket connection
+	camera = None
+	@classmethod
+	def connect_socket(cls):
+		cls.camera = gatansocket.GatanSocket()
+
 	def __init__(self):
-		self.ed_mode = 'super resolution'
 		ccdcamera.CCDCamera.__init__(self)
 		self.cameraid = 0
-		self.camera = gatansocket.GatanSocket()
 
 		self.binning = {'x': 1, 'y': 1}
 		self.offset = {'x': 0, 'y': 0}
@@ -80,22 +84,6 @@ class GatanK2(ccdcamera.CCDCamera):
 			raise ValueError('invalid exposure type')
 		self.exposuretype = value
 
-	def getCameraSize(self):
-		size = ccdcamera.CCDCamera.getCameraSize(self)
-		if self.getEDMode() == 'super resolution':
-			size = {'x': 2*size['x'], 'y': 2*size['y']}
-		return size
-
-	def getEDModes(self):
-		return ('linear', 'counting', 'super resolution')
-
-	def getEDMode(self):
-		return self.ed_mode
-
-	def setEDMode(self, mode):
-		assert mode in self.getEDModes()
-		self.ed_mode = mode
-
 	def calculateAcquireParams(self):
 		exptype = self.getExposureType()
 		if exptype == 'dark':
@@ -113,6 +101,7 @@ class GatanK2(ccdcamera.CCDCamera):
 		}
 		return acqparams
 
+	# our name mapped to SerialEM plugin value
 	readmodes = {'linear': 0, 'counting': 1, 'super resolution': 2}
 
 	def calculateK2Params(self):
@@ -166,110 +155,15 @@ class GatanK2(ccdcamera.CCDCamera):
 	def getInserted(self):
 		return self.camera.IsCameraInserted(self.cameraid)
 
-	def getEnergyFiltered(self):
-		method_names = [
-			'getEnergyFilter',
-			'setEnergyFilter',
-			'getEnergyFilterWidth',
-			'setEnergyFilterWidth',
-			'alignEnergyFilterZeroLossPeak',
-		]
 
-		for method_name in method_names:
-			if not hasattr(self, method_name):
-				return False
-		return True
+class GatanK2Linear(GatanK2Base):
+	name = 'GatanK2Linear'
+	ed_mode = 'linear'
 
-	def getEnergyFilter(self):
-		script = 'if(%s()) Exit(1.0) else Exit(-1.0)' % (self.filter_functions['getEnergyFilter'],)
-		result = self.camera.ExecuteScript(script)
-		return result > 0.0
+class GatanK2Counting(GatanK2Base):
+	name = 'GatanK2Counting'
+	ed_mode = 'counting'
 
-	def setEnergyFilter(self, value):
-		if value:
-			i = 1
-		else:
-			i = 0
-		script = '%s(%d)' % (self.filter_functions['setEnergyFilter'], i)
-		self.camera.ExecuteScript(script)
-
-	def getEnergyFilterWidth(self):
-		script = 'Exit(%s())' % (self.filter_functions['getEnergyFilterWidth'],)
-		result = self.camera.ExecuteScript(script)
-		return result
-
-	def setEnergyFilterWidth(self, value):
-		script = 'if(%s(%f)) Exit(1.0) else Exit(-1.0)' % (self.filter_functions['setEnergyFilterWidth'], value)
-		result = self.camera.ExecuteScript(script)
-		if result < 0.0:
-			raise RuntimeError('unable to set energy filter width')
-
-	def alignEnergyFilterZeroLossPeak(self):
-		script = 'if(%s()) Exit(1.0) else Exit(-1.0)' % (self.filter_functions['alignEnergyFilterZeroLossPeak'],)
-		result = self.camera.ExecuteScript(script)
-		if result < 0.0:
-			raise RuntimeError('unable to align energy filter zero loss peak')
-
-	'''
-	def getNumberOfFrames(self):
-		raise NotImplementedError()
-
-	def getSaveRawFrames(self):
-		raise NotImplementedError()
-
-	def setSaveRawFrames(self, value):
-		raise NotImplementedError()
-
-	def getPreviousRawFramesName(self):
-		raise NotImplementedError()
-        
-	def getNumberOfFramesSaved(self):
-		raise NotImplementedError()
-
-	def getUseFrames(self):
-		raise NotImplementedError()
-
-	def setUseFrames(self, frames):
-		raise NotImplementedError()
-
-	def getFrameRate(self):
-		raise NotImplementedError()
-
-	def setFrameRate(self, fps):
-		raise NotImplementedError()
-
-	def getReadoutDelay(self):
-		raise NotImplementedError()
-
-	def setReadoutDelay(self, milliseconds):
-		raise NotImplementedError()
-
-	def getTemperatureStatus(self):
-		raise NotImplementedError()
-
-	## method name altered to prevent Leginon from setting temperature
-	def set_TemperatureStatus(self, state):
-		raise NotImplementedError()
-
-	def getTemperature(self):
-		raise NotImplementedError()
-
-	def set_Temperature(self, degrees):
-		raise NotImplementedError()
-	'''
-
-class GatanK2Super(GatanK2):
+class GatanK2Super(GatanK2Base):
 	name = 'GatanK2Super'
-	def calculateK2Params(self):
-		params = {
-			'readMode': 3,  # 0 linear, 2 counting, 3 superres
-			'scaling': 1.0,   # ???
-			'hardwareProc': 2, #0 none, 2 dark, 4 gain, 6 dark/gain
-			'doseFrac': False,
-			'frameTime': 0.04,
-			'alignFrames': False,
-			'saveFrames': False,
-			'filtSize': 0,
-			'filt': [],
-		}
-		return params
+	ed_mode = 'super resolution'
