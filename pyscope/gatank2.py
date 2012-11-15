@@ -14,6 +14,7 @@ import gatansocket
 class GatanK2(ccdcamera.CCDCamera):
 	name = 'GatanK2'
 	def __init__(self):
+		self.ed_mode = 'super resolution'
 		ccdcamera.CCDCamera.__init__(self)
 		self.cameraid = 0
 		self.camera = gatansocket.GatanSocket()
@@ -24,6 +25,10 @@ class GatanK2(ccdcamera.CCDCamera):
 		self.dimension = {'x': size['x'], 'y': size['y']}
 		self.exposuretype = 'normal'
 		self.exposure_ms = 200
+		self.float_scale = 1000.0
+		# what to do in digital micrograph before handing back the image
+		# unprocessed, dark subtracted, gain normalized
+		self.dm_processing = 'gain normalized'
 
 		self.script_functions = [
 			('AFGetSlitState', 'getEnergyFilter'),
@@ -75,12 +80,28 @@ class GatanK2(ccdcamera.CCDCamera):
 			raise ValueError('invalid exposure type')
 		self.exposuretype = value
 
+	def getCameraSize(self):
+		size = ccdcamera.CCDCamera.getCameraSize(self)
+		if self.getEDMode() == 'super resolution':
+			size = {'x': 2*size['x'], 'y': 2*size['y']}
+		return size
+
+	def getEDModes(self):
+		return ('linear', 'counting', 'super resolution')
+
+	def getEDMode(self):
+		return self.ed_mode
+
+	def setEDMode(self, mode):
+		assert mode in self.getEDModes()
+		self.ed_mode = mode
+
 	def calculateAcquireParams(self):
 		exptype = self.getExposureType()
 		if exptype == 'dark':
 			processing = 'dark'
 		else:
-			processing = 'unprocessed'
+			processing = self.dm_processing
 		acqparams = {
 			'processing': processing,
 			'binning': self.binning['x'],
@@ -92,11 +113,13 @@ class GatanK2(ccdcamera.CCDCamera):
 		}
 		return acqparams
 
+	readmodes = {'linear': 0, 'counting': 1, 'super resolution': 2}
+
 	def calculateK2Params(self):
 		params = {
-			'readMode': 0,  # 0 linear, 2 counting, 3 superres
-			'scaling': 1.0,   # ???
-			'hardwareProc': 0, #0 none, 2 dark, 4 gain, 6 dark/gain
+			'readMode': self.readmodes[self.ed_mode],
+			'scaling': self.float_scale,
+			'hardwareProc': 6, #0 none, 2 dark, 4 gain, 6 dark/gain
 			'doseFrac': False,
 			'frameTime': 0.04,
 			'alignFrames': False,
@@ -108,12 +131,17 @@ class GatanK2(ccdcamera.CCDCamera):
 
 	def _getImage(self):
 		k2params = self.calculateK2Params()
+		print 'SETK2', k2params
 		self.camera.SetK2Parameters(**k2params)
 		acqparams = self.calculateAcquireParams()
 		t0 = time.time()
+		print 'GETIMAGE', acqparams
 		image = self.camera.GetImage(**acqparams)
 		t1 = time.time()
 		self.exposure_timestamp = (t1 + t0) / 2.0
+		if self.dm_processing == 'gain normalized':
+			image = numpy.asarray(image, dtype=numpy.float32)
+			image /= self.float_scale
 		return image
 
 	def getPixelSize(self):
@@ -182,6 +210,7 @@ class GatanK2(ccdcamera.CCDCamera):
 		if result < 0.0:
 			raise RuntimeError('unable to align energy filter zero loss peak')
 
+	'''
 	def getNumberOfFrames(self):
 		raise NotImplementedError()
 
@@ -227,3 +256,20 @@ class GatanK2(ccdcamera.CCDCamera):
 
 	def set_Temperature(self, degrees):
 		raise NotImplementedError()
+	'''
+
+class GatanK2Super(GatanK2):
+	name = 'GatanK2Super'
+	def calculateK2Params(self):
+		params = {
+			'readMode': 3,  # 0 linear, 2 counting, 3 superres
+			'scaling': 1.0,   # ???
+			'hardwareProc': 2, #0 none, 2 dark, 4 gain, 6 dark/gain
+			'doseFrac': False,
+			'frameTime': 0.04,
+			'alignFrames': False,
+			'saveFrames': False,
+			'filtSize': 0,
+			'filt': [],
+		}
+		return params

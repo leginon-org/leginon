@@ -203,9 +203,7 @@ class GatanSocket(object):
 		# prepare args for message
 		if processing == 'dark':
 			longargs = [enum_gs['GS_GetDarkReference']]
-		elif processing == 'unprocessed':
-			longargs = [enum_gs['GS_GetAcquiredImage']]
-		elif processing == 'darksubtracted':
+		else:
 			longargs = [enum_gs['GS_GetAcquiredImage']]
 		longargs.extend([
 			arrSize,  # pixels in the image
@@ -213,14 +211,16 @@ class GatanSocket(object):
 		])
 		if processing == 'unprocessed':
 			longargs.append(0)
-		elif processing == 'darksubtracted':
+		elif processing == 'dark subtracted':
 			longargs.append(1)
+		elif processing == 'gain normalized':
+			longargs.append(2)
 		longargs.extend([
 			binning,
 			top, left, bottom, right,
 			shutter,
 		])
-		if processing in ('unprocessed','darksubtracted'):
+		if processing != 'dark':
 			longargs.append(shutterDelay)
 		longargs.extend([
 			divideBy2,
@@ -249,13 +249,16 @@ class GatanSocket(object):
 		received = 0
 		remain = numBytes
 		for chunk in range(numChunks):
+			print 'CHUNK', chunk
 			# send chunk handshake for all but the first chunk
 			if chunk:
 				message_send = Message(longargs=(enum_gs['GS_ChunkHandshake'],))
+				self.ExchangeMessages(message_send)
 			thisChunkSize = min(remain, chunkSize)
 			chunkReceived = 0
 			chunkRemain = thisChunkSize
 			while chunkRemain:
+				print 'REMAIN', remain
 				new_recv = self.sock.recv(chunkRemain)
 				len_recv = len(new_recv)
 				imArray.data[received:received+len_recv] = new_recv
