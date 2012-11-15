@@ -249,7 +249,6 @@ class GatanSocket(object):
 		received = 0
 		remain = numBytes
 		for chunk in range(numChunks):
-			print 'CHUNK', chunk
 			# send chunk handshake for all but the first chunk
 			if chunk:
 				message_send = Message(longargs=(enum_gs['GS_ChunkHandshake'],))
@@ -258,7 +257,6 @@ class GatanSocket(object):
 			chunkReceived = 0
 			chunkRemain = thisChunkSize
 			while chunkRemain:
-				print 'REMAIN', remain
 				new_recv = self.sock.recv(chunkRemain)
 				len_recv = len(new_recv)
 				imArray.data[received:received+len_recv] = new_recv
