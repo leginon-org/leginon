@@ -11,17 +11,20 @@ import sys
 import time
 import gatansocket
 
+simulation = True
+
+# only one connection will be shared among all classes
+def connect():
+	if not hasattr(gatansocket, 'myGS'):
+		gatansocket.myGS = gatansocket.GatanSocket()
+	return gatansocket.myGS
+
 class GatanK2Base(ccdcamera.CCDCamera):
-
-	# so subclasses can all share the same socket connection
-	camera = None
-	@classmethod
-	def connect_socket(cls):
-		cls.camera = gatansocket.GatanSocket()
-
 	def __init__(self):
-		ccdcamera.CCDCamera.__init__(self)
+		self.camera = connect()
 		self.cameraid = 0
+
+		ccdcamera.CCDCamera.__init__(self)
 
 		self.binning = {'x': 1, 'y': 1}
 		self.offset = {'x': 0, 'y': 0}
@@ -32,7 +35,7 @@ class GatanK2Base(ccdcamera.CCDCamera):
 		self.float_scale = 1000.0
 		# what to do in digital micrograph before handing back the image
 		# unprocessed, dark subtracted, gain normalized
-		self.dm_processing = 'gain normalized'
+		self.dm_processing = 'unprocessed'
 
 		self.script_functions = [
 			('AFGetSlitState', 'getEnergyFilter'),
@@ -103,12 +106,13 @@ class GatanK2Base(ccdcamera.CCDCamera):
 
 	# our name mapped to SerialEM plugin value
 	readmodes = {'linear': 0, 'counting': 1, 'super resolution': 2}
+	hardwareProc = {'none': 0, 'dark': 2, 'gain': 4, 'dark+gain': 6}
 
 	def calculateK2Params(self):
 		params = {
 			'readMode': self.readmodes[self.ed_mode],
 			'scaling': self.float_scale,
-			'hardwareProc': 6, #0 none, 2 dark, 4 gain, 6 dark/gain
+			'hardwareProc': self.hardwareProc[self.hw_proc],
 			'doseFrac': False,
 			'frameTime': 0.04,
 			'alignFrames': False,
@@ -120,11 +124,9 @@ class GatanK2Base(ccdcamera.CCDCamera):
 
 	def _getImage(self):
 		k2params = self.calculateK2Params()
-		print 'SETK2', k2params
 		self.camera.SetK2Parameters(**k2params)
 		acqparams = self.calculateAcquireParams()
 		t0 = time.time()
-		print 'GETIMAGE', acqparams
 		image = self.camera.GetImage(**acqparams)
 		t1 = time.time()
 		self.exposure_timestamp = (t1 + t0) / 2.0
@@ -159,11 +161,20 @@ class GatanK2Base(ccdcamera.CCDCamera):
 class GatanK2Linear(GatanK2Base):
 	name = 'GatanK2Linear'
 	ed_mode = 'linear'
+	hw_proc = 'none'
 
 class GatanK2Counting(GatanK2Base):
 	name = 'GatanK2Counting'
 	ed_mode = 'counting'
+	if simulation:
+		hw_proc = 'none'
+	else:
+		hw_proc = 'dark+gain'
 
 class GatanK2Super(GatanK2Base):
 	name = 'GatanK2Super'
 	ed_mode = 'super resolution'
+	if simulation:
+		hw_proc = 'none'
+	else:
+		hw_proc = 'dark+gain'
