@@ -54,7 +54,7 @@ and optional long array.
 	'''
 	def __init__(self, longargs=[], boolargs=[], dblargs=[], longarray=[]):
 		# add final longarg with size of the longarray
-		if longarray:
+		if len(longarray):
 			longargs = list(longargs)
 			longargs.append(len(longarray))
 
@@ -187,7 +187,31 @@ class GatanSocket(object):
 		message_recv = Message(longargs=(0,)) # just return code
 		self.ExchangeMessages(message_send, message_recv)
 
-	def GetImage(self, processing, binning, top, left, bottom, right, exposure):
+	def SetupFileSaving(self, rotationFlip, dirname, rootname):
+		longs = [enum_gs['GS_SetupFileSaving'], rotationFlip]
+		bools = [True,] # filePerImage=True
+		pixelSize = 1.0
+		dbls = [pixelSize]
+		names_str = dirname + '\0' + rootname + '\0'
+		extra = len(names_str) % 4
+		if extra:
+			npad = 4 - extra
+			names_str = names_str + npad * '\0'
+		longarray = numpy.frombuffer(names_str, dtype=numpy.int_)
+		message_send = Message(longargs=longs, boolargs=bools, dblargs=dbls, longarray=longarray)
+		message_recv = Message(longargs=(0,0))
+		self.ExchangeMessages(message_send, message_recv)
+
+	def GetFileSaveResult(self):
+		longs = [enum_gs['GS_GetFileSaveResult'], rotationFlip]
+		message_send = Message(longargs=longs, boolargs=bools, dblargs=dbls, longarray=longarray)
+		message_recv = Message(longargs=(0,0,0))
+		self.ExchangeMessages(message_send, message_recv)
+		args = message_recv.array['longargs']
+		numsaved = args[1]
+		error = args[2]
+		
+	def GetImage(self, processing, binning, top, left, bottom, right, exposure, shutterDelay):
 
 		width = right - left
 		height = bottom - top
@@ -195,7 +219,6 @@ class GatanSocket(object):
 
 		# TODO: need to figure out what these should be
 		shutter = 0
-		shutterDelay = 0
 		divideBy2 = 0
 		corrections = 0
 		settling = 0.0

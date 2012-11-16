@@ -36,6 +36,10 @@ class GatanK2Base(ccdcamera.CCDCamera):
 		# what to do in digital micrograph before handing back the image
 		# unprocessed, dark subtracted, gain normalized
 		self.dm_processing = 'unprocessed'
+		self.save_frames = False
+		self.frames_name = None
+		self.frame_rate = 25.0
+		self.readout_delay_ms = 0
 
 		self.script_functions = [
 			('AFGetSlitState', 'getEnergyFilter'),
@@ -93,6 +97,10 @@ class GatanK2Base(ccdcamera.CCDCamera):
 			processing = 'dark'
 		else:
 			processing = self.dm_processing
+
+		# I think it's negative...
+		shutter_delay = -self.readout_delay_ms / 1000.0
+
 		acqparams = {
 			'processing': processing,
 			'binning': self.binning['x'],
@@ -101,6 +109,7 @@ class GatanK2Base(ccdcamera.CCDCamera):
 			'bottom': self.offset['y']+self.dimension['y'],
 			'right': self.offset['x']+self.dimension['x'],
 			'exposure': self.exposure_ms / 1000.0,
+			'shutterDelay': shutter_delay,
 		}
 		return acqparams
 
@@ -109,14 +118,15 @@ class GatanK2Base(ccdcamera.CCDCamera):
 	hardwareProc = {'none': 0, 'dark': 2, 'gain': 4, 'dark+gain': 6}
 
 	def calculateK2Params(self):
+		frame_time = 1.0 / self.frame_rate
 		params = {
 			'readMode': self.readmodes[self.ed_mode],
 			'scaling': self.float_scale,
 			'hardwareProc': self.hardwareProc[self.hw_proc],
-			'doseFrac': False,
-			'frameTime': 0.04,
+			'doseFrac': self.save_frames,
+			'frameTime': frame_time,
 			'alignFrames': False,
-			'saveFrames': False,
+			'saveFrames': self.save_frames,
 			'filtSize': 0,
 			'filt': [],
 		}
@@ -126,6 +136,7 @@ class GatanK2Base(ccdcamera.CCDCamera):
 		k2params = self.calculateK2Params()
 		self.camera.SetK2Parameters(**k2params)
 		acqparams = self.calculateAcquireParams()
+		self.camera.SetupFileSaving(0, 'C:\\frames', 'pyscope')
 		t0 = time.time()
 		image = self.camera.GetImage(**acqparams)
 		t1 = time.time()
@@ -157,6 +168,30 @@ class GatanK2Base(ccdcamera.CCDCamera):
 	def getInserted(self):
 		return self.camera.IsCameraInserted(self.cameraid)
 
+	def getSaveRawFrames(self):
+		return self.save_frames
+
+	def setSaveRawFrames(self, value):
+		self.save_frames = bool(value)
+
+	def getPreviousRawFramesName(self):
+		return self.frames_name
+        
+	def getNumberOfFramesSaved(self):
+		nframes = self.getProperty('Autosave Raw Frames - Frames Written in Last Exposure')
+		return int(nframes)
+
+	def getFrameRate(self):
+		return self.frame_rate
+
+	def setFrameRate(self, fps):
+		self.frame_rate = fps
+
+	def setReadoutDelay(self, ms):
+		self.readout_delay_ms = ms
+
+	def getReadoutDelay(self):
+		return self.readout_delay_ms
 
 class GatanK2Linear(GatanK2Base):
 	name = 'GatanK2Linear'
