@@ -10,8 +10,11 @@ import ccdcamera
 import sys
 import time
 import gatansocket
+import numpy
 
-simulation = True
+simulation = False
+if simulation:
+	print 'USING SIMULATION SETTINGS'
 
 # only one connection will be shared among all classes
 def connect():
@@ -35,10 +38,10 @@ class GatanK2Base(ccdcamera.CCDCamera):
 		self.float_scale = 1000.0
 		# what to do in digital micrograph before handing back the image
 		# unprocessed, dark subtracted, gain normalized
-		self.dm_processing = 'unprocessed'
+		self.dm_processing = 'gain normalized'
 		self.save_frames = False
 		self.frames_name = None
-		self.frame_rate = 25.0
+		self.frame_rate = 8.0
 		self.readout_delay_ms = 0
 
 		self.script_functions = [
@@ -136,12 +139,12 @@ class GatanK2Base(ccdcamera.CCDCamera):
 		k2params = self.calculateK2Params()
 		self.camera.SetK2Parameters(**k2params)
 		acqparams = self.calculateAcquireParams()
-		self.camera.SetupFileSaving(0, 'C:\\frames', 'pyscope')
+		self.camera.SetupFileSaving(0, 'X:\\', 'pyscope')
 		t0 = time.time()
 		image = self.camera.GetImage(**acqparams)
 		t1 = time.time()
 		self.exposure_timestamp = (t1 + t0) / 2.0
-		if self.dm_processing == 'gain normalized':
+		if self.dm_processing == 'gain normalized' and self.ed_mode in ('counting','super resolution'):
 			image = numpy.asarray(image, dtype=numpy.float32)
 			image /= self.float_scale
 		return image
