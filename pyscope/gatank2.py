@@ -147,16 +147,31 @@ class GatanK2Base(ccdcamera.CCDCamera):
 		}
 		return params
 
-	def _getImage(self):
-		k2params = self.calculateK2Params()
-		self.camera.SetK2Parameters(**k2params)
-		acqparams = self.calculateAcquireParams()
+	def calculateFileSavingParams(self):
 		drive = 'D:'
 		frames_name = time.strftime('%Y%m%d_%H%M%S', time.localtime())
 		frames_name = frames_name + '%02d' % (self.idcounter.next(),)
 		path = os.path.join(drive, frames_name)
-		self.camera.SetupFileSaving(0, path, frames_name)
 		self.frames_name = frames_name
+
+		rotation = 270 # degrees
+		flip = 0  # 0=none, 4=flip columns before rot, 8=flip after
+		rot_flip = rotation / 90 + flip
+
+		params = {
+			'rotationFlip': rot_flip,
+			'dirname': path,
+			'rootname': 'frame',
+		}
+		return params
+
+	def _getImage(self):
+		k2params = self.calculateK2Params()
+		self.camera.SetK2Parameters(**k2params)
+		acqparams = self.calculateAcquireParams()
+		fileparams = self.calculateFileSavingParams()
+		self.camera.SetupFileSaving(**fileparams)
+
 		t0 = time.time()
 		image = self.camera.GetImage(**acqparams)
 		t1 = time.time()
