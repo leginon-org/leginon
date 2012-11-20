@@ -11,10 +11,13 @@ import sys
 import time
 import gatansocket
 import numpy
+import itertools
+import os
 
 simulation = False
 if simulation:
 	print 'USING SIMULATION SETTINGS'
+
 
 # only one connection will be shared among all classes
 def connect():
@@ -27,18 +30,22 @@ class GatanK2Base(ccdcamera.CCDCamera):
 		self.camera = connect()
 		self.cameraid = 0
 
+		self.idcounter = itertools.cycle(range(100))
+
 		ccdcamera.CCDCamera.__init__(self)
 
 		self.binning = {'x': 1, 'y': 1}
 		self.offset = {'x': 0, 'y': 0}
-		size = self.getCameraSize()
-		self.dimension = {'x': size['x'], 'y': size['y']}
+		self.tempoffset = dict(self.offset)
+		self.camsize = self.getCameraSize()
+		self.dimension = {'x': self.camsize['x'], 'y': self.camsize['y']}
 		self.exposuretype = 'normal'
-		self.exposure_ms = 200
+		self.exposure_ms = 125
 		self.float_scale = 1000.0
 		# what to do in digital micrograph before handing back the image
 		# unprocessed, dark subtracted, gain normalized
-		self.dm_processing = 'gain normalized'
+		#self.dm_processing = 'gain normalized'
+		self.dm_processing = 'unprocessed'
 		self.save_frames = False
 		self.frames_name = None
 		self.frame_rate = 8.0
@@ -61,12 +68,15 @@ class GatanK2Base(ccdcamera.CCDCamera):
 		return dict(self.offset)
 
 	def setOffset(self, value):
+		# Work around
 		self.offset = dict(value)
+		self.tempoffset = {'x':0,'y':0}
 
 	def getDimension(self):
 		return dict(self.dimension)
 
 	def setDimension(self, value):
+		# Work around
 		self.dimension = dict(value)
 
 	def getBinning(self):
@@ -107,13 +117,14 @@ class GatanK2Base(ccdcamera.CCDCamera):
 		acqparams = {
 			'processing': processing,
 			'binning': self.binning['x'],
-			'top': self.offset['y'],
-			'left': self.offset['x'],
+			'top': self.tempoffset['y'],
+			'left': self.tempoffset['x'],
 			'bottom': self.offset['y']+self.dimension['y'],
 			'right': self.offset['x']+self.dimension['x'],
 			'exposure': self.exposure_ms / 1000.0,
 			'shutterDelay': shutter_delay,
 		}
+		print acqparams
 		return acqparams
 
 	# our name mapped to SerialEM plugin value
@@ -124,7 +135,8 @@ class GatanK2Base(ccdcamera.CCDCamera):
 		frame_time = 1.0 / self.frame_rate
 		params = {
 			'readMode': self.readmodes[self.ed_mode],
-			'scaling': self.float_scale,
+			#'scaling': self.float_scale,
+			'scaling': 1.0,
 			'hardwareProc': self.hardwareProc[self.hw_proc],
 			'doseFrac': self.save_frames,
 			'frameTime': frame_time,
@@ -139,13 +151,33 @@ class GatanK2Base(ccdcamera.CCDCamera):
 		k2params = self.calculateK2Params()
 		self.camera.SetK2Parameters(**k2params)
 		acqparams = self.calculateAcquireParams()
-		self.camera.SetupFileSaving(0, 'X:\\', 'pyscope')
+		drive = 'D:'
+		frames_name = time.strftime('%Y%m%d_%H%M%S', time.localtime())
+		frames_name = frames_name + '%02d' % (self.idcounter.next(),)
+		path = os.path.join(drive, frames_name)
+		self.camera.SetupFileSaving(0, path, frames_name)
+		self.frames_name = frames_name
 		t0 = time.time()
 		image = self.camera.GetImage(**acqparams)
 		t1 = time.time()
 		self.exposure_timestamp = (t1 + t0) / 2.0
+
+		# workaround to offset image problem
+		print image.shape
+		startx = self.getOffset()['x']
+		starty = self.getOffset()['y']
+		if startx != 0 or starty != 0:
+			endx = self.dimension['x'] + startx
+			endy = self.dimension['y'] + starty
+			print self.getOffset()
+			print 'original',self.dimension,self.binning
+			image = image[starty:endy,startx:endx]
+		print image.shape
+
 		if self.dm_processing == 'gain normalized' and self.ed_mode in ('counting','super resolution'):
+			print 'ASARRAY'
 			image = numpy.asarray(image, dtype=numpy.float32)
+			print 'DIVIDE'
 			image /= self.float_scale
 		return image
 
