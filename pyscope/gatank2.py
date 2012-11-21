@@ -50,6 +50,7 @@ class GatanK2Base(ccdcamera.CCDCamera):
 		self.frames_name = None
 		self.frame_rate = 8.0
 		self.readout_delay_ms = 0
+		self.align_frames = False
 
 		self.script_functions = [
 			('AFGetSlitState', 'getEnergyFilter'),
@@ -138,9 +139,9 @@ class GatanK2Base(ccdcamera.CCDCamera):
 			#'scaling': self.float_scale,
 			'scaling': 1.0,
 			'hardwareProc': self.hardwareProc[self.hw_proc],
-			'doseFrac': self.save_frames,
+			'doseFrac': self.save_frames or self.align_frames,
 			'frameTime': frame_time,
-			'alignFrames': False,
+			'alignFrames': self.align_frames,
 			'saveFrames': self.save_frames,
 			'filtSize': 0,
 			'filt': [],
@@ -217,6 +218,12 @@ class GatanK2Base(ccdcamera.CCDCamera):
 
 	def getInserted(self):
 		return self.camera.IsCameraInserted(self.cameraid)
+
+	def setAlignFrames(self, value):
+		self.align_frames = bool(value)
+
+	def getAlignFrames(self):
+		return self.align_frames
 
 	def getSaveRawFrames(self):
 		return self.save_frames
