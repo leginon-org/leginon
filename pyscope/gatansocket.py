@@ -164,14 +164,21 @@ class GatanSocket(object):
 		message_recv = Message(longargs=(0,))
 		self.ExchangeMessages(message_send, message_recv)
 
-	def SetK2Parameters(self, readMode, scaling, hardwareProc, doseFrac, frameTime, alignFrames, saveFrames, filtSize=0, filt=[]):
+	def SetK2Parameters(self, readMode, scaling, hardwareProc, doseFrac, frameTime, alignFrames, saveFrames, filt=''):
 		funcCode = enum_gs['GS_SetK2Parameters']
+
+		# filter name
+		filt_str = filt + '\0'
+		extra = len(filt_str) % 4
+		if extra:
+			npad = 4 - extra
+			filt_str = filt_str + npad * '\0'
+		longarray = numpy.frombuffer(filt_str, dtype=numpy.int_)
 
 		longs = [
 			funcCode,
 			readMode,
 			hardwareProc,
-			filtSize,
 		]
 		bools = [
 			doseFrac,
@@ -183,7 +190,7 @@ class GatanSocket(object):
 			frameTime,
 		]
 
-		message_send = Message(longargs=longs, boolargs=bools, dblargs=doubles, longarray=filt)
+		message_send = Message(longargs=longs, boolargs=bools, dblargs=doubles, longarray=longarray)
 		message_recv = Message(longargs=(0,)) # just return code
 		self.ExchangeMessages(message_send, message_recv)
 
