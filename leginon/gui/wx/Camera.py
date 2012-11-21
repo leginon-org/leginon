@@ -39,18 +39,24 @@ class CameraPanel(wx.Panel):
 		self.binnings = {'x': [1,2,3,4,6,8], 'y': [1,2,3,4,6,8]}
 		self.defaultexptime = 1000.0
 		self.defaultsaveframes = False
+		self.defaultalignframes = False
+		self.defaultalignfilter = 'None'
 		self.defaultuseframes = ''
 		self.defaultreadoutdelay= 0
 		self.common = {}
 		self.setfuncs = {
 			'exposure time': self._setExposureTime,
 			'save frames': self._setSaveFrames,
+			'align frames': self._setAlignFrames,
+			'align filter': self._setAlignFilter,
 			'use frames': self._setUseFrames,
 			'readout delay': self._setReadoutDelay,
 		}
 		self.getfuncs = {
 			'exposure time': self._getExposureTime,
 			'save frames': self._getSaveFrames,
+			'align frames': self._getAlignFrames,
+			'align filter': self._getAlignFilter,
 			'use frames': self._getUseFrames,
 			'readout delay': self._getReadoutDelay,
 		}
@@ -101,11 +107,11 @@ class CameraPanel(wx.Panel):
 		sz.Add(stms, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		self.szmain.Add(sz, (4, 1), (1, 2), wx.ALIGN_CENTER|wx.EXPAND)
 
-		sb = wx.StaticBox(self, -1, 'Frame-Saving Camera Only')
+		sb = wx.StaticBox(self, -1, 'Camera with Movie Mode')
 		ddsb = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		ddsz = wx.GridBagSizer(5, 5)
-		# save raw frames
-		self.saveframes = wx.CheckBox(self, -1, 'Save raw frames')
+		# save frames
+		self.saveframes = wx.CheckBox(self, -1, 'Save frames')
 		ddsz.Add(self.saveframes, (0, 0), (1, 2), wx.ALIGN_CENTER|wx.EXPAND)
 
 		# use raw frames
@@ -124,8 +130,26 @@ class CameraPanel(wx.Panel):
 		sz.Add(stms)
 		ddsz.Add(sz, (2, 0), (1, 2), wx.ALIGN_CENTER|wx.EXPAND)
 
+		# align frames box
+		sb = wx.StaticBox(self, -1, 'Frame-Aligning Camera Only')
+		afsb = wx.StaticBoxSizer(sb, wx.VERTICAL)
+		afsz = wx.GridBagSizer(3, 3)
+		# align frames
+		self.alignframes = wx.CheckBox(self, -1, 'Align frames')
+		afsz.Add(self.alignframes, (0, 0), (1, 2), wx.ALIGN_CENTER|wx.EXPAND)
+
+		# align frame filter
+		label = wx.StaticText(self, -1, 'c-correlation filter:')
+		self.alignfilter = wx.Choice(self, -1, choices=self.getAlignFilters())
+		self.alignfilter.SetSelection(0)
+		afsz.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		afsz.Add(self.alignfilter, (1, 1), (1, 1), wx.ALIGN_CENTER|wx.EXPAND)
+		afsb.Add(afsz, 0, wx.EXPAND|wx.ALL, 2)
+
+		ddsz.Add(afsb, (3, 0), (3, 2), wx.ALIGN_CENTER|wx.EXPAND)
+
 		ddsb.Add(ddsz, 0, wx.EXPAND|wx.ALL, 2)
-		self.szmain.Add(ddsb, (5, 0), (1, 3), wx.ALIGN_CENTER|wx.EXPAND)
+		self.szmain.Add(ddsb, (7, 0), (1, 3), wx.ALIGN_CENTER|wx.EXPAND)
 
 		ddsz.AddGrowableCol(1)
 		self.szmain.AddGrowableCol(1)
@@ -180,6 +204,8 @@ class CameraPanel(wx.Panel):
 		self.setGeometry(self.common[self.ccommon.GetStringSelection()])
 		self.feexposuretime.SetValue(self.defaultexptime)
 		self.saveframes.SetValue(self.defaultsaveframes)
+		self.alignframes.SetValue(self.defaultalignframes)
+		self.alignfilter.SetValue(self.defaultalignfilter)
 		self.useframes.SetValue(self.defaultuseframes)
 		self.readoutdelay.SetValue(self.defaultreadoutdelay)
 		#self.Enable(False)
@@ -248,6 +274,26 @@ class CameraPanel(wx.Panel):
 	def _setSaveFrames(self, value):
 		value = bool(value)
 		self.saveframes.SetValue(value)
+
+	def _getAlignFrames(self):
+		return self.alignframes.GetValue()
+
+	def _setAlignFrames(self, value):
+		value = bool(value)
+		self.alignframes.SetValue(value)
+
+	def getAlignFilters(self):
+		return ['None','Hanning Window (default)','Bandpass Filter (default)','Sobel Filter (default)','Combined Filter (default)']
+
+	def _getAlignFilter(self):
+		return self.alignfilter.GetStringSelection()
+
+	def _setAlignFilter(self, value):
+		if value:
+			value = str(value)
+		else:
+			value = 'None'
+		self.alignfilter.SetStringSelection(value)
 
 	def _getUseFrames(self):
 		frames_str = self.useframes.GetValue()

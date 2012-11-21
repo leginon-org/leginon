@@ -36,6 +36,8 @@ class SimCCDCamera(ccdcamera.CCDCamera):
 		self.frame_rate = 0.05
 		self.inserted = True
 		self.saverawframes = False
+		self.alignframes = False
+		self.alignfilter = 'None'
 		self.rawframesname = 'frames'
 		self.useframes = ()
 
@@ -223,7 +225,8 @@ class SimCCDCamera(ccdcamera.CCDCamera):
 				os.mkdir(self.rawframesname)
 			except:
 				pass
-
+		else:
+			return self.getSyntheticImage(shape)
 		sum = numpy.zeros(shape, numpy.float32)
 
 		for i in range(nframes):
@@ -246,6 +249,17 @@ class SimCCDCamera(ccdcamera.CCDCamera):
 				sum += frame
 
 		return sum
+
+	def getSyntheticImage(self,shape):
+		mean = self.exposure_time * 1000.0
+		sigma = 0.1 * mean
+		image = numpy.random.normal(mean, sigma, shape)
+		row_offset = random.randint(-shape[0]/8, shape[0]/8) + shape[0]/4
+		column_offset = random.randint(-shape[1]/8, shape[1]/8) + shape[0]/4
+		image[row_offset:row_offset+shape[0]/2,
+		  column_offset:column_offset+shape[1]/2] *= 1.5
+		image = numpy.asarray(image, dtype=numpy.uint16)
+		return image
 
 	def getEnergyFiltered(self):
 		return True
@@ -282,6 +296,21 @@ class SimCCDCamera(ccdcamera.CCDCamera):
 	def setSaveRawFrames(self, value):
 		'''True: save frames,  False: discard frames'''
 		self.saverawframes = bool(value)
+
+	def getAlignFrames(self):
+		return self.alignframes
+
+	def setAlignFrames(self, value):
+		self.alignframes = bool(value)
+
+	def getAlignFilter(self):
+		return self.alignfilter
+
+	def setAlignFilter(self, value):
+		if value:
+			self.alignfilter = str(value)
+		else:
+			self.alignfilter = 'None'
 
 	def setNextRawFramesName(self, value):
 		self.rawframesname = value

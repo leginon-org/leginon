@@ -387,6 +387,8 @@ parametermapping = (
 	('energy filter', 'EnergyFilter'),
 	('energy filter width', 'EnergyFilterWidth'),
 	('nframes', 'NumberOfFrames'),
+	('align frames', 'AlignFrames'),
+	('align filter', 'AlignFilter'),
 	('save frames', 'SaveRawFrames'),
 	('frames name', 'PreviousRawFramesName'),
 	('use frames', 'UseFrames'),

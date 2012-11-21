@@ -176,6 +176,8 @@ camera_params = (
 	('energy filter width', float),
 	('nframes', int),
 	('save frames', bool),
+	('align frames', bool),
+	('align filter', str),
 	('frames name', str),
 	('use frames', tuple),
 	('frame rate', float),
@@ -486,6 +488,8 @@ class PresetData(InSessionData):
 			('pre exposure', float),
 			('skip', bool),
 			('save frames', bool),
+			('align frames', bool),
+			('align filter', str),
 			('use frames', tuple),
 			('readout delay', int),
 		)
@@ -1103,6 +1107,8 @@ class CameraSettingsData(Data):
 			('binning', dict),
 			('exposure time', float),
 			('save frames', bool),
+			('align frames', bool),
+			('align filter', str),
 			('use frames', tuple),
 			('readout delay', int),
 		)

@@ -103,6 +103,14 @@ class CCDCamera(baseinstrument.BaseInstrument):
 			settings['readout delay'] = self.getReadoutDelay()
 		except:
 			settings['readout delay'] = 0
+		try:
+			settings['align frames'] = self.getAlignFrames()
+		except:
+			settings['save frames'] = False
+		try:
+			settings['align frame filter'] = self.getAlignFilter()
+		except:
+			settings['align frame filter'] = 'None'
 		return settings
 
 	def setSettings(self, settings):
@@ -118,6 +126,14 @@ class CCDCamera(baseinstrument.BaseInstrument):
 			pass
 		try:
 			self.setReadoutDelay(settings['readout delay'])
+		except:
+			pass
+		try:
+			self.setAlignFrames(settings['align frames'])
+		except:
+			pass
+		try:
+			self.setAlignFilter(settings['align filter'])
 		except:
 			pass
 
@@ -253,6 +269,21 @@ This method returns that multiplier, M.  In the standard case, returns 1.0.
 
 	def getSaveRawFrames(self):
 		return False
+
+	def setSaveRawFrames(self, value):
+		raise NotImplementedError
+
+	def getAlignFrames(self):
+		return False
+
+	def setAlignFrames(self, value):
+		raise NotImplementedError
+
+	def getAlignFilter(self):
+		return 'None'
+
+	def setAlignFilter(self, value):
+		raise NotImplementedError
 
 class FastCCDCamera(CCDCamera):
 	name = 'Fast CCD Camera'
