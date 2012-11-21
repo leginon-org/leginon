@@ -260,7 +260,6 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.publish(self.imagelistdata, database=True)
 		targetwatcher.TargetWatcher.processData(self, newdata)
 		self.publish(self.imagelistdata, pubevent=True)
-		self.presetsclient.unlock()
 		self.logger.info('Acquisition.processData done')
 
 	def validateStagePosition(self, stageposition):
