@@ -419,7 +419,7 @@ class DoseCalibrationClient(CalibrationClient):
 		'''
 		pixel_totaldose = self.pixel_totaldose_from_imagedata(imagedata)
 		nframes = imagedata['camera']['nframes']
-		if nframes is None:
+		if nframes is None or nframes == 0:
 			nframes = 1
 			has_frames = False
 		else:

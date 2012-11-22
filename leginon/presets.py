@@ -1239,7 +1239,10 @@ class PresetsManager(node.Node):
 		self.logger.info('Acquiring %s image' %(acquirestr))
 		camdata0 = leginondata.CameraEMData()
 		camdata0.friendly_update(preset)
-		
+	
+		## deactivate frame saving and align frame flags
+		camdata0['save frames'] = False
+		camdata0['align frames'] = False
 		## send preset binning to camera to get binned multiplier
 		self.instrument.ccdcamera.Binning = preset['binning']
 		camdata0['binned multiplier'] = self.instrument.ccdcamera.BinnedMultiplier
@@ -1722,6 +1725,9 @@ class PresetsManager(node.Node):
 		if temp_mag is None:
 			return
 
+		## deactivate frame saving and align frame flags
+		camdata0['save frames'] = False
+		camdata0['align frames'] = False
 		# set preset binning so we can get binned multiplier
 		self.instrument.ccdcamera.Binning = preset['binning']
 		orig_mult = self.instrument.ccdcamera.BinnedMultiplier
