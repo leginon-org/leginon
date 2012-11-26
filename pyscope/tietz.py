@@ -98,7 +98,7 @@ class Tietz(ccdcamera.CCDCamera):
 
 		self.binning = {'x': 1, 'y': 1}
 		self.offset = {'x': 0, 'y': 0}
-		self.dimension = {'x': 512, 'y': 512}
+		self.dimension = {'x': 1024, 'y': 1024}
 		self.exposuretime = 500
 		self.exposuretype = 'normal'
 
