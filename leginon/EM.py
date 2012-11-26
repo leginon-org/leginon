@@ -61,22 +61,16 @@ class EM(node.Node):
 		classes = registry.getClasses()
 		tems = []
 		ccdcameras = []
-		fastccdcameras = []
 		for i in classes:
 			name, c = i
 			if issubclass(c, tem.TEM):
 				tems.append(i)
-			elif issubclass(c, ccdcamera.FastCCDCamera):
-				fastccdcameras.append(i)
 			elif issubclass(c, ccdcamera.CCDCamera):
 				ccdcameras.append(i)
-		for name, c in tems + ccdcameras + fastccdcameras:
+		for name, c in tems + ccdcameras:
 			if issubclass(c, tem.TEM):
 				instrumentclass = instrument.TEM
 				wxaddmethod = self.panel.addTEM
-			elif issubclass(c, ccdcamera.FastCCDCamera):
-				instrumentclass = instrument.FastCCDCamera
-				wxaddmethod = self.panel.addCCDCamera
 			elif issubclass(c, ccdcamera.CCDCamera):
 				instrumentclass = instrument.CCDCamera
 				wxaddmethod = self.panel.addCCDCamera

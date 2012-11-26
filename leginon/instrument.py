@@ -324,9 +324,6 @@ class CCDCamera(remotecall.Locker):
 	def getDatabaseType(self):
 		return 'CCDCamera'
 
-class FastCCDCamera(CCDCamera):
-	pass
-
 parametermapping = (
 	# ScopeEM
 	('system time', 'SystemTime'),
