@@ -249,9 +249,12 @@ class GatanK2Base(ccdcamera.CCDCamera):
 		return self.frame_rate
 
 	def setFrameRate(self, fps):
-		self.frame_rate = fps
+		if fps:
+			self.frame_rate = fps
 
 	def setReadoutDelay(self, ms):
+		if not ms:
+			ms = 0
 		self.readout_delay_ms = ms
 
 	def getReadoutDelay(self):
