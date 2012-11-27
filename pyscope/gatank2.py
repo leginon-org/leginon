@@ -48,7 +48,7 @@ class GatanK2Base(ccdcamera.CCDCamera):
 		self.dm_processing = 'unprocessed'
 		self.save_frames = False
 		self.frames_name = None
-		self.frame_rate = 8.0
+		self.frame_rate = 4.0
 		self.readout_delay_ms = 0
 		self.align_frames = False
 		self.align_filter = 'None'
@@ -146,6 +146,7 @@ class GatanK2Base(ccdcamera.CCDCamera):
 			'saveFrames': self.save_frames,
 			'filt': self.align_filter,
 		}
+		print 'frame params: ',params
 		return params
 
 	def calculateFileSavingParams(self):
@@ -226,7 +227,7 @@ class GatanK2Base(ccdcamera.CCDCamera):
 		return self.align_frames
 
 	def setAlignFilter(self, value):
-		self.align_filter = value
+		self.align_filter = str(value)
 
 	def getAlignFilter(self):
 		return self.align_filter
