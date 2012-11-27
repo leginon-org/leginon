@@ -118,10 +118,6 @@ class GridRequest(Request):
 		self.node = node
 		self.griddata = griddata
 
-if sys.platform == 'win32':
-	import pythoncom
-	import win32com.client
-	import pywintypes
 import Queue
 
 class Robot(node.Node):
@@ -247,6 +243,8 @@ class Robot(node.Node):
 			communication_good = TestCommunication()
 		else:
 			try:
+				import pythoncom
+				import win32com.client
 				pythoncom.CoInitializeEx(pythoncom.COINIT_MULTITHREADED)
 				communication_good = win32com.client.Dispatch(
 																								'RobotCommunications.Signal')
