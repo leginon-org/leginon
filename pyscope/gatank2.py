@@ -151,9 +151,10 @@ class GatanK2Base(ccdcamera.CCDCamera):
 
 	def calculateFileSavingParams(self):
 		drive = 'D:'
+		dirname = 'frames'
 		frames_name = time.strftime('%Y%m%d_%H%M%S', time.localtime())
 		frames_name = frames_name + '%02d' % (self.idcounter.next(),)
-		path = os.path.join(drive, frames_name)
+		path = os.path.join(drive, dirname, frames_name)
 		self.frames_name = frames_name
 
 		rotation = 270 # degrees
