@@ -8,13 +8,6 @@ import scipy.stats
 import scipy.ndimage as ndimage
 import numextension
 from pyami import mrc,imagefun,arraystats,numpil
-try:
-	#The faster tifffile module only works with python 2.6 and above
-	from pyami import tifffile
-	use_tifffile = True
-except:
-	use_tifffile = False
-	import Image
 from leginon import correctorclient
 from appionlib import apDisplay, apDatabase
 
@@ -31,7 +24,9 @@ class DirectDetectorProcessing(object):
 		if wait_for_new:
 			self.waittime = 30 # in minutes
 		self.camerainfo = {}
+		self.setDefaultDimension(4096,3072)
 		self.c_client = correctorclient.CorrectorClient()
+		self.correct_dark_gain = True
 		# change this to True for loading bias image for correction
 		self.use_bias = False
 		self.use_GS = False
@@ -58,19 +53,31 @@ class DirectDetectorProcessing(object):
 	def getImageData(self):
 		return self.image
 
+	def getDefaultDimension(self):
+		return self.dimension
+
+	def setDefaultDimension(self,xdim,ydim):
+		self.dimension = {'x':xdim,'y':ydim}
+
 	def setUseGS(self,status):
 		self.use_GS = status
 
 	def getNumberOfFrameSaved(self):
-		return self.image['camera']['nframes']
+		return self.getNumberOfFrameSavedFromImageData(self.image)
+
+	def getNumberOfFrameSavedFromImageData(self,imagedata):
+		return imagedata['camera']['nframes']
 
 	def getScaledBrightArray(self,nframe):
 		return self.scaleRefImage('bright',nframe)
 
 	def getSingleFrameDarkArray(self):
 		darkdata = self.__getRefImageData('dark')
-		nframes = darkdata['camera']['nframes']
+		nframes = self.getNumberOfFrameSavedFromImageData(darkdata)
 		return darkdata['image'] / nframes
+
+	def getFrameNameFromNumber(self,frame_number):
+		raise NotImplementedError()
 
 	def OldgetSingleFrameDarkArray(self):
 		# work around for the bug in DE server between 11sep07 and 11nov22
@@ -180,7 +187,10 @@ class DirectDetectorProcessing(object):
 		camerainfo['dimension'] = dimension
 		camerainfo['nframe'] = nframe
 		camerainfo['norm'] = self.image['norm']
-		print self.image['norm']['filename']
+		if camerainfo['norm']:
+			print self.image['norm']['filename']
+		else:
+			self.correct_dark_gain = False
 		# Really should check frame rate but it is not saved now, so use exposure time
 		camerainfo['exposure time'] = self.image['camera']['exposure time']
 		return camerainfo
@@ -190,12 +200,15 @@ class DirectDetectorProcessing(object):
 		Checking changed camerainfo since last used so that cached 
 		references can be used if not changed.
 		'''
-		# return True all the time to use Gram-Schmidt process to calculate darkarray scale
-		if self.use_GS:
-			return True
 		if len(self.camerainfo.keys()) == 0:
 			if debug:
 				self.log.write( 'first frame image to be processed\n ')
+			return True
+		# no need to change condition if no dark/gain correction will be made
+		if not self.correct_dark_gain:
+			return False
+		# return True all the time to use Gram-Schmidt process to calculate darkarray scale
+		if self.use_GS:
 			return True
 		if self.camerainfo['norm'].dbid != self.image['norm'].dbid:
 			if debug:
@@ -225,44 +238,45 @@ class DirectDetectorProcessing(object):
 			# default
 			bin = {'x':1,'y':1}
 			offset = {'x':0,'y':0}
-			dimension = {'x':4096,'y':3072}
+			dimension = self.getDefaultDimension()
 		crop_end = {'x': offset['x']+dimension['x']*bin['x'], 'y':offset['y']+dimension['y']*bin['y']}
 
-		rawframe_path = os.path.join(rawframe_dir,'RawImage_%d.tif'%frame_number)
-		apDisplay.printMsg('Raw frame path: %s' %  rawframe_path)
+		framename = self.getFrameNameFromNumber(frame_number)
+		rawframe_path = os.path.join(rawframe_dir,framename)
+		apDisplay.printMsg('Frame path: %s' %  rawframe_path)
 		waitmin = 0
 		while not os.path.exists(rawframe_path):
 			if self.waittime < 0.1:
-				apDisplay.printWarning('Raw Frame File %s does not exist.' % rawframe_path)
+				apDisplay.printWarning('Frame File %s does not exist.' % rawframe_path)
 				return False
-			apDisplay.printWarning('Raw Frame File %s does not exist. Wait for 3 min.' % rawframe_path)
+			apDisplay.printWarning('Frame File %s does not exist. Wait for 3 min.' % rawframe_path)
 			time.sleep(180)
 			waitmin += 3
 			apDisplay.printMsg('Waited for %d min so far' % waitmin)
 			if waitmin > self.waittime:
 				return False
-		if use_tifffile:
-			# Use Faster tiff conversion to numpy module.
-			tif = tifffile.TIFFfile(rawframe_path)
-			a = tif.asarray()
-			a = numpy.asarray(a,dtype=numpy.float32)
-			a = a[offset['y']:crop_end['y'],offset['x']:crop_end['x']]
-		else:
-			# Use PIL
-			pil_img = Image.open(rawframe_path)
-			pil_cropped_img = pil_img.crop((offset['x'],offset['y'],crop_end['x'],crop_end['y']))
-			a = numpy.array(pil_cropped_img.getdata()).reshape((pil_cropped_img.size))
-			a = numpy.swapaxes(a,1,0)
+		return self.readFrameImage(rawframe_path,offset,crop_end,bin)
+
+	def readFrameImage(self,frameimage_path,offset,crop_end,bin):
+		'''
+		Read full size frame image as numpy array at the camera configuration
+		'''
+		# simulated image here. Need to define specifically in the subclass
+		dim = self.getDefaultDimension()
+		a = numpy.ones((dim['y'],dim['x']))
+		# modify the read array with cropping and binning
+		a = self.modifyFrameImage(a,offset,crop_end,bin)
+		return a
+
+	def modifyFrameImage(self,a,offset,crop_end,bin):
+		a = numpy.asarray(a,dtype=numpy.float32)
+		a = a[offset['y']:crop_end['y'],offset['x']:crop_end['x']]
 		if bin['x'] > 1:
 			if bin['x'] == bin['y']:
 				a = imagefun.bin(a,bin['x'])
 			else:
 				apDisplay.printError("Binnings in x,y are different")
-		# numarray gotten from tiffile is different from PIL
-		if use_tifffile:
-			return a[:,::-1]
-		else:
-			return a
+		return a
 
 	def sumupFrames(self,rawframe_dir,start_frame,nframe):
 		'''
@@ -355,23 +369,31 @@ class DirectDetectorProcessing(object):
 
 		# o.k. to set attribute now that condition change is checked
 		self.use_full_raw_area = use_full_raw_area
-
-		# DARK CORRECTION
 		if get_new_refs:
-			# load dark 
+			# set camera info for loading frames
 			self.setCameraInfo(nframe,use_full_raw_area)
-			unscaled_darkarray = self.getSingleFrameDarkArray()
-			self.unscaled_darkarray = unscaled_darkarray
-		else:
-			unscaled_darkarray = self.unscaled_darkarray
 
 		# load raw frames
 		rawarray = self.sumupFrames(self.rawframe_dir,start_frame,nframe)
 		if rawarray is False:
 			return False
 		if save_jpg:
-			numpil.write(unscaled_darkarray,'%s_dark.jpg' % ddtype,'jpeg')
 			numpil.write(rawarray,'%s_raw.jpg' % ddtype,'jpeg')
+
+		if not self.correct_dark_gain:
+			apDisplay.printMsg('Use summed frame image without further correction')
+			return rawarray
+
+		# DARK CORRECTION
+		if get_new_refs:
+			# load dark 
+			unscaled_darkarray = self.getSingleFrameDarkArray()
+			self.unscaled_darkarray = unscaled_darkarray
+		else:
+			unscaled_darkarray = self.unscaled_darkarray
+		if save_jpg:
+			numpil.write(unscaled_darkarray,'%s_dark.jpg' % ddtype,'jpeg')
+
 		corrected, dark_scale = self.darkCorrection(rawarray,unscaled_darkarray,nframe)
 		if save_jpg:
 			numpil.write(corrected,'%s_dark_corrected.jpg' % ddtype,'jpeg')
