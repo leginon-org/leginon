@@ -270,17 +270,17 @@ This method returns that multiplier, M.  In the standard case, returns 1.0.
 	def getSaveRawFrames(self):
 		return False
 
-	def setSaveRawFrames(self, value):
-		raise NotImplementedError
+	#def setSaveRawFrames(self, value):
+	#	raise NotImplementedError
 
 	def getAlignFrames(self):
 		return False
 
-	def setAlignFrames(self, value):
-		raise NotImplementedError
+	#def setAlignFrames(self, value):
+	#	raise NotImplementedError
 
 	def getAlignFilter(self):
 		return 'None'
 
-	def setAlignFilter(self, value):
-		raise NotImplementedError
+	#def setAlignFilter(self, value):
+	#	raise NotImplementedError
