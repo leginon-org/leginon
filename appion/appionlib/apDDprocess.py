@@ -16,6 +16,24 @@ save_jpg = False
 debug = False
 ddtype = 'thin'
 
+#=======================
+def initializeDDprocess(sessionname,wait_flag=False):
+	'''
+	initialize the DDprocess according to the camera
+	'''
+	sessiondata = apDatabase.getSessionDataFromSessionName(sessionname)
+	dcamdata = apDatabase.getFrameImageCamera(sessiondata)
+	if not dcamdata:
+		apDisplay.printError('Can not determine DD camera type')
+	if 'GatanK2' in dcamdata['name']:
+		from appionlib import apK2process
+		return apK2process.GatanK2Processing(wait_flag)
+	elif 'DE' in dcamdata['name']:
+		from appionlib import apDEprocess
+		return apDEprocess.DEProcessing(wait_flag)
+	else:
+		apDisplay.printError('Unknown frame camera name %s' % dcamdata['name'])
+
 class DirectDetectorProcessing(object):
 	def __init__(self,wait_for_new=False):
 		self.image = None

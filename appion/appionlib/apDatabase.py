@@ -224,6 +224,17 @@ def getSessionName(imgname):
 		apDisplay.printError("Image "+imgname+" not found in database\n")
 
 #================
+def getFrameImageCamera(sessiondata):
+	'''
+	Use latest frame saved image to find digital camera data
+	'''
+	camq = leginon.leginondata.CameraEMData(session=sessiondata)
+	camq['save frames'] = True
+	camems = camq.query(results=1)
+	if camems:
+		return camems[0]['ccdcamera']
+	
+#================
 def getTiltAngleDeg(imgdata):
 	return imgdata['scope']['stage position']['a']*180.0/math.pi
 

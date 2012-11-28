@@ -17,13 +17,13 @@ class GatanK2Processing(apDDprocess.DirectDetectorProcessing):
 		self.correct_dark_gain = False
 		
 	def getNumberOfFrameSaved(self):
-		return self.image['camera']['frame rate']*self.image['camera']['exposure time']/1000
+		return int(self.image['camera']['frame rate']*self.image['camera']['exposure time']/1000)
 
 	def getFrameNameFromNumber(self,frame_number):
-		return 'frame_%03d.mrc' % frame_number
+		return 'frame_%03d.mrc' % (frame_number+1)
 
 	def readFrameImage(self,frameimage_path,offset,crop_end,bin):
-		a = mrc.read(rawframe_path)
+		a = mrc.read(frameimage_path)
 		a = numpy.asarray(a,dtype=numpy.float32)
 		a = self.modifyFrameImage(a,offset,crop_end,bin)
 		return a

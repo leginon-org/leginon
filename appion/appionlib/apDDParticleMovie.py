@@ -6,7 +6,6 @@ import sys
 import math
 #appion
 from appionlib import apParticleExtractor
-from appionlib import apDDprocess
 from appionlib import apDisplay
 from appionlib import apFile
 from appionlib import apParticle

@@ -302,7 +302,7 @@ class ParticleExtractLoop(appionLoop2.AppionLoop):
 			help="Assessed mask run name")
 		self.parser.add_option("--label", dest="particlelabel", type="str", default=None,
 			help="select particles by label within the same run name")
-		self.parser.add_option("--ddstartframe", dest="startframe", type="int", default=1,
+		self.parser.add_option("--ddstartframe", dest="startframe", type="int", default=0,
 			help="starting frame for direct detector raw frame processing")
 		self.parser.add_option("--ddnframe", dest="nframe", type="int", default=0,
 			help="total frames to sum up for direct detector raw frame processing")
@@ -362,7 +362,7 @@ class ParticleExtractLoop(appionLoop2.AppionLoop):
 		self.totalpart = 0
 		if self.is_dd_frames:
 			from appionlib import apDDprocess
-			self.dd = apDDprocess.DirectDetectorProcessing()
+			self.dd = apDDprocess.initializeDDprocess(self.params['sessionname'])
 			self.dd.setUseGS(self.params['useGS'])
 		if len(self.imgtree) == 0:
 			apDisplay.printWarning("No images were found to process")

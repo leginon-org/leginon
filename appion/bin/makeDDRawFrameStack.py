@@ -6,8 +6,8 @@ import sys
 import math
 #appion
 from appionlib import appionLoop2
-from appionlib import apDDprocess
 from appionlib import apDisplay
+from appionlib import apDDprocess
 from appionlib import apFile
 from appionlib import apStack
 from appionlib import appiondata
@@ -30,7 +30,7 @@ class MakeRawFrameStackLoop(appionLoop2.AppionLoop):
 
 	#=======================
 	def preLoopFunctions(self):
-		self.dd = apDDprocess.DirectDetectorProcessing(self.params['wait'])
+		self.dd = apDDprocess.initializeDDprocess(self.params['sessionname'],self.params['wait'])
 		self.dd.setUseGS(self.params['useGS'])
 		self.imageids = []
 		if self.params['stackid']:
@@ -40,7 +40,7 @@ class MakeRawFrameStackLoop(appionLoop2.AppionLoop):
 	def processImage(self, imgdata):
 		# need to avoid non-frame saved image for proper caching
 		if imgdata is None or imgdata['camera']['save frames'] != True:
-			self.dd.log.write('%s skipped for no-frame-saved\n ' % imgdata['filename'])
+			apDisplay.printWarning('%s skipped for no-frame-saved\n ' % imgdata['filename'])
 			return
 		if self.params['stackid'] and imgdata.dbid not in self.imageids:
 			return
