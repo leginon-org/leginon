@@ -224,7 +224,7 @@ def writeTiltCom(processdir,align_file,recon_file,tilt_file,imageshape,thickness
 			"XAXISTILT %.1f" % xaxistilt,
 		]
 		if len(excludelist):
-			commands.append("EXCLUDELIST "+ ','.join(map((lambda x: str(x+1)),excludelist))) 
+			commands.append("EXCLUDELIST2 "+ ','.join(map((lambda x: str(x+1)),excludelist))) 
 		return writeCommand(processdir,'tilt',commands)
 
 def createETomoBoundaryModelEDF(processdir, templatedir, seriesname, sample_thickness,pixelsize):
