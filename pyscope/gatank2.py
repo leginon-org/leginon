@@ -180,15 +180,22 @@ class GatanK2Base(ccdcamera.CCDCamera):
 		t1 = time.time()
 		self.exposure_timestamp = (t1 + t0) / 2.0
 
-		# workaround to offset image problem
 		print image.shape
+		# workaround dose fractionation image rotate-flip not applied problem
+		if self.save_frames or self.align_frames:
+			image_shape = image.shape
+			# assume number of row is less than column
+			tmpimage_shape = (image.shape[0],image.shape[0])
+			image_dtype = image.dtype
+			tmpimage = numpy.fliplr(numpy.rot90(image,1))[:image_shape[0],:]
+			image = int(tmpimage.mean())*numpy.ones(image_shape,dtype=image_dtype)
+			image[:tmpimage.shape[0],:tmpimage.shape[1]] = tmpimage
+		# workaround to offset image problem
 		startx = self.getOffset()['x']
 		starty = self.getOffset()['y']
 		if startx != 0 or starty != 0:
 			endx = self.dimension['x'] + startx
 			endy = self.dimension['y'] + starty
-			print self.getOffset()
-			print 'original',self.dimension,self.binning
 			image = image[starty:endy,startx:endx]
 		print image.shape
 
