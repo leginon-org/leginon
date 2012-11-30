@@ -10,6 +10,7 @@ import numextension
 from pyami import mrc,imagefun,arraystats,numpil
 from leginon import correctorclient
 from appionlib import apDisplay, apDatabase
+import subprocess
 
 # testing options
 save_jpg = False
@@ -486,7 +487,7 @@ class DirectDetectorProcessing(object):
 	def makeCorrectedRawFrameStack(self,rundir, use_full_raw_area=False):
 		sys.stdout.write('\a')
 		sys.stdout.flush()
-		framestackpath = os.path.join(rundir,self.image['filename']+'_st.mrc')
+		self.framestackpath = os.path.join(rundir,self.image['filename']+'_st.mrc')
 		total_frames = self.getNumberOfFrameSaved()
 		half_way_frame = int(total_frames // 2)
 		first = 0 
@@ -498,13 +499,21 @@ class DirectDetectorProcessing(object):
 			array.max()
 			if start_frame == first:
 				# overwrite old stack mre file
-				mrc.write(array,framestackpath)
+				mrc.write(array,self.framestackpath)
 			elif start_frame == half_way_frame:
-				mrc.append(array,framestackpath,True)
+				mrc.append(array,self.framestackpath,True)
 			else:
 				# Only calculate stats if the last frame
-				mrc.append(array,framestackpath,False)
-		return framestackpath
+				mrc.append(array,self.framestackpath,False)
+		return self.framestackpath
+
+	def alignCorrectedFrameStack(self,rundir):
+		corrected_sumpath = os.path.join(rundir,self.image['filename']+'_c.mrc')
+		self.corrected_stackpath = os.path.join(rundir,self.framestackpath[:-4]+'_c'+self.framestackpath[-4:])
+		cmd = 'dosefgpu_driftcorr %s -fcs %s -fct %s' % (self.framestackpath,corrected_sumpath,self.corrected_stackpath)
+		self.proc = subprocess.Popen(cmd, shell=True)
+		self.proc.wait()
+		print self.proc.poll()
 
 if __name__ == '__main__':
 	dd = DirectDetectorProcessing()

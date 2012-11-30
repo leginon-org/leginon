@@ -25,6 +25,13 @@ class GatanK2Processing(apDDprocess.DirectDetectorProcessing):
 	def readFrameImage(self,frameimage_path,offset,crop_end,bin):
 		a = mrc.read(frameimage_path)
 		a = numpy.asarray(a,dtype=numpy.float32)
+
+		# work around wrong dimension problem from applying rotation to the frame images
+		# This commented out because the alignment program can not take non-square image anyway.
+		#tempdict = {'y':crop_end['x'],'x':crop_end['y']}
+		#crop_end = tempdict
+
+		# modify the size if needed
 		a = self.modifyFrameImage(a,offset,crop_end,bin)
 		return a
 

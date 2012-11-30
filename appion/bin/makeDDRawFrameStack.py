@@ -4,6 +4,8 @@
 import os
 import sys
 import math
+import shutil
+import subprocess
 #appion
 from appionlib import appionLoop2
 from appionlib import apDisplay
@@ -19,6 +21,8 @@ class MakeRawFrameStackLoop(appionLoop2.AppionLoop):
 			action="store_true", help="use full area of the raw frame, not leginon image area")
 		self.parser.add_option("--no-useGS", dest="useGS", default=True,
 			action="store_false", help="Do not use Gram-Schmidt process to scale dark image")
+		self.parser.add_option("--align", dest="align", default=False,
+			action="store_true", help="Make Aligned frame stack")
 		self.parser.add_option("--stackid", dest="stackid", type="int",
 			help="ID for particle stack (optional)", metavar="INT")
 		self.parser.remove_option("--uncorrected")
@@ -26,7 +30,11 @@ class MakeRawFrameStackLoop(appionLoop2.AppionLoop):
 
 	#=======================
 	def checkConflicts(self):
-		pass
+		if self.params['align']:
+			exename = 'dosefgpu_driftcorr'
+			driftcorrexe = subprocess.Popen("which "+exename, shell=True, stdout=subprocess.PIPE).stdout.read().strip()
+			if not os.path.isfile(driftcorrexe):
+				apDisplay.printError('Drift correction program not available')
 
 	#=======================
 	def preLoopFunctions(self):
@@ -61,6 +69,11 @@ class MakeRawFrameStackLoop(appionLoop2.AppionLoop):
 
 		### run batchboxer
 		self.dd.makeCorrectedRawFrameStack(rundir, self.params['rawarea'])
+		if self.params['align']:
+			self.dd.alignCorrectedFrameStack(rundir)
+			if os.path.isfile(self.dd.corrected_stackpath):
+				apFile.removeFile(self.dd.framestackpath)
+				shutil.move(self.dd.corrected_stackpath,self.dd.framestackpath)
 
 	def commitToDatabase(self, imgdata):
 		pass
