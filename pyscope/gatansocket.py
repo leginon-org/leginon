@@ -250,9 +250,7 @@ class GatanSocket(object):
 			top, left, bottom, right,
 			shutter,
 		])
-		if processing == 'dark':
-			longargs.append(0)
-		else:
+		if processing != 'dark':
 			longargs.append(shutterDelay)
 		longargs.extend([
 			divideBy2,
