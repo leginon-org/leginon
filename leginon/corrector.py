@@ -322,6 +322,9 @@ class Corrector(imagewatcher.ImageWatcher):
 		# so make sure there are no zeros in norm
 		normarray = numpy.clip(normarray, 0.001, sys.maxint)
 		normarray = normavg / normarray
+		# Avoid over correcting dead pixels
+		normarray = numpy.ma.masked_greater(normarray,20).filled(1)
+		# Saving normdata
 		normdata = leginondata.CameraImageData(initializer=refdata)
 		normdata['image'] = normarray
 		normdata['dark'] = dark

@@ -301,6 +301,8 @@ class CorrectorClient(cameraclient.CameraClient):
 		stats = numextension.allstats(normarray, mean=True)
 		normavg = stats['mean']
 		normarray = normavg / normarray
+		# Avoid over correcting dead pixels
+		normarray = numpy.ma.masked_greater(normarray,20).filled(1)
 		return normarray
 
 	def normalizeCameraImageData(self, imagedata, channel):
