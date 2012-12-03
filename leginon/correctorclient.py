@@ -275,6 +275,8 @@ class CorrectorClient(cameraclient.CameraClient):
 		b = darkarray.reshape(onedshape)
 		a_std = numextension.allstats(a,std=True)['std']
 		b_std = numextension.allstats(b,std=True)['std']
+		if b_std == 0:
+			return 1.0
 		ab_corr_coef = numpy.corrcoef(a,b)[(0,1)]
 		dark_scale = ab_corr_coef * a_std / b_std
 		return dark_scale

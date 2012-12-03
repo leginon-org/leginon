@@ -87,11 +87,14 @@ class DirectDetectorProcessing(object):
 	def getNumberOfFrameSavedFromImageData(self,imagedata):
 		return imagedata['camera']['nframes']
 
+	def getUsedFramesFromImageData(self,imagedata):
+		return imagedata['camera']['use frames']
+
 	def getScaledBrightArray(self,nframe):
 		return self.scaleRefImage('bright',nframe)
 
 	def getSingleFrameDarkArray(self):
-		darkdata = self.__getRefImageData('dark')
+		darkdata = self.getRefImageData('dark')
 		nframes = self.getNumberOfFrameSavedFromImageData(darkdata)
 		return darkdata['image'] / nframes
 
@@ -100,7 +103,7 @@ class DirectDetectorProcessing(object):
 
 	def OldgetSingleFrameDarkArray(self):
 		# work around for the bug in DE server between 11sep07 and 11nov22
-		return self.__getRefImageData('dark')['image']
+		return self.getRefImageData('dark')['image']
 
 	def getRawFramesName(self):
 		return self.framesname
@@ -144,7 +147,7 @@ class DirectDetectorProcessing(object):
 		return rawframedir
 
 
-	def __getRefImageData(self,reftype):
+	def getRefImageData(self,reftype):
 		if not self.use_full_raw_area:
 			refdata = self.image[reftype]
 			#refdata = self.c_client.getAlternativeChannelReference(reftype,refdata)
@@ -160,8 +163,8 @@ class DirectDetectorProcessing(object):
 		return refdata
 
 	def scaleRefImage(self,reftype,nframe,bias=False):
-		refdata = self.__getRefImageData(reftype)
-		ref_nframe = len(refdata['camera']['use frames'])
+		refdata = self.getRefImageData(reftype)
+		ref_nframe = len(self.getUsedFramesFromImageData(refdata))
 		refscale = float(nframe) / ref_nframe
 		scaled_refarray = refdata['image'] * refscale
 		return scaled_refarray
@@ -205,7 +208,7 @@ class DirectDetectorProcessing(object):
 		camerainfo['offset'] = offset
 		camerainfo['dimension'] = dimension
 		camerainfo['nframe'] = nframe
-		camerainfo['norm'] = self.image['norm']
+		camerainfo['norm'] = self.getRefImageData('norm')
 		if camerainfo['norm']:
 			print self.image['norm']['filename']
 		else:
@@ -229,6 +232,7 @@ class DirectDetectorProcessing(object):
 		# return True all the time to use Gram-Schmidt process to calculate darkarray scale
 		if self.use_GS:
 			return True
+		# self.camerainfo is not set for the new image yet so it may be different
 		if self.camerainfo['norm'].dbid != self.image['norm'].dbid:
 			if debug:
 				self.log.write( 'fail norm %d vs %d test\n ' % (self.camerainfo['norm'].dbid,self.image['norm'].dbid))
