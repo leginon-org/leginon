@@ -10,6 +10,7 @@ import traceback
 import redux.utility
 import redux.exceptions
 import redux.pipeline
+import pyami.version
 
 ### set up logging
 logger = logging.getLogger('redux')
@@ -50,6 +51,8 @@ class Server(SocketServer.ThreadingMixIn, SocketServer.TCPServer):
 
 def start_server(host, port):
 	server = Server((host,port), RequestHandler)
+	ver = pyami.version.getSubversionRevision()
+	logger.info('subversion revision: %s' % (ver,))
 	logger.info('host: %s,  port: %s' % server.server_address)
 	server.serve_forever()
 
