@@ -2,21 +2,12 @@
 
 import os
 import re
-import inspect
 import subprocess
+import fileutil
 
-def getInstalledLocation():
-	'''where is this module located'''
-	# full path of this module
-	this_file = inspect.currentframe().f_code.co_filename
-	fullmod = os.path.abspath(this_file)
-	# just the directory
-	dirname = os.path.dirname(fullmod)
-	return dirname
-
-def getSubverionRevision(filename=None):
+def getSubversionRevision(filename=None):
 	if filename is None:
-		dirname = getInstalledLocation()
+		dirname = fileutil.getMyDir(2)  # 2 means dir of the caller
 	elif os.path.isfile(filename):
 		dirname = os.path.dirname(os.path.abspath(filename))
 	else:
