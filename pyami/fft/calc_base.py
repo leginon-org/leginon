@@ -61,7 +61,7 @@ class Calculator(object):
 		fft_array = self.post_fft(fft_array, full, centered)
 		return fft_array
 
-	def reverse(fft_array):
+	def reverse(self, fft_array):
 		return self._reverse(fft_array)
 
 	def post_fft(self, fft_array, full=False, centered=False, mask=None):

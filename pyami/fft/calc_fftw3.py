@@ -113,8 +113,8 @@ class FFTW3Calculator(calc_base.Calculator):
 
 	def _reverse(self, fft_array):
 		imageshape = fft_array.shape[0], 2*(fft_array.shape[1]-1)
-		image_array = numpy.zeros(imageshape, dtype=float32)
-		input_array = numpy.zeros(fft_array.shape, dtype=complex)
+		image_array = numpy.zeros(imageshape, dtype=numpy.float)
+		input_array = numpy.zeros(fft_array.shape, dtype=numpy.complex)
 		newplan = self.plan(input_array, image_array, direction='backward')
 		input_array[:] = fft_array
 		newplan()
