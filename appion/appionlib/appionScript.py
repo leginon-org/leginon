@@ -260,9 +260,9 @@ class AppionScript(basicScript.BasicScript):
 			progrunq['revision'] = sline
 		if os.path.isdir(os.path.join(appiondir, ".svn")):
 			if progrunq['revision'] is None:
-				progrunq['revision'] = version.getSubverionRevision(appiondir)
+				progrunq['revision'] = version.getSubversionRevision(appiondir)
 			else:
-				progrunq['revision'] += "-"+version.getSubverionRevision(appiondir)
+				progrunq['revision'] += "-"+version.getSubversionRevision(appiondir)
 		if not progrunq['revision']:
 			progrunq['revision'] = 'unknown'
 		apDisplay.printMsg("Running Appion version '%s'"%(progrunq['revision']))

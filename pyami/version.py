@@ -56,5 +56,5 @@ def getSubversionRevision(filename=None):
 	return None
 
 if __name__ == "__main__":
-	rev = getSubverionRevision()
+	rev = getSubversionRevision()
 	print "Revision: %s"%(rev)
