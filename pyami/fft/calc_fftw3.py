@@ -119,3 +119,18 @@ class FFTW3Calculator(calc_base.Calculator):
 		input_array[:] = fft_array
 		newplan()
 		return image_array
+
+	def _fshape(self, fft_array, real_shape):
+		'''
+		Create a new fft_array by cropping or padding that will invert to
+		a real image of the given shape
+		'''
+		new_fft_shape = real_shape[0], real_shape[1]/2+1
+		new_fft_array = numpy.zeros(new_fft_shape, dtype=fft_array.dtype)
+		halfheight = min(new_fft_shape[0] / 2, fft_array.shape[0] / 2)
+		width = min(new_fft_shape[1], fft_array.shape[1])
+		new_fft_array[:halfheight,:width] = fft_array[:halfheight,:width]
+		new_fft_array[-halfheight:,:width] = fft_array[-halfheight:,:width]
+		norm = fft_array.shape[0] * 2 * (fft_array.shape[1]-1)
+		new_fft_array /= norm
+		return new_fft_array

@@ -101,3 +101,8 @@ class Calculator(object):
 		pow = self.post_fft(pow, full, centered, mask)
 		return pow
 
+	def reshape(self, image_array, new_shape):
+		fft_array = self.forward_raw(image_array)
+		new_fft_array = self._fshape(fft_array, new_shape)
+		new_image = self.reverse(new_fft_array)
+		return new_image
