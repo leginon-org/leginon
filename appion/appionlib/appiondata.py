@@ -696,9 +696,19 @@ class ApDDStackParamsData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
 			('preset', str),
+			('align', bool),
+			('bin', int),
 		)
 	typemap = classmethod(typemap)
 
+class ApDDAlignImagePairData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('source',leginon.leginondata.AcquisitionImageData),
+			('result',leginon.leginondata.AcquisitionImageData),
+			('ddstackrun',ApDDStackRunData),
+		)
+	typemap = classmethod(typemap)
 
 ### END Stack tables ###
 ### START alignment tables  ###

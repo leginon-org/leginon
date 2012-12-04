@@ -8,7 +8,7 @@ import scipy.stats
 import scipy.ndimage as ndimage
 import numextension
 from pyami import mrc,imagefun,arraystats,numpil
-from leginon import correctorclient
+from leginon import correctorclient,leginondata
 from appionlib import apDisplay, apDatabase
 import subprocess
 
@@ -45,7 +45,9 @@ class DirectDetectorProcessing(object):
 		self.camerainfo = {}
 		self.setDefaultDimension(4096,3072)
 		self.c_client = correctorclient.CorrectorClient()
+		self.stack_binning = 1
 		self.correct_dark_gain = True
+		self.aligned_camdata = None
 		# change this to True for loading bias image for correction
 		self.use_bias = False
 		self.use_GS = False
@@ -488,21 +490,35 @@ class DirectDetectorProcessing(object):
 		self.stripenormarray = (stripearray.mean() / stripearray)**2
 		return self.stripenormarray
 
+	def modifyImageArray(self,array):
+		cdata = self.getAlignedCameraEMData()
+		if not cdata:
+			additional_binning = self.getNewBinning()
+			return imagefun.bin(array,additional_binning)
+		else:
+			# Have cdata only if alignment will be done
+			additional_binning = cdata['binning']['x'] / self.image['camera']['binning']['x']
+			# Need squared image for alignment
+			array = imagefun.bin(array,additional_binning)
+			array = array[cdata['offset']['y']:cdata['offset']['y']+cdata['dimension']['y'],cdata['offset']['x']:cdata['offset']['x']+cdata['dimension']['x']]
+		apDisplay.printMsg('frame image shape is now x=%d,y=%d' % (array.shape[1],array.shape[0]))
+		return array
+		
 	def makeCorrectedRawFrameStack(self,rundir, use_full_raw_area=False):
 		sys.stdout.write('\a')
 		sys.stdout.flush()
 		self.framestackpath = os.path.join(rundir,self.image['filename']+'_st.mrc')
 		total_frames = self.getNumberOfFrameSaved()
 		half_way_frame = int(total_frames // 2)
-		first = 0 
+		first = 0
 		for start_frame in range(first,first+total_frames):
 			array = self.__correctFrameImage(start_frame,1,use_full_raw_area,False)
 			# if non-fatal error occurs, end here
 			if array is False:
 				break
-			array.max()
+			array = self.modifyImageArray(array)
 			if start_frame == first:
-				# overwrite old stack mre file
+				# overwrite old stack mrc file
 				mrc.write(array,self.framestackpath)
 			elif start_frame == half_way_frame:
 				mrc.append(array,self.framestackpath,True)
@@ -511,13 +527,76 @@ class DirectDetectorProcessing(object):
 				mrc.append(array,self.framestackpath,False)
 		return self.framestackpath
 
+	def setNewBinning(self,bin):
+		self.stack_binning = bin
+
+	def getNewBinning(self):
+		return self.stack_binning
+
+	def setAlignedCameraEMData(self):
+		camdata = leginondata.CameraEMData(initializer=self.image['camera'])
+		mindim = min(camdata['dimension']['x'],camdata['dimension']['y'])
+		camerasize = {}
+		newbin = self.getNewBinning()
+		for axis in ('x','y'):
+			if camdata['binning'][axis] != 1 or camdata['offset'][axis] != 0:
+				apDisplay.displayError('I can only process unbinned full size image for now')
+			if newbin < camdata['binning'][axis]:
+				apDisplay.displayError('can not change to smaller binning')
+			camerasize[axis] = (camdata['offset'][axis]*2+camdata['dimension'][axis])*camdata['binning'][axis]
+			camdata['dimension'][axis] = mindim * camdata['binning'][axis] / newbin
+			camdata['binning'][axis] = newbin
+			camdata['offset'][axis] = (camerasize[axis]/newbin -camdata['dimension'][axis])/2
+		self.aligned_camdata = camdata
+
+	def getAlignedCameraEMData(self):
+		return self.aligned_camdata
+		
 	def alignCorrectedFrameStack(self,rundir):
-		corrected_sumpath = os.path.join(rundir,self.image['filename']+'_c.mrc')
-		self.corrected_stackpath = os.path.join(rundir,self.framestackpath[:-4]+'_c'+self.framestackpath[-4:])
-		cmd = 'dosefgpu_driftcorr %s -fcs %s -fct %s' % (self.framestackpath,corrected_sumpath,self.corrected_stackpath)
+		'''
+		Xueming Li's gpu program for aligning frames using all defaults
+		'''
+		self.aligned_sumpath = os.path.join(rundir,self.image['filename']+'_c.mrc')
+		self.aligned_stackpath = os.path.join(rundir,self.framestackpath[:-4]+'_c'+self.framestackpath[-4:])
+		cmd = 'dosefgpu_driftcorr %s -fcs %s -ssc 1 -fct %s' % (self.framestackpath,self.aligned_sumpath,self.aligned_stackpath)
 		self.proc = subprocess.Popen(cmd, shell=True)
 		self.proc.wait()
 		print self.proc.poll()
+
+	def makeAlignedImageData(self):
+		'''
+		Prepare ImageData to be uploaded after alignment
+		'''
+		camdata = self.getAlignedCameraEMData()
+		align_presetdata = leginondata.PresetData(initializer=self.image['preset'])
+		if align_presetdata is None:
+			old_name = 'ma'
+			align_presetdata = leginondata.PresetData(
+					name='ma-a',
+					magnification=self.image['scope']['magnification'],
+					defocus=self.image['scope']['defocus'],
+					tem = self.image['scope']['tem'],
+					ccdcamera = camdata['ccdcamera'],
+			)
+		else:
+			old_name = align_presetdata['name']
+			align_presetdata['name'] = old_name+'-a'
+		align_presetdata['dimension'] = camdata['dimension'],
+		align_presetdata['binning'] = camdata['binning'],
+		align_presetdata['offset'] = camdata['offset'],
+		align_presetdata['exposure time'] = camdata['exposure time']
+		# make new imagedata with the align_preset amd aligned CameraEMData
+		imagedata = leginondata.AcquisitionImageData(initializer=self.image)
+		imagedata['preset'] = align_presetdata
+		imagefilename = imagedata['filename']
+		bits = imagefilename.split(old_name)
+		before_string = old_name.join(bits[:-1])
+		newfilename = align_presetdata['name'].join((before_string,bits[-1]))
+		imagedata['camera'] = camdata
+		imagedata['camera']['align frames'] = True
+		imagedata['image'] = mrc.read(self.aligned_sumpath)
+		imagedata['filename'] = newfilename
+		return imagedata
 
 if __name__ == '__main__':
 	dd = DirectDetectorProcessing()

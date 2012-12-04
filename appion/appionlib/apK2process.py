@@ -2,7 +2,7 @@
 
 import numpy
 from pyami import mrc,imagefun
-
+from leginon import leginondata
 from appionlib import apDDprocess,apDisplay
 
 # testing options
@@ -37,6 +37,28 @@ class GatanK2Processing(apDDprocess.DirectDetectorProcessing):
 		# modify the size if needed
 		a = self.modifyFrameImage(a,offset,crop_end,bin)
 		return a
+
+	def getDefaultCorrectedImageData(self):
+		if self.image['camera']['ccdcamera']['name'] == 'GatanK2Super':
+			return leginondata.AcquisitionImageData().direct_query(1989908)
+		elif self.image['camera']['ccdcamera']['name'] == 'GatanK2Counting':
+			return leginondata.AcquisitionImageData().direct_query(1989725)
+		else:
+			return self.image
+		
+	def getRefImageData(self,reftype):
+		if not self.use_full_raw_area:
+			refdata = self.image[reftype]
+			if refdata is None:
+				default_image = self.getDefaultCorrectedImage()
+				refdata = default_image[reftype]
+		else:
+			# use most recent CorrectorImageData
+			# TO DO: this should research only ones before the image is taken.
+			scopedata = self.image['scope']
+			channel = self.image['channel']
+			refdata = self.c_client.researchCorrectorImageData(reftype, scopedata, self.camerainfo, channel)
+		return refdata
 
 if __name__ == '__main__':
 	dd = GatanK2Processing()

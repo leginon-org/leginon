@@ -19,12 +19,14 @@ class MakeRawFrameStackLoop(appionLoop2.AppionLoop):
 	def setupParserOptions(self):
 		self.parser.add_option("--rawarea", dest="rawarea", default=False,
 			action="store_true", help="use full area of the raw frame, not leginon image area")
-		self.parser.add_option("--no-useGS", dest="useGS", default=True,
-			action="store_false", help="Do not use Gram-Schmidt process to scale dark image")
+		self.parser.add_option("--useGS", dest="useGS", default=False,
+			action="store_true", help="Use Gram-Schmidt process to scale dark image")
 		self.parser.add_option("--align", dest="align", default=False,
 			action="store_true", help="Make Aligned frame stack")
 		self.parser.add_option("--stackid", dest="stackid", type="int",
 			help="ID for particle stack (optional)", metavar="INT")
+		self.parser.add_option("--bin", dest="bin", type="int", default=1,
+			help="Binning factor to make the stack (optional)", metavar="INT")
 		self.parser.remove_option("--uncorrected")
 		self.parser.remove_option("--reprocess")
 
@@ -67,19 +69,26 @@ class MakeRawFrameStackLoop(appionLoop2.AppionLoop):
 			apDisplay.printWarning(e.message)
 			return
 
-		### run batchboxer
+		self.dd.setNewBinning(self.params['bin'])
+		if self.params['align']:
+			self.dd.setAlignedCameraEMData()
+		### make stack
 		self.dd.makeCorrectedRawFrameStack(rundir, self.params['rawarea'])
 		if self.params['align']:
 			self.dd.alignCorrectedFrameStack(rundir)
-			if os.path.isfile(self.dd.corrected_stackpath):
+			if os.path.isfile(self.dd.aligned_stackpath):
+				self.aligned_imagedata = self.dd.makeAlignedImageData()
+				apDisplay.printMsg(' Replacing unaligned stack with the aligned one....')
 				apFile.removeFile(self.dd.framestackpath)
-				shutil.move(self.dd.corrected_stackpath,self.dd.framestackpath)
+				shutil.move(self.dd.aligned_stackpath,self.dd.framestackpath)
 
 	def commitToDatabase(self, imgdata):
-		pass
+		apDisplay.printMsg('Uploading aligned image as %s' % imgdata['filename'])
+		q = appiondata.ApDDAlignImagePairData(source=imgdata,result=self.aligned_imagedata,ddstackrun=self.rundata)
+		q.insert()
 
 	def insertFunctionRun(self):
-		qparams = appiondata.ApDDStackParamsData(preset=self.params['preset'])
+		qparams = appiondata.ApDDStackParamsData(preset=self.params['preset'],align=self.params['align'],bin=self.params['bin'],)
 		qpath = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
 		sessiondata = self.getSessionData()
 		q = appiondata.ApDDStackRunData(runname=self.params['runname'],params=qparams,session=sessiondata,path=qpath)
