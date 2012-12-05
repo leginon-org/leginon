@@ -391,28 +391,41 @@ class ManualAcquisition(node.Node):
 		gridboxlabels.reverse()
 		return gridboxlabels
 
+	def calculateCutSize(self,camsize):
+		## cut down to no more than 1024x1024, adjust offset to keep same center
+		maxcutsize = 1024
+		cutsize = min(camsize['x'],camsize['y'])
+		while cutsize > maxcutsize:
+			cutsize = cutsize / 2
+		return cutsize
+
+	def makeCenterImageCamSettings(self,origcam):
+		# deep copy so internal dicts don't get modified
+		tmpcam = copy.deepcopy(origcam)
+		## deactivate frame saving and align frame flags
+		tmpcam['save frames'] = False
+		tmpcam['align frames'] = False
+
+		camsize = self.instrument.ccdcamera.getCameraSize()
+		cutsize = self.calculateCutSize(camsize)	
+		for axis in ('x','y'):
+			tmpcam['dimension'][axis] = cutsize
+			tmpcam['offset'][axis] = (camsize[axis] / tmpcam['binning'][axis] - cutsize) / 2
+		self.logger.info('Using %dx%d image...' % (tmpcam['dimension']['x'],tmpcam['dimension']['y']))
+		return tmpcam
+
 	def measureDose(self):
 		self.logger.info('acquiring dose image')
 		# configure camera using settings, but only 512x512 to save time
 		origcam = self.settings['camera settings']
-		# deep copy so internal dicts don't get modified
-		tmpcam = copy.deepcopy(origcam)
-
-		## cut down to 512x512, adjust offset to keep same center
-		cutsize = 1024
-		for axis in ('x','y'):
-			change = origcam['dimension'][axis] - cutsize
-			if change > 0:
-				tmpcam['dimension'][axis] = cutsize
-				tmpcam['offset'][axis] += (change / 2)
-
+		tmpcam = self.makeCenterImageCamSettings(origcam)
 		self.instrument.ccdcamera.Settings = tmpcam
 
 		# acquire image
 		imagedata = self.acquireCorrectedCameraImageData()
 
 		# display
-		self.logger.info('Displaying %dx%d dose image...' % (cutsize,cutsize))
+		self.logger.info('Displaying dose image...')
 		self.getImageStats(imagedata['image'])
 		self.setImage(imagedata['image'])
 
@@ -460,12 +473,10 @@ class ManualAcquisition(node.Node):
 		self.beep()
 		camdata1 = {}
 
+		# configure camera using settings, but only 512x512 to save time
+		origcam = self.settings['camera settings']
+		camdata1 = self.makeCenterImageCamSettings(origcam)
 		camdata1['exposure time']=self.focexptime
-		cutsize = 1024
-		camdata1['dimension'] = {'x':cutsize, 'y':cutsize}
-		camdata1['binning'] = {'x':1, 'y':1}
-		camsize = self.instrument.ccdcamera.getCameraSize()
-		camdata1['offset'] = {'x': (camsize['x']-cutsize)/2, 'y':(camsize['y']-cutsize)/2}
 		self.instrument.ccdcamera.Settings = camdata1
 		pixelsize,center = self.getReciprocalPixelSizeFromInstrument()
 		self.ht = self.instrument.tem.HighTension
