@@ -62,8 +62,19 @@ class Correlator(object):
 	def swapQuadrants(self, image):
 		return imagefun.swap_quadrants(image)
 
+	def getCenterSquareImage(self, array):
+		shape = array.shape
+		if shape[0] == shape[1]:
+			return array
+		minsize = min(shape)
+		offsety = (shape[0] - minsize) / 2
+		endy = offsety + minsize
+		offsetx = (shape[1] - minsize) / 2
+		endx = offsetx + minsize
+		return array[offsety:endy,offsetx:endx]
+
 	def correlate(self, imagedata, tiltcorrection=True, channel=None,wiener=False,taper=0,corrtype='phase'):
-		image = imagedata['image']
+		image = self.getCenterSquareImage(imagedata['image'])
 		if len(image.shape) != 2 or image.shape[0] != image.shape[1]:
 			raise ValueError
 
