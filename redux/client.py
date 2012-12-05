@@ -67,6 +67,7 @@ def dummy_callback(option, opt, value, parser):
 
 def parse_argv():
 	# initial parse to determine pipeline, with help and errors disabled
+	'''
 	parser = OptionParser()
 	add_option(parser, 'pipeline', None, 'pipeline preset to use')
 	add_option(parser, 'pipes', None, 'pipeline defined by sequence of pipes:  name:cls,name:cls,...')
@@ -81,6 +82,8 @@ def parse_argv():
 		pipes = redux.pipeline.pipes_by_string(options.pipes)
 	else:
 		pipes = []
+	'''
+	pipes = redux.pipeline.pipes_by_preset('standard')
 
 	# final parse
 	parser = OptionParser()
