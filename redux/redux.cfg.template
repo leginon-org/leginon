@@ -14,3 +14,7 @@ enable: no
 path: /var/cache/myami/redux
 disksize:  500
 memsize: 500
+
+# default uses current directory... better to specify full path
+[log]
+file: redux.log
