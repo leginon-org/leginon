@@ -16,7 +16,7 @@ prog=reduxd
 
 start() {        
 	echo -n $"Starting $prog: "
-	nohup $prog &
+	nohup $prog > /dev/null &
 	RETVAL=$?
 	sleep 1;
 	echo $"Started $prog: log location configured in redux.cfg"
