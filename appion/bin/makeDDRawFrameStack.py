@@ -74,6 +74,7 @@ class MakeRawFrameStackLoop(appionLoop2.AppionLoop):
 			self.dd.setAlignedCameraEMData()
 		### make stack
 		self.dd.makeCorrectedRawFrameStack(rundir, self.params['rawarea'])
+		self.aligned_imagedata = None
 		if self.params['align']:
 			self.dd.alignCorrectedFrameStack(rundir)
 			if os.path.isfile(self.dd.aligned_stackpath):
@@ -83,9 +84,10 @@ class MakeRawFrameStackLoop(appionLoop2.AppionLoop):
 				shutil.move(self.dd.aligned_stackpath,self.dd.framestackpath)
 
 	def commitToDatabase(self, imgdata):
-		apDisplay.printMsg('Uploading aligned image as %s' % imgdata['filename'])
-		q = appiondata.ApDDAlignImagePairData(source=imgdata,result=self.aligned_imagedata,ddstackrun=self.rundata)
-		q.insert()
+		if self.aligned_imagedata != None:
+			apDisplay.printMsg('Uploading aligned image as %s' % imgdata['filename'])
+			q = appiondata.ApDDAlignImagePairData(source=imgdata,result=self.aligned_imagedata,ddstackrun=self.rundata)
+			q.insert()
 
 	def insertFunctionRun(self):
 		qparams = appiondata.ApDDStackParamsData(preset=self.params['preset'],align=self.params['align'],bin=self.params['bin'],)
