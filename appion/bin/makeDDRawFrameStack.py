@@ -14,7 +14,7 @@ from appionlib import apFile
 from appionlib import apStack
 from appionlib import appiondata
 
-class MakeRawFrameStackLoop(appionLoop2.AppionLoop):
+class MakeFrameStackLoop(appionLoop2.AppionLoop):
 	#=======================
 	def setupParserOptions(self):
 		self.parser.add_option("--rawarea", dest="rawarea", default=False,
@@ -42,12 +42,15 @@ class MakeRawFrameStackLoop(appionLoop2.AppionLoop):
 	def preLoopFunctions(self):
 		self.dd = apDDprocess.initializeDDprocess(self.params['sessionname'],self.params['wait'])
 		self.dd.setUseGS(self.params['useGS'])
+		self.dd.setRunDir(self.params['rundir'])
 		self.imageids = []
 		if self.params['stackid']:
 			self.imageids = apStack.getImageIdsFromStack(self.params['stackid'])
 
 	#=======================
 	def processImage(self, imgdata):
+		# initialize aligned_imagedata as if not aligned
+		self.aligned_imagedata = None
 		# need to avoid non-frame saved image for proper caching
 		if imgdata is None or imgdata['camera']['save frames'] != True:
 			apDisplay.printWarning('%s skipped for no-frame-saved\n ' % imgdata['filename'])
@@ -73,10 +76,9 @@ class MakeRawFrameStackLoop(appionLoop2.AppionLoop):
 		if self.params['align']:
 			self.dd.setAlignedCameraEMData()
 		### make stack
-		self.dd.makeCorrectedRawFrameStack(rundir, self.params['rawarea'])
-		self.aligned_imagedata = None
+		self.dd.makeCorrectedFrameStack(self.params['rawarea'])
 		if self.params['align']:
-			self.dd.alignCorrectedFrameStack(rundir)
+			self.dd.alignCorrectedFrameStack()
 			if os.path.isfile(self.dd.aligned_stackpath):
 				self.aligned_imagedata = self.dd.makeAlignedImageData()
 				apDisplay.printMsg(' Replacing unaligned stack with the aligned one....')
@@ -105,7 +107,7 @@ class MakeRawFrameStackLoop(appionLoop2.AppionLoop):
 				self.rundata = {}
 
 if __name__ == '__main__':
-	makeStack = MakeRawFrameStackLoop()
+	makeStack = MakeFrameStackLoop()
 	makeStack.run()
 
 

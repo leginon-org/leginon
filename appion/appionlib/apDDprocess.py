@@ -9,7 +9,7 @@ import scipy.ndimage as ndimage
 import numextension
 from pyami import mrc,imagefun,arraystats,numpil
 from leginon import correctorclient,leginondata
-from appionlib import apDisplay, apDatabase
+from appionlib import apDisplay, apDatabase,apDBImage
 import subprocess
 
 # testing options
@@ -38,6 +38,7 @@ def initializeDDprocess(sessionname,wait_flag=False):
 class DirectDetectorProcessing(object):
 	def __init__(self,wait_for_new=False):
 		self.image = None
+		self.setRunDir(os.getcwd())
 		self.stripenorm_imageid = None
 		self.waittime = 0 # in minutes
 		if wait_for_new:
@@ -70,9 +71,16 @@ class DirectDetectorProcessing(object):
 	def setImageData(self,imagedata):
 		self.image = imagedata
 		self.__setRawFrameInfoFromImage()
+		self.framestackpath = os.path.join(self.rundir,self.image['filename']+'_st.mrc')
 
 	def getImageData(self):
 		return self.image
+
+	def setRunDir(self,rundir):
+		self.rundir = rundir
+
+	def getRunDir(self):
+		return self.rundir
 
 	def getDefaultDimension(self):
 		return self.dimension
@@ -504,10 +512,9 @@ class DirectDetectorProcessing(object):
 		apDisplay.printMsg('frame image shape is now x=%d,y=%d' % (array.shape[1],array.shape[0]))
 		return array
 		
-	def makeCorrectedRawFrameStack(self,rundir, use_full_raw_area=False):
+	def makeCorrectedFrameStack(self, use_full_raw_area=False):
 		sys.stdout.write('\a')
 		sys.stdout.flush()
-		self.framestackpath = os.path.join(rundir,self.image['filename']+'_st.mrc')
 		total_frames = self.getNumberOfFrameSaved()
 		half_way_frame = int(total_frames // 2)
 		first = 0
@@ -552,16 +559,41 @@ class DirectDetectorProcessing(object):
 	def getAlignedCameraEMData(self):
 		return self.aligned_camdata
 		
-	def alignCorrectedFrameStack(self,rundir):
+	def updateFrameStackHeaderImageStats(self,stackpath):
+		'''
+		This function update the header of dosefgpu_driftcorr corrected stack file without array stats.
+		'''
+		if not os.path.isfile(stackpath):
+			return
+		header = mrc.readHeaderFromFile(stackpath)
+		if header['amax'] == header['amin']:
+			return
+		apDisplay.printMsg('Update the stack header with middle slice')
+		total_frames = header['nz']
+		half_way_frame = int(total_frames // 2)
+		array = mrc.read(stackpath,half_way_frame)
+		stats = arraystats.all(array)
+		header['amin'] = stats['min']+0
+		header['amax'] = stats['max']+0
+		header['amean'] = stats['mean']+0
+		header['rms'] = stats['std']+0
+		mrc.update_file_header(stackpath, header)
+		
+	def alignCorrectedFrameStack(self):
 		'''
 		Xueming Li's gpu program for aligning frames using all defaults
 		'''
+		rundir = self.getRunDir()
 		self.aligned_sumpath = os.path.join(rundir,self.image['filename']+'_c.mrc')
 		self.aligned_stackpath = os.path.join(rundir,self.framestackpath[:-4]+'_c'+self.framestackpath[-4:])
 		cmd = 'dosefgpu_driftcorr %s -fcs %s -ssc 1 -fct %s' % (self.framestackpath,self.aligned_sumpath,self.aligned_stackpath)
+		apDisplay.printMsg('Running: %s'% cmd)
 		self.proc = subprocess.Popen(cmd, shell=True)
 		self.proc.wait()
-		print self.proc.poll()
+		if os.path.isfile(self.aligned_stackpath):
+			self.updateFrameStackHeaderImageStats(self.aligned_stackpath)
+		else:
+			apDisplay.printError('dosefgpu_driftcorr FAILED: \n%s not created.' % os.path.basename(stackpath))
 
 	def makeAlignedImageData(self):
 		'''
@@ -595,13 +627,13 @@ class DirectDetectorProcessing(object):
 		imagedata['camera'] = camdata
 		imagedata['camera']['align frames'] = True
 		imagedata['image'] = mrc.read(self.aligned_sumpath)
-		imagedata['filename'] = newfilename
+		imagedata['filename'] = apDBImage.makeUniqueImageFilename(imagedata,old_name,align_presetdata['name'])
 		return imagedata
 
 if __name__ == '__main__':
 	dd = DirectDetectorProcessing()
-	dd.setImageId(1640790)
+	dd.setImageId(1991218)
+	dd.setRunDir('./')
+	dd.setAlignedCameraEMData()
 	start_frame = 0
-	nframe = 5
-	corrected = dd.correctFrameImage(start_frame,nframe)
 	mrc.write(corrected,'corrected_frame%d_%d.mrc' % (start_frame,nframe))
