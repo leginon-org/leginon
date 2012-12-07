@@ -23,6 +23,8 @@ class MakeFrameStackLoop(appionLoop2.AppionLoop):
 			action="store_true", help="Use Gram-Schmidt process to scale dark image")
 		self.parser.add_option("--align", dest="align", default=False,
 			action="store_true", help="Make Aligned frame stack")
+		self.parser.add_option("--defergpu", dest="defergpu", default=False,
+			action="store_true", help="Make unaligned frame stack first on computer without gpu alignment program")
 		self.parser.add_option("--stackid", dest="stackid", type="int",
 			help="ID for particle stack (optional)", metavar="INT")
 		self.parser.add_option("--bin", dest="bin", type="int", default=1,
@@ -32,7 +34,7 @@ class MakeFrameStackLoop(appionLoop2.AppionLoop):
 
 	#=======================
 	def checkConflicts(self):
-		if self.params['align']:
+		if self.params['align'] and not self.params['defergpu']:
 			exename = 'dosefgpu_driftcorr'
 			driftcorrexe = subprocess.Popen("which "+exename, shell=True, stdout=subprocess.PIPE).stdout.read().strip()
 			if not os.path.isfile(driftcorrexe):
@@ -57,13 +59,6 @@ class MakeFrameStackLoop(appionLoop2.AppionLoop):
 			return
 		if self.params['stackid'] and imgdata.dbid not in self.imageids:
 			return
-		imgname = imgdata['filename']
-		stackname = imgname+'_st.mrc'
-
-		### first remove any existing stack file
-		rundir = self.params['rundir']
-		stackfilepath = os.path.join(rundir, stackname)
-		apFile.removeFile(stackfilepath)
 
 		### set processing image
 		try:
@@ -72,12 +67,26 @@ class MakeFrameStackLoop(appionLoop2.AppionLoop):
 			apDisplay.printWarning(e.message)
 			return
 
+		# set other parameters
 		self.dd.setNewBinning(self.params['bin'])
 		if self.params['align']:
 			self.dd.setAlignedCameraEMData()
+
+		### first remove any existing stack file
+		apFile.removeFile(self.dd.framestackpath)
 		### make stack
 		self.dd.makeCorrectedFrameStack(self.params['rawarea'])
+
+		# Align
 		if self.params['align']:
+			# make a fake log so that catchUpDDAlign will know that frame stack is done
+			fakelog = self.dd.framestackpath[:-4]+'_Log.txt'
+			f = open(fakelog,'w')
+			f.write('Fake log to mark the unaligned frame stack as done\n')
+			f.close()
+			if self.params['defergpu']:
+				return
+			# Doing the alignment
 			self.dd.alignCorrectedFrameStack()
 			if os.path.isfile(self.dd.aligned_stackpath):
 				self.aligned_imagedata = self.dd.makeAlignedImageData()

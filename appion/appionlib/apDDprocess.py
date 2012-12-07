@@ -72,6 +72,8 @@ class DirectDetectorProcessing(object):
 		self.image = imagedata
 		self.__setRawFrameInfoFromImage()
 		self.framestackpath = os.path.join(self.rundir,self.image['filename']+'_st.mrc')
+		self.aligned_sumpath = os.path.join(self.rundir,self.image['filename']+'_c.mrc')
+		self.aligned_stackpath = os.path.join(self.rundir,self.framestackpath[:-4]+'_c'+self.framestackpath[-4:])
 
 	def getImageData(self):
 		return self.image
@@ -133,15 +135,20 @@ class DirectDetectorProcessing(object):
 		imagepath = imagedata['session']['image path']
 
 		rawframedir = os.path.join(imagepath,'%s.frames' % imagedata['filename'])
+		if not self.waitForPathExist(rawframedir):
+			apDisplay.printError('Raw Frame Dir %s does not exist.' % rawframedir)
+		return rawframedir
+
+	def waitForPathExist(self,newpath):
 		waitmin = 0
-		while not os.path.exists(rawframedir):
+		while not os.path.exists(newpath):
 			if self.waittime < 0.1:
-				apDisplay.printError('Raw Frame Directory %s does not exist.' % rawframedir)
-			apDisplay.printWarning('Raw Frame Directory %s does not exist. Wait for 3 min.' % rawframedir)
+				return False
+			apDisplay.printWarning('%s does not exist. Wait for 3 min.' % newpath)
 			time.sleep(180)
 			waitmin += 3
 			apDisplay.printMsg('Waited for %d min so far' % waitmin)
-		return rawframedir
+		return True
 
 	def OldgetRawFrameDirFromImage(self,imagedata):
 		# works between 11sep07 and 11nov22
@@ -584,8 +591,6 @@ class DirectDetectorProcessing(object):
 		Xueming Li's gpu program for aligning frames using all defaults
 		'''
 		rundir = self.getRunDir()
-		self.aligned_sumpath = os.path.join(rundir,self.image['filename']+'_c.mrc')
-		self.aligned_stackpath = os.path.join(rundir,self.framestackpath[:-4]+'_c'+self.framestackpath[-4:])
 		cmd = 'dosefgpu_driftcorr %s -fcs %s -ssc 1 -fct %s' % (self.framestackpath,self.aligned_sumpath,self.aligned_stackpath)
 		apDisplay.printMsg('Running: %s'% cmd)
 		self.proc = subprocess.Popen(cmd, shell=True)
@@ -629,6 +634,21 @@ class DirectDetectorProcessing(object):
 		imagedata['image'] = mrc.read(self.aligned_sumpath)
 		imagedata['filename'] = apDBImage.makeUniqueImageFilename(imagedata,old_name,align_presetdata['name'])
 		return imagedata
+
+	def isReadyForAlignment(self):
+		'''
+		Check to see if frame stack creation is completed.
+		'''
+		rundir = self.getRunDir()
+		if not self.waitForPathExist(self.framestackpath):
+			apDisplay.printWarning('Stack making not started, Skipping')
+			return False
+		# Unless the _Log.txt is made, even if faked, the frame stack is not completed
+		logpath = self.framestackpath[:-4]+'_Log.txt'
+		if not self.waitForPathExist(logpath):
+			apDisplay.printWarning('Stack making not finished, Skipping')
+			return False
+		return True	
 
 if __name__ == '__main__':
 	dd = DirectDetectorProcessing()
