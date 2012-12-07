@@ -29,8 +29,8 @@ cache_on = configparser.get('cache','enable')
 if cache_on.strip().lower() in ('yes','on','true'):
 	config['cache on'] = True
 	config['cache path'] = configparser.get('cache','path')
-	config['cache disk size'] = configparser.get('cache','disksize')
-	config['cache mem size'] = configparser.get('cache','memsize')
+	config['cache disk size'] = configparser.getint('cache','disksize')
+	config['cache mem size'] = configparser.getint('cache','memsize')
 config['log file'] = configparser.get('log', 'file')
 
 def printConfig():
