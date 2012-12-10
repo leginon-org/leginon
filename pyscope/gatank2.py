@@ -180,16 +180,13 @@ class GatanK2Base(ccdcamera.CCDCamera):
 		t1 = time.time()
 		self.exposure_timestamp = (t1 + t0) / 2.0
 
-		print image.shape
+		print 'got',image.shape
 		# workaround dose fractionation image rotate-flip not applied problem
 		if self.save_frames or self.align_frames:
 			image_shape = image.shape
-			# assume number of row is less than column
-			tmpimage_shape = (image.shape[0],image.shape[0])
+			# assume number of columns is less than rows
 			image_dtype = image.dtype
-			tmpimage = numpy.fliplr(numpy.rot90(image,1))[:image_shape[0],:]
-			image = int(tmpimage.mean())*numpy.ones(image_shape,dtype=image_dtype)
-			image[:tmpimage.shape[0],:tmpimage.shape[1]] = tmpimage
+			image = numpy.fliplr(numpy.rot90(image,1))
 		# workaround to offset image problem
 		startx = self.getOffset()['x']
 		starty = self.getOffset()['y']
@@ -197,7 +194,7 @@ class GatanK2Base(ccdcamera.CCDCamera):
 			endx = self.dimension['x'] + startx
 			endy = self.dimension['y'] + starty
 			image = image[starty:endy,startx:endx]
-		print image.shape
+		print 'modified',image.shape
 
 		if self.dm_processing == 'gain normalized' and self.ed_mode in ('counting','super resolution'):
 			print 'ASARRAY'
@@ -274,6 +271,7 @@ class GatanK2Linear(GatanK2Base):
 	hw_proc = 'none'
 
 class GatanK2Counting(GatanK2Base):
+	logged_methods_on = True
 	name = 'GatanK2Counting'
 	ed_mode = 'counting'
 	if simulation:
