@@ -28,6 +28,7 @@ class AppionTiltSeriesLoop(appionScript.AppionScript):
 		overrides appionScript
 		"""
 		appionScript.AppionScript.__init__(self)
+		self.rundata = {}
 		### extra appionLoop functions:
 		self._addDefaultParams()
 		self.setFunctionResultKeys()
@@ -212,10 +213,10 @@ class AppionTiltSeriesLoop(appionScript.AppionScript):
 	#=====================
 	def insertFunctionRun(self):
 		"""
-		put in run and param insertion to db here
+		put in run and param insertion to db here for insertion during instance initialization if you want to use self.rundata during the run
 		"""
-		self.rundata = {}
 		return
+		"""
 
 	#=====================
 	def postLoopFunctions(self):
@@ -348,7 +349,9 @@ class AppionTiltSeriesLoop(appionScript.AppionScript):
 	#=====================
 	def _setRunAndParameters(self):
 		rundata = self.insertFunctionRun()
-		self.rundata = rundata
+		# replace existing rundata only if it is not empty
+		if rundata:
+			self.rundata = rundata
 
 	#=====================
 	def _writeDataToDB(self,idata):
