@@ -141,7 +141,7 @@ class TemplateCorrelationLoop(particleLoop2.ParticleLoop):
 			ccmaplist = apFindEM.runFindEM(imgdata, self.params, thread=self.params['threadfindem'])
 		return ccmaplist
 
-	def findPeaks(self,imgdata,cclist):
+	def findPeaks(self,imgdata,ccmaplist):
 		return apPeaks.findPeaks(imgdata, ccmaplist, self.params)
 
 	##=======================

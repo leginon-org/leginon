@@ -352,6 +352,17 @@ def convertListToPeaks(peaks, params):
 		peaktree.append(peak.copy())
 	return peaktree
 
+def attachTemplateLabel(peakdict,tmplnum,tmpldbid,diam):
+		peakdict['tmplnum']     = tmplnum
+		peakdict['template']    = tmpldbid
+		peakdict['diameter']    = diam
+		### add appropriate label
+		if tmpldbid is not None:
+			peakdict['label']    = "templ%d"%(tmpldbid)
+		elif diam is not None:
+			peakdict['label']    = "diam%.1f"%(diam)
+		return peakdict
+
 def convertBlobsToPeaks(blobtree, bin=1, tmpldbid=None, tmplnum=None, diam=None, peaktype="maximum"):
 	peaktree = []
 	#if tmpldbid is not None:
@@ -368,14 +379,7 @@ def convertBlobsToPeaks(blobtree, bin=1, tmpldbid=None, tmplnum=None, diam=None,
 		peakdict['peakmoment']  = blobclass.stats['moment']
 		peakdict['peakstddev']  = blobclass.stats['stddev']
 		peakdict['peakarea']    = blobclass.stats['n']
-		peakdict['tmplnum']     = tmplnum
-		peakdict['template']    = tmpldbid
-		peakdict['diameter']    = diam
-		### add appropriate label
-		if tmpldbid is not None:
-			peakdict['label']    = "templ%d"%(tmpldbid)
-		elif diam is not None:
-			peakdict['label']    = "diam%.1f"%(diam)
+		attachTemplateLabel(peakdict,tmplnum,tmpldbid,diam)
 		peaktree.append(peakdict)
 	return peaktree
 
