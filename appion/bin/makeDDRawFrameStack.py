@@ -51,14 +51,6 @@ class MakeFrameStackLoop(appionLoop2.AppionLoop):
 
 	#=======================
 	def processImage(self, imgdata):
-		print self.rundata
-		if not self.rundata and self.params['commit']:
-			print 'self.rundata not set'
-			self.insertFunctionRun()
-			print 'new self.rundata', self.rundata
-		if not self.rundata and self.params['commit']:
-			apDisplay.printError('still no self.rundata')
-
 		# initialize aligned_imagedata as if not aligned
 		self.aligned_imagedata = None
 		# need to avoid non-frame saved image for proper caching
@@ -115,13 +107,11 @@ class MakeFrameStackLoop(appionLoop2.AppionLoop):
 		q = appiondata.ApDDStackRunData(runname=self.params['runname'],params=qparams,session=sessiondata,path=qpath)
 		results = q.query()
 		if results:
-			self.rundata = results[0]
+			return results[0]
 		else:
 			if self.params['commit'] is True:
 				q.insert()
-				self.rundata = q
-			else:
-				self.rundata = {}
+				return q
 
 if __name__ == '__main__':
 	makeStack = MakeFrameStackLoop()
