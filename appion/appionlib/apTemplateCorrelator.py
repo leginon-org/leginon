@@ -134,6 +134,16 @@ class TemplateCorrelationLoop(particleLoop2.ParticleLoop):
 		apDisplay.printColor("Template list: "+str(self.params['templatelist']), "cyan")
 		self.checkPreviousTemplateRun()
 
+	def runTemplateCorrelator(self,imgdata):
+		if self.params['spectral'] is True:
+			ccmaplist = apFindEM.runSpectralFindEM(imgdata, self.params, thread=self.params['threadfindem'])
+		else:
+			ccmaplist = apFindEM.runFindEM(imgdata, self.params, thread=self.params['threadfindem'])
+		return ccmaplist
+
+	def findPeaks(self,imgdata,cclist):
+		return apPeaks.findPeaks(imgdata, ccmaplist, self.params)
+
 	##=======================
 	def processImage(self, imgdata, filtarray):
 		if abs(self.params['apix'] - self.params['templateapix']) > 0.01:
@@ -149,18 +159,17 @@ class TemplateCorrelationLoop(particleLoop2.ParticleLoop):
 		### run FindEM
 		looptdiff = time.time()-self.proct0
 		self.proct0 = time.time()
-		if self.params['spectral'] is True:
-			ccmaplist = apFindEM.runSpectralFindEM(imgdata, self.params, thread=self.params['threadfindem'])
-		else:
-			ccmaplist = apFindEM.runFindEM(imgdata, self.params, thread=self.params['threadfindem'])
 		proctdiff = time.time()-self.proct0
 		f = open("template_image_timing.dat", "a")
 		datstr = "%d\t%.5f\t%.5f\n"%(self.stats['count'], proctdiff, looptdiff)
 		f.write(datstr)
 		f.close()
 
+		### run Template Correlation program
+		cclist = self.runTemplateCorrelator(imgdata)
+
 		### find peaks in map
-		peaktree  = apPeaks.findPeaks(imgdata, ccmaplist, self.params)
+		peaktree  = self.findPeaks(imgdata, cclist)
 
 		return peaktree
 
