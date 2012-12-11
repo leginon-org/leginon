@@ -4,6 +4,7 @@
 import os
 import shutil
 import subprocess
+import time
 #leginon
 from leginon import leginondata
 #appion
@@ -32,6 +33,7 @@ class CatchUpFrameAlignmentLoop(appionScript.AppionScript):
 		ddstackrun = appiondata.ApDDStackRunData().direct_query(self.params['ddstackid'])
 		if ddstackrun:
 			apDisplay.printMsg('Found dd frame stack run')
+			# set self.rundata in this function because we may need it if rundir is not set in params
 			self.rundata = ddstackrun
 		else:
 			apDisplay.printError('DD Frame Stack id %d does not exist' % self.params['ddstackid'])
@@ -49,6 +51,7 @@ class CatchUpFrameAlignmentLoop(appionScript.AppionScript):
 		self.dd = apDDprocess.initializeDDprocess(self.params['sessionname'],self.params['wait'])
 		self.dd.setRunDir(self.params['rundir'])
 		self.dd.setNewBinning(self.rundata['params']['bin'])
+		self.has_new_image = False
 
 	def hasDDAlignedImagePair(self, imgdata):
 		q = appiondata.ApDDAlignImagePairData(source=imgdata,ddstackrun=self.rundata)
@@ -66,6 +69,7 @@ class CatchUpFrameAlignmentLoop(appionScript.AppionScript):
 			apDisplay.printWarning('aligned image %d from this run is already in the database. Skipped....' % imgdata.dbid)
 			return
 
+		self.has_new_image = True
 		### set processing image
 		try:
 			self.dd.setImageData(imgdata)
@@ -91,13 +95,14 @@ class CatchUpFrameAlignmentLoop(appionScript.AppionScript):
 			q = appiondata.ApDDAlignImagePairData(source=imgdata,result=self.aligned_imagedata,ddstackrun=self.rundata)
 			q.insert()
 
-	def start(self):
+	def loopCheckAndProcess(self):
 		allfiles = os.listdir(os.getcwd())
 		images = []
 		for filename in allfiles:
 			if os.path.isfile(filename) and '_st.mrc' in filename:
 				imagedata = leginondata.AcquisitionImageData(session=self.rundata['session'],filename=filename[:-7]).query()[0]
 				images.append(imagedata)
+		self.num_stacks = len(images)
 		for imagedata in images:
 			apDisplay.printMsg('---------------------------------------------------------')
 			apDisplay.printMsg('  Processing %s' % imagedata['filename'])
@@ -106,6 +111,31 @@ class CatchUpFrameAlignmentLoop(appionScript.AppionScript):
 			if self.params['commit']:
 				self.commitToDatabase(imagedata)
 			apDisplay.printMsg('\n')
+
+	def start(self):
+		print 'wait=',self.params['wait']
+		max_loop_num_trials = 3
+		wait_time = 20
+		self.last_num_stacks = 0
+		if self.params['wait']:
+			num_trials = 0
+			while True:
+				self.loopCheckAndProcess()
+				if self.num_stacks == self.last_num_stacks:
+					if num_trials >= max_loop_num_trials:
+						apDisplay.printColor('Checked for stack file %d times. Finishing....' % max_loop_num_trials,'magenta')
+						apDisplay.printMsg('Rerun this script if you know more are coming')
+						break
+					else:
+						num_trials += 1
+				else:
+					# reset trial number if new stack is found
+					num_trials = 0
+				apDisplay.printColor('Finished stack file checking in rundir. Will check again in %d seconds' % wait_time,'magenta')
+				time.sleep(wait_time)
+				self.last_num_stacks = self.num_stacks
+		else:				
+			self.loopCheckAndProcess()
 
 if __name__ == '__main__':
 	makeStack = CatchUpFrameAlignmentLoop()

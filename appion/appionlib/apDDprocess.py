@@ -139,15 +139,15 @@ class DirectDetectorProcessing(object):
 			apDisplay.printError('Raw Frame Dir %s does not exist.' % rawframedir)
 		return rawframedir
 
-	def waitForPathExist(self,newpath):
+	def waitForPathExist(self,newpath,sleep_time=180):
 		waitmin = 0
 		while not os.path.exists(newpath):
 			if self.waittime < 0.1:
 				return False
-			apDisplay.printWarning('%s does not exist. Wait for 3 min.' % newpath)
-			time.sleep(180)
-			waitmin += 3
-			apDisplay.printMsg('Waited for %d min so far' % waitmin)
+			apDisplay.printWarning('%s does not exist. Wait for %.1f min.' % (newpath,sleep_time/60.0))
+			time.sleep(sleep_time)
+			waitmin += sleep_time / 60.0
+			apDisplay.printMsg('Waited for %.1f min so far' % waitmin)
 		return True
 
 	def OldgetRawFrameDirFromImage(self,imagedata):
@@ -640,12 +640,12 @@ class DirectDetectorProcessing(object):
 		Check to see if frame stack creation is completed.
 		'''
 		rundir = self.getRunDir()
-		if not self.waitForPathExist(self.framestackpath):
+		if not self.waitForPathExist(self.framestackpath,60):
 			apDisplay.printWarning('Stack making not started, Skipping')
 			return False
 		# Unless the _Log.txt is made, even if faked, the frame stack is not completed
 		logpath = self.framestackpath[:-4]+'_Log.txt'
-		if not self.waitForPathExist(logpath):
+		if not self.waitForPathExist(logpath,60):
 			apDisplay.printWarning('Stack making not finished, Skipping')
 			return False
 		return True	
