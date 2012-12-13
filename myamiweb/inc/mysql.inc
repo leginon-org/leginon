@@ -237,12 +237,13 @@ class mysql {
 
 	function SQLQuery($query, $insert=false) {
 		$this->sqlquery = $query;
-		if (!$this->connect_db($this->db_host)) {
+		$connection = $this->connect_db($this->db_host);
+		if (!$connection) {
 			$this->mysqlerror = "Error: ".mysql_error();
 			$this->mysqlerrornb = mysql_errno();
 			return False;
 		}
-		$result = mysql_query($query); 
+		$result = mysql_query($query,$connection);
 		if (!$result) {
 			$this->mysqlerror = "Error: ".mysql_error();
 			$this->mysqlerrornb = mysql_errno();
@@ -252,7 +253,11 @@ class mysql {
 			$res = mysql_insert_id();
 		else
 			$res = $result;
-		$this->close_db();
+		// commented this out because
+		// it seems to cause intermittent errors
+		// with the web pages dropping connections to the db
+		// in the imageviewer and kicking people back out to the login screen
+		//$this->close_db($connection);
 		return $res;
 	}
 
