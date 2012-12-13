@@ -45,9 +45,12 @@ class Read(Pipe):
 		### Read image file
 		if input_format == 'mrc':
 			# use mrc
+			head = pyami.mrc.readHeaderFromFile(filename)
 			if info:
-				result = pyami.mrc.readHeaderFromFile(filename)
+				result = head
 			else:
+				if frame is None and head['nz'] > 1:
+					raise ValueError('reading entire stack not allowed: %s' % (filename,))
 				result = pyami.mrc.read(filename, frame)
 		elif input_format == 'imagic':
 			if info:
