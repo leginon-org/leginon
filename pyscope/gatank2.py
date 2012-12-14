@@ -6,6 +6,8 @@
 #	   see  http://ami.scripps.edu/software/leginon-license
 #
 
+# target intensity:  140410.1
+
 import ccdcamera
 import sys
 import time
@@ -26,6 +28,9 @@ def connect():
 	return gatansocket.myGS
 
 class GatanK2Base(ccdcamera.CCDCamera):
+	name = 'GatanK2Base'
+	ed_mode = 'base'
+	hw_proc = 'none'
 	def __init__(self):
 		self.camera = connect()
 		self.cameraid = 0
@@ -169,11 +174,12 @@ class GatanK2Base(ccdcamera.CCDCamera):
 		return params
 
 	def _getImage(self):
-		k2params = self.calculateK2Params()
-		self.camera.SetK2Parameters(**k2params)
+		if self.ed_mode != 'base':
+			k2params = self.calculateK2Params()
+			self.camera.SetK2Parameters(**k2params)
+			fileparams = self.calculateFileSavingParams()
+			self.camera.SetupFileSaving(**fileparams)
 		acqparams = self.calculateAcquireParams()
-		fileparams = self.calculateFileSavingParams()
-		self.camera.SetupFileSaving(**fileparams)
 
 		t0 = time.time()
 		image = self.camera.GetImage(**acqparams)
