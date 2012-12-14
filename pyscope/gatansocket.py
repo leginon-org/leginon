@@ -275,7 +275,7 @@ class GatanSocket(object):
 		bytesPerPixel = 2
   		numBytes = arrSize * bytesPerPixel
 		chunkSize = (numBytes + numChunks - 1) / numChunks
-		imArray = numpy.zeros((height,width), numpy.short)
+		imArray = numpy.zeros((height,width), numpy.ushort)
 		received = 0
 		remain = numBytes
 		for chunk in range(numChunks):
