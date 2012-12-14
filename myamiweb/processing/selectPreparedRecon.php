@@ -180,7 +180,8 @@ function jobForm($extra=false)
 	$apix 		= $stacks[0][apix];	
 	$cs 		= $stacks[0][cs];	
 	$boxsize 	= $stacks[0][boxsize];	
-	$stackfilename = $stacks[0][filename]; 
+	$phaseflipped 	= $stacks[0][phaseflipped];	
+	$stackfilename  = $stacks[0][filename]; 
 	
 	// Get initial models
 	$models = $particle->getModelsFromRefineID( $refineID );
@@ -218,6 +219,7 @@ function jobForm($extra=false)
 	$html.= "<input type='hidden' NAME='apix' value='".$apix."'>\n";
 	$html.= "<input type='hidden' NAME='cs' value='".$cs."'>\n";
 	$html.= "<input type='hidden' NAME='boxsize' value='".$boxsize."'>\n";
+	$html.= "<input type='hidden' NAME='phaseflipped' value='".$phaseflipped."'>\n";
 	$html.= "<input type='hidden' NAME='lastpart' value='".$lastPart."'>\n";
 	
 	// Start Table
@@ -327,12 +329,13 @@ function createCommand ($extra=False)
 	/* ***********************************
 	 PART 1: Get variables from POST array and validate
 	 ************************************* */		
-	$stackName	= $_POST['stackfilename'];
-	$apix 		= $_POST['apix'];	
-	$cs 		= $_POST['cs'];	
-	$boxsize 	= $_POST['boxsize'];	
-	$hostname   = $_POST['processinghost'];
-	$totalPart  = $_POST['lastpart'];
+	$stackName		= $_POST['stackfilename'];
+	$apix 			= $_POST['apix'];	
+	$cs 			= $_POST['cs'];	
+	$boxsize 		= $_POST['boxsize'];	
+	$phaseflipped 	= $_POST['phaseflipped'];	
+	$hostname   	= $_POST['processinghost'];
+	$totalPart  	= $_POST['lastpart'];
 	
 	// verify processing host parameters
 	$clusterParamForm = new ClusterParamsForm();
@@ -370,6 +373,7 @@ function createCommand ($extra=False)
 	$command .= "--stackname=".$stackName." ";
 	$command .= "--apix=".$apix." ";
 	$command .= "--boxsize=".$boxsize." ";
+	if ( $phaseflipped ) $command .= "--phaseflipped ";
 	$command .= "--totalpart=".$totalPart." ";
 	//$command .= "--cs=".$cs." "; //TODO: add this in when it is parsed on the python side
 	

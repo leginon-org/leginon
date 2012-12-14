@@ -20,6 +20,7 @@ require_once "inc/summarytables.inc";
 
 require_once "inc/forms/stackPrepForm.inc";
 require_once "inc/forms/stackPrepFormFrealign.inc";
+require_once "inc/forms/stackPrepFormRelion.inc";
 require_once "inc/forms/runParametersForm.inc";
 
 if ($_POST['process']) {
@@ -123,6 +124,8 @@ function jobForm($extra=false) {
 	// add stack preparation parameters
 	if ( $reconMethod == "frealign" ) {
 		$stackPrepForm = new StackPrepFormFrealign($stackid);
+	} else if ( $reconMethod == "relion" ) {
+		$stackPrepForm = new StackPrepFormRelion($stackid);
 	} else {
 		$stackPrepForm = new StackPrepForm();
 	}
@@ -175,6 +178,8 @@ function createCommand ($extra=False)
 	// validate stack preparation parameters
 	if ( $_POST['method'] == "frealign" ) {
 		$stackPrepForm = new StackPrepFormFrealign();
+	} else if ( $_POST['method'] == "relion" ) {
+		$stackPrepForm = new StackPrepFormRelion();
 	} else { 
 		$stackPrepForm = new StackPrepForm();
 	}

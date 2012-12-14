@@ -61,6 +61,12 @@ class FormParameters
 		return $this->params[$name]["label"];
 	}
 	
+	// Returns True if Hidden, otherwise False
+	final public function isHidden( $name ) 
+	{
+		return $this->params[$name]["hidden"];
+	}
+	
 	// returns the parameter array
 	final public function getParamArray()
 	{

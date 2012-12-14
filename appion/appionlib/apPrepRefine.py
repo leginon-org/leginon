@@ -22,6 +22,7 @@ class Prep3DRefinement(appionScript.AppionScript):
 		self.setRefineMethod()
 		self.files_to_send = []
 		self.invert = False
+		self.originalStackData = apStack.Stack( self.params['stackid'] )
 
 	def setRefineMethod(self):
 		'''
@@ -142,7 +143,7 @@ class Prep3DRefinement(appionScript.AppionScript):
 		if self.invert:
 			need_modify = True
 			emancmd += 'invert '
-
+			
 		if need_modify:
 			apFile.removeStack(outstack, warn=False)
 			starttime = time.time()
@@ -151,12 +152,15 @@ class Prep3DRefinement(appionScript.AppionScript):
 			apDisplay.printColor("finished eman in "+apDisplay.timeString(time.time()-starttime), "cyan")
 		else:
 			# no need to execute EmanCmd if the stack is not modified
+			apDisplay.printColor("No stack pre-processing is needed. Copying stack to run directory.", "cyan")
 			shutil.copy(self.stack['file'],outstack)
 			outstackimg = outstack.replace('hed','img')
 			if not os.path.isfile(outstackimg):
 				# only copy if not exist to save time
 				shutil.copy(self.stack['file'].replace('hed','img'),outstackimg)
 		self.stack['file'] = outstack
+		if not os.path.isfile(self.stack['file']):
+			apDisplay.printColor("Could not locate stack: %s" % self.stack['file'], "cyan")
 		self.stack['apix'] = self.stack['apix'] * self.params['bin']
 		return outstack
 			
@@ -189,12 +193,15 @@ class Prep3DRefinement(appionScript.AppionScript):
 		self.modelspidersingle = False
 
 	def __initializeStack(self):
+		# This sets parameters of our new stack based on the params of the original stack
+		# TODO: use originalStackData to populate these
 		self.stack = {}
 		self.stack['data'] = apStack.getOnlyStackData(self.params['stackid'])
 		self.stack['apix'] = apStack.getStackPixelSizeFromStackId(self.params['stackid'])
 		self.stack['boxsize'] = apStack.getStackBoxsize(self.params['stackid'])
 		self.stack['file'] = os.path.join(self.stack['data']['path']['path'], self.stack['data']['name'])
 		self.stack['format'] = 'imagic'
+		self.stack['phaseflipped'] = self.originalStackData.phaseFlipped
 
 	def __initializeModel(self,modelid,ismask=False):
 		self.model = {}
@@ -238,6 +245,7 @@ class Prep3DRefinement(appionScript.AppionScript):
 		q['boxsize'] = self.stack['boxsize']
 		q['cs'] = self.params['cs']  # This is the cs value that the ctf-corrected stack has used
 		q['recon'] = False
+		q['phaseflipped'] = self.stack['phaseflipped']
 		q.insert()
 
 	def __commitRefineInitModel(self,prepdata):
@@ -294,8 +302,8 @@ class Prep3DRefinement(appionScript.AppionScript):
 		Convert stack in database to refinestack in the format the refine method needs
 		'''
 		self.__initializeStack()
-		self.preprocessStack()
-		self.convertToRefineStack()
+		self.preprocessStack() # proc2d stuff
+		self.convertToRefineStack() # if makeStack2 is needed (for things like ctf-correction changes)
 		self.addStackToSend(self.stack['file'])
 		self.__commitRefineStack(prepdata)
 

@@ -78,6 +78,8 @@ class RefineJob(basicScript.BasicScript):
 			help="Number of particles in the particle stack", metavar="#")
 		self.parser.add_option("--boxsize", dest="boxsize", type="int", default=None,
 			help="Boxsize in the particle stack", metavar="#")
+		self.parser.add_option("--phaseflipped", dest="phaseflipped", default=False, action='store_true',
+			help="Indicates that the stack data have been phase flipped")
 		self.parser.add_option("--apix", dest="apix", type="float",
 			help="Pixel size (Angstrom per pixel/voxel)", metavar="#")
 		self.parser.add_option("--startIter", dest="startiter", type="int", default=1,

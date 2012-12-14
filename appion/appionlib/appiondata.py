@@ -1411,6 +1411,7 @@ class ApRefineStackData(Data):
 			('boxsize', int),
 			('cs', float), 
 			('recon', bool),
+			('phaseflipped', bool),
 		)
 	typemap = classmethod(typemap)
 

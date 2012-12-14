@@ -39,58 +39,23 @@ class RelionRefineForm extends BasicRefineForm
 		
 		$fieldSize = 3;
 		
+		$html .= "<b>Basic Relion Options</b><br/>\n";
 		$html .= $params->insertCheckboxField( "ctf" );
-		$html .= $params->insertCheckboxField( "ctf_intact_first_peak" );
-		$html .= "<br/>\n";
+		$html .= $params->insertCheckboxField( "ctf_corrected_ref" );		
 		$html .= $params->insertTextField( "ini_high", $fieldSize, "(&Aring;ngstroms)" );
+		$html .= "<br/>\n";
 		
-		$healpixOptions = array(30, 15, 7.5, 3.5, 1.8, 0.9, 0.5, 0.2, 0.1);
-		$html .= $params->insertSelectField( "healpix_order", $healpixOptions, "(degrees)" );
+		
+		$html .= "<b>Advanced Relion Options</b><br/>\n";
+		$html .= $params->insertCheckboxField( "ctf_intact_first_peak" );
 		$html .= $params->insertTextField( "offset_range", $fieldSize, "(pix)" );
 		$html .= $params->insertTextField( "offset_step", $fieldSize, "(pix)" );
+		$healpixOptions = array(30, 15, 7.5, 3.5, 1.8, 0.9, 0.5, 0.2, 0.1);
+		$html .= $params->insertSelectField( "healpix_order", $healpixOptions, "(degrees)" );
 		$html .= $params->insertSelectField( "auto_local_healpix_order", $healpixOptions, "(degrees)" );
 		$html .= "<br/>\n";	
 		
 		return $html;
-	}
-	
-	// @override
-	protected function setImportParams()
-	{
-		// find the symetry and outer mask radius 
-		$sym = $this->getSymmetry();
-		$stack = $this->getStackInfo();
-		$box = $stack['boxsize'];	
-		$rad = ($box/2)-2;
-		
-		// add default value sets to populate the import parameters form 
-		$id 					= 'asymm';
-		$label 					= 'asymmetric particles';
-		$outerMaskRadius 		= $rad;
-		$symmetry 				= $sym; 
-		$ctf 					= 'CHECKED'; 
-		$ctf_intact_first_peak 	= '';
-		$ini_high 				= '60';  
-		$healpix_order			= '7.5'; 
-		$auto_local_healpix_order = '1.8';
-		$offset_range			= '5'; 
-		$offset_step 			= '1'; 
-		
-		$asymmSet = new RelionParams( $id, $label, $outerMaskRadius, $symmetry, $ctf, $ctf_intact_first_peak, $ini_high,  
-							$healpix_order, $auto_local_healpix_order, $offset_range, $offset_step );
-		$this->addDefaultParams( $asymmSet );
-
-		$id 				= 'low';
-		$label 				= 'low symmetry particles';
-		$lowSet = new RelionParams( $id, $label, $outerMaskRadius, $symmetry, $ctf, $ctf_intact_first_peak, $ini_high,  
-							$healpix_order, $auto_local_healpix_order, $offset_range, $offset_step );
-		$this->addDefaultParams( $lowSet );
-		
-		$id 				= 'icos';
-		$label 				= 'icosahedral particles';
-		$icosSet = new RelionParams( $id, $label, $outerMaskRadius, $symmetry, $ctf, $ctf_intact_first_peak, $ini_high,  
-							$healpix_order, $auto_local_healpix_order, $offset_range, $offset_step );
-		$this->addDefaultParams( $icosSet );
 	}
 	
 	// override this function for importing previous run params to the form
@@ -101,6 +66,7 @@ class RelionRefineForm extends BasicRefineForm
 	{
 		$paramSet->addIterationToValue( "ctf", $iter['ctf'] );
 		$paramSet->addIterationToValue( "ctf_intact_first_peak", $iter['ctf_intact_first_peak'] );
+		$paramSet->addIterationToValue( "ctf_corrected_ref", $iter['ctf_corrected_ref'] );
 		$paramSet->addIterationToValue( "ini_high", $iter['ini_high'] );
 		$paramSet->addIterationToValue( "healpix_order", $iter['healpix_order'] );
 		$paramSet->addIterationToValue( "auto_local_healpix_order", $iter['auto_local_healpix_order'] );
@@ -117,6 +83,15 @@ class RelionRefineForm extends BasicRefineForm
 		$box = $stack['boxsize'];
 		$sym = $this->getSymmetry();
 		
+		// There are different default values for icosohedral symmetries
+		if ( stripos($sym, "icos") ) {
+			$healpix_order = 3.7;
+			$auto_local_healpix_order = 0.9;
+		} else {
+			$healpix_order = 7.5;
+			$auto_local_healpix_order = 1.8;
+		}
+		
 		$rad = ($box/2)-2;
 		$javafunc = "
 	  <script type='text/javascript'>
@@ -125,9 +100,10 @@ class RelionRefineForm extends BasicRefineForm
 	      if (obj.symmetry) obj.symmetry.value = '$sym';
 	      if (obj.ctf) obj.ctf.checked = true;
 	      if (obj.ctf_intact_first_peak) obj.ctf_intact_first_peak.checked = false;
+	      if (obj.ctf_corrected_ref) obj.ctf_corrected_ref.checked = false;
 	      if (obj.ini_high) obj.ini_high.value = '60';
-	      if (obj.healpix_order) obj.healpix_order.value = '7.5';
-	      if (obj.auto_local_healpix_order) obj.auto_local_healpix_order.value = '1.8';
+	      if (obj.healpix_order) obj.healpix_order.value = $healpix_order;
+	      if (obj.auto_local_healpix_order) obj.auto_local_healpix_order.value = $auto_local_healpix_order;
 	      if (obj.offset_range) obj.offset_range.value = '5';
 	      if (obj.offset_step ) obj.offset_step.value = '1';
 
@@ -136,6 +112,16 @@ class RelionRefineForm extends BasicRefineForm
 	  </script>\n";
 		return $javafunc;
 	}	
+
+	public function buildCommand( $postArray )
+	{
+		$command = parent::buildCommand( $postArray );
+		
+		// endIter is always 1 for relion
+		$command .= " --endIter=1 ";
+		
+		return $command;
+	}
 } // End of Refine Form class
 
 // extend the RefineFormParameters class to add
@@ -145,8 +131,8 @@ class RelionParams extends RefineFormParameters
 	function __construct( $id='', $label='', $outerMaskRadius='', $innerMaskRadius='', $outerAlignRadius='', 
 							$innerAlignRadius='', $symmetry='', $endIter='', $angSampRate='', $percentDiscard='',  
 							$filterEstimated='', $filterResolution='', $filterComputed='', $filterConstant='',
-							$ctf='', $ctf_intact_first_peak='', $ini_high='', $healpix_order='', $auto_local_healpix_order='',
-							$offset_range='', $offset_step='' ) 
+							$ctf='', $ctf_intact_first_peak='', $ctf_corrected_ref='', $ini_high='', $healpix_order='', 
+							$auto_local_healpix_order='', $offset_range='', $offset_step='' ) 
 	{
 		// Call the parent constructor to create the general refine params. Any of these may be hidden with a subsequent 
 		// call to hideParam().
@@ -156,6 +142,7 @@ class RelionParams extends RefineFormParameters
 									
 		$this->addParam( "ctf", $ctf, "Do CTF-correction " );
 		$this->addParam( "ctf_intact_first_peak", $ctf_intact_first_peak, "Ignore CTFs until first peak " );		
+		$this->addParam( "ctf_corrected_ref", $ctf_corrected_ref, "Reference model is CTF-corrected " );		
 		$this->addParam( "ini_high", $ini_high, "Initial low-pass filter " );
 		$this->addParam( "healpix_order", $healpix_order, "Angular sampling interval " );
 		$this->addParam( "auto_local_healpix_order", $auto_local_healpix_order, "Local searches from auto-sampling " );

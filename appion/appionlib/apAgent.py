@@ -2,6 +2,7 @@ from appionlib import torqueHost
 from appionlib import apRefineJobFrealign
 from appionlib import apRefineJobEman
 from appionlib import apRefineJobXmipp
+from appionlib import apRefineJobRelion
 from appionlib import apRefineJobXmippML3D
 from appionlib import apGenericJob
 from appionlib import jobtest
@@ -95,6 +96,8 @@ class Agent (basicAgent.BasicAgent):
 			jobInstance = apRefineJobFrealign.FrealignRefineJob(command)
 		elif "xmipprecon" == jobType:
 			jobInstance = apRefineJobXmipp.XmippSingleModelRefineJob(command)
+		elif "relionrecon" == jobType:
+			jobInstance = apRefineJobRelion.RelionSingleModelRefineJob(command)
 		elif "xmippml3d" == jobType:
 			jobInstance = apRefineJobXmippML3D.XmippML3DRefineJob(command)
 		elif "jobtest" == jobType:

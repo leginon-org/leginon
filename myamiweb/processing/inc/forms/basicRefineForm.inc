@@ -286,11 +286,20 @@ abstract class BasicRefineForm extends BasicForm
 		$html .= $this->insertSymmetrySelectionBox( "symmetry", $paramSet->getParamValue("symmetry") );
 		$html .= "&nbsp;";
 		$html .=  docpop( "basicrefine.symmetry", $paramSet->getParamLabel("symmetry") );
-			
-		$html .= "<br />\n";
-		$html .= "<br />\n";
-		$html .= "<b>Particle independent parameters</b>\n";
-		$html .= "<br />\n";
+
+		// only display this label if any of the following params are not hidden 
+		if ( !($paramSet->isHidden("endIter") &&
+			$paramSet->isHidden("endIter") &&
+			$paramSet->isHidden("endIter") &&
+			$paramSet->isHidden("endIter") &&
+			$paramSet->isHidden("endIter") &&
+			$paramSet->isHidden("endIter") &&
+			$paramSet->isHidden("endIter")) ) {
+				$html .= "<br />\n";
+				$html .= "<br />\n";
+				$html .= "<b>Particle independent parameters</b>\n";
+				$html .= "<br />\n";
+			}
 		
 		$html .= $paramSet->insertTextField( "endIter", $shortSize );
 		$html .= $paramSet->insertTextField( "angSampRate", $longSize );

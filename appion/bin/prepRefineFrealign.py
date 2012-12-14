@@ -72,7 +72,7 @@ class FrealignPrep3DRefinement(apPrepRefine.Prep3DRefinement):
 		stackruns = apStack.getStackRunsFromStack(stackdata)
 		# To Do: need to handle combined stack
 		stackrun = stackruns[0]
-		self.stackparamdata = stackrun['stackParams']
+		self.originalStackParamData = stackrun['stackParams']
 		self.stackrunlogparams = apScriptLog.getScriptParamValuesFromRunname(stackrun['stackRunName'],stackdata['path'],jobdata=None)
 
 	def preprocessModelWithProc3d(self):
@@ -88,10 +88,10 @@ class FrealignPrep3DRefinement(apPrepRefine.Prep3DRefinement):
 			self.params['defocpair'] = False
 		if self.params['paramonly'] is True:
 			return self.stack['file']
-		if not self.stackparamdata['phaseFlipped']:
+		if not self.originalStackParamData['phaseFlipped']:
 			# non-ctf-corrected stack can use proc2d to prepare
 			self.no_ctf_correction = True
-			if self.stackparamdata['inverted']:
+			if self.originalStackParamData['inverted']:
 				self.invert = True
 			newstackfile = super(FrealignPrep3DRefinement,self).preprocessStack()
 			return newstackfile
@@ -185,7 +185,7 @@ class FrealignPrep3DRefinement(apPrepRefine.Prep3DRefinement):
 		else:
 			reversetext = ''
 		if 'defocpair' in self.stackrunlogparams.keys():
-			defoctext = '--reverse'
+			defoctext = '--defocpair'
 		else:
 			defoctext = ''
 		cmd = '''
@@ -212,6 +212,7 @@ makestack2.py --single=%s --fromstackid=%d %s %s %s %s %s --no-invert --normaliz
 		self.stack['file'] = stackroot+'.mrc'
 		self.stack['format'] = 'frealign'
 		self.stack['bin'] = self.params['bin']
+		self.stack['phaseflipped'] = False # the Frealign prepped stacks are NOT phase flipped
 
 	def addStackToSend(self,mrcfilepath):
 		# mrc Format
