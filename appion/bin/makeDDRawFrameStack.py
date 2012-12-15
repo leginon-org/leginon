@@ -42,7 +42,7 @@ class MakeFrameStackLoop(appionLoop2.AppionLoop):
 
 	#=======================
 	def preLoopFunctions(self):
-		self.dd = apDDprocess.initializeDDprocess(self.params['sessionname'],self.params['wait'])
+		self.dd = apDDprocess.initializeDDFrameprocess(self.params['sessionname'],self.params['wait'])
 		self.dd.setUseGS(self.params['useGS'])
 		self.dd.setRunDir(self.params['rundir'])
 		self.imageids = []

@@ -9,7 +9,7 @@ import scipy.ndimage as ndimage
 import numextension
 from pyami import mrc,imagefun,arraystats,numpil
 from leginon import correctorclient,leginondata
-from appionlib import apDisplay, apDatabase,apDBImage
+from appionlib import apDisplay, apDatabase,apDBImage, appiondata
 import subprocess
 
 # testing options
@@ -18,7 +18,7 @@ debug = False
 ddtype = 'thin'
 
 #=======================
-def initializeDDprocess(sessionname,wait_flag=False):
+def initializeDDFrameprocess(sessionname,wait_flag=False):
 	'''
 	initialize the DDprocess according to the camera
 	'''
@@ -36,9 +36,88 @@ def initializeDDprocess(sessionname,wait_flag=False):
 		apDisplay.printError('Unknown frame camera name %s' % dcamdata['name'])
 
 class DirectDetectorProcessing(object):
-	def __init__(self,wait_for_new=False):
+	def __init__(self):
+		'''
+		Base class for DD processing
+		'''
 		self.image = None
 		self.setRunDir(os.getcwd())
+
+	def setImageId(self,imageid):
+		from leginon import leginondata
+		q = leginondata.AcquisitionImageData()
+		result = q.direct_query(imageid)
+		if result:
+			self.setImageData(result)
+		else:
+			apDisplay.printError("Image with ID of %d not found" % imageid)
+
+	def getImageId(self):
+		return self.image.dbid
+
+	def setImageData(self,imagedata):
+		'''
+		Set the image is to be considered for processs.
+		self.rundir must be set first before calling this.
+		'''
+		self.image = imagedata
+
+	def getImageData(self):
+		return self.image
+
+	def setFrameStackPath(self):
+		imagename = self.image['filename']
+		
+		if self.image['preset'] is not None and '-a' in self.image['preset']['name']:
+			# aligned image have -a in its preset name
+			aligned_presetname = self.image['preset']['name']
+			bits = imagename.split(aligned_presetname)
+			org_presetname = aligned_presetname.join(aligned_presetname.split('-a')[:-1])
+			if bits[-1] != '':
+				bits.pop(-1)
+			imagename = aligned_presetname.join(bits) +org_presetname 
+		self.framestackpath = os.path.join(self.rundir,imagename+'_st.mrc')
+		
+			
+	def setRunDir(self,rundir):
+		'''
+		This is the rundir for ddstack
+		'''
+		self.rundir = rundir
+
+	def getRunDir(self):
+		return self.rundir
+
+	def getNumberOfFrameSaved(self):
+		return self.getNumberOfFrameSavedFromImageData(self.image)
+
+	def getNumberOfFrameSavedFromImageData(self,imagedata):
+		return imagedata['camera']['nframes']
+
+	def getUsedFramesFromImageData(self,imagedata):
+		return imagedata['camera']['use frames']
+
+	def getAlignImagePairData(self,ddstackrundata,query_source=True):
+		'''
+		This returns DD AlignImagePairData if exists, returns False if not.
+		Image set in the class instance can either be the source or result of the alignment
+		'''
+		if query_source:
+			q = appiondata.ApDDAlignImagePairData(source=self.image,ddstackrun=ddstackrundata)
+		else:
+			q = appiondata.ApDDAlignImagePairData(result=self.image,ddstackrun=ddstackrundata)
+		r = q.query(results=1)
+		if r:
+			return r[0]
+		else:
+			return False
+
+class DDFrameProcessing(DirectDetectorProcessing):
+	'''
+	Class to process raw frames from DD
+	'''
+	def __init__(self,wait_for_new=False):
+		super(DDFrameProcessing,self).__init__()
 		self.stripenorm_imageid = None
 		self.waittime = 0 # in minutes
 		if wait_for_new:
@@ -56,33 +135,14 @@ class DirectDetectorProcessing(object):
 			self.log = open('newref.log','w')
 			self.scalefile = open('darkscale.log','w')
 
-	def setImageId(self,imageid):
-		from leginon import leginondata
-		q = leginondata.AcquisitionImageData()
-		result = q.direct_query(imageid)
-		if result:
-			self.setImageData(result)
-		else:
-			apDisplay.printError("Image with ID of %d not found" % imageid)
-
-	def getImageId(self):
-		return self.image.dbid
-
 	def setImageData(self,imagedata):
-		self.image = imagedata
+		super(DDFrameProcessing,self).setImageData(imagedata)
+		# dark/gain corrected stack is saved here
+		self.setFrameStackPath()
 		self.__setRawFrameInfoFromImage()
-		self.framestackpath = os.path.join(self.rundir,self.image['filename']+'_st.mrc')
+		# These two are only used if alignment of the frames are made
 		self.aligned_sumpath = os.path.join(self.rundir,self.image['filename']+'_c.mrc')
 		self.aligned_stackpath = os.path.join(self.rundir,self.framestackpath[:-4]+'_c'+self.framestackpath[-4:])
-
-	def getImageData(self):
-		return self.image
-
-	def setRunDir(self,rundir):
-		self.rundir = rundir
-
-	def getRunDir(self):
-		return self.rundir
 
 	def getDefaultDimension(self):
 		return self.dimension
@@ -92,15 +152,6 @@ class DirectDetectorProcessing(object):
 
 	def setUseGS(self,status):
 		self.use_GS = status
-
-	def getNumberOfFrameSaved(self):
-		return self.getNumberOfFrameSavedFromImageData(self.image)
-
-	def getNumberOfFrameSavedFromImageData(self,imagedata):
-		return imagedata['camera']['nframes']
-
-	def getUsedFramesFromImageData(self,imagedata):
-		return imagedata['camera']['use frames']
 
 	def getScaledBrightArray(self,nframe):
 		return self.scaleRefImage('bright',nframe)
@@ -508,6 +559,7 @@ class DirectDetectorProcessing(object):
 	def modifyImageArray(self,array):
 		cdata = self.getAlignedCameraEMData()
 		if not cdata:
+			# Only bin the image if not for alignment with dosefgpu_driftcorr program
 			additional_binning = self.getNewBinning()
 			return imagefun.bin(array,additional_binning)
 		else:
@@ -520,6 +572,9 @@ class DirectDetectorProcessing(object):
 		return array
 		
 	def makeCorrectedFrameStack(self, use_full_raw_area=False):
+		'''
+		Creates a file of gain/dark corrected stack of frames
+		'''
 		sys.stdout.write('\a')
 		sys.stdout.flush()
 		total_frames = self.getNumberOfFrameSaved()
@@ -535,26 +590,33 @@ class DirectDetectorProcessing(object):
 				# overwrite old stack mrc file
 				mrc.write(array,self.framestackpath)
 			elif start_frame == half_way_frame:
+				# Only calculate stats if half way in the stack making to save time
 				mrc.append(array,self.framestackpath,True)
 			else:
-				# Only calculate stats if the last frame
 				mrc.append(array,self.framestackpath,False)
 		return self.framestackpath
 
 	def setNewBinning(self,bin):
+		'''
+		Camera binning of the stack.
+		'''
 		self.stack_binning = bin
 
 	def getNewBinning(self):
 		return self.stack_binning
 
 	def setAlignedCameraEMData(self):
+		'''
+		DD aligned image will be uploaded into database with a square
+		camera dimension at the center and the specificed binning
+		'''
 		camdata = leginondata.CameraEMData(initializer=self.image['camera'])
 		mindim = min(camdata['dimension']['x'],camdata['dimension']['y'])
 		camerasize = {}
 		newbin = self.getNewBinning()
 		for axis in ('x','y'):
 			if camdata['binning'][axis] != 1 or camdata['offset'][axis] != 0:
-				apDisplay.displayError('I can only process unbinned full size image for now')
+				apDisplay.displayError('Starting image must be unbinned and at full dimension for now')
 			if newbin < camdata['binning'][axis]:
 				apDisplay.displayError('can not change to smaller binning')
 			camerasize[axis] = (camdata['offset'][axis]*2+camdata['dimension'][axis])*camdata['binning'][axis]
@@ -589,6 +651,7 @@ class DirectDetectorProcessing(object):
 	def alignCorrectedFrameStack(self):
 		'''
 		Xueming Li's gpu program for aligning frames using all defaults
+		Valid square gain/dark corrected ddstack is the input.
 		'''
 		rundir = self.getRunDir()
 		cmd = 'dosefgpu_driftcorr %s -fcs %s -ssc 1 -fct %s' % (self.framestackpath,self.aligned_sumpath,self.aligned_stackpath)
@@ -635,6 +698,7 @@ class DirectDetectorProcessing(object):
 		imagedata['filename'] = apDBImage.makeUniqueImageFilename(imagedata,old_name,align_presetdata['name'])
 		return imagedata
 
+
 	def isReadyForAlignment(self):
 		'''
 		Check to see if frame stack creation is completed.
@@ -650,10 +714,54 @@ class DirectDetectorProcessing(object):
 			return False
 		return True	
 
+
+class DDStackProcessing(DirectDetectorProcessing):
+	'''
+	Class to use gain/dark corrected DDStack. Need to setImage and then setFrameStackPath so
+	that the ddstackrun can be determined from image if not specified.
+	'''
+	def getIsAligned(self):
+		return self.image['preset'] is not None and '-a' in self.image['preset']['name']
+
+	def setDDStackRun(self,ddstackrunid=None):
+		if ddstackrunid:
+			# This works with image set
+			ddstackrun = appiondata.ApDDStackRunData.direct_query(ddstackrunid)
+		else:
+			if self.getIsAligned():
+				# This works if self.image is set
+				ddstackrun = self.getAlignImagePairData(None,query_source=False)['ddstackrun']
+			else:
+				apDisplay.printError('Image not from aligned ddstack run.  Can not determine stack location without ddstack id')
+		self.ddstackrun = ddstackrun
+
+	def getDDStackRun(self):
+		apDisplay.printMsg('Stack is from %s (id = %d)' % (self.ddstackrun['runname'],self.ddstackrun.dbid))
+		return self.ddstackrun
+
+	def setImageData(self,imagedata):
+		super(DDStackProcessing,self).setImageData(imagedata)
+
+	def setFrameStackPath(self,ddstackrunid=None):
+		self.setDDStackRun(ddstackrunid)
+		self.setRunDir(self.getDDStackRun()['path']['path'])
+		super(DDStackProcessing,self).setFrameStackPath()
+
+	def getDDStackFrameSumImage(self,start_frame,nframe):
+		'''
+		DDStack are gain/dark corrected and may or may not be aligned
+		'''
+		if not os.path.isfile(self.framestackpath):
+			apDisplay.printError('No DD Stack to make image from')
+		apDisplay.printMsg('Getting summed from from %s' % self.framestackpath)
+		stack = mrc.mmap(self.framestackpath)
+		sum = numpy.sum(stack[start_frame:start_frame+nframe,:,:],axis=0)
+		return sum
+
 if __name__ == '__main__':
 	dd = DirectDetectorProcessing()
-	dd.setImageId(1991218)
 	dd.setRunDir('./')
+	dd.setImageId(1991218)
 	dd.setAlignedCameraEMData()
 	start_frame = 0
 	mrc.write(corrected,'corrected_frame%d_%d.mrc' % (start_frame,nframe))

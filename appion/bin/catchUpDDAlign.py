@@ -48,14 +48,13 @@ class CatchUpFrameAlignmentLoop(appionScript.AppionScript):
 	def onInit(self):
 		if 'sessionname' not in self.params.keys():
 			self.params['sessionname'] = leginondata.SessionData().direct_query(self.params['expid'])['name']
-		self.dd = apDDprocess.initializeDDprocess(self.params['sessionname'],self.params['wait'])
+		self.dd = apDDprocess.initializeDDFrameprocess(self.params['sessionname'],self.params['wait'])
 		self.dd.setRunDir(self.params['rundir'])
 		self.dd.setNewBinning(self.rundata['params']['bin'])
-		self.has_new_image = False
 
-	def hasDDAlignedImagePair(self, imgdata):
-		q = appiondata.ApDDAlignImagePairData(source=imgdata,ddstackrun=self.rundata)
-		return len(q.query()) > 0
+	def hasDDAlignedImagePair(self):
+		alignpairdata = self.dd.getAlignImagePairData(self.rundata,query_source=True)
+		return bool(alignpairdata)
 
 	#=======================
 	def processImage(self, imgdata):
@@ -65,16 +64,16 @@ class CatchUpFrameAlignmentLoop(appionScript.AppionScript):
 		if imgdata is None or imgdata['camera']['save frames'] != True:
 			apDisplay.printWarning('%s skipped for no-frame-saved\n ' % imgdata['filename'])
 			return
-		if self.hasDDAlignedImagePair(imgdata):
-			apDisplay.printWarning('aligned image %d from this run is already in the database. Skipped....' % imgdata.dbid)
-			return
-
-		self.has_new_image = True
+	
 		### set processing image
 		try:
 			self.dd.setImageData(imgdata)
 		except Exception, e:
 			apDisplay.printWarning(e.message)
+			return
+
+		if self.hasDDAlignedImagePair():
+			apDisplay.printWarning('aligned image %d from this run is already in the database. Skipped....' % imgdata.dbid)
 			return
 
 		if not self.dd.isReadyForAlignment():

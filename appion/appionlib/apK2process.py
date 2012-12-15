@@ -10,7 +10,7 @@ save_jpg = False
 debug = False
 ddtype = 'thin'
 
-class GatanK2Processing(apDDprocess.DirectDetectorProcessing):
+class GatanK2Processing(apDDprocess.DDFrameProcessing):
 	def __init__(self,wait_for_new=False):
 		super(GatanK2Processing,self).__init__(wait_for_new)
 		self.setDefaultDimension(3840,3712)

@@ -170,15 +170,17 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 
 	#=======================
 	def getDDImageArray(self,imgdata):
-		self.dd.setImageData(imgdata)
-		return self.dd.correctFrameImage(self.params['startframe'],self.params['nframe'])
+		if self.is_dd_frame:
+			return self.dd.correctFrameImage(self.params['startframe'],self.params['nframe'])
+		if self.is_dd_stack:
+			return self.dd.getDDStackFrameSumImage(self.params['startframe'],self.params['nframe'])
 
 	#=======================
 	def getOriginalImagePath(self, imgdata):
 		imgname = imgdata['filename']
 		shortname = apDisplay.short(imgdata['filename'])
 		imgpath = os.path.join(imgdata['session']['image path'], imgdata['filename']+".mrc")
-		if self.params['nframe'] != 0:
+		if self.is_dd:
 			self.params['uncorrected'] = True
 			### dark/bright correct image
 			tmpname = shortname+"-darknorm.dwn.mrc"

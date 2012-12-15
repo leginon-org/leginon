@@ -15,7 +15,7 @@ save_jpg = False
 debug = False
 ddtype = 'thin'
 
-class DEProcessing(apDDprocess.DirectDetectorProcessing):
+class DEProcessing(apDDprocess.DDFrameProcessing):
 	def __init__(self,wait_for_new=False):
 		super(DEProcessing,self).__init__(wait_for_new)
 		self.setDefaultDimension(4096,3072)

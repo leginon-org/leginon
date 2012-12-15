@@ -306,6 +306,8 @@ class ParticleExtractLoop(appionLoop2.AppionLoop):
 			help="starting frame for direct detector raw frame processing")
 		self.parser.add_option("--ddnframe", dest="nframe", type="int", default=0,
 			help="total frames to sum up for direct detector raw frame processing")
+		self.parser.add_option("--ddstack", dest="ddstack", type="int", default=0,
+			help="gain/dark corrected ddstack id used for dd frame integration")
 		self.parser.add_option("--dduseGS", dest="useGS", default=False,
 			action="store_true", help="use Gram-Schmidt process to scale dark to frame images")
 
@@ -346,12 +348,24 @@ class ParticleExtractLoop(appionLoop2.AppionLoop):
 			self.params['checkmask'] = True
 
 	def checkIsDD(self):
-		if self.params['nframe'] > 0:
-			self.is_dd_frames = True
+		if self.params['ddstack'] > 0:
+			self.is_dd_stack = True
+			self.is_dd = True
+		else:
+			if self.params['preset'] and '-a' in self.params['preset'] and self.params['nframe'] > 0:
+				self.is_dd = True
+				self.is_dd_stack = True
+			elif self.params['mrcnames'] and '-a' in self.params['mrcnames'][0] and self.params['nframe'] > 0:
+				self.is_dd = True
+				self.is_dd_stack = True
+			elif self.params['nframe'] > 0:
+				self.is_dd_frame = True
 
 	#=======================
 	def preLoopFunctions(self):
-		self.is_dd_frames = False
+		self.is_dd_frame = False
+		self.is_dd_stack = False
+		self.is_dd = False
 		self.checkIsDD()
 		self.batchboxertimes = []
 		self.ctftimes = []
@@ -360,10 +374,15 @@ class ParticleExtractLoop(appionLoop2.AppionLoop):
 		self.insertdbtimes = []
 		self.noimages = False
 		self.totalpart = 0
-		if self.is_dd_frames:
+		# Different class needed depending on if ddstack is specified or available
+		if self.is_dd:
 			from appionlib import apDDprocess
-			self.dd = apDDprocess.initializeDDprocess(self.params['sessionname'])
+		if self.is_dd_frame:
+			self.dd = apDDprocess.initializeDDFrameprocess(self.params['sessionname'])
 			self.dd.setUseGS(self.params['useGS'])
+		if self.is_dd_stack:
+			self.dd = apDDprocess.DDStackProcessing()
+
 		if len(self.imgtree) == 0:
 			apDisplay.printWarning("No images were found to process")
 			self.noimages = True
@@ -414,6 +433,18 @@ class ParticleExtractLoop(appionLoop2.AppionLoop):
 		imgname = imgdata['filename']
 		shortname = apDisplay.short(imgdata['filename'])
 
+		if self.is_dd:
+			self.dd.setImageData(imgdata)
+			if self.is_dd_stack:
+				# find the ddstackrun of the image
+				self.dd.setDDStackRun()
+				# compare image ddstackrun with the specified ddstackrun
+				if self.params['ddstack'] and self.params['ddstack'] != self.dd.getDDStackRun().dbid:
+					apDisplay.printWarning('ddstack image not from specified ddstack run')
+					apDisplay.printWarning('Skipping this image ....')
+					return None
+				# This function will reset self.dd.ddstackrun for actual processing
+				self.dd.setFrameStackPath(self.params['ddstack'])
 
 		### first remove any existing boxed files
 		shortfileroot = os.path.join(self.params['rundir'], shortname)
