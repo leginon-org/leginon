@@ -9,6 +9,7 @@ from appionlib import apDDprocess,apDisplay
 save_jpg = False
 debug = False
 ddtype = 'thin'
+at_nramm = True
 
 class GatanK2Processing(apDDprocess.DDFrameProcessing):
 	def __init__(self,wait_for_new=False):
@@ -29,28 +30,40 @@ class GatanK2Processing(apDDprocess.DDFrameProcessing):
 		a = mrc.read(frameimage_path)
 		a = numpy.asarray(a,dtype=numpy.float32)
 
-		# work around wrong dimension problem from applying rotation to the frame images
-		# This commented out because the alignment program can not take non-square image anyway.
-		#tempdict = {'y':crop_end['x'],'x':crop_end['y']}
-		#crop_end = tempdict
-
 		# modify the size if needed
 		a = self.modifyFrameImage(a,offset,crop_end,bin)
 		return a
 
 	def getDefaultCorrectedImageData(self):
+		if not at_nramm:
+			return self.image
+		# local change
 		if self.image['camera']['ccdcamera']['name'] == 'GatanK2Super':
 			return leginondata.AcquisitionImageData().direct_query(1989908)
 		elif self.image['camera']['ccdcamera']['name'] == 'GatanK2Counting':
 			return leginondata.AcquisitionImageData().direct_query(1989725)
 		else:
 			return self.image
-		
+
+	def getImageCameraEMData(self):
+		camdata = leginondata.CameraEMData(initializer=self.image['camera'])
+		# local change. Need to remove before release
+		if at_nramm and self.image.dbid < 1989842:
+			# image dimension is not consistent with the frames
+			# Use the default camera dimension, binning, and offset of the frames
+			# (rotated and flipped full size)
+			defaultcamdata = self.getDefaultCorrectedImageData()['camera']
+			for key in ('dimension','binning','offset'):
+				camdata[key] = defaultcamdata[key]
+		return camdata
+
 	def getRefImageData(self,reftype):
 		if not self.use_full_raw_area:
 			refdata = self.image[reftype]
 			if refdata is None:
-				default_image = self.getDefaultCorrectedImage()
+				# Use chosen default image
+				apDisplay.printWarning('No %s reference for the image, use default' % reftype) 
+				default_image = self.getDefaultCorrectedImageData()
 				refdata = default_image[reftype]
 		else:
 			# use most recent CorrectorImageData

@@ -262,27 +262,28 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		returns dictionary of camerainfo obtained from the current image
 		and current instance values such as nframe and use_full_raw_area flag
 		'''
-		binning = self.image['camera']['binning']
-		offset = self.image['camera']['offset']
-		dimension = self.image['camera']['dimension']
+		imagecam = self.getImageCameraEMData()
+		binning = imagecam['binning']
+		offset = imagecam['offset']
+		dimension = imagecam['dimension']
 		if use_full_raw_area:
 			for axis in ('x','y'):
 				dimension[axis] = binning[axis] * dimension[axis] + 2 * offset[axis]
 				offset[axis] = 0
 				binning[axis] = 1
 		camerainfo = {}
-		camerainfo['ccdcamera'] = self.image['camera']['ccdcamera']
+		camerainfo['ccdcamera'] = imagecam['ccdcamera']
 		camerainfo['binning'] = binning
 		camerainfo['offset'] = offset
 		camerainfo['dimension'] = dimension
 		camerainfo['nframe'] = nframe
 		camerainfo['norm'] = self.getRefImageData('norm')
 		if camerainfo['norm']:
-			print self.image['norm']['filename']
+			print camerainfo['norm']['filename']
 		else:
 			self.correct_dark_gain = False
 		# Really should check frame rate but it is not saved now, so use exposure time
-		camerainfo['exposure time'] = self.image['camera']['exposure time']
+		camerainfo['exposure time'] = imagecam['exposure time']
 		return camerainfo
 			
 	def __conditionChanged(self,new_nframe,new_use_full_raw_area):
@@ -301,7 +302,7 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		if self.use_GS:
 			return True
 		# self.camerainfo is not set for the new image yet so it may be different
-		if self.camerainfo['norm'].dbid != self.image['norm'].dbid:
+		if self.image['norm'] and self.camerainfo['norm'].dbid != self.image['norm'].dbid:
 			if debug:
 				self.log.write( 'fail norm %d vs %d test\n ' % (self.camerainfo['norm'].dbid,self.image['norm'].dbid))
 			return True
@@ -331,7 +332,6 @@ class DDFrameProcessing(DirectDetectorProcessing):
 			offset = {'x':0,'y':0}
 			dimension = self.getDefaultDimension()
 		crop_end = {'x': offset['x']+dimension['x']*bin['x'], 'y':offset['y']+dimension['y']*bin['y']}
-
 		framename = self.getFrameNameFromNumber(frame_number)
 		rawframe_path = os.path.join(rawframe_dir,framename)
 		apDisplay.printMsg('Frame path: %s' %  rawframe_path)
@@ -564,7 +564,7 @@ class DDFrameProcessing(DirectDetectorProcessing):
 			return imagefun.bin(array,additional_binning)
 		else:
 			# Have cdata only if alignment will be done
-			additional_binning = cdata['binning']['x'] / self.image['camera']['binning']['x']
+			additional_binning = cdata['binning']['x'] / self.getImageCameraEMData()['binning']['x']
 			# Need squared image for alignment
 			array = imagefun.bin(array,additional_binning)
 			array = array[cdata['offset']['y']:cdata['offset']['y']+cdata['dimension']['y'],cdata['offset']['x']:cdata['offset']['x']+cdata['dimension']['x']]
@@ -586,6 +586,7 @@ class DDFrameProcessing(DirectDetectorProcessing):
 			if array is False:
 				break
 			array = self.modifyImageArray(array)
+			apDisplay.printMsg('final frame shape to put in stack x=%d,y=%d' % (array.shape[1],array.shape[0]))
 			if start_frame == first:
 				# overwrite old stack mrc file
 				mrc.write(array,self.framestackpath)
@@ -605,12 +606,15 @@ class DDFrameProcessing(DirectDetectorProcessing):
 	def getNewBinning(self):
 		return self.stack_binning
 
+	def getImageCameraEMData(self):
+		return leginondata.CameraEMData(initializer=self.image['camera'])
+
 	def setAlignedCameraEMData(self):
 		'''
 		DD aligned image will be uploaded into database with a square
 		camera dimension at the center and the specificed binning
 		'''
-		camdata = leginondata.CameraEMData(initializer=self.image['camera'])
+		camdata = self.getImageCameraEMData()
 		mindim = min(camdata['dimension']['x'],camdata['dimension']['y'])
 		camerasize = {}
 		newbin = self.getNewBinning()
