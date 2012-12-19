@@ -149,7 +149,8 @@ else:
 ######################################################################
 ## numpy
 ######################################################################
-testednumpy = ('1.0.2','1.0.1')
+minnumpyver = (1, 0, 1)
+minstr = '.'.join(map(str,minnumpyver))
 print '--------------------------------------------------------------'
 print 'numpy:'
 print '    importing numpy module...'
@@ -159,11 +160,12 @@ except ImportError:
 	print '    *** Failed to import numpy.  Install numpy first.'
 else:
 	mystr = numpy.__version__
+	mynumpyver = map((lambda x:int(x)),mystr.split('.')[:3])
 	print '    numpy version: %s' % (mystr,)
-	if mystr in testednumpy:
-		print '        OK'
+	if versionAtLeast(mynumpyver, minnumpyver):
+		print '        OK (at least %s required)' % (minstr ,)
 	else:
-		print '        *** WARNING: untested version of numpy.  Tested versions: %s'  % (testednumpy,)
+		print '        *** FAILED (at least %s required)' % (minstr,)
 
 ######################################################################
 ## scipy
