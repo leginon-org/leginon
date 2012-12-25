@@ -2980,7 +2980,7 @@ class particledata {
 			."WHERE DEF_id=$sessionId";
 		$r = $this->mysql->getSQLResult($q);
 		$sname = $r[0]['name'];
-		$q = "SELECT ast.`DEF_id` AS alignstackid "
+		$q = "SELECT DISTINCT ast.`DEF_id` AS alignstackid "
 			."FROM ApAlignStackData AS ast "
 			."LEFT JOIN ApStackData AS st ON "
 			."  (ast.`REF|ApStackData|stack` = st.`DEF_id`) "
