@@ -1154,3 +1154,14 @@ class Tecnai(tem.TEM):
 			return self.lowdose.WaitTime
 		except:
 			raise RuntimeError('no low dose interface')
+
+	def setShutterControl(self, value):
+		'''
+		If given boolean True, this should set the registers that allow
+		camera to control the shutter.  Should also behave for other types
+		of TEMs that do not have or need these registers.
+		'''
+		pass
+
+
+

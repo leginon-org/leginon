@@ -73,6 +73,14 @@ class CameraClient(object):
 
 		imagedata = leginondata.CameraImageData()
 		imagedata['session'] = self.session
+
+		## make sure shutter override is activated
+		try:
+			self.instrument.tem.ShutterControl = True
+		except:
+			# maybe tem has no such function
+			pass
+
 		## acquire image, get new scope/camera params
 		try:
 			scopedata = self.instrument.getData(scopeclass)
