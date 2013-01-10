@@ -1,0 +1,343 @@
+# -*- coding: mbcs -*-
+# Created by makepy.py version 0.5.01
+# By python version 2.7.3 (default, Apr 10 2012, 23:24:47) [MSC v.1500 64 bit (AMD64)]
+# From type library 'tecnaiccd.dll'
+# On Thu Jan 10 13:07:17 2013
+'TecnaiCCD 1.0 Type Library'
+makepy_version = '0.5.01'
+python_version = 0x20703f0
+
+import win32com.client.CLSIDToClass, pythoncom, pywintypes
+import win32com.client.util
+from pywintypes import IID
+from win32com.client import Dispatch
+
+# The following 3 lines may need tweaking for the particular server
+# Candidates are pythoncom.Missing, .Empty and .ArgNotFound
+defaultNamedOptArg=pythoncom.Empty
+defaultNamedNotOptArg=pythoncom.Empty
+defaultUnnamedArg=pythoncom.Empty
+
+CLSID = IID('{BE24587C-089F-48EF-AE0C-18FE7D25DB00}')
+MajorVersion = 1
+MinorVersion = 0
+LibraryFlags = 8
+LCID = 0x0
+
+class constants:
+	AM_FOCUS                      =1          # from enum __MIDL___MIDL_itf_tecnaiccd_0000_0001
+	AM_RECORD                     =2          # from enum __MIDL___MIDL_itf_tecnaiccd_0000_0001
+	AM_SEARCH                     =0          # from enum __MIDL___MIDL_itf_tecnaiccd_0000_0001
+	AS_CONTINUOUS                 =1          # from enum __MIDL___MIDL_itf_tecnaiccd_0000_0002
+	AS_SINGLEFRAME                =2          # from enum __MIDL___MIDL_itf_tecnaiccd_0000_0002
+	AS_TURBO                      =0          # from enum __MIDL___MIDL_itf_tecnaiccd_0000_0002
+
+from win32com.client import DispatchBaseClass
+class IGatanCamera(DispatchBaseClass):
+	'IGatanCamera Interface'
+	CLSID = IID('{14D1CFFF-727E-41C3-8757-5A5557957FD3}')
+	coclass_clsid = IID('{47417B9B-6714-4774-BA3D-C2F124A1D3F4}')
+
+	def AcquireAndShowImage(self, mode=defaultNamedNotOptArg):
+		'method AcquireAndShowImage'
+		return self._oleobj_.InvokeTypes(57, LCID, 1, (24, 0), ((3, 0),),mode
+			)
+
+	def AcquireDarkSubtractedImage(self):
+		'method AcquireDarkSubtractedImage'
+		return self._ApplyTypes_(64, 1, (12, 0), (), u'AcquireDarkSubtractedImage', None,)
+
+	def AcquireFrontImage(self, pImageData=pythoncom.Missing):
+		'method AcquireFrontImage'
+		return self._ApplyTypes_(60, 1, (24, 0), ((24578, 2),), u'AcquireFrontImage', None,pImageData
+			)
+
+	def AcquireImage(self):
+		'method AcquireImage'
+		return self._ApplyTypes_(58, 1, (12, 0), (), u'AcquireImage', None,)
+
+	def AcquireImageNotShown(self, idt=defaultNamedNotOptArg, pImageData=pythoncom.Missing):
+		'method AcquireImageNotShown'
+		return self._ApplyTypes_(66, 1, (24, 0), ((3, 1), (24578, 2)), u'AcquireImageNotShown', None,idt
+			, pImageData)
+
+	def AcquireImageShown(self, pImageData=pythoncom.Missing):
+		'method AcquireImageShown'
+		return self._ApplyTypes_(61, 1, (24, 0), ((24578, 2),), u'AcquireImageShown', None,pImageData
+			)
+
+	def AcquireRawImage(self):
+		'method AcquireRawImage'
+		return self._ApplyTypes_(63, 1, (12, 0), (), u'AcquireRawImage', None,)
+
+	# The method ExecuteScript is actually a property, but must be used as a method to correctly pass the arguments
+	def ExecuteScript(self, script=defaultNamedNotOptArg):
+		'property ExecuteScript'
+		return self._oleobj_.InvokeTypes(13, LCID, 2, (4, 0), ((8, 0),),script
+			)
+
+	# The method ExecuteScriptFile is actually a property, but must be used as a method to correctly pass the arguments
+	def ExecuteScriptFile(self, filename=defaultNamedNotOptArg):
+		'property ExecuteScript'
+		return self._oleobj_.InvokeTypes(14, LCID, 2, (4, 0), ((8, 0),),filename
+			)
+
+	def GetCCDPixelSize(self, lCameraId=defaultNamedNotOptArg, pdX=pythoncom.Missing, pdY=pythoncom.Missing):
+		'method GetCCDPixelSize'
+		return self._ApplyTypes_(65, 1, (24, 0), ((3, 1), (16389, 2), (16389, 2)), u'GetCCDPixelSize', None,lCameraId
+			, pdX, pdY)
+
+	# The method HasFeature is actually a property, but must be used as a method to correctly pass the arguments
+	def HasFeature(self, f=defaultNamedNotOptArg):
+		'HasFeature'
+		return self._oleobj_.InvokeTypes(5, LCID, 2, (3, 0), ((2, 0),),f
+			)
+
+	def Insert(self):
+		'Insert camera'
+		return self._oleobj_.InvokeTypes(50, LCID, 1, (24, 0), (),)
+
+	def LaunchAcquisition(self, mode=defaultNamedNotOptArg):
+		'LaunchAcquisition(mode)'
+		return self._oleobj_.InvokeTypes(53, LCID, 1, (24, 0), ((3, 0),),mode
+			)
+
+	# The method Location is actually a property, but must be used as a method to correctly pass the arguments
+	def Location(self, lCameraId=defaultNamedNotOptArg):
+		'property Location'
+		# Result is a Unicode object
+		return self._oleobj_.InvokeTypes(19, LCID, 2, (8, 0), ((3, 0),),lCameraId
+			)
+
+	def OpenShutter(self, newVal=defaultNamedNotOptArg):
+		'OpenShutter(bool) '
+		return self._oleobj_.InvokeTypes(52, LCID, 1, (24, 0), ((3, 1),),newVal
+			)
+
+	# The method PixelDepth is actually a property, but must be used as a method to correctly pass the arguments
+	def PixelDepth(self, lCameraId=defaultNamedNotOptArg):
+		'property PixelDepth'
+		return self._oleobj_.InvokeTypes(20, LCID, 2, (3, 0), ((3, 1),),lCameraId
+			)
+
+	# The method PixelSize is actually a property, but must be used as a method to correctly pass the arguments
+	def PixelSize(self, lCameraId=defaultNamedNotOptArg):
+		'property PixelSize'
+		return self._oleobj_.InvokeTypes(18, LCID, 2, (5, 0), ((3, 0),),lCameraId
+			)
+
+	def Retract(self):
+		'Retract camera'
+		return self._oleobj_.InvokeTypes(51, LCID, 1, (24, 0), (),)
+
+	def SaveImageInDMFormat(self, filename=defaultNamedNotOptArg):
+		'method SaveImageInDMFormat'
+		return self._oleobj_.InvokeTypes(56, LCID, 1, (24, 0), ((8, 0),),filename
+			)
+
+	def SelectCameraParameters(self, mode=defaultNamedNotOptArg):
+		'method SelectCameraParameters'
+		return self._oleobj_.InvokeTypes(59, LCID, 1, (24, 0), ((3, 0),),mode
+			)
+
+	def ShowAcquiredImage(self):
+		'method ShowAcquiredImage'
+		return self._oleobj_.InvokeTypes(62, LCID, 1, (24, 0), (),)
+
+	def StartAcquisition(self, mode=defaultNamedNotOptArg):
+		'method StartAcquistion'
+		return self._oleobj_.InvokeTypes(55, LCID, 1, (24, 0), ((3, 0),),mode
+			)
+
+	def StopAcquisition(self):
+		'StopAcquisition'
+		return self._oleobj_.InvokeTypes(54, LCID, 1, (24, 0), (),)
+
+	# The method Type is actually a property, but must be used as a method to correctly pass the arguments
+	def Type(self, lCameraId=defaultNamedNotOptArg):
+		'property Type'
+		# Result is a Unicode object
+		return self._oleobj_.InvokeTypes(21, LCID, 2, (8, 0), ((3, 1),),lCameraId
+			)
+
+	_prop_map_get_ = {
+		"Binning": (8, 2, (2, 0), (), "Binning", None),
+		"CameraBottom": (12, 2, (2, 0), (), "CameraBottom", None),
+		"CameraLeft": (9, 2, (2, 0), (), "CameraLeft", None),
+		"CameraName": (2, 2, (8, 0), (), "CameraName", None),
+		"CameraRight": (10, 2, (2, 0), (), "CameraRight", None),
+		"CameraTop": (11, 2, (2, 0), (), "CameraTop", None),
+		"CurrentCamera": (6, 2, (2, 0), (), "CurrentCamera", None),
+		"ExposureTime": (7, 2, (4, 0), (), "ExposureTime", None),
+		"FrontImage": (17, 2, (12, 0), (), "FrontImage", None),
+		"IsAcquiring": (15, 2, (3, 0), (), "IsAcquiring", None),
+		"IsInserted": (3, 2, (3, 0), (), "IsInserted", None),
+		"IsRetractable": (4, 2, (3, 0), (), "IsRetractable", None),
+		"NumberOfCameras": (1, 2, (2, 0), (), "NumberOfCameras", None),
+		"Speed": (16, 2, (3, 0), (), "Speed", None),
+	}
+	_prop_map_put_ = {
+		"Binning": ((8, LCID, 4, 0),()),
+		"CameraBottom": ((12, LCID, 4, 0),()),
+		"CameraLeft": ((9, LCID, 4, 0),()),
+		"CameraRight": ((10, LCID, 4, 0),()),
+		"CameraTop": ((11, LCID, 4, 0),()),
+		"CurrentCamera": ((6, LCID, 4, 0),()),
+		"ExposureTime": ((7, LCID, 4, 0),()),
+		"Speed": ((16, LCID, 4, 0),()),
+	}
+	def __iter__(self):
+		"Return a Python iterator for this object"
+		try:
+			ob = self._oleobj_.InvokeTypes(-4,LCID,3,(13, 10),())
+		except pythoncom.error:
+			raise TypeError("This object does not support enumeration")
+		return win32com.client.util.Iterator(ob, None)
+
+class _IGatanCameraEvents:
+	'_IGatanCameraEvents Interface'
+	CLSID = CLSID_Sink = IID('{8D1C2E6D-2709-491D-8EA3-F14A02FAFC9C}')
+	coclass_clsid = IID('{47417B9B-6714-4774-BA3D-C2F124A1D3F4}')
+	_public_methods_ = [] # For COM Server support
+	_dispid_to_func_ = {
+		}
+
+	def __init__(self, oobj = None):
+		if oobj is None:
+			self._olecp = None
+		else:
+			import win32com.server.util
+			from win32com.server.policy import EventHandlerPolicy
+			cpc=oobj._oleobj_.QueryInterface(pythoncom.IID_IConnectionPointContainer)
+			cp=cpc.FindConnectionPoint(self.CLSID_Sink)
+			cookie=cp.Advise(win32com.server.util.wrap(self, usePolicy=EventHandlerPolicy))
+			self._olecp,self._olecp_cookie = cp,cookie
+	def __del__(self):
+		try:
+			self.close()
+		except pythoncom.com_error:
+			pass
+	def close(self):
+		if self._olecp is not None:
+			cp,cookie,self._olecp,self._olecp_cookie = self._olecp,self._olecp_cookie,None,None
+			cp.Unadvise(cookie)
+	def _query_interface_(self, iid):
+		import win32com.server.util
+		if iid==self.CLSID_Sink: return win32com.server.util.wrap(self)
+
+	# Event Handlers
+	# If you create handlers, they should have the following prototypes:
+
+
+from win32com.client import CoClassBaseClass
+# This CoClass is known by the name 'TecnaiCCD.GatanCamera.2'
+class GatanCamera(CoClassBaseClass): # A CoClass
+	# GatanCamera Class
+	CLSID = IID('{47417B9B-6714-4774-BA3D-C2F124A1D3F4}')
+	coclass_sources = [
+		_IGatanCameraEvents,
+	]
+	default_source = _IGatanCameraEvents
+	coclass_interfaces = [
+		IGatanCamera,
+	]
+	default_interface = IGatanCamera
+
+class GatanCameraCreator(CoClassBaseClass): # A CoClass
+	# GatanCameraCreator Class
+	CLSID = IID('{872EABBA-F0D1-488B-9CDB-21C9DA97B3B6}')
+	coclass_sources = [
+	]
+	coclass_interfaces = [
+	]
+
+IGatanCamera_vtables_dispatch_ = 1
+IGatanCamera_vtables_ = [
+	(( u'NumberOfCameras' , u'pVal' , ), 1, (1, (), [ (16386, 10, None, None) , ], 1 , 2 , 4 , 0 , 56 , (3, 0, None, None) , 0 , )),
+	(( u'CameraName' , u'pVal' , ), 2, (2, (), [ (16392, 10, None, None) , ], 1 , 2 , 4 , 0 , 64 , (3, 0, None, None) , 0 , )),
+	(( u'IsInserted' , u'pVal' , ), 3, (3, (), [ (16387, 10, None, None) , ], 1 , 2 , 4 , 0 , 72 , (3, 0, None, None) , 0 , )),
+	(( u'IsRetractable' , u'pVal' , ), 4, (4, (), [ (16387, 10, None, None) , ], 1 , 2 , 4 , 0 , 80 , (3, 0, None, None) , 0 , )),
+	(( u'HasFeature' , u'f' , u'pVal' , ), 5, (5, (), [ (2, 0, None, None) , 
+			(16387, 10, None, None) , ], 1 , 2 , 4 , 0 , 88 , (3, 0, None, None) , 0 , )),
+	(( u'CurrentCamera' , u'pVal' , ), 6, (6, (), [ (16386, 10, None, None) , ], 1 , 2 , 4 , 0 , 96 , (3, 0, None, None) , 0 , )),
+	(( u'CurrentCamera' , u'pVal' , ), 6, (6, (), [ (2, 1, None, None) , ], 1 , 4 , 4 , 0 , 104 , (3, 0, None, None) , 0 , )),
+	(( u'ExposureTime' , u'pVal' , ), 7, (7, (), [ (16388, 10, None, None) , ], 1 , 2 , 4 , 0 , 112 , (3, 0, None, None) , 0 , )),
+	(( u'ExposureTime' , u'pVal' , ), 7, (7, (), [ (4, 1, None, None) , ], 1 , 4 , 4 , 0 , 120 , (3, 0, None, None) , 0 , )),
+	(( u'Binning' , u'pVal' , ), 8, (8, (), [ (16386, 10, None, None) , ], 1 , 2 , 4 , 0 , 128 , (3, 0, None, None) , 0 , )),
+	(( u'Binning' , u'pVal' , ), 8, (8, (), [ (2, 1, None, None) , ], 1 , 4 , 4 , 0 , 136 , (3, 0, None, None) , 0 , )),
+	(( u'CameraLeft' , u'pVal' , ), 9, (9, (), [ (16386, 10, None, None) , ], 1 , 2 , 4 , 0 , 144 , (3, 0, None, None) , 0 , )),
+	(( u'CameraLeft' , u'pVal' , ), 9, (9, (), [ (2, 1, None, None) , ], 1 , 4 , 4 , 0 , 152 , (3, 0, None, None) , 0 , )),
+	(( u'CameraRight' , u'pVal' , ), 10, (10, (), [ (16386, 10, None, None) , ], 1 , 2 , 4 , 0 , 160 , (3, 0, None, None) , 0 , )),
+	(( u'CameraRight' , u'pVal' , ), 10, (10, (), [ (2, 1, None, None) , ], 1 , 4 , 4 , 0 , 168 , (3, 0, None, None) , 0 , )),
+	(( u'CameraTop' , u'pVal' , ), 11, (11, (), [ (16386, 10, None, None) , ], 1 , 2 , 4 , 0 , 176 , (3, 0, None, None) , 0 , )),
+	(( u'CameraTop' , u'pVal' , ), 11, (11, (), [ (2, 1, None, None) , ], 1 , 4 , 4 , 0 , 184 , (3, 0, None, None) , 0 , )),
+	(( u'CameraBottom' , u'pVal' , ), 12, (12, (), [ (16386, 10, None, None) , ], 1 , 2 , 4 , 0 , 192 , (3, 0, None, None) , 0 , )),
+	(( u'CameraBottom' , u'pVal' , ), 12, (12, (), [ (2, 1, None, None) , ], 1 , 4 , 4 , 0 , 200 , (3, 0, None, None) , 0 , )),
+	(( u'ExecuteScript' , u'script' , u'pVal' , ), 13, (13, (), [ (8, 0, None, None) , 
+			(16388, 10, None, None) , ], 1 , 2 , 4 , 0 , 208 , (3, 0, None, None) , 0 , )),
+	(( u'ExecuteScriptFile' , u'filename' , u'pVal' , ), 14, (14, (), [ (8, 0, None, None) , 
+			(16388, 10, None, None) , ], 1 , 2 , 4 , 0 , 216 , (3, 0, None, None) , 0 , )),
+	(( u'IsAcquiring' , u'pVal' , ), 15, (15, (), [ (16387, 10, None, None) , ], 1 , 2 , 4 , 0 , 224 , (3, 0, None, None) , 0 , )),
+	(( u'Speed' , u'pVal' , ), 16, (16, (), [ (16387, 10, None, None) , ], 1 , 2 , 4 , 0 , 232 , (3, 0, None, None) , 0 , )),
+	(( u'Speed' , u'pVal' , ), 16, (16, (), [ (3, 1, None, None) , ], 1 , 4 , 4 , 0 , 240 , (3, 0, None, None) , 0 , )),
+	(( u'FrontImage' , u'pVal' , ), 17, (17, (), [ (16396, 10, None, None) , ], 1 , 2 , 4 , 0 , 248 , (3, 0, None, None) , 0 , )),
+	(( u'PixelSize' , u'lCameraId' , u'pVal' , ), 18, (18, (), [ (3, 0, None, None) , 
+			(16389, 10, None, None) , ], 1 , 2 , 4 , 0 , 256 , (3, 0, None, None) , 0 , )),
+	(( u'Location' , u'lCameraId' , u'pVal' , ), 19, (19, (), [ (3, 0, None, None) , 
+			(16392, 10, None, None) , ], 1 , 2 , 4 , 0 , 264 , (3, 0, None, None) , 0 , )),
+	(( u'PixelDepth' , u'lCameraId' , u'pVal' , ), 20, (20, (), [ (3, 1, None, None) , 
+			(16387, 10, None, None) , ], 1 , 2 , 4 , 0 , 272 , (3, 0, None, None) , 0 , )),
+	(( u'Type' , u'lCameraId' , u'pVal' , ), 21, (21, (), [ (3, 1, None, None) , 
+			(16392, 10, None, None) , ], 1 , 2 , 4 , 0 , 280 , (3, 0, None, None) , 0 , )),
+	(( u'Insert' , ), 50, (50, (), [ ], 1 , 1 , 4 , 0 , 288 , (3, 0, None, None) , 0 , )),
+	(( u'Retract' , ), 51, (51, (), [ ], 1 , 1 , 4 , 0 , 296 , (3, 0, None, None) , 0 , )),
+	(( u'OpenShutter' , u'newVal' , ), 52, (52, (), [ (3, 1, None, None) , ], 1 , 1 , 4 , 0 , 304 , (3, 0, None, None) , 0 , )),
+	(( u'LaunchAcquisition' , u'mode' , ), 53, (53, (), [ (3, 0, None, None) , ], 1 , 1 , 4 , 0 , 312 , (3, 0, None, None) , 0 , )),
+	(( u'StopAcquisition' , ), 54, (54, (), [ ], 1 , 1 , 4 , 0 , 320 , (3, 0, None, None) , 0 , )),
+	(( u'StartAcquisition' , u'mode' , ), 55, (55, (), [ (3, 0, None, None) , ], 1 , 1 , 4 , 0 , 328 , (3, 0, None, None) , 0 , )),
+	(( u'SaveImageInDMFormat' , u'filename' , ), 56, (56, (), [ (8, 0, None, None) , ], 1 , 1 , 4 , 0 , 336 , (3, 0, None, None) , 0 , )),
+	(( u'AcquireAndShowImage' , u'mode' , ), 57, (57, (), [ (3, 0, None, None) , ], 1 , 1 , 4 , 0 , 344 , (3, 0, None, None) , 0 , )),
+	(( u'AcquireImage' , u'pImage' , ), 58, (58, (), [ (16396, 10, None, None) , ], 1 , 1 , 4 , 0 , 352 , (3, 0, None, None) , 0 , )),
+	(( u'SelectCameraParameters' , u'mode' , ), 59, (59, (), [ (3, 0, None, None) , ], 1 , 1 , 4 , 0 , 360 , (3, 0, None, None) , 0 , )),
+	(( u'AcquireFrontImage' , u'pImageData' , ), 60, (60, (), [ (24578, 2, None, None) , ], 1 , 1 , 4 , 0 , 368 , (3, 0, None, None) , 0 , )),
+	(( u'AcquireImageShown' , u'pImageData' , ), 61, (61, (), [ (24578, 2, None, None) , ], 1 , 1 , 4 , 0 , 376 , (3, 0, None, None) , 0 , )),
+	(( u'ShowAcquiredImage' , ), 62, (62, (), [ ], 1 , 1 , 4 , 0 , 384 , (3, 0, None, None) , 0 , )),
+	(( u'AcquireRawImage' , u'pImage' , ), 63, (63, (), [ (16396, 10, None, None) , ], 1 , 1 , 4 , 0 , 392 , (3, 0, None, None) , 0 , )),
+	(( u'AcquireDarkSubtractedImage' , u'pImage' , ), 64, (64, (), [ (16396, 10, None, None) , ], 1 , 1 , 4 , 0 , 400 , (3, 0, None, None) , 0 , )),
+	(( u'GetCCDPixelSize' , u'lCameraId' , u'pdX' , u'pdY' , ), 65, (65, (), [ 
+			(3, 1, None, None) , (16389, 2, None, None) , (16389, 2, None, None) , ], 1 , 1 , 4 , 0 , 408 , (3, 0, None, None) , 0 , )),
+	(( u'AcquireImageNotShown' , u'idt' , u'pImageData' , ), 66, (66, (), [ (3, 1, None, None) , 
+			(24578, 2, None, None) , ], 1 , 1 , 4 , 0 , 416 , (3, 0, None, None) , 0 , )),
+]
+
+IGatanCameraCreator_vtables_dispatch_ = 0
+IGatanCameraCreator_vtables_ = [
+	(( u'CreateCameraInstance' , u'ppICamera' , ), 1610678272, (1610678272, (), [ (16393, 2, None, "IID('{14D1CFFF-727E-41C3-8757-5A5557957FD3}')") , ], 1 , 1 , 4 , 0 , 24 , (3, 0, None, None) , 0 , )),
+]
+
+RecordMap = {
+}
+
+CLSIDToClassMap = {
+	'{872EABBA-F0D1-488B-9CDB-21C9DA97B3B6}' : GatanCameraCreator,
+	'{14D1CFFF-727E-41C3-8757-5A5557957FD3}' : IGatanCamera,
+	'{47417B9B-6714-4774-BA3D-C2F124A1D3F4}' : GatanCamera,
+	'{8D1C2E6D-2709-491D-8EA3-F14A02FAFC9C}' : _IGatanCameraEvents,
+}
+CLSIDToPackageMap = {}
+win32com.client.CLSIDToClass.RegisterCLSIDsFromDict( CLSIDToClassMap )
+VTablesToPackageMap = {}
+VTablesToClassMap = {
+	'{14D1CFFF-727E-41C3-8757-5A5557957FD3}' : 'IGatanCamera',
+	'{97E3C1D3-B9EB-4180-BE53-2DE63940DB66}' : 'IGatanCameraCreator',
+}
+
+
+NamesToIIDMap = {
+	'IGatanCameraCreator' : '{97E3C1D3-B9EB-4180-BE53-2DE63940DB66}',
+	'_IGatanCameraEvents' : '{8D1C2E6D-2709-491D-8EA3-F14A02FAFC9C}',
+	'IGatanCamera' : '{14D1CFFF-727E-41C3-8757-5A5557957FD3}',
+}
+
+win32com.client.constants.__dicts__.append(constants.__dict__)
+
