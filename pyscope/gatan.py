@@ -19,17 +19,27 @@ try:
 except ImportError:
 	pass
 
+## create a single connection to tecnaiccd COM object.
+## Muliple calls to get_tecnaiccd will return the same connection.
+## Store the handle in win32com.client module, which is safer than in
+## this module due to multiple imports.
+win32com.client.tecnaiccd = None
+def get_tecnaiccd():
+	if win32com.client.tecnaiccd is None:
+			 win32com.client.tecnaiccd = win32com.client.dynamic.Dispatch('TecnaiCCD.GatanCamera.2')
+	return win32com.client.tecnaiccd
+
+
 class Gatan(ccdcamera.CCDCamera):
 	name = 'Gatan'
+	cameraid = 0
 	def __init__(self):
 		self.unsupported = []
 		ccdcamera.CCDCamera.__init__(self)
 
-		self.cameraid = 0
-
 		pythoncom.CoInitializeEx(pythoncom.COINIT_MULTITHREADED)
 		try:
-			self.camera = win32com.client.dynamic.Dispatch('TecnaiCCD.GatanCamera.2')
+			self._camera = get_tecnaiccd()
 		except pywintypes.com_error, e:
 			raise RuntimeError('unable to initialize Gatan interface')
 
@@ -64,6 +74,15 @@ class Gatan(ccdcamera.CCDCamera):
 				self.filter_functions[method_name] = name
 			else:
 				self.unsupported.append(method_name)
+
+	def __getattr__(self, name):
+		# When asked for self.camera, instead return self._camera, but only
+		# after setting the current camera id
+		if name == 'camera':
+			self._camera.CurrentCamera = self.cameraid
+			return self._camera
+		else:
+			return ccdcamera.CCDCamera.__getattr__(self, name)
 
 	def __getattribute__(self, attr_name):
 		#if hasattr(self, 'unsupported') and attr_name in object.__getattribute__(self, 'unsupported'):
@@ -277,4 +296,20 @@ class Gatan(ccdcamera.CCDCamera):
 		result = self.camera.ExecuteScript(script)
 		if result < 0.0:
 			raise RuntimeError('unable to align energy filter zero loss peak')
+
+class Gatan0(Gatan):
+	name = 'Gatan0'
+	cameraid = 0
+
+class Gatan1(Gatan):
+	name = 'Gatan1'
+	cameraid = 1
+
+class Gatan2(Gatan):
+	name = 'Gatan2'
+	cameraid = 2
+
+class Gatan3(Gatan):
+	name = 'Gatan3'
+	cameraid = 3
 
