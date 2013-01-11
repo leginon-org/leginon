@@ -1,0 +1,130 @@
+#!/usr/bin/env python
+
+'''
+This script will run in the background, checking for new images in the
+database, then converting them to JPEGs using redux with default parameters.
+'''
+
+import os
+import sinedon
+import MySQLdb
+import datetime
+import time
+import imcacheconfig
+import threading
+import Queue
+
+cache_path = imcacheconfig.cache_path
+redux_args = imcacheconfig.redux_args
+redux_maxsize = imcacheconfig.max_size
+
+class QueryThread(threading.Thread):
+
+	'''
+	Periodically runs a query for new images, puts them in a queue.
+	'''
+
+	# this is the constant part of the query before filling in details
+	image_query = '''
+		SELECT i.DEF_id, s.name, s.`image path`, i.filename,
+			c.`SUBD|dimension|x`, c.`SUBD|dimension|y`
+		FROM SessionData s, AcquisitionImageData i, CameraEMData c
+		WHERE s.DEF_id = i.`REF|SessionData|session`
+			AND i.`REF|CameraEMData|camera` = c.DEF_id
+			AND i.DEF_id > %s
+			%s
+		ORDER BY i.DEF_id
+	'''
+	time_query = 'AND i.DEF_timestamp > %s'
+
+	def __init__(self, imagequeue, *args, **kwargs):
+		self.imagequeue = imagequeue
+		self.pause = imcacheconfig.query_interval
+		self.min_timestamp = imcacheconfig.min_timestamp
+		self.start_id = imcacheconfig.start_id
+		self.query_counter = 0
+		threading.Thread.__init__(self, *args, **kwargs)
+
+	def connect(self):
+		args = sinedon.getConfig('leginondata')
+		db = MySQLdb.connect(**args)
+		return db
+
+	def query_images(self):
+		# include minimum timestamp on first query only.
+		# after that, only start_id matters
+		if self.query_counter:
+			timestamp = ''
+		else:
+			timestamp = 'AND i.DEF_timestamp > %s' % (self.min_timestamp,)
+		this_query = self.image_query % (self.start_id, timestamp)
+
+		# run the query
+		db = self.connect()
+		cur = db.cursor()
+		ret = cur.execute(this_query)
+		results = cur.fetchall()
+		cur.close()
+		db.close()
+
+		# filter out results that are already cached
+		for (imid,session,path,filename,width,height) in results:
+			jpgname = filename + '.jpg'
+			cache_filename = os.path.join(cache_path, jpgname)
+			if os.path.exists(cache_filename):
+				continue
+			mrc_filename = os.path.join(path, filename+'.mrc')
+			maxdim = max(width,height)
+			if maxdim > redux_maxsize:
+				factor = float(redux_maxsize) / float(maxdim)
+			outshape = int(factor*height), int(factor*width)
+			task = {
+				'id': imid,
+				'session': session,
+				'infilename': mrc_filename,
+				'outfilename': cache_filename,
+				'shape': outshape
+			}
+			self.imagequeue.put(task)
+			self.start_id = imid
+
+		self.query_counter += 1
+
+	def run(self):
+		while True:
+			self.query_images()
+			time.sleep(self.pause)
+
+class ReduxThread(threading.Thread):
+	def __init__(self, imagequeue, *args, **kwargs):
+		self.imagequeue = imagequeue
+		self.reduxclient = redux.client.SimpleClient()
+		threading.Thread.__init__(self, *args, **kwargs)
+
+	def mrc_to_jpg(self, task):
+		
+
+	def run(self):
+		while True:
+			task = self.imagequeue.get()
+			print 'TASK', task
+
+def run():
+	imagequeue = Queue.Queue()
+
+	querythread = QueryThread(imagequeue)
+	querythread.daemon = True
+	querythread.start()
+
+	reduxthread = ReduxThread(imagequeue)
+	reduxthread.daemon = True
+	reduxthread.start()
+
+	# main thread should run as long as other threads are alive
+	while True:
+		time.sleep(5)
+		if not (querythread.isAlive() and reduxthread.isAlive()):
+			break
+
+if __name__ == '__main__':
+	run()
