@@ -917,7 +917,8 @@ class automatedAngularReconstitution(appionScript.AppionScript):
 		appfiles = glob.glob("*.appl")
 		for file in appfiles:
 			os.remove(file)
-
+		
+		time.sleep(5) # bugfix for not executing split command
 		### Xmipp files for FSC calculations
 		splitcmd = "xmipp_selfile_split -i reconstruction.sel"
 		apParam.runCmd(splitcmd, "Xmipp")
