@@ -93,7 +93,7 @@ def parse_argv():
 	add_option(parser, 'server_host', None, 'redux server host name (if not given, will start built-in redux processor)')
 	add_option(parser, 'server_port', None, 'redux server port (if not given, will use default port)')
 	add_option(parser, 'pipes', None, 'pipeline defined by sequence of pipes:  name:cls,name:cls,...')
-	add_option(parser, 'cache', None, 'set to "no" to display cache for this request')
+	add_option(parser, 'cache', None, 'set to "no" to disable cache for this request')
 
 	for pipename,clsname in pipes:
 		cls = redux.pipes.registered[clsname]
