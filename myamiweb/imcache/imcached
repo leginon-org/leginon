@@ -13,6 +13,12 @@ import time
 import imcacheconfig
 import threading
 import Queue
+import pyami.fileutil
+
+# import redux config first to disable cache
+import redux.reduxconfig
+redux.reduxconfig.config['cache on'] = False
+import redux.client
 
 cache_path = imcacheconfig.cache_path
 redux_args = imcacheconfig.redux_args
@@ -58,6 +64,7 @@ class QueryThread(threading.Thread):
 		else:
 			timestamp = 'AND i.DEF_timestamp > %s' % (self.min_timestamp,)
 		this_query = self.image_query % (self.start_id, timestamp)
+		print 'THISQUERY', this_query
 
 		# run the query
 		db = self.connect()
@@ -70,13 +77,15 @@ class QueryThread(threading.Thread):
 		# filter out results that are already cached
 		for (imid,session,path,filename,width,height) in results:
 			jpgname = filename + '.jpg'
-			cache_filename = os.path.join(cache_path, jpgname)
+			cache_filename = os.path.join(cache_path, session, jpgname)
 			if os.path.exists(cache_filename):
 				continue
 			mrc_filename = os.path.join(path, filename+'.mrc')
 			maxdim = max(width,height)
 			if maxdim > redux_maxsize:
 				factor = float(redux_maxsize) / float(maxdim)
+			else:
+				factor = 1
 			outshape = int(factor*height), int(factor*width)
 			task = {
 				'id': imid,
@@ -92,7 +101,10 @@ class QueryThread(threading.Thread):
 
 	def run(self):
 		while True:
-			self.query_images()
+			try:
+				self.query_images()
+			except:
+				pass
 			time.sleep(self.pause)
 
 class ReduxThread(threading.Thread):
@@ -102,12 +114,31 @@ class ReduxThread(threading.Thread):
 		threading.Thread.__init__(self, *args, **kwargs)
 
 	def mrc_to_jpg(self, task):
-		
+		pass
 
 	def run(self):
 		while True:
 			task = self.imagequeue.get()
-			print 'TASK', task
+			if os.path.exists(task['outfilename']):
+				continue
+
+			# copy default redux args and update for current task
+			kwargs = dict(redux_args)
+			kwargs['shape'] = task['shape']
+			kwargs['filename'] = task['infilename']
+
+			# generate jpeg
+			jpg = self.reduxclient.process_kwargs(**kwargs)
+
+			# create session directory
+			dirname = os.path.dirname(task['outfilename'])
+			pyami.fileutil.mkdirs(dirname)
+
+			# save jpeg
+			f = open(task['outfilename'], 'w')
+			f.write(jpg)
+			f.close()
+			print 'done', task['outfilename']
 
 def run():
 	imagequeue = Queue.Queue()
