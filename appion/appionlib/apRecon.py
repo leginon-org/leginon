@@ -63,7 +63,7 @@ def getResolutionFromFSCFile(fscfile, boxsize, apix, msg=False):
 	res = boxsize * apix / (lastx + 1)
 	return res
 
-def getResolutionFromGenericFSCFile(fscfile, boxsize, apix, filtradius=3, msg=False):
+def getResolutionFromGenericFSCFile(fscfile, boxsize, apix, filtradius=3, criterion=0.5, msg=False):
 	"""
 	parses standard 2-column FSC file with 1) spatial frequency and 2) FRC, returns resolution
 	"""
@@ -85,7 +85,7 @@ def getResolutionFromGenericFSCFile(fscfile, boxsize, apix, filtradius=3, msg=Fa
 	for j, info in enumerate(fscfileinfo):      
 		frc = float(info.split()[1])
 		fscdata[j] = frc
-	res = apFourier.getResolution(fscdata, apix, boxsize, filtradius=filtradius)
+	res = apFourier.getResolution(fscdata, apix, boxsize, filtradius=filtradius, crit=criterion)
 
 	return res
 
