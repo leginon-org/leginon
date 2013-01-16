@@ -118,7 +118,6 @@ class DDFrameProcessing(DirectDetectorProcessing):
 	'''
 	def __init__(self,wait_for_new=False):
 		super(DDFrameProcessing,self).__init__()
-		self.stripenorm_imageid = None
 		self.waittime = 0 # in minutes
 		if wait_for_new:
 			self.waittime = 30 # in minutes
@@ -127,6 +126,7 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		self.c_client = correctorclient.CorrectorClient()
 		self.stack_binning = 1
 		self.correct_dark_gain = True
+		self.correct_frame_mask = False
 		self.aligned_camdata = None
 		# change this to True for loading bias image for correction
 		self.use_bias = False
@@ -436,7 +436,7 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		normarray = numpy.clip(normarray, clipmin, clipmax)
 		return normarray
 
-	def __correctFrameImage(self,start_frame,nframe,use_full_raw_area=False,stripe_correction=False):
+	def __correctFrameImage(self,start_frame,nframe,use_full_raw_area=False):
 		'''
 		This returns corrected numpy array of given start and total number
 		of raw frames of the current image set for the class instance.  
@@ -491,6 +491,19 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		if debug:
 			self.scalefile.write('%s\t%.4f\n' % (start_frame,dark_scale))
 		apDisplay.printMsg('..Dark Scale= %.4f' % dark_scale)
+
+		# MASK CORRECTION
+		if self.correct_frame_mask:
+			if get_new_refs:
+				apDisplay.printMsg('Making debris mask')
+				mask = self.makeMaskArray(start_frame)
+				self.mask = mask
+				if save_jpg and mask.max() > mask.min():
+					numpil.write(mask.astype(numpy.int)*255,'%s_mask.jpg' % ddtype,'jpeg')
+			else:
+				mask = self.mask
+
+
 		# GAIN CORRECTION
 		apDisplay.printMsg('Doing gain correction')
 		if get_new_refs:
@@ -498,7 +511,7 @@ class DDFrameProcessing(DirectDetectorProcessing):
 			if not self.use_GS and self.image['norm']:
 				normarray = self.image['norm']['image']
 			else:
-				normarray = self.makeNorm(scaled_brightarray,unscaled_darkarray, dark_scale)
+				normarray = self.makeNorm(scaled_brightarray,self.unscaled_darkarray, dark_scale)
 			self.normarray = normarray
 		else:
 			normarray = self.normarray
@@ -513,14 +526,14 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		self.c_client.fixBadPixels(corrected,plan)
 		apDisplay.printMsg('Cliping corrected image')
 		corrected = numpy.clip(corrected,0,10000)
-		#if save_jpg:
-			#numpil.write(corrected,'%s_gain_corrected.jpg' % ddtype,'jpeg')
+		if self.correct_frame_mask:
+			if numpy.any(mask):
+				apDisplay.printMsg('Doing mask correction')
+				corrected = self.correctMaskRegion(corrected,mask,True)
+		if save_jpg:
+			numpil.write(corrected,'%s_gain_corrected.jpg' % ddtype,'jpeg')
 		print 'corrected',arraystats.mean(corrected),corrected.min(),corrected.max()
 
-		if stripe_correction:
-			stripenorm = self.getStripeNormArray(512,use_full_raw_area)
-			mrc.write(stripenorm,'stripenorm.mrc')
-			corrected = corrected * stripenorm
 		return corrected
 
 	def getCorrectorPlan(self,camerainfo):
@@ -531,31 +544,63 @@ class DDFrameProcessing(DirectDetectorProcessing):
 			plan, plandata = self.c_client.retrieveCorrectorPlan(self.camerainfo)
 		return plan
 
-	def getStripeNormArray(self,length=256,use_full_raw_area=False):
+	def makeMaskArray(self,start_frame_index):
 		'''
-		Experimental correction to remove horizontal stripe that is not removed from
-		the dark and gain corrections.  The convolution this function perform will
-		produce blurring if there is true signal in the image that is used as reference.
-		This is a flaw in the current code since it uses the data image to calculate
-		the stripenormarray.
+		This function creates debris mask from a frame of the current image.
+		Debris settle on dd may be processed in the integrated image used in
+		gain correction but not on raw frames.  In such a case, a mask needs
+		to be created to replace the values in the region with random values
+		so that it does not create problem in alignment and ctf estimation.
+		This function creates it dynamically.
 		'''
-		if self.stripenorm_imageid == self.image.dbid:
-			apDisplay.printWarning('Same Image, use existing stripe norm array to save time')
-			return self.stripenormarray
-		image_nframes = self.getNumberOfFrameSaved()
-		array = self.__correctFrameImage(0,image_nframes,use_full_raw_area,False)
-		shape = array.shape
-		if shape < length:
-			length = shape
-		length = int(length)
-		stripearray = numpy.ones(shape)
-		for weightshape in ((1,length),(length,1)):
-			weightarray = numpy.ones((1,length))
-			stripearray = stripearray * ndimage.filters.convolve(array,weightarray,mode='reflect')
-		self.stripenorm_imageid = self.image.dbid
-		self.stripenormarray = (stripearray.mean() / stripearray)**2
-		return self.stripenormarray
+		# These paramters probably only works in counted or super-resolution
+		# mode where the debris is shown as continuous object but not random
+		# noise
+		nframe = 1
+		sigma = 2
+		thresh = 1 * nframe
+		apDisplay.printMsg('  using %s' % self.image['filename'])
+		apDisplay.printMsg('  frame index %d' % start_frame_index)
+		# load raw frames
+		oneframe = self.sumupFrames(self.rawframe_dir,start_frame_index,nframe)
+		oneframe, dark_scale = self.darkCorrection(oneframe,self.unscaled_darkarray,nframe)
+		mrc.write(oneframe,'dark_corrected.mrc')
+		# Filter and then threshold the result to show only debris
+		mask=ndimage.gaussian_filter(oneframe,sigma)
+		#mrc.write(mask,'filtered.mrc')
+		mask = numpy.where(mask<=thresh,True,False)
+		#mrc.write(mask.astype(numpy.int),'maska.mrc')
+		last_clabels = 100
+		clabels = 99 # fake label count to start
+		apDisplay.printMsg('..Dilating segamented mask until stable')
+		itr = 0
+		while clabels < last_clabels:
+			last_clabels = clabels
+			mask = ndimage.morphology.binary_dilation(mask,ndimage.morphology.generate_binary_structure(2,1),2)
+			regions,clabels = ndimage.label(mask)
+			itr += 2
+		apDisplay.printMsg('    Completed in %d iterations' % itr)
+		if clabels == 1 and numpy.all(mask):
+			mask = numpy.logical_not(mask)
+			apDisplay.printWarning('No debris found to be masked')
+		else:
+			apDisplay.printMsg('    %d mask segment(s) found' % clabels)
+		#mrc.write(mask.astype(numpy.int),'maskb.mrc')
+		return mask
 
+	def correctMaskRegion(self,image,mask,use_random=True):
+		'''
+		Fill in mask region with either random number of normal distribution
+		or the mean of the image.
+		'''
+		stats = arraystats.mean(image),arraystats.std(image)
+		if use_random:
+			fill_values = stats[1] * numpy.random.randn(image.shape[0],image.shape[1])+stats[0]
+		else:
+			fill_values = stats[1] * numpy.ones(image.shape)
+		masked = numpy.where(mask,fill_values,image)
+		return masked
+		
 	def modifyImageArray(self,array):
 		cdata = self.getAlignedCameraEMData()
 		if not cdata:
@@ -581,7 +626,7 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		half_way_frame = int(total_frames // 2)
 		first = 0
 		for start_frame in range(first,first+total_frames):
-			array = self.__correctFrameImage(start_frame,1,use_full_raw_area,False)
+			array = self.__correctFrameImage(start_frame,1,use_full_raw_area)
 			# if non-fatal error occurs, end here
 			if array is False:
 				break
