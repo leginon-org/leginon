@@ -38,7 +38,8 @@ class MakeDDParticleMovieLoop(apParticleExtractor.ParticleBoxLoop):
 			apDisplay.printError('binning is not yet implemented, please use bin=1')
 
 	def checkIsDD(self):
-		self.is_dd_frames = True
+		self.is_dd = True
+		self.is_dd_frame = True
 
 	#=======================
 	def preLoopFunctions(self):
@@ -91,7 +92,7 @@ class MakeDDParticleMovieLoop(apParticleExtractor.ParticleBoxLoop):
 		try:
 			self.dd.setImageData(imgdata)
 		except Exception, e:
-			apDisplay.printWarning(e.message)
+			apDisplay.printWarning('%s: %s' % (e.__class__.__name__,e)
 			return
 		
 		#make frames for the movies
