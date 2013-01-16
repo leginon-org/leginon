@@ -348,6 +348,7 @@ class ParticleExtractLoop(appionLoop2.AppionLoop):
 			self.params['checkmask'] = True
 
 	def checkIsDD(self):
+		apDisplay.printWarning('Checking for dd')
 		if self.params['ddstack'] > 0:
 			self.is_dd_stack = True
 			self.is_dd = True
@@ -359,6 +360,7 @@ class ParticleExtractLoop(appionLoop2.AppionLoop):
 				self.is_dd = True
 				self.is_dd_stack = True
 			elif self.params['nframe'] > 0:
+				self.is_dd = True
 				self.is_dd_frame = True
 
 	#=======================
