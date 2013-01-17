@@ -1234,6 +1234,14 @@ class PresetsManager(node.Node):
 			time.sleep(pause_time)
 		return self._acquireSpecialImage(preset, acquirestr, mode=mode, imagelength=smallsize, binning=binning)
 
+	def modifyImageLength(self,fullcamdim,imagelength):
+		binning_values = [1,2,4,8]
+		for bin in binning_values:
+			minlength = min((fullcamdim['x']/bin,fullcamdim['y']/bin))
+			if minlength <= imagelength:
+				break
+		return minlength
+		
 	def _acquireSpecialImage(self, preset, acquirestr='', mode='', imagelength=None, binning=None):
 		errstr = 'Acquire %s image failed: ' %(acquirestr) +'%s'
 		self.logger.info('Acquiring %s image' %(acquirestr))
@@ -1252,6 +1260,7 @@ class PresetsManager(node.Node):
 
 
 		if mode == 'center':
+			imagelength = self.modifyImageLength(fullcamdim,imagelength)
 			## send new binning to camera to get binned multiplier
 			self.instrument.ccdcamera.Binning = binning
 			camdata1['binned multiplier'] = self.instrument.ccdcamera.BinnedMultiplier
