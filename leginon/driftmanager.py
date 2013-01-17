@@ -132,6 +132,9 @@ class DriftManager(watcher.Watcher):
 		return imagedata
 
 	def acquireLoop(self, target=None, threshold=None):
+		self.logger.info('taking a fake image to remove hysteresis')
+		fakeimagedata = self.acquireImage(channel=1)
+		self.logger.info('taken the fake image')
 		## acquire first image
 		# make sure we have waited "pause time" before acquire the first image
 		self.logger.info('pausing at loop start')
@@ -231,7 +234,8 @@ class DriftManager(watcher.Watcher):
 			## t0 becomes t1 and t1 will be reset for next image
 			t0 = t1
 
-			if drift_rate < threshold:
+			# check both averaged drift rate and current drift rate.  Both need to be lower than the threshold
+			if drift_rate < threshold and current_drift < threshold:
 				return status, d, imagedata
 			else:
 				status = 'drifted'
