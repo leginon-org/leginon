@@ -164,7 +164,7 @@ function getImageFromRequester($pic,$imginfo,$p) {
 	$imagerequest = new imageRequester();
 	$imageUtil = new imageUtil();
 
-	//dimx,dimy are image size
+	//dimx,dimy are image size in the database
 	$dimx = $imginfo['dimx'];
 	$dimy = $imginfo['dimy'];
 	//size is the frame size
@@ -178,6 +178,9 @@ function getImageFromRequester($pic,$imginfo,$p) {
 		$xyDim = $imageUtil->imageFitIn($dimx, $dimy, $frame_size);
 	else
 		$xyDim = $imageUtil->imageBinning($dimx, $dimy, $binning, $default_size);
+	//Default prefftDim
+	$prefftDim = $xyDim;
+	//
 	$imgheaderinfo = $imagerequest->requestInfo($pic);
 	$iscalearray = getIntensityScale($p,$imgheaderinfo);
 	$scaletype = $iscalearray[0];
@@ -185,19 +188,26 @@ function getImageFromRequester($pic,$imginfo,$p) {
 	$arg2 = $iscalearray[2];
 	//filtering
 	if (function_exists($p['filter']))
-		$lpf_sigma = $p['filter']() * $xyDim[0] / $dimx;;
-	if (!isBinBeforeFFT($p) || $dimx==$xyDim[0]) {
+		$lpf_sigma = $p['filter']() * $xyDim[0] / $dimx;
+
+	//Use cached image if available
+	if (!$p['fft']) {
+		if (strpos($pic,'rawdata/') > 1 && $default_size >= $xyDim[0]) {
+			$rposition = strpos($pic,'rawdata/');
+			$bits = explode('/',substr($pic,0,$rposition));
+			$sindex = count($bits) - 2;
+			$sessionname = $bits[$sindex];
+			$imcachefile = substr($pic,$rposition+8,strlen($pic));
+			$imcachefile = CACHE_PATH.$sessionname.'/'.str_replace('.mrc','.jpg',$imcachefile);
+			if (is_file($imcachefile))
+				$pic = $imcachefile;
+		}
 		$imgstr = $imagerequest->requestImage($pic,'JPEG',$xyDim,$scaletype,$arg1,$arg2,$lpf_sigma,false,(bool)$p['fft'],false);
-		$prefftDim = $xyDim;
 	} else {
-		$prefftDim = getImageXYDimFromBinningParams($imginfo,$p);
-		$imgstr = $imagerequest->requestImage($pic,'PNG',$prefftDim,$scaletype,$arg1,$arg2,0,false,false,false);
-		$imageId = $imginfo['imageId'];
-		if (!is_dir(TEMP_IMAGES_DIR)) mkdir(TEMP_IMAGES_DIR,0777,true);
-		$tmpfile = TEMP_IMAGES_DIR.'/tmp'.$imginfo['imageId'].'_'.$prefftDim[0].'.png';
-		file_put_contents($tmpfile,$imgstr);
-		$imgstr = $imagerequest->requestImage($tmpfile,'JPEG',$xyDim,$scaletype,$arg1,$arg2,$lpf_sigma,false,$p['fft'],true);
-		unlink($tmpfile);
+		// fft
+		if (isBinBeforeFFT($p))
+			$prefftDim = getImageXYDimFromBinningParams($imginfo,$p);
+		$imgstr = $imagerequest->requestImage($pic,'JPEG',$xyDim,$scaletype,$arg1,$arg2,$lpf_sigma,false,(bool)$p['fft'],false);
 	}
 	if (!$imgstr) {
 		return makeBlankImageWithErrorMessage('redux failed to return anything');
