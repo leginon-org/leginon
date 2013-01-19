@@ -131,6 +131,7 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		# change this to True for loading bias image for correction
 		self.use_bias = False
 		self.use_GS = False
+		self.setUseAlternativeChannelReference(False)
 		if debug:
 			self.log = open('newref.log','w')
 			self.scalefile = open('darkscale.log','w')
@@ -190,6 +191,12 @@ class DDFrameProcessing(DirectDetectorProcessing):
 			apDisplay.printError('Raw Frame Dir %s does not exist.' % rawframedir)
 		return rawframedir
 
+	def setUseAlternativeChannelReference(self,use_alt_channel=False):
+		self.use_alt_channel_ref = use_alt_channel
+
+	def getUseAlternativeChannelReference(self):
+		return self.use_alt_channel_ref
+
 	def waitForPathExist(self,newpath,sleep_time=180):
 		waitmin = 0
 		while not os.path.exists(newpath):
@@ -216,9 +223,16 @@ class DDFrameProcessing(DirectDetectorProcessing):
 
 
 	def getRefImageData(self,reftype):
+		refdata = self.__getRefImageData(reftype)
+		if self.getUseAlternativeChannelReference():
+			oldrefname = refdata['filename']
+			refdata = self.c_client.getAlternativeChannelReference(reftype,refdata)
+			apDisplay.printWarning('Use Alternative Channel Reference %s instead of %s' % (refdata['filename'],oldrefname))
+		return refdata
+
+	def __getRefImageData(self,reftype):
 		if not self.use_full_raw_area:
 			refdata = self.image[reftype]
-			#refdata = self.c_client.getAlternativeChannelReference(reftype,refdata)
 			#if self.image.dbid <= 1815252 and self.image.dbid >= 1815060:
 				# special case to back correct images with bad references
 				#refdata = apDatabase.getRefImageDataFromSpecificImageId(reftype,1815281)
