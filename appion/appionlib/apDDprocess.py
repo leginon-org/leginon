@@ -227,7 +227,7 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		if self.getUseAlternativeChannelReference():
 			oldrefname = refdata['filename']
 			refdata = self.c_client.getAlternativeChannelReference(reftype,refdata)
-			apDisplay.printWarning('Use Alternative Channel Reference %s instead of %s' % (refdata['filename'],oldrefname))
+			#apDisplay.printWarning('Use Alternative Channel Reference %s instead of %s' % (refdata['filename'],oldrefname))
 		return refdata
 
 	def __getRefImageData(self,reftype):
@@ -316,9 +316,10 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		if self.use_GS:
 			return True
 		# self.camerainfo is not set for the new image yet so it may be different
-		if self.image['norm'] and self.camerainfo['norm'].dbid != self.image['norm'].dbid:
+		current_norm = self.getRefImageData('norm')
+		if current_norm and self.camerainfo['norm'].dbid != current_norm.dbid:
 			if debug:
-				self.log.write( 'fail norm %d vs %d test\n ' % (self.camerainfo['norm'].dbid,self.image['norm'].dbid))
+				self.log.write( 'fail norm %d vs %d test\n ' % (self.camerainfo['norm'].dbid,current_norm.dbid))
 			return True
 		if self.use_full_raw_area != new_use_full_raw_area:
 			if debug:
@@ -327,7 +328,11 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		else:
 			newcamerainfo = self.__getCameraInfoFromImage(new_nframe,new_use_full_raw_area)
 			for key in self.camerainfo.keys():
-				if key != 'ccdcamera' and self.camerainfo[key] != newcamerainfo[key] and debug:
+				# data instance would be different
+				# norm is checked already above
+				datakeys = ('ccdcamera','norm')
+				if key not in datakeys:
+					if self.camerainfo[key] != newcamerainfo[key] and debug:
 						self.log.write('fail %s test\n ' % (key))
 						return True
 		return False
@@ -469,7 +474,7 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		get_new_refs = self.__conditionChanged(nframe,use_full_raw_area)
 		if debug:
 			self.log.write('%s %s\n' % (self.image['filename'],get_new_refs))
-		if not get_new_refs and start_frame ==0:
+		if not get_new_refs and start_frame != 0:
 			apDisplay.printWarning("Imaging condition unchanged. Reference in memory will be used.")
 
 		# o.k. to set attribute now that condition change is checked
@@ -522,8 +527,10 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		apDisplay.printMsg('Doing gain correction')
 		if get_new_refs:
 			scaled_brightarray = self.getScaledBrightArray(nframe)
-			if not self.use_GS and self.image['norm']:
-				normarray = self.image['norm']['image']
+			normdata = self.getRefImageData('norm')
+			apDisplay.printWarning('Use Norm Reference %s' % (normdata['filename'],))
+			if not self.use_GS and normdata:
+				normarray = normdata['image']
 			else:
 				normarray = self.makeNorm(scaled_brightarray,self.unscaled_darkarray, dark_scale)
 			self.normarray = normarray
