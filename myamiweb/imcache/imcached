@@ -113,9 +113,6 @@ class ReduxThread(threading.Thread):
 		self.reduxclient = redux.client.SimpleClient()
 		threading.Thread.__init__(self, *args, **kwargs)
 
-	def mrc_to_jpg(self, task):
-		pass
-
 	def run(self):
 		while True:
 			task = self.imagequeue.get()
