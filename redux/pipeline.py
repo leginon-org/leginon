@@ -135,6 +135,8 @@ class Pipeline(object):
 		if result is None:
 			done = ()
 			remain = pipeline
+			if 'initial_input' in kwargs:
+				result = kwargs['initial_input']
 
 		### finish the remainder of the pipeline
 		for pipe in remain:
