@@ -29,6 +29,8 @@ class MakeFrameStackLoop(appionLoop2.AppionLoop):
 			help="ID for particle stack (optional)", metavar="INT")
 		self.parser.add_option("--bin", dest="bin", type="int", default=1,
 			help="Binning factor to make the stack (optional)", metavar="INT")
+		self.parser.add_option("--refimgid", dest="refimgid", type="int",
+			help="Specify a corrected image to do gain/dark correction with", metavar="INT")
 		self.parser.remove_option("--uncorrected")
 		self.parser.remove_option("--reprocess")
 
@@ -45,6 +47,8 @@ class MakeFrameStackLoop(appionLoop2.AppionLoop):
 		self.dd = apDDprocess.initializeDDFrameprocess(self.params['sessionname'],self.params['wait'])
 		self.dd.setUseGS(self.params['useGS'])
 		self.dd.setRunDir(self.params['rundir'])
+		if self.params['refimgid']:
+			self.dd.setDefaultImageForReference(self.params['refimgid'])
 		self.imageids = []
 		if self.params['stackid']:
 			self.imageids = apStack.getImageIdsFromStack(self.params['stackid'])
