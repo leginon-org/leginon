@@ -223,14 +223,14 @@ class DDFrameProcessing(DirectDetectorProcessing):
 
 
 	def getRefImageData(self,reftype):
-		refdata = self.__getRefImageData(reftype)
+		refdata = self._getRefImageData(reftype)
 		if self.getUseAlternativeChannelReference():
 			oldrefname = refdata['filename']
 			refdata = self.c_client.getAlternativeChannelReference(reftype,refdata)
 			#apDisplay.printWarning('Use Alternative Channel Reference %s instead of %s' % (refdata['filename'],oldrefname))
 		return refdata
 
-	def __getRefImageData(self,reftype):
+	def _getRefImageData(self,reftype):
 		if not self.use_full_raw_area:
 			refdata = self.image[reftype]
 			#if self.image.dbid <= 1815252 and self.image.dbid >= 1815060:
