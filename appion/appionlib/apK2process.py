@@ -61,7 +61,6 @@ class GatanK2Processing(apDDprocess.DDFrameProcessing):
 	def _getRefImageData(self,reftype):
 		if not self.use_full_raw_area:
 			refdata = self.image[reftype]
-			refdata = None
 			if refdata is None:
 				# Use chosen default image
 				apDisplay.printWarning('No %s reference for the image, use default' % reftype) 
