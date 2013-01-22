@@ -132,6 +132,7 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		self.use_bias = False
 		self.use_GS = False
 		self.setUseAlternativeChannelReference(False)
+		self.setDefaultImageForReference(0)
 		if debug:
 			self.log = open('newref.log','w')
 			self.scalefile = open('darkscale.log','w')
@@ -197,6 +198,12 @@ class DDFrameProcessing(DirectDetectorProcessing):
 	def getUseAlternativeChannelReference(self):
 		return self.use_alt_channel_ref
 
+	def setDefaultImageForReference(self,imageid):
+		self.default_ref_image = imageid
+
+	def getDefaultImageForReference(self):
+		return self.default_ref_image
+
 	def waitForPathExist(self,newpath,sleep_time=180):
 		waitmin = 0
 		while not os.path.exists(newpath):
@@ -221,6 +228,13 @@ class DDFrameProcessing(DirectDetectorProcessing):
 			apDisplay.printError('Raw Frame Directory %s does not exist' % rawframedir)
 		return rawframedir
 
+	def getDefaultCorrectedImageData(self):
+		imageid = self.getDefaultImageForReference()
+		imagedata = leginondata.AcquisitionImageData().direct_query(imageid)
+		if self.image['camera']['ccdcamera']['name'] != imagedata['camera']['ccdcamera']['name']:
+			apDisplay.printError('Default reference image not from the same camera as the data')
+		apDisplay.printMsg('Reference image comes from %s' % imagedata['filename'])
+		return imagedata
 
 	def getRefImageData(self,reftype):
 		refdata = self._getRefImageData(reftype)
@@ -231,6 +245,9 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		return refdata
 
 	def _getRefImageData(self,reftype):
+		if self.getDefaultImageForReference():
+			imagedata = self.getDefaultCorrectedImageData()
+			return imagedata[reftype]
 		if not self.use_full_raw_area:
 			refdata = self.image[reftype]
 			#if self.image.dbid <= 1815252 and self.image.dbid >= 1815060:
@@ -585,7 +602,6 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		# load raw frames
 		oneframe = self.sumupFrames(self.rawframe_dir,start_frame_index,nframe)
 		oneframe, dark_scale = self.darkCorrection(oneframe,self.unscaled_darkarray,nframe)
-		mrc.write(oneframe,'dark_corrected.mrc')
 		# Filter and then threshold the result to show only debris
 		mask=ndimage.gaussian_filter(oneframe,sigma)
 		#mrc.write(mask,'filtered.mrc')

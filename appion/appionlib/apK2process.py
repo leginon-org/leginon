@@ -59,6 +59,9 @@ class GatanK2Processing(apDDprocess.DDFrameProcessing):
 		return camdata
 
 	def _getRefImageData(self,reftype):
+		if self.getDefaultImageForReference():
+			imagedata = super(GatanK2Processing,self).getDefaultCorrectedImageData()
+			return imagedata[reftype]
 		if not self.use_full_raw_area:
 			refdata = self.image[reftype]
 			if refdata is None:
