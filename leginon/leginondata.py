@@ -221,6 +221,7 @@ class CameraEMData(EMData):
 	def typemap(cls):
 		return EMData.typemap() + camera_params + (
 			('ccdcamera', InstrumentData),
+			('save frames', bool),
 		)
 	typemap = classmethod(typemap)
 
