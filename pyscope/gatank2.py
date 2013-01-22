@@ -45,7 +45,7 @@ class GatanK2Base(ccdcamera.CCDCamera):
 		self.camsize = self.getCameraSize()
 		self.dimension = {'x': self.camsize['x'], 'y': self.camsize['y']}
 		self.exposuretype = 'normal'
-		self.exposure_ms = 125
+		self.user_exposure_ms = 125
 		self.float_scale = 1000.0
 		# what to do in digital micrograph before handing back the image
 		# unprocessed, dark subtracted, gain normalized
@@ -53,7 +53,9 @@ class GatanK2Base(ccdcamera.CCDCamera):
 		self.dm_processing = 'unprocessed'
 		self.save_frames = False
 		self.frames_name = None
-		self.frame_rate = 4.0
+		#self.frame_rate = 4.0
+		self.dosefrac_frame_time = 0.125
+		self.record_frame_time = 0.125
 		self.readout_delay_ms = 0
 		self.align_frames = False
 		self.align_filter = 'None'
@@ -94,11 +96,33 @@ class GatanK2Base(ccdcamera.CCDCamera):
 			raise ValueError('multiple binning dimesions not supported')
 		self.binning = dict(value)
 
+	def getFrameTime(self):
+		if self.isDoseFracOn():
+			frame_time = self.dosefrac_frame_time
+		else:
+			frame_time = self.record_frame_time
+		return frame_time
+
+	def getRealExposureTime(self):
+		'''
+		The real exposure time is rounded to the nearest
+		frame time, but not less than one frame.
+		'''
+		frame_time = self.getFrameTime()
+		user_time = self.user_exposure_ms / 1000.0
+		if user_time < frame_time:
+			real_time = frame_time
+		else:
+			real_time = round(user_time / frame_time) * frame_time
+		return real_time
+
 	def getExposureTime(self):
-		return self.exposure_ms
+		real_time = self.getRealExposureTime()
+		real_time_ms = int(round(real_time * 1000))
+		return real_time_ms
 
 	def setExposureTime(self, value):
-		self.exposure_ms = value
+		self.user_exposure_ms = value
 
 	def getExposureTypes(self):
 		return ['normal', 'dark']
@@ -128,7 +152,7 @@ class GatanK2Base(ccdcamera.CCDCamera):
 			'left': self.tempoffset['x'],
 			'bottom': self.offset['y']+self.dimension['y'],
 			'right': self.offset['x']+self.dimension['x'],
-			'exposure': self.exposure_ms / 1000.0,
+			'exposure': self.getRealExposureTime(),
 			'shutterDelay': shutter_delay,
 		}
 		print acqparams
@@ -138,14 +162,17 @@ class GatanK2Base(ccdcamera.CCDCamera):
 	readmodes = {'linear': 0, 'counting': 1, 'super resolution': 2}
 	hardwareProc = {'none': 0, 'dark': 2, 'gain': 4, 'dark+gain': 6}
 
+	def isDoseFracOn(self):
+		return self.save_frames or self.align_frames
+
 	def calculateK2Params(self):
-		frame_time = 1.0 / self.frame_rate
+		frame_time = self.getFrameTime()
 		params = {
 			'readMode': self.readmodes[self.ed_mode],
 			#'scaling': self.float_scale,
 			'scaling': 1.0,
 			'hardwareProc': self.hardwareProc[self.hw_proc],
-			'doseFrac': self.save_frames or self.align_frames,
+			'doseFrac': self.isDoseFracOn(),
 			'frameTime': frame_time,
 			'alignFrames': self.align_frames,
 			'saveFrames': self.save_frames,
@@ -251,17 +278,26 @@ class GatanK2Base(ccdcamera.CCDCamera):
 
 	def getPreviousRawFramesName(self):
 		return self.frames_name
-        
+
+	def getNumberOfFrames(self):
+		frame_time = self.getFrameTime()
+		real_time = self.getRealExposureTime()
+		nframes = int(round(real_time / frame_time))
+		return nframes
+
 	def getNumberOfFramesSaved(self):
-		nframes = self.getProperty('Autosave Raw Frames - Frames Written in Last Exposure')
-		return int(nframes)
+		if self.save_frames:
+			return self.getNumberOfFrames()
+		else:
+			return 0
 
 	def getFrameRate(self):
-		return self.frame_rate
+		frame_rate = 1.0 / self.getFrameTime()
+		return frame_rate
 
 	def setFrameRate(self, fps):
 		if fps:
-			self.frame_rate = fps
+			self.dosefrac_frame_time = 1.0 / fps
 
 	def setReadoutDelay(self, ms):
 		if not ms:
@@ -270,6 +306,13 @@ class GatanK2Base(ccdcamera.CCDCamera):
 
 	def getReadoutDelay(self):
 		return self.readout_delay_ms
+
+	def setUseFrames(self, frames):
+		pass
+
+	def getUseFrames(self):
+		nframes = self.getNumberOfFrames()
+		return tuple(range(nframes))
 
 class GatanK2Linear(GatanK2Base):
 	name = 'GatanK2Linear'
