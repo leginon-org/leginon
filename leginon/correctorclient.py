@@ -247,18 +247,21 @@ class CorrectorClient(cameraclient.CameraClient):
 		Rescale the dark image to be same number of frames as raw image.
 		Assuming exposure time of each frame (or frame rate) is constant.
 		'''
+		print 'DARK', dark['use frames'], dark['camera']['frame rate']
+		print 'RAW', raw['use frames'], raw['camera']['frame rate']
+		darkarray = dark['image']
 		try:
 			## NEED TO FIX
-			darkframes = len(dark['use frames'])
+			dark_exptime = len(dark['use frames']) / float(dark['camera']['frame rate'])
 		except:
-			darkframes = 1
+			return darkarray
 		try:
-			rawframes = len(raw['use frames'])
+			raw_exptime = len(raw['use frames']) / float(raw['camera']['frame rate'])
 		except:
-			rawframes = 1
-		darkarray = dark['image']
-		if rawframes and darkframes and (rawframes != darkframes):
-			multiplier = float(rawframes) / float(darkframes)
+			return darkarray
+		multiplier = float(raw_exptime) / float(dark_exptime)
+		print 'MUTLIPLIER', multiplier
+		if multiplier != 1.0:
 			darkarray = multiplier * darkarray
 		return darkarray
 
