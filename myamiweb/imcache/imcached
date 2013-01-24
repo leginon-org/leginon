@@ -21,8 +21,11 @@ redux.reduxconfig.config['cache on'] = False
 import redux.client
 
 cache_path = imcacheconfig.cache_path
-redux_args = imcacheconfig.redux_args
-redux_maxsize = imcacheconfig.max_size
+redux_args1 = imcacheconfig.redux_args1
+redux_args_jpg = imcacheconfig.redux_args_jpg
+redux_args_pow = imcacheconfig.redux_args_pow
+redux_maxsize1 = imcacheconfig.redux_maxsize1
+redux_maxsize2 = imcacheconfig.redux_maxsize2
 
 class QueryThread(threading.Thread):
 
@@ -76,23 +79,27 @@ class QueryThread(threading.Thread):
 
 		# filter out results that are already cached
 		for (imid,session,path,filename,width,height) in results:
+			# determine what is missing from cache
+			missing = {}
 			jpgname = filename + '.jpg'
 			cache_filename = os.path.join(cache_path, session, jpgname)
-			if os.path.exists(cache_filename):
+			if not os.path.exists(cache_filename):
+				missing['jpg'] = cache_filename
+			powname = filename + '.pow.jpg'
+			cache_filename = os.path.join(cache_path, session, powname)
+			if not os.path.exists(cache_filename):
+				missing['pow'] = cache_filename
+			if not missing:
 				continue
+
+			# put new task in the queue
 			mrc_filename = os.path.join(path, filename+'.mrc')
-			maxdim = max(width,height)
-			if maxdim > redux_maxsize:
-				factor = float(redux_maxsize) / float(maxdim)
-			else:
-				factor = 1
-			outshape = int(factor*height), int(factor*width)
 			task = {
 				'id': imid,
 				'session': session,
 				'infilename': mrc_filename,
-				'outfilename': cache_filename,
-				'shape': outshape
+				'missing': missing,
+				'shape': (height, width),
 			}
 			self.imagequeue.put(task)
 			self.start_id = imid
@@ -116,26 +123,70 @@ class ReduxThread(threading.Thread):
 	def run(self):
 		while True:
 			task = self.imagequeue.get()
-			if os.path.exists(task['outfilename']):
+
+			# make sure destination images still do not exist
+			still_missing = {}
+			for key in ('jpg','pow'):
+				m = task['missing'][key]
+				if not os.path.exists(m):
+					still_missing[key] = m
+			if not still_missing:
 				continue
 
+			# create an intermediate image, no greater than size1
+			inshape1 = task['shape']
+			inmax1 = max(*inshape1)
+			if inmax1 > redux_maxsize1:
+				factor = float(redux_maxsize1) / float(inmax1)
+			else:
+				factor = 1
+			outshape1 = int(factor*inshape1[0]), int(factor*inshape1[1])
 			# copy default redux args and update for current task
-			kwargs = dict(redux_args)
-			kwargs['shape'] = task['shape']
-			kwargs['filename'] = task['infilename']
-
-			# generate jpeg
-			jpg = self.reduxclient.process_kwargs(**kwargs)
+			kwargs1 = dict(redux_args1)
+			kwargs1['shape'] = outshape1
+			kwargs1['filename'] = task['infilename']
+			image1 = self.reduxclient.process_kwargs(**kwargs1)
 
 			# create session directory
-			dirname = os.path.dirname(task['outfilename'])
+			outfile = still_missing.values()[0]
+			dirname = os.path.dirname(outfile)
 			pyami.fileutil.mkdirs(dirname)
 
-			# save jpeg
-			f = open(task['outfilename'], 'w')
-			f.write(jpg)
-			f.close()
-			print 'done', task['outfilename']
+			# final jpg and pow jpg are no greater than size2
+			inshape2 = outshape1
+			inmax2 = max(*inshape2)
+			if inmax2 > redux_maxsize2:
+				factor = float(redux_maxsize2) / float(inmax2)
+			else:
+				factor = 1
+			outshape2 = int(factor*inshape2[0]), int(factor*inshape2[1])
+
+			# final jpeg
+			if 'jpg' in still_missing:
+				# copy default redux args and update for current task
+				kwargs = dict(redux_args_jpg)
+				kwargs['shape'] = outshape2
+				kwargs['initial_input'] = image1
+				jpg = self.reduxclient.process_kwargs(**kwargs)
+				# save jpeg
+				f = open(still_missing['jpg'], 'w')
+				f.write(jpg)
+				f.close()
+				print 'done', still_missing['jpg']
+
+			# final power
+			if 'pow' in still_missing:
+				# copy default redux args and update for current task
+				kwargs = dict(redux_args_pow)
+				kwargs['shape'] = outshape2
+				kwargs['initial_input'] = image1
+				pow = self.reduxclient.process_kwargs(**kwargs)
+				# save pow jpeg
+				f = open(still_missing['pow'], 'w')
+				f.write(pow)
+				f.close()
+				print 'done', still_missing['pow']
+
 
 def run():
 	imagequeue = Queue.Queue()

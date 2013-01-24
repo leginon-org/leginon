@@ -4,7 +4,7 @@
 query_interval = 5
 
 # limit query to later than this timestamp (mysql style: yyyymmddhhmmss)
-min_timestamp = '20130114120000'
+min_timestamp = '20130121000000'
 
 # limit query to start at this image id
 start_id = 0
@@ -13,16 +13,32 @@ start_id = 0
 cache_path = '/tmp/imcache'
 
 # maximum image dimension after conversion
-max_size = 1024
+redux_maxsize1 = 2048
+redux_maxsize2 = 1024
 
-# redux args for image conversion
-# filename and shape will be determined per image
-redux_args = {
-	'pipes': 'read:Read,shape:Shape,scale:Scale,format:Format',
+# initial redux read and resize before calculating power and final
+redux_args1 = {
+	'pipes': 'read:Read,shape:Shape',
 	'cache': False,
-	'oformat': 'JPEG',
+}
+
+# redux to create final image for cache
+redux_args_jpg = {
+	'pipes': 'shape:Shape,scale:Scale,format:Format',
 	'scaletype': 'stdev',
 	'scalemin': -5,
 	'scalemax': 5,
+	'oformat': 'JPEG',
+}
+
+# redux to create final power image for cache
+redux_args_pow = {
+	'pipes': 'power:Power,shape:Shape,mask:Mask,scale:Scale,format:Format',
+	'power': True,
+	'maskradius': 10,
+	'scaletype': 'stdev',
+	'scalemin': -2,
+	'scalemax': 2,
+	'oformat': 'JPEG',
 }
 
