@@ -42,7 +42,8 @@ class aceLoop(appionLoop2.AppionLoop):
 		if self.params['sessionname'] is not None:
 			self.params['outtextfile']=os.path.join(self.params['rundir'], self.params['sessionname']+".txt")
 	
-		apParam.resetVirtualFrameBuffer()
+		if self.params['xvfb'] is True:
+			apParam.resetVirtualFrameBuffer()
 		apMatlab.checkMatlabPath(self.params)
 		acepath = os.path.join(os.getcwd(), self.functionname+".py")
 		#if not os.path.isfile(acepath):
