@@ -1689,6 +1689,15 @@ class TiltAcquisitionSettingsData(AcquisitionSettingsData):
 		)
 	typemap = classmethod(typemap)
 
+class TiltAlternaterSettingsData(AcquisitionSettingsData):
+	def typemap(cls):
+		return AcquisitionSettingsData.typemap() + (
+			('tilts', str),
+			('use tilts', bool),
+			('reset per targetlist', bool),
+		)
+	typemap = classmethod(typemap)
+
 class CalibratorSettingsData(SettingsData):
 	def typemap(cls):
 		return SettingsData.typemap() + (
@@ -2052,6 +2061,21 @@ class PolygonRasterSettingsData(TargetFilterSettingsData):
 	typemap = classmethod(typemap)
 
 class RCTAcquisitionSettingsData(AcquisitionSettingsData):
+	def typemap(cls):
+		return AcquisitionSettingsData.typemap() + (
+			('tilts', str),
+			('stepsize', float),
+			('pause', float),
+			('minsize', float),
+			('maxsize', float),
+			('medfilt', int),
+			('lowfilt', float),
+			('drift threshold', float),
+			('drift preset', str),
+		)
+	typemap = classmethod(typemap)
+
+class TiltTrackerSettingsData(AcquisitionSettingsData):
 	def typemap(cls):
 		return AcquisitionSettingsData.typemap() + (
 			('tilts', str),
