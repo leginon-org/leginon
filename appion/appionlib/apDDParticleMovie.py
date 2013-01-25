@@ -4,6 +4,8 @@
 import os
 import sys
 import math
+
+from pyami import mrc
 #appion
 from appionlib import apParticleExtractor
 from appionlib import apDisplay
@@ -29,6 +31,8 @@ class MakeDDParticleMovieLoop(apParticleExtractor.ParticleBoxLoop):
 			help="number of raw frame averaged as a single movie frame")
 		self.parser.add_option("--framestep", dest="framestep", type="int", default=1,
 			help="interval of raw frames used as starting frame for averaging")
+		self.parser.add_option("--denoise", dest="denoise", default=False,
+			action="store_true", help="use KVSD to denoise the frames")
 		self.parser.remove_option("--uncorrected")
 		self.parser.remove_option("--reprocess")
 
@@ -36,18 +40,25 @@ class MakeDDParticleMovieLoop(apParticleExtractor.ParticleBoxLoop):
 		super(MakeDDParticleMovieLoop,self).checkConflicts()
 		if self.params['bin'] != 1:
 			apDisplay.printError('binning is not yet implemented, please use bin=1')
+		#if self.params['denoise'] and not self.params['ddstack']:
+		#	apDisplay.printError('denoise only works with ddstack')
+		if self.params['denoise'] and self.params['framestep'] > 1:
+			apDisplay.printWarning('Interval of frames must be one when denoising')
+			apDisplay.printWarning('Forcing it to 1....')
+			self.params['framestep'] = 1
 
-	def checkIsDD(self):
-		self.is_dd = True
-		self.is_dd_frame = True
 
 	#=======================
 	def preLoopFunctions(self):
 		super(MakeDDParticleMovieLoop,self).preLoopFunctions()
+		self.firstframe = self.params['startframe']
 		self.frameavg = self.params['frameavg']
 		self.framestep = self.params['framestep']
 		if self.params['commit']:
 			self.insertRun()
+		if self.params['denoise']:
+			from appionlib import apDenoise
+			self.denoise = apDenoise.KSVDdenoise(self.params['rundir'])
 
 	def processImage(self, imgdata):
 		self.movieparticles = {}
@@ -56,7 +67,6 @@ class MakeDDParticleMovieLoop(apParticleExtractor.ParticleBoxLoop):
 	def saveFrameFromArray(self,array,fileprefix,particleid,frameid):
 		filenamebase = '%s_%03d_%03d' % (fileprefix,particleid,frameid)
 		apTomo.array2jpg(filenamebase,array,imin=None,imax=None,size=self.boxsize)
-		print filenamebase
 		return filenamebase
 
 	def makeMovie(self,framepaths_wild,moviepath):
@@ -92,13 +102,36 @@ class MakeDDParticleMovieLoop(apParticleExtractor.ParticleBoxLoop):
 		try:
 			self.dd.setImageData(imgdata)
 		except Exception, e:
-			apDisplay.printWarning('%s: %s' % (e.__class__.__name__,e)
+			apDisplay.printWarning('%s: %s' % (e.__class__.__name__,e))
 			return
 		
 		#make frames for the movies
-		total_frames = self.dd.getNumberOfFrameSaved()
-		for start_frame in range(0,total_frames-self.frameavg+1,self.framestep):
-			corrected = self.dd.correctFrameImage(start_frame,self.frameavg)
+		self.nframe = self.dd.getNumberOfFrameSaved()
+		if self.params['nframe'] and (self.nframe is None or self.nframe > self.params['nframe']):
+			self.nframe = self.params['nframe']
+			
+		if not self.params['denoise']:
+			self.makeParticleJPGFrames(partdatas,shiftdata,shortname)
+		else:
+			self.makeDenoisedParticleJPGFrames(partdatas,shiftdata,shortname)
+		# make movies
+		self.combineFramesToMovie(partdatas,shortname,imgname)
+
+	def getDDStackDirFile(self,imgdata):
+		stackpath = self.dd.framestackpath
+		return os.path.dirname(stackpath), os.path.basename(stackpath)
+
+	def makeParticleJPGFrames(self,partdatas,shiftdata,shortname):
+		'''
+		Make corrected frame images and then box off the particles.
+		'''
+		imgdata = partdatas[0]['image']
+		for start_frame in range(self.firstframe,self.nframe-self.frameavg-self.firstframe+1,self.framestep):
+			if self.is_dd_frame:
+				corrected = self.dd.correctFrameImage(start_frame,self.frameavg)
+			else:
+				ddstackdir,stackfile = self.getDDStackDirFile(imgdata)
+				corrected = self.dd.getDDStackFrameSumImage(start_frame,self.frameavg)
 			for p,partdata in enumerate(partdatas):
 				col_start,row_start = apBoxer.getBoxStartPosition(imgdata,self.half_box,partdata, shiftdata)
 				row_end = row_start + self.boxsize
@@ -107,9 +140,35 @@ class MakeDDParticleMovieLoop(apParticleExtractor.ParticleBoxLoop):
 				# bin is not used for now
 				movieframe_number = start_frame
 				self.saveFrameFromArray(array,shortname,p,movieframe_number)
-		
-		# make movies
-		self.combineFramesToMovie(partdatas,shortname,imgname)
+
+	def makeDenoisedParticleJPGFrames(self,partdatas,shiftdata,shortname):
+		'''
+		Denoise the boxed particles and then read in the resulting frame stack of the particle for saving as movie frames.
+		'''
+		if not partdatas:
+			return
+		if not self.is_dd_stack:
+			apDisplay.printError('Denoising works only with ddstack for now')
+		imgdata = partdatas[0]['image']
+		ddstackdir,stackfile = self.getDDStackDirFile(imgdata)
+		framestacks = []
+		for p,partdata in enumerate(partdatas):
+			# denoise within the particle box
+			col_start,row_start = apBoxer.getBoxStartPosition(imgdata,self.half_box,partdata, shiftdata)
+			row_end = row_start + self.boxsize
+			col_end = col_start + self.boxsize
+			roi = ((row_start,row_end),(col_start,col_end))
+			paramstr = self.denoise.setupKSVDdenoise(self.frameavg,self.firstframe,self.nframe,roi)
+			apDisplay.printMsg('denoise param string: %s' % paramstr)
+			self.denoise.makeDenoisedStack(ddstackdir, stackfile)
+			outputstackfile = '%s_%s.mrc' % (stackfile[:-4], paramstr)
+			framestacks.append(outputstackfile)
+		for i,start_frame in enumerate(range(self.firstframe,self.nframe-self.frameavg-self.firstframe+1,self.framestep)):
+			for p,partdata in enumerate(partdatas):
+				array = mrc.read(os.path.join(self.params['rundir'],'results/mrc',framestacks[p]),i)
+				# bin is not used for now
+				movieframe_number = start_frame
+				self.saveFrameFromArray(array,shortname,p,movieframe_number)
 
 	def fakeprocessParticles(self,imgdata,partdatas,shiftdata):
 		self.movieparticles = {}
