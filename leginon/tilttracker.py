@@ -15,6 +15,7 @@ import time
 import math
 import pyami.quietscipy
 from scipy import ndimage
+import itertools
 #from apTilt import apTiltShift
 pi = numpy.pi
 
@@ -80,6 +81,7 @@ class TiltTracker(acquisition.Acquisition):
 	settingsclass = leginondata.TiltTrackerSettingsData
 	defaultsettings = acquisition.Acquisition.defaultsettings
 	defaultsettings.update({
+		'activation interval': 1,
 		'tilts': '(-45, 0)',
 		'stepsize': 42.0,
 		'pause': 1.0,
@@ -98,9 +100,13 @@ class TiltTracker(acquisition.Acquisition):
 		acquisition.Acquisition.__init__(self, id, session, managerlocation, **kwargs)
 		self.tiltnumber = 0
 		self.tiltseries = None
+		self.activation_counter = itertools.count()
+		self.activated = False
 
 	#====================
 	def setImageFilename(self, imagedata):
+		if not self.activated:
+			return super(TiltTracker, self).setImageFilename(imagedata)
 		setImageFilename(imagedata, tiltnumber=self.tiltnumber)
 		imagedata['tilt series'] = self.tiltseries
 
@@ -109,6 +115,14 @@ class TiltTracker(acquisition.Acquisition):
 		'''
 		We override this so we can process each target list for each tilt
 		'''
+
+		# activate if counter is at a multiple of interval
+		interval = self.settings['activation interval']
+		if interval and (self.activation_counter.next() % interval):
+			self.activated = True
+		else:
+			self.activated = False
+			return super(TiltTracker, self).processTargetList(tilt0targetlist)
 
 		## return if no targets in list
 		tilt0targets = self.researchTargets(list=tilt0targetlist, status='new')
@@ -514,7 +528,10 @@ class TiltTracker(acquisition.Acquisition):
 
 	#====================
 	def alreadyAcquired(self, target, presetname):
-		return False
+		if self.activated:
+			return False
+		else:
+			return super(TiltTracker, self).alreadyAcquired(target, presetname)
 
 	#====================
 	def getTiltSeries(self, targetdata, presetdata):
@@ -544,7 +561,9 @@ class TiltTracker(acquisition.Acquisition):
 		extend Acquisition.moveAndPreset because additionally we need to
 		return to the same defocus as the other images in the tilt series
 		'''
-		status = acquisition.Acquisition.moveAndPreset(self, presetdata, emtarget)
+		status = super(TiltTracker, self).moveAndPreset(presetdata, emtarget)
+		if not self.activated:
+			return status
 		if status == 'error':
 			return status
 		targetdata = emtarget['target']

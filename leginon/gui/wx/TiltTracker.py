@@ -51,32 +51,90 @@ class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 	def initialize(self):
 		sizers = leginon.gui.wx.Acquisition.ScrolledSettings.initialize(self)
 		if self.show_basic:
-			sbsz = self.addBasicRCTSettings()
+			sbsz = self.addBasicTiltSettings()
 		else:
-			sbsz = self.addRCTSettings()
+			sbsz = self.addTiltSettings()
 		return sizers + [sbsz]
 
-	def addRCTSettings(self):
-		sb = wx.StaticBox(self, -1, 'RCT Options')
+	def addTiltSettings(self):
+		sb = wx.StaticBox(self, -1, 'Tilt Options')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
 		sizer = wx.GridBagSizer(5, 4)
 		bordersize = 3
 
-		label = wx.StaticText(self, -1, 'List of Tilts to Collect (in degrees)')
+		label = wx.StaticText(self, -1, 'Activation Interval')
 		sizer.Add(label, (0, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
+		self.widgets['activation interval'] = IntEntry(self, -1, chars=5, style=wx.ALIGN_RIGHT)
+		sizer.Add(self.widgets['activation interval'], (0,2), (1,2), wx.ALL|wx.EXPAND|wx.ALIGN_CENTER_VERTICAL, bordersize)
+
+		label = wx.StaticText(self, -1, 'List of Tilts to Collect (in degrees)')
+		sizer.Add(label, (1, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
 		self.widgets['tilts'] = Entry(self, -1, chars=15, style=wx.ALIGN_RIGHT)
-		sizer.Add(self.widgets['tilts'], (0,2), (1,2), wx.ALL|wx.EXPAND|wx.ALIGN_CENTER_VERTICAL, bordersize)
+		sizer.Add(self.widgets['tilts'], (1,2), (1,2), wx.ALL|wx.EXPAND|wx.ALIGN_CENTER_VERTICAL, bordersize)
 
 		label = wx.StaticText(self, -1, 'Maximum Tilt Stepsize (in degrees)')
-		sizer.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sizer.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		self.widgets['stepsize'] = IntEntry(self, -1, chars=2, value='15')
-		sizer.Add(self.widgets['stepsize'], (1,1), (1,1), wx.ALL|wx.ALIGN_CENTER_VERTICAL, bordersize)
+		sizer.Add(self.widgets['stepsize'], (2,1), (1,1), wx.ALL|wx.ALIGN_CENTER_VERTICAL, bordersize)
 
 		label = wx.StaticText(self, -1, 'Pause Between Steps')
-		sizer.Add(label, (1, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sizer.Add(label, (2, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		self.widgets['pause'] = FloatEntry(self, -1, chars=2, value='1')
-		sizer.Add(self.widgets['pause'], (1,3), (1,1), wx.ALL|wx.ALIGN_CENTER_VERTICAL, bordersize)
+		sizer.Add(self.widgets['pause'], (2,3), (1,1), wx.ALL|wx.ALIGN_CENTER_VERTICAL, bordersize)
+
+		label = wx.StaticText(self, -1, 'Min Feature Size')
+		sizer.Add(label, (3,0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.widgets['minsize'] = FloatEntry(self, -1, chars=6, value='0.0')
+		sizer.Add(self.widgets['minsize'], (3,1), (1,1), wx.ALL|wx.ALIGN_CENTER_VERTICAL, bordersize)
+
+		label = wx.StaticText(self, -1, 'Max Feature Size')
+		sizer.Add(label, (3, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.widgets['maxsize'] = FloatEntry(self, -1, chars=6, value='0.0')
+		sizer.Add(self.widgets['maxsize'], (3,3), (1,1), wx.ALL|wx.ALIGN_CENTER_VERTICAL, bordersize)
+
+		label = wx.StaticText(self, -1, 'Median Filter (pixels)')
+		sizer.Add(label, (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.widgets['medfilt'] = IntEntry(self, -1, chars=2, value='0')
+		sizer.Add(self.widgets['medfilt'], (4,1), (1,1), wx.ALL|wx.ALIGN_CENTER_VERTICAL, bordersize)
+
+		label = wx.StaticText(self, -1, 'LowPass Filter (pixels)')
+		sizer.Add(label, (4, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.widgets['lowfilt'] = FloatEntry(self, -1, chars=2, value='0.0')
+		sizer.Add(self.widgets['lowfilt'], (4,3), (1,1), wx.ALL|wx.ALIGN_CENTER_VERTICAL, bordersize)
+
+		label = wx.StaticText(self, -1, 'Drift threshold')
+		sizer.Add(label, (5, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.widgets['drift threshold'] = FloatEntry(self, -1, chars=6, value='0.0')
+		sizer.Add(self.widgets['drift threshold'], (5,1), (1,1), wx.ALL|wx.ALIGN_CENTER_VERTICAL, bordersize)
+
+		label = wx.StaticText(self, -1, 'Drift preset')
+		sizer.Add(label, (5, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		presets = self.node.presetsclient.getPresetNames()
+		self.widgets['drift preset'] = PresetChoice(self, -1)
+		self.widgets['drift preset'].setChoices(presets)
+		sizer.Add(self.widgets['drift preset'], (5,3), (1,1), wx.ALL|wx.ALIGN_CENTER_VERTICAL, bordersize)
+
+		sbsz.Add(sizer, 0, wx.ALIGN_CENTER|wx.ALL, 2)
+
+		return sbsz
+
+	def addBasicTiltSettings(self):
+		sb = wx.StaticBox(self, -1, 'Tilt Options')
+		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
+
+		sizer = wx.GridBagSizer(5, 4)
+		bordersize = 3
+
+		label = wx.StaticText(self, -1, 'Activation Interval')
+		sizer.Add(label, (0, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
+		self.widgets['activation interval'] = IntEntry(self, -1, chars=5, style=wx.ALIGN_RIGHT)
+		sizer.Add(self.widgets['activation interval'], (0,2), (1,2), wx.ALL|wx.EXPAND|wx.ALIGN_CENTER_VERTICAL, bordersize)
+
+		label = wx.StaticText(self, -1, 'List of Tilts to Collect (in degrees)')
+		sizer.Add(label, (1, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
+		self.widgets['tilts'] = Entry(self, -1, chars=15, style=wx.ALIGN_RIGHT)
+		sizer.Add(self.widgets['tilts'], (1,2), (1,2), wx.ALL|wx.EXPAND|wx.ALIGN_CENTER_VERTICAL, bordersize)
 
 		label = wx.StaticText(self, -1, 'Min Feature Size')
 		sizer.Add(label, (2,0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
@@ -97,54 +155,6 @@ class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 		sizer.Add(label, (3, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		self.widgets['lowfilt'] = FloatEntry(self, -1, chars=2, value='0.0')
 		sizer.Add(self.widgets['lowfilt'], (3,3), (1,1), wx.ALL|wx.ALIGN_CENTER_VERTICAL, bordersize)
-
-		label = wx.StaticText(self, -1, 'Drift threshold')
-		sizer.Add(label, (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		self.widgets['drift threshold'] = FloatEntry(self, -1, chars=6, value='0.0')
-		sizer.Add(self.widgets['drift threshold'], (4,1), (1,1), wx.ALL|wx.ALIGN_CENTER_VERTICAL, bordersize)
-
-		label = wx.StaticText(self, -1, 'Drift preset')
-		sizer.Add(label, (4, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		presets = self.node.presetsclient.getPresetNames()
-		self.widgets['drift preset'] = PresetChoice(self, -1)
-		self.widgets['drift preset'].setChoices(presets)
-		sizer.Add(self.widgets['drift preset'], (4,3), (1,1), wx.ALL|wx.ALIGN_CENTER_VERTICAL, bordersize)
-
-		sbsz.Add(sizer, 0, wx.ALIGN_CENTER|wx.ALL, 2)
-
-		return sbsz
-
-	def addBasicRCTSettings(self):
-		sb = wx.StaticBox(self, -1, 'RCT Options')
-		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
-
-		sizer = wx.GridBagSizer(5, 4)
-		bordersize = 3
-
-		label = wx.StaticText(self, -1, 'List of Tilts to Collect (in degrees)')
-		sizer.Add(label, (0, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
-		self.widgets['tilts'] = Entry(self, -1, chars=15, style=wx.ALIGN_RIGHT)
-		sizer.Add(self.widgets['tilts'], (0,2), (1,2), wx.ALL|wx.EXPAND|wx.ALIGN_CENTER_VERTICAL, bordersize)
-
-		label = wx.StaticText(self, -1, 'Min Feature Size')
-		sizer.Add(label, (1,0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		self.widgets['minsize'] = FloatEntry(self, -1, chars=6, value='0.0')
-		sizer.Add(self.widgets['minsize'], (1,1), (1,1), wx.ALL|wx.ALIGN_CENTER_VERTICAL, bordersize)
-
-		label = wx.StaticText(self, -1, 'Max Feature Size')
-		sizer.Add(label, (1, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		self.widgets['maxsize'] = FloatEntry(self, -1, chars=6, value='0.0')
-		sizer.Add(self.widgets['maxsize'], (1,3), (1,1), wx.ALL|wx.ALIGN_CENTER_VERTICAL, bordersize)
-
-		label = wx.StaticText(self, -1, 'Median Filter (pixels)')
-		sizer.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		self.widgets['medfilt'] = IntEntry(self, -1, chars=2, value='0')
-		sizer.Add(self.widgets['medfilt'], (2,1), (1,1), wx.ALL|wx.ALIGN_CENTER_VERTICAL, bordersize)
-
-		label = wx.StaticText(self, -1, 'LowPass Filter (pixels)')
-		sizer.Add(label, (2, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		self.widgets['lowfilt'] = FloatEntry(self, -1, chars=2, value='0.0')
-		sizer.Add(self.widgets['lowfilt'], (2,3), (1,1), wx.ALL|wx.ALIGN_CENTER_VERTICAL, bordersize)
 
 		sbsz.Add(sizer, 0, wx.ALIGN_CENTER|wx.ALL, 2)
 

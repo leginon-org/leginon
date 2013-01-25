@@ -2078,6 +2078,7 @@ class RCTAcquisitionSettingsData(AcquisitionSettingsData):
 class TiltTrackerSettingsData(AcquisitionSettingsData):
 	def typemap(cls):
 		return AcquisitionSettingsData.typemap() + (
+			('activation interval', int),
 			('tilts', str),
 			('stepsize', float),
 			('pause', float),
