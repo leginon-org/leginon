@@ -73,7 +73,8 @@ class DirectDetectorProcessing(object):
 			aligned_presetname = self.image['preset']['name']
 			bits = imagename.split(aligned_presetname)
 			org_presetname = aligned_presetname.join(aligned_presetname.split('-a')[:-1])
-			if bits[-1] != '':
+			# remove trailing empty string and version
+			while len(bits) > 1 and (len(bits[-1]) == 0 or (len(bits[-1]) >= 4 and '_v' in bits[-1])):
 				bits.pop(-1)
 			imagename = aligned_presetname.join(bits) +org_presetname 
 		self.framestackpath = os.path.join(self.rundir,imagename+'_st.mrc')
@@ -839,7 +840,7 @@ class DDStackProcessing(DirectDetectorProcessing):
 		'''
 		if not os.path.isfile(self.framestackpath):
 			apDisplay.printError('No DD Stack to make image from')
-		apDisplay.printMsg('Getting summed from from %s' % self.framestackpath)
+		apDisplay.printMsg('Getting summed image from %s' % self.framestackpath)
 		stack = mrc.mmap(self.framestackpath)
 		sum = numpy.sum(stack[start_frame:start_frame+nframe,:,:],axis=0)
 		return sum

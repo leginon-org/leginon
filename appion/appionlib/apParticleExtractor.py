@@ -356,7 +356,7 @@ class ParticleExtractLoop(appionLoop2.AppionLoop):
 			if self.params['preset'] and '-a' in self.params['preset'] and self.params['nframe'] > 0:
 				self.is_dd = True
 				self.is_dd_stack = True
-			elif self.params['mrcnames'] and '-a' in self.params['mrcnames'][0] and self.params['nframe'] > 0:
+			elif self.params['mrcnames'] and self.params['mrcnames'].split(',')[0] and '-a' in self.params['mrcnames'].split(',')[0] and self.params['nframe'] > 0:
 				self.is_dd = True
 				self.is_dd_stack = True
 			elif self.params['nframe'] > 0:
@@ -439,7 +439,10 @@ class ParticleExtractLoop(appionLoop2.AppionLoop):
 			self.dd.setImageData(imgdata)
 			if self.is_dd_stack:
 				# find the ddstackrun of the image
-				self.dd.setDDStackRun()
+				if not self.params['ddstack']:
+					self.dd.setDDStackRun()
+				else:
+					self.dd.setDDStackRun(self.params['ddstack'])
 				# compare image ddstackrun with the specified ddstackrun
 				if self.params['ddstack'] and self.params['ddstack'] != self.dd.getDDStackRun().dbid:
 					apDisplay.printWarning('ddstack image not from specified ddstack run')
