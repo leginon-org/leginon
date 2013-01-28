@@ -127,6 +127,8 @@ class ReduxThread(threading.Thread):
 			# make sure destination images still do not exist
 			still_missing = {}
 			for key in ('jpg','pow'):
+				if key not in task['missing']:
+					continue
 				m = task['missing'][key]
 				if not os.path.exists(m):
 					still_missing[key] = m
