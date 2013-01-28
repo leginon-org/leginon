@@ -51,7 +51,7 @@ if (!$filter=$_GET['flt'])
 if (!$binning=$_GET['binning']) 
 	$binning = 'auto';
 if (!$fftbin=$_GET['fftbin']) 
-	$fftbin = 'b';
+	$fftbin = 'a';
 
 $displayloadingtime = false;
 $displayfilename = ($_GET['df']&1) ? true : false;
