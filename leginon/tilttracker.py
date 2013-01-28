@@ -118,7 +118,7 @@ class TiltTracker(acquisition.Acquisition):
 
 		# activate if counter is at a multiple of interval
 		interval = self.settings['activation interval']
-		if interval and (self.activation_counter.next() % interval):
+		if interval and not (self.activation_counter.next() % interval):
 			self.activated = True
 		else:
 			self.activated = False
