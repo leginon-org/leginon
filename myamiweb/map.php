@@ -21,6 +21,7 @@ $filter = ($_GET['flt']) ? '&flt='.$_GET['flt'] : '';
 $fftbin = ($_GET['fftbin']) ? '&fftbin='.$_GET['fftbin'] : '';
 $binorder = ($_GET['fftbin']) ? $_GET['fftbin'] : 'a';
 $binning = ($_GET['binning']) ? '&binning='.$_GET['binning'] : '';
+$lj = ($_GET['lj']) ? '&lj='.$_GET['lj'] : '';
 $autoscale = ($_GET['autoscale']) ? '&autoscale='.$_GET['autoscale'] : '';
 $quality = ($_GET['t']) ? '&t='.$_GET['t']: '';
 $psel = ($_GET['psel']) ? '&psel='.urlencode($_GET['psel']) : ''; 
@@ -28,7 +29,7 @@ $nptcl = ($_GET['nptcl']) ? '&nptcl='.$_GET['nptcl'] : '';
 $acepar = ($_GET['g']) ? '&g='.($_GET['g']) : ''; 
 $gradient= ($_GET['gr']) ? '&gr='.$_GET['gr'] : '';
 $autoscale = ($_GET['autoscale']) ? '&autoscale='.$_GET['autoscale'] : '';
-$options = $binning.$tg.$rid.$methodid.$opt.$sb.$minpix.$maxpix.$fft.$fftbin.$filter.$autoscale.$psel.$acepar.$gradient.$autoscale.$nptcl;
+$options = $binning.$tg.$rid.$methodid.$opt.$sb.$minpix.$maxpix.$fft.$fftbin.$filter.$autoscale.$lj.$psel.$acepar.$gradient.$autoscale.$nptcl;
 
 $nimgId = $leginondata->findImage($id, $preset);
 $imginfo = $leginondata->getImageInfo($nimgId['id']);
@@ -41,7 +42,9 @@ $dimy = ($imginfo) ? $imginfo['dimy']:$xmlimgsize;
 
 $imageUtil = new imageUtil();
 $imgbinning = $_GET['binning'];
-$default_size = $imageUtil->getDefaultImageSize($fftflag,$binorder);
+$prefft_default_size = $imageUtil->getDefaultImageSize($fftflag);
+$prefftxyDim = $imageUtil->imageBinning($dimx, $dimy, $imgbinning,$prefft_default_size);
+$default_size = $imageUtil->getDefaultImageSourceSize($fftflag);
 $xyDim = $imageUtil->imageBinning($dimx, $dimy, $imgbinning,$default_size);
 $imgwidth = $xyDim[0];
 $imgheight = $xyDim[1];
@@ -58,8 +61,8 @@ $ratio = $imgwidth/$imgmapwidth;
 $areacolor = ($_GET['gr']=="spectrum") ? "#000000" : "#00FF00";
 
 // --- set scale
-$imgratio = $imgbinning ;
-$display_pixelsize = $imageUtil->getDisplayPixelSize($imginfo['pixelsize'],$imginfo['binning'],$imginfo['dimx'],$imgwidth,$fftflag,$binorder,$imgwidth);
+$iscache = ($lj) ? true:false;
+$display_pixelsize = $imageUtil->getDisplayPixelSize($imginfo['pixelsize'],$imginfo['binning'],$imginfo['dimx'],$imgwidth,$fftflag,$binorder,$prefftxyDim[0],$iscache);
 $filename = $imginfo['filename'];
 //image width is used as the first factor to determine display size
 $imgmapsrc = $imgscript."?preset=".$preset."&session=".$session."&id=".$id."&t=75&s=$imgmapwidth".$options;

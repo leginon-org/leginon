@@ -74,10 +74,13 @@ function updateCacheTime($session) {
 	$result = $dbc->SQLQuery($q);
 }
 
-function useCache($filepath,$sessionname) {
+function useCache($filepath,$sessionname,$is_fft=false) {
 	//search for php-mrc cache jpg file.
 	$filename = basename($filepath);
-	$jpgfilename = preg_replace('%mrc$%', 'jpg', $filename);
+	if (!$is_fft)
+		$jpgfilename = preg_replace('%.mrc$%', '.jpg', $filename);
+	else
+		$jpgfilename = preg_replace('%.mrc$%', '.pow.jpg', $filename);
 	$jpgpath = CACHE_PATH.$sessionname."/";
 	$jpgpic = $jpgpath.$jpgfilename;
 	if (@is_file($jpgpic)) $filepath = $jpgpic;
