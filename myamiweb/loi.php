@@ -57,6 +57,7 @@ foreach ($datatypes as $datatype) {
 	$view->displayDeqIcon(true);
 	$view->setDataTypes($datatypes);
 	$view->selectDataType($datatype);
+	$view->setCacheOnly(true);
 	$viewer->add($view);
 	$v++;
 }

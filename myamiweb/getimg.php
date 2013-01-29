@@ -57,6 +57,7 @@ $displayloadingtime = false;
 $displayfilename = ($_GET['df']&1) ? true : false;
 $displaysample= ($_GET['df']&2) ? true : false;
 $loadjpg= ($_GET['lj']==1) ? true : false;
+$cacheonly= ($_GET['conly']==1) ? true : false;
 $displaynptcl = ($_GET['nptcl']) ? true : false;
 $displaylabel = ($_GET['dlbl']) ? true : false;
 $colorby = ($_GET['pcb']) ? $_GET['pcb'] : false;
@@ -81,6 +82,7 @@ if (!$g) {
 		'displaytargets' => $displaytarget,
 		'loadtime' => $displayloadingtime,
 		'loadjpg' => $loadjpg,
+		'cacheonly' => $cacheonly,
 		'autoscale' => $autoscale,
 		'newptcl' => $ptclparams,
 		'ptclsel' => $nptclsel

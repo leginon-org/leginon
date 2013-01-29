@@ -17,9 +17,9 @@ require_once "inc/imagerequest.inc";
 require_once "inc/path.inc";
 require_once "inc/fileutil.inc";
 
-function getImageFile($leginondata,$imageId,$preset='all',$loadjpg=false,$is_fft=false) {
+function getImageFile($leginondata,$imageId,$preset='all',$loadjpg=false,$is_fft=false,$cacheonly=false) {
 	$newimageId = getImageIdFromPreset($leginondata,$imageId,$preset);
-	return __getImageFile($leginondata,$newimageId,$loadjpg,$is_fft);
+	return __getImageFile($leginondata,$newimageId,$loadjpg,$is_fft,$cacheonly);
 }
 
 function getImageIdFromPreset($leginondata,$imageId,$preset='all') {
@@ -28,7 +28,7 @@ function getImageIdFromPreset($leginondata,$imageId,$preset='all') {
 	return $imageId;
 }
 
-function __getImageFile($leginondata,$imageId,$loadjpg=false,$is_fft=false) {
+function __getImageFile($leginondata,$imageId,$loadjpg=false,$is_fft=false,$cacheonly=false) {
 	//get image file with full path
 	$path = $leginondata->getImagePathFromImageId($imageId);
 
@@ -42,11 +42,12 @@ function __getImageFile($leginondata,$imageId,$loadjpg=false,$is_fft=false) {
 	}
 	$pic = $path.$filename;
 	if (!$pic) return false;
+
 	// Use Cached jpeg image if available
 	if ($loadjpg && ENABLE_CACHE) {
 		$sessioninfo=$leginondata->getSessionInfoFromImage($imageId);
 		$session=$sessioninfo['name'];
-		$pic = useCache($pic,$session,$is_fft);
+		$pic = useCache($pic,$session,$is_fft,$cacheonly);
 	}
 	return $pic;
 }
@@ -70,6 +71,7 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 		'autoscale' => false,
 		'targettype' => false,
 		'loadjpg' => false,
+		'cacheonly' => false,
 		'mrc' => false
 	);
 
@@ -85,10 +87,13 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 	}
 
 	$parentId = getImageIdFromPreset($leginondata,$imageId,$preset);
-	$pic = __getImageFile($leginondata,$parentId,$p['loadjpg'],$p['fft']);
+	$pic = __getImageFile($leginondata,$parentId,$p['loadjpg'],$p['fft'],$p['cacheonly']);
 
 	if (!$pic || !is_file($pic)) {
 		$messages = array('File not found: ');
+		if ($p['cacheonly'] && $p['loadjpg']) {
+			$messages[] = 'Cached Image Not Ready.';
+		}
 		$messages[] = $pic;
 		return makeBlankImageWithErrorMessage($messages);
 	}

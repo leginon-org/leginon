@@ -600,6 +600,7 @@ function newfile(view){
 	if (cgradient = eval("jsgradient"+view)) gradient="&gr="+cgradient; else gradient=""
 	if (cautoscale= eval("jsautoscale"+view)) autoscale="&autoscale="+cautoscale; else autoscale=""
 	if (cloadjpg= eval("jsloadjpg"+view)) loadjpg="&lj="+cloadjpg; else loadjpg=""
+	if (ccacheonly= eval("jscacheonly"+view)) cacheonly="&conly="+ccacheonly; else cacheonly=""
 	if (cptclsel = eval("jsptclsel"+view)) ptclsel="&psel="+escape(cptclsel); else ptclsel=""
 	if (cdwdformat = eval("jsdwdformat"+view)) dwdformat="&f="+cdwdformat; else cdwdformat=""
 
@@ -607,7 +608,7 @@ function newfile(view){
 		"&preset="+selpreset+
 		"&session="+jsSessionId+
 		"&id="+jsimgId+
-		"&s="+jssize+quality+tg+sb+fft+np+xp+flt+fftbin+binning+am+ar+ag+ao+displayfilename+loadjpg+pselp+nptcl+pcb+dlbl+gradient+scx+scy+autoscale
+		"&s="+jssize+quality+tg+sb+fft+np+xp+flt+fftbin+binning+am+ar+ag+ao+displayfilename+loadjpg+pselp+nptcl+pcb+dlbl+gradient+scx+scy+autoscale+cacheonly
 
 	if (options == lastoptions[vid])
 		return
@@ -1001,6 +1002,13 @@ function setloadfromjpg(viewname, state) {
 	}
 }
 
+function setcacheonly(viewname, state) {
+	eval("jscacheonly"+viewname+"='"+state+"'")
+	if (b = eval("document.viewerform."+viewname+"cacheonly")) {
+		b.value=state
+	}
+}
+
 function setdisplayfilename(viewname, state) {
 	eval("jsdisplayfilename"+viewname+"='"+state+"'")
 	if (b = eval("document.viewerform."+viewname+"df")) {
@@ -1028,6 +1036,7 @@ function popUpAdjust(URL, view, param){
 	autoscale = eval("jsautoscale"+view)
 	displayfilename = eval("jsdisplayfilename"+view)
 	loadjpg= eval("jsloadjpg"+view)
+	cacheonly= eval("jscacheonly"+view)
 	min = (min) ? "&pmin="+min : ""
 	max = (max) ? "&pmax="+max : ""
 	filter = (filter) ? "&filter="+filter : ""
@@ -1038,8 +1047,9 @@ function popUpAdjust(URL, view, param){
 	autoscale= (autoscale) ? "&autoscale="+autoscale : ""
 	displayfilename= (displayfilename) ? "&df="+displayfilename : ""
 	loadjpg= (loadjpg) ? "&lj="+loadjpg : ""
+	cacheonly= (cacheonly) ? "&conly="+cacheonly : ""
 	param = (param) ? param : "left=0,top=0,height=370,width=370"
-	eval (view+"adjw"+" = window.open('"+URL+min+max+filter+fftbin+binning+quality+gradient+autoscale+displayfilename+loadjpg+"', '"+view+"adj', '"+param+"', 'toolbar=0,scrollbars=0,location=0,statusbar=0,menubar=0,resizable=0,alwaysRaised=yes');")
+	eval (view+"adjw"+" = window.open('"+URL+min+max+filter+fftbin+binning+quality+gradient+autoscale+displayfilename+loadjpg+cacheonly+"', '"+view+"adj', '"+param+"', 'toolbar=0,scrollbars=0,location=0,statusbar=0,menubar=0,resizable=0,alwaysRaised=yes');")
 }
 
 function popUpPtcl(URL, view, param) {
