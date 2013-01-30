@@ -841,6 +841,7 @@ class DDStackProcessing(DirectDetectorProcessing):
 		if not os.path.isfile(self.framestackpath):
 			apDisplay.printError('No DD Stack to make image from')
 		apDisplay.printMsg('Getting summed image from %s' % self.framestackpath)
+		apDisplay.printMsg(' summing total of %d images start at frame %d' % (nframe,start_frame))
 		stack = mrc.mmap(self.framestackpath)
 		sum = numpy.sum(stack[start_frame:start_frame+nframe,:,:],axis=0)
 		return sum
