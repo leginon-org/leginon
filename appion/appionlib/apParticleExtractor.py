@@ -303,7 +303,7 @@ class ParticleExtractLoop(appionLoop2.AppionLoop):
 		self.parser.add_option("--label", dest="particlelabel", type="str", default=None,
 			help="select particles by label within the same run name")
 		self.parser.add_option("--ddstartframe", dest="startframe", type="int", default=0,
-			help="starting frame for direct detector raw frame processing")
+			help="starting frame for direct detector raw frame processing. The first frame is 0")
 		self.parser.add_option("--ddnframe", dest="nframe", type="int", default=0,
 			help="total frames to sum up for direct detector raw frame processing")
 		self.parser.add_option("--ddstack", dest="ddstack", type="int", default=0,
