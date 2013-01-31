@@ -107,7 +107,7 @@ class UpdateLib:
 			print '\033[36mSVN checkout revision is %s\033[0m' % svn_revision
 			return svn_revision
 		except:
-			release_revision = getReleaseRevisionFromXML(module_path)
+			release_revision = self.getReleaseRevisionFromXML(module_path)
 			if release_revision:
 				print '\033[36mRelease revision is %s\033[0m' % release_revision
 				return release_revision
