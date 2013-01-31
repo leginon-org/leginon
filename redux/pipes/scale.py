@@ -31,6 +31,9 @@ class Scale(Pipe):
 
 	## consider using scipy.misc.bytescale (is it faster?)
 	def linearscale(self, input, min, max):
+		if min == max:
+			min -= 1.0
+			max += 1.0
 		image_array = pyami.imagefun.linearscale(input, (min, max), (0,255))
 		image_array = numpy.clip(image_array, 0, 255)
 		return image_array
