@@ -60,12 +60,7 @@ class QueryThread(threading.Thread):
 		return db
 
 	def query_images(self):
-		# include minimum timestamp on first query only.
-		# after that, only start_id matters
-		if self.query_counter:
-			timestamp = ''
-		else:
-			timestamp = 'AND i.DEF_timestamp > %s' % (self.min_timestamp,)
+		timestamp = 'AND i.DEF_timestamp > %s' % (self.min_timestamp,)
 		this_query = self.image_query % (self.start_id, timestamp)
 		print 'THISQUERY', this_query
 
