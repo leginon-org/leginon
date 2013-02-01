@@ -11,9 +11,10 @@ class SchemaUpdate17224(schemabase.SchemaUpdate):
 		if not self.leginon_dbupgrade.columnExists('AcquisitionImageData', 'REF|CorrectorPlanData|corrector plan'):
 			self.leginon_dbupgrade.addColumn('AcquisitionImageData', 'REF|CorrectorPlanData|corrector plan', self.leginon_dbupgrade.int)
 
-		decameradata = leginondata.InstrumentData(name='DE12').query(results=1)[0]
-		if not decameradata:
+		results = leginondata.InstrumentData(name='DE12').query(results=1)
+		if not results:
 			return
+		decameradata = results[0]
 
 		dim = {'x':4096,'y':3072}
 		camq=leginondata.CameraEMData(ccdcamera=decameradata,dimension=dim)
