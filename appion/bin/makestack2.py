@@ -64,7 +64,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 
 	#=======================
 	def processParticles(self,imgdata,partdatas,shiftdata):
-		shortname = apDisplay.short(imgdata['filename'])
+		self.shortname = apDisplay.short(imgdata['filename'])
 
 		### if only selected points along helix,
 		### fill in points with helical step
@@ -76,7 +76,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 		self.boxedpartdatas, self.imgstackfile, self.partmeantree = self.boxParticlesFromImage(imgdata,partdatas,shiftdata)
 		if self.boxedpartdatas is None:
 			self.stats['lastpeaks'] = 0
-			apDisplay.printWarning("no particles were boxed from "+shortname+"\n")
+			apDisplay.printWarning("no particles were boxed from "+self.shortname+"\n")
 			self.badprocess = True
 			return None
 
@@ -178,21 +178,20 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 	#=======================
 	def getOriginalImagePath(self, imgdata):
 		imgname = imgdata['filename']
-		shortname = apDisplay.short(imgdata['filename'])
 		imgpath = os.path.join(imgdata['session']['image path'], imgdata['filename']+".mrc")
 		if self.is_dd:
 			self.params['uncorrected'] = True
 			### dark/bright correct image
-			tmpname = shortname+"-darknorm.dwn.mrc"
+			tmpname = self.shortname+"-darknorm.dwn.mrc"
 			imgpath = os.path.join(self.params['rundir'], tmpname)
 			if not self.params['usedownmrc'] or not os.path.isfile(imgpath):
 				imgarray = self.getDDImageArray(imgdata)
 				apImage.arrayToMrc(imgarray,imgpath)
+		apDisplay.printMsg('Boxing is done on %s' % (imgpath,))
 		return imgpath
 
 	#=======================
 	def boxParticlesFromImage(self, imgdata,partdatas,shiftdata):
-		shortname = apDisplay.short(imgdata['filename'])
 
 		### convert database particle data to coordinates and write boxfile
 		boxfile = os.path.join(self.params['rundir'], imgdata['filename']+".box")
@@ -205,9 +204,21 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 
 		### check if we have particles again
 		if len(partdatas) == 0 or len(parttree) == 0:
-			apDisplay.printColor(shortname+" has no remaining particles and has been rejected\n","cyan")
+			apDisplay.printColor(self.shortname+" has no remaining particles and has been rejected\n","cyan")
 			return None, None, None
+		
+		### set up output file path
+		imgstackfile = os.path.join(self.params['rundir'], self.shortname+".hed")
 
+		self._boxParticlesFromImage(imgdata,parttree, imgstackfile)
+		partmeantree = self.calculateParticleStackStats(imgstackfile,boxedpartdatas)
+		imgstackfile = self.postProcessParticleStack(imgdata,imgstackfile,boxedpartdatas,len(parttree))
+		return boxedpartdatas, imgstackfile, partmeantree
+
+	def _boxParticlesFromImage(self,imgdata,parttree,imgstackfile):
+		'''
+		Box Particles From the manipulated full size image file on disk
+		'''
 		### get corrected leginon image path.  This will make corrected integrated frame image, too.
 		imgpath = self.getOriginalImagePath(imgdata)
 
@@ -228,7 +239,6 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 			return None, None, None
 
 		### run apBoxer
-		imgstackfile = os.path.join(self.params['rundir'], shortname+".hed")
 		#emancmd = ("batchboxer input=%s dbbox=%s output=%s newsize=%i" 
 		#	%(imgpath, emanboxfile, imgstackfile, self.params['boxsize']))
 		apDisplay.printMsg("boxing "+str(len(parttree))+" particles into temp file: "+imgstackfile)
@@ -256,6 +266,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 			apBoxer.boxer(imgpath, parttree, imgstackfile, self.boxsize)
 		self.batchboxertimes.append(time.time()-t0)
 
+	def calculateParticleStackStats(self,imgstackfile,boxedpartdatas):
 		### read mean and stdev
 		partmeantree = []
 		t0 = time.time()
@@ -269,7 +280,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 			### if particle stdev == 0, then it is all constant, i.e., a bad particle
 			stdev = float(partarray.std())
 			if stdev < 1.0e-6:
-				apDisplay.printError("Standard deviation == 0 for particle %d in image %s"%(i,shortname))
+				apDisplay.printError("Standard deviation == 0 for particle %d in image %s"%(i,self.shortname))
 
 			### skew and kurtosis
 			partravel = numpy.ravel(partarray)
@@ -309,7 +320,9 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 			"""
 			partmeantree.append(partmeandict)
 		self.meanreadtimes.append(time.time()-t0)
+		return partmeantree
 
+	def postProcessParticleStack(self,imgdata,imgstackfile,boxedpartdatas,parttree_length):
 		### if xmipp-norm before phaseflip:
 		if self.params['xmipp-norm'] is not None and self.params['xmipp-norm-before'] is True:
 			self.xmippNormStack(imgstackfile)
@@ -331,9 +344,9 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 			apDisplay.printMsg("not phase flipping particles")
 
 		numpart = apFile.numImagesInStack(imgstackfile)
-		apDisplay.printMsg(str(numpart)+" particles were boxed out from "+shortname)
+		apDisplay.printMsg(str(numpart)+" particles were boxed out from "+self.shortname)
 
-		if len(parttree) != numpart:
+		if parttree_length != numpart:
 			apDisplay.printError("There is a mismatch in the number of particles expected and that were boxed")
 
 		### rectangular box masking
@@ -356,7 +369,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 			self.params['boxmaskf'] = os.path.splitext(imgstackfile)[0]+"-mask.hed"
 			apBoxer.boxMaskStack(self.params['boxmaskf'], boxedpartdatas, boxsz, bxmask, bymask, falloff, bimask, norotate=self.params['rotate'])
 
-		return boxedpartdatas, imgstackfile, partmeantree
+		return imgstackfile
 
 	############################################################
 	############################################################
@@ -453,8 +466,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 	def phaseFlipParticles(self, imgdata, imgstackfile):
 		apDisplay.printMsg("Applying CTF to particles")
 		imgname = imgdata['filename']
-		shortname = apDisplay.short(imgname)
-		ctfimgstackfile = os.path.join(self.params['rundir'], apDisplay.short(imgdata['filename'])+"-ctf.hed")
+		ctfimgstackfile = os.path.join(self.params['rundir'], self.shortname+"-ctf.hed")
 
 		### High tension on CM is given in kv instead of v so do not divide by 1000 in that case
 		if imgdata['scope']['tem']['name'] == "CM":
@@ -467,7 +479,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 		defocus, ampconst = self.getDefocusAmpConstForImage(imgdata,True)
 		defocus *= 1.0e6
 		### check to make sure defocus is a reasonable value for applyctf
-		self.checkDefocus(defocus, shortname)
+		self.checkDefocus(defocus, self.shortname)
 		### get all CTF parameters, we also need to get the CS value from the database
 		ctfdata, score = self.getCtfValueConfidenceForImage(imgdata, False)
 		#ampconst = ctfdata['amplitude_contrast'] ### we could use this too
@@ -508,8 +520,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 	#=======================
 	def phaseFlipWholeImage(self, inimgpath, imgdata):
 		imgname = imgdata['filename']
-		shortname = apDisplay.short(imgname)
-		outimgpath = os.path.join(self.params['rundir'], shortname+"-ctfcorrect.dwn.mrc")
+		outimgpath = os.path.join(self.params['rundir'], self.shortname+"-ctfcorrect.dwn.mrc")
 
 		### High tension on CM is given in kv instead of v so do not divide by 1000 in that case
 		if imgdata['scope']['tem']['name'] == "CM":
@@ -520,7 +531,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 		apix = apDatabase.getPixelSize(imgdata)
 		defocus, ampconst = self.getDefocusAmpConstForImage(imgdata, True)
 		defocus *= 1.0e6
-		self.checkDefocus(defocus, shortname)
+		self.checkDefocus(defocus, self.shortname)
 		### get all CTF parameters, we also need to get the CS value from the database
 		ctfdata, score = self.getCtfValueConfidenceForImage(imgdata,False)
 		#ampconst = ctfdata['amplitude_contrast'] ### we could use this too
@@ -671,8 +682,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 			return None
 
 		imgname = imgdata['filename']
-		shortname = apDisplay.short(imgname)
-		spi_imgpath = os.path.join(self.params['rundir'], shortname+".spi")
+		spi_imgpath = os.path.join(self.params['rundir'], self.shortname+".spi")
 
 		
 		df1 = abs(bestctfvalue['defocus1'])
@@ -695,7 +705,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 		outimgpath = filters.phaseFlipImage(spi_imgpath,cs,defocus,voltage,imgsize,apix)
 
 		# convert image back to mrc
-		mrcname = os.path.join(self.params['rundir'], shortname+".mrc.corrected.mrc")
+		mrcname = os.path.join(self.params['rundir'], self.shortname+".mrc.corrected.mrc")
 		emancmd="proc2d %s %s"%(outimgpath,mrcname)
 		apEMAN.executeEmanCmd(emancmd, showcmd=True)
 		# remove original spider image
