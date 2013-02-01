@@ -8,6 +8,7 @@ angle
 
 import sys
 import math
+import numpy
 from pyami import mrc
 from scipy import ndimage	#rotation function
 from appionlib import apImagicFile	#write imagic stacks
@@ -81,6 +82,14 @@ def processParticleData(imgdata, boxsize, partdatas, shiftdata, boxfile, rotate=
 	return parttree, boxedpartdatas
 
 ##=================
+def getBoxBoundary(partdict, boxsize):
+	x1 = partdict['x_coord']
+	x2 = x1+boxsize
+	y1 = partdict['y_coord']
+	y2 = y1+boxsize
+	return x1,x2,y1,y2
+
+##=================
 def boxer(imgfile, parttree, outstack, boxsize):
 	"""
 	boxes the particles and saves them to a imagic file
@@ -97,10 +106,7 @@ def boxerMemory(imgarray, parttree, boxsize):
 	"""
 	boxedparticles = []
 	for partdict in parttree:
-		x1 = partdict['x_coord']
-		x2 = x1+boxsize
-		y1 = partdict['y_coord']
-		y2 = y1+boxsize
+		x1,x2,y1,y2 = getBoxBoundary(partdict, boxsize)
 		#numpy arrays are rows,cols --> y,x not x,y
 		#print x1,x2,y1,y2, imgarray.shape
 		boxpart = imgarray[y1:y2,x1:x2]
@@ -168,3 +174,18 @@ def boxMaskStack(bmstackf, partdatas, box, xmask, ymask, falloff, imask=None, no
 	os.remove("boxmask.mrc")
 	return bmstackf
 
+def boxerFrameStack(framestackpath, parttree, outstack, boxsize,start_frame,nframe):
+	"""
+	boxes the particles and returns them as a list of numpy arrays
+	"""
+	apDisplay.printMsg("boxing %d particles from sum of total %d frames starting from frame %d using mmap" % (len(parttree),nframe,start_frame))
+	boxedparticles = []
+	stack = mrc.mmap(framestackpath)
+	for partdict in parttree:
+		x1,x2,y1,y2 = getBoxBoundary(partdict, boxsize)
+		apDisplay.printMsg(' crop range of (x,y)=(%d,%d) to (%d,%d)' % (x1,y1,x2-1,y2-1))
+		#numpy arrays are rows,cols --> y,x not x,y
+		boxpart = numpy.sum(stack[start_frame:start_frame+nframe,y1:y2,x1:x2],axis=0)
+		boxedparticles.append(boxpart)
+	apImagicFile.writeImagic(boxedparticles, outstack)
+	return True

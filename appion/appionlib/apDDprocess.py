@@ -834,7 +834,7 @@ class DDStackProcessing(DirectDetectorProcessing):
 		self.setRunDir(self.getDDStackRun()['path']['path'])
 		super(DDStackProcessing,self).setFrameStackPath()
 
-	def getDDStackFrameSumImage(self,start_frame,nframe):
+	def getDDStackFrameSumImage(self,start_frame,nframe,roi=None):
 		'''
 		DDStack are gain/dark corrected and may or may not be aligned
 		'''
@@ -843,7 +843,11 @@ class DDStackProcessing(DirectDetectorProcessing):
 		apDisplay.printMsg('Getting summed image from %s' % self.framestackpath)
 		apDisplay.printMsg(' summing total of %d images start at frame %d' % (nframe,start_frame))
 		stack = mrc.mmap(self.framestackpath)
-		sum = numpy.sum(stack[start_frame:start_frame+nframe,:,:],axis=0)
+		if not roi:
+			sum = numpy.sum(stack[start_frame:start_frame+nframe,:,:],axis=0)
+		else:
+			apDisplay.printMsg(' crop range of (%d,%d) to (%d,%d)' % (rot['x'][0],roi['x'][1]-1,roi['y'][0],roi['y'][1]-1))
+			sum = numpy.sum(stack[start_frame:start_frame+nframe,roi['y'][0]:roi['y'][1],roi['x'][0]:roi['x'][1]],axis=0)
 		return sum
 
 if __name__ == '__main__':
