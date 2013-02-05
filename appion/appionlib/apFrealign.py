@@ -146,7 +146,8 @@ def convertFrealignSymToAppionSym(frealign_symtext):
 	elif frealign_symtext[0] == 'O':
 		return 'Oct'
 	else:
-		return frealign_symtext[0].upper()+' (z)'
+		frealign_symtext[0].upper()
+		return ''.join(frealign_symtext) + ' (z)'
 
 #===============
 def generateParticleParams(params,modeldata,initparfile='params.0.par'):
