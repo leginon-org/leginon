@@ -211,7 +211,10 @@ if (empty($latestRunTimestamp) || strtotime($latestRunTimestamp) < strtotime("-1
 		//if($row['appiondb'] == 'ap5') continue;
 		
 		mysql_select_db($row['appiondb']);
-		
+		$apdb = new mysql(DB_HOST, DB_USER, DB_PASS, $row['appiondb']);
+		// No ScriptProgramRun means no processing
+		if (!$apdb->SQLTableExists('ScriptProgramRun')) continue;
+
 		/* get Total number of Projects with processed data: */
 		$q = "SELECT count(DEF_id) from ScriptProgramRun";
 		$r = mysql_query($q) or die("Query error: " . mysql_error());
