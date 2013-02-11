@@ -69,7 +69,7 @@ $display_y = $f;
 $axes = array($display_x,$display_y);
 if ($histogram == true && $histaxis == 'x') 
 	$axes = array($display_y,$display_x);
-$dbemgraph=&new dbemgraph($ndata, $axes[0], $axes[1]);
+$dbemgraph= new dbemgraph($ndata, $axes[0], $axes[1]);
 $dbemgraph->lineplot=false;
 $dbemgraph->title=$fieldname. ($preset) ? " for preset $preset":'';
 $yunit = ($f == 'defocus1' || $f == 'defocus2' || $f == 'difference') ? ' (um)':'';

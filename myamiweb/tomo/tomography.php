@@ -380,6 +380,6 @@ class Tomography {
 	}
 }
 
-$mysql = &new mysql(DB_HOST, DB_USER, DB_PASS, DB_LEGINON);
+$mysql = new mysql(DB_HOST, DB_USER, DB_PASS, DB_LEGINON);
 $tomography = new Tomography($mysql);
 ?>
