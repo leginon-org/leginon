@@ -66,9 +66,6 @@ def linearscale(input, boundfrom, boundto, extrema=None):
 
 	minfrom,maxfrom = boundfrom
 	minto,maxto = boundto
-	if minfrom is not None and maxfrom is not None:
-		if minfrom == maxfrom:
-			raise RuntimeError('Invalid range: %s' % (boundfrom,))
 
 	### default from bounds are min,max of the input
 	if minfrom is None:
@@ -83,11 +80,14 @@ def linearscale(input, boundfrom, boundto, extrema=None):
 			maxfrom = arraystats.max(input)
 
 	rangefrom = maxfrom - minfrom
-	rangeto = maxto - minto
-
-	scale = float(rangeto) / rangefrom
-	offset = minfrom * scale
-	output = input * scale - offset
+	if rangefrom == 0:
+		# if min==max, do simple thresholding
+		output = numpy.where(input>maxfrom, maxto, minto)
+	else:
+		rangeto = maxto - minto
+		scale = float(rangeto) / rangefrom
+		offset = minfrom * scale
+		output = input * scale - offset
 
 	return output
 
