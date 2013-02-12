@@ -177,7 +177,8 @@ class HoleFinder(object):
 		edgethresh = self.edges_config['thresh']
 
 		smooth = scipy.ndimage.gaussian_filter(sourceim, sigma)
-		mrc.write(smooth, 'smooth.mrc')
+		if self.save_mrc:
+			mrc.write(smooth, 'smooth.mrc')
 
 		edges = scipy.ndimage.generic_gradient_magnitude(smooth, derivative=scipy.ndimage.sobel)
 
