@@ -6,6 +6,8 @@ import threading
 import sys
 import time
 import subprocess
+import string
+import random
 #appion
 from appionlib import apDisplay
 from appionlib import apImage
@@ -26,6 +28,11 @@ def runSpectralFindEM(imgdict, params, thread=False):
 	ccmaplist = []
 
 	processAndSaveImage(imgdict, params)
+	### FindEM crashes when an input image is longer than 76 characters
+	if len(dwnimgname) > 76:
+		randlink = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(10))
+		randlink+= '.mrc'
+		os.symlink(dwnimgname, randlink)
 
 	if len(params['templatelist']) < 1:
 		apDisplay.printError("templatelist == 0; there are no templates")
@@ -40,7 +47,10 @@ def runSpectralFindEM(imgdict, params, thread=False):
 		params["startang"+str(100+classavg)] = params["startang"+str(classavg)]
 		params["endang"+str(100+classavg)] = params["endang"+str(classavg)]
 		params["incrang"+str(100+classavg)] = params["incrang"+str(classavg)]
-		feed = findEMString(100+classavg, templatename, dwnimgname, ccmapfile1, params)
+		if len(dwnimgname) > 76:
+			feed = findEMString(100+classavg, templatename, randlink, ccmapfile1, params)
+		else:
+			feed = findEMString(100+classavg, templatename, dwnimgname, ccmapfile1, params)
 		execFindEM(feed)
 
 		#Second round: template x template
@@ -84,6 +94,12 @@ def runFindEM(imgdict, params, thread=False):
 	dwnimgname = imgdict['filename']+".dwn.mrc"
 	if not os.path.isfile(dwnimgname):
 		apDisplay.printError("cound not find image to process: "+dwnimgname)
+	
+	### FindEM crashes when an input image is longer than 76 characters
+	if len(dwnimgname) > 76:
+		randlink = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(10))
+		randlink+= '.mrc'
+		os.symlink(dwnimgname, randlink)
 
 	### check template
 	if len(params['templatelist']) < 1:
@@ -104,7 +120,11 @@ def runFindEM(imgdict, params, thread=False):
 		apFile.removeFile(ccmapfile)
 
 		#GET FINDEM RUN COMMANDS
-		feed = findEMString(classavg, templatename, dwnimgname, ccmapfile, params)
+		if len(dwnimgname) > 76:
+			feed = findEMString(classavg, templatename, randlink, ccmapfile, params)
+		else:
+			feed = findEMString(classavg, templatename, dwnimgname, ccmapfile, params)
+		
 
 		#RUN THE PROGRAM
 		if thread is True:
