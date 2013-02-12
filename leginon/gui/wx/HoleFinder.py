@@ -482,9 +482,18 @@ class ScrolledSettings(leginon.gui.wx.TargetFinder.ScrolledSettings):
 
 			self.widgets['skip'] = wx.CheckBox(self, -1,
 																		'Skip automated hole finder')
+			self.widgets['focus interval'] = IntEntry(self, -1, chars=6)
+
 			sz = wx.GridBagSizer(5, 5)
 			sz.Add(self.widgets['skip'], (0, 0), (1, 1),
 							wx.ALIGN_CENTER_VERTICAL)
+
+			label = wx.StaticText(self, -1, 'Focus every')
+			sz.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+			sz.Add(self.widgets['focus interval'], (1, 1), (1, 1),
+										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
+			label = wx.StaticText(self, -1, 'image')
+			sz.Add(label, (1, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
 			sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
 

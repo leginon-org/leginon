@@ -19,6 +19,7 @@ from scipy import ndimage
 from pyami import arraystats
 import gui.wx.RasterFinder
 import polygon
+import itertools
 
 class RasterFinder(targetfinder.TargetFinder):
 	panelclass = gui.wx.RasterFinder.Panel
@@ -54,6 +55,7 @@ class RasterFinder(targetfinder.TargetFinder):
 		'acquisition convolve': False,
 		'acquisition convolve template': [],
 		'acquisition constant template': [],
+		'focus interval': 1,
 	})
 	def __init__(self, id, session, managerlocation, **kwargs):
 		targetfinder.TargetFinder.__init__(self, id, session, managerlocation, **kwargs)
@@ -71,6 +73,10 @@ class RasterFinder(targetfinder.TargetFinder):
 			'Raster': {},
 			'Final': {},
 		}
+
+		self.foc_counter = itertools.count()
+		self.foc_activated = False
+
 		self.start()
 
 	def autoSpacingAngle(self):
@@ -262,6 +268,13 @@ class RasterFinder(targetfinder.TargetFinder):
 
 		self.logger.info('%s points with good ice' % (len(goodpoints),))
 
+		# activate if counter is at a multiple of interval
+		interval = self.settings['focus interval']
+		if interval and not (self.foc_counter.next() % interval):
+			self.foc_activated = True
+		else:
+			self.foc_activated = False
+
 		### run template convolution
 		# takes x,y instead of row,col
 		if self.settings['focus convolve']:
@@ -274,8 +287,9 @@ class RasterFinder(targetfinder.TargetFinder):
 			acq_points = goodpoints
 
 		## add constant targets
-		const_foc = self.settings['focus constant template']
-		focus_points.extend(const_foc)
+		if self.foc_activated:
+			const_foc = self.settings['focus constant template']
+			focus_points.extend(const_foc)
 		const_acq = self.settings['acquisition constant template']
 		acq_points.extend(const_acq)
 
@@ -302,6 +316,8 @@ class RasterFinder(targetfinder.TargetFinder):
 
 	def applyTargetTemplate(self, centers, type):
 		if type == 'focus':
+			if not self.foc_activated:
+				return []
 			vects = self.settings['focus convolve template']
 		elif type == 'acquisition':
 			vects = self.settings['acquisition convolve template']

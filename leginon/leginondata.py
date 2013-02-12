@@ -1327,6 +1327,7 @@ class HoleFinderSettingsData(TargetFinderSettingsData):
 			('focus min mean thickness', float),
 			('focus max mean thickness', float),
 			('focus max stdev thickness', float),
+			('focus interval', int),
 		)
 	typemap = classmethod(typemap)
 
@@ -1404,6 +1405,7 @@ class RasterFinderSettingsData(TargetFinderSettingsData):
 			('ice max mean', float),
 			('ice max std', float),
 			('ice min std', float),
+			('focus interval', int),
 			('focus convolve', bool),
 			('focus convolve template', list),
 			('focus constant template', list),

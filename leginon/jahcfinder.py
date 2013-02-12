@@ -19,6 +19,7 @@ import os.path
 import math
 import gui.wx.JAHCFinder
 import version
+import itertools
 
 invsqrt2 = math.sqrt(2.0)/2.0
 default_template = os.path.join(version.getInstalledLocation(),'holetemplate.mrc')
@@ -69,6 +70,7 @@ class JAHCFinder(targetfinder.TargetFinder):
 		'focus min mean thickness': 0.05,
 		'focus max mean thickness': 0.5,
 		'focus max stdev thickness': 0.5,
+		'focus interval': 1,
 	})
 	extendtypes = ['off', 'full', '3x3']
 	targetnames = targetfinder.TargetFinder.targetnames + ['Blobs']
@@ -107,6 +109,9 @@ class JAHCFinder(targetfinder.TargetFinder):
 		self.cortypes = ['cross', 'phase']
 		self.focustypes = ['Off', 'Any Hole', 'Good Hole', 'Center']
 		self.userpause = threading.Event()
+
+		self.foc_counter = itertools.count()
+		self.foc_activated = False
 
 		self.start()
 
@@ -238,28 +243,36 @@ class JAHCFinder(targetfinder.TargetFinder):
 		centers = self.blobCenters(goodholes)
 		allcenters = self.blobCenters(self.hf['holes'])
 
+		# activate if counter is at a multiple of interval
+		interval = self.settings['focus interval']
+		if interval and not (self.foc_counter.next() % interval):
+			self.foc_activated = True
+		else:
+			self.foc_activated = False
+
 		focus_points = []
 
-		## replace an acquisition target with a focus target
-		onehole = self.settings['focus hole']
-		if centers and onehole != 'Off':
-			## if only one hole, this is useless
-			if len(allcenters) < 2:
-				self.logger.info('need more than one hole if you want to focus on one of them')
-				centers = []
-			elif onehole == 'Center':
-				focus_points.append(self.centerCarbon(allcenters))
-			elif onehole == 'Any Hole':
-				fochole = self.focus_on_hole(centers, allcenters)
-				focus_points.append(fochole)
-			elif onehole == 'Good Hole':
-				if len(centers) < 2:
-					self.logger.info('need more than one good hole if you want to focus on one of them')
+		if self.foc_activated:
+			## replace an acquisition target with a focus target
+			onehole = self.settings['focus hole']
+			if centers and onehole != 'Off':
+				## if only one hole, this is useless
+				if len(allcenters) < 2:
+					self.logger.info('need more than one hole if you want to focus on one of them')
 					centers = []
-				else:
-					## use only good centers
-					fochole = self.focus_on_hole(centers, centers)
+				elif onehole == 'Center':
+					focus_points.append(self.centerCarbon(allcenters))
+				elif onehole == 'Any Hole':
+					fochole = self.focus_on_hole(centers, allcenters)
 					focus_points.append(fochole)
+				elif onehole == 'Good Hole':
+					if len(centers) < 2:
+						self.logger.info('need more than one good hole if you want to focus on one of them')
+						centers = []
+					else:
+						## use only good centers
+						fochole = self.focus_on_hole(centers, centers)
+						focus_points.append(fochole)
 
 		self.logger.info('Holes with good ice: %s' % (len(centers),))
 		# takes x,y instead of row,col
@@ -383,6 +396,8 @@ class JAHCFinder(targetfinder.TargetFinder):
 					self.logger.info('skipping template point %s: out of image bounds' % (vect,))
 					continue
 				newtargets['acquisition'].append(target)
+		if not self.foc_activated:
+			return newtargets
 		for vect in foc_vect:
 			for center in focuscenters:
 				target = center[0]+vect[0], center[1]+vect[1]
