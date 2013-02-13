@@ -98,6 +98,7 @@ class RCTAcquisition(acquisition.Acquisition):
 		acquisition.Acquisition.__init__(self, id, session, managerlocation, **kwargs)
 		self.tiltnumber = 0
 		self.tiltseries = None
+		self.tilttest_cycle = 0
 
 	#====================
 	def setImageFilename(self, imagedata):
@@ -109,6 +110,8 @@ class RCTAcquisition(acquisition.Acquisition):
 		'''
 		We override this so we can process each target list for each tilt
 		'''
+		# reset tilt test cycle
+		self.tilttest_cycle = 0
 
 		## return if no targets in list
 		tilt0targets = self.researchTargets(list=tilt0targetlist, status='new')
@@ -621,4 +624,19 @@ class RCTAcquisition(acquisition.Acquisition):
 
 		return imagedata['image']
 
-
+	def testTilt(self):
+		tilts = self.convertDegreeTiltsToRadianList(self.settings['tilts'])
+		if len(tilts) == 0:
+			self.logger.error('Need to set tilts in settings to test tilts')
+		if self.tilttest_cycle >= len(tilts):
+			self.tilttest_cycle = 0
+		this_tilt = tilts[self.tilttest_cycle]
+		this_tilt_degrees = degrees(this_tilt)
+		self.instrument.tem.StagePosition = {'a': this_tilt}
+		self.logger.info('Stage Tilted to %.1f degrees' % this_tilt_degrees)
+		self.tilttest_cycle += 1
+		im = self.acquireImage()
+		if im is None:
+			return
+		im = numpy.asarray(im, dtype=numpy.float32)
+		self.setImage(im)
