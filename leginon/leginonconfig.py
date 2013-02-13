@@ -76,7 +76,12 @@ else:
 	sys.stderr.write('Warning:  You have not configured Images path in leginon.cfg!  Using current directory.\n')
 	IMAGE_PATH = os.path.abspath(os.curdir)
 
-if not os.access(IMAGE_PATH, os.W_OK):
+
+if sys.platform == 'win32':
+	mapped_path = mapPath(IMAGE_PATH)
+else:
+	mapped_path = IMAGE_PATH
+if not os.access(mapped_path, os.W_OK):
 	sys.stderr.write('Error:  image path is not writable: %s\n' % (IMAGE_PATH,))
 	sys.exit()
 
