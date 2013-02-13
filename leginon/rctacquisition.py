@@ -625,6 +625,8 @@ class RCTAcquisition(acquisition.Acquisition):
 		return imagedata['image']
 
 	def testTilt(self):
+		origstage = self.instrument.tem.StagePosition
+		orig_tilt = origstage['a']
 		tilts = self.convertDegreeTiltsToRadianList(self.settings['tilts'])
 		if len(tilts) == 0:
 			self.logger.error('Need to set tilts in settings to test tilts')
@@ -636,6 +638,9 @@ class RCTAcquisition(acquisition.Acquisition):
 		self.logger.info('Stage Tilted to %.1f degrees' % this_tilt_degrees)
 		self.tilttest_cycle += 1
 		im = self.acquireImage()
+		if orig_tilt != this_tilt:
+			self.instrument.tem.StagePosition = {'a': orig_tilt}
+			self.logger.info('Tilt Stage back to %.1f degrees' % degrees(orig_tilt))
 		if im is None:
 			return
 		im = numpy.asarray(im, dtype=numpy.float32)
