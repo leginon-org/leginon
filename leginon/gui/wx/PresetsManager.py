@@ -872,7 +872,8 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 		name = self.presets.getSelectedPreset()
 		self._presetsEnable(False)
 		target = self.node.fromScope
-		args = (name,)
+		# The True in the last argument copies beam shift to all presets at the same mag
+		args = (name,None,None,True)
 		threading.Thread(target=target, args=args).start()
 
 	def onNewFromScope(self, evt):

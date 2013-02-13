@@ -598,7 +598,7 @@ class PresetsManager(node.Node):
 			self.blankOff()
 			self.outputEvent(event.PresetChangedEvent(name=name, preset=presetdata))
 
-	def _fromScope(self, name, temname=None, camname=None, parameters=None):
+	def _fromScope(self, name, temname=None, camname=None, parameters=None, copybeam=False):
 		'''
 		create a new preset with name
 		if a preset by this name already exists in my 
@@ -673,6 +673,9 @@ class PresetsManager(node.Node):
 				newparams['image shift']['y'] -= (oldiswithoffset['y']-oldimageshift['y'])
 			newpreset = self.updatePreset(name, newparams)
 			self.currentpreset = newpreset
+			# copy beam shift to other presets at the same mag
+			if copybeam:
+				self.updateSameMagPresets(name,'beam shift')
 		elif parameters is not None:
 			raise ValueError
 		else:
@@ -822,8 +825,8 @@ class PresetsManager(node.Node):
 		previndex = index - 1
 		return order[previndex]
 
-	def fromScope(self, newname, temname=None, camname=None):
-		newpreset = self._fromScope(newname, temname, camname)
+	def fromScope(self, newname, temname=None, camname=None, copybeam=False):
+		newpreset = self._fromScope(newname, temname, camname, None, copybeam)
 		if newpreset is None:
 			self.panel.presetsEvent()
 			return
@@ -1660,16 +1663,16 @@ class PresetsManager(node.Node):
 		self.alignclose = True
 		self.panel.onDoneAllAlign()
 
-	def updateSameMagPresets(self, presetname):
-				newishift = {'image shift': self.presets[presetname]['image shift']}
+	def updateSameMagPresets(self, presetname,paramkey='image shift'):
+				newshift = {paramkey: self.presets[presetname][paramkey]}
 				mag = self.presets[presetname]['magnification']
 				for otherpreset in self.presets.keys():
 					if otherpreset == presetname:
 						continue
 					othermag = self.presets[otherpreset]['magnification']
 					if othermag == mag:
-						self.logger.info('Updating image shift of %s to image shift of %s' % (otherpreset,presetname))
-						self.updatePreset(otherpreset, newishift)
+						self.logger.info('Updating %s of %s to %s of %s' % (paramkey,otherpreset,paramkey,presetname))
+						self.updatePreset(otherpreset, newshift)
 
 	def onAlignNext(self):
 		self.alignnext.set()
@@ -1735,8 +1738,7 @@ class PresetsManager(node.Node):
 			return
 
 		## deactivate frame saving and align frame flags
-		camdata0['save frames'] = False
-		camdata0['align frames'] = False
+		self.instrument.ccdcamera.SaveRawFrames = False
 		# set preset binning so we can get binned multiplier
 		self.instrument.ccdcamera.Binning = preset['binning']
 		orig_mult = self.instrument.ccdcamera.BinnedMultiplier
@@ -1837,11 +1839,10 @@ class PresetsManager(node.Node):
 	def commitBeamAdjustment(self):
 		if self.new_beamshift is None:
 			return
+		presetname = self.currentpreset['name']
 		newbeamshift = {'beam shift': self.new_beamshift}
-		mag = self.currentpreset['magnification']
-		for preset in self.presets.values():
-			if preset['magnification'] == mag:
-				self.updatePreset(preset['name'], newbeamshift)
+		newpreset = self.updatePreset(presetname, newbeamshift)
+		self.updateSameMagPresets(presetname,'beam shift')
 
 	def handleUpdatePresetEvent(self, evt):
 		presetname = evt['name']
