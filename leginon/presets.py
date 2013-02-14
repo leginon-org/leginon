@@ -1738,7 +1738,12 @@ class PresetsManager(node.Node):
 			return
 
 		## deactivate frame saving and align frame flags
-		self.instrument.ccdcamera.SaveRawFrames = False
+		try:
+			self.instrument.ccdcamera.SaveRawFrames = False
+			self.instrument.ccdcamera.AlignFrames = False
+		except:
+			# camera without frame saving capacity will give an attribut error
+			pass
 		# set preset binning so we can get binned multiplier
 		self.instrument.ccdcamera.Binning = preset['binning']
 		orig_mult = self.instrument.ccdcamera.BinnedMultiplier
