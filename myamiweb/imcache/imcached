@@ -15,6 +15,9 @@ import threading
 import Queue
 import pyami.fileutil
 
+import sys
+direction = sys.argv[1]
+
 # import redux config first to disable cache
 import redux.reduxconfig
 redux.reduxconfig.config['cache on'] = False
@@ -27,6 +30,11 @@ redux_args_pow = imcacheconfig.redux_args_pow
 redux_maxsize1 = imcacheconfig.redux_maxsize1
 redux_maxsize2 = imcacheconfig.redux_maxsize2
 
+newest_image_query = '''
+	SELECT i.DEF_id
+	FROM AcquisitionImageData i
+	ORDER BY i.DEF_id DESC LIMIT 1
+'''
 class QueryThread(threading.Thread):
 
 	'''
@@ -40,11 +48,11 @@ class QueryThread(threading.Thread):
 		FROM SessionData s, AcquisitionImageData i, CameraEMData c
 		WHERE s.DEF_id = i.`REF|SessionData|session`
 			AND i.`REF|CameraEMData|camera` = c.DEF_id
-			AND i.DEF_id > %s
+			%s
 			%s
 		ORDER BY i.DEF_id
+		%s
 	'''
-	time_query = 'AND i.DEF_timestamp > %s'
 
 	def __init__(self, imagequeue, *args, **kwargs):
 		self.imagequeue = imagequeue
@@ -60,18 +68,38 @@ class QueryThread(threading.Thread):
 		return db
 
 	def query_images(self):
-		timestamp = 'AND i.DEF_timestamp > %s' % (self.min_timestamp,)
-		this_query = self.image_query % (self.start_id, timestamp)
+		if direction == 'f':
+			time_query = ''
+			direction_query = 'ASC'
+			if self.query_counter:
+				pass
+			else:
+				self.start_id = self.runQuery(newest_image_query)[0][0]
+			imageid_query = 'AND i.`DEF_id` >= %d' % self.start_id
+		else:
+			# reverse cache
+			direction_query = 'DESC'
+			if self.min_timestamp:
+				time_query = 'AND i.DEF_timestamp > %s' % (self.min_timestamp)
+			else:
+				time_query = ''
+			direction_query = 'DESC'
+			# include minimum timestamp on first query only.
+			# after that, only start_id matters
+			if self.query_counter:
+				print ''
+				print 'NO NEW QUERY %d' % self.query_counter
+				print ''
+				self.query_counter += 1
+				return
+			else:
+				self.start_id = self.runQuery(newest_image_query)[0][0]
+				print 'START_ID', self.start_id
+				imageid_query = 'AND i.`DEF_id` <= %d' % self.start_id
+		this_query = self.image_query % (imageid_query, time_query,direction_query)
 		print 'THISQUERY', this_query
 
-		# run the query
-		db = self.connect()
-		cur = db.cursor()
-		ret = cur.execute(this_query)
-		results = cur.fetchall()
-		cur.close()
-		db.close()
-
+		results = self.runQuery(this_query)
 		# filter out results that are already cached
 		for (imid,session,path,filename,width,height) in results:
 			# determine what is missing from cache
@@ -101,12 +129,22 @@ class QueryThread(threading.Thread):
 
 		self.query_counter += 1
 
+	def runQuery(self,query):
+		# run the query
+		db = self.connect()
+		cur = db.cursor()
+		ret = cur.execute(query)
+		results = cur.fetchall()
+		cur.close()
+		db.close()
+		return results
+
 	def run(self):
 		while True:
 			try:
 				self.query_images()
 			except:
-				pass
+				pass	
 			time.sleep(self.pause)
 
 class ReduxThread(threading.Thread):
