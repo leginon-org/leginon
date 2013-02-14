@@ -773,7 +773,7 @@ if (is_numeric($expId)) {
 		
 		$nruns=array();
 		$nruns[] = array(
-			'name'=>"<a href='runMakeDDRawFrameStack.php?expId=$sessionId'>Create raw frame stack</a>",
+			'name'=>"<a href='runMakeDDRawFrameStack.php?expId=$sessionId'>Create frame stack</a>",
 			'result'=>$ddresults,
 		);
 

@@ -23,7 +23,7 @@ if ($_POST['process']) {
 	createMakestackForm();
 }
 
-function createMakestackForm($extra=false, $title='makeDDRawFrameStack.py Launcher', $heading='Create a Direct Detector Image Stack') {
+function createMakestackForm($extra=false, $title='makeDDRawFrameStack.py Launcher', $heading='Create a Direct Detector Frame Stack') {
 	// check if coming directly from a session
 	$expId=$_GET['expId'];
 	if ($expId){
