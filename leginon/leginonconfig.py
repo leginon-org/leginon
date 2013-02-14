@@ -20,7 +20,7 @@ if sys.platform == 'win32':
 			if not pathmapping:
 				return path
 			for key, value in pathmapping.items():
-				if value == path[:len(value)]:
+				if value.lower() == path[:len(value)].lower():
 					path = key + path[len(value):]
 					break
 
@@ -30,7 +30,7 @@ if sys.platform == 'win32':
 			if not pathmapping:
 				return path
 			for key, value in pathmapping.items():
-				if key == path[:len(key)]:
+				if key.lower() == path[:len(key)].lower():
 					path = value + path[len(key):]
 					break
 			return os.path.normpath(path)
