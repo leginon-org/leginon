@@ -5,14 +5,24 @@ import logging
 import logging.handlers
 import threading
 
-logger = logging.getLogger('method_logger')
-logger.setLevel(logging.INFO)
-logname = 'methods.log'
-rothandler = logging.handlers.TimedRotatingFileHandler(logname, when='h', backupCount=72)
-rothandler.setLevel(logging.INFO)
-formatter = logging.Formatter('%(asctime)s\t%(message)s')
-rothandler.setFormatter(formatter)
-logger.addHandler(rothandler)
+def make_logger():
+	logger = logging.getLogger('method_logger')
+	logger.setLevel(logging.INFO)
+	logname = 'methods.log'
+	rothandler = logging.handlers.TimedRotatingFileHandler(logname, when='h', backupCount=72)
+	rothandler.setLevel(logging.INFO)
+	formatter = logging.Formatter('%(asctime)s\t%(message)s')
+	rothandler.setFormatter(formatter)
+	logger.addHandler(rothandler)
+	return logger
+
+logger = None
+
+def log_info(message):
+	global logger
+	if logger is None:
+		logger = make_logger()
+	logger.info(message)
 
 ## hack to keep track of our recursion level
 mylock = threading.RLock()
@@ -23,7 +33,7 @@ def logged_method(f, classname, fname):
 		try:
 			if mylock._RLock__count == 1 and args[0].logged_methods_on:
 				message = '%s\t%s\t%s\t%s\t%s' % (args[0].__class__.name, classname, fname, args[1:], kwargs)
-				logger.info(message)
+				log_info(message)
 			result = f(*args, **kwargs)
 			return result
 		finally:
