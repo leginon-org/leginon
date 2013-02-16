@@ -5,7 +5,7 @@ import os
 import platform
 import sys
 
-import fftw3
+from pyami.fft import fftw3
 import numpy
 
 import calc_base
@@ -90,16 +90,18 @@ class FFTW3Calculator(calc_base.Calculator):
 
 	def plan(self, *args, **kwargs):
 		'''wrapper around fftw3.Plan, so we can track changes in wisdom'''
-		wisdom_before = fftw3.export_wisdom_to_string()
+		#wisdom_before = fftw3.export_wisdom_to_string()
 		all_kwargs = {}
 		all_kwargs.update(global_plan_kwargs)
 		all_kwargs.update(kwargs)
 		plan = fftw3.Plan(*args, **all_kwargs)
+		'''
 		wisdom_after = fftw3.export_wisdom_to_string()
 		if len(wisdom_before) != len(wisdom_after):
 			if debug:
 				log('wisdom updated, saving new local wisdom file')
 			self.export_local_wisdom()
+		'''
 		return plan
 
 	def _forward(self, image_array):
