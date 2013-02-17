@@ -105,7 +105,7 @@ def parseFrealign9ParamFile(paramfile):
 			'defy' : float(sline[9]),
 			'astig' : float(sline[10]),
 			'occ' : float(sline[11]),
-			'logp' : float(sline[2]),
+			'logp' : float(sline[12]),
 			'score' : float(sline[13]),
 			'change' : float(sline[4]),
 		}
