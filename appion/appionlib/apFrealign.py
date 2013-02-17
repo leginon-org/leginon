@@ -107,7 +107,7 @@ def parseFrealign9ParamFile(paramfile):
 			'occ' : float(sline[11]),
 			'logp' : float(sline[12]),
 			'score' : float(sline[13]),
-			'change' : float(sline[4]),
+			'change' : float(sline[14]),
 		}
 		partdict[paramdict['partnum']] = paramdict
 	f.close()
