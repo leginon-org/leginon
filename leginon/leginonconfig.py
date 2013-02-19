@@ -83,7 +83,6 @@ else:
 	mapped_path = IMAGE_PATH
 if not os.access(mapped_path, os.W_OK):
 	sys.stderr.write('Error:  image path is not writable: %s\n' % (IMAGE_PATH,))
-	sys.exit()
 
 # project
 try:
