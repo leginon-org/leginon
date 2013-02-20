@@ -21,6 +21,8 @@ class CatchUpFrameAlignmentLoop(appionScript.AppionScript):
 			help="ID for dd frame stack run", metavar="INT")
 		self.parser.add_option("--no-wait", dest="wait", default=True,
 			action="store_false", help="Do not wait for frame stack to finish creation")
+		self.parser.add_option("-m", "--mrclist", dest="mrcnames",
+			help="List of mrc files to process, e.g. --mrclist=..003en,..002en,..006en", metavar="MRCNAME")
 
 	#=======================
 	def checkConflicts(self):
@@ -29,6 +31,8 @@ class CatchUpFrameAlignmentLoop(appionScript.AppionScript):
 		driftcorrexe = subprocess.Popen("which "+exename, shell=True, stdout=subprocess.PIPE).stdout.read().strip()
 		if not os.path.isfile(driftcorrexe):
 			apDisplay.printError('Drift correction program not available')
+		if not self.params['ddstackid']:
+			apDisplay.printMsg('Must have a ddstack run to catch up alignment')
 		# make sure ddstack exists
 		ddstackrun = appiondata.ApDDStackRunData().direct_query(self.params['ddstackid'])
 		if ddstackrun:
@@ -94,8 +98,21 @@ class CatchUpFrameAlignmentLoop(appionScript.AppionScript):
 			q = appiondata.ApDDAlignImagePairData(source=imgdata,result=self.aligned_imagedata,ddstackrun=self.rundata)
 			q.insert()
 
+	def getAllFiles(self):
+		if not self.params['mrcnames']:
+			# assume that we are in the ddstack rundir
+			return os.listdir(os.getcwd())
+		else:
+			origfiles = self.params['mrcnames'].split(",")
+			stackfiles = []
+			for origfile in origfiles:
+				if origfile[-4:] == '.mrc':
+					origfile = origfile[:-4]
+				stackfiles.append(origfile+'_st.mrc')
+			return stackfiles
+
 	def loopCheckAndProcess(self):
-		allfiles = os.listdir(os.getcwd())
+		allfiles = self.getAllFiles()
 		images = []
 		for filename in allfiles:
 			if os.path.isfile(filename) and '_st.mrc' in filename:

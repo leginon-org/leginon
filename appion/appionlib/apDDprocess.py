@@ -748,7 +748,7 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		if os.path.isfile(self.aligned_stackpath):
 			self.updateFrameStackHeaderImageStats(self.aligned_stackpath)
 		else:
-			apDisplay.printError('dosefgpu_driftcorr FAILED: \n%s not created.' % os.path.basename(stackpath))
+			apDisplay.printError('dosefgpu_driftcorr FAILED: \n%s not created.' % os.path.basename(self.aligned_stackpath))
 
 	def makeAlignedImageData(self):
 		'''
