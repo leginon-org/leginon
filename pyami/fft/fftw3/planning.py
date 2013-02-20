@@ -391,9 +391,7 @@ class Plan(object):
         execute(self)
 
     def __del__(self):
-        print "DESTROYED!!!!!!!!"
         lib.fftw_destroy_plan(self.plan)
-				#destroy_plan(self)
 
     def guru_execute_dft(self,inarray,outarray):
         """Guru interface: perform Fourier transform on two given arrays,
