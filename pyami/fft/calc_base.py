@@ -10,6 +10,7 @@ Subclasses must define:
 import numpy
 
 import pyami.weakattr
+import pyami.imagefun
 
 class Calculator(object):
 	def __init__(self):
