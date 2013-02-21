@@ -74,7 +74,8 @@ class QueryThread(threading.Thread):
 			if self.query_counter:
 				pass
 			else:
-				self.start_id = self.runQuery(newest_image_query)[0][0]
+				if not self.start_id:
+					self.start_id = self.runQuery(newest_image_query)[0][0]
 			imageid_query = 'AND i.`DEF_id` >= %d' % self.start_id
 		else:
 			# reverse cache
@@ -93,7 +94,8 @@ class QueryThread(threading.Thread):
 				self.query_counter += 1
 				return
 			else:
-				self.start_id = self.runQuery(newest_image_query)[0][0]
+				if not self.start_id:
+					self.start_id = self.runQuery(newest_image_query)[0][0]
 				print 'START_ID', self.start_id
 				imageid_query = 'AND i.`DEF_id` <= %d' % self.start_id
 		this_query = self.image_query % (imageid_query, time_query,direction_query)
