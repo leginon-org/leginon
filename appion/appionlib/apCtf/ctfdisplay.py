@@ -302,7 +302,7 @@ class CtfDisplay(object):
 
 		pyplot.clf()
 
-		pyplot.subplot(4,2,1) # 3 rows, 2 columns, plot 1
+		pyplot.subplot2grid((3,2), (0,0))
 		pyplot.title("Background Noise Subtraction", fontsize=titlefontsize)
 		pyplot.ylabel("Log(PSD)", fontsize=axisfontsize)
 		pyplot.plot(raddata[fpi:], rotdata[fpi:], 
@@ -320,7 +320,7 @@ class CtfDisplay(object):
 		self.setPyPlotXLabels(raddata, valleyradii=valleyradii, maxloc=res50max)
 		pyplot.ylim(ymin=noisedata[-1])
 
-		pyplot.subplot(4,2,2) # 3 rows, 2 columns, plot 2
+		pyplot.subplot2grid((3,2), (0,1))
 		pyplot.title("Envelope Normalization", fontsize=titlefontsize)
 		pyplot.ylabel("Log(PSD-Noise)", fontsize=axisfontsize)
 		pyplot.plot(raddata[fpi:], normlogrotdata[fpi:],
@@ -338,35 +338,9 @@ class CtfDisplay(object):
 		self.setPyPlotXLabels(raddata, peakradii=peakradii, maxloc=res50max)
 		pyplot.ylim(ymax=envelopdata[fpi-1])
 
-		pyplot.subplot(4,2,3) # 3 rows, 2 columns, plot 3
-		pyplot.title("Fit Valley Subtraction", fontsize=titlefontsize)
-		pyplot.ylabel("Norm PSD", fontsize=titlefontsize)
-		pyplot.plot(raddata[fpi:], normnormexprotdata[fpi:],
-			'-', color="blue", alpha=0.5, linewidth=0.75)
-		pyplot.plot(raddata[fpi:], normnormexprotdata[fpi:],
-			'.', color="blue", alpha=0.75, markersize=1.0)
-		pyplot.plot(raddata[fpi:], valleydata[fpi:],
-			'-', color="black", alpha=0.75, linewidth=1)
-		self.setPyPlotXLabels(raddata, valleyradii=valleyradii, maxloc=res50max)
-		pyplot.grid(True, linestyle=':', )
-		pyplot.ylim(-0.5, 1.1)
-
-		pyplot.subplot(4,2,4) # 3 rows, 2 columns, plot 4
-		pyplot.title("Fit Peak Normalization", fontsize=titlefontsize)
-		pyplot.ylabel("Norm PSD", fontsize=titlefontsize)
-		pyplot.plot(raddata[fpi:], normvalleydata[fpi:],
-			'-', color="blue", alpha=0.5, linewidth=0.75)
-		pyplot.plot(raddata[fpi:], normvalleydata[fpi:],
-			'.', color="blue", alpha=0.75, markersize=1.0)
-		pyplot.plot(raddata[fpi:], peakdata[fpi:],
-			'-', color="black", alpha=0.75, linewidth=1)
-		self.setPyPlotXLabels(raddata, peakradii=peakradii, maxloc=res50max)
-		pyplot.grid(True, linestyle=':', )
-		pyplot.ylim(-0.05, 1.5)
-
-		pyplot.subplot(4,2,5) # 3 rows, 2 columns, plot 5
-		pyplot.title("Fit of CTF data (30-10A %.3f / 5-peak %.3f)"
-			%(self.conf3010, self.conf5peak), fontsize=titlefontsize)
+		pyplot.subplot2grid((3,2), (1,0), colspan=2)
+		pyplot.title("Fit of CTF data (30-10A %.3f / 5-peak %.3f) Def1= %.3e / Def2= %.3e"
+			%(self.conf3010, self.conf5peak, self.defocus1, self.defocus2), fontsize=titlefontsize)
 		pyplot.ylabel("Norm PSD", fontsize=titlefontsize)
 		pyplot.plot(raddatasq[fpi:], ctffitdata[fpi:],
 			'-', color="black", alpha=0.5, linewidth=1)
@@ -376,11 +350,28 @@ class CtfDisplay(object):
 			'-', color="blue", alpha=0.5, linewidth=0.5)
 		pyplot.plot(raddatasq[fpi:], normpeakdata[fpi:],
 			'.', color="blue", alpha=0.75, markersize=2.0)
-		self.setPyPlotXLabels(raddatasq, maxloc=1/10.**2, square=True)
+		self.setPyPlotXLabels(raddatasq, maxloc=1/5.**2, square=True)
 		pyplot.grid(True, linestyle=':', )
 		pyplot.ylim(-0.05, 1.05)
 
-		pyplot.subplot(4,2,6) # 3 rows, 2 columns, plot 6
+		"""
+		pyplot.subplot2grid((3,2), (1,1))
+		tenangindex = numpy.searchsorted(raddata, 1/10.)-1
+		pyplot.title("Defocus1= %.3e / Defocus2= %.3e"
+			%(self.defocus1, self.defocus2), fontsize=titlefontsize)
+		pyplot.ylabel("Norm PSD", fontsize=titlefontsize)
+		pyplot.plot(raddatasq[tenangindex:], ctffitdata[tenangindex:],
+			'-', color="black", alpha=0.5, linewidth=1)
+		pyplot.plot(raddatasq[tenangindex:], normpeakdata[tenangindex:],
+			'-', color="blue", alpha=0.5, linewidth=0.5)
+		pyplot.plot(raddatasq[tenangindex:], normpeakdata[tenangindex:],
+			'.', color="blue", alpha=0.75, markersize=2.0)
+		self.setPyPlotXLabels(raddatasq[tenangindex:], maxloc=1/7.**2, square=True)
+		pyplot.grid(True, linestyle=':', )
+		pyplot.ylim(-0.05, 1.05)
+		"""
+
+		pyplot.subplot2grid((3,2), (2,0), colspan=2)
 		pyplot.title("Resolution limits: %.2fA at 0.8 and %.2fA at 0.5"
 			%(self.res80, self.res50), fontsize=titlefontsize)
 		pyplot.ylabel("Correlation", fontsize=titlefontsize)
@@ -409,45 +400,17 @@ class CtfDisplay(object):
 		else:
 			pyplot.ylim(-0.55, 1.05)
 
-		pyplot.subplot(4,2,7) # 4 rows, 2 columns, plot 7
-		tenangindex = numpy.searchsorted(raddata, 1/10.)-1
-		pyplot.title("Defocus1= %.3e / Defocus2= %.3e"
-			%(self.defocus1, self.defocus2), fontsize=titlefontsize)
-		pyplot.ylabel("Norm PSD", fontsize=titlefontsize)
-		pyplot.plot(raddatasq[tenangindex:], ctffitdata[tenangindex:],
-			'-', color="black", alpha=0.5, linewidth=1)
-		pyplot.plot(raddatasq[tenangindex:], normpeakdata[tenangindex:],
-			'-', color="blue", alpha=0.5, linewidth=0.5)
-		pyplot.plot(raddatasq[tenangindex:], normpeakdata[tenangindex:],
-			'.', color="blue", alpha=0.75, markersize=2.0)
-		self.setPyPlotXLabels(raddatasq[tenangindex:], maxloc=1/7.**2, square=True)
-		pyplot.grid(True, linestyle=':', )
-		pyplot.ylim(-0.05, 1.05)
 
-		pyplot.subplot(4,2,8) # 4 rows, 2 columns, plot 8
-		overdiffres = genctf.getDiffResForOverfocus(raddata*1e10, cs=self.cs, volts=self.volts)
-		overdiffindex = numpy.searchsorted(raddata, 1/overdiffres)
-
-		pyplot.title("Overfocus check (30-10A %.2f / 5-peak %.2f / %.1fA at 0.8 / %.1fA at 0.5 )"
-			%(self.overconf3010, self.overconf5peak, self.overres80, self.overres50), fontsize=titlefontsize-1)
-		pyplot.ylabel("Norm PSD", fontsize=titlefontsize)
-		pyplot.plot(raddatasq[overdiffindex:], ctffitdata[overdiffindex:],
-			'-', color="black", alpha=0.5, linewidth=1)
-		pyplot.plot(raddatasq[overdiffindex:], overctffitdata[overdiffindex:],
-			'-', color="red", alpha=0.75, linewidth=1)
-		pyplot.plot(raddatasq[overdiffindex:], normpeakdata[overdiffindex:],
-			'-', color="blue", alpha=0.5, linewidth=0.5)
-		pyplot.plot(raddatasq[overdiffindex:], normpeakdata[overdiffindex:],
-			'.', color="blue", alpha=0.75, markersize=2.0)
-		self.setPyPlotXLabels(raddatasq[overdiffindex:], maxloc=1/7.**2, square=True)
-		pyplot.grid(True, linestyle=':', )
-		pyplot.ylim(-0.05, 1.05)
-
-		pyplot.subplots_adjust(wspace=0.22, hspace=0.70, 
+		pyplot.subplots_adjust(wspace=0.22, hspace=0.50, 
 			bottom=0.08, left=0.07, top=0.95, right=0.965, )
 		self.plotsfile = apDisplay.short(self.imgname)+"-plots.png"
 		apDisplay.printMsg("Saving 1D graph to file %s"%(self.plotsfile))
 		pyplot.savefig(self.plotsfile, format="png", dpi=200, orientation='landscape', pad_inches=0.0)
+
+		f = open(apDisplay.short(self.imgname)+"-ctffitdata.dat", "w")
+		for i in range(len(ctffitdata)):
+			f.write("%.16f\t%.16f\n"%(raddata[i], ctffitdata[i]))
+		f.close()
 
 		if self.debug is True:
 			print "Showing results"
