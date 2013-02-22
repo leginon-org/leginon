@@ -409,7 +409,7 @@ class CtfDisplay(object):
 
 		f = open(apDisplay.short(self.imgname)+"-ctffitdata.dat", "w")
 		for i in range(len(ctffitdata)):
-			f.write("%.16f\t%.16f\n"%(raddata[i], ctffitdata[i]))
+			f.write("%.16f\t%.16f\t%.16f\n"%(raddata[i], normpeakdata[i], ctffitdata[i]))
 		f.close()
 
 		if self.debug is True:
