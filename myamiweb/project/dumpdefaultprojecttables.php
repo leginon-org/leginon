@@ -6,7 +6,7 @@ $user="usr_object";
 $pass="";
 $db="project";
 
-$leginondata->mysql = &new mysql($host, $user, $pass, $db);
+$leginondata->mysql = new mysql($host, $user, $pass, $db);
 $tables = array (
 'boxtypes',
 'grids',

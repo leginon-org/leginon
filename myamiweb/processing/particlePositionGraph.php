@@ -39,7 +39,7 @@ if ($viewsql) {
 $axes = array('xcoord','ycoord');
 if ($histogram == true && $histaxis == 'xcoord') 
 	$axes = array('ycoord','xcoord');
-$dbemgraph=&new dbemgraph($positiondata, $axes[0], $axes[1]);
+$dbemgraph = new dbemgraph($positiondata, $axes[0], $axes[1]);
 $dbemgraph->lineplot=False;
 $dbemgraph->title="particle positions for ".$rundata[0]['name'];
 $dbemgraph->yaxistitle=$axes[1]." (pixel)";
