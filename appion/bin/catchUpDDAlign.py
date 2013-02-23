@@ -71,7 +71,7 @@ class CatchUpFrameAlignmentLoop(appionScript.AppionScript):
 	
 		### set processing image
 		try:
-			self.dd.setImageData(imgdata)
+			self.dd.setImageData(imgdata,ignore_raw=True)
 		except Exception, e:
 			apDisplay.printWarning(e.message)
 			return

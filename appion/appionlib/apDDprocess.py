@@ -125,6 +125,7 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		self.camerainfo = {}
 		self.setDefaultDimension(4096,3072)
 		self.c_client = correctorclient.CorrectorClient()
+		self.framestackpath = None
 		self.stack_binning = 1
 		self.correct_dark_gain = True
 		self.correct_frame_mask = False
@@ -138,11 +139,14 @@ class DDFrameProcessing(DirectDetectorProcessing):
 			self.log = open('newref.log','w')
 			self.scalefile = open('darkscale.log','w')
 
-	def setImageData(self,imagedata):
+	def setImageData(self,imagedata,ignore_raw=False):
 		super(DDFrameProcessing,self).setImageData(imagedata)
 		# dark/gain corrected stack is saved here
 		self.setFrameStackPath()
-		self.__setRawFrameInfoFromImage()
+		if not ignore_raw:
+			self.__setRawFrameInfoFromImage()
+		else:
+			self.__setRawFrameInfoFromDDStack()
 		# These two are only used if alignment of the frames are made
 		self.aligned_sumpath = os.path.join(self.rundir,self.image['filename']+'_c.mrc')
 		self.aligned_stackpath = os.path.join(self.rundir,self.framestackpath[:-4]+'_c'+self.framestackpath[-4:])
@@ -278,9 +282,14 @@ class DDFrameProcessing(DirectDetectorProcessing):
 			apDisplay.printError('No image set.')
 		# set rawframe path
 		self.setRawFrameDir(self.getRawFrameDirFromImage(imagedata))
-		# initialize self.nframe
-		self.nframe = self.getNumberOfFrameSaved()
 		# total number of frames saved
+		self.totalframe = self.getNumberOfFrameSaved()
+
+	def __setRawFrameInfoFromDDStack(self):
+		'''
+		set totalframe only if ddstack is made
+		'''
+		#self.nframe = self.getNumberOfFrameSaved()
 		self.totalframe = self.getNumberOfFrameSaved()
 
 	def setCameraInfo(self,nframe,use_full_raw_area):
