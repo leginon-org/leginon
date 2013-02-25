@@ -46,7 +46,11 @@ class MakeDDParticleMovieLoop(apParticleExtractor.ParticleBoxLoop):
 			apDisplay.printWarning('Interval of frames must be one when denoising')
 			apDisplay.printWarning('Forcing it to 1....')
 			self.params['framestep'] = 1
-
+		if self.params['nframe'] == 0:
+			# force nframe to a large member so that checkIsDD will consider it as dd data
+			# This number will limit the total processing frames if smaller than
+			# the actual number of frames in the images
+			self.params['nframe'] = 1000
 
 	#=======================
 	def preLoopFunctions(self):
@@ -85,7 +89,7 @@ class MakeDDParticleMovieLoop(apParticleExtractor.ParticleBoxLoop):
 	def processParticles(self,imgdata,partdatas,shiftdata):
 		# need to avoid non-frame saved image for proper caching
 		if imgdata is None or imgdata['camera']['save frames'] != True:
-			self.dd.log.write('%s skipped for no-frame-saved\n ' % imgdata['filename'])
+			apDisplay.printWarning('%s skipped for no-frame-saved\n ' % imgdata['filename'])
 			return
 
 		### first remove any existing files
@@ -102,6 +106,7 @@ class MakeDDParticleMovieLoop(apParticleExtractor.ParticleBoxLoop):
 		try:
 			self.dd.setImageData(imgdata)
 		except Exception, e:
+			raise
 			apDisplay.printWarning('%s: %s' % (e.__class__.__name__,e))
 			return
 		
