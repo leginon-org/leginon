@@ -36,7 +36,7 @@ if (count($targetlistIds) == 500) {
 			$esttime = $q[4];
 			$estminute = (int) floor(($esttime / 60));
 			$estsecond = (int) floor($esttime%60);
-			$display	.= '<ul><li><b>'.$qtype.' </b></li>'
+			$display	.= '<ul><li><b>'.$qtype.' </b>('.$q[1].' targets)</li>'
 							.'<li>unprocessed queue = '.$q[2].'</li>'
 							.'<li>avg time so far = '. (int)($q[3]) .' s</li>'
 							.'<li>remaining time  = '. $estminute .' min '.$estsecond.' s</li>'
