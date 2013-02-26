@@ -302,7 +302,10 @@ class CtfDisplay(object):
 
 		pyplot.clf()
 
-		pyplot.subplot2grid((3,2), (0,0))
+		if 'subplot2grid' in dir(pyplot):
+			pyplot.subplot2grid((3,2), (0,0))
+		else:
+			pyplot.subplot(2,2,1) # 2 rows, 2 columns, plot 1
 		pyplot.title("Background Noise Subtraction", fontsize=titlefontsize)
 		pyplot.ylabel("Log(PSD)", fontsize=axisfontsize)
 		pyplot.plot(raddata[fpi:], rotdata[fpi:], 
@@ -320,7 +323,10 @@ class CtfDisplay(object):
 		self.setPyPlotXLabels(raddata, valleyradii=valleyradii, maxloc=res50max)
 		pyplot.ylim(ymin=noisedata[-1])
 
-		pyplot.subplot2grid((3,2), (0,1))
+		if 'subplot2grid' in dir(pyplot):
+			pyplot.subplot2grid((3,2), (0,1))
+		else:
+			pyplot.subplot(2,2,2) # 2 rows, 2 columns, plot 2
 		pyplot.title("Envelope Normalization", fontsize=titlefontsize)
 		pyplot.ylabel("Log(PSD-Noise)", fontsize=axisfontsize)
 		pyplot.plot(raddata[fpi:], normlogrotdata[fpi:],
@@ -338,7 +344,10 @@ class CtfDisplay(object):
 		self.setPyPlotXLabels(raddata, peakradii=peakradii, maxloc=res50max)
 		pyplot.ylim(ymax=envelopdata[fpi-1])
 
-		pyplot.subplot2grid((3,2), (1,0), colspan=2)
+		if 'subplot2grid' in dir(pyplot):
+			pyplot.subplot2grid((3,2), (1,0), colspan=2)
+		else:
+			pyplot.subplot(2,2,3) # 2 rows, 2 columns, plot 3
 		pyplot.title("Fit of CTF data (30-10A %.3f / 5-peak %.3f) Def1= %.3e / Def2= %.3e"
 			%(self.conf3010, self.conf5peak, self.defocus1, self.defocus2), fontsize=titlefontsize)
 		pyplot.ylabel("Norm PSD", fontsize=titlefontsize)
@@ -371,7 +380,10 @@ class CtfDisplay(object):
 		pyplot.ylim(-0.05, 1.05)
 		"""
 
-		pyplot.subplot2grid((3,2), (2,0), colspan=2)
+		if 'subplot2grid' in dir(pyplot):
+			pyplot.subplot2grid((3,2), (2,0), colspan=2)
+		else:
+			pyplot.subplot(2,2,4) # 2 rows, 2 columns, plot 4
 		pyplot.title("Resolution limits: %.2fA at 0.8 and %.2fA at 0.5"
 			%(self.res80, self.res50), fontsize=titlefontsize)
 		pyplot.ylabel("Correlation", fontsize=titlefontsize)
