@@ -389,7 +389,7 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 
 #=====================
 if __name__ == "__main__":
-	maxLike = MaximumLikelihoodScript(True)
+	maxLike = MaximumLikelihoodScript()
 	maxLike.start()
 	maxLike.close()
 
