@@ -764,7 +764,13 @@ def whereFormat(in_dict):
 		if key=="DEF_timelimit":
 		#	For MySQL 4.1.1 or greater
 		#	sqlwhere = ''' %s.%s >= ADDTIME(NOW(), '%s') ''' % (backquote(alias), backquote('DEF_timestamp'), evalue)
-			sqlwhere = ''' %s.%s >= DATE_ADD(now(), INTERVAL '%s' DAY_SECOND) ''' % (backquote(alias), backquote('DEF_timestamp'), evalue)
+			parts = evalue.split('\t')
+			if len(parts) == 1:
+				evalue = parts[0]
+				sqlwhere = '''%s.%s >= DATE_ADD(now(), INTERVAL '%s' DAY_SECOND) ''' % (backquote(alias), backquote('DEF_timestamp'), evalue)
+			elif len(parts) == 2:
+				mintime,maxtime = parts
+				sqlwhere = '''%s.%s BETWEEN %s AND %s''' % (backquote(alias), backquote('DEF_timestamp'), mintime, maxtime)
 		else:
 			sqlwhere = ''' %s.%s="%s" ''' % (backquote(alias), backquote(key), evalue)
 		wherelist.append(sqlwhere)
