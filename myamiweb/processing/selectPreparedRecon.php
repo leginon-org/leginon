@@ -334,8 +334,10 @@ function createCommand ($extra=False)
 	$cs 			= $_POST['cs'];	
 	$boxsize 		= $_POST['boxsize'];	
 	$phaseflipped 	= $_POST['phaseflipped'];	
-	$hostname   	= $_POST['processinghost'];
 	$totalPart  	= $_POST['lastpart'];
+	// from the ClusterParamsForm
+	$hostname   	= $_POST['processinghost'];
+	$remoteoutdir	= $_POST['remoteoutdir'];
 	
 	// verify processing host parameters
 	$clusterParamForm = new ClusterParamsForm();
@@ -352,7 +354,7 @@ function createCommand ($extra=False)
 	/* *******************
 	 PART 2: Copy any needed files to the cluster
 	 ******************** */
-	$copyCommand = copyFilesToCluster( $hostname );
+	$copyCommand = copyFilesToCluster( $hostname, $remoteoutdir );
 	
 	/* *******************
 	 PART 3: Create program command
@@ -409,11 +411,12 @@ function createCommand ($extra=False)
 // copying the files, this function returns a string with 
 // directions for manual copy. If the copy is successful,
 // this returns and empty string.
-function copyFilesToCluster( $host )
+function copyFilesToCluster( $host, $directory )
 {
 	$copyNeededFlag		= false; // this becomes true if files actually need to be copied 
 	$printCommandFlag 	= false; // this becomes true if we are unable to execute the copy
 	$returnCmdString	= ""; // the commands the user needs to enter manually if auto copy fails
+	$clusterpath		= $directory;
 		
 	// if the user is not logged in, we cannot execute the copy for them
 	$user = $_SESSION['username'];
@@ -422,9 +425,6 @@ function copyFilesToCluster( $host )
 		$printCommandFlag = true;
 	}
 
-	$cluster 	 = new Cluster($host);
-	$clusterpath = $cluster->getPath();
-	
 	$runname = $_POST['runname'];
 	$rundir = $_POST['outdir'].$runname;
 	$clusterpath = $clusterpath.$runname;
