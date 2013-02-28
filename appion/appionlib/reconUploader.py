@@ -81,7 +81,10 @@ class generalReconUploader(appionScript.AppionScript):
 
 		### unpickle results or parse logfile, set default parameters if missing
 		os.chdir(os.path.abspath(self.params['rundir']))
-		self.unpackResults()
+		if os.path.isdir(os.path.join(self.params['rundir'], "recon")):
+			apDisplay.printWarning('recon dir already exist, no need to unpack')
+		else:
+			self.unpackResults()
 		self.runparams = self.readRunParameters()
 	
 		### parameters recovered from runparameter file(s)
