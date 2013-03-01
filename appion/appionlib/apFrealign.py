@@ -145,6 +145,8 @@ def convertFrealignSymToAppionSym(frealign_symtext):
 		return icosdict[frealign_symtext.lower()]
 	elif frealign_symtext[0] == 'O':
 		return 'Oct'
+	elif frealign_symtext.lower() == 'c1':
+		return 'C1'
 	else:
 		frealign_symtext[0].upper()
 		return ''.join(frealign_symtext) + ' (z)'
