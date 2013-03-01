@@ -2,8 +2,8 @@
 #
 # /etc/rc.d/init.d/reduxd
 #
-#
-#Redux is a utility for running a pipeline of simple image processing routines.
+# chkconfig: 2345 95 05
+# description: Redux is a utility for running a pipeline of simple image processing routines.
 #The main purpose is to produce display worthy images (JPEG, PNG, etc) from
 #raw MRC images.  It includes a caching mechanism to reduce processing time at
 #the expence of disk or memory usage.
