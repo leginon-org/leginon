@@ -81,6 +81,9 @@ class SimTEM(tem.TEM):
 		self.emission = 'on'
 		self.BeamBlank = 'on'
 
+		self.energy_filter = False
+		self.energy_filter_width = 0.0
+
 	def getColumnValvePositions(self):
 		return ['open', 'closed']
 
@@ -291,4 +294,22 @@ class SimTEM(tem.TEM):
 		return self.BeamBlank
 		
 	def setBeamBlank(self, bb):
-			self.BeamBlank = bb
+		self.BeamBlank = bb
+
+	def getEnergyFiltered(self):
+		return True
+
+	def getEnergyFilter(self):
+		return self.energy_filter
+
+	def setEnergyFilter(self, value):
+		#print 'TEM energy filter', value
+		self.energy_filter = bool(value)
+
+	def getEnergyFilterWidth(self):
+		return self.energy_filter_width
+
+	def setEnergyFilterWidth(self, value):
+		#print 'TEM energy filter width = ', value
+		self.energy_filter_width = float(value)
+

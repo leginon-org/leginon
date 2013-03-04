@@ -79,6 +79,10 @@ class TEM(baseinstrument.BaseInstrument):
 		{'name': 'preFilmExposure', 'type': 'method'},
 		{'name': 'resetDefocus', 'type': 'method'},
 		{'name': 'runBufferCycle', 'type': 'method'},
+
+		## optional:
+		{'name': 'EnergyFilter', 'type': 'property'},
+		{'name': 'EnergyFilterWidth', 'type': 'property'},
 	)
 	def __init__(self):
 		baseinstrument.BaseInstrument.__init__(self)
@@ -87,3 +91,7 @@ class TEM(baseinstrument.BaseInstrument):
 
 	def getCs(self):
 		return self.cs
+
+	def getEnergyFiltered(self):
+		return False
+
