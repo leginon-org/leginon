@@ -605,22 +605,20 @@ class Jeol(tem.TEM):
 		# set stage position and wait for movement to stop
 		if 'z' in position:
                         result = self.stage3.SetZ(position['z']*STAGE_SCALE_XYZ)
-			self._waitForStage()
 
 		if 'x' in position:
                         result = self.stage3.SetX(position['x']*STAGE_SCALE_XYZ)
-			self._waitForStage()
 
 		if 'y' in position:
                         result = self.stage3.SetY(position['y']*STAGE_SCALE_XYZ)
-			self._waitForStage()
 
 		if 'a' in position:
                         result = self.stage3.SetTiltXAngle(math.degrees(position['a']))
-			self._waitForStage()
 
 		if 'b' in position:
                         result = self.stage3.SetTiltYAngle(math.degrees(position['b']))
+
+                self._waitForStage()
 
         '''	
 	def setStagePosition(self, position, relative = "absolute"):
