@@ -6,16 +6,17 @@ import time
 import sys
 import traceback
 
-# local
+import redux.reduxlog
+
+### set up logging
+redux.reduxlog.setup()
+logger = redux.reduxlog.logger
+
+import redux.reduxconfig
 import redux.utility
 import redux.exceptions
 import redux.pipeline
-
-### set up logging
-logger = logging.getLogger('redux')
-logger.setLevel(logging.DEBUG)
-stderr_handler = logging.StreamHandler()
-logger.addHandler(stderr_handler)
+import pyami.version
 
 class RequestHandler(SocketServer.StreamRequestHandler):
 	def handle(self):
@@ -50,6 +51,10 @@ class Server(SocketServer.ThreadingMixIn, SocketServer.TCPServer):
 
 def start_server(host, port):
 	server = Server((host,port), RequestHandler)
+	ver = pyami.version.getSubversionRevision()
+	logger.info('*****************************************')
+	logger.info('redux server started: %s' % (time.asctime(),))
+	logger.info('subversion revision: %s' % (ver,))
 	logger.info('host: %s,  port: %s' % server.server_address)
 	server.serve_forever()
 
@@ -65,8 +70,10 @@ def test_request():
 	sys.stderr.write('TIME: %s\n' % (t1-t0))
 	print result
 
-if __name__ == '__main__':
-	import reduxconfig
-	host = reduxconfig.config['server host']
-	port = reduxconfig.config['server port']
+def main():
+	host = redux.reduxconfig.config['server host']
+	port = redux.reduxconfig.config['server port']
 	start_server(host, port)
+
+if __name__ == '__main__':
+	main()

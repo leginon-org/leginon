@@ -5,7 +5,8 @@ import os
 import platform
 import sys
 
-import fftw3
+print '*** Using custom copy of fftw3 wrapper'
+from pyami.fft import fftw3
 import numpy
 
 import calc_base
@@ -90,16 +91,18 @@ class FFTW3Calculator(calc_base.Calculator):
 
 	def plan(self, *args, **kwargs):
 		'''wrapper around fftw3.Plan, so we can track changes in wisdom'''
-		wisdom_before = fftw3.export_wisdom_to_string()
+		#wisdom_before = fftw3.export_wisdom_to_string()
 		all_kwargs = {}
 		all_kwargs.update(global_plan_kwargs)
 		all_kwargs.update(kwargs)
 		plan = fftw3.Plan(*args, **all_kwargs)
+		'''
 		wisdom_after = fftw3.export_wisdom_to_string()
 		if len(wisdom_before) != len(wisdom_after):
 			if debug:
 				log('wisdom updated, saving new local wisdom file')
 			self.export_local_wisdom()
+		'''
 		return plan
 
 	def _forward(self, image_array):
@@ -113,9 +116,24 @@ class FFTW3Calculator(calc_base.Calculator):
 
 	def _reverse(self, fft_array):
 		imageshape = fft_array.shape[0], 2*(fft_array.shape[1]-1)
-		image_array = numpy.zeros(imageshape, dtype=float32)
-		input_array = numpy.zeros(fft_array.shape, dtype=complex)
+		image_array = numpy.zeros(imageshape, dtype=numpy.float)
+		input_array = numpy.zeros(fft_array.shape, dtype=numpy.complex)
 		newplan = self.plan(input_array, image_array, direction='backward')
 		input_array[:] = fft_array
 		newplan()
 		return image_array
+
+	def _fshape(self, fft_array, real_shape):
+		'''
+		Create a new fft_array by cropping or padding that will invert to
+		a real image of the given shape
+		'''
+		new_fft_shape = real_shape[0], real_shape[1]/2+1
+		new_fft_array = numpy.zeros(new_fft_shape, dtype=fft_array.dtype)
+		halfheight = min(new_fft_shape[0] / 2, fft_array.shape[0] / 2)
+		width = min(new_fft_shape[1], fft_array.shape[1])
+		new_fft_array[:halfheight,:width] = fft_array[:halfheight,:width]
+		new_fft_array[-halfheight:,:width] = fft_array[-halfheight:,:width]
+		norm = fft_array.shape[0] * 2 * (fft_array.shape[1]-1)
+		new_fft_array /= norm
+		return new_fft_array

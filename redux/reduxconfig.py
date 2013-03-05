@@ -20,7 +20,7 @@ def printConfigFiles():
 		print '\t%s' % (configfile,)
 
 # default config
-config = {'host':'localhost', 'port':55123, 'cache on': False}
+config = {'server host':'localhost', 'server port':55123, 'cache on': False}
 
 # from config file
 config['server host'] = configparser.get('server','host')
@@ -29,8 +29,9 @@ cache_on = configparser.get('cache','enable')
 if cache_on.strip().lower() in ('yes','on','true'):
 	config['cache on'] = True
 	config['cache path'] = configparser.get('cache','path')
-	config['cache disk size'] = configparser.get('cache','disksize')
-	config['cache mem size'] = configparser.get('cache','memsize')
+	config['cache disk size'] = configparser.getint('cache','disksize')
+	config['cache mem size'] = configparser.getint('cache','memsize')
+config['log file'] = configparser.get('log', 'file')
 
 def printConfig():
 	'''

@@ -66,9 +66,6 @@ def linearscale(input, boundfrom, boundto, extrema=None):
 
 	minfrom,maxfrom = boundfrom
 	minto,maxto = boundto
-	if minfrom is not None and maxfrom is not None:
-		if minfrom == maxfrom:
-			raise RuntimeError('Invalid range: %s' % (boundfrom,))
 
 	### default from bounds are min,max of the input
 	if minfrom is None:
@@ -83,11 +80,14 @@ def linearscale(input, boundfrom, boundto, extrema=None):
 			maxfrom = arraystats.max(input)
 
 	rangefrom = maxfrom - minfrom
-	rangeto = maxto - minto
-
-	scale = float(rangeto) / rangefrom
-	offset = minfrom * scale
-	output = input * scale - offset
+	if rangefrom == 0:
+		# if min==max, do simple thresholding
+		output = numpy.where(input>maxfrom, maxto, minto)
+	else:
+		rangeto = maxto - minto
+		scale = float(rangeto) / rangefrom
+		offset = minfrom * scale
+		output = input * scale - offset
 
 	return output
 
@@ -287,7 +287,9 @@ def scipyblobs(im,mask):
 		means = scipy.ndimage.mean(im,labels,range(1,n+1))
 		moments = moment_of_inertia(im,labels,range(1,n+1))
 		maxpos = scipy.ndimage.maximum_position(im,labels,range(1,n+1))
-		if n==1:
+		## scipy has changed to return array when there is one answer in 0.9
+		## This single value case for n=1 only needed for older versions
+		if n==1 and isinstance(means,float):
 			centers = [centers]
 			stds = [stds]
 			means = [means]
@@ -498,10 +500,114 @@ def crop_at(im, center, shape, mode='wrap', cval=None):
 	croppedcenter = shape[0]/2.0 - 0.5, shape[1]/2.0 - 0.5
 	shift = croppedcenter[0]-center[0], croppedcenter[1]-center[1]
 	if mode == 'constant':
-		shifted = scipy.ndimage.shift(im, shift, mode=mode, cval=cval)
+		shifted = scipy.ndimage.shift(im, shift, mode=mode, cval=cval, order=1)
 	else:
-		shifted = scipy.ndimage.shift(im, shift, mode=mode)
+		shifted = scipy.ndimage.shift(im, shift, mode=mode, order=1)
 	cropped = shifted[:shape[0], :shape[1]]
+	return cropped
+
+def center_from_shape(shape):
+	'''
+Calculate the center coordinate of an image based on its shape.
+Each value in the coordinate is calculated independently and could
+result in either a float or int.  Result may be mixed floats and ints.
+	'''
+	center = []
+	for x in shape:
+		if x < 1:
+			raise ValueError('Invalid shape: %s' % (shape,))
+		half_floor = x//2
+		if x % 2:
+			center.append(int(half_floor))
+		else:
+			center.append(float(half_floor-0.5))
+	return center
+
+crop_modes = ('wrap','zero')
+def crop(im, shape, center=None, mode='wrap', output_type=None):
+	'''
+Crop an nd-array to given shape.
+
+If center is given, it indicates what position of the input image will
+become the center of the output image. It will default to the center of
+the input image.
+
+mode may either be 'wrap' or 'zero' to indicate what happens out of bounds.
+
+output_type indicates the desired numpy dtype of the output array.  If not
+given, it defaults to the same as the input (interpolations may be rounded
+to integers, for example).
+	'''
+	ndims_in = len(im.shape)
+	ndims_out = len(shape)
+	if ndims_in != ndims_out:
+		raise ValueError('crop: dimension mismatch, input is %d-D, output is %d-D' % (ndims_in, ndims_out))
+
+	if mode not in crop_modes:
+		raise ValueError('Invalid mode "%s".  Must select from %s.' % (mode, crop_modes,))
+
+	if center is None:
+		center = center_from_shape(im.shape)
+	out_center = center_from_shape(shape)
+
+	interp = False  # turn on if interpolation is necessary
+	shift = []
+	for i in range(ndims_in):
+		s = out_center[i]-center[i]
+		if isinstance(s,float) and not s.is_integer():
+			interp = True
+		else:
+			s = int(-s)
+		shift.append(s)
+
+	if interp:
+		if mode == 'zero':
+			shifted = scipy.ndimage.shift(im, shift, output=output_type, mode='constant', cval=0, order=1)
+		else:
+			shifted = scipy.ndimage.shift(im, shift, output=output_type, mode='wrap', order=1)
+		cropped = shifted[:shape[0], :shape[1]]
+	else:
+		if mode == 'wrap':
+			cropped = im
+			for i in range(ndims_in):
+				indices = range(shift[i],shift[i]+shape[i])
+				cropped = cropped.take(indices, axis=i, mode='wrap')
+			if output_type is not None:
+				cropped = numpy.asarray(cropped, output_type)
+		else:
+			if output_type:
+				dtype = output_type
+			else:
+				dtype = im.dtype
+			cropped = numpy.zeros(shape, dtype)
+			slices_in = []
+			slices_out = []
+			do_it = True
+			for i in range(ndims_in):
+				start = shift[i]
+				end = start+shape[i]
+				if start < 0:
+					start_in = 0
+					start_out = -start
+				elif start >= im.shape[i]:
+					do_it = False
+					break
+				else:
+					start_in = start
+					start_out = 0
+				if end <= 0:
+					do_it = False
+					break
+				elif end > im.shape[i]:
+					end_in = im.shape[i]
+					end_out = shape[i]-end+im.shape[i]
+				else:
+					end_in = end
+					end_out = shape[i]
+				slices_in.append(slice(start_in,end_in))
+				slices_out.append(slice(start_out,end_out))
+			if do_it:
+				cropped[slices_out] = im[slices_in]
 	return cropped
 
 def threshold(a, limit):

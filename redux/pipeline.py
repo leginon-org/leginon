@@ -20,8 +20,7 @@ if CACHE_ON:
 	results = redux.cache.Cache(disk_cache_path, disk_cache_size, size_max=mem_cache_size)
 
 def log(msg):
-	sys.stderr.write(msg)
-	sys.stderr.write('\n')
+	sys.stderr.write(msg+'\n')
 
 '''
 pipe order specifier:
@@ -136,6 +135,8 @@ class Pipeline(object):
 		if result is None:
 			done = ()
 			remain = pipeline
+			if 'initial_input' in kwargs:
+				result = kwargs['initial_input']
 
 		### finish the remainder of the pipeline
 		for pipe in remain:

@@ -3,6 +3,8 @@
 import os
 
 def meminfo2dict():
+	if not os.path.exists('/proc/meminfo'):
+		return None
 	f = open('/proc/meminfo', 'r')
 	lines = f.readlines()
 	f.close()
@@ -19,6 +21,8 @@ def meminfo2dict():
 	return info
 
 def stats(meminfo=meminfo2dict()):
+	if meminfo is None:
+		return
 	total = meminfo['MemTotal']
 	free = meminfo['MemFree']
 	used = total - free

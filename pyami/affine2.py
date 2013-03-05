@@ -91,10 +91,12 @@ class Rotation(Transform3x3):
 		Transform3x3.__init__(self, matrix)
 
 class Scale(Transform3x3):
-	def __init__(self, scale):
+	def __init__(self, scale0, scale1=None):
 		matrix = numpy.identity(3)
-		matrix[0,0] = scale
-		matrix[1,1] = scale
+		if scale1 is None:
+			scale1 = scale0
+		matrix[0,0] = scale0
+		matrix[1,1] = scale1
 		Transform3x3.__init__(self, matrix)
 
 def matrix_chain(transformations):
