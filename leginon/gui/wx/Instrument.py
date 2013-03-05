@@ -1056,7 +1056,7 @@ class Panel(leginon.gui.wx.Node.Panel):
 				self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_CALCULATE, False)
 		except ValueError:
 			pass
-		current_rows = self.szmain.GetCols()
+		current_rows = self.szmain.GetRows()
 		if string in self.tems :
 			if self.szmain.FindItem(self.tempanel):
 				self.tempanel.clearParameters()
