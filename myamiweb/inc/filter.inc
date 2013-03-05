@@ -22,7 +22,7 @@ class filter {
 
 	var $fftbin_types = array (
 				'a'=> 'after',
-			//	'b'=> 'before'
+				'b'=> 'before'
 			);
 	var $binning_types = array (
 				'auto' => 'auto',

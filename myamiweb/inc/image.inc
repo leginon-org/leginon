@@ -16,9 +16,9 @@ require_once "inc/imageutil.inc";
 require_once "inc/imagerequest.inc";
 require_once "inc/path.inc";
 
-function getImageFile($leginondata,$imageId,$preset='all',$loadjpg=false,$is_fft=false) {
+function getImageFile($leginondata,$imageId,$preset='all',$loadjpg=false,$is_fft=false,$cacheonly=false) {
 	$newimageId = getImageIdFromPreset($leginondata,$imageId,$preset);
-	return __getImageFile($leginondata,$newimageId,$loadjpg,$is_fft);
+	return __getImageFile($leginondata,$newimageId,$loadjpg,$is_fft,$cacheonly);
 }
 
 function getImageIdFromPreset($leginondata,$imageId,$preset='all') {
@@ -27,7 +27,7 @@ function getImageIdFromPreset($leginondata,$imageId,$preset='all') {
 	return $imageId;
 }
 
-function __getImageFile($leginondata,$imageId,$loadjpg=false,$is_fft=false) {
+function __getImageFile($leginondata,$imageId,$loadjpg=false,$is_fft=false,$cacheonly=false) {
 	//get image file with full path
 	$path = $leginondata->getImagePathFromImageId($imageId);
 
@@ -41,11 +41,12 @@ function __getImageFile($leginondata,$imageId,$loadjpg=false,$is_fft=false) {
 	}
 	$pic = $path.$filename;
 	if (!$pic) return false;
+
 	// Use Cached jpeg image if available
-	if ($loadjpg && !$is_fft && ENABLE_CACHE) {
+	if ($loadjpg && ENABLE_CACHE) {
 		$sessioninfo=$leginondata->getSessionInfoFromImage($imageId);
 		$session=$sessioninfo['name'];
-		$pic = useCache($pic,$session);
+		$pic = useCache($pic,$session,$is_fft,$cacheonly);
 	}
 	return $pic;
 }
@@ -69,8 +70,8 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 		'autoscale' => false,
 		'targettype' => false,
 		'loadjpg' => false,
-		'mrc' => false,
-		'cacheonly' => false
+		'cacheonly' => false,
+		'mrc' => false
 	);
 
 	if (is_array($params))
@@ -85,13 +86,19 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 	}
 
 	$parentId = getImageIdFromPreset($leginondata,$imageId,$preset);
-	$pic = __getImageFile($leginondata,$parentId,$p['loadjpg'],$p['fft']);
+	$pic = __getImageFile($leginondata,$parentId,$p['loadjpg'],$p['fft'],$p['cacheonly']);
 
 	if (!$pic || !is_file($pic)) {
 		$messages = array('File not found: ');
+		if ($p['cacheonly'] && $p['loadjpg']) {
+			$messages[] = 'Cached Image Not Ready.';
+		}
 		$messages[] = $pic;
 		return makeBlankImageWithErrorMessage($messages);
 	}
+	// pass on whether the image is from cache
+	$p['iscache']= (strpos($pic,'jpg'))? true:false;
+
 	$childimginfo = $leginondata->getImageInfo($imageId);
 
 	$shownimginfo = $leginondata->getImageInfo($parentId);
@@ -113,8 +120,7 @@ function getImageXML($xmlfile, $imageId, $preset, $params = array()) {
 		'loadtime' => false,
 		'newptlc' => false,
 		'autoscale' => false,
-		'mrc' => false,
-		'cacheonly' => false
+		'mrc' => false
 	);
 
 	if (is_array($params))
@@ -164,7 +170,7 @@ function getImageFromRequester($pic,$imginfo,$p) {
 	$imagerequest = new imageRequester();
 	$imageUtil = new imageUtil();
 
-	//dimx,dimy are image size
+	//dimx,dimy are image size in the database
 	$dimx = $imginfo['dimx'];
 	$dimy = $imginfo['dimy'];
 	//size is the frame size
@@ -173,11 +179,14 @@ function getImageFromRequester($pic,$imginfo,$p) {
 	$binning = $p['binning'];
 	$loadjpg = $p['loadjpg'];
 	// find out the proper x, y for display
-	$default_size = $imageUtil->getDefaultImageSize($p['fft'],$p['fftbin']);
+	$default_size = $imageUtil->getDefaultImageSize($p['fft']);
 	if ($frame_size)
 		$xyDim = $imageUtil->imageFitIn($dimx, $dimy, $frame_size);
 	else
 		$xyDim = $imageUtil->imageBinning($dimx, $dimy, $binning, $default_size);
+	//Default prefftDim
+	$prefftDim = $xyDim;
+	//
 	$imgheaderinfo = $imagerequest->requestInfo($pic);
 	$iscalearray = getIntensityScale($p,$imgheaderinfo);
 	$scaletype = $iscalearray[0];
@@ -185,19 +194,21 @@ function getImageFromRequester($pic,$imginfo,$p) {
 	$arg2 = $iscalearray[2];
 	//filtering
 	if (function_exists($p['filter']))
-		$lpf_sigma = $p['filter']() * $xyDim[0] / $dimx;;
-	if (!isBinBeforeFFT($p) || $dimx==$xyDim[0]) {
+		$lpf_sigma = $p['filter']() * $xyDim[0] / $dimx;
+
+	if (!$p['fft']) {
 		$imgstr = $imagerequest->requestImage($pic,'JPEG',$xyDim,$scaletype,$arg1,$arg2,$lpf_sigma,false,(bool)$p['fft'],false);
-		$prefftDim = $xyDim;
 	} else {
-		$prefftDim = getImageXYDimFromBinningParams($imginfo,$p);
-		$imgstr = $imagerequest->requestImage($pic,'PNG',$prefftDim,$scaletype,$arg1,$arg2,0,false,false,false);
-		$imageId = $imginfo['imageId'];
-		if (!is_dir(TEMP_IMAGES_DIR)) mkdir(TEMP_IMAGES_DIR,0777,true);
-		$tmpfile = TEMP_IMAGES_DIR.'/tmp'.$imginfo['imageId'].'_'.$prefftDim[0].'.png';
-		file_put_contents($tmpfile,$imgstr);
-		$imgstr = $imagerequest->requestImage($tmpfile,'JPEG',$xyDim,$scaletype,$arg1,$arg2,$lpf_sigma,false,$p['fft'],true);
-		unlink($tmpfile);
+		if ($p['iscache']) {
+			//cached power spectrum image does not need further transform
+			$imgstr = $imagerequest->requestImage($pic,'JPEG',$xyDim,$scaletype,$arg1,$arg2,$lpf_sigma,false,false,false);
+			$prefftDim = $imageUtil->imageBinning($dimx, $dimy, $binning, $default_size);
+		} else {
+			// fft
+			if (isBinBeforeFFT($p)) 
+				$prefftDim = getImageXYDimFromBinningParams($imginfo,$p);
+			$imgstr = $imagerequest->requestImage($pic,'JPEG',$xyDim,$scaletype,$arg1,$arg2,$lpf_sigma,false,(bool)$p['fft'],false);
+		}
 	}
 	if (!$imgstr) {
 		return makeBlankImageWithErrorMessage('redux failed to return anything');
@@ -205,8 +216,17 @@ function getImageFromRequester($pic,$imginfo,$p) {
 	if (substr($imgstr,0,11) === 'REDUX ERROR') {
 		return makeBlankImageWithErrorMessage($imgstr);
 	}
-	$img = imagecreatefromstring($imgstr);
-	$display_pixelsize = getDisplayPixelSize($img,$imginfo,$p['fft'],$p['fftbin'],$prefftDim);
+	if (!$p['iscache'] && isBinBeforeFFT($p)) {
+		//Fake prefft binning by resample
+		$src_coords = $imageUtil->getResampleCoordinates($dimx,$dimy,$xyDim, $binning, $default_size);
+		$tmpimg = imagecreatefromstring($imgstr);
+		$img = imagecreatetruecolor($xyDim[0],$xyDim[1]);
+		imagecopyresampled($img,$tmpimg,0,0,$src_coords[0],$src_coords[1],$xyDim[0],$xyDim[1],$src_coords[2],$src_coords[3]);
+		imagedestroy($tmpimg);
+	} else {
+		$img = imagecreatefromstring($imgstr);
+	}
+	$display_pixelsize = getDisplayPixelSize($img,$imginfo,$p['fft'],$p['fftbin'],$prefftDim,$p['iscache']);
 	if ($p['scalebar']) 
 		$img = addScaleBarRingToImage($img,$display_pixelsize,$p['fft'],$p['fftbin']);
 	// This is a good place to add debug message as a string on the image
@@ -220,15 +240,16 @@ function isBinBeforeFFT($p) {
 	return ($p['fft'] && $p['fftbin'] == 'b');
 }
 
-function getDisplayPixelSize($img,$imginfo,$isfft,$fftbintype,$prefftDim) {
+function getDisplayPixelSize($img,$imginfo,$isfft,$fftbintype,$prefftDim,$iscache=false) {
 	$imageUtil = new imageUtil();
 	$input_dimx = $imginfo['dimx'];
 	$input_calpixelsize = $imginfo['pixelsize'];
 	$input_cambinning = $imginfo['binning'];
 	$display_dimx = imagesx($img);
 	$prefft_dimx = $prefftDim[0];
-	return $imageUtil->getDisplayPixelSize($input_calpixelsize,$input_cambinning,$input_dimx,$display_dimx,$isfft,$fftbintype,$prefft_dimx);
+	return $imageUtil->getDisplayPixelSize($input_calpixelsize,$input_cambinning,$input_dimx,$display_dimx,$isfft,$fftbintype,$prefft_dimx,$iscache);
 }
+
 function getIntensityScale($p,$imgheaderinfo) {
 	$imageUtil = new imageUtil();
 	if ($p['autoscale']) 
@@ -286,7 +307,7 @@ function getImageXYDimFromBinningParams($imginfo,$p) {
 	$dimx = $imginfo['dimx'];
 	$dimy = $imginfo['dimy'];
 	$binning = $p['binning'];
-	$default_size = $imageUtil->getDefaultImageSize($p['fft'],$p['fftbin']);
+	$default_size = $imageUtil->getDefaultImageSize($p['fft']);
 	$xyDim = $imageUtil->imageBinning($dimx, $dimy, $binning, $default_size);
 	return $xyDim;
 }
@@ -298,7 +319,7 @@ function addAppionOverlays($leginondata,$img,$childinfo,$imginfo,$p) {
 	$overlay = new imageOverlay($img);
 
 	$prefftDim = getImageXYDimFromBinningParams($imginfo,$p);
-	$display_pixelsize = getDisplayPixelSize($img,$imginfo,$p['fft'],$p['fftbin'],$prefftDim);
+	$display_pixelsize = getDisplayPixelSize($img,$imginfo,$p['fft'],$p['fftbin'],$prefftDim,$p['iscache']);
 	$debug_message = '';
 	$sessionId = $imginfo['sessionId'];
 	$imageId = $imginfo['imageId'];

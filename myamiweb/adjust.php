@@ -254,30 +254,42 @@ function update() {
 	if(!setscale()) {
 		return false
 	}
-	if (binninglist = document.adjustform.binning)
-		jsbinning=binninglist.options[binninglist.selectedIndex].value;
-	parentwindow.setbinning(jsviewname,jsbinning);
 
-	if (fftbinlist = document.adjustform.fftbin)
-		jsfftbin=fftbinlist.options[fftbinlist.selectedIndex].value;
-	parentwindow.setfftbin(jsviewname,jsfftbin);
+	//auto load uses all default	
+	if (jsloadfromjpg == 1) {
+		parentwindow.setbinning(jsviewname,'auto');
+		parentwindow.setfilter(jsviewname,'default');
+		parentwindow.setautoscale(jsviewname,'s;5');
+		parentwindow.setquality(jsviewname,'80');
+		parentwindow.setgradient(jsviewname,'default');
+		parentwindow.setfftbin(jsviewname,'b');
+	} else {
+		
+		if (binninglist = document.adjustform.binning)
+			jsbinning=binninglist.options[binninglist.selectedIndex].value;
+		parentwindow.setbinning(jsviewname,jsbinning);
 
-	if (filterlist = document.adjustform.filter)
-		jsfilter=filterlist.options[filterlist.selectedIndex].value;
-	parentwindow.setfilter(jsviewname,jsfilter);
-	if (!eval("parentwindow."+jsviewname+"filter_bt_st"))
-		if (jsfilter!="default")
-			eval("parentwindow.toggleButton('"+jsviewname+"filter_bt', 'filter_bt')");
-	parentwindow.setminmax(jsviewname,jsminpix,jsmaxpix);
-	parentwindow.setautoscale(jsviewname,jsautoscale);
-	parentwindow.setloadfromjpg(jsviewname,jsloadfromjpg);
-	if (qualitylist = document.adjustform.quality)
-		jsquality=qualitylist.options[qualitylist.selectedIndex].value;
-	parentwindow.setquality(jsviewname,jsquality);
-	if (gradientlist = document.adjustform.gradientlist) {
-		jsgradient=gradientlist.options[gradientlist.selectedIndex].value;
-		parentwindow.setgradient(jsviewname,jsgradient);
+		if (fftbinlist = document.adjustform.fftbin)
+			jsfftbin=fftbinlist.options[fftbinlist.selectedIndex].value;
+		parentwindow.setfftbin(jsviewname,jsfftbin);
+
+		if (filterlist = document.adjustform.filter)
+			jsfilter=filterlist.options[filterlist.selectedIndex].value;
+		parentwindow.setfilter(jsviewname,jsfilter);
+		if (!eval("parentwindow."+jsviewname+"filter_bt_st"))
+			if (jsfilter!="default")
+				eval("parentwindow.toggleButton('"+jsviewname+"filter_bt', 'filter_bt')");
+		parentwindow.setautoscale(jsviewname,jsautoscale);
+		if (qualitylist = document.adjustform.quality)
+			jsquality=qualitylist.options[qualitylist.selectedIndex].value;
+		parentwindow.setquality(jsviewname,jsquality);
+		if (gradientlist = document.adjustform.gradientlist) {
+			jsgradient=gradientlist.options[gradientlist.selectedIndex].value;
+			parentwindow.setgradient(jsviewname,jsgradient);
+		}
 	}
+	parentwindow.setminmax(jsviewname,jsminpix,jsmaxpix);
+	parentwindow.setloadfromjpg(jsviewname,jsloadfromjpg);
 	parentwindow.newfile(jsviewname);
 }
 

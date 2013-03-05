@@ -64,14 +64,17 @@ function updateCacheTime($session) {
 	$result = $dbc->SQLQuery($q);
 }
 
-function useCache($filepath,$sessionname) {
-	//redux cache is searched using the original file path.
-	if (USE_REDUX_CACHE) return $filepath;
-	//search for php-mrc cache jpg file.
+function useCache($filepath,$sessionname,$is_fft=false,$cacheonly) {
+	//search for imcache jpg file.
 	$filename = basename($filepath);
-	$jpgfilename = preg_replace('%mrc$%', 'jpg', $filename);
+	if (!$is_fft)
+		$jpgfilename = preg_replace('%.mrc$%', '.jpg', $filename);
+	else
+		$jpgfilename = preg_replace('%.mrc$%', '.pow.jpg', $filename);
 	$jpgpath = CACHE_PATH.$sessionname."/";
 	$jpgpic = $jpgpath.$jpgfilename;
+	// not to return the mrc filepath if only allows jpg filepath to return
+	if ($cacheonly) $filepath = false;
 	if (@is_file($jpgpic)) $filepath = $jpgpic;
 	return $filepath;
 }

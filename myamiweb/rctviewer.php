@@ -18,7 +18,6 @@ $sessionId = (empty($sessionId)) ? $lastId : $sessionId;
 
 $sessioninfo=$leginondata->getSessionInfo($sessionId);
 $session=$sessioninfo['Name'];
-startcache($session);
 
 $projectdata = new project();
 $projectdb = $projectdata->checkDBConnection();

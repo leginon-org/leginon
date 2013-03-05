@@ -613,6 +613,7 @@ class view {
 		$this->autoscale = "s;5";
 		$this->displayfilename = "0";
 		$this->loadjpg= "1";
+		$this->cacheonly= "0";
 		$this->ptclsel = "0";
 		$this->jsacemethod= "1";
 		$this->jsacepar= "1";
@@ -635,6 +636,7 @@ class view {
 		$this->autoscalememo = $this->name.'autos';
 		$this->displayfilenamememo= $this->name.'df';
 		$this->loadjpgmemo= $this->name.'df';
+		$this->cacheonlymemo= $this->name.'cacheonly';
 		$this->btfftmemo = $this->name.'fft_bt_st';
 		$this->bttagmemo = $this->name.'tag_bt_st';
 		$this->btnptclmemo = $this->name.'nptcl_bt_st';
@@ -662,6 +664,8 @@ class view {
 			$this->displayfilename= $displayfilename;
 		if ($loadjpg=$_REQUEST[$this->loadjpgmemo])
 			$this->loadjpg= $loadjpg;
+		if ($cacheonly=$_REQUEST[$this->cacheonlymemo])
+			$this->cacheonly= $cacheonly;
 		if ($btfftstate=$_REQUEST[$this->btfftmemo])
 			$this->btfftstate = $btfftstate;
 		if ($btacestate=$_REQUEST[$this->btacememo])
@@ -741,6 +745,11 @@ class view {
 
 	function setImageId($imageId) {
 		$this->imageId=$imageId;
+	}
+
+	function setCacheOnly($cacheonly) {
+		// true or false
+		$this->cacheonly= (int) $cacheonly;
 	}
 
 	function displayPresets($state) {
@@ -888,6 +897,7 @@ class view {
 			.'var jsautoscale'.$this->name.'="'.$this->autoscale.'";'.$this->crlf
 			.'var jsdisplayfilename'.$this->name.'="'.$this->displayfilename.'";'.$this->crlf
 			.'var jsloadjpg'.$this->name.'="'.$this->loadjpg.'";'.$this->crlf
+			.'var jscacheonly'.$this->name.'="'.$this->cacheonly.'";'.$this->crlf
 			.'var jsptclsel'.$this->name.'="'.$this->ptclsel.'";'.$this->crlf
 			.'var jsacemethod'.$this->name.'="'.$this->jsacemethod.'";'.$this->crlf
 			.'var jsaceparam'.$this->name.'="'.$this->jsacepar.'";'.$this->crlf
@@ -1053,6 +1063,7 @@ class view {
 		<input type="hidden" name="'.$this->autoscalememo.'" value="'.$this->autoscale.'">
 		<input type="hidden" name="'.$this->displayfilenamememo.'" value="'.$this->displayfilename.'">
 		<input type="hidden" name="'.$this->loadjpgmemo.'" value="'.$this->loadjpg.'">
+		<input type="hidden" name="'.$this->cacheonlymemo.'" value="'.$this->cacheonly.'">
 		<input type="hidden" name="'.$this->minpixmemo.'" value="'.$this->minpix.'">
 		<input type="hidden" name="'.$this->maxpixmemo.'" value="'.$this->maxpix.'"> 
 		<input type="hidden" name="'.$this->btfftmemo.'" value="'.$this->btfftstate.'"> 
