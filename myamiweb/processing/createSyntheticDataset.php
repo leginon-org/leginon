@@ -240,11 +240,11 @@ function syntheticDatasetForm($extra=false, $title='Synthetic Dataset Creation',
 	$snr1 = ($_POST['snr1']) ? $_POST['snr1'] : 1.4;
 	$snrtot = ($_POST['snrtot']) ? $_POST['snrtot'] : 0.05;
 	$radius = ($_POST['radius']) ? $_POST['radius'] : $modeldata[boxsize]/2;
-	$df1 = ($_POST['df1']) ? $_POST['df1'] : -1.5;
-	$df2 = ($_POST['df2']) ? $_POST['df2'] : -1.5;
+	$df1 = ($_POST['df1']) ? $_POST['df1'] : 1.5;
+	$df2 = ($_POST['df2']) ? $_POST['df2'] : 1.5;
 	$astigmatism = ($_POST['astigmatism']) ? $_POST['astigmatism'] : 0;
-	$lpfilt = ($_POST['lpfilt']) ? $_POST['lpfilt'] : 5;
-	$hpfilt = ($_POST['hpfilt']) ? $_POST['hpfilt'] : 600;
+	$lpfilt = ($_POST['lpfilt']) ? $_POST['lpfilt'] : '';
+	$hpfilt = ($_POST['hpfilt']) ? $_POST['hpfilt'] : '';
 
 	// default params for javascript
 	$randomdef = ($_POST['randomdef']=='on') ? 'CHECKED' : '';
