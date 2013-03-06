@@ -21,8 +21,6 @@ require_once('../inc/formValidator.php');
 			$validator->addValidation("cache_path", $_POST['cache_path'], "folder_permission");
 		}
 		
-		$validator->addValidation("mrc2any", $_POST['mrc2any'], "abs_path");
-		
 		if($_POST['processing'] == 'true'){
 						
 			$validator->addValidation("def_processing_prefix", $_POST['def_processing_prefix'], "minlen=1");
