@@ -4,13 +4,13 @@
 query_interval = 5
 
 # limit query to later than this timestamp (mysql style: yyyymmddhhmmss)
-min_timestamp = '20130126000000'
+min_timestamp = '20130101000000'
 
 # limit query to start at this image id
 start_id = 0
 
 # root dir of cache.  session subdirs will be added automatically
-cache_path = '/tmp/myami/myamiweb'
+cache_path = '/srv/cache/myamiweb'
 
 # maximum image dimension after conversion
 redux_maxsize1 = 4096

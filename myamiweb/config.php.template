@@ -121,13 +121,10 @@ $DATA_DIRS = array();
 // --- Enable Image Cache --- //
 define('ENABLE_CACHE', false);
 // --- caching location --- //
-// --- please make sure the apache user has write access to this folder --- //
-// --- define('CACHE_PATH', "/srv/www/cache/"); --- //
-// --- redux cache only works with python 2.6 and up --- //
-// --- php cache will be used instead if USE_REDUX_CACHE is false --- //
+// --- please make sure the apache user has read access to this folder --- //
+// --- define('CACHE_PATH', "/srv/cache/myamiweb"); --- //
 define('USE_REDUX_CACHE',false);
 define('CACHE_PATH', "");
-define('CACHE_SCRIPT', WEB_ROOT.'/makejpg.php');
 
 // --- define Flash player base url --- //
 define('FLASHPLAYER_URL', "/flashplayer/");

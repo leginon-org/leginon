@@ -218,23 +218,9 @@ require_once('../inc/formValidator.php');
 				($update && ENABLE_CACHE) ? print("value='".CACHE_PATH."'") : print("readOnly=\"true\" style=\"background:#eeeeee\" value=''"); 
 			}
 		?> /><br /><br />
-		Please make sure the apache user has write access to this folder. (example: chown 'your_apache_user' /srv/www/cache/)  <br />
+		Please make sure the apache user has read access to this folder. (example: chown 'your_apache_user' /srv/www/cache/)  <br />
 		<br />
 
-		<h3>Enable download images as TIFF or JPEG</h3>
-		<p>Please provide the path to the mrc2any python module. The path may be found by typing "which mrc2any" at a command prompt.   
-			See <a target='_blank' href='http://ami.scripps.edu/redmine/projects/appion/wiki/Install_the_Web_Interface'>installation documentation</a> for help. <br /><br />
-			Example : /usr/bin/mrc2any  </p>
-		<div id="error"><?php if($errMsg['mrc2any']) echo $errMsg['mrc2any']; ?></div>
-		<input type="text" size=25 name="mrc2any" 
-		<?php 			
-			if($_POST){
-				print("value='".$_POST['mrc2any']."'");
-			}else{
-				($update) ? print("value='".MRC2ANY."'") : print("value=''"); 
-			}
-		
-		?> /><br /><br />
 		<br />
 				
 		<h3>Do you want to enable the Appion image processing pipeline</h3>
