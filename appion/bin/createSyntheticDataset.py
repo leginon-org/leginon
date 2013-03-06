@@ -81,9 +81,9 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 			help="override default cs value with the value here (in millimeters)", metavar="float")
 		self.parser.add_option("--amp", dest="amp", type="float", default=0.07,
 			help="amplitude contrast for the data (0.07 for ice, 0.15 for stain)", metavar="float")
-		self.parser.add_option("--df1", dest="df1", type="float", default=-1.5,
+		self.parser.add_option("--df1", dest="df1", type="float", default=1.5,
 			help="defocus value 1 in microns (represented as the mean if --randomdef & --randomdef-std specified)", metavar="FLOAT")
-		self.parser.add_option("--df2", dest="df2", type="float", default=-1.5,
+		self.parser.add_option("--df2", dest="df2", type="float", default=1.5,
 			help="defocus value 2 in microns (represented as the mean if --randomdef & --randomdef-std specified", metavar="FLOAT")
 		self.parser.add_option("--randomdef", dest="randomdef", default=False,
 			action="store_true", help="randomize defocus values when applying CTF (df1 and df2 would represent the mean)")
@@ -109,6 +109,8 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 				see W.T. Baxter et al. (2009). JSB 166 126-132. Correlations were calculated using a circular mask of 220 pixels from a 300-pixel \
 				box, effectively increasing the CCC and SNRs from what is calculated here. If your particle occupies 70% of the box \
 				then the calculated noise additions will be increased by a factor of 1/(0.35*0.35*pi) = ~2.46")	
+		self.parser.add_option("--invert", dest="invert", default=False,
+			action="store_true", help="invert 2D images after projecting, e.g. for Frealign")
 
 		### optional parameters (ACE2 correct & filtering)
 		self.parser.add_option("--ace2correct", dest="ace2correct", default=False,
@@ -161,17 +163,13 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 			split = self.params['rundir'].split("/")
 			self.params['sessionname'] = split[4]
 
-		### make sure that the defoci are negative and in microns
+		### make sure that the defoci are positive (underfocus) and in microns
 		self.params['df1'] *= 10**-6
 		self.params['df2'] *= 10**-6
-		if self.params['df1'] > 0:
-			apDisplay.printError('defocus value is positive!')
-		if self.params['df2'] > 0:
-			apDisplay.printError('defocus value is positive!')
-#		if self.params['df1'] < -1e-05:
-#			apDisplay.printError('make sure defocus is in meters, i.e. for -2 microns, df=-2e-06!')
-#		if self.params['df2'] < -1e-05:
-#			apDisplay.printError('make sure defocus is in meters, i.e. for -2 microns, df=-2e-06!')
+		if self.params['df1'] < 0:
+			apDisplay.printError('defocus value is negative! specify positive (underfocus) values')
+		if self.params['df2'] < 0:
+			apDisplay.printError('defocus value is negative! specify positive (underfocus) values')
 
 		### check defocus group values
 		if self.params['defocus_groups'] is not None:
@@ -179,7 +177,7 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 			self.defmax = float(self.params['defocus_groups'].split(",")[1])
 			self.defint = float(self.params['defocus_groups'].split(",")[2])
 			if self.defmin is None or self.defmax is None or self.defint is None:
-				apDisplay.printError("all defocus group values must be specified, e.g. --defocus_groups=-1,-3,-0.1")
+				apDisplay.printError("all defocus group values must be specified, e.g. --defocus_groups=1,3,0.1")
 
 		### make sure that only one type of ace2correction is specified
 		if self.params['ace2correct'] is True and self.params['ace2correct_rand'] is True:
@@ -195,7 +193,7 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 		### set cs value & make sure that it's in millimeters
 		if self.params['cs'] is None:
 			self.params['cs'] = apInstrument.getCsValueFromSession(self.getSessionData())
-			self.params['cs'] = self.params['cs'] * 1e-03
+			self.params['cs'] = self.params['cs'] 
 		apDisplay.printColor("cs value: %.3f" % self.params['cs'], "cyan")
 		return
 
@@ -340,7 +338,7 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 		return numproj
 
 	#=====================
-	def createProjections(self):
+	def createProjections(self, pad=False, invert=False):
 		timestamp = apParam.makeTimestamp()
 		eulerlist = self.setEulers()
 		eulerfile = os.path.join(self.params['rundir'], "eulers.lst")
@@ -384,21 +382,24 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 		clipped = os.path.join(self.params['rundir'], "clipped.mrc")
 		newsize = self.params['box'] * 1.5
 		emancmd = "proc3d "+origfile+" "+clipped+" clip="+str(int(newsize))+","+str(int(newsize))+","+str(int(newsize))+" edgenorm"
-		apEMAN.executeEmanCmd(emancmd, showcmd=True, verbose=True)
+		apParam.runCmd(emancmd, "EMAN", showcmd=True, verbose=True)
 
 		### project resized file
 		filename = os.path.join(self.params['rundir'], 'proj.img')
 		apFile.removeStack(filename)
 		emancmd = "project3d "+clipped+" out="+filename+" list="+eulerfile
 		t0 = time.time()
-		apEMAN.executeEmanCmd(emancmd, showcmd=True, verbose=True)
+		apParam.runCmd(emancmd, "EMAN", showcmd=True, verbose=True)
 		apDisplay.printMsg("Finished project3d in %s, %.3f ms per iteration"
 			%(apDisplay.timeString(time.time()-t0), 1.0e3 * (time.time()-t0)/float(self.params['projcount'])))
+
+		### post-process stack
+		self.post_process_stack(filename, pad, invert)
 
 		return filename
 
 	#=====================
-	def createProjectionsEmanProp(self, pad=False):
+	def createProjectionsEmanProp(self, pad=False, invert=False):
 
 		### first get rid of projection artifacts from insufficient padding
 		if self.params['threedfile'] is not None:
@@ -413,7 +414,7 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 		clipped = os.path.join(self.params['rundir'], "clipped.mrc")
 		newsize = self.params['box'] * 1.5
 		emancmd = "proc3d "+origfile+" "+clipped+" clip="+str(int(newsize))+","+str(int(newsize))+","+str(int(newsize))+" edgenorm"
-		apEMAN.executeEmanCmd(emancmd, showcmd=True, verbose=True)
+		apParam.runCmd(emancmd, "EMAN", showcmd=True, verbose=True)
 
 		### project resized file
 		eulerfile = os.path.join(self.params['rundir'], "eulers.lst")
@@ -423,9 +424,6 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 
 		emancmd = "project3d "+clipped+" out="+temp+" sym=c1 prop="+str(self.params['projinc'])+" > "+tempeulerfile
 		apParam.runCmd(emancmd, "EMAN", showcmd=True, verbose=True)
-
-		emancmd = "project3d "+clipped+" out="+temp+" sym=c1 prop="+str(self.params['projinc'])+" > "+tempeulerfile
-		apEMAN.executeEmanCmd(emancmd, showcmd=True, verbose=True)
 
 		### update projection count & write eulerlist file
 		f = open(tempeulerfile, "r")
@@ -483,19 +481,31 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 				n += 1
 		f.close()
 		'''
+	
+		### post-process stack	
+		self.post_process_stack(filename, pad, invert)
 
-		### pad out projections
-		if pad is True:
-			emancmd = "proc2d %s %s.pad.hed clip=%d" % (filename, filename, self.params['box']*self.params['padF'])
+		return filename
+
+        #=====================
+	def post_process_stack(self, filename, pad, invert):
+
+		### pad out and/or invert projections
+		if self.params['invert'] is True or pad is True:
+			emancmd = "proc2d %s %s.process.hed " % (filename, filename)
+			if self.params['invert'] is True:
+				emancmd+="invert "
+			if pad is True:
+				emancmd+="clip=%d " % (self.params['box']*self.params['padF'])
+
 			apParam.runCmd(emancmd, "EMAN")
-			shutil.move("%s.pad.hed" % filename, "%s.hed" % filename[:-4])
-			shutil.move("%s.pad.img" % filename, "%s.img" % filename[:-4])
+			shutil.move("%s.process.hed" % filename, "%s.hed" % filename[:-4])
+			shutil.move("%s.process.img" % filename, "%s.img" % filename[:-4])
 
 #		self.params['projcount'] = int(split[-1][0]) ### last row, first value is last projection
 #		self.params['projcount'] = self.numProj(ang=self.params['projinc'], sym='c1')  ### for some reasons did not work for prop=20
 #		numpart = apFile.numImagesInStack(stackfile)
-
-		return filename
+		return 
 
 	#=====================
 	def shiftAndRotate(self, filename):
@@ -530,7 +540,7 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 					emancmd = emancmd+" flip clip="+str(self.params['box'])+","+str(self.params['box'])+" edgenorm"
 				else:
 					emancmd = emancmd+" flip edgenorm"
-			apEMAN.executeEmanCmd(emancmd, showcmd=False)
+			apParam.runCmd(emancmd, "EMAN", showcmd=False)
 			if self.params['rotang'] != 0:
 				f.write("%.3f,"%(randrot))
 			else:
@@ -574,12 +584,12 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 		newstack = basename+"_snr"+formattedsnr+".hed"
 		apFile.removeStack(newstack)
 		emancmd = "proc2d "+oldstack+" "+newstack+" addnoise="+str(noiselevel)
-		apEMAN.executeEmanCmd(emancmd)
+		apParam.runCmd(emancmd, "EMAN")
 
 		return newstack
 
 	#=====================
-	def getListOfDefocuses(self, numpart):
+	def getListOfDefoci(self, numpart):
 		"""
 		same as createRawMicrographs with creating micrographs
 		"""
@@ -629,9 +639,10 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 		applydefocusfile = os.path.join(self.params['rundir'], "defocuslist_application.lst")
 		correctdefocusfile = os.path.join(self.params['rundir'], "defocuslist_correction.lst")
 		af = open(applydefocusfile, "w")
-		cf = open(correctdefocusfile, "w")
 		af.write("projection\tdefocus1\tdefocus2\tastigmatism\n")
-		cf.write("projection\tdefocus1\tdefocus2\tastigmatism\n")
+		if self.params['ace2correct'] is True or self.params['ace2correct_rand'] is True:
+			cf = open(correctdefocusfile, "w")
+			cf.write("projection\tdefocus1\tdefocus2\tastigmatism\n")
 		n = 0
 		while n < numpart:
 			af.write("%d\t%.9f\t%.9f\t%.3f\n"
@@ -641,7 +652,8 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 					%(n, self.deflist1c[n], self.deflist2c[n], self.params['astigmatism']))
 			n += 1
 		af.close()
-		cf.close()
+		if self.params['ace2correct'] is True or self.params['ace2correct_rand'] is True:
+			cf.close()
 
 		return
 
@@ -788,7 +800,7 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 		apDisplay.printMsg("%d particles per dot"%(cut))
 
 		if len(self.deflist1) == 0:
-			self.getListOfDefocuses(numpart)
+			self.getListOfDefoci(numpart)
 
 		### break up particles
 		partlistdocfile = apXmipp.breakupStackIntoSingleFiles(stack, filetype="mrc")
@@ -928,7 +940,10 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 		stparamq['lowpass'] = self.params['lpfilt']
 		stparamq['highpass'] = self.params['hpfilt']
 		stparamq['norejects'] = 1
-		stparamq['inverted'] = 0
+		if self.params['invert'] is True:
+			stparamq['inverted'] = 1
+		else:
+			stparamq['inverted'] = 0
 		if self.params['ace2correct'] is True or self.params['ace2correct_rand'] is True:
 			stparamq['phaseFlipped'] = 1
 			stparamq['fliptype'] = "ace2part"
@@ -1152,9 +1167,9 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 
 		### first create projections
 		if self.params['preforient'] is True:
-			filename = self.createProjections()
+			filename = self.createProjections(pad=self.params['pad'], invert=self.params['invert'])
 		else:
-			filename = self.createProjectionsEmanProp(pad=self.params['pad'])
+			filename = self.createProjectionsEmanProp(pad=self.params['pad'], invert=self.params['invert'])
 
 		### shift & rotate randomly
 		if self.params['rotang']!=0 or self.params['shiftrad']!=0:
@@ -1176,7 +1191,7 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 		noisystack = self.addNoise(shiftstackname, noiselevel1, SNR=self.params['snr1'])
 
 		### get list of defocus values
-		self.getListOfDefocuses(self.params['projcount'])
+		self.getListOfDefoci(self.params['projcount'])
 
 		### apply envelope and ctf to each .mrc file, then correct based on how well ace2 works on raw micrographs
 		ctfstack, ctfpartlist = self.applyEnvelopeAndCTF(noisystack)
@@ -1211,7 +1226,7 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 				emancmd = emancmd+"lp="+str(self.params['lpfilt'])+" "
 			if self.params['norm'] is True:
 				emancmd = emancmd+"norm="+str(self.params['norm'])+" "
-			apEMAN.executeEmanCmd(emancmd)
+			apParam.runCmd(emancmd, "EMAN")
 			self.params['finalstack'] = os.path.basename(filtstack)
 			finalstack = filtstack
 		else:
