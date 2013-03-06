@@ -575,6 +575,9 @@ function newfile(view){
 	pselp = (cpselpar = eval("jsptclpick"+view)) ? "&psel="+cpselpar : ""
 	ag = (cacepar = eval("jsaceparam"+view)) ? "&g="+cacepar : ""
 	am = (cacemethod = eval("jsacemethod"+view)) ? "&m="+cacemethod : ""
+	// webbrowser hang on to js and complain ar does not exist if switching
+	// between trunk and this branch.  This fake definition keep it from happening
+	ar = ""
 	ao = (caceopt = eval("jsaceopt"+view)) ? "&opt="+caceopt : ""
 	sb = (eval(view+"scale_bt_st")) ? "&sb=1" : ""
 	tg = (eval(view+"target_bt_st")) ? "&tg=1" : ""
