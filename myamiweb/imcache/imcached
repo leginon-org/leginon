@@ -182,7 +182,18 @@ class ReduxThread(threading.Thread):
 			kwargs1 = dict(redux_args1)
 			kwargs1['shape'] = outshape1
 			kwargs1['filename'] = task['infilename']
-			image1 = self.reduxclient.process_kwargs(**kwargs1)
+
+			# 3 tries to read a file
+			for i in range(3):
+				try:
+					image1 = self.reduxclient.process_kwargs(**kwargs1)
+					break
+				except:
+					image1 = None
+				time.sleep(0.5)
+			if image1 is None:
+				print '**Failed to read', task['infilename']
+				continue
 
 			# create session directory
 			outfile = still_missing.values()[0]
