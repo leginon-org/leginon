@@ -126,6 +126,9 @@ function stacksummarytable($stackid, $mini=false, $tiny=false, $showOptions=True
 	$selectdata = $particle->getStackSelectionRun($stackid);
 	$expId = $selectdata[0]['sessionId'];
 
+	//synthetic data do not come from a particle selection run
+	if (!$expId) $expId = $_SESSION['expId'];
+
 	$stackdata = $particle->getStackParams($stackid);
 
 	if ($_POST['updateDesc'.$stackid])
