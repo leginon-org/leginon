@@ -352,7 +352,10 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 			az = random.gauss(eulerlist[projnum][1], self.params['projstdev'])
 			#phi = random.random()*360.0-180.0
 			#phi = random.random()*360.0
-			phi = 0.0
+			if self.params['rotang'] != 0:
+				phi = random.uniform(-1*self.params['rotang'], self.params['rotang'])
+			else:
+				phi = 0.0
 			f.write("%.8f\t%.8f\t%.8f\n"%(alt,az,phi))
 
 			### stats
@@ -444,7 +447,11 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 				f.write(str(n)+"\t")
 				f.write(str(split[1])+"\t")
 				f.write(str(split[2])+"\t")
-				f.write(str(split[3])+"\t\n")
+				if self.params['rotang'] != 0:
+					randrot = random.uniform(-1*self.params['rotang'], self.params['rotang'])
+					f.write(str(randrot)+"\t\n")
+				else:
+					f.write(str(split[3])+"\t\n")
 				n += 1
 		f.close()
 
@@ -508,28 +515,31 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 		return 
 
 	#=====================
-	def shiftAndRotate(self, filename):
+	def shift_images(self, filename):
 		### random shifts and rotations to a stack
 		shiftstackname = filename[:-4]+"_rand.hed"
 		apFile.removeStack(shiftstackname)
+#		shiftfile = os.path.join(self.params['rundir'], "shift_rotate.lst")
 		shiftfile = os.path.join(self.params['rundir'], "shift_rotate.lst")
 		if os.path.isfile(shiftfile):
 			apFile.removeFile(shiftfile)
 		f = open(shiftfile, "a")
-		apDisplay.printMsg("Now randomly shifting and rotating particles")
+#		apDisplay.printMsg("Now randomly shifting and rotating particles")
+		apDisplay.printMsg("Now randomly shifting particles")
 		for i in range(self.params['projcount']):
-			if self.params['rotang'] != 0:
-				randrot = random.uniform(-1*self.params['rotang'], self.params['rotang'])
+#			if self.params['rotang'] != 0:
+#				randrot = random.uniform(-1*self.params['rotang'], self.params['rotang'])
 			randx = random.uniform(-1*self.params['shiftrad'], self.params['shiftrad'])
 			randy = random.uniform(-1*self.params['shiftrad'], self.params['shiftrad'])
 			if self.params['flip'] is True:
 				flip = random.choice([0,1])
 			else:
 				flip = 0
-			if self.params['rotang'] != 0:
-				emancmd = "proc2d "+filename+" "+shiftstackname+" first="+str(i)+" last="+str(i)+" rot="+str(randrot)+" trans="+str(randx)+","+str(randy)
-			else:
-				emancmd = "proc2d "+filename+" "+shiftstackname+" first="+str(i)+" last="+str(i)+" trans="+str(randx)+","+str(randy)
+#			if self.params['rotang'] != 0:
+#				emancmd = "proc2d "+filename+" "+shiftstackname+" first="+str(i)+" last="+str(i)+" rot="+str(randrot)+" trans="+str(randx)+","+str(randy)
+#			else:
+#				emancmd = "proc2d "+filename+" "+shiftstackname+" first="+str(i)+" last="+str(i)+" trans="+str(randx)+","+str(randy)
+			emancmd = "proc2d "+filename+" "+shiftstackname+" first="+str(i)+" last="+str(i)+" trans="+str(randx)+","+str(randy)
 			if flip == 0:
 				if self.params['pad'] is False:
 					emancmd = emancmd+" clip="+str(self.params['box'])+","+str(self.params['box'])+" edgenorm"
@@ -541,10 +551,10 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 				else:
 					emancmd = emancmd+" flip edgenorm"
 			apParam.runCmd(emancmd, "EMAN", showcmd=False)
-			if self.params['rotang'] != 0:
-				f.write("%.3f,"%(randrot))
-			else:
-				f.write(",")
+#			if self.params['rotang'] != 0:
+#				f.write("%.3f,"%(randrot))
+#			else:
+#				f.write(",")
 			f.write("%.3f,"%(randx))
 			f.write("%.3f,"%(randy))
 			f.write(str(flip)+"\n")
@@ -580,7 +590,7 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 	def addNoise(self, oldstack, noiselevel, SNR):
 		### create new image with modified SNR
 		basename, extension = os.path.splitext(oldstack)
-		formattedsnr = "%.2f" % (SNR)
+		formattedsnr = "%.3f" % (SNR)
 		newstack = basename+"_snr"+formattedsnr+".hed"
 		apFile.removeStack(newstack)
 		emancmd = "proc2d "+oldstack+" "+newstack+" addnoise="+str(noiselevel)
@@ -1173,7 +1183,7 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 
 		### shift & rotate randomly
 		if self.params['rotang']!=0 or self.params['shiftrad']!=0:
-			shiftstackname = self.shiftAndRotate(filename)
+			shiftstackname = self.shift_images(filename)
 		else:
 			shiftstackname = filename
 
