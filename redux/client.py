@@ -15,7 +15,11 @@ class Client(object):
 		raise NotImplementedError()
 
 class NetworkClient(Client):
-	def __init__(self, host, port):
+	def __init__(self, host=None, port=None):
+		if host is None:
+			host = redux.reduxconfig.config['server host']
+		if port is None:
+			port = redux.reduxconfig.config['server port']
 		self.host = host
 		self.port = port
 
