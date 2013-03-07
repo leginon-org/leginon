@@ -317,17 +317,14 @@ class ImageLoader(appionLoop2.AppionLoop):
 		standard appionLoop
 		"""	
 		self.updatePixelSizeCalibration(imginfo)
-		imgdata = self.makeImageData(imginfo)
 		origimgfilepath = imginfo['original filepath']
-		newimgfilepath = os.path.join(self.params['rundir'], imgdata['filename']+".mrc")
-		apDisplay.printMsg("Copying original image to a new location: "+newimgfilepath)
-		### if input files are mrc, copy to new file location
-		if self.params['filetype'] == "mrc":
-			shutil.copyfile(origimgfilepath, newimgfilepath)
-		### non-mrc images will have already been converted and saved
-		### as a tmp file in the new location
-		else:
-			shutil.move(origimgfilepath, newimgfilepath)
+		newimgfilepath = os.path.join(self.params['rundir'], imginfo['filename']+".mrc")
+		apDisplay.printMsg("Reading original image: "+origimgfilepath)
+		### In order to obey the rule of first save image then insert 
+		### database record, image need to be read as numpy array, not copied
+		### single image should not overload memory
+		imagearray = mrc.read(origimgfilepath)
+		imgdata = self.makeImageData(imagearray,imginfo)
 		pixeldata = None
 		return imgdata, pixeldata
 
@@ -528,7 +525,7 @@ class ImageLoader(appionLoop2.AppionLoop):
 		return
 
 	#=====================
-	def makeImageData(self,info):
+	def makeImageData(self,imagearray,info):
 		scopedata = leginon.leginondata.ScopeEMData(session=self.session,tem =self.temdata)
 		scopedata['defocus'] = info['defocus']
 		scopedata['magnification'] = info['magnification']
@@ -548,8 +545,8 @@ class ImageLoader(appionLoop2.AppionLoop):
 		imgdata['tilt series'] = self.getTiltSeries()
 		imgdata['filename'] = info['filename']
 		imgdata['label'] = 'upload'
-		#fake image array to avoid overloading memory
-		imgdata['image'] = numpy.ones((1,1))
+		# single image should not overload memory
+		imgdata['image'] = imagearray
 		self.publish(imgdata)
 		return imgdata
 

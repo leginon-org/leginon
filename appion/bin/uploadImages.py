@@ -321,7 +321,7 @@ class UploadImages(appionScript.AppionScript):
 		return self.params['defocus']
 
 	#=====================
-	def uploadImageInformation(self, newimagepath, dims, seriescount, numinseries):
+	def uploadImageInformation(self, imagearray, newimagepath, dims, seriescount, numinseries):
 		### setup scope data
 		scopedata = leginon.leginondata.ScopeEMData()
 		scopedata['session'] = self.sessiondata
@@ -365,8 +365,8 @@ class UploadImages(appionScript.AppionScript):
 		imgdata['filename'] = basename
 		imgdata['label'] = 'UploadImage'
 
-		### fake small image array to avoid overloading memory
-		imgdata['image'] = numpy.ones((1,1))
+		### use real imagearray to ensure that file is saved before database insert
+		imgdata['image'] = imagearray
 
 		### use this for defocal group data
 		imgdata['target'] = self.setDefocalTargetData(seriescount)
@@ -414,16 +414,13 @@ class UploadImages(appionScript.AppionScript):
 		return newimagepath
 
 	#=====================
-	def copyfile(self, oldmrcfile, newmrcfile):
+	def readFile(self, oldmrcfile):
+		apDisplay.printMsg('Reading %s into memory' % oldmrcfile)
+		imagearray = mrc.read(oldmrcfile)
 		# invert image density
-		if self.params['invert'] is False:
-			shutil.copy(oldmrcfile, newmrcfile)
-		else:
-			tmpimage = mrc.read(oldmrcfile)
-			tmpimage *= -1.0
-			mrc.write(tmpimage,newmrcfile)
-		if apFile.fileSize(oldmrcfile) != apFile.fileSize(newmrcfile):
-			apDisplay.printError("File sizes are different")
+		if self.params['invert'] is True:
+			imagearray *= -1.0
+		return imagearray
 
 	#=====================
 	def getImageDimensions(self, mrcfile):
@@ -463,11 +460,11 @@ class UploadImages(appionScript.AppionScript):
 			### set pixel size in database
 			self.updatePixelSizeCalibration()
 
-			### upload image
-			self.uploadImageInformation(newimagepath, dims, seriescount, numinseries)
+			## read the file. images should be small enough to read into memory
+			imagearray = self.readFile(mrcfile)
 
-			## copy the file
-			self.copyfile(mrcfile, newimagepath)
+			### upload image
+			self.uploadImageInformation(imagearray, newimagepath, dims, seriescount, numinseries)
 
 			### counting
 			numinseries += 1
