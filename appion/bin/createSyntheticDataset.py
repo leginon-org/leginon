@@ -520,7 +520,7 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 		shiftstackname = filename[:-4]+"_rand.hed"
 		apFile.removeStack(shiftstackname)
 #		shiftfile = os.path.join(self.params['rundir'], "shift_rotate.lst")
-		shiftfile = os.path.join(self.params['rundir'], "shift_rotate.lst")
+		shiftfile = os.path.join(self.params['rundir'], "shift.lst")
 		if os.path.isfile(shiftfile):
 			apFile.removeFile(shiftfile)
 		f = open(shiftfile, "a")
