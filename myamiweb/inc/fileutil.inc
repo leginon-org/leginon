@@ -25,7 +25,7 @@ class fileDataRead {
 	function getColumnFromCSV($col) {
 		$jrf = new ReadFileData();
 		$maxlength = 1024;
-		$count = $jrf ->FromCSV($this->aFile,&$aData,$this->aSepChar,$aMaxLineLength=$maxlength);
+		$count = $jrf ->FromCSV($this->aFile,$aData,$this->aSepChar,$aMaxLineLength=$maxlength);
 		return $this->getColumnFromArray($aData,$this->col_width,$col);
 	}
 

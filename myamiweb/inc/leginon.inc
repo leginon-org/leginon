@@ -2791,6 +2791,7 @@ class leginondata {
 	function getIceThickness($sessionId, $preset) {
 		$q = "SELECT "
 			."date_format(h.`DEF_timestamp`, '%Y-%d-%m %T') as `timestamp`, "
+			."a.filename as filename, "
 			.'`h`.`thickness-mean` '
 			.'FROM '
 			.'`HoleStatsData` AS `h` '

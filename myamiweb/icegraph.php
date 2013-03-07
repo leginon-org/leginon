@@ -32,7 +32,7 @@ if ($viewsql) {
 	exit;
 }
 if ($viewdata) {
-	$keys = array("timestamp", "thickness-mean");
+	$keys = array("timestamp", "filename", "thickness-mean");
 	echo dumpData($thicknessdata, $keys);
 	exit;
 }
