@@ -159,6 +159,10 @@ scope_params = (
 	('film date type', str),
 	('objective current', float),
 	('exp wait time', float),
+	('tem energy filtered', bool),
+	('tem energy filter', bool),
+	('tem energy filter width', float),
+	('aperture size', dict),
 )
 camera_params = (
 	('dimension', dict),
@@ -483,8 +487,11 @@ class PresetData(InSessionData):
 			('film', bool),
 			('tem', InstrumentData),
 			('ccdcamera', InstrumentData),
+			('tem energy filter', bool),
+			('tem energy filter width', float),
 			('energy filter', bool),
 			('energy filter width', float),
+			('aperture size', dict),
 			('pre exposure', float),
 			('skip', bool),
 			('save frames', bool),

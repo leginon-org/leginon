@@ -359,6 +359,10 @@ parametermapping = (
 	('film date type', 'FilmDateType'),
 	('objective current', 'ObjectiveCurrent'),
 	('exp wait time', 'ExpWaitTime'),
+	('tem energy filtered', 'EnergyFiltered'),
+	('tem energy filter', 'EnergyFilter'),
+	('tem energy filter width', 'EnergyFilterWidth'),
+	('aperture size', 'ApertureSize'),
 	# not used
 	#('beam blank', 'BeamBlank'),
 	#('film exposure', 'filmExposure'),

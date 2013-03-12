@@ -529,8 +529,12 @@ class PresetsManager(node.Node):
 				scopedata['image shift'] = self.getOffsetImageShift(presetdata)
 			cameradata.friendly_update(presetdata)
 			if not final:
+				scopedata['tem energy filter'] = None
+				scopedata['tem energy filter width'] = None
 				cameradata['energy filter'] = None
 				cameradata['energy filter width'] = None
+
+				scopedata['aperture size'] = None
 			scopedata['defocus'] = mydefocus
 
 		self.logger.info(beginmessage)
@@ -1404,6 +1408,10 @@ class PresetsManager(node.Node):
 				pixelshift2 = {'row':pixvect2[0] / newpreset['binning']['y'],'col':pixvect2[1] / newpreset['binning']['x']}
 				newscope = self.calclients['image'].transform(pixelshift2, fakescope2, fakecam2)
 				myimage = newscope['image shift']
+				if emtargetdata['movetype'] == 'image beam shift':
+					beam_pixel_shift = {'row': -pixelshift2['row'], 'col': -pixelshift2['col']}
+					newscope = self.calclients['beam'].transform(beam_pixel_shift, fakescope2, fakecam2)
+					mybeam = newscope['beam shift']
 			except Exception, e:
 				self.logger.error('Image shift transform failed:  %s' % (e,))
 		else:
@@ -1416,11 +1424,13 @@ class PresetsManager(node.Node):
 			myimage['y'] += newimageshift['y']
 		# Shouldn't have to make special case for non-beam shift, but for precaution
 		# of avoiding problem of random beam shift on 10apr29b, let's do this now.
-		if emtargetdata['movetype'] == 'image beam shift' or emtargetdata['movetype'] == 'beam shift':
+		if emtargetdata['movetype'] == 'beam shift':
 			mybeam['x'] -= oldpreset['beam shift']['x']
 			mybeam['x'] += newpreset['beam shift']['x']
 			mybeam['y'] -= oldpreset['beam shift']['y']
 			mybeam['y'] += newpreset['beam shift']['y']
+		elif emtargetdata['movetype'] == 'image beam shift':
+			pass
 		else:
 			mybeam['x'] = newpreset['beam shift']['x']
 			mybeam['y'] = newpreset['beam shift']['y']
