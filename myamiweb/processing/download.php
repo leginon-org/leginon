@@ -1,6 +1,6 @@
 <?php
-require "inc/particledata.inc";
-require 'inc/leginon.inc';
+require_once "inc/particledata.inc";
+require_once 'inc/leginon.inc';
 
 //Block unauthorized user
 $filename = ($_GET['file']) ? $_GET['file']: false;
