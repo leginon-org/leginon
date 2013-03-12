@@ -1,6 +1,6 @@
 <?php
 require_once "inc/particledata.inc";
-require_once 'inc/leginon.inc';
+require_once "inc/leginon.inc";
 
 //Block unauthorized user
 $filename = ($_GET['file']) ? $_GET['file']: false;
@@ -9,12 +9,12 @@ checkExptAccessPrivilege($sessionId,'data');
 preg_match("%(.*)config(.*)%", $filename, $reg_match_config);
 preg_match("%(.*)dbemauth(.*)%", $filename, $reg_match_auth);
 
-if (is_null($reg_match_config) && is_null($reg_match_auth)) {
+if (empty($reg_match_config) && empty($reg_match_auth)) {
 	$sessioninfo = $leginondata->getSessionInfo($sessionId);
 	preg_match("%(.*)%".$sessioninfo['name']."(.*)", $filename, $reg_match);
 
 
-	if (file_exists($filename) && !is_null($reg_match))  {
+	if (file_exists($filename) && !empty($reg_match))  {
 		$size=filesize($filename);
 		header("Content-Type: application/octet-stream");
 		header("Content-Type: application/force-download");
