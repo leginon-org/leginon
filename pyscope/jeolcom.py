@@ -57,6 +57,14 @@ STAGE_SCALE_XYZ = 1e9
 # does the scope have an energy filter
 ENERGY_FILTER = True
 
+# apertures
+CLA = 1
+HCA = 3
+SAA = 4
+CLA_SIZES = [0, 150e-6, 70e-6, 50e-6, 20e-6]
+HCA_SIZES = [0, 120e-6, 60e-6, 40e-6, 20e-6]
+SAA_SIZES = [0, 100e-6, 50e-6, 20e-6, 10e-6]
+
 low_magnifications = [
 	100, 120, 150, 200, 250, 300, 400, 500, 600, 800, 1000, 1200, 1500, 2000	#, 2500, 3000
 ]
@@ -100,6 +108,7 @@ class Jeol(tem.TEM):
 		self.stage3 = self.tem3.CreateStage3()
 		self.feg3 = self.tem3.CreateFEG3()
 		self.filter3 = self.tem3.CreateFilter3()
+		self.apt3 = self.tem3.CreateApt3()
 
 		# wait for interface to activate
 		result = None
@@ -184,7 +193,6 @@ class Jeol(tem.TEM):
 
 	def getColumnValvePosition(self):
 		position, result = self.feg3.GetBeamValve()
-		print 'column valve status =', position, result
 		if position:
 			return 'open'
 		else:
@@ -850,7 +858,6 @@ class Jeol(tem.TEM):
 
 	def getEnergyFilter(self):
 		position, result = self.filter3.GetSlitPosition()
-		print 'energy filter position =', position, result
 		return bool(position)
 
 	def setEnergyFilter(self, value):
@@ -861,7 +868,6 @@ class Jeol(tem.TEM):
 
 	def getEnergyFilterWidth(self):
 		width, result = self.filter3.GetSlitWidth()
-		print 'energy filter width =', width, result
 		return width
 
 	def setEnergyFilterWidth(self, value):
@@ -869,6 +875,143 @@ class Jeol(tem.TEM):
 
 	def alignEnergyFilterZeroLossPeak(self):
 		pass
+
+	def getApertures(self):
+		return ['condenser', 'high contrast', 'selected area']
+
+	def _getApertureKind(self, name):
+		if name == 'condenser':
+			return CLA
+		elif name == 'high contrast':
+			return HCA
+		elif name == 'selected area':
+			return SAA
+		else:
+			raise ValueError('Invalid aperture name specified')
+
+	def _getApertureSizes(self, name):
+		if name == 'condenser':
+			return CLA_SIZES
+		elif name == 'high contrast':
+			return HCA_SIZES
+		elif name == 'selected area':
+			return SAA_SIZES
+		else:
+			raise ValueError('Invalid aperture name specified')
+
+
+	def getApertureSizes(self):
+		sizes = {}
+
+		names = self.getApertures()
+
+		for name in names:
+			sizes[name] = self._getApertureSizes(name)
+
+		return sizes
+
+	def getApertureSize(self):
+		sizes = {}
+
+		names = self.getApertures()
+
+		for name in names:
+			kind = self._getApertureKind(name)
+
+			size, result = self.apt3.GetSize(kind)
+			if result != 0:
+				raise SystemError('Get %s aperture size failed' % name)
+
+			size_list = self._getApertureSizes(name)
+
+			try:
+				sizes[name] = size_list[size]
+			except ValueError:
+				raise SystemError('No aperture size for index %d' % size)
+
+		return sizes
+
+	def setApertureSize(self, sizes):
+
+		current_kind, result = self.apt3.GetKind()
+
+		for name in sizes:
+			kind = self._getApertureKind(name)
+
+			size_list = self._getApertureSizes(name)
+
+			try:
+				index = size_list.index(sizes[name])
+			except ValueError:
+				raise ValueError('Invalid %s aperture size %d specified' % (name, sizes[name]))
+
+			current_index, result = self.apt3.GetSize(kind)
+			if result != 0:
+				raise SystemError('Get %s aperture size failed' % name)
+			if index != current_index:
+
+				result = self.apt3.SelectKind(kind)
+
+				if current_index > index:
+					result = self.apt3.SetSize(index - 1)
+					result = None
+					# should add timeout
+					while result != 0:
+						set_index, result = self.apt3.GetSize(kind)
+						time.sleep(.1)
+
+				result = self.apt3.SetSize(index)
+				result = None
+				# should add timeout
+				while result != 0:
+					set_index, result = self.apt3.GetSize(kind)
+					time.sleep(.1)
+
+		result = self.apt3.SelectKind(current_kind)
+
+	def getAperturePosition(self):
+		positions = {}
+
+		names = self.getApertures()
+
+		current_kind, result = self.apt3.GetKind()
+
+		for name in names:
+			kind = self._getApertureKind(name)
+
+			result = self.apt3.SelectKind(kind)
+
+			x, y, result = self.apt3.GetPosition()
+			if result != 0:
+				raise SystemError('Get %s aperture position failed' % name)
+
+			positions[name] = {'x': x, 'y': y}
+
+		result = self.apt3.SelectKind(current_kind)
+
+		return positions
+
+	def setAperturePosition(self, positions):
+		current_kind, result = self.apt3.GetKind()
+
+		for name in positions:
+			p = positions[name]
+			if 'x' in p and type(p['x']) is not int:
+				raise TypeError
+			if 'y' in p and type(p['y']) is not int:
+				raise TypeError
+			
+
+			kind = self._getApertureKind(name)
+
+			result = self.apt3.SelectKind(kind)
+
+			x, y, result = self.apt3.GetPosition()
+
+			if 'x' in p and p['x'] != x or 'y' in p and p['y'] != y:
+				result = self.apt3.SetPosition(p['x'], p['y'])
+
+		result = self.apt3.SelectKind(current_kind)
 
 	def _setSpecialMag(self):
                 result = self.eos3.SelectFunctionMode(MAG1_MODE)
