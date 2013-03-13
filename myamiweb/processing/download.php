@@ -11,7 +11,7 @@ preg_match("%(.*)dbemauth(.*)%", $filename, $reg_match_auth);
 
 if (empty($reg_match_config) && empty($reg_match_auth)) {
 	$sessioninfo = $leginondata->getSessionInfo($sessionId);
-	preg_match("%(.*)%".$sessioninfo['name']."(.*)", $filename, $reg_match);
+	preg_match("%(.*)".$sessioninfo['name']."(.*)%", $filename, $reg_match);
 
 
 	if (file_exists($filename) && !empty($reg_match))  {
