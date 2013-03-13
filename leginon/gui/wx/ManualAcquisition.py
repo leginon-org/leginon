@@ -421,26 +421,9 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 						wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.widgets['save image'], (3, 0), (1, 3),
 						wx.ALIGN_CENTER_VERTICAL)
-		label = wx.StaticText(self, -1, 'Loop pause')
-		sz.Add(label, (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['loop pause time'], (4, 1), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.FIXED_MINSIZE)
-		label = wx.StaticText(self, -1, 'seconds')
-		sz.Add(label, (4, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		label = wx.StaticText(self, -1, 'Label')
-		sz.Add(label, (5, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['image label'], (5, 1), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.FIXED_MINSIZE)
-		sz.AddGrowableCol(1)
-		self.widgets['dark'] = wx.CheckBox(self, -1, 'Dark Exposure')
-		sz.Add(self.widgets['dark'], (6,0), (1,1))
 
-		self.widgets['force annotate'] = wx.CheckBox(self, -1, 'Always Annotate Saved Images')
-		sz.Add(self.widgets['force annotate'], (7,0), (1,1))
-
-		self.widgets['reduced params'] = wx.CheckBox(self, -1, 'Reduced EM Parameter Set (for slow TEMs)')
-		sz.Add(self.widgets['reduced params'], (8,0), (1,1))
-
+		sb2 = wx.GridBagSizer(5,5)
+	
 		szdefocus= wx.GridBagSizer(5, 5)
 		label = wx.StaticText(self, -1,'(leave both unchecked to use current defocus)')
 		szdefocus.Add(label, (0,0), (1,2))
@@ -453,13 +436,32 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		self.widgets['defocus2'] = FloatEntry(self, -1, chars=6)
 		szdefocus.Add(self.widgets['defocus2'], (2,1), (1,1))
 		sbszdefocus.Add(szdefocus, 1, wx.EXPAND|wx.ALL, 5)
+		sb2.Add(sbszscreen,(0,0),(1,3), wx.EXPAND)
+		sb2.Add(sbszlowdose,(1,0),(1,3), wx.EXPAND)
+		sb2.Add(sbszdefocus,(2,0),(1,3), wx.EXPAND)
 
-		sb2 = wx.GridBagSizer(5,5)
-		sb2.Add(sbszscreen,(0,0),(1,1), wx.EXPAND)
-		sb2.Add(sbszlowdose,(1,0),(1,1), wx.EXPAND)
-		sb2.Add(sbszdefocus,(2,0),(1,1), wx.EXPAND)
+		label = wx.StaticText(self, -1, 'Loop pause')
+		sb2.Add(label, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sb2.Add(self.widgets['loop pause time'], (3, 1), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.FIXED_MINSIZE)
+		label = wx.StaticText(self, -1, 'seconds')
+		sb2.Add(label, (3, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		label = wx.StaticText(self, -1, 'Label')
+		sb2.Add(label, (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sb2.Add(self.widgets['image label'], (4, 1), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.FIXED_MINSIZE)
+		sb2.AddGrowableCol(1)
+		self.widgets['dark'] = wx.CheckBox(self, -1, 'Dark Exposure')
+		sb2.Add(self.widgets['dark'], (5,0), (1,1))
+
+		self.widgets['force annotate'] = wx.CheckBox(self, -1, 'Always Annotate Saved Images')
+		sb2.Add(self.widgets['force annotate'], (6,0), (1,1))
+
+		self.widgets['reduced params'] = wx.CheckBox(self, -1, 'Reduced EM Parameter Set (for slow TEMs)')
+		sb2.Add(self.widgets['reduced params'], (7,0), (1,1))
 
 		sba = wx.GridBagSizer(5,5)
+		# put the two sizers in columns
 		sba.Add(sz,(0,0),(1,1))
 		sba.Add(sb2,(0,1),(1,1))
 
