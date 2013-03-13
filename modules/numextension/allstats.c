@@ -21,8 +21,8 @@ void initStats(stats *s) {
 	s->switch_mean = 0;
 	s->switch_std = 0;
 	s->n = 0.0;
-	s->min = INFINITY;
-	s->max = -INFINITY;
+	s->min = 1e38;
+	s->max = -1e38;
 	s->mean = 0.0;
 	s->variance = 0.0;
 	s->variance_n = 0.0;
