@@ -103,7 +103,10 @@ class CalibrationClient(object):
 		return rpixelsize
 
 	def correctTilt(self, imagedata):
-		self.tiltcorrector.correct_tilt(imagedata)
+		try:
+			self.tiltcorrector.correct_tilt(imagedata)
+		except RuntimeError, e:
+			self.node.logger.error('Failed tilt correction: %s' % (e))
 
 	def acquireImage(self, scope, settle=0.0, correct_tilt=False, corchannel=0):
 		if scope is not None:
