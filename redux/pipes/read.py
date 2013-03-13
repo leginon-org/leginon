@@ -63,6 +63,9 @@ class Read(Pipe):
 				result = pyami.numpil.readInfo(filename)
 			else:
 				result = scipy.misc.imread(filename)
+				if len(result.shape) < 2:
+					# some combination of scipy os gives pngimagefile object as the scaler item of array
+					result = pyami.numpil.im2numpy(result.item())
 		elif input_format == 'spider':
 			if info:
 				result = pyami.spidernew.read_info(filename, frame)
