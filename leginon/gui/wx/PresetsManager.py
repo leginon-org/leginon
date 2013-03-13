@@ -226,7 +226,6 @@ class EditPresetDialog(leginon.gui.wx.Dialog.Dialog):
 				'beam shift',
 				'energy filter',
 				'energy filter width',
-				'aperture sizes',
 			),
 			'ccdcamera': (
 				'energy filter',
@@ -274,7 +273,7 @@ class EditPresetDialog(leginon.gui.wx.Dialog.Dialog):
 		for key, text in labels:
 			self.labels[key] = wx.StaticText(self, -1, text)
 
-		sizer = wx.GridBagSizer(11, 5)
+		sizer = wx.GridBagSizer(5, 5)
 		self._sz = sizer
 
 		sizer.Add(self.labels['tem'], (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
@@ -401,9 +400,13 @@ class EditPresetDialog(leginon.gui.wx.Dialog.Dialog):
 
 			self.aperture_sbsizer.Remove(self.aperture_sizer)
 			self._sz.Remove(self.aperture_sbsizer)
+			self._sz.Remove(self._buttons['tem']['aperture sizes'])
+			self._buttons['tem']['aperture sizes'].Destroy()
+			del self._buttons['tem']['aperture sizes']
 			self.aperture_sizer = None
 			self.aperture_sbsizer = None
 			self.aperture_sb = None
+			self._sz.Layout()
 
 		if evt is not None:
 			tem = evt.GetString()
@@ -411,7 +414,7 @@ class EditPresetDialog(leginon.gui.wx.Dialog.Dialog):
 		if aperture_sizes:
 			self.aperture_sb = wx.StaticBox(self, -1, 'Apertures')
 			self.aperture_sbsizer = wx.StaticBoxSizer(self.aperture_sb, wx.VERTICAL)
-			self.aperture_sizer = wx.GridBagSizer(len(aperture_sizes), 2)
+			self.aperture_sizer = wx.GridBagSizer(5,5)
 			i = 0
 			for aperture in apertures:
 				self.labels[aperture] = wx.StaticText(self, -1, aperture)
@@ -422,6 +425,9 @@ class EditPresetDialog(leginon.gui.wx.Dialog.Dialog):
 			self.aperture_sizer.AddGrowableCol(1)
 			self.aperture_sbsizer.Add(self.aperture_sizer, 0, wx.EXPAND|wx.ALL, 5)
 			self._sz.Add(self.aperture_sbsizer, (11, 0), (1, 3), wx.ALIGN_CENTER|wx.EXPAND|wx.HORIZONTAL)
+			button =  bitmapButton(self, 'instrumentget', 'Set this value from the instrument value')
+			self._buttons['tem']['aperture sizes'] = button
+			self.Bind(wx.EVT_BUTTON, self.onButton, button)
 			self._sz.Add(self._buttons['tem']['aperture sizes'], (11, 3), (1, 1), wx.ALIGN_CENTER)
 			self._sz.Layout()
 
@@ -1804,6 +1810,7 @@ class Parameters(wx.StaticBoxSizer):
 					apertures.sort()
 
 				i = 0
+				self.aperture_sizer = wx.GridBagSizer(5, 5)
 				for aperture in apertures:
 					aperture_size = parameters['aperture size'][aperture]
 					if aperture_size is None:
@@ -1821,10 +1828,12 @@ class Parameters(wx.StaticBoxSizer):
 				if self.labels['aperture size'] or self.values['aperture size']:
 					self.aperture_sb = wx.StaticBox(self.parent, -1, 'Apertures')
 					self.aperture_sbsizer = wx.StaticBoxSizer(self.aperture_sb, wx.VERTICAL)
-					self.aperture_sizer = wx.GridBagSizer(len(parameters['aperture size']), 2)
 					self.aperture_sizer.AddGrowableCol(1)
 					self.aperture_sbsizer.Add(self.aperture_sizer, 0, wx.EXPAND|wx.ALL, 5)
 					self._sz.Add(self.aperture_sbsizer, (11, 0), (1, 2), wx.EXPAND)
+				else:
+					self.aperture_sizer.Destroy()
+					self.aperture_sizer = None
 
 			self.Layout()
 
