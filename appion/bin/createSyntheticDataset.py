@@ -77,7 +77,7 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 #			action="store_false", help="DO NOT randomly flip the projections along with shifts and rotations")
 		self.parser.add_option("--kv", dest="kv", type="float", default=200,
 			help="kV of the microscope, needed for envelope function", metavar="INT")
-		self.parser.add_option("--cs", dest="cs", type="float",
+		self.parser.add_option("--cs", dest="cs", default=0.0, type="float",
 			help="override default cs value with the value here (in millimeters)", metavar="float")
 		self.parser.add_option("--amp", dest="amp", type="float", default=0.07,
 			help="amplitude contrast for the data (0.07 for ice, 0.15 for stain)", metavar="float")
@@ -194,6 +194,8 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 		if self.params['cs'] is None:
 			self.params['cs'] = apInstrument.getCsValueFromSession(self.getSessionData())
 			self.params['cs'] = self.params['cs'] 
+		if self.params['cs'] > 0:
+			apDisplay.printWarning("non-zero cs value is untested and may not be properly applied. Consider setting to 0")
 		apDisplay.printColor("cs value: %.3f" % self.params['cs'], "cyan")
 		return
 
