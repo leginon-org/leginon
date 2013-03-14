@@ -785,6 +785,8 @@ function runMakestack() {
 	//make sure a session was selected
 	if (!$description)
 		createMakestackForm("<b>ERROR:</b> Enter a brief description of the stack");
+	if ( strpos( $description, "'" ) !== FALSE || strpos( $description, '"' ) !== FALSE )
+		createMakestackForm("<b>ERROR:</b> Please remove any quote characters from your description entry.");		
 
 	//make sure a session was selected
 	if (!$outdir)
