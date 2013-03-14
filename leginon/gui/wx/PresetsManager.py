@@ -159,7 +159,7 @@ class EditPresetDialog(leginon.gui.wx.Dialog.Dialog):
 				tem = self.parameters['tem']['name']
 			apertures = list(self.tems[tem]['apertures'])
 			aperture_sizes = dict(self.tems[tem]['aperture sizes'])
-		except KeyError:
+		except (KeyError, TypeError):
 			apertures = []
 			aperture_sizes = {}
 
@@ -1723,7 +1723,10 @@ class Parameters(wx.StaticBoxSizer):
 	def set(self, parameters):
 		if parameters is None:
 			for value in self.values.values():
-				value.SetLabel('')
+				try:
+					value.SetLabel('')
+				except AttributeError:
+					pass
 		else:
 			for key in ['tem', 'ccdcamera']:
 				if parameters[key] is None:
