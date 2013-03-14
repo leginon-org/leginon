@@ -14,6 +14,7 @@ require_once "inc/leginon.inc";
 require_once "inc/viewer.inc";
 require_once "inc/project.inc";
 require_once "inc/appionloop.inc";
+require_once "inc/forms/makeDDStackForm.inc";
 
 if ($_POST['process']) {
 	// IF VALUES SUBMITTED, EVALUATE DATA
@@ -64,7 +65,7 @@ function createMakestackForm($extra=false, $title='makeDDRawFrameStack.py Launch
 	$commitcheck = ($_POST['commit']=='on' || !$_POST['process']) ? 'CHECKED' : '';
 
 	$javascript .= writeJavaPopupFunctions('appion');
-
+	
 	processing_header($title,$heading,$javascript);
 
 	// write out errors, if any came up:
@@ -88,12 +89,38 @@ function createMakestackForm($extra=false, $title='makeDDRawFrameStack.py Launch
  
 	echo "</td>";
 	echo "</tr>\n";
+	
 	echo "<tr>\n";
-	echo "<td colspan='2' align='CENTER'>\n
+	echo "<td  align='CENTER'>\n
 		<input type='checkbox' name='testimage' onclick='enabledtest(this)' $testcheck>
 		Run on a single image:
 		<input type='text' name='testfilename' $testdisabled value='$testvalue' size='45'>
-		<hr />";	
+		";	
+	echo "</td>\n";
+	echo "</tr>\n";
+	echo "</table>\n";
+	
+	
+	echo "<td class='tablebg'>\n";
+	echo "<table cellpading='5' border='0' >\n";
+	echo "<tr><td valign='TOP'>\n";
+	// Create an instance of the Make DD Stack param form, setting it's default values then display it 
+	$makeDDStackForm = new MakeDDStackForm($align='', $defergpu='' );
+	echo $makeDDStackForm->generateForm();
+	echo "</td>\n";
+	echo "</tr>\n";
+	echo "</table>\n";
+	echo "</td>\n";
+	echo "</tr>\n";	
+	
+	
+	// --- Row --- 
+	// Add submit button
+	echo "<tr>\n";
+	echo "<td colspan='2' align='center'>\n";
+	echo "<hr />\n";
+	echo "<br/>\n";		
+	
 	echo getSubmitForm("Make Stack");
 	echo "</td>\n";
 	echo "</tr>\n";
@@ -138,18 +165,23 @@ function runMakestack() {
 		$testimage = ereg_replace(" ","\ ",$testimage);
 	}
 	
-	
+	$makeDDStackForm = new MakeDDStackForm();
+	$errorMsg .= $makeDDStackForm->validate( $_POST );
+		
 	/* *******************
 	PART 2: Check for conflicts, if there is an error display the form again
 	******************** */
 	
 	//make sure a session was selected
 	if (!$description)
-		createMakestackForm("<b>ERROR:</b> Enter a brief description of the stack");
+		$errorMsg .= "<b>ERROR:</b> Enter a brief description of the stack";
 
 	//make sure a session was selected
 	if (!$outdir)
-		createMakestackForm("<b>ERROR:</b> Select an experiment session");
+		$errorMsg .= "<b>ERROR:</b> Select an experiment session";
+		
+	// reload the form with the error messages
+	if ( $errorMsg ) createMakestackForm( $errorMsg );		
 
 	/* *******************
 	PART 3: Create program command
@@ -164,6 +196,9 @@ function runMakestack() {
 		exit;
 	}
 	$command .= $apcommand;
+	
+	// add make DD stack parameters
+	$command .= $makeDDStackForm->buildCommand( $_POST );	
 
 	/* *******************
 	PART 4: Create header info, i.e., references

@@ -539,5 +539,9 @@ var help = {
 		'auto_local_healpix_order' : 'In the automated procedure to increase the angular samplings, local angular searches of -6/+6 times the sampling rate will be used from this angular sampling rate onwards.',
 		'offset_range' : 'Probabilities will be calculated only for translations in a circle with this radius (in pixels). The center of this circle changes at every iteration and is placed at the optimal translation for each image in the previous iteration. If auto-sampling is used, this will be the value for the first iteration(s) only, and the sampling rate will be increased automatically after that.',
 		'offset_step' : 'Translations will be sampled with this step-size (in pixels).Translational sampling is also done using the adaptive approach. Therefore, if adaptive=1, the translations will first be evaluated on a 2x coarser grid. If auto-sampling is used, this will be the value for the first iteration(s) only, and the sampling rate will be increased automatically after that.',
-	}	
+	},
+	'makeDDStack' : {
+		'align' : 'Select to align the images.',
+		'defergpu' : 'Select defer gpu if this job will be launched on a computer without GPU capability. The alignment can be done after building the stack by running catchUpDDAlign.py',
+	}		
 }
