@@ -109,7 +109,7 @@ header_fields = (
 	('yorigin', 'float32'),
 	('zorigin', 'float32'),
 	('map', 'string', 4),
-	('byteorder', 'int32'),
+	('byteorder', 'string', 4),
 	('rms', 'float32'),
 	('nlabels', 'int32'),
 	('label0', 'string', 80),
@@ -226,12 +226,14 @@ All fields are initialized to zeros.
 	return header
 
 intbyteorder = {
-	0x11110000: 'big',
-	0x44440000: 'little'
+	'\x11\x11\x00\x00': 'big',
+	'\x44\x41\x00\x00': 'little',
+	'\x44\x44\x00\x00': 'little',  # compatible with badly written files
+	'\x00\x00\x44\x44': 'little',  # compatible with badly written files
 }
-byteorderint = {
-	'big': 0x11110000,
-	'little': 0x44440000
+byteorderstr = {
+	'big': '\x11\x11\x00\x00',
+	'little': '\x44\x41\x00\x00',
 }
 
 def isSwapped(headerbytes):
@@ -345,7 +347,7 @@ def updateHeaderDefaults(header):
 	header['mapr'] = 2
 	header['maps'] = 3
 	header['map'] = 'MAP '
-	header['byteorder'] = byteorderint[sys.byteorder]
+	header['byteorder'] = byteorderstr[sys.byteorder]
 	header['amin'] = 0.0
 	header['amax'] = 0.0
 	header['amean'] = 0.0
