@@ -780,6 +780,9 @@ def test_update_header():
 	# update header with global min
 	update_file_header('test.mrc', {'amin':amin})
 
+def fix_file_machine_stamp(filename):
+	update_file_header(filename,{'byteorder':byteorderstr[sys.byteorder]})
+
 if __name__ == '__main__':
 	#testHeader()
 	#testWrite()
