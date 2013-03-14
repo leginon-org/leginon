@@ -76,7 +76,7 @@ function createForm( $extra=false, $title='runSimpleCluster.py Launcher', $headi
 
 	// Enable pop-up help. 
 	// This does not change and is required for help messages.
-	$javascript .= writeJavaPopupFunctions();	
+	$javascript .= writeJavaPopupFunctions('appion');	
 
 	// This line does not change and is required for Appion processing pages to add the standard header and menu.
 	processing_header($title,$heading,$javascript);
@@ -107,7 +107,7 @@ function createForm( $extra=false, $title='runSimpleCluster.py Launcher', $headi
 	$runname = ($_POST['runname']) ? $_POST['runname'] : 'simple'.($alignruns+1);
 	//$description = $_POST['description'];
 	$stackidstr = $_POST['stackval'];
-	var_dump($stackidstr);
+	//var_dump($stackidstr);
 	list($stackidval,$apix,$boxsz) = split('\|--\|',$stackidstr);
 
 	// start the main form

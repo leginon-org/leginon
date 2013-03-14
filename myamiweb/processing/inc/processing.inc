@@ -1169,7 +1169,8 @@ function writeJavaPopupFunctions($help='')
 	$javafunc .="
 	function popLayer(a, id) {
 		dhelp=$('dhelp')
-		helpstr=eval('$helpsection'+a)
+		helpstr=eval('help.'+a)
+		if(!helpstr){helpstr=eval('$helpsection'+a)}
 		if(!helpstr){helpstr='<font color=red>Missing help info</font>'}
 
 		desc = '<div style=\'position: relative; width: 300px; padding: 1em\'>'+helpstr+'</div>'
