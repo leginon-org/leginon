@@ -305,6 +305,11 @@ function parseAppionLoopParams () {
 }
 
 function checkAppionErrors () {
+	$description = $_POST['description'];
+	if ( strpos( $description, "'" ) !== FALSE || strpos( $description, '"' ) !== FALSE ) {
+		createMakestackForm("<b>ERROR:</b> Please remove any quote characters from your description entry.");
+	}		
+
 	if (!$_POST[outdir]) {
 		return "<B>ERROR:</B> Select an experiment session";
 		exit;
