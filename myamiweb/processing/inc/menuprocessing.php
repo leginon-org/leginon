@@ -776,7 +776,10 @@ if (is_numeric($expId)) {
 			'name'=>"<a href='runMakeDDRawFrameStack.php?expId=$sessionId'>Create frame stack</a>",
 			'result'=>$ddresults,
 		);
-
+		$nruns[] = array(
+			'name'=>"<a href='runCatchupDDAlign.php?expId=$sessionId'>Launch Alignment Catchup</a>",
+		);
+		
 		$data[] = array(
 			'action' => array($action, $celloption),
 			'newrun' => array($nruns, $celloption),

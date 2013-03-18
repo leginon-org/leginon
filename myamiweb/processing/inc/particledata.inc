@@ -2227,6 +2227,51 @@ class particledata {
 		return $this->getRunIds($sessionId, "ApDDStackRunData", $showHidden);
 	}
 	
+	function getDDStackRunIdsAlign($sessionId,$showHidden=True) 
+	{
+		$q = "SELECT r.`DEF_id` as stackid "
+			."FROM `ApDDStackRunData` AS r "
+			."LEFT JOIN ApPathData AS p "
+			."ON (r.`REF|ApPathData|path` = p.`DEF_id`) "
+			."LEFT JOIN `ApDDStackParamsData` AS a "
+			."ON (r.`REF|ApDDStackParamsData|params` = a.`DEF_id`) "
+			."WHERE r.`REF|leginondata|SessionData|session` = '$sessionId' "
+			."AND a.`align` = 1 ";
+		if (!$showHidden) $q.= " AND (r.`hidden` IS NULL OR r.`hidden` = 0) ";
+		$q.= "ORDER BY r.`DEF_id` DESC ";
+		//echo $q."<br/>\n";
+		$r = $this->mysql->getSQLResult($q);
+		//echo print_r($r)."<br/>\n";
+		return $r;
+	}	
+	
+	function getDDStackRunName($stackId,$showHidden=True) 
+	{
+		$q = "SELECT r.`runname` "
+			."FROM `ApDDStackRunData` AS r "
+			."WHERE r.`DEF_id` = '$stackId' ";
+		if (!$showHidden) $q.= " AND (r.`hidden` IS NULL OR r.`hidden` = 0) ";
+		//echo $q."<br/>\n";
+		$r = $this->mysql->getSQLResult($q);
+		//echo print_r($r)."<br/>\n";
+		return $r;
+	}		
+
+	function getDDStackOutdir($stackId,$showHidden=True) 
+	{
+		$q = "SELECT p.`path` "
+			."FROM `ApDDStackRunData` AS r "
+			."LEFT JOIN ApPathData AS p "
+			."ON (r.`REF|ApPathData|path` = p.`DEF_id`) "
+			."WHERE r.`DEF_id` = '$stackId' ";
+		if (!$showHidden) $q.= " AND (r.`hidden` IS NULL OR r.`hidden` = 0) ";
+		//echo $q."<br/>\n";
+		$r = $this->mysql->getSQLResult($q);
+		//echo print_r($r)."<br/>\n";
+		return $r;
+	}	
+	
+	
 	#--------- MAKE STACK FUNCTIONS---------------#
 
 	function getParticleRunsFromStack($stackid) {
@@ -3757,6 +3802,10 @@ class particledata {
 		if ($ignore) $q.=" AND j.`status` != 'I'";
 		$q.=" ORDER BY j.`DEF_id` DESC ";
 		$r = $this->mysql->getSQLResult($q);
+		if ($r === False) {
+			$dberror = $this->mysql->getError();
+			error_log("Error: database error in particledata.inc, getJobIdsFromSession(): $dberror /n");
+		}
 		return $r;
 	}
 
