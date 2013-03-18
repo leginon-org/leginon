@@ -53,7 +53,7 @@ if not hasattr(lib, 'fftw_plan_dft_1d'):
 if osname == 'nt' or psystem() == 'Windows':
     lib_threads = lib
 else:
-    libbase, dot, ext = basename(libfullpath).partition('.')
+    libbase,ext = libfullpath.split('.', 1)
     libdir = dirname(libfullpath)
     lib_threads = joinpath(libdir, libbase + '_threads.'+ ext)
     try:
