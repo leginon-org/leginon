@@ -17,6 +17,9 @@ prog=reduxd
 start() {        
 	echo -n $"Starting $prog: "
 	nohup $prog > /dev/null &
+	# Or comment out the above line and replace with the following
+	# to give reduxd more priority both on processor and I/O.
+	#nohup nice --adjustment=-5 ionice -c1 -n2 $prog > /dev/null &
 	RETVAL=$?
 	sleep 1;
 	echo $"Started $prog: log location configured in redux.cfg"
