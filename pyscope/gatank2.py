@@ -145,13 +145,26 @@ class GatanK2Base(ccdcamera.CCDCamera):
 		# I think it's negative...
 		shutter_delay = -self.readout_delay_ms / 1000.0
 
+		physical_binning = self.binning['x']
+		if self.ed_mode != 'super resolution':
+			binscale = 1
+		else:
+			binscale = 2
+			if self.binning['x'] > 1:
+				# physical binning is half super resolution binning except when the latter is 1
+				physical_binning /= binscale
+
+		height = self.offset['y']+self.dimension['y']
+		width = self.offset['x']+self.dimension['x']
 		acqparams = {
 			'processing': processing,
-			'binning': self.binning['x'],
-			'top': self.tempoffset['y'],
-			'left': self.tempoffset['x'],
-			'bottom': self.offset['y']+self.dimension['y'],
-			'right': self.offset['x']+self.dimension['x'],
+			'height': height,
+			'width': width,
+			'binning': physical_binning,
+			'top': self.tempoffset['y'] * binscale,
+			'left': self.tempoffset['x'] * binscale,
+			'bottom': height * binscale,
+			'right': width * binscale,
 			'exposure': self.getRealExposureTime(),
 			'shutterDelay': shutter_delay,
 		}

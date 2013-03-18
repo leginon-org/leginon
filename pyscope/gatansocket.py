@@ -218,10 +218,8 @@ class GatanSocket(object):
 		numsaved = args[1]
 		error = args[2]
 		
-	def GetImage(self, processing, binning, top, left, bottom, right, exposure, shutterDelay):
+	def GetImage(self, processing, height, width, binning, top, left, bottom, right, exposure, shutterDelay):
 
-		width = right - left
-		height = bottom - top
 		arrSize = width * height
 
 		# TODO: need to figure out what these should be
