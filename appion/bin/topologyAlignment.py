@@ -8,6 +8,7 @@ import glob
 import cPickle
 import tarfile
 import subprocess
+import string
 #appion
 from appionlib import appionScript
 from appionlib import apDisplay
@@ -36,7 +37,7 @@ class TopologyRepScript(appionScript.AppionScript):
 			help="Stack database id", metavar="ID#")
 
 		self.parser.add_option("--msaproc", dest="msaproc", type="int", default=1,
-			help="Number of processor to use for MSA", metavar="#")
+			help="Number of processor to use for CAN", metavar="#")
 
 		self.parser.add_option("--lowpass", "--lp", dest="lowpass", type="int",
 			help="Low pass filter radius (in Angstroms)", metavar="#")
@@ -76,12 +77,16 @@ class TopologyRepScript(appionScript.AppionScript):
 			action="store_true", help="Keep all intermediate node images")
 		self.parser.add_option("--premask", dest="premask", default=False,
 			action="store_true", help="Mask raw particles before processing")
+		self.parser.add_option("--no-mask", dest="nomask", default=False,
+			action="store_true", help="Do not apply a mask to the class averages")
 		self.parser.add_option("--no-center", dest="nocenter", default=False,
 			action="store_true", help="Do not center particles after each iteration")
 		self.parser.add_option("--classiter", dest="classiter", default=False,
 			action="store_true", help="Perform iterative averaging of class averages")
 		self.parser.add_option("--uploadonly", dest="uploadonly", default=False,
 			action="store_true", help="Just upload results of completed run")
+		self.parser.add_option("--invert", dest="invert", default=False,
+			action="store_true", help="Invert before alignment")
 
 		### choices
 		self.mramethods = ("eman","imagic")
@@ -92,6 +97,10 @@ class TopologyRepScript(appionScript.AppionScript):
 		self.parser.add_option("--msamethod", dest="msamethod",
 			help="Method for MSA", metavar="PACKAGE",
 			type="choice", choices=self.msamethods, default="can")
+		self.cluster = ("barcelona","himem","batch")
+		self.parser.add_option("--cluster", dest="cluster", 
+			help="If using cluster, specify queue (defaults to barcelona)", metavar="QUEUE",
+			type="choice", choices=self.cluster, default="barcelona")
 
 	#=====================
 	def checkConflicts(self):
@@ -119,12 +128,16 @@ class TopologyRepScript(appionScript.AppionScript):
 		if self.params['mramethod'] == 'imagic':
 			self.imagicroot = apIMAGIC.checkImagicExecutablePath()
 			self.imagicversion = apIMAGIC.getImagicVersion(self.imagicroot)
+		## check if running on cluster:
+		if apParam.getExecPath("qsub",die=False) is None:
+			self.params['cluster']=None
 
 	#=====================
 	def setRunDir(self):
 		self.stackdata = apStack.getOnlyStackData(self.params['stackid'], msg=False)
 		path = self.stackdata['path']['path']
 		uppath = os.path.abspath(os.path.join(path, "../.."))
+		uppath = string.replace(uppath,"/jetstor/APPION","")
 		self.params['rundir'] = os.path.join(uppath, "align", self.params['runname'])
 
 	#=====================
@@ -302,10 +315,33 @@ class TopologyRepScript(appionScript.AppionScript):
 		cancmd = self.params['canexe']+canopts
 		self.params['currentnumclasses'] = numClasses
 
+		if self.params['cluster'] is not None:
+			bfile="can_align.job"
+			f = open(bfile,'w')
+			f.write("#!/bin/sh\n")
+			# cluster commands
+			f.write("#PBS -N can_align\n")
+			f.write("#PBS -l nodes=1:ppn=%i\n"%self.params['msaproc'])
+			f.write("#PBS -l walltime=240:00:00\n\n")
+			f.write("cd %s\n\n"%self.params['iterdir'])
+			f.write("webcaller.py '%s' %s/can.log\n"%(cancmd,self.params['rundir']))
+			f.write("touch can_done.txt\n")
+			f.write("exit\n")
+			f.close()
+		
 		apDisplay.printMsg("running CAN:")
 		apDisplay.printMsg(cancmd+"\n")
 		self.writeTopolRepLog(cancmd)
-		apEMAN.executeEmanCmd(cancmd, verbose=True, showcmd=True)
+		## run on cluster or locally
+		if self.params['cluster'] is not None:
+			subprocess.Popen("qsub %s"%bfile, shell=True).wait()
+			## wait for job to complete
+			while not os.path.isfile("can_done.txt"):
+				time.sleep(10)
+			time.sleep(30)
+			os.remove("can_done.txt")
+		else:
+			apEMAN.executeEmanCmd(cancmd, verbose=True, showcmd=True)
 
 		# check that CAN ran properly
 		if not os.path.exists('classes.hed'):
@@ -341,13 +377,15 @@ class TopologyRepScript(appionScript.AppionScript):
 			# don't align references for last iteration
 			if self.params['currentiter'] < self.params['iter']:
 				if self.params['classiter'] is True:
+					## need to implement this:
+					#e2stacksort.py classes_avg.hed out.hdf --simcmp=sqeuclidean:normto=1 --simalign=rotate_translate --center --useali --iterative
 					emancmd = "classalign2 %s.hed 10 keep=100 saveali"%classname
 					apEMAN.executeEmanCmd(emancmd, verbose=False)
 					apFile.removeStack(classname)
 					classname = "a"+classname
 				
 				else:
-					if  self.params['nocenter'] is False:
+					if self.params['nocenter'] is False and self.params['nomask'] is False:
 						emancmd = "proc2d %s.hed %s_cen.hed center"%(classname,classname)
 						## try cenalignint
 						emancmd = "cenalignint %s.hed"%classname
@@ -368,10 +406,13 @@ class TopologyRepScript(appionScript.AppionScript):
 					classname = alifile
 
 			# mask the classes
-			maskfile = imagicFilters.softMask(classname, mask=maskfrac, falloff=0.1)
-			if self.params['keepall'] is False:
-				apFile.removeStack(classname)
-		
+			if self.params['nomask'] is False:
+				maskfile = imagicFilters.softMask(classname, mask=maskfrac, falloff=0.1)
+				if self.params['keepall'] is False:
+					apFile.removeStack(classname)
+			else:
+				maskfile = classname
+
 			# normalize the classes
 			classname = imagicFilters.normalize(maskfile, sigma=10.0)
 			if self.params['keepall'] is False:
@@ -465,6 +506,7 @@ class TopologyRepScript(appionScript.AppionScript):
 		if self.params['currentiter'] > 1:
 			apFile.removeStack(self.params['alignedstack'])
 		self.params['alignedstack']=os.path.abspath("mrastack")
+		self.params['alignedstack'] = string.replace(self.params['alignedstack'],"/jetstor/APPION","")
 
 		# remove cls file used for alignment
 		os.remove("cls_all.lst")
@@ -477,11 +519,27 @@ class TopologyRepScript(appionScript.AppionScript):
 
 		f = open(bfile,'w')
 		f.write("#!/bin/csh -f\n")
+		## if on cluster
+		if self.params['cluster'] is not None:
+			# distribute processes evenly
+#			num_threads = int(float(os.environ.get('OMP_NUM_THREADS')))
+#			num_nodes = math.ceil(self.params['nproc']/num_threads)
+			proc = subprocess.Popen('pbsnodes -a | grep "state = free"', stdout=subprocess.PIPE, shell=True)
+			(out,err)=proc.communicate()
+			num_nodes = float(len(out.strip().split("\n")))
+			num_ppn = math.ceil(self.params['nproc']/num_nodes)
+			if num_nodes>self.params['nproc']:
+				num_nodes=self.params['nproc']
+				num_ppn=1
+			f.write("#PBS -N mralign\n")
+			f.write("#PBS -l nodes=%i:ppn=%i\n"%(num_nodes,num_ppn))
+			f.write("#PBS -l walltime=240:00:00\n\n")
+			f.write("cd %s\n\n"%self.params['iterdir'])
 
 		f.write("setenv IMAGIC_BATCH 1\n")
 		if self.params['nproc'] > 1:
-			f.write("mpirun -np %i "%(self.params['nproc']))
-			## for barcelona queue:
+			f.write("%s/openmpi/bin/mpirun "%self.imagicroot)
+			f.write("-np %i "%(self.params['nproc']))
 			f.write("-x IMAGIC_BATCH %s/align/mralign.e_mpi << EOF\n" %self.imagicroot)
 			if int(self.imagicversion) != 110119:
 				f.write("YES\n")
@@ -550,7 +608,14 @@ class TopologyRepScript(appionScript.AppionScript):
 		apEMAN.executeEmanCmd("chmod 755 "+bfile)
 
 		apDisplay.printColor("Running IMAGIC .batch file: %s"%(os.path.abspath(bfile)), "cyan")
-		apIMAGIC.executeImagicBatchFile(os.path.abspath(bfile))
+		if self.params['cluster'] is not None:
+			subprocess.Popen("qsub %s"%bfile, shell=True).wait()
+			## wait for mra to finish
+			while not os.path.isfile("mra_done.txt"):
+				time.sleep(10)
+			time.sleep(30)
+		else:
+			apIMAGIC.executeImagicBatchFile(os.path.abspath(bfile))
 
 		os.remove("mra_done.txt")
 
@@ -561,6 +626,7 @@ class TopologyRepScript(appionScript.AppionScript):
 		if self.params['currentiter'] > 1:
 			apFile.removeStack(self.params['alignedstack'])
 		self.params['alignedstack']=os.path.abspath(outfile)
+		self.params['alignedstack'] = string.replace(self.params['alignedstack'],"/jetstor/APPION","")
 
 	#=====================
 	def runIMAGICmsa(self):
@@ -577,18 +643,28 @@ class TopologyRepScript(appionScript.AppionScript):
 
 		f = open(bfile,'w')
 		f.write("#!/bin/csh -f\n")
+		## if on cluster
+		if self.params['cluster'] is not None:
+			# distribute processes evenly
+			num_threads = int(float(os.environ.get('OMP_NUM_THREADS')))
+			num_nodes = math.ceil(self.params['nproc']/num_threads)
+			f.write("#PBS -N imagicMSA\n")
+			f.write("#PBS -l nodes=%i:ppn=%i\n"%(num_nodes,num_threads))
+			f.write("#PBS -l walltime=240:00:00\n\n")
+			f.write("cd %s\n\n"%self.params['iterdir'])
 
 		f.write("setenv IMAGIC_BATCH 1\n")
-		if self.params['nproc'] > 1:
-			f.write("mpirun -np %i "%(self.params['nproc']))
-			## for barcelona queue:
+		if self.params['msaproc'] > 1:
+			f.write("%s/openmpi/bin/mpirun "%self.imagicroot)
+			f.write("-np %i "%(self.params['msaproc']))
 			f.write("-x IMAGIC_BATCH %s/msa/msa.e_mpi << EOF\n" %self.imagicroot)
 			if int(self.imagicversion) != 110119:
 				f.write("YES\n")
-				f.write("%i\n"%self.params['nproc'])
+				f.write("%i\n"%self.params['msaproc'])
 		else:
 			f.write("%s/msa/msa.e <<EOF\n" % self.imagicroot)
-			f.write("NO\n")
+			if int(self.imagicversion) != 110326:
+				f.write("NO\n")
 		if int(self.imagicversion) != 110119 and int(self.imagicversion) != 100312:
 			f.write("NO\n")
 		f.write("FRESH_MSA\n")
@@ -598,10 +674,15 @@ class TopologyRepScript(appionScript.AppionScript):
 			f.write("NO\n")
 		f.write("msamask\n")
 		f.write("eigenim\n")
-		f.write("my_pixcoos\n")
-		f.write("my_eigenpix\n")
+		if int(self.imagicversion) < 120619:
+			f.write("my_pixcoos\n")
+			f.write("my_eigenpix\n")
+		else:
+			f.write("NO\n")
 		f.write("%i\n"%self.params['msaiter'])
 		f.write("%i\n"%self.params['numeigen'])
+		if int(self.imagicversion) >= 120619:
+			f.write("1\n")
 		f.write("%.02f\n"%self.params['overcorrection'])
 		f.write("%s\n"%outfile)
 		f.write("EOF\n")
@@ -615,7 +696,14 @@ class TopologyRepScript(appionScript.AppionScript):
 		apEMAN.executeEmanCmd("chmod 755 "+bfile)
 
 		apDisplay.printColor("Running IMAGIC .batch file: %s"%(os.path.abspath(bfile)), "cyan")
-		apIMAGIC.executeImagicBatchFile(os.path.abspath(bfile))
+		if self.params['cluster'] is not None:
+			subprocess.Popen("qsub %s"%bfile, shell=True).wait()
+			## wait for mra to finish
+			while not os.path.isfile("msa_done.txt"):
+				time.sleep(10)
+			time.sleep(30)
+		else:
+			apIMAGIC.executeImagicBatchFile(os.path.abspath(bfile))
 
 		os.remove("msa_done.txt")
 
@@ -644,6 +732,13 @@ class TopologyRepScript(appionScript.AppionScript):
 
 		f = open(bfile,'w')
 		f.write("#!/bin/csh -f\n")
+		## if on cluster
+		if self.params['cluster'] is not None:
+			# distribute processes evenly
+			f.write("#PBS -N imagicClassify\n")
+			f.write("#PBS -l nodes=1:ppn=1\n")
+			f.write("#PBS -l walltime=240:00:00\n\n")
+			f.write("cd %s\n\n"%self.params['iterdir'])
 
 		f.write("setenv IMAGIC_BATCH 1\n")
 		f.write("%s/msa/classify.e <<EOF\n" % self.imagicroot)
@@ -663,6 +758,8 @@ class TopologyRepScript(appionScript.AppionScript):
 		f.write("YES\n")
 		f.write("NONE\n")
 		f.write("0\n")
+		if int(self.imagicversion) >= 120619:
+			f.write("NONE\n") # Mode of summing statistics
 		f.write("EOF\n")
 
 		## make eigenimage stack appion-compatible
@@ -677,7 +774,14 @@ class TopologyRepScript(appionScript.AppionScript):
 		apEMAN.executeEmanCmd("chmod 755 "+bfile)
 
 		apDisplay.printColor("Running IMAGIC .batch file: %s"%(os.path.abspath(bfile)), "cyan")
-		apIMAGIC.executeImagicBatchFile(os.path.abspath(bfile))
+		if self.params['cluster'] is not None:
+			subprocess.Popen("qsub %s"%bfile, shell=True).wait()
+			## wait for mra to finish
+			while not os.path.isfile("msaclassify_done.txt"):
+				time.sleep(10)
+			time.sleep(30)
+		else:
+			apIMAGIC.executeImagicBatchFile(os.path.abspath(bfile))
 
 		os.remove("msaclassify_done.txt")
 
@@ -904,6 +1008,8 @@ class TopologyRepScript(appionScript.AppionScript):
 		if self.params['bin'] > 1:
 			proccmd += " shrink=%d edgenorm"%(self.params['bin'])
 		proccmd += " last="+str(self.params['numpart']-1)
+		if self.params['invert'] is True:
+			proccmd += " invert"
 		if self.params['highpass'] is not None and self.params['highpass'] > 1:
 			proccmd += " hp="+str(self.params['highpass'])
 		if self.params['lowpass'] is not None and self.params['lowpass'] > 1:
@@ -911,7 +1017,10 @@ class TopologyRepScript(appionScript.AppionScript):
 		if self.params['premask'] is True and self.params['mramethod'] != 'imagic':
 			proccmd += " mask=%i"%self.params['mask']
 		if self.params['uploadonly'] is not True:
-			apEMAN.executeEmanCmd(proccmd, verbose=True)
+			if os.path.isfile(os.path.join(self.params['rundir'],"stack.hed")):
+				self.params['localstack']=os.path.join(self.params['rundir'],"stack.hed")
+			else:
+				apEMAN.executeEmanCmd(proccmd, verbose=True)
 			if self.params['numpart'] != apFile.numImagesInStack(self.params['localstack']):
 				apDisplay.printError("Missing particles in stack")
 
@@ -938,6 +1047,7 @@ class TopologyRepScript(appionScript.AppionScript):
 				# set up next iteration directory
 				self.params['currentiter'] = i
 				self.params['iterdir'] = os.path.abspath("iter%02i" % i)
+				self.params['iterdir'] = string.replace(self.params['iterdir'],"/jetstor/APPION","")
 				if os.path.exists(self.params['iterdir']):
 					apDisplay.printError("Error: directory '%s' exists, aborting alignment" % self.params['iterdir'])
 
@@ -980,10 +1090,12 @@ class TopologyRepScript(appionScript.AppionScript):
 			alliters = glob.glob("iter*")
 			alliters.sort()
 			os.chdir(alliters[-1])
+			self.params['iterdir'] = os.path.abspath(".")
 			## get iteration number from iter dir
 			self.params['currentiter'] = int(alliters[-1][-2:])
 			self.params['alignedstack'] = os.path.abspath("mrastack")
 			self.params['currentcls'] = "classes%02i"%(self.params['currentiter'])
+
 		### get particle information from last iteration
 		if self.params['mramethod']=='imagic':
 			partlist = self.readPartIMAGICFile()
@@ -997,11 +1109,12 @@ class TopologyRepScript(appionScript.AppionScript):
 		# move back to starting directory
 		os.chdir(self.params['rundir'])
 
-		# proc2d aligned stack to current directory for appionweb
+		# move aligned stack to current directory for appionweb
 		if not os.path.isfile("mrastack.hed"):
-			emancmd="proc2d "+self.params['alignedstack']+".hed mrastack.hed"
-			apEMAN.executeEmanCmd(emancmd)
-			apFile.removeStack(self.params['alignedstack'])
+			shutil.move(self.params['alignedstack']+".hed","mrastack.hed")
+			shutil.move(self.params['alignedstack']+".img","mrastack.img")
+			# rewrite header
+			imagicFilters.takeoverHeaders("mrastack",self.params['numpart'],self.workingboxsize)
 
 		### create an average mrc of final references 
 		if not os.path.isfile("average.mrc"):
