@@ -97,7 +97,7 @@ class SimCCDCamera(ccdcamera.CCDCamera):
 			raise ValueError('invalid image geometry')
 
 		for axis in ['x', 'y']:
-			if self.dimension[axis] % self.binning[axis] != 0:
+			if self.dimension[axis] * self.binning[axis] > self.getCameraSize()[axis]:
 				raise ValueError('invalid dimension/binning combination')
 
 		columns = self.dimension['x']
