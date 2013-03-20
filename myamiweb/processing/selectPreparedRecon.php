@@ -183,6 +183,10 @@ function jobForm($extra=false)
 	$phaseflipped 	= $stacks[0][phaseflipped];	
 	$stackfilename  = $stacks[0][filename]; 
 	
+	// Get the Kv, which is the high tension divided by 1000.
+	$hightension = $particle->getHighTensionFromSessionId( $expId );
+	$kv = $hightension/1000;
+	
 	// Get initial models
 	$models = $particle->getModelsFromRefineID( $refineID );
 	
@@ -221,6 +225,7 @@ function jobForm($extra=false)
 	$html.= "<input type='hidden' NAME='boxsize' value='".$boxsize."'>\n";
 	$html.= "<input type='hidden' NAME='phaseflipped' value='".$phaseflipped."'>\n";
 	$html.= "<input type='hidden' NAME='lastpart' value='".$lastPart."'>\n";
+	$html.= "<input type='hidden' NAME='kv' value='".$kv."'>\n";
 	
 	// Start Table
 	$html.= "<TABLE BORDER=0 CLASS=tableborder CELLPADDING=15>";	
@@ -332,6 +337,7 @@ function createCommand ($extra=False)
 	$stackName		= $_POST['stackfilename'];
 	$apix 			= $_POST['apix'];	
 	$cs 			= $_POST['cs'];	
+	$kv 			= $_POST['kv'];	
 	$boxsize 		= $_POST['boxsize'];	
 	$phaseflipped 	= $_POST['phaseflipped'];	
 	$totalPart  	= $_POST['lastpart'];
@@ -377,7 +383,8 @@ function createCommand ($extra=False)
 	$command .= "--boxsize=".$boxsize." ";
 	if ( $phaseflipped ) $command .= "--phaseflipped ";
 	$command .= "--totalpart=".$totalPart." ";
-	//$command .= "--cs=".$cs." "; //TODO: add this in when it is parsed on the python side
+	$command .= "--cs=".$cs." "; 
+	$command .= "--kv=".$kv." "; 
 	
 	// collect processing run parameters
 	$runParametersForm = new RunParametersForm();

@@ -279,10 +279,10 @@ abstract class BasicRefineForm extends BasicForm
 		$shortSize = 4;
 		$longSize = 20;
 		
-		$html .= $paramSet->insertTextField( "innerMaskRadius", $longSize, "(&Aring;ngstroms)" );
-		$html .= $paramSet->insertTextField( "outerMaskRadius", $longSize, "(&Aring;ngstroms)" );
-		$html .= $paramSet->insertTextField( "innerAlignRadius", $longSize, "(&Aring;ngstroms)" );
-		$html .= $paramSet->insertTextField( "outerAlignRadius", $longSize, "(&Aring;ngstroms)" );
+		$html .= $paramSet->insertTextField( "innerMaskRadius", $longSize, "(pixels)" );
+		$html .= $paramSet->insertTextField( "outerMaskRadius", $longSize, "(pixels)" );
+		$html .= $paramSet->insertTextField( "innerAlignRadius", $longSize, "(pixels)" );
+		$html .= $paramSet->insertTextField( "outerAlignRadius", $longSize, "(pixels)" );
 		$html .= $this->insertSymmetrySelectionBox( "symmetry", $paramSet->getParamValue("symmetry") );
 		$html .= "&nbsp;";
 		$html .=  docpop( "basicrefine.symmetry", $paramSet->getParamLabel("symmetry") );

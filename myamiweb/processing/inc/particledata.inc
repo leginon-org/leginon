@@ -1971,6 +1971,15 @@ class particledata {
 		$r = $this->mysql->getSQLResult($q);
 		return $r[0]['num'];
 	}
+	
+	function getHighTensionFromSessionId( $sessionId )
+	{
+		$q= "SELECT `high tension` FROM ".DB_LEGINON.".ScopeEMData AS s "
+			. "WHERE s.`REF|SessionData|session`='$sessionId' ";
+		//echo $q;
+		$r = $this->mysql->getSQLResult($q);
+		return $r[0]['high tension'];
+	}
 
 	function getSelectionRunIdFromPath($path){
 		$q= "SELECT r.* "
@@ -5397,7 +5406,7 @@ class particledata {
 		$r = $this->mysql->getSQLResult($q);
 		return $r;
 	}
-
+	
 	//------ -------------------- ---------//
 	//------ Loop again functions ---------//
 	//------ -------------------- ---------//

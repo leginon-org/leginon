@@ -211,7 +211,10 @@ _rlnAmplitudeContrast
 		self.addToLog('....Creating Relion .star file....')
 		self.createStarFile(relionParams)
 		stackpath = os.path.join( self.params['remoterundir'], self.params['stackname'] )
-		starCommandInsidePart = '{if ($1!="C") {print $1"@'+stackpath+'", $8, $9, $10, $11, " 80 2.0 0.1"}  }'
+		# TODO: Amplitude Contrast is hard coded below. This needs to be changed.
+		kv = str(self.params['kv'])
+		cs = str(self.params['cs'])
+		starCommandInsidePart = '{if ($1!="C") {print $1"@'+stackpath+'", $8, $9, $10, $11, " '+kv+' '+cs+' 0.1"}  }'
 		starCommand = "awk '"+starCommandInsidePart+"' < params.000.par >> %s" % (relionParams["i"])
 		tasks = self.addToTasks( tasks, starCommand )
 		

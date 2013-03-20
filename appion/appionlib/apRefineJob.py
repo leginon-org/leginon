@@ -88,6 +88,10 @@ class RefineJob(basicScript.BasicScript):
 			help="End refine at this iteration", metavar="INT")
 		self.parser.add_option('--setuponly', dest='setuponly', default=False, action='store_true',
 			help="setup without executing, for testing purpose")
+		self.parser.add_option("--cs", dest="cs", type="float", default=2.0,
+			help="Spherical Aboration", metavar="#")
+		self.parser.add_option("--kv", dest="kv", type="int", default=200,
+			help="High Tension value of scope in Kv", metavar="INT")
 		# set non-iteration list parameters that are separated by ','
 		self.setListParams()
 			# Refinement Iteration parameters
