@@ -230,8 +230,8 @@ class FrealignRefineForm extends BasicRefineForm
 	      if (obj.pbc) obj.pbc.value = '100';
 	      if (obj.itmax) obj.itmax.value = '10';
 	      if (obj.ipmax) obj.ipmax.value = '10';
-	      if (obj.hp) obj.hp.value = '10';
-	      if (obj.lp) obj.lp.value = '300';
+	      if (obj.hp) obj.hp.value = '300';
+	      if (obj.lp) obj.lp.value = '10';
 	      if (obj.reconstackval) obj.reconstackid.value = '';
 	      if (obj.dang) obj.dang.value = '5';
 	      if (obj.fmag) obj.fmag.checked = false;
@@ -272,8 +272,8 @@ class FrealignParams extends RefineFormParameters
 		$this->addParam( "pbc", $pbc, "Weight particles in reconstruction (PBC)" );
 		$this->addParam( "itmax", $itmax, "Number of randomized search trials (ITMAX)" );
 		$this->addParam( "ipmax", $ipmax, "Number of potential matches to refine (IPMAX)" );
-		$this->addParam( "lp", $lp, "Lower resolution limit or high-pass filter (RMAX1)" );
-		$this->addParam( "hp", $hp, "Higher resolution limit or low-pass filter (RMAX2)" );
+		$this->addParam( "hp", $hp, "Lower resolution limit or high-pass filter (RMAX1)" );
+		$this->addParam( "lp", $lp, "Higher resolution limit or low-pass filter (RMAX2)" );
 		$this->addParam( "reconstackid", $reconstackid, "Reconstruction Stack" );
 		$this->addParam( "dang", $dang, "Angular increment (DANG)" );
 		
