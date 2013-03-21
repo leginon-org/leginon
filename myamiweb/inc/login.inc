@@ -168,19 +168,8 @@ function checkExptAdminPrivilege($sessionId,$privilege_type='data') {
 	$userId = getLoginUserId();
 	if ($userId === true || privilege($privilege_type)>=4) return true;
 	if ($userId) {
-		global $dbemauth;
-		$q = "select o.`DEF_id` as ownerId "
-			."from ".DB_LEGINON.".`SessionData` s "
-			."left join projectexperiments pe "
-			."on s.`DEF_id` = pe.`REF|leginondata|SessionData|session` "
-			."left join projectowners o "
-			."on o.`REF|projects|project` = pe.`REF|projects|project` "
-			."where s.`DEF_id` = ".$sessionId." "
-			."and o.`REF|leginondata|UserData|user` = ".$userId;
-				$dbc=new mysql(DB_HOST, DB_USER, DB_PASS, DB_PROJECT);
-				$r = $dbc->getSQLResult($q);
-		if (is_array($r) && !empty($r)) 
-			return true;
+		// for other users,data processing is allowed if access is allowed.
+		return checkExptAccessPrivilege($sessionId,$privilege_type='data');
 	}
 	return false;
 }
