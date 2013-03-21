@@ -58,11 +58,16 @@ function checkJobs($showjobs=False, $showall=False, $extra=False) {
 		$jobinfo = $particle->getJobInfoFromId($jobid);
 		
 		// check if job has an associated jobfile
+		// works only if the file is already send to local appath
 		$jobfile = $job['appath'].'/'.$job['name'];
 		if (!file_exists($jobfile)) {
-			echo divisionHeader($jobinfo);
-			echo "<i>missing job file: $jobfile</i><br/><br/>\n";
-			continue;
+			// multiple qsub refinement does not generate .job but would generate .commands
+			$commandfile = substr($jobfile,0,-3).'commands';
+			if (!file_exists($commandfile)) {
+				echo divisionHeader($jobinfo);
+				echo "<i>missing job or commands file: $jobfile</i><br/><br/>\n";
+				continue;
+			}
 		}
 		
 		// display relevant info
