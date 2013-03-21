@@ -104,10 +104,11 @@ class FrealignRefineJob(apRefineJob.RefineJob):
 				# to be consistent with other packages, we will use percentDiscard instead of thresh as input param
 				{'name':"percentDiscard", 'default':0.2,
 					'help':"percent to include"},
-				{'name':"cs", 'default':2.0, 
-					'help':"spherical aberation"},
-				{'name':"kv", 'default':120.0, 
-					'help':"accelerlating voltage"},
+				# cs and kv are options in apRefineJob.py
+				#{'name':"cs", 'default':2.0, 
+				#	'help':"spherical aberation"},
+				#{'name':"kv", 'default':120.0, 
+				#	'help':"accelerlating voltage"},
 				# beamtiltx is always 0.0
 					#{'name':'beamtiltx', 'default': 0.0, 'help':'beam tilt in x direction'},
 				# beamtilty is always 0.0
