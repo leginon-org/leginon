@@ -101,11 +101,11 @@ class Agent (basicAgent.BasicAgent):
 	def Main(self,idtext,commands):
 		self.initiateTaskIdFile()
 		self.processingHost = self.createProcessingHost()
+		self.idtext = idtext
 
 		for command in commands:	 
 			try:   
 				self.currentJob = self.createJobInst(command)
-				self.currentJob.setName(idtext)
 			except Exception, e:
 				sys.stderr.write("Error: Could not create job  %s : %s\n" %(command, e))
 				sys.exit(1)
@@ -131,7 +131,7 @@ class Agent (basicAgent.BasicAgent):
 	def createJobInst(self, command):
 		jobInstance = None
 			
-		jobInstance = SimpleJob(command,self.rundir,ppn=self.ppn,nodes=self.nodes,mem=self.mem)
+		jobInstance = SimpleJob(command,self.idtext,self.rundir,ppn=self.ppn,nodes=self.nodes,mem=self.mem)
 		return jobInstance
 	##
 	#
