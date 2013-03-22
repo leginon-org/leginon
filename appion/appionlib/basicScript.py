@@ -40,6 +40,7 @@ class BasicScript(object):
 		self.parsePythonPath()
 		loadavg = os.getloadavg()[0]
 		if loadavg > 2.0:
+			apDisplay.printMsg("Load average is %.2f, wait for %.1f second " % (round(loadavg,2),loadavg**2))
 			time.sleep(loadavg**2)
 			apDisplay.printMsg("Load average is high "+str(round(loadavg,2)))
 
