@@ -72,8 +72,8 @@ class FrealignRefineForm extends BasicRefineForm
 		$html .=  $paramSet->insertCheckboxField( "ffilt" );
 		$html .=  $paramSet->insertCheckboxField( "fbfact" );
 		$html .=  $paramSet->insertCheckboxField( "pbc" );
-		$html .=  $paramSet->insertTextField( "hp", $shortSize, "(in &Aring;ngstroms)" );
-		$html .=  $paramSet->insertTextField( "lp", $shortSize, "(in &Aring;ngstroms; default 2*Nyquist)" );
+		$html .=  $paramSet->insertTextField( "hp", $shortSize, "(in &Aring;ngstroms; default 2*Nyquist)" );
+		$html .=  $paramSet->insertTextField( "lp", $shortSize, "(in &Aring;ngstroms)" );
 		$html .=  $paramSet->insertTextField( "wgh", $shortSize, "(percent)");
 		// These parameters may be added back in when we add the search feature
 		//$html .=  $paramSet->insertTextField( "dang", $shortSize );
