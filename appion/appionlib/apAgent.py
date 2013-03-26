@@ -50,6 +50,10 @@ class Agent (basicAgent.BasicAgent):
 			sys.stderr.write("Error: Could not create job for: %s\n" % (command))
 			sys.exit(1)
 
+		if self.currentJob.getSetupOnly():
+			sys.stderr.write("Create job but not execute %s\n" % (command))
+			sys.exit(1)
+
 		if not self.currentJob.getLaunchAsShell():
 			# typical case that put all commands in one queued job script
 			hostJobId = self.processingHost.launchJob(self.currentJob)

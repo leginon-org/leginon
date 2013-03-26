@@ -279,22 +279,26 @@ class RefineJob(basicScript.BasicScript):
 	def makeNewTrialScript(self):
 		'''
 		Package-specific function to make job script for tasks that set up files required to start a
-		clean refine/reconstruction trial, including removal of the old trial
+		clean refine/reconstruction trial, including removal of the old trial. The job script starts
+		at recondir
 		'''
 		pass
 
 	def __makeNewTrialScript(self):
 		'''
 		Function to make job script for tasks that set up files required to start a
-		clean refine/reconstruction trial, including removal of the old trial content
+		clean refine/reconstruction trial. The job script starts and ends at remoterundir
 		'''
 		pretasks = {}
 		pretasks = self.addToTasks(pretasks,'# setup directory')
+		pretasks = self.addToTasks(pretasks,'# recon dir may already exist with mpi commands during preparation')
+		pretasks = self.addToTasks(pretasks,'#   of the job script. O.K. if mkdir fails')
 		pretasks = self.addToTasks(pretasks,'mkdir -p %s' % self.params['recondir'])
 		pretasks = self.addToTasks(pretasks,'cd %s' % self.params['recondir'])
 		pretasks = self.addToTasks(pretasks,'')
 		pretasks = self.addToTasks(pretasks,'/bin/rm -fv resolution.txt')
 		pretasks = self.addToTasks(pretasks,'touch resolution.txt')
+		pretasks = self.addToTasks(pretasks,'cd %s' % self.params['remoterundir'])
 		self.addJobCommands(pretasks)
 		self.addSimpleCommand('')
 
@@ -513,12 +517,18 @@ class RefineJob(basicScript.BasicScript):
 		if self.isNewTrial():
 			self.addSimpleCommand('')
 			self.addToLog('....Setting up new refinement job trial....')
-			# removeReconDir is not included in NewTrialScript because it is needed 
-			# in setting up scripts even if it is not run.
+			# __removeReconDir is not in NewTrialScript because it is needed 
+			# in setting up scripts even if the job script is not run.
 			self.__removeReconDir()
-			self.__makeNewTrialScript()
+			# __createReconDir physically creates recondir before or without
+			# jobscript running so prepartion per iteration can be done.
 			self.__createReconDir()
+			self.__makeNewTrialScript()
+			self.addSimpleCommand('# go to recondir after global new trial commands')
+			self.addSimpleCommand('cd %s' % self.params['recondir'])
 			self.makeNewTrialScript()
+			self.addSimpleCommand('# return to rundir after package new trial commands')
+			self.addSimpleCommand('cd %s' % self.params['remoterundir'])
 		self.addSimpleCommand('')
 		self.__makePreIterationScript()
 		self.makePreIterationScript()
@@ -581,6 +591,8 @@ class RefineJob(basicScript.BasicScript):
 		return self.rundir    
 	def getLaunchAsShell(self):
 		return self.launch_as_shell    
+	def getSetupOnly(self):
+		return self.setuponly  
 	
 class Tester(RefineJob):
 	def makeRefineScript(self,iter):
