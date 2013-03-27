@@ -635,7 +635,7 @@ class AppionLoop(appionScript.AppionScript):
 		swapfree = mem.swapfree()
 		minavailmem = 64*1024; # 64 MB, size of one image
 		if(memfree < minavailmem):
-			apDisplay.printError("Memory is low ("+str(int(memfree/1024))+"MB): there is probably a memory leak")
+			apDisplay.printWarning("Memory is low ("+str(int(memfree/1024))+"MB): there is probably a memory leak")
 
 		if(self.stats['count'] > 15):
 			memlist = self.stats['memlist'][-15:]
@@ -658,7 +658,7 @@ class AppionLoop(appionScript.AppionScript):
 			memleak = rho*slope
 			###
 			if(self.stats['memleak'] > 3 and slope > 20 and memleak > 512 and gain > 2048):
-				apDisplay.printError("Memory leak of "+str(round(memleak,2))+"MB")
+				apDisplay.printWarning("Memory leak of "+str(round(memleak,2))+"MB")
 			elif(memleak > 32):
 				self.stats['memleak'] += 1
 				apDisplay.printWarning("substantial memory leak "+str(round(memleak,2))+"MB")
