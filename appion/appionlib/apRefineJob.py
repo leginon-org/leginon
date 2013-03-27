@@ -74,6 +74,8 @@ class RefineJob(basicScript.BasicScript):
 			help="Particle stack path", metavar="FILENAME")
 		self.parser.add_option("--modelnames", dest="modelnames",
 			help="Initial Model volume path", metavar="FILENAME")
+		self.parser.add_option("--symmetry", dest="symmetry", default='',
+			help='symmetry name (i.e. c1 or C1)', metavar="text")
 		self.parser.add_option("-N", "--totalpart", dest="totalpart", type="int", default=None,
 			help="Number of particles in the particle stack", metavar="#")
 		self.parser.add_option("--boxsize", dest="boxsize", type="int", default=None,
@@ -110,6 +112,10 @@ class RefineJob(basicScript.BasicScript):
 			apDisplay.printError("enter at least one 3D initial model volume file, e.g. --modelnames=initial.mrc")
 		if self.params['stackname'] is None:
 			apDisplay.printError("enter a particle stack file, e.g. --stackname=start.hed")
+		if 'symmetry' not in self.params.keys() or self.params['symmetry'] == '':
+			apDisplay.printError("Symmetry was not defined")
+		self.params['symmetry'] = self.convertSymmetryNameForPackage(self.params['symmetry'])
+
 		if self.params['boxsize'] is None:
 			apDisplay.printError("enter the stack boxsize, e.g. --boxsize=64")
 		if self.params['stackname'] is None:
@@ -142,7 +148,6 @@ class RefineJob(basicScript.BasicScript):
 
 	def setIterationParamList(self):
 		self.iterparams = [
-				{'name':'symmetry','default':'','help':'symmetry name (i.e. c1 or C1)'},
 				{'name':'angSampRate','default':'5.0','help':'angular increment (degrees)'},
 				{'name':'outerMaskRadius','default':'0','help':'mask radius (pixels) autoset if 0'},
 				{'name':'innerMaskRadius','default':'0','help':'mask radius (pixels) autoset if 0'},
@@ -170,16 +175,12 @@ class RefineJob(basicScript.BasicScript):
 		boxsizeAngstrom = self.params['boxsize'] * self.params['apix']
 		maxmask = int(math.floor(boxsizeAngstrom/2.0))-2
 		for iter in range(self.params['numiter']):
-			if 'symmetry' not in self.params.keys() or self.params['symmetry'][iter] == '':
-				apDisplay.printError("Symmetry was not defined")
-
 			if self.params['outerMaskRadius'][iter] == 0:
 				apDisplay.printWarning("mask was not defined, setting to boxsize: %d"%(maxmask))
 				self.params['outerMaskRadius'][iter] = maxmask
 			if self.params['outerMaskRadius'][iter] > maxmask:
 				apDisplay.printWarning("mask was too big, setting to boxsize: %d"%(maxmask))
 				self.params['outerMaskRadius'][iter] = maxmask
-			self.params['symmetry'][iter] = self.convertSymmetryNameForPackage(self.params['symmetry'][iter])
 
 	def convertSymmetryNameForPackage(self,symm_name):
 		return symm_name.replace(' (z)','')
