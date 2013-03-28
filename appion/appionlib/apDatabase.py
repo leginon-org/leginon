@@ -109,6 +109,14 @@ def getAllImagesFromDB(session):
 	return imgtree
 
 #================
+def getImageDataFromSpecificImageId(imageid):
+	imagedata = leginon.leginondata.AcquisitionImageData().direct_query(imageid)
+	if imagedata:
+		return imagedata
+	else:
+		apDisplay.printError('Image (id=%d) does not exist' % (imageid))
+
+#================
 def getRefImageDataFromSpecificImageId(reftype,imageid):
 		q = leginon.leginondata.AcquisitionImageData()
 		imagedata = q.direct_query(imageid)
