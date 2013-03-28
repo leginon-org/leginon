@@ -162,6 +162,8 @@ class genericJob(object):
 	def getJobName(self):
 		return self.runname + ".job"
 	def getLaunchAsShell(self):
-		return self.launch_as_shell    
+		return self.launch_as_shell
+        def getSetupOnly(self):
+		return False
 	
 
