@@ -63,7 +63,7 @@ def removeDir(dirname, warn=True):
 #===============
 def removeStack(filename, warn=True):
 	rootname = os.path.splitext(filename)[0]
-	for f in (rootname+".hed", rootname+".img"):
+	for f in (rootname+".hed", rootname+".img", rootname+".hdf"):
 		if os.path.isfile(f):
 			if warn is True:
 				apDisplay.printWarning("removing stack: "+f)
