@@ -161,7 +161,10 @@ function stacksummarytable($stackid, $mini=false, $tiny=false, $showOptions=True
 	$downloadLink .= "  <img style='vertical-align:middle' src='img/download_arrow.png' border='0' width='16' height='17' alt='download coordinates'>";
 	$downloadLink .= "  &nbsp;download particles data\n";
 	$downloadLink .= "</a></font>)\n";
-	$j.= $downloadLink;	
+	$j.= $downloadLink;
+	## link to list ctf values
+	if ($particle->hasCtfData($expId))
+		$j.= "<input class='edit' type='button' onClick='window.open(\"listCTFvalues.php?expId=$expId&sId=$stackid\")' value = 'list per-particle CTF info'>\n";
 	$stacktable.= apdivtitle($j);
 	
 	if ($tiny)
