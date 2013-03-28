@@ -19,7 +19,7 @@ import pyami.quietscipy
 from scipy import ndimage
 
 #maximum allowed stack size in gigabytes (GB)
-memorylimit = 1.9
+memorylimit = 3.9
 bytelimit = memorylimit*(1024**3)
 
 #===============
