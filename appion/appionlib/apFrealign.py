@@ -141,7 +141,7 @@ def getStackParticlesInOrder(params):
 
 def convertFrealignSymToAppionSym(frealign_symtext):
 	if frealign_symtext[0].lower() == 'i':
-		icosdict = {'i':'Icos (5 3 2) Viper/3DEM','i2':'Icos (2 5 3) Crowther'}
+		icosdict = {'i':'Icos (2 3 5) Viper/3DEM','i2':'Icos (2 5 3) Crowther'}
 		return icosdict[frealign_symtext.lower()]
 	elif frealign_symtext[0] == 'O':
 		return 'Oct'
