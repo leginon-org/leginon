@@ -15,7 +15,8 @@ require_once "inc/viewer.inc";
 require_once "inc/project.inc";
 require_once "inc/summarytables.inc";
 
-if ($_POST) {
+// Currently, maskiton cannot connect to our DB, so skip selecting a stack in the gui, the user will need to upload it to the maskiton server.
+if (True /*$_POST*/) {
 	createMaskitonForm();
 } else {
 	createSelectStackForm();
@@ -41,8 +42,10 @@ function createMaskitonForm($extra=false, $title='Maskiton Launcher', $heading='
 		echo "<font color='#cc3333' size='+2'>$extra</font>\n<hr/>\n";
 	}
 	
-	echo "<Iframe src='http://maskiton.scripps.edu/masking.html?projectid=$projectId&stackid=$stackval' width='800' height='800'></Iframe><br /><br />\n";
-
+	// This stopped working. Users need to upload a stack to the maskiton server to work with it.
+	//echo "<Iframe src='http://maskiton.scripps.edu/masking.html?projectid=$projectId&stackid=$stackval' width='800' height='800'></Iframe><br /><br />\n";
+	echo "<Iframe src='http://maskiton.scripps.edu/' width='800' height='800'></Iframe><br /><br />\n";
+	
 	processing_footer();
 }
 
