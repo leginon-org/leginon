@@ -4484,8 +4484,9 @@ class particledata {
 	}
 	
 	function getPreparedRefineStackData ( $refineid ) {
-		$q = "SELECT stack.*  "
+		$q = "SELECT stack.*, stackref.pixelsize AS parent_pixelsize  "
 			. " FROM ApRefineStackData AS stack "
+			. " LEFT JOIN ApStackData AS stackref ON ( stackref.`DEF_id` = stack.`REF|ApStackData|stackref` ) "
 			. " WHERE stack.`REF|ApPrepRefineData|preprefine` = $refineid ";
 		//echo $q."<br/><br/>\n";
 		$r = $this->mysql->getSQLResult($q);

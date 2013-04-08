@@ -287,7 +287,8 @@ class uploadXmippProjectionMatchingRefinementScript(reconUploader.generalReconUp
 		### set global parameters
 		runparams = {}
 		runparams['numiter'] = packageparams['NumberofIterations']
-		runparams['mask'] = packageparams['MaskRadius']
+		# Mask should be in pixels of original stack
+		runparams['mask'] = packageparams['MaskRadius'] # TODO: multiply by the boxscale of the prepped vs original stack
 		runparams['alignmentInnerRadius'] = packageparams['InnerRadius']
 		runparams['alignmentOuterRadius'] = packageparams['OuterRadius']
 		runparams['symmetry'] = apSymmetry.findSymmetry(sym)

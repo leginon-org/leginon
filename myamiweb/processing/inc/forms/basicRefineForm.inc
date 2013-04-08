@@ -92,6 +92,7 @@ abstract class BasicRefineForm extends BasicForm
 				$this->stackInfo['boxsize'] = $stack[boxsize];	
 				$this->stackInfo['lastPart'] = $stack[last_part];
 				$this->stackInfo['stackfilename'] = $stack[filename];
+				$this->stackInfo['parent_apix'] = $stack[parent_pixelsize] / 1e-10; // the angstroms per pixel for the original stack the refine stack was made from
 				
 				break;
 			}			
@@ -213,6 +214,7 @@ abstract class BasicRefineForm extends BasicForm
 		// get our stack info
 		$stackInfo 	= $this->getStackInfo();
 		$box 		= $stackInfo['boxsize'];
+		$parent_apix = $stackInfo['parent_apix'];
 		
 		// use the two stacks to get scaling factor for box sizes
 		$importBox 	= $importStackInfo['boxsize'];
@@ -226,12 +228,14 @@ abstract class BasicRefineForm extends BasicForm
 		// add each iteration value to our forms parameters
 		for ( $i = 1; $i <= $endIter; $i++ ) {
 			foreach ($iterinfo as $iter) {
-				if ($iter['iteration'] == $i) {					
-					$outerMaskRadius = ceil($iter['mask']*$boxscale);
-					$paramSet->addIterationToValue( "outerMaskRadius", $outerMaskRadius );
+				if ($iter['iteration'] == $i) {	
+					// The masks are stored as pixels in the database, so when importing from a prior run,
+					// we need to multiply the original stack apix by the recorded mask pixel to get the angstroms				
+					$outerMaskRadius = ceil($iter['mask']*$parent_apix);
+					$paramSet->addIterationToValue( "outerMaskRadius", $outerMaskRadius ); // in angstroms
 					
-					if (floor($iter['imask']*$boxscale) > 0)
-						$paramSet->addIterationToValue( "innerMaskRadius", floor($iter['imask']*$boxscale) );
+					if (floor($iter['imask']*$parent_apix) > 0)
+						$paramSet->addIterationToValue( "innerMaskRadius", floor($iter['imask']*$parent_apix) ); // in angstroms
 						
 					$this->addImportedRefineIter( $paramSet, $iter );
 						
@@ -279,10 +283,10 @@ abstract class BasicRefineForm extends BasicForm
 		$shortSize = 4;
 		$longSize = 20;
 		
-		$html .= $paramSet->insertTextField( "innerMaskRadius", $longSize, "(pixels)" );
-		$html .= $paramSet->insertTextField( "outerMaskRadius", $longSize, "(pixels)" );
-		$html .= $paramSet->insertTextField( "innerAlignRadius", $longSize, "(pixels)" );
-		$html .= $paramSet->insertTextField( "outerAlignRadius", $longSize, "(pixels)" );
+		$html .= $paramSet->insertTextField( "innerMaskRadius", $longSize, "(&Aring;ngstroms)" );
+		$html .= $paramSet->insertTextField( "outerMaskRadius", $longSize, "(&Aring;ngstroms)" );
+		$html .= $paramSet->insertTextField( "innerAlignRadius", $longSize, "(&Aring;ngstroms)" );
+		$html .= $paramSet->insertTextField( "outerAlignRadius", $longSize, "(&Aring;ngstroms)" );
 		$html .= $this->insertSymmetrySelectionBox( "symmetry", $paramSet->getParamValue("symmetry") );
 		$html .= "&nbsp;";
 		$html .=  docpop( "basicrefine.symmetry", $paramSet->getParamLabel("symmetry") );
@@ -370,18 +374,21 @@ abstract class BasicRefineForm extends BasicForm
 	public function setDefaults()
 	{
 		$stack = $this->getStackInfo();
+		var_dump($stack);
 		$box = $stack['boxsize'];
+		$apix = $stack['apix'];
 		$sym = $this->getSymmetry();
 		
 		// make sure radius is smaller than half of the box size
-		$rad = ($box/2)-2;
+		$radPix = ($box/2)-2;
+		$radAng = round($radPix * $apix);
 		$javafunc = "
 	  <script type='text/javascript'>
 	    function setDefaults(obj) {
-	      if (obj.outerMaskRadius) obj.outerMaskRadius.value = $rad;
+	      if (obj.outerMaskRadius) obj.outerMaskRadius.value = $radAng;
 	      if (obj.innerMaskRadius) obj.innerMaskRadius.value = 0;
 	      if (obj.innerAlignRadius) obj.innerAlignRadius.value = '4';
-	      if (obj.outerAlignRadius) obj.outerAlignRadius.value = $rad;
+	      if (obj.outerAlignRadius) obj.outerAlignRadius.value = $radAng;
 	      if (obj.symmetry) obj.symmetry.value = '$sym';
 	      if (obj.endIter) obj.endIter.value = '10';
 	      if (obj.angSampRate) obj.angSampRate.value = '4x10 2x5 2x3 2x2';

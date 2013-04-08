@@ -116,7 +116,7 @@ class EmanRefineForm extends BasicRefineForm
 		// add default value sets to populate the import parameters form 
 		$id 				= 'asymm';
 		$label 				= 'Mostly asymmetric particle';
-		$outerMaskRadius 	= '126';
+		$outerMaskRadius 	= '126'; //TODO: this should not be hard coded???
 		$innerMaskRadius 	= '';
 		$outerAlignRadius 	= '';	 
 		$innerAlignRadius 	= ''; 
@@ -213,13 +213,15 @@ class EmanRefineForm extends BasicRefineForm
 	{
 		$stackInfo = $this->getStackInfo();
 		$box = $stackInfo['boxsize'];
+		$apix = $stackInfo['apix'];
 		$sym = $this->getSymmetry();
 		
-		$rad = ($box/2)-2;
+		$radPix = ($box/2)-2;
+		$radAng = round($radPix * $apix);
 		$javafunc = "
 	  <script type='text/javascript'>
 	    function setDefaults(obj) {
-	      obj.outerMaskRadius.value = $rad;
+	      obj.outerMaskRadius.value = $radAng;
 	      obj.innerMaskRadius.value = 0;
 	      obj.angSampRate.value = '4x10:2x5:2x3:2x2';
 	      obj.symmetry.value = '$sym';

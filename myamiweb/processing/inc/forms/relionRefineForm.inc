@@ -81,6 +81,7 @@ class RelionRefineForm extends BasicRefineForm
 	{
 		$stack = $this->getStackInfo();
 		$box = $stack['boxsize'];
+		$apix = $stack['apix'];
 		$sym = $this->getSymmetry();
 		
 		// There are different default values for icosohedral symmetries
@@ -92,11 +93,12 @@ class RelionRefineForm extends BasicRefineForm
 			$auto_local_healpix_order = 1.8;
 		}
 		
-		$rad = ($box/2)-2;
+		$radPix = ($box/2)-2;
+		$radAng = round($radPix * $apix);
 		$javafunc = "
 	  <script type='text/javascript'>
 	    function setDefaults(obj) {
-	      if (obj.outerMaskRadius) obj.outerMaskRadius.value = $rad;
+	      if (obj.outerMaskRadius) obj.outerMaskRadius.value = $radAng;
 	      if (obj.symmetry) obj.symmetry.value = '$sym';
 	      if (obj.ctf) obj.ctf.checked = true;
 	      if (obj.ctf_intact_first_peak) obj.ctf_intact_first_peak.checked = false;

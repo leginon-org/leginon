@@ -149,8 +149,8 @@ class RefineJob(basicScript.BasicScript):
 	def setIterationParamList(self):
 		self.iterparams = [
 				{'name':'angSampRate','default':'5.0','help':'angular increment (degrees)'},
-				{'name':'outerMaskRadius','default':'0','help':'mask radius (pixels) autoset if 0'},
-				{'name':'innerMaskRadius','default':'0','help':'mask radius (pixels) autoset if 0'},
+				{'name':'outerMaskRadius','default':'0','help':'mask radius (angstroms) autoset if 0'},
+				{'name':'innerMaskRadius','default':'0','help':'mask radius (angstroms) autoset if 0'},
 				]
 
 	def __convertIterationParams(self):

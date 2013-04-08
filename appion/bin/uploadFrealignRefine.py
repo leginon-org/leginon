@@ -178,6 +178,7 @@ class UploadFrealignScript(reconUploader.generalReconUploader):
 		iterparams['ipmax'] = int(data[9])
 
 		### get symmetry info from card #5
+		apDisplay.printMsg("Found Frealign symmetry %s in card 5"%(cards[5], ))
 		symtext = apFrealign.convertFrealignSymToAppionSym(cards[5])
 		symmdata = apSymmetry.findSymmetry(symtext)
 		apDisplay.printMsg("Found symmetry %s with id %s"%(symmdata['eman_name'], symmdata.dbid))
@@ -215,7 +216,8 @@ class UploadFrealignScript(reconUploader.generalReconUploader):
 		### set global parameters
 		runparams = {}
 		runparams['numiter'] = self.findLastCompletedIteration()
-		runparams['mask'] = int(iterparams['mask'])
+		# Mask should be in pixels of original stack
+		runparams['mask'] = int(iterparams['mask']) #TODO: divide by the apix of the original stack
 		runparams['imask'] = int(iterparams['imask'])
 		runparams['symmetry'] = iterparams['symmdata']
 		runparams['package_params'] = iterparams

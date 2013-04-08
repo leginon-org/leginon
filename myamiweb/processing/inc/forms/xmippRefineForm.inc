@@ -168,16 +168,18 @@ class XmippRefineForm extends BasicRefineForm
 	{
 		$stack = $this->getStackInfo();
 		$box = $stack['boxsize'];
+		$apix = $stack['apix'];
 		$sym = $this->getSymmetry();
 		
-		$rad = ($box/2)-2;
+		$radPix = ($box/2)-2;
+		$radAng = round($radPix * $apix);
 		$javafunc = "
 	  <script type='text/javascript'>
 	    function setDefaults(obj) {
-	      if (obj.outerMaskRadius) obj.outerMaskRadius.value = $rad;
+	      if (obj.outerMaskRadius) obj.outerMaskRadius.value = $radAng;
 	      if (obj.innerMaskRadius) obj.innerMaskRadius.value = 0;
 	      if (obj.innerAlignRadius) obj.innerAlignRadius.value = '4';
-	      if (obj.outerAlignRadius) obj.outerAlignRadius.value = $rad;
+	      if (obj.outerAlignRadius) obj.outerAlignRadius.value = $radAng;
 	      if (obj.symmetry) obj.symmetry.value = '$sym';
 	      if (obj.endIter) obj.endIter.value = '10';
 	      if (obj.angSampRate) obj.angSampRate.value = '4x10:2x5:2x3:2x2';
