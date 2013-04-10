@@ -12,7 +12,7 @@ require_once "basicForm.inc";
 class MakeDDStackForm extends BasicForm
 
 {
-	function __construct( $align='', $defergpu='' ) 
+	function __construct( $align='', $defergpu='', $bin=2 ) 
 	{
 		parent::__construct();
 		$params = $this->getFormParams();
@@ -22,6 +22,7 @@ class MakeDDStackForm extends BasicForm
 				
 		$params->addParam( "align", $align, "align" );
 		$params->addParam( "defergpu", $defergpu, "defer gpu processing" );
+		$params->addParam( "bin", $bin, "binning" );
 		
 		// Validations
 		//$params->addValidation( "numpart", "req" );
@@ -32,12 +33,13 @@ class MakeDDStackForm extends BasicForm
 		$this->updateFormParams();
 		$params = $this->getFormParams();
 		
-		$fieldSize = 7;
+		$fieldSize = 2;
 		
 		$html .= "<b>Make DD stack params:</b><br />\n";
 		
 		$html.= $params->insertCheckboxField( "align" );
 		$html.= $params->insertCheckboxField( "defergpu" );
+		$html.= $params->insertTextFieldInRow( "bin", $fieldSize );
 		
 		return $html;
 	}	

@@ -543,5 +543,6 @@ var help = {
 	'makeDDStack' : {
 		'align' : 'Select to align the images.',
 		'defergpu' : 'Select defer gpu if this job will be launched on a computer without GPU capability. The alignment can be done after building the stack by running catchUpDDAlign.py',
+		'bin' : 'Binning of the image.  This takes any integer value, but powers of 2 are recommended. Binning quickly shrinks the image to help make the processing faster.',
 	}		
 }
