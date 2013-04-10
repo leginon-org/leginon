@@ -71,6 +71,11 @@ class redux{
 		$str = $this->cacheOff ? '1' : '0'; 
 		return $str;
 	}
+
+	function getCacheOn(){
+		$str = ($this->cacheOff === false) ? '0' : '1'; 
+		return $str;
+	}
 	function getRGB(){
 		$str = $this->rgb ? '1' : '0'; 
 		return $str;
@@ -323,7 +328,7 @@ class redux{
 		$str .= 'filename=' . $this->getFilename();
 		//$str .= empty($this->padShape) ? '' : '&padshape=' . $this->getPadShape();
 		$str .= empty($this->power) ? '' : '&power=' . $this->getPower();
-		$str .= empty($this->cacheOff) ? '' : '&cache=' . $this->getCacheOff();
+		$str .= empty($this->cacheOff) ? '' : '&cache=' . (int) !$this->getCacheOn();
 		$str .= empty($this->info) ? '' : '&info=' . $this->getInfo();
 		$str .= empty($this->maskRadius) ? '' : '&maskradius=' . $this->getMaskRadius();
 		$str .= empty($this->rgb) ? '' : '&rgb=' . $this->getRGB();
