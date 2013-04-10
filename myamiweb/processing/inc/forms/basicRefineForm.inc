@@ -374,7 +374,6 @@ abstract class BasicRefineForm extends BasicForm
 	public function setDefaults()
 	{
 		$stack = $this->getStackInfo();
-		var_dump($stack);
 		$box = $stack['boxsize'];
 		$apix = $stack['apix'];
 		$sym = $this->getSymmetry();
