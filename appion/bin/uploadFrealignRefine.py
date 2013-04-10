@@ -216,9 +216,10 @@ class UploadFrealignScript(reconUploader.generalReconUploader):
 		### set global parameters
 		runparams = {}
 		runparams['numiter'] = self.findLastCompletedIteration()
-		# Mask should be in pixels of original stack
-		runparams['mask'] = int(iterparams['mask']) #TODO: divide by the apix of the original stack
-		runparams['imask'] = int(iterparams['imask'])
+		# Mask should be in pixels of original stack, frealign returns the mask as angstroms,
+		# so divide the mask by the apix of the original stack
+		runparams['mask'] = int(iterparams['mask'] / self.runparams['original_apix'])
+		runparams['imask'] = int(iterparams['imask'] / self.runparams['original_apix'])
 		runparams['symmetry'] = iterparams['symmdata']
 		runparams['package_params'] = iterparams
 		runparams['remoterundir'] = self.params['rundir']

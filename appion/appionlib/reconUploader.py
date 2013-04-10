@@ -45,6 +45,7 @@ class generalReconUploader(appionScript.AppionScript):
 			help="jobid of refinement", metavar="INT")
 		self.parser.add_option("--timestamp", dest="timestamp", type="str",
 			help="timestampe associated with refinement, e.g. --timestamp=08nov25c07", metavar="INT")
+		# This is the stack id of the original stack (not the temporary refine stack created during the prep step)
 		self.parser.add_option("-s", "--stackid", dest="stackid", type="int",
 			help="Stack database id", metavar="ID#")
 		self.parser.add_option("--modelid", dest="modelid", type="str", 	
@@ -54,8 +55,10 @@ class generalReconUploader(appionScript.AppionScript):
 			help="number of references produced during refinement", metavar="INT")
 		self.parser.add_option("--numiter", dest="numiter", type="int",
 			help="number of iterations performed during refinement", metavar="INT")
+		# This is the apix of the prepared refine stack, which may be different from the original stack.
 		self.parser.add_option("--apix", dest="apix", type="float",
 			help="pixelsize of the particles / map during refinement", metavar="FLOAT")		
+		# This is the boxsize of the prepared refine stack, which may be different from the original stack.
 		self.parser.add_option("--boxsize", dest="boxsize", type="int",
 			help="boxsize of the particles / map during refinement", metavar="INT")
 		self.parser.add_option("--symid", dest="symid", type="int",
@@ -79,6 +82,10 @@ class generalReconUploader(appionScript.AppionScript):
 	def checkConflicts(self):
 		''' These are required error checks, everything else should be possible to obtain from the timestamped pickle file '''
 
+		stackdata = apStack.getOnlyStackData(self.params['stackid'])
+		self.runparams['original_apix'] = ( stackdata['pixelsize'] / 1e-10 ) # convert pixelsize to angstroms per pixel.
+		self.runparams['original_boxsize'] = stackdata['boxsize']
+		
 		### unpickle results or parse logfile, set default parameters if missing
 		os.chdir(os.path.abspath(self.params['rundir']))
 		if os.path.isdir(os.path.join(self.params['rundir'], "recon")):

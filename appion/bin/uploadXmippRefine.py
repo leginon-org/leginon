@@ -287,10 +287,13 @@ class uploadXmippProjectionMatchingRefinementScript(reconUploader.generalReconUp
 		### set global parameters
 		runparams = {}
 		runparams['numiter'] = packageparams['NumberofIterations']
-		# Mask should be in pixels of original stack
-		runparams['mask'] = packageparams['MaskRadius'] # TODO: multiply by the boxscale of the prepped vs original stack
-		runparams['alignmentInnerRadius'] = packageparams['InnerRadius']
-		runparams['alignmentOuterRadius'] = packageparams['OuterRadius']
+		# Mask should be in pixels of original stack. Xmipp returns pixels in terms of preped stack.
+		# so orig_pix = preped_pix * (orig_boxsize / preped_boxsize). 
+		# This is needed in case the prepedatack was binned.
+		boxscale = self.runparams['original_boxsize'] / self.runparams['boxsize']
+		runparams['mask'] = packageparams['MaskRadius'] * boxscale 
+		runparams['alignmentInnerRadius'] = packageparams['InnerRadius'] * boxscale
+		runparams['alignmentOuterRadius'] = packageparams['OuterRadius'] * boxscale
 		runparams['symmetry'] = apSymmetry.findSymmetry(sym)
 		runparams['angularSamplingRate'] = packageparams['AngSamplingRateDeg']
 		runparams['apix'] = packageparams['ResolSam']
