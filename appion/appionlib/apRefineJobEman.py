@@ -121,7 +121,7 @@ class EmanRefineJob(apRefineJob.RefineJob):
 
 	def makeRefineTasks(self,iter):
 		iter_index = iter - self.params['startiter']
-		refine_mem = self.calcRefineMem(self.ppn,self.params['boxsize'],self.params['symmetry'][iter_index],self.params['ang'][iter_index])
+		refine_mem = self.calcRefineMem(self.ppn,self.params['boxsize'],self.params['symmetry'],self.params['ang'][iter_index])
 		nproc = self.params['nproc']
 		refineparams,eotestparams = self.setEmanRefineParams(iter)
 		refinetask_list = ['refine','%d'%iter,'proc=%d' % nproc]
