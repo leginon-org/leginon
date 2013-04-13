@@ -272,7 +272,7 @@ class viewer {
 	function addFileSelector($filenames=array(), $size=40) {
 		if ($size) $htmlsize = "size=$size";
 		$selector = '#images :'.count($filenames).'<br />';
-		$selector .= '<select style="width: 250px" name="imageId" '.$htmlsize .' >'.$this->crlf;
+		$selector .= '<select style="width: 250px text-align:right" name="imageId" '.$htmlsize .' >'.$this->crlf;
 		$default = ($this->imageId) ? $this->imageId : $filenames[0][id];
 		foreach ((array)$filenames as $filename) {
 			$filestr = preg_replace('%[[:alnum:]]+_(.*)%', '\1', $filename[name]);
@@ -283,6 +283,7 @@ class viewer {
 			$filestr = preg_replace('%square%', 'sq', $filestr);
 			$filestr = preg_replace('%hole%', 'hl', $filestr);
 			$filestr = preg_replace('%focus%', 'fc', $filestr);
+			$filestr = preg_replace('%.mrc%', '', $filestr);
 			if ($filename[id]==$default) $s='selected'; else $s='';
 				$selector .= '<option value='.$filename[id].' '.$s.' >'.$filestr.$this->crlf; 
 		}
