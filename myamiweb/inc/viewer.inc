@@ -272,7 +272,7 @@ class viewer {
 	function addFileSelector($filenames=array(), $size=40) {
 		if ($size) $htmlsize = "size=$size";
 		$selector = '#images :'.count($filenames).'<br />';
-		$selector .= '<select style="width: 250px text-align:right" name="imageId" '.$htmlsize .' >'.$this->crlf;
+		$selector .= '<select style="width: 250px text-align:left" name="imageId" '.$htmlsize .' >'.$this->crlf;
 		$default = ($this->imageId) ? $this->imageId : $filenames[0][id];
 		foreach ((array)$filenames as $filename) {
 			$filestr = preg_replace('%[[:alnum:]]+_(.*)%', '\1', $filename[name]);
