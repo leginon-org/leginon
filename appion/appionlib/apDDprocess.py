@@ -644,7 +644,7 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		if use_random:
 			fill_values = stats[1] * numpy.random.randn(image.shape[0],image.shape[1])+stats[0]
 		else:
-			fill_values = stats[1] * numpy.ones(image.shape)
+			fill_values = stats[0] * numpy.ones(image.shape)
 		masked = numpy.where(mask,fill_values,image)
 		return masked
 		
