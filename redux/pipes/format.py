@@ -4,6 +4,8 @@ import cStringIO
 # 3rd party
 import numpy
 import scipy.misc
+import Image
+import ImageDraw
 
 # myami
 import pyami.mrc
@@ -14,8 +16,8 @@ import redux.utility
 
 class Format(redux.pipe.Pipe):
 	required_args = {'oformat': str}
-	optional_args = {'rgb': redux.pipe.bool_converter}
-	optional_defaults = {'rgb': False}
+	optional_args = {'rgb': redux.pipe.bool_converter, 'overlay': str, 'overlaycolor': redux.pipe.shape_converter}
+	optional_defaults = {'rgb': False, 'overlay': '', 'overlaycolor': None}
 	file_formats = {
 		'JPEG': '.jpg',
 		'GIF': '.gif',
@@ -24,7 +26,7 @@ class Format(redux.pipe.Pipe):
 		'MRC': '.mrc',
 		'JSON': '.json',
 	}
-	def run(self, input, oformat, rgb):
+	def run(self, input, oformat, rgb, overlay, overlaycolor):
 		if oformat not in self.file_formats:
 			raise ValueError('oformat: %s' % (oformat,))
 
@@ -33,7 +35,7 @@ class Format(redux.pipe.Pipe):
 		elif oformat == 'JSON':
 			s = self.run_json(input)
 		else:
-			s = self.run_pil(input, oformat, rgb)
+			s = self.run_pil(input, oformat, rgb, overlay, overlaycolor)
 
 		return s
 
@@ -48,10 +50,23 @@ class Format(redux.pipe.Pipe):
 		outstring = redux.utility.json_encode(input)
 		return outstring
 
-	def run_pil(self, input, oformat, rgb):
+	def overlay_mask(self, image, mask, color):
+		size = image.size
+		# read mask, resize it to image size
+		maskim = Image.open(mask)
+		maskim = maskim.resize(size)
+		if color is None:
+			overlay=maskim
+		else:
+			overlay=color
+		image.paste(overlay, (0,0), maskim)
+
+	def run_pil(self, input, oformat, rgb, overlay, overlaycolor):
 		pil_image = scipy.misc.toimage(input, cmin=0, cmax=255)
-		if rgb:
+		if rgb or overlay:
 			pil_image = pil_image.convert('RGB')
+		if overlay:
+			self.overlay_mask(pil_image, overlay, overlaycolor)
 		file_object = cStringIO.StringIO()
 		pil_image.save(file_object, oformat)
 		image_string = file_object.getvalue()
