@@ -637,7 +637,15 @@ def array2jpg(pictpath,im,imin=None,imax=None,size=512):
 		range = stats['mean']-3*stats['std'],stats['mean']+3*stats['std']
 	numpil.write(im,jpgpath, format = 'JPEG', limits=range)
 
-def makeAlignStackMovie(filename,xsize=512):
+def makeAlignStackMovie(filename,xsize=2**16):
+	'''
+	Make movie based on align stack.  Default size is the size
+	of the align stack
+	'''
+	if not os.path.exists(filename):
+		apDisplay.printWarning('align stack does not exist. No movie making.')
+		return
+
 	apDisplay.printMsg('Making movie','blue')
 	mrcpath = filename
 	dirpath = os.path.dirname(mrcpath)
