@@ -479,8 +479,8 @@ class protomoAligner(appionScript.AppionScript):
 					else:
 						primary = False
 					apTomo.insertTiltsInAlignRun(alignrun, tiltdatalist[i],leginonxcorrlist[i],primary)
-				apTomo.makeAlignStackMovie(alifilepath)
-				os.chdir(processdir)
+			apTomo.makeAlignStackMovie(alifilepath)
+			os.chdir(processdir)
 
 #=====================
 if __name__ == '__main__':
