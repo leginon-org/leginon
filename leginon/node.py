@@ -514,11 +514,13 @@ class Node(correctorclient.CorrectorClient):
 	def stopTimer(self, label):
 		self.storeTime(label, type='stop')
 
-	def convertDegreeTiltsToRadianList(self,tiltstr):
+	def convertDegreeTiltsToRadianList(self,tiltstr,accept_empty=False):
 		## list of tilts entered by user in degrees, converted to radians
 		try:
 			alphatilts = eval(tiltstr)
 		except:
+			if accept_empty:
+				return []
 			self.logger.error('Invalid tilt list')
 			return
 		self.logger.info('tilts: %s' % tiltstr)

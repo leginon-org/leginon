@@ -63,6 +63,7 @@ class Tomography(leginon.acquisition.Acquisition):
 #		'wiener max tilt': 45,
 		'fit data points': 4,
 		'use z0': False,
+		'addon tilts':'()',
 	})
 
 	def __init__(self, *args, **kwargs):
@@ -115,7 +116,8 @@ class Tomography(leginon.acquisition.Acquisition):
 							  max=math.radians(self.settings['tilt max']),
 							  start=math.radians(self.settings['tilt start']),
 							  step=math.radians(self.settings['tilt step']),
-							  n=self.settings['equally sloped n'])
+							  n=self.settings['equally sloped n'],
+							  add_on=self.convertDegreeTiltsToRadianList(self.settings['addon tilts'],True))
 		except ValueError, e:
 			self.logger.warning('Tilt parameters invalid: %s.' % e)
 		else:

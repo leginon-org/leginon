@@ -177,6 +177,7 @@ class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 		self.widgets['equally sloped'] = wx.CheckBox(self, -1, 'Use cosine rule')
 		self.widgets['equally sloped n'] = IntEntry(self, -1, min=1, allownone=False, chars=5, value='30')
 
+		tiltoptsz = wx.GridBagSizer(5, 5)
 		tiltsz = wx.GridBagSizer(5, 5)
 		label = wx.StaticText(self, -1, 'Min.')
 		tiltsz.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.LEFT, 10)
@@ -196,16 +197,26 @@ class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 					wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
 		label = wx.StaticText(self, -1, 'degree(s)')
 		tiltsz.Add(label, (0, 8), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		equalslopesz = wx.GridBagSizer(5, 5)
+		addonsizer = wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1, 'List of Extra Tilts to Collect (in degrees)')
+		addonsizer.Add(label, (0, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
+		self.widgets['addon tilts'] = Entry(self, -1, chars=45, style=wx.ALIGN_RIGHT|wx.EXPAND)
+		addonsizer.Add(self.widgets['addon tilts'], (0,2), (1,7), wx.EXPAND)
+		addonsizer.AddGrowableCol(2)
+		tiltsz.Add(addonsizer, (1, 0), (1, 9), wx.EXPAND)
+
+		tiltoptsz.Add(tiltsz, (1, 0), (2, 9), wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
+		equalslopesz = wx.GridBagSizer(0, 5)
 		equalslopesz.Add(self.widgets['equally sloped'], (0, 0), (1, 2),
 					wx.ALIGN_LEFT|wx.FIXED_MINSIZE)
 		equalslopesz.Add(self.widgets['equally sloped n'], (1, 0), (1, 1),
 					wx.ALIGN_LEFT|wx.FIXED_MINSIZE)
 		label = wx.StaticText(self, -1, 'Number of tilts in the maximal tilting direction')
 		equalslopesz.Add(label, (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		equalslopesbsz.Add(equalslopesz, 0, wx.EXPAND|wx.ALL, 5)
-		tiltsz.Add(equalslopesbsz, (0, 9), (1, 2), wx.EXPAND|wx.ALL, 5)
-		tiltsbsz.Add(tiltsz, 0, wx.EXPAND|wx.ALL, 5)
+		equalslopesbsz.Add(equalslopesz, 0, wx.EXPAND)
+		tiltoptsz.Add(equalslopesbsz, (0, 9), (3, 2), wx.EXPAND|wx.ALIGN_CENTER_VERTICAL)
+
+		tiltsbsz.Add(tiltoptsz, 0, wx.EXPAND|wx.ALL, 5)
 
 		self.widgets['dose'] = FloatEntry(self, -1, min=0.0,
 													allownone=False,

@@ -1929,6 +1929,7 @@ class TomographySettingsData(AcquisitionSettingsData):
 #			('wiener max tilt', float),
 			('fit data points', int),
 			('use z0', bool),
+			('addon tilts', str),
 		)
 	typemap = classmethod(typemap)
 
