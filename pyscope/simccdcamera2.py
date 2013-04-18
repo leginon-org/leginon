@@ -14,13 +14,14 @@ idcounter = itertools.cycle(range(100))
 
 class SimCCDCamera(ccdcamera.CCDCamera):
 	name = 'SimCCDCamera'
+	binning_limits = [1,2,4,8]
+	binmethod = 'exact'
+
 	def __init__(self):
 		ccdcamera.CCDCamera.__init__(self)
 		self.pixel_size = {'x': 2.5e-5, 'y': 2.5e-5}
 		self.exposure_types = ['normal', 'dark', 'bias']
 
-		self.binning_limits = [1,2,4,8]
-		self.binmethod = 'exact'
 		self.binning = {'x': 1, 'y': 1}
 		self.offset = {'x': 0, 'y': 0}
 		self.dimension = copy.copy(self.getCameraSize())

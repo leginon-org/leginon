@@ -14,6 +14,8 @@ class GeometryError(Exception):
 
 class CCDCamera(baseinstrument.BaseInstrument):
 	name = 'CCD Camera'
+	binning_limits = [1,2,4,8]
+	binmethod = 'exact'
 
 	capabilities = baseinstrument.BaseInstrument.capabilities + (
 		{'name': 'PixelSize', 'type': 'property'},
@@ -48,8 +50,6 @@ class CCDCamera(baseinstrument.BaseInstrument):
 		self.readoutcallback = None
 		self.callbacks = {}
 		self.exposure_timestamp = None
-		self.binning_limits = [1,2,4,8]
-		self.binmethod = 'exact'
 
 	def getZplane(self):
 		return self.zplane
