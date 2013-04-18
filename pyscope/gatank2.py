@@ -39,13 +39,15 @@ class GatanK2Base(ccdcamera.CCDCamera):
 
 		ccdcamera.CCDCamera.__init__(self)
 
+		self.binning_limits = [1,2,3,4,5,6,7,8]
+		self.binmethod = 'floor'
 		self.binning = {'x': 1, 'y': 1}
 		self.offset = {'x': 0, 'y': 0}
 		self.tempoffset = dict(self.offset)
 		self.camsize = self.getCameraSize()
 		self.dimension = {'x': self.camsize['x'], 'y': self.camsize['y']}
 		self.exposuretype = 'normal'
-		self.user_exposure_ms = 125
+		self.user_exposure_ms = 100
 		self.float_scale = 1000.0
 		# what to do in digital micrograph before handing back the image
 		# unprocessed, dark subtracted, gain normalized
@@ -54,8 +56,8 @@ class GatanK2Base(ccdcamera.CCDCamera):
 		self.save_frames = False
 		self.frames_name = None
 		#self.frame_rate = 4.0
-		self.dosefrac_frame_time = 0.125
-		self.record_frame_time = 0.125
+		self.dosefrac_frame_time = 0.200
+		self.record_frame_time = 0.100
 		self.readout_delay_ms = 0
 		self.align_frames = False
 		self.align_filter = 'None'
@@ -345,3 +347,8 @@ class GatanK2Super(GatanK2Base):
 		hw_proc = 'none'
 	else:
 		hw_proc = 'dark+gain'
+
+	def __init__(self):
+		super(GatanK2Super,self).__init__()
+		self.binning_limits = [1]
+		self.binmethod = 'floor'
