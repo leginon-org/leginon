@@ -467,12 +467,12 @@ class EditPresetDialog(leginon.gui.wx.Dialog.Dialog):
 	def onCCDCameraChoice(self, evt):
 		ccdcamera = evt.GetString()
 		try:
-			camerasize = self.ccd_cameras[ccdcamera]
+			camera_geom_limits = self.ccd_cameras[ccdcamera]
 		except KeyError:
-			camerasize = None
-		self.dicts['camera parameters'].setSize(camerasize)
+			camera_geom_limits = None
+		self.dicts['camera parameters'].setGeometryLimits(camera_geom_limits)
 		for value in self._buttons['ccdcamera'].values():
-			value.Enable(camerasize is not None)
+			value.Enable(camera_geom_limits is not None)
 
 	def setParameters(self, parameters):
 		try:
@@ -526,8 +526,8 @@ class EditPresetDialog(leginon.gui.wx.Dialog.Dialog):
 				pass
 
 		try:
-			size = self.ccd_cameras[parameters['ccdcamera']['name']]
-			self.dicts['camera parameters'].setSize(size)
+			geom_limits = self.ccd_cameras[parameters['ccdcamera']['name']]
+			self.dicts['camera parameters'].setGeometryLimits(geom_limits)
 		except:
 			pass
 
@@ -1078,10 +1078,13 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 		for ccd_camera_name in self.node.instrument.getCCDCameraNames():
 			try:
 				ccd_camera = self.node.instrument.getCCDCamera(ccd_camera_name)
-				ccd_cameras[ccd_camera_name] = ccd_camera.CameraSize
+				ccd_cameras[ccd_camera_name] = {}
+				ccd_cameras[ccd_camera_name]['size'] = ccd_camera.CameraSize
+				ccd_cameras[ccd_camera_name]['binnings'] = ccd_camera.CameraBinnings
+				ccd_cameras[ccd_camera_name]['binmethod'] = ccd_camera.CameraBinMethod
 			except leginon.instrument.NotAvailableError:
 				continue
-		if not ccd_cameras:
+		if not ccd_cameras[ccd_camera_name]['size']:
 			return
 
 		dialog = EditPresetDialog(self, preset, tems, ccd_cameras, self.node)

@@ -331,7 +331,7 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		self.panel.setInstrumentSelection(self.instrumentselection)
 
 		self.widgets['camera settings'] = leginon.gui.wx.Camera.CameraPanel(self)
-		self.widgets['camera settings'].setSize(self.node.instrument.camerasize)
+		self.widgets['camera settings'].setGeometryLimits({'size':self.node.instrument.camerasize,'binnings':self.node.instrument.camerabinnings,'binmethod':self.node.instrument.camerabinmethod})
 		self.widgets['low dose'] = wx.CheckBox(self, -1, 'Use low dose')
 
 		szlowdose = wx.GridBagSizer(5, 5)
@@ -379,7 +379,7 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		self.panel.setInstrumentSelection(self.instrumentselection)
 
 		self.widgets['camera settings'] = leginon.gui.wx.Camera.CameraPanel(self)
-		self.widgets['camera settings'].setSize(self.node.instrument.camerasize)
+		self.widgets['camera settings'].setGeometryLimits({'size':self.node.instrument.camerasize,'binnings':self.node.instrument.camerabinnings,'binmethod':self.node.instrument.camerabinmethod})
 		self.widgets['screen up'] = wx.CheckBox(self, -1, 'Up before acquire')
 		self.widgets['screen down'] = wx.CheckBox(self, -1, 'Down after acquired')
 		self.widgets['beam blank'] = wx.CheckBox(self, -1, 'Force beam blank after acquired')

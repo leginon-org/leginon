@@ -29,6 +29,10 @@ class Proxy(object):
 		self.ccdcamera = None
 		self.camerasize = None
 		self.camerasizes = {}
+		self.camerabinnings = [1]
+		self.allcamerabinnings = {}
+		self.camerabinmethod = None
+		self.camerabinmethods = {}
 		self.session = session
 		self.wxeventhandler = wxeventhandler
 		self.objectservice = objectservice
@@ -50,6 +54,8 @@ class Proxy(object):
 			proxy = self.objectservice.getObjectProxy(nodename, name)
 			self.ccdcameras[name] = proxy
 			self.camerasizes[name] = proxy.CameraSize
+			self.allcamerabinnings[name] = proxy.CameraBinnings
+			self.camerabinmethods[name] = proxy.CameraBinMethod
 			if self.wxeventhandler is not None:
 				names = self.getCCDCameraNames()
 				evt = gui.wx.Events.SetCCDCamerasEvent(self.wxeventhandler, names=names)
@@ -67,6 +73,8 @@ class Proxy(object):
 			del self.ccdcameras[name]
 		try:
 			del self.camerasizes[name]
+			del self.allcamerabinnings[name]
+			del self.camerabinmethods[name]
 		except KeyError:
 			pass
 
@@ -194,10 +202,14 @@ class Proxy(object):
 		if name is None:
 			self.ccdcamera = None
 			self.camerasize = None
+			self.camerabinnings = [1]
+			self.camerabinmethod = 'exact'
 		else:
 			try:
 				self.ccdcamera = self.ccdcameras[name]
 				self.camerasize = self.camerasizes[name]
+				self.camerabinnings = self.allcamerabinnings[name]
+				self.camerabinmethod = self.camerabinmethods[name]
 			except KeyError:
 				raise NotAvailableError('CCD camera \'%s\' not available' % name)
 		if self.wxeventhandler is not None:

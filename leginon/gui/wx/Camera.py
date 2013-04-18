@@ -35,6 +35,7 @@ class CameraPanel(wx.Panel):
 		sb = wx.StaticBox(self, -1, 'Camera Configuration')
 		self.sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		self.size = None
+		self.binmethod = 'exact'
 		self.geometry = None
 		self.binnings = {'x': [1,2,3,4,6,8], 'y': [1,2,3,4,6,8]}
 		self.defaultexptime = 1000.0
@@ -168,6 +169,19 @@ class CameraPanel(wx.Panel):
 		self.Bind(EVT_SET_CONFIGURATION, self.onSetConfiguration)
 
 		#self.Enable(False)
+
+	def setGeometryLimits(self,limitdict):
+		if limitdict is None:
+			self.setSize(None)
+		if 'binnings' in limitdict.keys():
+			self.binnings['x'] = limitdict['binnings']
+			self.binnings['y'] = limitdict['binnings']
+		if 'binmethod' in limitdict.keys():
+			self.binmethod = limitdict['binmethod']
+		if 'size' in limitdict.keys():
+			self.setSize(limitdict['size'])
+		else:
+			self.setSize(None)
 
 	def setSize(self, size):
 		if size is None:
@@ -348,7 +362,7 @@ class CameraPanel(wx.Panel):
 		return geometry
 
 	def getFullGeometry(self,binning):
-		if (self.size['x'] % binning) or (self.size['y'] % binning):
+		if self.binmethod == 'exact' and ((self.size['x'] % binning) or (self.size['y'] % binning)):
 			return None
 		dimx = self.size['x'] / binning
 		dimy = self.size['y'] / binning
@@ -364,7 +378,7 @@ class CameraPanel(wx.Panel):
 		if self.size['x'] != self.size['y']:
 			show_sections = True
 			keys.append('--- Full ---')
-			for binning in range(1,9):
+			for binning in self.binnings['x']:
 				dimx = self.size['x'] / binning
 				dimy = self.size['y'] / binning
 				key = '%d x %d bin %d' % (dimx,dimy,binning)
@@ -375,7 +389,7 @@ class CameraPanel(wx.Panel):
 		if self.binnings['x'] != self.binnings['y']:
 			return geometries
 		self.minsize = min(self.size['x'],self.size['y'])
-		dimensions = [self.minsize/float(b) for b in self.binnings['x']]
+		dimensions = [int(self.minsize/float(b)) for b in self.binnings['x']]
 		def good(dim):
 			return not bool(numpy.modf(dim)[1]-dim)
 		def filtergood(input, mask):
@@ -384,18 +398,20 @@ class CameraPanel(wx.Panel):
 				if mask[i]:
 					result.append(inval)
 			return result
-		mask = [good(dim) for dim in dimensions]
+		if self.binmethod == 'exact':
+			mask = [good(dim) for dim in dimensions]
+		else:
+			mask = [True for dim in dimensions]
 		dimensions = filtergood(dimensions, mask)
 		def minsize(size):
-			return size >= self.minsize / 8
+			return size >= self.minsize / max(self.binnings['x'])
 		dimensions = filter(minsize, dimensions)
 		binnings = filtergood(self.binnings['x'], mask)
-
 		dimensions.reverse()
 		if show_sections:
 			keys.append('--- Center ---')
 		for d in dimensions:
-			for b in binnings:
+			for b in self.binnings['x']:
 				if d*b <= self.minsize:
 					key = '%d x %d bin %d' % (d, d, b)
 					geometries[key] = self.getCenteredGeometry(d, b)

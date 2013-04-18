@@ -72,7 +72,7 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		self.instrumentselection = leginon.gui.wx.Instrument.SelectionPanel(self)
 		self.panel.setInstrumentSelection(self.instrumentselection)
 		self.widgets['camera settings'] = leginon.gui.wx.Camera.CameraPanel(self)
-		self.widgets['camera settings'].setSize(self.node.instrument.camerasize)
+		self.widgets['camera settings'].setGeometryLimits({'size':self.node.instrument.camerasize,'binnings':self.node.instrument.camerabinnings,'binmethod':self.node.instrument.camerabinmethod})
 
 		szwaittime = wx.GridBagSizer(5, 5)
 		label = wx.StaticText(self, -1, 'Wait Time:')

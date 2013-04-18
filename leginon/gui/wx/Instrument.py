@@ -1356,10 +1356,13 @@ class SelectionMixin(object):
 		## new list of selection panels that still exist
 		self.instrumentselections = still_exist
 
-	def setCameraSize(self):
+	def setCameraGeometryLimits(self):
 		try:
 			camerasize = self.proxy.camerasize
-			self.settingsdialog.widgets['camera settings'].setSize(camerasize)
+			camerabinnings = self.proxy.camerabinnings
+			camerabinmethod = self.proxy.camerabinmethod
+			limitdict = {'size':camerasize,'binnings':camerabinnings,'binmethod':camerabinmethod}
+			self.settingsdialog.widgets['camera settings'].setGeometryLimits(limitdict)
 		except AttributeError:
 			pass
 
@@ -1371,7 +1374,7 @@ class SelectionMixin(object):
 
 	def onSetCCDCamera(self, evt):
 		self.instrumentSelectionEvent(evt, passive=False)
-		self.setCameraSize()
+		self.setCameraGeometryLimits()
 
 	def onSetCCDCameras(self, evt):
 		self.instrumentSelectionEvent(evt, passive=True)
