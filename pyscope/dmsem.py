@@ -28,7 +28,7 @@ def connect():
 	return gatansocket.myGS
 
 class DMSEM(ccdcamera.CCDCamera):
-	ed_mode = None
+	ed_mode = 'linear'
 	def __init__(self):
 		self.camera = connect()
 
@@ -150,7 +150,7 @@ class DMSEM(ccdcamera.CCDCamera):
 		return acqparams
 
 	def custom_setup(self):
-		pass
+		self.camera.SetReadMode(self.readmodes[self.ed_mode])
 
 	def _getImage(self):
 		print 'SELECT', self.cameraid

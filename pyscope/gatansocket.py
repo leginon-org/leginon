@@ -164,6 +164,12 @@ class GatanSocket(object):
 		message_recv = Message(longargs=(0,))
 		self.ExchangeMessages(message_send, message_recv)
 
+	def SetReadMode(self, mode):
+		funcCode = enum_gs['GS_SetReadMode']
+		message_send = Message(longargs=(funcCode,mode))
+		message_recv = Message(longargs=(0,))
+		self.ExchangeMessages(message_send, message_recv)
+
 	def SetK2Parameters(self, readMode, scaling, hardwareProc, doseFrac, frameTime, alignFrames, saveFrames, filt=''):
 		funcCode = enum_gs['GS_SetK2Parameters']
 
