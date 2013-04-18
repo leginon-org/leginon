@@ -164,9 +164,9 @@ class GatanSocket(object):
 		message_recv = Message(longargs=(0,))
 		self.ExchangeMessages(message_send, message_recv)
 
-	def SetReadMode(self, mode):
+	def SetReadMode(self, mode, scaling=1.0):
 		funcCode = enum_gs['GS_SetReadMode']
-		message_send = Message(longargs=(funcCode,mode))
+		message_send = Message(longargs=(funcCode,mode),dblargs=(scaling,))
 		message_recv = Message(longargs=(0,))
 		self.ExchangeMessages(message_send, message_recv)
 
