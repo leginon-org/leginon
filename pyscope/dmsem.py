@@ -28,6 +28,8 @@ def connect():
 	return gatansocket.myGS
 
 class DMSEM(ccdcamera.CCDCamera):
+	# our name mapped to SerialEM plugin value
+	readmodes = {'linear': 0, 'counting': 1, 'super resolution': 2}
 	ed_mode = 'linear'
 	def __init__(self):
 		self.camera = connect()
@@ -269,7 +271,6 @@ class GatanK2Base(DMSEM):
 		return real_time_ms
 
 	# our name mapped to SerialEM plugin value
-	readmodes = {'linear': 0, 'counting': 1, 'super resolution': 2}
 	hardwareProc = {'none': 0, 'dark': 2, 'gain': 4, 'dark+gain': 6}
 
 	def isDoseFracOn(self):
