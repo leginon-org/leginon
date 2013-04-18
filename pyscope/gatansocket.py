@@ -217,6 +217,12 @@ class GatanSocket(object):
 		args = message_recv.array['longargs']
 		numsaved = args[1]
 		error = args[2]
+
+	def SelectCamera(self, cameraid):
+		funcCode = enum_gs['GS_SelectCamera']
+		message_send = Message(longargs=(funcCode,cameraid))
+		message_recv = Message(longargs=(0,))
+		self.ExchangeMessages(message_send, message_recv)
 		
 	def GetImage(self, processing, height, width, binning, top, left, bottom, right, exposure, shutterDelay):
 
