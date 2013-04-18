@@ -48,6 +48,8 @@ class CCDCamera(baseinstrument.BaseInstrument):
 		self.readoutcallback = None
 		self.callbacks = {}
 		self.exposure_timestamp = None
+		self.binning_limits = [1,2,4,8]
+		self.binmethod = 'exact'
 
 	def getZplane(self):
 		return self.zplane
@@ -188,6 +190,12 @@ This method returns that multiplier, M.  In the standard case, returns 1.0.
 
 	def getPixelSize(self):
 		raise NotImplementedError
+
+	def getCameraBinnings(self):
+		return self.binning_limits
+
+	def getCameraBinMethod(self):
+		return self.binmethod
 
 	def getCameraSize(self):
 		if self.configured_size is not None:
