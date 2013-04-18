@@ -177,18 +177,22 @@ class imagicMultivariateStatisticalAnalysisScript(appionScript.AppionScript):
 		else:
 			f.write(str(self.imagicroot)+"/msa/msa.e <<EOF >> imagicMultivariateStatisticalAnalysis.log\n")
 			f.write("NO\n")
+		## fix for later versions:
+		f.write("DEFINE_LOCAL_FILES\n")
+		f.write(self.params['rundir']+"\n")
 		f.write("FRESH_MSA\n")
 		f.write(str(self.params['MSAdistance'])+"\n")
 		f.write("start\n")
-		if self.params['nproc'] > 1:
-			f.write("NO\n")
-#		f.write("NO\n")
 		f.write("msamask\n")
 		f.write("eigenimages\n")
+		# for later versions:
+		f.write("NO\n")
 		f.write("pixcoos\n")
 		f.write("eigenpixels\n")
 		f.write(str(self.params['numiters'])+"\n")
 		f.write("69\n")
+		# for later versions
+		f.write("1\n")
 		f.write(str(self.params['overcorrection'])+"\n")
 		f.write("my_msa\n")
 		f.write("EOF\n")
