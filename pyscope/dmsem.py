@@ -30,7 +30,7 @@ def connect():
 class DMSEM(ccdcamera.CCDCamera):
 	# our name mapped to SerialEM plugin value
 	readmodes = {'linear': 0, 'counting': 1, 'super resolution': 2}
-	ed_mode = 'linear'
+	ed_mode = None
 	def __init__(self):
 		self.camera = connect()
 
@@ -152,7 +152,8 @@ class DMSEM(ccdcamera.CCDCamera):
 		return acqparams
 
 	def custom_setup(self):
-		self.camera.SetReadMode(self.readmodes[self.ed_mode])
+		# required for non-K2 cameras
+		self.camera.SetReadMode(-1)
 
 	def _getImage(self):
 		print 'SELECT', self.cameraid
