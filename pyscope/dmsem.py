@@ -156,21 +156,15 @@ class DMSEM(ccdcamera.CCDCamera):
 		self.camera.SetReadMode(-1)
 
 	def _getImage(self):
-		print 'SELECT', self.cameraid
 		self.camera.SelectCamera(self.cameraid)
-		print 'CUSTOM'
 		self.custom_setup()
-		print 'CALC ACQ'
 		acqparams = self.calculateAcquireParams()
-		print 'DONE CALC'
 
-		print 'GETIMAGE'
 		t0 = time.time()
 		image = self.camera.GetImage(**acqparams)
 		t1 = time.time()
 		self.exposure_timestamp = (t1 + t0) / 2.0
 
-		print 'got',image.shape
 		# workaround dose fractionation image rotate-flip not applied problem
 		if self.save_frames or self.align_frames:
 			image_shape = image.shape
