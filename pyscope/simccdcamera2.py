@@ -16,10 +16,11 @@ class SimCCDCamera(ccdcamera.CCDCamera):
 	name = 'SimCCDCamera'
 	def __init__(self):
 		ccdcamera.CCDCamera.__init__(self)
-		self.binning_values = {'x': [1, 2, 4, 8], 'y': [1, 2, 4, 8]}
 		self.pixel_size = {'x': 2.5e-5, 'y': 2.5e-5}
 		self.exposure_types = ['normal', 'dark', 'bias']
 
+		self.binning_limits = [1,2,4,8]
+		self.binmethod = 'exact'
 		self.binning = {'x': 1, 'y': 1}
 		self.offset = {'x': 0, 'y': 0}
 		self.dimension = copy.copy(self.getCameraSize())
@@ -65,7 +66,7 @@ class SimCCDCamera(ccdcamera.CCDCamera):
 	def setBinning(self, value):
 		for axis in self.binning.keys():
 			try:
-				if value[axis] not in self.binning_values[axis]:
+				if value[axis] not in self.getCameraBinnings():
 					raise ValueError('invalid binning')
 			except KeyError:
 				pass
@@ -330,6 +331,11 @@ class SimCCDCamera(ccdcamera.CCDCamera):
 
 class SimOtherCCDCamera(SimCCDCamera):
 	name = 'SimOtherCCDCamera'
+	def __init__(self):
+		super(SimOtherCCDCamera,self).__init__()
+		self.binning_limits = [1,2,3,4,5,6,7,8]
+		self.binmethod = 'floor'
+
 	def _getImage(self):
 		im = SimCCDCamera._getImage(self)
 		im = 10 * im
