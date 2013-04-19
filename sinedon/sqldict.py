@@ -155,6 +155,7 @@ import string
 import datetime
 import re
 import numpy
+import math
 import MySQLdb.cursors
 from types import *
 import newdict
@@ -1226,6 +1227,9 @@ def matrix2dict(matrix, name=None):
 		for col in row:
 			k = sep.join(['ARRAY',name,'%s_%s'%(i,j)])
 			v = float(matrix[i-1,j-1])
+			if hasattr(math,'isnan') and math.isnan(v):
+				# isnan is only an attribute of math at python 2.6 and above
+				v = None
 			d[k]=v
 			j+=1
 	return d
