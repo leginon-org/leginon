@@ -54,7 +54,7 @@ class DMSEM(ccdcamera.CCDCamera):
 		self.frames_name = None
 		#self.frame_rate = 4.0
 		self.dosefrac_frame_time = 0.200
-		self.record_frame_time = 0.100
+		self.record_precision = 0.100
 		self.readout_delay_ms = 0
 		self.align_frames = False
 		self.align_filter = 'None'
@@ -241,23 +241,26 @@ class GatanK2Base(DMSEM):
 			self.camera.SetupFileSaving(**fileparams)
 
 	def getFrameTime(self):
+		return self.dosefrac_frame_time
+
+	def getExposurePrecision(self):
 		if self.isDoseFracOn():
 			frame_time = self.dosefrac_frame_time
 		else:
-			frame_time = self.record_frame_time
+			frame_time = self.record_precision
 		return frame_time
 
 	def getRealExposureTime(self):
 		'''
 		The real exposure time is rounded to the nearest
-		frame time, but not less than one frame.
+		"exposure precision unit" in seconds, but not less than one "unit"
 		'''
-		frame_time = self.getFrameTime()
+		precision = self.getExposurePrecision()
 		user_time = self.user_exposure_ms / 1000.0
-		if user_time < frame_time:
-			real_time = frame_time
+		if user_time < precision:
+			real_time = precision
 		else:
-			real_time = round(user_time / frame_time) * frame_time
+			real_time = round(user_time / precision) * precision
 		return real_time
 
 	def getExposureTime(self):
