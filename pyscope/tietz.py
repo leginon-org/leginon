@@ -649,6 +649,7 @@ class TietzFC415(Tietz):
 
 class TietzF416(Tietz):
 	name = 'Tietz F416'
+	binning_limits = [1,2,4]
 	cameratypeattr = 'ctF416'
 	mmname = 'CAM_F416_DATA'
 	def __init__(self):
