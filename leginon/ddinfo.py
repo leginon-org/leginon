@@ -52,6 +52,19 @@ def saveSessionDDinfoToDatabase(sessiondata):
 		infopath = os.path.join(sessiondata['image path'],imagedata['filename']+'.frames','info.path')
 		saveImageDDinfoToDatabase(imagedata,infopath)
 
+def getRawFrameSessionPathFromImagePath(imagepath):
+	'''
+	Raw Frames are saved by session under parallel directory of leginon.
+	For example, leginon image path of '/mydata/leginon/13may01a/rawdata' uses
+	'/mydata/frames/13may01a' to store frames.
+	'''
+	baseframe_dirname = 'frames'
+	pathbits = imagepath.split('/')
+	leginonbasepath = '/'.join(pathbits[:-3])
+	sessionrawdatapath = '/'.join(pathbits[-2:])
+	rawframe_sessionpath = os.path.join(leginonbasepath,baseframe_dirname,sessionrawdatapath)
+	return rawframe_sessionpath
+
 if __name__ == '__main__':
 	infopath = sys.argv[1]
 	if infopath == 'all':

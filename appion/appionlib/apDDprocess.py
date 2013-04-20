@@ -8,7 +8,7 @@ import scipy.stats
 import scipy.ndimage as ndimage
 import numextension
 from pyami import mrc,imagefun,arraystats,numpil
-from leginon import correctorclient,leginondata
+from leginon import correctorclient,leginondata,ddinfo
 from appionlib import apDisplay, apDatabase,apDBImage, appiondata
 import subprocess
 
@@ -117,21 +117,6 @@ class DirectDetectorProcessing(object):
 		else:
 			return False
 
-	def getRawFrameSessionPathFromImagePath(self,imagepath):
-		'''
-		Raw Frames are saved by session under parallel directory of leginon.
-		For example, leginon image path of '/mydata/leginon/13may01a/rawdata' uses
-		'/mydata/frames/13may01a' to store frames.
-		'''
-		baseframe_dirname = 'frames'
-		pathbits = imagepath.split('/')
-		leginonbasepath = '/'.join(pathbits[:-3])
-		sessionrawdatapath = '/'.join(pathbits[-2:])
-		rawframe_sessionpath = os.path.join(leginonbasepath,baseframe_dirname,sessionrawdatapath)
-		if not os.path.isdir(rawframe_sessionpath):
-			apDisplay.printWarning('Raw Frame path for the session does not exist at %s' % rawframe_sessionpath)
-		return rawframe_sessionpath
-
 class DDFrameProcessing(DirectDetectorProcessing):
 	'''
 	Class to process raw frames from DD
@@ -210,7 +195,7 @@ class DDFrameProcessing(DirectDetectorProcessing):
 			apDisplay.printWarning('No Raw Frame Saved for %s' % imagedata['filename'])
 		# raw frames are saved in a subdirctory of image path
 		imagepath = imagedata['session']['image path']
-		rawframe_basepath = self.getRawFrameSessionPathFromImagePath(imagepath)
+		rawframe_basepath = ddinfo.getRawFrameSessionPathFromImagePath(imagepath)
 		rawframedir = os.path.join(rawframe_basepath,'%s.frames' % imagedata['filename'])
 		if not self.waitForPathExist(rawframedir):
 			apDisplay.printError('Raw Frame Dir %s does not exist.' % rawframedir)

@@ -3,6 +3,7 @@ import sys
 import os
 import time
 import leginon.leginondata
+import leginon.ddinfo
 
 def getSessionData(sessionname):
 	# get Session
@@ -66,7 +67,8 @@ def	removeOldframes(to_remove,timelimit=3600*2):
 	recent_count = 0
 	remove_list = []
 	for imagedata in to_remove:
-		framedir = os.path.join(sessiondata['image path'],imagedata['filename']+'.frames')
+		session_frames_path = leginon.ddinfo.getRawFrameSessionPathFromImagePath(imagedata['session']['image path'])
+		framedir = os.path.join(session_frames_path,imagedata['filename']+'.frames')
 		if not os.path.isdir(framedir):
 			not_exist_count += 1
 		else:

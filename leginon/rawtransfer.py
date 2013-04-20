@@ -91,14 +91,7 @@ def run_once(parent_src_path):
 		if imdata is None:
 			continue
 		image_path = imdata['session']['image path']
-		path_parts = image_path.split('/')
-		print 'PATHPARTS', path_parts
-		root_parts = path_parts[:-3]
-		leg_part = path_parts[-3]
-		ses_part = path_parts[-2]
-		raw_part = path_parts[-1]
-		frames_parts = root_parts + ['frames',ses_part,raw_part]
-		frames_path = '/'.join(frames_parts)
+		frames_path = leginon.ddinfo.getRawFrameSessionPathFromImagePath(image_path)
 		imname = imdata['filename'] + '.frames'
 		dst_path = os.path.join(frames_path, imname)
 		print 'DEST', dst_path
