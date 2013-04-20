@@ -66,6 +66,10 @@ class DirectDetectorProcessing(object):
 		return self.image
 
 	def setFrameStackPath(self):
+		'''
+		Frame stack path set by this function is gain/dark corrected. It can either
+		be aligned or not.
+		'''
 		imagename = self.image['filename']
 		
 		if self.image['preset'] is not None and '-a' in self.image['preset']['name']:
@@ -112,6 +116,21 @@ class DirectDetectorProcessing(object):
 			return r[0]
 		else:
 			return False
+
+	def getRawFrameSessionPathFromImagePath(self,imagepath):
+		'''
+		Raw Frames are saved by session under parallel directory of leginon.
+		For example, leginon image path of '/mydata/leginon/13may01a/rawdata' uses
+		'/mydata/frames/13may01a' to store frames.
+		'''
+		baseframe_dirname = 'frames'
+		pathbits = imagepath.split('/')
+		leginonbasepath = '/'.join(pathbits[:-3])
+		sessionrawdatapath = '/'.join(pathbits[-2:])
+		rawframe_sessionpath = os.path.join(leginonbasepath,baseframe_dirname,sessionrawdatapath)
+		if not os.path.isdir(rawframe_sessionpath):
+			apDisplay.printWarning('Raw Frame path for the session does not exist at %s' % rawframe_sessionpath)
+		return rawframe_sessionpath
 
 class DDFrameProcessing(DirectDetectorProcessing):
 	'''
@@ -191,8 +210,8 @@ class DDFrameProcessing(DirectDetectorProcessing):
 			apDisplay.printWarning('No Raw Frame Saved for %s' % imagedata['filename'])
 		# raw frames are saved in a subdirctory of image path
 		imagepath = imagedata['session']['image path']
-
-		rawframedir = os.path.join(imagepath,'%s.frames' % imagedata['filename'])
+		rawframe_basepath = self.getRawFrameSessionPathFromImagePath(imagepath)
+		rawframedir = os.path.join(rawframe_basepath,'%s.frames' % imagedata['filename'])
 		if not self.waitForPathExist(rawframedir):
 			apDisplay.printError('Raw Frame Dir %s does not exist.' % rawframedir)
 		return rawframedir

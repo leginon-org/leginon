@@ -14,9 +14,9 @@ at_nramm = True
 class GatanK2Processing(apDDprocess.DDFrameProcessing):
 	def __init__(self,wait_for_new=False):
 		super(GatanK2Processing,self).__init__(wait_for_new)
-		self.setDefaultDimension(3840,3712)
+		self.setDefaultDimension(3838,3710)
 		self.correct_dark_gain = True
-		self.correct_frame_mask = True
+		self.correct_frame_mask = False
 		
 	def getNumberOfFrameSavedFromImageData(self,imagedata):
 		return int(imagedata['camera']['frame rate']*imagedata['camera']['exposure time']/1000)
