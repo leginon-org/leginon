@@ -54,6 +54,7 @@ def run_timing():
     threads - number of threads to use, usually your number of virtual cores
 		flag - one of: patient, exhaustive, measure, estimate
 		'''
+		sys.exit()
 	pyami.fft.calc_fftw3.load_wisdom()
 
 	for i in range(n):
