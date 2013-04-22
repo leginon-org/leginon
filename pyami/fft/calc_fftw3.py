@@ -5,7 +5,7 @@ import os
 import platform
 import sys
 
-print '*** Using custom copy of fftw3 wrapper'
+sys.stderr.write('*** Using custom copy of fftw3 wrapper\n')
 from pyami.fft import fftw3
 import numpy
 
