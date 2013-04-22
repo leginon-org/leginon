@@ -78,7 +78,7 @@ class FFTW3Calculator(calc_base.Calculator):
 		fullheight = fftheight
 		fullwidth = 2*(fftwidth-1)
 		fullshape = fullheight, fullwidth
-		full_array = numpy.zeros(fullshape, fft_array.dtype)
+		full_array = numpy.empty(fullshape, fft_array.dtype)
 		## fill in left half
 		full_array[:,:fftwidth] = fft_array
 		## fill in right half
@@ -106,9 +106,9 @@ class FFTW3Calculator(calc_base.Calculator):
 		return plan
 
 	def _forward(self, image_array):
-		input_array = numpy.zeros(image_array.shape, numpy.float)
+		input_array = numpy.empty(image_array.shape, numpy.float)
 		fftshape = image_array.shape[0], image_array.shape[1]/2+1
-		fft_array = numpy.zeros(fftshape, dtype=complex)
+		fft_array = numpy.empty(fftshape, dtype=complex)
 		newplan = self.plan(input_array, fft_array, direction='forward')
 		input_array[:] = image_array
 		newplan()
@@ -116,8 +116,8 @@ class FFTW3Calculator(calc_base.Calculator):
 
 	def _reverse(self, fft_array):
 		imageshape = fft_array.shape[0], 2*(fft_array.shape[1]-1)
-		image_array = numpy.zeros(imageshape, dtype=numpy.float)
-		input_array = numpy.zeros(fft_array.shape, dtype=numpy.complex)
+		image_array = numpy.empty(imageshape, dtype=numpy.float)
+		input_array = numpy.empty(fft_array.shape, dtype=numpy.complex)
 		newplan = self.plan(input_array, image_array, direction='backward')
 		input_array[:] = fft_array
 		newplan()
