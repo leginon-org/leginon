@@ -64,6 +64,7 @@ class imagicMultivariateStatisticalAnalysisScript(appionScript.AppionScript):
 	def checkConflicts(self):
 		### check for IMAGIC installation
 		self.imagicroot = apIMAGIC.checkImagicExecutablePath()	
+		self.imagicversion = apIMAGIC.getImagicVersion(self.imagicroot)
 	
 		### check input parameters
 		if self.params['alignid'] is None:
@@ -72,7 +73,6 @@ class imagicMultivariateStatisticalAnalysisScript(appionScript.AppionScript):
 			apDisplay.printError("enter a run ID")
 		if self.params['MSAdistance'] is None:
 			apDisplay.printError("enter distance criteria for MSA program (i.e. eulidean, chisquare, modulation)")
-
 		return
 
 	#=====================
@@ -177,22 +177,32 @@ class imagicMultivariateStatisticalAnalysisScript(appionScript.AppionScript):
 		else:
 			f.write(str(self.imagicroot)+"/msa/msa.e <<EOF >> imagicMultivariateStatisticalAnalysis.log\n")
 			f.write("NO\n")
-		## fix for later versions:
-		f.write("DEFINE_LOCAL_FILES\n")
-		f.write(self.params['rundir']+"\n")
+
+		if int(self.imagicversion) > 100312:
+			f.write("DEFINE_LOCAL_FILES\n")
+			f.write(self.params['rundir']+"\n")
+
 		f.write("FRESH_MSA\n")
 		f.write(str(self.params['MSAdistance'])+"\n")
 		f.write("start\n")
+
+		if int(self.imagicversion) > 100312 and self.params['nproc'] > 1:
+			f.write("NO\n")
+
 		f.write("msamask\n")
 		f.write("eigenimages\n")
-		# for later versions:
-		f.write("NO\n")
+
+		if int(self.imagicversion) > 100312:
+			f.write("NO\n")
+
 		f.write("pixcoos\n")
 		f.write("eigenpixels\n")
 		f.write(str(self.params['numiters'])+"\n")
 		f.write("69\n")
-		# for later versions
-		f.write("1\n")
+
+		if int(self.imagicversion) > 100312:
+			f.write("1\n")
+
 		f.write(str(self.params['overcorrection'])+"\n")
 		f.write("my_msa\n")
 		f.write("EOF\n")
