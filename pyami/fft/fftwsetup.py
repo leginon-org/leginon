@@ -16,13 +16,13 @@ def create(shape):
 	timing['create'].append(time.time() - t0)
 	return a
 
-def make_plan(image_array, threads, flag):
+def make_plan(image_array):
 	global timing
 	t0 = time.time()
 	input_array = numpy.empty(image_array.shape, numpy.float)
 	fftshape = image_array.shape[0], image_array.shape[1]/2+1
 	fft_array = numpy.empty(fftshape, dtype=complex)
-	p = fftw3.Plan(input_array, fft_array, flags=[flag], nthreads=threads, direction='forward')
+	p = fftw3.Plan(input_array, fft_array, direction='forward', **pyami.fft.calc_fftw3.global_plan_kwargs)
 	p.input_array = input_array
 	p.fft_array = fft_array
 	timing['plan'].append(time.time() - t0)
@@ -44,15 +44,11 @@ def run_timing():
 	try:
 		n = int(sys.argv[1])
 		shape = int(sys.argv[2]), int(sys.argv[3])
-		threads = int(sys.argv[4])
-		flag = sys.argv[5]
 	except:
 		print '''
-  usage:   %s N shape0 shape1 threads flag' % (sys.argv[0],)
+  usage:   %s N shape0 shape1' % (sys.argv[0],)
     N - number of iterations to test
     shape0,shape1 - the shape of the array to test
-    threads - number of threads to use, usually your number of virtual cores
-		flag - one of: patient, exhaustive, measure, estimate
 		'''
 		sys.exit()
 	pyami.fft.calc_fftw3.load_wisdom()
@@ -60,7 +56,7 @@ def run_timing():
 	for i in range(n):
 		print i
 		a = create(shape)
-		plan = make_plan(a, threads, flag)
+		plan = make_plan(a)
 		init(a, plan)
 		run(plan)
 

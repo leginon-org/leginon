@@ -12,15 +12,25 @@ import numpy
 import calc_base
 
 import pyami.fileutil
+import pyami.cpu
 
 def log(msg):
+	sys.stderr.write('calc_fftw3: ')
 	sys.stderr.write(msg)
 	sys.stderr.write('\n')
 
+# determine number of cpus
+try:
+	threads = pyami.cpu.count()
+	log('%s CPUs found, setting threads=%s' % (threads,threads))
+except:
+	log('could not get number of CPUs, setting threads=1')
+	threads = 1
+
 ## args that are always passed to plan creation
 global_plan_kwargs = {
-	'flags': ['measure'],  # 'patient' never seems to help
-	'nthreads': 8,  # 4 seems best on both dual core and quad core systems
+	'flags': ['measure'],
+	'nthreads': threads,  # number of logical cpus seems best
 }
 
 ## where to look for user customized wisdom
