@@ -45,7 +45,7 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		self.widgets['instruments'] = leginon.gui.wx.Instrument.SelectionPanel(self)
 		self.panel.setInstrumentSelection(self.widgets['instruments'])
 		self.widgets['camera settings'] = leginon.gui.wx.Camera.CameraPanel(self)
-		self.widgets['camera settings'].setGeometryLimits({'size':self.node.instrument.camerasize,'binning':[1,2,3,4,5,6,7,8],'binmethod':'floor'})
+		self.widgets['camera settings'].setGeometryLimits({'size':self.node.instrument.camerasize,'binnings':self.node.instrument.camerabinnings,'binmethod':self.node.instrument.camerabinmethod})
 
 		szcor = wx.GridBagSizer(5, 5)
 		label = wx.StaticText(self, -1, 'Use')
