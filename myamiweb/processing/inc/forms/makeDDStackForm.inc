@@ -12,7 +12,7 @@ require_once "basicForm.inc";
 class MakeDDStackForm extends BasicForm
 
 {
-	function __construct( $align='', $defergpu='', $bin=2 ) 
+	function __construct( $align='', $defergpu='', $bin=1 ) 
 	{
 		parent::__construct();
 		$params = $this->getFormParams();
