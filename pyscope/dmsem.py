@@ -291,8 +291,11 @@ class GatanK2Base(DMSEM):
 		return params
 
 	def calculateFileSavingParams(self):
-		frames_name = time.strftime('%Y%m%d_%H%M%S', time.localtime())
-		self.frames_name = frames_name + '%02d' % (self.idcounter.next(),)
+		if self.isDoseFracOn():
+			frames_name = time.strftime('%Y%m%d_%H%M%S', time.localtime())
+			self.frames_name = frames_name + '%02d' % (self.idcounter.next(),)
+		else:
+			self.frames_name = 'dummy'
 		path = 'D:\\frames\\' + self.frames_name
 
 		rotation = 270 # degrees
