@@ -209,7 +209,8 @@ function runMakestack() {
 	PART 5: Show or Run Command
 	******************** */
 	// submit command
-	$errors = showOrSubmitCommand($command, $headinfo, 'makeddrawframestack', $nproc, $testimage);
+	// Running single image is not for testing for framestack making but truly to run on one image
+	$errors = showOrSubmitCommand($command, $headinfo, 'makeddrawframestack', $nproc, false);
 
 	// if error display them
 	if ($errors) {
