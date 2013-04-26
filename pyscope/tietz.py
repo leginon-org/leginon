@@ -655,6 +655,10 @@ class TietzF416(Tietz):
 	def __init__(self):
 		Tietz.__init__(self)
 
+	def getBinnedMultiplier(self):
+		binning = self.getBinning()
+		return binning['x']*binning['y']
+
 class TietzF816(Tietz):
 	name = 'Tietz F816'
 	cameratypeattr = 'ctF816'

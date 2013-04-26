@@ -35,7 +35,7 @@ class SimCCDCamera(ccdcamera.CCDCamera):
 		self.view = 'square'
 		#self.view = 'empty'
 		self.frames_on = True
-		self.frame_rate = 0.05
+		self.frame_time = 0.05
 		self.inserted = True
 		self.saverawframes = False
 		self.alignframes = False
@@ -60,6 +60,10 @@ class SimCCDCamera(ccdcamera.CCDCamera):
 
 	def getViews(self):
 		return self.views
+
+	def getBinnedMultiplier(self):
+		binning = self.getBinning()
+		return binning['x']*binning['y']
 
 	def getBinning(self):
 		return copy.copy(self.binning)
@@ -204,7 +208,7 @@ class SimCCDCamera(ccdcamera.CCDCamera):
 
 		if self.frames_on:
 			nframes = self.getNumberOfFrames()
-			exptime = self.frame_rate
+			exptime = self.frame_time
 		else:
 			nframes = 1
 			exptime = self.exposure_time
@@ -286,7 +290,7 @@ class SimCCDCamera(ccdcamera.CCDCamera):
 
 	def getNumberOfFrames(self):
 		if self.frames_on:
-			nframes = int(round(self.exposure_time / self.frame_rate))
+			nframes = int(round(self.exposure_time / self.frame_time))
 			return nframes
 		else:
 			return None
