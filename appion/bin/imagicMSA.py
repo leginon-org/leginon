@@ -186,7 +186,7 @@ class imagicMultivariateStatisticalAnalysisScript(appionScript.AppionScript):
 		f.write(str(self.params['MSAdistance'])+"\n")
 		f.write("start\n")
 
-		if int(self.imagicversion) > 100312 and self.params['nproc'] > 1:
+		if int(self.imagicversion) >= 100312 and self.params['nproc'] > 1:
 			f.write("NO\n")
 
 		f.write("msamask\n")
