@@ -52,19 +52,24 @@ class Format(redux.pipe.Pipe):
 
 	def overlay_mask(self, image, mask, color):
 		size = image.size
+		mode = image.mode
 		# read mask, resize it to image size
+		# and make sure they are the same mode for the blend function
 		maskim = Image.open(mask)
 		maskim = maskim.resize(size)
+		maskim = maskim.convert(mode)
 		if color is None:
 			overlay=maskim
 		else:
 			overlay=color
-		image.paste(overlay, (0,0), maskim)
+		# Use PIL Image blend with alpha value between 0.0 and 1.0
+		# TODO: this way does not make use of a color. remove color
+		image = Image.blend(image, maskim, .5)
 
 	def run_pil(self, input, oformat, rgb, overlay, overlaycolor):
 		pil_image = scipy.misc.toimage(input, cmin=0, cmax=255)
-		if rgb or overlay:
-			pil_image = pil_image.convert('RGB')
+		if rgb:
+			pil_image = pil_image.convert('RGBA')
 		if overlay:
 			self.overlay_mask(pil_image, overlay, overlaycolor)
 		file_object = cStringIO.StringIO()
