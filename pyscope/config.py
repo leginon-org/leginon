@@ -10,7 +10,7 @@ import pyscope.tem
 import pyscope.ccdcamera
 import pyami.fileutil
 
-configured = None
+configured = {}
 temclasses = None
 cameraclasses = None
 configfiles = None
@@ -43,7 +43,6 @@ def parse():
 	names = configparser.sections()
 	temclasses = []
 	cameraclasses = []
-	configured = {}
 	mods = {}
 
 	for name in names:
@@ -93,7 +92,7 @@ def parse():
 
 def getConfigured():
 	global configured
-	if configured is None:
+	if not configured:
 		parse()
 	return configured
 
