@@ -192,7 +192,7 @@ function stacksummarytable($stackid, $mini=false, $tiny=false, $showOptions=True
 	if (!$mini && file_exists($stackavg)) {
 		$stacktable.= "<tr>\n";
 		$stacktable.= "<td  align='left' rowspan='30' align='center' valign='top'>\n";
-		$stacktable.= "<img src='loadimg.php?filename=$stackavg&s=150' height='150'><br/>\n";
+		$stacktable.= "<img src='loadimg.php?filename=$stackavg&s=150&coff=1' height='150'><br/>\n";
 		$stacktable.= "<i>averaged stack image</i>\n";
 		if ($showOptions) {
 			if (!$centered) $stacktable.= "<br /><a href='centerStack.php?expId=$expId&sId=$stackid'>[Center Particles]</a>\n";

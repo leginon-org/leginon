@@ -328,8 +328,12 @@ class redux{
 		$str .= 'filename=' . $this->getFilename();
 		//$str .= empty($this->padShape) ? '' : '&padshape=' . $this->getPadShape();
 		$str .= empty($this->power) ? '' : '&power=' . $this->getPower();
-		$str .= empty($this->cacheOff) ? '' : '&cache=' . (int) !$this->getCacheOn();
 		$str .= empty($this->info) ? '' : '&info=' . $this->getInfo();
+		if (empty($this->info)) {
+			$str .= empty($this->cacheOff) ? '' : '&cache=' . (int) !$this->getCacheOn();
+		} else {
+			$str .= '&cache=0';
+		}
 		$str .= empty($this->maskRadius) ? '' : '&maskradius=' . $this->getMaskRadius();
 		$str .= empty($this->rgb) ? '' : '&rgb=' . $this->getRGB();
 		$str .= empty($this->shape) ? '' : '&shape=' . $this->getShape();
