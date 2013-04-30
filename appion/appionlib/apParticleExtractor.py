@@ -436,6 +436,9 @@ class ParticleExtractLoop(appionLoop2.AppionLoop):
 		shortname = apDisplay.short(imgdata['filename'])
 
 		if self.is_dd:
+			if imgdata is None or imgdata['camera']['save frames'] != True:
+				apDisplay.printWarning('%s skipped for no-frame-saved\n ' % imgdata['filename'])
+				return
 			self.dd.setImageData(imgdata)
 			if self.is_dd_stack:
 				# find the ddstackrun of the image
