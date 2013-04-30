@@ -20,7 +20,6 @@ simulation = False
 if simulation:
 	print 'USING SIMULATION SETTINGS'
 
-
 # only one connection will be shared among all classes
 def connect():
 	if not hasattr(gatansocket, 'myGS'):
@@ -231,6 +230,7 @@ class GatanK2Base(DMSEM):
 	hw_proc = 'none'
 	binning_limits = [1,2,3,4,5,6,7,8]
 	binmethod = 'floor'
+	filePerImage = False
 	def custom_setup(self):
 		if self.ed_mode != 'base':
 			k2params = self.calculateK2Params()
@@ -296,7 +296,12 @@ class GatanK2Base(DMSEM):
 			self.frames_name = frames_name + '%02d' % (self.idcounter.next(),)
 		else:
 			self.frames_name = 'dummy'
-		path = 'D:\\frames\\' + self.frames_name
+		if self.filePerImage:
+			path = 'D:\\frames\\' + self.frames_name
+			fileroot = 'frame'
+		else:
+			path = 'D:\\frames\\'
+			fileroot = self.frames_name
 
 		rotation = 270 # degrees
 		flip = 0  # 0=none, 4=flip columns before rot, 8=flip after
@@ -305,7 +310,8 @@ class GatanK2Base(DMSEM):
 		params = {
 			'rotationFlip': rot_flip,
 			'dirname': path,
-			'rootname': 'frame',
+			'rootname': fileroot,
+			'filePerImage': self.filePerImage,
 		}
 		return params
 
