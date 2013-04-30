@@ -65,6 +65,14 @@ def getRawFrameSessionPathFromImagePath(imagepath):
 	rawframe_sessionpath = os.path.join(leginonbasepath,baseframe_dirname,sessionrawdatapath)
 	return rawframe_sessionpath
 
+def getRawFrameType(session_image_path):
+	rawframe_basepath = getRawFrameSessionPathFromImagePath(session_image_path)
+	entries = os.listdir(rawframe_basepath)
+	for path in entries:
+		if 'frame' in path and os.path.isdir(os.path.join(rawframe_basepath,path)):
+			return 'singles'
+	return 'stack'
+
 if __name__ == '__main__':
 	infopath = sys.argv[1]
 	if infopath == 'all':

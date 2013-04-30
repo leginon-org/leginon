@@ -6,10 +6,13 @@ import sys
 import math
 import shutil
 import subprocess
+#leginon
+from leginon import ddinfo
 #appion
 from appionlib import appionLoop2
 from appionlib import apDisplay
 from appionlib import apDDprocess
+from appionlib import apDatabase
 from appionlib import apFile
 from appionlib import apStack
 from appionlib import appiondata
@@ -42,11 +45,18 @@ class MakeFrameStackLoop(appionLoop2.AppionLoop):
 			if not os.path.isfile(driftcorrexe):
 				apDisplay.printError('Drift correction program not available')
 
+	def getFrameType(self):
+		# set how frames are saved depending on what is found in the basepath
+		sessiondata = apDatabase.getSessionDataFromSessionName(self.params['sessionname'])
+		return ddinfo.getRawFrameType(sessiondata['image path'])
+
 	#=======================
 	def preLoopFunctions(self):
 		self.dd = apDDprocess.initializeDDFrameprocess(self.params['sessionname'],self.params['wait'])
 		self.dd.setUseGS(self.params['useGS'])
 		self.dd.setRunDir(self.params['rundir'])
+		self.dd.setRawFrameType(self.getFrameType())
+		
 		if self.params['refimgid']:
 			self.dd.setDefaultImageForReference(self.params['refimgid'])
 		self.imageids = []

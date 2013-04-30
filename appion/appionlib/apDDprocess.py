@@ -129,6 +129,7 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		self.camerainfo = {}
 		self.setDefaultDimension(4096,3072)
 		self.c_client = correctorclient.CorrectorClient()
+		self.rawframetype = None
 		self.framestackpath = None
 		self.stack_binning = 1
 		self.correct_dark_gain = True
@@ -187,6 +188,18 @@ class DDFrameProcessing(DirectDetectorProcessing):
 
 	def getRawFrameDir(self):
 		return self.rawframe_dir
+
+	def setRawFrameType(self,frametype='singles'):
+		if frametype in ('singles','stack'):
+			self.rawframetype = frametype
+
+	def getRawFrameType(self):
+		if not self.rawframetype:
+			if self.image:
+				self.setRawFrameType(ddinfo.getRawFrameType(self.image['session']['image path']))
+			else:
+				apDisplay.printError('RawFrameType not set')
+		return self.rawframetype
 
 	def getRawFrameDirFromImage(self,imagedata):
 		# strip off DOS path in rawframe directory name 
@@ -368,7 +381,7 @@ class DDFrameProcessing(DirectDetectorProcessing):
 						return True
 		return False
 			
-	def __loadOneRawFrame(self,rawframe_dir,frame_number):
+	def loadOneRawFrame(self,rawframe_dir,frame_number):
 		'''
 		Load from rawframe_dir the chosen frame of the current image.
 		'''
@@ -429,11 +442,11 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		apDisplay.printMsg( 'Summing up %d Frames starting from %d ....' % (nframe,start_frame))
 		for frame_number in range(start_frame,start_frame+nframe):
 			if frame_number == start_frame:
-				rawarray = self.__loadOneRawFrame(rawframe_dir,frame_number)
+				rawarray = self.loadOneRawFrame(rawframe_dir,frame_number)
 				if rawarray is False:
 					return False
 			else:
-				oneframe = self.__loadOneRawFrame(rawframe_dir,frame_number)
+				oneframe = self.loadOneRawFrame(rawframe_dir,frame_number)
 				if oneframe is False:
 					return False
 				rawarray += oneframe

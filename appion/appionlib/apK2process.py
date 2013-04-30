@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 
+import os
 import numpy
 from pyami import mrc,imagefun
-from leginon import leginondata
+from leginon import leginondata,ddinfo
 from appionlib import apDDprocess,apDisplay
 
 # testing options
@@ -27,7 +28,76 @@ class GatanK2Processing(apDDprocess.DDFrameProcessing):
 	def getUsedFramesFromImageData(self,imagedata):
 		return range(self.getNumberOfFrameSavedFromImageData(imagedata))
 
+	def getRawFrameDirFromImage(self,imagedata):
+		print 'RawFrameType',self.getRawFrameType()
+		if self.getRawFrameType() == 'singles':
+			return super(GatanK2Processing,self).getRawFrameDirFromImage(imagedata)
+		'''
+		K2 raw frames are now saved as image stack for feeding into gpu program.
+		RawFrameDir here is now actually the filename with mrc extension.
+		'''
+		# strip off DOS path in rawframe directory name 
+		rawframename = imagedata['camera']['frames name'].split('\\')[-1]
+		if not rawframename:
+			apDisplay.printWarning('No Raw Frame Saved for %s' % imagedata['filename'])
+		# raw frames are saved in a subdirctory of image path
+		imagepath = imagedata['session']['image path']
+		rawframe_basepath = ddinfo.getRawFrameSessionPathFromImagePath(imagepath)
+		# frame stackfile is image filename plus '.frames.mrc'
+		rawframedir = os.path.join(rawframe_basepath,'%s.frames.mrc' % imagedata['filename'])
+		if not self.waitForPathExist(rawframedir):
+			apDisplay.printError('Raw Frame Dir %s does not exist.' % rawframedir)
+		return rawframedir
+
+	def loadOneRawFrame(self,rawframe_path,frame_number):
+		'''
+		Load one raw frame depending on the rawframetype
+		'''
+		print 'RawFrameType',self.getRawFrameType()
+		if self.getRawFrameType() == 'singles':
+			return super(GatanK2Processing,self).loadOneRawFrame(rawframe_path,frame_number)
+		'''
+		Load from rawframe_path (a stack file) the chosen frame of the current image.
+		'''
+		try:
+			bin = self.camerainfo['binning']
+			offset = self.camerainfo['offset']
+			dimension = self.camerainfo['dimension']
+		except:
+			# default
+			bin = {'x':1,'y':1}
+			offset = {'x':0,'y':0}
+			dimension = self.getDefaultDimension()
+		crop_end = {'x': offset['x']+dimension['x']*bin['x'], 'y':offset['y']+dimension['y']*bin['y']}
+		apDisplay.printMsg('Frame path: %s' %  rawframe_path)
+		waitmin = 0
+		while not os.path.exists(rawframe_path):
+			if self.waittime < 0.1:
+				apDisplay.printWarning('Frame File %s does not exist.' % rawframe_path)
+				return False
+			apDisplay.printWarning('Frame File %s does not exist. Wait for 3 min.' % rawframe_path)
+			time.sleep(180)
+			waitmin += 3
+			apDisplay.printMsg('Waited for %d min so far' % waitmin)
+			if waitmin > self.waittime:
+				return False
+		return self.readImageFrame(rawframe_path,frame_number,offset,crop_end,bin)
+
+	def readImageFrame(self,framestack_path,frame_number,offset,crop_end,bin):
+		'''
+		Read a frame from the image stack
+		'''
+		a = mrc.read(framestack_path,frame_number)
+		a = numpy.asarray(a,dtype=numpy.float32)
+
+		# modify the size if needed
+		a = self.modifyFrameImage(a,offset,crop_end,bin)
+		return a
+
 	def readFrameImage(self,frameimage_path,offset,crop_end,bin):
+		'''
+		Read a frame file from the frame directory
+		'''
 		a = mrc.read(frameimage_path)
 		a = numpy.asarray(a,dtype=numpy.float32)
 
