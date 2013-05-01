@@ -178,11 +178,14 @@ function createCommand()
 
 	// Get the run name and directory
 	// This is not needed for the catchup command, but is needed for appion
-	$particle = new particledata();
-	$runname = $particle->getDDStackRunName($stackid);
-	$outdir = $particle->getDDStackOutdir($stackid);
-	$_POST['runname'] = $runname[0]['runname'];
-	$_POST['outdir'] = $outdir[0]['path'];
+	$particle 		= new particledata();
+	$outdirResult 	= $particle->getDDStackOutdir($stackid);
+	$pathArray 		= explode('/', $outdirResult[0]['path']);
+	$runname 		= array_pop($pathArray);
+	$outdir 		= implode('/', $pathArray);
+	
+	$_POST['runname'] = $runname;
+	$_POST['outdir']  = $outdir;
 	
 	// reload the form with the error messages
 	if ( $errorMsg ) createForm( $errorMsg );
