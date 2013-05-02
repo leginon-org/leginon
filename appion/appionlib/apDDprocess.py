@@ -403,9 +403,9 @@ class DDFrameProcessing(DirectDetectorProcessing):
 			if self.waittime < 0.1:
 				apDisplay.printWarning('Frame File %s does not exist.' % rawframe_path)
 				return False
-			apDisplay.printWarning('Frame File %s does not exist. Wait for 3 min.' % rawframe_path)
-			time.sleep(180)
-			waitmin += 3
+			apDisplay.printWarning('Frame File %s does not exist. Wait for 1 min.' % rawframe_path)
+			time.sleep(60)
+			waitmin += 1
 			apDisplay.printMsg('Waited for %d min so far' % waitmin)
 			if waitmin > self.waittime:
 				return False

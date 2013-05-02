@@ -62,6 +62,10 @@ class MakeFrameStackLoop(appionLoop2.AppionLoop):
 		self.imageids = []
 		if self.params['stackid']:
 			self.imageids = apStack.getImageIdsFromStack(self.params['stackid'])
+		# Optimize AppionLoop wait time for this since the processing now takes longer than
+		# image acquisition
+		self.setWaitSleepMin(1)
+		self.setProcessBatchCount(1)
 
 	#=======================
 	def processImage(self, imgdata):

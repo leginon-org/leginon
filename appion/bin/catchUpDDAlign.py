@@ -130,7 +130,7 @@ class CatchUpFrameAlignmentLoop(appionScript.AppionScript):
 
 	def start(self):
 		print 'wait=',self.params['wait']
-		max_loop_num_trials = 3
+		max_loop_num_trials = 60 * 3
 		wait_time = 20
 		self.last_num_stacks = 0
 		if self.params['wait']:

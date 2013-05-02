@@ -36,6 +36,22 @@ class AppionLoop(appionScript.AppionScript):
 		#self.specialCreateOutputDirs()
 		self._initializeDoneDict()
 		self.result_dirs={}
+		self.sleep_minutes = 6
+		self.process_batch_count = 10
+
+	#=====================
+	def setWaitSleepMin(self,minutes):
+		'''
+		Set the wait time between query for new images in minutes
+		'''
+		self.sleep_minutes = minutes
+
+	#=====================
+	def setProcessBatchCount(self,count):
+		'''
+		Set number of images accumulated from database record before processing them
+		'''
+		self.process_batch_count = count
 
 	#=====================
 	def run(self):
@@ -783,13 +799,14 @@ class AppionLoop(appionScript.AppionScript):
 		if self.params["limit"] is not None:
 			return False
 
-		### CHECK FOR IMAGES, IF MORE THAN 10 JUST GO AHEAD
+		### CHECK FOR IMAGES, IF MORE THAN self.process_batch_count (default 10) JUST GO AHEAD
 		apDisplay.printMsg("Finished all images, checking for more\n")
 		self._getAllImages()
 		### reset counts
 		self.stats['imagecount'] = len(self.imgtree)
 		self.stats['imagesleft'] = self.stats['imagecount'] - self.stats['count']
-		if self.stats['imagesleft'] > 10:
+		### Not sure this really works since imagesleft appears to be negative value AC
+		if  self.stats['imagesleft'] > self.process_batch_count:
 			return True
 
 		### WAIT
@@ -797,9 +814,10 @@ class AppionLoop(appionScript.AppionScript):
 			apDisplay.printWarning("waited longer than three hours for new images with no results, so I am quitting")
 			return False
 		apParam.closeFunctionLog(functionname=self.functionname, logfile=self.logfile, msg=False, stats=self.stats)
-		sys.stderr.write("\nAll images processed. Waiting ten minutes for new images (waited "+str(self.stats['waittime'])+" min so far).")
+		sys.stderr.write("\nAll images processed. Waiting %d minutes for new images (waited %.2f min so far)." % (int(self.sleep_minutes),float(self.stats['waittime'])))
 		twait0 = time.time()
-		for i in range(20):
+		repeats = int(self.sleep_minutes * 60 / 20)
+		for i in range(repeats):
 			time.sleep(20)
 			#print a dot every 30 seconds
 			sys.stderr.write(".")

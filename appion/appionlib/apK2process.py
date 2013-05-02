@@ -45,7 +45,7 @@ class GatanK2Processing(apDDprocess.DDFrameProcessing):
 		rawframe_basepath = ddinfo.getRawFrameSessionPathFromImagePath(imagepath)
 		# frame stackfile is image filename plus '.frames.mrc'
 		rawframedir = os.path.join(rawframe_basepath,'%s.frames.mrc' % imagedata['filename'])
-		if not self.waitForPathExist(rawframedir):
+		if not self.waitForPathExist(rawframedir,30):
 			apDisplay.printError('Raw Frame Dir %s does not exist.' % rawframedir)
 		return rawframedir
 
