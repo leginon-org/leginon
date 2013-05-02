@@ -37,7 +37,7 @@ def query_image_by_frames_name(name):
 			return results[0]
 	return None
 
-def copy_and_delete(src, dst):
+def copy_and_delete(src, dst, uid, gid):
 	# make destination dirs
 	dirname,basename = os.path.split(os.path.abspath(dst))
 	print 'mkdirs', dirname
@@ -45,6 +45,12 @@ def copy_and_delete(src, dst):
 
 	# copy frames
 	cmd = 'rsync -av --remove-sent-files %s %s' % (src, dst)
+	print cmd
+	p = subprocess.Popen(cmd, shell=True)
+	p.wait()
+
+	# change ownership of desintation directory and contents
+	cmd = 'chown -R %s:%s %s' % (uid, gid, dirname)
 	print cmd
 	p = subprocess.Popen(cmd, shell=True)
 	p.wait()
@@ -102,13 +108,19 @@ def run_once(parent_src_path):
 		if imdata is None:
 			continue
 		image_path = imdata['session']['image path']
+
+		# determine user and group of leginon data
+		stat = os.stat(image_path)
+		uid = stat.st_uid
+		gid = stat.st_gid
+
 		frames_path = leginon.ddinfo.getRawFrameSessionPathFromImagePath(image_path)
 		imname = imdata['filename'] + dst_suffix
 		dst_path = os.path.join(frames_path, imname)
 		print 'DEST', dst_path
 
 		# do actual copy and delete
-		copy_and_delete(src_path, dst_path)
+		copy_and_delete(src_path, dst_path, uid, gid)
 		leginon.ddinfo.saveImageDDinfoToDatabase(imdata,os.path.join(dst_path,'info.txt'))
 
 def run():
