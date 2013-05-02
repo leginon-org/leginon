@@ -70,5 +70,11 @@ def get_config_dirs(module=None):
 
 	return [system_dir, installed_dir, user_dir]
 
+def open_if_not_exists(filename):
+	'''Creates a new file for read/write access.  Raises exception if file exists'''
+	fd = os.open(filename, os.O_CREAT|os.O_EXCL|os.O_RDWR)
+	f = os.fdopen(fd, 'r+')
+	return f
+
 if __name__ == '__main__':
 	print getMyFilename()
