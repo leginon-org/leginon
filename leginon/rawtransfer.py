@@ -9,7 +9,7 @@ import leginon.leginondata
 import leginon.ddinfo
 import pyami.fileutil
 
-check_interval = 30  # seconds between checking for new frames
+check_interval = 20  # seconds between checking for new frames
 
 def get_source_path():
 	raw_frames_path = 'RAW_FRAMES_PATH'
@@ -38,20 +38,22 @@ def query_image_by_frames_name(name):
 	return None
 
 def copy_and_delete(src, dst):
-	## ensure a trailing / on src
-	if src[-1] != '/':
-		src = src + '/'
-	## make dirs
-	pyami.fileutil.mkdirs(dst)
+	# make destination dirs
+	dirname,basename = os.path.split(os.path.abspath(dst))
+	print 'mkdirs', dirname
+	pyami.fileutil.mkdirs(dirname)
+
+	# copy frames
 	cmd = 'rsync -av --remove-sent-files %s %s' % (src, dst)
 	print cmd
 	p = subprocess.Popen(cmd, shell=True)
 	p.wait()
 
-	# remove the dir we just copied, assuming is and all subdirs are empty
+	# remove empty dir from source
 	abspath = os.path.abspath(src)
 	dirpath,basename = os.path.split(abspath)
-	cmd = 'find %s -type d -empty -prune -exec rmdir --ignore-fail-on-non-empty -p \{\} \;' % (basename,)
+	if src.endswith('/'):
+		cmd = 'find %s -type d -empty -prune -exec rmdir --ignore-fail-on-non-empty -p \{\} \;' % (basename,)
 	print 'cd', dirpath
 	print cmd
 	p = subprocess.Popen(cmd, shell=True, cwd=dirpath)
@@ -67,7 +69,7 @@ def run_once(parent_src_path):
 	global time_expire
 	global mtime
 	names = os.listdir(parent_src_path)
-	time.sleep(4)  # wait for any current writes to finish
+	time.sleep(10)  # wait for any current writes to finish
 	time_start = next_time_start
 	for name in names:
 		src_path = os.path.join(parent_src_path, name)
@@ -76,7 +78,7 @@ def run_once(parent_src_path):
 			# maybe delete empty dir too?
 			continue
 
-		# skip expired dirctories
+		# skip expired dirs, mrcs
 		if name in expired_names:
 			continue
 
@@ -87,12 +89,21 @@ def run_once(parent_src_path):
 		print '**running', src_path
 
 		# query for Leginon image
-		imdata = query_image_by_frames_name(name)
+		if name.endswith('.mrc'):
+			frames_name = name[:-4]
+			dst_suffix = '.frames.mrc'
+		else:
+			frames_name = name
+			dst_suffix = '.frames'
+			## ensure a trailing / on directory
+			if src_path[-1] != '/':
+				src_path = src_path + '/'
+		imdata = query_image_by_frames_name(frames_name)
 		if imdata is None:
 			continue
 		image_path = imdata['session']['image path']
 		frames_path = leginon.ddinfo.getRawFrameSessionPathFromImagePath(image_path)
-		imname = imdata['filename'] + '.frames'
+		imname = imdata['filename'] + dst_suffix
 		dst_path = os.path.join(frames_path, imname)
 		print 'DEST', dst_path
 
