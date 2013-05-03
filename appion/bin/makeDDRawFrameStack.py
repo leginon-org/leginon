@@ -44,6 +44,8 @@ class MakeFrameStackLoop(appionLoop2.AppionLoop):
 			driftcorrexe = subprocess.Popen("which "+exename, shell=True, stdout=subprocess.PIPE).stdout.read().strip()
 			if not os.path.isfile(driftcorrexe):
 				apDisplay.printError('Drift correction program not available')
+			if self.params['parallel']:
+				apDisplay.printError('parallel processing only works without gpu processing i.e., align must be deferred')
 
 	def getFrameType(self):
 		# set how frames are saved depending on what is found in the basepath
@@ -64,7 +66,7 @@ class MakeFrameStackLoop(appionLoop2.AppionLoop):
 			self.imageids = apStack.getImageIdsFromStack(self.params['stackid'])
 		# Optimize AppionLoop wait time for this since the processing now takes longer than
 		# image acquisition
-		self.setWaitSleepMin(1)
+		self.setWaitSleepMin(0.4)
 		self.setProcessBatchCount(1)
 
 	#=======================
@@ -83,6 +85,12 @@ class MakeFrameStackLoop(appionLoop2.AppionLoop):
 			self.dd.setImageData(imgdata)
 		except Exception, e:
 			apDisplay.printWarning(e.message)
+			return
+
+		if self.params['parallel'] and os.path.isfile(self.dd.getFrameStackPath()):
+			# This is a secondary image lock check, checking the first output of the process.
+			# It alone is not good enough
+			apDisplay.printWarning('Some other parallel process is working on the same image. Skipping')
 			return
 
 		# set other parameters

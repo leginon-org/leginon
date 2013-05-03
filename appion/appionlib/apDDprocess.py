@@ -83,6 +83,8 @@ class DirectDetectorProcessing(object):
 			imagename = aligned_presetname.join(bits) +org_presetname 
 		self.framestackpath = os.path.join(self.rundir,imagename+'_st.mrc')
 		
+	def getFrameStackPath(self):
+		return self.framestackpath
 			
 	def setRunDir(self,rundir):
 		'''
