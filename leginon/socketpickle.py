@@ -17,10 +17,14 @@ PORT = 55555
 
 class Handler(SocketServer.StreamRequestHandler):
 	def handle(self):
+			print 'Handling request...'
 			size = pickle.load(self.rfile)
+			print '  Size requested: ', size
 			result = numpy.zeros((size,size), dtype=numpy.int32)
+			print '  Sending result...'
 			pickle.dump(result, self.wfile, pickle.HIGHEST_PROTOCOL)
 			self.wfile.flush()
+			print '  Done.'
 
 class Server(SocketServer.ThreadingTCPServer):
 	allow_reuse_address = True
@@ -32,12 +36,16 @@ class Client(object):
 		self.host = host
 
 	def getImage(self, size):
+		print 'Connecting to server...'
 		s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		s.connect((self.host, PORT))
 		sfile = s.makefile('rwb')
+		print 'Sending request...'
 		pickle.dump(size, sfile, pickle.HIGHEST_PROTOCOL)
 		sfile.flush()
+		print 'Getting result...'
 		result = pickle.load(sfile)
+		print 'Done.'
 		sfile.close()
 		return result
 
