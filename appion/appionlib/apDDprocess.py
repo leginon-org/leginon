@@ -140,6 +140,8 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		# change this to True for loading bias image for correction
 		self.use_bias = False
 		self.use_GS = False
+		self.use_gpu_flat = False
+		self.gpuid = 0
 		self.setUseAlternativeChannelReference(False)
 		self.setDefaultImageForReference(0)
 		if debug:
@@ -170,6 +172,12 @@ class DDFrameProcessing(DirectDetectorProcessing):
 	def getScaledBrightArray(self,nframe):
 		return self.scaleRefImage('bright',nframe)
 
+	def setUseGPUFlat(self,use_gpu_flat):
+		self.use_gpu_flat = use_gpu_flat
+
+	def setGPUid(self,gpuid):
+		self.gpuid = gpuid
+
 	def getSingleFrameDarkArray(self):
 		darkdata = self.getRefImageData('dark')
 		nframes = self.getNumberOfFrameSavedFromImageData(darkdata)
@@ -190,6 +198,12 @@ class DDFrameProcessing(DirectDetectorProcessing):
 
 	def getRawFrameDir(self):
 		return self.rawframe_dir
+
+	def getRawFrameStackPath(self):
+		if self.getRawFrameType() == 'stack':
+			return self.getRawFrameDir()
+		else:
+			return self.makeRawFrameStack()
 
 	def setRawFrameType(self,frametype='singles'):
 		if frametype in ('singles','stack'):
@@ -681,8 +695,74 @@ class DDFrameProcessing(DirectDetectorProcessing):
 			array = array[cdata['offset']['y']:cdata['offset']['y']+cdata['dimension']['y'],cdata['offset']['x']:cdata['offset']['x']+cdata['dimension']['x']]
 		apDisplay.printMsg('frame image shape is now x=%d,y=%d' % (array.shape[1],array.shape[0]))
 		return array
-		
+
+	def makeRawFrameStack(self):
+		'''
+		Creates a file of uncorrected stack of frames
+		'''
+		sys.stdout.write('\a')
+		sys.stdout.flush()
+		rawframe_dir = self.getRawFrameDir()
+		total_frames = self.getNumberOfFrameSaved()
+		half_way_frame = int(total_frames // 2)
+		first = 0
+		frameprocess_dir = os.path.basename(self.farmestackpath)
+		rawframestack_path = os.path.join(frameprocess_dir,self.image['filename']+'_raw_st.mrc')
+		for start_frame in range(first,first+total_frames):
+			array = self.loadOneRawFrame(rawframe_dir,start_frame)
+			# if non-fatal error occurs, end here
+			if array is False:
+				break
+			if start_frame == first:
+				# overwrite old stack mrc file
+				mrc.write(array,rawframestack_path)
+			elif start_frame == half_way_frame:
+				# Only calculate stats if half way in the stack making to save time
+				mrc.append(array,rawframestack_path,True)
+			else:
+				mrc.append(array,rawframestack_path,False)
+		return rawframestack_path
+				
 	def makeCorrectedFrameStack(self, use_full_raw_area=False):
+		if self.use_gpu_flat:
+			return self.makeCorrectedFrameStack_gpu(use_full_raw_area)
+		else:
+			return self.makeCorrectedFrameStack_cpu(use_full_raw_area)
+
+	def makeCorrectedFrameStack_gpu(self, use_full_raw_area=False):
+		'''
+		Creates a file of gain/dark corrected stack of frames
+		'''
+		sys.stdout.write('\a')
+		sys.stdout.flush()
+		if use_full_raw_area is True:
+			apDisplay.displayError('use_full_raw_area when image is cropped is not implemented for gpu')
+		frameprocess_dir = os.path.dirname(self.framestackpath)
+		get_new_refs = self.__conditionChanged(1,use_full_raw_area)
+		# o.k. to set attribute now that condition change is checked
+		self.use_full_raw_area = use_full_raw_area
+		if get_new_refs:
+			# set camera info for loading frames
+			self.setCameraInfo(1,use_full_raw_area)
+			# output dark and norm
+			unscaled_darkarray = self.getSingleFrameDarkArray()
+			self.dark_path = os.path.join(frameprocess_dir,'dark.mrc')
+			mrc.write(unscaled_darkarray,self.dark_path)
+			normdata = self.getRefImageData('norm')
+			apDisplay.printWarning('Use Norm Reference %s' % (normdata['filename'],))
+			normarray = normdata['image']
+			self.norm_path = os.path.join(frameprocess_dir,'dark.mrc')
+			mrc.write(normarray,self.norm_path)
+		rawframestack_path = self.getRawFrameStackPath()
+		cmd = "dosefgpu_flat %s %s %s %d %s" % (rawframestack_path,self.framestackpath,self.norm_path,self.gpuid,self.dark_path)
+		apDisplay.printMsg('Running: %s'% cmd)
+		self.proc = subprocess.Popen(cmd, shell=True)
+		self.proc.wait()
+		if not os.path.isfile(self.framestackpath):
+			apDisplay.printError('dosefgpu_flat FAILED: \n%s not created.' % os.path.basename(self.framestackpath))
+		return self.framestackpath
+
+	def makeCorrectedFrameStack_cpu(self, use_full_raw_area=False):
 		'''
 		Creates a file of gain/dark corrected stack of frames
 		'''
@@ -769,7 +849,7 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		Valid square gain/dark corrected ddstack is the input.
 		'''
 		rundir = self.getRunDir()
-		cmd = 'dosefgpu_driftcorr %s -fcs %s -ssc 1 -fct %s' % (self.framestackpath,self.aligned_sumpath,self.aligned_stackpath)
+		cmd = 'dosefgpu_driftcorr %s -gpu %d -fcs %s -ssc 1 -fct %s' % (self.framestackpath,self.gpuid,self.aligned_sumpath,self.aligned_stackpath)
 		apDisplay.printMsg('Running: %s'% cmd)
 		self.proc = subprocess.Popen(cmd, shell=True)
 		self.proc.wait()

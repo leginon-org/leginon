@@ -26,6 +26,8 @@ class MakeFrameStackLoop(appionLoop2.AppionLoop):
 			action="store_true", help="Use Gram-Schmidt process to scale dark image")
 		self.parser.add_option("--align", dest="align", default=False,
 			action="store_true", help="Make Aligned frame stack")
+		self.parser.add_option("--gpuflat", dest="gpuflat", default=False,
+			action="store_true", help="Use gpu for flat field (gain/dark/mask) correction")
 		self.parser.add_option("--defergpu", dest="defergpu", default=False,
 			action="store_true", help="Make unaligned frame stack first on computer without gpu alignment program")
 		self.parser.add_option("--stackid", dest="stackid", type="int",
@@ -34,18 +36,31 @@ class MakeFrameStackLoop(appionLoop2.AppionLoop):
 			help="Binning factor to make the stack (optional)", metavar="INT")
 		self.parser.add_option("--refimgid", dest="refimgid", type="int",
 			help="Specify a corrected image to do gain/dark correction with", metavar="INT")
+		self.parser.add_option("--gpuid", dest="gpuid", type="int", default=0,
+			help="GPU device id used in gpu processing", metavar="INT")
 		self.parser.remove_option("--uncorrected")
 		self.parser.remove_option("--reprocess")
 
 	#=======================
 	def checkConflicts(self):
 		if self.params['align'] and not self.params['defergpu']:
+			gpuexelist = ['dosefgpu_driftcorr','dosefgpu_flat']
 			exename = 'dosefgpu_driftcorr'
-			driftcorrexe = subprocess.Popen("which "+exename, shell=True, stdout=subprocess.PIPE).stdout.read().strip()
-			if not os.path.isfile(driftcorrexe):
-				apDisplay.printError('Drift correction program not available')
+			gpuexe = subprocess.Popen("which "+exename, shell=True, stdout=subprocess.PIPE).stdout.read().strip()
+			if not os.path.isfile(gpuexe):
+				apDisplay.printError('Correction program "%s" not available' % exename)
+			# We don't have gpu locking
 			if self.params['parallel']:
-				apDisplay.printError('parallel processing only works without gpu processing i.e., align must be deferred')
+					apDisplay.printWarning('Make sure that you use different gpuid for each parallel process')
+			# As single processing sequential job, gpu is faster than cpu
+			self.params['gpuflat'] = True
+
+		if self.params['gpuflat']:
+			exename = 'dosefgpu_flat'
+			gpuexe = subprocess.Popen("which "+exename, shell=True, stdout=subprocess.PIPE).stdout.read().strip()
+			if not os.path.isfile(gpuexe):
+				apDisplay.printWarning('Correction program "%s" not available. Use cpu for correction.' % exename)
+				self.params['gpuflat'] = False
 
 	def getFrameType(self):
 		# set how frames are saved depending on what is found in the basepath
@@ -58,6 +73,8 @@ class MakeFrameStackLoop(appionLoop2.AppionLoop):
 		self.dd.setUseGS(self.params['useGS'])
 		self.dd.setRunDir(self.params['rundir'])
 		self.dd.setRawFrameType(self.getFrameType())
+		self.dd.setUseGPUFlat(self.params['gpuflat'])
+		self.dd.setGPUid(self.params['gpuid'])
 		
 		if self.params['refimgid']:
 			self.dd.setDefaultImageForReference(self.params['refimgid'])
