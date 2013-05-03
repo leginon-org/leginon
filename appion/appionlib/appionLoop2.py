@@ -10,6 +10,7 @@ import time
 import math
 import random
 import cPickle
+import glob
 #appion
 from appionlib import apDisplay
 from appionlib import apDatabase
@@ -19,6 +20,7 @@ from appionlib import apProject
 #leginon
 from appionlib import appionScript
 from pyami import mem
+from pyami import fileutil
 
 class AppionLoop(appionScript.AppionScript):
 	#=====================
@@ -54,10 +56,34 @@ class AppionLoop(appionScript.AppionScript):
 		self.process_batch_count = count
 
 	#=====================
+	def cleanParallelLock(self):
+		for file in glob.glob('_lock*'):
+			os.remove(file)
+
+	def lockParallel(self,imgid):
+		'''
+		Check and create lock for image when running multiple instances on different
+		hosts. This is as safe as we can do.  If in doubt, add a secondary check
+		for the first output in the function processImage
+		'''
+		try:
+			fileutil.open_if_not_exists('_lock%d' %imgid).close()
+		except OSError:
+			return True # exists before locking
+		
+	def unlockParallel(self,imgid):
+		try:
+			os.remove('_lock%d' %imgid)
+		except:
+			apDisplay.printError('Parallel appionLoop unlock failed')
+		
+	#=====================
 	def run(self):
 		"""
 		processes all images
 		"""
+		if not self.params['parallel']:
+			self.cleanParallelLock()
 		### get images from database
 		self._getAllImages()
 		os.chdir(self.params['rundir'])
@@ -106,6 +132,8 @@ class AppionLoop(appionScript.AppionScript):
 				### FINISH with custom functions
 
 				self._writeDoneDict(imgdata['filename'])
+				if self.params['parallel']:
+					self.unlockParallel(imgdata.dbid)
 
 				loadavg = os.getloadavg()[0]
 				if loadavg > 2.0:
@@ -332,6 +360,8 @@ class AppionLoop(appionScript.AppionScript):
 			action="store_true", help="Shuffle the images before processing, i.e. process images out of order")
 		self.parser.add_option("--reverse", dest="reverse", default=False,
 			action="store_true", help="Process the images from newest to oldest")
+		self.parser.add_option("--parallel", dest="parallel", default=False,
+			action="store_true", help="parallel appionLoop on different cpu. Only work with the part not using gpu")
 
 	#=====================
 	def _addDefaultParams(self):
@@ -550,6 +580,10 @@ class AppionLoop(appionScript.AppionScript):
 		initilizes several parameters for a new image
 		and checks if it is okay to start processing image
 		"""
+		if self.params['parallel']:
+			if self.lockParallel(imgdata.dbid):
+				apDisplay.printMsg('%s locked by another parallel run in the rundir' % (apDisplay.shortenImageName(imgdata['filename'])))
+				return False
 		#calc images left
 		self.stats['imagesleft'] = self.stats['imagecount'] - self.stats['count']
 
@@ -569,10 +603,14 @@ class AppionLoop(appionScript.AppionScript):
 		imgpath = os.path.join(imgdata['session']['image path'], imgdata['filename']+'.mrc')
 		if not os.path.isfile(imgpath):
 			apDisplay.printWarning(imgpath+" not found, skipping")
+			if self.params['parallel']:
+				self.unlockParallel(imgdata.dbid)
 			return False
 
 		# check to see if image has already been processed
 		if self._alreadyProcessed(imgdata):
+			if self.params['parallel']:
+				self.unlockParallel(imgdata.dbid)
 			return False
 
 		self.stats['waittime'] = 0

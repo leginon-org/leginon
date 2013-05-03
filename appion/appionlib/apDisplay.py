@@ -4,6 +4,7 @@ import os
 import re
 import sys
 import types
+import glob
 
 ####
 # This is a low-level file with NO database connections
@@ -46,6 +47,9 @@ def printError(text,raised=True):
 	"""
 	standardized error message
 	"""
+	# release appionLoop image locks so that it can be reprocessed
+	for lockfile in glob.glob('_lock*'):
+			os.remove(lockfile)
 	if writeOut is True:
 		try:
 			f = open(outFile, "a")
