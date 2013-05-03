@@ -1,0 +1,66 @@
+#!/usr/bin/env python
+#
+# COPYRIGHT:
+#	   The Leginon software is Copyright 2003
+#	   The Scripps Research Institute, La Jolla, CA
+#	   For terms of the license agreement
+#	   see  http://ami.scripps.edu/software/leginon-license
+#
+
+import cPickle as pickle
+import socket
+import SocketServer
+import numpy
+import sys
+
+PORT = 55555
+
+class Handler(SocketServer.StreamRequestHandler):
+	def handle(self):
+			size = pickle.load(self.rfile)
+			result = numpy.zeros((size,size), dtype=numpy.int32)
+			pickle.dump(result, self.wfile, pickle.HIGHEST_PROTOCOL)
+			self.wfile.flush()
+
+class Server(SocketServer.ThreadingTCPServer):
+	allow_reuse_address = True
+	def __init__(self):
+		SocketServer.ThreadingTCPServer.__init__(self, ('', PORT), Handler)
+
+class Client(object):
+	def __init__(self, host):
+		self.host = host
+
+	def getImage(self, size):
+		s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		s.connect((self.host, PORT))
+		sfile = s.makefile('rwb')
+		pickle.dump(size, sfile, pickle.HIGHEST_PROTOCOL)
+		sfile.flush()
+		result = pickle.load(sfile)
+		sfile.close()
+		return result
+
+def run_server():
+	hostname = socket.gethostname()
+	port = PORT
+	print 'Running Server'
+	print '  host: %s' % (hostname,)
+	print '  port: %s' % (port,)
+	s = Server()
+	s.serve_forever()
+
+def run_client():
+	server_host = sys.argv[1]
+	size = int(sys.argv[2])
+	c = Client(server_host)
+	im = c.getImage(size)
+	print ''
+	print 'IMAGE %s:' % (im.shape,)
+	print im
+	print ''
+
+if sys.argv[1:]:
+	run_client()
+else:
+	run_server()
