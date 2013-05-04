@@ -856,7 +856,8 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		if os.path.isfile(self.aligned_stackpath):
 			self.updateFrameStackHeaderImageStats(self.aligned_stackpath)
 		else:
-			apDisplay.printError('dosefgpu_driftcorr FAILED: \n%s not created.' % os.path.basename(self.aligned_stackpath))
+			apDisplay.printWarning('dosefgpu_driftcorr FAILED: \n%s not created.' % os.path.basename(self.aligned_stackpath))
+			apDisplay.printError('If this happens consistently on an image, hide it in myamiweb viewer and continue with others' )
 
 	def makeAlignedImageData(self):
 		'''

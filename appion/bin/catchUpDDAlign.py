@@ -120,6 +120,12 @@ class CatchUpFrameAlignmentLoop(appionScript.AppionScript):
 				images.append(imagedata)
 		self.num_stacks = len(images)
 		for imagedata in images:
+			# Avoid hidden images
+			if leginondata.ViewerImageStatus(image=imagedata,status='hidden').query():
+				apDisplay.printMsg('---------------------------------------------------------')
+				apDisplay.printMsg(' Skipping hidden %s' % imagedata['filename'])
+				apDisplay.printMsg('---------------------------------------------------------')
+				continue
 			apDisplay.printMsg('---------------------------------------------------------')
 			apDisplay.printMsg('  Processing %s' % imagedata['filename'])
 			apDisplay.printMsg('---------------------------------------------------------')
@@ -137,7 +143,7 @@ class CatchUpFrameAlignmentLoop(appionScript.AppionScript):
 			num_trials = 0
 			while True:
 				self.loopCheckAndProcess()
-				if self.num_stacks == self.last_num_stacks:
+				if self.num_stacks <= self.last_num_stacks:
 					if num_trials >= max_loop_num_trials:
 						apDisplay.printColor('Checked for stack file %d times. Finishing....' % max_loop_num_trials,'magenta')
 						apDisplay.printMsg('Rerun this script if you know more are coming')
