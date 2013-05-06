@@ -2238,7 +2238,7 @@ class particledata {
 	
 	function getDDStackRunIdsAlign($sessionId,$showHidden=True) 
 	{
-		$q = "SELECT r.`DEF_id` as stackid "
+		$q = "SELECT r.`DEF_id` as stackid, r.`runname` as runname "
 			."FROM `ApDDStackRunData` AS r "
 			."LEFT JOIN ApPathData AS p "
 			."ON (r.`REF|ApPathData|path` = p.`DEF_id`) "

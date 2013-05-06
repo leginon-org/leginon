@@ -30,6 +30,27 @@ if ( $_POST )
 	createForm();
 }
 
+// Returns the html to display a stack selector
+// stackInfos input contains stackid and runname.
+function getDDStackSelector( $stackInfos, $stackidval, $onchange ) 
+{
+	$html = "<SELECT NAME='stackval'";
+	if ($onchange) $html .= "onchange='".$onchange."'";
+	$html .= ">\n";
+	
+	foreach ( $stackInfos as $stackinfo ) {
+	    $opvals = "$stackinfo[stackid]";
+	
+		$html .= "<OPTION VALUE='$opvals'";
+		// select previously set stack on resubmita
+		if ( $stackinfo['stackid'] == $stackidval ) $html .= " SELECTED";
+		$html .= ">$stackinfo[runname] ID: $stackinfo[stackid] </OPTION>\n";
+	}
+	
+	$html .= "</SELECT>\n";
+	return $html;
+}
+
 // createForm() will output the html code needed to display the launch form to the user
 function createForm( $extra=false, $title='runCatchupDDAlign.py Launcher', $heading='DD Alignment Catchup' ) 
 {
@@ -58,7 +79,7 @@ function createForm( $extra=false, $title='runCatchupDDAlign.py Launcher', $head
 	$javascript .= writeJavaPopupFunctions('appion');	
 
 	// This line does not change and is required for Appion processing pages to add the standard header and menu.
-	processing_header($title,$heading,$javascript);
+	processing_header( $title, $heading, $javascript );
 	// Write out errors, if any came up:
 	// This line should not change
 	if ($extra) {
@@ -67,7 +88,7 @@ function createForm( $extra=false, $title='runCatchupDDAlign.py Launcher', $head
 
 	// connect to particle database
 	$particle = new particledata();
-	$stackIds = $particle->getDDStackRunIdsAlign($sessionId);
+	$stackInfos = $particle->getDDStackRunIdsAlign($sessionId);
 	$alignrunsarray = $particle->getAlignStackIds($sessionId);
 	$alignruns = ($alignrunsarray) ? count($alignrunsarray) : 0;
 	
@@ -84,9 +105,7 @@ function createForm( $extra=false, $title='runCatchupDDAlign.py Launcher', $head
 	while (file_exists($sessionpathval.'ddstack'.($alignruns+1)))
 		$alignruns += 1;
 	$runname = ($_POST['runname']) ? $_POST['runname'] : 'ddstack'.($alignruns+1);
-	$stackidstr = $_POST['stackval'];
-	//var_dump($stackidstr);
-	list($stackidval,$apix,$boxsz) = split('\|--\|',$stackidstr);
+	$stackidval = $_POST['stackval'];
 
 	// start the main form
 	echo "<form name='viewerform' method='POST' action='$formAction'>\n";
@@ -105,12 +124,12 @@ function createForm( $extra=false, $title='runCatchupDDAlign.py Launcher', $head
 	// Add common parameters
 	echo "<tr>";
 	echo "<td>";
-	if (!$stackIds) {
+	if (!$stackInfos) {
 		echo "<font color='red'><B>No Stacks for this Session</B></font>\n";
 	} else {
-		echo docpop('stack','<b>Select a stack of particles to use:</b>');
+		echo docpop('stack','<b>Select a stack to align:</b>');
 		echo "<br/>";
-		$apix = $particle->getStackSelector($stackIds,$stackidval,'switchDefaults(this.value)');
+		echo getDDStackSelector( $stackInfos, $stackidval, 'switchDefaults(this.value)' );
 	}
 	echo "</td></tr>\n";
 	
@@ -166,12 +185,9 @@ function createCommand()
 	/* ***********************************
 	 PART 1: Get variables from POST array and validate
 	 ************************************* */	
-	$stackval = $_POST['stackval'];
+	$stackid = $_POST['stackval'];
 	$commit = ($_POST['commit']=="on") ? true : false;
 
-	// get stack id, apix, & box size from input
-	list($stackid,$apix,$boxsz) = split('\|--\|',$stackval);
-	
 	//make sure a stack was selected
 	if (!$stackid)
 		$errorMsg .= "<B>ERROR:</B> No stack selected";
@@ -225,6 +241,7 @@ function createCommand()
 	exit;
 
 }
+
 
 ?>
 
