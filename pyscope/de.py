@@ -290,7 +290,7 @@ class DECameraBase(ccdcamera.CCDCamera):
 		self.setProperty('Autosave Sum Frames - Ignored Frames', nskip)
 
 	def getFrameTime(self):
-		fps = 1.0 / self.getProperty('Frames Per Second')
+		fpss = self.getProperty('Frames Per Second')
 		ms = (1.0 / fps) * 1000.0
 		print "frame time ms= ",ms
 		return ms
