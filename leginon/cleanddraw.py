@@ -70,7 +70,16 @@ def	removeOldframes(to_remove,timelimit=3600*2):
 		session_frames_path = leginon.ddinfo.getRawFrameSessionPathFromImagePath(imagedata['session']['image path'])
 		framedir = os.path.join(session_frames_path,imagedata['filename']+'.frames')
 		if not os.path.isdir(framedir):
-			not_exist_count += 1
+			framepath = os.path.join(session_frames_path,imagedata['filename']+'.frames.mrc')
+			if os.path.isfile(framepath):
+				filestat = os.stat(framepath)
+				if (timenow - timelimit) > filestat.st_mtime:
+					remove_list.append((framepath,''))
+				else:
+					recent_count += 1
+			else:
+				# aligned images do not have raw frames in its name
+				not_exist_count += 1
 		else:
 			ok_to_remove = True
 			files = os.listdir(framedir)
@@ -95,8 +104,12 @@ def	removeOldframes(to_remove,timelimit=3600*2):
 				for file in files:
 					framepath = os.path.join(framedir,file)
 					os.remove(framepath)
-				os.rmdir(framedir)
-				if not os.path.isdir(framedir):
+				if os.path.isdir(framedir):
+					os.rmdir(framedir)
+				else:
+					# framedir is a file
+					os.remove(framedir)
+				if not os.path.exists(framedir):
 					remove_count += 1
 				else:
 					print framedir,' is still there. Something is wrong'
