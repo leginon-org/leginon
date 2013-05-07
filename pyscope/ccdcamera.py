@@ -98,6 +98,10 @@ class CCDCamera(baseinstrument.BaseInstrument):
 		except:
 			settings['save frames'] = False
 		try:
+			settings['frame time'] = self.getFrameTime()
+		except:
+			settings['frame time'] = None
+		try:
 			settings['use frames'] = self.getUseFrames()
 		except:
 			settings['use frames'] = ()
@@ -124,6 +128,10 @@ class CCDCamera(baseinstrument.BaseInstrument):
 			pass
 		try:
 			self.setUseFrames(settings['use frames'])
+		except:
+			pass
+		try:
+			self.setFrameTime(settings['frame time'])
 		except:
 			pass
 		try:
@@ -278,6 +286,8 @@ This method returns that multiplier, M.  In the standard case, returns 1.0.
 	def getSaveRawFrames(self):
 		return False
 
+	def getNumberOfFrames(self):
+		return 1
 	#def setSaveRawFrames(self, value):
 	#	raise NotImplementedError
 

@@ -1959,6 +1959,7 @@ if __name__ == '__main__':
 				'defocus range max': 0.0,
 				'skip': True,
 				'save frames': False,
+				'frame time': 200.0,
 				'dose': 0,
 				'spot size': 1,
 				'intensity': 0.0,

@@ -245,19 +245,23 @@ class CorrectorClient(cameraclient.CameraClient):
 		'''
 		For cameras that return a sum of n frames:
 		Rescale the dark image to be same number of frames as raw image.
-		Assuming exposure time of each frame (or frame rate) is constant.
+		Assuming exposure time of each frame (or frame time) is constant.
 		'''
-		print 'DARK', dark['use frames'], dark['camera']['frame rate']
-		print 'RAW', raw['use frames'], raw['camera']['frame rate']
+		print 'DARK', dark['use frames'], dark['camera']['frame time']
+		print 'RAW', raw['use frames'], raw['camera']['frame time']
 		darkarray = dark['image']
 		try:
 			## NEED TO FIX
-			dark_exptime = len(dark['use frames']) / float(dark['camera']['frame rate'])
+			dark_exptime = len(dark['use frames']) * float(dark['camera']['frame time'])
 		except:
+			print 'DARK has invalid "use frames" or "frame time"'
 			return darkarray
 		try:
-			raw_exptime = len(raw['use frames']) / float(raw['camera']['frame rate'])
+			raw_exptime = len(raw['use frames']) * float(raw['camera']['frame time'])
 		except:
+			print 'RAW has invalid "use frames" or "frame time"'
+			return darkarray
+		if	dark_exptime == 0.0:
 			return darkarray
 		multiplier = float(raw_exptime) / float(dark_exptime)
 		print 'MUTLIPLIER', multiplier

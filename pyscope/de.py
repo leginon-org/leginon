@@ -289,11 +289,16 @@ class DECameraBase(ccdcamera.CCDCamera):
 		self.setProperty('Autosave Sum Frames - Sum Count', nsum)
 		self.setProperty('Autosave Sum Frames - Ignored Frames', nskip)
 
-	def getFrameRate(self):
-		return self.getProperty('Frames Per Second')
+	def getFrameTime(self):
+		fps = 1.0 / self.getProperty('Frames Per Second')
+		ms = (1.0 / fps) * 1000.0
+		print "frame time ms= ",ms
+		return ms
 
-	def setFrameRate(self, fps):
-		return self.setProperty('Frames Per Second', fps)
+	def setFrameTime(self, ms):
+		seconds = ms / 1000.0
+		fps = 1.0 / seconds
+		self.setProperty('Frames Per Seconds)', fps)
 
 	def getReadoutDelay(self):
 		return self.getProperty('Sensor Readout Delay (milliseconds)')

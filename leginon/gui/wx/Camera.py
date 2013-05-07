@@ -48,6 +48,7 @@ class CameraPanel(wx.Panel):
 		self.setfuncs = {
 			'exposure time': self._setExposureTime,
 			'save frames': self._setSaveFrames,
+			'frame time': self._setFrameTime,
 			'align frames': self._setAlignFrames,
 			'align filter': self._setAlignFilter,
 			'use frames': self._setUseFrames,
@@ -56,6 +57,7 @@ class CameraPanel(wx.Panel):
 		self.getfuncs = {
 			'exposure time': self._getExposureTime,
 			'save frames': self._getSaveFrames,
+			'frame time': self._getFrameTime,
 			'align frames': self._getAlignFrames,
 			'align filter': self._getAlignFilter,
 			'use frames': self._getUseFrames,
@@ -115,11 +117,22 @@ class CameraPanel(wx.Panel):
 		self.saveframes = wx.CheckBox(self, -1, 'Save frames')
 		ddsz.Add(self.saveframes, (0, 0), (1, 2), wx.ALIGN_CENTER|wx.EXPAND)
 
+		# frame time
+		stet = wx.StaticText(self, -1, 'Exposure time per Frame:')
+		self.frametime = FloatEntry(self, -1, min=0.01, chars=7)
+		stms = wx.StaticText(self, -1, 'ms')
+
+		ddsz.Add(stet, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		ftsz = wx.GridBagSizer(0, 3)
+		ftsz.Add(self.frametime, (0, 0), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		ftsz.Add(stms, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		ddsz.Add(ftsz, (1, 1), (1, 2), wx.ALIGN_CENTER|wx.EXPAND)
 		# use raw frames
 		label = wx.StaticText(self, -1, 'Frames to use:')
 		self.useframes = Entry(self, -1)
-		ddsz.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		ddsz.Add(self.useframes, (1, 1), (1, 1), wx.ALIGN_CENTER|wx.EXPAND)
+		ddsz.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		ddsz.Add(self.useframes, (2, 1), (1, 1), wx.ALIGN_CENTER|wx.EXPAND)
 
 		# readout delay
 		strd = wx.StaticText(self, -1, 'Readout delay:')
@@ -129,7 +142,7 @@ class CameraPanel(wx.Panel):
 		sz.Add(strd)
 		sz.Add(self.readoutdelay)
 		sz.Add(stms)
-		ddsz.Add(sz, (2, 0), (1, 2), wx.ALIGN_CENTER|wx.EXPAND)
+		ddsz.Add(sz, (3, 0), (1, 2), wx.ALIGN_CENTER|wx.EXPAND)
 
 		# align frames box
 		sb = wx.StaticBox(self, -1, 'Frame-Aligning Camera Only')
@@ -147,7 +160,7 @@ class CameraPanel(wx.Panel):
 		afsz.Add(self.alignfilter, (1, 1), (1, 1), wx.ALIGN_CENTER|wx.EXPAND)
 		afsb.Add(afsz, 0, wx.EXPAND|wx.ALL, 2)
 
-		ddsz.Add(afsb, (3, 0), (3, 2), wx.ALIGN_CENTER|wx.EXPAND)
+		ddsz.Add(afsb, (4, 0), (3, 2), wx.ALIGN_CENTER|wx.EXPAND)
 
 		ddsb.Add(ddsz, 0, wx.EXPAND|wx.ALL, 2)
 		self.szmain.Add(ddsb, (7, 0), (1, 3), wx.ALIGN_CENTER|wx.EXPAND)
@@ -164,6 +177,7 @@ class CameraPanel(wx.Panel):
 		self.Bind(wx.EVT_BUTTON, self.onCustomButton, bcustom)
 		self.Bind(EVT_ENTRY, self.onExposureTime, self.feexposuretime)
 		self.Bind(wx.EVT_CHECKBOX, self.onSaveFrames, self.saveframes)
+		self.Bind(EVT_ENTRY, self.onFrameTime, self.frametime)
 		self.Bind(EVT_ENTRY, self.onUseFrames, self.useframes)
 		self.Bind(EVT_ENTRY, self.onReadoutDelay, self.readoutdelay)
 		self.Bind(EVT_SET_CONFIGURATION, self.onSetConfiguration)
@@ -235,6 +249,9 @@ class CameraPanel(wx.Panel):
 	def onSaveFrames(self, evt):
 		self.onConfigurationChanged()
 
+	def onFrameTime(self, evt):
+		self.onConfigurationChanged()
+
 	def onUseFrames(self, evt):
 		self.onConfigurationChanged()
 
@@ -288,6 +305,12 @@ class CameraPanel(wx.Panel):
 	def _setSaveFrames(self, value):
 		value = bool(value)
 		self.saveframes.SetValue(value)
+
+	def _getFrameTime(self):
+		return self.frametime.GetValue()
+
+	def _setFrameTime(self, value):
+		self.frametime.SetValue(value)
 
 	def _getAlignFrames(self):
 		return self.alignframes.GetValue()

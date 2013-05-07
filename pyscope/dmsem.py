@@ -241,7 +241,12 @@ class GatanK2Base(DMSEM):
 			self.camera.SetupFileSaving(**fileparams)
 
 	def getFrameTime(self):
-		return self.dosefrac_frame_time
+		ms = self.dosefrac_frame_time * 1000.0
+		return ms
+
+	def setFrameTime(self,ms):
+		seconds = ms / 1000.0
+		self.dosefrac_frame_time = seconds
 
 	def getExposurePrecision(self):
 		if self.isDoseFracOn():
@@ -275,7 +280,7 @@ class GatanK2Base(DMSEM):
 		return self.save_frames or self.align_frames
 
 	def calculateK2Params(self):
-		frame_time = self.getFrameTime()
+		frame_time = self.dosefrac_frame_time
 		params = {
 			'readMode': self.readmodes[self.ed_mode],
 			#'scaling': self.float_scale,
@@ -337,7 +342,7 @@ class GatanK2Base(DMSEM):
 		return self.frames_name
 
 	def getNumberOfFrames(self):
-		frame_time = self.getFrameTime()
+		frame_time = self.dosefrac_frame_time
 		real_time = self.getRealExposureTime()
 		nframes = int(round(real_time / frame_time))
 		return nframes
@@ -347,14 +352,6 @@ class GatanK2Base(DMSEM):
 			return self.getNumberOfFrames()
 		else:
 			return 0
-
-	def getFrameRate(self):
-		frame_rate = 1.0 / self.getFrameTime()
-		return frame_rate
-
-	def setFrameRate(self, fps):
-		if fps:
-			self.dosefrac_frame_time = 1.0 / fps
 
 	def setUseFrames(self, frames):
 		pass
