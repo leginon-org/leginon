@@ -200,9 +200,9 @@ class GatanSocket(object):
 		message_recv = Message(longargs=(0,)) # just return code
 		self.ExchangeMessages(message_send, message_recv)
 
-	def SetupFileSaving(self, rotationFlip, dirname, rootname):
+	def SetupFileSaving(self, rotationFlip, dirname, rootname, filePerImage):
 		longs = [enum_gs['GS_SetupFileSaving'], rotationFlip]
-		bools = [True,] # filePerImage=True
+		bools = [filePerImage,]
 		pixelSize = 1.0
 		dbls = [pixelSize]
 		names_str = dirname + '\0' + rootname + '\0'
