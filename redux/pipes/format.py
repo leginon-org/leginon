@@ -64,7 +64,7 @@ class Format(redux.pipe.Pipe):
 			overlay=color
 		# Use PIL Image blend with alpha value between 0.0 and 1.0
 		# TODO: this way does not make use of a color. remove color
-		image = Image.blend(image, maskim, .5)
+		image = Image.blend(image, maskim, .3)
 		return image
 
 	def run_pil(self, input, oformat, rgb, overlay, overlaycolor):
