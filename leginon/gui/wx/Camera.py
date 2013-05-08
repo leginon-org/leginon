@@ -40,6 +40,7 @@ class CameraPanel(wx.Panel):
 		self.binnings = {'x': [1,2,3,4,6,8], 'y': [1,2,3,4,6,8]}
 		self.defaultexptime = 1000.0
 		self.defaultsaveframes = False
+		self.defaultframetime = 200
 		self.defaultalignframes = False
 		self.defaultalignfilter = 'None'
 		self.defaultuseframes = ''
@@ -232,6 +233,7 @@ class CameraPanel(wx.Panel):
 		self.setGeometry(self.common[self.ccommon.GetStringSelection()])
 		self.feexposuretime.SetValue(self.defaultexptime)
 		self.saveframes.SetValue(self.defaultsaveframes)
+		self.frametime.SetValue(self.defaultframetime)
 		self.alignframes.SetValue(self.defaultalignframes)
 		self.alignfilter.SetValue(self.defaultalignfilter)
 		self.useframes.SetValue(self.defaultuseframes)
