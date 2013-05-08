@@ -292,13 +292,12 @@ class DECameraBase(ccdcamera.CCDCamera):
 	def getFrameTime(self):
 		fps = self.getProperty('Frames Per Second')
 		ms = (1.0 / fps) * 1000.0
-		print "frame time ms= ",ms
 		return ms
 
 	def setFrameTime(self, ms):
 		seconds = ms / 1000.0
 		fps = 1.0 / seconds
-		self.setProperty('Frames Per Seconds)', fps)
+		self.setProperty('Frames Per Second', fps)
 
 	def getReadoutDelay(self):
 		return self.getProperty('Sensor Readout Delay (milliseconds)')
