@@ -20,7 +20,7 @@ class GatanK2Processing(apDDprocess.DDFrameProcessing):
 		self.correct_frame_mask = False
 		
 	def getNumberOfFrameSavedFromImageData(self,imagedata):
-		return int(imagedata['camera']['frame rate']*imagedata['camera']['exposure time']/1000)
+		return int(imagedata['camera']['exposure time'] / imagedata['camera']['frame time'])
 
 	def getFrameNameFromNumber(self,frame_number):
 		return 'frame_%03d.mrc' % (frame_number+1)
