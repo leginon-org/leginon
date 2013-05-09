@@ -2,6 +2,7 @@
 import os
 from leginon import leginondata
 import sys
+import glob
 
 def parseInfoTxt(infopath):
 	if not os.path.isfile(infopath):
@@ -58,6 +59,9 @@ def getRawFrameSessionPathFromImagePath(imagepath):
 	For example, leginon image path of '/mydata/leginon/13may01a/rawdata' uses
 	'/mydata/frames/13may01a' to store frames.
 	'''
+	# backward compatibility
+	if glob.glob(os.path.join(imagepath,'*.frames')):
+		return imagepath
 	baseframe_dirname = 'frames'
 	pathbits = imagepath.split('/')
 	leginonbasepath = '/'.join(pathbits[:-3])
