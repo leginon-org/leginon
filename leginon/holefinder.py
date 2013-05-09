@@ -454,6 +454,9 @@ class HoleFinder(targetfinder.TargetFinder):
 		self.currentimagedata = imdata
 		self.setImage(imdata['image'], 'Original')
 		if not self.settings['skip']:
+			if self.isFromNewParentImage(imdata):
+				self.logger.debug('Reset focus counter')
+				self.foc_counter = itertools.count()
 			autofailed = False
 			try:
 				self.everything()

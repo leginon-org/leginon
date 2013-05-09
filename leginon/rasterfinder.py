@@ -341,6 +341,9 @@ class RasterFinder(targetfinder.TargetFinder):
 		## automated part
 		self.currentimagedata = imdata
 		if not self.settings['skip']:
+			if self.isFromNewParentImage(imdata):
+				self.logger.debug('Reset focus counter')
+				self.foc_counter = itertools.count()
 			self.everything()
 
 		## user part

@@ -67,6 +67,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 			'modeled stage position':
 												calibrationclient.ModeledStageCalibrationClient(self)
 		}
+		self.parent_imageid = None
 
 	def readImage(self, filename):
 		imagedata = None
@@ -301,6 +302,28 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 	def clearTargets(self,targettype):
 		self.setTargets([], targettype, block=False)
 
+	def isFromNewParentImage(self, imdata):
+		'''
+		Determine if the parent image of the given imdata is new. This is used to reset foc_counter for automated hole finders.
+		'''
+		is_new = True
+		if imdata['target']:
+			targetcopy = imdata['target']
+			while True:
+				# get the original target
+				if targetcopy['fromtarget'] is None:
+					break
+				targetcopy = targetcopy['fromtarget']
+			if targetcopy['image']:
+				if targetcopy['image'].dbid == self.parent_imageid:
+					is_new = False
+				self.parent_imageid = targetcopy['image'].dbid
+			else:
+				self.parent_imageid = None
+		else:
+			self.parent_imageid = None
+		return is_new
+
 class ClickTargetFinder(TargetFinder):
 	targetnames = ['preview', 'reference', 'focus', 'acquisition']
 	panelclass = gui.wx.ClickTargetFinder.Panel
@@ -346,4 +369,3 @@ class ClickTargetFinder(TargetFinder):
 			self.logger.error('Submitting reference target failed')
 		else:
 			self.logger.info('Reference target submitted')
-
