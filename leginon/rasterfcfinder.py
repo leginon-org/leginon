@@ -17,15 +17,13 @@ import targetfinder
 # rasterfinder.py anyway.
 # rewrites were required in overridden ice method.
 #
-# import Mrc
 import threading
 import ice
-#import numarray
-#import imagefun
 import numpy
 from pyami import arraystats
 import gui.wx.RasterFCFinder
 import polygon
+import itertools
 
 import math
 
@@ -65,6 +63,10 @@ class RasterFCFinder(rasterfinder.RasterFinder):
 			'Raster': {},
 			'Final': {},
 		}
+
+		self.foc_counter = itertools.count()
+		self.foc_activated = False
+
 		self.start()
 
 	def ice(self):
@@ -106,12 +108,18 @@ class RasterFCFinder(rasterfinder.RasterFinder):
 		### run template convolution
 		# takes x,y instead of row,col
 
+		# activate if counter is at a multiple of interval
+		interval = self.settings['focus interval']
+		if interval and not (self.foc_counter.next() % interval):
+			self.foc_activated = True
+		else:
+			self.foc_activated = False
+
 		# WVN - focus convolve not used in rasterfcfinder
 		# if self.settings['focus convolve']:
 	#		focus_points = self.applyTargetTemplate(goodpoints, 'focus')
 		# else:
 	#		focus_points = []
-		focus_points = []
 
 		if self.settings['acquisition convolve']:
 			acq_points = self.applyTargetTemplate(goodpoints, 'acquisition')
@@ -125,6 +133,13 @@ class RasterFCFinder(rasterfinder.RasterFinder):
 
 		const_acq = self.settings['acquisition constant template']
 		acq_points.extend(const_acq)
+
+		focus_points = []
+		if not self.foc_activated:
+			# return without focus target search if skip focusing
+			self.setTargets(acq_points, 'acquisition', block=True)
+			self.setTargets(focus_points, 'focus', block=True)
+			return
 
 		# WVN - Find a suitable focus target on the chosen
 		# focus "circle"
