@@ -4,7 +4,7 @@
 <link rel="stylesheet" href="css/viewer.css" type="text/css" /> 
 </head>
 
-<body onLoad="init()">
+<body>
 <form name="queuecount" method="POST" action="queuecount.php">
 <?php
 
