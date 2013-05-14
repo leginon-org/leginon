@@ -22,8 +22,10 @@ class dbemGraph {
 	var $datay=array();
 	var $scatterplot=true;
 	var $lineplot=true;
+	var $markstart=false;
 	var $baselineplot=false;
 	var $baselinevalue=0;
+	var $manualscale=false;
 
 	function dbemGraph($data, $xname, $yname) {
 		$this->data=&$data;
@@ -33,6 +35,25 @@ class dbemGraph {
 			$this->datax[] = $t[$xname];
 			$this->datay[] = $t[$yname];
 		}
+	}
+
+	function proportion($margin) {
+		$xrange = max($this->datax)-min($this->datax);
+		$yrange = max($this->datay)-min($this->datay);
+		$range = max($xrange,$yrange);
+		$this->manualscale = true;
+		$xmid = min($this->datax) + $xrange / 2;
+		$ymid = min($this->datay) + $yrange / 2;
+		$this->xmin = $xmid - $range * (0.5 + $margin);
+		$this->ymin = $ymid - $range * (0.5 + $margin);
+		$this->xmax = $xmid + $range * (0.5 + $margin);
+		$this->ymax = $ymid + $range * (0.5 + $margin);
+		//echo $xrange.' '.$yrange,' '.$range;
+		//echo $xmid.' '.$ymid;
+		//echo ' xmin= '.$this->xmin.' ('.min($this->datax).')';
+		//echo ' ymin= '.$this->ymin.' ('.min($this->datay).')';
+		//echo ' xmax= '.$this->xmax.' ('.max($this->datax).')';
+		//echo ' ymax= '.$this->ymax.' ('.max($this->datay).')';
 	}
 
 	function scale(&$d) {
@@ -114,6 +135,8 @@ class dbemGraph {
 			if ($scientic_notation)
 				$graph->yaxis->SetLabelFormatCallback('sciCallback');
 
+			if ($this->manualscale)
+					$graph->SetScale("linlin",$this->ymin,$this->ymax,$this->xmin,$this->xmax); 
 			if ($this->scatterplot) {
 				$sp1 = new ScatterPlot($this->datay,$this->datax);
 				$sp1->mark->SetType(MARK_CIRCLE);
@@ -135,6 +158,15 @@ class dbemGraph {
 				$p2->SetColor("blue");
 				$graph->Add($p2);
 			}
+
+			if ($this->markstart) {
+				$sp2 = new ScatterPlot(array($this->datay[0]),array($this->datax[0]));
+				$sp2->mark->SetType(MARK_FILLEDCIRCLE);
+				$sp2->mark->SetColor('blue');
+				$sp2->mark->SetWidth(4);
+				$graph->Add($sp2);
+			}
+
 		}
 		$source = $graph->Stroke(_IMG_HANDLER);
 		}

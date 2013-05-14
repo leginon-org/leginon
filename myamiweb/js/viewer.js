@@ -537,6 +537,7 @@ function newdatatype(view) {
 }
 
 function newfile(view){
+	// The tools that alters the view
 	jssize = eval(view+"size")
 	jsvfile = eval("jsvfile"+view)
 	selpreset = eval("jspreset"+view)
@@ -564,33 +565,26 @@ function newfile(view){
 	setImageStatus(view)
 
 	if (eval(view+"fft_bt_st")) fft="&fft=1"; else fft=""
+
+	// Set scripts
 	if (eval(view+"ace_bt_st")) {
 		jsimagescriptcur="getaceimg.php"
 		jspresetscriptcur="getacepreset.php"
 	} else { 
-		jsimagescriptcur = eval("jsimagescript"+view)
+		if (eval(view+"dd_bt_st"))	jsimagescriptcur="dddriftgraph.php"; else jsimagescriptcur = eval("jsimagescript"+view)
 		jspresetscriptcur = eval("jspresetscript"+view)
 	}
 	jscommentscriptcur = "getcomment.php"
-	pselp = (cpselpar = eval("jsptclpick"+view)) ? "&psel="+cpselpar : ""
-	ag = (cacepar = eval("jsaceparam"+view)) ? "&g="+cacepar : ""
-	am = (cacemethod = eval("jsacemethod"+view)) ? "&m="+cacemethod : ""
-	ar = (cacerun = eval("jsacerun"+view)) ? "&r="+cacerun : ""
-	ao = (caceopt = eval("jsaceopt"+view)) ? "&opt="+caceopt : ""
+
+	// Options
+	// image display tools
 	sb = (eval(view+"scale_bt_st")) ? "&sb=1" : ""
 	tg = (eval(view+"target_bt_st")) ? "&tg=1" : ""
 	t1=(eval("jstagparam1"+view)==1) ? 1 : 0
 	t1+=(eval("jstagparam2"+view)==1) ? 2 : 0
 	displayfilename = (eval(view+"tag_bt_st")) ? "&df="+t1 : ""
-	dlbl = (eval("jsptcllabel"+view)) ? "&dlbl=1" : ""
-	pcb = (colorby = eval("jsptclcolor"+view)) ? "&pcb="+colorby : ""
-	nptcl = (eval(view+"nptcl_bt_st")) ? "&nptcl=1" : ""
-	scx = (acescx = eval("jsacescx"+view)) ? "&scx="+acescx : ""
-	scy = (acescy = eval("jsacescy"+view)) ? "&scy="+acescy : ""
-	if (nptcl) {
-		ptclparam=eval("jsptclparam"+view)
-		nptcl += ptclparam
-	}
+	if (cdwdformat = eval("jsdwdformat"+view)) dwdformat="&f="+cdwdformat; else cdwdformat=""
+	// image ajustment
 	np = (cmin = eval("jsmin"+view)) ? "&np="+cmin : ""
 	if (cmax = eval("jsmax"+view)) xp="&xp="+cmax; else xp=""
 	if (cfilter = eval("jsfilter"+view)) flt="&flt="+cfilter; else flt=""
@@ -601,20 +595,45 @@ function newfile(view){
 	if (cautoscale= eval("jsautoscale"+view)) autoscale="&autoscale="+cautoscale; else autoscale=""
 	if (cloadjpg= eval("jsloadjpg"+view)) loadjpg="&lj="+cloadjpg; else loadjpg=""
 	if (ccacheonly= eval("jscacheonly"+view)) cacheonly="&conly="+ccacheonly; else cacheonly=""
+	// particle picking
+	pselp = (cpselpar = eval("jsptclpick"+view)) ? "&psel="+cpselpar : ""
+	dlbl = (eval("jsptcllabel"+view)) ? "&dlbl=1" : ""
+	pcb = (colorby = eval("jsptclcolor"+view)) ? "&pcb="+colorby : ""
+	nptcl = (eval(view+"nptcl_bt_st")) ? "&nptcl=1" : ""
+	if (nptcl) {
+		ptclparam=eval("jsptclparam"+view)
+		nptcl += ptclparam
+	}
 	if (cptclsel = eval("jsptclsel"+view)) ptclsel="&psel="+escape(cptclsel); else ptclsel=""
-	if (cdwdformat = eval("jsdwdformat"+view)) dwdformat="&f="+cdwdformat; else cdwdformat=""
+	// ctf estimation
+	ag = (cacepar = eval("jsaceparam"+view)) ? "&g="+cacepar : ""
+	am = (cacemethod = eval("jsacemethod"+view)) ? "&m="+cacemethod : ""
+	ar = (cacerun = eval("jsacerun"+view)) ? "&r="+cacerun : ""
+	ao = (caceopt = eval("jsaceopt"+view)) ? "&opt="+caceopt : ""
+	scx = (acescx = eval("jsacescx"+view)) ? "&scx="+acescx : ""
+	scy = (acescy = eval("jsacescy"+view)) ? "&scy="+acescy : ""
 
-	options = "imgsc="+jsimagescriptcur+
-		"&preset="+selpreset+
-		"&session="+jsSessionId+
-		"&id="+jsimgId+
-		"&s="+jssize+quality+tg+sb+fft+np+xp+flt+fftbin+binning+am+ar+ag+ao+displayfilename+loadjpg+pselp+nptcl+pcb+dlbl+gradient+scx+scy+autoscale+cacheonly
+	if (eval(view+"dd_bt_st")) {
+		options = "id="+jsimgId+
+			"&expId="+jsSessionId
+	} else {
+		options = "imgsc="+jsimagescriptcur+
+			"&preset="+selpreset+
+			"&session="+jsSessionId+
+			"&id="+jsimgId+
+			quality+tg+sb+fft+np+xp+flt+fftbin+binning+am+ar+ag+ao+displayfilename+loadjpg+pselp+nptcl+pcb+dlbl+gradient+scx+scy+autoscale+cacheonly
+	}
+	optsize = "&s="+jssize
 
 	if (options == lastoptions[vid])
 		return
+	// put the script and options together
+	ni = jsimagescriptcur+"?"+options+optsize
 
-	ni = jsimagescriptcur+"?"+options
-	nlink = "javascript:popUpMap('map.php?"+options+"')"
+	// The tools that opens a separate window
+	nmaplink = "javascript:popUpMap('map.php?"+options+"')"
+	nddlink = "javascript:popUpW('getdddriftgraph.php?"+options+"&s=512')"
+	nlink = (eval(view+"dd_bt_st")) ? nddlink: nmaplink
 	ninfolink = "imgreport.php?id="+jsimgId+"&preset="+selpreset
 	ndeqlink = "javascript:popUpW('removequeue.php?id="+jsimgId+"&preset="+selpreset+"')"
 	ndownloadlink = "download.php?id="+jsimgId+"&preset="+selpreset+fft+cdwdformat

@@ -2183,7 +2183,39 @@ class particledata {
 	{
 		return getRunData($partRunId, "ApSelectionRunData" );
 	}
-	
+
+	function getAlignLogFromDDAlignedImageId($result_imgid)
+	{
+		// get Alignlog path
+		$q = "SELECT rundir.path as rundir, pair.`REF|leginondata|AcquisitionImageData|source` as source_imgid "
+			."FROM `ApDDAlignImagePairData` pair "
+			."LEFT JOIN `ApDDStackRunData` run "
+			."ON pair.`REF|ApDDStackRunData|ddstackrun`=run.`DEF_id` "
+			."LEFT JOIN	`ApPathData` rundir "
+			."ON run.`REF|ApPathData|path` = rundir.`DEF_id` "
+			."WHERE pair.`REF|leginondata|AcquisitionImageData|result` = ".$result_imgid;
+		list($r) = $this->mysql->getSQLResult($q);
+		$source_image_name = $this->getImageNameFromId($r['source_imgid']);
+		$align_log = $r['rundir'].'/'.$source_image_name.'_st_Log.txt';
+		// get shift data
+		$data = array();
+		if (is_file($align_log)) {
+			$text = file_get_contents($align_log);
+			$bits = explode('Sum Frame',$text);
+			if (count($bits) > 1) {
+				$shiftlines = explode("\n",$bits[1]);
+				foreach($shiftlines as $shiftline) {
+					$shiftbits = explode('with xy shift:',$shiftline);
+					if (count($shiftbits) > 1) {
+						$shifts = explode(' ',trim($shiftbits[1]));
+						$data[] = array('x'=>(float) $shifts[0],'y'=> (float) $shifts[count($shifts)-1]);
+					}
+				}
+			}
+		} else {return $align_log;}
+		return $data;
+	}
+
 	function getRunData($runId, $table) 
 	{
 		$q = "SELECT r.*, p.path "
@@ -2250,7 +2282,6 @@ class particledata {
 		$q.= "ORDER BY r.`DEF_id` DESC ";
 		//echo $q."<br/>\n";
 		$r = $this->mysql->getSQLResult($q);
-		//echo print_r($r)."<br/>\n";
 		return $r;
 	}	
 	

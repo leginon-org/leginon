@@ -150,13 +150,8 @@ function getImageXML($xmlfile, $imageId, $preset, $params = array()) {
 }	
 
 function makeBlankImageWithErrorMessage($error_text) {
-	$img = blankimage(512);
-	$error_text_array = (is_array($error_text)) ? $error_text: array($error_text);
-	$yoffset = 31;
-	foreach ($error_text_array as $text) {
-		imagestring($img, 4, 21, $yoffset, $text, imagecolorallocate($img,0,0,255));
-		$yoffset += 20;
-	}
+	$image_util = new imageUtil();
+	$img = $image_util->makeBlankImageWithErrorMessage($error_text);
 	return $img;
 	
 }

@@ -550,6 +550,8 @@ class view {
 		$this->displayname = $this->name.'view';
 		$this->displayPresets(true);
 		$this->displayComment(false);
+
+		// initialize tools
 		$this->btdownload = new button('download'.$this->name, 'dwd');
 		$this->btdownload->setLink('download.php','');
 		$this->displayscaleicon = true;
@@ -570,7 +572,10 @@ class view {
 		$this->btace = new toggleButton($this->name.'ace', 'ace');
 		$this->btace->onToggle($name.'btaceaction'); 
 		$this->btdeq = new button('deq'.$this->name, 'deq');
+		$this->btdd = new toggleButton($this->name.'dd', 'scale');
+		$this->btdd->onToggle($name.'btddaction');
 
+		// default
 		$this->displayscaleicon = true;
 		$this->displayscaleicon = true;
 		$this->displaytargeticon = true;
@@ -582,6 +587,7 @@ class view {
 		$this->displayparticleicon = false;
 		$this->displaydownloadicon = true;
 		$this->displaydeqicon = false;
+		$this->displayddicon = false;
 		$this->displaycloseicon = true;
 		$this->displayadjustlink = true;
 		$this->displayexportlink = true;
@@ -601,11 +607,14 @@ class view {
 		$this->target_st = "false";
 		$this->tag_st = "false";
 		$this->nptcl_st = "false";
+		$this->dd_st = "false";
 		$this->btscalestate = "true";
 		$this->bttargetstate = "true";
 		$this->bttagstate = "true";
 		$this->btfftstate = "false";
 		$this->btnptclstate = "false";
+		$this->btddstate = "false";
+		// adjust options
 		$this->quality = "80";
 		$this->gradient = "";
 		$this->filter= "default";
@@ -615,11 +624,14 @@ class view {
 		$this->displayfilename = "0";
 		$this->loadjpg= "1";
 		$this->cacheonly= "0";
+		// particle picking
 		$this->ptclsel = "0";
+		// ctf estimation
 		$this->jsacemethod= "1";
 		$this->jsacerun= "-1";
 		$this->jsacepar= "1";
 		$this->jsaceopt= "2";
+		// tag?
 		$this->jstagpar1 = "1";
 		$this->jstagpar2 = "1";
 		if ($_POST) {
@@ -627,6 +639,7 @@ class view {
 			$this->jstagpar2 = ($_REQUEST[$this->name.'tagp2']) ? "1" : "0";
 		}
 		$this->jsprtlpick= "1";
+		// memos are used to send the state to javascript
 		$this->ptclselmemo = $this->name.'psel';
 		$this->qualitymemo = $this->name.'q';
 		$this->gradientmemo = $this->name.'gr';
@@ -644,6 +657,9 @@ class view {
 		$this->btnptclmemo = $this->name.'nptcl_bt_st';
 		$this->bttargetmemo = $this->name.'target_bt_st';
 		$this->btscalememo = $this->name.'scale_bt_st';
+		$this->btddmemo = $this->name.'dd_bt_st';
+
+		// set options through javascript
 		if ($ptcl=$_REQUEST[$this->ptclselmemo])
 			$this->ptclsel = $ptcl;
 		if ($quality=$_REQUEST[$this->qualitymemo])
@@ -668,6 +684,7 @@ class view {
 			$this->loadjpg= $loadjpg;
 		if ($cacheonly=$_REQUEST[$this->cacheonlymemo])
 			$this->cacheonly= $cacheonly;
+		// set toggle button state from javascript
 		if ($btfftstate=$_REQUEST[$this->btfftmemo])
 			$this->btfftstate = $btfftstate;
 		if ($btacestate=$_REQUEST[$this->btacememo])
@@ -680,6 +697,8 @@ class view {
 			$this->btnptclstate = $btnptclstate;
 		if ($btscalestate=$_REQUEST[$this->btscalememo])
 			$this->btscalestate = $btscalestate;
+		if ($btddstate=$_REQUEST[$this->btddmemo])
+			$this->btddstate = $btddstate;
 	}
 
 	function setParam($key, $value) {
@@ -840,6 +859,16 @@ class view {
 		$this->displayscaleicon = $state;
 	}
 
+	function displayDDDrift($state) {
+		$state_str = ($state) ? "true" : "false";
+		$this->dd_st= $state_str;
+		$this->btddstate = $state_str;
+	}
+
+	function displayDDIcon($state) {
+		$this->displayddicon = $state;
+	}
+
 	function displayDeqIcon($state) {
 		$this->displaydeqicon = $state;
 	}
@@ -932,6 +961,7 @@ class view {
 			.$this->btfft->getJavascript()
 			.$this->btace->getJavascript()
 			.$this->btdeq->getJavascript()
+			.$this->btdd->getJavascript()
 			.$this->btclose->getJavascript()
 			.$this->crlf;
 
@@ -964,6 +994,12 @@ class view {
 			.'	setform("'.$this->btnptclmemo.'", state);'.$this->crlf
 			.'}'.$this->crlf;
 
+		$javascript .= 'function '.$name.'btddaction(state) { '.$this->crlf
+			.'	newfile("'.$this->name.'");'.$this->crlf
+			.'	setform("'.$this->btddmemo.'", state);'.$this->crlf
+			.'	updateviews();'.$this->crlf
+			.'}'.$this->crlf;
+
 		$javascript .= 'function '.$name.'btcloseaction(state) { '.$this->crlf
 			.'	setform("'.$this->displayname.'", state);'.$this->crlf
 			.'	newexp();'.$this->crlf
@@ -989,6 +1025,8 @@ class view {
 			$javascript .= $this->bttarget->getjstoggle();
 		if ($this->btscalestate=='true') 
 			$javascript .= $this->btscale->getjstoggle();
+		if ($this->btddstate=='true') 
+			$javascript .= $this->btdd->getjstoggle();
 		return $javascript;
 	}
 
@@ -1074,6 +1112,7 @@ class view {
 		<input type="hidden" name="'.$this->bttagmemo.'" value="'.$this->bttagstate.'"> 
 		<input type="hidden" name="'.$this->btnptclmemo.'" value="'.$this->btnptclstate.'"> 
 		<input type="hidden" name="'.$this->btscalememo.'" value="'.$this->btscalestate.'"> 
+		<input type="hidden" name="'.$this->btddmemo.'" value="'.$this->btddstate.'"> 
 		<input type="hidden" name="'.$this->ptclselmemo.'" value="0"> ';
 		if ($this->ismaster) {
 			$htmlframe .= '
@@ -1107,6 +1146,12 @@ class view {
 			.'
 			</td>
 		';
+		if ($this->displayddicon) {
+		$htmlframe .= '
+			<td width="15">'
+			.$this->btdd->display().$this->crlf
+			.'</td> ';
+		}
 		if ($this->displaydeqicon) {
 		$htmlframe .= '
 			<td width="15">'
