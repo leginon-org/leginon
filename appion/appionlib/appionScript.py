@@ -24,6 +24,7 @@ import leginon.leginonconfig
 import sinedon
 from pyami import mem
 from pyami import version
+from pyami import fileutil
 
 #=====================
 #=====================
@@ -58,6 +59,7 @@ class AppionScript(basicScript.BasicScript):
 			loadsquared = loadavg*loadavg
 			time.sleep(loadavg)
 			apDisplay.printMsg("New load average "+str(round(os.getloadavg()[0],2)))
+		self.setLockname('lock')
 
 		### setup default parser: run directory, etc.
 		self.setParams(optargs,useglobalparams)
@@ -515,6 +517,33 @@ class AppionScript(basicScript.BasicScript):
 		apDisplay.printMsg('------------------------------------------------')
 		return proc.returncode
 
+	#=====================
+	def setLockname(self,name):
+		self.lockname = '_'+name
+
+	def cleanParallelLock(self):
+		for file in glob.glob('%s*' % self.lockname):
+			os.remove(file)
+
+	def lockParallel(self,dbid):
+		'''
+		Check and create lock for dbid when running multiple instances on different
+		hosts. This is as safe as we can do.  If in doubt, add a secondary check
+		for the first output in the function
+		'''
+		try:
+			fileutil.open_if_not_exists('%s%d' % (self.lockname,dbid)).close()
+		except OSError:
+			return True # exists before locking
+		
+	def unlockParallel(self,dbid):
+		try:
+			os.remove('%s%d' % (self.lockname,dbid))
+		except:
+			apDisplay.printError('Parallel unlock failed')
+		
+	#=====================
+	
 class TestScript(AppionScript):
 	def setupParserOptions(self):
 		apDisplay.printMsg("Parser options")

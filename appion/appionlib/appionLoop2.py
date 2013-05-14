@@ -20,7 +20,6 @@ from appionlib import apProject
 #leginon
 from appionlib import appionScript
 from pyami import mem
-from pyami import fileutil
 
 class AppionLoop(appionScript.AppionScript):
 	#=====================
@@ -55,28 +54,6 @@ class AppionLoop(appionScript.AppionScript):
 		'''
 		self.process_batch_count = count
 
-	#=====================
-	def cleanParallelLock(self):
-		for file in glob.glob('_lock*'):
-			os.remove(file)
-
-	def lockParallel(self,imgid):
-		'''
-		Check and create lock for image when running multiple instances on different
-		hosts. This is as safe as we can do.  If in doubt, add a secondary check
-		for the first output in the function processImage
-		'''
-		try:
-			fileutil.open_if_not_exists('_lock%d' %imgid).close()
-		except OSError:
-			return True # exists before locking
-		
-	def unlockParallel(self,imgid):
-		try:
-			os.remove('_lock%d' %imgid)
-		except:
-			apDisplay.printError('Parallel appionLoop unlock failed')
-		
 	#=====================
 	def run(self):
 		"""

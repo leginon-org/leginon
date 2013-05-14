@@ -23,6 +23,8 @@ class CatchUpFrameAlignmentLoop(appionScript.AppionScript):
 			action="store_false", help="Do not wait for frame stack to finish creation")
 		self.parser.add_option("-m", "--mrclist", dest="mrcnames",
 			help="List of mrc files to process, e.g. --mrclist=..003en,..002en,..006en", metavar="MRCNAME")
+		self.parser.add_option("--gpuid", dest="gpuid", type="int", default=0,
+			help="GPU device id used in gpu processing", metavar="INT")
 
 	#=======================
 	def checkConflicts(self):
@@ -55,6 +57,8 @@ class CatchUpFrameAlignmentLoop(appionScript.AppionScript):
 		self.dd = apDDprocess.initializeDDFrameprocess(self.params['sessionname'],self.params['wait'])
 		self.dd.setRunDir(self.params['rundir'])
 		self.dd.setNewBinning(self.rundata['params']['bin'])
+		# Give an unique lockname
+		self.setLockname('ddalign')
 
 	def hasDDAlignedImagePair(self):
 		alignpairdata = self.dd.getAlignImagePairData(self.rundata,query_source=True)
@@ -84,6 +88,11 @@ class CatchUpFrameAlignmentLoop(appionScript.AppionScript):
 			apDisplay.printWarning('unaligned frame stack not created. Skipped....')
 			return
 
+		if self.lockParallel(imgdata.dbid):
+			apDisplay.printMsg('%s locked by another parallel run in the rundir' % (apDisplay.shortenImageName(imgdata['filename'])))
+			return
+
+		self.dd.setGPUid(self.params['gpuid'])
 		self.dd.setAlignedCameraEMData()
 		self.dd.alignCorrectedFrameStack()
 		if os.path.isfile(self.dd.aligned_stackpath):
@@ -91,6 +100,7 @@ class CatchUpFrameAlignmentLoop(appionScript.AppionScript):
 			apDisplay.printMsg(' Replacing unaligned stack with the aligned one....')
 			apFile.removeFile(self.dd.framestackpath)
 			shutil.move(self.dd.aligned_stackpath,self.dd.framestackpath)
+		self.unlockParallel(imgdata.dbid)
 
 	def commitToDatabase(self, imgdata):
 		if self.aligned_imagedata != None:
@@ -158,6 +168,9 @@ class CatchUpFrameAlignmentLoop(appionScript.AppionScript):
 				self.last_num_stacks = self.num_stacks
 		else:				
 			self.loopCheckAndProcess()
+
+	def onClose(self):
+		self.cleanParallelLock()
 
 if __name__ == '__main__':
 	makeStack = CatchUpFrameAlignmentLoop()
