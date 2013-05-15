@@ -50,7 +50,7 @@ class Format(redux.pipe.Pipe):
 		outstring = redux.utility.json_encode(input)
 		return outstring
 
-	def overlay_mask(self, image, mask, color):
+	def overlay_mask(self, image, mask, blendRatio=0.1):
 		size = image.size
 		mode = image.mode
 		# read mask, resize it to image size
@@ -58,13 +58,9 @@ class Format(redux.pipe.Pipe):
 		maskim = Image.open(mask)
 		maskim = maskim.resize(size)
 		maskim = maskim.convert(mode)
-		if color is None:
-			overlay=maskim
-		else:
-			overlay=color
+
 		# Use PIL Image blend with alpha value between 0.0 and 1.0
-		# TODO: this way does not make use of a color. remove color
-		image = Image.blend(image, maskim, .3)
+		image = Image.blend(image, maskim, blendRatio)
 		return image
 
 	def run_pil(self, input, oformat, rgb, overlay, overlaycolor):
