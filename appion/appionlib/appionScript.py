@@ -9,6 +9,7 @@ import sys
 import pwd
 import time
 import subprocess
+import glob
 from optparse import OptionParser
 #appion
 from appionlib import basicScript
