@@ -16,12 +16,11 @@ class SchemaUpdate17562(schemabase.SchemaUpdate):
 		query = "SELECT `DEF_id` as dbid, `nframes`, `frame time`, `exposure time` FROM `CameraEMData` WHERE `nframes` IS NOT NULL"
 		results = self.leginon_dbupgrade.returnCustomSQL(query)
 		for r in results:
-			print r
 			if r[1] and r[2] is None:
 				ms = r[3] / r[1]
 				status = self.leginon_dbupgrade.updateColumn('CameraEMData','frame time','%e' % ms,'`DEF_id`=%d' % r[0],True)
 				if not status:
-					print break_from_failed_update
+					print 'break_from_failed_update'
 		
 if __name__ == "__main__":
 	update = SchemaUpdate17562()
