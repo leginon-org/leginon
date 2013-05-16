@@ -612,5 +612,155 @@ def combineMultipleJobs(params):
 	proc = subprocess.Popen('csh '+combinejobname, shell=True)
 	proc.wait()
 
+#===============
+def scale_parfile_frealign8(infile, outfile, mult, newmag=0):
+	### outfile
+	ff = open(outfile, "w")
+	ff.write("%s%8s%8s%8s%8s%8s%8s%6s%9s%9s%8s\n" \
+		% ("c      ","psi","theta","phi","shx","shy","mag","film","df1","df2","angast"))
 
+	### read & write params
+	params1 = parseFrealignParamFile(infile)
+	k = 1
+	olddx = 0
+	micnum = 0
+	for i,p in enumerate(params1):
+		if i % 1000 == 0:
+			print "finished %d particles from parameter file 1" % i
+		partnum = p['partnum']
+		psi = p['psi']
+		theta = p['theta']
+		phi = p['phi']
+		shx = p['shiftx'] * mult
+		shy = p['shifty'] * mult
+		mag = p['mag']
+		film = p['film']
+		dx = p['defoc1']
+		dy = p['defoc2']
+		ast = p['astang']
+		try:
+			pres = p['phase_residual']
+		except:
+			pass
+		
+		if olddx != (dx+dy)/2:
+			olddx = (dx+dy)/2
+			micnum+=1
+		if newmag == 0:
+			newmag = mag
+		ff.write("%7d%8.2f%8.2f%8.2f%8.2f%8.2f%8d%6d%9.1f%9.1f%8.2f\n" \
+			% (k, psi, theta, phi, shx, shy, newmag, micnum, dx, dy, ast))
+		k+=1
+	ff.close()
 
+#=================
+def scale_parfile_frealign9(infile, outfile, mult, newmag=0):
+	### outfile
+	ff = open(outfile, "w")
+	ff.write("%s%8s%8s%8s%10s%10s%8s%6s%9s%9s%8s%8s%13s%8s%8s\n" \
+		% ("C      ","PSI","THETA","PHI","SHX","SHY","MAG","FILM","DF1","DF2","ANGAST","OCC","-LogP","SCORE","CHANGE"))
+
+	### read & write params
+	params1 = parseFrealign9ParamFile(infile)
+	k = 1
+	olddx = 0
+	micnum = 0
+
+	for i,p in params1.iteritems():
+		if i % 1000 == 0:
+			print "finished %d particles from parameter file 1" % i
+		partnum = p['partnum']
+		psi = p['psi']
+		theta = p['theta']
+		phi = p['phi']
+		shx = p['shiftx'] * mult
+		shy = p['shifty'] * mult
+		mag = p['mag']
+		film = p['micn']
+		dx = p['defx']
+		dy = p['defy']
+		ast = p['astig']
+		occ = p['occ']
+		logp = p['logp']
+		try:
+			score = p['score']
+			change = p['change']
+		except:
+			score = 0.0
+			change = 0.0
+		
+		if olddx != (dx+dy)/2:
+			olddx = (dx+dy)/2
+			micnum += 1
+		if newmag == 0:
+			newmag = mag
+		ff.write("%7d%8.2f%8.2f%8.2f%10.2f%10.2f%8d%6d%9.1f%9.1f%8.2f%8.2f%13d%8.2f%8.2f\n" \
+			% (k, psi, theta, phi, shx, shy, newmag, micnum, dx, dy, ast, occ, logp, score, change))
+		k+=1
+	ff.close()
+
+#=================
+def frealign8_to_frealign9(infile, outfile, apix, occ=0, logp=0, score=0, change=0)
+	### output file
+	ff = open(ffile2, "w")
+	ff.write("%s%8s%8s%8s%10s%10s%8s%6s%9s%9s%8s%8s%13s%8s%8s\n" \
+		% ("C      ","PSI","THETA","PHI","SHX","SHY","MAG","FILM","DF1","DF2","ANGAST","OCC","-LogP","SCORE","CHANGE"))
+	### read & write params
+	params = parseFrealignParamFile(ffile1)
+	for i,p in enumerate(params):
+		if i % 1000 == 0:
+			print "finished %d particles" % i
+		partnum = float(p['partnum'])
+		psi = float(p['psi'])
+		theta = float(p['theta'])
+		phi = float(p['phi'])
+		shx = float(p['shiftx'] * apix)
+		shy = float(p['shifty'] * apix)
+		mag = float(p['mag'])
+		film = float(p['film'])
+		dx = float(p['defoc1'])
+		dy = float(p['defoc2'])
+		ast = float(p['astang'])
+		ff.write("%7d%8.2f%8.2f%8.2f%10.2f%10.2f%8d%6d%9.1f%9.1f%8.2f%8.2f%13d%8.2f%8.2f\n" \
+			% (partnum, psi, theta, phi, shx, shy, mag, film, dx, dy, ast, occ, logp, score, change))
+	ff.close()
+
+#=================
+def extract_from_paramfile_frealign8(bestparticlefile, inparfile, outparfile):
+	'''
+		uses EMAN-style list (numbering starts at 0) containing all the particles that should be KEPT. Then takes the input
+		frealign8 parameter file, and extracts all of the particles that are in the list to make a new parameter file
+	'''
+	### read / write files
+	bpf = open(bestparticlefile, "r")
+	bpflines = bpf.readlines()
+	bpfstrip = [int(float(line.strip())) for line in bpflines]
+	bpf.close()
+	params = parseFrealignParamFile(inparfile)
+	ff = open(outparfile, "w")
+	ff.write("%s%8s%8s%8s%8s%8s%8s%6s%9s%9s%8s\n" \
+	% ("C      ","PSI","THETA","PHI","SHX","SHY","MAG","FILM","DF1","DF2","ANGAST"))
+
+	### read & write params
+	olddx = 0
+	micnum = 0
+	for i, val in enumerate(bpfstrip):
+		partnum = params[val]['partnum']
+		psi     = params[val]['psi']
+		theta   = params[val]['theta']
+		phi     = params[val]['phi']
+		shx     = params[val]['shiftx']
+		shy     = params[val]['shifty']
+		mag     = params[val]['mag']
+		film    = params[val]['film']
+		dx      = params[val]['defoc1']
+		dy      = params[val]['defoc2']
+		ast     = params[val]['astang']
+
+		if olddx != (dx+dy)/2:
+			olddx = (dx+dy)/2
+			micnum += 1
+
+		ff.write("%7d%8.2f%8.2f%8.2f%8.2f%8.2f%8d%6d%9.1f%9.1f%8.2f\n" \
+			% ((i+1), psi, theta, phi, shx, shy, mag, micnum, dx, dy, ast))
+	ff.close()
