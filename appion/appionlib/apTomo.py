@@ -679,8 +679,9 @@ def makeAlignStackMovie(filename,xsize=2**16):
 		array2jpg(pictpath1,slice,stats['mean']-6*stats['std'],stats['mean']+6*stats['std'],xsize)
 		array2jpg(pictpath2,slice,stats['mean']-6*stats['std'],stats['mean']+6*stats['std'],xsize)
 	apDisplay.printMsg('Putting the jpg files together to flash video...')
-	moviepath = dirpath+'/minialign'+key+'.flv'
-	framepath = rootpath+'_slice*.jpg'
+	moviepath = dirpath+'/minialign'+key
+	framepath = rootpath+'_slice%05d.jpg'
+	apMovie.makemp4('jpg',framepath,moviepath,False)
 	apMovie.makeflv('jpg',framepath,moviepath)
 
 def makeMovie(filename,xsize=512):
