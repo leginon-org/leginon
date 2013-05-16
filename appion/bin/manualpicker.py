@@ -708,7 +708,7 @@ class ManualPicker(particleLoop2.ParticleLoop):
 
 		return peaktree
 
-	def XY2particle(self, binx, biny, angle, helixnum, label=None):
+	def XY2particle(self, binx, biny, angle=None, helixnum=None, label=None):
 		peak={}
 		peak['xcoord'] = binx*self.params['bin']
 		peak['ycoord'] = biny*self.params['bin']

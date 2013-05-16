@@ -825,7 +825,7 @@ class ContourPicker(manualpicker.ManualPicker):
 		peaktree=[]
 		for label,targets in self.targets.items():
 			for target in targets:
-				peaktree.append(self.XY2particle(target.x, target.y, label))
+				peaktree.append(self.XY2particle(target.x, target.y, label=label))
 		
 		targetsList = self.getPolyParticlePoints()
 		contourTargets = self.app.panel.getTargets('Auto Create Contours')
