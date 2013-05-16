@@ -79,17 +79,17 @@ class CatchUpFrameAlignmentLoop(appionScript.AppionScript):
 		except Exception, e:
 			apDisplay.printWarning(e.message)
 			return
-
+		## various ways to skip the image
 		if self.hasDDAlignedImagePair():
 			apDisplay.printWarning('aligned image %d from this run is already in the database. Skipped....' % imgdata.dbid)
 			return
-
-		if not self.dd.isReadyForAlignment():
-			apDisplay.printWarning('unaligned frame stack not created. Skipped....')
-			return
-
 		if self.lockParallel(imgdata.dbid):
 			apDisplay.printMsg('%s locked by another parallel run in the rundir' % (apDisplay.shortenImageName(imgdata['filename'])))
+			return
+		# This will wait for the stack to finish gain correction
+		if not self.dd.isReadyForAlignment():
+			apDisplay.printWarning('unaligned frame stack not created. Skipped....')
+			self.unlockParallel(imgdata.dbid)
 			return
 
 		self.dd.setGPUid(self.params['gpuid'])
