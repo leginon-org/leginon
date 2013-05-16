@@ -620,11 +620,11 @@ def scale_parfile_frealign8(infile, outfile, mult, newmag=0):
 		% ("c      ","psi","theta","phi","shx","shy","mag","film","df1","df2","angast"))
 
 	### read & write params
-	params1 = parseFrealignParamFile(infile)
+	params = parseFrealignParamFile(infile)
 	k = 1
 	olddx = 0
 	micnum = 0
-	for i,p in enumerate(params1):
+	for i,p in enumerate(params):
 		if i % 1000 == 0:
 			print "finished %d particles from parameter file 1" % i
 		partnum = p['partnum']
@@ -661,12 +661,12 @@ def scale_parfile_frealign9(infile, outfile, mult, newmag=0):
 		% ("C      ","PSI","THETA","PHI","SHX","SHY","MAG","FILM","DF1","DF2","ANGAST","OCC","-LogP","SCORE","CHANGE"))
 
 	### read & write params
-	params1 = parseFrealign9ParamFile(infile)
+	params = parseFrealign9ParamFile(infile)
 	k = 1
 	olddx = 0
 	micnum = 0
 
-	for i,p in params1.iteritems():
+	for i,p in params.iteritems():
 		if i % 1000 == 0:
 			print "finished %d particles from parameter file 1" % i
 		partnum = p['partnum']
@@ -700,7 +700,7 @@ def scale_parfile_frealign9(infile, outfile, mult, newmag=0):
 	ff.close()
 
 #=================
-def frealign8_to_frealign9(infile, outfile, apix, occ=0, logp=0, score=0, change=0)
+def frealign8_to_frealign9(infile, outfile, apix, occ=0, logp=0, score=0, change=0):
 	### output file
 	ff = open(ffile2, "w")
 	ff.write("%s%8s%8s%8s%10s%10s%8s%6s%9s%9s%8s%8s%13s%8s%8s\n" \
@@ -764,3 +764,81 @@ def extract_from_paramfile_frealign8(bestparticlefile, inparfile, outparfile):
 		ff.write("%7d%8.2f%8.2f%8.2f%8.2f%8.2f%8d%6d%9.1f%9.1f%8.2f\n" \
 			% ((i+1), psi, theta, phi, shx, shy, mag, micnum, dx, dy, ast))
 	ff.close()
+
+#=================
+def exclude_class_from_frealign9_parfile(inparfile, outlist, minocc=50.0, frealign8outfile=None, apix=None, frealign9outfile=None):
+	'''
+		reads input frealign9 parameter file for a particular class. If the occupancy of the particle is greater than 'minocc', 
+		then treats that particle as belonging to the class, and outputs to an EMAN-style list file (starts with 0). Optionally
+		can output either a frealign8 or frealign9 style parameter file with that class excluded
+	''' 
+
+	if frealign8outfile is not None and apix is None:
+		apDisplay.printError("frealign 8 parameter file needs pixel size value to determine proper shift, please specify this option")
+
+	### read & write frealign params
+	params = parseFrealign9ParamFile(inparfile)
+	partlist = []
+	if frealign8outfile is not None:
+		ff8 = open(frealign8outfile, "w")
+		ff8.write("%s%8s%8s%8s%8s%8s%8s%6s%9s%9s%8s\n" \
+			% ("C      ","PSI","THETA","PHI","SHX","SHY","MAG","FILM","DF1","DF2","ANGAST"))
+	if frealign9outfile is not None:
+		ff9 = open(frealign9outfile, "w")
+		ff9.write("%s%8s%8s%8s%10s%10s%8s%6s%9s%9s%8s%8s%13s%8s%8s\n" \
+	                % ("C      ","PSI","THETA","PHI","SHX","SHY","MAG","FILM","DF1","DF2","ANGAST","OCC","-LogP","SCORE","CHANGE"))
+	k = 1
+	olddx = 0
+	micnum = 0
+	for i,p in params.iteritems():
+		partnum = p['partnum']
+		psi = p['psi']
+		theta = p['theta']
+		phi = p['phi']
+		shx = p['shiftx']
+		shy = p['shifty']
+		mag = p['mag']
+		film = p['micn']
+		dx = p['defx']
+		dy = p['defy']
+		ast = p['astig']
+		occ = p['occ']
+		logp = p['logp']
+		try:
+			score = p['score']
+			change = p['change']
+		except:
+			score = 0.0
+			change = 0.0
+
+		if olddx != (dx+dy)/2:
+			olddx = (dx+dy)/2
+			micnum += 1
+
+		### optionally write out new frealign files
+		if occ > minocc:
+			partlist.append(partnum-1)
+			if frealign8outfile is not None:
+				f8shx = shx / apix
+				f8shy = shy / apix
+				ff8.write("%7d%8.2f%8.2f%8.2f%8.2f%8.2f%8d%6d%9.1f%9.1f%8.2f\n" \
+					% (k, psi, theta, phi, f8shx, f8shy, mag, micnum, dx, dy, ast))
+			if frealign9outfile is not None:
+				ff9.write("%7d%8.2f%8.2f%8.2f%10.2f%10.2f%8d%6d%9.1f%9.1f%8.2f%8.2f%13d%8.2f%8.2f\n" \
+					% (k, psi, theta, phi, shx, shy, mag, micnum, dx, dy, ast, occ, logp, score, change))
+			k+=1
+
+	### close frealign files
+	if frealign8outfile is not None:
+		ff8.close()
+	if frealign9outfile is not None:
+		ff9.close()
+
+	### write out partlist file
+	partlist.sort()
+	of = open(outlist, "w")
+	for p in partlist:
+		of.write("%d\n" % p)
+	of.close()
+
+
