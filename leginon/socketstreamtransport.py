@@ -116,6 +116,15 @@ class Handler(SocketServer.StreamRequestHandler):
 				pass
 			return
 
+# In SocketServer.StreamRequestHandler, the write buffer size is set to 0.
+# The reason is given in a comment that says:
+#   "we make wfile unbuffered because (a) often after a write() we want to
+#    read and we need to flush the line; (b) big writes to unbuffered files
+#    are typically optimized by stdio even when big reads aren't."
+# This may not always be true, so here we may want to override the write
+# buffer size.  Otherwise, leave it as 0 for the original behavior.
+Handler.wbufsize = 0
+
 class Server(object):
 	def __init__(self, datahandler):
 		self.exitevent = threading.Event()
