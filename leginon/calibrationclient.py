@@ -1229,13 +1229,6 @@ class ImageShiftCalibrationClient(SimpleMatrixCalibrationClient):
 		p1 = numpy.array(p1)
 		stagepos = numpy.dot(matrix1, p1)
 		p2 = numpy.dot(matrix2inv, stagepos)
-		# The following calculation of p2 is to get around Berkeley Titan behavior
-		# of unchanged image orientation when image shift axis rotates.
-		# scaling only by the length of the transformation matrix
-		print 'old vector 2',p2
-		scale = math.sqrt(numpy.linalg.det(matrix1) / numpy.linalg.det(matrix2))
-		p2 = p1 * scale
-		print 'new vector 2',p2
 		return p2
 
 class BeamShiftCalibrationClient(SimpleMatrixCalibrationClient):
