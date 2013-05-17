@@ -1,7 +1,5 @@
+import comtypes.client
 import ccdcamera
-import comarray
-from win32com.client import Dispatch
-import pythoncom
 import numpy
 import time
 
@@ -13,7 +11,6 @@ class TIA(ccdcamera.CCDCamera):
 			'getPixelSize',
 			'getInserted', 'setInserted',]
 		ccdcamera.CCDCamera.__init__(self)
-		pythoncom.CoInitializeEx(pythoncom.COINIT_MULTITHREADED)
 		self.im = None
 		self.imdisp = None
 		self.tianame = 'pyscope'
@@ -24,7 +21,7 @@ class TIA(ccdcamera.CCDCamera):
 		self.initSettings()
 
 	def initSettings(self):
-		self.dimension = self.getCameraSize()
+		self.dimension = self._getCameraSize()
 		self.binning = {'x':1, 'y':1}
 		self.offset = {'x':0, 'y':0}
 		self.exposure = 500.0
@@ -50,7 +47,7 @@ class TIA(ccdcamera.CCDCamera):
 		'''
 		Connects to the ESVision COM server
 		'''
-		self.esv = Dispatch('ESVision.Application')
+		self.esv = comtypes.client.CreateObject('ESVision.Application')
 		self.acqman = self.esv.AcquisitionManager()
 		self.ccd = self.esv.CcdServer()
 
@@ -137,8 +134,8 @@ acquisition.
 		return {'x': 1.5e-5, 'y': 1.5e-5}
 
 	def _getCameraSize(self):
-		rangex = self.ccd.GetTotalPixelReadoutRange().SizeX
-		rangey = self.ccd.GetTotalPixelReadoutRange().SizeY
+		rangex = self.ccd.GetTotalPixelReadoutRange.SizeX
+		rangey = self.ccd.GetTotalPixelReadoutRange.SizeY
 		camsize = {'x':rangex, 'y':rangey}
 		return camsize
 
@@ -157,7 +154,7 @@ acquisition.
 
 		# final exposure time
 		if self.exposuretype == 'dark':
-			exposure = self.ccd.GetIntegrationTimeRange().Start
+			exposure = self.ccd.GetIntegrationTimeRange.Start
 		else:
 			exposure = self.exposure/1000.0
 
@@ -175,7 +172,8 @@ acquisition.
 			self.acqman.Acquire()
 			t1 = time.time()
 			self.exposure_timestamp = (t1 + t0) / 2.0
-			arr = comarray.prop(self.im.Data, 'Array')
+			arr = self.im.Data.Array
+			arr.shape = (self.dimension['y'],self.dimension['x'])
 			arr = numpy.flipud(arr)
 		except Exception, e:
 			print e
@@ -183,7 +181,7 @@ acquisition.
 		return arr
 
 	def getRetractable(self):
-		retractable = bool(self.ccd.IsCameraRetractable())
+		retractable = bool(self.ccd.IsCameraRetractable)
 		return retractable
 
 	'''
