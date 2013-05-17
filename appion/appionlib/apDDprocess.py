@@ -11,6 +11,7 @@ from pyami import mrc,imagefun,arraystats,numpil
 from leginon import correctorclient,leginondata,ddinfo
 from appionlib import apDisplay, apDatabase,apDBImage, appiondata
 import subprocess
+import socket
 
 # testing options
 save_jpg = False
@@ -142,6 +143,7 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		self.use_GS = False
 		self.use_gpu_flat = False
 		self.gpuid = 0
+		self.hostname = socket.gethostname().split('.')[0]
 		self.setUseAlternativeChannelReference(False)
 		self.setDefaultImageForReference(0)
 		if debug:
@@ -746,12 +748,12 @@ class DDFrameProcessing(DirectDetectorProcessing):
 			self.setCameraInfo(1,use_full_raw_area)
 			# output dark and norm
 			unscaled_darkarray = self.getSingleFrameDarkArray()
-			self.dark_path = os.path.join(frameprocess_dir,'dark.mrc')
+			self.dark_path = os.path.join(frameprocess_dir,'dark-%s-%d.mrc' % (self.hostname,self.gpuid))
 			mrc.write(unscaled_darkarray,self.dark_path)
 			normdata = self.getRefImageData('norm')
 			apDisplay.printWarning('Use Norm Reference %s' % (normdata['filename'],))
 			normarray = normdata['image']
-			self.norm_path = os.path.join(frameprocess_dir,'dark.mrc')
+			self.norm_path = os.path.join(frameprocess_dir,'norm-%s-%d.mrc' % (self.hostname,self.gpuid))
 			mrc.write(normarray,self.norm_path)
 		rawframestack_path = self.getRawFrameStackPath()
 		cmd = "dosefgpu_flat %s %s %s %d %s" % (rawframestack_path,self.framestackpath,self.norm_path,self.gpuid,self.dark_path)
