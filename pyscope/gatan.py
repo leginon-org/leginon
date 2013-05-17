@@ -11,24 +11,32 @@ import sys
 import numpy
 import time
 
+com_module = None
 try:
 	import pythoncom
-	import pywintypes
 	import win32com.client
 	import comarray
+	com_module = 'win32com'
+	client_module = win32com.client
 except ImportError:
-	pass
+	import comtypes
+	import comtypes.client
+	com_module = 'comtypes'
+	client_module = comtypes.client
 
 ## create a single connection to tecnaiccd COM object.
 ## Muliple calls to get_tecnaiccd will return the same connection.
-## Store the handle in win32com.client module, which is safer than in
+## Store the handle in the com module, which is safer than in
 ## this module due to multiple imports.
-win32com.client.tecnaiccd = None
+client_module.tecnaiccd = None
 def get_tecnaiccd():
-	if win32com.client.tecnaiccd is None:
-			 win32com.client.tecnaiccd = win32com.client.dynamic.Dispatch('TecnaiCCD.GatanCamera.2')
-	return win32com.client.tecnaiccd
-
+	if client_module.tecnaiccd is None:
+		if com_module == 'win32com':
+			pythoncom.CoInitializeEx(pythoncom.COINIT_MULTITHREADED)
+			client_module.tecnaiccd = client_module.dynamic.Dispatch('TecnaiCCD.GatanCamera.2')
+		elif com_module == 'comtypes':
+			client_module.tecnaiccd = client_module.CreateObject('TecnaiCCD.GatanCamera.2')
+	return client_module.tecnaiccd
 
 class Gatan(ccdcamera.CCDCamera):
 	name = 'Gatan'
@@ -37,11 +45,7 @@ class Gatan(ccdcamera.CCDCamera):
 		self.unsupported = []
 		ccdcamera.CCDCamera.__init__(self)
 
-		pythoncom.CoInitializeEx(pythoncom.COINIT_MULTITHREADED)
-		try:
-			self._camera = get_tecnaiccd()
-		except pywintypes.com_error, e:
-			raise RuntimeError('unable to initialize Gatan interface')
+		self._camera = get_tecnaiccd()
 
 		self.calculated_camerasize = self._calculateCameraSize()
 
@@ -90,17 +94,23 @@ class Gatan(ccdcamera.CCDCamera):
 			raise AttributeError('attribute not supported')
 		return object.__getattribute__(self, attr_name)
 
+	def dictToInt(self, d):
+		new_d = {}
+		for key, value in d.items():
+			new_d[key] = int(value)
+		return new_d
+
 	def getOffset(self):
 		return dict(self.offset)
 
 	def setOffset(self, value):
-		self.offset = dict(value)
+		self.offset = self.dictToInt(value)
 
 	def getDimension(self):
 		return dict(self.dimension)
 
 	def setDimension(self, value):
-		self.dimension = dict(value)
+		self.dimension = self.dictToInt(value)
 
 	def getBinning(self):
 		return dict(self.binning)
@@ -108,7 +118,7 @@ class Gatan(ccdcamera.CCDCamera):
 	def setBinning(self, value):
 		if value['x'] != value['y']:
 			raise ValueError('multiple binning dimesions not supported')
-		self.binning = dict(value)
+		self.binning = self.dictToInt(value)
 
 	def getExposureTime(self):
 		return self.camera.ExposureTime*1000.0
@@ -129,20 +139,22 @@ class Gatan(ccdcamera.CCDCamera):
 
 	def acquireRaw(self):
 		t0 = time.time()
-		image = comarray.call(self.camera, 'AcquireRawImage')
+		if com_module == 'win32com':
+			image = comarray.call(self.camera, 'AcquireRawImage')
+		elif com_module == 'comtypes':
+			image = self.camera.AcquireRawImage()
 		t1 = time.time()
+		image = numpy.asarray(image, numpy.uint16)
+		image.shape = self.dimension['y'], self.dimension['x']
 		self.exposure_timestamp = (t1 + t0) / 2.0
 		return image
 
 	def _getImage(self):
-		try:
-			self.camera.Binning = self.binning['x']
-			self.camera.CameraLeft = self.offset['x']
-			self.camera.CameraTop = self.offset['y']
-			self.camera.CameraRight = self.dimension['x'] + self.camera.CameraLeft
-			self.camera.CameraBottom = self.dimension['y'] + self.camera.CameraTop
-		except pywintypes.com_error, e:
-			raise ValueError('invalid image dimensions')
+		self.camera.Binning = self.binning['x']
+		self.camera.CameraLeft = self.offset['x']
+		self.camera.CameraTop = self.offset['y']
+		self.camera.CameraRight = self.dimension['x'] + self.camera.CameraLeft
+		self.camera.CameraBottom = self.dimension['y'] + self.camera.CameraTop
 		if self.getExposureType() == 'dark':
 			if False:
 			#if self.getRetractable():
@@ -159,11 +171,8 @@ class Gatan(ccdcamera.CCDCamera):
 				image = self.acquireRaw()
 				self.setExposureTime(exposuretime)
 				return image
-		try:
-			image = self.acquireRaw()
-			return image.astype(numpy.uint16)
-		except pywintypes.com_error, e:
-			raise ValueError('invalid image dimensions')
+		image = self.acquireRaw()
+		return image
 
 	def _getCameraSize(self):
 		return self.calculated_camerasize
@@ -182,10 +191,7 @@ class Gatan(ccdcamera.CCDCamera):
 		return self.camera.Speed
 
 	def setSpeed(self, value):
-		try:
-			self.camera.Speed = value
-		except pywintypes.com_error, e:
-			raise ValueError('invalid speed')
+		self.camera.Speed = value
 
 	def getRetractable(self):
 		if self.camera.IsRetractable:
