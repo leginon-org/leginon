@@ -60,10 +60,17 @@ def limitImagesToRemoveByStatus(all,status,sessiondata):
 		for imagedata in all:
 			source_imagedata, alignedimageids = getAlignedImageIds(imagedata)
 			print '.'
-			if source_imagedata.dbid in hiddenids or (set(alignedimageids).issubset(set(hiddenids))):
-				if source_imagedata.dbid not in to_remove_ids:
-					to_remove.append(source_imagedata)
-					to_remove_ids.append(source_imagedata.dbid)
+			if len(alignedimageids)>0:
+				# if one of the aligned image is not hidden, the source movie should not be remove
+				if not (set(alignedimageids).issubset(set(hiddenids))):
+					continue
+			else:
+				# when there is no alignment, then check if the source is hidden
+				if not source_imagedata.dbid in hiddenids:
+					continue
+			if source_imagedata.dbid not in to_remove_ids:
+				to_remove.append(source_imagedata)
+				to_remove_ids.append(source_imagedata.dbid)
 
 	elif status == 'not-best':
 		# remove exemplar from images to be removed
@@ -72,6 +79,7 @@ def limitImagesToRemoveByStatus(all,status,sessiondata):
 		bestids = map((lambda x: x['image'].dbid), bests)
 		for imagedata in all:
 			source_imagedata, alignedimageids = getAlignedImageIds(imagedata)
+			# only when none of the versions is exemplar would it be o.k. to remove
 			if source_imagedata not in bestids and len(set(alignedimageids).intersection(set(bestids))) == 0:
 				if source_imagedata.dbid not in to_remove_ids:
 					to_remove.append(source_imagedata)
