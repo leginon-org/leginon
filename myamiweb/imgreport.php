@@ -143,7 +143,10 @@ $imageinfokeys = array (
 		'high tension',
 		'gridNb',
 		'trayId',
-		'exposure time'
+		'exposure time',
+		'stage x',
+		'stage y',
+		'stage z'
 		);
 
 $parentimageinfokeys = array (	
@@ -197,6 +200,8 @@ if (is_array($imageinfo)) {
 				$v = $leginondata->formatHighTension($v);
 			if ($k=='exposure time') 
 						$leginondata->formatExposuretime($v);
+			if (in_array($k, array('defocus','stage x','stage y','stage z')))
+				$v = $leginondata->formatStagePosition($v);
 
 			echo formatHtmlRow($k,$v);
 		}

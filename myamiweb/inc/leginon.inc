@@ -1331,6 +1331,10 @@ class leginondata {
 			."c.`exposure time`, "
 			."pi.pixelsize as pixelsize, "
 			."scope.magnification, "
+			."scope.`SUBD|stage position|x` as `stage x`, "
+			."scope.`SUBD|stage position|y` as `stage y`, "
+			."scope.`SUBD|stage position|z` as `stage z`, "
+			."scope.`SUBD|stage position|a` as `stage alpha`, "
 			."scope.defocus, "
 			."scope.`high tension` "
 			."from AcquisitionImageData a "
@@ -2849,6 +2853,11 @@ class leginondata {
 				} else continue;
 			}
 		}
+	}
+
+	function formatStagePosition(&$position) {
+		$position = format_micro_number($position);
+		return $position;
 	}
 
 	function formatDefocus(&$defocus) {
