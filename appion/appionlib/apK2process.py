@@ -10,7 +10,6 @@ from appionlib import apDDprocess,apDisplay
 save_jpg = False
 debug = False
 ddtype = 'thin'
-at_nramm = True
 
 class GatanK2Processing(apDDprocess.DDFrameProcessing):
 	def __init__(self,wait_for_new=False):
@@ -105,8 +104,16 @@ class GatanK2Processing(apDDprocess.DDFrameProcessing):
 		a = self.modifyFrameImage(a,offset,crop_end,bin)
 		return a
 
+	def isOldNRAMMData(self):
+		'''
+		Work around old NRAMM data that has a bad reference, but not in any
+		one outside.  This works because we don't think anyone outside uses
+		this module before that.
+		'''
+		return self.image.timestamp < datetime.date(2012,12,31)
+
 	def getDefaultCorrectedImageData(self):
-		if not at_nramm:
+		if not self.isOldNRAMMData:
 			return self.image
 		# local change
 		if self.image['camera']['ccdcamera']['name'] == 'GatanK2Super':
@@ -119,7 +126,7 @@ class GatanK2Processing(apDDprocess.DDFrameProcessing):
 	def getImageCameraEMData(self):
 		camdata = leginondata.CameraEMData(initializer=self.image['camera'])
 		# local change. Need to remove before release
-		if at_nramm and self.image.dbid < 1989842:
+		if self.isOldNRAMMData and self.image.dbid < 1989842:
 			# image dimension is not consistent with the frames
 			# Use the default camera dimension, binning, and offset of the frames
 			# (rotated and flipped full size)
