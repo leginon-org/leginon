@@ -127,7 +127,7 @@ class GatanK2Processing(apDDprocess.DDFrameProcessing):
 	def getImageCameraEMData(self):
 		camdata = leginondata.CameraEMData(initializer=self.image['camera'])
 		# local change. Need to remove before release
-		if self.isOldNRAMMData and self.image.dbid < 1989842:
+		if self.isOldNRAMMData() and self.image.dbid < 1989842:
 			# image dimension is not consistent with the frames
 			# Use the default camera dimension, binning, and offset of the frames
 			# (rotated and flipped full size)
