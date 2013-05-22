@@ -163,8 +163,12 @@ function runMakestack() {
 	if ($_POST['testimage']=="on") {
 		if ($_POST['testfilename']) $testimage=$_POST['testfilename'];
 		$testimage = ereg_replace(" ","\ ",$testimage);
+		// Avoid parallel mode in case the image lock is not released due to error
+		$parallel = "";
+	} else {
+		$parallel = " --parallel";
 	}
-	
+
 	$makeDDStackForm = new MakeDDStackForm();
 	$errorMsg .= $makeDDStackForm->validate( $_POST );
 		
@@ -199,6 +203,7 @@ function runMakestack() {
 	
 	// add make DD stack parameters
 	$command .= $makeDDStackForm->buildCommand( $_POST );	
+	$command .= $parallel;
 
 	/* *******************
 	PART 4: Create header info, i.e., references
