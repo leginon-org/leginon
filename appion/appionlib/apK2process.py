@@ -2,6 +2,7 @@
 
 import os
 import numpy
+import datetime
 from pyami import mrc,imagefun
 from leginon import leginondata,ddinfo
 from appionlib import apDDprocess,apDisplay
@@ -110,10 +111,10 @@ class GatanK2Processing(apDDprocess.DDFrameProcessing):
 		one outside.  This works because we don't think anyone outside uses
 		this module before that.
 		'''
-		return self.image.timestamp < datetime.date(2012,12,31)
+		return self.image.timestamp.date() < datetime.date(2012,12,31)
 
 	def getDefaultCorrectedImageData(self):
-		if not self.isOldNRAMMData:
+		if not self.isOldNRAMMData():
 			return self.image
 		# local change
 		if self.image['camera']['ccdcamera']['name'] == 'GatanK2Super':
