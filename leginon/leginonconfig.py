@@ -78,7 +78,6 @@ else:
 
 if not os.access(IMAGE_PATH, os.W_OK):
 	sys.stderr.write('Error:  image path is not writable: %s\n' % (IMAGE_PATH,))
-	sys.exit()
 
 # project
 try:
