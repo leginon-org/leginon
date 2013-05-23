@@ -52,8 +52,8 @@ class MakeFrameStackLoop(appionLoop2.AppionLoop):
 			# We don't have gpu locking
 			if self.params['parallel']:
 					apDisplay.printWarning('Make sure that you use different gpuid for each parallel process')
-			# As single processing sequential job, gpu is faster than cpu
-			self.params['gpuflat'] = True
+			# As single processing sequential job, not sure if gpu is faster than cpu
+			#self.params['gpuflat'] = True
 
 		if self.params['gpuflat']:
 			exename = 'dosefgpu_flat'
