@@ -22,7 +22,9 @@ class Handler(SocketServer.StreamRequestHandler):
 			print '  Size requested: ', size
 			result = numpy.zeros((size,size), dtype=numpy.int32)
 			print '  Sending result...'
-			pickle.dump(result, self.wfile, pickle.HIGHEST_PROTOCOL)
+			#pickle.dump(result, self.wfile, pickle.HIGHEST_PROTOCOL)
+			s = pickle.dumps(result, pickle.HIGHEST_PROTOCOL)
+			self.wfile.write(s)
 			self.wfile.flush()
 			print '  Done.'
 
