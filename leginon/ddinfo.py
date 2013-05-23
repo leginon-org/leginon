@@ -77,6 +77,19 @@ def getRawFrameType(session_image_path):
 			return 'singles'
 	return 'stack'
 
+def readPositionsFromAlignLog(filename):
+	'''
+	Reads from dosefgpu_driftcorr log file the shifts applied to each frame
+	'''
+	f = open(filename)
+	text = f.read()
+	lines = text[text.find('Sum Frame'):text.find('Save Sum')].split('\n')[1:-2]
+	positions = []
+	for line in lines:
+		position_strings = line.split('shift:')[-1].split()
+		positions.append((float(position_strings[0]),float(position_strings[1])))
+	return positions
+
 if __name__ == '__main__':
 	infopath = sys.argv[1]
 	if infopath == 'all':
