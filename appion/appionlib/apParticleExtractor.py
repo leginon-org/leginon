@@ -304,7 +304,7 @@ class ParticleExtractLoop(appionLoop2.AppionLoop):
 			help="select particles by label within the same run name")
 		self.parser.add_option("--ddstartframe", dest="startframe", type="int", default=0,
 			help="starting frame for direct detector raw frame processing. The first frame is 0")
-		self.parser.add_option("--ddnframe", dest="nframe", type="int", default=0,
+		self.parser.add_option("--ddnframe", dest="nframe", type="int",
 			help="total frames to consider for direct detector raw frame processing")
 		self.parser.add_option("--ddstack", dest="ddstack", type="int", default=0,
 			help="gain/dark corrected ddstack id used for dd frame integration")
@@ -355,13 +355,13 @@ class ParticleExtractLoop(appionLoop2.AppionLoop):
 			self.is_dd_stack = True
 			self.is_dd = True
 		else:
-			if self.params['preset'] and '-a' in self.params['preset'] and (self.params['nframe'] > 0 or self.params['driftlimit'] > 0):
+			if self.params['preset'] and '-a' in self.params['preset'] and (self.params['nframe'] or self.params['driftlimit'] > 0):
 				self.is_dd = True
 				self.is_dd_stack = True
-			elif self.params['mrcnames'] and self.params['mrcnames'].split(',')[0] and '-a' in self.params['mrcnames'].split(',')[0] and (self.params['nframe'] > 0 or self.params['driftlimit'] > 0):
+			elif self.params['mrcnames'] and self.params['mrcnames'].split(',')[0] and '-a' in self.params['mrcnames'].split(',')[0] and (self.params['nframe'] or self.params['driftlimit'] > 0):
 				self.is_dd = True
 				self.is_dd_stack = True
-			elif self.params['nframe'] > 0:
+			elif self.params['nframe']:
 				self.is_dd = True
 				self.is_dd_frame = True
 
@@ -439,12 +439,15 @@ class ParticleExtractLoop(appionLoop2.AppionLoop):
 		imgname = imgdata['filename']
 		shortname = apDisplay.short(imgdata['filename'])
 
+		# set default to work with non-dd data
+		self.framelist = []
 		if self.is_dd:
 			if imgdata is None or imgdata['camera']['save frames'] != True:
 				apDisplay.printWarning('%s skipped for no-frame-saved\n ' % imgdata['filename'])
 				return
 			self.dd.setImageData(imgdata)
-			if not self.dd.getFrameList(self.params):
+			self.framelist = self.dd.getFrameList(self.params)
+			if not self.framelist:
 				apDisplay.printWarning('image rejected because no frame passes drift limit test')
 				return
 			if self.is_dd_stack:

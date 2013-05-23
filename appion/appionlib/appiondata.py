@@ -587,6 +587,9 @@ class ApStackParamsData(ApParticleExtractorData):
 			('xmipp-norm', float),
 			('lowpass', float),
 			('highpass', float),
+			('startframe',int),
+			('nframe',int),
+			('driftlimit',float),
 		)
 	typemap = classmethod(typemap)
 
@@ -638,6 +641,15 @@ class ApStackParticleData(Data):
 			('edgestdev', float),
 			('centermean', float),
 			('centerstdev', float),
+		)
+	typemap = classmethod(typemap)
+
+class ApStackImageFrameListData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('stack', ApStackData),
+			('image', leginon.leginondata.AcquisitionImageData),
+			('frames', list),
 		)
 	typemap = classmethod(typemap)
 

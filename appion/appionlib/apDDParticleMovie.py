@@ -46,7 +46,7 @@ class MakeDDParticleMovieLoop(apParticleExtractor.ParticleBoxLoop):
 			apDisplay.printWarning('Interval of frames must be one when denoising')
 			apDisplay.printWarning('Forcing it to 1....')
 			self.params['framestep'] = 1
-		if self.params['nframe'] == 0:
+		if not self.params['nframe']:
 			# force nframe to a large member so that checkIsDD will consider it as dd data
 			# This number will limit the total processing frames if smaller than
 			# the actual number of frames in the images

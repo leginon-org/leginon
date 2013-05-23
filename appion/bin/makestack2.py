@@ -805,7 +805,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 		stparamq=appiondata.ApStackParamsData()
 		paramlist = ('boxSize','bin','aceCutoff','correlationMin','correlationMax',
 			'checkMask','minDefocus','maxDefocus','fileType','inverted','normalized', 'xmipp-norm', 'defocpair',
-			'lowpass','highpass','norejects', 'tiltangle')
+			'lowpass','highpass','norejects', 'tiltangle','startframe','nframe','driftlimit')
 
 		### fill stack parameters
 		for p in paramlist:
@@ -1143,6 +1143,10 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 		except:
 			return
 
+		if self.framelist and self.params['commit'] is True:
+			# insert framelist
+			q = appiondata.ApStackImageFrameListData(stack=self.stackdata,image=imgdata,frames=self.framelist)
+			q.insert()
 		t0 = time.time()
 		### loop over the particles and insert
 		for i in range(len(self.boxedpartdatas)):
