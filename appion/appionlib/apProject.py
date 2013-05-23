@@ -107,4 +107,7 @@ def setDBfromProjectId(projectid, die=True):
 	apDisplay.printColor("Connected to database: '"+newdbname+"'", "green")
 	return True
 
+def setAppiondbBySessionName(sessionname, die=True):
+	projectid = getProjectIdFromSessionName(sessionname)
+	setDBfromProjectId(projectid, die=die)
 
