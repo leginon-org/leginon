@@ -170,10 +170,14 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 
 	#=======================
 	def getDDImageArray(self,imgdata):
+		framelist = self.dd.getFrameList(self.params)
+		'''
+		TO DO handle empty framelist caused by driftlimit
+		'''
 		if self.is_dd_frame:
-			return self.dd.correctFrameImage(self.params['startframe'],self.params['nframe'])
+			return self.dd.correctFrameImage(framelist)
 		if self.is_dd_stack:
-			return self.dd.getDDStackFrameSumImage(self.params['startframe'],self.params['nframe'])
+			return self.dd.getDDStackFrameSumImage(framelist)
 
 	#=======================
 	def getOriginalImagePath(self, imgdata):
@@ -210,10 +214,11 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 		### set up output file path
 		imgstackfile = os.path.join(self.params['rundir'], self.shortname+".hed")
 
-		if self.is_dd_stack and self.params['nframe'] and not self.params['phaseflipped'] and not self.params['rotate']:
+		if self.is_dd_stack and (self.params['nframe'] or self.params['driftlimit']) and not self.params['phaseflipped'] and not self.params['rotate']:
 			# If processing on whole image is not needed, it is more efficient to use mmap to box frame stack
 			apDisplay.printMsg("boxing "+str(len(parttree))+" particles into temp file: "+imgstackfile)
-			apBoxer.boxerFrameStack(self.dd.framestackpath, parttree, imgstackfile, self.boxsize,self.params['startframe'],self.params['nframe'])
+			framelist = self.dd.getFrameList(self.params)
+			apBoxer.boxerFrameStack(self.dd.framestackpath, parttree, imgstackfile, self.boxsize,framelist)
 		else:
 			self._boxParticlesFromImage(imgdata,parttree, imgstackfile)
 		partmeantree = self.calculateParticleStackStats(imgstackfile,boxedpartdatas)

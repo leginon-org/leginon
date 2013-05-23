@@ -4,6 +4,7 @@ import os
 import sys
 import numpy
 import time
+import math
 import scipy.stats
 import scipy.ndimage as ndimage
 import numextension
@@ -62,6 +63,8 @@ class DirectDetectorProcessing(object):
 		self.rundir must be set first before calling this.
 		'''
 		self.image = imagedata
+		# dark/gain corrected stack is saved here
+		self.setFrameStackPath()
 
 	def getImageData(self):
 		return self.image
@@ -100,10 +103,29 @@ class DirectDetectorProcessing(object):
 		return self.getNumberOfFrameSavedFromImageData(self.image)
 
 	def getNumberOfFrameSavedFromImageData(self,imagedata):
-		return imagedata['camera']['nframes']
+		nframe = imagedata['camera']['nframes']
+		if nframe is None:
+			# older data or k2
+			nframe =  int(imagedata['camera']['exposure time'] / imagedata['camera']['frame time'])
+		return nframe
+			
 
 	def getUsedFramesFromImageData(self,imagedata):
 		return imagedata['camera']['use frames']
+
+	def checkFrameListRange(self,framelist):
+		# check parameter
+		if not self.image:
+			apDisplay.printError("You must set an image for the operation")
+		if min(framelist) not in range(self.totalframe):
+			apDisplay.printError("Starting Frame not in saved raw frame range, can not be processed")
+		framelength_original = len(framelist)
+		framelist_original = list(framelist)
+		while max(framelist) >= self.totalframe:
+			del framelist[framelist.index(max(framelist))]
+		if len(framelist) < framelength_original:
+			apDisplay.printWarning( "%s instead of %s frames will be used since not enough frames are saved." % (framelist,framelist_original))
+		return framelist
 
 	def getAlignImagePairData(self,ddstackrundata,query_source=True):
 		'''
@@ -119,6 +141,57 @@ class DirectDetectorProcessing(object):
 			return r[0]
 		else:
 			return False
+
+	def getStillFrames(self,threshold):
+		'''
+		Returns frames that shift less than threshold (in pixels) relative to either the frame before
+		or the frame after.
+		'''
+		stills = []
+		logfile = self.framestackpath[:-4]+'_Log.txt'
+		if not os.path.isfile(logfile):
+			apDisplay.printWarning('No alignment log file %s found for thresholding drift' % logfile)
+			return False
+		positions = ddinfo.readPositionsFromAlignLog(logfile)
+		# place holder for first frame shift duplication
+		shifts = [None,]
+		for p in range(len(positions)-1):
+			shift = math.hypot(positions[p][0]-positions[p+1][0],positions[p][1]-positions[p+1][1])
+			shifts.append(shift)
+		# duplicate first and last shift for the end points
+		shifts.append(shifts[-1])
+		shifts[0] = shifts[1]
+		# pick out passed frames
+		for i in range(len(shifts[:-1])):
+			# keep the frame if at least one shift around the frame is small enough
+			if min(shifts[i],shifts[i+1]) < threshold:
+				# index is off by 1 because of the duplication
+				stills.append(i)
+		return stills
+
+	def getFrameList(self,params):
+		'''
+		Get list of frames
+		'''
+		# frame list according to start frame and number of frames
+		if not params['nframe']:
+			if params['startframe'] is None:
+				framelist = range(self.getNumberOfFrameSavedFromImageData(self.image))
+			else:
+				framelist = range(params['startframe'],self.getNumberOfFrameSavedFromImageData(self.image)-params['startframe'])
+		else:
+			framelist = range(params['startframe'],params['startframe']+params['nframe'])
+		if 'driftlimit' not in params.keys() or not params['driftlimit']:
+			return framelist
+		else:
+			# drift limit considered
+			stillframes = self.getStillFrames(params['driftlimit'] / params['apix'])
+			if stillframes is False:
+				return farmelist
+			framelist = list(set(framelist).intersection(set(stillframes)))
+			framelist.sort()
+			apDisplay.printMsg('Limit frames used to %s' % (framelist,))
+			return framelist
 
 class DDFrameProcessing(DirectDetectorProcessing):
 	'''
@@ -152,8 +225,6 @@ class DDFrameProcessing(DirectDetectorProcessing):
 
 	def setImageData(self,imagedata,ignore_raw=False):
 		super(DDFrameProcessing,self).setImageData(imagedata)
-		# dark/gain corrected stack is saved here
-		self.setFrameStackPath()
 		if not ignore_raw:
 			self.__setRawFrameInfoFromImage()
 		else:
@@ -214,6 +285,7 @@ class DDFrameProcessing(DirectDetectorProcessing):
 	def getRawFrameType(self):
 		if not self.rawframetype:
 			if self.image:
+				# Do this only on the first image
 				self.setRawFrameType(ddinfo.getRawFrameType(self.image['session']['image path']))
 			else:
 				apDisplay.printError('RawFrameType not set')
@@ -450,15 +522,16 @@ class DDFrameProcessing(DirectDetectorProcessing):
 				apDisplay.printError("Binnings in x,y are different")
 		return a
 
-	def sumupFrames(self,rawframe_dir,start_frame,nframe):
+	def sumupFrames(self,rawframe_dir,framelist):
 		'''
 		Load a number of consecutive raw frames from known directory,
 		sum them up, and return as numpy array.
 		nframe = total number of frames to sum up.
 		
 		'''
-		apDisplay.printMsg( 'Summing up %d Frames starting from %d ....' % (nframe,start_frame))
-		for frame_number in range(start_frame,start_frame+nframe):
+		start_frame = framelist[0]
+		apDisplay.printMsg( 'Summing up %d Frames %s ....' % (len(framelist),framelist))
+		for frame_number in framelist:
 			if frame_number == start_frame:
 				rawarray = self.loadOneRawFrame(rawframe_dir,frame_number)
 				if rawarray is False:
@@ -470,24 +543,17 @@ class DDFrameProcessing(DirectDetectorProcessing):
 				rawarray += oneframe
 		return rawarray
 
-	def correctFrameImage(self,start_frame,nframe,use_full_raw_area=False):
-		corrected = self.__correctFrameImage(start_frame,nframe,use_full_raw_area)
+	def correctFrameImage(self,framelist,use_full_raw_area=False):
+		corrected = self.__correctFrameImage(framelist,use_full_raw_area)
 		if corrected is False:
 			apDisplay.printError('Failed to correct Image')
 		else:
 			return corrected
 
-	def test__correctFrameImage(self,start_frame,nframe,use_full_raw_area=False):
-		# check parameter
-		if not self.image:
-			apDisplay.printError("You must set an image for the operation")
-		if start_frame not in range(self.totalframe):
-			apDisplay.printError("Starting Frame not in saved raw frame range, can not be processed")
-		if (start_frame + nframe) > self.totalframe:
-			newnframe = self.totalframe - start_frame
-			apDisplay.printWarning( "%d instead of %d frames will be used since not enough frames are saved." % (newnframe,nframe))
-			nframe = newnframe
+	def test__correctFrameImage(self,framelist,use_full_raw_area=False):
+		framelist = self.checkFrameListRange(framelist)
 		self.use_full_raw_area = use_full_raw_area
+		nframe = len(framelist)
 		get_new_refs = self.__conditionChanged(nframe,use_full_raw_area)
 		if get_new_refs:
 			self.setCameraInfo(nframe,use_full_raw_area)
@@ -517,22 +583,15 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		normarray = numpy.clip(normarray, clipmin, clipmax)
 		return normarray
 
-	def __correctFrameImage(self,start_frame,nframe,use_full_raw_area=False):
+	def __correctFrameImage(self,framelist,use_full_raw_area=False):
 		'''
 		This returns corrected numpy array of given start and total number
 		of raw frames of the current image set for the class instance.  
 		Full raw frame area can be returned as an option.
 		'''
-		# check parameter
-		if not self.image:
-			apDisplay.printError("You must set an image for the operation")
-		if start_frame not in range(self.totalframe):
-			apDisplay.printError("Starting Frame not in saved raw frame range, can not be processed")
-		if (start_frame + nframe) > self.totalframe:
-			newnframe = self.totalframe - start_frame
-			apDisplay.printWarning( "%d instead of %d frames will be used since not enough frames are saved." % (newnframe,nframe))
-			nframe = newnframe
-
+		framelist = self.checkFrameListRange(framelist)
+		nframe = len(framelist)
+		start_frame = framelist[0]
 		get_new_refs = self.__conditionChanged(nframe,use_full_raw_area)
 		if debug:
 			self.log.write('%s %s\n' % (self.image['filename'],get_new_refs))
@@ -546,7 +605,7 @@ class DDFrameProcessing(DirectDetectorProcessing):
 			self.setCameraInfo(nframe,use_full_raw_area)
 
 		# load raw frames
-		rawarray = self.sumupFrames(self.rawframe_dir,start_frame,nframe)
+		rawarray = self.sumupFrames(self.rawframe_dir,framelist)
 		if rawarray is False:
 			return False
 		if save_jpg:
@@ -645,7 +704,8 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		apDisplay.printMsg('  using %s' % self.image['filename'])
 		apDisplay.printMsg('  frame index %d' % start_frame_index)
 		# load raw frames
-		oneframe = self.sumupFrames(self.rawframe_dir,start_frame_index,nframe)
+		framelist = range(start_frame_index,start_frame_indes+nframe)
+		oneframe = self.sumupFrames(self.rawframe_dir,framelist)
 		oneframe, dark_scale = self.darkCorrection(oneframe,self.unscaled_darkarray,nframe)
 		# Filter and then threshold the result to show only debris
 		mask=ndimage.gaussian_filter(oneframe,sigma)
@@ -774,7 +834,7 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		half_way_frame = int(total_frames // 2)
 		first = 0
 		for start_frame in range(first,first+total_frames):
-			array = self.__correctFrameImage(start_frame,1,use_full_raw_area)
+			array = self.__correctFrameImage([start_frame,],use_full_raw_area)
 			# if non-fatal error occurs, end here
 			if array is False:
 				break
@@ -945,20 +1005,23 @@ class DDStackProcessing(DirectDetectorProcessing):
 		self.setRunDir(self.getDDStackRun()['path']['path'])
 		super(DDStackProcessing,self).setFrameStackPath()
 
-	def getDDStackFrameSumImage(self,start_frame,nframe,roi=None):
+	def getDDStackFrameSumImage(self,framelist,roi=None):
 		'''
 		DDStack are gain/dark corrected and may or may not be aligned
 		'''
 		if not os.path.isfile(self.framestackpath):
 			apDisplay.printError('No DD Stack to make image from')
 		apDisplay.printMsg('Getting summed image from %s' % self.framestackpath)
-		apDisplay.printMsg(' summing total of %d images start at frame %d' % (nframe,start_frame))
 		stack = mrc.mmap(self.framestackpath)
+		if max(framelist) >= stack.shape[0]:
+			apDisplay.printError('Last frame in list index out of range')
+		frametuple = tuple(framelist)
+		apDisplay.printMsg(' summing frames %s' % (frametuple,))
 		if not roi:
-			sum = numpy.sum(stack[start_frame:start_frame+nframe,:,:],axis=0)
+			sum = numpy.sum(stack[frametuple,:,:],axis=0)
 		else:
 			apDisplay.printMsg(' crop range of (%d,%d) to (%d,%d)' % (rot['x'][0],roi['x'][1]-1,roi['y'][0],roi['y'][1]-1))
-			sum = numpy.sum(stack[start_frame:start_frame+nframe,roi['y'][0]:roi['y'][1],roi['x'][0]:roi['x'][1]],axis=0)
+			sum = numpy.sum(stack[frametuple,roi['y'][0]:roi['y'][1],roi['x'][0]:roi['x'][1]],axis=0)
 		return sum
 
 if __name__ == '__main__':

@@ -38,5 +38,6 @@ if __name__ == '__main__':
 	dd.setImageId(1640790)
 	start_frame = 0
 	nframe = 5
-	corrected = dd.correctFrameImage(start_frame,nframe)
+	framelist = range(start_frame,start_frame+nframe)
+	corrected = dd.correctFrameImage(framelist)
 	mrc.write(corrected,'corrected_frame%d_%d.mrc' % (start_frame,nframe))

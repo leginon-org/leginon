@@ -174,10 +174,12 @@ def boxMaskStack(bmstackf, partdatas, box, xmask, ymask, falloff, imask=None, no
 	os.remove("boxmask.mrc")
 	return bmstackf
 
-def boxerFrameStack(framestackpath, parttree, outstack, boxsize,start_frame,nframe):
+def boxerFrameStack(framestackpath, parttree, outstack, boxsize,framelist):
 	"""
 	boxes the particles and returns them as a list of numpy arrays
 	"""
+	start_frame = framelist[0]
+	nframe = len(framelist)
 	apDisplay.printMsg("boxing %d particles from sum of total %d frames starting from frame %d using mmap" % (len(parttree),nframe,start_frame))
 	boxedparticles = []
 	stack = mrc.mmap(framestackpath)
@@ -185,7 +187,7 @@ def boxerFrameStack(framestackpath, parttree, outstack, boxsize,start_frame,nfra
 		x1,x2,y1,y2 = getBoxBoundary(partdict, boxsize)
 		apDisplay.printMsg(' crop range of (x,y)=(%d,%d) to (%d,%d)' % (x1,y1,x2-1,y2-1))
 		#numpy arrays are rows,cols --> y,x not x,y
-		boxpart = numpy.sum(stack[start_frame:start_frame+nframe,y1:y2,x1:x2],axis=0)
+		boxpart = numpy.sum(stack[tuple(framelist),y1:y2,x1:x2],axis=0)
 		boxedparticles.append(boxpart)
 	apImagicFile.writeImagic(boxedparticles, outstack)
 	return True
