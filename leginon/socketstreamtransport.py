@@ -12,6 +12,7 @@ import SocketServer
 import threading
 import datatransport
 
+CHUNK_SIZE = 8*1024*1024
 
 # from Tao of Mac
 # Hideous fix to counteract http://python.org/sf/1092502
@@ -106,7 +107,14 @@ class Handler(SocketServer.StreamRequestHandler):
 				result = e
 
 		try:
-			pickle.dump(result, self.wfile, pickle.HIGHEST_PROTOCOL)
+			s = pickle.dumps(result, pickle.HIGHEST_PROTOCOL)
+			psize = len(s)
+			nchunks = int(math.ceil(float(psize) / float(CHUNK_SIZE)))
+			for i in range(nchunks):
+				start = i * CHUNK_SIZE
+				end = start + CHUNK_SIZE
+				chunk = s[start:end]
+				self.wfile.write(chunk)
 			self.wfile.flush()
 		except Exception, e:
 			estr = 'error responding to request, %s' % e
@@ -115,15 +123,6 @@ class Handler(SocketServer.StreamRequestHandler):
 			except AttributeError:
 				pass
 			return
-
-# In SocketServer.StreamRequestHandler, the write buffer size is set to 0.
-# The reason is given in a comment that says:
-#   "we make wfile unbuffered because (a) often after a write() we want to
-#    read and we need to flush the line; (b) big writes to unbuffered files
-#    are typically optimized by stdio even when big reads aren't."
-# This may not always be true, so here we may want to override the write
-# buffer size.  Otherwise, leave it as 0 for the original behavior.
-Handler.wbufsize = 0
 
 class Server(object):
 	def __init__(self, datahandler):
