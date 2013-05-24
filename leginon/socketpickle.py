@@ -12,6 +12,7 @@ import socket
 import SocketServer
 import numpy
 import sys
+import math
 
 PORT = 55555
 
@@ -24,9 +25,19 @@ class Handler(SocketServer.StreamRequestHandler):
 			print '  Sending result...'
 			#pickle.dump(result, self.wfile, pickle.HIGHEST_PROTOCOL)
 			s = pickle.dumps(result, pickle.HIGHEST_PROTOCOL)
-			self.wfile.write(s)
+			psize = len(s)
+			chunk_size = 8*1024*1024
+			nchunks = int(math.ceil(float(psize) / float(chunk_size)))
+			print 'NCHUNKS', nchunks
+			for i in range(nchunks):
+				print 'I', i
+				start = i * chunk_size
+				end = start + chunk_size
+				chunk = s[start:end]
+				self.wfile.write(chunk)
 			self.wfile.flush()
 			print '  Done.'
+
 
 class Server(SocketServer.ThreadingTCPServer):
 	allow_reuse_address = True
