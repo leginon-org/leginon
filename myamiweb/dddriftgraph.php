@@ -21,14 +21,16 @@ $size = ($_GET['s']) ? $_GET['s'] : 255;
 $width=$size;
 $height=$size;
 
+$pixelinfo = $leginondata->getPresets($aligned_imgid, $presets=array('pixelsize'));
+
 $particle=new particledata;
-$data = $particle->getAlignLogFromDDAlignedImageId($aligned_imgid);
+$data = $particle->getAlignLogShiftFromDDAlignedImageId($aligned_imgid,$pixelinfo['pixelsize']*1e10);
 
 if (is_array($data) && (count($data)> 1)) {
 	$dbemgraph= new dbemgraph($data, 'x', 'y');
-	$dbemgraph->title="drift (pixels per frame)";
-	$dbemgraph->xaxistitle="x drift (pixels)";
-	$dbemgraph->yaxistitle="y drift (pixels)";
+	$dbemgraph->title="Frame Movement (Angstrom)";
+	$dbemgraph->xaxistitle="x drift (Angstrom)";
+	$dbemgraph->yaxistitle="y drift (Angstrom)";
 	$dbemgraph->markstart=true;
 
 	$dbemgraph->proportion(0.0);

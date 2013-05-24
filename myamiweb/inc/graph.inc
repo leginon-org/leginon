@@ -37,23 +37,21 @@ class dbemGraph {
 		}
 	}
 
-	function proportion($margin) {
-		$xrange = max($this->datax)-min($this->datax);
-		$yrange = max($this->datay)-min($this->datay);
+	function proportion($margin,$intlimit=true) {
+		$xmin = ($intlimit) ? floor(min($this->datax)):min($this->datax);
+		$ymin = ($intlimit) ? floor(min($this->datay)):min($this->datay);
+		$xmax = ($intlimit) ? ceil(max($this->datax)):max($this->datax);
+		$ymax = ($intlimit) ? ceil(max($this->datay)):max($this->datay);
+		$xrange = ($intlimit) ? ceil(($xmax-$xmin)/2)*2: $xmax-$xmin;
+		$yrange = ($intlimit) ? ceil(($ymax-$ymin)/2)*2: $ymax-$ymin;
 		$range = max($xrange,$yrange);
 		$this->manualscale = true;
-		$xmid = min($this->datax) + $xrange / 2;
-		$ymid = min($this->datay) + $yrange / 2;
+		$xmid = $xmin + $xrange / 2;
+		$ymid = $ymin + $yrange / 2;
 		$this->xmin = $xmid - $range * (0.5 + $margin);
 		$this->ymin = $ymid - $range * (0.5 + $margin);
 		$this->xmax = $xmid + $range * (0.5 + $margin);
 		$this->ymax = $ymid + $range * (0.5 + $margin);
-		//echo $xrange.' '.$yrange,' '.$range;
-		//echo $xmid.' '.$ymid;
-		//echo ' xmin= '.$this->xmin.' ('.min($this->datax).')';
-		//echo ' ymin= '.$this->ymin.' ('.min($this->datay).')';
-		//echo ' xmax= '.$this->xmax.' ('.max($this->datax).')';
-		//echo ' ymax= '.$this->ymax.' ('.max($this->datay).')';
 	}
 
 	function scale(&$d) {

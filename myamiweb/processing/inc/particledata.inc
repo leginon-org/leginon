@@ -2184,7 +2184,7 @@ class particledata {
 		return getRunData($partRunId, "ApSelectionRunData" );
 	}
 
-	function getAlignLogFromDDAlignedImageId($result_imgid)
+	function getAlignLogShiftFromDDAlignedImageId($result_imgid,$apix=1)
 	{
 		// get Alignlog path
 		$q = "SELECT rundir.path as rundir, pair.`REF|leginondata|AcquisitionImageData|source` as source_imgid "
@@ -2208,7 +2208,7 @@ class particledata {
 					$shiftbits = explode('with xy shift:',$shiftline);
 					if (count($shiftbits) > 1) {
 						$shifts = explode(' ',trim($shiftbits[1]));
-						$data[] = array('x'=>(float) $shifts[0],'y'=> (float) $shifts[count($shifts)-1]);
+						$data[] = array('x'=>((float) $shifts[0])*$apix,'y'=> ((float) $shifts[count($shifts)-1])*$apix);
 					}
 				}
 			}
