@@ -93,7 +93,6 @@ def limitImagesToRemoveByStatus(all,status,sessiondata):
 def	removeFrames(to_remove):
 	not_exist_count = 0
 	remove_count = 0
-	recent_count = 0
 	remove_list = []
 	if to_remove:
 		session_frames_path = leginon.ddinfo.getRawFrameSessionPathFromImagePath(to_remove[0]['session']['image path'])
@@ -108,15 +107,12 @@ def	removeFrames(to_remove):
 				# aligned images do not have raw frames in its name
 				not_exist_count += 1
 		else:
-			ok_to_remove = True
 			files = os.listdir(framedir)
 			# removing files and then directory
-			if ok_to_remove:
-				print framedir,' will be removed'
-				remove_list.append((framedir,files))
-			else:
-				recent_count += 1
+			print framedir,' will be removed'
+			remove_list.append((framedir,files))
 	print 'total  %d movies to be removed' % len(remove_list)
+
 	if len(remove_list) > 0:
 		# Last chance to back out
 		want_to_remove = raw_input('Are you sure? (Y/N)')
