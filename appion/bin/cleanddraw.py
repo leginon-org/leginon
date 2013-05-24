@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 import sys
 import os
-import time
 import leginon.leginondata
 import leginon.ddinfo
 from appionlib import appiondata
@@ -59,7 +58,7 @@ def limitImagesToRemoveByStatus(all,status,sessiondata):
 		hiddenids = map((lambda x: x['image'].dbid), hiddens)
 		for imagedata in all:
 			source_imagedata, alignedimageids = getAlignedImageIds(imagedata)
-			print '.'
+			sys.stderr.write(".")
 			if len(alignedimageids)>0:
 				# if one of the aligned image is not hidden, the source movie should not be remove
 				if not (set(alignedimageids).issubset(set(hiddenids))):
@@ -91,8 +90,7 @@ def limitImagesToRemoveByStatus(all,status,sessiondata):
 		sys.exit(1)
 	return to_remove
 
-def	removeOldframes(to_remove,timelimit=3600*2):
-	timenow = time.time()
+def	removeFrames(to_remove):
 	not_exist_count = 0
 	remove_count = 0
 	recent_count = 0
@@ -104,23 +102,14 @@ def	removeOldframes(to_remove,timelimit=3600*2):
 		if not os.path.isdir(framedir):
 			framepath = os.path.join(session_frames_path,imagedata['filename']+'.frames.mrc')
 			if os.path.isfile(framepath):
-				filestat = os.stat(framepath)
-				if (timenow - timelimit) > filestat.st_mtime:
-					remove_list.append((framepath,''))
-				else:
-					recent_count += 1
+				print framepath,' will be removed'
+				remove_list.append((framepath,''))
 			else:
 				# aligned images do not have raw frames in its name
 				not_exist_count += 1
 		else:
 			ok_to_remove = True
 			files = os.listdir(framedir)
-			# Check if any file in the directory is last modified within the timelimit
-			for file in files:
-				framepath = os.path.join(framedir,file)
-				filestat = os.stat(framepath)
-				if (timenow - timelimit) < filestat.st_mtime:
-					ok_to_remove = False
 			# removing files and then directory
 			if ok_to_remove:
 				print framedir,' will be removed'
@@ -172,8 +161,6 @@ if __name__ == '__main__':
 
 	print '---------------'
 	to_remove = limitImagesToRemoveByStatus(all,status,sessiondata)
-	print 'to_remove',len(to_remove)
-	remove_count,recent_count,not_exist_count = removeOldframes(to_remove,timelimit=3600*2)
+	remove_count,recent_count,not_exist_count = removeFrames(to_remove)
 	print '---------------'
 	print "Total of %d frame directories removed." % (remove_count)
-	print "Total of %d frame directories too new to remove." % (recent_count)
