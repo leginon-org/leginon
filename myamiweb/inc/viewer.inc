@@ -572,7 +572,7 @@ class view {
 		$this->btace = new toggleButton($this->name.'ace', 'ace');
 		$this->btace->onToggle($name.'btaceaction'); 
 		$this->btdeq = new button('deq'.$this->name, 'deq');
-		$this->btdd = new toggleButton($this->name.'dd', 'scale');
+		$this->btdd = new toggleButton($this->name.'dd', 'drift');
 		$this->btdd->onToggle($name.'btddaction');
 
 		// default

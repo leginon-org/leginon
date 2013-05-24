@@ -81,6 +81,7 @@ $view1->setDataTypes($datatypes);
 $view1->selectDataType($presetv1);
 $view1->setParam('ptclparams',$particleruns);
 $view1->setParam('aceruns',$aceruns);
+$view1->displayDDIcon(true);
 $view1->setSize(512);
 $view1->displayTag(true);
 $viewer->add($view1);
