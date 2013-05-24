@@ -11,6 +11,7 @@ import socket
 import SocketServer
 import threading
 import datatransport
+import math
 
 CHUNK_SIZE = 8*1024*1024
 
