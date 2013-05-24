@@ -132,7 +132,7 @@ def	removeFrames(to_remove):
 				else:
 					print framedir,' is still there. Something is wrong'
 					sys.exit(1)
-	return remove_count,recent_count,not_exist_count
+	return remove_count,not_exist_count
 
 if __name__ == '__main__':
 	valid_status = ('hidden','not-best','all')
@@ -157,6 +157,6 @@ if __name__ == '__main__':
 
 	print '---------------'
 	to_remove = limitImagesToRemoveByStatus(all,status,sessiondata)
-	remove_count,recent_count,not_exist_count = removeFrames(to_remove)
+	remove_count,not_exist_count = removeFrames(to_remove)
 	print '---------------'
 	print "Total of %d frame directories removed." % (remove_count)
