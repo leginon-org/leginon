@@ -156,9 +156,6 @@ class MakeFrameStackLoop(appionLoop2.AppionLoop):
 				q.insert()
 				return q
 
-	def onClose(self):
-		self.cleanParallelLock()
-
 if __name__ == '__main__':
 	makeStack = MakeFrameStackLoop()
 	makeStack.run()
