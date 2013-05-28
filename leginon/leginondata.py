@@ -76,6 +76,7 @@ class SessionData(Data):
 			('name', str),
 			('user', UserData),
 			('image path', str),
+			('frame path', str),
 			('comment', str),
 			('holder', GridHolderData),
 		)

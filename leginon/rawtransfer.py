@@ -108,13 +108,13 @@ def run_once(parent_src_path):
 		if imdata is None:
 			continue
 		image_path = imdata['session']['image path']
+		frames_path = imdata['session']['frame path']
 
 		# determine user and group of leginon data
 		stat = os.stat(image_path)
 		uid = stat.st_uid
 		gid = stat.st_gid
 
-		frames_path = leginon.ddinfo.getRawFrameSessionPathFromImagePath(image_path)
 		imname = imdata['filename'] + dst_suffix
 		dst_path = os.path.join(frames_path, imname)
 		print 'DEST', dst_path

@@ -21,6 +21,7 @@ import leginon.gui.wx.Dialog
 import leginon.gui.wx.ListBox
 import leginon.version
 import leginon.session
+import leginon.ddinfo
 
 class WizardPage(wx.wizard.PyWizardPage):
 	pass
@@ -897,11 +898,13 @@ class Setup(object):
 
 	def createSession(self, user, name, description, directory):
 		imagedirectory = os.path.join(leginon.leginonconfig.unmapPath(directory), name, 'rawdata').replace('\\', '/')
+		framepath = leginon.ddinfo.getRawFrameSessionPathFromImagePath(imagedirectory)
 		initializer = {
 			'name': name,
 			'comment': description,
 			'user': user,
 			'image path': imagedirectory,
+			'frame path': framepath,
 		}
 		return leginon.leginondata.SessionData(initializer=initializer)
 
