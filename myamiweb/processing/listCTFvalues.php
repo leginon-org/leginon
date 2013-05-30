@@ -7,7 +7,6 @@
 # specify a directory that the web server can write to
 $scratchdir = "/tmp";
 
-
 require "inc/particledata.inc";
 require "inc/leginon.inc";
 require "inc/project.inc";
@@ -18,6 +17,7 @@ $frealign = $_GET['frealign'];
 
 $particle = new particledata();
 $leginon = new leginondata();
+
 $cs = $leginon->getCsValueFromSession($expId);
 $apix=$particle->getStackPixelSizeFromStackId($stackId)*1e10;
 ## get all the particle pick information for each stack particle
@@ -128,7 +128,8 @@ foreach ($s as $part) {
 	}
 	else file_put_contents($fpath,$l,FILE_APPEND | LOCK_EX);
 }
-echo "<br><b><a href='https://appion.qb3.berkeley.edu/scratch/$fname'>right click to save file</a></b><br>\n";
+	$downloadLink = "(<a href='download.php?file=$fpath&expId=$expId'>\n";
+echo "<br><b>".$downloadLink."Download the file</a></b><br>\n";
 if ($errornum>0) echo "<br>Warning! File contains $errornum errors\n";
 ?>
 
