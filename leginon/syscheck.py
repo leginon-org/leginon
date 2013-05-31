@@ -167,28 +167,6 @@ else:
 		print '        *** FAILED: need version of scipy.optimize with leastsq'
 		
 ######################################################################
-## Python XML module
-######################################################################
-minxmlver = (0, 8, 2)
-minstr = '.'.join(map(str,minxmlver))
-print '--------------------------------------------------------------'
-print 'Python XML module:'
-print '    importing xml module...'
-try:
-	import xml
-except:
-	print '    *** Could not import xml module.'
-	print '      You must install Python xml version %s or greater' % (minstr,)
-else:
-	mystr = xml.__version__
-	myxmlver = map(int, mystr.split('.'))
-	print '    Python XML version: %s' % (mystr,)
-	if versionAtLeast(myxmlver, minxmlver):
-		print '        OK (at least %s required)' % (minstr ,)
-	else:
-		print '        *** FAILED (at least %s required)' % (minstr,)
-
-######################################################################
 ## wxPython
 ######################################################################
 minwxver = (2, 5, 2, 8)
