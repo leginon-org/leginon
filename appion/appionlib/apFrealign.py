@@ -702,11 +702,11 @@ def scale_parfile_frealign9(infile, outfile, mult, newmag=0):
 #=================
 def frealign8_to_frealign9(infile, outfile, apix, occ=0, logp=0, score=0, change=0):
 	### output file
-	ff = open(ffile2, "w")
+	ff = open(outfile, "w")
 	ff.write("%s%8s%8s%8s%10s%10s%8s%6s%9s%9s%8s%8s%13s%8s%8s\n" \
 		% ("C      ","PSI","THETA","PHI","SHX","SHY","MAG","FILM","DF1","DF2","ANGAST","OCC","-LogP","SCORE","CHANGE"))
 	### read & write params
-	params = parseFrealignParamFile(ffile1)
+	params = parseFrealignParamFile(infile)
 	for i,p in enumerate(params):
 		if i % 1000 == 0:
 			print "finished %d particles" % i
@@ -723,6 +723,32 @@ def frealign8_to_frealign9(infile, outfile, apix, occ=0, logp=0, score=0, change
 		ast = float(p['astang'])
 		ff.write("%7d%8.2f%8.2f%8.2f%10.2f%10.2f%8d%6d%9.1f%9.1f%8.2f%8.2f%13d%8.2f%8.2f\n" \
 			% (partnum, psi, theta, phi, shx, shy, mag, film, dx, dy, ast, occ, logp, score, change))
+	ff.close()
+
+#=================
+def frealign9_to_frealign8(infile, outfile, apix):
+	""" pixel size is needed, because frealign9 parameters are in Angstroms, but frealign8 parameters in pixels """	
+
+	### output file
+	ff = open(outfile, "w")
+	ff.write("%s%8s%8s%8s%8s%8s%8s%6s%9s%9s%8s\n" \
+		% ("c      ","PSI","THETA","PHI","SHX","SHY","MAG","FILM","DF1","DF2","ANGAST"))
+	### read & write params
+	params = parseFrealign9ParamFile(infile)
+	for i,p in params.iteritems():
+		partnum = p['partnum']
+		psi = p['psi']
+		theta = p['theta']
+		phi = p['phi']
+		shx = p['shiftx'] / apix
+		shy = p['shifty'] / apix
+		mag = p['mag']
+		micnum = p['micn']
+		dx = p['defx']
+		dy = p['defy']
+		ast = p['astig']
+		ff.write("%7d%8.2f%8.2f%8.2f%8.2f%8.2f%8d%6d%9.1f%9.1f%8.2f\n" \
+			% ((i+1), psi, theta, phi, shx, shy, mag, micnum, dx, dy, ast))	
 	ff.close()
 
 #=================
@@ -766,7 +792,7 @@ def extract_from_paramfile_frealign8(bestparticlefile, inparfile, outparfile):
 	ff.close()
 
 #=================
-def exclude_class_from_frealign9_parfile(inparfile, outlist, minocc=50.0, frealign8outfile=None, apix=None, frealign9outfile=None):
+def exclude_class_from_frealign9_parfile(inparfile, outlist, minocc=50.0, frealign8outfile=None, apix=None, frealign9outfile=None, newocc=None):
 	'''
 		reads input frealign9 parameter file for a particular class. If the occupancy of the particle is greater than 'minocc', 
 		then treats that particle as belonging to the class, and outputs to an EMAN-style list file (starts with 0). Optionally
@@ -823,9 +849,13 @@ def exclude_class_from_frealign9_parfile(inparfile, outlist, minocc=50.0, freali
 				f8shy = shy / apix
 				ff8.write("%7d%8.2f%8.2f%8.2f%8.2f%8.2f%8d%6d%9.1f%9.1f%8.2f\n" \
 					% (k, psi, theta, phi, f8shx, f8shy, mag, micnum, dx, dy, ast))
+			if newocc is not None:
+				newocc = newocc
+			else:
+				newocc = occ
 			if frealign9outfile is not None:
 				ff9.write("%7d%8.2f%8.2f%8.2f%10.2f%10.2f%8d%6d%9.1f%9.1f%8.2f%8.2f%13d%8.2f%8.2f\n" \
-					% (k, psi, theta, phi, shx, shy, mag, micnum, dx, dy, ast, occ, logp, score, change))
+					% (k, psi, theta, phi, shx, shy, mag, micnum, dx, dy, ast, newocc, logp, score, change))
 			k+=1
 
 	### close frealign files
