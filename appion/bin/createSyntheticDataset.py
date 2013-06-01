@@ -1213,8 +1213,10 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 		### read IMAGIC stats to figure out noise level addition
 		mean2, stdev2 = self.readFileStats(ctfstack)
 
-		### cascading of noise processes according to Frank and Al-Ali (1975)
-		snr2 = 1 / ((1+1/float(self.params['snrtot'])) / (1/float(self.params['snr1']) + 1) - 1)
+		### cascading of noise processes according to Frank and Al-Ali (1975) & Baxter (2009)
+#		snr2 = 1 / ((1+1/float(self.params['snrtot'])) / (1/float(self.params['snr1']) + 1) - 1)
+		snr2 = (1+1/self.params['snr1'])/(1/self.params['snrtot']-1/self.params['snr1'])
+
 		### NOTE: THERE ARE DIFFERENT DEFINITIONS OF SNR, see below
 		noiselevel2 = math.sqrt((float(stdev2)*float(stdev2)) / float(snr2))
 #		noiselevel2 = float(stdev2) / float(snr2)
