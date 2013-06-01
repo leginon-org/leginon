@@ -519,7 +519,7 @@ function createSyntheticDataset() {
 	if (!$radius) syntheticDatasetForm("<B>ERROR:</B> radius of the particle inside box needs to be specified, this affects the calculated SNR", $title, $heading, $modelId);
 
 	// make sure defocus values are positive
-	if ($df1 > 0 || $df2 > 0) syntheticDatasetForm("<B>ERROR:</B> Make sure that the applied defocus values are negative", $title, $heading, $modelId);
+	if ($df1 < 0 || $df2 < 0) syntheticDatasetForm("<B>ERROR:</B> Make sure that the applied defocus values are positive", $title, $heading, $modelId);
 
 	// other stuff
 	if ($rotang > 360 || $rotang < 0) syntheticDatasetForm("<B>ERROR:</B> Enter rotation angle between 0 and 360", $title, $heading, $modelId);
