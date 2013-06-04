@@ -6,7 +6,7 @@
  *	For terms of the license agreement
  *	see  http://ami.scripps.edu/software/leginon-license
  */
-require "inc/particledata.inc";
+require_once "inc/particledata.inc";
 require_once "inc/leginon.inc";
 
 $sessionId= $_GET['Id'];

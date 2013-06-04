@@ -3,9 +3,9 @@
  *	Displays helical information about a class or list of classes
  */
 
-require "inc/particledata.inc";
-require "inc/leginon.inc";
-require "inc/project.inc";
+require_once "inc/particledata.inc";
+require_once "inc/leginon.inc";
+require_once "inc/project.inc";
 
 ?>
 <html>
