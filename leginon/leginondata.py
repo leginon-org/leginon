@@ -495,6 +495,7 @@ class PresetData(InSessionData):
 			('aperture size', dict),
 			('pre exposure', float),
 			('skip', bool),
+			('alt channel', bool),
 			('save frames', bool),
 			('frame time', float),
 			('align frames', bool),

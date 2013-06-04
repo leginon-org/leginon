@@ -911,6 +911,7 @@ class PresetsManager(node.Node):
 			newpreset['hasref'] = False
 			newpreset['pre exposure'] = 0.0
 			newpreset['skip'] = False
+			newpreset['alt channel'] = False
 			newpreset.friendly_update(newparams)
 			self.presets[presetname] = newpreset
 			self.presetToDB(newpreset)

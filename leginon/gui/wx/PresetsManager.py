@@ -210,6 +210,7 @@ class EditPresetDialog(leginon.gui.wx.Dialog.Dialog):
 			'tem energy filter': wx.CheckBox(self, -1, 'Energy filtered'),
 			'energy filter': wx.CheckBox(self, -1, 'Energy filtered'),
 			'skip': wx.CheckBox(self, -1, 'Skip when cycling'),
+			'alt channel': wx.CheckBox(self, -1, 'Use Channel 1 correction in normal acquisition'),
 		}
 
 		self.dicts = {
@@ -325,7 +326,8 @@ class EditPresetDialog(leginon.gui.wx.Dialog.Dialog):
 
 		self.initializeApertureSelection()
 
-		sizer.Add(self.bools['skip'], (12, 0), (1, 4), wx.ALIGN_CENTER)
+		sizer.Add(self.bools['skip'], (12, 0), (1, 4), wx.ALIGN_LEFT)
+		sizer.Add(self.bools['alt channel'], (13, 0), (1, 4), wx.ALIGN_LEFT)
 
 		sizer.Add(self.labels['ccdcamera'], (0, 5), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sizer.Add(self.choices['ccdcamera'], (0, 6), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.EXPAND)
@@ -341,8 +343,8 @@ class EditPresetDialog(leginon.gui.wx.Dialog.Dialog):
 		sizer.Add(self.labels['pre exposure'], (4, 5), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sizer.Add(self.floats['pre exposure'], (4, 6), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.FIXED_MINSIZE)
 
-		sizer.Add(self.dicts['camera parameters'], (5, 5), (8, 2), wx.ALIGN_CENTER|wx.EXPAND)
-		sizer.Add(self._buttons['ccdcamera']['camera parameters'], (5, 7), (8, 1), wx.ALIGN_CENTER)
+		sizer.Add(self.dicts['camera parameters'], (5, 5), (15, 2), wx.ALIGN_CENTER|wx.EXPAND)
+		sizer.Add(self._buttons['ccdcamera']['camera parameters'], (5, 7), (15, 1), wx.ALIGN_CENTER)
 
 
 		self.setParameters(parameters)
@@ -519,7 +521,7 @@ class EditPresetDialog(leginon.gui.wx.Dialog.Dialog):
 				except KeyError:
 					pass
 
-		for key in ['skip', 'film', 'tem energy filter', 'energy filter']:
+		for key in ['skip', 'alt channel', 'film', 'tem energy filter', 'energy filter']:
 			try:
 				self.bools[key].SetValue(bool(parameters[key]))
 			except KeyError:
@@ -588,7 +590,7 @@ class EditPresetDialog(leginon.gui.wx.Dialog.Dialog):
 					value = float(value)
 				parameters[key][axis] = value
 
-		for key in ['skip', 'film', 'tem energy filter', 'energy filter']:
+		for key in ['skip', 'alt channel', 'film', 'tem energy filter', 'energy filter']:
 			parameters[key] = bool(self.bools[key].GetValue())
 
 		ccdcamera = self.choices['ccdcamera'].GetStringSelection()

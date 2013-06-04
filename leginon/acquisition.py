@@ -699,7 +699,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.publish(imagedata['camera'], database=True)
 		return imagedata
 
-	def acquire(self, presetdata, emtarget=None, attempt=None, target=None, channel=None):
+	def acquire(self, presetdata, emtarget=None, attempt=None, target=None):
 		reduce_pause = self.onTarget
 
 		if debug:
@@ -738,7 +738,8 @@ class Acquisition(targetwatcher.TargetWatcher):
 		pretime = presetdata['pre exposure']
 		if pretime:
 			self.exposeSpecimen(pretime)
-		args = (presetdata, emtarget, channel)
+		defaultchannel = int(presetdata['alt channel'])
+		args = (presetdata, emtarget, defaultchannel)
 		if self.settings['background']:
 			self.clearCameraEvents()
 			t = threading.Thread(target=self.acquirePublishDisplayWait, args=args)
