@@ -738,7 +738,12 @@ class Acquisition(targetwatcher.TargetWatcher):
 		pretime = presetdata['pre exposure']
 		if pretime:
 			self.exposeSpecimen(pretime)
-		defaultchannel = int(presetdata['alt channel'])
+		try:
+			defaultchannel = int(presetdata['alt channel'])
+		except:
+			# back compatible since imported old presetdata would have value if
+			# database column is not yet created by sinedon
+			defaultchannel = None
 		args = (presetdata, emtarget, defaultchannel)
 		if self.settings['background']:
 			self.clearCameraEvents()
