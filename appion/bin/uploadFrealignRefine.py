@@ -8,6 +8,7 @@ import time
 import math
 import subprocess
 import shutil
+import glob
 #appion
 from appionlib import appionScript
 from appionlib import apEMAN
@@ -35,22 +36,18 @@ class UploadFrealignScript(reconUploader.generalReconUploader):
 			
 	#=====================
 	def findLastCompletedIteration(self):
-		recondir = os.path.join(self.params['rundir'], "recon")
-		iternum = 0
-		stop = False
-		while stop is False:
-			## check if iteration is complete
-			iternum += 1
+		if not self.params['euleronly']:
+			filepattern = "threed.[0-9][0-9][0-9]a.mrc"
+		else:
+			# If only refinement is run, there is no reconstruction volume
+			filepattern = "params.[0-9][0-9][0-9].par"
 
-			imagicvolume = "threed.%03da.mrc"%(iternum)
-			imagicvolumepath = os.path.join(recondir,imagicvolume)
-			if not os.path.isfile(imagicvolumepath):
-				apDisplay.printWarning("Volume file %s is missing"%(imagicvolumepath))
-				stop = True
-				break
+		recondir = os.path.join(self.params['rundir'], "recon")
+		files = glob.glob(os.path.join(recondir, filepattern))
+		lastfile = max(files)
 
 		### set last working iteration
-		numiter = iternum-1
+		numiter = int(os.path.basename(lastfile).split('.')[-2].split('a')[0])
 		if numiter < 1:
 			apDisplay.printError("No iterations were found")
 		apDisplay.printColor("Found %d complete iterations"%(numiter), "green")
@@ -287,27 +284,29 @@ class UploadFrealignScript(reconUploader.generalReconUploader):
 			apDisplay.printColor("uploading iteration %d" % iteration, "cyan")
 			
 			package_database_object = self.instantiateProjMatchParamsData(iteration)
-			
-			### move FSC file to results directory
-			self.FSCExists = self.convertFSCFileForIteration(iteration)
+
+			if not self.params['euleronly']:			
+				### move FSC file to results directory
+				self.FSCExists = self.convertFSCFileForIteration(iteration)
 				
 			### create a text file with particle information
 			self.createParticleDataFile(iteration, package_database_object)
 					
-			### create mrc file of map for iteration and reference number
-			oldvol = os.path.join(self.projmatchpath, "threed.%03da.mrc" % iteration)
-			newvol = os.path.join(self.resultspath, "recon_%s_it%.3d_vol001.mrc" % (self.params['timestamp'], iteration))
-			apFile.safeCopy(oldvol, newvol)
+			if not self.params['euleronly']:			
+				### create mrc file of map for iteration and reference number
+				oldvol = os.path.join(self.projmatchpath, "threed.%03da.mrc" % iteration)
+				newvol = os.path.join(self.resultspath, "recon_%s_it%.3d_vol001.mrc" % (self.params['timestamp'], iteration))
+				apFile.safeCopy(oldvol, newvol)
 			
-			### make chimera snapshot of volume
-			self.createChimeraVolumeSnapshot(newvol, iteration)
+				### make chimera snapshot of volume
+				self.createChimeraVolumeSnapshot(newvol, iteration)
 			
 			### instantiate database objects
 			self.insertRefinementRunData(iteration)
 			self.insertRefinementIterationData(iteration, package_table, package_database_object)
 
 			###  make symlink only after successful insertion				
-			if os.path.isfile(newvol):
+			if not self.params['euleronly'] and os.path.isfile(newvol):
 				if os.path.isfile(oldvol):
 					apFile.removeFile(oldvol,True)
 				try:

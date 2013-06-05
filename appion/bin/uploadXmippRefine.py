@@ -29,8 +29,14 @@ class uploadXmippProjectionMatchingRefinementScript(reconUploader.generalReconUp
 
 	#=====================
 	def findLastCompletedIteration(self):
-		''' find the last iteration that finished in ml3d job '''
-		
+		''' find the last iteration that finished the job '''
+
+		if not self.params['euleronly']:
+			filepattern = "Iter**reconstruction.vol"
+		else:
+			# If only refinement is run, there is no reconstruction volume, only euler angles
+			filepattern = "Iter*current_angles.doc"
+
 		lastiter = 0
 		if os.path.isdir(self.projmatchpath) is False:
 			apDisplay.printError("Could not find %s. Projection matching did not run. Please double check and restart the job" % self.projmatchpath)
@@ -38,7 +44,7 @@ class uploadXmippProjectionMatchingRefinementScript(reconUploader.generalReconUp
 		directories.sort()
 		for dir in directories:
 			if os.path.isdir(dir):
-				files = glob.glob(os.path.join(self.projmatchpath, dir, "Iter**reconstruction.vol"))
+				files = glob.glob(os.path.join(dir, filepattern))
 				if isinstance(files, list) and len(files)>0:
 					m = re.search("[0-9]+", os.path.basename(dir))
 					iternum = int(m.group(0))
@@ -454,14 +460,15 @@ class uploadXmippProjectionMatchingRefinementScript(reconUploader.generalReconUp
 			### create a text file with particle information
 			self.createParticleDataFile(iteration)
 					
-			### create mrc file of map for iteration and reference number
-			oldvol = os.path.join(self.projmatchpath, "Iter_%d" % iteration, "Iter_%d_reconstruction.vol" % iteration)
-			newvol = os.path.join(self.resultspath, "recon_%s_it%.3d_vol001.mrc" % (self.params['timestamp'], iteration))
-			mrccmd = "proc3d %s %s apix=%.3f" % (oldvol, newvol, self.runparams['apix'])
-			apParam.runCmd(mrccmd, "EMAN")
+			if not self.params['euleronly']:
+				### create mrc file of map for iteration and reference number
+				oldvol = os.path.join(self.projmatchpath, "Iter_%d" % iteration, "Iter_%d_reconstruction.vol" % iteration)
+				newvol = os.path.join(self.resultspath, "recon_%s_it%.3d_vol001.mrc" % (self.params['timestamp'], iteration))
+				mrccmd = "proc3d %s %s apix=%.3f" % (oldvol, newvol, self.runparams['apix'])
+				apParam.runCmd(mrccmd, "EMAN")
 			
-			### make chimera snapshot of volume
-			self.createChimeraVolumeSnapshot(newvol, iteration)
+				### make chimera snapshot of volume
+				self.createChimeraVolumeSnapshot(newvol, iteration)
 			
 			### instantiate database objects
 			self.insertRefinementRunData(iteration)

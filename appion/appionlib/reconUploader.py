@@ -64,6 +64,8 @@ class generalReconUploader(appionScript.AppionScript):
 		self.parser.add_option("--symid", dest="symid", type="int",
 			help="symmetry database id, enter 25 for C1", metavar="ID#")
 			
+		self.parser.add_option("--euleronly", dest="euleronly", default=False,
+			action="store_true", help="Commit refined euler angles without reconstruction")
 		### chimera snapshots	
 		self.parser.add_option("--snapfilter", dest="snapfilter", type="float",
 			help="Low pass filter in angstroms for snapshot rendering (FSC_0.5 by default)", metavar="FLOAT")
@@ -80,12 +82,6 @@ class generalReconUploader(appionScript.AppionScript):
 						
 	#=====================
 	def checkConflicts(self):
-		''' These are required error checks, everything else should be possible to obtain from the timestamped pickle file '''
-
-		stackdata = apStack.getOnlyStackData(self.params['stackid'])
-		self.runparams['original_apix'] = ( stackdata['pixelsize'] / 1e-10 ) # convert pixelsize to angstroms per pixel.
-		self.runparams['original_boxsize'] = stackdata['boxsize']
-		
 		### unpickle results or parse logfile, set default parameters if missing
 		os.chdir(os.path.abspath(self.params['rundir']))
 		if os.path.isdir(os.path.join(self.params['rundir'], "recon")):
@@ -94,6 +90,12 @@ class generalReconUploader(appionScript.AppionScript):
 			self.unpackResults()
 		self.runparams = self.readRunParameters()
 	
+		''' These are required error checks, everything else should be possible to obtain from the timestamped pickle file '''
+
+		stackdata = apStack.getOnlyStackData(self.params['stackid'])
+		self.runparams['original_apix'] = ( stackdata['pixelsize'] / 1e-10 ) # convert pixelsize to angstroms per pixel.
+		self.runparams['original_boxsize'] = stackdata['boxsize']
+		
 		### parameters recovered from runparameter file(s)
 		if not self.runparams.has_key('stackid'):
 			if self.params['stackid'] is not None:
@@ -252,7 +254,6 @@ class generalReconUploader(appionScript.AppionScript):
 	#=====================
 	def readRunParameters(self):
 		''' read pickled run parameters for refinement procedure '''
-		
 		if self.params['timestamp'] is not None:
 			paramfile = glob.glob("*"+self.params['timestamp']+"-params.pickle")
 		else:
@@ -302,7 +303,6 @@ class generalReconUploader(appionScript.AppionScript):
 	#=====================
 	def verifyUploadIterations(self, lastiter=float("inf")):
 		''' verify number of completed / specified iterations '''
-
 		if self.params['uploadIterations'] is not None:
 			uploadIterations = self.params['uploadIterations'].split(",")
 			uploadIterations = [int(iter) for iter in uploadIterations]
@@ -372,19 +372,22 @@ class generalReconUploader(appionScript.AppionScript):
 	#=====================
 	def insertRefinementIterationData(self, iteration, package_table=None, package_database_object=None, reference_number=1):
 		''' fills in database entry for ApRefineIterData table '''
-				
-		### get resolution
-		try:
-			fscfile = os.path.join(self.resultspath, "recon_%s_it%.3d_vol%.3d.fsc" \
-				% (self.params['timestamp'], iteration, reference_number))
-			fscRes = apRecon.getResolutionFromGenericFSCFile(fscfile, self.runparams['boxsize'], self.runparams['apix'])
-			apDisplay.printColor("FSC 0.5 Resolution: "+str(fscRes), "cyan")
-			resq = appiondata.ApResolutionData()
-			resq['half'] = fscRes
-			resq['fscfile'] = os.path.basename(fscfile)
-		except Exception, e:
-			print e
-			apDisplay.printWarning("FSC file does not exist or is unreadable")
+
+		if not self.params['euleronly']:				
+			### get resolution
+			try:
+				fscfile = os.path.join(self.resultspath, "recon_%s_it%.3d_vol%.3d.fsc" \
+					% (self.params['timestamp'], iteration, reference_number))
+				fscRes = apRecon.getResolutionFromGenericFSCFile(fscfile, self.runparams['boxsize'], self.runparams['apix'])
+				apDisplay.printColor("FSC 0.5 Resolution: "+str(fscRes), "cyan")
+				resq = appiondata.ApResolutionData()
+				resq['half'] = fscRes
+				resq['fscfile'] = os.path.basename(fscfile)
+			except Exception, e:
+				print e
+				apDisplay.printWarning("FSC file does not exist or is unreadable")
+				resq = None
+		else:
 			resq = None
 			
 		### fill in ApRefineIterData object
@@ -394,7 +397,10 @@ class generalReconUploader(appionScript.AppionScript):
 		iterationParamsq['refineRun'] = self.refinerunq
 		iterationParamsq['iteration'] = iteration
 		iterationParamsq['resolution'] = resq
-		iterationParamsq['rMeasure'] = self.getRMeasureData(iteration, reference_number)
+		if not self.params['euleronly']:				
+			iterationParamsq['rMeasure'] = self.getRMeasureData(iteration, reference_number)
+		else:
+			iterationParamsq['rMeasure'] = None
 		iterationParamsq['mask'] = apRecon.getComponentFromVector(self.runparams['mask'], iteration-1)
 		iterationParamsq['imask'] = apRecon.getComponentFromVector(self.runparams['imask'], iteration-1)
 		iterationParamsq['alignmentInnerRadius'] = apRecon.getComponentFromVector(self.runparams['alignmentInnerRadius'], iteration-1)
@@ -418,13 +424,14 @@ class generalReconUploader(appionScript.AppionScript):
 			% (self.params['timestamp'], iteration, reference_number)
 		if os.path.exists(os.path.join(self.resultspath, varianceAvgs)):
 			iterationParamsq['classVariance'] = varianceAvgs
-		
-		### insert FSC data into database
-		try:
-			self.insertFSCData(fscfile, iterationParamsq)
-		except Exception, e:
-			print e
-			apDisplay.printWarning("FSC file does not exist or is unreadable")			
+
+		if not self.params['euleronly']:
+			### insert FSC data into database
+			try:
+				self.insertFSCData(fscfile, iterationParamsq)
+			except Exception, e:
+				print e
+				apDisplay.printWarning("FSC file does not exist or is unreadable")			
 		
 		### fill in ApRefineReferenceData object
 		referenceParamsq = appiondata.ApRefineReferenceData()
