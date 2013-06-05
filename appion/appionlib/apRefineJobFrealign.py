@@ -16,8 +16,6 @@ class FrealignRefineJob(apRefineJob.RefineJob):
 		super(FrealignRefineJob,self).setupParserOptions()
 		self.parser.add_option('--recononly', dest='recononly', default=False, action='store_true',
 			help="run recon part only, allowed only if startiter=enditer")
-		self.parser.add_option('--refineonly', dest='refineonly', default=False, action='store_true',
-			help="run refine part only, allowed only if startiter=enditer")
 		self.parser.add_option('--ffilt', dest='ffilt', default=False, action='store_true',
 			help="apply SSNR filter to reconstruction")
 		self.parser.add_option('--fpbc', dest='fpbc', default=False, action='store_true',
@@ -165,9 +163,6 @@ class FrealignRefineJob(apRefineJob.RefineJob):
 	#=====================
 	def checkPackageConflicts(self):
 		self.setConstantParams()
-		if self.params['startiter'] != self.params['enditer']:
-			if self.params['recononly'] or self.params['refineonly']:
-				apDisplay.printError("partial iteration only allowed if startiter==enditer.")
 		if self.params['fpbc'] == False:
 			self.params['pbc'] = 100.0
 		else:
@@ -271,6 +266,31 @@ class FrealignRefineJob(apRefineJob.RefineJob):
 		constant_inputlines.extend(appendcards)
 		return constant_inputlines
 
+	def getCombineShellLines(self,iter,iterpath):
+		combine_lines = [
+			'#!/bin/sh',
+			'cd %s' % iterpath,
+			'env |grep SHELL',
+			'/bin/rm -fv params.%03d.par' % iter,
+			"cat proc*/outparams.par |grep -v '^C' | sort -n > params.%03d.par" % iter,
+			'wc -l params.%03d.par' % iter,
+			]
+		return combine_lines
+	def writeRefineOnlyCombineShell(self,iter,iterpath):
+		lines = self.getCombineShellLines(iter,iterpath)
+		lines.extend([
+			'cd ..',
+			'/bin/ln -s threed.%03da.mrc threed.%03da.mrc' % (iter-1,iter),
+			'cd %s' % iterpath,
+			'/bin/cp -v params.%03d.par ..' % iter,
+			])
+		procfile = os.path.join(iterpath,'frealign.iter%03d.combine.sh' %	(iter))
+		f = open(procfile,'w')
+		f.writelines(map((lambda x: x+'\n'),lines))
+		f.close()
+		os.chmod(procfile, 0755)
+		return procfile
+
 	def writeReconShell(self,iter,inputlines,iterpath,ppn):
 		pieces = inputlines[0].split(',')
 		pieces[1] = '0' #mode = 0 for recon
@@ -281,7 +301,8 @@ class FrealignRefineJob(apRefineJob.RefineJob):
 		inputlines[9] = 'params.%03d.par' % iter
 		inputlines[12] = '0.0,0,0,0,0,0,0,0'
 		inputlines[13] = 'threed.%03da.mrc' % iter
-		lines_before_input = [
+		lines_before_input = self.getCombineShellLines(iter,iterpath)
+		lines_before_input.extend( [
 			'#!/bin/sh',
 			'cd %s' % iterpath,
 			'env |grep SHELL',
@@ -296,7 +317,7 @@ class FrealignRefineJob(apRefineJob.RefineJob):
 			'',
 			'### START FREALIGN ###',
 			'frealign_v8_mp.exe << EOF > frealign.recon.out',
-			]
+			])
 		lines_after_input=[
 			'EOF',
 			'',
@@ -412,6 +433,12 @@ class FrealignRefineJob(apRefineJob.RefineJob):
 			tasks = self.logTaskStatus(tasks,'eotest','../resolution.txt',iter)
 			tasks = self.addToTasks(tasks,'cd %s' % self.params['recondir'])
 			tasks = self.logTaskStatus(tasks,'recon',os.path.join(iterpath,'frealign.recon.out'),iter)
+		else:
+			recon_file = self.writeRefineOnlyCombineShell(iter,iterpath)	
+			mp_recon = self.setupMPRun(recon_file,2,1)
+			tasks = self.addToTasks(tasks,mp_recon,2,1)
+			tasks = self.addToTasks(tasks,'cd %s' % iterpath)
+
 		return tasks
 
 	def isNewTrial(self):

@@ -90,6 +90,8 @@ class RefineJob(basicScript.BasicScript):
 			help="End refine at this iteration", metavar="INT")
 		self.parser.add_option('--setuponly', dest='setuponly', default=False, action='store_true',
 			help="setup without executing, for testing purpose")
+		self.parser.add_option('--refineonly', dest='refineonly', default=False, action='store_true',
+			help="always refine angles against the original initial model")
 		self.parser.add_option("--cs", dest="cs", type="float", default=2.0,
 			help="Spherical Aboration", metavar="#")
 		self.parser.add_option("--kv", dest="kv", type="int", default=200,

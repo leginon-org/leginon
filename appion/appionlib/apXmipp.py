@@ -9,6 +9,7 @@ import math
 import numpy
 import string
 import subprocess
+import shutil
 #appion
 from appionlib import apDisplay
 from appionlib import apEMAN
@@ -289,6 +290,79 @@ def particularizeProtocol(protocolIn, parameters, protocolOut):
 	fileIn.close()
 	fileOut.close()
 
+def searchTwoLineTextsInFile(filepath,texts):
+	if len(texts) > 2:
+		apDisplay.printError('searchTwoLineTextsInFile can only handle two texts')
+	fileIn = open(filepath)
+	lines = fileIn.readlines()
+	fileIn.close()
+	maskline_index=None
+	for l,line in enumerate(lines):
+		if texts[0] in line:
+			print 'candidate line:',line
+			print len(texts)
+			if len(texts) == 1:
+				maskline_index=l
+			elif len(texts) == 2 and texts[1] in lines[l+1]:
+				maskline_index=l
+	return maskline_index
+
+def fixReferenceMakingInRefineOnlyProtocol(protocol):
+	tmp_protocol = protocol+'.tmp'
+	fileIn = open(protocol)
+	fileOut = open(tmp_protocol,'w')
+	maskline_index=searchTwoLineTextsInFile(protocol,['# Mask reference volume','execute_mask'])
+	# Making masklines
+	lines = fileIn.readlines()
+	fileIn.close()
+	masklines = []
+	masklines.append('          if _iteration_number == 1:\n')
+	if maskline_index is not None:
+		for m in range(10):
+			masklines.append('  '+lines[maskline_index+m])
+		masklines.append('          else:\n')
+		masklines.append('            shutil.move(os.path.join("../Iter_%d" % (_iteration_number-1), "Iter_%d_reference_volume.vol" % (_iteration_number-1)), os.path.join("../Iter_%d" % (_iteration_number), "Iter_%d_reference_volume.vol" % (_iteration_number)))\n')
+		outlines = lines[:maskline_index]
+		outlines.extend(masklines)
+		outlines.extend(lines[maskline_index+10:])
+	else:
+		outlines = lines
+	fileOut.writelines(outlines)
+	fileOut.close()
+	return tmp_protocol
+
+def removeBadFilterInRefineOnlyProtocol(protocol):
+	tmp_protocol = protocol+'.tmp'
+	fileIn = open(protocol)
+	fileOut = open(tmp_protocol,'w')
+	maskline_index=searchTwoLineTextsInFile(protocol,['globalFourierMaxFrequencyOfInterest=filter_at_given_resolution'])
+	print 'global',maskline_index
+	# Making masklines
+	lines = fileIn.readlines()
+	fileIn.close()
+	masklines = []
+	masklines.append('          if self._DoReconstruction:\n')
+	if maskline_index is not None:
+		masklines.append('  '+lines[maskline_index])
+		outlines = lines[:maskline_index]
+		outlines.extend(masklines)
+		outlines.extend(lines[maskline_index+1:])
+	else:
+		outlines = lines
+	fileOut.writelines(outlines)
+	fileOut.close()
+	return tmp_protocol
+
+def fixRefineOnlyProtocol(template_protocol,protocol):
+	'''
+	protocol version specific function to modify Xmipp protocol so that multiple iteration of refine-only will run
+	'''
+	shutil.copy(template_protocol,protocol)
+	temp_protocol = fixReferenceMakingInRefineOnlyProtocol(protocol)
+	shutil.move(temp_protocol,protocol)
+	tmp_protocol = removeBadFilterInRefineOnlyProtocol(protocol)
+	shutil.move(temp_protocol,protocol)
+
 #======================
 #======================	
 def convertXmippEulersToEman(phi, theta, psi,mirror=False):
@@ -487,7 +561,7 @@ def convertSymmetryNameForPackage(inputname):
 		symm_name = inputname.upper()
 		apDisplay.printWarning("unknown symmetry name conversion. Use it directly as %s" % symm_name)
 	return symm_name
-	
+
 #=======================
 #=======================
 def calculate_equivalent_Eulers_without_flip(phi, theta, psi):

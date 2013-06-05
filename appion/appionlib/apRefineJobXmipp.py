@@ -21,9 +21,9 @@ class XmippSingleModelRefineJob(apRefineJob.RefineJob):
 			help="Arbitrary mask volume file (0 outside protein, 1 inside). Arbitrary and spherical masks "
 			+"are mutually exclusive",default="")
 		self.parser.add_option("--innerAlignRadius", dest="innerAlignRadius", type="int",
-			help="Inner radius for alignment",default=2)
+			help="Inner radius for alignment",default=0)
 		self.parser.add_option("--outerAlignRadius", dest="outerAlignRadius", type="int",
-			help="Outer radius for alignment")
+			help="Outer radius for alignment",default=0)
 		self.parser.add_option("--fourierMaxFrequencyOfInterest",
 			dest="fouriermaxfrequencyofinterest", type="float",
 			help="Maximum frequency of interest for Fourier", default=0.25)
@@ -35,6 +35,8 @@ class XmippSingleModelRefineJob(apRefineJob.RefineJob):
 			help="Use the FSC=0.5+Constant frequency for the filtration", default=True)
 		self.parser.add_option("--filterResolution", dest="filterResolution", type="float", 
 			help="just model to specified resolution (in Angstroms) after each iteration")
+		self.parser.add_option("--reconMethod",dest="reconMethod", default="fourier",
+			help="fourier, art, wbp")
 
 	#================
 	def setIterationParamList(self):
@@ -52,8 +54,6 @@ class XmippSingleModelRefineJob(apRefineJob.RefineJob):
 					'help':"Shift step for 5D searches", 'default':"2"},
 				{'name':"percentDiscard",
 					'help':"Percentage of images discarded with a CCF below X", 'default':"10"},
-				{'name':"reconMethod",
-					'help':"fourier, art, wbp", 'default':"fourier"},
 				{'name':"ARTLambda",
 					'help':"Relaxation factor for ART", 'default':"0.2"},
 				{'name':"filterConstant",
@@ -68,6 +68,15 @@ class XmippSingleModelRefineJob(apRefineJob.RefineJob):
 			apDisplay.printWarning("cannot use FSC for filter AND specify a resolution to filter model, either set \
 				--DontUseFscForFilter to True or remove --filterResolution ... setting --DontUseFscForFilter to True")
 			self.params['usefscforfilter'] = False
+
+		# outerAlignRaidus which is not iteration parameter in protocol but has to be smaller than mask radius if present
+		min_outerMaskRadius = min(self.params['outerMaskRadius'])
+		if self.params['outerAlignRadius'] == 0:
+			apDisplay.printWarning("mask was not defined, setting to outer mask radius: %d"%(min_outerMaskRadius))
+			self.params['outerAlignRadius'] = min_outerMaskRadius
+		elif self.params['outerAlignRadius'] > min_outerMaskRadius:
+			apDisplay.printWarning("mask too big, setting to outer mask radius: %d"%(min_outerMaskRadius))
+			self.params['outerAlignRadius'] = min_outerMaskRadius
 	
 	def convertSymmetryNameForPackage(self,inputname):
 		'''
@@ -129,14 +138,15 @@ class XmippSingleModelRefineJob(apRefineJob.RefineJob):
 		protocolPrm["ReferenceIsCtfCorrected"]      =   True
 		protocolPrm["DoMask"]                       =   self.params['maskvol']>0
 		protocolPrm["DoSphericalMask"]              =   self.params['outerMaskRadius']>0
-		# there seems to be a problem further up the line as the split should not be needed	
+		# split is needed because refineJob base class defines outMaskRadius as iteration parameter but xmipp can
+		# no accept such assignment	
 		protocolPrm["MaskRadius"]                   =   self.convertAngstromToPixel( self.params['outerMaskRadius'].split()[0] )
 		protocolPrm["MaskFileName"]                 =   self.params['maskvol']
 		protocolPrm["DoProjectionMatching"]         =   True
 		protocolPrm["DisplayProjectionMatching"]    =   False
 		protocolPrm["InnerRadius"]                  =  self.convertAngstromToPixel( self.params['innerAlignRadius'] )
 		protocolPrm["OuterRadius"]                  =  self.convertAngstromToPixel( self.params['outerAlignRadius'] )
-		protocolPrm["AvailableMemory"]              =   '%d' % self.calcRefineMem()
+		protocolPrm["AvailableMemory"]              =   self.calcRefineMem()
 #		protocolPrm["AngSamplingRateDeg"]           =   self.params['AngularSteps']
 		protocolPrm["AngSamplingRateDeg"]           =   self.params['angSampRate']
 		protocolPrm["MaxChangeInAngles"]            =   self.params['maxAngularChange']
@@ -157,21 +167,33 @@ class XmippSingleModelRefineJob(apRefineJob.RefineJob):
 		protocolPrm["Align2DIterNr"]                =   4
 		protocolPrm["Align2dMaxChangeOffset"]       =   '1000'
 		protocolPrm["Align2dMaxChangeRot"]          =   '1000'
-		protocolPrm["DoReconstruction"]             =   True
+		if not self.params['refineonly']:
+			protocolPrm["DoReconstruction"]             =   True
+		else:
+			protocolPrm["DoReconstruction"]             =   False
 		protocolPrm["DisplayReconstruction"]        =   False
-		protocolPrm["ReconstructionMethod"]         =   self.params['reconMethod']
 		protocolPrm["ARTLambda"]                    =   self.params['ARTLambda']
 		protocolPrm["ARTReconstructionExtraCommand"]=   ''
 		protocolPrm["FourierMaxFrequencyOfInterest"]=   self.params['fouriermaxfrequencyofinterest']
 		protocolPrm["WBPReconstructionExtraCommand"]=''
 		protocolPrm["FourierReconstructionExtraCommand"]=''
-		protocolPrm["DoComputeResolution"]          =   self.params['docomputeresolution']
-		protocolPrm["DoSplitReferenceImages"]       =   True
+		if not self.params['refineonly']:
+			protocolPrm["ReconstructionMethod"]         =   self.params['reconMethod']
+			protocolPrm["DoComputeResolution"]          =   self.params['docomputeresolution']
+			protocolPrm["DoSplitReferenceImages"]       =   True
+			protocolPrm["DoLowPassFilter"]              =   self.params['dolowpassfilter']
+			protocolPrm["UseFscForFilter"]              =   self.params['usefscforfilter']
+		else:
+			#Xmipp does not allow False SplitReferenceImage except the exact syntex of 'fourier' in ReconstructionMethod
+			protocolPrm["ReconstructionMethod"]         =   'fourier'
+			#These should never be used if reconstruction is not done
+			protocolPrm["DoComputeResolution"]          =   False
+			protocolPrm["DoSplitReferenceImages"]       =   False
+			protocolPrm["DoLowPassFilter"]              =   False 
+			protocolPrm["UseFscForFilter"]              =   False
 		protocolPrm["ResolSam"]                     =   self.params['apix']
 		protocolPrm["DisplayResolution"]            =   False
-		protocolPrm["DoLowPassFilter"]              =   self.params['dolowpassfilter']
-		protocolPrm["UseFscForFilter"]              =   self.params['usefscforfilter']
-		if self.params['usefscforfilter'] is False:
+		if self.params['usefscforfilter'] is False and self.params['filterResolution']:
 			protocolPrm["ConstantToAddToFiltration"] = str(self.params['apix'] / self.params['filterResolution'])
 		else:
 			protocolPrm["ConstantToAddToFiltration"]    =   str(self.params['filterConstant'])
@@ -185,7 +207,13 @@ class XmippSingleModelRefineJob(apRefineJob.RefineJob):
 
 		### write out python protocol into run directory
 		protocolfile = os.path.join(self.params['remoterundir'],"%s.py" % protocolname)
-		apXmipp.particularizeProtocol(protocol_projmatch, protocolPrm, protocolfile)
+		if self.params['refineonly']:
+			tempprotocolfile = os.path.join(self.params['remoterundir'],"%s.temp" % protocolname)
+			apXmipp.fixRefineOnlyProtocol(protocol_projmatch,tempprotocolfile)
+			apXmipp.particularizeProtocol(tempprotocolfile, protocolPrm, protocolfile)
+			os.remove(tempprotocolfile)
+		else:
+			apXmipp.particularizeProtocol(protocol_projmatch, protocolPrm, protocolfile)
 		os.chmod(os.path.join(self.params['rundir'], protocolfile), 0775)
 				
 		### Write the parameters for posterior uploading, both generic and specific
@@ -213,9 +241,12 @@ class XmippSingleModelRefineJob(apRefineJob.RefineJob):
 		return protocolfile, protocolPrm
 
 	def makeNewTrialScript(self):
+		'''
+		This starts and ends at recondir
+		'''
 		print self.params['modelnames'][0]
-		self.addSimpleCommand('ln -s %s %s' % (self.params['modelnames'][0], 
-			os.path.join(self.params['remoterundir'], self.params['modelnames'][0])))
+		self.addSimpleCommand('ln -s %s %s' % ( 
+			os.path.join(self.params['remoterundir'], self.params['modelnames'][0]),self.params['modelnames'][0]))
 		partar = os.path.join(self.params['remoterundir'],'partfiles.tar.gz')
 		partpath = os.path.join(self.params['remoterundir'],'partfiles')
 		if not os.path.isdir(partpath):
