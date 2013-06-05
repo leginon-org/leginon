@@ -136,8 +136,9 @@ def getOnlyStackData(stackid, msg=True):
 	if not stackdata:
 		apDisplay.printError("Stack ID: "+str(stackid)+" does not exist in the database")
 	stackpath = os.path.join(stackdata['path']['path'], stackdata['name'])
-	if not os.path.isfile(stackpath):
-		apDisplay.printError("Could not find stack file: "+stackpath)
+	# stack file is not checked in case it is archieved away
+	#if not os.path.isfile(stackpath):
+	#	apDisplay.printError("Could not find stack file: "+stackpath)
 	if msg is True:
 		sys.stderr.write("Old stack info: ")
 		apDisplay.printColor("'"+stackdata['description']+"'","cyan")
