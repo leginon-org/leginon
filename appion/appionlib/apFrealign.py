@@ -238,8 +238,8 @@ def generateParticleParams(params,modeldata,initparfile='params.0.par'):
 			particleparams['psi'] = fr_eulers['psi']
 			particleparams['theta'] = fr_eulers['theta']
 			particleparams['phi'] = fr_eulers['phi']
-			particleparams['shx']=params['eman_orient']['shiftx']
-			particleparams['shy']=params['eman_orient']['shifty']
+			particleparams['shx']=-params['eman_orient']['shiftx']
+			particleparams['shy']=-params['eman_orient']['shifty']
 			if params['eman_orient']['mirror'] is True:
 				particleparams['shx']*=-1
 		writeParticleParamLine(particleparams,f)

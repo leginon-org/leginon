@@ -297,8 +297,8 @@ def convertXmippEulersToFrealign(phi, theta, psi):
 	These angle conversions give identical volumes using Xmipp & Frealign 
 	'''
 	phi = math.fmod(phi,360.0)
-	theta = math.fmod((theta+180),360.0)
-	psi = math.fmod((-psi+180),360.0)
+	theta = math.fmod(theta,360.0)
+	psi = math.fmod(psi,360.0)
 	return phi, theta, psi
 
 #==================
@@ -312,8 +312,8 @@ def convert3DEMEulersToFrealign(phi, theta, omega):
 def convertFrealignEulersToXmipp(phi, theta, psi):
 	''' reverse of convertXmippEulersToFrealign '''
 	phi = math.fmod(phi,360.0)
-	theta = math.fmod((theta-180),360.0)
-	psi = math.fmod((-psi+180),360.0)
+	theta = math.fmod(theta,360.0)
+	psi = math.fmod(psi,360.0)
 	return phi, theta, psi 
 
 #==================
