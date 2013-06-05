@@ -81,6 +81,7 @@ class FastFreeHandTestScript(appionScript.AppionScript):
 		stackdata = apStackData.getOnlyStackData(self.params['stackid'])
 		stackfile = os.path.join(stackdata['path']['path'],stackdata['name'])
 		stackbaseroot = os.path.basename(stackfile).split('.')[0]
+		stackroot = os.path.join(stackdata['path']['path'],stackdata['name'][:-4])
 		apDisplay.printMsg('converting %s from default IMAGIC stack format to MRC as %s.mrc'% (stackroot,stackbaseroot))
 		self.stackfile = stackbaseroot+'.mrc'
 		apIMAGIC.convertImagicStackToMrcStack(stackroot,self.stackfile)
