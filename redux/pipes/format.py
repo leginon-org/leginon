@@ -65,7 +65,7 @@ class Format(redux.pipe.Pipe):
 
 	def run_pil(self, input, oformat, rgb, overlay, overlaycolor):
 		pil_image = scipy.misc.toimage(input, cmin=0, cmax=255)
-		if rgb:
+		if rgb or overlay:
 			pil_image = pil_image.convert('RGBA')
 		if overlay:
 			pil_image = self.overlay_mask(pil_image, overlay, overlaycolor)
