@@ -62,11 +62,16 @@ if ($type=="r") {
 	while ($row = mysql_fetch_array($result, MYSQL_ASSOC)) {
 
 		mysql_select_db($row['appiondb']);
-		$r = mysql_query($q) or die("Query error: " . mysql_error());
 		
-		// add the processing runs from this project to the appropriate quarter
-		while ($rowInner = mysql_fetch_array($r, MYSQL_ASSOC)) {
-			$keyedData[$rowInner['unix_timestamp']] += $rowInner[$alias];
+		$rexists = mysql_query("SHOW TABLES LIKE 'ApAppionJobData'");
+		$tableExists = mysql_num_rows($rexists) > 0;
+		if ( $tableExists ) {
+			$r = mysql_query($q) or die("Database query error: " . mysql_error());
+			
+			// add the processing runs from this project to the appropriate quarter
+			while ($rowInner = mysql_fetch_array($r, MYSQL_ASSOC)) {
+				$keyedData[$rowInner['unix_timestamp']] += $rowInner[$alias];
+			}
 		}
 	}
 
