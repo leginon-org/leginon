@@ -16,6 +16,17 @@ class EmanPrep3DRefinement(apPrepRefine.Prep3DRefinement):
 		self.stackspidersingle = False
 		self.modelspidersingle = False
 
+	def convertRefineModelIcosSymmetry(self,modelname,extname,modelfile,apix):
+		# EMAN uses (5 3 2) only
+		symmetry_description = self.model['data']['symmetry']['symmetry']
+		tempfile = os.path.join(self.params['rundir'], "temp.%s" % (extname))
+		if '(2 3 5)' in symmetry_description:
+			apVolume.viper2eman(modelfile, tempfile, apix=self.stack['apix'])
+			shutil.copy(tempfile,modelfile)
+		if '(2 5 3)' in symmetry_description:
+			apVolume.crowther2eman(modelfile, tempfile, apix=self.stack['apix'])
+			shutil.copy(tempfile,modelfile)
+
 	def addStackToSend(self,hedfilepath):
 		# Imagic Format stack has 'hed' and 'img' files
 		self.addToFilesToSend(hedfilepath)

@@ -177,10 +177,28 @@ class Prep3DRefinement(appionScript.AppionScript):
 		apFile.removeStack(outmodelfile, warn=False)
 		if rescale:
 			apVolume.rescaleVolume(self.model['file'], outmodelfile, self.model['apix'], self.stack['apix'], self.stack['boxsize'], spider=self.modelspidersingle)
+		symmetry_description = self.model['data']['symmetry']['symmetry']
+		if 'Icos' in symmetry_description:
+			self.convertRefineModelIcosSymmetry(modelname,extname,outmodelfile,self.stack['apix'])
 		self.model['file'] = outmodelfile
 		self.model['apix'] = self.stack['apix']
 		self.model['format'] = extname
 		return outmodelfile
+
+	def convertRefineModelIcosSymmetry(self,modelname,extname,modelfile,apix):
+		'''
+		This default conversion changes all to (2 3 5) Viper/3DEM convention.
+		'''
+		symmetry_description = self.model['data']['symmetry']['symmetry']
+		# convert to (2 3 5) Viper/3DEM orientation
+		if '(5 3 2)' in symmetry_description:
+			tempfile = os.path.join(self.params['rundir'], "temp.%s" % (extname))
+			apVolume.eman2viper(modelfile, tempfile, spider=self.modelspidersingle,apix=self.stack['apix'])
+			shutil.copy(tempfile,modelfile)
+		if '(2 5 3)' in symmetry_description:
+			tempfile = os.path.join(self.params['rundir'], "temp.%s" % (extname))
+			apVolume.crowther2viper(modelfile, tempfile, spider=self.modelspidersingle,apix=self.stack['apix'])
+			shutil.copy(tempfile,modelfile)
 
 	def setFormat(self):
 		'''

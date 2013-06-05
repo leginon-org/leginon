@@ -29,8 +29,8 @@ Functions to manipulate volumes
 #================
 def getModelDimensions(mrcfile):
 	print "calculating dimensions..."
-	vol=mrc.read(mrcfile)
-	(x,y,z)=vol.shape
+	h=mrc.readHeaderFromFile(mrcfile)
+	(x,y,z)=h['mx'],h['my'],h['mz']
 	if x!=y!=z:
 		apDisplay.printWarning("starting model is not a cube")
 		return max(x,y,z)
@@ -136,7 +136,7 @@ def rescaleVolume(infile, outfile, inapix, outapix=None, newbox=None, spider=Non
 	return
 
 #================
-def viper2eman(infile, outfile, apix=None):
+def viper2eman(infile, outfile, apix=None,spider=None):
 	"""
 	apix is requested so it puts it into the MRC file
 	sometimes yflip is needed, but I am worried this mirrors the structure
@@ -153,12 +153,14 @@ def viper2eman(infile, outfile, apix=None):
 	finalcmd = "proc3d composed.mrc %s origin=0,0,0 "%(outfile)
 	if apix is not None:
 		finalcmd += "apix=%.3f "%(apix)
+	if spider:
+		finalcmd += "spidersingle"
 	apEMAN.executeEmanCmd(finalcmd, verbose=True)
 
 	return outfile
 
 #================
-def eman2viper(infile, outfile, apix=None):
+def eman2viper(infile, outfile, apix=None,spider=None):
 	"""
 	apix is requested so it puts it into the MRC file
 	"""
@@ -174,8 +176,29 @@ def eman2viper(infile, outfile, apix=None):
 	finalcmd = "proc3d rotated.mrc %s origin=0,0,0 "%(outfile)
 	if apix is not None:
 		finalcmd += "apix=%.3f "%(apix)
+	if spider:
+		finalcmd += "spidersingle"
 	apEMAN.executeEmanCmd(finalcmd, verbose=True)
 
+	return outfile
+
+def viper2crowther(infile, outfile, apix=None, spider=None):
+	### set origin and apix
+	emancmd = 'proc3d %s %s rot=0,0,-90 ' % (infile, outfile)
+	if apix is not None:
+		emancmd += "apix=%.3f "%(apix)
+	if spider:
+		emancmd += "spidersingle"
+	apEMAN.executeEmanCmd(emancmd, verbose=True)
+	return outfile
+
+def crowther2viper(infile, outfile, apix=None, spider=None):
+	emancmd = 'proc3d %s %s rot=0,0,90 ' % (infile, outfile)
+	if apix is not None:
+		emancmd += "apix=%.3f "%(apix)
+	if spider:
+		emancmd += "spidersingle"
+	apEMAN.executeEmanCmd(emancmd, verbose=True)
 	return outfile
 
 ####
