@@ -16,8 +16,8 @@ import redux.utility
 
 class Format(redux.pipe.Pipe):
 	required_args = {'oformat': str}
-	optional_args = {'rgb': redux.pipe.bool_converter, 'overlay': str, 'overlaycolor': redux.pipe.shape_converter}
-	optional_defaults = {'rgb': False, 'overlay': '', 'overlaycolor': None}
+	optional_args = {'rgb': redux.pipe.bool_converter, 'overlay': str, 'overlaycolor': float}
+	optional_defaults = {'rgb': False, 'overlay': '', 'overlaycolor': 0.1}
 	file_formats = {
 		'JPEG': '.jpg',
 		'GIF': '.gif',
