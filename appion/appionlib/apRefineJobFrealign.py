@@ -186,7 +186,8 @@ class FrealignRefineJob(apRefineJob.RefineJob):
 		'''
 		hedral symmetry key is of possible name, value is that of this package
 		'''
-		frealign_hedral_symm_names = {'oct':'O','icos (2 3 5) viper/3dem':'I','icos (2 5 3) crowther':'I2'}
+		# (5 3 2) EMAN and (2 5 3) crowther icos would have been converted into (2 3 5) 3dem orientation during the preparation
+		frealign_hedral_symm_names = {'oct':'O','icos (2 3 5) viper/3dem':'I','icos (2 5 3) crowther':'I','icos (5 3 2) eman':'I'}
 		inputname = inputname.lower()
 		if inputname[0] in ('c','d'):
 			bits = inputname.split(' ')
@@ -194,8 +195,8 @@ class FrealignRefineJob(apRefineJob.RefineJob):
 		elif inputname in frealign_hedral_symm_names.keys():
 			symm_name = frealign_hedral_symm_names[inputname]
 		else:
-			apDisplay.printWarning("unknown symmetry name conversion. Use it directly")
 			symm_name = inputname.upper()
+			apDisplay.printWarning("unknown symmetry name conversion. Use it directly as %s" % symm_name)
 		return symm_name
 
 	def setFrealignRefineParams(self):

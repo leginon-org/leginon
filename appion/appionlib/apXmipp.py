@@ -476,15 +476,16 @@ def convertSymmetryNameForPackage(inputname):
 	'''
 	hedral symmetry key is of possible name, value is that of this package
 	'''
-	xmipp_hedral_symm_names = {'oct':'O','icos':'I'}
-	inputname = inputname.lower().split(' ')[0]
+	# (5 3 2) EMAN and (2 5 3) crowther icos would have been converted into (2 3 5) 3dem orientation during the preparation
+	xmipp_hedral_symm_names = {'oct':'O','icos (2 3 5) viper/3dem':'I1','icos (2 5 3) crowther':'I1','icos (5 3 2) eman':'I1'}
+	inputname = inputname.lower()
 	if inputname[0] in ('c','d') or inputname in xmipp_hedral_symm_names.values():
-		symm_name = inputname.lower()
+		symm_name = inputname.lower().split()[0]
 	elif inputname in xmipp_hedral_symm_names.keys():
 		symm_name = xmipp_hedral_symm_names[inputname]
 	else:
-		apDisplay.printWarning("unknown symmetry name conversion. Use it directly")
 		symm_name = inputname.upper()
+		apDisplay.printWarning("unknown symmetry name conversion. Use it directly as %s" % symm_name)
 	return symm_name
 	
 #=======================
