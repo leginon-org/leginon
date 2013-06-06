@@ -19,6 +19,10 @@ $particle=new particledata();
 // check if coming directly from a session
 $expId=$_GET['expId'];
 $pickId=$_GET['pickId'];
+$maskRunId=$_GET['maskId']; // The DEF_id for the mask maker run in ApMaskMakerRunData
+
+$imgtypes = array('jpg','png','mrc','dwn.mrc');
+
 if ($expId) {
 	$sessionId=$expId;
 	$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
@@ -31,6 +35,15 @@ if ($pickId) {
 	$pickdata = $particle->getSelectionRunData($pickId);
 	$_POST['imgdir'] = $pickdata['path'];
 	$_POST['imgrun'] = 0;
+}
+$displayMasks = False;
+if ($maskRunId && !$_POST['imgrun']) {
+	$displayMasks = True;
+	$formAction = $formAction."&maskId=$maskRunId";
+	$maskdata = $particle->getMaskMakerParams($maskRunId);
+	$_POST['imgdir'] = $maskdata[0]['path']."/masks/";
+	$_POST['imgrun'] = 0;
+	if ( $type = findImageTypeInDir($_POST['imgdir'], $imgtypes ) ) $_POST['imgtype'] = $type;
 }
 $projectId=getProjectId();
 
@@ -47,9 +60,8 @@ if ($hasassrun){
 	$assessmentrid=$particle->getLastAssessmentRun($sessionId);
 }
 
-////////////////////////////////////////////////////////
 
-$imgtypes=array('jpg','png','mrc','dwn.mrc');
+////////////////////////////////////////////////////////
 
 $javascript="<script src='../js/viewer.js'></script>\n";
 processing_header("Leginon Image Assessor","Image Assessor",$javascript);
@@ -86,6 +98,7 @@ if (file_exists($origjpgpath)) {
 	$allruns[] = $run;
 }
 
+// Add particle picking runs
 $prtlrunInfos = $particle->getParticleRunIds($sessionId);
 $count = count($prtlrunInfos);
 $i = 0;
@@ -114,7 +127,37 @@ while ($i < $count) {
 	$i++;
 }
 
+// Add masking runs
+$maskRunInfos = $particle->getMaskMakerRunIds($sessionId);
+foreach ( $maskRunInfos as $maskRun ) {
+	$runname = $maskRun['name'];
 
+	if (strlen($maskRun['path']) > 10) $maskpath = $maskRun['path']."/masks/";
+	else {
+		// HACK for Particle Runs without Path Data
+	        $maskpath = $extractpath.$maskRun['name']."/masks/";
+	        if (!file_exists($maskpath)) $maskpath = $appionpath.$maskRun['name']."/masks/";
+	}
+	
+	// Find a file extension in this directory. There may be more than one, 
+	// but let's at least start with a type that we know exists
+	if ( $type = findImageTypeInDir($maskpath, $imgtypes ) ) {
+		$imgtype = $type;
+	} else {
+		$imgtype = "jpg";
+	}
+		
+	$run = array("label"=>"Masking Run: ".$runname,
+		"name"=>"mask_".$maskRun['DEF_id'],"imgtype"=>$imgtype,"path"=>$maskpath);
+	//echo $prtlrun['DEF_id']." == $pickId<br/>";
+	if ($maskRun['DEF_id'] == $maskRunId) {
+		//echo "unshift<br/>";
+		array_unshift($allruns, $run);
+	} else {
+		$allruns[] = $run;
+	}
+}
+	
 // Choose best combination of settings
 $lastimgrun = count($allruns)-1;
 if ($_POST['oldimgtype'] != $_POST['imgtype']) {
@@ -132,8 +175,8 @@ if ($_POST['oldimgtype'] != $_POST['imgtype']) {
 		
 		} else {
 
-			$imgdir = $_POST[imgdir];
-			$imgtype = $_POST[imgtype];
+			$imgdir = $_POST['imgdir'];
+			$imgtype = $_POST['imgtype'];
 		}
 	} else {
 		// default at first loading.
@@ -148,12 +191,13 @@ if ($_POST['oldimgtype'] != $_POST['imgtype']) {
 	}
 
 	if ($inselections) {
-		$imgdir = $allruns[$imgrun][path];
-		$imgtype = $allruns[$imgrun][imgtype];
+		$imgdir = $allruns[$imgrun]['path'];
+		$imgtype = $allruns[$imgrun]['imgtype'];
 	} else {
 		$imgrun = 0;
 	}
 }
+
 
 // save for future comparison
 echo "<INPUT TYPE='hidden' NAME='oldimgrun' VALUE='$imgrun'>";
@@ -162,6 +206,18 @@ echo "<INPUT TYPE='hidden' NAME='oldimgtype' VALUE='$imgtype'>";
 // Read and Display images
 echo"<TABLE CLASS='tableborder' CELLPADING='10' CELLSPACING='5'>\n";
 echo"<TR><TD COLSPAN='3' ALIGN='CENTER'>\n";
+
+// Find the mask assessment run id found in ApMaskAssessmentRunData
+$maskAssessRunId = 0;
+$maskRunSelected = strpos($imgdir, "/masks/");
+if ( $maskRunSelected && !$maskRunId ) {
+	$maskRunPath = rstrtrim($imgdir, "/masks/");
+	$maskRunId = $particle->getMaskMakerRunByPath($sessionId,$maskRunPath);
+}
+if ( $maskRunId ) {
+	$maskAssessRunId = $particle->getMaskAssessRunId($sessionId, $maskRunId);
+}
+
 
 $files = array();
 $presettype = $_POST['presettype'];
@@ -192,9 +248,21 @@ if ($imgdir) {
 		}
 		foreach ($allfiles as $filepath) {
 			$filename = basename($filepath);
-			if (!$typematch || preg_match('`'.$typematch.'(_[0-9][0-9])?\.`',$filename)) {
+		    $excludeExt = "_tmp.jpg"; //This is a poor workaround for now. these tmp files are created for labeling regions.
+		    // TODO: it would actually be better to use the tmp files as the overlay. 
+			$exclude = strpos($filename, $excludeExt) ;
+			if ( !$exclude && (!$typematch || preg_match('`'.$typematch.'(_[0-9][0-9])?\.`',$filename)) ) {
 		      $files[$i][0] = $filename;
 		      $files[$i][1] = filemtime($filepath);
+		      // Add the original MRC image so that we can overlay masks on it.
+		      $maskExts = array("_mask.png", "_mask.jpg");
+		      foreach ( $maskExts as $maskExt ) {
+			      if ( false !== strpos($filename, $maskExt) )
+			      {
+			      	$files[$i][0] = $sessionpath."/".rstrtrim($filename, $maskExt).".mrc";
+			      	$files[$i][2] = $filename;
+			      } 
+		      }
 		      $i++;
 			}
 		}
@@ -204,8 +272,8 @@ if ($imgdir) {
 			array_multisort($sortTime, SORT_ASC, $files);
 			// save sorted file list
 			foreach($files as $t) $fileList[] = $t[0];
-			// display image
-			displayImagePanel($_POST, $fileList, $imgdir, $leginondata, $particle, $assessmentrid);
+			// display image			
+			displayImagePanel($_POST, /*$fileList*/$files, $imgdir, $leginondata, $particle, $assessmentrid, $maskAssessRunId, $maskRunId );
 			//echo "read ".count($files)." files in ".(microtime()-$starttime)." seconds<br/>\n";
 		}
 		else echo"<FONT class='apcomment'>No file found in this directory with extension: $ext or preset: $presettype </FONT><HR>\n";
@@ -266,9 +334,8 @@ echo appionRef();
 processing_footer();
 
 //****************************************
-function displayImagePanel ($_POST,$files,$imgdir,$leginondata,$particle,$assessmentrid) {
+function displayImagePanel($_POST,$files,$imgdir,$leginondata,$particle,$assessmentrid, $maskAssessRunId, $maskRunId ) {
 	$numfiles = count($files);
-	$imlst = $_POST['imagelist'];
 	$imgindex = ($_POST['imgindex']) ? $_POST['imgindex'] : '0';
 	$imgperpage = ($_POST['imgperpage']) ? $_POST['imgperpage'] : 15;
 
@@ -278,6 +345,10 @@ function displayImagePanel ($_POST,$files,$imgdir,$leginondata,$particle,$assess
 	$lastindex = getPrevImage($files, $numfiles, $firstindex, $leginondata, $particle, $assessmentrid);
 	//echo "i$imgindex f$firstindex l$lastindex";
 
+	if ($maskAssessRunId) {
+		updateMaskStatuses($files, $imgindex, $lastindex, $leginondata, $particle, $maskAssessRunId, $assessmentrid, $maskRunId );
+	}
+	
 	if ($_POST['imgjump']) {
 	// go directly to a particular image by number or filename
 		$imgindex = $_POST['imgjump']-1;
@@ -286,22 +357,22 @@ function displayImagePanel ($_POST,$files,$imgdir,$leginondata,$particle,$assess
 			$imgindex = $firstindex;
 		elseif ($imgindex > $lastindex)
 			$imgindex = $lastindex;
-	} elseif ($imlst=='Back') {
+	} elseif ($_POST['imagelist_back_x']) {
 	// go to previous image
 		updateImageStatuses($files, $imgindex, $lastindex, $leginondata, $particle, $assessmentrid);
 		if ($_POST['previndex'])
 			$imgindex = $_POST['previndex'];
 		else
 			$imgindex = getPrevImage($files, $imgindex-$imgperpage, $firstindex, $leginondata, $particle, $assessmentrid);
-	} elseif ($imlst=='Next') {
+	} elseif ($_POST['imagelist_next_x']) {
 	// go to next image
 		echo "<INPUT TYPE='HIDDEN' NAME='previndex' VALUE='$imgindex'>\n";
 		updateImageStatuses($files, $imgindex, $lastindex, $leginondata, $particle, $assessmentrid);
 		$imgindex = $_POST['nextindex'];
-	} elseif ($imlst=='First') {
+	} elseif ($_POST['imagelist_first_x']) {
 	// go to first image
 		$imgindex = $firstindex;
-	} elseif ($imlst=='Last') {
+	} elseif ($_POST['imagelist_last_x']) {
 	// go to last image
 		$imgindex = $lastindex;
 	}
@@ -324,8 +395,7 @@ function displayImagePanel ($_POST,$files,$imgdir,$leginondata,$particle,$assess
 	for ($i = 0; $i < $imgperpage; $i += 1) {
 		$file = $files[$curindex];
 		//echo "c$curindex i$imgindex f$firstindex l$lastindex";
-		//echo $file;
-		displayImage($file, $imgdir, $curindex, $leginondata, $particle, $assessmentrid);
+		displayImage($file, $imgdir, $curindex, $leginondata, $particle, $assessmentrid, $maskAssessRunId, $maskRunId);
 		if ((($i+1) % 3) == 0) {
 			if (!$tool) {
 				$tool = true;
@@ -360,7 +430,7 @@ function displayImagePanel ($_POST,$files,$imgdir,$leginondata,$particle,$assess
 	echo"<INPUT TYPE='text' NAME='imgjump' SIZE='5'>";
 	echo"</TD></tr></table>";
 	echo"</TD><TD ALIGN='RIGHT'>\n";
-	$imgrescl= ($_POST['imgrescale']) ? $_POST['imgrescale'] : 0.2; 
+	$imgrescl= ($_POST['imgrescale']) ? $_POST['imgrescale'] : 0.075; 
 	echo"Scale Factor: <INPUT TYPE='text' NAME='imgrescale' VALUE='$imgrescl' SIZE='4'>\n";
 	echo"</TD></tr><TR><TD ALIGN='CENTER' COLSPAN='3'>\n";
 	$skipallcheck=($_POST['skipimages']=='all') ? 'CHECKED' : '';
@@ -401,6 +471,34 @@ function updateImageStatuses ($files, $imgindex, $lastindex, $leginondata, $part
 	}
 }
 
+
+//****************************************
+function updateMaskStatuses( $files, $imgindex, $lastindex, $leginondata, $particle, $maskAssessRunId, $assessmentrid, $maskRunId ) 
+{
+	//echo "updateMaskStatuses<br/>\n";
+	$curindex = $imgindex;
+	for ($i = 0; $i < $_POST['imgperpage']; $i += 1) {
+		$filename  = $_POST['filename'.$curindex];
+		$statdata  = getMaskStatus($filename, $leginondata, $particle, $maskRunId);
+		$oldstatus = $statdata;
+		$newstatus = $_POST['maskstatus'.$curindex];
+		$imageid   = $_POST['imageid'.$curindex];
+		if ($newstatus != $oldstatus) {
+			//echo "</br>STATUS index: $curindex imgid: $imageid old: $oldstatus new: $newstatus</br></br>\n";
+			if($newstatus == 'yes') {
+				$particle->updateMaskAssessmentByImage($imageid, $maskAssessRunId,'1');
+				//echo "</br><font color='green'>KEEP</font> index $curindex imgid $imageid old $oldstatus new $newstatus</br>\n";
+			} elseif($newstatus == 'no')  {
+				$particle->updateMaskAssessmentByImage($imageid, $maskAssessRunId,'0');
+				//echo "</br><font color='red'>REJECT</font> index $curindex imgid $imageid old $oldstatus new $newstatus</br>\n";
+			}
+		}
+		$nextindex = getNextImage($files, $curindex, $lastindex, $leginondata, $particle, $maskAssessRunId);
+		if ($curindex == $nextindex)
+			break;
+		$curindex = $nextindex;
+	}
+}
 //****************************************
 function getNextImage ($files, $imgindex, $lastindex, $leginondata, $particle, $assessmentrid) {
 	$found = false;
@@ -410,10 +508,10 @@ function getNextImage ($files, $imgindex, $lastindex, $leginondata, $particle, $
 		if ($imgindex > $lastindex) {
 			echo "<FONT COLOR='RED'> At end of image list</FONT><br>\n";
 			$imgindex = $lastindex;
-			$statdata=getImageStatus($files[$imgindex],$leginondata,$particle,$assessmentrid);
+			$statdata=getImageStatus($files[$imgindex][0],$leginondata,$particle,$assessmentrid);
 			return $imgindex;
 		}
-		$statdata=getImageStatus($files[$imgindex],$leginondata,$particle,$assessmentrid);
+		$statdata=getImageStatus($files[$imgindex][0],$leginondata,$particle,$assessmentrid);
 		if ($_POST['skipimages']!='none' && $statdata['status']=='no')
 			$found=false;
 		elseif ($_POST['skipimages']=='all' && $statdata['status']=='yes')
@@ -433,10 +531,10 @@ function getPrevImage ($files, $imgindex, $firstindex, $leginondata, $particle, 
 		if ($imgindex < $firstindex) {
 			echo "<FONT COLOR='RED'> At start of image list</FONT><br>\n";
 			$imgindex = $firstindex;
-			$statdata=getImageStatus($files[$imgindex], $leginondata, $particle, $assessmentrid);
+			$statdata=getImageStatus($files[$imgindex][0], $leginondata, $particle, $assessmentrid);
 			return $imgindex;
 		}
-		$statdata=getImageStatus($files[$imgindex], $leginondata, $particle, $assessmentrid);
+		$statdata=getImageStatus($files[$imgindex][0], $leginondata, $particle, $assessmentrid);
 		if ($_POST['skipimages']!='none' && $statdata['status']=='no')
 			$found=false;
 		elseif ($_POST['skipimages']=='all' && $statdata['status']=='yes')
@@ -448,9 +546,9 @@ function getPrevImage ($files, $imgindex, $firstindex, $leginondata, $particle, 
 }
 
 //****************************************
-function displayImage ($file, $imgdir, $filenum, $leginondata, $particle, $assessmentrid) {
+function displayImage ($file, $imgdir, $filenum, $leginondata, $particle, $assessmentrid, $maskAssessRunId, $maskRunId) {
 	//echo $file."<br/>\n";
-	$statdata = getImageStatus($file, $leginondata, $particle, $assessmentrid);
+	$statdata = getImageStatus($file[0], $leginondata, $particle, $assessmentrid);
 	//echo print_r($statdata)."<br/>\n";
 	$imgname   = $statdata['name'];
 	$imgid     = $statdata['id'];
@@ -464,20 +562,30 @@ function displayImage ($file, $imgdir, $filenum, $leginondata, $particle, $asses
 	echo"<CENTER>\n<TABLE BORDER='0' CELLPADDING='5' CELLSPACING='5'><TR><TD align='center'>\n";
 	//printToolBar();
 	//echo"</TD><td>\n";
-	$imgrescl= ($_POST['imgrescale']) ? $_POST['imgrescale'] : 0.2; 
-	echo"<img src='loadimg.php?filename=$imgfull&scale=$imgrescl'>\n";
+	if ( !empty($file[2]) )
+	{
+		$filename = $file[0];
+		$overlay = $imgdir.$file[2];
+	} else {
+		$overlay = '';
+		$filename = $imgfull;
+	}
+	
+	$imgrescl = ($_POST['imgrescale']) ? $_POST['imgrescale'] : 0.075;
+	$imgurl = "<img src='loadimg.php?filename=".$filename."&scale=".$imgrescl."&overlay=".$overlay."'>\n";
+	echo $imgurl;
 	//echo"</TD><td>\n";
 	//printToolBar();
 
 	echo"</td></tr><tr><td align='center'>\n";
 
-	// Current status
+	// Current Image status
 	echo "<br\><i>";
 	echo "image number ".($filenum+1)."<br/>\n";
 	echo "<font size='-3'>";
 	echo $imgname;
 	echo "</font></i><br/>\n";
-	echo "Current Status: <b>\n";
+	echo "Image Assessment Status: <b>\n";
 	if ($imgstatus=='no') {
 		echo"<font color='red' size='+1'>REJECT</font>";
 		$rejecton = "CHECKED";
@@ -494,6 +602,32 @@ function displayImage ($file, $imgdir, $filenum, $leginondata, $particle, $asses
 	echo"<input type='radio' name='imgstatus$filenum' value='no' $rejecton><FONT COLOR='RED'>Reject</FONT>&nbsp;\n";
 	echo"<input type='radio' name='imgstatus$filenum' value='yes' $keepon><FONT COLOR='GREEN'>Keep</FONT>\n";
 	echo"<input type='radio' name='imgstatus$filenum' value='none' $noneon>None\n";	
+
+	// Mask Status
+	if ($overlay != '') {
+		
+		$maskstatus = getMaskStatus( $file[0], $leginondata, $particle, $maskRunId );
+		
+		echo "<br/>";
+		echo "Mask Assessment Status: <b>\n";
+		if ($maskstatus == 'no') {
+			echo"<font color='red' size='+1'>REJECT</font>";
+			$mrejecton = "CHECKED";
+		} elseif ($maskstatus == 'yes') {
+			echo "<font color='green' size='+1'>KEEP</font>";
+			$mkeepon = "CHECKED";
+		} else {
+			echo "none";
+			$mnoneon = "CHECKED";
+		}
+		echo "</b><br/>\n";
+	
+		// Set mask status
+		echo"<input type='radio' name='maskstatus$filenum' value='no' $mrejecton><FONT COLOR='RED'>Reject</FONT>&nbsp;\n";
+		echo"<input type='radio' name='maskstatus$filenum' value='yes' $mkeepon><FONT COLOR='GREEN'>Keep</FONT>\n";
+		echo"<input type='radio' name='maskstatus$filenum' value='none' $mnoneon>None\n";
+	}	
+	
 	echo"</TD></tr></table>\n";
 }
 
@@ -501,13 +635,13 @@ function displayImage ($file, $imgdir, $filenum, $leginondata, $particle, $asses
 function printToolBarRow() {
 	echo"<TABLE BORDER='0' CELLPADDING='3' CELLSPACING='5'>\n";
 	echo"<TR><TD ALIGN='CENTER'>\n";
-	echo"<INPUT BORDER='0' TYPE='IMAGE' SRC='img/button-first.png' ALT='First' NAME='imagelist' VALUE='First'>\n";
+	echo"<INPUT BORDER='0' TYPE='IMAGE' SRC='img/button-first.png' ALT='First' NAME='imagelist_first' VALUE='First'>\n";
 	echo"</TD><TD ALIGN='CENTER'>\n";
-	echo"<INPUT BORDER='0' TYPE='IMAGE' SRC='img/button-back.png' ALT='Back' NAME='imagelist' VALUE='Back'>\n";
+	echo"<INPUT BORDER='0' TYPE='IMAGE' SRC='img/button-back.png' ALT='Back' NAME='imagelist_back' VALUE='Back'>\n";
 	echo"</TD><TD ALIGN='CENTER'>\n";
-	echo"<INPUT BORDER='0'TYPE='IMAGE' SRC='img/button-next.png' ALT='Next' NAME='imagelist' VALUE='Next'>\n";
+	echo"<INPUT BORDER='0'TYPE='IMAGE' SRC='img/button-next.png' ALT='Next' NAME='imagelist_next' VALUE='Next'>\n";
 	echo"</TD><TD ALIGN='CENTER'>\n";
-	echo"<INPUT BORDER='0' TYPE='IMAGE' SRC='img/button-last.png' ALT='Last' NAME='imagelist' VALUE='Last'>\n";
+	echo"<INPUT BORDER='0' TYPE='IMAGE' SRC='img/button-last.png' ALT='Last' NAME='imagelist_last' VALUE='Last'>\n";
 	echo"</TD></tr></table>";
 }
 
@@ -515,24 +649,106 @@ function printToolBarRow() {
 function printToolBarSide() {
 	echo"<TABLE BORDER='0' CELLPADDING='3' CELLSPACING='5'>\n";
 	echo"<TR><TD ALIGN='CENTER'>\n";
-	echo"<INPUT BORDER='0' TYPE='IMAGE' SRC='img/button-first.png' ALT='First' NAME='imagelist' VALUE='First'>\n";
+	echo"<INPUT BORDER='0' TYPE='IMAGE' SRC='img/button-first.png' ALT='First' NAME='imagelist_first' VALUE='First'>\n";
 	echo"</TD></tr><TR><TD ALIGN='CENTER'>\n";
-	echo"<INPUT BORDER='0' TYPE='IMAGE' SRC='img/button-back.png' ALT='Back' NAME='imagelist' VALUE='Back'>\n";
+	echo"<INPUT BORDER='0' TYPE='IMAGE' SRC='img/button-back.png' ALT='Back' NAME='imagelist_back' VALUE='Back'>\n";
 	echo"</TD></tr><TR><TD ALIGN='CENTER'>\n";
-	echo"<INPUT BORDER='0'TYPE='IMAGE' SRC='img/button-next.png' ALT='Next' NAME='imagelist' VALUE='Next'>\n";
+	echo"<INPUT BORDER='0'TYPE='IMAGE' SRC='img/button-next.png' ALT='Next' NAME='imagelist_next' VALUE='Next'>\n";
 	echo"</TD></tr><TR><TD ALIGN='CENTER'>\n";
-	echo"<INPUT BORDER='0' TYPE='IMAGE' SRC='img/button-last.png' ALT='Last' NAME='imagelist' VALUE='Last'>\n";
+	echo"<INPUT BORDER='0' TYPE='IMAGE' SRC='img/button-last.png' ALT='Last' NAME='imagelist_last' VALUE='Last'>\n";
 	echo"</TD></tr></table>";
 }
 
+function getImageId( $imgname, $leginondata )
+{
+	global $sessionId;
+	$imgbase = basename($imgname);
+	$imageId = $leginondata->getId(array('MRC|image'=>$imgbase,'REF|SessionData|session'=>$sessionId),'AcquisitionImageData','DEF_id');
+	
+	// There can be two images with the same name if the images were uploaded again.
+	// In this case getId() returns an array. Just use the first one.
+	// TODO: this needs to be sorted out - we must return the correct image ID.
+	// Try adding session Id? This seems to have worked.
+	if ( is_array($imageId) ){
+		$id = $imageId[0];
+	} else {
+		$id = $imageId;
+	}
+	
+	return $id;
+}
 //****************************************
-function getImageStatus ($imgname,$leginondata,$particle,$assessmentrid) {
+function getImageStatus( $imgname,$leginondata,$particle,$assessmentrid ) 
+{
+
 	// get the status of the image index
-	$imgbase=preg_split("%\.%",$imgname);
-	$imgbase=$imgbase[0].".mrc";
-	$statdata['id']=$leginondata->getId(array('MRC|image'=>$imgbase),'AcquisitionImageData','DEF_id');
-	$statdata['status']=$particle->getKeepStatus($statdata['id'],$assessmentrid);
-	$statdata['name']=$imgname;
+	$statdata['id'] 	= getImageId( $imgname, $leginondata );
+	$statdata['status'] = $particle->getKeepStatus($statdata['id'],$assessmentrid);
+	$statdata['name'] 	= $imgname;
+	
 	return $statdata;
 }
+
+function getMaskStatus( $imgname, $leginondata, $particle, $maskRunId ) 
+{
+	$statdata['id'] = getImageId( $imgname, $leginondata );
+	if ($statdata['id']) {
+		$maskstatus = $particle->getMaskAssessment( $statdata['id'], $maskRunId );
+	}
+	//echo "mask stat: $maskstatus ";
+	
+	$maskstatus =  ($maskstatus == "1") ? 'yes' : 'no';
+	return $maskstatus;
+}
+/**
+ * Strip a string from the end of a string
+ *
+ * @param string $str      the input string
+ * @param string $remove   OPTIONAL string to remove
+ * 
+ * @return string the modified string
+  */
+function rstrtrim($str, $remove=null)
+{
+    $str    = (string)$str;
+    $remove = (string)$remove;   
+   
+    if(empty($remove))
+    {
+        return rtrim($str);
+    }
+   
+    $len = strlen($remove);
+    $offset = strlen($str)-$len;
+    while($offset > 0 && $offset == strpos($str, $remove, $offset))
+    {
+        $str = substr($str, 0, $offset);
+        $offset = strlen($str)-$len;
+    }
+   
+    return rtrim($str);   
+   
+} //End of function rstrtrim($str, $remove=null) 
+
+// Will return the first filetype to be found from a list of file types ($fileTypes)
+// in a given directory ($dir). If non of the specified types are found, returns False.
+function findImageTypeInDir( $dir, $fileTypes )
+{
+	// Find a file extension in this directory. There may be more than one, 
+	// but let's at least start with a type that we know exists
+	$foundtype = False;
+	$files = scandir($dir);
+	foreach ( $files as $file ) {
+		foreach ( $fileTypes as $type ) {
+			if ( substr($file, -strlen($type)) == $type ) {
+				$foundtype = $type;
+				break;
+			}
+		}
+	}
+	
+	return $foundtype;
+}	
+
+
 ?>

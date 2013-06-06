@@ -6,7 +6,9 @@ class imageRequester {
 	// filepath is the full path to file ex: /a/b/c.d
 	// filename is the base name of file path ex: c.d
 	// fileroot is the root name of the filename ex: c
-	function requestImage($filepath,$oFormat,$shape=array(512,512),$scaleType='stdev',$scaleMin=-5,$scaleMax=5,$lpf=0,$rgb=false,$power=false,$cacheOff=false,$frame=false) {
+	function requestImage($filepath,$oFormat,$shape=array(512,512),$scaleType='stdev',$scaleMin=-5,$scaleMax=5,$lpf=0,$rgb=false,$power=false,$cacheOff=false,$frame=false,
+							$overlay='', $overlayColor=0.35) 
+	{
 		if (empty($filepath)) return false;
 		$redux = new redux($filepath, $oFormat);
 		$redux->setPipeline('standard');
@@ -27,12 +29,19 @@ class imageRequester {
 		$redux->setLpf($lpf);
 		$redux->setRGB($rgbValue);
 		$redux->setFrameValue($frame);
+		$redux->setOverlay($overlay);
+		$redux->setOverlayColor($overlayColor);
 
-		$errMsg = $redux->getErrMsg();
-		//if(!empty($errMsg)){
-		//	print_r($errMsg);
-		//	exit;
-		//}
+//		$errMsg = $redux->getErrMsg();
+//		if(!empty($errMsg)){
+//			echo "Error requesting image from redux: padvalue-> ";
+//			echo $_POST['padValue'];
+//			echo "  maskRaduis-> ". $maskRadius;
+//			echo " shape-> ";
+//			print_r($shape);
+//			print_r($errMsg);
+//			exit;
+//		}
 
 		$reply = $redux->requestImage();
 		return $reply;

@@ -8,6 +8,7 @@ $w = $_GET['w'];
 $h = $_GET['h'];
 $rawgif = $_GET['rawgif'];
 $cacheOff = $_GET['coff'];
+$overlay = $_GET['overlay'];
 
 if (empty($filename)) {
 	return;
@@ -56,10 +57,11 @@ if (preg_match('`\.gif$`i',$filename) && $rawgif) {
 	$rgb = (substr_compare($filename,'jpg',-3,true) || substr_compare($filename,'png',-3,true)) ? true:false;
 	$frame = (substr_compare($filename,'jpg',-3,true) || substr_compare($filename,'png',-3,true)) ? null:$frame;
 	// request image
-	if (!$rescale && $pmin != $pmax) 
-		$imgstr = $imagerequest->requestImage($filename,$oformat,$xyDim,'minmax',$pmin,$pmax,0,$rgb,false,$cacheOff,$frame);
+	//TODO: this does not work. The minmax method seems to be not working in redux.
+	if (0/*!$rescale && $pmin != $pmax*/) 
+		$imgstr = $imagerequest->requestImage($filename,$oformat,$xyDim,'minmax',$pmin,$pmax,0,$rgb,false,$cacheOff,$frame,$overlay);
 	else
-		$imgstr = $imagerequest->requestImage($filename,$oformat,$xyDim,'stdev',-3,3,0,$rgb,false,$cacheOff,$frame);
+		$imgstr = $imagerequest->requestImage($filename,$oformat,$xyDim,'stdev',-3,3,0,$rgb,false,$cacheOff,$frame,$overlay);
 	$imagerequest->displayImageString($imgstr,$oformat,$filename);
 }
 

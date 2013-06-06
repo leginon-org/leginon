@@ -3567,21 +3567,42 @@ class particledata {
 	#--------- MAKE MASK FUNCTIONS---------------#
 
 	function getMaskMakerRunIds ($sessionId) {
-		$q = "select * "
-			."from `ApMaskMakerRunData` where `REF|leginondata|SessionData|session` = '$sessionId'";
-		$r = $this->mysql->getSQLResult($q);
-		return $r;
+		return $this->getRunIds($sessionId, "ApMaskMakerRunData", True);
 	}
 
 	function getMaskAssessRunIds ($sessionId) {
 		$q = "select * "
 			."from `ApMaskAssessmentRunData` where `REF|leginondata|SessionData|session` = '$sessionId'";
 		$r = $this->mysql->getSQLResult($q);
+		if ($r === False) {
+			$dberror = $this->mysql->getError();
+			//echo "error -> $dberror \n";
+			error_log("Error: database error in particledata.inc, getMaskAssessRunIds(): $dberror /n");
+		}
 		return $r;
 	}
-
+	
+	function getMaskAssessRunId( $sessionId, $maskRunId ) 
+	{
+		$q = "select `DEF_id` "
+			."from `ApMaskAssessmentRunData` where `REF|leginondata|SessionData|session` = '$sessionId' and `REF|ApMaskMakerRunData|maskrun` = $maskRunId";
+		$r = $this->mysql->getSQLResult($q);
+		if ($r === False) {
+			$dberror = $this->mysql->getError();
+			echo "error -> $dberror \n";
+			error_log("Error: database error in particledata.inc, getMaskAssessRunId(): $dberror /n");
+		}
+		$id = $r[0]["DEF_id"];
+		return $id;
+	}
+	
 	function hasMaskMakerData ($sessionId) {
 		$r= ($this->getLastMaskMakerRun($sessionId)) ? true : false;
+		if ($r === False) {
+			$dberror = $this->mysql->getError();
+			//echo "error -> $dberror \n";
+			error_log("Error: database error in particledata.inc, hasMaskMakerData(): $dberror /n");
+		}
 		return $r;
 	}
 
@@ -3592,6 +3613,20 @@ class particledata {
 		return $r[runId];
 	}
 
+	function getMaskMakerRunByPath( $sessionId, $path ) 
+	{
+		$q = "select m.`DEF_id` as runId "
+			."from `ApMaskMakerRunData` m where m.`REF|leginondata|SessionData|session` = $sessionId "
+			."and m.`REF|ApPathData|path` in (SELECT p.`DEF_id` from `ApPathData` AS p where p.`path` LIKE \"%$path%\") ";
+		list($r) = $this->mysql->getSQLResult($q);
+		if ($r === False) {
+			$dberror = $this->mysql->getError();
+			echo "error -> $dberror query -> $q \n";
+			error_log("Error: database error in particledata.inc, updateMaskAssessmentByImage(): $dberror /n");
+		}
+		return $r[runId];
+	}
+	
 	function getMaskMakerParams ($runId) {
 		$q = "select * from ApMaskMakerRunData "
 			." where `DEF_id` = '$runId' ";
@@ -3599,8 +3634,9 @@ class particledata {
 
 		//print_r ($r);
 		//echo $r['REF|ApMaskMakerParamsData|params'];
-		$q = "select s.*, r.name, r.`REF|leginondata|SessionData|session` ";
+		$q = "select s.*, p.path, r.name, r.`REF|leginondata|SessionData|session` ";
 
+		// TODO: does this table even exist?
 		if ($r['REF|ApMaskMakerParamsData|params']) {
 			$maskparamid=$r['REF|ApSelectionParamsData|params'];
 			$q .= "from ApMaskMakerParamsData s "
@@ -3648,8 +3684,9 @@ class particledata {
 	}
 
 	function displayMaskRegionStats ($expId,$particleruns, $display_keys, $inspect=False, $selexval=False) {
-		if (!is_array($particleruns))
+		if (!is_array($particleruns)) {
 			return ;
+		}
 		$html = "<BR>\n<table class='tableborder' border='1' cellspacing='1' cellpadding='5'>\n";
 		$html .= "<tr> <td> </td>";
 		foreach($display_keys as $key) {
@@ -3675,7 +3712,7 @@ class particledata {
 			$html .= "<td><a target='params' href='maskrunreport.php?expId=$expId&rId=$runId'>".$r0['name']."</a></td>";
 			foreach($display_keys as $field) {
 							$data=$regionstats[$field];
-				if (preg_match('^areamean|^Imean|^Istddev%i', $field)) $data=format_sci_number($data,4);
+				if (preg_match('^areamean^', $field) || preg_match('^Imean^', $field) || preg_match('^Istddev^', $field)) $data=format_sci_number($data,4);
 				$html .= "<td> $data </td> \n";
 			}
 			$html .= "</tr>\n";
@@ -3729,6 +3766,96 @@ class particledata {
 		return $r[0];
 
 	}
+	
+	// $maskId is the DEF_id of the region in ApMaskAssessmentData
+	// $newStatus is boolean True or False
+	// True means the region will be considered during stack creation
+	// and particles within the region will not be used. 
+	// False means this region will be ignored and particles within the 
+	// region will still be used for stack creation.
+	function updateMaskAssessment( $maskId, $newStatus) 
+	{
+		$table = "ApMaskAssessmentData";
+		$field = "keep";
+		// make sure the row and column exists 
+		$q = "SELECT `".$field."` "
+			."FROM `".$table."` "
+			."WHERE `DEF_id`=".$maskId." ";
+		$olddata = $this->mysql->getSQLResult($q);
+		if ( array_key_exists($field, $olddata[0]) ) {
+			$data 			= array();
+			$data[$field] 	= $newStatus;
+			$where 			= array('DEF_id'=>$maskId);
+			$this->mysql->SQLUpdate( $table, $data, $where );
+		}
+	}	
+	
+	// Update all the masks for a given image with the new status.
+	// Use the $assessRunId to find the ApMaskMakerRunData ID.
+	// Use the $imageId with the mask maker run id to find all the mask region ids that should change.
+	// Use the mask region id with the assessment run ID to update the status in ApMaskAssessmentData.
+	// For now, not using the assessment run ID, I think there is only one per region.
+	function updateMaskAssessmentByImage( $imageId, $assessRunId, $newStatus) 
+	{
+		// Pull the region id from ApMaskRegionData and give it a key of 
+		// REF|ApMaskRegionData|region to match what we are looking for in ApMaskAssessmentData.
+		$q = "SELECT regions.`DEF_id` as `REF|ApMaskRegionData|region` "
+			."FROM `ApMaskRegionData` as regions "
+			."LEFT JOIN `ApMaskAssessmentRunData` as assessRun "
+			."ON (assessRun.`REF|ApMaskMakerRunData|maskrun` = regions.`REF|ApMaskMakerRunData|maskrun`) "
+			."WHERE assessRun.`DEF_id`=".$assessRunId." AND regions.`REF|leginondata|AcquisitionImageData|image`=".$imageId." ";
+
+		$regionIds = $this->mysql->getSQLResult($q);
+		if ($regionIds === False) {
+			$dberror = $this->mysql->getError();
+			//echo "error -> $dberror query -> $q \n";
+			error_log("Error: database error in particledata.inc, updateMaskAssessmentByImage(): $dberror /n");
+		}
+		
+		// Update keep status
+		$data 			= array();
+		$data["keep"] 	= $newStatus;
+		foreach ( $regionIds as $regionId ) {
+			$this->mysql->SQLUpdate( "ApMaskAssessmentData", $data, $regionId );
+		}
+	}		
+
+	function getMaskAssessment( $imageId, $maskRunId) 
+	{
+		// First find the mask region ID
+		$q = "SELECT `DEF_id` "
+			."FROM `ApMaskRegionData` "
+			."WHERE `REF|leginondata|AcquisitionImageData|image`=".$imageId." and `REF|ApMaskMakerRunData|maskrun`=".$maskRunId." ";
+			
+		$regionIdResult = $this->mysql->getSQLResult($q);
+		if ($regionIdResult === False) {
+			$dberror = $this->mysql->getError();
+			echo "error -> $dberror query -> $q \n";
+			//error_log("Error: database error in particledata.inc, updateMaskAssessmentByImage(): $dberror /n");
+			return;
+		} else if ( empty($regionIdResult) ) {
+			//var_dump($q);
+			return;
+		} else {
+			$regionId = $regionIdResult[0]['DEF_id'];
+		}
+		
+		// Now find the keep status from the region id
+		$table = "ApMaskAssessmentData";
+		$field = "keep";
+		// make sure the row and column exists 
+		$q = "SELECT `".$field."` "
+			."FROM `".$table."` "
+			."WHERE `REF|ApMaskRegionData|region`=".$regionId." ";
+		
+		$r = $this->mysql->getSQLResult($q);
+		if ($r === False) {
+			$dberror = $this->mysql->getError();
+			echo "error -> $dberror query -> $q \n";
+			//error_log("Error: database error in particledata.inc, updateMaskAssessmentByImage(): $dberror /n");
+		}
+		return $r[0]['keep'];
+	}		
 
 	#---------RECONSTRUCTION FUNCTIONS---------------#
 

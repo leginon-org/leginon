@@ -892,26 +892,14 @@ if (is_numeric($expId)) {
 		$results[] = ($crudqueued==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=maskmaker'>$crudqueued queued</a>";		
 		
 		$nruns[] = array(
-			'name'=>"<a href='runMaskMaker.php?expId=$sessionId'>Crud Finding</a>",
+			'name'=>"<a href='selectMaskingType.php?expId=$sessionId'>Run Automated Masking</a>",
 			'result'=>$results,
 		);
 	}
 	
-	//Maskiton is not yet working
-	if (!HIDE_FEATURE)
-	{
-		$nrun = "<a href='maskiton.php?expId=$sessionId'>";
-		$nrun .= "Maskiton";
-		$nrun .= "</a>";
-		$nruns[] = $nrun;
-	
-	}
-	
-	$nrun = "<a href='manualMaskMaker.php?expId=$sessionId'>";
-	$nrun .= "Manual Masking";
-	$nrun .= "</a>";
+	$nrun = "<a href='manualMaskMaker.php?expId=$sessionId'>Run Manual Masking</a>";
 	$nruns[] = $nrun;
-
+	
 	$data[] = array(
 		'action' => array($action, $celloption),
 		'result' => array($result),

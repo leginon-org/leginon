@@ -167,14 +167,32 @@ def getMaskPath(maskrundata):
 def getMaskFilename(maskrundata,imagedata):
 	maskpath = getMaskPath(maskrundata)
 	maskfile = imagedata['filename']+"_mask.png"
+	maskfileandpath = os.path.join(maskpath,maskfile)
+	# TODO: this is for automasking, need to sort out the filenames better
+	if not os.path.exists(maskfileandpath):
+		maskfile = imagedata['filename']+"_mask.jpg_tmp.jpg"
+		
 	return maskfile
 
 def getMaskArray(maskrundata,imgdata):
+	maskArray = []
 	maskpath = getMaskPath(maskrundata)
 	maskfile = getMaskFilename(maskrundata,imgdata)
 	#mask = apImage.PngAlphaToBinarryArray(os.path.join(maskpath,maskfile))
-	mask = apImage.PngToBinarryArray(os.path.join(maskpath,maskfile))
-	return mask
+	maskfileandpath = os.path.join(maskpath,maskfile)
+	if os.path.exists(maskfileandpath):
+		print "Trying to open " + maskfileandpath
+		fileExtension = os.path.splitext(maskfile)[1][1:].strip().lower()
+		
+		if fileExtension == "jpg":
+			print "Opening JPG file."
+			maskArray = apImage.readJPG(maskfileandpath)
+		else:
+			maskArray = apImage.PngToBinarryArray(maskfileandpath)
+	else:
+		print "File does not exist: " + maskfileandpath
+
+	return maskArray
 
 def getMaskRunInfo(maskpath,maskfilename):
 	parent=maskfilename.replace('_mask.png','')
@@ -192,6 +210,11 @@ def getMaskMakerRunNamesFromSession(sessiondata):
 		return []
 	masknames = map((lambda x:x['name']),results)
 	return masknames
+
+def getMaskMakerRunDataById(id):
+	mquery = appiondata.ApMaskMakerRunData(DEF_id=id)
+	results = mquery.query()
+	return results
 
 def getRegionsAsTargets(maskrun,maskshape,imgdata):
 	regiondata = getMaskRegions(maskrun,imgdata)
@@ -241,7 +264,24 @@ def getMaskbins(sessiondata,maskassessname):
 	for i,assessrundata in enumerate(assessruntree):
 		maskrundata = assessrundata['maskrun']
 		maskbins.append(maskrundata['params']['bin'])
-	return maskbins,max(maskbins)
+	if maskbins:
+		maxbin = max(maskbins)
+	else:
+		maxbin = 0  
+	return maskbins,maxbin
+
+def getMaskRegionsByAssessName(sessiondata,maskassessname,imgdata):
+
+	assessruntree = getMaskAssessRunData(sessiondata,maskassessname)
+
+	for i,assessrundata in enumerate(assessruntree):
+
+		maskrundata = assessrundata['maskrun']
+		maskregiondata = getMaskRegions(maskrundata,imgdata)
+		if len(maskregiondata) == 0:
+			continue
+		else:
+			return maskregiondata
 
 def makeInspectedMask(sessiondata,maskassessname,imgdata):
 
@@ -262,7 +302,19 @@ def makeInspectedMask(sessiondata,maskassessname,imgdata):
 			continue
 
 		maskarray = getMaskArray(maskrundata,imgdata)
+#		#### This is for auto msking only 
+#		if len(maskarray) == 0:
+#			continue
+#		else:
+#			allmaskarray =  maskarray
+#			
+#	return allmaskarray, maxbin
+#
+#    ### End aoutomasking only code
+		
+		
 		maskarray = apCrud.makeKeepMask(maskarray,keeplist)
+		print maskarray
 		extrabin = maxbin/maskbins[i]
 		if extrabin > 1:
 			maskarray = apImage.binImg(maskarray, extrabin)
@@ -301,6 +353,34 @@ def overlayMask(image,mask):
 
 	return overlay
 
+# Check the shape of the images. If they are not the same,
+# create a new mask image with the same shape of the original image.
+def reshapeMask( image, mask ):
+		# make sure the images have the same shape
+		imgshape = numpy.asarray(image.shape)
+		print "MRC Image Shape:"
+		print imgshape
+		imgsize = imgshape[0]*imgshape[1]
+		print "MRC Image Size:"
+		print imgsize
+
+		maskshape = numpy.shape(mask)
+		print "Mask Image Shape:"
+		print maskshape
+		
+		print "resizing mask image."
+		scaleFactor = float(imgshape[0])/float(maskshape[0])
+		print scaleFactor
+		outimg = imagefun.scale( mask, scaleFactor )
+		maskshape = numpy.shape(outimg)
+		print "Mask Image Shape:"
+		print maskshape
+		
+		return outimg
+		#img3 = numpy.resize(img2, imgshape) # not working
+#		outimgpath = self.outfile + "_tmp.jpg"
+#		scipy.misc.imsave(outimgpath, outimg)		
+	
 if __name__ == '__main__':
 	assessrun = appiondata.ApMaskAssessmentRunData.direct_query(11)
 	sessiondata = assessrun['session']

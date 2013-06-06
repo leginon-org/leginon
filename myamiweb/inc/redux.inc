@@ -30,14 +30,16 @@ class redux{
 	private $info;			// boolean
 	private $oFormat;		// image output format [choices: ('JPEG', 'GIF', 'TIFF', 'PNG', 'MRC')]
 	private $errMsg;		// error message array contain name - message pair.
+	private $overlay;		// Path to an overlay image
+	private $overlayColor;  // Srting representing RGB values for displaying the overlay, ex. "255,0,0"
 	
 	
 	/*
 	 * default constructor requires at lease image input location
 	 * and output format
 	 */
-	function __construct($filename, $oFormat=null){
-		
+	function __construct($filename, $oFormat=null)
+	{
 		$this->setFilename($filename);	
 		
 		// set default output format to JPEG
@@ -108,6 +110,20 @@ class redux{
 	function getErrMsg(){ 
 		$this->validateInputs();
 		return $this->errMsg; 
+	}
+	
+	function setOverlay( $filename='' )
+	{	
+		if (!empty($filename)) {
+			global $validator;
+			$validator->addValidation("filename", $filename, "file_exist", "Overlay image file does not exist.");
+		}
+		$this->overlay = $filename; 
+	}
+	
+	function setOverlayColor( $color=0.1 )
+	{	
+		$this->overlayColor = $color; 
 	}
 	
 	function setFilename($filename){
@@ -349,6 +365,8 @@ class redux{
 		# Be more specific about frame since frame=0 triggers disable_cache in redux
 		$str .= ($this->frameValue===false || $this->frameValue===null) ? '' : '&frame=' . $this->getFrameValue();	
 		$str .= empty($this->lpf) ? '' : '&lpf=' . $this->getLpf();	
+		$str .= empty($this->overlay) ? '' : '&overlay=' . $this->overlay;
+		$str .= empty($this->overlayColor) ? '' : '&overlaycolor=' . $this->overlayColor;
 
 		return $str;
 	}
