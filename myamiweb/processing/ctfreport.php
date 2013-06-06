@@ -10,8 +10,9 @@ require "inc/appionloop.inc";
 $ctf = new particledata();
 
 $expId = $_GET['expId'];
+$showmore = $_GET['showmore'] ? $_GET['showmore'] : '0';
 $projectId =getProjectId();
-$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
+$formAction=$_SERVER['PHP_SELF']."?expId=$expId&showmore=$showmore";
 
 $fieldarray = $ctf->getCTFParameterFields();
 foreach ($fieldarray as $k=>$v) {
@@ -87,66 +88,111 @@ if (count($ctfrundatas) != count($hidectfrundatas) && !$_GET['showHidden']) {
 }
 
 if ($ctfrundatas) {
+	if ($showmore > 0) {
+		$showmorelink = $_SERVER['PHP_SELF']."?expId=$expId&showmore=0";
+		echo "<a href='$showmorelink'>[show less statistics]</a><br/>\n";
+	}	else {
+		$showmorelink = $_SERVER['PHP_SELF']."?expId=$expId&showmore=1";
+		echo "<a href='$showmorelink'>[show all statistics]</a><br/>\n";
+	}		
+
 	echo "<h3>Summary of confidence values from all runs</h3>\n";
 
 	echo "<table>\n";
+
+	// Row 0
+	echo "<tr><td>\n";
+		echo "<h3>Defocus 1</h3>";
+		echo "<a href='ctfgraph.php?hg=1&expId=$expId&s=1&f=defocus1'>\n";
+		echo "<img border='0' width='400' height='200' src='ctfgraph.php?"
+			."w=800&h=600&hg=1&expId=$expId&s=1&xmax=7e-6&f=defocus1' alt='please wait...'></a>\n";
+	echo "</td><td>\n";
+		echo "<h3>Defocus 2</h3>";
+		echo "<a href='ctfgraph.php?hg=1&expId=$expId&s=1&f=defocus2'>\n";
+		echo "<img border='0' width='400' height='200' src='ctfgraph.php?"
+			."w=800&h=600&hg=1&expId=$expId&s=1&xmax=7e-6&f=defocus2' alt='please wait...'></a>\n";
+	echo "</td></tr>";
+
+	// Row 0
+	echo "<tr><td>\n";
+		echo "<h3>Amplitude Contrast</h3>";
+		echo "<a href='ctfgraph.php?hg=1&expId=$expId&s=1&xmin=0.0&f=amplitude_contrast'>\n";
+		echo "<img border='0' width='400' height='200' src='ctfgraph.php?"
+			."w=800&h=600&hg=1&expId=$expId&s=1&xmin=0.0&f=amplitude_contrast' alt='please wait...'></a>\n";
+	echo "</td><td>\n";
+		echo "<h3>Angle Astigmatism</h3>";
+		echo "<a href='ctfgraph.php?hg=1&expId=$expId&s=1&xmin=-90&xmax=90&f=angle_astigmatism'>\n";
+		echo "<img border='0' width='400' height='200' src='ctfgraph.php?"
+			."w=800&h=600&hg=1&expId=$expId&s=1&xmin=-90&xmax=90&f=angle_astigmatism' alt='please wait...'></a>\n";
+	echo "</td></tr>";
+
+	if ($showmore > 0) {
 	// Row 0
 	echo "<tr><td>\n";
 		echo "<h3>Merged Confidence</h3>";
 		echo "<a href='ctfgraph.php?hg=1&expId=$expId&s=1&f=confidence'>\n";
-		echo "<img border='0' width='400' height='300' src='ctfgraph.php?"
-			."w=400&h=300&hg=1&expId=$expId&s=1&xmin=0.3&f=confidence' alt='please wait...'></a>\n";
+		echo "<img border='0' width='400' height='200' src='ctfgraph.php?"
+			."w=800&h=600&hg=1&expId=$expId&s=1&xmin=0.3&f=confidence' alt='please wait...'></a>\n";
 	echo "</td><td>\n";
 		echo "<h3>Confidence D</h3>";
 		echo "<a href='ctfgraph.php?hg=1&expId=$expId&s=1&f=confidence_d'>\n";
-		echo "<img border='0' width='400' height='300' src='ctfgraph.php?"
-			."w=400&h=300&hg=1&expId=$expId&s=1&xmin=0.3&f=confidence_d' alt='please wait...'></a>\n";
+		echo "<img border='0' width='400' height='200' src='ctfgraph.php?"
+			."w=800&h=600&hg=1&expId=$expId&s=1&xmin=0.3&f=confidence_d' alt='please wait...'></a>\n";
 	echo "</td></tr>";
+	}
+
 	// Row 1
 	echo "<tr><td>\n";
 		echo "<h3>Confidence 1/30&Aring; - 1/10&Aring;</h3>";
 		echo "<a href='ctfgraph.php?hg=1&expId=$expId&s=1&f=confidence_30_10'>\n";
-		echo "<img border='0' width='400' height='300' src='ctfgraph.php?"
-			."w=400&h=300&hg=1&expId=$expId&s=1&xmin=0.3&f=confidence_30_10' alt='please wait...'></a>\n";
+		echo "<img border='0' width='400' height='200' src='ctfgraph.php?"
+			."w=800&h=600&hg=1&expId=$expId&s=1&xmin=0.3&f=confidence_30_10' alt='please wait...'></a>\n";
 	echo "</td><td>\n";
 		echo "<h3>Confidence 5 Peaks</h3>";
 		echo "<a href='ctfgraph.php?hg=1&expId=$expId&s=1&f=confidence_5_peak'>\n";
-		echo "<img border='0' width='400' height='300' src='ctfgraph.php?"
-			."w=400&h=300&hg=1&expId=$expId&s=1&xmin=0.3&f=confidence_5_peak' alt='please wait...'></a>\n";
+		echo "<img border='0' width='400' height='200' src='ctfgraph.php?"
+			."w=800&h=600&hg=1&expId=$expId&s=1&xmin=0.3&f=confidence_5_peak' alt='please wait...'></a>\n";
 	echo "</td></tr>";
 	// Row 2
 	echo "<tr><td>\n";
 		echo "<h3>Resolution at 0.8</h3>";
-		echo "<a href='ctfgraph.php?hg=1&expId=$expId&s=1&xmax=50&color=darkred&f=resolution_80_percent'>\n";
-		echo "<img border='0' width='400' height='300' src='ctfgraph.php?"
-			."w=400&h=300&hg=1&expId=$expId&s=1&xmax=30&f=resolution_80_percent' alt='please wait...'></a>\n";
+		echo "<a href='ctfgraph.php?hg=1&expId=$expId&s=1&xmin=5&xmax=50&f=resolution_80_percent'>\n";
+		echo "<img border='0' width='400' height='200' src='ctfgraph.php?"
+			."w=800&h=600&hg=1&expId=$expId&s=1&xmin=4&xmax=30&f=resolution_80_percent' alt='please wait...'></a>\n";
 	echo "</td><td>\n";
 		echo "<h3>Resolution at 0.5</h3>";
-		echo "<a href='ctfgraph.php?hg=1&expId=$expId&s=1&xmax=30&color=darkred&f=resolution_50_percent'>\n";
-		echo "<img border='0' width='400' height='300' src='ctfgraph.php?"
-			."w=400&h=300&hg=1&expId=$expId&s=1&xmax=30&f=resolution_50_percent' alt='please wait...'></a>\n";
+		echo "<a href='ctfgraph.php?hg=1&expId=$expId&s=1&xmin=5&xmax=30&f=resolution_50_percent'>\n";
+		echo "<img border='0' width='400' height='200' src='ctfgraph.php?"
+			."w=800&h=600&hg=1&expId=$expId&s=1&xmin=4&xmax=30&f=resolution_50_percent' alt='please wait...'></a>\n";
 	echo "</td></tr>";
 	// Row 3
 	echo "<tr><td>\n";
 		echo "<h3>Confidence values during run</h3>\n";
 		echo "<a href='ctfgraph.php?hg=0&expId=$expId&s=1&f=confidence'>\n";
-		echo "<img border='0' width='400' height='300' src='ctfgraph.php?"
-			."w=400&h=300&hg=0&expId=$expId&s=1&f=confidence'></a>\n";
+		echo "<img border='0' width='400' height='200' src='ctfgraph.php?"
+			."w=800&h=600&hg=0&expId=$expId&s=1&f=confidence'></a>\n";
 	echo "</td><td>\n";
 	// very hacky
 		$sessiondata = getSessionList($projectId, $expId);
 		$preset = end($sessiondata['presets']);
 		echo "<h3>Difference from Leginon for preset '$preset'</h3>\n";
 		echo "<a href='autofocacegraph.php?hg=0&expId=$expId&s=1&f=difference&preset=$preset'>\n";
-		echo "<img border='0' width='400' height='300' src='autofocacegraph.php?"
+		echo "<img border='0' width='400' height='200' src='autofocacegraph.php?"
 			."hg=0&expId=$expId&s=1&f=difference&preset=$preset' alt='please wait...'></a>\n";
 	echo "</td></tr>";
 	echo "</table>";
-	$ctfdownlink .= "<h3>";
+	$ctfdownlink = "<h3>";
 	$ctfdownlink .= "<a href='downloadctfdata.php?expId=$expId'>\n";
 	$ctfdownlink .= "  <img style='vertical-align:middle' src='img/download_arrow.png' border='0' width='16' height='17' alt='download best ctf data'>&nbsp;download best ctf data\n";
 	$ctfdownlink .= "</a></h3>\n";
 	echo $ctfdownlink;
+
+	$ctfdownlink = "<h3>";
+	$ctfdownlink .= "<a href='downloadctfemxfile.php?expId=$expId'>\n";
+	$ctfdownlink .= "  <img style='vertical-align:middle' src='img/download_arrow.png' border='0' width='16' height='17' alt='download best ctf data'>&nbsp;download best ctf EMX file\n";
+	$ctfdownlink .= "</a></h3>\n";
+	echo $ctfdownlink;
+
 
 	echo "<hr/>\n";
 
@@ -165,9 +211,9 @@ if ($ctfrundatas) {
 
 		//echo "ctfdata".print_r($ctfdata);
 		$fields = array('defocus1', 'defocus2', 
-			'confidence', 'confidence_d', 
-			'confidence_30_10', 'confidence_5_peak',  
+			//'confidence', 'confidence_d', 
 			'angle_astigmatism', 'amplitude_contrast',  
+			'confidence_30_10', 'confidence_5_peak',  
 			'resolution_80_percent', 'resolution_50_percent');
 		$stats = $ctf->getCTFStats($fields, $expId, $ctfrunid);
 		$display_ctf=false;
