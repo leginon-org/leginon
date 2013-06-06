@@ -347,8 +347,8 @@ function runMaxLikeAlign() {
 	if (!$description)
 		createMaxLikeAlignForm("<B>ERROR:</B> Enter a brief description of the particles to be aligned");
 
-	if ($nproc > 16)
-		createMaxLikeAlignForm("<B>ERROR:</B> Let's be reasonable with the nubmer of processors, less than 16 please");
+#	if ($nproc > 16)
+#		createMaxLikeAlignForm("<B>ERROR:</B> Let's be reasonable with the nubmer of processors, less than 16 please");
 
 	//make sure a stack was selected
 	if (!$stackid)
@@ -387,9 +387,9 @@ function runMaxLikeAlign() {
 	$calctime = ($numpart/1000.0)*$numref*($boxsize/$bin)*($boxsize/$bin)/$angle*$secperiter/$nproc;
 	if ($mirror) $calctime *= 2.0;
 	// kill if longer than 10 hours
-	if ($calctime > 10.0*3600.0)
-		createMaxLikeAlignForm("<b>ERROR:</b> Run time per iteration greater than 10 hours<br/>"
-			."<b>Estimated calc time:</b> ".round($calctime/3600.0,2)." hours\n");
+//	if ($calctime > 10.0*3600.0)
+//		createMaxLikeAlignForm("<b>ERROR:</b> Run time per iteration greater than 10 hours<br/>"
+//			."<b>Estimated calc time:</b> ".round($calctime/3600.0,2)." hours\n");
 	elseif (!$fast && $calctime > 1800.0)
 		createMaxLikeAlignForm("<b>ERROR:</b> Run time per iteration greater than 30 minutes without fast mode<br/>"
 			."<b>Estimated calc time:</b> ".round($calctime/60.0,2)." minutes\n");
