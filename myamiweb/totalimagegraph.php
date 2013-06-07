@@ -26,8 +26,8 @@ $type = $_GET['type'];
 $start = $_GET['st'];
 $points = $_GET['pt'];
 
-$gwidth=600;
-$gheight=300;
+$gwidth=800;
+$gheight=400;
 
 $width = $_GET['w'];
 $height = $_GET['h'];
@@ -35,16 +35,14 @@ $height = $_GET['h'];
 if ($type=="r") {
 	$alias="njobs";
 	$gtitle="Number of Processing Runs";
-	$gtitle .= ($cumulative) ? " (cumulative)" : " (every three months)";
+	$gtitle .= ($cumulative) ? " (cumulative)" : " (every year)";
 	$yaxistitle="#processingruns";
 
 	$q="select "
-		."@QT:=concat(YEAR(DEF_timestamp),'-',LPAD(QUARTER(DEF_timestamp)*3-2,2,'0'),'-01') as `timestamp`, "
-		."UNIX_TIMESTAMP(@QT) as `unix_timestamp`, "
 		."count(DEF_id) as $alias, "
-		."year (DEF_timestamp) year, quarter(DEF_timestamp) quarter "
+		."year (DEF_timestamp) year"
 		."from ApAppionJobData "
-		."where DEF_timestamp<>'0000-00-00 00:00:00' group by year,quarter";
+		."where DEF_timestamp<>'0000-00-00 00:00:00' group by year";
 		
 	mysql_connect(DB_HOST, DB_USER, DB_PASS) or die("Could not connect: " . mysql_error());
 	
@@ -115,35 +113,31 @@ if ($type=="r") {
 } else if ($type=="s") {
 	$alias="nsession";
 	$gtitle="Number of Sessions";
-	$gtitle .= ($cumulative) ? " (cumulative)" : " (every three months)";
+	$gtitle .= ($cumulative) ? " (cumulative)" : " (every year)";
 	$yaxistitle="#sessions";
 
 	$sql="select "
-		."@QT:=concat(YEAR(ns.DEF_timestamp),'-',LPAD(QUARTER(ns.DEF_timestamp)*3-2,2,'0'),'-01') as `timestamp`, "
-		."UNIX_TIMESTAMP(@QT) as `unix_timestamp`, "
 		."count(ns.DEF_id) as $alias, "
-		."year (ns.DEF_timestamp) year, quarter(ns.DEF_timestamp) quarter "
+		."year (ns.DEF_timestamp) year "
 		."from (select "
 		."	s.DEF_timestamp, s.DEF_id "
 		."from AcquisitionImageData a "
 		."left join SessionData s on (s.`DEF_id` = a.`REF|SessionData|Session`) "
 		."where a.`REF|SessionData|Session` IS NOT NULL "
 		."group by a.`REF|SessionData|Session`) ns "
-		."where ns.DEF_timestamp<>'0000-00-00 00:00:00' group by year,quarter";
+		."where ns.DEF_timestamp<>'0000-00-00 00:00:00' group by year";
 	
 } else {
 	$alias="nimage";
 	$gtitle="Number of Images";
-	$gtitle .= ($cumulative) ? " (cumulative)" : " (every three months)";
+	$gtitle .= ($cumulative) ? " (cumulative)" : " (every year)";
 	$yaxistitle="#images";
 	$sql="select "
-		."@QT:=concat(YEAR(DEF_timestamp),'-',LPAD(QUARTER(DEF_timestamp)*3-2,2,'0'),'-01') as `timestamp`, "
-		."UNIX_TIMESTAMP(@QT) as `unix_timestamp`, "
 		."count(DEF_id) as $alias, "
-		."year(DEF_timestamp) year, quarter(DEF_timestamp) quarter "
+		."year(DEF_timestamp) year "
 		."from `AcquisitionImageData` "
 		."where DEF_timestamp<>'0000-00-00 00:00:00' "
-		."group by year, quarter"
+		."group by year"
 		." $limit ";
 }
 /* use leginon database */
@@ -163,14 +157,14 @@ if ($viewdata) {
 }
 
 function TimeCallback($aVal) {
-    return Date('M Y',$aVal);
+    return $aVal;
 }
 
 if ($nimagedata){
 	//suppress the last data, (not the whole 3 month data).
 	unset($nimagedata[count($nimagedata)-1]);
 	foreach ($nimagedata as $d) {
-		$datax[] = $d['unix_timestamp'];
+		$datax[] = $d['year'];
 		if(!$cumulative){
 			$datay[] = $d[$alias];
 		}
