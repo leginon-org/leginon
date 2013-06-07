@@ -13,6 +13,7 @@
 
 import leginon.icons
 import wx
+import sys
 
 ID_SETTINGS = 10001
 ID_ACQUIRE = 10002
@@ -101,3 +102,15 @@ class ToolBar(wx.ToolBar):
 		bitmap = '%s.png' % bitmap
 		bitmap = wx.BitmapFromImage(wx.Image(leginon.icons.getPath(bitmap)))
 		wx.ToolBar.InsertTool(self, pos, id, bitmap, **kwargs)
+
+	def RemoveTool(self, id):
+		# Get around window freeze on this wx function see bug #2229
+		if 'win' in sys.platform[:3]:
+			return
+		wx.ToolBar.RemoveTool(id)
+
+	def DeleteTool(self, id):
+		# Get around window freeze on this wx function see bug #2229
+		if 'win' in sys.platform[:3]:
+			return
+		wx.ToolBar.DeleteTool(id)
