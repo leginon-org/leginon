@@ -723,8 +723,20 @@ def makeMask(params,image):
 	return regioninfos,equalregions,
 
 def makeKeepMask(maskarray,keeplist1):
-	labeled_maskarray,countlabels=nd.label(maskarray)
+	# label the regions in the mask image array
+	labeled_maskarray,countlabels = nd.label( maskarray )
+	
+	# Remove any regions that are too small (happens with auto-masking)
+	testlog = [False,0,""]
+	infos={}	
+	infos, testlog = getLabeledInfo( maskarray, maskarray, labeled_maskarray, range(1,countlabels+1), False, infos, testlog )
+	goodregions = range(countlabels)
+	goodareas = pruneByArea( infos, 400, 16777216, goodregions)
+	labeled_maskarray, countlabels, infos = makePrunedLabels(labeled_maskarray, countlabels, infos, goodareas)
+	
+	# adjust the index of the regions
 	keeplist0 = map((lambda x: x-1),keeplist1)
+	# make a new image array that only includes the regions that have not been rejected
 	labeled_maskarray = makeImageFromLabels(labeled_maskarray,countlabels,keeplist0)
 	maskarray=getBmaskFromLabeled(labeled_maskarray)
 	return maskarray

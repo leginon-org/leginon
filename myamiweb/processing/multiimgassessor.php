@@ -617,15 +617,16 @@ function displayImage ($file, $imgdir, $filenum, $leginondata, $particle, $asses
 			echo "<font color='green' size='+1'>KEEP</font>";
 			$mkeepon = "CHECKED";
 		} else {
-			echo "none";
+			echo "status error";
 			$mnoneon = "CHECKED";
 		}
 		echo "</b><br/>\n";
 	
 		// Set mask status
+		// All masks are set to keep by default when they are created.
 		echo"<input type='radio' name='maskstatus$filenum' value='no' $mrejecton><FONT COLOR='RED'>Reject</FONT>&nbsp;\n";
 		echo"<input type='radio' name='maskstatus$filenum' value='yes' $mkeepon><FONT COLOR='GREEN'>Keep</FONT>\n";
-		echo"<input type='radio' name='maskstatus$filenum' value='none' $mnoneon>None\n";
+		//echo"<input type='radio' name='maskstatus$filenum' value='none' $mnoneon>None\n";
 	}	
 	
 	echo"</TD></tr></table>\n";

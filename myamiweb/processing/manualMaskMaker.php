@@ -145,7 +145,7 @@ function getAssessname () {
 		$assessname = $runname;
 		break;
 	case 1:
-		$assessname = $_POST[oldassessname];
+		$assessname = $_POST['oldassess'];
 		break;
 	case 2:
 		$assessname = $_POST[newassessname];
@@ -273,7 +273,7 @@ function runMaskMaker() {
 	$runname = $_POST['runname'];
 	$assess = $_POST[assess];
 	$newassess= $_POST[newassessname];
-	$oldassess= $_POST[oldassessname];
+	$oldassess= $_POST['oldassess'];
 	
 	/* *******************
 	PART 2: Check for conflicts, if there is an error display the form again
