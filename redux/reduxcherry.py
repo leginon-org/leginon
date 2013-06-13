@@ -7,7 +7,7 @@ hostname:8080/leginon/filename/512x512/5/image.jpg
 import cherrypy
 import redux.pipeline
 
-cherrypy.config.update({'server.socket_host': 'cronus2',
+cherrypy.config.update({'server.socket_host': '0.0.0.0',
                         'server.socket_port': 8080,
                        })
 
@@ -22,13 +22,15 @@ class ReduxRoot(object):
 	index.exposed = True
 	'''
 	def default(self, *args, **kwargs):
-		cherrypy.response.headers['Content-Type'] = 'image/jpeg'
 		pipes = args[:-1]
 		outfilename = args[-1]
 		pipes = [(pipe,pipe) for pipe in pipes]
 		
 		#return str(pipes) + '...' + str(kwargs)
 		pl = redux.pipeline.Pipeline(pipes)
+		content_type = kwargs['oformat'].lower()
+		content_type = 'image/' + content_type
+		cherrypy.response.headers['Content-Type'] = content_type
 		return pl.process(**kwargs)
 	default.exposed = True
 
