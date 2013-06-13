@@ -3,6 +3,7 @@ import os
 from leginon import leginondata
 import sys
 import glob
+import math
 
 def parseInfoTxt(infopath):
 	if not os.path.isfile(infopath):
@@ -60,13 +61,15 @@ def getRawFrameSessionPathFromImagePath(imagepath):
 	'/mydata/frames/13may01a' to store frames.
 	'''
 	# backward compatibility
-	if glob.glob(os.path.join(imagepath,'*.frames')):
+	if glob.glob(os.path.join(imagepath,'*.frames*')):
 		return imagepath
 	baseframe_dirname = 'frames'
 	pathbits = imagepath.split('/')
 	leginonbasepath = '/'.join(pathbits[:-3])
 	sessionrawdatapath = '/'.join(pathbits[-2:])
 	rawframe_sessionpath = os.path.join(leginonbasepath,baseframe_dirname,sessionrawdatapath)
+	if not os.path.exists(rawframe_sessionpath):
+		rawframe_sessionpath = rawframe_sessionpath.replace('data16','data00')
 	return rawframe_sessionpath
 
 def getRawFrameType(session_image_path):
@@ -89,6 +92,29 @@ def readPositionsFromAlignLog(filename):
 		position_strings = line.split('shift:')[-1].split()
 		positions.append((float(position_strings[0]),float(position_strings[1])))
 	return positions
+
+def printDriftStats(filenamepattern, apix):
+
+	filelist = glob.glob(filenamepattern+'_st_Log.txt')
+	if len(filelist) == 0:
+		return
+
+	allshifts = []
+	imgdata = leginondata.AcquisitionImageData(filename=filelist[0].split('_st_Log.txt')[0]).query()[0]
+	fps = 1000.0 / imgdata['camera']['frame time']
+	for file in filelist:
+		positions = readPositionsFromAlignLog(file)
+		positions.insert(0,positions[0])
+		shifts = []
+		for i in range(len(positions)-1):
+			shifts.append(math.hypot(positions[i+1][0] - positions[i][0], positions[i+1][1] - positions[i][1]))
+		allshifts.append(shifts)
+
+	import numpy
+	a = numpy.array(allshifts)
+	for d in range(a.shape[1]):
+		suba = a[:,d]
+		print "frame_%d %6.4f %6.4f" % (d,suba.mean()*apix*fps,suba.std()*apix*fps)
 
 if __name__ == '__main__':
 	infopath = sys.argv[1]
