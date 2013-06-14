@@ -655,6 +655,8 @@ def scale_parfile_frealign8(infile, outfile, mult, newmag=0):
 
 #=================
 def scale_parfile_frealign9(infile, outfile, mult, newmag=0):
+	''' note that this may not make sense as it would in frealign8, because frealign9 shifts are in Angstroms '''
+
 	### outfile
 	ff = open(outfile, "w")
 	ff.write("%s%8s%8s%8s%10s%10s%8s%6s%9s%9s%8s%8s%13s%8s%8s\n" \
