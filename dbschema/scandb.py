@@ -10,8 +10,8 @@ class ScanDB(object):
 	'''
 
 	def __init__(self):
-		self.project_dbtools = dbupgrade.DBUpgradeTools('projectdata', drop=True)
-		self.leginon_dbtools = dbupgrade.DBUpgradeTools('leginondata', drop=True)
+		self.project_dbtools = dbupgrade.DBUpgradeTools('projectdata')
+		self.leginon_dbtools = dbupgrade.DBUpgradeTools('leginondata')
 
 	def getAppionDatabases(self,project_dbtools):
 		"""
