@@ -694,7 +694,9 @@ def readParticleFileByFilePath(pdatafile,porderfile=''):
 	for j, info in enumerate(finfo):
 		alldata = {}			
 		data = info.strip().split()
-		alldata['partnum'] = orderlist[j]
+		# Information lines in ParticleFile is not necessarily sorted by particle number in the prepared stack.
+		# EMAN result is ordered by class number, for example
+		alldata['partnum'] = orderlist[int(data[0])-1]
 		alldata['phi'] = float(data[1])
 		alldata['theta'] = float(data[2])
 		alldata['omega'] = float(data[3])
