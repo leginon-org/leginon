@@ -395,8 +395,16 @@ class uploadEmanProjectionMatchingRefinementScript(reconUploader.generalReconUpl
 		
 		return True
 
+	def moveAndLink(self,oldf,newf,move):
+		if not os.path.isfile(newf):
+			if move:
+				shutil.move(oldf, newf)
+				os.symlink(newf, oldf)
+			else:
+				os.symlink(oldf, newf)
+			
 	#=====================
-	def compute_stack_of_class_averages_and_reprojections(self, iteration):
+	def compute_stack_of_class_averages_and_reprojections(self, iteration, move=True):
 		''' create EMAN class averages in new format '''
 			
 		classavg = os.path.join(self.projmatchpath, "classes.%d.img" % iteration)
@@ -411,16 +419,13 @@ class uploadEmanProjectionMatchingRefinementScript(reconUploader.generalReconUpl
 				for ext in ['.img','.hed']:
 					oldf = classavg.replace('.img', ext)
 					newf = os.path.join(self.resultspath, "proj-avgs_%s_it%.3d_vol%.3d%s" % (self.params['timestamp'], iteration, 1, ext))
-					if not os.path.isfile(newf):
-						shutil.move(oldf, newf)
-						os.symlink(newf, oldf)
+					self.moveAndLink(oldf,newf,move)
+
 			elif os.path.exists(classavgnew) and not os.path.islink(classavgnew):
 				for ext in ['.img','.hed']:
 					oldf = classavgnew.replace('.img', ext)
 					newf = os.path.join(self.resultspath, "proj-avgs_%s_it%.3d_vol%.3d%s" % (self.params['timestamp'], iteration, 1, ext))
-					if not os.path.isfile(newf):
-						shutil.move(oldf, newf)
-						os.symlink(newf, oldf)		
+					self.moveAndLink(oldf,newf,move)
 					
 		###		spider correspondence analysis used to refine class averages
 		###
@@ -433,23 +438,17 @@ class uploadEmanProjectionMatchingRefinementScript(reconUploader.generalReconUpl
 				for ext in ['.img','.hed']:
 					oldf = classavg_coran.replace('.img', ext)
 					newf = os.path.join(self.resultspath, "refined_proj-avgs_%s_it%.3d_vol%.3d%s" % (self.params['timestamp'], iteration, 1, ext))
-					if not os.path.isfile(newf):
-						shutil.move(oldf, newf)
-						os.symlink(newf, oldf)		
+					self.moveAndLink(oldf,newf,move)
 			if os.path.exists(classavg_precoran) and not os.path.islink(classavg_precoran):
 				for ext in ['.img','.hed']:
 					oldf = classavg_precoran.replace('.img', ext)
 					newf = os.path.join(self.resultspath, "proj-avgs_%s_it%.3d_vol%.3d%s" % (self.params['timestamp'], iteration, 1, ext))
-					if not os.path.isfile(newf):
-						shutil.move(oldf, newf)
-						os.symlink(newf, oldf)
+					self.moveAndLink(oldf,newf,move)
 			elif os.path.exists(classavgnew) and not os.path.islink(classavgnew):
 				for ext in ['.img','.hed']:
 					oldf = classavgnew.replace('.img', ext)
 					newf = os.path.join(self.resultspath, "proj-avgs_%s_it%.3d_vol%.3d%s" % (self.params['timestamp'], iteration, 1, ext))
-					if not os.path.isfile(newf):
-						shutil.move(oldf, newf)
-						os.symlink(newf, oldf)
+					self.moveAndLink(oldf,newf,move)
 
 		### message-passing used to refine class averages			
 		elif apRecon.getComponentFromVector(self.runparams['package_params']['package'], iteration-1) == "EMAN/MsgP":
@@ -457,23 +456,17 @@ class uploadEmanProjectionMatchingRefinementScript(reconUploader.generalReconUpl
 				for ext in ['.img','.hed']:
 					oldf = classavg.replace('.img', ext)
 					newf = os.path.join(self.resultspath, "proj-avgs_%s_it%.3d_vol%.3d%s" % (self.params['timestamp'], iteration, 1, ext))
-					if not os.path.isfile(newf):
-						shutil.move(oldf, newf)
-						os.symlink(newf, oldf)		
+					self.moveAndLink(oldf,newf,move)
 			elif os.path.exists(classavgnew) and not os.path.islink(classavgnew):
 				for ext in ['.img','.hed']:
 					oldf = classavgnew.replace('.img', ext)
 					newf = os.path.join(self.resultspath, "proj-avgs_%s_it%.3d_vol%.3d%s" % (self.params['timestamp'], iteration, 1, ext))
-					if not os.path.isfile(newf):
-						shutil.move(oldf, newf)
-						os.symlink(newf, oldf)
+					self.moveAndLink(oldf,newf,move)
 			if os.path.exists(classavg_goodMsgP) and not os.path.islink(classavg_goodMsgP):
 				for ext in ['.img','.hed']:
 					oldf = classavg_goodMsgP.replace('.img', ext)
 					newf = os.path.join(self.resultspath, "refined_proj-avgs_%s_it%.3d_vol%.3d%s" % (self.params['timestamp'], iteration, 1, ext))
-					if not os.path.isfile(newf):
-						shutil.move(oldf, newf)
-						os.symlink(newf, oldf)				
+					self.moveAndLink(oldf,newf,move)
 
 		return
 
@@ -582,7 +575,7 @@ class uploadEmanProjectionMatchingRefinementScript(reconUploader.generalReconUpl
 			### create a text file with particle information
 			badparticles = self.readParticleLog(iteration)
 			self.createParticleDataFile(iteration, badparticles)
-					
+
 			### create mrc file of map for iteration and reference number
 			oldvol = os.path.join(self.projmatchpath, "threed.%da.mrc" % iteration)
 			newvol = os.path.join(self.resultspath, "recon_%s_it%.3d_vol001.mrc" % (self.params['timestamp'], iteration))
