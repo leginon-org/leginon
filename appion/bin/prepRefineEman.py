@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import os
 
 #appion
 from appionlib import apPrepRefine
