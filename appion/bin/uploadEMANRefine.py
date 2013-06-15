@@ -347,7 +347,7 @@ class uploadEmanProjectionMatchingRefinementScript(reconUploader.generalReconUpl
 					az = float(eulers[i][1])
 					Ephi = float(other[0])*180./math.pi
 					mirror = int(float(other[3]))
-					if mirror is True:
+					if mirror:
 						alt, az, Ephi = apEulerCalc.calculate_equivalent_EMANEulers_without_flip(alt, az, Ephi)
 					phi, theta, omega = apEulerCalc.convertEmanEulersToXmipp(alt, az, Ephi)
 					particledataf.write("%9d" % (int(prtlnum)+1)) ### NOTE: IT IS IMPORTANT TO START WITH 1, OTHERWISE STACKMAPPING IS WRONG!!!

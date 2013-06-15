@@ -154,6 +154,8 @@ def rotationMatrixToEulersEMAN(m):
 	''' 
 	this code was taken from the Transform class in Sparx and EMAN2 
 	http://blake.bcm.edu/eman2/doxygen_html/transform_8cpp_source.html#l00511
+	The input matrix must has no mirror.  The original code is different
+	when mirror (flip x) is present.
 	'''
 
 	if type(m) is not numpy.ndarray:
