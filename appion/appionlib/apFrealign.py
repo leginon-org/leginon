@@ -151,6 +151,25 @@ def convertFrealignSymToAppionSym(frealign_symtext):
 		frealign_symtext[0].upper()
 		return ''.join(frealign_symtext) + ' (z)'
 
+def initializeParticleParams(iter):
+		particleparams = {}
+		# frealign requires that the first field to be in consecutive sequence
+		particleparams['ptclnum']=iter+1
+		particleparams['psi']=0
+		particleparams['theta']=0
+		particleparams['phi']=0
+		particleparams['df1']=0.1 # workaround if no ctf correction
+		particleparams['df2']=0.1 # set defocus to 0.1 Angstroms
+		particleparams['angast']=0.0
+		particleparams['mag'] = 10000 # workaround to get around dstep
+		particleparams['shx']=0
+		particleparams['shy']=0
+		particleparams['film']=1
+		particleparams['presa']=0
+		particleparams['dpres']=0
+		particleparams['pnumber']=iter+1
+		return particleparams
+
 #===============
 def generateParticleParams(params,modeldata,initparfile='params.0.par'):
 	params['inpar']=os.path.join(params['rundir'],initparfile)
@@ -158,7 +177,6 @@ def generateParticleParams(params,modeldata,initparfile='params.0.par'):
 	params['mode']=3
 	stackdata=getStackParticlesInOrder(params)
 	first_imageid = stackdata[0]['particle']['image'].dbid
-	particleparams={}
 	f=open(params['inpar'],'w')
 	params['noClassification']=0
 	if params['reconiterid']:
@@ -170,17 +188,7 @@ def generateParticleParams(params,modeldata,initparfile='params.0.par'):
 		params['last'] = len(stackdata)
 	for i, particle in enumerate(stackdata[:params['last']]):
 		# defaults
-		# frealign requires that the first field to be in consecutive sequence
-		particleparams['ptclnum']=i+1
-		particleparams['psi']=0
-		particleparams['theta']=0
-		particleparams['phi']=0
-		particleparams['df1']=0.1 # workaround if no ctf correction
-		particleparams['df2']=0.1 # set defocus to 0.1 Angstroms
-		particleparams['angast']=0.0
-		particleparams['mag'] = 10000 # workaround to get around dstep
-		particleparams['shx']=0
-		particleparams['shy']=0
+		particleparams = initializeParticleParams(i)
 		# for helical reconstructions, film is helix number
 		if particle['particle']['helixnum']:
 			imgid=particle['particle']['image'].dbid
@@ -195,8 +203,6 @@ def generateParticleParams(params,modeldata,initparfile='params.0.par'):
 			particleparams['film']=params['totalHelix']
 		else:
 			particleparams['film']=particle['particle']['image'].dbid - first_imageid + 1
-		particleparams['presa']=0
-		particleparams['dpres']=0
 		# extra particle number information not read by Frealign
 		particleparams['pnumber']=particle['particleNumber']
 
