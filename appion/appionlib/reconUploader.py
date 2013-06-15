@@ -88,14 +88,16 @@ class generalReconUploader(appionScript.AppionScript):
 			apDisplay.printWarning('recon dir already exist, no need to unpack')
 		else:
 			self.unpackResults()
-		self.runparams = self.readRunParameters()
 	
 		''' These are required error checks, everything else should be possible to obtain from the timestamped pickle file '''
 
 		stackdata = apStack.getOnlyStackData(self.params['stackid'])
+		self.runparams = {}
 		self.runparams['original_apix'] = ( stackdata['pixelsize'] / 1e-10 ) # convert pixelsize to angstroms per pixel.
 		self.runparams['original_boxsize'] = stackdata['boxsize']
-		
+		# some functions in readRunParameters needs the above params
+		self.runparams.update(self.readRunParameters())
+
 		### parameters recovered from runparameter file(s)
 		if not self.runparams.has_key('stackid'):
 			if self.params['stackid'] is not None:
