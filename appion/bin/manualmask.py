@@ -293,8 +293,35 @@ class ManualPicker(filterLoop.FilterLoop):
 		sys.stderr.write("Pre-processing images before picking\n")
 		count = 0
 		total = len(self.imgtree)
+		# if we are masking based on a previous mask run, and only want to process images with rejected masks,
+		# remove any images with accepted masks from the imgtree.
+		newImageTree = []
 		for imgdata in self.imgtree:
 			count += 1
+				
+	        # useAccecepted mask is true when the assess flag is used, and an 
+	        # accepted mask is found in the indicated mask run that should be retained
+			self.useAcceptedMask = False 
+			
+			# check to see if this image
+			# 1. Does not have a mask region
+			# 2. Has only mask regions that have been rejected
+			# If both are true, continue, otherwise we do not need to display this image.
+			
+			filename = imgdata['filename']		
+			maskAssessRunName = self.params['assessname']
+			sessiondata = apDatabase.getSessionDataFromSessionName(self.params['sessionname'])
+			
+			maskimg,maskbin = apMask.makeInspectedMask( sessiondata, maskAssessRunName, imgdata )
+			if maskimg is not None and maskimg.size:
+				apDisplay.printMsg("Skipping image with accepted mask region.")
+				maskimg = apMask.reshapeMask( imgdata['image'], maskimg )
+				self.maskimg = maskimg
+				self.image = imgdata['image']
+				self.useAcceptedMask = True
+				self.commitToDatabase(imgdata)
+				continue
+			
 			imgpath = os.path.join(self.params['rundir'], imgdata['filename']+'.dwn.mrc')
 			if self.params['continue'] is True and os.path.isfile(imgpath):
 				sys.stderr.write(".")
@@ -305,8 +332,12 @@ class ManualPicker(filterLoop.FilterLoop):
 				sys.stderr.write("#")
 				apFindEM.processAndSaveImage(imgdata, params=self.params)
 
+			newImageTree.append(imgdata)
+
 			if count % 60 == 0:
 				sys.stderr.write(" %d left\n" % (total-count))
+				
+		self.imgtree = newImageTree
 
 	def runManualPicker(self, imgdata):
 		#reset targets
@@ -318,25 +349,8 @@ class ManualPicker(filterLoop.FilterLoop):
 		self.app.setAssessStatus()
         # useAccecepted mask is true when the assess flag is used, and an 
         # accepted mask is found in the indicated mask run that should be retained
+        # This is checked in the preLoopFunctions().
 		self.useAcceptedMask = False 
-		
-		# check to see if this image
-		# 1. Does not have a mask region
-		# 2. Has only mask regions that have been rejected
-		# If both are true, continue, otherwise we do not need to display this image.
-		
-		filename = imgdata['filename']		
-		maskAssessRunName = self.params['assessname']
-		sessiondata = apDatabase.getSessionDataFromSessionName(self.params['sessionname'])
-		
-		maskimg,maskbin = apMask.makeInspectedMask( sessiondata, maskAssessRunName, imgdata )
-		if maskimg is not None and maskimg.size:
-			apDisplay.printMsg("Skipping image with accepted mask region.")
-			maskimg = apMask.reshapeMask( imgdata['image'], maskimg )
-			self.maskimg = maskimg
-			self.image = imgdata['image']
-			self.useAcceptedMask = True
-			return
 
 		#open new file
 		imgname = imgdata['filename']+'.dwn.mrc'
