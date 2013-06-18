@@ -166,7 +166,8 @@ function createAngularReconstitutionForm($extra=False, $title='automatedCommonLi
 						echo "</SELECT>\n";						
 					}
 					if ($templateIds) {
-						echo "<br>OR<br><b> Template Stack: </b>";
+						if ($clusterIds) echo "<br>OR<br>";
+						echo "<b> Template Stack: </b>";
 						echo "<br><SELECT NAME='tsvals'>\n";
 						echo "<OPTION VALUE='select'>select one</OPTION>";
 						foreach ($templateIds as $temp) {
@@ -174,12 +175,12 @@ function createAngularReconstitutionForm($extra=False, $title='automatedCommonLi
 							$templatename = $temp['templatename'];
 							$apix = $temp['apix'];
 							$boxsz = $temp['boxsize'];
-							$totprtls = "";
+							$totprtls = $temp['numimages'];
 							if ($temp['cls_avgs'] == 1) $type = "Class Averages";
 							elseif ($temp['forward'] == 1) $type = "Forward Projections";
 							echo "<OPTION VALUE='$templateId|--|$apix|--|$boxsz|--|$totprtls|--|$type'";
 							if ($tsid == $templateId) echo " SELECTED";
-							echo ">$templateId: $templatename ($apix &Aring;/pixel, $boxsz pixels)</OPTION>\n";
+							echo ">$templateId: $templatename ($apix &Aring;/pixel, $boxsz pixels, $totprtls images)</OPTION>\n";
 						}
 						echo "</SELECT>\n";
 					}
@@ -202,7 +203,8 @@ function createAngularReconstitutionForm($extra=False, $title='automatedCommonLi
 						echo "</SELECT>\n";						
 					}
 					if ($templateIds) {
-						echo "<br>OR<br><b> Template Stack: </b>";
+						if ($clusterIds) echo "<br>OR<br>";
+						echo "<b> Template Stack: </b>";
 						echo "<br><SELECT NAME='rtsvals'>\n";
 						echo "<OPTION VALUE='select'>select one</OPTION>";
 						foreach ($templateIds as $rtemp) {
@@ -210,12 +212,12 @@ function createAngularReconstitutionForm($extra=False, $title='automatedCommonLi
 							$rtemplatename = $rtemp['templatename'];
 							$rapix = $rtemp['apix'];
 							$rboxsz = $rtemp['boxsize'];
-							$rtotprtls = "";
+							$rtotprtls = $rtemp['numimages'];
 							if ($rtemp['cls_avgs'] == 1) $rtype = "Class Averages";
 							elseif ($rtemp['forward'] == 1) $rtype = "Forward Projections";
 							echo "<OPTION VALUE='$rtemplateId|--|$rapix|--|$rboxsz|--|$rtotprtls|--|$rtype'";
 							if ($rtsid == $rtemplateId) echo " SELECTED";
-							echo ">$rtemplateId: $rtemplatename ($rapix &Aring;/pixel, $rboxsz pixels)</OPTION>\n";
+							echo ">$rtemplateId: $rtemplatename ($rapix &Aring;/pixel, $rboxsz pixels, $rtotpartls images)</OPTION>\n";
 						}
 						echo "</SELECT>\n";
 					}
