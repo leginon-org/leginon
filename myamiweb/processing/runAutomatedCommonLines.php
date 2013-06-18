@@ -47,7 +47,33 @@ function createAngularReconstitutionForm($extra=False, $title='automatedCommonLi
 	$aclruns= ($aclrunsarray) ? count($aclrunsarray) : 0;
 	
 	$javascript = "<script src='../js/viewer.js'></script>\n";
-	$javascript .= writeJavaPopupFunctions('appion');	
+//	$javascript .= writeJavaPopupFunctions('appion');	
+
+
+	// toggle initial model calculation parameters
+        $javascript .= "<script>\n";
+	$javascript .="function chooseIM(package) {\n";
+	$javascript .="  if (package == 'EMAN') {\n";
+	$javascript .="    document.viewerform.immethod.value='eman';\n";
+	$javascript .="    document.getElementById('emanbutton').style.border='1px solid #0F0';\n";
+	$javascript .="    document.getElementById('emanbutton').style.backgroundColor='#CCFFCC';\n";
+	$javascript .="    document.getElementById('emanparams').style.display = 'block';\n";
+	$javascript .="    document.getElementById('imagicbutton').style.border='1px solid #F00';\n";
+	$javascript .="    document.getElementById('imagicbutton').style.backgroundColor='#C0C0C0';\n";
+	$javascript .="    document.getElementById('imagicparams').style.display = 'none';\n";
+	$javascript .="  }\n";
+	$javascript .="  if (package == 'IMAGIC') {\n";
+	$javascript .="    document.viewerform.immethod.value='imagic';\n";
+	$javascript .="    document.getElementById('emanbutton').style.border='1px solid #F00';\n";
+	$javascript .="    document.getElementById('emanbutton').style.backgroundColor='#C0C0C0';\n";
+	$javascript .="    document.getElementById('emanparams').style.display = 'none';\n";
+	$javascript .="    document.getElementById('imagicbutton').style.border='1px solid #0F0';\n";
+	$javascript .="    document.getElementById('imagicbutton').style.backgroundColor='#CCFFCC';\n";
+	$javascript .="    document.getElementById('imagicparams').style.display = 'block';\n";
+	$javascript .="  }\n";
+	$javascript .="}\n";
+	$javascript .= "</script>\n";
+	$javascript .= writeJavaPopupFunctions('appion');
 	
 	processing_header($title,$heading,$javascript);
 	// write out errors, if any came up:
@@ -73,11 +99,16 @@ function createAngularReconstitutionForm($extra=False, $title='automatedCommonLi
 	list($clusterid,$apix,$boxsz,$num_classes,$totprtls) = split('\|--\|', $clusteridstr);
 	$tsidstr = $_POST['tsvals'];
 	list($tsid,$apix,$boxsz,$totprtls,$type) = split('\|--\|', $tsidstr);
+	$rclusteridstr = $_POST['rclustervals'];
+	list($rclusterid,$rapix,$rboxsz,$rnum_classes,$rtotprtls) = split('\|--\|', $rclusteridstr);
+	$rtsidstr = $_POST['rtsvals'];
+	list($rtsid,$rapix,$rboxsz,$rtotprtls,$rtype) = split('\|--\|', $rtsidstr);
 	$weight = ($_POST && !$_POST['weight']) ? '' : 'checked';
 	$prealign = ($_POST && !$_POST['prealign']) ? '' : 'checked';
 	$scale = ($_POST && !$_POST['scale']) ? '' : 'checked';
 	$nvol = ($_POST['nvol']) ? $_POST['nvol'] : '300';
 	$nproc = ($_POST['nproc']) ? $_POST['nproc'] : '8';
+	$threes = ($_POST && !$_POST['threes']) ? '' : 'checked';
 	$asqfilt = ($_POST['asqfilt']=='on') ? 'checked' : '';
 //	$linmask = ($_POST['linmask']) ? $_POST['linmask'] : '0.67';
 	$anginc = ($_POST['anginc']) ? $_POST['anginc'] : '2';
@@ -88,6 +119,8 @@ function createAngularReconstitutionForm($extra=False, $title='automatedCommonLi
 	$numeigens = ($_POST['numeigens']) ? $_POST['numeigens'] : '20';
 	$preftype = ($_POST['preftype']) ? $_POST['preftype'] : 'median';
 //	$recalc = ($_POST['recalc']=='on') ? 'checked' : '';
+	$immethod = ($_POST['immethod']) ? $_POST['immethod'] : 'eman';
+	$images_per_volume = ($_POST['images_per_volume']) ? $_POST['images_per_volume'] : '';
 	
 	// options for the parameters
 	echo "<table border='0' class='tableborder'>\n<TR><TD valign='top'>\n";
@@ -115,8 +148,9 @@ function createAngularReconstitutionForm($extra=False, $title='automatedCommonLi
 					echo "<font color='red'><B>No Clustering Stacks or Template Stacks for this Session</B></FONT>\n";
 				} 
 				else {
+					echo "<h3><b><c> Iterative Initial Model Calculation</c></b></h3>";
 					if ($clusterIds) {
-						echo "<br><b> Clustering Stack: </b>";
+						echo "<b> Clustering Stack: </b>";
 						echo "<br><SELECT NAME='clustervals'>\n";
 						echo "<OPTION VALUE='select'>select one</OPTION>";
 						foreach ($clusterIds as $c) {
@@ -132,7 +166,7 @@ function createAngularReconstitutionForm($extra=False, $title='automatedCommonLi
 						echo "</SELECT>\n";						
 					}
 					if ($templateIds) {
-						echo "<br><br>OR<br><br><b> Template Stack: </b>";
+						echo "<br>OR<br><b> Template Stack: </b>";
 						echo "<br><SELECT NAME='tsvals'>\n";
 						echo "<OPTION VALUE='select'>select one</OPTION>";
 						foreach ($templateIds as $temp) {
@@ -146,6 +180,42 @@ function createAngularReconstitutionForm($extra=False, $title='automatedCommonLi
 							echo "<OPTION VALUE='$templateId|--|$apix|--|$boxsz|--|$totprtls|--|$type'";
 							if ($tsid == $templateId) echo " SELECTED";
 							echo ">$templateId: $templatename ($apix &Aring;/pixel, $boxsz pixels)</OPTION>\n";
+						}
+						echo "</SELECT>\n";
+					}
+
+					echo "<h3><b><c> Refinement of Aligned & Clustered 3D Models</c></b></h3>";
+					if ($clusterIds) {
+						echo "<b> Clustering Stack: </b>";
+						echo "<br><SELECT NAME='rclustervals'>\n";
+						echo "<OPTION VALUE='select'>select one</OPTION>";
+						foreach ($clusterIds as $rc) {
+							$rclusterId = $rc['DEF_id'];
+							$rapix = $rc['pixelsize'];
+							$rboxsz = $rc['boxsize'];
+							$rnum_classes = $rc['num_classes'];
+							$rtotprtls = $rc['num_particles'];
+							echo "<OPTION VALUE='$rclusterId|--|$rapix|--|$rboxsz|--|$rnum_classes|--|$rtotprtls'";
+							if ($rclusterid == $rclusterId) echo " SELECTED";
+							echo ">$rclusterId: ($rapix &Aring;/pixel, $rboxsz pixels, $rnum_classes classes from $rtotprtls particles)</OPTION>\n";
+						}
+						echo "</SELECT>\n";						
+					}
+					if ($templateIds) {
+						echo "<br>OR<br><b> Template Stack: </b>";
+						echo "<br><SELECT NAME='rtsvals'>\n";
+						echo "<OPTION VALUE='select'>select one</OPTION>";
+						foreach ($templateIds as $rtemp) {
+							$rtemplateId = $rtemp['DEF_id'];
+							$rtemplatename = $rtemp['templatename'];
+							$rapix = $rtemp['apix'];
+							$rboxsz = $rtemp['boxsize'];
+							$rtotprtls = "";
+							if ($rtemp['cls_avgs'] == 1) $rtype = "Class Averages";
+							elseif ($rtemp['forward'] == 1) $rtype = "Forward Projections";
+							echo "<OPTION VALUE='$rtemplateId|--|$rapix|--|$rboxsz|--|$rtotprtls|--|$rtype'";
+							if ($rtsid == $rtemplateId) echo " SELECTED";
+							echo ">$rtemplateId: $rtemplatename ($rapix &Aring;/pixel, $rboxsz pixels)</OPTION>\n";
 						}
 						echo "</SELECT>\n";
 					}
@@ -182,12 +252,44 @@ function createAngularReconstitutionForm($extra=False, $title='automatedCommonLi
 				echo "<br>";
 	
 				echo "<br/>\n";
-				echo "<b>Angular Reconstitution</b>\n";
+				echo "<b>Iterative Initial Model Calculation Package</b>\n";
 				echo "<br/>\n";
-		
-				echo "<INPUT TYPE='checkbox' NAME='weight' $weight>\n";;
+
+				$onstyle = "font-size: 12px; border: 1px solid #0F0; background-color: #CCFFCC";
+				$offstyle = "font-size: 12px; border: 1px solid #F00";
+
+				$emanstyle = ($immethod=='eman') ? $onstyle : $offstyle;
+				$imgstyle = ($immethod=='imagic') ? $onstyle : $offstyle;
+				echo "<input id='emanbutton' style='$emanstyle' type='button' value='EMAN' onclick='chooseIM(\"EMAN\")'>\n";
+				echo "<input id='imagicbutton' style='$imgstyle' type='button' value='IMAGIC' onclick='chooseIM(\"IMAGIC\")'>\n";
+				echo "<br>\n";
+				echo "<br>\n";
+
+				// hidden input for package
+				echo "<input type='hidden' name='immethod' value='$immethod'>\n";
+
+
+				// initial model parameters for EMAN common lines 
+				echo "<div id='emanparams'";
+				if ($immethod=='imagic') echo " style='display:none'";
+				echo ">\n";
+				echo "<b>EMAN Parameters</b><br/>\n";
+				echo "<input type='text' name='images_per_volume' value='$images_per_volume' size='4'>\n";
+				echo docpop('images_per_volume','Images Per Volume');
+				echo "<br/><br/><br/><br/><br/><br/><br/>\n";
+				echo "</div>\n";
+
+				// initial model parameters for IMAGIC common lines
+				echo "<div id='imagicparams'";
+				if ($immethod=='eman') echo " style='display:none'";	
+				echo "<br>";
+				echo "<INPUT TYPE='checkbox' NAME='weight' $weight>\n";
 				echo docpop('weight_randomization','Weight randomization based on image differences');
 				echo "<br>";
+
+				echo "<INPUT TYPE='checkbox' NAME='threes' $threes>\n";
+				echo docpop('threes','Only use sets of three images');
+				echo "<br/>\n";
 			
 				echo "<INPUT TYPE='checkbox' NAME='asqfilt' $asqfilt>\n";
 				echo docpop('asqfilt','ASQ filter the sinogram lines');
@@ -212,7 +314,8 @@ function createAngularReconstitutionForm($extra=False, $title='automatedCommonLi
 				echo docpop('threedfilt','Volume Filter');
 				echo "<font size='-2'>(&Aring;ngstroms)</font>\n";
 				echo "<br/>\n";	
-		
+				echo "</div>\n";		
+
 				echo "<br/>\n";
 				echo "<b>3D Alignment</b>\n";
 				echo "<br/>\n";
@@ -293,17 +396,27 @@ function runAngularReconstitution() {
 	$description = $_POST['description'];
 	$clustervals = $_POST['clustervals'];
 	$tsvals = $_POST['tsvals'];
+	$rclustervals = $_POST['rclustervals'];
+	$rtsvals = $_POST['rtsvals'];
+
 	$nvol = $_POST['nvol'];
 	$commit = ($_POST['commit']=="on") ? true : false;
 	$nproc = ($_POST['nproc']) ? $_POST['nproc'] : 1;
 	$scale = ($_POST['scale']=="on") ? true : false;
 	$prealign = ($_POST['prealign']=="on") ? true : false;
 	$weight = ($_POST['weight']=="on") ? true : false;
+
+	$immethod = $_POST['immethod'];
+	### IMAGIC Angular reconstitution params
+	$threes = ($_POST['threes']=="on") ? true : false;
 	$asqfilt = ($_POST['asqfilt']=="on") ? true : false;
 	$linmask = $_POST['linmask'];
 	$anginc = $_POST['anginc'];
 	$keep_ordered = $_POST['keep_ordered'];
 	$filt3d = $_POST['filt3d'];
+	### EMAN cross-common lines params
+	$images_per_volume = $_POST['images_per_volume'];
+
 	$nref = $_POST['nref'];
 	$usePCA = ($_POST['usePCA']=="on") ? true : false;
 	$numeigens = $_POST['numeigens'];
@@ -319,6 +432,10 @@ function runAngularReconstitution() {
 		list($clusterid,$apix,$boxsz,$num_classes,$totprtls) = split('\|--\|', $clustervals);
 	if ($tsvals != 'select') 
 		list($tsid,$apix,$boxsz,$totprtls,$type) = split('\|--\|', $tsvals);
+	if ($rclustervals != 'select') 
+		list($rclusterid,$rapix,$rboxsz,$rnum_classes,$rtotprtls) = split('\|--\|', $rclustervals);
+	if ($rtsvals != 'select') 
+		list($rtsid,$rapix,$rboxsz,$rtotprtls,$rtype) = split('\|--\|', $rtsvals);
 
 	/* *******************
 	PART 2: Check for conflicts, if there is an error display the form again
@@ -329,12 +446,18 @@ function runAngularReconstitution() {
 		createAngularReconstitutionForm("<B>ERROR:</B> No stack selected");
 	elseif ($clusterid && $tsid)
 		createAngularReconstitutionForm("<B>ERROR:</B> must choose EITHER clustering stack OR template stack");
-	
+	if (!$rclusterid && !$rtsid)
+		createAngularReconstitutionForm("<B>ERROR:</B> No refinement stack selected");
+	elseif ($rclusterid && $rtsid)
+		createAngularReconstitutionForm("<B>ERROR:</B> must choose EITHER clustering stack OR template stack for refinement");
+
 	// check for other parameters that need to be specified
 	if (!$description)
 		createAngularReconstitutionForm("<B>ERROR:</B> Enter a brief description of the run");
 	if (!$nvol)
 		createAngularReconstitutionForm("<B>ERROR:</B> Enter the number of volumes that you wish to create using Angular Reconstitution");
+	if ($immethod == 'eman' && !$images_per_volume)
+		createAngularReconstitutionForm("<B>ERROR:</B> Enter the number images within each volumes for EMAN cross-common lines");
 	if ($nproc > 8)
 		createMaxLikeAlignForm("<B>ERROR:</B> Cannot currently use more than 8 processors with Imagic parallelization");
 
@@ -347,17 +470,28 @@ function runAngularReconstitution() {
 	$command.="--description=\"$description\" ";
 	if ($clusterid) $command.="--clusterid=$clusterid ";
 	elseif ($tsid) $command.="--templatestackid=$tsid ";
+	if ($rclusterid) $command.="--refine_clusterid=$rclusterid ";
+	elseif ($rtsid) $command.="--refine_templatestackid=$rtsid ";
 	$command.="--num_volumes=$nvol ";
 	if ($scale) $command.="--scale ";
 	if ($prealign) $command.="--prealign ";
 	if (!$weight) $command.="--non_weighted_sequence ";
-	if ($asqfilt) $command.="--asqfilter ";
-	if ($linmask) $command.="--linear_mask=$linmask ";
-	if ($anginc) $command.="--ang_inc=$anginc ";
-	if ($keep_ordered) $command.="--keep_ordered=$keep_ordered ";
-	if ($filt3d) $command.="--3d_lpfilt=$filt3d ";
+
+	// IMAGIC angular reconstitution
+	if ($immethod == 'imagic') {
+		if ($threes) $command.="--threes ";
+		if ($asqfilt) $command.="--asqfilter ";
+		if ($linmask) $command.="--linear_mask=$linmask ";
+		if ($anginc) $command.="--ang_inc=$anginc ";
+		if ($keep_ordered) $command.="--keep_ordered=$keep_ordered ";
+		if ($filt3d) $command.="--3d_lpfilt=$filt3d ";
+	}
+	else {
+		$command.="--useEMAN1 ";
+		$command.="--images_per_volume=$images_per_volume ";
+	}
 	if ($nref) $command.="--nref=$nref ";
-	if ($usePCA) $command.="--PCA ";
+	if (!$usePCA) $command.="--no-PCA ";
 	if ($numeigens) $command.="--numeigens=$numeigens ";
 //	if ($recalc) $command.="--recalculate_volumes ";
 	if ($maskradius) $command.="--mask_radius=$maskradius ";
