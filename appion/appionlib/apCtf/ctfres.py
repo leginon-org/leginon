@@ -16,11 +16,9 @@ def getCorrelationProfile(raddata, rawdata, ctfdata, peaks, freq):
 		"""
 		raddata - x data in inverse Angstroms
 		rawdata - powerspectra data, normalized to 0 and 1
+		ctfdata - generated CTF function
+		peaks - array of ctf peaks
 		freq - frequency of the x data
-		defocus - mean defocus value to use in meters, underfocus is positive
-		volts - potential of the microscope in volts
-		cs - spherical abberation of microscope in meters
-		ampcontrast - amplitude contrast of ctf profile
 		"""
 
 		raddatasq = raddata**2
