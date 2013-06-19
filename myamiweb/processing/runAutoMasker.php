@@ -14,7 +14,9 @@ require_once "inc/project.inc";
 require_once "inc/viewer.inc";
 require_once "inc/processing.inc";
 require_once "inc/appionloop.inc";
- 
+require_once "inc/publication.inc";
+require_once "inc/forms/autoMaskForm.inc";
+
 // IF VALUES SUBMITTED, EVALUATE DATA
 if ($_POST['process']) {
 	runAutoMasker();
@@ -22,79 +24,6 @@ if ($_POST['process']) {
 // CREATE FORM PAGE
 else {
 	createForm();
-}
-
-function createMaskMakerTable ($cannyminthresh, $cannymaxthresh) {
-	echo "<!-- BEGIN Mask Maker Param -->";
-//	prettytable2();
-//	<TR><td BGCOLOR=#660000 ALIGN=CENTER><FONT COLOR=#DDDDDD>Appion Loop Params</FONT></td></tr>
-	$blur = ($_POST['blur']) ? $_POST['blur'] : '3.5';
-	$minthresh = ($_POST['minthresh']) ? $_POST['minthresh'] : $cannyminthresh;
-	$maxthresh = ($_POST['maxthresh']) ? $_POST['maxthresh'] : $cannymaxthresh;
-	$bin = ($_POST['bin']) ? $_POST['bin'] : '4';
-	$crudstd = ($_POST['crudstd']) ? $_POST['crudstd'] : '';
-	$convolve = ($_POST['convolve']) ? $_POST['convolve'] : '';
-	$masktype = ($_POST['masktype']) ? $_POST['masktype'] : '';
-	$masktypes = array('crud','edge','aggr');
-	$masktypeval = ($_POST['masktype']) ? $_POST['masktype'] : 'crud';
-	$masktype = $masktypeval;
-	echo docpop('masktype','<b>Mask Type : </b>');
-	echo "\n<SELECT NAME='masktype'>\n";
-	foreach ($masktypes as $masktype) {
-		echo "<OPTION VALUE='$masktype' ";
-		// make crud selected by default
-		if ($masktype==$masktypeval) echo "SELECTED";
-		echo ">$masktype</OPTION>\n";
-	}
-	echo"</SELECT><br><br>\n";
-	echo "
-		<B>Canny Edge thresholds:</B><br>
-		<INPUT TYPE='text' NAME='blur' VALUE='$blur' SIZE='4'>\n";
-	echo docpop('blur','Gradient bluring');
-	echo "<br />\n";
-	echo "<INPUT TYPE='text' NAME='maxthresh' VALUE='$maxthresh' SIZE='4'>\n";
-	echo docpop('crudmaxthresh','High threshold for the start of edge detection');
-	echo "<br />\n";
-	echo "<INPUT TYPE='text' NAME='minthresh' VALUE='$minthresh' SIZE='4'>\n";
-	echo docpop('crudminthresh','Low threshold for edge extension');
-	echo "<br /><br />\n";
-	echo "<B>Image Option:</B><br />\n";
-	echo "<INPUT TYPE='text' NAME='bin' VALUE='$bin' SIZE='4'>\n";
-	echo docpop('binval','Binning');
-	echo "<br /><br />\n";
-	echo "<B>Advanced thresholding:</B><br />\n";
-	echo "<INPUT TYPE='text' NAME='crudstd' VALUE='$crudstd' SIZE='4'>\n";
-	echo docpop('crudstd','Standard deviation threshold');
-	echo "<br />\n";
-	echo "<INPUT TYPE='text' NAME='convolve' VALUE='$convolve' SIZE='4'>\n";
-	echo docpop('convolve','Convoluted map threshold for aggregate mask (0.0-1.0)');
-	echo "<br />\n";
-
-	echo "<!-- END Mask Maker Param -->";
-};
-
-function parseMaskMakerParams () {
-	$diam = $_POST[diam];
-	$cdiam = $_POST[cdiam];
-	$minthresh = $_POST[minthresh];
-	$maxthresh = $_POST[maxthresh];
-	$blur = $_POST[blur];
-	$bin = $_POST[bin];
-	$masktype = ($_POST[masktype]);
-	$crudstd = $_POST[crudstd];
-	$convolve = $_POST[convolve];
-
-	$command .=" --diam=$diam";
-	if (is_numeric($cdiam)) $command .=" --cruddiam=$cdiam";
-	if ($maxthresh && $maxthresh > 0) $command.=" --crudhi=$maxthresh";
-	if ($blur && $blur > 0.01) $command.=" --crudblur=$blur";
-	if ($minthresh && $minthresh > 0) $command.=" --crudlo=$minthresh";
-	if ($crudstd && $crudstd > 0.01 && $crudstd != '') $command.=" --crudstd=$crudstd";
-	if ($masktype) $command.=" --masktype=$masktype";
-	if ($convolve && $convolve > 0.01 && $convolve != '') $command.=" --convolve=$convolve";
-	if ($bin && $bin > 0) $command.=" --bin=$bin";
-
-	return $command;
 }
 
 function createForm($extra=false, $title='Auto Masking Launcher', $heading='Automated Masking with EM Hole Finder') {
@@ -158,36 +87,32 @@ function createForm($extra=false, $title='Auto Masking Launcher', $heading='Auto
 	$sessiondata=getSessionList($projectId,$sessionId);
 	$sessioninfo=$sessiondata['info'];
 	$lastrunnumber = $particle->getLastRunNumberForType($sessionId,'ApMaskMakerRunData','name'); 
-  $defrunname = ($_POST['runname']) ? $_POST['runname'] : 'maskrun'.($lastrunnumber+1);
+    $defrunname = ($_POST['runname']) ? $_POST['runname'] : 'maskrun'.($lastrunnumber+1);
 
 	$testcheck = ($_POST['testimage']=='on') ? 'CHECKED' : '';
 	$testdisabled = ($_POST['testimage']=='on') ? '' : 'DISABLED';
 	$testvalue = ($_POST['testimage']=='on') ? $_POST['testfilename'] : 'mrc file name';
 
-	//$diam = ($_POST['diam']) ? $_POST['diam'] :'';
-	//$cdiam = ($_POST['cdiam']) ? $_POST['cdiam'] :'';
 	$process = ($_POST['process']) ? $_POST['process'] :'';
 	echo"
 		<TABLE BORDER=0 CLASS=tableborder CELLPADDING=15>
 			<tr>
 				<td VALIGN='TOP'>";
 	createAppionLoopTable($sessiondata, $defrunname, "mask");
-//	echo"
-//				</td>
-//				<td CLASS='tablebg'>
-//					<B>Particle Diameter:</B><br>
-//					<INPUT TYPE='text' NAME='diam' VALUE='$diam' SIZE='4'>\n";
-//	echo docpop('crudpdiam','Particle diameter as reference for template');
-//	echo "	<FONT SIZE=-2><I>(in &Aring;ngstroms)</I></FONT>\n";
-//	echo "	<br /><br />";
-//	echo"
-//					<B>Minimal Mask Region Diameter:</B><br>
-//					<INPUT TYPE='text' NAME='cdiam' VALUE='$cdiam' SIZE='4'>\n";
-//	echo docpop('crudmindiam','Mask Region diameter as lower area/perimeter threshold');
-//	echo " <FONT SIZE=-2><I>(in &Aring;ngstroms)</I></FONT>
-//					<br><br>";
-//
-//	//createMaskMakerTable(0.6,0.95);
+
+	// Add parameters specific to the method selected
+	echo "<td class='tablebg'>\n";
+	echo "<table cellpading='5' border='0'>\n";
+	echo "<tr><td valign='top'>\n";
+	// Create an instance of the AutoMask param form, setting it's default values then display it 
+	$autoMaskForm = new AutoMaskForm($downsample='20', $compsizethresh='50', $adapthresh='500', $blur='10',$dilation='10', $erosion='1');
+	echo $autoMaskForm->generateForm();
+		echo "</td>\n";
+	echo "</tr>\n";
+	echo "</table>\n";
+	echo "</td>\n";
+	echo "</tr>\n";
+		
 	echo "
 				</td>
 			</tr>
@@ -217,40 +142,27 @@ function createForm($extra=false, $title='Auto Masking Launcher', $heading='Auto
 	</FORM>
 	";
 
-	echo appionRef();
+	// Add references for this processing method.
+	// Create an instance of a publication with the appropriate 
+	// key found in myami/myamiweb/processing/inc/publicationList.inc.
+	$pub = new Publication('appion');
+	echo $pub->getHtmlTable();
 
 	processing_footer();
 }
 
 function runAutoMasker() {
 	/* *******************
-	PART 1: Get variables
+	PART 1: Get variables and validate
 	******************** */
+	$autoMaskForm = new autoMaskForm();
+	$errorMsg .= $autoMaskForm->validate( $_POST );
 
 	$process = $_POST['process'];
-	//$masktype = $_POST['masktype'];
-	//$diam = $_POST['diam'];
-	//$convolve = $_POST['convolve'];
-	//$cdiam = $_POST['cdiam'];
 	$expId = $_GET['expId'];
-
-	/* *******************
-	PART 2: Check for conflicts, if there is an error display the form again
-	******************** */
-
-//	if (!$diam and $masktype !='crud') {
-//		createMMForm("<B>ERROR:</B> Specify a particle diameter");
-//		exit;
-//	}
-//	if (!$convolve && $_POST[masktype] == "aggr") {
-//		createMMForm("<B>ERROR:</B> Specify a convolution map threshold");
-//		exit;
-//	}
-//	if (!is_numeric($cdiam) && !is_numeric($diam)) {
-//		createMMForm("<B>ERROR:</B> Specify a mask region diameter");
-//		exit;
-//	}
-
+	
+	// reload the form with the error messages
+	if ( $errorMsg ) createForm( $errorMsg );
 
 	/* *******************
 	PART 3: Create program command
@@ -263,7 +175,9 @@ function runAutoMasker() {
 		exit;
 	}
 	$command .= $apcommand;
-	//$command .= parseMaskMakerParams($_POST);
+	// add automask parameters
+	$command .= $autoMaskForm->buildCommand( $_POST );
+	
 	if ($_POST['testimage']=="on") {
 		$command .= " --test";
 		if ($_POST['testfilename'])

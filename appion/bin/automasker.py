@@ -54,6 +54,18 @@ class AutoMasker(appionLoop2.AppionLoop):
 	def setupParserOptions(self):
 		self.parser.add_option("-b", "--bin", dest="bin", type="int", default=1,
 			help="Binning of the image", metavar="#")
+		self.parser.add_option( "--downsample", dest="downsample", type="int", default=20,
+			help="Downsample to reduce the size of the image prior to processessing.", metavar="#")
+		self.parser.add_option("--compsizethresh", dest="compsizethresh", type="int", default=50,
+			help="Component size thresholding'", metavar="#")
+		self.parser.add_option("--adapthresh", dest="adapthresh", type="int", default=500,
+			help="Adaptive thresholding factor", metavar="#")
+		self.parser.add_option("--blur", dest="blur", type="int", default=10,
+			help="Blur window size")
+		self.parser.add_option("--dilation", dest="dilation", type="int", default=10,
+			help="Dilation factor", metavar="#")
+		self.parser.add_option("--erosion", dest="erosion", type="int", default=1,
+			help="Erosion factor", metavar="#")
 		self.parser.add_option("--test", dest="test", default=False,
 			action="store_true", help="Flag for saving intermediate-step images and not to commit to database")
 
@@ -200,9 +212,16 @@ class AutoMasker(appionLoop2.AppionLoop):
 		
 		pyami.numpil.write(self.image, jpg_image)
 		
-		self.outfile = os.path.join(self.params['rundir'],"masks", imgdata['filename']+"_mask.jpg" )
+		self.outfile  = os.path.join(self.params['rundir'],"masks", imgdata['filename']+"_mask.jpg" )
+		downsample    = str(self.params['downsample'])
+		compsizethresh = str(self.params['compsizethresh'])
+		adapthresh    = str(self.params['adapthresh'])
+		dilation      = str(self.params['dilation'])
+		erosion       = str(self.params['erosion'])
+		blur         = str(self.params['blur'])
+		options = " --downsample=" +  downsample + " --compsizethresh=" + compsizethresh + " --adapthresh=" + adapthresh + " --blur=" + blur + " --dilation=" + dilation + " --erosion=" + erosion;
 		
-		commandline = ( "source /opt/em_hole_finder/env/bin/activate; python /opt/em_hole_finder/find_mask_amber.py " + jpg_image + " " + self.outfile + "\n" )
+		commandline = ( "source /opt/em_hole_finder/env/bin/activate; python /opt/em_hole_finder/find_mask_amber_dev.py --ifile=" + jpg_image + " --ofile=" + self.outfile + options + "\n" )
 		# Test with test image
 		#commandline = ( "source /opt/em_hole_finder/env/bin/activate; python /opt/em_hole_finder/find_mask_amber.py \n" )
 
