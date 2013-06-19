@@ -645,6 +645,10 @@ def peakExtender(raddata, rotdata, extrema, extrematype="below"):
 	rotdata - powerspectra data, almost normalized to 0 and 1
 	extrema - numpy array of peak or valley locations in inverse Angstroms
 	extrematype - type of extrema, must be either below or above
+
+	this program looks at the CTF data using the "known" location of the extrema
+	extracts their extreme values 
+	and does a linear interpolation between the extreme points
 	"""
 	t0 = time.time()
 	apDisplay.printMsg("starting peak extension")
@@ -666,8 +670,8 @@ def peakExtender(raddata, rotdata, extrema, extrematype="below"):
 		else:
 			preveindex = extremeindices[i-1]
 		nexteindex = extremeindices[i+1]
-		eindex1 = int(eindex - abs(preveindex-eindex)/2.0)
-		eindex2 = int(eindex + abs(nexteindex-eindex)/2.0)
+		eindex1 = int(round(eindex - abs(preveindex-eindex)/4.0))
+		eindex2 = int(round(eindex + abs(nexteindex-eindex)/4.0))
 
 		values = rotdata[eindex1:eindex2]
 		if extrematype is "below":
@@ -686,7 +690,7 @@ def peakExtender(raddata, rotdata, extrema, extrematype="below"):
 		elif extrematype is "above":		
 			return numpy.ones(raddata.shape)
 
-	func = scipy.interpolate.interp1d(xdata, ydata, kind='slinear')
+	func = scipy.interpolate.interp1d(xdata, ydata, kind='linear')
 	extremedata = func(raddatasq[minx:maxx])
 	if extrematype is "below":
 		if minx < 3:
