@@ -86,9 +86,11 @@ function createForm($extra=false, $title='Auto Masking Launcher', $heading='Auto
 	$particle=new particleData;
 	$sessiondata=getSessionList($projectId,$sessionId);
 	$sessioninfo=$sessiondata['info'];
+	$sessionpath=$sessioninfo['Image path'];
+	echo "<INPUT TYPE='HIDDEN' NAME='sessionpath' VALUE='$sessionpath'>\n";
 	$lastrunnumber = $particle->getLastRunNumberForType($sessionId,'ApMaskMakerRunData','name'); 
     $defrunname = ($_POST['runname']) ? $_POST['runname'] : 'maskrun'.($lastrunnumber+1);
-
+    
 	$testcheck = ($_POST['testimage']=='on') ? 'CHECKED' : '';
 	$testdisabled = ($_POST['testimage']=='on') ? '' : 'DISABLED';
 	$testvalue = ($_POST['testimage']=='on') ? $_POST['testfilename'] : 'mrc file name';
@@ -245,38 +247,52 @@ function runAutoMasker() {
 }
 
 
-function displayTestResults($testimage,$imgdir,$files){
+function displayTestResults($testimage,$imgdir,$files)
+{
 	echo "<CENTER>\n";
 
-  $numfiles=count($files);
+ 	$numfiles=count($files);
 	$prefix = '';
 	$n = 0;
 	sort($files);
+ 	//var_dump($files);
+	$imgrescl = 0.075;
+	$imgname=$files[0];
+	$imgfull=$imgdir.$imgname; 	
+	$sessionpath = $_POST['sessionpath'];
+	$origImage = $sessionpath."/".$testimage;
+	echo"<B>$imgname</B>\n<P>";
+	echo "<img src='loadimg.php?filename=".$origImage."&scale=".$imgrescl."&overlay=".$imgfull."'>\n";
 	
-	echo"<TABLE BORDER='0' CELLPADDING='0' CELLSPACING='0' WIDTH='400'>\n";
-	echo"<tr><td ALIGN='LEFT'>\n";
-  echo"<B>$testimage</B>\n";
-	echo"</td></tr></table>";
-	echo"<TABLE BORDER='0' CELLPADDING='5' CELLSPACING='0'><tr>\n";
-	$col = 0;
-	$row = 0;
-	$colcount = 4;
-	while ($col+$colcount*$row < count($files)) {
-		if ($col > $colcount-1) {
-			$col = 0;
-			$row = $row + 1;
-			echo "</tr><tr>";
-		}
-		echo "<td>";	
-		$imgindx = $col+$colcount*$row;
-		$imgname=$files[$imgindx];
-		$imgfull=$imgdir.$imgname;
-		echo"<B>$imgname</B>\n<P>";
-		echo"<img src='loadimg.php?filename=$imgfull&scale=0.25'><P>\n";
-		echo "</td>";
-		$col = $col + 1;
-	}	
-	echo"</tr></table>\n";
+//	echo"<TABLE BORDER='0' CELLPADDING='0' CELLSPACING='0' WIDTH='400'>\n";
+//	echo"<tr><td ALIGN='LEFT'>\n";
+//  echo"<B>$testimage</B>\n";
+//	echo"</td></tr></table>";
+//	echo"<TABLE BORDER='0' CELLPADDING='5' CELLSPACING='0'><tr>\n";
+//	$sessionpath = $_POST['sessionpath'];
+//	$origImage = $sessionpath."/".$testimage;
+//	$col = 0;
+//	$row = 0;
+//	$colcount = 4;
+//	while ($col+$colcount*$row < $numfiles) {
+//		if ($col > $colcount-1) {
+//			$col = 0;
+//			$row = $row + 1;
+//			echo "</tr><tr>";
+//		}
+//		echo "<td>";	
+//		$imgindx = $col+$colcount*$row;
+//		$imgname=$files[$imgindx];
+//		$imgfull=$imgdir.$imgname;
+//		echo"<B>$imgname</B>\n<P>";
+//		$imgrescl = 0.075;
+//		//echo "<img src='loadimg.php?filename=".$origImage."&scale=".$imgrescl."&overlay=".$imgfull."'>\n";
+//		echo"<img src='loadimg.php?filename=".$imgfull."&scale=0.75'><P>\n";
+//		//echo"'loadimg.php?filename=$origImage&scale=0.075&overlay=$imgfull'<P>\n";
+//		echo "</td>";
+//	}	
+//		exit;
+//	echo"</tr></table>\n";
 	echo "</CENTER>\n";
 }
 ?>

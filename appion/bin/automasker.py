@@ -194,6 +194,9 @@ class AutoMasker(appionLoop2.AppionLoop):
 		return
 	
 	def preLoopFunctions(self):
+		if ( self.params['test'] ):
+			apParam.createDirectory(os.path.join(self.params['rundir'],"tests"))
+								    
 		apParam.createDirectory(os.path.join(self.params['rundir'],"masks"),warning=False)
 		regionpath = os.path.join(self.params['rundir'],"regions")
 		apParam.createDirectory(regionpath,warning=False)
@@ -212,7 +215,10 @@ class AutoMasker(appionLoop2.AppionLoop):
 		
 		pyami.numpil.write(self.image, jpg_image)
 		
-		self.outfile  = os.path.join(self.params['rundir'],"masks", imgdata['filename']+"_mask.jpg" )
+		if ( self.params['test']):
+			self.outfile  = os.path.join(self.params['rundir'],"tests", imgdata['filename']+"_mask.jpg" )
+		else:
+			self.outfile  = os.path.join(self.params['rundir'],"masks", imgdata['filename']+"_mask.jpg" )
 		downsample    = str(self.params['downsample'])
 		compsizethresh = str(self.params['compsizethresh'])
 		adapthresh    = str(self.params['adapthresh'])
