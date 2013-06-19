@@ -6,6 +6,8 @@ import sys
 import math
 import shutil
 import subprocess
+#pyami
+from pyami import fileutil
 #leginon
 from leginon import ddinfo
 #appion
@@ -30,6 +32,9 @@ class MakeFrameStackLoop(appionLoop2.AppionLoop):
 			action="store_true", help="Use gpu for flat field (gain/dark/mask) correction")
 		self.parser.add_option("--defergpu", dest="defergpu", default=False,
 			action="store_true", help="Make unaligned frame stack first on computer without gpu alignment program")
+		self.parser.add_option("--tempdir", dest="tempdir",
+			help="Local path for storing temporary stack output, e.g. --tempdir=/tmp/appion/makeddstack",
+			metavar="PATH")
 		self.parser.add_option("--stackid", dest="stackid", type="int",
 			help="ID for particle stack (optional)", metavar="INT")
 		self.parser.add_option("--bin", dest="bin", type="int", default=1,
@@ -54,6 +59,20 @@ class MakeFrameStackLoop(appionLoop2.AppionLoop):
 					apDisplay.printWarning('Make sure that you use different gpuid for each parallel process')
 			# As single processing sequential job, not sure if gpu is faster than cpu
 			#self.params['gpuflat'] = True
+			# Local directory creating and permission checking
+			if self.params['tempdir']:
+				try:
+					fileutil.mkdirs(self.params['tempdir'])
+					os.access(self.params['tempdir'],os.W_OK|os.X_OK)
+				except:
+					raise
+					apDisplay.printError('Local temp directory not writable')
+		else:
+			# makes no sense to save gain corrected ddstack in tempdir if no alignment
+			# will be done on the same machine
+			if self.params['tempdir']:
+				apDiplay.printWarning('tempdir is not neccessary without aligning on the same host. Reset to None')
+				self.params['tempdir'] = None
 
 		if self.params['gpuflat']:
 			exename = 'dosefgpu_flat'
@@ -72,6 +91,7 @@ class MakeFrameStackLoop(appionLoop2.AppionLoop):
 		self.dd = apDDprocess.initializeDDFrameprocess(self.params['sessionname'],self.params['wait'])
 		self.dd.setUseGS(self.params['useGS'])
 		self.dd.setRunDir(self.params['rundir'])
+		self.dd.setTempDir(self.params['tempdir'])
 		self.dd.setRawFrameType(self.getFrameType())
 		self.dd.setUseGPUFlat(self.params['gpuflat'])
 		self.dd.setGPUid(self.params['gpuid'])
@@ -104,7 +124,7 @@ class MakeFrameStackLoop(appionLoop2.AppionLoop):
 			apDisplay.printWarning(e.message)
 			return
 
-		if self.params['parallel'] and os.path.isfile(self.dd.getFrameStackPath()):
+		if self.params['parallel'] and (os.path.isfile(self.dd.getFrameStackPath(temp=True)) or os.path.isfile(self.dd.getFrameStackPath())):
 			# This is a secondary image lock check, checking the first output of the process.
 			# It alone is not good enough
 			apDisplay.printWarning('Some other parallel process is working on the same image. Skipping')
@@ -117,6 +137,7 @@ class MakeFrameStackLoop(appionLoop2.AppionLoop):
 
 		### first remove any existing stack file
 		apFile.removeFile(self.dd.framestackpath)
+		apFile.removeFile(self.dd.tempframestackpath)
 		### make stack
 		self.dd.makeCorrectedFrameStack(self.params['rawarea'])
 
@@ -135,7 +156,10 @@ class MakeFrameStackLoop(appionLoop2.AppionLoop):
 				self.aligned_imagedata = self.dd.makeAlignedImageData()
 				apDisplay.printMsg(' Replacing unaligned stack with the aligned one....')
 				apFile.removeFile(self.dd.framestackpath)
+				apDisplay.printMsg('Moving %s to %s' % (self.dd.aligned_stackpath,self.dd.framestackpath))
 				shutil.move(self.dd.aligned_stackpath,self.dd.framestackpath)
+			if self.dd.framestackpath != self.dd.tempframestackpath:
+				apFile.removeFile(self.dd.tempframestackpath)
 
 	def commitToDatabase(self, imgdata):
 		if self.aligned_imagedata != None:

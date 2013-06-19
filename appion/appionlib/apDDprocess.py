@@ -8,6 +8,7 @@ import math
 import scipy.stats
 import scipy.ndimage as ndimage
 import numextension
+import shutil
 from pyami import mrc,imagefun,arraystats,numpil
 from leginon import correctorclient,leginondata,ddinfo
 from appionlib import apDisplay, apDatabase,apDBImage, appiondata
@@ -85,11 +86,24 @@ class DirectDetectorProcessing(object):
 			while len(bits) > 1 and (len(bits[-1]) == 0 or (len(bits[-1]) >= 4 and '_v' in bits[-1])):
 				bits.pop(-1)
 			imagename = aligned_presetname.join(bits) +org_presetname 
+		self.tempframestackpath = os.path.join(self.tempdir,imagename+'_st.mrc')
 		self.framestackpath = os.path.join(self.rundir,imagename+'_st.mrc')
 		
-	def getFrameStackPath(self):
-		return self.framestackpath
-			
+	def getFrameStackPath(self,temp=False):
+		if not temp:
+			return self.tempframestackpath
+		else:
+			return self.framestackpath	
+		
+	def setTempDir(self,tempdir):
+		'''
+		This is the rundir for ddstack
+		'''
+		if tempdir:
+			self.tempdir = tempdir
+		else:
+			self.tempdir = self.rundir
+
 	def setRunDir(self,rundir):
 		'''
 		This is the rundir for ddstack
@@ -799,7 +813,7 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		sys.stdout.flush()
 		if use_full_raw_area is True:
 			apDisplay.displayError('use_full_raw_area when image is cropped is not implemented for gpu')
-		frameprocess_dir = os.path.dirname(self.framestackpath)
+		frameprocess_dir = os.path.dirname(self.tempframestackpath)
 		get_new_refs = self.__conditionChanged(1,use_full_raw_area)
 		# o.k. to set attribute now that condition change is checked
 		self.use_full_raw_area = use_full_raw_area
@@ -816,13 +830,13 @@ class DDFrameProcessing(DirectDetectorProcessing):
 			self.norm_path = os.path.join(frameprocess_dir,'norm-%s-%d.mrc' % (self.hostname,self.gpuid))
 			mrc.write(normarray,self.norm_path)
 		rawframestack_path = self.getRawFrameStackPath()
-		cmd = "dosefgpu_flat %s %s %s %d %s" % (rawframestack_path,self.framestackpath,self.norm_path,self.gpuid,self.dark_path)
+		cmd = "dosefgpu_flat %s %s %s %d %s" % (rawframestack_path,self.tempframestackpath,self.norm_path,self.gpuid,self.dark_path)
 		apDisplay.printMsg('Running: %s'% cmd)
 		self.proc = subprocess.Popen(cmd, shell=True)
 		self.proc.wait()
-		if not os.path.isfile(self.framestackpath):
-			apDisplay.printError('dosefgpu_flat FAILED: \n%s not created.' % os.path.basename(self.framestackpath))
-		return self.framestackpath
+		if not os.path.isfile(self.tempframestackpath):
+			apDisplay.printError('dosefgpu_flat FAILED: \n%s not created.' % os.path.basename(self.tempframestackpath))
+		return self.tempframestackpath
 
 	def makeCorrectedFrameStack_cpu(self, use_full_raw_area=False):
 		'''
@@ -842,13 +856,13 @@ class DDFrameProcessing(DirectDetectorProcessing):
 			apDisplay.printMsg('final frame shape to put in stack x=%d,y=%d' % (array.shape[1],array.shape[0]))
 			if start_frame == first:
 				# overwrite old stack mrc file
-				mrc.write(array,self.framestackpath)
+				mrc.write(array,self.tempframestackpath)
 			elif start_frame == half_way_frame:
 				# Only calculate stats if half way in the stack making to save time
-				mrc.append(array,self.framestackpath,True)
+				mrc.append(array,self.tempframestackpath,True)
 			else:
-				mrc.append(array,self.framestackpath,False)
-		return self.framestackpath
+				mrc.append(array,self.tempframestackpath,False)
+		return self.tempframestackpath
 
 	def setNewBinning(self,bin):
 		'''
@@ -910,16 +924,29 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		Xueming Li's gpu program for aligning frames using all defaults
 		Valid square gain/dark corrected ddstack is the input.
 		'''
-		rundir = self.getRunDir()
-		cmd = 'dosefgpu_driftcorr %s -gpu %d -fcs %s -ssc 1 -fct %s' % (self.framestackpath,self.gpuid,self.aligned_sumpath,self.aligned_stackpath)
+		os.chdir(self.tempdir)
+		temp_aligned_sumpath = 'temp%d_sum.mrc' % (self.gpuid)
+		temp_aligned_stackpath = 'temp%d_aligned_st.mrc' % (self.gpuid)
+		temp_log = self.tempframestackpath[:-4]+'_Log.txt'
+		cmd = 'dosefgpu_driftcorr %s -gpu %d -fcs %s -ssc 1 -dsp 0 -fct %s' % (self.tempframestackpath,self.gpuid,temp_aligned_sumpath,temp_aligned_stackpath)
 		apDisplay.printMsg('Running: %s'% cmd)
 		self.proc = subprocess.Popen(cmd, shell=True)
 		self.proc.wait()
-		if os.path.isfile(self.aligned_stackpath):
-			self.updateFrameStackHeaderImageStats(self.aligned_stackpath)
+		if os.path.isfile(temp_aligned_stackpath):
+			self.updateFrameStackHeaderImageStats(temp_aligned_stackpath)
+			if self.tempdir != self.rundir:
+				if os.path.isfile(temp_log):
+					shutil.move(temp_log,self.framestackpath[:-4]+'_Log.txt')
+					apDisplay.printMsg('Copying result for %s from %s to %s' % (self.image['filename'],self.tempdir,self.rundir))
+			shutil.move(temp_aligned_stackpath,self.aligned_stackpath)
+			shutil.move(temp_aligned_sumpath,self.aligned_sumpath)
 		else:
-			apDisplay.printWarning('dosefgpu_driftcorr FAILED: \n%s not created.' % os.path.basename(self.aligned_stackpath))
-			apDisplay.printError('If this happens consistently on an image, hide it in myamiweb viewer and continue with others' )
+			if self.tempdir != self.rundir:
+				if os.path.isfile(temp_log):
+					shutil.move(self.tempframestackpath[:-4]+'_Log.txt',self.framestackpath[:-4]+'_Log.txt')
+			apDisplay.printWarning('dosefgpu_driftcorr FAILED: \n%s not created.' % os.path.basename(temp_aligned_stackpath))
+			#apDisplay.printError('If this happens consistently on an image, hide it in myamiweb viewer and continue with others' )
+		os.chdir(self.rundir)
 
 	def makeAlignedImageData(self):
 		'''
@@ -927,7 +954,7 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		'''
 		camdata = self.getAlignedCameraEMData()
 		align_presetdata = leginondata.PresetData(initializer=self.image['preset'])
-		if align_presetdata is None:
+		if self.image['preset'] is None:
 			old_name = 'ma'
 			align_presetdata = leginondata.PresetData(
 					name='ma-a',
@@ -1003,6 +1030,7 @@ class DDStackProcessing(DirectDetectorProcessing):
 	def setFrameStackPath(self,ddstackrunid=None):
 		self.setDDStackRun(ddstackrunid)
 		self.setRunDir(self.getDDStackRun()['path']['path'])
+		self.setTempDir(self.getRunDir())
 		super(DDStackProcessing,self).setFrameStackPath()
 
 	def getDDStackFrameSumImage(self,framelist,roi=None):
