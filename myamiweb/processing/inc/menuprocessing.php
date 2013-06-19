@@ -529,7 +529,7 @@ if (is_numeric($expId)) {
 	/* IMAGIC Angular Reconstitution */
 	if (!HIDE_IMAGIC) {
 		if (($aligndone >= 1 && $clusterdone >=1) || ($tsdone >= 1)) {
-			$angrecondone = count($particle->getAngularReconstitutionRuns($sessionId));
+			$angrecondone = count($particle->getAutomatedCommonLinesRunsTs($sessionId));
 			$angreconqueue = count($subclusterjobs['angrecon']['queued']);
 			$angreconrun = count($subclusterjobs['angrecon']['running']);
 			$angreconresults[] = ($angrecondone > 0) ? "<a href='automatedCommonLinesSummary.php?expId=$sessionId'>$angrecondone complete</a>" : '';

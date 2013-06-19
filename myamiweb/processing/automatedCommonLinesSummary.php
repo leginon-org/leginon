@@ -37,7 +37,10 @@ echo "<form name='templateform' method='post' action='$formAction'>\n";
 $particle = new particledata();
 
 // --- Get Reconstruction Data
-$aclRuns = $particle->getAngularReconstitutionRuns($sessionId);
+$aclRunsTs = $particle->getAutomatedCommonLinesRunsTs($sessionId);
+$aclRunsCs = $particle->getAutomatedCommonLinesRunsCs($sessionId);
+$aclRuns = array_merge((array)$aclRunsTs, (array)$aclRunsCs);
+//print_r($aclRuns);
 
 if ($aclRuns) {
 

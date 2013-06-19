@@ -5315,8 +5315,8 @@ class particledata {
 		$r=$this->mysql->getSQLResult($q);
 		return $r[0];
 	}
-
-	function getAngularReconstitutionRuns($sessionId) {
+	
+	function getAutomatedCommonLinesRunsCs($sessionId) {
 		$q="SELECT "
 			."  ar.*, "
 			."  path.`path` AS path "
@@ -5325,14 +5325,6 @@ class particledata {
 			."  ON ar.`REF|ApPathData|path` = path.`DEF_id` "
 			
 			### add a session entry to table
-			."LEFT JOIN ApTemplateStackData AS ts "
-			."  ON ar.`REF|ApTemplateStackData|templatestackid` = ts.`DEF_id` "
-			."WHERE "
-			."  ts.`REF|leginondata|SessionData|session` = '$sessionId' "
-			."ORDER BY ar.`DEF_id` DESC";
-//			."LEFT JOIN leginondata|SessionData AS sd "
-//			."  ON ts.`REF|leginondata|SessionData|session` = sd.`DEF_id` "; 
-			/*	
 			."LEFT JOIN ApClusteringStackData AS clusterstack "
 			."  ON ar.`REF|ApClusteringStackData|clusterid` = clusterstack.`DEF_id` "
 			."LEFT JOIN ApClusteringRunData AS clusterrun ON "
@@ -5346,8 +5338,26 @@ class particledata {
 			."LEFT JOIN ApStackRunData AS stackrun "
 			."  ON stackrun.`DEF_id` = runsinstack.`REF|ApStackRunData|stackRun` "
 			."WHERE "
-			."  stackrun.`REF|leginondata|SessionData|session` = '$sessionId'";
-			*/
+			."  stackrun.`REF|leginondata|SessionData|session` = '$sessionId' "
+			."ORDER BY ar.`DEF_id` DESC";
+		$r=$this->mysql->getSQLResult($q);
+		return $r;
+	}
+	
+	function getAutomatedCommonLinesRunsTs($sessionId) {
+		$q="SELECT "
+			."  ar.*, "
+			."  path.`path` AS path "
+			."FROM ApAutomatedCommonLinesRunData as ar "
+			."LEFT JOIN ApPathData AS path "
+			."  ON ar.`REF|ApPathData|path` = path.`DEF_id` "
+			
+			### add a session entry to table
+			."LEFT JOIN ApTemplateStackData AS ts "
+			."  ON ar.`REF|ApTemplateStackData|templatestackid` = ts.`DEF_id` "
+			."WHERE "
+			."  ts.`REF|leginondata|SessionData|session` = '$sessionId' "
+			."ORDER BY ar.`DEF_id` DESC";
 		$r=$this->mysql->getSQLResult($q);
 		return $r;
 	}
