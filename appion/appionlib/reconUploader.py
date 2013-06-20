@@ -452,9 +452,9 @@ class generalReconUploader(appionScript.AppionScript):
 				
 		### get all particle data for this iteration
 		particledata = self.readParticleFile(iteration, reference_number)
-				
+
 		self.insertRefinementParticleData(particledata, iterationParamsq, referenceParamsq)
-		
+
 		### create euler freq map
 		if self.params['commit'] is True:
 			apDisplay.printMsg("creating euler frequency map")
@@ -487,6 +487,9 @@ class generalReconUploader(appionScript.AppionScript):
 
 			### convert icos convention to standard convention
 			full_sym_name = iterationParamsq['symmetry']['symmetry']
+			if 'Icos' in full_sym_name:
+				# Icos particle data from particle file is always in 235
+				full_sym_name = 'Icos (2 3 5) Viper/3DEM'
 			phi,theta,omega = apEulerCalc.convert3DEMEulerToStandardSym(full_sym_name,particledata[i]['phi'], particledata[i]['theta'], particledata[i]['omega'])
 			### convert Euler angles from 3DEM to EMAN format (temporary fix)
 			alt, az, phi = apXmipp.convertXmippEulersToEman(phi, theta, omega)
@@ -731,3 +734,9 @@ def readParticleFileByFilePath(pdatafile,porderfile=''):
 	return particledata
 
 
+	def onClose(self):
+		# do some clean up
+			tasksender_jobs = glob.glob(os.path.join(self.params['rundir'],'tasksender*'))
+			for filename in tasksender_jobs:
+				apFile.removeFile(filename)
+			

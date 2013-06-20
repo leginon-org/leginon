@@ -350,6 +350,10 @@ class uploadEmanProjectionMatchingRefinementScript(reconUploader.generalReconUpl
 					if mirror:
 						alt, az, Ephi = apEulerCalc.calculate_equivalent_EMANEulers_without_flip(alt, az, Ephi)
 					phi, theta, omega = apEulerCalc.convertEmanEulersToXmipp(alt, az, Ephi)
+					full_sym_name = self.runparams['symmetry']['symmetry']
+					if 'Icos' in full_sym_name:
+						# EMAN Icos is always 532 orientation, while particlefile is set to 235
+						phi,theta,omega = apEulerCalc.convert3DEMIcosEulerFrom532('Icos (2 3 5) Viper/3DEM',phi,theta,omega)
 					particledataf.write("%9d" % (int(prtlnum)+1)) ### NOTE: IT IS IMPORTANT TO START WITH 1, OTHERWISE STACKMAPPING IS WRONG!!!
 					particledataf.write("%10.4f" % phi)
 					particledataf.write("%10.4f" % theta)

@@ -343,9 +343,11 @@ def convertAppionEmanEulersToFrealign(eman_eulers, full_sym_name='c1'):
 	Emirror = eman_eulers['mirror']
 	m = apEulerCalc.EulersToRotationMatrixEMAN(Ealt, Eaz, Ephi, Emirror)
 	Xphi, Xtheta, Xpsi = apEulerCalc.rotationMatrixToEulersXmipp(m)
+	if 'Icos' in full_sym_name:
+		# Always covert to 235 orientation
+		full_sym_name = 'Icos (2 3 5) Viper/3DEM'
 	Xphi, Xtheta, Xpsi = apEulerCalc.convert3DEMEulerFromStandardSym(full_sym_name,Xphi,Xtheta,Xpsi)
 	Fphi, Ftheta, Fpsi = apEulerCalc.convertXmippEulersToFrealign(Xphi, Xtheta, Xpsi)
-	Fphi, Ftheta, Fpsi = Xphi, Xtheta, Xpsi
 	eulers={"phi":Fphi,"theta":Ftheta,"psi":Fpsi}
 	return eulers
 

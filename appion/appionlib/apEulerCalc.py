@@ -72,14 +72,17 @@ def convert3DEMIcosEulerFrom532(full_sym_name,phi,theta,omega):
 		return phi,theta,omega
 	r_in = EulersToRotationMatrix3DEM(phi, theta, omega)
 	i_matrix = numpy.matrix([[1,0,0],[0,1,0],[0,0,1]])
-	if '3DEM' in full_sym_name:
-		# (235) to (253)
-		symr1 = EulersToRotationMatrix3DEM(90,0,0).I
+	'''
+	Euler conversion runs the opposite direction of model rotation
+	'''
+	if 'EMAN' not in full_sym_name:
+		# inverse of (253) to (532)
+		symr1 = EulersToRotationMatrix3DEM(-90,90,-31.7174744).I
 	else:
 		symr1 = i_matrix
-	if 'EMAN' not in full_sym_name:
-		# (253) to (532)
-		symr2 = EulersToRotationMatrix3DEM(-90,90,-31.7174744).I
+	if '3DEM' in full_sym_name:
+		# inverse of (235) to (253)
+		symr2 = EulersToRotationMatrix3DEM(90,0,0).I
 	else:
 		symr2 = i_matrix
 	symr = symr1 * symr2
