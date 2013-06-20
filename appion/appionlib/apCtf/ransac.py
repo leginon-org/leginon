@@ -4,6 +4,7 @@ import sys
 import time
 import math
 import numpy
+import random
 from appionlib.apCtf import ctftools
 from pyami import ellipse
 
@@ -12,8 +13,24 @@ def ellipseRANSAC(edgeMap, ellipseThresh=2.0, minPercentGoodPoints=0.001, certai
 	takes 2D edge map from image and trys to find a good ellipse in the data
 	"""
 	## make a list of edges, with x, y radii
+	bottomEdgeMap = numpy.copy(edgeMap)
+	bottomEdgeMap[:edgeMap.shape[0]/2,:] = 0
+	topEdgeMap = numpy.copy(edgeMap)
+	topEdgeMap[edgeMap.shape[0]/2:,:] = 0
+	rightEdgeMap = numpy.copy(edgeMap)
+	rightEdgeMap[:,:edgeMap.shape[1]/2] = 0
+	leftEdgeMap = numpy.copy(edgeMap)
+	leftEdgeMap[:,edgeMap.shape[1]/2:] = 0
+	
 	center = numpy.array(edgeMap.shape, dtype=numpy.float64)/2.0 - 0.5
 	edgeList = numpy.array(numpy.where(edgeMap), dtype=numpy.float64).transpose() - center
+	bottomEdgeList = numpy.array(numpy.where(bottomEdgeMap), dtype=numpy.float64).transpose() - center
+	topEdgeList = numpy.array(numpy.where(topEdgeMap), dtype=numpy.float64).transpose() - center
+	rightEdgeList = numpy.array(numpy.where(rightEdgeMap), dtype=numpy.float64).transpose() - center
+	leftEdgeList = numpy.array(numpy.where(leftEdgeMap), dtype=numpy.float64).transpose() - center
+
+
+
 	#might be better to sort edges into quadrants and choose that way
 
 	numEdges = edgeMap.sum()
@@ -21,7 +38,7 @@ def ellipseRANSAC(edgeMap, ellipseThresh=2.0, minPercentGoodPoints=0.001, certai
 		print "something weird in array sizes"
 		return None
 
-	numSamples = 5
+	numSamples = 4
 	mostGoodPoints = 0
 	maxDistFromCenter = math.hypot(edgeMap.shape[0], edgeMap.shape[1])/10.0
 	inscribedCircleArea = edgeMap.shape[0] * edgeMap.shape[1] / 4
@@ -41,21 +58,25 @@ def ellipseRANSAC(edgeMap, ellipseThresh=2.0, minPercentGoodPoints=0.001, certai
 		if mostGoodPoints > currentProb*numEdges:
 			currentProb = mostGoodPoints/float(numEdges)
 			successProb = 1.0 - math.exp( iternum * math.log(1.0 - currentProb**numSamples) )
-			print "RANSAC SUCCESS"
+			print "\nRANSAC SUCCESS"
 			break
 
 		if currentProb < minPercentGoodPoints:
-			print "RANSAC FAILURE"
+			print "\nRANSAC FAILURE"
 			break
 
 		if iternum >= maxiter:
-			print "RANSAC GAVE UP"
+			print "\nRANSAC GAVE UP"
 			break
 
 		#choose random edges
 		#might be better to sort edges into quadrants and choose that way
-		randpoints = numpy.random.randint(numEdges, size=numSamples)
-		currentEdges = edgeList[randpoints]
+		currentEdges = []
+		currentEdges.append(random.choice(bottomEdgeList))
+		currentEdges.append(random.choice(topEdgeList))
+		currentEdges.append(random.choice(leftEdgeList))
+		currentEdges.append(random.choice(rightEdgeList))
+		currentEdges = numpy.array(currentEdges)
 
 		# solve centered ellipse, fixed center
 		centeredParams = ellipse.solveEllipseOLS(currentEdges)
@@ -77,7 +98,8 @@ def ellipseRANSAC(edgeMap, ellipseThresh=2.0, minPercentGoodPoints=0.001, certai
 
 		# solve general ellipse, floating center
 		## only three points, can use other Ellipse fit
-		generalParams = ellipse.solveEllipseB2AC(currentEdges)
+		#generalParams = ellipse.solveEllipseB2AC(currentEdges)
+		generalParams = ellipse.solveEllipseGander(currentEdges)
 		if generalParams is None:
 			sys.stderr.write("g")
 		else:
@@ -101,9 +123,9 @@ def ellipseRANSAC(edgeMap, ellipseThresh=2.0, minPercentGoodPoints=0.001, certai
 		goodPoints = numpy.logical_and(edgeMap, ellipseMap).sum()
 
 		if goodPoints > mostGoodPoints or iternum%100 == 0:
-			print ("\ngood points=%d (best=%d; need=%d, currProb=%.1f, iter=%d, timePer=%.3f)"
+			print ("\ngood points=%d (best=%d; need=%d, bestProb=%.1f, iter=%d, timePer=%.3f)"
 				%(goodPoints, mostGoodPoints, currentProb*numEdges, 
-					goodPoints/float(numEdges)*100, iternum, (time.time()-t0)/float(iternum)))
+					mostGoodPoints/float(numEdges)*100, iternum, (time.time()-t0)/float(iternum)))
 
 		if goodPoints < minGoodPoints or goodPoints < mostGoodPoints:
 			sys.stderr.write("F")
@@ -112,14 +134,9 @@ def ellipseRANSAC(edgeMap, ellipseThresh=2.0, minPercentGoodPoints=0.001, certai
 		if goodPoints > mostGoodPoints:
 			bestEllipseParams = centeredParams
 			mostGoodPoints = goodPoints
-			#filled = generateEllipseRangeMap(bestEllipseParams, 2, edgeMap.shape)
-			#filled = 2*edgeMap + filled
-			#from matplotlib import pyplot
-			#pyplot.imshow(filled)
-			#pyplot.gray()
-			#pyplot.show()
-	### end loop and do stuff
 
+	### end loop and do stuff
+	return bestEllipseParams
 
 #=================
 def drawFilledEllipse(shape, a, b, alpha):
@@ -156,11 +173,17 @@ if __name__ == "__main__":
 	from appionlib.apCtf import canny
 	lena = lena()
 
-	edgeMap = canny.canny_edges(lena, 3, 0.05, 0.5)
+	edgeMap = canny.canny_edges(lena, 5, 0.25, 0.75)
+	edgeMapInv = numpy.flipud(numpy.fliplr(edgeMap))
+	edgeMap = numpy.logical_or(edgeMap,edgeMapInv)
 
+	t0 = time.time()
 	ellipseParams = ellipseRANSAC(edgeMap)
+	print time.time()-t0, "seconds"
 
-	pyplot.imshow(edgeMap)
+	filled = generateEllipseRangeMap(ellipseParams, 2, edgeMap.shape)
+	filled = 2*edgeMap + filled
+	pyplot.imshow(filled)
 	pyplot.gray()
 	pyplot.show()
 
