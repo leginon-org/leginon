@@ -1,9 +1,11 @@
 #!/usr/bin/env python
 import os
+import shutil
 
 #appion
 from appionlib import apPrepRefine
 from appionlib import apDisplay
+from appionlib import apVolume
 
 class EmanPrep3DRefinement(apPrepRefine.Prep3DRefinement):
 	def setRefineMethod(self):
