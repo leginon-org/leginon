@@ -397,7 +397,7 @@ def getEllipticalDistanceArray(ellipratio, ellipangle, shape):
 	radial = xx**2 + yy**2
 	### apply ellipse rotation
 	radial = scipy.ndimage.interpolation.rotate(radial, angle=ellipangle, 
-		reshape=False, mode='wrap', order=2)
+		reshape=False, mode='wrap', order=1)
 	radial = imagefilter.frame_cut(radial, shape)
 	if debug is True:
 		print "minimal radial distance", radial.min()
