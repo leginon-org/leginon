@@ -43,8 +43,9 @@ function createAngularReconstitutionForm($extra=False, $title='automatedCommonLi
 	$clusterIds = $particle->getClusteringStacks($sessionId, $projectId);
 //	$templateIds = $particle->getTemplateStacksFromSession($sessionId);
 	$templateIds = $particle->getTemplateStacksFromProject($projectId);
-	$aclrunsarray = $particle->getAngularReconstitutionRuns($sessionId);
-	$aclruns= ($aclrunsarray) ? count($aclrunsarray) : 0;
+	$aclRunsTs = $particle->getAutomatedCommonLinesRunsTs($sessionId);
+	$aclRunsCs = $particle->getAutomatedCommonLinesRunsCs($sessionId);
+	$aclRuns = array_merge((array)$aclRunsTs, (array)$aclRunsCs);
 	
 	$javascript = "<script src='../js/viewer.js'></script>\n";
 //	$javascript .= writeJavaPopupFunctions('appion');	
