@@ -670,8 +670,8 @@ def peakExtender(raddata, rotdata, extrema, extrematype="below"):
 		else:
 			preveindex = extremeindices[i-1]
 		nexteindex = extremeindices[i+1]
-		eindex1 = int(round(eindex - abs(preveindex-eindex)/4.0))
-		eindex2 = int(round(eindex + abs(nexteindex-eindex)/4.0))
+		eindex1 = int(round(eindex - abs(preveindex-eindex)/2.0))
+		eindex2 = int(round(eindex + abs(nexteindex-eindex)/2.0))
 
 		values = rotdata[eindex1:eindex2]
 		if extrematype is "below":
