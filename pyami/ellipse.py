@@ -193,15 +193,23 @@ def solveEllipseOLS(points, center=(0,0)):
 	Sxy3 = (X[:,0]*numpy.power(X[:,1], 3.0)).sum()
 	
 	### Calculate ellipse parameters
-	A = (Sx3y*(Sxy3*Sy2-Sxy*Sy4)+Sx2y2*(Sx2*Sy4+Sxy*Sxy3)-numpy.power(Sx2y2,2.0)*Sy2-Sx2*numpy.power(Sxy3,2.0))/(Sx4*(Sx2y2*Sy4-numpy.power(Sxy3,2.0))-numpy.power(Sx3y,2.0)*Sy4+2.0*Sx2y2*Sx3y*Sxy3-numpy.power(Sx2y2,3.0));
+	A = (Sx3y*(Sxy3*Sy2-Sxy*Sy4)+Sx2y2*(Sx2*Sy4+Sxy*Sxy3)
+		-numpy.power(Sx2y2,2.0)*Sy2-Sx2*numpy.power(Sxy3,2.0))/(Sx4*(Sx2y2*Sy4-numpy.power(Sxy3,2.0))
+		-numpy.power(Sx3y,2.0)*Sy4+2.0*Sx2y2*Sx3y*Sxy3-numpy.power(Sx2y2,3.0));
 	
-	B = -(Sx4*(Sxy3*Sy2-Sxy*Sy4)+Sx3y*(Sx2*Sy4-Sx2y2*Sy2)-Sx2*Sx2y2*Sxy3+numpy.power(Sx2y2,2.0)*Sxy)/(Sx4*(Sx2y2*Sy4-numpy.power(Sxy3,2.0))-numpy.power(Sx3y,2.0)*Sy4+2.0*Sx2y2*Sx3y*Sxy3-numpy.power(Sx2y2,3.0));
+	B = -(Sx4*(Sxy3*Sy2-Sxy*Sy4)+Sx3y*(Sx2*Sy4-Sx2y2*Sy2)-Sx2*Sx2y2*Sxy3
+		+numpy.power(Sx2y2,2.0)*Sxy)/(Sx4*(Sx2y2*Sy4-numpy.power(Sxy3,2.0))
+		-numpy.power(Sx3y,2.0)*Sy4+2.0*Sx2y2*Sx3y*Sxy3-numpy.power(Sx2y2,3.0));
 
-	C = (Sx4*(Sx2y2*Sy2-Sxy*Sxy3)-numpy.power(Sx3y,2.0)*Sy2+Sx3y*(Sx2*Sxy3+Sx2y2*Sxy)-Sx2*numpy.power(Sx2y2,2.0))/(Sx4*(Sx2y2*Sy4-numpy.power(Sxy3,2.0))-numpy.power(Sx3y,2.0)*Sy4+2.0*Sx2y2*Sx3y*Sxy3-numpy.power(Sx2y2,3.0));
+	C = (Sx4*(Sx2y2*Sy2-Sxy*Sxy3)-numpy.power(Sx3y,2.0)*Sy2+Sx3y*(Sx2*Sxy3+Sx2y2*Sxy)
+		-Sx2*numpy.power(Sx2y2,2.0))/(Sx4*(Sx2y2*Sy4-numpy.power(Sxy3,2.0))
+		-numpy.power(Sx3y,2.0)*Sy4+2.0*Sx2y2*Sx3y*Sxy3-numpy.power(Sx2y2,3.0));
 
 	algebraic = (A, B, C, 0, 0, -1)
 
 	params = algebraic2parametric(algebraic)
+	if params is None:
+		return None
 
 	params['center'] = center
 
