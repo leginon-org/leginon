@@ -65,23 +65,35 @@ echo " <p>CTFFIND uses a robust grid search algorithm to find the optimal "
 	."</p>\n";
 echo "</td></tr>\n";
 
+
+/*
+** Interactive CTF
+*/
+
+//echo "<tr><td width='100' align='center'>\n";
+//echo "</td><td>\n";
+//echo "  <h3><a href='runInteractCtf.php?expId=$expId'>Interactive CTF</a></h3>\n";
+//echo "</td></tr>\n";
+
+
 /*
 ** ACE 1
 */
-
-echo "<tr><td width='100' align='center'>\n";
-echo "  <img src='img/appionlogo.jpg' width='64'>\n";
-echo "</td><td>\n";
-echo "  <h3><a href='runPyAce.php?expId=$expId'>ACE 1</a></h3>\n";
-echo " <p> ACE1 is the original edge detection program for finding the CTF "
-	." parameters. Astigmatism estimation never worked quite right in ACE1 and it "
-	." has a tendency to give false positives, i.e., a high confidence for a poor fit, "
-	." because it will sometimes only try to fit 2 peaks in the powerspectrum. "
-	." Nonetheless, ACE1 has been shown to work on a variety of microscopes and imaging methods. "
-	."<br/><i>Note:</i> requires MATLAB. "
-	."</p>\n";
-echo "</td></tr>\n";
-
+if (!HIDE_MATLAB)
+{
+	echo "<tr><td width='100' align='center'>\n";
+	echo "  <img src='img/appionlogo.jpg' width='64'>\n";
+	echo "</td><td>\n";
+	echo "  <h3><a href='runPyAce.php?expId=$expId'>ACE 1</a></h3>\n";
+	echo " <p> ACE1 is the original edge detection program for finding the CTF "
+		." parameters. Astigmatism estimation never worked quite right in ACE1 and it "
+		." has a tendency to give false positives, i.e., a high confidence for a poor fit, "
+		." because it will sometimes only try to fit 2 peaks in the powerspectrum. "
+		." Nonetheless, ACE1 has been shown to work on a variety of microscopes and imaging methods. "
+		."<br/><i>Note:</i> requires MATLAB. "
+		."</p>\n";
+	echo "</td></tr>\n";
+}
 
 /*
 ** Xmipp CTF
@@ -101,6 +113,7 @@ if (!HIDE_FEATURE)
 		."</p>\n";
 	echo "</td></tr>\n";
 }
+
 
 //CTFTilt Estimation works and uploads, but fails alot; there is a warning
 if (!HIDE_FEATURE)
