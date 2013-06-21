@@ -100,6 +100,92 @@ if ($ctfrundatas) {
 
 	echo "<table>\n";
 
+	// Overall Summary
+	echo "<tr><td colspan='2' align='center'>\n";
+
+		$minconf = 0.2;
+		$ctfinfo = $ctf->getBestCtfInfoByResolution($expId, $minconf);
+
+		$numctfest = count($ctfinfo);
+
+		if ($numctfest > 1) {
+
+			echo "<b>Overall Summary for $numctfest CTF estimates</b></br>\n";
+
+			$fields = array('defocus1', 'defocus2', 
+				//'confidence', 'confidence_d', 
+				'angle_astigmatism', 'amplitude_contrast',  
+				'confidence_30_10', 'confidence_5_peak',  
+				'resolution_80_percent', 'resolution_50_percent');
+			$stats = $ctf->getCTFStats($fields, $expId);
+			$display_ctf=false;
+			foreach($stats as $field=>$data) {
+				//echo $field."&nbsp;=>&nbsp;".$data."<br/>\n";
+				foreach($data as $k=>$v) {
+					$display_ctf=true;
+					$imageId = $stats[$field][$k]['id'];
+					$p = $leginondata->getPresetFromImageId($imageId);
+					$stats[$field][$k]['preset'] = $p['name'];
+					$cdf = '<a href="ctfgraph.php?hg=1&expId='
+							.$expId.'&rId='.$ctfrunid.'&f='.$field.'&preset='.$p['name'].'">'
+						.'<img border="0" src="ctfgraph.php?w=100&hg=1&expId='
+							.$expId.'&rId='.$ctfrunid.'&f='.$field.'&preset='.$p['name'].'"></a>';
+					$stats[$field][$k]['img'] = $cdf;
+				}
+			}
+			$display_keys = array ( 'nb', 'min', 'max', 'avg', 'stddev');
+
+			$popupstr = "<a href=\"javascript:infopopup(";
+			foreach ($aceparamsfields as $param) {
+				$popupstr .= "'".$ctfdata[$param]."',";
+			}
+			$popupstr = rtrim($popupstr,',');	
+			$popupstr .=  ")\">\n";
+
+			echo "\n\n<br/>\n\n";
+			echo openRoundBorder();
+			echo "<table cellspacing='3'>";
+
+			echo "<tr>";
+				echo "<td colspan='10'>\n";
+				$j = "";
+				if ($ctfdata['hidden'] == 1) {
+					$j.= " <font color='#cc0000'>HIDDEN</font>\n";
+					$j.= " <input class='edit' type='submit' name='unhideRun".$ctfrunid."' value='unhide'>\n";
+				} else $j.= " <input class='edit' type='submit' name='hideRun".$ctfrunid."' value='hide'>\n";
+				$j .= "<input class='edit' type='button' onClick='parent.location=\"dropctf.php?expId="
+					."$expId&ctfId=$ctfrunid\"' value='delete'>\n";
+				$downloadLink = "(<font size='-2'><a href='downloadctfdata.php?expId=$expId&runId=$ctfrunid'>\n";
+				$downloadLink .= "  <img style='vertical-align:middle' src='img/download_arrow.png' "
+					." border='0' width='16' height='17' alt='download coordinates'>";
+				$downloadLink .= "  &nbsp;download ctf data\n";
+				$downloadLink .= "</a></font>)\n";
+				echo apdivtitle("Overall Stats: &nbsp$downloadLink\n");
+			
+				echo "</td>\n";
+			echo "</tr>\n";
+
+			if ($ctfdata['resamplefr']) {
+				echo "<tr bgcolor='#ffffff'>\n";
+					echo "<td>Resample Freq</td><td>".$ctfdata['resamplefr']."</td>\n";
+				echo "</tr>\n";
+			} elseif ($ctfdata['bin']) {
+				echo "<tr bgcolor='#ffffff'>\n";
+					echo "<td>Binning</td><td>".$ctfdata['bin']."</td>\n";
+				echo "</tr>\n";
+			}
+
+			echo "<tr><td colspan='10'>\n";
+				echo displayCTFstats($stats, $display_keys);
+			echo "</td></tr>\n";
+			echo "</table>";
+			echo closeRoundBorder();
+
+		}
+
+	echo "</td></tr>";
+
+
 	// Row 0
 	echo "<tr><td>\n";
 		echo "<h3>Defocus 1</h3>";
