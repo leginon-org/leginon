@@ -93,11 +93,13 @@ class particledata {
 	//------ -------------------- ---------//
 
 	function getTotalAceStats(){
+		// Note: this is only used in procsummary.php and needs to be updated
 		$q = "SELECT count(DISTINCT `REF|ApAceRunData|acerun`) AS runs, "
 			."COUNT(DISTINCT `REF|leginondata|AcquisitionImageData|image`) AS img "
 			."FROM `ApCtfData` ";
 		$r = $this->mysql->getSQLResult($q);
 		$results = $r[0];
+		// seems weird to have hard coded confidence check
 		$q = "SELECT COUNT(DISTINCT `REF|leginondata|AcquisitionImageData|image`) as i "
 			."FROM `ApCtfData` "
 			."WHERE (`confidence`>=0.8 OR `confidence_d`>=0.8)";
@@ -1098,20 +1100,21 @@ class particledata {
 			if ($method === 'ace1') $q .= "AND r.`REF|ApAceParamsData|aceparams` IS NOT NULL ";
 			elseif ($method === 'ace2') $q .= "AND r.`REF|ApAce2ParamsData|ace2_params` IS NOT NULL ";
 			elseif ($method === 'ctffind') $q .= "AND r.`REF|ApCtfTiltParamsData|ctftilt_params` IS NOT NULL ";
-
-			if ($method === 'ctffind') $q .="ORDER BY (c.`cross_correlation`) DESC";
-			else $q .= "ORDER BY (c.`confidence`*c.`confidence_d`) DESC";
 		}
+		$q .= " ORDER BY resolution_50_percent ASC ";
 
-		if ($order) {
-			$fields = $order['fields'];
-			$q .= " order by ".join(", ",$fields);
-		}
+		//if ($order) {
+		//	$fields = $order['fields'];
+		//	$q .= " order by ".join(", ",$fields);
+		//}
 
 		return $this->mysql->getSQLResult($q);
 	}
 
 	function getBestCtfInfoForSessionId($sessionId, $limit=false) {
+		// this has been replaced getBestCtfInfoByResolution() below
+		//echo "<b>getBestCtfInfoForSessionId FUNCTION DISABLED</b><br/><br/>\n";
+		//return array();
 		$q = "select  ctfdata.* "
 			."from "
 			."	( "
@@ -1255,6 +1258,8 @@ class particledata {
 	}
 
 	function getBestStats($fields, $sessionId, $limit=false) {
+		// this function is used to set default values 
+		//   for makestack, imgrejector, summary.php, and index.php
 		if (!is_array($fields))
 			return False;
 		foreach ($fields as $field) {
@@ -1294,7 +1299,7 @@ class particledata {
 				."			select a.`DEF_id` from ".DB_LEGINON.".`AcquisitionImageData` a  "
 				."			where a.`REF|SessionData|session`='$sessionId'  "
 				."			)  "
-				."			order by (if(confidence_d>confidence, confidence_d, confidence)) desc  "
+				."			ORDER BY resolution_50_percent ASC  "
 				."		) allctfdata "
 				."	group by allctfdata.`REF|leginondata|AcquisitionImageData|image` "
 				."	) ctfdata ";
