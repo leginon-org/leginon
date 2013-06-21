@@ -294,6 +294,8 @@ def getBestCtfByResolution(imgdata, msg=True):
 		if conf < 0.4:
 			continue
 		res50 = ctfvalue['resolution_50_percent']
+		if res50 is None:
+			continue
 		if res50 < bestres50:
 			bestres50 = res50
 			bestctfvalue = ctfvalue
