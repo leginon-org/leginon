@@ -32,7 +32,6 @@ $ctf = new particledata();
 
 //If summary is true, get only the data with the best confidence
 if ($summary) {
-	//$ctfinfo = $ctf->getBestCtfInfoForSessionId($sessionId, $minimum);
 	$ctfinfo = $ctf->getBestCtfInfoByResolution($sessionId, $minimum);
 } else {
 	$runId= ($_GET[rId]);

@@ -21,9 +21,10 @@ if (!$ctfrundatas) {
 }
 
 if(empty($runId))
-	$ctfdatas = $appiondb->getBestCtfInfoForSessionId($sessionId);
+	$ctfdatas = $appiondb->getBestCtfInfoByResolution($sessionId);
 else
 	$ctfdatas = $appiondb->getCtfInfo($runId);
+
 
 $data[] = "image #\tnominal_def\tdefocus_1\tdefocus_2\tangle_astig\tamp_cont\tconfidence_1\tconfidence_2\timage_name\n";
 //echo "</br>\n";

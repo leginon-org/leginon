@@ -21,7 +21,7 @@ if (!$ctfrundatas) {
 }
 
 if(empty($runId))
-	$ctfdatas = $appiondb->getBestCtfInfoForSessionId($sessionId);
+	$ctfdatas = $appiondb->getBestCtfInfoByResolution($sessionId);
 else
 	$ctfdatas = $appiondb->getCtfInfo($runId);
 
