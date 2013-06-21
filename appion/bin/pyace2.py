@@ -71,7 +71,7 @@ class Ace2Loop(appionLoop2.AppionLoop):
 		if self.params['reprocess'] is None:
 			return True
 
-		ctfvalue, conf = ctfdb.getBestCtfValueForImage(imgdata, msg=False, method="ace2")
+		ctfvalue = ctfdb.getBestCtfByResolution(imgdata, msg=False, method="ace2")
 
 		if ctfvalue is None:
 			return True
@@ -85,7 +85,7 @@ class Ace2Loop(appionLoop2.AppionLoop):
 	#======================
 	def processImage(self, imgdata):
 		self.ctfvalues = {}
-		bestdef, bestconf = ctfdb.getBestCtfValueForImage(imgdata, msg=True, method="ace2")
+		bestdef  = ctfdb.getBestCtfByResolution(imgdata, msg=True, method="ace2")
 		apix = apDatabase.getPixelSize(imgdata)
 		if (not (self.params['onepass'] and self.params['zeropass'])):
 			maskhighpass = False
@@ -213,12 +213,7 @@ class Ace2Loop(appionLoop2.AppionLoop):
 		apDisplay.printMsg("Angle astigmatism: %.2f degrees"%(self.ctfvalues['angle_astigmatism']))
 		apDisplay.printMsg("Amplitude contrast: %.2f percent"%(ampconst))
 
-		if bestconf is None:
-			apDisplay.printColor("Final confidence: %.3f"%(self.ctfvalues['confidence']),'cyan')
-		elif self.ctfvalues['confidence'] > bestconf:
-			apDisplay.printColor("Final confidence: %.3f > %.3f"%(self.ctfvalues['confidence'], bestconf),'green')
-		else:
-			apDisplay.printColor("Final confidence: %.3f < %.3f"%(self.ctfvalues['confidence'], bestconf),'yellow')
+		apDisplay.printColor("Final confidence: %.3f"%(self.ctfvalues['confidence']),'cyan')
 
 		### double check that the values are reasonable
 		if avgdf > self.params['maxdefocus'] or avgdf < self.params['mindefocus']:
