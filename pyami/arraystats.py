@@ -9,7 +9,6 @@ then you must specify force=True.
 '''
 
 import weakattr
-import numextension
 
 debug = False
 def dprint(s):
@@ -42,11 +41,21 @@ def wrap_allstats(stat):
 	else:
 		kwargs = {stat:True}
 	def wrapped(a):
-		result = numextension.allstats(a, **kwargs)
+		result = allstats(a, **kwargs)
 		if stat != 'all':
 			result = result[stat]
 		return result
 	return wrapped
+
+
+def allstats(a, **kwargs):
+	result = {
+		'min': a.min(),
+		'max': a.max(),
+		'mean': a.mean(),
+		'std': a.std(),
+	}
+	return result
 
 statnames = ('min','max','mean','std')
 
