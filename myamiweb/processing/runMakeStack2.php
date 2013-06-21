@@ -125,7 +125,7 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	$invcheck = ($_POST['stackinv']=='on' || !$_POST['process']) ? 'CHECKED' : '';
 	// normalization check (checked by default)
 	$normcheck = ($_POST['stacknorm']=='on' || !$_POST['process']) ? 'CHECKED' : '';
-	$xmippnormcheck = ($_POST['xmippstacknorm']=='on' || !$_POST['process']) ? 'CHECKED' : '';
+	$xmippnormcheck = ($_POST['xmippstacknorm']=='off' || !$_POST['process']) ? '' : 'CHECKED';
 	$xmippbeforecheck = ($_POST['xmippbefore']=='on') ? 'CHECKED' : '';
 	$xmippdisable = ($xmippnormcheck=='CHECKED') ? '' : 'DISABLED';
 	$xmippnormval = ($_POST['xmippnormval']) ? $_POST['xmippnormval'] : '4.5';
