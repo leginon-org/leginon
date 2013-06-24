@@ -106,42 +106,49 @@ class CtfDisplay(object):
 		# require at least 10 points past first peak of CTF to perform estimation
 		if numpoints < 10:
 			return None
-		part1start = firstvalleyindex
-		part1end = int(firstvalleyindex + numpoints*6/10.)
-		part2start = int(firstvalleyindex + numpoints*5/10.)
-		part2end = int(firstvalleyindex + numpoints*9/10.)
-		part3start = int(firstvalleyindex + numpoints*8/10.)
-		part3end = len(raddata)
+		npart1start = firstvalleyindex
+		npart1end = int(firstvalleyindex + numpoints*6/10.)
+		npart2start = int(firstvalleyindex + numpoints*5/10.)
+		npart2end = int(firstvalleyindex + numpoints*9/10.)
+		npart3start = int(firstvalleyindex + numpoints*8/10.)
+		npart3end = len(raddata)
 		
-		valleydata = ctfnoise.peakExtender(raddata, rotdata, valleyradii, "below")
+		svalleydata = ctfnoise.peakExtender(raddata, rotdata, valleyradii, "below")
 
 		### fit function below log(CTF), i.e., noise model	
 		## first part data
-		noisefitparams1 = CtfNoise.modelCTFNoise(raddata[part1start:part1end],
-			valleydata[part1start:part1end], "below")
+		noisefitparams1 = CtfNoise.modelCTFNoise(raddata[npart1start:npart1end],
+			svalleydata[npart1start:npart1end], "below")
 		noisedata1 = CtfNoise.noiseModel(noisefitparams1, raddata)
 
 		## second part data
-		noisefitparams2 = CtfNoise.modelCTFNoise(raddata[part2start:part2end],
-			valleydata[part2start:part2end], "below")
+		noisefitparams2 = CtfNoise.modelCTFNoise(raddata[npart2start:npart2end],
+			rotdata[npart2start:npart2end], "below")
 		noisedata2 = CtfNoise.noiseModel(noisefitparams2, raddata)
 
 		## third part data
-		noisefitparams3 = CtfNoise.modelCTFNoise(raddata[part3start:part3end],
-			valleydata[part3start:part3end], "below")
+		#noisefitparams3 = CtfNoise.modelCTFNoise(raddata[npart3start:npart3end],
+		#	svalleydata[npart3start:npart3end], "below")
+		noisefitparams3 = CtfNoise.modelCTFNoise(raddata[npart3start:npart3end],
+			rotdata[npart3start:npart3end], "below")
 		noisedata3 = CtfNoise.noiseModel(noisefitparams3, raddata)
 
-		## merge data
-		scale = numpy.arange(part1end-part2start, dtype=numpy.float32)
-		scale /= scale.max()
-		overlapdata1 = noisedata1[part2start:part1end]*(1-scale) + noisedata2[part2start:part1end]*scale
-		scale = numpy.arange(part2end-part3start, dtype=numpy.float32)
-		scale /= scale.max()
-		overlapdata2 = noisedata2[part3start:part2end]*(1-scale) + noisedata3[part3start:part2end]*scale
+		## debug only
+		singlenoisefitparams = CtfNoise.modelCTFNoise(raddata[npart1start:npart3end],
+			svalleydata[npart1start:npart3end], "below")
+		singlenoisedata = CtfNoise.noiseModel(singlenoisefitparams, raddata)
 
-		mergedata = numpy.hstack((noisedata1[:part2start], overlapdata1,
-			noisedata2[part1end:part3start], overlapdata2,
-			noisedata3[part2end:]))
+		## merge data
+		scale = numpy.arange(npart1end-npart2start, dtype=numpy.float32)
+		scale /= scale.max()
+		overlapdata1 = noisedata1[npart2start:npart1end]*(1-scale) + noisedata2[npart2start:npart1end]*scale
+		scale = numpy.arange(npart2end-npart3start, dtype=numpy.float32)
+		scale /= scale.max()
+		overlapdata2 = noisedata2[npart3start:npart2end]*(1-scale) + noisedata3[npart3start:npart2end]*scale
+
+		mergedata = numpy.hstack((noisedata1[:npart2start], overlapdata1,
+			noisedata2[npart1end:npart3start], overlapdata2,
+			noisedata3[npart2end:]))
 
 		noisedata = mergedata
 
@@ -172,41 +179,41 @@ class CtfDisplay(object):
 		### split the function up in first 3/5 and last 3/5 of data with 1/5 overlap
 		firstpeakindex = numpy.searchsorted(raddata, firstpeak*self.trimfreq)
 		numpoints = len(raddata) - firstpeakindex
-		part1start = firstpeakindex
-		part1end = int(firstpeakindex + numpoints*6/10.)
-		part2start = int(firstpeakindex + numpoints*5/10.)
-		part2end = int(firstpeakindex + numpoints*9/10.)
-		part3start = int(firstpeakindex + numpoints*8/10.)
-		part3end = len(raddata)
+		epart1start = firstpeakindex
+		epart1end = int(firstpeakindex + numpoints*6/10.)
+		epart2start = int(firstpeakindex + numpoints*5/10.)
+		epart2end = int(firstpeakindex + numpoints*9/10.)
+		epart3start = int(firstpeakindex + numpoints*8/10.)
+		epart3end = len(raddata)
 
 		peakdata = ctfnoise.peakExtender(raddata, normlogrotdata, peakradii, "above")
 
 		## first part data
-		envelopfitparams1 = CtfNoise.modelCTFNoise(raddata[part1start:part1end],
-			peakdata[part1start:part1end], "above")
+		envelopfitparams1 = CtfNoise.modelCTFNoise(raddata[epart1start:epart1end],
+			peakdata[epart1start:epart1end], "above")
 		envelopdata1 = CtfNoise.noiseModel(envelopfitparams1, raddata)
 
 		## second part data
-		envelopfitparams2 = CtfNoise.modelCTFNoise(raddata[part2start:part2end],
-			peakdata[part2start:part2end], "above")
+		envelopfitparams2 = CtfNoise.modelCTFNoise(raddata[epart2start:epart2end],
+			peakdata[epart2start:epart2end], "above")
 		envelopdata2 = CtfNoise.noiseModel(envelopfitparams2, raddata)
 
 		## third part data
-		envelopfitparams3 = CtfNoise.modelCTFNoise(raddata[part3start:part3end],
-			peakdata[part3start:part3end], "above")
+		envelopfitparams3 = CtfNoise.modelCTFNoise(raddata[epart3start:epart3end],
+			peakdata[epart3start:epart3end], "above")
 		envelopdata3 = CtfNoise.noiseModel(envelopfitparams3, raddata)
 
 		## merge data
-		scale = numpy.arange(part1end-part2start, dtype=numpy.float32)
+		scale = numpy.arange(epart1end-epart2start, dtype=numpy.float32)
 		scale /= scale.max()
-		overlapdata1 = envelopdata1[part2start:part1end]*(1-scale) + envelopdata2[part2start:part1end]*scale
-		scale = numpy.arange(part2end-part3start, dtype=numpy.float32)
+		overlapdata1 = envelopdata1[epart2start:epart1end]*(1-scale) + envelopdata2[epart2start:epart1end]*scale
+		scale = numpy.arange(epart2end-epart3start, dtype=numpy.float32)
 		scale /= scale.max()
-		overlapdata2 = envelopdata2[part3start:part2end]*(1-scale) + envelopdata3[part3start:part2end]*scale
+		overlapdata2 = envelopdata2[epart3start:epart2end]*(1-scale) + envelopdata3[epart3start:epart2end]*scale
 
-		mergedata = numpy.hstack((envelopdata1[:part2start], overlapdata1,
-			envelopdata2[part1end:part3start], overlapdata2,
-			envelopdata3[part2end:]))
+		mergedata = numpy.hstack((envelopdata1[:epart2start], overlapdata1,
+			envelopdata2[epart1end:epart3start], overlapdata2,
+			envelopdata3[epart2end:]))
 		envelopdata = mergedata
 
 		normnormexprotdata = normexprotdata / numpy.exp(envelopdata)
@@ -312,11 +319,11 @@ class CtfDisplay(object):
 			'-', color="blue", alpha=0.5, linewidth=0.5)
 		pyplot.plot(raddata[fpi:], rotdata[fpi:], 
 			'.', color="blue", alpha=0.75, markersize=2.0)
-		pyplot.plot(raddata[part1start:part1end], noisedata1[part1start:part1end],
+		pyplot.plot(raddata[npart1start:npart1end], noisedata1[npart1start:npart1end],
 			'-', color="magenta", alpha=0.5, linewidth=2)
-		pyplot.plot(raddata[part2start:part2end], noisedata2[part2start:part2end],
+		pyplot.plot(raddata[npart2start:npart2end], noisedata2[npart2start:npart2end],
 			'-', color="red", alpha=0.5, linewidth=2)
-		pyplot.plot(raddata[part3start:part3end], noisedata3[part3start:part3end], 
+		pyplot.plot(raddata[npart3start:npart3end], noisedata3[npart3start:npart3end], 
 			'-', color="orange", alpha=0.5, linewidth=2)
 		pyplot.plot(raddata[fpi:], noisedata[fpi:], 
 			'--', color="purple", alpha=1.0, linewidth=1)
@@ -333,11 +340,11 @@ class CtfDisplay(object):
 			'-', color="blue", alpha=0.5, linewidth=0.5)
 		pyplot.plot(raddata[fpi:], normlogrotdata[fpi:],
 			'.', color="blue", alpha=0.75, markersize=2.0)
-		pyplot.plot(raddata[part1start:part1end], envelopdata1[part1start:part1end],
+		pyplot.plot(raddata[epart1start:epart1end], envelopdata1[epart1start:epart1end],
 			'-', color="magenta", alpha=0.5, linewidth=2)
-		pyplot.plot(raddata[part2start:part2end], envelopdata2[part2start:part2end],
+		pyplot.plot(raddata[epart2start:epart2end], envelopdata2[epart2start:epart2end],
 			'-', color="red", alpha=0.5, linewidth=2)
-		pyplot.plot(raddata[part3start:part3end], envelopdata3[part3start:part3end],
+		pyplot.plot(raddata[epart3start:epart3end], envelopdata3[epart3start:epart3end],
 			'-', color="orange", alpha=0.5, linewidth=2)
 		pyplot.plot(raddata[fpi:], envelopdata[fpi:],
 			'--', color="purple", alpha=1.0, linewidth=1)
@@ -417,12 +424,64 @@ class CtfDisplay(object):
 			bottom=0.08, left=0.07, top=0.95, right=0.965, )
 		self.plotsfile = apDisplay.short(self.imgname)+"-plots.png"
 		apDisplay.printMsg("Saving 1D graph to file %s"%(self.plotsfile))
-		pyplot.savefig(self.plotsfile, format="png", dpi=200, orientation='landscape', pad_inches=0.0)
+		pyplot.savefig(self.plotsfile, format="png", dpi=300, orientation='landscape', pad_inches=0.0)
 
-		f = open(apDisplay.short(self.imgname)+"-ctffitdata.dat", "w")
-		for i in range(len(ctffitdata)):
-			f.write("%.16f\t%.16f\t%.16f\n"%(raddata[i], normpeakdata[i], ctffitdata[i]))
-		f.close()
+
+		if self.debug is True:
+			### write a 1d profile dat files
+
+			f = open(apDisplay.short(self.imgname)+"-noise_fit.dat", "w")
+			for i in range(npart1start, npart3end):
+				f.write("%.16f\t%.16f\t%.16f\t%.16f\n"%(raddata[i], rotdata[i], singlenoisedata[i], noisedata[i]))
+			f.write("&\n")
+			for i in range(npart1start, npart1end):
+				f.write("%.16f\t%.16f\n"%(raddata[i], noisedata1[i]))
+			f.write("&\n")
+			for i in range(npart2start, npart2end):
+				f.write("%.16f\t%.16f\n"%(raddata[i], noisedata2[i]))
+			f.write("&\n")
+			for i in range(npart3start, npart3end):
+				f.write("%.16f\t%.16f\n"%(raddata[i], noisedata3[i]))
+			f.write("&\n")
+			f.close()
+
+			#smallrotdata = numpy.where(rotdata-singlenoisedata>0.19, 0.19, rotdata-singlenoisedata)
+			noiseexp = numpy.exp(singlenoisedata)
+			smallrotdata = numpy.exp(rotdata) - noiseexp
+			minval = 3
+
+			smallrotdata = numpy.log(numpy.where(smallrotdata<minval, minval, smallrotdata))
+			smallnoise = numpy.exp(noisedata) - noiseexp
+			smallnoise = numpy.log(numpy.where(smallnoise<minval, minval, smallnoise))
+			smallnoise1 = numpy.exp(noisedata1) - noiseexp
+			smallnoise1 = numpy.log(numpy.where(smallnoise1<minval, minval, smallnoise1))
+			smallnoise2 = numpy.exp(noisedata2) - noiseexp
+			smallnoise2 = numpy.log(numpy.where(smallnoise2<minval, minval, smallnoise2))
+			smallnoise3 = numpy.exp(noisedata3) - noiseexp
+			smallnoise3 = numpy.log(numpy.where(smallnoise3<minval, minval, smallnoise3))
+			f = open(apDisplay.short(self.imgname)+"-noisesubt_fit.dat", "w")
+			for i in range(len(ctffitdata)):
+				f.write("%.16f\t%.16f\n"%(raddata[i], smallrotdata[i]))
+			f.write("&\n")
+			for i in range(npart1start, npart3end):
+				f.write("%.16f\t%.16f\t%.16f\t%.16f\n"%(raddata[i], smallrotdata[i], smallnoise[i], 0))
+			f.write("&\n")
+			for i in range(npart1start, npart1end):
+				f.write("%.16f\t%.16f\n"%(raddata[i], smallnoise1[i]))
+			f.write("&\n")
+			for i in range(npart2start, npart2end):
+				f.write("%.16f\t%.16f\n"%(raddata[i], smallnoise2[i]))
+			f.write("&\n")
+			for i in range(npart3start, npart3end):
+				f.write("%.16f\t%.16f\n"%(raddata[i], smallnoise3[i]))
+			f.write("&\n")
+			f.close()
+
+			f = open(apDisplay.short(self.imgname)+"-ctf_fit.dat", "w")
+			for i in range(len(ctffitdata)):
+				f.write("%.16f\t%.16f\t%.16f\n"%(raddata[i], normpeakdata[i], ctffitdata[i]))
+			f.close()
+			#sys.exit(1)
 
 		if self.debug is True:
 			print "Showing results"
@@ -564,8 +623,15 @@ class CtfDisplay(object):
 
 	#====================
 	#====================
-	def drawPowerSpecImage(self, origpowerspec, maxsize=1500, outerresolution=8.7):
+	def drawPowerSpecImage(self, origpowerspec, maxsize=1200, outerresolution=7.7):
+
+		### would be nice to have a more intelligent way to set 'outerresolution'
+		###   based on defocus and measured CTF resolution
+
 		origpowerspec = ctftools.trimPowerSpectraToOuterResolution(origpowerspec, outerresolution, self.trimfreq)
+
+		if self.debug is True:
+			print "origpowerspec shape", origpowerspec.shape
 
 		#compute elliptical average and merge with original image
 		pixelrdata, rotdata = ctftools.ellipticalAverage(origpowerspec, self.ellipratio, self.angle,
@@ -583,8 +649,10 @@ class CtfDisplay(object):
 			apDisplay.printMsg( "Scaling final powerspec image by %.3f"%(scale))
 			powerspec = imagefilter.scaleImage(halfpowerspec, scale)
 		else:
-			scale = 1.0
-			powerspec = halfpowerspec.copy()
+			scale = 1280./float(max(halfpowerspec.shape))
+			powerspec = imagefilter.scaleImage(halfpowerspec, scale)
+			#scale = 1.0
+			#powerspec = halfpowerspec.copy()
 
 		self.scaleapix = self.trimapix
 		self.scalefreq = self.trimfreq/scale
@@ -593,7 +661,7 @@ class CtfDisplay(object):
 			print "trim pixel", self.trimapix
 			print "scale pixel", self.scaleapix
 
-		numzeros = 10
+		numzeros = 13
 
 		radii1 = ctftools.getCtfExtrema(self.defocus1, self.scalefreq*1e10, 
 			self.cs, self.volts, self.ampcontrast, numzeros=numzeros, zerotype="valley")
@@ -638,7 +706,9 @@ class CtfDisplay(object):
 		pilimage = originalimage.copy()
 		draw = ImageDraw.Draw(pilimage)
 
-		## draw an axis line, if astig > 5%
+		#########
+		## draw astig axis line, if astig > 5%
+		#########
 		perdiff = 2*abs(self.defocus1-self.defocus2)/abs(self.defocus1+self.defocus2)
 		if self.debug is True:
 			print "Percent Difference %.1f"%(perdiff*100)
@@ -659,6 +729,9 @@ class CtfDisplay(object):
 			#print xy
 			draw.line(xy, fill="#f23d3d", width=2)
 
+		#########
+		## draw colored CTF Thon rings
+		#########
 		foundzeros = min(len(radii1), len(radii2))
 		#color="#3d3dd2" #blue
 		color="#ffd700" #gold
@@ -672,10 +745,10 @@ class CtfDisplay(object):
 			if minor > powerspec.shape[0]/math.sqrt(3):
 				# this limits how far we draw out the ellipses sqrt(3) to corner, just 2 inside line
 				break
-			width = int(math.ceil(math.sqrt(numzeros - i)))
+			width = int(math.ceil(math.sqrt(numzeros - i)))*2
 
 			### determine color of circle
-			currentres = 1.0/(major*self.trimfreq)
+			currentres = 1.0/(major*self.scalefreq)
 			if currentres > self.res80:
 				ringcolor = "green"
 			elif currentres > self.res50:
@@ -690,9 +763,9 @@ class CtfDisplay(object):
 			#theta = 2 * asin (a/2b)
 			#numpoints = 2 pi / theta
 			## define a to be 5 pixels
-			a = 10
+			a = 40
 			theta = 2.0 * math.asin (a/(2.0*major))
-			skipfactor = 3
+			skipfactor = 2
 			numpoints = int(math.ceil(2.0*math.pi/theta/skipfactor))*skipfactor + 1
 			#print "numpoints", numpoints
 
@@ -714,6 +787,9 @@ class CtfDisplay(object):
 				xy = (x[k], y[k], x[k+1], y[k+1])
 				draw.line(xy, fill=ringcolor, width=width)
 
+		#########
+		## draw blue resolution ring
+		#########
 		# 1/res = freq * pixrad => pixrad = 1/(res*freq)
 		maxrad = (max(powerspec.shape)-1)/2.0 - 3
 		maxres = 1.0/(self.scalefreq*maxrad)
@@ -726,18 +802,20 @@ class CtfDisplay(object):
 			apDisplay.printError("Too big of outer radius to draw")
 		outpixrad = math.ceil(pixrad)+1
 		inpixrad = math.floor(pixrad)-1
-		for i in numpy.arange(-2.0,2.01,0.1):
+		for i in numpy.arange(-4.0,4.01,0.01):
 			r = pixrad + i
 			blackxy = numpy.array((center[0]-r,center[1]-r, 
 				center[0]+r,center[1]+r), dtype=numpy.float64)
 			draw.ellipse(tuple(blackxy), outline="black")
-		for i in numpy.arange(-0.5,0.51,0.1):
+		for i in numpy.arange(-1.50,1.51,0.01):
 			r = pixrad + i
 			whitexy = numpy.array((center[0]-r,center[1]-r, 
 				center[0]+r,center[1]+r), dtype=numpy.float64)
-			draw.ellipse(tuple(whitexy), outline="blue")
+			draw.ellipse(tuple(whitexy), outline="#0BB5FF")
 
-		### add text
+		#########
+		## setup font to add text
+		#########
 		fontpath = "/usr/share/fonts/liberation/LiberationSans-Regular.ttf"
 		from PIL import ImageFont
 		if os.path.isfile(fontpath):
@@ -745,21 +823,50 @@ class CtfDisplay(object):
 			font = ImageFont.truetype(fontpath, fontsize)
 		else:
 			font = ImageFont.load_default()
-		angrad = maxrad/math.sqrt(2) + 10
-		coord = (angrad+maxrad, angrad+maxrad)
-		draw.text(coord, "%.1f A"%(bestres), font=font, fill="blue")
 
+		#########
+		## add resolution ring text
+		#########
+		angrad = maxrad/math.sqrt(2) + 1
+		coord = (angrad+maxrad, angrad+maxrad)
+		for i in [-2,2]:
+			for j in [-2,2]:
+				draw.text((coord[0]+i,coord[1]+j), "%.1f A"%(bestres), font=font, fill="black")
+		draw.text(coord, "%.1f A"%(bestres), font=font, fill="#0BB5FF")
+
+		#########
+		## add defocus value text
+		#########
+		meandef = abs(self.defocus1+self.defocus2)/2.0
+		deftext = "%.2f um"%(meandef*1e6)
+		tsize = draw.textsize(deftext, font=font)
+		coord = (powerspec.shape[0]-4-tsize[0], powerspec.shape[0]-4-tsize[1])
+		for i in [-2,2]:
+			for j in [-2,2]:
+				draw.text((coord[0]+i,coord[1]+j), deftext, font=font, fill="black")
+		draw.text(coord, deftext, font=font, fill="#AB82FF")
+
+		#########
 		## add text about what sides of powerspec are:
 		## left - raw data; right - elliptical average data
-		leftcoord = (16, 16)
-		draw.text(leftcoord, "Raw CTF Data", font=font, fill="blue")
-		draw.text(leftcoord, "Raw CTF Data", font=font, fill="black")
-		tsize = draw.textsize("Elliptical Average", font=font)
-		xdist = powerspec.shape[0] - 16 - tsize[0]
-		rightcoord = (xdist, 16)
-		draw.text(rightcoord, "Elliptical Average", font=font, fill="blue")
+		#########
+		leftcoord = (4, 4)
+		for i in [-3, -1, 0, 1, 3]:
+			for j in [-3, -1, 0, 1, 3]:
+				draw.text((leftcoord[0]+i,leftcoord[1]+j) , "Raw CTF Data", font=font, fill="black")
+		draw.text(leftcoord, "Raw CTF Data", font=font, fill="#00BFFF")
 
+		tsize = draw.textsize("Elliptical Average", font=font)
+		xdist = powerspec.shape[0] - 4 - tsize[0]
+		rightcoord = (xdist, 4)
+		for i in [-2,2]:
+			for j in [-2,2]:
+				draw.text((rightcoord[0]+i,rightcoord[1]+j), "Elliptical Average", font=font, fill="black")
+		draw.text(rightcoord, "Elliptical Average", font=font, fill="#00BFFF")
+
+		#########
 		## create an alpha blend effect
+		#########
 		originalimage = Image.blend(originalimage, pilimage, 0.95)
 		apDisplay.printMsg("Saving 2D powerspectra to file: %s"%(self.powerspecfile))
 		#pilimage.save(self.powerspecfile, "JPEG", quality=85)
@@ -914,23 +1021,28 @@ if __name__ == "__main__":
 	imagelist = []
 	#=====================
 	### CNV data
-	#imagelist.extend(glob.glob("/data01/leginon/10apr19a/rawdata/10apr19a_10apr19a_*en_1.mrc")[:10])
+	#imagelist.extend(glob.glob("/data01/leginon/10apr19a/rawdata/10apr19a_10apr19a_*en_1.mrc"))
+	imagelist.extend(glob.glob("/data01/leginon/10apr19a/rawdata/10apr19a_10apr19a_*23gr*10sq*02hl*17en_1.mrc"))
 	### Pick-wei images with lots of rings
-	#imagelist.extend(glob.glob("/data01/leginon/09sep20a/rawdata/09*en.mrc")[:10])
+	#imagelist.extend(glob.glob("/data01/leginon/09sep20a/rawdata/09*en.mrc"))
 	### Something else, ice data
-	#imagelist.extend(glob.glob("/data01/leginon/09feb20d/rawdata/09*en.mrc")[:10])
+	#imagelist.extend(glob.glob("/data01/leginon/09feb20d/rawdata/09*en.mrc"))
 	### OK groEL ice data
-	#imagelist.extend(glob.glob("/data01/leginon/05may19a/rawdata/05*en*.mrc")[:10])
+	#imagelist.extend(glob.glob("/data01/leginon/05may19a/rawdata/05*en*.mrc"))
+	### 30S ribosome in stain
+	#imagelist.extend(glob.glob("/data01/leginon/12jun06h52a/rawdata/12*en*.mrc"))
+	imagelist.extend(glob.glob("/data01/leginon/12jun06h52a/rawdata/12jun06h52a_09oct22c*04sq*19hl*2en*.mrc"))
 	### images of Hassan with 1.45/1.65 astig at various angles
-	#imagelist.extend(glob.glob("/data01/leginon/12jun12a/rawdata/12jun12a_ctf_image_ang*.mrc")[:10])
+	#imagelist.extend(glob.glob("/data01/leginon/12jun12a/rawdata/12jun12a_ctf_image_ang*.mrc"))
 	### rectangular images
-	imagelist.extend(glob.glob("/data01/leginon/12may08eD1/rawdata/*.mrc")[:10])
+	#imagelist.extend(glob.glob("/data01/leginon/12may08eD1/rawdata/*.mrc"))
 	#=====================
 
 	apDisplay.printMsg("# of images: %d"%(len(imagelist)))
 	#imagelist.sort()
 	#imagelist.reverse()
 	random.shuffle(imagelist)
+	#imagelist = imagelist[:30]
 	random.shuffle(imagelist)
 
 	
@@ -954,12 +1066,27 @@ if __name__ == "__main__":
 			apDisplay.printColor("Skipping image %s, already complete"%(apDisplay.short(imagename)), "cyan")
 			continue
 
-		ctfdata, bestconf = ctfdb.getBestCtfValueForImage(imgdata)
+		ctfdata = ctfdb.getBestCtfByResolution(imgdata)
 		#ctfdata, bestconf = ctfdb.getBestCtfValueForImage(imgdata, method="ctffind")
 		#ctfdata, bestconf = ctfdb.getBestCtfValueForImage(imgdata, method="ace2")
 		if ctfdata is None:
 			apDisplay.printColor("Skipping image %s, no CTF data"%(apDisplay.short(imagename)), "red")
 			continue
+		#print ctfdata
+		if ctfdata['confidence_30_10'] < 0.88:
+			apDisplay.printColor("Skipping image %s, poor confidence"%(apDisplay.short(imagename)), "red")
+			continue
+		"""
+		if ctfdata['resolution_50_percent'] > 10 or ctfdata['resolution_50_percent'] < 7.5:
+			apDisplay.printColor("Skipping image %s, not right 50per resolution"%(apDisplay.short(imagename)), "red")
+			continue
+		if ctfdata['resolution_80_percent'] > 13 or ctfdata['resolution_80_percent'] < 8.5:
+			apDisplay.printColor("Skipping image %s, not right 80per resolution"%(apDisplay.short(imagename)), "red")
+			continue
+		if ctfdata['defocus1'] > 2.0e-6:
+			apDisplay.printColor("Skipping image %s, too high defocus"%(apDisplay.short(imagename)), "red")
+			continue
+		"""
 
 		print ""
 		print "**********************************"
