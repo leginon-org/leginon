@@ -298,7 +298,7 @@ def checkParams(focus1=-1.0e-6, focus2=-1.0e-6, pixelsize=1.5e-10,
 			apDisplay.printWarning(msg)
 		else:
 			apDisplay.printError(msg)
-	if cs*1e3 > 7.0 or cs*1e3 < 0.7:
+	if cs*1e3 > 7.0 or cs*1e3 < 0.4:
 		msg = "atypical C_s value %.1f mm"%(cs*1e3)
 		if failParams is False:
 			apDisplay.printWarning(msg)
