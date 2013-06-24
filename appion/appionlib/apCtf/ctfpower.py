@@ -39,7 +39,7 @@ def getFieldSize(shape):
 	return fieldsize
 
 #=============
-def power(image, pixelsize, fieldsize=None, mask_radius=1):
+def power(image, pixelsize, fieldsize=None, mask_radius=0.5):
 	"""
 	computes power spectra of image using sub-field averaging
 
