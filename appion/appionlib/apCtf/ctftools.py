@@ -33,7 +33,7 @@ def getCtfExtrema(focus=1.0e-6, mfreq=1.498e-04, cs=2e-2,
 	if focus*1e6 > 15.0 or focus*1e6 < 0.1:
 		apDisplay.printWarning("atypical defocus value %.1f microns (underfocus is positive)"
 			%(focus*1e6))
-	if cs*1e3 > 4.0 or cs*1e3 < 0.4:
+	if cs*1e3 > 7.0 or cs*1e3 < 0.4:
 		apDisplay.printWarning("atypical C_s value %.1f mm"%(cs*1e3))
 	if mfreq > 1e7 or mfreq < 1e5:
 		apDisplay.printWarning("atypical mfreq value %.2e 1/meters"%(mfreq))
@@ -176,8 +176,8 @@ def powerSpectraToOuterResolution(image, outerresolution, apix):
 		print "Computing power spectra..."
 	fieldsize = ctfpower.getFieldSize(image.shape)
 	binning = max(image.shape)/fieldsize
-	#data = imagefun.power(image, mask_radius=1)
-	data, freq = ctfpower.power(image, apix, fieldsize, mask_radius=1)
+	#data = imagefun.power(image)
+	data, freq = ctfpower.power(image, apix, fieldsize)
 	#data = numpy.exp(data)
 	data = data.astype(numpy.float64)
 	powerspec = trimPowerSpectraToOuterResolution(data, outerresolution, freq)
