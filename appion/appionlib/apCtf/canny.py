@@ -12,6 +12,8 @@ adapted from:
 http://code.google.com/p/python-for-matlab-users/source/browse/Examples/scipy_canny.py
 """
 
+#=======================
+#=======================
 def getRadialAndAngles(shape):
 	## create a grid of distance from the center
 	xhalfshape = shape[0]/2.0
@@ -23,7 +25,9 @@ def getRadialAndAngles(shape):
 	angles = numpy.arctan2(yy,xx)
 	return radialsq, angles
 
-def non_maximal_edge_suppresion(mag, orient):
+#=======================
+#=======================
+def non_maximal_edge_suppresion(mag, orient, minEdgeRadius=20, maxEdgeRadius=None):
 	"""
 	Non Maximal suppression of gradient magnitude and orientation.
 	"""
@@ -35,10 +39,13 @@ def non_maximal_edge_suppresion(mag, orient):
 	radialsq, angles = getRadialAndAngles(mag.shape)
 	
 	### create circular mask
-	cutoff = radialsq[mag.shape[0]/2,mag.shape[0]/10]
-	outermask = numpy.where(radialsq > cutoff, False, True)
+	if maxEdgeRadius is None:
+		maxEdgeRadiusSq = radialsq[mag.shape[0]/2,mag.shape[0]/10]
+	else:
+		maxEdgeRadiusSq = maxEdgeRadius**2
+	outermask = numpy.where(radialsq > maxEdgeRadiusSq, False, True)
 	## probably a bad idea here
-	innermask = numpy.where(radialsq < 20**2, False, True)
+	innermask = numpy.where(radialsq < minEdgeRadius**2, False, True)
 
 	### create directional filters to go with offsets
 	horz = numpy.where(numpy.abs(angles) < 3*math.pi/4., numpy.abs(angles), 0)
@@ -80,11 +87,13 @@ def non_maximal_edge_suppresion(mag, orient):
 	#print time.time() - t0
 	return edge_map
 
-
-def canny_edges(image, sigma=1.0, low_thresh=50, high_thresh=100):
-	"""Compute Canny edge detection on an image."""
+#=======================
+#=======================
+def canny_edges(image, minedges=2500, maxedges=10000, low_thresh=50, minEdgeRadius=20, maxEdgeRadius=None):
+	"""
+	Compute Canny edge detection on an image
+	"""
 	t0 = time.time()
-	image = ndimage.gaussian_filter(image, sigma)
 	dx = ndimage.sobel(image,0)
 	dy = ndimage.sobel(image,1)
 
@@ -93,7 +102,7 @@ def canny_edges(image, sigma=1.0, low_thresh=50, high_thresh=100):
 
 	ort = numpy.arctan2(dy, dx)
 
-	edge_map = non_maximal_edge_suppresion(mag, ort)
+	edge_map = non_maximal_edge_suppresion(mag, ort, minEdgeRadius, maxEdgeRadius)
 
 	edge_map = numpy.logical_and(edge_map, mag > low_thresh)
 
@@ -108,8 +117,6 @@ def canny_edges(image, sigma=1.0, low_thresh=50, high_thresh=100):
 	minThresh = maxs.min()
 
 	#print time.time() - t0
-	minedges = 1500
-	maxedges = 8000
 	edge_count = edge_map.sum()
 	count = 0
 	while count < 25:
@@ -161,18 +168,19 @@ def canny_edges(image, sigma=1.0, low_thresh=50, high_thresh=100):
 	#print time.time() - t0
 	return newedge_map
 
-
+#=======================
+#=======================
+#=======================
+#=======================
 if __name__ == "__main__":
 	from scipy.misc import lena
 	from matplotlib import pyplot
 	lena = lena()
-	
-	high_thresh = 0.5
-	low_thresh = 0.1*high_thresh
-	blur = 6
-	e = canny_edges(lena, blur, low_thresh, high_thresh)
+	image = ndimage.filters.gaussian_filter(lena, 6)
 
-	pyplot.imshow(e)
+	edgeimage = canny_edges(image, minedges=2500, maxedges=15000, low_thresh=0.001, minEdgeRadius=20, maxEdgeRadius=None)
+
+	pyplot.imshow(edgeimage)
 	pyplot.gray()
 	pyplot.show()
 

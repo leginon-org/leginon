@@ -60,7 +60,7 @@ def frame_cut(a, newshape):
 	return a[mindimx:maxdimx, mindimy:maxdimy]
 
 #=========================
-def ellipseRANSAC(edgeMap, ellipseThresh=3, minPercentGoodPoints=0.001, certainProb=0.9, maxiter=5000):
+def ellipseRANSAC(edgeMap, ellipseThresh=2, minPercentGoodPoints=0.001, certainProb=0.9, maxiter=5000):
 	"""
 	takes 2D edge map from image and trys to find a good ellipse in the data
 	"""
@@ -167,7 +167,7 @@ def ellipseRANSAC(edgeMap, ellipseThresh=3, minPercentGoodPoints=0.001, certainP
 			#sys.stderr.write("S%d "%(sizeReject))
 			continue	
 		ratio = centeredParams['a']/float(centeredParams['b'])
-		if ratio > 2.5 or ratio < 0.4:
+		if ratio > 4 or ratio < 0.25:
 			ratioReject += 1
 			#sys.stderr.write("R%d "%(ratioReject))
 			continue	
@@ -244,6 +244,8 @@ def ellipseRANSAC(edgeMap, ellipseThresh=3, minPercentGoodPoints=0.001, certainP
 				bestEllipseParams = centeredParams
 				mostGoodPoints = goodPoints
 
+			printParams(bestEllipseParams)
+
 	### end loop and do stuff
 	#bestEllipseMap = generateEllipseRangeMap2(bestEllipseParams, ellipseThresh*1.5, edgeMap.shape)
 	#bestEllipseList = numpy.array(numpy.where(bestEllipseMap), dtype=numpy.float64).transpose() - center
@@ -270,7 +272,8 @@ def generateEllipseRangeMap2(ellipseParams, ellipseThresh, shape):
 	'''
 	a = ellipseParams['a']
 	b = ellipseParams['b']
-	alpha = ellipseParams['alpha']
+	## this should be negative because we are using negative convention in viewer
+	alpha = -ellipseParams['alpha']
 
 	maxradius = max(a,b)
 	numpoints = int(math.ceil(6.28*maxradius))
@@ -297,12 +300,6 @@ def generateEllipseRangeMap2(ellipseParams, ellipseThresh, shape):
 	ellipseRange2 = filters.maximum_filter(ellipseRange, size=ellipseThresh*2)
 	ellipseRange = ellipseRange + ellipseRange2*0.1
 
-	#pyplot.clf()
-	#pyplot.imshow(ellipseRange)
-	#pyplot.gray()
-	#pyplot.show()
-	#time.sleep(1)
-
 	return ellipseRange
 
 #=================
@@ -310,6 +307,7 @@ def generateEllipseRangeMap(ellipseParams, ellipseThresh, shape):
 	"""
 	make an elliptical ring of width ellipseThresh based on ellipseParams
 	"""
+	raise DeprecationWarning
 	largeEllipse = drawFilledEllipse(shape, ellipseParams['a']+ellipseThresh, 
 		ellipseParams['b']+ellipseThresh, ellipseParams['alpha'])
 	smallEllipse = drawFilledEllipse(shape, ellipseParams['a']-ellipseThresh, 
@@ -328,7 +326,7 @@ def drawFilledEllipse(shape, a, b, alpha):
 	raise DeprecationWarning
 	ellipratio = a/float(b)
 	### this step is TOO SLOW
-	radial = ctftools.getEllipticalDistanceArray(ellipratio, math.degrees(alpha), shape)
+	radial = ctftools.getEllipticalDistanceArray(ellipratio, -math.degrees(alpha), shape)
 	meanradius = math.sqrt(a*b)
 	filledEllipse = numpy.where(radial > meanradius, False, True)
 	return filledEllipse

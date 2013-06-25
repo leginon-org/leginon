@@ -12,7 +12,7 @@ from appionlib.apCtf import ctftools, genctf
 #===================================================
 #===================================================
 #===================================================
-def refineAmplitudeContrast(radial_array, defocus, normPSD, cs, wavelength):
+def refineAmplitudeContrast(radial_array, defocus, normPSD, cs, wavelength, weights=None):
 	"""
 	takes elliptical average data and fits it to the equation
 	A cos(x) + B sin(x)
@@ -27,86 +27,110 @@ def refineAmplitudeContrast(radial_array, defocus, normPSD, cs, wavelength):
 		+ math.pi * wavelength * radialsq * defocus )
 	cosvec = numpy.cos(2*gamma) #C
 	sinvec = numpy.sin(2*gamma) #D
-	X = numpy.array([cosvec, sinvec]).transpose()
+	onevec = numpy.ones(gamma.shape) #extra constant
+	X = numpy.array([cosvec, sinvec, onevec, radialsq]).transpose()
 	#del cosvec, sinvec, gamma
 
-	print "gamma"
-	imagestat.printImageInfo(gamma)
+	# create weighted matrix
+	if weights is None:
+		# make an identity matrix for no weights
+		weights = numpy.ones(normPSD.shape[0])
 
 	# adjust y values
 	yprime = 2 * normPSD - 1
 
-	# QR decomposition
-	Q, R = numpy.linalg.qr(X)
-	if numpy.linalg.det(R) == 0:
+	#matrix setup
+	XTW = numpy.transpose(X)*weights
+	XTWX = numpy.dot(XTW, X)
+	if numpy.linalg.det(XTWX) == 0:
 		apDisplay.printWarning("Singular matrix in calculation")
 		return None
-	QT = numpy.transpose(Q)
-	Rinv = numpy.linalg.inv(R)
-	del X
+	XTWXinv = numpy.linalg.inv(XTWX)
 
 	#do the least squares
-	beta = numpy.dot(numpy.dot(Rinv, QT), yprime)
+	beta = numpy.dot(numpy.dot(XTWXinv, XTW), yprime)
+	del X, XTWX, weights, XTWXinv, XTW
+
+	#translate the values
 	C = beta[0]
 	D = beta[1]
+	constant = beta[2]
+	sqterm = beta[3]
 	print beta, radial_array.shape
 	psi = 0.5*math.atan2(C,D)
+	print "psi=", psi
 	phi = psi + math.pi/4
-	if phi < 0:
-		phi += math.pi
-	amplitude_contrast = math.sin(phi)
+	print "phi=", phi
+	amp_con = math.sin(phi)
 
-	apDisplay.printColor("amplitude contrast = %.8f"%(amplitude_contrast), "cyan")
+	apDisplay.printColor("amplitude contrast = %.8f"%(amp_con), "cyan")
 
 	fitctf1 = C*cosvec + D*sinvec
 	fitctf2 = numpy.sin(2*gamma + 2*psi)
-	newB = math.sqrt(1 - amplitude_contrast**2)
+	newB = math.sqrt(1 - amp_con**2)
 	# need to do the y' = 2 y - 1
-	adjctf1 = 2 * numpy.power(amplitude_contrast*numpy.cos(gamma) + newB*numpy.sin(gamma), 2) - 1
-	#adjctf2 = 2 * numpy.power(numpy.sin(gamma + math.asin(amplitude_contrast)), 2) - 1
+	adjctf1 = 2 * numpy.power(amp_con*numpy.cos(gamma) + newB*numpy.sin(gamma), 2) - 1
+	#adjctf2 = 2 * numpy.power(numpy.sin(gamma + math.asin(amp_con)), 2) - 1
+
+	crosscorr = scipy.stats.pearsonr(fitctf2, adjctf1)[0]
+
+	if crosscorr < -0.6:
+		print "likely 180 degree out of phase"
+		apDisplay.printWarning("Bad angle translation: %.8f"%(amp_con))
 
 	pyplot.clf()
-	pyplot.plot(radialsq, yprime, '.', color="gray")
-	pyplot.plot(radialsq, yprime, 'k-',)
+	yprime2 = yprime - constant - sqterm*radialsq
+	pyplot.plot(radialsq, yprime2, '.', color="gray")
+	pyplot.plot(radialsq, yprime2, 'k-',)
 	pyplot.plot(radialsq, fitctf1, 'r--',)
 	pyplot.plot(radialsq, fitctf2, 'g--',)
 	pyplot.plot(radialsq, adjctf1, 'b--',)
-	conf1 = scipy.stats.pearsonr(yprime, fitctf1)[0]
-	conf2 = scipy.stats.pearsonr(yprime, adjctf1)[0]
-	conf3 = scipy.stats.pearsonr(yprime, fitctf2)[0]
 
-	print "conf %.4f, %.4f, %.4f"%(conf1, conf2, conf3)
+	conf1 = scipy.stats.pearsonr(yprime2, fitctf1)[0]
+	conf2 = scipy.stats.pearsonr(yprime2, adjctf1)[0]
+	conf3 = scipy.stats.pearsonr(yprime2, fitctf2)[0]
 
-	pyplot.ylim(ymin=-1.05, ymax=1.05)
-	pyplot.title("Amplitude Contrast Fit")
+	print "conf %.4f, %.4f, %.4f; cc = %.4f"%(conf1, conf2, conf3, crosscorr)
+
+	#pyplot.ylim(ymin=-1.05, ymax=1.05)
+	pyplot.title("Amplitude Contrast Fit (%.2f, %.2f, %.2f) CC=%.3f"%(conf1, conf2, conf3, crosscorr))
 	pyplot.subplots_adjust(wspace=0.05, hspace=0.05,
 		bottom=0.05, left=0.05, top=0.95, right=0.95, )
 	pyplot.show()
 
-	if amplitude_contrast > 0.6 or amplitude_contrast < 0.0:
-		apDisplay.printWarning("Fit out of range, bad amp contrast: %.8f"%(amplitude_contrast))
+
+	if crosscorr < 0.5:
+		apDisplay.printWarning("Bad angle translation: %.8f"%(amp_con))
 		return None
 
-	return amplitude_contrast
+	if amp_con < 0.0:
+		apDisplay.printWarning("amp contrast is negative (reduce defocus): %.4f"%(amp_con))
+		return None
+
+	if amp_con > 0.6:
+		apDisplay.printWarning("amp contrast is too large (increase defocus): %.8f"%(amp_con))
+		return None
+
+	return amp_con
 
 #===================================================
 #===================================================
 #===================================================
 def refineCTF(radial_array, angle_array, 
-	amp_cont, z1, z2, angle_astig, 
-	normPSD, cs, wavelength):
+	amp_con, z1, z2, angle_astig, 
+	normPSD, cs, wavelength, weights=None):
 	"""
 	take a 2D normalized PSB and refines all CTF parameters
 	using a linear least squares
 
 	all values in meters
 	"""
-	print "BEFORE ac=%.3f, z1=%.3e, z2=%.3e, astig=%.1f"%(amp_cont, z1, z2, angle_astig)
+	print "BEFORE ac=%.3f, z1=%.3e, z2=%.3e, astig=%.1f"%(amp_con, z1, z2, angle_astig)
 	print cs, wavelength
 	print "resolution limits %.2f <> %.2f"%(1.0e10/radial_array.max(), 1.0e10/radial_array.min())
 
 	### convert parameters
-	C = math.sin(math.asin(amp_cont) - math.pi/4.)
+	C = math.sin(math.asin(amp_con) - math.pi/4.)
 	D = math.sqrt(1 - C**2)
 	zavg = (z1 + z2)/2.0
 	zdiff = z2 - z1
@@ -135,21 +159,29 @@ def refineCTF(radial_array, angle_array,
 	### create X data matrix and adjust y values
 	#X = numpy.array([cosvec, sinvec]).transpose()
 	X = numpy.array([cosvec, sinvec, zavgvec, zdiffvec, zastigvec]).transpose()
-	yprime = 2 * normPSD - 1
-	del cosvec, sinvec, zavgvec, zdiffvec, zastigvec, normPSD, angle_array
+	del cosvec, sinvec, zavgvec, zdiffvec, zastigvec, angle_array
 
-	### QR decompostion
-	Q, R = numpy.linalg.qr(X)
-	del X
-	if numpy.linalg.det(R) == 0:
+	# create weighted matrix
+	if weights is None:
+		# make an identity matrix for no weights
+		weights = numpy.ones(normPSD.shape[0])
+
+	# adjust y values
+	yprime = 2 * normPSD - 1
+
+	#matrix setup
+	XTW = numpy.transpose(X)*weights
+	XTWX = numpy.dot(XTW, X)
+	if numpy.linalg.det(XTWX) == 0:
 		apDisplay.printWarning("Singular matrix in calculation")
 		return None
-	QT = numpy.transpose(Q)
-	Rinv = numpy.linalg.inv(R)
-	del Q, R
+	XTWXinv = numpy.linalg.inv(XTWX)
 
 	#do the least squares
-	beta = numpy.dot(numpy.dot(Rinv, QT), yprime)
+	beta = numpy.dot(numpy.dot(XTWXinv, XTW), yprime)
+	del X, XTWX, weights, XTWXinv, XTW
+
+	#translate the values
 	C = beta[0]
 	D = beta[1]
 	dzavg = beta[2]
@@ -157,10 +189,11 @@ def refineCTF(radial_array, angle_array,
 	dtheta = beta[4]
 	print beta
 	psi = 0.5*math.atan2(C,D)
+	print "psi=", psi
 	phi = psi + math.pi/4
-	if phi < 0:
-		phi += math.pi
-	amp_cont = math.sin(phi)
+	print "phi=", phi
+	amp_con = math.sin(phi)
+
 	zavg += dzavg
 	zdiff += dzdiff
 	if zdiff < 0:
@@ -170,10 +203,138 @@ def refineCTF(radial_array, angle_array,
 	z1 = zavg - zdiff/2
 	z2 = zavg + zdiff/2.
 
-	print "AFTER ac=%.3f, z1=%.3e, z2=%.3e, astig=%.1f"%(amp_cont, z1, z2, angle_astig)
+	print "AFTER ac=%.3f, z1=%.3e, z2=%.3e, astig=%.1f"%(amp_con, z1, z2, angle_astig)
 
-	if amp_cont > 0.6 or amp_cont < 0.0:
-		apDisplay.printWarning("Fit out of range, bad amp contrast: %.8f"%(amp_cont))
+	if amp_con < 0.0:
+		apDisplay.printWarning("amp contrast is negative (reduce defocus): %.4f"%(amp_con))
 		return None
 
-	return amp_cont, z1, z2, angle_astig
+	if amp_con > 0.6:
+		apDisplay.printWarning("amp contrast is too large (increase defocus): %.8f"%(amp_con))
+		return None
+
+	return amp_con, z1, z2, angle_astig
+
+
+#===================================================
+#===================================================
+#===================================================
+def refineCTFOneDimension(radial_array, amp_con, zavg, normPSD, cs, wavelength, weights=None):
+	"""
+	take a 2D normalized PSB and refines all CTF parameters
+	using a linear least squares
+
+	all values in meters
+	"""
+	apDisplay.printColor("BEFORE ac=%.3f, zavg=%.3e"%(amp_con, zavg), "cyan")
+	print cs, wavelength
+	print "resolution limits %.2f <> %.2f"%(1.0e10/radial_array.max(), 1.0e10/radial_array.min())
+
+	### convert parameters
+	C = math.sin(math.asin(amp_con) - math.pi/4.)
+	D = math.sqrt(1 - C**2)
+
+	### create astigmatic gamma function
+	radialsq_array = radial_array**2
+	gamma_array = ( -0.5*math.pi * cs * wavelength**3 * radialsq_array**2
+		+ math.pi * wavelength * radialsq_array * zavg )
+
+	### create refinement vectors
+	cosvec = numpy.cos(2*gamma_array) #C
+	sinvec = numpy.sin(2*gamma_array) #D
+	onevec = numpy.ones(radialsq_array.shape)
+	dCTFdGamma_array = -2*C*sinvec + 2*D*cosvec
+	zavgvec = wavelength*math.pi*radialsq_array * dCTFdGamma_array
+
+	### create X data matrix and adjust
+	X = numpy.array([cosvec, sinvec, zavgvec, onevec, radialsq_array]).transpose()
+
+	# create weighted matrix
+	if weights is None:
+		# make an identity matrix for no weights
+		weights = numpy.ones(normPSD.shape[0])
+
+	# adjust y values
+	yprime = 2 * normPSD - 1
+
+	#matrix setup
+	XTW = numpy.transpose(X)*weights
+	XTWX = numpy.dot(XTW, X)
+	if numpy.linalg.det(XTWX) == 0:
+		apDisplay.printWarning("Singular matrix in calculation")
+		return None
+	XTWXinv = numpy.linalg.inv(XTWX)
+
+	#do the least squares
+	beta = numpy.dot(numpy.dot(XTWXinv, XTW), yprime)
+	del X, XTWX, weights, XTWXinv, XTW
+
+	#translate the values
+	C = beta[0]
+	D = beta[1]
+	dzavg = beta[2]
+	constant = beta[3]
+	sqterm = beta[4]
+	print beta
+	psi = 0.5*math.atan2(C,D)
+	print "psi=", psi
+	phi = psi + math.pi/4
+	print "phi=", phi
+	amp_con = math.sin(phi)
+
+	zavg += dzavg
+
+	print "AFTER ac=%.3f, zavg=%.3e"%(amp_con, zavg)
+
+	apDisplay.printColor("AFTER ac=%.3f, zavg=%.3e"%(amp_con, zavg), "cyan")
+
+	newGamma = ( -0.5*math.pi * cs * wavelength**3 * radialsq_array**2
+		+ math.pi * wavelength * radialsq_array * zavg )
+
+	fitctf1 = C*cosvec + D*sinvec
+	fitctf1b = numpy.sin(2*gamma_array + 2*psi)
+	fitctf2 = numpy.sin(2*newGamma + 2*psi)
+	newB = math.sqrt(1 - amp_con**2)
+	# need to do the y' = 2 y - 1
+	adjctf1 = 2 * numpy.power(amp_con*numpy.cos(newGamma) + newB*numpy.sin(newGamma), 2) - 1
+
+	crosscorr = scipy.stats.pearsonr(fitctf2, adjctf1)[0]
+
+	if crosscorr < -0.6:
+		print "likely 180 degree out of phase"
+		apDisplay.printWarning("Bad angle translation: %.8f"%(amp_con))
+
+	pyplot.clf()
+	yprime2 = yprime - constant - sqterm*radialsq_array
+	pyplot.plot(radialsq_array, yprime2, '.', color="gray")
+	pyplot.plot(radialsq_array, yprime2, 'k-',)
+	pyplot.plot(radialsq_array, fitctf1b, 'r--',)
+	pyplot.plot(radialsq_array, fitctf2, 'g--',)
+	pyplot.plot(radialsq_array, adjctf1, 'b--',)
+
+	conf1 = scipy.stats.pearsonr(yprime2, fitctf1b)[0]
+	conf2 = scipy.stats.pearsonr(yprime2, adjctf1)[0]
+	conf3 = scipy.stats.pearsonr(yprime2, fitctf2)[0]
+
+	#pyplot.ylim(ymin=-1.05, ymax=1.05)
+	pyplot.title("CTF Refine 1D Fit (%.2f, %.2f, %.2f) CC=%.3f"%(conf1, conf2, conf3, crosscorr))
+	pyplot.subplots_adjust(wspace=0.05, hspace=0.05,
+		bottom=0.05, left=0.05, top=0.95, right=0.95, )
+	pyplot.show()
+
+	if crosscorr < 0.5:
+		apDisplay.printWarning("Bad angle translation: %.8f"%(amp_con))
+		return None
+
+	if amp_con < 0.0:
+		apDisplay.printWarning("amp contrast is negative (reduce defocus): %.4f"%(amp_con))
+		return None
+
+	if amp_con > 0.6:
+		apDisplay.printWarning("amp contrast is too large (increase defocus): %.8f"%(amp_con))
+		return None
+
+	return amp_con, zavg
+
+
+
