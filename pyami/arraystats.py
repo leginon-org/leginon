@@ -41,7 +41,14 @@ def wrap_allstats(stat):
 	else:
 		kwargs = {stat:True}
 	def wrapped(a):
-		result = allstats(a, **kwargs)
+		# we cannot remove the numextension requirement here, see Bug #1105
+		# which is unfortunate, because our simple mrc.py requires numextension
+		try:
+			import numextension
+			result = numextension.allstats(a, **kwargs)
+		except:
+			b = numpy.array(a, dtype=numpy.float64)
+			result = allstats(b, **kwargs)
 		if stat != 'all':
 			result = result[stat]
 		return result
