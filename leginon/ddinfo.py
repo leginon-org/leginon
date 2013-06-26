@@ -63,11 +63,17 @@ def getRawFrameSessionPathFromImagePath(imagepath):
 	# backward compatibility
 	if glob.glob(os.path.join(imagepath,'*.frames*')):
 		return imagepath
-	baseframe_dirname = 'frames'
-	pathbits = imagepath.split('/')
-	leginonbasepath = '/'.join(pathbits[:-3])
-	sessionrawdatapath = '/'.join(pathbits[-2:])
-	rawframe_sessionpath = os.path.join(leginonbasepath,baseframe_dirname,sessionrawdatapath)
+
+	# goal is to replace legdir with framedir
+	framedir = 'frames'
+	legdir = 'leginon'
+
+	## Taking care of multiple legdirs in path...
+	## Only replace the final legdir with framedir
+	legsplit = imagepath.split(legdir)
+	legjoin = legdir.join(legsplit[:-1])
+	rawframe_sessionpath = legjoin + framedir + legsplit[-1]
+
 	if not os.path.exists(rawframe_sessionpath):
 		rawframe_sessionpath = rawframe_sessionpath.replace('data16','data00')
 	return rawframe_sessionpath
