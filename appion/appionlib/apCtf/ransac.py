@@ -252,7 +252,8 @@ def ellipseRANSAC(edgeMap, ellipseThresh=2, minPercentGoodPoints=0.001, certainP
 				mostGoodPoints = goodPoints
 
 			printParams(bestEllipseParams)
-			imagefile.arrayToJpeg(centeredEllipseMap1, "map%05d.jpg"%(iternum))
+			if iternum > 100:
+				imagefile.arrayToJpeg(centeredEllipseMap1, "map%05d.jpg"%(iternum))
 
 	### end loop and do stuff
 	#bestEllipseMap = generateEllipseRangeMap2(bestEllipseParams, ellipseThresh*1.5, edgeMap.shape)

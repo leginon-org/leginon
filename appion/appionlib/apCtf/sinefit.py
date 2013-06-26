@@ -7,7 +7,7 @@ import scipy.stats
 from matplotlib import pyplot
 from appionlib import apDisplay
 from appionlib.apImage import imagestat
-from appionlib.apCtf import ctftools, genctf
+from appionlib.apCtf import ctftools, genctf, leastsq
 
 #===================================================
 #===================================================
@@ -39,17 +39,14 @@ def refineAmplitudeContrast(radial_array, defocus, normPSD, cs, wavelength, weig
 	# adjust y values
 	yprime = 2 * normPSD - 1
 
-	#matrix setup
-	XTW = numpy.transpose(X)*weights
-	XTWX = numpy.dot(XTW, X)
-	if numpy.linalg.det(XTWX) == 0:
-		apDisplay.printWarning("Singular matrix in calculation")
+	## solve it
+	beta = leastsq.totalLeastSquares(X, yprime, weights)
+	if beta is None:
+		beta = leastsq.numpyLeastSquares(X, yprime)
+	del X, weights
+	if beta is None:
+		apDisplay.printWarning("Least squares failed")
 		return None
-	XTWXinv = numpy.linalg.inv(XTWX)
-
-	#do the least squares
-	beta = numpy.dot(numpy.dot(XTWXinv, XTW), yprime)
-	del X, XTWX, weights, XTWXinv, XTW
 
 	#translate the values
 	C = beta[0]
@@ -97,7 +94,6 @@ def refineAmplitudeContrast(radial_array, defocus, normPSD, cs, wavelength, weig
 	pyplot.subplots_adjust(wspace=0.05, hspace=0.05,
 		bottom=0.05, left=0.05, top=0.95, right=0.95, )
 	pyplot.show()
-
 
 	if crosscorr < 0.5:
 		apDisplay.printWarning("Bad angle translation: %.8f"%(amp_con))
@@ -169,17 +165,14 @@ def refineCTF(radial_array, angle_array,
 	# adjust y values
 	yprime = 2 * normPSD - 1
 
-	#matrix setup
-	XTW = numpy.transpose(X)*weights
-	XTWX = numpy.dot(XTW, X)
-	if numpy.linalg.det(XTWX) == 0:
-		apDisplay.printWarning("Singular matrix in calculation")
+	## solve it
+	beta = leastsq.weightedLeastSquares(X, yprime, weights)
+	if beta is None:
+		beta = leastsq.numpyLeastSquares(X, yprime)
+	del X, weights
+	if beta is None:
+		apDisplay.printWarning("Least squares failed")
 		return None
-	XTWXinv = numpy.linalg.inv(XTWX)
-
-	#do the least squares
-	beta = numpy.dot(numpy.dot(XTWXinv, XTW), yprime)
-	del X, XTWX, weights, XTWXinv, XTW
 
 	#translate the values
 	C = beta[0]
@@ -257,17 +250,14 @@ def refineCTFOneDimension(radial_array, amp_con, zavg, normPSD, cs, wavelength, 
 	# adjust y values
 	yprime = 2 * normPSD - 1
 
-	#matrix setup
-	XTW = numpy.transpose(X)*weights
-	XTWX = numpy.dot(XTW, X)
-	if numpy.linalg.det(XTWX) == 0:
-		apDisplay.printWarning("Singular matrix in calculation")
+	## solve it
+	beta = leastsq.weightedLeastSquares(X, yprime, weights)
+	if beta is None:
+		beta = leastsq.numpyLeastSquares(X, yprime)
+	del X, weights
+	if beta is None:
+		apDisplay.printWarning("Least squares failed")
 		return None
-	XTWXinv = numpy.linalg.inv(XTWX)
-
-	#do the least squares
-	beta = numpy.dot(numpy.dot(XTWXinv, XTW), yprime)
-	del X, XTWX, weights, XTWXinv, XTW
 
 	#translate the values
 	C = beta[0]
