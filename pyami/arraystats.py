@@ -47,7 +47,7 @@ def wrap_allstats(stat):
 			import numextension
 			result = numextension.allstats(a, **kwargs)
 		except:
-			b = numpy.array(a, dtype=numpy.float64)
+			b = numpy.asanyarray(a, dtype=numpy.float64)
 			result = allstats(b, **kwargs)
 		if stat != 'all':
 			result = result[stat]
