@@ -10,6 +10,11 @@ def ellipsePoints(angleinc, center, a, b, alpha):
 	'''
 	Generate a sequence of x,y points given the parameters of an
 	ellipse, and an angular increment.
+
+	convention note: ellipse points are created as x,y coordinates, so alpha
+		is measured as positive values towards the y-axis
+
+	note: generate_ellipse() below is a faster version of this
 	'''
 	cosa = numpy.cos(alpha)
 	sina = numpy.sin(alpha)
@@ -26,6 +31,9 @@ def ellipsePoints(angleinc, center, a, b, alpha):
 def ellipseKeyPoints(center, a, b, alpha):
 	'''
 	Calulate the points at each end of the ellipse axes.
+
+	convention note: ellipse points are created as x,y coordinates, so alpha
+		is measured as positive values towards the y-axis
 	'''
 	points = ellipsePoints(numpy.pi/2.0, center, a, b, alpha)
 	keypoints = {}
@@ -45,6 +53,9 @@ def drawEllipse(shape, angleinc, center, a, b, alpha):
 	'''
 	Generate a zero initialized image array with an ellipse drawn
 	by setting pixels to 1.
+
+	convention note: ellipse points are x,y coordinates, so alpha
+		is measured as positive values towards the y-axis
 	'''
 	result = numpy.zeros(shape, numpy.int)
 	points = ellipsePoints(angleinc, center, a, b, alpha)
@@ -71,6 +82,8 @@ def algebraic2parametric(coeff):
 		a - major axis
 		b - minor axis
 		alpha - angle of major axis
+
+	convention note: alpha is measured as positive values towards the y-axis
 	'''
 	#print coeff
 	#print ("A=%.3f B=%.3f C=%.3f D=%.3f E=%.3f F=%.3f"
@@ -98,7 +111,7 @@ def algebraic2parametric(coeff):
 		b = numpy.sqrt(h/D[1])
 
 	## correct backwards major/minor axes
-	if b > a:
+	if a > b:
 		temp = b
 		b = a
 		a = temp
@@ -120,6 +133,9 @@ def solveEllipseB2AC(points):
 	and Machine Intelligence, Vol 21, No 5, May 1999.
 
 	This method has a tendency to crash, but is very fast
+
+	convention note: ellipse points are x,y coordinates, so alpha
+		is measured as positive values towards the y-axis
 	'''
 	X = numpy.array(points, numpy.float)
 	D = numpy.column_stack((X[:,0]**2, X[:,0]*X[:,1], X[:,1]**2, X[:,0], X[:,1], numpy.ones(X.shape[0])))
@@ -144,9 +160,13 @@ def solveEllipseGander(points):
 	'''
 	Solve the ellipse that best fits the given points.
 	Based on the matlab function "algellipse.m" in the files that
-	accompany:  "Least-Squares Fitting of Circles and Ellipses", W. Gander, G. H. Golub, R. Strebel, BIT Numerical Mathematics, Springer 1994
+	accompany:  "Least-Squares Fitting of Circles and Ellipses", W. Gander, G. H. Golub, R. Strebel, 
+		BIT Numerical Mathematics, Springer 1994
 
 	This method seems to go O(n^2), so can be slow with lots of points
+
+	convention note: ellipse points are x,y coordinates, so alpha
+		is measured as positive values towards the y-axis
 	'''
 	X = numpy.array(points)
 	a = numpy.column_stack((X[:,0]**2, X[:,0]*X[:,1], X[:,1]**2, X[:,0], X[:,1], numpy.ones(X.shape[0])))
@@ -174,6 +194,9 @@ def solveEllipseOLS(points, center=(0,0)):
 	Ax^2 + Bxy +Cy^2 + Dx + Ey + F = 0
 	D = E = 0 to center the ellipse on the origin
 	F = -1 to force the general conic equation to be an ellipse
+
+	convention note: ellipse points are x,y coordinates, so alpha
+		is measured as positive values towards the y-axis
 	"""
 
 	### power twos
@@ -226,8 +249,11 @@ def generate_ellipse(a, b, alpha, center=(0,0), numpoints=3, noise=None,
 	numpoints - # of points that make an ellipse
 	noise - float of the amount of noise to add
 
-	this is a duplicate of ellipsePoints() function above
+	this is a faster version of ellipsePoints() function above
 		without the "for" loop and with extra features
+
+	convention note: ellipse points are created as x,y coordinates, so alpha
+		is measured as positive values towards the y-axis
 	"""
 
 	cosa = numpy.cos(alpha)
