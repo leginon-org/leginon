@@ -111,7 +111,8 @@ def algebraic2parametric(coeff):
 		b = numpy.sqrt(h/D[1])
 
 	## correct backwards major/minor axes
-	if a > b:
+	## 'major axis as a, minor axis as b'
+	if b > a:
 		temp = b
 		b = a
 		a = temp
