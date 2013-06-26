@@ -6,9 +6,11 @@ import math
 import numpy
 import random
 from pyami import ellipse
+from matplotlib import pyplot
 from scipy.ndimage import filters
 from appionlib.apCtf import ctftools
-from matplotlib import pyplot
+from appionlib.apImage import imagefile
+
 
 #=========================
 def trimZeroEdges(oldarray):
@@ -39,7 +41,7 @@ def printParams(params):
 	b = params['b']
 	alpha = params['alpha']
 	print ("ellip: %d x %d < %.1f deg"%
-		(a, b, alpha*180/math.pi))
+		(a, b, math.degrees(alpha)))
 	return
 
 #=========================
@@ -60,7 +62,7 @@ def frame_cut(a, newshape):
 	return a[mindimx:maxdimx, mindimy:maxdimy]
 
 #=========================
-def ellipseRANSAC(edgeMap, ellipseThresh=2, minPercentGoodPoints=0.001, certainProb=0.9, maxiter=5000):
+def ellipseRANSAC(edgeMap, ellipseThresh=2, minPercentGoodPoints=0.001, certainProb=0.9, maxiter=2000):
 	"""
 	takes 2D edge map from image and trys to find a good ellipse in the data
 	"""
@@ -149,8 +151,13 @@ def ellipseRANSAC(edgeMap, ellipseThresh=2, minPercentGoodPoints=0.001, certainP
 		currentEdges.append(random.choice(rightEdgeList))
 		currentEdges = numpy.array(currentEdges, dtype=numpy.int16)
 
+		## convert rows, columns into x, y by swapping columns
+		convertEdges = currentEdges.copy()
+		convertEdges[:,[0, 1]] = currentEdges[:,[1, 0]]
+		convertEdges = numpy.vstack( (currentEdges[:,1], currentEdges[:,0]) ).T
+
 		# solve centered ellipse, fixed center
-		centeredParams = ellipse.solveEllipseOLS(currentEdges)
+		centeredParams = ellipse.solveEllipseOLS(convertEdges)
 		#print centeredParams
 		if centeredParams is None:
 			#sys.stderr.write("c")
@@ -176,8 +183,8 @@ def ellipseRANSAC(edgeMap, ellipseThresh=2, minPercentGoodPoints=0.001, certainP
 
 		# solve general ellipse, floating center
 		## only a few points, can use solveEllipseGander fit
-		#generalParams = ellipse.solveEllipseB2AC(currentEdges)
-		generalParams = ellipse.solveEllipseGander(currentEdges)
+		#generalParams = ellipse.solveEllipseB2AC(convertEdges)
+		generalParams = ellipse.solveEllipseGander(convertEdges)
 		if generalParams is not None:
 			## check center to see if its reasonably close to center
 			distFromCenter = math.hypot(generalParams['center'][0], generalParams['center'][1])
@@ -245,6 +252,7 @@ def ellipseRANSAC(edgeMap, ellipseThresh=2, minPercentGoodPoints=0.001, certainP
 				mostGoodPoints = goodPoints
 
 			printParams(bestEllipseParams)
+			imagefile.arrayToJpeg(centeredEllipseMap1, "map%05d.jpg"%(iternum))
 
 	### end loop and do stuff
 	#bestEllipseMap = generateEllipseRangeMap2(bestEllipseParams, ellipseThresh*1.5, edgeMap.shape)
@@ -272,16 +280,16 @@ def generateEllipseRangeMap2(ellipseParams, ellipseThresh, shape):
 	'''
 	a = ellipseParams['a']
 	b = ellipseParams['b']
-	## this should be negative because we are using negative convention in viewer
-	alpha = -ellipseParams['alpha']
-
 	maxradius = max(a,b)
 	numpoints = int(math.ceil(6.28*maxradius))
 
-	ellipseRange = numpy.zeros(shape, dtype=numpy.float64)
-
 	center = numpy.array(shape, dtype=numpy.float64)/2.0
+	## ellip angle is positive toward y-axis
+	alpha = ellipseParams['alpha']
+
 	points = ellipse.generate_ellipse(a, b, alpha, center=center, numpoints=numpoints, integers=True)
+	#prepoints = ellipse.ellipsePoints(math.radians(1.0), center, a, b, alpha)
+	#points = numpy.array(prepoints, dtype=numpy.int16)
 
 	#remove negative coordinates, off screen
 	if points.min() < 0:
@@ -295,7 +303,8 @@ def generateEllipseRangeMap2(ellipseParams, ellipseThresh, shape):
 		belowedge = numpy.where(maxs < min(shape)-1)
 		points = points[belowedge]
 
-	ellipseRange[points[:,0],points[:,1]] = 1.0
+	ellipseRange = numpy.zeros(shape, dtype=numpy.float64)
+	ellipseRange[points[:,1],points[:,0]] = 1.0
 	ellipseRange = filters.maximum_filter(ellipseRange, size=ellipseThresh)
 	ellipseRange2 = filters.maximum_filter(ellipseRange, size=ellipseThresh*2)
 	ellipseRange = ellipseRange + ellipseRange2*0.1
@@ -308,6 +317,7 @@ def generateEllipseRangeMap(ellipseParams, ellipseThresh, shape):
 	make an elliptical ring of width ellipseThresh based on ellipseParams
 	"""
 	raise DeprecationWarning
+	## ellip angle is positive toward y-axis
 	largeEllipse = drawFilledEllipse(shape, ellipseParams['a']+ellipseThresh, 
 		ellipseParams['b']+ellipseThresh, ellipseParams['alpha'])
 	smallEllipse = drawFilledEllipse(shape, ellipseParams['a']-ellipseThresh, 
@@ -326,7 +336,8 @@ def drawFilledEllipse(shape, a, b, alpha):
 	raise DeprecationWarning
 	ellipratio = a/float(b)
 	### this step is TOO SLOW
-	radial = ctftools.getEllipticalDistanceArray(ellipratio, -math.degrees(alpha), shape)
+	## ellip angle is positive toward y-axis
+	radial = ctftools.getEllipticalDistanceArray(ellipratio, math.degrees(alpha), shape)
 	meanradius = math.sqrt(a*b)
 	filledEllipse = numpy.where(radial > meanradius, False, True)
 	return filledEllipse
