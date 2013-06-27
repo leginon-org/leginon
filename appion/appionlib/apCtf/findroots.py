@@ -4,12 +4,8 @@ import time
 import math
 import numpy
 import random
+from scipy import stats
 from scipy import ndimage
-
-
-
-
-
 
 class FindRoots(object):
 	#==================
@@ -97,9 +93,46 @@ class FindRoots(object):
 			zvalues.append(zs[0])
 			print zs[0]
 
+		zvalues = numpy.array(zvalues)
+		xtemp = numpy.arange(zvalues.shape[0])
+		rho = self.getLinearRho(xtemp, zvalues)
+		if rho > 0.5:
+			types += 4
+		elif rho < -0.5:
+			types -= 4
+
+		zvalues = []
+		for i in range(len(newx)):
+			zs = self.getDefocus(newx[i]*1e10, types[i])
+			if isinstance(zs, int):
+				continue
+			zvalues.append(zs[0])
+			print zs[0]
+
+		zvalues = numpy.array(zvalues)
+		xtemp = numpy.arange(zvalues.shape[0])
+		rho = self.getLinearRho(xtemp, zvalues)
+
 		bestdef = numpy.median(zvalues)
 		print "bestDef=", bestdef
 		return bestdef
+
+	#==================
+	#==================
+	def getLinearRho(self, x, y):
+		slope, intercept, rho, _, _ = stats.linregress(x,y)
+		print "slope=", slope, "rho=", rho
+		return rho
+
+	#==================
+	#==================
+	def getNormRunningSum(self, x, y):
+		cumsumy = numpy.cumsum(y)
+		slope, intercept, _, _, _ = stats.linregress(x,cumsumy)
+		fity = slope*x + intercept
+		cumsumy = cumsumy-fity
+		cumsumy /= numpy.abs(cumsumy).max()
+		return cumsumy
 
 	#==================
 	#==================
@@ -124,11 +157,13 @@ class FindRoots(object):
 
 	#==================
 	#==================
-	def getZeros(self, a):
+	def getZeros(self, a, b):
+		print a.shape
+		print b.shape
 		signs = numpy.sign(a)
-		diff = numpy.diff(signs)
-		b = numpy.where(diff > 0)
-		c = numpy.where(diff < 0)
+		diff = numpy.ediff1d(signs, to_end=0)
+		b = numpy.where(numpy.logical_and(diff > 0, b < 0))
+		c = numpy.where(numpy.logical_and(diff < 0, b > 0))
 		print b, c
 		return b, c
 
@@ -140,11 +175,14 @@ def estimateDefocus(xdata, ydata, cs=2e-3, wavelength=3.35e-12,
 	xdata in inverse Angstroms
 	"""
 	fcls = FindRoots(cs, wavelength, amp_con, mindef, maxdef)
+	xdatasq = xdata**2
 
-	ups,downs = fcls.getZeros(ydata)
-
-	diffy = ndimage.filters.median_filter(numpy.diff(ydata), size=3)
-	mins,maxs = fcls.getZeros(diffy)
+	cumsumy = fcls.getNormRunningSum(xdatasq, ydata)
+	ups,downs = fcls.getZeros(ydata, cumsumy)
+	diffy = numpy.ediff1d(ydata, to_begin=0)
+	diffy = ndimage.filters.gaussian_filter(diffy, sigma=1)
+	diffy /= numpy.abs(diffy).max()
+	mins,maxs = fcls.getZeros(diffy, ydata)
 
 	xups = xdata[ups]
 	xmaxs = xdata[maxs]
@@ -171,14 +209,15 @@ def estimateDefocus(xdata, ydata, cs=2e-3, wavelength=3.35e-12,
 	
 	defocus = fcls.findPath(xzeros[args], xzerostype[args])
 
+
 	return defocus
 
 #==================
 #==================	
 if __name__ == "__main__" :
 	from matplotlib import pyplot
-	#filename = "ctfroots.dat"
-	filename = "interact1-profile.dat"
+	filename = "ctfroots.dat"
+	#filename = "interact1-profile.dat"
 	f = open (filename, "r")
 	xdata = []
 	ydata = []
@@ -189,30 +228,37 @@ if __name__ == "__main__" :
 		if len(bits)<2:
 			continue
 		count += 1
+		if count < 50:
+			continue
 		x = float(bits[0])
 		xdata.append(x)
 		y = float(bits[1])
 		ydata.append(y)
-		#if count >100:
+
+		#if count >200:
 		#	break
 		if x > 0.125e10:
 			break
 	#print xdata
 	f.close()
-	xdata = numpy.array(xdata)/1e10
+	xdata = numpy.array(xdata) #/1e10
 	ydata = numpy.array(ydata)
-	if ydata.min() > 0.1:
+	if ydata.min() > -0.1:
 		ydata = ydata - 0.5
+	ydata /= numpy.abs(ydata).max()
 	xdatasq = xdata**2
 
 	t0=time.time()
 
-	fcls = FindRoots(cs, wavelength, amp_con, mindef, maxdef)
+	fcls = FindRoots()
 
 	zvalues = []
-	ups,downs = fcls.getZeros(ydata)
-	diffy = ndimage.filters.median_filter(numpy.diff(ydata), size=3)
-	mins,maxs = fcls.getZeros(diffy)
+	cumsumy = fcls.getNormRunningSum(xdatasq, ydata)
+	ups,downs = fcls.getZeros(ydata, cumsumy)
+	diffy = numpy.ediff1d(ydata, to_begin=0)
+	diffy = ndimage.filters.gaussian_filter(diffy, sigma=1)
+	diffy /= numpy.abs(diffy).max()
+	mins,maxs = fcls.getZeros(diffy, ydata)
 
 	xups = xdata[ups]
 	xmaxs = xdata[maxs]
@@ -220,11 +266,15 @@ if __name__ == "__main__" :
 	xmins = xdata[mins]
 
 	pyplot.plot (xdatasq,ydata, color="darkgreen", linewidth=2)
+	#pyplot.plot (xdatasq,cumsumy, color="darkblue", linewidth=2)
+	#pyplot.plot (xdatasq,diffy, color="darkred", linewidth=2)
+
 	pyplot.hlines(0, 0, xdatasq[-1], color="black")
-	pyplot.vlines(xups**2, -1, 1, color="red")
-	pyplot.vlines(xmaxs**2, -1, 1, color="blue")
-	pyplot.vlines(xdowns**2, -1, 1, color="orange")
-	pyplot.vlines(xmins**2, -1, 1, color="violet")
+	if len(xups) > 0:
+		pyplot.vlines(xups**2, -1, 1, color="red")
+		pyplot.vlines(xmaxs**2, -1, 1, color="blue")
+		pyplot.vlines(xdowns**2, -1, 1, color="orange")
+		pyplot.vlines(xmins**2, -1, 1, color="violet")
 	pyplot.show()
 
 	xzeros = numpy.hstack([xups, xmaxs, xdowns, xmins])
