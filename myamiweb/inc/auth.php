@@ -445,27 +445,31 @@ class authlib{
 		if (empty($password) && $username!='Anonymous')
 			return $this->error['fields_empty'];
 
-		if($username != 'Anonymous'){
-			$this->filter_username($username);
+		$this->filter_username($username);
 
-			$this->filter_password($password);
+		$this->filter_password($password);
 
-			$dbc=new mysql(DB_HOST, DB_USER, DB_PASS, DB_LEGINON);
+		$dbc=new mysql(DB_HOST, DB_USER, DB_PASS, DB_LEGINON);
 
-			if (!get_magic_quotes_gpc()) {
-				$password=addslashes($password);
-				$username=addslashes($username);
-			}
-			$password = md5($password);
-			$q="select DEF_id, DEF_timestamp from UserData where username = '$username' and password = '$password'";
-
-			$query=$dbc->SQLQuery($q);
-			$result = @mysql_num_rows($query);
-		
-			if ($result != 1) {
-				return false;
-			}
+		if (!get_magic_quotes_gpc()) {
+			$password=addslashes($password);
+			$username=addslashes($username);
 		}
+		$password = md5($password);
+		if($username == 'Anonymous'){
+			$q="select DEF_id, DEF_timestamp from UserData where username = 'Anonymous'";
+		}
+		else{
+			$q="select DEF_id, DEF_timestamp from UserData where username = '$username' and password = '$password'";
+		}
+		
+		$query=$dbc->SQLQuery($q);
+		$result = @mysql_num_rows($query);
+	
+		if ($result != 1) {
+			return false;
+		}
+		
 		//The part from the database
 		list ($id,$timestamp) = mysql_fetch_row($query);
 		//The part from configuration
