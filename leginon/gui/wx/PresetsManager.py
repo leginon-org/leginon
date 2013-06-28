@@ -1559,6 +1559,8 @@ class ImportDialog(wx.Dialog):
 		self.sessiondict = OrderedDict()
 		badsessions = []
 		for p in presets:
+			if p['session'] is None:
+				continue
 			sname = p['session']['name']
 			# reduce sessions to check for multiple TEM used in most recent preset
 			if sname not in self.sessiondict.keys() and sname not in badsessions:
