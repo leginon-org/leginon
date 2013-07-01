@@ -548,11 +548,11 @@ var help = {
 		'bin' : 'Binning of the image.  This takes any integer value, but powers of 2 are recommended. Binning quickly shrinks the image to help make the processing faster.',
 	},		
 	'em_hole_finder' : {
-		'downsample' : 'Reduces the image size prior to processing.',
-		'compsizethresh' : 'Component size thresholding',
-		'adapthresh' : 'Adaptive thresholding factor',
-		'blur' : 'Blur window size',
-		'dilation' : 'Dilation factor',
-		'erosion' : 'Erosion factor',
+		'downsample' : 'The amount the image is down sampled before being process for masking. This is done to increase the speed of the algorithm.',
+		'compsizethresh' : 'The size of the smallest component that is considered by the algorithm.',
+		'adapthresh' : 'The size of the window that is used to threshold each pixel. Each pixel is compared to the distribution of pixels in its window.',
+		'blur' : 'The size of the window for the blur function.',
+		'dilation' : 'The amount the masked area is dilated to make the algorithm more conservative.',
+		'erosion' : 'The amount the thresholded areas are eroded to break small bridges between separate components.',
 	}		
 }
