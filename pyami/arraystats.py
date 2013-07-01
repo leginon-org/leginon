@@ -9,6 +9,7 @@ then you must specify force=True.
 '''
 
 import weakattr
+import numpy
 
 debug = False
 def dprint(s):
