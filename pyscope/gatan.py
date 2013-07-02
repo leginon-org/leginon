@@ -40,7 +40,7 @@ def get_tecnaiccd():
 
 class Gatan(ccdcamera.CCDCamera):
 	name = 'Gatan'
-	cameraid = 0
+	cameraid = None
 	def __init__(self):
 		self.unsupported = []
 		ccdcamera.CCDCamera.__init__(self)
@@ -83,7 +83,8 @@ class Gatan(ccdcamera.CCDCamera):
 		# When asked for self.camera, instead return self._camera, but only
 		# after setting the current camera id
 		if name == 'camera':
-			self._camera.CurrentCamera = self.cameraid
+			if self.cameraid is not None:
+				self._camera.CurrentCamera = self.cameraid
 			return self._camera
 		else:
 			return ccdcamera.CCDCamera.__getattr__(self, name)
@@ -178,7 +179,11 @@ class Gatan(ccdcamera.CCDCamera):
 		return self.calculated_camerasize
 
 	def getPixelSize(self):
-		x, y = self.camera.GetCCDPixelSize(self.cameraid)
+		if self.cameraid is None:
+			camid = 0
+		else:
+			camid = self.cameraid
+		x, y = self.camera.GetCCDPixelSize(camid)
 		return {'x': x, 'y': y}
 
 	def getAcquiring(self):
