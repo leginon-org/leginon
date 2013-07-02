@@ -46,10 +46,10 @@ def run_timing():
 		shape = int(sys.argv[2]), int(sys.argv[3])
 	except:
 		print '''
-  usage:   %s N shape0 shape1' % (sys.argv[0],)
+  usage:   %s N shape0 shape1
     N - number of iterations to test
     shape0,shape1 - the shape of the array to test
-		'''
+		''' % (sys.argv[0],)
 		sys.exit()
 	pyami.fft.calc_fftw3.load_wisdom()
 
