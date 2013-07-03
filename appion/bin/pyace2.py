@@ -71,7 +71,7 @@ class Ace2Loop(appionLoop2.AppionLoop):
 		if self.params['reprocess'] is None:
 			return True
 
-		ctfvalue = ctfdb.getBestCtfByResolution(imgdata, msg=False, method="ace2")
+		ctfvalue = ctfdb.getBestCtfByResolution(imgdata, msg=False)
 
 		if ctfvalue is None:
 			return True
@@ -85,7 +85,7 @@ class Ace2Loop(appionLoop2.AppionLoop):
 	#======================
 	def processImage(self, imgdata):
 		self.ctfvalues = {}
-		bestdef  = ctfdb.getBestCtfByResolution(imgdata, msg=True, method="ace2")
+		bestdef  = ctfdb.getBestCtfByResolution(imgdata, msg=True)
 		apix = apDatabase.getPixelSize(imgdata)
 		if (not (self.params['onepass'] and self.params['zeropass'])):
 			maskhighpass = False
