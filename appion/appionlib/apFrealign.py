@@ -15,6 +15,7 @@ from appionlib import apDefocalPairs
 from appionlib import apRecon
 from appionlib import apDatabase
 from appionlib import apEulerCalc
+from appionlib import apParam
 
 #=====================
 def parseFrealignParamFile(paramfile):
@@ -880,5 +881,41 @@ def exclude_class_from_frealign9_parfile(inparfile, outlist, minocc=50.0, freali
 	for p in partlist:
 		of.write("%d\n" % p)
 	of.close()
+	
+def exclude_classes_from_frealign9_parfiles(inparfilebase, outlist, minocc, *classlist):
+	'''
+	inparfilebase is the base name of the parameter file, w/ iteration number, but w/o class number
+	e.g. for parameter file input_20_r1.par, inparfilebase is input_20
+	
+	classlist refers to a list with class numbers (starting with 1), e.g. [0,1,4]
 
-
+	outlist is a list containing the particle numbers within the relevant classes (starts with 0)
+	'''
+	
+	if minocc < 50:
+		apDisplay.printWarning("minimum occupancy is < 50% ... are you sure you want to include these particles?")	
+	
+	combined = []
+	outbase = apParam.randomString(10)
+	for i in classlist:
+		parfile = "%s_r%d.par" % (inparfilebase, i)
+		exclude_class_from_frealign9_parfile(parfile, "%s_%d.lst" % (outbase,i), minocc=minocc)
+		f = open("%s_%d.lst" % (outbase,i), "r")
+		lines = f.readlines()
+		f.close()
+		os.remove("%s_%d.lst" % (outbase,i))
+		stripped = [int(l.strip()) for l in lines]
+		combined.extend(stripped)
+	combined.sort()
+	
+	### check for duplicates
+	last = -1
+	for i in reversed(range(0,len(combined))):
+		if combined[i] == combined[i-1]:
+			tmp = combined.pop(i)
+	### write to file
+	outlistf = open(outlist, "w")
+	for i in combined:
+		outlistf.write("%d\n" %i)
+	outlistf.close()
+	
