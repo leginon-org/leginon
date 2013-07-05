@@ -56,6 +56,11 @@ class CatchUpFrameAlignmentLoop(appionScript.AppionScript):
 			self.params['sessionname'] = leginondata.SessionData().direct_query(self.params['expid'])['name']
 		self.dd = apDDprocess.initializeDDFrameprocess(self.params['sessionname'],self.params['wait'])
 		self.dd.setRunDir(self.params['rundir'])
+		# The gain/dark corrected ddstack is unlikely to be on local disk
+		if 'tempdir' not in self.params.keys():
+			self.dd.setTempDir()
+		else:
+			self.dd.setTempDir(self.params['tempdir'])
 		self.dd.setNewBinning(self.rundata['params']['bin'])
 		# Give an unique lockname
 		self.setLockname('ddalign')
