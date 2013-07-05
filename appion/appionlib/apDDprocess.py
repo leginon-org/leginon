@@ -95,7 +95,7 @@ class DirectDetectorProcessing(object):
 		else:
 			return self.framestackpath	
 		
-	def setTempDir(self,tempdir):
+	def setTempDir(self,tempdir=None):
 		'''
 		This is the rundir for ddstack
 		'''
