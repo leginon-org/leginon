@@ -637,11 +637,7 @@ class RCTAcquisition(acquisition.Acquisition):
 		self.instrument.tem.StagePosition = {'a': this_tilt}
 		self.logger.info('Stage Tilted to %.1f degrees' % this_tilt_degrees)
 		self.tilttest_cycle += 1
-		im = self.acquireImage()
+		im = self.testAcquire()
 		if orig_tilt != this_tilt:
 			self.instrument.tem.StagePosition = {'a': orig_tilt}
 			self.logger.info('Tilt Stage back to %.1f degrees' % degrees(orig_tilt))
-		if im is None:
-			return
-		im = numpy.asarray(im, dtype=numpy.float32)
-		self.setImage(im)
