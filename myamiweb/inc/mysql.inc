@@ -453,6 +453,14 @@ class mysql {
 		return $fields;
 	}
 
+	function FieldExists($table,$fieldname) {
+		$has_field = false;
+		$fields = $this->getFields($table);
+		if (empty($fields)) return $has_field;
+		if (in_array($fieldname,$fields)) $has_field=true;
+		return $has_field;
+	}
+
 	function getTableDescription($table) {
 		$fields = array();
 		if ($table && $this->SQLTableExists($table)) {

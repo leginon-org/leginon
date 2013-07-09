@@ -463,7 +463,7 @@ class particledata {
 			."t.`REF|ApTomoAlignerParamsData|aligner` as aligner, "
 			."t.`REF|leginondata|AcquisitionImageData|zprojection` as zproj_id, "
 			." t.`hidden` ";
-		if ($has_run)
+		if ($has_run && $this->mysql->FieldExists('ApFullTomogramRunData','SEQ|excluded'))
 			$q .= ", r.`SEQ|excluded` as 'excluded imageIds' ";
 		$q .= "FROM `ApFullTomogramData` t ";
 		if ($has_run) {
