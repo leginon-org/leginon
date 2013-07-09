@@ -1,11 +1,13 @@
 #!/usr/bin/env python
 
+import sys
 import time
 import math
 import numpy
 import random
 from scipy import stats
 from scipy import ndimage
+from appionlib import apDisplay
 
 class FindRoots(object):
 	#==================
@@ -40,13 +42,16 @@ class FindRoots(object):
 
 	#==================
 	#==================
-	def findPath(self, x, types):
-		#print ""
-		xsq = x**2
+	def removeFalsePostives(self, xsq, types):
+		"""
+		false positives that are too close together
+
+		should incorporate information on type
+		could choose n or n+1 to see which is better to remove or average them
+		"""
 		d = numpy.diff(xsq)
-		#print xsq
-		#print d.std()
 		lastdstd = 2*d.std()
+		count = 0
 		while lastdstd > d.std():
 			lastdstd = d.std()
 			lastxsq = xsq
@@ -54,67 +59,143 @@ class FindRoots(object):
 			n = numpy.argmin(d)
 			xsq = numpy.delete(xsq, n)
 			types = numpy.delete(types, n)
-			#xsq = numpy.concatenate([xsq[:n], xsq[n+1:]])
-			#types = numpy.concatenate([types[:n], types[n+1:]])
 			d = numpy.diff(xsq)
-			#print xsq
-			#print d.std()
+			count += 1
 		xsq = lastxsq
 		types = lasttypes
-		#print xsq
-		#print types
-		#newtypes = []
+		apDisplay.printMsg("removed %d false positive to find roots"%(count-1))
+		return xsq, types
+
+	#==================
+	#==================
+	def findPath(self, x, types):
+		#print ""
+
+		xsq = x**2
+		xsq, types = self.removeFalsePostives(xsq, types)
+
+		## group peaks together
 		for i in range(len(types)-1):
 			if types[i] > types[i+1]:
 				types[i+1:] += 4
-		#print types
 
-		"""
-		d = numpy.diff(xsq)/(numpy.diff(types) + 0.1)
-		lastdstd = 2*d.std()
-		while lastdstd > d.std():
-			lastdstd = d.std()
-			lastxsq = xsq
+		rho = 2
+		count = 0
+		lasttypes = types
+		while abs(rho) > 0.7 and count < 10:
+			count += 1
+			zvalues = self.getDefocus(xsq*1e20, types)
+			if zvalues is None:
+				types = lasttypes
+				zvalues = self.getDefocus(xsq*1e20, types)
+				break
+
+			apDisplay.printColor("defocus estimate %d: %.3f um +/- %.3f"
+				%(count, zvalues.mean()*1e6, zvalues.std()*1e6), "magenta")
+
+			xtemp = numpy.arange(zvalues.shape[0])
+			rho = self.getLinearRho(xtemp, zvalues)
 			lasttypes = types
-			n = numpy.argmin(d)
-			xsq = numpy.concatenate([xsq[:n], xsq[n+1:]])
-			types = numpy.concatenate([types[:n], types[n+1:]])
-			d = numpy.diff(xsq)/numpy.diff(types)
-			print xsq
-			print d.std()
-		"""
-
-		newx = numpy.sqrt(xsq)
-		zvalues = []
-		for i in range(len(newx)):
-			zs = self.getDefocus(newx[i]*1e10, types[i])
-			if isinstance(zs, int):
-				continue
-			zvalues.append(zs[0])
-			print zs[0]
-
-		zvalues = numpy.array(zvalues)
-		xtemp = numpy.arange(zvalues.shape[0])
-		rho = self.getLinearRho(xtemp, zvalues)
-		if rho > 0.5:
-			types += 4
-		elif rho < -0.5:
-			types -= 4
-
-		zvalues = []
-		for i in range(len(newx)):
-			zs = self.getDefocus(newx[i]*1e10, types[i])
-			if isinstance(zs, int):
-				continue
-			zvalues.append(zs[0])
-			print zs[0]
-
-		zvalues = numpy.array(zvalues)
-		xtemp = numpy.arange(zvalues.shape[0])
-		rho = self.getLinearRho(xtemp, zvalues)
+			if rho > 0.7:
+				types += 4
+			elif rho < -0.7:
+				types -= 4
 
 		bestdef = numpy.median(zvalues)
-		print "bestDef=", bestdef
+		print "best defocus=", bestdef
+		return bestdef
+
+	#==================
+	#==================
+	def findPathDiffs(self, x, types):
+		#print ""
+
+		xsq = x**2 * 1e10**2
+		xsq, types = self.removeFalsePostives(xsq, types)
+
+		## group peaks together
+		for i in range(len(types)-1):
+			if types[i] > types[i+1]:
+				types[i+1:] += 4
+
+		cs = self.cs
+		wv = self.wavelength
+		phi = math.asin(self.amp_con)
+
+		defocii = []
+		for i in range(len(xsq)-2):
+			#sin(a x^2) = 0, +1, -1 --> a x^2 = n pi/4
+			#a x_n^2 - a x_(n+1)^2 = pi/4
+			# with Cs
+			#sin(a x^2 + b x^4 + phi) = 0, +1, -1 --> a x^2 + b x^4 = n pi/4
+			#a x_n^2 + b x_n^4 + phi - a x_(n+1)^2 + b x_(n+1)^4 - phi = pi/4
+			# amp contrast cancels out!
+			#a (x_n^2 - x_(n+1)^2) + b (x_n^4 - x_(n+1)^4) = pi/4
+			#a (x_n^2 - x_(n+1)^2) = [pi + 4 b (x_n^4 - x_(n+1)^4)]/4
+			#a = [pi + 4 b (x_n^4 - x_(n+1)^4)]/ [ 4 (x_n^2 - x_(n+1)^2) ]
+			# anumer = pi + 4 b (x_n^4 - x_(n+1)^4)
+			# adenom = 4 (x_n^2 - x_(n+1)^2)
+
+			# case 1: only consecutive peaks are valid
+			if types[i+1] - types[i] == 1:
+				xsq1 = xsq[i+1]
+				xsq2 = xsq[i]
+				anumer = math.pi + 2 * math.pi * wv**3 * ( xsq1**2 - xsq2**2 )
+				adenom = 4 * ( xsq1 - xsq2 )
+				a = anumer/adenom
+				# a = pi * wv * def
+				defocus = a / (math.pi * wv)
+				if defocus > self.mindef and defocus < self.maxdef:
+					print defocus
+					defocii.append(defocus)
+
+			#sin(a x^2) = 0, +1, -1 --> a x^2 = n pi/4
+			#a x_n^2 - a x_(n+2)^2 = pi/2
+			# with Cs
+			#sin(a x^2 + b x^4 + phi) = 0, +1, -1 --> a x^2 + b x^4 = n pi/2
+			#a x_n^2 + b x_n^4 + phi - a x_(n+2)^2 + b x_(n+2)^4 - phi = pi/2
+			# amp contrast cancels out!
+			#a (x_n^2 - x_(n+2)^2) + b (x_n^4 - x_(n+2)^4) = pi/2
+			#a (x_n^2 - x_(n+2)^2) = [pi + 2 b (x_n^4 - x_(n+2)^4)]/2
+			#a = [pi + 2 b (x_n^4 - x_(n+2)^4)]/ [ 2 (x_n^2 - x_(n+2)^2) ]
+			# anumer = pi + 2 b (x_n^4 - x_(n+2)^4)
+			# adenom = 2 (x_n^2 - x_(n+2)^2)
+
+			# case 2: only consecutive peaks are valid
+			if types[i+1] - types[i] == 2:
+				xsq1 = xsq[i+1]
+				xsq2 = xsq[i]
+				anumer = math.pi + math.pi * wv**3 * ( xsq1**2 - xsq2**2 )
+				adenom = 2 * ( xsq1 - xsq2 )
+				a = anumer/adenom
+				# a = pi * wv * def
+				defocus = a / (math.pi * wv)
+				if defocus > self.mindef and defocus < self.maxdef:
+					print defocus
+					defocii.append(defocus)
+			if types[i+2] - types[i] == 2:
+				xsq1 = xsq[i+2]
+				xsq2 = xsq[i]
+				anumer = math.pi + math.pi * wv**3 * ( xsq1**2 - xsq2**2 )
+				adenom = 2 * ( xsq1 - xsq2 )
+				a = anumer/adenom
+				# a = pi * wv * def
+				defocus = a / (math.pi * wv)
+				if defocus > self.mindef and defocus < self.maxdef:
+					print defocus
+					defocii.append(defocus)
+
+		print defocii
+
+		defocii = numpy.array(defocii)
+		bestdef = numpy.median(defocii)
+		print "best defocus= %.3e +- %.1e"%(bestdef, defocii.std())
+		## filter outliers:
+		defocii = defocii[numpy.where(defocii > bestdef - 2*defocii.std())]
+		defocii = defocii[numpy.where(defocii < bestdef + 2*defocii.std())]
+		bestdef = numpy.median(defocii)
+		print "best defocus= %.3e +- %.1e"%(bestdef, defocii.std())
+		#sys.exit(1)
 		return bestdef
 
 	#==================
@@ -136,23 +217,19 @@ class FindRoots(object):
 
 	#==================
 	#==================
-	def getDefocus(self, s, n=1, num=0):
-		nvalues = numpy.arange(n-4*num, n+4*num+1, 4)
-		nvalues = nvalues[numpy.where(nvalues > 0)]
+	def getDefocus(self, xsq, nvalues):
 
 		cs = self.cs
 		wv = self.wavelength
 		phi = math.asin(self.amp_con)
 
-		numer = nvalues * math.pi + 2 * math.pi * cs * wv**3 * s**4 - 4 * phi
-		denom = 4 * math.pi * wv * s**2
+		numer = nvalues * math.pi + 2 * math.pi * cs * wv**3 * xsq**2 - 4 * phi
+		denom = 4 * math.pi * wv * xsq
 		zvalues = numer/denom
 		zvalues = zvalues[numpy.where(zvalues > self.mindef)]
-		if len(zvalues) == 0:
-			return +1
 		zvalues = zvalues[numpy.where(zvalues < self.maxdef)]
 		if len(zvalues) == 0:
-			return -1
+			return None
 		return zvalues
 
 	#==================
@@ -207,8 +284,7 @@ def estimateDefocus(xdata, ydata, cs=2e-3, wavelength=3.35e-12,
 		
 	args = numpy.argsort(xzeros)
 	
-	defocus = fcls.findPath(xzeros[args], xzerostype[args])
-
+	defocus = fcls.findPathDiffs(xzeros[args], xzerostype[args])
 
 	return defocus
 
@@ -266,8 +342,8 @@ if __name__ == "__main__" :
 	xmins = xdata[mins]
 
 	pyplot.plot (xdatasq,ydata, color="darkgreen", linewidth=2)
-	#pyplot.plot (xdatasq,cumsumy, color="darkblue", linewidth=2)
-	#pyplot.plot (xdatasq,diffy, color="darkred", linewidth=2)
+	pyplot.plot (xdatasq,cumsumy, color="darkblue", linewidth=2)
+	pyplot.plot (xdatasq,diffy, color="darkred", linewidth=2)
 
 	pyplot.hlines(0, 0, xdatasq[-1], color="black")
 	if len(xups) > 0:
@@ -294,9 +370,9 @@ if __name__ == "__main__" :
 
 	ac = fcls.autocorr(xzeros**2)
 
-	#pyplot.plot (xzeros**2, xzerostype, "x", color="darkgreen")
-	#pyplot.plot (ac, "x", color="darkgreen")
-	#pyplot.show()
+	pyplot.plot (xzeros**2, xzerostype, "x", color="darkgreen")
+	pyplot.plot (ac, "x", color="darkgreen")
+	pyplot.show()
 
 	fcls.findPath(xzeros[args], xzerostype[args])
 
