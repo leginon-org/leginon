@@ -13,13 +13,7 @@ from appionlib import apStackMeanPlot
 from appionlib.apTilt import apTiltPair
 from pyami import mem, mrc
 
-class rctVolumeScript(appionScript.AppionScript):
-	#=====================
-	def onInit(self):
-		self.rotmirrorcache = {}
-		self.fscresolution = None
-		self.rmeasureresolution = None
-
+class TiltPairStackScript(appionScript.AppionScript):
 	#=====================
 	def setupParserOptions(self):
 		self.parser.set_usage("Usage: %prog --known-stack=# --full-stack=# [options]")
@@ -116,8 +110,8 @@ class rctVolumeScript(appionScript.AppionScript):
 
 #=====================
 if __name__ == "__main__":
-	rctVolume = rctVolumeScript()
-	rctVolume.start()
-	rctVolume.close()
+	app = TiltPairStackScript()
+	app.start()
+	app.close()
 
 
