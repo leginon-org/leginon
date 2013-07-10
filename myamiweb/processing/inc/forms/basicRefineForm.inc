@@ -166,12 +166,18 @@ abstract class BasicRefineForm extends BasicForm
 				$recons = $this->particle->getReconIdsFromSession($s['id']);
 				if (is_array($recons)) {
 					foreach ($recons as $r) {
-						// limit the length of the description
-						$description = substr($r['description'], 0, 50);
-						$ropt.= "<option value='".$r['DEF_id']."'>";
-						$ropt.= $s['name']." : ";
-						$ropt.= $r['name']." - ".$description;
-						$ropt.= "</option>\n";
+						// Only include previous runs that were using the same method/package
+						// The database tends to store the package name as "EMAN", "Xmipp", "XmippML3D", or "Frealign",
+						// While the web page is using "emanrecon", "xmipprecon", etc. Would be good to standardize some day. 
+						$methodstring = $r['package']."recon";
+						if ( strcasecmp($r['package'], $this->method) === 0 || strcasecmp($methodstring, $this->method) === 0 ) {
+							// limit the length of the description
+							$description = substr($r['description'], 0, 50);
+							$ropt.= "<option value='".$r['DEF_id']."'>";
+							$ropt.= $s['name']." : ";
+							$ropt.= $r['name']." - ".$description;
+							$ropt.= "</option>\n";
+						}
 					}
 				}
 			}
