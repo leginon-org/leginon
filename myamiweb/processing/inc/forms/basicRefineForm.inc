@@ -216,6 +216,7 @@ abstract class BasicRefineForm extends BasicForm
 		// get import refine stack info
 		$refinfo 			= $this->particle->getRefinementRunInfo( $defaultSetId );
 		$importStackInfo 	= $this->particle->getStackParams($refinfo['REF|ApStackData|stack']);
+		$import_apix 		= $importStackInfo['pixelsize'] / 1e-10;
 		
 		// get our stack info
 		$stackInfo 	= $this->getStackInfo();
@@ -234,14 +235,14 @@ abstract class BasicRefineForm extends BasicForm
 		// add each iteration value to our forms parameters
 		for ( $i = 1; $i <= $endIter; $i++ ) {
 			foreach ($iterinfo as $iter) {
-				if ($iter['iteration'] == $i) {	
+				if ($iter['iteration'] == $i) {
 					// The masks are stored as pixels in the database, so when importing from a prior run,
 					// we need to multiply the original stack apix by the recorded mask pixel to get the angstroms				
-					$outerMaskRadius = ceil($iter['mask']*$parent_apix);
+					$outerMaskRadius = ceil($iter['mask']*$import_apix);
 					$paramSet->addIterationToValue( "outerMaskRadius", $outerMaskRadius ); // in angstroms
 					
-					if (floor($iter['imask']*$parent_apix) > 0)
-						$paramSet->addIterationToValue( "innerMaskRadius", floor($iter['imask']*$parent_apix) ); // in angstroms
+					if (floor($iter['imask']*$import_apix) > 0)
+						$paramSet->addIterationToValue( "innerMaskRadius", floor($iter['imask']*$import_apix) ); // in angstroms
 						
 					$this->addImportedRefineIter( $paramSet, $iter );
 						
