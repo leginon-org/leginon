@@ -162,6 +162,20 @@ def getStackParticle(stackid, partnum, nodie=False):
 	return stackparticledata[0]
 
 #===============
+def getStackParticleFromData(stackid, partdata, nodie=False):
+	stackparticleq = appiondata.ApStackParticleData()
+	stackparticleq['stack'] = appiondata.ApStackData.direct_query(stackid)
+	stackparticleq['particle'] = partdata
+	stackparticledata = stackparticleq.query()
+	if not stackparticledata:
+		if nodie is True:
+			return
+		apDisplay.printError("partid="+str(partdata.dbid)+" was not found in stackid="+str(stackid))
+	if len(stackparticledata) > 1:
+		apDisplay.printError("There's a problem with this stack. More than one particle with the same particledata.")
+	return stackparticledata[0]
+
+#===============
 def getRunsInStack(stackid):
 	stackdata = appiondata.ApStackData.direct_query(stackid)
 	runsinstackq = appiondata.ApRunsInStackData()
