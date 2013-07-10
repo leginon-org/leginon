@@ -81,7 +81,7 @@ function createForm($extra=false) {
   $defrunname = ($_POST['runname']) ? $_POST['runname'] : 'phasor'.($lastrunnumber+1);
   $binval = ($_POST['binval']) ? $_POST['binval'] : 2;
   $confcheck = ($_POST['confcheck']== 'on') ? 'CHECKED' : '';
-  $reprocess = ($_POST['reprocess']) ? $_POST['reprocess'] : 0.8;
+  $reprocess = ($_POST['reprocess']) ? $_POST['reprocess'] : 10;
   $reslimit = ($_POST['reslimit']) ? $_POST['reslimit'] : 6;
   $maxdef = ($_POST['maxdef']) ? $_POST['maxdef'] : 7;
   $mindef = ($_POST['mindef']) ? $_POST['mindef'] : 0.5;
@@ -97,35 +97,41 @@ function createForm($extra=false) {
 	  </TD>
 	  <TD CLASS='tablebg' valign='top'>\n";
 
-	echo "<INPUT TYPE='checkbox' NAME='confcheck' onclick='enableconf(this)' $confcheck >\n";
-	echo "Reprocess Below Confidence Value<br />\n";
-	if ($confcheck == 'CHECKED') {
-		echo "Set Value:<input type='text' name='reprocess' value=$reprocess size='4'>\n";
-	} else {
-		echo "Set Value:<input type='text' name='reprocess' disabled value=$reprocess size='4'>\n";
-	}
-	echo "<font size='-2'><i>(between 0.0 - 1.0)</i></font>\n";
-	echo "<br/><br/>\n";
-
 	echo "<b>Sample type:</b>\n";
 	echo "<br />\n";
-	echo "<INPUT TYPE='radio' NAME='sample' SIZE='4'>\n";
-	echo "Carbon<br />\n";
-	echo "<INPUT TYPE='radio' NAME='sample' SIZE='4'>\n";
-	echo "Ice\n";
+	echo "<INPUT TYPE='radio' NAME='sample' VALUE='stain' SIZE='3'>\n";
+	echo "Carbon stain<br />\n";
+	echo "<INPUT TYPE='radio' NAME='sample' VALUE='ice' SIZE='3'>\n";
+	echo "Virteous ice\n";
 	echo "<br/><br/>\n";
 
+	echo "<INPUT TYPE='checkbox' NAME='astig' >\n";
+	echo "Estimate astigmatism\n";
+	echo "<br/>\n";
+	echo "Resolution search cutoff: ";
+	echo "<input type='text' name='reslimit' value=$reslimit size='2'> &Aring;<br/>\n";
+	echo "<br/><br/>\n";
 
-	echo "Resolution cutoff: <input type='text' name='reslimit' value=$reslimit size='4'> &Aring;ngstroms<br/>\n";
-	echo "Max defocus: <input type='text' name='maxdef' value=$maxdef size='4'> microns<br/>\n";
-	echo "Min defocus: <input type='text' name='mindef' value=$mindef size='4'> microns<br/>\n";
+	echo "<b>Defocus limits:</b>\n";
+	echo "<br />\n";
+	echo "Max defocus: <input type='text' name='maxdef' value=$maxdef size='3'> microns<br/>\n";
+	echo "Min defocus: <input type='text' name='mindef' value=$mindef size='3'> microns<br/>\n";
+	echo "<br/><br/>\n";
+
+	echo "<INPUT TYPE='checkbox' NAME='confcheck' onclick='enableconf(this)' $confcheck >\n";
+	echo "Reprocess Above Resolution Value<br />\n";
+	echo "&nbsp;&nbsp;Set Value:&nbsp;<input type='text' name='reprocess' ";
+	if ($confcheck != 'CHECKED')
+		echo "disabled";
+	echo " value=$reprocess size='2'> &Aring;\n";
+	echo "<br/><br/>\n";
 
 	echo"
 	  </TD>
 	</tr>
 	<TR>
 	  <TD COLSPAN='2' ALIGN='CENTER'>\n<hr />";
-	echo getSubmitForm("Run CTF", true, true);
+	echo getSubmitForm("Run CTF");
 	echo "
 	  </td>
 	</tr>
@@ -137,7 +143,7 @@ function createForm($extra=false) {
 /*
 **
 **
-** Ace 2 COMMAND
+** Phasor COMMAND
 **
 **
 */
@@ -153,14 +159,13 @@ function runProgram() {
 	$expId   = $_GET['expId'];
 	$outdir  = $_POST['outdir'];
 	$runname = $_POST['runname'];
-	// parse params
-	//$refine2d=$_POST['refine2d'];
-	$binval=$_POST['binval'];
 
+	$sample=$_POST['sample'];
+	$astig=$_POST['astig'];
 	$reslimit=trim($_POST['reslimit']);
 	$maxdef=trim($_POST['maxdef']);
 	$mindef=trim($_POST['mindef']);
-	$reprocess=$_POST['reprocess'];
+	$reprocess=trim($_POST['reprocess']);
 	
 	/* *******************
 	PART 2: Check for conflicts, if there is an error display the form again
@@ -170,17 +175,39 @@ function runProgram() {
 		createForm("Cs value of the images in this session is not unique or known, can't process");
 		exit;
 	}
+
 	// check the tilt situation
 	$particle = new particledata();
 	$maxang = $particle->getMaxTiltAngle($_GET['expId']);
 	if ($maxang > 5) {
 		$tiltangle = $_POST['tiltangle'];
 		if ($tiltangle!='notilt' && $tiltangle!='lowtilt') {
-			createForm("ACE 2 does not work on tilted images");
+			createForm("Phasor CTF does not work on tilted images");
 			exit;
 		}
 	}
-	
+
+	if (!$sample) {
+		createForm("Please select a sample type");
+		exit;
+	}
+
+	if (!$reslimit || !is_numeric($reslimit)) {
+		createForm("Please provide a valid res limit type ".$reslimit);
+		exit;
+	}
+
+	if (!$maxdef || !is_numeric($maxdef)) {
+		createForm("Please provide a valid maximum defocus ".$maxdef);
+		exit;
+	}
+
+	if (!$mindef || !is_numeric($mindef)) {
+		createForm("Please provide a valid minimum defocus ".$mindef);
+		exit;
+	}
+
+
 	/* *******************
 	PART 3: Create program command
 	******************** */
@@ -192,13 +219,16 @@ function runProgram() {
 		exit;
 	}
 	$command .= $apcommand;
-	if ($reslimit)
-		$command .= "--reslimit=$reslimit ";	
-	if ($maxdef)
-		$command .= "--maxdef=".($maxdef*1e-6)." ";
-	if ($mindef)
-		$command .= "--mindef=".($mindef*1e-6)." ";	
-	
+	$command .= "--sample=$sample ";	
+	if ($asitg == 'ON')
+		$command .= "--astig ";	
+	else
+		$command .= "--no-astig ";	
+	$command .= "--reslimit=$reslimit ";	
+	$command .= "--maxdef=".($maxdef*1e-6)." ";
+	$command .= "--mindef=".($mindef*1e-6)." ";
+
+
 	/* *******************
 	PART 4: Create header info, i.e., references
 	******************** */
