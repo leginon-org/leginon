@@ -44,7 +44,7 @@ if ($reconRuns) {
 	$html .= "<TR>\n";
 	$display_keys = array ( 'final image', 'recon name', 'description', 'path', '',
 		'stack info', 'num parts', 'box size', 'pixel size',  '',
-		'model info', 'model symm',  '',
+		'model info', 'recon symm',  '',
 		'FSC&frac12; Rmeasure resolution', 'avg median<br/>euler jump',);
 	foreach($display_keys as $key) {
 		$html .= "<td><span class='datafield0'>".$key."</span> </TD> ";
@@ -81,11 +81,12 @@ if ($reconRuns) {
 
 		$modelid = $reconrun['REF|ApInitialModelData|initialModel'];
 		$modelparams = $particle->getInitModelInfo($modelid);
-		$symdata = $particle->getSymInfo($modelparams['REF|ApSymmetryData|symmetry']);
+		$modelsymdata = $particle->getSymInfo($modelparams['REF|ApSymmetryData|symmetry']);
 		$res = $particle->getHighestResForRecon($reconid);
 		$avgmedjump = $particle->getAverageMedianJump($reconid);
 
 		$iterinfo = $particle->getIterationInfo($reconid);
+		$itersymdata = $particle->getSymInfo($iterinfo[0]['REF|ApSymmetryData|symmetry']);
 
 		//print_r($reconrun);
 //		$bestimages = glob($reconrun['path'].'/threed.*'.$res['iter'].'a.mrc.1.png');
@@ -125,7 +126,7 @@ if ($reconRuns) {
 
 		// model info
 		$html .= "<td><b>$modelid:</b> <font size=-2>".$modelparams['description']."</font></td>\n";
-		$html .= "<td>".$symdata['symmetry']."</td>";
+		$html .= "<td>".$itersymdata['symmetry']."</td>";
 		$html .= "<td bgcolor='#dddddd'></td>\n";
 
 		// recon stats
