@@ -41,6 +41,8 @@ def int_converter(value):
 
 def shape_converter(value):
 	'''size must be a shape of the form "AxB"'''
+	if not value:
+		return None
 	# first convert value to sequence of numbers
 	if isinstance(value, types.StringTypes):
 		numbers = re.findall('[\d.]+', value)

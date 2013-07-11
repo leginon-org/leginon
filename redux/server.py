@@ -28,23 +28,29 @@ class RequestHandler(SocketServer.StreamRequestHandler):
 
 	def run_process(self, request):
 		try:
-			kwargs = redux.utility.request_to_kwargs(request)
-			if 'pipeline' in kwargs:
-				pipeline = redux.pipeline.pipeline_by_preset(kwargs['pipeline'])
-			elif 'pipes' in kwargs:
-				pipeline = redux.pipeline.pipeline_by_string(kwargs['pipes'])		
-			else:
-				pipeline = redux.pipeline.pipeline_by_preset('standard')
-			result = pipeline.process(**kwargs)
-		except Exception, e:
-			timestamp = str(time.time())
-			result = 'REDUX ERROR ' + timestamp + ' ' + str(e)
-			sys.stderr.write(timestamp+'\n')
-			traceback.print_exc(file=sys.stderr)
+			try:
+				kwargs = redux.utility.request_to_kwargs(request)
+				if 'pipeline' in kwargs:
+					pipeline = redux.pipeline.pipeline_by_preset(kwargs['pipeline'])
+				elif 'pipes' in kwargs:
+					pipeline = redux.pipeline.pipeline_by_string(kwargs['pipes'])		
+				else:
+					pipeline = redux.pipeline.pipeline_by_preset('standard')
+				result = pipeline.process(**kwargs)
+			except Exception, e:
+				timestamp = str(time.time())
+				result = 'REDUX ERROR ' + timestamp + ' ' + str(e)
+				sys.stderr.write(timestamp+'\n')
+				traceback.print_exc(file=sys.stderr)
 		finally:
 			self.wfile.write(result)
 			self.wfile.flush()
 
+# Some testing has shown that ForkingMixIn may be more stable in
+# the case of multiple concurrent connections from multiple clients.
+# However, it should only be used if you have caching turned off.
+# It also makes weird things happen to log files.  Therefore, default
+# here is to use ThreadingMixIn.
 #class Server(SocketServer.ForkingMixIn, SocketServer.TCPServer):
 class Server(SocketServer.ThreadingMixIn, SocketServer.TCPServer):
 	allow_reuse_address = True
