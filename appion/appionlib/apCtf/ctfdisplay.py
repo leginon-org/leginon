@@ -328,7 +328,7 @@ class CtfDisplay(object):
 		pyplot.plot(raddata[fpi:], noisedata[fpi:], 
 			'--', color="purple", alpha=1.0, linewidth=1)
 		self.setPyPlotXLabels(raddata, valleyradii=valleyradii, maxloc=res50max)
-		pyplot.ylim(ymin=noisedata[-1])
+		pyplot.ylim(ymin=noisedata.min())
 
 		if 'subplot2grid' in dir(pyplot):
 			pyplot.subplot2grid((3,2), (0,1))
@@ -349,7 +349,7 @@ class CtfDisplay(object):
 		pyplot.plot(raddata[fpi:], envelopdata[fpi:],
 			'--', color="purple", alpha=1.0, linewidth=1)
 		self.setPyPlotXLabels(raddata, peakradii=peakradii, maxloc=res50max)
-		pyplot.ylim(ymax=envelopdata[fpi-1])
+		pyplot.ylim(ymax=envelopdata.max())
 
 		if 'subplot2grid' in dir(pyplot):
 			pyplot.subplot2grid((3,2), (1,0), colspan=2)
