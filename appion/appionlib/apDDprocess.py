@@ -11,7 +11,7 @@ import numextension
 import shutil
 from pyami import mrc,imagefun,arraystats,numpil
 from leginon import correctorclient,leginondata,ddinfo
-from appionlib import apDisplay, apDatabase,apDBImage, appiondata
+from appionlib import apDisplay, apDatabase,apDBImage, appiondata,apFile
 import subprocess
 import socket
 
@@ -232,6 +232,8 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		self.use_GS = False
 		self.use_gpu_flat = False
 		self.gpuid = 0
+		self.keep_stack = True
+		self.save_aligned_stack = True
 		self.hostname = socket.gethostname().split('.')[0]
 		self.setUseAlternativeChannelReference(False)
 		self.setDefaultImageForReference(0)
@@ -875,6 +877,11 @@ class DDFrameProcessing(DirectDetectorProcessing):
 	def getNewBinning(self):
 		return self.stack_binning
 
+	def setKeepStack(self,is_keepstack):
+			self.keep_stack = is_keepstack
+			if is_keepstack:
+				self.save_aligned_stack = True
+
 	def getImageCameraEMData(self):
 		return leginondata.CameraEMData(initializer=self.image['camera'])
 
@@ -940,10 +947,12 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		consecutive frame sum.
 		'''
 		framelist = self.getAlignedSumFrameList()
-		print framelist, self.totalframe
 		# To save time, only proceed if necessary
 		if framelist and framelist == range(min(framelist),min(framelist)+len(framelist)):
+			self.save_aligned_stack = self.keep_stack
 			return True
+		# aligned_stack has to be saved to use Numpy to sum substack
+		self.save_aligned_stack=True
 		return False
 		
 	def alignCorrectedFrameStack(self):
@@ -966,14 +975,16 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		else:
 			# minimal sum since it needs to be redone by numpy
 			cmd += ' -nss %d -nes %d' % (0,1)
-		cmd += ' -ssc 1 -fct %s' % (temp_aligned_stackpath)
+		if self.save_aligned_stack:
+			cmd += ' -ssc 1 -fct %s' % (temp_aligned_stackpath)
 		apDisplay.printMsg('Running: %s'% cmd)
 		self.proc = subprocess.Popen(cmd, shell=True)
 		self.proc.wait()
 
-		if os.path.isfile(temp_aligned_stackpath):
+		if os.path.isfile(temp_aligned_sumpath):
 			# successful alignment
-			self.updateFrameStackHeaderImageStats(temp_aligned_stackpath)
+			if self.save_aligned_stack:
+				self.updateFrameStackHeaderImageStats(temp_aligned_stackpath)
 			if self.tempdir != self.rundir:
 				if os.path.isfile(temp_log):
 					shutil.move(temp_log,self.framestackpath[:-4]+'_Log.txt')
@@ -981,13 +992,17 @@ class DDFrameProcessing(DirectDetectorProcessing):
 			if not is_sum_with_dosefgpu:
 				self.sumSubStackWithNumpy(temp_aligned_stackpath,temp_aligned_sumpath)
 			shutil.move(temp_aligned_sumpath,self.aligned_sumpath)
-			shutil.move(temp_aligned_stackpath,self.aligned_stackpath)
+			if self.keep_stack:
+				shutil.move(temp_aligned_stackpath,self.aligned_stackpath)
+			else:
+				apFile.removeFile(temp_aligned_stackpath)
+				apFile.removeFile(self.aligned_stackpath)
 		else:
 			if self.tempdir != self.rundir:
 				# Move the Log to permanent location for future inspection
 				if os.path.isfile(temp_log):
 					shutil.move(self.tempframestackpath[:-4]+'_Log.txt',self.framestackpath[:-4]+'_Log.txt')
-			apDisplay.printWarning('dosefgpu_driftcorr FAILED: \n%s not created.' % os.path.basename(temp_aligned_stackpath))
+			apDisplay.printWarning('dosefgpu_driftcorr FAILED: \n%s not created.' % os.path.basename(temp_aligned_sumpath))
 			#apDisplay.printError('If this happens consistently on an image, hide it in myamiweb viewer and continue with others' )
 		os.chdir(self.rundir)
 

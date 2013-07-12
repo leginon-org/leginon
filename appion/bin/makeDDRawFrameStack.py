@@ -22,6 +22,7 @@ from appionlib import appiondata
 class MakeFrameStackLoop(appionLoop2.AppionLoop):
 	#=======================
 	def setupParserOptions(self):
+		# Boolean
 		self.parser.add_option("--rawarea", dest="rawarea", default=False,
 			action="store_true", help="use full area of the raw frame, not leginon image area")
 		self.parser.add_option("--useGS", dest="useGS", default=False,
@@ -32,9 +33,13 @@ class MakeFrameStackLoop(appionLoop2.AppionLoop):
 			action="store_true", help="Use gpu for flat field (gain/dark/mask) correction")
 		self.parser.add_option("--defergpu", dest="defergpu", default=False,
 			action="store_true", help="Make unaligned frame stack first on computer without gpu alignment program")
+		self.parser.add_option("--no-keepstack", dest="keepstack", default=True,
+			action="store_false", help="Clean up frame stack after alignment and sum image upload")
+		# String
 		self.parser.add_option("--tempdir", dest="tempdir",
 			help="Local path for storing temporary stack output, e.g. --tempdir=/tmp/appion/makeddstack",
 			metavar="PATH")
+		# Integer
 		self.parser.add_option("--stackid", dest="stackid", type="int",
 			help="ID for particle stack (optional)", metavar="INT")
 		self.parser.add_option("--bin", dest="bin", type="int", default=1,
@@ -77,6 +82,14 @@ class MakeFrameStackLoop(appionLoop2.AppionLoop):
 			if self.params['tempdir']:
 				apDisplay.printWarning('tempdir is not neccessary without aligning on the same host. Reset to None')
 				self.params['tempdir'] = None
+			# Stack cleaning should not be done in some cases
+			if not self.params['keepstack']:
+				if self.params['defergpu']:
+					apDisplay.printWarning('The gain/dark-corrected stack must be saved if alignment is deferred')
+					self.params['keepstack'] = True
+				else:
+					apDisplay.printError('Why making only gain/dark-corrected ddstacks but not keeping them')
+
 
 		if self.params['gpuflat']:
 			exename = 'dosefgpu_flat'
@@ -99,6 +112,8 @@ class MakeFrameStackLoop(appionLoop2.AppionLoop):
 		self.dd.setRawFrameType(self.getFrameType())
 		self.dd.setUseGPUFlat(self.params['gpuflat'])
 		self.dd.setGPUid(self.params['gpuid'])
+		# keepstack is resolved for various cases in conflict check.  There should be no ambiguity by now
+		self.dd.setKeepStack(self.params['keepstack'])
 		
 		if self.params['refimgid']:
 			self.dd.setDefaultImageForReference(self.params['refimgid'])
@@ -158,14 +173,19 @@ class MakeFrameStackLoop(appionLoop2.AppionLoop):
 				return
 			# Doing the alignment
 			self.dd.alignCorrectedFrameStack()
-			if os.path.isfile(self.dd.aligned_stackpath):
+			if os.path.isfile(self.dd.aligned_sumpath):
 				self.aligned_imagedata = self.dd.makeAlignedImageData()
-				apDisplay.printMsg(' Replacing unaligned stack with the aligned one....')
-				apFile.removeFile(self.dd.framestackpath)
-				apDisplay.printMsg('Moving %s to %s' % (self.dd.aligned_stackpath,self.dd.framestackpath))
-				shutil.move(self.dd.aligned_stackpath,self.dd.framestackpath)
+				if os.path.isfile(self.dd.aligned_stackpath):
+					# aligned_stackpath exists either because keepstack is true
+					apDisplay.printMsg(' Replacing unaligned stack with the aligned one....')
+					apFile.removeFile(self.dd.framestackpath)
+					apDisplay.printMsg('Moving %s to %s' % (self.dd.aligned_stackpath,self.dd.framestackpath))
+					shutil.move(self.dd.aligned_stackpath,self.dd.framestackpath)
+			# Clean up tempdir in case of failed alignment
 			if self.dd.framestackpath != self.dd.tempframestackpath:
 				apFile.removeFile(self.dd.tempframestackpath)
+		if not self.params['keepstack']:
+			apFile.removeFile(self.dd.framestackpath)
 
 	def commitToDatabase(self, imgdata):
 		if self.aligned_imagedata != None:
