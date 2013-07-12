@@ -699,7 +699,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.publish(imagedata['camera'], database=True)
 		return imagedata
 
-	def acquire(self, presetdata, emtarget=None, attempt=None, target=None):
+	def acquire(self, presetdata, emtarget=None, attempt=None, target=None, channel=None):
 		reduce_pause = self.onTarget
 
 		if debug:
@@ -738,12 +738,15 @@ class Acquisition(targetwatcher.TargetWatcher):
 		pretime = presetdata['pre exposure']
 		if pretime:
 			self.exposeSpecimen(pretime)
-		try:
-			defaultchannel = int(presetdata['alt channel'])
-		except:
-			# back compatible since imported old presetdata would have value if
-			# database column is not yet created by sinedon
-			defaultchannel = None
+		if channel is None:
+			try:
+				defaultchannel = int(presetdata['alt channel'])
+			except:
+				# back compatible since imported old presetdata would have value if
+				# database column is not yet created by sinedon
+				defaultchannel = None
+		else:
+			defaultchannel = channel
 		args = (presetdata, emtarget, defaultchannel)
 		if self.settings['background']:
 			self.clearCameraEvents()
