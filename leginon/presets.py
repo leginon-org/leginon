@@ -66,6 +66,19 @@ class PresetsClient(object):
 		except IndexError:
 			raise ValueError('no preset \'%s\' in the database' % name)
 
+	def isPresetNameToAvoid(self,pname):
+		'''
+		Avoid derived presets. '-' is used for aligned dd sum image.
+		'Zproj' is the projection of full tomogram
+		'''
+		presets_to_avoid = ['-','Zproj']
+		avoid = False
+		for name_str in presets_to_avoid:
+				if name_str in pname:
+					avoid = True
+					break
+		return avoid
+
 	def getPresetsFromDB(self, session=None):
 		'''
 		get ordered list of presets for this session from DB
@@ -86,6 +99,8 @@ class PresetsClient(object):
 		for p in plist:
 			pname = p['name']
 			if not pname or pname in done:
+				continue
+			if self.isPresetNameToAvoid(pname):
 				continue
 			done[pname] = None
 			if p['removed']:
@@ -685,7 +700,9 @@ class PresetsManager(node.Node):
 		else:
 			newpreset = self.newPreset(name, newparams)
 
-		self.logger.info('Set preset "%s" values from instrument' % name)
+		# newpreset is None if preset is not created by self.newPreset
+		if newpreset:
+			self.logger.info('Set preset "%s" values from instrument' % name)
 		self.beep()
 		return newpreset
 
@@ -902,6 +919,9 @@ class PresetsManager(node.Node):
 		return newpreset
 
 	def newPreset(self, presetname, newparams):
+			if self.presetsclient.isPresetNameToAvoid(presetname):
+				self.logger.error('Preset name not allowed. Try again')
+				return
 			newpreset = leginondata.PresetData()
 			newpreset['session'] = self.session
 			newpreset['name'] = presetname
