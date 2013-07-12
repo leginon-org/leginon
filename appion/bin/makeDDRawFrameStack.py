@@ -43,6 +43,10 @@ class MakeFrameStackLoop(appionLoop2.AppionLoop):
 			help="Specify a corrected image to do gain/dark correction with", metavar="INT")
 		self.parser.add_option("--gpuid", dest="gpuid", type="int", default=0,
 			help="GPU device id used in gpu processing", metavar="INT")
+		self.parser.add_option("--ddstartframe", dest="startframe", type="int", default=0,
+			help="starting frame for direct detector raw frame processing. The first frame is 0")
+		self.parser.add_option("--ddnframe", dest="nframe", type="int",
+			help="total frames to consider for direct detector raw frame processing")
 		self.parser.remove_option("--uncorrected")
 		self.parser.remove_option("--reprocess")
 
@@ -71,7 +75,7 @@ class MakeFrameStackLoop(appionLoop2.AppionLoop):
 			# makes no sense to save gain corrected ddstack in tempdir if no alignment
 			# will be done on the same machine
 			if self.params['tempdir']:
-				apDiplay.printWarning('tempdir is not neccessary without aligning on the same host. Reset to None')
+				apDisplay.printWarning('tempdir is not neccessary without aligning on the same host. Reset to None')
 				self.params['tempdir'] = None
 
 		if self.params['gpuflat']:
@@ -134,6 +138,8 @@ class MakeFrameStackLoop(appionLoop2.AppionLoop):
 		self.dd.setNewBinning(self.params['bin'])
 		if self.params['align']:
 			self.dd.setAlignedCameraEMData()
+			framelist = self.dd.getFrameList(self.params)
+			self.dd.setAlignedSumFrameList(framelist)
 
 		### first remove any existing stack file
 		apFile.removeFile(self.dd.framestackpath)

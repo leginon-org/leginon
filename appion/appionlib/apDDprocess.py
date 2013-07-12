@@ -45,6 +45,8 @@ class DirectDetectorProcessing(object):
 		'''
 		self.image = None
 		self.setRunDir(os.getcwd())
+		self.setTempDir()
+		self.sumframelist = None
 
 	def setImageId(self,imageid):
 		from leginon import leginondata
@@ -894,10 +896,22 @@ class DDFrameProcessing(DirectDetectorProcessing):
 			camdata['dimension'][axis] = mindim * camdata['binning'][axis] / newbin
 			camdata['binning'][axis] = newbin
 			camdata['offset'][axis] = (camerasize[axis]/newbin -camdata['dimension'][axis])/2
+		framelist = self.getAlignedSumFrameList()
+		if framelist:
+			camdata['use frames'] = framelist
+		else:
+			# DE camera might not use all frames in the original sum image
+			camdata['use frames'] = range(self.totalframe)
 		self.aligned_camdata = camdata
 
 	def getAlignedCameraEMData(self):
 		return self.aligned_camdata
+
+	def setAlignedSumFrameList(self,framelist):
+		self.sumframelist = framelist
+		
+	def getAlignedSumFrameList(self):
+		return self.sumframelist
 		
 	def updateFrameStackHeaderImageStats(self,stackpath):
 		'''
@@ -918,30 +932,59 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		header['amean'] = stats['mean']+0
 		header['rms'] = stats['std']+0
 		mrc.update_file_header(stackpath, header)
+
+	def isSumSubStackWithDosefgpu(self):
+		'''
+		This funciton decides whether dosefgpu_driftcorr will be used for
+		summing up ddstack.  Dosefgpu_driftcorr can only handle
+		consecutive frame sum.
+		'''
+		framelist = self.getAlignedSumFrameList()
+		print framelist, self.totalframe
+		# To save time, only proceed if necessary
+		if framelist and framelist == range(min(framelist),min(framelist)+len(framelist)):
+			return True
+		return False
 		
 	def alignCorrectedFrameStack(self):
 		'''
 		Xueming Li's gpu program for aligning frames using all defaults
 		Valid square gain/dark corrected ddstack is the input.
 		'''
+		# The alignment is done in tempdir (a local directory to reduce network traffic)
 		os.chdir(self.tempdir)
 		temp_aligned_sumpath = 'temp%d_sum.mrc' % (self.gpuid)
 		temp_aligned_stackpath = 'temp%d_aligned_st.mrc' % (self.gpuid)
 		temp_log = self.tempframestackpath[:-4]+'_Log.txt'
-		cmd = 'dosefgpu_driftcorr %s -gpu %d -fcs %s -ssc 1 -dsp 0 -fct %s' % (self.tempframestackpath,self.gpuid,temp_aligned_sumpath,temp_aligned_stackpath)
+
+		# Construct the command line with defaults
+		cmd = 'dosefgpu_driftcorr %s -gpu %d -fcs %s -dsp 0' % (self.tempframestackpath,self.gpuid,temp_aligned_sumpath)
+		is_sum_with_dosefgpu =  self.isSumSubStackWithDosefgpu()
+		if is_sum_with_dosefgpu:
+			cmd += ' -nss %d -nes %d' % (min(self.sumframelist),max(self.sumframelist))
+			cmd += ' -nss %d -nes %d' % (min(self.sumframelist),max(self.sumframelist))
+		else:
+			# minimal sum since it needs to be redone by numpy
+			cmd += ' -nss %d -nes %d' % (0,1)
+		cmd += ' -ssc 1 -fct %s' % (temp_aligned_stackpath)
 		apDisplay.printMsg('Running: %s'% cmd)
 		self.proc = subprocess.Popen(cmd, shell=True)
 		self.proc.wait()
+
 		if os.path.isfile(temp_aligned_stackpath):
+			# successful alignment
 			self.updateFrameStackHeaderImageStats(temp_aligned_stackpath)
 			if self.tempdir != self.rundir:
 				if os.path.isfile(temp_log):
 					shutil.move(temp_log,self.framestackpath[:-4]+'_Log.txt')
 					apDisplay.printMsg('Copying result for %s from %s to %s' % (self.image['filename'],self.tempdir,self.rundir))
-			shutil.move(temp_aligned_stackpath,self.aligned_stackpath)
+			if not is_sum_with_dosefgpu:
+				self.sumSubStackWithNumpy(temp_aligned_stackpath,temp_aligned_sumpath)
 			shutil.move(temp_aligned_sumpath,self.aligned_sumpath)
+			shutil.move(temp_aligned_stackpath,self.aligned_stackpath)
 		else:
 			if self.tempdir != self.rundir:
+				# Move the Log to permanent location for future inspection
 				if os.path.isfile(temp_log):
 					shutil.move(self.tempframestackpath[:-4]+'_Log.txt',self.framestackpath[:-4]+'_Log.txt')
 			apDisplay.printWarning('dosefgpu_driftcorr FAILED: \n%s not created.' % os.path.basename(temp_aligned_stackpath))
@@ -999,6 +1042,14 @@ class DDFrameProcessing(DirectDetectorProcessing):
 			return False
 		return True	
 
+	def sumSubStackWithNumpy(self,stackpath,sumpath):
+		stackproc = DDStackProcessing()
+		framelist = self.getAlignedSumFrameList()
+		# To save time, only proceed if necessary
+		if framelist and framelist != range(self.totalframe):
+			# set attribute without other complications
+			stackproc.framestackpath = stackpath
+			mrc.write(stackproc.getDDStackFrameSumImage(framelist),sumpath)
 
 class DDStackProcessing(DirectDetectorProcessing):
 	'''
