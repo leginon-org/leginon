@@ -408,15 +408,16 @@ class Corrector(imagewatcher.ImageWatcher):
 			coordinates = coordinates.tolist()
 			for bad in coordinates:
 				# convert to tuple to be consistent with plan
-				yx = bad[1], bad[0]
-				if yx not in newbadpixels:
+				xy = bad[1], bad[0]
+				if xy not in newbadpixels:
 					if len(newbadpixels) >= self.max_badpixels:
 						self.logger.error("Too many bad pixels, new pixels not added")
 						break
 					else:
-						newbadpixels.append(yx)
-						self.logger.info("added bad pixel point at (%d,%d) at %d" % (bad[0], bad[1],int(currentvalue)))
-						imageshown[yx]=imagemean
+						newbadpixels.append(xy)
+						self.logger.info("added bad pixel point at (%d,%d) at %d" % (bad[1], bad[0],int(currentvalue)))
+						# Assign the bad pixel intensity to mean so that it will not be found in the next round
+						imageshown[bad]=imagemean
 
 		plan['pixels'] = newbadpixels
 		self.displayImage(imageshown)
