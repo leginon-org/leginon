@@ -217,20 +217,13 @@ def getCtfValueForImage(imgdata, ctf_estimation_runid=None, ctfavg=True, msg=Tru
 	return ctfvalue, conf
 
 #=====================
-def calculateConfidenceScore(ctfdata,ctfavg=True):
+def calculateConfidenceScore(ctfdata, ctfavg=True):
 	# get ctf confidence values
-	# accepts negative cross_correlation as well
 	conf1 = ctfdata['confidence']
-	if ctfdata['cross_correlation'] is not None:
-		conf1 = max(ctfdata['confidence'],abs(ctfdata['cross_correlation']))
 	conf2 = ctfdata['confidence_d']
-
-	if conf1 >= 0 and conf2 >= 0:
-		conf = max(conf1,conf2)
-		if ctfavg is True:
-			conf = math.sqrt(conf1*conf2)
-	else:
-		conf = 0
+	conf3 = ctfdata['confidence_30_10']
+	conf4 = ctfdata['confidence_5_peak']
+	conf = max(conf1, conf2, conf3, conf4)
 	return conf
 
 #=====================
@@ -284,13 +277,14 @@ def getBestCtfByResolution(imgdata, msg=True):
 
 	### check if it has values
 	if ctfvalues is None:
+		print "no CTF values found in database"
 		return None
 
 	### find the best values
 	bestres50 = 0.0
 	bestctfvalue = None
 	for ctfvalue in ctfvalues:
-		conf = ctfvalue['confidence']
+		conf = calculateConfidenceScore(ctfvalue)
 		if conf < 0.4:
 			continue
 		res50 = ctfvalue['resolution_50_percent']
