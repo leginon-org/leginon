@@ -1,17 +1,17 @@
 <?php
-require "inc/project.inc.php";
-require "inc/leginon.inc";
+require_once "inc/project.inc.php";
+require_once "inc/leginon.inc";
 if (SAMPLE_TRACK) {
-	require "inc/confirmlib.php";
-	require "inc/packagelib.php";
-	require "inc/samplelib.php";
-	require "inc/gridlib.php";
-	require "inc/statusreport.inc.php";
-	require "inc/note.inc.php";
+	require_once "inc/confirmlib.php";
+	require_once "inc/packagelib.php";
+	require_once "inc/samplelib.php";
+	require_once "inc/gridlib.php";
+	require_once "inc/statusreport.inc.php";
+	require_once "inc/note.inc.php";
 }
-require "inc/utilpj.inc.php";
+require_once "inc/utilpj.inc.php";
 
-$share =  (@require "inc/share.inc.php") ? true : false;
+$share =  (@require_once "inc/share.inc.php") ? true : false;
 $share =  (privilege('shareexperiments') >=1) ? $share : false;
 
 if ($_GET['projectId']) {

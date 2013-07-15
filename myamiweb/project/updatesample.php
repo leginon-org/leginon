@@ -1,10 +1,10 @@
 <?php
 
-require "inc/project.inc.php";
-require "inc/leginon.inc";
-require "inc/samplelib.php";
-require "inc/packagelib.php";
-require "inc/utilpj.inc.php";
+require_once "inc/project.inc.php";
+require_once "inc/leginon.inc";
+require_once "inc/samplelib.php";
+require_once "inc/packagelib.php";
+require_once "inc/utilpj.inc.php";
 
 $sampleId = ($_GET['id']) ? $_GET['id'] : $_POST['sampleId'];
 $projectId = ($_GET['pid']) ? $_GET['pid'] : $_POST['projectId'];
@@ -119,7 +119,7 @@ project_header("Sample $title");
 <font face="Arial, Helvetica, sans-serif" size="2">: required fields</font>
 </p>
 <?
-require "inc/aform.php";
+require_once "inc/aform.php";
 ?>
 <link href="css/aform.css" rel="stylesheet" type="text/css" />
 <?

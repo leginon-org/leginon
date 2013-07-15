@@ -3,12 +3,12 @@
 /**
  *	This script requires pdflib Lite 1.2.7 or newer and pdf wrapper from pear
 */
-require "inc/project.inc.php";
-require "inc/gridlib.php";
-require "inc/packagelib.php";
-require "inc/samplelib.php";
-require "inc/aform.php";
-require "inc/utilpj.inc.php";
+require_once "inc/project.inc.php";
+require_once "inc/gridlib.php";
+require_once "inc/packagelib.php";
+require_once "inc/samplelib.php";
+require_once "inc/aform.php";
+require_once "inc/utilpj.inc.php";
 require_once "inc/getleginondata.php";
 
 $package = new Package();

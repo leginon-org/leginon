@@ -1,8 +1,8 @@
 <?php
 
-require "inc/project.inc.php";
-require "inc/mysql.inc";
-require "inc/util.inc";
+require_once "inc/project.inc.php";
+require_once "inc/mysql.inc";
+require_once "inc/util.inc";
 
 
 $project = new project();

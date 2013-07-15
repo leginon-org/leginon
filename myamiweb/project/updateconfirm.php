@@ -1,10 +1,10 @@
 <?php
 
-require "inc/project.inc.php";
-require "inc/leginon.inc";
-require "inc/confirmlib.php";
-require "inc/utilpj.inc.php";
-require "inc/aform.php";
+require_once "inc/project.inc.php";
+require_once "inc/leginon.inc";
+require_once "inc/confirmlib.php";
+require_once "inc/utilpj.inc.php";
+require_once "inc/aform.php";
 
 $confirmId = ($_GET['id']) ? $_GET['id'] : $_POST['confirmId'];
 $projectId = ($_GET['pid']) ? $_GET['pid'] : $_POST['projectId'];
