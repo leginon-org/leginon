@@ -7,11 +7,11 @@
  *	see  http://ami.scripps.edu/software/leginon-license
  */
 
-require "inc/particledata.inc";
-require "inc/leginon.inc";
-require "inc/project.inc";
+require_once "inc/particledata.inc";
+require_once "inc/leginon.inc";
+require_once "inc/project.inc";
 
-require "inc/graph.inc";
+require_once "inc/graph.inc";
 
 $defaultId= 1766;
 $sessionId= ($_GET['expId']) ? $_GET['expId'] : $defaultId;

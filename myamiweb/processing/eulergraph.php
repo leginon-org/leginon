@@ -7,13 +7,13 @@
  *	see  http://ami.scripps.edu/software/leginon-license
  */
 
-require "inc/particledata.inc";
-require "inc/leginon.inc";
-require "inc/project.inc";
-require "inc/jpgraph.php";
-require "inc/jpgraph_bar.php";
-require "inc/histogram.inc";
-require "inc/image.inc";
+require_once "inc/particledata.inc";
+require_once "inc/leginon.inc";
+require_once "inc/project.inc";
+require_once "inc/jpgraph.php";
+require_once "inc/jpgraph_bar.php";
+require_once "inc/histogram.inc";
+require_once "inc/image.inc";
 
 define (PARTICLE_DB, $_SESSION['processingdb']);
 

@@ -2,11 +2,11 @@
 // compress this file if the browser accepts it.
 if (substr_count($_SERVER['HTTP_ACCEPT_ENCODING'], 'gzip')) ob_start("ob_gzhandler"); else ob_start();
 
-require "inc/particledata.inc";
-require "inc/util.inc";
-require "inc/leginon.inc";
-require "inc/project.inc";
-require "inc/processing.inc";
+require_once "inc/particledata.inc";
+require_once "inc/util.inc";
+require_once "inc/leginon.inc";
+require_once "inc/project.inc";
+require_once "inc/processing.inc";
 require_once "inc/refineJobsSingleModel.inc";
 require_once "inc/refineJobsMultiModel.inc";
 

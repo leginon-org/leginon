@@ -12,7 +12,7 @@ include ("inc/jpgraph.php");
 include ("inc/jpgraph_utils.inc.php");
 include ("inc/jpgraph_line.php");
 include ("inc/jpgraph_scatter.php");
-require ("inc/leginon.inc");
+require_once ("inc/leginon.inc");
 
 $file=$_GET['file'];
 $width=$_GET['width'];

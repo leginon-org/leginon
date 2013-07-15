@@ -2,7 +2,7 @@
 require_once "inc/particledata.inc";
 require_once "inc/viewer.inc";
 require_once "inc/processing.inc";
-//require "inc/util.inc";
+//require_once "inc/util.inc";
 require_once "inc/leginon.inc";
 require_once "inc/project.inc";
 require_once "inc/summarytables.inc";

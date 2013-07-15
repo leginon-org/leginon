@@ -7,12 +7,12 @@
  *	see  http://ami.scripps.edu/software/leginon-license
  */
 
-require "inc/jpgraph.php";
-require "inc/jpgraph_line.php";
-require "inc/jpgraph_scatter.php";
-require "inc/jpgraph_bar.php";
-require "inc/histogram.inc";
-require "inc/image.inc";
+require_once "inc/jpgraph.php";
+require_once "inc/jpgraph_line.php";
+require_once "inc/jpgraph_scatter.php";
+require_once "inc/jpgraph_bar.php";
+require_once "inc/histogram.inc";
+require_once "inc/image.inc";
 
 class dbemGraph {
 

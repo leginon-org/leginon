@@ -7,9 +7,9 @@
 # specify a directory that the web server can write to
 $scratchdir = "/tmp";
 
-require "inc/particledata.inc";
-require "inc/leginon.inc";
-require "inc/project.inc";
+require_once "inc/particledata.inc";
+require_once "inc/leginon.inc";
+require_once "inc/project.inc";
 
 $expId = $_GET['expId'];
 $stackId = $_GET['sId'];
