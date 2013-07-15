@@ -7,8 +7,8 @@
  *	see  http://ami.scripps.edu/software/leginon-license
  */
 
-require "inc/leginon.inc";
-require "inc/graph.inc";
+require_once "inc/leginon.inc";
+require_once "inc/graph.inc";
 
 $defaultId= 1445;
 $defaultpreset='hl';
@@ -32,7 +32,7 @@ if ($viewsql) {
 	exit;
 }
 if ($viewdata) {
-	$keys = array("timestamp", "filename", "thickness-mean");
+	$keys = array("timestamp", "thickness-mean");
 	echo dumpData($thicknessdata, $keys);
 	exit;
 }

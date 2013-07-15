@@ -1,5 +1,5 @@
 <?php
-require "inc/login.inc";
+require_once "inc/login.inc";
 
 // if user already login, redirect to homepage
 if ($login_check = $dbemauth->is_logged()) {

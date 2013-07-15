@@ -7,12 +7,12 @@
  *	see  http://ami.scripps.edu/software/leginon-license
  */
 
-require "inc/leginon.inc";
+require_once "inc/leginon.inc";
 require_once "inc/imagerequest.inc";
 
-require "inc/viewer.inc";
+require_once "inc/viewer.inc";
 if (defined('PROCESSING')) {
-	$ptcl = (@require "inc/particledata.inc") ? true : false;
+	$ptcl = (@require_once "inc/particledata.inc") ? true : false;
 }
 
 // display data tree ?
@@ -35,7 +35,7 @@ $imageinfo = $leginondata->getImageInfo($imgId);
 if ($imageinfo === false) $imageinfo = $leginondata->getMinimalImageInfo($imgId);
 $sessionId = $imageinfo[sessionId];
 $_GET['expId'] = $sessionId;
-require "inc/project.inc";
+require_once "inc/project.inc";
 
 //Block unauthorized user
 checkExptAccessPrivilege($sessionId);

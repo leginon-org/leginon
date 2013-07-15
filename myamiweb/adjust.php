@@ -80,8 +80,8 @@ if ($scaletype=="s") {
 <html>
 <head>
 <?php
-require "getgrad.php";
-require "inc/filter.inc";
+require_once "getgrad.php";
+require_once "inc/filter.inc";
 
 $filterdata = new filter();
 $filtertypes = $filterdata->getFilterTypes();

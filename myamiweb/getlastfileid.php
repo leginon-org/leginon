@@ -5,7 +5,7 @@
  *	For terms of the license agreement
  *	see  http://ami.scripps.edu/software/leginon-license
  */
-require "inc/leginon.inc";
+require_once "inc/leginon.inc";
 $lastfileid = false;
 $session = ($_GET['session']) ? $_GET['session'] : $_POST['session'];
 $lastfileid = $leginondata->getLastFilenameId($session);

@@ -1,6 +1,6 @@
 #!/usr/bin/env php
 <?php
-require "inc/leginon.inc";
+require_once "inc/leginon.inc";
 
 function display($data, $withkey=false, $title="", $id=true, $total=false) {
 	if (!is_array($data))

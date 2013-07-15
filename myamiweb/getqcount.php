@@ -17,7 +17,7 @@
 	</head>
 	<body>
 <?php
-require 'inc/leginon.inc';
+require_once 'inc/leginon.inc';
 $sessionId=$_GET['id'];
 $targetlistIds = $leginondata->getTargetListIds($sessionId,'',$limit=500);
 if (count($targetlistIds) == 500) {

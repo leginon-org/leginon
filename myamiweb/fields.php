@@ -5,8 +5,8 @@
 <title>Data</title>
 <?php
 
-require "config.php";
-require "inc/mysql.inc";
+require_once "config.php";
+require_once "inc/mysql.inc";
 
 $db = new mysql($DB_HOST, $DB_USER, $DB_PASS, $DB);
 

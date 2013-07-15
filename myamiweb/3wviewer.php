@@ -1,8 +1,8 @@
 <?php
-require "inc/leginon.inc";
-require "inc/viewer.inc";
-require "inc/project.inc";
-require "inc/cachedb.inc";
+require_once "inc/leginon.inc";
+require_once "inc/viewer.inc";
+require_once "inc/project.inc";
+require_once "inc/cachedb.inc";
 if (defined('PROCESSING')) {
 	$ptcl = (@require_once "inc/particledata.inc") ? true : false;
 }

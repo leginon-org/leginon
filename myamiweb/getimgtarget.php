@@ -1,6 +1,6 @@
 <?php
 
-require "inc/image.inc";
+require_once "inc/image.inc";
 
 $img = imagecreatetruecolor(15,15);
 $bg= imageColorAllocate($img, 255, 255, 255);

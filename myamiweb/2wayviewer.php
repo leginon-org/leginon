@@ -1,9 +1,9 @@
 <?php
-require "inc/leginon.inc";
-require "inc/viewer.inc";
-require "inc/project.inc";
+require_once "inc/leginon.inc";
+require_once "inc/viewer.inc";
+require_once "inc/project.inc";
 if (defined('PROCESSING')) {
-	$ptcl = (@require "inc/particledata.inc") ? true : false;
+	$ptcl = (@require_once "inc/particledata.inc") ? true : false;
 }
 
 // --- get Predefined Variables form GET or POST method --- //

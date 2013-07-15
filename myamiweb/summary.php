@@ -7,13 +7,13 @@
  *	see  http://ami.scripps.edu/software/leginon-license
  */
 
-require "inc/leginon.inc";
-require "inc/project.inc";
+require_once "inc/leginon.inc";
+require_once "inc/project.inc";
 
 login_header(PROJECT_TITLE);
 
 if (defined('PROCESSING')) {
-	$ptcl = (@require "inc/particledata.inc") ? true : false;
+	$ptcl = (@require_once "inc/particledata.inc") ? true : false;
 }
 
 

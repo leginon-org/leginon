@@ -1,5 +1,5 @@
 <?php
-require "inc/particledata.inc";
+require_once "inc/particledata.inc";
 $field = $_GET['f'];
 $id = $_GET['id'];
 $n_width = $_GET['w'];

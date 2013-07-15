@@ -1,6 +1,6 @@
 <?php
 
-require "inc/admin.inc";
+require_once "inc/admin.inc";
 $login_check = $dbemauth->is_logged();
 $is_admin = (privilege('groups')>3);
 if (privilege('groups') < 2)

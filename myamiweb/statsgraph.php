@@ -1,7 +1,7 @@
 <?php
-require "inc/jpgraph.php";
-require "inc/jpgraph_scatter.php";
-require "inc/image.inc";
+require_once "inc/jpgraph.php";
+require_once "inc/jpgraph_scatter.php";
+require_once "inc/image.inc";
 require_once "inc/leginon.inc";
 
 function getColorMap($v) {

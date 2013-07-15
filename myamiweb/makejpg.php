@@ -7,9 +7,9 @@
  *	see  http://ami.scripps.edu/software/leginon-license
  */
 
-require "clitools.php";
-require "inc/leginon.inc";
-require "inc/image.inc";
+require_once "clitools.php";
+require_once "inc/leginon.inc";
+require_once "inc/image.inc";
 require_once "Console/ProgressBar.php";
 
 $CHECKSUM_FILE=0;

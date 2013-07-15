@@ -7,8 +7,8 @@
  *	see  http://ami.scripps.edu/software/leginon-license
  */
 
-require "inc/leginon.inc";
-require "inc/graph.inc";
+require_once "inc/leginon.inc";
+require_once "inc/graph.inc";
 
 $defaultId=3956;
 $defaultpreset='en';

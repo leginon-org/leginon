@@ -7,9 +7,9 @@
  *	see  http://ami.scripps.edu/software/leginon-license
  */
 
-require "inc/viewer.inc";
-require "inc/leginon.inc";
-require "inc/particledata.inc";
+require_once "inc/viewer.inc";
+require_once "inc/leginon.inc";
+require_once "inc/particledata.inc";
 
 $imgId=$_GET['id'];
 $preset=$_GET['preset'];
@@ -24,7 +24,7 @@ $sessionId = $imageinfo['sessionId'];
 $newexpId = $sessionId; // --- variable use by setdatabase() in inc/project.inc
 // These require statements need to be here after $newexpId is defined
 // in order to set processing database properly
-require "inc/project.inc";
+require_once "inc/project.inc";
 
 ?>
 <html>

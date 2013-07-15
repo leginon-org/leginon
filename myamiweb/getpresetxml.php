@@ -15,7 +15,7 @@
 <body leftmargin="5" topmargin="0" bottommargin="0" marginwidth="5" marginheight="0" >
 <font face="Arial, Helvetica, sans-serif" size="2">
 <?php
-require 'inc/xmldata.inc';
+require_once 'inc/xmldata.inc';
 $p[]='mag';
 $p[]='defocus';
 $p[]='pixelsize';

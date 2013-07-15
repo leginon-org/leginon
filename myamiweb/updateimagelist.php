@@ -1,5 +1,5 @@
 <?php
-require "inc/leginon.inc";
+require_once "inc/leginon.inc";
 
 $imageId = $_GET['imageId'];
 $sessionId = $_GET['sessionId'];

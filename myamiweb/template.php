@@ -1,7 +1,7 @@
 <?php
-require "inc/leginon.inc";
-require "inc/project.inc";
-require "inc/viewer.inc";
+require_once "inc/leginon.inc";
+require_once "inc/project.inc";
+require_once "inc/viewer.inc";
 
 
 $templates=$leginondata->getTemplates();
@@ -57,6 +57,7 @@ $view1->displayDownloadIcon(false);
 $view1->addMenuItems($playbackcontrol);
 $view1->setDataTypes($datatypes);
 $view1->displayPTCLIcon(false);
+$view1->displayMaskIcon(false);
 $view1->setSize(256);
 $view1->setImageScript('getimgfile.php');
 $view1->setPresetScript('getpresetfile.php');

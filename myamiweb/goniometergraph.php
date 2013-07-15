@@ -7,11 +7,11 @@
  *	see  http://ami.scripps.edu/software/leginon-license
  */
 
-require "inc/jpgraph.php";
-require "inc/jpgraph_utils.inc.php";
-require "inc/jpgraph_line.php";
-require "inc/jpgraph_scatter.php";
-require "inc/leginon.inc";
+require_once "inc/jpgraph.php";
+require_once "inc/jpgraph_utils.inc.php";
+require_once "inc/jpgraph_line.php";
+require_once "inc/jpgraph_scatter.php";
+require_once "inc/leginon.inc";
 
 $Id=$_GET['Id'];
 

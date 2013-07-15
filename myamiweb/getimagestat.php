@@ -1,5 +1,5 @@
 <?php
-require 'inc/leginon.inc';
+require_once 'inc/leginon.inc';
 require_once "inc/imagerequest.inc";
 $id=$_GET['id'];
 $preset=$_GET['pr'];

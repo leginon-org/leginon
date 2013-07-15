@@ -8,9 +8,9 @@
  *	Simple viewer to view a image using mrcmodule
  */
 
-require 'inc/viewer.inc';
-require 'inc/login.inc';
-require 'inc/xmldata.inc';
+require_once 'inc/viewer.inc';
+require_once 'inc/login.inc';
+require_once 'inc/xmldata.inc';
 
 
 $xmldata = new xmldata(XML_DATA);
@@ -32,6 +32,7 @@ $view1->setDownloadScript('downloadxml.php');
 $view1->setImageScript('getimgxml.php');
 $view1->setPresetScript('getpresetxml.php');
 $view1->displayPTCLIcon(false);
+$view1->displayMaskIcon(false);
 $view1->displayTagIcon(false);
 $view1->displayACEIcon(false);
 $view1->displayTargetIcon(false);

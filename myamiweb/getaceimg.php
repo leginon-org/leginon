@@ -1,9 +1,9 @@
 <?php
-require "inc/leginon.inc";
-require "inc/image.inc";
-require "inc/project.inc";
-require "inc/particledata.inc";
-require "inc/ace.inc";
+require_once "inc/leginon.inc";
+require_once "inc/image.inc";
+require_once "inc/project.inc";
+require_once "inc/particledata.inc";
+require_once "inc/ace.inc";
 
 $imgid=$_GET['id'];
 $runid=$_GET['r'];

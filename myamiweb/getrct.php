@@ -1,6 +1,6 @@
 <?php
 
-require "inc/leginon.inc";
+require_once "inc/leginon.inc";
 
 $f="06oct10rct_00028sq_00_00276en_00.mrc";
 $f="06oct10rct_00028sq_00.mrc";

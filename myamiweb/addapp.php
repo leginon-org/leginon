@@ -7,7 +7,7 @@
  *	see  http://ami.scripps.edu/software/leginon-license
  */
 
-require "inc/admin.inc";
+require_once "inc/admin.inc";
 
 $is_admin = (privilege('groups')>3);
 if (privilege('groups') < 2)

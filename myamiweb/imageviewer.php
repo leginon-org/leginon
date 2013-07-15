@@ -1,8 +1,8 @@
 <?php
-require "inc/leginon.inc";
-require "inc/viewer.inc";
-require "inc/project.inc";
-require "inc/cachedb.inc";
+require_once "inc/leginon.inc";
+require_once "inc/viewer.inc";
+require_once "inc/project.inc";
+require_once "inc/cachedb.inc";
 if (defined('PROCESSING')) {
 	$ptcl = (require_once "inc/particledata.inc") ? true : false;
 }
@@ -35,10 +35,13 @@ if($projectdb) {
 $jsdata='';
 if ($ptcl) {
 	list ($jsdata, $particleruns) = getParticleInfo($sessionId);
+	list ($jsmaskdata, $maskruns) = getMaskInfo($sessionId);
+	$jsdata .= $jsmaskdata;
 	$particle = new particledata();
 	$filenames = $particle->getFilenamesFromLabel($runId, $preset);
 	$aceruns = $particle-> getCtfRunIds($sessionId);
 }
+
 
 // --- update SessionId while a project is selected
 $sessionId_exists = $leginondata->sessionIdExists($sessions, $sessionId);
@@ -88,6 +91,7 @@ $javascript = $viewer->getJavascript();
 $view1 = new view('Main View', 'v1');
 $view1->setControl();
 $view1->setParam('ptclparams',$particleruns);
+$view1->setParam('maskparams',$maskruns);
 $view1->setParam('aceruns',$aceruns);
 $view1->displayDDIcon(true);
 $view1->displayComment(true); 

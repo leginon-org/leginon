@@ -1,6 +1,6 @@
 <?php
-require "config.php";
-require "inc/mysql.inc";
+require_once "config.php";
+require_once "inc/mysql.inc";
 
 $databases[]=DB_LEGINON;
 $databases[]=DB_PROJECT;

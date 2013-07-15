@@ -6,9 +6,9 @@
  *	see  http://ami.scripps.edu/software/leginon-license
  */
 
-require "inc/leginon.inc";
-require "inc/viewer.inc";
-require "inc/project.inc";
+require_once "inc/leginon.inc";
+require_once "inc/viewer.inc";
+require_once "inc/project.inc";
 
 $refreshtime = ($_POST['refreshtime']) ? $_POST['refreshtime'] : 10;
 

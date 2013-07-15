@@ -8,8 +8,8 @@
  */
 
 
-require 'inc/xmldata.inc';
-require 'inc/image.inc';
+require_once 'inc/xmldata.inc';
+require_once 'inc/image.inc';
 
 $g=true;
 if (!$sessionId=stripslashes($_GET['session'])) {

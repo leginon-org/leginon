@@ -16,7 +16,7 @@
  *
  */
 
-require ("inc/leginon.inc");
+require_once ("inc/leginon.inc");
 
 function getSessionSelector($sessions, $sessionId=NULL) {
 	$selector = '<select name="sessionId" onchange=submit()>';
