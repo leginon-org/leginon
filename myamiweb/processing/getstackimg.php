@@ -67,8 +67,11 @@ if ($imgh<128) {
 
 // --- display info --- //
 if (trim($_GET['di'])==1) {
-	$color=imagecolorallocate($img,128,0,128);
-	$w=imagecolorallocate($img,255,255,255);
+	// some PNG images can not allocate purple as background color. Using imagecolorresolve
+	// avoid this problem even though the backgroupd might not be purple if the image
+	// is greyscale only
+	$color=imagecolorresolve($img,128,0,128);
+	$w=imagecolorresolve($img,255,255,255);
 	$x1=0;
 	$y1=$imgh-$yfont;
 	$x2=strlen($text)*$xfont+1;
