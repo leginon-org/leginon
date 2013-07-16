@@ -10,10 +10,12 @@ code_to_dtype = {
 	# ...
 }
 
-def readImagicHeader(filename):
+def readImagicHeader(filename,i=0):
 	hed_array_int = numpy.fromfile(filename, numpy.int32)
 	hed_array_float = hed_array_int.view(numpy.float32)
 	hed_dict = {}
+	# eman uses i4lp to store number of particles in class average image stack
+	hed_dict['i4lp'] = hed_array_int[61+i*256]
 	hed_dict['ny'] = hed_array_int[12]
 	hed_dict['nx'] = hed_array_int[13]
 	hed_dict['nz'] = len(hed_array_int.data) / 1024

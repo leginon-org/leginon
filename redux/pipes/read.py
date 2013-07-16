@@ -54,7 +54,7 @@ class Read(Pipe):
 				result = pyami.mrc.read(filename, frame)
 		elif input_format == 'imagic':
 			if info:
-				result = pyami.imagic.readImagicHeader(filename)
+				result = pyami.imagic.readImagicHeader(filename, frame)
 			else:
 				result = pyami.imagic.read(filename, frame)
 		elif input_format == 'PIL':
