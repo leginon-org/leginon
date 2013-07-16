@@ -80,7 +80,7 @@ echo "</td></tr>\n";
 echo "<tr><td width='100' align='center'>\n";
 echo "  <img src='img/appionlogo.jpg' width='64'>\n";
 echo "</td><td>\n";
-echo "  <h3><a href='runAppionLoop.php?expId=$expId'>Auto Masking</a></h3>\n";
+echo "  <h3><a href='runAutoMasker.php?expId=$expId'>Auto Masking</a></h3>\n";
 echo " <p> This is the <a href='http://www2.mrc-lmb.cam.ac.uk/relion/index.php/Main_Page'>
 	Relion refinement protocol.</a>&nbsp;<img src='img/external.png'> "
 	."This procedure implements so-called gold-standard FSC calculations, "
