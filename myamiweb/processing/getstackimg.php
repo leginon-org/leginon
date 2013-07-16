@@ -39,9 +39,10 @@ $scaletype = 'stdev';
 $arg1 = -3;
 $arg2= 3;
 // find out the proper x, y for display
-$imginfo = $imagerequest->requestInfo($pic);
+$imginfo = $imagerequest->requestInfo($pic,$frame);
 $dimx = $imginfo->nx;
 $dimy = $imginfo->ny;
+$info = $imginfo->i4lp;
 
 $xyDim = $imageUtil->imageBinning($dimx, $dimy, $binning);
 // request image

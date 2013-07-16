@@ -47,9 +47,10 @@ class imageRequester {
 		return $reply;
 	}
 
-	function requestInfo($filepath) {
+	function requestInfo($filepath,$frame=0) {
 		if (empty($filepath) || !is_file($filepath)) return false;
 		$redux = new redux($filepath, 'JSON');
+		$redux->setFrameValue($frame);
 		$redux->setInfo(true);
 
 		$errMsg = $redux->getErrMsg();
