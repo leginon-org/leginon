@@ -62,7 +62,6 @@ $displaynptcl = ($_GET['nptcl']) ? true : false;
 $displaylabel = ($_GET['dlbl']) ? true : false;
 $colorby = ($_GET['pcb']) ? $_GET['pcb'] : false;
 $ptclparams= ($displaynptcl) ? array('colorby'=>$colorby, 'displaylabel'=>$displaylabel, 'info'=>trim($_GET['nptcl'])) : false;
-$overlay = $_GET['overlay'];
 
 if (!$g) {
 	header("Content-type: image/x-png");
@@ -86,8 +85,7 @@ if (!$g) {
 		'cacheonly' => $cacheonly,
 		'autoscale' => $autoscale,
 		'newptcl' => $ptclparams,
-		'ptclsel' => $nptclsel,
-		'overlay' => $overlay
+		'ptclsel' => $nptclsel
 	);
 
 	if ($preset=='atlas') {
