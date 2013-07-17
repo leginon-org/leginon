@@ -549,6 +549,8 @@ var help = {
 		'defergpu' : 'Select defer gpu if this job will be launched on a computer without GPU capability. The alignment can be done after building the stack by running catchUpDDAlign.py',
 		'bin' : 'Binning of the image.  This takes any integer value, but powers of 2 are recommended. Binning quickly shrinks the image to help make the processing faster.',
 		'no_keepstack' : 'Remove any ddstack generated after it is used for alignment and generating aligned sum image to upload. If the stack is needed later. run the same script under the same run but remove --no-keepstack flag, change --commit to --no-commit and change --conitnue to --no-continue.',
+		'ddstartframe' : 'The frame number to begin with for the frame sum. 0 is the first frame acquired.',
+		'ddnframe' : 'The total number of frames that will be used for the sum. Leave blank to default to all frames.',
 	},		
 	'em_hole_finder' : {
 		'downsample' : 'The amount the image is down sampled before being process for masking. This is done to increase the speed of the algorithm.',

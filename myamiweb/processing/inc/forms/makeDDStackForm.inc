@@ -12,7 +12,7 @@ require_once "basicForm.inc";
 class MakeDDStackForm extends BasicForm
 
 {
-	function __construct( $align='', $defergpu='', $bin=1, $nokeepstack='' ) 
+	function __construct( $align='', $defergpu='', $bin=1, $nokeepstack='', $ddstartframe=0, $ddnframe='' ) 
 	{
 		parent::__construct();
 		$params = $this->getFormParams();
@@ -24,6 +24,8 @@ class MakeDDStackForm extends BasicForm
 		$params->addParam( "defergpu", $defergpu, "defer gpu processing" );
 		$params->addParam( "bin", $bin, "binning" );
 		$params->addParam( "no_keepstack", $nokeepstack, "remove generated stack after uploading aligned sum image" );
+		$params->addParam( "ddstartframe", $ddstartframe, "start frame" );
+		$params->addParam( "ddnframe", $ddnframe, "total frames" );
 		
 		// Validations
 		//$params->addValidation( "numpart", "req" );
@@ -34,7 +36,7 @@ class MakeDDStackForm extends BasicForm
 		$this->updateFormParams();
 		$params = $this->getFormParams();
 		
-		$fieldSize = 2;
+		$fieldSize = 3;
 		
 		$html .= "<b>Make DD stack params:</b><br />\n";
 		
@@ -42,6 +44,10 @@ class MakeDDStackForm extends BasicForm
 		$html.= $params->insertCheckboxField( "defergpu" );
 		$html.= $params->insertCheckboxField( "no_keepstack" );
 		$html.= $params->insertTextFieldInRow( "bin", $fieldSize );
+		
+		$html.= "<br/><br/>Frames used for sum image after alignment: <br/>\n";
+		$html.= $params->insertTextFieldInRow( "ddstartframe", $fieldSize );
+		$html.= $params->insertTextFieldInRow( "ddnframe", $fieldSize );
 		
 		return $html;
 	}	
