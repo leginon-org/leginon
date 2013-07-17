@@ -84,6 +84,8 @@ var help = {
 		'stackdfpair' : 'If you picked your particles on far-from focus images, select this to use the shift information to box out the particles from the close-to focus images',
 		'stacklim' : 'Makestack will continue processing micrographs and checking the stack size.  Once the number of particles matches or exceeds this limit, it will stop processing images.  Since all particles from a micrograph are added to the stack before checking, the final stack rarely has exactly the number of particles specified by the limit.  Leave blank to process all the micrographs.',
 		'maskrad' : 'Radius of external mask (in &Aring;ngstr&ouml;ms)',
+		// CTF find
+		'medium' : 'Choose Carbon if most of your image includes carbon, choose Ice if most of your image does not include carbon.',
 
 		// helical boxmask params
 		'boxmaskcheck' : 'Create a rectangular mask at the center of helical particles',
@@ -546,6 +548,7 @@ var help = {
 		'align' : 'Select to align the images.',
 		'defergpu' : 'Select defer gpu if this job will be launched on a computer without GPU capability. The alignment can be done after building the stack by running catchUpDDAlign.py',
 		'bin' : 'Binning of the image.  This takes any integer value, but powers of 2 are recommended. Binning quickly shrinks the image to help make the processing faster.',
+		'no_keepstack' : 'Remove any ddstack generated after it is used for alignment and generating aligned sum image to upload. If the stack is needed later. run the same script under the same run but remove --no-keepstack flag, change --commit to --no-commit and change --conitnue to --no-continue.',
 	},		
 	'em_hole_finder' : {
 		'downsample' : 'The amount the image is down sampled before being process for masking. This is done to increase the speed of the algorithm.',
