@@ -43,10 +43,11 @@ class EmanRefineJob(apRefineJob.RefineJob):
 		# determine padding automatically
 		pad = int(self.params['boxsize']*1.25/2.0)*2
 		self.params['pad'] = map((lambda x: pad),range(self.params['numiter']))
-		# copy to eman standard name for easier parameter settings
-		self.params['mask'] = self.params['outerMaskRadius']
+		# copy to eman standard name for easier parameter settings.
+		# EMAN know the mask and imask in pixels, not angstroms
+		self.params['mask'] = self.convertAngstromToPixel(self.params['outerMaskRadius'])
 		self.params['sym'] = self.params['symmetry']
-		self.params['imask'] = self.params['innerMaskRadius']
+		self.params['imask'] = self.convertAngstromToPixel(self.params['innerMaskRadius'])
 		self.params['ang'] = self.params['angSampRate']
 
 	def convertSymmetryNameForPackage(self,inputname):
