@@ -397,6 +397,9 @@ class FrealignRefineJob(apRefineJob.RefineJob):
 		return order
 
 	def calcRefineMem(self,ppn,boxsize,max_mem):
+		# refine only does not need to adjust iblow by available memory
+		if self.params['refineonly']:
+			return int(max_mem),2
 		for iblow  in (4,2,1):
 			memneed = (24*boxsize**3+4*(boxsize*iblow)**3+200e6)*2.0*ppn
 			numgig = math.ceil(memneed/1073741824.0)
