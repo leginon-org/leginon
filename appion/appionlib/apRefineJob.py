@@ -174,7 +174,7 @@ class RefineJob(basicScript.BasicScript):
 					apDisplay.printWarning("%s is converted to next integer above if entered as float" % key)
 					self.params[key] = map((lambda x: int(math.ceil(x))),self.params[key])
 		# mask size in pixels has to be 2 pixels less than half the box size
-		maxmaskPixels = int(math.floor(self.params['boxsize']/2.0) - 2
+		maxmaskPixels = int(math.floor(self.params['boxsize']/2.0)) - 2
 		# convert to angstroms to find the max outer mask radius
 		maxmaskAngstrom = maxmaskPixels * self.params['apix']
 		for iter in range(self.params['numiter']):
