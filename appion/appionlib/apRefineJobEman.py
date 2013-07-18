@@ -135,6 +135,7 @@ class EmanRefineJob(apRefineJob.RefineJob):
 		eotestlog = 'eotest%d.txt' % (iter)
 		tasks = self.addToTasks(tasks,' '.join(refinetask_list)+' > %s' % (refinelog),refine_mem,nproc)
 		tasks = self.logTaskStatus(tasks,'refine',refinelog)
+		tasks = self.logTaskStatus(tasks,'make3d','threed.%da.mrc' % iter)
 		tasks = self.addToTasks(tasks,'/bin/mv -v classes.%d.hed classes_eman.%d.hed' % (iter,iter))
 		tasks = self.addToTasks(tasks,'ln -s classes_eman.%d.hed classes.%d.hed' % (iter,iter))
 		tasks = self.addToTasks(tasks,'/bin/mv -v classes.%d.img classes_eman.%d.img' % (iter,iter))

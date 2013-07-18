@@ -13,6 +13,8 @@ class EmanTaskLog(apTaskLog.TaskLog):
 	def examineTaskLog(self):
 		if self.tasktype == 'refine':
 			self.checkRefineLogError()
+		elif self.tasktype == 'make3d':
+			self.checkReconVolume()
 		elif self.tasktype == 'eotest':
 			self.checkResolutionResult()
 
@@ -38,6 +40,12 @@ class EmanTaskLog(apTaskLog.TaskLog):
 			apDisplay.printError('Resolution not determined up to iteration %d' %(self.iter,),False)
 		else:
 			apDisplay.printMsg('Resolution at iteration %d is %s A' % (self.iter,lines[-1][:-1]))
+
+	def checkReconVolume(self):
+		from pyami import mrc
+		h = mrc.readHeaderFromFile(self.tasklogfile)
+		if h['amax'] == h['amin']:
+			apDisplay.printError('Reconstruction gives no real density.  Is the mask too tight? If not, consider using larger "hard" value to exclude fewer images in recostruction.',False)
 
 if __name__ == '__main__':
 	app = EmanTaskLog()

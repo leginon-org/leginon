@@ -51,10 +51,10 @@ class TaskLog(basicScript.BasicScript):
 			self.failed = True
 			apDisplay.printError('task %s did not produce %s' % (tasktype_display,tasklog_basename),raised=False)
 		else:
-			apDisplay.printMsg('task %s produced successfully logfile %s' % (tasktype_display,tasklog_basename))
+			apDisplay.printMsg('task %s produced successfully file %s' % (tasktype_display,tasklog_basename))
 			if os.stat(self.tasklogfile)[6] == 0:
 				self.failed = True
-				apDisplay.printError('task %s logfile %s is empty' % (tasktype_display,tasklog_basename),raised=False)
+				apDisplay.printError('task %s file %s is empty' % (tasktype_display,tasklog_basename),raised=False)
 
 	def examineTaskLog(self):
 		'''
