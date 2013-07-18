@@ -173,16 +173,17 @@ class RefineJob(basicScript.BasicScript):
 				if type(number) == type(0):
 					apDisplay.printWarning("%s is converted to next integer above if entered as float" % key)
 					self.params[key] = map((lambda x: int(math.ceil(x))),self.params[key])
-		# convert the stack boxsize from pixels to angstroms to find the maz outer mask radius
-		boxsizeAngstrom = self.params['boxsize'] * self.params['apix']
-		maxmask = int(math.floor(boxsizeAngstrom/2.0))-2
+		# mask size in pixels has to be 2 pixels less than half the box size
+		maxmaskPixels = int(math.floor(self.params['boxsize']/2.0) - 2
+		# convert to angstroms to find the max outer mask radius
+		maxmaskAngstrom = maxmaskPixels * self.params['apix']
 		for iter in range(self.params['numiter']):
 			if self.params['outerMaskRadius'][iter] == 0:
-				apDisplay.printWarning("mask was not defined, setting to boxsize: %d"%(maxmask))
-				self.params['outerMaskRadius'][iter] = maxmask
-			if self.params['outerMaskRadius'][iter] > maxmask:
-				apDisplay.printWarning("mask was too big, setting to boxsize: %d"%(maxmask))
-				self.params['outerMaskRadius'][iter] = maxmask
+				apDisplay.printWarning("mask was not defined, setting to boxsize: %.1f"%(maxmaskAngstrom))
+				self.params['outerMaskRadius'][iter] = maxmaskAngstrom
+			if self.params['outerMaskRadius'][iter] > maxmaskAngstrom:
+				apDisplay.printWarning("mask was too big, setting to boxsize: %.1f"%(maxmaskAngstrom))
+				self.params['outerMaskRadius'][iter] = maxmaskAngstrom
 
 	def convertSymmetryNameForPackage(self,symm_name):
 		return symm_name.replace(' (z)','')
