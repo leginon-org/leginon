@@ -8,6 +8,7 @@ import string
 import subprocess
 #numpy
 import numpy
+from scipy import ndimage
 #appion
 from appionlib import apEMAN
 from appionlib import apFile
@@ -149,8 +150,10 @@ def viper2eman(infile, outfile, apix=None,spider=None):
 	composecmd = "proc3d rotated.mrc composed.mrc icos2fTo5f"
 	apEMAN.executeEmanCmd(composecmd, verbose=True)
 
+	### shift map center
+	shiftToCenter('composed.mrc','shifted.mrc',isEMAN=True)
 	### set origin and apix
-	finalcmd = "proc3d composed.mrc %s origin=0,0,0 "%(outfile)
+	finalcmd = "proc3d shifted.mrc %s origin=0,0,0 "%(outfile)
 	if apix is not None:
 		finalcmd += "apix=%.3f "%(apix)
 	if spider:
@@ -172,8 +175,10 @@ def eman2viper(infile, outfile, apix=None,spider=None):
 	composecmd = "proc3d composed.mrc rotated.mrc rot=0,0,90"
 	apEMAN.executeEmanCmd(composecmd, verbose=True)
 
+	### shift map center
+	shiftToCenter('rotated.mrc','shifted.mrc')
 	### set origin and apix
-	finalcmd = "proc3d rotated.mrc %s origin=0,0,0 "%(outfile)
+	finalcmd = "proc3d shifted.mrc %s origin=0,0,0 "%(outfile)
 	if apix is not None:
 		finalcmd += "apix=%.3f "%(apix)
 	if spider:
@@ -183,23 +188,68 @@ def eman2viper(infile, outfile, apix=None,spider=None):
 	return outfile
 
 def viper2crowther(infile, outfile, apix=None, spider=None):
+	### rotate -90 degrees about z
+	rotatecmd = 'proc3d %s %s rot=0,0,-90 ' % (infile, 'rotated.mrc')
+	apEMAN.executeEmanCmd(rotatecmd, verbose=True)
+	### shift map center
+	shiftToCenter('rotated.mrc','shifted.mrc')
 	### set origin and apix
-	emancmd = 'proc3d %s %s rot=0,0,-90 ' % (infile, outfile)
+	finalcmd = "proc3d shifted.mrc %s origin=0,0,0 "%(outfile)
 	if apix is not None:
-		emancmd += "apix=%.3f "%(apix)
+		finalcmd += "apix=%.3f "%(apix)
 	if spider:
-		emancmd += "spidersingle"
-	apEMAN.executeEmanCmd(emancmd, verbose=True)
+		finalcmd += "spidersingle"
+	apEMAN.executeEmanCmd(finalcmd, verbose=True)
 	return outfile
 
 def crowther2viper(infile, outfile, apix=None, spider=None):
-	emancmd = 'proc3d %s %s rot=0,0,90 ' % (infile, outfile)
+	### rotate -90 degrees about z
+	rotatecmd = 'proc3d %s %s rot=0,0,90 ' % (infile, 'rotated.mrc')
+	apEMAN.executeEmanCmd(rotatecmd, verbose=True)
+	### shift map center
+	shiftToCenter('rotated.mrc','shifted.mrc')
+	### set origin and apix
+	finalcmd = "proc3d shifted.mrc %s origin=0,0,0 "%(outfile)
 	if apix is not None:
-		emancmd += "apix=%.3f "%(apix)
+		finalcmd += "apix=%.3f "%(apix)
 	if spider:
-		emancmd += "spidersingle"
-	apEMAN.executeEmanCmd(emancmd, verbose=True)
+		finalcmd += "spidersingle"
+	apEMAN.executeEmanCmd(finalcmd, verbose=True)
 	return outfile
+
+def getEmanCenter():
+	return (1,-1,0)
+
+def shiftToCenter(infile,shiftfile,isEMAN=False):
+	'''
+	EMAN defines the rotation origin differently from other packages.
+	Therefore, it needs to be recenterred according to the package
+	after using EMAN proc3d rotation functions.
+	'''
+	# center of rotation for eman is not at length/2.
+	if isEMAN:
+		formatoffset = getEmanCenter()
+		prefix = ''
+	else:
+		formatoffset = (0,0,0)
+		prefix = 'non-'
+
+	apDisplay.printMsg('Shifting map center for %sEMAN usage' % (prefix,))
+	# Find center of mass of the density map
+	a = mrc.read(infile)
+	t = a.mean()+2*a.std()
+	numpy.putmask(a,a>=t,t)
+	numpy.putmask(a,a<t,0)
+	center = ndimage.center_of_mass(a)
+	offset = (center[0]+formatoffset[0]-a.shape[0]/2,center[1]+formatoffset[1]-a.shape[1]/2,center[2]+formatoffset[2]-a.shape[2]/2)
+	offset = (-offset[0],-offset[1],-offset[2])
+	apDisplay.printMsg('Shifting map center by (x,y,z)=(%.2f,%.2f,%.2f)' % (offset[2],offset[1],offset[0]))
+	# shift the map
+	a = mrc.read(infile)
+	a = ndimage.interpolation.shift(a,offset)
+	mrc.write(a,shiftfile)
+	h = mrc.readHeaderFromFile(infile)
+	mrc.update_file_header(shiftfile,h)
 
 ####
 # This is a low-level file with NO database connections
