@@ -48,13 +48,13 @@ function selectRefineJob($extra=False) {
 	$projectId = getProjectId();
 	processing_header("Refinement Job Launcher","Refinement Job Launcher", $javafunc);
 	if ($expId) {
-		$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
+		$type = $_GET['type'];
+		$formAction=$_SERVER['PHP_SELF']."?expId=$expId&type=$type";
 	} else {
 		exit;
 	}
 	
 	// get prepared refine jobs
-	$type = $_GET['type'];
 	if ( $type == "single" ) 
 	{
 		$refinementJobs = new RefineJobsSingleModel($expId);
@@ -71,6 +71,7 @@ function selectRefineJob($extra=False) {
 
 	// print jobs with radio button
 	if (!$refinejobs) {
+		print_r($_POST);
 		echo "<font color='#CC3333' size='+2'>No prepared refinement jobs available</font>\n";
 		exit;
 	} 
@@ -155,7 +156,8 @@ function jobForm($extra=false)
 	$jobid 	= $_POST['jobid'];
 
 	if (!$jobid)
-		selectRefineJob("ERROR: No prepared refine job id was selected");
+		print_r($_POST);
+		#selectRefineJob("ERROR: No prepared refine job id was selected");
 	
 	// Get the selected refinement job info from the database 
 	$particle 		= new particledata();
