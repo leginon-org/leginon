@@ -185,58 +185,15 @@ function createAngularReconstitutionForm($extra=False, $title='automatedCommonLi
 						}
 						echo "</SELECT>\n";
 					}
-
-					echo "<h3><b><c> Refinement of Aligned & Clustered 3D Models</c></b></h3>";
-					if ($clusterIds) {
-						echo "<b> Clustering Stack: </b>";
-						echo "<br><SELECT NAME='rclustervals'>\n";
-						echo "<OPTION VALUE='select'>select one</OPTION>";
-						foreach ($clusterIds as $rc) {
-							$rclusterId = $rc['DEF_id'];
-							$rapix = $rc['pixelsize'];
-							$rboxsz = $rc['boxsize'];
-							$rnum_classes = $rc['num_classes'];
-							$rtotprtls = $rc['num_particles'];
-							echo "<OPTION VALUE='$rclusterId|--|$rapix|--|$rboxsz|--|$rnum_classes|--|$rtotprtls'";
-							if ($rclusterid == $rclusterId) echo " SELECTED";
-							echo ">$rclusterId: ($rapix &Aring;/pixel, $rboxsz pixels, $rnum_classes classes from $rtotprtls particles)</OPTION>\n";
-						}
-						echo "</SELECT>\n";						
-					}
-					if ($templateIds) {
-						if ($clusterIds) echo "<br>OR<br>";
-						echo "<b> Template Stack: </b>";
-						echo "<br><SELECT NAME='rtsvals'>\n";
-						echo "<OPTION VALUE='select'>select one</OPTION>";
-						foreach ($templateIds as $rtemp) {
-							$rtemplateId = $rtemp['DEF_id'];
-							$rtemplatename = $rtemp['templatename'];
-							$rapix = $rtemp['apix'];
-							$rboxsz = $rtemp['boxsize'];
-							$rtotprtls = $rtemp['numimages'];
-							if ($rtemp['cls_avgs'] == 1) $rtype = "Class Averages";
-							elseif ($rtemp['forward'] == 1) $rtype = "Forward Projections";
-							echo "<OPTION VALUE='$rtemplateId|--|$rapix|--|$rboxsz|--|$rtotprtls|--|$rtype'";
-							if ($rtsid == $rtemplateId) echo " SELECTED";
-							echo ">$rtemplateId: $rtemplatename ($rapix &Aring;/pixel, $rboxsz pixels, $rtotpartls images)</OPTION>\n";
-						}
-						echo "</SELECT>\n";
-					}
-					
 				}
+
+
 				echo "</TD></TR>\n";
 //			echo "<TR><TD VALIGN='TOP'>\n</TD></TR>\n";
 			echo "<TR>\n<TD VALIGN='TOP'>\n";
 				echo "<INPUT TYPE='checkbox' NAME='commit' $commitcheck>\n";
 				echo docpop('commit','<B>Commit to Database</B>');
 				echo "<br><br>";
-	
-				echo "<INPUT TYPE='text' NAME='nproc' SIZE='4' VALUE='$nproc'>\n";
-				echo "Number of Processors <br/>\n";
-				echo "</TD></TR><TR></TR>\n";
-			echo "</table>\n</TD>\n";
-		echo "<TD CLASS='tablebg'><TABLE cellpading='5' BORDER='0'>\n";
-			echo "<TR><TD VALIGN='TOP'>\n";
 	
 				echo "<INPUT TYPE='text' NAME='nvol' VALUE='$nvol' SIZE='4'>\n";
 				echo docpop('nvol','Number of Volumes to Compute');
@@ -286,6 +243,7 @@ function createAngularReconstitutionForm($extra=False, $title='automatedCommonLi
 				echo "<div id='imagicparams'";
 				if ($immethod=='eman') echo " style='display:none'";	
 				echo "<br>";
+				echo "<b>IMAGIC Parameters</b><br/>\n";
 				echo "<INPUT TYPE='checkbox' NAME='weight' $weight>\n";
 				echo docpop('weight_randomization','Weight randomization based on image differences');
 				echo "<br>";
@@ -319,18 +277,19 @@ function createAngularReconstitutionForm($extra=False, $title='automatedCommonLi
 				echo "<br/>\n";	
 				echo "</div>\n";		
 
-				echo "<br/>\n";
-				echo "<b>3D Alignment</b>\n";
-				echo "<br/>\n";
+				echo "</TD></TR><TR></TR>\n";
+			echo "</table>\n</TD>\n";
+		echo "<TD CLASS='tablebg'><TABLE cellpading='5' BORDER='0'>\n";
+			echo "<TR><TD VALIGN='TOP'>\n";
+
+				echo "<h3><b><c> 3D Alignment</c></b></h3>";
 
 				echo "<INPUT TYPE='text' NAME='nref' VALUE='$nref' SIZE='4'>\n";
 				echo docpop('nref','Number of Alignment References');
-				echo "<br/>\n";	
+				echo "<br/><br/>\n";	
 
-				echo "<br/>\n";
-				echo "<b>3D Classification</b>\n";
-				echo "<br/>\n";
-		
+				echo "<h3><b><c> 3D Classification</c></b></h3>";
+
 				echo "<INPUT TYPE='checkbox' NAME='usePCA' $usePCA>\n";
 				echo docpop('usePCA','Use Principal Components Analysis');
 				echo "<br>";
@@ -349,10 +308,48 @@ function createAngularReconstitutionForm($extra=False, $title='automatedCommonLi
 				echo "<OPTION VALUE='median'>Median correlation, greatest # of classes</OPTION>";
 				echo "<OPTION VALUE='minimum'>Minimum correlation, normal # of classes</OPTION>";
 				echo "<OPTION VALUE='minlessrange'>Minimum correlation - range, fewest # of classes</OPTION>";
-				echo "</SELECT><br>";
+				echo "</SELECT><br><br>";
+	
+				echo "<h3><b><c> Refinement of Aligned & Clustered 3D Models</c></b></h3>";
+				if ($clusterIds) {
+					echo "<b> Clustering Stack: </b>";
+					echo "<br><SELECT NAME='rclustervals'>\n";
+					echo "<OPTION VALUE='select'>select one</OPTION>";
+					foreach ($clusterIds as $rc) {
+						$rclusterId = $rc['DEF_id'];
+						$rapix = $rc['pixelsize'];
+						$rboxsz = $rc['boxsize'];
+						$rnum_classes = $rc['num_classes'];
+						$rtotprtls = $rc['num_particles'];
+						echo "<OPTION VALUE='$rclusterId|--|$rapix|--|$rboxsz|--|$rnum_classes|--|$rtotprtls'";
+						if ($rclusterid == $rclusterId) echo " SELECTED";
+						echo ">$rclusterId: ($rapix &Aring;/pixel, $rboxsz pixels, $rnum_classes classes from $rtotprtls particles)</OPTION>\n";
+					}
+					echo "</SELECT>\n";						
+				}
+				if ($templateIds) {
+					if ($clusterIds) echo "<br>OR<br>";
+					echo "<b> Template Stack: </b>";
+					echo "<br><SELECT NAME='rtsvals'>\n";
+					echo "<OPTION VALUE='select'>select one</OPTION>";
+					foreach ($templateIds as $rtemp) {
+						$rtemplateId = $rtemp['DEF_id'];
+						$rtemplatename = $rtemp['templatename'];
+						$rapix = $rtemp['apix'];
+						$rboxsz = $rtemp['boxsize'];
+						$rtotprtls = $rtemp['numimages'];
+						if ($rtemp['cls_avgs'] == 1) $rtype = "Class Averages";
+						elseif ($rtemp['forward'] == 1) $rtype = "Forward Projections";
+						echo "<OPTION VALUE='$rtemplateId|--|$rapix|--|$rboxsz|--|$rtotprtls|--|$rtype'";
+						if ($rtsid == $rtemplateId) echo " SELECTED";
+						echo ">$rtemplateId: $rtemplatename ($rapix &Aring;/pixel, $rboxsz pixels, $rtotprtls images)</OPTION>\n";
+					}
+					echo "</SELECT>\n";
+					echo "<br><br>\n";
+				}
 
 				echo "<br/>\n";
-				echo "<b>3D Refinement</b>\n";
+				echo "<b>Refinement Parameters</b>\n";
 				echo "<br/>\n";
 
 				echo "<INPUT TYPE='text' NAME='mask_radius' VALUE='$mask_radius' SIZE='4'>\n";
@@ -368,8 +365,13 @@ function createAngularReconstitutionForm($extra=False, $title='automatedCommonLi
 				echo "<br>\n";
 
 				echo "<INPUT TYPE='text' NAME='mass' VALUE='$mass' SIZE='4'>\n";
-				echo docpop('mass','Particle mass (kDa) - optional');
+				echo docpop('mass','Particle mass (kDa) - OPTIONAL');
 				echo "<br><br>\n";
+
+				echo "<h3><b><c> Cluster Parameters</c></b></h3>";
+
+				echo "<INPUT TYPE='text' NAME='nproc' SIZE='4' VALUE='$nproc'>\n";
+				echo "Number of Processors <br/>\n";
 
 //				echo "<br/>\n";
 //				echo "<b>Model Evaluation</b>\n";
