@@ -78,6 +78,13 @@ function doForceStatus() {
 	$jobdata = $particle->getJobInfoFromId($jobid);
 	echo displayJobInfo($jobdata);
 
+	// Abort multiple attempts of the same job
+	$aborted_similar_jobids = $particle->abortSimilarJobs($expId,$jobdata['name'],$jobdata['jobtype']);
+	if (count($aborted_similar_jobids)) echo formatHtmlRow('____________','___');
+	foreach($aborted_similar_jobids as $aborted_jobid) {
+		echo formatHtmlRow('Abort attempt of the same job in jobid',$aborted_jobid);
+	}
+
 	processing_footer();
 };
 

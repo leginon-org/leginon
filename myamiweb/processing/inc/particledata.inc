@@ -3965,7 +3965,19 @@ class particledata {
 		
 		return $r;
 	}
-	
+
+	function getJobNameTypesLike( $expId, $name, $pattern )
+	{
+		$q="SELECT * "
+			."FROM `ApAppionJobData` AS j "
+			."WHERE j.`REF|leginondata|SessionData|session` = $expId "
+			."AND j.`name` LIKE '$name' "
+			."AND j.`jobtype` LIKE '$pattern' ";
+		$r = $this->mysql->getSQLResult($q);
+		
+		return $r;
+	}
+
 	function getJobIdsFromSession($expId, $jobtype=False, $status=False, $ignore=True) {
 		$q="SELECT j.*, "
 			."p.path as appath "
@@ -4156,6 +4168,22 @@ class particledata {
 			."WHERE `REF|leginondata|SessionData|session`=$expId";
 		$r = $this->mysql->getSQLResult($q);
 		return $r;
+	}
+
+	function abortSimilarJobs($expId,$jobname,$jobtype) {
+		/*
+		This function is used to change status of the multiple attempts of the
+		same job when one of them has been forced by the user to done or abort.
+		*/
+		$aborted_jobids = array();
+		$jobs = $this->getJobNameTypesLike($expId,$jobname,$jobtype);
+		foreach ($jobs as $job) {
+			if ($job['status'] == 'Q') {
+				$this->updateClusterjobStatus($job['DEF_id'],'A',false);
+				$aborted_jobids[]=$job['DEF_id'];
+			}
+		}
+		return $aborted_jobids;
 	}
 
 	function getReconIdFromAppionJobId($jobid) {
