@@ -699,6 +699,21 @@ def getStackRunsFromStack(stackdata):
 	runsinstack = getRunsInStack(stackdata.dbid)
 	return map((lambda x: x['stackRun']),runsinstack)
 
+#===============
+def getExistingRefineStack(stackrefdata,format,phaseflipped,last_part=None,bin=1,lowpass=0,highpass=0):
+	refinestackfile = None
+	if not last_part:
+		# don't query for last_part
+		last_part=None
+	r = appiondata.ApRefineStackData(stackref=stackrefdata,format=format,phaseflipped=phaseflipped,bin=bin,last_part=last_part,lowpass=lowpass,highpass=highpass).query()
+	if r:
+		for refinestackdata in r:
+			refinestackfile = os.path.join(refinestackdata['preprefine']['path']['path'],refinestackdata['filename'])
+			if os.path.isfile(refinestackfile):
+				break
+		apDisplay.printMsg('Found an existing refinestack of the same format and params: %s' % ( refinestackfile))
+	return refinestackfile
+		
 ####
 # This is a database connections file with no file functions
 # Please keep it this way

@@ -2,6 +2,7 @@
 import os
 import sys
 import glob
+import shutil
 
 #appion
 from appionlib import apPrepRefine
@@ -135,6 +136,12 @@ class FrealignPrep3DRefinement(apPrepRefine.Prep3DRefinement):
 		newstackroot = os.path.join(self.params['rundir'],os.path.basename(self.stack['file'])[:-4])
 		if self.params['paramonly'] is True:
 			print 'newstackroot',newstackroot
+			self.setFrealignStack(newstackroot)
+			return
+		# copy existing refined stack if possible
+		existing_refine_stack = apStack.getExistingRefineStack(self.stack['data'],'frealign',False,self.params['last'],self.params['bin'],lowpass=self.params['lowpass'],highpass=self.params['highpass'])
+		if existing_refine_stack:
+			shutil.copyfile(existing_refine_stack,newstackroot+'.mrc')	
 			self.setFrealignStack(newstackroot)
 			return
 		if self.no_ctf_correction:
