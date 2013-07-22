@@ -97,10 +97,6 @@ class TopologyRepScript(appionScript.AppionScript):
 		self.parser.add_option("--msamethod", dest="msamethod",
 			help="Method for MSA", metavar="PACKAGE",
 			type="choice", choices=self.msamethods, default="can")
-		self.cluster = ("barcelona","himem","batch")
-		self.parser.add_option("--cluster", dest="cluster", 
-			help="If using cluster, specify queue (defaults to barcelona)", metavar="QUEUE",
-			type="choice", choices=self.cluster, default="barcelona")
 
 	#=====================
 	def checkConflicts(self):
@@ -128,9 +124,6 @@ class TopologyRepScript(appionScript.AppionScript):
 		if self.params['mramethod'] == 'imagic':
 			self.imagicroot = apIMAGIC.checkImagicExecutablePath()
 			self.imagicversion = apIMAGIC.getImagicVersion(self.imagicroot)
-		## check if running on cluster:
-		if apParam.getExecPath("qsub",die=False) is None:
-			self.params['cluster']=None
 
 	#=====================
 	def setRunDir(self):
@@ -315,33 +308,10 @@ class TopologyRepScript(appionScript.AppionScript):
 		cancmd = self.params['canexe']+canopts
 		self.params['currentnumclasses'] = numClasses
 
-		if self.params['cluster'] is not None:
-			bfile="can_align.job"
-			f = open(bfile,'w')
-			f.write("#!/bin/sh\n")
-			# cluster commands
-			f.write("#PBS -N can_align\n")
-			f.write("#PBS -l nodes=1:ppn=%i\n"%self.params['msaproc'])
-			f.write("#PBS -l walltime=240:00:00\n\n")
-			f.write("cd %s\n\n"%self.params['iterdir'])
-			f.write("webcaller.py '%s' %s/can.log\n"%(cancmd,self.params['rundir']))
-			f.write("touch can_done.txt\n")
-			f.write("exit\n")
-			f.close()
-		
 		apDisplay.printMsg("running CAN:")
 		apDisplay.printMsg(cancmd+"\n")
 		self.writeTopolRepLog(cancmd)
-		## run on cluster or locally
-		if self.params['cluster'] is not None:
-			subprocess.Popen("qsub %s"%bfile, shell=True).wait()
-			## wait for job to complete
-			while not os.path.isfile("can_done.txt"):
-				time.sleep(10)
-			time.sleep(30)
-			os.remove("can_done.txt")
-		else:
-			apEMAN.executeEmanCmd(cancmd, verbose=True, showcmd=True)
+		apEMAN.executeEmanCmd(cancmd, verbose=True, showcmd=True)
 
 		# check that CAN ran properly
 		if not os.path.exists('classes.hed'):
@@ -377,13 +347,16 @@ class TopologyRepScript(appionScript.AppionScript):
 			# don't align references for last iteration
 			if self.params['currentiter'] < self.params['iter']:
 				if self.params['classiter'] is True:
-					## need to implement this:
-					#e2stacksort.py classes_avg.hed out.hdf --simcmp=sqeuclidean:normto=1 --simalign=rotate_translate --center --useali --iterative
-					emancmd = "classalign2 %s.hed 10 keep=100 saveali"%classname
+					emancmd = "e2stacksort.py classes_avg.hed outtmpcls.hdf --simalign=rotate_translate --center --useali --iterative"
+					#emancmd = "e2stacksort.py classes_avg.hed outtmpcls.hdf --simcmp=sqeuclidean:normto=1 --simalign=rotate_translate --center --useali --iterative"
+					#emancmd = "classalign2 %s.hed 10 keep=100 saveali"%classname
 					apEMAN.executeEmanCmd(emancmd, verbose=False)
 					apFile.removeStack(classname)
 					classname = "a"+classname
-				
+					# convert hdf back to imagic
+					emancmd = "proc2d outtmpcls.hdf %s.hed"%classname
+					apEMAN.executeEmanCmd(emancmd, verbose=False)
+					apFile.removeStack("outtmpcls.hdf")
 				else:
 					if self.params['nocenter'] is False and self.params['nomask'] is False:
 						emancmd = "proc2d %s.hed %s_cen.hed center"%(classname,classname)
@@ -519,28 +492,9 @@ class TopologyRepScript(appionScript.AppionScript):
 
 		f = open(bfile,'w')
 		f.write("#!/bin/csh -f\n")
-		## if on cluster
-		if self.params['cluster'] is not None:
-			# distribute processes evenly
-#			num_threads = int(float(os.environ.get('OMP_NUM_THREADS')))
-#			num_nodes = math.ceil(self.params['nproc']/num_threads)
-			proc = subprocess.Popen('pbsnodes -a | grep "state = free"', stdout=subprocess.PIPE, shell=True)
-			(out,err)=proc.communicate()
-			num_nodes = float(len(out.strip().split("\n")))
-			num_ppn = math.ceil(self.params['nproc']/num_nodes)
-			if num_nodes>self.params['nproc']:
-				num_nodes=self.params['nproc']
-				num_ppn=1
-			f.write("#PBS -N mralign\n")
-			f.write("#PBS -l nodes=%i:ppn=%i\n"%(num_nodes,num_ppn))
-			f.write("#PBS -l walltime=240:00:00\n\n")
-			f.write("cd %s\n\n"%self.params['iterdir'])
-
 		f.write("setenv IMAGIC_BATCH 1\n")
 		if self.params['nproc'] > 1:
-			f.write("%s/openmpi/bin/mpirun "%self.imagicroot)
-			f.write("-np %i "%(self.params['nproc']))
-			f.write("-x IMAGIC_BATCH %s/align/mralign.e_mpi << EOF\n" %self.imagicroot)
+			f.write("%s/openmpi/bin/mpirun -x IMAGIC_BATCH %s/align/mralign.e_mpi << EOF\n" %(self.imagicroot,self.imagicroot))
 			if int(self.imagicversion) != 110119:
 				f.write("YES\n")
 				f.write("%i\n"%self.params['nproc'])
@@ -608,14 +562,7 @@ class TopologyRepScript(appionScript.AppionScript):
 		apEMAN.executeEmanCmd("chmod 755 "+bfile)
 
 		apDisplay.printColor("Running IMAGIC .batch file: %s"%(os.path.abspath(bfile)), "cyan")
-		if self.params['cluster'] is not None:
-			subprocess.Popen("qsub %s"%bfile, shell=True).wait()
-			## wait for mra to finish
-			while not os.path.isfile("mra_done.txt"):
-				time.sleep(10)
-			time.sleep(30)
-		else:
-			apIMAGIC.executeImagicBatchFile(os.path.abspath(bfile))
+		apIMAGIC.executeImagicBatchFile(os.path.abspath(bfile))
 
 		os.remove("mra_done.txt")
 
@@ -643,21 +590,10 @@ class TopologyRepScript(appionScript.AppionScript):
 
 		f = open(bfile,'w')
 		f.write("#!/bin/csh -f\n")
-		## if on cluster
-		if self.params['cluster'] is not None:
-			# distribute processes evenly
-			num_threads = int(float(os.environ.get('OMP_NUM_THREADS')))
-			num_nodes = math.ceil(self.params['nproc']/num_threads)
-			f.write("#PBS -N imagicMSA\n")
-			f.write("#PBS -l nodes=%i:ppn=%i\n"%(num_nodes,num_threads))
-			f.write("#PBS -l walltime=240:00:00\n\n")
-			f.write("cd %s\n\n"%self.params['iterdir'])
 
 		f.write("setenv IMAGIC_BATCH 1\n")
 		if self.params['msaproc'] > 1:
-			f.write("%s/openmpi/bin/mpirun "%self.imagicroot)
-			f.write("-np %i "%(self.params['msaproc']))
-			f.write("-x IMAGIC_BATCH %s/msa/msa.e_mpi << EOF\n" %self.imagicroot)
+			f.write("%s/openmpi/bin/mpirun -x IMAGIC_BATCH %s/msa/msa.e_mpi << EOF\n" %(self.imagicroot,self.imagicroot))
 			if int(self.imagicversion) != 110119:
 				f.write("YES\n")
 				f.write("%i\n"%self.params['msaproc'])
@@ -696,14 +632,8 @@ class TopologyRepScript(appionScript.AppionScript):
 		apEMAN.executeEmanCmd("chmod 755 "+bfile)
 
 		apDisplay.printColor("Running IMAGIC .batch file: %s"%(os.path.abspath(bfile)), "cyan")
-		if self.params['cluster'] is not None:
-			subprocess.Popen("qsub %s"%bfile, shell=True).wait()
-			## wait for mra to finish
-			while not os.path.isfile("msa_done.txt"):
-				time.sleep(10)
-			time.sleep(30)
-		else:
-			apIMAGIC.executeImagicBatchFile(os.path.abspath(bfile))
+		apIMAGIC.executeImagicBatchFile(os.path.abspath(bfile))
+
 
 		os.remove("msa_done.txt")
 
@@ -732,14 +662,6 @@ class TopologyRepScript(appionScript.AppionScript):
 
 		f = open(bfile,'w')
 		f.write("#!/bin/csh -f\n")
-		## if on cluster
-		if self.params['cluster'] is not None:
-			# distribute processes evenly
-			f.write("#PBS -N imagicClassify\n")
-			f.write("#PBS -l nodes=1:ppn=1\n")
-			f.write("#PBS -l walltime=240:00:00\n\n")
-			f.write("cd %s\n\n"%self.params['iterdir'])
-
 		f.write("setenv IMAGIC_BATCH 1\n")
 		f.write("%s/msa/classify.e <<EOF\n" % self.imagicroot)
 		f.write("IMAGES\n")
@@ -774,14 +696,7 @@ class TopologyRepScript(appionScript.AppionScript):
 		apEMAN.executeEmanCmd("chmod 755 "+bfile)
 
 		apDisplay.printColor("Running IMAGIC .batch file: %s"%(os.path.abspath(bfile)), "cyan")
-		if self.params['cluster'] is not None:
-			subprocess.Popen("qsub %s"%bfile, shell=True).wait()
-			## wait for mra to finish
-			while not os.path.isfile("msaclassify_done.txt"):
-				time.sleep(10)
-			time.sleep(30)
-		else:
-			apIMAGIC.executeImagicBatchFile(os.path.abspath(bfile))
+		apIMAGIC.executeImagicBatchFile(os.path.abspath(bfile))
 
 		os.remove("msaclassify_done.txt")
 
