@@ -626,7 +626,7 @@ def scale_parfile_frealign8(infile, outfile, mult, newmag=0):
 	### outfile
 	ff = open(outfile, "w")
 	ff.write("%s%8s%8s%8s%8s%8s%8s%6s%9s%9s%8s\n" \
-		% ("c      ","psi","theta","phi","shx","shy","mag","film","df1","df2","angast"))
+		% ("C      ","psi","theta","phi","shx","shy","mag","film","df1","df2","angast"))
 
 	### read & write params
 	params = parseFrealignParamFile(infile)
@@ -743,7 +743,7 @@ def frealign9_to_frealign8(infile, outfile, apix):
 	### output file
 	ff = open(outfile, "w")
 	ff.write("%s%8s%8s%8s%8s%8s%8s%6s%9s%9s%8s\n" \
-		% ("c      ","PSI","THETA","PHI","SHX","SHY","MAG","FILM","DF1","DF2","ANGAST"))
+		% ("C      ","PSI","THETA","PHI","SHX","SHY","MAG","FILM","DF1","DF2","ANGAST"))
 	### read & write params
 	params = parseFrealign9ParamFile(infile)
 	for i,p in params.iteritems():
