@@ -71,7 +71,6 @@ function selectRefineJob($extra=False) {
 
 	// print jobs with radio button
 	if (!$refinejobs) {
-		print_r($_POST);
 		echo "<font color='#CC3333' size='+2'>No prepared refinement jobs available</font>\n";
 		exit;
 	} 
@@ -156,7 +155,6 @@ function jobForm($extra=false)
 	$jobid 	= $_POST['jobid'];
 
 	if (!$jobid)
-		print_r($_POST);
 		#selectRefineJob("ERROR: No prepared refine job id was selected");
 	
 	// Get the selected refinement job info from the database 
