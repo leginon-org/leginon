@@ -107,7 +107,7 @@ class ToolBar(wx.ToolBar):
 		# Get around window freeze on this wx function see bug #2229
 		if 'win' in sys.platform[:3]:
 			return
-		wx.ToolBar.RemoveTool(self,id)
+		return wx.ToolBar.RemoveTool(self,id)
 
 	def DeleteTool(self, id):
 		# Get around window freeze on this wx function see bug #2229

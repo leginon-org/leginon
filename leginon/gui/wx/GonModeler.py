@@ -143,8 +143,7 @@ class Panel(leginon.gui.wx.Calibrator.Panel):
 		leginon.gui.wx.Calibrator.Panel.initialize(self)
 		ctb = self.toolbar.RemoveTool(leginon.gui.wx.ToolBar.ID_CALIBRATE)
 		atb = self.toolbar.RemoveTool(leginon.gui.wx.ToolBar.ID_ABORT)
-		self.toolbar.AddSeparator()
-		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_MEASURE,
+		self.toolbar.InsertTool(5,leginon.gui.wx.ToolBar.ID_MEASURE,
 													'cam_ruler',
 													shortHelpString='Measure')
 		self.toolbar.AddToolItem(atb)
