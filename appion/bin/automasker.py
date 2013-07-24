@@ -147,10 +147,13 @@ class AutoMasker(appionLoop2.AppionLoop):
 			apDisplay.printMsg("Mask Image Shape:")
 			print maskshape
 			
-			apDisplay.printMsg("resizing mask image.")
-			scaleFactor = float(imgshape[0])/float(maskshape[0])
-			print scaleFactor
-			img3 = imagefun.scale( img2, scaleFactor )
+			apDisplay.printMsg("resizing mask image with scale:")
+			scaleFactorx = float(imgshape[0])/float(maskshape[0])
+			scaleFactory = float(imgshape[1])/float(maskshape[1])
+			scale = scaleFactorx, scaleFactory
+			print scale
+
+			img3 = imagefun.scale( img2, scale )
 			maskshape = numpy.shape(img3)
 			apDisplay.printMsg("Mask Image Shape:")
 			print maskshape
@@ -205,6 +208,12 @@ class AutoMasker(appionLoop2.AppionLoop):
 	def processImage(self,imgdata):
 		#image     = self.getImage(imgdata, self.params['bin'])
 		self.image = imgdata['image']
+		
+		# Check the image shape
+		imgshape = numpy.asarray(imgdata['image'].shape)
+		apDisplay.printMsg("MRC Image Shape prior to processing:")
+		print imgshape
+		
 		imagepath = os.path.join(imgdata['session']['image path'],imgdata['filename']+".mrc")
 		
 		# Convert the MRC image to a jpg for find_mask.py
