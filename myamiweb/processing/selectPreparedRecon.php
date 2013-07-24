@@ -155,7 +155,7 @@ function jobForm($extra=false)
 	$jobid 	= $_POST['jobid'];
 
 	if (!$jobid)
-		#selectRefineJob("ERROR: No prepared refine job id was selected");
+		selectRefineJob("ERROR: No prepared refine job id was selected");
 	
 	// Get the selected refinement job info from the database 
 	$particle 		= new particledata();
