@@ -150,13 +150,14 @@ class SimCCDCamera(ccdcamera.CCDCamera):
 		return self.getSyntheticImage(shape)
 	
 	def getSyntheticImage(self,shape):
-		dark_mean = 5.0
+		dark_mean = 1.0
+		bright_scale = 10
 		if self.exposure_type != 'dark':
-			mean = self.exposure_time * 1000.0 + dark_mean
+			mean = self.exposure_time * 1000.0 *bright_scale + dark_mean
 			sigma = 0.1 * mean
 		else:
 			mean = dark_mean
-			sigma = 0.01 * mean
+			sigma = 0.1 * mean
 		image = numpy.random.normal(mean, sigma, shape)
 		if self.exposure_type != 'dark':
 			row_offset = random.randint(-shape[0]/8, shape[0]/8) + shape[0]/4
