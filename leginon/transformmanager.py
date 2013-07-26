@@ -29,6 +29,7 @@ import align
 import targethandler
 import tiltcorrector
 import cameraclient
+import player
 
 hide_incomplete = False
 
@@ -162,12 +163,16 @@ class TargetTransformer(targethandler.TargetHandler):
 		else:
 			return mymatrix
 
-	def calculateMatrix(self, image1, image2):
+	def calculateMatrix(self, image1, image2,bad_image2=False):
 		array1 = image1['image']
 		array2 = image2['image']
 		shape = array1.shape
 
-		regtype = self.settings['registration']
+		# If the reacquired image is too dark, puase here
+		if bad_image2:
+			regtype = 'identity'
+		else: 
+			regtype = self.settings['registration']
 		reg = self.registrations[regtype]
 		self.logger.info('Calculating main transform. Registration: %s' % (regtype,))
 		# If registration fails, revert to identity matrix.
@@ -222,7 +227,29 @@ class TargetTransformer(targethandler.TargetHandler):
 			newtarget['preset'] = newimage['preset']
 		newtarget.insert(force=True)
 		return newtarget
-	
+
+	def isGoodImagePair(self, image1,image2):	
+		'''
+		This detects if the new image acquired is at similar intensity mean as the original.
+		Intensity drops because of microscope or camera problem.  It is worth user attention.
+		'''
+		array1 = image1['image']
+		array2 = image2['image']
+		state = 'ok'
+		if array1.mean()*0.05 > array2.mean():
+			self.logger.error('Mean intensity of the reacquired image is less than 5 percent of the old')
+			self.logger.info('Reacquire if the problem is fixable')
+			self.player.pause()
+			self.setStatus('user input')
+			self.player.wait()
+			self.setStatus('processing')
+			state = self.player.state()
+			if state == 'stop':
+				self.logger.warning('Abort transformation. Use original targets')
+			elif state == 'play':
+				self.logger.info('Reacquire parent image to determin transformation')
+		return state
+
 	def transformTarget(self, target, level):
 		parentimage = target['image']
 		matrix = self.lookupMatrix(parentimage)
@@ -240,10 +267,16 @@ class TargetTransformer(targethandler.TargetHandler):
 				newparenttarget = self.transformTarget(parenttarget, level)
 			elif level == 'one':
 				newparenttarget = parenttarget
-			newparentimage = self.reacquire(newparenttarget)
-			if newparentimage is None:
-				return None
-			matrix = self.calculateMatrix(parentimage, newparentimage)
+			pairstate = 'play'
+			while pairstate == 'play':
+				newparentimage = self.reacquire(newparenttarget)
+				if newparentimage is None:
+					return None
+				pairstate = self.isGoodImagePair(parentimage,newparentimage)
+			if pairstate != 'stop':
+				matrix = self.calculateMatrix(parentimage, newparentimage)
+			else:
+				matrix = self.calculateMatrix(parentimage, newparentimage, bad_image2=True)
 		newtarget = self.matrixTransform(target, matrix,newparentimage)
 		return newtarget
 
@@ -288,6 +321,8 @@ class TransformManager(node.Node, TargetTransformer):
 			})
 
 		self.abortevent = threading.Event()
+		self.player = player.Player(callback=self.onPlayer)
+		self.panel.playerEvent(self.player.state())
 
 		self.start()
 
@@ -569,3 +604,15 @@ class TransformManager(node.Node, TargetTransformer):
 		disptarget = x,y
 			
 		self.setTargets([disptarget], 'Target')
+
+	def onPlayer(self, state):
+		infostr = ''
+		if state == 'play':
+			infostr += 'Continuing...'
+		elif state == 'pause':
+			infostr += 'Pausing...'
+		elif state == 'stop':
+			infostr += 'Aborting...'
+		if infostr:
+			self.logger.info(infostr)
+		self.panel.playerEvent(state)

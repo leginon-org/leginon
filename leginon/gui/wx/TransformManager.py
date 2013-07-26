@@ -13,6 +13,7 @@ import leginon.gui.wx.TargetPanel
 import leginon.gui.wx.Node
 import leginon.gui.wx.Settings
 import leginon.gui.wx.Instrument
+import leginon.gui.wx.Events
 
 class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin):
 	icon = 'driftmanager'
@@ -31,12 +32,16 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_DECLARE_DRIFT,
 													'declare',
 													shortHelpString='Declare Drift')
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_PLAY, 'play', shortHelpString='Reacquire')
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_ABORT, 'stop', shortHelpString='Abort')
 #		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_CHECK_DRIFT,
 #													'play',
 #													shortHelpString='Check Drift')
 #		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_ABORT_DRIFT,
 #													'stop',
 #													shortHelpString='Abort Drift Check')
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, False)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT, False)
 
 		# image
 		self.imagepanel = leginon.gui.wx.TargetPanel.TargetImagePanel(self, -1)
@@ -61,6 +66,12 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 											id=leginon.gui.wx.ToolBar.ID_SETTINGS)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onDeclareDriftTool,
 											id=leginon.gui.wx.ToolBar.ID_DECLARE_DRIFT)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onPlayTool,
+											id=leginon.gui.wx.ToolBar.ID_PLAY)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onStopTool,
+											id=leginon.gui.wx.ToolBar.ID_ABORT)
+
+		self.Bind(leginon.gui.wx.Events.EVT_PLAYER, self.onPlayer)
 
 	def onSettingsTool(self, evt):
 		dialog = SettingsDialog(self)
@@ -69,6 +80,24 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 
 	def onDeclareDriftTool(self, evt):
 		self.node.uiDeclareDrift()
+
+	def onPlayTool(self, evt):
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, False)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT, False)
+		self.node.player.play()
+
+	def onStopTool(self, evt):
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, False)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT, False)
+		self.node.player.stop()
+
+	def onPlayer(self, evt):
+		if evt.state == 'play':
+			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, False)
+			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT, False)
+		elif evt.state == 'pause':
+			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, True)
+			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT, True)
 
 class SettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
