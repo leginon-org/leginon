@@ -11,6 +11,7 @@
 import numpy
 import pyami.quietscipy
 import scipy.ndimage
+import math
 from pyami import imagefun, peakfinder, convolver, correlator, mrc, arraystats
 import ice
 import lattice
@@ -302,6 +303,28 @@ class HoleFinder(object):
 				blobs.append(blob)
 			return blobs
 
+	def convolve3x3WithBlobPoints(self,points):
+		if len(points) < 2:
+			self.logger.warning('Need at least 2 point to determine 3x3 patter orientation')
+			return []
+		shape = self.__results['original'].shape
+		tolerance = self.lattice_config['tolerance']
+		spacing = self.lattice_config['spacing']
+		total_lattice_points = []
+		# Use the first two points to get the rotation of the 3x3 holes
+		vector = (points[1][0]-points[0][0],points[1][1]-points[0][1])
+		vector_length = math.hypot(vector[0],vector[1])
+		# scaling the 3x3 pattern to have the spacing of the lattice_config
+		scaled_vector = map((lambda x: x*spacing/vector_length),vector)
+		def shiftpoint(point,vector):
+			return (point[0]+vector[0],point[1]+vector[1])
+		for point in points:
+			newpoints = [point,shiftpoint(point,scaled_vector)]
+			best_lattice = lattice.pointsToLattice(newpoints, spacing, tolerance, first_is_center=True)
+			best_lattice_points = best_lattice.raster(shape, layers=1)
+			total_lattice_points.extend(best_lattice_points)
+		return total_lattice_points
+			
 	def blobs_to_lattice(self, tolerance=None, spacing=None, minspace=None, extend=None, auto_center=False):
 		if self.__results['blobs'] is None:
 			raise RuntimeError('need blobs to create lattice')
@@ -325,25 +348,23 @@ class HoleFinder(object):
 			pointdict[point] = blob
 
 		if extend == '3x3':
-			if auto_center:
-				self.logger.info('Use the blob closest to the center as the 3x3 lattice center')
-				points = lattice.sortPointsByDistances(points, (shape[0]/2,shape[1]/2))
-			best_lattice = lattice.pointsToLattice(points, spacing, tolerance, first_is_center=True)
+			# Not to use points to determine Lattice but continue with extension
+			best_lattice = True
 		else:
 			best_lattice = lattice.pointsToLattice(points, spacing, tolerance)
 
 		if best_lattice is None:
-			best_lattice = []
+			best_lattice_points = []
 			holes = []
 		elif extend == 'full':
-			best_lattice = best_lattice.raster(shape)
-			holes = self.points_to_blobs(best_lattice)
+			best_lattice_points = best_lattice.raster(shape)
+			holes = self.points_to_blobs(best_lattice_points)
 		elif extend == '3x3':
-			best_lattice = best_lattice.raster(shape, layers=1)
-			holes = self.points_to_blobs(best_lattice)
+			best_lattice_points = self.convolve3x3WithBlobPoints(points)
+			holes = self.points_to_blobs(best_lattice_points)
 		else:
-			best_lattice = best_lattice.points
-			holes = [pointdict[tuple(point)] for point in best_lattice]
+			best_lattice_points = best_lattice.points
+			holes = [pointdict[tuple(point)] for point in best_lattice_points]
 
 		self.__update_result('lattice', best_lattice)
 		if best_lattice is None:
