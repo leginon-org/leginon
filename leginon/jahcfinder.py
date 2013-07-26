@@ -487,6 +487,8 @@ class JAHCFinder(targetfinder.TargetFinder):
 			newblobs = self.panel.getTargetPositions('Blobs')
 			if not newblobs:
 				return False
+			if self.settings['lattice extend'] == 'off':
+				return False
 			for point in self.oldblobs:
 				if point not in newblobs:
 					return True
