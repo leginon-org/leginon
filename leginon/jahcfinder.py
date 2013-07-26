@@ -502,12 +502,16 @@ class JAHCFinder(targetfinder.TargetFinder):
 			newblobs = self.panel.getTargetPositions('Blobs')
 			if not newblobs:
 				return False
+			if self.settings['lattice extend'] == 'off':
+				return False
 			for point in self.oldblobs:
 				if point not in newblobs:
+					self.logger.info('Lattice extension is on and blobs changed.')
 					return True
 			if len(newblobs) == len(self.oldblobs):
 				return False
 			else:
+				self.logger.info('Lattice extension is on and some blob added.')
 				return True
 
 	def findTargets(self, imdata, targetlist):
@@ -538,9 +542,11 @@ class JAHCFinder(targetfinder.TargetFinder):
 				newblobs = self.blobsChanged()
 				if newblobs:
 					try:
+						self.logger.info('Autofinder rerun starting from Lattice fitting')
 						self.usePickedBlobs()
 						self.fitLattice(auto_center=False)
 						self.ice()
+						self.logger.info('Autofinder rerun due to blob editing finished')
 					except Exception, e:
 						raise
 						self.logger.error('Failed: %s' % (e,))
