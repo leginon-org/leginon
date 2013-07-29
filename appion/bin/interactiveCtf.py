@@ -15,7 +15,6 @@ from PIL import Image
 from appionlib import apParam
 from appionlib import apDisplay
 from appionlib import appiondata
-from appionlib import apPrimeFactor
 from appionlib import apInstrument
 from appionlib import apDatabase
 from appionlib import appionLoop2
@@ -24,7 +23,7 @@ from appionlib.apCtf import ctftools, ctfnoise, ctfdb, sinefit, genctf, ctfpower
 #Leginon
 import leginon.polygon
 from leginon.gui.wx import ImagePanel, ImagePanelTools, TargetPanel, TargetPanelTools
-from pyami import mrc, fftfun, imagefun, ellipse
+from pyami import mrc, fftfun, imagefun, ellipse, primefactor
 from scipy import ndimage
 import scipy.stats
 from leginon.gui.wx.Entry import FloatEntry, IntEntry, EVT_ENTRY
@@ -2528,7 +2527,7 @@ class ManualCTF(appionLoop2.AppionLoop):
 				%(maxres, self.params['reslimit']))
 		limitwidth = int(math.ceil(2.0/(self.params['reslimit']*freq)))
 		print limitwidth, self.params['reslimit'], freq
-		limitwidth = apPrimeFactor.getNextEvenPrime(limitwidth)
+		limitwidth = primefactor.getNextEvenPrime(limitwidth)
 		requestres = 2.0/(freq*limitwidth)
 		if limitwidth > fftwidth:
 			apDisplay.printError("Cannot get requested resolution"

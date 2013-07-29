@@ -13,8 +13,10 @@ import subprocess
 import copy
 from scipy import stats
 from scipy import ndimage
+
 #appion
 from pyami import imagefun
+from pyami import primefactor
 from appionlib import apParticleExtractor
 from appionlib import apImage
 from appionlib import apDisplay
@@ -26,7 +28,6 @@ from appionlib import appiondata
 from appionlib import apStackMeanPlot
 from appionlib import apEMAN
 from appionlib import apProject
-from appionlib import apPrimeFactor
 from appionlib import apFile
 from appionlib import apParam
 from appionlib import apImagicFile
@@ -980,12 +981,12 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 	#=======================
 	def checkConflicts(self):
 		super(Makestack2Loop,self).checkConflicts()
-		if not apPrimeFactor.isGoodStack(self.params['boxsize']):
+		if not primefactor.isGoodStack(self.params['boxsize']):
 			apDisplay.printWarning("Boxsize does not contain recommended prime numbers")
-			smallbox,bigbox = apPrimeFactor.getPrimeLimits(self.params['boxsize'])
+			smallbox,bigbox = primefactor.getPrimeLimits(self.params['boxsize'])
 			apDisplay.printWarning("You should use %d or %d for a boxsize instead"%(smallbox,bigbox))
 		else:
-			primes = apPrimeFactor.prime_factors(self.params['boxsize'])
+			primes = primefactor.prime_factors(self.params['boxsize'])
 			apDisplay.printMsg("Boxsize "+str(self.params['boxsize'])+" contains the primes: "+str(primes))
 		if self.params['description'] is None:
 			apDisplay.printError("A description has to be specified")

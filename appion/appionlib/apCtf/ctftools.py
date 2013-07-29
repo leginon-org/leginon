@@ -7,7 +7,7 @@ from PIL import Image
 from PIL import ImageDraw
 from pyami import imagefun
 from pyami import ellipse
-from appionlib import apPrimeFactor
+from pyami import primefactor
 from appionlib import apDisplay
 from appionlib.apCtf import ctfpower
 from appionlib.apImage import imagefile
@@ -207,7 +207,7 @@ def trimPowerSpectraToOuterResolution(powerspec, outerresolution, freq):
 			%(outerresolution, initmaxres))
 		outerresolution = initmaxres
 	pixellimitradius = int(math.ceil(1./(freq * outerresolution)))
-	goodpixellimitradius = apPrimeFactor.getNextEvenPrime(pixellimitradius)
+	goodpixellimitradius = primefactor.getNextEvenPrime(pixellimitradius)
 	finalres = 1./(freq * goodpixellimitradius)
 	if debug is True:
 		print "__Pixel limit dimension: ", goodpixellimitradius

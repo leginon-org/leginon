@@ -15,13 +15,12 @@ from appionlib import apDisplay
 from appionlib import appiondata
 from appionlib import apDatabase
 from appionlib import appionLoop2
-from appionlib import apPrimeFactor
 from appionlib import apInstrument
 from appionlib.apCtf import ctftools, ctfnoise, ctfdb, sinefit, canny, findroots
 from appionlib.apCtf import genctf, ctfpower, ctfres, ctfinsert, ransac, lowess
 from appionlib.apImage import imagefile, imagefilter, imagenorm, imagestat
 #Leginon
-from pyami import mrc, fftfun, imagefun, ellipse
+from pyami import mrc, fftfun, imagefun, ellipse, primefactor
 from scipy import ndimage
 import scipy.stats
 
@@ -194,7 +193,7 @@ class LsqCTF(appionLoop2.AppionLoop):
 				%(maxres, self.params['reslimit']))
 
 		limitwidth = int(math.ceil(2.0/(self.params['reslimit']*freq)))
-		limitwidth = apPrimeFactor.getNextEvenPrime(limitwidth)
+		limitwidth = primefactor.getNextEvenPrime(limitwidth)
 		requestres = 2.0/(freq*limitwidth)
 		if limitwidth > fftwidth:
 			apDisplay.printError("Cannot get requested resolution"

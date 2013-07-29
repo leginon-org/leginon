@@ -11,6 +11,9 @@ import numpy
 import shutil
 import urllib
 import subprocess
+
+#pyami
+from pyami import primefactor
 #appion
 from appionlib import appionScript
 from appionlib import apParam
@@ -23,7 +26,6 @@ from appionlib import apFile
 from appionlib import appiondata
 from appionlib import apSymmetry
 from appionlib import apVolume
-from appionlib import apPrimeFactor
 
 from appionlib.apSpider import volFun
 
@@ -144,7 +146,7 @@ class modelFromPDB(appionScript.AppionScript):
 
 		### select double limit for resizing purposes
 		boxsize = int(2*limitsize/self.params['apix'])
-		while not apPrimeFactor.isGoodPrime(boxsize):
+		while not primefactor.isGoodPrime(boxsize):
 			boxsize += 1
 
 		apDisplay.printMsg("Selected boxsize of %d pixels to bound particle"%(boxsize))
