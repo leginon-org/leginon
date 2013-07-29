@@ -9,6 +9,7 @@ import wx
 from leginon.gui.wx.Entry import Entry, IntEntry, FloatEntry, EVT_ENTRY
 import numpy
 import re
+from pyami import primefactor
 
 ConfigurationChangedEventType = wx.NewEventType()
 SetConfigurationEventType = wx.NewEventType()
@@ -431,6 +432,7 @@ class CameraPanel(wx.Panel):
 		def minsize(size):
 			return size >= self.minsize / max(self.binnings['x'])
 		dimensions = filter(minsize, dimensions)
+		dimensions = map((lambda x: primefactor.getAllEvenPrimes(x)[-1]),dimensions)
 		binnings = filtergood(self.binnings['x'], mask)
 		dimensions.reverse()
 		if show_sections:

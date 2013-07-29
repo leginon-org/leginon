@@ -228,7 +228,7 @@ class GatanK2Base(DMSEM):
 	cameraid = 0
 	ed_mode = 'base'
 	hw_proc = 'none'
-	binning_limits = [1,2,3,4,5,6,7,8]
+	binning_limits = [1,2,4,8]
 	binmethod = 'floor'
 	filePerImage = False
 	def custom_setup(self):
