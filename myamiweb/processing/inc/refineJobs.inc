@@ -148,16 +148,21 @@ abstract class RefineJobs
 		$refineReadyUpload = array();
 		foreach ($this->runJobs as $job ) {
 			$jobid = $job['DEF_id'];
-			$jobinfo = $this->particle->getJobInfoFromId($jobid);
+			
+			// check if job has been uploaded
+			if ($this->particle->getReconIdFromAppionJobId($jobid)) {
+				//echo "recon $jobid";
+				continue;
+			}
+	
+			// check if job has been aborted
+			if ($job['status'] == 'A') {
+				//echo "abort $jobid";
+				continue;
+			}
 			
 			// check if job has been run
-			$jobran = ( $jobinfo['status'] == 'D' ) ? True : False;
-			
-			// check if job has an associated jobfile
-			$jobfile = $jobinfo['appath'].'/'.$jobinfo['name'];
-			$hasJobFile = file_exists($jobfile);
-			
-			if ( $jobran && $hasJobFile ) {
+			if ( $job['status'] == 'D' ) {
 				$refineReadyUpload[] = $job;
 			}
 		}	
