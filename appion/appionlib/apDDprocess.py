@@ -362,7 +362,7 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		imageid = self.getDefaultImageForReference()
 		imagedata = leginondata.AcquisitionImageData().direct_query(imageid)
 		if self.image['camera']['ccdcamera']['name'] != imagedata['camera']['ccdcamera']['name']:
-			apDisplay.printError('Default reference image not from the same camera as the data')
+			apDisplay.printError('Default reference image id=%d not from the same camera as the data' % (imageid))
 		apDisplay.printMsg('Reference image comes from %s' % imagedata['filename'])
 		return imagedata
 
@@ -697,7 +697,9 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		return corrected
 
 	def getCorrectorPlan(self,camerainfo):
-		plandata =  self.image['corrector plan']
+		imageid = self.getDefaultImageForReference()
+		imagedata = leginondata.AcquisitionImageData().direct_query(imageid)
+		plandata =  imagedata['corrector plan']
 		if plandata:
 			plan = self.c_client.formatCorrectorPlan(plandata)
 		else:
