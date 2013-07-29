@@ -31,7 +31,7 @@ def getAllPrimes(maxn=1028):
 	goodones = []
 	n = 2
 	while n <= maxn:
-		if isGoodPrime(n):
+		if isGoodPrime(n,False):
 			#print n, factors
 			goodones.append(n)
 		n += 2
@@ -42,7 +42,7 @@ def getAllEvenPrimes(maxn=1028):
 	goodones = []
 	n = 2
 	while n <= maxn:
-		if isGoodPrime(n):
+		if isGoodPrime(n,False):
 			#print n, factors
 			goodones.append(n)
 		n += 2
@@ -71,22 +71,23 @@ def getPrimeLimits(num=4):
 	return (prev, next)
 
 #====================
-def isGoodPrime(num=4):
+def isGoodPrime(num=4, power_of_4_rule=True):
 	"""
 	Boxsize rules:
 	(1) no prime factor greater than 11
 	(2) if greater than 4^x, must be multiple of 2^x, 
 	"""
-	#print num
-	if num % 4 != 0:
-		return False
+	#print numa
+	if power_of_4_rule:
+		if num % 4 != 0:
+			return False
 
-	### get the number of powers of 4 in number
-	power = int(math.floor(math.log(float(num))/math.log(4.0)))
-	### check to make sure number is divisible by 2 to that power
-	mod = int(2**power)
-	if num % mod != 0:
-		return False
+		### get the number of powers of 4 in number
+		power = int(math.floor(math.log(float(num))/math.log(4.0)))
+		### check to make sure number is divisible by 2 to that power
+		mod = int(2**power)
+		if num % mod != 0:
+			return False
 
 	### get prime factors and find maximum
 	factors = prime_factors(num)
