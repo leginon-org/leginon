@@ -30,7 +30,7 @@ def prime_factors(n):
 def getAllPrimes(maxn=1028):
 	goodones = []
 	n = 2
-	while n < maxn:
+	while n <= maxn:
 		if isGoodPrime(n):
 			#print n, factors
 			goodones.append(n)
@@ -41,7 +41,7 @@ def getAllPrimes(maxn=1028):
 def getAllEvenPrimes(maxn=1028):
 	goodones = []
 	n = 2
-	while n < maxn:
+	while n <= maxn:
 		if isGoodPrime(n):
 			#print n, factors
 			goodones.append(n)
