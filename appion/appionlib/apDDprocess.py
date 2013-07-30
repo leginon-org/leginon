@@ -1022,13 +1022,14 @@ class DDFrameProcessing(DirectDetectorProcessing):
 					defocus=self.image['scope']['defocus'],
 					tem = self.image['scope']['tem'],
 					ccdcamera = camdata['ccdcamera'],
+					session = self.image['session'],
 			)
 		else:
 			old_name = align_presetdata['name']
 			align_presetdata['name'] = old_name+'-a'
-		align_presetdata['dimension'] = camdata['dimension'],
-		align_presetdata['binning'] = camdata['binning'],
-		align_presetdata['offset'] = camdata['offset'],
+		align_presetdata['dimension'] = camdata['dimension']
+		align_presetdata['binning'] = camdata['binning']
+		align_presetdata['offset'] = camdata['offset']
 		align_presetdata['exposure time'] = camdata['exposure time']
 		# make new imagedata with the align_preset amd aligned CameraEMData
 		imagedata = leginondata.AcquisitionImageData(initializer=self.image)
@@ -1121,9 +1122,10 @@ class DDStackProcessing(DirectDetectorProcessing):
 		return sum
 
 if __name__ == '__main__':
-	dd = DirectDetectorProcessing()
+	dd = initializeDDFrameprocess('13jun18anchitestT1')
 	dd.setRunDir('./')
-	dd.setImageId(1991218)
+	dd.setImageId(2380386)
 	dd.setAlignedCameraEMData()
+	dd.makeAlignedImageData()
 	start_frame = 0
-	mrc.write(corrected,'corrected_frame%d_%d.mrc' % (start_frame,nframe))
+	#mrc.write(corrected,'corrected_frame%d_%d.mrc' % (start_frame,nframe))
