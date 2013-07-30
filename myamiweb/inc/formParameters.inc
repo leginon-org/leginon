@@ -261,6 +261,11 @@ class FormParameters
 		return $html;
 	}
 	
+	// This control is used for setting "flags" that appear in the form
+	// '--name' in the generated command. We use the value 'on' to indicate
+	// that the checkbox has been checked by the user. 
+	// TODO: May want to clean up the hard coded 'on' value as it is referenced
+	// in basicForm.inc as well to indicate that a flag should be added to a command. 
 	public function insertCheckboxField( $name, $note='', $helpkey='' )
 	{
 		// if the parameter has been "hidden" just return an empty string.
@@ -268,9 +273,11 @@ class FormParameters
 			$html = "";
 		} else {
 			$helpkey = $this->setHelpKey( $name, $helpkey );			
+			$checked = ( $this->params[$name]['value'] == "on" ) ? "CHECKED" : "";
 			$html = $this->formLib->insertCheckboxField( $this->params[$name]['name'], 
 														$this->params[$name]['label'], 
-														$this->params[$name]['value'], 
+														"on", /*sets $this->params[$name]['value'] to 'on' if checked by user*/
+														$checked, 
 														$this->params[$name]['enable'], 
 														$note,
 														$helpkey );

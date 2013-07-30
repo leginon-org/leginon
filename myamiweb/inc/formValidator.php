@@ -255,6 +255,11 @@ class formValidator{
 				break;
 			}
 			
+			case 'noquote':{
+				$result = $this->validateNoQuote($validateObj);
+				break;
+			}
+			
 		
 		} //end switch
 
@@ -272,7 +277,18 @@ class formValidator{
 			
 		return $result;	
 	}
+	/*
+	 * Validate "noquote" field
+	 */
+	function validateNoQuote($inputValue){
+		$result = true;
 	
+      	if (  (strlen($inputValue) > 0) && (strpos( $inputValue, "'" ) !== false || strpos( $inputValue, '"' ) !== false) ) {
+      		$result = false;
+		}		
+
+		return $result;	
+	}	
 	/*
 	 * Validate Max length of input value
 	 */
@@ -522,6 +538,7 @@ define("FOLDER_PERMISSION_CHECK_FAILED", "Apache user does not have write permis
 define("SMTP_CHECK_FAILED", "SMTP Server checking failed. Please contact your system administrator.");
 define("REMOTE_SERVER_CHECK_FAILED", "REMOTE Server checking failed. Please contact your system administrator.");
 define("DATABASE_CHECK_FAILED", "Database checking failed. Please contact your system administrator.");
+define("REMOVE_QUOTE_CHAR", "Please remove any quote characters from your entry.");
 
 // This is an inner class for formValidator.
 class validatorObj{
@@ -612,7 +629,9 @@ class validatorObj{
 				case 'remoteServer': { $this->errorOutputMessage = REMOTE_SERVER_CHECK_FAILED; break; }
 				
 				case 'database':	{ $this->errorOutputMessage = DATABASE_CHECK_FAILED; break;	}
-		
+				
+				case 'database':	{ $this->errorOutputMessage = REMOVE_QUOTE_CHAR; break;	}
+				
 			} //end switch			
 		}
 		else{

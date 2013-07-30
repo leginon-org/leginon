@@ -67,9 +67,9 @@ class FormGeneratorLib
 		return $html;
 	}
 	
-	public function insertCheckboxField( $name, $label='', $value='', $enable='', $note='', $helpkey='' )
+	public function insertCheckboxField( $name, $label='', $value='', $checked='', $enable='', $note='', $helpkey='' )
 	{
-		$html.= "<INPUT TYPE='checkbox' NAME='$name' $enable $value >\n";
+		$html.= "<INPUT TYPE='checkbox' NAME='$name' $enable VALUE='$value' $checked >\n";
 		$html.= $this->insertLabel( $name, $label, $helpkey );				
 		$html.= $this->insertNote( $note );
 		$html.= "<br/>\n";
@@ -87,15 +87,20 @@ class FormGeneratorLib
 		return $html;
 	}
 
+	//Options may be an associative array, to allow a more descriptive string to be shown to the user for each option. 
 	public function insertSelectField( $name, $label='', $value='', $options='', $enable='', $note='', $helpkey='' )
 	{
 		$html .=  "<SELECT NAME='$name' $enable>\n";
-		foreach ($options as $option) {
+		foreach ($options as $option => $desc) {
 			// determine if this entry is currently selected
 			$selected = ( $value == $option ) ? " SELECTED" : "";
 			
 			// add the entry to the option list
-			$html .=  "<OPTION VALUE='$option' $selected>$option</OPTION>\n";
+			if ( $desc ) {
+				$html .=  "<OPTION VALUE='$desc' $selected>$desc</OPTION>\n";
+			} else {
+				$html .=  "<OPTION VALUE='$option' $selected>$option</OPTION>\n";
+			}
 		}
 		$html .=  "</SELECT>\n";		
 
