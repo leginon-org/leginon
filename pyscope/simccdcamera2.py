@@ -384,7 +384,7 @@ class SimOtherCCDCamera(SimCCDCamera):
 	name = 'SimOtherCCDCamera'
 	def __init__(self):
 		super(SimOtherCCDCamera,self).__init__()
-		self.binning_limits = [1,2,3,4,5,6,7,8]
+		self.binning_limits = [1,2,4,8]
 		self.binmethod = 'floor'
 
 	def _getImage(self):
