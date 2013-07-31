@@ -113,9 +113,9 @@ class GatanK2Processing(apDDprocess.DDFrameProcessing):
 		'''
 		return self.image.timestamp.date() < datetime.date(2012,12,31)
 
-	def getDefaultCorrectedImageData(self):
+	def getCorrectedImageData(self):
 		if not self.isOldNRAMMData():
-			return self.image
+			return super(GatanK2Processing,self).getCorrectedImageData()
 		# local change
 		if self.image['camera']['ccdcamera']['name'] == 'GatanK2Super':
 			return leginondata.AcquisitionImageData().direct_query(1989908)
@@ -131,21 +131,19 @@ class GatanK2Processing(apDDprocess.DDFrameProcessing):
 			# image dimension is not consistent with the frames
 			# Use the default camera dimension, binning, and offset of the frames
 			# (rotated and flipped full size)
-			defaultcamdata = self.getDefaultCorrectedImageData()['camera']
+			defaultcamdata = self.getCorrectedImageData()['camera']
 			for key in ('dimension','binning','offset'):
 				camdata[key] = defaultcamdata[key]
 		return camdata
 
 	def _getRefImageData(self,reftype):
-		if self.getDefaultImageForReference():
-			imagedata = super(GatanK2Processing,self).getDefaultCorrectedImageData()
-			return imagedata[reftype]
+		imagedata = super(GatanK2Processing,self).getCorrectedImageData()
 		if not self.use_full_raw_area:
-			refdata = self.image[reftype]
+			refdata = imagedata[reftype]
 			if refdata is None:
 				# Use chosen default image
 				apDisplay.printWarning('No %s reference for the image, use default' % reftype) 
-				default_image = self.getDefaultCorrectedImageData()
+				default_image = self.getCorrectedImageData()
 				refdata = default_image[reftype]
 		else:
 			# use most recent CorrectorImageData

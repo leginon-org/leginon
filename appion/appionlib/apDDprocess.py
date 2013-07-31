@@ -358,13 +358,20 @@ class DDFrameProcessing(DirectDetectorProcessing):
 			apDisplay.printError('Raw Frame Directory %s does not exist' % rawframedir)
 		return rawframedir
 
-	def getDefaultCorrectedImageData(self):
+	def getCorrectedImageData(self):
+		'''
+		Returns image for getting reference.  If this is not set externally,
+		the image being processed is returned
+		'''
 		imageid = self.getDefaultImageForReference()
-		imagedata = leginondata.AcquisitionImageData().direct_query(imageid)
-		if self.image['camera']['ccdcamera']['name'] != imagedata['camera']['ccdcamera']['name']:
-			apDisplay.printError('Default reference image id=%d not from the same camera as the data' % (imageid))
-		apDisplay.printMsg('Reference image comes from %s' % imagedata['filename'])
-		return imagedata
+		if imageid:
+			imagedata = leginondata.AcquisitionImageData().direct_query(imageid)
+			if self.image['camera']['ccdcamera']['name'] != imagedata['camera']['ccdcamera']['name']:
+				apDisplay.printError('Default reference image id=%d not from the same camera as the data' % (imageid))
+				apDisplay.printMsg('Reference image comes from %s' % imagedata['filename'])
+			return imagedata
+		else:
+			return self.image
 
 	def getRefImageData(self,reftype):
 		refdata = self._getRefImageData(reftype)
@@ -375,19 +382,17 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		return refdata
 
 	def _getRefImageData(self,reftype):
-		if self.getDefaultImageForReference():
-			imagedata = self.getDefaultCorrectedImageData()
-			return imagedata[reftype]
+		imagedata = self.getCorrectedImageData()
 		if not self.use_full_raw_area:
-			refdata = self.image[reftype]
+			refdata = imagedata[reftype]
 			#if self.image.dbid <= 1815252 and self.image.dbid >= 1815060:
 				# special case to back correct images with bad references
 				#refdata = apDatabase.getRefImageDataFromSpecificImageId(reftype,1815281)
 		else:
 			# use most recent CorrectorImageData
 			# TO DO: this should research only ones before the image is taken.
-			scopedata = self.image['scope']
-			channel = self.image['channel']
+			scopedata = imagedata['scope']
+			channel = imagedata['channel']
 			refdata = self.c_client.researchCorrectorImageData(reftype, scopedata, self.camerainfo, channel)
 		return refdata
 
@@ -667,7 +672,9 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		if get_new_refs:
 			scaled_brightarray = self.getScaledBrightArray(nframe)
 			normdata = self.getRefImageData('norm')
+			apDisplay.printWarning('Ref Session Path:%s' % normdata['session']['image path'])
 			apDisplay.printWarning('Use Norm Reference %s' % (normdata['filename'],))
+			apDisplay.printWarning('Corresponding Bright Reference %s' % (normdata['bright']['filename'],))
 			if not self.use_GS and normdata:
 				normarray = normdata['image']
 			else:
@@ -697,8 +704,7 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		return corrected
 
 	def getCorrectorPlan(self,camerainfo):
-		imageid = self.getDefaultImageForReference()
-		imagedata = leginondata.AcquisitionImageData().direct_query(imageid)
+		imagedata = self.getCorrectedImageData()
 		plandata =  imagedata['corrector plan']
 		if plandata:
 			plan = self.c_client.formatCorrectorPlan(plandata)
@@ -832,6 +838,7 @@ class DDFrameProcessing(DirectDetectorProcessing):
 			mrc.write(unscaled_darkarray,self.dark_path)
 			normdata = self.getRefImageData('norm')
 			apDisplay.printWarning('Use Norm Reference %s' % (normdata['filename'],))
+			apDisplay.printWarning('Use Bright Reference %s' % (normdata['bright']['filename'],))
 			normarray = normdata['image']
 			self.norm_path = os.path.join(frameprocess_dir,'norm-%s-%d.mrc' % (self.hostname,self.gpuid))
 			mrc.write(normarray,self.norm_path)
