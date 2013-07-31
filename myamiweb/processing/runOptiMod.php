@@ -387,6 +387,12 @@ function createAngularReconstitutionForm($extra=False, $title='OptiMod.py Launch
 			echo getSubmitForm("Run OptiMod");
 			echo "</TD></TR>\n";
 		echo "</table>\n";
+
+	### add references
+	$pub = new Publication('optimod');
+        echo $pub->getHtmlTable();
+        $pub = new Publication('appion');
+        echo $pub->getHtmlTable();
 	echo "</form>\n";
 
 	processing_footer();

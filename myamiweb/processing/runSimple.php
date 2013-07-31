@@ -202,6 +202,8 @@ function createForm( $extra=false, $title='runSimpleCluster.py Launcher', $headi
 	// Add references for this processing method.
 	// Create an instance of a publication with the appropriate 
 	// key found in myami/myamiweb/processing/inc/publicationList.inc.
+	$pub = new Publication('simple');
+	echo $pub->getHtmlTable();
 	$pub = new Publication('appion');
 	echo $pub->getHtmlTable();
 

@@ -237,5 +237,31 @@ $PUBLICATIONS['relion'] = array(
 'logo' => 'img/Relion_logo_v1_64x64.png',
 'pages' => '406-418');
 
+$PUBLICATIONS['simple'] = array(
+'title' => 'SIMPLE: Software for ab initio reconstruction of heterogeneous single-particles',
+'year' => '2012',
+'authorlist' => 'Elmlund, D., Elmlund, H.',
+'journal' => 'Journal of Structural Biology',
+'volume' => '180',
+'issue' => '3',
+'pmid' => '22902564',
+'pmcid' => '',
+'doi' => 'doi: 10.1016/j.jsb.2012.07.010.',
+'logo' => 'img/simplelogo.png',
+'pages' => '420-427');
+
+$PUBLICATIONS['optimod'] = array(
+'title' => 'Optimod - An Automated Approach for Constructing and Optimizing Initial Models for Single-Particle Electron Microscopy',
+'year' => '2013',
+'authorlist' => 'Lyumkis, D., Vinterbo, S., Carragher, B., Potter., C.',
+'journal' => 'submitted',
+'volume' => '',
+'issue' => '',
+'pmid' => '',
+'pmcid' => '',
+'doi' => '',
+'logo' => 'img/topbarbackgrnd.jpg',
+'pages' => '');
+
 
 ?>
