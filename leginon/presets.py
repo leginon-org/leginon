@@ -1307,6 +1307,19 @@ class PresetsManager(node.Node):
 			## with exposure time adjustment
 			new_bin = max((fullcamdim['x']/imagelength,fullcamdim['y']/imagelength))
 
+			# keep new bin in the binning choices available to the camera
+			binnings = self.instrument.ccdcamera.CameraBinnings
+			if new_bin not in binnings:
+				binnings.append(new_bin)
+				binnings.sort()
+				bin_index= binnings.index(new_bin)
+				if bin_index == len(binnings) - 1:
+					# if the potential new bin is higher than any good ones, use the highest binning
+					new_bin = binnings[bin_index - 1]
+				else:
+					new_bin = binnings[bin_index + 1]
+				## need to delete the wrong one or it will add to the camera binnings in Camera config
+				del binnings[bin_index]
 			## send new binning to camera to get binned multiplier
 			self.instrument.ccdcamera.Binning = {'x': new_bin, 'y': new_bin}
 			camdata1['binned multiplier'] = self.instrument.ccdcamera.BinnedMultiplier
@@ -1321,7 +1334,7 @@ class PresetsManager(node.Node):
 			camdata1['exposure time'] = camdata1['exposure time'] * camdata1['binned multiplier'] / camdata0['binned multiplier']
 			if camdata1['exposure time']< 5.0:
 				camdata1['exposure time'] = 5.0
-		
+
 		try:
 			self.instrument.setData(camdata1)
 		except:
