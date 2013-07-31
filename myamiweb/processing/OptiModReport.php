@@ -17,10 +17,10 @@ if ($_POST['process']) {
 	recalculateCriteria();
 }
 else {
-	automatedCommonLinesSummary();
+	OptiModSummary();
 }
 
-function automatedCommonLinesSummary($extra=False, $title='Common Lines Summary', $heading='Common Lines Summary', $results=False) {
+function OptiModSummary($extra=False, $title='Common Lines Summary', $heading='Common Lines Summary', $results=False) {
 
 	// show any errors
 	if ($extra) {
@@ -44,7 +44,7 @@ function automatedCommonLinesSummary($extra=False, $title='Common Lines Summary'
 	$javascript.= editTextJava();
 	$javascript.= writeJavaPopupFunctions('appion');
 	
-	processing_header("Automated Common Lines Summary","Automated Common Lines Summary Page", $javascript, true);
+	processing_header("OptiMod Report","OptiMod Report Page", $javascript, true);
 
 	// edit description form
 	echo "<form name='templateform' method='post' action='$formAction'>\n";
@@ -251,7 +251,7 @@ function recalculateCriteria() {
 	$fsc = $_POST['fsc'];
 	
 	// error handling
-	if (!$ccpr && !$ej && !$fsc) automatedCommonLinesSummary("please specify at least one criteria");
+	if (!$ccpr && !$ej && !$fsc) OptiModSummary("please specify at least one criteria");
 	
 	// command 
 	$command = "combineQualityMetrics.py --infile=$infile --outfile=$outfile ";
@@ -264,11 +264,11 @@ function recalculateCriteria() {
 //	$errors = showOrSubmitCommand($command, "", 'Metric Combiner', 1, false);
 	if ($_POST['process'] != "Just Show Command") {
 		$error = processBasic($command);
-		automatedCommonLinesSummary($error, $title='Common Lines Summary', $heading='Common Lines Summary', false);
+		OptiModSummary($error, $title='Common Lines Summary', $heading='Common Lines Summary', false);
 	} else {
 		$processhost = getSelectedProcessingHost();
 		$results = addAppionWrapper($command, $processhost);
-		automatedCommonLinesSummary($error, $title='Common Lines Summary', $heading='Common Lines Summary', $results);
+		OptiModSummary($error, $title='Common Lines Summary', $heading='Common Lines Summary', $results);
 	}
 }
 

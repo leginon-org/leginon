@@ -529,15 +529,17 @@ if (is_numeric($expId)) {
 	/* IMAGIC Angular Reconstitution */
 	if (!HIDE_IMAGIC) {
 		if (($aligndone >= 1 && $clusterdone >=1) || ($tsdone >= 1)) {
-			$angrecondone = count($particle->getAutomatedCommonLinesRunsTs($sessionId));
-			$angreconqueue = count($subclusterjobs['angrecon']['queued']);
-			$angreconrun = count($subclusterjobs['angrecon']['running']);
-			$angreconresults[] = ($angrecondone > 0) ? "<a href='automatedCommonLinesSummary.php?expId=$sessionId'>$angrecondone complete</a>" : '';
-			$angreconresults[] = ($angreconrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=angrecon'>$angreconrun running</a>";
-			$angreconresults[] = ($angreconqueue==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=angrecon'>$angreconqueue queued</a>";
+			$OptiModRunsTs = $particle->getAutomatedCommonLinesRunsTs($sessionId);
+			$OptiModRunsCs = $particle->getAutomatedCommonLinesRunsCs($sessionId);
+			$OptiModdone = count(array_merge((array)$OptiModRunsTs, (array)$OptiModRunsCs));
+			$OptiModqueue = count($subclusterjobs['optimod']['queued']);
+			$OptiModrun = count($subclusterjobs['optimod']['running']);
+			$OptiModresults[] = ($OptiModdone > 0) ? "<a href='OptiModSummary.php?expId=$sessionId'>$OptiModdone complete</a>" : '';
+			$OptiModresults[] = ($OptiModrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=optimod'>$OptiModrun running</a>";
+			$OptiModresults[] = ($OptiModqueue==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=optimod'>$OptiModqueue queued</a>";
 			$nruns[] = array(
-				'name'=>"<a href='runAutomatedCommonLines.php?expId=$sessionId'>Automated Common Lines</a>",
-				'result'=>$angreconresults,
+				'name'=>"<a href='runOptiMod.php?expId=$sessionId'>OptiMod Common Lines</a>",
+				'result'=>$OptiModresults,
 			);
 		}
 	}

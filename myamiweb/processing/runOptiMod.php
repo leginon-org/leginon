@@ -25,7 +25,7 @@ else {
 	createAngularReconstitutionForm();
 }
 	
-function createAngularReconstitutionForm($extra=False, $title='automatedCommonLines.py Launcher', $heading='Automated Common Lines') {
+function createAngularReconstitutionForm($extra=False, $title='OptiMod.py Launcher', $heading='OptiMod') {
 	// check if coming directly from a session
 	$expId=$_GET['expId'];
 	if ($expId){
@@ -384,7 +384,7 @@ function createAngularReconstitutionForm($extra=False, $title='automatedCommonLi
 			echo "</table></TD></TR><TR></TR>\n";
 	
 		echo "<TR><TD COLSPAN='2' ALIGN='CENTER'>\n";
-			echo getSubmitForm("Run Automated Common Lines");
+			echo getSubmitForm("Run OptiMod");
 			echo "</TD></TR>\n";
 		echo "</table>\n";
 	echo "</form>\n";
@@ -471,7 +471,7 @@ function runAngularReconstitution() {
 	******************** */
 
 	// setup command
-	$command ="automatedCommonLines.py ";
+	$command ="OptiMod.py ";
 	$command.="--description=\"$description\" ";
 	if ($clusterid) $command.="--clusterid=$clusterid ";
 	elseif ($tsid) $command.="--templatestackid=$tsid ";

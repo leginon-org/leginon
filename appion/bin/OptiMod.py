@@ -246,7 +246,7 @@ class helpDialogs:
 		return h
 																																																																	
 	
-class AutomatedCommonLines(appionScript.AppionScript):
+class OptiMod(appionScript.AppionScript):
 
 	def setupParserOptions(self):
 		self.parser.set_usage( "Usage: %prog --classavgs=<name> --num_volumes=<num> "
@@ -579,7 +579,7 @@ class AutomatedCommonLines(appionScript.AppionScript):
 
 	def start(self):
 		''' 
-		automated common lines script 
+		OptiMod script 
 		'''
 		
 		###############     define short-hand parameter names       ############
@@ -888,7 +888,7 @@ class AutomatedCommonLines(appionScript.AppionScript):
 
 if __name__ == "__main__":
 
-	ACL = AutomatedCommonLines()
+	ACL = OptiMod()
 	ACL.start()
 	ACL.close()
 	

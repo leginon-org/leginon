@@ -28,7 +28,7 @@ $projectId=getProjectId();
 $javascript = "<script src='../js/viewer.js'></script>\n";
 $javascript.= editTextJava();
 
-processing_header("Automated Common Lines Summary","Automated Common Lines Summary Page", $javascript);
+processing_header("OptiMod Summary","OptiMod Summary Page", $javascript);
 
 // edit description form
 echo "<form name='templateform' method='post' action='$formAction'>\n";
@@ -46,7 +46,7 @@ if ($aclRuns) {
 
 	$html = "<table class='tableborder' border='1' cellspacing='1' cellpadding='5'>\n";
 	$html .= "<TR>\n";
-	$display_keys = array ( 'best image', 'best volumes', 'combined score', 'automated Common Lines runname', 'description', 'path', '',
+	$display_keys = array ( 'best image', 'best volumes', 'combined score', 'OptiMod runname', 'description', 'path', '',
 		'stack info', 'num parts', 'box size', 'pixel size');
 	foreach($display_keys as $key) {
 		$html .= "<td><span class='datafield0'>".$key."</span> </TD> ";
@@ -142,7 +142,7 @@ if ($aclRuns) {
 		
 
 		// acl info		
-		$html .= "<td><font size='+1'><a href='automatedCommonLinesReport.php?expId=$expId&aclId=$aclid'>$aclname</a></font>\n"
+		$html .= "<td><font size='+1'><a href='OptiModReport.php?expId=$expId&aclId=$aclid'>$aclname</a></font>\n"
 			." <br/><i>(ID: $aclid)</i>\n"
 			." <br/><input class='edit' type='submit' name='hideItem".$aclid."' value='hide'>\n"
 			."</td>\n";
