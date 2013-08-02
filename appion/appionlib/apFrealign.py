@@ -18,9 +18,10 @@ from appionlib import apEulerCalc
 from appionlib import apParam
 
 #=====================
-def parseFrealignParamFile(paramfile):
+def parseFrealignParamFile(paramfile,test=False):
 	"""
 	parse a typical FREALIGN parameter file from v8.08
+	test=True returns two particles for checking its content
 	"""
 	if not os.path.isfile(paramfile):
 		apDisplay.printError("Parameter file does not exist: %s"%(paramfile))
@@ -68,6 +69,9 @@ def parseFrealignParamFile(paramfile):
 		if len(line)>=109:
 			partdict['stackpartnum'] = int(line[103:109].strip())
 		parttree.append(partdict)
+		# test mode returns only two particles
+		if test and len(parttree) == 2:
+			break
 	f.close()
 	if len(parttree) < 2:
 		apDisplay.printError("No particles found in parameter file %s"%(paramfile))
@@ -77,7 +81,7 @@ def parseFrealignParamFile(paramfile):
 	return parttree
 
 #===============
-def parseFrealign9ParamFile(paramfile):
+def parseFrealign9ParamFile(paramfile,test=False):
 	'''
 	parse typical Frealign parameter file from v9 -- returns a dict entry: 
 	each key is particle number, value is parameter dictionary
@@ -111,6 +115,9 @@ def parseFrealign9ParamFile(paramfile):
 			'change' : float(sline[14]),
 		}
 		partdict[paramdict['partnum']] = paramdict
+		# test mode returns only two particles
+		if test and len(parttree) == 2:
+			break
 	f.close()
 
 	if len(partdict) < 2:
@@ -122,11 +129,8 @@ def parseFrealign9ParamFile(paramfile):
 def getStackParticlesInOrder(params):
 	partorderfile = os.path.join(params['rundir'],'stackpartorder.list')
 	stackid = params['stackid']
-	if not params['reconiterid'] :
+	if not os.path.isfile(partorderfile):
 		return apStack.getStackParticlesFromId(stackid)
-	else:
-		if not os.path.isfile(partorderfile):
-			return apStack.getStackParticlesFromId(stackid)
 	partfile = open(partorderfile,'r')
 	lines = partfile.readlines()
 	partorder = map((lambda x:int(x[:-1])),lines)

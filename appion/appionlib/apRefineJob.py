@@ -516,7 +516,25 @@ class RefineJob(basicScript.BasicScript):
 		Check if clean up before start is needed.
 		'''
 		return self.params['startiter'] == 1
-		
+	
+	def	createIterationCommandAndLog(self,iter):
+		refinetasks = self.makeRefineTasks(iter)
+		if 'scripts' in refinetasks.keys() and len(refinetasks['scripts']) >=1 and refinetasks['scripts'][0][0] !='':
+			self.addToLog('....Starting iteration %d at %s...' % (iter, "`date`"))
+			self.addJobCommands(refinetasks)
+			self.addToLog('Done with iteration %d at %s' % (iter, "`date`"))
+			self.addSimpleCommand('')
+
+	def needIter0Recon(self):
+		'''
+		Returns True if the initial model should be remade using initial euler angles such as
+		in the case of Frealign
+		'''
+		return False
+
+	def createIter0CommandAndLog(self):
+		self.createIterationCommandAndLog(0)
+
 	def start(self):
 		if self.isNewTrial():
 			self.addSimpleCommand('')
@@ -536,15 +554,12 @@ class RefineJob(basicScript.BasicScript):
 		self.addSimpleCommand('')
 		self.__makePreIterationScript()
 		self.makePreIterationScript()
+		if self.isNewTrial() and self.needIter0Recon():
+			self.createIter0CommandAndLog()
 		self.addSimpleCommand('')
 		self.addSimpleCommand('')
 		for iter in range(self.params['startiter'],self.params['enditer']+1):
-			refinetasks = self.makeRefineTasks(iter)
-			if 'scripts' in refinetasks.keys() and len(refinetasks['scripts']) >=1 and refinetasks['scripts'][0][0] !='':
-				self.addToLog('....Starting iteration %d at %s...' % (iter, "`date`"))
-				self.addJobCommands(refinetasks)
-				self.addToLog('Done with iteration %d at %s' % (iter, "`date`"))
-				self.addSimpleCommand('')
+			self.createIterationCommandAndLog(iter)
 		self.addSimpleCommand('cd %s' % self.params['remoterundir'])
 		self.addToLog('....Performing tasks after iterations....')
 		self.makePostIterationScript()

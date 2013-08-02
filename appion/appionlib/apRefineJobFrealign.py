@@ -7,6 +7,7 @@ import time
 from appionlib import apDisplay
 from appionlib import apRefineJob
 from appionlib import apParam
+from appionlib import apFrealign
 
 #================
 #================
@@ -301,13 +302,21 @@ class FrealignRefineJob(apRefineJob.RefineJob):
 		inputlines[9] = 'params.%03d.par' % iter
 		inputlines[12] = '0.0,0,0,0,0,0,0,0'
 		inputlines[13] = 'threed.%03da.mrc' % iter
-		lines_before_input = self.getCombineShellLines(iter,iterpath)
+		lines_before_input = []
+		if not iter == 0:
+			combine_params_lines = self.getCombineShellLines(iter,iterpath)[3:]
+		else:
+			combine_params_lines = [
+				'/bin/cp -v ../params.%03d.par .' % iter,
+				'/bin/rm -fv ../threed.%03da.mrc' % iter,
+			]
 		lines_before_input.extend( [
 			'#!/bin/sh',
 			'cd %s' % iterpath,
 			'env |grep SHELL',
-			'/bin/rm -fv params.%03d.par' % iter,
-			"cat proc*/outparams.par |grep -v '^C' | sort -n > params.%03d.par" % iter,
+		])
+		lines_before_input.extend(combine_params_lines)
+		lines_before_input.extend( [
 			'wc -l params.%03d.par' % iter,
 			'/bin/rm -fv iter%03d.???' % iter,
 			'/bin/rm -fv threed.%03da.???' % iter,
@@ -418,7 +427,7 @@ class FrealignRefineJob(apRefineJob.RefineJob):
 		# set frealign param keys
 		frealign_param_keys = self.setFrealignRefineParams()
 		inputlines_template = self.createFrealignInputLineTemplate(iter,frealign_param_keys)
-		if not self.params['recononly']:
+		if not self.params['recononly'] and iter > 0:
 			# refine parallelizable to multiple nodes
 			refine_files = self.writeMultipleRefineShells(iter,inputlines_template,iterpath,self.nproc)
 			# use mpi to parallelize the processes
@@ -426,7 +435,7 @@ class FrealignRefineJob(apRefineJob.RefineJob):
 			mpi_refine = self.setupMPIRun(refine_files,self.nproc,iterpath,masterfile_name)
 			tasks = self.addToTasks(tasks,mpi_refine,self.mem,self.ppn)
 			tasks = self.logTaskStatus(tasks,'refine',os.path.join(iterpath,'proc%03d/frealign.proc%03d.out' % (self.nproc-1,self.nproc-1)),iter)
-		if not self.params['refineonly']:
+		if not self.params['refineonly'] or iter == 0:
 			# combine and recon parallelized only on one node
 			recon_file = self.writeReconShell(iter,inputlines_template,iterpath,self.ppn)	
 			mp_recon = self.setupMPRun(recon_file,self.recon_mem,self.ppn)
@@ -450,6 +459,22 @@ class FrealignRefineJob(apRefineJob.RefineJob):
 		'''
 		return self.params['startiter'] == 1 and not self.params['recononly']
 		
+	def needIter0Recon(self):
+		'''
+		Function to determine if a reconstruction should be made before the first refimement.
+		New Trial using euler angles from other refinement run should do an reconstruction first
+		'''
+		if self.params['startiter'] > 1:
+			return False
+		### need iteration 0 recon if params.000.par came from a reconiter
+		# Not using database in case of limited access.
+		initparamfile = 'params.000.par'
+		parttree = apFrealign.parseFrealignParamFile(initparamfile)
+		for p in parttree:
+			if not (p['psi']==p['phi']==p['theta']==p['shiftx']==p['shifty']):
+				return True
+		return False
+
 if __name__ == '__main__':
 	app = FrealignRefineJob()
 	app.start()
