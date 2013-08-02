@@ -141,7 +141,13 @@ class FrealignPrep3DRefinement(apPrepRefine.Prep3DRefinement):
 		# copy existing refined stack if possible
 		existing_refine_stack = apStack.getExistingRefineStack(self.stack['data'],'frealign',False,self.params['last'],self.params['bin'],lowpass=self.params['lowpass'],highpass=self.params['highpass'])
 		if existing_refine_stack:
-			shutil.copyfile(existing_refine_stack,newstackroot+'.mrc')	
+			if existing_refine_stack != os.path.join(self.params['rundir'],newstackroot+'.mrc'):
+				shutil.copyfile(existing_refine_stack,newstackroot+'.mrc')
+			new_partorderfile = os.path.join(self.params['rundir'],'stackpartorder.list')
+			existing_partorderfile = os.path.join(os.path.dirname(existing_refine_stack),'stackpartorder.list')
+			# particle order list also need to be copied
+			if not os.path.isfile(new_partorderfile) and os.path.isfile(existing_partorderfile):
+				shutil.copyfile(existing_partorderfile,new_partorderfile)
 			self.setFrealignStack(newstackroot)
 			return
 		if self.no_ctf_correction:
