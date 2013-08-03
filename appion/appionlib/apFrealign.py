@@ -231,7 +231,8 @@ def generateParticleParams(params,modeldata,initparfile='params.0.par'):
 
 			else:
 				# first see if there are ctf values
-				ctfdata, confidence=ctfdb.getBestCtfValueForImage(imagedata, msg=False)
+				ctfdata, confidence=ctfdb.getBestCtfValueForImage(imagedata, msg=False,method=params['ctfmethod'])
+				## Do we really want value from any method if it is specified?
 				if ctfdata is None:
 					ctfdata, confidence=ctfdb.getBestCtfValueForImage(imagedata, msg=False)
 				if ctfdata is not None:
