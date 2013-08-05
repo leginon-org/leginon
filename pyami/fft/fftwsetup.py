@@ -16,13 +16,15 @@ def create(shape):
 	timing['create'].append(time.time() - t0)
 	return a
 
-def make_plan(image_array):
+def make_plan(image_array, rigor):
 	global timing
 	t0 = time.time()
 	input_array = numpy.empty(image_array.shape, numpy.float)
 	fftshape = image_array.shape[0], image_array.shape[1]/2+1
 	fft_array = numpy.empty(fftshape, dtype=complex)
-	p = fftw3.Plan(input_array, fft_array, direction='forward', **pyami.fft.calc_fftw3.global_plan_kwargs)
+	plan_kwargs = dict(pyami.fft.calc_fftw3.global_plan_kwargs)
+	plan_kwargs['flags'] = [rigor]
+	p = fftw3.Plan(input_array, fft_array, direction='forward', **plan_kwargs)
 	p.input_array = input_array
 	p.fft_array = fft_array
 	timing['plan'].append(time.time() - t0)
@@ -44,6 +46,10 @@ def run_timing():
 	try:
 		n = int(sys.argv[1])
 		shape = int(sys.argv[2]), int(sys.argv[3])
+		try:
+			rigor = sys.argv[4]
+		except:
+			rigor = 'measure'
 	except:
 		print '''
   usage:   %s N shape0 shape1
@@ -56,7 +62,7 @@ def run_timing():
 	for i in range(n):
 		print i
 		a = create(shape)
-		plan = make_plan(a)
+		plan = make_plan(a, rigor)
 		init(a, plan)
 		run(plan)
 

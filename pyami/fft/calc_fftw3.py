@@ -29,7 +29,7 @@ except:
 
 ## args that are always passed to plan creation
 global_plan_kwargs = {
-	'flags': ['measure'],
+	'flags': ['estimate'],
 	'nthreads': threads,  # number of logical cpus seems best
 }
 
