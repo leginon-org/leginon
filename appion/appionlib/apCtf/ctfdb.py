@@ -61,11 +61,12 @@ def printCtfData(ctfvalue):
 			(apDisplay.colorString("CTF stats", "blue"), 
 			apDisplay.colorProb(ctfvalue['confidence_30_10']), 
 			apDisplay.colorProb(ctfvalue['confidence_5_peak']),
-			ctfvalue['resolution_80_percent'], ctfvalue['resolution_80_percent']))
-	sys.stderr.write("[%s] conf: %s | conf_d: %s\n"%
-		(apDisplay.colorString("CTF stats", "blue"), apDisplay.colorProb(ctfvalue['confidence']), 
-		apDisplay.colorProb(ctfvalue['confidence_d'])))
+			ctfvalue['resolution_80_percent'], ctfvalue['resolution_50_percent']))
+	#sys.stderr.write("[%s] conf: %s | conf_d: %s\n"%
+	#	(apDisplay.colorString("CTF stats", "blue"), apDisplay.colorProb(ctfvalue['confidence']), 
+	#	apDisplay.colorProb(ctfvalue['confidence_d'])))
 	#apDisplay.colorProb(numlist[i])
+	#time.sleep(3)
 	return
 
 #=====================
@@ -110,6 +111,8 @@ def getBestDefocusForImage(imgdata, msg=False):
 	takes an image and get the best defocus (in negative meters) for that image
 	indepedent of method (ACE1 or ACE2)
 	"""
+	#print "ERROR getBestDefocusForImage(), use getBestCtfByResolution() instead"
+	#sys.exit(1)
 
 	ctfvalue, conf = getBestCtfValueForImage(imgdata)
 	if ctfvalue is None:
@@ -127,10 +130,6 @@ def getBestDefocusForImage(imgdata, msg=False):
 	### make sure value is negative
 	bestdf = -1.0*abs(bestdf)
 
-	### print msg
-	if msg is True:
-		printCtfData(ctfvalue)
-
 	return bestdf
 
 #=====================
@@ -138,6 +137,8 @@ def getDefocusAndampcontrastForImage(imgdata, ctf_estimation_runid=None, msg=Fal
 	"""
 	takes an image and get the defocus (in negative meters) and amplitude contrast for that image
 	"""
+	#print "ERROR getDefocusAndampcontrastForImage(), use getBestCtfByResolution() instead"
+	#sys.exit(1)
 	
 	if ctf_estimation_runid is not None:
 		ctfvalue, conf = getCtfValueForImage(imgdata, ctf_estimation_runid, msg=False, method=method)
@@ -161,15 +162,14 @@ def getDefocusAndampcontrastForImage(imgdata, ctf_estimation_runid=None, msg=Fal
 	### make sure value is negative
 	bestdf = -1.0*abs(bestdf)
 
-	### print msg
-	if msg is True:
-		printCtfData(ctfvalue)
-
 	return bestdf, bestamp
 
 #=====================
 def getBestDefocusAndampcontrastForImage(imgdata, msg=False, method=None):
 	''' takes an image and get the best defocus (in negative meters) for that image '''
+	#print "ERROR getBestDefocusAndampcontrastForImage(), use getBestCtfByResolution() instead"
+	#sys.exit(1)
+
 	return getDefocusAndampcontrastForImage(imgdata, msg=msg, method=method)
 
 #=====================
@@ -178,6 +178,9 @@ def getCtfValueForImage(imgdata, ctf_estimation_runid=None, ctfavg=True, msg=Tru
 	takes an image and get the ctf value for that image for the specified ctf estimation run
 	specified methods can be: ace2 or ctffind
 	"""
+	#print "ERROR getCtfValueForImage(), use getBestCtfByResolution() instead"
+	#sys.exit(1)
+
 	if ctf_estimation_runid is None:
 		apDisplay.printError("This function requires a ctf_estimation_runid")
 
@@ -224,6 +227,8 @@ def calculateConfidenceScore(ctfdata, ctfavg=True):
 	conf3 = ctfdata['confidence_30_10']
 	conf4 = ctfdata['confidence_5_peak']
 	conf = max(conf1, conf2, conf3, conf4)
+	if conf < 0:
+		conf = 0
 	return conf
 
 #=====================
@@ -232,6 +237,9 @@ def getBestCtfValueForImage(imgdata, ctfavg=True, msg=True, method=None):
 	takes an image and get the best ctfvalues for that image
 	specified methods can be: ace2 or ctffind
 	"""
+	#print "ERROR getBestCtfValueForImage(), use getBestCtfByResolution() instead"
+	#sys.exit(1)
+
 	### get all ctf values
 	ctfq = appiondata.ApCtfData()
 	ctfq['image'] = imgdata
@@ -244,12 +252,16 @@ def getBestCtfValueForImage(imgdata, ctfavg=True, msg=True, method=None):
 	### find the best values
 	bestconf = 0.0
 	bestctfvalue = None
+	count = 0
 	for ctfvalue in ctfvalues:
+		count += 1
 		### limit to specific method if requested:
 		if method is not None and getCtfMethod(ctfvalue) != method:
 			continue
 
-		conf = calculateConfidenceScore(ctfvalue,ctfavg)
+		conf = calculateConfidenceScore(ctfvalue, ctfavg)
+		if msg is True:
+			print "%d conf %.4f (res %.1f) (?? %.4f)"%(count, conf, ctfvalue['resolution_50_percent'], bestconf)
 		
 		if conf > bestconf:
 			bestconf = conf
@@ -259,13 +271,14 @@ def getBestCtfValueForImage(imgdata, ctfavg=True, msg=True, method=None):
 		return None, None
 
 	if msg is True:
+		print "selected conf %.2f"%(bestconf)
 		printCtfData(bestctfvalue)
 
 	return bestctfvalue, bestconf
 
 
 #=====================
-def getBestCtfByResolution(imgdata, msg=True):
+def getBestCtfByResolution(imgdata, msg=True, method=None):
 	"""
 	takes an image and get the best ctfvalues for that image
 	specified methods can be: ace2 or ctffind
@@ -275,19 +288,30 @@ def getBestCtfByResolution(imgdata, msg=True):
 	ctfq['image'] = imgdata
 	ctfvalues = ctfq.query()
 
+	if msg is True:
+		print "Found %d ctf values"%(len(ctfvalues))
+
 	### check if it has values
 	if ctfvalues is None:
 		print "no CTF values found in database"
 		return None
 
 	### find the best values
-	bestres50 = 0.0
+	bestres50 = 1000.0
 	bestctfvalue = None
 	for ctfvalue in ctfvalues:
 		conf = calculateConfidenceScore(ctfvalue)
-		if conf < 0.4:
+		if conf < 0.3:
 			continue
+		if method is not None:
+			imgmethod = getCtfMethod(ctfvalue)
+			if method != imgmethod:
+				continue
 		res50 = ctfvalue['resolution_50_percent']
+		if res50 is None:
+			continue
+		if msg is True:
+			print "%.3f -- %s"%(res50, ctfvalue['acerun']['name'])
 		if res50 is None:
 			continue
 		if res50 < bestres50:
@@ -295,10 +319,12 @@ def getBestCtfByResolution(imgdata, msg=True):
 			bestctfvalue = ctfvalue
 
 	if bestctfvalue is None:
+		print "no best value"
 		return None
 
 	if msg is True:
-		printCtfData(ctfvalue)
+		print "*** %.3f"%(bestres50)
+		printCtfData(bestctfvalue)
 
 	return bestctfvalue
 
@@ -307,6 +333,9 @@ def getBestTiltCtfValueForImage(imgdata):
 	"""
 	takes an image and get the tilted ctf parameters for that image
 	"""
+	#print "ERROR getBestTiltCtfValueForImage(), use getBestCtfByResolution() instead"
+	#sys.exit(1)
+
 	### get all ctf values
 	ctfq = appiondata.ApCtfData()
 	ctfq['image'] = imgdata
