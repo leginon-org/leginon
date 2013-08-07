@@ -42,7 +42,8 @@ $arg2= 3;
 $imginfo = $imagerequest->requestInfo($pic,$frame);
 $dimx = $imginfo->nx;
 $dimy = $imginfo->ny;
-$info = $imginfo->i4lp;
+// eman uses i4lp to pass number of particles in class average imagic file
+if (!$info && $stackinfoindex==1) $info = $imginfo->i4lp;
 
 $xyDim = $imageUtil->imageBinning($dimx, $dimy, $binning);
 // request image
