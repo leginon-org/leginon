@@ -65,21 +65,35 @@ function image_is_exemplar() {
 	}
 }
 
+function trash_image() {
+	if (bt_trash_state = document.getElementById("bt_trash")) {
+		bt_trash_state.value='clicked'
+	}
+	update_image_list(jsmasterview) 
+	bt_trash_state.value=''
+}
+
 function hide_image() {
 	var all=false
-	if (o=document.getElementById("chk_hide_all")) {
-		all=(o.checked) ? true : false
-	}
-	if (all) {
-		for (var i in jsviews) {
-			update_image_list(jsviews[i])
+	if (bt_hide_state = document.getElementById("bt_hide")) {
+		bt_hide_state.value='clicked'
+		if (o=document.getElementById("chk_hide_all")) {
+			all=(o.checked) ? true : false
 		}
-	} else {
-		update_image_list(jsmasterview) 
+		if (all) {
+			for (var i in jsviews) {
+				update_image_list(jsviews[i])
+				bt_hide_state.value=''
+			}
+		} else {
+			update_image_list(jsmasterview) 
+		}
+		bt_hide_state.value=''
 	}
 }
 
 function check_hide_state(view) {
+	// reactivates buttons after action
 	state = eval("js"+view+"done")
 	if (state) {
 		eval('clearInterval(hide_interval'+view+')')
@@ -87,16 +101,35 @@ function check_hide_state(view) {
 		if (bt_hide_state) {
 			bt_hide_state.disabled=false
 		}
+		if (bt_trash_state) {
+			bt_trash_state.disabled=false
+		}
 	} else {
 		if (bt_hide_state) {
 			bt_hide_state.disabled=true
+		}
+		if (bt_trash_state) {
+			bt_trash_state.disabled=true
 		}
 	}
 }
 
 function update_image_list(view) {
+	// This function updates database with the status and then update the image list
+	//
+	//hidden_state passed into updateimagelist is determined by values of the hide and trash button
 	if (bt_hide_state = document.getElementById("bt_hide")) {
+		if (bt_hide_state.value=='clicked') {
+			var hidden_state='h'
+		}
 		bt_hide_state.disabled=true
+	}
+	if (bt_trash_state = document.getElementById("bt_trash")) {
+		if (bt_trash_state.value=='clicked') {
+			var hidden_state='tr'
+		}
+		bt_trash_state.disabled=true
+
 	}
 	if (list = eval("document.viewerform."+view+"pre"))
 		selpreset=list.options[list.selectedIndex].value
@@ -104,7 +137,7 @@ function update_image_list(view) {
 	if (obj=document.viewerform.imageId) {
 		jsindex = obj.selectedIndex
 		jsimgId = obj.options[jsindex].value
-		var url = 'updateimagelist.php?username='+jsUsername+'&imageId='+jsimgId+'&sessionId='+jsSessionId+'&p='+selpreset+'&ac=h'
+		var url = 'updateimagelist.php?username='+jsUsername+'&imageId='+jsimgId+'&sessionId='+jsSessionId+'&p='+selpreset+'&s='+hidden_state
 		var xmlhttp = getXMLHttpRequest()
 		xmlhttp.open('GET', url, true)
 		xmlhttp.onreadystatechange = function() {
@@ -124,7 +157,7 @@ function update_image_list(view) {
 						obj.options[jsindex].selected=true
 					updateviews()
 				}
-			}
+			} 
 		}
 		xmlhttp.send(null)
 	}
@@ -186,15 +219,16 @@ function getKey(e)
 			updateviews()
 			break
 		case 'H':
-			update_image_list()
+			hide_image()
 			break
 		case 'U':
-			update_image_list()
+			hide_image()
+			break
+		case 'T':
+			trash_image()
 			break
 		case 'E':
 			image_is_exemplar()
-			incIndex()
-			updateviews()
 			break
   }
 }

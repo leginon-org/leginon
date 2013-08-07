@@ -33,7 +33,7 @@ class leginondata {
 
 	var $crlf = "\n";
 	var $ffttypes = array('focpow', 'fft');
-	var $defaulttypes = array('all', 'atlas', 'exemplar', 'hidden');
+	var $defaulttypes = array('all', 'atlas', 'exemplar', 'hidden','trash');
 	var $manualtype = 'manual';
 	var $rcttype = 'rct';
 	var $calibrationtables = array (
@@ -420,7 +420,7 @@ class leginondata {
 		$hiddenwhere = "";
 		if ($hidden) {
 			$hiddenjoin = "left join `ViewerImageStatus` r on (r.`REF|AcquisitionImageData|image`=a.DEF_id) ";
-			$hiddenwhere = "and (r.DEF_id is NULL or r.status <>'hidden') ";
+			$hiddenwhere = "and (r.DEF_id is NULL or (r.status <>'hidden' and r.status <> 'trash') ";
 		}
 		$q="SELECT p.name, count(a.`DEF_id`) as nb, p.magnification "
 			.",p.dose, min(p.defocus) as defocusmin, max(p.defocus) as defocusmax"
@@ -500,7 +500,7 @@ class leginondata {
 
 	function getAllDatatypes($sessionId) {
 		$defaulttypes = $this->defaulttypes;
-		if (privilege('data') < 2) $defaulttypes = array_diff($defaulttypes,array('hidden'));
+		if (privilege('data') < 2) $defaulttypes = array_diff($defaulttypes,array('hidden','trash'));
 		$types = $this->getDataTypes($sessionId);
 		return array_merge($defaulttypes, $types);
 	}
@@ -549,15 +549,15 @@ class leginondata {
 			$hiddenjoin = "left join `ViewerImageStatus` r on (r.`REF|AcquisitionImageData|image`=a.DEF_id) ";
 			if ($has_ImageStatusData)
 				$hiddenjoin .= "left join `ImageStatusData` ir on (ir.`REF|AcquisitionImageData|image`=a.DEF_id) ";
-		if ($defaultname=="hidden" || $defaultname=="exemplar") {
+		if ($defaultname=="trash" || $defaultname=="hidden" || $defaultname=="exemplar") {
 			$hiddenwhere = "and ((r.DEF_id is not null and r.status='$defaultname') ";
 			if ($has_ImageStatusData)
 				$hiddenwhere .= "or (ir.`DEF_id` is not null and ir.status='$defaultname')";
 			$hiddenwhere .=")";
 		} else {
-			$hiddenwhere = "and ((r.DEF_id is NULL or r.status <>'hidden') ";
+			$hiddenwhere = "and ((r.DEF_id is NULL or (r.status <>'hidden' and r.status <>'trash')) ";
 			if ($has_ImageStatusData)
-				$hiddenwhere .= "and (ir.`DEF_id` is NULL or ir.status <>'hidden')";
+				$hiddenwhere .= "and (ir.`DEF_id` is NULL or (ir.status <>'hidden' and ir.status <> 'trash'))";
 			$hiddenwhere .=") ";
 		}
 
@@ -1438,7 +1438,7 @@ class leginondata {
 		foreach ($relations as $relation) {
 			$siblingimageId = $relation['siblingimageId'];
 			$imagestatus = $this->getViewerImageStatus($siblingimageId);
-			if ($relation['siblingpreset']==$preset && $relation['parentId'] && 'hidden' != $imagestatus) {
+			if ($relation['siblingpreset']==$preset && $relation['parentId'] && 'hidden' != $imagestatus && 'trash' != $imagestatus ) {
 				$newimage['id'] = $siblingimageId;
 				$newimage['preset'] = $relation['siblingpreset'];
 				break;
@@ -1487,7 +1487,7 @@ class leginondata {
 			$parentId = $parent['parentId'];
 			$parentstatus = $this->getViewerImageStatus($parentId);
 			$parentpreset=$parent['parentpreset'];
-			if ($parentpreset==$preset && $parentstatus !='hidden') {
+			if ($parentpreset==$preset && $parentstatus !='hidden' && $parentstatus !='trash') {
 				$newimage['id'] = $parentId;
 				$newimage['preset'] = $parentpreset;
 				$newimage['childid'] = $parent['imageId'];

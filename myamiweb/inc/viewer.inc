@@ -341,6 +341,7 @@ class viewer {
 		$init .= 'var jsviews = new Array();'.$this->crlf;
 		$init .= 'var jscomments = new Array();'.$this->crlf;
 		$init .= 'var bt_hide_state = false;'.$this->crlf;
+		$init .= 'var bt_trash_state = false;'.$this->crlf;
 		foreach ($this->views as $v) {
 			if ($v->ismaster) {
 				$init .= 'var jsmasterview = "'.$v->getName().'";'.$this->crlf;
@@ -778,6 +779,7 @@ class view {
 	}
 
 	function displayHideBt($state) {
+		//This is used for determining whether to display trash button, too
 		$this->displayhidebt = $state;
 		$this->displayhideallbt = $state;
 
@@ -1358,29 +1360,44 @@ class view {
 		$htmlframe .= $imgstatus;
 		$htmlframe .='
 			</a></div></td>';
+
+		// Various image status buttons
 		$thispreset = $_POST[$this->name.'pre'];
 		if ($this->ismaster && $thispreset != 'atlas') {
 			$htmlframe .= '<td><ul style="padding:0; margin:0">';
+			// trash button
+			if ($this->displayhidebt && $thispreset != 'exemplar' && $thispreset != 'trash') {
+					$htmlframe .= '<li class="list1"> <button id="bt_trash" type="button" style="border: 1px solid #bdcebb; font-size: 10px;" '
+							.' onclick=\'trash_image()\' ><u><b>t</b></u>rash</button></li>';
+			}
+			// hide button
 			if ($this->displayhidebt && $thispreset != 'exemplar') {
 				$displayhide = ($thispreset == 'hidden') ? '<u><b>u</b></u>nhide': '<u><b>h</b></u>ide';
 				$htmlframe .= '<li class="list1"><button id="bt_hide" type="button" style="border: 1px solid #bdcebb; font-size: 10px;" '
 								.' onclick=\'hide_image()\' >'.$displayhide.'</button>';
 				$htmlframe .= '</li> ';
 			}
+			// hide all checkbox
 			if ($this->displayhideallbt) {
 				$htmlframe .= ' all<input type="checkbox" id="chk_hide_all"></li>';
 			}
+			// next button
 			if ($this->displaynextbt) {
 				$htmlframe .= '<li class="list1"><button type="button" style="border: 1px solid #bdcebb; font-size: 10px;" '
 							.' onclick=\'incIndex(); updateviews()\' ><u><b>n</b></u>ext</button></li>';
 			}
+			// exemplar button
 			if ($this->displayexemplarbt) {
-				if ($thispreset != 'exemplar') {
-					$htmlframe .= '<li class="list1"> <button id="bt_ex" type="button" style="border: 1px solid #bdcebb; font-size: 10px;" '
-							.' onclick=\'image_is_exemplar();\' ><u><b>e</b></u>xemplar</button></li>';
+				if ($thispreset == 'hidden' || $thispreset == 'trash') {
+					$htmlframe .='';	
 				} else {
-					$htmlframe .= '<li class="list1"> <button id="bt_hide" type="button" style="border: 1px solid #bdcebb; font-size: 10px;" '
+					if ($thispreset != 'exemplar') {
+						$htmlframe .= '<li class="list1"> <button id="bt_ex" type="button" style="border: 1px solid #bdcebb; font-size: 10px;" '
+								.' onclick=\'image_is_exemplar();\' ><u><b>e</b></u>xemplar</button></li>';
+					} else {
+						$htmlframe .= '<li class="list1"> <button id="bt_hide" type="button" style="border: 1px solid #bdcebb; font-size: 10px;" '
 								.' onclick=\'hide_image()\' ><u><b>u</u></b>ndo exemplar</button></li>';
+					}
 				}
 			$htmlframe .= '</ul></td>';
 			}
