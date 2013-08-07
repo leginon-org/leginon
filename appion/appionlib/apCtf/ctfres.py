@@ -140,6 +140,8 @@ def getResolutionFromConf(raddata, confs, limit=0.5):
 	"""
 	should use more general apFourier.getResolution()
 	"""
+	if raddata is None or confs is None:
+		return None
 	lastx=0
 	lasty=0
 	x = 0
