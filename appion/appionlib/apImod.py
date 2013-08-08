@@ -264,6 +264,33 @@ def getETomoBin(processdir,seriesname):
 		bin *= int(value)
 	return bin
 
+def getSubTomoBoundary(processdir,seriesname,axis):
+	'''
+	Get the start and end coordinate at a particular axis.
+	The definition of origin may or may not apply to tomograms
+	generated outside imod.
+	'''
+	fulltomopath = os.path.join(processdir,seriesname+'_full.rec')
+	subtomopath = os.path.join(processdir,seriesname+'.rec')
+	fullheader = mrc.readHeaderFromFile(fulltomopath)
+	subheader = mrc.readHeaderFromFile(subtomopath)
+
+	lenkey = axis+'len'
+	originkey = axis+'origin'
+	mkey = 'm'+axis
+	# There is a rotation around x-axis in full tomogram
+	fullorigin = {'xorigin':fullheader['xorigin'],'yorigin':fullheader['zorigin'],'zorigin':fullheader['yorigin']}
+	fullm = {'mx':fullheader['mx'],'my':fullheader['mz'],'mz':fullheader['my']}
+	# full and sub tomo should have the same pixelsize
+	pixelsize = subheader[lenkey] / subheader[mkey]
+	if axis != 'z':
+		start = int((fullorigin[originkey] - subheader[originkey]) / pixelsize)
+	else:
+		# z origin is defined different from x and y
+		start = -int((fullorigin[originkey] + subheader[originkey]) / pixelsize) + int(fullm[mkey])
+	end = start + int(subheader[mkey])
+	return (start,end)
+
 def getImodZShift(processdir):
 	shift_str = getETomoParam(processdir,'tilt.com',['SHIFT'])[0]
 	bits = shift_str.split(' ')
@@ -503,9 +530,13 @@ clip avg -2d -iz 0-199 temp.mrc projection.mrc
 		else:
 			lookup = {'y':1,'z':0}
 			inputparams['3d'] = inputparams['recon']
+		# limit slices for projection to 200 to save time.
+		zcenter = fullshape[lookup['z']]
+		zstart = max(0,zcenter - 100)
+		zend = min(fullshape[lookup['z']],zcenter + 99)
 		commands.append(
 				"$clip avg -2d -iz %d-%d %s %s"
-					% (0,fullshape[lookup['z']]-1,
+					% (zstart,zend,
 					inputparams['3d'],inputparams['project'],
 					),
 			)	

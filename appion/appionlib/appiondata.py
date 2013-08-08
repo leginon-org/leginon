@@ -190,6 +190,7 @@ class ApManualParamsData(Data):
 			('oldselectionrun', ApSelectionRunData),
 			('trace', bool),
 			('helicalstep', int),
+			('tomocenter', bool),
 		)
 	typemap = classmethod(typemap)
 

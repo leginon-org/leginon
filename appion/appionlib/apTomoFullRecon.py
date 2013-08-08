@@ -78,7 +78,7 @@ class ETomoMaker(ImodMaker):
 		pass
 
 	def recon3D(self):
-		proc = subprocess.Popen("etomo --fg %s.edf" % (self.seriesname), shell=True)
+		proc = subprocess.Popen("etomo --debug --fg %s.edf" % (self.seriesname), shell=True)
 		proc.wait()
 		reconfilepath = os.path.join(self.params['rundir'],'%s_full.rec' % (self.seriesname))
 		if not os.path.exists(reconfilepath):
@@ -95,6 +95,13 @@ class ETomoMaker(ImodMaker):
 		self.params['bin'] = apImod.getETomoBin(self.params['rundir'],self.seriesname)
 		self.params['thickness'] = apImod.getETomoThickness(self.params['rundir'],self.seriesname)
 		super(ETomoMaker,self).commitToDatabase()
+
+	def onClose(self):
+		if self.fulltomodata:
+			apDisplay.printMsg('------------------------')
+			apDisplay.printWarning('To create sub tomogram reconstruction and commit the result to database with this full tomogram, you need to use etomo_subrecon.py to start eTOMO and continue at "Post-Processing" with the .edf file by running this AppionScript:')
+			apDisplay.printColor('etomo_subrecon.py --session=%s --projectid=%d --fulltomoid=%d --description="" --commit --expId=%d --jobtype=%s --runname=etomosub' % (self.params['sessionname'],self.params['projectid'],self.fulltomodata.dbid,self.params['expid'],'etomo_subrecon'),'cyan')
+			apDisplay.printMsg('------------------------')
 
 #=====================
 #=====================
