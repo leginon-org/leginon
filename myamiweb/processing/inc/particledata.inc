@@ -5812,11 +5812,28 @@ function getBaseAppionPath($sessioninfo,$new_base='appion') {
 		}
 	}
 
+	// get from leginon session image path
+	$leginon_imagepath = $sessioninfo['Image path'];
 	if (defined('DEFAULT_APPION_PATH') && DEFAULT_APPION_PATH !='') {
-		return Path::formatEndPath(DEFAULT_APPION_PATH).$sessioninfo['Name'];
+		if (defined('APPION_PARENT_ADDITION') && APPION_PARENT_ADDITION !=0) {
+			
+			$parts = explode(DIRECTORY_SEPARATOR,$leginon_imagepath);
+			$session_index = array_search($sessioninfo['Name'],$parts);
+			if ($session_index !== false) {
+				// add extra directory division prior to sessionname
+				$addition_parts = array_splice($parts,$session_index-APPION_PARENT_ADDITION,APPION_PARENT_ADDITION);
+			
+				$appion_path = Path::formatEndPath(Path::formatEndPath(DEFAULT_APPION_PATH).implode(DIRECTORY_SEPARATOR,$addition_parts));
+			} else {
+				// No way to know what to add if sessionname is not part of the path
+				$appion_path = Path::formatEndPath(DEFAULT_APPION_PATH);
+			}
+		} else {
+			// use default alone
+			$appion_path = Path::formatEndPath(DEFAULT_APPION_PATH);
+		}
+		return $appion_path.$sessioninfo['Name'];
 	} else {
-		// get from leginon session image path
-		$leginon_imagepath = $sessioninfo['Image path'];
 		// use this in case that the word leginon is used in two parts of the path
 		preg_match("%leginon(.*)rawdata%", $leginon_imagepath, $reg_match);
 		if (!empty($reg_match)) {

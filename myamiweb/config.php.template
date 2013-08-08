@@ -158,6 +158,10 @@ define('USE_APPION_WRAPPER', false);
 // --- default appion base directory to store processing results (parallel to leginon image directory defined in leginon/leginon.cfg) --- //
 define('DEFAULT_APPION_PATH',"");
 
+// --- number of parent directories before the sessionname to append after DEFAULT_APPION_PATH --- // 
+// The result is a subdivision of data by user, for example, as configured in each user's leginon/leginon.cfg or upon creation of the Leginon session--- //
+define('APPION_PARENT_ADDITION',0); 
+
 // --- sample tracking ---//
 define('SAMPLE_TRACK', false);
 
