@@ -58,7 +58,8 @@ class Tableau(object):
 				colmin = extents['column'][0]
 			if extents['column'][1] > colmax:
 				colmax = extents['column'][1]
-		totalshape = 2*max(rowmax,-rowmin), 2*max(colmax,-colmin)
+		# odd number total shape allows center on the pixel and reduce truncation error
+		totalshape = 2*(max(rowmax,-rowmin))+1, 2*(max(colmax,-colmin))+1
 		background = self.images[0]['image'][(0,0)]
 		finalimage = numpy.ones(totalshape, self.images[0]['image'].dtype)
 		finalimage = background * finalimage

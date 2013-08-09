@@ -131,7 +131,7 @@ class BeamTiltImager(manualfocuschecker.ManualFocusChecker):
 			for col in (0,(split/2)*splitsize[1],(split-1)*splitsize[1]):
 				colslice = slice(col,col+splitsize[1])
 				splitimage = image[rowslice,colslice]
-				labeled, ctfdata = self.addCTFlabel(splitimage, self.ht, self.rpixelsize, 1, self.defocus)
+				labeled, ctfdata = self.binAndAddCTFlabel(splitimage, self.ht, self.rpixelsize, 1, self.defocus)
 				self.tabimage[rowslice,colslice] = labeled
 
 	def insertTableau(self, imagedata, angle, rad):
@@ -141,7 +141,7 @@ class BeamTiltImager(manualfocuschecker.ManualFocusChecker):
 			self.ht = imagedata['scope']['high tension']
 			if not self.rpixelsize:
 				self.rpixelsize = self.btcalclient.getImageReciprocalPixelSize(imagedata)
-			binned, ctfdata = self.addCTFlabel(image, self.ht, self.rpixelsize, binning, self.defocus)
+			binned, ctfdata = self.binAndAddCTFlabel(image, self.ht, self.rpixelsize, binning, self.defocus)
 			self.ctfdata.append(ctfdata)
 		else:
 			binned = imagefun.bin(image, binning)
@@ -168,18 +168,32 @@ class BeamTiltImager(manualfocuschecker.ManualFocusChecker):
 		self.displayTableau()
 		self.saveTableau()
 
+	def catchBadSettings(self,presetdata):
+		if 'beam tilt' in self.settings['tableau type']:
+			if (presetdata['dimension']['x'] > 1024 or presetdata['dimension']['y'] > 1024):
+				self.logger.error('Analysis will be too slow: Reduce preset image dimension')
+				return 'error'
+		# Bad image binning will cause error
+			if presetdata['dimension']['x'] % self.settings['tableau binning'] != 0 or presetdata['dimension']['y'] % self.settings['tableau binning'] != 0:
+				self.logger.error('Preset dimension not dividable by binning. Correct Settings or preset dimension')
+				return 'error'
+		if 'split image' in self.settings['tableau type']:
+			if presetdata['dimension']['x'] % self.settings['tableau split'] != 0 or presetdata['dimension']['y'] % self.settings['tableau split'] != 0:
+				self.logger.error('Preset dimension can not be split evenly. Correct Settings or preset dimension')
+				return 'error'
+
 	def acquire(self, presetdata, emtarget=None, attempt=None, target=None):
 		'''
 		this replaces Acquisition.acquire()
 		Instead of acquiring an image, we acquire a series of beam tilt images
 		'''
-		## sometimes have to apply or un-apply deltaz if image shifted on
-		## tilted specimen
-		if 'beam tilt' in self.settings['tableau type'] and (presetdata['dimension']['x'] > 1024 or presetdata['dimension']['y'] > 1024):
-			self.logger.error('Analysis will be too slow: Reduce preset image dimension')
+		if self.catchBadSettings(presetdata) == 'error':
 			return 'error'
+
 		self.rpixelsize = None
 		self.defocus = presetdata['defocus']
+		## sometimes have to apply or un-apply deltaz if image shifted on
+		## tilted specimen
 		if emtarget is None:
 			self.deltaz = 0
 		else:
@@ -352,7 +366,7 @@ class BeamTiltImager(manualfocuschecker.ManualFocusChecker):
 			return None
 		return ace2exe
 
-	def addCTFlabel(self, image, ht, rpixelsize, binning=1, defocus=None):
+	def binAndAddCTFlabel(self, image, ht, rpixelsize, binning=1, defocus=None):
 		pow = imagefun.power(image)
 		binned = imagefun.bin(pow, binning)
 		# No ctf estimation until it works better so that this node does not
