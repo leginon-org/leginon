@@ -330,6 +330,7 @@ echo divtitle("CTF");
 if (!empty($ctfdata)) {
 	echo "<table border='0'>";
 	foreach($ctfdata as $r) {
+		$runid = $r['acerunId'];
 		foreach($r as $k=>$v) {
 			if (!in_array($k, $ctf_display_fields))
 				continue;	
@@ -338,8 +339,13 @@ if (!empty($ctfdata)) {
 			elseif ($v-floor($v)) 
 				$display = format_sci_number($v,4,2);
 			elseif ($k=='path') {
-				$graphpath = strstr($v, 'ctffindrun') ? $v : $v.'/opimages';
-				$scale = strstr($v, 'ctffindrun') ? 1 : 0.4;
+				$graphpath = $v.'/opimages';
+				$scale = 0.4;
+				# back compatibility to ctffind runs
+				if ((strstr($v, 'ctffindrun')) && !is_file($graphpath."/".$r['graph1'])) {
+					$graphpath = $v;
+					$scale = 1;
+				}
 				$display=$graphpath;
 			}
 			elseif ($k=='graph1')
@@ -355,11 +361,10 @@ if (!empty($ctfdata)) {
 		echo "<td align='left'>\n";
 		echo "<a href='processing/loadimg.php?filename=$graph1'>\n";
 		echo "<img src='processing/loadimg.php?filename=$graph1&scale=$scale'></a></td>\n";
-	  	echo "<td align='left'>\n";
-		if(!strstr($graphpath, 'ctffindrun')){
-	  		echo "<a href='getaceimg.php?preset=all&session=$sessionId&id=$imgId&g=2'>\n";
-	  		echo "<img src='getaceimg.php?preset=all&session=$sessionId&id=$imgId&g=2' width=400></a></td>\n";
-		}
+	  echo "<td align='left'>\n";
+	  echo "<a href='getaceimg.php?preset=all&session=$sessionId&id=$imgId&g=2&r=$runid'>\n";
+	  echo "<img src='getaceimg.php?preset=all&session=$sessionId&id=$imgId&g=2&r=$runid' width=400></a></td>\n";
+
 		echo "</tr>\n";
 		echo "<tr><td colspan=2><hr></td></tr>";	
 	}
