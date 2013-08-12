@@ -222,7 +222,12 @@ class XmippSingleModelRefineJob(apRefineJob.RefineJob):
 
 		#sym = apSymmetry.getSymmetryDataFromID(self.params['symmetry'])
 		#sym2 = self.convertSymmetryNameForPackage(sym)
-		self.runparams['symmetry'] = protocolPrm["SymmetryGroup"]
+		
+		sym = protocolPrm["SymmetryGroup"][0]
+		if sym in ('i','I'):
+			self.runparams['symmetry'] = "Icos (2 3 5) Viper/3DEM"
+		else:
+			self.runparams['symmetry'] = protocolPrm["SymmetryGroup"]
 		self.runparams['numiter'] = protocolPrm['NumberofIterations']
 		self.runparams['mask'] = protocolPrm["MaskRadius"] 
 		self.runparams['imask'] = None
