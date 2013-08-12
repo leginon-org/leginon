@@ -49,7 +49,7 @@ $keys[]='defocus';
 $keys[]='defocus1';
 // assume defocus1 and defocus2 are equal if equal at Angstrom level
 $epsilon = 1e-10;
-if ((ctfdata['defocus1'] - ctfadata['defocus2']) > $epsilon) {
+if (abs($ctfdata['defocus1'] - $ctfdata['defocus2']) > $epsilon) {
 	$keys[]='defocus2';
 	$keys[]='angle_astigmatism';
 }
