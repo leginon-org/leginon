@@ -1101,7 +1101,8 @@ class particledata {
 			elseif ($method === 'ace2') $q .= "AND r.`REF|ApAce2ParamsData|ace2_params` IS NOT NULL ";
 			elseif ($method === 'ctffind') $q .= "AND r.`REF|ApCtfTiltParamsData|ctftilt_params` IS NOT NULL ";
 		}
-		$q .= " ORDER BY resolution_50_percent ASC ";
+		$q .= " ORDER BY coalesce(resolution_80_percent,999) ASC ";
+		$q .= " , coalesce(resolution_50_percent,999) ASC ";
 
 		//if ($order) {
 		//	$fields = $order['fields'];
