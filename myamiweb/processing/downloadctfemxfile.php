@@ -34,7 +34,7 @@ foreach ($ctfdatas as $ctfdata) {
 	$pieces = explode("_", $filename);
 	array_shift($pieces);
 	$short = implode("_", $pieces);
-	$data[] = sprintf("\t<micrograph fileName=\"%s\">\n", $short);
+	$data[] = sprintf("\t<micrograph fileName=\"%s.mrc\">\n", $short);
 	// Xmipp requires us to flip the defocus values relative to the Appion standard
 	$data[] = sprintf("\t\t<defocusU unit=\"nm\">%.3f</defocusU>\n", $ctfdata['defocus2']*1e9);
 	$data[] = sprintf("\t\t<defocusV unit=\"nm\">%.3f</defocusV>\n", $ctfdata['defocus1']*1e9);
