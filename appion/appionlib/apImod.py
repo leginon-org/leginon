@@ -531,9 +531,9 @@ clip avg -2d -iz 0-199 temp.mrc projection.mrc
 			lookup = {'y':1,'z':0}
 			inputparams['3d'] = inputparams['recon']
 		# limit slices for projection to 200 to save time.
-		zcenter = fullshape[lookup['z']]
+		zcenter = int(fullshape[lookup['z']] / 2)
 		zstart = max(0,zcenter - 100)
-		zend = min(fullshape[lookup['z']],zcenter + 99)
+		zend = min(fullshape[lookup['z']]-1,zcenter + 99)
 		commands.append(
 				"$clip avg -2d -iz %d-%d %s %s"
 					% (zstart,zend,
