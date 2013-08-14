@@ -81,7 +81,7 @@ function createForm($extra=false) {
   $defrunname = ($_POST['runname']) ? $_POST['runname'] : 'interact'.($lastrunnumber+1);
   $binval = ($_POST['binval']) ? $_POST['binval'] : 2;
   $confcheck = ($_POST['confcheck']== 'on') ? 'CHECKED' : '';
-  $reprocess = ($_POST['reprocess']) ? $_POST['reprocess'] : 0.8;
+  $reprocess = ($_POST['reprocess']) ? $_POST['reprocess'] : 10;
   $reslimit = ($_POST['reslimit']) ? $_POST['reslimit'] : 6;
   $maxdef = ($_POST['maxdef']) ? $_POST['maxdef'] : 7;
   $mindef = ($_POST['mindef']) ? $_POST['mindef'] : 0.5;
@@ -97,19 +97,21 @@ function createForm($extra=false) {
 	  </TD>
 	  <TD CLASS='tablebg' valign='top'>\n";
 
-	echo "<INPUT TYPE='checkbox' NAME='confcheck' onclick='enableconf(this)' $confcheck >\n";
-	echo "Reprocess Below Confidence Value<br />\n";
-	if ($confcheck == 'CHECKED') {
-		echo "Set Value:<input type='text' name='reprocess' value=$reprocess size='4'>\n";
-	} else {
-		echo "Set Value:<input type='text' name='reprocess' disabled value=$reprocess size='4'>\n";
-	}
-	echo "<font size='-2'><i>(between 0.0 - 1.0)</i></font>\n";
-	echo "<br/><br/>\n";
 
 	echo "Viewer cutoff: <input type='text' name='reslimit' value=$reslimit size='4'> &Aring;ngstroms<br/>\n";
 	echo "Max defocus: <input type='text' name='maxdef' value=$maxdef size='4'> microns<br/>\n";
 	echo "Min defocus: <input type='text' name='mindef' value=$mindef size='4'> microns<br/>\n";
+
+	echo "<br/><br/>\n";
+
+	echo "<INPUT TYPE='checkbox' NAME='confcheck' onclick='enableconf(this)' $confcheck >\n";
+	echo "Reprocess Above Resolution Value<br />\n";
+	echo "&nbsp;&nbsp;Set Value:&nbsp;<input type='text' name='reprocess' ";
+	if ($confcheck != 'CHECKED')
+		echo "disabled";
+	echo " value=$reprocess size='2'> &Aring;\n";
+	echo "<br/><br/>\n";
+
 
 	echo"
 	  </TD>
@@ -151,7 +153,7 @@ function runProgram() {
 	$reslimit=trim($_POST['reslimit']);
 	$maxdef=trim($_POST['maxdef']);
 	$mindef=trim($_POST['mindef']);
-	$reprocess=$_POST['reprocess'];
+	$reprocess=trim($_POST['reprocess']);
 	
 	/* *******************
 	PART 2: Check for conflicts, if there is an error display the form again
@@ -190,6 +192,9 @@ function runProgram() {
 	if ($mindef)
 		$command .= "--mindef=".($mindef*1e-6)." ";	
 	
+	if (is_numeric($reprocess))
+		$command .= "--reprocess=".$reprocess." ";
+
 	/* *******************
 	PART 4: Create header info, i.e., references
 	******************** */

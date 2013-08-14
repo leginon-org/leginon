@@ -24,8 +24,6 @@ else {
 	createForm();
 }
 
-
-
 /*
 **
 **
@@ -78,14 +76,23 @@ function createForm($extra=false) {
 	$lastrunnumber = $ctf->getLastRunNumberForType($sessionId,'ApAceRunData','name'); 
 	while (file_exists($sessionpath.'phasor'.($lastrunnumber+1)))
 		$lastrunnumber += 1;
-  $defrunname = ($_POST['runname']) ? $_POST['runname'] : 'phasor'.($lastrunnumber+1);
-  $binval = ($_POST['binval']) ? $_POST['binval'] : 2;
-  $confcheck = ($_POST['confcheck']== 'on') ? 'CHECKED' : '';
-  $reprocess = ($_POST['reprocess']) ? $_POST['reprocess'] : 10;
-  $reslimit = ($_POST['reslimit']) ? $_POST['reslimit'] : 6;
-  $maxdef = ($_POST['maxdef']) ? $_POST['maxdef'] : 7;
-  $mindef = ($_POST['mindef']) ? $_POST['mindef'] : 0.5;
-  //$refine2d = ($_POST['refine2d']== 'on') ? 'CHECKED' : '';
+	$defrunname = ($_POST['runname']) ? $_POST['runname'] : 'phasor'.($lastrunnumber+1);
+	$binval = ($_POST['binval']) ? $_POST['binval'] : 2;
+	$confcheck = ($_POST['confcheck']== 'on') ? 'CHECKED' : '';
+	$confcheck = ($_POST['confcheck']== 'on') ? 'CHECKED' : '';
+
+	$pixelsize = $ctf->getMinimumPixelSizeForSession($expId)*1e10;
+	$nyquistlimit = 2*$pixelsize;
+
+	$reprocess = ($_POST['reprocess']) ? $_POST['reprocess'] : 10;
+	$reslimit = ($_POST['reslimit']) ? $_POST['reslimit'] : ceil($nyquistlimit*1.5);
+	if ($reslimit < $nyquistlimit) {
+		$reslimit = ceil($nyquistlimit*1.5);
+	}
+
+	$maxdef = ($_POST['maxdef']) ? $_POST['maxdef'] : 7;
+	$mindef = ($_POST['mindef']) ? $_POST['mindef'] : 0.5;
+	//$refine2d = ($_POST['refine2d']== 'on') ? 'CHECKED' : '';
 	echo"
 	<TABLE BORDER=0 CLASS=tableborder CELLPADDING=15>
 	<TR>
@@ -102,20 +109,31 @@ function createForm($extra=false) {
 	echo "<INPUT TYPE='radio' NAME='sample' VALUE='stain' SIZE='3'>\n";
 	echo "Carbon stain<br />\n";
 	echo "<INPUT TYPE='radio' NAME='sample' VALUE='ice' SIZE='3'>\n";
-	echo "Virteous ice\n";
-	echo "<br/><br/>\n";
-
-	echo "<INPUT TYPE='checkbox' NAME='astig' >\n";
-	echo "Estimate astigmatism\n";
-	echo "<br/>\n";
-	echo "Resolution search cutoff: ";
-	echo "<input type='text' name='reslimit' value=$reslimit size='2'> &Aring;<br/>\n";
+	echo "Vitreous ice \n";
 	echo "<br/><br/>\n";
 
 	echo "<b>Defocus limits:</b>\n";
 	echo "<br />\n";
-	echo "Max defocus: <input type='text' name='maxdef' value=$maxdef size='3'> microns<br/>\n";
 	echo "Min defocus: <input type='text' name='mindef' value=$mindef size='3'> microns<br/>\n";
+	echo "Max defocus: <input type='text' name='maxdef' value=$maxdef size='3'> microns<br/>\n";
+	echo "<br/><br/>\n";
+
+	echo "<b>Level of astigmatism</b>\n";
+	echo "<br />\n";
+	echo "<INPUT TYPE='radio' NAME='astig' VALUE='false' "
+		.(($_POST['astig']== 'true') ? '' : 'CHECKED')." SIZE='3'>\n";
+	echo "Small \n";
+	echo "&nbsp; \n";
+	echo "<INPUT TYPE='radio' NAME='astig' VALUE='true' "
+		.(($_POST['astig']== 'true') ? 'CHECKED' : '')." SIZE='3'>\n";
+	echo "Large\n";
+	echo "<br/><br/>\n";
+
+
+	echo "<br/>\n";
+	echo "Resolution search cutoff: ";
+	echo "<input type='text' name='reslimit' value='$reslimit' size='2'> &Aring;<br/>\n";
+	echo "<i>Nyquist limit: $nyquistlimit &Aring;</i>\n";
 	echo "<br/><br/>\n";
 
 	echo "<INPUT TYPE='checkbox' NAME='confcheck' onclick='enableconf(this)' $confcheck >\n";
@@ -227,6 +245,9 @@ function runProgram() {
 	$command .= "--reslimit=$reslimit ";	
 	$command .= "--maxdef=".($maxdef*1e-6)." ";
 	$command .= "--mindef=".($mindef*1e-6)." ";
+
+	if (is_numeric($reprocess))
+		$command .= "--reprocess=".$reprocess." ";
 
 
 	/* *******************
