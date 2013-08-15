@@ -89,7 +89,7 @@ def non_maximal_edge_suppresion(mag, orient, minEdgeRadius=20, maxEdgeRadius=Non
 
 #=======================
 #=======================
-def canny_edges(image, minedges=2500, maxedges=10000, low_thresh=50, minEdgeRadius=20, maxEdgeRadius=None):
+def canny_edges(image, minedges=5000, maxedges=15000, low_thresh=50, minEdgeRadius=20, maxEdgeRadius=None):
 	"""
 	Compute Canny edge detection on an image
 	"""

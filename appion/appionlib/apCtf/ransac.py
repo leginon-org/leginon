@@ -40,7 +40,7 @@ def printParams(params):
 	a = params['a']
 	b = params['b']
 	alpha = params['alpha']
-	print ("ellip: %d x %d < %.1f deg"%
+	print ("ellip: %.1f x %.1f < %.1f deg"%
 		(a, b, math.degrees(alpha)))
 	return
 
@@ -62,13 +62,14 @@ def frame_cut(a, newshape):
 	return a[mindimx:maxdimx, mindimy:maxdimy]
 
 #=========================
-def ellipseRANSAC(edgeMap, ellipseThresh=2, minPercentGoodPoints=0.001, certainProb=0.9, maxiter=2000):
+def ellipseRANSAC(edgeMap, ellipseThresh=2, minPercentGoodPoints=0.001, certainProb=0.9, maxiter=10000):
 	"""
 	takes 2D edge map from image and trys to find a good ellipse in the data
 	"""
 	shrinkEdgeMap = numpy.float64(trimZeroEdges(edgeMap))
 	#shrinkEdgeMap = numpy.float64(edgeMap)
 	shape = shrinkEdgeMap.shape
+	print "RANSAC shape", shape
 
 	## make a list of edges, with x, y radii
 	bottomEdgeMap = numpy.copy(shrinkEdgeMap)
@@ -129,8 +130,9 @@ def ellipseRANSAC(edgeMap, ellipseThresh=2, minPercentGoodPoints=0.001, certainP
 
 		## check to see if we can stop
 		if mostGoodPoints > currentProb*numEdges:
-			currentProb = mostGoodPoints/float(numEdges)
-			successProb = 1.0 - math.exp( iternum * math.log(1.0 - currentProb**numSamples) )
+			#currentProb = mostGoodPoints/float(numEdges)
+			#print "currentProb", currentProb
+			#successProb = 1.0 - math.exp( iternum * math.log(1.0 - currentProb**numSamples) )
 			print "\nRANSAC SUCCESS"
 			break
 
@@ -149,6 +151,7 @@ def ellipseRANSAC(edgeMap, ellipseThresh=2, minPercentGoodPoints=0.001, certainP
 		currentEdges.append(random.choice(topEdgeList))
 		currentEdges.append(random.choice(leftEdgeList))
 		currentEdges.append(random.choice(rightEdgeList))
+		##NEIL IDEA: could select a random edge instead of an edge point???
 		currentEdges = numpy.array(currentEdges, dtype=numpy.int16)
 
 		## convert rows, columns into x, y by swapping columns
@@ -204,7 +207,8 @@ def ellipseRANSAC(edgeMap, ellipseThresh=2, minPercentGoodPoints=0.001, certainP
 				#sys.stderr.write("s%d "%(sizeReject))
 				continue	
 			ratio = centeredParams['a']/float(centeredParams['b'])
-			if ratio > 6 or ratio < 0.16:
+			if ratio > 1.4 or ratio < 0.99:
+				## should be a > b
 				ratioReject += 1
 				#sys.stderr.write("r%d "%(ratioReject))
 				continue	

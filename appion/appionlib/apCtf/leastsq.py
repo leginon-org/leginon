@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import sys
 import math
 import time
 import numpy
@@ -156,8 +157,8 @@ def weightedLeastSquares(X, Y, W):
 		return None
 	XTWXinv = numpy.linalg.inv(XTWX)
 	beta = numpy.dot(numpy.dot(XTWXinv, XTW), Y)
-	apDisplay.printMsg("weightedLeastSquares completed in %s"
-		%(apDisplay.timeString(time.time()-t0)))
+	#apDisplay.printMsg("weightedLeastSquares completed in %s"
+	#	%(apDisplay.timeString(time.time()-t0)))
 	return beta
 
 ##========================
@@ -203,7 +204,7 @@ def weightedLeastSquaresSVD(X, Y, W):
 
 ##========================
 ##========================
-def totalLeastSquares(X, Y, W=None, epsilon=1e-10, maxiter=500):
+def totalLeastSquares(X, Y, W=None, epsilon=1e-5, maxiter=500):
 	"""
 	iterative refine weights of observations, de-emphasizing bad fitting points
 	"""
@@ -216,11 +217,13 @@ def totalLeastSquares(X, Y, W=None, epsilon=1e-10, maxiter=500):
 	if W is None:
 		#W = numpy.random.random((m)) # weights for the observations
 		#W = W*float(M)/W.sum()
-		W = numpy.ones((m)) # even weights for the observations
+		W = numpy.ones(Y.shape) # even weights for the observations
 
 	### solve it
 	err0 = None
+	sys.stderr.write("running total least squares")
 	for i in range(maxiter):
+		sys.stderr.write(".")
 		beta = weightedLeastSquares(X, Y, W)
 		if beta is None:
 			if i < 2:
@@ -229,6 +232,7 @@ def totalLeastSquares(X, Y, W=None, epsilon=1e-10, maxiter=500):
 
 		## calculate the absolute mean error
 		err = numpy.absolute(numpy.dot(X, beta) - Y).ravel()
+		#print "totalLeastSquares iter %d error: %.4f"%(i, err.mean())
 		## fit to a normal distribution
 		normerr = ( err - err.min() )/err.std()
 		## calculate new weights based on 
