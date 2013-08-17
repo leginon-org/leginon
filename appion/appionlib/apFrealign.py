@@ -764,7 +764,7 @@ def frealign9_to_frealign8(infile, outfile, apix):
 		dy = p['defy']
 		ast = p['astig']
 		ff.write("%7d%8.2f%8.2f%8.2f%8.2f%8.2f%8d%6d%9.1f%9.1f%8.2f\n" \
-			% ((i+1), psi, theta, phi, shx, shy, mag, micnum, dx, dy, ast))	
+			% ((i), psi, theta, phi, shx, shy, mag, micnum, dx, dy, ast))	
 	ff.close()
 
 #=================
@@ -994,6 +994,6 @@ def split_frealign9_parfile(inparfile, *outparfiles):
 			change = float(p['change'])
 
 			ff.write("%7d%8.2f%8.2f%8.2f%10.2f%10.2f%8d%6d%9.1f%9.1f%8.2f%8.2f%13d%8.2f%8.2f\n" \
-				% (partnum, psi, theta, phi, shx, shy, mag, film, dx, dy, ast, occ, logp, score, change))
+				% (i, psi, theta, phi, shx, shy, mag, film, dx, dy, ast, occ, logp, score, change))
 		ff.close()
 		
