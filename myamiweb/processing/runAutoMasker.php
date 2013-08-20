@@ -262,7 +262,7 @@ function displayTestResults($testimage,$imgdir,$files)
 	$sessionpath = $_POST['sessionpath'];
 	$origImage = $sessionpath."/".$testimage;
 	echo"<B>$imgname</B>\n<P>";
-	echo "<img src='loadimg.php?filename=".$origImage."&scale=".$imgrescl."&overlay=".$imgfull."'>\n";
+	echo "<img src='loadimg.php?filename=".$origImage."&scale=".$imgrescl."&overlay=".$imgfull."&coff=1'>\n";
 	
 //	echo"<TABLE BORDER='0' CELLPADDING='0' CELLSPACING='0' WIDTH='400'>\n";
 //	echo"<tr><td ALIGN='LEFT'>\n";
