@@ -884,7 +884,7 @@ $xvfb=False, $xtra=False, $nproc=1, $ppn=0, $nodes=0, $walltime="240", $cputime=
 	$jobnum = $matches[0][0];
 	if (!is_numeric($jobnum)) {
 		echo "</table><p>\n";
-		echo "ERROR in job submission. Check the cluster.\n".$jobdata."\n".$matches[0][0]."\n";
+		echo "ERROR in job submission. Check the cluster setup. Ensure the ,.appio.cfg configuration file is correct (http://ami.scripps.edu/redmine/projects/appion/wiki/Configure_appioncfg)\n".$jobdata."\n".$matches[0][0]."\n";
 		processing_footer();
 		exit;
 	}
@@ -925,11 +925,15 @@ function writeTestResults($jpg,$ccclist,$bin,$process_str='')
 	// First, see if we are just showing the command
 	if ($process_str === '') {
 		$process_str = getProcessString();
-		$showcmd = True;
 	}
+	$showcmd = preg_match('/[Ss]how/',$process_str);
+	
+	// Remove any white space in the image name
+	$jpg = preg_replace('/\s+/','',$jpg);
+	
 	clearstatcache(); // clear cache
-	$fileExists = file_exists($jpg);
-  	if ( ($fileExists===false) && (preg_match('/[Ss]how/',$process_str)) ) {
+	$fileExists = is_file($jpg);
+  	if ( ($fileExists===false) && $showcmd ) {
 		return "<font color='#990000'>The test results are not ready for display. Refresh the page after the command is run successfully. </font><br />\n";
   	}
 	
@@ -951,7 +955,7 @@ function writeTestResults($jpg,$ccclist,$bin,$process_str='')
 	if (!$showcmd) {
 		do {
   			clearstatcache(); // filemtime() and file_exists() results are cached, clear it.
-			$fileExists = file_exists($jpg);
+			$fileExists = is_file($jpg);
   			if ($fileExists) {
 				$file_time = filemtime($jpg);
 				$mod_time = abs($start_time - $file_time);
@@ -959,15 +963,15 @@ function writeTestResults($jpg,$ccclist,$bin,$process_str='')
 
 			$curr_wait_time = time() - $start_time;	
 
-		} while ( (($fileExists===false) || ($mod_time > 35)) && ($curr_wait_time < $max_time ) );
+		} while ( (($fileExists===false) && ($curr_wait_time < $max_time )) || (($fileExists===true) && ($mod_time > $max_mod_time)) );
 	}
   
 	clearstatcache(); // filetime() and file_exists() results are cached, clear it.
-  	$fileExists = file_exists($jpg);
+  	$fileExists = is_file($jpg);
   	if ($fileExists===false) {
 		$base = basename($jpg);
 		$dir = dirname($jpg);
-		return "<font color='#990000' size='+2'>An Error occurred - the image $base was not found in folder $dir. Try refreshing this page.</font><br />\n";
+		return "<font color='#990000' size='+2'>An Error occurred - the image $base was not found in folder $dir.<br /> Processing may be taking longer than expected. Refresh this page when the image is available to display.</font><br />\n";
 	}
 
 	// The results are ready, display them.
