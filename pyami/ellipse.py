@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+
+import sys
 import time
 import math
 import numpy
@@ -134,6 +136,7 @@ def solveEllipseB2AC(points):
 	and Machine Intelligence, Vol 21, No 5, May 1999.
 
 	This method has a tendency to crash, but is very fast
+	probably should use QR decomposition to avoid crashing on singularities
 
 	convention note: ellipse points are x,y coordinates, so alpha
 		is measured as positive values towards the y-axis
@@ -145,6 +148,7 @@ def solveEllipseB2AC(points):
 	C[0,2] = -2
 	C[1,1] = 1
 	C[2,0] = -2
+	### replace eig with QR decomp
 	geval,gevec = scipy.linalg.eig(a=S, b=C)
 	geval = geval.real
 	gevec = gevec.real
@@ -152,9 +156,136 @@ def solveEllipseB2AC(points):
 	Neg = numpy.nonzero(numpy.logical_and(geval<0, numpy.logical_not(numpy.isinf(geval))))
 	a = gevec[:,Neg]
 	a = numpy.ravel(a)
+	
 	if len(a) == 0:
 		return None
 	return algebraic2parametric(a)
+
+##========================
+##========================
+def solveEllipseByQRdecomp(points, center=(0,0)):
+	"""
+	QR decomposition is not the fastest method
+	but it is by far the most stable
+	"""
+	t0 = time.time()
+	xy = numpy.array(points, dtype=numpy.float64) - numpy.array(center, dtype=numpy.float64)
+	X = numpy.column_stack((
+			xy[:,0]**2, 
+			xy[:,0]*xy[:,1], 
+			xy[:,1]**2,
+		))
+	Y = numpy.ones(xy.shape[0])
+	### solve it by QR decomposition
+	Q, R = numpy.linalg.qr(X)
+	if numpy.linalg.det(R) == 0:
+		print "Singular matrix in calculation"
+		return None
+	QT = numpy.transpose(Q)
+	Rinv = numpy.linalg.inv(R)
+	beta = numpy.dot(numpy.dot(Rinv, QT), Y)
+
+	algebraic = (beta[0], beta[1], beta[2], 0, 0, -1)
+
+	params = algebraic2parametric(algebraic)
+	if params is None:
+		return None
+
+	params['center'] = center
+	
+	return params
+
+##========================
+def weightedLeastSquares(X, Y, W):
+	"""
+	solve using the normal equations with no manipulation
+	"""
+	### solve it
+	XTW = numpy.transpose(X)*W
+	XTWX = numpy.dot(XTW, X)
+	if numpy.linalg.det(XTWX) == 0:
+		print "Singular matrix in calculation"
+		return None
+	XTWXinv = numpy.linalg.inv(XTWX)
+	beta = numpy.dot(numpy.dot(XTWXinv, XTW), Y)
+	return beta
+
+#=================
+def totalLeastSquareEllipse(points, center=(0,0), weights=None, epsilon=1e-5, maxiter=10):
+	'''
+	This was implemented by Neil Voss
+	
+	uses simple linear least squares to solve the general equation for
+	an ellipse, but implements the total least squares algorithm.
+	
+	http://en.wikipedia.org/wiki/Total_least_squares
+
+	total least squares assumes some points are better than others
+	so it uses an iterative approach to 
+	down weight points with higher fit error
+	and points with smaller error are weighed higher
+
+	takes a (N,2) numpy array containing ellipse points and 
+	return the best least square fit for an ellipse
+	values A,B,C
+	where
+	Ax^2 + Bxy +Cy^2 + Dx + Ey + F = 0
+	D = E = 0 to center the ellipse on the origin
+	F = -1 to force the general conic equation to be an ellipse
+
+	convention note: ellipse points are x,y coordinates, so alpha
+		is measured as positive values towards the y-axis
+	'''
+	t0 = time.time()
+	xy = numpy.array(points, dtype=numpy.float64) - numpy.array(center, dtype=numpy.float64)
+	X = numpy.column_stack((
+			xy[:,0]**2, 
+			xy[:,0]*xy[:,1], 
+			xy[:,1]**2,
+		))
+	Y = numpy.ones(xy.shape[0])
+
+	### setup weights if necessary
+	W = weights
+	if W is None:
+		W = numpy.ones(Y.shape) # even weights for the observations
+
+	### solve it
+	sys.stderr.write("total least squares")
+	err0 = None
+	for i in range(maxiter):
+		sys.stderr.write(".")
+		beta = weightedLeastSquares(X, Y, W)
+		if beta is None:
+			return None
+
+		## calculate the absolute mean error
+		err = numpy.absolute(numpy.dot(X, beta) - Y).ravel()
+		#print "totalLeastSquares iter %d error: %.4f"%(i, err.mean())
+		## fit to a normal distribution
+		normerr = ( err - err.min() )/err.std()
+		## calculate new weights based on 
+		W = numpy.exp( -1 * normerr**2 )
+		if W.sum() == 0:
+			apDisplay.printWarning("Failed to set weights")
+			return beta
+		## see if we can stop
+		if err0 is not None:
+			change = numpy.absolute(err-err0).mean()
+			if change < epsilon:
+				break
+		err0 = err	
+	
+	algebraic = (beta[0], beta[1], beta[2], 0, 0, -1)
+
+	params = algebraic2parametric(algebraic)
+	if params is None:
+		return None
+
+	params['center'] = center
+	
+	return params
+
 
 #=================
 def solveEllipseGander(points):
@@ -311,7 +442,7 @@ if __name__ == '__main__':
 	## randomly generate a noisy ellipse
 	# note: center is (col,row) i.e. (x,y) while shape is (row,col)
 	xdim = numcol = 32
-	ydim = numrow = 8
+	ydim = numrow = 16
 	shape = (numrow,numcol)
 	alpha = random.random()*math.pi - math.pi/2
 	center = numpy.array((numrow, numcol), dtype=numpy.float)/2.0
@@ -320,8 +451,8 @@ if __name__ == '__main__':
 	print alpha, majormax, minormax
 	major = (majormax-2) * random.random() + 2
 	minor = (min(minormax,major)-1) * random.random() + 1
-	numpoints = 8 + int(10000*random.random())
-	noise = 0.1 #random.random()
+	numpoints = 8 + int(100000*random.random()*random.random()*random.random())
+	noise = 0.2 #random.random()
 	print "NumPoints = %d ; Noise = %.1f"%(numpoints, noise)
 	printParams(center, major, minor, alpha)
 
@@ -330,9 +461,12 @@ if __name__ == '__main__':
 		noise, method="step", integers=False)
 	params = {'center':center, 'a':major, 'b':minor, 'alpha':alpha}
 	grid = numpy.zeros(shape, dtype=numpy.int)
-	for point in points:
-		p = numpy.floor(point)
-		grid[p[0],p[1]] = 1
+	intpoints = numpy.array(points, dtype=numpy.int)
+	print intpoints
+	grid[intpoints[:,0], intpoints[:,1]] = 1
+	#for point in points:
+	#	p = numpy.floor(point)
+	#	grid[p[0],p[1]] = 1
 	print grid
 	print ""
 
@@ -348,10 +482,13 @@ if __name__ == '__main__':
 
 	### draw gander ellipse
 	t0 = time.time()
-	params2 = solveEllipseGander(points)
-	#params2 = params1
-	print '\nGANDER', params2
-	print drawEllipse(shape, 4*numpy.pi/180.0, **params2)
+	if numpoints < 10000:
+		params2 = solveEllipseGander(points)
+		print '\nGANDER', params2
+		print drawEllipse(shape, 4*numpy.pi/180.0, **params2)
+	else:
+		print "skipping GANDER"
+		params2 = None
 	gandertime = time.time() - t0
 
 	### draw ols ellipse
@@ -361,16 +498,48 @@ if __name__ == '__main__':
 	print drawEllipse(shape, 4*numpy.pi/180.0, **params3)
 	olstime = time.time() - t0
 
+	### draw QR ellipse
+	t0 = time.time()
+	params4 = solveEllipseByQRdecomp(points, center)
+	print '\nQR DECOMP', params4
+	if params4 is not None:
+		print drawEllipse(shape, 4*numpy.pi/180.0, **params4)
+	qrdecomp = time.time() - t0
+
+	### draw Total Least Squares ellipse
+	t0 = time.time()
+	params5 = totalLeastSquareEllipse(points, center)
+	print '\nTotal Least Squares', params5
+	if params5 is not None:
+		print drawEllipse(shape, 4*numpy.pi/180.0, **params5)
+	totallsq = time.time() - t0
+
 	print majormax, minormax
 	print "NumPoints = %d ; Noise = %.1f"%(numpoints, noise)
+	print "Actual values"
 	printParams(center, major, minor, alpha)
+	print "Fit values"
 	if params1 is not None:
 		printParams(**params1)
 	else:
 		print "b2ac failed"
-	printParams(**params2)
+	if params2 is not None:
+		printParams(**params2)
+	else:
+		print "gander skipped"
 	printParams(**params3)
+	if params4 is not None:
+		printParams(**params4)
+	else:
+		print "qr decomp failed"
+	if params5 is not None:
+		printParams(**params5)
+	else:
+		print "total lsq failed"	
 	print "b2ac   complete in %.3f millisec"%(b2actime*1000)
 	print "gander complete in %.3f millisec"%(gandertime*1000)
 	print "ols    complete in %.3f millisec"%(olstime*1000)
+	print "qr     complete in %.3f millisec"%(qrdecomp*1000)
+	print "total  complete in %.3f millisec"%(totallsq*1000)
+
 
