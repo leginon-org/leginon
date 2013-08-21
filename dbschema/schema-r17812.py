@@ -4,7 +4,7 @@ from leginon import leginondata, ddinfo
 
 class SchemaUpdate17812(schemabase.SchemaUpdate):
 	'''
-	This schema update frame path
+	This schema correct adjust for transform from no to one in Centered Square
 	'''
 
 	def upgradeLeginonDB(self):
@@ -14,6 +14,7 @@ class SchemaUpdate17812(schemabase.SchemaUpdate):
 		for userdata in users:
 			sessionq = leginondata.SessionData(user=userdata)
 			asettingsq = leginondata.AcquisitionSettingsData(session=sessionq,name='Centered Square')
+			# only need to change the most recent one
 			asettings = asettingsq.query(results=1)
 			if asettings:
 				asettingsdata = asettings[0]
