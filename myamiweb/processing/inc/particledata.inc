@@ -969,6 +969,26 @@ class particledata {
 		return $r;
 	}
 
+	// Note, this method needs to be updated each time a new CTF method is added to the database.
+	function getCtfRunMethod( $acerunId )
+	{
+		$aceparams = $this->getAceParams($acerunId);
+		
+		if ( $aceparams['REF|ApAceParamsData|aceparams'] ) {
+			$method = "ace1";
+		} else if ( $aceparams['REF|ApAce2ParamsData|ace2_params'] ) {
+			$method = "ace2";
+		} else if ( $aceparams['REF|ApCtfTiltParamsData|ctftilt_params'] ) {
+			$method = "ctffind";
+		} else if ( $aceparams['REF|ApXmippCtfParamsData|xmipp_ctf_params'] ) {
+			$method = "xmipp";
+		} else {
+			$method = "unknown";
+		}
+		
+		return $method;
+	}
+	
 	function getAceParams($acerunId) {
 		$q = "SELECT *, path.`path` as path, acerun.`DEF_id` as acerun "
 			."FROM ApAceRunData AS acerun "
@@ -3580,6 +3600,22 @@ class particledata {
 		return $this->getRunIds($sessionId, "ApMaskMakerRunData", True);
 	}
 
+	function getMaskRunPathFromMaskRunId ( $maskRunId ) {
+		$q = "select p.`path` "
+			."from `ApPathData` p "
+			."left join `ApMaskMakerRunData` m "
+			."on (p.`DEF_id` = m.`REF|ApPathData|path`) "
+			."where m.`DEF_id` = $maskRunId ";
+			
+		$r = $this->mysql->getSQLResult($q);
+		if ($r === False) {
+			$dberror = $this->mysql->getError();
+			//echo "error -> $dberror \n";
+			error_log("Error: database error in particledata.inc, getMaskAssessRunIds(): $dberror /n");
+		}
+		return $r;
+	}
+	
 	function getMaskAssessRunIds ($sessionId) {
 		$q = "select * "
 			."from `ApMaskAssessmentRunData` where `REF|leginondata|SessionData|session` = '$sessionId'";
