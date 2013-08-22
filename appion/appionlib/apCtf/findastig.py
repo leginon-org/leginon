@@ -4,15 +4,19 @@ import copy
 import time
 import math
 import numpy
-from matplotlib import pyplot
+#from matplotlib import pyplot
 import scipy.ndimage.measurements
 from pyami import ellipse
 from appionlib.apCtf import ctftools
 from appionlib.apImage import imagefilter
 
 
+debug = False
 
+#=========================================
 def showImage(image):
+	if debug is False:
+		return
 	pyplot.clf()
 	pyplot.imshow(image)
 	pyplot.gray()
@@ -20,7 +24,7 @@ def showImage(image):
 	time.sleep(0.1)
 	return
 
-
+#=========================================
 def findAstigmatism(fftarray, freq, defocus, resolution, ctfvalues):
 	"""
 	find the astigmatism from a radial 1D estimate of the defocus
@@ -39,7 +43,6 @@ def findAstigmatism(fftarray, freq, defocus, resolution, ctfvalues):
 	fftcenter = copy.deepcopy(imagefilter.frame_cut(fftarray, newshape))
 	showImage(fftcenter)
 
-
 	shape = fftcenter.shape
 	## create a grid of distance from the center
 	xhalfshape = shape[0]/2.0
@@ -52,10 +55,11 @@ def findAstigmatism(fftarray, freq, defocus, resolution, ctfvalues):
 
 	maxVal = fftcenter.max()*2
 	minVal = fftcenter.min()
-	fftcenter = numpy.where(radialArray > maxEdgeRadius**2, maxVal, fftcenter)
-	showImage(fftcenter)
-	fftcenter = numpy.where(radialArray < minEdgeRadius**2, maxVal, fftcenter)
-	showImage(fftcenter)
+	if debug is True:
+		fftcenter = numpy.where(radialArray > maxEdgeRadius**2, maxVal, fftcenter)
+		showImage(fftcenter)
+		fftcenter = numpy.where(radialArray < minEdgeRadius**2, maxVal, fftcenter)
+		showImage(fftcenter)
 
 	angleArray = numpy.arctan2(-yy,xx)
 	numSteps = 360
@@ -72,22 +76,24 @@ def findAstigmatism(fftarray, freq, defocus, resolution, ctfvalues):
 		scipy.ndimage.measurements.minimum_position(
 			fftcenter, angleArray, dataIntegers))
 
-	fftcenter[xyData[:,0], xyData[:,1]] = maxVal*3
-	showImage(fftcenter)
+	if debug is True:
+		fftcenter[xyData[:,0], xyData[:,1]] = maxVal*3
+		showImage(fftcenter)
 
-	ellipseParams = ellipse.solveEllipseOLS(xyData, center=(xhalfshape, yhalfshape))
+	ellipseParams = ellipse.totalLeastSquareEllipse(xyData, center=(xhalfshape, yhalfshape))
 	ellipse.printParamsDict(ellipseParams)
-	numPoints = int(math.pi*(ellipseParams['a']+ellipseParams['b']))
-	ellPoints = ellipse.generate_ellipse(ellipseParams['a'], ellipseParams['b'], 
-		ellipseParams['alpha'], center=ellipseParams['center'], numpoints=numPoints, integers=True)
 
-	fftcenter[ellPoints[:,0], ellPoints[:,1]] += maxVal
-	showImage(fftcenter)
+	if debug is True:
+		numPoints = int(math.pi*(ellipseParams['a']+ellipseParams['b']))
+		ellPoints = ellipse.generate_ellipse(ellipseParams['a'], ellipseParams['b'], 
+			ellipseParams['alpha'], center=ellipseParams['center'], numpoints=numPoints, integers=True)
+		fftcenter[ellPoints[:,0], ellPoints[:,1]] += maxVal
+		showImage(fftcenter)
 
 	return ellipseParams
 
 
-#============
+#=========================================
 def rotationalAverage(image, ringwidth=3.0, innercutradius=None, full=False, median=False):
 	"""
 	compute the rotational average of a 2D numpy array
@@ -159,3 +165,9 @@ def rotationalAverage(image, ringwidth=3.0, innercutradius=None, full=False, med
 		apDisplay.printMsg("actual max size of rotational average: %d"%(xdata.max())) 
 
 	return xdata, ydata
+
+
+#=========================================
+#=========================================
+
+

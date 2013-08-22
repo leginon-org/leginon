@@ -62,7 +62,8 @@ def frame_cut(a, newshape):
 	return a[mindimx:maxdimx, mindimy:maxdimy]
 
 #=========================
-def ellipseRANSAC(edgeMap, ellipseThresh=2, minPercentGoodPoints=0.001, certainProb=0.9, maxiter=10000):
+def ellipseRANSAC(edgeMap, ellipseThresh=2, minPercentGoodPoints=0.001, 
+		certainProb=0.9, maxiter=10000, maxRatio=4.0):
 	"""
 	takes 2D edge map from image and trys to find a good ellipse in the data
 	"""
@@ -177,7 +178,7 @@ def ellipseRANSAC(edgeMap, ellipseThresh=2, minPercentGoodPoints=0.001, certainP
 			#sys.stderr.write("S%d "%(sizeReject))
 			continue	
 		ratio = centeredParams['a']/float(centeredParams['b'])
-		if ratio > 4 or ratio < 0.25:
+		if ratio > maxRatio or ratio < 1.0/maxRatio:
 			ratioReject += 1
 			#sys.stderr.write("R%d "%(ratioReject))
 			continue	
@@ -235,12 +236,12 @@ def ellipseRANSAC(edgeMap, ellipseThresh=2, minPercentGoodPoints=0.001, certainP
 			### refine the ellipse parameters to see if we can do better
 			centeredEllipseMap1 = generateEllipseRangeMap2(centeredParams, ellipseThresh, shape)
 			centeredEllipseList1 = numpy.array(numpy.where(centeredEllipseMap1), dtype=numpy.float64).transpose() - center
-			betterEllipseParams1 = ellipse.solveEllipseOLS(centeredEllipseList1)
+			betterEllipseParams1 = ellipse.totalLeastSquareEllipse(centeredEllipseList1)
 			betterEllipseMap1 = generateEllipseRangeMap2(betterEllipseParams1, ellipseThresh, shape)
 			betterGoodPoints1 = (shrinkEdgeMap*betterEllipseMap1).sum()
 			centeredEllipseMap2 = generateEllipseRangeMap2(centeredParams, ellipseThresh*8, shape)
 			centeredEllipseList2 = numpy.array(numpy.where(centeredEllipseMap2), dtype=numpy.float64).transpose() - center
-			betterEllipseParams2 = ellipse.solveEllipseOLS(centeredEllipseList2)
+			betterEllipseParams2 = ellipse.totalLeastSquareEllipse(centeredEllipseList2)
 			betterEllipseMap2 = generateEllipseRangeMap2(betterEllipseParams2, ellipseThresh, shape)
 			betterGoodPoints2 = (shrinkEdgeMap*betterEllipseMap2).sum()
 			#print goodPoints, betterGoodPoints1, betterGoodPoints2
@@ -256,8 +257,8 @@ def ellipseRANSAC(edgeMap, ellipseThresh=2, minPercentGoodPoints=0.001, certainP
 				mostGoodPoints = goodPoints
 
 			printParams(bestEllipseParams)
-			if iternum > 100:
-				imagefile.arrayToJpeg(centeredEllipseMap1, "map%05d.jpg"%(iternum))
+			#if iternum > 100:
+			#	imagefile.arrayToJpeg(centeredEllipseMap1, "map%05d.jpg"%(iternum))
 
 	### end loop and do stuff
 	#bestEllipseMap = generateEllipseRangeMap2(bestEllipseParams, ellipseThresh*1.5, edgeMap.shape)
