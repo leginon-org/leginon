@@ -19,7 +19,7 @@ radian_suspects = 0
 
 #====================
 #====================
-def validateAndInsertCTFData(imgdata, ctfvalues, rundata, rundir):
+def validateAndInsertCTFData(imgdata, ctfvalues, rundata, rundir, fftpath=None, fftfreq=None):
 	"""
 	function to insert CTF values in database
 	"""
@@ -42,7 +42,7 @@ def validateAndInsertCTFData(imgdata, ctfvalues, rundata, rundir):
 	opimagedir = os.path.join(rundir, "opimages")
 	if isvalid is True:
 		oldctfvalues = ctfvalues.copy()
-		ctfvalues = runCTFdisplayTools(imgdata, ctfvalues, opimagedir)
+		ctfvalues = runCTFdisplayTools(imgdata, ctfvalues, opimagedir, fftpath, fftfreq)
 		# check if image creation failed
 		if ctfvalues is None:
 			ctfvalues = oldctfvalues
@@ -75,9 +75,9 @@ def validateAndInsertCTFData(imgdata, ctfvalues, rundata, rundir):
 
 #====================
 #====================
-def runCTFdisplayTools(imgdata, ctfvalues, opimagedir):
+def runCTFdisplayTools(imgdata, ctfvalues, opimagedir, fftpath=None, fftfreq=None):
 	### RUN CTF DISPLAY TOOLS
-	ctfdisplaydict = ctfdisplay.makeCtfImages(imgdata, ctfvalues)
+	ctfdisplaydict = ctfdisplay.makeCtfImages(imgdata, ctfvalues, fftpath, fftfreq)
 	if ctfdisplaydict is None:
 		return ctfvalues
 	### save the classic images as well
@@ -87,8 +87,12 @@ def runCTFdisplayTools(imgdata, ctfvalues, opimagedir):
 		ctfvalues['graph4'] = os.path.basename(ctfvalues['graph2'])
 	### new powerspec file
 	psfile = os.path.join(opimagedir, ctfdisplaydict['powerspecfile'])
-	shutil.move(ctfdisplaydict['powerspecfile'], psfile)
-	ctfvalues['graph1'] = os.path.basename(psfile)
+	if not os.path.isfile(ctfdisplaydict['powerspecfile']):
+		apDisplay.printWarning("Powerspec file not created")
+	else:
+		print ctfdisplaydict['powerspecfile']
+		shutil.move(ctfdisplaydict['powerspecfile'], psfile)
+		ctfvalues['graph1'] = os.path.basename(psfile)
 	### new 1d plot file
 	plotfile = os.path.join(opimagedir, ctfdisplaydict['plotsfile'])
 	shutil.move(ctfdisplaydict['plotsfile'], plotfile)
