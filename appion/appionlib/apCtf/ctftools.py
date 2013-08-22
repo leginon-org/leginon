@@ -78,10 +78,11 @@ def getCtfExtrema(focus=1.0e-6, mfreq=1.498e-04, cs=2e-2,
 			pixeldist = rad2/mfreq
 		else:
 			print "ERROR"
+			continue
 		distances.append(pixeldist)
 		if debug is True:
 			print "radius of zero number %d is %d pixels"%(i+1, pixeldist)
-	return distances
+	return numpy.array(distances)
 
 #===================
 def getFirstCTFzeroRadius(focus=-1.0e-6, pixelsize=1.0e-10, cs=2e-2, 
@@ -236,6 +237,8 @@ def draw_ellipse_to_file(jpgfile, imgarray, major, minor, angle, center=None,
 	angle - angle (in degrees)
 	center - position of centre of ellipse
 	numpoints - # of points used that make an ellipse
+
+	angle is positive toward y-axis
 	"""
 	if center is None:
 		center = numpy.array(imgarray.shape, dtype=numpy.float)/2.0
@@ -360,6 +363,8 @@ def rotationalAverage2D(image, ringwidth=3.0):
 def unEllipticalAverage(xdata, ydata, ellipratio, ellipangle, shape):
 	"""
 	compute the rotational average of a 2D numpy array
+
+	ellip angle is positive toward y-axis
 	"""
 	radial = getEllipticalDistanceArray(ellipratio, ellipangle, shape)
 	radial = radial/math.sqrt(ellipratio)
@@ -375,6 +380,7 @@ def unEllipticalAverage(xdata, ydata, ellipratio, ellipangle, shape):
 
 #============
 def getEllipticalDistanceArray(ellipratio, ellipangle, shape):
+	## ellip angle is positive toward y-axis
 	if ellipratio < 1:
 		ellipratio = 1.0/ellipratio
 		ellipangle += 90
@@ -396,7 +402,8 @@ def getEllipticalDistanceArray(ellipratio, ellipangle, shape):
 	yy = ellipratio*yy
 	radial = xx**2 + yy**2
 	### apply ellipse rotation
-	radial = scipy.ndimage.interpolation.rotate(radial, angle=ellipangle, 
+	## ellip angle is positive toward y-axis, which is clockwise, so negative angle
+	radial = scipy.ndimage.interpolation.rotate(radial, angle=-ellipangle, 
 		reshape=False, mode='wrap', order=1)
 	radial = imagefilter.frame_cut(radial, shape)
 	if debug is True:
@@ -415,7 +422,8 @@ def ellipticalAverage(image, ellipratio, ellipangle, ringwidth=2.0, innercutradi
 				= circle has a value of 1
 	
 	ellipangle: angle of ellipse in degrees
-			
+	## ellip angle is positive toward y-axis
+
 	full : False -- only average complete circles (no edges/corners)
 	       True  -- rotational average out to corners of image
 
@@ -481,7 +489,8 @@ def ellipticalArray(image, ellipratio, ellipangle):
 				= circle has a value of 1
 	
 	ellipangle: angle of ellipse in degrees
-			
+	## ellip angle is positive toward y-axis
+
 	full : False -- only average complete circles (no edges/corners)
 	       True  -- rotational average out to corners of image
 	"""
