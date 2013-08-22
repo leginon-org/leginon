@@ -20,6 +20,9 @@ def generateCTF1d(radii=None, focus=1.0e-6, cs=2e-3, volts=120000, ampconst=0.07
 	if debug is True:
 		print "generateCTF1dFromRadii()"
 
+	if radii is None:
+		radii = generateRadii1d(numpoints=256, pixelsize=1e-10)
+
 	if debug is True:
 		apDisplay.printColor("generateCTF radii: 1/%.2fA --> 1/%.2fA"%(1/radii[1]*1e10, 1/radii[-1]*1e10), "cyan")
 
