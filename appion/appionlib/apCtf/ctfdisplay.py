@@ -8,7 +8,7 @@ import time
 import random
 from pyami import imagefun
 from pyami import ellipse
-
+from pyami import mrc
 from appionlib import apDatabase
 from appionlib import apDisplay
 #from appionlib import lowess
@@ -925,7 +925,7 @@ class CtfDisplay(object):
 
 	#====================
 	#====================
-	def CTFpowerspec(self, imgdata, ctfdata, outerbound=5e-10):
+	def CTFpowerspec(self, imgdata, ctfdata, fftpath=None, fftfreq=None, outerbound=5e-10):
 		"""
 		Make a nice looking powerspectra with lines for location of Thon rings
 
@@ -969,8 +969,12 @@ class CtfDisplay(object):
 				if ctfdata[key] is not None and not isinstance(ctfdata[key], dict):
 					print "  ", key, "--", ctfdata[key]
 
-		powerspec, self.trimfreq = ctftools.powerSpectraToOuterResolution(image, 
-			outerbound*1e10, self.apix)
+		if fftpath is not None and fftfreq is not None and os.path.isfile(fftpath):
+			powerspec = mrc.read(fftpath).astype(numpy.float64)
+			self.trimfreq = fftfreq
+		else:
+			powerspec, self.trimfreq = ctftools.powerSpectraToOuterResolution(image, 
+				outerbound*1e10, self.apix)
 		self.trimapix = 1.0/(self.trimfreq * powerspec.shape[0])
 
 		#print "Median filter image..."
@@ -1103,9 +1107,9 @@ if __name__ == "__main__":
 #====================
 #====================
 #====================
-def makeCtfImages(imgdata, ctfdata):
+def makeCtfImages(imgdata, ctfdata, fftpath=None, fftfreq=None):
 	a = CtfDisplay()
-	ctfdisplaydict = a.CTFpowerspec(imgdata, ctfdata)
+	ctfdisplaydict = a.CTFpowerspec(imgdata, ctfdata, fftpath, fftfreq)
 	return ctfdisplaydict
 
 
