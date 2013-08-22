@@ -27,6 +27,9 @@ def getCorrelationProfile(raddata, normPSD, ctfdata, peaks, freq):
 	newraddata = []
 	confs = []
 
+	if len(peaks) == 0:
+		return None, None	
+
 	### PART 1: standard data points
 	firstpeak = peaks[0]
 	xsqStart = (firstpeak*freq)**2
@@ -36,8 +39,11 @@ def getCorrelationProfile(raddata, normPSD, ctfdata, peaks, freq):
 	#numstep = 6.
 	#xsqStep = (xsqEnd-xsqStart)/numstep
 	#(2) 1 1/2 periods of the CTF
-	secondpeak = peaks[1]
-	xsqSecond = (secondpeak*freq)**2
+	if len(peaks) >= 2:
+		secondpeak = peaks[1]
+		xsqSecond = (secondpeak*freq)**2
+	else:
+		xsqSecond = xsqEnd
 	xsqStep = (xsqSecond-xsqStart)*1.5
 
 	### make sure we stay within step size
@@ -48,7 +54,7 @@ def getCorrelationProfile(raddata, normPSD, ctfdata, peaks, freq):
 	if debug is True:
 		print "getCorrelationProfile(): starting initial loop"
 	xsqStartPre = (firstpeak*freq)**2
-	if startindex > len(raddatasq):
+	if startindex >= len(raddatasq):
 		apDisplay.printWarning("First peak of CTF is greater than FFT resolution")
 		return None, None
 	xsqEndPre = raddatasq[startindex]
