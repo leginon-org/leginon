@@ -110,6 +110,9 @@ def run_once(parent_src_path):
 		image_path = imdata['session']['image path']
 		frames_path = imdata['session']['frame path']
 
+		if image_path and not frames_path:
+			frames_path = ddinfo.getRawFrameSessionPathFromImagePath(image_path)
+
 		# determine user and group of leginon data
 		stat = os.stat(image_path)
 		uid = stat.st_uid
