@@ -197,6 +197,14 @@ class AutoMasker(appionLoop2.AppionLoop):
 		return
 	
 	def preLoopFunctions(self):
+		# set the directory to the activate program which sets up the environment to run the em_hole_finder
+		# This is needed because at the moment, the em_hole_finder uses versions of packages line numextension 
+		# that the rest of appion is not compatible with. Should be something like "/opt/em_hole_finder/env/bin/activate".
+		if os.environ.has_key('HOLE_FIND_ACTIVATE'):
+			self.activatepath = os.path.join(os.environ['HOLE_FIND_ACTIVATE'], 'activate')
+		else:
+			apDisplay.printError("The environment variable 'HOLE_FIND_ACTIVATE' is not set. This is the path to the activate program which sets up the environment to run em_hole_finder. It should be 'path/to/em_hole_finder/env/bin'. For more info see http://http://ami.scripps.edu/redmine/projects/appion/wiki/Install_EM_Hole_Finder.")
+		
 		if ( self.params['test'] ):
 			apParam.createDirectory(os.path.join(self.params['rundir'],"tests"))
 								    
@@ -236,7 +244,7 @@ class AutoMasker(appionLoop2.AppionLoop):
 		blur         = str(self.params['blur'])
 		options = " --downsample=" +  downsample + " --compsizethresh=" + compsizethresh + " --adapthresh=" + adapthresh + " --blur=" + blur + " --dilation=" + dilation + " --erosion=" + erosion;
 		
-		commandline = ( "source /opt/em_hole_finder/env/bin/activate; python /opt/em_hole_finder/find_mask_amber_dev.py --ifile=" + jpg_image + " --ofile=" + self.outfile + options + "\n" )
+		commandline = ( "source " + self.activatepath + "; python find_mask.py --ifile=" + jpg_image + " --ofile=" + self.outfile + options + "\n" )
 		# Test with test image
 		#commandline = ( "source /opt/em_hole_finder/env/bin/activate; python /opt/em_hole_finder/find_mask_amber.py \n" )
 
