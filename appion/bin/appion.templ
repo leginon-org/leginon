@@ -41,6 +41,9 @@ Xmipp_Dir = ''
 #Spider_Dir: Spider's root installation directory.
 Spider_Dir = ''
 
+# em_hole_finder_dir: em_hole_finder root installation directory.
+em_hole_finder_dir = ''
+
 #Imod_Dir: Imod's root installation directory.
 Imod_Dir = ''
 
@@ -156,6 +159,10 @@ if (Spider_Dir != ''):
     os.environ['SPPROC_DIR'] = os.path.join(Spider_Dir, 'proc')
     os.environ['SPRGB_DIR'] =  os.path.join(Spider_Dir,'rgb')
     os.environ['SPMAN_DIR'] =  os.path.join(Spider_Dir,'man')
+
+if (em_hole_finder_dir != ''):
+    prependToEnv('PATH', em_hole_finder_dir)
+    os.environ['HOLE_FIND_ACTIVATE'] = os.path.join(em_hole_finder_dir, 'env','bin')
 
 if (Imod_Dir != ''):
     os.environ['IMOD_DIR'] = os.path.join(Imod_Dir)
