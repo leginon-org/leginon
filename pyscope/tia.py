@@ -184,7 +184,6 @@ acquisition.
 		retractable = bool(self.ccd.IsCameraRetractable)
 		return retractable
 
-	'''
 	def getInserted(self):
 		if self.getRetractable():
 			return self.ccd.CameraInserted
@@ -194,9 +193,6 @@ acquisition.
 	def setInserted(self, value):
 		if self.getRetractable():
 			self.ccd.CameraInserted = value
-		else:
-			raise NotImplementedError('getInserted')
-	'''
 
 	def getEnergyFiltered(self):
 		return False
