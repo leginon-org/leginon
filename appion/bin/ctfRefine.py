@@ -7,17 +7,15 @@ import math
 import copy
 import numpy
 import random
-from multiprocessing import Process
 #import subprocess
-from appionlib import apDog
 from appionlib import apParam
 from appionlib import apDisplay
 from appionlib import appiondata
 from appionlib import apDatabase
 from appionlib import appionLoop2
 from appionlib import apInstrument
-from appionlib.apCtf import ctftools, ctfnoise, ctfdb, sinefit, canny, findroots, findastig
-from appionlib.apCtf import genctf, ctfpower, ctfres, ctfinsert, ransac, lowess, leastsq
+from appionlib.apCtf import ctftools, ctfnoise, ctfdb, sinefit
+from appionlib.apCtf import genctf, ctfpower, ctfres, ctfinsert, leastsq
 from appionlib.apImage import imagefile, imagefilter, imagenorm, imagestat 
 #Leginon
 from pyami import mrc, fftfun, imagefun, ellipse, primefactor
@@ -33,39 +31,25 @@ import scipy.optimize
 ##################################
 ##################################
 
-class PhasorCTF(appionLoop2.AppionLoop):
+class RefineCTF(appionLoop2.AppionLoop):
 	#====================================
 	#====================================
 	def setupParserOptions(self):
 		### Input value options
 		self.parser.add_option("--fieldsize", dest="fieldsize", type="int",
 			help="field size to use for sub-field averaging in power spectra calculation")
+
 		self.parser.add_option("--ringwidth", dest="ringwidth", type="float", default=2.0,
 			help="number of radial pixels to average during elliptical average")
-
-		self.parser.add_option("--reslimit", "--resolution-limit", dest="reslimit", type="float", default=6.0,
-			help="outer resolution limit (in Angstroms) to clip the fft image")
-
-		self.parser.add_option("--mindef", dest="mindef", type="float", default=0.5e-6,
-			help="minimum defocus to search (in meters; default = 0.5e-6)")
-		self.parser.add_option("--maxdef", dest="maxdef", type="float", default=5.0e-6,
-			help="maximum defocus to search (in meters; default = 5.0e-6)")
-
-		self.parser.add_option("--astig", dest="astig", default=True,
-			action="store_true", help="Attempt to determine astigmatism")
-		self.parser.add_option("--no-astig", dest="astig", default=True,
-			action="store_false", help="Assume no astigmatism")
-
-		self.parser.add_option("--refineIter", dest="refineIter", type="int", default=130,
-			help="maximum number of refinement interations")
 
 		self.parser.add_option("--fast", dest="fast", default=False,
 			action="store_true", help="Enable fast mode")
 
-		self.samples = ('stain','ice')
-		self.parser.add_option("--sample", dest="sample",
-			default="ice", type="choice", choices=self.samples,
-			help="sample type: "+str(self.samples), metavar="TYPE")
+		self.parser.add_option("--reslimit", "--resolution-limit", dest="reslimit", type="float", default=6.0,
+			help="outer resolution limit (in Angstroms) to clip the fft image")
+
+		self.parser.add_option("--refineIter", dest="refineIter", type="int", default=130,
+			help="maximum number of refinement interations")
 
 	#====================================
 	#====================================
@@ -104,7 +88,7 @@ class PhasorCTF(appionLoop2.AppionLoop):
 		self.ctfvalues = None
 		fftpath = os.path.join(self.powerspecdir, apDisplay.short(imgdata['filename'])+'.powerspec.mrc')
 		self.processAndSaveFFT(imgdata, fftpath)
-		self.runPhasorCTF(imgdata, fftpath)
+		self.runRefineCTF(imgdata, fftpath)
 		return
 
 	#====================================
@@ -232,9 +216,6 @@ class PhasorCTF(appionLoop2.AppionLoop):
 		#fftarray = imagefun.power(fftarray, mask_radius=1)
 
 		fftarray = ndimage.median_filter(fftarray, 2)
-		## temp fix
-		#fftarray = ndimage.gaussian_filter(fftarray, 2)
-		#fftarray = self.rotationBlur(fftarray, angle=2, numIter=3)
 
 		## preform a rotational average and remove peaks
 		rotfftarray = ctftools.rotationalAverage2D(fftarray)
@@ -265,23 +246,6 @@ class PhasorCTF(appionLoop2.AppionLoop):
 	#====================================
 	#====================================
 	def from2Dinto1D(self, fftarray):
-		if self.params['astig'] is False and self.ellipseParams is None:
-			### simple case: do a rotational average
-			pixelrdata, PSDarray = ctftools.rotationalAverage(fftarray, self.params['ringwidth'], full=False)
-			return self.removeBlackCenter(pixelrdata*self.freq, PSDarray)
-
-		if self.ellipseParams is None:
-			### hard case: find ellipse and do a elliptical average
-			blurArray = copy.deepcopy(fftarray)
-			for blurIter in range(2):
-				### each time the image is blurred more
-				blurArray = self.rotationBlur(blurArray, angle=1, numIter=3)
-			self.findEllipseEdge(blurArray)
-			if self.ellipseParams is None:
-				apDisplay.printWarning("Failed to find ellipse, continuing with no astig")
-				pixelrdata, PSDarray = ctftools.rotationalAverage(fftarray, self.params['ringwidth'], full=False)
-				return self.removeBlackCenter(pixelrdata*self.freq, PSDarray)
-
 		ellipratio = self.ellipseParams['a']/self.ellipseParams['b']
 		ellipangle = math.degrees(self.ellipseParams['alpha'])
 		pixelrdata, PSDarray = ctftools.ellipticalAverage(fftarray, ellipratio, ellipangle, 
@@ -300,10 +264,10 @@ class PhasorCTF(appionLoop2.AppionLoop):
 			apDisplay.printColor("Prev Best :: avgRes=%.2f :: def=%.3e, NO ASTIG, ampCon=%.3f"
 				%(avgRes, defocus, ampCon), "green")
 		else:
-			defratio = (self.bestellipse['a']/self.bestellipse['b'])**2
+			ratio = (self.bestellipse['a']/self.bestellipse['b'])**2
 			angle = -math.degrees(self.bestellipse['alpha'])
 			apDisplay.printColor("Prev Best :: avgRes=%.2f :: def=%.3e, defRatio=%.3f, ang=%.2f, ampCon=%.3f"
-				%(avgRes, defocus, defratio, angle, ampCon), "green")
+				%(avgRes, defocus, ratio, angle, ampCon), "green")
 		return
 
 	#====================================
@@ -377,32 +341,6 @@ class PhasorCTF(appionLoop2.AppionLoop):
 			%(res8,res5), "magenta")
 
 		return (res8+res5)/2.0
-
-	#====================================
-	#====================================
-	def rotationBlur(self, imagedata, angle=1, numIter=2):
-		t0 = time.time()
-		if len(imagedata.shape) != 2:
-			print "Must be 2D array for rotBlur"
-			return imagedata
-
-		arraylist = [imagedata,]
-		for iterNum in range(numIter):
-			rotateCounterClock = ndimage.interpolation.rotate(imagedata, iterNum*angle,
-				order=1, mode='reflect', reshape=False)
-			arraylist.append(rotateCounterClock)
-      	
-			rotateClock = ndimage.interpolation.rotate(imagedata, -iterNum*angle,
-				order=1, mode='reflect', reshape=False)
-			arraylist.append(rotateClock)
-
-		rotblurdata = numpy.median(numpy.array(arraylist), axis=0)
-		#print rotblurdata.shape
-			
-		if self.debug is True:
-			apDisplay.printColor("Rotation blur complete in %s"
-				%(apDisplay.timeString(time.time()-t0)), "cyan")
-		return rotblurdata
 
 	#====================================
 	#====================================
@@ -581,92 +519,6 @@ class PhasorCTF(appionLoop2.AppionLoop):
 
 	#====================================
 	#====================================
-	def findEllipseEdge(self, fftarray, mindef=None, maxdef=None):
-		if mindef is None:
-			mindef = self.params['mindef']
-		if maxdef is None:
-			maxdef = self.params['maxdef']
-
-		minpeaks = ctftools.getCtfExtrema(maxdef, self.freq*1e10,
-			self.ctfvalues['cs'], self.ctfvalues['volts'], 0.0,
-			numzeros=3, zerotype="peaks")
-		minEdgeRadius = minpeaks[0]
-
-		maxvalleys = ctftools.getCtfExtrema(mindef, self.freq*1e10,
-			self.ctfvalues['cs'], self.ctfvalues['volts'], 0.0,
-			numzeros=3, zerotype="valleys")
-
-		minEdgeRadius = (maxvalleys[0]+minpeaks[0])/2
-		maxEdgeRadius = maxvalleys[2]
-
-		minCircum = math.ceil(2 * minEdgeRadius * math.pi)
-		minEdges = int(minCircum)
-
-		maxCircum = math.ceil(2 * maxEdgeRadius * math.pi)
-		maxEdges = 2*int(maxCircum)
-
-		dograd = (minpeaks[1] - minpeaks[0])/3.0
-		dogarray = apDog.diffOfGauss(fftarray, dograd, k=1.2)
-		#dogarray = fftarray
-
-		print "Edge range: ", minEdges, maxEdges
-
-		edges = canny.canny_edges(dogarray, low_thresh=0.01,
-			minEdgeRadius=minEdgeRadius, maxEdgeRadius=maxEdgeRadius, minedges=minEdges, maxedges=maxEdges)
-		#minedges=2500, maxedges=15000,
-		invedges = numpy.fliplr(numpy.flipud(edges))
-		self.edgeMap = numpy.logical_and(edges, invedges)
-		edges = self.edgeMap * (dogarray.max()/self.edgeMap.max())
-		imagedata = dogarray.copy() + edges
-		imagefile.arrayToJpeg(imagedata, "edges.jpg")
-
-		edgeThresh = 3
-		ellipseParams = ransac.ellipseRANSAC(self.edgeMap, edgeThresh, maxRatio=self.maxRatio)
-
-		fitEllipse1 = ransac.generateEllipseRangeMap2(ellipseParams, edgeThresh, self.edgeMap.shape)
-		fitEllipse2 = ransac.generateEllipseRangeMap2(ellipseParams, edgeThresh*3, self.edgeMap.shape)
-		outlineEllipse = fitEllipse2 - fitEllipse1
-		# image is draw upside down
-		#outlineEllipse = numpy.flipud(outlineEllipse)
-
-		imagedata = imagedata + 0.5*outlineEllipse*imagedata.max()
-
-		if self.debug is True:
-			from matplotlib import pyplot
-			pyplot.clf()
-			pyplot.imshow(imagedata)
-			pyplot.gray()
-			pyplot.show()
-
-		self.ellipseParams = ellipseParams
-
-		#self.convertEllipseToCtf(node=3)
-
-		return ellipseParams
-
-	#====================================
-	#====================================
-	def fitLinearPlus(self, raddata, PSDarray):
-		onevec = numpy.ones(raddata.shape)
-		sqrtvec = numpy.sqrt(raddata)
-		squarevec = raddata**2
-		X = numpy.array([onevec, sqrtvec, raddata, squarevec]).transpose()
-		fitparams = leastsq.totalLeastSquares(X, PSDarray, onevec)
-		fitdata = fitparams[0] + fitparams[1]*sqrtvec + fitparams[2]*raddata + fitparams[3]*squarevec
-		return fitdata
-
-	#====================================
-	#====================================
-	def fitConstant(self, raddata, PSDarray):
-		onevec = numpy.ones(raddata.shape)
-		sqrtvec = numpy.sqrt(raddata)
-		squarevec = raddata**2
-		X = numpy.array([onevec]).transpose()
-		fitparams = leastsq.totalLeastSquares(X, PSDarray, onevec)
-		return fitparams[0]
-
-	#====================================
-	#====================================
 	def gridSearch(self, raddata, PSDarray, lowerbound, mindef=None, maxdef=None):
 		#location of first zero is linear with 1/sqrt(z)
 		if mindef is None:
@@ -787,62 +639,6 @@ class PhasorCTF(appionLoop2.AppionLoop):
 
 	#====================================
 	#====================================
-	def findEllipseLoop(self, fftarray, lowerbound, upperbound):
-
-		blurArray = copy.deepcopy(fftarray)
-
-		numIter = 5
-		if self.params['fast'] is True:
-			numIter = 2
-
-		for blurIter in range(5):
-			### each time the image is blurred more
-			blurArray = self.rotationBlur(blurArray, angle=1, numIter=3)
-			blurArray = ndimage.gaussian_filter(blurArray, 2)
-
-			### edge find method
-			defocus = self.bestvalues['defocus']
-			#follows 1/sqrt(z) rule:
-			mindef = 1.0/(1.02/math.sqrt(defocus))**2
-			maxdef = 1.0/(0.98/math.sqrt(defocus))**2
-			self.findEllipseEdge(blurArray, mindef=mindef, maxdef=maxdef)
-			raddata, PSDarray = self.from2Dinto1D(blurArray)
-			normPSDarray = self.fullTriSectionNormalize(raddata, PSDarray, defocus)
-			defocus = self.defocusLoop(defocus, raddata, normPSDarray, lowerbound, upperbound)
-			normPSDarray = self.fullTriSectionNormalize(raddata, PSDarray, defocus)
-			defocus = self.defocusLoop(defocus, raddata, normPSDarray, lowerbound, upperbound)
-
-			### minimum valley method
-			defocus = self.bestvalues['defocus']
-			ellipseParams = findastig.findAstigmatism(blurArray, self.freq, defocus, None, self.ctfvalues)
-			ellipRatio = ellipseParams['a']/ellipseParams['b']
-			if 1.0/self.maxRatio < ellipRatio < self.maxRatio:
-				self.ellipseParams = ellipseParams
-				raddata, PSDarray = self.from2Dinto1D(blurArray)
-				normPSDarray = self.fullTriSectionNormalize(raddata, PSDarray, defocus)
-				defocus = self.defocusLoop(defocus, raddata, normPSDarray, lowerbound, upperbound)
-				normPSDarray = self.fullTriSectionNormalize(raddata, PSDarray, defocus)
-				defocus = self.defocusLoop(defocus, raddata, normPSDarray, lowerbound, upperbound)
-
-			if self.params['fast'] is True:
-				continue
-
-			### minimum valley method
-			defocus = self.bestvalues['defocus']
-			ellipseParams = findastig.findAstigmatism(blurArray, self.freq, defocus, None, self.ctfvalues, peakNum=2)
-			ellipRatio = ellipseParams['a']/ellipseParams['b']
-			if 1.0/self.maxRatio < ellipRatio < self.maxRatio:
-				self.ellipseParams = ellipseParams
-				raddata, PSDarray = self.from2Dinto1D(blurArray)
-				normPSDarray = self.fullTriSectionNormalize(raddata, PSDarray, defocus)
-				defocus = self.defocusLoop(defocus, raddata, normPSDarray, lowerbound, upperbound)
-				normPSDarray = self.fullTriSectionNormalize(raddata, PSDarray, defocus)
-				defocus = self.defocusLoop(defocus, raddata, normPSDarray, lowerbound, upperbound)
-	
-			self.printBestValues()
-
-	#====================================
-	#====================================
 	def refineMinFunc(self, x):
 		ellipRatio, ellipAlpha = x
 
@@ -898,12 +694,12 @@ class PhasorCTF(appionLoop2.AppionLoop):
 
 	#====================================
 	#====================================
-	def runPhasorCTF(self, imgdata, fftpath):
+	def runRefineCTF(self, imgdata, fftpath):
 		### reset important values
 		self.bestres = 1e10
 		self.bestellipse = None
-		self.bestvalues = None
-		self.ellipseParams = None
+		self.bestvalues = {}
+
 		self.volts = imgdata['scope']['high tension']
 		self.wavelength = ctftools.getTEMLambda(self.volts)
 		## get value in meters
@@ -914,17 +710,9 @@ class PhasorCTF(appionLoop2.AppionLoop):
 			'cs': self.cs,
 		}
 
-		if self.params['astig'] is False:
-			self.maxRatio=1.3
-		else:
-			self.maxRatio=2.0
-
 		### need to get FFT file open and freq of said file
 		fftarray = mrc.read(fftpath).astype(numpy.float64)
 		self.freq = self.freqdict[fftpath]
-
-		### print message
-		ctfdb.getBestCtfByResolution(imgdata)
 
 		### convert resolution limit into pixel distance
 		fftwidth = fftarray.shape[0]
@@ -953,65 +741,34 @@ class PhasorCTF(appionLoop2.AppionLoop):
 		self.apix = 1.0/(fftwidth*self.freq)
 		self.ctfvalues['apix'] = self.apix
 
-		if self.params['sample'] is 'stain':
-			self.ctfvalues['amplitude_contrast'] = 0.14
-		else:
-			self.ctfvalues['amplitude_contrast'] = 0.07
+		### print message
+		bestDbValues = ctfdb.getBestCtfByResolution(imgdata)
+		self.ctfvalues['amplitude_contrast'] = bestDbValues['amplitude_contrast']
+
+		lowerrad1 = ctftools.getCtfExtrema(bestDbValues['defocus1'], self.mfreq, self.cs, self.volts, 
+			self.ctfvalues['amplitude_contrast'], 1, "valley")
+		lowerrad2 = ctftools.getCtfExtrema(bestDbValues['defocus2'], self.mfreq, self.cs, self.volts, 
+			self.ctfvalues['amplitude_contrast'], 1, "valley")
+		meanRad = (lowerrad1[0] + lowerrad2[0])/2.0
+
+		self.ellipseParams = {
+			'a': lowerrad1[0],
+			'b': lowerrad2[0],
+			'alpha': -math.radians(bestDbValues['angle_astigmatism']),
+		}
+		ellipratio = self.ellipseParams['a']/self.ellipseParams['b']
+		defratio = bestDbValues['defocus2']/bestDbValues['defocus1']
+		print "ellr=%.3f, defr=%.3f, sqrt(defr)=%.3f"%(ellipratio, defratio, math.sqrt(defratio))
+		self.bestvalues['defocus'] = (bestDbValues['defocus1']+bestDbValues['defocus2'])/2.0
+
+
+		raddata, PSDarray = self.from2Dinto1D(fftarray)
+		lowerbound = numpy.searchsorted(raddata, meanRad*self.freq)
+		upperbound = numpy.searchsorted(raddata, 1/10.)
 
 		###
 		#	This is the start of the actual program
 		###
-
-		### this is either simple rotational average, 
-		### or complex elliptical average with edge find and RANSAC
-		raddata, PSDarray = self.from2Dinto1D(fftarray)
-
-		lowerrad = ctftools.getCtfExtrema(self.params['maxdef'], self.mfreq, self.cs, self.volts, 
-			self.ctfvalues['amplitude_contrast'], 1, "valley")
-		lowerbound = numpy.searchsorted(raddata, lowerrad[0]*self.freq)
-
-		if self.params['sample'] is 'stain':
-			upperbound = numpy.searchsorted(raddata, 1/8.)
-		else:
-			upperbound = numpy.searchsorted(raddata, 1/12.)
-
-		### fun way to get initial defocus estimate
-		fitData = self.fitLinearPlus(raddata, PSDarray)
-		#lowessFit = lowess.lowess(raddata**2, PSDarray, smoothing=0.6666)
-
-		if self.debug is True:
-			from matplotlib import pyplot
-			pyplot.clf()
-			pyplot.plot(raddata**2, PSDarray)
-			pyplot.plot(raddata**2, fitData)
-			pyplot.show()
-
-		flatPSDarray = PSDarray-fitData
-		flatPSDarray /= numpy.abs(flatPSDarray[lowerbound:upperbound]).max()
-
-		defocus = self.gridSearch(raddata, flatPSDarray, lowerbound)
-
-		#defocus = findroots.estimateDefocus(raddata[lowerbound:upperbound], flatPSDarray[lowerbound:upperbound], 
-		#	cs=self.cs, wavelength=self.wavelength,  amp_con=self.ctfvalues['amplitude_contrast'], 
-		#	mindef=self.params['mindef'], maxdef=self.params['maxdef'], volts=self.volts)
-	
-		amplitudecontrast = sinefit.refineAmplitudeContrast(raddata[lowerbound:upperbound]*1e10, defocus, 
-			flatPSDarray[lowerbound:upperbound], self.ctfvalues['cs'], self.wavelength, msg=self.debug)
-		if amplitudecontrast is not None:
-			print "amplitudecontrast", amplitudecontrast
-			self.ctfvalues['amplitude_contrast'] = amplitudecontrast
-	
-		defocus = self.defocusLoop(defocus, raddata, flatPSDarray, lowerbound, upperbound)
-
-		#lowerrad = ctftools.getCtfExtrema(defocus, self.mfreq, self.cs, self.volts, 
-		#	self.ctfvalues['amplitude_contrast'], 1, "valley")
-		#lowerbound = numpy.searchsorted(raddata, lowerrad[0]*self.freq)
-
-		normPSDarray = self.fullTriSectionNormalize(raddata, PSDarray, defocus)
-
-		defocus = self.defocusLoop(defocus, raddata, normPSDarray, lowerbound, upperbound)
-
-		self.findEllipseLoop(fftarray, lowerbound, upperbound)
 
 		self.refineEllipseLoop(fftarray, lowerbound, upperbound)
 
@@ -1048,6 +805,7 @@ class PhasorCTF(appionLoop2.AppionLoop):
 				apDisplay.printWarning("Large astigmatism")
 				#sys.exit(1)
 		else:
+			ellipratio = 1.0
 			self.ctfvalues['angle_astigmatism'] = 0.0
 			self.ctfvalues['defocus1'] = self.ctfvalues['defocus']
 			self.ctfvalues['defocus2'] = self.ctfvalues['defocus']
@@ -1086,6 +844,8 @@ class PhasorCTF(appionLoop2.AppionLoop):
 			%(self.ctfvalues['defocus1'], self.ctfvalues['defocus2'], self.ctfvalues['angle_astigmatism'],
 			self.ctfvalues['amplitude_contrast'], defocusratio), "blue")
 		self.printBestValues()
+		#ellipratio = self.ellipseParams['a']/self.ellipseParams['b']
+		print "ellr=%.3f, defr=%.3f, sqrt(defr)=%.3f"%(ellipratio, defocusratio, math.sqrt(defocusratio))
 		print "===================================="
 
 		return
@@ -1094,6 +854,6 @@ class PhasorCTF(appionLoop2.AppionLoop):
 #====================================
 #====================================
 if __name__ == '__main__':
-	imgLoop = PhasorCTF()
+	imgLoop = RefineCTF()
 	imgLoop.run()
 
