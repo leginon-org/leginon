@@ -109,7 +109,7 @@ function createForm($extra=false) {
 	echo "<br/><br/>\n";
 
 	echo "Number of Refinement Iterations: ";
-	echo "<input type='text' name='numRefineIter' value='$numRefineIter' size='2'><br/>\n";
+	echo "<input type='text' name='numRefineIter' value='$numRefineIter' size='4'><br/>\n";
 	echo "<br/><br/>\n";
 
 	echo "<INPUT TYPE='checkbox' NAME='confcheck' onclick='enableconf(this)' $confcheck >\n";
