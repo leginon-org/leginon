@@ -10,7 +10,7 @@ require_once('setupUtils.inc');
 	$extensions = get_loaded_extensions();
 	
 	$required_exts = array('gd' => '<b>\'gd\'</b> module is required for the php mrc module.', 
-						   'mrc' => '<b>\'mrc\'</b> module is required for displaying mrc images.', 
+// 						   'mrc' => '<b>\'mrc\'</b> module is required for displaying mrc images.', 
 						   'mysql' => '<b>\'mysql\'</b> module is required for connecting to the mysql database.', 
 						   'mysqli' => '<b>\'mysqli\'</b> module is required for connecting to the mysql database.', 
 						   'ssh2' => '<b>\'ssh2\'</b> module is required for connecting to the processing host or cluster.');
