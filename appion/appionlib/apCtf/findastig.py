@@ -25,7 +25,7 @@ def showImage(image):
 	return
 
 #=========================================
-def findAstigmatism(fftarray, freq, defocus, resolution, ctfvalues):
+def findAstigmatism(fftarray, freq, defocus, resolution, ctfvalues, peakNum=1):
 	"""
 	find the astigmatism from a radial 1D estimate of the defocus
 	"""
@@ -33,9 +33,11 @@ def findAstigmatism(fftarray, freq, defocus, resolution, ctfvalues):
 
 	extrema = ctftools.getCtfExtrema(defocus, freq*1e10,
 		ctfvalues['cs'], ctfvalues['volts'], ctfvalues['amplitude_contrast'],
-		numzeros=3, zerotype="all")
-	minEdgeRadius = int(math.ceil(extrema[0])) #first peak
-	maxEdgeRadius = int(math.ceil(extrema[2])) #second peak
+		numzeros=peakNum*2+1, zerotype="all")
+	if len(extrema) < 2*peakNum:
+		return None
+	minEdgeRadius = int(math.ceil(extrema[peakNum-1])) #first peak
+	maxEdgeRadius = int(math.ceil(extrema[peakNum])) #second peak
 	newshape = (maxEdgeRadius*2, maxEdgeRadius*2)
 
 	print "newshape",newshape
@@ -81,6 +83,8 @@ def findAstigmatism(fftarray, freq, defocus, resolution, ctfvalues):
 		showImage(fftcenter)
 
 	ellipseParams = ellipse.totalLeastSquareEllipse(xyData, center=(xhalfshape, yhalfshape))
+	if ellipseParams is None:
+		return None
 	ellipse.printParamsDict(ellipseParams)
 
 	if debug is True:

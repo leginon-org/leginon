@@ -208,7 +208,7 @@ def ellipseRANSAC(edgeMap, ellipseThresh=2, minPercentGoodPoints=0.001,
 				#sys.stderr.write("s%d "%(sizeReject))
 				continue	
 			ratio = centeredParams['a']/float(centeredParams['b'])
-			if ratio > 1.4 or ratio < 0.99:
+			if ratio > maxRatio or ratio < 1.0/maxRatio:
 				## should be a > b
 				ratioReject += 1
 				#sys.stderr.write("r%d "%(ratioReject))
@@ -216,6 +216,8 @@ def ellipseRANSAC(edgeMap, ellipseThresh=2, minPercentGoodPoints=0.001,
 
 		## create an outline of the ellipse
 		ellipseMap = generateEllipseRangeMap2(centeredParams, ellipseThresh, shape)
+		if ellipseMap is None:
+			continue
 
 		## take overlap of edges and fit area to determine number of good points
 		goodPoints = (shrinkEdgeMap*ellipseMap).sum()
@@ -273,8 +275,11 @@ def ellipseRANSAC(edgeMap, ellipseThresh=2, minPercentGoodPoints=0.001,
 	print "\tlarge area rejects", areaReject
 	print "\tlarge radius rejects", sizeReject
 	print "\toblong ratio rejects", ratioReject
-	printParams(bestEllipseParams)
-
+	if bestEllipseParams is not None:
+		printParams(bestEllipseParams)
+	else:
+		print "Fit failed"
+		return None
 
 	return bestEllipseParams
 
@@ -287,6 +292,8 @@ def generateEllipseRangeMap2(ellipseParams, ellipseThresh, shape):
 	a = ellipseParams['a']
 	b = ellipseParams['b']
 	maxradius = max(a,b)
+	if math.isnan(maxradius):
+		return None
 	numpoints = int(math.ceil(6.28*maxradius))
 
 	center = numpy.array(shape, dtype=numpy.float64)/2.0
