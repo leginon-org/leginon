@@ -257,7 +257,8 @@ class CtfNoise(object):
 		## divide points into fifths
 		numpoints = xdata.shape[0]
 		cutoff = int(math.floor(cutoffper*numpoints))
-		if self.debug is True: print "CUT:", numpoints, cutoff, (numpoints - cutoff)
+		if self.debug is True:
+			print "CUT:", numpoints, cutoff, (numpoints - cutoff)
 		if cutoff < 3 or abs(numpoints - cutoff) < 3:
 			return None, None
 		if self.debug: print "cutoff percent %.3f (%d points)"%(cutoffper, cutoff)
@@ -567,7 +568,7 @@ class CtfNoise(object):
 		else:
 			minconval = -1e-3
 		while constrainval < minconval and valuelist.min() < 1e6:
-			if constrainval < 0.1:
+			if constrainval < 0.1 and self.debug is True:
 				apDisplay.printMsg("Constraint violation: %.3e < %.3e"%(constrainval, minconval))
 			valuelist[minvalindex] *= 1e10
 			minvalindex = numpy.argmin(valuelist)
@@ -637,8 +638,9 @@ class CtfNoise(object):
 			pyplot.clf()
 			"""
 
-		apDisplay.printColor("Noise Model Complete in %s"
-			%(apDisplay.timeString(time.time()-t0)), "cyan")
+		if self.debug is True:
+			apDisplay.printColor("Noise Model Complete in %s"
+				%(apDisplay.timeString(time.time()-t0)), "cyan")
 
 		return bestfitparams
 
