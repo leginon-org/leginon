@@ -14,6 +14,7 @@ require_once "inc/project.inc";
 $expId = $_GET['expId'];
 $stackId = $_GET['sId'];
 $frealign = $_GET['frealign'];
+$acerunId = ($_GET['ctfrunId']) ? $_GET['ctfrunId']:'';
 
 $particle = new particledata();
 $leginon = new leginondata();
@@ -37,7 +38,7 @@ foreach ($s as $part) {
 #	if ($img < 693213) continue;
 	if (!array_key_exists($img,$imgids)) {
 		# CTF information
-		$res = $particle->getCtfInfoFromImageId($img);
+		$res = $particle->getCtfInfoFromImageId($img,false,'',$acerunId);
 		$imgids[$img]=$res[0];
 		# get image dimension & kev
 	}
