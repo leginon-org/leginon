@@ -151,18 +151,19 @@ def getResolutionFromConf(raddata, confs, limit=0.5):
 	lastx=0
 	lasty=0
 	x = 0
-	if confs[0] < limit:
+	if max(confs[0], confs[1], confs[2]) < limit:
 		apDisplay.printWarning("Res calc failed: Initial conf below desired limit %.2f"
 			%(limit))
 		return None
-	for i in range(raddata.shape[0]):
+	for i in range(1, raddata.shape[0]):
 		x = raddata[i]
 		y = confs[i]
+		yminus = confs[i-1]
 		if y > limit:
 			#store values for later
 			lastx = x
 			lasty = y
-		else:
+		elif yminus > limit:
 			# get difference
 			diffy = lasty-y
 			# get distance from limit
