@@ -1114,6 +1114,7 @@ class particledata {
 			."where c.`REF|leginondata|AcquisitionImageData|image`='$imageId' ";
 		$q .= " AND c.`graph1` IS NOT NULL ";
 		$q .= " AND (r.`hidden` IS NULL OR r.`hidden` = 0) ";
+		//$q .= " AND c.resolution_50_percent IS NOT NULL AND c.resolution_80_percent IS NOT NULL ";
 		if (is_numeric($acerunId) && $acerunId > 0) {
 			$q .= "AND r.`DEF_id`=".$acerunId." ";
 		} else {
@@ -1133,7 +1134,7 @@ class particledata {
 	}
 
 	function getBestCtfInfoForSessionId($sessionId, $limit=false) {
-		// this has been replaced getBestCtfInfoByResolution() below
+		// this has been replaced by getBestCtfInfoByResolution() below
 		//echo "<b>getBestCtfInfoForSessionId FUNCTION DISABLED</b><br/><br/>\n";
 		//return array();
 		$q = "select  ctfdata.* "
@@ -1159,7 +1160,7 @@ class particledata {
 			."	AND  "
 			."  ABS(s.`SUBD|stage position|a`) < 0.9  "
 			."		)  "
-			."		order by (greatest(COALESCE(confidence,0),COALESCE(confidence_d,0),COALESCE(cross_correlation,0))) DESC "
+			." order by (greatest(COALESCE(confidence,0),COALESCE(confidence_d,0),COALESCE(cross_correlation,0))) DESC "
 			."	) ctfdata ";
 		// if $limit is specified, report only values with confidences > $limit
 		if ($limit) {
@@ -1182,16 +1183,16 @@ class particledata {
 			."    unix_timestamp(i.`DEF_timestamp`) as unix_timestamp, "
 			."		2*ABS(ctf.defocus1-ctf.defocus2)/(ctf.defocus1+ctf.defocus2) AS difference, "
 			."		ctf.* "
-			."	FROM `ApCtfData` ctf "
-			."	LEFT JOIN  ".DB_LEGINON.".`AcquisitionImageData` i ON (i.`DEF_id` = ctf.`REF|leginondata|AcquisitionImageData|image`) "
-			."	LEFT JOIN  ".DB_LEGINON.".`PresetData` p ON (p.DEF_id = i.`REF|PresetData|preset`) "
-			." LEFT JOIN ".DB_LEGINON.".`ScopeEMData` s ON (i.`REF|ScopeEMData|scope` = s.`DEF_id`) "
+			."	FROM `ApCtfData` AS ctf "
+			."	LEFT JOIN ".DB_LEGINON.".`AcquisitionImageData` AS i ON (i.`DEF_id` = ctf.`REF|leginondata|AcquisitionImageData|image`) "
+			."	LEFT JOIN ".DB_LEGINON.".`PresetData` AS p ON (p.DEF_id = i.`REF|PresetData|preset`) "
+			." LEFT JOIN ".DB_LEGINON.".`ScopeEMData` AS s ON (i.`REF|ScopeEMData|scope` = s.`DEF_id`) "
 			." LEFT JOIN ".DB_LEGINON.".`ViewerImageStatus` AS viewer "
 			."  ON viewer.`REF|AcquisitionImageData|image` = ctf.`REF|leginondata|AcquisitionImageData|image` "
 			."	where "
-			."	ctf.`REF|leginondata|AcquisitionImageData|image` in  "
+			."	ctf.`REF|leginondata|AcquisitionImageData|image` IN  "
 			."	( "
-			."		SELECT a.`DEF_id` from ".DB_LEGINON.".`AcquisitionImageData` a  "
+			."		SELECT a.`DEF_id` from ".DB_LEGINON.".`AcquisitionImageData` AS a  "
 			."		WHERE a.`REF|SessionData|session`='$sessionId'  "
 			."	AND  "
 			."  ABS(s.`SUBD|stage position|a`) < 0.9  "
@@ -1203,7 +1204,7 @@ class particledata {
 			."	) ctfdata ";
 		// if $limit is specified, report only values with confidences > $limit
 		if ($limit) {
-			$q .= " where ctfdata.confidence > $limit || ctfdata.confidence_d > $limit ";
+			$q .= " WHERE ctfdata.confidence > $limit || ctfdata.confidence_d > $limit ";
 		}
 		$q .= " GROUP BY ctfdata.imageid ORDER BY ctfdata.unix_timestamp ";
 		//echo $q."<br/><br/>\n";
@@ -1241,31 +1242,40 @@ class particledata {
 		foreach ($fields as $field) {
 			if (!in_array($field, $dbfields))
 				continue;
-			$selects[$field] = "c.`REF|leginondata|AcquisitionImageData|image` as id, s.defocus, "
-					. "count(c.DEF_id) as `nb`, "
-					. "min(c.`$field`) as `min`, "
-					. "max(c.`$field`) as `max`, "
-					. "avg(c.`$field`) as `avg`, "
-					. "stddev(c.`$field`) as `stddev`";
+			$selects[$field] = "c.`REF|leginondata|AcquisitionImageData|image` AS id, "
+					//."s.defocus, "
+					. "count(c.DEF_id) AS `nb`, "
+					. "min(c.`$field`) AS `min`, "
+					. "max(c.`$field`) AS `max`, "
+					. "avg(c.`$field`) AS `avg`, "
+					. "stddev(c.`$field`) AS `stddev`";
 		}
 		if (!is_array($selects))
 			return False;
 		$stats = array();
 		foreach ($selects as $k=>$select) {
-			$q =	"select ".$select." "
-			."from ApCtfData c left join ".DB_LEGINON.".AcquisitionImageData i "
-			."on (c.`REF|leginondata|AcquisitionImageData|image`=i.`DEF_id`) "
-			."left join ".DB_LEGINON.".`ScopeEMData` s "
-			."on (i.`REF|ScopeEMData|scope` = s.`DEF_id`) "
-			."left join ".DB_LEGINON.".`PresetData` p "
-			."on (`p`.`DEF_id`=`i`.`REF|PresetData|preset`) "
-			."where i.`REF|SessionData|session`='$sessionId' ";
+			$q =	"SELECT ".$select." "
+				."FROM ApCtfData AS c "
+				."LEFT JOIN ".DB_LEGINON.".AcquisitionImageData i "
+					."ON (c.`REF|leginondata|AcquisitionImageData|image`=i.`DEF_id`) "
+				//."LEFT JOIN ".DB_LEGINON.".`ScopeEMData` s "
+				//	."ON (i.`REF|ScopeEMData|scope` = s.`DEF_id`) "
+				//."LEFT JOIN ".DB_LEGINON.".`PresetData` p "
+				//	."ON (`p`.`DEF_id`=`i`.`REF|PresetData|preset`) "
+				."WHERE i.`REF|SessionData|session`='$sessionId' ";
 			if ($runId)
-				$q .= "and c.`REF|ApAceRunData|acerun`='$runId' ";
-			else
-				$q .= "and c.`DEF_id`=(select max(c2.`DEF_id`) from ApCtfData c2 where c2.`REF|leginondata|AcquisitionImageData|image` = c.`REF|leginondata|AcquisitionImageData|image`)";
-			$q .= "group by p.`name`";
-			//echo $q."<br/><br/>\n";
+				$q .= "AND c.`REF|ApAceRunData|acerun`='$runId' ";
+			else {
+				$q .= "AND c.`DEF_id`=(".
+					"SELECT c2.`DEF_id` FROM ApCtfData AS c2 "
+					."WHERE c2.`REF|leginondata|AcquisitionImageData|image` = c.`REF|leginondata|AcquisitionImageData|image` "
+					."AND c2.resolution_50_percent IS NOT NULL AND c2.resolution_80_percent IS NOT NULL "
+					."ORDER BY (c2.resolution_50_percent+c2.resolution_80_percent) ASC LIMIT 1 "
+				.")";
+			}
+			//$q .= "GROUP BY p.`name`";
+			//if (!$runId)
+			//	echo $q."<br/><br/>\n";
 			$r = $this->mysql->getSQLResult($q);
 			$stats[$k] = $r;
 			//echo print_r($r)."<br/><br/>\n";
@@ -1325,7 +1335,8 @@ class particledata {
 				."			select a.`DEF_id` from ".DB_LEGINON.".`AcquisitionImageData` a  "
 				."			where a.`REF|SessionData|session`='$sessionId'  "
 				."			)  "
-				."			ORDER BY resolution_50_percent ASC  "
+				."       AND c.resolution_50_percent IS NOT NULL AND c.resolution_80_percent IS NOT NULL "
+				."			ORDER BY (c.resolution_50_percent+c.resolution_80_percent) ASC  "
 				."		) allctfdata "
 				."	group by allctfdata.`REF|leginondata|AcquisitionImageData|image` "
 				."	) ctfdata ";
@@ -2982,6 +2993,40 @@ class particledata {
 		}
 		$r2['stackpixelsize'] = $r2['ccdpixelsize']*$r2['imgbin']*$stackbin;
 		return $r2;
+	}
+
+	function getMinimumPixelSizeForSession($sessionid) {
+		// for simplicity this ignores any binning..., which may be bad
+		$q="SELECT "
+			."  MIN(pixelsize) AS val "
+			."FROM ".DB_LEGINON.".PixelSizeCalibrationData "
+			."WHERE DEF_id IN "
+			." ( "
+				."SELECT MAX(pix.`DEF_id`) "
+				."FROM ".DB_LEGINON.".`AcquisitionImageData` AS a "
+				."LEFT JOIN ".DB_LEGINON.".`CameraEMData` AS cam "
+				."  ON (a.`REF|CameraEMData|camera` = cam.`DEF_id`) "
+				."LEFT JOIN ".DB_LEGINON.".`ScopeEMData` AS scope "
+				."  ON (a.`REF|ScopeEMData|scope` = scope.`DEF_id`) "
+				.", ".DB_LEGINON.".PixelSizeCalibrationData AS pix "
+				."WHERE "
+				."  a.`REF|SessionData|session` = '$sessionid' "
+				."AND "
+				."  pix.`REF|InstrumentData|tem` = scope.`REF|InstrumentData|tem` "
+				."AND "
+				."  pix.`magnification` = scope.`magnification` "
+				."AND "
+				."  pix.`REF|InstrumentData|ccdcamera` = cam.`REF|InstrumentData|ccdcamera` "
+				."AND "
+				."  pix.`DEF_timestamp` <= a.`DEF_timestamp` "
+				."GROUP BY a.`DEF_id` "
+			." ) ";
+		//echo $q."<br/><br/>\n";
+		$r = $this->mysql->getSQLResult($q);
+		//echo print_r($r)."<br/><br/>\n";
+		$pixelsize = $r[0]['val'];
+		//echo $pixelsize."<br/><br/>\n";
+		return $pixelsize;
 	}
 
 	function getPixelSizeFromImgIdPresetQuery($imgid) {
