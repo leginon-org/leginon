@@ -289,7 +289,20 @@ class Tecnai(tem.TEM):
 			self.tecnai.Illumination.DFMode = win32com.client.constants.dfConical
 		else:
 			raise ValueError
-	
+
+	'''
+	probe_str_const = {'micro': win32com.client.constants.imMicroProbe, 'nano': win32com.client.constants.imNanoProbe}
+	probe_const_str = {win32com.client.constants.imMicroProbe: 'mirco', win32com.client.constants.imNanoProbe: 'nano'}
+	def getProbe(self):
+		const = self.tecnai.Illumination.Mode
+		probe = probe_const_str[const]
+		return probe
+
+	def setProbe(self, probe_str):
+		const = probe_str_const[probe_str]
+		self.tecnai.Illumination.Mode = const
+	'''
+
 	def getBeamBlank(self):
 		if self.tecnai.Illumination.BeamBlanked == 0:
 			return 'off'
