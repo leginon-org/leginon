@@ -91,6 +91,9 @@ def algebraic2parametric(coeff):
 	#print ("A=%.3f B=%.3f C=%.3f D=%.3f E=%.3f F=%.3f"
 	#	%(coeff[0], coeff[1], coeff[2], coeff[3], coeff[4], coeff[5],))
 
+	if numpy.any(numpy.isnan(coeff)) or numpy.any(numpy.isinf(coeff)):
+		return None
+
 	A   = numpy.array((coeff[0], coeff[1]/2, coeff[1]/2, coeff[2]))
 	A.shape = 2,2
 	bb  = numpy.asarray(coeff[3:5])
@@ -416,6 +419,11 @@ def generate_ellipse(a, b, alpha, center=(0,0), numpoints=3, noise=None,
 	#print points[:5,:]
 
 	return points
+
+#=================
+def printParamsDict(params):
+	printParams(params['center'], params['a'], params['b'], params['alpha'])
+	return
 
 #=================
 def printParams(center, a, b, alpha):
