@@ -50,7 +50,7 @@ class CtfDisplay(object):
 
 	#====================
 	#====================
-	def normalizeCtf(self, zdata2d):
+	def normalizeCtf(self, zdata2d, twod=True):
 		"""
 		inner cut radius - radius for number of pixels to clip in the center of image
 		"""
@@ -492,6 +492,9 @@ class CtfDisplay(object):
 			#plotspng.show()
 		pyplot.clf()
 
+		if twod is False:
+			return zdata2d
+
 		### 
 		### PART 8: NORMALIZE THE 2D IMAGE
 		### 
@@ -508,6 +511,7 @@ class CtfDisplay(object):
 			self.ellipratio, -self.angle, zdata2d.shape)
 
 		### Do the normalization on the 2d data
+		#blur2d = ndimage.gaussian_filter(zdata2d, 2)
 		normal2d = numpy.exp(zdata2d) - numpy.exp(noise2d)
 		normal2d = normal2d / numpy.exp(envelop2d)
 		normal2d = normal2d - valley2d
@@ -929,7 +933,7 @@ class CtfDisplay(object):
 
 	#====================
 	#====================
-	def CTFpowerspec(self, imgdata, ctfdata, fftpath=None, fftfreq=None, outerbound=5e-10):
+	def CTFpowerspec(self, imgdata, ctfdata, fftpath=None, fftfreq=None, outerbound=5e-10, twod=True):
 		"""
 		Make a nice looking powerspectra with lines for location of Thon rings
 
@@ -996,11 +1000,12 @@ class CtfDisplay(object):
 			print "\ttrim pixel %.3f freq %.3e"%(self.trimapix, self.trimfreq)
 
 		### more processing
-		normpowerspec = self.normalizeCtf(powerspec)
+		normpowerspec = self.normalizeCtf(powerspec, twod=twod)
 		if normpowerspec is None:
 			return None
 
-		self.drawPowerSpecImage(normpowerspec)
+		if twod is True:
+			self.drawPowerSpecImage(normpowerspec)
 
 		ctfdisplaydict = {
 			'powerspecfile': self.powerspecfile,
@@ -1111,9 +1116,9 @@ if __name__ == "__main__":
 #====================
 #====================
 #====================
-def makeCtfImages(imgdata, ctfdata, fftpath=None, fftfreq=None):
+def makeCtfImages(imgdata, ctfdata, fftpath=None, fftfreq=None, twod=True):
 	a = CtfDisplay()
-	ctfdisplaydict = a.CTFpowerspec(imgdata, ctfdata, fftpath, fftfreq)
+	ctfdisplaydict = a.CTFpowerspec(imgdata, ctfdata, fftpath, fftfreq, twod=twod)
 	return ctfdisplaydict
 
 
