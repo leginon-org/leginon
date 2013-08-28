@@ -67,13 +67,33 @@ echo "</td></tr>\n";
 
 
 /*
-** Interactive CTF
+** Phasor CTF
 */
 
-//echo "<tr><td width='100' align='center'>\n";
-//echo "</td><td>\n";
-//echo "  <h3><a href='runInteractCtf.php?expId=$expId'>Interactive CTF</a></h3>\n";
-//echo "</td></tr>\n";
+echo "<tr><td width='100' align='center'>\n";
+		echo "  <img src='img/lsqctf-logo.png' width='96'>\n";
+echo "</td><td>\n";
+echo "  <h3><a href='runPhasorCtf.php?expId=$expId'>Phasor CTF</a></h3>\n";
+echo " <p>Phasor is a kitchen sink program. It tries several different methods "
+	." to find the CTF from ACE1/2 and CTFFIND and uses the result with the highest "
+	." resolution"
+	."</p>\n";
+echo "</td></tr>\n";
+
+/*
+** CTF Refine
+*/
+
+echo "<tr><td width='100' align='center'>\n";
+//echo "  <img src='img/lsqctf-logo.png' width='96'>\n";
+echo "</td><td>\n";
+echo "  <h3><a href='runCtfRefine.php?expId=$expId'>CTF Refine</a></h3>\n";
+$simplexUrl = "http://en.wikipedia.org/wiki/Simplex_algorithm";
+echo " <p>Uses the <a href='$simplexUrl'>simplex algorithm</a> to refine the 2d parameters of the CTF "
+	." (i.e., the angle astigmatism and amount of astigmatism) and then keeps "
+	."  the value with the highest CTF resolution "
+	."</p>\n";
+echo "</td></tr>\n";
 
 
 /*
@@ -92,6 +112,22 @@ if (!HIDE_MATLAB)
 		." Nonetheless, ACE1 has been shown to work on a variety of microscopes and imaging methods. "
 		."<br/><i>Note:</i> requires MATLAB. "
 		."</p>\n";
+	echo "</td></tr>\n";
+}
+
+/*
+** Interactive CTF
+*/
+
+if (!HIDE_FEATURE)
+{
+	echo "<tr><td width='100' align='center'>\n";
+			echo "  <img src='img/interactiveCtf_logo.png' width='96'>\n";
+	echo "</td><td>\n";
+	echo "  <h3><a href='runInteractCtf.php?expId=$expId'>Interactive CTF</a></h3>\n";
+echo " <p> <b>Experimental</b> manual CTF estimation program, currently has way too many "
+	."buttons and no documentation "
+	."</p>\n";
 	echo "</td></tr>\n";
 }
 

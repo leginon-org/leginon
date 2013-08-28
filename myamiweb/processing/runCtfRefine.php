@@ -58,7 +58,7 @@ function createForm($extra=false) {
 		}
 	</script>";
 	$javafunctions .= writeJavaPopupFunctions('appion');
-	processing_header("Phasor CTF Estimation", "Phasor CTF Estimation", $javafunctions);
+	processing_header("CTF Refinement", "CTF Refinement", $javafunctions);
 
 	if ($extra) {
 		echo "<font color='#cc3333' size='+2'>$extra</font>\n<hr/>\n";
@@ -74,9 +74,9 @@ function createForm($extra=false) {
 	}
 	$ctf = new particledata();
 	$lastrunnumber = $ctf->getLastRunNumberForType($sessionId,'ApAceRunData','name'); 
-	while (file_exists($sessionpath.'phasor'.($lastrunnumber+1)))
+	while (file_exists($sessionpath.'ctfRefine'.($lastrunnumber+1)))
 		$lastrunnumber += 1;
-	$defrunname = ($_POST['runname']) ? $_POST['runname'] : 'phasor'.($lastrunnumber+1);
+	$defrunname = ($_POST['runname']) ? $_POST['runname'] : 'ctfRefine'.($lastrunnumber+1);
 	$binval = ($_POST['binval']) ? $_POST['binval'] : 2;
 	$confcheck = ($_POST['confcheck']== 'on') ? 'CHECKED' : '';
 	$confcheck = ($_POST['confcheck']== 'on') ? 'CHECKED' : '';
@@ -85,50 +85,22 @@ function createForm($extra=false) {
 	$nyquistlimit = 2*$pixelsize;
 
 	$reprocess = ($_POST['reprocess']) ? $_POST['reprocess'] : 10;
-	$numRefineIter = ($_POST['numRefineIter']) ? $_POST['numRefineIter'] : 0;
+	$numRefineIter = ($_POST['numRefineIter']) ? $_POST['numRefineIter'] : 100;
 	$reslimit = ($_POST['reslimit']) ? $_POST['reslimit'] : ceil($nyquistlimit*1.5);
 	if ($reslimit < $nyquistlimit) {
 		$reslimit = ceil($nyquistlimit*1.5);
 	}
 
-	$maxdef = ($_POST['maxdef']) ? $_POST['maxdef'] : 7;
-	$mindef = ($_POST['mindef']) ? $_POST['mindef'] : 0.5;
 	//$refine2d = ($_POST['refine2d']== 'on') ? 'CHECKED' : '';
 	echo"
 	<TABLE BORDER=0 CLASS=tableborder CELLPADDING=15>
 	<TR>
 	  <TD VALIGN='TOP'>";
 
-
 	createAppionLoopTable($sessiondata, $defrunname, "ctf");
 	echo"
 	  </TD>
 	  <TD CLASS='tablebg' valign='top'>\n";
-
-	echo "<b>Sample type:</b>\n";
-	echo "<br />\n";
-	echo "<INPUT TYPE='radio' NAME='sample' VALUE='stain' SIZE='3'>\n";
-	echo "Carbon stain<br />\n";
-	echo "<INPUT TYPE='radio' NAME='sample' VALUE='ice' SIZE='3'>\n";
-	echo "Vitreous ice \n";
-	echo "<br/><br/>\n";
-
-	echo "<b>Defocus limits:</b>\n";
-	echo "<br />\n";
-	echo "Min defocus: <input type='text' name='mindef' value=$mindef size='3'> microns<br/>\n";
-	echo "Max defocus: <input type='text' name='maxdef' value=$maxdef size='3'> microns<br/>\n";
-	echo "<br/><br/>\n";
-
-	echo "<b>Level of astigmatism</b>\n";
-	echo "<br />\n";
-	echo "<INPUT TYPE='radio' NAME='astig' VALUE='false' "
-		.(($_POST['astig']== 'true') ? '' : 'CHECKED')." SIZE='3'>\n";
-	echo "Small \n";
-	echo "&nbsp; \n";
-	echo "<INPUT TYPE='radio' NAME='astig' VALUE='true' "
-		.(($_POST['astig']== 'true') ? 'CHECKED' : '')." SIZE='3'>\n";
-	echo "Large\n";
-	echo "<br/><br/>\n";
 
 	echo "<br/>\n";
 	echo "Resolution search cutoff: ";
@@ -136,7 +108,7 @@ function createForm($extra=false) {
 	echo "<i>Nyquist limit: $nyquistlimit &Aring;</i>\n";
 	echo "<br/><br/>\n";
 
-	echo "Number of Post-Search Refinement Iterations: ";
+	echo "Number of Refinement Iterations: ";
 	echo "<input type='text' name='numRefineIter' value='$numRefineIter' size='2'><br/>\n";
 	echo "<br/><br/>\n";
 
@@ -165,11 +137,10 @@ function createForm($extra=false) {
 /*
 **
 **
-** Phasor COMMAND
+** ctfRefine COMMAND
 **
 **
 */
-
 
 
 // --- parse data and process on submit
@@ -182,12 +153,8 @@ function runProgram() {
 	$outdir  = $_POST['outdir'];
 	$runname = $_POST['runname'];
 
-	$sample=$_POST['sample'];
-	$astig=$_POST['astig'];
 	$reslimit=trim($_POST['reslimit']);
 	$numRefineIter=trim($_POST['numRefineIter']);
-	$maxdef=trim($_POST['maxdef']);
-	$mindef=trim($_POST['mindef']);
 	$reprocess=trim($_POST['reprocess']);
 	
 	/* *******************
@@ -205,31 +172,15 @@ function runProgram() {
 	if ($maxang > 5) {
 		$tiltangle = $_POST['tiltangle'];
 		if ($tiltangle!='notilt' && $tiltangle!='lowtilt') {
-			createForm("Phasor CTF does not work on tilted images");
+			createForm("ctfRefine CTF does not work on tilted images");
 			exit;
 		}
-	}
-
-	if (!$sample) {
-		createForm("Please select a sample type");
-		exit;
 	}
 
 	if (!$reslimit || !is_numeric($reslimit)) {
 		createForm("Please provide a valid res limit type ".$reslimit);
 		exit;
 	}
-
-	if (!$maxdef || !is_numeric($maxdef)) {
-		createForm("Please provide a valid maximum defocus ".$maxdef);
-		exit;
-	}
-
-	if (!$mindef || !is_numeric($mindef)) {
-		createForm("Please provide a valid minimum defocus ".$mindef);
-		exit;
-	}
-
 
 	if (!$numRefineIter || !is_numeric($numRefineIter)) {
 		createForm("Please provide a valid number of iterations ".$numRefineIter);
@@ -239,7 +190,7 @@ function runProgram() {
 	/* *******************
 	PART 3: Create program command
 	******************** */
-	$command.= "phasorCtf.py ";
+	$command.= "ctfRefine.py ";
 
 	$apcommand = parseAppionLoopParams($_POST);
 	if ($apcommand[0] == "<") {
@@ -247,16 +198,8 @@ function runProgram() {
 		exit;
 	}
 	$command .= $apcommand;
-	$command .= "--sample=$sample ";	
-	if ($asitg == 'ON')
-		$command .= "--astig ";	
-	else
-		$command .= "--no-astig ";	
-	$command .= "--reslimit=$reslimit ";	
-	$command .= "--maxdef=".($maxdef*1e-6)." ";
-	$command .= "--mindef=".($mindef*1e-6)." ";
+	$command .= "--reslimit=$reslimit ";
 	$command .= "--refineIter=$numRefineIter ";	
-
 	if (is_numeric($reprocess))
 		$command .= "--reprocess=".$reprocess." ";
 
