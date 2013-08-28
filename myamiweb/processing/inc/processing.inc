@@ -857,7 +857,11 @@ $xvfb=False, $xtra=False, $nproc=1, $ppn=0, $nodes=0, $walltime="240", $cputime=
 	$cmd = $apcmd;
 	
 	// write output page
-	processing_header("Appion Job Submission","Appion Job Submission");
+	$checkUrl = "checkAppionJob.php?expId=$expId&jobId=$jobid";
+	//$autoRedirect = '';
+	$autoRedirect = " <meta http-equiv='refresh' content='10;url=$checkUrl'>\n";
+
+	processing_header("Appion Job Submission","Appion Job Submission", $autoRedirect);
 	echo "<table width='800'>\n";
 	echo "<tr><td>Appion Directory</td><td>$rundir</td></tr>\n";
 	echo "<tr><td>Job File Name</td><td>$jobfile</td></tr>\n";
@@ -913,8 +917,8 @@ $xvfb=False, $xtra=False, $nproc=1, $ppn=0, $nodes=0, $walltime="240", $cputime=
 	} else {
 		echo "<font color='red'>No Jobs on the cluster, check your settings</font>\n";
 	}
-	echo "<p><a href='checkAppionJob.php?expId=$expId&jobId=$jobid'>[Check status of this job]</a><p>\n";
-	echo "<p><font color='#990000'>Do not hit 'reload' - it will re-submit job</font><p>\n";
+	echo "<p><a href='$checkUrl'>[Check status of this job]</a><p>\n";
+	echo "<p><font color='#990000'>do NOT hit 'reload' -- it will re-submit job</font><p>\n";
 	processing_footer();
 	exit;
 }
