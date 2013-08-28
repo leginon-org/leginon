@@ -24,6 +24,7 @@ from appionlib import appionLoop2
 from appionlib import apInstrument
 from appionlib.apCtf import ctftools, ctfnoise, ctfdb, sinefit, canny, findroots
 from appionlib.apCtf import genctf, ctfpower, ctfres, ctfinsert, ransac, findastig
+from appionlib.apCtf import ctfdisplay
 from appionlib.apImage import imagefile, imagefilter, imagenorm, imagestat
 #Leginon
 import leginon.polygon
@@ -185,12 +186,12 @@ class RefineCTFDialog(wx.Dialog):
 		wv = self.parent.wavelength
 		volts = self.parent.ctfvalues['volts']
 
-		#SET XSCALE
+		#SET refine Flags 
 		refineFlags = numpy.array((
 			not self.def1Tog.GetValue(),
 			not self.def2Tog.GetValue(),
-			not self.ampconTog.GetValue(),
 			not self.angleTog.GetValue(),
+			not self.ampconTog.GetValue(),
 			), dtype=numpy.bool)
 
 		radial_array, angle_array, normPSD = self.parent.getTwoDProfile()
@@ -226,7 +227,7 @@ class RefineCTFDialog(wx.Dialog):
 			weights[firstpoint:lastpoint] = 1
 
 		newvalues = sinefit.refineCTF(radial_array[firstpoint:lastpoint]*1e10, angle_array[firstpoint:lastpoint], 
-			ampcon, def1, def2, ellipangle, normPSD[firstpoint:lastpoint], cs, wv, weights[firstpoint:lastpoint])
+			ampcon, def1, def2, ellipangle, normPSD[firstpoint:lastpoint], cs, wv, refineFlags, weights[firstpoint:lastpoint])
 
 		if newvalues is None:
 			apDisplay.printWarning("onRefineCTF failed")
@@ -370,9 +371,9 @@ class ThonRingTool(ImagePanelTools.ImageTool):
 			#theta = 2 * asin (a/2b)
 			#numpoints = 2 pi / theta
 			## define a to be 5 pixels
-			a = 10
+			a = 5
 			theta = 2.0 * math.asin (a/(2.0*major))
-			skipfactor = 4
+			skipfactor = 3
 			## multiple by skipfactor to remove unsightly seam lines
 			numpoints = int(math.ceil(2.0*math.pi/theta/skipfactor))*skipfactor + 1
 		
@@ -428,7 +429,7 @@ class EditParamsDialog(wx.Dialog):
 		inforow.Add(self.def2value, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 3)
 
 		label = wx.StaticText(self, -1, "Amp Contrast: ", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
-		self.ampconvalue = FloatEntry(self, -1, allownone=False, min=0, max=1.0, chars=16, value="0")
+		self.ampconvalue = FloatEntry(self, -1, allownone=False, min=-1.0, max=1.0, chars=16, value="0")
 		self.ampconvalue.SetMinSize((entrywidth, -1))
 		inforow.Add(label, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 		inforow.Add(self.ampconvalue, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 3)
@@ -573,6 +574,10 @@ class CTFApp(wx.App):
 		self.bestvalues = None
 		self.bestres = 1000.
 		self.bestellipse = None
+
+		self.maxAmpCon = 0.25
+		self.minAmpCon = 0.02
+
 		wx.App.__init__(self)
 
 	#---------------------------------------
@@ -871,6 +876,11 @@ class CTFApp(wx.App):
 		label = wx.StaticText(self.frame, -1, "Finish:  ", style=wx.ALIGN_RIGHT)
 		self.buttonrow.Add(label, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 3)
 
+		wxbutton = wx.Button(self.frame, -1, 'Check Final Res')
+		wxbutton.SetMinSize((-1, buttonheight))
+		self.Bind(wx.EVT_BUTTON, self.onCheckFinalRes, wxbutton)
+		self.buttonrow.Add(wxbutton, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
+
 		self.next = wx.Button(self.frame, wx.ID_FORWARD, 'Forward')
 		self.next.SetMinSize((-1, buttonheight))
 		self.Bind(wx.EVT_BUTTON, self.onNext, self.next)
@@ -1151,10 +1161,9 @@ class CTFApp(wx.App):
 		self.onDeleteCorners(evt)
 
 		self.onGridSearch(evt)
-		self.onRefineAmpContrast(evt)
 
 		self.onRevert(evt)
-		self.onPrevBest(evt)
+		#self.onPrevBest(evt)
 		self.onFlatCenter(evt)
 		self.onMedianFilter(evt)
 		self.onRotAverage(evt)
@@ -1790,12 +1799,12 @@ class CTFApp(wx.App):
 		if res5 is None:
 			res5 = 100
 
-		if (res8+res5) < self.bestres and 0.0 < self.ctfvalues['amplitude_contrast'] < 0.5:
+		if (res8+res5) < self.bestres and self.minAmpCon < self.ctfvalues['amplitude_contrast'] < self.maxAmpCon:
 			apDisplay.printColor("Congrats! Saving best resolution values %.3e and %.2f"
 				%(meandefocus, self.ctfvalues['amplitude_contrast']), "green")
 			self.bestres = (res8+res5)
 			self.bestvalues = copy.deepcopy(self.ctfvalues)
-			self.bestvalues['meandefocus'] = meandefocus
+			self.bestvalues['defocus'] = meandefocus
 			self.bestellipse = copy.deepcopy(self.ellipseParams)
 		else:
 			print "not saving values %.2f, need an average better than %.2f"%((res8+res5), self.bestres)
@@ -1847,6 +1856,8 @@ class CTFApp(wx.App):
 			pyplot.subplots_adjust(wspace=0.05, hspace=0.05,
 				bottom=0.05, left=0.05, top=0.95, right=0.95, )
 			pyplot.show()
+
+		self.printBestValues()
 
 		apDisplay.printColor("Resolution values of %.4fA at 0.8 and %.4fA at 0.5"
 			%(res8,res5), "magenta")
@@ -1956,11 +1967,11 @@ class CTFApp(wx.App):
 	#---------------------------------------
 	def onFixAmpContrast(self, evt):
 		"""
-		fix amp contrast < 0 or amp contrast > 0.5, by adjusting defocus
+		fix amp contrast < 0 or amp contrast > 0.3, by adjusting defocus
 		"""
 		t0 = time.time()
 
-		if self.ctfvalues['amplitude_contrast'] > 0 and self.ctfvalues['amplitude_contrast'] < 0.5:
+		if self.ctfvalues['amplitude_contrast'] > self.minAmpCon and self.ctfvalues['amplitude_contrast'] < self.maxAmpCon:
 			return
 
 		newdefocus = (self.ctfvalues['defocus2']+self.ctfvalues['defocus1'])/2.0 
@@ -1994,12 +2005,12 @@ class CTFApp(wx.App):
 				self.ctfvalues['defocus1'] = olddef1
 				self.ctfvalues['defocus2'] = olddef2
 				return
-			elif amplitudecontrast < 0:
+			elif amplitudecontrast < self.minAmpCon:
 				apDisplay.printColor("Amp Cont: %.3f too small, decrease defocus %.3e"%
 					(amplitudecontrast, newdefocus), "blue")
 				scaleFactor = 0.99 - abs(amplitudecontrast)/5.
 				newdefocus = newdefocus*scaleFactor
-			elif amplitudecontrast > 0.5:
+			elif amplitudecontrast > self.maxAmpCon:
 				apDisplay.printColor("Amp Cont: %.3f too large, increase defocus %.3e"%
 					(amplitudecontrast, newdefocus), "cyan")
 				scaleFactor = 1.01 + (amplitudecontrast - 0.5)/5.
@@ -2019,6 +2030,10 @@ class CTFApp(wx.App):
 			apDisplay.printWarning("FAILED to fix amplitude contrast")
 			self.ctfvalues['defocus1'] = olddef1
 			self.ctfvalues['defocus2'] = olddef2
+			if self.ctfvalues['amplitude_contrast'] > self.maxAmpCon:
+				self.ctfvalues['amplitude_contrast'] = self.maxAmpCon
+			elif self.ctfvalues['amplitude_contrast'] < self.minAmpCon:
+				self.ctfvalues['amplitude_contrast'] = self.minAmpCon
 			return
 
 		zavg = (self.ctfvalues['defocus2']+self.ctfvalues['defocus1'])/2.0
@@ -2079,6 +2094,8 @@ class CTFApp(wx.App):
 		apDisplay.printColor("amplitude contrast change from %.4f to %.4f"
 			%(self.ctfvalues['amplitude_contrast'], amplitudecontrast), "cyan")
 		self.ctfvalues['amplitude_contrast'] = amplitudecontrast
+
+		self.onFixAmpContrast(evt)
 
 		self.panel.UpdateDrawing()
 		apDisplay.printColor("Refine Amplitude Contrast complete in %s"
@@ -2147,6 +2164,8 @@ class CTFApp(wx.App):
 
 		apDisplay.printColor("defocus change from %.3e to %.3e"
 			%(oldzavg, zavg), "magenta")
+
+		self.onFixAmpContrast(evt)
 
 		self.panel.UpdateDrawing()
 		apDisplay.printColor("Refine CTF 1D complete in %s"
@@ -2218,6 +2237,8 @@ class CTFApp(wx.App):
 		self.ctfvalues['amplitude_contrast'] = ampcon
 		## ellip angle is positive toward y-axis, ctf angle is negative toward y-axis
 		self.ctfvalues['angle_astigmatism'] = -ellipangle
+
+		self.onFixAmpContrast(evt)
 
 		self.panel.UpdateDrawing()
 		apDisplay.printColor("Refine CTF complete in %s"
@@ -2747,12 +2768,13 @@ class CTFApp(wx.App):
 	#---------------------------------------
 	def copyDataToAppionLoop(self):
 		self.appionloop.ctfvalues = {}
-		paramlist = ['angle_astigmatism', 'amplitude_contrast', 'defocus1', 'defocus2']
-		for p in paramlist:
-			self.appionloop.ctfvalues.update(self.ctfvalues)
-		print self.appionloop.ctfvalues
+		#paramlist = ['angle_astigmatism', 'amplitude_contrast', 'defocus1', 'defocus2']
+		self.appionloop.ctfvalues.update(self.ctfvalues)
+		#print self.appionloop.ctfvalues
 		## Cs in mm
 		self.appionloop.ctfvalues['cs'] *= 1000
+		## some shift in angle astig, cannot explain at moment
+		#self.appionloop.ctfvalues['angle_astigmatism'] += 90
 		self.appionloop.assess = self.assess
 		self.ctfvalues = {}
 
@@ -2824,6 +2846,44 @@ class CTFApp(wx.App):
 		na = numpy.array(a, dtype=numpy.int32)
 		return na
 
+	#====================================
+	#====================================
+	def printBestValues(self):
+		if self.bestvalues is None:
+			return
+		avgRes = self.bestres/2.0
+		defocus = self.bestvalues['defocus']
+		ampCon = self.bestvalues['amplitude_contrast']
+		if self.bestellipse is None:
+			apDisplay.printColor("Prev Best :: avgRes=%.1f :: def=%.2e, NO ASTIG, ampCon=%.2f"
+				%(avgRes, defocus, ampCon), "green")
+		else:
+			ratio = (self.bestellipse['a']/self.bestellipse['b'])**2
+			angle = -math.degrees(self.bestellipse['alpha'])
+			apDisplay.printColor("Prev Best :: avgRes=%.1f :: def=%.2e, ratio=%.2f, ang=%.1f, ampCon=%.2f"
+				%(avgRes, defocus, ratio, angle, ampCon), "green")
+		return
+
+	#---------------------------------------
+	def onCheckFinalRes(self, evt):
+		self.printBestValues()
+		newctdata = copy.deepcopy(self.ctfvalues)
+		newctdata['cs'] *= 1000
+		fftpath = os.path.join(self.appionloop.fftsdir, apDisplay.short(self.imgdata['filename'])+'.powerspec.mrc')
+		if os.path.isfile(fftpath) and fftpath in self.appionloop.freqdict.keys():
+			fftfreq = self.appionloop.freqdict[fftpath]
+		else:
+			return
+		ctfdisplaydict = ctfdisplay.makeCtfImages(self.imgdata, newctdata, fftpath, fftfreq, twod=False)
+		ctfvalue = ctfdb.getBestCtfByResolution(self.imgdata, msg=True)
+		apDisplay.printColor("Resolution values %.2f and %.2f"
+				%(ctfdisplaydict['res50'], ctfdisplaydict['res80']), "magenta")
+		#avgRes = (ctfdisplaydict['res50'] + ctfdisplaydict['res80'])/2.0
+		#apDisplay.printColor("Curr Val :: avgRes=%.1f :: def=%.2e, ratio=%.2f, ang=%.1f, ampCon=%.2f"
+		#	%(avgRes, defocus, ratio, angle, ampCon), "green")
+
+		return
+
 	#---------------------------------------
 	def onNext(self, evt):
 		if not self.appionloop:
@@ -2834,6 +2894,14 @@ class CTFApp(wx.App):
 				dialog.Destroy()
 				return
 			dialog.Destroy()
+
+		if self.ctfvalues['amplitude_contrast'] < self.minAmpCon or self.ctfvalues['amplitude_contrast'] > self.maxAmpCon:
+			dialog = wx.MessageDialog(self.frame, 
+				"Please fix amplitude contrast, invalid value (%.2f)."%(self.ctfvalues['amplitude_contrast']),
+				'Error', wx.OK|wx.ICON_ERROR)
+			dialog.ShowModal()
+			dialog.Destroy()
+			return
 
 		self.submit = True
 
@@ -2916,7 +2984,7 @@ class ManualCTF(appionLoop2.AppionLoop):
 	def postLoopFunctions(self):
 		self.app.frame.Destroy()
 		apDisplay.printMsg("Finishing up")
-		time.sleep(20)
+		time.sleep(0.1)
 		apDisplay.printMsg("finished")
 		wx.Exit()
 
@@ -2993,13 +3061,13 @@ class ManualCTF(appionLoop2.AppionLoop):
 			return True
 
 		ctfvalue = ctfdb.getBestCtfByResolution(imgdata, msg=False)
-		print ctfvalue
+		#print ctfvalue
 
 		if ctfvalue is None:
 			return True
 
 		avgres = (ctfvalue['resolution_80_percent'] + ctfvalue['resolution_50_percent'])/2.0
-		print "avgres %.3f"%(avgres)
+		print "avgres %.3f -- %s"%(avgres, apDisplay.short(imgdata['filename']))
 
 		if avgres < self.params['reprocess']:
 			return False
