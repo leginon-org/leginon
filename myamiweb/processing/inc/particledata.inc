@@ -1198,7 +1198,8 @@ class particledata {
 			."	AND  "
 			." ( viewer.status IS NULL OR viewer.status != 'hidden' ) "
 			."		)  "
-			."		ORDER BY ctf.`resolution_50_percent` ASC "
+			."		ORDER BY coalesce(resolution_80_percent,999) ASC "
+			." , coalesce(resolution_50_percent,999) ASC "
 			."	) ctfdata ";
 		// if $limit is specified, report only values with confidences > $limit
 		if ($limit) {
