@@ -91,6 +91,8 @@ def linearscale(input, boundfrom, boundto, extrema=None):
 def power(a, mask_radius=1.0, thresh=3):
 	fft = ffteng.transform(a)
 	pow = numpy.absolute(fft)
+	### neil half pixel shift or powerspectra are not centered!
+	pow = scipy.ndimage.interpolation.shift(pow, (-1, -1), order=1, mode='wrap')
 	try:
 		pow = numpy.log(pow)
 	except OverflowError:
