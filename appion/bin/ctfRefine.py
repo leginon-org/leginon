@@ -103,10 +103,6 @@ class RefineCTF(appionLoop2.AppionLoop):
 		all stored in self.ctfvalues
 		"""
 
-		if self.params['projectid'] == 13 or self.params['projectid'] == 15:
-			print "wrong project"
-			sys.exit(1)
-
 		if ( not 'defocus1' in self.ctfvalues 
 				or self.ctfvalues['defocus1'] is None
 				or not 'defocus2' in self.ctfvalues

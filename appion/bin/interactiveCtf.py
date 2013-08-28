@@ -3012,10 +3012,6 @@ class ManualCTF(appionLoop2.AppionLoop):
 			print "main window was closed, quitting program"
 			sys.exit(1)
 
-		if self.params['projectid'] == 13 or self.params['projectid'] == 16:
-			print "wrong project"
-			sys.exit(1)
-
 		if self.assess != self.assessold and self.assess is not None:
 			#imageaccessor run is always named run1
 			apDatabase.insertImgAssessmentStatus(imgdata, 'run1', self.assess)
