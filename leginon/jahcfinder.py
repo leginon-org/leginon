@@ -47,6 +47,7 @@ class JAHCFinder(targetfinder.TargetFinder):
 		'template lpf': {
 			'sigma': 1.0,
 		},
+		'template threshold':0.0,
 		'threshold': 3.0,
 		'threshold method': "Threshold = mean + A * stdev",
 		'blobs border': 20,
@@ -130,13 +131,14 @@ class JAHCFinder(targetfinder.TargetFinder):
 		self.hf.configure_template(diameter, filename, filediameter)
 		self.hf.create_template()
 		cortype = self.settings['template type']
+		cor_image_min = self.settings['template image min']
 		lpfsettings = self.settings['template lpf']
 		corsigma = lpfsettings['sigma']
 		if cortype == 'phase' and corsigma:
 			corfilt = (corsigma,)
 		else:
 			corfilt = None
-		self.hf.configure_correlation(cortype, corfilt)
+		self.hf.configure_correlation(cortype, corfilt,cor_image_min)
 		self.hf.correlate_template()
 		self.setImage(self.hf['correlation'], 'Template')
 

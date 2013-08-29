@@ -126,6 +126,8 @@ class TemplateScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		self.widgets['template diameter'] = IntEntry(self, -1, chars=4)
 
 		self.widgets['template type'] = Choice(self, -1, choices=self.node.cortypes)
+		self.widgets['template image min'] = FloatEntry(self, -1,
+																												 chars=4)
 
 		szcor = wx.GridBagSizer(5, 5)
 		label = wx.StaticText(self, -1, 'Use')
@@ -135,22 +137,31 @@ class TemplateScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		label = wx.StaticText(self, -1, 'correlation')
 		szcor.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
+		szcorlimit = wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1, 'Fill image values below')
+		szcorlimit.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szcorlimit.Add(self.widgets['template image min'], (0, 1), (1, 1),
+							wx.ALIGN_CENTER_VERTICAL)
+		label = wx.StaticText(self, -1, 'with mean before correlation')
+		szcorlimit.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+
 		sztemplate = wx.GridBagSizer(5, 5)
-		sztemplate.Add(szcor, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sztemplate.Add(szcor, (0, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
+		sztemplate.Add(szcorlimit, (1, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
 
 		label = wx.StaticText(self, -1, 'Template Filename')
-		sztemplate.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sztemplate.Add(self.widgets['template filename'], (1, 1), (1, 1),
+		sztemplate.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sztemplate.Add(self.widgets['template filename'], (2, 1), (1, 1),
 										wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
 
 		label = wx.StaticText(self, -1, 'Original Template Diameter')
-		sztemplate.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sztemplate.Add(self.widgets['file diameter'], (2, 1), (1, 1),
+		sztemplate.Add(label, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sztemplate.Add(self.widgets['file diameter'], (3, 1), (1, 1),
 										wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
 
 		label = wx.StaticText(self, -1, 'Final Template Diameter')
-		sztemplate.Add(label, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sztemplate.Add(self.widgets['template diameter'], (3, 1), (1, 1),
+		sztemplate.Add(label, (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sztemplate.Add(self.widgets['template diameter'], (4, 1), (1, 1),
 										wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
 
 		sbsztemplate.Add(sztemplate, 1, wx.EXPAND|wx.ALL, 5)

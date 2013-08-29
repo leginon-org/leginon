@@ -9,6 +9,7 @@
 #
 
 import numpy
+import numpy.ma as ma
 import pyami.quietscipy
 import scipy.ndimage
 import math
@@ -198,16 +199,30 @@ class HoleFinder(object):
 		if self.save_mrc:
 			mrc.write(template, 'template.mrc')
 
-	def configure_correlation(self, cortype=None, corfilt=None):
+	def configure_correlation(self, cortype=None, corfilt=None,cor_image_min=0):
 		if cortype is not None:
 			self.correlation_config['cortype'] = cortype
 		self.correlation_config['corfilt'] = corfilt
+		self.correlation_config['cor_image_min'] = cor_image_min
+
+	def maskBlack(self, image):
+		'''
+		Mask area with value lower than cor_image_min and fill it with mean
+		of the rest of the area.  Effectively, this reduces the correlation
+		produced by the edge produced by the black block.
+		'''
+		image_min = self.correlation_config['cor_image_min']
+		if image_min is None:
+			return image
+		masked = ma.masked_less(image,image_min)
+		return masked.filled(masked.mean())
 
 	def correlate_template(self):
 		fromimage = 'original'
 		if None in (self.__results[fromimage], self.__results['template']):
 			raise RuntimeError('need image %s and template before correlation' % (fromimage,))
 		edges = self.__results[fromimage]
+		edges = self.maskBlack(edges)
 		template = self.__results['template']
 		cortype = self.correlation_config['cortype']
 		corfilt = self.correlation_config['corfilt']
