@@ -231,7 +231,7 @@ function runProgram() {
 	}
 
 
-	if (!$numRefineIter || !is_numeric($numRefineIter)) {
+	if (!is_numeric($numRefineIter)) {
 		createForm("Please provide a valid number of iterations ".$numRefineIter);
 		exit;
 	}
