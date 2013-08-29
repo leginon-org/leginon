@@ -85,7 +85,7 @@ echo "</td></tr>\n";
 */
 
 echo "<tr><td width='100' align='center'>\n";
-//echo "  <img src='img/lsqctf-logo.png' width='96'>\n";
+echo "  <img src='img/CTF_Refine_Logo.png' width='96'>\n";
 echo "</td><td>\n";
 echo "  <h3><a href='runCtfRefine.php?expId=$expId'>CTF Refine</a></h3>\n";
 $simplexUrl = "http://en.wikipedia.org/wiki/Simplex_algorithm";
