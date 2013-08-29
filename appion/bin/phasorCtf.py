@@ -56,7 +56,7 @@ class PhasorCTF(appionLoop2.AppionLoop):
 		self.parser.add_option("--no-astig", dest="astig", default=True,
 			action="store_false", help="Assume no astigmatism")
 
-		self.parser.add_option("--refineIter", dest="refineIter", type="int", default=130,
+		self.parser.add_option("--refineIter", dest="refineIter", type="int", default=0,
 			help="maximum number of refinement interations")
 
 		self.parser.add_option("--fast", dest="fast", default=False,
@@ -811,14 +811,15 @@ class PhasorCTF(appionLoop2.AppionLoop):
 			### minimum valley method
 			defocus = self.bestvalues['defocus']
 			ellipseParams = findastig.findAstigmatism(blurArray, self.freq, defocus, None, self.ctfvalues)
-			ellipRatio = ellipseParams['a']/ellipseParams['b']
-			if 1.0/self.maxRatio < ellipRatio < self.maxRatio:
-				self.ellipseParams = ellipseParams
-				raddata, PSDarray = self.from2Dinto1D(blurArray)
-				normPSDarray = self.fullTriSectionNormalize(raddata, PSDarray, defocus)
-				defocus = self.defocusLoop(defocus, raddata, normPSDarray, lowerbound, upperbound)
-				normPSDarray = self.fullTriSectionNormalize(raddata, PSDarray, defocus)
-				defocus = self.defocusLoop(defocus, raddata, normPSDarray, lowerbound, upperbound)
+			if ellipseParams is not None:
+				ellipRatio = ellipseParams['a']/ellipseParams['b']
+				if 1.0/self.maxRatio < ellipRatio < self.maxRatio:
+					self.ellipseParams = ellipseParams
+					raddata, PSDarray = self.from2Dinto1D(blurArray)
+					normPSDarray = self.fullTriSectionNormalize(raddata, PSDarray, defocus)
+					defocus = self.defocusLoop(defocus, raddata, normPSDarray, lowerbound, upperbound)
+					normPSDarray = self.fullTriSectionNormalize(raddata, PSDarray, defocus)
+					defocus = self.defocusLoop(defocus, raddata, normPSDarray, lowerbound, upperbound)
 
 			if self.params['fast'] is True:
 				continue
@@ -826,14 +827,15 @@ class PhasorCTF(appionLoop2.AppionLoop):
 			### minimum valley method
 			defocus = self.bestvalues['defocus']
 			ellipseParams = findastig.findAstigmatism(blurArray, self.freq, defocus, None, self.ctfvalues, peakNum=2)
-			ellipRatio = ellipseParams['a']/ellipseParams['b']
-			if 1.0/self.maxRatio < ellipRatio < self.maxRatio:
-				self.ellipseParams = ellipseParams
-				raddata, PSDarray = self.from2Dinto1D(blurArray)
-				normPSDarray = self.fullTriSectionNormalize(raddata, PSDarray, defocus)
-				defocus = self.defocusLoop(defocus, raddata, normPSDarray, lowerbound, upperbound)
-				normPSDarray = self.fullTriSectionNormalize(raddata, PSDarray, defocus)
-				defocus = self.defocusLoop(defocus, raddata, normPSDarray, lowerbound, upperbound)
+			if ellipseParams is not None:
+				ellipRatio = ellipseParams['a']/ellipseParams['b']
+				if 1.0/self.maxRatio < ellipRatio < self.maxRatio:
+					self.ellipseParams = ellipseParams
+					raddata, PSDarray = self.from2Dinto1D(blurArray)
+					normPSDarray = self.fullTriSectionNormalize(raddata, PSDarray, defocus)
+					defocus = self.defocusLoop(defocus, raddata, normPSDarray, lowerbound, upperbound)
+					normPSDarray = self.fullTriSectionNormalize(raddata, PSDarray, defocus)
+					defocus = self.defocusLoop(defocus, raddata, normPSDarray, lowerbound, upperbound)
 	
 			self.printBestValues()
 
@@ -871,6 +873,9 @@ class PhasorCTF(appionLoop2.AppionLoop):
 			defocus
 			amplitude contrast (mostly a dependent variable)
 		"""
+		if self.params['refineIter'] <= 0:
+			return
+
 		self.fminCount = 0
 		### "self.ellipseParams" controls what self.from2Dinto1D() does
 		ellipRatio = self.ellipseParams['a']/self.ellipseParams['b']
