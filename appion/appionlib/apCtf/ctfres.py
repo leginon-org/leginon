@@ -151,6 +151,9 @@ def getResolutionFromConf(raddata, confs, limit=0.5):
 	lastx=0
 	lasty=0
 	x = 0
+	if len(confs) < 3:
+		apDisplay.printWarning("Res calc failed: Not enough points")
+		return None
 	if max(confs[0], confs[1], confs[2]) < limit:
 		apDisplay.printWarning("Res calc failed: Initial conf below desired limit %.2f"
 			%(limit))
