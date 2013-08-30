@@ -9,7 +9,7 @@
 #
 
 import numpy
-import numpy.ma as ma
+ma = numpy.ma
 import pyami.quietscipy
 import scipy.ndimage
 import math
