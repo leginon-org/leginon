@@ -588,6 +588,10 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.instrument.tem.MainScreenPosition = 'down'
 		time.sleep(seconds)
 		self.instrument.tem.MainScreenPosition = 'up'
+		if self.instrument.tem.MainScreenPosition == 'down':
+			time.sleep(1)
+			self.instrument.tem.MainScreenPosition = 'up'
+			self.logger.warning('Second try to put the screen up')
 		self.logger.info('Screen up.')
 
 	def getImageShiftOffset(self):
