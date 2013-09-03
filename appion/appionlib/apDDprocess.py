@@ -971,8 +971,9 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		'''
 		# The alignment is done in tempdir (a local directory to reduce network traffic)
 		os.chdir(self.tempdir)
-		temp_aligned_sumpath = 'temp%d_sum.mrc' % (self.gpuid)
-		temp_aligned_stackpath = 'temp%d_aligned_st.mrc' % (self.gpuid)
+		# include both hostname and gpu to identify the temp output
+		temp_aligned_sumpath = 'temp%s.%d_sum.mrc' % (self.hostname,self.gpuid)
+		temp_aligned_stackpath = 'temp%s.%d_aligned_st.mrc' % (self.hostname,self.gpuid)
 		temp_log = self.tempframestackpath[:-4]+'_Log.txt'
 
 		# Construct the command line with defaults
