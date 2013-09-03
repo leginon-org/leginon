@@ -138,6 +138,10 @@ def runFindEM(imgdict, params, thread=False):
 		#STORE OUTPUT FILE
 		ccmapfilelist.append(ccmapfile)
 
+	# get findemexe name
+	findemexepath = getFindEMPath()
+	findemexename = os.path.basename(findemexepath)
+
 	### WAIT FOR THREADS TO COMPLETE
 	if thread is True:
 		apDisplay.printMsg("waiting for "+str(len(joblist))+" findem threads to complete")
@@ -148,7 +152,7 @@ def runFindEM(imgdict, params, thread=False):
 				time.sleep(1.5)
 				numtimes+=1
 				if numtimes == 40:
-					pidof = "pidof findem64.exe"
+					pidof = "pidof %s" % findemexename
 					pids=subprocess.Popen(pidof, shell=True,stdout=subprocess.PIPE).stdout.read()
 					pids = pids.split()
 					for pid in pids:
