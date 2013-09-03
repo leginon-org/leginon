@@ -126,6 +126,7 @@ def runFindEM(imgdict, params, thread=False):
 			feed = findEMString(classavg, templatename, dwnimgname, ccmapfile, params)
 		
 
+
 		#RUN THE PROGRAM
 		if thread is True:
 			job = findemjob(feed)
@@ -140,10 +141,22 @@ def runFindEM(imgdict, params, thread=False):
 	### WAIT FOR THREADS TO COMPLETE
 	if thread is True:
 		apDisplay.printMsg("waiting for "+str(len(joblist))+" findem threads to complete")
+		numtimes = 0
 		for i,job in enumerate(joblist):
 			while job.isAlive():
 				sys.stderr.write(".")
 				time.sleep(1.5)
+				numtimes+=1
+				if numtimes == 40:
+					pidof = "pidof findem64.exe"
+					pids=subprocess.Popen(pidof, shell=True,stdout=subprocess.PIPE).stdout.read()
+					pids = pids.split()
+					for pid in pids:
+						os.kill(int(float(pid)),9)
+					
+					apDisplay.printWarning("\nFindEM likely stalled.  Re-running the template correlator command\n")
+					runFindEM(imgdict,params,thread)
+				
 		sys.stderr.write("\n")
 	apDisplay.printMsg("FindEM finished in "+apDisplay.timeString(time.time()-t0))
 
