@@ -71,7 +71,7 @@ echo "</td></tr>\n";
 */
 
 echo "<tr><td width='100' align='center'>\n";
-		echo "  <img src='img/lsqctf-logo.png' width='96'>\n";
+		echo "  <img src='img/PhasorCTF.png' width='96'>\n";
 echo "</td><td>\n";
 echo "  <h3><a href='runPhasorCtf.php?expId=$expId'>Phasor CTF</a></h3>\n";
 echo " <p>Phasor is a kitchen sink program. It tries several different methods "
