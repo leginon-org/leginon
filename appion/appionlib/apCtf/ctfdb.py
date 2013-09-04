@@ -261,7 +261,11 @@ def getBestCtfValueForImage(imgdata, ctfavg=True, msg=True, method=None):
 
 		conf = calculateConfidenceScore(ctfvalue, ctfavg)
 		if msg is True:
-			print "%d conf %.4f (res %.1f) (?? %.4f)"%(count, conf, ctfvalue['resolution_50_percent'], bestconf)
+			if ctfvalue['resolution_50_percent']:
+				print "%d conf %.4f (res %.1f) (?? %.4f)"%(count, conf, ctfvalue['resolution_50_percent'], bestconf)
+			else:
+				print "%d conf %.4f (?? %.4f)"%(count, conf, bestconf)
+				
 		
 		if conf > bestconf:
 			bestconf = conf

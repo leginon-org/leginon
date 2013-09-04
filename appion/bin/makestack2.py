@@ -390,6 +390,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 
 	#=======================
 	def getCS(self, ctfvalue):
+		cs = None
 		if ctfvalue['cs']:
 			cs = ctfvalue['cs']
 		elif ctfvalue['acerun']['ace2_params']:
@@ -608,7 +609,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 				angast = bestctfvalue['angle_astigmatism'] + 90			
 			amp = bestctfvalue['amplitude_contrast']
 			kv = imgdata['scope']['high tension']/1000
-			cs = bestctfvalue['cs']/1000
+			cs = self.getCS(bestctfvalue)/1000
 			conf = bestctfvalue['confidence_d']
 
 			if os.path.isfile(ctfvaluesfile):
