@@ -27,6 +27,7 @@ from pyami import mrc, arraystats
 import numpy
 import wx
 import sys
+import math
 from PIL import Image
 import leginon.gui.wx.Stats
 import ImagePanelTools
@@ -171,6 +172,15 @@ class ImagePanel(wx.Panel):
 		self.tools.append(tool)
 		return tool
 
+	def getPowerFactor(self,wximage):
+		'''
+		Determine factor used for determining padding based on imagesize and panelsize
+		'''
+		# We will not need to zoom out too much if wximage is small
+		ratio = max(wximage.GetWidth()/ float(self.imagesize[0]),wximage.GetHeight() / float(self.imagesize[1]))
+		power = math.ceil(math.log(ratio)/math.log(2))
+		return math.pow(2,power)
+
 	# image set functions
 	#--------------------
 	def setBitmap(self):
@@ -185,6 +195,13 @@ class ImagePanel(wx.Panel):
 		else:
 			self.bitmap = None
 			return
+
+		# Some images such as ones from Gatan K2 Summit can not be divided by power of 2
+		# Pad the image using resize makes the image display smoother.
+		factor = self.getPowerFactor(wximage)
+		goodsize = int(math.ceil(wximage.GetWidth()/factor)*factor),int(math.ceil(wximage.GetHeight()/factor)*factor)
+		if goodsize[0] != wximage.GetWidth() or goodsize[1] != wximage.GetHeight():
+			wximage.Resize((goodsize[0],goodsize[1]),(0,0))
 
 		if self.scaleImage():
 			xscale, yscale = self.getScale()
