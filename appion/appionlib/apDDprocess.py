@@ -190,8 +190,8 @@ class DirectDetectorProcessing(object):
 		Get list of frames
 		'''
 		# frame list according to start frame and number of frames
-		if not params['nframe']:
-			if params['startframe'] is None:
+		if 'nframe' not in params.keys() or not params['nframe']:
+			if 'startframe' not in params.keys() or params['startframe'] is None:
 				framelist = range(self.getNumberOfFrameSavedFromImageData(self.image))
 			else:
 				framelist = range(params['startframe'],self.getNumberOfFrameSavedFromImageData(self.image)-params['startframe'])

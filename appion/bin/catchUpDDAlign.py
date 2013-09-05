@@ -13,6 +13,8 @@ from appionlib import apDisplay
 from appionlib import apDDprocess
 from appionlib import apFile
 from appionlib import appiondata
+from appionlib import apDatabase
+from appionlib import apScriptLog
 
 class CatchUpFrameAlignmentLoop(appionScript.AppionScript):
 	#=======================
@@ -62,6 +64,12 @@ class CatchUpFrameAlignmentLoop(appionScript.AppionScript):
 		else:
 			self.dd.setTempDir(self.params['tempdir'])
 		self.dd.setNewBinning(self.rundata['params']['bin'])
+	
+		# Get the unfinished ddstack run parameters to apply them here
+		jobdata = apDatabase.getJobDataFromPathAndType(self.rundata['path']['path'], 'makeddrawframestack')
+		self.ddstack_script_params = apScriptLog.getScriptParamValuesFromRunname(self.rundata['runname'],self.rundata['path'],jobdata)
+		if 'no-keepstack' in self.ddstack_script_params.keys():
+			self.dd.setKeepStack(False)
 		# Give an unique lockname
 		self.setLockname('ddalign')
 
@@ -97,8 +105,12 @@ class CatchUpFrameAlignmentLoop(appionScript.AppionScript):
 			self.unlockParallel(imgdata.dbid)
 			return
 
+		# set align parameters for the image
+		framelist = self.dd.getFrameList(self.ddstack_script_params)
+		self.dd.setAlignedSumFrameList(framelist)
 		self.dd.setGPUid(self.params['gpuid'])
 		self.dd.setAlignedCameraEMData()
+
 		self.dd.alignCorrectedFrameStack()
 		if os.path.isfile(self.dd.aligned_stackpath):
 			self.aligned_imagedata = self.dd.makeAlignedImageData()
