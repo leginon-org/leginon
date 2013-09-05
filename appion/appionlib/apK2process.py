@@ -29,7 +29,6 @@ class GatanK2Processing(apDDprocess.DDFrameProcessing):
 		return range(self.getNumberOfFrameSavedFromImageData(imagedata))
 
 	def getRawFrameDirFromImage(self,imagedata):
-		print 'RawFrameType',self.getRawFrameType()
 		if self.getRawFrameType() == 'singles':
 			return super(GatanK2Processing,self).getRawFrameDirFromImage(imagedata)
 		'''
@@ -53,7 +52,6 @@ class GatanK2Processing(apDDprocess.DDFrameProcessing):
 		'''
 		Load one raw frame depending on the rawframetype
 		'''
-		print 'RawFrameType',self.getRawFrameType()
 		if self.getRawFrameType() == 'singles':
 			return super(GatanK2Processing,self).loadOneRawFrame(rawframe_path,frame_number)
 		'''
