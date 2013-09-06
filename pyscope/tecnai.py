@@ -96,6 +96,8 @@ class Tecnai(tem.TEM):
 				self.pressure_prop = gauge
 			except:
 				pass
+		self.probe_str_const = {'micro': win32com.client.constants.imMicroProbe, 'nano': win32com.client.constants.imNanoProbe}
+		self.probe_const_str = {win32com.client.constants.imMicroProbe: 'mirco', win32com.client.constants.imNanoProbe: 'nano'}
 
 	def getMagnificationsInitialized(self):
 		if self.magnifications:
@@ -290,18 +292,14 @@ class Tecnai(tem.TEM):
 		else:
 			raise ValueError
 
-	'''
-	probe_str_const = {'micro': win32com.client.constants.imMicroProbe, 'nano': win32com.client.constants.imNanoProbe}
-	probe_const_str = {win32com.client.constants.imMicroProbe: 'mirco', win32com.client.constants.imNanoProbe: 'nano'}
 	def getProbe(self):
 		const = self.tecnai.Illumination.Mode
-		probe = probe_const_str[const]
+		probe = self.probe_const_str[const]
 		return probe
 
 	def setProbe(self, probe_str):
-		const = probe_str_const[probe_str]
+		const = self.probe_str_const[probe_str]
 		self.tecnai.Illumination.Mode = const
-	'''
 
 	def getBeamBlank(self):
 		if self.tecnai.Illumination.BeamBlanked == 0:
