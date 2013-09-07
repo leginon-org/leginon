@@ -1207,24 +1207,26 @@
 	<sqltable name="UserData">
 		<field name="DEF_id" type="int(16)" null="NOT NULL" extra="auto_increment" />
 		<field name="DEF_timestamp" type="timestamp" null="NOT NULL" Default="CURRENT_TIMESTAMP" />
-		<field name="username" type="text" />
-		<field name="firstname" type="text" />
-		<field name="lastname" type="text" />
+		<field name="username" type="varchar(24)" />
+		<field name="firstname" type="varchar(24)" />
+		<field name="lastname" type="varchar(24)" />
 		<field name="password" type="char(32)" />
 		<field name="email" type="varchar(60)" />
 		<field name="REF|GroupData|group" type="int(20)" />
 		<field name="noleginon" type="tinyint(1)" Default="0" />
 		<field name="advanced" type="tinyint(1)" Default="0" />
     <key>PRIMARY KEY (`DEF_id`)</key>
+    <key>UNIQUE `username` (`username`)</key>
     <key>KEY `DEF_timestamp` (`DEF_timestamp`)</key>
     <key>KEY `REF|GroupData|group` (`REF|GroupData|group`)</key>
+    <key>KEY `email` (`email`)</key>
 	</sqltable>
 	<sqltable name="ViewerImageStatus">
 		<field name="DEF_id" type="int(11)" null="NOT NULL" extra="auto_increment" />
 		<field name="DEF_timestamp" type="timestamp" null="NOT NULL" Default="CURRENT_TIMESTAMP" />
 		<field name="REF|SessionData|session" type="int(11)" />
 		<field name="REF|AcquisitionImageData|image" type="int(11)" />
-		<field name="status" type="enum('hidden','visible','exemplar')" />
+		<field name="status" type="enum('hidden','visible','exemplar','trash')" />
     <key>PRIMARY KEY (`DEF_id`)</key>
     <key>KEY `DEF_timestamp` (`DEF_timestamp`)</key>
     <key>KEY `REF|SessionData|session` (`REF|SessionData|session`)</key>
