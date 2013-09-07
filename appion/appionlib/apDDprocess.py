@@ -7,6 +7,7 @@ import time
 import math
 import scipy.stats
 import scipy.ndimage as ndimage
+ma = numpy.ma
 import numextension
 import shutil
 from pyami import mrc,imagefun,arraystats,numpil
@@ -14,6 +15,7 @@ from leginon import correctorclient,leginondata,ddinfo
 from appionlib import apDisplay, apDatabase,apDBImage, appiondata,apFile
 import subprocess
 import socket
+import itertools
 
 # testing options
 save_jpg = False
@@ -47,6 +49,7 @@ class DirectDetectorProcessing(object):
 		self.setRunDir(os.getcwd())
 		self.setTempDir()
 		self.sumframelist = None
+		self.altchannel_cycler = itertools.cycle([False,True])
 
 	def setImageId(self,imageid):
 		from leginon import leginondata
@@ -203,7 +206,7 @@ class DirectDetectorProcessing(object):
 			# drift limit considered
 			stillframes = self.getStillFrames(params['driftlimit'] / params['apix'])
 			if stillframes is False:
-				return farmelist
+				return framelist
 			framelist = list(set(framelist).intersection(set(stillframes)))
 			framelist.sort()
 			apDisplay.printMsg('Limit frames used to %s' % (framelist,))
@@ -236,6 +239,7 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		self.save_aligned_stack = True
 		self.hostname = socket.gethostname().split('.')[0]
 		self.setUseAlternativeChannelReference(False)
+		self.setCycleReferenceChannels(False)
 		self.setDefaultImageForReference(0)
 		if debug:
 			self.log = open('newref.log','w')
@@ -321,6 +325,9 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		if not self.waitForPathExist(rawframedir):
 			apDisplay.printError('Raw Frame Dir %s does not exist.' % rawframedir)
 		return rawframedir
+
+	def setCycleReferenceChannels(self, value=False):
+		self.cycle_ref_channels = value
 
 	def setUseAlternativeChannelReference(self,use_alt_channel=False):
 		self.use_alt_channel_ref = use_alt_channel
@@ -426,6 +433,7 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		'''
 		set cemrainfo attributes with current values of the image
 		'''
+		apDisplay.printMsg('Setting new camera info....')
 		self.camerainfo = self.__getCameraInfoFromImage(nframe,use_full_raw_area)
 
 	def __getCameraInfoFromImage(self,nframe,use_full_raw_area):
@@ -449,9 +457,7 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		camerainfo['dimension'] = dimension
 		camerainfo['nframe'] = nframe
 		camerainfo['norm'] = self.getRefImageData('norm')
-		if camerainfo['norm']:
-			print camerainfo['norm']['filename']
-		else:
+		if not camerainfo['norm']:
 			self.correct_dark_gain = False
 		# Really should check frame rate but it is not saved now, so use exposure time
 		camerainfo['exposure time'] = imagecam['exposure time']
@@ -616,6 +622,10 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		nframe = len(framelist)
 		start_frame = framelist[0]
 		get_new_refs = self.__conditionChanged(nframe,use_full_raw_area)
+		if self.cycle_ref_channels:
+			# alternate channels
+			get_new_refs = True
+			self.setUseAlternativeChannelReference(self.altchannel_cycler.next())
 		if debug:
 			self.log.write('%s %s\n' % (self.image['filename'],get_new_refs))
 		if not get_new_refs and start_frame != 0:
@@ -658,8 +668,11 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		# MASK CORRECTION
 		if self.correct_frame_mask:
 			if get_new_refs:
-				apDisplay.printMsg('Making debris mask')
-				mask = self.makeMaskArray(start_frame)
+				#aDisplay.printMsg('Making debris mask')
+				# mask = self.makeMaskArray(start_frame)
+				# experimental.  Need to create variance.map to run
+				aDisplay.printMsg('Making variance threshold mask')
+				mask = self.makeVarianceMaskArray()
 				self.mask = mask
 				if save_jpg and mask.max() > mask.min():
 					numpil.write(mask.astype(numpy.int)*255,'%s_mask.jpg' % ddtype,'jpeg')
@@ -699,7 +712,6 @@ class DDFrameProcessing(DirectDetectorProcessing):
 				corrected = self.correctMaskRegion(corrected,mask,True)
 		if save_jpg:
 			numpil.write(corrected,'%s_gain_corrected.jpg' % ddtype,'jpeg')
-		print 'corrected',arraystats.mean(corrected),corrected.min(),corrected.max()
 
 		return corrected
 
@@ -756,6 +768,20 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		#mrc.write(mask.astype(numpy.int),'maskb.mrc')
 		return mask
 
+	def makeLowVarianceMask(self,var_map,thresh=10):
+		masked = ma.masked_less_equal(var_map,thresh)
+		return masked.mask
+
+	def makeHighVarianceMask(self,var_map,thresh=1000000):
+		masked = ma.masked_greater_equal(var_map,thresh)
+		return masked.mask
+
+	def makeVarianceMaskArray(self,variancepath='variance.mrc'):
+		v = mrc.read(variancepath)
+		v1 = self.makeLowVarianceMask(v, 0.7)
+		v2 = self.makeHighVarianceMask(v,10.0)
+		return numpy.logical_or(v1,v2)
+
 	def correctMaskRegion(self,image,mask,use_random=True):
 		'''
 		Fill in mask region with either random number of normal distribution
@@ -786,7 +812,7 @@ class DDFrameProcessing(DirectDetectorProcessing):
 
 	def makeRawFrameStack(self):
 		'''
-		Creates a file of uncorrected stack of frames
+		Creates a file of non-gain/dark corrected stack of frames
 		'''
 		sys.stdout.write('\a')
 		sys.stdout.flush()
@@ -861,6 +887,7 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		half_way_frame = int(total_frames // 2)
 		first = 0
 		for start_frame in range(first,first+total_frames):
+			apDisplay.printMsg('Processing New Frame::::: ')
 			array = self.__correctFrameImage([start_frame,],use_full_raw_area)
 			# if non-fatal error occurs, end here
 			if array is False:

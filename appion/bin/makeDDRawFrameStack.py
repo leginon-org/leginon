@@ -35,6 +35,8 @@ class MakeFrameStackLoop(appionLoop2.AppionLoop):
 			action="store_true", help="Make unaligned frame stack first on computer without gpu alignment program")
 		self.parser.add_option("--no-keepstack", dest="keepstack", default=True,
 			action="store_false", help="Clean up frame stack after alignment and sum image upload")
+		self.parser.add_option("--no-cyclechannels", dest="cyclechannels", default=True,
+			action="store_false", help="Use only one reference channel for gain/dark correction")
 		# String
 		self.parser.add_option("--tempdir", dest="tempdir",
 			help="Local path for storing temporary stack output, e.g. --tempdir=/tmp/appion/makeddstack",
@@ -114,6 +116,7 @@ class MakeFrameStackLoop(appionLoop2.AppionLoop):
 		self.dd.setGPUid(self.params['gpuid'])
 		# keepstack is resolved for various cases in conflict check.  There should be no ambiguity by now
 		self.dd.setKeepStack(self.params['keepstack'])
+		self.dd.setCycleReferenceChannels(self.params['cyclechannels'])
 		
 		if self.params['refimgid']:
 			self.dd.setDefaultImageForReference(self.params['refimgid'])
