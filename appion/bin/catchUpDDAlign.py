@@ -27,6 +27,8 @@ class CatchUpFrameAlignmentLoop(appionScript.AppionScript):
 			help="List of mrc files to process, e.g. --mrclist=..003en,..002en,..006en", metavar="MRCNAME")
 		self.parser.add_option("--gpuid", dest="gpuid", type="int", default=0,
 			help="GPU device id used in gpu processing", metavar="INT")
+		self.parser.add_option("--limit", dest="limit", type="int", default=0,
+			help="Limit image processing to this number.  0 means no limit", metavar="INT")
 
 	#=======================
 	def checkConflicts(self):
@@ -72,6 +74,7 @@ class CatchUpFrameAlignmentLoop(appionScript.AppionScript):
 			self.dd.setKeepStack(False)
 		# Give an unique lockname
 		self.setLockname('ddalign')
+		self.success_count = 0
 
 	def hasDDAlignedImagePair(self):
 		alignpairdata = self.dd.getAlignImagePairData(self.rundata,query_source=True)
@@ -117,6 +120,7 @@ class CatchUpFrameAlignmentLoop(appionScript.AppionScript):
 			apDisplay.printMsg(' Replacing unaligned stack with the aligned one....')
 			apFile.removeFile(self.dd.framestackpath)
 			shutil.move(self.dd.aligned_stackpath,self.dd.framestackpath)
+			self.success_count += 1
 		self.unlockParallel(imgdata.dbid)
 
 	def commitToDatabase(self, imgdata):
@@ -142,11 +146,17 @@ class CatchUpFrameAlignmentLoop(appionScript.AppionScript):
 		allfiles = self.getAllFiles()
 		images = []
 		for filename in allfiles:
-			if os.path.isfile(filename) and '_st.mrc' in filename:
-				imagedata = leginondata.AcquisitionImageData(session=self.rundata['session'],filename=filename[:-7]).query()[0]
+			if os.path.isfile(filename) and '_st.mrc' in filename and self.rundata['session']['name'] in filename:
+				try:
+					imagedata = leginondata.AcquisitionImageData(session=self.rundata['session'],filename=filename[:-7]).query()[0]
+				except:
+					continue
 				images.append(imagedata)
 		self.num_stacks = len(images)
 		for imagedata in images:
+			if self.params['limit'] > 0:
+				if self.success_count >= self.params['limit']:
+					return True
 			# Avoid hidden images
 			if leginondata.ViewerImageStatus(image=imagedata,status='hidden').query():
 				apDisplay.printMsg('---------------------------------------------------------')
@@ -160,6 +170,7 @@ class CatchUpFrameAlignmentLoop(appionScript.AppionScript):
 			if self.params['commit']:
 				self.commitToDatabase(imagedata)
 			apDisplay.printMsg('\n')
+		return False
 
 	def start(self):
 		print 'wait=',self.params['wait']
@@ -169,7 +180,10 @@ class CatchUpFrameAlignmentLoop(appionScript.AppionScript):
 		if self.params['wait']:
 			num_trials = 0
 			while True:
-				self.loopCheckAndProcess()
+				limit_reached = self.loopCheckAndProcess()
+				if limit_reached:
+					apDisplay.printMsg('image limit reached. Stoping...')
+					break
 				if self.num_stacks <= self.last_num_stacks:
 					if num_trials >= max_loop_num_trials:
 						apDisplay.printColor('Checked for stack file %d times. Finishing....' % max_loop_num_trials,'magenta')
