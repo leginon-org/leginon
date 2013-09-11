@@ -240,7 +240,7 @@ class XmippParams extends RefineFormParameters
 		$msg = parent::validate();
 
 		if ( !empty($this->params["mask"]["value"]) && !empty($this->params["outerMaskRadius"]["value"]) )
-			$msg .= "<b>Error:</b> You may not define both the outer mask raduis and a mask file.";
+			$msg .= "<b>Error:</b> You may not define both the outer mask radius and a mask file.";
 				
 		return $msg;
 	}
