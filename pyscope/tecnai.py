@@ -97,7 +97,7 @@ class Tecnai(tem.TEM):
 			except:
 				pass
 		self.probe_str_const = {'micro': win32com.client.constants.imMicroProbe, 'nano': win32com.client.constants.imNanoProbe}
-		self.probe_const_str = {win32com.client.constants.imMicroProbe: 'mirco', win32com.client.constants.imNanoProbe: 'nano'}
+		self.probe_const_str = {win32com.client.constants.imMicroProbe: 'micro', win32com.client.constants.imNanoProbe: 'nano'}
 
 	def getMagnificationsInitialized(self):
 		if self.magnifications:
