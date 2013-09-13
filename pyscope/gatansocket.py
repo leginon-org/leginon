@@ -8,8 +8,11 @@ import socket
 import numpy
 import time
 
-## set this to a file name to log some socket debug messages
+## set this to a file name to log some socket debug messages.
+## Set to None to avoid saving a log.
+## for example:
 debug_log = None
+#debug_log = 'gatansocket.log'
 
 # enum function codes as in GatanSocket.cpp and SocketPathway.cpp
 enum_gs = [
@@ -104,19 +107,21 @@ def log(message):
 	if debug_log is None:
 		return
 	f = open(debug_log, 'a')
-	line = '%f\t'
-	f.write(message)
+	line = '%f\t%s\n' % (time.time(), message)
+	f.write(line)
+	f.close()
 
 ## decorator for socket send and recv calls, so they can make log
 def logwrap(func):
 	def newfunc(*args, **kwargs):
-		log('%s\t%s\t%s' % (func,args,kwargs)
+		log('%s\t%s\t%s' % (func,args,kwargs))
 		try:
 			result = func(*args, **kwargs)
 		except Exception, exc:
 			log('EXCEPTION: %s' % (exc,))
 			raise
 		return result
+	return newfunc
 
 class GatanSocket(object):
 	def __init__(self, host='', port=None):
@@ -201,6 +206,7 @@ class GatanSocket(object):
 		message_recv = Message(longargs=(0,))
 		self.ExchangeMessages(message_send, message_recv)
 
+	@logwrap
 	def SetK2Parameters(self, readMode, scaling, hardwareProc, doseFrac, frameTime, alignFrames, saveFrames, filt=''):
 		funcCode = enum_gs['GS_SetK2Parameters']
 
@@ -231,6 +237,7 @@ class GatanSocket(object):
 		message_recv = Message(longargs=(0,)) # just return code
 		self.ExchangeMessages(message_send, message_recv)
 
+	@logwrap
 	def SetupFileSaving(self, rotationFlip, dirname, rootname, filePerImage):
 		longs = [enum_gs['GS_SetupFileSaving'], rotationFlip]
 		bools = [filePerImage,]
@@ -261,6 +268,7 @@ class GatanSocket(object):
 		message_recv = Message(longargs=(0,))
 		self.ExchangeMessages(message_send, message_recv)
 		
+	@logwrap
 	def GetImage(self, processing, height, width, binning, top, left, bottom, right, exposure, shutterDelay):
 
 		arrSize = width * height
