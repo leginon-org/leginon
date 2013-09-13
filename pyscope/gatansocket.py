@@ -6,6 +6,10 @@ This defines a client class to interface with the socket based DM plugin.
 import os
 import socket
 import numpy
+import time
+
+## set this to a file name to log some socket debug messages
+debug_log = None
 
 # enum function codes as in GatanSocket.cpp and SocketPathway.cpp
 enum_gs = [
@@ -95,6 +99,25 @@ and optional long array.
 		'''
 		self.array = numpy.frombuffer(buf, dtype=self.dtype)[0]
 
+def log(message):
+	global debug_log
+	if debug_log is None:
+		return
+	f = open(debug_log, 'a')
+	line = '%f\t'
+	f.write(message)
+
+## decorator for socket send and recv calls, so they can make log
+def logwrap(func):
+	def newfunc(*args, **kwargs):
+		log('%s\t%s\t%s' % (func,args,kwargs)
+		try:
+			result = func(*args, **kwargs)
+		except Exception, exc:
+			log('EXCEPTION: %s' % (exc,))
+			raise
+		return result
+
 class GatanSocket(object):
 	def __init__(self, host='', port=None):
 		self.host = host
@@ -109,8 +132,16 @@ class GatanSocket(object):
 	def connect(self):
 		self.sock = socket.create_connection((self.host,self.port))
 
+	@logwrap
+	def send_data(self, data):
+		return self.sock.sendall(data)
+
+	@logwrap
+	def recv_data(self, n):
+		return self.sock.recv(n)
+
 	def ExchangeMessages(self, message_send, message_recv=None):
-		self.sock.sendall(message_send.pack())
+		self.send_data(message_send.pack())
 		if message_recv is None:
 			return
 		recv_buffer = message_recv.pack()
@@ -119,7 +150,7 @@ class GatanSocket(object):
 		parts = []
 		while total_recv < recv_len:
 			remain = recv_len - total_recv
-			new_recv = self.sock.recv(remain)
+			new_recv = self.recv_data(remain)
 			parts.append(new_recv)
 			total_recv += len(new_recv)
 		buf = ''.join(parts)
@@ -297,7 +328,7 @@ class GatanSocket(object):
 			chunkReceived = 0
 			chunkRemain = thisChunkSize
 			while chunkRemain:
-				new_recv = self.sock.recv(chunkRemain)
+				new_recv = self.recv_data(chunkRemain)
 				len_recv = len(new_recv)
 				imArray.data[received:received+len_recv] = new_recv
 				chunkReceived += len_recv
