@@ -225,7 +225,19 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 	def onSetImage(self, evt):
 		leginon.gui.wx.Node.Panel.onSetImage(self, evt)
 
+	def resetInstruments(self):
+		'''
+		Use gui value to set proxy instrument.  This is called before
+		settings dialog is opened since
+		gui initialization may come before instruments are available.
+		It causes mismatch of gui and the instrument in proxy
+		'''
+		dialogvalues = self.settingsdialog.widgets['instruments'].GetValue()
+		self.node.instrument.setTEM(dialogvalues['tem'])
+		self.node.instrument.setCCDCamera(dialogvalues['ccdcamera'])
+
 	def onSettingsTool(self, evt):
+		self.resetInstruments()
 		self.settingsdialog.ShowModal()
 		plan = self.node.retrieveCorrectorPlanFromSettings()
 		self.setPlan(plan)
