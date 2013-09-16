@@ -244,7 +244,7 @@ class AutoMasker(appionLoop2.AppionLoop):
 		blur         = str(self.params['blur'])
 		options = " --downsample=" +  downsample + " --compsizethresh=" + compsizethresh + " --adapthresh=" + adapthresh + " --blur=" + blur + " --dilation=" + dilation + " --erosion=" + erosion;
 		
-		commandline = ( "source " + self.activatepath + "; python find_mask.py --ifile=" + jpg_image + " --ofile=" + self.outfile + options + "\n" )
+		commandline = ( "source " + self.activatepath + "; python `which find_mask.py` --ifile=" + jpg_image + " --ofile=" + self.outfile + options + "\n" )
 		# Test with test image
 		#commandline = ( "source /opt/em_hole_finder/env/bin/activate; python /opt/em_hole_finder/find_mask_amber.py \n" )
 
