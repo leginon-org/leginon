@@ -3,8 +3,28 @@ import ccdcamera
 import numpy
 import time
 
+## create a single connection to TIA COM object.
+## Muliple calls to get_tiaccd will return the same connection.
+## Store the handle in the com module, which is safer than in
+## this module due to multiple imports.
+class TIAConnection(object):
+	esv = None
+	acqman = None
+	ccd = None
+
+connection = TIAConnection()
+comtypes.client.tiaccd = connection
+def get_tiaccd():
+	global connection
+	if connection.esv is None:
+		connection.esv = comtypes.client.CreateObject('ESVision.Application')
+		connection.acqman = connection.esv.AcquisitionManager()
+		connection.ccd = connection.esv.CcdServer()
+	return connection
+
 class TIA(ccdcamera.CCDCamera):
 	name = 'TIA'
+	camera_name = None
 
 	def __init__(self):
 		self.unsupported = [
@@ -19,6 +39,16 @@ class TIA(ccdcamera.CCDCamera):
 		self.imagename = self.tianame + ' Image'
 		self._connectToESVision()
 		self.initSettings()
+
+	def __getattr__(self, name):
+		# When asked for self.camera, instead return self._camera, but only
+		# after setting the current camera id
+		if name == 'ccd':
+			if self.camera_name is not None:
+				self._ccd.Camera = self.camera_name
+			return self._ccd
+		else:
+			return ccdcamera.CCDCamera.__getattr__(self, name)
 
 	def initSettings(self):
 		self.dimension = self._getCameraSize()
@@ -47,9 +77,10 @@ class TIA(ccdcamera.CCDCamera):
 		'''
 		Connects to the ESVision COM server
 		'''
-		self.esv = comtypes.client.CreateObject('ESVision.Application')
-		self.acqman = self.esv.AcquisitionManager()
-		self.ccd = self.esv.CcdServer()
+		connection = get_tiaccd()
+		self.esv = connection.esv
+		self.acqman = connection.acqman
+		self._ccd = connection.ccd
 
 		## scan mode to spot so CCD can be setup
 		#self.esv.ScanningServer().ScanMode = 0
@@ -215,3 +246,9 @@ acquisition.
 			return 6.6
 		elif binning == 8:
 			return 7.8
+
+class TIA_Falcon(TIA):
+	camera_name = 'BM-Falcon'
+
+class TIA_Orius(TIA):
+	camera_name = 'BM-Orius'
