@@ -249,6 +249,7 @@ acquisition.
 
 class TIA_Falcon(TIA):
 	camera_name = 'BM-Falcon'
+	binning_limits = [1,2,4]
 
 class TIA_Orius(TIA):
 	camera_name = 'BM-Orius'
