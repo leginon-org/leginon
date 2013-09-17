@@ -164,6 +164,7 @@ scope_params = (
 	('tem energy filter', bool),
 	('tem energy filter width', float),
 	('aperture size', dict),
+	('probe mode', str),
 )
 camera_params = (
 	('dimension', dict),
@@ -502,6 +503,7 @@ class PresetData(InSessionData):
 			('align filter', str),
 			('use frames', tuple),
 			('readout delay', int),
+			('probe mode', str),
 		)
 	typemap = classmethod(typemap)
 

@@ -292,14 +292,17 @@ class Tecnai(tem.TEM):
 		else:
 			raise ValueError
 
-	def getProbe(self):
+	def getProbeMode(self):
 		const = self.tecnai.Illumination.Mode
 		probe = self.probe_const_str[const]
 		return probe
 
-	def setProbe(self, probe_str):
+	def setProbeMode(self, probe_str):
 		const = self.probe_str_const[probe_str]
 		self.tecnai.Illumination.Mode = const
+
+	def getProbeModes(self):
+		return list(self.probe_str_const.keys())
 
 	def getBeamBlank(self):
 		if self.tecnai.Illumination.BeamBlanked == 0:

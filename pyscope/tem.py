@@ -64,6 +64,7 @@ class TEM(baseinstrument.BaseInstrument):
 		{'name': 'LowDoseMode', 'type': 'property'},
 		{'name': 'Magnification', 'type': 'property'},
 		{'name': 'MainScreenPosition', 'type': 'property'},
+		{'name': 'ProbeMode', 'type': 'property'},
 		{'name': 'RawImageShift', 'type': 'property'},
 		{'name': 'Shutter', 'type': 'property'},
 		{'name': 'SpotSize', 'type': 'property'},

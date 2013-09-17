@@ -30,6 +30,12 @@ class SimTEM(tem.TEM):
 		]
 		self.magnification_index = 0
 
+		self.probe_modes = [
+			'micro',
+			'nano',
+		]
+		self.probe_mode_index = 0
+
 		self.stage_axes = ['x', 'y', 'z', 'a']
 		if nidaq is not None:
 			self.stage_axes.append('b')
@@ -255,6 +261,28 @@ class SimTEM(tem.TEM):
 
 	def getMagnificationsInitialized(self):
 		return True
+
+	def getProbeMode(self, index=None):
+		print 'get probemode index',index
+		if index is None:
+			index = self.probe_mode_index
+		try:
+			print index, self.probe_modes[index]
+			return self.probe_modes[index]
+		except IndexError:
+			raise ValueError('invalid probe mode')
+
+	def setProbeMode(self, value):
+		print self.probe_modes
+		print 'set probemode value',value
+		try:
+			self.probe_mode_index = self.probe_modes.index(str(value))
+			print self.probe_mode_index
+		except ValueError:
+			raise ValueError('invalid probe mode')
+
+	def getProbeModes(self):
+		return list(self.probe_modes)
 
 	def getMainScreenPositions(self):
 		return list(self.main_screen_positions)

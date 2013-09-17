@@ -375,6 +375,7 @@ parametermapping = (
 	('tem energy filter', 'EnergyFilter'),
 	('tem energy filter width', 'EnergyFilterWidth'),
 	('aperture size', 'ApertureSize'),
+	('probe mode','ProbeMode'),
 	# not used
 	#('beam blank', 'BeamBlank'),
 	#('film exposure', 'filmExposure'),
