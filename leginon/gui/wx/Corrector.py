@@ -233,6 +233,9 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 		It causes mismatch of gui and the instrument in proxy
 		'''
 		dialogvalues = self.settingsdialog.widgets['instruments'].GetValue()
+		for instrument in dialogvalues.keys():
+			if dialogvalues[instrument] == 'None':
+				dialogvalues[instrument] = None
 		self.node.instrument.setTEM(dialogvalues['tem'])
 		self.node.instrument.setCCDCamera(dialogvalues['ccdcamera'])
 
