@@ -222,8 +222,15 @@ acquisition.
 			return True
 
 	def setInserted(self, value):
-		if self.getRetractable():
-			self.ccd.CameraInserted = value
+		# return if already at this insertion state
+		if not self.getRetractable() or not (value ^ self.getInserted()):
+			return
+		if value:
+			sleeptime = 5
+		else:
+			sleeptime = 1
+		self.ccd.CameraInserted = value
+		time.sleep(sleeptime)
 
 	def getEnergyFiltered(self):
 		return False
