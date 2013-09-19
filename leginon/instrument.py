@@ -187,6 +187,7 @@ class Proxy(object):
 		return dbinstrumentdata
 
 	def setTEM(self, name):
+		print 'name'
 		if name is None:
 			self.tem = None
 		else:
@@ -338,7 +339,9 @@ class CCDCamera(remotecall.Locker):
 
 parametermapping = (
 	# ScopeEM
+	# The order should base on dependency
 	('system time', 'SystemTime'),
+	('probe mode','ProbeMode'),
 	('magnification', 'Magnification'),
 	('spot size', 'SpotSize'),
 	('image shift', 'ImageShift'),
@@ -375,7 +378,6 @@ parametermapping = (
 	('tem energy filter', 'EnergyFilter'),
 	('tem energy filter width', 'EnergyFilterWidth'),
 	('aperture size', 'ApertureSize'),
-	('probe mode','ProbeMode'),
 	# not used
 	#('beam blank', 'BeamBlank'),
 	#('film exposure', 'filmExposure'),
