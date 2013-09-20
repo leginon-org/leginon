@@ -187,7 +187,6 @@ class Proxy(object):
 		return dbinstrumentdata
 
 	def setTEM(self, name):
-		print 'name'
 		if name is None:
 			self.tem = None
 		else:
