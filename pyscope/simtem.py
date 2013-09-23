@@ -262,18 +262,15 @@ class SimTEM(tem.TEM):
 	def getMagnificationsInitialized(self):
 		return True
 
-	def getProbeMode(self, index=None):
-		print 'get probemode index',index
-		if index is None:
-			index = self.probe_mode_index
+	def getProbeMode(self):
+		index = self.probe_mode_index
 		try:
-			print index, self.probe_modes[index]
+			print 'get probe mode result', self.probe_modes[index]
 			return self.probe_modes[index]
 		except IndexError:
 			raise ValueError('invalid probe mode')
 
 	def setProbeMode(self, value):
-		print self.probe_modes
 		print 'set probemode value',value
 		try:
 			self.probe_mode_index = self.probe_modes.index(str(value))
@@ -340,4 +337,3 @@ class SimTEM(tem.TEM):
 	def setEnergyFilterWidth(self, value):
 		#print 'TEM energy filter width = ', value
 		self.energy_filter_width = float(value)
-
