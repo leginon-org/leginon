@@ -158,7 +158,7 @@ class CatchUpFrameAlignmentLoop(appionScript.AppionScript):
 				if self.success_count >= self.params['limit']:
 					return True
 			# Avoid hidden and trash images
-			if not apDatabase.getImgCompleteStatus(imagedata):
+			if apDatabase.getImgCompleteStatus(imagedata) == False:
 				apDisplay.printMsg('---------------------------------------------------------')
 				apDisplay.printMsg(' Skipping hidden/trashed %s' % imagedata['filename'])
 				apDisplay.printMsg('---------------------------------------------------------')

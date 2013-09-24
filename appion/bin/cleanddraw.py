@@ -60,6 +60,9 @@ def limitImagesToRemoveByStatus(all,status,sessiondata):
 			q['status'] = vstatus
 			hiddens = q.query()
 			hiddenids.extend(map((lambda x: x['image'].dbid), hiddens))
+		hiddenids = list(set(hiddenids))
+		hiddenids.sort()
+		
 		for imagedata in all:
 			source_imagedata, alignedimageids = getAlignedImageIds(imagedata)
 			sys.stderr.write(".")
