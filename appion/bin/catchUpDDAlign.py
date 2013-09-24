@@ -157,10 +157,10 @@ class CatchUpFrameAlignmentLoop(appionScript.AppionScript):
 			if self.params['limit'] > 0:
 				if self.success_count >= self.params['limit']:
 					return True
-			# Avoid hidden images
-			if leginondata.ViewerImageStatus(image=imagedata,status='hidden').query():
+			# Avoid hidden and trash images
+			if not apDatabase.getImgCompleteStatus(imagedata):
 				apDisplay.printMsg('---------------------------------------------------------')
-				apDisplay.printMsg(' Skipping hidden %s' % imagedata['filename'])
+				apDisplay.printMsg(' Skipping hidden/trashed %s' % imagedata['filename'])
 				apDisplay.printMsg('---------------------------------------------------------')
 				continue
 			apDisplay.printMsg('---------------------------------------------------------')

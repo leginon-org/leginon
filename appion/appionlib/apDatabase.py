@@ -499,7 +499,7 @@ def getDarkNorm(sessionname, cameraconfig):
 def getImgViewerStatus(imgdata):
 	"""
 	Function that returns whether or not the image was hidden in the viewer
-	False: Image was hidden
+	False: Image was hidden or trash
 	True: Image is an exemplar
 	None: Image is visible
 
@@ -513,6 +513,8 @@ def getImgViewerStatus(imgdata):
 
 	statusdata = statusdatas[0]
 	if statusdata['status']=='hidden':
+		return False
+	if statusdata['status']=='trash':
 		return False
 	if statusdata['status']=='exemplar':
 		return True

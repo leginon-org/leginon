@@ -51,11 +51,15 @@ def limitImagesToRemoveByStatus(all,status,sessiondata):
 	to_remove = []
 	to_remove_ids = []
 	q = leginon.leginondata.ViewerImageStatus(session=sessiondata)
-	if status == 'hidden':
+	statusmap = {'hidden':['hidden'],'trash':['trash'],'rejected':['hidden','trash']}
+	if status in statusmap.keys():
+		hiddenids = []
 		# pick hidden images
-		q['status'] = 'hidden'
-		hiddens = q.query()
-		hiddenids = map((lambda x: x['image'].dbid), hiddens)
+		for vstatus in statusmap[status]:
+			q = leginon.leginondata.ViewerImageStatus(session=sessiondata)
+			q['status'] = vstatus
+			hiddens = q.query()
+			hiddenids.extend(map((lambda x: x['image'].dbid), hiddens))
 		for imagedata in all:
 			source_imagedata, alignedimageids = getAlignedImageIds(imagedata)
 			sys.stderr.write(".")
@@ -135,11 +139,12 @@ def	removeFrames(to_remove):
 	return remove_count,not_exist_count
 
 if __name__ == '__main__':
-	valid_status = ('hidden','not-best','all')
+	valid_status = ('hidden','trash','rejected','not-best','all')
 	if len(sys.argv) != 3:
 		print 'Usage: cleanddraw.py sessionname status'
 		print '  sessionname (str): Leginon session name'
-		print '  status (choice): "hidden", "not-best", or "all"'
+		print '  status (choice): "hidden", "trash", "rejected", "not-best", or "all"'
+		print '  "rejected" includes both "hidden" and "trash".'
 		sys.exit()
 	# check input
 	sessionname = sys.argv[1]
