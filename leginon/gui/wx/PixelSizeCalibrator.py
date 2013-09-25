@@ -319,7 +319,7 @@ class EditDialog(wx.Dialog):
 
 class PixelSizeListCtrl(wx.ListCtrl, ListCtrlAutoWidthMixin):
 	def __init__(self, parent, id):
-		wx.ListCtrl.__init__(self, parent, id,
+		wx.ListCtrl.__init__(self, parent, id, size=wx.Size(200,100),
 													style=wx.LC_REPORT|wx.LC_HRULES|wx.LC_VRULES)
 		ListCtrlAutoWidthMixin.__init__(self)
 		self.InsertColumn(0, 'Magnification', wx.LIST_FORMAT_RIGHT)

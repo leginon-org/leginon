@@ -377,7 +377,7 @@ class SessionNamePage(WizardPage):
 		sizer.Add(self.holderctrl, (2,1), (1,1))
 
 		sizer.Add(wx.StaticText(self, -1, 'Description:'), (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		self.descriptiontextctrl = wx.TextCtrl(self, -1, '', style=wx.TE_MULTILINE)
+		self.descriptiontextctrl = wx.TextCtrl(self, -1, '', size=wx.Size(-1,50), style=wx.TE_MULTILINE)
 		sizer.Add(self.descriptiontextctrl, (4, 0), (1, 2), wx.EXPAND|wx.ALL)
 
 
