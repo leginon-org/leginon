@@ -249,6 +249,7 @@ class PresetsManager(node.Node):
 			'image':calibrationclient.ImageShiftCalibrationClient(self),
 			'stage':calibrationclient.StageCalibrationClient(self),
 			'beam':calibrationclient.BeamShiftCalibrationClient(self),
+			'beam tilt':calibrationclient.BeamTiltCalibrationClient(self),
 			'modeled stage':calibrationclient.ModeledStageCalibrationClient(self),
 		}
 		self.dosecal = calibrationclient.DoseCalibrationClient(self)
@@ -872,6 +873,7 @@ class PresetsManager(node.Node):
 		ht = self.getHighTension()
 		tem = preset['tem']
 		cam = preset['ccdcamera']
+		probe = preset['probe mode']
 
 		## not dependent on HT
 		ptime = str(self.calclients['pixel size'].time(tem, cam, mag))
@@ -887,6 +889,7 @@ class PresetsManager(node.Node):
 			stagetime = self.calclients['stage'].time(tem, cam, ht, mag, 'stage position')
 			imagetime = self.calclients['image'].time(tem, cam, ht, mag, 'image shift')
 			beamtime = self.calclients['beam'].time(tem, cam, ht, mag, 'beam shift')
+			defocustime = self.calclients['beam tilt'].time(tem, cam, ht, mag, 'defocus', probe)
 			modmagtimex = self.calclients['modeled stage'].timeMagCalibration(tem, cam, ht,
 																																			mag, 'x')
 			modmagtimey = self.calclients['modeled stage'].timeMagCalibration(tem, cam, ht,
@@ -900,6 +903,7 @@ class PresetsManager(node.Node):
 			'beam': str(beamtime),
 			'modeled stage': str(modtime),
 			'modeled stage mag only': str(modmagtime),
+			'defocus': str(defocustime),
 		}
 
 		self.panel.setCalibrations(times)

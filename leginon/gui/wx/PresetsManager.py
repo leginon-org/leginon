@@ -101,6 +101,7 @@ class Calibrations(wx.StaticBoxSizer):
 			('beam', 'Beam shift'),
 			('modeled stage', 'Modeled stage'),
 			('modeled stage mag only', 'Modeled stage (mag. only)'),
+			('defocus', 'Beam tilt - Defocus'),
 		]
 
 		self.sts = {}
