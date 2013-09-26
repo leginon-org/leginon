@@ -145,6 +145,7 @@ function createTopolAlignForm($extra=false, $title='topologyAlignment.py Launche
 	$mask = ($_POST['mask']) ? $_POST['mask'] : 100;
 	$premaskcheck = ($_POST['premask']=='on') ? 'checked' : '';
 	$nocentercheck = ($_POST['nocenter']=='on') ? 'checked' : '';
+	$nomaskcheck = ($_POST['nomask']=='on') ? 'checked' : '';
 	$classitercheck = ($_POST['classiter']=='on') ? 'checked' : '';
 	$nproc = ($_POST['nproc']) ? $_POST['nproc'] : '8';
 	$msaproc = ($_POST['msaproc']) ? $_POST['msaproc'] : '8';
@@ -319,6 +320,9 @@ function createTopolAlignForm($extra=false, $title='topologyAlignment.py Launche
 	echo "<INPUT TYPE='checkbox' name='nocenter' $nocentercheck>\n";
 	echo docpop('nocenter','Do not center the class averages');	
 	echo "<br/>\n";
+	echo "<INPUT TYPE='checkbox' name='nomask' $nomaskcheck>\n";
+	echo docpop('nomask','Do not mask the class averages');	
+	echo "<br/>\n";
 	echo "<INPUT TYPE='checkbox' name='classiter' $classitercheck>\n";
 	echo docpop('classiter','Perform iterative class averaging');	
 	echo "<br/>\n";
@@ -397,6 +401,7 @@ function runTopolAlign() {
 	$commit = ($_POST['commit']=="on") ? true : false;
 	$premask = ($_POST['premask']=="on") ? true : false;
 	$nocenter = ($_POST['nocenter']=="on") ? true : false;
+	$nomask = ($_POST['nomask']=="on") ? true : false;
 	$classiter = ($_POST['classiter']=="on") ? true : false;
 	$nproc = ($_POST['nproc']) ? $_POST['nproc'] : 8;
 	$msaproc = ($_POST['msaproc']) ? $_POST['msaproc'] : 8;
@@ -489,6 +494,7 @@ function runTopolAlign() {
 		$command.="--msaproc=$msaproc ";
 	if ($premask) $command.="--premask ";
 	if ($nocenter) $command.="--no-center ";
+	if ($nomask) $command.="--no-mask ";
 	if ($classiter) $command.="--classiter ";
 	if ($commit) $command.="--commit ";
 	else $command.="--no-commit ";
