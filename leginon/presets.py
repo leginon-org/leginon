@@ -883,7 +883,7 @@ class PresetsManager(node.Node):
 		# dependent on HT
 		if ht is None:
 			message = 'Unknown (cannot get current high tension)'
-			modmagtime = beamtime = imagetime = stagetime = message
+			modmagtime = beamtime = imagetime = stagetime = defocustime = message
 		else:
 			stagetime = self.calclients['stage'].time(tem, cam, ht, mag, 'stage position')
 			imagetime = self.calclients['image'].time(tem, cam, ht, mag, 'image shift')
