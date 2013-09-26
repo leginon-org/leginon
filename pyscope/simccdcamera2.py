@@ -154,16 +154,16 @@ class SimCCDCamera(ccdcamera.CCDCamera):
 		bright_scale = 10
 		if self.exposure_type != 'dark':
 			mean = self.exposure_time * 1000.0 *bright_scale + dark_mean
-			sigma = 0.1 * mean
+			sigma = 0.01 * mean
 		else:
 			mean = dark_mean
 			sigma = 0.1 * mean
 		image = numpy.random.normal(mean, sigma, shape)
 		if self.exposure_type != 'dark':
-			row_offset = random.randint(-shape[0]/8, shape[0]/8) + shape[0]/4
-			column_offset = random.randint(-shape[1]/8, shape[1]/8) + shape[0]/4
+			row_offset = random.randint(-shape[0]/16, shape[0]/16) + shape[0]/4
+			column_offset = random.randint(-shape[1]/16, shape[1]/16) + shape[0]/4
 			image[row_offset:row_offset+shape[0]/2,
-				column_offset:column_offset+shape[1]/2] *= 1.5
+				column_offset:column_offset+shape[1]/2] += 0.5 * mean
 		image = numpy.asarray(image, dtype=numpy.uint16)
 		return image
 
@@ -193,7 +193,7 @@ class SimFrameCamera(SimCCDCamera):
 	def __init__(self):
 		super(SimFrameCamera,self).__init__()
 		self.frames_on = True
-		self.frame_time = None
+		self.frame_time = 200
 		self.saverawframes = False
 		self.alignframes = False
 		self.alignfilter = 'None'
@@ -324,22 +324,21 @@ class SimFrameCamera(SimCCDCamera):
 	
 	def getNumberOfFrames(self):
 		if self.frames_on:
-			print 'getNumberOfFrames',self.frame_time
-			nframes = int(round(self.exposure_time / self.frame_time))
-			return nframes
+			if not self.frame_time:
+				nframes = int(round(self.exposure_time / self.frame_time))
+				return nframes
+			else:
+				return 1
 		else:
 			return None
 
 	def getFrameTime(self):
-		print 'getFrameTime', self.frame_time
 		ms = self.frame_time * 1000.0
 		return ms
 
 	def setFrameTime(self,ms):
 		seconds = ms / 1000.0
-		print 'setFrameTime ms:',ms
 		self.frame_time = seconds
-		print 'self.frame_time',self.frame_time
 
 	def getSaveRawFrames(self):
 		'''Save or Discard'''
