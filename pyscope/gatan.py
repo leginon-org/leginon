@@ -11,18 +11,19 @@ import sys
 import numpy
 import time
 
+# try comtypes first, then win32com only if comtypes not installed
 com_module = None
 try:
+	import comtypes
+	import comtypes.client
+	com_module = 'comtypes'
+	client_module = comtypes.client
+except ImportError:
 	import pythoncom
 	import win32com.client
 	import comarray
 	com_module = 'win32com'
 	client_module = win32com.client
-except ImportError:
-	import comtypes
-	import comtypes.client
-	com_module = 'comtypes'
-	client_module = comtypes.client
 
 ## create a single connection to tecnaiccd COM object.
 ## Muliple calls to get_tecnaiccd will return the same connection.
