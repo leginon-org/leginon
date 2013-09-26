@@ -68,18 +68,21 @@ class CalibrationClient(object):
 	def checkAbort(self):
 		if self.abortevent.isSet():
 			raise Abort()
-	
+
+	def setDBInstruments(self,caldata,tem=None,cam=None):	
+		if tem is None:
+			caldata['tem'] = self.instrument.getTEMData()
+		else:
+			caldata['tem'] = tem
+		if cam is None:
+			caldata['ccdcamera'] = self.instrument.getCCDCameraData()
+		else:
+			caldata['ccdcamera'] = cam
+
 	def getPixelSize(self, mag, tem=None, ccdcamera=None):
 		queryinstance = leginondata.PixelSizeCalibrationData()
 		queryinstance['magnification'] = mag
-		if tem is None:
-			queryinstance['tem'] = self.instrument.getTEMData()
-		else:
-			queryinstance['tem'] = tem
-		if ccdcamera is None:
-			queryinstance['ccdcamera'] = self.instrument.getCCDCameraData()
-		else:
-			queryinstance['ccdcamera'] = ccdcamera
+		self.setDBInstruments(queryinstance,tem,ccdcamera)
 		caldatalist = self.node.research(datainstance=queryinstance, results=1)
 		if len(caldatalist) > 0:
 			return caldatalist[0]['pixelsize']
@@ -331,19 +334,17 @@ class DoseCalibrationClient(CalibrationClient):
 		CalibrationClient.__init__(self, node)
 		self.psizecal = PixelSizeCalibrationClient(node)
 
-	def storeSensitivity(self, ht, sensitivity):
+	def storeSensitivity(self, ht, sensitivity,tem=None,ccdcamera=None):
 		newdata = leginondata.CameraSensitivityCalibrationData()
 		newdata['session'] = self.node.session
 		newdata['high tension'] = ht
 		newdata['sensitivity'] = sensitivity
-		newdata['tem'] = self.instrument.getTEMData()
-		newdata['ccdcamera'] = self.instrument.getCCDCameraData()
+		self.setDBInstruments(newdata,tem,ccdcamera)
 		self.node.publish(newdata, database=True, dbforce=True)
 
 	def retrieveSensitivity(self, ht, tem, ccdcamera):
 		qdata = leginondata.CameraSensitivityCalibrationData()
-		qdata['tem'] = tem
-		qdata['ccdcamera'] = ccdcamera
+		self.setDBInstruments(qdata,tem,ccdcamera)
 		qdata['high tension'] = ht
 		results = self.node.research(datainstance=qdata, results=1)
 		if results:
@@ -463,14 +464,7 @@ class PixelSizeCalibrationClient(CalibrationClient):
 	def researchPixelSizeData(self, tem, ccdcamera, mag):
 		queryinstance = leginondata.PixelSizeCalibrationData()
 		queryinstance['magnification'] = mag
-		if tem is None:
-			queryinstance['tem'] = self.instrument.getTEMData()
-		else:
-			queryinstance['tem'] = tem
-		if ccdcamera is None:
-			queryinstance['ccdcamera'] = self.instrument.getCCDCameraData()
-		else:
-			queryinstance['ccdcamera'] = ccdcamera
+		self.setDBInstruments(queryinstance,tem,ccdcamera)
 		caldatalist = self.node.research(datainstance=queryinstance)
 		return caldatalist
 
@@ -500,7 +494,6 @@ class PixelSizeCalibrationClient(CalibrationClient):
 			try:
 				mag = caldata['magnification']
 			except:
-				print 'CALDATA', caldata
 				raise RuntimeError('Failed retrieving last pixelsize')
 			if mag not in last:
 				last[mag] = caldata
@@ -518,13 +511,13 @@ class MatrixCalibrationClient(CalibrationClient):
 	def parameter(self):
 		raise NotImplementedError
 
-	def researchMatrix(self, tem, ccdcamera, caltype, ht, mag):
+	def researchMatrix(self, tem, ccdcamera, caltype, ht, mag, probe=None):
 		queryinstance = leginondata.MatrixCalibrationData()
-		queryinstance['tem'] = tem
-		queryinstance['ccdcamera'] = ccdcamera
+		self.setDBInstruments(queryinstance,tem,ccdcamera)
 		queryinstance['type'] = caltype
 		queryinstance['magnification'] = mag
 		queryinstance['high tension'] = ht
+		queryinstance['probe'] = probe
 		caldatalist = self.node.research(datainstance=queryinstance, results=1)
 		if caldatalist:
 			caldata = caldatalist[0]
@@ -534,17 +527,17 @@ class MatrixCalibrationClient(CalibrationClient):
 			excstr = 'no matrix for %s, %s, %s, %seV, %sx' % (tem['name'], ccdcamera['name'], caltype, ht, mag)
 			raise NoMatrixCalibrationError(excstr, state=queryinstance)
 
-	def retrieveMatrix(self, tem, ccdcamera, caltype, ht, mag):
+	def retrieveMatrix(self, tem, ccdcamera, caltype, ht, mag, probe=None):
 		'''
 		finds the requested matrix using magnification and type
 		'''
-		caldata = self.researchMatrix(tem, ccdcamera, caltype, ht, mag)
+		caldata = self.researchMatrix(tem, ccdcamera, caltype, ht, mag, probe)
 		matrix = caldata['matrix'].copy()
 		return matrix
 
-	def time(self, tem, ccdcamera, ht, mag, caltype):
+	def time(self, tem, ccdcamera, ht, mag, caltype, probe=None):
 		try:
-			caldata = self.researchMatrix(tem, ccdcamera, caltype, ht, mag)
+			caldata = self.researchMatrix(tem, ccdcamera, caltype, ht, mag, probe)
 		except:
 			caldata = None
 		if caldata is None:
@@ -553,16 +546,14 @@ class MatrixCalibrationClient(CalibrationClient):
 			timestamp = caldata.timestamp
 		return timestamp
 
-	def storeMatrix(self, ht, mag, type, matrix, tem=None, ccdcamera=None):
+	def storeMatrix(self, ht, mag, type, matrix, tem=None, ccdcamera=None, probe=None):
 		'''
 		stores a new calibration matrix
 		'''
-		if tem is None:
-			tem = self.instrument.getTEMData()
-		if ccdcamera is None:
-			ccdcamera = self.instrument.getCCDCameraData()
+		print 'storeMatrix',probe
+		caldata = leginondata.MatrixCalibrationData(session=self.node.session, magnification=mag, type=type, matrix=matrix, probe=probe)
+		self.setDBInstruments(caldata,tem,ccdcamera)
 		newmatrix = numpy.array(matrix, numpy.float64)
-		caldata = leginondata.MatrixCalibrationData(session=self.node.session, magnification=mag, type=type, matrix=matrix, tem=tem, ccdcamera=ccdcamera)
 		caldata['high tension'] = ht
 		self.node.publish(caldata, database=True, dbforce=True)
 
@@ -598,20 +589,22 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 	def setBeamTilt(self, bt):
 		self.instrument.tem.BeamTilt = bt
 
-	def storeRotationCenter(self, tem, ht, mag, beamtilt):
+	def storeRotationCenter(self, tem, ht, mag, probe, beamtilt):
 		rc = leginondata.RotationCenterData()
 		rc['high tension'] = ht
 		rc['magnification'] = mag
+		rc['probe'] = probe
 		rc['beam tilt'] = beamtilt
 		rc['tem'] = tem
 		rc['session'] = self.node.session
 		self.node.publish(rc, database=True, dbforce=True)
 
-	def retrieveRotationCenter(self, tem, ht, mag):
+	def retrieveRotationCenter(self, tem, ht, mag, probe):
 		rc = leginondata.RotationCenterData()
 		rc['tem'] = tem
 		rc['high tension'] = ht
 		rc['magnification'] = mag
+		rc['probe'] = probe
 		results = self.node.research(datainstance=rc, results=1)
 		if results:
 			return results[0]['beam tilt']
@@ -1631,8 +1624,7 @@ class ModeledStageCalibrationClient(MatrixCalibrationClient):
 	def storeMagCalibration(self, tem, cam, label, ht, mag, axis, angle, mean):
 		caldata = leginondata.StageModelMagCalibrationData()
 		caldata['session'] = self.node.session
-		caldata['tem'] = tem
-		caldata['ccdcamera'] = cam
+		self.setDBInstruments(caldata,tem,cam)
 		caldata['label'] = label
 		caldata['high tension'] = ht
 		caldata['magnification'] = mag
@@ -1644,14 +1636,7 @@ class ModeledStageCalibrationClient(MatrixCalibrationClient):
 	def researchMagCalibration(self, tem, cam, ht, mag, axis):
 		qinst = leginondata.StageModelMagCalibrationData(magnification=mag, axis=axis)
 		qinst['high tension'] = ht
-		if tem is None:
-			qinst['tem'] = self.instrument.getTEMData()
-		else:
-			qinst['tem'] = tem
-		if cam is None:
-			qinst['ccdcamera'] = self.instrument.getCCDCameraData()
-		else:
-			qinst['ccdcamera'] = cam
+		self.setDBInstruments(qinst,tem,cam)
 
 		caldatalist = self.node.research(datainstance=qinst, results=1)
 		if len(caldatalist) > 0:
@@ -1697,11 +1682,8 @@ class ModeledStageCalibrationClient(MatrixCalibrationClient):
 
 	def storeModelCalibration(self, tem, cam, label, axis, period, a, b):
 		caldata = leginondata.StageModelCalibrationData()
-		caldata['tem'] = tem
-		caldata['ccdcamera'] = cam
 		caldata['session'] = self.node.session
-		caldata['tem'] = self.instrument.getTEMData()
-		caldata['ccdcamera'] = self.instrument.getCCDCameraData()
+		self.setDBInstruments(caldata,tem,cam)
 		caldata['label'] = label 
 		caldata['axis'] = axis
 		caldata['period'] = period
@@ -1715,14 +1697,7 @@ class ModeledStageCalibrationClient(MatrixCalibrationClient):
 
 	def researchModelCalibration(self, tem, ccdcamera, axis):
 		qinst = leginondata.StageModelCalibrationData(axis=axis)
-		if tem is None:
-			qinst['tem'] = self.instrument.getTEMData()
-		else:
-			qinst['tem'] = tem
-		if ccdcamera is None:
-			qinst['ccdcamera'] = self.instrument.getCCDCameraData()
-		else:
-			qinst['ccdcamera'] = ccdcamera
+		self.setDBInstruments(qinst,tem,ccdcamera)
 		caldatalist = self.node.research(datainstance=qinst, results=1)
 		if len(caldatalist) > 0:
 			caldata = caldatalist[0]
@@ -1739,6 +1714,7 @@ class ModeledStageCalibrationClient(MatrixCalibrationClient):
 			caldata2 = {}
 			caldata2['axis'] = caldata['axis']
 			caldata2['period'] = caldata['period']
+			caldata2['label'] = caldata['label']
 			caldata2['a'] = numpy.ravel(caldata['a']).copy()
 			caldata2['b'] = numpy.ravel(caldata['b']).copy()
 			return caldata2
@@ -1958,18 +1934,12 @@ class EucentricFocusClient(CalibrationClient):
 	def __init__(self, node):
 		CalibrationClient.__init__(self, node)
 
-	def researchEucentricFocus(self, ht, mag, tem=None, ccdcamera=None):
+	def researchEucentricFocus(self, ht, mag, probe, tem=None, ccdcamera=None):
 		query = leginondata.EucentricFocusData()
-		if tem is None:
-			query['tem'] = self.instrument.getTEMData()
-		else:
-			query['tem'] = tem
-		if ccdcamera is None:
-			query['ccdcamera'] = self.instrument.getCCDCameraData()
-		else:
-			query['ccdcamera'] = ccdcamera
+		self.setDBInstruments(query,tem,ccdcamera)
 		query['high tension'] = ht
 		query['magnification'] = mag
+		query['probe'] = probe
 		datalist = self.node.research(datainstance=query, results=1)
 		if datalist:
 			eucfoc = datalist[0]
@@ -1977,12 +1947,13 @@ class EucentricFocusClient(CalibrationClient):
 			eucfoc = None
 		return eucfoc
 
-	def publishEucentricFocus(self, ht, mag, ef):
+	def publishEucentricFocus(self, ht, mag, probe, ef):
 		newdata = leginondata.EucentricFocusData()
 		newdata['session'] = self.node.session
 		newdata['tem'] = self.instrument.getTEMData()
 		newdata['ccdcamera'] = self.instrument.getCCDCameraData()
 		newdata['high tension'] = ht
 		newdata['magnification'] = mag
+		newdata['probe'] = probe
 		newdata['focus'] = ef
 		self.node.publish(newdata, database=True, dbforce=True)

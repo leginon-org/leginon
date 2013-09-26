@@ -258,7 +258,7 @@ class Panel(leginon.gui.wx.Calibrator.Panel):
 		dialog = EditFocusCalibrationDialog(self, evt.matrix, evt.rotation_center, evt.eucentric_focus, 'Edit Calibration')
 		if dialog.ShowModal() == wx.ID_OK:
 			calibration = dialog.getFocusCalibration()
-			self.node.saveCalibration(calibration, evt.parameter, evt.high_tension, evt.magnification, evt.tem, evt.ccd_camera)
+			self.node.saveCalibration(calibration, evt.parameter, evt.high_tension, evt.magnification, evt.tem, evt.ccd_camera, evt.probe)
 		dialog.Destroy()
 
 	def editCalibration(self, **kwargs):

@@ -366,23 +366,30 @@ class PixelSizeCalibrationData(MagDependentCalibrationData):
 		)
 	typemap = classmethod(typemap)
 
-class EucentricFocusData(MagDependentCalibrationData):
+class BeamProbeDependentCalibrationData(MagDependentCalibrationData):
 	def typemap(cls):
 		return MagDependentCalibrationData.typemap() + (
+			('probe', str),
+		)
+	typemap = classmethod(typemap)
+
+class EucentricFocusData(BeamProbeDependentCalibrationData):
+	def typemap(cls):
+		return BeamProbeDependentCalibrationData.typemap() + (
 			('focus', float),
 		)
 	typemap = classmethod(typemap)
 
-class RotationCenterData(MagDependentCalibrationData):
+class RotationCenterData(BeamProbeDependentCalibrationData):
 	def typemap(cls):
-		return MagDependentCalibrationData.typemap() + (
+		return BeamProbeDependentCalibrationData.typemap() + (
 			('beam tilt', dict),
 		)
 	typemap = classmethod(typemap)
 
-class MatrixCalibrationData(MagDependentCalibrationData):
+class MatrixCalibrationData(BeamProbeDependentCalibrationData):
 	def typemap(cls):
-		return MagDependentCalibrationData.typemap() + (
+		return BeamProbeDependentCalibrationData.typemap() + (
 			('type', str),
 			('matrix', sinedon.newdict.DatabaseArrayType),
 			('previous', MatrixCalibrationData),
@@ -1721,6 +1728,13 @@ class CalibratorSettingsData(SettingsData):
 			('override preset', bool),
 			('camera settings', CameraSettingsData),
 			('correlation type', str),
+		)
+	typemap = classmethod(typemap)
+
+class CalibrationCopierSettingsData(CalibratorSettingsData):
+	def typemap(cls):
+		return CalibratorSettingsData.typemap() + (
+			('to instruments', dict),
 		)
 	typemap = classmethod(typemap)
 
