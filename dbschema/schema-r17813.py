@@ -2,7 +2,7 @@
 import schemabase
 from leginon import leginondata, ddinfo
 
-class SchemaUpdate17797(schemabase.SchemaUpdate):
+class SchemaUpdate17813(schemabase.SchemaUpdate):
 	'''
 	This schema adds trash status to ViewerImageStatus.  This is supposed to be for r17797 but wasn't made 
 	until r17812 was made.  So we will call the module 17813
@@ -16,7 +16,7 @@ class SchemaUpdate17797(schemabase.SchemaUpdate):
 
 		
 if __name__ == "__main__":
-	update = SchemaUpdate17797()
+	update = SchemaUpdate17813()
 	# update only leginon database
 	update.setRequiredUpgrade('leginon')
 	update.run()
