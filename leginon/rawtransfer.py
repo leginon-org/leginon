@@ -187,7 +187,7 @@ def run_once(parent_src_path,cam_host,dest_head,method):
 
 		# back compatible to sessions without frame path in database
 		if image_path and not frames_path:
-			frames_path = ddinfo.getRawFrameSessionPathFromImagePath(image_path)
+			frames_path = leginon.ddinfo.getRawFrameSessionPathFromImagePath(image_path)
 
 		# only process destination frames_path starting with chosen head
 		if not frames_path.startswith(dest_head):
