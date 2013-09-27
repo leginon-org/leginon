@@ -43,12 +43,13 @@ class ManualFocusChecker(acquisition.Acquisition):
 		try:
 			ht = self.instrument.tem.HighTension
 			mag = self.instrument.tem.Magnification
+			probe = self.instrument.tem.ProbeMode
 		except:
 			self.logger.error(errstr % 'unable to access instrument')
 			return
-		eufocdata = self.euclient.researchEucentricFocus(ht, mag)
+		eufocdata = self.euclient.researchEucentricFocus(ht, mag, probe)
 		if eufocdata is None:
-			self.logger.error('No eucentric focus found for HT: %s and Mag.: %s' % (ht, mag))
+			self.logger.error('No eucentric focus found for HT: %s , Mag.: %s, and %s probe' % (ht, mag, probe))
 		else:
 			delta = eufocdata.timestamp.now() - eufocdata.timestamp
 			if delta.days > 90:
@@ -62,12 +63,13 @@ class ManualFocusChecker(acquisition.Acquisition):
 		try:
 			ht = self.instrument.tem.HighTension
 			mag = self.instrument.tem.Magnification
+			probe = self.instrument.tem.ProbeMode
 			foc = self.instrument.tem.Focus
 		except:
 			self.logger.error(errstr % 'unable to access instrument')
 			return
 		try:
-			self.euclient.publishEucentricFocus(ht, mag, foc)
+			self.euclient.publishEucentricFocus(ht, mag, probe, foc)
 		except node.PublishError, e:
 			self.logger.error(errstr % 'unable to save')
 			return

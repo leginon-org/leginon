@@ -599,7 +599,9 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		rc['session'] = self.node.session
 		self.node.publish(rc, database=True, dbforce=True)
 
-	def retrieveRotationCenter(self, tem, ht, mag, probe):
+	def retrieveRotationCenter(self, tem, ht, mag, probe=None):
+		if probe is None:
+			probe = self.instrument.tem.ProbeMode
 		rc = leginondata.RotationCenterData()
 		rc['tem'] = tem
 		rc['high tension'] = ht
@@ -1934,11 +1936,13 @@ class EucentricFocusClient(CalibrationClient):
 	def __init__(self, node):
 		CalibrationClient.__init__(self, node)
 
-	def researchEucentricFocus(self, ht, mag, probe, tem=None, ccdcamera=None):
+	def researchEucentricFocus(self, ht, mag, probe=None, tem=None, ccdcamera=None):
 		query = leginondata.EucentricFocusData()
 		self.setDBInstruments(query,tem,ccdcamera)
 		query['high tension'] = ht
 		query['magnification'] = mag
+		if probe is None:
+			probe = self.instrument.tem.ProbeMode
 		query['probe'] = probe
 		datalist = self.node.research(datainstance=query, results=1)
 		if datalist:

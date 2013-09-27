@@ -602,11 +602,12 @@ class BeamTiltImager(manualfocuschecker.ManualFocusChecker):
 		tem = self.instrument.getTEMData()
 		ht = self.instrument.tem.HighTension
 		mag = self.instrument.tem.Magnification
+		probe = self.instrument.tem.ProbeMode
 		if self.parameter_choice in ('Beam Tilt X','Beam Tilt Y'):
 			beam_tilt = self.coma_free_tilt
 		else:
 			beam_tilt = self.instrument.tem.BeamTilt
-		self.btcalclient.storeRotationCenter(tem, ht, mag, beam_tilt)
+		self.btcalclient.storeRotationCenter(tem, ht, mag, probe, beam_tilt)
 
 	def rotationCenterFromScope(self):
 		self.manualchecklock.acquire()
