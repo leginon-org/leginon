@@ -351,7 +351,12 @@ class UploadImages(appionScript.AppionScript):
 		presetdata['tem'] = self.temdata
 		presetdata['ccdcamera'] = self.camdata
 		presetdata['magnification'] = self.params['magnification']
-		presetdata['name'] = 'upload%d'%(numinseries)
+
+		presetname = 'upload'
+		# defocal series have different preset for each member
+		if self.params['uploadtype'] == "defocalseries":
+			presetname += '%d' %(numinseries)
+		presetdata['name'] = presetname
 
 		### setup image data
 		imgdata = leginon.leginondata.AcquisitionImageData()
