@@ -202,6 +202,10 @@ class TargetTransformer(targethandler.TargetHandler):
 		return matrix
 
 	def matrixTransform(self, target, matrix, newimage=None):
+		'''
+		Transform the most recent version of the targets from target list to new targets.
+		'''
+		# reseachTargets always returns most recent version of the targets
 		alltargets = self.researchTargets(list=target['list'])
 		for t in alltargets:
 			newt = self.matrixTransformOne(t, matrix, newimage)
@@ -273,12 +277,29 @@ class TargetTransformer(targethandler.TargetHandler):
 				if newparentimage is None:
 					return None
 				pairstate = self.isGoodImagePair(parentimage,newparentimage)
+			# parentimage may not be the last version of the newparentimage
+			lastparentimage = self.getLastParentImage(newparentimage)
+			if not lastparentimage:
+				lastparentimage = parentimage
 			if pairstate != 'stop':
-				matrix = self.calculateMatrix(parentimage, newparentimage)
+				# matrix is calculated between the last and the new parentimage
+				matrix = self.calculateMatrix(lastparentimage, newparentimage)
 			else:
-				matrix = self.calculateMatrix(parentimage, newparentimage, bad_image2=True)
+				matrix = self.calculateMatrix(lastparentimage, newparentimage, bad_image2=True)
+		self.logger.info('Transform Matrix calculated from %s' % (lastparentimage['filename'],))
+		self.logger.info('                              to %s' % (newparentimage['filename'],))
 		newtarget = self.matrixTransform(target, matrix,newparentimage)
 		return newtarget
+
+	def getLastParentImage(self,newparentimage):
+		'''
+		Get last version of the newparentimage. If there are target adjustment
+		of the grandparent, the query may returns no results
+		'''
+		results = leginondata.AcquisitionImageData(target=newparentimage['target'],version=newparentimage['version']-1).query(results=1)
+		if not results:
+			return None
+		return results[0]
 
 class TransformManager(node.Node, TargetTransformer):
 	panelclass = gui.wx.TransformManager.Panel
