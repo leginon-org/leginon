@@ -370,7 +370,7 @@ class Tomography {
 	}
 
 	function error_image($message='no results to graph') {
-		header("Content-type: image/x-png");
+		header("Content-type: image/png");
 		$blkimg = imagecreatetruecolor(300,20);
 		$bgc = imagecolorallocate($blkimg, 255,255,255);
 		imagefilledrectangle($blkimg,0,0,300,20, $bgc);

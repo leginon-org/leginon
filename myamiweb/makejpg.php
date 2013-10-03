@@ -72,7 +72,7 @@ if (!$imageIds) {
 
 $t = $args['t'];
 if ($t=='png') {
-        $type = "image/x-png";
+        $type = "image/png";
 	$ext = "png";
 } else {
         $type = "image/jpeg";

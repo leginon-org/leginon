@@ -22,7 +22,7 @@ if (!$id=stripslashes($_GET['id'])) {
 $preset = stripslashes($_GET['preset']);
 $t = $_GET['t'];
 if ($t=='png') {
-        $type = "image/x-png";
+        $type = "image/png";
 	$ext = "png";
 } else {
         $type = "image/jpeg";
@@ -69,7 +69,7 @@ if ($g) {
 	$imagerequest->displayImageObj($img,$ext,$quality,$filename);
 
 } else {
-	Header("Content-type: image/x-png");
+	Header("Content-type: image/png");
 	$blkimg = blankimage();
 	imagedestroy($blkimg);
 }

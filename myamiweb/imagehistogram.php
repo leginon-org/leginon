@@ -18,7 +18,7 @@ require_once "inc/imagerequest.inc";
 
 if(!$imgId=$_GET['id']) {
 	$img = blankimage(200,60);
-	header("Content-type: image/x-png");
+	header("Content-type: image/png");
 	imagepng($img);
 	imagedestroy($img);
 	exit;
@@ -66,7 +66,7 @@ $graph->xaxis->HideFirstLastLabel();
 $graph->xaxis->HideLastTickLabel();
 $graph->xaxis->SetTextLabelInterval(2);
 $source = $graph->Stroke(_IMG_HANDLER);
-header("Content-type: image/x-png");
+header("Content-type: image/png");
 imagepng($source);
 imagedestroy($source);
 

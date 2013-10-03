@@ -26,7 +26,7 @@ if (!$_GET) {
 	$img = imagecreate(1,1);
 	imagecolorallocate($img, 255, 255, 255);
 }
-Header("Content-type: image/x-png");
+Header("Content-type: image/png");
 imagepng($img);
 imagedestroy($img);
 ?>

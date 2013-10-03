@@ -22,7 +22,7 @@ if (!$id=stripslashes($_GET['id'])) {
 }
 $t = $_GET['t'];
 if ($t=='png') {
-        $type = "image/x-png";
+        $type = "image/png";
 } else {
         $type = "image/jpeg";
 	$quality=$t;

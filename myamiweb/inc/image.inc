@@ -592,7 +592,7 @@ function createAltMessage($text, $fontsize=2, $margin=6) {
 }
 
 function resample($source, $new_width="", $new_height="") {
-	header("Content-type: image/x-png");
+	header("Content-type: image/png");
 	$width = imagesx($source);
 	$height = imagesy($source);
 	if ($new_width)

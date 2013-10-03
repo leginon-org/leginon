@@ -22,7 +22,7 @@ if (!$filename=trim($_GET['id'])) {
 }
 $t = $_GET['t'];
 if ($t=='png') {
-        $type = "image/x-png";
+        $type = "image/png";
 	$ext = "png";
 } else {
         $type = "image/jpeg";
@@ -73,7 +73,7 @@ if ($g) {
                 imagejpeg($img,'',$quality);
 	imagedestroy($img);
 } else {
-	Header("Content-type: image/x-png");
+	Header("Content-type: image/png");
 	$blkimg = blankimage();
 	imagedestroy($blkimg);
 }

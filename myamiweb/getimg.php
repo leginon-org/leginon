@@ -27,7 +27,7 @@ if (!$id=stripslashes($_GET['id'])) {
 $preset = stripslashes($_GET['preset']);
 $t = $_GET['t'];
 if ($t=='png') {
-        $type = "image/x-png";
+        $type = "image/png";
 	$ext = "png";
 } else {
         $type = "image/jpeg";
@@ -64,7 +64,7 @@ $colorby = ($_GET['pcb']) ? $_GET['pcb'] : false;
 $ptclparams= ($displaynptcl) ? array('colorby'=>$colorby, 'displaylabel'=>$displaylabel, 'info'=>trim($_GET['nptcl'])) : false;
 
 if (!$g) {
-	header("Content-type: image/x-png");
+	header("Content-type: image/png");
 	$blkimg = blankimage(256, 64, "missing sessionid or imgid");
 	imagepng($blkimg);
 	imagedestroy($blkimg);
@@ -127,7 +127,7 @@ if (!$g) {
 	}
 
 	if (!$img) {
-		header("Content-type: image/x-png");
+		header("Content-type: image/png");
 		$blkimg = blankimage(256, 64, "image not found");
 		imagepng($blkimg);
 		imagedestroy($blkimg);

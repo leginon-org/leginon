@@ -124,7 +124,7 @@
 
 	function makeTriangle($stats, $outfile="") {
 		if (!$outfile)
-			header("Content-type: image/x-png");
+			header("Content-type: image/png");
 		$myImage = createTriangle($stats->eulers1);
 		echo "Writing to file... ".$outfile."\n";
 		imagepng($myImage, $outfile);
@@ -141,7 +141,7 @@
 	//	$line->SetBarCenter();
 		$graph->add($line);
 		if (!$outfile)
-			header("Content-type: image/x-png");
+			header("Content-type: image/png");
 		$graph->Stroke($outfile);
 		echo "Writing to file... ".$outfile."\n";
 	}

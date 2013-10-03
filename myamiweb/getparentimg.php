@@ -24,7 +24,7 @@ if (!$preset=stripslashes($_GET['preset'])) {
 }
 $t = $_GET['t'];
 if ($t=='png') {
-        $type = "image/x-png";
+        $type = "image/png";
 } else {
         $type = "image/jpeg";
 	$quality=$t;
@@ -116,7 +116,7 @@ if ($g) {
 
 		imagedestroy($img);
 	} else {
-		Header("Content-type: image/x-png");
+		Header("Content-type: image/png");
 		$blkimg = imagecreate(256,256);
 		$white = imagecolorallocate($blkimg, 255, 255, 255);
 //		$black = imagecolorallocate($blkimg, 0, 0, 0);
