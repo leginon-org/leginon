@@ -16,7 +16,7 @@ class Frame(wx.Frame):
 		wx.Frame.__init__(self, parent, -1, 'Application Editor', style=style)
 
 		self.manager = manager
-		self.apps = self.manager.getApplications()
+		self.apps = self.manager.getApplications(True)
 
 		self.menubar = wx.MenuBar()
 

@@ -324,7 +324,13 @@ class Frame(wx.Frame):
 		dialog = RunApplicationDialog(self, apps, history, launchernames, launchers)
 		if dialog.ShowModal() == wx.ID_OK:
 			app = dialog.getValues()
-			threading.Thread(name='wx.manager runApplication',
+			if not self.manager.validateApplication(app):
+				e = 'Outdated Application'
+				dlg = wx.MessageDialog(self, e, 'Node Create Error', wx.OK|wx.ICON_ERROR)
+				dlg.ShowModal()
+				dlg.Destroy()
+			else:
+				threading.Thread(name='wx.manager runApplication',
 												target=self.manager.runApplication,
 												args=(app,)).start()
 		dialog.Destroy()

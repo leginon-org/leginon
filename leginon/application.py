@@ -124,7 +124,6 @@ class Application(object):
 		threads = []
 		for bindingspec in self.bindingspecs:
 			args = self.bindingSpec2Args(bindingspec)
-			#print 'binding %s' % str(args)
 			apply(self.node.addEventDistmap, args)
 		nodeclasses = map(lambda ns: (ns['alias'], ns['class string']),
 											self.nodespecs)
@@ -134,6 +133,25 @@ class Application(object):
 			name = self.launchNode(args)
 			self.launchednodes.append(name)
 		return self.launchednodes
+
+	def validateTransformManagerNavigatorBindings(self):
+		if self.nodespecs is None:
+			return True
+		node_classnames = map(lambda x: x['class string'], self.nodespecs)
+		if 'Navigator' not in node_classnames or 'TransformManager' not in node_classnames:
+			return True
+		navigator_alias = self.nodespecs[node_classnames.index('Navigator')]['alias']
+		transformer_alias = self.nodespecs[node_classnames.index('TransformManager')]['alias']
+		has_to_event = False
+		has_done_event = True
+		for binding in self.bindingspecs:
+			if navigator_alias == binding['to node alias'] and transformer_alias == binding['from node alias'] and 'MoveToTargetEvent' == binding['event class string']:
+				has_to_event = True
+			if navigator_alias == binding['from node alias'] and transformer_alias == binding['to node alias'] and 'MoveToTargetDoneEvent' == binding['event class string']:
+				has_done_event = True
+		if has_to_event and has_done_event:
+			return True
+		return False
 
 	def launchNode(self, args):
 		if not hasattr(self.node, 'launchNode'):
@@ -154,6 +172,7 @@ class Application(object):
 
 	def save(self):
 		self.data['version'] = self.getNewVersion(self.data['name'])
+		self.data['hidden'] = False
 		self.node.publish(self.data, database=True)
 		for nodespecdata in self.nodespecs:
 			self.node.publish(nodespecdata, database=True)

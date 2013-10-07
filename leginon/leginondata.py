@@ -923,6 +923,7 @@ class ApplicationData(Data):
 		return Data.typemap() + (
 			('name', str),
 			('version', int),
+			('hide', bool),
 		)
 	typemap = classmethod(typemap)
 
