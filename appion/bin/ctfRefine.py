@@ -739,6 +739,19 @@ class RefineCTF(appionLoop2.AppionLoop):
 
 		### print message
 		bestDbValues = ctfdb.getBestCtfByResolution(imgdata)
+		if bestDbValues is None:
+			apDisplay.printColor("SKIPPING: No CTF values for image %s"
+				%(apDisplay.short(imgdata['filename'])), "red")
+			self.badprocess = True
+			return
+
+		### skip if resolution > 90.
+		if bestDbValues['resolution_50_percent'] > 90.:
+			apDisplay.printColor("SKIPPING: No decent CTF values for image %s"
+				%(apDisplay.short(imgdata['filename'])), "yellow")
+			self.badprocess = True
+			return
+
 		self.ctfvalues['amplitude_contrast'] = bestDbValues['amplitude_contrast']
 
 		lowerrad1 = ctftools.getCtfExtrema(bestDbValues['defocus1'], self.mfreq, self.cs, self.volts, 
