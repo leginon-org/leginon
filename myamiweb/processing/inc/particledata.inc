@@ -1114,7 +1114,6 @@ class particledata {
 			."where c.`REF|leginondata|AcquisitionImageData|image`='$imageId' ";
 		$q .= " AND c.`graph1` IS NOT NULL ";
 		$q .= " AND (r.`hidden` IS NULL OR r.`hidden` = 0) ";
-		//$q .= " AND c.resolution_50_percent IS NOT NULL AND c.resolution_80_percent IS NOT NULL ";
 		if (is_numeric($acerunId) && $acerunId > 0) {
 			$q .= "AND r.`DEF_id`=".$acerunId." ";
 		} else {
@@ -1122,9 +1121,14 @@ class particledata {
 			elseif ($method === 'ace2') $q .= "AND r.`REF|ApAce2ParamsData|ace2_params` IS NOT NULL ";
 			elseif ($method === 'ctffind') $q .= "AND r.`REF|ApCtfTiltParamsData|ctftilt_params` IS NOT NULL ";
 		}
-		$q .= " ORDER BY coalesce(resolution_80_percent,999) ASC ";
-		$q .= " , coalesce(resolution_50_percent,999) ASC ";
-
+		// First order by res80. If some entries of res80 are null, they will be sorted as 999 and end up at the end of the list.
+		// Then sort by res50. If there was a tie from res80, the tie is broken with res50.
+		// Res80 and res50 are only set for newer versions of Appion. For runs that were mase with older versions, we still want to sort by
+		// cross_correlation (ctffind) and confidence (ace1 and ace2). After sorting by resolution, old runs should all be tied with 999, so the
+		// final sort will sort by whichever is not null, the ctffind correlation or the Ace conf.
+		$q .= "	ORDER BY coalesce(resolution_80_percent,999) ASC ";
+		$q .= " , coalesce(resolution_50_percent,999) ASC, coalesce(c.`cross_correlation`,(c.`confidence`*c.`confidence_d`),999) DESC  ";
+		
 		//if ($order) {
 		//	$fields = $order['fields'];
 		//	$q .= " order by ".join(", ",$fields);
@@ -1199,8 +1203,13 @@ class particledata {
 			."	AND  "
 			." ( viewer.status IS NULL OR viewer.status != 'hidden' ) "
 			."		)  "
+			// First order by res80. If some entries of res80 are null, they will be sorted as 999 and end up at the end of the list.
+			// Then sort by res50. If there was a tie from res80, the tie is broken with res50.
+			// Res80 and res50 are only set for newer versions of Appion. For runs that were mase with older versions, we still want to sort by
+			// cross_correlation (ctffind) and confidence (ace1 and ace2). After sorting by resolution, old runs should all be tied with 999, so the
+			// final sort will sort by whichever is not null, the ctffind correlation or the Ace conf.
 			."		ORDER BY coalesce(resolution_80_percent,999) ASC "
-			." , coalesce(resolution_50_percent,999) ASC "
+			." , coalesce(resolution_50_percent,999) ASC, coalesce(c.`cross_correlation`,(c.`confidence`*c.`confidence_d`),999) DESC  "
 			."	) ctfdata ";
 		// if $limit is specified, report only values with confidences > $limit
 		if ($limit) {
@@ -2001,6 +2010,17 @@ class particledata {
 		return $r[0]['num'];
 	}
 
+	function getImgIdsFromSessionId ($sessionId){
+		$q = "SELECT "
+			."img.`DEF_id` "
+			."FROM ".DB_LEGINON.".AcquisitionImageData as img "
+			."WHERE "
+			."  img.`REF|SessionData|session` = '$sessionId' ";
+		//echo $q;
+		$r = $this->mysql->getSQLResult($q);
+		return $r;
+	}	
+	
 	function getNumImgsFromSessionId ($sessionId){
 		$q= "SELECT "
 			. "  COUNT(DISTINCT p.`REF|leginondata|AcquisitionImageData|image`) AS num  "
@@ -4322,9 +4342,11 @@ class particledata {
 		
 		// find the name with the greatest incremental id ex. recon4 is greater than recon3
 		$maxRunNumber = 0;
-		foreach ( $names as $name ) {
-			$runNumber = $this->getJobRunIdFromRunname( $name['name'] );
-			$maxRunNumber = ( $runNumber > $maxRunNumber ) ? $runNumber : $maxRunNumber;
+		if ( !empty($names) ) {
+			foreach ( $names as $name ) {
+				$runNumber = $this->getJobRunIdFromRunname( $name['name'] );
+				$maxRunNumber = ( $runNumber > $maxRunNumber ) ? $runNumber : $maxRunNumber;
+			}
 		}
 		
 		return $maxRunNumber;
