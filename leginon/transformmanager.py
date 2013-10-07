@@ -18,6 +18,7 @@ import numpy
 import time
 import threading
 import presets
+import navigator
 import copy
 import EM
 import gui.wx.TransformManager
@@ -190,6 +191,8 @@ class TargetTransformer(targethandler.TargetHandler):
 		matrixquery = leginondata.TransformMatrixData()
 		matrixquery['session'] = self.session
 		results = matrixquery.query()
+		# This insertion only happens on the first matrix calculated in the
+		# session since images are not queried
 		if not results:
 			newmatrix = leginondata.TransformMatrixData()
 			newmatrix['session'] = self.session
@@ -198,7 +201,7 @@ class TargetTransformer(targethandler.TargetHandler):
 			newmatrix['matrix'] = matrix
 			newmatrix.insert()
 			results = [newmatrix]
-	
+
 		return matrix
 
 	def matrixTransform(self, target, matrix, newimage=None):
@@ -212,7 +215,7 @@ class TargetTransformer(targethandler.TargetHandler):
 			if t['number'] == target['number']:
 				ret = newt
 		return ret
-	
+
 	def matrixTransformOne(self, target, matrix,newimage=None):
 		row = target['delta row']
 		col = target['delta column']
@@ -311,8 +314,12 @@ class TransformManager(node.Node, TargetTransformer):
 		'min mag': 300,
 		'camera settings': cameraclient.default_settings,
 	}
-	eventinputs = node.Node.eventinputs + presets.PresetsClient.eventinputs + [event.TransformTargetEvent]
-	eventoutputs = node.Node.eventoutputs + presets.PresetsClient.eventoutputs + [event.TransformTargetDoneEvent]
+	eventinputs = node.Node.eventinputs + presets.PresetsClient.eventinputs \
+								+ [event.TransformTargetEvent] \
+								+ navigator.NavigatorClient.eventinputs
+	eventoutputs = node.Node.eventoutputs + presets.PresetsClient.eventoutputs \
+								+ [event.TransformTargetDoneEvent] \
+								+ navigator.NavigatorClient.eventoutputs
 	def __init__(self, id, session, managerlocation, **kwargs):
 		node.Node.__init__(self, id, session, managerlocation, **kwargs)
 		TargetTransformer.__init__(self)
@@ -329,6 +336,7 @@ class TransformManager(node.Node, TargetTransformer):
 		self.calclients['beam shift'] = calibrationclient.BeamShiftCalibrationClient(self)
 		self.pixsizeclient = calibrationclient.PixelSizeCalibrationClient(self)
 		self.presetsclient = presets.PresetsClient(self)
+		self.navclient = navigator.NavigatorClient(self)
 		self.addEventInput(event.TransformTargetEvent, self.handleTransformTargetEvent)
 
 		self.registrations = {
@@ -389,11 +397,11 @@ class TransformManager(node.Node, TargetTransformer):
 				newscope = origscope
 			else:
 				targetcamera = targetdata['camera']
-		
+
 				## to shift targeted point to center...
 				deltarow = -targetdeltarow
 				deltacol = -targetdeltacolumn
-		
+
 				pixelshift = {'row':deltarow, 'col':deltacol}
 				## figure out scope state that gets to the target
 				calclient = self.calclients[movetype]
@@ -416,25 +424,57 @@ class TransformManager(node.Node, TargetTransformer):
 						raise NoMoveCalibration(message)
 					ydiff = tmpscope['stage position']['y'] - targetscope['stage position']['y']
 					zdiff = ydiff * numpy.sin(targetscope['stage position']['a'])
-	
+
 			### check if stage position is valid
 			if newscope['stage position']:
 				self.validateStagePosition(newscope['stage position'])
-	
+
 			emtargetdata['preset'] = oldpreset
 			emtargetdata['movetype'] = movetype
 			emtargetdata['image shift'] = dict(newscope['image shift'])
 			emtargetdata['beam shift'] = dict(newscope['beam shift'])
 			emtargetdata['stage position'] = dict(newscope['stage position'])
 			emtargetdata['delta z'] = zdiff
-		
+
 		emtargetdata['target'] = targetdata
 		## publish in DB because it will likely be needed later
 		## when returning to the same target,
 		## even after it is removed from memory
 		self.publish(emtargetdata, database=True)
 		return emtargetdata
-	
+
+	def imageMoveAndPreset(self, imagedata, emtarget):
+		'''
+		Move and set according to the preset based on the imagedata and emtarget.
+		Mover can either be presets manager or navigator
+		'''
+		status = 'ok'
+		presetname = imagedata['preset']['name']
+		targetdata = emtarget['target']
+		moverdata = imagedata['mover']
+		#### move and change preset
+		movetype = imagedata['emtarget']['movetype']
+		# If mover is not known, use presets manager
+		if moverdata is None:
+			movefunction = 'presets manager'
+		else:
+			movefunction = moverdata['mover']
+		keep_shift = False
+		if movetype == 'image shift' and movefunction == 'navigator':
+			self.logger.warning('Navigator cannot be used for image shift, using Presets Manager instead')
+			movefunction = 'presets manager'
+		self.setStatus('waiting')
+		if movefunction == 'navigator':
+			emtarget = None
+			if targetdata['type'] != 'simulated':
+				precision = moverdata['move precision']
+				accept_precision = moverdata['accept precision']
+				status = self.navclient.moveToTarget(targetdata, movetype, precision, accept_precision, final_imageshift=False)
+				if status == 'error':
+					return status
+		self.presetsclient.toScope(presetname, emtarget, keep_shift=False)
+		return status
+
 	def reacquire(self, targetdata):
 		oldimage = None
 		targetlist = targetdata['list']
@@ -444,8 +484,8 @@ class TransformManager(node.Node, TargetTransformer):
 		if len(results) > 0:
 			oldimage = results[0]
 		if oldimage is None:
-			print "can not find an image that is acquired with this target"
-			print targetdata.dbid
+			if targetlist:
+				self.logger.error('No image is acquired with target list %d' % targetlist.dbid)
 			return None
 		oldemtarget = oldimage['emtarget']
 		movetype = oldemtarget['movetype']
@@ -457,7 +497,7 @@ class TransformManager(node.Node, TargetTransformer):
 		oldpresetdata = oldimage['preset']
 		presetname = oldpresetdata['name']
 		channel = int(oldimage['correction channel']==0)
-		self.presetsclient.toScope(presetname, emtarget, keep_shift=False)
+		self.imageMoveAndPreset(oldimage,emtarget)
 		targetdata = emtarget['target']
 		imagedata = self.acquireCorrectedCameraImageData(channel)
 		currentpresetdata = self.presetsclient.getCurrentPreset()
@@ -466,7 +506,7 @@ class TransformManager(node.Node, TargetTransformer):
 		pixels = dim['x'] * dim['y']
 		pixeltype = str(imagedata['image'].dtype)
 		## Fix me: Not sure what image list should go in here nor naming of the file
-		imagedata = leginondata.AcquisitionImageData(initializer=imagedata, preset=currentpresetdata, label=self.name, target=targetdata, list=oldimage['list'], emtarget=emtarget, pixels=pixels, pixeltype=pixeltype,grid=oldimage['grid'])
+		imagedata = leginondata.AcquisitionImageData(initializer=imagedata, preset=currentpresetdata, label=self.name, target=targetdata, list=oldimage['list'], emtarget=emtarget, pixels=pixels, pixeltype=pixeltype,grid=oldimage['grid'],mover=oldimage['mover'])
 		version = self.recentImageVersion(oldimage)
 		imagedata['version'] = version + 1
 		## set the 'filename' value

@@ -818,6 +818,10 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.reportStatus('output', 'Publishing image...')
 		self.startTimer('publish image')
 		if self.settings['save image']:
+			moverq = leginondata.MoverParamsData(mover=self.settings['mover'])
+			moverq['move precision'] = self.settings['move precision']
+			moverq['accept precision'] = self.settings['accept precision']
+			imagedata['mover'] = moverq
 			imagedata.insert(force=True)
 		self.publish(imagedata, pubevent=True)
 

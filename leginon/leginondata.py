@@ -707,6 +707,7 @@ class AcquisitionImageData(CameraImageData):
 			('tilt series', TiltSeriesData),
 			('version', int),
 			('tiltnumber', int),
+			('mover', MoverParamsData),
 		)
 	typemap = classmethod(typemap)
 
@@ -1600,6 +1601,15 @@ class AcquisitionSettingsData(TargetWatcherSettingsData):
 			('target offset col', int),
 			('correct image shift coma', bool),
 			('park after target', bool),
+		)
+	typemap = classmethod(typemap)
+
+class MoverParamsData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('mover', str),
+			('move precision', float),
+			('accept precision', float),
 		)
 	typemap = classmethod(typemap)
 
