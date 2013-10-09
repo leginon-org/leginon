@@ -172,7 +172,7 @@ class Application(object):
 
 	def save(self):
 		self.data['version'] = self.getNewVersion(self.data['name'])
-		self.data['hidden'] = False
+		self.data['hide'] = False
 		self.node.publish(self.data, database=True)
 		for nodespecdata in self.nodespecs:
 			self.node.publish(nodespecdata, database=True)
