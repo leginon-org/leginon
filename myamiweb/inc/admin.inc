@@ -120,13 +120,13 @@ function defaultsettings_fileheader($user_id,$admin_init=false,$sessionname=fals
 	$array[] = '	exit();'.$linebreak;
 	$array[] = '}'.$linebreak;
 	$array[] = '$dbc=$leginondata->mysql;'.$linebreak;
-	$array[] = '$q = "insert into `SessionData` (`name`,`REF|UserData|user`,`comment`) "'.$linebreak;
+	$array[] = '$q = "insert into `SessionData` (`name`,`REF|UserData|user`,`comment`,`hidden`) "'.$linebreak;
 	$array[] = '      . " VALUES "'.$linebreak;
 	$array[] = '      . " ( concat(\'importsettings\', DATE_FORMAT(now(), \'%Y%m%d%H%i%s\')), "'.$linebreak;
 	if ($sessionname===false) {
-		$array[] = '			. " ".$user_id.",\'revert to default\' ) ";'.$linebreak;
+		$array[] = '			. " ".$user_id.",\'revert to default\',\'1\' ) ";'.$linebreak;
 	} else {
-		$array[] = '			. " ".$user_id.",\'revert to '.$sessionname.'\' ) ";'.$linebreak;
+		$array[] = '			. " ".$user_id.",\'revert to '.$sessionname.'\',\'1\' ) ";'.$linebreak;
 	}
 	$array[] = '$sessionId = $dbc->SQLQuery($q, true);'.$linebreak;
 	$array[] = $linebreak;
