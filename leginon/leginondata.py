@@ -79,6 +79,7 @@ class SessionData(Data):
 			('frame path', str),
 			('comment', str),
 			('holder', GridHolderData),
+			('hidden', bool),
 		)
 	typemap = classmethod(typemap)
 

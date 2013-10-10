@@ -254,12 +254,11 @@ class CorrectorClient(cameraclient.CameraClient):
 			## NEED TO FIX
 			dark_exptime = len(dark['use frames']) * float(dark['camera']['frame time'])
 		except:
-			print 'DARK has invalid "use frames" or "frame time"'
+			print 'Bias only'
 			return darkarray
 		try:
 			raw_exptime = len(raw['use frames']) * float(raw['camera']['frame time'])
 		except:
-			print 'RAW has invalid "use frames" or "frame time"'
 			return darkarray
 		if	dark_exptime == 0.0:
 			return darkarray
@@ -426,6 +425,7 @@ class CorrectorClient(cameraclient.CameraClient):
 
 	def formatCorrectorPlan(self, plandata=None):
 		if plandata:
+			print plandata.dbid
 			result = {}
 			result['rows'] = list(plandata['bad_rows'])
 			result['columns'] = list(plandata['bad_cols'])
@@ -536,6 +536,7 @@ class CorrectorClient(cameraclient.CameraClient):
 			'comment': 'reference images',
 			'user': self.session['user'],
 			'image path': imagedirectory,
+			'hidden' : True,
 		}
 		session = leginondata.SessionData(initializer=initializer)
 		session.insert()
@@ -545,7 +546,7 @@ class CorrectorClient(cameraclient.CameraClient):
 
 	def getReferenceSession(self):
 		qrefses = leginondata.ReferenceSessionData()
-		refsessions = qrefses.query(timelimit='-90 0:0:0')
+		refsessions = qrefses.query(timelimit='-10 0:0:0')
 
 		# find one that is writable
 		refsession = None

@@ -885,6 +885,8 @@ class Setup(object):
 		sessiondatalist = self.research(datainstance=sessiondata, results=n)
 		names = []
 		for sessiondata in sessiondatalist:
+			if sessiondata['hidden'] is True:
+				continue
 			name = sessiondata['name']
 			if name is not None:
 				names.append(name)
