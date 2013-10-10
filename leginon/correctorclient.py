@@ -546,7 +546,7 @@ class CorrectorClient(cameraclient.CameraClient):
 
 	def getReferenceSession(self):
 		qrefses = leginondata.ReferenceSessionData()
-		refsessions = qrefses.query(timelimit='-10 0:0:0')
+		refsessions = qrefses.query(timelimit='-90 0:0:0')
 
 		# find one that is writable
 		refsession = None
