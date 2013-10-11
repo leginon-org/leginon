@@ -1305,7 +1305,10 @@ def findDataClass(modulename, classname):
 		mod = findWrongName(modulename)
 		if mod is None:
 			raise RuntimeError('Cannot find class %s. Module %s not loaded.' % (classname, modulename))
-	cls = getattr(mod, classname)
+	try:
+		cls = getattr(mod, classname)
+	except:
+		return None
 	return cls
 
 def datatype(in_dict, join=None, parentclass=None):
@@ -1370,6 +1373,7 @@ def datatype(in_dict, join=None, parentclass=None):
 				## not in result, but create reference
 				dclassname = tablename
 				dclass = findDataClass(modulename, dclassname)
+				## If the data class does not exist, then this column should be ignored
 				if dclass is None:
 					continue
 				# host and name should come from parent object
