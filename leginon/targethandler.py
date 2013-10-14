@@ -31,6 +31,7 @@ class TargetHandler(object):
 		evt = event.TransformTargetEvent()
 		evt['target'] = targetdata
 		evt['level'] = self.settings['adjust for transform']
+		evt['use parent mover'] = self.settings['use parent mover']
 		self.transformtargetevent.clear()
 		self.logger.info('requesting transformed target')
 		self.outputEvent(evt)

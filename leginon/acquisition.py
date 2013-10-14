@@ -130,6 +130,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		'iterations': 1,
 		'wait time': 0,
 		'adjust for transform': 'no',
+		'use parent mover': False,
 		'drift between': False,
 		'mover': 'presets manager',
 		'move precision': 0.0,

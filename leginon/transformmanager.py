@@ -257,7 +257,7 @@ class TargetTransformer(targethandler.TargetHandler):
 				self.logger.info('Reacquire parent image to determin transformation')
 		return state
 
-	def transformTarget(self, target, level):
+	def transformTarget(self, target, level, use_parent_mover):
 		parentimage = target['image']
 		matrix = self.lookupMatrix(parentimage)
 		if parentimage is None:
@@ -271,12 +271,12 @@ class TargetTransformer(targethandler.TargetHandler):
 		if matrix is None:
 			parenttarget = parentimage['target']
 			if level == 'all':
-				newparenttarget = self.transformTarget(parenttarget, level)
+				newparenttarget = self.transformTarget(parenttarget, level, use_parent_mover)
 			elif level == 'one':
 				newparenttarget = parenttarget
 			pairstate = 'play'
 			while pairstate == 'play':
-				newparentimage = self.reacquire(newparenttarget)
+				newparentimage = self.reacquire(newparenttarget, use_parent_mover)
 				if newparentimage is None:
 					return None
 				pairstate = self.isGoodImagePair(parentimage,newparentimage)
@@ -443,7 +443,7 @@ class TransformManager(node.Node, TargetTransformer):
 		self.publish(emtargetdata, database=True)
 		return emtargetdata
 
-	def imageMoveAndPreset(self, imagedata, emtarget):
+	def imageMoveAndPreset(self, imagedata, emtarget, use_parent_mover=False):
 		'''
 		Move and set according to the preset based on the imagedata and emtarget.
 		Mover can either be presets manager or navigator
@@ -455,7 +455,7 @@ class TransformManager(node.Node, TargetTransformer):
 		#### move and change preset
 		movetype = imagedata['emtarget']['movetype']
 		# If mover is not known, use presets manager
-		if moverdata is None:
+		if moverdata is None or not use_parent_mover:
 			movefunction = 'presets manager'
 		else:
 			movefunction = moverdata['mover']
@@ -475,7 +475,7 @@ class TransformManager(node.Node, TargetTransformer):
 		self.presetsclient.toScope(presetname, emtarget, keep_shift=False)
 		return status
 
-	def reacquire(self, targetdata):
+	def reacquire(self, targetdata, use_parent_mover=False):
 		oldimage = None
 		targetlist = targetdata['list']
 		tquery = leginondata.AcquisitionImageTargetData(session=self.session, list=targetlist, number=targetdata['number'], type=targetdata['type'])
@@ -497,7 +497,7 @@ class TransformManager(node.Node, TargetTransformer):
 		oldpresetdata = oldimage['preset']
 		presetname = oldpresetdata['name']
 		channel = int(oldimage['correction channel']==0)
-		self.imageMoveAndPreset(oldimage,emtarget)
+		self.imageMoveAndPreset(oldimage,emtarget,use_parent_mover)
 		targetdata = emtarget['target']
 		imagedata = self.acquireCorrectedCameraImageData(channel)
 		currentpresetdata = self.presetsclient.getCurrentPreset()
@@ -541,8 +541,9 @@ class TransformManager(node.Node, TargetTransformer):
 		self.setStatus('processing')
 		oldtarget = ev['target']
 		level = ev['level']
+		use_parent_mover = ev['use parent mover']
 		requestingnode = ev['node']
-		newtarget = self.transformTarget(oldtarget, level)
+		newtarget = self.transformTarget(oldtarget, level, use_parent_mover)
 		evt = event.TransformTargetDoneEvent()
 		evt['target'] = newtarget
 		evt['destination'] = requestingnode

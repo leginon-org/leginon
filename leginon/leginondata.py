@@ -1585,6 +1585,7 @@ class AcquisitionSettingsData(TargetWatcherSettingsData):
 			('wait time', float),
 			('iterations', int),
 			('adjust for transform', str),
+			('use parent mover', bool),
 			('drift between', bool),
 			('mover', str),
 			('move precision', float),

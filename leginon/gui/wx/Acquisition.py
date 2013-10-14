@@ -168,6 +168,7 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		self.widgets['wait for reference'] = wx.CheckBox(self, -1,
 																				'Publish and wait for the reference target')
 		self.widgets['adjust for transform'] = Choice(self, -1, choices=['no', 'one', 'all'])
+		self.widgets['use parent mover'] = wx.CheckBox(self, -1, 'Use ancestor image mover in adjustment')
 		self.widgets['drift between'] = wx.CheckBox(self, -1, 'Declare drift between targets')
 		self.widgets['background'] = wx.CheckBox(self, -1, 'Acquire in the background')
 		self.widgets['use parent tilt'] = wx.CheckBox(self, -1, 'Tilt the stage like its parent image')
@@ -282,6 +283,7 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 						wx.ALIGN_CENTER_VERTICAL)
 		label = wx.StaticText(self, -1, 'ancestor(s)')
 		sz_transform.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz_transform.Add(self.widgets['use parent mover'],(1,0),(1,3))
 		sz_offset = wx.BoxSizer(wx.HORIZONTAL)
 		sz_offset.Add(wx.StaticText(self, -1, 'offset target x:'))
 		sz_offset.Add(self.widgets['target offset col'])
