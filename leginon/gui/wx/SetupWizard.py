@@ -907,6 +907,7 @@ class Setup(object):
 			'user': user,
 			'image path': imagedirectory,
 			'frame path': framepath,
+			'hidden': False,
 		}
 		return leginon.leginondata.SessionData(initializer=initializer)
 
