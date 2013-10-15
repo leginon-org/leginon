@@ -247,14 +247,11 @@ class CorrectorClient(cameraclient.CameraClient):
 		Rescale the dark image to be same number of frames as raw image.
 		Assuming exposure time of each frame (or frame time) is constant.
 		'''
-		print 'DARK', dark['use frames'], dark['camera']['frame time']
-		print 'RAW', raw['use frames'], raw['camera']['frame time']
 		darkarray = dark['image']
 		try:
 			## NEED TO FIX
 			dark_exptime = len(dark['use frames']) * float(dark['camera']['frame time'])
 		except:
-			print 'Bias only'
 			return darkarray
 		try:
 			raw_exptime = len(raw['use frames']) * float(raw['camera']['frame time'])
@@ -263,7 +260,6 @@ class CorrectorClient(cameraclient.CameraClient):
 		if	dark_exptime == 0.0:
 			return darkarray
 		multiplier = float(raw_exptime) / float(dark_exptime)
-		print 'MUTLIPLIER', multiplier
 		if multiplier != 1.0:
 			darkarray = multiplier * darkarray
 		return darkarray
@@ -330,7 +326,6 @@ class CorrectorClient(cameraclient.CameraClient):
 		r = numpy.where(numpy.isfinite(r), r, 0)
 		## replace 0 with mean
 		if 'GatanK2' in cameradata['ccdcamera']['name']:
-			print 'remove zeros'
 			r = numpy.where(r==0,r.mean(), r)
 		imagedata['image'] = r	
 		imagedata['dark'] = dark
@@ -425,7 +420,6 @@ class CorrectorClient(cameraclient.CameraClient):
 
 	def formatCorrectorPlan(self, plandata=None):
 		if plandata:
-			print plandata.dbid
 			result = {}
 			result['rows'] = list(plandata['bad_rows'])
 			result['columns'] = list(plandata['bad_cols'])
