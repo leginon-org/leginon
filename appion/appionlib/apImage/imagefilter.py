@@ -384,9 +384,9 @@ def frame_cut(a, newshape):
 #=========================
 def frame_constant(a, shape, cval=0):
 	"""
-	frame_nearest creates an oversized copy of 'a' with new 'shape'
+	frame_constant creates an oversized copy of 'a' with new 'shape'
 	and the contents of 'a' in the center.  The boundary pixels are
-	copied from the nearest edge pixel in 'a'.
+	constant.
 
 	>>> a = num.arange(16, shape=(4,4))
 	>>> frame_constant(a, (8,8), cval=42)

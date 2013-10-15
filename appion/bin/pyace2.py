@@ -22,7 +22,7 @@ from appionlib import apInstrument
 from appionlib.apCtf import ctfdb
 from appionlib.apCtf import ctfinsert
 # other myami
-from pyami import mrc
+from pyami import mrc, primefactor, imagefun
 
 class Ace2Loop(appionLoop2.AppionLoop):
 	"""
@@ -107,6 +107,18 @@ class Ace2Loop(appionLoop2.AppionLoop):
 			clippedmrc = apImage.frame_cut(mrcarray,[dims[0],dims[0]])
 			ace2inputpath = os.path.join(self.params['rundir'],imgdata['filename']+".mrc")
 			apImage.arrayToMrc(clippedmrc,ace2inputpath,msg=False)
+
+		### pad out image to speed up FFT calculations for non-standard image sizes
+		print "checking prime factor"
+		if primefactor.isGoodStack(dimx) is False:
+			goodsize = primefactor.getNextEvenPrime(dimx)
+			factor = float(goodsize) / float(dimx)
+			apDisplay.printMsg("padding image:  %ix%i to %ix%i" % (dimx,dimy,dimx*factor,dimy*factor))
+			mrcarray = apImage.mrcToArray(ace2inputpath,msg=False)
+#			paddedmrc = imagefun.pad(mrcarray, None, factor)
+			paddedmrc = apImage.frame_constant(mrcarray, (dimx*factor,dimy*factor), cval=mrcarray.mean())
+			ace2inputpath = os.path.join(self.params['rundir'],imgdata['filename']+".mrc")
+			apImage.arrayToMrc(paddedmrc,ace2inputpath,msg=False)
 
 		inputparams = {
 			'input': ace2inputpath,

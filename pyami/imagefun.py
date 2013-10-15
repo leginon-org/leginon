@@ -183,11 +183,13 @@ def swap_quadrants(a):
 	a = numpy.roll(a, shift1, 1)
 	return a
 
-def pad(im, value=None):
+def pad(im, value=None, factor=None):
 	# maybe use numpy.concatenate instead?
 	if value is None:
 		value = arraystats.mean(im)
-	padshape = im.shape[0]*2, im.shape[1]*2
+	if factor is None:
+		factor = 2
+	padshape = im.shape[0]*factor, im.shape[1]*factor
 	paddedimage = value * numpy.ones(padshape, im.dtype)
 	paddedimage[:im.shape[0], :im.shape[1]] = im
 	return paddedimage
