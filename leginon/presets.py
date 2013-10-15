@@ -132,6 +132,7 @@ class PresetsClient(object):
 
 	def toScope(self, presetname, emtarget=None, keep_shift=False):
 		'''
+		presetsclient function to
 		send the named preset to the scope
 		optionally send a target to the scope as well
 		'''
