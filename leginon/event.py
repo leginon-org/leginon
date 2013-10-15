@@ -409,6 +409,7 @@ class TransformTargetEvent(Event):
 		return Event.typemap() + (
 			('target', leginondata.AcquisitionImageTargetData),
 			('level', str),
+			('use parent mover', bool),
 		)
 	typemap = classmethod(typemap)
 
