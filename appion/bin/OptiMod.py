@@ -768,7 +768,8 @@ class OptiMod(appionScript.AppionScript):
 		
 		####################          align 3-D models        ##################
 
-		if start != "3D_assess" and start != "3D_refine":		
+		if start == "3D_align" or start == "none":
+#		if start != "3D_assess" and start != "3D_refine":		
 			### run Maximum Likelihood 3-D alignment & align resulting volumes
 			apDisplay.printColor("Running Xmipp maximum likelihood 3-D alignment", "cyan")
 			vol_doc_file, alignref = apCommonLines.xmipp_max_like_3d_align(
@@ -806,7 +807,8 @@ class OptiMod(appionScript.AppionScript):
 
 		#########    refine volumes using Xmipp projection matching    #########
 
-		if start != "3D_assess":
+		if start == "3D_align" or start == "3D_refine" or start == "none":
+#		if start != "3D_assess":
 			if not os.path.isdir("refinement"):
 				os.mkdir("refinement")
 			os.chdir("refinement")
@@ -829,7 +831,8 @@ class OptiMod(appionScript.AppionScript):
 		
 		#################            model evaluation           ################
 		
-		if start == "none" or start=="3D_assess":
+		if start == "3D_align" or start == "3D_refine" or start == "3D_assess" or start == "none":
+#		if start == "none" or start=="3D_assess":
 			### final model assessment
 			try:
 				euler_array = apCommonLines.getEulerValuesForModels(alignparams, 
