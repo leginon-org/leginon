@@ -152,6 +152,14 @@ class ConfirmationEvent(NotificationEvent):
 		)
 	typemap = classmethod(typemap)
 
+class ApplicationLaunchedEvent(NotificationEvent):
+	'Event passing the application launched'
+	def typemap(cls):
+		return NotificationEvent.typemap() + (
+			('application', leginondata.ApplicationData),
+		)
+	typemap = classmethod(typemap)
+
 class QueuePublishEvent(PublishEvent):
 	dataclass = leginondata.QueueData
 

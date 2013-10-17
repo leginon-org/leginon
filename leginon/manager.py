@@ -764,6 +764,8 @@ class Manager(node.Node):
 		self.frame.GetEventHandler().AddPendingEvent(evt)
 
 	def onApplicationStarted(self, name):
+		evt = event.ApplicationLaunchedEvent(application=self.application.applicationdata,destination='')
+		self.distributeEvents(evt)
 		evt = gui.wx.Manager.ApplicationStartedEvent(name)
 		self.frame.GetEventHandler().AddPendingEvent(evt)
 

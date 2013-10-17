@@ -47,6 +47,7 @@ class Node(correctorclient.CorrectorClient):
 	panelclass = None
 	eventinputs = [event.Event,
 									event.KillEvent,
+									event.ApplicationLaunchedEvent,
 									event.ConfirmationEvent]
 
 	eventoutputs = [event.PublishEvent,
@@ -91,6 +92,7 @@ class Node(correctorclient.CorrectorClient):
 		self.addEventInput(event.KillEvent, self.die)
 		self.addEventInput(event.ConfirmationEvent, self.handleConfirmedEvent)
 		self.addEventInput(event.SetManagerEvent, self.handleSetManager)
+		self.addEventInput(event.ApplicationLaunchedEvent, self.handleApplicationEvent)
 
 		self.managerlocation = managerlocation
 		if managerlocation is not None:
@@ -326,6 +328,14 @@ class Node(correctorclient.CorrectorClient):
 			return self.eventToClient(ievent, self.managerclient, wait, timeout)
 		else:
 			self.logger.warning('No manager, not sending event: %s' % (ievent,))
+
+	def handleApplicationEvent(self, ievent):
+		'''
+		Use the application object passed through the event to do something.
+		This is for future setting synchronization.  Not implemented yet.
+		It does nothing now.
+		'''
+		pass
 
 	def handleConfirmedEvent(self, ievent):
 		'''Handler for ConfirmationEvents. Unblocks the call waiting for confirmation of the event generated.'''
