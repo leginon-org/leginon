@@ -265,16 +265,13 @@ class SimTEM(tem.TEM):
 	def getProbeMode(self):
 		index = self.probe_mode_index
 		try:
-			print 'get probe mode result', self.probe_modes[index]
 			return self.probe_modes[index]
 		except IndexError:
 			raise ValueError('invalid probe mode')
 
 	def setProbeMode(self, value):
-		print 'set probemode value',value
 		try:
 			self.probe_mode_index = self.probe_modes.index(str(value))
-			print self.probe_mode_index
 		except ValueError:
 			raise ValueError('invalid probe mode')
 
