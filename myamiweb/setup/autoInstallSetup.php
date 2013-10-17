@@ -44,7 +44,7 @@ if(is_dir($dir)){
 				continue;
 
 			//don't import 2-client versions, 'Advanced', 'Robot' or 'SimuTomography'
-			if(preg_match("/2./", $filenam) || preg_match("/Advanced/", $filenam) || eepreg_match("/Robot/", $filename) || preg_match("/SimuTomography/", $filename))
+			if(preg_match("/2./", $filenam) || preg_match("/Advanced/", $filename) || preg_match("/Robot/", $filename) || preg_match("/SimuTomography/", $filename))
 				continue;
 			else
 				// import application to database.
