@@ -393,6 +393,7 @@ class MoveToTargetEvent(Event):
 			('move precision', float),
 			('accept precision', float),
 			('final image shift', bool),
+			('use target z', bool),
 		)
 	typemap = classmethod(typemap)
 

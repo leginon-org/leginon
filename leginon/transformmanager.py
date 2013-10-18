@@ -31,6 +31,7 @@ import targethandler
 import tiltcorrector
 import cameraclient
 import player
+import imagehandler
 
 hide_incomplete = False
 
@@ -134,7 +135,7 @@ class LogPolarRegistration(Registration):
 		matrix[2,1] = shift[1]
 		return matrix
 
-class TargetTransformer(targethandler.TargetHandler):
+class TargetTransformer(targethandler.TargetHandler, imagehandler.ImageHandler):
 	def __init__(self):
 		targethandler.TargetHandler.__init__(self)
 
@@ -216,6 +217,18 @@ class TargetTransformer(targethandler.TargetHandler):
 				ret = newt
 		return ret
 
+	def matrixTransformMosaic(self, target, matrix, newimage=None):
+		'''
+		Transform the most recent version of the targets from target list to new targets.
+		'''
+		# reseachTargets always returns most recent version of the targets
+		alltargets = self.researchTargets(list=target['list'],image=target['image'])
+		for t in alltargets:
+			newt = self.matrixTransformOne(t, matrix, newimage)
+			if t['number'] == target['number']:
+				ret = newt
+		return ret
+
 	def matrixTransformOne(self, target, matrix,newimage=None):
 		row = target['delta row']
 		col = target['delta column']
@@ -291,18 +304,12 @@ class TargetTransformer(targethandler.TargetHandler):
 				matrix = self.calculateMatrix(lastparentimage, newparentimage, bad_image2=True)
 		self.logger.info('Transform Matrix calculated from %s' % (lastparentimage['filename'],))
 		self.logger.info('                              to %s' % (newparentimage['filename'],))
-		newtarget = self.matrixTransform(target, matrix,newparentimage)
+		if parentimage['target']['list'] is None or not parentimage['target']['list']['mosaic']:
+			newtarget = self.matrixTransform(target, matrix,newparentimage)
+		else:
+			newtarget = self.matrixTransformMosaic(target, matrix,newparentimage)
 		return newtarget
 
-	def getLastParentImage(self,newparentimage):
-		'''
-		Get last version of the newparentimage. If there are target adjustment
-		of the grandparent, the query may returns no results
-		'''
-		results = leginondata.AcquisitionImageData(target=newparentimage['target'],version=newparentimage['version']-1).query(results=1)
-		if not results:
-			return None
-		return results[0]
 
 class TransformManager(node.Node, TargetTransformer):
 	panelclass = gui.wx.TransformManager.Panel
@@ -449,6 +456,7 @@ class TransformManager(node.Node, TargetTransformer):
 		Mover can either be presets manager or navigator
 		'''
 		status = 'ok'
+		print 'oldimage stage z:', imagedata['scope']['stage position']['z']
 		presetname = imagedata['preset']['name']
 		targetdata = emtarget['target']
 		moverdata = imagedata['mover']
@@ -469,15 +477,24 @@ class TransformManager(node.Node, TargetTransformer):
 			if targetdata['type'] != 'simulated':
 				precision = moverdata['move precision']
 				accept_precision = moverdata['accept precision']
-				status = self.navclient.moveToTarget(targetdata, movetype, precision, accept_precision, final_imageshift=False)
+				# Use current z in navigator move like in presetsclient
+				status = self.navclient.moveToTarget(targetdata, movetype, precision, accept_precision, final_imageshift=False,use_current_z=True)
 				if status == 'error':
 					return status
 		self.presetsclient.toScope(presetname, emtarget, keep_shift=False)
+		stagenow = self.instrument.tem.StagePosition
+		print 'reacquire MoveAndPreset end z', stagenow['z']
 		return status
 
 	def reacquire(self, targetdata, use_parent_mover=False):
+		'''
+		Reacquire parent image that created the targetdata but at current stage z.
+		'''
+		### get old image
 		oldimage = None
 		targetlist = targetdata['list']
+		# targetdata may be outdated due to other target adjustment
+		# This query gives the most recent target of the same specification
 		tquery = leginondata.AcquisitionImageTargetData(session=self.session, list=targetlist, number=targetdata['number'], type=targetdata['type'])
 		aquery = leginondata.AcquisitionImageData(target=tquery)
 		results = aquery.query(readimages=False, results=1)
@@ -500,6 +517,7 @@ class TransformManager(node.Node, TargetTransformer):
 		self.imageMoveAndPreset(oldimage,emtarget,use_parent_mover)
 		targetdata = emtarget['target']
 		imagedata = self.acquireCorrectedCameraImageData(channel)
+		# The preset used does not always have the original preset's parameters such as image shift
 		currentpresetdata = self.presetsclient.getCurrentPreset()
 		## convert CameraImageData to AcquisitionImageData
 		dim = imagedata['camera']['dimension']

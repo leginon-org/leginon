@@ -54,12 +54,13 @@ class NavigatorClient(object):
 		self.movedonestatus = evt['status']
 		self.movedone.set()
 
-	def moveToTarget(self, target, movetype, precision=0.0, accept_precision=1e-3, final_imageshift=False):
+	def moveToTarget(self, target, movetype, precision=0.0, accept_precision=1e-3, final_imageshift=False, use_current_z=False):
 		self.node.startTimer('moveToTarget')
 		ev = event.MoveToTargetEvent(target=target, movetype=movetype)
 		ev['move precision'] = precision
 		ev['accept precision'] = accept_precision
 		ev['final image shift'] = final_imageshift
+		ev['use target z'] = not use_current_z
 		self.movedone.clear()
 		self.node.outputEvent(ev, wait=False)
 		## wait for event
@@ -122,6 +123,7 @@ class Navigator(node.Node):
 		precision = ev['move precision']
 		accept_precision = ev['accept precision']
 		final_imageshift = ev['final image shift']
+		use_target_z = ev['use target z']
 		self.logger.info('handling %s request from %s' % (movetype, nodename,))
 		imagedata = targetdata['image']
 		self.newImage(imagedata)
@@ -144,6 +146,15 @@ class Navigator(node.Node):
 		# has been changed by Navigator and will not cycle on the first target.  
 		# Later targets in the list do cycle according to PresetsManager settings
 		# even if Navigator settings['cycle after'] is off
+		stagenow = self.instrument.tem.StagePosition
+		print 'z before use_target_z', use_target_z, stagenow['z']
+		if use_target_z:
+			# if the move comes from target adjustment, z focus is likely done.
+			# Therefore target z should not be set according to parent
+			print imagedata['scope']['stage position']['z']
+			self.instrument.tem.setStagePosition({'z':imagedata['scope']['stage position']['z']})
+		stagenow = self.instrument.tem.StagePosition
+		print 'set z before navigator move', stagenow['z']
 		status = self.move(rows, cols, movetype, precision, accept_precision, check, preset=preset, final_imageshift=final_imageshift, cycle_after=True)
 		self.stopTimer('move')
 
@@ -230,7 +241,12 @@ class Navigator(node.Node):
 		for axis in ('x','y'):
 			scopeshift[axis] = newstate[moveparam][axis] - scope[moveparam][axis]
 		self.logger.info('change in %(moveparam)s: %(x).4e, %(y).4e' % scopeshift)
-		
+
+		# Avoid changing stage z according to imagedata here since it is handled 
+		# before the move
+		stagenow = self.instrument.tem.StagePosition	
+		newstate['stage position']['z'] = stagenow['z']
+
 		self.oldstate = self.newstate
 		self.newstate = newstate
 		emdat = leginondata.NavigatorScopeEMData()
