@@ -27,6 +27,7 @@ import raster
 import presets
 import time
 import targetfinder
+import imagehandler
 
 try:
 	set = set
@@ -35,7 +36,7 @@ except NameError:
 	set = sets.Set
 
 
-class MosaicClickTargetFinder(targetfinder.ClickTargetFinder):
+class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.ImageHandler):
 	panelclass = gui.wx.MosaicClickTargetFinder.Panel
 	settingsclass = leginondata.MosaicClickTargetFinderSettingsData
 	defaultsettings = dict(targetfinder.ClickTargetFinder.defaultsettings)
@@ -193,12 +194,24 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder):
 				self.targetlist = targets[0]['list']
 			self.targetmap[imid][type] = targets
 		self.logger.info('Image added to mosaic')
+		if self.targetlist:
+			print 'add tile targetlist',self.targetlist.dbid
+		print 'add tile, imid', imid, imagedata['filename']
+		print 'add targetmap', len(self.targetmap[imid]['acquisition'])
+
+	def hasNewImageVersion(self):
+		for id, imagedata in self.imagemap.items():
+			recent_imagedata = self.researchImages(list=imagedata['list'],target=imagedata['target'])[-1]
+			if recent_imagedata.dbid != imagedata.dbid:
+				return True
+		return False
 
 	def targetsFromDatabase(self):
 		for id, imagedata in self.imagemap.items():
+			recent_imagedata = self.researchImages(list=imagedata['list'],target=imagedata['target'])[-1]
 			self.targetmap[id] = {}
 			for type in ('acquisition','focus'):
-				targets = self.researchTargets(image=imagedata, type=type)
+				targets = self.researchTargets(image=recent_imagedata, type=type)
 				### set my target list to same as first target found
 				if targets and self.targetlist is None:
 					self.targetlist = targets[0]['list']
@@ -242,7 +255,10 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder):
 
 	def displayDatabaseTargets(self):
 		self.logger.info('Getting targets from database...')
-		self.targetsFromDatabase()
+		if not self.hasNewImageVersion():
+			self.targetsFromDatabase()
+		else:
+			self.loadMosaicTiles(self.getMosaicName())
 		self.displayTargets()
 
 	def displayTargets(self):
@@ -319,6 +335,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder):
 		self.logger.debug('publishing new mosaic image list')
 		self.publish(self.mosaicimagelist, database=True, dbforce=True)
 		self.logger.debug('published new mosaic image list')
+		self.setMosaicName(targetlist)
 		return self.mosaicimagelist
 
 	def processImageData(self, imagedata):
@@ -338,6 +355,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder):
 		tiledata = leginondata.MosaicTileData(image=imagedata, list=imagelist, session=self.session)
 		self.logger.debug('publishing MosaicTileData')
 		self.publish(tiledata, database=True)
+		self.setMosaicNameFromImageList(imagelist)
 		self.logger.debug('published MosaicTileData')
 		self.addTile(imagedata)
 
@@ -395,6 +413,20 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder):
 		self.researchMosaicTileData()
 		return self.mosaicselectionmapping.keys()
 
+	def setMosaicName(self, mosaicname):
+		self.mosaicname = mosaicname
+
+	def setMosaicNameFromImageList(self,list):
+		label = '(no label)'
+		if list['targets'] is not None:
+			if list['targets']['label']:
+				label = list['targets']['label']
+		key = '%s:  %s' % (list.dbid, label)
+		self.setMosaicName(key)
+
+	def getMosaicName(self):
+		return self.mosaicname
+
 	def loadMosaicTiles(self, mosaicname):
 		self.logger.info('Clearing mosaic')
 		self.clearTiles()
@@ -402,7 +434,12 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder):
 		try:
 			tiles = self.mosaicselectionmapping[mosaicname]
 		except KeyError:
-			raise ValueError
+			# new inbound mosaic is not in selectionmapping. Refresh the list and try again
+			self.researchMosaicTileData()
+			if mosaicname not in self.mosaicselectionmapping.keys():
+				raise ValueError
+			else:
+				tiles = self.mosaicselectionmapping[mosaicname]
 		self.mosaicimagelist = tiles[0]['list']
 		mosaicsession = self.mosaicimagelist['session']
 		ntotal = len(tiles)
@@ -413,7 +450,8 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder):
 			# create an instance model to query
 			self.logger.info('Finding image %i of %i' % (i + 1, ntotal))
 			imagedata = tile['image']
-			self.addTile(imagedata)
+			recent_imagedata = self.researchImages(list=imagedata['list'],target=imagedata['target'])[-1]
+			self.addTile(recent_imagedata)
 		self.reference_target = self.getReferenceTarget()
 		self.logger.info('Mosaic loaded (%i of %i images loaded successfully)' % (i+1, ntotal))
 		if self.settings['create on tile change'] in ('all', 'final'):
@@ -455,7 +493,9 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder):
 			self.targetlist = self.newTargetList()
 			self.publish(self.targetlist, database=True, dbforce=True)
 		'''
-		targetdata = self.newTargetForTile(imagedata, drow, dcol, type=typename, list=self.targetlist)
+		# publish as targets on most recent version of image to preserve adjusted z
+		recent_imagedata = self.researchImages(list=imagedata['list'],target=imagedata['target'])[-1]
+		targetdata = self.newTargetForTile(recent_imagedata, drow, dcol, type=typename, list=self.targetlist)
 		## can we do dbforce here?  it might speed it up
 		self.publish(targetdata, database=True)
 		return targetdata
