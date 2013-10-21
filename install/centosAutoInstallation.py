@@ -16,11 +16,11 @@ class CentosInstallation(object):
 
 	def setReleaseDependantValues(self):
 		# need to change to branch when release
-		self.svnCmd = "svn co http://ami.scripps.edu/svn/myami/branches/myami-redux " + self.svnMyamiDir
+		#self.svnCmd = "svn co http://ami.scripps.edu/svn/myami/branches/myami-redux " + self.svnMyamiDir
 		
-		#self.svnCmd = "svn co http://ami.scripps.edu/svn/myami/trunk " + self.svnMyamiDir
+		self.svnCmd = "svn co http://ami.scripps.edu/svn/myami/trunk " + self.svnMyamiDir
 		# redhat release related values
-		self.redhatRelease = '6.5'
+		self.redhatRelease = '6.8' # currently used to decide the name of the epel download.
 		self.torqueLibPath = '/var/lib/torque/'
 
 		# SHA-1 digest of a registration key provided by AMI. When we change the key that we give to
@@ -155,7 +155,8 @@ class CentosInstallation(object):
 		redhatMajorRelease = self.redhatRelease.split('.')[0]
 		redhatMinorRelease = self.redhatRelease.split('.')[1]
 
-		self.runCommand("rpm -Uvh http://download.fedora.redhat.com/pub/epel/%s/`uname -i`/epel-release-%s-%s.noarch.rpm" % (redhatMajorRelease, redhatMajorRelease, redhatMinorRelease))
+		# download from http://dl.fedoraproject.org/pub/epel/6/i386/epel-release-6-8.noarch.rpm 
+		self.runCommand("rpm -Uvh http://dl.fedoraproject.org/pub/epel/%s/`uname -i`/epel-release-%s-%s.noarch.rpm" % (redhatMajorRelease, redhatMajorRelease, redhatMinorRelease))
 
 		self.runCommand("yum -y update yum*")
 
@@ -211,8 +212,14 @@ class CentosInstallation(object):
 		# download the tar file and unzip it
 		command = "wget -c " + os.path.join(fileLocation, targzFileName)
 		self.runCommand(command)
+
+		if not os.path.exists( targzFileName ):
+			command = "wget -c " + fileLocation
+			self.runCommand(command)
+
 		command = "tar -zxvf " + targzFileName
 		self.runCommand(command)
+		
 		# install with python installer
 		os.chdir(unpackDirName)
 		command = "python setup.py install"
@@ -304,7 +311,7 @@ class CentosInstallation(object):
 		cmd = os.path.join(self.svnMyamiDir, 'install/newDBsetup.php -L %s -P %s -H %s -U %s -E %s' % (self.leginonDB, self.projectDB, self.dbHost, self.dbUser, self.adminEmail))
 		cmd = 'php ' + cmd
 
-		#self.runCommand(cmd)
+		self.runCommand(cmd)
 		self.openFirewallPort(3306)
 		return True
 
@@ -344,9 +351,7 @@ class CentosInstallation(object):
 
 		# setup Leginon configuration file
 		self.writeToLog("setup Leginon configuration file")
-		leginonDir = self.runCommand('python -c "import leginon; print leginon.__path__[0]"')		
-		leginonDir = leginonDir.strip()
-		self.setupLeginonCfg(leginonDir + '/config')
+		self.setupLeginonCfg()
 
 		# setup Sinedon configuration file
 		self.writeToLog("setup Sinedon configuration file")
@@ -666,6 +671,10 @@ setenv LD_LIBRARY_PATH ${LD_LIBRARY_PATH}:${XMIPPDIR}/lib:%s''' % (MpiLibDir))
 		
 		f = open(self.torqueLibPath + 'mom_priv/config', 'w')
 		f.write("$pbsserver localhost # running pbs_server on this host")
+
+		# Need munge key
+		self.runCommand("/usr/sbin/create-munge-key")
+		self.runCommand("chkconfig munge on")
 		
 		self.runCommand('qmgr -c "s s scheduling=true"')
 		self.runCommand('qmgr -c "c q batch queue_type=execution"')
@@ -683,9 +692,21 @@ setenv LD_LIBRARY_PATH ${LD_LIBRARY_PATH}:${XMIPPDIR}/lib:%s''' % (MpiLibDir))
 		packagelist = ['mysql-server', 'php', 'php-mysql', ]
 		self.yumInstall(packagelist)
 	
-	def setupLeginonCfg(self, leginonCfgDir):
-		inf = open(leginonCfgDir + '/default.cfg', 'r')
-		outf = open(leginonCfgDir + '/leginon.cfg', 'w')
+	def setupLeginonCfg(self):
+		# The template config file is in the svn download loacation. The last place the leginon.cfg
+		# file is looked for is /etc/myami, which makes it the most global config file location.
+		configTemplateFile	= os.path.join(self.svnMyamiDir, "leginon", "leginon.cfg.template")
+		configOutFile 		= "leginon.cfg"
+		configDest 		= "/etc/myami"
+		
+		# make and go to the destination dir
+		if not os.path.exists( configDest ):
+			self.writeToLog("create leginon configuration folder - /etc/myami")
+			os.makedirs( configDest )
+		os.chdir( configDest )
+
+		inf  = open( configTemplateFile, 'r' )
+		outf = open( configOutFile, 'w' )
 
 		for line in inf:
 			if line.startswith('path:'):
@@ -694,6 +715,7 @@ setenv LD_LIBRARY_PATH ${LD_LIBRARY_PATH}:${XMIPPDIR}/lib:%s''' % (MpiLibDir))
 				outf.write(line)
 		inf.close()
 		outf.close()
+		os.chdir(self.currentDir)
 
 	def setupPyscopeCfg(self, pyscopeCfgDir):
 		shutil.copy(pyscopeCfgDir + '/instruments.cfg.template', pyscopeCfgDir + '/instruments.cfg')
@@ -846,12 +868,21 @@ setenv LD_LIBRARY_PATH ${LD_LIBRARY_PATH}:${XMIPPDIR}/lib:%s''' % (MpiLibDir))
 			{
 				# Python fs
 				'targzFileName':'fs-0.4.0.tar.gz',
-				'fileLocation':'http://pyfilesystem.googlecode.com/files/',
-				'unpackDirName':'pyfilesystem-0.4.0',
+				'fileLocation':'https://code.google.com/p/pyfilesystem/downloads/detail?name=fs-0.4.0.tar.gz&can=2&q=',
+				'unpackDirName':'fs-0.4.0',
 			}
 		]
 		for p in packagelist:
 			self.installPythonPackage(p['targzFileName'], p['fileLocation'], p['unpackDirName'])
+
+		# Setup the redux config file. For now, just use default values
+		copyFrom = self.svnMyamiDir + "redux/redux.cfg.template"
+		copyTo = "/etc/myami/redux.cfg"
+		copyCommand = "cp " + configTemplateFile + " " + copyTo
+		self.runCommand( copyCommand )
+
+		# sudo cp -v myami/redux/init.d/reduxd /etc/init.d/
+		self.runCommand("/sbin/service reduxd start")
 
 
 	def installPhpSsh2(self):
@@ -935,7 +966,9 @@ setenv LD_LIBRARY_PATH ${LD_LIBRARY_PATH}:${XMIPPDIR}/lib:%s''' % (MpiLibDir))
 			elif line.startswith("define('TEMP_IMAGES_DIR', "):
 				outf.write("define('TEMP_IMAGES_DIR', '/tmp');\n")
 			elif line.startswith("define('DEFAULTCS', "):
-				outf.write("define('DEFAULTCS', '%.1f');\n" % (self.csValue))		
+				outf.write("define('DEFAULTCS', '%.1f');\n" % (self.csValue))
+			elif line.startswith("define('SERVER_HOST'"):
+				outf.write("define('SERVER_HOST', 'localhost');\n")		
 			else:
 				outf.write(line + '\n')
 
@@ -1106,6 +1139,8 @@ setenv LD_LIBRARY_PATH ${LD_LIBRARY_PATH}:${XMIPPDIR}/lib:%s''' % (MpiLibDir))
 		print("You may launch Leginon with the following command: start-leginon.py")
 		print("========================")
 
+		# Start the Torque server
+		self.runCommand("/etc/init.d/pbs_server start")
 				
 		setupURL = "http://localhost/myamiweb/setup/autoInstallSetup.php?password=" + self.serverRootPass
 		webbrowser.open_new(setupURL)
