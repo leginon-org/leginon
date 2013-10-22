@@ -137,6 +137,14 @@ class GatanSocket(object):
 	def connect(self):
 		self.sock = socket.create_connection((self.host,self.port))
 
+	def disconnect(self):
+		self.sock.shutdown(socket.SHUT_RDWR)
+		self.sock.close()
+
+	def restart_socket(self):
+		self.disconnect()
+		self.connect()
+
 	@logwrap
 	def send_data(self, data):
 		return self.sock.sendall(data)
