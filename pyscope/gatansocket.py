@@ -322,7 +322,7 @@ class GatanSocket(object):
 		message_recv = Message(longargs=(0,0,0,0,0))
 
 		# attempt to solve UCLA problem by reconnecting
-		self.reconnect()
+		#self.reconnect()
 
 		self.ExchangeMessages(message_send, message_recv)
 
