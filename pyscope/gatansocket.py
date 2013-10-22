@@ -132,6 +132,7 @@ class GatanSocket(object):
 			self.port = os.environ['SERIALEMCCD_PORT']
 		else:
 			raise ValueError('need to specify a port to GatanSocket instance, or set environment variable SERIALEMCCD_PORT')
+		self.save_frames = False
 		self.connect()
 
 	def connect(self):
@@ -217,6 +218,8 @@ class GatanSocket(object):
 	@logwrap
 	def SetK2Parameters(self, readMode, scaling, hardwareProc, doseFrac, frameTime, alignFrames, saveFrames, filt=''):
 		funcCode = enum_gs['GS_SetK2Parameters']
+
+		self.save_frames = saveFrames
 
 		# filter name
 		filt_str = filt + '\0'
@@ -322,7 +325,8 @@ class GatanSocket(object):
 		message_recv = Message(longargs=(0,0,0,0,0))
 
 		# attempt to solve UCLA problem by reconnecting
-		#self.reconnect()
+		#if self.save_frames:
+			#self.reconnect()
 
 		self.ExchangeMessages(message_send, message_recv)
 
