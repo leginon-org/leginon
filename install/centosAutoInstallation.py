@@ -673,8 +673,9 @@ setenv LD_LIBRARY_PATH ${LD_LIBRARY_PATH}:${XMIPPDIR}/lib:%s''' % (MpiLibDir))
 		f.write("$pbsserver localhost # running pbs_server on this host")
 
 		# Need munge key
-		self.runCommand("/usr/sbin/create-munge-key")
-		self.runCommand("chkconfig munge on")
+		#self.runCommand("/usr/sbin/munged")
+		#self.runCommand("/usr/sbin/create-munge-key")
+		#self.runCommand("chkconfig munge on")
 		
 		self.runCommand('qmgr -c "s s scheduling=true"')
 		self.runCommand('qmgr -c "c q batch queue_type=execution"')
@@ -868,21 +869,23 @@ setenv LD_LIBRARY_PATH ${LD_LIBRARY_PATH}:${XMIPPDIR}/lib:%s''' % (MpiLibDir))
 			{
 				# Python fs
 				'targzFileName':'fs-0.4.0.tar.gz',
-				'fileLocation':'https://code.google.com/p/pyfilesystem/downloads/detail?name=fs-0.4.0.tar.gz&can=2&q=',
+				'fileLocation':'https://pyfilesystem.googlecode.com/files/',
 				'unpackDirName':'fs-0.4.0',
 			}
 		]
+
 		for p in packagelist:
 			self.installPythonPackage(p['targzFileName'], p['fileLocation'], p['unpackDirName'])
 
 		# Setup the redux config file. For now, just use default values
 		copyFrom = self.svnMyamiDir + "redux/redux.cfg.template"
 		copyTo = "/etc/myami/redux.cfg"
-		copyCommand = "cp " + configTemplateFile + " " + copyTo
+		copyCommand = "cp " + copyFrom + " " + copyTo
 		self.runCommand( copyCommand )
 
-		# sudo cp -v myami/redux/init.d/reduxd /etc/init.d/
-		self.runCommand("/sbin/service reduxd start")
+		# Can't start the redux server from within this script, so we prompt the user to start it 
+		# at the end of this script.
+		# self.runCommand("/sbin/service reduxd start")
 
 
 	def installPhpSsh2(self):
@@ -1137,6 +1140,8 @@ setenv LD_LIBRARY_PATH ${LD_LIBRARY_PATH}:${XMIPPDIR}/lib:%s''' % (MpiLibDir))
 		print("Installation Complete.")
 		print("Appion will launch in your web browser momentarily.")
 		print("You may launch Leginon with the following command: start-leginon.py")
+		print("IMPORTANT: To view images in the web browser, you must first start the Redux server.")
+		print("Start the Redux Server with the following command: /sbin/service reduxd start")
 		print("========================")
 
 		# Start the Torque server
