@@ -185,6 +185,9 @@ class Focuser(manualfocuschecker.ManualFocusChecker):
 		### Drift check
 		if setting['check drift']:
 			driftthresh = setting['drift threshold']
+			# move first if needed
+			# TO DO: figure out how drift monitor behaves in RCT if doing this
+			self.conditionalMoveAndPreset(presetname, emtarget)
 			driftresult = self.checkDrift(presetname, emtarget, driftthresh)
 			if driftresult['status'] == 'drifted':
 				self.logger.info('Drift was detected so target will be repeated')
@@ -202,9 +205,7 @@ class Focuser(manualfocuschecker.ManualFocusChecker):
 
 		## send the autofocus preset to the scope
 		## drift check may have done this already
-		p = self.presetsclient.getCurrentPreset()
-		if p is None or p['name'] != presetname:
-			self.presetsclient.toScope(presetname, emtarget)
+		self.conditionalMoveAndPreset(presetname,emtarget)
 
 		## set to eucentric focus if doing Z correction
 		## WARNING:  this assumes that user will not change
@@ -345,7 +346,8 @@ class Focuser(manualfocuschecker.ManualFocusChecker):
 		#	driftthresh = None
 
 		## send the autofocus preset to the scope
-		self.presetsclient.toScope(presetname, emtarget)
+		## drift check or melting may have done this already
+		self.conditionalMoveAndPreset(presetname,emtarget)
 		target = emtarget['target']
 		try:
 			z = self.stagetiltcalclient.measureZ(atilt, correlation_type=setting['correlation type'])
@@ -421,14 +423,30 @@ class Focuser(manualfocuschecker.ManualFocusChecker):
 		scopedata.insert(force=True)
 		resultdata['scope'] = scopedata
 		self.publish(resultdata, database=True, dbforce=True)
+		stagenow = self.instrument.tem.StagePosition
+		print 'z after step', setting['name'], stagenow['z']
 
 		return status
+
+	def conditionalMoveAndPreset(self,target_presetname, emtarget):
+		'''
+		Only call moveAndPreset if this is the first time the target is processed.
+		This reduces time spent in moving.
+		'''
+		p = self.presetsclient.getCurrentPreset()
+		if p is None or p['name'] != target_presetname or self.new_acquire:
+			presetdata = self.presetsclient.getPresetFromDB(target_presetname)
+			self.moveAndPreset(presetdata, emtarget)
+			self.new_acquire = False
+			return
 
 	def acquire(self, presetdata, emtarget=None, attempt=None, target=None):
 		'''
 		this replaces Acquisition.acquire()
 		Instead of acquiring an image, we do autofocus
 		'''
+		self.new_acquire = True
+
 		## sometimes have to apply or un-apply deltaz if image shifted on
 		## tilted specimen
 		if emtarget is None:
@@ -448,9 +466,7 @@ class Focuser(manualfocuschecker.ManualFocusChecker):
 
 			#### change to melt preset
 			meltpresetname = self.settings['melt preset']
-			p = self.presetsclient.getCurrentPreset()
-			if p is None or p['name'] != meltpresetname:
-				self.presetsclient.toScope(meltpresetname, emtarget)
+			self.conditionalMoveAndPreset(meltpresetname,emtarget)
 			self.logger.info('melt preset: %s' % (meltpresetname,))
 
 			self.startTimer('melt exposeSpecimen')
@@ -477,6 +493,8 @@ class Focuser(manualfocuschecker.ManualFocusChecker):
 		# aquire and save the focus image
 		if self.settings['acquire final']:
 			manualfocuschecker.ManualFocusChecker.acquire(self, presetdata, emtarget)
+		stagenow = self.instrument.tem.StagePosition
+		print 'z after all adjustment in Focuser', stagenow['z']
 
 		return status
 
