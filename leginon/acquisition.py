@@ -631,6 +631,8 @@ class Acquisition(targetwatcher.TargetWatcher):
 					status = self.navclient.moveToTarget(targetdata, movetype, precision, accept_precision, final_imageshift=final_imageshift)
 					if status == 'error':
 						return status
+					# Give presetsclient time to unlock navigator changePreset request
+					time.sleep(0.5)
 			self.presetsclient.toScope(presetname, emtarget, keep_shift=keep_shift)
 			stageposition = self.instrument.tem.getStagePosition()
 			stagea = stageposition['a']
