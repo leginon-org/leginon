@@ -494,7 +494,7 @@ class TopologyRepScript(appionScript.AppionScript):
 		f.write("#!/bin/csh -f\n")
 		f.write("setenv IMAGIC_BATCH 1\n")
 		if self.params['nproc'] > 1:
-			f.write("%s/openmpi/bin/mpirun -x IMAGIC_BATCH %s/align/mralign.e_mpi << EOF\n" %(self.imagicroot,self.imagicroot))
+			f.write("mpirun -np %i -x IMAGIC_BATCH %s/align/mralign.e_mpi << EOF\n" %(self.params['nproc'],self.imagicroot))
 			if int(self.imagicversion) != 110119:
 				f.write("YES\n")
 				f.write("%i\n"%self.params['nproc'])
@@ -593,7 +593,7 @@ class TopologyRepScript(appionScript.AppionScript):
 
 		f.write("setenv IMAGIC_BATCH 1\n")
 		if self.params['msaproc'] > 1:
-			f.write("%s/openmpi/bin/mpirun -x IMAGIC_BATCH %s/msa/msa.e_mpi << EOF\n" %(self.imagicroot,self.imagicroot))
+			f.write("mpirun -np %i -x IMAGIC_BATCH %s/msa/msa.e_mpi << EOF\n" %(self.params['msaproc'],self.imagicroot))
 			if int(self.imagicversion) != 110119:
 				f.write("YES\n")
 				f.write("%i\n"%self.params['msaproc'])
