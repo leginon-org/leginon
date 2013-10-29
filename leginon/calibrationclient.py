@@ -1290,6 +1290,8 @@ class StageTiltCalibrationClient(StageCalibrationClient):
 		## alpha backlash correction
 		self.instrument.tem.StagePosition = state1['stage position']
 		self.instrument.tem.StagePosition = state2['stage position']
+		# make sure main screen is up since there is no failure in this function
+		self.instrument.tem.setMainScreenPosition('up')
 		## do tilt and measure image shift
 		im1 = self.acquireImage(state1)
 		shiftinfo = self.measureScopeChange(im1, state2, correlation_type=correlation_type)

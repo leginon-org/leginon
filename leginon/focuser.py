@@ -546,9 +546,12 @@ class Focuser(manualfocuschecker.ManualFocusChecker):
 		deltaz = delta * numpy.cos(alpha)
 		newz = stage['z'] + deltaz
 		self.logger.info('Correcting stage Z by %s (defocus change %s at alpha %s)' % (deltaz,delta,alpha))
-		self.instrument.tem.StagePosition = {'z': newz}
-		if reset or (reset is None and self.reset):
-			self.resetDefocus()
+		try:
+			self.instrument.tem.StagePosition = {'z': newz}
+			if reset or (reset is None and self.reset):
+				self.resetDefocus()
+		except ValueError:
+			self.logger.warning('Stage Z correction to %.0f um failed. Likely Limit reached' % (newz*1e6))
 		resultdata['defocus correction'] = setting['correction type']
 		# declare drift
 		self.logger.info('Declaring drift after correcting stage Z')
