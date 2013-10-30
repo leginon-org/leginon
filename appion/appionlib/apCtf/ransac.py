@@ -148,11 +148,18 @@ def ellipseRANSAC(edgeMap, ellipseThresh=2, minPercentGoodPoints=0.001,
 		#choose random edges
 		#might be better to sort edges into quadrants and choose that way
 		currentEdges = []
-		currentEdges.append(random.choice(bottomEdgeList))
-		currentEdges.append(random.choice(topEdgeList))
-		currentEdges.append(random.choice(leftEdgeList))
-		currentEdges.append(random.choice(rightEdgeList))
+		if len(bottomEdgeList) > 0:
+			currentEdges.append(random.choice(bottomEdgeList))
+		if len(topEdgeList) > 0:
+			currentEdges.append(random.choice(topEdgeList))
+		if len(leftEdgeList) > 0:
+			currentEdges.append(random.choice(leftEdgeList))
+		if len(rightEdgeList) > 0:
+			currentEdges.append(random.choice(rightEdgeList))
 		##NEIL IDEA: could select a random edge instead of an edge point???
+		if len(currentEdges) < 3:
+			print "error not enough edges"
+			break
 		currentEdges = numpy.array(currentEdges, dtype=numpy.int16)
 
 		## convert rows, columns into x, y by swapping columns
