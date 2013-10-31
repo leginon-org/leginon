@@ -413,7 +413,7 @@ class EditParamsDialog(wx.Dialog):
 		self.parent = parent
 		wx.Dialog.__init__(self, self.parent.frame, -1, "Edit CTF Parameters")
 
-		inforow = wx.FlexGridSizer(2, 2, 5, 5) #row, col
+		inforow = wx.FlexGridSizer(2, 4, 5, 5) #row, col
 		entrywidth = 120
 
 		label = wx.StaticText(self, -1, "Defocus 1: ", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
@@ -471,7 +471,7 @@ class EditMicroscopeDialog(wx.Dialog):
 		self.parent = parent
 		wx.Dialog.__init__(self, self.parent.frame, -1, "Edit Microscope Parameters")
 
-		inforow = wx.FlexGridSizer(2, 3, 5, 5) #row, col
+		inforow = wx.FlexGridSizer(3, 3, 5, 5) #row, col
 		entrywidth = 120
 
 		label = wx.StaticText(self, -1, "Cs: ", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
@@ -582,7 +582,7 @@ class CTFApp(wx.App):
 
 	#---------------------------------------
 	def OnInit(self):
-		self.deselectcolor = wx.Color(240,240,240)
+		self.deselectcolor = wx.Colour(240,240,240)
 
 		self.frame = wx.Frame(None, -1, 'Manual CTF')
 		self.sizer = wx.FlexGridSizer(3,1)
@@ -600,13 +600,13 @@ class CTFApp(wx.App):
 
 		self.panel.addTool(ThonRingTool(self, self.panel, self.panel.toolsizer))
 
-		self.panel.addTargetTool('First Valley', color=wx.Color(220,20,20),
+		self.panel.addTargetTool('First Valley', color=wx.Colour(220,20,20),
 			target=True, shape='x')
 		self.panel.setTargets('First Valley', [])
 		self.panel.selectiontool.setDisplayed('First Valley', True)
 		self.panel.selectiontool.setTargeting('First Valley', True)
 
-		self.panel.addTargetTool('First Valley Fit', color=wx.Color(251,236,93),
+		self.panel.addTargetTool('First Valley Fit', color=wx.Colour(251,236,93),
 			target=False, shape='polygon')
 		self.panel.setTargets('First Valley Fit', [])
 		self.panel.selectiontool.setDisplayed('First Valley Fit', True)
@@ -616,7 +616,7 @@ class CTFApp(wx.App):
 		### END IMAGE PANEL
 
 		### BEGIN BUTTONS ROW
-		self.buttonrow = wx.FlexGridSizer(1,8)
+		self.buttonrow = wx.FlexGridSizer(0,8)
 
 		label = wx.StaticText(self.frame, -1, "Database:  ", style=wx.ALIGN_RIGHT)
 		self.buttonrow.Add(label, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 3)
@@ -2800,7 +2800,7 @@ class CTFApp(wx.App):
 	#---------------------------------------
 	def onToggleNone(self, evt):
 		self.assessnone.SetValue(1)
-		self.assessnone.SetBackgroundColour(wx.Color(200,200,0))
+		self.assessnone.SetBackgroundColour(wx.Colour(200,200,0))
 		self.assesskeep.SetValue(0)
 		self.assesskeep.SetBackgroundColour(self.deselectcolor)
 		self.assessreject.SetValue(0)
@@ -2812,7 +2812,7 @@ class CTFApp(wx.App):
 		self.assessnone.SetValue(0)
 		self.assessnone.SetBackgroundColour(self.deselectcolor)
 		self.assesskeep.SetValue(1)
-		self.assesskeep.SetBackgroundColour(wx.Color(0,200,0))
+		self.assesskeep.SetBackgroundColour(wx.Colour(0,200,0))
 		self.assessreject.SetValue(0)
 		self.assessreject.SetBackgroundColour(self.deselectcolor)
 		self.assess = True
@@ -2824,7 +2824,7 @@ class CTFApp(wx.App):
 		self.assesskeep.SetValue(0)
 		self.assesskeep.SetBackgroundColour(self.deselectcolor)
 		self.assessreject.SetValue(1)
-		self.assessreject.SetBackgroundColour(wx.Color(200,0,0))
+		self.assessreject.SetBackgroundColour(wx.Colour(200,0,0))
 		self.assess = False
 
 	#---------------------------------------
