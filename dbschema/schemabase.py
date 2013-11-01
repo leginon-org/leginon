@@ -3,7 +3,7 @@ import time
 from sinedon import dbupgrade, dbconfig
 import updatelib
 
-class SchemaUpdate:
+class SchemaUpdate(object):
 	'''
 		Base Class for database schema upgrade.  Please name the supclass as
 		SchemaUpdatexxxxx where xxxxx is the svn revision number.  See
@@ -86,6 +86,14 @@ class SchemaUpdate:
 			appion_dbupgrade = dbupgrade.DBUpgradeTools('appiondata', appiondbname, drop=True)
 			appion_dbupgrade.backupDatabase("%s.sql" % (appiondbname), data=True)
 
+	def commitUpdate(self):
+		'''
+		Log that this update has been completed and therefore can not be repeated.
+		'''
+		self.updatelib.updateDatabaseReset(self.updatelib.db_revision)
+		self.updatelib.updateDatabaseRevision(self.selected_revision)
+		print "\033[35mUpdated install table reset and revision\033[0m"
+
 	def run(self):
 		if not self.required_upgrade:
 			print "\033[31mNothing to do\033[0m"
@@ -128,8 +136,7 @@ class SchemaUpdate:
 				raise
 			print divider
 			print "\033[35mSuccessful Update\033[0m"
-			self.updatelib.updateDatabaseReset(self.updatelib.db_revision)
-			self.updatelib.updateDatabaseRevision(self.selected_revision)
+			self.commitUpdate()
 
 if __name__ == "__main__":
 	update = SchemaUpdate(backup=False)
