@@ -61,7 +61,7 @@ if ($lasthelix) $labelline.= "   hnum   angle";
 
 $fname = "ctfvals-$expId-$stackId.txt";
 $fpath = "$scratchdir/$fname";
-unlink($fpath);
+if (file_exists($fpath)) unlink($fpath);
 
 if (!$frealign)
 	$format = "%7d  %9.6f  %9.6f  %7.3f  %3d  %3.1f  %6.4f %s\n";
@@ -129,7 +129,7 @@ foreach ($s as $part) {
 	}
 	else file_put_contents($fpath,$l,FILE_APPEND | LOCK_EX);
 }
-	$downloadLink = "(<a href='download.php?file=$fpath&expId=$expId'>\n";
+	$downloadLink = "<a href='download.php?file=$fpath&expId=$expId'>\n";
 echo "<br><b>".$downloadLink."Download the file</a></b><br>\n";
 if ($errornum>0) echo "<br>Warning! File contains $errornum errors\n";
 ?>
