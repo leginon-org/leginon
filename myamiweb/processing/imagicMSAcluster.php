@@ -50,13 +50,18 @@ function jobform($extra=false)	{
 	
 	// set commit on by default when first loading page, else set
 	$commitcheck = ($_POST['commit']=='on' || !$_POST['process']) ? 'checked' : '';
+	$alignparams = $particle->getAlignStackParams($alignId);
+	$nump=$alignparams['num_particles'];
 	// Set any existing parameters in form
 	$description = $_POST['description'];
 	$classidval = $_GET['imagicAnalysisId'];
 	$outdir = ($_POST['outdir']) ? $_POST['outdir'] : $sessionpath;
 	$ignore_images = ($_POST['ignore_images']) ? $_POST['ignore_images'] : '0';
 	$ignore_members = ($_POST['ignore_members']) ? $_POST['ignore_members'] : '0';
-	$num_classes = ($_POST['num_classes']) ? $_POST['num_classes'] : '4,16,64';
+	$defaultNumClasses = round(sqrt($nump));
+	$defaultNumClasses.= ",".round(sqrt(4*$nump));
+	$defaultNumClasses.= ",".round(sqrt(16*$nump));
+	$num_classes = ($_POST['num_classes']) ? $_POST['num_classes'] : $defaultNumClasses;
 	$num_factors = ($_POST['num_factors']) ? $_POST['num_factors'] : '8';
 	
 	echo "<form name='viewerform' method='POST' action='$formaction'>\n";
