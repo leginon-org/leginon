@@ -216,7 +216,6 @@ class AppionTiltSeriesLoop(appionScript.AppionScript):
 		put in run and param insertion to db here for insertion during instance initialization if you want to use self.rundata during the run
 		"""
 		return
-		"""
 
 	#=====================
 	def postLoopFunctions(self):
