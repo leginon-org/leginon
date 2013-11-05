@@ -233,7 +233,7 @@ class PresetsManager(node.Node):
 		'mag only': True,
 		'apply offset': False,
 		'blank': False,
-		'smallsize': 512,
+		'smallsize': 1024,
 		'add pause in alignment': False,
 	}
 	eventinputs = node.Node.eventinputs + [event.ChangePresetEvent, event.MeasureDoseEvent, event.UpdatePresetEvent]
