@@ -227,7 +227,7 @@ def generateParticleParams(params,modeldata,initparfile='params.0.par'):
 				# use defocus & astigmatism values
 				particleparams['df1']=abs(df1)
 				particleparams['df2']=abs(df2)
-				particleparams['angast']=-ctfdata['angle_astigmatism']
+				particleparams['angast']=ctfdata['angle_astigmatism']
 
 			else:
 				# first see if there are ctf values
@@ -239,7 +239,7 @@ def generateParticleParams(params,modeldata,initparfile='params.0.par'):
 					# use defocus & astigmatism values
 					particleparams['df1']=abs(ctfdata['defocus1']*1e10)
 					particleparams['df2']=abs(ctfdata['defocus2']*1e10)
-					particleparams['angast']=-ctfdata['angle_astigmatism']
+					particleparams['angast']=ctfdata['angle_astigmatism']
 
 		# if using parameters from previous reconstruction
 		if params['reconiterid'] is not None:

@@ -616,7 +616,8 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 				os.remove(ctfvaluesfile)
 			f = open(ctfvaluesfile,'w')
 			f.write("\tFinal Params for image: %s.mrc\n"%imgdata['filename'])
-			f.write("\tFinal Defocus (m,m,deg): %.6e %.6e %.6f\n"%(df1,df2,angast))
+			# acecorrect definition is opposite to database
+			f.write("\tFinal Defocus (m,m,deg): %.6e %.6e %.6f\n"%(df1,df2,-angast))
 			f.write("\tAmplitude Contrast: %.6f\n"%amp)
 			f.write("\tVoltage (kV): %.6f\n"%kv)
 			f.write("\tSpherical Aberration (mm): %.6e\n"%cs)

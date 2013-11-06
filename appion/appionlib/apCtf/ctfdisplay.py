@@ -85,7 +85,7 @@ class CtfDisplay(object):
 		### do the elliptical average
 		if self.ellipratio is None:
 			return None
-		pixelrdata, rotdata = ctftools.ellipticalAverage(zdata2d, self.ellipratio, -self.angle,
+		pixelrdata, rotdata = ctftools.ellipticalAverage(zdata2d, self.ellipratio, self.angle,
 			self.ringwidth, firstpeak, full=False)
 		raddata = pixelrdata*self.trimfreq
 
@@ -502,13 +502,13 @@ class CtfDisplay(object):
 
 		### Convert 1D array into 2D array by un-elliptical average
 		noise2d = ctftools.unEllipticalAverage(pixelrdata, noisedata,
-			self.ellipratio, -self.angle, zdata2d.shape)
+			self.ellipratio, self.angle, zdata2d.shape)
 		envelop2d = ctftools.unEllipticalAverage(pixelrdata, envelopdata,
-			self.ellipratio, -self.angle, zdata2d.shape)
+			self.ellipratio, self.angle, zdata2d.shape)
 		valley2d = ctftools.unEllipticalAverage(pixelrdata, valleydata,
-			self.ellipratio, -self.angle, zdata2d.shape)
+			self.ellipratio, self.angle, zdata2d.shape)
 		peak2d = ctftools.unEllipticalAverage(pixelrdata, peakdata,
-			self.ellipratio, -self.angle, zdata2d.shape)
+			self.ellipratio, self.angle, zdata2d.shape)
 
 		### Do the normalization on the 2d data
 		#blur2d = ndimage.gaussian_filter(zdata2d, 2)
@@ -640,10 +640,10 @@ class CtfDisplay(object):
 			print "origpowerspec shape", origpowerspec.shape
 
 		#compute elliptical average and merge with original image
-		pixelrdata, rotdata = ctftools.ellipticalAverage(origpowerspec, self.ellipratio, -self.angle,
+		pixelrdata, rotdata = ctftools.ellipticalAverage(origpowerspec, self.ellipratio, self.angle,
 			self.ringwidth*3, 1, full=True)
 		ellipavgpowerspec = ctftools.unEllipticalAverage(pixelrdata, rotdata, 
-			self.ellipratio, -self.angle, origpowerspec.shape)
+			self.ellipratio, self.angle, origpowerspec.shape)
 		halfshape = origpowerspec.shape[1]/2
 		halfpowerspec = numpy.hstack( (origpowerspec[:,:halfshape] , ellipavgpowerspec[:,halfshape:] ) )
 		if halfpowerspec.shape != origpowerspec.shape:
@@ -720,7 +720,7 @@ class CtfDisplay(object):
 			print "Percent Difference %.1f"%(perdiff*100)
 		if perdiff > 0.05:
 			#print self.angle, radii2[0], center
-			x = -1*firstpeak*math.cos(math.radians(self.angle))
+			x = 1*firstpeak*math.cos(math.radians(self.angle))
 			y = firstpeak*math.sin(math.radians(self.angle))
 			#print x,y
 			xy = (x+center[0], y+center[1], -x+center[0], -y+center[1])
@@ -728,7 +728,7 @@ class CtfDisplay(object):
 			draw.line(xy, fill="#f23d3d", width=10)
 		elif perdiff > 1e-6:
 			#print self.angle, radii2[0], center
-			x = -1*firstpeak*math.cos(math.radians(self.angle))
+			x = 1*firstpeak*math.cos(math.radians(self.angle))
 			y = firstpeak*math.sin(math.radians(self.angle))
 			#print x,y
 			xy = (x+center[0], y+center[1], -x+center[0], -y+center[1])
@@ -776,9 +776,8 @@ class CtfDisplay(object):
 			#print "numpoints", numpoints
 
 
-			### for some reason, we need to give a negative angle here
 			points = ellipse.generate_ellipse(major, minor, 
-				-math.radians(self.angle), center, numpoints, None, "step", True)
+				math.radians(self.angle), center, numpoints, None, "step", True)
 			x = points[:,0]
 			y = points[:,1]
 
