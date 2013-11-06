@@ -90,7 +90,7 @@ class Collection(object):
 		imageshape = self.preset['dimension']
 		# use minsize since tiltcorrelator needs it square, will crop the image in there.
 		minsize = min((imageshape['x'],imageshape['y']))
-		if maxsize > 512:
+		if minsize > 512:
 			correlation_bin = self.calcBinning(minsize, 256, 512)
 		else:
 			correlation_bin = 1
