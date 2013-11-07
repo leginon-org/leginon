@@ -88,11 +88,15 @@ class Collection(object):
 			lpf = None
 		# bin down images for correlation
 		imageshape = self.preset['dimension']
-		maxsize = max((imageshape['x'],imageshape['y']))
-		if maxsize > 512:
-			correlation_bin = self.calcBinning(maxsize, 256, 512)
+		# use minsize since tiltcorrelator needs it square, will crop the image in there.
+		minsize = min((imageshape['x'],imageshape['y']))
+		if minsize > 512:
+			correlation_bin = self.calcBinning(minsize, 256, 512)
 		else:
 			correlation_bin = 1
+		if correlation_bin is None:
+			# use a non-dividable number and crop in the correlator
+			correlation_bin = int(math.ceil(minsize / 512.0))
 		self.correlator = leginon.tomography.tiltcorrelator.Correlator(self.node, self.theta, correlation_bin, lpf)
 		if self.settings['run buffer cycle']:
 			self.runBufferCycle()

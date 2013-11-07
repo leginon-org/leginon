@@ -180,7 +180,7 @@ class setLeginonDefaultValues {
 		$data["cycle"] = "1";
 		$data["isdefault"] = "1";
 		$data["apply offset"] = "0";
-		$data["smallsize"] = "512";
+		$data["smallsize"] = "1024";
 		$data["blank"] = "0";
 		$data["REF|SessionData|session"]= $this->sessionId;
 		$pid2174=$this->mysqld->SQLInsert($table, $data);
@@ -421,6 +421,7 @@ class setLeginonDefaultValues {
 		$data["correct image shift coma"] = "0";
 		$data["park after list"] = "0";
 		$data["park after target"] = "0";
+		$data["use parent mover"] = "1";
 		$data["REF|SessionData|session"]= $this->sessionId;
 		$aid53=$this->mysqld->SQLInsert($table, $data);
 		
@@ -2222,7 +2223,7 @@ class setLeginonDefaultValues {
 		$data["integer"] = "1";
 		$data["intscale"] = "1";
 		$data["save integer"] = "0";
-		$data["model mag"] = "this preset and lower mags";
+		$data["model mag"] = "custom values";
 		$data["z0 error"] = "2e-06";
 		$data["phi"] = "0";
 		$data["offset"] = "0";
@@ -2278,7 +2279,7 @@ class setLeginonDefaultValues {
 		$data["process target type"] = "acquisition";
 		$data["mover"] = "navigator";
 		$data["move precision"] = "6e-08";
-		$data["drift threshold"] = "0";
+		$data["drift threshold"] = "6e-10";
 		$data["drift preset"] = "fa";
 		$data["save integer"] = "0";
 		$data["pause"] = "1";
@@ -2286,7 +2287,7 @@ class setLeginonDefaultValues {
 		$data["lowfilt"] = "1";
 		$data["drift between"] = "0";
 		$data["final image shift"] = "0";
-		$data["accept precision"] = "1e-06";
+		$data["accept precision"] = "5e-07";
 		$data["wait for reference"] = "0";
 		$data["wait for transform"] = "0";
 		$data["adjust for transform"] = "one";
@@ -2430,7 +2431,7 @@ class setLeginonDefaultValues {
 		$table = "FocusSequenceData";
 		$data=array();
 		$data["node name"] = "Focus";
-		$data["SEQ|sequence"] = "['Z_to_Eucentric', 'Def_to_Eucentric', 'Manual_after']";
+		$data["SEQ|sequence"] = "['Defocus1', 'Defocus2', 'Manual_after']";
 		$data["isdefault"] = "1";
 		$data["REF|SessionData|session"]= $this->sessionId;
 		$fid1=$this->mysqld->SQLInsert($table, $data);
@@ -2460,7 +2461,7 @@ class setLeginonDefaultValues {
 		$table = "FocusSettingData";
 		$data=array();
 		$data["correlation type"] = "phase";
-		$data["fit limit"] = "1000";
+		$data["fit limit"] = "5000";
 		$data["focus method"] = "Beam Tilt";
 		$data["stig defocus min"] = "2e-06";
 		$data["drift threshold"] = "3e-10";
@@ -2468,7 +2469,7 @@ class setLeginonDefaultValues {
 		$data["correction type"] = "Defocus";
 		$data["check drift"] = "1";
 		$data["preset name"] = "fa";
-		$data["name"] = "Def_to_Eucentric";
+		$data["name"] = "Defocus1";
 		$data["stig defocus max"] = "4e-06";
 		$data["tilt"] = "0.01";
 		$data["node name"] = "Focus";
@@ -2482,7 +2483,29 @@ class setLeginonDefaultValues {
 		$table = "FocusSettingData";
 		$data=array();
 		$data["correlation type"] = "phase";
-		$data["fit limit"] = "1000";
+		$data["fit limit"] = "5000";
+		$data["focus method"] = "Beam Tilt";
+		$data["stig defocus min"] = "2e-06";
+		$data["drift threshold"] = "3e-10";
+		$data["stig correction"] = "0";
+		$data["correction type"] = "Defocus";
+		$data["check drift"] = "0";
+		$data["preset name"] = "fa";
+		$data["name"] = "Defocus2";
+		$data["stig defocus max"] = "4e-06";
+		$data["tilt"] = "0.01";
+		$data["node name"] = "Focus";
+		$data["switch"] = "0";
+		$data["delta min"] = "0";
+		$data["delta max"] = "2e-05";
+		$data["isdefault"] = "1";
+		$data["REF|SessionData|session"]= $this->sessionId;
+		$fid26=$this->mysqld->SQLInsert($table, $data);
+		
+		$table = "FocusSettingData";
+		$data=array();
+		$data["correlation type"] = "phase";
+		$data["fit limit"] = "5000";
 		$data["focus method"] = "Manual";
 		$data["stig defocus min"] = "2e-06";
 		$data["drift threshold"] = "3e-10";
@@ -2512,7 +2535,7 @@ class setLeginonDefaultValues {
 		$table = "FocusSettingData";
 		$data=array();
 		$data["correlation type"] = "phase";
-		$data["fit limit"] = "1000";
+		$data["fit limit"] = "5000";
 		$data["focus method"] = "Stage Tilt";
 		$data["stig defocus min"] = "2e-06";
 		$data["drift threshold"] = "3e-10";
@@ -2534,7 +2557,7 @@ class setLeginonDefaultValues {
 		$table = "FocusSettingData";
 		$data=array();
 		$data["correlation type"] = "phase";
-		$data["fit limit"] = "1500";
+		$data["fit limit"] = "5000";
 		$data["focus method"] = "Stage Tilt";
 		$data["stig defocus min"] = "2e-06";
 		$data["drift threshold"] = "3e-10";
@@ -2630,7 +2653,7 @@ class setLeginonDefaultValues {
 		$table = "FocusSettingData";
 		$data=array();
 		$data["correlation type"] = "phase";
-		$data["fit limit"] = "2000";
+		$data["fit limit"] = "5000";
 		$data["focus method"] = "Beam Tilt";
 		$data["stig defocus min"] = "2e-06";
 		$data["drift threshold"] = "3e-10";
@@ -2864,7 +2887,7 @@ class setLeginonDefaultValues {
 		$data["stig defocus max"] = "4e-06";
 		$data["tilt"] = "0.0349065850398866";
 		$data["node name"] = "Section Z Focus";
-		$data["switch"] = "1";
+		$data["switch"] = "0";
 		$data["delta min"] = "0";
 		$data["delta max"] = "0.001";
 		$data["isdefault"] = "1";

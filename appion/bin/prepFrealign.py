@@ -299,7 +299,7 @@ class frealignJob(appionScript.AppionScript):
 					### use defocus and astigmatism values
 					particleparams['df1'] = abs(ctfdata['defocus1']*1e10)
 					particleparams['df2'] = abs(ctfdata['defocus2']*1e10)
-					particleparams['angast'] = -ctfdata['angle_astigmatism']
+					particleparams['angast'] = ctfdata['angle_astigmatism']
 			# if using parameters from previous reconstruction
 			if self.params['reconiterid'] is not None:
 				emaneuler = self.getStackParticleEulersForIteration(particle['particleNumber'])

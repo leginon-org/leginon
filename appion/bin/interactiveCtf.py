@@ -377,8 +377,8 @@ class ThonRingTool(ImagePanelTools.ImageTool):
 			## multiple by skipfactor to remove unsightly seam lines
 			numpoints = int(math.ceil(2.0*math.pi/theta/skipfactor))*skipfactor + 1
 		
-			## ellip angle is positve toward y-axis, ctf angle is negative toward y-axis
-			alpha = -math.radians(self.app.ctfvalues['angle_astigmatism'])
+			## ellip angle is positve toward y-axis, ctf angle is positive toward y-axis
+			alpha = math.radians(self.app.ctfvalues['angle_astigmatism'])
 
 			points = ellipse.generate_ellipse(major, minor, alpha,
 				center, numpoints, None, "step", True)

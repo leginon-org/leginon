@@ -261,7 +261,7 @@ class RefineCTF(appionLoop2.AppionLoop):
 				%(avgRes, defocus, ampCon), "green")
 		else:
 			ratio = (self.bestellipse['a']/self.bestellipse['b'])**2
-			angle = -math.degrees(self.bestellipse['alpha'])
+			angle = math.degrees(self.bestellipse['alpha'])
 			apDisplay.printColor("Prev Best :: avgRes=%.2f :: def=%.3e, defRatio=%.3f, ang=%.2f, ampCon=%.3f"
 				%(avgRes, defocus, ratio, angle, ampCon), "green")
 		return
@@ -683,7 +683,7 @@ class RefineCTF(appionLoop2.AppionLoop):
 
 		ellipRatio, ellipAlpha = results
 		apDisplay.printColor("BEST FROM FMIN :: defRatio=%.3f < a=%.2f"
-			%(ellipRatio**2, -math.degrees(ellipAlpha)), "blue")
+			%(ellipRatio**2, math.degrees(ellipAlpha)), "blue")
 
 		self.printBestValues()
 		time.sleep(10)
@@ -763,7 +763,7 @@ class RefineCTF(appionLoop2.AppionLoop):
 		self.ellipseParams = {
 			'a': lowerrad1[0],
 			'b': lowerrad2[0],
-			'alpha': -math.radians(bestDbValues['angle_astigmatism']),
+			'alpha': math.radians(bestDbValues['angle_astigmatism']),
 		}
 		ellipratio = self.ellipseParams['a']/self.ellipseParams['b']
 		defratio = bestDbValues['defocus2']/bestDbValues['defocus1']
@@ -797,7 +797,7 @@ class RefineCTF(appionLoop2.AppionLoop):
 
 		### translate ellipse into ctf values
 		if self.ellipseParams is not None:
-			self.ctfvalues['angle_astigmatism'] = -math.degrees(self.ellipseParams['alpha'])
+			self.ctfvalues['angle_astigmatism'] = math.degrees(self.ellipseParams['alpha'])
 			ellipratio = self.ellipseParams['a']/self.ellipseParams['b']
 			phi = math.asin(self.ctfvalues['amplitude_contrast'])
 			#note: a > b then def1 < def2

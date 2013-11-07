@@ -124,7 +124,7 @@ class aceLoop(appionLoop2.AppionLoop):
 			self.ctfvalues[ acevaluelist[i] ] = acevalues[i]
 
 		### override the astig angle to be in degrees
-		self.ctfvalues['angle_astigmatism'] = math.degrees(self.ctfvalues['angle_astigmatism'])
+		self.ctfvalues['angle_astigmatism'] = - math.degrees(self.ctfvalues['angle_astigmatism'])
 		self.ctfvalues['mat_file'] = imgdata['filename']+".mrc.mat"
 		self.ctfvalues['cs'] = scopeparams['cs']
 		self.ctfvalues['volts'] = scopeparams['kv']*1000.0

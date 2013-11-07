@@ -269,7 +269,7 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 					'defocus1':	float(bits[0])*1e-10,
 					'defocus2':	float(bits[1])*1e-10,
 					# WARNING: this is the negative of the direct result
-					'angle_astigmatism':	-float(bits[2]),
+					'angle_astigmatism':	float(bits[2]),
 					'amplitude_contrast': inputparams['ampcnst'],
 					'cross_correlation':	float(bits[numvals-3]),
 					'nominal':	nominal*1e-10,

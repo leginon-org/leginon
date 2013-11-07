@@ -75,7 +75,7 @@ foreach ($s as $part) {
 	$img = $part['imgid'];
 	$df1 = abs($imgids[$img]['defocus1'])*1e6;
 	$df2 = abs($imgids[$img]['defocus2'])*1e6;
-	$ang = -$imgids[$img]['angle_astigmatism'];
+	$ang = $imgids[$img]['angle_astigmatism'];
 	$amp = $imgids[$img]['amplitude_contrast'];
 	$tiltaxis = $imgids[$img]['tilt_axis_angle'];
 	$tiltangle = $imgids[$img]['tilt_angle'];

@@ -1032,7 +1032,7 @@ class PhasorCTF(appionLoop2.AppionLoop):
 
 		### translate ellipse into ctf values
 		if self.ellipseParams is not None:
-			self.ctfvalues['angle_astigmatism'] = -math.degrees(self.ellipseParams['alpha'])
+			self.ctfvalues['angle_astigmatism'] = math.degrees(self.ellipseParams['alpha'])
 			ellipratio = self.ellipseParams['a']/self.ellipseParams['b']
 			phi = math.asin(self.ctfvalues['amplitude_contrast'])
 			#note: a > b then def1 < def2

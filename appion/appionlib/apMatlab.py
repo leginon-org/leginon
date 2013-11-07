@@ -124,7 +124,7 @@ def runAceCorrect(imgdict,params):
 
 	#pdb.set_trace()
 	acecorrectcommand=("ctfcorrect1('%s', '%s', '%.32f', '%.32f', '%f', '%f', '%f');" % \
-		(imgpath, ctdimpath, ctfvalues['defocus1'], ctfvalues['defocus2'], ctfvalues['angle_astigmatism'], voltage, apix))
+		(imgpath, ctdimpath, ctfvalues['defocus1'], ctfvalues['defocus2'], -ctfvalues['angle_astigmatism'], voltage, apix))
 	print acecorrectcommand
 	try:
 		matlab = pymat.open("matlab -nosplash")

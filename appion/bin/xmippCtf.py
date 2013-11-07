@@ -183,7 +183,7 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 			elif sline.startswith("defocusV"):
 				defocus2 = float(bits[1].strip())
 			elif sline.startswith("azimuthal_angle"):
-				angle_astigmatism = -float(bits[1].strip())
+				angle_astigmatism = float(bits[1].strip())
 			elif sline.startswith("Q0"):
 				amplitude_contrast = abs(float(bits[1].strip()))
 

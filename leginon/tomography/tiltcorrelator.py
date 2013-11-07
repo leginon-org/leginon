@@ -64,13 +64,14 @@ class Correlator(object):
 
 	def getCenterSquareImage(self, array):
 		shape = array.shape
-		if shape[0] == shape[1]:
+		if shape[0] == shape[1] and (shape[0] % int(self.correlation_binning)) == 0:
 			return array
 		minsize = min(shape)
-		offsety = (shape[0] - minsize) / 2
-		endy = offsety + minsize
-		offsetx = (shape[1] - minsize) / 2
-		endx = offsetx + minsize
+		worksize = (min(shape) / int(self.correlation_binning)) * self.correlation_binning
+		offsety = (shape[0] - worksize) / 2
+		endy = offsety + worksize
+		offsetx = (shape[1] - worksize) / 2
+		endx = offsetx + worksize
 		return array[offsety:endy,offsetx:endx]
 
 	def correlate(self, imagedata, tiltcorrection=True, channel=None,wiener=False,taper=0,corrtype='phase'):

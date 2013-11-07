@@ -205,7 +205,8 @@ class Ace2Loop(appionLoop2.AppionLoop):
 				#print parts
 				self.ctfvalues['defocus1'] = float(parts[3])
 				self.ctfvalues['defocus2'] = float(parts[4])
-				self.ctfvalues['angle_astigmatism'] = float(parts[5])
+				# ace2 defines negative angle from +x toward +y
+				self.ctfvalues['angle_astigmatism'] = -float(parts[5])
 			elif re.search("^Amplitude Contrast:",sline):
 				parts = sline.split()
 				self.ctfvalues['amplitude_contrast'] = float(parts[2])
