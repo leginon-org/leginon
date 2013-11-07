@@ -18,6 +18,15 @@ class SchemaUpdate(object):
 		self.backup = backup
 		self.valid_upgrade = ['leginon','project','appion']
 		self.required_upgrade = self.valid_upgrade
+		self.excluded_appiondbs = []
+
+	def appendToExcluded_AppionDBs(self,dbname):
+		self.excluded_appiondbs.append(dbname)
+
+	def inExcluded_AppionDBList(self,appiondbname):
+		if appiondbname in self.excluded_appiondbs:
+			return True
+		return False
 
 	def setRequiredUpgrade(self,input):
 		list = []
@@ -124,6 +133,10 @@ class SchemaUpdate(object):
 					if self.backup:
 						self.appionbackup(appiondblist)
 					for appiondbname in appiondblist:
+						if self.inExcluded_AppionDBList(appiondbname):
+							print "\033[31mSkipping database %s\033[0m"%(appiondbname)
+							time.sleep(1)
+							continue
 						if not self.project_dbupgrade.databaseExists(appiondbname):
 							print "\033[31merror database %s does not exist\033[0m"%(appiondbname)
 							time.sleep(1)
