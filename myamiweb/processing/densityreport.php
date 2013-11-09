@@ -1,8 +1,8 @@
 <?php
-require"inc/particledata.inc";
-require"inc/leginon.inc";
-require"inc/project.inc";
-require"inc/processing.inc";
+require_once "inc/particledata.inc";
+require_once "inc/leginon.inc";
+require_once "inc/project.inc";
+require_once "inc/processing.inc";
 
 $expId= $_GET['expId'];
 $densityId= $_GET['densityId'];

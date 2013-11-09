@@ -14,7 +14,7 @@ require_once "inc/leginon.inc";
 require_once "inc/project.inc";
 require_once "inc/viewer.inc";
 require_once "inc/processing.inc";
-//require "inc/forms/basicRefineForm.inc";
+//require_once "inc/forms/basicRefineForm.inc";
 
 // IF VALUES SUBMITTED, EVALUATE DATA
 	

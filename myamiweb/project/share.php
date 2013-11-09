@@ -1,7 +1,7 @@
 <?
-require("inc/project.inc.php");
-require("inc/leginon.inc");
-require("inc/share.inc.php");
+require_once("inc/project.inc.php");
+require_once("inc/leginon.inc");
+require_once("inc/share.inc.php");
 
 if ($_GET[cp])
 	$selectedprojectId=$_GET[cp];

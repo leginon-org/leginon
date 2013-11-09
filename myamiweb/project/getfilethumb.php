@@ -1,7 +1,7 @@
 <?php
-require("inc/project.inc.php");
-require("inc/note.inc.php");
-require("inc/mysql.php");
+require_once("inc/project.inc.php");
+require_once("inc/note.inc.php");
+require_once("inc/mysql.php");
 
 $n_width = $_GET['w'];
 $n_height = $_GET['h'];

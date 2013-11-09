@@ -9,7 +9,7 @@
 
 require_once ("inc/leginon.inc");
 require_once "inc/dbemauth.inc";
-require('inc/admin.inc');
+require_once('inc/admin.inc');
 
 // Change $test to true to print out the code_string without executing it.
 $test=false;

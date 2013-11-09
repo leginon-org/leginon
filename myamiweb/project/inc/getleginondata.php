@@ -3,7 +3,7 @@
 // They might be merged with project/inc/experiment.inc.php in the future
 
 require_once "../config.php";
-require('inc/leginon.inc');
+require_once('inc/leginon.inc');
 
 $leginondata->mysql=new mysql(DB_HOST, DB_USER, DB_PASS, DB_LEGINON);
 
