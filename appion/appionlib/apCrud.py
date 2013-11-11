@@ -432,6 +432,10 @@ def makeImageFromLabels(labeled_image,ltotal,goodlabels):
 	else:
 		if len(goodlabels)==ltotal:
 			return labeled_image
+		# Special case when database got more assessed region.  Most likely an user error. See issue #2584
+		if len(goodlabels)>ltotal:
+			apDisplay.printWarning('There are more regions to keep than the number of regions.  Assuming want all!')
+			return labeled_image
 	if len(goodlabels)*2 < ltotal:
 		for i,l1 in enumerate(goodlabels):
 			l=l1+1
