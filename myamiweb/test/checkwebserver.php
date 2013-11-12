@@ -37,7 +37,7 @@ echo "<p>";
 require_once('./inc/moduleCheck.inc');
 $modules = new moduleCheck();
 
-require('./inc/webServerTester.inc');
+require_once('./inc/webServerTester.inc');
 $tester = new WebServerTester();
 
 // The location of the config file

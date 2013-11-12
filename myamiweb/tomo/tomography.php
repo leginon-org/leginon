@@ -134,10 +134,14 @@ class Tomography {
 			."ON (s.DEF_id = a.`REF|ScopeEMData|scope`) "
 			."LEFT JOIN CameraEMData c "
 			."ON (c.DEF_id = a.`REF|CameraEMData|camera`) "
+			."LEFT JOIN PresetData pr "
+			."ON (pr.DEF_id = a.`REF|PresetData|preset`) "
 			."LEFT JOIN TomographyPredictionData p "
 			."ON (a.DEF_id = p.`REF|AcquisitionImageData|image`) "
 			."WHERE a.`REF|TiltSeriesData|tilt series`=$tiltSeriesId "
 			."AND (a.`label` is null or a.`label` like '%tomo%') "
+			# exclude aligned data
+			."AND (pr.`name` not like '%-%') "
 			."ORDER BY stage_alpha";
 
 		return $this->mysql->getSQLResult($query);
@@ -168,9 +172,19 @@ class Tomography {
 		return $result[0];
 	}
 
-	function getTiltSeriesData($tiltSeriesId) {
+	function getTiltSeriesData($tiltSeriesId,$excludeAligned=true) {
 		if($tiltSeriesId == NULL)
 			return array();
+
+		# exclude aligned data so that statistics not screwed up
+		if ($excludeAligned) {
+			$exclude_aligned_join = "LEFT JOIN PresetData pr "
+				."ON (pr.DEF_id = a.`REF|PresetData|preset`) ";
+			$exclude_aligned_and = "AND (pr.`name` not like '%-%') ";
+		} else {
+			$exclude_aligned_join = '';
+			$exclude_aligned_and = '';
+		}
 
 		$query = 'SELECT '
 			.'a.DEF_id AS id, '
@@ -201,6 +215,7 @@ class Tomography {
 			.'ON c.DEF_id=a.`REF|CameraEMData|camera` '
 			.'LEFT JOIN TiltSeriesData t '
 			.'ON t.DEF_id=a.`REF|TiltSeriesData|tilt series` '
+			.$exclude_aligned_join
 			.'LEFT JOIN TomographyPredictionData '
 			.'ON TomographyPredictionData.`REF|AcquisitionImageData|image`=a.DEF_id '
 			.'LEFT JOIN AcquisitionImageStatsData '
@@ -213,6 +228,7 @@ class Tomography {
 			."WHERE a.`REF|TiltSeriesData|tilt series`=$tiltSeriesId "
 			// exclude projections
 			."AND (a.`label` is null or a.`label` like '%tomo%') "
+			.$exclude_aligned_and
 			.'AND '
 			.'p1.DEF_timestamp=(SELECT MAX(p2.DEF_timestamp) '
 			.'FROM PixelSizeCalibrationData p2 '

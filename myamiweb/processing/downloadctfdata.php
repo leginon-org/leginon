@@ -31,7 +31,7 @@ $data[] = "image #\tnominal_def\tdefocus_1\tdefocus_2\tangle_astig\tamp_cont\tco
 
 foreach ($ctfdatas as $ctfdata) {
 	$filename = $appiondb->getImageNameFromId($ctfdata['REF|leginondata|AcquisitionImageData|image']);
-	$angtxt = str_pad(sprintf("%.3f",$ctfdata['angle_astigmatism']), 7, " ", "STR_PAD_LEFT");
+	$angtxt = str_pad(sprintf("%.3f",$ctfdata['angle_astigmatism']), 9, " ", STR_PAD_LEFT);
 	$data[] = sprintf("%d\t%.4e\t%.5e\t%.5e\t%s\t%.4f\t%.4f\t%.4f\t%s\n",
 		$ctfdata['REF|leginondata|AcquisitionImageData|image'],
 		$ctfdata['defocus'],
@@ -60,7 +60,6 @@ header("Content-Disposition: attachment; filename=$downname;");
 foreach ($data as $line) {
 	echo $line;
 }
-
 
 
 

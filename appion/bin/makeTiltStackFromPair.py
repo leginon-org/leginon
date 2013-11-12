@@ -50,6 +50,10 @@ class TiltPairStackScript(appionScript.AppionScript):
 
 	#=====================
 	def getGoodParticles(self):
+		'''
+		Get particle numbers in eman format in fullstack that
+		has tilt pair in knownstack
+		'''
 		includeParticle = []
 		tiltParticlesData = []
 		no_match_count = 0
@@ -61,10 +65,12 @@ class TiltPairStackScript(appionScript.AppionScript):
 		numpartl = apStack.getNumberStackParticlesFromId(self.params['knownstackid'])
 		for partnum in range(1,numpartl+1):
 			stpartdata = apStack.getStackParticle(knownstackid, partnum, True)
+			# stpartdata and otherpartdata are related by tilt transform
 			imgnum, transformdata, otherpartdata = apTiltPair.getTiltTransformFromParticle(stpartdata['particle'])
 			apDisplay.printMsg('Mapping particle %d to %d' % (stpartdata['particle'].dbid,otherpartdata.dbid))
 			fullstackpartdata = apStack.getStackParticleFromData(fullstackid, otherpartdata, True)
 			if fullstackpartdata:
+				# eman particle number starts from 0, appion database number starts from 1
 				emantiltstackpartnum = fullstackpartdata['particleNumber']-1
 				includeParticle.append(emantiltstackpartnum)
 				tiltParticlesData.append(fullstackpartdata)

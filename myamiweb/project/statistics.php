@@ -1,6 +1,6 @@
 <?
-require('inc/project.inc.php');
-require('inc/experiment.inc.php');
+require_once('inc/project.inc.php');
+require_once('inc/experiment.inc.php');
 
 if (privilege('projects') > 2) {
 	$title = "Projects";

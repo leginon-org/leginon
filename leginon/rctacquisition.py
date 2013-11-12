@@ -15,6 +15,7 @@ import time
 import math
 import pyami.quietscipy
 from scipy import ndimage
+from leginon import transformregistration
 #from apTilt import apTiltShift
 pi = numpy.pi
 
@@ -99,6 +100,7 @@ class RCTAcquisition(acquisition.Acquisition):
 		self.tiltnumber = 0
 		self.tiltseries = None
 		self.tilttest_cycle = 0
+		self.shiftmatrix_maker = transformregistration.CorrelationRegistration(self)
 
 	#====================
 	def setImageFilename(self, imagedata):
@@ -244,6 +246,16 @@ class RCTAcquisition(acquisition.Acquisition):
 
 		return tiltedtargetlist
 
+	def isSmallTiltDifference(self,tilts,i,tilt0):
+		newtilt = tilts[i]
+		if i == 0:
+			oldtilt = tilt0
+		else:
+			oldtilt = tilts[i-1]
+		if abs(newtilt - oldtilt) < 0.1:
+			return True
+		return False
+
 	#====================
 	def trackStage(self, image0, tilt0, tilt, tilt0targets):
 		#import pprint
@@ -290,6 +302,7 @@ class RCTAcquisition(acquisition.Acquisition):
 			tilt = float("%.3f"%tilts[i])
 			self.logger.info('Going to tilt angle: %.2f' % (degrees(tilt),))
 			self.instrument.tem.StagePosition = {'a': tilt}
+			is_small_tilt_diff = self.isSmallTiltDifference(tilts,i,tilt0)
 			if pausetime > 0.1:
 				self.logger.info('Pausing %.1f seconds' %(pausetime,))
 				time.sleep(pausetime)
@@ -297,58 +310,67 @@ class RCTAcquisition(acquisition.Acquisition):
 			#print 'acquire intertilt'
 			imagenew = self.acquireCorrectedCameraImageData()
 			arraynew = numpy.asarray(imagenew['image'], dtype=numpy.float32)
+			if is_small_tilt_diff:
+				# Don't filter if phase correlation will be used
+				medfilt = 0
+				lowfilt = 0
 			if medfilt > 1:
 				arraynew = ndimage.median_filter(arraynew, size=medfilt)
 			if lowfilt > 0:
 				arraynew = ndimage.gaussian_filter(arraynew, lowfilt)
 			self.setImage(arraynew, 'Image')
 
-			print '============ Craig stuff ============'
-
-			self.logger.info('Craig\'s libCV stuff')
-			minsize = self.settings['minsize']
-			maxsize = self.settings['maxsize']
-			libCVwrapper.checkArrayMinMax(self, arrayold, arraynew)
-
-			import pyami.mrc
-			pyami.mrc.write(arrayold, 'arrayold.mrc')
-			pyami.mrc.write(arraynew, 'arraynew.mrc')
-			print 'minsize', minsize
-			print 'maxsize', maxsize
-
-			timeout = 300
-			#result = libCVwrapper.MatchImages(arrayold, arraynew, minsize, maxsize)
-			try:
-				result = pyami.timedproc.call('leginon.libCVwrapper', 'MatchImages', args=(arrayold, arraynew, minsize, maxsize), timeout=timeout)
-				self.logger.info("result matrix= "+str(numpy.asarray(result*100, dtype=numpy.int8).ravel()))
-			except:
-				self.logger.error('libCV MatchImages failed')
-				return None,None
-				
-			#difftilt = degrees(abs(tilts[int(i)])-abs(tilts[int(i-1)]))
-			#result = self.apTiltShiftMethod(arrayold, arraynew, difftilt)
-
-			check = libCVwrapper.checkLibCVResult(self, result)
-			if check is False:
-				self.logger.warning("libCV failed: redoing tilt %.2f"%(tilt,))
-				### redo this tilt; becomes an infinite loop if the image goes black
-				retries += 1
-				if retries <= 2:
-					### reduce minsize and try again
-					self.settings['minsize'] *= 0.95
-					if i == len(tilts)-1:
-						### maybe the tilt angle is too high, reduce max angle by 5 percent
-						tilts[len(tilts)-1] *= 0.95
-					i -= 1
-				else:
-					retries = 0
-					print "Tilt libCV FAILED"
-					self.logger.error("libCV failed: giving up")
-					return None, None
-				continue
+			if is_small_tilt_diff:
+				self.logger.info('Use phase correlation on small tilt')
+				result = numpy.array(self.shiftmatrix_maker.register(arrayold, arraynew))
 			else:
-				retries = 0			
-			print '============ Craig stuff done ============'
+
+				print '============ Craig stuff ============'
+
+				self.logger.info('Craig\'s libCV stuff')
+				minsize = self.settings['minsize']
+				maxsize = self.settings['maxsize']
+				libCVwrapper.checkArrayMinMax(self, arrayold, arraynew)
+
+				import pyami.mrc
+				pyami.mrc.write(arrayold, 'arrayold.mrc')
+				pyami.mrc.write(arraynew, 'arraynew.mrc')
+				print 'minsize', minsize
+				print 'maxsize', maxsize
+
+				timeout = 300
+				#result = libCVwrapper.MatchImages(arrayold, arraynew, minsize, maxsize)
+				try:
+					result = pyami.timedproc.call('leginon.libCVwrapper', 'MatchImages', args=(arrayold, arraynew, minsize, maxsize), timeout=timeout)
+					self.logger.info("result matrix= "+str(numpy.asarray(result*100, dtype=numpy.int8).ravel()))
+				except:
+					self.logger.error('libCV MatchImages failed')
+					return None,None
+					
+				#difftilt = degrees(abs(tilts[int(i)])-abs(tilts[int(i-1)]))
+				#result = self.apTiltShiftMethod(arrayold, arraynew, difftilt)
+
+				check = libCVwrapper.checkLibCVResult(self, result)
+				if check is False:
+					self.logger.warning("libCV failed: redoing tilt %.2f"%(tilt,))
+					### redo this tilt; becomes an infinite loop if the image goes black
+					retries += 1
+					if retries <= 2:
+						### reduce minsize and try again
+						self.settings['minsize'] *= 0.95
+						if i == len(tilts)-1:
+							### maybe the tilt angle is too high, reduce max angle by 5 percent
+							tilts[len(tilts)-1] *= 0.95
+						i -= 1
+					else:
+						retries = 0
+						print "Tilt libCV FAILED"
+						self.logger.error("libCV failed: giving up")
+						return None, None
+					continue
+				else:
+					retries = 0			
+				print '============ Craig stuff done ============'
 
 			self.logger.info("result matrix= "+str(numpy.asarray(result*100, dtype=numpy.int8).ravel()))
 			self.logger.info( "Inter Matrix: "+libCVwrapper.affineToText(result) )

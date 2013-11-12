@@ -29,6 +29,7 @@ class Collection(object):
 		instrument_state = leginon.leginondata.ScopeEMData()
 		for key in keys:
 			instrument_state[key] = self.instrument_state[key]
+		self.logger.info('stage alpha reset to %.1f' % (instrument_state['stage position']['a']*180.0/3.14159,))
 		self.instrument.setData(instrument_state)
 
 	def start(self):
@@ -273,6 +274,7 @@ class Collection(object):
 					raise Abort
 				else:
 					self.logger.warning('Image counts below threshold, aborting loop...')
+					self.restoreInstrumentState()
 					break
 
 			self.logger.info('Saving image...')
@@ -369,6 +371,7 @@ class Collection(object):
 			self.checkAbort()
 
 			if abort_loop:
+				self.restoreInstrumentState()
 				break
 
 		self.viewer.clearImages()
