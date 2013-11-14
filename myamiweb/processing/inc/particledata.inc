@@ -2825,6 +2825,39 @@ class particledata {
 		return $r['num'];
 	}
 
+	function removeSelectionRunById($selectionRunId) {
+		# count the number of values for selection run
+		$q = "SELECT count(DEF_id) as num "
+			. "FROM `ApParticleData` "
+			. "WHERE `REF|ApSelectionRunData|selectionrun` = $selectionRunId";
+		list($r) = $this->mysql->getSQLResult($q);
+		
+		# remove the selection data
+		$q = "DELETE from `ApParticleData` "
+			. "WHERE `REF|ApSelectionRunData|selectionrun` = $selectionRunId";
+		$this->mysql->getSQLResult($q);
+		$status.= "Removed ".$r['num']." values from ApParticleData<br/>\n";
+
+		# get path from the entry in ApSelectionRunData
+		$q = "SELECT `REF|ApPathData|path` as path from ApSelectionRunData "
+			."WHERE DEF_id=$selectionRunId";
+		$r = $this->mysql->getSQLResult($q);
+		$pathid = $r[0]['path'];
+		# this path is used to remove the corresponding
+		# entry from ApAppionJobData
+		$q = "DELETE from ApAppionJobData "
+			."WHERE `REF|ApPathData|path`=$pathid ";
+		$this->mysql->getSQLResult($q);
+		$status.= "Removed associated job from ApAppionJobData<br/>\n";
+
+		# remove the runid
+		$q = "DELETE from `ApSelectionRunData` "
+			. "WHERE `DEF_id` = $selectionRunId";
+		$this->mysql->getSQLResult($q);
+		$status.= "Removed Selection Run ID $selectionRunId from ApSelectionRunData table<br/>\n";
+		return $status;
+	}
+
 	function removeAlignStackById($alignStackId) {
 		// Get alignment run for this stack
 		$q = "SELECT `REF|ApAlignRunData|alignrun` as alignrun "

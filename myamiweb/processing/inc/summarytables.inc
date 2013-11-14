@@ -18,7 +18,7 @@ $jmol = false;
 
 /****************************************
 ****************************************/
-function pickingsummarytable($selectionid, $mini=false) {
+function pickingsummarytable($selectionid, $mini=false, $showOptions=True) {
 	$expId = $_GET['expId'];
 	$particle = new particledata();
 	$selectiontype = $particle->getSelectionParams($selectionid, true);
@@ -42,9 +42,11 @@ function pickingsummarytable($selectionid, $mini=false) {
 		.$selectiondata['name']."</a></span> (ID: $selectionid)\n";
 	if ($selectiondata['hidden'] == 1) {
 		$j.= " <font color='#cc0000'>HIDDEN</font>\n";
-		$j.= " <input class='edit' type='submit' name='unhideItem".$selectionid."' value='unhide'>\n";
+		if ($showOptions) $j.= " <input class='edit' type='submit' name='unhideItem".$selectionid."' value='unhide'>\n";
 		$display_keys['hidden']="<font color='#cc0000'>HIDDEN</font>\n";
-	} else $j.= " <input class='edit' type='submit' name='hideItem".$selectionid."' value='hide'>\n";
+	}
+	elseif ($showOptions) $j.= " <input class='edit' type='submit' name='hideItem".$selectionid."' value='hide'>\n";
+	if ($_SESSION['username'] && $showOptions) $j.="<input class='edit' type='button' onClick='parent.location=\"dropparticles.php?expId=$expId&partId=$selectionid\"' value='delete'>\n";
 
 	$selectiontable.= apdivtitle($j);
 	//echo $j."<br/>\n";
