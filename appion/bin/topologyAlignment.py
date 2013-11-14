@@ -9,6 +9,8 @@ import cPickle
 import tarfile
 import subprocess
 import string
+from EMAN2 import *
+from sparx import *
 #appion
 from appionlib import appionScript
 from appionlib import apDisplay
@@ -348,8 +350,6 @@ class TopologyRepScript(appionScript.AppionScript):
 			if self.params['currentiter'] < self.params['iter']:
 				if self.params['classiter'] is True:
 					emancmd = "e2stacksort.py classes_avg.hed outtmpcls.hdf --simalign=rotate_translate --center --useali --iterative"
-					#emancmd = "e2stacksort.py classes_avg.hed outtmpcls.hdf --simcmp=sqeuclidean:normto=1 --simalign=rotate_translate --center --useali --iterative"
-					#emancmd = "classalign2 %s.hed 10 keep=100 saveali"%classname
 					apEMAN.executeEmanCmd(emancmd, verbose=False)
 					apFile.removeStack(classname)
 					classname = "a"+classname
@@ -852,7 +852,7 @@ class TopologyRepScript(appionScript.AppionScript):
 				spidict = operations.spiderInLine(l)
 				p = int(spidict['floatlist'][0])
 				if p not in pclass:
-					pclass[p]=refn
+					pclass[p]=self.sortedAvgDict[refn]
 				else:
 					apDisplay.printError("particle %i has more than 1 classification,"
 						+" classified to reference %i and %i"%(p,pclass[p],refn))
@@ -904,6 +904,65 @@ class TopologyRepScript(appionScript.AppionScript):
 				if sofar > numps:
 					apDisplay.printError("too many particles in class %i"%refn)
 		return pclass		
+
+	#=====================
+	def sortClassAverages(self):
+		### sort class averages using cross correlation
+		apDisplay.printMsg("Sorting final class averages")
+
+		self.sortedAvgDict = {}
+		self.sortedList = []
+
+		out = "sortedcls.hed"
+		# read class averages
+		d = EMData.read_images(self.params['currentcls']+".hed")
+		# set translational search range to tenth of box size
+		ts = int(self.workingboxsize*0.1)
+
+		# start with first image
+		temp = d[0].copy()
+		temp.write_image(out,0)
+		del d[0]
+		k=1
+
+		# sortlist will keep new list of averages, starting with 1
+		self.sortedAvgDict[1]=k
+		self.sortedList.append(0)
+		# sort the class averages
+		while (len(d) > 0):
+			maxcit = -111
+			# find average with highest CC to previous class
+			for i in range(len(d)):
+				p1 = peak_search(Util.window(ccf(d[i],temp),ts,ts))
+				peak = p1[0][0]
+				if (peak > maxcit):
+					maxcit = peak
+					sx = -int(p1[0][4])
+					sy = -int(p1[0][5])
+					qi = i
+					pnum = d[i].get_attr('IMAGIC.imgnum')
+			temp = d[qi].copy()
+			temp=rot_shift2D(temp, 0, sx, sy, 0)
+			del d[qi]
+			temp.write_image(out,k)
+			k+=1
+			self.sortedAvgDict[pnum]=k
+			self.sortedList.append(pnum-1)
+
+		apFile.moveStack(out,self.params['currentcls']+".hed")
+
+		return
+
+	#=====================
+	def applySort(self):
+		out = "classes_avg.hed"
+		# read class averages
+		avgfile = os.path.join(self.params['iterdir'],"classes_avg.img")
+		d = EMData.read_images(avgfile)
+
+		for avgn in self.sortedList:
+			d[avgn].write_image(out,-1)
+		apFile.removeStack(avgfile)
 
 	#=====================
 	def start(self):
@@ -1011,6 +1070,9 @@ class TopologyRepScript(appionScript.AppionScript):
 			self.params['alignedstack'] = os.path.abspath("mrastack")
 			self.params['currentcls'] = "classes%02i"%(self.params['currentiter'])
 
+		## sort the class averages
+		self.sortClassAverages()
+
 		### get particle information from last iteration
 		if self.params['mramethod']=='imagic':
 			partlist = self.readPartIMAGICFile()
@@ -1031,19 +1093,19 @@ class TopologyRepScript(appionScript.AppionScript):
 			# rewrite header
 			imagicFilters.takeoverHeaders("mrastack",self.params['numpart'],self.workingboxsize)
 
+		# move actual averages to current directory
+		if self.params['msamethod']=='can':
+			if not os.path.isfile("classes_avg.hed"):
+				self.applySort()
+			# save actual class averages as refs in database
+			self.params['currentcls']="classes_avg"
+		
+		
 		### create an average mrc of final references 
 		if not os.path.isfile("average.mrc"):
 			apStack.averageStack(stack=self.params['currentcls']+".hed")
 			self.dumpParameters()
 
-		# move actual averages to current directory
-		if self.params['msamethod']=='can':
-			if not os.path.isfile("classes_avg.hed"):
-				shutil.move(os.path.join(self.params['iterdir'],"classes_avg.hed"),".")
-				shutil.move(os.path.join(self.params['iterdir'],"classes_avg.img"),".")
-			# save actual class averages as refs in database
-			self.params['currentcls']="classes_avg"
-		
 		### remove the filtered stack
 		apFile.removeStack(origstack)
 
