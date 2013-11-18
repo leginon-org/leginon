@@ -259,7 +259,7 @@ echo "</p>";
 <h3>Display Images:</h3>
 <p><font color='red'>Please confirm that 2 images are visible below.</font> <br />
 Don't see them? For more info visit:
-<a target='_blank' href='http://ami.scripps.edu/redmine/projects/appion/wiki/Install_the_MRC_PHP_Extension'>[Install the MRC PHP extension]</a>
+<a target='_blank' href='http://ami.scripps.edu/redmine/projects/appion/wiki/Install_Redux_image_server'>[Install the Redux Image Server]</a>
 <br />
 <br />
 
