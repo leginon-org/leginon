@@ -22,10 +22,10 @@ if ($_POST) {
 	runAngularReconstitution();
 }
 else {
-	createAngularReconstitutionForm();
+	createOptiModForm();
 }
 	
-function createAngularReconstitutionForm($extra=False, $title='OptiMod.py Launcher', $heading='OptiMod') {
+function createOptiModForm($extra=False, $title='OptiMod.py Launcher', $heading='OptiMod') {
 	// check if coming directly from a session
 	$expId=$_GET['expId'];
 	if ($expId){
@@ -85,7 +85,7 @@ function createAngularReconstitutionForm($extra=False, $title='OptiMod.py Launch
 	echo "<FORM NAME='viewerform' method='POST' ACTION='$formAction'>\n";
 	$sessiondata=getSessionList($projectId,$sessionId);
 	$sessioninfo=$sessiondata['info'];
-	$sessionpath=getBaseAppionPath($sessioninfo).'/angrecon/';
+	$sessionpath=getBaseAppionPath($sessioninfo).'/abinitio';
 	
 	// set commit on by default when first loading page, else set
 	$commitcheck = ($_POST['commit']=='on' || !$_POST['process']) ? 'checked' : '';	
@@ -454,23 +454,23 @@ function runAngularReconstitution() {
 
 	// make sure a clustering stack or template stack was selected
 	if (!$clusterid && !$tsid)
-		createAngularReconstitutionForm("<B>ERROR:</B> No stack selected");
+		createOptiModForm("<B>ERROR:</B> No stack selected");
 	elseif ($clusterid && $tsid)
-		createAngularReconstitutionForm("<B>ERROR:</B> must choose EITHER clustering stack OR template stack");
+		createOptiModForm("<B>ERROR:</B> must choose EITHER clustering stack OR template stack");
 	if (!$rclusterid && !$rtsid)
-		createAngularReconstitutionForm("<B>ERROR:</B> No refinement stack selected");
+		createOptiModForm("<B>ERROR:</B> No refinement stack selected");
 	elseif ($rclusterid && $rtsid)
-		createAngularReconstitutionForm("<B>ERROR:</B> must choose EITHER clustering stack OR template stack for refinement");
+		createOptiModForm("<B>ERROR:</B> must choose EITHER clustering stack OR template stack for refinement");
 
 	// check for other parameters that need to be specified
 	if (!$description)
-		createAngularReconstitutionForm("<B>ERROR:</B> Enter a brief description of the run");
+		createOptiModForm("<B>ERROR:</B> Enter a brief description of the run");
 	if (!$nvol)
-		createAngularReconstitutionForm("<B>ERROR:</B> Enter the number of volumes that you wish to create using Angular Reconstitution");
+		createOptiModForm("<B>ERROR:</B> Enter the number of volumes that you wish to create using Angular Reconstitution");
 	if ($immethod == 'eman' && !$images_per_volume)
-		createAngularReconstitutionForm("<B>ERROR:</B> Enter the number images within each volumes for EMAN cross-common lines");
+		createOptiModForm("<B>ERROR:</B> Enter the number images within each volumes for EMAN cross-common lines");
 	if ($nproc > 8)
-		createMaxLikeAlignForm("<B>ERROR:</B> Cannot currently use more than 8 processors with Imagic parallelization");
+		createOptiModForm("<B>ERROR:</B> Cannot currently use more than 8 processors with Imagic parallelization");
 
 	/* *******************
 	PART 3: Create program command
@@ -526,11 +526,11 @@ function runAngularReconstitution() {
 	******************** */
 
 	// submit command
-	$errors = showOrSubmitCommand($command, $headinfo, 'angrecon', $nproc);
+	$errors = showOrSubmitCommand($command, $headinfo, 'optimod', $nproc);
 
 	// if error display them
 	if ($errors)
-		createAngularReconstitutionForm($errors);
+		createOptiModForm($errors);
 	exit;
 }
 	
