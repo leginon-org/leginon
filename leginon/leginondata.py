@@ -2362,6 +2362,17 @@ class ConditionerSettingsData(SettingsData):
 		)
 	typemap = classmethod(typemap)
 
+class AutoFillerSettingsData(ConditionerSettingsData):
+	def typemap(cls):
+		return ConditionerSettingsData.typemap() + (
+			('autofiller mode', str),
+			('column fill start', float),
+			('column fill end', float),
+			('loader fill start', float),
+			('loader fill end', float),
+		)
+	typemap = classmethod(typemap)
+
 class DDinfoKeyData(Data):
 	def typemap(cls):
 		return Data.typemap() + (

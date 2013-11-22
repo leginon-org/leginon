@@ -7,6 +7,9 @@
 import copy
 import math
 import tem
+
+import itertools
+
 try:
 	import nidaq
 except:
@@ -89,6 +92,12 @@ class SimTEM(tem.TEM):
 
 		self.energy_filter = False
 		self.energy_filter_width = 0.0
+
+		self.resetRefrigerantCounter()
+
+	def resetRefrigerantCounter(self):
+		self.level0_counter = itertools.count()
+		self.level1_counter = itertools.count()
 
 	def getColumnValvePositions(self):
 		return ['open', 'closed']
@@ -334,3 +343,12 @@ class SimTEM(tem.TEM):
 	def setEnergyFilterWidth(self, value):
 		#print 'TEM energy filter width = ', value
 		self.energy_filter_width = float(value)
+
+	def getRefrigerantLevel(self,id=0):
+		if id == 0:
+			return 100 - (self.level0_counter.next())*20
+		else:
+			return 100 - (self.level1_counter.next())*20
+
+	def runAutoFiller(self):
+		self.resetRefrigerantCounter()

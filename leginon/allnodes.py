@@ -184,6 +184,9 @@ noderegistry.registerNodeClass(AlignmentManager,classtype)
 from conditioner import Conditioner
 noderegistry.registerNodeClass(Conditioner,classtype)
 
+from conditioner import AutoNitrogenFiller
+noderegistry.registerNodeClass(AutoNitrogenFiller,classtype)
+
 from maskassessor import MaskAssessor
 noderegistry.registerNodeClass(MaskAssessor,classtype)
 

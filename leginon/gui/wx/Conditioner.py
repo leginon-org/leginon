@@ -15,17 +15,20 @@ class Panel(leginon.gui.wx.Node.Panel):
 	def __init__(self, *args, **kwargs):
 		leginon.gui.wx.Node.Panel.__init__(self, *args, **kwargs)
 
+		self.addTools()
+		self.SetSizer(self.szmain)
+		self.SetAutoLayout(True)
+		self.SetupScrolling()
+
+	def addTools(self):
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_SETTINGS, 'settings', shortHelpString='Settings')
 		self.toolbar.AddSeparator()
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_PLAY, 'play', shortHelpString='Test')
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, True)
 
-		self.SetSizer(self.szmain)
-		self.SetAutoLayout(True)
-		self.SetupScrolling()
-
 	def onPlayTool(self, evt):
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT, True)
+		self.node.player.play()
 		self.node.onTest()
 
 	def onNodeInitialized(self):
