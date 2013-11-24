@@ -420,7 +420,10 @@ class TransformManager(node.Node, TargetTransformer):
 		channel = int(oldimage['correction channel']==0)
 		self.imageMoveAndPreset(oldimage,emtarget,use_parent_mover)
 		targetdata = emtarget['target']
-		imagedata = self.acquireCorrectedCameraImageData(channel)
+		try:
+			imagedata = self.acquireCorrectedCameraImageData(channel)
+		except Exception, exc:
+			self.logger.error('Reacquire image failed: %s' % (exc,))
 		# The preset used does not always have the original preset's parameters such as image shift
 		currentpresetdata = self.presetsclient.getCurrentPreset()
 		## convert CameraImageData to AcquisitionImageData

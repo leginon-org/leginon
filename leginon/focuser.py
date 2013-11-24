@@ -364,7 +364,10 @@ class Focuser(manualfocuschecker.ManualFocusChecker):
 		self.logger.info('no measurement selected')
 
 	def alignRotationCenter(self, defocus1, defocus2):
-		bt = self.btcalclient.measureRotationCenter(defocus1, defocus2, correlation_type=None, settle=0.5)
+		try:
+			bt = self.btcalclient.measureRotationCenter(defocus1, defocus2, correlation_type=None, settle=0.5)
+		except Exception, e:
+			self.logger.error('Failed rotation center measurement: %s' % (e,)
 		self.logger.info('Misalignment correction: %.4f, %.4f' % (bt['x'],bt['y'],))
 		if bt['x'] == 0.0 and bt['y'] == 0.0:
 			return
