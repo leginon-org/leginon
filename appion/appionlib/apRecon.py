@@ -9,21 +9,21 @@ import string
 import shutil
 import subprocess
 #appion
-from appionlib import appiondata
-from appionlib import apDatabase
+#from appionlib import appiondata
+#from appionlib import apDatabase
 from appionlib import apParam
 from appionlib import apDisplay
-from appionlib import apEMAN
-from appionlib import apEulerDraw
-from appionlib import apChimera
-from appionlib import apStack
+#from appionlib import apEMAN
+#from appionlib import apEulerDraw
+#from appionlib import apChimera
+#from appionlib import apStack
 from appionlib import apFile
 from appionlib import apFourier 
-from appionlib import apSymmetry
+#from appionlib import apSymmetry
 
 #==================
 #==================
-def getResolutionFromFSCFile(fscfile, boxsize, apix, msg=False):
+def getResolutionFromFSCFile(fscfile, boxsize, apix, criteria=0.5, msg=False):
 	"""
 	should use more general apFourier.getResolution()
 	"""
@@ -36,19 +36,21 @@ def getResolutionFromFSCFile(fscfile, boxsize, apix, msg=False):
 	lasty=0
 	for line in f:
 		xy = line.strip().split()
+		if xy[0].startswith('#'):
+			continue
 		x = float(xy[0])
 		y = float(xy[1])
 		if x != 0.0 and x < 0.9:
 			apDisplay.printWarning("FSC is wrong data format")
-		if y > 0.5:
+		if y > criteria:
 			#store values for later
 			lastx = x
 			lasty = y
 		else:
 			# get difference of fsc
 			diffy = lasty-y
-			# get distance from 0.5
-			distfsc = (0.5-y) / diffy
+			# get distance from criteria 0.5 or 0.143
+			distfsc = (criteria-y) / diffy
 			# get interpolated spatial freq
 			intfsc = x - distfsc * (x-lastx)
 			# convert to Angstroms
@@ -58,7 +60,7 @@ def getResolutionFromFSCFile(fscfile, boxsize, apix, msg=False):
 				res = boxsize * apix
 			f.close()
 			return res
-	# fsc did not fall below 0.5
+	# fsc did not fall below criteria 0.5 or 0.143
 	apDisplay.printWarning("Failed to determine resolution")
 	res = boxsize * apix / (lastx + 1)
 	return res
