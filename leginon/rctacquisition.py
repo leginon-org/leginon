@@ -247,12 +247,16 @@ class RCTAcquisition(acquisition.Acquisition):
 		return tiltedtargetlist
 
 	def isSmallTiltDifference(self,tilts,i,tilt0):
+		'''
+		Determine if phase correlation should be used for matching
+		'''
 		newtilt = tilts[i]
 		if i == 0:
 			oldtilt = tilt0
 		else:
 			oldtilt = tilts[i-1]
-		if abs(newtilt - oldtilt) < 0.1:
+		# high tilt is more sensitive to distortion
+		if abs(newtilt - oldtilt) < 0.1 and abs(oldtilt) < 0.2:
 			return True
 		return False
 
@@ -332,11 +336,7 @@ class RCTAcquisition(acquisition.Acquisition):
 				maxsize = self.settings['maxsize']
 				libCVwrapper.checkArrayMinMax(self, arrayold, arraynew)
 
-				import pyami.mrc
-				pyami.mrc.write(arrayold, 'arrayold.mrc')
-				pyami.mrc.write(arraynew, 'arraynew.mrc')
-				print 'minsize', minsize
-				print 'maxsize', maxsize
+				print 'tilt', tilts[i]*180/3.14159
 
 				timeout = 300
 				#result = libCVwrapper.MatchImages(arrayold, arraynew, minsize, maxsize)
@@ -448,7 +448,7 @@ class RCTAcquisition(acquisition.Acquisition):
 
 		### look at final values
 		self.logger.info('Number of tilt steps: %d' % nsteps)
-		if nsteps > 5:
+		if nsteps > 5 and self.settings['stepsize'] < bigstepsize:
 			self.logger.warning("More than 5 tilt steps, increase your "
 				+"max step size to at least %.1f"%(degrees(bigstepsize)))
 
