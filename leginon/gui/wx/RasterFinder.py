@@ -311,12 +311,6 @@ class FinalScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		self.widgets['ice max mean'] = FloatEntry(self, -1, chars=8)
 		self.widgets['ice max std'] = FloatEntry(self, -1, chars=8, min=0.0)
 		self.widgets['ice min std'] = FloatEntry(self, -1, chars=8, min=0.0)
-		self.widgets['focus convolve'] = wx.CheckBox(self, -1, 'Convolve')
-		self.widgets['focus convolve template'] = \
-			leginon.gui.wx.TargetTemplate.Panel(self, 'Convolve Template')
-		self.widgets['focus constant template'] = \
-			leginon.gui.wx.TargetTemplate.Panel(self, 'Constant Template', targetname='Constant target')
-		self.widgets['focus one'] = wx.CheckBox(self, -1, 'Threshold to one focus target')
 		self.widgets['acquisition convolve'] = wx.CheckBox(self, -1, 'Convolve')
 		self.widgets['acquisition convolve template'] = \
 			leginon.gui.wx.TargetTemplate.Panel(self, 'Convolve Template')
@@ -386,6 +380,12 @@ class FinalScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 
 	
 	def FocusFilterSettingsPanel(self):
+		self.widgets['focus convolve'] = wx.CheckBox(self, -1, 'Convolve')
+		self.widgets['focus convolve template'] = \
+			leginon.gui.wx.TargetTemplate.Panel(self, 'Convolve Template')
+		self.widgets['focus constant template'] = \
+			leginon.gui.wx.TargetTemplate.Panel(self, 'Constant Template', targetname='Constant target')
+		self.widgets['focus one'] = wx.CheckBox(self, -1, 'Threshold to one focus target')
 		szft = wx.GridBagSizer(5, 5)
 		szft.Add(self.widgets['focus convolve'], (0, 0), (1, 2),
 			wx.ALIGN_CENTER_VERTICAL)
