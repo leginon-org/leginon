@@ -27,5 +27,11 @@ from histogram import Histogram
 register(Histogram)
 from simulate import Simulate
 register(Simulate)
-from leginonread import Leginon
-register(Leginon)
+try:
+	# leginonread is only for testing direct read from leginon database
+	# It is not needed for production usage
+	from leginonread import Leginon
+	register(Leginon)
+except:
+	# Exception print goes to redux.log
+	print "leginonread not available. leginon/sinedon may not be installed on this machine"
