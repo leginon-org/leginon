@@ -80,23 +80,34 @@ class ResultWriter(object):
 
 
 if __name__=='__main__':
-	if len(sys.argv) < 2 or len(sys.argv) > 3:
-		print 'Usage: sibling_stageposition.py <one-filename> <outputfilename> <optional:outputfile>'
+	if len(sys.argv) < 3 or len(sys.argv) > 5:
+		print 'Usage: sibling_stageposition.py <sort-type> <one-filename> <optional:outputfile>'
+		print '       sort-type: position or number'
 		print 'Notes: one-filename in the raster does not need to include .mrc extension'
+		print 'Example: python sibling_stageposition.py position 13dec01_00001gr out.txt'
+		sys.exit(1)
+
+	# Check sort type
+	sorttype = sys.argv[1]
+	validtypes = ('position','number')
+	if sorttype not in validtypes:
+		print 'Error: sort type not valid'
 		sys.exit(1)
 
 	# Find image data objects of the siblings include itself
 	a = Siblings()
-	a.setFilename(sys.argv[1])
+	a.setFilename(sys.argv[2])
 	siblings = a.getSiblings()
 
 	# Sort image data objects
 	b = ImageSorter(siblings)
-	#sorted_images = b.sortByStagePosition()
-	sorted_images = b.sortByTargetNumber()
+	if sorttype == 'position':
+		sorted_images = b.sortByStagePosition()
+	else:
+		sorted_images = b.sortByTargetNumber()
 
 	# Write the results
 	outputfilename = None
-	if len(sys.argv) == 3:
-		outputfilename = sys.argv[2]
+	if len(sys.argv) == 4:
+		outputfilename = sys.argv[3]
 	c = ResultWriter(sorted_images,outputfilename)
