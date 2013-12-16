@@ -9,8 +9,10 @@ class ScanCtf(scandb.ScanDB):
 	'''
 	def __init__(self,backup=False):
 		super(ScanCtf, self).__init__()
-		self.deltadays = -1
-		self.checktime = datetime.datetime.now() + datetime.timedelta(days=self.deltadays)
+		# set the cutoff time here. Minus number for past time and days.
+		self.deltadays = 0
+		self.deltahours = -8
+		self.checktime = datetime.datetime.now() + datetime.timedelta(days=self.deltadays,hours=self.deltahours)
 
 	def scanAppionDB(self):
 		if self.appion_dbtools.tableExists('ApCtfData'):
@@ -18,7 +20,7 @@ class ScanCtf(scandb.ScanDB):
 			if results:
 				ctfdata = results[0]
 				if ctfdata.timestamp > self.checktime:
-					print "\033[35m%s has new ApCtfData in %d day\033[0m" % (self.appion_dbtools.getDatabaseName(),-self.deltadays)
+					print "\033[35m%s has new ApCtfData in %d days %d hours\033[0m" % (self.appion_dbtools.getDatabaseName(),-self.deltadays,-self.deltahours)
 		if self.appion_dbtools.tableExists('ApStackRunData'):
 			results = appiondata.ApStackRunData().query(results=1)
 			if results:
@@ -28,7 +30,7 @@ class ScanCtf(scandb.ScanDB):
 					if stackpartr:
 						stackpartdata = stackpartr[0]
 						if stackpartdata.timestamp > self.checktime:
-							print "\033[35m%s has new particle inserted to Stack with phase flip in %d day\033[0m" % (self.appion_dbtools.getDatabaseName(),-self.deltadays)
+							print "\033[35m%s has new particle inserted to Stack with phase flip in %d days %d hours\033[0m" % (self.appion_dbtools.getDatabaseName(),-self.deltadays,-self.deltahours)
 
 if __name__ == "__main__":
 	update = ScanCtf()
