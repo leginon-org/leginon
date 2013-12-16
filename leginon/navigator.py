@@ -146,15 +146,13 @@ class Navigator(node.Node):
 		# has been changed by Navigator and will not cycle on the first target.  
 		# Later targets in the list do cycle according to PresetsManager settings
 		# even if Navigator settings['cycle after'] is off
-		stagenow = self.instrument.tem.StagePosition
-		print 'z before use_target_z', use_target_z, stagenow['z']
 		if use_target_z:
 			# if the move comes from target adjustment, z focus is likely done.
 			# Therefore target z should not be set according to parent
-			print imagedata['scope']['stage position']['z']
+			self.logger.debug('Navigator: set to target z %.6f' % imagedata['scope']['stage position']['z'])
 			self.instrument.tem.setStagePosition({'z':imagedata['scope']['stage position']['z']})
 		stagenow = self.instrument.tem.StagePosition
-		print 'set z before navigator move', stagenow['z']
+		self.logger.debug('Navigator: z in navigator move %.6f' % stagenow['z'])
 		status = self.move(rows, cols, movetype, precision, accept_precision, check, preset=preset, final_imageshift=final_imageshift, cycle_after=True)
 		self.stopTimer('move')
 

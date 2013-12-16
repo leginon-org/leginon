@@ -1516,7 +1516,7 @@ class PresetsManager(node.Node):
 			self.instrument.setData(scopedata)
 			self.instrument.setData(cameradata)
 			newstage = self.instrument.tem.StagePosition
-			print 'presetmanager targetToScope',newpresetname,newstage['z']
+			self.logger.debug('Presetmanager: %s targetToScope %.6f' % (newpresetname,newstage['z']))
 		except Exception, e:
 			self.logger.error(e)
 			message = 'Move to target failed: unable to set instrument'
