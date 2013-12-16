@@ -223,6 +223,12 @@ class GatanOrius(DMSEM):
 	binning_limits = [1,2,4]
 	binmethod = 'exact'
 
+class GatanUltraScan(DMSEM):
+	name = 'GatanUltraScan'
+	cameraid = 0
+	binning_limits = [1,2,4,8]
+	binmethod = 'exact'
+
 class GatanK2Base(DMSEM):
 	name = 'GatanK2Base'
 	cameraid = 0
