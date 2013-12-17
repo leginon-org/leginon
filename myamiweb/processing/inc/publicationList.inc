@@ -3,6 +3,7 @@
 // When adding a new processing package to Appion, this file should be updated with any associated publications
 // for proper reference reporting.
 
+
 $PUBLICATIONS['appion'] = array(
 'title' => 'Appion: an integrated, database-driven pipeline to facilitate EM image processing.',
 'year' => '2009',
@@ -262,6 +263,19 @@ $PUBLICATIONS['optimod'] = array(
 'doi' => '',
 'logo' => 'img/topbarbackgrnd.jpg',
 'pages' => '');
+
+$PUBLICATIONS['gpudriftcorr'] = array(
+'title' => 'Electron counting and beam-induced motion correction enable near-atomic-resolution single-particle cryo-EM',
+'year' => '2013',
+'authorlist' => 'Xueming Li,	 Paul Mooney,	 Shawn Zheng,	 Christopher R Booth,	 Michael B Braunfeld,	 Sander Gubbens,	 David A Agard	 & Yifan Cheng',
+'journal' => 'Nature Methods',
+'volume' => '10',
+'issue' => '6',
+'pmid' => '23644547',
+'pmcid' => '3684049',
+'doi' => 'doi:10.1038/nmeth.2472',
+'logo' => 'img/topbarbackgrnd.jpg',
+'pages' => '584-590');
 
 
 ?>

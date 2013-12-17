@@ -130,7 +130,7 @@ function createMakestackForm($extra=false, $title='makeDDRawFrameStack.py Launch
 	echo "</table>\n";
 	echo "</form>\n";
 
-	echo appionRef();
+	echo gpuDriftCorrRef();
 
 	processing_footer();
 	exit;
@@ -208,7 +208,7 @@ function runMakestack() {
 	/* *******************
 	PART 4: Create header info, i.e., references
 	******************** */
-	$headinfo .= appionRef();
+	$headinfo .= gpuDriftCorrRef();
 		
 	/* *******************
 	PART 5: Show or Run Command

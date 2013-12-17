@@ -174,6 +174,7 @@ function createForm( $extra=false, $title='runCatchupDDAlign.py Launcher', $head
 	// end form
 	echo"</form><br/>\n";	
 
+	echo gpuDriftCorrRef();
 	// This line is required to provide the standard Appion header and side menu
 	processing_footer();
 	exit;
@@ -225,6 +226,7 @@ function createCommand()
 	$headinfo = "";
 	
 	// Add reference for selected refinement method
+	$headinfo .=  gpuDriftCorrRef();
 	$pub = new Publication('appion');
 	$headinfo .=  $pub->getHtmlTable();	
 
