@@ -360,7 +360,7 @@ class TransformManager(node.Node, TargetTransformer):
 		Mover can either be presets manager or navigator
 		'''
 		status = 'ok'
-		print 'oldimage stage z:', imagedata['scope']['stage position']['z']
+		self.logger.debug('imageMoveAndPreset oldimage stage z %.6f' % imagedata['scope']['stage position']['z'])
 		presetname = imagedata['preset']['name']
 		targetdata = emtarget['target']
 		moverdata = imagedata['mover']
@@ -387,7 +387,7 @@ class TransformManager(node.Node, TargetTransformer):
 					return status
 		self.presetsclient.toScope(presetname, emtarget, keep_shift=False)
 		stagenow = self.instrument.tem.StagePosition
-		print 'reacquire MoveAndPreset end z', stagenow['z']
+		self.logger.debug('reacquire imageMoveAndPreset end z %.6f' % stagenow['z'])
 		return status
 
 	def reacquire(self, targetdata, use_parent_mover=False):

@@ -59,9 +59,11 @@ ENERGY_FILTER = True
 
 # apertures
 CLA = 1
+OLA = 2
 HCA = 3
 SAA = 4
 CLA_SIZES = [0, 150e-6, 70e-6, 50e-6, 20e-6]
+OLA_SIZES = [0, 50e-6, 30e-6, 15e-6, 5e-6]
 HCA_SIZES = [0, 120e-6, 60e-6, 40e-6, 20e-6]
 SAA_SIZES = [0, 100e-6, 50e-6, 20e-6, 10e-6]
 
@@ -120,10 +122,10 @@ class Jeol(tem.TEM):
 		self.zeroOM = None
 		self.zeroOLf = None
 		self.zeroOLc = None
-
+		
 		# set zero defocus for current mag mode only
 		self._resetDefocus()
-	
+
 
 	def __del__(self):
 		comtypes.CoUninitialize()
@@ -877,11 +879,13 @@ class Jeol(tem.TEM):
 		pass
 
 	def getApertures(self):
-		return ['condenser', 'high contrast', 'selected area']
+		return ['condenser', 'objective', 'high contrast', 'selected area']
 
 	def _getApertureKind(self, name):
 		if name == 'condenser':
 			return CLA
+		elif name == 'objective':
+			return OLA
 		elif name == 'high contrast':
 			return HCA
 		elif name == 'selected area':
@@ -892,6 +896,8 @@ class Jeol(tem.TEM):
 	def _getApertureSizes(self, name):
 		if name == 'condenser':
 			return CLA_SIZES
+		elif name == 'objective':
+			return OLA_SIZES
 		elif name == 'high contrast':
 			return HCA_SIZES
 		elif name == 'selected area':
@@ -919,6 +925,12 @@ class Jeol(tem.TEM):
 			kind = self._getApertureKind(name)
 
 			size, result = self.apt3.GetSize(kind)
+
+			for i in range(10):
+				if result != 0:
+					time.sleep(.1)
+					size, result = self.apt3.GetSize(kind)
+
 			if result != 0:
 				raise SystemError('Get %s aperture size failed' % name)
 
@@ -946,6 +958,11 @@ class Jeol(tem.TEM):
 				raise ValueError('Invalid %s aperture size %d specified' % (name, sizes[name]))
 
 			current_index, result = self.apt3.GetSize(kind)
+			for i in range(10):
+				if result != 0:
+					time.sleep(.1)
+					current_index, result = self.apt3.GetSize(kind)
+
 			if result != 0:
 				raise SystemError('Get %s aperture size failed' % name)
 			if index != current_index:
@@ -982,6 +999,11 @@ class Jeol(tem.TEM):
 			result = self.apt3.SelectKind(kind)
 
 			x, y, result = self.apt3.GetPosition()
+			for i in range(10):
+				if result != 0:
+					time.sleep(.1)
+					x, y, result = self.apt3.GetPosition()
+
 			if result != 0:
 				raise SystemError('Get %s aperture position failed' % name)
 
@@ -1071,3 +1093,13 @@ class Jeol(tem.TEM):
 		result = self.camera3.EjectFilm()
 		
 		return
+
+	def getProbeMode(self):
+		return 'default'
+
+	def setProbeMode(self, probe_str):
+		pass
+
+	def getProbeModes(self):
+		return ['default']
+

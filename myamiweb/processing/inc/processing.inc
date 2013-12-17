@@ -1271,6 +1271,7 @@ function imodWeightedBackProjRef() { return showReference("imodweightedbackproj"
 function protomoRef() { return showReference("protomo"); }
 function imodRef() { return showReference("imod"); }
 function xmippRef() { return showReference("xmipp"); }
+function gpuDriftCorrRef() { return showReference("gpudriftcorr"); }
 
 // TODO: This should be revisited. 
 function showReference( $method )
