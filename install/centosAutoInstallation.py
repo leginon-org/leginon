@@ -779,7 +779,7 @@ setenv LD_LIBRARY_PATH ${LD_LIBRARY_PATH}:${XMIPPDIR}/lib:%s''' % (MpiLibDir))
 			if line.startswith(';'):
 				outf.write(line + "\n")
 			elif line.startswith('error_reporting'):
-				outf.write("error_reporting = E_ALL & ~E_NOTICE\n")
+				outf.write("error_reporting = E_ALL & ~E_NOTICE & ~E_WARNING ~E_DEPRECATED\n")
 			elif line.startswith('display_error'):
 				outf.write("display_error = On\n")
 			elif line.startswith('register_argc_argv'):
