@@ -34,10 +34,16 @@ def getAllImagesWithRawFrames(sessiondata):
 	camq['save frames'] = True
 	imageq = leginon.leginondata.AcquisitionImageData(session=sessiondata,camera=camq)
 	all = imageq.query()
+	all_source = []
+	for imagedata in all:
+		sourcedata, results = getAlignedImageIds(imagedata)
+		# include only non-aligned images
+		if len(results) == 0 or sourcedata.dbid == imagedata.dbid:
+			all_source.append(imagedata)
+		
 	print '---------------'
-	print "Total of %d images should have frames saved" % (len(all))
-	#return [leginon.leginondata.AcquisitionImageData().direct_query(2271163)]
-	return all
+	print "Total of %d images should have frames saved" % (len(all_source))
+	return all_source
 
 def getAlignedImageIds(imagedata):
 	if '-a' in imagedata['filename']:

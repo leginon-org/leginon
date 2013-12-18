@@ -122,7 +122,7 @@ echo "<a target='_blank' href='http://ami.scripps.edu/redmine/projects/appion/wi
 echo "<p>";
 
 // These are constant values based on what AMI recommends for the php.ini settings
-$errorReportingRec   = "2037";
+$errorReportingRec   = "22517";
 $displayErrorsRec    = "On";
 $registerArgcArgvRec = "On";
 $shortOpenTagRec     = "On";
@@ -146,6 +146,9 @@ switch ($errorReporting) {
 		break;
 	case 22519:
 		$errorReportingText = "E_ALL & ~E_DEPRECATED & ~E_NOTICE";
+		break;
+	case 22517:
+		$errorReportingText = "E_ALL & ~E_DEPRECATED & ~E_NOTICE & ~E_WARNING";
 		break;
 	default:
 		$errorReportingText = $errorReporting;
@@ -184,7 +187,7 @@ $memoryLimitFont      = ($memoryLimit      != $memoryLimitRec)      ? $errorColo
 	<tr>
 		<td>error_reporting</td>
 		<td><? echo "<font color='".$errorReportingFont."'>".$errorReportingText."</font>"; ?></td>
-		<td>E_ALL & ~E_NOTICE & ~E_WARNING</td>
+		<td>E_ALL & ~E_NOTICE & ~E_WARNING & ~E_DEPRECATED</td>
 	</tr>
 	<tr>
 		<td>display_errors</td>
