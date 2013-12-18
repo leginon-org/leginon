@@ -185,7 +185,7 @@ def boxerFrameStack(framestackpath, parttree, outstack, boxsize,framelist):
 	stack = mrc.mmap(framestackpath)
 	for partdict in parttree:
 		x1,x2,y1,y2 = getBoxBoundary(partdict, boxsize)
-		apDisplay.printMsg(' crop range of (x,y)=(%d,%d) to (%d,%d)' % (x1,y1,x2-1,y2-1))
+		apDisplay.printDebug(' crop range of (x,y)=(%d,%d) to (%d,%d)' % (x1,y1,x2-1,y2-1))
 		#numpy arrays are rows,cols --> y,x not x,y
 		boxpart = numpy.sum(stack[tuple(framelist),y1:y2,x1:x2],axis=0)
 		boxedparticles.append(boxpart)
