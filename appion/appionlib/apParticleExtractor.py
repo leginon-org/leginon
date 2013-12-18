@@ -378,6 +378,7 @@ class ParticleExtractLoop(appionLoop2.AppionLoop):
 		self.insertdbtimes = []
 		self.noimages = False
 		self.totalpart = 0
+		self.selectiondata = None
 		# Different class needed depending on if ddstack is specified or available
 		if self.is_dd:
 			from appionlib import apDDprocess
@@ -392,8 +393,9 @@ class ParticleExtractLoop(appionLoop2.AppionLoop):
 		if len(self.imgtree) == 0:
 			apDisplay.printWarning("No images were found to process")
 			self.noimages = True
-			return
-		self.selectiondata = None
+			# Still need to set attributes if waiting for more images
+			if not self.params['wait']:
+				return
 		if self.params['selectionid'] is not None:
 			self.selectiondata = apParticle.getSelectionRunDataFromID(self.params['selectionid'])
 			if self.params['particlelabel'] == 'fromtrace':

@@ -55,6 +55,8 @@ class MakeDDParticleMovieLoop(apParticleExtractor.ParticleBoxLoop):
 	#=======================
 	def preLoopFunctions(self):
 		super(MakeDDParticleMovieLoop,self).preLoopFunctions()
+		if self.noimages and not self.params['wait']:
+			return
 		self.firstframe = self.params['startframe']
 		self.frameavg = self.params['frameavg']
 		self.framestep = self.params['framestep']
