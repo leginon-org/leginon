@@ -14,7 +14,6 @@ class setLeginonDefaultValues {
 		}
 		else
 			$this->userId = $userId;
-		
 		$this->sessionId = $this->createNewSession();
 		$this->addDefaultValues();
 	}
@@ -36,10 +35,10 @@ class setLeginonDefaultValues {
 	}
 	
 	function createNewSession(){
-		$sql = "insert into `SessionData` (`name`,`REF|UserData|user`,`comment` ) "
+		$sql = "insert into `SessionData` (`name`,`REF|UserData|user`,`comment`, `hidden` ) "
       		. " VALUES "
       		. " ( concat('importsettings', DATE_FORMAT(now(), '%Y%m%d%H%i%s')), "
-			. " ".$this->userId." ,'import default') ";
+			. " ".$this->userId." ,'import default',1) ";
 		return $this->mysqld->SQLQuery($sql, true);
 	}
 	
