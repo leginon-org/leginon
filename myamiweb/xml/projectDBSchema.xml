@@ -40,7 +40,7 @@
     <field 
       name="timestamp" 
       type="timestamp" 
-      default="DEFAULT 'CURRENT_TIMESTAMP'" 
+      default="DEFAULT CURRENT_TIMESTAMP" 
     />
     <field 
       name="label" 
@@ -70,7 +70,7 @@
     <field 
       name="timestamp" 
       type="timestamp" 
-      default="DEFAULT 'CURRENT_TIMESTAMP'" 
+      default="DEFAULT CURRENT_TIMESTAMP" 
     />
     <field 
       name="label" 
@@ -151,7 +151,7 @@
     <field 
       name="timestamp" 
       type="timestamp" 
-      default="DEFAULT 'CURRENT_TIMESTAMP'" 
+      default="DEFAULT CURRENT_TIMESTAMP" 
     />
     <field 
       name="label" 
@@ -337,7 +337,7 @@
     <field 
       name="hidden" 
       type="tinyint(1)" 
-      default="0"
+      default="DEFAULT '0'"
       null="NOT NULL"
     />
     <key>PRIMARY KEY (`DEF_id`)</key>
@@ -377,7 +377,7 @@
     <field 
       name="date" 
       type="timestamp" 
-      default="DEFAULT 'CURRENT_TIMESTAMP'" 
+      default="DEFAULT CURRENT_TIMESTAMP" 
     />
   </sqltable>  
   <sqltable name="projectexperiments" >
@@ -557,7 +557,7 @@
       name="last_exp_runtime" 
       type="timestamp" 
       null="NOT NULL"
-      default="0000-00-00-00:00:00" 
+      default="DEFAULT '0000-00-00 00:00:00'" 
     />
     <field 
       name="ace_run" 
@@ -695,7 +695,7 @@
       name="first_exp_runtime" 
       type="timestamp" 
       null="NOT NULL"
-      default="0000-00-00-00:00:00" 
+      default="DEFAULT '0000-00-00 00:00:00'" 
     />
      
     <key>PRIMARY KEY (`DEF_id`)</key>

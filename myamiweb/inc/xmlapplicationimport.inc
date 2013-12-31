@@ -58,9 +58,11 @@ class XMLImport {
 			if ($v['tag']=='field') {
 				$fname = $v['attributes']['name'];
 				$ftype = $v['attributes']['type'];
-				$fnull = empty($v['attributes']['null']) ? 'null' : $v['attributes']['null'];
+				$fdefault = empty($v['attributes']['default']) ? '' : $v['attributes']['default'];
+				$fdefault = (!empty($fdefault) && strpos(strtolower($fdefault),'default')===false) ? 'default '.$fdefault : $fdefault;
+				$fnull = (empty($fdefault) && empty($v['attributes']['null'])) ? 'null' : $v['attributes']['null'];
 				$fextra = empty($v['attributes']['extra']) ? '' : $v['attributes']['extra'];
-				$fields[] = "`$fname` $ftype $fnull $fextra";
+				$fields[] = "`$fname` $ftype $fnull $fdefault $fextra";
 				$fieldtypes[$fname] = $ftype;
 			}
 			if ($v['tag']=='key') {
