@@ -73,6 +73,12 @@ $filename = DEF_PROCESSING_TABLES_FILE;
 $leginondata->mysql->setSQLHost( array('db'=>$dbname) );
 $leginondata->importTables($filename);
 
+/* basic appion tables and symmetry record
+*/
+$filename = "../project/defaultprocessingtables.xml";
+$leginondata->mysql->setSQLHost( array('db'=>$dbname) );
+$leginondata->importTables($filename);
+
 /* appion_extra.xml is created by sinedon/maketables.py
  * based on a database without importing the existing appion_extra.xml 
  * Since sinedon/maketables.py does not create table definition if
