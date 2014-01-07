@@ -664,7 +664,7 @@
       name="DEF_timestamp" 
       type="timestamp" 
       null="NOT NULL" 
-      default="DEFAULT 'CURRENT_TIMESTAMP'" 
+      default="DEFAULT CURRENT_TIMESTAMP" 
     />
     <field 
       name="REF|ApplicationData|application" 
@@ -1328,7 +1328,7 @@
 			name="DEF_timestamp" 
 			type="timestamp" 
 			null="NOT NULL" 
-			default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+			default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 		/> 
 		<field 
 			name="REF|SessionData|session" 
@@ -1581,7 +1581,7 @@
 			name="DEF_timestamp" 
 			type="timestamp" 
 			null="NOT NULL" 
-			default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+			default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 		/> 
 		<field name="SEQ|correction presets" type="text" />
 		<field 
@@ -1664,7 +1664,7 @@
 			name="DEF_timestamp" 
 			type="timestamp" 
 			null="NOT NULL" 
-			default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+			default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 		/> 
 		<field 
 			name="REF|SessionData|session" 

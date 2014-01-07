@@ -11,7 +11,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="name" 
@@ -224,7 +224,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="bin" 
@@ -314,7 +314,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="display" 
@@ -407,7 +407,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="REF|ApAceParamsData|aceparams" 
@@ -470,7 +470,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="mask_diam" 
@@ -503,7 +503,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="runname" 
@@ -564,7 +564,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="partnum" 
@@ -657,7 +657,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="refnum" 
@@ -734,7 +734,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="runname" 
@@ -848,7 +848,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="imagicfile" 
@@ -936,7 +936,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="REF|ApAssessmentRunData|assessmentrun" 
@@ -972,7 +972,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="REF|leginondata|SessionData|session" 
@@ -1000,7 +1000,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="num_averages" 
@@ -1111,7 +1111,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="runname" 
@@ -1190,7 +1190,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="runname" 
@@ -1287,7 +1287,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="partnum" 
@@ -1342,7 +1342,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="refnum" 
@@ -1400,7 +1400,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="runname" 
@@ -1493,7 +1493,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="num_classes" 
@@ -1564,7 +1564,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="name" 
@@ -1632,7 +1632,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="REF|ApContourData|contour" 
@@ -1667,7 +1667,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="REF|ApCoranRunData|coranRun" 
@@ -1714,7 +1714,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="mask_diam" 
@@ -1748,7 +1748,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="REF|ApAceRunData|acerun" 
@@ -1930,7 +1930,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="medium" 
@@ -2005,7 +2005,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="preset" 
@@ -2026,7 +2026,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="runname" 
@@ -2068,7 +2068,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="diam" 
@@ -2181,7 +2181,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="runname" 
@@ -2220,7 +2220,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="runname" 
@@ -2278,7 +2278,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="package" 
@@ -2455,7 +2455,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="REF|ApStackParticleData|particle" 
@@ -2522,7 +2522,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="REF|ApRefineIterData|refineIter" 
@@ -2557,7 +2557,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="iflag" 
@@ -2657,7 +2657,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="name" 
@@ -2763,7 +2763,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="REF|leginondata|SessionData|session" 
@@ -2864,7 +2864,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="REF|leginondata|SessionData|session" 
@@ -2904,7 +2904,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="REF|leginondata|AcquisitionImageData|image" 
@@ -2957,7 +2957,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="REF|leginondata|SessionData|session" 
@@ -3089,7 +3089,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="REF|leginondata|SessionData|session" 
@@ -3199,7 +3199,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="REF|leginondata|SessionData|session" 
@@ -3355,7 +3355,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="runname" 
@@ -3421,7 +3421,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="REF|leginondata|AcquisitionImageData|image1" 
@@ -3518,7 +3518,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="REF|leginondata|AcquisitionImageData|image1" 
@@ -3572,7 +3572,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="REF|ApImagic3dRefineRunData|refinement_run" 
@@ -3835,7 +3835,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="runname" 
@@ -3907,7 +3907,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="runname" 
@@ -3986,7 +3986,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="RotationAngle" 
@@ -4026,7 +4026,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="mask_diam" 
@@ -4071,7 +4071,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="diam" 
@@ -4149,7 +4149,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="REF|ApMaskAssessmentRunData|run" 
@@ -4185,7 +4185,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="REF|leginondata|SessionData|session" 
@@ -4220,7 +4220,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="bin" 
@@ -4303,7 +4303,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="REF|ApMaskMakerParamsData|params" 
@@ -4345,7 +4345,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="REF|ApMaskMakerRunData|maskrun" 
@@ -4417,7 +4417,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="runname" 
@@ -4470,7 +4470,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="runname" 
@@ -4541,7 +4541,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="REF|projectdata|projects|project" 
@@ -4613,7 +4613,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="runname" 
@@ -4653,7 +4653,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="runname" 
@@ -4758,7 +4758,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="runname" 
@@ -4880,7 +4880,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="REF|ApSelectionRunData|selectionrun" 
@@ -4976,7 +4976,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="boxSize" 
@@ -5072,7 +5072,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="movieNumber" 
@@ -5113,7 +5113,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="boxSize" 
@@ -5221,7 +5221,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="movieRunName" 
@@ -5270,7 +5270,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="name" 
@@ -5343,7 +5343,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="REF|ApTomoAlignmentRunData|alignrun" 
@@ -5411,7 +5411,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="REF|ApTomoAlignerParamsData|aligner" 
@@ -5453,7 +5453,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="REF|ApTomoAlignerParamsData|aligner" 
@@ -5500,7 +5500,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="series_name" 
@@ -5521,7 +5521,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="REF|ApProtomoParamsData|protomo" 
@@ -5576,7 +5576,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="volume" 
@@ -5603,7 +5603,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="markersize" 
@@ -5631,7 +5631,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="runname" 
@@ -5753,7 +5753,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="runname" 
@@ -5835,7 +5835,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="REF|ApRefineIterData|refine" 
@@ -5882,7 +5882,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="REF|ApPrepRefineData|preprefine" 
@@ -5928,7 +5928,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="iteration" 
@@ -6063,7 +6063,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="REF|ApPrepRefineData|preprefine" 
@@ -6109,7 +6109,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="REF|ApRefineIterData|refineIter" 
@@ -6233,7 +6233,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="volumeDensityStart" 
@@ -6279,7 +6279,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="runname" 
@@ -6364,7 +6364,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="REF|ApPrepRefineData|preprefine" 
@@ -6455,7 +6455,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="fscfile" 
@@ -6487,7 +6487,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="mask_diam" 
@@ -6574,7 +6574,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="REF|ApStackData|stack" 
@@ -6604,7 +6604,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="diam" 
@@ -6699,7 +6699,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="name" 
@@ -6769,7 +6769,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="name" 
@@ -6809,7 +6809,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="factor_list" 
@@ -6835,7 +6835,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="runname" 
@@ -6885,7 +6885,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="REF|ApPathData|path" 
@@ -6982,7 +6982,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="REF|ApStackData|stack" 
@@ -7033,7 +7033,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="boxSize" 
@@ -7178,7 +7178,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="particleNumber" 
@@ -7281,7 +7281,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="stackRunName" 
@@ -7330,7 +7330,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="REF|leginondata|SessionData|session" 
@@ -7385,7 +7385,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="REF|ApInitialModelData|modelid" 
@@ -7557,7 +7557,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="REF|ApTemplateImageData|template" 
@@ -7612,7 +7612,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="REF|ApClusteringStackData|clusterstack" 
@@ -7716,7 +7716,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="bin" 
@@ -7738,7 +7738,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="REF|ApTestRunData|testrun" 
@@ -7780,7 +7780,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="REF|ApTestParamsData|params" 
@@ -7827,7 +7827,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="diam" 
@@ -7897,7 +7897,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="REF|ApParticleData|particle1" 
@@ -7940,7 +7940,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="REF|ApTomoAlignmentRunData|alignrun" 
@@ -7984,7 +7984,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="REF|ApTomoAlignmentRunData|alignrun" 
@@ -8052,7 +8052,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="REF|leginondata|SessionData|session" 
@@ -8147,7 +8147,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="runname" 
@@ -8207,7 +8207,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="REF|ApTomoAverageRunData|avgrun" 
@@ -8250,7 +8250,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="tilt_angle_offset" 
@@ -8290,7 +8290,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="REF|leginondata|SessionData|session" 
@@ -8388,7 +8388,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="runname" 
@@ -8441,7 +8441,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="runname" 
@@ -8504,7 +8504,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="InSelFile" 
@@ -8695,7 +8695,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="NumberofIterations" 
@@ -8997,7 +8997,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="name" 
@@ -9060,7 +9060,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="name" 
@@ -9088,7 +9088,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="value" 
@@ -9128,7 +9128,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="name" 
@@ -9149,7 +9149,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="runname" 
@@ -9222,7 +9222,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="name" 

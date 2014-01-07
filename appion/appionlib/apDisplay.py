@@ -11,6 +11,7 @@ import glob
 # Please keep it this way
 ####
 
+debug = False
 writeOut = False
 try:
 	outFile = os.path.basename(sys.argv[0]).split(".")[0]+".out"
@@ -61,6 +62,21 @@ def printError(text,raised=True):
 		raise Exception, colorString("\n *** FATAL ERROR ***\n"+text+"\n\a","red")
 	else:
 		sys.stderr.write(colorString("\n *** FATAL ERROR ***\n"+text+"\n\a","red"))
+
+def printDebug(text):
+	"""
+	standardized debug message
+	"""
+	if not debug:
+		return
+	if writeOut is True:
+		try:
+			f = open(outFile, "a")
+			f.write(" !!! DEBUG: "+text+"\n")
+			f.close()
+		except:
+			print "write error"
+	sys.stderr.write(colorString("!!! DEBUG: "+text,"yellow")+"\n")
 
 def printColor(text, colorstr):
 	"""

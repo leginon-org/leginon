@@ -63,11 +63,11 @@ abstract class RefineJobs
 		}	
 		
 		// Sort the job array by the timestamp (default)
-		$this->sortJobs(&$this->runJobs);
+		$this->sortJobs($this->runJobs);
 	}
 	
 	# Sort a given array of Jobs by the given key
-	private function sortJobs( $jobArray, $key="DEF_timestamp" )
+	private function sortJobs( &$jobArray, $key="DEF_timestamp" )
 	{
 		$compareFunction = create_function('$a, $b','if ($a['.$key.'] == $b['.$key.']) return 0; return ($a['.$key.'] > $b['.$key.']) ? -1 : 1;');
 		usort( $jobArray, $compareFunction);
