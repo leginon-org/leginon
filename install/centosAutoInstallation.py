@@ -724,7 +724,7 @@ setenv LD_LIBRARY_PATH ${LD_LIBRARY_PATH}:${XMIPPDIR}/lib:%s''' % (MpiLibDir))
 
 	def setupSinedonCfg(self, sinedonDir):
 		inf = open(self.svnMyamiDir + 'sinedon/examples/sinedon.cfg', 'r')
-		outf = open(sinedonDir + '/sinedon.cfg', 'w')
+		outf = open('/etc/myami/sinedon.cfg', 'w')
 
 		for line in inf:
 			if line.startswith('user: usr_object'):
@@ -786,6 +786,9 @@ setenv LD_LIBRARY_PATH ${LD_LIBRARY_PATH}:${XMIPPDIR}/lib:%s''' % (MpiLibDir))
 				outf.write("register_argc_argv = On\n")
 			elif line.startswith('short_open_tag'):
 				outf.write("short_open_tag = On\n")
+			elif line.startswith('date.timezone'):
+				timestring = "date.timezone = '" + self.timezone + "'\n"
+				outf.write(timestring)
 			elif line.startswith('max_execution_time'):
 				pass
 			elif line.startswith('max_input_time'):
@@ -877,17 +880,33 @@ setenv LD_LIBRARY_PATH ${LD_LIBRARY_PATH}:${XMIPPDIR}/lib:%s''' % (MpiLibDir))
 		for p in packagelist:
 			self.installPythonPackage(p['targzFileName'], p['fileLocation'], p['unpackDirName'])
 
-		# Setup the redux config file. For now, just use default values
-		copyFrom = self.svnMyamiDir + "redux/redux.cfg.template"
-		copyTo = "/etc/myami/redux.cfg"
-		copyCommand = "cp " + copyFrom + " " + copyTo
-		self.runCommand( copyCommand )
+		# Setup the redux config file.
+		self.editReduxConfig()
 
 		# Can't start the redux server from within this script, so we prompt the user to start it 
 		# at the end of this script.
 		# self.runCommand("/sbin/service reduxd start")
 
+	def editReduxConfig(self):
+		
+		# The redux log should go to /var/log
+		copyFrom  = self.svnMyamiDir + "redux/redux.cfg.template"
+		copyTo    = "/etc/myami/redux.cfg"
+		inf       = open(copyFrom, 'r')
+		outf      = open(copyTo, 'w')
 
+		for line in inf:
+			line = line.rstrip()
+			if line.startswith('#'):
+				outf.write(line + "\n")
+			elif line.startswith('file:'):
+				outf.write("file: /var/log/redux.log\n")
+			else:
+				outf.write(line + '\n')
+
+		inf.close()
+		outf.close()
+		
 	def installPhpSsh2(self):
 		if os.path.isfile("/etc/php.d/ssh2.ini"):
 			return
@@ -1010,28 +1029,23 @@ setenv LD_LIBRARY_PATH ${LD_LIBRARY_PATH}:${XMIPPDIR}/lib:%s''' % (MpiLibDir))
 		if result is False:
 			return False
 
-
-		value = raw_input("Please enter an email address: ")
-		value = value.strip()
-
-		self.adminEmail = value
-
-		# the Cs value is no longer needed in 2.2
-		#print ""
-		#print "What is the spherical aberration (Cs) constant for the microsope (in millimeters)."
-		#print "Example : 2.0"
-		#print ""
-		#value = raw_input("Please enter the spherical aberration (Cs) value : ")
-		#value = float (value.strip())
-
-		self.csValue = 2.0#value
+		# Set the admin email address
+		value             = raw_input("Please enter an email address: ")
+		value             = value.strip()
+		self.adminEmail   = value
 		
-		#print ""
-		#print ""
-		#print ""		
-		password = raw_input("Please enter the system root password: ")
-		password = password.strip()
-		self.serverRootPass = password
+		# Set the root password		
+		password              = raw_input("Please enter the system root password: ")
+		password              = password.strip()
+		self.serverRootPass   = password
+		
+		# Set the local timezone for use in the php.ini file
+		timezone      = raw_input("Please enter your timezone based on the available options listed at http://www.php.net/manual/en/timezones.php : ")
+		timezone      = timezone.strip()
+		if ( timezone == "" ):
+			# provide a default timezone if it is empty
+			timezone = "America/Los_Angeles" 
+		self.timezone = timezone
 
 		value = ""
 		while (value != "Y" and value != "y" and value != "N" and value != "n"): 
@@ -1076,7 +1090,7 @@ setenv LD_LIBRARY_PATH ${LD_LIBRARY_PATH}:${XMIPPDIR}/lib:%s''' % (MpiLibDir))
 		self.leginonDB = 'leginondb'
 		self.projectDB = 'projectdb'
 		self.adminEmail = ''
-		self.csValue = ''
+		self.csValue = 2.0
 		self.mrc2any = '/usr/bin/mrc2any'
 		self.imagesDir = '/myamiImages'
 
@@ -1148,8 +1162,15 @@ setenv LD_LIBRARY_PATH ${LD_LIBRARY_PATH}:${XMIPPDIR}/lib:%s''' % (MpiLibDir))
 		self.runCommand("/etc/init.d/pbs_server start")
 				
 		setupURL = "http://localhost/myamiweb/setup/autoInstallSetup.php?password=" + self.serverRootPass
-		webbrowser.open_new(setupURL)
-		self.writeToLog("Myamiweb Started.")
+		try:
+			webbrowser.open_new(setupURL)
+		except:
+			print("ERROR: Failed to run Myamiweb setup script.")
+			print("You may try running " + setupURL + " in your web browser. ")
+			print(sys.exc_info()[0])
+			self.writeToLog("ERROR: Failed to run Myamiweb setup script (autoInstallSetup.php). ")
+		else:
+			self.writeToLog("Myamiweb Started.")
 		
 		subprocess.Popen("start-leginon.py")
 		self.writeToLog("Leginon Started")
