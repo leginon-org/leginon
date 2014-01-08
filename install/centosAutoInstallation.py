@@ -201,8 +201,11 @@ class CentosInstallation(object):
 		#self.runCommand("updatedb")
 
 	def openFirewallPort(self, port):
-			
-		self.runCommand("/sbin/iptables --insert RH-Firewall-1-INPUT --proto tcp --dport %d --jump ACCEPT" % (port))
+		
+		# The following command does not seem to be working	
+		#self.runCommand("/sbin/iptables --insert RH-Firewall-1-INPUT --proto tcp --dport %d --jump ACCEPT" % (port))
+		# replacing with:
+		self.runCommand("/sbin/iptables -I INPUT -p tcp --dport %d -j ACCEPT" % (port))		
 		self.runCommand("/sbin/iptables-save > /etc/sysconfig/iptables")
 		self.runCommand("/etc/init.d/iptables restart")
 		self.writeToLog("firewall port %d opened" % (port))
@@ -279,8 +282,9 @@ class CentosInstallation(object):
 	def setupWebServer(self):
 		self.writeToLog("--- Start install Web Server")
 		#myamiweb yum packages
-		packagelist = ['httpd', 'libssh2-devel', 'php', 'php-mysql', 'phpMyAdmin.noarch', 'php-devel', 'php-gd', ]
+		packagelist = ['php-pecl-ssh2','mod_ssl', 'fftw3-devel','svn','python-imaging','python-devel','mod_python','scipy','httpd', 'libssh2-devel', 'php', 'php-mysql', 'phpMyAdmin.noarch', 'php-devel', 'php-gd', ]
 		self.yumInstall(packagelist)
+		self.runCommand("easy_install fs PyFFTW3")
 
 		# Redux Server is on Web server for now.
 		self.installReduxServer()
@@ -288,7 +292,8 @@ class CentosInstallation(object):
 		self.editPhpIni()
 		self.editApacheConfig()
 		
-		self.installPhpSsh2()
+		# PHP ssh2 is now available as a yum package and does not need to be compiled.
+		#self.installPhpSsh2()
 		self.installMyamiWeb()
 		self.editMyamiWebConfig()
 		
@@ -821,7 +826,7 @@ setenv LD_LIBRARY_PATH ${LD_LIBRARY_PATH}:${XMIPPDIR}/lib:%s''' % (MpiLibDir))
 			if line.startswith('#'):
 				outf.write(line + "\n")
 			elif line.startswith('DirectoryIndex'):
-				outf.write("DirectoryIndex index.html index.php\n")
+				outf.write("DirectoryIndex index.html index.html.var index.php\n")
 			elif line.startswith('HostnameLookups'):
 				outf.write("HostnameLookups On\n")
 			elif line.startswith('UseCanonicalName'):
