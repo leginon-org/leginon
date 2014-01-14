@@ -34,9 +34,10 @@ require_once "inc/summarytables.inc";
 
 class BasicReport {
 
-	function __construct( $expId, $jobtype, $runDataTableName=NULL ) {
+	function __construct( $expId, $jobtype, $runDataTableName=NULL, $thisExpIdOnly=false ) {
 		$this->expId 	  = $expId;
 		$this->jobtype 	  = $jobtype;
+		$this->thisExpIdOnly 	  = $thisExpIdOnly;
 		$this->tableCount = 0;  // used to ensure recursive table display methods do not run indefinatly.
 		$this->MAX_TABLES = 30;	// the max number of sub-tables that will display before cutting off display recursion.	
 		$this->allDisplayKeys = array();
@@ -151,8 +152,11 @@ class BasicReport {
 	function getRunDatas( $showHidden=False ) {
 		$q = "SELECT r.* "
 			."FROM `$this->runDataTableName` AS r ";
+		$q.= "WHERE 1 ";
 		if (!$showHidden) $q.= " AND (r.`hidden` IS NULL OR r.`hidden` = 0) ";
+		if ($this->thisExpIdOnly) $q.= "AND r.`REF|leginondata|SessionData|session`=$this->expId ";
 		$q.= "ORDER BY r.`DEF_id` DESC ";
+		echo $q;
 		$r = $this->mysql->getSQLResult($q);
 		if ( $r === False ) {
 			$dberror = $this->mysql->getError();

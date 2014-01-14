@@ -14,7 +14,7 @@ $formAction=$_SERVER['PHP_SELF']."?expId=$expId";
 
 try {
     // Create an instance of the BasicReport class to display all the make raw frame stack runs from this session.
-    $report = new BasicReport( $expId, "makeddrawframestack", "ApDDStackRunData");
+    $report = new BasicReport( $expId, "makeddrawframestack", "ApDDStackRunData", True);
 
     if ($report->hasRunData($expId)) {
         $runDatas =$report->getRunDatas(True);
