@@ -711,6 +711,8 @@ class ApDDStackParamsData(Data):
 			('preset', str),
 			('align', bool),
 			('bin', int),
+			('unaligned_ddstackrun', ApDDStackRunData),
+			('stack', ApStackData),
 		)
 	typemap = classmethod(typemap)
 
