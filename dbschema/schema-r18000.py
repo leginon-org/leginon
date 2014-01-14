@@ -32,10 +32,14 @@ class SchemaUpdate18000(schemabase.SchemaUpdate):
 		if not self.leginon_dbupgrade.tableExists('ApplicationData'):
 			return
 		
+		if not self.leginon_dbupgrade.columnExists('ApplicationData', 'hide'):
+			self.leginon_dbupgrade.addColumn('ApplicationData', 'hide', self.leginon_dbupgrade.bool)
+
 		apps = leginondata.ApplicationData().query()
 
 		for appdata in apps:
 			t_results, n_results = self.getTransformManagerNavigatorNodes(appdata)
+			# Only on applications with the two nodes
 			if t_results and n_results:
 				hasbindings = self.hasTransformManagerNavigatorBindings(appdata,t_results[0],n_results[0])
 				if not hasbindings:
