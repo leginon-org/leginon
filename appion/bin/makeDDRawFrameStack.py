@@ -11,7 +11,7 @@ from pyami import fileutil
 #leginon
 from leginon import ddinfo
 #appion
-from appionlib import appionLoop2
+from appionlib import apDDLoop
 from appionlib import apDisplay
 from appionlib import apDDprocess
 from appionlib import apDatabase
@@ -19,9 +19,10 @@ from appionlib import apFile
 from appionlib import apStack
 from appionlib import appiondata
 
-class MakeFrameStackLoop(appionLoop2.AppionLoop):
+class MakeFrameStackLoop(apDDLoop.DDStackLoop):
 	#=======================
 	def setupParserOptions(self):
+		super(MakeFrameStackLoop,self).setupParserOptions()
 		# Boolean
 		self.parser.add_option("--rawarea", dest="rawarea", default=False,
 			action="store_true", help="use full area of the raw frame, not leginon image area")
@@ -33,29 +34,12 @@ class MakeFrameStackLoop(appionLoop2.AppionLoop):
 			action="store_true", help="Use gpu for flat field (gain/dark/mask) correction")
 		self.parser.add_option("--defergpu", dest="defergpu", default=False,
 			action="store_true", help="Make unaligned frame stack first on computer without gpu alignment program")
-		self.parser.add_option("--no-keepstack", dest="keepstack", default=True,
-			action="store_false", help="Clean up frame stack after alignment and sum image upload")
 		self.parser.add_option("--no-cyclechannels", dest="cyclechannels", default=True,
 			action="store_false", help="Use only one reference channel for gain/dark correction")
 		# String
-		self.parser.add_option("--tempdir", dest="tempdir",
-			help="Local path for storing temporary stack output, e.g. --tempdir=/tmp/appion/makeddstack",
-			metavar="PATH")
 		# Integer
-		self.parser.add_option("--stackid", dest="stackid", type="int",
-			help="ID for particle stack (optional)", metavar="INT")
-		self.parser.add_option("--bin", dest="bin", type="int", default=1,
-			help="Binning factor to make the stack (optional)", metavar="INT")
 		self.parser.add_option("--refimgid", dest="refimgid", type="int",
 			help="Specify a corrected image to do gain/dark correction with", metavar="INT")
-		self.parser.add_option("--gpuid", dest="gpuid", type="int", default=0,
-			help="GPU device id used in gpu processing", metavar="INT")
-		self.parser.add_option("--ddstartframe", dest="startframe", type="int", default=0,
-			help="starting frame for direct detector raw frame processing. The first frame is 0")
-		self.parser.add_option("--ddnframe", dest="nframe", type="int",
-			help="total frames to consider for direct detector raw frame processing")
-		self.parser.remove_option("--uncorrected")
-		self.parser.remove_option("--reprocess")
 
 	#=======================
 	def checkConflicts(self):
@@ -113,6 +97,7 @@ class MakeFrameStackLoop(appionLoop2.AppionLoop):
 		self.dd.setTempDir(self.params['tempdir'])
 		self.dd.setRawFrameType(self.getFrameType())
 		self.dd.setUseGPUFlat(self.params['gpuflat'])
+		self.dd.setDoseFDriftCorrOptions(self.params)
 		self.dd.setGPUid(self.params['gpuid'])
 		# keepstack is resolved for various cases in conflict check.  There should be no ambiguity by now
 		self.dd.setKeepStack(self.params['keepstack'])
@@ -122,7 +107,9 @@ class MakeFrameStackLoop(appionLoop2.AppionLoop):
 			self.dd.setDefaultImageForReference(self.params['refimgid'])
 		self.imageids = []
 		if self.params['stackid']:
-			self.imageids = apStack.getImageIdsFromStack(self.params['stackid'])
+			# create a list of unaligned imageids from the particle stack
+			imageids_from_stack = apStack.getImageIdsFromStack(self.params['stackid'])
+			self.imageids = self.getUnAlignedImageIds(imageids_from_stack)
 		# Optimize AppionLoop wait time for this since the processing now takes longer than
 		# image acquisition
 		self.setWaitSleepMin(0.4)
@@ -143,7 +130,7 @@ class MakeFrameStackLoop(appionLoop2.AppionLoop):
 		try:
 			self.dd.setImageData(imgdata)
 		except Exception, e:
-			apDisplay.printWarning(e.message)
+			apDisplay.printWarning(e.args[0])
 			return
 
 		if self.params['parallel'] and (os.path.isfile(self.dd.getFrameStackPath(temp=True)) or os.path.isfile(self.dd.getFrameStackPath())):
@@ -197,7 +184,11 @@ class MakeFrameStackLoop(appionLoop2.AppionLoop):
 			q.insert()
 
 	def insertFunctionRun(self):
-		qparams = appiondata.ApDDStackParamsData(preset=self.params['preset'],align=self.params['align'],bin=self.params['bin'],)
+		if self.params['stackid']:
+			stackdata = apStack.getOnlyStackData(self.params['stackid'])
+		else:
+			stackdata = None
+		qparams = appiondata.ApDDStackParamsData(preset=self.params['preset'],align=self.params['align'],bin=self.params['bin'],stack=stackdata)
 		qpath = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
 		sessiondata = self.getSessionData()
 		q = appiondata.ApDDStackRunData(runname=self.params['runname'],params=qparams,session=sessiondata,path=qpath)

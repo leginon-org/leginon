@@ -237,6 +237,7 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		self.gpuid = 0
 		self.keep_stack = True
 		self.save_aligned_stack = True
+		self.alignparams = {}
 		self.hostname = socket.gethostname().split('.')[0]
 		self.setUseAlternativeChannelReference(False)
 		self.setCycleReferenceChannels(False)
@@ -990,7 +991,19 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		# aligned_stack has to be saved to use Numpy to sum substack
 		self.save_aligned_stack=True
 		return False
-		
+
+	def setDoseFDriftCorrOptions(self,params):
+		paramkeys = ['bft','fod']
+		for goodkey in paramkeys:
+			if goodkey in params.keys():
+				self.alignparams[goodkey] = params[goodkey]
+
+	def addDoseFDriftCorrOptions(self):
+		cmd = ''
+		for key in self.alignparams.keys():
+			cmd += ' -%s %s' % (key,str(self.alignparams[key]))
+		return cmd
+
 	def alignCorrectedFrameStack(self):
 		'''
 		Xueming Li's gpu program for aligning frames using all defaults
@@ -1005,6 +1018,8 @@ class DDFrameProcessing(DirectDetectorProcessing):
 
 		# Construct the command line with defaults
 		cmd = 'dosefgpu_driftcorr %s -gpu %d -fcs %s -dsp 0' % (self.tempframestackpath,self.gpuid,temp_aligned_sumpath)
+		# Options
+		cmd += self.addDoseFDriftCorrOptions()
 		is_sum_with_dosefgpu =  self.isSumSubStackWithDosefgpu()
 		if is_sum_with_dosefgpu:
 			cmd += ' -nss %d -nes %d' % (min(self.sumframelist),max(self.sumframelist))
@@ -1132,6 +1147,11 @@ class DDStackProcessing(DirectDetectorProcessing):
 		super(DDStackProcessing,self).setImageData(imagedata)
 
 	def setFrameStackPath(self,ddstackrunid=None):
+		# This is sometimes called from setImageData which gives no ddstackrunid
+		ddstackrundata = self.getDDStackRun()
+		if ddstackrundata and ddstackrunid is None:
+			# set ddstackrunid from ddstackrundata
+			ddstackrunid = ddstackrundata.dbid
 		self.setDDStackRun(ddstackrunid)
 		self.setRunDir(self.getDDStackRun()['path']['path'])
 		self.setTempDir(self.getRunDir())

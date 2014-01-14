@@ -72,6 +72,7 @@ class CatchUpFrameAlignmentLoop(appionScript.AppionScript):
 		self.ddstack_script_params = apScriptLog.getScriptParamValuesFromRunname(self.rundata['runname'],self.rundata['path'],jobdata)
 		if 'no-keepstack' in self.ddstack_script_params.keys():
 			self.dd.setKeepStack(False)
+		self.dd.setDoseFDriftCorrOptions(self.ddstack_script_params)
 		# Give an unique lockname
 		self.setLockname('ddalign')
 		self.success_count = 0
