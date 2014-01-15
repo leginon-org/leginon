@@ -1209,7 +1209,7 @@ class particledata {
 			// cross_correlation (ctffind) and confidence (ace1 and ace2). After sorting by resolution, old runs should all be tied with 999, so the
 			// final sort will sort by whichever is not null, the ctffind correlation or the Ace conf.
 			."		ORDER BY coalesce(resolution_80_percent,999) ASC "
-			." , coalesce(resolution_50_percent,999) ASC, coalesce(c.`cross_correlation`,(c.`confidence`*c.`confidence_d`),999) DESC  "
+			." , coalesce(resolution_50_percent,999) ASC, coalesce(ctf.`cross_correlation`,(ctf.`confidence`*ctf.`confidence_d`),999) DESC  "
 			."	) ctfdata ";
 		// if $limit is specified, report only values with confidences > $limit
 		if ($limit) {
