@@ -579,7 +579,9 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	// This feature only works with Python 2.6
 	echo "<b>Raw frame processing if available: </b><br/>\n";
 	echo "start frame:<input type='text' name='ddstartframe' value='$ddstartframe' size='3'>\n";
+	echo docpop('makeDDStack.ddstartframe', 'start frame');
 	echo "total frame:<input type='text' name='ddnframe' value='$ddnframe' size='3'>\n";
+	echo docpop('makeDDStack.ddnframe', 'total frames');
 	echo "<br/><br/>\n";
 
 	echo "<b>Filter Values:</b><br/>";
