@@ -575,16 +575,23 @@ def getRgbFile(msg=True):
 
 #=====================
 def getNumProcessors(msg=True):
-	if not os.path.exists('/proc/cpuinfo'):
-		return None
-	f = open('/proc/cpuinfo', 'r')
-	nproc = 0
-	for line in f:
-		if line.startswith('processor'):
-			nproc += 1
-	f.close()
+	# First see if on a PBS cluster:
+	if os.environ.has_key('PBS_NODEFILE'):
+		cmd = "wc -l $PBS_NODEFILE | awk '{print $1}'"
+		nproc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).stdout.read().strip()
+		nproc = int(nproc)
+
+	else:
+		if not os.path.exists('/proc/cpuinfo'):
+			return None
+		f = open('/proc/cpuinfo', 'r')
+		nproc = 0
+		for line in f:
+			if line.startswith('processor'):
+				nproc += 1
+		f.close()
 	if msg is True:
-		apDisplay.printMsg("Found "+str(nproc)+" processors on this machine")
+		apDisplay.printMsg("Found %i processors on this machine"%nproc)
 	return nproc
 
 #=====================
