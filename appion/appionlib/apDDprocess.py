@@ -81,16 +81,15 @@ class DirectDetectorProcessing(object):
 		be aligned or not.
 		'''
 		imagename = self.image['filename']
-		
-		if self.image['preset'] is not None and '-a' in self.image['preset']['name']:
-			# aligned image have -a in its preset name
-			aligned_presetname = self.image['preset']['name']
-			bits = imagename.split(aligned_presetname)
-			org_presetname = aligned_presetname.join(aligned_presetname.split('-a')[:-1])
-			# remove trailing empty string and version
-			while len(bits) > 1 and (len(bits[-1]) == 0 or (len(bits[-1]) >= 4 and '_v' in bits[-1])):
-				bits.pop(-1)
-			imagename = aligned_presetname.join(bits) +org_presetname 
+
+		if self.image['camera']['align frames']:
+			# Use pair data to find the align source image
+			result = self.getAlignImagePairData(None,query_source=False)
+			if result is False:
+				# This means that frames were aligned by camera algorithm and frame stack was not saved
+				return False
+			source_imagedata = result['source']
+			imagename = source_imagedata['filename']
 		self.tempframestackpath = os.path.join(self.tempdir,imagename+'_st.mrc')
 		self.framestackpath = os.path.join(self.rundir,imagename+'_st.mrc')
 		
@@ -1124,6 +1123,10 @@ class DDStackProcessing(DirectDetectorProcessing):
 	Class to use gain/dark corrected DDStack. Need to setImage and then setFrameStackPath so
 	that the ddstackrun can be determined from image if not specified.
 	'''
+	def __init__(self):
+		super(DDStackProcessing,self).__init__()
+		self.ddstackrun = None
+
 	def getIsAligned(self):
 		return self.image['preset'] is not None and '-a' in self.image['preset']['name']
 
@@ -1140,7 +1143,8 @@ class DDStackProcessing(DirectDetectorProcessing):
 		self.ddstackrun = ddstackrun
 
 	def getDDStackRun(self):
-		apDisplay.printMsg('Stack is from %s (id = %d)' % (self.ddstackrun['runname'],self.ddstackrun.dbid))
+		if self.ddstackrun:
+			apDisplay.printMsg('Stack is from %s (id = %d)' % (self.ddstackrun['runname'],self.ddstackrun.dbid))
 		return self.ddstackrun
 
 	def setImageData(self,imagedata):
