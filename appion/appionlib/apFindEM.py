@@ -94,10 +94,6 @@ def runFindEM(imgdict, params, thread=False):
 	to get cross-correlation maps
 	"""
 
-	# get number of CPUs on node:
-	cmd = "wc -l $PBS_NODEFILE | awk '{print $1}'"
-	ppn = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE).stdout.read().strip()
-
 	### check image
 	processAndSaveImage(imgdict, params)
 	dwnimgname = imgdict['filename']+".dwn.mrc"
