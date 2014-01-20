@@ -145,18 +145,26 @@ class DirectDetectorProcessing(object):
 			apDisplay.printWarning( "%s instead of %s frames will be used since not enough frames are saved." % (framelist,framelist_original))
 		return framelist
 
-	def getAlignImagePairData(self,ddstackrundata,query_source=True):
+	def getAllAlignImagePairData(self,ddstackrundata,query_source=True):
 		'''
-		This returns DD AlignImagePairData if exists, returns False if not.
-		Image set in the class instance can either be the source or result of the alignment
+		This returns DD all AlignImagePairData. source query may have more
+		than one result.  This function gets all not just the most recent one.
 		'''
 		if query_source:
 			q = appiondata.ApDDAlignImagePairData(source=self.image,ddstackrun=ddstackrundata)
 		else:
 			q = appiondata.ApDDAlignImagePairData(result=self.image,ddstackrun=ddstackrundata)
-		r = q.query(results=1)
-		if r:
-			return r[0]
+		r = q.query()
+		return r
+
+	def getAlignImagePairData(self,ddstackrundata,query_source=True):
+		'''
+		This returns DD AlignImagePairData if exists, returns False if not.
+		Image set in the class instance can either be the source or result of the alignment
+		'''
+		results = self.getAllAlignImagePairData(ddstackrundata,query_source)
+		if results:
+			return results[0]
 		else:
 			return False
 
@@ -1120,8 +1128,9 @@ class DDFrameProcessing(DirectDetectorProcessing):
 
 class DDStackProcessing(DirectDetectorProcessing):
 	'''
-	Class to use gain/dark corrected DDStack. Need to setImage and then setFrameStackPath so
-	that the ddstackrun can be determined from image if not specified.
+	Class to use gain/dark corrected DDStack. Need to setImage and 
+	then setFrameStackPath so that the ddstackrun can be determined
+	from image if not specified.
 	'''
 	def __init__(self):
 		super(DDStackProcessing,self).__init__()
@@ -1142,9 +1151,9 @@ class DDStackProcessing(DirectDetectorProcessing):
 				apDisplay.printError('Image not from aligned ddstack run.  Can not determine stack location without ddstack id')
 		self.ddstackrun = ddstackrun
 
-	def getDDStackRun(self):
-		if self.ddstackrun:
-			apDisplay.printMsg('Stack is from %s (id = %d)' % (self.ddstackrun['runname'],self.ddstackrun.dbid))
+	def getDDStackRun(self,show_msg=False):
+		if self.ddstackrun and show_msg:
+			apDisplay.printMsg('DDStack is from %s (id = %d)' % (self.ddstackrun['runname'],self.ddstackrun.dbid))
 		return self.ddstackrun
 
 	def setImageData(self,imagedata):

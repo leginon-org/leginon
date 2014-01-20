@@ -13,6 +13,7 @@ require_once "inc/leginon.inc";
 require_once "inc/project.inc";
 require_once "inc/processing.inc";
 require_once "inc/summarytables.inc";
+require_once "inc/forms/ddstackForm.inc";
 
 // IF VALUES SUBMITTED, EVALUATE DATA
 if ($_POST) {
@@ -29,6 +30,7 @@ function createStackIntoPicksForm($extra=false, $title='Run Stack Into Picks', $
 	if ($_GET['showHidden']) $formAction.="&showHidden=True";
 
 	$javascript.= editTextJava();
+	$javascript .= writeJavaPopupFunctions('appion');
 
 	processing_header($title, $heading, $javascript, False);
 	// write out errors, if any came up:
@@ -52,6 +54,7 @@ function createStackIntoPicksForm($extra=false, $title='Run Stack Into Picks', $
 	$description = $_POST['description'];
 	$stackparam = $particle->getStackParams($stackids[0]['stackid']);
 	$outdir = ($_POST['outdir']) ? $_POST['outdir'] : $sessionpath;
+	$ddstackform = new DDStackForm('','Apply to ddframe stack result images','ddstack.transfer2ddstack' );
 
 	if ($stackids) {
 		echo "<form name='stackform' method='post' action='$formAction'>\n";
@@ -66,6 +69,10 @@ function createStackIntoPicksForm($extra=false, $title='Run Stack Into Picks', $
 		echo "<br />\n";
 		echo "<input type='text' name='outdir' value='$outdir' size='50'>\n";
 		echo "<br />\n";
+		echo "<br />\n";
+		echo docpop('ddstack.transfer2ddstack','<b>Apply to dd frame stack result image:</b>');
+		echo "<br />\n";
+		echo $ddstackform->generateForm();
 		echo "<br />\n";
 		echo getSubmitForm("Run Stack Into Picks");
 		echo "</td></tr>\n";
@@ -91,6 +98,7 @@ function createStackIntoPicksForm($extra=false, $title='Run Stack Into Picks', $
 }
 
 function runStackIntoPicks() {
+	$ddstackform = new DDStackForm('','Apply to ddframe stack result images','ddstack.transfer2ddstack' );
 	/* *******************
 	PART 1: Get variables
 	******************** */
@@ -119,6 +127,7 @@ function runStackIntoPicks() {
 	$command.="--runname=$runname ";
 	$command.="--stackid=$stackid ";
 	$command.="--commit ";
+	$command .= $ddstackform->buildCommand( $_POST );	
 
 	/* *******************
 	PART 4: Create header info, i.e., references

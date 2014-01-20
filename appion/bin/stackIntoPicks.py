@@ -14,6 +14,8 @@ from appionlib import apDisplay
 from appionlib import appiondata
 from appionlib import apEMAN
 from appionlib import apStackMeanPlot
+from appionlib import apDDprocess
+from appionlib import apDatabase
 from pyami import mem
 
 
@@ -25,6 +27,8 @@ class StackIntoPicksScript(appionScript.AppionScript):
 		### Ints
 		self.parser.add_option("-s", "--stackid", dest="stackid", type="int",
 			help="Stack id", metavar="ID")
+		self.parser.add_option("--ddstack", dest="ddstack", type="int",
+			help="ID for ddstack run to make aligned ddstack(required)", metavar="INT")
 
 	#=====================
 	def checkConflicts(self):
@@ -53,6 +57,39 @@ class StackIntoPicksScript(appionScript.AppionScript):
 			return selectrundata['tiltparams']['diam']
 		return 10
 
+	def chooseValidResultImageInDDAlignPairs(self, alldata):
+		'''
+		Return the first non-rejected result image
+		'''
+		if not alldata:
+			# no data
+			return False
+		for pairdata in alldata:
+			if apDatabase.getImgCompleteStatus(pairdata['result']) is False:
+				continue
+			return pairdata['result']
+
+	def getNewImageFromDDStack(self,imagedata):
+		'''
+		Returns aligned image for the specified ddstack according to
+		the image input.  The input may be another aligned image or
+		a source image in the alignpair
+		'''
+		# This has the side effect of resetting ddstackrun in self.dd
+		# However getAlignImagePairData has specific input for it.
+		self.dd.setImageData(imagedata)
+		alignpairdata = self.dd.getAlignImagePairData(None,query_source=not self.dd.getIsAligned())
+		if alignpairdata is False:
+			apDisplay.printWarning('Image not used for nor a result of alignment.  Will not transfer pick')
+			return False
+		self.dd.setImageData(alignpairdata['source'])
+		allpairs = self.dd.getAllAlignImagePairData(self.newddstackrun,query_source=True)
+		newalignedimagedata = self.chooseValidResultImageInDDAlignPairs(allpairs)
+		if newalignedimagedata is False:
+			apDisplay.printWarning('Matched aligned image not found in ddstack.  Will not transfer pick')
+			return False
+		return newalignedimagedata
+
 	#=====================
 	def start(self):
 		### check for existing run
@@ -63,6 +100,10 @@ class StackIntoPicksScript(appionScript.AppionScript):
 		if selectrundata:
 			apDisplay.printError("Runname already exists")
 
+		if self.params['ddstack']:
+			self.dd = apDDprocess.DDStackProcessing()
+			self.dd.setDDStackRun(self.params['ddstack'])
+			self.newddstackrun = self.dd.getDDStackRun(show_msg=True)
 		### stack data
 		stackdata = apStack.getOnlyStackData(self.params['stackid'])
 
@@ -101,6 +142,12 @@ class StackIntoPicksScript(appionScript.AppionScript):
 			oldpartdata = stackpart['particle']
 			newpartq = appiondata.ApParticleData(initializer=oldpartdata)
 			newpartq['selectionrun'] = selectrunq
+			if self.params['ddstack']:
+				newimagedata = self.getNewImageFromDDStack(oldpartdata['image'])
+				if newimagedata is False:
+					# no pick transferred
+					continue
+				newpartq['image'] = newimagedata
 			if self.params['commit'] is True:
 				newpartq.insert()
 		apDisplay.printMsg("Completed in %s"%(apDisplay.timeString(time.time()-t0)))

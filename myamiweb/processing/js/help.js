@@ -544,6 +544,9 @@ var help = {
 		'offset_range' : 'Probabilities will be calculated only for translations in a circle with this radius (in pixels). The center of this circle changes at every iteration and is placed at the optimal translation for each image in the previous iteration. If auto-sampling is used, this will be the value for the first iteration(s) only, and the sampling rate will be increased automatically after that.',
 		'offset_step' : 'Translations will be sampled with this step-size (in pixels).Translational sampling is also done using the adaptive approach. Therefore, if adaptive=1, the translations will first be evaluated on a 2x coarser grid. If auto-sampling is used, this will be the value for the first iteration(s) only, and the sampling rate will be increased automatically after that.',
 	},
+	'ddstack': {
+		'transfer2ddstack':'Apply the transfer not on the original image where the stack came from but to its associated (aligned) image of the specified ddstackrun',
+	},
 	'makeDDStack' : {
 		'align' : 'Select to align the images.',
 		'defergpu' : 'Select defer gpu if this job will be launched on a computer without GPU capability. The alignment can be done after building the stack by running catchUpDDAlign.py',
