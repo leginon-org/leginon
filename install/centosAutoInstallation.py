@@ -791,7 +791,7 @@ setenv LD_LIBRARY_PATH ${LD_LIBRARY_PATH}:${XMIPPDIR}/lib:%s''' % (MpiLibDir))
 				outf.write("register_argc_argv = On\n")
 			elif line.startswith('short_open_tag'):
 				outf.write("short_open_tag = On\n")
-			elif line.startswith('date.timezone'):
+			elif line.startswith(';date.timezone'):
 				timestring = "date.timezone = '" + self.timezone + "'\n"
 				outf.write(timestring)
 			elif line.startswith('max_execution_time'):
@@ -1168,14 +1168,19 @@ setenv LD_LIBRARY_PATH ${LD_LIBRARY_PATH}:${XMIPPDIR}/lib:%s''' % (MpiLibDir))
 				
 		setupURL = "http://localhost/myamiweb/setup/autoInstallSetup.php?password=" + self.serverRootPass
 		try:
-			webbrowser.open_new(setupURL)
+			setupOpened = webbrowser.open_new(setupURL)
 		except:
 			print("ERROR: Failed to run Myamiweb setup script.")
 			print("You may try running " + setupURL + " in your web browser. ")
 			print(sys.exc_info()[0])
 			self.writeToLog("ERROR: Failed to run Myamiweb setup script (autoInstallSetup.php). ")
 		else:
-			self.writeToLog("Myamiweb Started.")
+			if ( setupOpened ):
+				self.writeToLog("Myamiweb Started.")
+			else:
+				print("ERROR: Failed to run Myamiweb setup script.")
+				print("You may try running " + setupURL + " in your web browser. ")
+				self.writeToLog("ERROR: Failed to run Myamiweb setup script (autoInstallSetup.php). ")
 		
 		subprocess.Popen("start-leginon.py")
 		self.writeToLog("Leginon Started")
