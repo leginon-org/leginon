@@ -171,6 +171,9 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 
 	#=======================
 	def getDDImageArray(self,imgdata):
+		'''
+		Returns integrated and gain/dark corrected image according to framelist
+		'''
 		framelist = self.dd.getFrameList(self.params)
 		'''
 		TO DO handle empty framelist caused by driftlimit
@@ -182,14 +185,22 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 
 	#=======================
 	def getOriginalImagePath(self, imgdata):
+		'''
+		This function gives back the image path to be used for boxing.
+		Three possible results:
+		1. image from the leginon/session/rawdata as recorded in imgdata (typical)
+		2. -darknorm.dwn.mrc previously created
+		3. -darknorm.dwn.mrc made from dd frames.
+		'''
 		imgname = imgdata['filename']
+		# default path
 		imgpath = os.path.join(imgdata['session']['image path'], imgdata['filename']+".mrc")
 		if self.is_dd:
-			self.params['uncorrected'] = True
 			### dark/bright correct image
 			tmpname = self.shortname+"-darknorm.dwn.mrc"
 			imgpath = os.path.join(self.params['rundir'], tmpname)
 			if not self.params['usedownmrc'] or not os.path.isfile(imgpath):
+				# make downmrc
 				imgarray = self.getDDImageArray(imgdata)
 				apImage.arrayToMrc(imgarray,imgpath)
 		apDisplay.printMsg('Boxing is done on %s' % (imgpath,))
@@ -230,7 +241,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 		'''
 		Box Particles From the manipulated full size image file on disk
 		'''
-		### get corrected leginon image path.  This will make corrected integrated frame image, too.
+		### make corrected integrated frame image
 		imgpath = self.getOriginalImagePath(imgdata)
 
 		t0 = time.time()
