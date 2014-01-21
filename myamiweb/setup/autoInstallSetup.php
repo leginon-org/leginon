@@ -109,8 +109,10 @@ sleep(5);
 /*
  * Redirect to the myamiweb homepage.
  */
+// Using the HTTP_HOST is not always working for autoinstaller.
+// Try localhost.
 $host  = $_SERVER['HTTP_HOST'];
 $uri = '/myamiweb';
-header("Location: http://$host$uri");
+header("Location: http://localhost$uri");
 exit;
 ?>
