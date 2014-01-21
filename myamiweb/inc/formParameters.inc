@@ -306,7 +306,8 @@ class FormParameters
 		return $html;
 	}		
 	
-	// $options is an array of options for the selection box
+	// $options is an array of options for the selection box. 
+	// Options may be a dictionary, to allow a more descriptive string to be shown to the user for each option.  
 	public function insertSelectField( $name, $options, $note='', $helpkey='' )
 	{
 		// if the parameter has been "hidden" just return an empty string.
@@ -325,6 +326,28 @@ class FormParameters
 
 		return $html;
 	}		
+	
+	// $options is an array of options for the selection box. 
+	// Options may be a dictionary, to allow a more descriptive string to be shown to the user for each option.  
+	public function insertStackedSelectField( $name, $options, $note='', $helpkey='' )
+	{
+		// if the parameter has been "hidden" just return an empty string.
+		if ( $this->params[$name]['hidden'] ) {
+			$html = "";
+		} else {
+			$helpkey = $this->setHelpKey( $name, $helpkey );	
+			$html = $this->formLib->insertStackedSelectField( $this->params[$name]['name'], 
+														$this->params[$name]['label'], 
+														$this->params[$name]['value'],
+														$options, 
+														$this->params[$name]['enable'], 
+														$note,
+														$helpkey );
+		}
+
+		return $html;
+	}		
+	
 }
 
 ?>

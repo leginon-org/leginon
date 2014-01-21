@@ -87,8 +87,33 @@ class FormGeneratorLib
 		return $html;
 	}
 
-	//Options may be an associative array, to allow a more descriptive string to be shown to the user for each option. 
+	//Options may be a dictionary, to allow a more descriptive string to be shown to the user for each option. 
 	public function insertSelectField( $name, $label='', $value='', $options='', $enable='', $note='', $helpkey='' )
+	{
+		$html.= $this->insertUnlabeledSelectField( $name, $value, $options, $enable );
+
+		$html.= $this->insertLabel( $name, $label, $helpkey );				
+		$html.= $this->insertNote( $note );
+		$html.= "<br/>\n";
+		
+		return $html;
+	}
+
+	//Options may be a dictionary, to allow a more descriptive string to be shown to the user for each option. 
+	public function insertStackedSelectField( $name, $label='', $value='', $options='', $enable='', $note='', $helpkey='' )
+	{
+		$html.= $this->insertLabel( $name, $label, $helpkey );				
+		$html.= $this->insertNote( $note );
+		$html.= "<br/>\n";
+		$html.= $this->insertUnlabeledSelectField( $name, $value, $options, $enable );
+
+		$html.= "<br/>\n";
+		
+		return $html;
+	}
+	
+	//Options may be a dictionary, to allow a more descriptive string to be shown to the user for each option. 
+	public function insertUnlabeledSelectField( $name, $value='', $options='', $enable='' )
 	{
 		$html .=  "<SELECT NAME='$name' $enable>\n";
 		foreach ($options as $option => $desc) {
@@ -103,10 +128,6 @@ class FormGeneratorLib
 			}
 		}
 		$html .=  "</SELECT>\n";		
-
-		$html.= $this->insertLabel( $name, $label, $helpkey );				
-		$html.= $this->insertNote( $note );
-		$html.= "<br/>\n";
 		
 		return $html;
 	}
