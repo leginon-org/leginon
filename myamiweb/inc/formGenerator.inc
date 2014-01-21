@@ -122,7 +122,7 @@ class FormGeneratorLib
 			
 			// add the entry to the option list
 			if ( $desc ) {
-				$html .=  "<OPTION VALUE='$desc' $selected>$desc</OPTION>\n";
+				$html .=  "<OPTION VALUE='$option' $selected>$desc</OPTION>\n";
 			} else {
 				$html .=  "<OPTION VALUE='$option' $selected>$option</OPTION>\n";
 			}
