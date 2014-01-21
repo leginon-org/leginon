@@ -48,6 +48,9 @@ class DDStackForm extends BasicForm
 		$html .= ">\n";
 		*/
 		// default to not specifying ddstack
+
+		if (empty($stackInfos)) return '';
+
 		array_unshift($stackInfos,array('stackid'=>'','runname'=>'no-ddstack-specified'));
 		
 		$ddselect_options = array();
