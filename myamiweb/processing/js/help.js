@@ -545,6 +545,7 @@ var help = {
 		'offset_step' : 'Translations will be sampled with this step-size (in pixels).Translational sampling is also done using the adaptive approach. Therefore, if adaptive=1, the translations will first be evaluated on a 2x coarser grid. If auto-sampling is used, this will be the value for the first iteration(s) only, and the sampling rate will be increased automatically after that.',
 	},
 	'ddstack': {
+		'ddstack': 'Choose an dd frame stack',
 		'transfer2ddstack':'Apply the transfer not on the original image where the stack came from but to its associated (aligned) image of the specified ddstackrun',
 	},
 	'makeDDStack' : {

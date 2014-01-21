@@ -17,6 +17,7 @@ require_once "inc/viewer.inc";
 require_once "inc/processing.inc";
 require_once "inc/forms/runParametersForm.inc";
 require_once "inc/forms/clusterParamsForm.inc";
+require_once "inc/forms/ddstackForm.inc";
 
 // Decide which method to enter. If this is our first time through, we create the form.
 // If the form values have already been submitted by the user, we create a processing run command.
@@ -28,27 +29,6 @@ if ( $_POST )
 } else {
 	// if this is the first time through, create the launch form
 	createForm();
-}
-
-// Returns the html to display a stack selector
-// stackInfos input contains stackid and runname.
-function getDDStackSelector( $stackInfos, $stackidval, $onchange ) 
-{
-	$html = "<SELECT NAME='stackval'";
-	if ($onchange) $html .= "onchange='".$onchange."'";
-	$html .= ">\n";
-	
-	foreach ( $stackInfos as $stackinfo ) {
-	    $opvals = "$stackinfo[stackid]";
-	
-		$html .= "<OPTION VALUE='$opvals'";
-		// select previously set stack on resubmita
-		if ( $stackinfo['stackid'] == $stackidval ) $html .= " SELECTED";
-		$html .= ">$stackinfo[runname] ID: $stackinfo[stackid] </OPTION>\n";
-	}
-	
-	$html .= "</SELECT>\n";
-	return $html;
 }
 
 // createForm() will output the html code needed to display the launch form to the user
@@ -101,11 +81,13 @@ function createForm( $extra=false, $title='runCatchupDDAlign.py Launcher', $head
 	// set commit on by default when first loading page, else set
 	$commitcheck = ($_POST['commit']=='on' || !$_POST['process']) ? 'checked' : '';
 	// Set any existing parameters in form
+	// These are needed if we submit this as a job
 	$sessionpathval = ($_POST['outdir']) ? $_POST['outdir'] : $sessionpath;
 	while (file_exists($sessionpathval.'ddstack'.($alignruns+1)))
 		$alignruns += 1;
 	$runname = ($_POST['runname']) ? $_POST['runname'] : 'ddstack'.($alignruns+1);
-	$stackidval = $_POST['stackval'];
+
+	$ddstackform = new DDStackForm('','Select a dd frame stack to align','ddstack.ddstack' );
 
 	// start the main form
 	echo "<form name='viewerform' method='POST' action='$formAction'>\n";
@@ -125,11 +107,11 @@ function createForm( $extra=false, $title='runCatchupDDAlign.py Launcher', $head
 	echo "<tr>";
 	echo "<td>";
 	if (!$stackInfos) {
-		echo "<font color='red'><B>No Stacks for this Session</B></font>\n";
+		echo "<font color='red'><B>No DD Frame Stacks for this Session</B></font>\n";
 	} else {
-		echo docpop('stack','<b>Select a stack to align:</b>');
+		echo docpop('stack','<b>Select a ddstack to align:</b>');
 		echo "<br/>";
-		echo getDDStackSelector( $stackInfos, $stackidval, 'switchDefaults(this.value)' );
+		echo $ddstackform->generateForm();
 	}
 	echo "</td></tr>\n";
 	
@@ -187,12 +169,12 @@ function createCommand()
 	/* ***********************************
 	 PART 1: Get variables from POST array and validate
 	 ************************************* */	
-	$stackid = $_POST['stackval'];
+	$stackid = $_POST['ddstack'];
 	$commit = ($_POST['commit']=="on") ? true : false;
 
 	//make sure a stack was selected
 	if (!$stackid)
-		$errorMsg .= "<B>ERROR:</B> No stack selected";
+		$errorMsg .= "<B>ERROR:</B> No dd frame stack selected";
 
 	// Get the run name and directory
 	// This is not needed for the catchup command, but is needed for appion
