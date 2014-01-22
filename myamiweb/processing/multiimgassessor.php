@@ -43,7 +43,14 @@ if ($maskRunId && !$_POST['imgrun']) {
 	$maskdata = $particle->getMaskMakerParams($maskRunId);
 	$_POST['imgdir'] = $maskdata[0]['path']."/masks/";
 	$_POST['imgrun'] = 0;
-	if ( $type = findImageTypeInDir($_POST['imgdir'], $imgtypes ) ) $_POST['imgtype'] = $type;
+	// Try to find the type of images in the imgdir. 
+	try {
+		$type = findImageTypeInDir($_POST['imgdir'], $imgtypes );
+		$_POST['imgtype'] = $type;
+	} catch (Exception $e) {
+    	$_POST['imgtype'] = "jpg";
+	}
+	
 }
 $projectId=getProjectId();
 
@@ -135,18 +142,20 @@ foreach ( $maskRunInfos as $maskRun ) {
 	if (strlen($maskRun['path']) > 10) $maskpath = $maskRun['path']."/masks/";
 	else {
 		// HACK for Particle Runs without Path Data
-	        $maskpath = $extractpath.$maskRun['name']."/masks/";
+	        //$maskpath = $extractpath.$maskRun['name']."/masks/";
 	        if (!file_exists($maskpath)) $maskpath = $appionpath.$maskRun['name']."/masks/";
 	}
 	
 	// Find a file extension in this directory. There may be more than one, 
 	// but let's at least start with a type that we know exists
-	if ( $type = findImageTypeInDir($maskpath, $imgtypes ) ) {
+	// If we fail to find a type, fail gracefully and just set the type to jpg.
+	try {
+		$type = findImageTypeInDir( $maskpath, $imgtypes );
 		$imgtype = $type;
-	} else {
+	} catch (Exception $e) {
 		$imgtype = "jpg";
 	}
-		
+			
 	$run = array("label"=>"Masking Run: ".$runname,
 		"name"=>"mask_".$maskRun['DEF_id'],"imgtype"=>$imgtype,"path"=>$maskpath);
 	//echo $prtlrun['DEF_id']." == $pickId<br/>";
@@ -733,8 +742,14 @@ function rstrtrim($str, $remove=null)
 
 // Will return the first filetype to be found from a list of file types ($fileTypes)
 // in a given directory ($dir). If non of the specified types are found, returns False.
+// If the directory provided does not exist, throws an exception. Wrap this in a try block!
 function findImageTypeInDir( $dir, $fileTypes )
 {
+	// If the directory is not there, throw exception.
+	if ( !file_exists( $dir ) ) {
+		throw new Exception(" $dir does not exist.");
+	}
+	
 	// Find a file extension in this directory. There may be more than one, 
 	// but let's at least start with a type that we know exists
 	$foundtype = False;
