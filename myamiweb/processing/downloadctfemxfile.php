@@ -56,6 +56,8 @@ foreach ($ctfdatas as $ctfdata) {
 	//$data[] = sprintf("\t\t\t<X unit="A/px">%.3f</X>\n", ??????);
 	//$data[] = sprintf("\t\t\t<Y unit="A/px">%.3f</X>\n", ??????);
 	//$data[] = sprintf("\t\t</pixelSpacing>\n");
+	//$data[] = sprintf("\t\t<res80>%.3f</res80>\n", $ctfdata['resolution_80_percent']);
+	//$data[] = sprintf("\t\t<res50>%.3f</res50>\n", $ctfdata['resolution_50_percent']);
 	//$data[] = sprintf("\t\t<method>%s</method>\n", $method);
 	$data[] = sprintf("\t</micrograph>\n");
 }
