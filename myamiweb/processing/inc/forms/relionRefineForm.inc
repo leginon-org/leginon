@@ -51,6 +51,7 @@ class RelionRefineForm extends BasicRefineForm
 		$html .= $params->insertTextField( "offset_range", $fieldSize, "(pix)" );
 		$html .= $params->insertTextField( "offset_step", $fieldSize, "(pix)" );
 		$healpixOptions = array(30, 15, 7.5, 3.5, 1.8, 0.9, 0.5, 0.2, 0.1);
+		$healpixOptions = array_combine( $healpixOptions, $healpixOptions ); //need a dict with key and value set to degrees
 		$html .= $params->insertSelectField( "healpix_order", $healpixOptions, "(degrees)" );
 		$html .= $params->insertSelectField( "auto_local_healpix_order", $healpixOptions, "(degrees)" );
 		$html .= "<br/>\n";	

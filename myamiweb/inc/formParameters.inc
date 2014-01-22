@@ -307,7 +307,7 @@ class FormParameters
 	}		
 	
 	// $options is an array of options for the selection box. 
-	// Options may be a dictionary, to allow a more descriptive string to be shown to the user for each option.  
+	// Options must be a dictionary, to allow a more descriptive string to be shown to the user for each option.  
 	public function insertSelectField( $name, $options, $note='', $helpkey='' )
 	{
 		// if the parameter has been "hidden" just return an empty string.

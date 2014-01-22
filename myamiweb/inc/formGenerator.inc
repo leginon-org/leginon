@@ -112,7 +112,9 @@ class FormGeneratorLib
 		return $html;
 	}
 	
-	//Options may be a dictionary, to allow a more descriptive string to be shown to the user for each option. 
+	// Options MUST be a dictionary, to allow a more descriptive string to be shown to the user for each option, if desired.
+	// If the option value and description should be the same, then that value should be both the key and the value.
+	// $options = array( "first" => "first", "second" => "second description"...) The key is what gets kept in the POST array. 
 	public function insertUnlabeledSelectField( $name, $value='', $options='', $enable='' )
 	{
 		$html .=  "<SELECT NAME='$name' $enable>\n";
@@ -121,11 +123,7 @@ class FormGeneratorLib
 			$selected = ( $value == $option ) ? " SELECTED" : "";
 			
 			// add the entry to the option list
-			if ( $desc ) {
-				$html .=  "<OPTION VALUE='$option' $selected>$desc</OPTION>\n";
-			} else {
-				$html .=  "<OPTION VALUE='$option' $selected>$option</OPTION>\n";
-			}
+			$html .=  "<OPTION VALUE='$option' $selected>$desc</OPTION>\n";
 		}
 		$html .=  "</SELECT>\n";		
 		
