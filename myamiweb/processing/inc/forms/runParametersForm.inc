@@ -12,7 +12,7 @@ require_once "basicForm.inc";
 class RunParametersForm extends BasicForm
 
 {
-	function __construct( $runname='', $outdir='', $description='' ) 
+	function __construct( $runname='', $outdir='', $description='', $showDesc=True ) 
 	{
 		parent::__construct();
 		$params = $this->getFormParams();
@@ -23,6 +23,14 @@ class RunParametersForm extends BasicForm
 		$params->addParam( "runname", $runname, "Run name" );
 		$params->addParam( "outdir", $outdir, "Output directory" );
 		$params->addParam( "description", $description, "Description" );
+		
+		// Add Validations
+		$params->addValidation( "description", "noquote" );
+		$params->addValidation( "outdir", "req" );
+		
+		if ( !$showDesc ) {
+			$params->hideParam( "description" );
+		}
 	}
 		
 	public function generateForm()
@@ -31,17 +39,14 @@ class RunParametersForm extends BasicForm
 		//$this->params->getPostedValues( $postArray );
 		$this->updateFormParams();
 		$params = $this->getFormParams();
-		
-		$html = "
-	    <br />
-	    <H4>Processing Run Parameters</H4>
-	    <hr />";
-		
+				
+		$html.= openRoundBorder();
 		$html.= $params->insertStackedTextField( "runname", 20 );
 		$html.= "<br/>\n";
 		$html.= $params->insertStackedTextField( "outdir", 56 );
 		$html.= "<br/>\n";
 		$html.= $params->insertTextArea( "description");
+		$html.= closeRoundBorder();
 			
 		$html.= "<br/>\n";
 
@@ -58,15 +63,16 @@ class RunParametersForm extends BasicForm
 		
 		$command = $this->addCommandFlag( $command, "description" );
 		
-		//$this->params->getPostedValues( $postArray );
-		//$paramArray = $this->params->getParamArray();
 		
-		// runname and outdir are currently handled in showOrSubmitCommand().
-		// TODO: Pull params out of showOrSubmitCommand and move to general form for all processing
-		//$command = "--runname=".$paramArray["runname"]["value"]." ";
-		//$command.= "--outdir=".$paramArray["outdir"]["value"]." ";
-		//$command.= "--description=".$paramArray["description"]["value"]." ";
-		
+		// TODO: We should be adding the rundir here rather than in showOrSubmitCommand
+		$outdir		= $params->getParamValue('outdir');
+		$runname	= $params->getParamValue('runname');
+		if ( $outdir ) {
+			// make sure outdir ends with '/' and append run name
+			if (substr($outdir,-1,1)!='/') $outdir.='/';
+			$rundir = $outdir.$runname;
+		}
+				
 		return $command;
 	}
 	
