@@ -38,6 +38,7 @@ def isValidVolume(volfile):
 	Checks to see if a MRC volume is valid
 	"""
 	if not os.path.isfile(volfile):
+		apDisplay.printWarning("volume path '%s' is not a file"%(volfile))
 		return False
 	volarray = mrc.read(volfile)
 	if volarray.shape[0]*volarray.shape[1]*volarray.shape[2] > 400**3:
@@ -58,7 +59,7 @@ def setVolumeMass(volumefile, apix=1.0, mass=1.0, rna=0.0):
 	use RNA to set the percentage of RNA in the structure
 	"""
 	if isValidVolume(volumefile) is False:
-		apDisplay.printError("Volume file is not valid")
+		apDisplay.printError("Volume file %s is not valid"%(volumefile))
 
 	procbin = apParam.getExecPath("proc2d")
 	emandir = os.path.dirname(procbin)
@@ -86,7 +87,7 @@ def filterAndChimera(density, res=30, apix=None, box=None, chimtype='snapshot',
 	filter volume and then create a few snapshots for viewing on the web
 	"""
 	if isValidVolume(density) is False:
-		apDisplay.printError("Volume file is not valid")
+		apDisplay.printError("Volume file %s is not valid"%(density))
 	if box is None:
 		boxdims = apFile.getBoxSize(density)
 		box = boxdims[0]
