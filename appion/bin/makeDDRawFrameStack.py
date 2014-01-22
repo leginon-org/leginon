@@ -117,8 +117,7 @@ class MakeFrameStackLoop(apDDLoop.DDStackLoop):
 
 	#=======================
 	def processImage(self, imgdata):
-		# initialize aligned_imagedata as if not aligned
-		self.aligned_imagedata = None
+		super(AlignFrameStackLoop,self).processImage(imgdata)
 		# need to avoid non-frame saved image for proper caching
 		if imgdata is None or imgdata['camera']['save frames'] != True:
 			apDisplay.printWarning('%s skipped for no-frame-saved\n ' % imgdata['filename'])
@@ -164,7 +163,7 @@ class MakeFrameStackLoop(apDDLoop.DDStackLoop):
 			# Doing the alignment
 			self.dd.alignCorrectedFrameStack()
 			if os.path.isfile(self.dd.aligned_sumpath):
-				self.aligned_imagedata = self.dd.makeAlignedImageData(label=self.params['alignlabel'])
+				self.aligned_imagedata = self.dd.makeAlignedImageData(alignlabel=self.params['alignlabel'])
 				if os.path.isfile(self.dd.aligned_stackpath):
 					# aligned_stackpath exists either because keepstack is true
 					apDisplay.printMsg(' Replacing unaligned stack with the aligned one....')
@@ -176,12 +175,6 @@ class MakeFrameStackLoop(apDDLoop.DDStackLoop):
 				apFile.removeFile(self.dd.tempframestackpath)
 		if not self.params['keepstack']:
 			apFile.removeFile(self.dd.framestackpath)
-
-	def commitToDatabase(self, imgdata):
-		if self.aligned_imagedata != None:
-			apDisplay.printMsg('Uploading aligned image as %s' % imgdata['filename'])
-			q = appiondata.ApDDAlignImagePairData(source=imgdata,result=self.aligned_imagedata,ddstackrun=self.rundata)
-			q.insert()
 
 	def insertFunctionRun(self):
 		if self.params['stackid']:

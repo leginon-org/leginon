@@ -2,6 +2,8 @@
 
 from appionlib import appionLoop2
 from appionlib import apDDprocess
+from appionlib import apDisplay
+from appionlib import appiondata
 
 class DDStackLoop(appionLoop2.AppionLoop):
 	'''
@@ -28,7 +30,7 @@ class DDStackLoop(appionLoop2.AppionLoop):
 			help="starting frame for summing the frames. The first frame is 0")
 		self.parser.add_option("--ddnframe", dest="nframe", type="int",
 			help="total frames to consider for direct detector frame sum")
-		self.parser.add_option("--label", dest="alignlabel", default='a',
+		self.parser.add_option("--alignlabel", dest="alignlabel", default='a',
 			help="label to be appended to the presetname, e.g. --label=a gives ed-a as the aligned preset for preset ed", metavar="CHAR")
 		self.parser.remove_option("--uncorrected")
 		self.parser.remove_option("--reprocess")
@@ -61,4 +63,11 @@ class DDStackLoop(appionLoop2.AppionLoop):
 
 	#=======================
 	def processImage(self, imgdata):
-		pass
+		# initialize aligned_imagedata as if not aligned
+		self.aligned_imagedata = None
+
+	def commitToDatabase(self,imgdata):
+		if self.aligned_imagedata != None:
+			apDisplay.printMsg('Uploading aligned image as %s' % self.aligned_imagedata['filename'])
+			q = appiondata.ApDDAlignImagePairData(source=imgdata,result=self.aligned_imagedata,ddstackrun=self.rundata)
+			q.insert()
