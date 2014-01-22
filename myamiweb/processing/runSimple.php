@@ -118,10 +118,8 @@ function createForm( $extra=false, $title='runSimpleCluster.py Launcher', $headi
 	echo "<table border='0' class='tableborder'>\n<tr><td valign='top'>\n";
 	echo "<table border='0' cellpadding='5'>\n";
 	echo "<tr><td>\n";
-	echo openRoundBorder();
 	$runParamsForm = new RunParametersForm( $runname, $sessionpathval, $description );
 	echo $runParamsForm->generateForm();
-	echo closeRoundBorder();
 	echo "</td>";
 	echo "</tr>";
 		
