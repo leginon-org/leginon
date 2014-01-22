@@ -164,7 +164,7 @@ class MakeFrameStackLoop(apDDLoop.DDStackLoop):
 			# Doing the alignment
 			self.dd.alignCorrectedFrameStack()
 			if os.path.isfile(self.dd.aligned_sumpath):
-				self.aligned_imagedata = self.dd.makeAlignedImageData()
+				self.aligned_imagedata = self.dd.makeAlignedImageData(label=self.params['alignlabel'])
 				if os.path.isfile(self.dd.aligned_stackpath):
 					# aligned_stackpath exists either because keepstack is true
 					apDisplay.printMsg(' Replacing unaligned stack with the aligned one....')

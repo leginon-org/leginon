@@ -28,6 +28,8 @@ class DDStackLoop(appionLoop2.AppionLoop):
 			help="starting frame for summing the frames. The first frame is 0")
 		self.parser.add_option("--ddnframe", dest="nframe", type="int",
 			help="total frames to consider for direct detector frame sum")
+		self.parser.add_option("--label", dest="alignlabel", default='a',
+			help="label to be appended to the presetname, e.g. --label=a gives ed-a as the aligned preset for preset ed", metavar="CHAR")
 		self.parser.remove_option("--uncorrected")
 		self.parser.remove_option("--reprocess")
 

@@ -1065,16 +1065,17 @@ class DDFrameProcessing(DirectDetectorProcessing):
 			#apDisplay.printError('If this happens consistently on an image, hide it in myamiweb viewer and continue with others' )
 		os.chdir(self.rundir)
 
-	def makeAlignedImageData(self):
+	def makeAlignedImageData(self,alignlabel='a'):
 		'''
 		Prepare ImageData to be uploaded after alignment
 		'''
+		label_string = '-%s' % (alignlabel)
 		camdata = self.getAlignedCameraEMData()
 		align_presetdata = leginondata.PresetData(initializer=self.image['preset'])
 		if self.image['preset'] is None:
 			old_name = 'ma'
 			align_presetdata = leginondata.PresetData(
-					name='ma-a',
+					name='ma-%s' % (label_string),
 					magnification=self.image['scope']['magnification'],
 					defocus=self.image['scope']['defocus'],
 					tem = self.image['scope']['tem'],
@@ -1083,7 +1084,7 @@ class DDFrameProcessing(DirectDetectorProcessing):
 			)
 		else:
 			old_name = align_presetdata['name']
-			align_presetdata['name'] = old_name+'-a'
+			align_presetdata['name'] = old_name+label_string
 		align_presetdata['dimension'] = camdata['dimension']
 		align_presetdata['binning'] = camdata['binning']
 		align_presetdata['offset'] = camdata['offset']
@@ -1137,7 +1138,10 @@ class DDStackProcessing(DirectDetectorProcessing):
 		self.ddstackrun = None
 
 	def getIsAligned(self):
-		return self.image['preset'] is not None and '-a' in self.image['preset']['name']
+		'''
+		Leginon does not allow "-" in user-defined preset name. '-' is only added when aligned.
+		'''
+		return self.image['preset'] is not None and '-' in self.image['preset']['name']
 
 	def setDDStackRun(self,ddstackrunid=None):
 		if ddstackrunid:

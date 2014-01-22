@@ -117,7 +117,10 @@ class CatchUpFrameAlignmentLoop(appionScript.AppionScript):
 
 		self.dd.alignCorrectedFrameStack()
 		if os.path.isfile(self.dd.aligned_stackpath):
-			self.aligned_imagedata = self.dd.makeAlignedImageData()
+			if 'alignlabel' not in self.ddstack_script_params.keys() or not self.ddstack_script_params['alignlabel']:
+				# appion script params may not have included alignlabel
+				self.ddstack_script_params['alignlabel'] = 'a'
+			self.aligned_imagedata = self.dd.makeAlignedImageData(label=self.ddstack_script_params['alignlabel'])
 			apDisplay.printMsg(' Replacing unaligned stack with the aligned one....')
 			apFile.removeFile(self.dd.framestackpath)
 			shutil.move(self.dd.aligned_stackpath,self.dd.framestackpath)
