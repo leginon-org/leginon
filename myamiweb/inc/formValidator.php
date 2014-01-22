@@ -256,7 +256,7 @@ class formValidator{
 			}
 			
 			case 'noquote':{
-				$result = $this->validateNoQuote($validateObj);
+				$result = $this->validateNoQuote($validateObj->getVariableValue());
 				break;
 			}
 			
