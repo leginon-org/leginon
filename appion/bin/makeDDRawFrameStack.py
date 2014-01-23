@@ -117,7 +117,7 @@ class MakeFrameStackLoop(apDDLoop.DDStackLoop):
 
 	#=======================
 	def processImage(self, imgdata):
-		super(AlignFrameStackLoop,self).processImage(imgdata)
+		super(MakeFrameStackLoop,self).processImage(imgdata)
 		# need to avoid non-frame saved image for proper caching
 		if imgdata is None or imgdata['camera']['save frames'] != True:
 			apDisplay.printWarning('%s skipped for no-frame-saved\n ' % imgdata['filename'])
