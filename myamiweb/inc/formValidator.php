@@ -282,8 +282,8 @@ class formValidator{
 	 */
 	function validateNoQuote($inputValue){
 		$result = true;
-	
-      	if (  (strlen($inputValue) > 0) && (strpos( $inputValue, "'" ) !== false || strpos( $inputValue, '"' ) !== false) ) {
+
+		if (  (strlen($inputValue) > 0) && (strpos( $inputValue, "'" ) !== false || strpos( $inputValue, '"' ) !== false) ) {
       		$result = false;
 		}		
 
@@ -630,7 +630,7 @@ class validatorObj{
 				
 				case 'database':	{ $this->errorOutputMessage = DATABASE_CHECK_FAILED; break;	}
 				
-				case 'database':	{ $this->errorOutputMessage = REMOVE_QUOTE_CHAR; break;	}
+				case 'noquote':	{ $this->errorOutputMessage = REMOVE_QUOTE_CHAR; break;	}
 				
 			} //end switch			
 		}
