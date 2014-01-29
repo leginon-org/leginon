@@ -279,11 +279,16 @@ class formValidator{
 	}
 	/*
 	 * Validate "noquote" field
+	 * This will allow quotes as the first and last chars, but nothing in between.
 	 */
 	function validateNoQuote($inputValue){
 		$result = true;
 
-		if (  (strlen($inputValue) > 0) && (strpos( $inputValue, "'" ) !== false || strpos( $inputValue, '"' ) !== false) ) {
+		// remove the first and last chars, it is fine if these are quote chars, as this is generally
+		// necessary if there is a space within the string
+		$str = substr( $inputValue, 1, -1 );
+		
+		if (  (strlen($str) > 0) && (strpos( $str, "'" ) !== false || strpos( $str, '"' ) !== false) ) {
       		$result = false;
 		}		
 
