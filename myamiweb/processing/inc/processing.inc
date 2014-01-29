@@ -262,8 +262,15 @@ function processing_header($title,$heading=false,$headerstuff=false,$pleaseWait=
 		$expId=$_GET['expId'];
 		$projectId=getProjectId();
 		// retain the original formAction if expId is not specified as in the case of uploadimage
-		if (!empty($expId))
-			$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
+		if (!empty($expId)) {
+			// Some forms need the class name to be specified in the url.
+			if (!empty($_GET['form'])) {
+				$form = $_GET['form'];
+				$formAction=$_SERVER['PHP_SELF']."?expId=$expId&form=$form";
+			} else { 
+				$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
+			}
+		}
 		if (privilege('data') > 1)
 			$html.=displayLogin($formAction);
 		if(!empty($errors)){
@@ -338,8 +345,9 @@ function processing_header($title,$heading=false,$headerstuff=false,$pleaseWait=
 		$html.= "</table>\n";
 		$html.= "</div>\n";
 	}
-	echo $html;
 
+	echo $html;
+	
 	// return all the menu data
 	return $data;
 }
@@ -563,7 +571,7 @@ function showOrSubmitCommand($command, $headinfo, $jobtype, $nproc, $testimg=Fal
 	$command .= "--expid=$expId ";
 	if (!preg_match("/--jobtype=/", $command))
 	$command .= "--jobtype=$jobtype ";
-	
+		
 	// Get the processing host
 	$processhost = getSelectedProcessingHost();
 
@@ -861,7 +869,9 @@ $xvfb=False, $xtra=False, $nproc=1, $ppn=0, $nodes=0, $walltime="240", $cputime=
 	//$autoRedirect = '';
 	$autoRedirect = " <meta http-equiv='refresh' content='10;url=$checkUrl'>\n";
 
-	processing_header("Appion Job Submission","Appion Job Submission", $autoRedirect);
+	// I find that the redirection here does not give me enough time to view any errors. Removing for now.
+	//processing_header("Appion Job Submission","Appion Job Submission", $autoRedirect);
+	processing_header("Appion Job Submission","Appion Job Submission");
 	echo "<table width='800'>\n";
 	echo "<tr><td>Appion Directory</td><td>$rundir</td></tr>\n";
 	echo "<tr><td>Job File Name</td><td>$jobfile</td></tr>\n";
@@ -938,7 +948,7 @@ function writeTestResults($jpg,$ccclist,$bin,$process_str='')
 	clearstatcache(); // clear cache
 	$fileExists = is_file($jpg);
   	if ( ($fileExists===false) && $showcmd ) {
-		return "<font color='#990000'>The test results are not ready for display. Refresh the page after the command is run successfully. </font><br />\n";
+		return "<font color='#990000'>The test results ($jpg) are not ready for display. Refresh the page after the command is run successfully. </font><br />\n";
   	}
 	
 	
