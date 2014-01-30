@@ -401,10 +401,13 @@ function runRctVolume() {
 	/* *******************
 	PART 5: Show or Run Command
 	******************** */
-	$nproc = 8; //I have no idea why this was set to 8...
+	// Setting the nodes and ppn per issue #2274
+	$nproc = 4;
+	$nodes = 1;
+	$ppn = 4;
 
 	// submit command
-	$errors = showOrSubmitCommand($command, $headinfo, 'rctvolume', $nproc);
+	$errors = showOrSubmitCommand($command, $headinfo, 'rctvolume', $nproc, $testimg=False, $nodes, $ppn);
 
 	// if error display them
 	if ($errors)
