@@ -18,7 +18,6 @@ require_once "inc/project.inc";
 require_once "inc/summarytables.inc";
 require_once "inc/forms/basicForm.inc";
 require_once "../inc/formParameters.inc";
-require_once "inc/publication.inc";
 
 
 abstract class BasicRefineForm extends BasicForm
@@ -26,7 +25,6 @@ abstract class BasicRefineForm extends BasicForm
 	private $stackInfo;
 	private $defaultSym;
 	protected $particle;
-	protected $pubKeyList;
 	
 	function __construct( $method, $stacks='', $models='' ) 
 	{
@@ -47,7 +45,6 @@ abstract class BasicRefineForm extends BasicForm
 	function __destruct() 
 	{
 		unset( $this->particle );
-		unset( $this->pubKeyList );
 	}
 	
 	// extending classes should override this function and set the 
@@ -57,18 +54,7 @@ abstract class BasicRefineForm extends BasicForm
 	{
 		$this->pubKeyList = array("appion");
 	}
-	
-	// TODO: we may want to move this to BasicForm class
-	public function showReference()
-	{
-		foreach ( $this->pubKeyList as $pubKey ) {
-			$pub = new Publication($pubKey);
-			$html .= $pub->getHtmlTable();
-		}
 		
-		return $html;
-	}
-	
 	// Extending classes should override this function to return the appropriate
 	// class of form parameters if it has also extended the RefineFormParams class.
 	// This createFormParams() function should always be used instead of 

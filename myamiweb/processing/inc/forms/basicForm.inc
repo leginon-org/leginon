@@ -9,25 +9,54 @@
 
 //--------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------
-
 require_once "../inc/formParameters.inc";
+require_once "inc/publication.inc";
 
 
 class BasicForm
 {
 	protected $defaultParamSets; 	// an array of parameter sets of type RefineFormParameters used for populating forms
 	protected $formParams; 			// the current user selected or modified parameter set
+	protected $pubKeyList;
 	
 	function __construct() 
 	{
 		$this->formParams = $this->createFormParams();
+		$this->setPublications();
 	}	
 	
 	function __destruct() 
 	{
 		unset( $this->formParams );
 		unset( $this->defaultParamSets );
+		unset( $this->pubKeyList );
 	}
+	
+	// extending classes should use this to set the 
+	// publication key list with key values that have been added 
+	// to the array in publicationList.inc
+	protected function setPublications($pubList='')
+	{
+		// Provide a default publication reference
+		if ( $pubList === '' ) {
+			$pubList = array("appion");
+		}
+		$this->pubKeyList = $pubList;
+	}
+	
+	// Returns the HTML to display the references boxes for the publications associated with this Form.
+	// Publications are set with setPublications().
+	public function showReference()
+	{
+		foreach ( $this->pubKeyList as $pubKey ) {
+			$pub = new Publication($pubKey);
+			$html .= $pub->getHtmlTable();
+		}
+		
+		return $html;
+	}
+	
+	
 		
 	// Extending classes should override this function to return the appropriate
 	// class of form parameters if it has also extended the FormParameters class.
