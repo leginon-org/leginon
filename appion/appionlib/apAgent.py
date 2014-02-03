@@ -9,6 +9,7 @@ from appionlib import jobtest
 from appionlib import appiondata
 from appionlib import apDatabase
 from appionlib import basicAgent
+from appionlib import apParam
 import sys
 import re
 import time
@@ -31,7 +32,7 @@ class Agent (basicAgent.BasicAgent):
 		self.statusCkInterval = 30
 	
 	def Main(self,command):
-		
+				
 		self.processingHost = self.createProcessingHost()
 		
 		jobType = self.getJobType(command)
@@ -49,6 +50,9 @@ class Agent (basicAgent.BasicAgent):
 		if not self.currentJob:
 			sys.stderr.write("Error: Could not create job for: %s\n" % (command))
 			sys.exit(1)
+			
+		# Write out the command for this job to the jobs run directory
+		self.saveCommandToFile( command )
 
 		if self.currentJob.getSetupOnly():
 			sys.stderr.write("Create job but not execute %s\n" % (command))
@@ -111,6 +115,7 @@ class Agent (basicAgent.BasicAgent):
 		print jobType, command
 		return jobInstance
 
+	# This is used to execute commands on the head node, rather than through the resource manager with a job file.
 	def executeCommandList(self,jobObject):
 		returncode = self.processingHost.executeCommand('rm -f agent.log')
 		returncode = self.processingHost.executeCommand('source %s >agent.log &' % (jobObject.commandfile),wait=False)
@@ -153,6 +158,29 @@ class Agent (basicAgent.BasicAgent):
 
 		return
 	
+	# write out a text file with "command" as the only contents to the jobs run dir.
+	# The command is a list
+	def saveCommandToFile(self, command):
+		# create the rundir if it is not there
+		rundir = self.currentJob.getRundir()
+		apParam.createDirectory( rundir, warning=False )
+		
+		# set the file path and name and get current  date time to record with the command
+		commandLog = os.path.join( rundir, "run_commands.log" )
+		datetime = time.strftime("%c")
+		
+		# We append to this file as many commands can use this run dir and we want to see all of them without overwriting.
+		f = open( commandLog, 'a' )
+		f.write( datetime )
+		f.write( '\nIMPORTANT: To re-run this job, if runJob.py is followed with a path ending in /appion, \nyou must copy this path so that it also occurs at the start of the command, prior to runJob.py. \n\n' )
+		f.write( 'runJob.py ' )
+		
+		for entry in command:
+		  f.write( entry + " " )
+		  
+		f.write( "\n______________________________________________\n")
+		f.close()
+
 	##
 	#
 	def __updateStatusInDB (self, jobid, status):
