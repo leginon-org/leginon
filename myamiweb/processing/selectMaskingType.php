@@ -80,7 +80,9 @@ echo "</td></tr>\n";
 echo "<tr><td width='100' align='center'>\n";
 echo "  <img src='img/appionlogo.jpg' width='64'>\n";
 echo "</td><td>\n";
-echo "  <h3><a href='runAutoMasker.php?expId=$expId'>Auto Masking</a></h3>\n";
+//echo "  <h3><a href='runAutoMasker.php?expId=$expId'>Auto Masking</a></h3>\n";
+$form = "AutoMaskForm";
+echo "  <h3><a href='runAppionLoop.php?expId=$expId&form=$form'>Auto Masking</a></h3>\n";
 echo " <p> This is the <a href='https://github.com/hbradlow/em_hole_finder'>
 	em_hole_finder.</a>&nbsp;<img src='img/external.png'> "
 	."This procedure computes masks of carbon holes in electron micrographs. "

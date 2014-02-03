@@ -7,14 +7,32 @@
  *	see  http://ami.scripps.edu/software/leginon-license
  */
 
-require_once "basicForm.inc";
+require_once "basicLoopForm.inc";
 
-class MakeDDStackForm extends BasicForm
+class MakeDDStackForm extends BasicLoopForm
 
 {
-	function __construct( $align='', $defergpu='', $bin=1, $nokeepstack='', $ddstartframe=0, $ddnframe='' ) 
+	function __construct(  $expId, $extraHTML='',$align='', $defergpu='', $bin=1, $nokeepstack='', $ddstartframe=0, $ddnframe='' ) 
 	{
-		parent::__construct();
+		parent::__construct($expId, $extraHTML);
+		
+		//------ Set Parameters for the parent class, BasicLoopForm (general Appion params) -----//
+		
+		// Set the publications to be references on the web pages
+		$pubList = array('appion');
+		$this->setPublications( $pubList );
+		$this->setJobType( 'makeddrawframestack' );
+		$this->setOutputDirectory( 'ddstack' );
+		$this->setBaseRunName( 'ddstack' );
+		$this->setTitle( 'makeDDRawFrameStack.py Launcher' );
+		$this->setHeading( 'Create a Direct Detector Frame Stack' );
+		$this->setExeFile( 'makeDDRawFrameStack.py' );
+		$this->setGuideURL( "http://ami.scripps.edu/redmine/projects/appion/wiki/Appion_Processing" );
+		$this->setTestable( True ); // True to activate "test single image".
+		$this->setUseLegOutDir( False ); // The output directory will be created in the Appion run directory rather than Leginon.
+		$this->setShowDesc( True ); // Flag to hide the description field of the run parameters.
+		
+		//------ Set Parameters specific to the program that requires this new form -----//
 		$params = $this->getFormParams();
 		
 		// The help section corresponds to the array key for these parameters found in help.js for popup help.
@@ -31,7 +49,7 @@ class MakeDDStackForm extends BasicForm
 		//$params->addValidation( "numpart", "req" );
 	}
 		
-	public function generateForm()
+	public function generateAdditionalFormRight()
 	{
 		$this->updateFormParams();
 		$params = $this->getFormParams();
@@ -60,6 +78,11 @@ class MakeDDStackForm extends BasicForm
 						
 		$command = $this->addCommandFlag($command, "no-keepstack", "no_keepstack" );
 
+		// if we are not testing an image, add the parellel flag
+		if ( !($postArray['testimage']=="on") ) {
+			$command.= " --parallel";
+		}
+		
 		// remove params not needed in command
 		$command = $this->removeCommandFlag($command, "no_keepstack" );
 		

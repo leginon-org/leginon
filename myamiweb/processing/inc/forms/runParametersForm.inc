@@ -54,24 +54,26 @@ class RunParametersForm extends BasicForm
 	}	
 	
 	// override build Command because runname and outdir are a special case, they
-	// are handled in showOrSubmitCommand. We should refactor appion so all methods
-	// use this class and remove the special cases.
+	// are added to the command concatenated as "rundir". 
 	public function buildCommand( $postArray )
 	{
 		$params = $this->getFormParams();
 		$params->getPostedValues( $postArray );
 		
 		$command = $this->addCommandFlag( $command, "description" );
+		$command = $this->addCommandFlag( $command, "runname" );
 		
-		
-		// TODO: We should be adding the rundir here rather than in showOrSubmitCommand
 		$outdir		= $params->getParamValue('outdir');
 		$runname	= $params->getParamValue('runname');
+		
+		// Create the rundir from outdir and runname
 		if ( $outdir ) {
 			// make sure outdir ends with '/' and append run name
 			if (substr($outdir,-1,1)!='/') $outdir.='/';
 			$rundir = $outdir.$runname;
 		}
+		
+		$command = $this->addCommandFlag( $command, "rundir", '',  $rundir);
 				
 		return $command;
 	}

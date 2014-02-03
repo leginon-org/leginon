@@ -934,7 +934,8 @@ function runMakestack() {
 	if ($_POST['fileformat']=='spider') $command.="--spider ";
 	if ($partlimit != "none") $command.="--partlimit=$partlimit ";
 	if ($boxfiles == 'on') $command.="--boxfiles ";
-	$command.="--description=\"$description\" ";
+	// Don't need description here after converting appionloop
+	//$command.="--description=\"$description\" ";
 	if (!empty($partlabel)) $command.="--label=\"$partlabel\" ";
 	if ($ctffindonly) $command.="--ctfmethod=ctffind ";
 	if ($boxhstep) $command.="--helicalstep=$boxhstep ";

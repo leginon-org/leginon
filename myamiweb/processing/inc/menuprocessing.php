@@ -769,11 +769,13 @@ if (is_numeric($expId)) {
 		$ddresults[] = ($dddone==0) ? "" : "<a href='rawFrameStackReport.php?expId=$sessionId'>$dddone complete</a>";
 		$ddresults[] = ($ddrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=makeddrawframestack'>$ddrun running</a>";
 		$ddresults[] = ($ddq==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=makeddrawframestack'>$ddq queued</a>";
-		
+
+		$ddStackform = "MakeDDStackForm";
 		$nruns=array();
 		$nruns[] = array(
-			'name'=>"<a href='runMakeDDRawFrameStack.php?expId=$sessionId'>Create frame stack</a>",
-			'result'=>$ddresults,
+//			'name'=>"<a href='runMakeDDRawFrameStack.php?expId=$sessionId'>Create frame stack</a>",
+			'name'=>"<a href='runAppionLoop.php?expId=$sessionId&form=$ddStackform'>Create frame stack</a>",
+		'result'=>$ddresults,
 		);
 		$nruns[] = array(
 			'name'=>"<a href='runCatchupDDAlign.php?expId=$sessionId'>Launch Alignment Catchup</a>",

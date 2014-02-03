@@ -6,15 +6,31 @@
  *	For terms of the license agreement
  *	see  http://ami.scripps.edu/software/leginon-license
  */
+require_once "basicLoopForm.inc";
 
-require_once "basicForm.inc";
-
-class AutoMaskForm extends BasicForm
-
+class AutoMaskForm extends BasicLoopForm
 {
-	function __construct( $downsample='', $compsizethresh='', $adapthresh='', $blur='',$dilation='', $erosion='') 
+	function __construct( $expId, $extraHTML='', $downsample='20', $compsizethresh='50', $adapthresh='500', $blur='10',$dilation='10', $erosion='1') 
 	{
-		parent::__construct();
+		parent::__construct($expId, $extraHTML);
+		
+		//------ Set Parameters for the parent class, BasicLoopForm (general Appion params) -----//
+		
+		// Set the publications to be references on the web pages
+		$pubList = array('appion');
+		$this->setPublications( $pubList );
+		$this->setJobType( 'maskmaker' );
+		$this->setOutputDirectory( 'mask' );
+		$this->setBaseRunName( 'maskrun' );
+		$this->setTitle( 'Auto Masking Launcher' );
+		$this->setHeading( 'Automated Masking with EM Hole Finder' );
+		$this->setExeFile( 'automasker.py' );
+		$this->setGuideURL( "http://ami.scripps.edu/redmine/projects/appion/wiki/Appion_Processing" );
+		$this->setTestable( True ); // True to activate "test single image".
+		$this->setUseLegOutDir( False ); // The output directory will be created in the Appion run directory rather than Leginon.
+		$this->setShowDesc( False ); // Flag to hide the description field of the run parameters.
+		
+		//------ Set Parameters specific to the program that requires this new form -----//
 		$params = $this->getFormParams();
 		
 		// The help section corresponds to the array key for these parameters found in help.js for popup help.
@@ -31,7 +47,8 @@ class AutoMaskForm extends BasicForm
 		//$params->addValidation( "numpart", "req" );
 	}
 		
-	public function generateForm()
+	// Generate a form for the parameters that are specific to this program (not Appion params)
+	public function generateAdditionalFormRight()
 	{
 		$this->updateFormParams();
 		$params = $this->getFormParams();
@@ -52,6 +69,56 @@ class AutoMaskForm extends BasicForm
 		
 		return $html;
 	}	
+
+	// Override the default build Command Function because the --test flag is not normal
+	// for other Appion Loop methods and not included in the parent.
+	public function buildCommand( $postArray )
+	{
+		$command   = parent::buildCommand( $postArray );
+		
+		if ( $postArray['testimage']=="on" ) {
+			$command.= " --test";
+		}
+		
+		return $command." ";
+	}	
 	
+	// getTestResults() should return the HTML code needed to display test results any way this method
+	// prefers to have them displayed. The results will be placed below a printout of the test command and 
+	// above the launch form. Note that an instance of this class is not required to use this function.
+	static public function getTestResults( $outdir, $runname, $testfilename )
+	{
+		$testdir 		= $outdir.$runname."/tests/"; // Path to output mask jpgs images
+		$jpgdir 		= $outdir.$runname."/jpgs/"; // Path to original input jpg images
+		$origjpgname 	= preg_replace( "%.mrc%",".jpg", $testfilename );			
+		$origJpgFull 	= $jpgdir.$origjpgname; // Full path to original test imgage jpg
+		$imgrescl 		= 0.075; // Scale factor for displaying the result image 
+		
+		if (file_exists($testdir)) {
+     		// open image directory
+     		$pathdir = opendir( $testdir );
+			// get all files in directory
+			$ext='jpg';
+			while ( $filename=readdir($pathdir) ) {
+			   	if ($filename == '.' || $filename == '..') continue;
+				if (preg_match('`\.'.$ext.'$`i',$filename)) $files[] = $filename;
+			}
+			closedir( $pathdir );
+		}
+		
+		if ( count($files) > 0 ) {
+			sort($files);
+			$imgname 		= $files[0];
+			$maskimgfull 	= $testdir.$imgname; 	
+			$html .= "$imgname<P>";
+			$html .= "<img src='loadimg.php?filename=".$origJpgFull."&scale=".$imgrescl."&overlay=".$maskimgfull."'>\n";
+		} else {
+			// Tell the users what to do if the test results are not found.
+			$html .=  "<FONT COLOR='RED'><B>NO RESULT YET</B><br></FONT>";
+			$html .=  "<FONT COLOR='RED'><B>Refresh this page when processing completes</B><br></FONT>";
+		}
+		
+		return $html;
+	}	
 }
 ?>
