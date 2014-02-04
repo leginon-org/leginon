@@ -101,7 +101,7 @@ class imageRequester {
 		if (strtoupper($format) == 'PNG')
 			imagepng($img);
 		if (strtoupper($format) == 'JPEG')
-			imagejpeg($img,'',$quality);
+			imagejpeg($img,NULL,$quality);
 		
 		imagedestroy($img);
 	}
