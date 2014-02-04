@@ -427,7 +427,7 @@ class Focuser(manualfocuschecker.ManualFocusChecker):
 		resultdata['scope'] = scopedata
 		self.publish(resultdata, database=True, dbforce=True)
 		stagenow = self.instrument.tem.StagePosition
-		print 'z after step', setting['name'], stagenow['z']
+		self.logger.debug('z after step %s %.2f um' % (setting['name'], stagenow['z']*1e6))
 
 		return status
 
@@ -497,7 +497,7 @@ class Focuser(manualfocuschecker.ManualFocusChecker):
 		if self.settings['acquire final']:
 			manualfocuschecker.ManualFocusChecker.acquire(self, presetdata, emtarget)
 		stagenow = self.instrument.tem.StagePosition
-		print 'z after all adjustment in Focuser', stagenow['z']
+		self.logger.debug('z after all adjustment in Focuser %.2f um' % (1e6*stagenow['z']))
 
 		return status
 
