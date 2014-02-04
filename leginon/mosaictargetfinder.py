@@ -195,9 +195,9 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 			self.targetmap[imid][type] = targets
 		self.logger.info('Image added to mosaic')
 		if self.targetlist:
-			print 'add tile targetlist',self.targetlist.dbid
-		print 'add tile, imid', imid, imagedata['filename']
-		print 'add targetmap', len(self.targetmap[imid]['acquisition'])
+			self.logger.debug('add tile targetlist %d' % (self.targetlist.dbid,))
+			self.logger.debug( 'add tile, imid %d %s' % (imid, imagedata['filename']))
+			self.logger.debug( 'add targetmap %d'% (len(self.targetmap[imid]['acquisition']),))
 
 	def hasNewImageVersion(self):
 		for id, imagedata in self.imagemap.items():
@@ -351,7 +351,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 			self.logger.info('No targets to process')
 			return
 		imagelist = self.getMosaicImageList(targets)
-		self.logger.debug('creating MosaicTileData for image %s' % (imagedata.dbid,))
+		self.logger.debug('creating MosaicTileData for image %d' % (imagedata.dbid,))
 		tiledata = leginondata.MosaicTileData(image=imagedata, list=imagelist, session=self.session)
 		self.logger.debug('publishing MosaicTileData')
 		self.publish(tiledata, database=True)
