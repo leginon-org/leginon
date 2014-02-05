@@ -20,6 +20,9 @@ classtype = 'Pipeline'
 from gridentry import GridEntry
 noderegistry.registerNodeClass(GridEntry,classtype)
 
+from plategridentry import PlateGridEntry
+noderegistry.registerNodeClass(PlateGridEntry,classtype)
+
 from targetmaker import MosaicTargetMaker
 noderegistry.registerNodeClass(MosaicTargetMaker,classtype)
 
@@ -64,6 +67,9 @@ noderegistry.registerNodeClass(MosaicClickTargetFinder,classtype)
 
 from mosaicsectionfinder import MosaicSectionFinder
 noderegistry.registerNodeClass(MosaicSectionFinder,classtype)
+
+from mosaicspotfinder import MosaicSpotFinder
+noderegistry.registerNodeClass(MosaicSpotFinder,classtype)
 
 from robotatlastargetfinder import RobotAtlasTargetFinder
 noderegistry.registerNodeClass(RobotAtlasTargetFinder,classtype)

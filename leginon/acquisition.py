@@ -92,6 +92,9 @@ def getRootName(imagedata, listlabel=False):
 	## use root name from parent image
 	parent_root = parent_image['filename']
 	if parent_root:
+		if parent_target['spotmap'] and not parent_image['spotmap']:
+			# target only has spotmap if from MosaicSpotFinder
+			parent_root += '_%s' % (parent_target['spotmap']['name'])
 		return parent_root
 	else:
 		return newRootName(imagedata, usegridlabel)
@@ -785,8 +788,16 @@ class Acquisition(targetwatcher.TargetWatcher):
 			self.instrument.tem.BeamTilt = self.beamtilt0
 			self.logger.info("reset beam tilt to (%.4f,%.4f)" % (self.instrument.tem.BeamTilt['x'],self.instrument.tem.BeamTilt['y']))
 		targetdata = emtarget['target']
-		if targetdata is not None and 'grid' in targetdata and targetdata['grid'] is not None:
-			imagedata['grid'] = targetdata['grid']
+		if targetdata is not None:
+			if 'grid' in targetdata and targetdata['grid'] is not None:
+				imagedata['grid'] = targetdata['grid']
+			if 'spotmap' in targetdata:
+				# if in targetdata, get spotmap from it
+				imagedata['spotmap'] = targetdata['spotmap']
+			if not targetdata['spotmap']:
+				if targetdata['image']:
+					# get spotmap from parent image
+					imagedata['spotmap'] = targetdata['image']['spotmap']
 		else:
 			if self.grid:
 				imagedata['grid'] = self.grid

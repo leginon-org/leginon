@@ -193,9 +193,11 @@ class TargetTransformer(targethandler.TargetHandler, imagehandler.ImageHandler):
 				newparenttarget = parenttarget
 			pairstate = 'play'
 			while pairstate == 'play':
+				if newparenttarget is None:
+					return target
 				newparentimage = self.reacquire(newparenttarget, use_parent_mover)
 				if newparentimage is None:
-					return None
+					return target
 				pairstate = self.isGoodImagePair(parentimage,newparentimage)
 			# parentimage may not be the last version of the newparentimage
 			lastparentimage = self.getLastParentImage(newparentimage)
@@ -431,7 +433,7 @@ class TransformManager(node.Node, TargetTransformer):
 		pixels = dim['x'] * dim['y']
 		pixeltype = str(imagedata['image'].dtype)
 		## Fix me: Not sure what image list should go in here nor naming of the file
-		imagedata = leginondata.AcquisitionImageData(initializer=imagedata, preset=currentpresetdata, label=self.name, target=targetdata, list=oldimage['list'], emtarget=emtarget, pixels=pixels, pixeltype=pixeltype,grid=oldimage['grid'],mover=oldimage['mover'])
+		imagedata = leginondata.AcquisitionImageData(initializer=imagedata, preset=currentpresetdata, label=self.name, target=targetdata, list=oldimage['list'], emtarget=emtarget, pixels=pixels, pixeltype=pixeltype,grid=oldimage['grid'],mover=oldimage['mover'],spotmap=oldimage['spotmap'])
 		version = self.recentImageVersion(oldimage)
 		imagedata['version'] = version + 1
 		## set the 'filename' value

@@ -613,8 +613,8 @@ class CameraImageData(ImageData):
 			('scope', ScopeEMData),
 			('camera', CameraEMData),
 			('corrector plan', CorrectorPlanData),
-			('correction channel', int),
-			('channel', int),
+			('correction channel', int), # used in AcquisitionImageData
+			('channel', int), # used in ReferenceImagedata
 			('dark', DarkImageData),
 			('bright', BrightImageData),
 			('norm', NormImageData),
@@ -705,6 +705,7 @@ class AcquisitionImageData(CameraImageData):
 			('target', AcquisitionImageTargetData),
 			('emtarget', EMTargetData),
 			('grid', GridData),
+			('spotmap', SpotWellMapData),
 			('tilt series', TiltSeriesData),
 			('version', int),
 			('tiltnumber', int),
@@ -782,6 +783,9 @@ class CorrectorPlanData(InSessionData):
 	typemap = classmethod(typemap)
 
 class GridData(Data):
+	'''
+	This identifies a particular insertion of an EMGrid
+	'''
 	def typemap(cls):
 		return Data.typemap() + (
 			('grid ID', int),
@@ -791,9 +795,66 @@ class GridData(Data):
 	typemap = classmethod(typemap)
 
 class EMGridData(Data):
+	'''
+	This identifies a physical EM grid prepared for a project
+	'''
 	def typemap(cls):
 		return Data.typemap() + (
 			('name', str),
+			('project', int),
+			('mapping', WellMappingTypeData),
+			('well group', int),
+			('print trial', int),
+			('plate', PrepPlateData),
+		)
+	typemap = classmethod(typemap)
+
+class WellMappingTypeData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('name', str),
+			('plate format',PrepPlateFormatData),
+			('grid format',EMGridFormatData),
+		)
+	typemap = classmethod(typemap)
+
+class PrepPlateFormatData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('rows', int),
+			('cols', int),
+		)
+	typemap = classmethod(typemap)
+
+class EMGridFormatData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('rows', int),
+			('cols', int),
+			('skips', list),#list of tuples in (row,col), count from (1,1)
+		)
+	typemap = classmethod(typemap)
+
+class SpotWellMapData(Data):
+	'''
+	Mapping between a plate position to a spot on an em grid at given well group
+	Well and Spot positions are dictionaries of keys (row,col)
+	'''
+	def typemap(cls):
+		return Data.typemap() + (
+			('name', str),
+			('well position', dict),
+			('spot position', dict),
+			('mapping', WellMappingTypeData),
+			('well group', int),
+		)
+	typemap = classmethod(typemap)
+
+class PrepPlateData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('name', str),
+			('plate format',PrepPlateFormatData),
 			('project', int),
 		)
 	typemap = classmethod(typemap)
@@ -824,6 +885,8 @@ class AcquisitionImageTargetData(ImageTargetData):
 			## keep track of when we have done the melt ice thing.
 			('pre_exposure', bool),
 			('fromtarget', AcquisitionImageTargetData),
+			# target mapping to a well on the prep plate if applicable
+			('spotmap', SpotWellMapData),
 		)
 	typemap = classmethod(typemap)
 
@@ -1531,6 +1594,16 @@ class MosaicClickTargetFinderSettingsData(ClickTargetFinderSettingsData,
 		return typemap
 	typemap = classmethod(typemap)
 
+class MosaicSpotFinderSettingsData(ClickTargetFinderSettingsData,
+																					SquareFinderSettingsData):
+	def typemap(cls):
+		typemap = MosaicClickTargetFinderSettingsData.typemap()
+		typemap += (
+			('autofinder', bool),
+		)
+		return typemap
+	typemap = classmethod(typemap)
+
 class MosaicSectionFinderSettingsData(ClickTargetFinderSettingsData,
 																					SquareFinderSettingsData):
 	def typemap(cls):
@@ -1897,6 +1970,15 @@ class GridEntrySettingsData(SettingsData):
 	def typemap(cls):
 		return SettingsData.typemap() + (
 			('grid name', str),
+		)
+	typemap = classmethod(typemap)
+
+class PlateGridEntrySettingsData(GridEntrySettingsData):
+	def typemap(cls):
+		return GridEntrySettingsData.typemap() + (
+			('plate name', str),
+			('grid format name', str),
+			('plate format name', str),
 		)
 	typemap = classmethod(typemap)
 
@@ -2388,4 +2470,3 @@ class DDinfoValueData(Data):
 			('infovalue', str),
 		)
 	typemap = classmethod(typemap)
-

@@ -14,7 +14,7 @@ import leginon.gui.wx.Settings
 import threading
 import wx
 
-class Panel(leginon.gui.wx.Node.Panel):
+class GridSelectionPanel(leginon.gui.wx.Node.Panel):
 	#icon = 'robot'
 	def __init__(self, *args, **kwargs):
 		leginon.gui.wx.Node.Panel.__init__(self, *args, **kwargs)
@@ -29,27 +29,53 @@ class Panel(leginon.gui.wx.Node.Panel):
 													'refresh',
 													shortHelpString='Refresh Grid List')
 
-		self.cgrid = wx.Choice(self, -1)
-		self.cgrid.Enable(False)
-		szgrid = wx.GridBagSizer(5, 5)
-		label = wx.StaticText(self, -1, 'Grids in the project')
-		szgrid.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szgrid.Add(self.cgrid, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.setDefaultGridSelection()
+		self.createGridSelector((0,0))
+		self.addNew()
 
-		label = wx.StaticText(self, -1, 'New Grid Name:')
-		szgrid.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		self.newgrid = Entry(self, -1)
-		szgrid.Add(self.newgrid, (1, 1), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
-		self.savenewgrid = wx.Button(self, wx.ID_APPLY)
-		szgrid.Add(self.savenewgrid, (1, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-
-		self.szmain.Add(szgrid, (0, 0), (1, 1), wx.ALIGN_CENTER)
 		self.szmain.AddGrowableCol(0)
 
 		self.SetSizer(self.szmain)
 		self.SetAutoLayout(True)
 		self.SetupScrolling()
+
+	def setDefaultGridSelection(self):
+		self.default_gridlabel = None
+
+	def addNew(self):
+		'''
+		placeholder for subclass new gui
+		the sizer is added to self.szmain
+		'''
+		pass
+
+	def enableNew(self,gridlabel):
+		'''
+		placeholder to enable subclass new gui to upon
+		grid Choice selection
+		'''
+		pass
+
+	def runNew(self):
+		'''
+		placeholder for subclass new gui to be run upon
+		default grid Choice selection
+		'''
+		pass
+
+
+	def createGridSelector(self,start_position):
+		sb = wx.StaticBox(self, -1, 'EM Grid for Imaging')
+		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
+		self.cgrid = wx.Choice(self, -1)
+		self.cgrid.Enable(False)
+		szgrid = wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1, 'Grids in the database')
+		szgrid.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szgrid.Add(self.cgrid, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szgrid.AddGrowableCol(1)
+		sbsz.Add(szgrid, 0, wx.EXPAND|wx.ALL, 5)
+		self.szmain.Add(sbsz, start_position, (1, 1), wx.EXPAND|wx.ALL|wx.ALIGN_CENTER_VERTICAL)
 
 	def onNodeInitialized(self):
 		self.toolbar.Bind(wx.EVT_TOOL, self.onSettingsTool,
@@ -59,21 +85,6 @@ class Panel(leginon.gui.wx.Node.Panel):
 											id=leginon.gui.wx.ToolBar.ID_REFRESH)
 
 		self.Bind(wx.EVT_CHOICE, self.onGridChoice, self.cgrid)
-		self.Bind(wx.EVT_BUTTON, self.onSaveNewGrid, self.savenewgrid)
-		self.refreshGrids()
-
-	def onSaveNewGrid(self,evt=None):
-		choices = self.node.getGridNames()
-		newgrid = self.newgrid.Update()
-		newgrid = self.newgrid.GetValue()
-		if newgrid is None or newgrid == '':
-			self.node.onBadEMGridName('No Grid Name')
-			return
-		elif newgrid in choices:
-			self.node.onBadEMGridName('Grid Name Exists')
-			return
-		else:
-			self.node.publishNewEMGrid(newgrid)
 		self.refreshGrids()
 
 	def onGridChoice(self, evt=None):
@@ -84,10 +95,7 @@ class Panel(leginon.gui.wx.Node.Panel):
 		settings = self.node.getSettings()
 		settings['grid name'] = gridlabel
 		self.node.setSettings(settings)
-		if gridlabel != '--New Grid as Below--':
-			self.newgrid.Enable(False)
-		else:
-			self.newgrid.Enable(True)
+		self.enableNew(gridlabel)
 
 	def setGridSelection(self,choices):
 		if choices:
@@ -111,19 +119,8 @@ class Panel(leginon.gui.wx.Node.Panel):
 
 	def onPlayTool(self, evt):
 		gridlabel = self.cgrid.GetStringSelection()
-		if gridlabel == '--New Grid as Below--':
-			choices = self.node.getGridNames()
-			newgrid = self.newgrid.Update()
-			newgrid = self.newgrid.GetValue()
-			if newgrid is None or newgrid == '':
-				self.node.onBadEMGridName('No Grid Name')
-				return
-			elif newgrid in choices:
-				self.node.onBadEMGridName('Grid Name Exists')
-				return
-			else:
-				self.node.publishNewEMGrid(newgrid)
-		self.refreshGrids()
+		if self.default_gridlabel and gridlabel == self.default_gridlabel:
+			self.runNew()
 		#self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, False)
 		self.node.submitGrid()
 
@@ -132,11 +129,65 @@ class Panel(leginon.gui.wx.Node.Panel):
 
 	def refreshGrids(self):
 		choices = self.node.getGridNames()
-		choices.insert(0,'--New Grid as Below--')
+		if self.default_gridlabel:
+			choices.insert(0,self.default_gridlabel)
 		self.setGridSelection(choices)		
 
 	def onGridDone(self):
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, True)
+
+class Panel(GridSelectionPanel):
+	def setDefaultGridSelection(self):
+		self.default_gridlabel = '--New Grid as Below--'
+
+	def addNew(self):
+		self.createNewGridEntry((1,0))
+
+	def enableNew(self,gridlabel):
+		# enable entry of new grid
+		if gridlabel != self.default_gridlabel:
+			self.newgrid.Enable(False)
+		else:
+			self.newgrid.Enable(True)
+
+	def runNew(self):
+		self.onSaveNewGrid(None)
+
+	def createNewGridEntry(self,start_position):
+		sb = wx.StaticBox(self, -1, 'New Grid')
+		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
+		szgrid = wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1, 'New Grid Name:')
+		szgrid.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.newgrid = Entry(self, -1)
+		szgrid.Add(self.newgrid, (0, 1), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
+
+		self.savenewgrid = wx.Button(self, wx.ID_APPLY)
+
+		szgrid.Add(self.savenewgrid, (2, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
+
+		szgrid.AddGrowableCol(1)
+		sbsz.Add(szgrid, 0, wx.EXPAND|wx.ALL, 5)
+		self.szmain.Add(sbsz, start_position, (1, 1), wx.EXPAND|wx.ALL|wx.ALIGN_CENTER_VERTICAL)
+	
+	def onNodeInitialized(self):
+		super(Panel,self).onNodeInitialized()
+		self.Bind(wx.EVT_BUTTON, self.onSaveNewGrid, self.savenewgrid)
+
+	def onSaveNewGrid(self,evt=None):
+		choices = self.node.getGridNames()
+		newgrid = self.newgrid.Update()
+		newgrid = self.newgrid.GetValue()
+		if newgrid is None or newgrid == '':
+			self.node.onBadEMGridName('No Grid Name')
+			return
+		elif newgrid in choices:
+			self.node.onBadEMGridName('Grid Name Exists')
+			return
+		else:
+			self.node.publishNewEMGrid(newgrid)
+		self.refreshGrids()
 
 class SettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
