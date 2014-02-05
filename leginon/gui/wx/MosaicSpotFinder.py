@@ -131,7 +131,11 @@ class SpotIDNameScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 
 		for coord in gridformat['skips']:
 			self.grid.SetCellBackgroundColour(coord[0]-1,coord[1]-1,wx.Colour(100,100,0))
-		self.grid.HideColLabels()
+		try:
+			# only available for newer wxpython
+			self.grid.HideColLabels()
+		except:
+			pass
 		self.setSpotGridValues()
 
 		return self.grid

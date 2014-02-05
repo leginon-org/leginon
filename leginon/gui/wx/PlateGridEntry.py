@@ -32,7 +32,7 @@ class Panel(leginon.gui.wx.GridEntry.GridSelectionPanel):
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		szgrid = wx.GridBagSizer(5, 5)
 		label = wx.StaticText(self, -1, 'Select a Grid Format (r x c:skips):')
-		szgrid.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szgrid.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
 		self.cgridformat = wx.Choice(self, -1)
 		self.cgridformat.Enable(False)
 		szgrid.Add(self.cgridformat, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
