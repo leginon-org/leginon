@@ -25,22 +25,24 @@ if(empty($runId))
 else
 	$ctfdatas = $appiondb->getCtfInfo($runId);
 
-
-$data[] = "image #\tnominal_def\tdefocus_1\tdefocus_2\tangle_astig\tamp_cont\tconfidence_1\tconfidence_2\timage_name\n";
+$data[] = "image #\tnominal_def\tdefocus_1\tdefocus_2\tangle_astig\tamp_cont\tres(0.8)\tres(0.5)\tconf(30/10)\tconf(5_peak)\tconf\timage_name\n";
 //echo "</br>\n";
 
 foreach ($ctfdatas as $ctfdata) {
 	$filename = $appiondb->getImageNameFromId($ctfdata['REF|leginondata|AcquisitionImageData|image']);
 	$angtxt = str_pad(sprintf("%.3f",$ctfdata['angle_astigmatism']), 9, " ", STR_PAD_LEFT);
-	$data[] = sprintf("%d\t%.4e\t%.5e\t%.5e\t%s\t%.4f\t%.4f\t%.4f\t%s\n",
+	$data[] = sprintf("%d\t%.4e\t%.5e\t%.5e\t%s\t%.4f\t%.2f\t%.2f\t%.3f\t%.3f\t%.3f%s\n",
 		$ctfdata['REF|leginondata|AcquisitionImageData|image'],
 		$ctfdata['defocus'],
 		$ctfdata['defocus1'],
 		$ctfdata['defocus2'],
 		$angtxt,
 		$ctfdata['amplitude_contrast'],
+		$ctfdata['resolution_80_percent'],
+		$ctfdata['resolution_50_percent'],
+		$ctfdata['confidence_30_10'],
+		$ctfdata['confidence_5_peak'],
 		$ctfdata['confidence'],
-		$ctfdata['confidence_d'],
 		$filename);
 }
 
@@ -60,6 +62,4 @@ header("Content-Disposition: attachment; filename=$downname;");
 foreach ($data as $line) {
 	echo $line;
 }
-
-
 
