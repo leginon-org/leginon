@@ -42,6 +42,8 @@ class Cluster
 	function __construct( $hostname )
 	{
 		global $PROCESSING_HOSTS;
+		$appionPathAddon = 0; // This represents the number of path levels of the leginon path to an image to add to the appion path?
+		if (defined('APPION_PARENT_ADDITION') && APPION_PARENT_ADDITION !=0) $appionPathAddon = APPION_PARENT_ADDITION;
 		
 		foreach ( $PROCESSING_HOSTS as $hostconfig ) {
 			// We have an issue with machines that have multiple host names.
@@ -59,7 +61,7 @@ class Cluster
 			throw new Exception("Trying to establish a connection with an unknown host ($hostname). Ask your sys admin to add this host to your configuration file.");
 		}
 		
-		$this->setRemoteOutputPath();
+		$this->setRemoteOutputPath( $appionPathAddon );
 	}
 
 	function loadConfig( $hostconfig )
@@ -159,21 +161,40 @@ class Cluster
          throw new  Exception("Can not read private key file");
    }
 	
-	function setRemoteOutputPath()
+   
+    // Sets the base path that appion Run directories should be set to.
+    // $appionPathAddon is for feature #2470 which allows a level of the path to the
+    // leginon image file to be added to the appion path, such as a username.
+    // TODO: this uses Path::join() which is only working for "/" as as dir separator
+    // Should we make the path function non-static? This class shoulld remain separator neutral!
+	function setRemoteOutputPath( $appionPathAddon )
 	{
 		$leginondata = new leginondata();
 		// TODO: should we pass in the expID?
-		$sessiondata = $leginondata->getSessionInfo($_GET['expId']);
-		$sessionname = $sessiondata['Name'];
+		$sessiondata 		= $leginondata->getSessionInfo($_GET['expId']);
+		$sessionname 		= $sessiondata['Name'];
+		$leginon_imagepath 	= $sessiondata['Image path'];	
+		$addition_parts		= array(); // additional directories to add to the path prior to session name
+
+		if ( $appionPathAddon != 0 ) {
+			$parts 			= explode($this->dirSeparator,$leginon_imagepath);
+			$session_index 	= array_search( $sessionname, $parts) ;
+			if ($session_index !== false) {
+				// add extra directory division prior to sessionname
+				$addition_parts = array_splice( $parts, $session_index-$appionPathAddon, $appionPathAddon);
+			}			
+		}
+		
 		// TODO: need to pass in the folder name 
-		$rootpath = $sessionname.$this->dirSeparator."recon".$this->dirSeparator;
+		$rootpath = Path::join( implode( $this->dirSeparator, $addition_parts), $sessionname, "recon" );
+		//$rootpath = $sessionname.$this->dirSeparator."recon".$this->dirSeparator;
 		
 		// if no baseoutdir was provided, set it to the current user's home directory 
 		if ( $this->baseoutdir === "") {
-			 $this->baseoutdir = '~'.$_SESSION['username'].$this->dirSeparator."appion".$this->dirSeparator;
+			 $this->baseoutdir = Path::join( '~'.$_SESSION['username'], "appion" );
 		}
 
-		$remoteOutputPath = $this->formatEndPath($this->baseoutdir).$rootpath;
+		$remoteOutputPath = Path::join( $this->baseoutdir, $rootpath );
 		$remoteOutputPath = ($_POST['clusterpath']) ? $_POST['clusterpath'] : $remoteOutputPath;
 		// Some forms are calling this 'remoteoutdir'
 		$remoteOutputPath = ($_POST['remoteoutdir']) ? $_POST['remoteoutdir'] : $remoteOutputPath;
