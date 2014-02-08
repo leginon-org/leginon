@@ -10,6 +10,7 @@ import MySQLdb
 
 def connect(**kwargs):
 	c = MySQLdb.connect(**kwargs)
+	c.autocommit(True)
 	c.kwargs = dict(kwargs)
 	return c
 
