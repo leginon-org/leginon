@@ -151,6 +151,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		self.logger.info('Submitting targets...')
 		self.getTargetDataList('acquisition')
 		self.getTargetDataList('focus')
+		self.getTargetDataList('preview')
 		try:
 			self.publish(self.targetlist, pubevent=True)
 		except node.PublishError, e:
@@ -309,6 +310,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 
 		self.updateCurrentPosition()
 		self.setTargets(self.currentposition, 'position')
+		self.setTargets([], 'preview')
 		n = 0
 		for type in ('acquisition','focus'):
 			n += len(targets[type])
