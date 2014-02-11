@@ -105,7 +105,11 @@ class RefineJob(basicScript.BasicScript):
 			if 'default' in param.keys() and param['default']:
 				example = ", e.g. --%s=%s" % (param['name'],param['default'])
 
-			self.parser.add_option('--%s' % param['name'], dest="%s" % param['name'], default= param['default'],
+			if 'action' in param.keys() and param['action']:
+				self.parser.add_option('--%s' % param['name'], dest="%s" % param['name'], default= param['default'], action="%s" % param['action'] ,
+				help="iteration parameter: %s%s" % (param['help'],example))
+			else:
+				self.parser.add_option('--%s' % param['name'], dest="%s" % param['name'], default= param['default'],
 				type="str", help="iteration parameter: %s%s" % (param['help'],example), metavar="#x##")
 		
 	#=====================
