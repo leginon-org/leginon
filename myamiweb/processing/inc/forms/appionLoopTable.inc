@@ -54,9 +54,9 @@ class AppionLoopTable extends BasicForm
 		// Presets
 		if ($this->presetList && count($this->presetList) > 1) {
 			$html.= $params->insertSelectField( "preset", $this->presetList );
-		} elseif ($this->presetList) {
+		} elseif ( !empty($this->presetList) ) {			
 			//only one preset
-			$preset = $this->presetList[0];
+			$preset = key( $this->presetList );
 			$html.= "<B>Preset:</B>&nbsp;&nbsp;".$preset."\n\n";
 			$html.= "<input type='hidden' name='preset' VALUE=".$preset."><br/>\n";
 		} else {

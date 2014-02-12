@@ -105,7 +105,9 @@ class BasicLoopForm extends BasicForm
 		
 		// Presets
 		// Create a dictionary of preset value=>desc. Desc appears in the gui, value is returned in the code in a selection box.
-		$presetList = array_combine( $sessiondata['presets'], $sessiondata['presets'] );
+		if ( !empty( $sessiondata['presets']) ) {
+			$presetList = array_combine( $sessiondata['presets'], $sessiondata['presets'] );			
+		}
 
 		// Get the max tilt angle which determines if the tilt angle select control is displayed
 		$maxang = $particle->getMaxTiltAngle( $this->expId );		
