@@ -190,9 +190,7 @@ class AppionLoopTable extends BasicForm
 	
 		if ($tiltangle == '' || $tiltangle == 'all') { 
 			$command = $this->removeCommandFlag( $command, 'tiltangle' );
-		} else {
-			$command.=" --tiltangle=$tiltangle";
-		}
+		} 
 		
 		if (!$apcontinue) {
 			$command.=" --no-continue";
