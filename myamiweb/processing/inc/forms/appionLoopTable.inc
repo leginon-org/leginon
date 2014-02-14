@@ -183,7 +183,7 @@ class AppionLoopTable extends BasicForm
 		
 		if ($norejects) $command.= " --no-rejects";
 		if ($bestimages)$command.= " --best-images";
-		if (!$nowait) 	$command.= " --no-wait";
+		if ($nowait) 	$command.= " --no-wait";
 		if (!$commit)   $command.= " --no-commit";
 		if ($reverse)   $command.= " --reverse";
 		if ($shuffle)   $command.= " --shuffle";
