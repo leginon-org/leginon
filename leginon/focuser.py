@@ -242,6 +242,10 @@ class Focuser(manualfocuschecker.ManualFocusChecker):
 			self.logger.info('Calibrate and then continue...')
 			self.beep()
 			return 'repeat'
+		except:
+			# any other exception
+			self.btcalclient.setBeamTilt(beamtilt0)
+			raise
 
 		if setting['stig correction'] and correction['stigx'] and correction['stigy']:
 			sx = '%.3f' % correction['stigx']
