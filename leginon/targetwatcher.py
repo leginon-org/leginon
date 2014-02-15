@@ -130,7 +130,6 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 			self.setStatus('processing')
 			if state in ('stop', 'stopqueue'):
 				targetliststatus = 'aborted'
-				print "aborting before rejects are sent"
 				# If I report targets done then rejected target are also done.  Which make
 				# them unrestartable What to do???????
 				self.reportTargetListDone(newdata, targetliststatus)
@@ -248,9 +247,15 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 				except Exception, e:
 					self.logger.exception('Process target failed: %s' % e)
 					process_status = 'exception'
+					
 				self.stopTimer('processTargetData')
 
-				self.reportTargetStatus(adjustedtarget, 'done')
+				if process_status != 'exception':
+					self.reportTargetStatus(adjustedtarget, 'done')
+				else:
+					# set targetlist status to abort if exception not user fixable
+					targetliststatus = 'aborted'
+					self.reportTargetStatus(adjustedtarget, 'aborted')
 
 				# pause check after a good target processing
 				if self.player.state() == 'pause':
