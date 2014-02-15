@@ -225,13 +225,18 @@ class Focuser(manualfocuschecker.ManualFocusChecker):
 			self.instrument.tem.Defocus = p['defocus']
 			self.eucset = False
 		self.reset = True
+		# get original beam to use to reset before return for any reason.
+		# failed in the process or not as a safety
+		beamtilt0 = self.btcalclient.getBeamTilt()
 
 		try:
 			correction = self.btcalclient.measureDefocusStig(btilt, correct_tilt=True, correlation_type=setting['correlation type'], stig=setting['stig correction'], settle=0.25, image0=lastdriftimage)
 		except calibrationclient.Abort:
+			self.btcalclient.setBeamTilt(beamtilt0)
 			self.logger.info('Measurement of defocus and stig. has been aborted')
 			return 'aborted'
 		except calibrationclient.NoMatrixCalibrationError, e:
+			self.btcalclient.setBeamTilt(beamtilt0)
 			self.player.pause()
 			self.logger.error('Measurement failed without calibration: %s' % e)
 			self.logger.info('Calibrate and then continue...')
@@ -250,6 +255,7 @@ class Focuser(manualfocuschecker.ManualFocusChecker):
 		fitmin = correction['min']
 
 		resultdata.update({'defocus':defoc, 'stigx':stigx, 'stigy':stigy, 'min':fitmin, 'drift': lastdrift})
+		self.btcalclient.setBeamTilt(beamtilt0)
 		return 'ok'
 
 		#####################################################################
