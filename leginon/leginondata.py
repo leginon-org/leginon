@@ -887,6 +887,7 @@ class AcquisitionImageTargetData(ImageTargetData):
 			('fromtarget', AcquisitionImageTargetData),
 			# target mapping to a well on the prep plate if applicable
 			('spotmap', SpotWellMapData),
+			('last_focused', ImageTargetListData),
 		)
 	typemap = classmethod(typemap)
 

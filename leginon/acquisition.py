@@ -374,9 +374,14 @@ class Acquisition(targetwatcher.TargetWatcher):
 			offset = {'x':self.settings['target offset col'],'y':self.settings['target offset row']}
 			if offset['x'] or offset['y']:
 				targetdata = self.makeTransformTarget(targetdata,offset)
+
+			# set stage z first before move
+			z = self.moveToLastFocusedStageZ(targetdata)
+			self.testprint('preset manager moved to LastFocusedStageZ %s' % (z,))
+
 			### determine how to move to target
 			try:
-				emtarget = self.targetToEMTargetData(targetdata)
+				emtarget = self.targetToEMTargetData(targetdata, z)
 			except InvalidStagePosition:
 				return 'invalid'
 
@@ -435,7 +440,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		else:
 			return False
 
-	def targetToEMTargetData(self, targetdata):
+	def targetToEMTargetData(self, targetdata, z=None):
 		'''
 		convert an ImageTargetData to an EMTargetData object
 		using chosen move type.
@@ -461,6 +466,11 @@ class Acquisition(targetwatcher.TargetWatcher):
 			targetscope['stage position'] = dict(origscope['stage position'])
 			targetscope['image shift'] = dict(origscope['image shift'])
 			targetscope['beam shift'] = dict(origscope['beam shift'])
+
+			if z is not None:
+				# since presetsmanager settings 'only xy' is always True, this
+				# is only good for database record
+				targetscope['stage position']['z'] = z
 
 			movetype = self.settings['move type']
 			oldpreset = targetdata['preset']
@@ -508,10 +518,10 @@ class Acquisition(targetwatcher.TargetWatcher):
 			emtargetdata['delta z'] = zdiff
 
 		emtargetdata['target'] = targetdata
-
 		## publish in DB because it will likely be needed later
 		## when returning to the same target,
 		## even after it is removed from memory
+		# This may be a problem for focus target when used to return to it.
 		self.publish(emtargetdata, database=True)
 		return emtargetdata
 
@@ -612,6 +622,9 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.instrument.tem.ImageShift = {'x':x, 'y':y}
 
 	def moveAndPreset(self, presetdata, emtarget):
+			'''
+			Move xy to emtarget position with its mover and set preset
+			'''
 			status = 'ok'
 			presetname = presetdata['name']
 			targetdata = emtarget['target']
@@ -631,7 +644,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 					final_imageshift = self.settings['final image shift']
 					if final_imageshift:
 						keep_shift = True
-					status = self.navclient.moveToTarget(targetdata, movetype, precision, accept_precision, final_imageshift=final_imageshift)
+					status = self.navclient.moveToTarget(targetdata, movetype, precision, accept_precision, final_imageshift=final_imageshift, use_current_z=True)
 					if status == 'error':
 						return status
 					# Give presetsclient time to unlock navigator changePreset request

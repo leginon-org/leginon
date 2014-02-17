@@ -250,6 +250,8 @@ class TransformManager(node.Node, TargetTransformer):
 		self.pixsizeclient = calibrationclient.PixelSizeCalibrationClient(self)
 		self.presetsclient = presets.PresetsClient(self)
 		self.navclient = navigator.NavigatorClient(self)
+		self.target_to_transform = None
+
 		self.addEventInput(event.TransformTargetEvent, self.handleTransformTargetEvent)
 
 		self.registrations = {
@@ -362,7 +364,8 @@ class TransformManager(node.Node, TargetTransformer):
 		Mover can either be presets manager or navigator
 		'''
 		status = 'ok'
-		self.logger.debug('imageMoveAndPreset oldimage stage z %.6f' % imagedata['scope']['stage position']['z'])
+		msg = 'imageMoveAndPreset oldimage stage z %.6f' % imagedata['scope']['stage position']['z']
+		self.logger.debug(msg)
 		presetname = imagedata['preset']['name']
 		targetdata = emtarget['target']
 		moverdata = imagedata['mover']
@@ -378,6 +381,7 @@ class TransformManager(node.Node, TargetTransformer):
 			self.logger.warning('Navigator cannot be used for image shift, using Presets Manager instead')
 			movefunction = 'presets manager'
 		self.setStatus('waiting')
+
 		if movefunction == 'navigator':
 			emtarget = None
 			if targetdata['type'] != 'simulated':
@@ -389,7 +393,9 @@ class TransformManager(node.Node, TargetTransformer):
 					return status
 		self.presetsclient.toScope(presetname, emtarget, keep_shift=False)
 		stagenow = self.instrument.tem.StagePosition
-		self.logger.debug('reacquire imageMoveAndPreset end z %.6f' % stagenow['z'])
+		msg = 'reacquire imageMoveAndPreset end z %.6f' % stagenow['z']
+		self.testprint(msg)
+		self.logger.debug(msg)
 		return status
 
 	def reacquire(self, targetdata, use_parent_mover=False):
@@ -420,6 +426,7 @@ class TransformManager(node.Node, TargetTransformer):
 		oldpresetdata = oldimage['preset']
 		presetname = oldpresetdata['name']
 		channel = int(oldimage['correction channel']==0)
+		self._moveToLastFocusedStageZ()
 		self.imageMoveAndPreset(oldimage,emtarget,use_parent_mover)
 		targetdata = emtarget['target']
 		try:
@@ -449,6 +456,13 @@ class TransformManager(node.Node, TargetTransformer):
 		self.setImage(imagedata['image'], 'Image')
 		return imagedata
 
+	def _moveToLastFocusedStageZ(self):
+		'''
+		Set stage z to the height of an image acquired by the last focusing.
+		This should only be called from inside TrasnformManage
+		'''
+		self.moveToLastFocusedStageZ(self.target_to_transform)
+
 	def recentImageVersion(self, imagedata):
 		# find most recent version of this image
 		p = leginondata.PresetData(name=imagedata['preset']['name'])
@@ -470,6 +484,7 @@ class TransformManager(node.Node, TargetTransformer):
 		level = ev['level']
 		use_parent_mover = ev['use parent mover']
 		requestingnode = ev['node']
+		self.target_to_transform = oldtarget
 		newtarget = self.transformTarget(oldtarget, level, use_parent_mover)
 		evt = event.TransformTargetDoneEvent()
 		evt['target'] = newtarget

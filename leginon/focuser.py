@@ -507,7 +507,9 @@ class Focuser(manualfocuschecker.ManualFocusChecker):
 		if self.settings['acquire final']:
 			manualfocuschecker.ManualFocusChecker.acquire(self, presetdata, emtarget)
 		stagenow = self.instrument.tem.StagePosition
-		self.logger.debug('z after all adjustment in Focuser %.2f um' % (1e6*stagenow['z']))
+		msg = 'z after all adjustment %.2f um' % (1e6*stagenow['z'])
+		self.testprint('Focuser: '+msg)
+		self.logger.debug(msg)
 
 		return status
 

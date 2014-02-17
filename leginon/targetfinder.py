@@ -68,6 +68,8 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 												calibrationclient.ModeledStageCalibrationClient(self)
 		}
 		self.parent_imageid = None
+		self.focusing_targetlist = None
+		self.resetLastFocusedTargetList(None)
 
 	def readImage(self, filename):
 		imagedata = None
@@ -194,6 +196,13 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		self.logger.info("returning sorted targets")
 		return sortedtargetlist
 		
+	def resetLastFocusedTargetList(self,targetlist):
+		self.last_focused = None
+		self.focusing_targetlist = targetlist
+
+	def setLastFocusedTargetList(self):
+		self.last_focused = self.focusing_targetlist
+
 	#--------------------
 	def publishTargets(self, imagedata, typename, targetlist):
 		imagetargets = self.panel.getTargetPositions(typename)
@@ -205,12 +214,13 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		imagearray = imagedata['image']
 		lastnumber = self.lastTargetNumber(image=imagedata, session=self.session)
 		number = lastnumber + 1
+
 		for imagetarget in imagetargets:
 			column, row = imagetarget
 			drow = row - imagearray.shape[0]/2
 			dcol = column - imagearray.shape[1]/2
 
-			targetdata = self.newTargetForImage(imagedata, drow, dcol, type=typename, list=targetlist, number=number)
+			targetdata = self.newTargetForImage(imagedata, drow, dcol, type=typename, list=targetlist, number=number,last_focused=self.last_focused)
 			self.publish(targetdata, database=True)
 			number += 1
 

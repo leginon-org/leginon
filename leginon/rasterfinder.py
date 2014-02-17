@@ -344,6 +344,7 @@ class RasterFinder(targetfinder.TargetFinder):
 			if self.isFromNewParentImage(imdata):
 				self.logger.debug('Reset focus counter')
 				self.foc_counter = itertools.count()
+				self.resetLastFocusedTargetList(targetlist)
 			self.everything()
 
 		## user part
@@ -357,6 +358,10 @@ class RasterFinder(targetfinder.TargetFinder):
 			self.setStatus('processing')
 
 		## the new way
+		if self.foc_activated:
+			self.resetLastFocusedTargetList(targetlist)
+		else:
+			self.setLastFocusedTargetList()
 		self.logger.info('Publishing targets...')
 		self.publishTargets(imdata, 'focus', targetlist)
 		self.publishTargets(imdata, 'acquisition', targetlist)
