@@ -26,6 +26,9 @@ import leginonconfig
 import os
 import correctorclient
 
+# testprinting for development
+testing = True
+
 class ResearchError(Exception):
 	pass
 
@@ -105,6 +108,10 @@ class Node(correctorclient.CorrectorClient):
 		correctorclient.CorrectorClient.__init__(self)
 
 		self.initializeSettings()
+
+	def testprint(self,msg):
+		if testing:
+			print msg
 
 	# settings
 

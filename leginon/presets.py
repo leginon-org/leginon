@@ -1369,6 +1369,7 @@ class PresetsManager(node.Node):
 		This is like toScope, but this one is mainly called
 		by client nodes which request that presets and targets
 		be tightly coupled.
+		Stage position is always xy only
 		'''
 
 		## first cycle through presets before sending the final one
@@ -1408,11 +1409,14 @@ class PresetsManager(node.Node):
 #			if not self.settings['stage always']:
 #				mystage = None
 
+		# 'xy only' settings is default to True and unexposed to user
+		# It means this always True
 		if mystage and self.settings['xy only']:
 			## only set stage x and y
 			for key in mystage.keys():
 				if key not in ('x','y'):
 					del mystage[key]
+		self.testprint('targetToScope used no z change')
 
 		## offset image shift to center stage tilt axis
 		if self.settings['apply offset']:
@@ -1516,7 +1520,9 @@ class PresetsManager(node.Node):
 			self.instrument.setData(scopedata)
 			self.instrument.setData(cameradata)
 			newstage = self.instrument.tem.StagePosition
-			self.logger.debug('Presetmanager: %s targetToScope %.6f' % (newpresetname,newstage['z']))
+			msg = '%s targetToScope %.6f' % (newpresetname,newstage['z'])
+			self.testprint('Presetmanager:' + msg)
+			self.logger.debug(msg)
 		except Exception, e:
 			self.logger.error(e)
 			message = 'Move to target failed: unable to set instrument'
