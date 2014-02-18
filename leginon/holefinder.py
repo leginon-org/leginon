@@ -457,6 +457,7 @@ class HoleFinder(targetfinder.TargetFinder):
 			if self.isFromNewParentImage(imdata):
 				self.logger.debug('Reset focus counter')
 				self.foc_counter = itertools.count()
+				self.resetLastFocusedTargetList(targetlist)
 			autofailed = False
 			try:
 				self.everything()
@@ -473,6 +474,11 @@ class HoleFinder(targetfinder.TargetFinder):
 					break
 				self.panel.targetsSubmitted()
 
+		# set self.last_focused for target publishing	
+		if self.foc_activated:
+			self.resetLastFocusedTargetList(targetlist)
+		else:
+			self.setLastFocusedTargetList()
 		self.logger.info('Publishing targets...')
 		### publish targets from goodholesimage
 		self.publishTargets(imdata, 'focus', targetlist)
