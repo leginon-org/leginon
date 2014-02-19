@@ -200,9 +200,11 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		self.last_focused = None
 		self.focusing_targetlist = targetlist
 
-	def setLastFocusedTargetList(self):
-		self.last_focused = self.focusing_targetlist
-
+	def setLastFocusedTargetList(self,targetlist):
+		if self.panel.getTargetPositions('focus'):
+			self.resetLastFocusedTargetList(targetlist)
+		else:
+			self.last_focused = self.focusing_targetlist
 	#--------------------
 	def publishTargets(self, imagedata, typename, targetlist):
 		imagetargets = self.panel.getTargetPositions(typename)

@@ -475,12 +475,9 @@ class HoleFinder(targetfinder.TargetFinder):
 				self.panel.targetsSubmitted()
 
 		# set self.last_focused for target publishing	
-		if self.foc_activated:
-			self.resetLastFocusedTargetList(targetlist)
-		else:
-			self.setLastFocusedTargetList()
-		self.logger.info('Publishing targets...')
+		self.setLastFocusedTargetList(targetlist)
 		### publish targets from goodholesimage
+		self.logger.info('Publishing targets...')
 		self.publishTargets(imdata, 'focus', targetlist)
 		self.publishTargets(imdata, 'acquisition', targetlist)
 		self.setStatus('idle')
