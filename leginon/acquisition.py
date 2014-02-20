@@ -297,14 +297,23 @@ class Acquisition(targetwatcher.TargetWatcher):
 		newtarget.insert(force=True)
 		self.logger.info('target adjusted by (%.1f,%.1f) (column, row)' % (offset['x'],offset['y']))
 		return newtarget
-	
+
+	def avoidTargetAdjustment(self,target_to_adjust,recent_target):
+		'''
+		Determine if target adjustment should be avoided.
+		'''
+		return False
+
 	def adjustTargetForTransform(self, targetdata):
 		## look up most recent version of this target
 		targetlist = targetdata['list']
 		targetnumber = targetdata['number']
 		newtargetdata = self.researchTargets(session=self.session, number=targetnumber, list=targetlist)
 		newtargetdata = newtargetdata[0]
-		
+
+		if self.avoidTargetAdjustment(targetdata,newtargetdata):
+			return newtargetdata
+
 		## look up all transforms declared for this session
 		decq = leginondata.TransformDeclaredData(session=self.session)
 		transformsdeclared = decq.query()

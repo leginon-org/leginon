@@ -440,6 +440,8 @@ class TransformManager(node.Node, TargetTransformer):
 		pixels = dim['x'] * dim['y']
 		pixeltype = str(imagedata['image'].dtype)
 		## Fix me: Not sure what image list should go in here nor naming of the file
+		# This does not include tilt series nor tilt number.  If included,
+		# rct filenaming becomes corrupted
 		imagedata = leginondata.AcquisitionImageData(initializer=imagedata, preset=currentpresetdata, label=self.name, target=targetdata, list=oldimage['list'], emtarget=emtarget, pixels=pixels, pixeltype=pixeltype,grid=oldimage['grid'],mover=oldimage['mover'],spotmap=oldimage['spotmap'])
 		version = self.recentImageVersion(oldimage)
 		imagedata['version'] = version + 1
