@@ -173,6 +173,17 @@ class RCTAcquisition(acquisition.Acquisition):
 		self.instrument.tem.StagePosition = {'a': tilt0}
 		self.reportTargetListDone(tilt0targetlist, 'success')
 
+	def avoidTargetAdjustment(self,target_to_adjust,recent_target):
+		'''
+		RCT should not adjust targets.  StageTracking is doing it.
+		The way transformmanager looks for recent target can give wrong
+		result after change for issue #2526
+		The drift after stage tilt and focus will not be adjusted this way.
+		However, since the targets are moved by iterative navigator move,
+		this should be o.k.
+		'''
+		return True
+
 	#====================
 	def getFocusTargets(self, targetlistdata):
 		targets = []

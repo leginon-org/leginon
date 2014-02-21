@@ -1,5 +1,9 @@
 # config file for imcached
 
+# camera name pattern to cache.  For example 'GatanK2' will restrict it
+# only to camera name containing the string
+camera_name_pattern = ''
+
 # time in seconds to wait between consecutive queries
 query_interval = 5
 

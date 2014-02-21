@@ -16,6 +16,7 @@ import numpy
 import itertools
 import os
 
+isDM230 = False
 simulation = False
 if simulation:
 	print 'USING SIMULATION SETTINGS'
@@ -37,6 +38,7 @@ class DMSEM(ccdcamera.CCDCamera):
 
 		ccdcamera.CCDCamera.__init__(self)
 
+		self.bblankerid = 0
 		self.binning = {'x': 1, 'y': 1}
 		self.offset = {'x': 0, 'y': 0}
 		self.tempoffset = dict(self.offset)
@@ -135,6 +137,10 @@ class DMSEM(ccdcamera.CCDCamera):
 
 		height = self.offset['y']+self.dimension['y']
 		width = self.offset['x']+self.dimension['x']
+		if isDM230 and self.save_frames or self.align_frames:
+			tmpheight = height
+			height = width
+			width = tmpheight
 		acqparams = {
 			'processing': processing,
 			'height': height,
@@ -238,6 +244,7 @@ class GatanK2Base(DMSEM):
 	binmethod = 'floor'
 	filePerImage = False
 	def custom_setup(self):
+		#self.camera.SetShutterNormallyClosed(self.cameraid,self.bblankerid)
 		if self.ed_mode != 'base':
 			k2params = self.calculateK2Params()
 			print 'SETK2PARAMS', k2params

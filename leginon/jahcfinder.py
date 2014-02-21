@@ -528,6 +528,7 @@ class JAHCFinder(targetfinder.TargetFinder):
 			if self.isFromNewParentImage(imdata):
 				self.logger.debug('Reset focus counter')
 				self.foc_counter = itertools.count()
+				self.resetLastFocusedTargetList(targetlist)
 			autofailed = False
 			try:
 				self.everything()
@@ -557,8 +558,10 @@ class JAHCFinder(targetfinder.TargetFinder):
 					break
 				self.panel.targetsSubmitted()
 
-		self.logger.info('Publishing targets...')
+		# set self.last_focused for target publishing	
+		self.setLastFocusedTargetList(targetlist)
 		### publish targets from goodholesimage
+		self.logger.info('Publishing targets...')
 		self.publishTargets(imdata, 'focus', targetlist)
 		self.publishTargets(imdata, 'acquisition', targetlist)
 		self.setStatus('idle')

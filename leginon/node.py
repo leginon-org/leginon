@@ -26,6 +26,9 @@ import leginonconfig
 import os
 import correctorclient
 
+# testprinting for development
+testing = True
+
 class ResearchError(Exception):
 	pass
 
@@ -105,6 +108,10 @@ class Node(correctorclient.CorrectorClient):
 		correctorclient.CorrectorClient.__init__(self)
 
 		self.initializeSettings()
+
+	def testprint(self,msg):
+		if testing:
+			print msg
 
 	# settings
 
@@ -491,6 +498,34 @@ class Node(correctorclient.CorrectorClient):
 		declared['session'] = self.session
 		declared['node'] = self.name
 		self.publish(declared, database=True, dbforce=True)
+
+	def getLastFocusedStageZ(self,targetdata):
+		if not targetdata or not targetdata['last_focused']:
+			return None
+		# FIX ME: This only works if images are taken with the last_focused
+		# ImageTargetListData.  Not ideal. Can not rely on FocusResultData since
+		# manual z change is not recorded and it is not possible to distinguish
+		# true failuer from "fail" at eucentric focus as the contrast is lost.
+		qt = leginondata.AcquisitionImageTargetData(list=targetdata['last_focused'])
+		images = leginondata.AcquisitionImageData(target=qt,session=targetdata['session']).query(results=1)
+		if images:
+			z = images[0]['scope']['stage position']['z']
+			return z
+
+	def moveToLastFocusedStageZ(self,targetdata):
+		'''
+		Set stage z to the height of an image acquired by the last focusing.
+		This is used to maintain the z adjustment when some of the automated
+		focus target selection are skipped.
+		'''
+		z = self.getLastFocusedStageZ(targetdata)
+		if z is not None:
+			msg = 'moveToLastFocusedStageZ %s' % (z,)
+			self.testprint(msg)
+			self.logger.debug(msg)
+			stage_position = {'z':z}
+			self.instrument.tem.StagePosition = stage_position
+		return z
 
 	def timerKey(self, label):
 		return self.name, label

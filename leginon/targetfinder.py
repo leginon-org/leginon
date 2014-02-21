@@ -68,6 +68,8 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 												calibrationclient.ModeledStageCalibrationClient(self)
 		}
 		self.parent_imageid = None
+		self.focusing_targetlist = None
+		self.resetLastFocusedTargetList(None)
 
 	def readImage(self, filename):
 		imagedata = None
@@ -194,6 +196,15 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		self.logger.info("returning sorted targets")
 		return sortedtargetlist
 		
+	def resetLastFocusedTargetList(self,targetlist):
+		self.last_focused = None
+		self.focusing_targetlist = targetlist
+
+	def setLastFocusedTargetList(self,targetlist):
+		if self.panel.getTargetPositions('focus'):
+			self.resetLastFocusedTargetList(targetlist)
+		else:
+			self.last_focused = self.focusing_targetlist
 	#--------------------
 	def publishTargets(self, imagedata, typename, targetlist):
 		imagetargets = self.panel.getTargetPositions(typename)
@@ -203,16 +214,30 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		if self.settings['sort target']:
 			imagetargets = self.sortTargets(imagetargets)
 		imagearray = imagedata['image']
+		imageshape = imagearray.shape
 		lastnumber = self.lastTargetNumber(image=imagedata, session=self.session)
 		number = lastnumber + 1
+		if typename == 'focus':
+			imagetargets = self.getCenterTargets(imagetargets, imageshape)
 		for imagetarget in imagetargets:
 			column, row = imagetarget
-			drow = row - imagearray.shape[0]/2
-			dcol = column - imagearray.shape[1]/2
+			drow = row - imageshape[0]/2
+			dcol = column - imageshape[1]/2
 
-			targetdata = self.newTargetForImage(imagedata, drow, dcol, type=typename, list=targetlist, number=number)
+			targetdata = self.newTargetForImage(imagedata, drow, dcol, type=typename, list=targetlist, number=number,last_focused=self.last_focused)
 			self.publish(targetdata, database=True)
 			number += 1
+
+	def getCenterTargets(self, imagetargets, imageshape):
+		'''
+		return the image target closest to the center of the image in a list
+		'''
+		if len(imagetargets) <= 1:
+			return imagetargets
+		else:
+			self.logger.warning('Each image can only have one focus target. Publish only the one closest to the center')
+			deltas = map((lambda x: math.hypot(x[1]-imageshape[0]/2,x[0]-imageshape[1]/2)),imagetargets)
+			return [imagetargets[deltas.index(min(deltas))],]
 
 	def displayPreviousTargets(self, targetlistdata):
 		targets = self.researchTargets(list=targetlistdata)

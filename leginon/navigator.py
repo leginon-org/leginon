@@ -55,6 +55,9 @@ class NavigatorClient(object):
 		self.movedone.set()
 
 	def moveToTarget(self, target, movetype, precision=0.0, accept_precision=1e-3, final_imageshift=False, use_current_z=False):
+		'''
+		Go through a thread of moveToTarget in Navigator
+		'''
 		self.node.startTimer('moveToTarget')
 		ev = event.MoveToTargetEvent(target=target, movetype=movetype)
 		ev['move precision'] = precision
@@ -149,7 +152,9 @@ class Navigator(node.Node):
 		if use_target_z:
 			# if the move comes from target adjustment, z focus is likely done.
 			# Therefore target z should not be set according to parent
-			self.logger.debug('Navigator: set to target z %.6f' % imagedata['scope']['stage position']['z'])
+			msg = 'Set to target z %.6f' % imagedata['scope']['stage position']['z']
+			self.testprint('Navigator: ' + msg)
+			self.logger.debug(msg)
 			self.instrument.tem.setStagePosition({'z':imagedata['scope']['stage position']['z']})
 		stagenow = self.instrument.tem.StagePosition
 		self.logger.debug('Navigator: z in navigator move %.6f' % stagenow['z'])

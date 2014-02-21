@@ -46,8 +46,10 @@ class QueryThread(threading.Thread):
 		SELECT i.DEF_id, s.name, s.`image path`, i.filename,
 			c.`SUBD|dimension|x`, c.`SUBD|dimension|y`
 		FROM SessionData s, AcquisitionImageData i, CameraEMData c
+		%s
 		WHERE s.DEF_id = i.`REF|SessionData|session`
 			AND i.`REF|CameraEMData|camera` = c.DEF_id
+			%s
 			%s
 			%s
 		ORDER BY i.DEF_id
@@ -60,6 +62,7 @@ class QueryThread(threading.Thread):
 		self.min_timestamp = imcacheconfig.min_timestamp
 		self.start_id = imcacheconfig.start_id
 		self.query_counter = 0
+		self.camera_name_pattern = imcacheconfig.camera_name_pattern
 		threading.Thread.__init__(self, *args, **kwargs)
 
 	def connect(self):
@@ -68,6 +71,13 @@ class QueryThread(threading.Thread):
 		return db
 
 	def query_images(self):
+		# camera selection
+		if not self.camera_name_pattern:
+			instrument_join = ''
+			camera_query = ''
+		else:
+			instrument_join = 'left join InstrumentData instr on instr.`DEF_id`=c.`REF|InstrumentData|ccdcamera` '
+			camera_query = "AND instr.`name` like '%%%s%%' " % self.camera_name_pattern
 		if direction == 'f':
 			time_query = ''
 			direction_query = 'ASC'
@@ -98,7 +108,7 @@ class QueryThread(threading.Thread):
 					self.start_id = self.runQuery(newest_image_query)[0][0]
 				print 'START_ID', self.start_id
 				imageid_query = 'AND i.`DEF_id` <= %d' % self.start_id
-		this_query = self.image_query % (imageid_query, time_query,direction_query)
+		this_query = self.image_query % (instrument_join, imageid_query, time_query,camera_query,direction_query)
 		print 'THISQUERY', this_query
 
 		results = self.runQuery(this_query)
@@ -146,7 +156,7 @@ class QueryThread(threading.Thread):
 			try:
 				self.query_images()
 			except:
-				pass	
+				pass
 			time.sleep(self.pause)
 
 class ReduxThread(threading.Thread):
