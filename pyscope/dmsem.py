@@ -244,7 +244,7 @@ class GatanK2Base(DMSEM):
 	binmethod = 'floor'
 	filePerImage = False
 	def custom_setup(self):
-		self.camera.SetShutterNormallyClosed(self.cameraid,self.bblankerid)
+		#self.camera.SetShutterNormallyClosed(self.cameraid,self.bblankerid)
 		if self.ed_mode != 'base':
 			k2params = self.calculateK2Params()
 			print 'SETK2PARAMS', k2params
