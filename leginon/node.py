@@ -27,7 +27,7 @@ import os
 import correctorclient
 
 # testprinting for development
-testing = True
+testing = False
 
 class ResearchError(Exception):
 	pass
