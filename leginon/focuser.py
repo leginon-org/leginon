@@ -580,3 +580,14 @@ class Focuser(manualfocuschecker.ManualFocusChecker):
 
 	def onAbortFailure(self):
 		self.btcalclient.abortevent.set()
+
+	def avoidTargetAdjustment(self,target_to_adjust,recent_target):
+		'''
+		RCT Focus should not adjust targets. refs #2665. It would be better not
+		having specify this by node name but through application node
+		binding.
+		'''
+		if self.name != 'RCT Focus':
+			return False
+		else:
+			return True
