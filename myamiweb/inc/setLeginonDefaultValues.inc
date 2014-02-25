@@ -1147,7 +1147,7 @@ class setLeginonDefaultValues {
 		$data["accept precision"] = "0.001";
 		$data["wait for reference"] = "0";
 		$data["wait for transform"] = "0";
-		$data["adjust for transform"] = "one";
+		$data["adjust for transform"] = "no";
 		$data["background"] = "0";
 		$data["use parent tilt"] = "0";
 		$data["adjust time by tilt"] = "0";
@@ -2289,7 +2289,7 @@ class setLeginonDefaultValues {
 		$data["accept precision"] = "5e-07";
 		$data["wait for reference"] = "0";
 		$data["wait for transform"] = "0";
-		$data["adjust for transform"] = "one";
+		$data["adjust for transform"] = "no";
 		$data["background"] = "0";
 		$data["use parent tilt"] = "0";
 		$data["adjust time by tilt"] = "0";
