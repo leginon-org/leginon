@@ -125,6 +125,9 @@ class DirectDetectorProcessing(object):
 		if nframe is None:
 			# older data or k2
 			nframe =  int(imagedata['camera']['exposure time'] / imagedata['camera']['frame time'])
+		# avoid 0 for dark image scaling and frame list creation
+		if nframe == 0:
+			nframe = 1
 		return nframe
 			
 
