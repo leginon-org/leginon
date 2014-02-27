@@ -407,8 +407,10 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		label = wx.StaticText(self, -1, '')
 		self.widgets['cycle after'] = wx.CheckBox(self, -1, 'Preset cycle after final move')
 		self.widgets['cycle each'] = wx.CheckBox(self, -1, 'Preset cycle after each move')
+		self.widgets['preexpose'] = wx.CheckBox(self, -1, 'Perform pre-exposure from preset')
 		hysfixsz.Add(self.widgets['cycle after'], (0, 0), (1, 1))
 		hysfixsz.Add(self.widgets['cycle each'], (1, 0), (1, 1))
+		hysfixsz.Add(self.widgets['preexpose'], (2, 0), (1, 1))
 
 		## 
 		ccsz = wx.GridBagSizer(5,5)

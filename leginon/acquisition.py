@@ -602,20 +602,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		return filmdata
 
 	def exposeSpecimen(self, seconds):
-		## I want to expose the specimen, but not the camera.
-		## I would rather use some kind of manual shutter where above specimen
-		## shutter opens and below specimen shutter remains closed.
-		## Using the screen down was easier and serves the same purpose, but
-		## with more error on the actual time exposed.
-		self.logger.info('Screen down for %ss to expose specimen...' % (seconds,))
-		self.instrument.tem.MainScreenPosition = 'down'
-		time.sleep(seconds)
-		self.instrument.tem.MainScreenPosition = 'up'
-		if self.instrument.tem.MainScreenPosition == 'down':
-			time.sleep(1)
-			self.instrument.tem.MainScreenPosition = 'up'
-			self.logger.warning('Second try to put the screen up')
-		self.logger.info('Screen up.')
+		self.exposeSpecimenWithScreenDown(seconds)
 
 	def getImageShiftOffset(self):
 		pimageshift = self.presetsclient.currentpreset['image shift']

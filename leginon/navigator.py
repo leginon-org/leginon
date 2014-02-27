@@ -88,6 +88,7 @@ class Navigator(node.Node):
 		'cycle each': False,
 		'final image shift': False,
 		'camera settings': cameraclient.default_settings,
+		'preexpose': True,
 	}
 	eventinputs = node.Node.eventinputs + presets.PresetsClient.eventinputs + [event.MoveToTargetEvent]
 	eventoutputs = node.Node.eventoutputs + presets.PresetsClient.eventoutputs + [event.CameraImagePublishEvent, event.MoveToTargetDoneEvent]
@@ -144,6 +145,8 @@ class Navigator(node.Node):
 		self.logger.info('change to parent preset: %s' % (preset['name'],))
 		self.presetsclient.toScope(preset['name'])
 
+		if self.settings['preexpose'] and preset['pre exposure']:
+			self.exposeSpecimenWithScreenDonw(preset['pre exposure'])
 		self.startTimer('move')
 		# Force cycle_after to True because PresetsManager does not know that preset
 		# has been changed by Navigator and will not cycle on the first target.  
