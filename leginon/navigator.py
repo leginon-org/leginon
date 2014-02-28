@@ -146,7 +146,7 @@ class Navigator(node.Node):
 		self.presetsclient.toScope(preset['name'])
 
 		if self.settings['preexpose'] and preset['pre exposure']:
-			self.exposeSpecimenWithScreenDonw(preset['pre exposure'])
+			self.exposeSpecimenWithScreenDown(preset['pre exposure'])
 		self.startTimer('move')
 		# Force cycle_after to True because PresetsManager does not know that preset
 		# has been changed by Navigator and will not cycle on the first target.  
