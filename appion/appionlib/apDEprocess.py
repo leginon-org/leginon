@@ -22,6 +22,7 @@ class DEProcessing(apDDprocess.DDFrameProcessing):
 		self.correct_dark_gain = True
 		
 	def getNumberOfFrameSavedFromImageData(self,imagedata):
+		# DE nframes is the true base frame numbers saved
 		return imagedata['camera']['nframes']
 
 	def getFrameNameFromNumber(self,frame_number):
