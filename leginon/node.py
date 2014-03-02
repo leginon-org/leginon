@@ -591,5 +591,10 @@ class Node(correctorclient.CorrectorClient):
 			self.logger.warning('Second try to put the screen up')
 		self.logger.info('Screen up.')
 
+	def exposeSpecimenWithShutterOverride(self, seconds):
+		self.logger.info('Override shutter projection shutter for %ss to expose specimen but not camera' % (seconds,))
+		self.instrument.tem.exposeSpecimenNotCamera(seconds)
+		self.logger.info('specimen-only exposure done')
+
 ## module global for storing start times
 start_times = {}
