@@ -352,3 +352,6 @@ class SimTEM(tem.TEM):
 
 	def runAutoFiller(self):
 		self.resetRefrigerantCounter()
+
+	def exposeSpecimenNotCamera(self,seconds):
+		time.sleep(seconds)
