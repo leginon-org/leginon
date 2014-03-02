@@ -33,7 +33,8 @@ class TIA(ccdcamera.CCDCamera):
 		ccdcamera.CCDCamera.__init__(self)
 		self.im = None
 		self.imdisp = None
-		self.tianame = 'pyscope'
+		# Each camera needs its own display name
+		self.tianame = 'pyscope-%s' % (self.camera_name)
 		self.setupname = self.tianame + ' Setup'
 		self.imagedispname = self.tianame + ' Image Display'
 		self.imagename = self.tianame + ' Image'
