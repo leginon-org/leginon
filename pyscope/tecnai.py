@@ -1190,3 +1190,21 @@ class Tecnai(tem.TEM):
 		Trigger autofiller refill
 		'''
 		self.tecnai.TemeratureControl.ForceRefill()
+
+	def exposeSpecimenNotCamera(self,exptime=0):
+		'''
+		take control of the shutters to open
+		the gun blanker (pre-specimen)
+		but not projection shutter (post-specimen)
+		Used in pre-exposure and melting ice
+		'''
+		if exptime == 0:
+			return
+		self.setBeamBlank('on')
+		self.tecnai.BlankerShutter.ShutterOverrideOn = True
+		time.sleep(1.0)
+		self.setBeamBlank('off')
+		time.sleep(exptime)
+		self.tecnai.BlankerShutter.ShutterOverrideOn = False
+		time.sleep(1.0)
+		self.setBeamBlank('off')

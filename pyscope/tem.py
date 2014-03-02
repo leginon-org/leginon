@@ -96,3 +96,5 @@ class TEM(baseinstrument.BaseInstrument):
 	def getEnergyFiltered(self):
 		return False
 
+	def exposureSpecimenNotCamera(self):
+		return NotImplementedError()
