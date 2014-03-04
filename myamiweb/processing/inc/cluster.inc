@@ -234,14 +234,10 @@ class Cluster
 	  	// Setting blocking to true can cause it to hang.
 		stream_set_blocking($stream, false);
 		
-		// TODO: This is crazy. PHP must provide a better solution. 
-		// Setting timeout function doesn't work.
-		// not positive this sleep is necessary. needs more testing.
-		sleep(1); //seconds. 
 
 		// This block will wait a given time to get a result from the output stream.
 		$start_time = time();
-	  	$max_time = 10; // max time to wait for a result in seconds. I've seen it take 4 seconds, but this may need to be higher.
+	  	$max_time = 20; // max time to wait for a result in seconds. I've seen it take 4 seconds, but this may need to be higher.
 	  	while (empty($result) && (( time() - $start_time ) < $max_time )) { 
 			if (function_exists("stream_get_contents")) {		
 				$result = stream_get_contents($stream);
