@@ -2,6 +2,7 @@ import subprocess
 import shutil
 import sys
 import os
+import socket # For hostname
 
 class ProcessingHost (object):
 	def __init__ (self):
@@ -87,10 +88,13 @@ class ProcessingHost (object):
 			raise UnboundLocalError ("Current Job not set")		
 		
 		#Generate the processing host specific headers for the job file
-		header = self.generateHeaders(currentJob)
+		host      = socket.gethostname()
+		header    = self.generateHeaders(currentJob)
 		commandList = currentJob.getCommandList()		
 		try:
 			jobFile.write(header)		   
+			jobFile.write("\n# Target Host: " + host + "\n")
+			jobFile.write("# This job file has been created for the %s processing host. \n# Changes may be required to run this on another host.\n\n" % (host))
 			for line in commandList:
 				jobFile.write(line + '\n')
 		except IOError, e:
