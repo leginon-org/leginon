@@ -8,6 +8,7 @@ import wx
 import leginon.gui.wx.Conditioner
 import leginon.gui.wx.Settings
 import leginon.gui.wx.ToolBar
+import leginon.gui.wx.Events
 from leginon.gui.wx.Entry import IntEntry,FloatEntry
 
 class Panel(leginon.gui.wx.Conditioner.Panel):
@@ -19,7 +20,7 @@ class Panel(leginon.gui.wx.Conditioner.Panel):
 	def onStopTool(self, evt):
 		self.node.player.stop()
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, False)
-		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT, False)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT, True)
 
 	def onNodeInitialized(self):
 		self.toolbar.Bind(wx.EVT_TOOL, self.onSettingsTool, id=leginon.gui.wx.ToolBar.ID_SETTINGS)
@@ -27,10 +28,18 @@ class Panel(leginon.gui.wx.Conditioner.Panel):
 											id=leginon.gui.wx.ToolBar.ID_PLAY)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onStopTool,
 											id=leginon.gui.wx.ToolBar.ID_ABORT)
+		self.Bind(leginon.gui.wx.Events.EVT_PLAYER, self.onPlayer)
+
+	def onPlayer(self, evt):
+		if evt.state == 'play':
+			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, False)
+			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT, True)
+		elif evt.state == 'stop':
+			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, True)
+			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT, False)
 
 	def onSettingsTool(self, evt):
 		dialog = SettingsDialog(self)
-		print 'this one'
 		dialog.ShowModal()
 		dialog.Destroy()
 
@@ -38,25 +47,35 @@ class SettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
 		return ScrolledSettings(self,self.scrsize,False)
 
-class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
-	def initialize(self):
-		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
-		sb = wx.StaticBox(self, -1, 'AutoFiller')
-		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
+class ScrolledSettings(leginon.gui.wx.Conditioner.ScrolledSettings):
+	def getTitle(self):
+		return 'N2 Autofiller'
 
-		self.widgets['bypass'] = wx.CheckBox(self, -1, 'Bypass Conditioner')
-		sz = wx.GridBagSizer(7, 4)
-		sz_time = wx.GridBagSizer(1, 4)
-		sz.Add(self.widgets['bypass'], (0, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
-		label1 = wx.StaticText(self, -1, 'Wait for at least')
-		self.widgets['repeat time'] = IntEntry(self, -1, chars=6, min = 0)
-		label2 = wx.StaticText(self, -1, 'seconds before fixing condition')
-		sz_time.Add(label1, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz_time.Add(self.widgets['repeat time'], (0, 1), (1, 1), wx.EXPAND)
-		sz_time.Add(label2, (0, 2), (1, 2), wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
-		sz.Add(sz_time, (1, 0), (1, 2), wx.ALIGN_LEFT|wx.ALL)
-	
-		# column fill start
+	def addSettings(self):
+		super(ScrolledSettings,self).addSettings()
+		self.createAutofillerModeSelector((2,0))	
+		self.createColumnFillStartEntry((3,0))
+		self.createColumnFillEndEntry((4,0))
+		self.createGridLoaderFillStartEntry((5,0))
+		self.createGridLoaderFillEndEntry((6,0))
+
+	def addBindings(self):
+		super(ScrolledSettings,self).addBindings()
+		self.Bind(wx.EVT_CHOICE, self.onAutofillerModeChoice, self.mode)
+		choices = self.node.getFillerModes()
+		self.setAutofillerModeSelection(choices)
+
+	def createAutofillerModeSelector(self,start_position):	
+		szmode = wx.GridBagSizer(5, 5)
+		# plate format
+		label = wx.StaticText(self, -1, 'Plate Format:')
+		szmode.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.mode = wx.Choice(self, -1)
+		self.mode.Enable(False)
+		szmode.Add(self.mode, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.sz.Add(szmode, start_position, (1, 1), wx.ALIGN_CENTER_VERTICAL)
+
+	def createColumnFillStartEntry(self,start_position):
 		self.widgets['column fill start'] = FloatEntry(self, -1,
 																		min=0.0,
 																		allownone=False,
@@ -72,25 +91,27 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		szcolstart.Add(wx.StaticText(self, -1, '%'),
 								(0, 2), (1, 1),
 								wx.ALIGN_CENTER_VERTICAL)
+		self.sz.Add(szcolstart, start_position, (1, 2), wx.ALIGN_LEFT|wx.ALL)
 
-		# column fill end
+	def createColumnFillEndEntry(self,start_position):
 		self.widgets['column fill end'] = FloatEntry(self, -1,
 																		min=0.0,
 																		allownone=False,
 																		chars=4,
-																		value='80.0')
-		szcolend = wx.GridBagSizer(5, 5)
-		szcolend.Add(wx.StaticText(self, -1, 'Colomn Fill done when level is above'),
+																		value='85.0')
+		szcolstart = wx.GridBagSizer(5, 5)
+		szcolstart.Add(wx.StaticText(self, -1, 'Colomn Fill done when level is above'),
 								(0, 0), (1, 1),
 								wx.ALIGN_CENTER_VERTICAL)
-		szcolend.Add(self.widgets['column fill end'],
+		szcolstart.Add(self.widgets['column fill end'],
 								(0, 1), (1, 1),
 								wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
-		szcolend.Add(wx.StaticText(self, -1, '%'),
+		szcolstart.Add(wx.StaticText(self, -1, '%'),
 								(0, 2), (1, 1),
 								wx.ALIGN_CENTER_VERTICAL)
+		self.sz.Add(szcolstart, start_position, (1, 2), wx.ALIGN_LEFT|wx.ALL)
 
-		# autoloader fill start
+	def createGridLoaderFillStartEntry(self,start_position):
 		self.widgets['loader fill start'] = FloatEntry(self, -1,
 																		min=0.0,
 																		allownone=False,
@@ -106,8 +127,9 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		szloaderstart.Add(wx.StaticText(self, -1, '%'),
 								(0, 2), (1, 1),
 								wx.ALIGN_CENTER_VERTICAL)
+		self.sz.Add(szloaderstart, start_position, (1, 2), wx.ALIGN_LEFT|wx.ALL)
 
-		# loader fill end
+	def createGridLoaderFillEndEntry(self,start_position):
 		self.widgets['loader fill end'] = FloatEntry(self, -1,
 																		min=0.0,
 																		allownone=False,
@@ -117,20 +139,37 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		szloaderend.Add(wx.StaticText(self, -1, 'Grid Loader Fill done when level is above'),
 								(0, 0), (1, 1),
 								wx.ALIGN_CENTER_VERTICAL)
-		szloaderend.Add(self.widgets['column fill end'],
+		szloaderend.Add(self.widgets['loader fill end'],
 								(0, 1), (1, 1),
 								wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
 		szloaderend.Add(wx.StaticText(self, -1, '%'),
 								(0, 2), (1, 1),
 								wx.ALIGN_CENTER_VERTICAL)
 
-		sz.Add(szcolstart, (2, 0), (1, 2), wx.ALIGN_LEFT|wx.ALL)
-		sz.Add(szcolend, (3, 0), (1, 2), wx.ALIGN_LEFT|wx.ALL)
-		sz.Add(szloaderstart, (4, 0), (1, 2), wx.ALIGN_LEFT|wx.ALL)
-		sz.Add(szloaderend, (5, 0), (1, 2), wx.ALIGN_LEFT|wx.ALL)
-
-		sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
+		self.sz.Add(szloaderend, start_position, (1, 2), wx.ALIGN_LEFT|wx.ALL)
 		
+	def onAutofillerModeChoice(self, evt=None):
+		if evt is None:
+			modelabel = self.mode.GetStringSelection()
+		else:
+			modelabel = evt.GetString()
+		settings = self.node.getSettings()
+		settings['autofiller mode'] = modelabel
+		self.node.setSettings(settings)
+		self.mode.Enable(True)
 
-		return [sbsz]
+	def setAutofillerModeSelection(self,choices):
+		if choices:
+			self.mode.Clear()
+			self.mode.AppendItems(choices)
+			if self.node.settings['autofiller mode']:
+				n = self.mode.FindString(self.node.settings['autofiller mode'])
+			else:
+				n = wx.NOT_FOUND
+			if n == wx.NOT_FOUND:
+				self.mode.SetSelection(0)
+			else:
+				self.mode.SetSelection(n)
+			self.mode.Enable(True)
+			self.onAutofillerModeChoice()
 

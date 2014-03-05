@@ -4,6 +4,7 @@
 # see http://ami.scripps.edu/software/leginon-license
 
 import wx
+import threading
 
 import leginon.gui.wx.Node
 import leginon.gui.wx.Settings
@@ -29,7 +30,9 @@ class Panel(leginon.gui.wx.Node.Panel):
 	def onPlayTool(self, evt):
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT, True)
 		self.node.player.play()
-		self.node.onTest()
+		# onTest takes longer. Therefore start another thread
+		t = threading.Thread(target=self.node.onTest)
+		t.start()
 
 	def onNodeInitialized(self):
 		self.toolbar.Bind(wx.EVT_TOOL, self.onSettingsTool, id=leginon.gui.wx.ToolBar.ID_SETTINGS)
@@ -48,22 +51,40 @@ class SettingsDialog(leginon.gui.wx.Settings.Dialog):
 class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def initialize(self):
 		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
-		sb = wx.StaticBox(self, -1, 'Condition Fixer')
+		sb = wx.StaticBox(self, -1, self.getTitle())
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
+		self.sz = wx.GridBagSizer(5, 5)
+		self.addSettings()
+		sbsz.Add(self.sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
+		self.addBindings()
+		return [sbsz]
 
+	def getTitle(self):
+		return 'Condition Fixer'
+
+	def addSettings(self):
+		self.createBypassCheckBox((0,0))
+		self.createRepeatTimeEntry((1,0))
+
+	def addBindings(self):
+		self.Bind(wx.EVT_CHECKBOX, self.onBypassChange, self.widgets['bypass'])
+
+	def createBypassCheckBox(self,start_position):
 		self.widgets['bypass'] = wx.CheckBox(self, -1, 'Bypass Conditioner')
-		sz = wx.GridBagSizer(2, 4)
+		self.sz.Add(self.widgets['bypass'], start_position, (1, 2), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_LEFT)
+
+	def createRepeatTimeEntry(self,start_position):
 		sz_time = wx.GridBagSizer(1, 4)
-		sz.Add(self.widgets['bypass'], (0, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
 		label1 = wx.StaticText(self, -1, 'Wait for at least')
 		self.widgets['repeat time'] = IntEntry(self, -1, chars=6, min = 0)
 		label2 = wx.StaticText(self, -1, 'seconds before fixing condition')
 		sz_time.Add(label1, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz_time.Add(self.widgets['repeat time'], (0, 1), (1, 1), wx.EXPAND)
 		sz_time.Add(label2, (0, 2), (1, 2), wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
-		sz.Add(sz_time, (1, 0), (1, 2), wx.ALIGN_LEFT|wx.ALL)
-		sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
-		
+		self.sz.Add(sz_time, start_position, (1, 2), wx.ALIGN_LEFT|wx.ALL)
 
-		return [sbsz]
-
+	def onBypassChange(self,event):
+		settings = self.node.getSettings()
+		settings['bypass'] = self.widgets['bypass'].IsChecked()
+		self.node.setSettings(settings)
+		self.node.makeConditioningRequests()
