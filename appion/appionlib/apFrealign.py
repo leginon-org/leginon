@@ -111,8 +111,9 @@ def parseFrealign9ParamFile(paramfile,test=False):
 			'astig' : float(sline[10]),
 			'occ' : float(sline[11]),
 			'logp' : float(sline[12]),
-			'score' : float(sline[13]),
-			'change' : float(sline[14]),
+			'sigma' : float(sline[13]),
+			'score' : float(sline[14]),
+			'change' : float(sline[15]),
 		}
 		partdict[paramdict['partnum']] = paramdict
 		# test mode returns only two particles
@@ -669,6 +670,7 @@ def scale_parfile_frealign8(infile, outfile, mult, newmag=0):
 
 #=================
 def scale_parfile_frealign9(infile, outfile, mult, newmag=0):
+	''' THIS FUNCTION IS PROBABLY OUTDATED AND MAY ONLY WORK FOR FREALIGN 9.03 '''
 	''' note that this may not make sense as it would in frealign8, because frealign9 shifts are in Angstroms '''
 
 	### outfile
@@ -716,11 +718,12 @@ def scale_parfile_frealign9(infile, outfile, mult, newmag=0):
 	ff.close()
 
 #=================
-def frealign8_to_frealign9(infile, outfile, apix, occ=0, logp=0, score=0, change=0):
+def frealign8_to_frealign9(infile, outfile, apix, occ=0, logp=0, sigma=0, score=0, change=0):
+	''' modified for version 9.06 and above, character spaces for version <9.06 is different for logp value '''
 	### output file
 	ff = open(outfile, "w")
-	ff.write("%s%8s%8s%8s%10s%10s%8s%6s%9s%9s%8s%8s%13s%8s%8s\n" \
-		% ("C      ","PSI","THETA","PHI","SHX","SHY","MAG","FILM","DF1","DF2","ANGAST","OCC","-LogP","SCORE","CHANGE"))
+	ff.write("%s%8s%8s%8s%10s%10s%8s%6s%9s%9s%8s%8s%10s%11s%8s%8s\n" \
+		% ("C      ","PSI","THETA","PHI","SHX","SHY","MAG","FILM","DF1","DF2","ANGAST","OCC","-LogP","SIGMA","SCORE","CHANGE"))
 	### read & write params
 	params = parseFrealignParamFile(infile)
 	for i,p in enumerate(params):
@@ -737,8 +740,8 @@ def frealign8_to_frealign9(infile, outfile, apix, occ=0, logp=0, score=0, change
 		dx = float(p['defoc1'])
 		dy = float(p['defoc2'])
 		ast = float(p['astang'])
-		ff.write("%7d%8.2f%8.2f%8.2f%10.2f%10.2f%8d%6d%9.1f%9.1f%8.2f%8.2f%13d%8.2f%8.2f\n" \
-			% (partnum, psi, theta, phi, shx, shy, mag, film, dx, dy, ast, occ, logp, score, change))
+		ff.write("%7d%8.2f%8.2f%8.2f%10.2f%10.2f%8d%6d%9.1f%9.1f%8.2f%8.2f%10d%11.4f%8.2f%8.2f\n" \
+			% (partnum, psi, theta, phi, shx, shy, mag, film, dx, dy, ast, occ, logp, sigma, score, change))
 	ff.close()
 
 #=================
@@ -766,6 +769,44 @@ def frealign9_to_frealign8(infile, outfile, apix):
 		ff.write("%7d%8.2f%8.2f%8.2f%8.2f%8.2f%8d%6d%9.1f%9.1f%8.2f\n" \
 			% ((i), psi, theta, phi, shx, shy, mag, micnum, dx, dy, ast))	
 	ff.close()
+
+#=================
+def frealign9_03_to_frealign9_06(infile, outfile):
+	''' modified for version 9.06 and above, character spaces for version <9.06 is different for logp value '''
+	### output file
+	ff = open(outfile, "w")
+	ff.write("%s%8s%8s%8s%10s%10s%8s%6s%9s%9s%8s%8s%10s%11s%8s%8s\n" \
+		% ("C      ","PSI","THETA","PHI","SHX","SHY","MAG","FILM","DF1","DF2","ANGAST","OCC","-LogP","SIGMA","SCORE","CHANGE"))
+
+	### read & write params
+	params = parseFrealign9ParamFile(infile)
+	for i,p in params.iteritems():
+		partnum = p['partnum']
+		psi = p['psi']
+		theta = p['theta']
+		phi = p['phi']
+		shx = p['shiftx'] 
+		shy = p['shifty']
+		mag = p['mag']
+		micnum = p['micn']
+		dx = p['defx']
+		dy = p['defy']
+		ast = p['astig']
+		occ = p['occ']
+		logp = p['logp']
+		try:
+			sigma = p['sigma']
+			score = p['score']
+			change = p['change']
+		except:
+			sigma = 0.0
+			score = 0.0
+			change = 0.0
+
+		ff.write("%7d%8.2f%8.2f%8.2f%10.2f%10.2f%8d%6d%9.1f%9.1f%8.2f%8.2f%10d%11.4f%8.2f%8.2f\n" \
+			% (partnum, psi, theta, phi, shx, shy, mag, micnum, dx, dy, ast, occ, logp, sigma, score, change))	
+	ff.close()
+
 
 #=================
 def extract_from_paramfile_frealign8(bestparticlefile, inparfile, outparfile):
@@ -813,6 +854,8 @@ def exclude_class_from_frealign9_parfile(inparfile, outlist, minocc=50.0, freali
 		reads input frealign9 parameter file for a particular class. If the occupancy of the particle is greater than 'minocc', 
 		then treats that particle as belonging to the class, and outputs to an EMAN-style list file (starts with 0). Optionally
 		can output either a frealign8 or frealign9 style parameter file with that class excluded
+	
+		modified for version 9.06 and above, character spaces for version <9.06 is different for logp value
 	''' 
 
 	if frealign8outfile is not None and apix is None:
@@ -827,8 +870,8 @@ def exclude_class_from_frealign9_parfile(inparfile, outlist, minocc=50.0, freali
 			% ("C      ","PSI","THETA","PHI","SHX","SHY","MAG","FILM","DF1","DF2","ANGAST"))
 	if frealign9outfile is not None:
 		ff9 = open(frealign9outfile, "w")
-		ff9.write("%s%8s%8s%8s%10s%10s%8s%6s%9s%9s%8s%8s%13s%8s%8s\n" \
-	                % ("C      ","PSI","THETA","PHI","SHX","SHY","MAG","FILM","DF1","DF2","ANGAST","OCC","-LogP","SCORE","CHANGE"))
+		ff9.write("%s%8s%8s%8s%10s%10s%8s%6s%9s%9s%8s%8s%10s%11s%8s%8s\n" \
+	                % ("C      ","PSI","THETA","PHI","SHX","SHY","MAG","FILM","DF1","DF2","ANGAST","OCC","-LogP","SIGMA","SCORE","CHANGE"))
 	k = 1
 	olddx = 0
 	micnum = 0
@@ -847,9 +890,11 @@ def exclude_class_from_frealign9_parfile(inparfile, outlist, minocc=50.0, freali
 		occ = p['occ']
 		logp = p['logp']
 		try:
+			sigma = p['sigma']
 			score = p['score']
 			change = p['change']
 		except:
+			sigma = 0.0
 			score = 0.0
 			change = 0.0
 
@@ -870,8 +915,8 @@ def exclude_class_from_frealign9_parfile(inparfile, outlist, minocc=50.0, freali
 			else:
 				newocc = occ
 			if frealign9outfile is not None:
-				ff9.write("%7d%8.2f%8.2f%8.2f%10.2f%10.2f%8d%6d%9.1f%9.1f%8.2f%8.2f%13d%8.2f%8.2f\n" \
-					% (k, psi, theta, phi, shx, shy, mag, micnum, dx, dy, ast, newocc, logp, score, change))
+				ff9.write("%7d%8.2f%8.2f%8.2f%10.2f%10.2f%8d%6d%9.1f%9.1f%8.2f%8.2f%10d%11.4f%8.2f%8.2f\n" \
+					% (k, psi, theta, phi, shx, shy, mag, micnum, dx, dy, ast, newocc, logp, sigma, score, change))
 			k+=1
 
 	### close frealign files
@@ -971,8 +1016,8 @@ def split_frealign9_parfile(inparfile, *outparfiles):
 	for outfile in outparfiles:
 		### output file
 		ff = open(outfile, "w")
-		ff.write("%s%8s%8s%8s%10s%10s%8s%6s%9s%9s%8s%8s%13s%8s%8s\n" \
-			% ("C      ","PSI","THETA","PHI","SHX","SHY","MAG","FILM","DF1","DF2","ANGAST","OCC","-LogP","SCORE","CHANGE"))
+		ff.write("%s%8s%8s%8s%10s%10s%8s%6s%9s%9s%8s%8s%10s%11s%8s%8s\n" \
+			% ("C      ","PSI","THETA","PHI","SHX","SHY","MAG","FILM","DF1","DF2","ANGAST","OCC","-LogP","SIGMA","SCORE","CHANGE"))
 		### read & write params
 		for i,p in params.iteritems():	
 			if i % 1000 == 0:
@@ -990,10 +1035,11 @@ def split_frealign9_parfile(inparfile, *outparfiles):
 			ast = float(p['astig'])
 			occ = float(p['occ']) / len(outparfiles)
 			logp = float(p['logp']) 
+			sigma = float(p['sigma'])
 			score = float(p['score'])
 			change = float(p['change'])
 
-			ff.write("%7d%8.2f%8.2f%8.2f%10.2f%10.2f%8d%6d%9.1f%9.1f%8.2f%8.2f%13d%8.2f%8.2f\n" \
-				% (i, psi, theta, phi, shx, shy, mag, film, dx, dy, ast, occ, logp, score, change))
+			ff.write("%7d%8.2f%8.2f%8.2f%10.2f%10.2f%8d%6d%9.1f%9.1f%8.2f%8.2f%10d%11.4f%8.2f%8.2f\n" \
+				% (i, psi, theta, phi, shx, shy, mag, film, dx, dy, ast, occ, logp, sigma, score, change))
 		ff.close()
 		
