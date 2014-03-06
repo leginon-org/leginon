@@ -602,7 +602,8 @@ class Acquisition(targetwatcher.TargetWatcher):
 		return filmdata
 
 	def exposeSpecimen(self, seconds):
-		self.exposeSpecimenWithScreenDown(seconds)
+		self.exposeSpecimenWithShutterOverride(seconds)
+		#self.exposeSpecimenWithScreenDown(seconds)
 
 	def getImageShiftOffset(self):
 		pimageshift = self.presetsclient.currentpreset['image shift']
