@@ -12,17 +12,21 @@ from appionlib import apFile
 from appionlib import apScriptLog
 from appionlib import apIMAGIC
 from appionlib import apXmipp
+from appionlib import apImagicFile
 
-''' There are 3 things we want to ensure for stacks used with Relion:
-1. The particles must be white on a black background (this is not actually true)
+''' There are 4 things we want to ensure for stacks used with Relion:
+1. The particles must be white on a black background (this is not actually true according to Sjors)
 2. The stack must be normalized (xmipp normalize is good for this)
 3. The stack must NOT be ctf-corrected (aka ctf-phaseFlipped)
+4. Relion prefers mrc stacks over Imagic and should be named .mrcs
 
 The most efficient way to achieve this is:
 1. If it needs to be inverted only (to make it whiteOnBlack), run proc2d.
 2. If it needs to be normalized only, just run xmipp normalize.
 3. If it needs to be inverted and normalized, run proc2d followed by xmipp normalize.
 4. If it needs to be un-ctf-corrected run makestack2.py and do inversion and normalization at that time if needed.
+5. After makestack, run ImagicStackToFrealignMrcStack(), rename to .mrcs in func, remove the .hed and .img that makestack made
+6. Make sure star file has mrcs.
 '''
 
 # TODO: Do these functions belong somewhere else or can they be made const?
@@ -143,6 +147,8 @@ class PrepRefineRelion(apPrepRefine.Prep3DRefinement):
 		'''
 		The stack is remaked without ctf correction and inverted and normalized if needed
 		'''
+		self.stackErrorCheck( self.stack['file'] )
+		
 		newstackroot = os.path.join(self.params['rundir'],os.path.basename(self.stack['file'])[:-4])
 		self.stack['phaseflipped']    = False
 		self.stack['format']          = 'relion' #TODO: Where is this used? 
@@ -154,16 +160,33 @@ class PrepRefineRelion(apPrepRefine.Prep3DRefinement):
 		
 		# If we just need to normalize, run xmipp_normalize
 		if self.normalize and not self.un_ctf_correct:
+			apDisplay.printMsg("Normalizing stack for use with Relion")
 			extname,addformat = self.proc2dFormatConversion()
-			outstack = os.path.join(self.params['rundir'], "start.%s" % extname)
+			stackfilenamebits = self.stack['file'].split('.')
+			basestackname = stackfilenamebits[0]
+			outstack = os.path.join(self.params['rundir'], "%s.%s" % (basestackname, extname) )
 			self.xmippNormStack(self.stack['file'], outstack)
 			self.stack['file'] = outstack
 		
 		# If we don't need to un-ctf-correct, we are done
-		if not self.un_ctf_correct:
-			return
+		if self.un_ctf_correct:
+			self.undoCTFCorrect( newstackroot )
+			
+		# Convert the imagic stack to an MRC stack format
+		# Relion preferes an mrc stack with .mrcs extension
+		imagicStack = self.stack['file'] #os.path.join(self.params['rundir'],'start.hed')
+		mrcStack = newstackroot+'.mrc'
+		mrcsStack = newstackroot+'.mrcs' #TODO: why no dot here? Was adding double...
+		self.ImagicStackToMrcStack( imagicStack )
 		
-		# At this point, the stack needs to be remade un-ctf-corrected, and possibly normalized and/or inverted		
+		apDisplay.printMsg("Renaming %s to %s " % (mrcStack, mrcsStack) )
+		os.rename(mrcStack, mrcsStack)		
+		self.stack['file'] = mrcsStack
+		
+
+			
+	def undoCTFCorrect(self, newstackroot):		
+					# At this point, the stack needs to be remade un-ctf-corrected, and possibly normalized and/or inverted		
 		apDisplay.printWarning('Relion needs a stack without ctf correction. A new stack is being made....')
 		
 		# Gather all the makestack parameters
@@ -193,7 +216,7 @@ class PrepRefineRelion(apPrepRefine.Prep3DRefinement):
 
 		# Build the makestack2 command
 		cmd = '''
-makestack2.py --single=%s --fromstackid=%d %s %s %s %s %s %s --normalized %s --boxsize=%d --bin=%d --description="frealign refinestack based on %s(id=%d)" --projectid=%d --preset=%s --runname=%s --rundir=%s --no-wait --no-commit --no-continue --session=%s --expId=%d --jobtype=makestack2
+makestack2.py --single=%s --fromstackid=%d %s %s %s %s %s %s --normalized %s --boxsize=%d --bin=%d --description="Relion refinestack based on %s(id=%d)" --projectid=%d --preset=%s --runname=%s --rundir=%s --no-wait --no-commit --no-continue --session=%s --expId=%d --jobtype=makestack2
 		''' % (os.path.basename(newstackimagicfile),stackid,lowpasstext,highpasstext,partlimittext,reversetext,defoctext,inverttext,xmipp_normtext,unbinnedboxsize,bin,stackpathname,stackid,projectid,presetname,newstackrunname,newstackrundir,sessionname,sessionid)
 		
 		# Run the command
@@ -201,11 +224,6 @@ makestack2.py --single=%s --fromstackid=%d %s %s %s %s %s %s --normalized %s --b
 		returncode = self.runAppionScriptInSubprocess(cmd,logfilepath)
 		if returncode > 0:
 			apDisplay.printError('Error in Relion specific stack making')
-
-		# Convert the imagic stack to an MRC stack format
-		# Relion preferes an mrc stack with .mrcs extension
-		#self.ImagicStackToMrcStack(newstackimagicfile)
-		#os.rename(newstackimagicfile[:-4]+'.mrc',newstackroot+'.mrc')
 
 		# Make sure our new stack params reflects the changes made
 		# Use the same complex equation as in eman clip
@@ -219,7 +237,23 @@ makestack2.py --single=%s --fromstackid=%d %s %s %s %s %s %s --normalized %s --b
 		for rmfile in rmfiles:
 			apFile.removeFile(rmfile)
 
+	def stackErrorCheck(self,stackfile):
+		# Check that the stackfile min and max densities make sense. 
+		# Relion fails if min is greater than max.
+		headerdict = apImagicFile.readImagicHeader(stackfile)
+		
+		if headerdict['min'] > headerdict['max']:
+			min = headerdict['min']
+			max = headerdict['max']
+			headerdict['min'] = max
+			headerdict['max'] = min
+			apDisplay.printWarning('Relion will not process this stack because there is an error in the IMAGIC image header. The minimum pixel density is a larger value than the maximum pixel density.')
+
 	def ImagicStackToMrcStack(self,stackfile):
+		# Check that the stackfile min and max densities make sense. 
+		# Relion fails if min is greater than max.
+		self.stackErrorCheck(stackfile)
+		
 		stackroot = stackfile[:-4]
 		stackbaseroot = os.path.basename(stackfile).split('.')[0]
 		apDisplay.printMsg('converting %s from default IMAGIC stack format to MRC as %s.mrc'% (stackroot,stackbaseroot))
@@ -228,7 +262,7 @@ makestack2.py --single=%s --fromstackid=%d %s %s %s %s %s %s --normalized %s --b
 		tmpstackdir = os.path.dirname(stackfile)
 		stackext = os.path.basename(stackfile).split('.')[-1]
 		if stackext != 'mrc' and tmpstackdir == self.params['rundir']:
-			os.remove(stackfile)
+			#os.remove(stackfile)
 			if stackext == 'hed':
 				imgfilepath = stackfile.replace('hed','img')
 				os.remove(imgfilepath)
@@ -240,7 +274,8 @@ makestack2.py --single=%s --fromstackid=%d %s %s %s %s %s %s --normalized %s --b
 		paramfile = 'params.000.par'
 		self.params['noctf'] = False
 		self.params['ctftilt'] = False
-		apFrealign.generateParticleParams(self.params,self.model['data'],paramfile)
+		self.params['ctfmethod'] = None
+		apFrealign.generateParticleParams( self.params, self.model['data'], paramfile, True )
 		self.addToFilesToSend(paramfile)
 
 #=====================

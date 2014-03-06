@@ -23,9 +23,9 @@ class RelionSingleModelRefineJob(apRefineJob.RefineJob):
 	def setIterationParamList(self):
 		super(RelionSingleModelRefineJob,self).setIterationParamList()
 		self.iterparams.extend([
-				{'name':"ctf", 'help':"Do CTF-correction", 'default':"True"},
-				{'name':"ctf_intact_first_peak", 'help':"Ignore CTFs until first peak", 'default':"True"},
-				{'name':"ctf_corrected_ref", 'help':"Has reference been CTF corrected?", 'default':"True"},
+				{'name':"ctf", 'help':"Do CTF-correction", 'default':"False", 'action':"store_true"},
+				{'name':"ctf_intact_first_peak", 'help':"Ignore CTFs until first peak", 'default':"False", 'action':"store_true"},
+				{'name':"ctf_corrected_ref", 'help':"Has reference been CTF corrected?", 'default':"False", 'action':"store_true"},
 				{'name':"ini_high", 'help':"Initial low-pass filter", 'default':"60"},
 				{'name':"healpix_order", 'help':"Angular sampling interval", 'default':"7.5"},
 				{'name':"auto_local_healpix_order", 'help':"Local searches from auto-sampling", 'default':"1.8"},
@@ -83,10 +83,22 @@ class RelionSingleModelRefineJob(apRefineJob.RefineJob):
 		# Add relion command parameters to a parameter dictionary
 		# self.params is designed to handle multiple models, so some of the params may be stored as a list.
 		# For these params just take the value at index 0 since this file is only for single model cases.
+		
+#		for (key, value) in self.params.items():
+#			print 'param: ' + key + ', '
+#			print value
 		relionParams={}
-		relionParams["sym"]                      = self.params['symmetry'][0]
+		if isinstance(self.params['symmetry'], (list, tuple)):
+			relionParams["sym"] = self.params['symmetry'][0]
+		else:
+			relionParams["sym"] = self.params['symmetry']
+
+		if isinstance(self.params['ini_high'], (list, tuple)):
+			relionParams["ini_high"] = self.params['ini_high'][0]
+		else:
+			relionParams["ini_high"] = self.params['ini_high']
+
 		relionParams["angpix"]                   = self.params['apix']
-		relionParams["ini_high"]                 = self.params['ini_high'][0]
 		relionParams["healpix_order"]            = self.convertDegToOrder( self.params['healpix_order'][0] )
 		relionParams["auto_local_healpix_order"] = self.convertDegToOrder( self.params['auto_local_healpix_order'][0] )
 		relionParams["offset_range"]             = self.params['offset_range'][0]
@@ -112,14 +124,20 @@ class RelionSingleModelRefineJob(apRefineJob.RefineJob):
 		 --ctf_corrected_ref --sym C7 --K 10 --oversampling 1 --healpix_order 2 --offset_range 5 
 		 --offset_step 2 --norm --scale   --j 2
 		 '''
-		 
+#		for (key, value) in relionParams.items():
+#			print 'relion param: ' + key + ', ' 
+#			print value
+#		 
 		 ### TODO: add --continue
 		 ### TODO: // For C-point group symmetries, join half-reconstructions up to 40A to prevent diverging orientations
 		 ###		if (sym_group.getValue() == "C")
 		 ###			cline += " --low_resol_join_halves 40";
 		
-		command = "mpirun -np 6 " 
-		relionProgramLocation = "`which relion_refine_mpi` " #"/usr/local/relion-1.1/bin/relion_refine_mpi "
+		# -np is the number of MPI processors which should match the number of requested nodes.
+		# It is best to request an odd number of nodes
+		command = "mpirun -np " + str(self.nodes) + " " 
+		relionProgramLocation = "/usr/local/relion-1.2/bin/relion_refine_mpi "
+		#relionProgramLocation = "`which relion_refine_mpi` " #"/usr/local/relion-1.1/bin/relion_refine_mpi "
 		# TODO: We should find the relion program automagically 
 		#protocolname = 'xmipp_protocol_projmatch'
 		# Locate protocol_projmatch
@@ -137,11 +155,12 @@ class RelionSingleModelRefineJob(apRefineJob.RefineJob):
 			else:
 				command += "--" + key + " " + str(value) + " "
 
-		# What are the number of threads?
-		command += "--j 2 "
+		# --j is the number of threads per node, and should match the number of processors per node selected by the user.
+		command += " --j " + str(self.ppn)
 		
 		# Always add these flags for 3D Auto Refine
-		command += "--flatten_solvent  --oversampling 1 --auto_sampling --split_random_halves  --norm --scale "
+		# TODO: remove --auto_sampling??
+		command += " --flatten_solvent  --oversampling 1 --auto_sampling --split_random_halves  --norm --scale "
 		
 		return command
 
@@ -210,11 +229,12 @@ _rlnAmplitudeContrast
 
 		self.addToLog('....Creating Relion .star file....')
 		self.createStarFile(relionParams)
-		stackpath = os.path.join( self.params['remoterundir'], self.params['stackname'] )
-		# TODO: Amplitude Contrast is hard coded below. This needs to be changed.
+		stackpath = os.path.join( self.params['remoterundir'], self.params['stackname'][:-5] ) #remove 5 chars (.mrcs) from the name
+		stackpath = stackpath + ".mrcs"
+		
 		kv = str(self.params['kv'])
 		cs = str(self.params['cs'])
-		starCommandInsidePart = '{if ($1!="C") {print $1"@'+stackpath+'", $8, $9, $10, $11, " '+kv+' '+cs+' 0.1"}  }'
+		starCommandInsidePart = '{if ($1!="C") {print $1"@'+stackpath+'", $8, $9, $10, $11, " '+kv+' '+cs+' ",$15}  }'
 		starCommand = "awk '"+starCommandInsidePart+"' < params.000.par >> %s" % (relionParams["i"])
 		tasks = self.addToTasks( tasks, starCommand )
 		
@@ -223,9 +243,9 @@ _rlnAmplitudeContrast
 		self.addToLog('....Start running Relion Single Model Refinement....')
 		tasks = self.addToTasks( tasks, command, self.calcRefineMem(), self.params['nproc'] )
 		
-		tasklogfilename = 'relionTaskLog.log'
-		tasklogfile = os.path.join(self.params['recondir'],tasklogfilename)
-		tasks = self.logTaskStatus(tasks,'protocol_run',tasklogfile)
+		#tasklogfilename = 'relionTaskLog.log'
+		#tasklogfile = os.path.join(self.params['recondir'],tasklogfilename)
+		#tasks = self.logTaskStatus(tasks,'protocol_run',tasklogfile)
 
 		self.addJobCommands(tasks)
 
