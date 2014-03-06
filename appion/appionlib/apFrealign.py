@@ -109,12 +109,28 @@ def parseFrealign9ParamFile(paramfile,test=False):
 			'defx' : float(sline[8]),
 			'defy' : float(sline[9]),
 			'astig' : float(sline[10]),
-			'occ' : float(sline[11]),
-			'logp' : float(sline[12]),
-			'sigma' : float(sline[13]),
-			'score' : float(sline[14]),
-			'change' : float(sline[15]),
-		}
+			}
+		try:
+			paramdict['occ'] = float(sline[11])
+		except:
+			paramdict['occ'] = 0.0
+		try:
+			paramdict['logp'] = float(sline[12])
+		except:
+			paramdict['logp'] = 0.0
+		try:
+			paramdict['sigma'] = float(sline[13])
+		except:
+			paramdict['sigma'] = 0.0
+		try:
+			paramdict['score'] = float(sline[14])
+		except:
+			paramdict['score'] = 0.0
+		try:
+			paramdict['change'] = float(sline[15])
+		except:
+			paramdict['change'] = 0.0
+
 		partdict[paramdict['partnum']] = paramdict
 		# test mode returns only two particles
 		if test and len(parttree) == 2:
