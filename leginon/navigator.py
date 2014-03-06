@@ -145,8 +145,6 @@ class Navigator(node.Node):
 		self.logger.info('change to parent preset: %s' % (preset['name'],))
 		self.presetsclient.toScope(preset['name'])
 
-		if self.settings['preexpose'] and preset['pre exposure']:
-			self.exposeSpecimenWithScreenDown(preset['pre exposure'])
 		self.startTimer('move')
 		# Force cycle_after to True because PresetsManager does not know that preset
 		# has been changed by Navigator and will not cycle on the first target.  
@@ -336,6 +334,10 @@ class Navigator(node.Node):
 		target = shape[0]/2.0-0.5+self.origmove[0], shape[1]/2.0-0.5+self.origmove[1]
 		status = 'ok'
 		if check:
+			# pre-expose after first move and before reacquire
+			if preset and self.settings['preexpose'] and preset['pre exposure']:
+				self.exposeSpecimenWithShutterOverride(seconds)
+
 			if self.outofbounds(target, shape):
 				self.logger.info('target out of bounds, so cannot check error')
 				self.setStatus('idle')
