@@ -173,7 +173,7 @@ class CalibrationClient(object):
 			raise RuntimeError('invalid correlation type')
 		self.node.stopTimer('scope change correlation')
 
-		if lp is not None:
+		if lp is not None and lp > 0.0001:
 			cor = scipy.ndimage.gaussian_filter(cor, lp)
 
 		self.displayCorrelation(cor)
