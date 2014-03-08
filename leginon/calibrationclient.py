@@ -1283,26 +1283,40 @@ class StageTiltCalibrationClient(StageCalibrationClient):
 		'''
 		orig_a = self.instrument.tem.StagePosition['a']
 
+		state0 = leginondata.ScopeEMData()
 		state1 = leginondata.ScopeEMData()
 		state2 = leginondata.ScopeEMData()
+		state0['stage position'] = {'a':0.0}
 		state1['stage position'] = {'a':-tilt_value}
 		state2['stage position'] = {'a':tilt_value}
 		## alpha backlash correction
 		self.instrument.tem.StagePosition = state1['stage position']
-		self.instrument.tem.StagePosition = state2['stage position']
 		# make sure main screen is up since there is no failure in this function
 		self.instrument.tem.setMainScreenPosition('up')
+
 		## do tilt and measure image shift
-		im1 = self.acquireImage(state1)
-		shiftinfo = self.measureScopeChange(im1, state2, correlation_type=correlation_type)
+		## move from state2, through 0, to state1 to remove backlash
+		self.instrument.tem.StagePosition = state2['stage position']
+		self.instrument.tem.StagePosition = state0['stage position']
+		im0 = self.acquireImage(state0)
+		# measure the change from 0 to state1
+		shiftinfo1 = self.measureScopeChange(im0, state1, correlation_type=correlation_type)
+		## move from state1, through 0, to state2 to remove backlash
+		self.instrument.tem.StagePosition = state0['stage position']
+		im0 = self.acquireImage(state0)
+		# measure the change from 0 to state1
+		shiftinfo2 = self.measureScopeChange(im0, state2, correlation_type=correlation_type)
+
+		# return to original
 		self.instrument.tem.StagePosition = {'a':orig_a}
 
-		state1 = shiftinfo['previous']['scope']
-		state2 = shiftinfo['next']['scope']
-		pixelshift = shiftinfo['pixel shift']
-		#psize = self.getPixelSize(state1['magnification'])
-		#dist = psize * math.hypot(pixelshift['row'], pixelshift['col'])
-		
+		state1 = shiftinfo1['next']['scope']
+		state2 = shiftinfo2['next']['scope']
+		pixelshift = {}
+		# combine the two half of the tilts
+		for axis in shiftinfo1['pixel shift'].keys():
+			pixelshift[axis] = shiftinfo2['pixel shift'][axis] - shiftinfo1['pixel shift'][axis]
+					
 		# fake the current state for the transform with alpha = 0
 		scope = leginondata.ScopeEMData(initializer=state1)
 		scope['stage position']['a'] = 0.0
