@@ -176,8 +176,9 @@ class RCTAcquisition(acquisition.Acquisition):
 	def avoidTargetAdjustment(self,target_to_adjust,recent_target):
 		'''
 		RCT should not adjust targets.  StageTracking is doing it.
-		The way transformmanager looks for recent target can give wrong
-		result after change for issue #2526
+		The way imagehandler getLastParentImage looks for last version
+		give wrong results since tilt number is not part of the query
+		and stage tracked image version is reset to 0.
 		The drift after stage tilt and focus will not be adjusted this way.
 		However, since the targets are moved by iterative navigator move,
 		this should be o.k.
