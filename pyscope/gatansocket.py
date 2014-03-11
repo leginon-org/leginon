@@ -169,6 +169,10 @@ class GatanSocket(object):
 			total_recv += len(new_recv)
 		buf = ''.join(parts)
 		message_recv.unpack(buf)
+		## log the error code from received message
+		sendargs = message_send.array['longargs']
+		recvargs = message_recv.array['longargs']
+		log('Func: %d, Code: %d' % (sendargs[0],recvargs[0]))
 
 	def GetLong(self, funcName):
 		'''common class of function that gets a single long'''
