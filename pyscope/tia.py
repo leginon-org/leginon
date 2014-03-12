@@ -259,5 +259,9 @@ class TIA_Falcon(TIA):
 	camera_name = 'BM-Falcon'
 	binning_limits = [1,2,4]
 
+	def getPixelSize(self):
+		return {'x': 1.4e-5, 'y': 1.4e-5}
+
+
 class TIA_Orius(TIA):
 	camera_name = 'BM-Orius'
