@@ -417,7 +417,7 @@ function getSessionList($projectId,$sessionId){
 // TODO: what if the cluster does not use qstat? Moab uses mstat or some thing like that.
 function checkClusterJobs($processhost, $user, $pass) {
 	$cmd = "qstat -au ".$user." | egrep '^[0-9]'";
-	$subjobs = exec_over_ssh($processhost, $user, $pass, $cmd, true);
+	$subjobs = exec_over_ssh($processhost, $user, $pass, $cmd, true, $port=22, $max_time=10);
 	return $subjobs;
 }
 
@@ -882,7 +882,7 @@ $xvfb=False, $xtra=False, $nproc=1, $ppn=0, $nodes=0, $walltime="240", $cputime=
 	echo "<tr><td>Command</td><td><font size='-2'>$cmd</font></td></tr>\n";
 	
 	// submit job to cluster
-	$jobdata = exec_over_ssh($processhost, $user, $pass, $cmd, True);
+	$jobdata = exec_over_ssh($processhost, $user, $pass, $cmd, True, $port=22, $max_time=20);
 	if ( empty($jobdata) ) {		
 		$errMsg .= "Error: Job submission to $processhost failed. <br>  ";
 		$errMsg .= pconnError();

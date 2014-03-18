@@ -16,14 +16,14 @@ require_once "../processing/inc/cluster.inc";
 $errorMessage = "No error code has been set by the system.";
 
 // Set $blocking to true to wait for the command to execute before returning.
-function exec_over_ssh($host, $username, $password, $command, $result=false, $port=22) 
+function exec_over_ssh($host, $username, $password, $command, $result=false, $port=22, $max_time=1) 
 {
 	global $errorMessage;		
 	$sshResult = true;
 	
 	try {
 		$cluster = new Cluster($host);
-		$sshResult = $cluster->executeOnHost($username, $password, $command, $port);
+		$sshResult = $cluster->executeOnHost($username, $password, $command, $result=$result, $port=$port, $max_time=$max_time);
 	} catch(Exception $e) {
   		$errorMessage = 'Failed to execute command ('.$command.') on host ('.$host.') for user ('.$username.'). Message: ' .$e->getMessage();
   		$sshResult = false;

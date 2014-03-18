@@ -214,7 +214,7 @@ class Cluster
 		return Path::formatEndPath($path, $this->dirSeparator);
 	}
 	
-	function executeOnHost ($username, $password, $command, $returnResult=false, $port=22)
+	function executeOnHost ($username, $password, $command, $returnResult=false, $port=22, $max_time=1)// max time to wait for a result in seconds. I've seen it take 4 seconds, but this may need to be higher.
 	{
 		$result = false;
 				
@@ -234,10 +234,10 @@ class Cluster
 	  	// Setting blocking to true can cause it to hang.
 		stream_set_blocking($stream, false);
 		
+		//error_log("Command = ".$command." max_time =".$max_time);
 
 		// This block will wait a given time to get a result from the output stream.
 		$start_time = time();
-	  	$max_time = 20; // max time to wait for a result in seconds. I've seen it take 4 seconds, but this may need to be higher.
 	  	while (empty($result) && (( time() - $start_time ) < $max_time )) { 
 			if (function_exists("stream_get_contents")) {		
 				$result = stream_get_contents($stream);
@@ -245,6 +245,8 @@ class Cluster
 				$result = fread($stream,4096);
 			}	  		
 	  	}	
+	  	
+	  	//error_log("Command Result = ".$result." Port = "."$port");
 	  	
 	  	// This is just for testing
 //	  	$totalTime = time() - $start_time;
