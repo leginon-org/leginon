@@ -14,7 +14,7 @@ require_once "inc/project.inc";
 $expId = $_GET['expId'];
 $stackId = $_GET['sId'];
 $acerunId = ($_GET['ctfrunId']) ? $_GET['ctfrunId']:'';
-$ff = ($_GET['ff']) ? $_GET['ff'] : 'EMAN2';
+$ff = ($_GET['ff']) ? $_GET['ff'] : 'FREALIGN';
 
 $particle = new particledata();
 $leginon = new leginondata();
@@ -68,7 +68,7 @@ if (file_exists($fpath)) unlink($fpath);
 if ($ff=='FREALIGN')
 	$format = "%7d%8.3f%8.3f%8.3f%8.3f%8.3f%9.1f%5d%9.1f%9.1f%8.2f%7.2f%8.2f\n";
 elseif ($ff=='RELION')
-	$format = "%d@stack.spi mic%d %5d %5d %7.2f %3d %3.1f %6.4f\n";
+	$format = "%d@start.mrcs mic%d %5d %5d %7.2f %3d %3.1f %6.4f\n";
 elseif ($ff=='EMAN2')
 	$format = "%7d  %9.6f  %9.6f  %7.3f  %3d  %3.1f  %6.4f %s\n";
 
@@ -76,9 +76,9 @@ $errornum=0;
 
 #for relion header
 if ($ff=='RELION') {
-	$l = "data_\nloop_\n_rlnImageName\n_rlnMicrographName\n_rlnDefocusU\n";
-	$l.= "_rlnDefocusV\n_rlnDefocusAngle\n_rlnVoltage\n";
-	$l.= "_rlnSphericalAberration\n_rlnAmplitudeContrast\n";
+	$l = "data_\nloop_\n_rlnImageName #1\n_rlnMicrographName #2\n_rlnDefocusU #3\n";
+	$l.= "_rlnDefocusV #4\n_rlnDefocusAngle #5\n_rlnVoltage #6\n";
+	$l.= "_rlnSphericalAberration #7\n_rlnAmplitudeContrast#8\n";
 	file_put_contents($fpath,$l,FILE_APPEND | LOCK_EX);
 }
 
