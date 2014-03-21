@@ -78,7 +78,7 @@ $errornum=0;
 if ($ff=='RELION') {
 	$l = "data_\nloop_\n_rlnImageName #1\n_rlnMicrographName #2\n_rlnDefocusU #3\n";
 	$l.= "_rlnDefocusV #4\n_rlnDefocusAngle #5\n_rlnVoltage #6\n";
-	$l.= "_rlnSphericalAberration #7\n_rlnAmplitudeContrast#8\n";
+	$l.= "_rlnSphericalAberration #7\n_rlnAmplitudeContrast #8\n";
 	file_put_contents($fpath,$l,FILE_APPEND | LOCK_EX);
 }
 
