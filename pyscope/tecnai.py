@@ -1177,20 +1177,6 @@ class Tecnai(tem.TEM):
 		'''
 		pass
 
-
-	def getRefrigerantLevel(self,id=0):
-		'''
-		Get current refrigerant level. Only works on Krios. id 0 is the
-		autoloader, 1 is the column.
-		'''
-		return self.tecnai.TemperatureControl.RefrigerantLevel(id)
-
-	def runAutoFiller(self):
-		'''
-		Trigger autofiller refill
-		'''
-		self.tecnai.TemeratureControl.ForceRefill()
-
 	def exposeSpecimenNotCamera(self,exptime=0):
 		'''
 		take control of the shutters to open
@@ -1208,3 +1194,24 @@ class Tecnai(tem.TEM):
 		self.tecnai.BlankerShutter.ShutterOverrideOn = False
 		time.sleep(1.0)
 		self.setBeamBlank('off')
+
+	def runAutoFiller(self):
+		'''
+		Trigger autofiller refill
+		'''
+		self.tecnai.TemperatureControl.ForceRefill()
+
+	def isAutoFillerBusy(self):
+		try:
+			isbusy = self.tecnai.TemperatureControl.DewarsAreBusyFilling
+		except:
+			# property not exist for older versions
+			isbusy = None
+		return isbusy
+
+	def getRefrigerantLevel(self,id=0):
+		'''
+		Get current refrigerant level. Only works on Krios. id 0 is the
+		autoloader, 1 is the column.
+		'''
+		return self.tecnai.TemperatureControl.RefrigerantLevel(id)
