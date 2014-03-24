@@ -148,6 +148,7 @@ class AutoNitrogenFiller(Conditioner):
 	def fixCondition(self, condition_type):
 		self.setStatus('processing')
 		self.logger.info('handle fix condition request')
+		self.monitorRefillWithIsBusy()
 		refilled = self.refillRefrigerantLevel()
 		if refilled:
 			self.logger.info('done %s' % (condition_type))
@@ -157,7 +158,7 @@ class AutoNitrogenFiller(Conditioner):
 		self.player.stop()
 
 	def refillRefrigerantLevel(self):
-		loader_level,column_level = self.getRefrigerantLevel()
+		loader_level,column_level = self.getRefrigerantLevels()
 		check_loader = self.settings['autofiller mode'] in ['both cold','column RT, loader cold']
 		check_column = self.settings['autofiller mode'] in ['both cold','column cold, loader RT']
 		force_fill = False
@@ -170,9 +171,33 @@ class AutoNitrogenFiller(Conditioner):
 			self.instrument.tem.runAutoFiller()
 			force_fill = True
 		if force_fill:
-			self.monitorRefill(check_column,check_loader)
+			filler_status = self.monitorRefillWithIsBusy()
+			if filler_status is None:
+				self.monitorRefill(check_column,check_loader)
 			return True
 		return False
+
+	def monitorRefillWithIsBusy(self):
+		'''
+		Wait until autofiller not busy if can be monitored by function in tem.
+		If the function is not available returns None immediately.
+		returned status is either False (finished refill or not busy)
+		or None (not available)
+		'''
+		isbusy = self.instrument.tem.isAutoFillerBusy()
+
+		# handle script not available
+		if isbusy is None:
+			return isbusy
+
+		if isbusy is True:
+			self.logger.info('filling')
+		else:
+			self.logger.info('filler is idle')
+		while isbusy is True:
+			isbusy = self.instrument.tem.isAutoFillerBusy()
+			time.sleep(10)
+		return isbusy
 
 	def monitorRefill(self,check_column,check_loader):
 		sleeptime = 3
@@ -186,8 +211,9 @@ class AutoNitrogenFiller(Conditioner):
 			loader_filled = self.monitorGridLoaderRefill(sleeptime,significance)
 
 			# report final values
-			self.logger.info('Column N2 at %.1f %%' % (self.instrument.tem.getRefrigerantLevel(1)))
-			self.logger.info('Grid autoloader at %.1f %%' % (self.instrument.tem.getRefrigerantLevel(0),))
+			loader_level,column_level = self.getRefrigerantLevels()
+			self.logger.info('Column N2 at %.1f %%' % (column_level,))
+			self.logger.info('Grid autoloader at %.1f %%' % (loader_level,))
 
 			# OK if autoloader not filled when 'both cold' mode is used
 			if self.settings['autofiller mode'] == 'both cold' and column_filled and not loader_filled:
@@ -263,7 +289,7 @@ class AutoNitrogenFiller(Conditioner):
 			self.logger.info(infostr)
 		self.panel.playerEvent(state)
 
-	def getRefrigerantLevel(self):
+	def getRefrigerantLevels(self):
 		loader_level = self.instrument.tem.getRefrigerantLevel(0)
 		column_level = self.instrument.tem.getRefrigerantLevel(1)
 		return loader_level,column_level
