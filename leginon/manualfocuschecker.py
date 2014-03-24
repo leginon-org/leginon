@@ -56,6 +56,7 @@ class ManualFocusChecker(acquisition.Acquisition):
 				self.logger.warning('Not setting eucentric focus older than 90 days, HT: %s and Mag.: %s' % (ht, mag))
 			else:
 				eufoc = eufocdata['focus']
+				self.logger.info('set focus to %s' % (eufoc,))
 				self.instrument.tem.Focus = eufoc
 
 	def eucentricFocusFromScope(self):
