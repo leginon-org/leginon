@@ -184,8 +184,10 @@ class AutoNitrogenFiller(Conditioner):
 		returned status is either False (finished refill or not busy)
 		or None (not available)
 		'''
-		isbusy = self.instrument.tem.isAutoFillerBusy()
-
+		try:
+			isbusy = self.instrument.tem.isAutoFillerBusy()
+		except AttributeError:
+			return None
 		# handle script not available
 		if isbusy is None:
 			return isbusy
