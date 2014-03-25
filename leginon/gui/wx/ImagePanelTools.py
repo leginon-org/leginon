@@ -644,6 +644,9 @@ class ResolutionTool(ValueTool):
 	def valueString(self, x, y, value):
 		if self.pixelsize and self.center:
 			distance = math.sqrt((x-self.center['x'])**2+(y-self.center['y'])**2)
+			if distance < 1.0:
+				# avoid divide by zero error
+				return ''
 			resolution = 1/math.sqrt(((x-self.center['x'])*self.pixelsize['x'])**2+((y-self.center['y'])*self.pixelsize['y'])**2)
 			defocus = fftfun.calculateDefocus(self.hightension,1/resolution)
 			if resolution < 1e-6:
