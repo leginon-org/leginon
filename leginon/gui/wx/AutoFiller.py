@@ -68,7 +68,7 @@ class ScrolledSettings(leginon.gui.wx.Conditioner.ScrolledSettings):
 	def createAutofillerModeSelector(self,start_position):	
 		szmode = wx.GridBagSizer(5, 5)
 		# plate format
-		label = wx.StaticText(self, -1, 'Plate Format:')
+		label = wx.StaticText(self, -1, 'Filler Mode:')
 		szmode.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		self.mode = wx.Choice(self, -1)
 		self.mode.Enable(False)
