@@ -748,7 +748,10 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.logger.info('pausing for %s s' % (pausetime,))
 
 		self.startTimer('pause')
+		t = threading.Thread(target=self.positionCamera)
+		t.start()
 		time.sleep(pausetime)
+		self.waitPositionCameraDone()
 		self.stopTimer('pause')
 
 		if debug:

@@ -18,17 +18,22 @@ class CameraClient(object):
 		self.exposure_start_event = threading.Event()
 		self.exposure_done_event = threading.Event()
 		self.readout_done_event = threading.Event()
+		self.position_camera_done_event = threading.Event()
 
 	def clearCameraEvents(self):
 		self.exposure_start_event.clear()
 		self.exposure_done_event.clear()
 		self.readout_done_event.clear()
+		self.position_camera_done_event.clear()
 
 	def waitExposureDone(self):
 		self.exposure_done_event.wait()
 
 	def waitReadoutDone(self):
 		self.readout_done_event.wait()
+
+	def waitPositionCameraDone(self):
+		self.position_camera_done_event.wait()
 
 	def startExposureTimer(self):
 		'''
@@ -45,8 +50,13 @@ class CameraClient(object):
 		self.exposure_start_event.set()
 		t.start()
 
-	def acquireCameraImageData(self, scopeclass=leginondata.ScopeEMData, allow_retracted=False, type='normal'):
-		'''Acquire a raw image from the currently configured CCD camera'''
+	def positionCamera(self,camera_name=None, allow_retracted=False):
+		'''
+		Position the camera ready for acquisition
+		'''
+		orig_camera_name = self.instrument.getCCDCameraName()
+		if camera_name is not None:
+			self.instrument.setCCDCamera(camera_name)
 
 		## Retract the cameras that are above this one (higher zplane)
 		for name,cam in self.instrument.ccdcameras.items():
@@ -68,6 +78,14 @@ class CameraClient(object):
 				camname = self.instrument.getCCDCameraName()
 				self.logger.info('inserting camera: %s' % (camname,))
 				self.instrument.ccdcamera.Inserted = True
+		if camera_name is not None:
+			# set current camera back in case of side effect
+			self.instrument.setCCDCamera(orig_camera_name)
+		self.position_camera_done_event.set()
+
+	def acquireCameraImageData(self, scopeclass=leginondata.ScopeEMData, allow_retracted=False, type='normal'):
+		'''Acquire a raw image from the currently configured CCD camera'''
+		self.positionCamera(allow_retracted=allow_retracted)
 
 		## set type to normal or dark
 		self.instrument.ccdcamera.ExposureType = type
