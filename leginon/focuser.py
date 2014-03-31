@@ -588,7 +588,6 @@ class Focuser(manualfocuschecker.ManualFocusChecker):
 	
 		## TO DO: It would be better not having specify this by
 		## node name but through application node binding.
-		'''
 		if self.name != 'RCT Focus':
 			return False
 		else:
