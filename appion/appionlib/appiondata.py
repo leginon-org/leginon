@@ -1337,6 +1337,7 @@ class ApRefineIterData(Data):
 			('xmippParams', ApXmippRefineIterData),
 			('frealignParams', ApFrealignIterData),
 			('xmippML3DParams', ApXmippML3DRefineIterData),
+			('relionParams', ApRelionIterData),
 		)
 	typemap = classmethod(typemap)
 	
@@ -1505,6 +1506,21 @@ class ApFrealignIterData(Data):
 			('highpass', float),
 			('lowpass', float),
 			('rbfact', float),
+		)
+	typemap = classmethod(typemap)
+
+### this one is for each iteration in Relion refinement
+class ApRelionIterData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('ini_high', int),
+			('ctf', bool),
+			('offset_step', int),
+			('auto_local_healpix_order', int),
+			('healpix_order', int),
+			('offset_range', int),
+			('ctf_intact_first_peak', bool),
+			('ctf_corrected_ref', bool),
 		)
 	typemap = classmethod(typemap)
 

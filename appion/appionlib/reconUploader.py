@@ -247,6 +247,9 @@ class generalReconUploader(appionScript.AppionScript):
 		else:
 			self.modeldata.append(appiondata.ApInitialModelData.direct_query(self.runparams['modelid']))
 			
+		### Set the default FSC Resolution criterion
+		self.fscResCriterion = 0.5
+			
 		return
 
 	def parseFileForRunParameters(self):
@@ -380,14 +383,15 @@ class generalReconUploader(appionScript.AppionScript):
 			try:
 				fscfile = os.path.join(self.resultspath, "recon_%s_it%.3d_vol%.3d.fsc" \
 					% (self.params['timestamp'], iteration, reference_number))
-				fscRes = apRecon.getResolutionFromGenericFSCFile(fscfile, self.runparams['boxsize'], self.runparams['apix'])
-				apDisplay.printColor("FSC 0.5 Resolution: "+str(fscRes), "cyan")
+				fscRes = apRecon.getResolutionFromGenericFSCFile(fscfile, self.runparams['boxsize'], self.runparams['apix'],filtradius=3, criterion=self.fscResCriterion)
+				apDisplay.printColor("FSC " + str(self.fscResCriterion) + " Resolution: "+str(fscRes), "cyan")
 				resq = appiondata.ApResolutionData()
 				resq['half'] = fscRes
 				resq['fscfile'] = os.path.basename(fscfile)
 			except Exception, e:
+				apDisplay.printWarning("An error occured while reading fsc data: ")
 				print e
-				apDisplay.printWarning("FSC file does not exist or is unreadable")
+				apDisplay.printWarning("The following FSC file does not exist or is unreadable: %s " % (fscfile))
 				resq = None
 		else:
 			resq = None
@@ -491,6 +495,7 @@ class generalReconUploader(appionScript.AppionScript):
 				# Icos particle data from particle file is always in 235
 				full_sym_name = 'Icos (2 3 5) Viper/3DEM'
 			phi,theta,omega = apEulerCalc.convert3DEMEulerToStandardSym(full_sym_name,particledata[i]['phi'], particledata[i]['theta'], particledata[i]['omega'])
+						
 			### convert Euler angles from 3DEM to EMAN format (temporary fix)
 			alt, az, phi = apXmipp.convertXmippEulersToEman(phi, theta, omega)
 
@@ -597,14 +602,23 @@ class generalReconUploader(appionScript.AppionScript):
 			newfscfile = os.path.join(self.resultspath, "recon_%s_it%.3d_vol%.3d.fsc" \
 				% (self.params['timestamp'], iteration, reference_number))
 			try:
-				resolution = apRecon.getResolutionFromGenericFSCFile(newfscfile, self.runparams['boxsize'], self.runparams['apix'])
+				resolution = apRecon.getResolutionFromGenericFSCFile(newfscfile, self.runparams['boxsize'], self.runparams['apix'],filtradius=3, criterion=self.fscResCriterion)
 			except:
 				apDisplay.printWarning("Failed to get resolution from generic FSC file: "+newfscfile)
 				resolution = 30
 		apDisplay.printWarning("Running Chimera Snapshot with resolution: %d " % resolution)
+		
+		# TODO: need to work this out. 
+        # symmetry was hard coded to 'c1'. why?
+		try:
+			symmetry = self.runparams['symmetry']
+		except Exception, e:
+			symmetry = self.runparams['symmetry'].split()[0]
+			symmetry = apSymmetry.findSymmetry( symmetry )
+            
 		apChimera.filterAndChimera(volume, resolution, self.runparams['apix'], 
 			self.runparams['boxsize'], 'snapshot', self.params['contour'], self.params['zoom'],
-			sym='c1', mass=self.params['mass'])	
+			sym=symmetry, mass=self.params['mass'])	
 			
 	#=====================
 	def calculateEulerJumpsAndGoodBadParticles(self, uploadIterations):

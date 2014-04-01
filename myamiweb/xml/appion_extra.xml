@@ -2546,6 +2546,70 @@
 	<key>KEY `DEF_timestamp` (`DEF_timestamp`)</key> 
 	<key>KEY `REF|ApRefineIterData|refineIter` (`REF|ApRefineIterData|refineIter`)</key> 
 </sqltable>
+<sqltable name="ApRelionIterData" >
+	<field 
+		name="DEF_id" 
+		type="int(16)" 
+		null="NOT NULL" 
+		extra="auto_increment" 
+	/> 
+	<field 
+		name="DEF_timestamp" 
+		type="timestamp" 
+		null="NOT NULL" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
+	/> 
+	<field 
+		name="ini_high" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="ctf" 
+		type="TINYINT(1)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="offset_step" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="auto_local_healpix_order" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="healpix_order" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="offset_range" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="ctf_intact_first_peak" 
+		type="TINYINT(1)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="ctf_corrected_ref" 
+		type="TINYINT(1)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<key>PRIMARY KEY (`DEF_id`)</key> 
+	<key>KEY `DEF_timestamp` (`DEF_timestamp`)</key> 
+</sqltable>
 <sqltable name="ApFrealignIterData" >
 	<field 
 		name="DEF_id" 
@@ -6040,6 +6104,12 @@
 		null="NULL" 
 		default="NULL" 
 	/> 
+	<field 
+		name="REF|ApRelionIterData|relionParams" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 	
 	<key>PRIMARY KEY (`DEF_id`)</key> 
 	<key>KEY `DEF_timestamp` (`DEF_timestamp`)</key> 
 	<key>KEY `exemplar` (`exemplar`)</key> 
@@ -6051,6 +6121,7 @@
 	<key>KEY `REF|ApXmippRefineIterData|xmippParams` (`REF|ApXmippRefineIterData|xmippParams`)</key> 
 	<key>KEY `REF|ApFrealignIterData|frealignParams` (`REF|ApFrealignIterData|frealignParams`)</key> 
 	<key>KEY `REF|ApXmippML3DRefineIterData|xmippML3DParams` (`REF|ApXmippML3DRefineIterData|xmippML3DParams`)</key> 
+	<key>KEY `REF|ApRelionIterData|relionParams` (`REF|ApRelionIterData|relionParams`)</key> 
 </sqltable>
 <sqltable name="ApRefineMaskVolData" >
 	<field 

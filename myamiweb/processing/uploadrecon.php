@@ -408,6 +408,10 @@ function runUploadRecon() {
 		case "frealignrecon":
 			$command = "uploadFrealignRefine.py ";
 			break;
+		case "relionrecon":
+			$command = "uploadRelionRefine.py ";
+			$command .= "--numberOfReferences=1 ";
+			break;
 		default:
 			$command = "uploadExternalRefine.py ";
 			break;

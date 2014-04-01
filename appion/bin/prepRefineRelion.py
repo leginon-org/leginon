@@ -2,6 +2,8 @@
 import os
 import sys
 import glob
+import time
+import math
 
 #appion
 from appionlib import apPrepRefine
@@ -13,6 +15,9 @@ from appionlib import apScriptLog
 from appionlib import apIMAGIC
 from appionlib import apXmipp
 from appionlib import apImagicFile
+from appionlib import apParam
+from appionlib import appiondata
+from leginon import leginondata
 
 ''' There are 4 things we want to ensure for stacks used with Relion:
 1. The particles must be white on a black background (this is not actually true according to Sjors)
@@ -143,13 +148,128 @@ class PrepRefineRelion(apPrepRefine.Prep3DRefinement):
 		apFile.removeFile(selfile)
 		apFile.removeDir("partfiles")
 			
+			
+	def runRelionPreprocess(self, newstackroot):
+		'''
+		1. Use stackIntoPicks.py to extract the particle locations from the selected stack.
+		2. Run makestack2.py without ctf correction or normalization using the stackIntoPicks result as the Particles run.
+		3. Run relion_preprocess with rescale and norm. Outputs .mrcs file.
+		'''
+		# Build the stackIntoPicks command
+		apDisplay.printWarning('Extracting the particle locations from your selected stack.')
+		newstackrunname   = self.params['runname']+"_particles"
+		newstackrundir    = self.params['rundir']
+		projectid         = self.params['projectid']
+		stackid           = self.originalStackData.stackid
+		sessionid         = int(self.params['expid'])
+
+		cmd = '''
+stackIntoPicks.py --stackid=%d --projectid=%d --runname=%s --rundir=%s --commit --expId=%d --jobtype=makestack
+		''' % (stackid,projectid,newstackrunname,newstackrundir,sessionid)
+		
+		# Run the command
+		logfilepath = os.path.join(newstackrundir,'relionstackrun.log')
+		returncode = self.runAppionScriptInSubprocess(cmd,logfilepath)
+		if returncode > 0:
+			apDisplay.printError('Error in Relion specific stack making')
+
+		# Build the makestack2 command
+		'''
+		This is the command we want to make a stack from a stackIntoPicks run
+		makestack2.py --single=start.hed --selectionid=130 --invert --boxsize=320 --bin=2 --description="made from stackrun1 using stackintopicks" --runname=stack66 --rundir=/ami/data00/appion/zz07jul25b/stacks/stack66 --commit --preset=en --projectid=303 --session=zz07jul25b --no-rejects --no-wait --continue --expid=8556 --jobtype=makestack2 --ppn=1 --nodes=1 --walltime=240 --jobid=2016
+		'''
+		apDisplay.printWarning('Using you particle locations to make a Relion ready stack....')
+
+		# Get the ID of the stackIntoPicks run we just created
+		#apParticle.getSelectionIdFromName(runname, sessionname)
+		
+		runq = appiondata.ApSelectionRunData()
+		runq['name'] = newstackrunname
+		runq['session'] = leginondata.SessionData.direct_query(self.params['expid'])
+		rundatas = runq.query(results=1)
+		print rundatas
+
+		if rundatas:
+			selectionid = rundatas[0].dbid
+		else:
+			apDisplay.printError("Error creating Relion ready stack. Could not find stackIntoPicks.py data in database.\n")
+		
+		
+		# Gather all the makestack parameters
+		totalpart             = self.originalStackData.numpart
+		numpart               = totalpart if not self.params['last'] else min(self.params['last'],totalpart)
+		stackpathname         = os.path.basename( self.originalStackData.path )
+		newstackrunname       = self.params['runname']
+		newstackrundir        = self.params['rundir']
+		newstackimagicfile    = os.path.join(newstackrundir,'start.hed')
+		presetname            = self.originalStackData.preset
+		
+		# binning is combination of the original binning of the stack and the preparation binnning
+		bin               = self.originalStackData.bin * self.params['bin']
+		unbinnedboxsize   = self.stack['boxsize'] * self.originalStackData.bin
+		lowpasstext       = setArgText( 'lowpass', ( self.params['lowpass'], self.originalStackData.lowpass ), False)
+		highpasstext      = setArgText( 'highpass', ( self.params['highpass'], self.originalStackData.highpass ), True)
+		partlimittext     = setArgText('partlimit',(numpart,),False)
+		xmipp_normtext    = setArgText('xmipp-normalize', (self.params['xmipp-norm'],), True)
+		sessionid         = int(self.params['expid'])
+		sessiondata       = apDatabase.getSessionDataFromSessionId(sessionid)
+		sessionname       = sessiondata['name']
+		projectid         = self.params['projectid']
+		stackid           = self.originalStackData.stackid
+		reversetext       = '--reverse' if self.originalStackData.reverse else ''
+		defoctext         = '--defocpair' if self.originalStackData.defocpair else ''
+		inverttext        = '--no-invert' if not self.invert else ''  
+
+		# Build the makestack2 command
+		cmd = '''
+makestack2.py --single=%s --selectionid=%d %s --boxsize=%d --bin=%d --description="Relion refinestack based on %s(id=%d)" --projectid=%d --preset=%s --runname=%s --rundir=%s --no-wait --no-commit --no-continue --session=%s --expId=%d --jobtype=makestack2
+		''' % (os.path.basename(newstackimagicfile),selectionid,inverttext,unbinnedboxsize,bin,stackpathname,stackid,projectid,presetname,newstackrunname,newstackrundir,sessionname,sessionid)
+		
+		# Run the command
+		logfilepath = os.path.join(newstackrundir,'relionstackrun.log')
+		returncode = self.runAppionScriptInSubprocess(cmd,logfilepath)
+		if returncode > 0:
+			apDisplay.printError('Error in Relion specific stack making')
+
+		# Make sure our new stack params reflects the changes made
+		# Use the same complex equation as in eman clip
+		clipsize = self.calcClipSize(self.stack['boxsize'],self.params['bin'])
+		self.stack['boxsize']         = clipsize / self.params['bin']
+		self.stack['apix']            = self.stack['apix'] * self.params['bin']
+		self.stack['file']            = newstackroot+'.hed'		
+		
+		# Clean up
+		rmfiles = glob.glob("*.box")
+		for rmfile in rmfiles:
+			apFile.removeFile(rmfile)
+
+		# Run Relion pre-process command
+		'''
+		Setup the follow relion preprocess command to normalize the new stack:
+		/usr/local/relion-1.2/bin/relion_preprocess --o particles --norm --bg_radius 60 --white_dust -1 --black_dust -1 --operate_on /ami/data00/appion/zz07jul25b/stacks/stack63_no_xmipp_norm/start.hed
+		'''
+		apDisplay.printWarning('Running Relion preprocessing to normalize your Relion Ready stack....')
+		bg_radius = math.floor((self.stack['boxsize'] / 2) -1)
+		
+		relioncmd = '''
+/usr/local/relion-1.2/bin/relion_preprocess --o particles --norm --bg_radius %d --white_dust -1 --black_dust -1 --operate_on %s
+		''' % (bg_radius,newstackimagicfile)
+		
+		apParam.runCmd(relioncmd, package="Relion", verbose=True, showcmd=True)
+		self.stack['file'] = 'particles.mrcs'		
+
+
 	def convertToRefineStack(self):
 		'''
 		The stack is remaked without ctf correction and inverted and normalized if needed
 		'''
+		newstackroot = os.path.join(self.params['rundir'],os.path.basename(self.stack['file'])[:-4])
+		
+		self.runRelionPreprocess( newstackroot )
+		return
+        #TODO: clean up everything below here once this relion preprocess is proven out
 		self.stackErrorCheck( self.stack['file'] )
 		
-		newstackroot = os.path.join(self.params['rundir'],os.path.basename(self.stack['file'])[:-4])
 		self.stack['phaseflipped']    = False
 		self.stack['format']          = 'relion' #TODO: Where is this used? 
 		
@@ -159,7 +279,8 @@ class PrepRefineRelion(apPrepRefine.Prep3DRefinement):
 			return
 		
 		# If we just need to normalize, run xmipp_normalize
-		if self.normalize and not self.un_ctf_correct:
+#		if self.normalize and not self.un_ctf_correct:
+		if not self.un_ctf_correct:
 			apDisplay.printMsg("Normalizing stack for use with Relion")
 			extname,addformat = self.proc2dFormatConversion()
 			stackfilenamebits = self.stack['file'].split('.')
@@ -186,7 +307,7 @@ class PrepRefineRelion(apPrepRefine.Prep3DRefinement):
 
 			
 	def undoCTFCorrect(self, newstackroot):		
-					# At this point, the stack needs to be remade un-ctf-corrected, and possibly normalized and/or inverted		
+		# At this point, the stack needs to be remade un-ctf-corrected, and possibly normalized and/or inverted		
 		apDisplay.printWarning('Relion needs a stack without ctf correction. A new stack is being made....')
 		
 		# Gather all the makestack parameters

@@ -373,7 +373,11 @@ foreach ($reconRuns as $recon) {
 		$m .= "which provided a value of $halfres&nbsp;&Aring; resolution.\n";
 	} else if ($recon["REF|ApFrealignIterData|frealignParams"]) {
 		$m .= "The 3D reconstruction was carried out using the Frealign reconstruction package (Grigorieff <i>et al.</i>, 2007). \n";
-		$m .= "Resolution was assessed by calculating the Fourier Shell Correlation (FSC) at a cutoff of 0.5, \n";
+		$m .= "Resolution was assessed by calculating the Fourier Shell Correlation (FSC) at a cutoff of 0.143, \n";
+		$m .= "which provided a value of $halfres&nbsp;&Aring; resolution.\n";
+	} else if ($recon["REF|ApRelionIterData|relionParams"]) {
+		$m .= "The 3D reconstruction was carried out using the Relion reconstruction package (Scheres <i>et al.</i>, 2012). \n";
+		$m .= "Resolution was assessed by calculating the Fourier Shell Correlation (FSC) at a cutoff of 0.143, \n";
 		$m .= "which provided a value of $halfres&nbsp;&Aring; resolution.\n";
 	} else if ($recon["REF|ApXmippML3DRefineIterData|xmippML3DParams"]) {	
 		$m .= "The 3D reconstruction was carried out using the XMIPP ML3D reconstruction package (Scheres <i>et al.</i>, 2010). \n";

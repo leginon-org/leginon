@@ -190,10 +190,11 @@ def initializeParticleParams(iter):
 		particleparams['presa']=0
 		particleparams['dpres']=0
 		particleparams['pnumber']=iter+1
+		particleparams['ampcont']=0.15 #default value for stain. Ice should be .07.		
 		return particleparams
 
 #===============
-def generateParticleParams(params,modeldata,initparfile='params.0.par'):
+def generateParticleParams(params,modeldata,initparfile='params.0.par',extended=False):
 	params['inpar']=os.path.join(params['rundir'],initparfile)
 	apDisplay.printMsg("Creating parameter file: "+params['inpar'])
 	params['mode']=3
@@ -204,8 +205,12 @@ def generateParticleParams(params,modeldata,initparfile='params.0.par'):
 	if params['reconiterid']:
 		iterdata = apRecon.getRefineIterDataFromIterationId(params['reconiterid'])
 		sym_name = modeldata['symmetry']['symmetry']
+	
+	if (extended):
+		print "Writing out extended particle parameters"
+	else:
+		print "Writing out particle parameters"
 		
-	print "Writing out particle parameters"
 	if 'last' not in params:
 		params['last'] = len(stackdata)
 	for i, particle in enumerate(stackdata[:params['last']]):
@@ -245,6 +250,7 @@ def generateParticleParams(params,modeldata,initparfile='params.0.par'):
 				particleparams['df1']=abs(df1)
 				particleparams['df2']=abs(df2)
 				particleparams['angast']=ctfdata['angle_astigmatism']
+				particleparams['ampcont'] = ctfdata['amplitude_contrast']
 
 			else:
 				# first see if there are ctf values
@@ -257,6 +263,7 @@ def generateParticleParams(params,modeldata,initparfile='params.0.par'):
 					particleparams['df1']=abs(ctfdata['defocus1']*1e10)
 					particleparams['df2']=abs(ctfdata['defocus2']*1e10)
 					particleparams['angast']=ctfdata['angle_astigmatism']
+					particleparams['ampcont'] = ctfdata['amplitude_contrast']
 
 		# if using parameters from previous reconstruction
 		if params['reconiterid'] is not None:
@@ -271,7 +278,11 @@ def generateParticleParams(params,modeldata,initparfile='params.0.par'):
 			particleparams['shy']=-params['eman_orient']['shifty']
 			if params['eman_orient']['mirror'] is True:
 				particleparams['shx']*=-1
-		writeParticleParamLine(particleparams,f)
+		
+		if (extended):
+			writeParticleParamLineExtended(particleparams,f)
+		else:
+			writeParticleParamLine(particleparams,f)
 	f.close()
 
 #===============
@@ -280,6 +291,14 @@ def writeParticleParamLine(particleparams, fileobject):
 	fileobject.write("%7d%8.2f%8.2f%8.2f%8.2f%8.2f%7.f.%6d%9.1f%9.1f%8.2f%7.2f%8.2f%7d\n" 
 		% (p['ptclnum'],p['psi'],p['theta'],p['phi'],p['shx'],p['shy'],p['mag'],
 		p['film'],p['df1'],p['df2'],p['angast'],p['presa'],p['dpres'],p['pnumber']))
+
+#===============
+def writeParticleParamLineExtended(particleparams, fileobject):
+	p=particleparams
+	
+	fileobject.write("%7d%8.2f%8.2f%8.2f%8.2f%8.2f%7.f.%6d%9.1f%9.1f%8.2f%7.2f%8.2f%7d%9.2f\n" 
+		% (p['ptclnum'],p['psi'],p['theta'],p['phi'],p['shx'],p['shy'],p['mag'],
+		p['film'],p['df1'],p['df2'],p['angast'],p['presa'],p['dpres'],p['pnumber'],p['ampcont']))
 
 #===============
 def createFrealignJob (params, jobname, nodenum=None, mode=None, inpar=None, invol=None, first=None, last=None, norecon=False):

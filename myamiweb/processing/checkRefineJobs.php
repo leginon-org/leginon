@@ -233,6 +233,9 @@ function showStatus($jobinfo) {
 		} elseif ($jobinfo['jobtype'] == 'xmippml3d') {
 			$dlbuttons = "<input type='button' onclick=\"parent.location=('"
 				."uploadrecon.php?expId=$expId&jobId=$jobid')\" value='Upload Xmippml3d results'>&nbsp;\n";
+		} elseif ($jobinfo['jobtype'] == 'relionrecon') {
+			$dlbuttons = "<input type='button' onclick=\"parent.location=('"
+				."uploadrecon.php?expId=$expId&jobId=$jobid')\" value='Upload Relion results'>&nbsp;\n";
 		}
 		if ($user == $job['user'] || is_null($job['user'])) {
 			$dlbuttons .= "&nbsp;<input type='BUTTON' onclick=\"parent.location="
