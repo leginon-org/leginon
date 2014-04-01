@@ -355,6 +355,8 @@ class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 			chars=6, value='0.0')
 		self.widgets['z0'] = FloatEntry(self, -1, allownone=False,
 			chars=6, value='0.0')
+		self.widgets['z02'] = FloatEntry(self, -1, allownone=False,
+			chars=6, value='0.0')
 		self.widgets['z0 error'] = FloatEntry(self, -1, min=0.0,
 			allownone=False, chars=6, value='2e-6')
 		self.widgets['fixed model'] = wx.CheckBox(self, -1, 'Keep the tilt axis parameters fixed')
@@ -396,11 +398,19 @@ class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 				   (1, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
 		z0sz = wx.GridBagSizer(2, 2)
 		label = wx.StaticText(self, -1, 'Z0:')
-		z0sz.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		z0sz.Add(label, (0, 0), (2, 1), wx.ALIGN_CENTER_VERTICAL)
+		label = wx.StaticText(self, -1, '+d')
+		z0sz.Add(label, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
 		z0sz.Add(self.widgets['z0'],
-				   (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+				   (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
 		label = wx.StaticText(self, -1, 'um')
-		z0sz.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		z0sz.Add(label, (0, 3), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		label = wx.StaticText(self, -1, '-d')
+		z0sz.Add(label, (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		z0sz.Add(self.widgets['z02'],
+				   (1, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		label = wx.StaticText(self, -1, 'um')
+		z0sz.Add(label, (1, 3), (2, 1), wx.ALIGN_CENTER_VERTICAL)
 		
 		optsz = wx.GridBagSizer(5, 10)
 		optsz.Add(phisz, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)

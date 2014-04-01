@@ -2039,6 +2039,7 @@ class TomographySettingsData(AcquisitionSettingsData):
 			('offset', float),
 			('offset2', float),
 			('z0', float),
+			('z02', float),
 			('fixed model', bool),
 			('use lpf', bool),
 #			('use wiener', bool),
