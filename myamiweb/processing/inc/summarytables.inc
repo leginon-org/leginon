@@ -145,7 +145,6 @@ function stacksummarytable($stackid, $mini=false, $tiny=false, $showOptions=True
 	}
 
 	$numpart = $particle->getNumStackParticles($stackid);
-	if ($numpart == 0) return;
 
 	$stackname = $stackdata['shownstackname'];
 	$stackfile = $stackdata['path']."/".$stackdata['name'];
@@ -158,6 +157,11 @@ function stacksummarytable($stackid, $mini=false, $tiny=false, $showOptions=True
 	}
 	elseif ($showOptions) $j.= " <input class='edit' type='submit' name='hideItem".$stackid."' value='hide'>\n";
 	if ($showOptions) $j.="<input class='edit' type='button' onClick='parent.location=\"dropstack.php?expId=$expId&sId=$stackid\"' value='delete'>\n";
+	
+	# if stack contains 0 particles, give option of deleting it
+	if ($numpart == 0) {
+		return apdivtitle($j." (no particles)");
+	}
 	
 	$downloadLink = "(<font size='-2'><a href='downloadStackParticles.php?expId=$expId&stackId=$stackid'>\n";
 	$downloadLink .= "  <img style='vertical-align:middle' src='img/download_arrow.png' border='0' width='16' height='17' alt='download coordinates'>";
