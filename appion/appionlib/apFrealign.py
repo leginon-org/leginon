@@ -1077,4 +1077,13 @@ def split_frealign9_parfile(inparfile, *outparfiles):
 			ff.write("%7d%8.2f%8.2f%8.2f%10.2f%10.2f%8d%6d%9.1f%9.1f%8.2f%8.2f%10d%11.4f%8.2f%8.2f\n" \
 				% (i, psi, theta, phi, shx, shy, mag, film, dx, dy, ast, occ, logp, sigma, score, change))
 		ff.close()
+
+def average_value_frealign9(inparfile, *values):
+	### read params
+	params = parseFrealign9ParamFile(inparfile)
+	for v in values:
+		vlist = []
+		for i in range(len(params)):
+			vlist.append(params[i+1][v])
+		print "average %s:" % (v), numpy.average(vlist)
 		
