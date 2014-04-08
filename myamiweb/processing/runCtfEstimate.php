@@ -168,7 +168,7 @@ function createCtfFindForm($extra=false) {
 		}
 		function ice_preset(obj) {
 		  obj.resmin.value = '100';
-		  obj.resmax.value = '15';
+		  obj.resmax.value = '10';
 		  obj.medium[0].checked = false;
 		  obj.medium[1].checked = true;
 		  obj.defstep.value = 1000;
