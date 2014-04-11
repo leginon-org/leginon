@@ -550,7 +550,6 @@ class MatrixCalibrationClient(CalibrationClient):
 		'''
 		stores a new calibration matrix
 		'''
-		print 'storeMatrix',probe
 		caldata = leginondata.MatrixCalibrationData(session=self.node.session, magnification=mag, type=type, matrix=matrix, probe=probe)
 		self.setDBInstruments(caldata,tem,ccdcamera)
 		newmatrix = numpy.array(matrix, numpy.float64)
@@ -1283,53 +1282,59 @@ class StageTiltCalibrationClient(StageCalibrationClient):
 		'''
 		orig_a = self.instrument.tem.StagePosition['a']
 
-		state0 = leginondata.ScopeEMData()
-		state1 = leginondata.ScopeEMData()
-		state2 = leginondata.ScopeEMData()
-		state0['stage position'] = {'a':0.0}
-		state1['stage position'] = {'a':-tilt_value}
-		state2['stage position'] = {'a':tilt_value}
+		state = {}
+		shiftinfo = {}
+		state[0] = leginondata.ScopeEMData()
+		state[1] = leginondata.ScopeEMData()
+		state[2] = leginondata.ScopeEMData()
+		state[0]['stage position'] = {'a':0.0}
+		state[1]['stage position'] = {'a':-tilt_value}
+		state[2]['stage position'] = {'a':tilt_value}
 		## alpha backlash correction
-		self.instrument.tem.StagePosition = state1['stage position']
+		self.instrument.tem.StagePosition = state[1]['stage position']
 		# make sure main screen is up since there is no failure in this function
 		self.instrument.tem.setMainScreenPosition('up')
 
 		## do tilt and measure image shift
 		## move from state2, through 0, to state1 to remove backlash
-		self.instrument.tem.StagePosition = state2['stage position']
-		self.instrument.tem.StagePosition = state0['stage position']
-		im0 = self.acquireImage(state0)
+		self.instrument.tem.StagePosition = state[2]['stage position']
+		self.instrument.tem.StagePosition = state[0]['stage position']
+		im0 = self.acquireImage(state[0])
 		# measure the change from 0 to state1
-		shiftinfo1 = self.measureScopeChange(im0, state1, correlation_type=correlation_type)
+		shiftinfo[1] = self.measureScopeChange(im0, state[1], correlation_type=correlation_type, lp=1)
 		## move from state1, through 0, to state2 to remove backlash
-		self.instrument.tem.StagePosition = state0['stage position']
-		im0 = self.acquireImage(state0)
+		self.instrument.tem.StagePosition = state[0]['stage position']
+		im0 = self.acquireImage(state[0])
 		# measure the change from 0 to state1
-		shiftinfo2 = self.measureScopeChange(im0, state2, correlation_type=correlation_type)
+		shiftinfo[2] = self.measureScopeChange(im0, state[2], correlation_type=correlation_type,lp=1)
 
 		# return to original
 		self.instrument.tem.StagePosition = {'a':orig_a}
 
-		state1 = shiftinfo1['next']['scope']
-		state2 = shiftinfo2['next']['scope']
+		state[1] = shiftinfo[1]['next']['scope']
+		state[2] = shiftinfo[2]['next']['scope']
 		pixelshift = {}
 		# combine the two half of the tilts
-		for axis in shiftinfo1['pixel shift'].keys():
-			pixelshift[axis] = shiftinfo2['pixel shift'][axis] - shiftinfo1['pixel shift'][axis]
-					
-		# fake the current state for the transform with alpha = 0
-		scope = leginondata.ScopeEMData(initializer=state1)
-		scope['stage position']['a'] = 0.0
-		cam = leginondata.CameraEMData()
-		# measureScopeChange already unbinned it, so fake cam bin = 1
-		cam['binning'] = {'x':1,'y':1}
-		cam['ccdcamera'] = self.instrument.getCCDCameraData()
-		# get the virtual x,y movement
-		newscope = self.transform(pixelshift, scope, cam)
-		# y component is all we care about to get Z
-		y = newscope['stage position']['y'] - scope['stage position']['y']
-		z = y / 2.0 / math.sin(tilt_value)
-		return z
+
+		z = {}
+		for t in (1,2):
+			for axis in shiftinfo[1]['pixel shift'].keys():
+				pixelshift[axis] = shiftinfo[t]['pixel shift'][axis]
+			# fake the current state for the transform with alpha = 0
+			scope = leginondata.ScopeEMData(initializer=state[1])
+			scope['stage position']['a'] = 0.0
+			cam = leginondata.CameraEMData()
+			# measureScopeChange already unbinned it, so fake cam bin = 1
+			cam['binning'] = {'x':1,'y':1}
+			cam['ccdcamera'] = self.instrument.getCCDCameraData()
+			# get the virtual x,y movement
+			newscope = self.transform(pixelshift, scope, cam)
+			# y component is all we care about to get Z
+			y = newscope['stage position']['y'] - scope['stage position']['y']
+			z[t] = y / math.sin(state[t]['stage position']['a'])
+
+		zmean = (z[1]+z[2]) / 2
+		return zmean
 
 	def measureTiltAxisLocation(self, tilt_value=0.26, numtilts=1, tilttwice=False,
 	  update=False, snrcut=10.0, correlation_type='phase', medfilt=False):
@@ -1443,7 +1448,6 @@ class StageTiltCalibrationClient(StageCalibrationClient):
 				tilt1=tilt_value, correlation_type=correlation_type, beam_tilt_value=beam_tilt)
 			if defshift is not None and abs(defshift) < 1e-5:
 				defshifts.append(defshift)
-		print defshifts	
 		### END TILTING; BEGIN ASSESSMENT
 
 		if len(defshifts) < 1:
@@ -1579,7 +1583,6 @@ class StageTiltCalibrationClient(StageCalibrationClient):
 			self.node.logger.error(e)
 			return imagedata0, None 
 		def0 = defresult['defocus']
-		print defresult
 		minres = defresult['min']
 		self.node.logger.info('acquiring tilt=%s degrees' % (tilt1deg))
 		self.instrument.setData(state1)
@@ -1590,7 +1593,6 @@ class StageTiltCalibrationClient(StageCalibrationClient):
 		self.displayImage(im1)
 		defresult = self.node.btcalclient.measureDefocusStig(beam_tilt_value, False, False, correlation_type, 0.5, imagedata1)
 		def1 = defresult['defocus']
-		print defresult
 		minres = min((minres,defresult['min']))
 		if minres > 5000000:
 			self.node.logger.error('Measurement not reliable: residual= %.0f' % minres)
@@ -1968,12 +1970,15 @@ class EucentricFocusClient(CalibrationClient):
 		return eucfoc
 
 	def publishEucentricFocus(self, ht, mag, probe, ef):
-		newdata = leginondata.EucentricFocusData()
-		newdata['session'] = self.node.session
-		newdata['tem'] = self.instrument.getTEMData()
-		newdata['ccdcamera'] = self.instrument.getCCDCameraData()
-		newdata['high tension'] = ht
-		newdata['magnification'] = mag
-		newdata['probe'] = probe
-		newdata['focus'] = ef
-		self.node.publish(newdata, database=True, dbforce=True)
+		camera_names = self.instrument.getCCDCameraNames()
+		# need to publish for all cameras since it can be used by any
+		for name in camera_names:
+			newdata = leginondata.EucentricFocusData()
+			newdata['session'] = self.node.session
+			newdata['tem'] = self.instrument.getTEMData()
+			newdata['ccdcamera'] = self.instrument.getCCDCameraData(name)
+			newdata['high tension'] = ht
+			newdata['magnification'] = mag
+			newdata['probe'] = probe
+			newdata['focus'] = ef
+			self.node.publish(newdata, database=True, dbforce=True)
