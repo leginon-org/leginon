@@ -159,6 +159,9 @@ class CorrectorClient(cameraclient.CameraClient):
 			qcam['exposure time'] = None
 			q = self.createRefQuery(reftype,qcam,qscope,altchannel)
 			reflist = q.query()
+		if len(reflist) == 0:
+			#no switching, no alternative channel found
+			return refdata
 		for newrefdata in reflist:
 			if newrefdata.timestamp < timestamp:
 				break
@@ -385,10 +388,9 @@ class CorrectorClient(cameraclient.CameraClient):
 			self.fixBadPixels(imagedata['image'], plan)
 
 		pixelmax = imagedata['camera']['ccdcamera']['pixelmax']
-		if pixelmax is None:
-			pixelmax = 2**16
 		imagedata['image'] = numpy.asarray(imagedata['image'], numpy.float32)
-		imagedata['image'] = numpy.clip(imagedata['image'], 0, pixelmax)
+		if pixelmax is not None:
+			imagedata['image'] = numpy.clip(imagedata['image'], 0, pixelmax)
 
 		if plan is not None and plan['despike']:
 			self.logger.debug('Despiking...')
