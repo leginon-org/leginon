@@ -1215,3 +1215,16 @@ class Tecnai(tem.TEM):
 		autoloader, 1 is the column.
 		'''
 		return self.tecnai.TemperatureControl.RefrigerantLevel(id)
+
+class Krios(Tecnai):
+	def __init__(self):
+		Tecnai.__init__(self)
+		self.correctedstage = False
+
+	def setStagePosition(self, value):
+		# Krios Compustage works better without preposition
+		value = self.checkStagePosition(value)
+		if not value:
+			return
+		return self._setStagePosition(value)
+
