@@ -209,11 +209,11 @@ class Gatan(ccdcamera.CCDCamera):
 		inserted = self.getInserted()
 		if not inserted and value:
 			self.camera.Insert()
+			time.sleep(5)
 		elif inserted and not value:
 			self.camera.Retract()
 		else:
 			return
-		time.sleep(5)
 
 	def getInserted(self):
 		if self.camera.IsInserted:

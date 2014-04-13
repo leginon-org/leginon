@@ -261,6 +261,12 @@ class TIA_Falcon(TIA):
 	def getPixelSize(self):
 		return {'x': 1.4e-5, 'y': 1.4e-5}
 
+	def setInserted(self, value):
+		super(TIA_Falcon,self).setInserted(value)
+		if value == False:
+			# extra pause for Orius insert since Orius might think
+			# it is already inserted
+			time.sleep(4)
 
 class TIA_Orius(TIA):
 	camera_name = 'BM-Orius'
