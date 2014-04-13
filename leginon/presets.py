@@ -608,6 +608,7 @@ class PresetsManager(node.Node):
 			raise PresetChangeError(message)
 
 		self.startTimer('preset pause')
+		self.logger.info('Pause for %.1f s' % (self.settings['pause time'],))
 		time.sleep(self.settings['pause time'])
 		self.stopTimer('preset pause')
 		if magonly:
@@ -1530,6 +1531,7 @@ class PresetsManager(node.Node):
 			raise PresetChangeError(message)
 
 		self.startTimer('preset pause')
+		self.logger.info('Pause for %.1f s' % (self.settings['pause time'],))
 		time.sleep(self.settings['pause time'])
 		self.stopTimer('preset pause')
 		name = newpreset['name']
