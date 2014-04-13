@@ -51,12 +51,9 @@ class ManualFocusChecker(acquisition.Acquisition):
 		if eufocdata is None:
 			self.logger.error('No eucentric focus found for HT: %s , Mag.: %s, and %s probe' % (ht, mag, probe))
 		else:
-			delta = eufocdata.timestamp.now() - eufocdata.timestamp
-			if delta.days > 90:
-				self.logger.warning('Not setting eucentric focus older than 90 days, HT: %s and Mag.: %s' % (ht, mag))
-			else:
-				eufoc = eufocdata['focus']
-				self.instrument.tem.Focus = eufoc
+			eufoc = eufocdata['focus']
+			self.logger.info('set focus to %s' % (eufoc,))
+			self.instrument.tem.Focus = eufoc
 
 	def eucentricFocusFromScope(self):
 		errstr = 'Eucentric focus from instrument failed: %s'
