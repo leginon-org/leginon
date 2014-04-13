@@ -397,8 +397,8 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Image Correction')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
-		sb = wx.StaticBox(self, -1, 'Clipping')
-		sbszclip = wx.StaticBoxSizer(sb, wx.VERTICAL)
+		#sb = wx.StaticBox(self, -1, 'Clipping')
+		#sbszclip = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sb = wx.StaticBox(self, -1, 'Reference Creation')
 		sbszref = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
@@ -411,9 +411,10 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 
 		self.widgets['camera settings'] = leginon.gui.wx.Camera.CameraPanel(self)
 		self.widgets['camera settings'].setGeometryLimits({'size':self.node.instrument.camerasize,'binnings':self.node.instrument.camerabinnings,'binmethod':self.node.instrument.camerabinmethod})
-		self.widgets['clip min'] = FloatEntry(self, -1, chars=6)
-		self.widgets['clip max'] = FloatEntry(self, -1, chars=6)
+		#self.widgets['clip min'] = FloatEntry(self, -1, chars=6)
+		#self.widgets['clip max'] = FloatEntry(self, -1, chars=6)
 
+		'''
 		szclip = wx.GridBagSizer(5, 5)
 		label = wx.StaticText(self, -1, 'Clip min:')
 		szclip.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
@@ -423,7 +424,7 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		szclip.Add(self.widgets['clip max'], (1, 1), (1, 1), wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
 		szclip.AddGrowableCol(1)
 		sbszclip.Add(szclip, 1, wx.ALIGN_CENTER|wx.EXPAND|wx.ALL, 3)
-
+		'''
 
 		szref = wx.GridBagSizer(5, 5)
 
@@ -443,7 +444,7 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sz.Add(self.widgets['instruments'], (0, 0), (1, 1), wx.ALIGN_CENTER)
 		sz.Add(self.widgets['camera settings'], (1, 0), (2, 1), wx.ALIGN_CENTER|wx.EXPAND)
 		sz.Add(sbszref, (0, 1), (1, 1), wx.EXPAND)
-		sz.Add(sbszclip, (1, 1), (1, 1), wx.EXPAND)
+		#sz.Add(sbszclip, (1, 1), (1, 1), wx.EXPAND)
 
 		sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
 
