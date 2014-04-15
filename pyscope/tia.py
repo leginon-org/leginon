@@ -287,7 +287,7 @@ class TIA_Falcon(TIA):
 
 	def custom_setup(self):
 			if self.save_frames:
-				self.frameconfig.makeConfigFromExposureTime(self.exposure/1000.0)
+				self.frameconfig.makeRealConfigFromExposureTime(self.exposure/1000.0)
 			else:
 				self.frameconfig.makeDummyConfig()
 

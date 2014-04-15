@@ -86,6 +86,11 @@ class FalconFrameConfigXmlMaker(object):
 		start_frames,end_frames = self.setFrameRange(second,1)
 		self.writeConfigXml(start_frames,end_frames)
 
+	def makeRealConfigFromExposureTime(self,second):
+		self.setNFrames(7)
+		self.setFramePath(self.base_frame_path)
+		self.makeConfigFromExposureTime(second)
+
 	def makeDummyConfig(self):
 		self.setNFrames(1)
 		self.setFramePath(os.path.join(self.base_frame_path,'dummy'))
