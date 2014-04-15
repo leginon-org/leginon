@@ -1,41 +1,55 @@
 #!/usr/bin/env python
 import math
 import sys
+import os
 import xml.dom.minidom
 import xml.etree.ElementTree as et
 
 class FalconFrameConfigXmlMaker(object):
 	def __init__(self):
+		self.base_frame_time = 0.055771
 		self.frame_time = 0.055771
 		self.frame_path = 'E:\\frames'
+		self.total_output_frames = 7
 
 	def setFrameTime(self,second):
-		sefl.frame_time = second
+		self.frame_time = second
+
+	def getFrameTime(self):
+		return self.frame_time
 
 	def setFramePath(self,path):
 		self.frame_path = path
+
+	def getFramePath(self):
+		return self.frame_path
+
+	def setNFrames(self,nframes):
+		self.total_output_frames = nframes
+
+	def getNFrames(self):
+		return self.total_output_frames
 
 	def setFrameRange(self,exposure_time,frame_offset=1):
 		'''
 		frame number range to output.  Frame 0  is the first frame with
 		shutter roll-in.
 		'''
-		total_frames = 7
+		total_output_frames = self.total_output_frames
 		end_frames = []
 
-		nframes = int(exposure_time / self.frame_time)
+		# available number of frames
+		available_nframes = int(exposure_time / self.base_frame_time)
 		# avoid roll-in
-		equal_step = (nframes-frame_offset) / total_frames
-		spare_frames = nframes - equal_step * total_frames - frame_offset
+		equal_step = (available_nframes-frame_offset) / total_output_frames
+		spare_frames = available_nframes - equal_step * total_output_frames - frame_offset
 		frames_in_step = []
-		print nframes,spare_frames
 		if equal_step > 0:
-			frames_in_step = total_frames * [equal_step,]
+			frames_in_step = total_output_frames * [equal_step,]
 			for i in range(1,spare_frames+1):
 				frames_in_step[-1*i] += 1
 		else:
-			frames_in_step = nframes * [1,]
-		print frames_in_step
+			frames_in_step = total_output_frames * [1,]
 		end_frames = map((lambda x:sum(frames_in_step[:x+1])),range(len(frames_in_step)))
 		start_frames = map((lambda x:end_frames[x]+1),range(len(end_frames)-1))
 		start_frames.insert(0,frame_offset)
@@ -67,10 +81,17 @@ class FalconFrameConfigXmlMaker(object):
 		start_frames,end_frames = self.setFrameRange(second,1)
 		app.writeConfigXml(start_frames,end_frames)
 
+	def makeDummyConfig(self):
+		self.setNFrames(1)
+		self.setFramePath(os.path.join(self.getFramePath(),'dummy'))
+		self.makeConfigFromExposureTime(self.base_frame_time)
+
 if __name__ == '__main__':
 		if len(sys.argv) != 2:
 			print 'usage: falconframe.py exposure_time_in_second'
 			sys.exit()
 		app = FalconFrameConfigXmlMaker()
 		exposure_second = float(sys.argv[1])
+		#app.makeDummyConfig()
+		app.setNFrames(7)
 		app.makeConfigFromExposureTime(exposure_second)
