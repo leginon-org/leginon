@@ -9,7 +9,10 @@ class FalconFrameConfigXmlMaker(object):
 	def __init__(self):
 		self.base_frame_time = 0.055771
 		self.frame_time = 0.055771
+		self.format_version = 1.0
+		self.base_frame_path = 'E:\\frames'
 		self.frame_path = 'E:\\frames'
+		self.configxml_path = 'C:\Titan\Data\Falcon'
 		self.total_output_frames = 7
 
 	def setFrameTime(self,second):
@@ -57,6 +60,8 @@ class FalconFrameConfigXmlMaker(object):
 
 	def writeConfigXml(self,start_frames,end_frames):
 		rt = et.Element('IntermediateConfig')
+		fv = et.SubElement(rt,'FormatVersion')
+		fv.text = '%.1f' % self.format_version
 		sp = et.SubElement(rt,'StoragePath')
 		sp.text = self.frame_path
 		ifb = {}
@@ -70,7 +75,7 @@ class FalconFrameConfigXmlMaker(object):
 		reparsed = xml.dom.minidom.parseString(roughstr)
 		xmlstr = reparsed.toprettyxml(indent="\t",newl='\n',encoding="utf-8")
 		print xmlstr
-		f = open('IntermediateConfig.xml','w')
+		f = open(os.path.join(self.configxml_path,'IntermediateConfig.xml'),'w')
 		f.write(xmlstr)
 		f.close()
 
@@ -79,19 +84,21 @@ class FalconFrameConfigXmlMaker(object):
 
 	def makeConfigFromExposureTime(self,second):
 		start_frames,end_frames = self.setFrameRange(second,1)
-		app.writeConfigXml(start_frames,end_frames)
+		self.writeConfigXml(start_frames,end_frames)
 
 	def makeDummyConfig(self):
 		self.setNFrames(1)
-		self.setFramePath(os.path.join(self.getFramePath(),'dummy'))
+		self.setFramePath(os.path.join(self.base_frame_path,'dummy'))
 		self.makeConfigFromExposureTime(self.base_frame_time)
 
 if __name__ == '__main__':
 		if len(sys.argv) != 2:
 			print 'usage: falconframe.py exposure_time_in_second'
-			sys.exit()
+			print 'default to 0.5 second'
+			exposure_second = 0.5
+		else:
+			exposure_second = float(sys.argv[1])
 		app = FalconFrameConfigXmlMaker()
-		exposure_second = float(sys.argv[1])
 		#app.makeDummyConfig()
 		app.setNFrames(7)
 		app.makeConfigFromExposureTime(exposure_second)
