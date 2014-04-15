@@ -2,7 +2,7 @@ import comtypes.client
 import ccdcamera
 import numpy
 import time
-
+import falconframe
 ## create a single connection to TIA COM object.
 ## Muliple calls to get_tiaccd will return the same connection.
 ## Store the handle in the com module, which is safer than in
@@ -69,9 +69,10 @@ class TIA(ccdcamera.CCDCamera):
 		self.offset = value
 	def getOffset(self):
 		return self.offset
-	def setExposureTime(self, value):
-		self.exposure = value
+	def setExposureTime(self, ms):
+		self.exposure = ms
 	def getExposureTime(self):
+		# milliseconds
 		return float(self.exposure)
 
 	def _connectToESVision(self):
@@ -193,12 +194,20 @@ acquisition.
 		# send it to camera
 		self.setConfig(binning=bin, range=range, exposure=exposure)
 
+
+	def custom_setup(self):
+		'''
+		Camrea specific setup
+		'''
+		pass
+
 	def _getImage(self):
 		'''
 		Acquire an image using the setup for this ESVision client.
 		'''
 		try:
 			self.selectSetup()
+			self.custom_setup()
 			self.finalizeSetup()
 			t0 = time.time()
 			self.acqman.Acquire()
@@ -259,6 +268,10 @@ class TIA_Falcon(TIA):
 	camera_name = 'BM-Falcon'
 	binning_limits = [1,2,4]
 
+	def __init__(self):
+		super(TIA_Falcon,self).__init__()
+		self.frameconfig = falconframe.FalconFrameConfigXmlMaker()
+
 	def getPixelSize(self):
 		return {'x': 1.4e-5, 'y': 1.4e-5}
 
@@ -268,6 +281,15 @@ class TIA_Falcon(TIA):
 			# extra pause for Orius insert since Orius might think
 			# it is already inserted
 			time.sleep(4)
+
+	def setSaveRawFrames(self, value):
+		self.save_frames = bool(value)
+
+	def custom_setup(self):
+			if self.save_frames:
+				self.frameconfig.makeConfigFromExposureTime(self.exposure/1000.0)
+			else:
+				self.frameconfig.makeDummyConfig()
 
 class TIA_Orius(TIA):
 	camera_name = 'BM-Orius'
