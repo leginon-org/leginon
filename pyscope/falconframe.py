@@ -10,6 +10,7 @@ class FalconFrameConfigXmlMaker(object):
 		self.base_frame_time = 0.055771
 		self.frame_time = 0.055771
 		self.format_version = 1.0
+		self.no_save_frame_path = 'E:\\not_a_real_path'
 		self.base_frame_path = 'E:\\frames'
 		self.frame_path = 'E:\\frames'
 		self.configxml_path = 'C:\Titan\Data\Falcon'
@@ -74,7 +75,6 @@ class FalconFrameConfigXmlMaker(object):
 		roughstr =  et.tostring(rt,'utf-8')
 		reparsed = xml.dom.minidom.parseString(roughstr)
 		xmlstr = reparsed.toprettyxml(indent="\t",newl='\n',encoding="utf-8")
-		print xmlstr
 		f = open(os.path.join(self.configxml_path,'IntermediateConfig.xml'),'w')
 		f.write(xmlstr)
 		f.close()
@@ -92,8 +92,16 @@ class FalconFrameConfigXmlMaker(object):
 		self.makeConfigFromExposureTime(second)
 
 	def makeDummyConfig(self):
+		'''
+		Non-frame saving can be achieved by saving
+		the frames to a directory under a non-existing
+		directory
+		'''
 		self.setNFrames(1)
-		self.setFramePath(os.path.join(self.base_frame_path,'dummy'))
+		# self.no_save_frame_path needs to be on not existing
+		# since FalconIntermediateImage program is capable of
+		# making a directory below existing ones
+		self.setFramePath(os.path.join(self.no_save_frame_path,'dummy'))
 		self.makeConfigFromExposureTime(self.base_frame_time)
 
 if __name__ == '__main__':
