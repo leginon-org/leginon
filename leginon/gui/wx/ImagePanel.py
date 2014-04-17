@@ -388,7 +388,11 @@ class ImagePanel(wx.Panel):
 		dflt_max = min(dflt_max, stats['max'])
 
 		value = (dflt_min, dflt_max)
-		self.contrasttool.setRange((stats['min'], stats['max']), value)
+		# handle possible nan such array is all None
+		if math.isnan(stats['min']) or math.isnan(stats['max']) or math.isnan(stats['mean']) or math.isnan(stats['std']):
+			self.imagedata = None
+		elif stats['min'] != stats['max']:
+			self.contrasttool.setRange((stats['min'], stats['max']), value)
 		self.setBitmap()
 		self.setVirtualSize()
 		self.setBuffer()
