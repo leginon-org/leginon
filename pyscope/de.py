@@ -98,7 +98,7 @@ class DECameraBase(ccdcamera.CCDCamera):
 	Subclasses should define an attribute "de_name"
 	to inform this base class how to set the active camera.
 	'''
-	logged_methods_on = True
+	logged_methods_on = False
 	def __init__(self):
 		ccdcamera.CCDCamera.__init__(self)
 
@@ -107,6 +107,8 @@ class DECameraBase(ccdcamera.CCDCamera):
 		## instance specific 
 		self.offset = {'x': 0, 'y': 0}
 		self.binning = {'x': 1, 'y': 1}
+		self.dimension = self._getCameraSize()
+
 		#update a few essential camera properties to default values
 		self.setProperty('Correction Mode', 'Uncorrected Raw')
 
@@ -151,7 +153,6 @@ class DECameraBase(ccdcamera.CCDCamera):
 
 	def setExposureTime(self, ms):
 		seconds = ms / 1000.0
-		print 'SETTING EXPTIME', time.time(), seconds
 		self.setProperty('Exposure Time (seconds)', seconds)
 
 	def getDimension(self):
@@ -263,8 +264,6 @@ class DECameraBase(ccdcamera.CCDCamera):
 	def getUseFrames(self):
 		nsum = self.getProperty('Autosave Sum Frames - Sum Count')
 		first = self.getProperty('Autosave Sum Frames - Ignored Frames')
-		print 'NSUM', nsum
-		print 'FIRST', first
 		last = first + nsum
 		ntotal = self.getNumberOfFrames()
 		if last > ntotal:
@@ -284,8 +283,6 @@ class DECameraBase(ccdcamera.CCDCamera):
 		if nsum > total_frames:
 			nsum = total_frames
 		nsum = int(nsum)
-		print 'NSUM', nsum
-		print 'NSKIP', nskip
 		self.setProperty('Autosave Sum Frames - Sum Count', nsum)
 		self.setProperty('Autosave Sum Frames - Ignored Frames', nskip)
 
@@ -326,15 +323,33 @@ class DE12Survey(DECameraBase):
 		DECameraBase.__init__(self)
 		self.dimension = {'x': 1024, 'y': 1024}
 
-class DE12(DECameraBase):
-	name = 'DE12'
+class DD(DECameraBase):
+	name = 'DD'
 	def __init__(self):
-		DECameraBase.__init__(self)
-		self.dimension = {'x': 4096, 'y': 3072}
+		'''
+		DD camera
+		'''
+		# Keep the proxy object to be used later
+		# to avoid "not an instance of the module problem
+		# after reload.
+		self.as_super = super(DD,self)
+
+		self.as_super.__init__()
 		self.setProperty('Ignore Number of Frames', 0)
-		self.setProperty('Preexposure Time (seconds)', 0.043)		
+		frame_time_ms = self.getFrameTime()
+		self.setProperty('Preexposure Time (seconds)', frame_time_ms/1000.0)		
 
 	def finalizeGeometry(self, image):
-		image = DECameraBase.finalizeGeometry(self, image)
+		image = self.as_super.finalizeGeometry(image)
 		image = numpy.fliplr(image)
 		return image
+
+class DE12(DD):
+	name = 'DE12'
+
+class DE20(DD):
+	name = 'DE20'
+	def getPixelSize(self):
+		psize = 6.4e-6
+		return {'x': psize, 'y': psize}
+
