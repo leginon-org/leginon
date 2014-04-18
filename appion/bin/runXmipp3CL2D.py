@@ -615,7 +615,7 @@ class CL2D(appionScript.AppionScript):
 				self.insertClusterStackIntoDatabase(
 					"part"+self.params['timestamp']+"_level_%02d_.hed"%level,
 					classnum+1, partdict[classnum], len(partdict))
-#		self.clearIntermediateFiles()
+		self.clearIntermediateFiles()
 					
 #=====================
 if __name__ == "__main__":
