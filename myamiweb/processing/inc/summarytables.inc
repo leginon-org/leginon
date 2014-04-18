@@ -690,8 +690,11 @@ function clustersummarytable($clusterrunid, $mini=false) {
 			$clustertable .= "<b>Factor list:</b> <i>".$clusterrun['factor_list']."</i>\n";
 			$clustertable .= "<ul>\n";
 		} elseif ($clusterrun['REF|ApCL2DRunData|cl2dparams']) {
-			$clustertable .= "<b>Type:</b> <i>Xmipp CL2D</i><br/>\n";
+			$clustertable .= "<b>Type:</b> <i>Xmipp 2 CL2D</i><br/>\n";
 			$clustertable .= "<ul>\n";
+		} elseif ($clusterrun['REF|ApXMIPP3CL2DRunData|xmipp3cl2drun']) {
+				$clustertable .= "<b>Type:</b> <i>Xmipp 3 CL2D</i><br/>\n";
+				$clustertable .= "<ul>\n";			
 		} elseif ($clusterrun['REF|ApSIMPLEClusterRunData|simpleparams']) {
 			$clustertable .= "<b>Type:</b> <i>SIMPLE alignment and clustering</i><br/>\n";
 			$clustertable .= "<ul>\n";
@@ -752,7 +755,7 @@ function clustersummarytable($clusterrunid, $mini=false) {
 					."<a target='stackview' href='viewstack.php?expId=$expId&clusterId=$clusterid&file=$clusteravgfile'>"
 					.$clusterdata['num_classes']." Class Averages</a> (ID $clusterid)&nbsp;"
 					."</span></li>\n";
-			} elseif ($clusterdata['REF|ApCL2DRunData|cl2dparams']) {
+			} elseif ($clusterdata['REF|ApCL2DRunData|cl2dparams']|| $clusterdata['REF|ApXMIPP3CL2DRunData|xmipp3cl2drun']) {
 				if (preg_match("/level_[0-9][0-9]/i", $clusteravgfile, $matches)){
 					$level = substr($matches[0],-2,2);
 				}

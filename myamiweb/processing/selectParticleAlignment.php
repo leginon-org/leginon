@@ -77,26 +77,45 @@ echo " <p> first you select template and then this method uses the "
 echo "</td></tr>\n";
 
 /*
-** Xmipp Clustering 2D Reference Free Alignment
+ ** Xmipp 3 Clustering 2D Reference Free Alignment
 */
 
 echo "<tr><td width='100' align='center'>\n";
 echo "  <img src='img/xmipp_logo.png' width='64'>\n";
 echo "</td><td>\n";
-echo "  <h3><a href='runCL2DAlign.php?expId=$expId'>Xmipp Clustering 2D Alignment</a></h3>\n";
+echo "  <h3><a href='runXmipp3CL2DAlign.php?expId=$expId'>Xmipp 3 Clustering 2D Alignment</a></h3>\n";
 echo " <p> this method builds a hierarchical classification of particles"
-	." It uses the "
-	."<a href='http://xmipp.cnb.csic.es/twiki/bin/view/Xmipp/ClassAverages'>Xmipp cl2d</a>"
-	."&nbsp;<img src='img/external.png'>"
-	." program to perform alignments. "
-	."It is a relatively fast method that aligns and classify the images at the same time. "
-	."The method starts by estimating a few classes that are further subdivided till the desired number of classes is reached. "
-	."Every time an image is compared to the class averages it is aligned before-hand. <b> NOTE: in Xmipp 2.4 the alignment "
-	."parameters are not saved in the database, and therefore this method cannot be used for RCT / OTR reconstructions.</b>"
-	."</p>\n";
+		." It uses the "
+		."<a href='http://xmipp.cnb.csic.es/twiki/bin/view/Xmipp/Classify_mpi_cl2d_v3'>Xmipp 3 cl2d</a>"
+				."&nbsp;<img src='img/external.png'>"
+						." program to perform alignments. "
+								."It is a relatively fast method that aligns and classify the images at the same time. "
+										."The method starts by estimating a few classes that are further subdivided till the desired number of classes is reached. "
+												."Every time an image is compared to the class averages it is aligned before-hand."
+																."</p>\n";
 //echo "  <img src='img/align-smr.png' width='250'><br/>\n";
 echo "</td></tr>\n";
 
+/*
+ ** Xmipp 2 Clustering 2D Reference Free Alignment
+*/
+
+echo "<tr><td width='100' align='center'>\n";
+echo "  <img src='img/xmipp_logo.png' width='64'>\n";
+echo "</td><td>\n";
+echo "  <h3><a href='runCL2DAlign.php?expId=$expId'>Xmipp 2 Clustering 2D Alignment</a></h3>\n";
+echo " <p> this method builds a hierarchical classification of particles"
+		." It uses the "
+		."<a href='http://xmipp.cnb.csic.es/twiki/bin/view/Xmipp/ClassAverages'>Xmipp 2 cl2d</a>"
+				."&nbsp;<img src='img/external.png'>"
+						." program to perform alignments. "
+								."It is a relatively fast method that aligns and classify the images at the same time. "
+										."The method starts by estimating a few classes that are further subdivided till the desired number of classes is reached. "
+												."Every time an image is compared to the class averages it is aligned before-hand. <b> NOTE: in Xmipp 2.4 the alignment "
+														."parameters are not saved in the database, and therefore this method cannot be used for RCT / OTR reconstructions.</b>"
+																."</p>\n";
+//echo "  <img src='img/align-smr.png' width='250'><br/>\n";
+echo "</td></tr>\n";
 
 if (!HIDE_IMAGIC && !HIDE_FEATURE) {
 	/*

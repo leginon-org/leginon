@@ -64,7 +64,7 @@ if ($stackdatas) {
 		else
 			$analysisdatas = $particle->getAnalysisRunForAlignStack($alignstackid, $projectId, false);
 		$s = $particle->getAlignStackParams($alignstackid); 
-		if ($analysisdatas || $s['REF|ApCL2DRunData|cl2drun'] || $s['REF|ApSIMPLEClusterRunData|simplerun']) {
+		if ($analysisdatas || $s['REF|ApCL2DRunData|cl2drun'] || $s['REF|ApXMIPP3CL2DRunData|xmipp3cl2drun'] || $s['REF|ApSIMPLEClusterRunData|simplerun']) {
 			if ($_GET['showHidden'])
 				$clusterruns = $particle->getClusteringRunsForAlignStack($alignstackid, true);
 			else
