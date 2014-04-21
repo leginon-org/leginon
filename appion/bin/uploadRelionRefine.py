@@ -24,6 +24,8 @@ from appionlib import apRecon
 from appionlib import apFrealign
 from appionlib import reconUploader
 from appionlib import apFile
+from appionlib import starFile
+
 
 class UploadRelionScript(reconUploader.generalReconUploader):
 	
@@ -64,89 +66,34 @@ class UploadRelionScript(reconUploader.generalReconUploader):
 	def parseParticleDataIterationFile(self,paramfile,test=False):
 		'''
 		parse data.star file from Relion 1.2:
-	data_images
-	
-	loop_
-	_rlnVoltage #1
-	_rlnDefocusU #2
-	_rlnDefocusV #3
-	_rlnDefocusAngle #4
-	_rlnSphericalAberration #5
-	_rlnAmplitudeContrast #6
-	_rlnImageName #7
-	_rlnMicrographName #8
-	_rlnGroupNumber #9
-	_rlnAngleRot #10
-	_rlnAngleTilt #11
-	_rlnAnglePsi #12
-	_rlnOriginX #13
-	_rlnOriginY #14
-	_rlnClassNumber #15
-	_rlnNormCorrection #16
-	_rlnMagnificationCorrection #17
-	_rlnRandomSubset #18
-	_rlnLogLikeliContribution #19
-	_rlnMaxValueProbDistribution #20
-	_rlnNrOfSignificantSamples #21
-	  120.000000 15077.300000 14183.700000   -41.860000     2.000000     0.360000 1@/ami/data00/appion/zz07jul25b/recon/relion_recon63/start.mrcs          1            1    69.185200    65.769858  -107.659774     0.321202    -0.178798            1     1.000000     1.000000            1 48957.121482 8.954495e-05         1710
-		
+
 		'''
 		if not os.path.isfile(paramfile):
 			apDisplay.printError("Relion data.star file does not exist: %s" % (paramfile))
-	
-		f = open(paramfile, "r")
-		partdict = {}
-		inloop = False
-		partnum = 1 ### partnum starts with 1, not 0
-		apDisplay.printMsg("Processing particle data file: %s" % (paramfile))
+		apDisplay.printMsg("Parsing parameter file: %s" % (paramfile))
+			
+		# Use the star file class to read the parameter file
+		f = starFile.StarFile( paramfile )
+		f.read()
+		dataBlock = f.getDataBlock("data_images")
+		loopDict  = dataBlock.getLoopDict() # there is only one loop in the data_images block
+		partnum   = 1 # partnum starts with 1, not 0
+		partdict  = {}
 		
-		for line in f:
-			line = line.strip()
-			if line.startswith("loop_"):
-				inloop = True
-				continue
-			elif inloop and line.startswith("_"):
-				### comment line
-				continue
-			elif inloop and not line:
-				inloop = False
-				break # reached the end of this section of the file
-			elif inloop and line:
-				sline = line.split()
-				paramdict = {
-					'partnum' : partnum,   
-					'volatage' : float(sline[0]),   
-					'defocusU' : float(sline[1]),
-					'defocusV' : float(sline[2]),
-					'defocusAngle' : float(sline[3]),
-					'sphericalAberration' : float(sline[4]),
-					'amplitudeContrast' : float(sline[5]),
-					'imageName' : sline[6],
-					'micrographName' : int(sline[7]),
-					'groupNumber' : int(sline[8]),
-					'angleRot' : float(sline[9]),
-					'angleTilt' : float(sline[10]),
-					'anglePsi' : float(sline[11]),
-					'originX' : float(sline[12]),
-					'originY' : float(sline[13]),
-					'classNumber' : int(sline[14]),
-					'normCorrection' : float(sline[15]),
-					'magnificationCorrection' : float(sline[16]),
-					'randomSubset' : int(sline[17]),
-					'logLikeliContribution' : float(sline[18]),
-					'maxValueProbDistribution' : float(sline[19]),
-					'nrOfSignificantSamples' : int(sline[20]),
-				}
-				partdict[paramdict['partnum']] = paramdict
-				partnum = partnum + 1
-	
-			# test mode returns only two particles
-			if test and len(parttree) == 2:
-				break
-		f.close()
-	
+		for valueSet in loopDict:
+			paramdict = {
+					'partnum'      : partnum,   
+					'angleRot'     : float(valueSet["_rlnAngleRot"]),
+					'angleTilt'    : float(valueSet["_rlnAngleTilt"]),
+					'anglePsi'     : float(valueSet["_rlnAnglePsi"]),
+					'originX'      : float(valueSet["_rlnOriginX"]),
+					'originY'      : float(valueSet["_rlnOriginY"]),
+			}
+			partdict[paramdict['partnum']] = paramdict
+			partnum = partnum + 1
+				
 		if len(partdict) < 2:
-			apDislay.printError("No particles found in particle data file %s" % (paramfile))
+			apDisplay.printError("No particles found in particle data file %s" % (paramfile))
 	
 		apDisplay.printMsg("Processed %d particles" % (len(partdict)))
 		return partdict	
@@ -234,41 +181,27 @@ class UploadRelionScript(reconUploader.generalReconUploader):
 		paramdict = {}
 		
 		### parse optimiser file to populate dictionary
-		f = open(optimiserfilepath, "r")
+		f = starFile.StarFile( optimiserfilepath )
+		f.read()
+		dataBlock = f.getDataBlock("data_optimiser_general")
+		paramdict = dataBlock.getLabelDict()
+		header    = f.getHeader()
 		
-		for line in f:
-			if line.startswith("# RELION optimiser"):
-				continue
-			elif line.startswith("# --o"): # The command used to run Relion
-				sline = line.strip()
-				bits = sline.split("--")
-				
-				for bit in bits:
-					params = bit.split()
-					key = params[0]
-					if len(params) > 1 :
-						value = params[1]
-						paramdict[key] = value
-					else:
-						paramdict[key] = True
-
-			elif line.startswith("_"): # star format entry
-				
-				sline = line.strip()
-				bits = sline.split()
-				if len(bits) < 2 :
-					continue
-				key = bits[0]
-				value = bits[1]
+		# Parse the header for the command line options used to run relion
+		sheader = header.strip()
+		bits = sheader.split("--")
+		for bit in bits:
+			params = bit.split()
+			key = params[0]
+			if len(params) > 1 :
+				value = params[1]
 				paramdict[key] = value
-
-			elif line.startswith("EOF"):
-				break
-			
-		f.close()
-				
-		# TODO: There are more parameters to add here
-		# fill on the iteration params that we care about
+			else:
+				paramdict[key] = True
+		
+		if 'ini_high' not in paramdict:
+			paramdict['ini_high'] = 0
+		
 		iterparams['ctf']                     = self.convertBool(paramdict['_rlnDoCorrectCtf']) if paramdict['_rlnDoCorrectCtf'] else False
 		iterparams['ctf_intact_first_peak']   = self.convertBool(paramdict['_rlnDoIgnoreCtfUntilFirstPeak']) if paramdict['_rlnDoIgnoreCtfUntilFirstPeak'] else False
 		iterparams['ctf_corrected_ref']       = self.convertBool(paramdict['_rlnRefsAreCtfCorrected']) if paramdict['_rlnRefsAreCtfCorrected'] else False
@@ -337,38 +270,29 @@ class UploadRelionScript(reconUploader.generalReconUploader):
 			fscfile = os.path.join(self.projmatchpath, "recon_model.star"%(iteration))
 		else:
 			fscfile = os.path.join(self.projmatchpath, "recon_it%.3d_half1_model.star"%(iteration))
-
+			
+		f = starFile.StarFile( fscfile )
 		try: 
-			f = open(fscfile, "r")
-		except IOError, e:
+			f.read()
+		except e:
 			if iteration == lastiter:
 				apDisplay.printWarning("%s file could not be opened, data will NOT be inserted into the database. Relion did NOT run to completion." % fscfile)
 			else:
 				apDisplay.printWarning("%s file could not be opened, data will NOT be inserted into the database" % fscfile)
 			return False
 		
+		dataBlock = f.getDataBlock("data_model_class_1")
+		loopDict = dataBlock.getLoopDict()
+
 		newfscfile = open(os.path.join(self.resultspath, "recon_%s_it%.3d_vol001.fsc" % (self.params['timestamp'], iteration)), "w")
 		newfscfile.write("### column (1) inverse Angstroms, column (2) Fourier Shell Correlation (FSC)")
-		indatamodel = False
 		
-		for line in f:
-			line = line.strip()
-			if line.startswith("data_model_class_1"):
-				indatamodel = True
-				continue
-			elif indatamodel and ( line.startswith("_") or line.startswith("loop_") ): 
-				continue
-			elif indatamodel and line.startswith("data_model_groups"):
-				indatamodel = False
-				break
-			elif indatamodel and line:
-				bits = line.split()
-				resolution = float(bits[1]) # already in inverse angstrom
-				fsc = float(bits[4]) # should go from a value of 1 to 0
-				newfscfile.write("%.6f\t%.6f\n" % (resolution, fsc))
-
+		for valueSet in loopDict:
+			resolution   = float(valueSet["_rlnResolution"]) # already in inverse angstrom
+			fsc          = float(valueSet["_rlnGoldStandardFsc"]) # should go from a value of 1 to 0
+			newfscfile.write("%.6f\t%.6f\n" % (resolution, fsc))
+			
 		newfscfile.close()
-		f.close()
 		
 		return True
 	
@@ -386,8 +310,13 @@ class UploadRelionScript(reconUploader.generalReconUploader):
 		
 		appended = numpy.zeros(((box,box,box)))
 		for file in filelist:
-			f = mrc.read(file)
-			appended += f
+			try:
+				f = mrc.read(file)
+				appended += f
+			except Exception, e:
+				print e
+				apDisplay.printError("%s file could not be combined with its other half." % file)
+		
 		appended = (appended / nvol)
 		
 		summed = mrc.write(appended, finalvol)
