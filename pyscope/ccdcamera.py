@@ -54,6 +54,9 @@ class CCDCamera(baseinstrument.BaseInstrument):
 	def getZplane(self):
 		return self.zplane
 
+	def getCameraModelName(self):
+		return self.name
+
 	def calculateCenteredGeometry(self, dimension, binning):
 		camerasize = self.getCameraSize()
 		offsetx = (camerasize['x']/binning - dimension)/2

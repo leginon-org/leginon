@@ -24,7 +24,7 @@ def get_tiaccd():
 
 class TIA(ccdcamera.CCDCamera):
 	name = 'TIA'
-	camera_name = None
+	camera_name = 'tia'
 
 	def __init__(self):
 		self.unsupported = [
@@ -57,6 +57,8 @@ class TIA(ccdcamera.CCDCamera):
 		self.offset = {'x':0, 'y':0}
 		self.exposure = 500.0
 		self.exposuretype = 'normal'
+	def getCameraModelName(self):
+		return self.camera_name
 	def setDimension(self, value):
 		self.dimension = value
 	def getDimension(self):

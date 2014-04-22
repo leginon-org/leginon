@@ -102,6 +102,9 @@ class Gatan(ccdcamera.CCDCamera):
 			new_d[key] = int(value)
 		return new_d
 
+	def getCameraModelName(self):
+		return self.camera.CameraName
+
 	def getOffset(self):
 		return dict(self.offset)
 
@@ -209,7 +212,7 @@ class Gatan(ccdcamera.CCDCamera):
 		inserted = self.getInserted()
 		if not inserted and value:
 			self.camera.Insert()
-			time.sleep(5)
+			time.sleep(6)
 		elif inserted and not value:
 			self.camera.Retract()
 		else:
