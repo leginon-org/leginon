@@ -86,7 +86,7 @@ class Conditioner(node.Node):
 			self._handleFixConditionEvent(evt)
 			self.confirmEvent(evt, status='ok')
 		except Exception, e:
-			self.logger.error('handling exception %s' %(e,))
+			self.logger.warning('handling exception %s' %(e,))
 			self.confirmEvent(evt, status='exception')
 		self.setStatus('idle')
 
@@ -188,6 +188,7 @@ class AutoNitrogenFiller(Conditioner):
 			isbusy = self.instrument.tem.isAutoFillerBusy()
 		except AttributeError:
 			return None
+
 		# handle script not available
 		if isbusy is None:
 			return isbusy
