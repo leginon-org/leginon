@@ -27,6 +27,7 @@ class ApEulerJump(object):
 		self.dbconf = sinedon.getConfig('appiondata')
 		### connect
 		self.db     = MySQLdb.connect(**self.dbconf)
+		self.db.autocommit(True)
 		### create a cursor
 		self.cursor = self.db.cursor()
 		### keep sinedon version too
