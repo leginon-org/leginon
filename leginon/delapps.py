@@ -38,6 +38,7 @@ user = raw_input('DB User: ')
 passwd = getpass.getpass()
 
 db = MySQLdb.connect(host=host, user=user, db=dbname, passwd=passwd)
+db.autocommit(True)
 
 for id in appids:
 	cur = db.cursor()
