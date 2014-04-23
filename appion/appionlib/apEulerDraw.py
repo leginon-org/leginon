@@ -29,6 +29,7 @@ def getEulersForIteration(reconid, iteration=1):
 	# connect
 	dbconf = sinedon.getConfig('appiondata')
 	db = MySQLdb.connect(**dbconf)
+	db.autocommit(True)
 	# create a cursor
 	cursor = db.cursor()
 
@@ -288,8 +289,6 @@ def fillDataDict(radlist, anglelist, freqlist):
 	d['maxy'] = float(ndimage.maximum(ynumpy))
 	d['rangex'] = d['maxx']-d['minx']
 	d['rangey'] = d['maxy']-d['miny']
-	
-	apDisplay.printWarning("rangex: %f, mina: %f, minx: %f, maxx: %f" % (d['rangex'],d['mina'],d['minx'],d['maxx']))
 
 	return d
 
@@ -301,7 +300,6 @@ def makeTriangleImage(eulerdict, imgname="temp.png",
 	"""
 
 	### convert to lists
-	valsum = 0.0
 	radlist   = []
 	anglelist = []
 	freqlist  = []
@@ -310,8 +308,6 @@ def makeTriangleImage(eulerdict, imgname="temp.png",
 		radlist.append(rad*math.pi/180.0*math.pi/180.0)
 		anglelist.append(ang*math.pi/180.0*math.pi/180.0)
 		freqlist.append(val)
-		valsum += val
-	apDisplay.printWarning("Sum of values in freqlist: %f" % (valsum))
 
 	### find min/max data
 	d = fillDataDict(radlist, anglelist, freqlist)
@@ -357,7 +353,6 @@ def makePolarImage(eulerdict, imgname="temp.png",
 	"""
 
 	### convert to lists
-	valsum = 0.0
 	radlist   = []
 	anglelist = []
 	freqlist  = []
@@ -366,8 +361,6 @@ def makePolarImage(eulerdict, imgname="temp.png",
 		radlist.append(rad*math.pi/180.0)
 		anglelist.append(ang*math.pi/180.0)
 		freqlist.append(val)
-		valsum += val
-	apDisplay.printWarning("Sum of values in freqlist: %f" % (valsum))
 
 	### find min/max data
 	d = fillDataDict(radlist, anglelist, freqlist)
@@ -419,13 +412,7 @@ def makePolarImage(eulerdict, imgname="temp.png",
 
 #===========
 def freqToColor(freq, maxf, rangef):
-	try:
-		fgray = 255.0*((maxf-freq)/rangef)**2
-	except Exception, e:
-		fgray = 0
-		apDisplay.printWarning("Exception in apEulerDraw.py freqToColor(): ")
-		print e
-		
+	fgray = 255.0*((maxf-freq)/rangef)**2
 	return fgray
 
 #===========
