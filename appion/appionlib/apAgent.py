@@ -159,6 +159,7 @@ class Agent (basicAgent.BasicAgent):
 		retVal = True   #initialize return value to True
 		dbConfig = sinedon.getConfig('appiondata')
 		dbConnection = MySQLdb.connect(**dbConfig)
+		dbConnection.autocommit(True)
 		cursor = dbConnection.cursor()
 		   
 		   
@@ -179,6 +180,7 @@ class Agent (basicAgent.BasicAgent):
 			#Determine the appion project database name using the project id.
 			projDBConfig = sinedon.getConfig('projectdata')
 			dbConnection = MySQLdb.connect(**projDBConfig)
+			dbConnection.autocommit(True)
 			cursor =  dbConnection.cursor()
 										  
 			query = "SELECT appiondb from processingdb WHERE `REF|projects|project`=%d" % (jobObject.getProjectId())

@@ -48,6 +48,7 @@ class DBUpgradeTools(object):
 			print "\033[32mconnected to db '%s' on server '%s'\033[0m"%(dbconf['db'], dbconf['host'])
 		### connect to db
 		db = MySQLdb.connect(**dbconf)
+		db.autocommit(True)
 		### create cursor
 		self.cursor = db.cursor()
 		self.defid = 'int(20) NOT NULL auto_increment'

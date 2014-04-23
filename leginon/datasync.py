@@ -33,6 +33,7 @@ print ''
 print ''
 
 db = MySQLdb.connect(host=dbhost, db=dbname, user=dbuser, passwd=dbpass)
+db.autocommit(True)
 
 ## get list of tables
 cur = db.cursor()

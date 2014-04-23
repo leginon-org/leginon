@@ -27,6 +27,7 @@ class tiltStackSync(appionScript.AppionScript):
 		# connect
 		self.dbconf = sinedon.getConfig('appiondata')
 		self.db     = MySQLdb.connect(**self.dbconf)
+		self.db.autocommit(True)
 		# create a cursor
 		self.cursor = self.db.cursor()
 

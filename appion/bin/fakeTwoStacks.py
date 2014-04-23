@@ -24,6 +24,7 @@ class fakeStackScript(appionScript.AppionScript):
 	def onInit(self):
 		self.dbconf = sinedon.getConfig('appiondata')
 		self.db     = MySQLdb.connect(**self.dbconf)
+		self.db.autocommit(True)
 		self.cursor = self.db.cursor()
 
 	#=====================

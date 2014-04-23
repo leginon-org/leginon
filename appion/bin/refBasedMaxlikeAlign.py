@@ -175,6 +175,7 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 			return
 		config = sinedon.getConfig('appiondata')
 		dbc = MySQLdb.Connect(**config)
+		dbc.autocommit(True)
 		cursor = dbc.cursor()
 		query = (
 			"  UPDATE ApMaxLikeJobData "

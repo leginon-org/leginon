@@ -29,6 +29,7 @@ def getEulersForIteration(reconid, iteration=1):
 	# connect
 	dbconf = sinedon.getConfig('appiondata')
 	db = MySQLdb.connect(**dbconf)
+	db.autocommit(True)
 	# create a cursor
 	cursor = db.cursor()
 

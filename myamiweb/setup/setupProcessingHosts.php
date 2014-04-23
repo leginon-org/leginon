@@ -307,7 +307,7 @@ require_once('../inc/formValidator.php');
 			var row12 = tbl.insertRow(lastRow);
 			lastRow = lastRow +1;
 			var cellFirst = row12.insertCell(0);
-		  	var textNode = document.createTextNode("Path to Appion Scripts :");
+		  	var textNode = document.createTextNode("Path to Appion Scripts (/usr/local/bin/appion) :");
 		  	cellFirst.appendChild(textNode);
 		  
 		  	var cellRight = row12.insertCell(1);
@@ -322,7 +322,7 @@ require_once('../inc/formValidator.php');
 			var rowLib = tbl.insertRow(lastRow);
 			lastRow = lastRow +1;
 			var cellFirst = rowLib.insertCell(0);
-		  	var textNode = document.createTextNode("Path to appionlib directory :");
+		  	var textNode = document.createTextNode("Path to appionlib directory (/usr/lib/python2.6/site-packages/appionlib) :");
 		  	cellFirst.appendChild(textNode);
 		  
 		  	var cellRight = rowLib.insertCell(1);
@@ -382,7 +382,7 @@ require_once('../inc/formValidator.php');
 			var row16 = tbl.insertRow(lastRow);
 			lastRow = lastRow +1;
 			var cellFirst = row16.insertCell(0);
-		  	var textNode = document.createTextNode("Path to Appion Wrapper Script :");
+		  	var textNode = document.createTextNode("Path to Appion Wrapper Script (advanced feature) :");
 		  	cellFirst.appendChild(textNode);
 		  
 		  	var cellRight = row16.insertCell(1);
@@ -509,7 +509,7 @@ require_once('../inc/formValidator.php');
 		<input name="addHost" type="button" value="Add" <?php /*($update && PROCESSING === true) ? print("") : print("disabled"); */?> onclick="addRowToTable('','','','','','','','','','','','','','','','','','','','','');" />
 		<!-- leave the remove button out, does not work -->
 		<!-- <input name="removeHost" type="button" value="Remove"  <?php /*($update && PROCESSING === true) ? print("") : print("disabled");*/ ?> onclick="removeRowFormTable('hosts');" />-->
-		Please Click the "Add" Button to start. If this is a new installation and you have not yet set up a processing host (<a href="http://ami.scripps.edu/redmine/projects/appion/wiki/Setup_Remote_Processing">Setup Remote Processing</a>), please skip this section and return here later.<br />
+		Please Click the "Add" Button to start. See <a href="http://ami.scripps.edu/redmine/projects/appion/wiki/Appion_config_advanced">Processing Host Config Params</a> for details. If this is a new installation and you have not yet set up a processing host (<a href="http://ami.scripps.edu/redmine/projects/appion/wiki/Setup_Remote_Processing">Setup Remote Processing</a>), please skip this section and return here later.<br />
 		
 		<table border=0 cellspacing=8 style="font-size: 12px" id="hosts">
 		<div id="error"><?php if($errMsg['host']) echo $errMsg['host']; ?></div>

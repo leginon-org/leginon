@@ -37,6 +37,7 @@ class satEulerScript(appionScript.AppionScript):
 			# connect
 			self.dbconf = sinedon.getConfig('appiondata')
 			self.db     = MySQLdb.connect(**self.dbconf)
+			self.db.autocommit(True)
 			# create a cursor
 			self.cursor = self.db.cursor()
 
@@ -712,6 +713,7 @@ class satEulerScript(appionScript.AppionScript):
 			# connect
 			self.dbconf = sinedon.getConfig('appiondata')
 			self.db     = MySQLdb.connect(**self.dbconf)
+			self.db.autocommit(True)
 			# create a cursor
 			self.cursor = self.db.cursor()
 		if not self.params['reconid']:

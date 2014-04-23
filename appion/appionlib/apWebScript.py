@@ -39,6 +39,7 @@ def setJobStatus(jobid, status):
 	### do the query
 	dbconf = sinedon.getConfig('appiondata')
 	db     = MySQLdb.connect(**dbconf)
+	db.autocommit(True)
 	cursor = db.cursor()
 	query = (
 		"UPDATE \n"

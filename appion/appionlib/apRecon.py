@@ -256,6 +256,7 @@ def setGoodBadParticlesFromReconId(reconid):
 	import MySQLdb
 	dbconf = sinedon.getConfig('appiondata')
 	db     = MySQLdb.connect(**dbconf)
+	db.autocommit(True)
 	cursor = db.cursor()
 
 	refinerundata = appiondata.ApRefineRunData.direct_query(reconid)
