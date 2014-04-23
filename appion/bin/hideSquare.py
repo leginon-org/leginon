@@ -21,6 +21,7 @@ if __name__ == '__main__':
 
 	dbconf = sinedon.getConfig('leginon.leginondata')
 	db     = MySQLdb.connect(**dbconf)
+	db.autocommit(True)
 	cursor = db.cursor()
 
 	query = ( "SELECT "

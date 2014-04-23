@@ -23,6 +23,7 @@ if __name__ == "__main__":
 		pjc = sinedon.getConfig('projectdata')
 		q = "SELECT appiondb FROM processingdb WHERE `REF|projects|project`='%s'" % (projectid,)
 		dbc = MySQLdb.Connect(**pjc)
+		dbc.autocommit(True)
 		cursor = dbc.cursor()
 		result = cursor.execute(q)
 		if result:
@@ -35,6 +36,7 @@ if __name__ == "__main__":
 	c = sinedon.getConfig('appiondata')
 
 	dbc = MySQLdb.Connect(**c)
+	dbc.autocommit(True)
 	cursor = dbc.cursor()
 
 	# execute update
