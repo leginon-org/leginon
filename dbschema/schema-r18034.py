@@ -17,7 +17,7 @@ class SchemaUpdate18034(schemabase.SchemaUpdate):
 		else:
 			q = "DESCRIBE `SessionData` hidden"
 			results = self.leginon_dbupgrade.returnCustomSQL(q)
-			if results[0][2].lower == 'no':
+			if results[0][2].lower() == 'no':
 				q = "ALTER TABLE `SessionData` modify `hidden` tinyint NULL default 0"
 				self.leginon_dbupgrade.executeCustomSQL(q)
 
