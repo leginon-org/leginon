@@ -170,7 +170,7 @@ $link = mysql_connect(DB_HOST, DB_USER, DB_PASS);
 if(!$link) {
 	die('Could not connect: ' . mysql_error());
 }
-$sqlCmd = "insert into " . DB_PROJECT . ".install (`key`, value) Values ('Revision', $svnRevision)";
+$sqlCmd = "insert into " . DB_PROJECT . ".install (`key`, value) Values ('revision', $svnRevision)";
 mysql_query($sqlCmd);
 mysql_close($link);
 
