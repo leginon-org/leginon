@@ -361,6 +361,13 @@ class ImagePanel(wx.Panel):
 		y = int(round(vheight*cheight - height/2.0))
 		self.panel.Scroll(x, y)
 
+	def isPython26OrUp(self):
+		mypyver = sys.version_info[:3]
+		if mypyver[0] <=2 and mypyver[1] < 6:
+			return False
+		else:
+			return True
+
 	#--------------------
 	def setNumericImage(self, numericimage):
 		'''
@@ -389,7 +396,7 @@ class ImagePanel(wx.Panel):
 
 		value = (dflt_min, dflt_max)
 		# handle possible nan such array is all None
-		if math.isnan(stats['min']) or math.isnan(stats['max']) or math.isnan(stats['mean']) or math.isnan(stats['std']):
+		if self.isPython26OrUp() and (math.isnan(stats['min']) or math.isnan(stats['max']) or math.isnan(stats['mean']) or math.isnan(stats['std'])):
 			self.imagedata = None
 		elif stats['min'] != stats['max']:
 			self.contrasttool.setRange((stats['min'], stats['max']), value)
