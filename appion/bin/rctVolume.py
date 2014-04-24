@@ -352,7 +352,13 @@ class rctVolumeScript(appionScript.AppionScript):
 				memdiff = (mem.active()-startmem)/count/1024.0
 				if memdiff > 3:
 					apDisplay.printColor("Memory increase: %d MB/part"%(memdiff), "red")
-			tiltrot, theta, notrot, tiltangle = apTiltPair.getParticleTiltRotationAngles(stackpartdata)
+			try:
+				tiltrot, theta, notrot, tiltangle = apTiltPair.getParticleTiltRotationAngles(stackpartdata)
+			except:
+				count -= 1
+				apDisplay.printWarning("Skipping "+str(stackpartdata))
+				self.numpart -= 1
+				continue
 			inplane, mirror = self.getParticleInPlaneRotation(stackpartdata)
 			totrot = -1.0*(notrot + inplane)
 			if mirror is True:
