@@ -2,8 +2,10 @@
 import math
 import sys
 import os
+import time
 import xml.dom.minidom
 import xml.etree.ElementTree as et
+import itertools
 
 class FalconFrameConfigXmlMaker(object):
 	'''
@@ -11,34 +13,56 @@ class FalconFrameConfigXmlMaker(object):
 	either when frames to be saved and not.
 	The raw frames are put in limited number of bins.
 	'''
-	def __init__(self):
+	def __init__(self,simu=False):
 		'''
 		i/o time unit is second
 		'''
+		self.simulation = simu
+		self.idcounter = itertools.cycle(range(100))
 		self.base_frame_time = 0.055771
-		self.frame_time = 0.055771
 		self.format_version = 1.0
 		self.no_save_frame_path = 'E:\\not_a_real_path'
 		self.base_frame_path = 'E:\\frames'
-		self.frame_path = 'E:\\frames'
 		self.configxml_path = 'C:\Titan\Data\Falcon'
 		# Falcon 2 software can save frames in at most 7 bins
 		self.output_bin_limit = 7
 		self.output_bins = self.output_bin_limit + 0
+		self.resetParams()
+
+	def resetParams(self):
+		self.frame_path = self.no_save_frame_path
+		self.frames_name = ''
 		# Readout delay of one means frame 0 (shutter roll-in) is  not readout
+		self.internal_readout_delay = 1
 		self.frame_readout_delay = 1
+
+	def getBaseFrameTime(self):
+		return self.base_frame_time
 
 	def getNumberOfBinLimit(self):
 		return self.output_bin_limit
 
-	def setFrameTime(self,second):
-		self.frame_time = second
+	def makeFrameDirName(self,use_timestamp):
+		if use_timestamp:
+			frames_name = time.strftime('%Y%m%d_%H%M%S', time.localtime())
+			self.frames_name = frames_name + '%02d' % (self.idcounter.next(),)
+		else:
+			self.frames_name = 'dummy'
+		return self.frames_name
 
-	def getFrameTime(self):
-		return self.frame_time
+	def getFrameDirName(self):
+		return self.frames_name
 
-	def setFramePath(self,path):
-		self.frame_path = path
+	def createFramePath(self,base_path):
+		if os.path.isdir(base_path) or self.simulation:
+			# real path below existing base_path becomes the frame path
+			self.frame_path = os.path.join(base_path,self.makeFrameDirName(True))
+			if not self.simulation:
+				os.path.mkdir(self.frame_path)
+		else:
+			# dummy path will keep the frames from being written
+			self.makeFrameDirName(False)
+			self.frame_path = base_path
 
 	def getFramePath(self):
 		return self.frame_path
@@ -73,18 +97,18 @@ class FalconFrameConfigXmlMaker(object):
 		usable_nframes = available_nframes -self.frame_readout_delay
 		return min(self.output_bins,max(usable_nframes,1))
 
-	def setFrameReadOutDelay(self,value=1):
+	def setFrameReadoutDelay(self,value=1):
 		self.frame_readout_delay = value
 
-	def getFrameReadOutDelay(self):
+	def getFrameReadoutDelay(self):
 		return self.frame_readout_delay
 
 	def getNumberOfAvailableFrames(self):
 		'''
-		Available frames include the offset frames since exposure time does not include that.
+		Available frames include the roll-in frame since exposure time does not include that.
 		'''
 		half_frame_time = self.base_frame_time / 2.0
-		return int((self.exposure_time + half_frame_time) / self.base_frame_time) + self.getFrameReadOutDelay()
+		return int((self.exposure_time + half_frame_time) / self.base_frame_time) + self.internal_readout_delay
 
 	def distributeFramesInBins(self):
 		'''
@@ -93,7 +117,7 @@ class FalconFrameConfigXmlMaker(object):
 		output_bins = self.output_bins
 
 		available_nframes = self.getNumberOfAvailableFrames()
-		# usable number of frames does not include those not read
+		# usable number of frames does not include those not read for output
 		usable_nframes = available_nframes -self.frame_readout_delay
 		return self._distributeItemsInBins(usable_nframes,output_bins)
 
@@ -122,11 +146,14 @@ class FalconFrameConfigXmlMaker(object):
 		shutter roll-in.
 		'''
 		nframe_in_bins = self.distributeFramesInBins()
+		if self.simulation:
+			print nframe_in_bins
 		end_frames = []
-		if self.frame_readout_delay == 0:
+		offset = self.frame_readout_delay - self.internal_readout_delay
+		if False:
 			return [0],[0]
 		else:
-			end_frames = map((lambda x:sum(nframe_in_bins[:x+1])),range(len(nframe_in_bins)))
+			end_frames = map((lambda x:offset+sum(nframe_in_bins[:x+1])),range(len(nframe_in_bins)))
 			start_frames = map((lambda x:end_frames[x]+1),range(len(end_frames)-1))
 			start_frames.insert(0,self.frame_readout_delay)
 		self.output_bins = len(start_frames)
@@ -141,36 +168,38 @@ class FalconFrameConfigXmlMaker(object):
 		ifb = {}
 		for i in range(len(start_frames)):
 			ifb[i] = et.SubElement(rt,'InterFrameBoundary')
-			start = self.frame_time * (start_frames[i]+0.5)
-			end = self.frame_time * (end_frames[i]+0.5)
+			start = self.base_frame_time * (start_frames[i]+0.5)
+			end = self.base_frame_time * (end_frames[i]+0.5)
 			ifb[i].text = '%.3f - %.3f' % (start, end)
 		# pretty print
 		roughstr =  et.tostring(rt,'utf-8')
 		reparsed = xml.dom.minidom.parseString(roughstr)
 		xmlstr = reparsed.toprettyxml(indent="\t",newl='\n',encoding="utf-8")
-		f = open(os.path.join(self.configxml_path,'IntermediateConfig.xml'),'w')
-		f.write(xmlstr)
-		f.close()
-
-	def getFrames(self):
-		return range(1,8,1)
+		if not self.simulation:
+			f = open(os.path.join(self.configxml_path,'IntermediateConfig.xml'),'w')
+			f.write(xmlstr)
+			f.close()
+		else:
+			print xmlstr
 
 	def makeConfigXML(self):
 		start_frames,end_frames = self.setFrameRange()
 		self.writeConfigXml(start_frames,end_frames)
 
-	def makeRealConfigFromExposureTime(self,second):
+	def makeRealConfigFromExposureTime(self,second,delay=None):
 		'''
 		Make Useful Frame saving config.xml.
 		Minimal is 2 base_frame_time
 		'''
+		self.resetParams()
 		self.setMaxNumberOfFrameBins(7)
-		self.setFrameReadOutDelay(1)
+		if delay is not None:
+			self.setFrameReadoutDelay(delay)
 		status = self.validateExposureTime(second)
 		if status is False:
 			return False
 		self.setExposureTime(second)
-		self.setFramePath(self.base_frame_path)
+		self.createFramePath(self.base_frame_path)
 		self.makeConfigXML()
 		return True
 
@@ -180,8 +209,9 @@ class FalconFrameConfigXmlMaker(object):
 		the frames to a directory under a non-existing
 		directory
 		'''
+		self.resetParams()
 		self.setMaxNumberOfFrameBins(1)
-		self.setFrameReadOutDelay(1)
+		self.setFrameReadoutDelay(1)
 		status = self.validateExposureTime(second)
 		if status is False:
 			return status
@@ -189,18 +219,24 @@ class FalconFrameConfigXmlMaker(object):
 		# self.no_save_frame_path needs to be on not existing
 		# since FalconIntermediateImage program is capable of
 		# making a directory below existing ones
-		self.setFramePath(os.path.join(self.no_save_frame_path,'dummy'))
+		self.createFramePath(os.path.join(self.no_save_frame_path,'dummy'))
 		self.makeConfigXML()
 		return True
 
 if __name__ == '__main__':
-		if len(sys.argv) != 2:
-			print 'usage: falconframe.py exposure_time_in_second'
+		if len(sys.argv) < 2:
+			print 'usage: falconframe.py exposure_time_in_second delay_number_frames'
 			print 'default to 0.5 second'
+			print 'delay_number_frames default is 1'
 			exposure_second = 0.5
 		else:
 			exposure_second = float(sys.argv[1])
-		app = FalconFrameConfigXmlMaker()
+			if len(sys.argv) == 3:
+				delay = int(sys.argv[2])
+			else:
+				delay = 1
+		app = FalconFrameConfigXmlMaker(True)
 		#is_success = app.makeDummyConfig(exposure_second)
-		is_success = app.makeRealConfigFromExposureTime(exposure_second)
+		is_success = app.makeRealConfigFromExposureTime(exposure_second,delay)
 		print is_success
+		print app.getFrameDirName()

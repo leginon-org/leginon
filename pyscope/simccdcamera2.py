@@ -8,6 +8,7 @@ import remote
 import os
 from pyami import mrc
 import itertools
+from pyscope import falconframe
 
 rawtype = numpy.uint32
 idcounter = itertools.cycle(range(100))
@@ -192,9 +193,8 @@ class SimFrameCamera(SimCCDCamera):
 	name = 'SimFrameCamera'
 	def __init__(self):
 		super(SimFrameCamera,self).__init__()
-		self.frames_on = True
 		self.frame_time = 200
-		self.saverawframes = False
+		self.save_frames = False
 		self.alignframes = False
 		self.alignfilter = 'None'
 		self.rawframesname = 'frames'
@@ -252,7 +252,14 @@ class SimFrameCamera(SimCCDCamera):
 		#print 'VIEW', transparency
 		return transparency
 
+	def custom_setup(self):
+		'''
+		Place holder for more setup
+		'''
+		pass
+
 	def _getImage(self):
+		self.custom_setup()
 		if not self.validateGeometry():
 			raise ValueError('invalid image geometry')
 
@@ -271,12 +278,8 @@ class SimFrameCamera(SimCCDCamera):
 		t1 = time.time()
 		self.exposure_timestamp = (t1 + t0) / 2.0
 
-		if self.frames_on:
-			nframes = self.getNumberOfFrames()
-			exptime = self.frame_time
-		else:
-			nframes = 1
-			exptime = self.exposure_time
+		nframes = self.getNumberOfFrames()
+		exptime = self.frame_time
 
 		if self.useframes:
 			useframes = []
@@ -288,8 +291,8 @@ class SimFrameCamera(SimCCDCamera):
 			useframes = range(nframes)
 		self.useframes = useframes
 
-		print 'SAVERAWFRAMES', self.saverawframes
-		if self.saverawframes:
+		print 'SAVERAWFRAMES', self.save_frames
+		if self.save_frames:
 			self.rawframesname = time.strftime('frames_%Y%m%d_%H%M%S')
 			self.rawframesname += '_%02d' % (idcounter.next(),)
 			try:
@@ -310,7 +313,7 @@ class SimFrameCamera(SimCCDCamera):
 			else:
 				raise RuntimeError('unknown exposure type: %s' % (self.exposure_type,))
 
-			if self.saverawframes:
+			if self.save_frames:
 				print 'SAVE', i
 				mrcname = '%03d.mrc' % (i,)
 				fname = os.path.join(self.rawframesname, mrcname)
@@ -323,14 +326,11 @@ class SimFrameCamera(SimCCDCamera):
 
 	
 	def getNumberOfFrames(self):
-		if self.frames_on:
-			if not self.frame_time:
-				nframes = int(round(self.exposure_time / self.frame_time))
-				return nframes
-			else:
-				return 1
+		if not self.frame_time:
+			nframes = int(round(self.exposure_time / self.frame_time))
+			return nframes
 		else:
-			return None
+			return 1
 
 	def getFrameTime(self):
 		ms = self.frame_time * 1000.0
@@ -342,11 +342,11 @@ class SimFrameCamera(SimCCDCamera):
 
 	def getSaveRawFrames(self):
 		'''Save or Discard'''
-		return self.saverawframes
+		return self.save_frames
 
 	def setSaveRawFrames(self, value):
 		'''True: save frames,  False: discard frames'''
-		self.saverawframes = bool(value)
+		self.save_frames = bool(value)
 
 	def getAlignFrames(self):
 		return self.alignframes
@@ -373,12 +373,101 @@ class SimFrameCamera(SimCCDCamera):
 		return self.rawframesname
 
 	def setUseFrames(self, value):
-		print 'SET USE FRAMES', value
 		self.useframes = value
 
 	def getUseFrames(self):
 		return self.useframes
 	
+class SimFalconFrameCamera(SimFrameCamera):
+	name = 'SimFalconFrameCamera'
+	def __init__(self):
+		super(SimFalconFrameCamera,self).__init__()
+		self.frameconfig = falconframe.FalconFrameConfigXmlMaker(simu=True)
+		self.movie_exposure = 500.0
+		self.start_frame_number = 1
+		self.end_frame_number = 7
+
+	def getNumberOfFrames(self):
+		if self.save_frames:
+			return self.frameconfig.getNumberOfFrameBins()
+		else:
+			return 1
+
+	def calculateMovieExposure(self):
+		'''
+		Movie Exposure is the exposure time to set to ConfigXmlMaker in ms
+		'''
+		self.movie_exposure = self.end_frame_number * self.frameconfig.getBaseFrameTime() * 1000.0
+		self.frameconfig.setExposureTime(self.movie_exposure / 1000.0)
+
+	def getReadoutDelay(self):
+		'''
+		Integrated image readout delay is always base_frame_time.
+		There is no way to change it.
+		'''
+		return None
+
+	def validateUseFramesMax(self,value):
+		'''
+		Return end frame number valid for the integrated image exposure time.
+		'''
+		if not self.save_frames:
+			return 1
+		# find number of frames the exposure time will give as the maximun
+		self.frameconfig.setExposureTime(self.exposure_time)
+		max_input_frame_value = self.frameconfig.getNumberOfAvailableFrames() - 1 
+		return min(max_input_frame_value, max(value,1))
+
+	def setUseFrames(self, frames):
+		'''
+		UseFrames gui for Falcon is a tuple of base_frames that defines
+		the frames used in the movie.  For simplicity in input, we only
+		use the min number as the movie delay and max number as the highest
+		frame number to include.
+		''' 
+		if frames:
+			if len(frames) > 1:
+				self.frameconfig.setFrameReadoutDelay(min(frames))
+			else:
+				self.frameconfig.setFrameReadoutDelay(1)
+			self.end_frame_number = self.validateUseFramesMax(max(frames))
+		else:
+			# default movie to start at frame 1 ( i.e., not include roll-in)
+			self.frameconfig.setFrameReadoutDelay(1)
+			# use impossible large number to get back value for exposure time
+			self.end_frame_number = self.validateUseFramesMax(1000)
+		self.start_frame_number = self.frameconfig.getFrameReadoutDelay()
+		self.calculateMovieExposure()
+		# self.useframes is used in simulater to generate simulated sum image
+		self.useframes = tuple(range(self.start_frame_number-self.frameconfig.internal_readout_delay, self.end_frame_number-self.frameconfig.internal_readout_delay))
+
+	def getUseFrames(self):
+		return (self.start_frame_number,self.end_frame_number)
+
+	def setFrameTime(self,ms):
+		'''
+		OutputFrameTime is not detrmined by the user
+		'''
+		pass
+
+	def getFrameTime(self):
+		'''
+		Output frame time is the average time of all frame bins.
+		'''
+		ms = self.movie_exposure / self.getNumberOfFrames()
+		return ms
+
+	def getPreviousRawFramesName(self):
+		return self.frameconfig.getFrameDirName()
+
+	def custom_setup(self):
+		self.calculateMovieExposure()
+		movie_exposure_second = self.movie_exposure/1000.0
+		if self.save_frames:
+			self.frameconfig.makeRealConfigFromExposureTime(movie_exposure_second,self.start_frame_number)
+		else:
+			self.frameconfig.makeDummyConfig(movie_exposure_second)
+
 class SimOtherCCDCamera(SimCCDCamera):
 	name = 'SimOtherCCDCamera'
 	def __init__(self):
