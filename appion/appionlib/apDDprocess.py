@@ -324,6 +324,9 @@ class DDFrameProcessing(DirectDetectorProcessing):
 				apDisplay.printError('RawFrameType not set')
 		return self.rawframetype
 
+	def getFrameNamePattern(self,framedir):
+		pass
+
 	def getRawFrameDirFromImage(self,imagedata):
 		# strip off DOS path in rawframe directory name 
 		rawframename = imagedata['camera']['frames name'].split('\\')[-1]
@@ -335,6 +338,7 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		rawframedir = os.path.join(rawframe_basepath,'%s.frames' % imagedata['filename'])
 		if not self.waitForPathExist(rawframedir):
 			apDisplay.printError('Raw Frame Dir %s does not exist.' % rawframedir)
+		self.getFrameNamePattern(rawframedir)
 		return rawframedir
 
 	def setCycleReferenceChannels(self, value=False):
