@@ -236,7 +236,7 @@ if __name__ == '__main__':
 				delay = int(sys.argv[2])
 			else:
 				delay = 1
-		app = FalconFrameConfigXmlMaker(False)
+		app = FalconFrameConfigXmlMaker(True)
 		#is_success = app.makeDummyConfig(exposure_second)
 		is_success = app.makeRealConfigFromExposureTime(exposure_second,delay)
 		print is_success
