@@ -281,7 +281,7 @@ class TIA_Falcon(TIA):
 
 	def __init__(self):
 		super(TIA_Falcon,self).__init__()
-		self.frameconfig = falconframe.FalconFrameConfigXmlMaker()
+		self.frameconfig = falconframe.FalconFrameConfigXmlMaker(False)
 		self.movie_exposure = 500.0
 		self.start_frame_number = 1
 		self.end_frame_number = 7
@@ -297,6 +297,13 @@ class TIA_Falcon(TIA):
 			time.sleep(4)
 
 	#==========Frame Saving========================
+	def getSaveRawFrames(self):
+		'''Save or Discard'''
+		return self.save_frames
+	def setSaveRawFrames(self, value):
+		'''True: save frames, False: discard frames'''
+		self.save_frames = bool(value)
+
 	def getNumberOfFrames(self):
 		if self.save_frames:
 			return self.frameconfig.getNumberOfFrameBins()
@@ -324,7 +331,7 @@ class TIA_Falcon(TIA):
 		if not self.save_frames:
 			return 1
 		# find number of frames the exposure time will give as the maximun
-		self.frameconfig.setExposureTime(self.exposure_time)
+		self.frameconfig.setExposureTime(float(self.exposure) / 1000)
 		max_input_frame_value = self.frameconfig.getNumberOfAvailableFrames() - 1 
 		return min(max_input_frame_value, max(value,1))
 
@@ -334,7 +341,7 @@ class TIA_Falcon(TIA):
 		the frames used in the movie.  For simplicity in input, we only
 		use the min number as the movie delay and max number as the highest
 		frame number to include.
-		''' 
+		'''
 		if frames:
 			if len(frames) > 1:
 				self.frameconfig.setFrameReadoutDelay(min(frames))
@@ -350,7 +357,12 @@ class TIA_Falcon(TIA):
 		self.calculateMovieExposure()
 
 	def getUseFrames(self):
-		return (self.start_frame_number,self.end_frame_number)
+		'''
+		returns tuple for "use frames" gui.  Set it to None if
+		not saving frames to avoid changing future useframes value
+		'''
+		if self.save_frames:
+			return (self.start_frame_number,self.end_frame_number)
 
 	def setFrameTime(self,ms):
 		'''
