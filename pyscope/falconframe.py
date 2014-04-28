@@ -58,7 +58,7 @@ class FalconFrameConfigXmlMaker(object):
 			# real path below existing base_path becomes the frame path
 			self.frame_path = os.path.join(base_path,self.makeFrameDirName(True))
 			if not self.simulation:
-				os.path.mkdir(self.frame_path)
+				os.makedirs(self.frame_path)
 		else:
 			# dummy path will keep the frames from being written
 			self.makeFrameDirName(False)
@@ -229,13 +229,14 @@ if __name__ == '__main__':
 			print 'default to 0.5 second'
 			print 'delay_number_frames default is 1'
 			exposure_second = 0.5
+			delay = 1
 		else:
 			exposure_second = float(sys.argv[1])
 			if len(sys.argv) == 3:
 				delay = int(sys.argv[2])
 			else:
 				delay = 1
-		app = FalconFrameConfigXmlMaker(True)
+		app = FalconFrameConfigXmlMaker(False)
 		#is_success = app.makeDummyConfig(exposure_second)
 		is_success = app.makeRealConfigFromExposureTime(exposure_second,delay)
 		print is_success
