@@ -37,6 +37,9 @@ def initializeDDFrameprocess(sessionname,wait_flag=False):
 	elif 'DE' in dcamdata['name']:
 		from appionlib import apDEprocess
 		return apDEprocess.DEProcessing(wait_flag)
+	elif 'TIA' in dcamdata['name']:
+		from appionlib import apFalconProcess
+		return apFalconProcess.FalconProcessing(wait_flag)
 	else:
 		apDisplay.printError('Unknown frame camera name %s' % dcamdata['name'])
 

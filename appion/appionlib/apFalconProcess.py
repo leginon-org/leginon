@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import os
 import numpy
 from pyami import mrc
 from appionlib import apDDprocess,apDisplay
@@ -22,14 +23,17 @@ class FalconProcessing(apDDprocess.DDFrameProcessing):
 		# Falcon nframes is the number of frame bins
 		return imagedata['camera']['nframes']
 
+	def getRefImageData(self,reftype):
+		return None
+
 	def getFrameNamePattern(self,framedir):
 		filenames = os.listdir(framedir)
 		while len(filenames) < 2:
 			time.sleep(5)
 		for i,t0 in enumerate(filenames[0]):
-			if t0 != filenames[1][i]
+			if t0 != filenames[1][i]:
 				break
-		self.framename_pattern = filenames[0][:i-1]
+		self.framename_pattern = filenames[0][:i]
 
 	def getFrameNameFromNumber(self,frame_number):
 		return '%s%d.raw' % (self.framename_pattern,frame_number)
@@ -47,7 +51,7 @@ class FalconProcessing(apDDprocess.DDFrameProcessing):
 		return self.makeCorrectedFrameStack_cpu(use_full_raw_area)
 
 	def correctFrameImage(self,framelist,use_full_raw_area=False):
-		return __correctFrameImage(framelist,use_full_raw_area)	
+		return self.__correctFrameImage(framelist,use_full_raw_area)	
 
 	def __correctFrameImage(self,framelist,use_full_raw_area=False):
 		# load raw frames
