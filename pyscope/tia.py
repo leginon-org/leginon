@@ -57,22 +57,31 @@ class TIA(ccdcamera.CCDCamera):
 		self.offset = {'x':0, 'y':0}
 		self.exposure = 500.0
 		self.exposuretype = 'normal'
+
 	def getCameraModelName(self):
 		return self.camera_name
+
 	def setDimension(self, value):
 		self.dimension = value
+
 	def getDimension(self):
 		return self.dimension
+
 	def setBinning(self, value):
 		self.binning = value
+
 	def getBinning(self):
 		return self.binning
+
 	def setOffset(self, value):
 		self.offset = value
+
 	def getOffset(self):
 		return self.offset
+
 	def setExposureTime(self, ms):
-		self.exposure = ms
+		self.exposure = float(ms)
+
 	def getExposureTime(self):
 		# milliseconds
 		return float(self.exposure)
@@ -273,6 +282,9 @@ class TIA_Falcon(TIA):
 	def __init__(self):
 		super(TIA_Falcon,self).__init__()
 		self.frameconfig = falconframe.FalconFrameConfigXmlMaker()
+		self.movie_exposure = 500.0
+		self.start_frame_number = 1
+		self.end_frame_number = 7
 
 	def getPixelSize(self):
 		return {'x': 1.4e-5, 'y': 1.4e-5}
@@ -284,14 +296,86 @@ class TIA_Falcon(TIA):
 			# it is already inserted
 			time.sleep(4)
 
-	def setSaveRawFrames(self, value):
-		self.save_frames = bool(value)
+	#==========Frame Saving========================
+	def getNumberOfFrames(self):
+		if self.save_frames:
+			return self.frameconfig.getNumberOfFrameBins()
+		else:
+			return 1
+
+	def calculateMovieExposure(self):
+		'''
+		Movie Exposure is the exposure time to set to ConfigXmlMaker in ms
+		'''
+		self.movie_exposure = self.end_frame_number * self.frameconfig.getBaseFrameTime() * 1000.0
+		self.frameconfig.setExposureTime(self.movie_exposure / 1000.0)
+
+	def getReadoutDelay(self):
+		'''
+		Integrated image readout delay is always base_frame_time.
+		There is no way to change it.
+		'''
+		return None
+
+	def validateUseFramesMax(self,value):
+		'''
+		Return end frame number valid for the integrated image exposure time.
+		'''
+		if not self.save_frames:
+			return 1
+		# find number of frames the exposure time will give as the maximun
+		self.frameconfig.setExposureTime(self.exposure_time)
+		max_input_frame_value = self.frameconfig.getNumberOfAvailableFrames() - 1 
+		return min(max_input_frame_value, max(value,1))
+
+	def setUseFrames(self, frames):
+		'''
+		UseFrames gui for Falcon is a tuple of base_frames that defines
+		the frames used in the movie.  For simplicity in input, we only
+		use the min number as the movie delay and max number as the highest
+		frame number to include.
+		''' 
+		if frames:
+			if len(frames) > 1:
+				self.frameconfig.setFrameReadoutDelay(min(frames))
+			else:
+				self.frameconfig.setFrameReadoutDelay(1)
+			self.end_frame_number = self.validateUseFramesMax(max(frames))
+		else:
+			# default movie to start at frame 1 ( i.e., not include roll-in)
+			self.frameconfig.setFrameReadoutDelay(1)
+			# use impossible large number to get back value for exposure time
+			self.end_frame_number = self.validateUseFramesMax(1000)
+		self.start_frame_number = self.frameconfig.getFrameReadoutDelay()
+		self.calculateMovieExposure()
+
+	def getUseFrames(self):
+		return (self.start_frame_number,self.end_frame_number)
+
+	def setFrameTime(self,ms):
+		'''
+		OutputFrameTime is not detrmined by the user
+		'''
+		pass
+
+	def getFrameTime(self):
+		'''
+		Output frame time is the average time of all frame bins.
+		'''
+		ms = self.movie_exposure / self.getNumberOfFrames()
+		return ms
+
+	def getPreviousRawFramesName(self):
+		return self.frameconfig.getFrameDirName()
 
 	def custom_setup(self):
-			if self.save_frames:
-				self.frameconfig.makeRealConfigFromExposureTime(self.exposure/1000.0)
-			else:
-				self.frameconfig.makeDummyConfig()
+		self.calculateMovieExposure()
+		movie_exposure_second = self.movie_exposure/1000.0
+		if self.save_frames:
+			self.frameconfig.makeRealConfigFromExposureTime(movie_exposure_second,self.start_frame_number)
+		else:
+			self.frameconfig.makeDummyConfig(movie_exposure_second)
+
 
 class TIA_Orius(TIA):
 	camera_name = 'BM-Orius'
