@@ -756,7 +756,7 @@ class DDFrameProcessing(DirectDetectorProcessing):
 	def hasBadPixels(self):
 		plan = self.getCorrectorPlan(self.camerainfo)
 		if plan and (plan['columns'] or plan['rows'] or plan['pixels']):
-			return False
+			return True
 		return False
 
 	def makeMaskArray(self,start_frame_index):
