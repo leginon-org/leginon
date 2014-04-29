@@ -938,8 +938,8 @@ function runMakestack() {
 	if ($boxhstep) $command.="--helicalstep=$boxhstep ";
 	if ($helicalcheck == 'on') $command.="--rotate ";
 	elseif ($finealigncheck == 'on') $command.="--rotate --finealign ";
-	if ($ddstartframe) $command.=" --ddstartframe=$ddstartframe";
-	if ($ddnframe) $command.=" --ddnframe=$ddnframe";
+	if ($ddstartframe) $command.=" --ddstartframe=$ddstartframe ";
+	if ($ddnframe) $command.=" --ddnframe=$ddnframe ";
 	if ($ctfrunID) $command.="--ctfrunid=$ctfrunID ";
 	if ($boxmask) $command.="--boxmask='$boxmask' ";
 
