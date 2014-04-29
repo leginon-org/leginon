@@ -165,7 +165,8 @@ def run_once(parent_src_path,cam_host,dest_head,method):
 			next_time_start = mtime
 
 		# ignore irrelevent source files or folders
-		if not name.endswith('.mrc') and not name.endswith('.frames'):
+		# de folder starts with '20'
+		if not name.endswith('.mrc']) and  not name.endswith('.frames') and not name.startswith('20'):
 			continue
 		print '**running', src_path
 
