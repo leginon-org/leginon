@@ -30,8 +30,8 @@ class MakeFrameStackLoop(apDDLoop.DDStackLoop):
 			action="store_true", help="Use Gram-Schmidt process to scale dark image")
 		self.parser.add_option("--align", dest="align", default=False,
 			action="store_true", help="Make Aligned frame stack")
-		self.parser.add_option("--gpuflat", dest="gpuflat", default=False,
-			action="store_true", help="Use gpu for flat field (gain/dark/mask) correction")
+		self.parser.add_option("--square", dest="square", default=False,
+			action="store_true", help="Output square images")
 		self.parser.add_option("--defergpu", dest="defergpu", default=False,
 			action="store_true", help="Make unaligned frame stack first on computer without gpu alignment program")
 		self.parser.add_option("--no-cyclechannels", dest="cyclechannels", default=True,
@@ -44,7 +44,6 @@ class MakeFrameStackLoop(apDDLoop.DDStackLoop):
 	#=======================
 	def checkConflicts(self):
 		if self.params['align'] and not self.params['defergpu']:
-			gpuexelist = ['dosefgpu_driftcorr','dosefgpu_flat']
 			exename = 'dosefgpu_driftcorr'
 			gpuexe = subprocess.Popen("which "+exename, shell=True, stdout=subprocess.PIPE).stdout.read().strip()
 			if not os.path.isfile(gpuexe):
@@ -52,8 +51,6 @@ class MakeFrameStackLoop(apDDLoop.DDStackLoop):
 			# We don't have gpu locking
 			if self.params['parallel']:
 					apDisplay.printWarning('Make sure that you use different gpuid for each parallel process')
-			# As single processing sequential job, not sure if gpu is faster than cpu
-			#self.params['gpuflat'] = True
 			# Local directory creating and permission checking
 			if self.params['tempdir']:
 				try:
@@ -76,14 +73,6 @@ class MakeFrameStackLoop(apDDLoop.DDStackLoop):
 				else:
 					apDisplay.printError('Why making only gain/dark-corrected ddstacks but not keeping them')
 
-
-		if self.params['gpuflat']:
-			exename = 'dosefgpu_flat'
-			gpuexe = subprocess.Popen("which "+exename, shell=True, stdout=subprocess.PIPE).stdout.read().strip()
-			if not os.path.isfile(gpuexe):
-				apDisplay.printWarning('Correction program "%s" not available. Use cpu for correction.' % exename)
-				self.params['gpuflat'] = False
-
 	def getFrameType(self):
 		# set how frames are saved depending on what is found in the basepath
 		sessiondata = apDatabase.getSessionDataFromSessionName(self.params['sessionname'])
@@ -96,7 +85,8 @@ class MakeFrameStackLoop(apDDLoop.DDStackLoop):
 		self.dd.setRunDir(self.params['rundir'])
 		self.dd.setTempDir(self.params['tempdir'])
 		self.dd.setRawFrameType(self.getFrameType())
-		self.dd.setUseGPUFlat(self.params['gpuflat'])
+		self.dd.setUseGPUFlat(True)
+		self.dd.setSquareOutputShape(self.params['square'])
 		self.dd.setDoseFDriftCorrOptions(self.params)
 		self.dd.setGPUid(self.params['gpuid'])
 		# keepstack is resolved for various cases in conflict check.  There should be no ambiguity by now
@@ -148,9 +138,13 @@ class MakeFrameStackLoop(apDDLoop.DDStackLoop):
 		### first remove any existing stack file
 		apFile.removeFile(self.dd.framestackpath)
 		apFile.removeFile(self.dd.tempframestackpath)
-		### make stack
-		self.dd.makeCorrectedFrameStack(self.params['rawarea'])
-
+		if self.dd.hasBadPixels():
+			self.dd.setUseGPUFlat(False)
+			### make stack
+			self.dd.makeCorrectedFrameStack(self.params['rawarea'])
+		else:
+			self.dd.setUseGPUFlat(True)
+			self.dd.makeRawFrameStackForOneStepCorrectAlign(self.params['rawarea'])
 		# Align
 		if self.params['align']:
 			# make a fake log so that catchUpDDAlign will know that frame stack is done
@@ -161,7 +155,10 @@ class MakeFrameStackLoop(apDDLoop.DDStackLoop):
 			if self.params['defergpu']:
 				return
 			# Doing the alignment
-			self.dd.alignCorrectedFrameStack()
+			if self.dd.getUseGPUFlat():
+				self.dd.gainCorrectAndAlignFrameStack()
+			else:
+				self.dd.alignCorrectedFrameStack()
 			if os.path.isfile(self.dd.aligned_sumpath):
 				self.aligned_imagedata = self.dd.makeAlignedImageData(alignlabel=self.params['alignlabel'])
 				if os.path.isfile(self.dd.aligned_stackpath):

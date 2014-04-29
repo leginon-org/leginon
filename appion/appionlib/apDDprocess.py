@@ -132,7 +132,9 @@ class DirectDetectorProcessing(object):
 		if nframe == 0:
 			nframe = 1
 		return nframe
-			
+
+	def setSquareOutputShape(self,value=False):
+		self.square_output = value
 
 	def getUsedFramesFromImageData(self,imagedata):
 		return imagedata['camera']['use frames']
@@ -243,6 +245,7 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		self.correct_dark_gain = True
 		self.correct_frame_mask = False
 		self.aligned_camdata = None
+		self.square_output = False
 		# change this to True for loading bias image for correction
 		self.use_bias = False
 		self.use_GS = False
@@ -284,13 +287,20 @@ class DDFrameProcessing(DirectDetectorProcessing):
 	def setUseGPUFlat(self,use_gpu_flat):
 		self.use_gpu_flat = use_gpu_flat
 
+	def getUseGPUFlat(self):
+		return self.use_gpu_flat
+
 	def setGPUid(self,gpuid):
 		self.gpuid = gpuid
 
 	def getSingleFrameDarkArray(self):
-		darkdata = self.getRefImageData('dark')
-		nframes = self.getNumberOfFrameSavedFromImageData(darkdata)
-		return darkdata['image'] / nframes
+		try:
+			darkdata = self.getRefImageData('dark')
+			nframes = self.getNumberOfFrameSavedFromImageData(darkdata)
+			return darkdata['image'] / nframes
+		except:
+			dimension = self.getDefaultDimension()
+			return numpy.zeros((dimension['y'],dimension['x']))
 
 	def getFrameNameFromNumber(self,frame_number):
 		raise NotImplementedError()
@@ -722,8 +732,9 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		plan = self.getCorrectorPlan(self.camerainfo)
 		apDisplay.printMsg('Fixing bad pixel, columns, and rows')
 		self.c_client.fixBadPixels(corrected,plan)
-		apDisplay.printMsg('Cliping corrected image')
-		corrected = numpy.clip(corrected,0,10000)
+		#Clipping is turned off to avoid artifacts in analog DD
+		#apDisplay.printMsg('Cliping corrected image')
+		#corrected = numpy.clip(corrected,0,10000)
 		if self.correct_frame_mask:
 			if numpy.any(mask):
 				apDisplay.printMsg('Doing mask correction')
@@ -741,6 +752,12 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		else:
 			plan, plandata = self.c_client.retrieveCorrectorPlan(self.camerainfo)
 		return plan
+
+	def hasBadPixels(self):
+		plan = self.getCorrectorPlan(self.camerainfo)
+		if plan and (plan['columns'] or plan['rows'] or plan['pixels']):
+			return False
+		return False
 
 	def makeMaskArray(self,start_frame_index):
 		'''
@@ -814,6 +831,8 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		return masked
 		
 	def modifyImageArray(self,array):
+		if self.getNewBinning() == 1 and not self.square_output:
+			return array
 		cdata = self.getAlignedCameraEMData()
 		if not cdata:
 			# Only bin the image if not for alignment with dosefgpu_driftcorr program
@@ -823,8 +842,11 @@ class DDFrameProcessing(DirectDetectorProcessing):
 			# Have cdata only if alignment will be done
 			additional_binning = cdata['binning']['x'] / self.getImageCameraEMData()['binning']['x']
 			# Need squared image for alignment
-			array = imagefun.bin(array,additional_binning)
-			array = array[cdata['offset']['y']:cdata['offset']['y']+cdata['dimension']['y'],cdata['offset']['x']:cdata['offset']['x']+cdata['dimension']['x']]
+			if self.square_output:
+				if array.shape[0] == array.shape[1]:
+					return array
+				array = imagefun.bin(array,additional_binning)
+				array = array[cdata['offset']['y']:cdata['offset']['y']+cdata['dimension']['y'],cdata['offset']['x']:cdata['offset']['x']+cdata['dimension']['x']]
 		apDisplay.printMsg('frame image shape is now x=%d,y=%d' % (array.shape[1],array.shape[0]))
 		return array
 
@@ -838,10 +860,11 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		total_frames = self.getNumberOfFrameSaved()
 		half_way_frame = int(total_frames // 2)
 		first = 0
-		frameprocess_dir = os.path.basename(self.farmestackpath)
+		frameprocess_dir = os.path.dirname(self.tempframestackpath)
 		rawframestack_path = os.path.join(frameprocess_dir,self.image['filename']+'_raw_st.mrc')
 		for start_frame in range(first,first+total_frames):
 			array = self.loadOneRawFrame(rawframe_dir,start_frame)
+			array = self.modifyImageArray(array)
 			# if non-fatal error occurs, end here
 			if array is False:
 				break
@@ -854,14 +877,31 @@ class DDFrameProcessing(DirectDetectorProcessing):
 			else:
 				mrc.append(array,rawframestack_path,False)
 		return rawframestack_path
-				
-	def makeCorrectedFrameStack(self, use_full_raw_area=False):
-		if self.use_gpu_flat:
-			return self.makeCorrectedFrameStack_gpu(use_full_raw_area)
-		else:
-			return self.makeCorrectedFrameStack_cpu(use_full_raw_area)
 
-	def makeCorrectedFrameStack_gpu(self, use_full_raw_area=False):
+	def makeRawFrameStackForOneStepCorrectAlign(self, use_full_raw_area=False):
+		'''
+		Creates a file of non gain/dark corrected stack of frames
+		'''
+		self.setupDarkNormMrcs(use_full_raw_area)
+		rawframestack_path = self.getRawFrameStackPath()
+		if not os.path.isfile(self.tempframestackpath) and os.path.isfile(rawframestack_path):
+			os.symlink(rawframestack_path,self.tempframestackpath)
+			apDisplay.printMsg('link %s to %s.' % (rawframestack_path, self.tempframestackpath))
+		return self.tempframestackpath
+
+	def makeCorrectedFrameStack(self, use_full_raw_area=False):
+		return self.makeCorrectedFrameStack_cpu(use_full_raw_area)
+
+	def makeDosefgpuGainCorrectionParams(self):
+		self.setupDarkNormMrcs(False)
+		cmd = ''
+		if self.dark_path:
+			cmd += " -fdr %s" % self.dark_path
+		if self.norm_path:
+			cmd += " -fgr %s" % self.norm_path
+		return cmd
+
+	def setupDarkNormMrcs(self, use_full_raw_area=False):
 		'''
 		Creates a file of gain/dark corrected stack of frames
 		'''
@@ -884,16 +924,11 @@ class DDFrameProcessing(DirectDetectorProcessing):
 			apDisplay.printWarning('Use Norm Reference %s' % (normdata['filename'],))
 			apDisplay.printWarning('Use Bright Reference %s' % (normdata['bright']['filename'],))
 			normarray = normdata['image']
-			self.norm_path = os.path.join(frameprocess_dir,'norm-%s-%d.mrc' % (self.hostname,self.gpuid))
+			if self.use_gpu_flat:
+				
+				self.norm_path = os.path.join(frameprocess_dir,'norm-%s-%d.mrc' % (self.hostname,self.gpuid))
 			mrc.write(normarray,self.norm_path)
-		rawframestack_path = self.getRawFrameStackPath()
-		cmd = "dosefgpu_flat %s %s %s %d %s" % (rawframestack_path,self.tempframestackpath,self.norm_path,self.gpuid,self.dark_path)
-		apDisplay.printMsg('Running: %s'% cmd)
-		self.proc = subprocess.Popen(cmd, shell=True)
-		self.proc.wait()
-		if not os.path.isfile(self.tempframestackpath):
-			apDisplay.printError('dosefgpu_flat FAILED: \n%s not created.' % os.path.basename(self.tempframestackpath))
-		return self.tempframestackpath
+	
 
 	def makeCorrectedFrameStack_cpu(self, use_full_raw_area=False):
 		'''
@@ -941,11 +976,16 @@ class DDFrameProcessing(DirectDetectorProcessing):
 
 	def setAlignedCameraEMData(self):
 		'''
-		DD aligned image will be uploaded into database with a square
+		DD aligned image will be uploaded into database with the specified binning.
+		If self.square_output is True, with a square
 		camera dimension at the center and the specificed binning
 		'''
 		camdata = self.getImageCameraEMData()
-		mindim = min(camdata['dimension']['x'],camdata['dimension']['y'])
+		if self.square_output:
+			mindim = min(camdata['dimension']['x'],camdata['dimension']['y'])
+			dims = {'x':mindim,'y':mindim}
+		else:
+			dims = camdata['dimension']
 		camerasize = {}
 		newbin = self.getNewBinning()
 		for axis in ('x','y'):
@@ -954,7 +994,7 @@ class DDFrameProcessing(DirectDetectorProcessing):
 			if newbin < camdata['binning'][axis]:
 				apDisplay.displayError('can not change to smaller binning')
 			camerasize[axis] = (camdata['offset'][axis]*2+camdata['dimension'][axis])*camdata['binning'][axis]
-			camdata['dimension'][axis] = mindim * camdata['binning'][axis] / newbin
+			camdata['dimension'][axis] = dims['x'] * camdata['binning'][axis] / newbin
 			camdata['binning'][axis] = newbin
 			camdata['offset'][axis] = (camerasize[axis]/newbin -camdata['dimension'][axis])/2
 		framelist = self.getAlignedSumFrameList()
@@ -1021,7 +1061,11 @@ class DDFrameProcessing(DirectDetectorProcessing):
 			cmd += ' -%s %s' % (key,str(self.alignparams[key]))
 		return cmd
 
-	def alignCorrectedFrameStack(self):
+	def gainCorrectAndAlignFrameStack(self):
+		cmd = self.makeDosefgpuGainCorrectionParams()
+		self.alignCorrectedFrameStack(gain_dark_cmd=cmd)
+
+	def alignCorrectedFrameStack(self, gain_dark_cmd=''):
 		'''
 		Xueming Li's gpu program for aligning frames using all defaults
 		Valid square gain/dark corrected ddstack is the input.
@@ -1037,6 +1081,8 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		cmd = 'dosefgpu_driftcorr %s -gpu %d -fcs %s -dsp 0' % (self.tempframestackpath,self.gpuid,temp_aligned_sumpath)
 		# Options
 		cmd += self.addDoseFDriftCorrOptions()
+		# gain dark references
+		cmd += gain_dark_cmd
 		is_sum_with_dosefgpu =  self.isSumSubStackWithDosefgpu()
 		if is_sum_with_dosefgpu:
 			cmd += ' -nss %d -nes %d' % (min(self.sumframelist),max(self.sumframelist))
