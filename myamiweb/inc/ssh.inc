@@ -23,7 +23,7 @@ function exec_over_ssh($host, $username, $password, $command, $result=false, $po
 	
 	try {
 		$cluster = new Cluster($host);
-		$sshResult = $cluster->executeOnHost($username, $password, $command, $port);
+		$sshResult = $cluster->executeOnHost($username, $password, $command, $result, $port);
 	} catch(Exception $e) {
   		$errorMessage = 'Failed to execute command ('.$command.') on host ('.$host.') for user ('.$username.'). Message: ' .$e->getMessage();
   		$sshResult = false;
