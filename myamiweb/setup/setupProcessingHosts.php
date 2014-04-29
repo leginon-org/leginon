@@ -232,7 +232,7 @@ require_once('../inc/formValidator.php');
 			var row7 = tbl.insertRow(lastRow);
 			lastRow = lastRow +1;
 			var cellFirst = row7.insertCell(0);
-		  	var textNode = document.createTextNode("Default Wall Time allowed :");
+		  	var textNode = document.createTextNode("Default Wall Time (minutes) allowed :");
 		  	cellFirst.appendChild(textNode);
 		  
 		  	var cellRight = row7.insertCell(1);
@@ -247,7 +247,7 @@ require_once('../inc/formValidator.php');
 			var row8 = tbl.insertRow(lastRow);
 			lastRow = lastRow +1;
 			var cellFirst = row8.insertCell(0);
-		  	var textNode = document.createTextNode("Max Wall Time allowed :");
+		  	var textNode = document.createTextNode("Max Wall Time (minutes) allowed :");
 		  	cellFirst.appendChild(textNode);
 		  
 		  	var cellRight = row8.insertCell(1);
@@ -262,7 +262,7 @@ require_once('../inc/formValidator.php');
 			var row9 = tbl.insertRow(lastRow);
 			lastRow = lastRow +1;
 			var cellFirst = row9.insertCell(0);
-		  	var textNode = document.createTextNode("Default CPU time allowed :");
+		  	var textNode = document.createTextNode("Default CPU time (minutes) allowed :");
 		  	cellFirst.appendChild(textNode);
 		  
 		  	var cellRight = row9.insertCell(1);
@@ -277,7 +277,7 @@ require_once('../inc/formValidator.php');
 			var row10 = tbl.insertRow(lastRow);
 			lastRow = lastRow +1;
 			var cellFirst = row10.insertCell(0);
-		  	var textNode = document.createTextNode("Max CPU time allowed :");
+		  	var textNode = document.createTextNode("Max CPU time (minutes) allowed :");
 		  	cellFirst.appendChild(textNode);
 		  
 		  	var cellRight = row10.insertCell(1);
@@ -292,7 +292,7 @@ require_once('../inc/formValidator.php');
 			var row11 = tbl.insertRow(lastRow);
 			lastRow = lastRow +1;
 			var cellFirst = row11.insertCell(0);
-		  	var textNode = document.createTextNode("Max Memory to use :");
+		  	var textNode = document.createTextNode("Max Memory (Gb) to use :");
 		  	cellFirst.appendChild(textNode);
 		  
 		  	var cellRight = row11.insertCell(1);
