@@ -160,7 +160,7 @@ class RelionSingleModelRefineJob(apRefineJob.RefineJob):
 		
 		# Always add these flags for 3D Auto Refine
 		# TODO: remove --auto_sampling??
-		command += " --flatten_solvent  --oversampling 1 " # --split_random_halves --norm --scale"
+		command += " --flatten_solvent  --oversampling 1 --split_random_halves --dont_check_norm"
 		
 		return command
 

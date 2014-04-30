@@ -109,12 +109,12 @@ class PrepRefineRelion(apPrepRefine.Prep3DRefinement):
 		
 		# non-ctf-corrected stack can use proc2d to prepare
 		# otherwise, changes are made in convertToRefineStack()
-		if not self.un_ctf_correct:
-			# Call the base class to run proc2d and copy the stack to the rundir
-			newstackfile = super(PrepRefineRelion,self).preprocessStack()
-			return newstackfile
-		else:
-			return self.stack['file']
+		#if not self.un_ctf_correct:
+		#	# Call the base class to run proc2d and copy the stack to the rundir
+		#	newstackfile = super(PrepRefineRelion,self).preprocessStack()
+		#	return newstackfile
+		#else:
+		return self.stack['file']
 		
 	# TODO: THis function belongs somewhere else
 	def xmippNormStack(self, inStackPath, outStackPath):
@@ -178,7 +178,7 @@ stackIntoPicks.py --stackid=%d --projectid=%d --runname=%s --rundir=%s --commit 
 		This is the command we want to make a stack from a stackIntoPicks run
 		makestack2.py --single=start.hed --selectionid=130 --invert --boxsize=320 --bin=2 --description="made from stackrun1 using stackintopicks" --runname=stack66 --rundir=/ami/data00/appion/zz07jul25b/stacks/stack66 --commit --preset=en --projectid=303 --session=zz07jul25b --no-rejects --no-wait --continue --expid=8556 --jobtype=makestack2 --ppn=1 --nodes=1 --walltime=240 --jobid=2016
 		'''
-		apDisplay.printWarning('Using you particle locations to make a Relion ready stack....')
+		apDisplay.printMsg('Using selected stack particle locations to make a Relion ready stack....')
 
 		# Get the ID of the stackIntoPicks run we just created
 		#apParticle.getSelectionIdFromName(runname, sessionname)
@@ -248,7 +248,7 @@ makestack2.py --single=%s --selectionid=%d %s --boxsize=%d --bin=%d --descriptio
 		Setup the follow relion preprocess command to normalize the new stack:
 		/usr/local/relion-1.2/bin/relion_preprocess --o particles --norm --bg_radius 60 --white_dust -1 --black_dust -1 --operate_on /ami/data00/appion/zz07jul25b/stacks/stack63_no_xmipp_norm/start.hed
 		'''
-		apDisplay.printWarning('Running Relion preprocessing to normalize your Relion Ready stack....')
+		apDisplay.printMsg('Running Relion preprocessing to normalize your Relion Ready stack....')
 		bg_radius = math.floor((self.stack['boxsize'] / 2) -1)
 		
 		relioncmd = '''
