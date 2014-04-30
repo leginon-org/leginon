@@ -15,6 +15,7 @@ require_once "inc/project.inc";
 require_once "inc/viewer.inc";
 require_once "inc/processing.inc";
 require_once "inc/summarytables.inc";
+require_once "inc/forms/clusterParamsForm.inc";
 
 if ($_POST['process']) {
 	// if the POST variable process is defined run the script
@@ -161,11 +162,14 @@ function createCL2DAlignForm($extra=false,
 	echo docpop('commit','<B>Commit to Database</B>');
 	echo "";
 	echo "<br>";
-	
-	echo "<INPUT TYPE='text' NAME='nproc' SIZE='4' VALUE='$nproc'>\n";
-	echo "Number of Processors";
-	echo "<br/>\n";	
-	
+	// Add cluster parameter form
+	$html.= "<tr>";
+	$html.= "<td VALIGN='TOP' COLSPAN='2' >";
+	$html.= "<H4 style='align=\'center\' >Processing Host Parameters</H4><hr />";
+	$clusterParamsForm = new ClusterParamsForm();
+	$html.= $clusterParamsForm->generateForm_without_remoteoutdir();
+
+	echo $html;	
 	echo "</table>\n";
 	
 	echo "</TD>\n";
@@ -256,7 +260,7 @@ function createCL2DAlignForm($extra=false,
 	echo "<TR>\n";
 	echo "	<TD COLSPAN='2' ALIGN='CENTER'>\n";
 	echo "	<hr />\n";
-	echo getSubmitForm("Run CL2D Alignment");
+	echo getSubmitForm("Run CL2D Alignment", false);
 	echo "  </td>\n";
 	echo "</tr>\n";
 	echo "</table>\n";
@@ -303,7 +307,10 @@ function runAppionScript() {
 	// check box is set to 'on' or 'off'
 	$commit = ($_POST['commit']=="on") ? true : false;
 
-	$nproc = (isset($_POST['nproc'])) ? $_POST['nproc'] : '4';
+	// verify processing host parameters
+	$clusterParamForm = new ClusterParamsForm();
+	$errorMsg .= $clusterParamForm->validate( $_POST );
+		
 	/* *******************
 	PART 2: Check for conflicts, if there is an error display the form again
 	******************** */
@@ -362,7 +369,12 @@ function runAppionScript() {
 	if ($commit) $command.="--commit ";
 	else $command.="--no-commit ";
 
-
+	// collect processing host parameters
+	$command .= $clusterParamForm->buildCommand( $_POST );
+	$command = $clusterParamForm->removeCommandFlag( $command, "processinghost" );
+	$command = $clusterParamForm->removeCommandFlag( $command, "rpn" );
+	$command = $clusterParamForm->removeCommandFlag( $command, "remoteoutdir" );
+	$command = $clusterParamForm->removeCommandFlag( $command, "localhost" );
 	
 	// show or submit command, auto sets up runname, projectid, and rundir (from outdir)
 	$errors = showOrSubmitCommand($command, $headinfo, 'partalign', $nproc);

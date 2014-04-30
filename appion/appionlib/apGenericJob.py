@@ -51,10 +51,12 @@ class genericJob(object):
 				   'nproc'	   : self.setNProc,
 				   'projectid' : self.setProjectId, 
 				   'expid'	 : self.setExpId, 
+				   'mem'	 : self.setMem, 
 				   'jobtype'   : self.setJobType}
-		excludeList = ['jobid', 'walltime', 'cput', 'nodes', 'ppn', 'jobtype']
+		excludeList = ['jobid', 'walltime', 'cput', 'nodes', 'ppn', 'jobtype', 'mem']
 		optionKeys = options.keys()
 		has_nproc = False
+
 		for opt in optList:
 			matchedLine = re.match(r'--(\S+)=(.*)', opt)
 			if matchedLine:

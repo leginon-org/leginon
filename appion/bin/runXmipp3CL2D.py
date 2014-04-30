@@ -64,6 +64,18 @@ class CL2D(appionScript.AppionScript):
 		self.parser.add_option("--dontAlignImages", dest="align", default=True,
 			action="store_false", help="Do not produce an aligned stack")
 
+		# Job parameters that the remotehost need
+		self.parser.add_option("--nodes", dest="nodes", type="int", default=1,
+			help="Number of nodes requested for multi-node capable tasks", metavar="#")
+		self.parser.add_option("--ppn", dest="ppn", type="int", default=4,
+			help="Minimum Processors per node", metavar="#")
+		self.parser.add_option("--mem", dest="mem", type="int", default=4,
+			help="Maximum memory per node", metavar="#")
+		self.parser.add_option("--walltime", dest="walltime", type="int", default=24,
+			help="Maximum walltime in hours", metavar="#")
+		self.parser.add_option('--cput', dest='cput', type='int', default=None)
+
+
 	#=====================
 	def checkConflicts(self):
 		if self.params['stackid'] is None:

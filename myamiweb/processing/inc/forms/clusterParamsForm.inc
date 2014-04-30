@@ -181,6 +181,60 @@ class ClusterParamsForm extends BasicForm
 		return $html;
 	}
 	
+	public function generateForm_without_remoteoutdir()
+	{	/**
+		 * remoteoutdir is currently hardcoded to have /recon ending https://ami.scripps.edu/redmine/projects/appion/repository/revisions/18147/entry/trunk/myamiweb/processing/inc/cluster.inc#L189
+		 * for cl2d we need it to end with /align instead. This function is added to hande this.
+		 */
+		 
+		
+		// if the user selects a new cluster, don't bother checking the previous values
+		// or it will overwrite the new ones.
+		$clusterSelection = $_POST['changehostname'];
+		if ( !$clusterSelection ) {
+			$this->updateFormParams();
+		}
+	
+		$params = $this->getFormParams();
+	
+		// set form field size
+		$size = 4;
+	
+		//--- Cluster Parameters
+		$html.= "<table border='0' cellpadding='4' cellspacing='4'>\n";
+	
+		// row 1
+		// add cluster selection box
+		$html.= "<tr><td>\n";
+		$html.= $this->instertHostSelectionBox();
+		$html.= "</td>\n";
+		$html.= "<td>\n";
+		$html.= $params->insertTextFieldInRow( "processinghost", 20 );
+		$html.= "</td></tr>\n";
+	
+		// row 2
+		$html.= "<tr><td>\n";
+		$html.= $params->insertTextFieldInRow( "nodes", $size );
+		$html.= "</td><td>\n";
+		$html.= $params->insertTextFieldInRow( "ppn", $size );
+		$html.= "</td><td>\n";
+	
+		// row 3
+		$html.= "<tr><td>\n";
+		$html.= $params->insertTextFieldInRow( "walltime", $size, "(hours)" );
+		$html.= "</td><td>\n";
+		$html.= $params->insertTextFieldInRow( "cput", $size, "(hours)" );
+		$html.= "</td><td>\n";
+		$html.= $params->insertTextFieldInRow( "mem", $size );
+		$html.= "</td></tr>\n";
+	
+		// End table
+		$html.= "</table>\n";
+	
+		return $html;
+	}
+	
+	
 	private function instertHostSelectionBox()
 	{
 		global $PROCESSING_HOSTS;
