@@ -136,7 +136,7 @@ class RelionSingleModelRefineJob(apRefineJob.RefineJob):
 		# -np is the number of MPI processors which should match the number of requested nodes.
 		# It is best to request an odd number of nodes
 		command = "mpirun -np " + str(self.nodes) + " " 
-		relionProgramLocation = "/usr/local/relion-1.2/bin/relion_refine_mpi "
+		relionProgramLocation = "`which relion_refine_mpi` "
 		#relionProgramLocation = "`which relion_refine_mpi` " #"/usr/local/relion-1.1/bin/relion_refine_mpi "
 		# TODO: We should find the relion program automagically 
 		#protocolname = 'xmipp_protocol_projmatch'
