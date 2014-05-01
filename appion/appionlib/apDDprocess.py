@@ -247,6 +247,7 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		self.aligned_camdata = None
 		self.square_output = False
 		# change this to True for loading bias image for correction
+		self.use_full_raw_area = False
 		self.use_bias = False
 		self.use_GS = False
 		self.use_gpu_flat = False
@@ -745,6 +746,8 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		return corrected
 
 	def getCorrectorPlan(self,camerainfo):
+		if not camerainfo:
+			return None
 		imagedata = self.getCorrectedImageData()
 		plandata =  imagedata['corrector plan']
 		if plandata:
@@ -754,6 +757,8 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		return plan
 
 	def hasBadPixels(self):
+		# set camerainfo so to find corretor plan
+		self.setCameraInfo(1,self.use_full_raw_area)
 		plan = self.getCorrectorPlan(self.camerainfo)
 		if plan and (plan['columns'] or plan['rows'] or plan['pixels']):
 			return True
@@ -905,6 +910,10 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		'''
 		Creates a file of gain/dark corrected stack of frames
 		'''
+		if not self.correct_dark_gain:
+			self.dark_path = None
+			self.norm_path = None
+			return
 		sys.stdout.write('\a')
 		sys.stdout.flush()
 		if use_full_raw_area is True:
