@@ -42,7 +42,8 @@ class FalconProcessing(apDDprocess.DDFrameProcessing):
 		a = numraw.read(frameimage_path)
 		a = a.astype(numpy.int16)
 		a = self.modifyFrameImage(a,offset,crop_end,bin)
-		return a[:,::-1]
+		# 270 degree rotation
+		return numpy.rot90(a,3)
 
 	def makeCorrectedFrameStack(self, use_full_raw_area=False):
 		'''
