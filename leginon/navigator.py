@@ -336,7 +336,7 @@ class Navigator(node.Node):
 		if check:
 			# pre-expose after first move and before reacquire
 			if preset and self.settings['preexpose'] and preset['pre exposure']:
-				self.exposeSpecimenWithShutterOverride(seconds)
+				self.exposeSpecimenWithShutterOverride(preset['pre exposure'])
 
 			if self.outofbounds(target, shape):
 				self.logger.info('target out of bounds, so cannot check error')
@@ -490,6 +490,10 @@ class Navigator(node.Node):
 		self._acquireImage()
 
 	def _acquireImage(self, channel=0):
+		try:
+			self.instrument.ccdcamera.SaveRawFrames = False
+		except:
+			pass
 		time.sleep(self.settings['pause time'])
 		try:
 			imagedata = self.acquireCorrectedCameraImageData(channel=channel)
