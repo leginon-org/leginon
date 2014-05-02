@@ -232,7 +232,7 @@ class Focuser(manualfocuschecker.ManualFocusChecker):
 
 		try:
 			# increased settle time from 0.25 to 0.5 for Falcon protector
-			settletime = self.params['beam tilt settle time']
+			settletime = self.settings['beam tilt settle time']
 			correction = self.btcalclient.measureDefocusStig(btilt, correct_tilt=True, correlation_type=setting['correlation type'], stig=setting['stig correction'], settle=settletime, image0=lastdriftimage)
 		except calibrationclient.Abort:
 			self.btcalclient.setBeamTilt(beamtilt0)
