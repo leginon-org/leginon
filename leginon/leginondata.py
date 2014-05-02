@@ -1778,6 +1778,7 @@ class FocuserSettingsData(AcquisitionSettingsData):
 			('melt time', float),
 			('acquire final', bool),
 			('manual focus preset', str),
+			('beam tilt settle time', float),
 		)
 	typemap = classmethod(typemap)
 

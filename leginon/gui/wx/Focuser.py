@@ -173,39 +173,81 @@ class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 		sb = wx.StaticBox(self, -1, 'Focusing')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
-		sizer = wx.GridBagSizer(5, 5)
+		self.szmain = wx.GridBagSizer(5, 5)
+
+		self.presetnames = self.node.presetsclient.getPresetNames()
+
+		newrow,newcol = self.createManualFocusPresetSelector((0,0))
+		newrow,newcol = self.createMeltPresetSelector((newrow,0))
+		newrow,newcol = self.createMeltTimeEntry((newrow,0))
+		newrow,newcol = self.createAcquireFinalCheckBox((newrow,0))
+		newrow,newcol = self.createBeamTiltSettleTimeEntry((newrow,0))
+
+
+		sbsz.Add(self.szmain, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 5)
+
+		return sbsz
+
+	def createAcquireFinalCheckBox(self,start_position):
+		self.widgets['acquire final'] = \
+				wx.CheckBox(self, -1, 'Acquire post-focus image')
+
+		total_length = (1,2)
+		self.szmain.Add(self.widgets['acquire final'], start_position, (1, 2),
+				  wx.ALIGN_CENTER)
+		return start_position[0]+total_length[0],start_position[1]+total_length[1]
+
+	def createMeltTimeEntry(self,start_position):
 		self.widgets['melt time'] = FloatEntry(self, -1, min=0.0, allownone=False, chars=4, value='0.0')
 		melt_sizer = wx.GridBagSizer(5, 5)
 		melt_sizer.Add(self.widgets['melt time'], (0, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
 		melt_sizer.Add(wx.StaticText(self, -1, 'seconds'), (0, 1), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
-		self.widgets['acquire final'] = \
-				wx.CheckBox(self, -1, 'Acquire post-focus image')
+		label = wx.StaticText(self, -1, 'Melt time:')
 
-		presetnames = self.node.presetsclient.getPresetNames()
+		total_length = (1,2)
+		self.szmain.Add(label, start_position, (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.szmain.Add(melt_sizer, (start_position[0],start_position[1]+1), (1, 1), wx.ALIGN_CENTER)
+		return start_position[0]+total_length[0],start_position[1]+total_length[1]
+
+	def createManualFocusPresetSelector(self,start_position):
+		sizer = wx.GridBagSizer(5, 5)
 		self.widgets['manual focus preset'] = leginon.gui.wx.Presets.PresetChoice(self, -1)
-		self.widgets['manual focus preset'].setChoices(presetnames)
+		self.widgets['manual focus preset'].setChoices(self.presetnames)
 		label = wx.StaticText(self, -1, 'Manual focus tool preset:')
-		sizer.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sizer.Add(self.widgets['manual focus preset'], (0, 1), (1, 1), wx.ALIGN_CENTER)
 
+		total_length = (1,2)
+		self.szmain.Add(label, start_position, (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.szmain.Add(self.widgets['manual focus preset'], (start_position[0],start_position[1]+1), (1, 1), wx.ALIGN_CENTER)
+		return start_position[0]+total_length[0],start_position[1]+total_length[1]
+
+	def createMeltPresetSelector(self,start_position):
+		sizer = wx.GridBagSizer(5, 5)
 		self.widgets['melt preset'] = leginon.gui.wx.Presets.PresetChoice(self, -1)
-		self.widgets['melt preset'].setChoices(presetnames)
+		self.widgets['melt preset'].setChoices(self.presetnames)
 		label = wx.StaticText(self, -1, 'Melt preset:')
 		sizer.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sizer.Add(self.widgets['melt preset'], (1, 1), (1, 1), wx.ALIGN_CENTER)
+		total_length = (1,2)
+		self.szmain.Add(label, start_position, (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.szmain.Add(self.widgets['melt preset'], (start_position[0],start_position[1]+1), (1, 1), wx.ALIGN_CENTER)
+		return start_position[0]+total_length[0],start_position[1]+total_length[1]
 
-		label = wx.StaticText(self, -1, 'Melt time:')
-		sizer.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sizer.Add(melt_sizer, (2, 1), (1, 1), wx.ALIGN_CENTER)
-		sizer.Add(self.widgets['acquire final'], (3, 0), (1, 2),
-				  wx.ALIGN_CENTER)
+	def createBeamTiltSettleTimeEntry(self,start_position):
+		self.widgets['beam tilt settle time'] = FloatEntry(self, -1, min=0.0, allownone=False, chars=4, value='0.0')
+		melt_sizer = wx.GridBagSizer(5, 5)
+		melt_sizer.Add(self.widgets['beam tilt settle time'], (0, 0), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		melt_sizer.Add(wx.StaticText(self, -1, 'seconds'), (0, 1), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+		label = wx.StaticText(self, -1, 'Beam Tilt Settle time:')
 
-		sbsz.Add(sizer, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 5)
-
-		return sbsz
-
+		total_length = (1,2)
+		self.szmain.Add(label, start_position, (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.szmain.Add(melt_sizer, (start_position[0],start_position[1]+1), (1, 1), wx.ALIGN_CENTER)
+		return start_position[0]+total_length[0],start_position[1]+total_length[1]
+	
 class MeasureTiltAxisDialog(wx.Dialog):
 	def __init__(self, parent):
 		self.node = parent.node
