@@ -240,6 +240,7 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		self.setDefaultDimension(4096,3072)
 		self.c_client = correctorclient.CorrectorClient()
 		self.rawframetype = None
+		self.rawtransfer_wait = 20.0
 		self.framestackpath = None
 		self.stack_binning = 1
 		self.correct_dark_gain = True
@@ -350,7 +351,7 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		imagepath = imagedata['session']['image path']
 		rawframe_basepath = ddinfo.getRawFrameSessionPathFromImagePath(imagepath)
 		rawframedir = os.path.join(rawframe_basepath,'%s.frames' % imagedata['filename'])
-		if not self.waitForPathExist(rawframedir):
+		if not self.waitForPathExist(rawframedir,self.rawtransfer_wait):
 			apDisplay.printError('Raw Frame Dir %s does not exist.' % rawframedir)
 		self.getFrameNamePattern(rawframedir)
 		return rawframedir

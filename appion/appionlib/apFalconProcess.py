@@ -30,6 +30,7 @@ class FalconProcessing(apDDprocess.DDFrameProcessing):
 		filenames = os.listdir(framedir)
 		while len(filenames) < 2:
 			time.sleep(5)
+			filenames = os.listdir(framedir)
 		for i,t0 in enumerate(filenames[0]):
 			if t0 != filenames[1][i]:
 				break
