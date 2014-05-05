@@ -1817,6 +1817,7 @@ class CalibratorSettingsData(SettingsData):
 			('override preset', bool),
 			('camera settings', CameraSettingsData),
 			('correlation type', str),
+			('lpf sigma', float),
 		)
 	typemap = classmethod(typemap)
 

@@ -24,7 +24,8 @@ class Calibrator(node.Node):
 		'instruments': {'tem': None, 'ccdcamera': None},
 		'override preset': False,
 		'camera settings': cameraclient.default_settings,
-		'correlation type': 'cross',
+		'correlation type': 'phase',
+		'lpf sigma': 1.5,
 	}
 	def __init__(self, id, session, managerlocation, **kwargs):
 		node.Node.__init__(self, id, session, managerlocation, **kwargs)

@@ -8,6 +8,7 @@ import threading
 import wx
 
 from leginon.gui.wx.Choice import Choice
+from leginon.gui.wx.Entry import FloatEntry
 import leginon.gui.wx.Camera
 import leginon.gui.wx.Events
 import leginon.gui.wx.TargetPanel
@@ -54,13 +55,25 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		label = wx.StaticText(self, -1, 'correlation')
 		szcor.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
+		szlpf = wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1, 'phase correlation low pass filter')
+		szlpf.Add(label, (0, 0), (1, 3), wx.ALIGN_CENTER_VERTICAL)
+		label = wx.StaticText(self, -1, 'sigma:')
+		szlpf.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.widgets['phase corr lpf sigma'] = FloatEntry(self, -1,
+																												min=0.0, chars=4)
+		szlpf.Add(self.widgets['phase corr lpf sigma'], (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		label = wx.StaticText(self, -1, 'pixels')
+		szlpf.Add(label, (1, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+
 		sz = wx.GridBagSizer(5, 5)
 		sz.Add(szcor, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['override preset'], (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['instruments'], (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['camera settings'], (0, 1), (3, 1), wx.ALIGN_CENTER|wx.EXPAND)
+		sz.Add(szlpf, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['override preset'], (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['instruments'], (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['camera settings'], (0, 1), (4, 1), wx.ALIGN_CENTER|wx.EXPAND)
 
-		sz.AddGrowableRow(2)
+		sz.AddGrowableRow(3)
 		sz.AddGrowableCol(0)
 		sz.AddGrowableCol(1)
 		return sz

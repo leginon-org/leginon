@@ -11,6 +11,7 @@
 from pyami import correlator, peakfinder, ordereddict
 import math
 import numpy
+import scipy.ndimage
 import acquisition
 import libCVwrapper
 import align
@@ -86,6 +87,7 @@ class CorrelationRegistration(Registration):
 		self.correlator.setImage(0,array1)
 		self.correlator.setImage(1,array2)
 		corrimage = self.correlator.phaseCorrelate()
+		corrimage = scipy.ndimage.gaussian_filter(corrimage,1)
 		self.node.setImage(corrimage, 'Correlation')
 		peak = self.peakfinder.subpixelPeak(newimage=corrimage)
 		self.node.setTargets([(peak[1],peak[0])], 'Peak')

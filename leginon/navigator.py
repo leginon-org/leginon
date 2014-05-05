@@ -37,6 +37,7 @@ import logging
 
 # 3rd party
 import numpy
+import scipy.ndimage
 
 # used to create debug filenames
 idcounter = itertools.cycle(range(100))
@@ -400,6 +401,7 @@ class Navigator(node.Node):
 		im2 = imagefun.crop_at(self.newimagedata['image'], 'center', limit)
 
 		pc = correlator.phase_correlate(im2, im1, zero=False)
+		pc = scipy.ndimage.gaussian_filter(pc,1)
 		subpixelpeak = self.peakfinder.subpixelPeak(newimage=pc, guess=(0.5,0.5), limit=limit)
 		res = self.peakfinder.getResults()
 		unsignedpixelpeak = res['unsigned pixel peak']

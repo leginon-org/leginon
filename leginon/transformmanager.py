@@ -15,6 +15,7 @@ from pyami import correlator, peakfinder, ordereddict
 import calibrationclient
 import math
 import numpy
+import scipy.ndimage
 import time
 import threading
 import presets
@@ -584,6 +585,7 @@ class TransformManager(node.Node, TargetTransformer):
 
 		## do correlation
 		pc = self.correlator.phaseCorrelate()
+		pc = scipy.ndimage.gaussian_filter(pc,1)
 		peak = self.peakfinder.subpixelPeak(newimage=pc)
 		rows,cols = self.peak2shift(peak, pc.shape)
 		dist = math.hypot(rows,cols)
