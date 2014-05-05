@@ -190,6 +190,13 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 		apDisplay.printColor("Defocus search range: %d A to %d A (%.2f to %.2f um)"
 			%(inputparams['defmin'], inputparams['defmax'], 
 			inputparams['defmin']*1e-4, inputparams['defmax']*1e-4), "cyan")
+
+		### secondary lock check right before it starts on the real part
+		if self.params['parallel'] and os.path.isfile(apDisplay.short(imgdata['filename'])+".mrc"):
+			# This is a secondary image lock check, checking the first output of the process.
+			# It alone is not good enough
+			apDisplay.printWarning('Some other parallel process is working on the same image. Skipping')
+			return
 		### create local link to image
 		if not os.path.exists(inputparams['input']):
 			cmd = "ln -s "+inputparams['orig']+" "+inputparams['input']+"\n"
