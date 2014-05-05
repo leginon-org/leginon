@@ -28,9 +28,11 @@ class FalconProcessing(apDDprocess.DDFrameProcessing):
 
 	def getFrameNamePattern(self,framedir):
 		filenames = os.listdir(framedir)
-		while len(filenames) < 2:
+		head = 'Intermediate'
+		while len(filenames) < 3 and filenames[0].startswith(head):
 			time.sleep(5)
 			filenames = os.listdir(framedir)
+		print filenames
 		for i,t0 in enumerate(filenames[0]):
 			if t0 != filenames[1][i]:
 				break
