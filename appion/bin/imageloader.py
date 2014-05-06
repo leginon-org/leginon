@@ -304,7 +304,8 @@ class ImageLoader(appionLoop2.AppionLoop):
 				+str(self.stats['imagesleft'])+" ) file: "\
 				+apDisplay.short(name), "green")
 			self.stats['lastcount'] = self.stats['count']
-			self._checkMemLeak()
+			if apDisplay.isDebugOn():
+				self._checkMemLeak()
 		# check to see if image has already been processed
 		if self._alreadyProcessed(info):
 			return False

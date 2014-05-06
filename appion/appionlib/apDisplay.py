@@ -11,7 +11,7 @@ import glob
 # Please keep it this way
 ####
 
-debug = True
+debug = False
 writeOut = False
 try:
 	outFile = os.path.basename(sys.argv[0]).split(".")[0]+".out"

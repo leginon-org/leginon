@@ -574,7 +574,8 @@ class AppionLoop(appionScript.AppionScript):
 			elif self.stats['count'] % 80 == 0:
 				sys.stderr.write("\n")
 			self.stats['lastcount'] = self.stats['count']
-			self._checkMemLeak()
+			if apDisplay.isDebugOn():
+				self._checkMemLeak()
 
 		# skip if image doesn't exist:
 		imgpath = os.path.join(imgdata['session']['image path'], imgdata['filename']+'.mrc')
