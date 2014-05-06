@@ -11,12 +11,15 @@ import glob
 # Please keep it this way
 ####
 
-debug = False
+debug = True
 writeOut = False
 try:
 	outFile = os.path.basename(sys.argv[0]).split(".")[0]+".out"
 except:
 	outFile = "function.out"
+
+def isDebugOn():
+	return debug
 
 def printWarning(text):
 	"""
