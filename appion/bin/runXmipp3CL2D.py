@@ -23,7 +23,7 @@ from appionlib import apFourier
 from pyami import spider
 import sinedon
 import MySQLdb
-cmd = os.popen('modulecmd python load xmipp/3')
+cmd = os.popen('modulecmd python load xmipp/3.1')
 exec(cmd)
 #=====================
 #=====================
@@ -530,7 +530,6 @@ class CL2D(appionScript.AppionScript):
 	#=====================
 	def start(self):
 		# following http://stackoverflow.com/questions/5427040/loading-environment-modules-within-a-python-script 
-		cmd = os.popen('modulecmd python load xmipp/3.1')
 		exec(cmd)
 #		self.insertCL2DJob()
 		self.stack = {}
