@@ -224,6 +224,10 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		self.setTargets(self.currentposition, 'position')
 
 	def updateCurrentPosition(self):
+		'''
+		update current stage position on the mosaic.
+		Does not work if calibration parameter is image shift
+		'''
 		try:
 			image = self.imagemap.values()[0]
 		except:
@@ -240,13 +244,11 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 			self.logger.exception('could not get current position')
 			return
 		self.setCalibrationParameter()
-		center = self.mosaic.getFakeParameter()
-		shift = {}
-		for axis in ('x','y'):
-			shift[axis] = stagepos[axis] - center[axis]
 
+		## self.mosaic knows the center, and need stagepos to integrate
+		## modeled stage position
+		delta = self.mosaic.positionByCalibration(stagepos)
 		## this is unscaled and relative to center of mosaic image
-		delta = self.mosaic.positionByCalibration(shift)
 		moshape = self.mosaic.mosaicshape
 		pos = moshape[0]/2+delta[0], moshape[1]/2+delta[1]
 		pos = self.mosaic.scaled(pos)
