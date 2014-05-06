@@ -1863,8 +1863,8 @@ class ModeledStageCalibrationClient(MatrixCalibrationClient):
 
 		xmagcal = self.retrieveMagCalibration(tem, ccd, scope['high tension'], scope['magnification'], 'x')
 		ymagcal = self.retrieveMagCalibration(tem, ccd, scope['high tension'], scope['magnification'], 'y')
-		self.node.logger.debug('x mag cal %s' % (xmagcal,))
-		self.node.logger.debug('y mag cal %s' % (ymagcal,))
+		self.node.logger.debug('x mag cal angle=%6.3f, scale=%e' % (xmagcal['angle'],xmagcal['mean']))
+		self.node.logger.debug('y mag cal angle=%6.3f, scale=%e' % (ymagcal['angle'],ymagcal['mean'],))
 
 		newx = position['x']
 		newy = position['y']
@@ -1896,8 +1896,8 @@ class ModeledStageCalibrationClient(MatrixCalibrationClient):
 
 		xmagcal = self.retrieveMagCalibration(tem, ccd, scope['high tension'], scope['magnification'], 'x')
 		ymagcal = self.retrieveMagCalibration(tem, ccd, scope['high tension'], scope['magnification'], 'y')
-		self.node.logger.debug('x mag cal %s' % (xmagcal,))
-		self.node.logger.debug('y mag cal %s' % (ymagcal,))
+		self.node.logger.debug('x mag cal angle=%6.3f, scale=%e' % (xmagcal['angle'],xmagcal['mean']))
+		self.node.logger.debug('y mag cal angle=%6.3f, scale=%e' % (ymagcal['angle'],ymagcal['mean'],))
 
 
 		delta = self.pixtix(xmod, ymod, xmagcal, ymagcal, curstage['x'], curstage['y'], pixcol, pixrow)
