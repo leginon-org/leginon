@@ -316,7 +316,7 @@ function runUploadImage() {
 	$batch = trim($_POST['batch']);
 	$batch_check = trim($_POST['batchcheck']);
 	$invert_check = trim($_POST['invert_check']);
-	$cs = $_POST['cs']+0;
+	$cs = $_POST['cs'];
 	$imagegroup = $_POST['imagegroup']+0;
 	$uploadtype = $_POST['uploadtype'];
 	$tiltlist = $_POST['tiltlist'];
@@ -371,9 +371,13 @@ function runUploadImage() {
 
 	// for inverting density
 	if ($invert_check=='on') $command.="--invert ";
-	if (!$cs) {
+	if ($cs === "") {
 			createUploadImageForm($errormsg."Specify the Cs value");
 	} else {
+		$cs = $cs + 0;
+		if ( $cs < 0.0 ) {
+			createUploadImageForm($errormsg."The Cs value must be a positive number");
+		}
 		if ($has_session) {
 			$session_cs = $leginon->getCsValueFromSession($has_session[0]['DEF_id']);
 			if ($session_cs != $cs) {
