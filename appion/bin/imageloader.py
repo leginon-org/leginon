@@ -98,7 +98,7 @@ class ImageLoader(appionLoop2.AppionLoop):
 				apDisplay.printError("If not specifying a parameter file, supply a high tension")
 			if self.params['kv'] > 1000:
 				apDisplay.printError("High tension must be in kilovolts (e.g., 120)")
-			if self.params['cs'] < 0.1:
+			if self.params['cs'] < 0.0:
 				apDisplay.printError("Cs value must be in mm (e.g., 2.0)")
 			if self.params['imgdir'] is None:
 				apDisplay.printError("If not specifying a parameter file, specify directory containing images")
