@@ -354,10 +354,7 @@ class rctVolumeScript(appionScript.AppionScript):
 					apDisplay.printColor("Memory increase: %d MB/part"%(memdiff), "red")
 			tiltrot, theta, notrot, tiltangle = apTiltPair.getParticleTiltRotationAngles(stackpartdata)
 			if tiltrot is None:
-				count -= 1
-				apDisplay.printWarning("Skipping "+str(stackpartdata))
-				self.numpart -= 1
-				continue
+				apDisplay.printError("BAD particle  "+str(stackpartdata))
 			inplane, mirror = self.getParticleInPlaneRotation(stackpartdata)
 			totrot = -1.0*(notrot + inplane)
 			if mirror is True:
@@ -419,8 +416,16 @@ class rctVolumeScript(appionScript.AppionScript):
 					notstackpartnum = clustpart['alignparticle']['stackpart']['particleNumber']
 					tiltstackpartdata = apTiltPair.getStackParticleTiltPair(self.params['notstackid'],
 						notstackpartnum, self.params['tiltstackid'])
+						
+				
 					if tiltstackpartdata is None:
 						nopairParticle += 1
+						continue
+					tiltrot, theta, notrot, tiltangle = apTiltPair.getParticleTiltRotationAngles(tiltstackpartdata)
+					if tiltrot is None:
+						apDisplay.printWarning("BAD particle  "+str(stackpartdata))
+						nopairParticle += 1
+						continue
 					else:
 						inplane, mirror = self.getParticleInPlaneRotation(tiltstackpartdata)
 						if ( self.params['mirror'] == "all"
