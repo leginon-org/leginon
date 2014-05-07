@@ -203,9 +203,9 @@ if ($r) {
 ?>
 	<td>
 	Preset: <?php echo $preset; ?>
-	<a href="imagestatsgraph.php?hg=1&vdata=1&Id=<?php echo $sessionId; ?>&preset=<?php echo $preset; ?>">[data]</a>
-	<a href="imagestatsgraph.php?hg=1&vs=1&Id=<?php echo $sessionId; ?>&preset=<?php echo $preset; ?>">[sql]</a><br>
-	<a href="imagestatsgraph.php?hg=1&Id=<?php echo $sessionId; ?>&preset=<?php echo $preset; ?>"><img border="0"  src="imagestatsgraph.php?hg=1&w=210&Id=<?php echo $sessionId; ?>&preset=<?php echo $preset; ?>"></a>
+	<a href="imagestatsgraph.php?vdata=1&Id=<?php echo $sessionId; ?>&preset=<?php echo $preset; ?>">[data]</a>
+	<a href="imagestatsgraph.php?vs=1&Id=<?php echo $sessionId; ?>&preset=<?php echo $preset; ?>">[sql]</a><br>
+	<a href="imagestatsgraph.php?Id=<?php echo $sessionId; ?>&preset=<?php echo $preset; ?>"><img border="0"  src="imagestatsgraph.php?w=210&Id=<?php echo $sessionId; ?>&preset=<?php echo $preset; ?>"></a>
 	</td>
 <?php
 	}
