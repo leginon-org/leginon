@@ -211,7 +211,7 @@ def checkParams(ctfvalues):
 		msg = "atypical defocus #2 value %.4f microns (underfocus is positve)"%(focus2*1e6)
 		apDisplay.printWarning(msg)
 		return False
-	if cs > 9.0 or cs < 0.7:
+	if cs > 9.0 or cs < 0.0:
 		msg = "atypical C_s value %.4f mm"%(cs)
 		apDisplay.printWarning(msg)
 		return False
