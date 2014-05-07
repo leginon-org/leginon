@@ -23,7 +23,7 @@ from appionlib import apFourier
 from pyami import spider
 import sinedon
 import MySQLdb
-cmd = os.popen('modulecmd python load xmipp/3.1')
+cmd = os.popen("csh -c 'modulecmd python load xmipp/3.1'")
 exec(cmd)
 #=====================
 #=====================
