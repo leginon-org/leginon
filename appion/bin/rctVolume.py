@@ -423,7 +423,7 @@ class rctVolumeScript(appionScript.AppionScript):
 						continue
 					tiltrot, theta, notrot, tiltangle = apTiltPair.getParticleTiltRotationAngles(tiltstackpartdata)
 					if tiltrot is None:
-						apDisplay.printWarning("BAD particle  "+str(stackpartdata))
+						apDisplay.printWarning("BAD particle  "+str(tiltstackpartdata))
 						nopairParticle += 1
 						continue
 					else:
