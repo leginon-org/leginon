@@ -45,10 +45,6 @@ function createCL2DAlignForm($extra=false,
 	// connect to appion database, this is confusingly called particle data for historical reasons
 	$particle = new particledata();
 	$stackIds = $particle->getStackIds($expId);
-	$analysisIds = $particle->getAnalysisRuns($expId, $projectId, true);
-	//foreach ($analysisIds as $analysisId)
-	//	echo print_r($analysisId)."<br/><br/>\n";
-	$analysisruns = ($analysisIds) ? count($analysisIds) : 0;
 
 	$javascript = "<script src='../js/viewer.js'></script>\n";
 	// javascript to switch the defaults based on the stack
@@ -99,8 +95,11 @@ function createCL2DAlignForm($extra=false,
 	$commitcheck = ($_POST['commit']=='on' || !$_POST['process']) ? 'checked' : '';
 	// Set any existing parameters in form
 	$sessionpathval = ($_POST['outdir']) ? $_POST['outdir'] : $sessionpath;
+	$analysisruns = $particle->getMaxRunNumber("partalign", $expId);
+	
 	while (file_exists($sessionpathval.'cl2d'.($analysisruns+1)))
 		$analysisruns += 1;
+	
 	$runnameval = ($_POST['runname']) ? $_POST['runname'] : 'cl2d'.($analysisruns+1);
 	$bin = ($_POST['bin']) ? $_POST['bin'] : '1';
 	$rundescrval = $_POST['description'];
