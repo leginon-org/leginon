@@ -516,12 +516,12 @@ class EMMosaic(object):
 		param = self.calibrationclient.parameter()
 		return self.fakescope[param]
 
-	def positionByCalibration(self, shift):
+	def positionByCalibration(self, value):
 		'''
 		calculate a pixel vector which corresponds to
-		the given parameter shift from the center of the fakeimage
+		the given parameter value from the same of the fakeimage.
 		'''
-		position = self.calibrationclient.itransform(shift, self.fakescope, self.fakecamera)
+		position = self.calibrationclient.itransform(value, self.fakescope, self.fakecamera)
 		if position is None:
 			return None
 		# this makes it work with calibration
