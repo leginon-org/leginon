@@ -580,6 +580,9 @@ class Tomography(leginon.acquisition.Acquisition):
 		self.publish(request_data, database=True, pubevent=True, wait=True)
 
 	def processTargetData(self, *args, **kwargs):
+		self.setStatus('waiting')
+		self.fixCondition()
+		self.setStatus('processing')
 		preset_name = self.settings['preset order'][-1]
 		if self.settings['align zero loss peak']:
 			self.alignZeroLossPeak(preset_name)
