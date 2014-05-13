@@ -91,6 +91,7 @@ $view2->setControl();
 $view2->displayTag(true);
 $view2->setParam('ptclparams',$particleruns);
 $view2->setParam('aceruns',$aceruns);
+$view2->displayDDIcon(true);
 $view2->setDataTypes($datatypes);
 $view2->selectDataType($preset);
 $view2->addMenuItems($playbackcontrol);
