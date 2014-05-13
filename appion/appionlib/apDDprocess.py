@@ -1004,7 +1004,7 @@ class DDFrameProcessing(DirectDetectorProcessing):
 			if newbin < camdata['binning'][axis]:
 				apDisplay.displayError('can not change to smaller binning')
 			camerasize[axis] = (camdata['offset'][axis]*2+camdata['dimension'][axis])*camdata['binning'][axis]
-			camdata['dimension'][axis] = dims['x'] * camdata['binning'][axis] / newbin
+			camdata['dimension'][axis] = dims[axis] * camdata['binning'][axis] / newbin
 			camdata['binning'][axis] = newbin
 			camdata['offset'][axis] = (camerasize[axis]/newbin -camdata['dimension'][axis])/2
 		framelist = self.getAlignedSumFrameList()
