@@ -30,19 +30,25 @@ class GatanK2Processing(apDDprocess.DDFrameProcessing):
 		return range(self.getNumberOfFrameSavedFromImageData(imagedata))
 
 	def getRawFrameDirFromImage(self,imagedata):
+		'''
+		K2 raw frames are saved as image stack for feeding into gpu program.
+		RawFrameDir here is actually the filename with mrc extension.
+		'''
 		if self.getRawFrameType() == 'singles':
+			# back compatibility pre-3.0
 			return super(GatanK2Processing,self).getRawFrameDirFromImage(imagedata)
-		'''
-		K2 raw frames are now saved as image stack for feeding into gpu program.
-		RawFrameDir here is now actually the filename with mrc extension.
-		'''
-		# strip off DOS path in rawframe directory name 
+		# strip off DOS path in rawframe directory name if included
 		rawframename = imagedata['camera']['frames name'].split('\\')[-1]
 		if not rawframename:
 			apDisplay.printWarning('No Raw Frame Saved for %s' % imagedata['filename'])
-		# raw frames are saved in a subdirctory of image path
-		imagepath = imagedata['session']['image path']
-		rawframe_basepath = ddinfo.getRawFrameSessionPathFromImagePath(imagepath)
+		if imagedata['session']['frame path']:
+			# 3.0+ version
+			rawframe_basepath = imagedata['session']['frame path']
+		else:
+			# pre-3.0
+			# raw frames are saved in a subdirctory of image path
+			imagepath = imagedata['session']['image path']
+			rawframe_basepath = ddinfo.getRawFrameSessionPathFromImagePath(imagepath)
 		# frame stackfile is image filename plus '.frames.mrc'
 		rawframedir = os.path.join(rawframe_basepath,'%s.frames.mrc' % imagedata['filename'])
 		if not self.waitForPathExist(rawframedir,30):

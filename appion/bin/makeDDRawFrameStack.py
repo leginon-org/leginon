@@ -76,7 +76,12 @@ class MakeFrameStackLoop(apDDLoop.DDStackLoop):
 	def getFrameType(self):
 		# set how frames are saved depending on what is found in the basepath
 		sessiondata = apDatabase.getSessionDataFromSessionName(self.params['sessionname'])
-		return ddinfo.getRawFrameType(sessiondata['image path'])
+		if sessiondata['frame path']:
+			# 3.0+
+			return ddinfo.getRawFrameType(sessiondata['frame path'])
+		else:
+			# pre-3.0
+			return ddinfo.getRawFrameType(sessiondata['image path'])
 
 	#=======================
 	def preLoopFunctions(self):

@@ -334,7 +334,7 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		if not self.rawframetype:
 			if self.image:
 				# Do this only on the first image
-				self.setRawFrameType(ddinfo.getRawFrameType(self.image['session']['image path']))
+				self.setRawFrameType(ddinfo.getRawFrameType(self.image['session']['frame path']))
 			else:
 				apDisplay.printError('RawFrameType not set')
 		return self.rawframetype
@@ -347,9 +347,12 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		rawframename = imagedata['camera']['frames name'].split('\\')[-1]
 		if not rawframename:
 			apDisplay.printWarning('No Raw Frame Saved for %s' % imagedata['filename'])
-		# raw frames are saved in a subdirctory of image path
-		imagepath = imagedata['session']['image path']
-		rawframe_basepath = ddinfo.getRawFrameSessionPathFromImagePath(imagepath)
+		if imagedata['session']['frame path']:
+			 rawframe_basepath = imagedata['session']['frame path']
+		else:
+			# raw frames are saved in a subdirctory of image path pre-3.0
+			imagepath = imagedata['session']['image path']
+			rawframe_basepath = ddinfo.getRawFrameSessionPathFromImagePath(imagepath)
 		rawframedir = os.path.join(rawframe_basepath,'%s.frames' % imagedata['filename'])
 		if not self.waitForPathExist(rawframedir,self.rawtransfer_wait):
 			apDisplay.printError('Raw Frame Dir %s does not exist.' % rawframedir)
