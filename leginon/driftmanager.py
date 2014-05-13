@@ -119,12 +119,13 @@ class DriftManager(watcher.Watcher):
 
 	def acquireImage(self, channel=0, correct=True):
 		self.startTimer('drift acquire')
+		imagedata = None
 		if correct:
 			try:
 				imagedata = self.acquireCorrectedCameraImageData(channel)
 			except:
 				self.logger.warning('Acquiring corrected image failed. Raw image is used')
-		else:
+		if imagedata is None:
 			imagedata = self.acquireCameraImageData()
 		if imagedata is not None:
 			self.setImage(imagedata['image'], 'Image')
