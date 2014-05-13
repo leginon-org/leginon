@@ -63,7 +63,6 @@ if __name__ == '__main__':
 	import sys
 	sys.coinit_flags = 0
 	import pythoncom
-	from PIL import Image
 	import MrcImagePlugin
 	import cStringIO
 	webcam = VideoCapture.Device()
