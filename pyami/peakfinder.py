@@ -133,17 +133,18 @@ class PeakFinder(object):
 				v[i] = a[row,col]
 				i += 1
 
-		## fit quadratic
-		fit = linear_least_squares(dm, v)
-		coeffs = fit[0]
-		minsum = fit[1]
-
-		## find root
 		try:
+			## find root
+			## fit quadratic
+			fit = linear_least_squares(dm, v)
+			coeffs = fit[0]
+			minsum = fit[1]
 			row0 = -coeffs[1] / 2.0 / coeffs[0]
 			col0 = -coeffs[3] / 2.0 / coeffs[2]
 		except ZeroDivisionError:
 			raise FindPeakError('peak least squares fit has zero coefficient')
+		except ValueError:
+			raise FindPeakError('peak least squares fit has bad coefficient')
 
 		## find peak value
 		peak = coeffs[0] * row0**2 + coeffs[1] * row0 + coeffs[2] * col0**2 + coeffs[3] * col0 + coeffs[4]
