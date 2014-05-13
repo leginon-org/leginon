@@ -186,6 +186,8 @@ class DriftManager(watcher.Watcher):
 			else:
 				corchan = 1
 			imagedata = self.acquireImage(channel=corchan)
+			if imagedata is None:
+				continue
 			self.logger.info('new image acquired')
 			numdata = imagedata['image']
 			binning = imagedata['camera']['binning']['x']
