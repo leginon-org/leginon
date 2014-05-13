@@ -1,6 +1,6 @@
 #!/usr/bin/env python
-import Image
-import ImageDraw
+from PIL import Image
+from PIL import ImageDraw
 import numpy
 import imagefun
 import arraystats

@@ -5,7 +5,7 @@ import math
 import numpy
 import wx
 from wx.lib.buttons import GenBitmapButton, GenBitmapToggleButton
-import Image
+from PIL import Image
 import time
 import threading
 

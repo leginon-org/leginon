@@ -111,9 +111,9 @@ print '--------------------------------------------------------------'
 print 'Python Imaging Library (PIL):'
 print '    importing Image module...'
 try:
-	import Image
+	from PIL import Image
 except:
-	print '    *** Could not import Image module.'
+	print '    *** Could not import PIL Image module.'
 	print '      You must install Python Imaging Library version %s or greater' % (minstr,)
 else:
 	mystr = Image.VERSION

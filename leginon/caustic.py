@@ -14,8 +14,8 @@ import numpy
 import scipy
 import scipy.ndimage as ndimage
 import houghcircle
-import Image
-import ImageDraw
+from PIL import Image
+from PIL import ImageDraw
 from pyami import imagefun
 
 def saveMRC(image, name):

@@ -5,7 +5,7 @@ import math
 import pylab
 from matplotlib.ticker import MultipleLocator, FormatStrFormatter
 import subprocess
-import Image
+from PIL import Image
 import numpy as np
 import matplotlib.pyplot as plt
 from appionlib import appionScript

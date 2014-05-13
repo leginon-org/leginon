@@ -10,7 +10,7 @@
 
 import numpy
 from pyami import mrc, arraystats
-import Image
+from PIL import Image
 import re
 import sys
 

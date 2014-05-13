@@ -13,7 +13,7 @@
 
 import string
 from Mrc import MrcHeader
-import Image, ImageFile
+from PIL import Image, ImageFile
 
 
 ## PIL modes: F

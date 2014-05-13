@@ -5,7 +5,6 @@ import sys
 
 from pyami import mrc, imagefun
 import wx
-import Image
 from PIL import Image
 import time
 import math

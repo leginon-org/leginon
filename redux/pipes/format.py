@@ -4,8 +4,8 @@ import cStringIO
 # 3rd party
 import numpy
 import scipy.misc
-import Image
-import ImageDraw
+from PIL import Image
+from PIL import ImageDraw
 
 # myami
 import pyami.mrc

@@ -1,6 +1,6 @@
 import wx
-import Image
-import ImageDraw
+from PIL import Image
+from PIL import ImageDraw
 
 PreviewScaleEventType = wx.NewEventType()
 SetScaleEventType = wx.NewEventType()

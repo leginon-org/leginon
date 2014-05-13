@@ -8,7 +8,7 @@
 import node
 import uidata
 import VideoCapture
-import Image
+from PIL import Image
 import time
 import threading
 
@@ -63,7 +63,7 @@ if __name__ == '__main__':
 	import sys
 	sys.coinit_flags = 0
 	import pythoncom
-	import Image
+	from PIL import Image
 	import MrcImagePlugin
 	import cStringIO
 	webcam = VideoCapture.Device()

@@ -2,7 +2,7 @@
 # Copyright by New York Structural Biology Center
 # from leginon import robot2nysbc ; j = robot2nysbc.Robot2nysbc(); j.moveStagePositionZ()
 
-import Image
+from PIL import Image
 import sys
 import threading
 import time

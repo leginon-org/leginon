@@ -12,7 +12,7 @@ import event
 import node
 import gui.wx.ImageAssessor
 import os
-import Image
+from PIL import Image
 import numpy
 from pyami import imagefun, mrc
 
