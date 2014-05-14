@@ -11,7 +11,7 @@ import sys
 import wx
 import numpy
 import _mysql
-import Image
+from PIL import Image
 
 class Dialog(leginon.gui.wx.Dialog.Dialog):
 	def __init__(self, parent):
