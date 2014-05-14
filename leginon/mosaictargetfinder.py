@@ -246,7 +246,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		self.setCalibrationParameter()
 
 		## self.mosaic knows the center, and need stagepos to integrate
-		## modeled stage position
+		## modeled stage position (row,col)
 		delta = self.mosaic.positionByCalibration(stagepos)
 		## this is unscaled and relative to center of mosaic image
 		moshape = self.mosaic.mosaicshape
