@@ -346,9 +346,11 @@ class SimTEM(tem.TEM):
 
 	def getRefrigerantLevel(self,id=0):
 		if id == 0:
-			return 100 - (self.level0_counter.next())*20
+			level = 100 - (self.level0_counter.next())*20
 		else:
-			return 100 - (self.level1_counter.next())*20
+			level = 100 - (self.level1_counter.next())*20
+		print id, level
+		return level
 
 	def runAutoFiller(self):
 		self.resetRefrigerantCounter()
