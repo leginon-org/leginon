@@ -56,6 +56,8 @@ class Panel(leginon.gui.wx.Acquisition.Panel):
 		# to use, yet.
 		#self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_MANUAL_FOCUS, 'manualfocus',
 		#					 shortHelpString='Align beam tilt with wobbler')
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_GET_BEAMTILT, 'beamtiltget', shortHelpString='Rotation Center From Scope')
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_SET_BEAMTILT, 'beamtiltset', shortHelpString='Rotation Center To Scope')
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_ALIGN, 'rotcenter',
 							 shortHelpString='Align rotation center')
 		# correlation image
@@ -67,6 +69,8 @@ class Panel(leginon.gui.wx.Acquisition.Panel):
 
 	def onNodeInitialized(self):
 		self.align_dialog = AlignRotationCenterDialog(self)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onRotationCenterFromScope, id=leginon.gui.wx.ToolBar.ID_GET_BEAMTILT)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onRotationCenterToScope, id=leginon.gui.wx.ToolBar.ID_SET_BEAMTILT)
 		self.Bind(EVT_ALIGN, self.onAlignRotationCenter, self)
 		self.manualdialog = leginon.gui.wx.ManualFocus.ManualBeamTiltWobbleDialog(self, self.node)
 		self.Bind(EVT_MANUAL_CHECK, self.onManualCheck, self)
@@ -90,6 +94,12 @@ class Panel(leginon.gui.wx.Acquisition.Panel):
 	def onImageClicked(self, evt):
 		threading.Thread(target=self.node.navigate, args=(evt.xy,)).start()
 
+	def onRotationCenterToScope(self, evt):
+		threading.Thread(target=self.node.rotationCenterToScope).start()
+
+	def onRotationCenterFromScope(self, evt):
+		threading.Thread(target=self.node.rotationCenterFromScope).start()
+
 	def onAlignRotationCenter(self, evt):
 		self.align_dialog.ShowModal()
 
@@ -98,7 +108,6 @@ class Panel(leginon.gui.wx.Acquisition.Panel):
 
 	def onManualCheck(self, evt):
 		#self.manualdialog.MakeModal(True)
-		print "at onManualCheck"
 		self.manualdialog.Raise()
 		self.manualdialog.Show()
 

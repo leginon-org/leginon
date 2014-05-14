@@ -506,24 +506,6 @@ class BeamTiltImager(manualfocuschecker.ManualFocusChecker):
 			tshape = self.tabimage.shape
 			self.logger.info('Axial Coma(pixels)= (%.2f,%.2f)' % (mcal[0]*b2[0]*1e6+tshape[0]/2,mcal[1]*b2[1]*1e6+tshape[1]/2))
 
-	def setParameterChoice(self,parameter):
-		if parameter == 'Beam Tilt X':
-				self.axis = 'x'
-		elif parameter == 'Beam Tilt Y':
-				self.axis = 'y'
-		self.parameter_choice = parameter
-
-	def onManualCheck(self):
-		self.tiltdirection = 1
-		self.coma_free_tilt = self.instrument.tem.BeamTilt
-		evt = gui.wx.BeamTiltImager.ManualCheckEvent(self.panel)
-		self.panel.GetEventHandler().AddPendingEvent(evt)
-
-	def onManualCheckDone(self):
-		evt = gui.wx.BeamTiltImager.ManualCheckDoneEvent(self.panel)
-		self.panel.GetEventHandler().AddPendingEvent(evt)
-		self.resetTEMState()
-
 	def getTilt(self):
 		newtilt = self.coma_free_tilt.copy()
 		new_tilt_direction = (-1) * self.tiltdirection
@@ -531,93 +513,12 @@ class BeamTiltImager(manualfocuschecker.ManualFocusChecker):
 		self.tiltdirection = new_tilt_direction
 		return newtilt
 
-	def changeFocus(self, parameter, direction):
-		'''use this function for beam tilt adjustment as well'''
-		delta = self.increment
-		self.manualchecklock.acquire()
-		self.logger.info('Changing %s %s %s' % (parameter, direction, delta))
-		try:
-			if parameter == 'Stage Z':
-				value = self.instrument.tem.StagePosition['z']
-			elif parameter == 'Defocus':
-				value = self.instrument.tem.Defocus
-			elif parameter == 'Beam Tilt X':
-				self.axis = 'x'
-				value = self.coma_free_tilt[self.axis]
-			elif parameter == 'Beam Tilt Y':
-				self.axis = 'y'
-				value = self.coma_free_tilt[self.axis]
-			if direction == 'up':
-				value += delta
-			elif direction == 'down':
-				value -= delta
-			
-			if parameter == 'Stage Z':
-				self.instrument.tem.StagePosition = {'z': value}
-			elif parameter == 'Defocus':
-				self.instrument.tem.Defocus = value
-			elif parameter in ('Beam Tilt X','Beam Tilt Y'):
-				self.coma_free_tilt[self.axis] = value
-		except Exception, e:
-			self.logger.exception('Change focus failed: %s' % e)
-			self.manualchecklock.release()
-			return
-
-		self.manualchecklock.release()
-
-	
-	def setTEMState(self):
-		if self.parameter_choice in ('Beam Tilt X','Beam Tilt Y'):
-			self.instrument.tem.BeamTilt = self.getTilt()
-		else:
-			self.resetTEMState()
-		print self.instrument.tem.BeamTilt
-
-	def resetTEMState(self):
-		print 'tilt back'
-		self.instrument.tem.BeamTilt = self.coma_free_tilt
-
-	def _rotationCenterToScope(self):
-		tem = self.instrument.getTEMData()
-		ht = self.instrument.tem.HighTension
-		mag = self.instrument.tem.Magnification
-		beam_tilt = self.btcalclient.retrieveRotationCenter(tem, ht, mag)
-		if not beam_tilt:
-			raise RuntimeError('no rotation center for %geV, %gX' % (ht, mag))
-		self.instrument.tem.BeamTilt = beam_tilt
-		self.coma_free_tilt = beam_tilt
-
 	def rotationCenterToScope(self):
-		self.manualchecklock.acquire()
-		try:
-			self._rotationCenterToScope()
-		except Exception, e:
-			self.logger.error('Unable to set rotation center: %s' % e)
-		else:
-			self.logger.info('Set instrument rotation center')
-		self.manualchecklock.release()
-		self.panel.manualUpdated()
+		self.btcalclient.rotationCenterToScope()
+		self.coma_free_tilt = self.instrument.tem.BeamTilt
 
-	def _rotationCenterFromScope(self):
-		tem = self.instrument.getTEMData()
-		ht = self.instrument.tem.HighTension
-		mag = self.instrument.tem.Magnification
-		probe = self.instrument.tem.ProbeMode
-		if self.parameter_choice in ('Beam Tilt X','Beam Tilt Y'):
-			beam_tilt = self.coma_free_tilt
-		else:
-			beam_tilt = self.instrument.tem.BeamTilt
-		self.btcalclient.storeRotationCenter(tem, ht, mag, probe, beam_tilt)
 
 	def rotationCenterFromScope(self):
-		self.manualchecklock.acquire()
-		try:
-			self._rotationCenterFromScope()
-		except Exception, e:
-			self.logger.error('Unable to get rotation center: %s' % e)
-		else:
-			self.logger.info('Saved instrument rotation center')
-		self.manualchecklock.release()
-		self.panel.manualUpdated()
+		self.btcalclient.rotationCenterFromScope()
 
 	

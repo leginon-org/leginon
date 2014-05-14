@@ -61,50 +61,14 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 
 	def alignRotationCenter(self, defocus1, defocus2):
 		cal = self.calibration_clients['beam tilt']
-		bt = cal.measureRotationCenter(defocus1, defocus2, correlation_type=None, settle=0.5)
-		self.logger.info('Misalignment correction: %.4f, %.4f' % (bt['x'],bt['y'],))
-		oldbt = self.instrument.tem.BeamTilt
-		self.logger.info('Old beam tilt: %.4f, %.4f' % (oldbt['x'],oldbt['y'],))
-		newbt = {'x': oldbt['x'] + bt['x'], 'y': oldbt['y'] + bt['y']}
-		self.instrument.tem.BeamTilt = newbt
-		self.logger.info('New beam tilt: %.4f, %.4f' % (newbt['x'],newbt['y'],))
-
-	def _rotationCenterToScope(self):
-		tem = self.instrument.getTEMData()
-		ht = self.instrument.tem.HighTension
-		mag = self.instrument.tem.Magnification
-		probe = self.instrument.tem.ProbeMode
-		calibration_client = self.calibration_clients['beam tilt']
-		beam_tilt = calibration_client.retrieveRotationCenter(tem, ht, mag, probe)
-		if not beam_tilt:
-			raise RuntimeError('no rotation center for %geV, %gX' % (ht, mag))
-		self.instrument.tem.BeamTilt = beam_tilt
+		bt = cal.alignRotationCenter(defocus1, defocus2)
 
 	def rotationCenterToScope(self):
-		try:
-			self._rotationCenterToScope()
-		except Exception, e:
-			self.logger.error('Unable to set rotation center: %s' % e)
-		else:
-			self.logger.info('Set instrument rotation center')
+		self.calibration_clients['beam tilt'].rotationCenterToScope()
 		self.panel.setInstrumentDone()
 
-	def _rotationCenterFromScope(self):
-		tem = self.instrument.getTEMData()
-		ht = self.instrument.tem.HighTension
-		mag = self.instrument.tem.Magnification
-		probe = self.instrument.tem.ProbeMode
-		beam_tilt = self.instrument.tem.BeamTilt
-		calibration_client = self.calibration_clients['beam tilt']
-		calibration_client.storeRotationCenter(tem, ht, mag, probe, beam_tilt)
-
 	def rotationCenterFromScope(self):
-		try:
-			self._rotationCenterFromScope()
-		except Exception, e:
-			self.logger.error('Unable to get rotation center: %s' % e)
-		else:
-			self.logger.info('Saved instrument rotation center')
+		self.calibration_clients['beam tilt'].rotationCenterFromScope()
 		self.panel.setInstrumentDone()
 
 	def calibrateComaFree(self):

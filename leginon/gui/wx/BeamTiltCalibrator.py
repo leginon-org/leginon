@@ -211,13 +211,13 @@ class Panel(leginon.gui.wx.Calibrator.Panel):
 		threading.Thread(target=self.node.rotationCenterFromScope).start()
 
 	def onAlignRotationCenter(self, evt):
-		self.align_dialog.Show()
+		self.align_dialog.ShowModal()
 
 	def onMeasureTool(self, evt):
 		self.measure_dialog.ShowModal()
 
 	def onMeasureComafreeTool(self, evt):
-		self.comafree_dialog.Show()
+		self.comafree_dialog.ShowModal()
 
 	def onParameterSettingsTool(self, evt):
 		parameter = self.parameter.GetStringSelection()

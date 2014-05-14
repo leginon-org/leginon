@@ -1101,6 +1101,49 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		beamtilt = self.transformImageShiftToBeamTilt(shift0, tem, cam, ht, beamtilt, mag)
 		self.setBeamTilt(beamtilt)
 
+	def alignRotationCenter(self, defocus1, defocus2):
+		bt = self.measureRotationCenter(defocus1, defocus2, correlation_type=None, settle=0.5)
+		self.node.logger.info('Misalignment correction: %.4f, %.4f' % (bt['x'],bt['y'],))
+		oldbt = self.instrument.tem.BeamTilt
+		self.node.logger.info('Old beam tilt: %.4f, %.4f' % (oldbt['x'],oldbt['y'],))
+		newbt = {'x': oldbt['x'] + bt['x'], 'y': oldbt['y'] + bt['y']}
+		self.instrument.tem.BeamTilt = newbt
+		self.node.logger.info('New beam tilt: %.4f, %.4f' % (newbt['x'],newbt['y'],))
+
+	def _rotationCenterToScope(self):
+		tem = self.instrument.getTEMData()
+		ht = self.instrument.tem.HighTension
+		mag = self.instrument.tem.Magnification
+		probe = self.instrument.tem.ProbeMode
+		beam_tilt = self.retrieveRotationCenter(tem, ht, mag, probe)
+		if not beam_tilt:
+			raise RuntimeError('no rotation center for %geV, %gX' % (ht, mag))
+		self.instrument.tem.BeamTilt = beam_tilt
+
+	def rotationCenterToScope(self):
+		try:
+			self._rotationCenterToScope()
+		except Exception, e:
+			self.node.logger.error('Unable to set rotation center: %s' % e)
+		else:
+			self.node.logger.info('Set instrument rotation center')
+
+	def _rotationCenterFromScope(self):
+		tem = self.instrument.getTEMData()
+		ht = self.instrument.tem.HighTension
+		mag = self.instrument.tem.Magnification
+		probe = self.instrument.tem.ProbeMode
+		beam_tilt = self.instrument.tem.BeamTilt
+		self.storeRotationCenter(tem, ht, mag, probe, beam_tilt)
+
+	def rotationCenterFromScope(self):
+		try:
+			self._rotationCenterFromScope()
+		except Exception, e:
+			self.node.logger.error('Unable to get rotation center: %s' % e)
+		else:
+			self.node.logger.info('Saved instrument rotation center')
+	
 class SimpleMatrixCalibrationClient(MatrixCalibrationClient):
 	mover = True
 	def __init__(self, node):

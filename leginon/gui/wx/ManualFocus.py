@@ -348,6 +348,9 @@ if __name__ == '__main__':
 			self.man_power = None
 			self.man_image = None
 
+		def setParameterChoice(self,parameter):
+			self.parameter_choice = parameter
+
 	class App(wx.App):
 		def OnInit(self):
 			node = Node()
