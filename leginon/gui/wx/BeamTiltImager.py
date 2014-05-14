@@ -91,7 +91,7 @@ class Panel(leginon.gui.wx.Acquisition.Panel):
 		threading.Thread(target=self.node.navigate, args=(evt.xy,)).start()
 
 	def onAlignRotationCenter(self, evt):
-		self.align_dialog.Show()
+		self.align_dialog.ShowModal()
 
 	def onManualFocusTool(self, evt):
 		self.node.manualNow()
