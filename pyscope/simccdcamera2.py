@@ -386,6 +386,7 @@ class SimFalconFrameCamera(SimFrameCamera):
 		self.movie_exposure = 500.0
 		self.start_frame_number = 1
 		self.end_frame_number = 7
+		self.equal_distr_frame_number = 0
 
 	def getNumberOfFrames(self):
 		if self.save_frames:
@@ -437,12 +438,25 @@ class SimFalconFrameCamera(SimFrameCamera):
 			# use impossible large number to get back value for exposure time
 			self.end_frame_number = self.validateUseFramesMax(1000)
 		self.start_frame_number = self.frameconfig.getFrameReadoutDelay()
+		# set equally distributed frames starting frame number
+		if len(frames) >2:
+			framelist = list(frames)
+			framelist.sort()
+			self.equal_distr_frame_number = framelist[1]
+		else:
+			self.equal_distr_frame_number = 0
+		self.frameconfig.setEquallyDistributedStartFrame(self.equal_distr_frame_number)
+
 		self.calculateMovieExposure()
 		# self.useframes is used in simulater to generate simulated sum image
 		self.useframes = tuple(range(self.start_frame_number-self.frameconfig.internal_readout_delay, self.end_frame_number-self.frameconfig.internal_readout_delay))
 
 	def getUseFrames(self):
-		return (self.start_frame_number,self.end_frame_number)
+		if self.save_frames:
+			if self.equal_distr_frame_number > self.start_frame_number:
+				return (self.start_frame_number,self.equal_distr_frame_number,self.end_frame_number)
+			else:
+				return (self.start_frame_number,self.end_frame_number)
 
 	def setFrameTime(self,ms):
 		'''
@@ -464,7 +478,7 @@ class SimFalconFrameCamera(SimFrameCamera):
 		self.calculateMovieExposure()
 		movie_exposure_second = self.movie_exposure/1000.0
 		if self.save_frames:
-			self.frameconfig.makeRealConfigFromExposureTime(movie_exposure_second,self.start_frame_number)
+			self.frameconfig.makeRealConfigFromExposureTime(movie_exposure_second,self.equal_distr_frame_number,self.start_frame_number)
 		else:
 			self.frameconfig.makeDummyConfig(movie_exposure_second)
 

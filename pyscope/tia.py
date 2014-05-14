@@ -285,6 +285,7 @@ class TIA_Falcon(TIA):
 		self.movie_exposure = 500.0
 		self.start_frame_number = 1
 		self.end_frame_number = 7
+		self.equal_distr_frame_number = 0
 
 	def getPixelSize(self):
 		return {'x': 1.4e-5, 'y': 1.4e-5}
@@ -354,6 +355,15 @@ class TIA_Falcon(TIA):
 			# use impossible large number to get back value for exposure time
 			self.end_frame_number = self.validateUseFramesMax(1000)
 		self.start_frame_number = self.frameconfig.getFrameReadoutDelay()
+		# set equally distributed frames starting frame number
+		if len(frames) >2:
+			framelist = list(frames)
+			framelist.sort()
+			self.equal_distr_frame_number = framelist[1]
+		else:
+			self.equal_distr_frame_number = 0
+		self.frameconfig.setEquallyDistributedStartFrame(self.equal_distr_frame_number)
+
 		self.calculateMovieExposure()
 
 	def getUseFrames(self):
@@ -362,7 +372,10 @@ class TIA_Falcon(TIA):
 		not saving frames to avoid changing future useframes value
 		'''
 		if self.save_frames:
-			return (self.start_frame_number,self.end_frame_number)
+			if self.equal_distr_frame_number > self.start_frame_number:
+				return (self.start_frame_number,self.equal_distr_frame_number,self.end_frame_number)
+			else:
+				return (self.start_frame_number,self.end_frame_number)
 
 	def setFrameTime(self,ms):
 		'''
@@ -384,7 +397,7 @@ class TIA_Falcon(TIA):
 		self.calculateMovieExposure()
 		movie_exposure_second = self.movie_exposure/1000.0
 		if self.save_frames:
-			self.frameconfig.makeRealConfigFromExposureTime(movie_exposure_second,self.start_frame_number)
+			self.frameconfig.makeRealConfigFromExposureTime(movie_exposure_second,self.equal_distr_frame_number,self.start_frame_number)
 		else:
 			self.frameconfig.makeDummyConfig(movie_exposure_second)
 

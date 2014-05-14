@@ -27,6 +27,7 @@ class FalconFrameConfigXmlMaker(object):
 		# Falcon 2 software can save frames in at most 7 bins
 		self.output_bin_limit = 7
 		self.output_bins = self.output_bin_limit + 0
+		self.equal_distributed_frame = 0
 		self.resetParams()
 
 	def resetParams(self):
@@ -35,6 +36,7 @@ class FalconFrameConfigXmlMaker(object):
 		# Readout delay of one means frame 0 (shutter roll-in) is  not readout
 		self.internal_readout_delay = 1
 		self.frame_readout_delay = 1
+		self.equally_distributed_frame = 0
 
 	def getBaseFrameTime(self):
 		return self.base_frame_time
@@ -88,6 +90,12 @@ class FalconFrameConfigXmlMaker(object):
 		'''
 		self.output_bins = min(self.output_bin_limit,nframes)
 
+	def setEquallyDistributedStartFrame(self,frame_number):
+		'''
+		Set start of equal distribution to output frames
+		'''
+		self.equally_distributed_frame = frame_number
+
 	def getNumberOfFrameBins(self):
 		'''
 		Get number of frame bins saved without running self.distributeFramesInBins()
@@ -114,12 +122,19 @@ class FalconFrameConfigXmlMaker(object):
 		'''
 		return list of number of frames in each output bin.
 		'''
-		output_bins = self.output_bins
+		eframe = max((self.equally_distributed_frame - self.frame_readout_delay,0))
 
 		available_nframes = self.getNumberOfAvailableFrames()
 		# usable number of frames does not include those not read for output
 		usable_nframes = available_nframes -self.frame_readout_delay
-		return self._distributeItemsInBins(usable_nframes,output_bins)
+
+		# initialize with single frames
+		frames_in_bins = map((lambda x:1),range(eframe))
+		# equally distribute the rest
+		usable_equal_frames = usable_nframes - len(frames_in_bins)
+		equal_bins = self.output_bins - len(frames_in_bins)
+		frames_in_bins.extend(self._distributeItemsInBins(usable_equal_frames, equal_bins))
+		return frames_in_bins
 
 	def _distributeItemsInBins(self,n_items,bins):
 		'''
@@ -186,13 +201,14 @@ class FalconFrameConfigXmlMaker(object):
 		start_frames,end_frames = self.setFrameRange()
 		self.writeConfigXml(start_frames,end_frames)
 
-	def makeRealConfigFromExposureTime(self,second,delay=None):
+	def makeRealConfigFromExposureTime(self,second,equal_distr_frame=0,delay=None):
 		'''
 		Make Useful Frame saving config.xml.
 		Minimal is 2 base_frame_time
 		'''
 		self.resetParams()
 		self.setMaxNumberOfFrameBins(7)
+		self.setEquallyDistributedStartFrame(equal_distr_frame)
 		if delay is not None:
 			self.setFrameReadoutDelay(delay)
 		status = self.validateExposureTime(second)
@@ -225,19 +241,25 @@ class FalconFrameConfigXmlMaker(object):
 
 if __name__ == '__main__':
 		if len(sys.argv) < 2:
-			print 'usage: falconframe.py exposure_time_in_second delay_number_frames'
+			print 'usage: falconframe.py exposure_time_in_second equal_distr_frame delay_number_frames'
 			print 'default to 0.5 second'
+			print 'default equal_distr_frame is the first non-single frame'
+			print '  including which will be equally distributed'
 			print 'delay_number_frames default is 1'
 			exposure_second = 0.5
 			delay = 1
 		else:
 			exposure_second = float(sys.argv[1])
-			if len(sys.argv) == 3:
-				delay = int(sys.argv[2])
+			if len(sys.argv) >= 3:
+				equal_distr_frame = int(sys.argv[2])
+			else:
+				equal_distr_frame = 0
+			if len(sys.argv) == 4:
+				delay = int(sys.argv[3])
 			else:
 				delay = 1
 		app = FalconFrameConfigXmlMaker(True)
 		#is_success = app.makeDummyConfig(exposure_second)
-		is_success = app.makeRealConfigFromExposureTime(exposure_second,delay)
+		is_success = app.makeRealConfigFromExposureTime(exposure_second, equal_distr_frame,delay)
 		print is_success
 		print app.getFrameDirName()
