@@ -754,7 +754,7 @@ def scale_parfile_frealign9(infile, outfile, mult, newmag=0):
 	ff.close()
 
 #=================
-def frealign8_to_frealign9(infile, outfile, apix, occ=0, logp=0, sigma=0, score=0, change=0):
+def frealign8_to_frealign9(infile, outfile, apix, occ=0, logp=5000, sigma=1, score=0, change=0):
 	''' modified for version 9.06 and above, character spaces for version <9.06 is different for logp value '''
 	### output file
 	ff = open(outfile, "w")
