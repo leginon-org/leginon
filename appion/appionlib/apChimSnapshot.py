@@ -24,6 +24,8 @@ if __name__ == "__main__":
 	sys.stderr.write("\nusage: chimera python:apChimSnapshot.py\n\n")
 	sys.exit(1)
 try:
+	cmd = os.popen("csh -c 'modulecmd python load chimera'")
+	exec(cmd)
 	import chimera
 	import chimera.printer
 	from chimera.colorTable import getColorByName
