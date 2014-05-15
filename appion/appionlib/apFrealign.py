@@ -16,6 +16,7 @@ from appionlib import apRecon
 from appionlib import apDatabase
 from appionlib import apEulerCalc
 from appionlib import apParam
+from appionlib import starFile
 
 #=====================
 def parseFrealignParamFile(paramfile,test=False):
@@ -843,6 +844,43 @@ def frealign9_03_to_frealign9_06(infile, outfile):
 	ff.close()
 
 
+#===================
+def frealign9_06_to_frealign9_03(infile, outfile):
+	''' modified for version 9.06 and above, character spaces for version <9.06 is different for logp value '''
+	### output file
+	ff = open(outfile, "w")
+	ff.write("%s%8s%8s%8s%10s%10s%8s%6s%9s%9s%8s%8s%13s%8s%8s\n" \
+		% ("C      ","PSI","THETA","PHI","SHX","SHY","MAG","FILM","DF1","DF2","ANGAST","OCC","-LogP","SCORE","CHANGE"))
+
+	### read & write params
+	params = parseFrealign9ParamFile(infile)
+	for i,p in params.iteritems():
+		partnum = p['partnum']
+		psi = p['psi']
+		theta = p['theta']
+		phi = p['phi']
+		shx = p['shiftx'] 
+		shy = p['shifty']
+		mag = p['mag']
+		micnum = p['micn']
+		dx = p['defx']
+		dy = p['defy']
+		ast = p['astig']
+		occ = p['occ']
+		logp = p['logp']
+		try:
+			sigma = p['sigma']
+			score = p['score']
+			change = p['change']
+		except:
+			sigma = 0.0
+			score = 0.0
+			change = 0.0
+
+		ff.write("%7d%8.2f%8.2f%8.2f%10.2f%10.2f%8d%6d%9.1f%9.1f%8.2f%8.2f%13d%8.2f%8.2f\n" \
+			% (partnum, psi, theta, phi, shx, shy, mag, micnum, dx, dy, ast, occ, sigma, score, change))	
+	ff.close()
+
 #=================
 def extract_from_paramfile_frealign8(bestparticlefile, inparfile, outparfile):
 	'''
@@ -1086,4 +1124,39 @@ def average_value_frealign9(inparfile, *values):
 		for i in range(len(params)):
 			vlist.append(params[i+1][v])
 		print "average %s:" % (v), numpy.average(vlist)
-		
+
+def Relion_to_Frealign8(starfile, parfile, mag):
+	star = starFile.StarFile(starfile)
+	star.read()
+	dataBlock = star.getDataBlock("data_images")
+	loopDict  = dataBlock.getLoopDict()
+	
+	### write Frealign8 file
+	ff = open(frealignfile, "w")
+	ff.write("%s%8s%8s%8s%8s%8s%8s%6s%9s%9s%8s\n" \
+		% ("C      ","PSI","THETA","PHI","SHX","SHY","MAG","FILM","DF1","DF2","ANGAST"))
+
+	olddx = 0
+	micn = 0
+	for i in range(len(loopDict)):
+		if i % 1000 == 0:
+			print "done with %d particles" % i
+
+		rlnrot = float(loopDict[i]['_rlnAngleRot'])
+		rlntilt = float(loopDict[i]['_rlnAngleTilt'])
+		rlnpsi = float(loopDict[i]['_rlnAnglePsi'])
+		shiftx = float(loopDict[i]['_rlnOriginX']) * -1
+		shifty = float(loopDict[i]['_rlnOriginY'])
+		dx = float(loopDict[i]['_rlnDefocusU'])
+		dy = float(loopDict[i]['_rlnDefocusU'])
+		astig = float(loopDict[i]['_rlnDefocusAngle'])
+
+		phi, theta, psi = apEulerCalc.convertXmippEulersToFrealign(rlnrot, rlntilt, rlnpsi)
+
+		if dx != olddx:
+			micn += 1
+			olddx = dx
+
+		ff.write("%7d%8.2f%8.2f%8.2f%8.2f%8.2f%8d%6d%9.1f%9.1f%8.2f\n" \
+			% (i+1, psi, theta, phi, shiftx, shifty, mag, micn, dx, dy, astig))
+	ff.close()
