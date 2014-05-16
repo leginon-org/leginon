@@ -35,12 +35,16 @@ try:
 	from SurfaceCap import surfcaps
 	from _surface import SurfaceModel, connected_pieces
 	from chimera import openModels
-	from chimera.replyobj import nogui_message
 	from MeasureVolume import enclosed_volume
 	import ScaleBar.session
 except ImportError:
 	print "Failed to import chimera modules"
 	pass
+
+#from chimera-1.2.5/share/chimera/replyobj.py
+def nogui_message(s):
+	"""Show a message"""
+	sys.stdout.write(s)
 
 class ChimSnapShots(object):
 	# -----------------------------------------------------------------------------
