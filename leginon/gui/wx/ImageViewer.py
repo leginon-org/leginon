@@ -16,8 +16,6 @@ from Entry import FloatEntry, EVT_ENTRY
 import Stats
 import ImageViewer2
 
-wx.InitAllImageHandlers()
-
 ImageClickedEventType = wx.NewEventType()
 ImageClickDoneEventType = wx.NewEventType()
 MeasurementEventType = wx.NewEventType()

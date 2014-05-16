@@ -35,8 +35,6 @@ import SelectionTool
 import leginon.icons
 #import time
 
-wx.InitAllImageHandlers()
-
 ImageClickDoneEventType = wx.NewEventType()
 EVT_IMAGE_CLICK_DONE = wx.PyEventBinder(ImageClickDoneEventType)
 
