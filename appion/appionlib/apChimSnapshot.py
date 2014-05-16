@@ -54,7 +54,6 @@ class ChimSnapShots(object):
 		self.openPDBData()
 		self.openVolumeData()
 		self.saveOBJfile()
-
 		### select proper function
 		if self.type == 'animate':
 			if self.symmetry[:4] == 'icos':
@@ -695,7 +694,7 @@ class ChimSnapShots(object):
 	# -----------------------------------------------------------------------------
 	def snapshot_asymmetric(self):
 		self.writeMessageToLog("snapshot_asymmetric")
-		self.hideDust(150)
+		self.hideDust()
 		for s in self.surfaces:
 			self.color_surface_height(s)
 		#self.writeMessageToLog("turn: get front view")
