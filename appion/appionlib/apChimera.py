@@ -95,7 +95,8 @@ def filterAndChimera(density, res=30, apix=None, box=None, chimtype='snapshot',
 	if not res or str(res) == 'nan':
 		res = 30
 	### low pass filter the volume to 60% of reported res
-	tmpf = density+'.tmp.mrc'
+	tmpf = os.path.abspath(density+'.tmp.mrc')
+	density = os.path.abspath(density)
 	filtres = 0.6*res
 	shrinkby = 1
 	if box is not None and box > 250:
