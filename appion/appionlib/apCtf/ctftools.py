@@ -42,46 +42,69 @@ def getCtfExtrema(focus=1.0e-6, mfreq=1.498e-04, cs=2e-2,
 
 	wavelength = getTEMLambda(volts)
 
-	a = 0.5*cs*math.pi*wavelength**3
-	b = -focus*math.pi*wavelength
-	c = -math.asin(ampconst)
-	if debug is True:
-		print "quadradtic parameters %.3e, %.3e, %.3e"%(a,b,c)
-	#eq: sin^2 (a r^4 + b r^2 + c) = 0
-	#==> a r^4 + b r^2 + c - n*pi/2 = 0
-	#quadradtic: r^2 = [ -b +/- sqrt( b^2 - 4*a*(c + n*pi/2)) ] / 2*a
-	# note: "-b + sqrt(..)" is always the positive (non-imaginary) root 
-
-	## after a certain point the peaks switch direction
-	#peakswitch = (2.0*math.sqrt(focus/(cs*wavelength**2)))/math.pi + 0.9
-	#if debug is True:
-	#	print "Peak switch", peakswitch
-
-	distances = []
-	for i in range(numzeros):
-		if zerotype.startswith("valley"):	
-			innerroot = b**2. - 4. * a * (c + (i+1)*math.pi)	## just valleys/minima
-		elif zerotype.startswith("peak"):
-			innerroot = b**2. - 4. * a * (c + (i+0.5)*math.pi)	## just peaks/maxima
-		else:
-			innerroot = b**2. - 4. * a * (c + (i/2.0+0.5)*math.pi)	## all extrema
-		if innerroot < 0:
-			continue
-		root = math.sqrt(innerroot)
-		radsq1 = (-b + root)/(2*a)
-		radsq2 = (-b - root)/(2*a)
-		if radsq1 > 0 and radsq1 < radsq2:
-			rad1 = math.sqrt(radsq1)
-			pixeldist = rad1/mfreq
-		elif radsq2 > 0 and radsq2 < radsq1:
-			rad2 = math.sqrt(radsq2)
-			pixeldist = rad2/mfreq
-		else:
-			print "ERROR"
-			continue
-		distances.append(pixeldist)
+	if cs > 0:
+		a = 0.5*cs*math.pi*wavelength**3
+		b = -focus*math.pi*wavelength
+		c = -math.asin(ampconst)
 		if debug is True:
-			print "radius of zero number %d is %d pixels"%(i+1, pixeldist)
+			print "quadradtic parameters %.3e, %.3e, %.3e"%(a,b,c)
+		#eq: sin^2 (a r^4 + b r^2 + c) = 0
+		#==> a r^4 + b r^2 + c - n*pi/2 = 0
+		#quadradtic: r^2 = [ -b +/- sqrt( b^2 - 4*a*(c + n*pi/2)) ] / 2*a
+		# note: "-b + sqrt(..)" is always the positive (non-imaginary) root 
+
+		## after a certain point the peaks switch direction
+		#peakswitch = (2.0*math.sqrt(focus/(cs*wavelength**2)))/math.pi + 0.9
+		#if debug is True:
+		#	print "Peak switch", peakswitch
+
+		distances = []
+		for i in range(numzeros):
+			if zerotype.startswith("valley"):	
+				innerroot = b**2. - 4. * a * (c + (i+1)*math.pi)	## just valleys/minima
+			elif zerotype.startswith("peak"):
+				innerroot = b**2. - 4. * a * (c + (i+0.5)*math.pi)	## just peaks/maxima
+			else:
+				innerroot = b**2. - 4. * a * (c + (i/2.0+0.5)*math.pi)	## all extrema
+			if innerroot < 0:
+				continue
+			root = math.sqrt(innerroot)
+			radsq1 = (-b + root)/(2*a)
+			radsq2 = (-b - root)/(2*a)
+			if radsq1 > 0 and radsq1 < radsq2:
+				rad1 = math.sqrt(radsq1)
+				pixeldist = rad1/mfreq
+			elif radsq2 > 0 and radsq2 < radsq1:
+				rad2 = math.sqrt(radsq2)
+				pixeldist = rad2/mfreq
+			else:
+				print "ERROR"
+				continue
+			distances.append(pixeldist)
+			if debug is True:
+				print "radius of zero number %d is %d pixels"%(i+1, pixeldist)
+	elif cs == 0:
+		b = focus*math.pi*wavelength
+		c = math.asin(ampconst)
+		if debug is True:
+			print "quadradtic parameters %.3e, %.3e, %.3e"%(0.0,b,c)
+		#eq: sin^2 (b r^2 + c) = 0
+		#==> b r^2 + c - n*pi/2 = 0
+		#==> r^2 = (n*pi/2 - c)/b
+		distances = []
+		for i in range(numzeros):
+			if zerotype.startswith("valley"):
+				innerroot = ((i+1)*math.pi - c)/b
+			elif zerotype.startswith("peak"):
+				innerroot =	((i+0.5)*math.pi - c)/b
+			else:
+			   innerroot = ((i/2.0+0.5)*math.pi - c)/b
+			rad = math.sqrt(innerroot)
+			pixeldist = rad/mfreq
+			distances.append(pixeldist)
+			if debug is True:
+				print "radius of zero number %d is %d pixels"%(i+1, pixeldist)
+
 	return numpy.array(distances)
 
 #===================
