@@ -1076,6 +1076,45 @@ def combine_frealign8_parfiles(outparfile, *parfiles):
 				% (total, psi, theta, phi, shx, shy, mag, micnum, dx, dy, ast))
 	ff.close()
 
+def combine_frealign9_parfiles(outparfile, *parfiles):	
+
+	ff = open(outparfile, "w")
+	ff.write("%s%8s%8s%8s%10s%10s%8s%6s%9s%9s%8s%8s%10s%11s%8s%8s\n" \
+		% ("C      ","PSI","THETA","PHI","SHX","SHY","MAG","FILM","DF1","DF2","ANGAST","OCC","-LogP","SIGMA","SCORE","CHANGE"))
+
+	total = 0
+	micnum = 0
+	olddx = 0
+	for inparfile in parfiles:
+		params = parseFrealign9ParamFile(inparfile)
+		### read & write params
+		for i, p in params.iteritems():
+			total+=1
+			partnum = float(p['partnum'])
+			psi = float(p['psi'])
+			theta = float(p['theta'])
+			phi = float(p['phi'])
+			shx = float(p['shiftx'])
+			shy = float(p['shifty'])
+			mag = float(p['mag'])
+			film = float(p['micn'])
+			dx = float(p['defx'])
+			dy = float(p['defy'])
+			ast = float(p['astig'])
+			occ = float(p['occ']) 
+			logp = float(p['logp'])
+			sigma = float(p['sigma'])
+			score = float(p['score'])
+			change = float(p['change'])
+
+			if olddx != (dx+dy)/2:
+				olddx = (dx+dy)/2
+				micnum += 1
+	
+			ff.write("%7d%8.2f%8.2f%8.2f%10.2f%10.2f%8d%6d%9.1f%9.1f%8.2f%8.2f%10d%11.4f%8.2f%8.2f\n" \
+				% (total, psi, theta, phi, shx, shy, mag, micnum, dx, dy, ast, occ, logp, sigma, score, change))
+	ff.close()
+
 def split_frealign9_parfile(inparfile, *outparfiles):
 	''' takes as input a frealign9 parameter file, and splits up the occupancies into however many
 	output parameter files one specifies (e.g. 2). Keeps all other input the same '''
@@ -1146,7 +1185,7 @@ def Relion_to_Frealign8(starfile, parfile, mag):
 		rlntilt = float(loopDict[i]['_rlnAngleTilt'])
 		rlnpsi = float(loopDict[i]['_rlnAnglePsi'])
 		shiftx = float(loopDict[i]['_rlnOriginX']) * -1
-		shifty = float(loopDict[i]['_rlnOriginY'])
+		shifty = float(loopDict[i]['_rlnOriginY']) * -1
 		dx = float(loopDict[i]['_rlnDefocusU'])
 		dy = float(loopDict[i]['_rlnDefocusU'])
 		astig = float(loopDict[i]['_rlnDefocusAngle'])
