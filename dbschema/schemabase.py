@@ -19,6 +19,7 @@ class SchemaUpdate(object):
 		self.valid_upgrade = ['leginon','project','appion']
 		self.required_upgrade = self.valid_upgrade
 		self.excluded_appiondbs = []
+		self.setForceUpdate(False)
 
 	def appendToExcluded_AppionDBs(self,dbname):
 		self.excluded_appiondbs.append(dbname)
@@ -99,9 +100,15 @@ class SchemaUpdate(object):
 		'''
 		Log that this update has been completed and therefore can not be repeated.
 		'''
-		self.updatelib.updateDatabaseReset(self.updatelib.db_revision)
-		self.updatelib.updateDatabaseRevision(self.selected_revision)
-		print "\033[35mUpdated install table reset and revision\033[0m"
+		if not self.force:
+			self.updatelib.updateDatabaseReset(self.updatelib.db_revision)
+			self.updatelib.updateDatabaseRevision(self.selected_revision)
+			print "\033[35mUpdated install table reset and revision\033[0m"
+		else:
+			print "\033[35mForced Update does not update install table reset and revision\033[0m"
+
+	def setForceUpdate(self,is_force):
+		self.force = is_force
 
 	def run(self):
 		if not self.required_upgrade:
@@ -110,7 +117,7 @@ class SchemaUpdate(object):
 		divider = "-------------------------------------------"
 		checkout_revision = self.updatelib.getCheckOutRevision()
 		revision_in_database = self.updatelib.getDatabaseRevision()
-		if self.updatelib.needUpdate(checkout_revision,self.selected_revision) == 'now':
+		if self.updatelib.needUpdate(checkout_revision,self.selected_revision,self.force) == 'now':
 			try:
 				if 'leginon' in self.required_upgrade:
 					# leginon part

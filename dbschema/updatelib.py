@@ -22,13 +22,13 @@ class UpdateLib:
 		'''
 		has_appiondbs = self.checkProcessingDB()
 		if svn_branch == 'trunk':
-			schema_revisions = [12857,13713,14077,14891,15069,15526,15653,16182,16607,17035,17111,17224,17561,17562,17617,17812,17813,17916,18000,18034]
+			schema_revisions = [12857,13713,14077,14891,15069,15497,15526,15653,16182,16607,17035,17111,17224,17561,17562,17617,17812,17813,17916,18000,18034]
 			appion_only_revisions = [15248,15251,15293,15961,16412,16446,17035,17311,17982]
 		elif svn_branch == 'myami-3.0':
-			schema_revisions = [12857,13713,14077,14891,15069,15526,15653,16182,16607,17035,17111,17224,17561,17562,17617,17812,17813,17916,18000,18034]
+			schema_revisions = [12857,13713,14077,14891,15069,15497,15526,15653,16182,16607,17035,17111,17224,17561,17562,17617,17812,17813,17916,18000,18034]
 			appion_only_revisions = [15248,15251,15293,15961,16412,16446,17035,17311,17982]
 		elif svn_branch == 'myami-2.2':
-			schema_revisions = [12857,13713,14077,14891,15069,15526,15653,16182,16607]
+			schema_revisions = [12857,13713,14077,14891,15069,15497,15526,15653,16182,16607]
 			appion_only_revisions = [15248,15251,15293,15961,16412,16446]
 		elif svn_branch == 'myami-2.1':
 			schema_revisions = [12857,13713,14077,14891]
@@ -187,13 +187,15 @@ class UpdateLib:
 			print '\033[35mYou must successfully run schema-r%d.py first\033[0m' % (minimal_revision_in_database)
 			return False
 
-	def needUpdate(self,checkout_revision,selected_revision):
+	def needUpdate(self,checkout_revision,selected_revision,force=False):
 		''' 
 			database update of the schema at selected_revision is 
 			performed only if the checkout_revision
 			is newer than the selected_revision and that previous
 			update was made successfully as recorded in the database
 		'''
+		if force:
+			return 'now'
 		revision_in_database = self.getDatabaseRevisionByBranch()
 		schema_revisions = self.getBranchUpdateRevisionSequence()
 		try:
