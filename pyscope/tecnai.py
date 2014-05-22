@@ -1186,14 +1186,19 @@ class Tecnai(tem.TEM):
 		'''
 		if exptime == 0:
 			return
-		self.setBeamBlank('on')
-		self.tecnai.BlankerShutter.ShutterOverrideOn = True
-		time.sleep(1.0)
-		self.setBeamBlank('off')
-		time.sleep(exptime)
-		self.tecnai.BlankerShutter.ShutterOverrideOn = False
-		time.sleep(1.0)
-		self.setBeamBlank('off')
+		if hasattr(self.tecnai,'BlankerShutter'):
+			self.setBeamBlank('on')
+			self.tecnai.BlankerShutter.ShutterOverrideOn = True
+			time.sleep(1.0)
+			self.setBeamBlank('off')
+			time.sleep(exptime)
+			self.tecnai.BlankerShutter.ShutterOverrideOn = False
+			time.sleep(1.0)
+			self.setBeamBlank('off')
+		else:
+			self.setMainScreenPosition('down')
+			time.sleep(exptime)
+			self.setMainScreenPosition('up')
 
 	def runAutoFiller(self):
 		'''
