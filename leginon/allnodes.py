@@ -83,6 +83,10 @@ noderegistry.registerNodeClass(TiltRotateRepeater,classtype)
 from robot import Robot
 noderegistry.registerNodeClass(Robot,classtype)
 
+# TargetFinder is registered for setting validataion only
+from targetfinder import TargetFinder
+noderegistry.registerNodeClass(TargetFinder,classtype)
+
 from targetfinder import ClickTargetFinder
 noderegistry.registerNodeClass(ClickTargetFinder,classtype)
 
