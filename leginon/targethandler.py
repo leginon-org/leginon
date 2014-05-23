@@ -352,6 +352,7 @@ class TargetHandler(object):
 	def reportTargetStatus(self, target, status):
 		# look up most recent version of this target
 		tquery = leginondata.AcquisitionImageTargetData()
+		tquery['session'] = target['session']
 		tquery['list'] = target['list']
 		tquery['number'] = target['number']
 		tquery['type'] = target['type']
