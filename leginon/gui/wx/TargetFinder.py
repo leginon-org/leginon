@@ -38,6 +38,7 @@ class Panel(leginon.gui.wx.Node.Panel):
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SUBMIT, False)
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SUBMIT_QUEUE, False)
 
+
 		self.initialize()
 
 		self.SetSizer(self.szmain)
@@ -56,6 +57,15 @@ class Panel(leginon.gui.wx.Node.Panel):
 		self.Bind(leginon.gui.wx.ImagePanelTools.EVT_SETTINGS, self.onImageSettings)
 		queue = self.node.settings['queue']
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SUBMIT_QUEUE, queue)
+		self.imagepanel.imagevector = self.node.getTargetImageVector()
+
+	def onSetImage(self, evt):
+		super(Panel,self).onSetImage(evt)
+		try:
+			self.imagepanel.imagevector = self.node.getTargetImageVector()
+		except AttributeError:
+			# This function is called on initialization and self.node would be None
+			pass
 
 	def onImageSettings(self, evt):
 		pass

@@ -71,6 +71,8 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		self.parent_imageid = None
 		self.focusing_targetlist = None
 		self.last_acq_node = None
+		self.next_acq_node = None
+		self.targetimagevector = (0,0)
 		self.resetLastFocusedTargetList(None)
 
 	def handleApplicationEvent(self,evt):
@@ -80,6 +82,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		'''
 		app = evt['application']
 		self.last_acq_node = appclient.getLastNodeThruBinding(app,self.name,'AcquisitionImagePublishEvent','Acquisition')
+		self.next_acq_node = appclient.getNextNodeThruBinding(app,self.name,'ImageTargetListPublishEvent','Acquisition')
 
 	def checkSettings(self,settings):
 		'''
@@ -297,6 +300,8 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 
 		for target_name in self.targetnames:
 			self.setTargets([], target_name, block=True)
+
+		self.setTargetImageVector(imagedata)
 		# check if there is already a target list for this image
 		# or any other versions of this image (all from same target/preset)
 		# exclude sublists (like rejected target lists)
@@ -374,6 +379,32 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		else:
 			self.parent_imageid = None
 		return is_new
+
+	def setTargetImageVector(self,imagedata):
+		cam_length_on_image = self.getAcquisitionTargetLength(imagedata)
+		beam_diameter = cam_length_on_image * 1.5
+		self.targetimagevector = (cam_length_on_image,0)
+
+	def getTargetImageVector(self):
+		return self.targetimagevector
+
+	def getAcquisitionTargetLength(self,imagedata):
+		if not self.next_acq_node:
+			return 0
+		try:
+			settingsclassname = self.next_acq_node['class string']+'SettingsData'
+			results= self.reseachDBSettings(getattr(leginondata,settingsclassname),self.next_acq_node['alias'])
+			acqsettings = results[0]
+			presetlist = acqsettings['preset order']
+			acq_dim = self.presetsclient.getPresetImageDimension(presetlist[0])
+			image_pixelsize = self.calclients['image shift'].getImagePixelSize(imagedata)
+			dim_on_image = []
+			for axis in ('x','y'):
+				dim_on_image.append(int(acq_dim[axis]/image_pixelsize[axis]))
+			return max(dim_on_image)
+		except:
+			# Set Length to 0 in case of any exception
+			return 0
 
 class ClickTargetFinder(TargetFinder):
 	targetnames = ['preview', 'reference', 'focus', 'acquisition']

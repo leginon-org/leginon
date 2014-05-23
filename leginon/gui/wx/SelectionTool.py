@@ -57,19 +57,22 @@ class SelectionTool(wx.Panel):
 		if 'numbers' in typetool.togglebuttons:
 			self.sz.Add(typetool.togglebuttons['numbers'], (n, 3), (1, 1), wx.ALIGN_CENTER)
 			typetool.togglebuttons['numbers'].Bind(leginon.gui.wx.TargetPanelTools.EVT_SHOWNUMBERS, self.onNumber)
-		elif 'area' in typetool.togglebuttons:
-			self.sz.Add(typetool.togglebuttons['area'], (n, 3), (1, 1), wx.ALIGN_CENTER)
+		else:
+			#add spacer
+			self.sz.Add((1,1), (n, 3), (1, 1), wx.ALIGN_CENTER)
+		if 'area' in typetool.togglebuttons:
+			self.sz.Add(typetool.togglebuttons['area'], (n, 4), (1, 1), wx.ALIGN_CENTER)
 			typetool.togglebuttons['area'].Bind(leginon.gui.wx.TargetPanelTools.EVT_SHOWAREA, self.onImageArea)
 			typetool.togglebuttons['area'].SetValue(True)
 		else:
 			#add spacer
-			self.sz.Add((1,1), (n, 3), (1, 1), wx.ALIGN_CENTER)
+			self.sz.Add((1,1), (n, 4), (1, 1), wx.ALIGN_CENTER)
 		if 'target' in typetool.togglebuttons:
-			self.sz.Add(typetool.togglebuttons['target'], (n, 4), (1, 1), wx.ALIGN_CENTER)
+			self.sz.Add(typetool.togglebuttons['target'], (n, 5), (1, 1), wx.ALIGN_CENTER)
 			typetool.togglebuttons['target'].Bind(leginon.gui.wx.TargetPanelTools.EVT_TARGETING, self.onTargeting)
 		if 'settings' in typetool.togglebuttons:
-			self.sz.Add(typetool.togglebuttons['settings'], (n, 5), (1, 1), wx.ALIGN_CENTER)
-		self.sz.Add((1,1), (n, 6), (1, 1), wx.ALIGN_CENTER)
+			self.sz.Add(typetool.togglebuttons['settings'], (n, 6), (1, 1), wx.ALIGN_CENTER)
+		self.sz.Add((1,1), (n, 7), (1, 1), wx.ALIGN_CENTER)
 
 		if isinstance(typetool, leginon.gui.wx.TargetPanelTools.TargetTypeTool):
 			self.targets[typetool.name] = None
