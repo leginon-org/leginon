@@ -430,8 +430,9 @@ class TransformManager(node.Node, TargetTransformer):
 		self._moveToLastFocusedStageZ()
 		self.imageMoveAndPreset(oldimage,emtarget,use_parent_mover)
 		targetdata = emtarget['target']
-		# extra wait for falcon protector
-		time.sleep(2)
+		# extra wait for falcon protector or normalization
+		self.logger.info('Wait for %.1f second before reaquire' % self.settings['pause time'])
+		time.sleep(self.settings['pause time'])
 		try:
 			imagedata = self.acquireCorrectedCameraImageData(channel)
 		except Exception, exc:
