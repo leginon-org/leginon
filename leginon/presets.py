@@ -57,6 +57,7 @@ class PresetsClient(object):
 		self.pchanged = {}
 		self.dose_measured = {}
 		self.currentpreset = None
+		self.calclient = calibrationclient.CalibrationClient(self.node)
 
 	def getPresetFromDB(self, name):
 		session = self.node.session
@@ -220,6 +221,16 @@ class PresetsClient(object):
 			if presets[highest_mag_preset_name]['magnification'] < presets[name]['magnification']:
 				highest_mag_preset_name = name
 		return highest_mag_preset_name
+
+	def getPresetImageDimension(self,pname):
+		preset = self.getPresetByName(pname)
+		if not preset:
+			return None
+		unbinned_pixelsize = self.calclient.getPixelSize(preset['magnification'],preset['tem'],preset['ccdcamera'])
+		imagedim = {}
+		for axis in ('x','y'):
+			imagedim[axis] = unbinned_pixelsize * preset['binning'][axis] * preset['dimension'][axis]
+		return imagedim
 
 class PresetsManager(node.Node):
 	panelclass = gui.wx.PresetsManager.Panel
