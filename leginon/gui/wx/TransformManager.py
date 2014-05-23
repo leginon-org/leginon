@@ -108,34 +108,63 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Transform Management')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
+		self.szmain = wx.GridBagSizer(5, 5)
 
+		newrow,newcol = self.createMinMagEntry((0,0))
+		newrow,newcol = self.createRegistrationSelector((newrow,0))
+		newrow,newcol = self.createPauseTimeEntry((newrow,0))
+
+		sbsz.Add(self.szmain, 0, wx.ALIGN_CENTER|wx.ALL, 5)
+		return [sbsz]
+
+	def createMinMagEntry(self,start_position):
+		# define widget
 		self.widgets['min mag'] = IntEntry(self, -1, min=1, chars=9)
-		#self.instrumentselection = leginon.gui.wx.Instrument.SelectionPanel(self, passive=True)
-		#self.panel.setInstrumentSelection(self.instrumentselection)
-		#self.widgets['camera settings'] = leginon.gui.wx.Camera.CameraPanel(self)
-		#self.widgets['camera settings'].setSize(self.node.instrument.camerasize)
-
-		regtypes = self.node.getRegistrationTypes()
-		self.widgets['registration'] = Choice(self, -1, choices=regtypes)
-
+		# make sizer
 		szminmag = wx.GridBagSizer(5, 5)
-
 		label = wx.StaticText(self, -1, 'Minimum Magnification')
 		szminmag.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		szminmag.Add(self.widgets['min mag'], (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		# add to main
+		total_length = (1,1)
+		self.szmain.Add(szminmag, start_position, total_length,
+				  wx.ALIGN_CENTER)
+		return start_position[0]+total_length[0],start_position[1]+total_length[1]
 
+	def createRegistrationSelector(self,start_position):
+		# define widget
+		regtypes = self.node.getRegistrationTypes()
+		self.widgets['registration'] = Choice(self, -1, choices=regtypes)
+		# make sizer
+		sz = wx.GridBagSizer(5, 5)
 		label = wx.StaticText(self, -1, 'Register images using')
-		szminmag.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szminmag.Add(self.widgets['registration'], (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		sz.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['registration'], (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		# add to main
+		total_length = (1,1)
+		self.szmain.Add(sz, start_position, total_length,
+				  wx.ALIGN_CENTER)
+		return start_position[0]+total_length[0],start_position[1]+total_length[1]
 
-		sz = wx.GridBagSizer(5, 10)
-		sz.Add(szminmag, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		#sz.Add(self.instrumentselection, (1, 0), (1, 1), wx.EXPAND)
-		#sz.Add(self.widgets['camera settings'], (2, 0), (1, 1), wx.EXPAND)
-
-		sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
-
-		return [sbsz]
+	def createPauseTimeEntry(self,start_position):
+		# define widget
+		self.widgets['pause time'] = FloatEntry(self, -1, min=0.0, allownone=False, chars=4, value='0.0')
+		# make sizer
+		sz = wx.GridBagSizer(5, 5)
+		sz.Add(wx.StaticText(self, -1, 'Wait'),
+								(0, 0), (1, 1),
+								wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['pause time'],
+								(0, 1), (1, 1),
+								wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		sz.Add(wx.StaticText(self, -1, 'seconds before reacquiring image'),
+								(0, 2), (1, 1),
+								wx.ALIGN_CENTER_VERTICAL)
+		# add to main
+		total_length = (1,1)
+		self.szmain.Add(sz, start_position, total_length,
+				  wx.ALIGN_CENTER)
+		return start_position[0]+total_length[0],start_position[1]+total_length[1]
 
 if __name__ == '__main__':
 	class App(wx.App):
