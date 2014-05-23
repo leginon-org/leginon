@@ -15,6 +15,7 @@ import mosaic
 import threading
 import node
 import targethandler
+import appclient
 from pyami import convolver, imagefun, mrc, numpil
 import numpy
 import pyami.quietscipy
@@ -69,7 +70,32 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		}
 		self.parent_imageid = None
 		self.focusing_targetlist = None
+		self.last_acq_node = None
 		self.resetLastFocusedTargetList(None)
+
+	def handleApplicationEvent(self,evt):
+		'''
+		Find the Acquisition class or its subclass instance bound
+		to this node upon application loading.
+		'''
+		app = evt['application']
+		self.last_acq_node = appclient.getLastNodeThruBinding(app,self.name,'AcquisitionImagePublishEvent','Acquisition')
+
+	def checkSettings(self,settings):
+		'''
+		Check that depth-first tree travelsal won't break
+		'''
+		if self.last_acq_node:
+			settingsclassname = self.last_acq_node['class string']+'SettingsData'
+			results= self.reseachDBSettings(getattr(leginondata,settingsclassname),self.last_acq_node['alias'])
+			if not results:
+				# default acquisition settings waiting is False
+				last_acq_wait = False
+			else:
+				last_acq_wait = results[0]['wait for process']
+			if not settings['queue'] and not last_acq_wait:
+				return [('error','"%s" node "wait for process" setting must be True when queue is not activated in this node' % (self.last_acq_node['alias'],))]
+		return []
 
 	def readImage(self, filename):
 		imagedata = None
