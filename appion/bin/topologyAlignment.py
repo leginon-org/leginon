@@ -958,6 +958,11 @@ class TopologyRepScript(appionScript.AppionScript):
 		out = "classes_avg.hed"
 		# read class averages
 		avgfile = os.path.join(self.params['iterdir'],"classes_avg.img")
+
+		# make compatible for eman write
+		emancmd = "proc2d %s %s inplace"%(avgfile,avgfile)
+		apEMAN.executeEmanCmd(emancmd,verbose=False)
+
 		d = EMData.read_images(avgfile)
 
 		for avgn in self.sortedList:
