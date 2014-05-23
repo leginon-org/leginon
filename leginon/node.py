@@ -119,17 +119,7 @@ class Node(correctorclient.CorrectorClient):
 		if not hasattr(self, 'settingsclass'):
 			return
 
-		# load the requested user settings
-		if user is None:
-			user = self.session['user']
-		qsession = leginondata.SessionData(initializer={'user': user})
-		qdata = self.settingsclass(initializer={'session': qsession,
-																						'name': self.name})
-		settings = self.research(qdata, results=1)
-		# if that failed, try to load default settings from DB
-		if not settings:
-			qdata = self.settingsclass(initializer={'isdefault': True, 'name': self.name})
-			settings = self.research(qdata, results=1)
+		settings = self.reseachDBSettings(self.settingsclass, self.name, user)
 
 		# if that failed, use hard coded defaults
 		if not settings:
@@ -146,6 +136,20 @@ class Node(correctorclient.CorrectorClient):
 			if value is None:
 				if key in self.defaultsettings:
 					self.settings[key] = copy.deepcopy(self.defaultsettings[key])
+
+	def reseachDBSettings(self, settingsclass, inst_alias, user=None):
+		# load the requested user settings
+		if user is None:
+			user = self.session['user']
+		qsession = leginondata.SessionData(initializer={'user': user})
+		qdata = settingsclass(initializer={'session': qsession,
+																						'name': inst_alias})
+		settings = self.research(qdata, results=1)
+		# if that failed, try to load default settings from DB
+		if not settings:
+			qdata = settingsclass(initializer={'isdefault': True, 'name': self.name})
+			settings = self.research(qdata, results=1)
+		return settings
 
 	def loadSettingsByID(self, id):
 		if not hasattr(self, 'settingsclass'):
@@ -595,6 +599,7 @@ class Node(correctorclient.CorrectorClient):
 		self.logger.info('Override shutter projection shutter for %ss to expose specimen but not camera' % (seconds,))
 		self.instrument.tem.exposeSpecimenNotCamera(seconds)
 		self.logger.info('specimen-only exposure done')
+
 
 ## module global for storing start times
 start_times = {}
