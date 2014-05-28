@@ -3,7 +3,21 @@ import os
 from leginon import leginondata
 #appion
 from appionlib import apDatabase, apDisplay
+from leginon import correctorclient
 
+class ApCorrectorClient(correctorclient.CorrectorClient):
+	def __init__(self, session, is_upload=False):
+		super(ApCorrectorClient,self).__init__()
+		self.logger = apDisplay.LeginonLogger()
+		self.session = session
+		self.is_upload = is_upload
+
+	def getReferenceSession(self):
+		if not self.is_upload:
+			return super(ApCorrectorClient,self).getReferenceSession()
+		else:
+			return self.session
+		
 #=========================
 def correctImage(imgdata):
 	"""

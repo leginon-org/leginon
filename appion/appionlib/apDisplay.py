@@ -424,6 +424,19 @@ def environmentError():
 			value = '*** NOT SET ***'
 		print colorString("%-20s -> %s" % (name, value), "red")
 
+class LeginonLogger(object):
+	'''
+	fake leginon-style logger that uses apDisplay function
+	so that leginon classes can be used in appion.
+	'''
+	def info(self,msg):
+		printMsg(msg)
+	def debug(self,msg):
+		printDebug(msg)
+	def warning(self,msg):
+		printWarning(msg)
+	def error(self,msg):
+		printWarning('Leginon ERROR: ',msg)
 
 ####
 # This is a low-level file with NO database connections
