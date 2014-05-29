@@ -40,6 +40,9 @@ def initializeDDFrameprocess(sessionname,wait_flag=False):
 	elif 'TIA' in dcamdata['name']:
 		from appionlib import apFalconProcess
 		return apFalconProcess.FalconProcessing(wait_flag)
+	elif 'Appion' in dcamdata['name']:
+		from appionlib import apAppionCamProcess
+		return apAppionCamProcess.AppionCamFrameProcessing(wait_flag)
 	else:
 		apDisplay.printError('Unknown frame camera name %s' % dcamdata['name'])
 
@@ -912,7 +915,7 @@ class DDFrameProcessing(DirectDetectorProcessing):
 
 	def setupDarkNormMrcs(self, use_full_raw_area=False):
 		'''
-		Creates a file of gain/dark corrected stack of frames
+		Creates local reference files for gain/dark-correcting the stack of frames
 		'''
 		if not self.correct_dark_gain:
 			self.dark_path = None
@@ -926,21 +929,25 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		get_new_refs = self.__conditionChanged(1,use_full_raw_area)
 		# o.k. to set attribute now that condition change is checked
 		self.use_full_raw_area = use_full_raw_area
-		if get_new_refs:
+		# at least write dark and norm image once
+		if get_new_refs or not hasattr(self,'dark_path'):
 			# set camera info for loading frames
 			self.setCameraInfo(1,use_full_raw_area)
-			# output dark and norm
+
+			# output dark
 			unscaled_darkarray = self.getSingleFrameDarkArray()
 			self.dark_path = os.path.join(frameprocess_dir,'dark-%s-%d.mrc' % (self.hostname,self.gpuid))
 			mrc.write(unscaled_darkarray,self.dark_path)
+
+			# output norm
 			normdata = self.getRefImageData('norm')
 			apDisplay.printWarning('Use Norm Reference %s' % (normdata['filename'],))
-			apDisplay.printWarning('Use Bright Reference %s' % (normdata['bright']['filename'],))
+			if normdata['bright']:
+				apDisplay.printWarning('Use Bright Reference %s' % (normdata['bright']['filename'],))
 			normarray = normdata['image']
 			if self.use_gpu_flat:
-				
 				self.norm_path = os.path.join(frameprocess_dir,'norm-%s-%d.mrc' % (self.hostname,self.gpuid))
-			mrc.write(normarray,self.norm_path)
+				mrc.write(normarray,self.norm_path)
 	
 
 	def makeCorrectedFrameStack_cpu(self, use_full_raw_area=False):
@@ -1003,7 +1010,7 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		newbin = self.getNewBinning()
 		for axis in ('x','y'):
 			if camdata['binning'][axis] != 1 or camdata['offset'][axis] != 0:
-				apDisplay.displayError('Starting image must be unbinned and at full dimension for now')
+				apDisplay.printError('Starting image must be unbinned and at full dimension for now')
 			if newbin < camdata['binning'][axis]:
 				apDisplay.displayError('can not change to smaller binning')
 			camerasize[axis] = (camdata['offset'][axis]*2+camdata['dimension'][axis])*camdata['binning'][axis]
