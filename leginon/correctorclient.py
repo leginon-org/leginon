@@ -312,6 +312,16 @@ class CorrectorClient(cameraclient.CameraClient):
 		normarray = numpy.ma.masked_greater(normarray,20).filled(1)
 		return normarray
 
+	def normalizeImageArray(self, rawarray, darkarray, normarray, is_counting=False):
+		diff = rawarray - darkarray
+		r = diff * normarray
+		## remove nan and inf
+		r = numpy.where(numpy.isfinite(r), r, 0)
+		## replace 0 with mean
+		if is_counting:
+			r = numpy.where(r==0,r.mean(), r)
+		return r
+
 	def normalizeCameraImageData(self, imagedata, channel):
 		cameradata = imagedata['camera']
 		scopedata = imagedata['scope']
@@ -323,13 +333,7 @@ class CorrectorClient(cameraclient.CameraClient):
 		rawarray = imagedata['image']
 		darkarray = self.prepareDark(dark, imagedata)
 		normarray = norm['image']
-		diff = rawarray - darkarray
-		r = diff * normarray
-		## remove nan and inf
-		r = numpy.where(numpy.isfinite(r), r, 0)
-		## replace 0 with mean
-		if 'GatanK2' in cameradata['ccdcamera']['name']:
-			r = numpy.where(r==0,r.mean(), r)
+		r = self.normalizeImageArray(rawarray,darkarray,normarray, 'GatanK2' in cameradata['ccdcamera']['name'])
 		imagedata['image'] = r	
 		imagedata['dark'] = dark
 		imagedata['bright'] = norm['bright']
