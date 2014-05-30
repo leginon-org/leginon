@@ -411,9 +411,10 @@ class DDFrameProcessing(DirectDetectorProcessing):
 			imagedata = leginondata.AcquisitionImageData().direct_query(imageid)
 			if self.image['camera']['ccdcamera']['name'] != imagedata['camera']['ccdcamera']['name']:
 				apDisplay.printError('Default reference image id=%d not from the same camera as the data' % (imageid))
-				apDisplay.printMsg('Reference image comes from %s' % imagedata['filename'])
+				apDisplay.printMsg('Reference comes from %s' % imagedata['filename'])
 			return imagedata
 		else:
+			apDisplay.printMsg('Reference comes from current image')
 			return self.image
 
 	def getRefImageData(self,reftype):
@@ -658,6 +659,10 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		nframe = len(framelist)
 		start_frame = framelist[0]
 		get_new_refs = self.__conditionChanged(nframe,use_full_raw_area)
+
+		# local restriction
+		if not hasattr(self,'unscaled_darkarray') or not hasattr(self,'normarray'):
+			get_new_refs = True
 		if self.cycle_ref_channels:
 			# alternate channels
 			get_new_refs = True
@@ -666,7 +671,6 @@ class DDFrameProcessing(DirectDetectorProcessing):
 			self.log.write('%s %s\n' % (self.image['filename'],get_new_refs))
 		if not get_new_refs and start_frame != 0:
 			apDisplay.printWarning("Imaging condition unchanged. Reference in memory will be used.")
-
 		# o.k. to set attribute now that condition change is checked
 		self.use_full_raw_area = use_full_raw_area
 		if get_new_refs:
@@ -719,14 +723,14 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		# GAIN CORRECTION
 		apDisplay.printMsg('Doing gain correction')
 		if get_new_refs:
-			scaled_brightarray = self.getScaledBrightArray(nframe)
 			normdata = self.getRefImageData('norm')
-			apDisplay.printWarning('Ref Session Path:%s' % normdata['session']['image path'])
-			apDisplay.printWarning('Use Norm Reference %s' % (normdata['filename'],))
-			apDisplay.printWarning('Corresponding Bright Reference %s' % (normdata['bright']['filename'],))
 			if not self.use_GS and normdata:
+				apDisplay.printWarning('Ref Session Path:%s' % normdata['session']['image path'])
+				apDisplay.printWarning('Use Norm Reference %s' % (normdata['filename'],))
 				normarray = normdata['image']
 			else:
+				scaled_brightarray = self.getScaledBrightArray(nframe)
+				apDisplay.printWarning('Corresponding Bright Reference %s' % (normdata['bright']['filename'],))
 				normarray = self.makeNorm(scaled_brightarray,self.unscaled_darkarray, dark_scale)
 			self.normarray = normarray
 		else:
@@ -941,12 +945,12 @@ class DDFrameProcessing(DirectDetectorProcessing):
 
 			# output norm
 			normdata = self.getRefImageData('norm')
-			apDisplay.printWarning('Use Norm Reference %s' % (normdata['filename'],))
 			if normdata['bright']:
-				apDisplay.printWarning('Use Bright Reference %s' % (normdata['bright']['filename'],))
-			normarray = normdata['image']
+				apDisplay.printWarning('From Bright Reference %s' % (normdata['bright']['filename'],))
 			if self.use_gpu_flat:
+				normarray = normdata['image']
 				self.norm_path = os.path.join(frameprocess_dir,'norm-%s-%d.mrc' % (self.hostname,self.gpuid))
+				apDisplay.printWarning('Save Norm Reference %s to %s' % (normdata['filename'],self.norm_path))
 				mrc.write(normarray,self.norm_path)
 	
 
