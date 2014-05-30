@@ -143,7 +143,7 @@ class MakeFrameStackLoop(apDDLoop.DDStackLoop):
 		### first remove any existing stack file
 		apFile.removeFile(self.dd.framestackpath)
 		apFile.removeFile(self.dd.tempframestackpath)
-		if self.dd.hasBadPixels():
+		if self.dd.hasBadPixels() or not self.params['align']:
 			self.dd.setUseGPUFlat(False)
 			### make stack
 			self.dd.makeCorrectedFrameStack(self.params['rawarea'])
