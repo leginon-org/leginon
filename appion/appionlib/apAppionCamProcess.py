@@ -22,6 +22,10 @@ class AppionCamFrameProcessing(apDDprocess.DDFrameProcessing):
 		self.correct_dark_gain = True
 		self.correct_frame_mask = False
 		
+	def setCycleReferenceChannels(self, value=False):
+		# Force cycle_ref_channels to False
+		self.cycle_ref_channels = False
+
 	def getNumberOfFrameSavedFromImageData(self,imagedata):
 		# avoid 0 for dark image scaling and frame list creation
 		return max(1,int(imagedata['camera']['exposure time'] / imagedata['camera']['frame time']))
@@ -104,11 +108,7 @@ class AppionCamFrameProcessing(apDDprocess.DDFrameProcessing):
 		imagedata = super(AppionCamFrameProcessing,self).getCorrectedImageData()
 		if not self.use_full_raw_area:
 			refdata = imagedata[reftype]
-			if refdata is None:
-				# Use chosen default image
-				apDisplay.printWarning('No %s reference for the image, use default' % reftype) 
-				default_image = self.getCorrectedImageData()
-				refdata = default_image[reftype]
+			return refdata
 		else:
 			# use most recent CorrectorImageData
 			# TO DO: this should research only ones before the image is taken.
