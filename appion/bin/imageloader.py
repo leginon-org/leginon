@@ -338,7 +338,10 @@ class ImageLoader(appionLoop2.AppionLoop):
 		newname = rootname+extension
 		newframename = rootname+'.frames'+extension
 		newimagepath = os.path.join(self.session['image path'], newname)
-		newframepath = os.path.join(self.session['frame path'], newframename)
+		if self.session['frame path']:
+			newframepath = os.path.join(self.session['frame path'], newframename)
+		else:
+			newframepath = newimagepath
 		return newimagepath, newframepath
 
 	def getImageDimensions(self, mrcfile):
@@ -399,6 +402,8 @@ class ImageLoader(appionLoop2.AppionLoop):
 		newimgfilepath, newframepath = self.newImagePath(imginfo['filename'])
 		nframes = self.getNumberOfFrames(origimgfilepath)
 		if nframes > 1:
+			if not self.session['frame path']:
+				apDisplay.printError('Can not upload frame movies: Frame path for this session not defined. Please start a new session')
 			self.makeFrameDir(self.session['frame path'])
 		## read the image/summed file into memory and copy frames if available
 		imagearray = self.prepareImageForUpload(origimgfilepath,newframepath,nframes)
