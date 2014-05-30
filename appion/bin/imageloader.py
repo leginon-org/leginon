@@ -224,8 +224,10 @@ class ImageLoader(appionLoop2.AppionLoop):
 		"""	
 		self.c_client = apDBImage.ApCorrectorClient(self.session,True)
 		self.getAppionInstruments()
-		self.uploadRefImage('norm', self.params['normimg'])
-		self.uploadRefImage('dark', self.params['darkimg'])
+		if self.params['normimg']:
+			# need at least normimg to upload reference. darkimg can be faked
+			self.uploadRefImage('norm', self.params['normimg'])
+			self.uploadRefImage('dark', self.params['darkimg'])
 
 	#=====================
 	def run(self):
@@ -384,7 +386,7 @@ class ImageLoader(appionLoop2.AppionLoop):
 		if 'norm' in self.refdata.keys() and self.refdata['norm']:
 			normarray = self.refdata['norm']['image']
 			if 'dark' in self.refdata.keys() and self.refdata['dark']:
-				darkarray = self.refdata['dark']['image']*nframes/self.refdata['dark']['nframes']
+				darkarray = self.refdata['dark']['image']*nframes/self.refdata['dark']['camera']['nframes']
 			else:
 				darkarray = numpy.zeros(rawarray.shape)
 			apDisplay.printMsg('Normalizing image before upload')
@@ -620,12 +622,16 @@ class ImageLoader(appionLoop2.AppionLoop):
 		return
 
 	def uploadRefImage(self,reftype,refpath):
-		if refpath is None:
-			self.refdata[reftype] = None
-			return
-		nframes = self.getNumberOfFrames(refpath)
-		imagearray = self.prepareImageForUpload(refpath,None,nframes)
 		info = self.readUploadInfo(self.batchinfo[0])
+		if refpath is None:
+			nframes = 1
+			if reftype == 'dark':
+				imagearray = numpy.zeros((info['dimension']['y'],info['dimension']['x']))
+			else:
+				imagearray = numpy.ones((info['dimension']['y'],info['dimension']['x']))
+		else:
+			nframes = self.getNumberOfFrames(refpath)
+			imagearray = self.prepareImageForUpload(refpath,None,nframes)
 		scopedata = self.makeScopeEMData(info)
 		cameradata = self.makeCameraEMData(info,nframes)
 		imagedata = {'image':imagearray,'scope':scopedata,'camera':cameradata}	
