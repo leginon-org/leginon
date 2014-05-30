@@ -7,6 +7,8 @@
 import copy
 import math
 import tem
+import threading
+import time
 
 import itertools
 
@@ -14,6 +16,8 @@ try:
 	import nidaq
 except:
 	nidaq = None
+
+simu_autofiller = False
 
 class SimTEM(tem.TEM):
 	name = 'SimTEM'
@@ -93,11 +97,15 @@ class SimTEM(tem.TEM):
 		self.energy_filter = False
 		self.energy_filter_width = 0.0
 
-		self.resetRefrigerantCounter()
+		self.resetRefrigerant()
 
-	def resetRefrigerantCounter(self):
-		self.level0_counter = itertools.count()
-		self.level1_counter = itertools.count()
+	def resetRefrigerant(self):
+		self.level0 = 100.0
+		self.level1 = 100.0
+		if simu_autofiller:
+			t = threading.Thread(target=self.useRefrigerant)
+			t.setDaemon(True)
+			t.start()
 
 	def getColumnValvePositions(self):
 		return ['open', 'closed']
@@ -346,14 +354,34 @@ class SimTEM(tem.TEM):
 
 	def getRefrigerantLevel(self,id=0):
 		if id == 0:
-			level = 100 - (self.level0_counter.next())*20
+			level = self.level0
 		else:
-			level = 100 - (self.level1_counter.next())*20
+			level = self.level1
 		print id, level
 		return level
 
 	def runAutoFiller(self):
-		self.resetRefrigerantCounter()
+		t = threading.Thread(target=self.addRefrigerant)
+		t.setDaemon(True)
+		t.start()
+
+	def useRefrigerant(self):
+		while 1:
+			self.level0 -= 11
+			self.level1 -= 11
+			if self.level1 <= 0:
+				print 'empty col'
+			self.level0 = max(self.level0,0.0)
+			self.level1 = max(self.level1,0.0)
+			print 'using', self.level0, self.level1
+			time.sleep(4)
+
+	def addRefrigerant(self):
+		for i in range(5):
+			self.level0 += 20
+			self.level1 += 20
+			print 'adding', self.level0, self.level1
+			time.sleep(2)
 
 	def exposeSpecimenNotCamera(self,seconds):
 		time.sleep(seconds)
