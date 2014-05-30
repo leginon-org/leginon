@@ -713,6 +713,36 @@ def readHeaderFromFile(filename):
 	h = parseHeader(h)
 	return h
 
+def sumStack(filename,dtype=numpy.float32):
+	h = readHeaderFromFile(filename)
+	nslices = h['nz']
+	for i in range(nslices):
+		if i == 0:
+			a = read(filename,i)
+			a.astype(dtype)
+		else:
+			a+= read(filename,i)
+	return a
+
+def saveSumStack(filename,outfile,dtype=numpy.float32):
+	a = sumStack(filename,dtype)
+	write(a, outfile)
+
+def averageStack(filename):
+	h = readHeaderFromFile(filename)
+	nslices = h['nz']
+	for i in range(nslices):
+		if i == 0:
+			a = read(filename,i)
+			a.astype(dtype)
+		else:
+			a = (a * i + read(filename,i)) / (i+1)
+	return a
+
+def saveAverageStack(filename,outfile,dtype=numpy.float32):
+	a = averageStack(filename,dtype)
+	mrc.write(a, outfile)
+
 def testHeader():
 	infilename = sys.argv[1]
 	f = open(infilename)
