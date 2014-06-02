@@ -441,7 +441,7 @@ class ImageLoader(appionLoop2.AppionLoop):
 			'comment': description,
 			'user': user,
 			'image path': imagedirectory,
-			'frame path': leginon.ddinfo.getRawFrameSessionPathFromImagePath(imagedirectory)
+			'frame path': leginon.ddinfo.getRawFrameSessionPathFromSessionPath(imagedirectory)
 		}
 		sessionq = leginon.leginondata.SessionData(initializer=initializer)
 		sessiondata = self.publish(sessionq)

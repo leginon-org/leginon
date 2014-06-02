@@ -54,32 +54,40 @@ def saveSessionDDinfoToDatabase(sessiondata):
 		infopath = os.path.join(sessiondata['image path'],imagedata['filename']+'.frames','info.path')
 		saveImageDDinfoToDatabase(imagedata,infopath)
 
-def getRawFrameSessionPathFromImagePath(imagepath):
+def getRawFrameSessionPathFromSessionPath(session_path):
 	'''
 	Raw Frames are saved by session under parallel directory of leginon.
 	For example, leginon image path of '/mydata/leginon/13may01a/rawdata' uses
 	'/mydata/frames/13may01a' to store frames.
-	'''
-	# backward compatibility
-	if glob.glob(os.path.join(imagepath,'*.frames*')):
-		return imagepath
 
+	This function allows frame path to be passed in as well.
+
+	Possible senerios:
+	1. input: /mydata/leginon/mysession/rawdata;  output: /mydata/leginon/mysession/rawdata.
+	2. input: /mydata/leginon/myuser/mysession/rawdata;  output: /mydata/leginon/myuser/mysession/rawdata.
+	3. input: /mydata/frames/mysession/rawdata; output=input
+	'''
 	# goal is to replace legdir with framedir
 	framedir = 'frames'
 	legdir = 'leginon'
 
 	## Taking care of multiple legdirs in path...
 	## Only replace the final legdir with framedir
-	legsplit = imagepath.split(legdir)
+	legsplit = session_path.split(legdir)
+	framesplit = session_path.split(framedir)
+	# Handles the case session frame path is the input
+	if len(legsplit) == 1 and len(framesplit) > 1 and os.path.isdir(framesplit[0]):
+		return session_path
+	# Actual replacement
 	legjoin = legdir.join(legsplit[:-1])
 	rawframe_sessionpath = legjoin + framedir + legsplit[-1]
-
-	if not os.path.exists(rawframe_sessionpath):
-		rawframe_sessionpath = rawframe_sessionpath.replace('data16','data00')
 	return rawframe_sessionpath
 
-def getRawFrameType(session_image_path):
-	rawframe_basepath = getRawFrameSessionPathFromImagePath(session_image_path)
+def getRawFrameType(session_path):
+	'''
+	Determine Frame Type from either session image path or session frame path.
+	'''
+	rawframe_basepath = getRawFrameSessionPathFromSessionPath(session_path)
 	entries = os.listdir(rawframe_basepath)
 	for path in entries:
 		if 'frame' in path and os.path.isdir(os.path.join(rawframe_basepath,path)):

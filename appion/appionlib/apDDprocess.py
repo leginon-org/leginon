@@ -355,7 +355,7 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		else:
 			# raw frames are saved in a subdirctory of image path pre-3.0
 			imagepath = imagedata['session']['image path']
-			rawframe_basepath = ddinfo.getRawFrameSessionPathFromImagePath(imagepath)
+			rawframe_basepath = ddinfo.getRawFrameSessionPathFromSessionPath(imagepath)
 		rawframedir = os.path.join(rawframe_basepath,'%s.frames' % imagedata['filename'])
 		if not self.waitForPathExist(rawframedir,self.rawtransfer_wait):
 			apDisplay.printError('Raw Frame Dir %s does not exist.' % rawframedir)

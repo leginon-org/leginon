@@ -48,7 +48,7 @@ class GatanK2Processing(apDDprocess.DDFrameProcessing):
 			# pre-3.0
 			# raw frames are saved in a subdirctory of image path
 			imagepath = imagedata['session']['image path']
-			rawframe_basepath = ddinfo.getRawFrameSessionPathFromImagePath(imagepath)
+			rawframe_basepath = ddinfo.getRawFrameSessionPathFromSessionPath(imagepath)
 		# frame stackfile is image filename plus '.frames.mrc'
 		rawframedir = os.path.join(rawframe_basepath,'%s.frames.mrc' % imagedata['filename'])
 		if not self.waitForPathExist(rawframedir,30):

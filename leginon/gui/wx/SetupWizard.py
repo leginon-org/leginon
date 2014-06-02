@@ -900,7 +900,7 @@ class Setup(object):
 
 	def createSession(self, user, name, description, directory):
 		imagedirectory = os.path.join(leginon.leginonconfig.unmapPath(directory), name, 'rawdata').replace('\\', '/')
-		framepath = leginon.ddinfo.getRawFrameSessionPathFromImagePath(imagedirectory)
+		framepath = leginon.ddinfo.getRawFrameSessionPathFromSessionPath(imagedirectory)
 		initializer = {
 			'name': name,
 			'comment': description,

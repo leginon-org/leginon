@@ -108,7 +108,7 @@ def	removeFrames(to_remove):
 	remove_count = 0
 	remove_list = []
 	if to_remove:
-		session_frames_path = leginon.ddinfo.getRawFrameSessionPathFromImagePath(to_remove[0]['session']['image path'])
+		session_frames_path = to_remove[0]['session']['frame path']
 	for imagedata in to_remove:
 		framedir = os.path.join(session_frames_path,imagedata['filename']+'.frames')
 		if not os.path.isdir(framedir):
