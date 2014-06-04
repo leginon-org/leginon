@@ -12,7 +12,7 @@ configfilename = 'sinedon.cfg'
 
 confdirs = pyami.fileutil.get_config_dirs()
 if os.environ.has_key("SINEDON_CFG_PATH"):
-	confdirs.index(0, os.environ["SINEDON_CFG_PATH"])#added to have an option to have mutiple sinedon.cfg files
+	confdirs.append(os.environ["SINEDON_CFG_PATH"])#added to have an option to have mutiple sinedon.cfg files
 config_locations = [os.path.join(confdir, configfilename) for confdir in confdirs]
 
 configparser = ConfigParser.SafeConfigParser()
