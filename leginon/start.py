@@ -13,6 +13,16 @@ import sinedon.data as data
 import leginon.gui.wx.Manager
 import leginon.version
 import leginon.project
+
+# An TSRI local database split configuration matching
+try:
+	# This is a local file
+	import leginon.configmatch
+	print leginon.configmatch
+	matchconfigs=True
+except:
+	matchconfigs=False
+
 print 'Leginon version:  ', leginon.version.getVersion()
 
 def checkRequirements():
@@ -26,6 +36,8 @@ def checkRequirements():
 		raise RuntimeError('Must create at least one project before starting Leginon')
 
 def start(options=None):
+	if matchconfigs:
+		leginon.configmatch.matchConfigs()
 	checkRequirements()
 	m = leginon.gui.wx.Manager.App(None, options=options)
 	if not m.abort:
