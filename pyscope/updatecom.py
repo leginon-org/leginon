@@ -3,14 +3,13 @@ from win32com.client import selecttlb
 from win32com.client import gencache
 
 info = [
-	('TEM Scripting', 'TEM Scripting'),
-	('Tecnai Scripting', 'Tecnai Scripting'),
-	('TOMMoniker 1.0 Type Library', 'TOM Moniker'),
-	('Low Dose Server Library', 'Tecnai Low Dose Kit'),
-	('adaExp Library', 'Tecnai Exposure Adaptor'),
-	('TecnaiCCD 1.0 Type Library', 'Gatan CCD Camera'),
-	('CAMC4 1.0 Type Library', 'Tietz CCD Camera'),
-	('ES Vision 3.0 Type Library', 'TIA CCD Camera'),
+	(('TEM Scripting','Tecnai Scripting'), 'TEM Scripting'),
+	(('TOMMoniker 1.0 Type Library',), 'TOM Moniker'),
+	(('Low Dose Server Library',), 'Tecnai Low Dose Kit'),
+	(('adaExp Library',), 'Tecnai Exposure Adaptor'),
+	(('TecnaiCCD 1.0 Type Library',), 'Gatan CCD Camera'),
+	(('CAMC4 1.0 Type Library',), 'Tietz CCD Camera'),
+	(('ES Vision 3.1 Type Library','ES Vision 3.0 Type Library'), 'TIA CCD Camera'),
 ]
 items = selecttlb.EnumTlbs()
 
@@ -20,10 +19,14 @@ def getTlbFromDesc(desc):
 			return item
 	return None
 
-def makeFile(desc):
-	typelibInfo = getTlbFromDesc(desc)
+def makeFile(descs):
+	for desc in descs:
+		typelibInfo = getTlbFromDesc(desc)
+		if typelibInfo is not None:
+			print '\nFound: ', desc
+			break
 	if typelibInfo is None:
-		print 'Error, cannot find typelib for "%s"' % desc
+		print 'Error, cannot find typelib for "%s"' % descs
 		return
 
 	clsid = typelibInfo.clsid
@@ -38,6 +41,7 @@ def makeFile(desc):
 		return
 	else:
 		print 'done.'
+		print ''
 
 def run():
 	print 'Generating .py files from type libraries...'
