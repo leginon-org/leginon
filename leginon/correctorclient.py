@@ -31,7 +31,8 @@ class CorrectorClient(cameraclient.CameraClient):
 
 	def acquireCorrectedCameraImageData(self, channel=0, **kwargs):
 		imagedata = self.acquireCameraImageData(**kwargs)
-		self.correctCameraImageData(imagedata, channel)
+		if not imagedata['camera']['system corrected']:
+			self.correctCameraImageData(imagedata, channel)
 		return imagedata
 
 	def researchCorrectorImageData(self, type, scopedata, cameradata, channel):

@@ -192,6 +192,7 @@ camera_params = (
 	('temperature status', str),
 	('readout delay', int),
 	('gain index', int),
+	('system corrected', bool),
 )
 
 class ScopeEMData(EMData):
