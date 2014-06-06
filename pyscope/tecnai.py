@@ -1233,3 +1233,5 @@ class Krios(Tecnai):
 			return
 		return self._setStagePosition(value)
 
+class Talos(Tecnai):
+	name = 'Talos'
