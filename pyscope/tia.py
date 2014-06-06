@@ -221,8 +221,14 @@ acquisition.
 			self.custom_setup()
 			self.finalizeSetup()
 			t0 = time.time()
-			self.acqman.Acquire()
+			self.acqman.Start()
 			t1 = time.time()
+			while self.acqman.IsAcquiring:
+				time.sleep(0.2)
+				t1 = time.time()
+				# No acquisition should take more than 2 mins
+				if t1-t0 > 120:
+					return None
 			self.exposure_timestamp = (t1 + t0) / 2.0
 			arr = self.im.Data.Array
 			arr.shape = (self.dimension['y'],self.dimension['x'])
@@ -401,6 +407,16 @@ class TIA_Falcon(TIA):
 		else:
 			self.frameconfig.makeDummyConfig(movie_exposure_second)
 
+	def getSystemGainDarkCorrected(self):
+		return True
 
 class TIA_Orius(TIA):
 	camera_name = 'BM-Orius'
+
+class TIA_Ceta(TIA):
+	name = 'Ceta'
+	camera_name = 'BM-Ceta'
+
+	def getSystemGainDarkCorrected(self):
+		return True
+
