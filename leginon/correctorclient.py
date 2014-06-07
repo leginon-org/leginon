@@ -31,8 +31,7 @@ class CorrectorClient(cameraclient.CameraClient):
 
 	def acquireCorrectedCameraImageData(self, channel=0, **kwargs):
 		imagedata = self.acquireCameraImageData(**kwargs)
-		if not imagedata['camera']['system corrected']:
-			self.correctCameraImageData(imagedata, channel)
+		self.correctCameraImageData(imagedata, channel)
 		return imagedata
 
 	def researchCorrectorImageData(self, type, scopedata, cameradata, channel):
@@ -378,12 +377,13 @@ class CorrectorClient(cameraclient.CameraClient):
 		'''
 		this puts an image through a pipeline of corrections
 		'''
-		try:
-			self.normalizeCameraImageData(imagedata, channel)
-			imagedata['correction channel'] = channel
-		except Exception, e:
-			self.logger.error('Normalize failed: %s' % e)
-			self.logger.warning('Image will not be normalized')
+		if not 'system corrected' in imagedata['camera'].keys() or not imagedata['camera']['system corrected']:
+			try:
+				self.normalizeCameraImageData(imagedata, channel)
+				imagedata['correction channel'] = channel
+			except Exception, e:
+				self.logger.error('Normalize failed: %s' % e)
+				self.logger.warning('Image will not be normalized')
 
 		cameradata = imagedata['camera']
 		plan, plandata = self.retrieveCorrectorPlan(cameradata)
