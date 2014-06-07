@@ -377,7 +377,8 @@ class CorrectorClient(cameraclient.CameraClient):
 		'''
 		this puts an image through a pipeline of corrections
 		'''
-		if not 'system corrected' in imagedata['camera'].keys() or not imagedata['camera']['system corrected']:
+		#if not 'system corrected' in imagedata['camera'].keys() or not imagedata['camera']['system corrected']:
+		if True:
 			try:
 				self.normalizeCameraImageData(imagedata, channel)
 				imagedata['correction channel'] = channel
