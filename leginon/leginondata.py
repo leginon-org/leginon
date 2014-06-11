@@ -2297,7 +2297,9 @@ class ExposureFixerSettingsData(ReferenceSettingsData):
 	def typemap(cls):
 		return PresetAdjusterSettingsData.typemap() + (
 			('required dose', float),
+			('adjust method', str),
 			('max exposure time', int),
+			('max beam diameter', float),
 		)
 	typemap = classmethod(typemap)
 

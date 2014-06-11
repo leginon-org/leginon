@@ -6,12 +6,10 @@
 # $State: Exp $
 # $Locker:  $
 import math
-import reference
-from leginon import leginondata
+from leginon import leginondata, reference, calibrationclient, cameraclient
 import event
 import gui.wx.BeamFixer
 from pyami import arraystats
-import cameraclient
 
 class PresetAdjuster(reference.Reference):
 	# relay measure does events
@@ -38,6 +36,7 @@ class PresetAdjuster(reference.Reference):
 			watch = []
 		kwargs['watchfor'] = watch + [event.FixBeamEvent]
 		reference.Reference.__init__(self, *args, **kwargs)
+		self.beamarea_client = calibrationclient.BeamAreaCalibrationClient(self)
 		self.start()
 
 	def processData(self, incoming_data):
@@ -79,24 +78,46 @@ class PresetAdjuster(reference.Reference):
 		return imagedata
 
 	def execute(self, request_data=None):
-		params = self.getAdjustment()
-		scale_factor = None
-		if 'scale exposure time' in params.keys():
-			scale_factor = params['scale exposure time']
-			del params['scale exposure time']
-			params['exposure time'] = None
+		self._resetScaleFactor()
+		self.params = self.getAdjustment()
+		self._setScaleFactor()
 		# update the preset beam shift
 		correction_presets = self.settings['correction presets']
-		if request_data and params:
+		if request_data and self.params:
 			if request_data['preset'] not in correction_presets:
 				correction_presets.append(request_data['preset'])
 			for preset_name in correction_presets:
-				# exposure time scaling
-				if scale_factor:
-					presetdata = self.presets_client.getPresetByName(preset_name)
-					params['exposure time'] = presetdata['exposure time'] * scale_factor
-				self.presets_client.updatePreset(preset_name, params)
+				presetdata = self.presets_client.getPresetByName(preset_name)
+				# get new preset key and value according to the scale factor
+				preset_key, preset_value = self.processScaling(presetdata)
+				if preset_key:
+					self.params[preset_key] = preset_value
+					self.logger.info('Adjusting preset %s %s to %s' % (preset_name, preset_key, preset_value))
+					self.updatePreset(preset_name, self.params)
+
+	def updatePreset(self,preset_name, params):
+		self.presets_client.updatePreset(preset_name, params)
 
 	def getAdjustment(self):
 		# return preset parameters to be adjusted as a dictionary
 		raise NotImplementedError()
+
+	def _resetScaleFactor(self):
+		# default has no scale factor
+		self.scale_factor = None
+	
+	def _setScaleFactor(self):
+		# Scale factor should be set only once based on the key in self.params
+		if self.params and 'scale' in self.params.keys()[0]:
+			key = self.params.keys()[0]
+			self.scale_factor = self.params[key]
+			self.params[key] = None
+	
+	def processScaling(self,presetdata):
+		# return preset parameter after scaling with self.scale_factor
+		if self.scale_factor:
+			raise NotImplementedError()
+		else:
+			preset_key = None
+			preset_value = None
+			return preset_key, preset_value
