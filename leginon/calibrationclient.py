@@ -2025,3 +2025,23 @@ class EucentricFocusClient(CalibrationClient):
 			newdata['probe'] = probe
 			newdata['focus'] = ef
 			self.node.publish(newdata, database=True, dbforce=True)
+
+class BeamAreaCalibrationClient(CalibrationClient):
+	def getCrossOverIntensity(self):
+		# TO DO: calibrate to find cross over
+		return 0.5
+
+	def getBeamSize(self,intensity,spot_size=None,c2_aperture=None):
+		'''Return beam diameter in meters'''
+		intensity_delta = intensity - self.getCrossOverIntensity()
+		return intensity_delta * 1e-5
+
+	def getIlluminatedArea(self,intensity):
+		beam_diameter = self.getBeamSize(intensity)
+		return math.pi * (beam_diameter/2)**2
+
+	def getIntensityFromAreaScale(self,intensity,area_scale_factor):
+		beam_cross_over = self.getCrossOverIntensity()
+		intensity_scale_factor = 1 / math.sqrt(area_scale_factor)
+		new_intensity = (intensity - beam_cross_over) * intensity_scale_factor + beam_cross_over
+		return new_intensity
