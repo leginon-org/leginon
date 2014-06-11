@@ -29,7 +29,10 @@ class Panel(leginon.gui.wx.Acquisition.Panel):
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_ACQUIRE, 'acquire', shortHelpString='Acquire')
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_RESET_ALPHA, 'alpha',
 													shortHelpString='Tilt stage alpha to next value')
-
+		self.toolbar.RemoveTool(leginon.gui.wx.ToolBar.ID_SIMULATE_TARGET)
+		self.toolbar.RemoveTool(leginon.gui.wx.ToolBar.ID_SIMULATE_TARGET_LOOP)
+		self.toolbar.RemoveTool(leginon.gui.wx.ToolBar.ID_SIMULATE_TARGET_LOOP_STOP)
+		self.toolbar.RemoveTool(leginon.gui.wx.ToolBar.ID_BROWSE_IMAGES)
 		# correlation image
 		self.imagepanel.addTypeTool('Correlation', display=True)
 		self.imagepanel.addTargetTool('Peak', wx.Colour(255, 128, 0))
