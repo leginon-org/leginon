@@ -1074,6 +1074,11 @@ class TopologyRepScript(appionScript.AppionScript):
 			self.params['currentiter'] = int(alliters[-1][-2:])
 			self.params['alignedstack'] = os.path.abspath("mrastack")
 			self.params['currentcls'] = "classes%02i"%(self.params['currentiter'])
+			if os.path.isfile(os.path.join(self.params['rundir'],self.params['currentcls']+".hed")):
+				p1 = os.path.join(self.params['rundir'],self.params['currentcls'])
+				p2 = os.path.join(self.params['iterdir'],self.params['currentcls'])
+				shutil.move(p1+".hed",p2+".hed")
+				shutil.move(p1+".img",p2+".img")
 
 		## sort the class averages
 		self.sortClassAverages()
