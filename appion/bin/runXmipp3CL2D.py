@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# need to work on this
 import os
 import time
 import sys
@@ -23,6 +22,7 @@ from appionlib import apFourier
 from pyami import spider
 import sinedon
 import MySQLdb
+# following http://stackoverflow.com/questions/5427040/loading-environment-modules-within-a-python-script 
 cmd = os.popen("csh -c 'modulecmd python load xmipp/3.1'")
 exec(cmd)
 #=====================
@@ -299,7 +299,7 @@ class CL2D(appionScript.AppionScript):
 				particleNumber = line.split("@")[0]
 				listOfParticles.append(particleNumber)
 				xmipplist.append(int(particleNumber))
-			classNumber=int(lines[0].split("_images")[0])
+			classNumber=int(lines[0].split("_images")[0])-1 
 			D[classNumber]=listOfParticles
 		
 		fh.close()
@@ -525,12 +525,11 @@ class CL2D(appionScript.AppionScript):
 			# actual parameters
 			if self.params['commit'] is True:
 				cpartq.insert()
+				
 		return
 
 	#=====================
 	def start(self):
-		# following http://stackoverflow.com/questions/5427040/loading-environment-modules-within-a-python-script 
-		exec(cmd)
 #		self.insertCL2DJob()
 		self.stack = {}
 		self.stack['data'] = apStack.getOnlyStackData(self.params['stackid'])
