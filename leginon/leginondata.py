@@ -360,6 +360,16 @@ class MagDependentCalibrationData(CalibrationData):
 		)
 	typemap = classmethod(typemap)
 
+class BeamSizeCalibrationData(CalibrationData):
+	def typemap(cls):
+		return CalibrationData.typemap() + (
+			('probe mode', str),
+			('spot size', int),
+			('focused beam', float),
+			('scale', float),
+		)
+	typemap = classmethod(typemap)
+
 class PixelSizeCalibrationData(MagDependentCalibrationData):
 	def typemap(cls):
 		return MagDependentCalibrationData.typemap() + (
@@ -1864,6 +1874,13 @@ class DoseCalibratorSettingsData(CalibratorSettingsData):
 		return CalibratorSettingsData.typemap() + (
 			('beam diameter', float),
 			('scale factor', float),
+		)
+	typemap = classmethod(typemap)
+
+class BeamSizeCalibratorSettingsData(CalibratorSettingsData):
+	def typemap(cls):
+		return CalibratorSettingsData.typemap() + (
+			('beam diameter', float),
 		)
 	typemap = classmethod(typemap)
 

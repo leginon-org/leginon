@@ -2027,21 +2027,50 @@ class EucentricFocusClient(CalibrationClient):
 			self.node.publish(newdata, database=True, dbforce=True)
 
 class BeamAreaCalibrationClient(CalibrationClient):
-	def getCrossOverIntensity(self):
-		# TO DO: calibrate to find cross over
-		return 0.5
+	def getCrossOverIntensityDial(self,scopedata):
+		return self.researchBeamSizeCalibration(scopedata,'focused beam')
 
-	def getBeamSize(self,intensity,spot_size=None,c2_aperture=None):
+	def getSizeIntensityDialScale(self,scopedata):
+		return self.researchBeamSizeCalibration(scopedata,'scale')
+
+	def researchBeamSizeCalibration(self,scopedata,key):
+		queryinstance = leginondata.BeamSizeCalibrationData()
+		print 'scopedata',scopedata,key
+		if scopedata:
+			queryinstance['tem'] = scopedata['tem']
+			queryinstance['spot size'] = scopedata['spot size']
+			queryinstance['probe mode'] = scopedata['probe mode']
+		else:
+			self.setDBInstruments(queryinstance,None,None)
+		caldatalist = self.node.research(datainstance=queryinstance, results=1)
+		print queryinstance
+		print caldatalist
+		if len(caldatalist) > 0:
+			return caldatalist[0][key]
+		else:
+			return None
+	
+	def getBeamSize(self,scopedata):
 		'''Return beam diameter in meters'''
-		intensity_delta = intensity - self.getCrossOverIntensity()
-		return intensity_delta * 1e-5
+		slope = self.getSizeIntensityDialScale(scopedata)
+		intercept = self.getCrossOverIntensityDial(scopedata)
+		intensity = scopedata['intensity']
+		if slope is not None and intercept is not None:
+			intensity_delta = intensity - intercept
+			return intensity_delta / slope
 
-	def getIlluminatedArea(self,intensity):
-		beam_diameter = self.getBeamSize(intensity)
-		return math.pi * (beam_diameter/2)**2
+	def getIlluminatedArea(self,scopedata):
+		beam_diameter = self.getBeamSize(scopedata) 
+		if beam_diameter:
+			return math.pi * (beam_diameter/2)**2
+		else:
+			return None
 
-	def getIntensityFromAreaScale(self,intensity,area_scale_factor):
-		beam_cross_over = self.getCrossOverIntensity()
+	def getIntensityFromAreaScale(self,scopedata,area_scale_factor):
+		beam_cross_over = self.getCrossOverIntensityDial(scopedata)
+		if not beam_cross_over:
+			return None
+		intensity = scopedata['intensity']
 		intensity_scale_factor = 1 / math.sqrt(area_scale_factor)
 		new_intensity = (intensity - beam_cross_over) * intensity_scale_factor + beam_cross_over
 		return new_intensity

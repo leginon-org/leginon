@@ -49,16 +49,6 @@ class SettingsDialog(leginon.gui.wx.Settings.Dialog):
 		return ScrolledSettings(self,self.scrsize,False)
 
 class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
-	def initialize(self):
-		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
-		sb = wx.StaticBox(self, -1, self.getTitle())
-		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
-		self.sz = wx.GridBagSizer(5, 5)
-		self.addSettings()
-		sbsz.Add(self.sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
-		self.addBindings()
-		return [sbsz]
-
 	def getTitle(self):
 		return 'Condition Fixer'
 

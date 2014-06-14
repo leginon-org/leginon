@@ -169,6 +169,9 @@ noderegistry.registerNodeClass(PixelSizeCalibrator,classtype)
 from dosecalibrator import DoseCalibrator
 noderegistry.registerNodeClass(DoseCalibrator,classtype)
 
+from beamsizecalibrator import BeamSizeCalibrator
+noderegistry.registerNodeClass(BeamSizeCalibrator,classtype)
+
 ##############################
 # Utility
 ##############################
