@@ -95,9 +95,6 @@ class TIA(ccdcamera.CCDCamera):
 		self.acqman = connection.acqman
 		self._ccd = connection.ccd
 
-		## scan mode to spot so CCD can be setup
-		#self.esv.ScanningServer().ScanMode = 0
-
 		## new display window
 		disp = self.esv.FindDisplayWindow(self.tianame)
 		if disp is not None:
@@ -429,3 +426,7 @@ class TIA_Ceta(TIA):
 
 	def getSystemGainDarkCorrected(self):
 		return True
+
+	def getPixelSize(self):
+		return {'x': 1.4e-5, 'y': 1.4e-5}
+
