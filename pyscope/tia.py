@@ -212,6 +212,22 @@ acquisition.
 		'''
 		pass
 
+	def getImage(self):
+		try:
+			## scan mode to spot so CCD can be setup on scope with STEM
+			self.esv.ScanningServer().ScanMode = 0
+		except:
+			## scope withou STEM mode would fail this call
+			pass
+		# The following is copied from ccdcamera.CCDCamera since
+		# super (or self.as_super as used in de.py) does not work in proxy call
+		if self.readoutcallback:
+			name = str(time.time())
+			self.registerCallback(name, self.readoutcallback)
+			self.backgroundReadout(name)
+		else:
+			return self._getImage()
+
 	def _getImage(self):
 		'''
 		Acquire an image using the setup for this ESVision client.
@@ -221,14 +237,8 @@ acquisition.
 			self.custom_setup()
 			self.finalizeSetup()
 			t0 = time.time()
-			self.acqman.Start()
+			self.acqman.Acquire()
 			t1 = time.time()
-			while self.acqman.IsAcquiring:
-				time.sleep(0.2)
-				t1 = time.time()
-				# No acquisition should take more than 2 mins
-				if t1-t0 > 120:
-					return None
 			self.exposure_timestamp = (t1 + t0) / 2.0
 			arr = self.im.Data.Array
 			arr.shape = (self.dimension['y'],self.dimension['x'])
@@ -419,4 +429,3 @@ class TIA_Ceta(TIA):
 
 	def getSystemGainDarkCorrected(self):
 		return True
-
