@@ -50,10 +50,7 @@ class BeamSizeCalibrator(calibrator.Calibrator):
 			return 'error'
 		beam_diameter_on_screen = diameter
 		beam_diameter_on_specimen = beam_diameter_on_screen / screen_mag
-		if diameter == 0:
-			intensity = 0.5
-		else:
-			intensity = scope['intensity']
+		intensity = scope['intensity']
 		spotsize = scope['spot size']
 		if spotsize not in self.beamvalues.keys():
 			self.beamvalues[spotsize] = [(beam_diameter_on_specimen,intensity)]

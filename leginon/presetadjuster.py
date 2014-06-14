@@ -36,7 +36,7 @@ class PresetAdjuster(reference.Reference):
 			watch = []
 		kwargs['watchfor'] = watch + [event.FixBeamEvent]
 		reference.Reference.__init__(self, *args, **kwargs)
-		self.beamarea_client = calibrationclient.BeamAreaCalibrationClient(self)
+		self.beamsize_client = calibrationclient.BeamSizeCalibrationClient(self)
 		self.start()
 
 	def processData(self, incoming_data):

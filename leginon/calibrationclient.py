@@ -2026,7 +2026,7 @@ class EucentricFocusClient(CalibrationClient):
 			newdata['focus'] = ef
 			self.node.publish(newdata, database=True, dbforce=True)
 
-class BeamAreaCalibrationClient(CalibrationClient):
+class BeamSizeCalibrationClient(CalibrationClient):
 	def getCrossOverIntensityDial(self,scopedata):
 		return self.researchBeamSizeCalibration(scopedata,'focused beam')
 
@@ -2035,7 +2035,6 @@ class BeamAreaCalibrationClient(CalibrationClient):
 
 	def researchBeamSizeCalibration(self,scopedata,key):
 		queryinstance = leginondata.BeamSizeCalibrationData()
-		print 'scopedata',scopedata,key
 		if scopedata:
 			queryinstance['tem'] = scopedata['tem']
 			queryinstance['spot size'] = scopedata['spot size']
@@ -2043,8 +2042,6 @@ class BeamAreaCalibrationClient(CalibrationClient):
 		else:
 			self.setDBInstruments(queryinstance,None,None)
 		caldatalist = self.node.research(datainstance=queryinstance, results=1)
-		print queryinstance
-		print caldatalist
 		if len(caldatalist) > 0:
 			return caldatalist[0][key]
 		else:
@@ -2057,7 +2054,8 @@ class BeamAreaCalibrationClient(CalibrationClient):
 		intensity = scopedata['intensity']
 		if slope is not None and intercept is not None:
 			intensity_delta = intensity - intercept
-			return intensity_delta / slope
+			beamsize = intensity_delta / slope
+			return beamsize
 
 	def getIlluminatedArea(self,scopedata):
 		beam_diameter = self.getBeamSize(scopedata) 

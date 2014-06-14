@@ -8,7 +8,6 @@
 import math
 from leginon import presetadjuster
 from leginon import leginondata
-from leginon import calibrationclient
 import event
 import gui.wx.ExposureFixer
 
@@ -93,7 +92,7 @@ class ExposureFixer(presetadjuster.PresetAdjuster):
 			preset_value = presetdata['exposure time'] * self.scale_factor
 		elif self.settings['adjust method'] == 'illuminated diameter':
 			preset_key = 'intensity'
-			preset_value = self.beamarea_client.getIntensityFromAreaScale(presetdata,self.scale_factor)
+			preset_value = self.beamsize_client.getIntensityFromAreaScale(presetdata,self.scale_factor)
 			if not preset_value:
 				self.logger.error('Scaling failed. No beam size calibration available')
 		return preset_key, preset_value
@@ -117,7 +116,7 @@ class ExposureFixer(presetadjuster.PresetAdjuster):
 			dose = preset['dose']/1e20
 			scale_factor = self.settings['required dose'] / dose
 			# The following works only if intensity is from tem illuminated area property
-			illuminated_area = self.beamarea_client.getIlluminatedArea(preset)
+			illuminated_area = self.beamsize_client.getIlluminatedArea(preset)
 			new_illuminated_area = illuminated_area / scale_factor
 			if self.player.state() == 'stop':
 				return {}

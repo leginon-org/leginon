@@ -263,6 +263,7 @@ class PresetsManager(node.Node):
 			'beam':calibrationclient.BeamShiftCalibrationClient(self),
 			'beam tilt':calibrationclient.BeamTiltCalibrationClient(self),
 			'modeled stage':calibrationclient.ModeledStageCalibrationClient(self),
+			'beam size':calibrationclient.BeamSizeCalibrationClient(self),
 		}
 		self.dosecal = calibrationclient.DoseCalibrationClient(self)
 		import navigator
