@@ -31,7 +31,7 @@ class Panel(leginon.gui.wx.TargetFinder.Panel):
 		self.imagepanel.addTypeTool('Threshold', display=True, settings=True)
 		self.imagepanel.addTargetTool('Blobs', wx.Colour(0, 255, 255), shape='o', settings=True)
 		self.imagepanel.addTargetTool('Lattice', wx.Colour(255, 0, 255), settings=True)
-		self.imagepanel.addTargetTool('acquisition', wx.GREEN, target=True, settings=True)
+		self.imagepanel.addTargetTool('acquisition', wx.GREEN, target=True, settings=True,exp=True)
 		self.imagepanel.addTargetTool('focus', wx.BLUE, target=True, settings=True)
 		self.imagepanel.addTargetTool('preview', wx.Colour(255, 128, 255), target=True)
 		self.imagepanel.addTargetTool('done', wx.RED)

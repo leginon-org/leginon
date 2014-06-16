@@ -36,7 +36,7 @@ class Panel(leginon.gui.wx.TargetFinder.Panel):
 
 	
 		self.imagepanel.addTargetTool('Polygon Raster', wx.Colour(255,128,0))
-		self.imagepanel.addTargetTool('acquisition', wx.GREEN, target=True, settings=True)
+		self.imagepanel.addTargetTool('acquisition', wx.GREEN, target=True, settings=True, exp=True)
 		self.imagepanel.selectiontool.setDisplayed('acquisition', True)
 		self.imagepanel.addTargetTool('focus', wx.BLUE, target=True, settings=True)
 		self.imagepanel.selectiontool.setDisplayed('focus', True)
