@@ -92,7 +92,7 @@ class Navigator(node.Node):
 		'preexpose': True,
 	}
 	eventinputs = node.Node.eventinputs + presets.PresetsClient.eventinputs + [event.MoveToTargetEvent]
-	eventoutputs = node.Node.eventoutputs + presets.PresetsClient.eventoutputs + [event.CameraImagePublishEvent, event.MoveToTargetDoneEvent]
+	eventoutputs = node.Node.eventoutputs + presets.PresetsClient.eventoutputs + [event.CameraImagePublishEvent, event.MoveToTargetDoneEvent,event.UpdatePresetEvent]
 
 	def __init__(self, id, session, managerlocation, **kwargs):
 		node.Node.__init__(self, id, session, managerlocation, **kwargs)
@@ -667,6 +667,17 @@ class Navigator(node.Node):
 			self.logger.exception(errstr % 'unable to set instrument')
 		else:
 			self.logger.info('Moved to location %s' % (name,))
+
+	def uiGetPreset(self,presetname):
+		self.logger.info('Get %s preset image shift and beam shift from scope' % (presetname,))
+		params = {}
+		params['image shift'] = self.instrument.tem.ImageShift
+		params['beam shift'] = self.instrument.tem.BeamShift
+		self.presetsclient.updatePreset(presetname,params)
+
+	def uiSendPreset(self,presetname):
+		self.logger.info('Send %s preset to scope' % (presetname,))
+		self.presetsclient.toScope(presetname)
 
 	def onResetXY(self):
 		loc = {'x':0.0,'y':0.0}

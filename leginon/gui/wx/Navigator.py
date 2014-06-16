@@ -87,8 +87,13 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 		## make sure node setting is a value that is in the choice list
 		self.node.settings['move type'] = self.cmovetype.GetStringSelection()
 		self.cmovetype.SetToolTip(wx.ToolTip('Navigion Parameter'))
-		self.toolbar.InsertControl(2, self.cmovetype)
+		self.toolbar.InsertControl(4, self.cmovetype)
 
+		self.insertPresetSelector(2)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onGetPresetTool,
+											id=leginon.gui.wx.ToolBar.ID_GET_PRESET)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onSendPresetTool,
+											id=leginon.gui.wx.ToolBar.ID_SEND_PRESET)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onSettingsTool,
 											id=leginon.gui.wx.ToolBar.ID_SETTINGS)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onAcquireTool,
@@ -108,6 +113,31 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 							self.imagepanel)
 		self.test_dialog = ReproTestDialog(self)
 		self.Bind(EVT_TEST, self.onReproTest, self)
+
+	def insertPresetSelector(self,position):
+		'''
+		Select preset to send/get.
+		'''
+		# This needs to be done after self.node is set.
+		self.presetnames = self.node.presetsclient.getPresetNames()
+
+		self.preset_choices = Choice(self.toolbar, -1, choices=self.presetnames)
+		#self.toolbar.InsertTool(position+3,leginon.gui.wx.ToolBar.ID_GET_PRESET,
+		#											'instrumentget',
+		#										shortHelpString='Get preset from scope')
+		self.toolbar.InsertTool(position,leginon.gui.wx.ToolBar.ID_SEND_PRESET,
+													'instrumentset',
+													shortHelpString='Send preset to scope')
+		self.toolbar.InsertControl(position,self.preset_choices)
+		return
+
+	def onGetPresetTool(self,evt):
+		presetname = self.preset_choices.GetStringSelection()
+		self.node.uiGetPreset(presetname)
+
+	def onSendPresetTool(self,evt):
+		presetname = self.preset_choices.GetStringSelection()
+		self.node.uiSendPreset(presetname)
 
 	def onResetXY(self, evt):
 		self.node.onResetXY()

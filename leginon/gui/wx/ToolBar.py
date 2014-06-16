@@ -75,6 +75,8 @@ ID_COMMENT = 10057
 ID_RESET_XY = 10058
 ID_RESET_Z = 10059
 ID_RESET_ALPHA = 10060
+ID_SEND_PRESET = 10061
+ID_GET_PRESET = 10062
 
 class ToolBar(wx.ToolBar):
 	def __init__(self, parent):
