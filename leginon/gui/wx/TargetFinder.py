@@ -58,11 +58,13 @@ class Panel(leginon.gui.wx.Node.Panel):
 		queue = self.node.settings['queue']
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SUBMIT_QUEUE, queue)
 		self.imagepanel.imagevector = self.node.getTargetImageVector()
+		self.imagepanel.beamradius = self.node.getTargetBeamRadius()
 
 	def onSetImage(self, evt):
 		super(Panel,self).onSetImage(evt)
 		try:
 			self.imagepanel.imagevector = self.node.getTargetImageVector()
+			self.imagepanel.beamradius = self.node.getTargetBeamRadius()
 		except AttributeError:
 			# This function is called on initialization and self.node would be None
 			pass

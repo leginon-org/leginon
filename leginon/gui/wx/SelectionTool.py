@@ -64,6 +64,10 @@ class SelectionTool(wx.Panel):
 			self.sz.Add(typetool.togglebuttons['area'], (n, 4), (1, 1), wx.ALIGN_CENTER)
 			typetool.togglebuttons['area'].Bind(leginon.gui.wx.TargetPanelTools.EVT_SHOWAREA, self.onImageArea)
 			typetool.togglebuttons['area'].SetValue(True)
+		elif 'exp' in typetool.togglebuttons:
+			self.sz.Add(typetool.togglebuttons['exp'], (n, 4), (1, 1), wx.ALIGN_CENTER)
+			typetool.togglebuttons['exp'].Bind(leginon.gui.wx.TargetPanelTools.EVT_SHOWEXPOSURE, self.onImageExposure)
+			typetool.togglebuttons['exp'].SetValue(True)
 		else:
 			#add spacer
 			self.sz.Add((1,1), (n, 4), (1, 1), wx.ALIGN_CENTER)
@@ -138,6 +142,8 @@ class SelectionTool(wx.Panel):
 					typetool = tool.areatype
 				elif typename == 'numbers':
 					typetool = tool.numberstype
+				elif typename == 'exp':
+					typetool = tool.exptype
 				typetool.setTargets(tool.targettype.getTargets())
 			self.parent.setDisplayedTargets(typetool, targets)
 			if not value and typename == 'display' and self.isTargeting(name):
@@ -182,7 +188,7 @@ class SelectionTool(wx.Panel):
 
 	#--------------------
 	def setDependantTypeTools(self, name, targets):
-		for typename in ('numbers','area'):
+		for typename in ('numbers','area','exp'):
 			if self.isDisplayed(name,typename,False):
 				self.setDisplayed(name, targets, typename)
 
@@ -315,4 +321,7 @@ class SelectionTool(wx.Panel):
 
 	def onImageArea(self, evt):
 		self._setDisplayed(evt.name, evt.value, 'area')
+
+	def onImageExposure(self, evt):
+		self._setDisplayed(evt.name, evt.value, 'exp')
 

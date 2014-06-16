@@ -66,13 +66,16 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 			'image shift': calibrationclient.ImageShiftCalibrationClient(self),
 			'stage position': calibrationclient.StageCalibrationClient(self),
 			'modeled stage position':
-												calibrationclient.ModeledStageCalibrationClient(self)
+												calibrationclient.ModeledStageCalibrationClient(self),
+			'beam size':
+												calibrationclient.BeamSizeCalibrationClient(self)
 		}
 		self.parent_imageid = None
 		self.focusing_targetlist = None
 		self.last_acq_node = None
 		self.next_acq_node = None
 		self.targetimagevector = (0,0)
+		self.targetbeamradius = 0
 		self.resetLastFocusedTargetList(None)
 
 	def handleApplicationEvent(self,evt):
@@ -381,30 +384,47 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		return is_new
 
 	def setTargetImageVector(self,imagedata):
-		cam_length_on_image = self.getAcquisitionTargetLength(imagedata)
-		beam_diameter = cam_length_on_image * 1.5
+		cam_length_on_image,beam_diameter_on_image = self.getAcquisitionTargetDimensions(imagedata)
+		self.targetbeamradius = beam_diameter_on_image / 2
 		self.targetimagevector = (cam_length_on_image,0)
 
 	def getTargetImageVector(self):
 		return self.targetimagevector
 
-	def getAcquisitionTargetLength(self,imagedata):
+	def getTargetBeamRadius(self):
+		return self.targetbeamradius
+
+	def getAcquisitionTargetDimensions(self,imagedata):
+		'''
+		Get next acquisition target image size and beam diameter displayed on imagedata
+		'''
 		if not self.next_acq_node:
-			return 0
+			return 0,0
+		image_pixelsize = self.calclients['image shift'].getImagePixelSize(imagedata)
 		try:
+			# get settings for the next Acquisition node
 			settingsclassname = self.next_acq_node['class string']+'SettingsData'
 			results= self.reseachDBSettings(getattr(leginondata,settingsclassname),self.next_acq_node['alias'])
 			acqsettings = results[0]
+			# use first preset in preset order for display
 			presetlist = acqsettings['preset order']
-			acq_dim = self.presetsclient.getPresetImageDimension(presetlist[0])
-			image_pixelsize = self.calclients['image shift'].getImagePixelSize(imagedata)
+			presetname = presetlist[0]
+			# get image dimension of the target preset
+			acq_dim = self.presetsclient.getPresetImageDimension(presetname)
 			dim_on_image = []
 			for axis in ('x','y'):
 				dim_on_image.append(int(acq_dim[axis]/image_pixelsize[axis]))
-			return max(dim_on_image)
+			# get Beam diameter on image
+			acq_presetdata = self.presetsclient.getPresetFromDB(presetname)
+			beam_diameter = self.calclients['beam size'].getBeamSize(acq_presetdata)
+			if beam_diameter is None:
+				# handle no beam size calibration
+				beam_diameter = 0
+			beam_diameter_on_image = int(beam_diameter/min(image_pixelsize.values()))
+			return max(dim_on_image), beam_diameter_on_image
 		except:
 			# Set Length to 0 in case of any exception
-			return 0
+			return 0,0
 
 class ClickTargetFinder(TargetFinder):
 	targetnames = ['preview', 'reference', 'focus', 'acquisition']

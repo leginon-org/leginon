@@ -57,6 +57,7 @@ class TargetImagePanel(leginon.gui.wx.ImagePanel.ImagePanel):
 		self.selectedtarget = None
 		self.box = 0
 		self.imagevector = (0,0)
+		self.beamradius = None
 
 	#--------------------
 	def _getSelectionTool(self):
@@ -180,11 +181,13 @@ class TargetImagePanel(leginon.gui.wx.ImagePanel.ImagePanel):
 						self.drawNumbers(dc, type.color, targets)
 					elif type.shape == 'area':
 						self.drawImageArea(dc, type.color, targets)
+					elif type.shape == 'exp':
+						self.drawImageExposure(dc, type.color, targets)
 					else:
 						self._drawTargets(dc, type.bitmaps['default'], targets, scale)
 
 		if self.selectedtarget is not None:
-			if self.selectedtarget.type in self.targets and type.shape != 'polygon' and type.shape != 'spline' and type.shape != 'numbers' and type.shape != 'area':
+			if self.selectedtarget.type in self.targets and type.shape != 'polygon' and type.shape != 'spline' and type.shape != 'numbers' and type.shape != 'area' and type.shape != 'exp':
 				try:
 					bitmap = self.selectedtarget.type.bitmaps['selected']
 					self._drawTargets(dc, bitmap, [self.selectedtarget], scale)
@@ -257,6 +260,39 @@ class TargetImagePanel(leginon.gui.wx.ImagePanel.ImagePanel):
 			dc.DrawLine(p1[0]-dia[0], p1[1]-dia[1], p1[0]-dia[1], p1[1]+dia[0])
 			dc.DrawLine(p1[0]-dia[1], p1[1]+dia[0], p1[0]+dia[0], p1[1]+dia[1])
 			dc.DrawLine(p1[0]+dia[1], p1[1]-dia[0], p1[0]+dia[0], p1[1]+dia[1])
+
+	def drawImageExposure(self, dc, color, targets):
+		scale = self.getScale()
+		dc.SetPen(wx.Pen(color, 1))
+		dc.SetBrush(wx.Brush(color, 1))
+		scaledpoints = [(target.x,target.y) for target in targets]
+		imagevector = self.imagevector
+		dia = (scale[0]*(imagevector[0]/2+imagevector[1]/2), scale[1]*(imagevector[0]/2-imagevector[1]/2))
+		for p1 in scaledpoints:
+			p1 = self.image2view(p1)
+			dc.DrawLine(p1[0]-dia[0], p1[1]-dia[1], p1[0]+dia[1], p1[1]-dia[0])
+			dc.DrawLine(p1[0]-dia[0], p1[1]-dia[1], p1[0]-dia[1], p1[1]+dia[0])
+			dc.DrawLine(p1[0]-dia[1], p1[1]+dia[0], p1[0]+dia[0], p1[1]+dia[1])
+			dc.DrawLine(p1[0]+dia[1], p1[1]-dia[0], p1[0]+dia[0], p1[1]+dia[1])
+			if self.beamradius:
+				self.drawEmptyCircle(dc,p1[0],p1[1],scale[0]*self.beamradius)
+
+	def drawEmptyCircle(self,dc,row,col,radius):
+		'''
+		Draw a circle without filling.
+		'''
+		radius = int(radius)
+		p1 = (row,col-radius)
+		p2 = (row,col-radius)
+		for r in range(-radius,radius+1):
+			angle = math.acos((r+0.0)/radius)
+			delta = int(radius * math.sin(math.acos((r+0.0)/radius)))
+			p11 = (row+delta,col+r)
+			p22 = (row-delta,col+r)
+			dc.DrawLine(p1[0],p1[1],p11[0],p11[1])
+			dc.DrawLine(p2[0],p2[1],p22[0],p22[1])
+			p1 = p11
+			p2 = p22
 
 	#--------------------
 	def Draw(self, dc):
