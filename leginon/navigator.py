@@ -670,14 +670,18 @@ class Navigator(node.Node):
 
 	def uiGetPreset(self,presetname):
 		self.logger.info('Get %s preset image shift and beam shift from scope' % (presetname,))
+		self.setStatus('processing')
 		params = {}
 		params['image shift'] = self.instrument.tem.ImageShift
 		params['beam shift'] = self.instrument.tem.BeamShift
 		self.presetsclient.updatePreset(presetname,params)
+		self.setStatus('idle')
 
 	def uiSendPreset(self,presetname):
 		self.logger.info('Send %s preset to scope' % (presetname,))
+		self.setStatus('processing')
 		self.presetsclient.toScope(presetname)
+		self.setStatus('idle')
 
 	def onResetXY(self):
 		loc = {'x':0.0,'y':0.0}

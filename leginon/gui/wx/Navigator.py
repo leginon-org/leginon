@@ -133,11 +133,13 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 
 	def onGetPresetTool(self,evt):
 		presetname = self.preset_choices.GetStringSelection()
-		self.node.uiGetPreset(presetname)
+		args = (presetname,)
+		threading.Thread(target=self.node.uiGetPreset,args=args).start()
 
 	def onSendPresetTool(self,evt):
 		presetname = self.preset_choices.GetStringSelection()
-		self.node.uiSendPreset(presetname)
+		args = (presetname,)
+		threading.Thread(target=self.node.uiSendPreset,args=args).start()
 
 	def onResetXY(self, evt):
 		self.node.onResetXY()
