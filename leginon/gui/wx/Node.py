@@ -52,6 +52,12 @@ class Panel(wx.lib.scrolledpanel.ScrolledPanel):
 	def OnChildFocus(self, evt):
 		evt.Skip()
 
+	def onShow(self):
+		'''
+		Things to do when the node is selected to be shown.
+		'''
+		pass
+
 	def onAddMessage(self, evt):
 		self.messagelog.addMessage(evt.level, evt.message)
 

@@ -131,6 +131,10 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 		self.toolbar.InsertControl(position,self.preset_choices)
 		return
 
+	def onShow(self):
+		self.presetnames = self.node.presetsclient.getPresetNames()
+		self.preset_choices.Set(self.presetnames)
+
 	def onGetPresetTool(self,evt):
 		presetname = self.preset_choices.GetStringSelection()
 		args = (presetname,)
