@@ -198,6 +198,7 @@ class CL2D(appionScript.AppionScript):
 	#=====================
 	def clearIntermediateFiles(self):
 		os.system("rm -rf level_* "+self.params['timestamp']+".* ")
+		os.system("rm -rf nodo*")
 
 
 	#=====================
@@ -298,6 +299,7 @@ class CL2D(appionScript.AppionScript):
 				if not line: continue
 				particleNumber = line.split("@")[0]
 				listOfParticles.append(particleNumber)
+				
 				xmipplist.append(int(particleNumber))
 			classNumber=int(lines[0].split("_images")[0])-1 
 			D[classNumber]=listOfParticles
