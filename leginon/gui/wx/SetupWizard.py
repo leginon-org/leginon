@@ -647,7 +647,7 @@ if you would like to see its imprint when targeting'''
 		c2sizer = wx.GridBagSizer(5, 5)
 		label = wx.StaticText(self, -1, 'C2 size: ')
 		c2sizer.Add(label, (0, 0), (1, 1), wx.ALIGN_LEFT)
-		self.c2sizectrl = IntEntry(self, -1, chars=6)
+		self.c2sizectrl = IntEntry(self, -1, chars=6, value='100')
 		c2sizer.Add(self.c2sizectrl, (0, 1), (1, 1), wx.ALIGN_RIGHT)
 		label = wx.StaticText(self, -1, 'um')
 		c2sizer.Add(label, (0, 2), (1, 1), wx.ALIGN_LEFT)
@@ -825,6 +825,8 @@ class SetupWizard(wx.wizard.Wizard):
 				self.sessionselectpage.limitcheckbox.GetValue(),
 			'n limit':
 				self.sessionselectpage.limitintctrl.GetValue(),
+			'c2 size':
+				self.c2sizepage.c2sizectrl.GetValue(),
 		}
 		return initializer
 
@@ -971,14 +973,21 @@ class Setup(object):
 
 	def setC2Size(self,session,clients,c2size):
 		localhost = socket.gethostname()
+		# append localhost at the end as the last to check
 		hosts = list(clients)
 		hosts.append(localhost)
+		# set it to the first tem found in the hosts list
+		got_tem = False
 		for host in hosts:
 			r = leginon.leginondata.InstrumentData(hostname=host).query()
 			if r:
 				for idata in r:
 					if idata['cs']:
 						temdata = idata
+						got_tem = True
+						break
+			if got_tem:
+				break
 		c2data = leginon.leginondata.C2ApertureSizeData(session=session,tem=temdata,size=c2size)
 		self.publish(c2data, database=True, dbforce=True)
 

@@ -2035,10 +2035,9 @@ class BeamSizeCalibrationClient(CalibrationClient):
 		if not c2size:
 			return None
 		c2results = leginondata.C2ApertureSizeData(session=self.node.session,tem=scopedata['tem']).query(results=1)
-		if not c2results:
-			return None
-		session_c2size = float(c2results[0]['size'])
-		return scale * (session_c2size / c2size)
+		if c2results and c2results[0]['size']:
+			session_c2size = float(c2results[0]['size'])
+			return scale * (c2size / session_c2size)
 
 	def researchBeamSizeCalibration(self,scopedata,key):
 		if not scopedata:
