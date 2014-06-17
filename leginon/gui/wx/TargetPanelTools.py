@@ -139,15 +139,12 @@ class TargetTypeTool(leginon.gui.wx.ImagePanelTools.TypeTool):
 		input: list of targets where target.position is a tuple
 		output: sorted list of targets where target.position is a tuple
 		"""
-		print "targets=",targets
 		#convert to list of (x,y) tuples
 		targetlist = [t.position for t in targets]
 		bestorder, bestscore = shortpath.sortPoints(list(targetlist), numiter=3, maxeval=70000)
-		print "bestorder=",bestorder
 		sortedtargets = []
 		for i in bestorder:
 			sortedtargets.append(targets[i])
-		print "sortedtargets=",sortedtargets
 		return sortedtargets
 
 	#--------------------
@@ -173,6 +170,11 @@ class TargetTypeTool(leginon.gui.wx.ImagePanelTools.TypeTool):
 		if not self.togglebuttons['exp'].IsEnabled():
 			self.togglebuttons['exp'].SetValue(False)
 			return
+		# get new image vector and beam size
+		self.parent.parent.parent.node.uiRefreshTargetImageVector()
+		self.parent.parent.imagevector = self.parent.parent.parent.node.getTargetImageVector()
+		self.parent.parent.beamradius = self.parent.parent.parent.node.getTargetBeamRadius()
+		# set and show targets
 		self.exptype.setTargets(self.targettype.getTargets())
 		evt = ShowExposureEvent(evt.GetEventObject(), self.name, evt.GetIsDown())
 		self.togglebuttons['exp'].GetEventHandler().AddPendingEvent(evt)

@@ -71,6 +71,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 												calibrationclient.BeamSizeCalibrationClient(self)
 		}
 		self.parent_imageid = None
+		self.current_image_pixelsize = None
 		self.focusing_targetlist = None
 		self.last_acq_node = None
 		self.next_acq_node = None
@@ -237,6 +238,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 			self.resetLastFocusedTargetList(targetlist)
 		else:
 			self.last_focused = self.focusing_targetlist
+
 	#--------------------
 	def publishTargets(self, imagedata, typename, targetlist):
 		imagetargets = self.panel.getTargetPositions(typename)
@@ -385,6 +387,9 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 
 	def setTargetImageVector(self,imagedata):
 		cam_length_on_image,beam_diameter_on_image = self.getAcquisitionTargetDimensions(imagedata)
+		self._setTargetImageVector(cam_length_on_image,beam_diameter_on_image)
+
+	def _setTargetImageVector(self,cam_length_on_image,beam_diameter_on_image):
 		self.targetbeamradius = beam_diameter_on_image / 2
 		self.targetimagevector = (cam_length_on_image,0)
 
@@ -394,6 +399,17 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 	def getTargetBeamRadius(self):
 		return self.targetbeamradius
 
+	def uiRefreshTargetImageVector(self):
+		'''
+		refresh target image vector and beam size when ui exposure target panel tool
+		is toggled on.
+		'''
+		if not self.current_image_pixelsize:
+			self.logger.error('No image to calculate exposure area')
+			return
+		cam_length_on_image,beam_diameter_on_image = self._getAcquisitionTargetDimensions(self.current_image_pixelsize)
+		self._setTargetImageVector(cam_length_on_image,beam_diameter_on_image)
+
 	def getAcquisitionTargetDimensions(self,imagedata):
 		'''
 		Get next acquisition target image size and beam diameter displayed on imagedata
@@ -401,6 +417,10 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		if not self.next_acq_node:
 			return 0,0
 		image_pixelsize = self.calclients['image shift'].getImagePixelSize(imagedata)
+		self.current_image_pixelsize = image_pixelsize
+		return self._getAcquisitionTargetDimensions(image_pixelsize)
+
+	def _getAcquisitionTargetDimensions(self,image_pixelsize):
 		try:
 			# get settings for the next Acquisition node
 			settingsclassname = self.next_acq_node['class string']+'SettingsData'
