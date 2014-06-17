@@ -132,8 +132,14 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 		return
 
 	def onShow(self):
+		current_choice = self.preset_choices.GetStringSelection()
 		self.presetnames = self.node.presetsclient.getPresetNames()
-		self.preset_choices.Set(self.presetnames)
+		# This part is needed for wxpython 2.8.  It can be replaced by Set function in 3.0
+		self.preset_choices.Clear()
+		for name in self.presetnames:
+			self.preset_choices.Append(name)
+		if current_choice in self.presetnames:
+			self.preset_choices.SetStringSelection(current_choice)
 
 	def onGetPresetTool(self,evt):
 		presetname = self.preset_choices.GetStringSelection()
