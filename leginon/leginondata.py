@@ -365,6 +365,7 @@ class BeamSizeCalibrationData(CalibrationData):
 		return CalibrationData.typemap() + (
 			('probe mode', str),
 			('spot size', int),
+			('c2 size', int),
 			('focused beam', float),
 			('scale', float),
 		)
@@ -1193,6 +1194,7 @@ class SetupWizardSettingsData(SettingsData):
 			('limit', bool),
 			('n limit', int),
 			('connect', bool),
+			('c2 size', int),
 		)
 	typemap = classmethod(typemap)
 
@@ -2493,5 +2495,13 @@ class DDinfoValueData(Data):
 			('camera', CameraEMData),
 			('infokey', DDinfoKeyData),
 			('infovalue', str),
+		)
+	typemap = classmethod(typemap)
+
+class C2ApertureSizeData(InSessionData):
+	def typemap(cls):
+		return InSessionData.typemap() + (
+			('tem', InstrumentData),
+			('size', int),
 		)
 	typemap = classmethod(typemap)

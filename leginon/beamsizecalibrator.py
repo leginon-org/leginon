@@ -16,6 +16,7 @@ import numpy.linalg
 import calibrator
 from leginon import leginondata
 import gui.wx.BeamSizeCalibrator
+from leginon import calibrationclient
 
 class BeamSizeCalibrator(calibrator.Calibrator):
 	panelclass = gui.wx.BeamSizeCalibrator.Panel
@@ -28,14 +29,35 @@ class BeamSizeCalibrator(calibrator.Calibrator):
 	def __init__(self, *args, **kwargs):
 		calibrator.Calibrator.__init__(self, *args, **kwargs)
 
+		self.beamsizecalclient = calibrationclient.BeamSizeCalibrationClient(self)
 		self.beamvalues = {}
+		self.c2size = None
 		self.start()
 
+	def uiSetC2Size(self,size):
+		temdata = self.instrument.getTEMData()
+		self.setC2Size(temdata,size)
+	
 	def uiMeasureFocusedIntensityDialValue(self):
+		if self.getC2Size() is None:
+			self.logger.error('Illumination Aperture not known. Calibration not saved')
+			return
+		temdata = self.instrument.getTEMData()
 		self.storeIntensityDialValue(0)
 
 	def uiMeasureIntensityDialValue(self):
 		self.storeIntensityDialValue(self.settings['beam diameter'])
+
+	def uiMeasureBeamDiameter(self):
+		try:
+			scope = self.instrument.getData(leginondata.ScopeEMData)
+		except:
+			return 'error'
+		beam_diameter = self.beamsizecalclient.getBeamSize(scope)
+		if beam_diameter is not None:
+			self.logger.info('Current Beam Diameter is %.1f um' % (beam_diameter * 1e6,))
+		else:
+			self.logger.error('Beam size measurement failed.')
 
 	def storeIntensityDialValue(self,diameter):
 		if self.initInstruments():
@@ -50,7 +72,11 @@ class BeamSizeCalibrator(calibrator.Calibrator):
 			return 'error'
 		beam_diameter_on_screen = diameter
 		beam_diameter_on_specimen = beam_diameter_on_screen / screen_mag
-		intensity = scope['intensity']
+		# simulated TEM always gives back 0 as intensity dial value
+		if 'Sim' in scope['tem']['name'] and diameter == 0:
+			intensity = 0.5
+		else:
+			intensity = scope['intensity']
 		spotsize = scope['spot size']
 		if spotsize not in self.beamvalues.keys():
 			self.beamvalues[spotsize] = [(beam_diameter_on_specimen,intensity)]
@@ -61,10 +87,19 @@ class BeamSizeCalibrator(calibrator.Calibrator):
 	def linearFitData(self, spotsize):
 		x = numpy.array(map((lambda x: x[0]),self.beamvalues[spotsize]))
 		y = numpy.array(map((lambda x: x[1]),self.beamvalues[spotsize]))
-		print x
-		print y
 		A = numpy.vstack([x,numpy.ones(len(x))]).T
 		return numpy.linalg.lstsq(A,y)[0]
+
+	def setC2Size(self, temdata,size):
+		c2sizedata = leginondata.C2ApertureSizeData(session=self.session,tem=temdata,size=size).insert()
+		self.c2size = size
+
+	def getC2Size(self):
+		temdata = self.instrument.getTEMData()
+		if temdata:
+			r = leginondata.C2ApertureSizeData(session=self.session,tem=temdata).query(results=1)
+			if r:
+				return r[0]['size']
 
 	def storeCalibration(self,scope):
 		self.logger.info('Calculating beam size - intensity dial relationship...')
@@ -72,6 +107,7 @@ class BeamSizeCalibrator(calibrator.Calibrator):
 		self.logger.info('Saving calibration with focused beam at %3.1e' % intercept)
 		temdata = self.instrument.getTEMData()
 		caldata = leginondata.BeamSizeCalibrationData()
+		caldata['c2 size'] = self.getC2Size()
 		caldata['spot size'] = scope['spot size']
 		caldata['probe mode'] = scope['probe mode']
 		caldata['focused beam'] = intercept

@@ -19,12 +19,46 @@ class Panel(leginon.gui.wx.Calibrator.Panel):
 		leginon.gui.wx.Calibrator.Panel.initialize(self)
 		self.dialog = None
 		self.toolbar.DeleteTool(leginon.gui.wx.ToolBar.ID_ABORT)
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_MEASURE, 'ruler', shortHelpString='Measure current beam size')
+		self.toolbar.Bind(wx.EVT_TOOL, self.onMeasureTool, id=leginon.gui.wx.ToolBar.ID_MEASURE)
 
 	def onCalibrateTool(self, evt):
+		if not self.node.getC2Size():
+			self.c2dialog = C2SizeDialog(self,'C2 Aperture Size')
+			self.c2dialog.ShowModal()
+			self.c2dialog.Destroy()
 		self.dialog = BeamSizeCalibrationDialog(self)
 		self.dialog.ShowModal()
 		self.dialog.Destroy()
 		self.dialog = None
+
+	def onMeasureTool(self, evt):
+		threading.Thread(target=self.node.uiMeasureBeamDiameter).start()
+
+class C2SizeDialog(leginon.gui.wx.Dialog.Dialog):
+	def __init__(self, parent, title):
+		self.node = parent.node
+		leginon.gui.wx.Dialog.Dialog.__init__(self, parent, title, style=wx.DEFAULT_DIALOG_STYLE)
+
+	def onInitialize(self):
+		c2sizer = wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1, 'C2 size: ')
+		c2sizer.Add(label, (0, 0), (1, 1), wx.ALIGN_LEFT)
+		self.c2sizectrl = IntEntry(self, -1, chars=6)
+		c2sizer.Add(self.c2sizectrl, (0, 1), (1, 1), wx.ALIGN_RIGHT)
+		label = wx.StaticText(self, -1, 'um')
+		c2sizer.Add(label, (0, 2), (1, 1), wx.ALIGN_LEFT)
+
+		self.sz.Add(c2sizer, (0, 0), (1, 1), wx.EXPAND|wx.ALL,10)
+		savebtn = wx.Button(self, -1, 'Save')
+		self.sz.Add(savebtn, (1, 0), (1, 1), wx.EXPAND|wx.ALL,5)
+		self.sz.AddGrowableCol(0)
+
+		self.Bind(wx.EVT_BUTTON, self.onSave, savebtn)
+
+	def onSave(self,evt):
+		args = (self.c2sizectrl.GetValue(),)
+		threading.Thread(target=self.node.uiSetC2Size,args=args).start()
 
 class BeamSizeCalibrationDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):

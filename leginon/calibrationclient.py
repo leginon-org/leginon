@@ -2028,24 +2028,31 @@ class EucentricFocusClient(CalibrationClient):
 
 class BeamSizeCalibrationClient(CalibrationClient):
 	def getCrossOverIntensityDial(self,scopedata):
-		return self.researchBeamSizeCalibration(scopedata,'focused beam')
+		return self.researchBeamSizeCalibration(scopedata,'focused beam')[0]
 
 	def getSizeIntensityDialScale(self,scopedata):
-		return self.researchBeamSizeCalibration(scopedata,'scale')
+		scale,c2size = self.researchBeamSizeCalibration(scopedata,'scale')
+		if not c2size:
+			return None
+		c2results = leginondata.C2ApertureSizeData(session=self.node.session,tem=scopedata['tem']).query(results=1)
+		if not c2results:
+			return None
+		session_c2size = float(c2results[0]['size'])
+		return scale * (session_c2size / c2size)
 
 	def researchBeamSizeCalibration(self,scopedata,key):
+		if not scopedata:
+			return None, None
+		# search beamsize
 		queryinstance = leginondata.BeamSizeCalibrationData()
-		if scopedata:
-			queryinstance['tem'] = scopedata['tem']
-			queryinstance['spot size'] = scopedata['spot size']
-			queryinstance['probe mode'] = scopedata['probe mode']
-		else:
-			self.setDBInstruments(queryinstance,None,None)
+		queryinstance['tem'] = scopedata['tem']
+		queryinstance['spot size'] = scopedata['spot size']
+		queryinstance['probe mode'] = scopedata['probe mode']
 		caldatalist = self.node.research(datainstance=queryinstance, results=1)
 		if len(caldatalist) > 0:
-			return caldatalist[0][key]
+			return caldatalist[0][key], caldatalist[0]['c2 size']
 		else:
-			return None
+			return None, None
 	
 	def getBeamSize(self,scopedata):
 		'''Return beam diameter in meters'''

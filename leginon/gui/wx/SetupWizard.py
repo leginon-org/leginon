@@ -22,6 +22,7 @@ import leginon.gui.wx.ListBox
 import leginon.version
 import leginon.session
 import leginon.ddinfo
+from leginon.gui.wx.Entry import IntEntry
 
 class WizardPage(wx.wizard.PyWizardPage):
 	pass
@@ -626,6 +627,44 @@ class SessionCreatePage(WizardPage):
 	def GetPrev(self):
 		return self.GetParent().imagedirectorypage
 
+	def GetNext(self):
+		parent = self.GetParent()
+		return parent.c2sizepage
+
+class C2SizePage(WizardPage):
+	def __init__(self, parent):
+		WizardPage.__init__(self, parent)
+		self.pagesizer = wx.GridBagSizer()
+		self.sizer = wx.GridBagSizer()
+
+		self.sizer.Add(wx.StaticText(self, -1,
+									'''Enter illumination limiting aperture size
+(likely C2) you will use at high magnification imaging
+if you would like to see its imprint when targeting'''
+									),
+									(0, 0), (1, 1))
+		
+		c2sizer = wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1, 'C2 size: ')
+		c2sizer.Add(label, (0, 0), (1, 1), wx.ALIGN_LEFT)
+		self.c2sizectrl = IntEntry(self, -1, chars=6)
+		c2sizer.Add(self.c2sizectrl, (0, 1), (1, 1), wx.ALIGN_RIGHT)
+		label = wx.StaticText(self, -1, 'um')
+		c2sizer.Add(label, (0, 2), (1, 1), wx.ALIGN_LEFT)
+
+		self.sizer.Add(c2sizer, (2, 0), (1, 1), wx.EXPAND|wx.ALL,10)
+
+		self.sizer.AddGrowableCol(0)
+
+		self.pagesizer.Add(self.sizer, (0, 0), (1, 1), wx.ALIGN_CENTER)
+		self.pagesizer.AddGrowableRow(0)
+		self.pagesizer.AddGrowableCol(0)
+
+		self.SetSizerAndFit(self.pagesizer)
+	
+	def GetPrev(self):
+		return self.GetParent().sessioncreatepage
+
 class SetupWizard(wx.wizard.Wizard):
 	def __init__(self, manager):
 		self.manager = manager
@@ -650,6 +689,7 @@ class SetupWizard(wx.wizard.Wizard):
 		self.imagedirectorypage = SessionImageDirectoryPage(self)
 		self.sessionselectpage = SessionSelectPage(self)
 		self.sessioncreatepage = SessionCreatePage(self)
+		self.c2sizepage = C2SizePage(self)
 
 		# initialize page values
 		users = self.getUsers()
@@ -731,6 +771,10 @@ class SetupWizard(wx.wizard.Wizard):
 			self.clients = self.sessioncreatepage.clients
 			self.history = self.sessioncreatepage.history
 			self.setup.saveClients(self.session, self.clients)
+		elif page is self.c2sizepage:
+			if self.session:
+				c2size = self.c2sizepage.c2sizectrl.GetValue()
+				self.setup.setC2Size(self.session, self.clients,c2size)
 
 	def onPageChanged(self, evt):
 		page = evt.GetPage()
@@ -764,6 +808,7 @@ class SetupWizard(wx.wizard.Wizard):
 				self.sessiontypepage.sessiontyperadiobox.SetSelection(n)
 		self.sessionselectpage.limitcheckbox.SetValue(sd['limit'])
 		self.sessionselectpage.limitintctrl.SetValue(sd['n limit'])
+		self.c2sizepage.c2sizectrl.SetValue(sd['c2 size'])
 		if sd['selected session'] is not None:
 			s = sd['selected session']
 			n = self.sessionselectpage.sessionchoice.FindString(s)
@@ -836,6 +881,7 @@ class Setup(object):
 			'limit': True,
 			'n limit': 10,
 			'connect': True,
+			'c2 size': 100,
 		}
 		qsession = leginon.leginondata.SessionData(initializer={'user': userdata})
 		qdata = settingsclass(initializer={'session': qsession})
@@ -922,6 +968,19 @@ class Setup(object):
 		projeq['session'] = sdata[0]
 		projeq['project'] = projdata
 		return projeq
+
+	def setC2Size(self,session,clients,c2size):
+		localhost = socket.gethostname()
+		hosts = list(clients)
+		hosts.append(localhost)
+		for host in hosts:
+			r = leginon.leginondata.InstrumentData(hostname=host).query()
+			if r:
+				for idata in r:
+					if idata['cs']:
+						temdata = idata
+		c2data = leginon.leginondata.C2ApertureSizeData(session=session,tem=temdata,size=c2size)
+		self.publish(c2data, database=True, dbforce=True)
 
 class EditClientsDialog(leginon.gui.wx.Dialog.Dialog):
 	def __init__(self, parent, clients, history):
