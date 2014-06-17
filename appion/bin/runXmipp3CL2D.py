@@ -296,10 +296,9 @@ class CL2D(appionScript.AppionScript):
 			listOfParticles=[]
 			                         #      0             1           2          3           4        5         6          7            8
 			for line in lines[9:]: #['000001_images', 'loop_', ' _image', ' _enabled', ' _ref', ' _flip', ' _shiftX', ' _shiftY', ' _anglePsi',
-				if not line: continue
+				if not line or line.split()[1] == '-1': continue
 				particleNumber = line.split("@")[0]
 				listOfParticles.append(particleNumber)
-				
 				xmipplist.append(int(particleNumber))
 			classNumber=int(lines[0].split("_images")[0])-1 
 			D[classNumber]=listOfParticles
