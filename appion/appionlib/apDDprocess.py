@@ -708,11 +708,15 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		# MASK CORRECTION
 		if self.correct_frame_mask:
 			if get_new_refs:
-				#aDisplay.printMsg('Making debris mask')
-				# mask = self.makeMaskArray(start_frame)
+				if not os.path.isfile("variance.mrc"):
+					apDisplay.printMsg('Making debris mask')
+					mask = self.makeMaskArray(start_frame)
+					mrc.write(mask, "variance.mrc")
+				else:
+					mask = mrc.read("variance.mrc")
 				# experimental.  Need to create variance.map to run
-				aDisplay.printMsg('Making variance threshold mask')
-				mask = self.makeVarianceMaskArray()
+#				apDisplay.printMsg('Making variance threshold mask')
+#				mask = self.makeVarianceMaskArray()
 				self.mask = mask
 				if save_jpg and mask.max() > mask.min():
 					numpil.write(mask.astype(numpy.int)*255,'%s_mask.jpg' % ddtype,'jpeg')
@@ -793,7 +797,7 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		apDisplay.printMsg('  using %s' % self.image['filename'])
 		apDisplay.printMsg('  frame index %d' % start_frame_index)
 		# load raw frames
-		framelist = range(start_frame_index,start_frame_indes+nframe)
+		framelist = range(start_frame_index,start_frame_index+nframe)
 		oneframe = self.sumupFrames(self.rawframe_dir,framelist)
 		oneframe, dark_scale = self.darkCorrection(oneframe,self.unscaled_darkarray,nframe)
 		# Filter and then threshold the result to show only debris
