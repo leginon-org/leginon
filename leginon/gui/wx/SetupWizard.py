@@ -808,7 +808,10 @@ class SetupWizard(wx.wizard.Wizard):
 				self.sessiontypepage.sessiontyperadiobox.SetSelection(n)
 		self.sessionselectpage.limitcheckbox.SetValue(sd['limit'])
 		self.sessionselectpage.limitintctrl.SetValue(sd['n limit'])
-		self.c2sizepage.c2sizectrl.SetValue(sd['c2 size'])
+		if sd['c2 size']:
+			self.c2sizepage.c2sizectrl.SetValue(sd['c2 size'])
+		else:
+			self.c2sizepage.c2sizectrl.SetValue(100)
 		if sd['selected session'] is not None:
 			s = sd['selected session']
 			n = self.sessionselectpage.sessionchoice.FindString(s)
@@ -971,25 +974,32 @@ class Setup(object):
 		projeq['project'] = projdata
 		return projeq
 
-	def setC2Size(self,session,clients,c2size):
-		localhost = socket.gethostname()
-		# append localhost at the end as the last to check
-		hosts = list(clients)
-		hosts.append(localhost)
-		# set it to the first tem found in the hosts list
-		got_tem = False
-		for host in hosts:
-			r = leginon.leginondata.InstrumentData(hostname=host).query()
+	def getTEM(self,hostname, no_sim=True):
+			temdata = None
+			r = leginon.leginondata.InstrumentData(hostname=hostname).query()
 			if r:
 				for idata in r:
+					if no_sim and 'Sim' in idata['name']:
+						continue
 					if idata['cs']:
 						temdata = idata
-						got_tem = True
 						break
-			if got_tem:
+			return temdata
+
+	def setC2Size(self,session,clients,c2size):
+		# set it to the first tem found in the hosts list
+		for host in clients:
+			# avoid simulated tem on clients
+			temdata = self.getTEM(host,True)
+			if temdata:
 				break
-		c2data = leginon.leginondata.C2ApertureSizeData(session=session,tem=temdata,size=c2size)
-		self.publish(c2data, database=True, dbforce=True)
+		if not temdata:
+			localhost = socket.gethostname()
+			# use tem on localhost, including simulation
+			temdata = self.getTEM(localhost,False)
+		if temdata and c2size:
+			c2data = leginon.leginondata.C2ApertureSizeData(session=session,tem=temdata,size=c2size)
+			self.publish(c2data, database=True, dbforce=True)
 
 class EditClientsDialog(leginon.gui.wx.Dialog.Dialog):
 	def __init__(self, parent, clients, history):
