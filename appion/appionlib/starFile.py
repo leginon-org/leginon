@@ -178,6 +178,9 @@ class StarFile():
                 sline = line.split()
                 loopBlock.addValueSet(sline)
 
+        if inloop: # End of file reached
+            dataBlock.addLoopBlock(loopBlock)
+            
         f.close()
     
         # Add the last (or only) data block to the star file
