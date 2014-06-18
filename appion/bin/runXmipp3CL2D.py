@@ -19,6 +19,7 @@ from appionlib import appiondata
 from appionlib import apImagicFile
 from appionlib import apProject
 from appionlib import apFourier
+from appionlib import starFile 
 from pyami import spider
 import sinedon
 import MySQLdb
@@ -275,7 +276,7 @@ class CL2D(appionScript.AppionScript):
 			stack=[]
 			for partnum in D[classref]:
 				### NOTE: RESOLUTION WILL NOT BE CALCULATED IF ALIGNED STACK IS NOT CREATED
-				stack.append(apImagicFile.readSingleParticleFromStack("alignedStack.hed",int(partnum),msg=False))
+				stack.append(apImagicFile.readSingleParticleFromStack("alignedStack.hed",self.partMapper[int(partnum)],msg=False))
 			apImagicFile.writeImagic(stack,"tmp.hed")
 
 			frcdata = apFourier.spectralSNRStack("tmp.hed", self.apix)
@@ -594,6 +595,17 @@ class CL2D(appionScript.AppionScript):
 						+self.params['timestamp']+"_level_"+digits+"_.hed", package="Xmipp 3", verbose=True)
 			
 		if self.params['align']:
+			star = starFile.StarFile("images.xmd")
+			dataBlock = star.getDataBlock("data_noname")
+			loopDict = dataBlock.getLoopDict()
+			#Particles with _enabled = -1 are not saved in alignedStack.hed with xmipp_image_convert below.
+			#parMapper maps particle _image number from images.xmd to particle number in alignedStack.hed. 
+			self.partMapper = range(len(loopDict)+1)
+			number_disabled = 0
+			for i in range(len(loopDict)):		
+				if loopDict[i]['_enabled'] == "-1": number_disabled += 1; continue
+				self.partMapper[i+1] = int(loopDict[i]['_image'].split("@")[0]) -  number_disabled
+						
 			apParam.runCmd("xmipp_image_convert -i images.xmd -o alignedStack.hed", package="Xmipp 3", verbose=True)
 		
 		self.parseOutput()
