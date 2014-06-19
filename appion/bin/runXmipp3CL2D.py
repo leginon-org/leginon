@@ -596,6 +596,7 @@ class CL2D(appionScript.AppionScript):
 			
 		if self.params['align']:
 			star = starFile.StarFile("images.xmd")
+			star.read()
 			dataBlock = star.getDataBlock("data_noname")
 			loopDict = dataBlock.getLoopDict()
 			#Particles with _enabled = -1 are not saved in alignedStack.hed with xmipp_image_convert below.
