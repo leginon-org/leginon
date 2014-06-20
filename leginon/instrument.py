@@ -268,6 +268,7 @@ class Proxy(object):
 					# avoid exception for now on TSRI Krios
 					if temname == 'Krios':
 						continue
+					continue
 					#raise results[i]
 			except AttributeError:
 				continue
