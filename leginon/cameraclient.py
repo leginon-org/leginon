@@ -58,9 +58,13 @@ class CameraClient(object):
 		if camera_name is not None:
 			self.instrument.setCCDCamera(camera_name)
 
+		hosts = map((lambda x: self.instrument.ccdcameras[x].Hostname),self.instrument.ccdcameras.keys())
 		## Retract the cameras that are above this one (higher zplane)
+		## or on the same host but lower because the host often
+		## retract the others regardless of the position but not include
+		## that in the timing.  Often get blank image as a result
 		for name,cam in self.instrument.ccdcameras.items():
-			if cam.Zplane > self.instrument.ccdcamera.Zplane:
+			if cam.Zplane > self.instrument.ccdcamera.Zplane or (hosts.count(cam.Hostname) > 1 and cam.Zplane < self.instrument.ccdcamera.Zplane):
 				try:
 					if cam.Inserted:
 						cam.Inserted = False
@@ -86,7 +90,6 @@ class CameraClient(object):
 	def acquireCameraImageData(self, scopeclass=leginondata.ScopeEMData, allow_retracted=False, type='normal'):
 		'''Acquire a raw image from the currently configured CCD camera'''
 		self.positionCamera(allow_retracted=allow_retracted)
-
 		## set type to normal or dark
 		self.instrument.ccdcamera.ExposureType = type
 
