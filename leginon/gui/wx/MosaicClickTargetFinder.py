@@ -95,6 +95,10 @@ class Panel(leginon.gui.wx.ClickTargetFinder.Panel):
 		dialog.ShowModal()
 		dialog.Destroy()
 
+	def onShow(self):
+		if self.imagepanel.imagedata is not None:
+			self.onRefreshTargetsButton(None)
+
 	def onRefreshTargetsButton(self, evt):
 		self.node.displayDatabaseTargets()
 
