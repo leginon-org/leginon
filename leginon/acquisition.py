@@ -647,6 +647,9 @@ class Acquisition(targetwatcher.TargetWatcher):
 					# Give presetsclient time to unlock navigator changePreset request
 					time.sleep(0.5)
 			self.presetsclient.toScope(presetname, emtarget, keep_shift=keep_shift)
+			# DO this the second time give an effect of normalization. Removed defocus and beam shift hysteresis on Talos
+			if new_tem['hostname'] == 'talos-20taf2c':
+				self.presetsclient.toScope(presetname, emtarget, keep_shift=keep_shift)
 			stageposition = self.instrument.tem.getStagePosition()
 			stagea = stageposition['a']
 			if self.settings['correct image shift coma']:

@@ -176,7 +176,7 @@ class Proxy(object):
 		try:
 			instrumentdata['hostname'] = self.ccdcameras[name].Hostname
 		except:
-			raise RuntimeError('unable to get TEM hostname')
+			raise RuntimeError('unable to get Camera hostname')
 		results = instrumentdata.query(results=1)
 		## save in DB if not already there
 		if results:
@@ -265,7 +265,10 @@ class Proxy(object):
 		for i, key in enumerate(keys):
 			try:
 				if isinstance(results[i], Exception):
-					raise results[i]
+					# avoid exception for now on TSRI Krios
+					if temname == 'Krios':
+						continue
+					#raise results[i]
 			except AttributeError:
 				continue
 			instance[key] = results[i]

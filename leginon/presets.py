@@ -521,6 +521,7 @@ class PresetsManager(node.Node):
 
 	def toScope(self, pname, magonly=False, final=False):
 		'''
+		toScope in presets manage does the job.
 		'''
 		presetdata = self.presetByName(pname)
 		if presetdata is None:
@@ -1461,6 +1462,12 @@ class PresetsManager(node.Node):
 				pixcol = pixelshift1['col'] * oldpreset['binning']['x']
 				pixvect1 = numpy.array((pixrow, pixcol))
 				pixvect2 = self.calclients['image'].pixelToPixel(old_tem,old_ccdcamera,new_tem, new_ccdcamera, ht,oldpreset['magnification'],newpreset['magnification'],pixvect1)
+				# Hacking on Krios until TUI fixed 6/19/14:
+				# scale the value because the physical values are 
+				# not the same at 1700 and 22500x
+				if new_tem['hostname'] == 'titan52332940':
+					print 'apply scaling= 1.4'
+					pixvect2 = pixvect2 *1.4
 				pixelshift2 = {'row':pixvect2[0] / newpreset['binning']['y'],'col':pixvect2[1] / newpreset['binning']['x']}
 				newscope = self.calclients['image'].transform(pixelshift2, fakescope2, fakecam2)
 				myimage = newscope['image shift']
