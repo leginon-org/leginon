@@ -1254,18 +1254,20 @@ class ImageShiftCalibrationClient(SimpleMatrixCalibrationClient):
 
 	def pixelToPixel(self, old_tem, old_ccdcamera, new_tem, new_ccdcamera, ht, mag1, mag2, p1):
 		'''
-		Using stage position as a global coordinate system, we can
+		Using physical position as a global coordinate system, we can
 		do pixel to pixel transforms between mags.
 		This function will calculate a pixel vector at mag2, given
 		a pixel vector at mag1.
+		For image shift, this means: the physical image shift values in meters
+		need to be properly calibrated for this to work right
 		'''
 		par = self.parameter()
 		matrix1 = self.retrieveMatrix(old_tem, old_ccdcamera, par, ht, mag1)
 		matrix2 = self.retrieveMatrix(new_tem, new_ccdcamera, par, ht, mag2)
 		matrix2inv = numpy.linalg.inv(matrix2)
 		p1 = numpy.array(p1)
-		stagepos = numpy.dot(matrix1, p1)
-		p2 = numpy.dot(matrix2inv, stagepos)
+		physicalpos = numpy.dot(matrix1, p1)
+		p2 = numpy.dot(matrix2inv, physicalpos)
 		return p2
 
 class BeamShiftCalibrationClient(SimpleMatrixCalibrationClient):
