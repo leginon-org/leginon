@@ -1011,6 +1011,9 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 			apDisplay.printError("max defocus is not in an acceptable range, e.g. maxdefocus=-1.5e-6")
 		if self.params['fromstackid'] is not None and self.params['selectionid'] is not None:
 			apDisplay.printError("please only specify one of either --selectionid or --fromstackid")
+		if self.params['fromstackid'] is not None and self.params['helicalstep'] is not None:
+			apDisplay.printWarning("Helicalstep option cannot be used with --fromstackid, ignoring")
+			self.params['helicalstep'] = None
 		if self.params['fromstackid'] is None and self.params['selectionid'] is None:
 			apDisplay.printError("please specify one of either --selectionid or --fromstackid")
 		if self.params['maskassess'] is None and self.params['checkmask']:
