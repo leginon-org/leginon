@@ -905,7 +905,16 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		self.setupDarkNormMrcs(use_full_raw_area)
 		rawframestack_path = self.getRawFrameStackPath()
 		if not os.path.isfile(self.tempframestackpath) and os.path.isfile(rawframestack_path):
-			os.symlink(rawframestack_path,self.tempframestackpath)
+			# temporary fix for DM 2.3.1 on krioscam1
+			if self.image['camera']['ccdcamera']['hostname']=='krioscam1':
+				apDisplay.printWarning("flipping and rotating frame stack")
+				a = mrc.read(rawframestack_path)
+				a = numpy.swapaxes(a,0,2)
+				a = numpy.rot90(numpy.fliplr(numpy.rot90(a,1)),1)
+				a = numpy.swapaxes(a,0,2)
+				mrc.write(a,self.tempframestackpath)
+			else:
+				os.symlink(rawframestack_path,self.tempframestackpath)
 			apDisplay.printMsg('link %s to %s.' % (rawframestack_path, self.tempframestackpath))
 		return self.tempframestackpath
 
