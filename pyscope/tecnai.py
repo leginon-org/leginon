@@ -1222,6 +1222,7 @@ class Tecnai(tem.TEM):
 		return self.tecnai.TemperatureControl.RefrigerantLevel(id)
 
 class Krios(Tecnai):
+	name = 'Krios'
 	def __init__(self):
 		Tecnai.__init__(self)
 		self.correctedstage = False
