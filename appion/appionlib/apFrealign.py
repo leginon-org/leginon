@@ -122,11 +122,11 @@ def parseFrealign9ParamFile(paramfile,test=False):
 		try:
 			paramdict['sigma'] = float(sline[13])
 		except:
-			paramdict['sigma'] = 0.0
+			paramdict['sigma'] = 1.0
 		try:
 			paramdict['score'] = float(sline[14])
 		except:
-			paramdict['score'] = 0.0
+			paramdict['score'] = 0.5
 		try:
 			paramdict['change'] = float(sline[15])
 		except:
@@ -705,7 +705,7 @@ def scale_parfile_frealign8(infile, outfile, mult, newmag=0):
 	ff.close()
 
 #=================
-def scale_parfile_frealign9(infile, outfile, mult, newmag=0):
+def scale_parfile_frealign9_03(infile, outfile, mult, newmag=0):
 	''' THIS FUNCTION IS PROBABLY OUTDATED AND MAY ONLY WORK FOR FREALIGN 9.03 '''
 	''' note that this may not make sense as it would in frealign8, because frealign9 shifts are in Angstroms '''
 
@@ -738,9 +738,11 @@ def scale_parfile_frealign9(infile, outfile, mult, newmag=0):
 		logp = p['logp']
 		try:
 			score = p['score']
+		except:
+			score = 0.5
+		try:
 			change = p['change']
 		except:
-			score = 0.0
 			change = 0.0
 		
 		if olddx != (dx+dy)/2:
@@ -754,7 +756,7 @@ def scale_parfile_frealign9(infile, outfile, mult, newmag=0):
 	ff.close()
 
 #=================
-def frealign8_to_frealign9(infile, outfile, apix, occ=0, logp=5000, sigma=1, score=0, change=0):
+def frealign8_to_frealign9(infile, outfile, apix, occ=0, logp=5000, sigma=1, score=0.5, change=0):
 	''' modified for version 9.06 and above, character spaces for version <9.06 is different for logp value '''
 	### output file
 	ff = open(outfile, "w")
@@ -832,11 +834,15 @@ def frealign9_03_to_frealign9_06(infile, outfile):
 		logp = p['logp']
 		try:
 			sigma = p['sigma']
+		except:
+			sigma = 1.0
+		try:
 			score = p['score']
+		except:
+			score = 0.5
+		try:
 			change = p['change']
 		except:
-			sigma = 0.0
-			score = 0.0
 			change = 0.0
 
 		ff.write("%7d%8.2f%8.2f%8.2f%10.2f%10.2f%8d%6d%9.1f%9.1f%8.2f%8.2f%10d%11.4f%8.2f%8.2f\n" \
@@ -870,11 +876,15 @@ def frealign9_06_to_frealign9_03(infile, outfile):
 		logp = p['logp']
 		try:
 			sigma = p['sigma']
-			score = p['score']
-			change = p['change']
 		except:
 			sigma = 0.0
+		try:
+			score = p['score']
+		except:
 			score = 0.0
+		try:
+			change = p['change']
+		except:
 			change = 0.0
 
 		ff.write("%7d%8.2f%8.2f%8.2f%10.2f%10.2f%8d%6d%9.1f%9.1f%8.2f%8.2f%13d%8.2f%8.2f\n" \
@@ -964,11 +974,15 @@ def exclude_class_from_frealign9_parfile(inparfile, outlist, minocc=50.0, freali
 		logp = p['logp']
 		try:
 			sigma = p['sigma']
+		except:
+			sigma = 1.0
+		try:
 			score = p['score']
+		except:
+			score = 0.5
+		try:
 			change = p['change']
 		except:
-			sigma = 0.0
-			score = 0.0
 			change = 0.0
 
 		if olddx != (dx+dy)/2:
