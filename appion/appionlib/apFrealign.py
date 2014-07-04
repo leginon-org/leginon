@@ -126,7 +126,7 @@ def parseFrealign9ParamFile(paramfile,test=False):
 		try:
 			paramdict['score'] = float(sline[14])
 		except:
-			paramdict['score'] = 0.5
+			paramdict['score'] = 50.0
 		try:
 			paramdict['change'] = float(sline[15])
 		except:
@@ -739,7 +739,7 @@ def scale_parfile_frealign9_03(infile, outfile, mult, newmag=0):
 		try:
 			score = p['score']
 		except:
-			score = 0.5
+			score = 50.0
 		try:
 			change = p['change']
 		except:
@@ -756,7 +756,7 @@ def scale_parfile_frealign9_03(infile, outfile, mult, newmag=0):
 	ff.close()
 
 #=================
-def frealign8_to_frealign9(infile, outfile, apix, occ=0, logp=5000, sigma=1, score=0.5, change=0):
+def frealign8_to_frealign9(infile, outfile, apix, occ=0, logp=5000, sigma=1, score=50.0, change=0):
 	''' modified for version 9.06 and above, character spaces for version <9.06 is different for logp value '''
 	### output file
 	ff = open(outfile, "w")
@@ -839,7 +839,7 @@ def frealign9_03_to_frealign9_06(infile, outfile):
 		try:
 			score = p['score']
 		except:
-			score = 0.5
+			score = 50.0
 		try:
 			change = p['change']
 		except:
@@ -979,7 +979,7 @@ def exclude_class_from_frealign9_parfile(inparfile, outlist, minocc=50.0, freali
 		try:
 			score = p['score']
 		except:
-			score = 0.5
+			score = 50.0
 		try:
 			change = p['change']
 		except:
