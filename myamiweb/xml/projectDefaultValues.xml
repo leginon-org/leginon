@@ -7,11 +7,11 @@
     </sqltable>
     <sqltable name="install" >
         <field name="key" >version</field>
-        <field name="value" >trunk</field>
+        <field name="value" >3.1.0</field>
     </sqltable>
     <sqltable name="install" >
         <field name="key" >revision</field>
-        <field name="value" >17956</field>
+        <field name="value" >18367</field>
     </sqltable>
   <!-- boxtypes -->
     <sqltable name="boxtypes" >
