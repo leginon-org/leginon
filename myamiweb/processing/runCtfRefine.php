@@ -81,7 +81,8 @@ function createForm($extra=false) {
 	$confcheck = ($_POST['confcheck']== 'on') ? 'CHECKED' : '';
 	$confcheck = ($_POST['confcheck']== 'on') ? 'CHECKED' : '';
 
-	$pixelsize = $ctf->getMinimumPixelSizeForSession($expId)*1e10;
+	// this query goes too slow for AMI database
+	$pixelsize = 1.0; $ctf->getMinimumPixelSizeForSession($expId)*1e10;
 	$nyquistlimit = 2*$pixelsize;
 
 	$reprocess = ($_POST['reprocess']) ? $_POST['reprocess'] : 10;
@@ -105,7 +106,7 @@ function createForm($extra=false) {
 	echo "<br/>\n";
 	echo "Resolution search cutoff: ";
 	echo "<input type='text' name='reslimit' value='$reslimit' size='2'> &Aring;<br/>\n";
-	echo "<i>Nyquist limit: $nyquistlimit &Aring;</i>\n";
+	//echo "<i>Nyquist limit: $nyquistlimit &Aring;</i>\n";
 	echo "<br/><br/>\n";
 
 	echo "Number of Refinement Iterations: ";
