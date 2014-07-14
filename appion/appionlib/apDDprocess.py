@@ -909,9 +909,9 @@ class DDFrameProcessing(DirectDetectorProcessing):
 			if self.image['camera']['ccdcamera']['hostname']=='krioscam1':
 				apDisplay.printWarning("flipping and rotating frame stack")
 				a = mrc.read(rawframestack_path)
-				a = numpy.swapaxes(a,0,2)
-				a = numpy.rot90(numpy.fliplr(numpy.rot90(a,1)),1)
-				a = numpy.swapaxes(a,0,2)
+				a = numpy.swapaxes(a,0,1)
+				a = numpy.flipud(a)
+				a = numpy.swapaxes(a,0,1)
 				mrc.write(a,self.tempframestackpath)
 			else:
 				os.symlink(rawframestack_path,self.tempframestackpath)
