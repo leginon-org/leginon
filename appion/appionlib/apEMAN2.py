@@ -5,6 +5,7 @@ import time
 import math
 import random
 import subprocess
+from appionlib import apFile
 from appionlib import apDisplay
 from appionlib import apImagicFile
 
@@ -75,12 +76,13 @@ def stackHDFToIMAGIC(hdfFile, imagicFile=None):
 	convert HDF stack back into an IMAGIC stack
 	"""
 	numPart = EMAN2.EMUtil.get_image_count(hdfFile)
-
+	
 	# output must end with hdf
 	root, ext = os.path.splitext(hdfFile)	
 	if imagicFile is None or ext != ".hed":
 		imagicFile = root+".hed"
-
+	apFile.removeFile(imagicFile)
+	apFile.removeFile(root+".img")
 	apDisplay.printMsg("Creating IMAGIC file '%s' with %d particles"%(imagicFile,numPart))
 
 	headerOnly = False
