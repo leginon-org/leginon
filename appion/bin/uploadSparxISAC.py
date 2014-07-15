@@ -322,6 +322,7 @@ class parseISAC(object):
 			alignData = self.particleAlignData[origPartId]
 			newClassNum = self.particleClass[origPartId]
 			alpha, x, y, mirror, peak = alignData
+			genId, genClassNum = self.newClassToGenClass[newClassNum]
 			partDict = {
 				'refnum': newClassNum,
 				'partnum': newPartId+1,
@@ -331,6 +332,7 @@ class parseISAC(object):
 				'inplane': alpha,
 				'mirror': mirror,
 				'peak': peak,
+				'generation': genId,
 			}	
 			partList.append(partDict)
 		return partList
@@ -496,6 +498,7 @@ class UploadISAC(appionScript.AppionScript):
 			refq['alignrun'] = self.alignstackdata['alignrun']
 			if partdict['refnum']  in self.resdict:
 				refq['ssnr_resolution'] = self.resdict[partdict['refnum']]
+			refq['isac_generation'] = partdict['generation']
 
 			### setup particle
 			alignpartq = appiondata.ApAlignParticleData()
