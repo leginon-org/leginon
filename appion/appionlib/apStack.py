@@ -145,7 +145,7 @@ def getOnlyStackData(stackid, msg=True):
 	return stackdata
 
 #===============
-def getStackParticle(stackid, partnum, nodie=False):
+def getStackParticle(stackid, partnum, noDie=False):
 	if partnum <= 0:
 		apDisplay.printMsg("cannot get particle %d from stack %d"%(partnum,stackid))
 	#apDisplay.printMsg("getting particle %d from stack %d"%(partnum,stackid))
@@ -154,7 +154,7 @@ def getStackParticle(stackid, partnum, nodie=False):
 	stackparticleq['particleNumber'] = partnum
 	stackparticledata = stackparticleq.query()
 	if not stackparticledata:
-		if nodie is True:
+		if noDie is True:
 			return
 		apDisplay.printError("partnum="+str(partnum)+" was not found in stackid="+str(stackid))
 	if len(stackparticledata) > 1:
@@ -162,13 +162,36 @@ def getStackParticle(stackid, partnum, nodie=False):
 	return stackparticledata[0]
 
 #===============
-def getStackParticleFromData(stackid, partdata, nodie=False):
+def getStackParticleFromAlignParticle(alignrunid, alignpartnum, noDie=False):
+	alignrundata = appiondata.ApAlignRunData.direct_query(alignrunid)
+	alignstackq = appiondata.ApAlignStackData()	
+	alignstackq['alignrun'] = alignrundata
+	alignstackdatas = alignstackq.query()
+	if not alignstackdatas:
+		if noDie is True:
+			return
+		apDisplay.printError("alignpartnum="+str(alignpartnum)+" was not found in alignrunid="+str(alignrunid))	
+	alignstackdata = alignstackdatas[0]
+	alignpartq = appiondata.ApAlignParticleData()	
+	alignpartq['alignstack'] = alignstackdata
+	alignpartq['partnum'] = alignpartnum
+	alignpartdata = alignpartq.query()
+	if not alignpartdata:
+		if noDie is True:
+			return
+		apDisplay.printError("alignpartnum="+str(alignpartnum)+" was not found in alignrunid="+str(alignrunid))	
+	if len(alignpartdata) > 1:
+		apDisplay.printError("There's a problem with this align stack. More than one particle with the same number.")
+	return alignpartdata[0]['stackpart']
+
+#===============
+def getStackParticleFromData(stackid, partdata, noDie=False):
 	stackparticleq = appiondata.ApStackParticleData()
 	stackparticleq['stack'] = appiondata.ApStackData.direct_query(stackid)
 	stackparticleq['particle'] = partdata
 	stackparticledata = stackparticleq.query()
 	if not stackparticledata:
-		if nodie is True:
+		if noDie is True:
 			return
 		apDisplay.printError("partid="+str(partdata.dbid)+" was not found in stackid="+str(stackid))
 	if len(stackparticledata) > 1:
@@ -623,7 +646,7 @@ def getNumStacksFromSession(sessionname):
 	return len(stacklist)
 
 #===============
-def getStackParticleFromParticleId(particleid, stackid, nodie=False):
+def getStackParticleFromParticleId(particleid, stackid, noDie=False):
 	"""
 	Provided a Stack Id & an ApParticle Id, find the stackparticle Id
 	"""
@@ -632,7 +655,7 @@ def getStackParticleFromParticleId(particleid, stackid, nodie=False):
 	stackdata['stack'] = appiondata.ApStackData.direct_query(stackid)
 	stackpnum = stackdata.query()
 	if not stackpnum:
-		if nodie is True:
+		if noDie is True:
 			return
 		apDisplay.printError("partnum="+str(particleid)+" was not found in stackid="+str(stackid))
 	if len(stackpnum) > 1:
@@ -640,7 +663,7 @@ def getStackParticleFromParticleId(particleid, stackid, nodie=False):
 	return stackpnum[0]
 
 #===============
-def getImageParticles(imagedata,stackid,nodie=True):
+def getImageParticles(imagedata,stackid,noDie=True):
 	"""
 	Provided a Stack Id & imagedata, to find particles
 	"""
@@ -652,7 +675,7 @@ def getImageParticles(imagedata,stackid,nodie=True):
 	stackps = stackpdata.query()
 	particles = []
 	if not stackps:
-		if nodie is True:
+		if noDie is True:
 			return particles,None
 		apDisplay.printError("partnum="+str(particleid)+" was not found in stackid="+str(stackid))
 	for stackp in stackps:
