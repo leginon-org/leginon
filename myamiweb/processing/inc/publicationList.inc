@@ -277,5 +277,16 @@ $PUBLICATIONS['gpudriftcorr'] = array(
 'logo' => 'img/topbarbackgrnd.jpg',
 'pages' => '584-590');
 
+$PUBLICATIONS['isac'] = array(
+'title' => 'Iterative stable alignment and clustering of 2D transmission electron microscope images',
+'year' => '2012',
+'authorlist' => 'Yang Z, Fang J, Chittuluru J, Asturias FJ, Penczek PA.',
+'journal' => 'Structure',
+'volume' => '20',
+'issue' => '2',
+'pmid' => '22325773',
+'pmcid' => '3426367',
+'doi' => 'doi: 10.1016/j.str.2011.12.007',
+'pages' => '237-47');
 
 ?>

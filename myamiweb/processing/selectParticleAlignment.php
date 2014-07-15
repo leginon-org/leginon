@@ -233,6 +233,20 @@ echo " <p> similar to reference-free but you select templates first."
 //echo "  <img src='img/align-smr.png' width='250'><br/>\n";
 echo "</td></tr>\n";
 
+/*
+ ** Iterative Stable Alignment and Clustering (ISAC)
+*/
+
+echo "<tr><td width='100' align='center'>\n";
+echo "  <h2>ISAC</h2>\n";
+echo "</td><td>\n";
+echo "  <h3><a href='runISAC.php?expId=$expId'>Iterative Stable Alignment and Clustering (ISAC)</a></h3>\n";
+echo " <p>Initial version. More information about ISAC is available from:"
+		." <a href='http://sparx-em.org/sparxwiki/sxisac'>sxisac - SPARX</a>"
+		."</p>\n";
+echo "</td></tr>\n";
+
+
 echo "</table>\n";
 processing_footer();
 exit;
