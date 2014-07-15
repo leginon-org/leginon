@@ -755,6 +755,27 @@ class ApMaxLikeRunData(Data):
 		)
 	typemap = classmethod(typemap)
 
+class ApSparxISACJobData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('runname', str),
+			('timestamp', str),
+			('path', ApPathData),
+			('REF|projectdata|projects|project', int),
+			('finished', bool),
+			('hidden', bool),
+		)
+	typemap = classmethod(typemap)
+
+class ApSparxISACRunData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('runname', str),
+			('job', ApSparxISACJobData),
+			('alignstackid', ApAlignStackData),
+		)
+	typemap = classmethod(typemap)
+
 class ApCL2DRunData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
@@ -960,6 +981,7 @@ class ApAlignRunData(Data):
 			('norefrun', ApSpiderNoRefRunData),
 			('refbasedrun', ApRefBasedRunData),
 			('maxlikerun', ApMaxLikeRunData),
+			('isacrun', ApSparxISACRunData),
 			('refine2drun', ApEMANRefine2dRunData),
 			('imagicMRA', ApMultiRefAlignRunData),
 			('editerrun', ApEdIterRunData),
