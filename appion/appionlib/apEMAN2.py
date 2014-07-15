@@ -13,8 +13,6 @@ try:
 except:
 	apDisplay.printError("EMAN2 not found")
 
-from EMAN2 import EMUtil
-
 ####
 # This is a low-level file with NO database connections
 # Please keep it this way
@@ -30,7 +28,7 @@ def stackToHDF(infile,outfile,apix,pinfo=None):
 	from utilities import generate_ctf
 
 	a = EMAN2.EMData()
-	imn = EMUtil.get_image_count(infile)
+	imn = EMAN2.EMUtil.get_image_count(infile)
 
 	if pinfo is not None:
 		if len(pinfo) != imn:
@@ -71,3 +69,23 @@ def stackToHDF(infile,outfile,apix,pinfo=None):
 
 	return outstack
 
+#=====================
+def stackHDFToIMAGIC(hdfFile, imagicFile=None):
+	"""
+	convert HDF stack back into an IMAGIC stack
+	"""
+	numPart = EMAN2.EMUtil.get_image_count(hdfFile)
+
+	# output must end with hdf
+	root, ext = os.path.splitext(hdfFile)	
+	if imagicFile is None or ext != ".hed":
+		imagicFile = root+".hed"
+
+	apDisplay.printMsg("Creating IMAGIC file '%s' with %d particles"%(imagicFile,numPart))
+
+	headerOnly = False
+	for i in range(numPart):
+		imgData = EMAN2.EMData.read_images(hdfFile, [i], headerOnly)[0]
+		imgData.write_image(imagicFile, i)
+
+	return imagicFile
