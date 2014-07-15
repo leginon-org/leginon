@@ -9,8 +9,11 @@ import numpy
 import pprint
 import random
 import cPickle
+from appionlib import apFile
 from appionlib import apEMAN2
 from appionlib import apStack
+from appionlib import apProject
+from appionlib import apFourier
 from appionlib import apDisplay
 from appionlib import appiondata
 from appionlib import appionScript
@@ -175,7 +178,7 @@ class parseISAC(object):
 		imageList, self.classToGenerationDict = self.readAndMergeStacks()
 
 		if numClassPerIter is None:
-			numClassPerIter = int(0.1*len(imageList))+1
+			numClassPerIter = int(0.01*len(imageList))+1
 	
 		# randomly select an initial class
 		init = int(random.random()*len(imageList))
@@ -191,9 +194,12 @@ class parseISAC(object):
 		#print unusedClasses
 		f = open(outlist, "w")
 		f.write("genId\tgenClass\tcombineClass\torigClass\talpha\tx\ty\tmirror\tpeak\n")
-		acceptedClass = []
-		newClassNumber = 0
+		newClassNumber = 1
+		self.newClassAlignDataDict = {}
 		self.newClassToGenClass = {}
+		genId,origClass = self.classToGenerationDict[init]
+		self.newClassToGenClass[0] = genId,origClass
+		self.newClassAlignDataDict[0] = 0,0,0,0,1e6
 		while(len(unusedClasses) > 0):
 			t0 = time.time()
 			peakList = []
@@ -213,15 +219,16 @@ class parseISAC(object):
 			## fancy numpy thing to get the indices of top N values from an array
 			peakSelect = peakArray.argsort()[-numClassPerIter:][::-1]
 			#print peakSelect
-			
+			#print self.classToGenerationDict
 			#print unusedClasses
 			for index in peakSelect:
 				classNum = indexList[index]
 				alignData = alignDict[classNum]
 				alpha, x, y, mirror, peak = alignData
 				#print newClassNumber,classNum,peak
-				genId,origClass = self.classToGenerationDict[index]
+				genId,origClass = self.classToGenerationDict[classNum]
 				self.newClassToGenClass[newClassNumber] = genId,origClass
+				self.newClassAlignDataDict[newClassNumber] = alignData
 				f.write("%d\t%d\t%d\t%d\t%.3f\t%.3f\t%.3f\t%d\t%.3f\n" 
 					% (genId, origClass, newClassNumber, index, alpha, x, y, mirror, peak))
 				temp = imageList[classNum].copy()
@@ -252,6 +259,8 @@ class parseISAC(object):
 		apDisplay.printMsg("aligning %d particles to %d classes"%(numPart, numClasses))		
 		combinePartList = []
 		self.particleAlignData = {}
+		self.particleClass = {}
+		totalPart = 0
 		for newClassNum in range(numClasses):
 			genId, genClassNum = self.newClassToGenClass[newClassNum]
 			particleList = self.classMembersDict[genId][genClassNum]
@@ -259,17 +268,18 @@ class parseISAC(object):
 				%(len(particleList), newClassNum, numClasses, genId, genClassNum))
 			partEMDataList = sparx.EMData.read_images(partStack, particleList, not self.headerOnly)
 			classEMData = sparx.get_im(alignedClassStack, newClassNum)
-
+			totalPart += len(particleList)
 			for i in range(len(particleList)):
 				partEMData = partEMDataList[i]
 				partId = particleList[i]
+				self.particleClass[partId] = newClassNum
 				alignData = sparx.align2d(partEMData, classEMData, 
 					self.xrange, self.yrange, self.transStep, self.firstRing, 
 					self.lastRing, self.ringStep, self.mode)
 				self.particleAlignData[partId] = alignData
 				combinePartList.append(partId)
-		apDisplay.printColor("Finished aligning particles in %s"
-			%(apDisplay.timeString(time.time() - t1)), "cyan")
+		apDisplay.printColor("Finished aligning %d particles in %s"
+			%(totalPart, apDisplay.timeString(time.time() - t1)), "cyan")
 		
 		t1 = time.time()
 		### write out complete alignment parameters for all generations & aligned stack
@@ -295,9 +305,36 @@ class parseISAC(object):
 			count += 1
 		f.close()
 		sys.stderr.write("\n")
-		apDisplay.printColor("Finished creating aligned stack in %s"
-			%(apDisplay.timeString(time.time() - t1)), "cyan")	
+		apDisplay.printColor("Finished creating aligned stack of %d particles in %s"
+			%(count, apDisplay.timeString(time.time() - t1)), "cyan")	
 		return
+
+
+
+	#========================
+	#========================
+	def createPartList(self):
+		partList = []
+		partIdList = self.alignPartToOrigPartDict.keys()
+		partIdList.sort()
+		for newPartId in partIdList:
+			origPartId = self.alignPartToOrigPartDict[newPartId]
+			alignData = self.particleAlignData[origPartId]
+			newClassNum = self.particleClass[origPartId]
+			alpha, x, y, mirror, peak = alignData
+			partDict = {
+				'refnum': newClassNum,
+				'partnum': newPartId+1,
+				'origPartNum': origPartId+1,
+				'xshift': x,
+				'yshift': y,
+				'inplane': alpha,
+				'mirror': mirror,
+				'peak': peak,
+			}	
+			partList.append(partDict)
+		return partList
+
 
 
 #=====================
@@ -328,11 +365,39 @@ class UploadISAC(appionScript.AppionScript):
 			help="ISAC jobid", metavar="#")
 		self.parser.add_option("-t", "--timestamp", dest="timestamp",
 			help="Timestamp of files, e.g. 08nov02b35", metavar="CODE")
-			
+		self.parser.add_option("-s", "--stackid", dest="stackid", type="int",
+			help="Stack used for alignment", metavar="#")
+		self.parser.add_option("-a", "--alignstackid", dest="alignstackid", type="int",
+			help="Aligned stack used for alignment", metavar="#")			
+		self.parser.add_option("--highpass", dest="highpass", type="float",
+			help="High pass filter used in alignment", metavar="#")	
+		self.parser.add_option("--lowpass", dest="lowpass", type="float",
+			help="Low pass filter used for alignment", metavar="#")				
+		self.parser.add_option("--bin", dest="bin", type="int",
+			help="Binning used for alignment", metavar="#", default=1)
+							
 	#=====================
 	def checkConflicts(self):
+		if self.params['stackid'] is None:
+			self.params['stackid'] = self.getStackId()
+				
 		return
 
+
+	#=====================
+	def getStackId(self):
+		if self.params['alignstackid'] is not None:
+			alignstackdata = appiondata.ApAlignStackData.direct_query(self.params['alignstackid'])
+			return alignstackdata['stack'].dbid		
+		runparams = self.readRunParameters()
+		if 'stackid' in runparams:
+			return runparams['stackid']
+		if 'alignstackid' in runparams:
+			alignstackdata = appiondata.ApAlignStackData.direct_query(runparams['alignstackid'])
+			return alignstackdata['stack'].dbid
+		apDisplay.printWarning("Could not find stack id")
+		return None
+		
 	#=====================
 	def setRunDir(self):
 		if self.params["jobid"] is not None:
@@ -346,7 +411,7 @@ class UploadISAC(appionScript.AppionScript):
 		isacjobq = appiondata.ApSparxISACJobData()
 		isacjobq['runname'] = runparams['runname']
 		isacjobq['path'] = appiondata.ApPathData(path=os.path.abspath(runparams['rundir']))
-		isacjobq['REF|projectdata|projects|project'] = apProject.getProjectIdFromStackId(runparams['stackid'])
+		isacjobq['REF|projectdata|projects|project'] = self.params['projectid']
 		isacjobq['timestamp'] = self.params['timestamp']
 		isacjobdata = isacjobq.query(results=1)
 		if not isacjobdata:
@@ -368,12 +433,6 @@ class UploadISAC(appionScript.AppionScript):
 		### setup ISAC like run
 		isacq = appiondata.ApSparxISACRunData()
 		isacq['runname'] = runparams['runname']
-		isacq['run_seconds'] = runparams['runtime']
-		isacq['fast'] = runparams['fast']
-		isacq['fastmode'] = runparams['fastmode']
-		isacq['mirror'] = runparams['mirror']
-		isacq['student'] = bool(runparams['student'])
-		isacq['init_method'] = "xmipp default"
 		isacq['job'] = self.getISACJobData(runparams)
 
 		### finish alignment run
@@ -405,10 +464,10 @@ class UploadISAC(appionScript.AppionScript):
 			apDisplay.printError("could not find reference stack file: "+refstackfile)
 		alignstackq['stack'] = apStack.getOnlyStackData(runparams['stackid'])
 		alignstackq['boxsize'] = apFile.getBoxSize(alignimagicfilepath)[0]
-		alignstackq['pixelsize'] = apStack.getStackPixelSizeFromStackId(runparams['stackid'])*runparams['bin']
+		alignstackq['pixelsize'] = apStack.getStackPixelSizeFromStackId(self.params['stackid'])*self.params['bin']
 		alignstackq['description'] = runparams['description']
 		alignstackq['hidden'] =  False
-		alignstackq['num_particles'] =  runparams['numpart']
+		alignstackq['num_particles'] =  self.numPart
 
 		### insert
 		if self.params['commit'] is True:
@@ -418,12 +477,12 @@ class UploadISAC(appionScript.AppionScript):
 		return
 
 	#=====================
-	def insertParticlesIntoDatabase(self, stackid, partlist):
+	def insertParticlesIntoDatabase(self, stackid, partList):
 		count = 0
 		inserted = 0
 		t0 = time.time()
 		apDisplay.printColor("Inserting particle alignment data, please wait", "cyan")
-		for partdict in partlist:
+		for partdict in partList:
 			count += 1
 			if count % 100 == 0:
 				sys.stderr.write(".")
@@ -432,32 +491,27 @@ class UploadISAC(appionScript.AppionScript):
 			refq = appiondata.ApAlignReferenceData()
 			refq['refnum'] = partdict['refnum']
 			refq['iteration'] = self.lastiter
-			refsearch = "part"+self.params['timestamp']+"_ref*"+str(partdict['refnum'])+"*"
-			refbase = os.path.splitext(glob.glob(refsearch)[0])[0]
-			refq['mrcfile'] = refbase+".mrc"
+			#refq['mrcfile'] = refbase+".mrc" ### need to create mrcs of each class???
 			refq['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
 			refq['alignrun'] = self.alignstackdata['alignrun']
 			if partdict['refnum']  in self.resdict:
 				refq['ssnr_resolution'] = self.resdict[partdict['refnum']]
-			reffile = os.path.join(self.params['rundir'], refq['mrcfile'])
-			if not os.path.isfile(reffile):
-				emancmd = "proc2d "+refbase+".xmp "+refbase+".mrc"
-				apEMAN.executeEmanCmd(emancmd, verbose=False)
-			if not os.path.isfile(reffile):
-				apDisplay.printError("could not find reference file: "+reffile)
 
 			### setup particle
 			alignpartq = appiondata.ApAlignParticleData()
 			alignpartq['partnum'] = partdict['partnum']
 			alignpartq['alignstack'] = self.alignstackdata
-			stackpartdata = apStack.getStackParticle(stackid, partdict['partnum'])
+			if self.params['alignstackid'] is None:
+				stackpartdata = apStack.getStackParticle(stackid, partdict['origPartNum'])
+			else:
+				stackpartdata = apStack.getStackParticleFromAlignParticle(self.params['alignstackid'], partdict['origPartNum'])				
 			alignpartq['stackpart'] = stackpartdata
 			alignpartq['xshift'] = partdict['xshift']
 			alignpartq['yshift'] = partdict['yshift']
 			alignpartq['rotation'] = partdict['inplane']
 			alignpartq['mirror'] = partdict['mirror']
 			alignpartq['ref'] = refq
-			alignpartq['spread'] = partdict['spread']
+			alignpartq['score'] = partdict['peak']
 
 			### insert
 			if self.params['commit'] is True:
@@ -547,6 +601,8 @@ class UploadISAC(appionScript.AppionScript):
 
 		alignedClassStackHDF = "alignedClasses.hdf"
 		alignedPartStackHDF = "alignedParticles.hdf"
+		apFile.removeStack(alignedClassStackHDF, warn=False)
+		apFile.removeStack(alignedPartStackHDF, warn=False)
 		
 		ISACParser = parseISAC()
 		ISACParser.setAlignParams(self.params)
@@ -561,16 +617,20 @@ class UploadISAC(appionScript.AppionScript):
 		###  align particles to classes AND create aligned stacks
 		ISACParser.alignParticlesToClasses(self.params['localstack'], alignedClassStackHDF, alignedPartStackHDF)
 		alignedPartStack = apEMAN2.stackHDFToIMAGIC(alignedPartStackHDF)
+		self.numPart = sparx.EMUtil.get_image_count(alignedPartStackHDF)
+
+		partList = ISACParser.createPartList()
 		
 		### calculate resolution for each reference
-		#apix = apStack.getStackPixelSizeFromStackId(self.params['stackid'])*self.params['bin']
-		#self.calcResolution(partlist, alignimagicfile, apix)
+		apix = apStack.getStackPixelSizeFromStackId(self.params['stackid'])*self.params['bin']
+		self.calcResolution(partList, alignedPartStack, apix)
 
-		### insert into databse
+		### insert into database
 		self.insertRunIntoDatabase(alignedPartStack, alignedClassStack, self.params)
-		self.insertParticlesIntoDatabase(self.params['stackid'], ISACParser.XXXXXXXXXXXX)
 
-		##apFile.removeStack(self.params['localstack'], warn=False)
+		self.insertParticlesIntoDatabase(self.params['stackid'], partList)
+
+		##apFile.removeStack(self.params['localstack'], warn=True)
 		##apFile.removeFilePattern("start*.hdf")
 
 #=====================
