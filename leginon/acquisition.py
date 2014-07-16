@@ -30,6 +30,7 @@ import smtplib
 import emailnotification
 import leginonconfig
 import gridlabeler
+import itertools
 
 debug = False
 
@@ -147,6 +148,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		'high mean': 2**16,
 		'low mean': 50,
 		'bad stats response': 'Continue',
+		'recheck pause time': 10,
 		'emission off': False,
 		'target offset row': 0,
 		'target offset col': 0,
@@ -704,6 +706,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 			return 'fail'
 
 		if self.settings['bad stats response'] != 'Continue':
+			self.recheck_counter = itertools.count()
 			self.evaluateStats(imagedata['image'])
 
 		## convert float to uint16
@@ -919,6 +922,30 @@ class Acquisition(targetwatcher.TargetWatcher):
 		mes = emailnotification.makeMessage(leginonconfig.emailfrom, leginonconfig.emailto, subject, text)
 		s.sendmail(leginonconfig.emailfrom, leginonconfig.emailto, mes.as_string())
 
+	def pauseAndRecheck(self,pausetime):
+		recheck_count = self.recheck_counter.next()
+		self.logger.info('Pausing for %d s before checking again at %d' % (pausetime,recheck_count))
+		time.sleep(pausetime)
+		## acquire image
+		self.reportStatus('acquisition', 'acquiring image...')
+		self.startTimer('acquire getData')
+		correctimage = self.settings['correct image']
+		try:
+			self.instrument.ccdcamera.SaveRawFrames = False
+		except:
+			pass
+		if correctimage:
+			imagedata = self.acquireCorrectedCameraImageData(channel=0)
+		else:
+			imagedata = self.acquireCameraImageData()
+		self.reportStatus('acquisition', 'image acquired')
+		self.stopTimer('acquire getData')
+		if imagedata is None:
+			return 'fail'
+		imagearray = imagedata['image']
+		self.evaluateStats(imagearray)
+		return
+
 	def respondBadImageStats(self, badstate=''):
 			if self.settings['bad stats response'] == 'Abort all':
 				self.player.stopqueue()
@@ -928,6 +955,8 @@ class Acquisition(targetwatcher.TargetWatcher):
 				self.player.stop()
 				self.logger.info('Skiping targets in this target list')
 				raise BadImageStatsAbort('image mean too '+badstate)
+			elif self.settings['bad stats response'] == 'Recheck':
+				self.pauseAndRecheck(self.settings['recheck pause time'])
 			elif self.settings['bad stats response'] == 'Pause':
 				raise BadImageStatsPause('image mean too '+badstate)
 
@@ -944,6 +973,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 				self.emailBadImageStats(mean)
 			except:
 				self.logger.info('could not email')
+			self.logger.info('mean lower than settings %6.0f' % (mean))
 			self.respondBadImageStats('low')
 
 	def publishImage(self, imdata):
