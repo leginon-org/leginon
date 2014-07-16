@@ -379,6 +379,7 @@ def frame_cut(a, newshape):
 	maxdimx = int( (a.shape[0] / 2.0) + (newshape[0] / 2.0) )
 	mindimy = int( (a.shape[1] / 2.0) - (newshape[1] / 2.0) )
 	maxdimy = int( (a.shape[1] / 2.0) + (newshape[1] / 2.0) )
+	#print mindimx, maxdimx, mindimy, maxdimy
 	return a[mindimx:maxdimx, mindimy:maxdimy]
 
 #=========================
