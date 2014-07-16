@@ -278,6 +278,7 @@ class parseISAC(object):
 			partEMDataList = sparx.EMData.read_images(partStack, particleList, not self.headerOnly)
 			classEMData = sparx.get_im(alignedClassStack, newClassNum)
 			totalPart += len(particleList)
+			print newClassNum, particleList
 			for i in range(len(particleList)):
 				partEMData = partEMDataList[i]
 				partId = particleList[i]
@@ -331,9 +332,10 @@ class parseISAC(object):
 			alignData = self.particleAlignData[origPartId]
 			newClassNum = self.particleClass[origPartId]
 			alpha, x, y, mirror, peak = alignData
+			print newClassNum,origPartId,"-->",newPartId
 			genId, genClassNum = self.newClassToGenClass[newClassNum]
 			partDict = {
-				'refnum': newClassNum,
+				'refnum': newClassNum+1,
 				'partnum': newPartId+1,
 				'origPartNum': origPartId+1,
 				'xshift': x,
@@ -497,10 +499,11 @@ class UploadISAC(appionScript.AppionScript):
 			count += 1
 			if count % 100 == 0:
 				sys.stderr.write(".")
-
 			### setup reference
 			refq = appiondata.ApAlignReferenceData()
 			refq['refnum'] = partdict['refnum']
+			if refq['refnum'] < 1:
+				apDisplay.printError("Classes must start with 1")
 			refq['iteration'] = self.lastiter
 			#refq['mrcfile'] = refbase+".mrc" ### need to create mrcs of each class???
 			refq['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
@@ -512,6 +515,8 @@ class UploadISAC(appionScript.AppionScript):
 			### setup particle
 			alignpartq = appiondata.ApAlignParticleData()
 			alignpartq['partnum'] = partdict['partnum']
+			if alignpartq['partnum'] < 1:
+				apDisplay.printError("Particles must start with 1")
 			alignpartq['alignstack'] = self.alignstackdata
 			if self.params['alignstackid'] is None:
 				stackpartdata = apStack.getStackParticle(stackid, partdict['origPartNum'])
