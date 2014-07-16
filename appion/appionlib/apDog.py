@@ -93,8 +93,9 @@ def diffOfGauss(imgarray0, pixrad, k=1.2):
 	apDisplay.printMsg("filtering particles of size "+str(pixrad)+" +/- "
 		+str(round(pixrange,1))+" pixels")
 	#do the blurring
-	imgarray1 = ndimage.gaussian_filter(imgarray0, sigma=sigma1)
-	imgarray2 = ndimage.gaussian_filter(imgarray1, sigma=sigmaprime)
+	print sigma1, sigmaprime
+	imgarray1 = ndimage.gaussian_filter(imgarray0, sigma=sigma1, mode='wrap')
+	imgarray2 = ndimage.gaussian_filter(imgarray1, sigma=sigmaprime, mode='wrap')
 	#apImage.arrayToJpeg(imgarray1, "imgarray1.jpg")
 	#apImage.arrayToJpeg(imgarray2, "imgarray2.jpg")
 	dogmap = imgarray1-imgarray2
