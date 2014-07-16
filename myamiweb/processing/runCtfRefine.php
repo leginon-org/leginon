@@ -82,7 +82,7 @@ function createForm($extra=false) {
 	$confcheck = ($_POST['confcheck']== 'on') ? 'CHECKED' : '';
 
 	// this query goes too slow for AMI database
-	$pixelsize = 1.0; $ctf->getMinimumPixelSizeForSession($expId)*1e10;
+	$pixelsize = 1.0; //$ctf->getMinimumPixelSizeForSession($expId)*1e10;
 	$nyquistlimit = 2*$pixelsize;
 
 	$reprocess = ($_POST['reprocess']) ? $_POST['reprocess'] : 10;
