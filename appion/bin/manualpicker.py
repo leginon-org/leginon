@@ -594,7 +594,7 @@ class ManualPicker(particleLoop2.ParticleLoop):
 				else:
 					label = 'particle_w/o_label'
 			else:
-				if label not in self.params['labels']:
+				if self.params['labels'] is not None and label not in self.params['labels']:
 					print "ERROR: It is too late to add old labels to the gui"
 			if label not in targets:
 				targets[label] = []
