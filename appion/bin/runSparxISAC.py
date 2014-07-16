@@ -4,40 +4,39 @@ import os
 import time
 import sys
 import math
-import glob
-import cPickle
 import subprocess
 import re
-import numpy
 #appion
-from appionlib import appionScript
+from appionlib import apRemoteJob
 from appionlib import apDisplay
 from appionlib import apFile
 from appionlib import apStack
 from appionlib import apParam
-from appionlib import apXmipp
-from appionlib import appiondata
-from appionlib import apImagicFile
 from appionlib import apProject
-from appionlib import apFourier
-from pyami import spider
+from appionlib import appiondata
 import sinedon
 import MySQLdb
 
 #=====================
 #=====================
-class ISAC(appionScript.AppionScript):
+class ISACJob(apRemoteJob.RemoteJob): # technically not a refine job, but a big job run on a remote cluster
 
 	#=====================
 	def setupParserOptions(self):
+		super(ISACJob,self).setupParserOptions()
+		### basic params
 		self.parser.set_usage("Usage: %prog --stack=ID [ --num-part=# ]")
-		self.parser.add_option("-s", "--stack", dest="stackid", type="int",
+		self.parser.add_option("--stack", dest="stackid", type="int",
 			help="Stack database id", metavar="ID#")
-		self.parser.add_option("-j", "--jobid", dest="jobid", type="int",
-			help="ISAC jobid", metavar="#")
-		self.parser.add_option("-t", "--timestamp", dest="timestamp",
+		self.parser.add_option("--alignstack", dest="alignstackid", type="int",
+			help="Align stack database id", metavar="ID#")
+		self.parser.add_option("--timestamp", dest="timestamp",
 			help="Timestamp of files, e.g. 08nov02b35", metavar="CODE")
-						
+		self.parser.add_option("--nproc", dest="nproc",
+			help="number of processors", metavar="#")
+#		self.parser.add_option("--projectid", dest="projectid", type="int",
+#			help="Project id associated with processing run, e.g. --projectid=159", metavar="#")
+		
 		### filtering, clipping, etc.	
 		self.parser.add_option("--clip", dest="clipsize", type="int",
 			help="Clip size in pixels (reduced box size)", metavar="#")
@@ -47,7 +46,7 @@ class ISAC(appionScript.AppionScript):
 			help="High pass filter radius (in Angstroms)", metavar="#")
 		self.parser.add_option("--bin", dest="bin", type="int", default=1,
 			help="Bin images by factor", metavar="#")
-		self.parser.add_option("-N", "--num-part", dest="numpart", type="int",
+		self.parser.add_option("--num-part", dest="numpart", type="int",
 			help="Number of particles to use", metavar="#")
 			
 		### ISAC params
@@ -130,19 +129,38 @@ class ISAC(appionScript.AppionScript):
 
 	#=====================
 	def checkConflicts(self):
-		if self.params['stackid'] is None:
-			apDisplay.printError("stack id was not defined")
+		### setup correct database after we have read the project id
+		if 'projectid' in self.params and self.params['projectid'] is not None:
+			apDisplay.printMsg("Using split database")
+			# use a project database
+			newdbname = apProject.getAppionDBFromProjectId(self.params['projectid'])
+			sinedon.setConfig('appiondata', db=newdbname)
+			apDisplay.printColor("Connected to database: '"+newdbname+"'", "green")
+		
+		### get stack data
+		self.stack = {}
+		self.stack['data'] = apStack.getOnlyStackData(self.params['stackid'])
+		self.stack['apix'] = apStack.getStackPixelSizeFromStackId(self.params['stackid'])
+		self.stack['part'] = apStack.getOneParticleFromStackId(self.params['stackid'])
+		self.stack['boxsize'] = apStack.getStackBoxsize(self.params['stackid'])
+		self.stack['file'] = os.path.join(self.stack['data']['path']['path'], self.stack['data']['name'])
+
+		### check conflicts
+		if self.params['stackid'] is None and self.params['alignstackid'] is None:
+			apDisplay.printError("stack id OR alignstack id was not defined")
+		if self.params['stackid'] is not None and self.params['alignstackid'] is not None:
+			apDisplay.printError("either specify stack id OR alignstack id, not both")
 		if self.params['generations'] is None:
 			apDisplay.printError("number of generations was not provided")
 		maxparticles = 500000
 		if self.params['numpart'] > maxparticles:
 			apDisplay.printError("too many particles requested, max: "
 				+ str(maxparticles) + " requested: " + str(self.params['numpart']))
-		stackdata = apStack.getOnlyStackData(self.params['stackid'], msg=False)
-		stackfile = os.path.join(stackdata['path']['path'], stackdata['name'])
-		if self.params['numpart'] > apFile.numImagesInStack(stackfile):
+		if self.params['numpart'] > apFile.numImagesInStack(self.stack['file']):
 			apDisplay.printError("trying to use more particles "+str(self.params['numpart'])
-				+" than available "+str(apFile.numImagesInStack(stackfile)))
+				+" than available "+str(apFile.numImagesInStack(self.stack['file'])))
+		if self.params['numpart'] is None:
+			self.params['numpart'] = apFile.numImagesInStack(self.stack['file'])
 
 		boxsize = apStack.getStackBoxsize(self.params['stackid'])
 		if self.params['ou'] is None:
@@ -153,20 +171,17 @@ class ISAC(appionScript.AppionScript):
 				apDisplay.printError("requested clipsize is too big %d > %d"
 					%(self.params['clipsize'],self.clipsize))
 			self.clipsize = self.params['clipsize']
-		if self.params['numpart'] is None:
-			self.params['numpart'] = apFile.numImagesInStack(stackfile)
 		self.mpirun = self.checkMPI()
 		if self.mpirun is None:
 			apDisplay.printError("There is no MPI installed")
-		if self.params['nproc'] is None:
-			self.params['nproc'] = apParam.getNumProcessors()
-		if self.params['nproc'] < 2:
-			apDisplay.printError("Only the MPI version of ISAC is currently supported, must run with > 1 CPU")
+#		if self.params['nproc'] is None:
+#			self.params['nproc'] = apParam.getNumProcessors()
+#		if self.params['nproc'] < 2:
+#			apDisplay.printError("Only the MPI version of ISAC is currently supported, must run with > 1 CPU")
 
 	#=====================
 	def setRunDir(self):
-		self.stackdata = apStack.getOnlyStackData(self.params['stackid'], msg=False)
-		path = self.stackdata['path']['path']
+		path = self.stack['data']['path']['path']
 		uppath = os.path.abspath(os.path.join(path, "../.."))
 		self.params['rundir'] = os.path.join(uppath, "align", self.params['runname'])
 
@@ -174,19 +189,8 @@ class ISAC(appionScript.AppionScript):
 	#=====================		RUNNING ISAC JOB
 	#=====================
 
-	
 	#=====================
-	def dumpParameters(self):
-		self.params['runtime'] = time.time() - self.t0
-		self.params['timestamp'] = self.params['timestamp']
-		paramfile = "isac-"+self.params['timestamp']+"-params.pickle"
-		pf = open(paramfile, "w")
-		cPickle.dump(self.params, pf)
-		pf.close()
-		
-	#=====================
-
-	#=====================
+	'''
 	def readyUploadFlag(self):
 		if self.params['commit'] is False:
 			return
@@ -201,7 +205,7 @@ class ISAC(appionScript.AppionScript):
 		cursor.execute(query)
 		cursor.close()
 		dbc.close()
-#	'''
+	'''
 	
 	#=====================
 	def checkMPI(self):
@@ -226,33 +230,7 @@ class ISAC(appionScript.AppionScript):
 		f.write(apParam.getLogHeader())
 		f.write(text+"\n")
 		f.close()
-
-        def addToTasks(self,tasks,script,mem=2,nproc=1):
-		'''
-		Function to add one line of job command into existing tasks performed by the job.
-		tasks = dictionary containing lists of scripts, mem, and nproc. can be initialized by an empty dictionary
-		mem = task memory requirement required by the task for determining the memory the job need to reserve.
-		nproc = the number of processors required by the task for determining the number of processors the job need to reserve.
-		'''
-		'''
-		This is in the form of list of list for future development
-		'''
-		if len(tasks) == 0:
-			for key in ('scripts','mem','nproc','file'):
-				tasks[key] = []
-		tasks['scripts'].append([script])
-		tasks['mem'].append([mem])
-		tasks['nproc'].append([nproc])
-		return tasks
-
-        def addJobCommands(self,tasks):
-		'''
-		Function to add a series of tasks to the job
-		'''
-		self.command_list.extend(map((lambda x:x[0]),tasks['scripts']))
-		self.min_mem_list.extend(tasks['mem'])
-		self.nproc_list.extend(tasks['nproc'])
-
+	
 	#=====================
 #	def clearIntermediateFiles(self):
 #		for i in range(self.params['generations']):
@@ -260,7 +238,8 @@ class ISAC(appionScript.AppionScript):
 
 	#=====================
 	def start(self):
-#		self.insertISACJob()
+		self.addToLog('.... Setting up new ISAC job ....')
+		self.addToLog('.... Making command for stack pre-processing ....')
 		self.stack = {}
 		self.stack['data'] = apStack.getOnlyStackData(self.params['stackid'])
 		self.stack['apix'] = apStack.getStackPixelSizeFromStackId(self.params['stackid'])
@@ -268,7 +247,16 @@ class ISAC(appionScript.AppionScript):
 		self.stack['boxsize'] = apStack.getStackBoxsize(self.params['stackid'])
 		self.stack['file'] = os.path.join(self.stack['data']['path']['path'], self.stack['data']['name'])
 
-		### srite Sparx jobfile: process stack to local file
+		### send file to remotehost
+		tasks = {}
+		sfhed = self.stack['file'][:-4]+".hed"
+		sfimg = self.stack['file'][:-4]+".img"
+		tasks = self.addToTasks(tasks,"rsync -e 'ssh -o StrictHostKeyChecking=no' -rotouv --partial %s %s:%s/%s" % (sfhed,self.params['localhost'],self.params['remoterundir'],"start1.hed"))
+		tasks = self.addToTasks(tasks,"rsync -e 'ssh -o StrictHostKeyChecking=no' -rotouv --partial %s %s:%s/%s" % (sfimg,self.params['localhost'],self.params['remoterundir'],"start1.img"))
+
+#		print self.params
+
+		### write Sparx jobfile: process stack to local file
 		if self.params['timestamp'] is None:
 			apDisplay.printMsg("creating timestamp")
 			self.params['timestamp'] = self.timestamp
@@ -286,11 +274,13 @@ class ISAC(appionScript.AppionScript):
 			proccmd += " hp="+str(self.params['highpass'])
 		if self.params['lowpass'] is not None and self.params['lowpass'] > 1:
 			proccmd += " lp="+str(self.params['lowpass'])
-		apParam.runCmd(proccmd, "EMAN", verbose=True)
-		if self.params['numpart'] != apFile.numImagesInStack(self.params['localstack']):
-			apDisplay.printError("Missing particles in stack")
-		sparxcmd = "sxcpy.py %s %s.hdf" % (self.params['localstack'], self.params['localstac'][:-4])
-		apParam.runCmd(sparxcmd, "SPARX", verbose=True)
+#		apParam.runCmd(proccmd, "EMAN", verbose=True)
+		self.addSimpleCommand('cd %s' % self.params['rundir'])
+		self.addSimpleCommand(proccmd)
+		sparxcmd = "sxcpy.py %s %s.hdf" % (self.params['localstack'], self.params['localstack'][:-4])
+#		apParam.runCmd(sparxcmd, "SPARX", verbose=True)
+		self.addSimpleCommand(sparxcmd)
+		self.addSimpleCommand("")
 
 		### write Sparx jobfile: run ISAC
 		for i in range(self.params['generations']):
@@ -341,17 +331,18 @@ class ISAC(appionScript.AppionScript):
 			sparxexe = apParam.getExecPath("sxisac.py", die=True)
 			mpiruncmd = self.mpirun+" -np "+str(self.params['nproc'])+" "+sparxexe+" "+sparxopts
 			e2cmd = "e2proc2d.py start%d.hdf start%d.hdf --list=\"generation_%d_unaccounted.txt\"" % (i, i+1, i)
-#			self.writeSparxLog(mpiruncmd)
+			self.addSimpleCommand(mpiruncmd)
+			self.addSimpleCommand(e2cmd)
 
-		### minor post-processing
-		self.createReferenceStack()
-		self.parseOutput()
-#		self.clearIntermediateFiles()
-#		self.readyUploadFlag()
+#		print dir(self)
+#		print self.tasks
+#		print self.commandfile
+#		print self.command_list
+		self.writeCommandListToFile()
 		apParam.dumpParameters(self.params, "isac-"+self.params['timestamp']+"-params.pickle")
 					
 #=====================
 if __name__ == "__main__":
-	isac = ISAC()
+	isac = ISACJob()
 	isac.start()
 	isac.close()
