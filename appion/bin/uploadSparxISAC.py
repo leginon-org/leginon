@@ -128,6 +128,8 @@ class parseISAC(object):
 		f.write("generation\tclassNum\tnumMembers\tmember\n")
 		t1 = time.time()
 		files = self.getGenerationFiles()	
+		self.biggestClassNum = 0
+		mostParticles = 0
 		for genFile in files:
 			t0 = time.time()
 			generation = self.generationFromFile(genFile)
@@ -146,6 +148,7 @@ class parseISAC(object):
 			classInfoList = sparx.EMData.read_images(classFile, [], self.headerOnly)
 			self.classMembersDict[generation] = []
 			classNum = 0
+
 			for classInfo in classInfoList:
 				members = classInfo.get_attr('members')
 				members.sort()
@@ -160,11 +163,16 @@ class parseISAC(object):
 						pass
 				if isinstance(members, numpy.ndarray):
 					members = members.tolist()
+				if len(members) > mostParticles:
+					mostParticles = len(members)
+					self.biggestClassNum = classNum
 				self.classMembersDict[generation].append(members)
 				classNum += 1
 				myStr = self.listToString(members)
 				f.write("%d\t%d\t%d\t%s\n"%(generation, classNum, len(members), myStr))
 		f.close()
+		apDisplay.printMsg( "Biggest class %d has %d particles"
+			%(self.biggestClassNum, mostParticles))
 		apDisplay.printColor("Finished tracking particles in %s"
 			%(apDisplay.timeString(time.time() - t1)), "cyan")	
 		return 
@@ -178,10 +186,11 @@ class parseISAC(object):
 		imageList, self.classToGenerationDict = self.readAndMergeStacks()
 
 		if numClassPerIter is None:
-			numClassPerIter = int(0.01*len(imageList))+1
+			numClassPerIter = int(0.1*len(imageList))+1
 	
 		# randomly select an initial class
 		init = int(random.random()*len(imageList))
+		init = self.biggestClassNum
 		apDisplay.printMsg( "initial align class %d of %d / num classes per iter %d"
 			%(init, len(imageList)-1, numClassPerIter))
 		temp = imageList[init].copy()
@@ -544,14 +553,16 @@ class UploadISAC(appionScript.AppionScript):
 		for refnum in reflistsdict.keys():
 			partlist = reflistsdict[refnum]
 			esttime = 3e-6 * len(partlist) * boxsize**2
-			apDisplay.printMsg("Ref num %d; %d parts; est time %s"
-				%(refnum, len(partlist), apDisplay.timeString(esttime)))
+			if esttime > 2:
+				apDisplay.printMsg("Ref num %d; %d parts; est time %s"
+					%(refnum, len(partlist), apDisplay.timeString(esttime)))
 
 			frcdata = apFourier.spectralSNRStack(alignimagicfile, apix, partlist, msg=False)
 			frcfile = "frcplot-%03d.dat"%(refnum)
 			apFourier.writeFrcPlot(frcfile, frcdata, apix, boxsize)
 			res = apFourier.getResolution(frcdata, apix, boxsize)
-
+			if res < 30:
+				apDisplay.printMsg( "Ref %d; res %.1f A"%(refnum, res))
 			self.resdict[refnum] = res
 
 		return
