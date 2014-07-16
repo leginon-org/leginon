@@ -44,7 +44,7 @@ class Agent (basicAgent.BasicAgent):
 		try:   
 			self.currentJob = self.createJobInst(jobType, command)
 		except Exception, e:
-			sys.stderr.write("Error: Could not create job  %s : %s\n" %(command, e))
+			sys.stderr.write("Error: Could not create job inst %s : %s\n" %(command, e))
 			sys.exit(1)
 			
 		if not self.currentJob:
@@ -97,7 +97,7 @@ class Agent (basicAgent.BasicAgent):
 	#
 	def createJobInst(self, jobType, command):
 		jobInstance = None
-			
+		print "Job type: %s"%(jobType)	
 		if "emanrecon" == jobType:
 			jobInstance = apRefineJobEman.EmanRefineJob(command)
 		elif "frealignrecon" == jobType:
