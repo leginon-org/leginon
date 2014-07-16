@@ -96,6 +96,9 @@ def ellipseRANSAC(edgeMap, ellipseThresh=2, minPercentGoodPoints=0.001,
 		return None
 
 	numSamples = 4
+	if numEdges < numSamples:
+		print "not enough edges"
+		return None
 
 	## count rejects
 	areaReject = 0
@@ -296,6 +299,8 @@ def generateEllipseRangeMap2(ellipseParams, ellipseThresh, shape):
 	'''
 	make an elliptical ring of width 1 based on ellipseParams
 	'''
+	if ellipseParams is None:
+		return None
 	a = ellipseParams['a']
 	b = ellipseParams['b']
 	maxradius = max(a,b)
