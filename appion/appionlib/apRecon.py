@@ -320,10 +320,16 @@ def getParticleCount(refineid, cursor, name="refine_keep", isone=True):
 	return int(count)
 
 #==================
-def getComponentFromVector(vector, iteration):
-	''' NOTE: THIS IS MODIFIED FROM XMIPP ARG.PY LIBRARY IN THE XMIPP_PROTOCOLS DIRECTORY '''
+def getComponentFromVector(vector, iteration, splitter=None):
+	''' 
+	NOTE: THIS IS MODIFIED FROM XMIPP ARG.PY LIBRARY IN THE XMIPP_PROTOCOLS DIRECTORY 
+	'splitter' can be any string, for example, ':' will split on :
+	'''
 
-	listValues = getListFromVector(vector)
+	if splitter is not None:
+		listValues = getListFromVector(vector, splitter)
+	else:
+		listValues = getListFromVector(vector)
 	if listValues is None:
 		return None
 	if iteration<0: iteration=0
@@ -335,12 +341,18 @@ def getComponentFromVector(vector, iteration):
 #---------------------------------------------------------------------------
 # getListFromVector
 #---------------------------------------------------------------------------
-def getListFromVector(vector):
-	''' NOTE: THIS IS MODIFIED FROM XMIPP ARG.PY LIBRARY IN THE XMIPP_PROTOCOLS DIRECTORY '''	
+def getListFromVector(vector, splitter=None):
+	''' 
+	NOTE: THIS IS MODIFIED FROM XMIPP ARG.PY LIBRARY IN THE XMIPP_PROTOCOLS DIRECTORY 
+	'splitter' can be any string, for example, ':' will split on :
+	'''	
 
 	if vector is None:
 		return None
-	intervals = string.split(str(vector))
+	if splitter is not None:
+		intervals = string.split(str(vector), splitter)
+	else:
+		intervals = string.split(str(vector))	
 	if len(intervals) == 0:
 #		raise RuntimeError,"Empty vector"
 		return None
