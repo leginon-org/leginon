@@ -129,6 +129,7 @@ class UploadFrealignScript(reconUploader.generalReconUploader):
 
 		combinefile = "iter%03d/frealign.iter%03d.proc%03d.sh"%(iternum, iternum, iternum)
 		conbinefilepath = os.path.join(recondir, combinefile)
+		apDisplay.printMsg("Reading combine file %s for parameters"%(conbinefilepath))
 		f = open(conbinefilepath, "r")
 		### locate start
 		for line in f:
@@ -177,6 +178,7 @@ class UploadFrealignScript(reconUploader.generalReconUploader):
 		### get symmetry info from card #5
 		apDisplay.printMsg("Found Frealign symmetry %s in card 5"%(cards[5], ))
 		symtext = apFrealign.convertFrealignSymToAppionSym(cards[5])
+		print symtext
 		symmdata = apSymmetry.findSymmetry(symtext)
 		apDisplay.printMsg("Found symmetry %s with id %s"%(symmdata['eman_name'], symmdata.dbid))
 		iterparams['symmdata'] = symmdata
