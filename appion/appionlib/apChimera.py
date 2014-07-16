@@ -70,6 +70,7 @@ def setVolumeMass(volumefile, apix=1.0, mass=1.0, rna=0.0):
 	command = "%s %s %.3f set=%.3f"%(	
 		volumebin, volumefile, apix, mass
 	)
+	print "EMAN: "+command
 	t0 = time.time()
 	proc = subprocess.Popen(command, shell=True)
 	proc.wait()
