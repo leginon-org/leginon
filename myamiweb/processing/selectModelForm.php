@@ -71,11 +71,17 @@ if (is_array($models) && count($models)>0) {
 }
 
 $javafunc="<script src='../js/viewer.js'></script>\n";
+
+if ( $method == "external" ) {
+	$action="runAppionLoop.php?expId=$expId&form=UploadExternalRefine";
+} else {
+	$action="prepRefineForm.php?expId=$expId";
+}
 ?>
 
 <?php processing_header("Appion: Recon Refinement","Select Initial Model for Refinement",$javafunc); ?>
 
-<form name='select_model_form' method='POST' action='prepRefineForm.php?expId=<?php echo $expId; ?>' >
+<form name='select_model_form' method='POST' action='<?php echo $action; ?>' >
 	<P><B>Model:</B><br><A HREF='uploadmodel.php?expId=<?php echo $expId; ?> '>[Upload a new initial model]</A><br /><br />
 	
 	<input type='SUBMIT' NAME='submitstackmodel' VALUE='Use selected model(s)'><br>

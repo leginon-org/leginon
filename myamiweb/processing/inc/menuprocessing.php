@@ -841,6 +841,9 @@ if (is_numeric($expId)) {
 	$nruns[] = array(
 		'name'=>"<a href='uploadstack.php?expId=$sessionId'>Upload stack</a>",
 	);
+	$nruns[] = array(
+		'name'=>"<a href='selectStackForm.php?expId=$sessionId&method=external'>Upload reconstruction</a>",
+	);
 
 	$data[] = array(
 		'action' => array($action, $celloption),

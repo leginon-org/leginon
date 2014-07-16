@@ -244,7 +244,7 @@ function jobForm($extra=false)
 	$html.= "<tr>";
 	$html.= "<td VALIGN='TOP' COLSPAN='2' >";
 	$html.= "<H4 style='align=\'center\' >Processing Host Parameters</H4><hr />";
-	$clusterParamsForm = new ClusterParamsForm();
+	$clusterParamsForm = new ClusterParamsForm("recon");
 	$html.= $clusterParamsForm->generateForm();
 	$html.= "</td>";
 	$html.= "</tr>";
@@ -346,7 +346,7 @@ function createCommand ($extra=False)
 	$remoteoutdir	= $_POST['remoteoutdir'];
 	
 	// verify processing host parameters
-	$clusterParamForm = new ClusterParamsForm();
+	$clusterParamForm = new ClusterParamsForm("recon");
 	$errorMsg .= $clusterParamForm->validate( $_POST );
 	
 	// verify the parameters for the selected method of refinement.

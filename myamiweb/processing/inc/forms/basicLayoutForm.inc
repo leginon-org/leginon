@@ -47,12 +47,12 @@ class BasicLayoutForm extends BasicForm
 	
 	// Override this to output the html required to display program specific parameters
 	// This html will be displayed in the grey column on the right hand side of the appion loop params
-	public function generateAdditionalFormRight() {}
+	public function generateAdditionalFormRight() { return False;}
 	
 	// Override this to output the html required to display program specific parameters
 	// This html will be displayed directly below the appion loop params on the left hand side of the form
 	// TODO: add this function to the generateForm() function when this class is used for something that uses it.
-	public function generateAdditionalFormLeft() {}
+	public function generateAdditionalFormLeft() {return False;}
 	
 	public function generateForm() 
 	{
@@ -128,44 +128,35 @@ class BasicLayoutForm extends BasicForm
 		$html .= "<TABLE BORDER=0 CLASS=tableborder CELLPADDING=15>
 				  <tr>
 					<td VALIGN='TOP'>";
-		
-
-		// Add the Run Parameters Form
-		$showDesc = $this->getShowDesc();
-		$runParamsForm = new RunParametersForm( $runname=$defrunname, $outdir=$outdir, $description='', $showDesc );
-		$html .= $runParamsForm->generateForm();
 			
-
 		if ($this->getUseCluster() ) {
 			$html .= "<br />";
 	    	$html .= "<H4>Cluster Parameters</H4>";
 	   		$html .= "<hr />";
-			$clusterParamsForm = new ClusterParamsForm();
+			$clusterParamsForm = new ClusterParamsForm($this->outDir);
 			$html.= $clusterParamsForm->generateForm();
-		} 
+		} else {
+			// Add the Run Parameters Form
+			$showDesc = $this->getShowDesc();
+			$runParamsForm = new RunParametersForm( $runname=$defrunname, $outdir=$outdir, $description='', $showDesc );
+			$html .= $runParamsForm->generateForm();
+		}
 		
-		// Add the Appion Loop Form
-//		$appionLoopTable = new AppionLoopTable( $checkimage='unrejected', $nowait='', $imgorder='normal', $limit='',$tiltangle='', $maxtiltangle=$maxang, $apcontinue='1',
-//		$commit='on', $presetList=$presetList, $preset="en", $testimage='', $testfilename='' );
-		
-		// Only hide advanced parameters if there is not an advanced user logged in.
-		// Modify user profile to set to an advanced user. 
-		// NOTE: this assumes the Appion user name and the username that is used to log in to the processing page are the same.
-		// We may want to change that someday.
-		$displayAdvanced = $_SESSION['advanced_user'];
-//		$html .= $appionLoopTable->generateForm( $displayAdvanced=$displayAdvanced );
 		$html .= $this->generateAdditionalFormLeft();		
 		$html .= "</td>\n";
 
 		// Add parameters specific to the method selected
-		$html .= "<td class='tablebg' VALIGN='TOP'>\n";
-		$html .= "<table cellpading='5' border='0'>\n";
-		$html .= "<tr><td valign='top'>\n";
-		$html .= $this->generateAdditionalFormRight();
-		$html .= "</td>\n";
-		$html .= "</tr>\n";
-		$html .= "</table>\n";
-		$html .= "</td>\n";
+		$formRight = $this->generateAdditionalFormRight();
+		if ( $formRight ) {
+			$html .= "<td class='tablebg' VALIGN='TOP'>\n";
+			$html .= "<table cellpading='5' border='0'>\n";
+			$html .= "<tr><td valign='top'>\n";
+			$html .= $formRight;
+			$html .= "</td>\n";
+			$html .= "</tr>\n";
+			$html .= "</table>\n";
+			$html .= "</td>\n";
+		}
 		$html .= "</tr>\n";
 		
 		// Add the test image input box
@@ -331,18 +322,13 @@ class BasicLayoutForm extends BasicForm
 	{
 		$msg = parent::validate( $postArray );
 		
-//		$appionLoopTable = new AppionLoopTable();
-//		$msg .= $appionLoopTable->validate( $postArray );
-		
-		$runParametersForm = new RunParametersForm();
-		$msg .= $runParametersForm->validate( $postArray );
-		
 		if ($this->getUseCluster()) {
-			$clusterParamsForm = new ClusterParamsForm();
+			$clusterParamsForm = new ClusterParamsForm($this->outDir);
 			$msg .= $clusterParamsForm->validate( $postArray );
-		} 
-
-		
+		} else {
+			$runParametersForm = new RunParametersForm();
+			$msg .= $runParametersForm->validate( $postArray );
+		}
 		
 		return $msg;
 	}
@@ -352,21 +338,15 @@ class BasicLayoutForm extends BasicForm
 	{	
 		$command = parent::buildCommand( $postArray );
 		
-
-		// add params from run parameters form
-		$runParametersForm = new RunParametersForm();
-		$command .= $runParametersForm->buildCommand( $postArray );
-		
 		if ( $this->getUseCluster() ) {
-			$clusterParamsForm = new ClusterParamsForm();
+			$clusterParamsForm = new ClusterParamsForm($this->outDir);
 			$command .= $clusterParamsForm->buildCommand( $postArray );
+		} else {
+			// add params from run parameters form
+			$runParametersForm = new RunParametersForm();
+			$command .= $runParametersForm->buildCommand( $postArray );
 		}
 
-		
-		// add params from Appion Loop form
-//		$appionLoopTable = new AppionLoopTable();
-//		$command .= $appionLoopTable->buildCommand( $postArray );
-		
 		// add the executable file to the front of the command
 		$command = $this->exeFile . " " . $command;
 		

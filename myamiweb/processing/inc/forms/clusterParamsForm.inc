@@ -15,7 +15,7 @@ class ClusterParamsForm extends BasicForm
 {
 	private $cluster;
 	
-	function __construct( $processinghost='', $nodes='', $ppn='', $rpn='', $mem='', $walltime='', $cput='', $localhost='', $remoteoutdir='' ) 
+	function __construct( $runFolder='', $processinghost='', $nodes='', $ppn='', $rpn='', $mem='', $walltime='', $cput='', $localhost='', $remoteoutdir='' ) 
 	{
 		parent::__construct();		
 		
@@ -40,7 +40,7 @@ class ClusterParamsForm extends BasicForm
 		$walltime 	= ( $walltime == '') ? $this->cluster->getWallTimeDef() : $walltime;
 		$cput 		= ( $cput == '') ? $this->cluster->getCpuTimeDef() : $cput;
 		$localhost 	= ( $localhost == '') ? $this->cluster->getLocalHelperHost() : $localhost;
-		$remoteoutdir = ( $remoteoutdir == '') ? $this->cluster->getPath() : $remoteoutdir;
+		$remoteoutdir = ( $remoteoutdir == '') ? $this->cluster->getPath($runFolder) : $remoteoutdir;
 		
 		$params = $this->getFormParams();
 		

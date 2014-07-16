@@ -184,9 +184,8 @@ class Cluster
 				$addition_parts = array_splice( $parts, $session_index-$appionPathAddon, $appionPathAddon);
 			}			
 		}
-		
-		// TODO: need to pass in the folder name 
-		$rootpath = Path::join( implode( $this->dirSeparator, $addition_parts), $sessionname, "recon" );
+		 
+		$rootpath = Path::join( implode( $this->dirSeparator, $addition_parts), $sessionname );
 		//$rootpath = $sessionname.$this->dirSeparator."recon".$this->dirSeparator;
 		
 		// if no baseoutdir was provided, set it to the current user's home directory 
@@ -201,8 +200,10 @@ class Cluster
 		$this->remoteOutputPath = $this->formatEndPath( $remoteOutputPath ); 		
 	}
 
-	function getPath() {
+	function getPath($outdir="recon") 
+	{
 		$path = $_POST['clusterpath'] ? $_POST['clusterpath'] : $this->remoteOutputPath;
+		$path = Path::join( $path, $outdir );
 		$path = $this->formatEndPath($path);
 		return $path;
 	}
