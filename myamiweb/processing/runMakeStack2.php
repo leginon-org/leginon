@@ -385,7 +385,10 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 			$partrunid=$partrun['DEF_id'];
 			$runname=$partrun['name'];
 			$partstats=$particle->getStats($partrunid);
-			$totparts=commafy($partstats['totparticles']);
+			$numPart = $partstats['totparticles'];
+			if ($numPart == 0)
+				continue;
+			$totparts=commafy($numPart);
 			echo "<option value='$partrunid'";
 			// select previously set part on resubmit
 			if ($partrunval==$partrunid) {
