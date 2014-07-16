@@ -214,7 +214,8 @@ function runProgram() {
 	PART 5: Show or Run Command
 	******************** */
 	// submit command
-	$errors = showOrSubmitCommand($command, $headinfo, 'ctfestimate', 1);
+	$nproc = 1;
+	$errors = showOrSubmitCommand($command, $headinfo, 'ctfestimate', $nproc);
 
 	// if error display them
 	if ($errors)

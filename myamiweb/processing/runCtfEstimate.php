@@ -114,6 +114,7 @@ function runCtfFind() {
 	PART 5: Show or Run Command
 	******************** */
 	// submit command
+	$nproc = 1;
 	$errors = showOrSubmitCommand($command, $headinfo, 'ctfestimate', $nproc);
 
 	// if error display them
