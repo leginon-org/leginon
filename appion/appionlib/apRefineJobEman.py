@@ -95,6 +95,7 @@ class EmanRefineJob(apRefineJob.RefineJob):
 		'''
 		This only covers chiral symmetry of 3d point group
 		'''
+		print "'%s'"%(sym_name)
 		proper = sym_name[0]
 		if proper.lower() == 'c':
 			order = eval(sym_name[1:])
@@ -106,14 +107,20 @@ class EmanRefineJob(apRefineJob.RefineJob):
 			order = 24
 		elif proper.lower() == 'i':
 			order = 60
+		else:
+			apDisplay.printError("Symmetry not found for %s"%(sym_name))
 		return order
 
-	def calcRefineMem(self,ppn,boxsize,sym,ang):
+	def calcRefineMem(self, ppn, boxsize, sym, ang):
+		print "calcRefineMem"
 		foldsym = self.getSymmetryOrder(sym)
+		print "foldsym",foldsym
 		endnumproj = 18000.0/(foldsym*ang*ang)
+		print "endnumproj",endnumproj
 		#need to open all projections and 1024 particles in memory
 		numpartinmem = endnumproj + 1024
 		memneed = numpartinmem*boxsize*boxsize*16.0*ppn
+		print memneed
 		numgiga = math.ceil(memneed/1073741824.0)
 		return int(numgiga)
 
@@ -121,9 +128,14 @@ class EmanRefineJob(apRefineJob.RefineJob):
 		self.addSimpleCommand('ln -s  %s threed.0a.mrc' % self.params['modelnames'][0])
 
 	def makeRefineTasks(self,iter):
+		print self.params['symmetry']
+		print "eman iter %d"%(iter)
 		iter_index = iter - self.params['startiter']
+		print "calc mem"
 		refine_mem = self.calcRefineMem(self.ppn,self.params['boxsize'],self.params['symmetry'],self.params['ang'][iter_index])
+		print refine_mem
 		nproc = self.params['nproc']
+		print "ref params"
 		refineparams,eotestparams = self.setEmanRefineParams(iter)
 		refinetask_list = ['refine','%d'%iter,'proc=%d' % nproc]
 		refinetask_list.extend(self.combineEmanParams(iter_index,refineparams))
@@ -144,11 +156,13 @@ class EmanRefineJob(apRefineJob.RefineJob):
 		tasks = self.addToTasks(tasks,'%s proj.img proj.%d.txt' % (appion_getProjEulers,iter))
 		tasks = self.addToTasks(tasks,' '.join(eotesttask_list)+' > %s' % (eotestlog),refine_mem,nproc)
 		tasks = self.addToTasks(tasks,'/bin/mv -v fsc.eotest fsc.eotest.%d' % (iter))
+		print "get res"
 		appion_getres = os.path.join(self.appion_bin_dir,'getRes.pl')
 		tasks = self.addToTasks(tasks,
 			'%s %d %d %.3f >> resolution.txt' % (appion_getres,iter,self.params['boxsize'], self.params['apix']))
 		tasks = self.logTaskStatus(tasks,'eotest','resolution.txt',iter)
 		tasks = self.addToTasks(tasks,'/bin/rm -fv cls*.lst')
+		print "return"
 		return tasks
 
 if __name__ == '__main__':
