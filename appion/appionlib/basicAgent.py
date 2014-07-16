@@ -29,7 +29,7 @@ class BasicAgent(object):
                 processingHost = torqueHost.TorqueHost(configDict)
             
         except (KeyError, AttributeError):
-            sys.stderr.write("Couldn't determine processing host type, using default\n")
+            sys.stderr.write("Could not determine processing host type, using default\n")
             processingHost = torqueHost.TorqueHost(configDict)
  
         return processingHost
