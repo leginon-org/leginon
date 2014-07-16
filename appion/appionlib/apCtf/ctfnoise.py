@@ -157,7 +157,10 @@ class CtfNoise(object):
 		"""
 		model the noise using: A + B*sqrt(x) + C*x
 		"""
-		z = numpy.polyfit(numpy.sqrt(xdata), ctfdata, 2)
+		try:
+			z = numpy.polyfit(numpy.sqrt(xdata), ctfdata, 2)
+		except:
+			return None, None
 		if self.debug is True:
 			print "poly fit: sqrt(x),y = ", z
 
