@@ -1675,6 +1675,8 @@ class particledata {
 			$s=$this->getStackParams($stackid['stackid']);
 			// get number of particles in each stack
 			$totalp=$this->getNumStackParticles($stackid['stackid']);
+			if ($totalp == 0)
+				continue;
 			$nump=commafy($totalp);
 			// get pixel size of stack
 			$apix=($this->getStackPixelSizeFromStackId($stackid['stackid']))*1e10;
