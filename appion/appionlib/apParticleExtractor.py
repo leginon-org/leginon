@@ -116,7 +116,7 @@ class ParticleExtractLoop(appionLoop2.AppionLoop):
 ############################################################
 
 	############################################################
-	##  skip image if additional criteria is not met
+	##   image if additional criteria is not met
 	############################################################
 	def rejectImage(self, imgdata):
 		shortname = apDisplay.short(imgdata['filename'])
@@ -133,90 +133,97 @@ class ParticleExtractLoop(appionLoop2.AppionLoop):
 	############################################################
 
 	def checkRequireCtf(self):
-		return self.params['ctfcutoff'] or self.params['mindefocus'] or self.params['maxdefocus'] or self.params['ctfres80'] or self.params['ctfres50']
+		try:
+			return self.params['saveRequireCtf']
+		except KeyError:
+			ctfres = self.params['ctfres80min'] or self.params['ctfres50min'] or self.params['ctfres80max'] or self.params['ctfres50max']
+			defoc = self.params['mindefocus'] or self.params['maxdefocus']
+			self.params['saveRequireCtf'] = self.params['ctfcutoff'] or ctfres or defoc
+		return self.params['saveRequireCtf']
 
-	def getCtfValueConfidenceForImage(self, imgdata, msg=False):
-		method = self.params['ctfmethod']
-		ctfrunid = self.params['ctfrunid']
-		if ctfrunid is None:
-			return ctfdb.getBestCtfValueForImage(imgdata,msg=msg,method=method)
-		else:
-			return ctfdb.getCtfValueForImage(imgdata, ctfrunid, msg=msg, method=method)
+	#=======================
+	def getBestCtfValue(self, imgdata, msg=False):
+		if self.params['ctfrunid'] is not None:
+			return ctfdb.getCtfValueForCtfRunId(imgdata, self.params['ctfrunid'], msg=msg)
+		return ctfdb.getBestCtfValue(imgdata, sortType=self.params['ctfsorttype'], method=self.params['ctfmethod'], msg=msg)
 
-	def getDefocusAmpConstForImage(self,imgdata,msg=False):
-		### This function returns defocus defined as negative underfocus
-		method = self.params['ctfmethod']
-		ctfrunid = self.params['ctfrunid']
-		if ctfrunid is None:
-			ctfvalue,conf = ctfdb.getBestCtfValueForImage(imgdata,msg=msg,method=method)
-			# make sure we return a negative underfocus value
-			defocus = -(abs(ctfvalue['defocus1'])+abs(ctfvalue['defocus2']))/2
-			return defocus, ctfvalue['amplitude_contrast']
-		else:
-			return ctfdb.getDefocusAndampcontrastForImage(imgdata, ctf_estimation_runid=ctfrunid, msg=msg, method=method)
 
+	#=======================
 	def checkCtfParams(self, imgdata):
 		shortname = apDisplay.short(imgdata['filename'])
-		ctfvalue, conf = self.getCtfValueConfidenceForImage(imgdata,False)
+		ctfvalue = self.getBestCtfValue(imgdata)
 
 		### check if we have values and if we care
 		if ctfvalue is None:
 			return not self.checkRequireCtf()
 
 		### check that CTF estimation is above confidence threshold
+		conf = ctfdb.calculateConfidenceScore(ctfvalue)
 		if self.params['ctfcutoff'] and conf < self.params['ctfcutoff']:
-			#apDisplay.printColor(shortname+" is below CTF threshold (conf="+str(round(conf,3))+")\n","cyan")
+			apDisplay.printColor(shortname+" is below confidence threshold (conf="+str(round(conf,3))+")\n","cyan")
 			return False
 
 		### check resolution requirement for CTF fit at 0.8 threshold
-		if self.params['ctfres80'] is not None:
-			if not 'resolution_80_percent' in ctfvalue.keys():
+		if self.params['ctfres80min'] is not None or self.params['ctfres80max'] is not None:
+			if not 'resolution_80_percent' in ctfvalue.keys() or ctfvalue['resolution_80_percent'] is None:
+				apDisplay.printColor("%s: no 0.8 resolution found"%(shortname), "cyan")
 				return False
-			if ctfvalue['resolution_80_percent'] > self.params['ctfres80']:
-				### resolution is too poor
+			if self.params['ctfres80max'] and ctfvalue['resolution_80_percent'] > self.params['ctfres80max']:
+				apDisplay.printColor("%s is above resolution threshold %.2f > %.2f"
+					%(shortname, ctfvalue['resolution_80_percent'], self.params['ctfres80max']), "cyan")
+				return False
+			if self.params['ctfres80min'] and ctfvalue['resolution_80_percent'] < self.params['ctfres80min']:
+				apDisplay.printColor("%s is below resolution threshold %.2f > %.2f"
+					%(shortname, ctfvalue['resolution_80_percent'], self.params['ctfres80min']), "cyan")
 				return False
 
 		### check resolution requirement for CTF fit at 0.5 threshold
-		if self.params['ctfres50'] is not None:
-			if not 'resolution_50_percent' in ctfvalue.keys():
+		if self.params['ctfres50min'] is not None or self.params['ctfres50max'] is not None:
+			if not 'resolution_50_percent' in ctfvalue.keys() or ctfvalue['resolution_50_percent'] is None:
+				apDisplay.printColor("%s: no 0.5 resolution found"%(shortname), "cyan")
 				return False
-			if ctfvalue['resolution_50_percent'] > self.params['ctfres50']:
-				### resolution is too poor
+			if self.params['ctfres50max'] and ctfvalue['resolution_50_percent'] > self.params['ctfres50max']:
+				apDisplay.printColor("%s is above resolution threshold %.2f > %.2f"
+					%(shortname, ctfvalue['resolution_50_percent'], self.params['ctfres50max']), "cyan")
+				return False
+			if self.params['ctfres50min'] and ctfvalue['resolution_50_percent'] < self.params['ctfres50min']:
+				apDisplay.printColor("%s is below resolution threshold %.2f > %.2f"
+					%(shortname, ctfvalue['resolution_50_percent'], self.params['ctfres50min']), "cyan")
 				return False
 
-		### get best defocus value
-		### defocus should be in negative meters
-		if ctfvalue['defocus2'] is not None and ctfvalue['defocus1'] != ctfvalue['defocus2']:
-			defocus = (ctfvalue['defocus1'] + ctfvalue['defocus2'])/2.0
-		else:
-			defocus = ctfvalue['defocus1']
-		defocus = -1.0*abs(defocus)	
+		if self.params['mindefocus'] is not None or self.params['maxdefocus'] is not None:
+			### get best defocus value
+			### defocus should be in negative meters
+			if ctfvalue['defocus2'] is not None and ctfvalue['defocus1'] != ctfvalue['defocus2']:
+				defocus = (ctfvalue['defocus1'] + ctfvalue['defocus2'])/2.0
+			else:
+				defocus = ctfvalue['defocus1']
+			defocus = -1.0*abs(defocus)	
 
-		### assume defocus values are ALWAYS negative but mindefocus is greater than maxdefocus
-		if self.params['mindefocus']:
-			self.params['mindefocus'] = -abs( self.params['mindefocus'] )
-		if self.params['maxdefocus']:
-			self.params['maxdefocus'] = -abs( self.params['maxdefocus'] )
-		if self.params['mindefocus'] and self.params['maxdefocus']:
-			if self.params['maxdefocus'] > self.params['mindefocus']:
-				mindef = self.params['mindefocus']
-				maxdef = self.params['maxdefocus']
-				self.params['mindefocus'] = maxdef
-				self.params['maxdefocus'] = mindef
-		### skip micrograph that have defocus above or below min & max defocus levels
-		if self.params['mindefocus'] and defocus > self.params['mindefocus']:
-			#apDisplay.printColor(shortname+" defocus ("+str(round(defocus*1e6,2))+\
-			#	" um) is less than mindefocus ("+str(self.params['mindefocus']*1e6)+" um)\n","cyan")
-			return False
-		if self.params['maxdefocus'] and defocus < self.params['maxdefocus']:
-			#apDisplay.printColor(shortname+" defocus ("+str(round(defocus*1e6,2))+\
-			#	" um) is greater than maxdefocus ("+str(self.params['maxdefocus']*1e6)+" um)\n","cyan")
-			return False
+			### assume defocus values are ALWAYS negative but mindefocus is greater than maxdefocus
+			if self.params['mindefocus']:
+				self.params['mindefocus'] = -abs( self.params['mindefocus'] )
+			if self.params['maxdefocus']:
+				self.params['maxdefocus'] = -abs( self.params['maxdefocus'] )
+			if self.params['mindefocus'] and self.params['maxdefocus']:
+				if self.params['maxdefocus'] > self.params['mindefocus']:
+					mindef = self.params['mindefocus']
+					maxdef = self.params['maxdefocus']
+					self.params['mindefocus'] = maxdef
+					self.params['maxdefocus'] = mindef
+			### skip micrograph that have defocus above or below min & max defocus levels
+			if self.params['mindefocus'] and defocus > self.params['mindefocus']:
+				#apDisplay.printColor(shortname+" defocus ("+str(round(defocus*1e6,2))+\
+				#	" um) is less than mindefocus ("+str(self.params['mindefocus']*1e6)+" um)\n","cyan")
+				return False
+			if self.params['maxdefocus'] and defocus < self.params['maxdefocus']:
+				#apDisplay.printColor(shortname+" defocus ("+str(round(defocus*1e6,2))+\
+				#	" um) is greater than maxdefocus ("+str(self.params['maxdefocus']*1e6)+" um)\n","cyan")
+				return False
 
 		return True
 
-	#=======================
-	
+
 	#=======================
 	def checkDefocus(self, defocus, shortname):
 		if defocus > 0:
@@ -275,10 +282,14 @@ class ParticleExtractLoop(appionLoop2.AppionLoop):
 			help="Bin the particles after extracting", metavar="#")
 		self.parser.add_option("--ctfcutoff", dest="ctfcutoff", type="float",
 			help="CTF confidence cut off")
-		self.parser.add_option("--ctfres80", dest="ctfres80", type="float",
-			help="resolution requirement for CTF fit at 0.8 threshold")
-		self.parser.add_option("--ctfres50", dest="ctfres50", type="float",
-			help="resolution requirement for CTF fit at 0.5 threshold")
+		self.parser.add_option("--ctfres80min", dest="ctfres80min", type="float",
+			help="min resolution requirement at 0.8 threshold (rarely used)")
+		self.parser.add_option("--ctfres50min", dest="ctfres50min", type="float",
+			help="min resolution requirement at 0.5 threshold (rarely used)")
+		self.parser.add_option("--ctfres80max", dest="ctfres80max", type="float",
+			help="max resolution requirement for CTF fit at 0.8 threshold")
+		self.parser.add_option("--ctfres50max", dest="ctfres50max", type="float",
+			help="max resolution requirement for CTF fit at 0.5 threshold")
 
 		self.parser.add_option("--mincc", dest="correlationmin", type="float",
 			help="particle correlation mininum")
@@ -434,7 +445,6 @@ class ParticleExtractLoop(appionLoop2.AppionLoop):
 		if self.checkCtfParams(imgdata) is False:
 			return False
 		return None
-
 
 	#=======================
 	def processImage(self, imgdata):

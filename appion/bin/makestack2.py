@@ -346,8 +346,8 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 
 	def postProcessParticleStack(self,imgdata,imgstackfile,boxedpartdatas,parttree_length):
 		### if xmipp-norm before phaseflip:
-		if self.params['xmipp-norm'] is not None and self.params['xmipp-norm-before'] is True:
-			self.xmippNormStack(imgstackfile)
+		#if self.params['xmipp-norm'] is not None and self.params['xmipp-norm-before'] is True:
+		#	self.xmippNormStack(imgstackfile)
 
 		### phase flipping
 		t0 = time.time()
@@ -504,7 +504,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 		### check to make sure defocus is a reasonable value for applyctf
 		self.checkDefocus(defocus, self.shortname)
 		### get all CTF parameters, we also need to get the CS value from the database
-		ctfdata, score = self.getCtfValueConfidenceForImage(imgdata, False)
+		ctfdata = self.getBestCtfValue(imgdata, False)
 		#ampconst = ctfdata['amplitude_contrast'] ### we could use this too
 
 		# find cs
@@ -556,7 +556,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 		defocus *= 1.0e6
 		self.checkDefocus(defocus, self.shortname)
 		### get all CTF parameters, we also need to get the CS value from the database
-		ctfdata, score = self.getCtfValueConfidenceForImage(imgdata,False)
+		ctfdata = self.getBestCtfValue(imgdata,False)
 		#ampconst = ctfdata['amplitude_contrast'] ### we could use this too
 
 		# find cs
@@ -583,7 +583,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 	def phaseFlipAceTwo(self, inimgpath, imgdata):
 
 		apix = apDatabase.getPixelSize(imgdata)
-		bestctfvalue, bestconf = self.getCtfValueConfidenceForImage(imgdata, True)
+		bestctfvalue = self.getBestCtfValue(imgdata, True)
 
 		if bestctfvalue is None:
 			apDisplay.printWarning("No ctf estimation for current image")
@@ -621,7 +621,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 			amp = bestctfvalue['amplitude_contrast']
 			kv = imgdata['scope']['high tension']/1000
 			cs = self.getCS(bestctfvalue)/1000
-			conf = bestctfvalue['confidence_d']
+			conf = ctfdb.calculateConfidenceScore(bestctfvalue)
 
 			if os.path.isfile(ctfvaluesfile):
 				os.remove(ctfvaluesfile)
@@ -698,7 +698,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 		phaseflip whole image using spider
 		"""
 
-		bestctfvalue, bestconf = self.getCtfValueConfidenceForImage(imgdata, True)
+		bestctfvalue = self.getBestCtfValue(imgdata, True)
 
 		if bestctfvalue is None:
 			apDisplay.printWarning("No ctf estimation for current image")
@@ -945,7 +945,8 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 	def setupParserOptions(self):
 		super(Makestack2Loop,self).setupParserOptions()
 
-		self.flipoptions = ('emanimage', 'emanpart', 'emantilt', 'spiderimage', 'ace2image','ace2imagephase')
+		self.flipoptions = ('emanimage', 'emanpart', 'emantilt', 'spiderimage', 'ace2image', 'ace2imagephase')
+		self.sortoptions = ('res80', 'res50', 'resplus', 'maxconf', 'conf3010', 'conf5peak', 'crosscorr')
 		### values
 		self.parser.add_option("--single", dest="single", default="start.hed",
 			help="create a single stack")
@@ -990,6 +991,9 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 		self.parser.add_option("--flip-type", dest="fliptype",
 			help="CTF correction method", metavar="TYPE",
 			type="choice", choices=self.flipoptions, default="emanpart" )
+		self.parser.add_option("--sort-type", dest="ctfsorttype",
+			help="CTF sorting method", metavar="TYPE",
+			type="choice", choices=self.sortoptions, default="res80" )
 
 	#=======================
 	def checkConflicts(self):
@@ -1021,8 +1025,8 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 		if self.params['maskassess'] is not None and not self.params['checkmask']:
 			apDisplay.printMsg("running mask assess")
 			self.params['checkmask'] = True
-		if self.params['xmipp-norm'] is not None and self.params['xmipp-norm-before'] is not None:
-			self.xmippexe = apParam.getExecPath("xmipp_normalize", die=True)
+		#if self.params['xmipp-norm'] is not None and self.params['xmipp-norm-before'] is not None:
+		#	self.xmippexe = apParam.getExecPath("xmipp_normalize", die=True)
 		if self.params['particlelabel'] == 'user' and self.params['rotate'] is True:
 			apDisplay.printError("User selected targets do not have rotation angles")
 		if self.params['particlelabel'] == 'helical' and self.params['rotate'] is False:
@@ -1102,8 +1106,8 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 				apStackMeanPlot.makeStackMeanPlot(stackid)
 
 		### apply xmipp normalization
-		if self.params['xmipp-norm'] is not None and self.params['xmipp-norm-before'] is False:
-			self.xmippNormStack(stackpath)
+		#if self.params['xmipp-norm'] is not None and self.params['xmipp-norm-before'] is False:
+		#	self.xmippNormStack(stackpath)
 
 		apDisplay.printColor("Timing stats", "blue")
 		self.printTimeStats("Batch Boxer", self.batchboxertimes)
@@ -1114,6 +1118,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 
 	#=======================
 	def xmippNormStack(self, stackpath):
+			return
 			### convert stack into single spider files
 			selfile = apXmipp.breakupStackIntoSingleFiles(stackpath)	
 

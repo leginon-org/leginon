@@ -114,8 +114,10 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	$ctfval = ($_POST['aceconf']=='on') ? $_POST['ctf'] : '0.8';
 	$ctfrescheck = ($_POST['ctfres']=='on') ? 'CHECKED' : '';
 	$ctfresdisable = ($_POST['ctfres']=='on') ? '' : 'DISABLED';
-	$ctfres80 = ($_POST['ctfres']=='on') ? $_POST['ctfres80'] : '';
-	$ctfres50 = ($_POST['ctfres']=='on') ? $_POST['ctfres50'] : '';
+	$ctfres80max = ($_POST['ctfres']=='on') ? $_POST['ctfres80max'] : '';
+	$ctfres50max = ($_POST['ctfres']=='on') ? $_POST['ctfres50max'] : '';
+	$ctfres80min = ($_POST['ctfres']=='on') ? $_POST['ctfres80min'] : '';
+	$ctfres50min = ($_POST['ctfres']=='on') ? $_POST['ctfres50min'] : '';
 	// correlation check params
 	$selexminval = ($_POST['partcutoff']=='on') ? $_POST['correlationmin'] : '0.5';
 	$selexmaxval = ($_POST['partcutoff']=='on') ? $_POST['correlationmax'] : '1.0';
@@ -149,6 +151,15 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 		$ctfoptions['emantilt'] = 'EMAN PhaseFlip by Tilt Location';
 		$limitedctfoptions['emantilt'] = 'EMAN PhaseFlip by Tilt Location';
 	}
+	$ctfsortoptions = array(
+		'res80'=>'Resolution 0.8 criteria',
+		'res50'=>'Resolution 0.5 criteria',
+		'resplus'=>'Sum of Res 0.5 + Res 0.8',
+		'maxconf'=>'Maximum confidence value',
+		'conf3010'=>'Confidence btw 1/30A and 1/10A',
+		'conf5peak'=>'5 peaks confidence',
+		'crosscorr'=>'CtfFind cross correlation',
+	);
  
 	$javascript="<script src='../js/viewer.js'></script>
 	<script type='text/javascript'>
@@ -165,12 +176,19 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 
 	function enablectfres() {
 		if (document.viewerform.ctfres.checked){
-			document.viewerform.ctfres80.disabled=false;
-			document.viewerform.ctfres50.disabled=false;
-			document.viewerform.ctfres50.value='';
+			document.viewerform.ctfres80max.disabled=false;
+			document.viewerform.ctfres50max.disabled=false;
+			document.viewerform.ctfres80min.disabled=false;
+			document.viewerform.ctfres50min.disabled=false;
+			document.viewerform.ctfres80max.value='';
+			document.viewerform.ctfres50max.value='';
+			document.viewerform.ctfres80min.value='';
+			document.viewerform.ctfres50min.value='';
 		} else {
-			document.viewerform.ctfres80.disabled=true;
-			document.viewerform.ctfres50.disabled=true;
+			document.viewerform.ctfres80max.disabled=true;
+			document.viewerform.ctfres50max.disabled=true;
+			document.viewerform.ctfres80min.disabled=true;
+			document.viewerform.ctfres50min.disabled=true;
 		}
 	}
 
@@ -219,8 +237,10 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	function enablectftype() {
 		if (document.viewerform.ctfcorrect.checked){
 			document.viewerform.ctfcorrecttype.disabled=false;
+			document.viewerform.ctfsorttype.disabled=false;
 		} else {
 			document.viewerform.ctfcorrecttype.disabled=true;
+			document.viewerform.ctfsorttype.disabled=true;
 		}
 	}
 
@@ -302,24 +322,6 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	echo "<input type='checkbox' name='stackinv' $invcheck>\n";
 	echo docpop('stackinv','Invert image density');
 	echo "<br/>\n";
-
-	if ($ctfdata) {
-		echo"<input type='checkbox' name='ctfcorrect' onclick='enablectftype(this)' $phasecheck>\n";
-		echo docpop('ctfcorrect','Ctf Correct Particle Images');
-		echo "<br/>\n";
-
-		echo "Ctf Correct Method:\n";
-		echo "&nbsp;&nbsp;<select name='ctfcorrecttype' ";
-		if (!$phasecheck) echo " disabled";
-		echo ">\n";
-		if ($xmippbeforecheck) $ctfoptions=$limitedctfoptions;
-		foreach ($ctfoptions as $key => $text) {
-			$selected = ($_POST['ctfcorrecttype']==$key) ? 'SELECTED':'';
-			echo "<option value='$key' $selected>$text</option>";
-		}
-		echo "</select>\n";
-		echo "<br/>\n";
-	}
 
 	//
 	// STARTING ADVANCED SECTION 1
@@ -498,11 +500,123 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	echo "<br/>\n";
 
 	if ($ctfdata) {
+		echo "<table style='border: 1px solid black; padding:5px; background-color:#f9f9ff; ' ><tr ><td>\n\n";
+
+		// use ctf correction
+		echo"<input type='checkbox' name='ctfcorrect' onclick='enablectftype(this)' $phasecheck>\n";
+		echo docpop('ctfcorrect','Ctf Correct Particle Images');
+
+		echo "<br/><br/>";
+		echo "</td></tr><tr><td>\n\n";
+
+		// select correction method
+		echo docpop('ctfcorrectmeth','CTF Correction Method');
+		echo "<br/>\n";
+		echo "&nbsp;&nbsp;<select name='ctfcorrecttype' ";
+		if (!$phasecheck) echo " disabled";
+		echo ">\n";
+		if ($xmippbeforecheck) $ctfoptions=$limitedctfoptions;
+		foreach ($ctfoptions as $key => $text) {
+			$selected = ($_POST['ctfcorrecttype']==$key) ? 'SELECTED':'';
+			echo "<option value='$key' $selected>$text</option>";
+		}
+		echo "</select>\n";
+
+		echo "<br/><br/>";
+		echo "</td></tr><tr><td>\n\n";
+
+		// select cutoff types method
+		echo docpop('ctfsort','CTF Sorting Method');
+		echo "<br/>\n";
+		echo "&nbsp;&nbsp;<select name='ctfsorttype' ";
+		if (!$phasecheck) echo " disabled";
+		echo ">\n";
+		foreach ($ctfsortoptions as $key => $text) {
+			$selected = ($_POST['ctfsorttype']==$key) ? 'SELECTED':'';
+			echo "<option value='$key' $selected>$text</option>";
+		}
+		echo "</select>\n";
+
+		echo "<br/>";
+
+		$empty_array=array(array('DEF_id'=> 0,'name' => 'all'));
+		$ctfruns=array_merge ($empty_array,$ctfruns);
+		echo "-OR- choose a ctf run:\n";
+		echo "&nbsp;&nbsp;<select name='ctfrunID'>\n";
+		foreach ($ctfruns as $ctfrun) {
+			$ID=$ctfrun['DEF_id'];
+			$ctfname=$ctfrun['name'];
+			$selected = ($_POST['ctfrunID']==$ID) ? 'SELECTED':'';
+			echo "<option value='$ID' $selected>$ctfname ($ID)</option>";
+		}
+		echo "</select>\n";
+
+		echo "<br/>";
+
+			// give option of only using ctffind values
+		if ($ctffindids) {
+			echo "-OR- <input type='checkbox' name='ctffindonly' $ctffindcheck>\n";
+			echo docpop('ctffindonly','Only use CTFFIND values');
+			echo "<br/>\n";
+		}
+
+		echo "<br/><br/>";
+		echo "</td></tr><tr><td>\n\n";
+
+		// confidence cutoff
 		echo"<input type='checkbox' name='aceconf' onclick='enablectf(this)' $ctfcheck>\n";
 		echo docpop('aceconf','CTF Confidence Cutoff');
 		echo "<br />\n";
 		echo "Use Values Above:<input type='text' name='ctf' $ctfdisable value='$ctfval' size='4'>
 		(between 0.0 - 1.0)\n";
+
+		echo "<br/><br/>";
+		echo "</td></tr><tr><td>\n\n";
+
+		// resolution cutoff
+		echo"<input type='checkbox' name='ctfres' onclick='enablectfres(this)' $ctfrescheck>\n";
+		echo docpop('ctfres','CTF Resolution Cutoff');
+		echo "<br />\n";
+		echo "&nbsp;&nbsp;Resolution range at 0.8 criteria: <br/>";
+			echo "between <input type='text' name='ctfres80min' value='$ctfres80min' size='4' $ctfresdisable>";
+			echo "and <input type='text' name='ctfres80max' value='$ctfres80max' size='4' $ctfresdisable>";
+			echo "&nbsp; <i>(in &Aring;ngstroms)</i>\n";
+		echo "<br/>\n";
+		echo "&nbsp;&nbsp;Resolution range at 0.5 criteria: <br/>";
+			echo "between <input type='text' name='ctfres50min' value='$ctfres50min' size='4' $ctfresdisable>";
+			echo "and <input type='text' name='ctfres50max' value='$ctfres50max' size='4' $ctfresdisable>";
+			echo "&nbsp; <i>(in &Aring;ngstroms)</i>\n";
+
+		echo "<br/><br/>";
+		echo "</td></tr><tr><td>\n\n";
+
+		// defocus cutoff
+		$fields = array('defocus1', 'defocus2');
+		$bestctf = $particle->getBestStats($fields, $sessionId);
+		// make sure defocus is always negative
+		$min=-1*abs($bestctf['defocus1'][0]['min']);
+		$max=-1*abs($bestctf['defocus1'][0]['max']);
+		//echo $min."<br/>\n";
+		//echo $max."<br/>\n";
+		// check if user has changed values on submit
+		$minval = ($_POST['dfmin']!=$min && $_POST['dfmin']!='' && $_POST['dfmin']!='-') ? $_POST['dfmin'] : $min;
+		$maxval = ($_POST['dfmax']!=$max && $_POST['dfmax']!='' && $_POST['dfmax']!='-') ? $_POST['dfmax'] : $max;
+		$minval = preg_replace("%E%","e",round($minval,8));
+		$maxval = preg_replace("%E%","e",round($maxval,8));
+		$mindbval = preg_replace("%E%","e",round($min,8));
+		$maxdbval = preg_replace("%E%","e",round($max,8));
+		echo"<b>Defocus Limits</b><br />
+				Min <input type='text' name='dfmin' value='$minval' size='8'>
+				<input type='hidden' name='dbmin' value='$mindbval'>
+			 & Max
+				<input type='text' name='dfmax' value='$maxval' size='8'>
+				<input type='hidden' name='dbmax' value='$maxdbval'>
+			\n";
+		echo "<br/>\n";
+		echo "<br/>\n";
+
+
+		echo "</td></tr></table>\n";
 		echo "<br/>\n";
 		echo "<br/>\n";
 	}
@@ -520,21 +634,6 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 		echo "<div id='Advanced_Stack_Options_2' style='display: none'>\n";
 	}
 	echo "<br/>\n";
-
-	if ($ctfdata) {
-		echo"<input type='checkbox' name='ctfres' onclick='enablectfres(this)' $ctfrescheck>\n";
-		echo '<b>CTF Resolution Cutoff</b>';
-		echo "<br />\n";
-		echo "&nbsp;&nbsp;Required Resolutions at 80%: ";
-			echo "<input type='text' name='ctfres80' value='$ctfres80' size='4' $ctfresdisable>";
-			echo "&nbsp; <i>(in &Aring;ngstroms)</i>\n";
-		echo "<br/>\n";
-		echo "&nbsp;&nbsp;Required Resolutions at 50%: ";
-			echo "<input type='text' name='ctfres50' value='$ctfres50' size='4' $ctfresdisable>";
-			echo "&nbsp; <i>(in &Aring;ngstroms)</i>\n";
-		echo "<br/>\n";
-		echo "<br/>\n";
-	}
 
 	$massessruns=count($massessrunIds);
 	$massessname = '';
@@ -602,29 +701,6 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 //		Use Ice Thinner Than:<input type='text' name='ice' $icedisable value='$iceval' size='4'>
 //		(between 0.0 - 1.0)\n";
 
-	if ($ctfdata) {
-		$empty_array=array(array('DEF_id'=> 0,'name' => 'all'));
-		$ctfruns=array_merge ($empty_array,$ctfruns);
-		echo "Choice of Ctf run:\n";
-		echo "&nbsp;&nbsp;<select name='ctfrunID'>\n";
-		foreach ($ctfruns as $ctfrun) {
-			$ID=$ctfrun['DEF_id'];
-			$ctfname=$ctfrun['name'];
-			$selected = ($_POST['ctfrunID']==$ID) ? 'SELECTED':'';
-			echo "<option value='$ID' $selected>$ctfname ($ID)</option>";
-		}
-		echo "</select>\n";
-		echo "<br/>\n";
-	
-		// give option of only using ctffind values
-		if ($ctffindids) {
-			echo "<input type='checkbox' name='ctffindonly' $ctffindcheck>\n";
-			echo docpop('ctffindonly','Only use CTFFIND values');
-			echo "<br/>\n";
-		}
-	}
-
-
 	echo"<input type='checkbox' name='partcutoff' onclick='enableselex(this)' $selexcheck>\n";
 	echo docpop('partcutoff','Particle Correlation Cutoff');
 	echo "<br />\n";
@@ -638,33 +714,6 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	echo docpop('stackdfpair','Use defocal pairs');
 	echo "<br/>\n";
 	echo "<br/>\n";
-
-	//if there is CTF data, show min & max defocus range
-	if ($ctfdata) {
-		$fields = array('defocus1', 'defocus2');
-		$bestctf = $particle->getBestStats($fields, $sessionId);
-		// make sure defocus is always negative
-		$min=-1*abs($bestctf['defocus1'][0]['min']);
-		$max=-1*abs($bestctf['defocus1'][0]['max']);
-		//echo $min."<br/>\n";
-		//echo $max."<br/>\n";
-		// check if user has changed values on submit
-		$minval = ($_POST['dfmin']!=$min && $_POST['dfmin']!='' && $_POST['dfmin']!='-') ? $_POST['dfmin'] : $min;
-		$maxval = ($_POST['dfmax']!=$max && $_POST['dfmax']!='' && $_POST['dfmax']!='-') ? $_POST['dfmax'] : $max;
-		$minval = preg_replace("%E%","e",round($minval,8));
-		$maxval = preg_replace("%E%","e",round($maxval,8));
-		$mindbval = preg_replace("%E%","e",round($min,8));
-		$maxdbval = preg_replace("%E%","e",round($max,8));
-		echo"<b>Defocus Limits</b><br />
-				<input type='text' name='dfmin' value='$minval' size='25'>
-				<input type='hidden' name='dbmin' value='$mindbval'>
-			Minimum<br/>
-				<input type='text' name='dfmax' value='$maxval' size='25'>
-				<input type='hidden' name='dbmax' value='$maxdbval'>
-			Maximum\n";
-		echo "<br/>\n";
-		echo "<br/>\n";
-	}
 
 
 	echo docpop('stacklim','Limit # of particles to: ');
@@ -751,6 +800,7 @@ function runMakestack() {
 	$stacknorm = ($_POST['stacknorm']=='on') ? True : False;
 	$ctfcorrect = ($_POST['ctfcorrect']=='on') ? 'ctfcorrect' : '';
 	$ctfcorrecttype = $_POST['ctfcorrecttype'];
+	$ctfsorttype = $_POST['ctfsorttype'];
 	$ctfrunID = $_POST['ctfrunID'];
 	$stig = ($_POST['stig']=='on') ? 'stig' : '';
 	$commit = ($_POST['commit']=="on") ? 'commit' : '';
@@ -800,10 +850,10 @@ function runMakestack() {
 
 
 	// xmipp normalization
-	if ($_POST['xmippstacknorm']=='on') {
+	/*if ($_POST['xmippstacknorm']=='on') {
 		$xmippnorm=$_POST['xmippnormval'];
 		if ($xmippnorm <= 0 || !$xmippnorm) createMakestackForm("<b>ERROR:</b> Xmipp sigma must be greater than 0" );
-	}
+	}*/
 
 	// binning amount
 	$bin=$_POST['bin'];
@@ -851,12 +901,22 @@ function runMakestack() {
 
 	// ctf resolution
 	if ($_POST['ctfres']=='on') {
-		$ctfres80=$_POST['ctfres80'];
-		if ($ctfres80 && !is_numeric($ctfres80) )
-			createMakestackForm("<b>ERROR:</b> CTF resolution cutoffs must be a number");
-		$ctfres50=$_POST['ctfres50'];
-		if ($ctfres50 && !is_numeric($ctfres50) )
-			createMakestackForm("<b>ERROR:</b> CTF resolution cutoffs must be a number");
+		$ctfres80min=$_POST['ctfres80min'];
+		if ($ctfres80min && !is_numeric($ctfres80min) )
+			createMakestackForm("<b>ERROR:</b> CTF resolution cutoffs must be a number or blank");
+		$ctfres50min=$_POST['ctfres50min'];
+		if ($ctfres50min && !is_numeric($ctfres50min) )
+			createMakestackForm("<b>ERROR:</b> CTF resolution cutoffs must be a number or blank");
+		$ctfres80max=$_POST['ctfres80max'];
+		if ($ctfres80max && !is_numeric($ctfres80max) )
+			createMakestackForm("<b>ERROR:</b> CTF resolution cutoffs must be a number or blank");
+		$ctfres50max=$_POST['ctfres50max'];
+		if ($ctfres50max && !is_numeric($ctfres50max) )
+			createMakestackForm("<b>ERROR:</b> CTF resolution cutoffs must be a number or blank");
+		if ($ctfres50max && $ctfres50min && $ctfres50max < $ctfres50min )
+			createMakestackForm("<b>ERROR:</b> CTF resolution cutoffs min must be less than the max");
+		if ($ctfres80max && $ctfres80min && $ctfres80max < $ctfres80min )
+			createMakestackForm("<b>ERROR:</b> CTF resolution cutoffs min must be less than the max");
 	}
 
 	// correlation cutoff
@@ -909,21 +969,25 @@ function runMakestack() {
 	if ($lp) $command.="--lowpass=$lp ";
 	if ($hp) $command.="--highpass=$hp ";
 	$command.= ($invert) ? "--invert " : "--no-invert ";
-	if ($stacknorm) $command.="--normalized ";
-	if ($xmippnorm) $command.="--xmipp-normalize=$xmippnorm ";
-	if ($_POST['xmippbefore']=='on') $command.="--xmipp-norm-before ";
+	//if ($stacknorm) $command.="--normalized ";
+	//if ($xmippnorm) $command.="--xmipp-normalize=$xmippnorm ";
+	//if ($_POST['xmippbefore']=='on') $command.="--xmipp-norm-before ";
 	if ($ctfcorrect) { 
-		$command.="--phaseflip --flip-type=$ctfcorrecttype ";
+		$command.="--phaseflip --flip-type=$ctfcorrecttype --sort-type=$ctfsorttype ";
 	}
 	if ($massessname) $command.="--maskassess=$massessname ";
 	$command.="--boxsize=$boxsize ";
 	if ($bin > 1) $command.="--bin=$bin ";
 	if ($ctf) $command.="--ctfcutoff=$ctf ";
 	if ($_POST['ctfres']=='on') {
-		if ($_POST['ctfres80'])
-			$command.="--ctfres80=$ctfres80 ";
-		if ($_POST['ctfres50'])
-			$command.="--ctfres50=$ctfres50 ";
+		if ($_POST['ctfres80min'])
+			$command.="--ctfres80min=$ctfres80min ";
+		if ($_POST['ctfres50min'])
+			$command.="--ctfres50min=$ctfres50min ";
+		if ($_POST['ctfres80max'])
+			$command.="--ctfres80max=$ctfres80max ";
+		if ($_POST['ctfres50max'])
+			$command.="--ctfres50max=$ctfres50max ";
 	}
 
 	if ($stackdfpair) $command.="--defocpair ";
@@ -963,6 +1027,7 @@ function runMakestack() {
 	PART 5: Show or Run Command
 	******************** */
 	// submit command
+	$nproc = 2;
 	$errors = showOrSubmitCommand($command, $headinfo, 'makestack2', $nproc);
 
 	// if error display them
