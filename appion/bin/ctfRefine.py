@@ -652,7 +652,7 @@ class RefineCTF(appionLoop2.AppionLoop):
 		#ctfdb.getBestCtfByResolution(self.imgdata)
 		self.printBestValues()
 		apDisplay.printColor(
-			"FMIN :: defRatio=%.3f < a=%.1f , d=%.2e == %.2fA (%d)"
+			"FMIN :: defRatio=%.5f <a=%.3f , d=%.2e == %.2fA (iter %d)"
 				%(ellipRatio**2, -math.degrees(ellipAlpha), defocus, avgres, self.fminCount),
 			"cyan")
 		return avgres
