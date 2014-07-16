@@ -2,6 +2,7 @@
 
 #pythonlib
 import os
+import sys
 import shutil
 import time
 import numpy
@@ -277,6 +278,7 @@ class ImageLoader(appionLoop2.AppionLoop):
 			if load > 2.0:
 				apDisplay.printMsg("Load average is high %.2f"%(load))
 				sleeptime = min(load, 60)
+				apDisplay.printMsg("Sleeping %.1f seconds"%(sleeptime))
 				time.sleep(load)
 
 			self._printSummary()
@@ -495,6 +497,26 @@ class ImageLoader(appionLoop2.AppionLoop):
 		upfiles = glob.glob(imgdir)
 		if not upfiles:
 			apDisplay.printError("No images for upload in '%s'"%self.params['imgdir'])
+		if self.donedict and len(self.donedict) > 1:
+			apDisplay.printMsg("Cleaning up alreadly uploaded images")
+			newupfiles = []
+			count = 0
+			for imgfile in upfiles:
+				count += 1
+				if count % 10 == 0:
+					sys.stderr.write("..%d "%(len(newupfiles)))
+				basename = os.path.basename(imgfile)
+				justbase = os.path.splitext(basename)[0]
+				newfile = self.params['sessionname']+"_"+justbase
+				try:
+					self.donedict[newfile]
+				except:
+					newupfiles.append(imgfile)
+			sys.stderr.write("\n")
+			if len(newupfiles) > 0:
+				apDisplay.printMsg("Removed %d of %d files :: %d remain to process"%
+					(len(upfiles)-len(newupfiles), len(upfiles), len(newupfiles)))
+				upfiles = newupfiles
 		upfiles.sort()
 		for upfile in upfiles:
 			fname = os.path.abspath(upfile)
@@ -513,7 +535,7 @@ class ImageLoader(appionLoop2.AppionLoop):
 		if info is None:
 			# example
 			info = ['test.mrc','2e-10','1','1','50000','-2e-6','120000']
-		apDisplay.printMsg('reading image info')
+		apDisplay.printMsg('reading image info for %s'%(os.path.abspath(info[0])))
 		try:
 			uploadedInfo = {}
 			uploadedInfo['original filepath'] = os.path.abspath(info[0])
@@ -707,6 +729,7 @@ class ImageLoader(appionLoop2.AppionLoop):
 		else:
 			self.publish(caldata, dbforce=True)
 			self.pixelsizes[mag] = pixelsize
+			apDisplay.printMsg("Sleeping 1 second")
 			time.sleep(1.0)
 
 #=====================
