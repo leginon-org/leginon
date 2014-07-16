@@ -116,6 +116,7 @@ class AppionLoop(appionScript.AppionScript):
 				if loadavg > 2.0:
 					apDisplay.printMsg("Load average is high "+str(round(loadavg,2)))
 					loadsquared = loadavg*loadavg
+					apDisplay.printMsg("Sleeping %.1f seconds"%(loadavg))
 					time.sleep(loadavg)
 					apDisplay.printMsg("New load average "+str(round(os.getloadavg()[0],2)))
 
@@ -532,7 +533,8 @@ class AppionLoop(appionScript.AppionScript):
 		"""
 		imgname = imgdata['filename']
 		self._reloadDoneDict()
-		if imgname in self.donedict:
+		try:
+			self.donedict[imgname]
 			if not self.stats['lastimageskipped']:
 				sys.stderr.write("skipping images\n")
 			elif self.stats['skipcount'] % 80 == 0:
@@ -543,7 +545,7 @@ class AppionLoop(appionScript.AppionScript):
 			self.stats['skipcount'] += 1
 			self.stats['count'] += 1
 			return True
-		else:
+		except:
 			self.stats['waittime'] = 0
 			if self.stats['lastimageskipped']:
 				apDisplay.printMsg("\nskipped"+str(self.stats['skipcount'])+" images so far")
@@ -834,6 +836,7 @@ class AppionLoop(appionScript.AppionScript):
 		twait0 = time.time()
 		repeats = int(self.sleep_minutes * 60 / 20)
 		for i in range(repeats):
+			apDisplay.printMsg("Sleeping 20 seconds")
 			time.sleep(20)
 			#print a dot every 30 seconds
 			sys.stderr.write(".")
