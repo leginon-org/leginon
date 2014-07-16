@@ -79,7 +79,7 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	while (file_exists($sessionpathval.'stack'.($stackruns+1)))
 		$stackruns += 1;
 	$runnameval = ($_POST['runname']) ? $_POST['runname'] : 'stack'.($stackruns+1);
-	$partrunval = ($_POST['partrunid']) ? $_POST['partrunid'] : $partrunids[0]['DEF_id'];
+	$partrunval = ($_POST['partrunid']) ? $_POST['partrunid'] : -1;
 	$labelcheck = ($_POST['labelcheck']=='on') ? 'checked' : '';
 	$labeldisable = ($_POST['labelcheck']=='on') ? '' : 'disabled';
 	$fromstackval = ($_POST['fromstackid']) ? $_POST['fromstackid'] : '0';
@@ -393,7 +393,10 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 			// select previously set part on resubmit
 			if ($partrunval==$partrunid) {
 				echo " selected";
-			}
+			} elseif ($partrunval==-1) {
+				echo " selected";
+				$partrunval=$partrunid;
+			}			
 			echo">$runname ($totparts parts)</option>\n";
 		}
 		echo "</select>\n";
