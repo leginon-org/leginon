@@ -421,12 +421,19 @@ class PhasorCTF(appionLoop2.AppionLoop):
 
 		### split the function up in first 3/5 and last 3/5 of data with 1/5 overlap
 		numpoints = len(raddata) - firstvalleyindex
-		part1start = firstvalleyindex
-		part1end = int(firstvalleyindex + numpoints*6/10.)
-		part2start = int(firstvalleyindex + numpoints*5/10.)
-		part2end = int(firstvalleyindex + numpoints*9/10.)
-		part3start = int(firstvalleyindex + numpoints*8/10.)
-		part3end = len(raddata)
+		npart1start = firstvalleyindex
+		npart1end = int(firstvalleyindex + numpoints*6/10.)+1
+		npart2start = int(firstvalleyindex + numpoints*5/10.)-1
+		npart2end = int(firstvalleyindex + numpoints*9/10.)+1
+		npart3start = int(firstvalleyindex + numpoints*8/10.)-1
+		npart3end = len(raddata)
+
+		apDisplay.printMsg("noise parts: %d-%d; %d-%d; %d-%d"
+			%(npart1start, npart1end, npart2start, npart2end, npart3start, npart3end))
+
+		if npart1start - npart3end < 5:
+			apDisplay.printWarning("Not enough points for fullTriSectionNormalize")
+			return PSD
 
 		CtfNoise = ctfnoise.CtfNoise()
 		if valleyradii is None:
@@ -435,35 +442,39 @@ class PhasorCTF(appionLoop2.AppionLoop):
 			valleydata = ndimage.minimum_filter(PSD, 4)
 
 		## first part data
-		noisefitparams1 = CtfNoise.modelCTFNoise(raddata[part1start:part1end],
-			valleydata[part1start:part1end], "below")
+		noisefitparams1 = CtfNoise.modelCTFNoise(raddata[npart1start:npart1end],
+			valleydata[npart1start:npart1end], "below")
 		noisedata1 = CtfNoise.noiseModel(noisefitparams1, raddata)
 
 		## second part data
-		noisefitparams2 = CtfNoise.modelCTFNoise(raddata[part2start:part2end],
-			valleydata[part2start:part2end], "below")
+		noisefitparams2 = CtfNoise.modelCTFNoise(raddata[npart2start:npart2end],
+			valleydata[npart2start:npart2end], "below")
 		noisedata2 = CtfNoise.noiseModel(noisefitparams2, raddata)
 
 		## third part data
-		noisefitparams3 = CtfNoise.modelCTFNoise(raddata[part3start:part3end],
-			valleydata[part3start:part3end], "below")
+		noisefitparams3 = CtfNoise.modelCTFNoise(raddata[npart3start:npart3end],
+			valleydata[npart3start:npart3end], "below")
 		noisedata3 = CtfNoise.noiseModel(noisefitparams3, raddata)
 
 		## merge data
-		scale = numpy.arange(part1end-part2start, dtype=numpy.float32)
+		scale = numpy.arange(npart1end-npart2start, dtype=numpy.float32)
 		scale /= scale.max()
-		overlapdata1 = noisedata1[part2start:part1end]*(1-scale) + noisedata2[part2start:part1end]*scale
-		scale = numpy.arange(part2end-part3start, dtype=numpy.float32)
+		overlapdata1 = noisedata1[npart2start:npart1end]*(1-scale) + noisedata2[npart2start:npart1end]*scale
+		scale = numpy.arange(npart2end-npart3start, dtype=numpy.float32)
 		scale /= scale.max()
-		overlapdata2 = noisedata2[part3start:part2end]*(1-scale) + noisedata3[part3start:part2end]*scale
+		overlapdata2 = noisedata2[npart3start:npart2end]*(1-scale) + noisedata3[npart3start:npart2end]*scale
 
-		mergedata = numpy.hstack((noisedata1[:part2start], overlapdata1,
-			noisedata2[part1end:part3start], overlapdata2,
-			noisedata3[part2end:]))
+		mergedata = numpy.hstack((noisedata1[:npart2start], overlapdata1,
+			noisedata2[npart1end:npart3start], overlapdata2,
+			noisedata3[npart2end:]))
 
 		noisedata = mergedata
 
 		### DO THE SUBTRACTION
+		print PSD.shape, noisedata.shape
+		if noisedata.shape[0] > PSD.shape[0]:
+			noisedata = noisedata[:-1]
+		print PSD.shape, noisedata.shape
 		normexpPSD = numpy.exp(PSD) - numpy.exp(noisedata)
 		normlogPSD = numpy.log(numpy.where(normexpPSD<1, 1, normexpPSD))
 
@@ -484,12 +495,19 @@ class PhasorCTF(appionLoop2.AppionLoop):
 
 		### split the function up in first 3/5 and last 3/5 of data with 1/5 overlap
 		numpoints = len(raddata) - firstpeakindex
-		part1start = firstpeakindex
-		part1end = int(firstpeakindex + numpoints*6/10.)
-		part2start = int(firstpeakindex + numpoints*5/10.)
-		part2end = int(firstpeakindex + numpoints*9/10.)
-		part3start = int(firstpeakindex + numpoints*8/10.)
-		part3end = len(raddata)
+		epart1start = firstpeakindex
+		epart1end = int(firstpeakindex + numpoints*6/10.)+1
+		epart2start = int(firstpeakindex + numpoints*5/10.)-1
+		epart2end = int(firstpeakindex + numpoints*9/10.)+1
+		epart3start = int(firstpeakindex + numpoints*8/10.)-1
+		epart3end = len(raddata)
+
+		apDisplay.printMsg("exp parts: %d-%d; %d-%d; %d-%d"
+			%(epart1start, epart1end, epart2start, epart2end, epart3start, epart3end))
+
+		if epart1start - epart3end < 5:
+			apDisplay.printWarning("Not enough points for fullTriSectionNormalize")
+			return PSD
 
 		CtfNoise = ctfnoise.CtfNoise()
 		if peakradii is None:
@@ -498,33 +516,38 @@ class PhasorCTF(appionLoop2.AppionLoop):
 			peakdata = ndimage.maximum_filter(normlogPSD, 4)
 
 		## first part data
-		envelopfitparams1 = CtfNoise.modelCTFNoise(raddata[part1start:part1end],
-			peakdata[part1start:part1end], "above")
+		envelopfitparams1 = CtfNoise.modelCTFNoise(raddata[epart1start:epart1end],
+			peakdata[epart1start:epart1end], "above")
 		envelopdata1 = CtfNoise.noiseModel(envelopfitparams1, raddata)
 
 		## second part data
-		envelopfitparams2 = CtfNoise.modelCTFNoise(raddata[part2start:part2end],
-			peakdata[part2start:part2end], "above")
+		envelopfitparams2 = CtfNoise.modelCTFNoise(raddata[epart2start:epart2end],
+			peakdata[epart2start:epart2end], "above")
 		envelopdata2 = CtfNoise.noiseModel(envelopfitparams2, raddata)
 
 		## third part data
-		envelopfitparams3 = CtfNoise.modelCTFNoise(raddata[part3start:part3end],
-			peakdata[part3start:part3end], "above")
+		envelopfitparams3 = CtfNoise.modelCTFNoise(raddata[epart3start:epart3end],
+			peakdata[epart3start:epart3end], "above")
 		envelopdata3 = CtfNoise.noiseModel(envelopfitparams3, raddata)
 
 		## merge data
-		scale = numpy.arange(part1end-part2start, dtype=numpy.float32)
+		scale = numpy.arange(epart1end-epart2start, dtype=numpy.float32)
 		scale /= scale.max()
-		overlapdata1 = envelopdata1[part2start:part1end]*(1-scale) + envelopdata2[part2start:part1end]*scale
-		scale = numpy.arange(part2end-part3start, dtype=numpy.float32)
+		overlapdata1 = envelopdata1[epart2start:epart1end]*(1-scale) + envelopdata2[epart2start:epart1end]*scale
+		scale = numpy.arange(epart2end-epart3start, dtype=numpy.float32)
 		scale /= scale.max()
-		overlapdata2 = envelopdata2[part3start:part2end]*(1-scale) + envelopdata3[part3start:part2end]*scale
+		overlapdata2 = envelopdata2[epart3start:epart2end]*(1-scale) + envelopdata3[epart3start:epart2end]*scale
 
-		mergedata = numpy.hstack((envelopdata1[:part2start], overlapdata1,
-			envelopdata2[part1end:part3start], overlapdata2,
-			envelopdata3[part2end:]))
+		mergedata = numpy.hstack((envelopdata1[:epart2start], overlapdata1,
+			envelopdata2[epart1end:epart3start], overlapdata2,
+			envelopdata3[epart2end:]))
 		envelopdata = mergedata
 
+		### DO THE DIVISION
+		print normexpPSD.shape, envelopdata.shape
+		if envelopdata.shape[0] > normexpPSD.shape[0]:
+			envelopdata = envelopdata[:-1]
+		print normexpPSD.shape, envelopdata.shape
 		normnormexpPSD = normexpPSD / numpy.exp(envelopdata)
 
 		if self.debug is True:
@@ -536,30 +559,30 @@ class PhasorCTF(appionLoop2.AppionLoop):
 			a = pyplot.plot(raddatasq, PSD, 'k-', alpha=0.5)
 			a = pyplot.plot(raddatasq, valleydata, 'k-', alpha=0.5)
 			b = pyplot.plot(raddatasq[firstvalleyindex:], noisedata[firstvalleyindex:], '--', color="purple", linewidth=2)
-			c = pyplot.plot(raddatasq[part1start:part1end],
-				noisedata1[part1start:part1end], 'b-', alpha=0.5, linewidth=2)
-			d = pyplot.plot(raddatasq[part2start:part2end],
-				noisedata2[part2start:part2end], 'r-', alpha=0.5, linewidth=2)
-			e = pyplot.plot(raddatasq[part3start:part3end],
-				noisedata3[part3start:part3end], '-', alpha=0.5, linewidth=2, color="green")
+			c = pyplot.plot(raddatasq[npart1start:npart1end],
+				noisedata1[npart1start:npart1end], 'b-', alpha=0.5, linewidth=2)
+			d = pyplot.plot(raddatasq[npart2start:npart2end],
+				noisedata2[npart2start:npart2end], 'r-', alpha=0.5, linewidth=2)
+			e = pyplot.plot(raddatasq[npart3start:npart3end],
+				noisedata3[npart3start:npart3end], '-', alpha=0.5, linewidth=2, color="green")
 			pyplot.legend([a, b, c, d, e], ["data", "merge", "part 1", "part 2", "part 3"])
 			pyplot.xlim(xmax=raddatasq.max())
-			pyplot.ylim(ymin=noisedata.min(), ymax=PSD[part1start:].max())
+			pyplot.ylim(ymin=noisedata.min(), ymax=PSD[npart1start:].max())
 
 			pyplot.subplot(3,1,2)
 			a = pyplot.plot(raddatasq, normlogPSD, 'k.',)
 			a = pyplot.plot(raddatasq, normlogPSD, 'k-', alpha=0.5)
 			a = pyplot.plot(raddatasq, peakdata, 'k-', alpha=0.5)
 			b = pyplot.plot(raddatasq, mergedata, '--', color="purple", linewidth=2)
-			c = pyplot.plot(raddatasq[part1start:part1end],
-				envelopdata1[part1start:part1end], 'b-', alpha=0.5, linewidth=2)
-			d = pyplot.plot(raddatasq[part2start:part2end],
-				envelopdata2[part2start:part2end], 'r-', alpha=0.5, linewidth=2)
-			e = pyplot.plot(raddatasq[part3start:part3end],
-				envelopdata3[part3start:part3end], '-', alpha=0.5, linewidth=2, color="green")
+			c = pyplot.plot(raddatasq[epart1start:epart1end],
+				envelopdata1[epart1start:epart1end], 'b-', alpha=0.5, linewidth=2)
+			d = pyplot.plot(raddatasq[epart2start:epart2end],
+				envelopdata2[epart2start:epart2end], 'r-', alpha=0.5, linewidth=2)
+			e = pyplot.plot(raddatasq[epart3start:epart3end],
+				envelopdata3[epart3start:epart3end], '-', alpha=0.5, linewidth=2, color="green")
 			pyplot.legend([a, b, c, d, e], ["data", "merge", "part 1", "part 2", "part 3"])
 			pyplot.xlim(xmax=raddatasq.max())
-			pyplot.ylim(ymin=normlogPSD[part1start:].min(), ymax=envelopdata.max())
+			pyplot.ylim(ymin=normlogPSD[epart1start:].min(), ymax=envelopdata.max())
 
 			pyplot.subplot(3,1,3)
 			pyplot.plot(raddatasq, normnormexpPSD, 'k.',)
@@ -618,6 +641,8 @@ class PhasorCTF(appionLoop2.AppionLoop):
 
 		edgeThresh = 3
 		ellipseParams = ransac.ellipseRANSAC(self.edgeMap, edgeThresh, maxRatio=self.maxRatio)
+		if ellipseParams is None:
+			return None
 
 		fitEllipse1 = ransac.generateEllipseRangeMap2(ellipseParams, edgeThresh, self.edgeMap.shape)
 		fitEllipse2 = ransac.generateEllipseRangeMap2(ellipseParams, edgeThresh*3, self.edgeMap.shape)
@@ -797,6 +822,8 @@ class PhasorCTF(appionLoop2.AppionLoop):
 			blurArray = ndimage.gaussian_filter(blurArray, 2)
 
 			### edge find method
+			if self.bestvalues is None:
+				return
 			defocus = self.bestvalues['defocus']
 			#follows 1/sqrt(z) rule:
 			mindef = 1.0/(1.02/math.sqrt(defocus))**2
@@ -810,7 +837,7 @@ class PhasorCTF(appionLoop2.AppionLoop):
 
 			### minimum valley method
 			defocus = self.bestvalues['defocus']
-			ellipseParams = findastig.findAstigmatism(blurArray, self.freq, defocus, None, self.ctfvalues)
+			ellipseParams = findastig.findAstigmatism(blurArray, self.freq, defocus, 0, self.ctfvalues)
 			if ellipseParams is not None:
 				ellipRatio = ellipseParams['a']/ellipseParams['b']
 				if 1.0/self.maxRatio < ellipRatio < self.maxRatio:
@@ -826,7 +853,7 @@ class PhasorCTF(appionLoop2.AppionLoop):
 
 			### minimum valley method
 			defocus = self.bestvalues['defocus']
-			ellipseParams = findastig.findAstigmatism(blurArray, self.freq, defocus, None, self.ctfvalues, peakNum=2)
+			ellipseParams = findastig.findAstigmatism(blurArray, self.freq, defocus, 0, self.ctfvalues, peakNum=2)
 			if ellipseParams is not None:
 				ellipRatio = ellipseParams['a']/ellipseParams['b']
 				if 1.0/self.maxRatio < ellipRatio < self.maxRatio:
@@ -1022,6 +1049,11 @@ class PhasorCTF(appionLoop2.AppionLoop):
 
 		apDisplay.printColor("Finishing up using best found CTF values", "blue")
 		self.printBestValues()
+
+		if self.bestvalues is None:
+			apDisplay.printColor("No CTF estimate found for this image", "red")	
+			self.badprocess = True
+			return
 
 		### take best values and use them
 		self.ctfvalues = self.bestvalues
