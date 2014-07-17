@@ -3695,6 +3695,69 @@ class particledata {
 		return $r;
 	}
 
+	#--------- RECIPE BAKING FUNCTIONS---------------#
+	function getAllRecipeData() {
+		# Return all recipe info
+		$q = "SELECT `DEF_id`, `name`, `description`, `ctfrunids`, "
+			."`REF|ApStackData|stack` as stackid, "
+			."`REF|ApAlignStackData|alignstack` as alignstackid "
+			."FROM ApRecipeData";
+		$r=$this->mysql->getSQLResult($q);
+		return $r;
+	}
+
+	function getRecipeDataFromId($rid,$remove=False) {
+		# Return info for recipe, or delete it
+		if ($remove) { 
+			$q = "DELETE FROM ApRecipeData WHERE `DEF_id`=$rid";
+			$r=$this->mysql->SQLQuery($q);
+			return;
+		}
+
+		$q = "SELECT `DEF_id`, `name`, `description`, `ctfrunids`, "
+			."`REF|ApStackData|stack` as stackid, "
+			."`REF|ApAlignStackData|alignstack` as alignstackid "
+			."FROM ApRecipeData "
+			."WHERE `DEF_id`=$rid";
+		echo $q;
+		$r=$this->mysql->getSQLResult($q);
+		return $r[0];
+	}
+
+	function getRecipeNames() {
+		# Return all the names for the recipes in a database
+		$q = "SELECT name FROM ApRecipeData";
+		$r=$this->mysql->getSQLResult($q);
+		if ($r) {
+			$names=array();
+			foreach ($r as $ra) $names[]=$ra['name'];
+		}
+		return $names;
+	}
+
+	function bakeRecipe($name, $description, $stackid, $alignstackid, $ctfrunids=False) {
+		# Make sure row doesn't already exist
+		$q = "SELECT * FROM ApRecipeData "
+			."WHERE ";
+		if ($stackid) $q.="`REF|ApStackData|stack` = $stackid";
+		elseif ($alignstackid) $q.="`REF|ApAlignStackData|alignstack` = $alignstackid ";
+		$r = $this->mysql->getSQLResult($q);
+		if ($r) return("exists");
+
+		$q = "INSERT INTO `ApRecipeData` "
+			."(`name`, `description`,`ctfrunids`,`REF|ApStackData|stack`,`REF|ApAlignStackData|alignstack`) "
+			."VALUES "
+			."('$name','".mysql_real_escape_string($description)."',";
+		$q .= ($ctfrunids) ? "'$ctfrunids'," : "NULL,";
+		$q .= ($stackid) ? "'$stackid'," : "NULL,";
+		$q .= ($alignstackid) ? "'$alignstackid'" : "NULL";
+		$q .= ")";
+		$r=$this->mysql->SQLQuery($q);
+		if ($r) return "ok";
+		
+	}
+
+
 	#--------- MAKE MASK FUNCTIONS---------------#
 
 	function getMaskMakerRunIds ($sessionId) {
@@ -4163,12 +4226,13 @@ class particledata {
 		return $r[0];
 	}
 
-	function getJobFileFromPath($path,$name) {
+	function getJobFileFromPath($path,$name=False) {
 		$q="SELECT j.*, p.path "
 			."FROM `ApAppionJobData` AS j "
 			."LEFT JOIN ApPathData AS p ON "
 			."(j.`REF|ApPathData|path` = p.`DEF_id`) "
-			."WHERE p.`path` = '$path' AND j.`name` = '$name'";
+			."WHERE p.`path` = '$path'";
+			if ($name) $q.= " AND j.`name` = '$name'";
 		$r = $this->mysql->getSQLResult($q);
 		return $r;
 	}

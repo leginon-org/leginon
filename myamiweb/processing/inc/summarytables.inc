@@ -171,8 +171,11 @@ function stacksummarytable($stackid, $mini=false, $tiny=false, $showOptions=True
 	## link to list ctf values
 	if ($particle->hasCtfData($expId))
 		$j.= "<input class='edit' type='button' onClick='window.open(\"listCTFvalues.php?expId=$expId&sId=$stackid\")' value = 'list per-particle CTF info'>\n";
+
+	## Only allow bake for stacks created from particle selection
+	if ($stackdata['REF|ApSelectionRunData|selectionrun'])
+		$j.="<input class='edit' type='button' onClick='parent.location=\"bakeRecipe.php?expId=$expId&stackid=$stackid\"' value='bake recipe'>\n";
 	$stacktable.= apdivtitle($j);
-	
 	if ($tiny)
 		return $stacktable;
 
@@ -394,6 +397,9 @@ function alignstacksummarytable($alignstackid, $mini=false, $showOptions=True) {
 	}
 
 	$numpart = $particle->getNumAlignStackParticles($alignstackid);
+
+	$origstackid = $stackdata['REF|ApStackData|stack'];
+
 	//echo $numpart."<br/>\n";
 
 	$j = "Align Stack Info: <span class='aptitle' >"
@@ -405,14 +411,19 @@ function alignstacksummarytable($alignstackid, $mini=false, $showOptions=True) {
 	}
 	elseif ($showOptions) $j.= " <input class='edit' type='submit' name='hideItem".$alignstackid."' value='hide'>\n";
 
-	if ($showOptions) $j.="<input class='edit' type='button' onClick='parent.location=\"dropstack.php?expId=$expId&alignId=$alignstackid\"' value='delete'>\n";
+	if ($showOptions) {
+		$j.="<input class='edit' type='button' onClick='parent.location=\"dropstack.php?expId=$expId&alignId=$alignstackid\"' value='delete'>\n";
+		# only show alignments for stacks that have selection IDs
+		$origstackdata = $particle->getStackParams($origstackid);
+		if ($origstackdata['REF|ApSelectionRunData|selectionrun'])
+			$j.="<input class='edit' type='button' onClick='parent.location=\"bakeRecipe.php?expId=$expId&alignstackid=$alignstackid\"' value='bake recipe'>\n";
+	}
 	$stacktable.= apdivtitle($j);
 	//echo $j."<br/>\n";
 
 
 	$stacktable.= "<table border='0'>\n";
 	$stackavg = $stackdata['path']."/average.mrc";
-	$origstackid = $stackdata['REF|ApStackData|stack'];
 	if (file_exists($stackavg)) {
 		$stacktable.= "<tr>\n";
 		$stacktable.= "<td rowspan='30' align='center' valign='top'>\n";
@@ -532,6 +543,159 @@ function alignstacksummarytable($alignstackid, $mini=false, $showOptions=True) {
 	$stacktable.= "</table>\n";
 	$stacktable.= "<p>\n";
 	return $stacktable;
+}
+
+function recipetable($recipeinfo){
+	// Create an alignment stack recipe summary
+	$expId = $_GET['expId'];
+	$particle = new particledata();
+
+	# recipe info
+	$recipeid = $recipeinfo['DEF_id'];
+	$recipename = $recipeinfo['name'];
+	$recipedesc = $recipeinfo['description'];
+	$alignstackid = $recipeinfo['alignstackid'];
+	$stackid = $recipeinfo['stackid'];
+	$ctfrunids = explode(',',$recipeinfo['ctfrunids']);
+
+	# for alignstack
+	if ($alignstackid) {
+		# get align stack info
+		$astackdata = $particle->getAlignStackParams($alignstackid);
+		# get original stack info
+		$stackid = $astackdata['REF|ApStackData|stack'];
+		$reporttype = "Align";
+	}
+	$j = "$reporttype Stack Recipe: <span class='aptitle' >"
+		.$recipename."</span> (ID: $recipeid)\n";
+	$j.="<input class='edit' type='button' onClick='parent.location=\"bakeRecipe.php?expId=$expId&remove=$recipeid\"' value='remove recipe'>\n";
+	$rtable = apdivtitle($j);
+	
+	$rtable.= "<b>Recipe description:</b> $recipedesc<hr/>";
+
+	# get particle picking info
+	$stackdata = $particle->getStackParams($stackid);
+	$selectid = $stackdata['REF|ApSelectionRunData|selectionrun'];
+
+	$rtable.= "<table class='tablebubble'><tr><td>";
+	$rtable.= selectionInfoForRecipe($selectid);
+	$rtable.= "</td></tr></table>\n";
+
+	$rtable.= "<table class='tablebubble'><tr><td>";
+	$rtable.= ctfInfoForRecipe($ctfrunids);
+	$rtable.= "</td></tr></table>\n";
+
+	$rtable.= "<table class='tablebubble'><tr><td>";
+	$rtable.= stackInfoForRecipe($stackid);
+	$rtable.= "</td></tr></table>\n";
+
+	if ($alignstackid) {
+		$rtable.= "<table class='tablebubble'><tr><td>";
+		$rtable.= alignInfoForRecipe($alignstackid);
+		$rtable.= "</td></tr></table>\n";
+	}
+
+	$rtable.= "<p>\n";
+
+	echo $rtable;
+}
+
+function selectionInfoForRecipe($selectid) {
+	// list out information for a selectionid 
+	$particle = new particledata();
+	$selectdata = $particle->getSelectionParams($selectid);
+	$selectdata = $selectdata[0];
+
+	$s = "<b>Particle selection info:</b>";
+
+	$display_keys['selection type'] = $particle->getSelectionParams($selectid, true);
+	$display_keys['diameter'] = $selectdata['diam']." &Aring;";
+	$display_keys['image binning'] = $selectdata['bin'];
+	$display_keys['overlap mult'] = $selectdata['overlapmult'];
+
+	foreach($display_keys as $k=>$v) {
+		$s.= formatHtmlRow($k,$v);
+	}
+	return $s;	
+}
+
+function ctfInfoForRecipe($ctfids) {
+	// list out information for an array of ctf ids
+	$particle = new particledata();
+
+	$s = "<b>CTF estimation info:</b><br>\n";
+	foreach ($ctfids as $ctfid) {
+		$ctfparams = $particle->getAceParams($ctfid);
+		$ctfmethod = $particle->getCtfRunMethod($ctfid);
+		$display_keys['estimation method'] = $ctfmethod;
+		if ($ctfmethod == 'ctffind') {
+			$display_keys['search min res'] = $ctfparams['resmin']. "&Aring;";
+			$display_keys['search max res'] = $ctfparams['resmax']. "&Aring;";
+			$display_keys['field size'] = $ctfparams['fieldsize']. " pixels";
+		}
+		foreach ($display_keys as $k=>$v) {
+			$s.= formatHtmlRow($k,$v);
+		}
+	}
+	return $s;
+}
+
+function stackInfoForRecipe($stackid) {
+	// list out stack info for a stackid
+	$particle = new particledata();
+
+	$stackdata = $particle->getStackParams($stackid);
+
+	$s = "<b>Stack creation info:</b><br>\n";
+	$stackavg = $stackdata['path']."/average.mrc";
+	$s.= "<table border='0'>\n";
+	if (file_exists($stackavg)) {
+		$s.= "<tr>\n";
+		$s.= "<td rowspan='30' align='center' valign='top'>\n";
+		$s.= "<img src='loadimg.php?filename=$stackavg&h=60' height='60'>\n";
+		$s.= "</td>\n";
+	}
+	$s.= "<td>\n";
+	$display_keys=array();
+	$display_keys['box size']=$stackdata['boxsize']." pixels";
+	$display_keys['pixel size']=round($stackdata['pixelsize']*1e10,2)." &Aring;/pixel";
+	$display_keys['binning']=$stackdata['bin'];
+
+	foreach($display_keys as $k=>$v) {
+		$s.= formatHtmlRow($k,$v);
+	}
+	$s.= "</td></tr></table>\n";
+
+	return $s;
+}
+
+function alignInfoForRecipe($astackid) {
+	// list out aligned stack info
+	$particle = new particledata();
+
+	$astackdata = $particle->getAlignStackParams($astackid);
+
+	$s = "<b>Alignment info:</b><br>\n";
+	$stackavg = $astackdata['path']."/average.mrc";
+	$s.= "<table border='0'>\n";
+	if (file_exists($stackavg)) {
+		$s.= "<tr>\n";
+		$s.= "<td rowspan='30' align='center' valign='top'>\n";
+		$s.= "<img src='loadimg.php?filename=$stackavg&h=60' height='60'>\n";
+		$s.= "</td>\n";
+	}
+	$s.= "<td>\n";
+	$display_keys=array();
+	$display_keys['box size']=$astackdata['boxsize']." pixels";
+	$display_keys['pixel size']=round($astackdata['pixelsize'],2)." &Aring;/pixel";
+	$display_keys['binning']=$astackdata['bin'];
+
+	foreach($display_keys as $k=>$v) {
+		$s.= formatHtmlRow($k,$v);
+	}
+	$s.= "</td></tr></table>\n";
+
+	return $s;
 }
 
 /****************************************

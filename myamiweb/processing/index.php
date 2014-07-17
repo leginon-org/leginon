@@ -61,6 +61,28 @@ if (!$hasProcDB) {
 }
 
 $particle=new particleData();
+// show any recipes if saved
+$recipes = $particle->getAllRecipeData();
+if ($recipes) {
+	# store recipe ids in separate arrays
+	$stackrecipes = array();
+	$astackrecipes = array();
+
+	foreach ($recipes as $recipe) {
+		if ($recipe['stackid']) $stackrecipes[]=$recipe;
+		if ($recipe['alignstackid']) $astackrecipes[]=$recipe;
+	}	
+
+	# List out aligned stack recipes
+	foreach ($astackrecipes as $ar) {
+		echo recipetable($ar);
+	}	
+	# List out stack recipes
+	foreach ($stackrecipes as $ar) {
+		echo recipetable($ar);
+	}	
+}
+
 // show exemplar reconstrucion, if set
 $reconRuns = $particle->getExemplarReconsFromSession($expId);
 
