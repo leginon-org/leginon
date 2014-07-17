@@ -9,7 +9,7 @@ ma = numpy.ma
 import time
 import subprocess
 import scipy.misc
-import Image
+from PIL import Image
 import scipy.ndimage as ndimage
 
 # myami

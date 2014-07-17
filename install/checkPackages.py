@@ -271,7 +271,7 @@ class CheckPackages(object):
         minstr = '.'.join(map(str,minVersion))
                     
         try:
-            import Image
+            from PIL import Image
         except:
             raise Exception("!!!! WARNING !!!! Could not import Python Imaging Library (PIL). You must install Python Imaging Library version %(minver)s or greater." % {'minver' : minstr }  )
         else:
