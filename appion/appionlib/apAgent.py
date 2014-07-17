@@ -4,6 +4,8 @@ from appionlib import apRefineJobEman
 from appionlib import apRefineJobXmipp
 from appionlib import apRefineJobRelion
 from appionlib import apRefineJobXmippML3D
+from appionlib import apRemoteJob
+from appionlib import apSparxISAC
 from appionlib import apGenericJob
 from appionlib import jobtest
 from appionlib import appiondata
@@ -108,6 +110,8 @@ class Agent (basicAgent.BasicAgent):
 			jobInstance = apRefineJobRelion.RelionSingleModelRefineJob(command)
 		elif "xmippml3d" == jobType:
 			jobInstance = apRefineJobXmippML3D.XmippML3DRefineJob(command)
+		elif "sparxisac" == jobType:
+			jobInstance = apSparxISAC.ISACJob(command)
 		elif "jobtest" == jobType:
 			jobInstance = jobtest.jobtestClass()
 		else:

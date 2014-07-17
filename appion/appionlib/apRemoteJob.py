@@ -66,8 +66,6 @@ class RemoteJob(basicScript.BasicScript):
 			help="Path for Appion bin directory if needed e.g. --appionwrap=/home/you/appion/bin", metavar="PATH")
 		self.parser.add_option('--setuponly', dest='setuponly', default=False, action='store_true',
 			help="setup without executing, for testing purpose")
-		# set non-iteration list parameters that are separated by ','
-		self.setListParams()
 				
 	#=====================
 	def checkConflicts(self):
@@ -77,9 +75,6 @@ class RemoteJob(basicScript.BasicScript):
 		self.params['nproc'] = self.params['rpn'] * self.params['nodes']
 		self.checkPackageConflicts()
 		self.__convertListParams()
-
-	def setListParams(self):
-		self.listparams.append('modelnames')
 
 	def __convertListParams(self):
 		for paramkey in self.listparams:
