@@ -177,13 +177,14 @@ def getBestCtfValue(imgdata, sortType='res80', method=None, msg=True):
 	ctfq = appiondata.ApCtfData()
 	ctfq['image'] = imgdata
 	ctfvalues = ctfq.query()
+	imgname = apDisplay.short(imgdata['filename'])
 
 	if msg is True:
 		print "Found %d ctf values"%(len(ctfvalues))
 
 	### check if it has values
 	if ctfvalues is None:
-		apDisplay.printWarning("no CTF values found in database")
+		apDisplay.printWarning("no CTF values found in database for img %s"%(imgname))
 		return None
 
 	### find the best values
@@ -204,7 +205,7 @@ def getBestCtfValue(imgdata, sortType='res80', method=None, msg=True):
 			bestctfvalue = ctfvalue
 
 	if bestctfvalue is None:
-		print "no best value"
+		apDisplay.printWarning("no best CTF value for image %s"%(imgname))
 		return None
 
 	if msg is True:
