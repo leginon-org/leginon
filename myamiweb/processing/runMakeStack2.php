@@ -141,7 +141,7 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 		'ace2image'=>'Ace 2 Wiener Filter Whole Image',
 		'ace2imagephase'=>'Ace 2 PhaseFlip Whole Image',
 		'spiderimage'=>'SPIDER PhaseFlip Whole Image (no astig)',
-		'emanimage'=>'EMAN1 PhaseFlip Whole Image (no astig)'		
+		'emanimage'=>'EMAN1 PhaseFlip Whole Image (no astig)',
 		'emanpart'=>'EMAN1 PhaseFlip Particle (no astig)',
 	);
 	$limitedctfoptions=array(
