@@ -181,9 +181,17 @@ function createCtfFindForm($extra=false) {
 		  obj.defstep.value = 100;
 		  return;
 		}
+		function updateDFsearch() {
+		  var dstep = parseFloat(document.getElementById('defstep').value);
+		  var numstep = parseFloat(document.getElementById('numstep').value);
+		  var range = dstep*numstep*1e-4;
+		  range = (range).toFixed(2);
+		  document.getElementById('srange').innerHTML=range;
+		}
 		</script>";
 
 	processing_header("$progname Launcher", "CTF Estimation by $progname", $javafunctions);
+
 
 	if ($extra) {
 		echo "<font color='#cc3333' size='+2'>$extra</font>\n<hr/>\n";
@@ -218,7 +226,7 @@ function createCtfFindForm($extra=false) {
 	$form_numstep = ($_POST['numstep']) ? $_POST['numstep'] : '25';
 	// check if ctftilt is set
 	$ctftiltcheck = ($_POST['runctftilt']=='on') ? 'CHECKED' : '';
-	$form_dast = ($_POST['dast']) ? $_POST['dast'] : '100';
+	$form_dast = ($_POST['dast']) ? $_POST['dast'] : '500';
 
 	echo"
 	<TABLE BORDER=0 CLASS=tableborder CELLPADDING=15>
@@ -265,12 +273,17 @@ function createCtfFindForm($extra=false) {
 	echo docpop('resmax','Maximum Resolution');
 	echo " (&Aring;ngstroms)<br />\n";
 	echo "<br />\n";
-	echo "<input type='text' name='defstep' value='$form_defstep' size='6'>\n";
+	echo "<input type='text' id='defstep' name='defstep' "
+		."value='$form_defstep' size='6' onChange='updateDFsearch()'>\n";
 	echo docpop('defstep','Defocus search step size');
 	echo " (&Aring;ngstroms)<br />\n";
-	echo "<input type='text' name='numstep' value='$form_numstep' size='6'>\n";
+	echo "<input type='text' id='numstep' name='numstep' "
+		."value='$form_numstep' size='6' onChange='updateDFsearch()'>\n";
 	echo docpop('numstep','Number of steps to search');
 	echo "<br />\n";
+	echo "Search range: &plusmn; <span id='srange'>";
+	echo round($form_defstep*$form_numstep*1e-4,2);
+	echo "</span>&micro;M<br><br>\n";
 	echo "<input type='text' name='dast' value='$form_dast' size='6'>\n";
 	echo docpop('dast','Expected astigmatism');
 	echo " (&Aring;ngstroms)<br />\n";
