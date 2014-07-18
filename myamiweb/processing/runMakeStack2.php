@@ -140,9 +140,9 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	$ctfoptions = array(
 		'ace2image'=>'Ace 2 Wiener Filter Whole Image',
 		'ace2imagephase'=>'Ace 2 PhaseFlip Whole Image',
-		'spiderimage'=>'SPIDER PhaseFlip Whole Image',
-		'emanpart'=>'EMAN PhaseFlip by Boxed Stack per Image',
-		'emanimage'=>'EMAN PhaseFlip Whole Image'
+		'spiderimage'=>'SPIDER PhaseFlip Whole Image (no astig)',
+		'emanimage'=>'EMAN1 PhaseFlip Whole Image (no astig)'		
+		'emanpart'=>'EMAN1 PhaseFlip Particle (no astig)',
 	);
 	$limitedctfoptions=array(
 		'emanpart'=>'EMAN PhaseFlip by Boxed Stack per Image'
