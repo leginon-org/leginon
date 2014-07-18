@@ -147,6 +147,12 @@ class ParticleExtractLoop(appionLoop2.AppionLoop):
 			return ctfdb.getCtfValueForCtfRunId(imgdata, self.params['ctfrunid'], msg=msg)
 		return ctfdb.getBestCtfValue(imgdata, sortType=self.params['ctfsorttype'], method=self.params['ctfmethod'], msg=msg)
 
+	#=======================
+	def getDefocusAmpConstForImage(self,imgdata,msg=False):
+		ctfvalue = self.getBestCtfValue(imgdata, msg)
+		### This function returns defocus defined as negative underfocus
+		defocus = -(abs(ctfvalue['defocus1'])+abs(ctfvalue['defocus2']))/2
+		return defocus, ctfvalue['amplitude_contrast']
 
 	#=======================
 	def checkCtfParams(self, imgdata):
