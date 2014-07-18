@@ -346,8 +346,8 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 
 	def postProcessParticleStack(self,imgdata,imgstackfile,boxedpartdatas,parttree_length):
 		### if xmipp-norm before phaseflip:
-		#if self.params['xmipp-norm'] is not None and self.params['xmipp-norm-before'] is True:
-		#	self.xmippNormStack(imgstackfile)
+		if self.params['xmipp-norm'] is not None and self.params['xmipp-norm-before'] is True:
+			self.xmippNormStack(imgstackfile)
 
 		### phase flipping
 		t0 = time.time()
@@ -1025,8 +1025,8 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 		if self.params['maskassess'] is not None and not self.params['checkmask']:
 			apDisplay.printMsg("running mask assess")
 			self.params['checkmask'] = True
-		#if self.params['xmipp-norm'] is not None and self.params['xmipp-norm-before'] is not None:
-		#	self.xmippexe = apParam.getExecPath("xmipp_normalize", die=True)
+		if self.params['xmipp-norm'] is not None and self.params['xmipp-norm-before'] is not None:
+			self.xmippexe = apParam.getExecPath("xmipp_normalize", die=True)
 		if self.params['particlelabel'] == 'user' and self.params['rotate'] is True:
 			apDisplay.printError("User selected targets do not have rotation angles")
 		if self.params['particlelabel'] == 'helical' and self.params['rotate'] is False:
@@ -1106,8 +1106,8 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 				apStackMeanPlot.makeStackMeanPlot(stackid)
 
 		### apply xmipp normalization
-		#if self.params['xmipp-norm'] is not None and self.params['xmipp-norm-before'] is False:
-		#	self.xmippNormStack(stackpath)
+		if self.params['xmipp-norm'] is not None and self.params['xmipp-norm-before'] is False:
+			self.xmippNormStack(stackpath)
 
 		apDisplay.printColor("Timing stats", "blue")
 		self.printTimeStats("Batch Boxer", self.batchboxertimes)
