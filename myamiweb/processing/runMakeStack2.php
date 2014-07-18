@@ -856,10 +856,10 @@ function runMakestack() {
 
 
 	// xmipp normalization
-	/*if ($_POST['xmippstacknorm']=='on') {
+	if ($_POST['xmippstacknorm']=='on') {
 		$xmippnorm=$_POST['xmippnormval'];
 		if ($xmippnorm <= 0 || !$xmippnorm) createMakestackForm("<b>ERROR:</b> Xmipp sigma must be greater than 0" );
-	}*/
+	}
 
 	// binning amount
 	$bin=$_POST['bin'];
@@ -975,9 +975,9 @@ function runMakestack() {
 	if ($lp) $command.="--lowpass=$lp ";
 	if ($hp) $command.="--highpass=$hp ";
 	$command.= ($invert) ? "--invert " : "--no-invert ";
-	//if ($stacknorm) $command.="--normalized ";
-	//if ($xmippnorm) $command.="--xmipp-normalize=$xmippnorm ";
-	//if ($_POST['xmippbefore']=='on') $command.="--xmipp-norm-before ";
+	if ($stacknorm) $command.="--normalized ";
+	if ($xmippnorm) $command.="--xmipp-normalize=$xmippnorm ";
+	if ($_POST['xmippbefore']=='on') $command.="--xmipp-norm-before ";
 	if ($ctfcorrect) { 
 		$command.="--phaseflip --flip-type=$ctfcorrecttype --sort-type=$ctfsorttype ";
 	}
