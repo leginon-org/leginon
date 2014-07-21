@@ -932,6 +932,66 @@ def extract_from_paramfile_frealign8(bestparticlefile, inparfile, outparfile):
 	ff.close()
 
 #=================
+def extract_from_paramfile_frealign9(bestparticlefile, inparfile, outparfile, newocc=None):
+	'''
+		uses EMAN-style list (numbering starts at 0) containing all the particles that should be KEPT. Then takes the input
+		frealign9 parameter file, and extracts all of the particles that are in the list to make a new parameter file
+	'''
+	### read / write files
+	bpf = open(bestparticlefile, "r")
+	bpflines = bpf.readlines()
+	bpfstrip = [int(float(line.strip())) for line in bpflines]
+	bpf.close()
+	params = parseFrealign9ParamFile(inparfile)
+	ff = open(outparfile, "w")
+	ff = open(outparfile, "w")
+	ff.write("%s%8s%8s%8s%10s%10s%8s%6s%9s%9s%8s%8s%10s%11s%8s%8s\n" \
+		% ("C      ","PSI","THETA","PHI","SHX","SHY","MAG","FILM","DF1","DF2","ANGAST","OCC","-LogP","SIGMA","SCORE","CHANGE"))
+
+	### read & write params
+	olddx = 0
+	micnum = 0
+
+	for i, val in enumerate(bpfstrip):
+		partnum = params[val+1]['partnum']
+		psi = params[val+1]['psi']
+		theta = params[val+1]['theta']
+		phi = params[val+1]['phi']
+		shx = params[val+1]['shiftx']
+		shy = params[val+1]['shifty']
+		mag = params[val+1]['mag']
+		film = params[val+1]['micn']
+		dx = params[val+1]['defx']
+		dy = params[val+1]['defy']
+		ast = params[val+1]['astig']
+		if newocc is not None:
+			occ = newocc
+		else:
+			occ = params[val+1]['occ']
+		logp = params[val+1]['logp']
+		try:
+			sigma = params[val+1]['sigma']
+		except:
+			sigma = 1.0
+		try:
+			score = params[val+1]['score']
+		except:
+			score = 50.0
+		try:
+			change = params[val+1]['change']
+		except:
+			change = 0.0
+
+		if olddx != (dx+dy)/2:
+			olddx = (dx+dy)/2
+			micnum += 1
+
+		ff.write("%7d%8.2f%8.2f%8.2f%10.2f%10.2f%8d%6d%9.1f%9.1f%8.2f%8.2f%10d%11.4f%8.2f%8.2f\n" \
+			% (i+1, psi, theta, phi, shx, shy, mag, micnum, dx, dy, ast, occ, logp, sigma, score, change))
+
+	ff.close()
+
+#=================
 def exclude_class_from_frealign9_parfile(inparfile, outlist, minocc=50.0, frealign8outfile=None, apix=None, frealign9outfile=None, newocc=None):
 	'''
 		reads input frealign9 parameter file for a particular class. If the occupancy of the particle is greater than 'minocc', 
