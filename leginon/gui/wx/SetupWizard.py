@@ -987,6 +987,7 @@ class Setup(object):
 			return temdata
 
 	def setC2Size(self,session,clients,c2size):
+		temdata = None
 		# set it to the first tem found in the hosts list
 		for host in clients:
 			# avoid simulated tem on clients
