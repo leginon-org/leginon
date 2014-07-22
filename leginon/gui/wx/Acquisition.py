@@ -257,6 +257,7 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 						wx.ALIGN_CENTER_VERTICAL)
 
 		self.widgets['bad stats response'] = Choice(self, -1, choices=['Continue', 'Pause', 'Recheck', 'Abort one','Abort all'])
+		self.widgets['bad stats type'] = Choice(self, -1, choices=['Mean', 'Slope'])
 		self.widgets['low mean'] = FloatEntry(self, -1, chars=4)
 		self.widgets['high mean'] = FloatEntry(self, -1, chars=4)
 		self.widgets['recheck pause time'] = IntEntry(self, -1, chars=8)
@@ -273,7 +274,11 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sz_evaluate.Add(self.widgets['high mean'])
 	
 		sbsz_evaluate.Add(sz_response, 0, wx.ALIGN_CENTER|wx.ALL, 0)
-		sbsz_evaluate.Add(wx.StaticText(self, -1, 'when image mean is NOT'), 0, wx.ALIGN_LEFT)
+		sz_range= wx.GridBagSizer(0, 0)
+		sz_range.Add(wx.StaticText(self, -1, 'when image'), (0,0),(1,1), wx.ALIGN_RIGHT)
+		sz_range.Add(self.widgets['bad stats type'],(0,1),(1,1))
+		sz_range.Add(wx.StaticText(self, -1, 'is NOT'), (0,2),(1,1), wx.ALIGN_LEFT)
+		sbsz_evaluate.Add(sz_range, 0, wx.ALIGN_CENTER|wx.ALL,0)
 		sbsz_evaluate.Add(sz_evaluate, 0, wx.ALIGN_CENTER|wx.ALL,0)
 		sbsz_evaluate.Add(passwordbut, 0, wx.ALIGN_CENTER|wx.ALL, 3)
 
