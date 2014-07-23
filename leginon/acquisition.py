@@ -24,12 +24,14 @@ import gui.wx.Acquisition
 import gui.wx.Presets
 import navigator
 import numpy
+import numpy.linalg
 import math
 from pyami import arraystats, imagefun, ordereddict
 import smtplib
 import emailnotification
 import leginonconfig
 import gridlabeler
+import itertools
 
 debug = False
 
@@ -147,6 +149,8 @@ class Acquisition(targetwatcher.TargetWatcher):
 		'high mean': 2**16,
 		'low mean': 50,
 		'bad stats response': 'Continue',
+		'bad stats type': 'Mean',
+		'recheck pause time': 10,
 		'emission off': False,
 		'target offset row': 0,
 		'target offset col': 0,
@@ -201,6 +205,10 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.received_image_drift = threading.Event()
 		self.requested_drift = None
 		self.grid = None
+		self.acq_counter = itertools.cycle(range(0,5))
+		self.time0 = time.time()
+		self.times = []
+		self.intensities = []
 
 		self.duplicatetypes = ['acquisition', 'focus']
 		self.presetlocktypes = ['acquisition', 'target', 'target list']
@@ -704,7 +712,12 @@ class Acquisition(targetwatcher.TargetWatcher):
 			return 'fail'
 
 		if self.settings['bad stats response'] != 'Continue':
-			self.evaluateStats(imagedata['image'])
+			self.recheck_counter = itertools.count()
+			# For ring collapse testing
+			#c = self.acq_counter.next()
+			#imagearray = imagedata['image'] - c*c
+			imagearray = imagedata['image']
+			self.evaluateStats(imagearray)
 
 		## convert float to uint16
 		if self.settings['save integer']:
@@ -919,6 +932,47 @@ class Acquisition(targetwatcher.TargetWatcher):
 		mes = emailnotification.makeMessage(leginonconfig.emailfrom, leginonconfig.emailto, subject, text)
 		s.sendmail(leginonconfig.emailfrom, leginonconfig.emailto, mes.as_string())
 
+	def pauseAndRecheck(self,pausetime):
+		recheck_count = self.recheck_counter.next()
+		self.logger.info('Pausing for %d s before checking again at %d' % (pausetime,recheck_count))
+		time.sleep(pausetime)
+		## acquire image
+		self.reportStatus('acquisition', 'acquiring image...')
+		self.startTimer('acquire getData')
+		correctimage = self.settings['correct image']
+		# Switch frame saving if available
+		try:
+			isSaveRawFrames = self.instrument.ccdcamera.SaveRawFrames
+			self.instrument.ccdcamera.SaveRawFrames = False
+		except:
+			isSaveRawFrames = False
+		if correctimage:
+			imagedata = self.acquireCorrectedCameraImageData(channel=0)
+		else:
+			imagedata = self.acquireCameraImageData()
+		# Restore frame saving
+		try:
+			self.instrument.ccdcamera.SaveRawFrames = isSaveRawFrames
+		except:
+			pass
+		self.reportStatus('acquisition', 'image acquired')
+		self.stopTimer('acquire getData')
+		if imagedata is None:
+			return 'fail'
+		imagearray = imagedata['image']
+		if recheck_count == 0:
+			# Restrict recover mean value with this too if slope is used
+			self.recover_mean = imagearray.mean() * 0.8
+		'''
+		Simulator testing ring collapse	
+		if recheck_count > 5:
+			imagearray = numpy.ones(imagearray.shape)*2800
+		else:
+			imagearray += 20 * recheck_count
+		'''
+		self.recheckEvaluateStats(imagearray)
+		return
+
 	def respondBadImageStats(self, badstate=''):
 			if self.settings['bad stats response'] == 'Abort all':
 				self.player.stopqueue()
@@ -928,11 +982,18 @@ class Acquisition(targetwatcher.TargetWatcher):
 				self.player.stop()
 				self.logger.info('Skiping targets in this target list')
 				raise BadImageStatsAbort('image mean too '+badstate)
+			elif self.settings['bad stats response'] == 'Recheck':
+				self.pauseAndRecheck(self.settings['recheck pause time'])
 			elif self.settings['bad stats response'] == 'Pause':
 				raise BadImageStatsPause('image mean too '+badstate)
 
 	def evaluateStats(self, imagearray):
 		mean = arraystats.mean(imagearray)
+		if self.settings['bad stats type'] == 'Slope':
+			mean = self.runningSlope(time.time() - self.time0,mean)
+			self.logger.info('current slope %s' % (mean,))
+			if mean is None:
+				return
 		if mean > self.settings['high mean']:
 			try:
 				self.emailBadImageStats(mean)
@@ -944,7 +1005,47 @@ class Acquisition(targetwatcher.TargetWatcher):
 				self.emailBadImageStats(mean)
 			except:
 				self.logger.info('could not email')
+			if mean is not None:
+				self.logger.info('mean lower than settings %6.0f' % (mean))
 			self.respondBadImageStats('low')
+
+	def recheckEvaluateStats(self,imagearray):
+		'''
+		Stats evaluation in recheck.
+		This is mainly based on the slope.
+		'''
+		mean = arraystats.mean(imagearray)
+		if self.settings['bad stats type'] is None or self.settings['bad stats type'] == 'Mean':
+			return self.evaluateStats(imagearray)
+		# Evaluate with slope.  Always rejects None (no slope calculated)
+		slope = self.runningSlope(time.time() - self.time0,mean)
+		self.logger.info('current slope %s' % (slope,))
+		if slope is not None and mean > self.recover_mean and slope <= self.settings['high mean'] and slope >=self.settings['low mean']:
+			return
+		else:
+			self.respondBadImageStats('low')
+
+	def runningSlope(self,time,intensity):
+		if len(self.times) == 5:
+			self.times = self.times[1:]
+			self.intensities = self.intensities[1:]
+		self.times.append(time)
+		self.intensities.append(intensity)
+		if len(self.times) < 3:
+			return None
+		slope, intercept = self.linearFitData(self.times,self.intensities)
+		return slope
+
+	def linearFitData(self,xlist,ylist):
+		'''
+		Fit data with a line.
+		dataxy is a dictionary of x values in a list and y values in a list.
+		returned result is a tuple of (slope, intercept).
+		'''
+		x = numpy.array(xlist)
+		y = numpy.array(ylist)
+		A = numpy.vstack([x,numpy.ones(len(x))]).T
+		return numpy.linalg.lstsq(A,y)[0]
 
 	def publishImage(self, imdata):
 		self.publish(imdata, pubevent=True)

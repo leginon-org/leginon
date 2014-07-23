@@ -1685,6 +1685,8 @@ class AcquisitionSettingsData(TargetWatcherSettingsData):
 			('adjust time by tilt', bool),
 			('reset tilt', bool),
 			('bad stats response', str),
+			('bad stats type', str),
+			('recheck pause time', int),
 			('high mean', float),
 			('low mean', float),
 			('emission off', bool),
