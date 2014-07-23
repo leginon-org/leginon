@@ -3,7 +3,7 @@
 - Application XML-Dump
 - http://ami.scripps.edu/ 
 -
-- Application :Calibrations2 (2.1)
+- Application :Calibrations2 (3.1)
 - Version     :0
 - Date : 09/27/2010
 -
@@ -112,7 +112,7 @@
     <sqltable name="ApplicationData" >
         <field name="DEF_id" >717</field>
         <field name="DEF_timestamp" >2010-09-27 12:10:39</field>
-        <field name="name" >Calibrations2 (2.1)</field>
+        <field name="name" >Calibrations2 (3.1)</field>
         <field name="version" >0</field>
     </sqltable>
   <!-- BindingSpecData -->
@@ -186,6 +186,14 @@
         <field name="event class string" >PresetChangedEvent</field>
         <field name="from node alias" >Presets Manager</field>
         <field name="to node alias" >Beam Tilt</field>
+        <field name="REF|ApplicationData|application" >717</field>
+    </sqltable>
+    <sqltable name="BindingSpecData" >
+        <field name="DEF_id" >21363</field>
+        <field name="DEF_timestamp" >2010-09-27 12:10:39</field>
+        <field name="event class string" >PresetChangedEvent</field>
+        <field name="from node alias" >Presets Manager</field>
+        <field name="to node alias" >Beam Size</field>
         <field name="REF|ApplicationData|application" >717</field>
     </sqltable>
     <sqltable name="BindingSpecData" >
@@ -279,6 +287,15 @@
         <field name="DEF_timestamp" >2010-09-27 12:10:39</field>
         <field name="class string" >BeamTiltCalibrator</field>
         <field name="alias" >Beam Tilt</field>
+        <field name="launcher alias" >main</field>
+        <field name="SEQ|dependencies" >[]</field>
+        <field name="REF|ApplicationData|application" >717</field>
+    </sqltable>
+    <sqltable name="NodeSpecData" >
+        <field name="DEF_id" >8274</field>
+        <field name="DEF_timestamp" >2010-09-27 12:10:39</field>
+        <field name="class string" >BeamSizeCalibrator</field>
+        <field name="alias" >Beam Size</field>
         <field name="launcher alias" >main</field>
         <field name="SEQ|dependencies" >[]</field>
         <field name="REF|ApplicationData|application" >717</field>

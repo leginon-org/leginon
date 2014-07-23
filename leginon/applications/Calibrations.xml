@@ -5,7 +5,7 @@
 - Application XML-Dump
 - http://ami.scripps.edu/ 
 -
-- Application :Calibrations (2.0)
+- Application :Calibrations (3.1)
 - Version     :0
 - Date : 06/06/2010
 -
@@ -114,7 +114,7 @@
     <sqltable name="ApplicationData" >
         <field name="DEF_id" >2</field>
         <field name="DEF_timestamp" >2010-06-06 00:19:41</field>
-        <field name="name" >Calibrations (2.0)</field>
+        <field name="name" >Calibrations (3.1)</field>
         <field name="version" >0</field>
     </sqltable>
   <!-- BindingSpecData -->
@@ -164,6 +164,14 @@
         <field name="event class string" >PresetChangedEvent</field>
         <field name="from node alias" >Presets Manager</field>
         <field name="to node alias" >Beam Tilt</field>
+        <field name="REF|ApplicationData|application" >2</field>
+    </sqltable>
+    <sqltable name="BindingSpecData" >
+        <field name="DEF_id" >18</field>
+        <field name="DEF_timestamp" >2010-06-06 00:19:41</field>
+        <field name="event class string" >PresetChangedEvent</field>
+        <field name="from node alias" >Presets Manager</field>
+        <field name="to node alias" >Beam Size</field>
         <field name="REF|ApplicationData|application" >2</field>
     </sqltable>
     <sqltable name="BindingSpecData" >
@@ -290,6 +298,15 @@
         <field name="DEF_timestamp" >2010-06-06 00:19:41</field>
         <field name="class string" >BeamTiltCalibrator</field>
         <field name="alias" >Beam Tilt</field>
+        <field name="launcher alias" >main</field>
+        <field name="SEQ|dependencies" >[]</field>
+        <field name="REF|ApplicationData|application" >2</field>
+    </sqltable>
+    <sqltable name="NodeSpecData" >
+        <field name="DEF_id" >18</field>
+        <field name="DEF_timestamp" >2010-06-06 00:19:41</field>
+        <field name="class string" >BeamSizeCalibrator</field>
+        <field name="alias" >Beam Size</field>
         <field name="launcher alias" >main</field>
         <field name="SEQ|dependencies" >[]</field>
         <field name="REF|ApplicationData|application" >2</field>
