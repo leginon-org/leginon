@@ -9,10 +9,13 @@ from appionlib import appionScript
 from appionlib import apDisplay
 from appionlib import apStack
 from appionlib import apBoxer
+from appionlib import apDDprocess
+from pyami import mrc, numpil
 import deProcessFrames
 import subprocess
 import glob
 import sys
+import shutil
 
 #=====================
 #=====================
@@ -50,6 +53,8 @@ class ExampleScript(appionScript.AppionScript):
 		self.parser.add_option("--stackid", dest="stackid", type="int", help="Stack on which to do frame alignment. ", metavar="INT")
 		self.parser.add_option('--dryrun', dest='dryrun', action='store_true', default=False, help="Just show the command, but do not execute")
 		self.parser.add_option("--output_rotation", dest="output_rotation", type='int', default=0, help="Rotate output particles by the specified angle", metavar="INT")
+		self.parser.add_option("--override_camera", dest="override_camera", default=None, help="Specify camera type")
+		self.parser.add_option("--show_DE_command", dest="show_DE_command", action='store_true',default=False, help="Show the command line options for the DE script")
 
 	#=====================
 	def checkConflicts(self):
@@ -80,12 +85,19 @@ class ExampleScript(appionScript.AppionScript):
 	#=====================
 	def start(self):
 		self.params['output_fileformat'] = 'mrc'
+		newstackname='framealigned.hed'
 		stackdata=apStack.getStackParticlesFromId(self.params['stackid'])
 		stackrundata=apStack.getOnlyStackData(self.params['stackid'])
 		apix=stackrundata['pixelsize']*1e10
 		kev=stackdata[0]['particle']['image']['scope']['high tension']/1000
 		origstackpath=os.path.join(stackrundata['path']['path'],stackrundata['name'])
 		boxsize=stackdata[0]['stack']['boxsize']		
+		
+		#determine camera type
+		cameratype=stackdata[0]['particle']['image']['camera']['ccdcamera']['name']
+		if self.params['override_camera'] is not None:
+			cameratype=self.params['override_camera']
+		
 		#create sorted boxfiles
 		imagedict={}
 		masterlist=[]
@@ -104,12 +116,41 @@ class ExampleScript(appionScript.AppionScript):
 			particlelst=imagedict[key]
 			parentimage=key
 			framespath=particlelst[0]['image']['session']['frame path']
-			framespathname=os.path.join(framespath,parentimage+'.frames')
 			
+			print cameratype
+			if 'Gatan' in cameratype:
+				#prepare frames
+				print framespath
+				
+				#prepare frame directory
+				framespathname=os.path.join(self.params['rundir'],parentimage+'.frames')
+				if os.path.exists(framespathname):
+					pass
+				else:
+					os.mkdir(framespathname)
+				print framespathname
+				
+				mrcframestackname=parentimage+'.frames.mrc'
+				
+				print mrcframestackname
+				
+				nframes=particlelst[0]['image']['camera']['nframes']
+				
+				print "Extracting frames for", mrcframestackname
+				for n in range(nframes):
+					a=mrc.read(os.path.join(framespath,mrcframestackname),n)
+					numpil.write(a,imfile=os.path.join(framespathname,'RawImage_%d.tif' % (n)), format='tiff')
+				
+			elif 'DE' in cameratype:
+				framespathname=os.path.join(framespath,parentimage+'.frames')
+			
+			print os.getcwd()
+			print framespathname
+			#generate DE script call
 			if os.path.exists(framespathname):
 				print "found frames for", parentimage
 
-				nframes=len(particlelst[0]['image']['use frames'])
+				nframes=particlelst[0]['image']['camera']['nframes']
 				boxname=parentimage + '.box'
 				boxpath=os.path.join(framespathname,boxname)
 				shiftdata={'scale':1,'shiftx':0,'shifty':0}
@@ -117,10 +158,10 @@ class ExampleScript(appionScript.AppionScript):
 				#flatfield references
 				brightrefpath=particlelst[0]['image']['bright']['session']['image path']
 				brightrefname=particlelst[0]['image']['bright']['filename']
-				brightnframes=len(particlelst[0]['image']['bright']['use frames'])
+				brightnframes=particlelst[0]['image']['bright']['camera']['nframes']
 				darkrefpath=particlelst[0]['image']['dark']['session']['image path']
 				darkrefname=particlelst[0]['image']['dark']['filename']
-				darknframes=len(particlelst[0]['image']['dark']['use frames'])
+				darknframes=particlelst[0]['image']['dark']['camera']['nframes']
 				brightref=os.path.join(brightrefpath,brightrefname+'.mrc')
 				darkref=os.path.join(darkrefpath,darkrefname+'.mrc')
 				print brightref
@@ -142,6 +183,8 @@ class ExampleScript(appionScript.AppionScript):
 				#self.params['boxes_boxsize']=boxsize
 
 				outpath=os.path.join(self.params['rundir'],key)
+				if os.path.exists(outpath):
+					shutil.rmtree(outpath)
 				os.mkdir(outpath)
 				
 				command=['deProcessFrames.py']
@@ -162,6 +205,7 @@ class ExampleScript(appionScript.AppionScript):
 					subprocess.call(command)
 					
 		
+		#recreate particle stack
 		for n,particledict in enumerate(masterlist):
 			parentimage=particledict['key']
 			correctedpath=os.path.join(self.params['rundir'],parentimage)
@@ -172,108 +216,35 @@ class ExampleScript(appionScript.AppionScript):
 				print os.path.join(correctedpath,('%s.*.region_%03d.*' % (parentimage,particledict['index'])))
 				print correctedparticle
 				#sys.exit()
-				command=['proc2d',correctedparticle[0], 'start.hed']
+				command=['proc2d',correctedparticle[0], newstackname]
 				if self.params['output_rotation'] !=0:
 					command.append('rot=%d' % self.params['output_rotation'])
-				print command
+				
+				if self.params['show_DE_command'] is True:
+					print command
 				subprocess.call(command)
 			else:
 				print "did not find frames for ", parentimage
-				command=['proc2d', origstackpath,'start.hed',('first=%d' % n), ('last=%d' % n)]
+				command=['proc2d', origstackpath, newstackname,('first=%d' % n), ('last=%d' % n)]
 				print command
 				if self.params['dryrun'] is False:
 					subprocess.call(command)
 				
-		sys.exit()
-			
+		#upload stack
 		
+		#make keep file
+		self.params['keepfile']='keepfile.txt'
+		f=open(self.params['keepfile'],'w')
+		for n in range(len(masterlist)):
+			f.write('%d\n' % (n))
+		f.close()
 		
+		apStack.commitSubStack(self.params, newname=newstackname)
+		apStack.averageStack(stack=newstackname)
 		
-		
-		
-#		for particle in stackdata[1001:1002]:
-		for n,particle in enumerate(stackdata):
-			#do necessary appion queries
-			parentimage=particle['particle']['image']['filename']
-			framespath=particle['particle']['image']['session']['frame path']
-			framespathname=os.path.join(framespath,parentimage+'.frames')
-			print framespathname
-			nframes=len(particle['particle']['image']['use frames'])
-			xcoord=particle['particle']['xcoord']
-			ycoord=particle['particle']['ycoord']
-			boxsize=particle['stack']['boxsize']
-
-			#flatfield references
-			brightrefpath=particle['particle']['image']['bright']['session']['image path']
-			brightrefname=particle['particle']['image']['bright']['filename']
-			brightnframes=len(particle['particle']['image']['bright']['use frames'])
-			darkrefpath=particle['particle']['image']['dark']['session']['image path']
-			darkrefname=particle['particle']['image']['dark']['filename']
-			darknframes=len(particle['particle']['image']['dark']['use frames'])
-			brightref=os.path.join(brightrefpath,brightrefname+'.mrc')
-			darkref=os.path.join(darkrefpath,darkrefname+'.mrc')
-			print brightref
-			print darkref
-			
-			#run DE alignment program
-			if os.path.exists(framespathname):
-				print "found frames for", parentimage
-				#os.chdir(framespath)
-
-				#write boxfile
-				boxname=parentimage + '.box'
-				boxpath=os.path.join(framespathname,boxname)
-				shiftdata={'scale':1,'shiftx':0,'shifty':0}
-				apBoxer.processParticleData(particle['particle']['image'],boxsize,[particle['particle']],shiftdata,boxpath)
+		print "Done!!!!"
 				
-				#set appion specific options
-				self.params['gainreference_filename']=brightref
-				self.params['gainreference_framecount']=brightnframes
-				self.params['darkreference_filename']=darkref
-				self.params['darkreference_framecount']=darknframes
-				self.params['input_framecount']=nframes
-				self.params['boxes_fromfiles']=1
-				#self.params['run_verbosity']=3
-				self.params['output_invert']=0
-				#self.params['radiationdamage_apix=']=apix
-				self.params['radiationdamage_voltage']=kev
-				#self.params['boxes_boxsize']=boxsize
-
-
-				command=['deProcessFrames.py']
-				keys=self.params.keys()
-				keys.sort()
-				for key in keys:
-					param=self.params[key]
-					#print key, param, type(param)
-					if param == None or param=='':
-						pass
-					else:
-						option='--%s=%s' % (key,param)
-						command.append(option)
-				command.append(self.params['rundir'])
-				command.append(framespathname)
-				print command
-				if self.params['dryrun'] is False:
-					subprocess.call(command)
-					print parentimage+'*'+'.mrc'
-					outimage=glob.glob(parentimage+'*'+'.mrc')
-					if len(outimage) > 1:
-						print "The directory contains more than one image matching the particle name"
-						sys.exit()
-					else:
-						command=['proc2d',outimage[0], 'start.hed']
-						if self.params['output_rotation'] !=0:
-							command.append('rot=%d' % self.params['output_rotation'])
-						print command
-						subprocess.call(command)
-			else:
-				print "did not find frames for ", parentimage
-				command=['proc2d', origstackpath,'start.hed',('first=%d' % n), ('last=%d' % n)]
-				print command
-				if self.params['dryrun'] is False:
-					subprocess.call(command)
-				
+		
 			
 		
 
