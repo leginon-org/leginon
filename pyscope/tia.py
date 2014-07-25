@@ -269,6 +269,8 @@ acquisition.
 	def getEnergyFiltered(self):
 		return False
 
+class TIA_Eagle(TIA):
+	camera_name = 'BM-Eagle'
 # Note:  only known to work with 4kx4k Eagle.
 # Multiplier, "M" determined by acquiring a series of dark/bright pairs
 # at different binning values.  Nothing else should change
