@@ -104,15 +104,6 @@ class BasicLayoutForm extends BasicForm
 	    $defrunname = ($_POST['runname']) ? $_POST['runname'] : $this->baseRunName.($lastrunnumber+1);
 		$outdir 	= $sessionpathval;
 		
-		// Presets
-		// Create a dictionary of preset value=>desc. Desc appears in the gui, value is returned in the code in a selection box.
-		if ( !empty( $sessiondata['presets']) ) {
-			$presetList = array_combine( $sessiondata['presets'], $sessiondata['presets'] );			
-		}
-
-		// Get the max tilt angle which determines if the tilt angle select control is displayed
-		$maxang = $particle->getMaxTiltAngle( $this->expId );		
-		
 	    // Check the test image params
 		$testcheck 		= ($_POST['testimage']=='on') ? 'CHECKED' : '';
 		$testdisabled 	= ($_POST['testimage']=='on') ? '' : 'DISABLED';
