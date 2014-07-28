@@ -245,7 +245,6 @@ class PresetsManager(node.Node):
 		'apply offset': False,
 		'blank': False,
 		'smallsize': 1024,
-		'add pause in alignment': False,
 	}
 	eventinputs = node.Node.eventinputs + [event.ChangePresetEvent, event.MeasureDoseEvent, event.UpdatePresetEvent]
 	eventoutputs = node.Node.eventoutputs + [event.PresetChangedEvent, event.PresetPublishEvent, event.DoseMeasuredEvent, event.MoveToTargetEvent]
@@ -1276,9 +1275,9 @@ class PresetsManager(node.Node):
 		acquirestr = 'align'
 		smallsize = self.settings['smallsize']
 		pause_time = self.settings['pause time']
-		if self.settings['add pause in alignment']:
-			self.logger.info('pausing for %s seconds before acquire' % (pause_time,))
-			time.sleep(pause_time)
+		# always apply pause
+		self.logger.info('pausing for %s seconds before acquire' % (pause_time,))
+		time.sleep(pause_time)
 		return self._acquireSpecialImage(preset, acquirestr, mode=mode, imagelength=smallsize, binning=binning)
 
 	def modifyImageLength(self,fullcamdim,imagelength):
@@ -1457,6 +1456,10 @@ class PresetsManager(node.Node):
 			old_ccdcamera = oldpreset['ccdcamera']
 			ht = self.instrument.tem.HighTension
 			try:
+				'''
+				pixelshift is the shift value in the unit of the binned pixel
+				pixelvector is the shift value in the unit of binned pixel
+				'''
 				pixelshift1 = self.calclients['image'].itransform(myimage, fakescope1, fakecam1)
 				pixrow = pixelshift1['row'] * oldpreset['binning']['y']
 				pixcol = pixelshift1['col'] * oldpreset['binning']['x']
