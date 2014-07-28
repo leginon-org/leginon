@@ -567,4 +567,17 @@ var help = {
 		'dilation' : 'The amount the masked area is dilated to make the algorithm more conservative.',
 		'erosion' : 'The amount the thresholded areas are eroded to break small bridges between separate components.',
 	}		
+	,		
+	'upload_external_recon' : {
+		'stackid' : 'Unique Appion database id of the stack used for the refinement',
+		'modelid' : 'Unique Appion database id of the model used for the refinement',
+		'numiter' : 'Total number of succesful refinement iterations located in the uplaod directory.',
+		'uploadIterations' : 'ex. 1,2,3,4,5 - The specific iterations that you would like to upload to the Appion database.',
+		'timestamp' : 'Define a timestamp, e.g. "11jun03a" or "my_favorite_refinement_procedure_june03" or whatever you want. This is the timestamp that is part of your file names. 3D mrc file titled: recon_"timestamp"_it#_vol#.mrc (it# and vol# have 3 integers), as for example "recon_11jul18z_it001_vol001.mrc".',
+		'numberOfReferences' : 'Number of output models / references',
+		'symid' : 'The Appion database id for your Symmetry. For example, 25 is the id for C1 symmetry.',
+		'mass' : 'The size of the window for the blur function.',
+		'apix' : 'The pixelsize, in Angstroms.',
+		'box' : 'The boxsize, in pixels.',
+	}		
 }

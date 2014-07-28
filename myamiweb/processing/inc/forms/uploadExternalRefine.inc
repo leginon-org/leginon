@@ -6,16 +6,16 @@
  *	For terms of the license agreement
  *	see  http://ami.scripps.edu/software/leginon-license
  */
-require_once "basicLayoutForm.inc";
-require_once "inc/summarytables.inc";
-require_once "inc/particledata.inc";
-
-// Used to create a command similar to the following:
+// This class displays a form used to create a command similar to the following:
 // uploadExternalRefine.py --rundir=/ami/data17/appion/11jan11a/recon/external_package_test 
 // --runname=external_package_test --description="testing out external upload on 11jan11 data, emanrecon11, first iteration" 
 // --projectid=224 --no-commit --expId=8397 --uploadIterations=1,2,3,4,5 --stackid=127 
 // --modelid=19 --mass=3800 --apix=2.74 --box=160 --numberOfReferences=1 --numiter=1 --timestamp=11jul18z 
 // --symid=25
+
+require_once "basicLayoutForm.inc"; //includes the BasicLayoutForm class that this class extends
+require_once "inc/particledata.inc"; // needed to look up symmetry values
+require_once "inc/summarytables.inc"; // needed to show stack and model tables
 
 class UploadExternalRefine extends BasicLayoutForm
 {
@@ -31,12 +31,12 @@ class UploadExternalRefine extends BasicLayoutForm
 		$pubList = array('appion');
 		$this->setPublications( $pubList );
 		$this->setJobType( 'uploadrecon' );
-		$this->setOutputDirectory( 'recon' );
-		$this->setBaseRunName( '' );
+		$this->setOutputDirectory( 'recon/external_package_test' );
+		$this->setBaseRunName( 'external_refinement_results' );
 		$this->setTitle( 'Upload Reconstruction' );
 		$this->setHeading( 'Upload External Reconstruction' );
 		$this->setExeFile( 'uploadExternalRefine.py' );
-		$this->setGuideURL( "http://ami.scripps.edu/redmine/projects/appion/wiki/Appion_Processing" );
+		$this->setGuideURL( "http://ami.scripps.edu/redmine/projects/appion/wiki/Upload_Refinement" );
 		$this->setTestable( False ); // True to activate "test single image".
 		$this->setUseLegOutDir( False ); // The output directory will be created in the Appion run directory rather than Leginon.
 		$this->setShowDesc( True ); // Flag to hide the description field of the run parameters.
@@ -44,8 +44,9 @@ class UploadExternalRefine extends BasicLayoutForm
 		
 		//------ Set Parameters specific to the program that requires this new form -----//
 	
-		// find any selected models
-		// we expect the key to be "model_" for single model, the value to be "model_#"
+		// Find any selected models and stack. 
+		// These were selected on a previous page and stored in the $_POST array.
+		// We expect the key to be "model_" for single model, the value to be "model_#"
 		// for multi-model, the value and key are both "model_#"
 		foreach( $_POST as $key=>$value ) {
 			if (strpos($key,"model_" ) !== False) {
@@ -55,19 +56,17 @@ class UploadExternalRefine extends BasicLayoutForm
 			}
 		}
 		
-		if (!$this->modelArray)
-			$error = "ERROR: no initial model selected";
-		if (!$_POST['stackval']) {
-			$error = "ERROR: no stack selected";
-		} else {
+		if ($_POST['stackval']) {
 			$stackid = $_POST['stackval'];
 		}
 			
 		$params = $this->getFormParams();
 		
 		// The help section corresponds to the array key for these parameters found in help.js for popup help.
-		$params->setHelpSection( "em_hole_finder" );
+		$params->setHelpSection( "upload_external_recon" );
 				
+		// Add each of the parameters here. 
+		// addParam( "key", default_value, "Label that appears in GUI")
 		$params->addParam( "uploadIterations", $uploadIterations, "Upload iterations" );
 		$params->addParam( "mass", $mass, "Mass" );
 		$params->addParam( "apix", $apix, "Apix" );
@@ -80,66 +79,61 @@ class UploadExternalRefine extends BasicLayoutForm
 		$params->addParam( "modelid", $modelid, "Model id" );
 		
 		// Validations
-		//$params->addValidation( "numpart", "req" );
+		$params->addValidation( "uploadIterations", "req" );
+		$params->addValidation( "apix", "req" );
+		$params->addValidation( "box", "req" );
+		$params->addValidation( "numiter", "req" );
+		$params->addValidation( "numberOfReferences", "req" );
+		$params->addValidation( "timestamp", "req" );
+		$params->addValidation( "symid", "req" );
+		$params->addValidation( "stackid", "req" );
+		$params->addValidation( "modelid", "req" );
 	}
 		
-	// Generate a form for the parameters that are specific to this program (not Appion params)
+	// Generate a form for the parameters that are specific to this program 
+	// The Left side will just show the stack and model that the user selected
+	// on the previous pages. This overrides the generateAdditionalFormLeft() 
+	// function that is found in the BasicLayoutForm class.
 	public function generateAdditionalFormLeft()
 	{
 		$this->updateFormParams();
 		$params = $this->getFormParams();
 		
-		$fieldSize = 10;
+				$fieldSize = 15;
 		
 		$html .= "
 	    <br />
 	    <H4>Recon Upload Parameters</H4>
 	    <hr />";
 		
-		$html .= $this->insertSymmetrySelectionBox( "symid", $params->getParamValue("symid") );
-		$html .= "&nbsp;";
-		$html .=  docpop( "basicrefine.symmetry", $params->getParamLabel("symid") );
-		$html.= "<br/><br/>\n";
+		$symDict = $this->createSymmetryDict();
+		$html .= $params->insertSelectField( "symid", $symDict );
 		
-		$html.= $params->insertTextField( "uploadIterations", $fieldSize );
-		$html.= $params->insertTextField( "mass", $fieldSize );
-		$html.= $params->insertTextField( "apix", $fieldSize );
-		$html.= $params->insertTextField( "box", $fieldSize );
+		$html.= $params->insertTextField( "timestamp", $fieldSize, "(ex. 11jul18z)" );
 		$html.= $params->insertTextField( "numberOfReferences", $fieldSize );
 		$html.= $params->insertTextField( "numiter", $fieldSize );
-		$html.= $params->insertTextField( "timestamp", $fieldSize );
+		$html.= $params->insertTextField( "uploadIterations", $fieldSize, "(ex. 1,2,3)" );
+		$html.= $params->insertTextField( "mass", $fieldSize, "(kDa)" );
+		$html.= $params->insertTextField( "apix", $fieldSize, "(&Aring;ngstroms)" );
+		$html.= $params->insertTextField( "box", $fieldSize, "(Pixels)" );
 		$html.= $params->insertTextField( "stackid", $fieldSize );
 		$html.= $params->insertTextField( "modelid", $fieldSize );
-
 		
-		// add stack and model summary
+		// add stack summary
 		//echo "StackID: $stackid -- ModelID: $modelid<br/>\n";
-		$html.= "<br/><br/>\n";
 		$html.= "<table class='tablebubble'><tr><td>\n";
 		$html.= stacksummarytable($params->getParamValue('stackid'), true);
 		$html.= "</td></tr>";
-		foreach ( $this->modelArray as $model ) {
-			$html.= "<tr><td>\n";
-			$html.= modelsummarytable( $model['id'], true );
-			$html.= "</td></tr>";
-		}
+		// Add the model summary table
+		$html.= "<tr><td>\n";
+		$html.= modelsummarytable( $params->getParamValue('modelid'), true );
+		$html.= "</td></tr>";
 		$html.= "</table>\n";
 		
 		return $html;
 	}	
-
-	// Override the default build Command Function because the --test flag is not normal
-	// for other Appion Loop methods and not included in the parent.
-	public function buildCommand( $postArray )
-	{
-		$command   = parent::buildCommand( $postArray );
-		
-		if ( $postArray['testimage']=="on" ) {
-			$command.= " --test";
-		}
-		
-		return $command." ";
-	}
+	
+	//------ Helper Functions specific to this form only -----//
 
 	// Parse "model_#" to return #
 	function getModelId($value)
@@ -154,45 +148,23 @@ class UploadExternalRefine extends BasicLayoutForm
 		return $id;
 	}
 	
-	// returns the html to display a drop down selection box
-	// containing all the available symmetry values as defined
-	// in the apSymmetry table. 
-	// Name is the name of the form parameter
-	// Value is the currently selected symmetry id 
-	// TODO: this is awfully similar to the box in UploadModel.php...merge? 
-	function insertSymmetrySelectionBox( $name, $value ) 
+	function createSymmetryDict( ) 
 	{
 		$this->particle = new particledata();
-		
-		// if there are quotes around $value, trim them
-		$value = str_replace('"','',$value); 
-		
 		$syms = $this->particle->getSymmetries();
-		$html .= "<select name='$name'>\n";
-	   	$html .= "<option value=''>select one...</option>\n";
 		
 	   	foreach ($syms as $sym) {
 	   		$id 		= $sym['DEF_id'];
 	   		$symmetry 	= $sym['symmetry'];
 	   		
-			$html .= "<option value='$symmetry'";
-			
-			if ( strcasecmp($symmetry, $value) == 0 ) {
-				$html .= " SELECTED";
-			}
-			
-			$html .= ">$symmetry";
-			
 			if ($symmetry == 'C1') {
-				$html .= " (no symmetry)";
+				$symmetry = " (no symmetry)";
 			}
 			
-			$html .= "</option>\n";
-		}
+			$symDict[$id] = $symmetry;
+	   	}
 		
-		$html .= "</select>\n";
-		
-		return $html;
+		return $symDict;
 	}	
 }
 ?>
