@@ -76,19 +76,13 @@ tiltseries {
  }
 
 
- reference {
-
-   body: T / F
-
- }
-
-
  align {
 
-   estimate: AP_do_estimation
-
-   maxcorrection: AP_max_correction
-
+   gridsearch {
+     limit: AP_grid_limit
+     step: AP_grid_step
+   }
+   
    mask {
      apodization: { AP_mask_apod_x, AP_mask_apod_y }
      width: AP_mask_width
@@ -97,10 +91,6 @@ tiltseries {
    correlation {
      mode: "AP_corr_mode"      (* AP corr mode *)
      size: { AP_correlation_size_x, AP_correlation_size_y } 
-   }
-
-   peaksearch {
-     radius: { AP_peak_search_radius_x, AP_peak_search_radius_y }
    }
 
  }

@@ -727,7 +727,7 @@ if (is_numeric($expId)) {
 			'result'=>$tarresults,
 		);
 		$nruns[] = array(
-			'name'=>"<a href='runTomoAligner.php?expId=$sessionId'>Align tilt series</a>",
+			'name'=>"<a href='selectAlignTiltSeries.php?expId=$sessionId'>Align tilt series</a>",
 			'result'=>$taresults,
 		);
 		$nruns[] = array(

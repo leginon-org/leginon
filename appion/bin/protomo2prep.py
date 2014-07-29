@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+# 
+# Prepares tomography micrographs in the Leginon database for alignment.
 
 import os
 import sys
@@ -56,7 +58,7 @@ class ProTomo2Prep(appionScript.AppionScript):
 		sessiondata = apDatabase.getSessionDataFromSessionName(self.params['sessionname'])
 		self.sessiondata = sessiondata
 		tiltseriesdata = apDatabase.getTiltSeriesDataFromTiltNumAndSessionId(self.params['tiltseries'],sessiondata)
-		tiltdata=apTomo.getImageList([tiltseriesdata])
+		tiltdata = apTomo.getImageList([tiltseriesdata])
 		description = self.params['description']
 		apDisplay.printMsg("getting imagelist")
 
@@ -64,35 +66,35 @@ class ProTomo2Prep(appionScript.AppionScript):
 		#tilts are tilt angles, ordered_imagelist are imagedata, ordered_mrc_files are paths to files, refimg is an int
 
 		###set up files
-		seriesname='series'+str(self.params['tiltseries'])
-		tiltfilename=seriesname+'.tlt'
-		param_out=seriesname+'.param'
-		maxtilt=max([abs(tilts[0]),abs(tilts[-1])])
+		seriesname = 'series'+str(self.params['tiltseries'])
+		tiltfilename = seriesname+'.tlt'
+		param_out = seriesname+'.param'
+		maxtilt = max([abs(tilts[0]),abs(tilts[-1])])
 		apDisplay.printMsg("highest tilt angle is %f" % maxtilt)
-		self.params['cos_alpha']=math.cos(maxtilt*math.pi/180)
-		self.params['raw_path']=os.path.join(self.params['rundir'],'raw')
+		self.params['cos_alpha'] = math.cos(maxtilt*math.pi/180)
+		self.params['raw_path'] = os.path.join(self.params['rundir'],'raw')
 
 
-		rawexists=apParam.createDirectory(self.params['raw_path'])
+		rawexists = apParam.createDirectory(self.params['raw_path'])
 
 		apDisplay.printMsg("copying raw images")
-		newfilenames=apProTomo.getImageFiles(ordered_imagelist,self.params['raw_path'], link=False)
+		newfilenames = apProTomo.getImageFiles(ordered_imagelist,self.params['raw_path'], link=False)
 	
 		###create tilt file
 
 		#get image size from the first image
-		imagesizex=tiltdata[0]['image'].shape[0]
-		imagesizey=tiltdata[0]['image'].shape[1]
+		imagesizex = tiltdata[0]['image'].shape[0]
+		imagesizey = tiltdata[0]['image'].shape[1]
 
 		#shift half tilt series relative to eachother
 		#SS I'm arbitrarily making the bin parameter here 1 because it's not necessary to sample at this point
 		shifts = apTomo.getGlobalShift(ordered_imagelist, 1, refimg)
 		
 		#OPTION: refinement might be more robust by doing one round of IMOD aligment to prealign images before doing protomo refine
-		origins=apProTomo2Prep.convertShiftsToOrigin(shifts, imagesizex, imagesizey)
+		origins = apProTomo2Prep.convertShiftsToOrigin(shifts, imagesizex, imagesizey)
 
 		#determine azimuth
-		azimuth=apTomo.getAverageAzimuthFromSeries(ordered_imagelist)
+		azimuth = apTomo.getAverageAzimuthFromSeries(ordered_imagelist)
 		apProTomo2Prep.writeTileFile2(tiltfilename, seriesname, newfilenames, origins, tilts, azimuth, refimg)
 
 #=====================

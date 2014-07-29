@@ -86,7 +86,10 @@ class ProTomo2Reconstruct(apTomoMakerBase.TomoMaker):
 		outtltfile='series.tlt'
 		seriesname='series'
 		
-		apProTomo.writeTiltFile2(outfilename, seriesname, specimen_eulers, azimuth, referenceimage ):
+		apProTomo.writeTiltFile2(outfilename, seriesname, specimen_eulers, azimuth, referenceimage )
+		
+		#reconstruct volume
+		
 
 #=====================
 if __name__ == '__main__':

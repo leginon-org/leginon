@@ -167,8 +167,46 @@ def createParamDict(params):
 		'AP_hp_apod_x': params['highpass_apod_x'],
 		'AP_hp_apod_y': params['highpass_apod_y'], 
 		'AP_corr_mode': params['corr_mode'],
-		'AP_raw_path': params['raw_path'] }
-
+		'AP_search_x' : params['peak_search_radius_x'],
+		'AP_search_y' : params['peak_search_radius_y'],
+		'AP_raw_path': params['raw_path'],
+		'AP_binning': params['binning'],
+		'AP_preprocessing': params['preprocessing'],
+		'AP_select_images': params['select_images'],
+		'AP_exclude_images': params['exclude_images'],
+		'AP_border': params['border'],
+		'AP_clip_low': params['clip_low'],
+		'AP_clip_high': params['clip_high'],
+		'AP_gradient': params['gradient'],
+		'AP_iter_gradient': params['iter_gradient'],
+		'AP_filter': params['filter'],
+		'AP_kernel_x': params['kernel_x'],
+		'AP_kernel_y': params['kernel_y'],
+		'AP_window_area': params['window_area'],
+		'AP_mask_apod_x': params['mask_apod_x'],
+		'AP_mask_apod_y': params['mask_apod_y'],
+		'AP_mask_width': params['mask_width'],
+		'AP_do_estimation': params['do_estimation'],
+		'AP_max_correction': params['max_correction'],
+		'AP_correlation_size_x': params['correlation_size_x'],
+		'AP_correlation_size_y': params['correlation_size_y'],
+		'AP_peak_search_radius_x': params['peak_search_radius_x'],
+		'AP_peak_search_radius_y': params['peak_search_radius_y'],
+		'AP_orientation': params['orientation'],
+		'AP_azimuth': params['azimuth'],
+		'AP_rotation': params['rotation'],
+		'AP_logging': params['logging'],
+		'AP_loglevel': params['loglevel'],
+		'AP_map_size_x': params['map_size_x'],
+		'AP_map_size_y': params['map_size_y'],
+		'AP_map_size_z': params['map_size_z'],
+		'AP_filename_prefix': params['filename_prefix'],
+		'AP_image_extension': params['image_file_type'],
+		'AP_cachedir': params['cachedir'],
+		'AP_protomo_outdir': params['protomo_outdir'],
+		'AP_restart': params['restart'],
+		'AP_grid_limit': params['gridsearch_limit'],
+		'AP_grid_step': params['gridsearch_step'] }
 	return paramdict				
 	
 #=====================
@@ -247,8 +285,10 @@ def getPrototypeParamFile(outparamfile):
 	shutil.copyfile(origparamfile,newparamfile)
 
 def getPrototypeParamPath():
-	appiondir=apParam.getAppionDirectory()
+	#appiondir=apParam.getAppionDirectory()
+	appiondir='/panfs/storage.local/imb/home/ajn10d/myami/appion'
 	origparamfile=os.path.join(appiondir,'appionlib','data','protomo.param')
-	return origparamfile
+	coarse_origparamfile=os.path.join(appiondir,'appionlib','data','protomo_coarse_align.param')
+	return coarse_origparamfile, origparamfile
 		
 		
