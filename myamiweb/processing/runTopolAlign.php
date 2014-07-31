@@ -67,21 +67,22 @@ function createTopolAlignForm($extra=false, $title='topologyAlignment.py Launche
 			var numpart = document.viewerform.numpart.value;
 			var boxsize = stackArray[2];
 			var numpix = Math.pow(boxsize/document.viewerform.bin.value, 2);
-			var calctime = (numpart/1000.0) * document.viewerform.startnumcls.value * numpix * secperiter / (document.viewerform.nproc.value - 1);
-			if (calctime < 70) {
-				var time = Math.round(calctime*100.0)/100.0
-				document.viewerform.timeestimate.value = time.toString()+' seconds';
-			} else if (calctime < 3700) {
-				var time = Math.round(calctime*0.6)/100.0
-				document.viewerform.timeestimate.value = time.toString()+' minutes';
-			} else if (calctime < 3700*24) {
-				var time = Math.round(calctime/36.0)/100.0
-				document.viewerform.timeestimate.value = time.toString()+' hours';
-			} else {
-				var time = Math.round(calctime/36.0/24.0)/100.0
-				document.viewerform.timeestimate.value = time.toString()+' days';
-			}
 		}\n";
+#			var calctime = (numpart/1000.0) * document.viewerform.startnumcls.value * numpix * secperiter / (document.viewerform.nproc.value - 1);
+#			if (calctime < 70) {
+#				var time = Math.round(calctime*100.0)/100.0
+#				document.viewerform.timeestimate.value = time.toString()+' seconds';
+#			} else if (calctime < 3700) {
+#				var time = Math.round(calctime*0.6)/100.0
+#				document.viewerform.timeestimate.value = time.toString()+' minutes';
+#			} else if (calctime < 3700*24) {
+#				var time = Math.round(calctime/36.0)/100.0
+#				document.viewerform.timeestimate.value = time.toString()+' hours';
+#			} else {
+#				var time = Math.round(calctime/36.0/24.0)/100.0
+#				document.viewerform.timeestimate.value = time.toString()+' days';
+#			}
+#		}\n";
 	// check form values
 	$javascript .="function checkform() {\n";
 	$javascript .="  if (document.forms[\"viewerform\"][\"msaproc\"].value > 8) {\n";
@@ -100,6 +101,7 @@ function createTopolAlignForm($extra=false, $title='topologyAlignment.py Launche
 	$javascript .="    document.getElementById('imagicbutton').style.border='1px solid #F00';\n";
 	$javascript .="    document.getElementById('imagicbutton').style.backgroundColor='#C0C0C0';\n";
 	$javascript .="    document.getElementById('imagicparams').style.display = 'none';\n";
+	$javascript .="    document.getElementById('msaprocinput').style.display = 'none';\n";
 	$javascript .="  }\n";
 	$javascript .="  if (package == 'IMAGIC') {\n";
 	$javascript .="    document.viewerform.msamethod.value='imagic';\n";
@@ -109,6 +111,7 @@ function createTopolAlignForm($extra=false, $title='topologyAlignment.py Launche
 	$javascript .="    document.getElementById('imagicbutton').style.border='1px solid #0F0';\n";
 	$javascript .="    document.getElementById('imagicbutton').style.backgroundColor='#CCFFCC';\n";
 	$javascript .="    document.getElementById('imagicparams').style.display = 'block';\n";
+	$javascript .="    document.getElementById('msaprocinput').style.display = 'block';\n";
 	$javascript .="  }\n";
 	$javascript .="}\n";
 
@@ -147,7 +150,7 @@ function createTopolAlignForm($extra=false, $title='topologyAlignment.py Launche
 	$nocentercheck = ($_POST['nocenter']=='on') ? 'checked' : '';
 	$nomaskcheck = ($_POST['nomask']=='on') ? 'checked' : '';
 	$classitercheck = ($_POST['classiter']=='on') ? 'checked' : '';
-	$nproc = ($_POST['nproc']) ? $_POST['nproc'] : '8';
+#	$nproc = ($_POST['nproc']) ? $_POST['nproc'] : '8';
 	$msaproc = ($_POST['msaproc']) ? $_POST['msaproc'] : '8';
 	$iter = (isset($_POST['iter'])) ? $_POST['iter'] : '5';
 	// topology alignment parameters
@@ -202,11 +205,15 @@ function createTopolAlignForm($extra=false, $title='topologyAlignment.py Launche
 	echo "";
 	echo "<br>";
 
-	echo "<INPUT TYPE='text' NAME='nproc' SIZE='4' VALUE='$nproc' onChange='estimatetime()'>\n";
-	echo "Number of Processors for MRA";
-	echo "<br/>\n";
+#	echo "<INPUT TYPE='text' NAME='nproc' SIZE='4' VALUE='$nproc' onChange='estimatetime()'>\n";
+#	echo "Number of Processors for MRA";
+#	echo "<br/>\n";
+	echo "<div id='msaprocinput'";
+	if ($msamethod=='can') echo " style='display:none'\n";
+	echo ">\n";
 	echo "<INPUT TYPE='text' NAME='msaproc' SIZE='4' VALUE='$msaproc' onChange='estimatetime()'>\n";
 	echo "Number of Processors for MSA";
+	echo "</div>\n";
 	echo "<br/>\n";
 
 	echo "</TD></tr>\n</table>\n";
@@ -351,9 +358,9 @@ function createTopolAlignForm($extra=false, $title='topologyAlignment.py Launche
 	echo "<TR>\n";
 	echo "	<TD COLSPAN='2' ALIGN='CENTER'>\n";
 	echo "	<hr />\n";
-	echo "Time estimate for first iteration: ";
-	echo "<INPUT TYPE='text' NAME='timeestimate' SIZE='16' onFocus='this.form.elements[0].focus()'>\n";
-	echo "<br/>\n";
+#	echo "Time estimate for first iteration: ";
+#	echo "<INPUT TYPE='text' NAME='timeestimate' SIZE='16' onFocus='this.form.elements[0].focus()'>\n";
+#	echo "<br/>\n";
 	echo getSubmitForm("Run Topology Alignment");
 	echo "  </td>\n";
 	echo "</tr>\n";
@@ -403,7 +410,7 @@ function runTopolAlign() {
 	$nocenter = ($_POST['nocenter']=="on") ? true : false;
 	$nomask = ($_POST['nomask']=="on") ? true : false;
 	$classiter = ($_POST['classiter']=="on") ? true : false;
-	$nproc = ($_POST['nproc']) ? $_POST['nproc'] : 8;
+#	$nproc = ($_POST['nproc']) ? $_POST['nproc'] : 8;
 	$msaproc = ($_POST['msaproc']) ? $_POST['msaproc'] : 8;
 	$mramethod = strtolower($_POST['mramethod']);
 	$msamethod = ($_POST['msamethod']);
@@ -422,11 +429,8 @@ function runTopolAlign() {
 	if (!$description)
 		createTopolAlignForm("<B>ERROR:</B> Enter a brief description of the particles to be aligned");
 
-	if ($nproc > 24)
-		createTopolAlignForm("<B>ERROR:</B> Let's be reasonable with the number of processors, less than 24 please");
-	if ($msaproc > 8 && $msamethod=='can')
-		createTopolAlignForm("<B>ERROR:</B> MSA cannot run on more than 8 processors");
-
+#	if ($nproc > 24)
+#		createTopolAlignForm("<B>ERROR:</B> Let's be reasonable with the number of processors, less than 24 please");
 	//make sure a stack was selected
 	if (!$stackid)
 		createTopolAlignForm("<B>ERROR:</B> No stack selected");
@@ -446,7 +450,7 @@ function runTopolAlign() {
 	$stackdata = $particle->getStackParams($stackid);
 	$boxsize = $stackdata['boxsize'];
 	$secperiter = 0.0025;
-	$calctime = ($numpart/1000.0)*$startnumcls*($boxsize/$bin)*($boxsize/$bin)*$secperiter/$nproc;
+#	$calctime = ($numpart/1000.0)*$startnumcls*($boxsize/$bin)*($boxsize/$bin)*$secperiter/$nproc;
 
 	// make sure outdir ends with '/' and append run name
 	if (substr($outdir,-1,1)!='/') $outdir.='/';
@@ -488,9 +492,9 @@ function runTopolAlign() {
 	$command.="--mramethod=$mramethod ";
 	$command.="--msamethod=$msamethod ";
 
-	if ($nproc)
-		$command.="--nproc=$nproc ";
-	if ($msaproc)
+#	if ($nproc)
+#		$command.="--nproc=$nproc ";
+	if ($msaproc && $msamethod=='imagic')
 		$command.="--msaproc=$msaproc ";
 	if ($premask) $command.="--premask ";
 	if ($nocenter) $command.="--no-center ";
