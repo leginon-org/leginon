@@ -31,6 +31,8 @@ class CCDCamera(baseinstrument.BaseInstrument):
 		## optional:
 		{'name': 'EnergyFilter', 'type': 'property'},
 		{'name': 'EnergyFilterWidth', 'type': 'property'},
+		{'name': 'FrameFlip', 'type': 'property'},
+		{'name': 'FrameRotate', 'type': 'property'},
 	)
 
 	def __init__(self):
@@ -309,3 +311,10 @@ This method returns that multiplier, M.  In the standard case, returns 1.0.
 	def getSystemGainDarkCorrected(self):
 		return False
 
+	def getFrameFlip(self):
+		# flip before? rotation
+		return False
+
+	def getFrameRotate(self):
+		# rotation in multiple of 90 degrees
+		return 0
