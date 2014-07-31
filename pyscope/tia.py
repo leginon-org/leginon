@@ -38,6 +38,9 @@ class TIA(ccdcamera.CCDCamera):
 		self.setupname = self.tianame + ' Setup'
 		self.imagedispname = self.tianame + ' Image Display'
 		self.imagename = self.tianame + ' Image'
+		# set save_frames here because super is used in TIA_Falcon first
+		# still not sure why it matters Issue #2874
+		self.save_frames = False
 		self._connectToESVision()
 		self.initSettings()
 
@@ -296,7 +299,6 @@ class TIA_Falcon(TIA):
 
 	def __init__(self):
 		super(TIA_Falcon,self).__init__()
-		self.save_frames = False
 		self.frameconfig = falconframe.FalconFrameConfigXmlMaker(False)
 		self.movie_exposure = 500.0
 		self.start_frame_number = 1
