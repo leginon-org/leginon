@@ -49,7 +49,7 @@ class TIA(ccdcamera.CCDCamera):
 				self._ccd.Camera = self.camera_name
 			return self._ccd
 		else:
-			return ccdcamera.CCDCamera.__getattr__(self, name)
+			return ccdcamera.CCDCamera.__getattribute__(self, name)
 
 	def initSettings(self):
 		self.dimension = self._getCameraSize()
@@ -296,6 +296,7 @@ class TIA_Falcon(TIA):
 
 	def __init__(self):
 		super(TIA_Falcon,self).__init__()
+		self.save_frames = False
 		self.frameconfig = falconframe.FalconFrameConfigXmlMaker(False)
 		self.movie_exposure = 500.0
 		self.start_frame_number = 1
