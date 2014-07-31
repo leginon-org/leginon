@@ -3,7 +3,7 @@
 - Application XML-Dump
 - http://ami.scripps.edu/ 
 -
-- Application :MSI-T Advanced (3.0)
+- Application :MSI-T Advanced (3.1)
 - Version     :4
 - Date : 06/05/2012
 -
@@ -115,7 +115,7 @@
     <sqltable name="ApplicationData" >
         <field name="DEF_id" >14</field>
         <field name="DEF_timestamp" >2012-06-05 11:45:24</field>
-        <field name="name" >MSI-T Advanced (3.0)</field>
+        <field name="name" >MSI-T Advanced (3.1)</field>
         <field name="version" >4</field>
     </sqltable>
   <!-- BindingSpecData -->
@@ -1258,6 +1258,23 @@
         <field name="from node alias" >Square</field>
         <field name="to node alias" >Target Adjustment</field>
         <field name="REF|ApplicationData|application" >662</field>
+    </sqltable>
+    <sqltable name="NodeSpecData" >
+        <field name="DEF_id" >8391</field>
+        <field name="DEF_timestamp" >2011-03-18 13:59:40</field>
+        <field name="class string" >AutoNitrogenFiller</field>
+        <field name="alias" >N2 Filling</field>
+        <field name="launcher alias" >main</field>
+        <field name="SEQ|dependencies" >[]</field>
+        <field name="REF|ApplicationData|application" >723</field>
+    </sqltable>
+    <sqltable name="BindingSpecData" >
+        <field name="DEF_id" >17773</field>
+        <field name="DEF_timestamp" >2009-03-04 15:47:10</field>
+        <field name="event class string" >FixConditionEvent</field>
+        <field name="from node alias" >Exposure MultiMove</field>
+        <field name="to node alias" >N2 Filling</field>
+        <field name="REF|ApplicationData|application" >658</field>
     </sqltable>
 
  </data>

@@ -309,6 +309,10 @@ class GatanK2Base(DMSEM):
 		return params
 
 	def calculateFileSavingParams(self):
+		'''
+		Creates raw frame file saving parameters independent of
+		the integrated image returned to Leginon
+		'''
 		if self.isDoseFracOn():
 			frames_name = time.strftime('%Y%m%d_%H%M%S', time.localtime())
 			self.frames_name = frames_name + '%02d' % (self.idcounter.next(),)

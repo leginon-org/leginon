@@ -49,7 +49,8 @@ class setLeginonDefaultValues {
 		$data["isdefault"] = "1";
 		$data["override preset"] = "0";
 		$data["REF|CameraSettingsData|camera settings"] = "1";
-		$data["correlation type"] = "cross";
+		$data["correlation type"] = "phase";
+		$data["lpf sigma"] = "1.0";
 		$data["defocus beam tilt"] = "0.01";
 		$data["first defocus"] = "-2e-06";
 		$data["second defocus"] = "-4e-06";
@@ -77,7 +78,8 @@ class setLeginonDefaultValues {
 		$data["SUBD|instruments|tem"] = "None";
 		$data["override preset"] = "0";
 		$data["REF|CameraSettingsData|camera settings"] = "1";
-		$data["correlation type"] = "cross";
+		$data["correlation type"] = "phase";
+		$data["lpf sigma"] = "1.0";
 		$data["image shift tolerance"] = "12";
 		$data["image shift shift fraction"] = "25";
 		$data["image shift n average"] = "1";
@@ -110,7 +112,8 @@ class setLeginonDefaultValues {
 		$data["SUBD|instruments|tem"] = "None";
 		$data["override preset"] = "0";
 		$data["REF|CameraSettingsData|camera settings"] = "1";
-		$data["correlation type"] = "cross";
+		$data["correlation type"] = "phase";
+		$data["lpf sigma"] = "1.0";
 		$data["image shift tolerance"] = "12";
 		$data["image shift shift fraction"] = "25";
 		$data["image shift n average"] = "1";
@@ -141,7 +144,8 @@ class setLeginonDefaultValues {
 		$data["isdefault"] = "1";
 		$data["override preset"] = "0";
 		$data["REF|CameraSettingsData|camera settings"] = "1";
-		$data["correlation type"] = "cross";
+		$data["correlation type"] = "phase";
+		$data["lpf sigma"] = "1.0";
 		$data["lattice a"] = "69";
 		$data["lattice b"] = "173.5";
 		$data["lattice gamma"] = "90";
@@ -162,7 +166,8 @@ class setLeginonDefaultValues {
 		$data["SUBD|instruments|tem"] = "None";
 		$data["override preset"] = "0";
 		$data["REF|CameraSettingsData|camera settings"] = "1";
-		$data["correlation type"] = "cross";
+		$data["correlation type"] = "phase";
+		$data["lpf sigma"] = "1.0";
 		$data["beam diameter"] = "0.16";
 		$data["scale factor"] = "0.88";
 		$data["REF|SessionData|session"]= $this->sessionId;
@@ -189,7 +194,7 @@ class setLeginonDefaultValues {
 		$data["correct image"] = "1";
 		$data["SEQ|preset order"] = "[u'gr']";
 		$data["wait for rejects"] = "0";
-		$data["move type"] = "modeled stage position";
+		$data["move type"] = "stage position";
 		$data["save image"] = "1";
 		$data["pause time"] = "1.5";
 		$data["display image"] = "1";
@@ -206,7 +211,6 @@ class setLeginonDefaultValues {
 		$data["final image shift"] = "0";
 		$data["accept precision"] = "0.001";
 		$data["wait for reference"] = "0";
-		$data["wait for transform"] = "0";
 		$data["adjust for transform"] = "no";
 		$data["background"] = "0";
 		$data["use parent tilt"] = "0";
@@ -229,7 +233,7 @@ class setLeginonDefaultValues {
 		$data["correct image"] = "1";
 		$data["SEQ|preset order"] = "[u'sq']";
 		$data["wait for rejects"] = "0";
-		$data["move type"] = "modeled stage position";
+		$data["move type"] = "stage position";
 		$data["save image"] = "1";
 		$data["pause time"] = "1.5";
 		$data["display image"] = "1";
@@ -246,7 +250,6 @@ class setLeginonDefaultValues {
 		$data["final image shift"] = "0";
 		$data["accept precision"] = "0.001";
 		$data["wait for reference"] = "0";
-		$data["wait for transform"] = "0";
 		$data["adjust for transform"] = "no";
 		$data["background"] = "0";
 		$data["use parent tilt"] = "0";
@@ -268,7 +271,7 @@ class setLeginonDefaultValues {
 		$data["correct image"] = "1";
 		$data["SEQ|preset order"] = "[u'rsq']";
 		$data["wait for rejects"] = "0";
-		$data["move type"] = "modeled stage position";
+		$data["move type"] = "stage position";
 		$data["save image"] = "1";
 		$data["pause time"] = "1.5";
 		$data["display image"] = "1";
@@ -285,7 +288,6 @@ class setLeginonDefaultValues {
 		$data["final image shift"] = "0";
 		$data["accept precision"] = "0.001";
 		$data["wait for reference"] = "0";
-		$data["wait for transform"] = "0";
 		$data["adjust for transform"] = "no";
 		$data["background"] = "0";
 		$data["use parent tilt"] = "0";
@@ -308,7 +310,7 @@ class setLeginonDefaultValues {
 		$data["correct image"] = "1";
 		$data["SEQ|preset order"] = "[u'hl']";
 		$data["wait for rejects"] = "1";
-		$data["move type"] = "modeled stage position";
+		$data["move type"] = "stage position";
 		$data["save image"] = "1";
 		$data["pause time"] = "1.5";
 		$data["display image"] = "1";
@@ -325,7 +327,6 @@ class setLeginonDefaultValues {
 		$data["final image shift"] = "0";
 		$data["accept precision"] = "0.001";
 		$data["wait for reference"] = "0";
-		$data["wait for transform"] = "0";
 		$data["adjust for transform"] = "one";
 		$data["background"] = "0";
 		$data["use parent tilt"] = "0";
@@ -348,7 +349,7 @@ class setLeginonDefaultValues {
 		$data["correct image"] = "1";
 		$data["SEQ|preset order"] = "[u'hl']";
 		$data["wait for rejects"] = "0";
-		$data["move type"] = "modeled stage position";
+		$data["move type"] = "stage position";
 		$data["save image"] = "1";
 		$data["pause time"] = "2.5";
 		$data["display image"] = "1";
@@ -365,7 +366,6 @@ class setLeginonDefaultValues {
 		$data["final image shift"] = "0";
 		$data["accept precision"] = "0.001";
 		$data["wait for reference"] = "0";
-		$data["wait for transform"] = "0";
 		$data["adjust for transform"] = "one";
 		$data["background"] = "0";
 		$data["use parent tilt"] = "0";
@@ -405,7 +405,6 @@ class setLeginonDefaultValues {
 		$data["final image shift"] = "0";
 		$data["accept precision"] = "0.001";
 		$data["wait for reference"] = "0";
-		$data["wait for transform"] = "0";
 		$data["adjust for transform"] = "one";
 		$data["background"] = "0";
 		$data["use parent tilt"] = "0";
@@ -419,6 +418,7 @@ class setLeginonDefaultValues {
 		$data["target offset col"] = "0";
 		$data["correct image shift coma"] = "0";
 		$data["park after list"] = "0";
+		$data["pause between time"] = "0";
 		$data["park after target"] = "0";
 		$data["use parent mover"] = "1";
 		$data["REF|SessionData|session"]= $this->sessionId;
@@ -429,7 +429,7 @@ class setLeginonDefaultValues {
 		$data["correct image"] = "1";
 		$data["SEQ|preset order"] = "[u'sq']";
 		$data["wait for rejects"] = "0";
-		$data["move type"] = "modeled stage position";
+		$data["move type"] = "stage position";
 		$data["save image"] = "1";
 		$data["pause time"] = "2.5";
 		$data["display image"] = "1";
@@ -446,7 +446,6 @@ class setLeginonDefaultValues {
 		$data["final image shift"] = "0";
 		$data["accept precision"] = "0.001";
 		$data["wait for reference"] = "0";
-		$data["wait for transform"] = "0";
 		$data["adjust for transform"] = "no";
 		$data["background"] = "0";
 		$data["use parent tilt"] = "0";
@@ -469,7 +468,7 @@ class setLeginonDefaultValues {
 		$data["correct image"] = "1";
 		$data["SEQ|preset order"] = "[u'hl']";
 		$data["wait for rejects"] = "1";
-		$data["move type"] = "modeled stage position";
+		$data["move type"] = "stage position";
 		$data["save image"] = "1";
 		$data["pause time"] = "2.5";
 		$data["display image"] = "1";
@@ -486,7 +485,6 @@ class setLeginonDefaultValues {
 		$data["final image shift"] = "0";
 		$data["accept precision"] = "0.001";
 		$data["wait for reference"] = "0";
-		$data["wait for transform"] = "0";
 		$data["adjust for transform"] = "one";
 		$data["background"] = "0";
 		$data["use parent tilt"] = "0";
@@ -509,7 +507,7 @@ class setLeginonDefaultValues {
 		$data["correct image"] = "1";
 		$data["SEQ|preset order"] = "[u'preview']";
 		$data["wait for rejects"] = "0";
-		$data["move type"] = "modeled stage position";
+		$data["move type"] = "stage position";
 		$data["save image"] = "1";
 		$data["pause time"] = "2.5";
 		$data["display image"] = "1";
@@ -526,7 +524,6 @@ class setLeginonDefaultValues {
 		$data["final image shift"] = "0";
 		$data["accept precision"] = "0.001";
 		$data["wait for reference"] = "0";
-		$data["wait for transform"] = "0";
 		$data["adjust for transform"] = "one";
 		$data["background"] = "0";
 		$data["use parent tilt"] = "0";
@@ -549,7 +546,7 @@ class setLeginonDefaultValues {
 		$data["correct image"] = "1";
 		$data["SEQ|preset order"] = "[u'hl']";
 		$data["wait for rejects"] = "1";
-		$data["move type"] = "modeled stage position";
+		$data["move type"] = "stage position";
 		$data["save image"] = "1";
 		$data["pause time"] = "2.5";
 		$data["display image"] = "1";
@@ -566,7 +563,6 @@ class setLeginonDefaultValues {
 		$data["final image shift"] = "0";
 		$data["accept precision"] = "0.001";
 		$data["wait for reference"] = "0";
-		$data["wait for transform"] = "0";
 		$data["adjust for transform"] = "no";
 		$data["background"] = "1";
 		$data["use parent tilt"] = "0";
@@ -589,7 +585,7 @@ class setLeginonDefaultValues {
 		$data["correct image"] = "1";
 		$data["SEQ|preset order"] = "[u'hl']";
 		$data["wait for rejects"] = "1";
-		$data["move type"] = "modeled stage position";
+		$data["move type"] = "stage position";
 		$data["save image"] = "1";
 		$data["pause time"] = "2.5";
 		$data["display image"] = "1";
@@ -606,7 +602,6 @@ class setLeginonDefaultValues {
 		$data["final image shift"] = "0";
 		$data["accept precision"] = "0.001";
 		$data["wait for reference"] = "0";
-		$data["wait for transform"] = "0";
 		$data["adjust for transform"] = "one";
 		$data["background"] = "0";
 		$data["use parent tilt"] = "0";
@@ -629,7 +624,7 @@ class setLeginonDefaultValues {
 		$data["correct image"] = "1";
 		$data["SEQ|preset order"] = "[u'sq']";
 		$data["wait for rejects"] = "1";
-		$data["move type"] = "modeled stage position";
+		$data["move type"] = "stage position";
 		$data["save image"] = "1";
 		$data["pause time"] = "2.5";
 		$data["display image"] = "1";
@@ -646,7 +641,6 @@ class setLeginonDefaultValues {
 		$data["final image shift"] = "0";
 		$data["accept precision"] = "0.001";
 		$data["wait for reference"] = "0";
-		$data["wait for transform"] = "0";
 		$data["adjust for transform"] = "one";
 		$data["background"] = "0";
 		$data["use parent tilt"] = "0";
@@ -669,7 +663,7 @@ class setLeginonDefaultValues {
 		$data["correct image"] = "1";
 		$data["SEQ|preset order"] = "[u'sq']";
 		$data["wait for rejects"] = "0";
-		$data["move type"] = "modeled stage position";
+		$data["move type"] = "stage position";
 		$data["save image"] = "1";
 		$data["pause time"] = "2.5";
 		$data["display image"] = "1";
@@ -686,7 +680,6 @@ class setLeginonDefaultValues {
 		$data["final image shift"] = "0";
 		$data["accept precision"] = "0.001";
 		$data["wait for reference"] = "0";
-		$data["wait for transform"] = "0";
 		$data["adjust for transform"] = "no";
 		$data["background"] = "0";
 		$data["use parent tilt"] = "0";
@@ -709,7 +702,7 @@ class setLeginonDefaultValues {
 		$data["correct image"] = "1";
 		$data["SEQ|preset order"] = "[u'hl']";
 		$data["wait for rejects"] = "1";
-		$data["move type"] = "modeled stage position";
+		$data["move type"] = "stage position";
 		$data["save image"] = "1";
 		$data["pause time"] = "2.5";
 		$data["display image"] = "1";
@@ -726,7 +719,6 @@ class setLeginonDefaultValues {
 		$data["final image shift"] = "0";
 		$data["accept precision"] = "0.001";
 		$data["wait for reference"] = "0";
-		$data["wait for transform"] = "0";
 		$data["adjust for transform"] = "one";
 		$data["background"] = "1";
 		$data["use parent tilt"] = "1";
@@ -749,7 +741,7 @@ class setLeginonDefaultValues {
 		$data["correct image"] = "1";
 		$data["SEQ|preset order"] = "[u'gr']";
 		$data["wait for rejects"] = "0";
-		$data["move type"] = "modeled stage position";
+		$data["move type"] = "stage position";
 		$data["save image"] = "1";
 		$data["pause time"] = "2.5";
 		$data["display image"] = "1";
@@ -766,7 +758,6 @@ class setLeginonDefaultValues {
 		$data["final image shift"] = "0";
 		$data["accept precision"] = "0.001";
 		$data["wait for reference"] = "0";
-		$data["wait for transform"] = "0";
 		$data["adjust for transform"] = "no";
 		$data["background"] = "0";
 		$data["use parent tilt"] = "0";
@@ -789,7 +780,7 @@ class setLeginonDefaultValues {
 		$data["correct image"] = "1";
 		$data["SEQ|preset order"] = "[u'hl']";
 		$data["wait for rejects"] = "0";
-		$data["move type"] = "modeled stage position";
+		$data["move type"] = "stage position";
 		$data["save image"] = "1";
 		$data["pause time"] = "2.5";
 		$data["display image"] = "1";
@@ -806,7 +797,6 @@ class setLeginonDefaultValues {
 		$data["final image shift"] = "0";
 		$data["accept precision"] = "0.001";
 		$data["wait for reference"] = "0";
-		$data["wait for transform"] = "0";
 		$data["adjust for transform"] = "no";
 		$data["background"] = "0";
 		$data["use parent tilt"] = "0";
@@ -829,7 +819,7 @@ class setLeginonDefaultValues {
 		$data["correct image"] = "1";
 		$data["SEQ|preset order"] = "[u'sq']";
 		$data["wait for rejects"] = "0";
-		$data["move type"] = "modeled stage position";
+		$data["move type"] = "stage position";
 		$data["save image"] = "1";
 		$data["pause time"] = "2.5";
 		$data["display image"] = "1";
@@ -846,7 +836,6 @@ class setLeginonDefaultValues {
 		$data["final image shift"] = "0";
 		$data["accept precision"] = "0.001";
 		$data["wait for reference"] = "0";
-		$data["wait for transform"] = "0";
 		$data["adjust for transform"] = "no";
 		$data["background"] = "0";
 		$data["use parent tilt"] = "0";
@@ -869,7 +858,7 @@ class setLeginonDefaultValues {
 		$data["correct image"] = "1";
 		$data["SEQ|preset order"] = "[u'en']";
 		$data["wait for rejects"] = "1";
-		$data["move type"] = "modeled stage position";
+		$data["move type"] = "stage position";
 		$data["save image"] = "1";
 		$data["pause time"] = "2.5";
 		$data["display image"] = "1";
@@ -886,7 +875,6 @@ class setLeginonDefaultValues {
 		$data["final image shift"] = "0";
 		$data["accept precision"] = "0.001";
 		$data["wait for reference"] = "0";
-		$data["wait for transform"] = "0";
 		$data["adjust for transform"] = "one";
 		$data["background"] = "0";
 		$data["use parent tilt"] = "0";
@@ -909,7 +897,7 @@ class setLeginonDefaultValues {
 		$data["correct image"] = "1";
 		$data["SEQ|preset order"] = "[u'en']";
 		$data["wait for rejects"] = "1";
-		$data["move type"] = "modeled stage position";
+		$data["move type"] = "stage position";
 		$data["save image"] = "1";
 		$data["pause time"] = "2.5";
 		$data["display image"] = "1";
@@ -970,7 +958,6 @@ class setLeginonDefaultValues {
 		$data["final image shift"] = "0";
 		$data["accept precision"] = "0.001";
 		$data["wait for reference"] = "0";
-		$data["wait for transform"] = "0";
 		$data["adjust for transform"] = "one";
 		$data["background"] = "0";
 		$data["use parent tilt"] = "0";
@@ -1000,7 +987,7 @@ class setLeginonDefaultValues {
 		$data["wait for rejects"] = "0";
 		$data["display image"] = "1";
 		$data["wait for process"] = "0";
-		$data["move type"] = "modeled stage position";
+		$data["move type"] = "stage position";
 		$data["wait time"] = "0";
 		$data["iterations"] = "1";
 		$data["isdefault"] = "1";
@@ -1014,7 +1001,6 @@ class setLeginonDefaultValues {
 		$data["final image shift"] = "0";
 		$data["accept precision"] = "0.001";
 		$data["wait for reference"] = "0";
-		$data["wait for transform"] = "0";
 		$data["adjust for transform"] = "one";
 		$data["background"] = "0";
 		$data["use parent tilt"] = "0";
@@ -1044,7 +1030,7 @@ class setLeginonDefaultValues {
 		$data["wait for rejects"] = "0";
 		$data["display image"] = "1";
 		$data["wait for process"] = "0";
-		$data["move type"] = "modeled stage position";
+		$data["move type"] = "stage position";
 		$data["wait time"] = "0";
 		$data["iterations"] = "1";
 		$data["isdefault"] = "1";
@@ -1058,7 +1044,6 @@ class setLeginonDefaultValues {
 		$data["final image shift"] = "0";
 		$data["accept precision"] = "0.001";
 		$data["wait for reference"] = "0";
-		$data["wait for transform"] = "0";
 		$data["adjust for transform"] = "one";
 		$data["background"] = "0";
 		$data["use parent tilt"] = "0";
@@ -1088,7 +1073,7 @@ class setLeginonDefaultValues {
 		$data["wait for rejects"] = "0";
 		$data["display image"] = "1";
 		$data["wait for process"] = "0";
-		$data["move type"] = "modeled stage position";
+		$data["move type"] = "stage position";
 		$data["wait time"] = "0";
 		$data["iterations"] = "1";
 		$data["isdefault"] = "1";
@@ -1102,7 +1087,6 @@ class setLeginonDefaultValues {
 		$data["final image shift"] = "0";
 		$data["accept precision"] = "0";
 		$data["wait for reference"] = "0";
-		$data["wait for transform"] = "0";
 		$data["adjust for transform"] = "one";
 		$data["background"] = "0";
 		$data["use parent tilt"] = "0";
@@ -1132,7 +1116,7 @@ class setLeginonDefaultValues {
 		$data["wait for rejects"] = "0";
 		$data["display image"] = "1";
 		$data["wait for process"] = "0";
-		$data["move type"] = "modeled stage position";
+		$data["move type"] = "stage position";
 		$data["wait time"] = "0";
 		$data["iterations"] = "1";
 		$data["isdefault"] = "1";
@@ -1146,7 +1130,6 @@ class setLeginonDefaultValues {
 		$data["final image shift"] = "0";
 		$data["accept precision"] = "0.001";
 		$data["wait for reference"] = "0";
-		$data["wait for transform"] = "0";
 		$data["adjust for transform"] = "no";
 		$data["background"] = "0";
 		$data["use parent tilt"] = "0";
@@ -1190,7 +1173,6 @@ class setLeginonDefaultValues {
 		$data["final image shift"] = "0";
 		$data["accept precision"] = "0.001";
 		$data["wait for reference"] = "0";
-		$data["wait for transform"] = "0";
 		$data["adjust for transform"] = "no";
 		$data["background"] = "0";
 		$data["use parent tilt"] = "0";
@@ -1220,7 +1202,7 @@ class setLeginonDefaultValues {
 		$data["wait for rejects"] = "0";
 		$data["display image"] = "1";
 		$data["wait for process"] = "0";
-		$data["move type"] = "modeled stage position";
+		$data["move type"] = "stage position";
 		$data["wait time"] = "0";
 		$data["iterations"] = "1";
 		$data["isdefault"] = "1";
@@ -1234,7 +1216,6 @@ class setLeginonDefaultValues {
 		$data["final image shift"] = "0";
 		$data["accept precision"] = "0.001";
 		$data["wait for reference"] = "0";
-		$data["wait for transform"] = "0";
 		$data["adjust for transform"] = "no";
 		$data["background"] = "0";
 		$data["use parent tilt"] = "0";
@@ -1264,7 +1245,7 @@ class setLeginonDefaultValues {
 		$data["wait for rejects"] = "0";
 		$data["display image"] = "1";
 		$data["wait for process"] = "0";
-		$data["move type"] = "modeled stage position";
+		$data["move type"] = "stage position";
 		$data["wait time"] = "0";
 		$data["iterations"] = "1";
 		$data["isdefault"] = "1";
@@ -1278,7 +1259,6 @@ class setLeginonDefaultValues {
 		$data["final image shift"] = "0";
 		$data["accept precision"] = "0.001";
 		$data["wait for reference"] = "0";
-		$data["wait for transform"] = "0";
 		$data["adjust for transform"] = "no";
 		$data["background"] = "0";
 		$data["use parent tilt"] = "0";
@@ -1308,7 +1288,7 @@ class setLeginonDefaultValues {
 		$data["wait for rejects"] = "0";
 		$data["display image"] = "1";
 		$data["wait for process"] = "0";
-		$data["move type"] = "modeled stage position";
+		$data["move type"] = "stage position";
 		$data["wait time"] = "0";
 		$data["iterations"] = "1";
 		$data["isdefault"] = "1";
@@ -1322,7 +1302,6 @@ class setLeginonDefaultValues {
 		$data["final image shift"] = "0";
 		$data["accept precision"] = "0.001";
 		$data["wait for reference"] = "0";
-		$data["wait for transform"] = "0";
 		$data["adjust for transform"] = "one";
 		$data["background"] = "0";
 		$data["use parent tilt"] = "0";
@@ -1410,7 +1389,7 @@ class setLeginonDefaultValues {
 		$data["name"] = "Square Targeting";
 		$data["scale image"] = "1";
 		$data["wait for done"] = "0";
-		$data["calibration parameter"] = "modeled stage position";
+		$data["calibration parameter"] = "stage position";
 		$data["scale size"] = "512";
 		$data["threshold"] = "100";
 		$data["REF|LowPassFilterSettingsData|lpf"] = $lid10;
@@ -1432,7 +1411,7 @@ class setLeginonDefaultValues {
 		$data["name"] = "Raster Center Targeting";
 		$data["scale image"] = "1";
 		$data["wait for done"] = "0";
-		$data["calibration parameter"] = "modeled stage position";
+		$data["calibration parameter"] = "stage position";
 		$data["scale size"] = "512";
 		$data["threshold"] = "100";
 		$data["ignore images"] = "0";
@@ -1460,7 +1439,7 @@ class setLeginonDefaultValues {
 		$data["name"] = "Rough Tissue Targeting";
 		$data["scale image"] = "1";
 		$data["wait for done"] = "0";
-		$data["calibration parameter"] = "modeled stage position";
+		$data["calibration parameter"] = "stage position";
 		$data["scale size"] = "512";
 		$data["threshold"] = "100";
 		$data["REF|LowPassFilterSettingsData|lpf"] = $lid2;
@@ -1483,7 +1462,7 @@ class setLeginonDefaultValues {
 		$data["name"] = "Atlas View";
 		$data["scale image"] = "1";
 		$data["wait for done"] = "0";
-		$data["calibration parameter"] = "modeled stage position";
+		$data["calibration parameter"] = "stage position";
 		$data["scale size"] = "512";
 		$data["threshold"] = "100";
 		$data["REF|LowPassFilterSettingsData|lpf"] = $lid10;
@@ -2087,7 +2066,7 @@ class setLeginonDefaultValues {
 		$data["raster symmetric"] = "1";
 		$data["sort target"] = "0";
 		$data["raster preset"] = "hl";
-		$data["raster movetype"] = "modeled stage position";
+		$data["raster movetype"] = "stage position";
 		$data["raster overlap"] = "0";
 		$data["skip"] = "0";
 		$data["allow append"] = "0";
@@ -2144,7 +2123,7 @@ class setLeginonDefaultValues {
 		$data["raster spacing"] = "20";
 		$data["raster angle"] = "0";
 		$data["raster preset"] = "hl";
-		$data["raster movetype"] = "modeled stage position";
+		$data["raster movetype"] = "stage position";
 		$data["raster overlap"] = "0";
 		$data["target type"] = "acquisition";
 		$data["ellipse angle"] = "0";
@@ -2198,7 +2177,7 @@ class setLeginonDefaultValues {
 		$data["tilt min"] = "-60";
 		$data["run buffer cycle"] = "0";
 		$data["correct image"] = "1";
-		$data["move type"] = "modeled stage position";
+		$data["move type"] = "stage position";
 		$data["wait for rejects"] = "1";
 		$data["name"] = "Tomography";
 		$data["align zero loss peak"] = "0";
@@ -2237,7 +2216,6 @@ class setLeginonDefaultValues {
 		$data["fit data points"] = "4";
 		$data["taper size"] = "10";
 		$data["wait for reference"] = "0";
-		$data["wait for transform"] = "0";
 		$data["adjust for transform"] = "one";
 		$data["background"] = "0";
 		$data["use parent tilt"] = "0";
@@ -2270,7 +2248,7 @@ class setLeginonDefaultValues {
 		$data["wait for rejects"] = "1";
 		$data["display image"] = "1";
 		$data["wait for process"] = "0";
-		$data["move type"] = "modeled stage position";
+		$data["move type"] = "stage position";
 		$data["minsize"] = "50";
 		$data["maxsize"] = "0.8";
 		$data["stepsize"] = "15";
@@ -2288,7 +2266,6 @@ class setLeginonDefaultValues {
 		$data["final image shift"] = "0";
 		$data["accept precision"] = "5e-07";
 		$data["wait for reference"] = "0";
-		$data["wait for transform"] = "0";
 		$data["adjust for transform"] = "no";
 		$data["background"] = "0";
 		$data["use parent tilt"] = "0";
@@ -2348,7 +2325,7 @@ class setLeginonDefaultValues {
 		$data=array();
 		$data["name"] = "Fix Beam";
 		$data["isdefault"] = "1";
-		$data["move type"] = "modeled stage position";
+		$data["move type"] = "stage position";
 		$data["pause time"] = "3";
 		$data["interval time"] = "3600";
 		$data["override preset"] = "0";
@@ -2369,7 +2346,8 @@ class setLeginonDefaultValues {
 		$data["isdefault"] = "1";
 		$data["override preset"] = "0";
 		$data["REF|CameraSettingsData|camera settings"] = "1";
-		$data["correlation type"] = "cross";
+		$data["correlation type"] = "phase";
+		$data["lpf sigma"] = "1.0";
 		$data["measure axis"] = "x";
 		$data["measure points"] = "25";
 		$data["measure interval"] = "5e-06";
@@ -3066,7 +3044,7 @@ class setLeginonDefaultValues {
 		$data["correct image"] = "1";
 		$data["SEQ|preset order"] = "[u'hl']";
 		$data["wait for rejects"] = "0";
-		$data["move type"] = "modeled stage position";
+		$data["move type"] = "stage position";
 		$data["save image"] = "1";
 		$data["pause time"] = "2.5";
 		$data["display image"] = "1";
@@ -3113,7 +3091,7 @@ class setLeginonDefaultValues {
 		$data["wait for rejects"] = "0";
 		$data["display image"] = "1";
 		$data["wait for process"] = "0";
-		$data["move type"] = "modeled stage position";
+		$data["move type"] = "stage position";
 		$data["wait time"] = "0";
 		$data["iterations"] = "1";
 		$data["isdefault"] = "1";
@@ -3249,7 +3227,7 @@ class setLeginonDefaultValues {
 		$data["park after list"] = "0";
 		$data["pause time"] = "2.5";
 		$data["pause between time"] = "0";
-		$data["move type"] = "modeled stage position";
+		$data["move type"] = "stage position";
 		$data["SEQ|preset order"] = "[u'fc']";
 		$data["correct image"] = "1";
 		$data["display image"] = "1";
@@ -3289,7 +3267,7 @@ class setLeginonDefaultValues {
 		$data=array();
 		$data["name"] = "Fix Exposure Time";
 		$data["isdefault"] = "1";
-		$data["move type"] = "modeled stage position";
+		$data["move type"] = "stage position";
 		$data["pause time"] = "3";
 		$data["interval time"] = "3600";
 		$data["override preset"] = "0";

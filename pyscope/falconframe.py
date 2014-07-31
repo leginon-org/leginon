@@ -240,6 +240,7 @@ class FalconFrameConfigXmlMaker(object):
 		return True
 
 if __name__ == '__main__':
+		equal_distr_frame = 0
 		if len(sys.argv) < 2:
 			print 'usage: falconframe.py exposure_time_in_second equal_distr_frame delay_number_frames'
 			print 'default to 0.5 second'

@@ -614,3 +614,6 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		message = 'found %s squares' % (len(targets),)
 		self.logger.info(message)
 
+	def checkSettings(self,settings):
+		# always queuing. No need to check "wait for process" conflict
+		return []

@@ -96,8 +96,9 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 			settingsclassname = self.last_acq_node['class string']+'SettingsData'
 			results= self.reseachDBSettings(getattr(leginondata,settingsclassname),self.last_acq_node['alias'])
 			if not results:
-				# default acquisition settings waiting is False
-				last_acq_wait = False
+				# default acquisition settings waiting is False. However, admin default
+				# should be o.k.
+				return []
 			else:
 				last_acq_wait = results[0]['wait for process']
 			if not settings['queue'] and not last_acq_wait:
