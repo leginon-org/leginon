@@ -136,7 +136,8 @@ class GatanSocket(object):
 		self.connect()
 
 	def connect(self):
-		self.sock = socket.create_connection((self.host,self.port))
+		# recommended by Gatan to use localhost IP to avoid using tcp
+		self.sock = socket.create_connection(('127.0.0.1',self.port))
 
 	def disconnect(self):
 		self.sock.shutdown(socket.SHUT_RDWR)
@@ -337,12 +338,12 @@ class GatanSocket(object):
 		longargs = message_recv.array['longargs']
 		if longargs[0] < 0:
 			return 1
-  		arrSize = longargs[1]
+		arrSize = longargs[1]
 		width = longargs[2]
 		height = longargs[3]
 		numChunks = longargs[4]
 		bytesPerPixel = 2
-  		numBytes = arrSize * bytesPerPixel
+		numBytes = arrSize * bytesPerPixel
 		chunkSize = (numBytes + numChunks - 1) / numChunks
 		imArray = numpy.zeros((height,width), numpy.ushort)
 		received = 0
