@@ -19,7 +19,7 @@ import os
 # the value in DM camera config
 k2_config_flip = True
 # multiple of 90 degrees (i.e. put 1 if 90 degrees, 3 if 270 degrees)
-k2_config_rotate = 1
+k2_config_rotate = 3
 
 simulation = False
 if simulation:
