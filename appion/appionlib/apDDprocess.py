@@ -580,6 +580,10 @@ class DDFrameProcessing(DirectDetectorProcessing):
 
 	def modifyFrameImage(self,a,offset,crop_end,bin):
 		a = numpy.asarray(a,dtype=numpy.float32)
+		# temporary fix for DM 2.3.1 on krioscam1
+		if self.image['camera']['ccdcamera']['hostname']=='krioscam1':
+			apDisplay.printWarning("flipping the frame")
+			a = numpy.flipud(a)
 		a = a[offset['y']:crop_end['y'],offset['x']:crop_end['x']]
 		if bin['x'] > 1:
 			if bin['x'] == bin['y']:
