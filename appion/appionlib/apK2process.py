@@ -21,7 +21,11 @@ class GatanK2Processing(apDDprocess.DDFrameProcessing):
 		
 	def getNumberOfFrameSavedFromImageData(self,imagedata):
 		# avoid 0 for dark image scaling and frame list creation
-		return max(1,int(imagedata['camera']['exposure time'] / imagedata['camera']['frame time']))
+		number_of_frames = max(1,int(imagedata['camera']['exposure time'] / imagedata['camera']['frame time']))
+		if imagedata['camera']['ccdcamera']['name'] == 'GatanK2Super':
+			# K2 can only output 38 frames in super resolution.
+			number_of_frames = min(number_of_frames,38)
+		return number_of_frames
 
 	def getFrameNameFromNumber(self,frame_number):
 		return 'frame_%03d.mrc' % (frame_number+1)
