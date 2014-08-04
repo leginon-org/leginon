@@ -877,30 +877,27 @@ if (is_numeric($expId)) {
 			"<a href='maskreport.php?expId=$sessionId'>$maskruns</a>";
 	$nruns=array();
 	
-	//Crud Finding is not yet working for 2.0 release
-	if (!HIDE_FEATURE)
-	{
-		$results=array();
-		$cruddone = count($subclusterjobs['maskmaker']['done']);
-		$crudrun = count($subclusterjobs['maskmaker']['running']);
-		$crudqueued = count($subclusterjobs['maskmaker']['queued']);
-		
-		// We can get an inflated count for done if the same job was run more than once.
-		// Not sure yet if $maskruns is for all methods of mask making or just this one...
-		if ( $maskruns < $cruddone )  {
-			$cruddone = $maskruns;
-		}
-
-		$results[] = ($cruddone==0) ? "" : "<a href='maskreport.php?expId=$sessionId'>$cruddone complete</a>";
-		$results[] = ($crudrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=maskmaker'>$crudrun running</a>";
-		$results[] = ($crudqueued==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=maskmaker'>$crudqueued queued</a>";		
-		
-		$nruns[] = array(
-			'name'=>"<a href='selectMaskingType.php?expId=$sessionId'>Run Automated Masking</a>",
-			'result'=>$results,
-		);
-	}
+	// Automated Masking
+	$results=array();
+	$cruddone = count($subclusterjobs['maskmaker']['done']);
+	$crudrun = count($subclusterjobs['maskmaker']['running']);
+	$crudqueued = count($subclusterjobs['maskmaker']['queued']);
 	
+	// We can get an inflated count for done if the same job was run more than once.
+	// Not sure yet if $maskruns is for all methods of mask making or just this one...
+	if ( $maskruns < $cruddone )  {
+		$cruddone = $maskruns;
+	}
+
+	$results[] = ($cruddone==0) ? "" : "<a href='maskreport.php?expId=$sessionId'>$cruddone complete</a>";
+	$results[] = ($crudrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=maskmaker'>$crudrun running</a>";
+	$results[] = ($crudqueued==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=maskmaker'>$crudqueued queued</a>";		
+	
+	$nruns[] = array(
+		'name'=>"<a href='selectMaskingType.php?expId=$sessionId'>Run Automated Masking</a>",
+		'result'=>$results,
+	);
+
 	$nrun = "<a href='manualMaskMaker.php?expId=$sessionId'>Run Manual Masking</a>";
 	$nruns[] = $nrun;
 	
