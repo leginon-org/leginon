@@ -15,7 +15,7 @@ require_once "inc/project.inc";
 require_once "inc/viewer.inc";
 require_once "inc/processing.inc";
 require_once "inc/summarytables.inc";
-require_once "inc/forms/clusterParamsForm.inc";
+require_once "inc/forms/remoteJobParamsForm.inc";
 
 if ($_POST['process']) {
 	// if the POST variable process is defined run the script
@@ -125,25 +125,15 @@ function createCL2DAlignForm($extra=false,
 	<table border='0' class='tableborder'>
 	<tr><td valign='top'>\n";
 	echo "<table border='0' cellpadding='5'>\n";
-	echo "<tr><td>\n";
-	echo openRoundBorder();
-	echo docpop('runid','<b>CL2D Run Name::</b>');
-	echo "<input type='text' name='runname' value='$runnameval'>\n";
-	echo "<br />\n";
-	echo "<br />\n";
-	echo docpop('outdir','<b>Output Directory:</b>');
-	echo "<br />\n";
-	echo "<input type='text' name='outdir' value='$sessionpathval' size='38'>\n";
-	echo "<br />\n";
-	echo "<br />\n";
-	echo docpop('descr','<b>Description of CL2D Alignment:</b>');
-	echo "<br />\n";
-	echo "<textarea name='description' rows='3' cols='60'>$rundescrval</textarea>\n";
-	echo closeRoundBorder();
-	echo "</td>
-		</tr>\n";
-	echo "<tr>
-			<td>\n";	
+	
+		// Add cluster parameter form
+	$html.= "<tr>";
+	$html.= "<td VALIGN='TOP' COLSPAN='2' >";
+	$remoteParamsForm = new RemoteJobParamsForm($runnameval, $sessionpathval);
+	$html.= $remoteParamsForm->generateForm();
+
+	echo $html;	
+	
 	if (!$stackIds) {
 	echo "<font color='red'><B>No Stacks for this Session</B></FONT>\n";
 	} else {
@@ -161,14 +151,7 @@ function createCL2DAlignForm($extra=false,
 	echo docpop('commit','<B>Commit to Database</B>');
 	echo "";
 	echo "<br>";
-	// Add cluster parameter form
-	$html.= "<tr>";
-	$html.= "<td VALIGN='TOP' COLSPAN='2' >";
-	$html.= "<H4 style='align=\'center\' >Processing Host Parameters</H4><hr />";
-	$clusterParamsForm = new ClusterParamsForm();
-	$html.= $clusterParamsForm->generateForm_without_remoteoutdir();
 
-	echo $html;	
 	echo "</table>\n";
 	
 	echo "</TD>\n";
@@ -307,8 +290,8 @@ function runAppionScript() {
 	$commit = ($_POST['commit']=="on") ? true : false;
 
 	// verify processing host parameters
-	$clusterParamForm = new ClusterParamsForm();
-	$errorMsg .= $clusterParamForm->validate( $_POST );
+	$remoteParamForm = new RemoteJobParamsForm();
+	$errorMsg .= $remoteParamForm->validate( $_POST );
 		
 	/* *******************
 	PART 2: Check for conflicts, if there is an error display the form again
@@ -349,7 +332,6 @@ function runAppionScript() {
 	******************** */
 
 	$command ="runXmipp3CL2D.py ";
-	$command.="--description=\"$description\" ";
 	$command.="--stack=$stackid ";
 	if ($binclipdiam != '') $command.="--clip=$binclipdiam ";
 	if ($lowpass != '') $command.="--lowpass=$lowpass ";
@@ -369,11 +351,7 @@ function runAppionScript() {
 	else $command.="--no-commit ";
 
 	// collect processing host parameters
-	$command .= $clusterParamForm->buildCommand( $_POST );
-	$command = $clusterParamForm->removeCommandFlag( $command, "processinghost" );
-	$command = $clusterParamForm->removeCommandFlag( $command, "rpn" );
-	$command = $clusterParamForm->removeCommandFlag( $command, "remoteoutdir" );
-	$command = $clusterParamForm->removeCommandFlag( $command, "localhost" );
+	$command .= $remoteParamForm->buildCommand( $_POST );
 	
 	// show or submit command, auto sets up runname, projectid, and rundir (from outdir)
 	$errors = showOrSubmitCommand($command, $headinfo, 'partalign', $nproc);

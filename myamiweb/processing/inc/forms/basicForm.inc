@@ -169,8 +169,12 @@ class BasicForm
 		$this->formParams->getPostedValues( $postArray );
 		$paramArray = $this->formParams->getParamArray();
 				
-		foreach ( $paramArray as $key=>$param ) {
-			$command = $this->addCommandFlag( $command, $param['name'] );
+		// If the form does purely composite and does not define any params of its own,
+		// the param array will be null.
+		if ( $paramArray ) {
+			foreach ( $paramArray as $key=>$param ) {
+				$command = $this->addCommandFlag( $command, $param['name'] );
+			}
 		}
 		
 		return $command;

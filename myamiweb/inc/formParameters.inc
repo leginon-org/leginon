@@ -98,22 +98,25 @@ class FormParameters
 	// TODO: rename to updateParamValues for more general purpose???
 	final public function getPostedValues($postArray)
 	{
-		foreach ( $this->params as $key=>$param ) {
-			
-			// TODO: fix this so we don't get NULL values but keep empty string and 0 and 0.0...
-			if ( !empty( $postArray[$param["name"]] ) || $postArray[$param["name"]] === '0' ) {
-				$value = $postArray[$param["name"]];
-	
-				// if the value has spaces and has not yet ben quoted, 
-				// put quotes around it to aid parsing later
-				$value = trim($value);
-				if ( strpos($value, " ") ) {
-					if ( !preg_match('/"([^"]*)"/', $value) ) {
-						$value = '"'.$value.'"';
+		// Forms with no parameters defined will not have valid params
+		if ( $this->params ) {
+			foreach ( $this->params as $key=>$param ) {
+				
+				// TODO: fix this so we don't get NULL values but keep empty string and 0 and 0.0...
+				if ( !empty( $postArray[$param["name"]] ) || $postArray[$param["name"]] === '0' ) {
+					$value = $postArray[$param["name"]];
+		
+					// if the value has spaces and has not yet ben quoted, 
+					// put quotes around it to aid parsing later
+					$value = trim($value);
+					if ( strpos($value, " ") ) {
+						if ( !preg_match('/"([^"]*)"/', $value) ) {
+							$value = '"'.$value.'"';
+						}
 					}
+		
+					$this->params[$key]["value"] = $value;
 				}
-	
-				$this->params[$key]["value"] = $value;
 			}
 		}
 	}
