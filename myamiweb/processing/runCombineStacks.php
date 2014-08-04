@@ -15,7 +15,7 @@ require_once "inc/processing.inc";
 require_once "inc/summarytables.inc";
 
 // IF VALUES SUBMITTED, EVALUATE DATA
-if ($_POST) {
+if ($_POST['process']) {
 	runCombineStack();
 } else {
 	createCombineStackForm();

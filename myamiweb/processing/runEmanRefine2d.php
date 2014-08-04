@@ -16,7 +16,7 @@ require_once "inc/viewer.inc";
 require_once "inc/processing.inc";
 
 // IF VALUES SUBMITTED, EVALUATE DATA
-if ($_POST) {
+if ($_POST['process']) {
 	runEMANRefine2d();
 } else {
 	createEMANRefine2dForm();

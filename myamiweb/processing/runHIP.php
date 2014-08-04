@@ -17,7 +17,7 @@ require_once "inc/processing.inc";
 require_once "inc/appionloop.inc";
 
 // IF VALUES SUBMITTED, EVALUATE DATA
-if ($_POST) {
+if ($_POST['process']) {
 	runHIP();
 } else {
 	createHIPForm();

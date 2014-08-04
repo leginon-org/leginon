@@ -16,7 +16,7 @@ require_once "inc/summarytables.inc";
 require_once "inc/forms/ddstackForm.inc";
 
 // IF VALUES SUBMITTED, EVALUATE DATA
-if ($_POST) {
+if ($_POST['process']) {
 	runStackIntoPicks();
 } else {
 	createStackIntoPicksForm();

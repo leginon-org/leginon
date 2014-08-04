@@ -22,7 +22,7 @@ require_once "inc/forms/ddstackForm.inc";
 // Decide which method to enter. If this is our first time through, we create the form.
 // If the form values have already been submitted by the user, we create a processing run command.
 // The POST array is an associative array of variables passed to the current script via the HTTP POST method. 
-if ( $_POST ) 
+if ( $_POST['process'] ) 
 {
 	// if form values have been submitted, evaluate them and create a command
 	createCommand();
