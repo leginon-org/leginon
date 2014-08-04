@@ -15,7 +15,7 @@ class ClusterParamsForm extends BasicForm
 {
 	private $cluster;
 	
-	function __construct( $runFolder='', $processinghost='', $nodes='', $ppn='', $rpn='', $mem='', $walltime='', $cput='', $localhost='', $remoteoutdir='' ) 
+	function __construct( $runFolder='',$processinghost='', $nodes='', $ppn='', $rpn='', $mem='', $walltime='', $cput='', $localhost='', $remoteoutdir='', $queue='' ) 
 	{
 		parent::__construct();		
 		
@@ -30,6 +30,7 @@ class ClusterParamsForm extends BasicForm
 			$processinghost = ( $processinghost == '') ? $PROCESSING_HOSTS[0]['host'] : $processinghost;
 		}
 		
+			
 		$this->cluster = new Cluster( $processinghost );
 		
 		// Set default values based on the selected cluster
@@ -41,6 +42,7 @@ class ClusterParamsForm extends BasicForm
 		$cput 		= ( $cput == '') ? $this->cluster->getCpuTimeDef() : $cput;
 		$localhost 	= ( $localhost == '') ? $this->cluster->getLocalHelperHost() : $localhost;
 		$remoteoutdir = ( $remoteoutdir == '') ? $this->cluster->getPath($runFolder) : $remoteoutdir;
+		$queue 		= ( $queue == '') ? $this->cluster->getQueue() : $queue;
 		
 		$params = $this->getFormParams();
 		
@@ -56,6 +58,7 @@ class ClusterParamsForm extends BasicForm
 		$params->addParam( "cput", $cput, "CPU Time" );
 		$params->addParam( "localhost", $localhost, "Local host for rsync from remote host" ); //local host the the remote host can use to rsync results to (not editable)
 		$params->addParam( "remoteoutdir", $remoteoutdir, "Processing host output directory" );
+		$params->addParam( "queue", $queue, "Queue" );
 		
 		// add validations
 		$params->addValidation( "processinghost", "req" );
@@ -96,6 +99,9 @@ class ClusterParamsForm extends BasicForm
 			$this->updateFormParams();
 		}
 		
+		// Get the cluster queue options 
+		$queueOptions = $this->getQueueOptions();
+		
 		$params = $this->getFormParams();
 		
 		// set form field size
@@ -111,6 +117,11 @@ class ClusterParamsForm extends BasicForm
 		$html.= "</td>\n";
 		$html.= "<td>\n";
 		$html.= $params->insertTextFieldInRow( "processinghost", 20 );
+		if ( $queueOptions ) {
+			$html.= "</td>\n";
+			$html.= "<td>\n";
+			$html.= $params->insertSelectField("queue", $queueOptions);
+		}
 		$html.= "</td></tr>\n";
 		
 		// row 2
@@ -248,6 +259,23 @@ class ClusterParamsForm extends BasicForm
 				
 		return $html;
 	}
+	
+	private function getQueueOptions()
+	{
+		$queues = $this->cluster->getAvailableQueues();
+		$options = array();
+		
+		if ( !empty($queues) ) {
+			foreach ($queues as $queue) {
+				// ignore empty lines and the header 'Queue'
+				if ( $queue != '' && $queue != 'Queue') {
+					$options[$queue] = $queue;
+				}
+			}
+		}
+		
+		return $options;
+	}	
 
 	// returns the total number of processors requested by the 
 	public function addNProcToCommand( $command )

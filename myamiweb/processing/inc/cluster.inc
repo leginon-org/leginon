@@ -37,7 +37,7 @@ class Cluster
 	private $privateKey;	  //Location of private key file(s)
 	private $passPhrase;	  //passPhrase if it is to be stored in cluster config
 	private $gpus;	  		// a dictionary array of the gpu names and device numbers available on this host
-	
+	private $queues;		// an array of queues that jobs may be submitted to. This may be empty.	
 	
 	function __construct( $hostname )
 	{
@@ -89,6 +89,7 @@ class Cluster
 		$this->publicKey		= $hostconfig['publickey'];
 		$this->privateKey       = $hostconfig['privatekey'];
 		$this->gpus       		= $hostconfig['gpus'];
+		$this->queues       	= $hostconfig['queues']; //an array of queues available on this cluster
 	}
 	
 	function getHostName() 		{ return $this->hostname; }
@@ -113,6 +114,8 @@ class Cluster
 	function getPrivateKey()	{ return $this->privateKey; }
 	function getPassPhrase()	{ return $this->passPhrase; }
 	function getGpus()			{ return $this->gpus; }
+	function getQueues()		{ return $this->queues; }
+	function getQueue()			{ return !empty($this->queues) ? $this->queues[0] : ''; }
 	
 	function hasGpu()			{ return !empty($this->gpus); }
 	
@@ -213,6 +216,26 @@ class Cluster
 	function formatEndPath($path) 
 	{
 		return Path::formatEndPath($path, $this->dirSeparator);
+	}
+	
+	//Returns all available queues on this cluster in an array
+	//TODO: this function may not work with resource managers other than Torque
+	function getAvailableQueues( $username='', $password='' )
+	{
+		$username = ( $username == '') ? $_SESSION['username'] : $username;
+		$password = ( $password == '') ? $_SESSION['password'] : $password;
+		
+		if ($username &&  $password) {
+			// print all queue names where the queue has more than 1 node
+			$cmd = "qstat -q | awk '$5 > 1{print $1}'";
+			//TODO: check that username and pass are set
+			$queues = $this->executeOnHost( $username, $password, $cmd, true, $port=22, $max_time=10 );
+			$queueArray = explode( "\n", $queues);
+		} else {
+			$queueArray = $this->getQueues();
+		}
+		
+		return $queueArray;
 	}
 	
 	function executeOnHost ($username, $password, $command, $returnResult=false, $port=22, $max_time=1)// max time to wait for a result in seconds. I've seen it take 4 seconds, but this may need to be higher.

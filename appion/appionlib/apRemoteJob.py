@@ -47,6 +47,8 @@ class RemoteJob(basicScript.BasicScript):
 		self.parser.add_option("--walltime", dest="walltime", type="int", default=24,
 			help="Maximum walltime in hours", metavar="#")
 		self.parser.add_option('--cput', dest='cput', type='int', default=None)
+		self.parser.add_option("--queue", dest="queue", type="str", default='',
+			help="Name of the queue on the processing host to submit this job to.", metavar="text")
 		# Parameters used to bring results back from the remotehost
 		self.parser.add_option("--localhost", dest="localhost", type="str", default='',
 			help="Name of a localhost that the remotehost user can do rsync to transfer the result files", metavar="text")
@@ -328,6 +330,7 @@ class RemoteJob(basicScript.BasicScript):
 		self.cputime = self.params['cput']
 		self.expid = self.params['expid']
 		self.rundir = self.params['rundir']
+		self.queue = self.params['queue']
 		# TO Do: need to get appion bin dir from appionwrapper environment variable Appion_Bin_Dir
 		self.appion_bin_dir = ''
 		
@@ -489,7 +492,7 @@ class RemoteJob(basicScript.BasicScript):
 	def getPmem(self):
 		return None
 	def getQueue(self):
-		return None
+		return self.queue
 	def getAccount(self):
 		return None
 	def getOutputDir(self):   	

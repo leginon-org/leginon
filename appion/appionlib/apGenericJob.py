@@ -52,8 +52,9 @@ class genericJob(object):
 				   'projectid' : self.setProjectId, 
 				   'expid'	 : self.setExpId, 
 				   'mem'	 : self.setMem, 
+				   'queue'	 : self.setQueue,
 				   'jobtype'   : self.setJobType}
-		excludeList = ['jobid', 'walltime', 'cput', 'nodes', 'ppn', 'jobtype', 'mem']
+		excludeList = ['jobid', 'walltime', 'cput', 'nodes', 'ppn', 'jobtype', 'mem', 'queue']
 		optionKeys = options.keys()
 		has_nproc = False
 
@@ -129,7 +130,10 @@ class genericJob(object):
 	def getPmem(self):
 		return None
 	def getQueue(self):
-		return None
+		return self.queue
+	def setQueue(self, queue):
+		self.queue = queue
+		
 	def getAccount(self):
 		return None
 	

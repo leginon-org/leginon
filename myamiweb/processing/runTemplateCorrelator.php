@@ -263,9 +263,6 @@ function createTCForm($extra=false, $title='Template Correlator Launcher',
 				document.viewerform.usegpu.checked=false;
 			 }	
 		 }		 
-		 function changeHost(){
-			 document.viewerform.submit();
-		 }		 
 		 </SCRIPT>\n";
 	$javafunctions .= writeJavaPopupFunctions('appion');
 	processing_header($title, $heading, $headerstuff=$javafunctions, $pleaseWait=true, $showmenu=true, $printDiv=false, 

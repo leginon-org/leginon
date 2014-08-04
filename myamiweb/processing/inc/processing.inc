@@ -105,18 +105,45 @@ function getHostForm() {
 	$h=array();
 	$selected_host=$_POST['processinghost'];
 	$proc_list = (array)getHosts();
+	$hostArray = $proc_list[0];
 
 	// only list hosts if there are more than 1
 	if (count($proc_list) > 1){
 		foreach ($proc_list as $host) {
+			if ($host['host'] == $_POST['processinghost']) {
+				$hostArray = $host;
+			}
 			$s = ($host['host'] == $_POST['processinghost']) ? "selected" : "";
 			$h[]="<option value='".$host['host']."' ".$s." >".$host['host']."</option>\n";
 		}
-		$html="<select name=\"processinghost\" onchange='changeHost()'>\n";
+		$html="<select name=\"processinghost\" onchange='this.form.submit()'>\n";
 		$html.=join("\n",$h);
 		$html.="</select>";
+	} else {
+		$html="<input type='hidden' name=\"processinghost\" value='".$proc_list[0]['host']."'>\n";
 	}
-	else $html="<input type='hidden' name=\"processinghost\" value='".$proc_list[0]['host']."'>\n";
+	
+	// TODO: would be nice to change the javascript so that the entire page is not reloaded when new 
+	// host selected.
+	// Add queues
+	if ($hostArray['queues']) {
+		$queues = $hostArray['queues'];
+		$selectedQueue = $_POST['queue'];
+		$q = array(); //the list of queue options in the select field
+		
+		if ( count($queues) > 1 ) {
+			foreach ($queues as $queue) {
+				$s = ($queue == $selectedQueue) ? "selected" : "";
+				$q[] = "<option value='".$queue."' ".$s." >".$queue."</option>\n";
+			}
+			$html.="<select name=\"queue\">\n";
+			$html.=join("\n",$q);
+			$html.="</select>";
+		} else {
+			$html.="<input type='hidden' name=\"queue\" value='".$queues[0]."'>\n";
+		}
+	}
+	
 	return $html;
 }
 
@@ -701,7 +728,7 @@ function justShowCommandTable($command, $processhost, $skip_command=false) {
 	return $commandtable;
 };
 
-function addProcessingHostParams( $command, $processhost, $nproc, $ppn, $nodes, $walltime, $cputime )
+function addProcessingHostParams( $command, $processhost, $nproc, $ppn, $nodes, $walltime, $cputime, $queue )
 {
 	if ($ppn < 1 && !preg_match("/--ppn=/", $command) ) {
 		$ppn = getNumberOfProcsPerNode($processhost);
@@ -725,6 +752,8 @@ function addProcessingHostParams( $command, $processhost, $nproc, $ppn, $nodes, 
 		$command .= " --walltime=$walltime ";
 	if (!preg_match("/--cput=/", $command) && $cputime)
 		$command .= " --cput=$cputime ";
+	if (!preg_match("/--queue=/", $command) && $queue)
+		$command .= " --queue=$queue ";
 		
 	return $command;		
 }
@@ -734,7 +763,7 @@ function addProcessingHostParams( $command, $processhost, $nproc, $ppn, $nodes, 
 // for generic jobs or
 // <wrapper> runjob.py --appionwrapper=<wrapper> --param1=x -- param2=y
 // for jobs that need to create a type specific job file.
-function addJobSubmitParams( $command, $processhost, $nproc, $ppn, $nodes, $walltime, $cputime )
+function addJobSubmitParams( $command, $processhost, $nproc, $ppn, $nodes, $walltime, $cputime, $queue )
 {
 	// Add the Appion wrapper to support muliple installations of Appion
 	$command = addAppionWrapper($command, $processhost);
@@ -756,7 +785,7 @@ function addJobSubmitParams( $command, $processhost, $nproc, $ppn, $nodes, $wall
 	}
 	
 	// Add processing host parameters to the command
-	$command = addProcessingHostParams($command, $processhost, $nproc, $ppn, $nodes, $walltime, $cputime);
+	$command = addProcessingHostParams($command, $processhost, $nproc, $ppn, $nodes, $walltime, $cputime, $queue);
 	
 	return $command;
 }
@@ -773,9 +802,10 @@ $xvfb=False, $xtra=False, $nproc=1, $ppn=0, $nodes=0, $walltime="240", $cputime=
 	$webserver = $_SERVER['SERVER_ADDR'];
 	$user = $_SESSION['username'];
 	$pass = $_SESSION['password'];
+	$queue = $_POST['queue'];
 
 	// Add parameters that are only needed if submitting the job from the web server
-	$command = addJobSubmitParams( $command, $processhost, $nproc, $ppn, $nodes, $walltime, $cputime );
+	$command = addJobSubmitParams( $command, $processhost, $nproc, $ppn, $nodes, $walltime, $cputime, $queue );
 	
 	//Check if filesystem is full
 	$cmd = "df $outdir";
