@@ -5,6 +5,11 @@ import pyami.imagefun
 import ccdcamera
 import threading
 
+# frame flipping configuration.
+FRAME_LR_FLIP = True
+# frame rotate configuration. multiple of 90 degrees if needed
+FRAME_ROTATE = 0
+
 # Shared global connection to the DE Server
 __deserver = None
 __active_camera = None
@@ -343,6 +348,12 @@ class DD(DECameraBase):
 		image = self.as_super.finalizeGeometry(image)
 		image = numpy.fliplr(image)
 		return image
+
+	def getFrameFlip(self):
+		return FRAME_LR_FLIP
+
+	def getFrameRotate(self):
+		return FRAME_ROTATE
 
 class DE12(DD):
 	name = 'DE12'

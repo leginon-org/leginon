@@ -17,9 +17,9 @@ import itertools
 import os
 
 # the value in DM camera config
-k2_config_flip = True
+K2_CONFIG_FLIP = True
 # multiple of 90 degrees (i.e. put 1 if 90 degrees, 3 if 270 degrees)
-k2_config_rotate = 3
+K2_CONFIG_ROTATE = 3
 
 simulation = False
 if simulation:
@@ -201,9 +201,9 @@ class DMSEM(ccdcamera.CCDCamera):
 		# workaround dose fractionation image rotate-flip not applied problem
 		if self.save_frames or self.align_frames:
 			if not self.isDM231orUp:
-				if k2_config_rotate:
-					image = numpy.rot90(image,4-k2_config_rotate)
-				if k2_config_flip:
+				if K2_CONFIG_ROTATE:
+					image = numpy.rot90(image,4-K2_CONFIG_ROTATE)
+				if K2_CONFIG_FLIP:
 					image = numpy.fliplr(image)
 		# workaround to offset image problem
 		startx = self.getOffset()['x']
@@ -385,8 +385,8 @@ class GatanK2Base(DMSEM):
 		rot_flip = 0
 		if not self.isDM231orUp():
 			# Backward compatibility
-			flip = int(not k2_config_flip)  # 0=none, 4=flip columns before rot, 8=flip after
-			rot_flip = k2_config_rotate + flip
+			flip = int(not K2_CONFIG_FLIP)  # 0=none, 4=flip columns before rot, 8=flip after
+			rot_flip = K2_CONFIG_ROTATE + flip
 
 		params = {
 			'rotationFlip': rot_flip,

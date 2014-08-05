@@ -422,6 +422,12 @@ class TIA_Falcon(TIA):
 	def getSystemGainDarkCorrected(self):
 		return True
 
+	def getFrameFlip(self):
+		return False
+
+	def getFrameRotate(self):
+		return 3
+
 class TIA_Orius(TIA):
 	camera_name = 'BM-Orius'
 
