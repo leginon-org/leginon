@@ -121,22 +121,6 @@ function createCL2DAlignForm($extra=false, $title='runXmippCL2D.py Launcher', $h
 
 	echo $html;	
 	
-//	echo openRoundBorder();
-//	echo docpop('runname','<b>CL2D Run Name:</b>');
-//	echo "<input type='text' name='runname' value='$runname'>\n";
-//	echo "<br />\n";
-//	echo "<br />\n";
-//	echo docpop('outdir','<b>Output Directory:</b>');
-//	echo "<br />\n";
-//	echo "<input type='text' name='outdir' value='$sessionpathval' size='38'>\n";
-//	echo "<br />\n";
-//	echo "<br />\n";
-//	echo docpop('descr','<b>Description of CL2D Alignment:</b>');
-//	echo "<br />\n";
-//	echo "<textarea name='description' rows='3' cols='50'>$description</textarea>\n";
-//	echo closeRoundBorder();
-//	echo "</td>
-//		</tr>\n";
 	echo "<tr>
 			<td>\n";
 
@@ -157,10 +141,6 @@ function createCL2DAlignForm($extra=false, $title='runXmippCL2D.py Launcher', $h
 	echo docpop('commit','<B>Commit to Database</B>');
 	echo "";
 	echo "<br>";
-
-	echo "<INPUT TYPE='text' NAME='nproc' SIZE='4' VALUE='$nproc'>\n";
-	echo "Number of Processors";
-	echo "<br/>\n";
 
 	echo "</TD></tr>\n</table>\n";
 	echo "</TD>\n";
@@ -277,8 +257,6 @@ function createCL2DAlignForm($extra=false, $title='runXmippCL2D.py Launcher', $h
 
 function runCL2DAlign() {
 	$expId=$_GET['expId'];
-	$runname=$_POST['runname'];
-	$outdir=$_POST['outdir'];
 	$stackval=$_POST['stackval'];
 	$highpass=$_POST['highpass'];
 	$lowpass=$_POST['lowpass'];
@@ -294,7 +272,6 @@ function runCL2DAlign() {
 	$image2clusterdistanceval = $_POST['image2clusterdistance'];
 //	$dontAlign = ($_POST['dontAlign']=="on") ? true : false;
 	$commit = ($_POST['commit']=="on") ? true : false;
-	$nproc = ($_POST['nproc']) ? $_POST['nproc'] : 1;
 
 	// get stack id, apix, & box size from input
 	list($stackid,$apix,$boxsz) = split('\|--\|',$stackval);
@@ -302,12 +279,13 @@ function runCL2DAlign() {
 	// verify processing host parameters
 	$remoteParamForm = new RemoteJobParamsForm();
 	$errorMsg .= $remoteParamForm->validate( $_POST );
+	
+	// Calculate the total noded required after checking that they are set in the validate
+	$nproc = ($_POST['nodes'] * $_POST['ppn']);
+	
 
 	if (!$description)
 		createCL2DAlignForm("<B>ERROR:</B> Enter a brief description of the particles to be aligned");
-
-#	if ($nproc > 16)
-#		createCL2DAlignForm("<B>ERROR:</B> Let's be reasonable with the nubmer of processors, less than 16 please");
 
 	//make sure a stack was selected
 	if (!$stackid)
@@ -341,7 +319,6 @@ function runCL2DAlign() {
 
 	// setup command
 	$command ="runXmippCL2D.py ";
-	//$command.="--description=\"$description\" ";
 	$command.="--stack=$stackid ";
 	if ($binclipdiam != '') $command.="--clip=$binclipdiam ";
 	if ($lowpass != '') $command.="--lowpass=$lowpass ";
