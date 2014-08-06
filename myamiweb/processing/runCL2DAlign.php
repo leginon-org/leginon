@@ -14,6 +14,7 @@ require_once "inc/leginon.inc";
 require_once "inc/project.inc";
 require_once "inc/viewer.inc";
 require_once "inc/processing.inc";
+require_once "inc/forms/remoteJobParamsForm.inc";
 
 // IF VALUES SUBMITTED, EVALUATE DATA
 if ($_POST['process']) {
@@ -114,22 +115,28 @@ function createCL2DAlignForm($extra=false, $title='runXmippCL2D.py Launcher', $h
 	echo "<table border='0' class='tableborder'>\n<tr><td valign='top'>\n";
 	echo "<table border='0' cellpadding='5'>\n";
 	echo "<tr><td>\n";
-	echo openRoundBorder();
-	echo docpop('runname','<b>CL2D Run Name:</b>');
-	echo "<input type='text' name='runname' value='$runname'>\n";
-	echo "<br />\n";
-	echo "<br />\n";
-	echo docpop('outdir','<b>Output Directory:</b>');
-	echo "<br />\n";
-	echo "<input type='text' name='outdir' value='$sessionpathval' size='38'>\n";
-	echo "<br />\n";
-	echo "<br />\n";
-	echo docpop('descr','<b>Description of CL2D Alignment:</b>');
-	echo "<br />\n";
-	echo "<textarea name='description' rows='3' cols='50'>$description</textarea>\n";
-	echo closeRoundBorder();
-	echo "</td>
-		</tr>\n";
+	
+	$remoteParamsForm = new RemoteJobParamsForm($runname, $sessionpathval);
+	$html.= $remoteParamsForm->generateForm();
+
+	echo $html;	
+	
+//	echo openRoundBorder();
+//	echo docpop('runname','<b>CL2D Run Name:</b>');
+//	echo "<input type='text' name='runname' value='$runname'>\n";
+//	echo "<br />\n";
+//	echo "<br />\n";
+//	echo docpop('outdir','<b>Output Directory:</b>');
+//	echo "<br />\n";
+//	echo "<input type='text' name='outdir' value='$sessionpathval' size='38'>\n";
+//	echo "<br />\n";
+//	echo "<br />\n";
+//	echo docpop('descr','<b>Description of CL2D Alignment:</b>');
+//	echo "<br />\n";
+//	echo "<textarea name='description' rows='3' cols='50'>$description</textarea>\n";
+//	echo closeRoundBorder();
+//	echo "</td>
+//		</tr>\n";
 	echo "<tr>
 			<td>\n";
 
@@ -248,7 +255,7 @@ function createCL2DAlignForm($extra=false, $title='runXmippCL2D.py Launcher', $h
 	echo "	<TD COLSPAN='2' ALIGN='CENTER'>\n";
 	echo "	<hr />\n";
 	echo "<br/>\n";
-	echo getSubmitForm("Run CL2D Alignment");
+	echo getSubmitForm("Run CL2D Alignment", false);
 	echo "  </td>\n";
 	echo "</tr>\n";
 	echo "</table>\n";
@@ -291,6 +298,10 @@ function runCL2DAlign() {
 
 	// get stack id, apix, & box size from input
 	list($stackid,$apix,$boxsz) = split('\|--\|',$stackval);
+	
+	// verify processing host parameters
+	$remoteParamForm = new RemoteJobParamsForm();
+	$errorMsg .= $remoteParamForm->validate( $_POST );
 
 	if (!$description)
 		createCL2DAlignForm("<B>ERROR:</B> Enter a brief description of the particles to be aligned");
@@ -330,7 +341,7 @@ function runCL2DAlign() {
 
 	// setup command
 	$command ="runXmippCL2D.py ";
-	$command.="--description=\"$description\" ";
+	//$command.="--description=\"$description\" ";
 	$command.="--stack=$stackid ";
 	if ($binclipdiam != '') $command.="--clip=$binclipdiam ";
 	if ($lowpass != '') $command.="--lowpass=$lowpass ";
@@ -353,6 +364,9 @@ function runCL2DAlign() {
 	if ($commit) $command.="--commit ";
 	else $command.="--no-commit ";
 	//$command .= "--converge=$converge ";
+	
+	// collect processing host parameters
+	$command .= $remoteParamForm->buildCommand( $_POST );
 
 	// setup header information
 	$headinfo = "";
