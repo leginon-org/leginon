@@ -346,7 +346,8 @@ class DD(DECameraBase):
 
 	def finalizeGeometry(self, image):
 		image = self.as_super.finalizeGeometry(image)
-		image = numpy.fliplr(image)
+		if self.getFrameFlip():
+			image = numpy.fliplr(image)
 		return image
 
 	def getFrameFlip(self):
