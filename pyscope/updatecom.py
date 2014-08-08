@@ -20,13 +20,14 @@ def getTlbFromDesc(desc):
 	return None
 
 def makeFile(descs):
+	typelibInfo = None
 	for desc in descs:
 		typelibInfo = getTlbFromDesc(desc)
 		if typelibInfo is not None:
 			print '\nFound: ', desc
 			break
 	if typelibInfo is None:
-		print 'Error, cannot find typelib for "%s"' % descs
+		print '\nError, cannot find typelib for "%s"\n' % (descs,)
 		return
 
 	clsid = typelibInfo.clsid
