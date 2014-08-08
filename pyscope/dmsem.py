@@ -16,10 +16,14 @@ import numpy
 import itertools
 import os
 
+# DM Version
+DM_VERSION = '2.30.542.0'
 # the value in DM camera config
 K2_CONFIG_FLIP = True
 # multiple of 90 degrees (i.e. put 1 if 90 degrees, 3 if 270 degrees)
 K2_CONFIG_ROTATE = 3
+# raw frame base directory. Use '\\' as path separator
+RAW_FRAME_DIR = 'D:\\frames\\'
 
 simulation = False
 if simulation:
@@ -135,8 +139,7 @@ class DMSEM(ccdcamera.CCDCamera):
 	def needConfigDimensionFlip(self,height,width):
 		# DM 2.3.0 and up needs camera dimension input in its original
 		# orientation regardless of rotation when dose fractionation is used.
-		if self.isDM230orUp() and self.save_frames or self.align_frames:
-
+		if self.isDM230orUp() and (self.save_frames or self.align_frames):
 			if height > width:
 				return True
 
@@ -179,7 +182,7 @@ class DMSEM(ccdcamera.CCDCamera):
 			'exposure': self.getRealExposureTime(),
 			'shutterDelay': shutter_delay,
 		}
-		#print acqparams
+		print 'DM acqire shape (%d, %d)' % (height,width)
 		return acqparams
 
 	def custom_setup(self):
@@ -199,8 +202,9 @@ class DMSEM(ccdcamera.CCDCamera):
 		if self.getExposureType() == 'dark':
 			self.modifyDarkImage(image)
 		# workaround dose fractionation image rotate-flip not applied problem
+		print 'received shape',image.shape
 		if self.save_frames or self.align_frames:
-			if not self.isDM231orUp:
+			if not self.isDM231orUp():
 				if K2_CONFIG_ROTATE:
 					image = numpy.rot90(image,4-K2_CONFIG_ROTATE)
 				if K2_CONFIG_FLIP:
@@ -212,12 +216,10 @@ class DMSEM(ccdcamera.CCDCamera):
 			endx = self.dimension['x'] + startx
 			endy = self.dimension['y'] + starty
 			image = image[starty:endy,startx:endx]
-		print 'modified',image.shape
+		print 'modified shape',image.shape
 
 		if self.dm_processing == 'gain normalized' and self.ed_mode in ('counting','super resolution'):
-			print 'ASARRAY'
 			image = numpy.asarray(image, dtype=numpy.float32)
-			print 'DIVIDE'
 			image /= self.float_scale
 		return image
 
@@ -261,11 +263,21 @@ class DMSEM(ccdcamera.CCDCamera):
 		'''
 		version: version_long, major.minor.sub
 		'''
-		version_long = self.camera.GetDMVersion()
+		if DM_VERSION:
+			bits = map((lambda x:int(x)),DM_VERSION.split('.'))
+			version_long = (bits[0]+2)*10000 + (bits[1] //10)*100 + bits[1] % 10
+		else:
+			version_long = self.camera.GetDMVersion()
 		if version_long < 40000:
 			major = 1
 			minor = None
 			sub = None
+			if version_long >=31100:
+				# 2.3.0 gives an odd number of 31100
+				major = 2
+				minor = 3
+				sub = 0
+				version_long = 40300
 		elif version_long == 40000:
 			# minor version can be 0 or 1 in this case
 			# but likely 1 since we have not used this module until k2 is around
@@ -303,10 +315,10 @@ class GatanK2Base(DMSEM):
 		#self.camera.SetShutterNormallyClosed(self.cameraid,self.bblankerid)
 		if self.ed_mode != 'base':
 			k2params = self.calculateK2Params()
-			print 'SETK2PARAMS', k2params
 			self.camera.SetK2Parameters(**k2params)
 			fileparams = self.calculateFileSavingParams()
-			print 'SETUPFILESAVING', fileparams
+			if fileparams['rootname'] != 'dummy':
+				print 'FILESAVING', fileparams['dirname'],fileparams['rootname']
 			self.camera.SetupFileSaving(**fileparams)
 
 	def getFrameTime(self):
@@ -361,7 +373,6 @@ class GatanK2Base(DMSEM):
 			'saveFrames': self.save_frames,
 			'filt': self.align_filter,
 		}
-		print 'frame params: ',params
 		return params
 
 	def calculateFileSavingParams(self):
@@ -375,10 +386,10 @@ class GatanK2Base(DMSEM):
 		else:
 			self.frames_name = 'dummy'
 		if self.filePerImage:
-			path = 'X:\\frames\\' + self.frames_name
+			path = RAW_FRAME_DIR + self.frames_name
 			fileroot = 'frame'
 		else:
-			path = 'X:\\frames\\'
+			path = RAW_FRAME_DIR 
 			fileroot = self.frames_name
 
 		# 0 means takes what DM gives
