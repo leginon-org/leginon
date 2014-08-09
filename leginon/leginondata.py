@@ -188,6 +188,8 @@ camera_params = (
 	('frames name', str),
 	('use frames', tuple),
 	('frame time', float),
+	('frame flip', bool),
+	('frame rotate', int),
 	('temperature', float),
 	('temperature status', str),
 	('readout delay', int),

@@ -412,6 +412,8 @@ parametermapping = (
 	('frames name', 'PreviousRawFramesName'),
 	('use frames', 'UseFrames'),
 	('frame time', 'FrameTime'),
+	('frame flip', 'FrameFlip'),
+	('frame rotate', 'FrameRotate'),
 	('readout delay', 'ReadoutDelay'),
 	('temperature', 'Temperature'),
 	('temperature status', 'TemperatureStatus'),
