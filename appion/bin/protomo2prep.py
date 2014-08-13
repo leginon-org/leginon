@@ -27,6 +27,10 @@ class ProTomo2Prep(appionScript.AppionScript):
 		self.parser.add_option("--tiltseries", dest="tiltseries", type="int",
 			help="tilt series number in the session", metavar="int")
 			
+		self.parser.add_option("--azimuth", dest="azimuth", type="float", default=None,
+			help="override the azimuth (tilt axis) from the value in the database", metavar="float")
+			
+			
 	#=====================
 	def checkConflicts(self):
 		pass
@@ -95,6 +99,8 @@ class ProTomo2Prep(appionScript.AppionScript):
 
 		#determine azimuth
 		azimuth = apTomo.getAverageAzimuthFromSeries(ordered_imagelist)
+		if self.params['azimuth'] is not None:
+			azimuth = self.params['azimuth']
 		apProTomo2Prep.writeTileFile2(tiltfilename, seriesname, newfilenames, origins, tilts, azimuth, refimg)
 
 #=====================
