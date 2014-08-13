@@ -58,10 +58,15 @@ class MakeAlignedSumLoop(appionLoop2.AppionLoop):
 		self.parser.add_option('--dryrun', dest='dryrun', action='store_true', default=False, help="Just show the command, but do not execute")
 		self.parser.add_option("--border", dest='border', type='int', default=0, help='Clip border specified border pixels and pad back out with mean value')
 		self.parser.add_option("--hackcopy", dest='hackcopy', action='store_true', default=False, help='Copy corrected image to session directory and overwrite the original image, saving the orignal with a new extension ".orig.mrc"')
+		self.parser.add_option("--override-dark", dest='override-dark', default=None, help='Override value in the database for the dark image for flat field correction. A full path to the image should be provided')
+		self.parser.add_option("--override-darknframes", dest='override-darknframes', type='int', default=None, help='Override value in the database for the number of frames for the dark image for flat field correction.')
+
+		self.parser.add_option("--override-bright", dest='override-bright', default=None, help='Override value in the database for the bright image for flat field correction. A full path to the image should be provided')
+		self.parser.add_option("--override-brightnframes", dest='override-brightnframes', type='int', default=None, help='Override value in the database for the number of frames for bright image for flat field correction.')
 
 	#=======================
 	def checkConflicts(self):
-	
+		#if override-dark or bright selected, should check for override-darkframes
 		pass
 
 		
@@ -107,27 +112,41 @@ class MakeAlignedSumLoop(appionLoop2.AppionLoop):
 		# Align
 		# Doing the alignment
 
-		#flatfield references
-		brightrefpath=imgdata['bright']['session']['image path']
-		brightrefname=imgdata['bright']['filename']
-		brightnframes=imgdata['bright']['camera']['nframes']
-		darkrefpath=imgdata['dark']['session']['image path']
-		darkrefname=imgdata['dark']['filename']
-		darknframes=imgdata['dark']['camera']['nframes']
-		brightref=os.path.join(brightrefpath,brightrefname+'.mrc')
-		darkref=os.path.join(darkrefpath,darkrefname+'.mrc')
-		print brightref
-		print darkref			
-
 		kev=imgdata['scope']['high tension']/1000
 		apix=apDatabase.getPixelSize(imgdata)
 		nframes=imgdata['camera']['nframes']
 
 		#set appion specific options
-		self.params['gainreference_filename']=brightref
-		self.params['gainreference_framecount']=brightnframes
-		self.params['darkreference_filename']=darkref
-		self.params['darkreference_framecount']=darknframes
+		#flatfield references
+		if self.params['override-bright'] is None:
+			brightrefpath=imgdata['bright']['session']['image path']
+			brightrefname=imgdata['bright']['filename']
+			brightref=os.path.join(brightrefpath,brightrefname+'.mrc')
+			self.params['gainreference_filename']=brightref
+		else:
+			self.params['gainreference_filename']=self.params['override-bright']
+		
+		if self.params['override-brightnframes'] is None:
+			brightnframes=imgdata['bright']['camera']['nframes']
+			self.params['gainreference_framecount']=brightnframes
+		else:
+			self.params['gainreference_framecount']=self.params['override-brightnframes']
+
+
+		if self.params['override-dark'] is None:
+			darkrefpath=imgdata['dark']['session']['image path']
+			darkrefname=imgdata['dark']['filename']
+			darkref=os.path.join(darkrefpath,darkrefname+'.mrc')
+			self.params['darkreference_filename']=darkref
+		else:
+			self.params['darkreference_filename']=self.params['override-dark']
+		
+		if self.params['override-darknframes'] is None:
+			darknframes=imgdata['dark']['camera']['nframes']
+			self.params['darkreference_framecount']=darknframes
+		else:
+			self.params['darkreference_framecount']=self.params['override-darknframes']
+
 		self.params['input_framecount']=nframes
 		#self.params['run_verbosity']=3
 		self.params['output_invert']=0
@@ -154,6 +173,13 @@ class MakeAlignedSumLoop(appionLoop2.AppionLoop):
 		command.append(outpath)
 		framespath=imgdata['session']['frame path']
 		framespathname=os.path.join(framespath,imgdata['filename']+'.frames')
+		
+		#check to see if there are frames in the path
+		framesinpath=len(glob.glob(os.path.join(framespathname,'*')))
+		if framesinpath == 0:
+			apDisplay.printWarning('%s skipped because %d frames were found' % (imgdata['filename'],framesinpath))
+			return
+		
 		command.append(framespathname)
 		print command
 		if self.params['dryrun'] is False:
