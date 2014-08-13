@@ -14,6 +14,7 @@ def parseOptions():
 	parser.add_option('--i3t', dest='i3tfile', help='path to i3t file')
 	parser.add_option('--param', dest='param', help='path to param file')
 	parser.add_option('--tlt', dest='tlt', help='path to tlt file. Only needed for the first iteration')
+	parser.add_option('--nomodel', dest='nomodel', action='store_true', default=False, help='do not model the tilt axis.')
 	
 	
 	options, args=parser.parse_args()
@@ -53,9 +54,11 @@ if __name__ == "__main__":
 		series.align()
 		basename='%s%02d' % (seriesname,(n+start))
 		
-		corrfile=basename+'.corr'
-		series.corr(corrfile)
-		series.fit()
+		
+		if options.nomodel is False:
+			corrfile=basename+'.corr'
+			series.corr(corrfile)
+			series.fit()
 		series.update()
 	
 		#archive results
