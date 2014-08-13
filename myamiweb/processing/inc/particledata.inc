@@ -1653,6 +1653,43 @@ class particledata {
 		$r = $this->mysql->getSQLResult($q);
 		return $r[0];
 	}
+	
+	// Returns a dictionary of values to be used in stack selector GUI elements
+	function getStackOptions( $stackIds ) 
+	{
+		$options = array();
+		
+		foreach ( $stackIds as $stackid ) {
+			
+			// get stack parameters from database
+			$s = $this->getStackParams( $stackid['stackid'] );
+			
+			// get number of particles in each stack
+			$totalp = $this->getNumStackParticles( $stackid['stackid'] );
+			if ($totalp == 0)
+				continue;
+				
+			$nump = commafy($totalp);
+			
+			// get pixel size of stack
+			$apix = ($this->getStackPixelSizeFromStackId($stackid['stackid']))*1e10;
+			// truncated pixel size
+			$showapix = sprintf("%.2f",$apix);
+			// get box size
+			$box = $s['boxsize'];
+			// get stack path with name
+			$opvals = "$stackid[stackid]|--|$apix|--|$box|--|$totalp|--|$s[path]|--|$s[name]";
+			
+			// if imagic stack, send both hed & img files for dmf
+			if (preg_match('~.hed~', $s['name'])) $opvals.='|--|'.preg_replace('~hed~','img',$s['name']);
+			if (preg_match('~.img~', $s['name'])) $opvals.='|--|'.preg_replace('~img~','hed',$s['name']);
+			
+			// Add this stack to the options dictionary
+			$options[$opvals] = $s[shownstackname]." ID: ".$stackid[stackid]." (".$nump." particles, ".$showapix." &Aring;/pix, ".$box."x".$box.")";
+		}
+		
+		return $options;
+	}
 
 	function getStackSelector($stackIds,$stackidval,$onchange) {
 		/* THIS FUNCTION SHOULD BE MOVED TO summarytables.inc */
@@ -1670,33 +1707,20 @@ class particledata {
 		echo "<SELECT NAME='stackval'";
 		if ($onchange) echo "onchange='".$onchange."'";
 		echo ">\n";
-		foreach ($stackIds as $stackid){
-			// get stack parameters from database
-			$s=$this->getStackParams($stackid['stackid']);
-			// get number of particles in each stack
-			$totalp=$this->getNumStackParticles($stackid['stackid']);
-			if ($totalp == 0)
-				continue;
-			$nump=commafy($totalp);
-			// get pixel size of stack
-			$apix=($this->getStackPixelSizeFromStackId($stackid['stackid']))*1e10;
-			// truncated pixel size
-			$showapix=sprintf("%.2f",$apix);
-			// get box size
-			$box = $s['boxsize'];
-			// get stack path with name
-			$opvals = "$stackid[stackid]|--|$apix|--|$box|--|$totalp|--|$s[path]|--|$s[name]";
-			// if imagic stack, send both hed & img files for dmf
-			if (preg_match('\.hed', $s['name'])) $opvals.='|--|'.preg_replace('hed','img',$s['name']);
-			if (preg_match('\.img', $s['name'])) $opvals.='|--|'.preg_replace('img','hed',$s['name']);
 		
-			echo "<OPTION VALUE='$opvals'";
+		$options = $this->getStackOptions($stackIds);
+		foreach ($options as $key => $value) {
+			echo "<OPTION VALUE='$key'";
 			// select previously set stack on resubmita
-			if ($stackid['stackid']==$stackidval) echo " SELECTED";
-			echo">$s[shownstackname] ID: $stackid[stackid] ($nump particles, $showapix &Aring;/pix, ".$box."x".$box.")</OPTION>\n";
+			$stackvals = explode( '|--|', $key );
+			if ( $stackvals[0] == $stackidval ) echo " SELECTED";
+			echo">$value</OPTION>\n";
 		}
+		
 		echo "</SELECT>\n";
-		return $apix;
+		
+		// return the apix value
+		return $stackvals ? $stackvals[1] : '';
 		/* THIS FUNCTION SHOULD BE MOVED TO summarytables.inc */
 	}
 

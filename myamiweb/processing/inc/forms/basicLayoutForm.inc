@@ -13,7 +13,7 @@ require_once "inc/processing.inc";
 require_once "basicForm.inc";
 require_once "inc/particledata.inc";
 require_once "inc/forms/runParametersForm.inc";
-require_once "inc/forms/clusterParamsForm.inc";
+require_once "inc/forms/remoteJobParamsForm.inc";
 
 
 class BasicLayoutForm extends BasicForm
@@ -31,7 +31,7 @@ class BasicLayoutForm extends BasicForm
 	protected $guideURL; // The URL that links to an appropriate page in the online Appion User Guide.
 	protected $testable; // Set to true if the form should include a test image input box.
 	protected $showDesc; // If False (default), hides the run decription field, True shows it. 
-	protected $useCluster; // If False (default),uses run parameters form, true cluster params. 
+	protected $useCluster; // If False (default),uses run parameters form, true uses remoteJobForm params. 
 	
 	function __construct( $expId, $extraHTML='' ) 
 	{
@@ -119,16 +119,13 @@ class BasicLayoutForm extends BasicForm
 		$html .= "<TABLE BORDER=0 CLASS=tableborder CELLPADDING=15>
 				  <tr>
 					<td VALIGN='TOP'>";
-			
+		
+		$showDesc = $this->getShowDesc();
 		if ($this->getUseCluster() ) {
-			$html .= "<br />";
-	    	$html .= "<H4>Cluster Parameters</H4>";
-	   		$html .= "<hr />";
-			$clusterParamsForm = new ClusterParamsForm($this->outDir);
-			$html.= $clusterParamsForm->generateForm();
+			$remoteParamsForm = new RemoteJobParamsForm($runname=$defrunname, $outdir=$outdir, $description='', $showDesc);
+			$html.= $remoteParamsForm->generateForm();
 		} else {
 			// Add the Run Parameters Form
-			$showDesc = $this->getShowDesc();
 			$runParamsForm = new RunParametersForm( $runname=$defrunname, $outdir=$outdir, $description='', $showDesc );
 			$html .= $runParamsForm->generateForm();
 		}
@@ -167,8 +164,11 @@ class BasicLayoutForm extends BasicForm
 		}
 		
 		// Add the submit buttons
+		// TODO: should we pass false to getSubmitForm if using cluster params instead of runParams?
 		$html .= "<tr><td COLSPAN='2' ALIGN='CENTER'>";
-		$html .= getSubmitForm("Run Command");
+		// if we are using the remoteJob form, do not include the host here
+		$includeHost = !$useCluster;
+		$html .= getSubmitForm("Run Command", $includeHost);
 		$html .= "</td></tr>";
 		
 		// Add any publication references for this method
@@ -314,8 +314,8 @@ class BasicLayoutForm extends BasicForm
 		$msg = parent::validate( $postArray );
 		
 		if ($this->getUseCluster()) {
-			$clusterParamsForm = new ClusterParamsForm($this->outDir);
-			$msg .= $clusterParamsForm->validate( $postArray );
+			$remoteParamsForm = new RemoteJobParamsForm($this->outDir);
+			$msg .= $remoteParamsForm->validate( $postArray );
 		} else {
 			$runParametersForm = new RunParametersForm();
 			$msg .= $runParametersForm->validate( $postArray );
@@ -330,8 +330,8 @@ class BasicLayoutForm extends BasicForm
 		$command = parent::buildCommand( $postArray );
 		
 		if ( $this->getUseCluster() ) {
-			$clusterParamsForm = new ClusterParamsForm($this->outDir);
-			$command .= $clusterParamsForm->buildCommand( $postArray );
+			$remoteParamsForm = new RemoteJobParamsForm($this->outDir);
+			$command .= $remoteParamsForm->buildCommand( $postArray );
 		} else {
 			// add params from run parameters form
 			$runParametersForm = new RunParametersForm();

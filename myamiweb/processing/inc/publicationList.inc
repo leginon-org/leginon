@@ -289,4 +289,17 @@ $PUBLICATIONS['isac'] = array(
 'doi' => 'doi: 10.1016/j.str.2011.12.007',
 'pages' => '237-47');
 
+$PUBLICATIONS['xmipp3CL2D'] = array(
+'title' => 'A clustering approach to multireference alignment of single-particle projections in electron microscopy.',
+'year' => '2010',
+'authorlist' => 'Sorzano CO, Bilbao-Castro JR, Shkolnisky Y, Alcorlo M, Melero R, Caffarena-Fernández G, Li M, Xu G, Marabini R, Carazo JM.',
+'journal' => 'J Struct Biol.',
+'volume' => '171',
+'issue' => '2',
+'pmid' => '20362059',
+'pmcid' => '',
+'doi' => '',
+'logo' => 'img/xmipp_logo.png',
+'pages' => '');
+
 ?>

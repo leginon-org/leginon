@@ -116,6 +116,11 @@ class FormParameters
 					}
 		
 					$this->params[$key]["value"] = $value;
+				} else if ( $postArray['process'] && empty( $postArray[$param["name"]] ) ) {
+					// TODO: Checking if the form has been submitted is very ugly here, 
+					// try passing in a value from to parent form (runAppionLoop.php) to
+					// decide if we should check for empty checkboxes...
+					$this->params[$key]["value"] = '';
 				}
 			}
 		}
@@ -310,8 +315,9 @@ class FormParameters
 	}		
 	
 	// $options is an array of options for the selection box. 
-	// Options must be a dictionary, to allow a more descriptive string to be shown to the user for each option.  
-	public function insertSelectField( $name, $options, $note='', $helpkey='' )
+	// Options must be a dictionary, to allow a more descriptive string to be shown to the user for each option. 
+	// Use onchange to pass a javascript function name 
+	public function insertSelectField( $name, $options, $note='', $helpkey='', $onchange='' )
 	{
 		// if the parameter has been "hidden" just return an empty string.
 		if ( $this->params[$name]['hidden'] ) {
@@ -324,7 +330,8 @@ class FormParameters
 														$options, 
 														$this->params[$name]['enable'], 
 														$note,
-														$helpkey );
+														$helpkey,
+														$onchange );
 		}
 
 		return $html;
@@ -332,7 +339,8 @@ class FormParameters
 	
 	// $options is an array of options for the selection box. 
 	// Options may be a dictionary, to allow a more descriptive string to be shown to the user for each option.  
-	public function insertStackedSelectField( $name, $options, $note='', $helpkey='' )
+	// Use onchange to pass a javascript function name
+	public function insertStackedSelectField( $name, $options, $note='', $helpkey='', $onchange='' )
 	{
 		// if the parameter has been "hidden" just return an empty string.
 		if ( $this->params[$name]['hidden'] ) {
@@ -345,7 +353,8 @@ class FormParameters
 														$options, 
 														$this->params[$name]['enable'], 
 														$note,
-														$helpkey );
+														$helpkey,
+														$onchange );
 		}
 
 		return $html;

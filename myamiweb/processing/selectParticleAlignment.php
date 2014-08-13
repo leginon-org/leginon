@@ -83,7 +83,9 @@ echo "</td></tr>\n";
 echo "<tr><td width='100' align='center'>\n";
 echo "  <img src='img/xmipp_logo.png' width='64'>\n";
 echo "</td><td>\n";
-echo "  <h3><a href='runXmipp3CL2DAlign.php?expId=$expId'>Xmipp 3 Clustering 2D Alignment</a></h3>\n";
+//echo "  <h3><a href='runXmipp3CL2DAlign.php?expId=$expId'>Xmipp 3 Clustering 2D Alignment</a></h3>\n";
+$form = "Xmipp3CL2DAlign";
+echo "  <h3><a href='runAppionLoop.php?expId=$expId&form=$form'>Xmipp 3 Clustering 2D Alignment</a></h3>\n";
 echo " <p> this method builds a hierarchical classification of particles"
 		." It uses the "
 		."<a href='http://xmipp.cnb.csic.es/twiki/bin/view/Xmipp/Classify_mpi_cl2d_v3'>Xmipp 3 cl2d</a>"

@@ -88,9 +88,9 @@ class FormGeneratorLib
 	}
 
 	//Options may be a dictionary, to allow a more descriptive string to be shown to the user for each option. 
-	public function insertSelectField( $name, $label='', $value='', $options='', $enable='', $note='', $helpkey='' )
+	public function insertSelectField( $name, $label='', $value='', $options='', $enable='', $note='', $helpkey='', $onchange='' )
 	{
-		$html.= $this->insertUnlabeledSelectField( $name, $value, $options, $enable );
+		$html.= $this->insertUnlabeledSelectField( $name, $value, $options, $enable, $onchange );
 
 		$html.= $this->insertLabel( $name, $label, $helpkey );				
 		$html.= $this->insertNote( $note );
@@ -100,12 +100,12 @@ class FormGeneratorLib
 	}
 
 	//Options may be a dictionary, to allow a more descriptive string to be shown to the user for each option. 
-	public function insertStackedSelectField( $name, $label='', $value='', $options='', $enable='', $note='', $helpkey='' )
+	public function insertStackedSelectField( $name, $label='', $value='', $options='', $enable='', $note='', $helpkey='', $onchange='' )
 	{
 		$html.= $this->insertLabel( $name, $label, $helpkey );				
 		$html.= $this->insertNote( $note );
 		$html.= "<br/>\n";
-		$html.= $this->insertUnlabeledSelectField( $name, $value, $options, $enable );
+		$html.= $this->insertUnlabeledSelectField( $name, $value, $options, $enable, $onchange );
 
 		$html.= "<br/>\n";
 		
@@ -115,9 +115,13 @@ class FormGeneratorLib
 	// Options MUST be a dictionary, to allow a more descriptive string to be shown to the user for each option, if desired.
 	// If the option value and description should be the same, then that value should be both the key and the value.
 	// $options = array( "first" => "first", "second" => "second description"...) The key is what gets kept in the POST array. 
-	public function insertUnlabeledSelectField( $name, $value='', $options='', $enable='' )
+	public function insertUnlabeledSelectField( $name, $value='', $options='', $enable='', $onchange='' )
 	{
-		$html .=  "<SELECT NAME='$name' $enable>\n";
+		$changeString = '';
+		if ( $onchange ) $changeString = " onchange='".$onchange."'";  
+		
+		$html .=  "<SELECT NAME='$name' $enable $changeString>\n";
+		
 		foreach ($options as $option => $desc) {
 			// determine if this entry is currently selected
 			$selected = ( $value == $option ) ? " SELECTED" : "";

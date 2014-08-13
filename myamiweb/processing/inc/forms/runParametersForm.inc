@@ -25,10 +25,12 @@ class RunParametersForm extends BasicForm
 		$params->addParam( "description", $description, "Description" );
 		
 		// Add Validations
-		$params->addValidation( "description", "noquote" );
 		$params->addValidation( "outdir", "req" );
 		
-		if ( !$showDesc ) {
+		if ( $showDesc ) {
+			//$params->addValidation( "description", "req" ); // This wont work unless we pass the $showDesc param when it should be false.
+			$params->addValidation( "description", "noquote" );
+		} else { 
 			$params->hideParam( "description" );
 		}
 	}
@@ -41,7 +43,7 @@ class RunParametersForm extends BasicForm
 		$params = $this->getFormParams();
 				
 		$html.= openRoundBorder();
-		$html.= $params->insertStackedTextField( "runname", 20 );
+		$html.= $params->insertStackedTextField( "runname", 30 );
 		$html.= "<br/>\n";
 		$html.= $params->insertStackedTextField( "outdir", 56 );
 		$html.= "<br/>\n";
