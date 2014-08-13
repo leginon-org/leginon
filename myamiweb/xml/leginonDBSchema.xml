@@ -31,6 +31,7 @@
 		<field name="adjust for transform" type="text" />
 		<field name="background" type="tinyint(1)" />
 		<field name="use parent tilt" type="tinyint(1)" />
+		<field name="use parent mover" type="tinyint(1)" />
 		<field name="adjust time by tilt" type="tinyint(1)" Default="0" />
 		<field name="reset tilt" type="tinyint(1)" Default="0" />
 		<field name="bad stats response" type="text" />
