@@ -68,6 +68,7 @@
 		<field name="DEF_timestamp" type="timestamp" null="NOT NULL" Default="CURRENT_TIMESTAMP" />
 		<field name="name" type="text" />
 		<field name="version" type="int(20)" />
+		<field name="hide" type="tinyint(1)" null="NULL" default="0"/>
     <key>PRIMARY KEY (`DEF_id`)</key>
     <key>KEY `DEF_timestamp` (`DEF_timestamp`)</key>
 	</sqltable>

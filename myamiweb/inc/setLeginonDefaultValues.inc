@@ -914,7 +914,7 @@ class setLeginonDefaultValues {
 		$data["final image shift"] = "0";
 		$data["accept precision"] = "5e-07";
 		$data["wait for reference"] = "1";
-		$data["adjust for transform"] = "one";
+		$data["adjust for transform"] = "no";
 		$data["background"] = "0";
 		$data["use parent tilt"] = "0";
 		$data["adjust time by tilt"] = "0";
