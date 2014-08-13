@@ -91,7 +91,8 @@ class ExampleScript(appionScript.AppionScript):
 		apix=stackrundata['pixelsize']*1e10
 		kev=stackdata[0]['particle']['image']['scope']['high tension']/1000
 		origstackpath=os.path.join(stackrundata['path']['path'],stackrundata['name'])
-		boxsize=stackdata[0]['stack']['boxsize']		
+		boxsize=stackdata[0]['stackRun']['stackParams']['boxSize']
+		binning=stackdata[0]['stackRun']['stackParams']['bin']	
 		
 		#determine camera type
 		cameratype=stackdata[0]['particle']['image']['camera']['ccdcamera']['name']
