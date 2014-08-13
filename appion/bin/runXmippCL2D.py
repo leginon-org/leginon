@@ -383,7 +383,7 @@ class CL2D(appionScript.AppionScript):
 				apDisplay.printError("could not find stack file: "+alignimagicfilepath)
 			avgmrcfile = os.path.join(self.params['rundir'], alignstackq['avgmrcfile'])
 			if not os.path.isfile(avgmrcfile):
-				apDisplay.printError("could not find average mrc file: "+avgmrcfile)
+				apDisplay.printWarning("could not find average mrc file: "+avgmrcfile)
 			refstackfile = os.path.join(self.params['rundir'], alignstackq['refstackfile'])
 			if not os.path.isfile(refstackfile):
 				apDisplay.printError("could not find reference stack file: "+refstackfile)
