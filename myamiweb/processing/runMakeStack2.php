@@ -1033,7 +1033,7 @@ function runMakestack() {
 	PART 5: Show or Run Command
 	******************** */
 	// submit command
-	$nproc = 2;
+	$nproc = 1;
 	$errors = showOrSubmitCommand($command, $headinfo, 'makestack2', $nproc);
 
 	// if error display them
