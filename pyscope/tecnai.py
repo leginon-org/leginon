@@ -53,8 +53,9 @@ class Tecnai(tem.TEM):
 			except:
 				pass
 
+		# Fatal error
 		if self.tecnai is None:
-			raise RuntimeError('unable to initialize Tecnai interface, %s' % msg)
+			raise RuntimeError('unable to initialize Tecnai interface')
 
 		try:
 			self.tom = win32com.client.Dispatch('TEM.Instrument.1')
