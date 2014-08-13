@@ -44,6 +44,9 @@ def parseInput(args,params):
 			params['apix']=float(elements[1])
 		elif arg=='eotest':
 			params['eotest']=True
+		elif elements[0]=='factornumbers':
+			words=elements[1].split(',')
+			params['factornumbers']=words
 		else:
 			print "\nERROR: undefined parameter \'"+arg+"\'\n"
 			sys.exit(1)
@@ -62,6 +65,7 @@ def createDefaults():
 	params['lp']=None
 	params['hp']=None
 	params['apix']=None
+	params['factornumbers']=['1','2','3']
 	return(params)
 
 if __name__== '__main__':
