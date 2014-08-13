@@ -110,7 +110,7 @@ class BeamSizeScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sz.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.widgets['beam diameter'], (0, 1), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
-		label = wx.StaticText(self, -1, 'and then:')
+		label = wx.StaticText(self, -1, 'meters and then:')
 		sz.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.save_screen_diameter, (1, 3), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.ALL, 5)
