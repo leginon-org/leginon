@@ -9,9 +9,6 @@ def parseOptions():
 	parser=optparse.OptionParser()
 	parser.add_option('--corr', dest='corr', help='corr file to plot')
 	
-	#NOTE: should use type='choice' for the following option
-	parser.add_option('--type', dest='type', help='parameter to plot (cofx, cofy, coa, or rot)')
-
 	options, args=parser.parse_args()
 	
 	if len(args) != 0 or len(sys.argv) == 1:
@@ -25,7 +22,6 @@ if __name__=="__main__":
 		
 
 	corrfile=options.corr
-	param=options.type
 
 	f=open(corrfile,'r')
 	lines=f.readlines()
@@ -42,16 +38,23 @@ if __name__=="__main__":
 		cofy.append(float(words[3]))
 		coa.append(float(words[4]))
 
-	if param=='rot':
-		pylab.plot(rot)
-	elif param=='cofx':
-		pylab.plot(cofx)
-	elif param=='cofy':
-		pylab.plot(cofy)
-	elif param=='coa':
-		pylab.plot(coa)
-	else:
-		print "Please enter rot, cofx, cofy, or coa"
-
+#	pylab.figure(figsize=(10,14))
+	pylab.figure()
+	pylab.subplot(221)
+	pylab.plot(rot)
+	pylab.title("rot")
+	
+	pylab.subplot(222)	
+	pylab.plot(cofx)
+	pylab.title('cofx')
+	
+	pylab.subplot(223)
+	pylab.plot(cofy)
+	pylab.title('cofy')
+	
+	pylab.subplot(224)
+	pylab.plot(coa)
+	pylab.title('coa')
+	
 	pylab.show()
 	print "Done!"
