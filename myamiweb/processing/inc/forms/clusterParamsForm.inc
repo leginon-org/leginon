@@ -235,5 +235,21 @@ class ClusterParamsForm extends BasicForm
 		$command = $this->addCommandFlag( $command, "nproc", "", $nproc );
 		return $command;
 	}
+	
+	// Override the validate function to add more complex validations than are available in the formValidator class.
+	public function validate( $postArray )
+	{
+		$msg = parent::validate( $postArray );
+		
+		$params = $this->getFormParams();
+		$ppn = $params->getParamValue( "ppn" );
+		$rpn = $params->getParamValue( "rpn" );
+		
+		if ( $rpn > $ppn ) {
+			$msg .= "<B>Error:</B> Recons/Node may not be greater than Proc/Node";
+		}
+		
+		return $msg;
+	}	
 }
 ?>
