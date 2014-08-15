@@ -145,24 +145,26 @@ class RCTAcquisition(acquisition.Acquisition):
 
 			## drift check
 			#self.declareDrift('rct')
-			try:
-				focustarget = self.getFocusTargets(tiltedtargetlist)[0]
-			except:
-				self.logger.error('Need at least one focus target to check drift')
-				focustarget = None
-			try:
-				emtarget = self.targetToEMTargetData(focustarget)
-			except:
-				self.logger.error('EMTarget failed, check move type')
-				emtarget = None
-			try:
-				presetname = self.settings['drift preset']
-			except:
-				self.logger.error('Need preset to check drift')
-				presetname = None
-			if None not in (focustarget, emtarget, presetname):
-				threshold = self.settings['drift threshold']
-				self.checkDrift(presetname, emtarget, threshold)
+			# dritt is checked only if threshold is bigger than zero
+			if self.settings['drift threshold'] > 0.0001:
+				try:
+					focustarget = self.getFocusTargets(tiltedtargetlist)[0]
+				except:
+					self.logger.error('Need at least one focus target to check drift')
+					focustarget = None
+				try:
+					emtarget = self.targetToEMTargetData(focustarget)
+				except:
+					self.logger.error('EMTarget failed, check move type')
+					emtarget = None
+				try:
+					presetname = self.settings['drift preset']
+				except:
+					self.logger.error('Need preset to check drift')
+					presetname = None
+				if None not in (focustarget, emtarget, presetname):
+					threshold = self.settings['drift threshold']
+					self.checkDrift(presetname, emtarget, threshold)
 
 			#self.declaredrifteachtarget = True
 			self.setTargets([], 'Peak')
@@ -268,7 +270,8 @@ class RCTAcquisition(acquisition.Acquisition):
 		else:
 			oldtilt = tilts[i-1]
 		# high tilt is more sensitive to distortion
-		if abs(newtilt - oldtilt) < 0.1 and abs(oldtilt) < 0.2:
+		# At 0.2 radians, the largest target position distortion is 2% at the edge of the image.
+		if abs(newtilt - oldtilt) < 0.2 and (abs(oldtilt) < 0.2 or abs(newtilt) < 0.2):
 			return True
 		return False
 
