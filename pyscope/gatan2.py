@@ -16,8 +16,8 @@ import comtypes.client
 class Gatan(ccdcamera.CCDCamera):
 	name = 'Gatan'
 	def __init__(self):
-		ccdcamera.CCDCamera.__init__(self)
 		self.unsupported = []
+		ccdcamera.CCDCamera.__init__(self)
 
 		self.cameraid = 0
 
