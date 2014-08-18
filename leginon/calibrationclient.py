@@ -432,6 +432,14 @@ class DoseCalibrationClient(CalibrationClient):
 		pixel_framedose = pixel_totaldose / nframes
 		return has_frames,pixel_framedose
 
+	def pixel_dose_rate_from_imagedata(self, imagedata):
+		'''
+		dose rate in number of electron per camera pixel per second.
+		'''
+		pixel_totaldose = self.pixel_totaldose_from_imagedata(imagedata)
+		exp_time_in_second = imagedata['camera']['exposure time'] / 1000.0
+		return pixel_totaldose / exp_time_in_second
+
 	def pixel_totaldose_from_imagedata(self, imagedata):
 		'''
 		Dose per camera pixel. Binning does not affect the result.
