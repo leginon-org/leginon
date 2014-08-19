@@ -1052,17 +1052,27 @@ setenv LD_LIBRARY_PATH ${LD_LIBRARY_PATH}:${XMIPPDIR}/lib:%s''' % (MpiLibDir))
 			timezone = "America/Los_Angeles" 
 		self.timezone = timezone
 
+		questionText = "Would you like to download demo GroEL images and upload them to this installation?"
+		self.doDownloadSampleImages = self.getBooleanInput(questionText)
+		
+		questionText = "Would you like to install EMAN, Xmipp, and Spider at this time?"
+		self.doInstallExternalPackages = self.getBooleanInput(questionText)
+		
+	def getBooleanInput(self, questionText = ''):
+		'''
+		Return boolean True/False depending on Y/N input from user.
+		'''
 		value = ""
 		while (value != "Y" and value != "y" and value != "N" and value != "n"): 
-			value = raw_input("Would you like to install EMAN, Xmipp, and Spider at this time?(Y/N): ")
+			value = raw_input("%s(Y/N): " % questionText)
 			value = value.strip()
 
 		if (value == "Y" or value == "y"):
-			self.doInstallExternalPackages = True
+			return True
 		else:
-			self.doInstallExternalPackages = False
+			return False
 		
-		
+	
 	def downloadSampleImages(self):
 	   
 		getImageCmd = "wget -P/tmp/images http://ami.scripps.edu/redmine/attachments/download/112/06jul12a_00015gr_00028sq_00004hl_00002en.mrc http://ami.scripps.edu/redmine/attachments/download/113/06jul12a_00015gr_00028sq_00023hl_00002en.mrc http://ami.scripps.edu/redmine/attachments/download/114/06jul12a_00015gr_00028sq_00023hl_00004en.mrc http://ami.scripps.edu/redmine/attachments/download/115/06jul12a_00022gr_00013sq_00002hl_00004en.mrc http://ami.scripps.edu/redmine/attachments/download/116/06jul12a_00022gr_00013sq_00003hl_00005en.mrc http://ami.scripps.edu/redmine/attachments/download/109/06jul12a_00022gr_00037sq_00025hl_00004en.mrc http://ami.scripps.edu/redmine/attachments/download/110/06jul12a_00022gr_00037sq_00025hl_00005en.mrc http://ami.scripps.edu/redmine/attachments/download/111/06jul12a_00035gr_00063sq_00012hl_00004en.mrc"
@@ -1147,7 +1157,8 @@ setenv LD_LIBRARY_PATH ${LD_LIBRARY_PATH}:${XMIPPDIR}/lib:%s''' % (MpiLibDir))
 		if result is False:
 			sys.exit(1)
 
-		self.downloadSampleImages()
+		if (self.doDownloadSampleImages):
+			self.downloadSampleImages()
 
 		if (self.doInstallExternalPackages):
 			self.installExternalPackages()
@@ -1166,7 +1177,8 @@ setenv LD_LIBRARY_PATH ${LD_LIBRARY_PATH}:${XMIPPDIR}/lib:%s''' % (MpiLibDir))
 		# Start the Torque server
 		self.runCommand("/etc/init.d/pbs_server start")
 				
-		setupURL = "http://localhost/myamiweb/setup/autoInstallSetup.php?password=" + self.serverRootPass
+		setupURL = "http://localhost/myamiweb/setup/autoInstallSetup.php?password=" + self.serverRootPass + "&myamidir=" + self.svnMyamiDir + "&uploadsample=" + "%d" % int(self.doDownloadSampleImages)
+		setupOpened = None
 		try:
 			setupOpened = webbrowser.open_new(setupURL)
 		except:
