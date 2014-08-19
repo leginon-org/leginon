@@ -30,7 +30,9 @@ $template->wizardFooter();
  * make sure the xml files are in the myami download location.
  */
 
-$dir = '/tmp/myami/leginon/applications/';
+$dir = ($_GET['myamidir']) ? $_GET['myamidir']:'/tmp/myami/';
+$dir .= 'leginon/applications/';
+
 if(is_dir($dir)){
 	
 	// make sure it is an directory
