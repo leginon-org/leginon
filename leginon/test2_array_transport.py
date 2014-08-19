@@ -46,8 +46,8 @@ print 'CONNECTING TO:  %s:%s' % (tecnaihost, tecnaiport)
 client = datatransport.Client(yourlocation, Logger())
 
 ## this will connect to the tecnai
-for i in range(10):
+for i in range(3):
 	client.send(e)
-
+	time.sleep(2)
 raw_input('hit enter to kill')
 db.exit()
