@@ -1027,6 +1027,7 @@ class PresetsManager(node.Node):
 		## display
 		try:
 			dose = self.dosecal.dose_from_imagedata(imagedata)
+			pixel_dose_rate = self.dosecal.pixel_dose_rate_from_imagedata(imagedata)
 			pixel_framedose = self.dosecal.pixel_framedose_from_imagedata(imagedata)
 		except calibrationclient.NoPixelSizeError:
 			self.logger.error('No pixel size for this magnification')
@@ -1039,7 +1040,7 @@ class PresetsManager(node.Node):
 			self.logger.error('Invalid dose measurement result')
 		else:
 			if display:
-				self.panel.setDoseValue([dose,pixel_framedose])
+				self.panel.setDoseValue([dose,pixel_framedose,pixel_dose_rate])
 				self.setImage(imagedata['image'])
 			else:
 				self.saveDose(dose, self.currentpreset['name'])
@@ -1465,12 +1466,6 @@ class PresetsManager(node.Node):
 				pixcol = pixelshift1['col'] * oldpreset['binning']['x']
 				pixvect1 = numpy.array((pixrow, pixcol))
 				pixvect2 = self.calclients['image'].pixelToPixel(old_tem,old_ccdcamera,new_tem, new_ccdcamera, ht,oldpreset['magnification'],newpreset['magnification'],pixvect1)
-				# Hacking on Krios until TUI fixed 6/19/14:
-				# scale the value because the physical values are 
-				# not the same at 1700 and 22500x
-				if new_tem['hostname'] == 'titan52332940':
-					print 'apply scaling= 1.4'
-					pixvect2 = pixvect2 *1.4
 				pixelshift2 = {'row':pixvect2[0] / newpreset['binning']['y'],'col':pixvect2[1] / newpreset['binning']['x']}
 				newscope = self.calclients['image'].transform(pixelshift2, fakescope2, fakecam2)
 				myimage = newscope['image shift']

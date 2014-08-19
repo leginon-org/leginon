@@ -82,6 +82,17 @@ class NodeAvailableEvent(NotificationEvent):
 		)
 	typemap = classmethod(typemap)
 
+import numpy
+import sinedon.newdict
+class ArrayPassingEvent(NotificationEvent):
+	'Event sent by a node to the manager to test array passing'
+	def typemap(cls):
+		return NotificationEvent.typemap() + (
+			('location', dict),
+			('array', sinedon.newdict.MRCArrayType),
+		)
+	typemap = classmethod(typemap)
+
 class NodeUnavailableEvent(NotificationEvent):
 	'Event sent by a node to the manager to indicate that it is inaccessible'
 	pass

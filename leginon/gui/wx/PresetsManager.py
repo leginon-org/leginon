@@ -753,6 +753,7 @@ class DoseDialog(leginon.gui.wx.Dialog.Dialog):
 
 		self.doselabel = wx.StaticText(self, -1, '')
 		self.pixelframedoselabel = wx.StaticText(self, -1, '')
+		self.pixeldoseratelabel = wx.StaticText(self, -1, '')
 
 		self.sz.Add(self.image, (0, 0), (1, 1), wx.EXPAND)
 
@@ -771,7 +772,6 @@ class DoseDialog(leginon.gui.wx.Dialog.Dialog):
 		label = wx.StaticText(self, -1, 'e/A^2')
 		szmatch.Add(label, (0, 3), (1, 1), wx.ALIGN_CENTER_VERTICAL )
 		self.sz.Add(szmatch, (1,0),(1,1), wx.ALIGN_RIGHT)
-		self.sz.Add(self.pixelframedoselabel, (2,0),(1,1), wx.ALIGN_RIGHT)
 
 		self.szbuttons.Add(self.doselabel, (0, 0), (1, 1),
 								wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
@@ -782,7 +782,9 @@ class DoseDialog(leginon.gui.wx.Dialog.Dialog):
 		bcancel.Enable(True)
 		self.szbuttons.Add(bcancel,(0,2),(1,1), wx.ALIGN_CENTER_VERTICAL)
 		self.szbuttons.AddGrowableRow(0)
-		self.szbuttons.Add(self.pixelframedoselabel, (1, 0), (1, 1),
+		self.szbuttons.Add(self.pixeldoseratelabel, (1, 0), (1, 1),
+								wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		self.szbuttons.Add(self.pixelframedoselabel, (2, 0), (1, 1),
 								wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
 
 		self.Bind(wx.EVT_BUTTON, self.onMatchDose, self.bmatch)
@@ -797,6 +799,7 @@ class DoseDialog(leginon.gui.wx.Dialog.Dialog):
 		else:
 			dosestr = '%.2f' % (dose/1e20)
 		dosestr = 'Use the measured dose %s e/A^2 for this preset?' % dosestr
+		# per frame dose
 		if doses[1] is not None:
 			if doses[1][0]:
 				framestr = 'per frame'
@@ -804,6 +807,12 @@ class DoseDialog(leginon.gui.wx.Dialog.Dialog):
 				framestr = ''
 			pixelframedosestr = '( Dose on camera pixel %s: %.1f electrons )' % (framestr,doses[1][1])
 			self.pixelframedoselabel.SetLabel(pixelframedosestr)
+		# dose rate.  This is more useful on K2 or Falcon with fixed base
+		# frame rate but variable saved frame rate
+		if doses[2] is not None:
+			pixeldoseratestr = '( Dose rate on camera pixel: %.1f electrons/second )' % (doses[2])
+			self.pixeldoseratelabel.SetLabel(pixeldoseratestr)
+
 		self.doselabel.SetLabel(dosestr)
 
 	def onMatchDose(self,evt):
