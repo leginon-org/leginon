@@ -276,7 +276,7 @@ class CL2D(appionScript.AppionScript):
 			stack=[]
 			for partnum in D[classref]:
 				### NOTE: RESOLUTION WILL NOT BE CALCULATED IF ALIGNED STACK IS NOT CREATED
-				stack.append(apImagicFile.readSingleParticleFromStack("alignedStack.hed",self.partMapper[int(partnum)],msg=False))
+				stack.append(apImagicFile.readSingleParticleFromStack(self.params['timestamp']+".hed",int(partnum),msg=False))
 			apImagicFile.writeImagic(stack,"tmp.hed")
 
 			frcdata = apFourier.spectralSNRStack("tmp.hed", self.apix)
@@ -545,73 +545,60 @@ class CL2D(appionScript.AppionScript):
 			apDisplay.printMsg("creating timestamp")
 			self.params['timestamp'] = self.timestamp
 		self.params['localstack'] = os.path.join(self.params['rundir'], self.params['timestamp']+".hed")
-		if os.path.isfile(self.params['localstack']):
-			apFile.removeStack(self.params['localstack'])
-		proccmd = "proc2d "+self.stack['file']+" "+self.params['localstack']+" apix="+str(self.stack['apix'])
-		if self.params['bin'] > 1 or self.params['clipsize'] is not None:
-			clipsize = int(self.clipsize)*self.params['bin']
-			if clipsize % 2 == 1:
-				clipsize += 1 ### making sure that clipped boxsize is even
-			proccmd += " shrink=%d clip=%d,%d "%(self.params['bin'],clipsize,clipsize)
-		proccmd += " last="+str(self.params['numpart']-1)
-		if self.params['highpass'] is not None and self.params['highpass'] > 1:
-			proccmd += " hp="+str(self.params['highpass'])
-		if self.params['lowpass'] is not None and self.params['lowpass'] > 1:
-			proccmd += " lp="+str(self.params['lowpass'])
-		apParam.runCmd(proccmd, "EMAN", verbose=True)
-		if self.params['numpart'] != apFile.numImagesInStack(self.params['localstack']):
-			apDisplay.printError("Missing particles in stack")
+ 		if os.path.isfile(self.params['localstack']):
+ 			apFile.removeStack(self.params['localstack'])
+ 		proccmd = "proc2d "+self.stack['file']+" "+self.params['localstack']+" apix="+str(self.stack['apix'])
+ 		if self.params['bin'] > 1 or self.params['clipsize'] is not None:
+ 			clipsize = int(self.clipsize)*self.params['bin']
+ 			if clipsize % 2 == 1:
+ 				clipsize += 1 ### making sure that clipped boxsize is even
+ 			proccmd += " shrink=%d clip=%d,%d "%(self.params['bin'],clipsize,clipsize)
+ 		proccmd += " last="+str(self.params['numpart']-1)
+ 		if self.params['highpass'] is not None and self.params['highpass'] > 1:
+ 			proccmd += " hp="+str(self.params['highpass'])
+ 		if self.params['lowpass'] is not None and self.params['lowpass'] > 1:
+ 			proccmd += " lp="+str(self.params['lowpass'])
+ 		apParam.runCmd(proccmd, "EMAN", verbose=True)
+ 		if self.params['numpart'] != apFile.numImagesInStack(self.params['localstack']):
+ 			apDisplay.printError("Missing particles in stack")
 
 		### setup Xmipp command
 		aligntime = time.time()
-		xmippopts = (" -i "+os.path.join(self.params['rundir'], self.params['localstack'])
-			+" --nref "+str(self.params['numrefs'])
-			+" --iter "+str(self.params['maxiter'])
-			+" --odir "+str(self.params['rundir'])
-			+" --oroot "+ "part"+str(self.params['timestamp'])
-		)
-
-		if self.params['correlation']:
-			xmippopts += " --distance correlation"
-		if self.params['classical']:
-			xmippopts += " --classicalMultiref"		
-
-
-		### use multi-processor command
-		apDisplay.printColor("Using "+str(self.params['nproc'])+" processors!", "green")
-		xmippexe = apParam.getExecPath(self.execFile, die=True)
-		mpiruncmd = self.mpirun+" -np "+str(self.params['nproc'])+" "+xmippexe+" "+xmippopts
-		self.writeXmippLog(mpiruncmd)
-		apParam.runCmd(mpiruncmd, package="Xmipp 3", verbose=True, showcmd=True, logfile="xmipp.std")
-		self.params['runtime'] = time.time() - aligntime
-		apDisplay.printMsg("Alignment time: "+apDisplay.timeString(self.params['runtime']))
-
-		### post-processing
-		# Create a stack for the class averages at each level
-		Nlevels=glob.glob("level_*")
-		for level in Nlevels:
-			digits = level.split("_")[1]
-			apParam.runCmd("xmipp_image_convert -i "+level+"/part"+self.params['timestamp']+"*xmd -o part"
-						+self.params['timestamp']+"_level_"+digits+"_.hed", package="Xmipp 3", verbose=True)
-			
-		if self.params['align']:
-			star = starFile.StarFile("images.xmd")
-			star.read()
-			dataBlock = star.getDataBlock("data_noname")
-			loopDict = dataBlock.getLoopDict()
-			#Particles with _enabled = -1 are not saved in alignedStack.hed with xmipp_image_convert below.
-			#parMapper maps particle _image number from images.xmd to particle number in alignedStack.hed. 
-			self.partMapper = range(len(loopDict)+1)
-			number_disabled = 0
-			for i in range(len(loopDict)):		
-				if loopDict[i]['_enabled'] == "-1": number_disabled += 1; continue
-				self.partMapper[i+1] = int(loopDict[i]['_image'].split("@")[0]) -  number_disabled
-						
-			apParam.runCmd("xmipp_image_convert -i images.xmd -o alignedStack.hed", package="Xmipp 3", verbose=True)
-		
-		self.parseOutput()
-#		self.readyUploadFlag()
-		apParam.dumpParameters(self.params, "cl2d-"+self.params['timestamp']+"-params.pickle")
+ 		xmippopts = (" -i "+os.path.join(self.params['rundir'], self.params['localstack'])
+ 			+" --nref "+str(self.params['numrefs'])
+ 			+" --iter "+str(self.params['maxiter'])
+ 			+" --odir "+str(self.params['rundir'])
+ 			+" --oroot "+ "part"+str(self.params['timestamp'])
+ 		)
+ 
+ 		if self.params['correlation']:
+ 			xmippopts += " --distance correlation"
+ 		if self.params['classical']:
+ 			xmippopts += " --classicalMultiref"		
+ 
+ 
+ 		### use multi-processor command
+ 		apDisplay.printColor("Using "+str(self.params['nproc'])+" processors!", "green")
+ 		xmippexe = apParam.getExecPath(self.execFile, die=True)
+ 		mpiruncmd = self.mpirun+" -np "+str(self.params['nproc'])+" "+xmippexe+" "+xmippopts
+ 		self.writeXmippLog(mpiruncmd)
+ 		apParam.runCmd(mpiruncmd, package="Xmipp 3", verbose=True, showcmd=True, logfile="xmipp.std")
+ 		self.params['runtime'] = time.time() - aligntime
+ 		apDisplay.printMsg("Alignment time: "+apDisplay.timeString(self.params['runtime']))
+ 
+ 		### post-processing
+ 		# Create a stack for the class averages at each level
+ 		Nlevels=glob.glob("level_*")
+ 		for level in Nlevels:
+ 			digits = level.split("_")[1]
+ 			apParam.runCmd("xmipp_image_convert -i "+level+"/part"+self.params['timestamp']+"*xmd -o part"
+ 						+self.params['timestamp']+"_level_"+digits+"_.hed", package="Xmipp 3", verbose=True)
+ 			
+ 		if self.params['align']:
+ 			apParam.runCmd("xmipp_image_convert -i images.xmd -o alignedStack.hed", package="Xmipp 3", verbose=True)
+ 		
+ 		self.parseOutput()
+ 		apParam.dumpParameters(self.params, "cl2d-"+self.params['timestamp']+"-params.pickle")
 
 		### upload results ... this used to be two separate operations, I'm combining into one
 		self.runparams = apParam.readRunParameters("cl2d-"+self.params['timestamp']+"-params.pickle")
