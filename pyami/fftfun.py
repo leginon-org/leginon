@@ -154,12 +154,14 @@ def getBeamTiltPhaseShiftCorrection(imgshape,beamtilt,Cs,wavelength,pixelsize):
 		correction = numpy.cos(phaseshift)+numpy.sin(phaseshift)*complex(0,1)
 		return correction
 
-def correctBeamTiltPhaseShift(imgarray,pixelsize,beamtilt,Cs,ht):
+def correctBeamTiltPhaseShift(imgarray,pixelsize=1e-10,beamtilt=(0.0,0.0),Cs=2e-3,ht=120000):
+		'''
+		Function to correct in phase shift induced by beam tilt.
+		Not fully tested for its effectiveness.
+		length unit in meters, voltage in volts, angles in radians
+		'''
 		fft = fftpack.fft2(imgarray)
 		beamtilt = (0.0,1e-4)
-		Cs = 2e-3
-		pixelsize = 1e-10
-		ht = 120000
 		wavelength = getElectronWavelength(ht)
 		correction = getBeamTiltPhaseShiftCorrection(fft.shape,beamtilt,Cs,wavelength,pixelsize)
 		cfft = fft * correction
