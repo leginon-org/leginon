@@ -1,10 +1,23 @@
 #!/usr/bin/env python
-import databinder
 import time
-import event
 import socket
-import datatransport
 import numpy
+from leginon import databinder
+from leginon import event
+from leginon import datatransport
+
+'''
+This is a datatransport test for passing numpy array across the network.
+test1_array_transport.py is opens a server ready to serve printData to
+the client that will be opened by test2_array_transport.py and requests
+printData as ArrayPassingEvent.
+'''
+
+# constants that defines the array. modify these to pass different size
+# and type of array
+ARRAY_SHAPE = (4096,4096)
+ARRAY_DTYPE = numpy.uint32
+
 
 class Logger(object):
    def info(self, stuff):
@@ -23,12 +36,15 @@ def printData(d):
    client = datatransport.Client(manlocation, Logger())
    myloc = db.location()
    del myloc['local transport']
-   shape = (4096,4096)
-   e = event.ArrayPassingEvent(location=myloc, destination=managerhost,array=numpy.ones(shape))
+   # create the ArrayPassingEvent with the array
+   shape = ARRAY_SHAPE
+   array_to_pass = numpy.ones(ARRAY_SHAPE,ARRAY_DTYPE)
+   e = event.ArrayPassingEvent(location=myloc, destination=managerhost,array=array_to_pass)
    t0 = time.time()
    client.send(e)
    t1 = time.time()
    print 'Event Sent Time (sec)', t1 - t0
+
 
 myhostname = socket.gethostname().lower()
 
