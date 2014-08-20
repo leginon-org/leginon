@@ -15,7 +15,7 @@ ddtype = 'thin'
 class GatanK2Processing(apDDprocess.DDFrameProcessing):
 	def __init__(self,wait_for_new=False):
 		super(GatanK2Processing,self).__init__(wait_for_new)
-		self.setDefaultDimension(3838,3710)
+		self.setDefaultDimension(3710,3838)
 		self.correct_dark_gain = True
 		self.correct_frame_mask = False
 		
@@ -39,6 +39,7 @@ class GatanK2Processing(apDDprocess.DDFrameProcessing):
 		RawFrameDir here is actually the filename with mrc extension.
 		'''
 		if self.getRawFrameType() == 'singles':
+			print 'singles'
 			# back compatibility pre-3.0
 			return super(GatanK2Processing,self).getRawFrameDirFromImage(imagedata)
 		# strip off DOS path in rawframe directory name if included
@@ -48,6 +49,7 @@ class GatanK2Processing(apDDprocess.DDFrameProcessing):
 		if imagedata['session']['frame path']:
 			# 3.0+ version
 			rawframe_basepath = imagedata['session']['frame path']
+			print 'rawframe_basepath',rawframe_basepath
 		else:
 			# pre-3.0
 			# raw frames are saved in a subdirctory of image path
