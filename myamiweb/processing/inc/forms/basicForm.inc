@@ -56,7 +56,12 @@ class BasicForm
 		return $html;
 	}
 	
-	
+	// Returns the HTML to display extra info at the top of the submited form
+	// This is just for extending classes to use. Override only if needed.
+	public function copyFilesToCluster()
+	{
+		return "";
+	}
 		
 	// Extending classes should override this function to return the appropriate
 	// class of form parameters if it has also extended the FormParameters class.

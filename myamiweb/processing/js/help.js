@@ -640,4 +640,28 @@ var help = {
 		'apix' : 'The pixelsize, in Angstroms.',
 		'box' : 'The boxsize, in pixels.',
 	}		
+	,		
+	'isac' : {
+		'ir' : 'Inner radius of the resampling to polar coordinate, colon separate for different generations,e.g. 4x1:2x5 means ir=0 for 4 generations and ir=5 for 2 generations (default 1)',
+		'ou' : 'Outer radius of the resampling to polar coordinate, colon separate for different generations, e.g. 4x24:2x20 means ou=24 for 4 generations and ou=20 for 2 generations (default box/2-2',
+		'rs' : 'Ring step of the resampling to polar coordinate, colon separate for different generations. e.g. 4x1:2x2 means rs=1 for 4 generations and rs=2 for 2 generations (default 1)',
+		'ts' : 'Search step of translational search, colon separate for different generations. e.g. 4x1:2x2 means ts=1 for 4 generations and ts=2 for 2 generations (default 1)',
+		'xr' : 'x range of translational search, colon separate for different generations,e.g. 4x1:2x2 means xr=1 for 4 generations and xr=2 for 2 generations (default 1).',
+		'yr' : 'y range of translational search, colon separate for different generations,e.g. 4x1:2x2 means yr=1 for 4 generations and yr=2 for 2 generations (default 1)',
+		'maxit' : 'number of iterations for reference-free alignment, colon separate for different generations,.e.g. 4x30:2x20 means maxit=30 for 4 generations and maxit=20 for 2 generations (default 30)',
+		'FL' : 'lowest stopband frequency used in the tangent filter, colon separate for different generations.e.g. 4x0.1:2x0.08 means FL=0.1 for 4 generations and FL=0.08 for 2 generations (default 0.1)',
+		'FH' : 'highest stopband frequency used in the tangent filter, colon separate for different generations,e.g. 4x0.3:2x0.4 means FH=0.3 for 4 generations and FH=0.4 for 2 generations (default 0.3)',
+		'FF' : 'falloff of the tangent filter, colon separate for different generations,.e.g. 4x0.2:2x0.3 means FF=0.2 for 4 generations and FF=0.3 for 2 generations (default 0.2)',
+		'init_iter' : 'number of runs of ab-initio within-cluster alignment for stability evaluation in SAC initialization,colon separate for different generations, e.g. 4x3:2x2 means init_iter=3 for 4 generations and init_iter=2 for 2 generations (default 3)',
+		'main_iter' : 'number of runs of ab-initio within-cluster alignment for stability evaluation in SAC, colon separate for different generations, e.g. 4x3:2x2 means main_iter=3 for 4 generations and main_iter=2 for 2 generations (default 3)',
+		'iter_reali' : 'every iter_reali iterations of SAC stability checking is performed, colon separate for different generations, e.g. 4x1:2x2 means iter_reali=1 for 4 generations and iter_reali=2 for 2 generations (default 1)',
+		'match_first' : 'number of iterations to run 2-way matching in the first phase, colon separate for different generations, e.g. 4x1:2x2 means iter_reali=1 for 4 generations and iter_reali=2 for 2 generations (default 1)',
+		'max_round' : 'maximum rounds of generating candidate class averages in the first phase, colon separate for different generations, e.g. 4x20:2x10 means max_round=20 for 4 generations and max_round=10 for 2 generations (default 20)',
+		'match_second' : 'number of iterations to run 2-way (or 3-way) matching in the second phase, colon separate for different generations, e.g. 4x5:2x3 means match_second=5 for 4 generations and match_second=3 for 2 generations (default 5)',
+		'stab_ali' : 'number of alignments when checking stability, colon separate for different generations, e.g. 4x5:2x3 means stab_ali=5 for 4 generations and stab_ali=3 for 2 generations (default 5)',
+		'thld_err' : 'the threshold of pixel error when checking stability, equals root mean square of distances between corresponding pixels from set of found transformations and theirs average transformation, depends linearly on square of radius (parameter ou), colon separate for different generations, e.g. 4x1:2x3 means thld_err=1 for 4 generations and thld_err=3 for 2 generations (default 0.7)',
+		'indep_run' : 'specifies the level of m-way matching for reproducibility tests. The default = 4 will perform full ISAC to 4-way matching. Value indep_run=2 will restrict ISAC to 2-way matching and 3 to 3-way matching. Note the number of used MPI processes requested in mpirun must be a multiplicity of indep_run, colon separate for different generations, e.g. 4x4:2x2 means indep_run=4 for 4 generations and indep_run=2 for 2 generations (default 4)',
+		'generations' : 'number of approaches on the dataset',
+		'img_per_grp' : 'number of images per class in the ideal case (essentially maximum size of class), colon separate for different generations, e.g. 4x100:2x50 means thld_grp=100 for 4 generations  and thld_grp=50 for 2 generations (default 100)',
+	}
 }

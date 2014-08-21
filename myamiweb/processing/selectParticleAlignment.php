@@ -242,7 +242,9 @@ echo "</td></tr>\n";
 echo "<tr><td width='100' align='center'>\n";
 echo "  <h2>ISAC</h2>\n";
 echo "</td><td>\n";
-echo "  <h3><a href='runISAC.php?expId=$expId'>Iterative Stable Alignment and Clustering (ISAC)</a></h3>\n";
+//echo "  <h3><a href='runISAC.php?expId=$expId'>Iterative Stable Alignment and Clustering (ISAC)</a></h3>\n";
+$form = "IsacForm";
+echo "  <h3><a href='runAppionLoop.php?expId=$expId&form=$form'>Iterative Stable Alignment and Clustering (ISAC)</a></h3>\n";
 echo " <p>Initial version. More information about ISAC is available from:"
 		." <a href='http://sparx-em.org/sparxwiki/sxisac'>sxisac - SPARX</a>"
 		."</p>\n";

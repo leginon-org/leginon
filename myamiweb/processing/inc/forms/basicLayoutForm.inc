@@ -167,7 +167,7 @@ class BasicLayoutForm extends BasicForm
 		// TODO: should we pass false to getSubmitForm if using cluster params instead of runParams?
 		$html .= "<tr><td COLSPAN='2' ALIGN='CENTER'>";
 		// if we are using the remoteJob form, do not include the host here
-		$includeHost = !$useCluster;
+		$includeHost = !$this->useCluster;
 		$html .= getSubmitForm("Run Command", $includeHost);
 		$html .= "</td></tr>";
 		

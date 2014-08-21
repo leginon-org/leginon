@@ -63,22 +63,28 @@ function runAppionLoop() {
 	// reload the form with any validation error messages
 	if ( !empty($errorMsg) ) createForm( $errorMsg );
 	
+	/* *******************
+	 PART 2: Copy any needed files to the cluster
+	******************** */
+	$copyCommand = $form->copyFilesToCluster();
+	
 	/* *******************************
-	PART 2: Create program command
+	PART 3: Create program command
 	********************************* */
 	$command .= $form->buildCommand( $_POST );
 
 	/* *************************
-	PART 3: Show or Run Command
+	PART 4: Show or Run Command
 	***************************** */
 	$headinfo = $form->showReference(); 
+	$headinfo.= $copyCommand;
 	$jobType  = $form->getJobType();
 
 	// submit command
 	$errors = showOrSubmitCommand($command, $headinfo, $jobType, 1, $testimage);
 
 	/* *********************************
-	PART 4: Show Errors or Test results
+	PART 5: Show Errors or Test results
 	************************************ */
 	// if error display them
 	if ($errors) {
