@@ -102,7 +102,7 @@ function getIndicies($results, $split) {
 }
 
 function thumbnails($tiltSeriesId, $tomography) {
-	$results = $tomography->getTiltSeriesData($tiltSeriesId, false);
+	$results = $tomography->getTiltSeriesData($tiltSeriesId, true);
 	$split = sortTiltSeriesData($results);
 	$min_image_id = findMinImageId($results);
 	$indices = getIndicies($results, $split);

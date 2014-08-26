@@ -1,0 +1,267 @@
+#!/usr/bin/env python
+
+'''
+This script will run in the background, checking for new images in the
+database, then converting them to JPEGs using redux with default parameters.
+'''
+
+import os
+import sinedon
+import MySQLdb
+import datetime
+import time
+import imcacheconfig
+import threading
+import Queue
+import pyami.fileutil
+
+import sys
+direction = sys.argv[1]
+
+# import redux config first to disable cache
+import redux.reduxconfig
+redux.reduxconfig.config['cache on'] = False
+import redux.client
+
+cache_path = imcacheconfig.cache_path
+redux_args1 = imcacheconfig.redux_args1
+redux_args_jpg = imcacheconfig.redux_args_jpg
+redux_args_pow = imcacheconfig.redux_args_pow
+redux_maxsize1 = imcacheconfig.redux_maxsize1
+redux_maxsize2 = imcacheconfig.redux_maxsize2
+
+newest_image_query = '''
+	SELECT i.DEF_id
+	FROM AcquisitionImageData i
+	ORDER BY i.DEF_id DESC LIMIT 1
+'''
+class QueryThread(threading.Thread):
+
+	'''
+	Periodically runs a query for new images, puts them in a queue.
+	'''
+
+	# this is the constant part of the query before filling in details
+	image_query = '''
+		SELECT i.DEF_id, s.name, s.`image path`, i.filename,
+			c.`SUBD|dimension|x`, c.`SUBD|dimension|y`
+		FROM SessionData s, AcquisitionImageData i, CameraEMData c
+		%s
+		WHERE s.DEF_id = i.`REF|SessionData|session`
+			AND i.`REF|CameraEMData|camera` = c.DEF_id
+			%s
+			%s
+			%s
+		ORDER BY i.DEF_id
+		%s
+	'''
+
+	def __init__(self, imagequeue, *args, **kwargs):
+		self.imagequeue = imagequeue
+		self.pause = imcacheconfig.query_interval
+		self.min_timestamp = imcacheconfig.min_timestamp
+		self.start_id = imcacheconfig.start_id
+		self.query_counter = 0
+		self.camera_name_pattern = imcacheconfig.camera_name_pattern
+		threading.Thread.__init__(self, *args, **kwargs)
+
+	def connect(self):
+		args = sinedon.getConfig('leginondata')
+		db = MySQLdb.connect(**args)
+		return db
+
+	def query_images(self):
+		# camera selection
+		if not self.camera_name_pattern:
+			instrument_join = ''
+			camera_query = ''
+		else:
+			instrument_join = 'left join InstrumentData instr on instr.`DEF_id`=c.`REF|InstrumentData|ccdcamera` '
+			camera_query = "AND instr.`name` like '%%%s%%' " % self.camera_name_pattern
+		if direction == 'f':
+			time_query = ''
+			direction_query = 'ASC'
+			if self.query_counter:
+				pass
+			else:
+				if not self.start_id:
+					self.start_id = self.runQuery(newest_image_query)[0][0]
+			imageid_query = 'AND i.`DEF_id` >= %d' % self.start_id
+		else:
+			# reverse cache
+			direction_query = 'DESC'
+			if self.min_timestamp:
+				time_query = 'AND i.DEF_timestamp > %s' % (self.min_timestamp)
+			else:
+				time_query = ''
+			direction_query = 'DESC'
+			# include minimum timestamp on first query only.
+			# after that, only start_id matters
+			if self.query_counter:
+				print ''
+				print 'NO NEW QUERY %d' % self.query_counter
+				print ''
+				self.query_counter += 1
+				return
+			else:
+				if not self.start_id:
+					self.start_id = self.runQuery(newest_image_query)[0][0]
+				print 'START_ID', self.start_id
+				imageid_query = 'AND i.`DEF_id` <= %d' % self.start_id
+		this_query = self.image_query % (instrument_join, imageid_query, time_query,camera_query,direction_query)
+		print 'THISQUERY', this_query
+
+		results = self.runQuery(this_query)
+		# filter out results that are already cached
+		for (imid,session,path,filename,width,height) in results:
+			# determine what is missing from cache
+			missing = {}
+			jpgname = filename + '.jpg'
+			cache_filename = os.path.join(cache_path, session, jpgname)
+			if not os.path.exists(cache_filename):
+				missing['jpg'] = cache_filename
+			powname = filename + '.pow.jpg'
+			cache_filename = os.path.join(cache_path, session, powname)
+			if not os.path.exists(cache_filename):
+				missing['pow'] = cache_filename
+			if not missing:
+				continue
+
+			# put new task in the queue
+			mrc_filename = os.path.join(path, filename+'.mrc')
+			task = {
+				'id': imid,
+				'session': session,
+				'infilename': mrc_filename,
+				'missing': missing,
+				'shape': (height, width),
+			}
+			self.imagequeue.put(task)
+			self.start_id = imid
+
+		self.query_counter += 1
+
+	def runQuery(self,query):
+		# run the query
+		db = self.connect()
+		cur = db.cursor()
+		ret = cur.execute(query)
+		results = cur.fetchall()
+		cur.close()
+		db.close()
+		return results
+
+	def run(self):
+		while True:
+			try:
+				self.query_images()
+			except:
+				pass
+			time.sleep(self.pause)
+
+class ReduxThread(threading.Thread):
+	def __init__(self, imagequeue, *args, **kwargs):
+		self.imagequeue = imagequeue
+		self.reduxclient = redux.client.SimpleClient()
+		threading.Thread.__init__(self, *args, **kwargs)
+
+	def run(self):
+		while True:
+			task = self.imagequeue.get()
+
+			# make sure destination images still do not exist
+			still_missing = {}
+			for key in ('jpg','pow'):
+				if key not in task['missing']:
+					continue
+				m = task['missing'][key]
+				if not os.path.exists(m):
+					still_missing[key] = m
+			if not still_missing:
+				continue
+
+			# create an intermediate image, no greater than size1
+			inshape1 = task['shape']
+			inmax1 = max(*inshape1)
+			if inmax1 > redux_maxsize1:
+				factor = float(redux_maxsize1) / float(inmax1)
+			else:
+				factor = 1
+			outshape1 = int(factor*inshape1[0]), int(factor*inshape1[1])
+			# copy default redux args and update for current task
+			kwargs1 = dict(redux_args1)
+			kwargs1['shape'] = outshape1
+			kwargs1['filename'] = task['infilename']
+
+			# 3 tries to read a file
+			for i in range(3):
+				try:
+					image1 = self.reduxclient.process_kwargs(**kwargs1)
+					break
+				except:
+					image1 = None
+				time.sleep(0.5)
+			if image1 is None:
+				print '**Failed to read', task['infilename']
+				continue
+
+			# create session directory
+			outfile = still_missing.values()[0]
+			dirname = os.path.dirname(outfile)
+			pyami.fileutil.mkdirs(dirname)
+
+			# final jpg and pow jpg are no greater than size2
+			inshape2 = outshape1
+			inmax2 = max(*inshape2)
+			if inmax2 > redux_maxsize2:
+				factor = float(redux_maxsize2) / float(inmax2)
+			else:
+				factor = 1
+			outshape2 = int(factor*inshape2[0]), int(factor*inshape2[1])
+
+			# final jpeg
+			if 'jpg' in still_missing:
+				# copy default redux args and update for current task
+				kwargs = dict(redux_args_jpg)
+				kwargs['shape'] = outshape2
+				kwargs['initial_input'] = image1
+				jpg = self.reduxclient.process_kwargs(**kwargs)
+				# save jpeg
+				f = open(still_missing['jpg'], 'w')
+				f.write(jpg)
+				f.close()
+				print 'done', still_missing['jpg']
+
+			# final power
+			if 'pow' in still_missing:
+				# copy default redux args and update for current task
+				kwargs = dict(redux_args_pow)
+				kwargs['shape'] = outshape2
+				kwargs['initial_input'] = image1
+				pow = self.reduxclient.process_kwargs(**kwargs)
+				# save pow jpeg
+				f = open(still_missing['pow'], 'w')
+				f.write(pow)
+				f.close()
+				print 'done', still_missing['pow']
+
+
+def run():
+	imagequeue = Queue.Queue()
+
+	querythread = QueryThread(imagequeue)
+	querythread.daemon = True
+	querythread.start()
+
+	reduxthread = ReduxThread(imagequeue)
+	reduxthread.daemon = True
+	reduxthread.start()
+
+	# main thread should run as long as other threads are alive
+	while True:
+		time.sleep(5)
+		if not (querythread.isAlive() and reduxthread.isAlive()):
+			break
+
+if __name__ == '__main__':
+	run()

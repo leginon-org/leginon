@@ -7,11 +7,11 @@
  *
  */
 
-require "inc/particledata.inc";
-require "inc/leginon.inc";
-require "inc/project.inc";
-require "inc/viewer.inc";
-require "inc/processing.inc";
+require_once "inc/particledata.inc";
+require_once "inc/leginon.inc";
+require_once "inc/project.inc";
+require_once "inc/viewer.inc";
+require_once "inc/processing.inc";
   
 // check if coming directly from a session
 $expId = $_GET['expId'];
@@ -87,7 +87,7 @@ if ($densityRuns) {
 		# name
 		$modelfile = $densityrun['path']."/".$densityrun['name'];
 		$html .= "<td><A HREF='densityreport.php?expId=$expId&densityId=$densityid'>$densityrun[name]</A>\n";
-		$modellink = "<font size='-2'><a href='download.php?file=$modelfile'>\n";
+		$modellink = "<font size='-2'><a href='download.php?expId=$expId&file=$modelfile'>\n";
 		$modellink .= "  <img style='vertical-align:middle' src='img/download_arrow.png' border='0' width='16' height='17' alt='download model'>\n";
 		$modellink .= "</a></font>\n";
 		$html .= $modellink."</td>\n";

@@ -49,28 +49,28 @@ class authlib{
 
 		else {
 
-			if (!eregi("^[a-z ]+$", $lastname)) {
+			if (!preg_match("%^[a-z ]+$%i", $lastname)) {
 
 				return $this->error['name_invalid'];
 
 			}
-			
-			if(!eregi("^[0-9a-z ]+$", $firstname)) {
+
+			if(!preg_match("%^[0-9a-z ]+$%i", $firstname)) {
 
 				return $this->error['name_invalid'];
 
 			}
-			
+
 			$filterError = $this->filter_email($email);
-			
+
 			if(!empty($filterError))
 				return $filterError;
-				
+
 			$filterError = $this->filter_username($username);
-			
+
 			if(!empty($filterError))
 				return $filterError;
-				
+
 			if ($password != $password2) {
 
 				return $this->error['passwd_not_match'];
@@ -80,8 +80,8 @@ class authlib{
 			$filterError = $this->filter_password($password);
 			if(!empty($filterError))
 				return $filterError;
-			
-			
+
+
 			$dbc=new mysql(DB_HOST, DB_USER, DB_PASS, DB_LEGINON);
 
 			if (!get_magic_quotes_gpc()) {
@@ -97,13 +97,13 @@ class authlib{
 				return $this->error['username_exists'];
 
 			}
-			
+
 			$now=date('Y-m-d H:i:s', time());
 			$hash = md5($username.$now);
 			$password = md5($password);
-			
+
 			$dbc=new mysql(DB_HOST, DB_USER, DB_PASS, DB_PROJECT);
-			
+
 			$q = "Insert into confirmauth (mdhash, username, password, firstname, lastname, email, date)
 					values ('$hash', '$username', '$password', '$firstname', '$lastname', '$email', now())";
 
@@ -120,55 +120,55 @@ class authlib{
 						."Username		$username \n "
 						."You need to confirm the account by pointing your browser at \n "
 						.'http://'.$_SERVER['HTTP_HOST'].BASE_URL.'confirm.php?hash='.$hash. "\n\n "
-						."If you did not apply for the account, please ignore this message.";	
-						
-			$sendEmailResult = $this->outgoingMail($from, $to, $subject, $body);			
-			
+						."If you did not apply for the account, please ignore this message.";
+
+			$sendEmailResult = $this->outgoingMail($from, $to, $subject, $body);
+
 			if(!$sendEmailResult)
 				return $this->error['confirm_email_error'];
 			return 2;
-				
+
 
 		}
 
 	}
-	
-	
+
+
 	/*
 	 * This registation is for adminstrator manually create user
 	 * No email will be send out and no confirmation needed.
 	 */
 	function adminRegister($username, $firstname, $lastname, $title, $institution, $dept, 
 						$address, $city, $statecountry, $zip, $phone, $fax, $email, $url, 
-						$password, $password2, $groupId){
+						$password, $password2, $groupId, $noleginon=0, $advanced=0){
 
 		if (empty($username) || empty($password) || empty($password2) || empty($email) || empty($lastname) || empty($firstname)) {
 			return $this->error['fields_empty'];
 
 		}
 
-		if (!eregi("^[a-z ]+$", $lastname)) {
+		if (!preg_match("%^[a-z ]+$%i", $lastname)) {
 
 		return $this->error['name_invalid'];
 
 		}
-		
-		if(!eregi("^[0-9a-z ]+$", $firstname)) {
+
+		if(!preg_match("%^[0-9a-z ]+$%i", $firstname)) {
 
 			return $this->error['name_invalid'];
 
 		}
-		
+
 		$filterError = $this->filter_email($email);
-		
+
 		if(!empty($filterError))
 			return $filterError;
-			
+
 		$filterError = $this->filter_username($username);
 		
 		if(!empty($filterError))
 			return $filterError;
-			
+
 		if ($password != $password2) {
 
 			return $this->error['passwd_not_match'];
@@ -195,22 +195,22 @@ class authlib{
 
 		$fullname = $firstname . ' '. $lastname;
 		$password = md5($password);
-		
+
 		$q = "insert into UserData (username, firstname, lastname, 
-							`REF|GroupData|group`, password, email) 
+							`REF|GroupData|group`, password, email, noleginon, advanced) 
 				  values ('$username', '$firstname', '$lastname'," . $groupId 
-							.", '$password', '$email')";
+							.", '$password', '$email', '$noleginon', '$advanced')";
 		if(!$dbc->SQLQuery($q)){
 
-			return $this->error['database_error'];		
+			return $this->error['database_error'];
 		}
 
 		$user = $this->getUserInfo($username);
-		
+
 		if(!empty($user)){
-			
+
 			$dbp=new mysql(DB_HOST, DB_USER, DB_PASS, DB_PROJECT);
-			
+
 			$userId = $user['DEF_id'];
 			$addUserDetails = "insert into userdetails (
 					  `REF|leginondata|UserData|user`, title, institution,
@@ -223,13 +223,13 @@ class authlib{
 				return $this->error['database_error'];
 			}
 		}
-				
+
 		return 2;
-		
+
 	}
 	function updateUser($userId, $username, $firstname, $lastname, $title, $institution, $dept, 
 						$address, $city, $statecountry, $zip, $phone, $fax, $email, $url, $chpass, 
-						$password, $password2, $groupId=null) {
+						$password, $password2, $groupId=null, $noleginon=0, $advanced=0) {
 
 		if (empty($firstname) || empty($lastname) || empty($email)) {
 
@@ -237,7 +237,7 @@ class authlib{
 
 		}
 
-		if (!eregi("^[a-z ]+$", $lastname)) {
+		if (!preg_match("%^[a-z ]+$%i", $lastname)) {
 
 			return $this->error['name_invalid'];
 
@@ -260,11 +260,12 @@ class authlib{
 				return $filterPassword;
 		}
 
-
 		$data=array();
 
 		$data['firstname']=$firstname;
 		$data['lastname']=$lastname;
+		$data['noleginon']= $noleginon;
+		$data['advanced']= $advanced;
 		$data['title']=$title;
 		$data['institution']=$institution;
 		$data['dept']=$dept;
@@ -289,17 +290,18 @@ class authlib{
 		$dbc=new mysql(DB_HOST, DB_USER, DB_PASS, DB_LEGINON);
 
 		$fullname = $firstname . ' '. $lastname;
-		
+
 		$q = "update UserData set 
 				firstname = '$firstname', 
-				lastname = '$lastname', email = '$email'
-			  where DEF_id = $userId";
-
+				lastname = '$lastname', email = '$email',
+				noleginon = '$noleginon',
+				advanced = $advanced
+			where DEF_id = $userId";
 		if(!$dbc->SQLQuery($q)){
 
-			return $this->error['database_error'];		
+			return $dbc->getError();//$this->error['database_error'];
 		}
-		
+
 		$dbp=new mysql(DB_HOST, DB_USER, DB_PASS, DB_PROJECT);
 
 		if($hasUserDetail){
@@ -328,15 +330,15 @@ class authlib{
 
 		if(!$dbp->SQLQuery($userDetailsQuery)){
 
-			return $this->error['database_error'];		
-		}	
+			return $this->error['database_error'];
+		}
 
 
 		if ($chpass){
 
 			$this->updatePassword($userId, $password);
 		}
-		
+
 		if (!empty($groupId)){
 			$this->updateGroupId($userId, $groupId);
 		}
@@ -348,14 +350,14 @@ class authlib{
 
 		$dbc = new mysql(DB_HOST, DB_USER, DB_PASS, DB_LEGINON);
 		$password = md5($password);
-		
+
 		$q = "update UserData set password = '$password' where DEF_id = $userId";
 
 		if(!$dbc->SQLQuery($q))
 			return false;
 		return true;
 	}
-	
+
 	function updateGroupId($userId, $groupId){
 		$dbc = new mysql(DB_HOST, DB_USER, DB_PASS, DB_LEGINON);
 
@@ -364,7 +366,7 @@ class authlib{
 		if(!$dbc->SQLQuery($q))
 			return false;
 		return true;
-		
+
 	}
 
 	function getUserInfo($username) {
@@ -378,7 +380,7 @@ class authlib{
 
 			$dbc=new mysql(DB_HOST, DB_USER, DB_PASS, DB_LEGINON);
 			
-			$q="select du.DEF_id, du.username, du.firstname, du.lastname, du.email, du.password, 
+			$q="select du.DEF_id, du.username, du.firstname, du.lastname, du.email, du.password, du.advanced,
 					up.title, up.institution, up.dept, up.address, up.city, up.statecountry, 
 					up.zip, up.phone, up.fax, up.url, dg.name
 				from ".DB_LEGINON.".UserData du 
@@ -396,35 +398,35 @@ class authlib{
 	function hasPassword($userId) {
 
 		$dbc=new mysql(DB_HOST, DB_USER, DB_PASS, DB_LEGINON);
-    	$sqlwhere = (is_numeric($userId)) ? "userId=$userId" : "username='$userId'";
-    	$q='select *  '
-      		.'from UserData '
-      		.'where '.$sqlwhere;
+		$sqlwhere = (is_numeric($userId)) ? "userId=$userId" : "username='$userId'";
+		$q='select *  '
+					.'from UserData '
+					.'where '.$sqlwhere;
 
 		list($r)=$dbc->getSQLResult($q);
 		return ($r['password']) ? true : false;
 	}
   
 	function hasUserDetail($userId){
-  		
+ 
 		if(empty($userId) || !is_numeric($userId)) return false;
 		
-  		$dbc = new mysql(DB_HOST, DB_USER, DB_PASS, DB_PROJECT);
-  		
-  		$q = "select * from userdetails where `REF|leginondata|UserData|user` = $userId";
+			$dbc = new mysql(DB_HOST, DB_USER, DB_PASS, DB_PROJECT);
+			
+			$q = "select * from userdetails where `REF|leginondata|UserData|user` = $userId";
 
-  		$result = $dbc->getSQLResult($q);
+			$result = $dbc->getSQLResult($q);
  
-  		if(empty($result)) return false;
-  		
-  		return true;
-  	
-  	}
-  	
-  	function getGroupId($name){
-  		
-  		$dbc=new mysql(DB_HOST, DB_USER, DB_PASS, DB_LEGINON);
-  		
+			if(empty($result)) return false;
+			
+			return true;
+
+		}
+
+		function getGroupId($name){
+
+			$dbc=new mysql(DB_HOST, DB_USER, DB_PASS, DB_LEGINON);
+
 		$q="select DEF_id from GroupData where name = '$name'";
 			
 		$query=$dbc->SQLQuery($q);
@@ -433,43 +435,49 @@ class authlib{
 		if(!empty($result))
 			return $result['DEF_id'];
 		return false;
-  	}
+		}
 
 	function login ($username, $password) {
 
 		if (empty($username))	
 			return $this->error['fields_empty'];
-		
+
 		if (empty($password) && $username!='Anonymous')
 			return $this->error['fields_empty'];
-		
-		if($username != 'Anonymous'){
-			$this->filter_username($username);
 
-			$this->filter_password($password);
+		$this->filter_username($username);
 
-			$dbc=new mysql(DB_HOST, DB_USER, DB_PASS, DB_LEGINON);
+		$this->filter_password($password);
 
-			if (!get_magic_quotes_gpc()) {
-				$password=addslashes($password);
-				$username=addslashes($username);
-			}
-			$password = md5($password);
-			$q="select DEF_id from UserData where username = '$username' and password = '$password'";
-		
-			$query=$dbc->SQLQuery($q);
-			$result = @mysql_num_rows($query);
-		
-			if ($result != 1) {
-				return false;
-			}
+		$dbc=new mysql(DB_HOST, DB_USER, DB_PASS, DB_LEGINON);
+
+		if (!get_magic_quotes_gpc()) {
+			$password=addslashes($password);
+			$username=addslashes($username);
+		}
+		$password = md5($password);
+		if($username == 'Anonymous'){
+			$q="select DEF_id, DEF_timestamp from UserData where username = 'Anonymous'";
+		}
+		else{
+			$q="select DEF_id, DEF_timestamp from UserData where username = '$username' and password = '$password'";
 		}
 		
-		$hash = md5($username);
+		$query=$dbc->SQLQuery($q);
+		$result = @mysql_num_rows($query);
+	
+		if ($result != 1) {
+			return false;
+		}
+		
+		//The part from the database
+		list ($id,$timestamp) = mysql_fetch_row($query);
+		//The part from configuration
+		$hash = md5($this->secret.$timestamp);
 		$expire = (COOKIE_TIME) ? time()+COOKIE_TIME : 0;
 
-		setcookie(PROJECT_NAME, "$username:$hash", COOKIE_TIME);
-		return 2;		
+		setcookie(PROJECT_NAME, "$username:$hash:$id", COOKIE_TIME);
+		return 2;
 		
 	}
 
@@ -477,38 +485,32 @@ class authlib{
 
 		global $_COOKIE;
 		$cookie = $_COOKIE[PROJECT_NAME];
-
 		$session_vars = explode(":", $cookie);
 		$username = $session_vars[0];
+		$id = $session_vars[2];
 
 		$dbc=new mysql(DB_HOST, DB_USER, DB_PASS, DB_LEGINON);
 
-		$q="select u.DEF_id, g.`REF|projectdata|privileges|privilege` as privilege from UserData as u "
+		$q="select u.DEF_id, u.DEF_timestamp, g.`REF|projectdata|privileges|privilege` as privilege from UserData as u "
 			."left join GroupData as g "
 			."on u.`REF|GroupData|group` = g.`DEF_id` "
-			."where u.username = '$username'";
+			."where u.username = '$username' ";
+
 		$query=$dbc->SQLQuery($q);
-		
 		$result = @mysql_num_rows($query);
 
 		if ($result < 1) {
-
 			return false;
-
 		}
+		//The part from the database
+		list ($id, $timestamp, $privilege) = mysql_fetch_row($query);
+		//The part from configuration
+		$hash = md5($this->secret.$timestamp);
 
-		list ($id, $privilege) = mysql_fetch_row($query);
-
-		$hash = md5($session_vars[0]);
-
-		if ($hash != $session_vars[1]) {
-
+		if ($hash != $session_vars[1] || $id != $session_vars[2]) {
 			return false;
-
 		} else {
-
 			return array($session_vars[0], $id, $privilege);
-
 		}
 
 	}
@@ -516,7 +518,7 @@ class authlib{
 	function logout () {
 
 		setcookie(PROJECT_NAME, "", time()-3600);
-		
+
 		header("Location: ".BASE_URL);
 
 	}
@@ -561,17 +563,17 @@ class authlib{
 				  values ('$username', '$firstname', '$lastname'," . $grUserId .", '$password', '$email')";
 				
 				// insert user to UserData table
-			if(!$dbL->SQLQuery($q)){	
+			if(!$dbL->SQLQuery($q)){
 				return $this->error['database_err1'];
 			}
-		
+
 				// remove registration 
 			$dbP->SQLDelete("confirmauth", array('username'=>$username));
 
 			$from = EMAIL_TITLE . " <".ADMIN_EMAIL.">";
 			$to = $firstname . " " . $lastname . " <" . $email . ">";
 			$subject = "Create Account Confirmation: Appion / Legnion Tools";
-			
+
 			$body = "Thank You, $firstname for registering. Here is the information we received :\n
 					\nFirst Name	: $firstname
 					\nLast Name		: $lastname
@@ -581,7 +583,7 @@ class authlib{
 					\nURL			: http://". $_SERVER['HTTP_HOST'] . BASE_URL."\n\n";
 
 			
-			$sendEmailResult = $this->outgoingMail($from, $to, $subject, $body);			
+			$sendEmailResult = $this->outgoingMail($from, $to, $subject, $body);
 			
 			if(!$sendEmailResult)
 				return $this->error['confirm_email_error'];
@@ -626,7 +628,7 @@ class authlib{
 		if (!$username) {
 			return $this->error['no_username'];
 		}
-		
+
 		// generate new password for user
 		$password=$this->generatePassword();
 		
@@ -646,8 +648,8 @@ class authlib{
  				\nPlease use the following link to login : http://". $_SERVER['HTTP_HOST'] . BASE_URL .
 				"\nWe hope you remember your password next time ;-)"; 
 
-		$sendEmailResult = $this->outgoingMail($from, $to, $subject, $body);			
-	
+		$sendEmailResult = $this->outgoingMail($from, $to, $subject, $body);
+
 		if(!$sendEmailResult)
 			return $this->error['confirm_email_error'];
 		return 2;
@@ -731,7 +733,7 @@ class authlib{
 
 			}
 
-			if (!ereg("^[[:alnum:]_-]+$", $password)) {
+			if (!preg_match("%^[[:alnum:]_-]+$%", $password)) {
 
 				return $this->error[7];
 
@@ -740,7 +742,7 @@ class authlib{
 			mysql_connect(DB_HOST, DB_USER, DB_PASS);
 			mysql_select_db(DB_LEGINON);
 			$password = md5($password);
-			
+
 			$query = mysql_query("update UserData set password = '$password' where id = '$id'");
 
 			mysql_close();
@@ -783,12 +785,12 @@ class authlib{
 
 			}
 
-			if (!ereg("^[\*@[:alnum:]._-]+$", $val)) {
+			if (!preg_match("%^[\*@[:alnum:]._-]+$%", $val)) {
 
 				return $this->error['passwd_invalid'];
 
 			}
-			
+
 	}
 
 	function filter_username($val) {
@@ -802,17 +804,17 @@ class authlib{
 				return $this->error['username_long'];
 
 			}
-			if (!ereg("^[[:alnum:]_]+$", $val)) {
+			if (!preg_match("%^[[:alnum:]_]+$%", $val)) {
 
 				return $this->error['username_invalid'];
 
 			}
 
 	}
-	
+
 	function filter_email($val) {
 
-			if (!eregi("^([a-z0-9]+)([._-]([a-z0-9]+))*[@]([a-z0-9]+)([._-]([a-z0-9]+))*[.]([a-z0-9]){2}([a-z0-9])?$", $val)) {
+			if (!preg_match("%^([a-z0-9]+)([._-]([a-z0-9]+))*[@]([a-z0-9]+)([._-]([a-z0-9]+))*[.]([a-z0-9]){2}([a-z0-9])?$%i", $val)) {
 
 				return $this->error['email_invalid'];
 
@@ -837,7 +839,7 @@ class authlib{
 		return $password;
 
 	}
-	
+
 	/*
 	 * This method is going to send out email, if will find out
 	 * the mail should use smtp or regular mail function by
@@ -851,21 +853,21 @@ class authlib{
 		$headers = array('From' => $from,
 						 'To' => $to,
 						 'Subject' =>$subject);
-		
+
 		// find out what type of email sending method and build
 		// out the email factory
 		$mailFactoryType = (ENABLE_SMTP ? "smtp" : "mail");
-		
-		if($mailFactoryType == 'smtp'){			
+
+		if($mailFactoryType == 'smtp'){
 			$authParams = array('host' => SMTP_HOST,
 								'auth' => SMTP_AUTH,
                         	  	'username' => SMTP_USERNAME,
                         	  	'password' => SMTP_PASSWORD);
 		}
-		
+
 		$mailing = Mail::factory($mailFactoryType, $authParams);
 		$mail = $mailing->send($to, $headers, $body);
-		
+
 		if(PEAR::isError($mail)){
 			return false;
 		}

@@ -1,0 +1,56 @@
+#!/bin/bash
+#
+# /etc/rc.d/init.d/reduxd
+#
+# chkconfig: 2345 95 05
+# description: Redux is a utility for running a pipeline of simple image processing routines.
+#The main purpose is to produce display worthy images (JPEG, PNG, etc) from
+#raw MRC images.  It includes a caching mechanism to reduce processing time at
+#the expence of disk or memory usage.
+#
+#TODO: add lock
+#
+# Source function library.
+. /etc/rc.d/init.d/functions
+prog=reduxd
+
+start() {        
+	echo -n $"Starting $prog: "
+	nohup $prog > /dev/null &
+	# Or comment out the above line and replace with the following
+	# to give reduxd more priority both on processor and I/O.
+	#nohup nice --adjustment=-5 ionice -c1 -n2 $prog > /dev/null &
+	RETVAL=$?
+	sleep 1;
+	echo $"Started $prog: log location configured in redux.cfg"
+	return $RETVAL
+}
+
+stop() {
+    echo -n $"Shutting down $prog: "
+	killproc $prog
+	RETVAL=$?
+        echo
+	[ $RETVAL -eq 0 ]
+	return $RETVAL
+}
+
+# See how we were called.
+case "$1" in
+  start)
+	start
+	;;
+  stop)
+	stop
+	;;
+  status)
+	status $prog
+	;;
+  restart)
+	stop
+	start
+	;;
+  *)
+	echo $"Usage: $0 {start|stop|status|restart}"
+	exit 1
+esac

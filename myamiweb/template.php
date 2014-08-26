@@ -1,7 +1,7 @@
 <?php
-require "inc/leginon.inc";
-require "inc/project.inc";
-require "inc/viewer.inc";
+require_once "inc/leginon.inc";
+require_once "inc/project.inc";
+require_once "inc/viewer.inc";
 
 
 $templates=$leginondata->getTemplates();
@@ -12,7 +12,7 @@ foreach ((array)$templates as $f) {
     $filename = $f['name'];
     if (!file_exists($filename)) {
       foreach ($datadrives as $drive) {
-        $nfile=ereg_replace('data..', $drive, $filename);
+        $nfile=preg_replace('%data..%', $drive, $filename);
         if (file_exists($nfile)) {
           $filename=$nfile; 
           break;  

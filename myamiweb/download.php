@@ -1,5 +1,7 @@
 <?php
-require 'inc/leginon.inc';
+require_once 'inc/leginon.inc';
+require_once 'inc/image.inc';
+require_once "inc/imagerequest.inc";
 $imgId  = $_GET['id'];
 $preset = $_GET['preset'];
 $fft = ($_GET['fft']==1) ? true : false;
@@ -14,17 +16,12 @@ $path = $leginondata->getImagePath($sessionId);
 //Block unauthorized user
 checkExptAccessPrivilege($sessionId,'data');
 
-if ($fft) {
-	$fftimg = $leginondata->getImageFFT($imgId);
-	$filename = $fftimg['fftimage'];
-} else {
-	$filename = $leginondata->getFilenameFromId($imgId);
-}
+$pic = getImageFile($leginondata,$imgId,$preset,false,$fft);
 
-
-$pic=$path.$filename;
 $size=filesize($pic);
+
 if (file_exists($pic))  {
+	$filename= basename($pic);
 	if ($format && $format!="mrc") {
 		if ($format=="tiff") {
 			$fileformat="TIFF";
@@ -34,19 +31,11 @@ if (file_exists($pic))  {
 			$fileformat="JPEG";
 			$fileext="jpg";
 		}
-		$filename=ereg_replace("mrc$", $fileext, $filename);
-		$tmpfile=tempnam("/tmp", "dbem");
-		if (!is_file(MRC2ANY)) {
-			echo "
-			<script>
-			alert('file: ".MRC2ANY." \\n not found');
-			history.go(-1);
-			</script>
-			";
-			exit;
-		}
-		$cmd=MRC2ANY." $pic -f $fileformat $tmpfile";
-		passthru($cmd);
+		$imagerequest = new imageRequester();
+		$imgstr = $imagerequest->requestDefaultFullImage($pic,$fileformat,$fft);
+		$filename= preg_replace("%mrc$%",$fileext,$filename);
+		$tmpfile=tempnam("/tmp", "leginon");
+		file_put_contents($tmpfile,$imgstr);
 		$pic=$tmpfile;
 		$size=filesize($pic);
 	}

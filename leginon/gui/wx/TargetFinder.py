@@ -17,6 +17,8 @@ import leginon.gui.wx.Settings
 import leginon.gui.wx.ToolBar
 import leginon.gui.wx.ImagePanelTools
 
+hide_incomplete = False
+
 class Panel(leginon.gui.wx.Node.Panel):
 	def __init__(self, *args, **kwargs):
 		leginon.gui.wx.Node.Panel.__init__(self, *args, **kwargs)
@@ -36,8 +38,8 @@ class Panel(leginon.gui.wx.Node.Panel):
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SUBMIT, False)
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SUBMIT_QUEUE, False)
 
+
 		self.initialize()
-		self.toolbar.Realize()
 
 		self.SetSizer(self.szmain)
 		self.SetAutoLayout(True)
@@ -55,6 +57,17 @@ class Panel(leginon.gui.wx.Node.Panel):
 		self.Bind(leginon.gui.wx.ImagePanelTools.EVT_SETTINGS, self.onImageSettings)
 		queue = self.node.settings['queue']
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SUBMIT_QUEUE, queue)
+		self.imagepanel.imagevector = self.node.getTargetImageVector()
+		self.imagepanel.beamradius = self.node.getTargetBeamRadius()
+
+	def onSetImage(self, evt):
+		super(Panel,self).onSetImage(evt)
+		try:
+			self.imagepanel.imagevector = self.node.getTargetImageVector()
+			self.imagepanel.beamradius = self.node.getTargetBeamRadius()
+		except AttributeError:
+			# This function is called on initialization and self.node would be None
+			pass
 
 	def onImageSettings(self, evt):
 		pass
@@ -149,8 +162,9 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 						wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.widgets['sort target'], (3, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['allow append'], (4, 0), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL)
+		if not hide_incomplete:
+			sz.Add(self.widgets['allow append'], (4, 0), (1, 1),
+							wx.ALIGN_CENTER_VERTICAL)
 
 		return sz
 

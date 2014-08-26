@@ -8,12 +8,13 @@
  *	Simple viewer to view a image using mrcmodule
  */
 
-require "inc/particledata.inc";
-require "inc/viewer.inc";
-require "inc/processing.inc";
-require "inc/appionloop.inc";
-require "inc/leginon.inc";
-require "inc/project.inc";
+require_once "inc/particledata.inc";
+require_once "inc/viewer.inc";
+require_once "inc/processing.inc";
+require_once "inc/appionloop.inc";
+require_once "inc/leginon.inc";
+require_once "inc/project.inc";
+require_once "inc/cluster.inc";
 
 // IF VALUES SUBMITTED, EVALUATE DATA
 if ($_POST['process']) {
@@ -131,7 +132,10 @@ function createTemplateForm($extra=False) {
 	}
 	$javafunctions.="<script src='../js/viewer.js'></script>\n";
 
-	processing_header("Template Correlator Launcher","Automated Particle Selection with Template Correlator",$javafunctions);
+	processing_header($title="Template Correlator Launcher", $heading="Automated Particle Selection with Template Correlator", 
+						$headerstuff=$javafunctions, $pleaseWait=false, $showmenu=true, $printDiv=false, 
+						$guideURL="http://ami.scripps.edu/redmine/projects/appion/wiki/Template_Picking");
+						
 	if ($extra) echo "<font color='#cc3333' size='+2'>$extra</font>\n<hr/>\n";
 	echo"<FORM name='viewerform' method='POST' ACTION='$formAction'><P>\n";
 	if ($templatetable) {
@@ -203,7 +207,7 @@ function createTCForm($extra=false, $title='Template Correlator Launcher',
 			if ($defdiam == 0) {
 				$tempdiam = $templateinfo['diam'];
 				if ($tempdiam)
-					$defdiam = $tempdiam*1.3;
+					$defdiam = round($tempdiam*1.3);
 			}
 
 			$filename=$templateinfo[path]."/".$templateinfo[templatename];
@@ -249,9 +253,21 @@ function createTCForm($extra=false, $title='Template Correlator Launcher',
 				document.viewerform.commit.checked=true;
 			 }
 		 }
-	</SCRIPT>\n";
+		 function enabledGpu(){
+			 if (document.viewerform.usegpu.checked){
+				document.viewerform.threadfindem.checked=false;
+			 }	
+		 }		 
+		 function enabledMultiThread(){
+			 if (document.viewerform.threadfindem.checked){
+				document.viewerform.usegpu.checked=false;
+			 }	
+		 }		 
+		 </SCRIPT>\n";
 	$javafunctions .= writeJavaPopupFunctions('appion');
-	processing_header($title,$heading,$javafunctions,True);
+	processing_header($title, $heading, $headerstuff=$javafunctions, $pleaseWait=true, $showmenu=true, $printDiv=false, 
+						$guideURL="http://ami.scripps.edu/redmine/projects/appion/wiki/Template_Picking");	
+	
 	// write out errors, if any came up:
 	if ($extra) {
 		echo "<font color='#cc3333' size='+2'>$extra</font>\n<hr/>\n";
@@ -272,6 +288,8 @@ function createTCForm($extra=false, $title='Template Correlator Launcher',
 	$threadcheck = ($_POST['threadfindem']=='off') ? '' : 'CHECKED';
 	$keepallcheck = ($_POST['keepall']=='on') ? 'CHECKED' : '';
 	$mirrorsv = ($_POST['mirrors']=='on') ? 'CHECKED' : '';
+	$gpudevice = ($_POST['gpudevice']) ? $_POST['gpudevice'] : '';
+	$usegpu = ($_POST['usegpu']) ? $_POST['usegpu'] : False;
 
 	echo"
 	<table border=0 class=tableborder cellpadding=15>
@@ -284,15 +302,43 @@ function createTCForm($extra=false, $title='Template Correlator Launcher',
 
 	createAppionLoopTable($sessiondata, $defrunname, "extract");
 
+	// Create an instance of the cluster class
+ 	if ($_POST['processinghost']) {
+		$processinghost = $_POST['processinghost'];
+	} else {
+		global $PROCESSING_HOSTS;
+		$processinghost = ( $processinghost == '') ? $PROCESSING_HOSTS[0]['host'] : $processinghost;
+	}
+	$cluster = new Cluster( $processinghost );
 	
+	// The user can only select either multi-processor OR GPU but not both.
+	// When the user changes the processing host, there is some javascript to show or hide
+	// the GPU option depending on if there are GPUs listed in the config file for that host.
 	if ($numtemplatesused > 1) {
-		echo "<input type='checkbox' name='threadfindem' $threadcheck>\n";
+		echo "<input type='checkbox' name='threadfindem' onclick='enabledMultiThread(this)' $threadcheck>\n";
 		echo "Use multi-processor threading\n";
 		echo "<br />\n";
 	} else {
 		echo "<input type='hidden' name='threadfindem' value='off'>";
 	}
-
+	
+	if ($cluster->hasGpu()) {
+		echo "<input type='checkbox' name='usegpu' onclick='enabledGpu(this)' $usegpu>\n";
+		echo "Use GPU version\n";
+		
+		// create a selection box for the GPU devices
+		echo "<select name='gpudevice'>";
+		$gpus = $cluster->getGpus();
+		foreach ($gpus as $deviceNum => $name) {
+			$selected = ( $gpudevice == $deviceNum ) ? " SELECTED" : "";
+			echo "<option value='$deviceNum' $selected>$name</option>";
+		}
+		echo "</select>";
+		echo "<br />\n";
+	} else {
+		echo "<input type='hidden' name='usegpu' value='off'>";
+	}
+		
 	echo "<input type='checkbox' name='keepall' $keepallcheck>\n";
 	echo "Do not delete .dwn.mrc files after finishing\n";
 	echo "<br />\n";
@@ -307,7 +353,8 @@ function createTCForm($extra=false, $title='Template Correlator Launcher',
 	echo docpop('mirror','Use template mirrors');
 	echo "<br/><br/>\n";
 
-	createParticleLoopTable(0.5,"",$_POST);
+	$showCCsearhMult = $cluster->hasGpu() ? True : False; 
+	createParticleLoopTable(0.5,"", $showCCsearhMult);
 
 	echo "
 		</td>
@@ -355,6 +402,9 @@ function createTCForm($extra=false, $title='Template Correlator Launcher',
 */
 
 function runTemplateCorrelator() {
+	/* *******************
+	PART 1: Get variables
+	******************** */
 	$expId   = $_GET['expId'];
 	$outdir  = $_POST['outdir'];
 	$runname = $_POST['runname'];
@@ -362,12 +412,44 @@ function runTemplateCorrelator() {
 	$thread = ($_POST['threadfindem']=='on') ? "<font color='green'>true</font>" : "<font color='red'>false</font>";
 	$keepall = ($_POST['keepall']=='on') ? "<font color='green'>true</font>" : "<font color='red'>false</font>";
 	$mirrors = ($_POST['mirrors']=='on') ? "<font color='green'>true</font>" : "<font color='red'>false</font>";
-
+	
+	// GPU params
+	$ccsearchmult 	= ($_POST['ccsearchmult']) ? $_POST['ccsearchmult'] : '';
+	$gpudevice		= ($_POST['gpudevice']) ? $_POST['gpudevice'] : '';
+	$usegpu			= ($_POST['usegpu']=='on') ? True : False;
+	
 	$numtemplatesused = $_POST['numtemplatesused'];
+	
+	if ($_POST['testimage']=="on") {
+		if ($_POST['testfilename']) $testimage=trim($_POST['testfilename']);
+		// replace other spaces with commas
+		$testimage = preg_replace("% %",",",$testimage);
+		$testimage = preg_replace("%,,%",",",$testimage);
+		
+		$nproc = 1;
+		if ($numtemplatesused >= 2 && $numtemplatesused <= 8)
+			$nproc = $numtemplatesused;
+		elseif ($numtemplatesused > 8)
+			$nproc = 8;
+		
+	}
+	
+	/* *******************
+	PART 2: Check for conflicts, if there is an error display the form again
+	******************** */
 
-	// START MAKE COMMAND
-
-	$command ="templateCorrelator.py ";
+	// make sure gpu device number is an integer
+	$gpudevice = floor($gpudevice);
+	
+	/* *******************
+	PART 3: Create program command
+	******************** */
+	
+	if ( $usegpu ) {
+		$command ="templateCorrelatorG.py ";
+	} else {
+		$command ="templateCorrelator.py ";
+	}
 
 	$apcommand = parseAppionLoopParams($_POST);
 	if ($apcommand[0] == "<") {
@@ -386,11 +468,11 @@ function runTemplateCorrelator() {
 	// get the list of templates
 	$i=1;
 	$templateList = $_POST['templateList'];
-	$templates=split(",", $templateList);
+	$templates=preg_split("%,%", $templateList);
 	$templateliststr = "";
 	$rangeliststr = "";
 	foreach ($templates as $template) {
-		list($num, $templateid) = split(":",$template);
+		list($num, $templateid) = preg_split("%:%",$template);
 		$templateliststr .= $templateid.",";
 		$start = "template".$num."strt";
 		$end   = "template".$num."end";
@@ -419,84 +501,48 @@ function runTemplateCorrelator() {
 		$command.="--keepall ";
 	if ($_POST['mirrors']=='on')
 		$command.="--use-mirrors ";
+		
+	if ( $usegpu ) {
+		$command .= "--ccsearchmult=$ccsearchmult ";
+		$command .= "--gcdev=$gpudevice ";
+	}		
 
-	// END MAKE COMMAND
+	/* *******************
+	PART 4: Create header info, i.e., references
+	******************** */
 
-	if ($_POST['testimage']=="on") {
-		if ($_POST['testfilename']) $testimage=trim($_POST['testfilename']);
-		// replace other spaces with commas
-		$testimage = ereg_replace(" ",",",$testimage);
-		$testimage = ereg_replace(",,",",",$testimage);
-	}
+	// Add reference to top of the page
+	$headinfo .= referenceBox("FindEM--a fast, efficient program for automatic selection of particles from electron micrographs.", 2004, "Roseman AM.", "J Struct Biol.", 145, "1-2", 15065677, false, false, "img/findem.png");
 
-	if ($_POST['process']=="Run Correlator") {
-		$user = $_SESSION['username'];
-		$password = $_SESSION['password'];
+	/* *******************
+	PART 5: Show or Run Command
+	******************** */
 
-		if (!($user && $password)) createTCForm("<b>ERROR:</b> Enter a user name and password");
+	// submit command
+	$errors = showOrSubmitCommand($command, $headinfo, 'templatecorrelator', $nproc, $testimage);
 
-		$nproc = 1;
-		if ($numtemplatesused >= 2 && $numtemplatesused <= 8)
-			$nproc = $numtemplatesused;
-		elseif ($numtemplatesused > 8)
-			$nproc = 8;
-		$sub = submitAppionJob($command, $outdir, $runname, $expId, 'templatecorrelator', $testimage, False, False, $nproc);
-
-		// if errors:
-		if ($sub) createTCForm("<b>ERROR:</b> $sub");
-		if (!$testimage) exit;
-	}
-
-	if ($testimage) {
+	// if error display them
+	if ($errors) {
+		createTCForm("<b>ERROR:</b> $errors");
+	} else if ($testimage) {
+		// add the appion wrapper to the command for display
+		$wrappedcmd = addAppionWrapper($command);
+		
 		if (substr($outdir,-1,1)!='/') $outdir.='/';
 		$results = "<table width='600' border='0'>\n";
 		$results.= "<tr><td>\n";
-		$results.= "<b>Template Correlator Command:</b><br />$command";
+		$results.= "<b>Template Correlator Command:</b><br />$wrappedcmd";
 		$results.= "</td></tr></table>\n";
 		$results.= "<br />\n";
-		$testjpg=ereg_replace(".mrc","",$testimage);
+		$testjpg=preg_replace("%.mrc%","",$testimage);
 
 		$jpgimg=$outdir.$runname."/jpgs/".$testjpg.".prtl.jpg";
 		$ccclist = glob($outdir.$runname."/maps/".$testjpg."*.jpg");
 
 		$results.= writeTestResults($jpgimg,$ccclist,$bin=$_POST['bin'],$_POST['process']);
 		createTCForm($false,'Particle Selection Results','Particle Selection Results',$results);
-		exit;
-	} else {
-		processing_header("Particle Selection Results","Particle Selection Results");
-
-		echo referenceBox("FindEM--a fast, efficient program for automatic selection of particles from electron micrographs.", 2004, "Roseman AM.", "J Struct Biol.", 145, "1-2", 15065677, false, false, "img/findem.png");
-
-		echo"
-			<table width='600'>
-			<tr><td colspan='2'>
-			<b>Template Correlation Picker Command:</b><br>
-			$command
-			<hr>
-			</td></tr>";
-		$i = 0;
-		foreach ( split(",", $templateliststr) as $templateid ) {
-			$i++;
-			echo"<tr><td>template $i id</td><td>$templateid</td></tr>";
-		}
-		echo"<tr><td>template list</td><td>$templateliststr</td></tr>";
-		$i = 0;
-		foreach ( split("x", $rangeliststr) as $rangestr ) {
-			$i++;
-			echo"<tr><td>template $i range</td><td>$rangestr</td></tr>";
-		}
-		echo"<tr><td>range list string</td><td>$rangeliststr</td></tr>";
-		echo"<tr><td>testimage</td><td>$testimage</td></tr>";
-		echo"<tr><td>thread findem</td><td>$thread</td></tr>";
-		echo"<tr><td>keep all .dwn.mrc</td><td>$keepall</td></tr>";
-		echo"<tr><td>use mirrors</td><td>$mirrors</td></tr>";
-		appionLoopSummaryTable($_POST);
-		particleLoopSummaryTable($_POST);
-
-		echo"</table>\n";
-		processing_footer(True, True);
 	}
-
+	
 	exit;
 }
 

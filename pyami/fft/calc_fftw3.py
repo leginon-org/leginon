@@ -5,79 +5,69 @@ import os
 import platform
 import sys
 
-import fftw3
+sys.stderr.write('*** Using custom copy of fftw3 wrapper\n')
+from pyami.fft import fftw3
 import numpy
 
 import calc_base
 
 import pyami.fileutil
+import pyami.cpu
 
 def log(msg):
+	sys.stderr.write('calc_fftw3: ')
 	sys.stderr.write(msg)
 	sys.stderr.write('\n')
 
+# determine number of cpus
+try:
+	threads = pyami.cpu.count()
+	log('%s CPUs found, setting threads=%s' % (threads,threads))
+except:
+	log('could not get number of CPUs, setting threads=1')
+	threads = 1
+
 ## args that are always passed to plan creation
 global_plan_kwargs = {
-	'flags': ['measure'],  # 'patient' never seems to help
-	'nthreads': 4,  # 4 seems best on both dual core and quad core systems
+	'flags': ['estimate'],
+	'nthreads': threads,  # number of logical cpus seems best
 }
 
-## set up where to find local wisdom.  Under this directory, there will
-## be a wisdom file named after the host.
-mydir = pyami.fileutil.getMyDir()
-local_wisdom_path = os.path.join(mydir, 'wisdom')
+## where to look for user customized wisdom
+home = os.path.expanduser('~')
+wisdom_file = 'fftw3-wisdom-' + platform.node()
+wisdom_file = os.path.join(home, wisdom_file)
+
+def load_wisdom():
+	try:
+		fftw3.import_system_wisdom()
+		if debug:
+			log('system wisdom imported')
+	except:
+		pass
+	try:
+		fftw3.import_wisdom_from_file(wisdom_file)
+		if debug:
+			log('local wisdom imported')
+	except:
+		pass
+
+def store_wisdom():
+		if os.path.exists(wisdom_file):
+			os.remove(wisdom_file)
+		fftw3.export_wisdom_to_file(wisdom_file)
 
 class FFTW3Calculator(calc_base.Calculator):
 	def __init__(self):
 		calc_base.Calculator.__init__(self)
-		self.import_wisdom()
-
-	def local_wisdom_filename(self):
-		hostname = platform.node()
-		filename = os.path.join(local_wisdom_path, hostname)
-		return filename
-
-	def export_local_wisdom(self):
-		filename = self.local_wisdom_filename()
-		if os.path.exists(filename):
-			os.remove(filename)
-		dir = os.path.dirname(filename)
-		pyami.fileutil.mkdirs(dir)
-		fftw3.export_wisdom_to_file(filename)
-
-	def import_local_wisdom(self):
-		local_wisdom_file = self.local_wisdom_filename()
-		try:
-			fftw3.import_wisdom_from_file(local_wisdom_file)
-			self.wisdom_found.append(local_wisdom_file)
-		except:
-			pass
-
-	def import_wisdom(self):
-		self.wisdom_found = []
-		#### Try to import wisdom from various locations
-		## system wisdom is normally kept in /etc/fftw/wisdom
-		try:
-			fftw3.import_system_wisdom()
-			self.wisdom_found.append('system')
-		except:
-			pass
-		## We also look for our own wisdom locally
-		self.import_local_wisdom()
-		if debug:
-			if self.wisdom_found:
-				log('fftw wisdom found:')
-				for name in self.wisdom_found:
-					log('  %s' % (name,))
-			else:
-				log('no wisdom found')
+		load_wisdom()
 
 	def make_full(self, fft_array):
 		fftheight, fftwidth = fft_array.shape
 		fullheight = fftheight
 		fullwidth = 2*(fftwidth-1)
 		fullshape = fullheight, fullwidth
-		full_array = numpy.zeros(fullshape, fft_array.dtype)
+		full_array = numpy.empty(fullshape, fft_array.dtype)
 		## fill in left half
 		full_array[:,:fftwidth] = fft_array
 		## fill in right half
@@ -89,23 +79,17 @@ class FFTW3Calculator(calc_base.Calculator):
 		return fft_array
 
 	def plan(self, *args, **kwargs):
-		'''wrapper around fftw3.Plan, so we can track changes in wisdom'''
-		wisdom_before = fftw3.export_wisdom_to_string()
+		'''wrapper around fftw3.Plan to combine global and custom args'''
 		all_kwargs = {}
 		all_kwargs.update(global_plan_kwargs)
 		all_kwargs.update(kwargs)
 		plan = fftw3.Plan(*args, **all_kwargs)
-		wisdom_after = fftw3.export_wisdom_to_string()
-		if len(wisdom_before) != len(wisdom_after):
-			if debug:
-				log('wisdom updated, saving new local wisdom file')
-			self.export_local_wisdom()
 		return plan
 
 	def _forward(self, image_array):
-		input_array = numpy.zeros(image_array.shape, numpy.float)
+		input_array = numpy.empty(image_array.shape, numpy.float)
 		fftshape = image_array.shape[0], image_array.shape[1]/2+1
-		fft_array = numpy.zeros(fftshape, dtype=complex)
+		fft_array = numpy.empty(fftshape, dtype=complex)
 		newplan = self.plan(input_array, fft_array, direction='forward')
 		input_array[:] = image_array
 		newplan()
@@ -113,9 +97,24 @@ class FFTW3Calculator(calc_base.Calculator):
 
 	def _reverse(self, fft_array):
 		imageshape = fft_array.shape[0], 2*(fft_array.shape[1]-1)
-		image_array = numpy.zeros(imageshape, dtype=float32)
-		input_array = numpy.zeros(fft_array.shape, dtype=complex)
+		image_array = numpy.empty(imageshape, dtype=numpy.float)
+		input_array = numpy.empty(fft_array.shape, dtype=numpy.complex)
 		newplan = self.plan(input_array, image_array, direction='backward')
 		input_array[:] = fft_array
 		newplan()
 		return image_array
+
+	def _fshape(self, fft_array, real_shape):
+		'''
+		Create a new fft_array by cropping or padding that will invert to
+		a real image of the given shape
+		'''
+		new_fft_shape = real_shape[0], real_shape[1]/2+1
+		new_fft_array = numpy.zeros(new_fft_shape, dtype=fft_array.dtype)
+		halfheight = min(new_fft_shape[0] / 2, fft_array.shape[0] / 2)
+		width = min(new_fft_shape[1], fft_array.shape[1])
+		new_fft_array[:halfheight,:width] = fft_array[:halfheight,:width]
+		new_fft_array[-halfheight:,:width] = fft_array[-halfheight:,:width]
+		norm = fft_array.shape[0] * 2 * (fft_array.shape[1]-1)
+		new_fft_array /= norm
+		return new_fft_array

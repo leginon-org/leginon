@@ -29,6 +29,7 @@ class Collection(object):
 		instrument_state = leginon.leginondata.ScopeEMData()
 		for key in keys:
 			instrument_state[key] = self.instrument_state[key]
+		self.logger.info('stage alpha reset to %.1f' % (instrument_state['stage position']['a']*180.0/3.14159,))
 		self.instrument.setData(instrument_state)
 
 	def start(self):
@@ -88,11 +89,15 @@ class Collection(object):
 			lpf = None
 		# bin down images for correlation
 		imageshape = self.preset['dimension']
-		maxsize = max((imageshape['x'],imageshape['y']))
-		if maxsize > 512:
-			correlation_bin = self.calcBinning(maxsize, 256, 512)
+		# use minsize since tiltcorrelator needs it square, will crop the image in there.
+		minsize = min((imageshape['x'],imageshape['y']))
+		if minsize > 512:
+			correlation_bin = self.calcBinning(minsize, 256, 512)
 		else:
 			correlation_bin = 1
+		if correlation_bin is None:
+			# use a non-dividable number and crop in the correlator
+			correlation_bin = int(math.ceil(minsize / 512.0))
 		self.correlator = leginon.tomography.tiltcorrelator.Correlator(self.node, self.theta, correlation_bin, lpf)
 		if self.settings['run buffer cycle']:
 			self.runBufferCycle()
@@ -269,6 +274,7 @@ class Collection(object):
 					raise Abort
 				else:
 					self.logger.warning('Image counts below threshold, aborting loop...')
+					self.restoreInstrumentState()
 					break
 
 			self.logger.info('Saving image...')
@@ -365,6 +371,7 @@ class Collection(object):
 			self.checkAbort()
 
 			if abort_loop:
+				self.restoreInstrumentState()
 				break
 
 		self.viewer.clearImages()

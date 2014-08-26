@@ -1,10 +1,18 @@
 #!/usr/bin/env python
-from pyscope import tecnai
+from pyscope import tem,registry
 from pyami import fftfun
 import time
 
-t = tecnai.Tecnai()
+def getTEM():
+	classes = registry.getClasses()
+	for i in classes:
+		name, c = i
+		if issubclass(c, tem.TEM):
+			t = c()
+			break
+	return t
 
+t = getTEM()
 print 'Load gold grating replica into the scope and set it to eucentric height and focus'
 print 'Spread the beam to cover an area at a magnification in SA mode'
 raw_input('hit enter when done')
@@ -50,6 +58,8 @@ print 'beam tilt is set back'
 print '---------------------------------------------------------------'
 print 'Write down the final rotation_center_scale %.2f ' % (best_scale_factor)
 print 'and replace the default 1.0 in pyscope/tecnai.py with a text editor'
+print 'If your scope is not tecnai or titan series from FEI, do this at the'
+print 'corresponding tem module'
 print '---------------------------------------------------------------'
 
 raw_input('hit enter or close window to finish.')

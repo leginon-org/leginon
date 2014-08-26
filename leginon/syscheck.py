@@ -46,11 +46,26 @@ def versionAtLeast(version, minimum):
 		# else equal, so check next digit
 	return True
 
+import pyami.fileutil
+import sinedon
+import pyscope
+import leginon
+def print_config_paths():
+	confdirs = set()
+	for module in (sinedon,pyscope,leginon):
+		confdirs.update(pyami.fileutil.get_config_dirs(module))
+	print 'These are the locations where various config files will be searched.'
+	print 'Please review any existing config files and update them if necessary.'
+	for confdir in confdirs:
+		print '   ', confdir
+
 ######################################################################
 ## Python
 ######################################################################
 print '--------------------------------------------------------------'
 leginonInstalled()
+print ''
+print_config_paths()
 print ''
 
 ######################################################################
@@ -70,6 +85,8 @@ for dir in sys.path:
 	print '        %s' % (dir,)
 if not sys.path:
 	print '        (Empty)'
+
+## config files
 
 ## minimum python version
 minpyver = (2, 3, 4)
@@ -94,9 +111,9 @@ print '--------------------------------------------------------------'
 print 'Python Imaging Library (PIL):'
 print '    importing Image module...'
 try:
-	import Image
+	from PIL import Image
 except:
-	print '    *** Could not import Image module.'
+	print '    *** Could not import PIL Image module.'
 	print '      You must install Python Imaging Library version %s or greater' % (minstr,)
 else:
 	mystr = Image.VERSION
@@ -132,7 +149,8 @@ else:
 ######################################################################
 ## numpy
 ######################################################################
-testednumpy = ('1.0.2','1.0.1')
+minnumpyver = (1, 0, 1)
+minstr = '.'.join(map(str,minnumpyver))
 print '--------------------------------------------------------------'
 print 'numpy:'
 print '    importing numpy module...'
@@ -142,11 +160,12 @@ except ImportError:
 	print '    *** Failed to import numpy.  Install numpy first.'
 else:
 	mystr = numpy.__version__
+	mynumpyver = map((lambda x:int(x)),mystr.split('.')[:3])
 	print '    numpy version: %s' % (mystr,)
-	if mystr in testednumpy:
-		print '        OK'
+	if versionAtLeast(mynumpyver, minnumpyver):
+		print '        OK (at least %s required)' % (minstr ,)
 	else:
-		print '        *** WARNING: untested version of numpy.  Tested versions: %s'  % (testednumpy,)
+		print '        *** FAILED (at least %s required)' % (minstr,)
 
 ######################################################################
 ## scipy
@@ -166,28 +185,6 @@ else:
 	except:
 		print '        *** FAILED: need version of scipy.optimize with leastsq'
 		
-######################################################################
-## Python XML module
-######################################################################
-minxmlver = (0, 8, 2)
-minstr = '.'.join(map(str,minxmlver))
-print '--------------------------------------------------------------'
-print 'Python XML module:'
-print '    importing xml module...'
-try:
-	import xml
-except:
-	print '    *** Could not import xml module.'
-	print '      You must install Python xml version %s or greater' % (minstr,)
-else:
-	mystr = xml.__version__
-	myxmlver = map(int, mystr.split('.'))
-	print '    Python XML version: %s' % (mystr,)
-	if versionAtLeast(myxmlver, minxmlver):
-		print '        OK (at least %s required)' % (minstr ,)
-	else:
-		print '        *** FAILED (at least %s required)' % (minstr,)
-
 ######################################################################
 ## wxPython
 ######################################################################
@@ -258,3 +255,5 @@ else:
 		except:
 			print '        Failed to start wx application.  This is usually because you do not have display permission'
 		print '    wxPython test successful'
+
+

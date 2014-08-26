@@ -1,6 +1,6 @@
 <?php
-require "config.php";
-require "inc/mysql.inc";
+require_once "config.php";
+require_once "inc/mysql.inc";
 
 $databases[]=DB_LEGINON;
 $databases[]=DB_PROJECT;
@@ -143,7 +143,7 @@ Alias: <input class="field" type="text" name="<?php echo $table."alias"; ?>" val
 <select multiple name="joins[]" size="10" >
 <?php
 	foreach ($fields as $field) {
-		if (!ereg('^REF', $field))
+		if (!preg_match('%^REF%', $field))
 			continue;
 		$currentjoins[] = $field;
 		if (in_array($field, (array)$_POST['joins'])) {
@@ -224,7 +224,7 @@ function formatJoin($reftable, $refalias, $reffield, $tablealias, $field) {
 <hr>
 <h4>SQL:</h4>
 <?php
-$sqlcondition = ($condition) ? ereg_replace("\n", $crlf, $condition).$crlf : "";
+$sqlcondition = ($condition) ? preg_replace("%\n%", $crlf, $condition).$crlf : "";
 if ($sqltables)
 	$sqltables.=$crlf;
 if ($sqljoins)
@@ -240,9 +240,9 @@ echo $query;
 <hr>
 <h4>PHP:</h4>
 <?php
-$phpq = ereg_replace('^', '$q="', $query);
-$phpq = ereg_replace($crlf.'$', '";', $phpq);
-$phpq = ereg_replace($crlf, ' "'.$crlf.'	."', $phpq);
+$phpq = preg_replace('%^%', '$q="', $query);
+$phpq = preg_replace('%'.$crlf.'$%', '";', $phpq);
+$phpq = preg_replace('%'.$crlf.'%', ' "'.$crlf.'	."', $phpq);
 echo $phpq;
 ?>
 </body>

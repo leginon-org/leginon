@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import leginondata
+from leginon import leginondata
 import event
 import threading
 from pyami import ordereddict
@@ -31,6 +31,7 @@ class TargetHandler(object):
 		evt = event.TransformTargetEvent()
 		evt['target'] = targetdata
 		evt['level'] = self.settings['adjust for transform']
+		evt['use parent mover'] = self.settings['use parent mover']
 		self.transformtargetevent.clear()
 		self.logger.info('requesting transformed target')
 		self.outputEvent(evt)
@@ -329,7 +330,11 @@ class TargetHandler(object):
 
 	def newSimulatedTarget(self, preset=None,grid=None):
 		## current state of TEM, but use preset
-		scopedata = self.instrument.getData(leginondata.ScopeEMData)
+		try:
+			scopedata = self.instrument.getData(leginondata.ScopeEMData)
+		except Exception, e:
+			self.logger.error('getting scopedata failed: %s' % (e))
+			raise
 		scopedata.friendly_update(preset)
 		lastnumber = self.lastTargetNumber(session=self.session, type='simulated')
 		nextnumber = lastnumber + 1
@@ -347,6 +352,7 @@ class TargetHandler(object):
 	def reportTargetStatus(self, target, status):
 		# look up most recent version of this target
 		tquery = leginondata.AcquisitionImageTargetData()
+		tquery['session'] = target['session']
 		tquery['list'] = target['list']
 		tquery['number'] = target['number']
 		tquery['type'] = target['type']

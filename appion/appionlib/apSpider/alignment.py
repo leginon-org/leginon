@@ -183,6 +183,25 @@ def refBasedAlignParticles(stackfile, templatestack,
 	)
 	mySpider.close()
 
+	"""
+	### perform alignment, should I use 'AP SH' instead?
+	mySpider = spyder.SpiderSession(dataext=dataext, logo=True, nproc=nproc, log=False)
+	mySpider.toSpider("AP SH",
+		spyder.fileFilter(templatestack)+"@**",     # reference image series
+		"1-"+str(numtemplate),                      # enter number of templates of doc file
+		str(int(xysearch))+","+str(int(xystep)),    # translation search range, step size
+		str(int(firstring))+","+str(int(lastring)), # first and last ring for rotational correlation
+		"*",													  # initial angles
+		spyder.fileFilter(stackfile)+"@******",     # unaligned image series
+		"1-"+str(numpart),                          # enter number of particles of doc file
+		"*",													  # initial angles
+		"0.0",												  # angle search
+		"1",												  # check mirrors and shift/rotate input
+		rundir+("/paramdoc%02d" % (iternum)),       # output angles document file
+	)
+	mySpider.close()
+	"""
+
 	### convert spider rotation, shift data to python
 	docfile = rundir+("/paramdoc%02d" % (iternum))+dataext
 	picklefile = rundir+("/paramdoc%02d" % (iternum))+".pickle"

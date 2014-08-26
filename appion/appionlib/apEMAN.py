@@ -285,7 +285,7 @@ def checkStackNumbering(stackname):
 	if n-1 != im.NImg():
 		apDisplay.printWarning("Original stack is not numbered! numbering now...")
 		# check that the stack exists in a writable directory and is not read-only
-		if os.access(oldstack, os.W_OK) is True:
+		if os.access(stackname, os.W_OK) is True:
 			numberParticlesInStack(stackname, startnum=0, verbose=True)
 		else:
 			apDisplay.printWarning("old stack header exists in a READ-only directory and cannot be numbered according to EMAN")

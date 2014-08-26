@@ -218,6 +218,7 @@ class kerdenSOMScript(appionScript.AppionScript):
 
 	#======================
 	def createMontageByEMAN(self):
+		self.cluster_resolution = []
 		apDisplay.printMsg("Converting files")
 
 		### create crappy files
@@ -257,6 +258,10 @@ class kerdenSOMScript(appionScript.AppionScript):
 				emancmd = ("proc2d %s %s"%
 					(listname+".mrc", listname+".png"))
 				apEMAN.executeEmanCmd(emancmd, showcmd=False, verbose=False)
+			### FIX ME: for now fill self.clsuter_sersolution with None, although it 
+			### should be possible to  calculate it if particle list exists like in createMontageInMemory
+			self.cluster_resolution.append(None)
+
 			montagecmd += listname+".png "
 			count +=1
 		montagecmd += "montage.png"

@@ -6,9 +6,9 @@
  *	see  http://ami.scripps.edu/software/leginon-license
  */
 
-require "inc/leginon.inc";
-require "inc/viewer.inc";
-require "inc/project.inc";
+require_once "inc/leginon.inc";
+require_once "inc/viewer.inc";
+require_once "inc/project.inc";
 
 $refreshtime = ($_POST['refreshtime']) ? $_POST['refreshtime'] : 10;
 
@@ -20,7 +20,7 @@ $sessionId = (empty($sessionId)) ? $lastId : $sessionId;
 $imageId= $leginondata->getLastFilenameId($sessionId);
 
 // --- Get data type list
-$datatypes = $leginondata->getDatatypes($sessionId);
+$datatypes = $leginondata->getDataTypes($sessionId);
 
 $sessions = $leginondata->getSessions('description');
 
@@ -57,6 +57,7 @@ foreach ($datatypes as $datatype) {
 	$view->displayDeqIcon(true);
 	$view->setDataTypes($datatypes);
 	$view->selectDataType($datatype);
+	$view->setCacheOnly(true);
 	$viewer->add($view);
 	$v++;
 }

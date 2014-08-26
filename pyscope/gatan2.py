@@ -16,8 +16,8 @@ import comtypes.client
 class Gatan(ccdcamera.CCDCamera):
 	name = 'Gatan'
 	def __init__(self):
-		ccdcamera.CCDCamera.__init__(self)
 		self.unsupported = []
+		ccdcamera.CCDCamera.__init__(self)
 
 		self.cameraid = 0
 
@@ -26,7 +26,7 @@ class Gatan(ccdcamera.CCDCamera):
 		import comtypes.gen.TECNAICCDLib
 		self.gen_module = comtypes.gen.TECNAICCDLib
 
-		self.camerasize = self._getCameraSize()
+		self.calculated_camerasize = self._calculateCameraSize()
 
 		self.binning = {'x': self.camera.Binning, 'y': self.camera.Binning}
 		self.offset = {'x': self.camera.CameraLeft, 'y': self.camera.CameraTop}
@@ -140,8 +140,8 @@ class Gatan(ccdcamera.CCDCamera):
 		image = self.acquireRaw()
 		return image
 
-	def getCameraSize(self):
-		return self.camerasize
+	def _getCameraSize(self):
+		return self.calculated_camerasize
 
 	def getPixelSize(self):
 		x, y = self.camera.GetCCDPixelSize(self.cameraid)
@@ -181,7 +181,7 @@ class Gatan(ccdcamera.CCDCamera):
 		else:
 			return False
 
-	def _getCameraSize(self):
+	def _calculateCameraSize(self):
 		binning = self.camera.Binning
 		left = self.camera.CameraLeft
 		right = self.camera.CameraRight

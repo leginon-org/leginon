@@ -4,7 +4,9 @@ static struct PyMethodDef numeric_methods[] = {
 	{"willsq", willsq, METH_VARARGS},
 	{"tiltang", tiltang, METH_VARARGS},
 	{"transform", transform, METH_VARARGS},
-	{NULL, NULL}
+	{"radonshift", radonShiftCorrelate, METH_VARARGS},
+	{"getAngles", getAngles, METH_VARARGS},
+	{NULL, NULL} /* marks the end of this structure */
 };
 
 void initradermacher() {

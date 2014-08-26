@@ -3,7 +3,7 @@
 - Application XML-Dump
 - http://ami.scripps.edu/ 
 -
-- Application :MSI-T (1.6)
+- Application :MSI-T (3.1)
 - Version     :6
 - Date : 03/04/2009
 -
@@ -185,7 +185,7 @@
     <sqltable name="ApplicationData" >
         <field name="DEF_id" >658</field>
         <field name="DEF_timestamp" >2009-03-04 15:47:10</field>
-        <field name="name" >MSI-T (1.6)</field>
+        <field name="name" >MSI-T (3.1)</field>
         <field name="version" >6</field>
     </sqltable>
   <!-- BindingSpecData -->
@@ -993,6 +993,55 @@
         <field name="alias" >Beam Tilt</field>
         <field name="launcher alias" >main</field>
         <field name="SEQ|dependencies" >[]</field>
+        <field name="REF|ApplicationData|application" >658</field>
+    </sqltable>
+    <sqltable name="BindingSpecData" >
+        <field name="DEF_id" >22079</field>
+        <field name="DEF_timestamp" >2011-10-10 18:25:01</field>
+        <field name="event class string" >MoveToTargetEvent</field>
+        <field name="from node alias" >Target Adjustment</field>
+        <field name="to node alias" >Navigation</field>
+        <field name="REF|ApplicationData|application" >728</field>
+    </sqltable>
+    <sqltable name="BindingSpecData" >
+        <field name="DEF_id" >22111</field>
+        <field name="DEF_timestamp" >2011-10-10 18:25:01</field>
+        <field name="event class string" >MoveToTargetDoneEvent</field>
+        <field name="from node alias" >Navigation</field>
+        <field name="to node alias" >Target Adjustment</field>
+        <field name="REF|ApplicationData|application" >728</field>
+    </sqltable>
+    <sqltable name="BindingSpecData" >
+        <field name="DEF_id" >18018</field>
+        <field name="DEF_timestamp" >2009-03-09 12:33:16</field>
+        <field name="event class string" >TransformTargetDoneEvent</field>
+        <field name="from node alias" >Target Adjustment</field>
+        <field name="to node alias" >Square</field>
+        <field name="REF|ApplicationData|application" >662</field>
+    </sqltable>
+    <sqltable name="BindingSpecData" >
+        <field name="DEF_id" >18018</field>
+        <field name="DEF_timestamp" >2009-03-09 12:33:16</field>
+        <field name="event class string" >TransformTargetEvent</field>
+        <field name="from node alias" >Square</field>
+        <field name="to node alias" >Target Adjustment</field>
+        <field name="REF|ApplicationData|application" >662</field>
+    </sqltable>
+    <sqltable name="NodeSpecData" >
+        <field name="DEF_id" >8391</field>
+        <field name="DEF_timestamp" >2011-03-18 13:59:40</field>
+        <field name="class string" >AutoNitrogenFiller</field>
+        <field name="alias" >N2 Filling</field>
+        <field name="launcher alias" >main</field>
+        <field name="SEQ|dependencies" >[]</field>
+        <field name="REF|ApplicationData|application" >723</field>
+    </sqltable>
+    <sqltable name="BindingSpecData" >
+        <field name="DEF_id" >17773</field>
+        <field name="DEF_timestamp" >2009-03-04 15:47:10</field>
+        <field name="event class string" >FixConditionEvent</field>
+        <field name="from node alias" >Exposure</field>
+        <field name="to node alias" >N2 Filling</field>
         <field name="REF|ApplicationData|application" >658</field>
     </sqltable>
   <!-- BindingSpecData -->

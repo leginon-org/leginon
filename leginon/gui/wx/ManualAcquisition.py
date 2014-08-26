@@ -58,10 +58,10 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 													'settings',
 													shortHelpString='Settings')
 		self.toolbar.AddSeparator()
-		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_GRID,
-													'grid',
-													shortHelpString='Grid')
-		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_GRID, False)
+		#self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_GRID,
+		#											'grid',
+		#											shortHelpString='Grid')
+		#self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_GRID, False)
 		self.toolbar.AddSeparator()
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_MANUAL_DOSE,
 													'dose',
@@ -331,13 +331,13 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		self.panel.setInstrumentSelection(self.instrumentselection)
 
 		self.widgets['camera settings'] = leginon.gui.wx.Camera.CameraPanel(self)
-		self.widgets['camera settings'].setSize(self.node.instrument.camerasize)
+		self.widgets['camera settings'].setGeometryLimits({'size':self.node.instrument.camerasize,'binnings':self.node.instrument.camerabinnings,'binmethod':self.node.instrument.camerabinmethod})
 		self.widgets['low dose'] = wx.CheckBox(self, -1, 'Use low dose')
 
 		szlowdose = wx.GridBagSizer(5, 5)
 		szlowdose.Add(self.widgets['low dose'], (0, 0), (1, 1),
 									wx.ALIGN_CENTER_VERTICAL)
-		szlowdose.AddGrowableCol(1)
+		szlowdose.AddGrowableCol(0)
 		sbszlowdose.Add(szlowdose, 1, wx.EXPAND|wx.ALL, 5)
 
 		sz = wx.GridBagSizer(5, 5)
@@ -379,7 +379,7 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		self.panel.setInstrumentSelection(self.instrumentselection)
 
 		self.widgets['camera settings'] = leginon.gui.wx.Camera.CameraPanel(self)
-		self.widgets['camera settings'].setSize(self.node.instrument.camerasize)
+		self.widgets['camera settings'].setGeometryLimits({'size':self.node.instrument.camerasize,'binnings':self.node.instrument.camerabinnings,'binmethod':self.node.instrument.camerabinmethod})
 		self.widgets['screen up'] = wx.CheckBox(self, -1, 'Up before acquire')
 		self.widgets['screen down'] = wx.CheckBox(self, -1, 'Down after acquired')
 		self.widgets['beam blank'] = wx.CheckBox(self, -1, 'Force beam blank after acquired')
@@ -421,27 +421,9 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 						wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.widgets['save image'], (3, 0), (1, 3),
 						wx.ALIGN_CENTER_VERTICAL)
-		label = wx.StaticText(self, -1, 'Loop pause')
-		sz.Add(label, (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['loop pause time'], (4, 1), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.FIXED_MINSIZE)
-		label = wx.StaticText(self, -1, 'seconds')
-		sz.Add(label, (4, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		label = wx.StaticText(self, -1, 'Label')
-		sz.Add(label, (5, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['image label'], (5, 1), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.FIXED_MINSIZE)
-		sz.AddGrowableCol(1)
-		self.widgets['dark'] = wx.CheckBox(self, -1, 'Dark Exposure')
-		sz.Add(self.widgets['dark'], (6,0), (1,1))
 
-		sz.AddGrowableCol(1)
-		self.widgets['force annotate'] = wx.CheckBox(self, -1, 'Always Annotate Saved Images')
-		sz.Add(self.widgets['force annotate'], (7,0), (1,1))
-
-		self.widgets['reduced params'] = wx.CheckBox(self, -1, 'Reduced EM Parameter Set (for slow TEMs)')
-		sz.Add(self.widgets['reduced params'], (8,0), (1,1))
-
+		sb2 = wx.GridBagSizer(5,5)
+	
 		szdefocus= wx.GridBagSizer(5, 5)
 		label = wx.StaticText(self, -1,'(leave both unchecked to use current defocus)')
 		szdefocus.Add(label, (0,0), (1,2))
@@ -454,13 +436,32 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		self.widgets['defocus2'] = FloatEntry(self, -1, chars=6)
 		szdefocus.Add(self.widgets['defocus2'], (2,1), (1,1))
 		sbszdefocus.Add(szdefocus, 1, wx.EXPAND|wx.ALL, 5)
+		sb2.Add(sbszscreen,(0,0),(1,3), wx.EXPAND)
+		sb2.Add(sbszlowdose,(1,0),(1,3), wx.EXPAND)
+		sb2.Add(sbszdefocus,(2,0),(1,3), wx.EXPAND)
 
-		sb2 = wx.GridBagSizer(5,5)
-		sb2.Add(sbszscreen,(0,0),(1,1), wx.EXPAND)
-		sb2.Add(sbszlowdose,(1,0),(1,1), wx.EXPAND)
-		sb2.Add(sbszdefocus,(2,0),(1,1), wx.EXPAND)
+		label = wx.StaticText(self, -1, 'Loop pause')
+		sb2.Add(label, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sb2.Add(self.widgets['loop pause time'], (3, 1), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.FIXED_MINSIZE)
+		label = wx.StaticText(self, -1, 'seconds')
+		sb2.Add(label, (3, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		label = wx.StaticText(self, -1, 'Label')
+		sb2.Add(label, (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sb2.Add(self.widgets['image label'], (4, 1), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.FIXED_MINSIZE)
+		sb2.AddGrowableCol(1)
+		self.widgets['dark'] = wx.CheckBox(self, -1, 'Dark Exposure')
+		sb2.Add(self.widgets['dark'], (5,0), (1,1))
+
+		self.widgets['force annotate'] = wx.CheckBox(self, -1, 'Always Annotate Saved Images')
+		sb2.Add(self.widgets['force annotate'], (6,0), (1,1))
+
+		self.widgets['reduced params'] = wx.CheckBox(self, -1, 'Reduced EM Parameter Set (for slow TEMs)')
+		sb2.Add(self.widgets['reduced params'], (7,0), (1,1))
 
 		sba = wx.GridBagSizer(5,5)
+		# put the two sizers in columns
 		sba.Add(sz,(0,0),(1,1))
 		sba.Add(sb2,(0,1),(1,1))
 
@@ -534,8 +535,8 @@ class ManualFocusDialog(wx.MiniFrame):
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_STOP, bitmap,
 													shortHelpString='Stop')
 
-		self.toolbar.Realize()
 		self.SetToolBar(self.toolbar)
+		self.toolbar.Realize()
 
 		self.imagepanel = leginon.gui.wx.TargetPanel.FFTTargetImagePanel(self, -1,imagesize=(512,512))
 
@@ -635,12 +636,12 @@ class ManualFocusDialog(wx.MiniFrame):
 class CommentDialog(leginon.gui.wx.Dialog.Dialog):
 	def onInitialize(self):
 
-		self.sz.AddGrowableCol(1)
 		self.viewstatus=None
 		self.comment = wx.TextCtrl(self, -1, '', style=wx.TE_MULTILINE)
 
-		self.sz.Add(self.comment, (0, 0), (2, 2),
+		self.sz.Add(self.comment, (0, 0), (3, 2),
 			wx.EXPAND|wx.ALL)
+		self.sz.AddGrowableCol(0)
 			
 		self.addButton('Save', wx.ID_OK)
 		#Temporary disable Hidden and Examplar buttons and leave the decision to web viewer

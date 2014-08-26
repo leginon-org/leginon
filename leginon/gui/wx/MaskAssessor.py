@@ -56,8 +56,6 @@ class Panel(leginon.gui.wx.ImageAssessor.Panel):
 
 		self.addImagePanel()
 
-		self.toolbar.Realize()
-
 		self.szmain.AddGrowableRow(1)
 		self.szmain.AddGrowableCol(0)
 		self.SetSizer(self.szmain)
@@ -93,7 +91,7 @@ class Panel(leginon.gui.wx.ImageAssessor.Panel):
 		self.imagepanel.addTypeTool('Mask', display=True)
 		self.imagepanel.selectiontool.setDisplayed('Mask', True)
 
-		self.imagepanel.addTargetTool('Regions', wx.Color(0, 255, 255), target=True, display=True)
+		self.imagepanel.addTargetTool('Regions', wx.Colour(0, 255, 255), target=True, display=True)
 		self.imagepanel.selectiontool.setDisplayed('Regions', True)
 		self.imagepanel.setTargets('Regions', [])
 

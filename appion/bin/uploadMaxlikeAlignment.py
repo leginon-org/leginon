@@ -238,6 +238,8 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 		runparams = cPickle.load(f)
 		if not 'localstack' in runparams:
 			runparams['localstack'] = self.params['timestamp']+".hed"
+		if not 'student' in runparams:
+			runparams['student'] = 0
 		return runparams
 
 	#=====================
@@ -272,7 +274,7 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 		maxlikeq['fast'] = runparams['fast']
 		maxlikeq['fastmode'] = runparams['fastmode']
 		maxlikeq['mirror'] = runparams['mirror']
-		maxlikeq['student'] = runparams['student']
+		maxlikeq['student'] = bool(runparams['student'])
 		maxlikeq['init_method'] = "xmipp default"
 		maxlikeq['job'] = self.getMaxLikeJob(runparams)
 
@@ -391,7 +393,7 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 
 	#=====================
 	def createAlignedStacks(self, partlist, origstackfile):
-		partperiter = 4096
+		partperiter = min(4096,apImagicFile.getPartSegmentLimit(origstackfile))
 		numpart = len(partlist)
 		if numpart < partperiter:
 			partperiter = numpart
@@ -630,7 +632,7 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 
 #=====================
 if __name__ == "__main__":
-	maxLike = UploadMaxLikeScript(True)
+	maxLike = UploadMaxLikeScript()
 	maxLike.start()
 	maxLike.close()
 

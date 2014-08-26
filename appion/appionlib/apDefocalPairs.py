@@ -12,14 +12,12 @@ import leginon.leginondata
 from appionlib import appiondata
 from appionlib import apImage
 from appionlib import apDisplay
+from appionlib import apEMAN
 
 ##===================
 ##===================
 def getShiftFromImage(imgdata, sessionname):
-	if imgdata['preset'] is not None and imgdata['preset']['name'] != 'upload':
-		sibling = getDefocusPair(imgdata)
-	else:
-		sibling = getManualDefocusPair(imgdata)
+	sibling = getDefocusPair(imgdata)
 	if sibling:
 		shiftpeak = getShift(imgdata, sibling)
 		recordShift(sessionname, imgdata, sibling, shiftpeak)
@@ -31,15 +29,15 @@ def getShiftFromImage(imgdata, sessionname):
 ##===================
 ##===================
 def getDefocusPair(imgdata):
-	target = imgdata['target']
-	if target is None:
-		return None
-	qtarget = leginon.leginondata.AcquisitionImageTargetData()
-	qtarget['image'] = target['image']
-	qtarget['number'] = target['number']
-	qsibling = leginon.leginondata.AcquisitionImageData(target=qtarget)
+	if imgdata['preset'] is not None and imgdata['preset']['name'] != 'upload':
+		sibling = getDefocusPairFromTarget(imgdata)
+	else:
+		sibling = getManualDefocusPair(imgdata)
+	return sibling
+
+def getDefocusPairFromTarget(imgdata):
 	origid = imgdata.dbid
-	allsiblings = qsibling.query(readimages=False)
+	allsiblings = getAllSiblings(imgdata)
 	defocpair = None
 	if len(allsiblings) > 1:
 		#could be multiple siblings but we are taking only the most recent
@@ -48,6 +46,20 @@ def getDefocusPair(imgdata):
 				defocpair=sib
 				break
 	return defocpair
+
+def getAllSiblings(imgdata):
+	'''
+	get all sibling image data, including itself, from the same parent image and target number
+	'''
+	target = imgdata['target']
+	if target is None or target['image'] is None:
+		return [imgdata]
+	qtarget = leginon.leginondata.AcquisitionImageTargetData()
+	qtarget['image'] = target['image']
+	qtarget['number'] = target['number']
+	qsibling = leginon.leginondata.AcquisitionImageData(target=qtarget)
+	allsiblings = qsibling.query(readimages=False)
+	return allsiblings
 
 ##===================
 ##===================
@@ -90,19 +102,27 @@ def getShift(imgdata1 ,imgdata2):
 		apDisplay.printWarning("Images must be greater than "+finalsize+" pixels to calculate shift.")
 		return None
 
+	#low pass filter 2 images to twice the final pixelsize BEFORE binning
 	shrinkfactor1=dimension1/finalsize
 	shrinkfactor2=dimension2/finalsize
-	binned1 = apImage.binImg(imgdata1['image'], shrinkfactor1)
-	binned2 = apImage.binImg(imgdata2['image'], shrinkfactor2)
+	binned1 = apImage.filterImg(imgdata1['image'],1.0,shrinkfactor1*2)
+	binned2 = apImage.filterImg(imgdata2['image'],1.0,shrinkfactor2*2)
 
+	#now bin 2 images
+	binned1 = apImage.binImg(binned1, shrinkfactor1)
+	binned2 = apImage.binImg(binned2, shrinkfactor2)
+	
 	### fix for non-square images, correlation fails on non-square images
 	mindim = min(binned1.shape)
 	binned1 = binned1[:mindim,:mindim]
 	binned2 = binned2[:mindim,:mindim]
 
-	pc=correlator.cross_correlate(binned1,binned2)
+	### use phase correlation, performs better than cross
+	pc=correlator.phase_correlate(binned1,binned2)
+	apImage.arrayToMrc(pc,"phaseCorrelate.mrc")
 
-	peak = peakfinder.findSubpixelPeak(pc, lpf=0.0)
+	### find peak, filtering to 10.0 helps
+	peak = peakfinder.findSubpixelPeak(pc, lpf=10.0)
 	subpixpeak = peak['subpixel peak']
 	shift=correlator.wrap_coord(subpixpeak, pc.shape)
 	peak['scalefactor'] = dimension2/float(dimension1)
@@ -110,6 +130,7 @@ def getShift(imgdata1 ,imgdata2):
 	xshift = int(round(shift[0]*shrinkfactor1))
 	yshift = int(round(shift[1]*shrinkfactor1))
 	peak['shift'] = numpy.array((xshift, yshift))
+	apDisplay.printMsg("Determined shifts: %f %f"%(peak['shift'][0],peak['shift'][1]))
 	#print peak['shift']
 	#sys.exit(1)
 	return peak

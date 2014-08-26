@@ -20,7 +20,7 @@ if sys.platform == 'win32':
 			if not pathmapping:
 				return path
 			for key, value in pathmapping.items():
-				if value == path[:len(value)]:
+				if value.lower() == path[:len(value)].lower():
 					path = key + path[len(value):]
 					break
 
@@ -30,7 +30,7 @@ if sys.platform == 'win32':
 			if not pathmapping:
 				return path
 			for key, value in pathmapping.items():
-				if key == path[:len(key)]:
+				if key.lower() == path[:len(key)].lower():
 					path = value + path[len(key):]
 					break
 			return os.path.normpath(path)
@@ -63,13 +63,26 @@ class LeginonConfigError(Exception):
 configparser = configparser.configparser
 
 # drive mapping
-drives = configparser.options('Drive Mapping')
-for drive in drives:
-	drivepath = drive.upper() + ':'
-	pathmapping[drivepath] = configparser.get('Drive Mapping', drive)
+if configparser.has_section('Drive Mapping'):
+	drives = configparser.options('Drive Mapping')
+	for drive in drives:
+		drivepath = drive.upper() + ':'
+		pathmapping[drivepath] = configparser.get('Drive Mapping', drive)
 
 # image path
-IMAGE_PATH = configparser.get('Images', 'path')
+if configparser.has_section('Images'):
+	IMAGE_PATH = configparser.get('Images', 'path')
+else:
+	sys.stderr.write('Warning:  You have not configured Images path in leginon.cfg!  Using current directory.\n')
+	IMAGE_PATH = os.path.abspath(os.curdir)
+
+
+if sys.platform == 'win32':
+	mapped_path = mapPath(IMAGE_PATH)
+else:
+	mapped_path = IMAGE_PATH
+if not os.access(mapped_path, os.W_OK):
+	sys.stderr.write('Error:  image path is not writable: %s\n' % (IMAGE_PATH,))
 
 # project
 try:
@@ -77,17 +90,11 @@ try:
 except:
 	default_project = None
 
-# check to see if image path has been set, then create it
-if not IMAGE_PATH:
-	raise LeginonConfigError('set IMAGE_PATH in leginonconfig.py')
-try:
-	mkdirs(mapPath(IMAGE_PATH))
-except:
-	if not os.path.isdir(IMAGE_PATH):
-		sys.stderr.write('Error accessing image path: %s\n' % (IMAGE_PATH,))
-
 # user
-USERNAME = configparser.get('User', 'fullname')
+try:
+	USERNAME = configparser.get('User', 'fullname')
+except:
+	USERNAME = ''
 
 try:
 	emailhost = configparser.get('Email', 'host')

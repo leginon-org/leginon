@@ -50,9 +50,9 @@ class MakeSnapshotScript(basicScript.BasicScript):
 			type="choice", choices=self.typemodes, default="snapshot" )
 
 		### true/false
-		self.parser.add_option("--xvfb", dest="xvfb", default=True,
+		self.parser.add_option("--xvfb", dest="xvfb", default=False,
 			action="store_true", help="Use Xvfb for imaging")
-		self.parser.add_option("--no-xvfb", dest="xvfb", default=True,
+		self.parser.add_option("--no-xvfb", dest="xvfb", default=False,
 			action="store_false", help="Do not use Xvfb for imaging")
 		self.parser.add_option("--no-silhouette", dest="silhouette", default=True,
 			action="store_false", help="Do not use silhouettes for imaging")

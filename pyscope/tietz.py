@@ -15,11 +15,12 @@ import enumproc
 import killproc
 
 import mmapfile
-import pythoncom
 import pywintypes
 import win32com.client
-import win32com.server.register
 import time
+
+import tietzcontrol
+cameracontrol = tietzcontrol.cameracontrol
 
 def intDict(d):
 	new_d = {}
@@ -45,94 +46,7 @@ def killCamcProcs():
 		procname = camcproc[:-4]
 		killproc.Kill_Process(procname)
 
-class CameraControl(object):
-	def __init__(self):
-		self.pingname = 'pyscope'
-		self.cameralock = threading.RLock()
-		self.camera = None
-		self.cameras = []
-
-	def addCamera(self, camera):
-		self.lock()
-		if camera in self.cameras:
-			self.unlock()
-			raise ValueError
-
-		if not self.cameras:
-			try:
-				self.initialize()
-			except:
-				self.unlock()
-				raise
-
-		camera.setCameraType()
-
-		try:
-			hr = cameracontrol.camera.Initialize(camera.cameratype, 0)
-		except pywintypes.com_error, e:
-			self.unlock()
-			raise RuntimeError('error initializing camera')
-		except:
-			self.unlock()
-			raise
-
-		self.cameras.append(camera)
-		self.unlock()
-
-	def removeCamera(self, camera):
-		self.lock()
-		self.cameras.remove(camera)
-
-		if not self.cameras:
-			try:
-				self.uninitialize()
-			except:
-				self.unlock()
-				raise
-
-		self.unlock()
-
-	def setCamera(self, camera):
-		self.camera.ActiveCamera = camera.cameratype
-
-	def lock(self):
-		self.cameralock.acquire()
-
-	def unlock(self):
-		self.cameralock.release()
-
-	def initialize(self):
-		pythoncom.CoInitializeEx(pythoncom.COINIT_MULTITHREADED)
-
-		try:
-			self.camera = win32com.client.Dispatch('CAMC4.Camera')		
-		except pywintypes.com_error, e:
-			raise RuntimeError('failed to initialize interface CAMC4.Camera')
-
-		try:
-			ping = win32com.client.Dispatch('pyscope.CAMCCallBack')
-		except pywintypes.com_error, e:
-			raise RuntimeError('failed to initialize interface pyscope.Ping')
-
-		try:
-			hr = self.camera.RegisterCAMCCallBack(ping, self.pingname)
-		except pywintypes.com_error, e:
-			raise RuntimeError('error registering callback COM object')
-
-		hr = self.camera.RequestLock()
-		if hr == win32com.client.constants.crDeny:
-			raise RuntimeError('error locking camera, denied lock')
-		elif hr == win32com.client.constants.crBusy:
-			raise RuntimeError('error locking camera, camera busy')
-		elif hr == win32com.client.constants.crSucceed:
-			pass
-
-	def uninitialize(self):
-		self.camera.UnlockCAMC()
-
-cameracontrol = CameraControl()
-
-class Tietz(object):
+class Tietz(ccdcamera.CCDCamera):
 	cameratype = None
 	mmname = ''
 	dependencymapping = {
@@ -158,7 +72,7 @@ class Tietz(object):
 		'getImageTransform': [('cpImageGeometry', 'r')],
 		'setImageTransform': [('cpImageGeometry', 'w')],
 		'getTemperature': [('cpCurrentTemperature', 'r')],
-		'setTemperature': [('cpTemperatureSetpoint', 'w')],
+		'set_Temperature': [('cpTemperatureSetpoint', 'w')],
 		'getShutterOpenDelay': [('cpShutterOpenDelay', 'r')],
 		'setShutterOpenDelay': [('cpShutterOpenDelay', 'w')],
 		'getShutterCloseDelay': [('cpShutterCloseDelay', 'r')],
@@ -184,7 +98,7 @@ class Tietz(object):
 
 		self.binning = {'x': 1, 'y': 1}
 		self.offset = {'x': 0, 'y': 0}
-		self.dimension = {'x': 512, 'y': 512}
+		self.dimension = {'x': 1024, 'y': 1024}
 		self.exposuretime = 500
 		self.exposuretype = 'normal'
 
@@ -199,6 +113,8 @@ class Tietz(object):
 			if not supported:
 				self.unsupported.append(methodname)
 
+		ccdcamera.CCDCamera.__init__(self)
+
 		## some cameras require centered geometries
 		geo = self.calculateCenteredGeometry(self.dimension['x'], self.binning['x'])
 		self.setGeometry(geo)
@@ -207,7 +123,11 @@ class Tietz(object):
 		self.cameratype = getattr(win32com.client.constants, self.cameratypeattr)
 
 	def __getattribute__(self, attr_name):
-		if attr_name in object.__getattribute__(self, 'unsupported'):
+		try:
+			unsupported = object.__getattribute__(self, 'unsupported')
+		except:
+			unsupported = []
+		if attr_name in unsupported:
 			raise AttributeError('attribute not supported')
 		return object.__getattribute__(self, attr_name)
 
@@ -421,7 +341,7 @@ class Tietz(object):
 		# {'type': str}
 		return self._getParameterValue('cpCameraName')
 
-	def getCameraSize(self):
+	def _getCameraSize(self):
 		# {'type': dict, 'values': {'x': {'type': int}, 'y': {'type': int}}}}
 		x = self._getParameterValue('cpTotalDimensionX')
 		y = self._getParameterValue('cpTotalDimensionY')
@@ -571,7 +491,8 @@ class Tietz(object):
 	def getTemperature(self):
 		return self._getParameterValue('cpCurrentTemperature')/1000.0
 
-	def setTemperature(self, value):
+	# method name altered to prevent Leginon from setting temperature
+	def set_Temperature(self, value):
 		#	{'type': float}
 		self._setParameterValue('cpTemperatureSetpoint', int(value*1000))
 
@@ -677,74 +598,70 @@ class Tietz(object):
 		else:
 			raise RuntimeError('error getting camera axis')
 
-class TietzPXL(Tietz, ccdcamera.CCDCamera):
+class TietzPXL(Tietz):
 	name = 'Tietz PXL'
 	cameratypeattr = 'ctPXL'
 	mmname = 'CAM_PXL_DATA'
 	def __init__(self):
-		ccdcamera.CCDCamera.__init__(self)
 		Tietz.__init__(self)
 	
-class TietzSimulation(Tietz, ccdcamera.CCDCamera):
+class TietzSimulation(Tietz):
 	name = 'Tietz Simulation'
 	cameratypeattr = 'ctSimulation'
 	mmname = 'CAM_SIMU_DATA'
 	def __init__(self):
-		ccdcamera.CCDCamera.__init__(self)
 		Tietz.__init__(self)
 
-class TietzPVCam(Tietz, ccdcamera.CCDCamera):
+class TietzPVCam(Tietz):
 	name = 'Tietz PVCam'
 	cameratypeattr = 'ctPVCam'
 	mmname = 'CAM_PVCAM_DATA'
 	def __init__(self):
-		ccdcamera.CCDCamera.__init__(self)
 		Tietz.__init__(self)
 	
-class TietzFastScan(Tietz, ccdcamera.FastCCDCamera):
+class TietzFastScan(Tietz):
 	name = 'Tietz FastScan'
 	cameratypeattr = 'ctFastScan'
 	mmname = 'CAM_FASTSCAN_DATA'
 	def __init__(self):
-		ccdcamera.CCDCamera.__init__(self)
 		Tietz.__init__(self)
 	
-class TietzFastScanFW(Tietz, ccdcamera.FastCCDCamera):
+class TietzFastScanFW(Tietz):
 	name = 'Tietz FastScan Firewire'
 	cameratypeattr = 'ctF114_FW'
 	mmname = 'CAM_FSFW_DATA'
 	def __init__(self):
-		ccdcamera.CCDCamera.__init__(self)
 		Tietz.__init__(self)
 	
-class TietzSCX(Tietz, ccdcamera.CCDCamera):
+class TietzSCX(Tietz):
 	name = 'Tietz SCX'
 	cameratypeattr = 'ctSCX'
 	mmname = 'CAM_SCX_DATA'
 	def __init__(self):
-		ccdcamera.CCDCamera.__init__(self)
 		Tietz.__init__(self)
 
-class TietzFC415(Tietz, ccdcamera.CCDCamera):
+class TietzFC415(Tietz):
 	name = 'Tietz FC415'
 	cameratypeattr = 'ctFC415'
 	mmname = 'CAM_FC415_DATA'
 	def __init__(self):
-		ccdcamera.CCDCamera.__init__(self)
 		Tietz.__init__(self)
 
-class TietzF416(Tietz, ccdcamera.CCDCamera):
+class TietzF416(Tietz):
 	name = 'Tietz F416'
+	binning_limits = [1,2,4]
 	cameratypeattr = 'ctF416'
 	mmname = 'CAM_F416_DATA'
 	def __init__(self):
-		ccdcamera.CCDCamera.__init__(self)
 		Tietz.__init__(self)
 
-class TietzF816(Tietz, ccdcamera.CCDCamera):
+	def getBinnedMultiplier(self):
+		binning = self.getBinning()
+		return binning['x']*binning['y']
+
+class TietzF816(Tietz):
 	name = 'Tietz F816'
 	cameratypeattr = 'ctF816'
 	mmname = 'CAM_F816_DATA'
 	def __init__(self):
-		ccdcamera.CCDCamera.__init__(self)
 		Tietz.__init__(self)

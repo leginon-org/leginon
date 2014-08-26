@@ -7,8 +7,8 @@
  *	see  http://ami.scripps.edu/software/leginon-license
  */
 
-require "inc/leginon.inc";
-require "inc/graph.inc";
+require_once "inc/leginon.inc";
+require_once "inc/graph.inc";
 
 $defaultId=1445;
 $defaultpreset='hl';
@@ -30,12 +30,12 @@ if ($viewsql) {
 	exit;
 }
 
-$dbemgraph=&new dbemgraph($thicknessdata, 'unix_timestamp', $data_name);
+$dbemgraph= new dbemgraph($thicknessdata, 'unix_timestamp', $data_name);
 $dbemgraph->lineplot=false;
 $dbemgraph->title="Pixel $data_name for preset $preset";
 $dbemgraph->yaxistitle="pixel $data_name";
 if ($viewdata) {
-	$dbemgraph->dumpData(array('timestamp', 'defocus'));
+	$dbemgraph->dumpData(array('timestamp', $data_name));
 }
 if ($histogram) {
 	$dbemgraph->histogram=true;

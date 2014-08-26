@@ -59,8 +59,6 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 			help="alignment stack id", metavar="ID")
 		self.parser.add_option("-N", "--num-part", dest="numpart", type="int",
 			help="Number of particles to use", metavar="#")
-		self.parser.add_option("--nproc", dest="nproc", type="int",
-			help="Number of processor to use", metavar="ID#")
 		self.parser.add_option("--bin", dest="bin", type="int", default=1,
 			help="Bin images by factor", metavar="#")
 		self.parser.add_option("--numvol", dest="nvol", type="int", default=2,
@@ -207,6 +205,7 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 			return
 		config = sinedon.getConfig('appiondata')
 		dbc = MySQLdb.Connect(**config)
+		dbc.autocommit(True)
 		cursor = dbc.cursor()
 		query = (
 			"  UPDATE ApMaxLikeJobData "
@@ -509,7 +508,7 @@ xmipp_mpi_reconstruct_wbp  -i CorrectGreyscale/corrected_reference_classes.sel -
 
 #=====================
 if __name__ == "__main__":
-	maxLike = MaximumLikelihoodScript(True)
+	maxLike = MaximumLikelihoodScript()
 	maxLike.start()
 	maxLike.close()
 

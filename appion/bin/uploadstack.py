@@ -38,6 +38,15 @@ class UploadStack(appionScript.AppionScript):
 		self.parser.add_option("--apix", dest="apix", type="float",
 			help="Stack pixel size (in Angstroms)", metavar="#")
 
+		### int
+		self.parser.add_option("--syncstack", dest="syncstackid", type="int",
+			help="Sync with this stack", metavar="#")
+
+		### choice
+		self.synctypes = ('tilt', 'defocus')
+		self.parser.add_option("--synctype", dest="synctype", default="tilt",
+			type="choice", choices=self.synctypes,
+			help="Type of synch", metavar="..")
 		### true / false
 		self.parser.add_option("--ctf-corrected", dest="ctfcorrect", default=False,
 			action="store_true", help="Particles are ctf corrected")
@@ -74,7 +83,6 @@ class UploadStack(appionScript.AppionScript):
 			apDisplay.printError("Please provide a Project database ID, e.g., --projectid=42")
 		if self.params['description'] is None:
 			apDisplay.printError("Please provide a Description, e.g., --description='awesome data'")
-
 		#This really is not conflict checking but to set up new session.
 		#There is no place in Appion script for this special case
 
@@ -135,7 +143,7 @@ class UploadStack(appionScript.AppionScript):
 		apDisplay.printMsg("Num part: %i"%self.numpart)
 		if not self.numpart or self.numpart <= 0:
 			apDisplay.printError("Could not determine number of particles")
-		if self.numpart <= 4:
+		if self.numpart <= 1:
 			apDisplay.printError("Not enough particles to upload")
 
 		apStack.averageStack(newstack)
@@ -218,7 +226,11 @@ class UploadStack(appionScript.AppionScript):
 
 		if self.params['commit'] is True:
 			runsinstackq.insert()
-
+			if 'syncstackid' in self.params.keys() and self.params['syncstackid']:
+				stackdata = runsinstackq['stack']
+				stack2data = apStack.getOnlyStackData(self.params['syncstackid'])
+				syncq = appiondata.ApSyncStackData(stack1=stackdata,stack2=stack2data,synctype=self.params['synctype'])
+				syncq.insert()
 		### for each particle
 		sys.stderr.write("Starting particle upload")
 		for i in range(self.numpart):

@@ -9,8 +9,8 @@
 
 ?>
 <?php
-require "inc/leginon.inc";
-require "inc/viewer.inc";
+require_once "inc/leginon.inc";
+require_once "inc/viewer.inc";
 
 // Do these first to set processing database for particle labeling
 $imgId=$_GET['id'];
@@ -23,7 +23,7 @@ $sessionId = $imageinfo['sessionId'];
 $newexpId = $sessionId; // --- variable use by setdatabase() in inc/project.inc
 // These require statements need to be here after $newexpId is defined
 // in order to set processing database properly
-require "inc/project.inc";
+require_once "inc/project.inc";
 ?>
 <html>
 <head>
@@ -40,11 +40,13 @@ $p[]='gridId';
 $p[]='mag';
 $p[]='defocus';
 $p[]='pixelsize';
+$p[]='exposure time';
 $p[]='dose';
 $p[]='tilt';
 $str_tilt="";
 $viewfilename=$_GET['vf'];
 $showtilt=$_GET['tl'];
+$showexptime=$_GET['xt'];
 if ($imgId) {
 	echo "<font style='font-size: 12px;'>";
 	$gridId	= $leginondata->getGridId($imgId);
@@ -83,7 +85,7 @@ if ($imgId) {
 			else if ($k=='exposure time') {
 				if( empty($v) && !empty($imageinfo['exposure time']))
 					$v = $imageinfo['exposure time'];
-				if(!empty($v))
+				if(!empty($v) && $showexptime)
 					echo " <b>$k:</b> ",($leginondata->formatExposuretime($v));
 			}
 			else
@@ -103,8 +105,8 @@ if ($imgId) {
 	$displaynptcl = ($_GET['nptcl']) ? true : false;
 	$ptclparams= ($displaynptcl) ? trim($_GET['nptcl']) : false;
 	if ($ptclparams) { 
-			require "inc/image.inc";
-			require "inc/particledata.inc";
+			require_once "inc/image.inc";
+			require_once "inc/particledata.inc";
 
 			$colors = particleLabelsColors();
 			$particle = new particledata();

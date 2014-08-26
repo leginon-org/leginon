@@ -72,9 +72,10 @@ function findScale(imgsize, pixelsize) {
 		// Fourier space scale
 		for (var key in inverse_scales) {
 			scale=inverse_scales[key]
-			nbpixels = 1/(scale * pixelsize)
+			rscale= 1/scale
+			nbpixels = rscale / pixelsize
 			r = imgsize/nbpixels;
-			if (r > 4 && r <8) {
+			if (r > 2 && r <5) {
 				break;
 			}
 		}

@@ -91,6 +91,9 @@ class testScript(appionScript.AppionScript):
 			url = ("http://ami.scripps.edu/redmine/attachments/download/%d/%s"
 				%(key, imgdict[key]))
 			apDisplay.printMsg("Downloading image '%s'"%(imgdict[key]))
+			if os.path.isfile(imgfile) and apFile.fileSize(imgfile) == 67109888:
+				apDisplay.printMsg("complete image file exists: %s"%(imgfile))
+				continue
 			urlretrieve(url, imgfile)
 			if not os.path.isfile(imgfile):
 				apDisplay.printError("could not download file: %s"%(url))
@@ -128,7 +131,11 @@ class testScript(appionScript.AppionScript):
 		scopeq['name'] = 'SimTEM'
 		scopedatas = scopeq.query(results=1)
 		if not scopedatas or len(scopedatas) < 1:
-			apDisplay.printError("Could not find simulated scope")
+			# try again with AppionTEM
+			scopeq['name'] = 'AppionTEM'
+			scopedatas = scopeq.query(results=1)
+			if not scopedatas or len(scopedatas) < 1:
+				apDisplay.printError("Could not find simulated scope")
 		random.shuffle(scopedatas)
 		scopeid = scopedatas[0].dbid
 		apDisplay.printMsg("Selected scope %d from host %s"	
@@ -139,7 +146,11 @@ class testScript(appionScript.AppionScript):
 		cameraq['name'] = 'SimCCDCamera'
 		cameradatas = cameraq.query(results=1)
 		if not cameradatas or len(cameradatas) < 1:
-			apDisplay.printError("Could not find simulated CCD camera")
+			# try again with AppionCamera
+			cameraq['name'] = 'AppionCamera'
+			cameradatas = cameraq.query(results=1)
+			if not cameradatas or len(cameradatas) < 1:
+				apDisplay.printError("Could not find simulated CCD camera")
 		random.shuffle(scopedatas)
 		carmeraid = cameradatas[0].dbid
 		apDisplay.printMsg("Selected camera %d from host %s"	
@@ -155,13 +166,14 @@ class testScript(appionScript.AppionScript):
 		imagedatfile = self.createImageBatchFile(imglist)
 
 		### get simulated instrument ids
-		scopeid, cameraid = self.getInstrumentIds()
+		#scopeid, cameraid = self.getInstrumentIds()
 
 		### run command
-		script = os.path.join(self.appiondir, "bin", "imageloader.py ")
-		params = (" --runname=%s --projectid=%d --session=%s --batch=%s --scopeid=%d --cameraid=%d --description='%s' "
+		# assume appion program exists in PATH
+		script = os.path.join("imageloader.py ")
+		params = (" --runname=%s --projectid=%d --session=%s --batch=%s --description='%s' "
 			%(self.timestamp, self.params['projectid'], self.timestamp, 
-			imagedatfile, scopeid, cameraid, self.params['description']+' running test suite application'))
+			imagedatfile, self.params['description']+' running test suite application'))
 		if self.params['commit'] is True:
 			params += " --commit "
 		else:

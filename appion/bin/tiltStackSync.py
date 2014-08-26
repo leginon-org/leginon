@@ -27,6 +27,7 @@ class tiltStackSync(appionScript.AppionScript):
 		# connect
 		self.dbconf = sinedon.getConfig('appiondata')
 		self.db     = MySQLdb.connect(**self.dbconf)
+		self.db.autocommit(True)
 		# create a cursor
 		self.cursor = self.db.cursor()
 
@@ -153,6 +154,9 @@ class tiltStackSync(appionScript.AppionScript):
 				sys.stderr.write(".")
 				eulerf.flush()
 			gamma, theta, phi, tiltangle = apTiltPair.getParticleTiltRotationAngles(stackpartdata)
+			if gamma is None:
+				apDisplay.printWarning("Skipping "+str(stackpartdata))
+				continue		
 			line = operations.spiderOutLine(count, [phi, tiltangle, gamma])
 			eulerf.write(line)
 		eulerf.close()
@@ -164,6 +168,9 @@ class tiltStackSync(appionScript.AppionScript):
 		eulerf = open(eulerfile, "a")
 		stackpartdata = apStack.getStackParticle(self.params['tiltstackid'], tiltpartnum)
 		gamma, theta, phi, tiltangle = apTiltPair.getParticleTiltRotationAngles(stackpartdata)
+		if gamma is None:
+			apDisplay.printWarning("Skipping "+str(stackpartdata))
+			return			
 		line = operations.spiderOutLine(count, [phi, tiltangle, -1.0*gamma])
 		eulerf.write(line)
 		eulerf.close()
@@ -174,7 +181,7 @@ class tiltStackSync(appionScript.AppionScript):
 			return
 
 		# Produce new stacks
-		oldstack = apStack.getOnlyStackData(self.params['stackid'], msg=False)
+		oldstack = apStack.getOnlyStackData(self.params['notstackid'], msg=False)
 		notstack = appiondata.ApStackData()
 		notstack['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
 		notstack['name'] = self.notstackdata['name']

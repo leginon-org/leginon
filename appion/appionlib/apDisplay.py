@@ -4,17 +4,22 @@ import os
 import re
 import sys
 import types
+import glob
 
 ####
 # This is a low-level file with NO database connections
 # Please keep it this way
 ####
 
+debug = False
 writeOut = False
 try:
 	outFile = os.path.basename(sys.argv[0]).split(".")[0]+".out"
 except:
 	outFile = "function.out"
+
+def isDebugOn():
+	return debug
 
 def printWarning(text):
 	"""
@@ -42,10 +47,13 @@ def printMsg(text, colorstr=None):
 			print "write error"
 	sys.stderr.write(" ... "+colorString(text, colorstr)+"\n")
 	
-def printError(text):
+def printError(text,raised=True):
 	"""
 	standardized error message
 	"""
+	# release appionLoop image locks so that it can be reprocessed
+	for lockfile in glob.glob('_lock*'):
+			os.remove(lockfile)
 	if writeOut is True:
 		try:
 			f = open(outFile, "a")
@@ -53,7 +61,25 @@ def printError(text):
 			f.close()
 		except:
 			print "write error"
-	raise Exception, colorString("\n *** FATAL ERROR ***\n"+text+"\n\a","red")
+	if raised:
+		raise Exception, colorString("\n *** FATAL ERROR ***\n"+text+"\n\a","red")
+	else:
+		sys.stderr.write(colorString("\n *** FATAL ERROR ***\n"+text+"\n\a","red"))
+
+def printDebug(text):
+	"""
+	standardized debug message
+	"""
+	if not debug:
+		return
+	if writeOut is True:
+		try:
+			f = open(outFile, "a")
+			f.write(" !!! DEBUG: "+text+"\n")
+			f.close()
+		except:
+			print "write error"
+	sys.stderr.write(colorString("!!! DEBUG: "+text,"yellow")+"\n")
 
 def printColor(text, colorstr):
 	"""
@@ -398,6 +424,19 @@ def environmentError():
 			value = '*** NOT SET ***'
 		print colorString("%-20s -> %s" % (name, value), "red")
 
+class LeginonLogger(object):
+	'''
+	fake leginon-style logger that uses apDisplay function
+	so that leginon classes can be used in appion.
+	'''
+	def info(self,msg):
+		printMsg(msg)
+	def debug(self,msg):
+		printDebug(msg)
+	def warning(self,msg):
+		printWarning(msg)
+	def error(self,msg):
+		printWarning('Leginon ERROR: ',msg)
 
 ####
 # This is a low-level file with NO database connections

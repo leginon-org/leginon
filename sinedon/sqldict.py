@@ -155,6 +155,7 @@ import string
 import datetime
 import re
 import numpy
+import math
 import MySQLdb.cursors
 from types import *
 import newdict
@@ -247,6 +248,21 @@ class SQLDict(object):
 		Execute a list of queries, it will return a list of dictionaries
 		"""
 		return _multipleQueries(self.db, queryinfo, readimages)
+
+	def delete(self, queryinfo):
+		# should be just a single object for now
+		info = queryinfo.popitem()[1]
+		print 'INFO', info
+		tablename = info['class'].__name__
+		print 'TABLENAME', tablename
+		where = info['where'].popitem()
+		where = '%s = %d' % where
+		print 'WHERE', where
+		query = str(sqlexpr.Delete(tablename, where))
+		print 'QUERY', query
+		self.db.ping()
+		cur = self.db.cursor(cursorclass=MySQLdb.cursors.DictCursor)
+		cur.execute(query)
 
 class _Table:
 
@@ -1216,6 +1232,9 @@ def matrix2dict(matrix, name=None):
 		for col in row:
 			k = sep.join(['ARRAY',name,'%s_%s'%(i,j)])
 			v = float(matrix[i-1,j-1])
+			if hasattr(math,'isnan') and math.isnan(v):
+				# isnan is only an attribute of math at python 2.6 and above
+				v = None
 			d[k]=v
 			j+=1
 	return d
@@ -1292,7 +1311,10 @@ def findDataClass(modulename, classname):
 		mod = findWrongName(modulename)
 		if mod is None:
 			raise RuntimeError('Cannot find class %s. Module %s not loaded.' % (classname, modulename))
-	cls = getattr(mod, classname)
+	try:
+		cls = getattr(mod, classname)
+	except:
+		return None
 	return cls
 
 def datatype(in_dict, join=None, parentclass=None, dbconfig=None):
@@ -1358,6 +1380,7 @@ def datatype(in_dict, join=None, parentclass=None, dbconfig=None):
 				## not in result, but create reference
 				dclassname = tablename
 				dclass = findDataClass(modulename, dclassname)
+				## If the data class does not exist, then this column should be ignored
 				if dclass is None:
 					continue
 				# host and name should come from parent object
@@ -1399,6 +1422,8 @@ def _sqltype(t):
 		return "INT(20)"
 	elif t is datetime.datetime:
 		return "TIMESTAMP"
+	elif t is datetime.date:
+		return "DATE"
 	else:
 		return None
 
@@ -1494,7 +1519,7 @@ def dataSQLColumns(data_instance, dbdk, fail=True):
 			'Index': ['DEF_timestamp']
 	})
 
-	if data_instance.timestamp is not None:
+	if hasattr(data_instance, "timestamp") and data_instance.timestamp is not None:
 		row['DEF_timestamp'] = data_instance.timestamp
 
 	type_dict = dict(data_instance.typemap())

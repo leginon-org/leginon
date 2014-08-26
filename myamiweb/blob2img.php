@@ -1,12 +1,12 @@
 <?php
-require "inc/particledata.inc";
+require_once "inc/particledata.inc";
 $field = $_GET['f'];
 $id = $_GET['id'];
 $n_width = $_GET['w'];
 $n_height = $_GET['h'];
 $ctf = new particledata;
 $blob = $ctf->getCTFBlobs($field, $id);
-header("Content-type: image/x-png");
+header("Content-type: image/png");
 $source = imagecreatefromstring($blob);
 $width  = imagesx($source);
 $height = imagesy($source);

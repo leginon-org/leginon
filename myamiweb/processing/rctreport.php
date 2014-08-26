@@ -1,9 +1,9 @@
 <?php
-require"inc/particledata.inc";
-require"inc/leginon.inc";
-require"inc/project.inc";
-require"inc/processing.inc";
-require"inc/summarytables.inc";
+require_once "inc/particledata.inc";
+require_once "inc/leginon.inc";
+require_once "inc/project.inc";
+require_once "inc/processing.inc";
+require_once "inc/summarytables.inc";
 
 $expId= $_GET['expId'];
 $rctId= $_GET['rctId'];
@@ -123,7 +123,7 @@ for ($i = 0; $i <= $numiter; $i++) {
 		$searchstr = "volume.*".$i."\.mrc\..*.png$";
 		$gifsearchstr = "volume.*".$i."\.mrc\..*\.gif$";
 		//echo $gifsearchstr."<br/>\n";
-		if (eregi($searchstr, $snapshot)) {
+		if (preg_match('%'.$searchstr.'%i', $snapshot)) {
 			$rcttable.= "<a border='0' href='loadimg.php?filename=$snapshot' target='snapshot'>";
 			$rcttable.= "<img src='loadimg.php?h=128&filename=$snapshot' height='128'></a>\n";
 		}

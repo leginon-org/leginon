@@ -1,6 +1,6 @@
 <?php
 
-require "inc/leginon.inc";
+require_once "inc/leginon.inc";
 
 $id=$_GET['id'];
 $tg = ($_GET['tg']) ? '&tg=1' : '';

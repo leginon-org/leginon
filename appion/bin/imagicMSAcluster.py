@@ -49,7 +49,8 @@ class imagicClusterScript(appionScript.AppionScript):
 	def checkConflicts(self):
 		### check for IMAGIC installation
 		self.imagicroot = apIMAGIC.checkImagicExecutablePath()
-	
+		self.imagicversion = apIMAGIC.getImagicVersion(self.imagicroot)
+
 		### check input parameters
 		if self.params['analysisId'] is None:
 			apDisplay.printError("There is no imagic analysis Id specified")
@@ -96,8 +97,12 @@ class imagicClusterScript(appionScript.AppionScript):
 		f.write("%s\n" % (self.params['classfile'][:-4]))
 		f.write("%s\n" % (self.params['classumfile'][:-4]))
 		f.write("YES\n")
-		f.write("NONE\n")
-		f.write(str(self.params['ignore_members'])+"\n")
+		if int(self.imagicversion) >= 120619:
+			f.write(str(self.params['ignore_members'])+"\n")
+			f.write("NONE\n")
+		else:
+			f.write("NONE\n")
+			f.write(str(self.params['ignore_members'])+"\n")
 		f.write("EOF\n")
 		f.close()
 

@@ -4,7 +4,9 @@
 import sys
 import time
 import threading
+import Queue
 import subprocess
+import os
 ## appion
 from appionlib import apDisplay
 from appionlib import apParam
@@ -22,6 +24,65 @@ class AppionJob(threading.Thread):
 		#self.proc.wait()
 	def poll(self):
 		return self.proc.poll()
+
+
+
+class LauncherThread(threading.Thread):
+	def __init__(self, queue, logfilename):
+		threading.Thread.__init__(self)
+		self.queue = queue
+		#self.setDaemon(True)
+		self.logfilename = logfilename
+
+	def log(self, message):
+		logfile = open(self.logfilename, 'a')
+		logfile.write('%s:  %s\n' % (time.asctime(), message))
+		logfile.flush()
+		logfile.close()
+
+	def run(self):
+		self.log('run start1')
+		while True:
+			try:
+				proc_info = self.queue.get(block=True, timeout=10)
+			except Queue.Empty:
+				break
+			self.log('got from queue')
+			self.log(str(proc_info))
+			args = proc_info['args']
+			kwargs = proc_info['kwargs']
+			self.log('starting subprocess')
+			self.proc = subprocess.Popen(*args, **kwargs)
+			self.proc.wait()
+			self.log('subprocess done')
+		self.log('thread done')
+
+class ProcessLauncher(object):
+	def __init__(self, nproc=1, rundir=None):
+		self.queue = Queue.Queue()
+		self.nproc = nproc
+		if rundir is None:
+			self.rundir = os.getcwd()
+		else:
+			self.rundir = rundir
+		self.threads = []
+		for i in range(self.nproc):
+			logfilename = 'thread%03d.log' % (i,)
+			logfilenamepath = os.path.join(self.rundir, logfilename)
+			newthread = LauncherThread(self.queue, logfilenamepath)
+			self.threads.append(newthread)
+			newthread.start()
+
+	def launch(self, *args, **kwargs):
+		proc_info = {'args': args, 'kwargs': kwargs}
+		self.queue.put(proc_info)
+
+def testProcessLauncher():
+	p = ProcessLauncher(4)
+	for i in range(8):
+		p.launch(['sleep','10'])
+		time.sleep(1)
+
 
 #===========
 def threadCommands(commandlist, nproc=None, pausetime=1.0):
@@ -73,7 +134,7 @@ def writeThreadLog(msg):
 	f.close()
 
 #===========
-if __name__ == "__main__":
+def testThreadCommands():
 	import random
 	cmdlist = []
 	for i in range(20):
@@ -82,7 +143,8 @@ if __name__ == "__main__":
 	print cmdlist
 	threadCommands(cmdlist)
 
-
+if __name__ == "__main__":
+	testProcessLauncher()
 
 
 

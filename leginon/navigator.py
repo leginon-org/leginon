@@ -11,21 +11,36 @@
 # $State: Exp $
 # $Locker:  $
 
+# leginon
 import node
 import event
-import leginondata
-import time
+from leginon import leginondata
 import calibrationclient
-from pyami import correlator, peakfinder, imagefun, ordereddict
-import math
 import gui.wx.Navigator
 import instrument
 import presets
-import types
-import numpy
-import leginondata
-import threading
 import cameraclient
+
+# myami
+from pyami import correlator, peakfinder, imagefun, ordereddict
+import pyami.fileutil
+import pyami.mrc
+
+# python standard
+import threading
+import time
+import types
+import os.path
+import itertools
+import math
+import logging
+
+# 3rd party
+import numpy
+import scipy.ndimage
+
+# used to create debug filenames
+idcounter = itertools.cycle(range(100))
 
 class NavigatorClient(object):
 	eventoutputs = [event.MoveToTargetEvent]
@@ -40,12 +55,16 @@ class NavigatorClient(object):
 		self.movedonestatus = evt['status']
 		self.movedone.set()
 
-	def moveToTarget(self, target, movetype, precision=0.0, accept_precision=1e-3, final_imageshift=False):
+	def moveToTarget(self, target, movetype, precision=0.0, accept_precision=1e-3, final_imageshift=False, use_current_z=False):
+		'''
+		Go through a thread of moveToTarget in Navigator
+		'''
 		self.node.startTimer('moveToTarget')
 		ev = event.MoveToTargetEvent(target=target, movetype=movetype)
 		ev['move precision'] = precision
 		ev['accept precision'] = accept_precision
 		ev['final image shift'] = final_imageshift
+		ev['use target z'] = not use_current_z
 		self.movedone.clear()
 		self.node.outputEvent(ev, wait=False)
 		## wait for event
@@ -70,9 +89,10 @@ class Navigator(node.Node):
 		'cycle each': False,
 		'final image shift': False,
 		'camera settings': cameraclient.default_settings,
+		'preexpose': True,
 	}
 	eventinputs = node.Node.eventinputs + presets.PresetsClient.eventinputs + [event.MoveToTargetEvent]
-	eventoutputs = node.Node.eventoutputs + presets.PresetsClient.eventoutputs + [event.CameraImagePublishEvent, event.MoveToTargetDoneEvent]
+	eventoutputs = node.Node.eventoutputs + presets.PresetsClient.eventoutputs + [event.CameraImagePublishEvent, event.MoveToTargetDoneEvent,event.UpdatePresetEvent]
 
 	def __init__(self, id, session, managerlocation, **kwargs):
 		node.Node.__init__(self, id, session, managerlocation, **kwargs)
@@ -108,6 +128,7 @@ class Navigator(node.Node):
 		precision = ev['move precision']
 		accept_precision = ev['accept precision']
 		final_imageshift = ev['final image shift']
+		use_target_z = ev['use target z']
 		self.logger.info('handling %s request from %s' % (movetype, nodename,))
 		imagedata = targetdata['image']
 		self.newImage(imagedata)
@@ -130,6 +151,15 @@ class Navigator(node.Node):
 		# has been changed by Navigator and will not cycle on the first target.  
 		# Later targets in the list do cycle according to PresetsManager settings
 		# even if Navigator settings['cycle after'] is off
+		if use_target_z:
+			# if the move comes from target adjustment, z focus is likely done.
+			# Therefore target z should not be set according to parent
+			msg = 'Set to target z %.6f' % imagedata['scope']['stage position']['z']
+			self.testprint('Navigator: ' + msg)
+			self.logger.debug(msg)
+			self.instrument.tem.setStagePosition({'z':imagedata['scope']['stage position']['z']})
+		stagenow = self.instrument.tem.StagePosition
+		self.logger.debug('Navigator: z in navigator move %.6f' % stagenow['z'])
 		status = self.move(rows, cols, movetype, precision, accept_precision, check, preset=preset, final_imageshift=final_imageshift, cycle_after=True)
 		self.stopTimer('move')
 
@@ -216,7 +246,12 @@ class Navigator(node.Node):
 		for axis in ('x','y'):
 			scopeshift[axis] = newstate[moveparam][axis] - scope[moveparam][axis]
 		self.logger.info('change in %(moveparam)s: %(x).4e, %(y).4e' % scopeshift)
-		
+
+		# Avoid changing stage z according to imagedata here since it is handled 
+		# before the move
+		stagenow = self.instrument.tem.StagePosition	
+		newstate['stage position']['z'] = stagenow['z']
+
 		self.oldstate = self.newstate
 		self.newstate = newstate
 		emdat = leginondata.NavigatorScopeEMData()
@@ -300,6 +335,10 @@ class Navigator(node.Node):
 		target = shape[0]/2.0-0.5+self.origmove[0], shape[1]/2.0-0.5+self.origmove[1]
 		status = 'ok'
 		if check:
+			# pre-expose after first move and before reacquire
+			if preset and self.settings['preexpose'] and preset['pre exposure']:
+				self.exposeSpecimenWithShutterOverride(preset['pre exposure'])
+
 			if self.outofbounds(target, shape):
 				self.logger.info('target out of bounds, so cannot check error')
 				self.setStatus('idle')
@@ -362,6 +401,7 @@ class Navigator(node.Node):
 		im2 = imagefun.crop_at(self.newimagedata['image'], 'center', limit)
 
 		pc = correlator.phase_correlate(im2, im1, zero=False)
+		pc = scipy.ndimage.gaussian_filter(pc,1)
 		subpixelpeak = self.peakfinder.subpixelPeak(newimage=pc, guess=(0.5,0.5), limit=limit)
 		res = self.peakfinder.getResults()
 		unsignedpixelpeak = res['unsigned pixel peak']
@@ -393,6 +433,16 @@ class Navigator(node.Node):
 		self.acquireImage()
 		self.panel.acquisitionDone()
 
+	def reacquiredFilename(self):
+		orig_id = self.origimagedata.dbid
+		if orig_id is None:
+			orig_id = 0
+		sessionname = self.session['name']
+		timestamp = time.strftime('%d%H%M%S', time.localtime())
+		nextid = idcounter.next()
+		f = '%08d_%s_%02d.mrc' % (orig_id, timestamp, nextid)
+		return f
+
 	def reacquireImage(self):
 		if self.origimagedata is None:
 			raise RuntimeError('no image to reacquire')
@@ -408,6 +458,15 @@ class Navigator(node.Node):
 		self.instrument.setCCDCamera(ccdcamera['name'])
 		self.instrument.setData(cameradata)
 		self._acquireImage(corchannel)
+
+		# save the reacquired image
+		if self.logger.isEnabledFor(logging.DEBUG):
+			debugpath = os.path.join(self.session['image path'], 'debug')
+			pyami.fileutil.mkdirs(debugpath)
+			filename = self.reacquiredFilename()
+			filename = os.path.join(debugpath, filename)
+			pyami.mrc.write(self.newimagedata['image'], filename)
+			self.logger.debug('saving reacquired mrc: %s' %(filename,))
 
 	def acquireImage(self):
 		if self.settings['override preset']:
@@ -433,6 +492,10 @@ class Navigator(node.Node):
 		self._acquireImage()
 
 	def _acquireImage(self, channel=0):
+		try:
+			self.instrument.ccdcamera.SaveRawFrames = False
+		except:
+			pass
 		time.sleep(self.settings['pause time'])
 		try:
 			imagedata = self.acquireCorrectedCameraImageData(channel=channel)
@@ -604,6 +667,21 @@ class Navigator(node.Node):
 			self.logger.exception(errstr % 'unable to set instrument')
 		else:
 			self.logger.info('Moved to location %s' % (name,))
+
+	def uiGetPreset(self,presetname):
+		self.logger.info('Get %s preset image shift and beam shift from scope' % (presetname,))
+		self.setStatus('processing')
+		params = {}
+		params['image shift'] = self.instrument.tem.ImageShift
+		params['beam shift'] = self.instrument.tem.BeamShift
+		self.presetsclient.updatePreset(presetname,params)
+		self.setStatus('idle')
+
+	def uiSendPreset(self,presetname):
+		self.logger.info('Send %s preset to scope' % (presetname,))
+		self.setStatus('processing')
+		self.presetsclient.toScope(presetname)
+		self.setStatus('idle')
 
 	def onResetXY(self):
 		loc = {'x':0.0,'y':0.0}

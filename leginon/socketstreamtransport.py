@@ -11,7 +11,9 @@ import socket
 import SocketServer
 import threading
 import datatransport
+import math
 
+CHUNK_SIZE = 8*1024*1024
 
 # from Tao of Mac
 # Hideous fix to counteract http://python.org/sf/1092502
@@ -106,7 +108,14 @@ class Handler(SocketServer.StreamRequestHandler):
 				result = e
 
 		try:
-			pickle.dump(result, self.wfile, pickle.HIGHEST_PROTOCOL)
+			s = pickle.dumps(result, pickle.HIGHEST_PROTOCOL)
+			psize = len(s)
+			nchunks = int(math.ceil(float(psize) / float(CHUNK_SIZE)))
+			for i in range(nchunks):
+				start = i * CHUNK_SIZE
+				end = start + CHUNK_SIZE
+				chunk = s[start:end]
+				self.wfile.write(chunk)
 			self.wfile.flush()
 		except Exception, e:
 			estr = 'error responding to request, %s' % e

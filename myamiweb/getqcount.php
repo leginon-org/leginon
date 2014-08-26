@@ -17,21 +17,34 @@
 	</head>
 	<body>
 <?php
-require 'inc/leginon.inc';
+require_once 'inc/leginon.inc';
 $sessionId=$_GET['id'];
-$qcounts = $leginondata->getQueueCountResults($sessionId);
-if ($qcounts) {
-	$display='estimated queue processing time
+$targetlistIds = $leginondata->getTargetListIds($sessionId,'',$limit=500);
+if (count($targetlistIds) == 500) {
+	// To speed up loi, this queue creates a link to queucount.php instead when queue is large 
+	$display = '
 <div id="qcount" style="position:relative; width:250px; border: 1px #696969 solid" >';
-	foreach ((array)$qcounts as $q) {
-		$display	.= '<ul><li><b>'.$q[0].' </b></li>'
-							.'<li>unprocessed queue= '.$q[1].'</li>'
-							.'<li>avg time so far = '. (int)($q[2]) .' s</li>'
-							.'<li>remaining time  = '. $q[3] .' min '.$q[4].' s</li>'
-							.'</ul>';
-	}
+	$display .= '<a class="header" target="queuecount" href="queuecount.php?expId='.$sessionId.'"> [link to estimated queue processing time] </a> ';
+	$display .= '</div>';
 	echo $display;
-	echo '<div>';
+} else {
+	$qcounts = $leginondata->getQueueCountResults($sessionId);
+	if ($qcounts) {
+		$display='estimated queue processing time
+	<div id="qcount" style="position:relative; width:250px; border: 1px #696969 solid" >';
+		foreach ((array)$qcounts as $qtype=>$q) {
+			$esttime = $q[4];
+			$estminute = (int) floor(($esttime / 60));
+			$estsecond = (int) floor($esttime%60);
+			$display	.= '<ul><li><b>'.$qtype.' </b>('.$q[1].' targets)</li>'
+							.'<li>unprocessed queue = '.$q[2].'</li>'
+							.'<li>avg time so far = '. (int)($q[3]) .' s</li>'
+							.'<li>remaining time  = '. $estminute .' min '.$estsecond.' s</li>'
+							.'</ul>';
+		}
+		$display .= '</div>';
+		echo $display;
+	}
 }
 ?>
 	</body>

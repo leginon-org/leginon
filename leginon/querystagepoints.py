@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import leginondata
+from leginon import leginondata
 import sys
 
 label = sys.argv[1]

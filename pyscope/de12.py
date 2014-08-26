@@ -8,7 +8,7 @@ import pyami.imagefun
 
 import ccdcamera
 class DE12(ccdcamera.CCDCamera):
-	name = 'DE12'
+	name = 'DE12OLD'
 	def __init__(self):
 		ccdcamera.CCDCamera.__init__(self)
 		self.camera_name = 'DE12'
@@ -20,7 +20,7 @@ class DE12(ccdcamera.CCDCamera):
 		#update a few essential camera properties to default values
 		self.setProperty('Correction Mode', 'Uncorrected Raw')
 		self.setProperty('Ignore Number of Frames', 0)
-		self.setProperty('Preexposure Time', 0.043)		
+		self.setProperty('Preexposure Time (seconds)', 0.043)		
 
 	def __del__(self):
 		self.disconnect()
@@ -33,7 +33,7 @@ class DE12(ccdcamera.CCDCamera):
 		if(self.server.connected) :
 			self.server.disconnect()
 
-	def getCameraSize(self):
+	def _getCameraSize(self):
 		return self.getDictProp('Image Size')
 
 	def getCameras(self):		
@@ -53,13 +53,14 @@ class DE12(ccdcamera.CCDCamera):
 		return value
 
 	def getExposureTime(self):
-		seconds = self.getProperty('Exposure Time')
+		seconds = self.getProperty('Exposure Time (seconds)')
 		ms = int(seconds * 1000.0)
 		return ms
 
 	def setExposureTime(self, ms):
 		seconds = ms / 1000.0
-		self.setProperty('Exposure Time', seconds)
+		print 'SETTING EXPTIME', time.time(), seconds
+		self.setProperty('Exposure Time (seconds)', seconds)
 
 	def getDictProp(self, name):		
 		x = int(self.server.getProperty(name + ' X'))
@@ -96,6 +97,8 @@ class DE12(ccdcamera.CCDCamera):
 		if not isinstance(image, numpy.ndarray):
 			raise ValueError('DE12 GetImage did not return array')
 		image = self.finalizeGeometry(image)
+		print 'Pausing, otherwise, no frames name when this returns.'
+		time.sleep(0.5)
 		return image
 
 	def finalizeGeometry(self, image):
@@ -130,7 +133,7 @@ class DE12(ccdcamera.CCDCamera):
 		time.sleep(sleeptime)
 		
 	def getInserted(self):
-		de12value = self.getProperty('Camera Position')
+		de12value = self.getProperty('Camera Position Status')
 		return de12value == 'Extended'
 
 	def getExposureTypes(self):
@@ -164,22 +167,48 @@ class DE12(ccdcamera.CCDCamera):
 			value_string = 'Discard'
 		self.setProperty('Autosave Raw Frames', value_string)
 
-	def setNextRawFramesName(self, value):
-		self.setProperty('Autosave Raw Frames - Next Dataset Name', value)
-
-	def getNextRawFramesName(self):
-		return self.getProperty('Autosave Raw Frames - Next Dataset Name')
-
 	def getPreviousRawFramesName(self):
-		return self.getProperty('Autosave Raw Frames - Previous Dataset Name')
-
+		frames_name = self.getProperty('Autosave Frames - Previous Dataset Name')
+		return frames_name
+        
 	def getNumberOfFramesSaved(self):
 		nframes = self.getProperty('Autosave Raw Frames - Frames Written in Last Exposure')
 		return int(nframes)
 
 	def getUseFrames(self):
-		nframes = self.getProperty('Number of Frames To Sum')
-		return int(nframes)
+		nsum = self.getProperty('Autosave Sum Frames - Sum Count')
+		first = self.getProperty('Autosave Sum Frames - Ignored Frames')
+		print 'NSUM', nsum
+		print 'FIRST', first
+		last = first + nsum
+		ntotal = self.getNumberOfFrames()
+		if last > ntotal:
+			last = ntotal
+		sumframes = range(first,last)
+		return tuple(sumframes)
 
-	def setUseFrames(self, nframes):
-		self.setProperty('Number of Frames To Sum', nframes)
+	def setUseFrames(self, frames):
+		total_frames = self.getNumberOfFrames()
+		if frames:
+			nskip = frames[0]
+			last = frames[-1]
+		else:
+			nskip = 0
+			last = total_frames - 1
+		nsum = last - nskip + 1
+		if nsum > total_frames:
+			nsum = total_frames
+		nsum = int(nsum)
+		print 'NSUM', nsum
+		print 'NSKIP', nskip
+		self.setProperty('Autosave Sum Frames - Sum Count', nsum)
+		self.setProperty('Autosave Sum Frames - Ignored Frames', nskip)
+
+	def getFrameRate(self):
+		return self.getProperty('Frames Per Second')
+
+	def getReadoutDelay(self):
+		return self.getProperty('Sensor Readout Delay (milliseconds)')
+
+	def setReadoutDelay(self, milliseconds):
+		self.setProperty('Sensor Readout Delay (milliseconds)', milliseconds)

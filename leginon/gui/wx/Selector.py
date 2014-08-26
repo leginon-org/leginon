@@ -82,14 +82,14 @@ class SelectorItem(object):
 		evt.Skip()
 
 	def setSelected(self, selected):
-		color = wx.Color(180,250,205)
+		color = wx.Colour(180,250,205)
 		if selected:
 			for item in self.items:
 				if item is None:
 					continue
 				item.SetBackgroundColour(color)
 			self.panel.SetBackgroundColour(color)
-			self.items[1].SetForegroundColour(wx.Color(200,0,0))
+			self.items[1].SetForegroundColour(wx.Colour(200,0,0))
 		else:
 			for item in self.items:
 				if item is None:
@@ -119,7 +119,6 @@ class Selector(wx.lib.scrolledpanel.ScrolledPanel):
 
 		self.sz = wx.GridBagSizer(1, 3)
 		self.sz.SetEmptyCellSize((16, 16))
-		#self.sz.AddGrowableCol(1)
 
 		self.SetSizer(self.sz)
 		self.SetAutoLayout(True)
@@ -154,7 +153,7 @@ class Selector(wx.lib.scrolledpanel.ScrolledPanel):
 			y = 0
 			for i, height in enumerate(self.sz.GetRowHeights()):
 				height += self.sz.GetVGap()
-				if evt.m_y >= y and evt.m_y <= y + height:
+				if evt.Y >= y and evt.Y <= y + height:
 					row = i
 					break
 				y += height
@@ -170,7 +169,8 @@ class Selector(wx.lib.scrolledpanel.ScrolledPanel):
 		name = self.order[row]
 		item = self.items[name]
 
-		selected = self.selectItem(item, not self.isSelected(item))
+		#selected = self.selectItem(item, not self.isSelected(item))
+		selected = self.selectItem(item, True)
 
 		evt = SelectEvent(self, item, selected)
 		self.GetEventHandler().AddPendingEvent(evt)

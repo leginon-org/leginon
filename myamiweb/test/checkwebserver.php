@@ -13,7 +13,7 @@
 #       ones are required???
 #
 # There are several hard coded constants in this file that may need to be maintained:
-# 1. $fileLocation - the path to the config.php file
+# 1. $configFileLocation - the path to the config.php file
 # 2. $minPhpVersion - minimum version of PHP required for Appion/Leginon
 # 3. The php.ini recommended values
 #
@@ -37,8 +37,26 @@ echo "<p>";
 require_once('./inc/moduleCheck.inc');
 $modules = new moduleCheck();
 
-require('./inc/webServerTester.inc');
+require_once('./inc/webServerTester.inc');
 $tester = new WebServerTester();
+
+// The location of the config file
+$configFileLocation = "../config.php";
+
+
+#####################################################################
+#
+# Display the Appion version
+#
+#####################################################################
+echo "<h3>Current Appion Version and Revision:</h3>";
+echo "<p>";
+try {
+	echo $tester->getDBVersion($configFileLocation);
+} catch(Exception $e) {
+	echo "<font color='red'>".$e->getMessage()."</font>";
+}
+echo "</p>";
 
 
 #####################################################################
@@ -49,18 +67,14 @@ $tester = new WebServerTester();
 echo "<h3>config.php file check:</h3>";
 echo "<p>";
 
-// The location of the config file
-$fileLocation = "../config.php";
-
 try {
-	$tester->verifyConfig($fileLocation);
+	$tester->verifyConfig($configFileLocation);
 	echo "Your config.php file is properly formatted.";
 } catch(Exception $e) {
 	echo "<font color='red'>".$e->getMessage()."</font>";
 }
 echo "<p>";
-
-
+echo "<a class='header' href='viewconfig.php' target='_blank'>[View Config File]</a>";
 
 #####################################################################
 #
@@ -71,10 +85,10 @@ echo "<h3>PHP check:</h3>";
 echo "<p>";
 
 // The minimum version of PHP required for Appion/Leginon, inclusive
-$minPhpVersion = "5.0.0";
+$minPhpVersion = "5.3.0";
 
 // upper bound, exclusive. If it must be 5.2.x but not 5.3.x, the maxPhpVersion is 5.3.
-$maxPhpVersion = "5.3.0"; 
+$maxPhpVersion = "5.4.0"; 
 
 try
 {
@@ -108,7 +122,7 @@ echo "<a target='_blank' href='http://ami.scripps.edu/redmine/projects/appion/wi
 echo "<p>";
 
 // These are constant values based on what AMI recommends for the php.ini settings
-$errorReportingRec   = "2037";
+$errorReportingRec   = "22517";
 $displayErrorsRec    = "On";
 $registerArgcArgvRec = "On";
 $shortOpenTagRec     = "On";
@@ -118,7 +132,8 @@ $memoryLimitRec      = "256M";
 
 // Convert the error reporting value to something readable
 // TODO: it may be better to read the php.ini file and get the string value.
-$errorReporting = get_cfg_var('error_reporting');
+//$errorReporting = get_cfg_var('error_reporting');
+$errorReporting = ini_get('error_reporting');
 switch ($errorReporting) {
 	case 2039:
 		$errorReportingText = "E_ALL & ~E_NOTICE";
@@ -128,6 +143,12 @@ switch ($errorReporting) {
 		break;
 	case 2047:
 		$errorReportingText = "E_ALL";
+		break;
+	case 22519:
+		$errorReportingText = "E_ALL & ~E_DEPRECATED & ~E_NOTICE";
+		break;
+	case 22517:
+		$errorReportingText = "E_ALL & ~E_DEPRECATED & ~E_NOTICE & ~E_WARNING";
 		break;
 	default:
 		$errorReportingText = $errorReporting;
@@ -166,7 +187,7 @@ $memoryLimitFont      = ($memoryLimit      != $memoryLimitRec)      ? $errorColo
 	<tr>
 		<td>error_reporting</td>
 		<td><? echo "<font color='".$errorReportingFont."'>".$errorReportingText."</font>"; ?></td>
-		<td>E_ALL & ~E_NOTICE & ~E_WARNING</td>
+		<td>E_ALL & ~E_NOTICE & ~E_WARNING & ~E_DEPRECATED</td>
 	</tr>
 	<tr>
 		<td>display_errors</td>
@@ -234,25 +255,6 @@ echo "</p>";
 
 #####################################################################
 #
-# Test if mrc is loaded and fftw3 is enabled
-#
-#####################################################################
-echo "<h3>MRC and FFTW check:</h3>";
-echo "<p>";
-
-try {
-	$tester->verifyMRC();
-	echo "MRC module loaded and fftw is enabled.";
-} catch(Exception $e) {
-	echo "<font color='red'>".$e->getMessage()."</font>";
-}
-echo "</p>";
-
-
-
-
-#####################################################################
-#
 # Display an mrc image as png
 #
 #####################################################################
@@ -260,18 +262,51 @@ echo "</p>";
 <h3>Display Images:</h3>
 <p><font color='red'>Please confirm that 2 images are visible below.</font> <br />
 Don't see them? For more info visit:
-<a target='_blank' href='http://ami.scripps.edu/redmine/projects/appion/wiki/Install_the_MRC_PHP_Extension'>[Install the MRC PHP extension]</a>
+<a target='_blank' href='http://ami.scripps.edu/redmine/projects/appion/wiki/Install_Redux_image_server'>[Install the Redux Image Server]</a>
 <br />
 <br />
 
 <img src='ex1.php' name='MRC test 1'> &nbsp; <img src='ex2.php'
 	name='MRC test 2'></p>
 
+<!--  
+#####################################################################
+#
+# Display instructions for running other test scripts 
+#
+#####################################################################
+-->
+<h3>Instructions for testing availablity of 3rd party processing packages:</h3>
+<p>
+Running the following script on the processing server will check that 3rd party processing packages are installed and avaialable from your PATH.
+</p>
 
+<p>
+<pre>
+cd /your_download_area/myami/appion/test<br />
+python check3rdPartyPackages.py
+</pre>
+</p>
+<h3>Instructions for running database update scripts:</h3>
+
+<p>
+Running the following script will indicate if you need to run any database update scripts.<br />
+</p>
+<p>
+<pre>
+cd /your_download_area/myami/dbschema<br />
+python schema_update.py
+</pre>
+</p>
+
+<p>
+This will print out a list of commands to paste into a shell which will run database update scripts.<br />
+You can re-run schema_update.py at any time to update the list of which scripts still need to be run.<br />
+</p>
 
 <!--  
 ##################################################################### 
-# Display all the loaded php extensions                         
+# Display other useful information                         
 ##################################################################### 
 -->
 <h3>The following PHP extensions are loaded:</h3>

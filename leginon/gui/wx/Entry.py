@@ -47,7 +47,7 @@ class Entry(wx.TextCtrl):
 
 		self.dirty = False
 		self.cleancolor = self.GetBackgroundColour()
-		self.dirtycolor = wx.Color(196, 225, 255)
+		self.dirtycolor = wx.Colour(196, 225, 255)
 		self.allowspaces = allowspaces
 
 		stuff = wx.TextCtrl.GetValue(self)

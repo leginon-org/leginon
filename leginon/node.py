@@ -8,11 +8,10 @@
 #
 
 import sinedon
-import leginondata
+from leginon import leginondata
 from databinder import DataBinder
 import datatransport
 import event
-import logging
 import threading
 import gui.wx.Events
 import gui.wx.Logging
@@ -22,9 +21,13 @@ import socket
 import remotecall
 import time
 import numpy
+import math
 import leginonconfig
 import os
 import correctorclient
+
+# testprinting for development
+testing = False
 
 class ResearchError(Exception):
 	pass
@@ -47,6 +50,7 @@ class Node(correctorclient.CorrectorClient):
 	panelclass = None
 	eventinputs = [event.Event,
 									event.KillEvent,
+									event.ApplicationLaunchedEvent,
 									event.ConfirmationEvent]
 
 	eventoutputs = [event.PublishEvent,
@@ -87,6 +91,7 @@ class Node(correctorclient.CorrectorClient):
 		self.addEventInput(event.KillEvent, self.die)
 		self.addEventInput(event.ConfirmationEvent, self.handleConfirmedEvent)
 		self.addEventInput(event.SetManagerEvent, self.handleSetManager)
+		self.addEventInput(event.ApplicationLaunchedEvent, self.handleApplicationEvent)
 
 		self.managerlocation = managerlocation
 		if managerlocation is not None:
@@ -100,23 +105,17 @@ class Node(correctorclient.CorrectorClient):
 
 		self.initializeSettings()
 
+	def testprint(self,msg):
+		if testing:
+			print msg
+
 	# settings
 
 	def initializeSettings(self, user=None):
 		if not hasattr(self, 'settingsclass'):
 			return
 
-		# load the requested user settings
-		if user is None:
-			user = self.session['user']
-		qsession = leginondata.SessionData(initializer={'user': user})
-		qdata = self.settingsclass(initializer={'session': qsession,
-																						'name': self.name})
-		settings = self.research(qdata, results=1)
-		# if that failed, try to load default settings from DB
-		if not settings:
-			qdata = self.settingsclass(initializer={'isdefault': True, 'name': self.name})
-			settings = self.research(qdata, results=1)
+		settings = self.reseachDBSettings(self.settingsclass, self.name, user)
 
 		# if that failed, use hard coded defaults
 		if not settings:
@@ -133,6 +132,20 @@ class Node(correctorclient.CorrectorClient):
 			if value is None:
 				if key in self.defaultsettings:
 					self.settings[key] = copy.deepcopy(self.defaultsettings[key])
+
+	def reseachDBSettings(self, settingsclass, inst_alias, user=None):
+		# load the requested user settings
+		if user is None:
+			user = self.session['user']
+		qsession = leginondata.SessionData(initializer={'user': user})
+		qdata = settingsclass(initializer={'session': qsession,
+																						'name': inst_alias})
+		settings = self.research(qdata, results=1)
+		# if that failed, try to load default settings from DB
+		if not settings:
+			qdata = settingsclass(initializer={'isdefault': True, 'name': self.name})
+			settings = self.research(qdata, results=1)
+		return settings
 
 	def loadSettingsByID(self, id):
 		if not hasattr(self, 'settingsclass'):
@@ -323,6 +336,14 @@ class Node(correctorclient.CorrectorClient):
 		else:
 			self.logger.warning('No manager, not sending event: %s' % (ievent,))
 
+	def handleApplicationEvent(self, ievent):
+		'''
+		Use the application object passed through the event to do something.
+		This is for future setting synchronization.  Not implemented yet.
+		It does nothing now.
+		'''
+		pass
+
 	def handleConfirmedEvent(self, ievent):
 		'''Handler for ConfirmationEvents. Unblocks the call waiting for confirmation of the event generated.'''
 		eventid = ievent['eventid']
@@ -451,6 +472,11 @@ class Node(correctorclient.CorrectorClient):
 				sys.stdout.flush()
 		self.logger.info('[beep]')
 
+	def twobeeps(self):
+		self.beep()
+		time.sleep(0.2)
+		self.beep()
+
 	def setStatus(self, status):
 		self.panel.setStatus(status)
 
@@ -472,6 +498,34 @@ class Node(correctorclient.CorrectorClient):
 		declared['session'] = self.session
 		declared['node'] = self.name
 		self.publish(declared, database=True, dbforce=True)
+
+	def getLastFocusedStageZ(self,targetdata):
+		if not targetdata or not targetdata['last_focused']:
+			return None
+		# FIX ME: This only works if images are taken with the last_focused
+		# ImageTargetListData.  Not ideal. Can not rely on FocusResultData since
+		# manual z change is not recorded and it is not possible to distinguish
+		# true failuer from "fail" at eucentric focus as the contrast is lost.
+		qt = leginondata.AcquisitionImageTargetData(list=targetdata['last_focused'])
+		images = leginondata.AcquisitionImageData(target=qt,session=targetdata['session']).query(results=1)
+		if images:
+			z = images[0]['scope']['stage position']['z']
+			return z
+
+	def moveToLastFocusedStageZ(self,targetdata):
+		'''
+		Set stage z to the height of an image acquired by the last focusing.
+		This is used to maintain the z adjustment when some of the automated
+		focus target selection are skipped.
+		'''
+		z = self.getLastFocusedStageZ(targetdata)
+		if z is not None:
+			msg = 'moveToLastFocusedStageZ %s' % (z,)
+			self.testprint(msg)
+			self.logger.debug(msg)
+			stage_position = {'z':z}
+			self.instrument.tem.StagePosition = stage_position
+		return z
 
 	def timerKey(self, label):
 		return self.name, label
@@ -504,6 +558,44 @@ class Node(correctorclient.CorrectorClient):
 
 	def stopTimer(self, label):
 		self.storeTime(label, type='stop')
+
+	def convertDegreeTiltsToRadianList(self,tiltstr,accept_empty=False):
+		## list of tilts entered by user in degrees, converted to radians
+		try:
+			alphatilts = eval(tiltstr)
+		except:
+			if accept_empty:
+				return []
+			self.logger.error('Invalid tilt list')
+			return
+		self.logger.info('tilts: %s' % tiltstr)
+		## check for singular value
+		if isinstance(alphatilts, float) or isinstance(alphatilts, int):
+			alphatilts = (alphatilts,)
+		alphatilts = map(math.radians, alphatilts)
+		return alphatilts
+
+	def exposeSpecimenWithScreenDown(self, seconds):
+		## I want to expose the specimen, but not the camera.
+		## I would rather use some kind of manual shutter where above specimen
+		## shutter opens and below specimen shutter remains closed.
+		## Using the screen down was easier and serves the same purpose, but
+		## with more error on the actual time exposed.
+		self.logger.info('Screen down for %ss to expose specimen...' % (seconds,))
+		self.instrument.tem.MainScreenPosition = 'down'
+		time.sleep(seconds)
+		self.instrument.tem.MainScreenPosition = 'up'
+		if self.instrument.tem.MainScreenPosition == 'down':
+			time.sleep(1)
+			self.instrument.tem.MainScreenPosition = 'up'
+			self.logger.warning('Second try to put the screen up')
+		self.logger.info('Screen up.')
+
+	def exposeSpecimenWithShutterOverride(self, seconds):
+		self.logger.info('Override shutter projection shutter for %ss to expose specimen but not camera' % (seconds,))
+		self.instrument.tem.exposeSpecimenNotCamera(seconds)
+		self.logger.info('specimen-only exposure done')
+
 
 ## module global for storing start times
 start_times = {}

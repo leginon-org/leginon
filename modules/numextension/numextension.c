@@ -1,7 +1,11 @@
 #include <Python.h>
+
+#define PY_ARRAY_UNIQUE_SYMBOL numextension_ARRAY_API
 #include <numpy/arrayobject.h>
+
 #include "imgbase.h"
 #include "edge.h"
+#include "allstats.h"
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -202,7 +206,7 @@ static PyObject * despike(PyObject *self, PyObject *args) {
 
 static PyObject * bin(PyObject *self, PyObject *args) {
 	PyObject *image, *floatimage, *result;
-	int binsize, rows, cols;
+	int binsize0, binsize1=0, rows, cols;
 	npy_intp newdims[2];
 	float *original, *resultrow, *resultpixel;
 	int i, j, ib, jb;
@@ -211,8 +215,13 @@ static PyObject * bin(PyObject *self, PyObject *args) {
 	unsigned long reslen;
 	PyArray_Descr *desc;
 
-	if (!PyArg_ParseTuple(args, "Oi", &image, &binsize))
+	if (!PyArg_ParseTuple(args, "Oi|i", &image, &binsize0, &binsize1))
 		return NULL;
+
+	/* if only only one binsize given, both dims use same binsize */
+	if (binsize1 == 0) {
+		binsize1 = binsize0;
+	}
 
 	/* must be 2-d array */
 	if (PyArray_NDIM(image) != 2) {
@@ -223,8 +232,8 @@ static PyObject * bin(PyObject *self, PyObject *args) {
 	/* must be able to be binned by requested amount */
 	rows = PyArray_DIMS(image)[0];
 	cols = PyArray_DIMS(image)[1];
-	if ((rows%binsize) || (cols%binsize) ) {
-		sprintf(errstr, "image dimensions %d,%d do not allow binning by %d", rows,cols,binsize);
+	if ((rows%binsize0) || (cols%binsize1) ) {
+		sprintf(errstr, "image dimensions %d,%d do not allow binning by %d,%d", rows,cols,binsize0,binsize1);
 		PyErr_SetString(PyExc_ValueError, errstr);
 		return NULL;
 	}
@@ -236,8 +245,8 @@ static PyObject * bin(PyObject *self, PyObject *args) {
 
 
 	/* create a float image for result */
-	resrows = rows / binsize;
-	rescols = cols / binsize;
+	resrows = rows / binsize0;
+	rescols = cols / binsize1;
 	newdims[0] = resrows;
 	newdims[1] = rescols;
 	result = PyArray_SimpleNew(2, newdims, NPY_FLOAT32);
@@ -254,10 +263,10 @@ static PyObject * bin(PyObject *self, PyObject *args) {
 	resultpixel = resultrow = (float *)PyArray_DATA(result);
 	original = (float *)PyArray_DATA(floatimage);
 	for(i=0; i<resrows; i++) {
-		for(ib=0;ib<binsize;ib++) {
+		for(ib=0;ib<binsize0;ib++) {
 			resultpixel=resultrow;
 			for(j=0; j<rescols; j++) {
-				for(jb=0;jb<binsize;jb++) {
+				for(jb=0;jb<binsize1;jb++) {
 					*resultpixel += *original;
 					original++;
 				}
@@ -269,7 +278,7 @@ static PyObject * bin(PyObject *self, PyObject *args) {
 
 	/* calc mean of the bins */
 	resultpixel = (float *)PyArray_DATA(result);
-	n = binsize * binsize;
+	n = binsize0 * binsize1;
 	for(i=0; i<reslen; i++) {
 		*resultpixel /= n;
 		resultpixel++;
@@ -782,11 +791,11 @@ static PyObject *cannyedge(PyObject *self, PyObject *args) {
 
 }
 
+
 static PyMethodDef numeric_methods[] = {
 
 /* used by align, ImageViewer2, */
 	{"minmax", minmax, METH_VARARGS, ""},
-
 
 /* used by rctacquisition, maybe could use nd_image interpolation instead */
 	{"bin", bin, METH_VARARGS, ""},
@@ -812,6 +821,9 @@ static PyMethodDef numeric_methods[] = {
  {"componentlabeling", componentlabeling, METH_VARARGS}, 
 	{"fitcircle2edges", fitcircle2edges, METH_VARARGS}, 
 */
+
+/* see README.allstats */
+	{"allstats", (PyCFunction)allstats, METH_KEYWORDS, ""},
 
 	{NULL, NULL, 0, NULL}
 };

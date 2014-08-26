@@ -90,7 +90,7 @@ function getColorMap($v) {
 	return $colormap;
 }
 
-header("Content-type: image/x-png");
+header("Content-type: image/png");
 imagepng($pic);
 ImageDestroy($pic);
 ?>

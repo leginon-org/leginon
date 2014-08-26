@@ -7,11 +7,11 @@
  *
  */
 
-require "inc/particledata.inc";
-require "inc/leginon.inc";
-require "inc/project.inc";
-require "inc/viewer.inc";
-require "inc/processing.inc";
+require_once "inc/particledata.inc";
+require_once "inc/leginon.inc";
+require_once "inc/project.inc";
+require_once "inc/viewer.inc";
+require_once "inc/processing.inc";
   
 // check if coming directly from a session
 $expId = $_GET['expId'];
@@ -36,7 +36,7 @@ $projectId = getProjectId();
 $javascript = "<script src='../js/viewer.js'></script>\n";
 $javascript.= editTextJava();
 
-processing_header("Protomo Alignment Iteration Report","Tilt Series Alignment Report Page", $javascript);
+processing_header("Alignment Iteration Report","Tilt Series Alignment Report Page", $javascript);
 
 // edit description form
 echo "<form name='templateform' method='post' action='$formAction'>\n";
@@ -73,7 +73,7 @@ if ($refinedata) {
 		//Report parameters
 		$s = $refinedata[0];
 	if ($is_protomo) {
-		$title = "Protomo alignment cycle parameters";
+		$title = "Alignment cycle parameters";
 	} else {
 		$title = "Alignment parameters";
 	}
@@ -85,8 +85,8 @@ if ($refinedata) {
 	echo $particle->displayHidingOption($expId,$allcycles,$showncycles,$showhidden);
 	// --- 
 } else {
-	$html .= "<b>No Alignment Information</b><p>";
-	$html .= "<b>Probably an uploaded tomogram</b>";
+	$html .= "<p><a href='tomoalignmovie.php?aId=$alignId&expId=$expId'>Alignment Movie</a></p>";
+	$html .= "<b>No Other Alignment Information</b><p>";
 	echo $html;
 }
 processing_footer();

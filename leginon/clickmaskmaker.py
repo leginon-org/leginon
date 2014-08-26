@@ -14,10 +14,10 @@ import event
 import node
 import gui.wx.ClickMaskMaker
 import os
-import Image
+from PIL import Image
 import numpy
 from pyami import imagefun, mrc
-import leginondata
+from leginon import leginondata
 import polygon
 
 try:

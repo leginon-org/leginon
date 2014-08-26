@@ -15,7 +15,7 @@ import numpy
 import threading
 import calibrator
 import calibrationclient
-import leginondata
+from leginon import leginondata
 import gui.wx.IntensityCalibrator
 from pyami import arraystats
 

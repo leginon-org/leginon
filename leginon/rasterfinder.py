@@ -8,7 +8,7 @@
 #       see  http://ami.scripps.edu/software/leginon-license
 #
 
-import leginondata
+from leginon import leginondata
 import targetfinder
 import threading
 import ice
@@ -19,6 +19,7 @@ from scipy import ndimage
 from pyami import arraystats
 import gui.wx.RasterFinder
 import polygon
+import itertools
 
 class RasterFinder(targetfinder.TargetFinder):
 	panelclass = gui.wx.RasterFinder.Panel
@@ -50,9 +51,11 @@ class RasterFinder(targetfinder.TargetFinder):
 		'focus convolve': False,
 		'focus convolve template': [],
 		'focus constant template': [],
+		'focus one': False,
 		'acquisition convolve': False,
 		'acquisition convolve template': [],
 		'acquisition constant template': [],
+		'focus interval': 1,
 	})
 	def __init__(self, id, session, managerlocation, **kwargs):
 		targetfinder.TargetFinder.__init__(self, id, session, managerlocation, **kwargs)
@@ -70,6 +73,10 @@ class RasterFinder(targetfinder.TargetFinder):
 			'Raster': {},
 			'Final': {},
 		}
+
+		self.foc_counter = itertools.count()
+		self.foc_activated = False
+
 		self.start()
 
 	def autoSpacingAngle(self):
@@ -250,7 +257,6 @@ class RasterFinder(targetfinder.TargetFinder):
 
 		## calculate stats around each raster point
 		goodpoints = []
-		mylist = []
 		if self.polygonrasterpoints is None:
 			self.polygonrasterpoints= []
 		for rasterpoint in self.polygonrasterpoints:
@@ -259,9 +265,15 @@ class RasterFinder(targetfinder.TargetFinder):
 			ts = self.icecalc.get_stdev_thickness(box_stats['std'], box_stats['mean'])
 			if (tmin <= t <= tmax) and (tstdmin <= ts <= tstdmax):
 				goodpoints.append(rasterpoint)
-				mylist.append( (rasterpoint, t, ts))
 
 		self.logger.info('%s points with good ice' % (len(goodpoints),))
+
+		# activate if counter is at a multiple of interval
+		interval = self.settings['focus interval']
+		if interval and not (self.foc_counter.next() % interval):
+			self.foc_activated = True
+		else:
+			self.foc_activated = False
 
 		### run template convolution
 		# takes x,y instead of row,col
@@ -275,16 +287,37 @@ class RasterFinder(targetfinder.TargetFinder):
 			acq_points = goodpoints
 
 		## add constant targets
-		const_foc = self.settings['focus constant template']
-		focus_points.extend(const_foc)
+		if self.foc_activated:
+			const_foc = self.settings['focus constant template']
+			focus_points.extend(const_foc)
 		const_acq = self.settings['acquisition constant template']
 		acq_points.extend(const_acq)
+
+		## limit to one focus based on thresholds
+		focusone = self.settings['focus one']
+		if focusone:
+			## calculate stats around each focus point
+			goodpoints = []
+			for focuspoint in focus_points:
+				box_stats = self.get_box_stats(self.currentimagedata['image'], focuspoint, boxsize)
+				t = self.icecalc.get_thickness(box_stats['mean'])
+				ts = self.icecalc.get_stdev_thickness(box_stats['std'], box_stats['mean'])
+				if (tmin <= t <= tmax) and (tstdmin <= ts <= tstdmax):
+					goodpoints.append(focuspoint)
+			if goodpoints:
+				## pick first good focus point
+				focus_points = [goodpoints[0]]
+			else:
+				## pick first of original focus points
+				focus_points = focus_points[0:1]
 
 		self.setTargets(acq_points, 'acquisition', block=True)
 		self.setTargets(focus_points, 'focus', block=True)
 
 	def applyTargetTemplate(self, centers, type):
 		if type == 'focus':
+			if not self.foc_activated:
+				return []
 			vects = self.settings['focus convolve template']
 		elif type == 'acquisition':
 			vects = self.settings['acquisition convolve template']
@@ -308,6 +341,10 @@ class RasterFinder(targetfinder.TargetFinder):
 		## automated part
 		self.currentimagedata = imdata
 		if not self.settings['skip']:
+			if self.isFromNewParentImage(imdata):
+				self.logger.debug('Reset focus counter')
+				self.foc_counter = itertools.count()
+				self.resetLastFocusedTargetList(targetlist)
 			self.everything()
 
 		## user part
@@ -320,7 +357,9 @@ class RasterFinder(targetfinder.TargetFinder):
 			self.panel.targetsSubmitted()
 			self.setStatus('processing')
 
-		## the new way
+		# set self.last_focused for target publishing	
+		self.setLastFocusedTargetList(targetlist)
+		### publish targets from goodholesimage
 		self.logger.info('Publishing targets...')
 		self.publishTargets(imdata, 'focus', targetlist)
 		self.publishTargets(imdata, 'acquisition', targetlist)

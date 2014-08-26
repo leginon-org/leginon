@@ -24,6 +24,8 @@ if __name__ == "__main__":
 	sys.stderr.write("\nusage: chimera python:apChimSnapshot.py\n\n")
 	sys.exit(1)
 try:
+	cmd = os.popen("csh -c 'modulecmd python load chimera'")
+	exec(cmd)
 	import chimera
 	import chimera.printer
 	from chimera.colorTable import getColorByName
@@ -33,12 +35,16 @@ try:
 	from SurfaceCap import surfcaps
 	from _surface import SurfaceModel, connected_pieces
 	from chimera import openModels
-	from chimera.replyobj import nogui_message
 	from MeasureVolume import enclosed_volume
 	import ScaleBar.session
 except ImportError:
 	print "Failed to import chimera modules"
 	pass
+
+#from chimera-1.2.5/share/chimera/replyobj.py
+def nogui_message(s):
+	"""Show a message"""
+	sys.stdout.write(s)
 
 class ChimSnapShots(object):
 	# -----------------------------------------------------------------------------
@@ -48,7 +54,6 @@ class ChimSnapShots(object):
 		self.openPDBData()
 		self.openVolumeData()
 		self.saveOBJfile()
-
 		### select proper function
 		if self.type == 'animate':
 			if self.symmetry[:4] == 'icos':
@@ -363,7 +368,7 @@ class ChimSnapShots(object):
 	# -----------------------------------------------------------------------------
 	def hideDust(self, size=100):
 		self.writeMessageToLog("Hide all dust particles less than %d voxels in size"%(size))
-		native = False
+		native = True
 		#try:
 		if True:
 			if native is True:
@@ -689,7 +694,7 @@ class ChimSnapShots(object):
 	# -----------------------------------------------------------------------------
 	def snapshot_asymmetric(self):
 		self.writeMessageToLog("snapshot_asymmetric")
-		self.hideDust(150)
+		self.hideDust()
 		for s in self.surfaces:
 			self.color_surface_height(s)
 		#self.writeMessageToLog("turn: get front view")

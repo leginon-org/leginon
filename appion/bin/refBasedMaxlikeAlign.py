@@ -41,9 +41,6 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		self.parser.add_option("-s", "--stack", dest="stackid", type="int",
 			help="Stack database id", metavar="ID#")
 
-		self.parser.add_option("--nproc", dest="nproc", type="int",
-			help="Number of processor to use", metavar="ID#")
-
 		self.parser.add_option("--clip", dest="clipsize", type="int",
 			help="Clip size in pixels (reduced box size)", metavar="#")
 		self.parser.add_option("--lowpass", "--lp", dest="lowpass", type="int",
@@ -178,6 +175,7 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 			return
 		config = sinedon.getConfig('appiondata')
 		dbc = MySQLdb.Connect(**config)
+		dbc.autocommit(True)
 		cursor = dbc.cursor()
 		query = (
 			"  UPDATE ApMaxLikeJobData "
@@ -392,7 +390,7 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 
 #=====================
 if __name__ == "__main__":
-	maxLike = MaximumLikelihoodScript(True)
+	maxLike = MaximumLikelihoodScript()
 	maxLike.start()
 	maxLike.close()
 

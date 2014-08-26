@@ -8,7 +8,7 @@ import re
 import threading
 import wx
 
-from leginon.gui.wx.Entry import Entry, FloatEntry
+from leginon.gui.wx.Entry import Entry, FloatEntry, IntEntry
 import leginon.gui.wx.Node
 from leginon.gui.wx.Presets import PresetChoice
 from leginon.gui.wx.Choice import Choice
@@ -124,6 +124,23 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
 		label = wx.StaticText(self, -1, 'm')
 		sz.Add(label, (2, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+
+		'''
+		# atlas max size
+		self.widgets['max size'] = IntEntry(self, -1)
+		label = wx.StaticText(self, -1, 'Max size:')
+		sz.Add(label, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['max size'], (3, 1), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
+
+		# atlas max size
+		self.widgets['max targets'] = IntEntry(self, -1)
+		label = wx.StaticText(self, -1, 'Max targets:')
+		sz.Add(label, (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['max targets'], (4, 1), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
+		'''
+
 		return sz
 
 	def addSettings(self):
@@ -132,6 +149,8 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		self.widgets['preset'].setChoices(presets)
 		self.widgets['label'] = Entry(self, -1, allowspaces=False)
 		self.widgets['radius'] = FloatEntry(self, -1, min=0.0, chars=6)
+		self.widgets['max size'] = IntEntry(self, -1, chars=6)
+		self.widgets['max targets'] = IntEntry(self, -1, chars=6)
 		self.widgets['overlap'] = FloatEntry(self, -1, max=100.0, chars=6)
 		self.widgets['mosaic center'] = Choice(self, -1, choices=['stage center', 'current position'])
 		self.widgets['ignore request'] = wx.CheckBox(self, -1, 'Ignore Request to Make Targets from Others')
@@ -162,18 +181,29 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		label = wx.StaticText(self, -1, 'm')
 		sz.Add(label, (2, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
-		label = wx.StaticText(self, -1, 'Overlap:')
+		label = wx.StaticText(self, -1, 'Max size:')
 		sz.Add(label, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['overlap'], (3, 1), (1, 1),
+		sz.Add(self.widgets['max size'], (3, 1), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
+
+		label = wx.StaticText(self, -1, 'Max targets:')
+		sz.Add(label, (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['max targets'], (4, 1), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
+
+		label = wx.StaticText(self, -1, 'Overlap:')
+		sz.Add(label, (5, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['overlap'], (5, 1), (1, 1),
 										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
 		label = wx.StaticText(self, -1, '%')
-		sz.Add(label, (3, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(label, (5, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
 		label = wx.StaticText(self, -1, 'Mosaic Center:')
-		sz.Add(label, (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['mosaic center'], (4, 1), (1, 1),
+		sz.Add(label, (6, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['mosaic center'], (6, 1), (1, 1),
 										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
-		sz.Add(self.widgets['ignore request'], (5, 0), (1, 3), wx.ALIGN_CENTER_VERTICAL)
+
+		sz.Add(self.widgets['ignore request'], (7, 0), (1, 3), wx.ALIGN_CENTER_VERTICAL)
 
 
 		sz.AddGrowableCol(1)

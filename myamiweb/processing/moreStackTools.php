@@ -8,11 +8,11 @@
  *	Simple viewer to view a image using mrcmodule
  */
 
-require "inc/particledata.inc";
-require "inc/leginon.inc";
-require "inc/project.inc";
-require "inc/processing.inc";
-#require "inc/displaytables.inc";
+require_once "inc/particledata.inc";
+require_once "inc/leginon.inc";
+require_once "inc/project.inc";
+require_once "inc/processing.inc";
+#require_once "inc/displaytables.inc";
 
 $expId = $_GET['expId'];
 $formAction=$_SERVER['PHP_SELF']."?expId=$expId";

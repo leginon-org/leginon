@@ -157,6 +157,8 @@ class ParticleLoop(filterLoop.FilterLoop):
 			'median': 'median',
 			'defocpair': 'defocal_pairs',
 			'overlapmult': 'overlapmult',
+			'helicalinsert': 'helicalinsert',
+			'helicalstep': 'helicalstep',
 		}
 		paramQuery = self.getParticleParamsData()
 
@@ -219,6 +221,9 @@ class ParticleLoop(filterLoop.FilterLoop):
 		#create path
 		runq['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
 
+		#add description
+		if self.params['description']:
+			runq['description'] = self.params['description']
 		if insert is True:
 			runq.insert()
 

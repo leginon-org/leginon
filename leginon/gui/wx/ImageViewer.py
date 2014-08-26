@@ -5,18 +5,16 @@ import math
 import numpy
 import wx
 from wx.lib.buttons import GenBitmapButton, GenBitmapToggleButton
-import Image
+from PIL import Image
 import time
 import threading
 
-from pyami import mrc, arraystats, arraystats
+from pyami import mrc, arraystats, arraystats, imagefun
 from leginon import icons
 import numextension
 from Entry import FloatEntry, EVT_ENTRY
 import Stats
 import ImageViewer2
-
-wx.InitAllImageHandlers()
 
 ImageClickedEventType = wx.NewEventType()
 ImageClickDoneEventType = wx.NewEventType()
@@ -257,7 +255,7 @@ def targetBitmap_circle(color):
 	return bitmap
 
 def getTargetBitmaps(color, shape='+'):
-	selectedcolor = wx.Color(color.Red()/2, color.Green()/2, color.Blue()/2)
+	selectedcolor = wx.Colour(color.Red()/2, color.Green()/2, color.Blue()/2)
 	return getTargetBitmap(color, shape), getTargetBitmap(selectedcolor, shape)
 
 # needs to adjust buffer/wximage instead of reseting from numeric image
@@ -339,10 +337,13 @@ class ContrastTool(object):
 		return (self.imagemax - self.imagemin)*scale + self.imagemin
 
 	def getSliderValue(self, value):
+		print 'VALUE', value, type(value)
+		print 'MINMAX', self.imagemin, self.imagemax, type(self.imagemin)
 		try:
 			scale = (value - self.imagemin)/(self.imagemax - self.imagemin)
-		except ZeroDivisionError:
+		except:
 			scale = 1.0
+		print 'SCALE', scale
 		return int(round((self.slidermax - self.slidermin)*scale + self.slidermin))
 
 	def setRange(self, range, value=None):
@@ -484,7 +485,7 @@ class ValueTool(ImageTool):
 
 class CrosshairTool(ImageTool):
 	def __init__(self, imagepanel, sizer):
-		self.color = wx.Color(0,150,150)
+		self.color = wx.Colour(0,150,150)
 		bitmap = getTargetIconBitmap(self.color, shape='+')
 		tooltip = 'Toggle Center Crosshair'
 		cursor = None
@@ -546,8 +547,8 @@ class RulerTool(ImageTool):
 	def OnLeftClick(self, evt):
 		if self.button.GetToggle():
 			if self.start is not None:
-				x = evt.m_x #- self.imagepanel.offset[0]
-				y = evt.m_y #- self.imagepanel.offset[1]
+				x = evt.GetX() #- self.imagepanel.offset[0]
+				y = evt.GetY() #- self.imagepanel.offset[1]
 				x0, y0 = self.start
 				dx, dy = x - x0, y - y0
 				self.measurement = {
@@ -558,7 +559,7 @@ class RulerTool(ImageTool):
 				}
 				mevt = MeasurementEvent(self.imagepanel, dict(self.measurement))
 				self.imagepanel.GetEventHandler().AddPendingEvent(mevt)
-			self.start = self.imagepanel.view2image((evt.m_x, evt.m_y))
+			self.start = self.imagepanel.view2image((evt.GetX(), evt.GetY()))
 
 	def OnRightClick(self, evt):
 		if self.button.GetToggle():
@@ -580,8 +581,8 @@ class RulerTool(ImageTool):
 
 	def OnMotion(self, evt, dc):
 		if self.button.GetToggle() and self.start is not None:
-			x = evt.m_x #- self.imagepanel.offset[0]
-			y = evt.m_y #- self.imagepanel.offset[1]
+			x = evt.GetX() #- self.imagepanel.offset[0]
+			y = evt.GetY() #- self.imagepanel.offset[1]
 			self.DrawRuler(dc, x, y)
 
 	def getToolTipStrings(self, x, y, value):
@@ -619,11 +620,11 @@ class ZoomTool(ImageTool):
 
 	def OnLeftClick(self, evt):
 		if self.button.GetToggle():
-			self.zoomIn(evt.m_x, evt.m_y)
+			self.zoomIn(evt.GetX(), evt.GetY())
 
 	def OnRightClick(self, evt):
 		if self.button.GetToggle():
-			self.zoomOut(evt.m_x, evt.m_y)
+			self.zoomOut(evt.GetX(), evt.GetY())
 
 	def zoom(self, level, viewcenter):
 		self.zoomlevel = level
@@ -748,6 +749,13 @@ class ImagePanel(wx.Panel):
 
 	# image set functions
 
+	def rgbstring(self, image_array, clipmin, clipmax, colormap=None):
+		a = imagefun.linearscale(image_array, (clipmin, clipmax), (0,255))
+		a = numpy.clip(a, 0, 255)
+		a = numpy.asarray(a, numpy.uint8)
+		a = a.repeat(3)
+		return a.tostring()
+
 	def setBitmap(self):
 		'''
 		Set the internal wx.Bitmap to current Numeric image
@@ -756,10 +764,10 @@ class ImagePanel(wx.Panel):
 			clip = self.contrasttool.getRange()
 			wximage = wx.EmptyImage(self.imagedata.shape[1], self.imagedata.shape[0])
 			if self.colormap is None:
-				wximage.SetData(numextension.rgbstring(self.imagedata,
+				wximage.SetData(self.rgbstring(self.imagedata,
 																								clip[0], clip[1]))
 			else:
-				wximage.SetData(numextension.rgbstring(self.imagedata,
+				wximage.SetData(self.rgbstring(self.imagedata,
 																								clip[0], clip[1],
 																								self.colormap))
 		elif isinstance(self.imagedata, Image.Image):
@@ -1057,10 +1065,10 @@ class ImagePanel(wx.Panel):
 		if self.scaleImage():
 			xoffset, yoffset = self.offset
 			width, height = self.virtualsize
-			if evt.m_x < xoffset or evt.m_x > xoffset + width: 
+			if evt.GetX() < xoffset or evt.GetX() > xoffset + width: 
 				self.UpdateDrawing()
 				return
-			if evt.m_y < yoffset or evt.m_y > yoffset + height: 
+			if evt.GetY() < yoffset or evt.GetY() > yoffset + height: 
 				self.UpdateDrawing()
 				return
 
@@ -1073,7 +1081,7 @@ class ImagePanel(wx.Panel):
 
 		self._onMotion(evt, dc)
 
-		x, y = self.view2image((evt.m_x, evt.m_y))
+		x, y = self.view2image((evt.GetX(), evt.GetY()))
 		value = self.getValue(x, y)
 		strings = []
 		for tool in self.tools:
@@ -1246,7 +1254,7 @@ class ClickTool(ImageTool):
 			return
 		if self._disable:
 			self._disabled = True
-		xy = self.imagepanel.view2image((evt.m_x, evt.m_y))
+		xy = self.imagepanel.view2image((evt.GetX(), evt.GetY()))
 		idcevt = ImageClickedEvent(self.imagepanel, xy)
 		self.imagepanel.GetEventHandler().AddPendingEvent(idcevt)
 
@@ -1773,7 +1781,7 @@ class TargetImagePanel(ImagePanel):
 
 	def _onLeftClick(self, evt):
 		if self.selectedtype is not None:
-			x, y = self.view2image((evt.m_x, evt.m_y))
+			x, y = self.view2image((evt.GetX(), evt.GetY()))
 			self.addTarget(self.selectedtype.name, x, y)
 
 	def _onRightClick(self, evt):
@@ -1815,7 +1823,7 @@ class TargetImagePanel(ImagePanel):
 		ImagePanel._onMotion(self, evt, dc)
 #		if self.selectedtype is not None:
 		viewoffset = self.panel.GetViewStart()
-		x, y = self.view2image((evt.m_x, evt.m_y))
+		x, y = self.view2image((evt.GetX(), evt.GetY()))
 		self.selectedtarget = self.closestTarget(self.selectedtype, x, y)
 #		else:
 #			self.selectedtarget = None

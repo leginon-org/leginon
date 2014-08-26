@@ -1,6 +1,6 @@
 <?php
-#require "inc/leginon.inc";
-require "inc/admin.inc";
+#require_once "inc/leginon.inc";
+require_once "inc/admin.inc";
 
 $dbc=$leginondata->mysql;
 $q="

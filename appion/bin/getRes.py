@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 
-from appionlib import appionScript
-from appionlib import apDisplay
 import os
 from appionlib import apRecon
+from appionlib import apDisplay
+from appionlib import basicScript
 
-class getResScript(appionScript.AppionScript):
+class getResScript(basicScript.BasicScript):
 
 	#=====================
 	def setupParserOptions(self):
@@ -17,7 +17,8 @@ class getResScript(appionScript.AppionScript):
 			help="Box size in pixels", metavar="INT")
 		self.parser.add_option("-a", "--apix", dest="apix", type="float",
 			help="Angstroms per pixels", metavar="FLOAT")
-
+		self.parser.add_option("-c", "--criteria", dest="criteria", type="float",
+			help="FSC resolution criteria", metavar="FLOAT", default=0.5)
 
 	#=====================
 	def checkConflicts(self):
@@ -36,7 +37,8 @@ class getResScript(appionScript.AppionScript):
 
 	#=====================
 	def start(self):
-		res = apRecon.getResolutionFromFSCFile(self.params['fscfile'], self.params['boxsize'], self.params['apix'])
+		res = apRecon.getResolutionFromFSCFile(self.params['fscfile'], 
+			self.params['boxsize'], self.params['apix'], self.params['criteria'])
 		apDisplay.printColor( ("resolution: %.5f" % (res)), "cyan")
 
 

@@ -8,14 +8,14 @@
  *      Simple viewer to view a image using mrcmodule
  */
 
-require "inc/particledata.inc";
-require "inc/leginon.inc";
-require "inc/project.inc";
-require "inc/viewer.inc";
-require "inc/processing.inc";
+require_once "inc/particledata.inc";
+require_once "inc/leginon.inc";
+require_once "inc/project.inc";
+require_once "inc/viewer.inc";
+require_once "inc/processing.inc";
 
 // IF VALUES SUBMITTED, EVALUATE DATA
-if ($_POST) {
+if ($_POST['process']) {
 	runSpiderNoRefAlign();
 } else {
 	createSpiderNoRefAlignForm();
@@ -82,7 +82,7 @@ function createSpiderNoRefAlignForm($extra=false, $title='spiderNoRefAlign.py La
 	// Set any existing parameters in form
 	$rundescrval = $_POST['description'];
 	$stackidstr = $_POST['stackval'];
-	list($stackidval) = split('\|--\|',$stackidstr);
+	list($stackidval) = preg_split('%\|--\|%',$stackidstr);
 	$sessionpathval = ($_POST['outdir']) ? $_POST['outdir'] : $sessionpath;
 	while (file_exists($sessionpathval.'noref'.($alignruns+1)))
 		$alignruns += 1;
@@ -233,6 +233,9 @@ function createSpiderNoRefAlignForm($extra=false, $title='spiderNoRefAlign.py La
 }
 
 function runSpiderNoRefAlign() {
+	/* *******************
+	PART 1: Get variables
+	******************** */
 	$expId=$_GET['expId'];
 	$runname=$_POST['runname'];
 	$outdir=$_POST['outdir'];
@@ -251,16 +254,19 @@ function runSpiderNoRefAlign() {
 	$templateid=$_POST['templateid'];
 
 	// get stack id, apix, & box size from input
-	list($stackid,$apix,$boxsz) = split('\|--\|',$stackval);
-
-	//make sure a session was selected
+	list($stackid,$apix,$boxsz) = preg_split('%\|--\|%',$stackval);
+	
+	$commit = ($_POST['commit']=="on") ? '--commit' : '';
 	$description=$_POST['description'];
+	
+	/* *******************
+	PART 2: Check for conflicts, if there is an error display the form again
+	******************** */
+	//make sure a session was selected
 	if (!$description) createSpiderNoRefAlignForm("<B>ERROR:</B> Enter a brief description of the particles to be aligned");
 
 	//make sure a stack was selected
 	if (!$stackid) createSpiderNoRefAlignForm("<B>ERROR:</B> No stack selected");
-
-	$commit = ($_POST['commit']=="on") ? '--commit' : '';
 
 	// classification
 	if ($numpart < 4) createSpiderNoRefAlignForm("<B>ERROR:</B> Must have more than 4 particles");
@@ -288,6 +294,9 @@ function runSpiderNoRefAlign() {
 
 	}
 
+	/* *******************
+	PART 3: Create program command
+	******************** */
 	$command="spiderNoRefAlign.py ";
 	$command.="--projectid=".getProjectId()." ";
 	$command.="--rundir=$rundir ";
@@ -306,43 +315,20 @@ function runSpiderNoRefAlign() {
 	if ($commit) $command.="--commit ";
 	else $command.="--no-commit ";
 
-	// submit job to cluster
-	if ($_POST['process'] == "Run Spider NoRef Alignment") {
-		$user = $_SESSION['username'];
-		$password = $_SESSION['password'];
+	/* *******************
+	PART 4: Create header info, i.e., references
+	******************** */
+	$headinfo .= spiderRef();
+	
+	/* *******************
+	PART 5: Show or Run Command
+	******************** */
+	// submit command
+	$errors = showOrSubmitCommand($command, $headinfo, 'partalign', $nproc);
 
-		if (!($user && $password)) createSpiderNoRefAlignForm("<B>ERROR:</B> Enter a user name and password");
-
-		$sub = submitAppionJob($command,$outdir,$runname,$expId,'partalign');
-		// if errors:
-		if ($sub) createSpiderNoRefAlignForm("<b>ERROR:</b> $sub");
-		exit;
-	}
-	else {
-		processing_header("No Ref Align Run Params","No Ref Align Params");
-
-		echo spiderRef();
-
-		echo"
-		<table width='600' class='tableborder' border='1'>
-		<tr><td colspan='2'>
-		<b>Spider NoRef Alignment Command:</b><br />
-		$command
-		</td></tr>
-		<tr><td>run id</td><td>$runname</td></tr>
-		<tr><td>stack id</td><td>$stackid</td></tr>
-		<tr><td>part rad</td><td>$partrad</td></tr>
-		<tr><td>low pass</td><td>$lowpass</td></tr>
-		<tr><td>high pass</td><td>$highpass</td></tr>
-		<tr><td>first ring</td><td>$firstring</td></tr>
-		<tr><td>last ring</td><td>$lastring</td></tr>
-		<tr><td>num part</td><td>$numpart</td></tr>
-		<tr><td>binning</td><td>$bin</td></tr>
-		<tr><td>init method</td><td>$initmethod</td></tr>
-		<tr><td>run dir</td><td>$rundir</td></tr>
-		<tr><td>commit</td><td>$commit</td></tr>
-		</table>\n";
-		processing_footer();
-	}
+	// if error display them
+	if ($errors)
+		createSpiderNoRefAlignForm("<b>ERROR:</b> $errors");
+	
 }
 ?>

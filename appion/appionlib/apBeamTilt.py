@@ -14,7 +14,7 @@ from appionlib import apDisplay
 from appionlib import appiondata
 from appionlib import apFile
 from appionlib import apImagicFile
-from leginon import leginondata
+import leginon.leginondata
 
 class correctStackBeamTiltPhaseShift(apImagicFile.processStack):
 	def __init__(self, oldstackid, newstack, msg=True):
@@ -110,7 +110,7 @@ class correctStackBeamTiltPhaseShift(apImagicFile.processStack):
 
 
 	def retrieveCalibrationMatrix(self, tem, ccdcamera, ht, mag, caltype):
-		queryinstance = leginondata.MatrixCalibrationData()
+		queryinstance = leginon.leginondata.MatrixCalibrationData()
 		queryinstance['tem'] = tem
 		queryinstance['ccdcamera'] = ccdcamera
 		queryinstance['type'] = caltype

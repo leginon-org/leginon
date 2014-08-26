@@ -4,7 +4,7 @@ import os
 import shutil
 import errno
 import glob
-import leginondata
+from leginon import leginondata
 
 def mkdirs(newdir):
 	originalumask = os.umask(02)

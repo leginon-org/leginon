@@ -107,7 +107,8 @@ class ApParticleData(Data):
 			('selectionrun', ApSelectionRunData),
 			('image', leginon.leginondata.AcquisitionImageData),
 			('xcoord', int),
-			('ycoord', int),
+			('ycoord', int), 	
+			('angle', float),
 			('correlation', float),
 			('template', ApTemplateImageData),
 			('peakmoment', float),
@@ -115,6 +116,7 @@ class ApParticleData(Data):
 			('peakarea', int),
 			('diameter', float),
 			('label', str),
+			('helixnum', int),
 		)
 	typemap = classmethod(typemap)
 
@@ -125,6 +127,7 @@ class ApSelectionRunData(Data):
 			('hidden', bool),
 			('path', ApPathData),
 			('session', leginon.leginondata.SessionData),
+			('description', str),
 			('params', ApSelectionParamsData),
 			('dogparams', ApDogParamsData),
 			('manparams', ApManualParamsData),
@@ -138,7 +141,7 @@ class ApSelectionParamsData(Data):
 			('diam', int),
 			('bin', int),
 			('manual_thresh', float),
-			#('auto_thresh', int),
+			# ('auto_thresh', int),
 			('lp_filt', int),
 			('hp_filt', int),
 			('invert', int),
@@ -186,6 +189,8 @@ class ApManualParamsData(Data):
 			('pixel_value_limit', float),
 			('oldselectionrun', ApSelectionRunData),
 			('trace', bool),
+			('helicalstep', int),
+			('tomocenter', bool),
 		)
 	typemap = classmethod(typemap)
 
@@ -225,6 +230,16 @@ class ApContourPointData(Data):
 			('contour', ApContourData),
 			('x', float),
 			('y', float),
+		)
+	typemap = classmethod(typemap)
+
+class ApSizingRunData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('name', str),
+			('path', ApPathData),
+			('method', str),
+			('tracerun', ApSelectionRunData),
 		)
 	typemap = classmethod(typemap)
 
@@ -287,8 +302,8 @@ class ApTemplateStackData(Data):
 class ApImageTransformationData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
-			('image1',leginon.leginondata.AcquisitionImageData),
-			('image2',leginon.leginondata.AcquisitionImageData),
+			('image1', leginon.leginondata.AcquisitionImageData),
+			('image2', leginon.leginondata.AcquisitionImageData),
 			('shiftx', float),
 			('shifty', float),
 			('correlation', float),
@@ -299,11 +314,11 @@ class ApImageTransformationData(Data):
 class ApImageTiltTransformData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
-			('image1',leginon.leginondata.AcquisitionImageData),
+			('image1', leginon.leginondata.AcquisitionImageData),
 			('image1_x', float),
 			('image1_y', float),
 			('image1_rotation', float),
-			('image2',leginon.leginondata.AcquisitionImageData),
+			('image2', leginon.leginondata.AcquisitionImageData),
 			('image2_x', float),
 			('image2_y', float),
 			('image2_rotation', float),
@@ -333,6 +348,7 @@ class ApAceRunData(Data):
 		return Data.typemap() + (
 			('aceparams', ApAceParamsData),
 			('ctftilt_params', ApCtfTiltParamsData),
+			('xmipp_ctf_params', ApXmippCtfParamsData),
 			('ace2_params', ApAce2ParamsData),
 			('session', leginon.leginondata.SessionData),
 			('path', ApPathData),
@@ -378,6 +394,14 @@ class ApAce2ParamsData(Data):
 		)
 	typemap = classmethod(typemap)
 
+class ApXmippCtfParamsData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('fieldsize', int),
+		)
+	typemap = classmethod(typemap)
+
+
 class ApCtfTiltParamsData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
@@ -390,6 +414,7 @@ class ApCtfTiltParamsData(Data):
 			('resmin', float),
 			('resmax', float),
 			('defstep', float),
+			('dast', float),
 		)
 	typemap = classmethod(typemap)
 
@@ -398,32 +423,40 @@ class ApCtfData(Data):
 		return Data.typemap() + (
 			('acerun', ApAceRunData),
 			('image', leginon.leginondata.AcquisitionImageData),
-			('defocus1', float),
-			('defocus2', float),
-			('defocusinit', float),
-			('amplitude_contrast', float),
-			('angle_astigmatism', float),
-			('tilt_angle', float),
-			('tilt_axis_angle', float),
-			('snr', float),
-			('confidence', float),
-			('confidence_d', float),
-			('graph1', str),
-			('graph2', str),
-			('mat_file', str),
-			('cross_correlation', float),
-			('ctfvalues_file', str),
-			('cs', float),
-			('noise1', float),
-			('noise2', float),
-			('noise3', float),
-			('noise4', float),
-			('envelope1', float),
-			('envelope2', float),
-			('envelope3', float),
-			('envelope4', float),
-			('lowercutoff', float),
-			('uppercutoff', float),
+			('cs', float),  # in millimeters
+			('defocusinit', float),  # initial defocus
+			('amplitude_contrast', float),  # sqrt(1-A^2)sin + A*cos format
+			('defocus1', float),  # in negative meters for underfocus |def1| < |def2|
+			('defocus2', float),  # in negative meters for underfocus
+			('angle_astigmatism', float),  # in counter-clockwise degrees from x-axis
+			('confidence', float),  # classic confidence
+			('confidence_d', float),  # classic confidence
+			('confidence_30_10', float),  # defined as confidence between 1/30 and 1/10 Angstroms
+			('confidence_5_peak', float),  # defined as conidence of the first 5 peaks of the CTF
+			('overfocus_conf_30_10', float),  # defined as confidence between 1/30 and 1/10 Angstroms
+			('overfocus_conf_5_peak', float),  # defined as conidence of the first 5 peaks of the CTF
+			('resolution_80_percent', float),  # resolution at 80% confidence
+			('resolution_50_percent', float),  # resolution at 50% confidence
+			('graph1', str),  # 2d powerspectra
+			('graph2', str),  # 1d plot showing fit
+			('graph3', str),  # raw native powerspectra from software 
+			('graph4', str),  # raw native 1d plot from software 
+			('ctfvalues_file', str),  # used for ace2correct
+			('cross_correlation', float),  # direct from ctffind/ctftilt
+			('tilt_angle', float),  # from ctftilt
+			('tilt_axis_angle', float),  # from ctftilt
+			('mat_file', str),  # from ACE1
+			('snr', float),  # from ACE1
+			('noise1', float),  # from ACE1
+			('noise2', float),  # from ACE1
+			('noise3', float),  # from ACE1
+			('noise4', float),  # from ACE1
+			('envelope1', float),  # from ACE1
+			('envelope2', float),  # from ACE1
+			('envelope3', float),  # from ACE1
+			('envelope4', float),  # from ACE1
+			('lowercutoff', float),  # from ACE1
+			('uppercutoff', float),  # from ACE1
 		)
 	typemap = classmethod(typemap)
 
@@ -436,7 +469,7 @@ class ApMaskMakerRunData(Data):
 			('params', ApMaskMakerParamsData),
 			('session', leginon.leginondata.SessionData),
 			('name', str),
-			#('path', str),
+			# ('path', str),
 			('path', ApPathData),
 		)
 	typemap = classmethod(typemap)
@@ -480,7 +513,7 @@ class ApMaskMakerParamsData(Data):
 class ApStackData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
-			#('stackPath', str),
+			# ('stackPath', str),
 			('path', ApPathData),
 			('name', str),
 			('description', str),
@@ -516,13 +549,20 @@ class ApStackRunData(Data):
 		)
 	typemap = classmethod(typemap)
 
-class ApStackParamsData(Data):
+class ApSyncStackData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('stack1', ApStackData),
+			('stack2', ApStackData),
+			('synctype', str),
+		)
+	typemap = classmethod(typemap)
+
+class ApParticleExtractorData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
 			('boxSize', int),
 			('bin', int),
-			('phaseFlipped', bool),
-			('fliptype', str),
 			('aceCutoff', float),
 			('correlationMin', float),
 			('correlationMax', float),
@@ -531,14 +571,26 @@ class ApStackParamsData(Data):
 			('norejects', bool),
 			('minDefocus', float),
 			('maxDefocus', float),
+			('defocpair', bool),
+			('tiltangle', str),
+			('rotate', bool),
+		)
+	typemap = classmethod(typemap)
+
+class ApStackParamsData(ApParticleExtractorData):
+	def typemap(cls):
+		return ApParticleExtractorData.typemap() + (
+			('phaseFlipped', bool),
+			('fliptype', str),
 			('fileType', str),
 			('inverted', bool),
 			('normalized', bool),
 			('xmipp-norm', float),
-			('defocpair', bool),
 			('lowpass', float),
 			('highpass', float),
-			('tiltangle', str),
+			('startframe', int),
+			('nframe', int),
+			('driftlimit', float),
 		)
 	typemap = classmethod(typemap)
 
@@ -593,6 +645,86 @@ class ApStackParticleData(Data):
 		)
 	typemap = classmethod(typemap)
 
+class ApStackImageFrameListData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('stack', ApStackData),
+			('image', leginon.leginondata.AcquisitionImageData),
+			('frames', list),
+		)
+	typemap = classmethod(typemap)
+
+class ApStackFormatData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('stack', ApStackData),
+			('eman', ApPathData),
+			('spider', ApPathData),
+			('xmipp', ApPathData),
+			('frealign', ApPathData),
+		)
+	typemap = classmethod(typemap)
+
+class ApParticleMovieRunData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('movieRunName', str),
+			('movieParams', ApParticleMovieParamsData),
+			('selectionrun', ApSelectionRunData),
+			('session', leginon.leginondata.SessionData),
+			('path', ApPathData),
+		)
+	typemap = classmethod(typemap)
+
+
+class ApParticleMovieParamsData(ApParticleExtractorData):
+	def typemap(cls):
+		return ApParticleExtractorData.typemap() + (
+			('frameavg', int),
+			('framestep', int),
+		)
+	typemap = classmethod(typemap)
+
+class ApParticleMovieData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('movieNumber', int),
+			('movieRun', ApParticleMovieRunData),
+			('particle', ApParticleData),
+			('format', str),
+		)
+	typemap = classmethod(typemap)
+
+class ApDDStackRunData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('runname', str),
+			('params', ApDDStackParamsData),
+			('session', leginon.leginondata.SessionData),
+			('path', ApPathData),
+		)
+	typemap = classmethod(typemap)
+
+class ApDDStackParamsData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('preset', str),
+			('align', bool),
+			('bin', int),
+			('unaligned_ddstackrun', ApDDStackRunData),
+			('stack', ApStackData),
+		)
+	typemap = classmethod(typemap)
+
+class ApDDAlignImagePairData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('source', leginon.leginondata.AcquisitionImageData),
+			('result', leginon.leginondata.AcquisitionImageData),
+			('ddstackrun', ApDDStackRunData),
+		)
+	typemap = classmethod(typemap)
+
 ### END Stack tables ###
 ### START alignment tables  ###
 
@@ -620,6 +752,122 @@ class ApMaxLikeRunData(Data):
 			('fastmode', str),
 			('run_seconds', int),
 			('job', ApMaxLikeJobData),
+		)
+	typemap = classmethod(typemap)
+
+class ApSparxISACJobData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('runname', str),
+			('timestamp', str),
+			('path', ApPathData),
+			('REF|projectdata|projects|project', int),
+			('finished', bool),
+			('hidden', bool),
+		)
+	typemap = classmethod(typemap)
+
+class ApSparxISACRunData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('runname', str),
+			('job', ApSparxISACJobData),
+			('alignstackid', ApAlignStackData),
+		)
+	typemap = classmethod(typemap)
+
+class ApCL2DRunData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('runname', str),
+			('fast', str),
+			('run_seconds', int),
+			('timestamp', str),
+			('REF|projectdata|projects|project', int),
+			('path', ApPathData),
+			('finished', bool),
+			('max-iter', int),
+			('num-ref', int),
+			('correlation', bool),
+			('correntropy', bool),
+			('classical_multiref', bool),
+			('intracluster_multiref', bool),
+		)
+	typemap = classmethod(typemap)
+
+class ApXMIPP3CL2DRunData(Data):  # need to work on this
+	def typemap(cls):
+		return Data.typemap() + (
+			('runname', str),
+			('run_seconds', int),
+			('timestamp', str),
+			('REF|projectdata|projects|project', int),
+			('path', ApPathData),
+			('finished', bool),
+			('max-iter', int),
+			('num-ref', int),
+			('correlation', bool),
+			('correntropy', bool),
+			('classical_multiref', bool),
+			('intracluster_multiref', bool),
+		)
+	typemap = classmethod(typemap)
+	
+class ApSIMPLEClusterRunData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('runname', str),
+			('run_seconds', int),
+			('timestamp', str),
+			('REF|projectdata|projects|project', int),
+			('path', ApPathData),
+			('finished', bool),
+			('max-iter', int),
+			('num-ref', int),
+			('kmeans', bool),
+			('center', bool),
+		)
+	typemap = classmethod(typemap)
+
+class ApSIMPLEOrigamiRunData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('runname', str),
+			('path', ApPathData),
+			('REF|projectdata|projects|project', int),
+			('timestamp', str),
+			('simple_params', ApSIMPLEOrigamiParamsData),
+			('stack', ApStackData),
+			('alignstack', ApAlignStackData),
+			('clusteringstack', ApClusteringStackData),
+			('box', int),
+			('apix', float),
+			('description', str),
+		)
+	typemap = classmethod(typemap)
+
+class ApSIMPLEOrigamiParamsData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+# 			('runname', str),
+# 			('timestamp', str),
+# 			('REF|projectdata|projects|project', int),
+# 			('path', ApPathData),
+# 			('box', int),
+# 			('apix', float),
+# 			('stack', ApStackData),
+# 			('alignstack', ApAlignStackData),
+			('lp', int),
+			('hp', int),
+			('froms', int),
+			('tos', int),
+			('maxits', int),
+			('msk', int),
+			('mw', int),
+			('amsklp', int),
+			('edge', int),
+			('trs', int),
+			('pgrp', str),
 		)
 	typemap = classmethod(typemap)
 
@@ -733,10 +981,14 @@ class ApAlignRunData(Data):
 			('norefrun', ApSpiderNoRefRunData),
 			('refbasedrun', ApRefBasedRunData),
 			('maxlikerun', ApMaxLikeRunData),
+			('isacrun', ApSparxISACRunData),
 			('refine2drun', ApEMANRefine2dRunData),
 			('imagicMRA', ApMultiRefAlignRunData),
 			('editerrun', ApEdIterRunData),
 			('topreprun', ApTopolRepRunData),
+			('cl2drun', ApCL2DRunData),
+			('xmipp3cl2drun', ApXMIPP3CL2DRunData),			
+			('simplerun', ApSIMPLEClusterRunData),
 			('hidden', bool),
 			('path', ApPathData),
 		)
@@ -774,6 +1026,7 @@ class ApAlignParticleData(Data):
 			('correlation', float),
 			('score', float),
 			('ref', ApAlignReferenceData),
+			('bad', bool),
 		)
 	typemap = classmethod(typemap)
 
@@ -785,6 +1038,7 @@ class ApAlignReferenceData(Data):
 			('mrcfile', str),
 			('varmrcfile', str),
 			('imagicfile', str),
+			('isac_generation', int),			
 			('ssnr_resolution', float),
 			('alignrun', ApAlignRunData),
 			('path', ApPathData),
@@ -906,6 +1160,9 @@ class ApClusteringRunData(Data):
 			('kerdenparams', ApKerDenSOMParamsData),
 			('rotkerdenparams', ApRotKerDenSOMParamsData),
 			('affpropparams', ApAffinityPropagationClusterParamsData),
+			('cl2dparams', ApCL2DRunData),
+			('xmipp3cl2drun', ApXMIPP3CL2DRunData),						
+			('simpleparams', ApSIMPLEClusterRunData),
 		)
 	typemap = classmethod(typemap)
 
@@ -998,6 +1255,7 @@ class Ap3dDensityData(Data):
 			('ampPath', ApPathData),
 			('symmetry', ApSymmetryData),
 			('refineIter', ApRefineIterData),
+			('hipIter', ApHipIterData),
 			('rctrun', ApRctRunData),
 			('otrrun', ApOtrRunData),
 			('session', leginon.leginondata.SessionData),
@@ -1027,6 +1285,7 @@ class ApRctRunData(Data):
 			('maskrad', int),
 			('lowpassvol', float),
 			('highpasspart', float),
+			('lowpasspart', float),
 			('median', int),
 			('description', str),
 			('numpart', int),
@@ -1066,8 +1325,19 @@ class ApOtrRunData(Data):
 ### END 3d Volume tables ###
 ### START Reconstruction tables ###
 
-### this one is for all iterations
-### generic refine table
+# ## generic multi-model refine table for all multi-model jobs
+class ApMultiModelRefineRunData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('runname', str),
+			('num_refinements', int),
+			('REF|projectdata|projects|project', int),
+			('session', leginon.leginondata.SessionData),
+		)
+	typemap = classmethod(typemap)	
+
+# ## this one is for all iterations
+# ## generic refine table
 class ApRefineRunData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
@@ -1076,44 +1346,63 @@ class ApRefineRunData(Data):
 			('description', str),
 			('num_iter', int),
 			('hidden', bool),
+			('reference_number', int),
 			('stack', ApStackData),
 			('initialModel', ApInitialModelData),
 			('path', ApPathData),
 			('job', ApAppionJobData),
-			### additional packages plugin here
-			('xmippParams', ApXmippRefineParamsData),
+			('multiModelRefineRun', ApMultiModelRefineRunData),
 		)
 	typemap = classmethod(typemap)
 
-### this one is for each iteration
-### generic refine table
+# ## this one is for each iteration
+# ## generic refine table
 class ApRefineIterData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
 			('iteration', int),
-			('exemplar',bool),
+			('exemplar', bool),
+			('angularSamplingRate', int),
 			('mask', int),
 			('imask', int),
-			('volumeDensity',str),
-			('refineClassAverages',str),
+			('alignmentInnerRadius', int),
+			('alignmentOuterRadius', int),
+			('volumeDensity', str),
+			('refineClassAverages', str),
 			('postRefineClassAverages', str),
 			('classVariance', str),
 			('symmetry', ApSymmetryData),
 			('refineRun', ApRefineRunData),
 			('resolution', ApResolutionData),
 			('rMeasure', ApRMeasureData),
-			### additional packages plugin here
+			# ## additional packages plugin here
 			('emanParams', ApEmanRefineIterData),
 			('xmippParams', ApXmippRefineIterData),
 			('frealignParams', ApFrealignIterData),
+			('xmippML3DParams', ApXmippML3DRefineIterData),
+			('relionParams', ApRelionIterData),
+		)
+	typemap = classmethod(typemap)
+	
+# ## this one is for each iteration, generic reference table
+class ApRefineReferenceData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('volumeDensityStart', str),
+			('volumeDensityEnd', str),
+			('reference_number', int),
+			('path', ApPathData),
+			('iteration', ApRefineIterData),
 		)
 	typemap = classmethod(typemap)
 
-### this one is for each particle each iteration
+# ## this one is for each particle each iteration
 class ApRefineParticleData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
 			('refineIter', ApRefineIterData),
+			('multiModelRefineRun', ApMultiModelRefineRunData),
+			('reference_number', ApRefineReferenceData),
 			('particle', ApStackParticleData),
 			('shiftx', float),
 			('shifty', float),
@@ -1123,20 +1412,25 @@ class ApRefineParticleData(Data):
 			('quality_factor', float),
 			('phase_residual', float),
 			('mirror', bool),
-			('refine_keep',bool),
-			('postRefine_keep',bool),
+			('3Dref_num', int),
+			('2Dclass_num', int),
+			('refine_keep', bool),
+			('postRefine_keep', bool),
 			('euler_convention', str),
 		)
 	typemap = classmethod(typemap)
 
-### this one is for each iteration
-### EMAN only things
+# ## this one is for each iteration
+# ## EMAN only things
 class ApEmanRefineIterData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
+			('package', str),
 			('ang', float),
 			('lpfilter', int),
 			('hpfilter', int),
+			('mask', int),
+			('imask', int),
 			('pad', int),
 			('EMAN_maxshift', int),
 			('EMAN_hard', int),
@@ -1146,6 +1440,9 @@ class ApEmanRefineIterData(Data):
 			('EMAN_shrink', int),
 			('EMAN_euler2', int),
 			('EMAN_xfiles', float),
+			('EMAN_amask1', float),
+			('EMAN_amask2', float),
+			('EMAN_amask3', float),
 			('EMAN_median', bool),
 			('EMAN_phasecls', bool),
 			('EMAN_fscls', bool),
@@ -1157,7 +1454,63 @@ class ApEmanRefineIterData(Data):
 		)
 	typemap = classmethod(typemap)
 
-### this one is for all iterations
+# ## this one is for all iterations
+class ApRefineStackData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('preprefine', ApPrepRefineData),
+			('stackref', ApStackData),
+			('filename', str),
+			('bin', int),
+			('lowpass', float),
+			('highpass', float),
+			('last_part', int),
+			('format', str),
+			('apix', float),
+			('boxsize', int),
+			('cs', float),
+			('recon', bool),
+			('phaseflipped', bool),
+		)
+	typemap = classmethod(typemap)
+
+class ApRefineInitModelData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('preprefine', ApPrepRefineData),
+			('refmodel', ApInitialModelData),
+			('filename', str),
+			('format', str),
+			('apix', float),
+		)
+	typemap = classmethod(typemap)
+
+class ApRefineMaskVolData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('preprefine', ApPrepRefineData),
+			('refmodel', ApInitialModelData),
+			('filename', str),
+			('format', str),
+			('apix', float),
+		)
+	typemap = classmethod(typemap)
+
+class ApPrepRefineData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+		('name', str),
+		('hidden', bool),
+		('path', ApPathData),
+		('stack', ApStackData),
+		('job', ApAppionJobData),
+		('session', leginon.leginondata.SessionData),
+		('method', str),
+		('description', str),
+		('paramiter', ApRefineIterData),
+		)
+	typemap = classmethod(typemap)
+
 class ApFrealignPrepareData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
@@ -1178,7 +1531,7 @@ class ApFrealignPrepareData(Data):
 		)
 	typemap = classmethod(typemap)
 
-### this one is for all iterations
+# ## this one is for each iteration in Frealign refinement
 class ApFrealignIterData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
@@ -1199,41 +1552,112 @@ class ApFrealignIterData(Data):
 		)
 	typemap = classmethod(typemap)
 
-### this one is for all iterations
-### is this even used???
-class ApXmippRefineParamsData(Data):
+# ## this one is for each iteration in Relion refinement
+class ApRelionIterData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
-			('Niter', int),
-			('maskFilename', str),
-			('maskRadius', int),
-			('innerRadius', float),
-			('outerRadius', float),
-			('symmetryGroup', ApSymmetryData),
-			('fourierMaxFrequencyOfInterest', float),
-			('computeResol', bool),
-			('dolowpassfilter', bool),
-			('usefscforfilter', bool),
+			('ini_high', int),
+			('ctf', bool),
+			('offset_step', int),
+			('auto_local_healpix_order', int),
+			('healpix_order', int),
+			('offset_range', int),
+			('ctf_intact_first_peak', bool),
+			('ctf_corrected_ref', bool),
 		)
 	typemap = classmethod(typemap)
 
-### this one is for each iteration
+# ## this one is for each iteration in Xmipp projection-matching refinement
 class ApXmippRefineIterData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
-			('angularStep', float),
-			('maxChangeInAngles', float),
-			('maxChangeOffset', float),
-			('search5dShift', float),
-			('search5dStep', float),
-			('discardPercentage', float),
-			('reconstructionMethod', str),
+			('NumberofIterations', int),
+			('MaskFileName', str),
+			('MaskRadius', int),
+			('InnerRadius', int),
+			('OuterRadius', int),
+			('SymmetryGroup', str),
+			('FourierMaxFrequencyOfInterest', float),
+			('SelFileName', str),
+			('DocFileName', str),
+			('ReferenceFileName', str),
+			('WorkingDir', str),
+			('CleanUpFiles', bool),
+			('DoCtfCorrection', bool),
+			('CTFDatName', str),
+			('DoAutoCtfGroup', bool),
+			('CtfGroupMaxDiff', float),
+			('CtfGroupMaxResol', float),
+			('PaddingFactor', float),
+			('WienerConstant', float),
+			('DataArePhaseFlipped', bool),
+			('ReferenceIsCtfCorrected', bool),
+			('DoMask', bool),
+			('DoSphericalMask', bool),
+			('AngSamplingRateDeg', float),
+			('MaxChangeInAngles', float),
+			('PerturbProjectionDirections', bool),
+			('MaxChangeOffset', float),
+			('Search5DShift', int),
+			('Search5DStep', int),
+			('DoRetricSearchbyTiltAngle', bool),
+			('Tilt0', float),
+			('TiltF', float),
+			('SymmetryGroupNeighbourhood', str),
+			('OnlyWinner', bool),
+			('MinimumCrossCorrelation', float),
+			('DiscardPercentage', float),
+			('ProjMatchingExtra', str),
+			('DoAlign2D', bool),
+			('Align2DIterNr', int),
+			('Align2dMaxChangeOffset', float),
+			('Align2dMaxChangeRot', float),
+			('ReconstructionMethod', str),
 			('ARTLambda', float),
-			('constantToAddToFiltration', float),
+			('ARTReconstructionExtraCommand', str),
+			('WBPReconstructionExtraCommand', str),
+			('FourierReconstructionExtraCommand', str),
+			('ResolSam', float),
+			('ConstantToAddToFiltration', float),
+		)
+	typemap = classmethod(typemap)
+	
+# ## this one is for each iteration in ML3D refinement
+class ApXmippML3DRefineIterData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('InSelFile', str),
+			('InitialReference', str),
+			('WorkingDir', str),
+			('DoDeleteWorkingDir', bool),
+			('DoMlf', bool),
+			('DoCorrectAmplitudes', bool),
+			('InCtfDatFile', str),
+			('HighResLimit', float),
+			('ImagesArePhaseFlipped', bool),
+			('InitialMapIsAmplitudeCorrected', bool),
+			('SeedsAreAmplitudeCorrected', bool),
+			('DoCorrectGreyScale', bool),
+			('ProjMatchSampling', int),
+			('DoLowPassFilterReference', bool),
+			('LowPassFilter', int),
+			('PixelSize', float),
+			('DoGenerateSeeds', bool),
+			('NumberOfReferences', int),
+			('DoJustRefine', bool),
+			('SeedsSelfile', str),
+			('DoML3DClassification', bool),
+			('AngularSampling', int),
+			('NumberOfIterations', int),
+			('Symmetry', str),
+			('DoNorm', bool),
+			('DoFourier', bool),
+			('RestartIter', bool),
+			('ExtraParamsMLrefine3D', str),
 		)
 	typemap = classmethod(typemap)
 
-### this one is for each iteration
+# ## this one is for each iteration
 class ApResolutionData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
@@ -1243,7 +1667,7 @@ class ApResolutionData(Data):
 		)
 	typemap = classmethod(typemap)
 
-### this one is for each iteration
+# ## this one is for each iteration
 class ApRMeasureData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
@@ -1252,7 +1676,7 @@ class ApRMeasureData(Data):
 		)
 	typemap = classmethod(typemap)
 
-### this one is for each iteration
+# ## this one is for each iteration
 class ApRefineGoodBadParticleData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
@@ -1264,12 +1688,13 @@ class ApRefineGoodBadParticleData(Data):
 		)
 	typemap = classmethod(typemap)
 
-### this one is for all iterations
+# ## this one is for all iterations
 class ApEulerJumpData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
 			('particle', ApStackParticleData),
 			('refineRun', ApRefineRunData),
+			('multiModelRefineRun', ApMultiModelRefineRunData),
 			('median', float),
 			('mean', float),
 			('stdev', float),
@@ -1303,8 +1728,9 @@ class ApTestRunData(Data):
 			('params', ApTestParamsData),
 			('session', leginon.leginondata.SessionData),
 			('name', str),
-			#('path', str),
+			# ('path', str),
 			('path', ApPathData),
+			('append_timestamp', str),
 		)
 	typemap = classmethod(typemap)
 
@@ -1325,7 +1751,7 @@ class ApAssessmentRunData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
 			('session', leginon.leginondata.SessionData),
-			('name',str),
+			('name', str),
 		)
 	typemap = classmethod(typemap)
 
@@ -1341,8 +1767,8 @@ class ApAssessmentData(Data):
 class ApMaskAssessmentRunData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
-			('session',leginon.leginondata.SessionData),
-			('name',str),
+			('session', leginon.leginondata.SessionData),
+			('name', str),
 			('maskrun', ApMaskMakerRunData),
 		)
 	typemap = classmethod(typemap)
@@ -1357,14 +1783,14 @@ class ApMaskAssessmentData(Data):
 	typemap = classmethod(typemap)
 
 ### END Assessment tables ###
-### START Bootstrap tables ###
+### START common lines tables ###
 
-class ApBootstrappedAngularReconstitutionRunData(Data):
+class ApAutomatedCommonLinesRunData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
 			('runname', str),
 			('path', ApPathData),
-			('aar_params', ApBootstrappedAngularReconstitutionParamsData),
+			('acl_params', ApAutomatedCommonLinesParamsData),
 			('pixelsize', float),
 			('boxsize', int),
 			('templatestackid', ApTemplateStackData),
@@ -1375,7 +1801,7 @@ class ApBootstrappedAngularReconstitutionRunData(Data):
 		)
 	typemap = classmethod(typemap)
 
-class ApBootstrappedAngularReconstitutionParamsData(Data):
+class ApAutomatedCommonLinesParamsData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
 			('num_averages', int),
@@ -1396,7 +1822,7 @@ class ApBootstrappedAngularReconstitutionParamsData(Data):
 		)
 	typemap = classmethod(typemap)
 
-### END Bootstrap tables ###
+### END common lines tables ###
 ### START IMAGIC tables ###
 
 class ApImagic3dRefineRunData(Data):
@@ -1473,6 +1899,14 @@ class ApImodXcorrParamsData(Data):
 		)
 	typemap = classmethod(typemap)
 
+class ApRaptorParamsData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('markersize', int),
+			('markernumber', int),
+		)
+	typemap = classmethod(typemap)
+
 class ApProtomoParamsData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
@@ -1491,6 +1925,7 @@ class ApProtomoRefinementParamsData(Data):
 			('imgref', int),
 			('reference', leginon.leginondata.AcquisitionImageData),
 		)
+	# ## this needs to be expanded to include all protomo2 params
 	typemap = classmethod(typemap)
 
 class ApProtomoAlignerParamsData(Data):
@@ -1561,11 +1996,13 @@ class ApTomoAlignmentRunData(Data):
 			('coarseLeginonParams', leginon.leginondata.TomographySettingsData),
 			('coarseImodParams', ApImodXcorrParamsData),
 			('fineProtomoParams', ApProtomoParamsData),
+			('raptorParams', ApRaptorParamsData),
 			('bin', int),
 			('name', str),
 			('path', ApPathData),
 			('description', str),
 			('hidden', bool),
+			('badAlign', bool),
 		)
 	typemap = classmethod(typemap)
 
@@ -1576,7 +2013,6 @@ class ApFullTomogramRunData(Data):
 			('runname', str),
 			('path', ApPathData),
 			('method', str),
-			('excluded', list),
 		)
 	typemap = classmethod(typemap)
 
@@ -1610,6 +2046,8 @@ class ApFullTomogramData(Data):
 			('description', str),
 			('zprojection', leginon.leginondata.AcquisitionImageData),
 			('hidden', bool),
+			('excluded', list),
+			('reconparam', ApTomoReconParamsData),
 		)
 	typemap = classmethod(typemap)
 
@@ -1656,6 +2094,16 @@ class ApTomoAvgParticleData(Data):
 		)
 	typemap = classmethod(typemap)
 
+class ApTomoReconParamsData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('tilt_angle_offset', float),
+			('z_shift', float),
+			('tilt_axis_tilt_out_xyplane', float),
+			('tilt_axis_rotation_in_xyplane', float),
+		)
+	typemap = classmethod(typemap)
+
 ### END Tomography tables ###
 
 class ApMiscData(Data):
@@ -1673,3 +2121,109 @@ class ApMiscData(Data):
 		)
 	typemap = classmethod(typemap)
 
+### Helical Image Processing Tables ###
+
+class ApHipRunData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('runname', str),
+			('path', ApPathData),
+			('description', str),
+			('REF|projectdata|projects|project', int),
+			('session', leginon.leginondata.SessionData),
+			('apix', float),
+			('stack', ApStackData),
+			('hidden', bool),
+		)
+	typemap = classmethod(typemap)
+
+class ApHipParamsData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('session', leginon.leginondata.SessionData),
+			('hipRun', ApHipRunData),
+			('numpart', int),
+			('replen', int),
+			('diam', int),
+			('diaminner', int),
+			('subunits', int),
+			('xlngth', int),
+			('yht2', int),
+			('padval', int),
+			('rescut', int),
+			('filval', int),
+			('strong', str),
+			('range', str),
+			('llbo', str),
+			('final_stack', str),
+		)
+	typemap = classmethod(typemap)
+
+class ApHipIterData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('session', leginon.leginondata.SessionData),
+			('hipRun', ApHipRunData),
+			('iteration', int),
+			('iterpath', str),
+			('volumeDensity', str),
+			('resolution', ApResolutionData),
+			('rMeasure', ApRMeasureData),
+			('cutfit1', str),
+			('cutfit2', str),
+			('cutfit3', str), 	
+			('chop1', str), 	
+			('chop2', str), 	
+			('avglist_file', str),
+			('final_numpart', int),
+			('asymsu', int),
+			('avg_file', str),
+			('map_file', str),
+			('mrc_file', str),
+			('ll_file', str),
+			('op_file', str),
+			('output_file', str),
+		)
+	typemap = classmethod(typemap)
+
+class ApHipParticleData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('session', leginon.leginondata.SessionData),
+			('hipRun', ApHipRunData),
+			('particleNumber', int),
+			('filename', str),
+			('stack', ApStackData),
+			('stackRun', ApStackRunData),
+			('tilt', float),
+			('shift', float),
+			('resid', float),
+			('far_phi', float),
+			('far_z', float),
+			('far_rscale', float),
+			('far_ampscale', float),
+			('ner_phi', float),
+			('ner_z', float),
+			('ner_rscale', float),
+			('ner_ampscale', float),
+			('mrc_file', str),
+			('s_file', str),
+			('dft_file', str),
+			('colb_file', str),
+			('ner_file', str),
+			('far_file', str),
+			('fft_file', str),
+		)
+	typemap = classmethod(typemap)
+
+class ApHelicalCoordData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('image', leginon.leginondata.AcquisitionImageData),
+			('filno', float),
+			('xlngth', float),
+			('xcoord', float),
+			('ycoord', float),
+			('initialang', float),
+		)
+	typemap = classmethod(typemap)

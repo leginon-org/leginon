@@ -5,15 +5,17 @@
 #	   For terms of the license agreement
 #	   see  http://ami.scripps.edu/software/leginon-license
 #
-import leginondata
+from leginon import leginondata
 import acquisition
 import gui.wx.RCTAcquisition
 import libCVwrapper
+import pyami.timedproc
 import numpy
 import time
 import math
 import pyami.quietscipy
 from scipy import ndimage
+from leginon import transformregistration
 #from apTilt import apTiltShift
 pi = numpy.pi
 
@@ -79,7 +81,7 @@ class RCTAcquisition(acquisition.Acquisition):
 	settingsclass = leginondata.RCTAcquisitionSettingsData
 	defaultsettings = acquisition.Acquisition.defaultsettings
 	defaultsettings.update({
-		'tilts': '(-45, 45)',
+		'tilts': '(-45, 0)',
 		'stepsize': 42.0,
 		'pause': 1.0,
 		'lowfilt': 1.0,
@@ -97,6 +99,8 @@ class RCTAcquisition(acquisition.Acquisition):
 		acquisition.Acquisition.__init__(self, id, session, managerlocation, **kwargs)
 		self.tiltnumber = 0
 		self.tiltseries = None
+		self.tilttest_cycle = 0
+		self.shiftmatrix_maker = transformregistration.CorrelationRegistration(self)
 
 	#====================
 	def setImageFilename(self, imagedata):
@@ -108,6 +112,8 @@ class RCTAcquisition(acquisition.Acquisition):
 		'''
 		We override this so we can process each target list for each tilt
 		'''
+		# reset tilt test cycle
+		self.tilttest_cycle = 0
 
 		## return if no targets in list
 		tilt0targets = self.researchTargets(list=tilt0targetlist, status='new')
@@ -115,18 +121,7 @@ class RCTAcquisition(acquisition.Acquisition):
 			self.reportTargetListDone(tilt0targetlist, 'success')
 			return
 
-		## list of tilts entered by user in degrees, converted to radians
-		tiltstr = self.settings['tilts']
-		try:
-			tilts = eval(tiltstr)
-		except:
-			self.logger.error('Invalid tilt list')
-			return
-		## check for singular value
-		if isinstance(tilts, float) or isinstance(tilts, int):
-			tilts = (tilts,)
-		## convert to radians
-		tilts = map(radians, tilts)
+		tilts = self.convertDegreeTiltsToRadianList(self.settings['tilts'])
 
 		## parent image and tilt of parent image
 		image0 = tilt0targetlist['image']
@@ -134,7 +129,6 @@ class RCTAcquisition(acquisition.Acquisition):
 		self.logger.info('image0 tilt = %s degrees' % (degrees(tilt0),))
 
 		## loop through each tilt
-		focused = False
 		for i,tilt in enumerate(tilts):
 			if self.player.state() == 'stop':
 				break
@@ -151,39 +145,47 @@ class RCTAcquisition(acquisition.Acquisition):
 
 			## drift check
 			#self.declareDrift('rct')
-			try:
-				focustarget = self.getFocusTargets(tiltedtargetlist)[0]
-			except:
-				self.logger.error('Need at least one focus target to check drift')
-				focustarget = None
-			try:
-				emtarget = self.targetToEMTargetData(focustarget)
-			except:
-				self.logger.error('EMTarget failed, check move type')
-				emtarget = None
-			try:
-				presetname = self.settings['drift preset']
-			except:
-				self.logger.error('Need preset to check drift')
-				presetname = None
-			if None not in (focustarget, emtarget, presetname):
-				threshold = self.settings['drift threshold']
-				self.checkDrift(presetname, emtarget, threshold)
+			# dritt is checked only if threshold is bigger than zero
+			if self.settings['drift threshold'] > 0.0001:
+				try:
+					focustarget = self.getFocusTargets(tiltedtargetlist)[0]
+				except:
+					self.logger.error('Need at least one focus target to check drift')
+					focustarget = None
+				try:
+					emtarget = self.targetToEMTargetData(focustarget)
+				except:
+					self.logger.error('EMTarget failed, check move type')
+					emtarget = None
+				try:
+					presetname = self.settings['drift preset']
+				except:
+					self.logger.error('Need preset to check drift')
+					presetname = None
+				if None not in (focustarget, emtarget, presetname):
+					threshold = self.settings['drift threshold']
+					self.checkDrift(presetname, emtarget, threshold)
 
-			## mark focus target done if already focused
-			'''
-			if focused:
-				self.focusDone(tiltedtargetlist)
-			'''
 			#self.declaredrifteachtarget = True
 			self.setTargets([], 'Peak')
 			acquisition.Acquisition.processTargetList(self, tiltedtargetlist)
 			#self.declaredrifteachtarget = False
-			focused = True
 
 		self.logger.info('returning to tilt0')
 		self.instrument.tem.StagePosition = {'a': tilt0}
 		self.reportTargetListDone(tilt0targetlist, 'success')
+
+	def avoidTargetAdjustment(self,target_to_adjust,recent_target):
+		'''
+		RCT should not adjust targets.  StageTracking is doing it.
+		The way imagehandler getLastParentImage looks for last version
+		give wrong results since tilt number is not part of the query
+		and stage tracked image version is reset to 0.
+		The drift after stage tilt and focus will not be adjusted this way.
+		However, since the targets are moved by iterative navigator move,
+		this should be o.k.
+		'''
+		return True
 
 	#====================
 	def getFocusTargets(self, targetlistdata):
@@ -243,7 +245,7 @@ class RCTAcquisition(acquisition.Acquisition):
 		if matrix is None:
 			return None
 
-		# create new target list adjusted for new tilt
+		# transformTargets for display purposes only
 		self.transformTargets(matrix, tilt0targets)
 
 		## publish everything
@@ -257,6 +259,21 @@ class RCTAcquisition(acquisition.Acquisition):
 			self.publish(tiltedtarget, database=True)
 
 		return tiltedtargetlist
+
+	def isSmallTiltDifference(self,tilts,i,tilt0):
+		'''
+		Determine if phase correlation should be used for matching
+		'''
+		newtilt = tilts[i]
+		if i == 0:
+			oldtilt = tilt0
+		else:
+			oldtilt = tilts[i-1]
+		# high tilt is more sensitive to distortion
+		# At 0.2 radians, the largest target position distortion is 2% at the edge of the image.
+		if abs(newtilt - oldtilt) < 0.2 and (abs(oldtilt) < 0.2 or abs(newtilt) < 0.2):
+			return True
+		return False
 
 	#====================
 	def trackStage(self, image0, tilt0, tilt, tilt0targets):
@@ -292,6 +309,7 @@ class RCTAcquisition(acquisition.Acquisition):
 			arrayold = ndimage.gaussian_filter(arrayold, lowfilt)
 		self.setImage(arrayold, 'Image')
 		runningresult = numpy.identity(3, numpy.float32)
+		# transformTargets for display purposes only
 		self.transformTargets(runningresult, tilt0targets)
 		retries = 0
 
@@ -303,6 +321,7 @@ class RCTAcquisition(acquisition.Acquisition):
 			tilt = float("%.3f"%tilts[i])
 			self.logger.info('Going to tilt angle: %.2f' % (degrees(tilt),))
 			self.instrument.tem.StagePosition = {'a': tilt}
+			is_small_tilt_diff = self.isSmallTiltDifference(tilts,i,tilt0)
 			if pausetime > 0.1:
 				self.logger.info('Pausing %.1f seconds' %(pausetime,))
 				time.sleep(pausetime)
@@ -310,50 +329,69 @@ class RCTAcquisition(acquisition.Acquisition):
 			#print 'acquire intertilt'
 			imagenew = self.acquireCorrectedCameraImageData()
 			arraynew = numpy.asarray(imagenew['image'], dtype=numpy.float32)
+			if is_small_tilt_diff:
+				# Don't filter if phase correlation will be used
+				medfilt = 0
+				lowfilt = 0
 			if medfilt > 1:
 				arraynew = ndimage.median_filter(arraynew, size=medfilt)
 			if lowfilt > 0:
 				arraynew = ndimage.gaussian_filter(arraynew, lowfilt)
 			self.setImage(arraynew, 'Image')
 
-			print '============ Craig stuff ============'
-
-			self.logger.info('Craig\'s libCV stuff')
-			minsize = self.settings['minsize']
-			maxsize = self.settings['maxsize']
-			libCVwrapper.checkArrayMinMax(self, arrayold, arraynew)
-			result = libCVwrapper.MatchImages(arrayold, arraynew, minsize, maxsize)
-			#difftilt = degrees(abs(tilts[int(i)])-abs(tilts[int(i-1)]))
-			#result = self.apTiltShiftMethod(arrayold, arraynew, difftilt)
-
-			self.logger.info("result matrix= "+str(numpy.asarray(result*100, dtype=numpy.int8).ravel()))
-
-			check = libCVwrapper.checkLibCVResult(self, result)
-			if check is False:
-				self.logger.warning("libCV failed: redoing tilt %.2f"%(tilt,))
-				### redo this tilt; becomes an infinite loop if the image goes black
-				retries += 1
-				if retries <= 2:
-					### reduce minsize and try again
-					self.settings['minsize'] *= 0.95
-					if i == len(tilts)-1:
-						### maybe the tilt angle is too high, reduce max angle by 5 percent
-						tilts[len(tilts)-1] *= 0.95
-					i -= 1
-				else:
-					retries = 0
-					print "Tilt libCV FAILED"
-					self.logger.error("libCV failed: giving up")
-					return None, None
-				continue
+			if is_small_tilt_diff:
+				self.logger.info('Use phase correlation on small tilt')
+				result = numpy.array(self.shiftmatrix_maker.register(arrayold, arraynew))
 			else:
-				retries = 0			
-			print '============ Craig stuff done ============'
+
+				print '============ Craig stuff ============'
+
+				self.logger.info('Craig\'s libCV stuff')
+				minsize = self.settings['minsize']
+				maxsize = self.settings['maxsize']
+				libCVwrapper.checkArrayMinMax(self, arrayold, arraynew)
+
+				print 'tilt', tilts[i]*180/3.14159
+
+				timeout = 300
+				#result = libCVwrapper.MatchImages(arrayold, arraynew, minsize, maxsize)
+				try:
+					result = pyami.timedproc.call('leginon.libCVwrapper', 'MatchImages', args=(arrayold, arraynew, minsize, maxsize), timeout=timeout)
+					self.logger.info("result matrix= "+str(numpy.asarray(result*100, dtype=numpy.int8).ravel()))
+				except:
+					self.logger.error('libCV MatchImages failed')
+					return None,None
+					
+				#difftilt = degrees(abs(tilts[int(i)])-abs(tilts[int(i-1)]))
+				#result = self.apTiltShiftMethod(arrayold, arraynew, difftilt)
+
+				check = libCVwrapper.checkLibCVResult(self, result)
+				if check is False:
+					self.logger.warning("libCV failed: redoing tilt %.2f"%(tilt,))
+					### redo this tilt; becomes an infinite loop if the image goes black
+					retries += 1
+					if retries <= 2:
+						### reduce minsize and try again
+						self.settings['minsize'] *= 0.95
+						if i == len(tilts)-1:
+							### maybe the tilt angle is too high, reduce max angle by 5 percent
+							tilts[len(tilts)-1] *= 0.95
+						i -= 1
+					else:
+						retries = 0
+						print "Tilt libCV FAILED"
+						self.logger.error("libCV failed: giving up")
+						return None, None
+					continue
+				else:
+					retries = 0			
+				print '============ Craig stuff done ============'
 
 			self.logger.info("result matrix= "+str(numpy.asarray(result*100, dtype=numpy.int8).ravel()))
 			self.logger.info( "Inter Matrix: "+libCVwrapper.affineToText(result) )
 
 			runningresult = numpy.dot(runningresult, result)
+			# transformTargets for display purposes only
 			self.transformTargets(runningresult, tilt0targets)
 			self.logger.info( "Running Matrix: "+libCVwrapper.affineToText(runningresult) )
 			self.logger.info("running result matrix= "+str(numpy.asarray(runningresult*100, dtype=numpy.int8).ravel()))
@@ -425,7 +463,7 @@ class RCTAcquisition(acquisition.Acquisition):
 
 		### look at final values
 		self.logger.info('Number of tilt steps: %d' % nsteps)
-		if nsteps > 5:
+		if nsteps > 5 and self.settings['stepsize'] < bigstepsize:
 			self.logger.warning("More than 5 tilt steps, increase your "
 				+"max step size to at least %.1f"%(degrees(bigstepsize)))
 
@@ -577,7 +615,15 @@ class RCTAcquisition(acquisition.Acquisition):
 		# find regions
 		minsize = self.settings['minsize']
 		maxsize = self.settings['maxsize']
-		regions, image  = libCVwrapper.FindRegions(im, minsize, maxsize)
+		timeout = 300
+		#regions, image  = libCVwrapper.FindRegions(im, minsize, maxsize)
+		self.logger.info('running libCV.FindRegions, timeout = %d' % (timeout,))
+		try:
+			regions,image = pyami.timedproc.call('leginon.libCVwrapper', 'FindRegions', args=(im,minsize,maxsize), timeout=timeout)
+		except:
+			self.logger.error('libCV.FindRegions failed')
+			regions = []
+			image = None
 
 		# this is copied from targetfinder:
 		#regions,image = libCVwrapper.FindRegions(self.mosaicimage, minsize, maxsize)
@@ -615,4 +661,20 @@ class RCTAcquisition(acquisition.Acquisition):
 
 		return imagedata['image']
 
-
+	def testTilt(self):
+		origstage = self.instrument.tem.StagePosition
+		orig_tilt = origstage['a']
+		tilts = self.convertDegreeTiltsToRadianList(self.settings['tilts'])
+		if len(tilts) == 0:
+			self.logger.error('Need to set tilts in settings to test tilts')
+		if self.tilttest_cycle >= len(tilts):
+			self.tilttest_cycle = 0
+		this_tilt = tilts[self.tilttest_cycle]
+		this_tilt_degrees = degrees(this_tilt)
+		self.instrument.tem.StagePosition = {'a': this_tilt}
+		self.logger.info('Stage Tilted to %.1f degrees' % this_tilt_degrees)
+		self.tilttest_cycle += 1
+		im = self.testAcquire()
+		if orig_tilt != this_tilt:
+			self.instrument.tem.StagePosition = {'a': orig_tilt}
+			self.logger.info('Tilt Stage back to %.1f degrees' % degrees(orig_tilt))

@@ -7,8 +7,8 @@
  *	see  http://ami.scripps.edu/software/leginon-license
  */
 
-require "inc/leginon.inc";
-require "inc/graph.inc";
+require_once "inc/leginon.inc";
+require_once "inc/graph.inc";
 
 $defaultId=4963;
 $defaultpreset='en';
@@ -29,7 +29,7 @@ if ($viewsql) {
 	exit;
 }
 
-$dbemgraph=&new dbemgraph($defocusdata, 'unix_timestamp', 'defocus');
+$dbemgraph= new dbemgraph($defocusdata, 'unix_timestamp', 'defocus');
 $dbemgraph->title="defocus for preset $preset";
 $dbemgraph->yaxistitle="defocus (um)";
 

@@ -1,10 +1,10 @@
 <?php
 
-require "inc/project.inc.php";
-require "inc/leginon.inc";
-require "inc/samplelib.php";
-require "inc/packagelib.php";
-require "inc/utilpj.inc.php";
+require_once "inc/project.inc.php";
+require_once "inc/leginon.inc";
+require_once "inc/samplelib.php";
+require_once "inc/packagelib.php";
+require_once "inc/utilpj.inc.php";
 
 $sampleId = ($_GET['id']) ? $_GET['id'] : $_POST['sampleId'];
 $projectId = ($_GET['pid']) ? $_GET['pid'] : $_POST['projectId'];
@@ -36,7 +36,7 @@ if ($_POST ) {
 	$data_from_post=from_POST_values(array_values($map));
 
 	foreach($map as $k=>$v) {
-		if (ereg("date$", $k)) {
+		if (preg_match("date$", $k)) {
 			$$k=mysql::format_date($data_from_post[$v]);
 		} else {
 			$$k=$data_from_post[$v];
@@ -52,7 +52,12 @@ if ($_POST ) {
 		$sampleId = $sample->addSample($projectId, $packageId, $newnumber, $label, $volume, $description, $concentration1, $concentration2, $stored, $notes);
 
 	} else if ($_POST['btsubmit']=='update') {
-		$sample->updateSample($sampleId, $packageId, $label, $volume, $description, $concentration1, $concentration2, $stored, $notes);
+		if ($packageId != $_POST['curpackageId']) {
+			$number = $sample->getNextNumber($packageId);
+		} else {
+			$number = $_POST['curnumber'];
+		}
+		$sample->updateSample($sampleId, $packageId, $number, $label, $volume, $description, $concentration1, $concentration2, $stored, $notes);
 	}
 // --- redirect after submission --- //
 	if ($_POST['btsubmit']=='add' || $_POST['btsubmit']=='update') {
@@ -72,7 +77,7 @@ if (empty($sampleId) || !($sample->checkSampleExistsbyId($sampleId))) {
 
 if ($_POST) {
 	foreach($_POST as $k=>$v) {
-		if (ereg("^sa",$k))
+		if (preg_match("%^sa%",$k))
 			$defaults[$k]=trim($v);
 	}
 }
@@ -92,12 +97,16 @@ if (!$packageId) {
 if ($sampleId) {
 $cursample = $sample->getSampleInfo($sampleId);
 foreach($map as $k=>$v) {
+	# use posted package
+	if ($v == 'sa1'  && array_key_exists('sa1',$_POST)) continue;
 	$val=$cursample[$k];
-	if (ereg("date$", $k)) {
+	if (preg_match("%date$%", $k)) {
 			$val=mysql::format_date($val, "ymd", "mdy", "-" );
 	}
 	$defaults[$v]=$val;
 }
+$curpackageId=$cursample['packageId'];
+$curnumber=$cursample['number'];
 $newnumberstr=$sample->format_number($cursample['number']);
 }
 
@@ -110,7 +119,7 @@ project_header("Sample $title");
 <font face="Arial, Helvetica, sans-serif" size="2">: required fields</font>
 </p>
 <?
-require "inc/aform.php";
+require_once "inc/aform.php";
 ?>
 <link href="css/aform.css" rel="stylesheet" type="text/css" />
 <?
@@ -129,6 +138,8 @@ $form->addField("Concentration (mg/L)", 20, false);
 $form->addField("Concentration (pt/L)", 20, false);
 $form->addField("Stored", 20, true, "RT, 4C, -80C");
 $form->addTextArea("Notes", 5, 50, false);
+$form->addHiddenField('curpackageId', $curpackageId);
+$form->addHiddenField('curnumber', $curnumber);
 
 $form->addSubmit("btsubmit", $action);
 

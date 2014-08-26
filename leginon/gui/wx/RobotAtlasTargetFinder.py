@@ -25,7 +25,6 @@ class Panel(leginon.gui.wx.Node.Panel):
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_ABORT, 'stop', shortHelpString='Abort this grid insertion')
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_REFRESH, False)
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SUBMIT, False)
-		self.toolbar.Realize()
 
 		self.atlaslist = []
 		self.listbox = wx.ListBox(self, -1, style=wx.LB_SINGLE)
@@ -36,7 +35,7 @@ class Panel(leginon.gui.wx.Node.Panel):
 		self.imagepanel.selectiontool.setDisplayed('Image', True)
 		self.imagepanel.addTargetTool('New', wx.GREEN, target=True)
 		self.imagepanel.selectiontool.setDisplayed('New', True)
-		self.imagepanel.addTargetTool('Submitted', wx.Color(255, 128, 0))
+		self.imagepanel.addTargetTool('Submitted', wx.Colour(255, 128, 0))
 		self.imagepanel.selectiontool.setDisplayed('Submitted', True)
 		self.imagepanel.addTargetTool('Processed', wx.RED)
 		self.imagepanel.selectiontool.setDisplayed('Processed', True)

@@ -6,7 +6,7 @@ import time
 from appionlib import appionLoop2
 from appionlib import apDatabase
 from appionlib import apParticle
-from appionlib import apCtf
+from appionlib.apCtf import ctfdb
 from appionlib.apTilt import apTiltPair
 from appionlib import apDisplay
 
@@ -26,8 +26,8 @@ class ImageRejector(appionLoop2.AppionLoop):
 			help="mindefocus", metavar="#")
 		self.parser.add_option("--maxdefocus", dest="maxdefocus", type="float",
 			help="maxdefocus", metavar="#")
-		self.parser.add_option("--acecutoff", dest="acecutoff", type="float",
-			help="acecutoff", metavar="#")
+		self.parser.add_option("--ctfcutoff", dest="ctfcutoff", type="float",
+			help="ctfcutoff", metavar="#")
 		self.parser.add_option("--noace", dest="noace", default=False,
 			action="store_true", help="noace")
 		self.parser.add_option("--nopicks", dest="nopicks", default=False,
@@ -137,7 +137,7 @@ class ImageRejector(appionLoop2.AppionLoop):
 		shortname = apDisplay.short(imgdata['filename'])
 
 		### get best defocus value
-		ctfvalue, conf = apCtf.getBestCtfValueForImage(imgdata)
+		ctfvalue, conf = ctfdb.getBestCtfValueForImage(imgdata)
 
 		if ctfvalue is None:
 			if self.params['noace'] is True:
@@ -147,9 +147,9 @@ class ImageRejector(appionLoop2.AppionLoop):
 				#apDisplay.printWarning("skipping no ACE values for "+apDisplay.short(imgdata['filename']))
 				return True
 
-		### check that ACE estimation is above confidence threshold
-		if self.params['acecutoff'] and conf < self.params['acecutoff']:
-			apDisplay.printColor("\nrejecting below ACE cutoff: "+apDisplay.short(imgdata['filename'])+" conf="+str(round(conf,3)), "cyan")
+		### check that CTF estimation is above confidence threshold
+		if self.params['ctfcutoff'] and conf < self.params['ctfcutoff']:
+			apDisplay.printColor("\nrejecting below CTF cutoff: "+apDisplay.short(imgdata['filename'])+" conf="+str(round(conf,3)), "cyan")
 			return False
 
 

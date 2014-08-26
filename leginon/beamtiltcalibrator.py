@@ -15,7 +15,7 @@ import numpy
 import threading
 import calibrator
 import calibrationclient
-import leginondata
+from leginon import leginondata
 import gui.wx.BeamTiltCalibrator
 import time
 
@@ -61,48 +61,14 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 
 	def alignRotationCenter(self, defocus1, defocus2):
 		cal = self.calibration_clients['beam tilt']
-		bt = cal.measureRotationCenter(defocus1, defocus2, correlation_type=None, settle=0.5)
-		self.logger.info('Misalignment correction: %.4f, %.4f' % (bt['x'],bt['y'],))
-		oldbt = self.instrument.tem.BeamTilt
-		self.logger.info('Old beam tilt: %.4f, %.4f' % (oldbt['x'],oldbt['y'],))
-		newbt = {'x': oldbt['x'] + bt['x'], 'y': oldbt['y'] + bt['y']}
-		self.instrument.tem.BeamTilt = newbt
-		self.logger.info('New beam tilt: %.4f, %.4f' % (newbt['x'],newbt['y'],))
-
-	def _rotationCenterToScope(self):
-		tem = self.instrument.getTEMData()
-		ht = self.instrument.tem.HighTension
-		mag = self.instrument.tem.Magnification
-		calibration_client = self.calibration_clients['beam tilt']
-		beam_tilt = calibration_client.retrieveRotationCenter(tem, ht, mag)
-		if not beam_tilt:
-			raise RuntimeError('no rotation center for %geV, %gX' % (ht, mag))
-		self.instrument.tem.BeamTilt = beam_tilt
+		bt = cal.alignRotationCenter(defocus1, defocus2)
 
 	def rotationCenterToScope(self):
-		try:
-			self._rotationCenterToScope()
-		except Exception, e:
-			self.logger.error('Unable to set rotation center: %s' % e)
-		else:
-			self.logger.info('Set instrument rotation center')
+		self.calibration_clients['beam tilt'].rotationCenterToScope()
 		self.panel.setInstrumentDone()
 
-	def _rotationCenterFromScope(self):
-		tem = self.instrument.getTEMData()
-		ht = self.instrument.tem.HighTension
-		mag = self.instrument.tem.Magnification
-		beam_tilt = self.instrument.tem.BeamTilt
-		calibration_client = self.calibration_clients['beam tilt']
-		calibration_client.storeRotationCenter(tem, ht, mag, beam_tilt)
-
 	def rotationCenterFromScope(self):
-		try:
-			self._rotationCenterFromScope()
-		except Exception, e:
-			self.logger.error('Unable to get rotation center: %s' % e)
-		else:
-			self.logger.info('Saved instrument rotation center')
+		self.calibration_clients['beam tilt'].rotationCenterFromScope()
 		self.panel.setInstrumentDone()
 
 	def calibrateComaFree(self):
@@ -124,7 +90,8 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 			self.logger.info('Storing calibration...')
 			mag = self.instrument.tem.Magnification
 			ht = self.instrument.tem.HighTension
-			calibration_client.storeMatrix(ht, mag, 'beam-tilt coma', matrix)
+			probe = self.instrument.tem.ProbeMode
+			calibration_client.storeMatrix(ht, mag, 'beam-tilt coma', matrix, probe=probe)
 			self.logger.info('Calibration stored')
 		self.panel.calibrationDone()
 
@@ -149,7 +116,8 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 			self.logger.info('Storing calibration...')
 			mag = self.instrument.tem.Magnification
 			ht = self.instrument.tem.HighTension
-			calibration_client.storeMatrix(ht, mag, 'image-shift coma', matrix)
+			probe = self.instrument.tem.ProbeMode
+			calibration_client.storeMatrix(ht, mag, 'image-shift coma', matrix, probe=probe)
 			self.logger.info('Calibration stored')
 		self.panel.calibrationDone()
 
@@ -218,7 +186,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 			comatilt = {'x':cftiltsx.mean(),'y':cftiltsy.mean()}
 			self.comameasurement = comatilt
 		except Exception, e:
-			self.logger.error('Measurement failed: %s' % e)
+			self.logger.error('ComaFree Measurement failed: %s' % e)
 		self.instrument.tem.BeamTilt = tilt0
 		self.panel.comaMeasurementDone(self.comameasurement)
 
@@ -264,7 +232,8 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		# store calibration
 		ht = self.instrument.tem.HighTension
 		mag = self.instrument.tem.Magnification
-		calibration_client.storeMatrix(ht, mag, 'defocus', matrix)
+		probe = self.instrument.tem.ProbeMode
+		calibration_client.storeMatrix(ht, mag, 'defocus', matrix, probe=probe)
 
 	def _calibrateDefocus(self, beam_tilt, defocii):
 		rotation_center = self.instrument.tem.BeamTilt
@@ -299,6 +268,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 
 		magnification = self.instrument.tem.Magnification
 		high_tension = self.instrument.tem.HighTension
+		probe = self.instrument.tem.ProbeMode
 
 		# set up the stigmator states
 		axes = ('x', 'y')
@@ -330,7 +300,8 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 			# store calibration
 			type = 'stig' + stig_axis
 			args = (high_tension, magnification, type, matrix)
-			calibration_client.storeMatrix(*args)
+			kwargs = {'probe':probe}
+			calibration_client.storeMatrix(*args,**kwargs)
 
 	def _calibrateStigmator(self, beam_tilt, delta):
 		rotation_center = self.instrument.tem.BeamTilt
@@ -458,9 +429,10 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 	def _eucentricFocusToScope(self):
 		ht = self.instrument.tem.HighTension
 		mag = self.instrument.tem.Magnification
+		probe = self.instrument.tem.ProbeMode
 		
 		calibration_client = self.calibration_clients['eucentric focus']
-		eucentric = calibration_client.researchEucentricFocus(ht, mag)
+		eucentric = calibration_client.researchEucentricFocus(ht, mag, probe)
 		if not eucentric:
 			raise RuntimeError('no eucentric focus for %geV, %gX' % (ht, mag))
 
@@ -479,10 +451,11 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 	def _eucentricFocusFromScope(self):
 		ht = self.instrument.tem.HighTension
 		mag = self.instrument.tem.Magnification
+		probe = self.instrument.tem.ProbeMode
 		focus = self.instrument.tem.Focus
 
 		calibration_client = self.calibration_clients['eucentric focus']
-		calibration_client.publishEucentricFocus(ht, mag, focus)
+		calibration_client.publishEucentricFocus(ht, mag, probe, focus)
 
 	def eucentricFocusFromScope(self):
 		try:
@@ -524,23 +497,26 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		magnification = self.instrument.tem.Magnification
 		if magnification is None:
 			raise RuntimerError('cannot get magnification')
+		probe = self.instrument.tem.ProbeMode
+		if probe is None:
+			raise RuntimerError('cannot get beam probe mode')
 		parameter = 'defocus'
 		client = self.calibration_clients['beam tilt']
 		m = 'Get %s calibration failed: %s'
 		try:
-			matrix_data = client.researchMatrix(tem, ccd_camera, parameter, high_tension, magnification)
+			matrix_data = client.researchMatrix(tem, ccd_camera, parameter, high_tension, magnification, probe)
 			matrix = matrix_data['matrix']
 		except Exception, e:
 			self.logger.warning(m % ('focus', e))
 			matrix = None
 		try:
-			rotation_center = client.retrieveRotationCenter(tem, high_tension, magnification)
+			rotation_center = client.retrieveRotationCenter(tem, high_tension, magnification, probe)
 		except Exception, e:
 			self.logger.warning(m % ('rotation center', e))
 			rotation_center = None
 		client = self.calibration_clients['eucentric focus']
 		try:
-			eucentric_focus_data = client.researchEucentricFocus(high_tension, magnification, tem=tem, ccdcamera=ccd_camera)
+			eucentric_focus_data = client.researchEucentricFocus(high_tension, magnification, probe, tem=tem, ccdcamera=ccd_camera)
 			eucentric_focus = eucentric_focus_data['focus']
 		except Exception, e:
 			self.logger.warning(m % ('eucentric focus', e))
@@ -550,6 +526,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 			'ccd_camera': ccd_camera,
 			'high_tension': high_tension,
 			'magnification': magnification,
+			'probe': probe,
 			'parameter': parameter,
 			'matrix': matrix,
 			'rotation_center': rotation_center,
@@ -557,11 +534,11 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		}
 		return kwargs
 
-	def saveCalibration(self, calibration, parameter, high_tension, magnification, tem, ccd_camera):
+	def saveCalibration(self, calibration, parameter, high_tension, magnification, tem, ccd_camera, probe):
 		matrix, rotation_center, eucentric_focus = calibration
 		client = self.calibration_clients['beam tilt']
-		client.storeMatrix(high_tension, magnification, parameter, matrix, tem, ccd_camera)
-		client.storeRotationCenter(tem, high_tension, magnification, rotation_center)
+		client.storeMatrix(high_tension, magnification, parameter, matrix, tem, ccd_camera, probe)
+		client.storeRotationCenter(tem, high_tension, magnification, probe, rotation_center)
 		client = self.calibration_clients['eucentric focus']
-		client.publishEucentricFocus(high_tension, magnification, eucentric_focus)
+		client.publishEucentricFocus(high_tension, magnification, probe, eucentric_focus)
 

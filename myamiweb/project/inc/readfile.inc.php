@@ -46,10 +46,10 @@ function data2sqlvalues($data) {
 }
 
 function formatstring($string) {
-	$match1 = ereg('(^")(.*)("$)', $string);	
-	$match2 = ereg('(^\')(.*)(\'$)', $string);	
+	$match1 = preg_match('%(^")(.*)("$)%', $string);	
+	$match2 = preg_match('%(^\')(.*)(\'$)%', $string);	
 	if ($match1 || $match2)
-		$string = ereg_replace('(^"|^\'|\'$|"$)', '', $string);	
+		$string = preg_replace('%(^"|^\'|\'$|"$)%', '', $string);	
 	return trim($string);
 }
 

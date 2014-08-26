@@ -6,7 +6,7 @@
 #       see  http://ami.scripps.edu/software/leginon-license
 #
 
-import leginondata
+from leginon import leginondata
 import instrument
 import node
 import socket
@@ -14,8 +14,6 @@ import threading
 import gui.wx.Instrument
 from pyscope import tem, ccdcamera, registry
 import sys
-if sys.platform == 'win32':
-	import pythoncom
 
 class EM(node.Node):
 	panelclass = gui.wx.Instrument.Panel
@@ -61,22 +59,16 @@ class EM(node.Node):
 		classes = registry.getClasses()
 		tems = []
 		ccdcameras = []
-		fastccdcameras = []
 		for i in classes:
 			name, c = i
 			if issubclass(c, tem.TEM):
 				tems.append(i)
-			elif issubclass(c, ccdcamera.FastCCDCamera):
-				fastccdcameras.append(i)
 			elif issubclass(c, ccdcamera.CCDCamera):
 				ccdcameras.append(i)
-		for name, c in tems + ccdcameras + fastccdcameras:
+		for name, c in tems + ccdcameras:
 			if issubclass(c, tem.TEM):
 				instrumentclass = instrument.TEM
 				wxaddmethod = self.panel.addTEM
-			elif issubclass(c, ccdcamera.FastCCDCamera):
-				instrumentclass = instrument.FastCCDCamera
-				wxaddmethod = self.panel.addCCDCamera
 			elif issubclass(c, ccdcamera.CCDCamera):
 				instrumentclass = instrument.CCDCamera
 				wxaddmethod = self.panel.addCCDCamera
@@ -89,6 +81,9 @@ class EM(node.Node):
 
 				def getHostname(self):
 					return self._hostname
+
+				def getCs(self):
+					return self.cs
 
 			tries = 3
 			instance = None
@@ -158,6 +153,7 @@ class EM(node.Node):
 		instrumentdata = leginondata.InstrumentData()
 		instrumentdata['name'] = name
 		instrumentdata['hostname'] = instance.getHostname()
+		instrumentdata['cs'] = instance.getCs()
 		magnificationsdata = leginondata.MagnificationsData()
 		magnificationsdata['instrument'] = instrumentdata
 		magnificationsdata['magnifications'] = instance.getMagnifications()

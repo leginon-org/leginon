@@ -198,6 +198,8 @@ class ListCtrlPanel(wx.Panel):
 		self.panel.Show(False)
 		self._onSetPanel(panel)
 		self.panel = panel
+		if hasattr(self.panel,'onShow'):
+			self.panel.onShow()
 		self.panel.Show(True)
 		self.Layout()
 		if hasattr(panel, 'messagelog'):

@@ -10,8 +10,9 @@
 require_once "config.php";
 require_once "inc/util.inc";
 require_once "inc/mysql.inc";
+require_once "inc/path.inc";
 
-require_once "inc/dbemauth.php";
+require_once "inc/dbemauth.inc";
 
 function privilege($type='data') {
 	global $dbemauth;
@@ -53,6 +54,27 @@ function getLoginUserId() {
 		}
 	} else {
 		return true;
+	}
+}
+
+function isAdvancedUser() 
+{
+	global $dbemauth;
+	if (ENABLE_LOGIN) {
+		$login_check = $dbemauth->is_logged();
+		if (is_array($login_check)) {
+			$username = $login_check[0];
+			$q = "select u.`advanced` as advanced "
+						."from UserData as u "
+						."where u.`username` LIKE '".$username."'";
+			$dbc=new mysql(DB_HOST, DB_USER, DB_PASS, DB_LEGINON);
+			$r = $dbc->getSQLResult($q);
+			return $r[0]['advanced'];
+		} else {
+			return false;
+		}
+	} else {
+		return false;
 	}
 }
 
@@ -138,7 +160,7 @@ function checkExptAccessPrivilege($sessionId,$privilege_type='data') {
 	
 	// arrives here if no view privilege
 	redirect(BASE_URL.'accessdeny.php');
-	return false;
+	exit;
 }
 
 function checkExptAdminPrivilege($sessionId,$privilege_type='data') {
@@ -146,19 +168,8 @@ function checkExptAdminPrivilege($sessionId,$privilege_type='data') {
 	$userId = getLoginUserId();
 	if ($userId === true || privilege($privilege_type)>=4) return true;
 	if ($userId) {
-		global $dbemauth;
-		$q = "select o.`DEF_id` as ownerId "
-			."from ".DB_LEGINON.".`SessionData` s "
-			."left join projectexperiments pe "
-			."on s.`DEF_id` = pe.`REF|leginondata|SessionData|session` "
-			."left join projectowners o "
-			."on o.`REF|projects|project` = pe.`REF|projects|project` "
-			."where s.`DEF_id` = ".$sessionId." "
-			."and o.`REF|leginondata|UserData|user` = ".$userId;
-				$dbc=new mysql(DB_HOST, DB_USER, DB_PASS, DB_PROJECT);
-				$r = $dbc->getSQLResult($q);
-		if (is_array($r) && !empty($r)) 
-			return true;
+		// for other users,data processing is allowed if access is allowed.
+		return checkExptAccessPrivilege($sessionId,$privilege_type='data');
 	}
 	return false;
 }
@@ -195,7 +206,7 @@ function login_header($title="", $javascript="", $onload="",$athome=false) {
 		$authorized_files=array(BASE_URL.'login.php', 'lostpass.php', 'register.php', 'confirm.php');
 	
 		$login_check = $dbemauth->is_logged();
-		if (!ereg(implode("|", $authorized_files), $_SERVER['PHP_SELF'])) {
+		if (!preg_match('%'.implode("|", $authorized_files).'%', $_SERVER['PHP_SELF'])) {
 	   	if (!$login_check)  {
 				//  unautorized files can only be loaded if logged in
 				redirect(BASE_URL.'login.php?ln='.$redirect);
@@ -224,7 +235,7 @@ function login_header($title="", $javascript="", $onload="",$athome=false) {
 		$username = $login_check[0];
 	}
 	$url = "ln=".urlencode($_SERVER['REQUEST_URI']);
-	$path = getPathFromString($_SERVER['SCRIPT_NAME']);
+	$path = Path::getPathFromString($_SERVER['SCRIPT_NAME']);
 	$onload = (empty($onload)) ? '' : 'onload="'.$onload.'"';
 	echo '
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"  "http://www.w3.org/TR/html4/strict.dtd">
@@ -246,6 +257,12 @@ function login_header($title="", $javascript="", $onload="",$athome=false) {
 	</head>
 	<body '.$onload.' >
 ';
+	// To display a notice to users on the processing header, add the following line to the myami/config.php file:
+	// define('STARTUP_MESSAGE', "Your Message here");
+	if (defined('STARTUP_MESSAGE') && STARTUP_MESSAGE != '') {
+		echo "<font size=-1><b>Important Notice:</b> ".STARTUP_MESSAGE."</font><br><br>\n";
+	}	
+	
 	if (!$athome)
 		echo '<a class="header" href="'.BASE_URL.'index.php">[Home]</a>';	
 	if (ENABLE_LOGIN) {
@@ -254,11 +271,13 @@ function login_header($title="", $javascript="", $onload="",$athome=false) {
 			if($username != 'Anonymous')
 				echo '<a class="header" href="'.BASE_URL.'prefs.php">['.$username.' Profile]</a>';
 		} else {
-			if (!ereg(BASE_URL.'login.php', $_SERVER['PHP_SELF']))
+			if (!preg_match('%'.BASE_URL.'login.php%', $_SERVER['PHP_SELF']))
 				echo '<a class="header" href="'.BASE_URL.'login.php?'.$url.'">[Login]</a>';
 			echo '<a class="header" href="register.php?'.$url.'">[register]</a>';
 		}
 	}
+
+	
 }
 
 function login_footer() {

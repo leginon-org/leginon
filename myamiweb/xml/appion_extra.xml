@@ -11,7 +11,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="name" 
@@ -151,6 +151,12 @@
 		default="NULL" 
 	/> 
 	<field 
+		name="REF|ApHipIterData|hipIter" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
 		name="REF|ApRctRunData|rctrun" 
 		type="INT(20)" 
 		null="NULL" 
@@ -202,6 +208,7 @@
 	<key>KEY `REF|ApPathData|ampPath` (`REF|ApPathData|ampPath`)</key> 
 	<key>KEY `REF|ApSymmetryData|symmetry` (`REF|ApSymmetryData|symmetry`)</key> 
 	<key>KEY `REF|ApRefineIterData|refineIter` (`REF|ApRefineIterData|refineIter`)</key> 
+	<key>KEY `REF|ApHipIterData|hipIter` (`REF|ApHipIterData|hipIter`)</key> 
 	<key>KEY `REF|ApRctRunData|rctrun` (`REF|ApRctRunData|rctrun`)</key> 
 	<key>KEY `REF|ApOtrRunData|otrrun` (`REF|ApOtrRunData|otrrun`)</key> 
 	<key>KEY `REF|leginondata|SessionData|session` (`REF|leginondata|SessionData|session`)</key> 
@@ -217,7 +224,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="bin" 
@@ -307,7 +314,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="display" 
@@ -400,7 +407,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="REF|ApAceParamsData|aceparams" 
@@ -463,7 +470,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="mask_diam" 
@@ -496,7 +503,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="runname" 
@@ -557,7 +564,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="partnum" 
@@ -625,12 +632,19 @@
 		null="NULL" 
 		default="NULL" 
 	/> 
+	<field 
+		name="bad" 
+		type="TINYINT(1)" 
+		null="NULL" 
+		default="0" 
+	/> 
 	<key>PRIMARY KEY (`DEF_id`)</key> 
 	<key>KEY `DEF_timestamp` (`DEF_timestamp`)</key> 
 	<key>KEY `REF|ApAlignStackData|alignstack` (`REF|ApAlignStackData|alignstack`)</key> 
 	<key>KEY `REF|ApStackParticleData|stackpart` (`REF|ApStackParticleData|stackpart`)</key> 
 	<key>KEY `mirror` (`mirror`)</key> 
 	<key>KEY `REF|ApAlignReferenceData|ref` (`REF|ApAlignReferenceData|ref`)</key> 
+	<key>KEY `bad` (`bad`)</key> 
 </sqltable>
 <sqltable name="ApAlignReferenceData" >
 	<field 
@@ -643,7 +657,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="refnum" 
@@ -720,7 +734,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="runname" 
@@ -793,6 +807,12 @@
 		default="NULL" 
 	/> 
 	<field 
+		name="REF|ApCL2DRunData|cl2drun" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
 		name="hidden" 
 		type="TINYINT(1)" 
 		null="NULL" 
@@ -813,6 +833,7 @@
 	<key>KEY `REF|ApMultiRefAlignRunData|imagicMRA` (`REF|ApMultiRefAlignRunData|imagicMRA`)</key> 
 	<key>KEY `REF|ApEdIterRunData|editerrun` (`REF|ApEdIterRunData|editerrun`)</key> 
 	<key>KEY `REF|ApTopolRepRunData|topreprun` (`REF|ApTopolRepRunData|topreprun`)</key> 
+	<key>KEY `REF|ApCL2DRunData|cl2drun` (`REF|ApCL2DRunData|cl2drun`)</key> 
 	<key>KEY `hidden` (`hidden`)</key> 
 	<key>KEY `REF|ApPathData|path` (`REF|ApPathData|path`)</key> 
 </sqltable>
@@ -827,7 +848,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="imagicfile" 
@@ -915,7 +936,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="REF|ApAssessmentRunData|assessmentrun" 
@@ -951,7 +972,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="REF|leginondata|SessionData|session" 
@@ -979,7 +1000,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="num_averages" 
@@ -1090,7 +1111,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="runname" 
@@ -1158,6 +1179,103 @@
 	<key>KEY `REF|ApClusteringStackData|clusterid` (`REF|ApClusteringStackData|clusterid`)</key> 
 	<key>KEY `hidden` (`hidden`)</key> 
 </sqltable>
+<sqltable name="ApCL2DRunData" >
+	<field 
+		name="DEF_id" 
+		type="int(16)" 
+		null="NOT NULL" 
+		extra="auto_increment" 
+	/> 
+	<field 
+		name="DEF_timestamp" 
+		type="timestamp" 
+		null="NOT NULL" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
+	/> 
+	<field 
+		name="runname" 
+		type="TEXT" 
+		null="NULL" 
+	/> 
+	<field 
+		name="fast" 
+		type="TEXT" 
+		null="NULL" 
+	/> 
+	<field 
+		name="run_seconds" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="timestamp" 
+		type="TEXT" 
+		null="NULL" 
+	/> 
+	<field 
+		name="REF|projectdata|projects|project" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="REF|ApPathData|path" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="finished" 
+		type="TINYINT(1)" 
+		null="NULL" 
+		default="0" 
+	/> 
+	<field 
+		name="max-iter" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="num-ref" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="correlation" 
+		type="TINYINT(1)" 
+		null="NULL" 
+		default="0" 
+	/> 
+	<field 
+		name="correntropy" 
+		type="TINYINT(1)" 
+		null="NULL" 
+		default="0" 
+	/> 
+	<field 
+		name="classical_multiref" 
+		type="TINYINT(1)" 
+		null="NULL" 
+		default="0" 
+	/> 
+	<field 
+		name="intracluster_multiref" 
+		type="TINYINT(1)" 
+		null="NULL" 
+		default="0" 
+	/> 
+	<key>PRIMARY KEY (`DEF_id`)</key> 
+	<key>KEY `DEF_timestamp` (`DEF_timestamp`)</key> 
+	<key>KEY `REF|ApPathData|path` (`REF|ApPathData|path`)</key> 
+	<key>KEY `finished` (`finished`)</key> 
+	<key>KEY `correlation` (`correlation`)</key> 
+	<key>KEY `correntropy` (`correntropy`)</key> 
+	<key>KEY `classical_multiref` (`classical_multiref`)</key> 
+	<key>KEY `intracluster_multiref` (`intracluster_multiref`)</key> 
+</sqltable>
 <sqltable name="ApClusteringParticleData" >
 	<field 
 		name="DEF_id" 
@@ -1169,7 +1287,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="partnum" 
@@ -1224,7 +1342,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="refnum" 
@@ -1282,7 +1400,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="runname" 
@@ -1348,6 +1466,12 @@
 		null="NULL" 
 		default="NULL" 
 	/> 
+	<field 
+		name="REF|ApCL2DRunData|cl2dparams" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
 	<key>PRIMARY KEY (`DEF_id`)</key> 
 	<key>KEY `DEF_timestamp` (`DEF_timestamp`)</key> 
 	<key>KEY `REF|ApAlignStackData|alignstack` (`REF|ApAlignStackData|alignstack`)</key> 
@@ -1356,6 +1480,7 @@
 	<key>KEY `REF|ApKerDenSOMParamsData|kerdenparams` (`REF|ApKerDenSOMParamsData|kerdenparams`)</key> 
 	<key>KEY `REF|ApRotKerDenSOMParamsData|rotkerdenparams` (`REF|ApRotKerDenSOMParamsData|rotkerdenparams`)</key> 
 	<key>KEY `REF|ApAffinityPropagationClusterParamsData|affpropparams` (`REF|ApAffinityPropagationClusterParamsData|affpropparams`)</key> 
+	<key>KEY `REF|ApCL2DRunData|cl2dparams` (`REF|ApCL2DRunData|cl2dparams`)</key> 
 </sqltable>
 <sqltable name="ApClusteringStackData" >
 	<field 
@@ -1368,7 +1493,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="num_classes" 
@@ -1439,7 +1564,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="name" 
@@ -1507,7 +1632,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="REF|ApContourData|contour" 
@@ -1542,7 +1667,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="REF|ApCoranRunData|coranRun" 
@@ -1589,7 +1714,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="mask_diam" 
@@ -1623,7 +1748,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="REF|ApAceRunData|acerun" 
@@ -1805,7 +1930,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="medium" 
@@ -1860,8 +1985,77 @@
 		null="NULL" 
 		default="NULL" 
 	/> 
+	<field 
+		name="dast" 
+		type="DOUBLE" 
+		null="NULL" 
+		default="NULL" 
+	/> 
 	<key>PRIMARY KEY (`DEF_id`)</key> 
 	<key>KEY `DEF_timestamp` (`DEF_timestamp`)</key> 
+</sqltable>
+<sqltable name="ApDDStackParamsData" >
+	<field 
+		name="DEF_id" 
+		type="int(16)" 
+		null="NOT NULL" 
+		extra="auto_increment" 
+	/> 
+	<field 
+		name="DEF_timestamp" 
+		type="timestamp" 
+		null="NOT NULL" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
+	/> 
+	<field 
+		name="preset" 
+		type="TEXT" 
+		null="NULL" 
+	/> 
+	<key>PRIMARY KEY (`DEF_id`)</key> 
+	<key>KEY `DEF_timestamp` (`DEF_timestamp`)</key> 
+</sqltable>
+<sqltable name="ApDDStackRunData" >
+	<field 
+		name="DEF_id" 
+		type="int(16)" 
+		null="NOT NULL" 
+		extra="auto_increment" 
+	/> 
+	<field 
+		name="DEF_timestamp" 
+		type="timestamp" 
+		null="NOT NULL" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
+	/> 
+	<field 
+		name="runname" 
+		type="TEXT" 
+		null="NULL" 
+	/> 
+	<field 
+		name="REF|ApDDStackParamsData|params" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="REF|leginondata|SessionData|session" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="REF|ApPathData|path" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<key>PRIMARY KEY (`DEF_id`)</key> 
+	<key>KEY `DEF_timestamp` (`DEF_timestamp`)</key> 
+	<key>KEY `REF|ApDDStackParamsData|params` (`REF|ApDDStackParamsData|params`)</key> 
+	<key>KEY `REF|leginondata|SessionData|session` (`REF|leginondata|SessionData|session`)</key> 
+	<key>KEY `REF|ApPathData|path` (`REF|ApPathData|path`)</key> 
 </sqltable>
 <sqltable name="ApDogParamsData" >
 	<field 
@@ -1874,7 +2068,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="diam" 
@@ -1987,7 +2181,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="runname" 
@@ -2026,7 +2220,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="runname" 
@@ -2084,7 +2278,12 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
+	/> 
+	<field 
+		name="package" 
+		type="TEXT" 
+		null="NULL" 
 	/> 
 	<field 
 		name="ang" 
@@ -2100,6 +2299,18 @@
 	/> 
 	<field 
 		name="hpfilter" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="mask" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="imask" 
 		type="INT(20)" 
 		null="NULL" 
 		default="NULL" 
@@ -2154,6 +2365,24 @@
 	/> 
 	<field 
 		name="EMAN_xfiles" 
+		type="DOUBLE" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="EMAN_amask1" 
+		type="DOUBLE" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="EMAN_amask2" 
+		type="DOUBLE" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="EMAN_amask3" 
 		type="DOUBLE" 
 		null="NULL" 
 		default="NULL" 
@@ -2226,7 +2455,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="REF|ApStackParticleData|particle" 
@@ -2236,6 +2465,12 @@
 	/> 
 	<field 
 		name="REF|ApRefineRunData|refineRun" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="REF|ApMultiModelRefineRunData|multiModelRefineRun" 
 		type="INT(20)" 
 		null="NULL" 
 		default="NULL" 
@@ -2274,6 +2509,7 @@
 	<key>KEY `DEF_timestamp` (`DEF_timestamp`)</key> 
 	<key>KEY `REF|ApStackParticleData|particle` (`REF|ApStackParticleData|particle`)</key> 
 	<key>KEY `REF|ApRefineRunData|refineRun` (`REF|ApRefineRunData|refineRun`)</key> 
+	<key>KEY `REF|ApMultiModelRefineRunData|multiModelRefineRun` (`REF|ApMultiModelRefineRunData|multiModelRefineRun`)</key> 
 </sqltable>
 <sqltable name="ApFSCData" >
 	<field 
@@ -2286,7 +2522,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="REF|ApRefineIterData|refineIter" 
@@ -2310,6 +2546,70 @@
 	<key>KEY `DEF_timestamp` (`DEF_timestamp`)</key> 
 	<key>KEY `REF|ApRefineIterData|refineIter` (`REF|ApRefineIterData|refineIter`)</key> 
 </sqltable>
+<sqltable name="ApRelionIterData" >
+	<field 
+		name="DEF_id" 
+		type="int(16)" 
+		null="NOT NULL" 
+		extra="auto_increment" 
+	/> 
+	<field 
+		name="DEF_timestamp" 
+		type="timestamp" 
+		null="NOT NULL" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
+	/> 
+	<field 
+		name="ini_high" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="ctf" 
+		type="TINYINT(1)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="offset_step" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="auto_local_healpix_order" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="healpix_order" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="offset_range" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="ctf_intact_first_peak" 
+		type="TINYINT(1)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="ctf_corrected_ref" 
+		type="TINYINT(1)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<key>PRIMARY KEY (`DEF_id`)</key> 
+	<key>KEY `DEF_timestamp` (`DEF_timestamp`)</key> 
+</sqltable>
 <sqltable name="ApFrealignIterData" >
 	<field 
 		name="DEF_id" 
@@ -2321,7 +2621,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="iflag" 
@@ -2421,7 +2721,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="name" 
@@ -2527,7 +2827,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="REF|leginondata|SessionData|session" 
@@ -2599,6 +2899,12 @@
 		null="NULL" 
 		default="0" 
 	/> 
+	<field 
+		name="REF|ApTomoReconParamsData|reconparam" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
 	<key>PRIMARY KEY (`DEF_id`)</key> 
 	<key>KEY `DEF_timestamp` (`DEF_timestamp`)</key> 
 	<key>KEY `REF|leginondata|SessionData|session` (`REF|leginondata|SessionData|session`)</key> 
@@ -2609,6 +2915,7 @@
 	<key>KEY `REF|ApPathData|path` (`REF|ApPathData|path`)</key> 
 	<key>KEY `REF|leginondata|AcquisitionImageData|zprojection` (`REF|leginondata|AcquisitionImageData|zprojection`)</key> 
 	<key>KEY `hidden` (`hidden`)</key> 
+	<key>KEY `REF|ApTomoReconParamsData|reconparam` (`REF|ApTomoReconParamsData|reconparam`)</key> 
 </sqltable>
 <sqltable name="ApFullTomogramRunData" >
 	<field 
@@ -2621,7 +2928,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="REF|leginondata|SessionData|session" 
@@ -2650,6 +2957,523 @@
 	<key>KEY `REF|leginondata|SessionData|session` (`REF|leginondata|SessionData|session`)</key> 
 	<key>KEY `REF|ApPathData|path` (`REF|ApPathData|path`)</key> 
 </sqltable>
+<sqltable name="ApHelicalCoordData" >
+	<field 
+		name="DEF_id" 
+		type="int(16)" 
+		null="NOT NULL" 
+		extra="auto_increment" 
+	/> 
+	<field 
+		name="DEF_timestamp" 
+		type="timestamp" 
+		null="NOT NULL" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
+	/> 
+	<field 
+		name="REF|leginondata|AcquisitionImageData|image" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="filno" 
+		type="DOUBLE" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="xlngth" 
+		type="DOUBLE" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="xcoord" 
+		type="DOUBLE" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="ycoord" 
+		type="DOUBLE" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="initialang" 
+		type="DOUBLE" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<key>PRIMARY KEY (`DEF_id`)</key> 
+	<key>KEY `DEF_timestamp` (`DEF_timestamp`)</key> 
+	<key>KEY `REF|leginondata|AcquisitionImageData|image` (`REF|leginondata|AcquisitionImageData|image`)</key> 
+</sqltable>
+<sqltable name="ApHipIterData" >
+	<field 
+		name="DEF_id" 
+		type="int(16)" 
+		null="NOT NULL" 
+		extra="auto_increment" 
+	/> 
+	<field 
+		name="DEF_timestamp" 
+		type="timestamp" 
+		null="NOT NULL" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
+	/> 
+	<field 
+		name="REF|leginondata|SessionData|session" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="REF|ApHipRunData|hipRun" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="iteration" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="iterpath" 
+		type="TEXT" 
+		null="NULL" 
+	/> 
+	<field 
+		name="volumeDensity" 
+		type="TEXT" 
+		null="NULL" 
+	/> 
+	<field 
+		name="REF|ApResolutionData|resolution" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="REF|ApRMeasureData|rMeasure" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="cutfit1" 
+		type="TEXT" 
+		null="NULL" 
+	/> 
+	<field 
+		name="cutfit2" 
+		type="TEXT" 
+		null="NULL" 
+	/> 
+	<field 
+		name="cutfit3" 
+		type="TEXT" 
+		null="NULL" 
+	/> 
+	<field 
+		name="chop1" 
+		type="TEXT" 
+		null="NULL" 
+	/> 
+	<field 
+		name="chop2" 
+		type="TEXT" 
+		null="NULL" 
+	/> 
+	<field 
+		name="avglist_file" 
+		type="TEXT" 
+		null="NULL" 
+	/> 
+	<field 
+		name="final_numpart" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="asymsu" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="avg_file" 
+		type="TEXT" 
+		null="NULL" 
+	/> 
+	<field 
+		name="map_file" 
+		type="TEXT" 
+		null="NULL" 
+	/> 
+	<field 
+		name="mrc_file" 
+		type="TEXT" 
+		null="NULL" 
+	/> 
+	<field 
+		name="ll_file" 
+		type="TEXT" 
+		null="NULL" 
+	/> 
+	<field 
+		name="op_file" 
+		type="TEXT" 
+		null="NULL" 
+	/> 
+	<field 
+		name="output_file" 
+		type="TEXT" 
+		null="NULL" 
+	/> 
+	<key>PRIMARY KEY (`DEF_id`)</key> 
+	<key>KEY `DEF_timestamp` (`DEF_timestamp`)</key> 
+	<key>KEY `REF|leginondata|SessionData|session` (`REF|leginondata|SessionData|session`)</key> 
+	<key>KEY `REF|ApHipRunData|hipRun` (`REF|ApHipRunData|hipRun`)</key> 
+	<key>KEY `REF|ApResolutionData|resolution` (`REF|ApResolutionData|resolution`)</key> 
+	<key>KEY `REF|ApRMeasureData|rMeasure` (`REF|ApRMeasureData|rMeasure`)</key> 
+</sqltable>
+<sqltable name="ApHipParamsData" >
+	<field 
+		name="DEF_id" 
+		type="int(16)" 
+		null="NOT NULL" 
+		extra="auto_increment" 
+	/> 
+	<field 
+		name="DEF_timestamp" 
+		type="timestamp" 
+		null="NOT NULL" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
+	/> 
+	<field 
+		name="REF|leginondata|SessionData|session" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="REF|ApHipRunData|hipRun" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="numpart" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="replen" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="diam" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="diaminner" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="subunits" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="xlngth" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="yht2" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="padval" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="rescut" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="filval" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="strong" 
+		type="TEXT" 
+		null="NULL" 
+	/> 
+	<field 
+		name="range" 
+		type="TEXT" 
+		null="NULL" 
+	/> 
+	<field 
+		name="llbo" 
+		type="TEXT" 
+		null="NULL" 
+	/> 
+	<field 
+		name="final_stack" 
+		type="TEXT" 
+		null="NULL" 
+	/> 
+	<key>PRIMARY KEY (`DEF_id`)</key> 
+	<key>KEY `DEF_timestamp` (`DEF_timestamp`)</key> 
+	<key>KEY `REF|leginondata|SessionData|session` (`REF|leginondata|SessionData|session`)</key> 
+	<key>KEY `REF|ApHipRunData|hipRun` (`REF|ApHipRunData|hipRun`)</key> 
+</sqltable>
+<sqltable name="ApHipParticleData" >
+	<field 
+		name="DEF_id" 
+		type="int(16)" 
+		null="NOT NULL" 
+		extra="auto_increment" 
+	/> 
+	<field 
+		name="DEF_timestamp" 
+		type="timestamp" 
+		null="NOT NULL" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
+	/> 
+	<field 
+		name="REF|leginondata|SessionData|session" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="REF|ApHipRunData|hipRun" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="particleNumber" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="filename" 
+		type="TEXT" 
+		null="NULL" 
+	/> 
+	<field 
+		name="REF|ApStackData|stack" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="REF|ApStackRunData|stackRun" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="tilt" 
+		type="DOUBLE" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="shift" 
+		type="DOUBLE" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="resid" 
+		type="DOUBLE" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="far_phi" 
+		type="DOUBLE" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="far_z" 
+		type="DOUBLE" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="far_rscale" 
+		type="DOUBLE" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="far_ampscale" 
+		type="DOUBLE" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="ner_phi" 
+		type="DOUBLE" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="ner_z" 
+		type="DOUBLE" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="ner_rscale" 
+		type="DOUBLE" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="ner_ampscale" 
+		type="DOUBLE" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="mrc_file" 
+		type="TEXT" 
+		null="NULL" 
+	/> 
+	<field 
+		name="s_file" 
+		type="TEXT" 
+		null="NULL" 
+	/> 
+	<field 
+		name="dft_file" 
+		type="TEXT" 
+		null="NULL" 
+	/> 
+	<field 
+		name="colb_file" 
+		type="TEXT" 
+		null="NULL" 
+	/> 
+	<field 
+		name="ner_file" 
+		type="TEXT" 
+		null="NULL" 
+	/> 
+	<field 
+		name="far_file" 
+		type="TEXT" 
+		null="NULL" 
+	/> 
+	<field 
+		name="fft_file" 
+		type="TEXT" 
+		null="NULL" 
+	/> 
+	<key>PRIMARY KEY (`DEF_id`)</key> 
+	<key>KEY `DEF_timestamp` (`DEF_timestamp`)</key> 
+	<key>KEY `REF|leginondata|SessionData|session` (`REF|leginondata|SessionData|session`)</key> 
+	<key>KEY `REF|ApHipRunData|hipRun` (`REF|ApHipRunData|hipRun`)</key> 
+	<key>KEY `REF|ApStackData|stack` (`REF|ApStackData|stack`)</key> 
+	<key>KEY `REF|ApStackRunData|stackRun` (`REF|ApStackRunData|stackRun`)</key> 
+</sqltable>
+<sqltable name="ApHipRunData" >
+	<field 
+		name="DEF_id" 
+		type="int(16)" 
+		null="NOT NULL" 
+		extra="auto_increment" 
+	/> 
+	<field 
+		name="DEF_timestamp" 
+		type="timestamp" 
+		null="NOT NULL" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
+	/> 
+	<field 
+		name="runname" 
+		type="TEXT" 
+		null="NULL" 
+	/> 
+	<field 
+		name="REF|ApPathData|path" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="description" 
+		type="TEXT" 
+		null="NULL" 
+	/> 
+	<field 
+		name="REF|projectdata|projects|project" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="REF|leginondata|SessionData|session" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="apix" 
+		type="DOUBLE" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="REF|ApStackData|stack" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="hidden" 
+		type="TINYINT(1)" 
+		null="NULL" 
+		default="0" 
+	/> 
+	<key>PRIMARY KEY (`DEF_id`)</key> 
+	<key>KEY `DEF_timestamp` (`DEF_timestamp`)</key> 
+	<key>KEY `REF|ApPathData|path` (`REF|ApPathData|path`)</key> 
+	<key>KEY `REF|leginondata|SessionData|session` (`REF|leginondata|SessionData|session`)</key> 
+	<key>KEY `REF|ApStackData|stack` (`REF|ApStackData|stack`)</key> 
+	<key>KEY `hidden` (`hidden`)</key> 
+</sqltable>
 <sqltable name="ApImageTiltTransformData" >
 	<field 
 		name="DEF_id" 
@@ -2661,7 +3485,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="REF|leginondata|AcquisitionImageData|image1" 
@@ -2758,7 +3582,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="REF|leginondata|AcquisitionImageData|image1" 
@@ -2812,7 +3636,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="REF|ApImagic3dRefineRunData|refinement_run" 
@@ -3075,7 +3899,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="runname" 
@@ -3147,7 +3971,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="runname" 
@@ -3226,7 +4050,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="RotationAngle" 
@@ -3266,7 +4090,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="mask_diam" 
@@ -3311,7 +4135,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="diam" 
@@ -3367,6 +4191,12 @@
 		null="NULL" 
 		default="0" 
 	/> 
+	<field 
+		name="helicalstep" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
 	<key>PRIMARY KEY (`DEF_id`)</key> 
 	<key>KEY `DEF_timestamp` (`DEF_timestamp`)</key> 
 	<key>KEY `REF|ApSelectionRunData|oldselectionrun` (`REF|ApSelectionRunData|oldselectionrun`)</key> 
@@ -3383,7 +4213,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="REF|ApMaskAssessmentRunData|run" 
@@ -3419,7 +4249,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="REF|leginondata|SessionData|session" 
@@ -3454,7 +4284,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="bin" 
@@ -3537,7 +4367,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="REF|ApMaskMakerParamsData|params" 
@@ -3579,7 +4409,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="REF|ApMaskMakerRunData|maskrun" 
@@ -3651,7 +4481,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="runname" 
@@ -3704,7 +4534,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="runname" 
@@ -3775,7 +4605,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="REF|projectdata|projects|project" 
@@ -3836,6 +4666,46 @@
 	<key>KEY `REF|ApPathData|path` (`REF|ApPathData|path`)</key> 
 	<key>KEY `hidden` (`hidden`)</key> 
 </sqltable>
+<sqltable name="ApMultiModelRefineRunData" >
+	<field 
+		name="DEF_id" 
+		type="int(16)" 
+		null="NOT NULL" 
+		extra="auto_increment" 
+	/> 
+	<field 
+		name="DEF_timestamp" 
+		type="timestamp" 
+		null="NOT NULL" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
+	/> 
+	<field 
+		name="runname" 
+		type="TEXT" 
+		null="NULL" 
+	/> 
+	<field 
+		name="num_refinements" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="REF|projectdata|projects|project" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="REF|leginondata|SessionData|session" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<key>PRIMARY KEY (`DEF_id`)</key> 
+	<key>KEY `DEF_timestamp` (`DEF_timestamp`)</key> 
+	<key>KEY `REF|leginondata|SessionData|session` (`REF|leginondata|SessionData|session`)</key> 
+</sqltable>
 <sqltable name="ApMultiRefAlignRunData" >
 	<field 
 		name="DEF_id" 
@@ -3847,7 +4717,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="runname" 
@@ -3952,7 +4822,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="runname" 
@@ -4074,7 +4944,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="REF|ApSelectionRunData|selectionrun" 
@@ -4097,6 +4967,12 @@
 	<field 
 		name="ycoord" 
 		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="angle" 
+		type="DOUBLE" 
 		null="NULL" 
 		default="NULL" 
 	/> 
@@ -4141,11 +5017,384 @@
 		type="TEXT" 
 		null="NULL" 
 	/> 
+	<field 
+		name="helixnum" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
 	<key>PRIMARY KEY (`DEF_id`)</key> 
 	<key>KEY `DEF_timestamp` (`DEF_timestamp`)</key> 
 	<key>KEY `REF|ApSelectionRunData|selectionrun` (`REF|ApSelectionRunData|selectionrun`)</key> 
 	<key>KEY `REF|leginondata|AcquisitionImageData|image` (`REF|leginondata|AcquisitionImageData|image`)</key> 
 	<key>KEY `REF|ApTemplateImageData|template` (`REF|ApTemplateImageData|template`)</key> 
+</sqltable>
+<sqltable name="ApParticleExtractorData" >
+	<field 
+		name="DEF_id" 
+		type="int(16)" 
+		null="NOT NULL" 
+		extra="auto_increment" 
+	/> 
+	<field 
+		name="DEF_timestamp" 
+		type="timestamp" 
+		null="NOT NULL" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
+	/> 
+	<field 
+		name="boxSize" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="bin" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="aceCutoff" 
+		type="DOUBLE" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="correlationMin" 
+		type="DOUBLE" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="correlationMax" 
+		type="DOUBLE" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="checkMask" 
+		type="TEXT" 
+		null="NULL" 
+	/> 
+	<field 
+		name="checkImage" 
+		type="TINYINT(1)" 
+		null="NULL" 
+		default="0" 
+	/> 
+	<field 
+		name="norejects" 
+		type="TINYINT(1)" 
+		null="NULL" 
+		default="0" 
+	/> 
+	<field 
+		name="minDefocus" 
+		type="DOUBLE" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="maxDefocus" 
+		type="DOUBLE" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="defocpair" 
+		type="TINYINT(1)" 
+		null="NULL" 
+		default="0" 
+	/> 
+	<field 
+		name="tiltangle" 
+		type="TEXT" 
+		null="NULL" 
+	/> 
+	<field 
+		name="rotate" 
+		type="TINYINT(1)" 
+		null="NULL" 
+		default="0" 
+	/> 
+	<key>PRIMARY KEY (`DEF_id`)</key> 
+	<key>KEY `DEF_timestamp` (`DEF_timestamp`)</key> 
+	<key>KEY `checkImage` (`checkImage`)</key> 
+	<key>KEY `norejects` (`norejects`)</key> 
+	<key>KEY `defocpair` (`defocpair`)</key> 
+	<key>KEY `rotate` (`rotate`)</key> 
+</sqltable>
+<sqltable name="ApParticleMovieData" >
+	<field 
+		name="DEF_id" 
+		type="int(16)" 
+		null="NOT NULL" 
+		extra="auto_increment" 
+	/> 
+	<field 
+		name="DEF_timestamp" 
+		type="timestamp" 
+		null="NOT NULL" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
+	/> 
+	<field 
+		name="movieNumber" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="REF|ApParticleMovieRunData|movieRun" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="REF|ApParticleData|particle" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="format" 
+		type="TEXT" 
+		null="NULL" 
+	/> 
+	<key>PRIMARY KEY (`DEF_id`)</key> 
+	<key>KEY `DEF_timestamp` (`DEF_timestamp`)</key> 
+	<key>KEY `REF|ApParticleMovieRunData|movieRun` (`REF|ApParticleMovieRunData|movieRun`)</key> 
+	<key>KEY `REF|ApParticleData|particle` (`REF|ApParticleData|particle`)</key> 
+</sqltable>
+<sqltable name="ApParticleMovieParamsData" >
+	<field 
+		name="DEF_id" 
+		type="int(16)" 
+		null="NOT NULL" 
+		extra="auto_increment" 
+	/> 
+	<field 
+		name="DEF_timestamp" 
+		type="timestamp" 
+		null="NOT NULL" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
+	/> 
+	<field 
+		name="boxSize" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="bin" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="aceCutoff" 
+		type="DOUBLE" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="correlationMin" 
+		type="DOUBLE" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="correlationMax" 
+		type="DOUBLE" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="checkMask" 
+		type="TEXT" 
+		null="NULL" 
+	/> 
+	<field 
+		name="checkImage" 
+		type="TINYINT(1)" 
+		null="NULL" 
+		default="0" 
+	/> 
+	<field 
+		name="norejects" 
+		type="TINYINT(1)" 
+		null="NULL" 
+		default="0" 
+	/> 
+	<field 
+		name="minDefocus" 
+		type="DOUBLE" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="maxDefocus" 
+		type="DOUBLE" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="defocpair" 
+		type="TINYINT(1)" 
+		null="NULL" 
+		default="0" 
+	/> 
+	<field 
+		name="tiltangle" 
+		type="TEXT" 
+		null="NULL" 
+	/> 
+	<field 
+		name="rotate" 
+		type="TINYINT(1)" 
+		null="NULL" 
+		default="0" 
+	/> 
+	<field 
+		name="frameavg" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="framestep" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<key>PRIMARY KEY (`DEF_id`)</key> 
+	<key>KEY `DEF_timestamp` (`DEF_timestamp`)</key> 
+	<key>KEY `checkImage` (`checkImage`)</key> 
+	<key>KEY `norejects` (`norejects`)</key> 
+	<key>KEY `defocpair` (`defocpair`)</key> 
+	<key>KEY `rotate` (`rotate`)</key> 
+</sqltable>
+<sqltable name="ApParticleMovieRunData" >
+	<field 
+		name="DEF_id" 
+		type="int(16)" 
+		null="NOT NULL" 
+		extra="auto_increment" 
+	/> 
+	<field 
+		name="DEF_timestamp" 
+		type="timestamp" 
+		null="NOT NULL" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
+	/> 
+	<field 
+		name="movieRunName" 
+		type="TEXT" 
+		null="NULL" 
+	/> 
+	<field 
+		name="REF|ApParticleMovieParamsData|movieParams" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="REF|ApSelectionRunData|selectionrun" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="REF|leginondata|SessionData|session" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="REF|ApPathData|path" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<key>PRIMARY KEY (`DEF_id`)</key> 
+	<key>KEY `DEF_timestamp` (`DEF_timestamp`)</key> 
+	<key>KEY `REF|ApParticleMovieParamsData|movieParams` (`REF|ApParticleMovieParamsData|movieParams`)</key> 
+	<key>KEY `REF|ApSelectionRunData|selectionrun` (`REF|ApSelectionRunData|selectionrun`)</key> 
+	<key>KEY `REF|leginondata|SessionData|session` (`REF|leginondata|SessionData|session`)</key> 
+	<key>KEY `REF|ApPathData|path` (`REF|ApPathData|path`)</key> 
+</sqltable>
+<sqltable name="ApPrepRefineData" >
+	<field 
+		name="DEF_id" 
+		type="int(16)" 
+		null="NOT NULL" 
+		extra="auto_increment" 
+	/> 
+	<field 
+		name="DEF_timestamp" 
+		type="timestamp" 
+		null="NOT NULL" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
+	/> 
+	<field 
+		name="name" 
+		type="TEXT" 
+		null="NULL" 
+	/> 
+	<field 
+		name="hidden" 
+		type="TINYINT(1)" 
+		null="NULL" 
+		default="0" 
+	/> 
+	<field 
+		name="REF|ApPathData|path" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="REF|ApStackData|stack" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="REF|ApAppionJobData|job" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="REF|leginondata|SessionData|session" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="method" 
+		type="TEXT" 
+		null="NULL" 
+	/> 
+	<field 
+		name="description" 
+		type="TEXT" 
+		null="NULL" 
+	/> 
+	<field 
+		name="REF|ApRefineIterData|paramiter" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<key>PRIMARY KEY (`DEF_id`)</key> 
+	<key>KEY `DEF_timestamp` (`DEF_timestamp`)</key> 
+	<key>KEY `hidden` (`hidden`)</key> 
+	<key>KEY `REF|ApPathData|path` (`REF|ApPathData|path`)</key> 
+	<key>KEY `REF|ApStackData|stack` (`REF|ApStackData|stack`)</key> 
+	<key>KEY `REF|ApAppionJobData|job` (`REF|ApAppionJobData|job`)</key> 
+	<key>KEY `REF|leginondata|SessionData|session` (`REF|leginondata|SessionData|session`)</key> 
+	<key>KEY `REF|ApRefineIterData|paramiter` (`REF|ApRefineIterData|paramiter`)</key> 
 </sqltable>
 <sqltable name="ApProtomoAlignerParamsData" >
 	<field 
@@ -4158,7 +5407,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="REF|ApTomoAlignmentRunData|alignrun" 
@@ -4226,7 +5475,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="REF|ApTomoAlignerParamsData|aligner" 
@@ -4268,7 +5517,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="REF|ApTomoAlignerParamsData|aligner" 
@@ -4315,7 +5564,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="series_name" 
@@ -4336,7 +5585,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="REF|ApProtomoParamsData|protomo" 
@@ -4373,6 +5622,8 @@
 		null="NULL" 
 		default="NULL" 
 	/> 
+	<field name="SUBD|alibox|x" type="double" />
+	<field name="SUBD|alibox|y" type="double" />
 	<key>PRIMARY KEY (`DEF_id`)</key> 
 	<key>KEY `DEF_timestamp` (`DEF_timestamp`)</key> 
 	<key>KEY `REF|ApProtomoParamsData|protomo` (`REF|ApProtomoParamsData|protomo`)</key> 
@@ -4389,7 +5640,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="volume" 
@@ -4399,6 +5650,34 @@
 	<field 
 		name="rMeasure" 
 		type="DOUBLE" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<key>PRIMARY KEY (`DEF_id`)</key> 
+	<key>KEY `DEF_timestamp` (`DEF_timestamp`)</key> 
+</sqltable>
+<sqltable name="ApRaptorParamsData" >
+	<field 
+		name="DEF_id" 
+		type="int(16)" 
+		null="NOT NULL" 
+		extra="auto_increment" 
+	/> 
+	<field 
+		name="DEF_timestamp" 
+		type="timestamp" 
+		null="NOT NULL" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
+	/> 
+	<field 
+		name="markersize" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="markernumber" 
+		type="INT(20)" 
 		null="NULL" 
 		default="NULL" 
 	/> 
@@ -4416,7 +5695,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="runname" 
@@ -4448,6 +5727,12 @@
 	/> 
 	<field 
 		name="highpasspart" 
+		type="DOUBLE" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="lowpasspart" 
 		type="DOUBLE" 
 		null="NULL" 
 		default="NULL" 
@@ -4532,7 +5817,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="runname" 
@@ -4614,7 +5899,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="REF|ApRefineIterData|refine" 
@@ -4650,6 +5935,52 @@
 	<key>KEY `DEF_timestamp` (`DEF_timestamp`)</key> 
 	<key>KEY `REF|ApRefineIterData|refine` (`REF|ApRefineIterData|refine`)</key> 
 </sqltable>
+<sqltable name="ApRefineInitModelData" >
+	<field 
+		name="DEF_id" 
+		type="int(16)" 
+		null="NOT NULL" 
+		extra="auto_increment" 
+	/> 
+	<field 
+		name="DEF_timestamp" 
+		type="timestamp" 
+		null="NOT NULL" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
+	/> 
+	<field 
+		name="REF|ApPrepRefineData|preprefine" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="REF|ApInitialModelData|refmodel" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="filename" 
+		type="TEXT" 
+		null="NULL" 
+	/> 
+	<field 
+		name="format" 
+		type="TEXT" 
+		null="NULL" 
+	/> 
+	<field 
+		name="apix" 
+		type="DOUBLE" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<key>PRIMARY KEY (`DEF_id`)</key> 
+	<key>KEY `DEF_timestamp` (`DEF_timestamp`)</key> 
+	<key>KEY `REF|ApPrepRefineData|preprefine` (`REF|ApPrepRefineData|preprefine`)</key> 
+	<key>KEY `REF|ApInitialModelData|refmodel` (`REF|ApInitialModelData|refmodel`)</key> 
+</sqltable>
 <sqltable name="ApRefineIterData" >
 	<field 
 		name="DEF_id" 
@@ -4661,7 +5992,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="iteration" 
@@ -4676,6 +6007,12 @@
 		default="0" 
 	/> 
 	<field 
+		name="angularSamplingRate" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
 		name="mask" 
 		type="INT(20)" 
 		null="NULL" 
@@ -4683,6 +6020,18 @@
 	/> 
 	<field 
 		name="imask" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="alignmentInnerRadius" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="alignmentOuterRadius" 
 		type="INT(20)" 
 		null="NULL" 
 		default="NULL" 
@@ -4749,6 +6098,18 @@
 		null="NULL" 
 		default="NULL" 
 	/> 
+	<field 
+		name="REF|ApXmippML3DRefineIterData|xmippML3DParams" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="REF|ApRelionIterData|relionParams" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 	
 	<key>PRIMARY KEY (`DEF_id`)</key> 
 	<key>KEY `DEF_timestamp` (`DEF_timestamp`)</key> 
 	<key>KEY `exemplar` (`exemplar`)</key> 
@@ -4759,6 +6120,54 @@
 	<key>KEY `REF|ApEmanRefineIterData|emanParams` (`REF|ApEmanRefineIterData|emanParams`)</key> 
 	<key>KEY `REF|ApXmippRefineIterData|xmippParams` (`REF|ApXmippRefineIterData|xmippParams`)</key> 
 	<key>KEY `REF|ApFrealignIterData|frealignParams` (`REF|ApFrealignIterData|frealignParams`)</key> 
+	<key>KEY `REF|ApXmippML3DRefineIterData|xmippML3DParams` (`REF|ApXmippML3DRefineIterData|xmippML3DParams`)</key> 
+	<key>KEY `REF|ApRelionIterData|relionParams` (`REF|ApRelionIterData|relionParams`)</key> 
+</sqltable>
+<sqltable name="ApRefineMaskVolData" >
+	<field 
+		name="DEF_id" 
+		type="int(16)" 
+		null="NOT NULL" 
+		extra="auto_increment" 
+	/> 
+	<field 
+		name="DEF_timestamp" 
+		type="timestamp" 
+		null="NOT NULL" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
+	/> 
+	<field 
+		name="REF|ApPrepRefineData|preprefine" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="REF|ApInitialModelData|refmodel" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="filename" 
+		type="TEXT" 
+		null="NULL" 
+	/> 
+	<field 
+		name="format" 
+		type="TEXT" 
+		null="NULL" 
+	/> 
+	<field 
+		name="apix" 
+		type="DOUBLE" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<key>PRIMARY KEY (`DEF_id`)</key> 
+	<key>KEY `DEF_timestamp` (`DEF_timestamp`)</key> 
+	<key>KEY `REF|ApPrepRefineData|preprefine` (`REF|ApPrepRefineData|preprefine`)</key> 
+	<key>KEY `REF|ApInitialModelData|refmodel` (`REF|ApInitialModelData|refmodel`)</key> 
 </sqltable>
 <sqltable name="ApRefineParticleData" >
 	<field 
@@ -4771,10 +6180,22 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="REF|ApRefineIterData|refineIter" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="REF|ApMultiModelRefineRunData|multiModelRefineRun" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="REF|ApRefineReferenceData|reference_number" 
 		type="INT(20)" 
 		null="NULL" 
 		default="NULL" 
@@ -4834,6 +6255,18 @@
 		default="0" 
 	/> 
 	<field 
+		name="3Dref_num" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="2Dclass_num" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
 		name="refine_keep" 
 		type="TINYINT(1)" 
 		null="NULL" 
@@ -4853,10 +6286,58 @@
 	<key>PRIMARY KEY (`DEF_id`)</key> 
 	<key>KEY `DEF_timestamp` (`DEF_timestamp`)</key> 
 	<key>KEY `REF|ApRefineIterData|refineIter` (`REF|ApRefineIterData|refineIter`)</key> 
+	<key>KEY `REF|ApMultiModelRefineRunData|multiModelRefineRun` (`REF|ApMultiModelRefineRunData|multiModelRefineRun`)</key> 
+	<key>KEY `REF|ApRefineReferenceData|reference_number` (`REF|ApRefineReferenceData|reference_number`)</key> 
 	<key>KEY `REF|ApStackParticleData|particle` (`REF|ApStackParticleData|particle`)</key> 
 	<key>KEY `mirror` (`mirror`)</key> 
 	<key>KEY `refine_keep` (`refine_keep`)</key> 
 	<key>KEY `postRefine_keep` (`postRefine_keep`)</key> 
+</sqltable>
+<sqltable name="ApRefineReferenceData" >
+	<field 
+		name="DEF_id" 
+		type="int(16)" 
+		null="NOT NULL" 
+		extra="auto_increment" 
+	/> 
+	<field 
+		name="DEF_timestamp" 
+		type="timestamp" 
+		null="NOT NULL" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
+	/> 
+	<field 
+		name="volumeDensityStart" 
+		type="TEXT" 
+		null="NULL" 
+	/> 
+	<field 
+		name="volumeDensityEnd" 
+		type="TEXT" 
+		null="NULL" 
+	/> 
+	<field 
+		name="reference_number" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="REF|ApPathData|path" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="REF|ApRefineIterData|iteration" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<key>PRIMARY KEY (`DEF_id`)</key> 
+	<key>KEY `DEF_timestamp` (`DEF_timestamp`)</key> 
+	<key>KEY `REF|ApPathData|path` (`REF|ApPathData|path`)</key> 
+	<key>KEY `REF|ApRefineIterData|iteration` (`REF|ApRefineIterData|iteration`)</key> 
 </sqltable>
 <sqltable name="ApRefineRunData" >
 	<field 
@@ -4869,7 +6350,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="runname" 
@@ -4899,6 +6380,12 @@
 		default="0" 
 	/> 
 	<field 
+		name="reference_number" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
 		name="REF|ApStackData|stack" 
 		type="INT(20)" 
 		null="NULL" 
@@ -4923,7 +6410,7 @@
 		default="NULL" 
 	/> 
 	<field 
-		name="REF|ApXmippRefineParamsData|xmippParams" 
+		name="REF|ApMultiModelRefineRunData|multiModelRefineRun" 
 		type="INT(20)" 
 		null="NULL" 
 		default="NULL" 
@@ -4935,7 +6422,98 @@
 	<key>KEY `REF|ApInitialModelData|initialModel` (`REF|ApInitialModelData|initialModel`)</key> 
 	<key>KEY `REF|ApPathData|path` (`REF|ApPathData|path`)</key> 
 	<key>KEY `REF|ApAppionJobData|job` (`REF|ApAppionJobData|job`)</key> 
-	<key>KEY `REF|ApXmippRefineParamsData|xmippParams` (`REF|ApXmippRefineParamsData|xmippParams`)</key> 
+	<key>KEY `REF|ApMultiModelRefineRunData|multiModelRefineRun` (`REF|ApMultiModelRefineRunData|multiModelRefineRun`)</key> 
+</sqltable>
+<sqltable name="ApRefineStackData" >
+	<field 
+		name="DEF_id" 
+		type="int(16)" 
+		null="NOT NULL" 
+		extra="auto_increment" 
+	/> 
+	<field 
+		name="DEF_timestamp" 
+		type="timestamp" 
+		null="NOT NULL" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
+	/> 
+	<field 
+		name="REF|ApPrepRefineData|preprefine" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="REF|ApStackData|stackref" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="filename" 
+		type="TEXT" 
+		null="NULL" 
+	/> 
+	<field 
+		name="bin" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="lowpass" 
+		type="DOUBLE" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="highpass" 
+		type="DOUBLE" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="last_part" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="format" 
+		type="TEXT" 
+		null="NULL" 
+	/> 
+	<field 
+		name="apix" 
+		type="DOUBLE" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="boxsize" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="cs" 
+		type="DOUBLE" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="recon" 
+		type="TINYINT(1)" 
+		null="NULL" 
+		default="0" 
+	/><field name="phaseflipped" type="TINYINT(1)" null="NULL"
+		default="NULL">
+</field>
+	<key>PRIMARY KEY (`DEF_id`)</key> 
+	<key>KEY `DEF_timestamp` (`DEF_timestamp`)</key> 
+	<key>KEY `REF|ApPrepRefineData|preprefine` (`REF|ApPrepRefineData|preprefine`)</key> 
+	<key>KEY `REF|ApStackData|stackref` (`REF|ApStackData|stackref`)</key> 
+	<key>KEY `recon` (`recon`)</key> 
 </sqltable>
 <sqltable name="ApResolutionData" >
 	<field 
@@ -4948,7 +6526,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="fscfile" 
@@ -4980,7 +6558,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="mask_diam" 
@@ -5067,7 +6645,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="REF|ApStackData|stack" 
@@ -5097,7 +6675,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="diam" 
@@ -5192,7 +6770,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="name" 
@@ -5251,6 +6829,46 @@
 	<key>KEY `REF|ApManualParamsData|manparams` (`REF|ApManualParamsData|manparams`)</key> 
 	<key>KEY `REF|ApTiltAlignParamsData|tiltparams` (`REF|ApTiltAlignParamsData|tiltparams`)</key> 
 </sqltable>
+<sqltable name="ApSizingRunData" >
+	<field 
+		name="DEF_id" 
+		type="int(16)" 
+		null="NOT NULL" 
+		extra="auto_increment" 
+	/> 
+	<field 
+		name="DEF_timestamp" 
+		type="timestamp" 
+		null="NOT NULL" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
+	/> 
+	<field 
+		name="name" 
+		type="TEXT" 
+		null="NULL" 
+	/> 
+	<field 
+		name="REF|ApPathData|path" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="method" 
+		type="TEXT" 
+		null="NULL" 
+	/> 
+	<field 
+		name="REF|ApSelectionRunData|tracerun" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<key>PRIMARY KEY (`DEF_id`)</key> 
+	<key>KEY `DEF_timestamp` (`DEF_timestamp`)</key> 
+	<key>KEY `REF|ApPathData|path` (`REF|ApPathData|path`)</key> 
+	<key>KEY `REF|ApSelectionRunData|tracerun` (`REF|ApSelectionRunData|tracerun`)</key> 
+</sqltable>
 <sqltable name="ApSpiderClusteringParamsData" >
 	<field 
 		name="DEF_id" 
@@ -5262,7 +6880,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="factor_list" 
@@ -5288,7 +6906,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="runname" 
@@ -5338,7 +6956,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="REF|ApPathData|path" 
@@ -5424,6 +7042,57 @@
 	<key>KEY `junksorted` (`junksorted`)</key> 
 	<key>KEY `beamtilt_corrected` (`beamtilt_corrected`)</key> 
 </sqltable>
+<sqltable name="ApStackFormatData" >
+	<field 
+		name="DEF_id" 
+		type="int(16)" 
+		null="NOT NULL" 
+		extra="auto_increment" 
+	/> 
+	<field 
+		name="DEF_timestamp" 
+		type="timestamp" 
+		null="NOT NULL" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
+	/> 
+	<field 
+		name="REF|ApStackData|stack" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="REF|ApPathData|eman" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="REF|ApPathData|spider" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="REF|ApPathData|xmipp" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="REF|ApPathData|frealign" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<key>PRIMARY KEY (`DEF_id`)</key> 
+	<key>KEY `DEF_timestamp` (`DEF_timestamp`)</key> 
+	<key>KEY `REF|ApStackData|stack` (`REF|ApStackData|stack`)</key> 
+	<key>KEY `REF|ApPathData|eman` (`REF|ApPathData|eman`)</key> 
+	<key>KEY `REF|ApPathData|spider` (`REF|ApPathData|spider`)</key> 
+	<key>KEY `REF|ApPathData|xmipp` (`REF|ApPathData|xmipp`)</key> 
+	<key>KEY `REF|ApPathData|frealign` (`REF|ApPathData|frealign`)</key> 
+</sqltable>
 <sqltable name="ApStackParamsData" >
 	<field 
 		name="DEF_id" 
@@ -5435,7 +7104,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="boxSize" 
@@ -5448,17 +7117,6 @@
 		type="INT(20)" 
 		null="NULL" 
 		default="NULL" 
-	/> 
-	<field 
-		name="phaseFlipped" 
-		type="TINYINT(1)" 
-		null="NULL" 
-		default="0" 
-	/> 
-	<field 
-		name="fliptype" 
-		type="TEXT" 
-		null="NULL" 
 	/> 
 	<field 
 		name="aceCutoff" 
@@ -5508,6 +7166,34 @@
 		default="NULL" 
 	/> 
 	<field 
+		name="defocpair" 
+		type="TINYINT(1)" 
+		null="NULL" 
+		default="0" 
+	/> 
+	<field 
+		name="tiltangle" 
+		type="TEXT" 
+		null="NULL" 
+	/> 
+	<field 
+		name="rotate" 
+		type="TINYINT(1)" 
+		null="NULL" 
+		default="0" 
+	/> 
+	<field 
+		name="phaseFlipped" 
+		type="TINYINT(1)" 
+		null="NULL" 
+		default="0" 
+	/> 
+	<field 
+		name="fliptype" 
+		type="TEXT" 
+		null="NULL" 
+	/> 
+	<field 
 		name="fileType" 
 		type="TEXT" 
 		null="NULL" 
@@ -5531,12 +7217,6 @@
 		default="NULL" 
 	/> 
 	<field 
-		name="defocpair" 
-		type="TINYINT(1)" 
-		null="NULL" 
-		default="0" 
-	/> 
-	<field 
 		name="lowpass" 
 		type="DOUBLE" 
 		null="NULL" 
@@ -5548,19 +7228,15 @@
 		null="NULL" 
 		default="NULL" 
 	/> 
-	<field 
-		name="tiltangle" 
-		type="TEXT" 
-		null="NULL" 
-	/> 
 	<key>PRIMARY KEY (`DEF_id`)</key> 
 	<key>KEY `DEF_timestamp` (`DEF_timestamp`)</key> 
-	<key>KEY `phaseFlipped` (`phaseFlipped`)</key> 
 	<key>KEY `checkImage` (`checkImage`)</key> 
 	<key>KEY `norejects` (`norejects`)</key> 
+	<key>KEY `defocpair` (`defocpair`)</key> 
+	<key>KEY `rotate` (`rotate`)</key> 
+	<key>KEY `phaseFlipped` (`phaseFlipped`)</key> 
 	<key>KEY `inverted` (`inverted`)</key> 
 	<key>KEY `normalized` (`normalized`)</key> 
-	<key>KEY `defocpair` (`defocpair`)</key> 
 </sqltable>
 <sqltable name="ApStackParticleData" >
 	<field 
@@ -5573,7 +7249,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="particleNumber" 
@@ -5676,7 +7352,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="stackRunName" 
@@ -5725,7 +7401,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="REF|leginondata|SessionData|session" 
@@ -5780,7 +7456,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="REF|ApInitialModelData|modelid" 
@@ -5952,7 +7628,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="REF|ApTemplateImageData|template" 
@@ -6007,7 +7683,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="REF|ApClusteringStackData|clusterstack" 
@@ -6111,7 +7787,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="bin" 
@@ -6133,7 +7809,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="REF|ApTestRunData|testrun" 
@@ -6175,7 +7851,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="REF|ApTestParamsData|params" 
@@ -6200,6 +7876,11 @@
 		null="NULL" 
 		default="NULL" 
 	/> 
+	<field 
+		name="append_timestamp" 
+		type="TEXT" 
+		null="NULL" 
+	/> 
 	<key>PRIMARY KEY (`DEF_id`)</key> 
 	<key>KEY `DEF_timestamp` (`DEF_timestamp`)</key> 
 	<key>KEY `REF|ApTestParamsData|params` (`REF|ApTestParamsData|params`)</key> 
@@ -6217,7 +7898,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="diam" 
@@ -6287,7 +7968,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="REF|ApParticleData|particle1" 
@@ -6330,7 +8011,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="REF|ApTomoAlignmentRunData|alignrun" 
@@ -6374,7 +8055,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="REF|ApTomoAlignmentRunData|alignrun" 
@@ -6442,7 +8123,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="REF|leginondata|SessionData|session" 
@@ -6475,6 +8156,12 @@
 		default="NULL" 
 	/> 
 	<field 
+		name="REF|ApRaptorParamsData|raptorParams" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
 		name="bin" 
 		type="INT(20)" 
 		null="NULL" 
@@ -6502,6 +8189,12 @@
 		null="NULL" 
 		default="0" 
 	/> 
+	<field 
+		name="badAlign" 
+		type="TINYINT(1)" 
+		null="NULL" 
+		default="0" 
+	/> 
 	<key>PRIMARY KEY (`DEF_id`)</key> 
 	<key>KEY `DEF_timestamp` (`DEF_timestamp`)</key> 
 	<key>KEY `REF|leginondata|SessionData|session` (`REF|leginondata|SessionData|session`)</key> 
@@ -6509,8 +8202,10 @@
 	<key>KEY `REF|leginondata|TomographySettingsData|coarseLeginonParams` (`REF|leginondata|TomographySettingsData|coarseLeginonParams`)</key> 
 	<key>KEY `REF|ApImodXcorrParamsData|coarseImodParams` (`REF|ApImodXcorrParamsData|coarseImodParams`)</key> 
 	<key>KEY `REF|ApProtomoParamsData|fineProtomoParams` (`REF|ApProtomoParamsData|fineProtomoParams`)</key> 
+	<key>KEY `REF|ApRaptorParamsData|raptorParams` (`REF|ApRaptorParamsData|raptorParams`)</key> 
 	<key>KEY `REF|ApPathData|path` (`REF|ApPathData|path`)</key> 
 	<key>KEY `hidden` (`hidden`)</key> 
+	<key>KEY `badAlign` (`badAlign`)</key> 
 </sqltable>
 <sqltable name="ApTomoAverageRunData" >
 	<field 
@@ -6523,7 +8218,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="runname" 
@@ -6583,7 +8278,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="REF|ApTomoAverageRunData|avgrun" 
@@ -6615,6 +8310,46 @@
 	<key>KEY `REF|ApTomogramData|subtomo` (`REF|ApTomogramData|subtomo`)</key> 
 	<key>KEY `REF|ApAlignParticleData|aligned_particle` (`REF|ApAlignParticleData|aligned_particle`)</key> 
 </sqltable>
+<sqltable name="ApTomoReconParamsData" >
+	<field 
+		name="DEF_id" 
+		type="int(16)" 
+		null="NOT NULL" 
+		extra="auto_increment" 
+	/> 
+	<field 
+		name="DEF_timestamp" 
+		type="timestamp" 
+		null="NOT NULL" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
+	/> 
+	<field 
+		name="tilt_angle_offset" 
+		type="DOUBLE" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="z_shift" 
+		type="DOUBLE" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="tilt_axis_tilt_out_xyplane" 
+		type="DOUBLE" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="tilt_axis_rotation_in_xyplane" 
+		type="DOUBLE" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<key>PRIMARY KEY (`DEF_id`)</key> 
+	<key>KEY `DEF_timestamp` (`DEF_timestamp`)</key> 
+</sqltable>
 <sqltable name="ApTomogramData" >
 	<field 
 		name="DEF_id" 
@@ -6626,7 +8361,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="REF|leginondata|SessionData|session" 
@@ -6724,7 +8459,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="runname" 
@@ -6777,7 +8512,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="runname" 
@@ -6829,6 +8564,197 @@
 	<key>KEY `DEF_timestamp` (`DEF_timestamp`)</key> 
 	<key>KEY `REF|ApTopolRepJobData|job` (`REF|ApTopolRepJobData|job`)</key> 
 </sqltable>
+<sqltable name="ApXmippML3DRefineIterData" >
+	<field 
+		name="DEF_id" 
+		type="int(16)" 
+		null="NOT NULL" 
+		extra="auto_increment" 
+	/> 
+	<field 
+		name="DEF_timestamp" 
+		type="timestamp" 
+		null="NOT NULL" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
+	/> 
+	<field 
+		name="InSelFile" 
+		type="TEXT" 
+		null="NULL" 
+	/> 
+	<field 
+		name="InitialReference" 
+		type="TEXT" 
+		null="NULL" 
+	/> 
+	<field 
+		name="WorkingDir" 
+		type="TEXT" 
+		null="NULL" 
+	/> 
+	<field 
+		name="DoDeleteWorkingDir" 
+		type="TINYINT(1)" 
+		null="NULL" 
+		default="0" 
+	/> 
+	<field 
+		name="DoMlf" 
+		type="TINYINT(1)" 
+		null="NULL" 
+		default="0" 
+	/> 
+	<field 
+		name="DoCorrectAmplitudes" 
+		type="TINYINT(1)" 
+		null="NULL" 
+		default="0" 
+	/> 
+	<field 
+		name="InCtfDatFile" 
+		type="TEXT" 
+		null="NULL" 
+	/> 
+	<field 
+		name="HighResLimit" 
+		type="DOUBLE" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="ImagesArePhaseFlipped" 
+		type="TINYINT(1)" 
+		null="NULL" 
+		default="0" 
+	/> 
+	<field 
+		name="InitialMapIsAmplitudeCorrected" 
+		type="TINYINT(1)" 
+		null="NULL" 
+		default="0" 
+	/> 
+	<field 
+		name="SeedsAreAmplitudeCorrected" 
+		type="TINYINT(1)" 
+		null="NULL" 
+		default="0" 
+	/> 
+	<field 
+		name="DoCorrectGreyScale" 
+		type="TINYINT(1)" 
+		null="NULL" 
+		default="0" 
+	/> 
+	<field 
+		name="ProjMatchSampling" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="DoLowPassFilterReference" 
+		type="TINYINT(1)" 
+		null="NULL" 
+		default="0" 
+	/> 
+	<field 
+		name="LowPassFilter" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="PixelSize" 
+		type="DOUBLE" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="DoGenerateSeeds" 
+		type="TINYINT(1)" 
+		null="NULL" 
+		default="0" 
+	/> 
+	<field 
+		name="NumberOfReferences" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="DoJustRefine" 
+		type="TINYINT(1)" 
+		null="NULL" 
+		default="0" 
+	/> 
+	<field 
+		name="SeedsSelfile" 
+		type="TEXT" 
+		null="NULL" 
+	/> 
+	<field 
+		name="DoML3DClassification" 
+		type="TINYINT(1)" 
+		null="NULL" 
+		default="0" 
+	/> 
+	<field 
+		name="AngularSampling" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="NumberOfIterations" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="Symmetry" 
+		type="TEXT" 
+		null="NULL" 
+	/> 
+	<field 
+		name="DoNorm" 
+		type="TINYINT(1)" 
+		null="NULL" 
+		default="0" 
+	/> 
+	<field 
+		name="DoFourier" 
+		type="TINYINT(1)" 
+		null="NULL" 
+		default="0" 
+	/> 
+	<field 
+		name="RestartIter" 
+		type="TINYINT(1)" 
+		null="NULL" 
+		default="0" 
+	/> 
+	<field 
+		name="ExtraParamsMLrefine3D" 
+		type="TEXT" 
+		null="NULL" 
+	/> 
+	<key>PRIMARY KEY (`DEF_id`)</key> 
+	<key>KEY `DEF_timestamp` (`DEF_timestamp`)</key> 
+	<key>KEY `DoDeleteWorkingDir` (`DoDeleteWorkingDir`)</key> 
+	<key>KEY `DoMlf` (`DoMlf`)</key> 
+	<key>KEY `DoCorrectAmplitudes` (`DoCorrectAmplitudes`)</key> 
+	<key>KEY `ImagesArePhaseFlipped` (`ImagesArePhaseFlipped`)</key> 
+	<key>KEY `InitialMapIsAmplitudeCorrected` (`InitialMapIsAmplitudeCorrected`)</key> 
+	<key>KEY `SeedsAreAmplitudeCorrected` (`SeedsAreAmplitudeCorrected`)</key> 
+	<key>KEY `DoCorrectGreyScale` (`DoCorrectGreyScale`)</key> 
+	<key>KEY `DoLowPassFilterReference` (`DoLowPassFilterReference`)</key> 
+	<key>KEY `DoGenerateSeeds` (`DoGenerateSeeds`)</key> 
+	<key>KEY `DoJustRefine` (`DoJustRefine`)</key> 
+	<key>KEY `DoML3DClassification` (`DoML3DClassification`)</key> 
+	<key>KEY `DoNorm` (`DoNorm`)</key> 
+	<key>KEY `DoFourier` (`DoFourier`)</key> 
+	<key>KEY `RestartIter` (`RestartIter`)</key> 
+</sqltable>
 <sqltable name="ApXmippRefineIterData" >
 	<field 
 		name="DEF_id" 
@@ -6840,46 +8766,247 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
-		name="angularStep" 
+		name="NumberofIterations" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="MaskFileName" 
+		type="TEXT" 
+		null="NULL" 
+	/> 
+	<field 
+		name="MaskRadius" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="InnerRadius" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="OuterRadius" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="SymmetryGroup" 
+		type="TEXT" 
+		null="NULL" 
+	/> 
+	<field 
+		name="FourierMaxFrequencyOfInterest" 
 		type="DOUBLE" 
 		null="NULL" 
 		default="NULL" 
 	/> 
 	<field 
-		name="maxChangeInAngles" 
+		name="SelFileName" 
+		type="TEXT" 
+		null="NULL" 
+	/> 
+	<field 
+		name="DocFileName" 
+		type="TEXT" 
+		null="NULL" 
+	/> 
+	<field 
+		name="ReferenceFileName" 
+		type="TEXT" 
+		null="NULL" 
+	/> 
+	<field 
+		name="WorkingDir" 
+		type="TEXT" 
+		null="NULL" 
+	/> 
+	<field 
+		name="CleanUpFiles" 
+		type="TINYINT(1)" 
+		null="NULL" 
+		default="0" 
+	/> 
+	<field 
+		name="DoCtfCorrection" 
+		type="TINYINT(1)" 
+		null="NULL" 
+		default="0" 
+	/> 
+	<field 
+		name="CTFDatName" 
+		type="TEXT" 
+		null="NULL" 
+	/> 
+	<field 
+		name="DoAutoCtfGroup" 
+		type="TINYINT(1)" 
+		null="NULL" 
+		default="0" 
+	/> 
+	<field 
+		name="CtfGroupMaxDiff" 
 		type="DOUBLE" 
 		null="NULL" 
 		default="NULL" 
 	/> 
 	<field 
-		name="maxChangeOffset" 
+		name="CtfGroupMaxResol" 
 		type="DOUBLE" 
 		null="NULL" 
 		default="NULL" 
 	/> 
 	<field 
-		name="search5dShift" 
+		name="PaddingFactor" 
 		type="DOUBLE" 
 		null="NULL" 
 		default="NULL" 
 	/> 
 	<field 
-		name="search5dStep" 
+		name="WienerConstant" 
 		type="DOUBLE" 
 		null="NULL" 
 		default="NULL" 
 	/> 
 	<field 
-		name="discardPercentage" 
+		name="DataArePhaseFlipped" 
+		type="TINYINT(1)" 
+		null="NULL" 
+		default="0" 
+	/> 
+	<field 
+		name="ReferenceIsCtfCorrected" 
+		type="TINYINT(1)" 
+		null="NULL" 
+		default="0" 
+	/> 
+	<field 
+		name="DoMask" 
+		type="TINYINT(1)" 
+		null="NULL" 
+		default="0" 
+	/> 
+	<field 
+		name="DoSphericalMask" 
+		type="TINYINT(1)" 
+		null="NULL" 
+		default="0" 
+	/> 
+	<field 
+		name="AngSamplingRateDeg" 
 		type="DOUBLE" 
 		null="NULL" 
 		default="NULL" 
 	/> 
 	<field 
-		name="reconstructionMethod" 
+		name="MaxChangeInAngles" 
+		type="DOUBLE" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="PerturbProjectionDirections" 
+		type="TINYINT(1)" 
+		null="NULL" 
+		default="0" 
+	/> 
+	<field 
+		name="MaxChangeOffset" 
+		type="DOUBLE" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="Search5DShift" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="Search5DStep" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="DoRetricSearchbyTiltAngle" 
+		type="TINYINT(1)" 
+		null="NULL" 
+		default="0" 
+	/> 
+	<field 
+		name="Tilt0" 
+		type="DOUBLE" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="TiltF" 
+		type="DOUBLE" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="SymmetryGroupNeighbourhood" 
+		type="TEXT" 
+		null="NULL" 
+	/> 
+	<field 
+		name="OnlyWinner" 
+		type="TINYINT(1)" 
+		null="NULL" 
+		default="0" 
+	/> 
+	<field 
+		name="MinimumCrossCorrelation" 
+		type="DOUBLE" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="DiscardPercentage" 
+		type="DOUBLE" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="ProjMatchingExtra" 
+		type="TEXT" 
+		null="NULL" 
+	/> 
+	<field 
+		name="DoAlign2D" 
+		type="TINYINT(1)" 
+		null="NULL" 
+		default="0" 
+	/> 
+	<field 
+		name="Align2DIterNr" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="Align2dMaxChangeOffset" 
+		type="DOUBLE" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="Align2dMaxChangeRot" 
+		type="DOUBLE" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="ReconstructionMethod" 
 		type="TEXT" 
 		null="NULL" 
 	/> 
@@ -6890,92 +9017,45 @@
 		default="NULL" 
 	/> 
 	<field 
-		name="constantToAddToFiltration" 
-		type="DOUBLE" 
-		null="NULL" 
-		default="NULL" 
-	/> 
-	<key>PRIMARY KEY (`DEF_id`)</key> 
-	<key>KEY `DEF_timestamp` (`DEF_timestamp`)</key> 
-</sqltable>
-<sqltable name="ApXmippRefineParamsData" >
-	<field 
-		name="DEF_id" 
-		type="int(16)" 
-		null="NOT NULL" 
-		extra="auto_increment" 
-	/> 
-	<field 
-		name="DEF_timestamp" 
-		type="timestamp" 
-		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
-	/> 
-	<field 
-		name="Niter" 
-		type="INT(20)" 
-		null="NULL" 
-		default="NULL" 
-	/> 
-	<field 
-		name="maskFilename" 
+		name="ARTReconstructionExtraCommand" 
 		type="TEXT" 
 		null="NULL" 
 	/> 
 	<field 
-		name="maskRadius" 
-		type="INT(20)" 
+		name="WBPReconstructionExtraCommand" 
+		type="TEXT" 
 		null="NULL" 
-		default="NULL" 
 	/> 
 	<field 
-		name="innerRadius" 
+		name="FourierReconstructionExtraCommand" 
+		type="TEXT" 
+		null="NULL" 
+	/> 
+	<field 
+		name="ResolSam" 
 		type="DOUBLE" 
 		null="NULL" 
 		default="NULL" 
 	/> 
 	<field 
-		name="outerRadius" 
+		name="ConstantToAddToFiltration" 
 		type="DOUBLE" 
 		null="NULL" 
 		default="NULL" 
-	/> 
-	<field 
-		name="REF|ApSymmetryData|symmetryGroup" 
-		type="INT(20)" 
-		null="NULL" 
-		default="NULL" 
-	/> 
-	<field 
-		name="fourierMaxFrequencyOfInterest" 
-		type="DOUBLE" 
-		null="NULL" 
-		default="NULL" 
-	/> 
-	<field 
-		name="computeResol" 
-		type="TINYINT(1)" 
-		null="NULL" 
-		default="0" 
-	/> 
-	<field 
-		name="dolowpassfilter" 
-		type="TINYINT(1)" 
-		null="NULL" 
-		default="0" 
-	/> 
-	<field 
-		name="usefscforfilter" 
-		type="TINYINT(1)" 
-		null="NULL" 
-		default="0" 
 	/> 
 	<key>PRIMARY KEY (`DEF_id`)</key> 
 	<key>KEY `DEF_timestamp` (`DEF_timestamp`)</key> 
-	<key>KEY `REF|ApSymmetryData|symmetryGroup` (`REF|ApSymmetryData|symmetryGroup`)</key> 
-	<key>KEY `computeResol` (`computeResol`)</key> 
-	<key>KEY `dolowpassfilter` (`dolowpassfilter`)</key> 
-	<key>KEY `usefscforfilter` (`usefscforfilter`)</key> 
+	<key>KEY `CleanUpFiles` (`CleanUpFiles`)</key> 
+	<key>KEY `DoCtfCorrection` (`DoCtfCorrection`)</key> 
+	<key>KEY `DoAutoCtfGroup` (`DoAutoCtfGroup`)</key> 
+	<key>KEY `DataArePhaseFlipped` (`DataArePhaseFlipped`)</key> 
+	<key>KEY `ReferenceIsCtfCorrected` (`ReferenceIsCtfCorrected`)</key> 
+	<key>KEY `DoMask` (`DoMask`)</key> 
+	<key>KEY `DoSphericalMask` (`DoSphericalMask`)</key> 
+	<key>KEY `PerturbProjectionDirections` (`PerturbProjectionDirections`)</key> 
+	<key>KEY `DoRetricSearchbyTiltAngle` (`DoRetricSearchbyTiltAngle`)</key> 
+	<key>KEY `OnlyWinner` (`OnlyWinner`)</key> 
+	<key>KEY `DoAlign2D` (`DoAlign2D`)</key> 
 </sqltable>
 <sqltable name="ScriptHostName" >
 	<field 
@@ -6988,7 +9068,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="name" 
@@ -7051,7 +9131,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="name" 
@@ -7079,7 +9159,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="value" 
@@ -7119,7 +9199,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="name" 
@@ -7140,7 +9220,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="runname" 
@@ -7213,7 +9293,7 @@
 		name="DEF_timestamp" 
 		type="timestamp" 
 		null="NOT NULL" 
-		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
 	/> 
 	<field 
 		name="name" 

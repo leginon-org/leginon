@@ -8,7 +8,7 @@
 import calibrator
 import calibrationclient
 import event
-import leginondata
+from leginon import leginondata
 import node
 import gui.wx.MagCalibrator
 import time

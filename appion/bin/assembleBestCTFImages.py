@@ -13,7 +13,7 @@ from appionlib import appionLoop2
 from appionlib import apImage
 from appionlib import apDisplay
 from appionlib import apDatabase
-from appionlib import apCtf
+from appionlib.apCtf import ctfdb
 from appionlib import apParam
 
 class aceLoop(appionLoop2.AppionLoop):
@@ -24,7 +24,7 @@ class aceLoop(appionLoop2.AppionLoop):
 		
 	#======================
 	def postLoopFunctions(self):
-		apCtf.printCtfSummary(self.params)
+		ctfdb.printCtfSummary(self.params, self.imgtree)
 
 	#======================
 	def reprocessImage(self, imgdata):
@@ -37,7 +37,7 @@ class aceLoop(appionLoop2.AppionLoop):
 		"""
 		if self.params['reprocess'] is None:
 			return None
-		ctfvalue, conf = apCtf.getBestCtfValueForImage(imgdata)
+		ctfvalue, conf = ctfdb.getBestCtfValueForImage(imgdata)
 		if ctfvalue is None:
 			return None
 
@@ -48,7 +48,7 @@ class aceLoop(appionLoop2.AppionLoop):
 
 	#======================
 	def processImage(self, imgdata):
-		ctfvalue, conf = apCtf.getBestCtfValueForImage(imgdata)
+		ctfvalue, conf = ctfdb.getBestCtfValueForImage(imgdata)
 		if ctfvalue is None:
 			return None
 		defocus = ctfvalue['defocus1']

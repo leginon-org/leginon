@@ -6,9 +6,9 @@
 Env_Override = False
 
 #Appion_Bin_Dir:  Appion scripts directory
-#Set the path to the directory containing the appion scripts.  By defaut
-#this is either /usr/local/bin or /usr/bin.
-Appion_Bin_Dir = '/usr/local/bin'
+#Set the path to the directory containing the appion scripts. The default
+#instalation places them in  /usr/bin.
+Appion_Bin_Dir = ''
 
 #Appion_Lib_Dir: Appion Python libraries location
 # Usually these are installed in the Python site-packages directory. If you
@@ -27,7 +27,7 @@ Appion_Ace_Dir = ''
 Matlab_Dir = ''
 
 
-#This next session sets the installation directories for the tools used by
+#This next section sets the installation directories for the tools used by
 #Appion.  For any these tools you would like to use it with appion set this
 #configuration parameter to the directory where you installed it.
 
@@ -40,6 +40,9 @@ Xmipp_Dir = ''
 
 #Spider_Dir: Spider's root installation directory.
 Spider_Dir = ''
+
+# em_hole_finder_dir: em_hole_finder root installation directory.
+em_hole_finder_dir = ''
 
 #Imod_Dir: Imod's root installation directory.
 Imod_Dir = ''
@@ -115,6 +118,10 @@ if (Env_Override):
     if (os.environ.has_key('IMOD')):
         Imod_Dir = os.environ['IMOD']
 
+    if (os.environ.has_key('XMIPP')):
+        Xmipp_Dir = os.environ['XMIPP']
+	
+
 if (Python_Path != ''):
     prependToEnv('PYTHONPATH', Python_Path)
         
@@ -153,9 +160,16 @@ if (Spider_Dir != ''):
     os.environ['SPRGB_DIR'] =  os.path.join(Spider_Dir,'rgb')
     os.environ['SPMAN_DIR'] =  os.path.join(Spider_Dir,'man')
 
+if (em_hole_finder_dir != ''):
+    prependToEnv('PATH', em_hole_finder_dir)
+    os.environ['HOLE_FIND_ACTIVATE'] = os.path.join(em_hole_finder_dir, 'env','bin')
+
 if (Imod_Dir != ''):
     os.environ['IMOD_DIR'] = os.path.join(Imod_Dir)
-    os.environ['IMOD_JAVADIR'] = os.environ['JAVA_HOME']
+    if (os.environ.has_key('JAVA_HOME')):
+       os.environ['IMOD_JAVADIR'] = os.environ['JAVA_HOME']
+    else:
+        os.environ['IMOD_JAVADIR'] = '/usr/java/latest'
     os.environ['IMOD_PLUGIN_DIR'] =  os.path.join(Imod_Dir,'lib','imodplug')
     prependToEnv('LD_LIBRARY_PATH', os.path.join(Imod_Dir, 'lib')) 
     prependToEnv('PATH', os.path.join(Imod_Dir, 'bin'))

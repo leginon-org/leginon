@@ -8,12 +8,12 @@
  *	Display results for each iteration of a refinement
  */
 
-require "inc/particledata.inc";
-require "inc/leginon.inc";
-require "inc/project.inc";
-require "inc/viewer.inc";
-require "inc/processing.inc";
-require "inc/summarytables.inc";
+require_once "inc/particledata.inc";
+require_once "inc/leginon.inc";
+require_once "inc/project.inc";
+require_once "inc/viewer.inc";
+require_once "inc/processing.inc";
+require_once "inc/summarytables.inc";
 
 showReport();
 
@@ -36,6 +36,8 @@ function showReport () {
 	// check if reconstruction is specified
 	if (!$reconId = $_GET['reconId'])
 		$reconId=false;
+	if (!$multiModelReconRunId = $_GET['multimodelreconid'])
+		$multiModelReconRunId=false;
 	$expId = $_GET['expId'];
 
 
@@ -48,7 +50,7 @@ function showReport () {
 	$javascript="<script LANGUAGE='JavaScript'>
 	        function infopopup(";
 	foreach ($refine_params_fields as $param) {
-		if (ereg("\|", $param)) {
+		if (preg_match("%\|%", $param)) {
 			$namesplit=explode("|", $param);
 			$param=end($namesplit);
 		}
@@ -62,7 +64,7 @@ function showReport () {
       newwindow.document.write('<TITLE>Ace Parameters</TITLE>');
       newwindow.document.write(\"</HEAD><BODY><TABLE class='tableborder' border='1' cellspacing='1' cellpadding='5'>\");\n";
 	foreach($refine_params_fields as $param) {
-		if (ereg("\|", $param)) {
+		if (preg_match("%\|%", $param)) {
 			$namesplit=explode("|", $param);
 			$param=end($namesplit);
 		}
@@ -111,7 +113,12 @@ function showReport () {
 
 	$stackfile=$stackparams['path']."/".$stackparams['name'];
 	$res = $particle->getHighestResForRecon($refinerun['DEF_id']);
-	$avgmedjump = $particle->getAverageMedianJump($refinerun['DEF_id']);
+	if ($multiModelReconRunId) {
+		$avgmedjump = $particle->getAverageMedianJumpMM($multiModelReconRunId);
+	} else {		
+		$avgmedjump = $particle->getAverageMedianJump($refinerun['DEF_id']);
+	}	
+
 	if ($avgmedjump['count'] > 0) {
 		$avgmedjumpstr .= "<A HREF='eulergraph.php?expId=$expId&hg=1&recon=$refinerun[DEF_id]' starget='snapshot'>";
 		$avgmedjumpstr .= sprintf("%2.2f &plusmn; %2.1f </A>", $avgmedjump['average'], $avgmedjump['stdev']);
@@ -262,10 +269,10 @@ function showReport () {
 		$eulerSelect = "<select name='eulerplot$iternum' onChange='switchEulerImg($iternum, this.options(this.selectedIndex).value)'>\n";
 		$eulerPngFiles = glob($refinerun['path']."/euler*_$iternum.png");
 		foreach ($eulerPngFiles as $eulername) {
-			if (eregi($reconId."_".$iternum."\.png$", $eulername)) {
+			if (preg_match('%'.$reconId."_".$iternum."\.png$%", $eulername)) {
 				$eulerfile = $eulername;
-				$opname = ereg_replace("euler","",basename($eulername));
-				$opname = ereg_replace("-.*$","",$opname);
+				$opname = preg_replace("%euler%","",basename($eulername));
+				$opname = preg_replace("%-.*$%","",$opname);
 				if (file_exists($eulerfile)) {
 					$eulerSelect.= "<option value='$eulerfile'>$opname</option>\n";
 					// set the first image as the default
@@ -293,9 +300,9 @@ function showReport () {
 		$numbad = $partcounts['bad_refine'];
 		$numgood = $partcounts['good_refine'];
 
-		if ($numbad + $numgood != $stackparticles) 
-				$html .= "<tr><td bgcolor='$bg'><font size='-1' color='#dd3333'><b>Particles are missing!!!</b></font></td></tr>";
-
+		$allrefineparticles = $particle->getNumParticlesFromRefineIter($refineIterId);
+		if (($numbad + $numgood != $stackparticles) && ($numbad + $numgood != $allrefineparticles[0]['num_parts'])) 
+			$html .= "<tr><td bgcolor='$bg'><font size='-1' color='#dd3333'><b>Particles are missing!!!</b></font></td></tr>";
 
 		$html .= "<tr><td bgcolor='$bg'>Normal Refine</td></tr>\n";
 		$html .= "<tr><td bgcolor='$bg'>\n";
@@ -331,7 +338,7 @@ function showReport () {
 		$html .= "<td bgcolor='$bg'>\n";
 
 		$mrcfile = $refinerun['path']."/".$iteration['volumeDensity'];
-		$html .= "<a href='download.php?file=$mrcfile'>\n";
+		$html .= "<a href='download.php?expId=$expId&file=$mrcfile'>\n";
 		$html .= "  <img style='vertical-align:middle' src='img/download_arrow.png' border='0' width='16' height='17' alt='download density'>\n";
 		$html .= "$iteration[volumeDensity]\n";
 		$html .= "</a><br/>\n";
@@ -351,7 +358,7 @@ function showReport () {
 		// snapshot images
 		$html .= "<td bgcolor='$bg'>\n";
 		foreach ($pngimages['pngfiles'] as $snapshot) {
-			if (eregi($iteration['volumeDensity'],$snapshot)) {
+			if (preg_match('%'.$iteration['volumeDensity'].'%i',$snapshot)) {
 				$snapfile = $snapshot;
 				$html .= "<A HREF='loadimg.php?filename=$snapfile' target='snapshot'>"
 					."<img src='loadimg.php?s=80&filename=$snapfile' HEIGHT='80'></a>\n";
@@ -374,7 +381,7 @@ function showReport () {
 				$html .= "<tr><td><b>path: </b></td><td>".$p['path']."</td></td>\n";
 
 				$postprocfile = $p['path']."/".$p['name'];
-				$modellink .= "<font size='-2'><a href='download.php?file=$postprocfile'>\n";
+				$modellink .= "<font size='-2'><a href='download.php?expId=$expId&file=$postprocfile'>\n";
 				$modellink .= "  <img style='vertical-align:middle' src='img/download_arrow.png' border='0' width='16' height='17' alt='download model'>\n";
 				$modellink .= "</a></font>\n";
 				$html .= "<tr><td><b>name: </b></td><td>".$p['name']." $modellink</td></td>\n";
@@ -400,7 +407,7 @@ function showReport () {
 				$html .= "</table>\n";
 				$html .= "</td><td>\n";
 				foreach ($procimgs['pngfiles'] as $s) {
-				  	if (eregi($p['name'],$s)) {
+				  	if (preg_match('%'.$p['name'].'%i',$s)) {
 						$sfile = $s;
 						$html .= "<a href='loadimg.php?filename=$sfile' target='snapshot'>"
 							."<img src='loadimg.php?s=80&filename=$sfile' height='80'></a>\n";
@@ -445,8 +452,8 @@ function showReport () {
 		Show Common Particles Between Iterations:";
 	echo "
 		<select name='comm_param'>\n";
-	$comm_params = array('bad'=>'Bad by EMAN refine',
-		'good'=>'Good by EMAN refine');
+	$comm_params = array('bad'=>'Bad by refinement procedure',
+		'good'=>'Good by refinement procedure');
 	if ($refinerun['package']=='EMAN/MsgP') { 
 			$comm_params_msgp = array('msgpbad'=>'Bad by Msg Passing');
 			$comm_params = array_merge($comm_params,$comm_params_msgp);

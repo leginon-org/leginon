@@ -8,12 +8,12 @@
  *	Simple viewer to view a image using mrcmodule
  */
 
-require "inc/particledata.inc";
-require "inc/viewer.inc";
-require "inc/processing.inc";
-require "inc/appionloop.inc";
-require "inc/leginon.inc";
-require "inc/project.inc";
+require_once "inc/particledata.inc";
+require_once "inc/viewer.inc";
+require_once "inc/processing.inc";
+require_once "inc/appionloop.inc";
+require_once "inc/leginon.inc";
+require_once "inc/project.inc";
 
 // IF VALUES SUBMITTED, EVALUATE DATA
 if ($_POST['process']) {
@@ -377,6 +377,9 @@ function createSigForm($extra=false, $title='Signature Launcher',
 */
 
 function runSignaturePicker() {
+	/* *******************
+	PART 1: Get variables
+	******************** */
 	$expId   = $_GET['expId'];
 	$outdir  = $_POST['outdir'];
 	$runname = $_POST['runname'];
@@ -386,8 +389,27 @@ function runSignaturePicker() {
 
 	$numtemplatesused = $_POST['numtemplatesused'];
 
-	// START MAKE COMMAND
+	if ($_POST['testimage']=="on") {
+		if ($_POST['testfilename']) $testimage=trim($_POST['testfilename']);
+		// replace other spaces with commas
+		$testimage = preg_replace("% %",",",$testimage);
+		$testimage = preg_replace("%,,%",",",$testimage);
+		
+		$nproc = 1;
+		if ($numtemplatesused >= 2 && $numtemplatesused <= 8)
+			$nproc = $numtemplatesused;
+		elseif ($numtemplatesused > 8)
+			$nproc = 8;
+	}
+	
+	/* *******************
+	PART 2: Check for conflicts, if there is an error display the form again
+	******************** */
 
+	/* *******************
+	PART 3: Create program command
+	******************** */
+	
 	$command ="signaturePicker.py ";
 
 	$apcommand = parseAppionLoopParams($_POST);
@@ -407,10 +429,10 @@ function runSignaturePicker() {
 	// get the list of templates
 	$templatenum=1;
 	$templateList = $_POST['templateList'];
-	$templates=split(",", $templateList);
+	$templates=preg_split("%,%", $templateList);
 	$templateliststr = "";
 	foreach ($templates as $template) {
-		list($num, $templateid) = split(":",$template);
+		list($num, $templateid) = preg_split("%:%",$template);
 		$templateliststr .= $templateid.",";
 		$templatenum++;
 	}
@@ -423,77 +445,40 @@ function runSignaturePicker() {
 		$command.="--keepall ";
 	if ($_POST['mirrors']=='on')
 		$command.="--use-mirrors ";
+	
+	/* *******************
+	PART 4: Create header info, i.e., references
+	******************** */
+	$headinfo .= referenceBox("SIGNATURE: a single-particle selection system for molecular electron microscopy.", 2007, "Chen JZ, Grigorieff N.", "J Struct Biol.", 157, 1, 16870473, false, "img/signature.jpg");
+	
+	/* *******************
+	PART 5: Show or Run Command
+	******************** */
 
-	// END MAKE COMMAND
+	// submit command
+	$errors = showOrSubmitCommand($command, $headinfo, 'signature', $nproc, $testimage);
 
-	if ($_POST['testimage']=="on") {
-		if ($_POST['testfilename']) $testimage=trim($_POST['testfilename']);
-		// replace other spaces with commas
-		$testimage = ereg_replace(" ",",",$testimage);
-		$testimage = ereg_replace(",,",",",$testimage);
-	}
-
-	if ($_POST['process']=="Run Signature") {
-		$user = $_SESSION['username'];
-		$password = $_SESSION['password'];
-
-		if (!($user && $password)) createSigForm("<b>ERROR:</b> Enter a user name and password");
-
-		$nproc = 1;
-		if ($numtemplatesused >= 2 && $numtemplatesused <= 8)
-			$nproc = $numtemplatesused;
-		elseif ($numtemplatesused > 8)
-			$nproc = 8;
-		$sub = submitAppionJob($command, $outdir, $runname, $expId, 'signature', $testimage, False, False, $nproc);
-
-		// if errors:
-		if ($sub) createSigForm("<b>ERROR:</b> $sub");
-		if (!$testimage) exit;
-	}
-
-	if ($testimage) {
+	// if error display them
+	if ($errors) {
+		createSigForm("<b>ERROR:</b> $errors");
+	} else if ($testimage) {
+		// add the appion wrapper to the command for display
+		$wrappedcmd = addAppionWrapper($command);
+		
 		if (substr($outdir,-1,1)!='/') $outdir.='/';
 		$results = "<table width='600' border='0'>\n";
 		$results.= "<tr><td>\n";
-		$results.= "<b>Signature Picker Command:</b><br />$command";
+		$results.= "<b>Signature Picker Command:</b><br />$wrappedcmd";
 		$results.= "</td></tr></table>\n";
 		$results.= "<br />\n";
-		$testjpg=ereg_replace(".mrc","",$testimage);
+		$testjpg=preg_replace("%.mrc%","",$testimage);
 
 		$jpgimg=$outdir.$runname."/jpgs/".$testjpg.".prtl.jpg";
 		$ccclist = glob($outdir.$runname."/maps/".$testjpg."*.jpg");
 		$results.= writeTestResults($jpgimg,$ccclist,$bin=$_POST['bin'],$_POST['process']);
 		createSigForm($false,'Particle Selection Results','Particle Selection Results',$results);
-		exit;
-	} else {
-		processing_header("Particle Selection Results","Particle Selection Results");
-
-		echo referenceBox("SIGNATURE: a single-particle selection system for molecular electron microscopy.", 2007, "Chen JZ, Grigorieff N.", "J Struct Biol.", 157, 1, 16870473, false, "img/signature.jpg");
-
-		echo"
-			<table width='600'>
-			<tr><td colspan='2'>
-			<b>Signature Picker Command:</b><br>
-			$command
-			<hr>
-			</td></tr>";
-		$templatenum = 0;
-		foreach ( split(",", $templateliststr) as $templateid ) {
-			$templatenum++;
-			echo"<tr><td>template $templatenum id</td><td>$templateid</td></tr>";
-		}
-		echo"<tr><td>template list</td><td>$templateliststr</td></tr>";
-		echo"<tr><td>testimage</td><td>$testimage</td></tr>";
-		echo"<tr><td>keep all .dwn.mrc</td><td>$keepall</td></tr>";
-		echo"<tr><td>use mirrors</td><td>$mirrors</td></tr>";
-		appionLoopSummaryTable($_POST);
-		particleLoopSummaryTable($_POST);
-
-		echo"</table>\n";
-
-		processing_footer(True, True);
-	}
-
+	} 
+	
 	exit;
 }
 

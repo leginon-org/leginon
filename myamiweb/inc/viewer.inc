@@ -22,7 +22,7 @@ require_once "inc/button.inc";
 require_once "inc/pref.inc";
 require_once "inc/ace.inc";
 if (ENABLE_LOGIN) {
-	require_once "inc/dbemauth.php";
+	require_once "inc/dbemauth.inc";
 }
 
 $VIEWNB=0;
@@ -272,17 +272,18 @@ class viewer {
 	function addFileSelector($filenames=array(), $size=40) {
 		if ($size) $htmlsize = "size=$size";
 		$selector = '#images :'.count($filenames).'<br />';
-		$selector .= '<select style="width: 250px" name="imageId" '.$htmlsize .' >'.$this->crlf;
+		$selector .= '<select style="width: 250px text-align:left" name="imageId" '.$htmlsize .' >'.$this->crlf;
 		$default = ($this->imageId) ? $this->imageId : $filenames[0][id];
 		foreach ((array)$filenames as $filename) {
-			$filestr = ereg_replace('[[:alnum:]]+_(.*)', '\1', $filename[name]);
-			$filestr = ereg_replace('_0*', '_', $filestr);
-			$filestr = ereg_replace('^0*', '', $filestr);
-			$filestr = ereg_replace('_v[0-2][0-9]_', '_', $filestr);
-			$filestr = ereg_replace('grid', 'gr', $filestr);
-			$filestr = ereg_replace('square', 'sq', $filestr);
-			$filestr = ereg_replace('hole', 'hl', $filestr);
-			$filestr = ereg_replace('focus', 'fc', $filestr);
+			$filestr = preg_replace('%[[:alnum:]]+_(.*)%', '\1', $filename[name]);
+			$filestr = preg_replace('%_0*%', '_', $filestr);
+			$filestr = preg_replace('%^0*%', '', $filestr);
+			$filestr = preg_replace('%_v[0-2][0-9]_%', '_', $filestr);
+			$filestr = preg_replace('%grid%', 'gr', $filestr);
+			$filestr = preg_replace('%square%', 'sq', $filestr);
+			$filestr = preg_replace('%hole%', 'hl', $filestr);
+			$filestr = preg_replace('%focus%', 'fc', $filestr);
+			$filestr = preg_replace('%.mrc%', '', $filestr);
 			if ($filename[id]==$default) $s='selected'; else $s='';
 				$selector .= '<option value='.$filename[id].' '.$s.' >'.$filestr.$this->crlf; 
 		}
@@ -340,6 +341,7 @@ class viewer {
 		$init .= 'var jsviews = new Array();'.$this->crlf;
 		$init .= 'var jscomments = new Array();'.$this->crlf;
 		$init .= 'var bt_hide_state = false;'.$this->crlf;
+		$init .= 'var bt_trash_state = false;'.$this->crlf;
 		foreach ($this->views as $v) {
 			if ($v->ismaster) {
 				$init .= 'var jsmasterview = "'.$v->getName().'";'.$this->crlf;
@@ -549,6 +551,8 @@ class view {
 		$this->displayname = $this->name.'view';
 		$this->displayPresets(true);
 		$this->displayComment(false);
+
+		// initialize tools
 		$this->btdownload = new button('download'.$this->name, 'dwd');
 		$this->btdownload->setLink('download.php','');
 		$this->displayscaleicon = true;
@@ -569,7 +573,10 @@ class view {
 		$this->btace = new toggleButton($this->name.'ace', 'ace');
 		$this->btace->onToggle($name.'btaceaction'); 
 		$this->btdeq = new button('deq'.$this->name, 'deq');
+		$this->btdd = new toggleButton($this->name.'dd', 'drift');
+		$this->btdd->onToggle($name.'btddaction');
 
+		// default
 		$this->displayscaleicon = true;
 		$this->displayscaleicon = true;
 		$this->displaytargeticon = true;
@@ -581,6 +588,7 @@ class view {
 		$this->displayparticleicon = false;
 		$this->displaydownloadicon = true;
 		$this->displaydeqicon = false;
+		$this->displayddicon = false;
 		$this->displaycloseicon = true;
 		$this->displayadjustlink = true;
 		$this->displayexportlink = true;
@@ -600,22 +608,31 @@ class view {
 		$this->target_st = "false";
 		$this->tag_st = "false";
 		$this->nptcl_st = "false";
+		$this->dd_st = "false";
 		$this->btscalestate = "true";
 		$this->bttargetstate = "true";
 		$this->bttagstate = "true";
 		$this->btfftstate = "false";
 		$this->btnptclstate = "false";
+		$this->btddstate = "false";
+		// adjust options
 		$this->quality = "80";
 		$this->gradient = "";
 		$this->filter= "default";
-		$this->fftbin= "b";
+		$this->fftbin= "a";
 		$this->binning= "auto";
-		$this->autoscale = "s;3";
+		$this->autoscale = "s;5";
 		$this->displayfilename = "0";
 		$this->loadjpg= "1";
+		$this->cacheonly= "0";
+		// particle picking
 		$this->ptclsel = "0";
+		// ctf estimation
+		$this->jsacemethod= "1";
+		$this->jsacerun= "-1";
 		$this->jsacepar= "1";
 		$this->jsaceopt= "2";
+		// tag?
 		$this->jstagpar1 = "1";
 		$this->jstagpar2 = "1";
 		if ($_POST) {
@@ -623,6 +640,7 @@ class view {
 			$this->jstagpar2 = ($_REQUEST[$this->name.'tagp2']) ? "1" : "0";
 		}
 		$this->jsprtlpick= "1";
+		// memos are used to send the state to javascript
 		$this->ptclselmemo = $this->name.'psel';
 		$this->qualitymemo = $this->name.'q';
 		$this->gradientmemo = $this->name.'gr';
@@ -634,11 +652,15 @@ class view {
 		$this->autoscalememo = $this->name.'autos';
 		$this->displayfilenamememo= $this->name.'df';
 		$this->loadjpgmemo= $this->name.'df';
+		$this->cacheonlymemo= $this->name.'cacheonly';
 		$this->btfftmemo = $this->name.'fft_bt_st';
 		$this->bttagmemo = $this->name.'tag_bt_st';
 		$this->btnptclmemo = $this->name.'nptcl_bt_st';
 		$this->bttargetmemo = $this->name.'target_bt_st';
 		$this->btscalememo = $this->name.'scale_bt_st';
+		$this->btddmemo = $this->name.'dd_bt_st';
+
+		// set options through javascript
 		if ($ptcl=$_REQUEST[$this->ptclselmemo])
 			$this->ptclsel = $ptcl;
 		if ($quality=$_REQUEST[$this->qualitymemo])
@@ -661,6 +683,9 @@ class view {
 			$this->displayfilename= $displayfilename;
 		if ($loadjpg=$_REQUEST[$this->loadjpgmemo])
 			$this->loadjpg= $loadjpg;
+		if ($cacheonly=$_REQUEST[$this->cacheonlymemo])
+			$this->cacheonly= $cacheonly;
+		// set toggle button state from javascript
 		if ($btfftstate=$_REQUEST[$this->btfftmemo])
 			$this->btfftstate = $btfftstate;
 		if ($btacestate=$_REQUEST[$this->btacememo])
@@ -673,6 +698,8 @@ class view {
 			$this->btnptclstate = $btnptclstate;
 		if ($btscalestate=$_REQUEST[$this->btscalememo])
 			$this->btscalestate = $btscalestate;
+		if ($btddstate=$_REQUEST[$this->btddmemo])
+			$this->btddstate = $btddstate;
 	}
 
 	function setParam($key, $value) {
@@ -742,11 +769,17 @@ class view {
 		$this->imageId=$imageId;
 	}
 
+	function setCacheOnly($cacheonly) {
+		// true or false
+		$this->cacheonly= (int) $cacheonly;
+	}
+
 	function displayPresets($state) {
 		$this->displaypreset= $state;
 	}
 
 	function displayHideBt($state) {
+		//This is used for determining whether to display trash button, too
 		$this->displayhidebt = $state;
 		$this->displayhideallbt = $state;
 
@@ -828,6 +861,16 @@ class view {
 		$this->displayscaleicon = $state;
 	}
 
+	function displayDDDrift($state) {
+		$state_str = ($state) ? "true" : "false";
+		$this->dd_st= $state_str;
+		$this->btddstate = $state_str;
+	}
+
+	function displayDDIcon($state) {
+		$this->displayddicon = $state;
+	}
+
 	function displayDeqIcon($state) {
 		$this->displaydeqicon = $state;
 	}
@@ -887,9 +930,14 @@ class view {
 			.'var jsautoscale'.$this->name.'="'.$this->autoscale.'";'.$this->crlf
 			.'var jsdisplayfilename'.$this->name.'="'.$this->displayfilename.'";'.$this->crlf
 			.'var jsloadjpg'.$this->name.'="'.$this->loadjpg.'";'.$this->crlf
+			.'var jscacheonly'.$this->name.'="'.$this->cacheonly.'";'.$this->crlf
 			.'var jsptclsel'.$this->name.'="'.$this->ptclsel.'";'.$this->crlf
+			.'var jsacemethod'.$this->name.'="'.$this->jsacemethod.'";'.$this->crlf
+			.'var jsacerun'.$this->name.'="'.$this->jsacerun.'";'.$this->crlf
 			.'var jsaceparam'.$this->name.'="'.$this->jsacepar.'";'.$this->crlf
 			.'var jsaceopt'.$this->name.'="'.$this->jsaceopt.'";'.$this->crlf
+			.'var jsacescx'.$this->name.'="'.$this->jsacescx.'";'.$this->crlf
+			.'var jsacescy'.$this->name.'="'.$this->jsacescy.'";'.$this->crlf
 			.'var jstagparam1'.$this->name.'="'.$this->jstagpar1.'";'.$this->crlf
 			.'var jstagparam2'.$this->name.'="'.$this->jstagpar2.'";'.$this->crlf
 			.'var jsptclpick'.$this->name.'="'.$this->jsptclpick.'";'.$this->crlf
@@ -915,6 +963,7 @@ class view {
 			.$this->btfft->getJavascript()
 			.$this->btace->getJavascript()
 			.$this->btdeq->getJavascript()
+			.$this->btdd->getJavascript()
 			.$this->btclose->getJavascript()
 			.$this->crlf;
 
@@ -947,6 +996,12 @@ class view {
 			.'	setform("'.$this->btnptclmemo.'", state);'.$this->crlf
 			.'}'.$this->crlf;
 
+		$javascript .= 'function '.$name.'btddaction(state) { '.$this->crlf
+			.'	newfile("'.$this->name.'");'.$this->crlf
+			.'	setform("'.$this->btddmemo.'", state);'.$this->crlf
+			.'	updateviews();'.$this->crlf
+			.'}'.$this->crlf;
+
 		$javascript .= 'function '.$name.'btcloseaction(state) { '.$this->crlf
 			.'	setform("'.$this->displayname.'", state);'.$this->crlf
 			.'	newexp();'.$this->crlf
@@ -972,6 +1027,8 @@ class view {
 			$javascript .= $this->bttarget->getjstoggle();
 		if ($this->btscalestate=='true') 
 			$javascript .= $this->btscale->getjstoggle();
+		if ($this->btddstate=='true') 
+			$javascript .= $this->btdd->getjstoggle();
 		return $javascript;
 	}
 
@@ -1049,6 +1106,7 @@ class view {
 		<input type="hidden" name="'.$this->autoscalememo.'" value="'.$this->autoscale.'">
 		<input type="hidden" name="'.$this->displayfilenamememo.'" value="'.$this->displayfilename.'">
 		<input type="hidden" name="'.$this->loadjpgmemo.'" value="'.$this->loadjpg.'">
+		<input type="hidden" name="'.$this->cacheonlymemo.'" value="'.$this->cacheonly.'">
 		<input type="hidden" name="'.$this->minpixmemo.'" value="'.$this->minpix.'">
 		<input type="hidden" name="'.$this->maxpixmemo.'" value="'.$this->maxpix.'"> 
 		<input type="hidden" name="'.$this->btfftmemo.'" value="'.$this->btfftstate.'"> 
@@ -1056,6 +1114,7 @@ class view {
 		<input type="hidden" name="'.$this->bttagmemo.'" value="'.$this->bttagstate.'"> 
 		<input type="hidden" name="'.$this->btnptclmemo.'" value="'.$this->btnptclstate.'"> 
 		<input type="hidden" name="'.$this->btscalememo.'" value="'.$this->btscalestate.'"> 
+		<input type="hidden" name="'.$this->btddmemo.'" value="'.$this->btddstate.'"> 
 		<input type="hidden" name="'.$this->ptclselmemo.'" value="0"> ';
 		if ($this->ismaster) {
 			$htmlframe .= '
@@ -1089,6 +1148,12 @@ class view {
 			.'
 			</td>
 		';
+		if ($this->displayddicon) {
+		$htmlframe .= '
+			<td width="15">'
+			.$this->btdd->display().$this->crlf
+			.'</td> ';
+		}
 		if ($this->displaydeqicon) {
 		$htmlframe .= '
 			<td width="15">'
@@ -1140,7 +1205,7 @@ class view {
 			$acemenu->closeval=$closedownimg;
 			$acemenu->height="";
 			$acemenu->width="";
-			$aceform=getAceViewerForm($name);
+			$aceform=getAceViewerForm($name, $this->params['aceruns']);
 			$acemenu->setContent($aceform);
 			$htmlframe.=$acemenu->display();
 		$htmlframe .= '
@@ -1295,29 +1360,44 @@ class view {
 		$htmlframe .= $imgstatus;
 		$htmlframe .='
 			</a></div></td>';
+
+		// Various image status buttons
 		$thispreset = $_POST[$this->name.'pre'];
 		if ($this->ismaster && $thispreset != 'atlas') {
 			$htmlframe .= '<td><ul style="padding:0; margin:0">';
+			// trash button
+			if ($this->displayhidebt && $thispreset != 'exemplar' && $thispreset != 'trash') {
+					$htmlframe .= '<li class="list1"> <button id="bt_trash" type="button" style="border: 1px solid #bdcebb; font-size: 10px;" '
+							.' onclick=\'trash_image()\' ><u><b>t</b></u>rash</button></li>';
+			}
+			// hide button
 			if ($this->displayhidebt && $thispreset != 'exemplar') {
 				$displayhide = ($thispreset == 'hidden') ? '<u><b>u</b></u>nhide': '<u><b>h</b></u>ide';
 				$htmlframe .= '<li class="list1"><button id="bt_hide" type="button" style="border: 1px solid #bdcebb; font-size: 10px;" '
 								.' onclick=\'hide_image()\' >'.$displayhide.'</button>';
 				$htmlframe .= '</li> ';
 			}
+			// hide all checkbox
 			if ($this->displayhideallbt) {
 				$htmlframe .= ' all<input type="checkbox" id="chk_hide_all"></li>';
 			}
+			// next button
 			if ($this->displaynextbt) {
 				$htmlframe .= '<li class="list1"><button type="button" style="border: 1px solid #bdcebb; font-size: 10px;" '
 							.' onclick=\'incIndex(); updateviews()\' ><u><b>n</b></u>ext</button></li>';
 			}
+			// exemplar button
 			if ($this->displayexemplarbt) {
-				if ($thispreset != 'exemplar') {
-					$htmlframe .= '<li class="list1"> <button id="bt_ex" type="button" style="border: 1px solid #bdcebb; font-size: 10px;" '
-							.' onclick=\'image_is_exemplar();\' ><u><b>e</b></u>xemplar</button></li>';
+				if ($thispreset == 'hidden' || $thispreset == 'trash') {
+					$htmlframe .='';	
 				} else {
-					$htmlframe .= '<li class="list1"> <button id="bt_hide" type="button" style="border: 1px solid #bdcebb; font-size: 10px;" '
+					if ($thispreset != 'exemplar') {
+						$htmlframe .= '<li class="list1"> <button id="bt_ex" type="button" style="border: 1px solid #bdcebb; font-size: 10px;" '
+								.' onclick=\'image_is_exemplar();\' ><u><b>e</b></u>xemplar</button></li>';
+					} else {
+						$htmlframe .= '<li class="list1"> <button id="bt_hide" type="button" style="border: 1px solid #bdcebb; font-size: 10px;" '
 								.' onclick=\'hide_image()\' ><u><b>u</u></b>ndo exemplar</button></li>';
+					}
 				}
 			$htmlframe .= '</ul></td>';
 			}

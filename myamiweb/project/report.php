@@ -1,11 +1,11 @@
 <?php
 
-require "inc/project.inc.php";
-require "inc/gridlib.php";
-require "inc/packagelib.php";
-require "inc/samplelib.php";
-require "inc/aform.php";
-require "inc/utilpj.inc.php";
+require_once "inc/project.inc.php";
+require_once "inc/gridlib.php";
+require_once "inc/packagelib.php";
+require_once "inc/samplelib.php";
+require_once "inc/aform.php";
+require_once "inc/utilpj.inc.php";
 require_once "inc/getleginondata.php";
 
 $package = new Package();
@@ -167,7 +167,7 @@ echo "</ul>";
 		$exp = $e['leginonId'];
 		$info = getExperimentInfo($exp, $hidden=true);
 		foreach ($samples as $s) {
-			if (ereg("^".$s['sample'], $info['Purpose'])) {
+			if (preg_match("%^%".$s['sample'], $info['Purpose'])) {
 				$filenames=getExemplars($exp);
 				$name='None';
 				if ($filenames) {
@@ -194,7 +194,7 @@ echo "</ul>";
 				$presetinfo=get_preset_mag($info, 0);
 				$ntotimg=$ndose=$ndefocus=array();
 				foreach ($presetinfo as $pr=>$pifo) {
-					if (!ereg("^en[1-9]{0,}", $pr)){
+					if (!preg_match("%^en[1-9]{0,}%", $pr)){
 							continue;
 					}
 					$totimg+=$pifo['totimg'];
@@ -215,14 +215,14 @@ echo "</ul>";
 function get_preset_mag($info, $mag) {
 	$presetinfo=array();
 	foreach ($info as $k=>$v) {
-		if (!ereg("^Total_.* x", $k)) {
+		if (!preg_match("%^Total_.* x%", $k)) {
 			continue;
 		}
-		list($imgnb, $dose, $defocusmin, $defocusmax) = split("	", $info[$k]);
+		list($imgnb, $dose, $defocusmin, $defocusmax) = preg_split("%	%", $info[$k]);
 		
-		ereg("Total_(.*) x", $k, $match);
+		preg_match("%Total_(.*) x%", $k, $match);
 		$preset=$match[1];
-		$cmag=ereg_replace("^Total_.* x", "", $k);
+		$cmag=preg_replace("%^Total_.* x%", "", $k);
 		if ($cmag>=$mag) {
 			$presetinfo[$preset]['magnification']=$cmag;
 			$presetinfo[$preset]['totimg']=$imgnb;
@@ -236,10 +236,10 @@ function get_preset_mag($info, $mag) {
 function get_totimg_mag($info, $mag) {
 	$tot_img=0;
 	foreach ($info as $k=>$v) {
-		if (!ereg("^Total_.* x", $k)) {
+		if (!preg_match("%^Total_.* x%", $k)) {
 			continue;
 		}
-		$cmag=ereg_replace("^Total_.* x", "", $k);
+		$cmag=preg_replace("%^Total_.* x%", "", $k);
 		if ($cmag>=$mag) {
 			$tot_img+=$info[$k];
 		}

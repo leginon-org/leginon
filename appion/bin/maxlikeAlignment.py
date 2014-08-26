@@ -40,9 +40,6 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		self.parser.add_option("-s", "--stack", dest="stackid", type="int",
 			help="Stack database id", metavar="ID#")
 
-		self.parser.add_option("--nproc", dest="nproc", type="int",
-			help="Number of processor to use", metavar="ID#")
-
 		self.parser.add_option("--clip", dest="clipsize", type="int",
 			help="Clip size in pixels (reduced box size)", metavar="#")
 		self.parser.add_option("--lowpass", "--lp", dest="lowpass", type="int",
@@ -175,6 +172,7 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 			return
 		config = sinedon.getConfig('appiondata')
 		dbc = MySQLdb.Connect(**config)
+		dbc.autocommit(True)
 		cursor = dbc.cursor()
 		query = (
 			"  UPDATE ApMaxLikeJobData "
@@ -291,7 +289,7 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		f.write("cd $PBSREMOTEDIR\n")
 		f.write("tar xf "+rundir+"/particles.tar\n")
 		f.write("\n")
-		f.write("foreach line ( `cat partlist.doc | cut -f1 -d' '` )\n")
+		f.write("foreach line ( `cat partlist.sel | cut -f1 -d' '` )\n")
 		f.write("  echo $PBSREMOTEDIR/`echo $line | sed 's/^.*partfiles/partfiles/'` 1 >> partlist2.doc\n")
 		f.write("end\n")
 		f.write("\n")
@@ -319,8 +317,8 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		f = open("readyupload.sql", "w")
 		f.write(query)
 		f.close()
-		apDisplay.printMsg("mysql -u usr_object -h cronus4 ap"+str(self.params['projectid'])+" < readyupload.sql")
-		apDisplay.printMsg("tar cf particles.tar partlist.doc partfiles/")
+		apDisplay.printMsg("mysql -u usr_object -h database_host ap"+str(self.params['projectid'])+" < readyupload.sql")
+		apDisplay.printMsg("tar cf particles.tar partlist.sel partfiles/")
 		apDisplay.printMsg("rsync -vaP "+jobfile+" cluster:"+rundir+"/")
 		apDisplay.printMsg("rsync -vaP particles.tar cluster:"+rundir+"/")
 		apDisplay.printColor("ready to run job on cluster", "cyan")
@@ -457,7 +455,7 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 
 #=====================
 if __name__ == "__main__":
-	maxLike = MaximumLikelihoodScript(True)
+	maxLike = MaximumLikelihoodScript()
 	maxLike.start()
 	maxLike.close()
 

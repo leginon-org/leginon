@@ -1,12 +1,12 @@
 <?php
 
-require "inc/jpgraph.php";
-require "inc/jpgraph_line.php";
-require "inc/jpgraph_scatter.php";
-require "inc/jpgraph_bar.php";
-require "inc/histogram.inc";
-require "inc/leginon.inc";
-require "inc/image.inc";
+require_once "inc/jpgraph.php";
+require_once "inc/jpgraph_line.php";
+require_once "inc/jpgraph_scatter.php";
+require_once "inc/jpgraph_bar.php";
+require_once "inc/histogram.inc";
+require_once "inc/leginon.inc";
+require_once "inc/image.inc";
 
 $defaultId= 1445;
 $sessionId= ($_GET['Id']) ? $_GET['Id'] : $defaultId;

@@ -9,11 +9,11 @@
  */
 $expId = $_GET['expId'];
 
-require "inc/particledata.inc";
-require "inc/leginon.inc";
+require_once "inc/particledata.inc";
+require_once "inc/leginon.inc";
 require_once "inc/project.inc";
 require_once "inc/processing.inc";
-require "inc/summarytables.inc";
+require_once "inc/summarytables.inc";
   
 $projectId = getProjectId();
 //echo "Project ID: ".$projectId." <br/>\n";

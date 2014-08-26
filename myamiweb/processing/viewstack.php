@@ -7,11 +7,14 @@
  *	see  http://ami.scripps.edu/software/leginon-license
  */
 
-require "inc/particledata.inc";
-require "inc/leginon.inc";
-require "inc/project.inc";
-require "inc/viewer.inc";
-require "inc/processing.inc";
+require_once "inc/particledata.inc";
+require_once "inc/leginon.inc";
+require_once "inc/project.inc";
+require_once "inc/viewer.inc";
+require_once "inc/processing.inc";
+require_once "inc/viewstack.inc";
+require_once "inc/imagerequest.inc";
+require_once "inc/viewstack.inc";
 
 $filename=$_GET['file'];
 $expId =$_GET['expId'];
@@ -64,6 +67,7 @@ if ($reconId) {
 }
 if ($alignId) {
 	$classnumber=$particle->getAlignParticleNumber($alignId);
+	$helical = $particle->hasHelicalInfo($alignId);
 } elseif ($clusterId) {
 	$classnumber=$particle->getClusteringParticleNumber($clusterId);
 }
@@ -99,8 +103,6 @@ if ($subStackClassesString != "") {
 		$filename=$stack['path'].'/'.$stack['imagicfile'];
 	} else {
 		
-		echo "yahoo";
-	
 		if ($clusterIdForSubstack) {
 			$stack=$particle->getRawStackFromCluster($clusterIdForSubstack);
 			$subprtls=$particle->getSubsetParticlesFromCluster($clusterIdForSubstack, $subStackClasses);
@@ -128,18 +130,22 @@ function getimagicfilenames($file) {
 	return array($file_hed, $file_img);
 }
 
-if (ereg(".spi$", $filename)) {
+if (preg_match("%.spi$%", $filename)) {
 	$file_hed=$file_img=$filename;
-	$info=spiderinfo($file_hed);
-	$n_images=$info['nimg'];
-} else if (ereg(".hdf5$", $filename)) {
+} else if (preg_match("%.hdf5$%", $filename)) {
 	$file_hed=$file_img=$filename;
-	$n_images=100;
+} else if (preg_match("%.mrc$%", $filename)) {
+	$file_hed=$file_img=$filename;
 } else {
 	list($file_hed, $file_img)=getimagicfilenames($filename);
-	$info=imagicinfo($file_hed);
-	$n_images=$info['count']+1;
 }
+
+// create imageRequester
+$imagerequest = new imageRequester();
+// find out frame counts in the stack
+$imginfo = $imagerequest->requestInfo($file_hed);
+$frames = $imginfo->nz;
+$info = array('count'=>$frames);
 
 //get session name
 if ($expId){
@@ -151,8 +157,7 @@ $sessiondata=getSessionList($projectId,$sessionId);
 $sessioninfo=$sessiondata['info'];
 $sessionname=$sessioninfo['Name'];
 
-$info=imagicinfo($file_hed);
-$n_images = ($substack || $substacktype || $subStackClassesString != "") ? $numbad : $info['count']+1;
+$n_images = ($substack || $substacktype || $subStackClassesString != "") ? $numbad : $info['count'];
 
 ?>
 <html>
@@ -184,7 +189,9 @@ if ($alignId || $clusterId) {
 	while ($classindex < $numclass && $i < $n_images) {
 		if ($classnumber[$classindex]['classNumber'] == $i+1) {
 			if (array_key_exists('resolution', $classnumber[$classindex]))
-				$c[]= sprintf("'%d, %.1fA'", $classnumber[$classindex]['number'], $classnumber[$classindex]['resolution']);
+				if ($classnumber[$classindex]['resolution'])
+					$c[]= sprintf("'%d, %.1fA'", $classnumber[$classindex]['number'], $classnumber[$classindex]['resolution']);
+				else $c[]= sprintf("'%d'", $classnumber[$classindex]['number']);
 			else
 				$c[]= sprintf("'%d'", $classnumber[$classindex]['number']);
 			$classindex++;
@@ -299,7 +306,12 @@ function applyJunkCutoff() {
 	}
 }
 
-function createSubStack() {
+function createSubStackIncluded() {
+	var index = $('selectedIndex').value
+	window.open("subStack.php?expId="+expId+"&sId="+stackId+"&include="+index+"",'height=250,width=400');
+}
+
+function createSubStackExcluded() {
 	var index = $('excludedIndex').value
 	window.open("subStack.php?expId="+expId+"&sId="+stackId+"&exclude="+index+"",'height=250,width=400');
 }
@@ -344,6 +356,13 @@ function viewAlignedSubstack() {
 	}
 }
 
+function showHelicalInfo() {
+	var index = $('selectedIndex').value
+	if (alignId!="") {
+		window.open("showHelicalInfo.php?expId="+expId+"&alignId="+alignId+"&include="+index,'height=250,width=400');
+	}
+}
+
 </script>
 </head>
 <body onload='load()'>
@@ -363,6 +382,7 @@ binning: <select id="binning">
 		<option value="2">2</option>
 		<option value="4">4</option>
 		<option value="8">8</option>
+		<option value="0.5">0.5</option>
 	</select>
 quality: <select id="quality">
 		<option value="50">jpeg 50</option>
@@ -391,9 +411,12 @@ if ($junksort)
 	$includebuttons .= "<input type='button' value='Apply junk cutoff' onClick='applyJunkCutoff()'>\n";
 if ($stackId || $clusterId || $alignId)
 	$includebuttons .= "<input type='button' value='Create Templates' onClick='uploadTemplate();' id='uploadbutton' >\n";
+	$includebuttons .= "<input type='button' value='Include Particles' onClick='createSubStackIncluded()' >\n";
 if ($clusterId || $alignId) {
 	$includebuttons .= "<input type='button' value='Create Template Stack' onClick='createTemplateStackIncluded()'>\n";
 	$includebuttons .= "<input type='button' value='Run Common Lines' onClick='runCommonLines()'>\n";
+if ($helical && $alignId)
+	$includebuttons .= "<input type='button' value='Helical Info' onClick='showHelicalInfo()'>\n";
 }
 //if ($clusterId || $templateStackId)
 //	$includebuttons .= "<input type='button' value='Run Imagic 3d0' onClick='create3d0();' id='3d0button'>\n";
@@ -403,7 +426,7 @@ if ($clusterId || $alignId) {
 //Buttons for exclusion
 $excludebuttons = "";
 if ($stackId)
-	$excludebuttons .= "<input type='button' value='Remove Particles' onClick='createSubStack()' >\n";
+	$excludebuttons .= "<input type='button' value='Remove Particles' onClick='createSubStackExcluded()' >\n";
 if ($clusterId || $alignId) 
 	$excludebuttons .= "<input type='button' value='Create SubStack' onClick='createAlignSubStack()'>\n";
 if ($clusterId) {
@@ -428,7 +451,6 @@ echo "</td></tr><tr><td>\n";
 if ($stackId)
 	echo "<input id='uploadavg' type='button' value='Average images as template' onClick='uploadavg();'>\n";
 echo "</td></tr></table>\n";
-
 ?>
 
 

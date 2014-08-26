@@ -8,11 +8,11 @@
  *	Simple viewer to view a image using mrcmodule
  */
 
-require "inc/particledata.inc";
-require "inc/leginon.inc";
-require "inc/project.inc";
-require "inc/processing.inc";
-require "inc/summarytables.inc";
+require_once "inc/particledata.inc";
+require_once "inc/leginon.inc";
+require_once "inc/project.inc";
+require_once "inc/processing.inc";
+require_once "inc/summarytables.inc";
   
 $expId = $_GET['expId'];
 $projectId = getProjectId();
@@ -63,7 +63,8 @@ if ($stackdatas) {
 			$analysisdatas = $particle->getAnalysisRunForAlignStack($alignstackid, $projectId, true);
 		else
 			$analysisdatas = $particle->getAnalysisRunForAlignStack($alignstackid, $projectId, false);
-		if ($analysisdatas) {
+		$s = $particle->getAlignStackParams($alignstackid); 
+		if ($analysisdatas || $s['REF|ApCL2DRunData|cl2drun'] || $s['REF|ApXMIPP3CL2DRunData|xmipp3cl2drun'] || $s['REF|ApSIMPLEClusterRunData|simplerun']) {
 			if ($_GET['showHidden'])
 				$clusterruns = $particle->getClusteringRunsForAlignStack($alignstackid, true);
 			else

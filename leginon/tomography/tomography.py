@@ -55,6 +55,7 @@ class Tomography(leginon.acquisition.Acquisition):
 		'offset': 0.0,
 		'offset2': 0.0,
 		'z0': 0.0,
+		'z02': 0.0,
 		'fixed model': False,
 		'use lpf': True,
 #		'use wiener': False,
@@ -63,6 +64,7 @@ class Tomography(leginon.acquisition.Acquisition):
 #		'wiener max tilt': 45,
 		'fit data points': 4,
 		'use z0': False,
+		'addon tilts':'()',
 	})
 
 	def __init__(self, *args, **kwargs):
@@ -115,7 +117,8 @@ class Tomography(leginon.acquisition.Acquisition):
 							  max=math.radians(self.settings['tilt max']),
 							  start=math.radians(self.settings['tilt start']),
 							  step=math.radians(self.settings['tilt step']),
-							  n=self.settings['equally sloped n'])
+							  n=self.settings['equally sloped n'],
+							  add_on=self.convertDegreeTiltsToRadianList(self.settings['addon tilts'],True))
 		except ValueError, e:
 			self.logger.warning('Tilt parameters invalid: %s.' % e)
 		else:
@@ -450,23 +453,28 @@ class Tomography(leginon.acquisition.Acquisition):
 				if goodprediction is not None:
 						break
 		
+		if self.settings['model mag'] == 'custom values':
+			goodprediction is None
 		if goodprediction is None:
 			if self.settings['model mag'] == 'custom values':
 				# initialize phi, offset by tilt direction
 				if self.first_tilt_direction == 1:
 					offsetlist = [self.settings['offset'],self.settings['offset2']]
 					philist = [self.settings['phi'],self.settings['phi2']]
+					custom_z0 = self.settings['z0']*(1e-6)/presetimage_pixel_size
 				else:
 					offsetlist = [self.settings['offset2'],self.settings['offset']]
 					philist = [self.settings['phi2'],self.settings['phi']]
+					custom_z0 = self.settings['z02']*(1e-6)/presetimage_pixel_size
 				if tiltgroup == 2:
 					axis_offset = offsetlist[1]
 					phi = math.radians(philist[1])
+					custom_z0 = self.settings['z02']*(1e-6)/presetimage_pixel_size
 				else:
 					axis_offset = offsetlist[0]
 					phi = math.radians(philist[0])
+					custom_z0 = self.settings['z0']*(1e-6)/presetimage_pixel_size
 				optical_axis = axis_offset*(1e-6)/presetimage_pixel_size
-				custom_z0 = self.settings['z0']*(1e-6)/presetimage_pixel_size
 				params = [phi, optical_axis, custom_z0]
 			else:
 				params = [0, 0, 0]
@@ -474,7 +482,7 @@ class Tomography(leginon.acquisition.Acquisition):
 			scale = prediction_pixel_size / presetimage_pixel_size
 			paramsdict = goodprediction['predicted position']
 			params = [paramsdict['phi'], paramsdict['optical axis']*scale, paramsdict['z0']*scale]
-		if not self.settings['use z0']:
+		if not self.settings['use z0'] and self.settings['model mag'] != 'custom values':
 			params[2] = 0
 
 		self.prediction.parameters = params
@@ -572,6 +580,9 @@ class Tomography(leginon.acquisition.Acquisition):
 		self.publish(request_data, database=True, pubevent=True, wait=True)
 
 	def processTargetData(self, *args, **kwargs):
+		self.setStatus('waiting')
+		self.fixCondition()
+		self.setStatus('processing')
 		preset_name = self.settings['preset order'][-1]
 		if self.settings['align zero loss peak']:
 			self.alignZeroLossPeak(preset_name)

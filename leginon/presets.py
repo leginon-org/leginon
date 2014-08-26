@@ -13,7 +13,7 @@
 
 import node
 import calibrationclient
-import leginondata
+from leginon import leginondata
 import event
 import copy
 import threading
@@ -25,6 +25,10 @@ import instrument
 import random
 import math
 import numpy
+
+## counter for dose images
+import itertools
+idcounter = itertools.cycle(range(100))
 
 class PresetChangeError(Exception):
 	pass
@@ -53,7 +57,7 @@ class PresetsClient(object):
 		self.pchanged = {}
 		self.dose_measured = {}
 		self.currentpreset = None
-		self.havelock = False
+		self.calclient = calibrationclient.CalibrationClient(self.node)
 
 	def getPresetFromDB(self, name):
 		session = self.node.session
@@ -62,6 +66,19 @@ class PresetsClient(object):
 			return self.node.research(datainstance=query, results=1)[0]
 		except IndexError:
 			raise ValueError('no preset \'%s\' in the database' % name)
+
+	def isPresetNameToAvoid(self,pname):
+		'''
+		Avoid derived presets. '-' is used for aligned dd sum image.
+		'Zproj' is the projection of full tomogram
+		'''
+		presets_to_avoid = ['-','Zproj']
+		avoid = False
+		for name_str in presets_to_avoid:
+				if name_str in pname:
+					avoid = True
+					break
+		return avoid
 
 	def getPresetsFromDB(self, session=None):
 		'''
@@ -84,6 +101,8 @@ class PresetsClient(object):
 			pname = p['name']
 			if not pname or pname in done:
 				continue
+			if self.isPresetNameToAvoid(pname):
+				continue
 			done[pname] = None
 			if p['removed']:
 				continue
@@ -104,25 +123,6 @@ class PresetsClient(object):
 			namedict[p['name']] = p
 		return namedict
 
-	def lock(self):
-		'try to acquire lock on presets manager, block until I have it'
-		if self.havelock:
-			return
-		lockevent = event.PresetLockEvent()
-		self.node.logger.info('Acquiring preset lock...')
-		self.node.outputEvent(lockevent, wait=True)
-		self.node.logger.info('Have preset lock')
-		self.havelock = True
-
-	def unlock(self):
-		'release the previously acquiring lock'
-		if not self.havelock:
-			return
-		unlockevent = event.PresetUnlockEvent()
-		self.node.logger.info('Releasing preset lock...')
-		self.node.outputEvent(unlockevent, wait=True)
-		self.havelock = False
-
 	def updatePreset(self, presetname, params):
 		evt = event.UpdatePresetEvent()
 		evt['name'] = presetname
@@ -133,6 +133,7 @@ class PresetsClient(object):
 
 	def toScope(self, presetname, emtarget=None, keep_shift=False):
 		'''
+		presetsclient function to
 		send the named preset to the scope
 		optionally send a target to the scope as well
 		'''
@@ -221,6 +222,16 @@ class PresetsClient(object):
 				highest_mag_preset_name = name
 		return highest_mag_preset_name
 
+	def getPresetImageDimension(self,pname):
+		preset = self.getPresetByName(pname)
+		if not preset:
+			return None
+		unbinned_pixelsize = self.calclient.getPixelSize(preset['magnification'],preset['tem'],preset['ccdcamera'])
+		imagedim = {}
+		for axis in ('x','y'):
+			imagedim[axis] = unbinned_pixelsize * preset['binning'][axis] * preset['dimension'][axis]
+		return imagedim
+
 class PresetsManager(node.Node):
 	panelclass = gui.wx.PresetsManager.Panel
 	settingsclass = leginondata.PresetsManagerSettingsData
@@ -233,10 +244,9 @@ class PresetsManager(node.Node):
 		'mag only': True,
 		'apply offset': False,
 		'blank': False,
-		'smallsize': 512,
-		'add pause in alignment': False,
+		'smallsize': 1024,
 	}
-	eventinputs = node.Node.eventinputs + [event.ChangePresetEvent, event.PresetLockEvent, event.PresetUnlockEvent, event.MeasureDoseEvent, event.UpdatePresetEvent]
+	eventinputs = node.Node.eventinputs + [event.ChangePresetEvent, event.MeasureDoseEvent, event.UpdatePresetEvent]
 	eventoutputs = node.Node.eventoutputs + [event.PresetChangedEvent, event.PresetPublishEvent, event.DoseMeasuredEvent, event.MoveToTargetEvent]
 
 	def __init__(self, name, session, managerlocation, **kwargs):
@@ -250,7 +260,9 @@ class PresetsManager(node.Node):
 			'image':calibrationclient.ImageShiftCalibrationClient(self),
 			'stage':calibrationclient.StageCalibrationClient(self),
 			'beam':calibrationclient.BeamShiftCalibrationClient(self),
+			'beam tilt':calibrationclient.BeamTiltCalibrationClient(self),
 			'modeled stage':calibrationclient.ModeledStageCalibrationClient(self),
+			'beam size':calibrationclient.BeamSizeCalibrationClient(self),
 		}
 		self.dosecal = calibrationclient.DoseCalibrationClient(self)
 		import navigator
@@ -274,22 +286,10 @@ class PresetsManager(node.Node):
 		self.addEventInput(event.ChangePresetEvent, self.changePreset)
 		self.addEventInput(event.MeasureDoseEvent, self.measureDose)
 		self.addEventInput(event.UpdatePresetEvent, self.handleUpdatePresetEvent)
-		self.addEventInput(event.PresetLockEvent, self.handleLock)
-		self.addEventInput(event.PresetUnlockEvent, self.handleUnlock)
 
 		## this will fill in UI with current session presets
 		self.getPresetsFromDB()
 		self.start()
-
-	def handleLock(self, ievent):
-		requesting = ievent['node']
-		self.lock(requesting)
-		self.confirmEvent(ievent)
-
-	def handleUnlock(self, ievent):
-		n = ievent['node']
-		self.unlock(n)
-		self.confirmEvent(ievent)
 
 	def lock(self, n):
 		'''many nodes could be waiting for a lock.  It is undefined which
@@ -520,6 +520,7 @@ class PresetsManager(node.Node):
 
 	def toScope(self, pname, magonly=False, final=False):
 		'''
+		toScope in presets manage does the job.
 		'''
 		presetdata = self.presetByName(pname)
 		if presetdata is None:
@@ -557,8 +558,12 @@ class PresetsManager(node.Node):
 				scopedata['image shift'] = self.getOffsetImageShift(presetdata)
 			cameradata.friendly_update(presetdata)
 			if not final:
+				scopedata['tem energy filter'] = None
+				scopedata['tem energy filter width'] = None
 				cameradata['energy filter'] = None
 				cameradata['energy filter width'] = None
+
+				scopedata['aperture size'] = None
 			scopedata['defocus'] = mydefocus
 
 		self.logger.info(beginmessage)
@@ -615,6 +620,7 @@ class PresetsManager(node.Node):
 			raise PresetChangeError(message)
 
 		self.startTimer('preset pause')
+		self.logger.info('Pause for %.1f s' % (self.settings['pause time'],))
 		time.sleep(self.settings['pause time'])
 		self.stopTimer('preset pause')
 		if magonly:
@@ -626,7 +632,7 @@ class PresetsManager(node.Node):
 			self.blankOff()
 			self.outputEvent(event.PresetChangedEvent(name=name, preset=presetdata))
 
-	def _fromScope(self, name, temname=None, camname=None, parameters=None):
+	def _fromScope(self, name, temname=None, camname=None, parameters=None, copybeam=False):
 		'''
 		create a new preset with name
 		if a preset by this name already exists in my 
@@ -701,12 +707,17 @@ class PresetsManager(node.Node):
 				newparams['image shift']['y'] -= (oldiswithoffset['y']-oldimageshift['y'])
 			newpreset = self.updatePreset(name, newparams)
 			self.currentpreset = newpreset
+			# copy beam shift to other presets at the same mag
+			if copybeam:
+				self.updateSameMagPresets(name,'beam shift')
 		elif parameters is not None:
 			raise ValueError
 		else:
 			newpreset = self.newPreset(name, newparams)
 
-		self.logger.info('Set preset "%s" values from instrument' % name)
+		# newpreset is None if preset is not created by self.newPreset
+		if newpreset:
+			self.logger.info('Set preset "%s" values from instrument' % name)
 		self.beep()
 		return newpreset
 
@@ -850,8 +861,8 @@ class PresetsManager(node.Node):
 		previndex = index - 1
 		return order[previndex]
 
-	def fromScope(self, newname, temname=None, camname=None):
-		newpreset = self._fromScope(newname, temname, camname)
+	def fromScope(self, newname, temname=None, camname=None, copybeam=False):
+		newpreset = self._fromScope(newname, temname, camname, None, copybeam)
 		if newpreset is None:
 			self.panel.presetsEvent()
 			return
@@ -876,6 +887,7 @@ class PresetsManager(node.Node):
 		ht = self.getHighTension()
 		tem = preset['tem']
 		cam = preset['ccdcamera']
+		probe = preset['probe mode']
 
 		## not dependent on HT
 		ptime = str(self.calclients['pixel size'].time(tem, cam, mag))
@@ -886,11 +898,12 @@ class PresetsManager(node.Node):
 		# dependent on HT
 		if ht is None:
 			message = 'Unknown (cannot get current high tension)'
-			modmagtime = beamtime = imagetime = stagetime = message
+			modmagtime = beamtime = imagetime = stagetime = defocustime = message
 		else:
 			stagetime = self.calclients['stage'].time(tem, cam, ht, mag, 'stage position')
 			imagetime = self.calclients['image'].time(tem, cam, ht, mag, 'image shift')
 			beamtime = self.calclients['beam'].time(tem, cam, ht, mag, 'beam shift')
+			defocustime = self.calclients['beam tilt'].time(tem, cam, ht, mag, 'defocus',probe)
 			modmagtimex = self.calclients['modeled stage'].timeMagCalibration(tem, cam, ht,
 																																			mag, 'x')
 			modmagtimey = self.calclients['modeled stage'].timeMagCalibration(tem, cam, ht,
@@ -904,6 +917,7 @@ class PresetsManager(node.Node):
 			'beam': str(beamtime),
 			'modeled stage': str(modtime),
 			'modeled stage mag only': str(modmagtime),
+			'defocus': str(defocustime),
 		}
 
 		self.panel.setCalibrations(times)
@@ -923,6 +937,9 @@ class PresetsManager(node.Node):
 		return newpreset
 
 	def newPreset(self, presetname, newparams):
+			if self.presetsclient.isPresetNameToAvoid(presetname):
+				self.logger.error('Preset name not allowed. Try again')
+				return
 			newpreset = leginondata.PresetData()
 			newpreset['session'] = self.session
 			newpreset['name'] = presetname
@@ -932,6 +949,7 @@ class PresetsManager(node.Node):
 			newpreset['hasref'] = False
 			newpreset['pre exposure'] = 0.0
 			newpreset['skip'] = False
+			newpreset['alt channel'] = False
 			newpreset.friendly_update(newparams)
 			self.presets[presetname] = newpreset
 			self.presetToDB(newpreset)
@@ -1002,12 +1020,15 @@ class PresetsManager(node.Node):
 		binning = preset['binning']
 		smallsize = self.settings['smallsize']
 		imagedata =  self._acquireSpecialImage(preset, acquirestr, mode='center', imagelength=smallsize, binning=binning)
+		self.imagedata = imagedata
 		
 		if imagedata is None:
 			return
 		## display
 		try:
 			dose = self.dosecal.dose_from_imagedata(imagedata)
+			pixel_dose_rate = self.dosecal.pixel_dose_rate_from_imagedata(imagedata)
+			pixel_framedose = self.dosecal.pixel_framedose_from_imagedata(imagedata)
 		except calibrationclient.NoPixelSizeError:
 			self.logger.error('No pixel size for this magnification')
 			return
@@ -1019,16 +1040,32 @@ class PresetsManager(node.Node):
 			self.logger.error('Invalid dose measurement result')
 		else:
 			if display:
-				self.panel.setDoseValue(dose)
+				self.panel.setDoseValue([dose,pixel_framedose,pixel_dose_rate])
 				self.setImage(imagedata['image'])
 			else:
 				self.saveDose(dose, self.currentpreset['name'])
+
+	def setDoseImageFilename(self, imagedata):
+		sessionname = self.session['name']
+		pname = imagedata['preset']['name']
+		smallsize = self.settings['smallsize']
+		timestamp = time.strftime('%d%H%M%S', time.localtime())
+		nextid = idcounter.next()
+		f = '%s_dose_%s_%s_%s_%s' % (sessionname, pname, smallsize, timestamp, nextid)
+		imagedata['filename'] = f
 
 	def saveDose(self, dose, presetname):
 		## store the dose in the current preset
 		params = {'dose': dose}
 		self.updatePreset(presetname, params)
 		self.old_time = None
+		self.saveDoseImage(presetname)
+
+	def saveDoseImage(self, presetname):
+		doseimage = leginondata.DoseImageData(initializer=self.imagedata)
+		doseimage['preset'] = self.presets[presetname]
+		self.setDoseImageFilename(doseimage)
+		doseimage.insert(force=True)
 
 	def matchDose(self,presetname,dose_to_match,old_dose):
 		preset = self.presetByName(presetname)
@@ -1097,7 +1134,8 @@ class PresetsManager(node.Node):
 			if pname == newpreset['name']:
 				continue
 			similar = True
-			for param in ('magnification', 'spot size', 'intensity'):
+			# should also check lens mode (LM vs SA)...
+			for param in ('spot size', 'intensity'):
 				if p[param] != newpreset[param]:
 					similar = False
 			if similar:
@@ -1128,7 +1166,6 @@ class PresetsManager(node.Node):
 					self.updatePreset(sim['name'], {'dose': simdose}, updatedose=False)
 
 	def getSimilarLook(self,camname,magdict):
-		imagelength = self.settings['smallsize']
 		if len(magdict) != 2:
 			self.logger.warning('Error calculating similar look camera binning')
 			return None, None
@@ -1144,6 +1181,8 @@ class PresetsManager(node.Node):
 		# This restrict the image to imagelength in x only
 		# and works only for camera dimension at power of 2 
 		fullcamdim = min(self.instrument.camerasizes[camname]['x'],self.instrument.camerasizes[camname]['y'])
+		# smallsize may actually be too big for this camera
+		imagelength = min(self.settings['smallsize'], fullcamdim)
 
 		#assume highmag imag is binning of full camera to imagelength
 		maxbin = fullcamdim / imagelength
@@ -1237,21 +1276,41 @@ class PresetsManager(node.Node):
 		acquirestr = 'align'
 		smallsize = self.settings['smallsize']
 		pause_time = self.settings['pause time']
-		if self.settings['add pause in alignment']:
-			self.logger.info('pausing for %s seconds before acquire' % (pause_time,))
-			time.sleep(pause_time)
+		# always apply pause
+		self.logger.info('pausing for %s seconds before acquire' % (pause_time,))
+		time.sleep(pause_time)
 		return self._acquireSpecialImage(preset, acquirestr, mode=mode, imagelength=smallsize, binning=binning)
 
+	def modifyImageLength(self,fullcamdim,imagelength):
+		binning_values = [1,2,4,8]
+		for bin in binning_values:
+			minlength = min((fullcamdim['x']/bin,fullcamdim['y']/bin))
+			if minlength <= imagelength:
+				break
+		return minlength
+		
 	def _acquireSpecialImage(self, preset, acquirestr='', mode='', imagelength=None, binning=None):
 		errstr = 'Acquire %s image failed: ' %(acquirestr) +'%s'
 		self.logger.info('Acquiring %s image' %(acquirestr))
 		camdata0 = leginondata.CameraEMData()
 		camdata0.friendly_update(preset)
+	
+		## deactivate frame saving and align frame flags
+		camdata0['save frames'] = False
+		camdata0['align frames'] = False
+		## send preset binning to camera to get binned multiplier
+		self.instrument.ccdcamera.Binning = preset['binning']
+		camdata0['binned multiplier'] = self.instrument.ccdcamera.BinnedMultiplier
 
 		camdata1 = copy.copy(camdata0)
 		fullcamdim = self.instrument.camerasizes[camdata1['ccdcamera']['name']]
 
+
 		if mode == 'center':
+			imagelength = self.modifyImageLength(fullcamdim,imagelength)
+			## send new binning to camera to get binned multiplier
+			self.instrument.ccdcamera.Binning = binning
+			camdata1['binned multiplier'] = self.instrument.ccdcamera.BinnedMultiplier
 			## center of the preset without exposure adjustment
 			## figure out if we want to cut down to imagelength x imagelength
 			for axis in ('x','y'):
@@ -1260,11 +1319,30 @@ class PresetsManager(node.Node):
 					camdata1['dimension'][axis] = imagelength
 					camdata1['offset'][axis] = (camdata0['offset'][axis]*camdata0['binning'][axis]+(change / 2))/binning[axis]
 					camdata1['binning'][axis] = binning[axis]
-					camdata1['exposure time'] = camdata1['exposure time']*camdata0['binning'][axis]/camdata1['binning'][axis]
+			camdata1['exposure time'] = camdata1['exposure time'] * (camdata0['binning']['x'] * camdata0['binning']['y'] / camdata0['binned multiplier'])
+			camdata1['exposure time'] = camdata1['exposure time'] / (camdata1['binning']['x'] * camdata1['binning']['y'] / camdata1['binned multiplier'])
 		if mode == 'bin':
 			## at maximum bin using as much camera as possible to at most imagelength x imagelength
 			## with exposure time adjustment
 			new_bin = max((fullcamdim['x']/imagelength,fullcamdim['y']/imagelength))
+
+			# keep new bin in the binning choices available to the camera
+			binnings = self.instrument.ccdcamera.CameraBinnings
+			if new_bin not in binnings:
+				binnings.append(new_bin)
+				binnings.sort()
+				bin_index= binnings.index(new_bin)
+				if bin_index == len(binnings) - 1:
+					# if the potential new bin is higher than any good ones, use the highest binning
+					new_bin = binnings[bin_index - 1]
+				else:
+					new_bin = binnings[bin_index + 1]
+				## need to delete the wrong one or it will add to the camera binnings in Camera config
+				del binnings[bin_index]
+			## send new binning to camera to get binned multiplier
+			self.instrument.ccdcamera.Binning = {'x': new_bin, 'y': new_bin}
+			camdata1['binned multiplier'] = self.instrument.ccdcamera.BinnedMultiplier
+
 			for axis in ('x','y'):
 				new_camdim = int(math.floor( fullcamdim[axis] / new_bin ))
 				extrabin = float(new_bin) / camdata0['binning'][axis]
@@ -1272,8 +1350,9 @@ class PresetsManager(node.Node):
 				camdata1['dimension'][axis] = new_camdim
 				camdata1['binning'][axis] = new_bin
 				camdata1['exposure time'] = camdata1['exposure time'] / extrabin
-				if camdata1['exposure time']< 5.0:
-					camdata1['exposure time'] = 5.0
+			camdata1['exposure time'] = camdata1['exposure time'] * camdata1['binned multiplier'] / camdata0['binned multiplier']
+			if camdata1['exposure time']< 5.0:
+				camdata1['exposure time'] = 5.0
 
 		try:
 			self.instrument.setData(camdata1)
@@ -1304,6 +1383,7 @@ class PresetsManager(node.Node):
 		This is like toScope, but this one is mainly called
 		by client nodes which request that presets and targets
 		be tightly coupled.
+		Stage position is always xy only
 		'''
 
 		## first cycle through presets before sending the final one
@@ -1343,11 +1423,14 @@ class PresetsManager(node.Node):
 #			if not self.settings['stage always']:
 #				mystage = None
 
+		# 'xy only' settings is default to True and unexposed to user
+		# It means this always True
 		if mystage and self.settings['xy only']:
 			## only set stage x and y
 			for key in mystage.keys():
 				if key not in ('x','y'):
 					del mystage[key]
+		self.testprint('targetToScope used no z change')
 
 		## offset image shift to center stage tilt axis
 		if self.settings['apply offset']:
@@ -1368,18 +1451,28 @@ class PresetsManager(node.Node):
 			fakescope2.friendly_update(newpreset)
 			fakecam2 = leginondata.CameraEMData()
 			fakecam2.friendly_update(newpreset)
-			tem = newpreset['tem']
-			ccdcamera = newpreset['ccdcamera']
+			new_tem = newpreset['tem']
+			new_ccdcamera = newpreset['ccdcamera']
+			old_tem = oldpreset['tem']
+			old_ccdcamera = oldpreset['ccdcamera']
 			ht = self.instrument.tem.HighTension
 			try:
+				'''
+				pixelshift is the shift value in the unit of the binned pixel
+				pixelvector is the shift value in the unit of binned pixel
+				'''
 				pixelshift1 = self.calclients['image'].itransform(myimage, fakescope1, fakecam1)
 				pixrow = pixelshift1['row'] * oldpreset['binning']['y']
 				pixcol = pixelshift1['col'] * oldpreset['binning']['x']
 				pixvect1 = numpy.array((pixrow, pixcol))
-				pixvect2 = self.calclients['image'].pixelToPixel(tem,ccdcamera,ht,oldpreset['magnification'],newpreset['magnification'],pixvect1)
+				pixvect2 = self.calclients['image'].pixelToPixel(old_tem,old_ccdcamera,new_tem, new_ccdcamera, ht,oldpreset['magnification'],newpreset['magnification'],pixvect1)
 				pixelshift2 = {'row':pixvect2[0] / newpreset['binning']['y'],'col':pixvect2[1] / newpreset['binning']['x']}
 				newscope = self.calclients['image'].transform(pixelshift2, fakescope2, fakecam2)
 				myimage = newscope['image shift']
+				if emtargetdata['movetype'] == 'image beam shift':
+					beam_pixel_shift = {'row': -pixelshift2['row'], 'col': -pixelshift2['col']}
+					newscope = self.calclients['beam'].transform(beam_pixel_shift, fakescope2, fakecam2)
+					mybeam = newscope['beam shift']
 			except Exception, e:
 				self.logger.error('Image shift transform failed:  %s' % (e,))
 		else:
@@ -1392,11 +1485,13 @@ class PresetsManager(node.Node):
 			myimage['y'] += newimageshift['y']
 		# Shouldn't have to make special case for non-beam shift, but for precaution
 		# of avoiding problem of random beam shift on 10apr29b, let's do this now.
-		if emtargetdata['movetype'] == 'image beam shift' or emtargetdata['movetype'] == 'beam shift':
+		if emtargetdata['movetype'] == 'beam shift':
 			mybeam['x'] -= oldpreset['beam shift']['x']
 			mybeam['x'] += newpreset['beam shift']['x']
 			mybeam['y'] -= oldpreset['beam shift']['y']
 			mybeam['y'] += newpreset['beam shift']['y']
+		elif emtargetdata['movetype'] == 'image beam shift':
+			pass
 		else:
 			mybeam['x'] = newpreset['beam shift']['x']
 			mybeam['y'] = newpreset['beam shift']['y']
@@ -1442,6 +1537,10 @@ class PresetsManager(node.Node):
 		try:
 			self.instrument.setData(scopedata)
 			self.instrument.setData(cameradata)
+			newstage = self.instrument.tem.StagePosition
+			msg = '%s targetToScope %.6f' % (newpresetname,newstage['z'])
+			self.testprint('Presetmanager:' + msg)
+			self.logger.debug(msg)
 		except Exception, e:
 			self.logger.error(e)
 			message = 'Move to target failed: unable to set instrument'
@@ -1449,6 +1548,7 @@ class PresetsManager(node.Node):
 			raise PresetChangeError(message)
 
 		self.startTimer('preset pause')
+		self.logger.info('Pause for %.1f s' % (self.settings['pause time'],))
 		time.sleep(self.settings['pause time'])
 		self.stopTimer('preset pause')
 		name = newpreset['name']
@@ -1529,7 +1629,6 @@ class PresetsManager(node.Node):
 		presetnames.sort(self.unbinnedAreaGreater)
 
 	def initAlignPresets(self, refname):
-		self.aligndone = False
 		self.alignnext.clear()
 
 		self.logger.info('Aligning presets to reference: %s' % (refname,))
@@ -1597,7 +1696,8 @@ class PresetsManager(node.Node):
 
 	def loopAlignPresets(self, refname):
 		self.initAlignPresets(refname)
-		for maglist in [self.highmags, self.lowmags]:
+		self.alignclose = False
+		for i, maglist in enumerate([self.highmags, self.lowmags]):
 			presetleft = self.refpreset
 
 			while maglist:
@@ -1609,30 +1709,46 @@ class PresetsManager(node.Node):
 
 				self.acquireAlignImages(presetleft, presetright)
 
+				if len(maglist) == 1 and i == 1:
+					# activate Done button if it is the last alignment
+					self.doneLastAlignPresets()
 				self.alignnext.wait()
+				# self.alignnext is clear if Continue is click before last alignment
+				# or if window is forced to close
 				self.alignnext.clear()
-				if self.aligndone == True:
-					return
+				if len(maglist) == 1 or self.alignclose:
+					break
 				magleft = maglist.pop()
 				presetsleft = self.magpresets[magleft]
 				presetleft = presetsleft[0]
-		self.doneAlignPresets()
+			# If break from while loop is caused by closing the window.
+			# it should not continue to the next maglist
+			if self.alignclose:
+				break
+		self.doneAllAlignPresets()
 
-	def doneAlignPresets(self):
-			self.aligndone = True
-			self.alignnext.set()
-			self.panel.onDoneAlign()
+	def doneLastAlignPresets(self):
+		# This is called when last alignment Preset Labels
+		#are set and image acquired
+		self.panel.onDoneLastAlign()
 
-	def updateSameMagPresets(self, presetname):
-				newishift = {'image shift': self.presets[presetname]['image shift']}
+	def doneAllAlignPresets(self):
+		# THis is called when the dialog window is forced closed
+		# or when Done is clicked when all alignment is done
+		self.alignnext.set()
+		self.alignclose = True
+		self.panel.onDoneAllAlign()
+
+	def updateSameMagPresets(self, presetname,paramkey='image shift'):
+				newshift = {paramkey: self.presets[presetname][paramkey]}
 				mag = self.presets[presetname]['magnification']
 				for otherpreset in self.presets.keys():
 					if otherpreset == presetname:
 						continue
 					othermag = self.presets[otherpreset]['magnification']
 					if othermag == mag:
-						self.logger.info('Updating image shift of %s to image shift of %s' % (otherpreset,presetname))
-						self.updatePreset(otherpreset, newishift)
+						self.logger.info('Updating %s of %s to %s of %s' % (paramkey,otherpreset,paramkey,presetname))
+						self.updatePreset(otherpreset, newshift)
 
 	def onAlignNext(self):
 		self.alignnext.set()
@@ -1696,6 +1812,18 @@ class PresetsManager(node.Node):
 		temp_mag = self.temp_mag
 		if temp_mag is None:
 			return
+
+		## deactivate frame saving and align frame flags
+		try:
+			self.instrument.ccdcamera.SaveRawFrames = False
+			self.instrument.ccdcamera.AlignFrames = False
+		except:
+			# camera without frame saving capacity will give an attribut error
+			pass
+		# set preset binning so we can get binned multiplier
+		self.instrument.ccdcamera.Binning = preset['binning']
+		orig_mult = self.instrument.ccdcamera.BinnedMultiplier
+
 		# go to temporary mag
 		original_mag = preset['magnification']
 		self.instrument.tem.Magnification = temp_mag
@@ -1712,11 +1840,13 @@ class PresetsManager(node.Node):
 		self.instrument.ccdcamera.Binning = {'x': temp_bin, 'y': temp_bin}
 		self.instrument.ccdcamera.Offset = {'x': 0, 'y': 0}
 		self.logger.info('Temporary Dimension, Binning: %d, %d' % (temp_dim, temp_bin,))
+		temp_mult = self.instrument.ccdcamera.BinnedMultiplier
 		# calculate temporary exposure time
 		orig_unbinned_dim = orig_bin * orig_dim
 		orig_zoom = fullcamdim / orig_unbinned_dim 
 		expscale = (temp_mag / float(original_mag)) ** 2
 		binscale = (orig_bin / float(temp_bin)/orig_zoom) ** 2
+		binscale = binscale * temp_mult / orig_mult   ## Is this right?
 		original_exptime = preset['exposure time']
 		temp_exptime = int(expscale * binscale * original_exptime)
 		if temp_exptime < 5:
@@ -1790,11 +1920,10 @@ class PresetsManager(node.Node):
 	def commitBeamAdjustment(self):
 		if self.new_beamshift is None:
 			return
+		presetname = self.currentpreset['name']
 		newbeamshift = {'beam shift': self.new_beamshift}
-		mag = self.currentpreset['magnification']
-		for preset in self.presets.values():
-			if preset['magnification'] == mag:
-				self.updatePreset(preset['name'], newbeamshift)
+		newpreset = self.updatePreset(presetname, newbeamshift)
+		self.updateSameMagPresets(presetname,'beam shift')
 
 	def handleUpdatePresetEvent(self, evt):
 		presetname = evt['name']

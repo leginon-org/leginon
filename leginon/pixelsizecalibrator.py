@@ -63,8 +63,8 @@ class PixelSizeCalibrator(calibrator.Calibrator):
 		self.shape = newimage.shape
 		self.imagepixelsize = self.getImagePixelSize()
 		size = max(self.shape)
-		if size > 2048:
-			newimage = scipy.ndimage.zoom(newimage, 2048.0/max(self.shape))
+		#if size > 2048:
+		#	newimage = scipy.ndimage.zoom(newimage, 2048.0/max(self.shape))
 		pow = imagefun.power(newimage, 1,10)
 		pow[(0,0)] =  pow.max()*2
 		self.setImage(pow, 'Power')

@@ -1,6 +1,6 @@
 #
 # COPYRIGHT:
-#       The Leginon software is Copyright 2003
+#       The Leginon software is Copyright 2003-2012
 #       The Scripps Research Institute, La Jolla, CA
 #       For terms of the license agreement
 #       see  http://ami.scripps.edu/software/leginon-license
@@ -12,7 +12,7 @@ ImageTargetData.
 '''
 import targetwatcher
 import time
-import leginondata
+from leginon import leginondata
 import event
 import calibrationclient
 import presets
@@ -24,12 +24,14 @@ import gui.wx.Acquisition
 import gui.wx.Presets
 import navigator
 import numpy
+import numpy.linalg
 import math
 from pyami import arraystats, imagefun, ordereddict
 import smtplib
 import emailnotification
 import leginonconfig
 import gridlabeler
+import itertools
 
 debug = False
 
@@ -92,6 +94,9 @@ def getRootName(imagedata, listlabel=False):
 	## use root name from parent image
 	parent_root = parent_image['filename']
 	if parent_root:
+		if parent_target['spotmap'] and not parent_image['spotmap']:
+			# target only has spotmap if from MosaicSpotFinder
+			parent_root += '_%s' % (parent_target['spotmap']['name'])
 		return parent_root
 	else:
 		return newRootName(imagedata, usegridlabel)
@@ -116,6 +121,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 	defaultsettings = dict(targetwatcher.TargetWatcher.defaultsettings)
 	defaultsettings.update({
 		'pause time': 2.5,
+		'pause between time': 0,
 		'move type': 'image shift',
 		'preset order': [],
 		'correct image': True,
@@ -129,6 +135,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		'iterations': 1,
 		'wait time': 0,
 		'adjust for transform': 'no',
+		'use parent mover': False,
 		'drift between': False,
 		'mover': 'presets manager',
 		'move precision': 0.0,
@@ -142,6 +149,8 @@ class Acquisition(targetwatcher.TargetWatcher):
 		'high mean': 2**16,
 		'low mean': 50,
 		'bad stats response': 'Continue',
+		'bad stats type': 'Mean',
+		'recheck pause time': 10,
 		'emission off': False,
 		'target offset row': 0,
 		'target offset col': 0,
@@ -163,6 +172,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 											event.DriftMonitorRequestEvent, 
 											event.FixBeamEvent,
 											event.FixAlignmentEvent,
+											event.FixConditionEvent,
 											event.ImageListPublishEvent, event.ReferenceTargetPublishEvent] \
 											+ navigator.NavigatorClient.eventoutputs
 
@@ -195,6 +205,10 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.received_image_drift = threading.Event()
 		self.requested_drift = None
 		self.grid = None
+		self.acq_counter = itertools.cycle(range(0,5))
+		self.time0 = time.time()
+		self.times = []
+		self.intensities = []
 
 		self.duplicatetypes = ['acquisition', 'focus']
 		self.presetlocktypes = ['acquisition', 'target', 'target list']
@@ -258,7 +272,6 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.publish(self.imagelistdata, database=True)
 		targetwatcher.TargetWatcher.processData(self, newdata)
 		self.publish(self.imagelistdata, pubevent=True)
-		self.presetsclient.unlock()
 		self.logger.info('Acquisition.processData done')
 
 	def validateStagePosition(self, stageposition):
@@ -292,14 +305,23 @@ class Acquisition(targetwatcher.TargetWatcher):
 		newtarget.insert(force=True)
 		self.logger.info('target adjusted by (%.1f,%.1f) (column, row)' % (offset['x'],offset['y']))
 		return newtarget
-	
+
+	def avoidTargetAdjustment(self,target_to_adjust,recent_target):
+		'''
+		Determine if target adjustment should be avoided.
+		'''
+		return False
+
 	def adjustTargetForTransform(self, targetdata):
 		## look up most recent version of this target
 		targetlist = targetdata['list']
 		targetnumber = targetdata['number']
 		newtargetdata = self.researchTargets(session=self.session, number=targetnumber, list=targetlist)
 		newtargetdata = newtargetdata[0]
-		
+
+		if self.avoidTargetAdjustment(targetdata,newtargetdata):
+			return newtargetdata
+
 		## look up all transforms declared for this session
 		decq = leginondata.TransformDeclaredData(session=self.session)
 		transformsdeclared = decq.query()
@@ -356,27 +378,36 @@ class Acquisition(targetwatcher.TargetWatcher):
 		presetnames = self.settings['preset order']
 		ret = 'ok'
 		self.onTarget = False
-		for newpresetname in presetnames:
+		for preset_index, newpresetname in enumerate(presetnames):
 			if self.alreadyAcquired(targetdata, newpresetname):
 				continue
 
 			if targetdata is not None and targetdata['type'] != 'simulated' and self.settings['adjust for transform'] != 'no':
 				if self.settings['drift between'] and self.goodnumber > 0:
-					self.declareDrift('between targets')
+						self.declareDrift('between targets')
 				targetonimage = targetdata['delta column'],targetdata['delta row']
 				targetdata = self.adjustTargetForTransform(targetdata)
 				self.logger.info('target adjusted by (%.1f,%.1f) (column, row)' % (targetdata['delta column']-targetonimage[0],targetdata['delta row']-targetonimage[1]))
 			offset = {'x':self.settings['target offset col'],'y':self.settings['target offset row']}
 			if offset['x'] or offset['y']:
 				targetdata = self.makeTransformTarget(targetdata,offset)
+
+			# set stage z first before move
+			z = self.moveToLastFocusedStageZ(targetdata)
+			self.testprint('preset manager moved to LastFocusedStageZ %s' % (z,))
+
 			### determine how to move to target
 			try:
-				emtarget = self.targetToEMTargetData(targetdata)
+				emtarget = self.targetToEMTargetData(targetdata, z)
 			except InvalidStagePosition:
 				return 'invalid'
 
 			presetdata = self.presetsclient.getPresetByName(newpresetname)
 
+			pause_between_time = self.settings['pause between time']
+			if preset_index > 0 and pause_between_time > 0.0:
+				self.logger.info('Pausing for extra %.1f before acquisition with %s' % (pause_between_time,newpresetname))
+				time.sleep(pause_between_time)
 			### acquire film or CCD
 			self.startTimer('acquire')
 			ret = self.acquire(presetdata, emtarget, attempt=attempt, target=targetdata)
@@ -426,7 +457,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		else:
 			return False
 
-	def targetToEMTargetData(self, targetdata):
+	def targetToEMTargetData(self, targetdata, z=None):
 		'''
 		convert an ImageTargetData to an EMTargetData object
 		using chosen move type.
@@ -452,6 +483,11 @@ class Acquisition(targetwatcher.TargetWatcher):
 			targetscope['stage position'] = dict(origscope['stage position'])
 			targetscope['image shift'] = dict(origscope['image shift'])
 			targetscope['beam shift'] = dict(origscope['beam shift'])
+
+			if z is not None:
+				# since presetsmanager settings 'only xy' is always True, this
+				# is only good for database record
+				targetscope['stage position']['z'] = z
 
 			movetype = self.settings['move type']
 			oldpreset = targetdata['preset']
@@ -499,10 +535,10 @@ class Acquisition(targetwatcher.TargetWatcher):
 			emtargetdata['delta z'] = zdiff
 
 		emtargetdata['target'] = targetdata
-
 		## publish in DB because it will likely be needed later
 		## when returning to the same target,
 		## even after it is removed from memory
+		# This may be a problem for focus target when used to return to it.
 		self.publish(emtargetdata, database=True)
 		return emtargetdata
 
@@ -574,16 +610,8 @@ class Acquisition(targetwatcher.TargetWatcher):
 		return filmdata
 
 	def exposeSpecimen(self, seconds):
-		## I want to expose the specimen, but not the camera.
-		## I would rather use some kind of manual shutter where above specimen
-		## shutter opens and below specimen shutter remains closed.
-		## Using the screen down was easier and serves the same purpose, but
-		## with more error on the actual time exposed.
-		self.logger.info('Screen down for %ss to expose specimen...' % (seconds,))
-		self.instrument.tem.MainScreenPosition = 'down'
-		time.sleep(seconds)
-		self.instrument.tem.MainScreenPosition = 'up'
-		self.logger.info('Screen up.')
+		self.exposeSpecimenWithShutterOverride(seconds)
+		#self.exposeSpecimenWithScreenDown(seconds)
 
 	def getImageShiftOffset(self):
 		pimageshift = self.presetsclient.currentpreset['image shift']
@@ -599,6 +627,9 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.instrument.tem.ImageShift = {'x':x, 'y':y}
 
 	def moveAndPreset(self, presetdata, emtarget):
+			'''
+			Move xy to emtarget position with its mover and set preset
+			'''
 			status = 'ok'
 			presetname = presetdata['name']
 			targetdata = emtarget['target']
@@ -618,10 +649,15 @@ class Acquisition(targetwatcher.TargetWatcher):
 					final_imageshift = self.settings['final image shift']
 					if final_imageshift:
 						keep_shift = True
-					status = self.navclient.moveToTarget(targetdata, movetype, precision, accept_precision, final_imageshift=final_imageshift)
+					status = self.navclient.moveToTarget(targetdata, movetype, precision, accept_precision, final_imageshift=final_imageshift, use_current_z=True)
 					if status == 'error':
 						return status
+					# Give presetsclient time to unlock navigator changePreset request
+					time.sleep(0.5)
 			self.presetsclient.toScope(presetname, emtarget, keep_shift=keep_shift)
+			# DO this the second time give an effect of normalization. Removed defocus and beam shift hysteresis on Talos
+			if presetdata['tem']['hostname'] == 'talos-20taf2c':
+				self.presetsclient.toScope(presetname, emtarget, keep_shift=keep_shift)
 			stageposition = self.instrument.tem.getStagePosition()
 			stagea = stageposition['a']
 			if self.settings['correct image shift coma']:
@@ -676,7 +712,12 @@ class Acquisition(targetwatcher.TargetWatcher):
 			return 'fail'
 
 		if self.settings['bad stats response'] != 'Continue':
-			self.evaluateStats(imagedata['image'])
+			self.recheck_counter = itertools.count()
+			# For ring collapse testing
+			#c = self.acq_counter.next()
+			#imagearray = imagedata['image'] - c*c
+			imagearray = imagedata['image']
+			self.evaluateStats(imagearray)
 
 		## convert float to uint16
 		if self.settings['save integer']:
@@ -723,7 +764,10 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.logger.info('pausing for %s s' % (pausetime,))
 
 		self.startTimer('pause')
+		t = threading.Thread(target=self.positionCamera)
+		t.start()
 		time.sleep(pausetime)
+		self.waitPositionCameraDone()
 		self.stopTimer('pause')
 
 		if debug:
@@ -733,7 +777,16 @@ class Acquisition(targetwatcher.TargetWatcher):
 		pretime = presetdata['pre exposure']
 		if pretime:
 			self.exposeSpecimen(pretime)
-		args = (presetdata, emtarget, channel)
+		if channel is None:
+			try:
+				defaultchannel = int(presetdata['alt channel'])
+			except:
+				# back compatible since imported old presetdata would have value if
+				# database column is not yet created by sinedon
+				defaultchannel = None
+		else:
+			defaultchannel = channel
+		args = (presetdata, emtarget, defaultchannel)
 		if self.settings['background']:
 			self.clearCameraEvents()
 			t = threading.Thread(target=self.acquirePublishDisplayWait, args=args)
@@ -764,8 +817,16 @@ class Acquisition(targetwatcher.TargetWatcher):
 			self.instrument.tem.BeamTilt = self.beamtilt0
 			self.logger.info("reset beam tilt to (%.4f,%.4f)" % (self.instrument.tem.BeamTilt['x'],self.instrument.tem.BeamTilt['y']))
 		targetdata = emtarget['target']
-		if targetdata is not None and 'grid' in targetdata and targetdata['grid'] is not None:
-			imagedata['grid'] = targetdata['grid']
+		if targetdata is not None:
+			if 'grid' in targetdata and targetdata['grid'] is not None:
+				imagedata['grid'] = targetdata['grid']
+			if 'spotmap' in targetdata:
+				# if in targetdata, get spotmap from it
+				imagedata['spotmap'] = targetdata['spotmap']
+			if not targetdata['spotmap']:
+				if targetdata['image']:
+					# get spotmap from parent image
+					imagedata['spotmap'] = targetdata['image']['spotmap']
 		else:
 			if self.grid:
 				imagedata['grid'] = self.grid
@@ -800,6 +861,11 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.reportStatus('output', 'Publishing image...')
 		self.startTimer('publish image')
 		if self.settings['save image']:
+			if not imagedata['mover']:
+				moverq = leginondata.MoverParamsData(mover=self.settings['mover'])
+				moverq['move precision'] = self.settings['move precision']
+				moverq['accept precision'] = self.settings['accept precision']
+				imagedata['mover'] = moverq
 			imagedata.insert(force=True)
 		self.publish(imagedata, pubevent=True)
 
@@ -866,6 +932,47 @@ class Acquisition(targetwatcher.TargetWatcher):
 		mes = emailnotification.makeMessage(leginonconfig.emailfrom, leginonconfig.emailto, subject, text)
 		s.sendmail(leginonconfig.emailfrom, leginonconfig.emailto, mes.as_string())
 
+	def pauseAndRecheck(self,pausetime):
+		recheck_count = self.recheck_counter.next()
+		self.logger.info('Pausing for %d s before checking again at %d' % (pausetime,recheck_count))
+		time.sleep(pausetime)
+		## acquire image
+		self.reportStatus('acquisition', 'acquiring image...')
+		self.startTimer('acquire getData')
+		correctimage = self.settings['correct image']
+		# Switch frame saving if available
+		try:
+			isSaveRawFrames = self.instrument.ccdcamera.SaveRawFrames
+			self.instrument.ccdcamera.SaveRawFrames = False
+		except:
+			isSaveRawFrames = False
+		if correctimage:
+			imagedata = self.acquireCorrectedCameraImageData(channel=0)
+		else:
+			imagedata = self.acquireCameraImageData()
+		# Restore frame saving
+		try:
+			self.instrument.ccdcamera.SaveRawFrames = isSaveRawFrames
+		except:
+			pass
+		self.reportStatus('acquisition', 'image acquired')
+		self.stopTimer('acquire getData')
+		if imagedata is None:
+			return 'fail'
+		imagearray = imagedata['image']
+		if recheck_count == 0:
+			# Restrict recover mean value with this too if slope is used
+			self.recover_mean = imagearray.mean() * 0.8
+		'''
+		Simulator testing ring collapse	
+		if recheck_count > 5:
+			imagearray = numpy.ones(imagearray.shape)*2800
+		else:
+			imagearray += 20 * recheck_count
+		'''
+		self.recheckEvaluateStats(imagearray)
+		return
+
 	def respondBadImageStats(self, badstate=''):
 			if self.settings['bad stats response'] == 'Abort all':
 				self.player.stopqueue()
@@ -875,11 +982,18 @@ class Acquisition(targetwatcher.TargetWatcher):
 				self.player.stop()
 				self.logger.info('Skiping targets in this target list')
 				raise BadImageStatsAbort('image mean too '+badstate)
+			elif self.settings['bad stats response'] == 'Recheck':
+				self.pauseAndRecheck(self.settings['recheck pause time'])
 			elif self.settings['bad stats response'] == 'Pause':
 				raise BadImageStatsPause('image mean too '+badstate)
 
 	def evaluateStats(self, imagearray):
 		mean = arraystats.mean(imagearray)
+		if self.settings['bad stats type'] == 'Slope':
+			mean = self.runningSlope(time.time() - self.time0,mean)
+			self.logger.info('current slope %s' % (mean,))
+			if mean is None:
+				return
 		if mean > self.settings['high mean']:
 			try:
 				self.emailBadImageStats(mean)
@@ -891,7 +1005,47 @@ class Acquisition(targetwatcher.TargetWatcher):
 				self.emailBadImageStats(mean)
 			except:
 				self.logger.info('could not email')
+			if mean is not None:
+				self.logger.info('mean lower than settings %6.0f' % (mean))
 			self.respondBadImageStats('low')
+
+	def recheckEvaluateStats(self,imagearray):
+		'''
+		Stats evaluation in recheck.
+		This is mainly based on the slope.
+		'''
+		mean = arraystats.mean(imagearray)
+		if self.settings['bad stats type'] is None or self.settings['bad stats type'] == 'Mean':
+			return self.evaluateStats(imagearray)
+		# Evaluate with slope.  Always rejects None (no slope calculated)
+		slope = self.runningSlope(time.time() - self.time0,mean)
+		self.logger.info('current slope %s' % (slope,))
+		if slope is not None and mean > self.recover_mean and slope <= self.settings['high mean'] and slope >=self.settings['low mean']:
+			return
+		else:
+			self.respondBadImageStats('low')
+
+	def runningSlope(self,time,intensity):
+		if len(self.times) == 5:
+			self.times = self.times[1:]
+			self.intensities = self.intensities[1:]
+		self.times.append(time)
+		self.intensities.append(intensity)
+		if len(self.times) < 3:
+			return None
+		slope, intercept = self.linearFitData(self.times,self.intensities)
+		return slope
+
+	def linearFitData(self,xlist,ylist):
+		'''
+		Fit data with a line.
+		dataxy is a dictionary of x values in a list and y values in a list.
+		returned result is a tuple of (slope, intercept).
+		'''
+		x = numpy.array(xlist)
+		y = numpy.array(ylist)
+		A = numpy.vstack([x,numpy.ones(len(x))]).T
+		return numpy.linalg.lstsq(A,y)[0]
 
 	def publishImage(self, imdata):
 		self.publish(imdata, pubevent=True)
@@ -1026,6 +1180,15 @@ class Acquisition(targetwatcher.TargetWatcher):
 			original_position = self.instrument.tem.getStagePosition()
 			status = self.outputEvent(evt, wait=True)
 			self.instrument.tem.setStagePosition({'z':original_position['z']})
+		except node.ConfirmationNoBinding, e:
+			self.logger.debug(e)
+		except Exception, e:
+			self.logger.error(e)
+
+	def fixCondition(self):
+		evt = event.FixConditionEvent()
+		try:
+			status = self.outputEvent(evt, wait=True)
 		except node.ConfirmationNoBinding, e:
 			self.logger.debug(e)
 		except Exception, e:

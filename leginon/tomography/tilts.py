@@ -85,8 +85,24 @@ class Tilts(object):
 	def getTilts(self):
 		return [list(tilts) for tilts in self.tilts]
 
+	def addOnTilts(self,tilts):
+		'''
+		add custom tilts
+		'''
+		tilt_num = len(tilts)
+		for add_on_tilt in self.add_on:
+			if add_on_tilt not in tilts and add_on_tilt < max(tilts) and add_on_tilt > min(tilts):
+				tilts.append(add_on_tilt)
+				reverse_sort = add_on_tilt < tilts[0]
+		# sort if at least one tilt is added
+		if tilt_num < len(tilts):
+			tilts.sort()
+			if reverse_sort:
+				tilts.reverse()
+		return tilts
+
 	def update(self, **kwargs):
-		attrs = ['min', 'max', 'start', 'step', 'n', 'equally_sloped']
+		attrs = ['min', 'max', 'start', 'step', 'n', 'equally_sloped', 'add_on']
 		for attr in attrs:
 			if attr not in kwargs:
 				continue
@@ -125,6 +141,7 @@ class Tilts(object):
 	
 			tilt_half = tilts[index:]
 			if len(tilt_half) > 1:
+				tilt_half = self.addOnTilts(tilt_half)
 				self.tilts.append(tilt_half)
 
 			if index < len(tilts) - 1:
@@ -132,6 +149,7 @@ class Tilts(object):
 			tilt_half = tilts[:index]
 			tilt_half.reverse()
 			if len(tilt_half) > 1:
+				tilt_half = self.addOnTilts(tilt_half)
 				self.tilts.append(tilt_half)
 			'''
 		# This is for symmetrical data collection not equally sloped
@@ -158,6 +176,7 @@ class Tilts(object):
 				tilts = equallyAngled(*args)
 				if len(tilts) < 2:
 					continue
+				tilts = self.addOnTilts(tilts)
 				self.tilts.append(tilts)
 
 			if not self.tilts:

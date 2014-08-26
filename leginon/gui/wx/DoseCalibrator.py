@@ -18,7 +18,6 @@ class Panel(leginon.gui.wx.Calibrator.Panel):
     def initialize(self):
         leginon.gui.wx.Calibrator.Panel.initialize(self)
         self.dialog = None
-        self.toolbar.Realize()
         self.toolbar.DeleteTool(leginon.gui.wx.ToolBar.ID_ABORT)
 
     def onCalibrateTool(self, evt):

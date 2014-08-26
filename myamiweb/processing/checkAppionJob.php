@@ -1,9 +1,9 @@
 <?php
-require "inc/particledata.inc";
-require "inc/util.inc";
-require "inc/leginon.inc";
-require "inc/project.inc";
-require "inc/processing.inc";
+require_once "inc/particledata.inc";
+require_once "inc/util.inc";
+require_once "inc/leginon.inc";
+require_once "inc/project.inc";
+require_once "inc/processing.inc";
 
 checkJobs();
 
@@ -47,7 +47,7 @@ function checkJobs($showjob=False,$showall=False,$extra=False) {
 			$particle->updateClusterQueue($jobId,$clusterjobid,'D');
 		} else {
 			// only same user can abort job
-			$particle->abortClusterJob($jobId,$cluster,$user);
+			$particle->abortClusterJob($jobId,$user);
 		}
 		echo "<font class='apcomment'>Job \"$clusterjobid\" has been removed from the cluster</font><br />\n";
 		// get updated job info
@@ -57,12 +57,21 @@ function checkJobs($showjob=False,$showall=False,$extra=False) {
 	// mark the job broken if requested
 	if ($_POST['brokenjob']) {
 		// only same user can abort job
-		$particle->abortClusterJob($jobId,$cluster,$user);
+		$particle->abortClusterJob($jobId,$user);
 		echo "<font class='apcomment'>Broken job \"".$jobinfo['name']."\" has been marked as aborted</font><br />\n";
 		// get updated job info
 		$jobinfo = $particle->getJobInfoFromId($jobId);
 	}
 	
+	// mark the job done if requested
+	if ($_POST['donejob']) {
+		// only same user can abort job
+		$particle->markDoneAppionJob($jobId,$user);
+		echo "<font class='apcomment'>Done job \"".$jobinfo['name']."\" has been marked as done</font><br />\n";
+		// get updated job info
+		$jobinfo = $particle->getJobInfoFromId($jobId);
+	}
+
 	// if clicked button, list job in queue
 	$queue = checkClusterJobs($host,$user, $pass);
 	if ($queue) {
@@ -101,7 +110,7 @@ function checkJobs($showjob=False,$showall=False,$extra=False) {
 	echo "</table>\n";
 
 	// get log file from name of job
-	$logfile = ereg_replace(".job",".log", $jobinfo['name']);
+	$logfile = preg_replace("%.job%",".log", $jobinfo['name']);
 	$logpath = $jobinfo['appath']."/".$logfile;
 	if ($_SESSION['loggedin']==True || !function_exists(ssh2_connect)) {
 		if (file_exists($logpath)) {
@@ -130,6 +139,7 @@ function checkJobs($showjob=False,$showall=False,$extra=False) {
 			if (!$queue) {
 				echo "<form name='jobform' method='post' action='$formAction'>\n";
 				if ($status=='Running') echo "<center><input type='submit' name='brokenjob' value='Mark this broken job as aborted'></center>\n";
+				if ($status=='Running') echo "<center><input type='submit' name='donejob' value='Mark this finished job as completed'></center>\n";
 				echo "</form>\n";
 			}
 		}
@@ -200,13 +210,13 @@ function convertToColors($j) {
 	foreach ($j as $i) {
 		//$i = removebackspace($i);
 		$i = trim($i);
-		$i = ereg_replace("\033\[(1;)?31m","<font style='color:red'>", $i);
-		$i = ereg_replace("\033\[(1;)?32m","<font style='color:green'>", $i);
-		$i = ereg_replace("\033\[(1;)?33m","<font style='color:yellow'>", $i);
-		$i = ereg_replace("\033\[(1;)?34m","<font style='color:blue'>", $i);
-		$i = ereg_replace("\033\[(1;)?35m","<font style='color:magenta'>", $i);
-		$i = ereg_replace("\033\[(1;)?36m","<font style='color:cyan'>", $i);
-		$i = ereg_replace("\033\[(1;)?0m","</font>", $i);
+		$i = preg_replace("%\033\[(1;)?31m%","<font style='color:red'>", $i);
+		$i = preg_replace("%\033\[(1;)?32m%","<font style='color:green'>", $i);
+		$i = preg_replace("%\033\[(1;)?33m%","<font style='color:yellow'>", $i);
+		$i = preg_replace("%\033\[(1;)?34m%","<font style='color:blue'>", $i);
+		$i = preg_replace("%\033\[(1;)?35m%","<font style='color:magenta'>", $i);
+		$i = preg_replace("%\033\[(1;)?36m%","<font style='color:cyan'>", $i);
+		$i = preg_replace("%\033\[(1;)?0m%","</font>", $i);
 		$line .= "$i ";
 		// make sure line doesn't get too long:
 		$linelen = $linelen + strlen($i) + 1;

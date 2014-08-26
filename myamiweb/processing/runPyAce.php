@@ -8,15 +8,12 @@
  *	Simple viewer to view a image using mrcmodule
  */
 
-require "inc/particledata.inc";
-require "inc/leginon.inc";
-require "inc/project.inc";
-require "inc/viewer.inc";
-require "inc/processing.inc";
-require "inc/appionloop.inc";
-
-// Cs should come straight out of the DB somehow, instead it is in config
-$defaultcs=DEFAULTCS;
+require_once "inc/particledata.inc";
+require_once "inc/leginon.inc";
+require_once "inc/project.inc";
+require_once "inc/viewer.inc";
+require_once "inc/processing.inc";
+require_once "inc/appionloop.inc";
 
 // IF VALUES SUBMITTED, EVALUATE DATA
 if ($_POST['process']) {
@@ -57,12 +54,13 @@ if (!empty($sessioninfo)) {
 
 // --- parse data and process on submit
 function runPyAce() {
+	
+	/* *******************
+	PART 1: Get variables
+	******************** */
 	$expId   = $_GET['expId'];
 	$outdir  = $_POST['outdir'];
 	$runname = $_POST['runname'];
-
-	$command.= "pyace.py ";
-
 	// parse params
 	$edgethcarbon=$_POST[edgethcarbon];
 	$edgethice=$_POST[edgethice];
@@ -72,7 +70,6 @@ function runPyAce() {
 	$fieldsize=$_POST[fieldsize];
 	$resamplefr=$_POST[resamplefr];
 	$medium=$_POST[medium];
-	$cs=$_POST[cs];
 	$nominal=$_POST[nominal];
 	$reprocess=$_POST[reprocess];
 	$display = ($_POST[display]=="on") ? "1" : '0';
@@ -82,11 +79,30 @@ function runPyAce() {
 	$continue = ($_POST[cont]=="on") ? "1" : '0';
 	$commit = ($_POST[commit]=="on") ? "1" : '0';
 	$proc = $_POST[processor];
-
-	if (!is_numeric($cs)) {
-		createPyAceForm("Invalid value for the Spherical Aberration");
+	
+	/* *******************
+	PART 2: Check for conflicts, if there is an error display the form again
+	******************** */
+	$leginondata = new leginondata();
+	if ($leginondata->getCsValueFromSession($expId) === false) {
+		createPyAceForm("Cs value of the images in this session is not unique or known, can't process");
 		exit;
 	}
+	// check the tilt situation
+	$particle = new particledata();
+	$maxang = $particle->getMaxTiltAngle($_GET['expId']);
+	if ($maxang > 5) {
+		$tiltangle = $_POST['tiltangle'];
+		if ($tiltangle!='notilt') {
+			createPyAceForm("ACE 1 does not work on tilted images");
+			exit;
+		}
+	}
+	
+	/* *******************
+	PART 3: Create program command
+	******************** */
+	$command.= "pyace.py ";
 
 	$command.="--edgethcarbon=$edgethcarbon ";
 	$command.="--edgethice=$edgethice ";
@@ -96,7 +112,6 @@ function runPyAce() {
 	$command.="--fieldsize=$fieldsize ";
 	$command.="--resamplefr=$resamplefr ";
 	$command.="--medium=$medium ";
-	$command.="--cs=$cs ";
 	$command.="--drange=$drange ";
 	$command.="--display=$display ";
 	$command.="--stig=$stig";
@@ -110,63 +125,25 @@ function runPyAce() {
 	}
 	$command .= $apcommand;
 
-	// check the tilt situation
-	$particle = new particledata();
-	$maxang = $particle->getMaxTiltAngle($_GET['expId']);
-	if ($maxang > 5) {
-		$tiltangle = $_POST['tiltangle'];
-		if ($tiltangle!='notilt') {
-			createPyAceForm("ACE 1 does not work on tilted images");
-			exit;
-		}
+	
+	/* *******************
+	PART 4: Create header info, i.e., references
+	******************** */
+	$headinfo .= referenceBox("ACE: automated CTF estimation.", 2005, "Mallick SP, Carragher B, Potter CS, Kriegman DJ.", "Ultramicroscopy.", 104, 1, 15935913, false, false, false);
+	
+	/* *******************
+	PART 5: Show or Run Command
+	******************** */
+	// submit command
+	$errors = showOrSubmitCommand($command, $headinfo, 'pyace', $nproc);
+
+	// if error display them
+	if ($errors) {
+		createPyAceForm("<b>ERROR:</b> $errors");
 	}
-
-	// submit job to cluster
-	if ($_POST['process']=="Run ACE") {
-		$user = $_SESSION['username'];
-		$password = $_SESSION['password'];
-
-		if (!($user && $password)) createPyAceForm("<b>ERROR:</b> Enter a user name and password");
-
-		$sub = submitAppionJob($command,$outdir,$runname,$expId,'pyace',False,True);
-		// if errors:
-		if ($sub) createPyAceForm("<b>ERROR:</b> $sub");
-		exit;
-	}
-
-	processing_header("PyACE Results","PyACE Results");
-
-	echo referenceBox("ACE: automated CTF estimation.", 2005, "Mallick SP, Carragher B, Potter CS, Kriegman DJ.", "Ultramicroscopy.", 104, 1, 15935913, false, false, false);
-
-	echo"
-	<TABLE WIDTH='600'>
-	<TR><TD COLSPAN='2'>
-	<B>ACE Command:</B><br/>
-	$command<HR>
-	</TD></tr>";
-	appionLoopSummaryTable();
-	echo"
-	<TR><td>edgethcarbon</TD><td>$edgethcarbon</TD></tr>
-	<TR><td>edgethice</TD><td>$edgethice</TD></tr>
-	<TR><td>pfcarbon</TD><td>$pfcarbon</TD></tr>
-	<TR><td>pfice</TD><td>$pfice</TD></tr>
-	<TR><td>overlap</TD><td>$overlap</TD></tr>
-	<TR><td>fieldsize</TD><td>$fieldsize</TD></tr>
-	<TR><td>resamplefr</TD><td>$resamplefr</TD></tr>
-	<TR><td>medium</TD><td>$medium</TD></tr>
-	<TR><td>cs</TD><td>$cs</TD></tr>
-	<TR><td>drange</TD><td>$drange</TD></tr>
-	<TR><td>display</TD><td>$display</TD></tr>
-	<TR><td>stig</TD><td>$stig</TD></tr>\n";
-
-	if ($nominal=="db value" OR $nominal=="") echo "<TR><td>nominal</TD><td><I>NULL</I></TD></tr>\n";
-	else echo "<TR><td>nominal</TD><td>$nominal</TD></tr>\n";
-	if ($reprocess) echo "<TR><td>reprocess</TD><td>$reprocess</TD></tr>\n";
-	else echo "<TR><td>reprocess</TD><td><I>NULL</I></TD></tr>\n";
-	echo "<TR><td>newnominal</TD><td>$newnominal</TD></tr>\n";
-	echo "</table>\n";
-	processing_footer(True, True);
 }
+
+
 
 /*
 **
@@ -178,7 +155,6 @@ function runPyAce() {
 
 // CREATE FORM PAGE
 function createPyAceForm($extra=false) {
-	global $defaultcs;
 	// check if coming directly from a session
 	$expId = $_GET['expId'];
 	if ($expId) {
@@ -252,7 +228,7 @@ function createPyAceForm($extra=false) {
 	$sessiondata=getSessionList($projectId,$expId);
 	$sessioninfo=$sessiondata['info'];
 	$presets=$sessiondata['presets'];
-	$sessionpath=getBaseAppionPath($sessioninfo).'/ctf';
+	$sessionpath=getBaseAppionPath($sessioninfo).'/ctf/';
 
 	$ctf = new particledata();
 	$ctfruns = count($ctf->getCtfRunIds($sessionId));
@@ -340,9 +316,6 @@ function createPyAceForm($extra=false) {
 	echo "<INPUT TYPE='text' NAME='fieldsize' VALUE='512' size='4'>\n";
 	echo docpop('field','Field Size');
 	echo "<br />\n";
-	echo "<INPUT TYPE='text' NAME='cs' VALUE='".$defaultcs."' SIZE='4'>\n";
-	echo docpop('cs','Spherical Aberration');
-	echo "&nbsp;(<a href='http://en.wikipedia.org/wiki/Spherical_aberration'>wiki\n";
 	echo "<img border='0' src='img/external.png'></a>)\n";
 	echo "<br/><br/>\n";
 

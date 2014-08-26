@@ -8,12 +8,12 @@
  *	Simple viewer to view a image using mrcmodule
  */
 
-require "inc/particledata.inc";
-require "inc/leginon.inc";
-require "inc/project.inc";
-require "inc/viewer.inc";
-require "inc/processing.inc";
-require "inc/appionloop.inc";
+require_once "inc/particledata.inc";
+require_once "inc/leginon.inc";
+require_once "inc/project.inc";
+require_once "inc/viewer.inc";
+require_once "inc/processing.inc";
+require_once "inc/appionloop.inc";
  
 // IF VALUES SUBMITTED, EVALUATE DATA
 if ($_POST['process']) {
@@ -87,7 +87,11 @@ function createJMForm($extra=false, $title='JPEG Maker', $heading='Automated JPE
 	#<input type='HIDDEN' name='lastSessionId' value='$sessionId'>\n";
 	$sessiondata=getSessionList($projectId,$sessionId);
 	$sessioninfo=$sessiondata['info'];
+	$sessionpath=getBaseAppionPath($sessioninfo).'/jpgs/';
 
+	// Set any existing parameters in form
+	$sessionpathval = ($_POST['outdir']) ? $_POST['outdir'] : $sessionpath;
+	$fftcheck = ($_POST['fft']=='on') ? 'CHECKED' : '';
 	$testcheck = ($_POST['testimage']=='on') ? 'CHECKED' : '';
 	$testdisabled = ($_POST['testimage']=='on') ? '' : 'DISABLED';
 	$testvalue = ($_POST['testimage']=='on') ? $_POST['testfilename'] : 'mrc file name';
@@ -107,7 +111,7 @@ function createJMForm($extra=false, $title='JPEG Maker', $heading='Automated JPE
 	<table border=0 class=tableborder cellpadding=15>
 	<tr>
 	  <td valign='top'>";
-	    createAppionLoopTable($sessiondata, 'jpgs', "", 1);
+	    createAppionLoopTable($sessiondata, 'jpgs', "", 0);
 	echo"
 	  </td>
 	  <td class='tablebg'>
@@ -131,6 +135,9 @@ function createJMForm($extra=false, $title='JPEG Maker', $heading='Automated JPE
 	    <a href=\"javascript:infopopup('size')\">
 	      <b>Maximal Image Size: </b></a><br/>
 	        <input type='text' name='imgsize' value=$imgsize size='4'> pixels<br/>
+		<br/>
+		<input type='checkbox' name='fft' $fftcheck>
+		<b>Create Fourier Transform</b>
 
 	  </td>";
 	echo"
@@ -147,7 +154,7 @@ function createJMForm($extra=false, $title='JPEG Maker', $heading='Automated JPE
 	<tr>
 		<td colspan='2' align='center'>
 	";
-	echo getSubmitForm("Run JPEG Maker", true, true);
+	echo getSubmitForm("Run JPEG Maker");
 	echo "
 		<br />
 		</td>
@@ -168,14 +175,14 @@ function createJMForm($extra=false, $title='JPEG Maker', $heading='Automated JPE
 }
 
 function runjpgmaker() {
+	/* *******************
+	PART 1: Get variables
+	******************** */
 	$expId   = $_GET['expId'];
 	$outdir  = $_POST['outdir'];
-	$runname = $_POST['runname'];
 
 	$process = $_POST['process'];
 	if (substr($outdir,-1,1)!='/') $outdir.='/';
-	$runname = $_POST['runname'];
-	$rundir=$outdir.$runname."/";
 	$alldbimages = $_POST['alldbimages'];
 	$dbimages = $_POST[sessionname].",".$_POST[preset];
 	$norejects = ($_POST[norejects]=="on") ? "0" : "1";
@@ -190,6 +197,8 @@ function runjpgmaker() {
 	$quality = $_POST[quality];
 	$imgsize = $_POST[imgsize];
 	
+	$fft = ($_POST[fft]=="on") ? "True" : "";
+
 	if ($_POST['testimage']=="on") {
 		if ($_POST['testfilename']) {
 			$testimage=$_POST['testfilename'];
@@ -197,7 +206,14 @@ function runjpgmaker() {
 			$apcontinue=0;
 		}
 	}
-
+	/* *******************
+	PART 2: Check for conflicts, if there is an error display the form again
+	******************** */
+	
+	/* *******************
+	PART 3: Create program command
+	******************** */
+	
 	$command="jpgmaker.py ";
 
 	$apcommand = parseAppionLoopParams($_POST);
@@ -210,40 +226,50 @@ function runjpgmaker() {
 	if ($scale == "fixed") $command.=" --min=".$min." --max=".$max;
 	if ($quality != 80) $command.=" --quality=".$quality;
 	if ($imgsize != 512) $command.=" --imgsize=".$imgsize;
+	if ($fft) $command.=" --fft";
 
-	if ($testimage && $_POST['process']=="Run JPEG Maker") {
-		$user = $_SESSION['username'];
-		$password = $_SESSION['password'];
-		if (!($user && $password)) createJMForm("<b>ERROR:</b> Enter a user name and password"); 
-		$sub = submitAppionJob($command,$outdir,$runname,$expId,'jpgmaker',False,True);
-		// if errors:
-		if ($sub) createJMForm("<b>ERROR:</b> $sub");
-		exit;
-	}
+	/* *******************
+	PART 4: Create header info, i.e., references
+	******************** */
+	
+	// Add reference to top of the page
+	$headinfo .= $images;
+	$headinfo .= appionRef();
+	$headinfo .= "<table width='560' class='tableborder' border='1'>";
+	$headinfo .= "<tr><td colspan='2'><br/>\n";
+	$headinfo .= "<span style='font-size: larger;'> After running this command, jpg images will be available in:<br/> ".$outdir.$jpgdir." <br/>";
+	$headinfo .= "</span><br/></td></tr></table><br/>\n";
 
-	if ($testimage) {
-		$images = "<center><table width='600' border='0'>\n";
-  		$images.= "<tr><td>";
-		$images.= "<b>JPEG Maker Command:</b><br />$command";
-		$images.= "</td></tr></table>\n";
-		$images.= "<br />\n";
-		$testjpg=ereg_replace(".mrc","",$testimage);
-		$jpgimg=$rundir.$testjpg.".jpg";
-		$images.= writeTestResults($jpgimg,array(),1);
-		createJMForm(false,'JPG File Maker Test Results','JPEG Maker Results',$images);
-	} else {
-		processing_header("JPEG Maker Results","JPEG Maker Results",$javascript);
-		echo appionRef();
-		echo"
-			<table width='600'>
-			<tr><td colspan='2'>
-			<b>JPEG Maker Command:</b><br>
-			$command
-			<hr>
-			</td></tr>";
-		appionLoopSummaryTable();
-		echo"</table>\n";
-		processing_footer();
+	/* *******************
+	PART 5: Show or Run Command
+	******************** */
+	
+	// submit command
+	$errors = showOrSubmitCommand($command, $headinfo, 'jpgmaker', $nproc, $testimage);
+	
+	// if error display them
+	if ($errors) {
+		createJMForm("<b>ERROR:</b> $errors");
+	} else if ($testimage) {
+		// add the appion wrapper to the command for display
+		$wrappedcmd = addAppionWrapper($command);
+
+		$results = "<table width='600' border='0'>\n";
+  		$results.= "<tr><td>";
+  		$results.= "<span style='font-size: larger;'> ";
+		$results.= "<b>Run the following command to test the image:</b><br />";
+		$results.= $wrappedcmd;
+		$results.= "</span>";
+		$results.= "</td></tr></table>\n";
+		$results.= "<br />\n";
+		$jpgdir = 'jpgs/';
+		$testjpg=preg_replace("%.mrc%","",$testimage);
+		$jpgimg=$outdir.$jpgdir.$testjpg.".jpg";
+		$results.= writeTestResults($jpgimg,array(),1);
+		
+		createJMForm(false,'JPEG Maker Test Results', 'JPEG Maker Test Results', $results);
 	}
+	exit;
 }
+
 ?>

@@ -125,6 +125,7 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 		choices = [
 			'Dark',
 			'Bright',
+			'Bright-Dark',
 			'Norm',
 			'Raw',
 			'Corrected'
@@ -150,7 +151,6 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_PLUS,'plus',shortHelpString='Add Region To Bad Pixel List')
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_STAGE_LOCATIONS,'stagelocations',shortHelpString='Add Extreme Points To Bad Pixel List')
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_REFRESH,'display',shortHelpString='Display Normalization Image')
-		self.toolbar.Realize()
 
 		# settings
 		self.szplan = self._getStaticBoxSizer('Plan', (0, 0), (1, 1), wx.ALIGN_TOP)
@@ -181,10 +181,10 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 
 		# image
 		self.imagepanel = leginon.gui.wx.TargetPanel.TargetImagePanel(self, -1)
-		self.imagepanel.addTargetTool('Bad_Pixels', wx.Color(255, 0, 0), target=True, shape='.')
+		self.imagepanel.addTargetTool('Bad_Pixels', wx.Colour(255, 0, 0), target=True, shape='.')
 		self.imagepanel.selectiontool.setDisplayed('Bad_Pixels', True)
 		self.imagepanel.setTargets('Bad_Pixels', [])
-		self.imagepanel.addTargetTool('Bad_Region', wx.Color(0, 255, 255), target=True, shape='polygon', display=True)
+		self.imagepanel.addTargetTool('Bad_Region', wx.Colour(0, 255, 255), target=True, shape='polygon', display=True)
 		self.imagepanel.selectiontool.setDisplayed('Bad_Region', True)
 		self.imagepanel.setTargets('Bad_Region', [])
 
@@ -225,7 +225,22 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 	def onSetImage(self, evt):
 		leginon.gui.wx.Node.Panel.onSetImage(self, evt)
 
+	def resetInstruments(self):
+		'''
+		Use gui value to set proxy instrument.  This is called before
+		settings dialog is opened since
+		gui initialization may come before instruments are available.
+		It causes mismatch of gui and the instrument in proxy
+		'''
+		dialogvalues = self.settingsdialog.widgets['instruments'].GetValue()
+		for instrument in dialogvalues.keys():
+			if dialogvalues[instrument] == 'None':
+				dialogvalues[instrument] = None
+		self.node.instrument.setTEM(dialogvalues['tem'])
+		self.node.instrument.setCCDCamera(dialogvalues['ccdcamera'])
+
 	def onSettingsTool(self, evt):
+		self.resetInstruments()
 		self.settingsdialog.ShowModal()
 		plan = self.node.retrieveCorrectorPlanFromSettings()
 		self.setPlan(plan)
@@ -269,6 +284,8 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 			reftype = 'bright'
 		elif acqtype == 'Norm':
 			reftype = 'norm'
+		elif acqtype == 'Bright-Dark':
+			reftype = 'dark-subtracted'
 		else:
 			return
 		chanstr = self.cchannel.GetStringSelection()
@@ -380,8 +397,8 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Image Correction')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
-		sb = wx.StaticBox(self, -1, 'Clipping')
-		sbszclip = wx.StaticBoxSizer(sb, wx.VERTICAL)
+		#sb = wx.StaticBox(self, -1, 'Clipping')
+		#sbszclip = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sb = wx.StaticBox(self, -1, 'Reference Creation')
 		sbszref = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
@@ -393,10 +410,11 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		self.widgets['store series'] = wx.CheckBox(self, -1, 'Save all images')
 
 		self.widgets['camera settings'] = leginon.gui.wx.Camera.CameraPanel(self)
-		self.widgets['camera settings'].setSize(self.node.instrument.camerasize)
-		self.widgets['clip min'] = FloatEntry(self, -1, chars=6)
-		self.widgets['clip max'] = FloatEntry(self, -1, chars=6)
+		self.widgets['camera settings'].setGeometryLimits({'size':self.node.instrument.camerasize,'binnings':self.node.instrument.camerabinnings,'binmethod':self.node.instrument.camerabinmethod})
+		#self.widgets['clip min'] = FloatEntry(self, -1, chars=6)
+		#self.widgets['clip max'] = FloatEntry(self, -1, chars=6)
 
+		'''
 		szclip = wx.GridBagSizer(5, 5)
 		label = wx.StaticText(self, -1, 'Clip min:')
 		szclip.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
@@ -406,7 +424,7 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		szclip.Add(self.widgets['clip max'], (1, 1), (1, 1), wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
 		szclip.AddGrowableCol(1)
 		sbszclip.Add(szclip, 1, wx.ALIGN_CENTER|wx.EXPAND|wx.ALL, 3)
-
+		'''
 
 		szref = wx.GridBagSizer(5, 5)
 
@@ -426,7 +444,7 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sz.Add(self.widgets['instruments'], (0, 0), (1, 1), wx.ALIGN_CENTER)
 		sz.Add(self.widgets['camera settings'], (1, 0), (2, 1), wx.ALIGN_CENTER|wx.EXPAND)
 		sz.Add(sbszref, (0, 1), (1, 1), wx.EXPAND)
-		sz.Add(sbszclip, (1, 1), (1, 1), wx.EXPAND)
+		#sz.Add(sbszclip, (1, 1), (1, 1), wx.EXPAND)
 
 		sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
 
@@ -440,7 +458,7 @@ class EditPlanDialog(wx.Dialog):
 		
 		strows = wx.StaticText(self, -1, 'Bad rows:')
 		stcolumns = wx.StaticText(self, -1, 'Bad columns:')
-		stpixels = wx.StaticText(self, -1, 'Bad Pixels:')
+		stpixels = wx.StaticText(self, -1, 'Bad Pixel (x,y):')
 
 		pixels = ', '.join(map(str,self.plan['pixels']))
 		rows = ', '.join(map(str,self.plan['rows']))

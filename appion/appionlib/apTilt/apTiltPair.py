@@ -314,7 +314,8 @@ def getParticleTiltRotationAngles(stackpartdata):
 	else:
 		#no particle pair info was found or some other problem
 		print partdata
-		apDisplay.printError("failed to get tilt pair data or some other problem")
+		apDisplay.printWarning("failed to get tilt pair data or some other problem")
+		return None,None,None,None
 
 	if transformdata.timestamp < datetime.datetime(2009, 2, 19, 0, 0, 0):
 		### bugfix for switched tilt axis angles, before Feb 19, 2009

@@ -168,14 +168,14 @@ class PostProcScript(appionScript.AppionScript):
 		reconiterdata = appiondata.ApRefineIterData.direct_query(self.params['reconiterid'])
 		iternum = reconiterdata['iteration']
 		refinepath = reconiterdata['refineRun']['path']['path']
-		fscfilename = "fsc.eotest.%d"%(iternum)
+		
+		### look up the fsc file name in ApResolutionData
+		fscfilename = reconiterdata['resolution']['fscfile']
 		fscfile = os.path.join(refinepath, fscfilename)
-		if not os.path.isfile(fscfile):
-			### for FREALIGN
-			fscfilename = "iter%03d/fsc.eotest.%d"%(iternum,iternum)
-			fscfile = os.path.join(refinepath, fscfilename)
+
 		if not os.path.isfile(fscfile):
 			apDisplay.printError("failed to find fscfile: "+fscfile)
+
 
 		return fscfile
 
@@ -239,6 +239,10 @@ class PostProcScript(appionScript.AppionScript):
 		if self.params['lp'] is not None:
 			fileroot += (".lp%d" % ( int(self.params['lp']), ))
 			emancmd += "lp=%d " %self.params['lp']
+			
+		if self.params['hp'] is not None:
+			fileroot += (".hp%d" % ( int(self.params['hp']), ))
+			emancmd += "hp=%d " %self.params['hp']
 
 		if self.params['yflip'] is True:
 			fileroot += ".yflip"

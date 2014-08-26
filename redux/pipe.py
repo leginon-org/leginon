@@ -6,6 +6,9 @@ import cStringIO
 import types
 import re
 
+# redux
+import redux.exceptions
+
 # mapping of some string representations to bool value
 bool_strings = {}
 for s in ('true', 'on', 'yes'):
@@ -38,33 +41,17 @@ def int_converter(value):
 
 def shape_converter(value):
 	'''size must be a shape of the form "AxB"'''
+	if not value:
+		return None
 	# first convert value to sequence of numbers
 	if isinstance(value, types.StringTypes):
-		numbers = re.findall('\d+', value)
+		numbers = re.findall('[\d.]+', value)
 	else:
 		numbers = list(value)
 	# now convert numbers to integers
 	numbers = map(float, numbers)
 	numbers = map(int, numbers)
 	return tuple(numbers)
-
-class PipeInitError(Exception):
-	pass
-
-class PipeMissingArgs(PipeInitError):
-	'''pipe init failed because some args given, but not all required args given'''
-	pass
-
-class PipeDisabled(PipeInitError):
-	pass
-
-class PipeSwitchedOff(PipeDisabled):
-	'''pipe disabled because of switch argument'''
-	pass
-
-class PipeNoArgs(PipeDisabled):
-	'''pipe disabled because no args were present'''
-	pass
 
 class Pipe(object):
 	'''
@@ -78,6 +65,7 @@ class Pipe(object):
 	optional_defaults = {}
 	cache_file = True
 	def __init__(self, **kwargs):
+		self.disable_cache = False
 		self.parse_args(**kwargs)
 		self.make_hash()
 		self.make_names()
@@ -128,6 +116,10 @@ class Pipe(object):
 	def dirname(self):
 		return self._dirname
 
+	def check_args(self):
+		'''Define this in subclass if you want to raise exceptions for various cases of bad arguments.'''
+		pass
+
 	def parse_args(self, **kwargs):
 		args_present = []
 		args_missing = []
@@ -137,7 +129,7 @@ class Pipe(object):
 				switch_arg_value = kwargs[self.switch_arg]
 				enabled = bool_converter(switch_arg_value)
 				if not enabled:
-					raise PipeSwitchedOff('%s=%s' % (self.switch_arg, switch_arg_value))
+					raise redux.exceptions.PipeSwitchedOff('%s=%s' % (self.switch_arg, switch_arg_value), self)
 			else:
 				args_missing.append(self.switch_arg)
 
@@ -157,9 +149,12 @@ class Pipe(object):
 
 		if args_missing:
 			if args_present:
-				raise PipeMissingArgs('got some args: %s, but missing: %s' % (args_present, args_missing))
+				raise redux.exceptions.PipeMissingArgs('got some args: %s, but missing: %s' % (args_present, args_missing))
 			else:
-				raise PipeNoArgs('pipe useless with no args')
+				raise redux.exceptions.PipeNoArgs('pipe useless with no args')
+
+		## now check for bad values
+		self.check_args()
 
 		items = self.kwargs.items()
 		items.sort()

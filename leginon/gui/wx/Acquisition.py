@@ -20,6 +20,7 @@ import leginon.gui.wx.Icons
 
 import leginon.targethandler
 
+hide_incomplete = False
 
 class SettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
@@ -137,6 +138,23 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		self.widgets['preset order'] = EditPresetOrder(self, -1)
 		self.widgets['preset order'].setChoices(presets)
 
+		# extra pause between presets
+		self.widgets['pause between time'] = FloatEntry(self, -1,
+																		min=0.0,
+																		allownone=False,
+																		chars=4,
+																		value='0.0')
+		szpausebtime = wx.GridBagSizer(5, 5)
+		szpausebtime.Add(wx.StaticText(self, -1, 'Wait'),
+								(0, 0), (1, 1),
+								wx.ALIGN_CENTER_VERTICAL)
+		szpausebtime.Add(self.widgets['pause between time'],
+								(0, 1), (1, 1),
+								wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		szpausebtime.Add(wx.StaticText(self, -1, 'extra seconds between presets'),
+								(0, 2), (1, 1),
+								wx.ALIGN_CENTER_VERTICAL)
+
 		# misc. checkboxes
 		self.widgets['correct image'] = wx.CheckBox(self, -1, 'Correct image')
 		self.widgets['save integer'] = wx.CheckBox(self, -1, 'Float->Integer')
@@ -150,12 +168,14 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		self.widgets['wait for reference'] = wx.CheckBox(self, -1,
 																				'Publish and wait for the reference target')
 		self.widgets['adjust for transform'] = Choice(self, -1, choices=['no', 'one', 'all'])
+		self.widgets['use parent mover'] = wx.CheckBox(self, -1, 'Use ancestor image mover in adjustment')
 		self.widgets['drift between'] = wx.CheckBox(self, -1, 'Declare drift between targets')
 		self.widgets['background'] = wx.CheckBox(self, -1, 'Acquire in the background')
 		self.widgets['use parent tilt'] = wx.CheckBox(self, -1, 'Tilt the stage like its parent image')
 		self.widgets['adjust time by tilt'] = wx.CheckBox(self, -1, 'Adjust exposure time by tilt')
 		self.widgets['reset tilt'] = wx.CheckBox(self, -1, 'Reset stage when done')
-		self.widgets['correct image shift coma'] = wx.CheckBox(self, -1, 'Correct image shift coma effect')
+		if not hide_incomplete:
+			self.widgets['correct image shift coma'] = wx.CheckBox(self, -1, 'Correct image shift coma effect')
 		self.widgets['target offset row'] = IntEntry(self, -1, chars=6)
 		self.widgets['target offset col'] = IntEntry(self, -1, chars=6)
 
@@ -232,12 +252,15 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 						wx.ALIGN_CENTER_VERTICAL)
 		sz_tilt.Add(self.widgets['reset tilt'], (2, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
-		sz_tilt.Add(self.widgets['correct image shift coma'], (3, 0), (1, 1),
+		if not hide_incomplete:
+			sz_tilt.Add(self.widgets['correct image shift coma'], (3, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
 
-		self.widgets['bad stats response'] = Choice(self, -1, choices=['Continue', 'Pause', 'Abort one','Abort all'])
+		self.widgets['bad stats response'] = Choice(self, -1, choices=['Continue', 'Pause', 'Recheck', 'Abort one','Abort all'])
+		self.widgets['bad stats type'] = Choice(self, -1, choices=['Mean', 'Slope'])
 		self.widgets['low mean'] = FloatEntry(self, -1, chars=4)
 		self.widgets['high mean'] = FloatEntry(self, -1, chars=4)
+		self.widgets['recheck pause time'] = IntEntry(self, -1, chars=8)
 		passwordbut = wx.Button(self, -1, 'Enter Email Password')
 		self.Bind(wx.EVT_BUTTON, self.onEnterPassword, passwordbut)
 
@@ -251,10 +274,23 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sz_evaluate.Add(self.widgets['high mean'])
 	
 		sbsz_evaluate.Add(sz_response, 0, wx.ALIGN_CENTER|wx.ALL, 0)
-		sbsz_evaluate.Add(wx.StaticText(self, -1, 'when image mean is NOT'), 0, wx.ALIGN_LEFT)
+		sz_range= wx.GridBagSizer(0, 0)
+		sz_range.Add(wx.StaticText(self, -1, 'when image'), (0,0),(1,1), wx.ALIGN_RIGHT)
+		sz_range.Add(self.widgets['bad stats type'],(0,1),(1,1))
+		sz_range.Add(wx.StaticText(self, -1, 'is NOT'), (0,2),(1,1), wx.ALIGN_LEFT)
+		sbsz_evaluate.Add(sz_range, 0, wx.ALIGN_CENTER|wx.ALL,0)
 		sbsz_evaluate.Add(sz_evaluate, 0, wx.ALIGN_CENTER|wx.ALL,0)
 		sbsz_evaluate.Add(passwordbut, 0, wx.ALIGN_CENTER|wx.ALL, 3)
 
+		sz_recheck = wx.GridBagSizer(0, 0)
+		label = wx.StaticText(self, -1, 'Wait for')
+		sz_recheck.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz_recheck.Add(self.widgets['recheck pause time'], (0, 1), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+		label = wx.StaticText(self, -1, 'second if recheck')
+		sz_recheck.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sbsz_evaluate.Add(sz_recheck, 0, wx.ALIGN_CENTER|wx.ALL, 3)
+		
 		sz_transform = wx.GridBagSizer(0, 0)
 		label = wx.StaticText(self, -1, 'Adjust target using')
 		sz_transform.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
@@ -262,6 +298,7 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 						wx.ALIGN_CENTER_VERTICAL)
 		label = wx.StaticText(self, -1, 'ancestor(s)')
 		sz_transform.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz_transform.Add(self.widgets['use parent mover'],(1,0),(1,3))
 		sz_offset = wx.BoxSizer(wx.HORIZONTAL)
 		sz_offset.Add(wx.StaticText(self, -1, 'offset target x:'))
 		sz_offset.Add(self.widgets['target offset col'])
@@ -281,9 +318,10 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 
 		szright = wx.GridBagSizer(3, 3)
 		szright.Add(self.widgets['preset order'], (0, 0), (4, 1), wx.ALIGN_CENTER)
-		szright.Add(szmover, (4,0), (1,1), wx.ALIGN_CENTER_VERTICAL)
-		szright.Add(szmoveprec, (5,0), (1,1), wx.ALIGN_CENTER_VERTICAL)
-		szright.Add(sz_target_type, (6,0), (1,1), wx.ALIGN_CENTER_VERTICAL)
+		szright.Add(szpausebtime, (4,0), (1,1), wx.ALIGN_CENTER_VERTICAL)
+		szright.Add(szmover, (5,0), (1,1), wx.ALIGN_CENTER_VERTICAL)
+		szright.Add(szmoveprec, (6,0), (1,1), wx.ALIGN_CENTER_VERTICAL)
+		szright.Add(sz_target_type, (7,0), (1,1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(szmovetype, (0, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(szpausetime, (1, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(sz_save, (2,0), (2,1), wx.ALIGN_CENTER_VERTICAL)
@@ -325,7 +363,6 @@ class Panel(leginon.gui.wx.Node.Panel):
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PAUSE, False)
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT, False)
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT_QUEUE, False)
-		self.toolbar.Realize()
 
 		self.addImagePanel()
 

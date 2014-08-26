@@ -29,6 +29,7 @@ def getEulersForIteration(reconid, iteration=1):
 	# connect
 	dbconf = sinedon.getConfig('appiondata')
 	db = MySQLdb.connect(**dbconf)
+	db.autocommit(True)
 	# create a cursor
 	cursor = db.cursor()
 
@@ -42,7 +43,6 @@ def getEulersForIteration(reconid, iteration=1):
 			+"WHERE rd.`REF|ApRefineRunData|refineRun` = "+str(reconid)+" "
 			+"AND rd.`iteration` = "+str(iteration)+" "
 		)
-	print query
 	print "querying for euler values at "+time.asctime()
 	cursor.execute(query)
 	numrows = int(cursor.rowcount)

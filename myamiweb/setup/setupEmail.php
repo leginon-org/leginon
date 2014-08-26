@@ -16,6 +16,7 @@ require_once('../inc/formValidator.php');
 		$validator = new formValidator();
 		
 		if($_POST['enable_login'] == 'true'){
+			$validator->addValidation("cookie_passphrase", $_POST['cookie_passphrase'], "req");
 			$validator->addValidation("email_title", $_POST['email_title'], "req");
 			$validator->addValidation("email_title", $_POST['email_title'], "alpha_s");
 			$validator->addValidation("admin_email", $_POST['admin_email'], "email");
@@ -62,6 +63,8 @@ require_once('../inc/formValidator.php');
 				wizard_form.enable_anonymous[0].disabled = false;
 				wizard_form.enable_anonymous[1].checked = true;
 				wizard_form.enable_anonymous[1].disabled = false;
+				wizard_form.cookie_passphrase.style.backgroundColor = "#ffffff";
+				wizard_form.cookie_passphrase.readOnly = false;
 				wizard_form.email_title.style.backgroundColor = "#ffffff";
 				wizard_form.email_title.readOnly = false;
 				wizard_form.admin_email.style.backgroundColor = "#ffffff";
@@ -76,6 +79,9 @@ require_once('../inc/formValidator.php');
 				wizard_form.enable_anonymous[0].checked = false;
 				wizard_form.enable_anonymous[1].disabled = true;
 				wizard_form.enable_anonymous[1].checked = false;
+				wizard_form.cookie_passphrase.style.backgroundColor = "#eeeeee";
+				wizard_form.cookie_passphrase.readOnly = true;
+				wizard_form.cookie_passphrase.value = "";
 				wizard_form.email_title.style.backgroundColor = "#eeeeee";
 				wizard_form.email_title.readOnly = true;
 				wizard_form.email_title.value = "";
@@ -211,7 +217,23 @@ require_once('../inc/formValidator.php');
 		
 		?> 
 			/>&nbsp;&nbsp;YES<br />
-		 
+
+		<br />
+		<h3>Enter cookie passphrase:</h3>
+		<p>example: My special passphrase</p>
+		<div id="error"><?php if($errMsg['cookie_passphrase']) echo $errMsg['cookie_passphrase']; ?></div>
+		<input type="text" size=50 name="cookie_passphrase" 
+			<?php 
+				if($_POST){
+					print("value='".$_POST['cookie_passphrase']."'");
+				}else{			
+					if($update && ENABLE_LOGIN === true) 
+						print("value='".COOKIE_PASSPHRASE."'"); 
+					else 
+						print("readOnly=\"true\" style=\"background:#eeeeee\" value=\"\""); 
+				}
+			?> /><br /><br />
+
 		<br />
 		<h3>Enter outgoing email subject line:</h3>
 		<p>example: The Scripps Research Institute</p>
@@ -244,6 +266,8 @@ require_once('../inc/formValidator.php');
 				}
 			?> /><br /><br />
 		<br />
+		
+		<!-- comment out smtp email section until we can confirm that it works
 		<div id="error"><?php if($errMsg['smtp_server']) echo $errMsg['smtp_server']."<br /><br />"; ?></div>
 		<h3>Determine a mail server to send outgoing email:</h3>
 		<p>Select "SMTP server" to enter your SMTP host information.<br />
@@ -339,6 +363,7 @@ require_once('../inc/formValidator.php');
 		?> /><br /><br />
 		<br />
 		
+		end of SMTP email section --> 
 		<input type="submit" value="NEXT" />
 
 	</form>

@@ -68,7 +68,9 @@ class autoTilt(object):
 		### run find theta
 		na1 = numpy.array(self.currentpicks1, dtype=numpy.int32)
 		na2 = numpy.array(self.currentpicks2, dtype=numpy.int32)
-		fittheta = radermacher.tiltang(na1, na2)
+		# minimum area for a triangle to be valid
+		arealim = 100.0
+		fittheta = radermacher.tiltang(na1, na2, arealim)
 		if not fittheta or not 'wtheta' in fittheta:
 			return
 		theta = fittheta['wtheta']

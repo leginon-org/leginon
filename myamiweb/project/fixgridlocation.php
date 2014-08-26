@@ -1,8 +1,8 @@
 <?php
-require "inc/project.inc.php";
-require "inc/gridbox.inc.php";
-require "inc/grid.inc.php";
-require "inc/mysql.inc";
+require_once "inc/project.inc.php";
+require_once "inc/gridbox.inc.php";
+require_once "inc/grid.inc.php";
+require_once "inc/mysql.inc";
 
 $griddata=new grid();
 $griddata->syncGridLocations();

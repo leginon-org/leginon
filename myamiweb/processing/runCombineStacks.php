@@ -8,14 +8,14 @@
  *	Simple viewer to view a image using mrcmodule
  */
 
-require "inc/particledata.inc";
-require "inc/leginon.inc";
-require "inc/project.inc";
-require "inc/processing.inc";
-require "inc/summarytables.inc";
+require_once "inc/particledata.inc";
+require_once "inc/leginon.inc";
+require_once "inc/project.inc";
+require_once "inc/processing.inc";
+require_once "inc/summarytables.inc";
 
 // IF VALUES SUBMITTED, EVALUATE DATA
-if ($_POST) {
+if ($_POST['process']) {
 	runCombineStack();
 } else {
 	createCombineStackForm();
@@ -114,18 +114,23 @@ function createCombineStackForm($extra=false, $title='combinestack.py Launcher',
 }
 
 function runCombineStack() {
+
+	/* *******************
+	PART 1: Get variables
+	******************** */
 	$expId = $_GET['expId'];
 	$projectId = getProjectId();
 	$runname=$_POST['runname'];
 	$outdir=$_POST['outdir'];
 
-	$command.="combinestack.py ";
-	$command.="--projectid=".getProjectId()." ";
-	
-	//make sure a description is entered
 	$description=$_POST['description'];
+	
+	/* *******************
+	PART 2: Check for conflicts, if there is an error display the form again
+	******************** */
+	//make sure a description is entered
 	if (!$description) createCombineStackForm("<B>ERROR:</B> Enter a brief description");
-
+	
 	$particle = new particledata();
 	$stackids = $particle->getStackIdsForProject($projectId, False);
 	$stacklist = "";
@@ -145,47 +150,40 @@ function runCombineStack() {
 		createCombineStackForm("<B>ERROR:</B> No stacks selected ".$count.": ".$stacklist);
 	if ($count < 2) 
 		createCombineStackForm("<B>ERROR:</B> Selected more than one stack");
-
+	
+	/* *******************
+	PART 3: Create program command
+	******************** */
+	$command.="combinestack.py ";
+	$command.="--projectid=".getProjectId()." ";
+	
 	if ($outdir) {
 		// make sure outdir ends with '/' and append run name
 		if (substr($outdir,-1,1)!='/') $outdir.='/';
 		$rundir = $outdir.$runname;
 		$command.="--rundir=$rundir ";
 	}
+	
 	$command.="--runname=$runname ";
 	$command.="--stacks=$stacklist ";
 	$command.="--description=\"$description\" ";
 	$command.="--commit ";
 
-	// submit job to cluster
-	if ($_POST['process']=="Run Combine Stack") {
-		$user = $_SESSION['username'];
-		$password = $_SESSION['password'];
+	/* *******************
+	PART 4: Create header info, i.e., references
+	******************** */
+	$headinfo .= appionRef();
+	
+	/* *******************
+	PART 5: Show or Run Command
+	******************** */
+	// submit command
+	$errors = showOrSubmitCommand($command, $headinfo, 'makestack', $nproc);
 
-		if (!($user && $password))
-			createCombineStackForm("<B>ERROR:</B> Enter a user name and password");
-
-		$sub = submitAppionJob($command,$outdir,$runname,$expId,'makestack');
-		// if errors:
-		if ($sub) createCombineStackForm("<b>ERROR:</b> $sub");
-		exit;
-	} else {
-		processing_header("Combine Stack Params","Combine Stack Params");
-		echo appionRef();
-		echo"
-		<table width='600' class='tableborder' border='1'>
-		<tr><td colspan='2'>
-		<b>Combine Stack Command:</b><br />
-		$command
-		</td></tr>
-		<tr><td>run name</td><td>$runname</td></tr>
-		<tr><td>description</td><td>$description</td></tr>
-		<tr><td>stack ids</td><td>$stacklist</td></tr>
-		<tr><td>run dir</td><td>$rundir</td></tr>
-		</table>\n";
-		processing_footer();
-	}
-	exit;
+	// if error display them
+	if ($errors)
+		createCombineStackForm("<b>ERROR:</b> $errors");
+	
 }
 
 

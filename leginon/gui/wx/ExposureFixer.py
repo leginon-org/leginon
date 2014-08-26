@@ -41,48 +41,91 @@ class ScrolledSettings(leginon.gui.wx.Reference.ScrolledSettings):
 		sb = wx.StaticBox(self, -1, 'Exposure Fixer')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
+		self.szsettings = wx.GridBagSizer(5, 5)
+		newrow,newcol = self.createAdjustMethodSelector((0,0))
+		newrow,newcol = self.createRequiredDoseEntry((newrow,0))
+		newrow,newcol = self.createMaxExposureTimeEntry((newrow,0))
+		newrow,newcol = self.createMaxBeamDiameterEntry((newrow,0))
+		newrow,newcol = self.createCorrectionPresetsEditor((0,newcol))
+
+		sbsz.Add(self.szsettings)
+
+		return refsizers + [sbsz]
+
+	def createAdjustMethodSelector(self,start_position):
+		# define widget
+		regtypes = self.node.getAdjustMethods()
+		self.widgets['adjust method'] = Choice(self, -1, choices=regtypes)
+		# make sizer
+		sz = wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1, 'Adjust exposure dose by changing')
+		sz.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['adjust method'], (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		# add to main
+		total_length = (1,1)
+		self.szsettings.Add(sz, start_position, total_length,
+				  wx.ALIGN_CENTER)
+		return start_position[0]+total_length[0],start_position[1]+total_length[1]
+
+	def createRequiredDoseEntry(self,start_position):
+		# define widget
 		self.widgets['required dose'] = FloatEntry(self, -1, min=0.0, chars=6)
+		# make sizer
+		sz = wx.GridBagSizer(5,5)
+		label = wx.StaticText(self, -1, 'Match the exposure of the first preset choice to ')
+		sz.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['required dose'], (0, 1), (1, 1),
+		wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		label = wx.StaticText(self, -1, 'e / A^2 ')
+		sz.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		# add to main
+		total_length = (1,1)
+		self.szsettings.Add(sz, start_position, total_length,
+				  wx.ALIGN_CENTER)
+		return start_position[0]+total_length[0],start_position[1]+total_length[1]
+
+
+	def createMaxExposureTimeEntry(self,start_position):
+		# define widget
 		self.widgets['max exposure time'] = IntEntry(self, -1, min=0, chars=6)
+		# make sizer
+		sz = wx.GridBagSizer(5,5)
+		label = wx.StaticText(self, -1, 'Maximal exposure time')
+		sz.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['max exposure time'], (0, 1), (1, 1),
+		wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		label = wx.StaticText(self, -1, 'ms')
+		sz.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		# add to main
+		total_length = (1,1)
+		self.szsettings.Add(sz, start_position, total_length,
+				  wx.ALIGN_CENTER)
+		return start_position[0]+total_length[0],start_position[1]+total_length[1]
+
+	def createMaxBeamDiameterEntry(self,start_position):
+		# define widget
+		self.widgets['max beam diameter'] = FloatEntry(self, -1, min=0.0, chars=6)
+		# make sizer
+		sz = wx.GridBagSizer(5,5)
+		label = wx.StaticText(self, -1, 'Maximal beam diameter')
+		sz.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['max beam diameter'], (0, 1), (1, 1),
+		wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		label = wx.StaticText(self, -1, 'um')
+		sz.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		# add to main
+		total_length = (1,1)
+		self.szsettings.Add(sz, start_position, total_length,
+				  wx.ALIGN_CENTER)
+		return start_position[0]+total_length[0],start_position[1]+total_length[1]
+
+	def createCorrectionPresetsEditor(self,start_position):
+		# define widget
 		presets = self.node.presets_client.getPresetNames()
 		self.widgets['correction presets'] = EditPresetOrder(self, -1)
 		self.widgets['correction presets'].setChoices(presets)
-		'''
-		# override preset
-		overridebox = wx.StaticBox(self, -1, "Override Preset")
-		overridesz = wx.StaticBoxSizer(overridebox, wx.VERTICAL)
-		self.widgets['override preset'] = wx.CheckBox(self, -1,
-																								'Override Preset')
-		self.widgets['instruments'] = leginon.gui.wx.Instrument.SelectionPanel(self, passive=True)
-		self.panel.setInstrumentSelection(self.widgets['instruments'])
-		self.widgets['camera settings'] = leginon.gui.wx.Camera.CameraPanel(self)
-		self.widgets['camera settings'].setSize(self.node.instrument.camerasize)
-
-		sz = wx.GridBagSizer(5, 10)
-		sz.Add(self.widgets['override preset'], (0, 0), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['instruments'], (1, 0), (1, 1), wx.EXPAND)
-		sz.Add(self.widgets['camera settings'], (2, 0), (1, 1), wx.EXPAND)
-		overridesz.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
-		'''
-		sz = wx.GridBagSizer(5, 5)
-		szshift = wx.GridBagSizer(5,5)
-		label = wx.StaticText(self, -1, 'Match the exposure of the first preset choice to ')
-		szshift.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szshift.Add(self.widgets['required dose'], (0, 1), (1, 1),
-		wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
-		label = wx.StaticText(self, -1, 'e / A^2 ')
-		szshift.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sztime = wx.GridBagSizer(5,5)
-		label = wx.StaticText(self, -1, 'Maximal exposure time')
-		sztime.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sztime.Add(self.widgets['max exposure time'], (0, 1), (1, 1),
-		wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
-		label = wx.StaticText(self, -1, 'ms')
-		sztime.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(szshift, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(sztime, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['correction presets'], (0, 1), (2, 1), wx.ALIGN_CENTER)
-		sbsz.Add(sz)
-		#sbsz.Add(overridesz)
-
-		return refsizers + [sbsz]
+		# add to main
+		total_length = (4,1)
+		self.szsettings.Add(self.widgets['correction presets'], start_position, total_length,
+				  wx.ALIGN_CENTER)
+		return start_position[0]+total_length[0],start_position[1]+total_length[1]

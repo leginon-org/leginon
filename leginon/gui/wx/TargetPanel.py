@@ -25,7 +25,6 @@
 import time
 import math
 import wx
-from PIL import Image
 import leginon.gui.wx.ImagePanel
 import leginon.gui.wx.ImagePanelTools
 import leginon.gui.wx.TargetPanelTools
@@ -35,12 +34,12 @@ targettype_colors = {
 	'acquisition': wx.GREEN,
 	'focus': wx.BLUE,
 	'done': wx.RED,
-	'reference': wx.Color(128, 0, 128),
-	'position': wx.Color(218, 165, 32),
-	'preview': wx.Color(255, 128, 255),
-	'meter': wx.Color(255, 255, 0),
-	'original': wx.Color(255, 128, 128),
-	'peak': wx.Color(255, 128, 0),
+	'reference': wx.Colour(128, 0, 128),
+	'position': wx.Colour(218, 165, 32),
+	'preview': wx.Colour(255, 128, 255),
+	'meter': wx.Colour(255, 255, 0),
+	'original': wx.Colour(255, 128, 128),
+	'peak': wx.Colour(255, 128, 0),
 }
 
 ##################################
@@ -58,6 +57,7 @@ class TargetImagePanel(leginon.gui.wx.ImagePanel.ImagePanel):
 		self.selectedtarget = None
 		self.box = 0
 		self.imagevector = (0,0)
+		self.beamradius = None
 
 	#--------------------
 	def _getSelectionTool(self):
@@ -174,16 +174,20 @@ class TargetImagePanel(leginon.gui.wx.ImagePanel.ImagePanel):
 			if targets:
 				if type.shape == 'polygon':
 					self.drawPolygon(dc, type.color, targets)
+				elif type.shape == 'spline':
+					self.drawPolygon(dc, type.color, targets, close=False)
 				else:
 					if type.shape == 'numbers':
 						self.drawNumbers(dc, type.color, targets)
 					elif type.shape == 'area':
 						self.drawImageArea(dc, type.color, targets)
+					elif type.shape == 'exp':
+						self.drawImageExposure(dc, type.color, targets)
 					else:
 						self._drawTargets(dc, type.bitmaps['default'], targets, scale)
 
 		if self.selectedtarget is not None:
-			if self.selectedtarget.type in self.targets and type.shape != 'polygon' and type.shape != 'numbers' and type.shape != 'area':
+			if self.selectedtarget.type in self.targets and type.shape != 'polygon' and type.shape != 'spline' and type.shape != 'numbers' and type.shape != 'area' and type.shape != 'exp':
 				try:
 					bitmap = self.selectedtarget.type.bitmaps['selected']
 					self._drawTargets(dc, bitmap, [self.selectedtarget], scale)
@@ -191,7 +195,7 @@ class TargetImagePanel(leginon.gui.wx.ImagePanel.ImagePanel):
 					pass
 
 	#--------------------
-	def drawPolygon(self, dc, color, targets):
+	def drawPolygon(self, dc, color, targets, close=True):
 		dc.SetPen(wx.Pen(color, 3))
 		dc.SetBrush(wx.Brush(color, 1))
 		#if self.scaleImage():
@@ -204,24 +208,31 @@ class TargetImagePanel(leginon.gui.wx.ImagePanel.ImagePanel):
 				point = target.x/xscale, target.y/yscale
 				scaledpoints.append(point)
 		else:
-			scaledpoints = [(target.x,target.y) for target in targets]
-
+			if isinstance(targets[-1], leginon.gui.wx.TargetPanelTools.StatsTarget) and close is False:
+				scaledpoints=[]
+				for target in targets:
+					scaledpoints.append([target.x,target.y,target.stats])
+			else:
+				scaledpoints = [(target.x,target.y,0) for target in targets]
 		if len(scaledpoints)>=1:
 			p1 = self.image2view(scaledpoints[0])
 			dc.DrawCircle(p1[0],p1[1],1)
 			
 		for i,p1 in enumerate(scaledpoints[:-1]):
 			p2 = scaledpoints[i+1]
+			pi1 = self.image2view(p1)
+			pi2 = self.image2view(p2)
+			dc.DrawCircle(pi2[0],pi2[1],1)
+			# for multiple splines
+			if p1[2]==p2[2]:
+				dc.DrawLine(pi1[0], pi1[1], pi2[0], pi2[1])
+		# close it with final edge if not a spline
+		if close is True:
+			p1 = scaledpoints[-1]
+			p2 = scaledpoints[0]
 			p1 = self.image2view(p1)
 			p2 = self.image2view(p2)
-			dc.DrawCircle(p2[0],p2[1],1)
 			dc.DrawLine(p1[0], p1[1], p2[0], p2[1])
-		# close it with final edge
-		p1 = scaledpoints[-1]
-		p2 = scaledpoints[0]
-		p1 = self.image2view(p1)
-		p2 = self.image2view(p2)
-		dc.DrawLine(p1[0], p1[1], p2[0], p2[1])
 
 	#--------------------
 	def drawNumbers(self, dc, color, targets):
@@ -250,6 +261,39 @@ class TargetImagePanel(leginon.gui.wx.ImagePanel.ImagePanel):
 			dc.DrawLine(p1[0]-dia[1], p1[1]+dia[0], p1[0]+dia[0], p1[1]+dia[1])
 			dc.DrawLine(p1[0]+dia[1], p1[1]-dia[0], p1[0]+dia[0], p1[1]+dia[1])
 
+	def drawImageExposure(self, dc, color, targets):
+		scale = self.getScale()
+		dc.SetPen(wx.Pen(color, 1))
+		dc.SetBrush(wx.Brush(color, 1))
+		scaledpoints = [(target.x,target.y) for target in targets]
+		imagevector = self.imagevector
+		dia = (scale[0]*(imagevector[0]/2+imagevector[1]/2), scale[1]*(imagevector[0]/2-imagevector[1]/2))
+		for p1 in scaledpoints:
+			p1 = self.image2view(p1)
+			dc.DrawLine(p1[0]-dia[0], p1[1]-dia[1], p1[0]+dia[1], p1[1]-dia[0])
+			dc.DrawLine(p1[0]-dia[0], p1[1]-dia[1], p1[0]-dia[1], p1[1]+dia[0])
+			dc.DrawLine(p1[0]-dia[1], p1[1]+dia[0], p1[0]+dia[0], p1[1]+dia[1])
+			dc.DrawLine(p1[0]+dia[1], p1[1]-dia[0], p1[0]+dia[0], p1[1]+dia[1])
+			if self.beamradius:
+				self.drawEmptyCircle(dc,p1[0],p1[1],scale[0]*self.beamradius)
+
+	def drawEmptyCircle(self,dc,row,col,radius):
+		'''
+		Draw a circle without filling.
+		'''
+		radius = int(radius)
+		p1 = (row,col-radius)
+		p2 = (row,col-radius)
+		for r in range(-radius,radius+1):
+			angle = math.acos((r+0.0)/radius)
+			delta = int(radius * math.sin(math.acos((r+0.0)/radius)))
+			p11 = (row+delta,col+r)
+			p22 = (row-delta,col+r)
+			dc.DrawLine(p1[0],p1[1],p11[0],p11[1])
+			dc.DrawLine(p2[0],p2[1],p22[0],p22[1])
+			p1 = p11
+			p2 = p22
+
 	#--------------------
 	def Draw(self, dc):
 		#now = time.time()
@@ -262,7 +306,7 @@ class TargetImagePanel(leginon.gui.wx.ImagePanel.ImagePanel):
 	#--------------------
 	def _onLeftClick(self, evt):
 		if self.selectedtype is not None:
-			x, y = self.view2image((evt.m_x, evt.m_y))
+			x, y = self.view2image((evt.GetX(), evt.GetY()))
 			self.addTarget(self.selectedtype.name, x, y)
 
 	#--------------------
@@ -317,7 +361,7 @@ class TargetImagePanel(leginon.gui.wx.ImagePanel.ImagePanel):
 		leginon.gui.wx.ImagePanel.ImagePanel._onMotion(self, evt, dc)
 #		if self.selectedtype is not None:
 		viewoffset = self.panel.GetViewStart()
-		x, y = self.view2image((evt.m_x, evt.m_y))
+		x, y = self.view2image((evt.GetX(), evt.GetY()))
 		self.selectedtarget = self.closestTarget(self.selectedtype, x, y)
 #		else:
 #			self.selectedtarget = None
@@ -335,11 +379,14 @@ class TargetImagePanel(leginon.gui.wx.ImagePanel.ImagePanel):
 				boxsum = self._getIntegratedIntensity(position[0],position[1])
 				strings.append('%s (%g, %g) %e' % (name, position[0], position[1],boxsum))
 			if isinstance(selectedtarget, leginon.gui.wx.TargetPanelTools.StatsTarget):
-				for key, value in selectedtarget.stats.items():
-					if type(value) is float:
-						strings.append('%s: %g' % (key, value))
-					else:
-						strings.append('%s: %s' % (key, value))
+				try:
+					for key, value in selectedtarget.stats.items():
+						if type(value) is float:
+							strings.append('%s: %g' % (key, value))
+						else:
+							strings.append('%s: %s' % (key, value))
+				except:
+					pass
 		return strings
 
 	def _getIntegratedIntensity(self,x,y):
@@ -371,6 +418,15 @@ class ShapeTargetImagePanel(TargetImagePanel):
 	def __init__(self, parent, id, disable=False, imagesize=(512,512), mode="horizontal"):
 		TargetImagePanel.__init__(self, parent, id, imagesize, mode)
 		self.addTool(leginon.gui.wx.ImagePanelTools.FitShapeTool(self, self.toolsizer))
+		self.panel.Bind(wx.EVT_MOTION, self.OnMotion)
+		self.sizer.Layout()
+		self.Fit()
+
+class TraceTargetImagePanel(TargetImagePanel):
+	def __init__(self, parent, id, disable=False, imagesize=(512,512), mode="horizontal"):
+		TargetImagePanel.__init__(self, parent, id, imagesize, mode)
+		self.tracetool = leginon.gui.wx.ImagePanelTools.TraceTool(self, self.toolsizer)
+		self.addTool(self.tracetool)
 		self.panel.Bind(wx.EVT_MOTION, self.OnMotion)
 		self.sizer.Layout()
 		self.Fit()
@@ -448,7 +504,17 @@ if __name__ == '__main__':
 	elif filename[-4:] == '.mrc':
 		image = mrc.read(filename)
 		app.panel.setImage(image.astype(numpy.float32))
+	elif filename[-4:] == '.tif':
+		# This is only for RawImage tiff files taken from DirectElectron DE camera
+		from pyami import tifffile
+		tif = tifffile.TIFFfile(filename)
+		a = tif.asarray()
+		a = numpy.asarray(a,dtype=numpy.float32)
+		# DE RawImage tiff files is mirrored horizontally from Leginon
+		a = a[:,::-1]
+		app.panel.setImage(a)
 	else:
-		app.panel.setImage(Image.open(filename))
+		from pyami import numpil
+		app.panel.setImage(numpil.read(filename))
 	app.MainLoop()
 

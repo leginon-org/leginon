@@ -1,12 +1,12 @@
 <?php
 
-require "inc/jpgraph.php";
-require "inc/jpgraph_line.php";
-require "inc/jpgraph_scatter.php";
-require "inc/jpgraph_bar.php";
-require "inc/leginon.inc";
-require "inc/image.inc";
-require "inc/histogram.inc";
+require_once "inc/jpgraph.php";
+require_once "inc/jpgraph_line.php";
+require_once "inc/jpgraph_scatter.php";
+require_once "inc/jpgraph_bar.php";
+require_once "inc/leginon.inc";
+require_once "inc/image.inc";
+require_once "inc/histogram.inc";
 
 $defaultId= 1445;
 $sessionId= ($_GET['Id']) ? $_GET['Id'] : $defaultId;
@@ -239,9 +239,9 @@ foreach ($channels as $k=>$c) {
 // Add arbitrary text to include the number of points
 $txt = new Text("$nmax points");
 if ($histogram)
-	$txt->Pos(630,380);
+	$txt->SetPos(630,380);
 else
-	$txt->Pos(630,480);
+	$txt->SetPos(630,480);
 $txt->SetColor("black");
 $graph->AddText($txt);
 

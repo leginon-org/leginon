@@ -13,11 +13,10 @@ import sqldb
 connections = {}
 
 def getConnection(modulename='leginondata'):
-	if not connections:
-		if not connections.has_key(modulename):
-			print 'connecting'
-			param = sinedon.getConfig(modulename)
-			connections[modulename] = sqldb.sqlDB(**param)
+	if not connections.has_key(modulename):
+		print 'connecting'
+		param = sinedon.getConfig(modulename)
+		connections[modulename] = sqldb.sqlDB(**param)
 	return connections[modulename]
 
 def complexMysqlQuery(basedbmodule,query):

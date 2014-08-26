@@ -27,14 +27,13 @@ from pyami import mrc, arraystats
 import numpy
 import wx
 import sys
+import math
 from PIL import Image
 import leginon.gui.wx.Stats
 import ImagePanelTools
 import SelectionTool
 import leginon.icons
 #import time
-
-wx.InitAllImageHandlers()
 
 ImageClickDoneEventType = wx.NewEventType()
 EVT_IMAGE_CLICK_DONE = wx.PyEventBinder(ImageClickDoneEventType)
@@ -171,6 +170,15 @@ class ImagePanel(wx.Panel):
 		self.tools.append(tool)
 		return tool
 
+	def getPowerFactor(self,wximage):
+		'''
+		Determine factor used for determining padding based on imagesize and panelsize
+		'''
+		# We will not need to zoom out too much if wximage is small
+		ratio = max(wximage.GetWidth()/ float(self.imagesize[0]),wximage.GetHeight() / float(self.imagesize[1]))
+		power = math.ceil(math.log(ratio)/math.log(2))
+		return math.pow(2,power)
+
 	# image set functions
 	#--------------------
 	def setBitmap(self):
@@ -186,6 +194,13 @@ class ImagePanel(wx.Panel):
 			self.bitmap = None
 			return
 
+		# Some images such as ones from Gatan K2 Summit can not be divided by power of 2
+		# Pad the image using resize makes the image display smoother.
+		factor = self.getPowerFactor(wximage)
+		goodsize = int(math.ceil(wximage.GetWidth()/factor)*factor),int(math.ceil(wximage.GetHeight()/factor)*factor)
+		if goodsize[0] != wximage.GetWidth() or goodsize[1] != wximage.GetHeight():
+			wximage.Resize((goodsize[0],goodsize[1]),(0,0))
+
 		if self.scaleImage():
 			xscale, yscale = self.getScale()
 			width = int(round(wximage.GetWidth()*xscale))
@@ -200,7 +215,8 @@ class ImagePanel(wx.Panel):
 		wximage = wx.EmptyImage(array.shape[1], array.shape[0])
 		normarray = array.astype(numpy.float32)
 		normarray = normarray.clip(min=clip[0], max=clip[1])
-		normarray = (normarray - clip[0]) / (clip[1] - clip[0]) * 255.0
+		if clip[1] - clip[0] != 0:
+			normarray = (normarray - clip[0]) / (clip[1] - clip[0]) * 255.0
 		if self.colormap is None:
 			normarray = normarray.astype(numpy.uint8)
 			h, w = normarray.shape[:2]
@@ -343,6 +359,13 @@ class ImagePanel(wx.Panel):
 		y = int(round(vheight*cheight - height/2.0))
 		self.panel.Scroll(x, y)
 
+	def isPython26OrUp(self):
+		mypyver = sys.version_info[:3]
+		if mypyver[0] <=2 and mypyver[1] < 6:
+			return False
+		else:
+			return True
+
 	#--------------------
 	def setNumericImage(self, numericimage):
 		'''
@@ -370,7 +393,11 @@ class ImagePanel(wx.Panel):
 		dflt_max = min(dflt_max, stats['max'])
 
 		value = (dflt_min, dflt_max)
-		self.contrasttool.setRange((stats['min'], stats['max']), value)
+		# handle possible nan such array is all None
+		if self.isPython26OrUp() and (math.isnan(stats['min']) or math.isnan(stats['max']) or math.isnan(stats['mean']) or math.isnan(stats['std'])):
+			self.imagedata = None
+		elif stats['min'] != stats['max']:
+			self.contrasttool.setRange((stats['min'], stats['max']), value)
 		self.setBitmap()
 		self.setVirtualSize()
 		self.setBuffer()
@@ -522,14 +549,14 @@ class ImagePanel(wx.Panel):
 		if self.scaleImage():
 			xoffset, yoffset = self.offset
 			width, height = self.virtualsize
-			if evt.m_x < xoffset or evt.m_x > xoffset + width: 
+			if evt.GetX() < xoffset or evt.GetX() > xoffset + width: 
 				self.UpdateDrawing()
 				return
-			if evt.m_y < yoffset or evt.m_y > yoffset + height: 
+			if evt.GetY() < yoffset or evt.GetY() > yoffset + height: 
 				self.UpdateDrawing()
 				return
 
-		x, y = self.view2image((evt.m_x, evt.m_y))
+		x, y = self.view2image((evt.GetX(), evt.GetY()))
 		value = self.getValue(x, y)
 		strings = []
 		for tool in self.tools:

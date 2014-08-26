@@ -278,7 +278,7 @@ class Prediction(object):
 		else:
 			previous_tilts = current_tilt_group.tilts[:]
 		if self.fixed_model:
-			# use previous 4 tilts for fixed phi, offset fitting of z0
+			# Accept accurate tilts only for fixed phi, offset fitting of z0
 			tolerance = 0.01
 		else:
 			# With all three parameters free to change, use all tilt points to stablize the fiting
@@ -314,6 +314,13 @@ class Prediction(object):
 				y = scipy.array(goodys)
 
 				args_list.append((cos_tilts, sin_tilts, x0, y0, x, y))
+
+				# leastsq function gives improper parameters error if too many input data array are empty
+				# This happens if 6 or more preceeding tilt series have much lower end tilt angle
+				# than the current. We will ignore them.
+				if cos_tilts.size < 1:
+					args_list.pop()
+					parameters.pop()
 
 		args = (args_list,)
 		kwargs = {

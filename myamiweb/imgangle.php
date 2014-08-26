@@ -1,6 +1,6 @@
 <?php
 
-require "inc/graphutil.inc";
+require_once "inc/graphutil.inc";
 
 $angle=$_GET['a'];
 $w=16;
@@ -31,7 +31,7 @@ $graphutil = new graphutil();
 $poly = $graphutil->rotatePoly($poly, $angle_rad, $cx, $cy);
 imagepolygon($img, $poly,count($poly)/2, $rt);
 
-header("Content-type: image/x-png");
+header("Content-type: image/png");
 imagepng($img);
 imagedestroy($img);
 ?>

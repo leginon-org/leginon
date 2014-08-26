@@ -19,6 +19,8 @@ import leginon.gui.wx.ImagePanel
 import leginon.gui.wx.TargetPanel
 import leginon.gui.wx.ToolBar
 
+hide_incomplete = True
+
 AlignRotationCenterEventType = wx.NewEventType()
 
 EVT_ALIGN = wx.PyEventBinder(AlignRotationCenterEventType)
@@ -76,14 +78,18 @@ class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 		bt_sizer.Add(wx.StaticText(self, -1, 'radian'), (0, 2), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
 
-		self.widgets['min threshold'] = FloatEntry(self, -1, min=0.0, allownone=False, chars=6, value='0.0')
+		if not hide_incomplete:
+			self.widgets['correct'] = wx.CheckBox(self, -1,
+																				'Make correction if the beam tilt coma is in this range:')
+			self.widgets['min threshold'] = FloatEntry(self, -1, min=0.0, allownone=False, chars=6, value='0.0')
+			self.widgets['max threshold'] = FloatEntry(self, -1, min=0.0, allownone=False, chars=6, value='0.0')
 		szt = wx.GridBagSizer(5, 5)
-		szt.Add(wx.StaticText(self, -1, 'Correct the beam tilt coma if '), (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szt.Add(self.widgets['min threshold'], (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
-		self.widgets['max threshold'] = FloatEntry(self, -1, min=0.0, allownone=False, chars=6, value='0.0')
-		szt.Add(wx.StaticText(self, -1, '< beam tilt < '), (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szt.Add(self.widgets['max threshold'], (0, 3), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
-		szt.Add(wx.StaticText(self, -1, 'radian'), (0, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		if not hide_incomplete:
+			szt.Add(self.widgets['correct'], (0,0), (1,4), wx.ALIGN_CENTER_VERTICAL)
+			szt.Add(self.widgets['min threshold'], (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+			szt.Add(wx.StaticText(self, -1, '< beam tilt < '), (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+			szt.Add(self.widgets['max threshold'], (1, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+			szt.Add(wx.StaticText(self, -1, 'radian'), (1, 3), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
 		sizer.Add(bt_sizer, (0, 0), (1, 1), wx.ALIGN_CENTER)
 		sizer.Add(szt, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)

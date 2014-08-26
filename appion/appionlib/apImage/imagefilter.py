@@ -11,11 +11,18 @@ from numpy import linalg
 ## appion
 from appionlib import apDisplay
 from appionlib.apSpider import filters
+try:
+	from appionlib import apDDprocess
+	dd_imported = True
+except:
+	dd_imported = False
 ## pyami
 from pyami import imagefun, fftengine
 
 ffteng = fftengine.fftEngine()
-
+if dd_imported:
+	dd = apDDprocess.DirectDetectorProcessing()
+	
 ####
 # This is a low-level file with NO database connections
 # Please keep it this way
@@ -352,37 +359,35 @@ def scaleImage(imgdata, scale):
 	"""
 	if scale == 1.0:
 		return imgdata
-	if min(imgdata.shape) * scale < 1:
-		apDisplay.printError("Image would be scaled to less than 1 pixel in length, aborted")
+	if min(imgdata.shape) * scale < 2:
+		apDisplay.printError("Image would be scaled to less than 2 pixels in length, aborted")
 	return ndimage.zoom(imgdata, scale, order=1)
 
-#=========================
-def correctImage(imgdata, sessionname):
-	"""
-	Correct an image using the old method:
-	- no bias correction
-	- dark correction is not time dependent
-	"""
-	rawimgarray = imgdata['image']
-	from appionlib import apDatabase
-	darkarray, normarray = apDatabase.getDarkNorm(sessionname, imgdata['camera'])
-	correctedimgarray = normarray * (rawimgarray - darkarray)
-	return correctedimgarray
 
 #=========================
 def frame_cut(a, newshape):
+	"""
+	clips image, similar to EMAN1's proc2d clip=X,Y
+	
+	>>> a = num.arange(16, shape=(4,4))
+	>>> frame_cut(a, (2,2))
+	array(
+			[[5,  6],
+		   [9, 10]])
+	"""
 	mindimx = int( (a.shape[0] / 2.0) - (newshape[0] / 2.0) )
 	maxdimx = int( (a.shape[0] / 2.0) + (newshape[0] / 2.0) )
 	mindimy = int( (a.shape[1] / 2.0) - (newshape[1] / 2.0) )
 	maxdimy = int( (a.shape[1] / 2.0) + (newshape[1] / 2.0) )
+	#print mindimx, maxdimx, mindimy, maxdimy
 	return a[mindimx:maxdimx, mindimy:maxdimy]
 
 #=========================
 def frame_constant(a, shape, cval=0):
 	"""
-	frame_nearest creates an oversized copy of 'a' with new 'shape'
+	frame_constant creates an oversized copy of 'a' with new 'shape'
 	and the contents of 'a' in the center.  The boundary pixels are
-	copied from the nearest edge pixel in 'a'.
+	constant.
 
 	>>> a = num.arange(16, shape=(4,4))
 	>>> frame_constant(a, (8,8), cval=42)

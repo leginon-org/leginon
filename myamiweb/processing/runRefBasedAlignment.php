@@ -8,11 +8,11 @@
  *      Form for starting a reference-based alignment of a stack
  */
 
-require "inc/particledata.inc";
-require "inc/leginon.inc";
-require "inc/project.inc";
-require "inc/viewer.inc";
-require "inc/processing.inc";
+require_once "inc/particledata.inc";
+require_once "inc/leginon.inc";
+require_once "inc/project.inc";
+require_once "inc/viewer.inc";
+require_once "inc/processing.inc";
 
 // IF VALUES SUBMITTED, EVALUATE DATA
 if ($_POST['process']) {
@@ -209,7 +209,7 @@ function createAlignmentForm($extra=false, $title='refBasedAlignment.py Launcher
 	} else {
 		//get template info if coming from resubmitting input
 		$templateIds = templateIds();
-		$templatearray=split(",",$templateIds);
+		$templatearray=preg_split("%,%",$templateIds);
 		$templateTable.="<table><TR>\n";
 		foreach ($templatearray as $templateId) {
 			$templateTable.="<TD VALIGN='TOP'><TABLE CLASS='tableborder'>\n";
@@ -354,12 +354,15 @@ function createAlignmentForm($extra=false, $title='refBasedAlignment.py Launcher
 //***************************************
 //***************************************
 function runAlignment() {
+	/* *******************
+	PART 1: Get variables
+	******************** */
 	$expId   = $_GET['expId'];
 	$outdir  = $_POST['outdir'];
 	$runname = $_POST['runname'];
 
 	$stackval=$_POST['stackval'];
-	list($stackid,$apix,$boxsz) = split('\|--\|',$stackval);
+	list($stackid,$apix,$boxsz) = preg_split('%\|--\|%',$stackval);
 	$lastring=$_POST['lastring'];
 	$firstring=$_POST['firstring'];
 	$bin=$_POST['bin'];
@@ -372,7 +375,12 @@ function runAlignment() {
 	$iters=$_POST['iters'];
 	$commit = ($_POST['commit']=="on") ? 'commit' : '';
 	$inverttempl = ($_POST['inverttempl']=="on") ? 'inverttempl' : '';
-
+	$numpart=$_POST['numpart'];
+	$description=$_POST['description'];
+	
+	/* *******************
+	PART 2: Check for conflicts, if there is an error display the form again
+	******************** */
 	//make sure a stack was selected
 	if (!$stackid) createAlignmentForm("<B>ERROR:</B> No stack selected");
 
@@ -381,7 +389,6 @@ function runAlignment() {
 	$rundir = $outdir.$runname;
 
 	// alignment
-	$numpart=$_POST['numpart'];
 	if ($numpart < 1) 
 		createAlignmentForm("<B>ERROR:</B> Number of particles must be at least 1");
 	$particle = new particledata();
@@ -391,16 +398,17 @@ function runAlignment() {
 			."less than the number of particles in the stack ($totprtls)");
 
 	$boxsize = (int) floor($boxsz/$bin);
-	$maxbox = (int) floor($boxsize/2-2);
+	$maxbox = (int) floor($boxsize/2-3); // workaround, SPIDER still gives error without -3 value
 	if (($lastring+$xysearch) > $maxbox) {
-		createAlignmentForm("<B>ERROR:</B> last ring radius ($lastring pixels) plus xy-search ($xysearch pixels) "
-			."is too big for final boxsize ($boxsize pixels); must be less than $maxbox pixels");
+		createAlignmentForm("<B>ERROR:</B> alignment will not run: either decrease the last ring radius ($lastring pixels) or the xy-search ($xysearch pixels)");
 	}
 
 	//make sure a session was selected
-	$description=$_POST['description'];
 	if (!$description) createAlignmentForm("<B>ERROR:</B> Enter a brief description of the alignment run");
 
+	/* *******************
+	PART 3: Create program command
+	******************** */
 	$command="refBasedAlignment2.py ";
 	$command.="--projectid=".getProjectId()." ";
 	$command.="--template-list=".templateIds()." ";
@@ -423,45 +431,21 @@ function runAlignment() {
 	if ($commit) $command.="--commit ";
 	else $command.="--no-commit ";
 
-	// submit job to cluster
-	if ($_POST['process']=="Run Ref-Based Alignment") {
-		$user = $_SESSION['username'];
-		$password = $_SESSION['password'];
+	/* *******************
+	PART 4: Create header info, i.e., references
+	******************** */
+	$headinfo .= spiderRef();
+	
+	/* *******************
+	PART 5: Show or Run Command
+	******************** */
+	// submit command
+	$errors = showOrSubmitCommand($command, $headinfo, 'partalign', $nproc);
 
-		if (!($user && $password))
-			createAlignmentForm("<B>ERROR:</B> Enter a user name and password");
-
-		$sub = submitAppionJob($command,$outdir,$runname,$expId,'partalign',False,False,False,8);
-		// if errors:
-		if ($sub)
-			createAlignmentForm("<b>ERROR:</b> $sub");
-		exit;
-	} else {
-		processing_header("Alignment Run","Alignment Params");
-
-		echo spiderRef();
-
-		echo"
-		<TABLE WIDTH='600' BORDER='1'>
-		<TR><TD COLSPAN='2'>
-		<B>Alignment Command:</B><br>
-		$command
-		</TD></tr>
-		<TR><td>runname</TD><td>$runname</TD></tr>
-		<TR><td>stackid</TD><td>$stackid</TD></tr>
-		<TR><td>refids</TD><td>".templateIds()."</TD></tr>
-		<TR><td>iter</TD><td>$iters</TD></tr>
-		<TR><td>numpart</TD><td>$numpart</TD></tr>
-		<TR><td>last ring</TD><td>$lastring</TD></tr>
-		<TR><td>first ring</TD><td>$firstring</TD></tr>
-		<TR><td>rundir</TD><td>$rundir</TD></tr>
-		<TR><td>xysearch</TD><td>$xysearch</TD></tr>
-		<TR><td>xystep</TD><td>$xystep</TD></tr>
-		<TR><td>low pass</TD><td>$lowpass</TD></tr>l
-		<TR><td>high pass</TD><td>$highpass</TD></tr>";
-		echo"	</table>\n";
-		processing_footer();
-	}
+	// if error display them
+	if ($errors)
+		createAlignmentForm("<b>ERROR:</b> $errors");
+	
 }
 
 /*
@@ -476,9 +460,9 @@ function templateIds () {
 	$command = "";
 	// get the list of templates
 	$templateList=$_POST['templateList'];
-	$templates=split(",", $templateList);
+	$templates=preg_split("%,%", $templateList);
 	foreach ($templates as $tmplt) {
-		list($tmpltNum,$tmpltId)=split(":",$tmplt);
+		list($tmpltNum,$tmpltId)=preg_split("%:%",$tmplt);
 		$templateIds.="$tmpltId,";
 	}
 	$templateIds=substr($templateIds,0,-1);

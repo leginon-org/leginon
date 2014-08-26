@@ -8,15 +8,12 @@
  *	Simple viewer to view a image using mrcmodule
  */
 
-require "inc/particledata.inc";
-require "inc/leginon.inc";
-require "inc/project.inc";
-require "inc/viewer.inc";
-require "inc/processing.inc";
-require "inc/appionloop.inc";
-
-// Cs should come straight out of the DB somehow, instead it is in config
-$defaultcs=DEFAULTCS;
+require_once "inc/particledata.inc";
+require_once "inc/leginon.inc";
+require_once "inc/project.inc";
+require_once "inc/viewer.inc";
+require_once "inc/processing.inc";
+require_once "inc/appionloop.inc";
 
 // IF VALUES SUBMITTED, EVALUATE DATA
 if ($_POST['process']) {
@@ -39,7 +36,6 @@ else {
 
 // CREATE FORM PAGE
 function createAce2Form($extra=false) {
-	global $defaultcs;
 	// check if coming directly from a session
 	$expId = $_GET['expId'];
 	if ($expId) {
@@ -84,7 +80,6 @@ function createAce2Form($extra=false) {
 		$lastrunnumber += 1;
   $defrunname = ($_POST['runname']) ? $_POST['runname'] : 'acetwo'.($lastrunnumber+1);
   $binval = ($_POST['binval']) ? $_POST['binval'] : 2;
-  $cs = ($_POST['cs']) ? $_POST['cs'] : $defaultcs;
   $confcheck = ($_POST['confcheck']== 'on') ? 'CHECKED' : '';
   $reprocess = ($_POST['reprocess']) ? $_POST['reprocess'] : 0.8;
   $hpzero = ($_POST['hpzero']) ? $_POST['hpzero'] : '';
@@ -108,12 +103,6 @@ function createAce2Form($extra=false) {
 
 	echo "<input type='text' name='binval' value=$binval size='4'>\n";
 	echo docpop('ace2bin','Binning');
-	echo "<br/><br/>\n";
-
-	echo "<input type='text' name='cs' value='".$cs."' size='4'>\n";
-	echo docpop('cs','Spherical Aberration');
-	echo "&nbsp;(<a href='http://en.wikipedia.org/wiki/Spherical_aberration'>wiki\n";
-	echo "<img border='0' src='img/external.png'></a>)\n";
 	echo "<br/><br/>\n";
 
 	echo "<INPUT TYPE='checkbox' NAME='confcheck' onclick='enableconf(this)' $confcheck >\n";
@@ -175,38 +164,35 @@ function createAce2Form($extra=false) {
 */
 
 
+
 // --- parse data and process on submit
 function runAce2() {
+	
+	/* *******************
+	PART 1: Get variables
+	******************** */
 	$expId   = $_GET['expId'];
 	$outdir  = $_POST['outdir'];
 	$runname = $_POST['runname'];
-
-	$command.= "pyace2.py ";
-
-	$apcommand = parseAppionLoopParams($_POST);
-	if ($apcommand[0] == "<") {
-		createAce2Form($apcommand);
-		exit;
-	}
-	$command .= $apcommand;
-
 	// parse params
 	//$refine2d=$_POST['refine2d'];
 	$binval=$_POST['binval'];
 
-	$cs=$_POST['cs'];
 	$hpzero=trim($_POST['hpzero']);
 	$hpone=trim($_POST['hpone']);
 	$edge1=trim($_POST['edge1']);
 	$edge2=trim($_POST['edge2']);
 	$rotblur=trim($_POST['rotblur']);
 	$reprocess=$_POST['reprocess'];
-
-	if (!is_numeric($cs)) {
-		createAce2Form("Invalid value for the Spherical Aberration");
+	
+	/* *******************
+	PART 2: Check for conflicts, if there is an error display the form again
+	******************** */
+	$leginondata = new leginondata();
+	if ($leginondata->getCsValueFromSession($expId) === false) {
+		createAce2Form("Cs value of the images in this session is not unique or known, can't process");
 		exit;
-	}		
-
+	}
 	// check the tilt situation
 	$particle = new particledata();
 	$maxang = $particle->getMaxTiltAngle($_GET['expId']);
@@ -217,6 +203,18 @@ function runAce2() {
 			exit;
 		}
 	}
+	
+	/* *******************
+	PART 3: Create program command
+	******************** */
+	$command.= "pyace2.py ";
+
+	$apcommand = parseAppionLoopParams($_POST);
+	if ($apcommand[0] == "<") {
+		createAce2Form($apcommand);
+		exit;
+	}
+	$command .= $apcommand;
 
 	if (is_numeric($reprocess))
 		$command.="--reprocess=$reprocess ";
@@ -234,40 +232,22 @@ function runAce2() {
 		$command.="--rotblur=$rotblur ";
 
 	//if($refine2d) $command.="--refine2d ";
-	$command.="--cs=$cs ";
 	$command.="--bin=$binval ";
+	
+	/* *******************
+	PART 4: Create header info, i.e., references
+	******************** */
+	$headinfo .= referenceBox("ACE: automated CTF estimation.", 2005, "Mallick SP, Carragher B, Potter CS, Kriegman DJ.", "Ultramicroscopy.", 104, 1, 15935913, false, false, false);
+	
+	/* *******************
+	PART 5: Show or Run Command
+	******************** */
+	// submit command
+	$errors = showOrSubmitCommand($command, $headinfo, 'pyace2', $nproc);
 
-	// submit job to cluster
-	if ($_POST['process'] == "Run Ace 2") {
-		$user = $_SESSION['username'];
-		$password = $_SESSION['password'];
-
-		if (!($user && $password)) createAce2Form("<b>ERROR:</b> Enter a user name and password");
-
-		$sub = submitAppionJob($command,$outdir,$runname,$expId,'pyace2',False,False);
-		// if errors:
-		if ($sub) createAce2Form("<b>ERROR:</b> $sub");
-		exit;
-	} else {
-
-		processing_header("Ace2 Results","Ace2 Results");
-
-		echo"
-		<TABLE WIDTH='600'>
-		<TR><TD COLSPAN='2'>
-		<B>ACE Command:</B><br/>
-		$command<HR>
-		</TD></tr>";
-		appionLoopSummaryTable();
-		//<TR><td>refine 2d</TD><td>$refine2d</TD></tr>
-		echo"
-		<TR><td>bin</TD><td>$binval</TD></tr>
-		<TR><td>cs</TD><td>$cs</TD></tr>
-		<TR><td>rotblur</TD><td>$rotblur</TD></tr>\n";
-		echo "</table>\n";
-		processing_footer(True, True);
-	}
+	// if error display them
+	if ($errors)
+		createAce2Form("<b>ERROR:</b> $errors");
 }
-
 
 ?>

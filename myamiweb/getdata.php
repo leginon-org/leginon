@@ -7,7 +7,7 @@
  *	see  http://ami.scripps.edu/software/leginon-license
  */
 
-require "inc/leginon.inc";
+require_once "inc/leginon.inc";
 
 $g=true;
 $opennodes = $_GET['r'];
@@ -39,7 +39,7 @@ if($g) {
 <script>
 <!--
 <?php
-if (ereg("undefined",$opennodes))
+if (preg_match("%undefined%",$opennodes))
 	$opennodes=0;
 if (!empty($opennodes))
 	$opennodes = '0,'.$opennodes;

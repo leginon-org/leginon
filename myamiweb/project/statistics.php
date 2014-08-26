@@ -1,6 +1,6 @@
 <?
-require('inc/project.inc.php');
-require('inc/experiment.inc.php');
+require_once('inc/project.inc.php');
+require_once('inc/experiment.inc.php');
 
 if (privilege('projects') > 2) {
 	$title = "Projects";
@@ -132,7 +132,7 @@ $displaytitle=true;
 foreach (getImageSizeInfo($k) as $imgi ) {
 	$data.="<tr>";
 	foreach ($imgi as $ki=>$vi) {
-	if (eregi('size', $ki)) {
+	if (preg_match('%size%i', $ki)) {
 		$vi=number_format($vi)." kB";
 	}
 	if ($displaytitle) {

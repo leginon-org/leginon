@@ -1,5 +1,8 @@
 <?php
-require '../inc/scalebar.inc';
+require_once dirname(__FILE__).'/../config.php';
+require_once '../inc/scalebar.inc';
+require_once "../inc/image.inc";
+require_once "../inc/imagerequest.inc";
 
 $file_hed=$_GET['hed'];
 $file_img=$_GET['img'];
@@ -15,28 +18,38 @@ if (!$t = $_GET['t'])
 if (!$binning = $_GET['b'])
 	$binning=1;
 if ($t=='png') {
-	$type = "image/x-png";
 	$ext = "png";
+	$oformat = 'PNG';
 } else {
-  $type = "image/jpeg";
 	$quality=$t;
 	$ext = "jpg";
+	$oformat = 'JPEG';
 }
 
-if (!$info && $stackinfoindex==1) {
-  $iminfo = imagicinfo($file_hed, $img_num);
-  $info = $iminfo['mrc2'];
-}
+// create imageRequester and imageUtil instances to begin.
+$imagerequest = new imageRequester();
+$imageUtil = new imageUtil();
 
-$mrcimg = imagicread($file_hed, $file_img, $img_num);
-$maxval=255;
-list($pmin, $pmax) = array(0, $maxval);
-if ($updateheader)
-	mrcupdateheader($mrcimg);
-list($pmin, $pmax) = mrcstdevscale($mrcimg, 3);
-mrcbinning($mrcimg,$binning);
-$img = mrctoimage($mrcimg,$pmin,$pmax);
-mrcdestroy($mrcimg);
+$pic = $file_hed;
+	
+// frame number for redux
+$frame=$img_num;
+// scale type is stdev only for now
+$scaletype = 'stdev';
+$arg1 = -3;
+$arg2= 3;
+// find out the proper x, y for display
+$imginfo = $imagerequest->requestInfo($pic,$frame);
+$dimx = $imginfo->nx;
+$dimy = $imginfo->ny;
+// eman uses i4lp to pass number of particles in class average imagic file
+if (!$info && $stackinfoindex==1) $info = $imginfo->i4lp;
+
+$xyDim = $imageUtil->imageBinning($dimx, $dimy, $binning);
+// request image
+$imgstr = $imagerequest->requestImage($pic,'PNG',$xyDim,$scaletype,$arg1,$arg2,0,false,false,true,$frame);
+if (empty($imgstr)) exit();
+$img = imagecreatefromstring($imgstr);
 
 $text="$img_num";
 if ($info) {
@@ -56,8 +69,11 @@ if ($imgh<128) {
 
 // --- display info --- //
 if (trim($_GET['di'])==1) {
-	$color=imagecolorallocate($img,128,0,128);
-	$w=imagecolorallocate($img,255,255,255);
+	// some PNG images can not allocate purple as background color. Using imagecolorresolve
+	// avoid this problem even though the backgroupd might not be purple if the image
+	// is greyscale only
+	$color=imagecolorresolve($img,128,0,128);
+	$w=imagecolorresolve($img,255,255,255);
 	$x1=0;
 	$y1=$imgh-$yfont;
 	$x2=strlen($text)*$xfont+1;
@@ -77,12 +93,6 @@ if (is_numeric(trim($_GET['ps'])) && $_GET['sb']==1) {
 }
 
 $filename="image$img_num.$ext";
-header( "Content-type: $type ");
-header( "Content-Disposition: inline; filename=".$filename);
-	if ($t=='png')
-		imagepng($img);
-	else
-		imagejpeg($img,'',$quality);
 
-imagedestroy($img);
+$imagerequest->displayImageObj($img,$oformat,$quality,$filename);
 ?>

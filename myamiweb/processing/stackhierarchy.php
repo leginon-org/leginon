@@ -8,11 +8,11 @@
  *	Simple viewer to view a image using mrcmodule
  */
 
-require "inc/particledata.inc";
-require "inc/leginon.inc";
-require "inc/project.inc";
-require "inc/processing.inc";
-require "inc/summarytables.inc";
+require_once "inc/particledata.inc";
+require_once "inc/leginon.inc";
+require_once "inc/project.inc";
+require_once "inc/processing.inc";
+require_once "inc/summarytables.inc";
 
 $particle = new particledata();
 $expId = $_GET['expId'];
@@ -25,7 +25,18 @@ show stack info for the input stack and all of its child stacks
 function showStack($stackdata) {
 	global $particle;
 	global $expId;
+	// allstackids contains all the stack ids associated with exp 
+	global $allstackIdList;
+
 	$stackid = $stackdata['stackid'];
+	// remove this stackid from the list of all stackids
+	foreach ($allstackIdList as $key => $value) {
+		if ($allstackIdList[$key]['stackid']==$stackid) {
+			unset($allstackIdList[$key]);
+			break;
+		}
+	}
+
 	// get all substackd including hidden ones
 	$allsubstackdatas = $particle->getSubStackIds($expId, $stackid, true);
 	// get only unhidden substackd
@@ -70,15 +81,29 @@ $javascript.= editTextJava();
 processing_header("Hierarchical Stack Summary","Hierarchical Stack Summary Page", $javascript, False);
 echo "<a href='stacksummary.php?expId=$expId'>[Show original stack summary page]</a><br/><br/>\n";
 
-// get stack data
+// get all stack ID's, regardless position in hierarchy
+$allstackIdList = $particle->getStackIds($expId, $showHidden=True);
+// sort array of stacks by stackid
+usort($allstackIdList,'cmp');
+// get primary stack data
 $allstackdatas = $particle->getPrimaryStackIds($expId);
 
-if ($allstackdatas) {
+if ($allstackdatas || $allstackIdList) {
 	echo "<form name='stackform' method='post' action='$formAction'>\n";
 	foreach ($allstackdatas as $stackdata) {
 		echo "<table class='tablebubble'><tr><td colspan='2'>\n";
 		showStack($stackdata);
 		echo "</td></tr></table>\n";
+	}
+	// check if there are orphaned stacks
+	if (count($allstackIdList)>0){
+		foreach ($allstackIdList as $stackdata) {
+			if (in_array($stackdata,$allstackIdList)) {
+				echo "<table class='tablebubble'><tr><td colspan='2'>\n";
+				showStack($stackdata);
+				echo "</td></tr></table>\n";
+			}
+		}
 	}
 	echo "</form>";
 } else {
@@ -90,4 +115,9 @@ echo "<a href='stacksummary.php?expId=$expId'>[Show original stack summary page]
 processing_footer();
 exit;
 
+// for sorting the stacks by stackid
+function cmp($stacka,$stackb) {
+	if ($stacka['stackid'] == $stackb['stackid']) return 0;
+	return ($stacka['stackid'] < $stackb['stackid']) ? -1:1;
+}
 ?>

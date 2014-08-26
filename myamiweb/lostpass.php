@@ -1,5 +1,5 @@
 <?php
-require "inc/login.inc";
+require_once "inc/login.inc";
 login_header("Lost password");
 if (!empty($_POST)) {
 	

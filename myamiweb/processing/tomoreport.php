@@ -8,12 +8,13 @@
  *	Display results for each iteration of a refinement
  */
 
-require "inc/particledata.inc";
-require "inc/leginon.inc";
-require "inc/project.inc";
-require "inc/viewer.inc";
-require "inc/processing.inc";
-require "inc/summarytables.inc";
+require_once "inc/particledata.inc";
+require_once "inc/leginon.inc";
+require_once "inc/project.inc";
+require_once "inc/viewer.inc";
+require_once "inc/processing.inc";
+require_once "inc/summarytables.inc";
+require_once "inc/movie.inc";
 
 // check if reconstruction is specified
 if (!$tomoId = $_GET['tomoId'])
@@ -21,13 +22,13 @@ if (!$tomoId = $_GET['tomoId'])
 $expId = $_GET['expId'];
 
 $align_params_fields = array('alignrun','bin','name');
-$javascript="<script src='../js/viewer.js'></script>\n";
+$javascript = addFlashPlayerJS();
 
 // javascript to display the refinement parameters
-$javascript="<script LANGUAGE='JavaScript'>
+$javascript .="<script LANGUAGE='JavaScript'>
         function infopopup(";
 foreach ($align_params_fields as $param) {
-        if (ereg("\|", $param)) {
+        if (preg_match("%\|%", $param)) {
 	        $namesplit=explode("|", $param);
 		$param=end($namesplit);
 	}
@@ -41,7 +42,7 @@ $javascript.=") {
                 newwindow.document.write('<TITLE>Ace Parameters</TITLE>');
                 newwindow.document.write(\"</HEAD><BODY><TABLE class='tableborder' border='1' cellspacing='1' cellpadding='5'>\");\n";
 foreach($align_params_fields as $param) {
-	if (ereg("\|", $param)) {
+	if (preg_match("%\|%", $param)) {
 		$namesplit=explode("|", $param);
 		$param=end($namesplit);
 	}
@@ -101,64 +102,21 @@ if (file_exists($snapshotfile)) {
 }
 echo "<td>";
 // --- Display Flash Movie from flv --- //
-@require_once('getid3/getid3.php');
-function getflvsize($filename) {
-	if (!class_exists('getID3')) {
-		return false;
-	}
-	$getID3 = new getID3;
-	$i = $getID3->analyze($filename);
-	$w = $i['meta']['onMetaData']['width'];
-	$h = $i['meta']['onMetaData']['height'];
-	return array($w, $h);
-}
-
-if (!defined('FLASHPLAYER_URL')) {
-	echo "<p style='color: #FF0000'>FLASHPLAYER_URL is not defined in config.php</p>";
-}
-$swfstyle=FLASHPLAYER_URL . 'FlowPlayer.swf';
 $axes = array(0=>'a',1=>'b');
 foreach ($axes as $axis) {
 	$flvfile = $tomogram['path']."/minitomo".$axis.".flv";
 	$projfile = $tomogram['path']."/projection".$axis.".jpg";
 	if (file_exists($flvfile) || file_exists($projfile)) {
 		echo "<table><tr><td>Projection</td><td>Slicing Through</td></tr>";
-		if (file_exists($flvfile)) {
-			if ($size=getflvsize($flvfile)) {
-				list($flvwidth, $flvheight)=$size;
-			}
-		}
 		if (file_exists($projfile)) 
 			$imagesize = getimagesize($projfile);
 		$maxcolwidth = 400;
 		echo "<tr><td>";
-		if ($flvwidth > 0 && $flvheight > 0) {
-			$colwidth = ($maxcolwidth < $flvwidth) ? $maxcolwidth : $flvwidth;
-			$rowheight = $colwidth * $flvheight / $flvwidth;
-		} else {
-			$colwidth = ($maxcolwidth < $imagesize[0]) ? $maxcolwidth : max($imagesize[0],40);
-			$rowheight = $colwidth * max($imagesize[1],0) / max($imagesize[0],1);
-		}
-		echo "<img src='loadimg.php?filename=$projfile&width=".$colwidth."' width='".$colwidth."'>";
+		list($colwidth,$rowheight) = getFinalSizeByLimit($flvfile,'width',$maxcolwidth,$imagesize[0],$imagesize[1]); 
+		echo "<img src='loadimg.php?filename=$projfile&width=".$colwidth."' height='".$rowheight."'>";
 		echo "</td><td>";
-		echo '<object type="application/x-shockwave-flash" data="'
-			.$swfstyle.'" width="'.$colwidth.'" height="'.$rowheight.'" >
-			<param name="allowScriptAccess" value="sameDomain" />
-			<param name="movie" value="'.$swfstyle.'" />
-			<param name="quality" value="high" />
-			<param name="scale" value="noScale" />
-			<param name="wmode" value="transparent" />
-			<param name="allowNetworking" value="all" />
-			<param name="flashvars" value="config={ 
-				autoPlay: true, 
-				loop: true, 
-				initialScale: \'orig\',
-				videoFile: \'getflv.php?file='.$flvfile.'\',
-				hideControls: true,
-				showPlayList: false,
-				showPlayListButtons: false,
-				}" />
-			</object>';
+		echo getMovieHTML($flvfile,$colwidth,$rowheight,$subid=$axis);
+
 		echo "</td></tr>";
 	}
 	echo "</table>";

@@ -7,7 +7,7 @@
  *	see  http://ami.scripps.edu/software/leginon-license
  */
 
-require "inc/leginon.inc";
+require_once "inc/leginon.inc";
 
 $g=true;
 if (!$session=stripslashes($_GET['session'])) {
@@ -22,7 +22,7 @@ if (!$id=stripslashes($_GET['id'])) {
 }
 $t = $_GET['t'];
 if ($t=='png') {
-        $type = "image/x-png";
+        $type = "image/png";
 } else {
         $type = "image/jpeg";
 	$quality=$t;

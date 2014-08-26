@@ -7,11 +7,11 @@
  *
  */
 
-require "inc/particledata.inc";
-require "inc/leginon.inc";
-require "inc/project.inc";
-require "inc/viewer.inc";
-require "inc/processing.inc";
+require_once "inc/particledata.inc";
+require_once "inc/leginon.inc";
+require_once "inc/project.inc";
+require_once "inc/viewer.inc";
+require_once "inc/processing.inc";
   
 // check if coming directly from a session
 $expId = $_GET['expId'];
@@ -56,12 +56,15 @@ if ($showntomoaligns) {
 	$html = "<h4>TiltSeries Alignment Runs</h4>";
 	$html .= "<table class='tableborder' border='1' cellspacing='1' cellpadding='5'>\n";
 	$html .= "<TR>\n";
-	$display_keys = array ( 'tilt number','alignrun id','alignrun name','method','description');
+	$display_keys = array ( 'tilt number','alignrun id','alignrun name','method','description','bad align');
 	foreach($display_keys as $key) {
 		$html .= "<td><span class='datafield0'>".$key."</span> </TD> ";
 	}
 	$html .= "</TR>\n";
 	foreach ($showntomoaligns as $t) {
+		$aligninfo = $particle->getTomoAlignmentInfo($t['alignrunid']);
+		$t['bad align'] = $aligninfo['badAlign'];
+		$t['method'] = $aligninfo['method'];
 		$html .= $particle->displayParametersInSummary($t,$display_keys,$expId,$hide_button_field='alignrun id');
 	}
 	$html .= "</table>\n";

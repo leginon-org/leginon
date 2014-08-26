@@ -130,18 +130,22 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 			self.setStatus('processing')
 			if state in ('stop', 'stopqueue'):
 				targetliststatus = 'aborted'
-				print "aborting before rejects are sent"
 				# If I report targets done then rejected target are also done.  Which make
 				# them unrestartable What to do???????
 				self.reportTargetListDone(newdata, targetliststatus)
 				self.setStatus('idle')
 				return
+
 			#tilt the stage first
 			if self.settings['use parent tilt']:
 				state1 = leginondata.ScopeEMData()
 				parentimage = newdata.special_getitem('image', True, readimages=False)
 				state1['stage position'] = {'a':parentimage['scope']['stage position']['a']}
 				self.instrument.setData(state1)
+			# start conditioner
+			self.setStatus('waiting')
+			self.fixCondition()
+			self.setStatus('processing')
 			# This is only for beamfixer now and it does not need preset_name
 			preset_name = None
 			original_position = self.instrument.tem.getStagePosition()
@@ -243,9 +247,15 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 				except Exception, e:
 					self.logger.exception('Process target failed: %s' % e)
 					process_status = 'exception'
+					
 				self.stopTimer('processTargetData')
 
-				self.reportTargetStatus(adjustedtarget, 'done')
+				if process_status != 'exception':
+					self.reportTargetStatus(adjustedtarget, 'done')
+				else:
+					# set targetlist status to abort if exception not user fixable
+					targetliststatus = 'aborted'
+					self.reportTargetStatus(adjustedtarget, 'aborted')
 
 				# pause check after a good target processing
 				if self.player.state() == 'pause':
@@ -335,3 +345,7 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 	
 	def fixAlignment(self):
 		raise NotImplementedError()
+
+	def fixCondition(self):
+		raise NotImplementedError()
+

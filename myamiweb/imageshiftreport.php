@@ -7,24 +7,13 @@
  *	see  http://ami.scripps.edu/software/leginon-license
  */
 
-require "inc/leginon.inc";
+require_once "inc/leginon.inc";
 
 $defaultId= 1445;
 $sessionId= ($_GET['Id']) ? $_GET['Id'] : $defaultId;
 $maxrate = (is_numeric($_POST['maxr'])) ? $_POST['maxr'] 
 		: (is_numeric($_GET['maxr']) ? $_GET['maxr'] : false);
 
-if ($driftdata = $leginondata->getDriftDataFromSessionId($sessionId)) {
-foreach ($driftdata as $drift) {
-	$id = $drift['imageId'];
-	$data[$id] = $drift;
-}
-
-foreach ($data as $drift) {
-	$id = $drift['imageId'];
-	$t  = $drift['time'];
-}
-}
 // --- Set  experimentId
 // $lastId = $leginondata->getLastSessionId();
 // $sessionId = (empty($_GET[Id])) ? $lastId : $_GET[sessionId];
@@ -60,7 +49,7 @@ $expId = $sessionId;
 $imageshiftpresets = $leginondata->getImageShiftPresets($expId);
 if (!empty($imageshiftpresets)) {
 	foreach($imageshiftpresets as $preset) {
-		$stats = $leginondata->getImageShift($expId,$preset['name'],True);
+		$stats = $leginondata->getImageScopeXYValues($expId,$preset['name'],'image shift',True);
 		if (!$stats['x']['stddev']) continue;
 		echo "<tr><td colspan='3'>";
 		echo divtitle("Image Shift of Image Acquire by ".$preset['name']." Preset");

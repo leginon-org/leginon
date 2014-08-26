@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import numpy
-import leginondata
+from leginon import leginondata
 import gonmodel
 import sinedon
 

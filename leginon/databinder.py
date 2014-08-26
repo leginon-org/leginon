@@ -10,7 +10,7 @@ import Queue
 from pyami import ordereddict
 import threading
 import datatransport
-import leginondata
+from leginon import leginondata
 import remotecall
 
 class DataBinder(object):

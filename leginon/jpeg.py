@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import Image
+from PIL import Image
 import numpy
 
 def save(a, min, max, filename, quality):

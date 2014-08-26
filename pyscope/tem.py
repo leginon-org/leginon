@@ -5,6 +5,7 @@
 #
 
 import baseinstrument
+import config
 
 class TEM(baseinstrument.BaseInstrument):
 	name = None
@@ -63,6 +64,7 @@ class TEM(baseinstrument.BaseInstrument):
 		{'name': 'LowDoseMode', 'type': 'property'},
 		{'name': 'Magnification', 'type': 'property'},
 		{'name': 'MainScreenPosition', 'type': 'property'},
+		{'name': 'ProbeMode', 'type': 'property'},
 		{'name': 'RawImageShift', 'type': 'property'},
 		{'name': 'Shutter', 'type': 'property'},
 		{'name': 'SpotSize', 'type': 'property'},
@@ -78,4 +80,21 @@ class TEM(baseinstrument.BaseInstrument):
 		{'name': 'preFilmExposure', 'type': 'method'},
 		{'name': 'resetDefocus', 'type': 'method'},
 		{'name': 'runBufferCycle', 'type': 'method'},
+
+		## optional:
+		{'name': 'EnergyFilter', 'type': 'property'},
+		{'name': 'EnergyFilterWidth', 'type': 'property'},
 	)
+	def __init__(self):
+		baseinstrument.BaseInstrument.__init__(self)
+		self.config_name = config.getNameByClass(self.__class__)
+		self.cs = config.getConfigured()[self.config_name]['cs']
+
+	def getCs(self):
+		return self.cs
+
+	def getEnergyFiltered(self):
+		return False
+
+	def exposeSpecimenNotCamera(self,seconds):
+		raise NotImplementedError()

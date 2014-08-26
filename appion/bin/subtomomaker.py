@@ -104,7 +104,10 @@ class tomoMaker(appionScript.AppionScript):
 		if (self.params['selexonId'] is not None or self.params['stackId']) and fulltomodata is not None:
 			sessiondata = fulltomodata['session']
 			seriesname = fulltomodata['name'].rstrip('_full')
-			fullbin = fulltomodata['aligner']['alignrun']['bin']
+			fullbin = fulltomodata['bin']
+			if not fullbin:
+				apDisplay.printWarning("no binning in full tomogram, something is wrong, use alignment bin for now")
+				fullbin = fulltomodata['aligner']['alignrun']['bin']
 			fulltomopath = os.path.join(fulltomodata['reconrun']['path']['path'], seriesname+"_full.rec")
 			fulltomoheader = mrc.readHeaderFromFile(fulltomopath)
 			fulltomoshape = fulltomoheader['shape']
@@ -123,7 +126,7 @@ class tomoMaker(appionScript.AppionScript):
 				particles,stackparticles = apStack.getImageParticles(zprojimagedata, self.params['stackId'])
 				stackdata = apStack.getOnlyStackData(self.params['stackId'])
 			for p, particle in enumerate(particles):
-				print particle['xcoord'],particle['ycoord']
+				print particle['xcoord'],particle['ycoord'],fullbin
 				center = apTomo.transformParticleCenter(particle,fullbin,gtransform)
 				size = (dimension['x']/fullbin,dimension['y']/fullbin,dimension['z']/fullbin)
 				volumename = 'volume%d'% (volumeindex,)

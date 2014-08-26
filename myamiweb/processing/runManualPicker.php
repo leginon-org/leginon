@@ -8,12 +8,12 @@
  *  Simple viewer to view a image using mrcmodule
  */
 
-require "inc/particledata.inc";
-require "inc/leginon.inc";
-require "inc/project.inc";
-require "inc/viewer.inc";
-require "inc/processing.inc";
-require "inc/appionloop.inc";
+require_once "inc/particledata.inc";
+require_once "inc/leginon.inc";
+require_once "inc/project.inc";
+require_once "inc/viewer.inc";
+require_once "inc/processing.inc";
+require_once "inc/appionloop.inc";
   
 /**
  * Handle Particle pick Label
@@ -27,6 +27,10 @@ if ($_POST['addpicklabel']) {
 	if (empty($_POST['editrunlabels']) && ($picklabel==$editrunname))
 		createManualPickerForm('Unlabeled Old Particle Pick is automatically labeled by its runname');
 	else {
+		$reserved_labels = array('fromtrace','_trace');
+		foreach ($reserved_labels as $rlabel)
+		if ($picklabel==$rlabel)
+			createManualPickerForm('"'.$rlabel.'" is a reserved label. Give another name');
 		if (!in_array($picklabel, $picklabels) && count($picklabels)<8) {
 			$_SESSION['picklabels'][]=$picklabel;
 		}
@@ -34,7 +38,7 @@ if ($_POST['addpicklabel']) {
 }
 if ($_POST['delpicklabel']) {
 	foreach ((array)$_POST as $k=>$v) {
-		if (ereg('^[0-9]{1,}i', $k)) {
+		if (preg_match('%^[0-9]{1,}i%', $k)) {
 			$index = (int)$k;
 			unset($_SESSION['picklabels'][$index]);
 		}
@@ -82,10 +86,21 @@ function createManualPickerForm($extra=false, $title='Manual Picker Launcher', $
                                  document.viewerform.testfilename.value='mrc file name';
                          }
                  }
+                 function disableHsteps(){
+			if (document.viewerform.helicalcheck.checked){
+				document.viewerform.helicalstep.disabled=true;
+				document.viewerform.ovrlp.disabled=true;
+			}
+			else {
+				document.viewerform.helicalstep.disabled=false;
+				document.viewerform.ovrlp.disabled=false;
+			}
+                 }
         </SCRIPT>\n";
   $javafunctions .= writeJavaPopupFunctions('appion');
-  processing_header("Manual Picker Launcher","Manual Particle Selection and Editing",$javafunctions);
-
+  processing_header($title="Manual Picker Launcher", $heading="Manual Particle Selection and Editing", 
+  					$headerstuff=$javafunctions, $pleaseWait=false, $showmenu=true, $printDiv=false, 
+					$guideURL="http://ami.scripps.edu/redmine/projects/appion/wiki/Manual_Picking");
   if ($extra) {
     echo "<font color='#cc3333' size='+2'>$extra</font>\n<hr/>\n";
   }
@@ -106,6 +121,7 @@ function createManualPickerForm($extra=false, $title='Manual Picker Launcher', $
   $testcheck = ($_POST['testimage']=='on') ? 'CHECKED' : '';
   $testdisabled = ($_POST['testimage']=='on') ? '' : 'DISABLED';
   $testvalue = ($_POST['testimage']=='on') ? $_POST['testfilename'] : 'mrc file name';
+  $helicalcheck = ($_POST['helicalcheck']=='on') ? 'CHECKED' : '';
 
   echo"
   <table BORDER=0 CLASS=tableborder CELLPADDING=15>
@@ -193,8 +209,8 @@ function createManualPickerForm($extra=false, $title='Manual Picker Launcher', $
 	// pick and image parameters
   echo "<TD CLASS='tablebg'>\n";
   echo "<b>Particle Diameter:</b><br />\n";
-  echo "<input type='text' NAME='diam' VALUE='$diam' SIZE='4'>\n";
   $diam = ($_POST['diam']) ? $_POST['diam'] : "";
+  echo "<input type='text' NAME='diam' VALUE='$diam' SIZE='4'>\n";
   echo docpop('pdiam','Particle diameter for result images');
   echo "<font SIZE=-2><I>(in &Aring;ngstroms)</I></font>\n";
   echo "<br /><br />\n";
@@ -214,10 +230,18 @@ function createManualPickerForm($extra=false, $title='Manual Picker Launcher', $
 		<I>16 pixels is best</I>
     <br /><br />";    
   echo "<b>Helical Parameters:</b><br />\n";
-  echo "<input type='text' NAME='helicalstep' VALUE='$helicalstep' SIZE='4'>\n";
+	echo "<input type='checkbox' name='helicalcheck' onclick='disableHsteps()' $helicalcheck >\n";
+	echo docpop('alonghelices','Pick along helices');
+	echo "<br>\n";
   $helicalstep = ($_POST['helicalstep']) ? $_POST['helicalstep'] : "";
+  echo "<input type='text' NAME='helicalstep' VALUE='$helicalstep' SIZE='4'>\n";
   echo docpop('helicalstep','Stepsize for Helical Insert');
   echo "<font SIZE=-2><I>(in &Aring;ngstroms)</I></font>\n";
+  echo "<br />\n";
+  $ovrlp = ($_POST['ovrlp']) ? $_POST['ovrlp'] : "0";
+  echo "<input type='text' NAME='ovrlp' VALUE='$ovrlp' SIZE='4'>\n";
+  echo docpop('ovrlp','Percent overlap');
+  echo "<font SIZE=-2><I>(%)</I></font>\n";
   echo "<br /><br />\n";
   createParticleLoopTable(-1, -1);
   echo "
@@ -225,7 +249,7 @@ function createManualPickerForm($extra=false, $title='Manual Picker Launcher', $
 		</tr>
 		<TR>
 		<TD COLSPAN='2' ALIGN='CENTER'><hr>";
-	echo getSubmitForm("Run ManualPicker", false, true);
+	echo getSubmitForm("Run ManualPicker", true, true);
   echo "</TD>
 		</tr>
 		</table>
@@ -273,9 +297,13 @@ function runManualPicker() {
     $command .= " --shapesize=$shapesize";
   } 
 
+  $helicalcheck=($_POST['helicalcheck']=='on') ? True: False;
   $helicalstep=$_POST['helicalstep'];
-  if($helicalstep) {
+  $ovrlp=$_POST['ovrlp'];
+  if ($helicalcheck) $command .= " --helix";
+  elseif($helicalstep) {
     $command .= " --helicalstep=$helicalstep";
+    $command .= " --ovrlp=$ovrlp";
   }
 
 	$oldlabels = explode('|--|',$_POST['editrunpicklabels']);
@@ -284,22 +312,26 @@ function runManualPicker() {
 		if (strlen($picklabel))
 			$command .= " --label=$picklabel";
 	}
+	
+	
+	/* *******************
+	PART 4: Create header info, i.e., references
+	******************** */
 
-	processing_header("Particle Selection Results","Particle Selection Results");
+	// Add reference to top of the page
+	$headinfo .= appionRef(); // main appion ref
 
-	echo appionRef();
+	/* *******************
+	PART 5: Show or Run Command
+	******************** */
 
-  echo"
-    <table WIDTH='600'>
-    <TR><TD COLSPAN='2'>
-    <B>Manual Picker Command:</B><br />
-    $command<HR>
-    </TD></tr>";
+	// submit command
+	$errors = showOrSubmitCommand($command, $headinfo, 'manualpicker', 1);
 
-  appionLoopSummaryTable();
-  particleLoopSummaryTable();
-  echo"</table>\n";
-  processing_footer();
+	// if error display them
+	if ($errors)
+		createManualPickerForm($errors);
+	exit;
 }
 
 ?>

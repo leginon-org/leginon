@@ -13,6 +13,7 @@
 
 import copy
 import threading
+import time
 import wx
 from wx.lib.mixins.listctrl import ColumnSorterMixin
 
@@ -59,10 +60,10 @@ class SetParametersEvent(wx.PyCommandEvent):
 		self.parameters = parameters
 
 class SetDoseValueEvent(wx.PyEvent):
-	def __init__(self, dose):
+	def __init__(self, doses):
 		wx.PyEvent.__init__(self)
 		self.SetEventType(SetDoseValueEventType)
-		self.dose = dose
+		self.doses = doses
 
 class SetCalibrationsEvent(wx.PyCommandEvent):
 	def __init__(self, times, source):
@@ -100,6 +101,7 @@ class Calibrations(wx.StaticBoxSizer):
 			('beam', 'Beam shift'),
 			('modeled stage', 'Modeled stage'),
 			('modeled stage mag only', 'Modeled stage (mag. only)'),
+			('defocus', 'Beam tilt - Defocus'),
 		]
 
 		self.sts = {}
@@ -127,6 +129,8 @@ class EditPresetDialog(leginon.gui.wx.Dialog.Dialog):
 		self.ccd_cameras = ccd_cameras
 		self.node = node
 
+		self.aperture_sizer = None
+
 		try:
 			title =  'Edit Preset %s' % parameters['name']
 		except KeyError:
@@ -135,10 +139,17 @@ class EditPresetDialog(leginon.gui.wx.Dialog.Dialog):
 
 	def getMagChoices(self):
 		try:
-			mags = self.tems[self.parameters['tem']['name']]
+			mags = self.tems[self.parameters['tem']['name']]['magnifications']
 		except:
 			mags = []
 		return [str(int(m)) for m in mags]
+
+	def getProbeModeChoices(self):
+		try:
+			probes = self.tems[self.parameters['tem']['name']]['probe modes']
+		except:
+			mags = []
+		return probes
 
 	def getTEMChoices(self):
 		choices = self.tems.keys()
@@ -150,6 +161,26 @@ class EditPresetDialog(leginon.gui.wx.Dialog.Dialog):
 		choices.sort()
 		return [self.nonestring] + choices
 
+	def getApertureSizeChoices(self, tem=None):
+		try:
+			if tem is None:
+				tem = self.parameters['tem']['name']
+			apertures = list(self.tems[tem]['apertures'])
+			aperture_sizes = dict(self.tems[tem]['aperture sizes'])
+		except (KeyError, TypeError):
+			apertures = []
+			aperture_sizes = {}
+
+		sizes = {}
+		for aperture in aperture_sizes:
+			sizes[aperture] = []
+			for a in aperture_sizes[aperture]:
+				if a == 0:
+					sizes[aperture].append("open")
+				else:
+					sizes[aperture].append(str(a))
+		return apertures, sizes
+
 	def onInitialize(self):
 		parameters = self.parameters
 		self.nonestring = '(None)'
@@ -157,10 +188,12 @@ class EditPresetDialog(leginon.gui.wx.Dialog.Dialog):
 		tems = self.getTEMChoices()
 		magnifications = self.getMagChoices()
 		ccdcameras = self.getCCDCameraChoices()
+		probes = self.getProbeModeChoices()
 		self.choices = {
 			'tem': wx.Choice(self, -1, choices=tems),
 			'magnification': wx.Choice(self, -1, choices=magnifications),
 			'ccdcamera': wx.Choice(self, -1, choices=ccdcameras),
+			'probe mode': wx.Choice(self, -1, choices=probes),
 		}
 
 		self.floats = {
@@ -177,14 +210,17 @@ class EditPresetDialog(leginon.gui.wx.Dialog.Dialog):
 				'x': FloatEntry(self, -1, chars=9),
 				'y': FloatEntry(self, -1, chars=9),
 			},
+			'tem energy filter width': FloatEntry(self, -1, chars=6),
 			'energy filter width': FloatEntry(self, -1, chars=6),
 			'pre exposure': FloatEntry(self, -1, chars=6),
 		}
 
 		self.bools = {
 			'film': wx.CheckBox(self, -1, 'Use film'),
-			'skip': wx.CheckBox(self, -1, 'Skip when cycling'),
+			'tem energy filter': wx.CheckBox(self, -1, 'Energy filtered'),
 			'energy filter': wx.CheckBox(self, -1, 'Energy filtered'),
+			'skip': wx.CheckBox(self, -1, 'Skip when cycling'),
+			'alt channel': wx.CheckBox(self, -1, 'Use Channel 1 correction in normal acquisition'),
 		}
 
 		self.dicts = {
@@ -199,6 +235,9 @@ class EditPresetDialog(leginon.gui.wx.Dialog.Dialog):
 				'intensity',
 				'image shift',
 				'beam shift',
+				'energy filter',
+				'energy filter width',
+				'probe mode',
 			),
 			'ccdcamera': (
 				'energy filter',
@@ -227,8 +266,6 @@ class EditPresetDialog(leginon.gui.wx.Dialog.Dialog):
 			for value in self._buttons[key].values():
 				value.Enable(enable_buttons)
 
-		self.setParameters(parameters)
-
 		labels = (
     		('tem', 'TEM'),
     		('magnification', 'Magnification'),
@@ -238,7 +275,9 @@ class EditPresetDialog(leginon.gui.wx.Dialog.Dialog):
     		('intensity', 'Intensity'),
     		('image shift', 'Image shift'),
     		('beam shift', 'Beam shift'),
-    		('ccdcamera', 'CCD Camera'),
+    		('tem energy filter width', 'Energy filter width'),
+				('probe mode', 'Probe Mode'),
+    		('ccdcamera', 'Digital Camera'),
     		('energy filter width', 'Energy filter width'),
     		('pre exposure', 'Pre-exposure'),
 		)
@@ -248,6 +287,8 @@ class EditPresetDialog(leginon.gui.wx.Dialog.Dialog):
 			self.labels[key] = wx.StaticText(self, -1, text)
 
 		sizer = wx.GridBagSizer(5, 5)
+		self._sz = sizer
+
 		sizer.Add(self.labels['tem'], (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sizer.Add(self.choices['tem'], (0, 1), (1, 2), wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
 		sizer.Add(self.labels['magnification'], (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
@@ -287,7 +328,21 @@ class EditPresetDialog(leginon.gui.wx.Dialog.Dialog):
 		sizer.Add(self.floats['beam shift']['x'], (8, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
 		sizer.Add(self.floats['beam shift']['y'], (8, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
 		sizer.Add(self._buttons['tem']['beam shift'], (8, 3), (1, 1), wx.ALIGN_CENTER)
-		sizer.Add(self.bools['skip'], (9, 0), (1, 8), wx.ALIGN_CENTER)
+		sizer.Add(self.labels['probe mode'], (9, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sizer.Add(self.choices['probe mode'], (9, 1), (1, 2), wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
+		sizer.Add(self._buttons['tem']['probe mode'], (9, 3), (1, 1), wx.ALIGN_CENTER)
+		sizer.Add(self.bools['tem energy filter'], (10, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
+
+		sizer.Add(self._buttons['tem']['energy filter'], (10, 3), (1, 1), wx.ALIGN_CENTER)
+
+		sizer.Add(self.labels['tem energy filter width'], (11, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sizer.Add(self.floats['tem energy filter width'], (11, 1), (1, 2), wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
+		sizer.Add(self._buttons['tem']['energy filter width'], (11, 3), (1, 1), wx.ALIGN_CENTER)
+
+		self.initializeApertureSelection()
+
+		sizer.Add(self.bools['skip'], (12, 0), (1, 4), wx.ALIGN_LEFT)
+		sizer.Add(self.bools['alt channel'], (13, 0), (1, 4), wx.ALIGN_LEFT)
 
 		sizer.Add(self.labels['ccdcamera'], (0, 5), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sizer.Add(self.choices['ccdcamera'], (0, 6), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.EXPAND)
@@ -303,13 +358,17 @@ class EditPresetDialog(leginon.gui.wx.Dialog.Dialog):
 		sizer.Add(self.labels['pre exposure'], (4, 5), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sizer.Add(self.floats['pre exposure'], (4, 6), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.FIXED_MINSIZE)
 
-		sizer.Add(self.dicts['camera parameters'], (5, 5), (4, 2), wx.ALIGN_CENTER|wx.EXPAND)
-		sizer.Add(self._buttons['ccdcamera']['camera parameters'], (5, 7), (4, 1), wx.ALIGN_CENTER)
+		sizer.Add(self.dicts['camera parameters'], (5, 5), (15, 2), wx.ALIGN_CENTER|wx.EXPAND)
+		sizer.Add(self._buttons['ccdcamera']['camera parameters'], (5, 7), (15, 1), wx.ALIGN_CENTER)
+
+
+		self.setParameters(parameters)
+
 
 		sizer.AddGrowableCol(0)
 		sizer.AddGrowableCol(4)
 		sizer.AddGrowableCol(5)
-		for i in range(10):
+		for i in range(12):
 			sizer.AddGrowableRow(i)
 
 		self.sz.Add(sizer, (0, 0), (1, 1), wx.ALL|wx.EXPAND)
@@ -342,56 +401,127 @@ class EditPresetDialog(leginon.gui.wx.Dialog.Dialog):
 						pass
 					break
 
-	def onTEMChoice(self, evt):
-		mag = self.choices['magnification'].GetStringSelection()
-		tem = evt.GetString()
+	def initializeApertureSelection(self, evt=None):
+		apertures, aperture_sizes = self.getApertureSizeChoices()
+		if self.aperture_sizer is not None:
+			for aperture in apertures:
+				try:
+					self.aperture_sizer.Remove(self.labels[aperture])
+					self.labels[aperture].Destroy()
+					del self.labels[aperture]
+					self.aperture_sizer.Remove(self.choices[aperture])
+					self.choices[aperture].Destroy()
+					del self.choices[aperture]
+				except KeyError:
+					pass
+
+			self.aperture_sbsizer.Remove(self.aperture_sizer)
+			self._sz.Remove(self.aperture_sbsizer)
+			self._sz.Remove(self._buttons['tem']['aperture sizes'])
+			self._buttons['tem']['aperture sizes'].Destroy()
+			del self._buttons['tem']['aperture sizes']
+			self.aperture_sizer = None
+			self.aperture_sbsizer = None
+			self.aperture_sb = None
+			self._sz.Layout()
+
+		if evt is not None:
+			tem = evt.GetString()
+			apertures, aperture_sizes = self.getApertureSizeChoices(tem)
+		if aperture_sizes:
+			self.aperture_sb = wx.StaticBox(self, -1, 'Apertures')
+			self.aperture_sbsizer = wx.StaticBoxSizer(self.aperture_sb, wx.VERTICAL)
+			self.aperture_sizer = wx.GridBagSizer(5,5)
+			i = 0
+			for aperture in apertures:
+				self.labels[aperture] = wx.StaticText(self, -1, aperture)
+				self.choices[aperture] = wx.Choice(self, -1, choices=aperture_sizes[aperture])
+				self.aperture_sizer.Add(self.labels[aperture], (i, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+				self.aperture_sizer.Add(self.choices[aperture], (i, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.FIXED_MINSIZE)
+				i += 1
+			self.aperture_sizer.AddGrowableCol(1)
+			self.aperture_sbsizer.Add(self.aperture_sizer, 0, wx.EXPAND|wx.ALL, 5)
+			self._sz.Add(self.aperture_sbsizer, (11, 0), (1, 3), wx.ALIGN_CENTER|wx.EXPAND|wx.HORIZONTAL)
+			button =  bitmapButton(self, 'instrumentget', 'Set this value from the instrument value')
+			self._buttons['tem']['aperture sizes'] = button
+			self.Bind(wx.EVT_BUTTON, self.onButton, button)
+			self._sz.Add(self._buttons['tem']['aperture sizes'], (11, 3), (1, 1), wx.ALIGN_CENTER)
+			self._sz.Layout()
+
+	def setTEMItemChoices(self,tem,itemgroupname,itemname,func=str):
+		current_choice = self.choices[itemname].GetStringSelection()
 		if tem == self.nonestring:
-			choices = []
+			new_choices = []
 		else:
 			try:
-				mags = self.tems[tem]
-				choices = [str(int(m)) for m in mags]
+				items = self.tems[tem][itemgroupname]
+				new_choices = [str(func(m)) for m in items]
 			except KeyError:
-				choices = []
+				new_choices = []
+		self.choices[itemname].Freeze()
+		self.choices[itemname].Clear()
+		self.choices[itemname].AppendItems(new_choices)
+		if self.choices[itemname].FindString(current_choice) == wx.NOT_FOUND:
+			if new_choices:
+				self.choices[itemname].SetSelection(0)
+		else:
+			self.choices[itemname].SetStringSelection(current_choice)
+		if self.choices[itemname].IsEnabled():
+			if not new_choices:
+				self.choices[itemname].Enable(False)
+		else:
+			if new_choices:
+				self.choices[itemname].Enable(True)
+		self.choices[itemname].Thaw()
+		return new_choices
+
+	def onTEMChoice(self, evt):
+		tem = evt.GetString()
+		new_choices = self.setTEMItemChoices(tem,'probe modes','probe mode',str)
+		new_choices = self.setTEMItemChoices(tem,'magnifications','magnification',int)
+
 		for value in self._buttons['tem'].values():
-			value.Enable(bool(choices))
+			# empty new_choices means TEM is not valid
+			value.Enable(bool(new_choices))
     	#'energy filter',
 		#'camera parameters',
-		self.choices['magnification'].Freeze()
-		self.choices['magnification'].Clear()
-		self.choices['magnification'].AppendItems(choices)
-		if self.choices['magnification'].FindString(mag) == wx.NOT_FOUND:
-			if choices:
-				self.choices['magnification'].SetSelection(0)
-		else:
-			self.choices['magnification'].SetStringSelection(mag)
-		if self.choices['magnification'].IsEnabled():
-			if not choices:
-				self.choices['magnification'].Enable(False)
-		else:
-			if choices:
-				self.choices['magnification'].Enable(True)
-		self.choices['magnification'].Thaw()
+
+		self.initializeApertureSelection(evt)
 
 	def onCCDCameraChoice(self, evt):
 		ccdcamera = evt.GetString()
 		try:
-			camerasize = self.ccd_cameras[ccdcamera]
+			camera_geom_limits = self.ccd_cameras[ccdcamera]
 		except KeyError:
-			camerasize = None
-		self.dicts['camera parameters'].setSize(camerasize)
+			camera_geom_limits = None
+		self.dicts['camera parameters'].setGeometryLimits(camera_geom_limits)
 		for value in self._buttons['ccdcamera'].values():
-			value.Enable(camerasize is not None)
+			value.Enable(camera_geom_limits is not None)
+
+	def setChoice(self,parameters, itemname, func):
+			if itemname not in parameters.keys():
+				return
+			if parameters[itemname] is not None:
+				value = str(func(parameters[itemname]))
+				if self.choices[itemname].FindString(value) == wx.NOT_FOUND:
+					self.choices[itemname].Append(value)
+				self.choices[itemname].SetStringSelection(value)
 
 	def setParameters(self, parameters):
-		try:
-			if parameters['magnification'] is not None:
-				magnification = str(int(parameters['magnification']))
-				if self.choices['magnification'].FindString(magnification) == wx.NOT_FOUND:
-					self.choices['magnification'].Append(magnification)
-				self.choices['magnification'].SetStringSelection(magnification)
-		except KeyError:
-			pass
+		self.setChoice(parameters,'magnification',int)
+		self.setChoice(parameters,'probe mode',str)
+
+		if 'aperture size' in parameters and parameters['aperture size'] is not None:
+			for aperture, aperture_size in parameters['aperture size'].items():
+				if aperture not in self.choices:
+					continue
+				if aperture_size == 0:
+					size_str = 'open'
+				else:
+					size_str = str(aperture_size)
+				if self.choices[aperture].FindString(size_str) == wx.NOT_FOUND:
+					continue
+				self.choices[aperture].SetStringSelection(size_str)
 
 		keys = (
 			'defocus',
@@ -399,6 +529,7 @@ class EditPresetDialog(leginon.gui.wx.Dialog.Dialog):
 			'defocus range max',
 			'spot size',
 			'intensity',
+			'tem energy filter width',
 			'energy filter width',
 			'pre exposure',
 		)
@@ -415,15 +546,15 @@ class EditPresetDialog(leginon.gui.wx.Dialog.Dialog):
 				except KeyError:
 					pass
 
-		for key in ['skip', 'film', 'energy filter']:
+		for key in ['skip', 'alt channel', 'film', 'tem energy filter', 'energy filter']:
 			try:
 				self.bools[key].SetValue(bool(parameters[key]))
 			except KeyError:
 				pass
 
 		try:
-			size = self.ccd_cameras[parameters['ccdcamera']['name']]
-			self.dicts['camera parameters'].setSize(size)
+			geom_limits = self.ccd_cameras[parameters['ccdcamera']['name']]
+			self.dicts['camera parameters'].setGeometryLimits(geom_limits)
 		except:
 			pass
 
@@ -432,24 +563,46 @@ class EditPresetDialog(leginon.gui.wx.Dialog.Dialog):
 		except KeyError:
 			pass
 
+	def getChoice(self,itemname,func):
+		n = self.choices[itemname].GetSelection()
+		if n < 0:
+			value = None
+		else:
+			value = func(self.choices[itemname].GetString(n))
+		return value
+
 	def getParameters(self):
 		parameters = {}
 		tem = self.choices['tem'].GetStringSelection()
 		if tem == self.nonestring:
 			tem = None
 		parameters['tem'] = tem
-		n = self.choices['magnification'].GetSelection()
-		if n < 0:
-			magnification = None
-		else:
-			magnification = int(self.choices['magnification'].GetString(n))
-		parameters['magnification'] = magnification
+
+		parameters['magnification'] = self.getChoice('magnification',int)
+		parameters['probe mode'] = self.getChoice('probe mode',str)
+
+		apertures, aperture_sizes = self.getApertureSizeChoices()
+		if apertures:
+			parameters['aperture size'] = {}
+			for aperture in apertures:
+				n = self.choices[aperture].GetSelection()
+				if n < 0:
+					continue
+				aperture_size_str = self.choices[aperture].GetString(n)
+				if aperture_size_str == 'open':
+					aperture_size = 0
+				else:
+					aperture_size = float(aperture_size_str)
+
+				parameters['aperture size'][aperture] = aperture_size
+
 		keys = [
 			'defocus',
 			'defocus range min',
 			'defocus range max',
 			'spot size',
 			'intensity',
+			'tem energy filter width',
 			'energy filter width',
 			'pre exposure',
 		]
@@ -467,7 +620,7 @@ class EditPresetDialog(leginon.gui.wx.Dialog.Dialog):
 					value = float(value)
 				parameters[key][axis] = value
 
-		for key in ['skip', 'film', 'energy filter']:
+		for key in ['skip', 'alt channel', 'film', 'tem energy filter', 'energy filter']:
 			parameters[key] = bool(self.bools[key].GetValue())
 
 		ccdcamera = self.choices['ccdcamera'].GetStringSelection()
@@ -590,7 +743,7 @@ class EditPresets(leginon.gui.wx.Presets.PresetOrder):
 class DoseDialog(leginon.gui.wx.Dialog.Dialog):
 	def __init__(self, parent):
 		leginon.gui.wx.Dialog.Dialog.__init__(self, parent, 'Dose Image', 'Dose Image')
-		self.dose = None
+		self.doses = [None,None]
 		self.parent = parent
 
 	def onInitialize(self):
@@ -599,6 +752,8 @@ class DoseDialog(leginon.gui.wx.Dialog.Dialog):
 		self.image = leginon.gui.wx.ImagePanel.ImagePanel(self, -1,imagesize=(360,360))
 
 		self.doselabel = wx.StaticText(self, -1, '')
+		self.pixelframedoselabel = wx.StaticText(self, -1, '')
+		self.pixeldoseratelabel = wx.StaticText(self, -1, '')
 
 		self.sz.Add(self.image, (0, 0), (1, 1), wx.EXPAND)
 
@@ -627,23 +782,42 @@ class DoseDialog(leginon.gui.wx.Dialog.Dialog):
 		bcancel.Enable(True)
 		self.szbuttons.Add(bcancel,(0,2),(1,1), wx.ALIGN_CENTER_VERTICAL)
 		self.szbuttons.AddGrowableRow(0)
+		self.szbuttons.Add(self.pixeldoseratelabel, (1, 0), (1, 1),
+								wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		self.szbuttons.Add(self.pixelframedoselabel, (2, 0), (1, 1),
+								wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
 
 		self.Bind(wx.EVT_BUTTON, self.onMatchDose, self.bmatch)
 		self.Bind(wx.EVT_BUTTON, self.onCancel, bcancel)
 		self.Bind(wx.EVT_CLOSE, self.onCancel)
 
-	def setDose(self, dose):
-		self.dose = dose
+	def setDose(self, doses):
+		self.doses = doses
+		dose = doses[0]
 		if dose is None:
 			dosestr = 'N/A'
 		else:
 			dosestr = '%.2f' % (dose/1e20)
 		dosestr = 'Use the measured dose %s e/A^2 for this preset?' % dosestr
+		# per frame dose
+		if doses[1] is not None:
+			if doses[1][0]:
+				framestr = 'per frame'
+			else:
+				framestr = ''
+			pixelframedosestr = '( Dose on camera pixel %s: %.1f electrons )' % (framestr,doses[1][1])
+			self.pixelframedoselabel.SetLabel(pixelframedosestr)
+		# dose rate.  This is more useful on K2 or Falcon with fixed base
+		# frame rate but variable saved frame rate
+		if doses[2] is not None:
+			pixeldoseratestr = '( Dose rate on camera pixel: %.1f electrons/second )' % (doses[2])
+			self.pixeldoseratelabel.SetLabel(pixeldoseratestr)
+
 		self.doselabel.SetLabel(dosestr)
 
 	def onMatchDose(self,evt):
 		dose_to_match = self.dose_to_match.GetValue()
-		self.parent.onMatchDose(dose_to_match * 1e20,self.dose)
+		self.parent.onMatchDose(dose_to_match * 1e20,self.doses[0])
 
 	def onCancel(self,evt):
 		self.parent.onCancelDoseMeasure()
@@ -707,7 +881,6 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 		self.importdialog = ImportDialog(self, self.node)
 		self.Bind(wx.EVT_BUTTON, self.onImport, self.presets.bimport)
 
-		self.aligndialog = AlignDialog(self, self.node)
 		self.Bind(wx.EVT_BUTTON, self.onAlign, self.presets.balign)
 
 		self.beamdialog = BeamDialog(self, self.node)
@@ -748,20 +921,20 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 			evt = leginon.gui.wx.Presets.PresetsChangedEvent(presets)
 			self.presets.GetEventHandler().AddPendingEvent(evt)
 
-	def setDoseValue(self, dose):
-		evt = SetDoseValueEvent(dose)
+	def setDoseValue(self, doses):
+		evt = SetDoseValueEvent(doses)
 		self.GetEventHandler().AddPendingEvent(evt)
 
 	def onSetImage(self, evt):
 		self.dosedialog.image.setImage(evt.image)
 		if not self.dosedialog.IsShown():
 			if self.dosedialog.ShowModal() == wx.ID_OK:
-				self.node.saveDose(self.dosedialog.dose,
+				self.node.saveDose(self.dosedialog.doses[0],
 														self.presets.getSelectedPreset())
 			self.dosedialog.image.setImage(None)
 
 	def onSetDoseValue(self, evt):
-		self.dosedialog.setDose(evt.dose)
+		self.dosedialog.setDose(evt.doses)
 
 	def onAcquireDoseImage(self, evt):
 		presetname = self.presets.getSelectedPreset()
@@ -805,6 +978,7 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 		self.alignacquiremode = self.aligndialog.choiceacquiremode.GetStringSelection()
 
 	def onAlign(self, evt):
+		self.aligndialog = AlignDialog(self, self.node)
 		preset_names = self.node.presets.keys()
 		self.aligndialog.choiceleft.setChoices(preset_names)
 		self.aligndialog.choiceright.setChoices(preset_names)
@@ -824,9 +998,12 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 		self.beamdialog.ShowModal()
 		self.node.new_beamshift = None
 
-	def onDoneAlign(self):
-		self.aligndialog.disableContinue()
-		self.aligndialog.EndModal(0)
+	def onDoneLastAlign(self):
+		self.aligndialog.enableDone()
+
+	def onDoneAllAlign(self):
+		# Destroy used instead of EndModal so that Leginon can close properly.  Don't know why
+		self.aligndialog.Destroy()
 
 	def setAlignImage(self, image, typename, stats={}):
 		evt = leginon.gui.wx.Events.SetImageEvent(image, typename, stats)
@@ -856,7 +1033,8 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 		name = self.presets.getSelectedPreset()
 		self._presetsEnable(False)
 		target = self.node.fromScope
-		args = (name,)
+		# The True in the last argument copies beam shift to all presets at the same mag
+		args = (name,None,None,True)
 		threading.Thread(target=target, args=args).start()
 
 	def onNewFromScope(self, evt):
@@ -925,7 +1103,14 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 		for tem_name in self.node.instrument.getTEMNames():
 			try:
 				tem = self.node.instrument.getTEM(tem_name)
-				tems[tem_name] = tem.Magnifications
+				tems[tem_name] = {}
+				tems[tem_name]['magnifications'] = tem.Magnifications
+				tems[tem_name]['probe modes'] = tem.ProbeModes
+				try:
+					tems[tem_name]['apertures'] = tem.Apertures
+					tems[tem_name]['aperture sizes'] = tem.ApertureSizes
+				except AttributeError:
+					pass
 			except leginon.instrument.NotAvailableError:
 				continue
 		if not tems:
@@ -935,10 +1120,13 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 		for ccd_camera_name in self.node.instrument.getCCDCameraNames():
 			try:
 				ccd_camera = self.node.instrument.getCCDCamera(ccd_camera_name)
-				ccd_cameras[ccd_camera_name] = ccd_camera.CameraSize
+				ccd_cameras[ccd_camera_name] = {}
+				ccd_cameras[ccd_camera_name]['size'] = ccd_camera.CameraSize
+				ccd_cameras[ccd_camera_name]['binnings'] = ccd_camera.CameraBinnings
+				ccd_cameras[ccd_camera_name]['binmethod'] = ccd_camera.CameraBinMethod
 			except leginon.instrument.NotAvailableError:
 				continue
-		if not ccd_cameras:
+		if not ccd_cameras[ccd_camera_name]['size']:
 			return
 
 		dialog = EditPresetDialog(self, preset, tems, ccd_cameras, self.node)
@@ -968,7 +1156,6 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		self.widgets['apply offset'] = wx.CheckBox(self, -1, 'Apply stage tilt axis offset to all image shifts')
 
 		self.widgets['blank'] = wx.CheckBox(self, -1, 'Beam blank during preset change')
-		self.widgets['add pause in alignment'] = wx.CheckBox(self, -1, 'Apply pause time in the preset alignment tool')
 		szsmallsize = wx.BoxSizer(wx.HORIZONTAL)
 		smallsizelab = wx.StaticText(self, -1, 'Small image size (for dose image, etc.)')
 		self.widgets['smallsize'] = IntEntry(self, -1, chars=6)
@@ -988,14 +1175,13 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 #						wx.ALIGN_CENTER_VERTICAL)
 		sz = wx.GridBagSizer(5, 10)
 		sz.Add(szpausetime, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['add pause in alignment'], (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['cycle'], (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['optimize cycle'], (3, 0), (1, 1),
+		sz.Add(self.widgets['cycle'], (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['optimize cycle'], (2, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['mag only'], (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['apply offset'], (5, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['blank'], (6, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(szsmallsize, (7, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['mag only'], (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['apply offset'], (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['blank'], (5, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(szsmallsize, (6, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
 		sbsz.Add(sz, 1, wx.EXPAND|wx.ALL, 5)
 
@@ -1111,7 +1297,7 @@ class AlignDialog(leginon.gui.wx.Dialog.Dialog):
 		szref.Add(sz, 1, wx.ALIGN_CENTER|wx.ALL, 5)
 		szmode = wx.BoxSizer(wx.HORIZONTAL)
 		szmode.Add(szref, 1)
-		self.choiceacquiremode = wx.Choice(self, -1, choices=(['Full CCD','Similar look across mags']))	
+		self.choiceacquiremode = wx.Choice(self, -1, choices=(['Full Camera','Similar look across mags']))	
 		szmode.Add(self.choiceacquiremode, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.ALL, 5)
 
 		preset_names = self.node.presets.keys()
@@ -1144,11 +1330,13 @@ class AlignDialog(leginon.gui.wx.Dialog.Dialog):
 		self.bstart = wx.Button(self, -1, 'Start')
 		self.bstart.Enable(True)
 		self.bcontinue = wx.Button(self, -1, 'Continue')
+		self.bdone = wx.Button(self, -1, 'Done')
 
 
 		szbutton = wx.GridBagSizer(5, 5)
 		szbutton.Add(self.bstart, (0, 0), (1, 1), wx.ALIGN_CENTER)
 		szbutton.Add(self.bcontinue, (0, 1), (1, 1), wx.ALIGN_CENTER)
+		szbutton.Add(self.bdone, (0, 2), (1, 1), wx.ALIGN_CENTER)
 		
 		
 		szimages = wx.BoxSizer(wx.HORIZONTAL)
@@ -1169,8 +1357,9 @@ class AlignDialog(leginon.gui.wx.Dialog.Dialog):
 		self.Bind(wx.EVT_BUTTON, self.onNext, self.bcontinue)
 		self.Bind(wx.EVT_BUTTON, self.onStart, self.bstart)
 		self.Bind(leginon.gui.wx.Events.EVT_SET_IMAGE, self.onSetImage)
+		self.Bind(wx.EVT_BUTTON, self.onClose, self.bdone)
 		self.Bind(wx.EVT_CLOSE, self.onClose)
-		self.disableContinue()
+		self.enableStart()
 
 	def onLeftImageClicked(self, evt):
 		self.node.onAlignImageClicked('left', evt.xy)
@@ -1179,7 +1368,7 @@ class AlignDialog(leginon.gui.wx.Dialog.Dialog):
 		self.node.onAlignImageClicked('right', evt.xy)
 
 	def onAcquireModeChoice(self, evt):
-		if not self.bstart.IsEnabled():
+		if not self.bstart.IsEnabled() or self.parent.customalign == True:
 			self.parent.alignacquiremode = self.choiceacquiremode.GetStringSelection()
 			self.node.acquireAlignImages(self)
 
@@ -1198,7 +1387,7 @@ class AlignDialog(leginon.gui.wx.Dialog.Dialog):
 			self.enableContinue()
 			threading.Thread(target=self.node.loopAlignPresets, args=(refname,)).start()
 		else:
-			self.disableContinue()
+			self.enableStartDone()
 			if self.parent.customalign == True:
 				self.labref.SetLabel('Custom Alignment Mode: ')
 				self.presetlabelref.SetLabel('no same mag automatic adjustment')
@@ -1214,21 +1403,32 @@ class AlignDialog(leginon.gui.wx.Dialog.Dialog):
 		else:
 			self.imright.setImage(evt.image)
 
-	def disableContinue(self):
+	def enableStart(self):
 		self.choiceleft.Enable(True)
 		self.choiceright.Enable(True)
 		self.bstart.Enable(True)
 		self.bcontinue.Disable()
+		self.bdone.Disable()
 
 	def enableContinue(self):
 		self.choiceleft.Disable()
 		self.choiceright.Disable()
 		self.bstart.Disable()
 		self.bcontinue.Enable(True)
+		self.bdone.Disable()
+
+	def enableStartDone(self):
+		self.enableStart()
+		self.bdone.Enable(True)
+
+	def enableDone(self):
+		self.bstart.Disable()
+		self.bcontinue.Disable()
+		self.bdone.Enable(True)
 
 	def onClose(self, evt):
-		self.disableContinue()
-		self.node.doneAlignPresets()
+		self.enableStart()
+		self.node.doneAllAlignPresets()
 
 class BeamDialog(wx.Dialog):
 	def __init__(self, parent, node):
@@ -1395,11 +1595,38 @@ class ImportDialog(wx.Dialog):
 		pquery = leginon.leginondata.PresetData(tem=tem, ccdcamera=ccd)
 		presets = self.node.research(pquery, timelimit=agestr)
 		self.sessiondict = OrderedDict()
+		badsessions = []
 		for p in presets:
+			if p['session'] is None:
+				continue
 			sname = p['session']['name']
-			if sname:
-				self.sessiondict[sname] = p['session']
+			# reduce sessions to check for multiple TEM used in most recent preset
+			if sname not in self.sessiondict.keys() and sname not in badsessions:
+				if self.onlyOneTEMinSessionPresets(p['session']):
+					self.sessiondict[sname] = p['session']
+				else:
+					badsessions.append(sname)
 		self.session.setSessions(self.sessiondict.values())
+
+	def onlyOneTEMinSessionPresets(self,sessiondata):
+		'''
+		This function make sure all current presets are on the same tem host.
+		SetupWizard can not prevent users from switching instrument hosts in
+		the same session in order to allow camera switch.  As a result, it
+		could make a session to have presets from different
+		TEM.  This prevents that mistake to be imported to a new session.
+		'''
+		tems = []
+		presets = self.node.getSessionPresets(sessiondata)
+		for presetname in presets.keys():
+			q = leginon.leginondata.PresetData(session=sessiondata,name=presetname)
+			newestpreset = q.query(results=1)[0]
+			if newestpreset['tem'].dbid not in tems:
+				if len(tems) < 1:
+					tems.append(newestpreset['tem'].dbid)
+				else:
+					return False
+		return True
 
 	def onSessionSelected(self, evt):
 		name = evt.GetText()
@@ -1451,7 +1678,7 @@ class Parameters(wx.StaticBoxSizer):
 
 		labels = (
 			('tem', 'TEM:'),
-			('ccdcamera', 'CCD Camera:'),
+			('ccdcamera', 'Digital Camera:'),
 			('magnification', 'Magnification:'),
 			('defocus', 'Defocus:'),
 			('defocus range', 'Random Defocus Range:'),
@@ -1460,6 +1687,8 @@ class Parameters(wx.StaticBoxSizer):
 			('image shift', 'Image shift:'),
 			('beam shift', 'Beam shift:'),
 			('film', 'Use film:'),
+			('tem energy filter', 'Energy filtered:'),
+			('tem energy filter width', 'Energy filter width:'),
 			('energy filter', 'Energy filtered:'),
 			('energy filter width', 'Energy filter width:'),
 			('dimension', 'Dimension:'),
@@ -1494,8 +1723,12 @@ class Parameters(wx.StaticBoxSizer):
 		sz.Add(self.values['image shift'], (6, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
 		sz.Add(self.labels['beam shift'], (7, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.values['beam shift'], (7, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-		sz.Add(self.labels['skip'], (9, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.values['skip'], (9, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		sz.Add(self.labels['tem energy filter'], (8, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.values['tem energy filter'], (8, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		sz.Add(self.labels['tem energy filter width'], (9, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.values['tem energy filter width'], (9, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		sz.Add(self.labels['skip'], (10, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.values['skip'], (10, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
 
 		sz.Add(self.labels['ccdcamera'], (0, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.values['ccdcamera'], (0, 5), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
@@ -1525,10 +1758,20 @@ class Parameters(wx.StaticBoxSizer):
 
 		self.Add(sz, 1, wx.EXPAND|wx.ALL, 3)
 
+		self._sz = sz
+		self.parent = parent
+
+		self.aperture_sizer = None
+		self.labels['aperture size'] = {}
+		self.values['aperture size'] = {}
+
 	def set(self, parameters):
 		if parameters is None:
 			for value in self.values.values():
-				value.SetLabel('')
+				try:
+					value.SetLabel('')
+				except AttributeError:
+					pass
 		else:
 			for key in ['tem', 'ccdcamera']:
 				if parameters[key] is None:
@@ -1541,6 +1784,7 @@ class Parameters(wx.StaticBoxSizer):
 				'defocus',
 				'spot size',
 				'intensity',
+				'tem energy filter width',
 				'energy filter width',
 				'exposure time',
 				'pre exposure',
@@ -1567,7 +1811,7 @@ class Parameters(wx.StaticBoxSizer):
 				s = '(%g, %g)' % (parameters[key]['x'], parameters[key]['y'])
 				self.values[key].SetLabel(s)
 
-			for key in ['film', 'energy filter', 'skip', 'save frames']:
+			for key in ['film', 'tem energy filter', 'energy filter', 'skip', 'save frames']:
 				if parameters[key]:
 					s = 'Yes'
 				else:
@@ -1589,6 +1833,56 @@ class Parameters(wx.StaticBoxSizer):
 					s = '%.2f' % (parameters[key]/1e20,)
 				self.values[key].SetLabel(s)
 
+			if self.aperture_sizer is not None:
+				for aperture in self.labels['aperture size'].keys():
+						self.aperture_sizer.Remove(self.labels['aperture size'][aperture])
+						self.labels['aperture size'][aperture].Destroy()
+						del self.labels['aperture size'][aperture]
+
+				for aperture in self.values['aperture size'].keys():
+						self.aperture_sizer.Remove(self.values['aperture size'][aperture])
+						self.values['aperture size'][aperture].Destroy()
+						del self.values['aperture size'][aperture]
+	
+				self.aperture_sbsizer.Remove(self.aperture_sizer)
+				self._sz.Remove(self.aperture_sbsizer)
+				self.aperture_sizer = None
+				self.aperture_sbsizer = None
+				self.aperture_sb = None
+
+			if parameters['aperture size']:
+				if 'apertures' in parameters:
+					apertures = parameters['apertures']
+				else:
+					apertures = parameters['aperture size'].keys()
+					apertures.sort()
+
+				i = 0
+				self.aperture_sizer = wx.GridBagSizer(5, 5)
+				for aperture in apertures:
+					aperture_size = parameters['aperture size'][aperture]
+					if aperture_size is None:
+						continue
+					if aperture_size == 0:
+						aperture_size_str = 'open'
+					else:
+						aperture_size_str = str(aperture_size)
+					self.labels['aperture size'][aperture] = self.labelclass(self.parent, -1, aperture)
+					self.aperture_sizer.Add(self.labels['aperture size'][aperture], (i, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+					self.values['aperture size'][aperture] = wx.StaticText(self.parent, -1, aperture_size_str)
+					self.aperture_sizer.Add(self.values['aperture size'][aperture], (i, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+					i += 1
+
+				if self.labels['aperture size'] or self.values['aperture size']:
+					self.aperture_sb = wx.StaticBox(self.parent, -1, 'Apertures')
+					self.aperture_sbsizer = wx.StaticBoxSizer(self.aperture_sb, wx.VERTICAL)
+					self.aperture_sizer.AddGrowableCol(1)
+					self.aperture_sbsizer.Add(self.aperture_sizer, 0, wx.EXPAND|wx.ALL, 5)
+					self._sz.Add(self.aperture_sbsizer, (11, 0), (1, 2), wx.EXPAND)
+				else:
+					self.aperture_sizer.Destroy()
+					self.aperture_sizer = None
+
 			self.Layout()
 
 class SelectParameters(Parameters):
@@ -1606,6 +1900,8 @@ class SelectParameters(Parameters):
 		selected['image shift'] = self.lblimageshift.GetValue()
 		selected['beam shift'] = self.lblbeamshift.GetValue()
 		selected['use film'] = self.lblfilm.GetValue()
+		selected['tem energy filter'] = self.lbltemenergyfilter.GetValue()
+		selected['tem energy filter width'] = self.lbltemenergyfilterwidth.GetValue()
 		selected['energy filter'] = self.lblenergyfilter.GetValue()
 		selected['energy filter width'] = self.lblenergyfilterwidth.GetValue()
 		selected['dimension'] = self.lbldimension.GetValue()
@@ -1625,6 +1921,8 @@ class SelectParameters(Parameters):
 															parameters is None or 'image shift' in parameters)
 		self.lblbeamshift.SetValue(parameters is None or 'beam shift' in parameters)
 		self.lblfilm.SetValue(parameters is None or 'use film' in parameters)
+		self.lbltemenergyfilter.SetValue(parameters is None or 'tem energy filter' in parameters)
+		self.lbltemenergyfilterwidth.SetValue(parameters is None or 'tem energy filter width' in parameters)
 		self.lblenergyfilter.SetValue(parameters is None or 'energy filter' in parameters)
 		self.lblenergyfilterwidth.SetValue(parameters is None or 'energy filter width' in parameters)
 		self.lbldimension.SetValue(parameters is None or 'dimension' in parameters)
@@ -1680,14 +1978,31 @@ class FromScopeDialog(wx.Dialog):
 				self.preset[key] = None
 		return self.preset
 
+def bitmapButton(parent, name, tooltip=None):
+	bitmap = leginon.gui.wx.Icons.icon(name)
+	button = wx.lib.buttons.GenBitmapButton(parent, -1, bitmap, size=(20, 20))
+	button.SetBezelWidth(1)
+	button.Enable(False)
+	if tooltip is not None:
+		button.SetToolTip(wx.ToolTip(tooltip))
+	return button
+
 if __name__ == '__main__':
 	class App(wx.App):
 		def OnInit(self):
 			frame = wx.Frame(None, -1, 'Presets Test')
 			preset = {
 				'name': 'Test Preset',
-				'magnification': 100.0,
+				'tem': {'name': 'TEM1'},
+				'ccdcamera': None,
+				'magnification': 1000.0,
 				'defocus': 0.0,
+				'defocus range min': 0.0,
+				'defocus range max': 0.0,
+				'skip': True,
+				'save frames': False,
+				'frame time': 200.0,
+				'dose': 0,
 				'spot size': 1,
 				'intensity': 0.0,
 				'image shift': {'x': 0.0, 'y': 0.0},
@@ -1698,13 +2013,39 @@ if __name__ == '__main__':
 				'binning': {'x': 1, 'y': 1},
 				'exposure time': 1000.0,
 				'pre exposure': 0.0,
+				'tem energy filter': True,
+				'tem energy filter width': 0.0,
 				'energy filter': True,
 				'energy filter width': 0.0,
+				'aperture size': {
+					'condenser': 100e-6,
+					'objective': 20e-6,
+				}
 			}
-			#dialog = EditPresetDialog(frame, preset, {}, {})
-			#dialog.Show()
+			tems = {
+				'TEM1': {
+					'magnifications': [100, 1000, 10000, 100000],
+					'apertures': ['condenser', 'objective'],
+					'aperture sizes': {
+						'condenser': [0, 100e-6, 10e-6, 1e-6],
+						'objective': [0, 200e-6, 20e-6, 2e-6],
+					}
+				},
+				'TEM2': {
+					'magnifications': [200, 2000, 20000, 200000],
+					'apertures': ['condenser', 'objective'],
+					'aperture sizes': {
+						'condenser': [0, 150e-6, 15e-6, 1e-6],
+						'objective': [0, 250e-6, 25e-6, 2e-6],
+					}
+				}
+			}
+			dialog = EditPresetDialog(frame, preset, tems, {}, None)
+			dialog.Show()
 			panel = wx.Panel(frame, -1)
 			sz = Parameters(panel)
+			sz.set(preset)
+			sz.set(preset)
 			panel.SetSizer(sz)
 			self.SetTopWindow(frame)
 			frame.Show()
@@ -1712,13 +2053,4 @@ if __name__ == '__main__':
 
 	app = App(0)
 	app.MainLoop()
-
-def bitmapButton(parent, name, tooltip=None):
-	bitmap = leginon.gui.wx.Icons.icon(name)
-	button = wx.lib.buttons.GenBitmapButton(parent, -1, bitmap, size=(20, 20))
-	button.SetBezelWidth(1)
-	button.Enable(False)
-	if tooltip is not None:
-		button.SetToolTip(wx.ToolTip(tooltip))
-	return button
 

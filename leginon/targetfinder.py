@@ -7,7 +7,7 @@
 #
 
 import calibrationclient
-import leginondata
+from leginon import leginondata
 import event
 import instrument
 import imagewatcher
@@ -15,6 +15,7 @@ import mosaic
 import threading
 import node
 import targethandler
+import appclient
 from pyami import convolver, imagefun, mrc, numpil
 import numpy
 import pyami.quietscipy
@@ -65,8 +66,44 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 			'image shift': calibrationclient.ImageShiftCalibrationClient(self),
 			'stage position': calibrationclient.StageCalibrationClient(self),
 			'modeled stage position':
-												calibrationclient.ModeledStageCalibrationClient(self)
+												calibrationclient.ModeledStageCalibrationClient(self),
+			'beam size':
+												calibrationclient.BeamSizeCalibrationClient(self)
 		}
+		self.parent_imageid = None
+		self.current_image_pixelsize = None
+		self.focusing_targetlist = None
+		self.last_acq_node = None
+		self.next_acq_node = None
+		self.targetimagevector = (0,0)
+		self.targetbeamradius = 0
+		self.resetLastFocusedTargetList(None)
+
+	def handleApplicationEvent(self,evt):
+		'''
+		Find the Acquisition class or its subclass instance bound
+		to this node upon application loading.
+		'''
+		app = evt['application']
+		self.last_acq_node = appclient.getLastNodeThruBinding(app,self.name,'AcquisitionImagePublishEvent','Acquisition')
+		self.next_acq_node = appclient.getNextNodeThruBinding(app,self.name,'ImageTargetListPublishEvent','Acquisition')
+
+	def checkSettings(self,settings):
+		'''
+		Check that depth-first tree travelsal won't break
+		'''
+		if self.last_acq_node:
+			settingsclassname = self.last_acq_node['class string']+'SettingsData'
+			results= self.reseachDBSettings(getattr(leginondata,settingsclassname),self.last_acq_node['alias'])
+			if not results:
+				# default acquisition settings waiting is False. However, admin default
+				# should be o.k.
+				return []
+			else:
+				last_acq_wait = results[0]['wait for process']
+			if not settings['queue'] and not last_acq_wait:
+				return [('error','"%s" node "wait for process" setting must be True when queue is not activated in this node' % (self.last_acq_node['alias'],))]
+		return []
 
 	def readImage(self, filename):
 		imagedata = None
@@ -115,6 +152,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 
 	def waitForUserCheck(self):
 			self.setStatus('user input')
+			self.twobeeps()
 			self.logger.info('Waiting for user to check targets...')
 			self.panel.submitTargets()
 			self.userpause.clear()
@@ -192,6 +230,16 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		self.logger.info("returning sorted targets")
 		return sortedtargetlist
 		
+	def resetLastFocusedTargetList(self,targetlist):
+		self.last_focused = None
+		self.focusing_targetlist = targetlist
+
+	def setLastFocusedTargetList(self,targetlist):
+		if self.panel.getTargetPositions('focus'):
+			self.resetLastFocusedTargetList(targetlist)
+		else:
+			self.last_focused = self.focusing_targetlist
+
 	#--------------------
 	def publishTargets(self, imagedata, typename, targetlist):
 		imagetargets = self.panel.getTargetPositions(typename)
@@ -201,16 +249,30 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		if self.settings['sort target']:
 			imagetargets = self.sortTargets(imagetargets)
 		imagearray = imagedata['image']
+		imageshape = imagearray.shape
 		lastnumber = self.lastTargetNumber(image=imagedata, session=self.session)
 		number = lastnumber + 1
+		if typename == 'focus':
+			imagetargets = self.getCenterTargets(imagetargets, imageshape)
 		for imagetarget in imagetargets:
 			column, row = imagetarget
-			drow = row - imagearray.shape[0]/2
-			dcol = column - imagearray.shape[1]/2
+			drow = row - imageshape[0]/2
+			dcol = column - imageshape[1]/2
 
-			targetdata = self.newTargetForImage(imagedata, drow, dcol, type=typename, list=targetlist, number=number)
+			targetdata = self.newTargetForImage(imagedata, drow, dcol, type=typename, list=targetlist, number=number,last_focused=self.last_focused)
 			self.publish(targetdata, database=True)
 			number += 1
+
+	def getCenterTargets(self, imagetargets, imageshape):
+		'''
+		return the image target closest to the center of the image in a list
+		'''
+		if len(imagetargets) <= 1:
+			return imagetargets
+		else:
+			self.logger.warning('Each image can only have one focus target. Publish only the one closest to the center')
+			deltas = map((lambda x: math.hypot(x[1]-imageshape[0]/2,x[0]-imageshape[1]/2)),imagetargets)
+			return [imagetargets[deltas.index(min(deltas))],]
 
 	def displayPreviousTargets(self, targetlistdata):
 		targets = self.researchTargets(list=targetlistdata)
@@ -244,6 +306,8 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 
 		for target_name in self.targetnames:
 			self.setTargets([], target_name, block=True)
+
+		self.setTargetImageVector(imagedata)
 		# check if there is already a target list for this image
 		# or any other versions of this image (all from same target/preset)
 		# exclude sublists (like rejected target lists)
@@ -300,6 +364,89 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 	def clearTargets(self,targettype):
 		self.setTargets([], targettype, block=False)
 
+	def isFromNewParentImage(self, imdata):
+		'''
+		Determine if the parent image of the given imdata is new. This is used to reset foc_counter for automated hole finders.
+		'''
+		is_new = True
+		if imdata['target']:
+			targetcopy = imdata['target']
+			while True:
+				# get the original target
+				if targetcopy['fromtarget'] is None:
+					break
+				targetcopy = targetcopy['fromtarget']
+			if targetcopy['image']:
+				if targetcopy['image'].dbid == self.parent_imageid:
+					is_new = False
+				self.parent_imageid = targetcopy['image'].dbid
+			else:
+				self.parent_imageid = None
+		else:
+			self.parent_imageid = None
+		return is_new
+
+	def setTargetImageVector(self,imagedata):
+		cam_length_on_image,beam_diameter_on_image = self.getAcquisitionTargetDimensions(imagedata)
+		self._setTargetImageVector(cam_length_on_image,beam_diameter_on_image)
+
+	def _setTargetImageVector(self,cam_length_on_image,beam_diameter_on_image):
+		self.targetbeamradius = beam_diameter_on_image / 2
+		self.targetimagevector = (cam_length_on_image,0)
+
+	def getTargetImageVector(self):
+		return self.targetimagevector
+
+	def getTargetBeamRadius(self):
+		return self.targetbeamradius
+
+	def uiRefreshTargetImageVector(self):
+		'''
+		refresh target image vector and beam size when ui exposure target panel tool
+		is toggled on.
+		'''
+		if not self.current_image_pixelsize:
+			self.logger.error('No image to calculate exposure area')
+			return
+		cam_length_on_image,beam_diameter_on_image = self._getAcquisitionTargetDimensions(self.current_image_pixelsize)
+		self._setTargetImageVector(cam_length_on_image,beam_diameter_on_image)
+
+	def getAcquisitionTargetDimensions(self,imagedata):
+		'''
+		Get next acquisition target image size and beam diameter displayed on imagedata
+		'''
+		if not self.next_acq_node:
+			return 0,0
+		image_pixelsize = self.calclients['image shift'].getImagePixelSize(imagedata)
+		self.current_image_pixelsize = image_pixelsize
+		return self._getAcquisitionTargetDimensions(image_pixelsize)
+
+	def _getAcquisitionTargetDimensions(self,image_pixelsize):
+		try:
+			# get settings for the next Acquisition node
+			settingsclassname = self.next_acq_node['class string']+'SettingsData'
+			results= self.reseachDBSettings(getattr(leginondata,settingsclassname),self.next_acq_node['alias'])
+			acqsettings = results[0]
+			# use first preset in preset order for display
+			presetlist = acqsettings['preset order']
+			presetname = presetlist[0]
+			# get image dimension of the target preset
+			acq_dim = self.presetsclient.getPresetImageDimension(presetname)
+			dim_on_image = []
+			for axis in ('x','y'):
+				dim_on_image.append(int(acq_dim[axis]/image_pixelsize[axis]))
+			# get Beam diameter on image
+			acq_presetdata = self.presetsclient.getPresetFromDB(presetname)
+			beam_diameter = self.calclients['beam size'].getBeamSize(acq_presetdata)
+			if beam_diameter is None:
+				# handle no beam size calibration
+				beam_diameter = 0
+			beam_diameter_on_image = int(beam_diameter/min(image_pixelsize.values()))
+			return max(dim_on_image), beam_diameter_on_image
+		except:
+			# Set Length to 0 in case of any exception
+			return 0,0
+
 class ClickTargetFinder(TargetFinder):
 	targetnames = ['preview', 'reference', 'focus', 'acquisition']
 	panelclass = gui.wx.ClickTargetFinder.Panel
@@ -345,4 +492,3 @@ class ClickTargetFinder(TargetFinder):
 			self.logger.error('Submitting reference target failed')
 		else:
 			self.logger.info('Reference target submitted')
-

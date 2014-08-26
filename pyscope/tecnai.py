@@ -53,8 +53,9 @@ class Tecnai(tem.TEM):
 			except:
 				pass
 
+		# Fatal error
 		if self.tecnai is None:
-			raise RuntimeError('unable to initialize Tecnai interface, %s' % msg)
+			raise RuntimeError('unable to initialize Tecnai interface')
 
 		try:
 			self.tom = win32com.client.Dispatch('TEM.Instrument.1')
@@ -96,6 +97,8 @@ class Tecnai(tem.TEM):
 				self.pressure_prop = gauge
 			except:
 				pass
+		self.probe_str_const = {'micro': win32com.client.constants.imMicroProbe, 'nano': win32com.client.constants.imNanoProbe}
+		self.probe_const_str = {win32com.client.constants.imMicroProbe: 'micro', win32com.client.constants.imNanoProbe: 'nano'}
 
 	def getMagnificationsInitialized(self):
 		if self.magnifications:
@@ -136,6 +139,12 @@ class Tecnai(tem.TEM):
 			if prevalue:
 				self._setStagePosition(prevalue)
 		return self._setStagePosition(value)
+
+	def setStageSpeed(self, value):
+		self.tom.Stage.Speed = value
+
+	def getStageSpeed(self):
+		return self.tom.Stage.Speed
 
 	def normalizeLens(self, lens = 'all'):
 		if lens == 'all':
@@ -283,7 +292,19 @@ class Tecnai(tem.TEM):
 			self.tecnai.Illumination.DFMode = win32com.client.constants.dfConical
 		else:
 			raise ValueError
-	
+
+	def getProbeMode(self):
+		const = self.tecnai.Illumination.Mode
+		probe = self.probe_const_str[const]
+		return probe
+
+	def setProbeMode(self, probe_str):
+		const = self.probe_str_const[probe_str]
+		self.tecnai.Illumination.Mode = const
+
+	def getProbeModes(self):
+		return list(self.probe_str_const.keys())
+
 	def getBeamBlank(self):
 		if self.tecnai.Illumination.BeamBlanked == 0:
 			return 'off'
@@ -1142,3 +1163,77 @@ class Tecnai(tem.TEM):
 
 	def getEmission(self):
 		return self.tom.Gun.Emission
+
+	def getExpWaitTime(self):
+		try:
+			return self.lowdose.WaitTime
+		except:
+			raise RuntimeError('no low dose interface')
+
+	def setShutterControl(self, value):
+		'''
+		If given boolean True, this should set the registers that allow
+		camera to control the shutter.  Should also behave for other types
+		of TEMs that do not have or need these registers.
+		'''
+		pass
+
+	def exposeSpecimenNotCamera(self,exptime=0):
+		'''
+		take control of the shutters to open
+		the gun blanker (pre-specimen)
+		but not projection shutter (post-specimen)
+		Used in pre-exposure and melting ice
+		'''
+		if exptime == 0:
+			return
+		if hasattr(self.tecnai,'BlankerShutter'):
+			self.setBeamBlank('on')
+			self.tecnai.BlankerShutter.ShutterOverrideOn = True
+			time.sleep(1.0)
+			self.setBeamBlank('off')
+			time.sleep(exptime)
+			self.tecnai.BlankerShutter.ShutterOverrideOn = False
+			time.sleep(1.0)
+			self.setBeamBlank('off')
+		else:
+			self.setMainScreenPosition('down')
+			time.sleep(exptime)
+			self.setMainScreenPosition('up')
+
+	def runAutoFiller(self):
+		'''
+		Trigger autofiller refill
+		'''
+		self.tecnai.TemperatureControl.ForceRefill()
+
+	def isAutoFillerBusy(self):
+		try:
+			isbusy = self.tecnai.TemperatureControl.DewarsAreBusyFilling
+		except:
+			# property not exist for older versions
+			isbusy = None
+		return isbusy
+
+	def getRefrigerantLevel(self,id=0):
+		'''
+		Get current refrigerant level. Only works on Krios. id 0 is the
+		autoloader, 1 is the column.
+		'''
+		return self.tecnai.TemperatureControl.RefrigerantLevel(id)
+
+class Krios(Tecnai):
+	name = 'Krios'
+	def __init__(self):
+		Tecnai.__init__(self)
+		self.correctedstage = False
+
+	def setStagePosition(self, value):
+		# Krios Compustage works better without preposition
+		value = self.checkStagePosition(value)
+		if not value:
+			return
+		return self._setStagePosition(value)
+
+class Talos(Tecnai):
+	name = 'Talos'

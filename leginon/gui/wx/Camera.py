@@ -9,6 +9,7 @@ import wx
 from leginon.gui.wx.Entry import Entry, IntEntry, FloatEntry, EVT_ENTRY
 import numpy
 import re
+from pyami import primefactor
 
 ConfigurationChangedEventType = wx.NewEventType()
 SetConfigurationEventType = wx.NewEventType()
@@ -35,12 +36,35 @@ class CameraPanel(wx.Panel):
 		sb = wx.StaticBox(self, -1, 'Camera Configuration')
 		self.sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		self.size = None
+		self.binmethod = 'exact'
 		self.geometry = None
 		self.binnings = {'x': [1,2,3,4,6,8], 'y': [1,2,3,4,6,8]}
 		self.defaultexptime = 1000.0
 		self.defaultsaveframes = False
+		self.defaultframetime = 200
+		self.defaultalignframes = False
+		self.defaultalignfilter = 'None'
 		self.defaultuseframes = ''
+		self.defaultreadoutdelay= 0
 		self.common = {}
+		self.setfuncs = {
+			'exposure time': self._setExposureTime,
+			'save frames': self._setSaveFrames,
+			'frame time': self._setFrameTime,
+			'align frames': self._setAlignFrames,
+			'align filter': self._setAlignFilter,
+			'use frames': self._setUseFrames,
+			'readout delay': self._setReadoutDelay,
+		}
+		self.getfuncs = {
+			'exposure time': self._getExposureTime,
+			'save frames': self._getSaveFrames,
+			'frame time': self._getFrameTime,
+			'align frames': self._getAlignFrames,
+			'align filter': self._getAlignFilter,
+			'use frames': self._getUseFrames,
+			'readout delay': self._getReadoutDelay,
+		}
 
 		# geometry
 		self.ccommon = wx.Choice(self, -1, choices = ['(None)'])
@@ -88,20 +112,66 @@ class CameraPanel(wx.Panel):
 		sz.Add(stms, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		self.szmain.Add(sz, (4, 1), (1, 2), wx.ALIGN_CENTER|wx.EXPAND)
 
-		# save raw frames
-		self.saveframes = wx.CheckBox(self, -1, 'Save raw frames')
-		self.szmain.Add(self.saveframes, (5, 0), (1, 2), wx.ALIGN_CENTER|wx.EXPAND)
+		sb = wx.StaticBox(self, -1, 'Camera with Movie Mode')
+		ddsb = wx.StaticBoxSizer(sb, wx.VERTICAL)
+		ddsz = wx.GridBagSizer(5, 5)
+		# save frames
+		self.saveframes = wx.CheckBox(self, -1, 'Save frames')
+		ddsz.Add(self.saveframes, (0, 0), (1, 2), wx.ALIGN_CENTER|wx.EXPAND)
 
+		# frame time
+		stet = wx.StaticText(self, -1, 'Exposure time per Frame:')
+		self.frametime = FloatEntry(self, -1, min=0.01, chars=7)
+		stms = wx.StaticText(self, -1, 'ms')
+
+		ddsz.Add(stet, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		ftsz = wx.GridBagSizer(0, 3)
+		ftsz.Add(self.frametime, (0, 0), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		ftsz.Add(stms, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		ddsz.Add(ftsz, (1, 1), (1, 2), wx.ALIGN_CENTER|wx.EXPAND)
 		# use raw frames
 		label = wx.StaticText(self, -1, 'Frames to use:')
 		self.useframes = Entry(self, -1)
-		self.szmain.Add(label, (6, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		self.szmain.Add(self.useframes, (6, 1), (1, 1), wx.ALIGN_CENTER|wx.EXPAND)
+		ddsz.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		ddsz.Add(self.useframes, (2, 1), (1, 1), wx.ALIGN_CENTER|wx.EXPAND)
 
+		# readout delay
+		strd = wx.StaticText(self, -1, 'Readout delay:')
+		self.readoutdelay = IntEntry(self, -1, chars=7)
+		stms = wx.StaticText(self, -1, 'ms')
+		sz = wx.BoxSizer(wx.HORIZONTAL)
+		sz.Add(strd)
+		sz.Add(self.readoutdelay)
+		sz.Add(stms)
+		ddsz.Add(sz, (3, 0), (1, 2), wx.ALIGN_CENTER|wx.EXPAND)
+
+		# align frames box
+		sb = wx.StaticBox(self, -1, 'Frame-Aligning Camera Only')
+		afsb = wx.StaticBoxSizer(sb, wx.VERTICAL)
+		afsz = wx.GridBagSizer(3, 3)
+		# align frames
+		self.alignframes = wx.CheckBox(self, -1, 'Align frames')
+		afsz.Add(self.alignframes, (0, 0), (1, 2), wx.ALIGN_CENTER|wx.EXPAND)
+
+		# align frame filter
+		label = wx.StaticText(self, -1, 'c-correlation filter:')
+		self.alignfilter = wx.Choice(self, -1, choices=self.getAlignFilters())
+		self.alignfilter.SetSelection(0)
+		afsz.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		afsz.Add(self.alignfilter, (1, 1), (1, 1), wx.ALIGN_CENTER|wx.EXPAND)
+		afsb.Add(afsz, 0, wx.EXPAND|wx.ALL, 2)
+
+		ddsz.Add(afsb, (4, 0), (3, 2), wx.ALIGN_CENTER|wx.EXPAND)
+
+		ddsb.Add(ddsz, 0, wx.EXPAND|wx.ALL, 2)
+		self.szmain.Add(ddsb, (7, 0), (1, 3), wx.ALIGN_CENTER|wx.EXPAND)
+
+		ddsz.AddGrowableCol(1)
 		self.szmain.AddGrowableCol(1)
 		self.szmain.AddGrowableCol(2)
 
-		self.sbsz.Add(self.szmain, 0, wx.EXPAND|wx.ALL, 5)
+		self.sbsz.Add(self.szmain, 0, wx.EXPAND|wx.ALL, 2)
 
 		self.SetSizerAndFit(self.sbsz)
 
@@ -109,10 +179,25 @@ class CameraPanel(wx.Panel):
 		self.Bind(wx.EVT_BUTTON, self.onCustomButton, bcustom)
 		self.Bind(EVT_ENTRY, self.onExposureTime, self.feexposuretime)
 		self.Bind(wx.EVT_CHECKBOX, self.onSaveFrames, self.saveframes)
+		self.Bind(EVT_ENTRY, self.onFrameTime, self.frametime)
 		self.Bind(EVT_ENTRY, self.onUseFrames, self.useframes)
+		self.Bind(EVT_ENTRY, self.onReadoutDelay, self.readoutdelay)
 		self.Bind(EVT_SET_CONFIGURATION, self.onSetConfiguration)
 
 		#self.Enable(False)
+
+	def setGeometryLimits(self,limitdict):
+		if limitdict is None:
+			self.setSize(None)
+		if 'binnings' in limitdict.keys():
+			self.binnings['x'] = limitdict['binnings']
+			self.binnings['y'] = limitdict['binnings']
+		if 'binmethod' in limitdict.keys():
+			self.binmethod = limitdict['binmethod']
+		if 'size' in limitdict.keys():
+			self.setSize(limitdict['size'])
+		else:
+			self.setSize(None)
 
 	def setSize(self, size):
 		if size is None:
@@ -149,7 +234,11 @@ class CameraPanel(wx.Panel):
 		self.setGeometry(self.common[self.ccommon.GetStringSelection()])
 		self.feexposuretime.SetValue(self.defaultexptime)
 		self.saveframes.SetValue(self.defaultsaveframes)
+		self.frametime.SetValue(self.defaultframetime)
+		self.alignframes.SetValue(self.defaultalignframes)
+		self.alignfilter.SetValue(self.defaultalignfilter)
 		self.useframes.SetValue(self.defaultuseframes)
+		self.readoutdelay.SetValue(self.defaultreadoutdelay)
 		#self.Enable(False)
 		self.Thaw()
 
@@ -163,7 +252,13 @@ class CameraPanel(wx.Panel):
 	def onSaveFrames(self, evt):
 		self.onConfigurationChanged()
 
+	def onFrameTime(self, evt):
+		self.onConfigurationChanged()
+
 	def onUseFrames(self, evt):
+		self.onConfigurationChanged()
+
+	def onReadoutDelay(self, evt):
 		self.onConfigurationChanged()
 
 	def setCommonChoice(self):
@@ -214,6 +309,32 @@ class CameraPanel(wx.Panel):
 		value = bool(value)
 		self.saveframes.SetValue(value)
 
+	def _getFrameTime(self):
+		return self.frametime.GetValue()
+
+	def _setFrameTime(self, value):
+		self.frametime.SetValue(value)
+
+	def _getAlignFrames(self):
+		return self.alignframes.GetValue()
+
+	def _setAlignFrames(self, value):
+		value = bool(value)
+		self.alignframes.SetValue(value)
+
+	def getAlignFilters(self):
+		return ['None','Hanning Window (default)','Bandpass Filter (default)','Sobel Filter (default)','Combined Filter (default)']
+
+	def _getAlignFilter(self):
+		return self.alignfilter.GetStringSelection()
+
+	def _setAlignFilter(self, value):
+		if value:
+			value = str(value)
+		else:
+			value = 'None'
+		self.alignfilter.SetStringSelection(value)
+
 	def _getUseFrames(self):
 		frames_str = self.useframes.GetValue()
 		numbers = re.split('\D+', frames_str)
@@ -231,6 +352,12 @@ class CameraPanel(wx.Panel):
 		else:
 			value = ''
 		self.useframes.SetValue(value)
+
+	def _getReadoutDelay(self):
+		return self.readoutdelay.GetValue()
+
+	def _setReadoutDelay(self, value):
+		return self.readoutdelay.SetValue(value)
 
 	def onCommonChoice(self, evt):
 		key = evt.GetString()
@@ -261,7 +388,7 @@ class CameraPanel(wx.Panel):
 		return geometry
 
 	def getFullGeometry(self,binning):
-		if (self.size['x'] % binning) or (self.size['y'] % binning):
+		if self.binmethod == 'exact' and ((self.size['x'] % binning) or (self.size['y'] % binning)):
 			return None
 		dimx = self.size['x'] / binning
 		dimy = self.size['y'] / binning
@@ -277,7 +404,7 @@ class CameraPanel(wx.Panel):
 		if self.size['x'] != self.size['y']:
 			show_sections = True
 			keys.append('--- Full ---')
-			for binning in range(1,9):
+			for binning in self.binnings['x']:
 				dimx = self.size['x'] / binning
 				dimy = self.size['y'] / binning
 				key = '%d x %d bin %d' % (dimx,dimy,binning)
@@ -288,7 +415,7 @@ class CameraPanel(wx.Panel):
 		if self.binnings['x'] != self.binnings['y']:
 			return geometries
 		self.minsize = min(self.size['x'],self.size['y'])
-		dimensions = [self.minsize/float(b) for b in self.binnings['x']]
+		dimensions = [int(self.minsize/float(b)) for b in self.binnings['x']]
 		def good(dim):
 			return not bool(numpy.modf(dim)[1]-dim)
 		def filtergood(input, mask):
@@ -297,18 +424,21 @@ class CameraPanel(wx.Panel):
 				if mask[i]:
 					result.append(inval)
 			return result
-		mask = [good(dim) for dim in dimensions]
+		if self.binmethod == 'exact':
+			mask = [good(dim) for dim in dimensions]
+		else:
+			mask = [True for dim in dimensions]
 		dimensions = filtergood(dimensions, mask)
 		def minsize(size):
-			return size >= 512
+			return size >= self.minsize / max(self.binnings['x'])
 		dimensions = filter(minsize, dimensions)
+		dimensions = map((lambda x: primefactor.getAllEvenPrimes(x)[-1]),dimensions)
 		binnings = filtergood(self.binnings['x'], mask)
-
 		dimensions.reverse()
 		if show_sections:
 			keys.append('--- Center ---')
 		for d in dimensions:
-			for b in binnings:
+			for b in self.binnings['x']:
 				if d*b <= self.minsize:
 					key = '%d x %d bin %d' % (d, d, b)
 					geometries[key] = self.getCenteredGeometry(d, b)
@@ -365,9 +495,8 @@ class CameraPanel(wx.Panel):
 		if g is None:	
 			return None
 		c = copy.deepcopy(g)
-		c['exposure time'] = self._getExposureTime()
-		c['save frames'] = self._getSaveFrames()
-		c['use frames'] = self._getUseFrames()
+		for key,func in self.getfuncs.items():
+			c[key] = func()
 		return c
 
 	def _setGeometry(self, geometry):
@@ -395,21 +524,16 @@ class CameraPanel(wx.Panel):
 		return True
 
 	def _setConfiguration(self, value):
-		setfuncs = {
-			'exposure time': self._setExposureTime,
-			'save frames': self._setSaveFrames,
-			'use frames': self._setUseFrames,
-		}
-		for key, func in setfuncs.items():
+		for key, func in self.setfuncs.items():
 			if key in value:
 				func(value[key])
 		self._setGeometry(value)
 		self.setCommonChoice()
 
 	def setConfiguration(self, value):
-		self._setExposureTime(value['exposure time'])
-		self._setSaveFrames(value['save frames'])
-		self._setUseFrames(value['use frames'])
+		for key, func in self.setfuncs.items():
+			if key in value:
+				func(value[key])
 		self.setGeometry(value)
 		if self.size is not None:
 			self.setCommonChoice()

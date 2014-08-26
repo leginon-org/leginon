@@ -84,6 +84,7 @@ class mysql {
 	function SQLTableExists($name) {
 		$table_exists=false;
 		$Rtables = $this->SQLQuery("SHOW TABLES");
+		#if ($Rtables === false) return false;
 	    	while($table = mysql_fetch_array($Rtables))
 			if ($table[0] == $name) {
 				$table_exists=true;
@@ -130,7 +131,7 @@ class mysql {
 	            $schema_create .= " ".$row['Extra'];
 	        $schema_create .= ",$crlf";
 	    }
-	    $schema_create = ereg_replace(",".$crlf."$", "", $schema_create);
+	    $schema_create = preg_replace("%,%".$crlf."$", "", $schema_create);
 	    $result = $this->SQLQuery("SHOW KEYS FROM $table") or die(mysql_error());
 	    while($row = mysql_fetch_array($result))
 	    {
@@ -187,7 +188,7 @@ class mysql {
 	            else
 	                $schema_insert .= " '',";
 	        }
-	        $schema_insert = ereg_replace(",$", "", $schema_insert);
+	        $schema_insert = preg_replace("%,$%", "", $schema_insert);
 	        $schema_insert .= ")";
 	        $content .= trim($schema_insert).";$crlf";
 	        $i++;
@@ -252,7 +253,7 @@ class mysql {
 			$res = mysql_insert_id();
 		else
 			$res = $result;
-		$this->close_db();
+		//$this->close_db();
 		return $res;
 	}
 
@@ -368,9 +369,12 @@ class mysql {
 			$wherestr .= $where;
 		}
 		foreach ($data as $k=>$v) {
-			if (!is_numeric($v))
+			if (!is_numeric($v) && $v !== NULL)
 				$v = "'".addslashes($v)."'";
-			$kv[] = "`".$k."`=".$v;
+			if ($v === NULL) 
+				$kv[] = '`'.$k.'`= NULL';
+			else
+				$kv[] = "`".$k."`=".$v;
 		}
 		$dbselection = ($db) ? $db.'.':'';
 		$q = "UPDATE $dbselection`$table` SET ".implode(', ',$kv).$wherestr;
@@ -404,7 +408,7 @@ class mysql {
 			if ($this->SQLTableExists($table)) {
 				$orgfieldtype = $this->getFieldTypes($table);
 				foreach ($fieldtype as $f=>$t) {
-					if (ereg('^DEF_', $f))
+					if (preg_match('%^DEF_%', $f))
 						continue;
 					if (!$orgfieldtype[$f]) {
 						$q[] = "ALTER TABLE `$table` ADD `$f` $t";
@@ -447,6 +451,14 @@ class mysql {
 				$fields[] = $r['Field'];
 		}
 		return $fields;
+	}
+
+	function FieldExists($table,$fieldname) {
+		$has_field = false;
+		$fields = $this->getFields($table);
+		if (empty($fields)) return $has_field;
+		if (in_array($fieldname,$fields)) $has_field=true;
+		return $has_field;
 	}
 
 	function getTableDescription($table) {

@@ -68,18 +68,21 @@ class CalibrationClient(object):
 	def checkAbort(self):
 		if self.abortevent.isSet():
 			raise Abort()
-	
+
+	def setDBInstruments(self,caldata,tem=None,cam=None):	
+		if tem is None:
+			caldata['tem'] = self.instrument.getTEMData()
+		else:
+			caldata['tem'] = tem
+		if cam is None:
+			caldata['ccdcamera'] = self.instrument.getCCDCameraData()
+		else:
+			caldata['ccdcamera'] = cam
+
 	def getPixelSize(self, mag, tem=None, ccdcamera=None):
 		queryinstance = leginondata.PixelSizeCalibrationData()
 		queryinstance['magnification'] = mag
-		if tem is None:
-			queryinstance['tem'] = self.instrument.getTEMData()
-		else:
-			queryinstance['tem'] = tem
-		if ccdcamera is None:
-			queryinstance['ccdcamera'] = self.instrument.getCCDCameraData()
-		else:
-			queryinstance['ccdcamera'] = ccdcamera
+		self.setDBInstruments(queryinstance,tem,ccdcamera)
 		caldatalist = self.node.research(datainstance=queryinstance, results=1)
 		if len(caldatalist) > 0:
 			return caldatalist[0]['pixelsize']
@@ -103,7 +106,10 @@ class CalibrationClient(object):
 		return rpixelsize
 
 	def correctTilt(self, imagedata):
-		self.tiltcorrector.correct_tilt(imagedata)
+		try:
+			self.tiltcorrector.correct_tilt(imagedata)
+		except RuntimeError, e:
+			self.node.logger.error('Failed tilt correction: %s' % (e))
 
 	def acquireImage(self, scope, settle=0.0, correct_tilt=False, corchannel=0):
 		if scope is not None:
@@ -167,7 +173,7 @@ class CalibrationClient(object):
 			raise RuntimeError('invalid correlation type')
 		self.node.stopTimer('scope change correlation')
 
-		if lp is not None:
+		if lp is not None and lp > 0.0001:
 			cor = scipy.ndimage.gaussian_filter(cor, lp)
 
 		self.displayCorrelation(cor)
@@ -243,9 +249,12 @@ class CalibrationClient(object):
 			ctfdata = fftfun.fitFirstCTFNode(pow,self.rpixelsize['x'], None, self.ht)
 			self.ctfdata.append(ctfdata)
 
+			# show defocus estimate on tableau
 			if ctfdata:
+				self.node.logger.info('tabeau defocus: %.3f um, zast: %.3f um' % (ctfdata[0]*1e6,ctfdata[1]*1e6))
 				s = '%d' % int(ctfdata[0]*1e9)
 				eparams = ctfdata[4]
+				self.node.logger.info('eparams a:%.3f, b:%.3f, alpha:%.3f' % (eparams['a'],eparams['b'],eparams['alpha']))
 				center = numpy.divide(eparams['center'], binning)
 				a = eparams['a'] / binning
 				b = eparams['b'] / binning
@@ -325,19 +334,17 @@ class DoseCalibrationClient(CalibrationClient):
 		CalibrationClient.__init__(self, node)
 		self.psizecal = PixelSizeCalibrationClient(node)
 
-	def storeSensitivity(self, ht, sensitivity):
+	def storeSensitivity(self, ht, sensitivity,tem=None,ccdcamera=None):
 		newdata = leginondata.CameraSensitivityCalibrationData()
 		newdata['session'] = self.node.session
 		newdata['high tension'] = ht
 		newdata['sensitivity'] = sensitivity
-		newdata['tem'] = self.instrument.getTEMData()
-		newdata['ccdcamera'] = self.instrument.getCCDCameraData()
+		self.setDBInstruments(newdata,tem,ccdcamera)
 		self.node.publish(newdata, database=True, dbforce=True)
 
 	def retrieveSensitivity(self, ht, tem, ccdcamera):
 		qdata = leginondata.CameraSensitivityCalibrationData()
-		qdata['tem'] = tem
-		qdata['ccdcamera'] = ccdcamera
+		self.setDBInstruments(qdata,tem,ccdcamera)
 		qdata['high tension'] = ht
 		results = self.node.research(datainstance=qdata, results=1)
 		if results:
@@ -368,9 +375,17 @@ class DoseCalibrationClient(CalibrationClient):
 		counts_per_electron = float(counts) / electrons_per_pixel
 		return counts_per_electron
 
-	def sensitivity_from_imagedata(self, imagedata, dose_rate):
+	def getTemCCDCameraFromImageData(self,imagedata):
 		tem = imagedata['scope']['tem']
+		if tem is None:
+			tem = self.instrument.getTEMData()
 		ccdcamera = imagedata['camera']['ccdcamera']
+		if ccdcamera is None:
+			ccdcamera = self.instrument.getCCDCameraData()
+		return tem,ccdcamera
+
+	def sensitivity_from_imagedata(self, imagedata, dose_rate):
+		tem,ccdcamera = self.getTemCCDCameraFromImageData(imagedata)
 		mag = imagedata['scope']['magnification']
 		self.node.logger.info('Magnification %.1f' % mag)
 		specimen_pixel_size = self.psizecal.retrievePixelSize(tem,
@@ -381,35 +396,69 @@ class DoseCalibrationClient(CalibrationClient):
 		camera_mag = camera_pixel_size / specimen_pixel_size
 		self.node.logger.info('CCD Camera magnification %.1f' % camera_mag)
 		exposure_time = imagedata['camera']['exposure time'] / 1000.0
-		binning = imagedata['camera']['binning']['x']
-		mean_counts = arraystats.mean(imagedata['image']) / (binning**2)
+		binningx = imagedata['camera']['binning']['x']
+		binningy = imagedata['camera']['binning']['y']
+		binmult = imagedata['camera']['binned multiplier']
+		mean_counts = binmult * arraystats.mean(imagedata['image']) / (binningx*binningy)
 		return self.sensitivity(dose_rate, camera_mag, camera_pixel_size,
 														exposure_time, mean_counts)
 
 	def dose_from_imagedata(self, imagedata):
 		'''
-		imagedata indirectly contains most info needed to calc dose
+		dose in number of electrons per meter^2 in the duration of exposure time.
 		'''
-		tem = imagedata['scope']['tem']
-		if tem is None:
-			tem = self.instrument.getTEMData()
-		ccdcamera = imagedata['camera']['ccdcamera']
-		if ccdcamera is None:
-			ccdcamera = self.instrument.getCCDCameraData()
-		camera_pixel_size = imagedata['camera']['pixel size']['x']
-		ht = imagedata['scope']['high tension']
-		binning = imagedata['camera']['binning']['x']
+		pixel_totaldose = self.pixel_totaldose_from_imagedata(imagedata)
+		tem,ccdcamera = self.getTemCCDCameraFromImageData(imagedata)
 		mag = imagedata['scope']['magnification']
 		specimen_pixel_size = self.psizecal.retrievePixelSize(tem, ccdcamera, mag)
 		self.node.logger.debug('Specimen pixel size %.4e' % specimen_pixel_size)
+		totaldose = pixel_totaldose / specimen_pixel_size**2
+		return totaldose
+
+	def pixel_framedose_from_imagedata(self, imagedata):
+		'''
+		dose in number of electron per camera pixel.  For frame integration
+		camera such as DE-12, this is per frame.  For other camera, this is
+		per total integration time
+		'''
+		pixel_totaldose = self.pixel_totaldose_from_imagedata(imagedata)
+		nframes = imagedata['camera']['nframes']
+		if nframes is None or nframes == 0:
+			nframes = 1
+			has_frames = False
+		else:
+			has_frames = True
+		self.node.logger.debug('Number of integration frames per exposure %d' % nframes)
+		pixel_framedose = pixel_totaldose / nframes
+		return has_frames,pixel_framedose
+
+	def pixel_dose_rate_from_imagedata(self, imagedata):
+		'''
+		dose rate in number of electron per camera pixel per second.
+		'''
+		pixel_totaldose = self.pixel_totaldose_from_imagedata(imagedata)
+		exp_time_in_second = imagedata['camera']['exposure time'] / 1000.0
+		return pixel_totaldose / exp_time_in_second
+
+	def pixel_totaldose_from_imagedata(self, imagedata):
+		'''
+		Dose per camera pixel. Binning does not affect the result.
+		Imagedata indirectly contains most info needed to calc dose
+		'''
+		tem,ccdcamera = self.getTemCCDCameraFromImageData(imagedata)
+		camera_pixel_size = imagedata['camera']['pixel size']['x']
+		ht = imagedata['scope']['high tension']
+		binningx = imagedata['camera']['binning']['x']
+		binningy = imagedata['camera']['binning']['y']
+		binmult = imagedata['camera']['binned multiplier']
 		exp_time = imagedata['camera']['exposure time'] / 1000.0
 		numdata = imagedata['image']
 		sensitivity = self.retrieveSensitivity(ht, tem, ccdcamera)
 		self.node.logger.debug('Sensitivity %.2f' % sensitivity)
-		mean_counts = arraystats.mean(numdata) / (binning**2)
+		mean_counts = binmult * arraystats.mean(numdata) / (binningx*binningy)
 		self.node.logger.debug('Mean counts %.1f' % mean_counts)
-		totaldose = mean_counts / specimen_pixel_size**2 / sensitivity
-		return totaldose
+		pixel_totaldose = mean_counts / sensitivity
+		return pixel_totaldose
 
 
 class PixelSizeCalibrationClient(CalibrationClient):
@@ -423,14 +472,7 @@ class PixelSizeCalibrationClient(CalibrationClient):
 	def researchPixelSizeData(self, tem, ccdcamera, mag):
 		queryinstance = leginondata.PixelSizeCalibrationData()
 		queryinstance['magnification'] = mag
-		if tem is None:
-			queryinstance['tem'] = self.instrument.getTEMData()
-		else:
-			queryinstance['tem'] = tem
-		if ccdcamera is None:
-			queryinstance['ccdcamera'] = self.instrument.getCCDCameraData()
-		else:
-			queryinstance['ccdcamera'] = ccdcamera
+		self.setDBInstruments(queryinstance,tem,ccdcamera)
 		caldatalist = self.node.research(datainstance=queryinstance)
 		return caldatalist
 
@@ -460,8 +502,7 @@ class PixelSizeCalibrationClient(CalibrationClient):
 			try:
 				mag = caldata['magnification']
 			except:
-				print 'CALDATA', caldata
-				raise
+				raise RuntimeError('Failed retrieving last pixelsize')
 			if mag not in last:
 				last[mag] = caldata
 		return last.values()
@@ -478,32 +519,33 @@ class MatrixCalibrationClient(CalibrationClient):
 	def parameter(self):
 		raise NotImplementedError
 
-	def researchMatrix(self, tem, ccdcamera, caltype, ht, mag):
+	def researchMatrix(self, tem, ccdcamera, caltype, ht, mag, probe=None):
 		queryinstance = leginondata.MatrixCalibrationData()
-		queryinstance['tem'] = tem
-		queryinstance['ccdcamera'] = ccdcamera
+		self.setDBInstruments(queryinstance,tem,ccdcamera)
 		queryinstance['type'] = caltype
 		queryinstance['magnification'] = mag
 		queryinstance['high tension'] = ht
+		queryinstance['probe'] = probe
 		caldatalist = self.node.research(datainstance=queryinstance, results=1)
 		if caldatalist:
 			caldata = caldatalist[0]
+			self.node.logger.debug('matrix calibration dbid: %d' % caldata.dbid)
 			return caldata
 		else:
 			excstr = 'no matrix for %s, %s, %s, %seV, %sx' % (tem['name'], ccdcamera['name'], caltype, ht, mag)
 			raise NoMatrixCalibrationError(excstr, state=queryinstance)
 
-	def retrieveMatrix(self, tem, ccdcamera, caltype, ht, mag):
+	def retrieveMatrix(self, tem, ccdcamera, caltype, ht, mag, probe=None):
 		'''
 		finds the requested matrix using magnification and type
 		'''
-		caldata = self.researchMatrix(tem, ccdcamera, caltype, ht, mag)
+		caldata = self.researchMatrix(tem, ccdcamera, caltype, ht, mag, probe)
 		matrix = caldata['matrix'].copy()
 		return matrix
 
-	def time(self, tem, ccdcamera, ht, mag, caltype):
+	def time(self, tem, ccdcamera, ht, mag, caltype, probe=None):
 		try:
-			caldata = self.researchMatrix(tem, ccdcamera, caltype, ht, mag)
+			caldata = self.researchMatrix(tem, ccdcamera, caltype, ht, mag, probe)
 		except:
 			caldata = None
 		if caldata is None:
@@ -512,16 +554,13 @@ class MatrixCalibrationClient(CalibrationClient):
 			timestamp = caldata.timestamp
 		return timestamp
 
-	def storeMatrix(self, ht, mag, type, matrix, tem=None, ccdcamera=None):
+	def storeMatrix(self, ht, mag, type, matrix, tem=None, ccdcamera=None, probe=None):
 		'''
 		stores a new calibration matrix
 		'''
-		if tem is None:
-			tem = self.instrument.getTEMData()
-		if ccdcamera is None:
-			ccdcamera = self.instrument.getCCDCameraData()
+		caldata = leginondata.MatrixCalibrationData(session=self.node.session, magnification=mag, type=type, matrix=matrix, probe=probe)
+		self.setDBInstruments(caldata,tem,ccdcamera)
 		newmatrix = numpy.array(matrix, numpy.float64)
-		caldata = leginondata.MatrixCalibrationData(session=self.node.session, magnification=mag, type=type, matrix=matrix, tem=tem, ccdcamera=ccdcamera)
 		caldata['high tension'] = ht
 		self.node.publish(caldata, database=True, dbforce=True)
 
@@ -557,20 +596,24 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 	def setBeamTilt(self, bt):
 		self.instrument.tem.BeamTilt = bt
 
-	def storeRotationCenter(self, tem, ht, mag, beamtilt):
+	def storeRotationCenter(self, tem, ht, mag, probe, beamtilt):
 		rc = leginondata.RotationCenterData()
 		rc['high tension'] = ht
 		rc['magnification'] = mag
+		rc['probe'] = probe
 		rc['beam tilt'] = beamtilt
 		rc['tem'] = tem
 		rc['session'] = self.node.session
 		self.node.publish(rc, database=True, dbforce=True)
 
-	def retrieveRotationCenter(self, tem, ht, mag):
+	def retrieveRotationCenter(self, tem, ht, mag, probe=None):
+		if probe is None:
+			probe = self.instrument.tem.ProbeMode
 		rc = leginondata.RotationCenterData()
 		rc['tem'] = tem
 		rc['high tension'] = ht
 		rc['magnification'] = mag
+		rc['probe'] = probe
 		results = self.node.research(datainstance=rc, results=1)
 		if results:
 			return results[0]['beam tilt']
@@ -584,9 +627,9 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		mag = self.instrument.tem.Magnification
 		try:
 			fmatrix = self.retrieveMatrix(tem, cam, 'defocus', ht, mag)
-		except NoMatrixCalibrationError:
-				raise RuntimeError('missing calibration matrix')
-
+		except (NoMatrixCalibrationError,RuntimeError), e:
+			self.node.logger.error('Measurement failed: %s' % e)
+			return {'x':0.0, 'y': 0.0}
 		state1 = leginondata.ScopeEMData()
 		state2 = leginondata.ScopeEMData()
 		state1['defocus'] = defocus1
@@ -606,10 +649,9 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		cam = self.instrument.getCCDCameraData()
 		ht = self.instrument.tem.HighTension
 		mag = self.instrument.tem.Magnification
-		try:
-			fmatrix = self.retrieveMatrix(tem, cam, 'defocus', ht, mag)
-		except NoMatrixCalibrationError:
-				raise RuntimeError('missing calibration matrix')
+		# Can not handle the exception for retrieveMatrix here. 
+		# Focuser node that calls this need to know the type of error
+		fmatrix = self.retrieveMatrix(tem, cam, 'defocus', ht, mag)
 
 		## only do stig if stig matrices exist
 		amatrix = bmatrix = None
@@ -639,7 +681,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 			state2 = leginondata.ScopeEMData()
 			state2['beam tilt'] = bt2
 			try:
-				shiftinfo = self.measureScopeChange(image0, state2, settle=settle, correlation_type=correlation_type)
+				shiftinfo = self.measureScopeChange(image0, state2, settle=settle, correct_tilt=correct_tilt, correlation_type=correlation_type)
 			except Abort:
 				break
 
@@ -892,10 +934,14 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 				if angle == 0.0 and tsign == -1:
 					angle = math.pi
 				self.insertTableau(im1, angle, 1/math.sqrt(2))
-			tlength = math.hypot(tiltvector[0],tiltvector[1])
-			d_diff = numpy.multiply((d[1]-d[0])/tlength, tiltvector)
 			self.renderTableau()
+			if None in d:
+				d_diff = d
+			else:
+				tlength = math.hypot(tiltvector[0],tiltvector[1])
+				d_diff = numpy.multiply((d[1]-d[0])/tlength, tiltvector)
 		finally:
+			self.node.logger.info('Setting beam tilt back')
 			self.setBeamTilt(btorig)
 		return d_diff
 
@@ -928,8 +974,10 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 					tvect = [0, 0]
 					tvect[axisn] = t
 					diff = self.measureDefocusDifference(tvect, settle)
-					if diff is None or not self.confirmDefocusInRange():
-						raise
+					if None in diff:
+						raise RuntimeError('Can not determine Defocus Difference with failed ctf estimation')
+					elif not self.confirmDefocusInRange():
+						raise RuntimeError('Deofucs Range confirmation failed')
 					diffs[axisname][msign] = diff
 		finally:
 			## return to original beam tilt
@@ -969,7 +1017,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 			coma0[axis2] /= len(ordered_axes)
 		return matrix, coma0
 
-	def measureComaFree(self, tilt_value, settle):
+	def measureComaFree(self, tilt_value, settle, raise_error=False):
 		tem = self.instrument.getTEMData()
 		cam = self.instrument.getCCDCameraData()
 		ht = self.instrument.tem.HighTension
@@ -977,31 +1025,39 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		self.rpixelsize = None
 		self.ht = ht
 		self.initTableau()
-		try:
-			par = 'beam-tilt coma'
-			cmatrix = self.retrieveMatrix(tem, cam, 'beam-tilt coma', ht, mag)
-		except NoMatrixCalibrationError:
-			raise RuntimeError('missing %s calibration matrix' % par)
+
+		par = 'beam-tilt coma'
+		cmatrix = self.retrieveMatrix(tem, cam, 'beam-tilt coma', ht, mag)
+
 		dc = [0,0]
+		failed_measurement = False
 		for axisn, axisname in ((0,'x'),(1,'y')):
 			tvect = [0, 0]
 			tvect[axisn] = tilt_value
-			dc[axisn] = self.measureDefocusDifference(tvect, settle)
-		dc = numpy.array(dc) / tilt_value
-		cftilt = numpy.linalg.solve(cmatrix, dc)
-		if not self.confirmDefocusInRange():
-			cftilt[(0,0)] = 0
-			cftilt[(1,1)] = 0
+			def_diff = self.measureDefocusDifference(tvect, settle)
+			if None in def_diff:
+				failed_measurement = True
+			dc[axisn] = def_diff
+		if not failed_measurement:
+			dc = numpy.array(dc) / tilt_value
+			cftilt = numpy.linalg.solve(cmatrix, dc)
+			if not self.confirmDefocusInRange():
+				cftilt[(0,0)] = 0
+				cftilt[(1,1)] = 0
+		else:
+			cftilt = numpy.zeros((2,2))
+			if raise_error:
+				raise Exception('Coma Free Beam Tilt Measurement Failed')
 		return cftilt
 
-	def repeatMeasureComaFree(self, tilt_value, settle, repeat=1):
+	def repeatMeasureComaFree(self, tilt_value, settle, repeat=1,raise_error=False):
 		'''repeat measuremnet to increase precision'''
 		tilts = {'x':[],'y':[]}
 		self.measured_defocii = []
 		self.node.logger.debug("===================")
 		for i in range(0,repeat):
 			try:
-				cftilt = self.measureComaFree(tilt_value, settle)
+				cftilt = self.measureComaFree(tilt_value, settle, raise_error)
 			except Exception, e:
 				cftilt = None
 				raise
@@ -1053,6 +1109,49 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		beamtilt = self.transformImageShiftToBeamTilt(shift0, tem, cam, ht, beamtilt, mag)
 		self.setBeamTilt(beamtilt)
 
+	def alignRotationCenter(self, defocus1, defocus2):
+		bt = self.measureRotationCenter(defocus1, defocus2, correlation_type=None, settle=0.5)
+		self.node.logger.info('Misalignment correction: %.4f, %.4f' % (bt['x'],bt['y'],))
+		oldbt = self.instrument.tem.BeamTilt
+		self.node.logger.info('Old beam tilt: %.4f, %.4f' % (oldbt['x'],oldbt['y'],))
+		newbt = {'x': oldbt['x'] + bt['x'], 'y': oldbt['y'] + bt['y']}
+		self.instrument.tem.BeamTilt = newbt
+		self.node.logger.info('New beam tilt: %.4f, %.4f' % (newbt['x'],newbt['y'],))
+
+	def _rotationCenterToScope(self):
+		tem = self.instrument.getTEMData()
+		ht = self.instrument.tem.HighTension
+		mag = self.instrument.tem.Magnification
+		probe = self.instrument.tem.ProbeMode
+		beam_tilt = self.retrieveRotationCenter(tem, ht, mag, probe)
+		if not beam_tilt:
+			raise RuntimeError('no rotation center for %geV, %gX' % (ht, mag))
+		self.instrument.tem.BeamTilt = beam_tilt
+
+	def rotationCenterToScope(self):
+		try:
+			self._rotationCenterToScope()
+		except Exception, e:
+			self.node.logger.error('Unable to set rotation center: %s' % e)
+		else:
+			self.node.logger.info('Set instrument rotation center')
+
+	def _rotationCenterFromScope(self):
+		tem = self.instrument.getTEMData()
+		ht = self.instrument.tem.HighTension
+		mag = self.instrument.tem.Magnification
+		probe = self.instrument.tem.ProbeMode
+		beam_tilt = self.instrument.tem.BeamTilt
+		self.storeRotationCenter(tem, ht, mag, probe, beam_tilt)
+
+	def rotationCenterFromScope(self):
+		try:
+			self._rotationCenterFromScope()
+		except Exception, e:
+			self.node.logger.error('Unable to get rotation center: %s' % e)
+		else:
+			self.node.logger.info('Saved instrument rotation center')
+	
 class SimpleMatrixCalibrationClient(MatrixCalibrationClient):
 	mover = True
 	def __init__(self, node):
@@ -1090,7 +1189,12 @@ class SimpleMatrixCalibrationClient(MatrixCalibrationClient):
 		par = self.parameter()
 		tem = scope['tem']
 		ccdcamera = camera['ccdcamera']
-		matrix = self.retrieveMatrix(tem, ccdcamera, par, ht, mag)
+		try:
+			matrix = self.retrieveMatrix(tem, ccdcamera, par, ht, mag)
+		except NoMatrixCalibrationError, e:
+			self.node.logger.error(e)
+			return scope
+			
 
 		pixrow = pixelshift['row'] * biny
 		pixcol = pixelshift['col'] * binx
@@ -1122,12 +1226,16 @@ class SimpleMatrixCalibrationClient(MatrixCalibrationClient):
 			scope['high tension'],
 			scope['magnification'],
 		)
-		matrix = self.retrieveMatrix(*args)
-		inverse_matrix = numpy.linalg.inv(matrix)
-
 		shift = dict(position)
 		shift['x'] -= scope[parameter]['x']
 		shift['y'] -= scope[parameter]['y']
+
+		try:
+			matrix = self.retrieveMatrix(*args)
+		except NoMatrixCalibrationError, e:
+			self.node.logger.error(e)
+			return {'row':0.0,'col':0.0}
+		inverse_matrix = numpy.linalg.inv(matrix)
 
 		# take into account effect of stage alpha tilt on y stage position
 		if parameter == 'stage position':
@@ -1152,20 +1260,22 @@ class ImageShiftCalibrationClient(SimpleMatrixCalibrationClient):
 	def parameter(self):
 		return 'image shift'
 
-	def pixelToPixel(self, tem, ccdcamera, ht, mag1, mag2, p1):
+	def pixelToPixel(self, old_tem, old_ccdcamera, new_tem, new_ccdcamera, ht, mag1, mag2, p1):
 		'''
-		Using stage position as a global coordinate system, we can
+		Using physical position as a global coordinate system, we can
 		do pixel to pixel transforms between mags.
 		This function will calculate a pixel vector at mag2, given
 		a pixel vector at mag1.
+		For image shift, this means: the physical image shift values in meters
+		need to be properly calibrated for this to work right
 		'''
 		par = self.parameter()
-		matrix1 = self.retrieveMatrix(tem, ccdcamera, par, ht, mag1)
-		matrix2 = self.retrieveMatrix(tem, ccdcamera, par, ht, mag2)
+		matrix1 = self.retrieveMatrix(old_tem, old_ccdcamera, par, ht, mag1)
+		matrix2 = self.retrieveMatrix(new_tem, new_ccdcamera, par, ht, mag2)
 		matrix2inv = numpy.linalg.inv(matrix2)
 		p1 = numpy.array(p1)
-		stagepos = numpy.dot(matrix1, p1)
-		p2 = numpy.dot(matrix2inv, stagepos)
+		physicalpos = numpy.dot(matrix1, p1)
+		p2 = numpy.dot(matrix2inv, physicalpos)
 		return p2
 
 class BeamShiftCalibrationClient(SimpleMatrixCalibrationClient):
@@ -1225,37 +1335,59 @@ class StageTiltCalibrationClient(StageCalibrationClient):
 		'''
 		orig_a = self.instrument.tem.StagePosition['a']
 
-		state1 = leginondata.ScopeEMData()
-		state2 = leginondata.ScopeEMData()
-		state1['stage position'] = {'a':-tilt_value}
-		state2['stage position'] = {'a':tilt_value}
+		state = {}
+		shiftinfo = {}
+		state[0] = leginondata.ScopeEMData()
+		state[1] = leginondata.ScopeEMData()
+		state[2] = leginondata.ScopeEMData()
+		state[0]['stage position'] = {'a':0.0}
+		state[1]['stage position'] = {'a':-tilt_value}
+		state[2]['stage position'] = {'a':tilt_value}
 		## alpha backlash correction
-		self.instrument.tem.StagePosition = state1['stage position']
-		self.instrument.tem.StagePosition = state2['stage position']
+		self.instrument.tem.StagePosition = state[1]['stage position']
+		# make sure main screen is up since there is no failure in this function
+		self.instrument.tem.setMainScreenPosition('up')
+
 		## do tilt and measure image shift
-		im1 = self.acquireImage(state1)
-		shiftinfo = self.measureScopeChange(im1, state2, correlation_type=correlation_type)
+		## move from state2, through 0, to state1 to remove backlash
+		self.instrument.tem.StagePosition = state[2]['stage position']
+		self.instrument.tem.StagePosition = state[0]['stage position']
+		im0 = self.acquireImage(state[0])
+		# measure the change from 0 to state1
+		shiftinfo[1] = self.measureScopeChange(im0, state[1], correlation_type=correlation_type, lp=1)
+		## move from state1, through 0, to state2 to remove backlash
+		self.instrument.tem.StagePosition = state[0]['stage position']
+		im0 = self.acquireImage(state[0])
+		# measure the change from 0 to state1
+		shiftinfo[2] = self.measureScopeChange(im0, state[2], correlation_type=correlation_type,lp=1)
+
+		# return to original
 		self.instrument.tem.StagePosition = {'a':orig_a}
 
-		state1 = shiftinfo['previous']['scope']
-		state2 = shiftinfo['next']['scope']
-		pixelshift = shiftinfo['pixel shift']
-		#psize = self.getPixelSize(state1['magnification'])
-		#dist = psize * math.hypot(pixelshift['row'], pixelshift['col'])
-		
-		# fake the current state for the transform with alpha = 0
-		scope = leginondata.ScopeEMData(initializer=state1)
-		scope['stage position']['a'] = 0.0
-		cam = leginondata.CameraEMData()
-		# measureScopeChange already unbinned it, so fake cam bin = 1
-		cam['binning'] = {'x':1,'y':1}
-		cam['ccdcamera'] = self.instrument.getCCDCameraData()
-		# get the virtual x,y movement
-		newscope = self.transform(pixelshift, scope, cam)
-		# y component is all we care about to get Z
-		y = newscope['stage position']['y'] - scope['stage position']['y']
-		z = y / 2.0 / math.sin(tilt_value)
-		return z
+		state[1] = shiftinfo[1]['next']['scope']
+		state[2] = shiftinfo[2]['next']['scope']
+		pixelshift = {}
+		# combine the two half of the tilts
+
+		z = {}
+		for t in (1,2):
+			for axis in shiftinfo[1]['pixel shift'].keys():
+				pixelshift[axis] = shiftinfo[t]['pixel shift'][axis]
+			# fake the current state for the transform with alpha = 0
+			scope = leginondata.ScopeEMData(initializer=state[1])
+			scope['stage position']['a'] = 0.0
+			cam = leginondata.CameraEMData()
+			# measureScopeChange already unbinned it, so fake cam bin = 1
+			cam['binning'] = {'x':1,'y':1}
+			cam['ccdcamera'] = self.instrument.getCCDCameraData()
+			# get the virtual x,y movement
+			newscope = self.transform(pixelshift, scope, cam)
+			# y component is all we care about to get Z
+			y = newscope['stage position']['y'] - scope['stage position']['y']
+			z[t] = y / math.sin(state[t]['stage position']['a'])
+
+		zmean = (z[1]+z[2]) / 2
+		return zmean
 
 	def measureTiltAxisLocation(self, tilt_value=0.26, numtilts=1, tilttwice=False,
 	  update=False, snrcut=10.0, correlation_type='phase', medfilt=False):
@@ -1311,6 +1443,7 @@ class StageTiltCalibrationClient(StageCalibrationClient):
 
 		## convert pixel shift into stage movement
 		newscope = self.transform(pixelshift, imagedata0['scope'], imagedata0['camera'])
+
 		## only want the y offset (distance from tilt axis)
 		deltay = newscope['stage position']['y'] - imagedata0['scope']['stage position']['y']
 		## scale correlation shift to the axis offset
@@ -1368,7 +1501,6 @@ class StageTiltCalibrationClient(StageCalibrationClient):
 				tilt1=tilt_value, correlation_type=correlation_type, beam_tilt_value=beam_tilt)
 			if defshift is not None and abs(defshift) < 1e-5:
 				defshifts.append(defshift)
-		print defshifts	
 		### END TILTING; BEGIN ASSESSMENT
 
 		if len(defshifts) < 1:
@@ -1500,11 +1632,10 @@ class StageTiltCalibrationClient(StageCalibrationClient):
 			self.displayImage(im0)
 		try:
 			defresult = self.node.btcalclient.measureDefocusStig(beam_tilt_value, False, False, correlation_type, 0.5, imagedata0)
-		except RuntimeError, e:
-			self.node.logger.error('Measurement failed: %s' % e)
+		except (NoMatrixCalibrationError,RuntimeError), e:
+			self.node.logger.error(e)
 			return imagedata0, None 
 		def0 = defresult['defocus']
-		print defresult
 		minres = defresult['min']
 		self.node.logger.info('acquiring tilt=%s degrees' % (tilt1deg))
 		self.instrument.setData(state1)
@@ -1515,7 +1646,6 @@ class StageTiltCalibrationClient(StageCalibrationClient):
 		self.displayImage(im1)
 		defresult = self.node.btcalclient.measureDefocusStig(beam_tilt_value, False, False, correlation_type, 0.5, imagedata1)
 		def1 = defresult['defocus']
-		print defresult
 		minres = min((minres,defresult['min']))
 		if minres > 5000000:
 			self.node.logger.error('Measurement not reliable: residual= %.0f' % minres)
@@ -1567,8 +1697,7 @@ class ModeledStageCalibrationClient(MatrixCalibrationClient):
 	def storeMagCalibration(self, tem, cam, label, ht, mag, axis, angle, mean):
 		caldata = leginondata.StageModelMagCalibrationData()
 		caldata['session'] = self.node.session
-		caldata['tem'] = tem
-		caldata['ccdcamera'] = cam
+		self.setDBInstruments(caldata,tem,cam)
 		caldata['label'] = label
 		caldata['high tension'] = ht
 		caldata['magnification'] = mag
@@ -1580,14 +1709,7 @@ class ModeledStageCalibrationClient(MatrixCalibrationClient):
 	def researchMagCalibration(self, tem, cam, ht, mag, axis):
 		qinst = leginondata.StageModelMagCalibrationData(magnification=mag, axis=axis)
 		qinst['high tension'] = ht
-		if tem is None:
-			qinst['tem'] = self.instrument.getTEMData()
-		else:
-			qinst['tem'] = tem
-		if cam is None:
-			qinst['ccdcamera'] = self.instrument.getCCDCameraData()
-		else:
-			qinst['ccdcamera'] = cam
+		self.setDBInstruments(qinst,tem,cam)
 
 		caldatalist = self.node.research(datainstance=qinst, results=1)
 		if len(caldatalist) > 0:
@@ -1633,11 +1755,8 @@ class ModeledStageCalibrationClient(MatrixCalibrationClient):
 
 	def storeModelCalibration(self, tem, cam, label, axis, period, a, b):
 		caldata = leginondata.StageModelCalibrationData()
-		caldata['tem'] = tem
-		caldata['ccdcamera'] = cam
 		caldata['session'] = self.node.session
-		caldata['tem'] = self.instrument.getTEMData()
-		caldata['ccdcamera'] = self.instrument.getCCDCameraData()
+		self.setDBInstruments(caldata,tem,cam)
 		caldata['label'] = label 
 		caldata['axis'] = axis
 		caldata['period'] = period
@@ -1651,14 +1770,7 @@ class ModeledStageCalibrationClient(MatrixCalibrationClient):
 
 	def researchModelCalibration(self, tem, ccdcamera, axis):
 		qinst = leginondata.StageModelCalibrationData(axis=axis)
-		if tem is None:
-			qinst['tem'] = self.instrument.getTEMData()
-		else:
-			qinst['tem'] = tem
-		if ccdcamera is None:
-			qinst['ccdcamera'] = self.instrument.getCCDCameraData()
-		else:
-			qinst['ccdcamera'] = ccdcamera
+		self.setDBInstruments(qinst,tem,ccdcamera)
 		caldatalist = self.node.research(datainstance=qinst, results=1)
 		if len(caldatalist) > 0:
 			caldata = caldatalist[0]
@@ -1675,6 +1787,7 @@ class ModeledStageCalibrationClient(MatrixCalibrationClient):
 			caldata2 = {}
 			caldata2['axis'] = caldata['axis']
 			caldata2['period'] = caldata['period']
+			caldata2['label'] = caldata['label']
 			caldata2['a'] = numpy.ravel(caldata['a']).copy()
 			caldata2['b'] = numpy.ravel(caldata['b']).copy()
 			return caldata2
@@ -1803,8 +1916,8 @@ class ModeledStageCalibrationClient(MatrixCalibrationClient):
 
 		xmagcal = self.retrieveMagCalibration(tem, ccd, scope['high tension'], scope['magnification'], 'x')
 		ymagcal = self.retrieveMagCalibration(tem, ccd, scope['high tension'], scope['magnification'], 'y')
-		self.node.logger.debug('x mag cal %s' % (xmagcal,))
-		self.node.logger.debug('y mag cal %s' % (ymagcal,))
+		self.node.logger.debug('x mag cal angle=%6.3f, scale=%e' % (xmagcal['angle'],xmagcal['mean']))
+		self.node.logger.debug('y mag cal angle=%6.3f, scale=%e' % (ymagcal['angle'],ymagcal['mean'],))
 
 		newx = position['x']
 		newy = position['y']
@@ -1836,8 +1949,8 @@ class ModeledStageCalibrationClient(MatrixCalibrationClient):
 
 		xmagcal = self.retrieveMagCalibration(tem, ccd, scope['high tension'], scope['magnification'], 'x')
 		ymagcal = self.retrieveMagCalibration(tem, ccd, scope['high tension'], scope['magnification'], 'y')
-		self.node.logger.debug('x mag cal %s' % (xmagcal,))
-		self.node.logger.debug('y mag cal %s' % (ymagcal,))
+		self.node.logger.debug('x mag cal angle=%6.3f, scale=%e' % (xmagcal['angle'],xmagcal['mean']))
+		self.node.logger.debug('y mag cal angle=%6.3f, scale=%e' % (ymagcal['angle'],ymagcal['mean'],))
 
 
 		delta = self.pixtix(xmod, ymod, xmagcal, ymagcal, curstage['x'], curstage['y'], pixcol, pixrow)
@@ -1894,18 +2007,14 @@ class EucentricFocusClient(CalibrationClient):
 	def __init__(self, node):
 		CalibrationClient.__init__(self, node)
 
-	def researchEucentricFocus(self, ht, mag, tem=None, ccdcamera=None):
+	def researchEucentricFocus(self, ht, mag, probe=None, tem=None, ccdcamera=None):
 		query = leginondata.EucentricFocusData()
-		if tem is None:
-			query['tem'] = self.instrument.getTEMData()
-		else:
-			query['tem'] = tem
-		if ccdcamera is None:
-			query['ccdcamera'] = self.instrument.getCCDCameraData()
-		else:
-			query['ccdcamera'] = ccdcamera
+		self.setDBInstruments(query,tem,ccdcamera)
 		query['high tension'] = ht
 		query['magnification'] = mag
+		if probe is None:
+			probe = self.instrument.tem.ProbeMode
+		query['probe'] = probe
 		datalist = self.node.research(datainstance=query, results=1)
 		if datalist:
 			eucfoc = datalist[0]
@@ -1913,12 +2022,69 @@ class EucentricFocusClient(CalibrationClient):
 			eucfoc = None
 		return eucfoc
 
-	def publishEucentricFocus(self, ht, mag, ef):
-		newdata = leginondata.EucentricFocusData()
-		newdata['session'] = self.node.session
-		newdata['tem'] = self.instrument.getTEMData()
-		newdata['ccdcamera'] = self.instrument.getCCDCameraData()
-		newdata['high tension'] = ht
-		newdata['magnification'] = mag
-		newdata['focus'] = ef
-		self.node.publish(newdata, database=True, dbforce=True)
+	def publishEucentricFocus(self, ht, mag, probe, ef):
+		camera_names = self.instrument.getCCDCameraNames()
+		# need to publish for all cameras since it can be used by any
+		for name in camera_names:
+			newdata = leginondata.EucentricFocusData()
+			newdata['session'] = self.node.session
+			newdata['tem'] = self.instrument.getTEMData()
+			newdata['ccdcamera'] = self.instrument.getCCDCameraData(name)
+			newdata['high tension'] = ht
+			newdata['magnification'] = mag
+			newdata['probe'] = probe
+			newdata['focus'] = ef
+			self.node.publish(newdata, database=True, dbforce=True)
+
+class BeamSizeCalibrationClient(CalibrationClient):
+	def getCrossOverIntensityDial(self,scopedata):
+		return self.researchBeamSizeCalibration(scopedata,'focused beam')[0]
+
+	def getSizeIntensityDialScale(self,scopedata):
+		scale,c2size = self.researchBeamSizeCalibration(scopedata,'scale')
+		if not c2size:
+			return None
+		c2results = leginondata.C2ApertureSizeData(session=self.node.session,tem=scopedata['tem']).query(results=1)
+		if c2results and c2results[0]['size']:
+			session_c2size = float(c2results[0]['size'])
+			return scale * (c2size / session_c2size)
+
+	def researchBeamSizeCalibration(self,scopedata,key):
+		if not scopedata:
+			return None, None
+		# search beamsize
+		queryinstance = leginondata.BeamSizeCalibrationData()
+		queryinstance['tem'] = scopedata['tem']
+		queryinstance['spot size'] = scopedata['spot size']
+		queryinstance['probe mode'] = scopedata['probe mode']
+		caldatalist = self.node.research(datainstance=queryinstance, results=1)
+		if len(caldatalist) > 0:
+			return caldatalist[0][key], caldatalist[0]['c2 size']
+		else:
+			return None, None
+	
+	def getBeamSize(self,scopedata):
+		'''Return beam diameter in meters'''
+		slope = self.getSizeIntensityDialScale(scopedata)
+		intercept = self.getCrossOverIntensityDial(scopedata)
+		intensity = scopedata['intensity']
+		if slope is not None and intercept is not None:
+			intensity_delta = intensity - intercept
+			beamsize = intensity_delta / slope
+			return beamsize
+
+	def getIlluminatedArea(self,scopedata):
+		beam_diameter = self.getBeamSize(scopedata) 
+		if beam_diameter:
+			return math.pi * (beam_diameter/2)**2
+		else:
+			return None
+
+	def getIntensityFromAreaScale(self,scopedata,area_scale_factor):
+		beam_cross_over = self.getCrossOverIntensityDial(scopedata)
+		if not beam_cross_over:
+			return None
+		intensity = scopedata['intensity']
+		intensity_scale_factor = 1 / math.sqrt(area_scale_factor)
+		new_intensity = (intensity - beam_cross_over) * intensity_scale_factor + beam_cross_over
+		return new_intensity

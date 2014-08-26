@@ -65,21 +65,35 @@ function image_is_exemplar() {
 	}
 }
 
+function trash_image() {
+	if (bt_trash_state = document.getElementById("bt_trash")) {
+		bt_trash_state.value='clicked'
+	}
+	update_image_list(jsmasterview) 
+	bt_trash_state.value=''
+}
+
 function hide_image() {
 	var all=false
-	if (o=document.getElementById("chk_hide_all")) {
-		all=(o.checked) ? true : false
-	}
-	if (all) {
-		for (var i in jsviews) {
-			update_image_list(jsviews[i])
+	if (bt_hide_state = document.getElementById("bt_hide")) {
+		bt_hide_state.value='clicked'
+		if (o=document.getElementById("chk_hide_all")) {
+			all=(o.checked) ? true : false
 		}
-	} else {
-		update_image_list(jsmasterview) 
+		if (all) {
+			for (var i in jsviews) {
+				update_image_list(jsviews[i])
+				bt_hide_state.value=''
+			}
+		} else {
+			update_image_list(jsmasterview) 
+		}
+		bt_hide_state.value=''
 	}
 }
 
 function check_hide_state(view) {
+	// reactivates buttons after action
 	state = eval("js"+view+"done")
 	if (state) {
 		eval('clearInterval(hide_interval'+view+')')
@@ -87,16 +101,35 @@ function check_hide_state(view) {
 		if (bt_hide_state) {
 			bt_hide_state.disabled=false
 		}
+		if (bt_trash_state) {
+			bt_trash_state.disabled=false
+		}
 	} else {
 		if (bt_hide_state) {
 			bt_hide_state.disabled=true
+		}
+		if (bt_trash_state) {
+			bt_trash_state.disabled=true
 		}
 	}
 }
 
 function update_image_list(view) {
+	// This function updates database with the status and then update the image list
+	//
+	//hidden_state passed into updateimagelist is determined by values of the hide and trash button
 	if (bt_hide_state = document.getElementById("bt_hide")) {
+		if (bt_hide_state.value=='clicked') {
+			var hidden_state='h'
+		}
 		bt_hide_state.disabled=true
+	}
+	if (bt_trash_state = document.getElementById("bt_trash")) {
+		if (bt_trash_state.value=='clicked') {
+			var hidden_state='tr'
+		}
+		bt_trash_state.disabled=true
+
 	}
 	if (list = eval("document.viewerform."+view+"pre"))
 		selpreset=list.options[list.selectedIndex].value
@@ -104,7 +137,7 @@ function update_image_list(view) {
 	if (obj=document.viewerform.imageId) {
 		jsindex = obj.selectedIndex
 		jsimgId = obj.options[jsindex].value
-		var url = 'updateimagelist.php?username='+jsUsername+'&imageId='+jsimgId+'&sessionId='+jsSessionId+'&p='+selpreset+'&ac=h'
+		var url = 'updateimagelist.php?username='+jsUsername+'&imageId='+jsimgId+'&sessionId='+jsSessionId+'&p='+selpreset+'&s='+hidden_state
 		var xmlhttp = getXMLHttpRequest()
 		xmlhttp.open('GET', url, true)
 		xmlhttp.onreadystatechange = function() {
@@ -124,7 +157,7 @@ function update_image_list(view) {
 						obj.options[jsindex].selected=true
 					updateviews()
 				}
-			}
+			} 
 		}
 		xmlhttp.send(null)
 	}
@@ -134,7 +167,7 @@ function update_image_list(view) {
 
 function setproject(id) {
 	if (obj=document.viewerform.projectId) {
-		for (var i in obj.options) {
+		for (var i=0;i<obj.options.length;i++) {
 			if (obj.options[i].value == id) {
 				obj.options[i].selected=true
 				break
@@ -186,15 +219,16 @@ function getKey(e)
 			updateviews()
 			break
 		case 'H':
-			update_image_list()
+			hide_image()
 			break
 		case 'U':
-			update_image_list()
+			hide_image()
+			break
+		case 'T':
+			trash_image()
 			break
 		case 'E':
 			image_is_exemplar()
-			incIndex()
-			updateviews()
 			break
   }
 }
@@ -537,6 +571,7 @@ function newdatatype(view) {
 }
 
 function newfile(view){
+	// The tools that alters the view
 	jssize = eval(view+"size")
 	jsvfile = eval("jsvfile"+view)
 	selpreset = eval("jspreset"+view)
@@ -558,32 +593,32 @@ function newfile(view){
 
 	eval("jspreset"+view+"='"+selpreset+"'")
 
+	autos = eval("document.viewerform."+view+"autos")
+	if (eval(view+"fft_bt_st"))
+		setFFTScale(view);
 	setImageStatus(view)
 
 	if (eval(view+"fft_bt_st")) fft="&fft=1"; else fft=""
+
+	// Set scripts
 	if (eval(view+"ace_bt_st")) {
 		jsimagescriptcur="getaceimg.php"
 		jspresetscriptcur="getacepreset.php"
 	} else { 
-		jsimagescriptcur = eval("jsimagescript"+view)
+		if (eval(view+"dd_bt_st"))	jsimagescriptcur="dddriftgraph.php"; else jsimagescriptcur = eval("jsimagescript"+view)
 		jspresetscriptcur = eval("jspresetscript"+view)
 	}
 	jscommentscriptcur = "getcomment.php"
-	pselp = (cpselpar = eval("jsptclpick"+view)) ? "&psel="+cpselpar : ""
-	ag = (cacepar = eval("jsaceparam"+view)) ? "&g="+cacepar : ""
-	ao = (caceopt = eval("jsaceopt"+view)) ? "&opt="+caceopt : ""
+
+	// Options
+	// image display tools
 	sb = (eval(view+"scale_bt_st")) ? "&sb=1" : ""
 	tg = (eval(view+"target_bt_st")) ? "&tg=1" : ""
 	t1=(eval("jstagparam1"+view)==1) ? 1 : 0
 	t1+=(eval("jstagparam2"+view)==1) ? 2 : 0
 	displayfilename = (eval(view+"tag_bt_st")) ? "&df="+t1 : ""
-	dlbl = (eval("jsptcllabel"+view)) ? "&dlbl=1" : ""
-	pcb = (colorby = eval("jsptclcolor"+view)) ? "&pcb="+colorby : ""
-	nptcl = (eval(view+"nptcl_bt_st")) ? "&nptcl=1" : ""
-	if (nptcl) {
-		ptclparam=eval("jsptclparam"+view)
-		nptcl += ptclparam
-	}
+	if (cdwdformat = eval("jsdwdformat"+view)) dwdformat="&f="+cdwdformat; else cdwdformat=""
+	// image ajustment
 	np = (cmin = eval("jsmin"+view)) ? "&np="+cmin : ""
 	if (cmax = eval("jsmax"+view)) xp="&xp="+cmax; else xp=""
 	if (cfilter = eval("jsfilter"+view)) flt="&flt="+cfilter; else flt=""
@@ -593,20 +628,46 @@ function newfile(view){
 	if (cgradient = eval("jsgradient"+view)) gradient="&gr="+cgradient; else gradient=""
 	if (cautoscale= eval("jsautoscale"+view)) autoscale="&autoscale="+cautoscale; else autoscale=""
 	if (cloadjpg= eval("jsloadjpg"+view)) loadjpg="&lj="+cloadjpg; else loadjpg=""
+	if (ccacheonly= eval("jscacheonly"+view)) cacheonly="&conly="+ccacheonly; else cacheonly=""
+	// particle picking
+	pselp = (cpselpar = eval("jsptclpick"+view)) ? "&psel="+cpselpar : ""
+	dlbl = (eval("jsptcllabel"+view)) ? "&dlbl=1" : ""
+	pcb = (colorby = eval("jsptclcolor"+view)) ? "&pcb="+colorby : ""
+	nptcl = (eval(view+"nptcl_bt_st")) ? "&nptcl=1" : ""
+	if (nptcl) {
+		ptclparam=eval("jsptclparam"+view)
+		nptcl += ptclparam
+	}
 	if (cptclsel = eval("jsptclsel"+view)) ptclsel="&psel="+escape(cptclsel); else ptclsel=""
-	if (cdwdformat = eval("jsdwdformat"+view)) dwdformat="&f="+cdwdformat; else cdwdformat=""
+	// ctf estimation
+	ag = (cacepar = eval("jsaceparam"+view)) ? "&g="+cacepar : ""
+	am = (cacemethod = eval("jsacemethod"+view)) ? "&m="+cacemethod : ""
+	ar = (cacerun = eval("jsacerun"+view)) ? "&r="+cacerun : ""
+	ao = (caceopt = eval("jsaceopt"+view)) ? "&opt="+caceopt : ""
+	scx = (acescx = eval("jsacescx"+view)) ? "&scx="+acescx : ""
+	scy = (acescy = eval("jsacescy"+view)) ? "&scy="+acescy : ""
 
-	options = "imgsc="+jsimagescriptcur+
-		"&preset="+selpreset+
-		"&session="+jsSessionId+
-		"&id="+jsimgId+
-		"&s="+jssize+quality+tg+sb+fft+np+xp+flt+fftbin+binning+autoscale+displayfilename+loadjpg+pselp+nptcl+pcb+dlbl+ag+ao+gradient
+	if (eval(view+"dd_bt_st")) {
+		options = "id="+jsimgId+
+			"&expId="+jsSessionId
+	} else {
+		options = "imgsc="+jsimagescriptcur+
+			"&preset="+selpreset+
+			"&session="+jsSessionId+
+			"&id="+jsimgId+
+			quality+tg+sb+fft+np+xp+flt+fftbin+binning+am+ar+ag+ao+displayfilename+loadjpg+pselp+nptcl+pcb+dlbl+gradient+scx+scy+autoscale+cacheonly
+	}
+	optsize = "&s="+jssize
 
 	if (options == lastoptions[vid])
 		return
+	// put the script and options together
+	ni = jsimagescriptcur+"?"+options+optsize
 
-	ni = jsimagescriptcur+"?"+options
-	nlink = "javascript:popUpMap('map.php?"+options+"')"
+	// The tools that opens a separate window
+	nmaplink = "javascript:popUpMap('map.php?"+options+"')"
+	nddlink = "javascript:popUpW('getdddriftgraph.php?"+options+"&s=512')"
+	nlink = (eval(view+"dd_bt_st")) ? nddlink: nmaplink
 	ninfolink = "imgreport.php?id="+jsimgId+"&preset="+selpreset
 	ndeqlink = "javascript:popUpW('removequeue.php?id="+jsimgId+"&preset="+selpreset+"')"
 	ndownloadlink = "download.php?id="+jsimgId+"&preset="+selpreset+fft+cdwdformat
@@ -632,9 +693,16 @@ function newfile(view){
 
 	if (cif=eval("this."+view+"if")) {
 		iflink = jspresetscriptcur+"?vf="+jsvfile+"&id="+jsimgId+"&preset="+selpreset+pselp+nptcl
-		// --- for ctffind presets instead of ace2
-		if (eval("jsaceparam"+view)==3)
+		// --- for specific estimation method presets
+		if (eval("jsacemethod"+view)==2)
+			iflink = iflink+"&ctf=ace1"
+		if (eval("jsacemethod"+view)==3)
+			iflink = iflink+"&ctf=ace2"
+		if (eval("jsacemethod"+view)==4)
 			iflink = iflink+"&ctf=ctffind"
+		// --- for specific acerun
+		if ((rid=eval("jsacerun"+view))>0)
+			iflink = iflink+"&r="+rid
 		cif.document.location.replace(iflink)
 	}
 	if (cmt=eval("this."+view+"cmt")) {
@@ -657,9 +725,29 @@ function setDownloadlink(view) {
 }
 
 function setAceParam(view) {
+	if (method = document.getElementById(view+"acemethod")) {
+		acem = method.options[method.selectedIndex].value
+		eval("jsacemethod"+view+"="+acem)
+		newfile(view)
+	}
+	if (acerun = document.getElementById(view+"acerun")) {
+		acer = acerun.options[acerun.selectedIndex].value
+		eval("jsacerun"+view+"="+acer)
+		newfile(view)
+	}
 	if (param = document.getElementById(view+"aceparam")) {
 		vf = param.options[param.selectedIndex].value
 		eval("jsaceparam"+view+"="+vf)
+
+		// I believe this is no longer needed in the redux era,
+		// Anchi should confirm. xscale and yscale are not defined.
+		//scx = document.getElementById(view+"xscale").value
+		//scy = document.getElementById(view+"yscale").value
+		if (!scx) scx = 1
+		if (!scy) scy = 1
+		eval("jsacescx"+view+"="+scx.value)
+		eval("jsacescy"+view+"="+scy.value)
+
 		aceopt=0
 		if (aceo = document.getElementById(view+"aceparam2")) {
 			if (aceo.checked) {
@@ -795,6 +883,20 @@ function isImageLoaded(view) {
 		}
 	}
 	return false
+}
+
+function setFFTScale(viewname) {
+	/* min max scale does not work for power spectrum scale
+	Therefore if previously assigned, it is replaced by stdev scale
+	*/
+	autos = eval("document.viewerform."+viewname+"autos")
+	if (autos.value!=0)
+		return autos.value
+	else {
+		state = "s;3"
+		setautoscale(viewname, state)
+		return state
+	}
 }
 
 function setImageStatus(viewname) {
@@ -953,6 +1055,13 @@ function setloadfromjpg(viewname, state) {
 	}
 }
 
+function setcacheonly(viewname, state) {
+	eval("jscacheonly"+viewname+"='"+state+"'")
+	if (b = eval("document.viewerform."+viewname+"cacheonly")) {
+		b.value=state
+	}
+}
+
 function setdisplayfilename(viewname, state) {
 	eval("jsdisplayfilename"+viewname+"='"+state+"'")
 	if (b = eval("document.viewerform."+viewname+"df")) {
@@ -980,6 +1089,7 @@ function popUpAdjust(URL, view, param){
 	autoscale = eval("jsautoscale"+view)
 	displayfilename = eval("jsdisplayfilename"+view)
 	loadjpg= eval("jsloadjpg"+view)
+	cacheonly= eval("jscacheonly"+view)
 	min = (min) ? "&pmin="+min : ""
 	max = (max) ? "&pmax="+max : ""
 	filter = (filter) ? "&filter="+filter : ""
@@ -990,8 +1100,9 @@ function popUpAdjust(URL, view, param){
 	autoscale= (autoscale) ? "&autoscale="+autoscale : ""
 	displayfilename= (displayfilename) ? "&df="+displayfilename : ""
 	loadjpg= (loadjpg) ? "&lj="+loadjpg : ""
+	cacheonly= (cacheonly) ? "&conly="+cacheonly : ""
 	param = (param) ? param : "left=0,top=0,height=370,width=370"
-	eval (view+"adjw"+" = window.open('"+URL+min+max+filter+fftbin+binning+quality+gradient+autoscale+displayfilename+loadjpg+"', '"+view+"adj', '"+param+"', 'toolbar=0,scrollbars=0,location=0,statusbar=0,menubar=0,resizable=0,alwaysRaised=yes');")
+	eval (view+"adjw"+" = window.open('"+URL+min+max+filter+fftbin+binning+quality+gradient+autoscale+displayfilename+loadjpg+cacheonly+"', '"+view+"adj', '"+param+"', 'toolbar=0,scrollbars=0,location=0,statusbar=0,menubar=0,resizable=0,alwaysRaised=yes');")
 }
 
 function popUpPtcl(URL, view, param) {

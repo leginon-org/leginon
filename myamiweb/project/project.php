@@ -1,8 +1,8 @@
 <?php
-require "inc/project.inc.php";
-require "inc/user.inc.php";
-require "inc/leginon.inc";
-require "inc/utilpj.inc.php";
+require_once "inc/project.inc.php";
+require_once "inc/user.inc.php";
+require_once "inc/leginon.inc";
+require_once "inc/utilpj.inc.php";
 if (privilege('projects')) {
 	$title = "Projects";
 	login_header($title);
@@ -41,7 +41,7 @@ foreach ((array)$projects as $k=>$proj) {
 		$nb=count($experimentIds);
 		$last=current($experimentIds);
 	}
-	$info = $leginondata->getSessionInfo($last);
+	$info = $leginondata->getSessionInfo($last['leginonId']);
 	$expId = $info['SessionId'];
 	$last_str =  ($last) ? "last: <a class='header' href='".SUMMARY_URL.$expId."'>".$last['name']."</a>" : "";
 	$exp_str = "experiment";

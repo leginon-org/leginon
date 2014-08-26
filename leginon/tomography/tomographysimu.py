@@ -27,9 +27,8 @@ class TomographySimu(leginon.acquisition.Acquisition):
 	panelclass = leginon.gui.wx.tomography.TomographySimu.Panel
 	settingsclass = leginon.leginondata.TomographySimuSettingsData
 
-	defaultsettings = {
-		'preset order': [],
-		'move type': 'image shift',
+	defaultsettings = leginon.acquisition.Acquisition.defaultsettings
+	defaultsettings.update({
 		'model mag': 'saved value for this series',
 		'z0 error': 2e-6,
 		'phi': 0.0,
@@ -41,7 +40,7 @@ class TomographySimu(leginon.acquisition.Acquisition):
 		'use tilt': True,
 		'simu tilt series': '1',
 		'fit data points': 4,
-	}
+	})
 
 	def __init__(self, *args, **kwargs):
 		leginon.acquisition.Acquisition.__init__(self, *args, **kwargs)

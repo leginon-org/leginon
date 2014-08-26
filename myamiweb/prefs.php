@@ -28,11 +28,13 @@ if ($_POST) {
 				$v = trim($v);
 				$$k = addslashes($v);
 			}
-
+		//can not use addslashes on checkbox value
+		$advanced = ($_POST['advanced']=='on') ? 1:0;
+			
 		if (!$haspass)
 			$chpass=true;
 
-		$newProfile=$dbemauth->updateUser($userId, $username, $firstname, $lastname, $title, $institution, $dept, $address, $city, $statecountry, $zip, $phone, $fax, $email, $url, $chpass, $mypass1, $mypass2);
+		$newProfile=$dbemauth->updateUser($userId, $username, $firstname, $lastname, $title, $institution, $dept, $address, $city, $statecountry, $zip, $phone, $fax, $email, $url, $chpass, $mypass1, $mypass2, $groupId=null, $noleginon=0, $advanced);
 
 		if ($newProfile!=2) {
 			echo '<p><font face="Arial, Helvetica, sans-serif" size="4" color="#FF2200">'.$newProfile.'</font></p>';
@@ -46,6 +48,7 @@ $userinfo = $dbemauth->getUserInfo($username);
 
 $action="update";
 $checkpass=true;
+$advancedval = ($userinfo['advanced'] == 1) ? "CHECKED":"";
 ?>
 <form name="userform" action="<?=$_SERVER['PHP_SELF'] ?>" method="POST">
   <input type="hidden" name="userId" value="<?=$userId?>">
@@ -171,6 +174,12 @@ $checkpass=true;
 		<input class="field" type="text" value="<?php echo $userinfo['url']; ?>" name="url" id="url"><br>
 	</td>
 	</tr>
+	<tr>
+	<td>
+		<input type="checkbox" name="advanced" <?=$advancedval?> >
+		<label for="advanced">Always show advanced options</label><br />
+	</td>
+	</tr>	
 	<tr>
 	<td>
 		<input type="submit" value="<?=$action?>" name="submit">

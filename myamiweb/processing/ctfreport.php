@@ -1,16 +1,18 @@
 <?php
 
-require "inc/particledata.inc";
-require "inc/leginon.inc";
-require "inc/project.inc";
-require "inc/viewer.inc";
-require "inc/processing.inc";
-require "inc/appionloop.inc";
+require_once "inc/particledata.inc";
+require_once "inc/leginon.inc";
+require_once "inc/project.inc";
+require_once "inc/viewer.inc";
+require_once "inc/processing.inc";
+require_once "inc/appionloop.inc";
 
 $ctf = new particledata();
 
-$sessionId = $_GET['expId'];
-$formAction=$_SERVER['PHP_SELF']."?expId=$sessionId";
+$expId = $_GET['expId'];
+$showmore = $_GET['showmore'] ? $_GET['showmore'] : '0';
+$projectId =getProjectId();
+$formAction=$_SERVER['PHP_SELF']."?expId=$expId&showmore=$showmore";
 
 $fieldarray = $ctf->getCTFParameterFields();
 foreach ($fieldarray as $k=>$v) {
@@ -25,7 +27,7 @@ $javafunctions="
 <script LANGUAGE='JavaScript'>
 	function infopopup(";
 foreach ($aceparamsfields as $param) {
-	if (ereg("\|", $param)) {
+	if (preg_match("%\|%", $param)) {
 		$namesplit=explode("|",$param);
 		$param=end($namesplit);
 	}
@@ -41,7 +43,7 @@ $javafunctions.="){
 		newwindow.document.write(\"</HEAD><BODY><TABLE class='tableborder' border='1' cellspacing='1' cellpadding='5'>\");";
 
 foreach ($aceparamsfields as $param) {
-	if (ereg("\|", $param)) {
+	if (preg_match("%\|%", $param)) {
 		$namesplit=explode("|",$param);
 		$param=end($namesplit);
 	}
@@ -64,15 +66,15 @@ $javafunctions.= editTextJava();
 processing_header('CTF report','CTF Report',$javafunctions);
 
 if (!$_GET['showHidden']) {
-	$ctfrundatas = $ctf->getCtfRunIds($sessionId, False);
-	$hidectfrundatas = $ctf->getCtfRunIds($sessionId, True);
+	$ctfrundatas = $ctf->getCtfRunIds($expId, False);
+	$hidectfrundatas = $ctf->getCtfRunIds($expId, True);
 } else {
-	$ctfrundatas = $ctf->getCtfRunIds($sessionId, True);
+	$ctfrundatas = $ctf->getCtfRunIds($expId, True);
 	$hidectfrundatas = $ctfrundatas;
 }
 
 if (!$ctfrundatas && $hidectfrundatas) {
-	$ctfrundatas = $ctf->getCtfRunIds($sessionId, True);
+	$ctfrundatas = $ctf->getCtfRunIds($expId, True);
 	$hidectfrundatas = $ctfrundatas;
 }
 
@@ -86,16 +88,199 @@ if (count($ctfrundatas) != count($hidectfrundatas) && !$_GET['showHidden']) {
 }
 
 if ($ctfrundatas) {
-	echo "<h3>Summary of confidence values from all runs</h3>\n";
-	echo "<a href='ctfgraph.php?hg=1&expId=$sessionId&s=1&f=confidence'>\n";
-	echo "<img border='0' width='400' height='300' src='ctfgraph.php?w=400&h=300&hg=1&expId=$sessionId&s=1&f=confidence'></a>\n";
-	echo "<br/>\n";
+	if ($showmore > 0) {
+		$showmorelink = $_SERVER['PHP_SELF']."?expId=$expId&showmore=0";
+		echo "<a href='$showmorelink'>[show less statistics]</a><br/>\n";
+	}	else {
+		$showmorelink = $_SERVER['PHP_SELF']."?expId=$expId&showmore=1";
+		echo "<a href='$showmorelink'>[show all statistics]</a><br/>\n";
+	}		
 
-	$ctfdownlink .= "<h3>";
-	$ctfdownlink .= "<a href='downloadctfdata.php?expId=$sessionId'>\n";
-	$ctfdownlink .= "  <img style='vertical-align:middle' src='img/download_arrow.png' border='0' width='16' height='17' alt='download ctf data'>&nbsp;download ctf data\n";
+	echo "<h3>Summary of confidence values from all runs</h3>\n";
+
+	echo "<table>\n";
+
+	// Overall Summary
+	echo "<tr><td colspan='2' align='center'>\n";
+
+		$minconf = 0.2;
+		$ctfinfo = $ctf->getBestCtfInfoByResolution($expId, $minconf);
+
+		$numctfest = count($ctfinfo);
+
+		if ($numctfest > 1) {
+
+			echo "<b>Overall Summary for $numctfest CTF estimates</b></br>\n";
+
+			$fields = array('defocus1', 'defocus2', 
+				//'confidence', 'confidence_d', 
+				'angle_astigmatism', 'amplitude_contrast',  
+				'confidence_30_10', 'confidence_5_peak',  
+				'resolution_80_percent', 'resolution_50_percent');
+			$stats = $ctf->getCTFStats($fields, $expId);
+			$display_ctf=false;
+			foreach($stats as $field=>$data) {
+				//echo $field."&nbsp;=>&nbsp;".$data."<br/>\n";
+				foreach($data as $k=>$v) {
+					$display_ctf=true;
+					$imageId = $stats[$field][$k]['id'];
+					$p = $leginondata->getPresetFromImageId($imageId);
+					$stats[$field][$k]['preset'] = $p['name'];
+					$cdf = '<a href="ctfgraph.php?hg=1&expId='
+							.$expId.'&rId='.$ctfrunid.'&f='.$field.'&preset='.$p['name'].'">'
+						.'<img border="0" src="ctfgraph.php?w=100&hg=1&expId='
+							.$expId.'&rId='.$ctfrunid.'&f='.$field.'&preset='.$p['name'].'"></a>';
+					$stats[$field][$k]['img'] = $cdf;
+				}
+			}
+			$display_keys = array ( 'nb', 'min', 'max', 'avg', 'stddev');
+
+			$popupstr = "<a href=\"javascript:infopopup(";
+			foreach ($aceparamsfields as $param) {
+				$popupstr .= "'".$ctfdata[$param]."',";
+			}
+			$popupstr = rtrim($popupstr,',');	
+			$popupstr .=  ")\">\n";
+
+			echo "\n\n<br/>\n\n";
+			echo openRoundBorder();
+			echo "<table cellspacing='3'>";
+
+			echo "<tr>";
+				echo "<td colspan='10'>\n";
+				$j = "";
+				if ($ctfdata['hidden'] == 1) {
+					$j.= " <font color='#cc0000'>HIDDEN</font>\n";
+					$j.= " <input class='edit' type='submit' name='unhideRun".$ctfrunid."' value='unhide'>\n";
+				} else $j.= " <input class='edit' type='submit' name='hideRun".$ctfrunid."' value='hide'>\n";
+				$j .= "<input class='edit' type='button' onClick='parent.location=\"dropctf.php?expId="
+					."$expId&ctfId=$ctfrunid\"' value='delete'>\n";
+				$downloadLink = "(<font size='-2'><a href='downloadctfdata.php?expId=$expId&runId=$ctfrunid'>\n";
+				$downloadLink .= "  <img style='vertical-align:middle' src='img/download_arrow.png' "
+					." border='0' width='16' height='17' alt='download coordinates'>";
+				$downloadLink .= "  &nbsp;download ctf data\n";
+				$downloadLink .= "</a></font>)\n";
+				echo apdivtitle("Overall Stats: &nbsp$downloadLink\n");
+			
+				echo "</td>\n";
+			echo "</tr>\n";
+
+			if ($ctfdata['resamplefr']) {
+				echo "<tr bgcolor='#ffffff'>\n";
+					echo "<td>Resample Freq</td><td>".$ctfdata['resamplefr']."</td>\n";
+				echo "</tr>\n";
+			} elseif ($ctfdata['bin']) {
+				echo "<tr bgcolor='#ffffff'>\n";
+					echo "<td>Binning</td><td>".$ctfdata['bin']."</td>\n";
+				echo "</tr>\n";
+			}
+
+			echo "<tr><td colspan='10'>\n";
+				echo displayCTFstats($stats, $display_keys);
+			echo "</td></tr>\n";
+			echo "</table>";
+			echo closeRoundBorder();
+
+		}
+
+	echo "</td></tr>";
+
+
+	// Row 0
+	echo "<tr><td>\n";
+		echo "<h3>Defocus 1</h3>";
+		echo "<a href='ctfgraph.php?hg=1&expId=$expId&s=1&f=defocus1'>\n";
+		echo "<img border='0' width='400' height='200' src='ctfgraph.php?"
+			."w=800&h=600&hg=1&expId=$expId&s=1&xmax=7e-6&f=defocus1' alt='please wait...'></a>\n";
+	echo "</td><td>\n";
+		echo "<h3>Defocus 2</h3>";
+		echo "<a href='ctfgraph.php?hg=1&expId=$expId&s=1&f=defocus2'>\n";
+		echo "<img border='0' width='400' height='200' src='ctfgraph.php?"
+			."w=800&h=600&hg=1&expId=$expId&s=1&xmax=7e-6&f=defocus2' alt='please wait...'></a>\n";
+	echo "</td></tr>";
+
+	// Row 0
+	echo "<tr><td>\n";
+		echo "<h3>Amplitude Contrast</h3>";
+		echo "<a href='ctfgraph.php?hg=1&expId=$expId&s=1&xmin=0.0&f=amplitude_contrast'>\n";
+		echo "<img border='0' width='400' height='200' src='ctfgraph.php?"
+			."w=800&h=600&hg=1&expId=$expId&s=1&xmin=0.0&f=amplitude_contrast' alt='please wait...'></a>\n";
+	echo "</td><td>\n";
+		echo "<h3>Angle Astigmatism</h3>";
+		echo "<a href='ctfgraph.php?hg=1&expId=$expId&s=1&xmin=-90&xmax=90&f=angle_astigmatism'>\n";
+		echo "<img border='0' width='400' height='200' src='ctfgraph.php?"
+			."w=800&h=600&hg=1&expId=$expId&s=1&xmin=-90&xmax=90&f=angle_astigmatism' alt='please wait...'></a>\n";
+	echo "</td></tr>";
+
+	if ($showmore > 0) {
+	// Row 0
+	echo "<tr><td>\n";
+		echo "<h3>Merged Confidence</h3>";
+		echo "<a href='ctfgraph.php?hg=1&expId=$expId&s=1&f=confidence'>\n";
+		echo "<img border='0' width='400' height='200' src='ctfgraph.php?"
+			."w=800&h=600&hg=1&expId=$expId&s=1&xmin=0.3&f=confidence' alt='please wait...'></a>\n";
+	echo "</td><td>\n";
+		echo "<h3>Confidence D</h3>";
+		echo "<a href='ctfgraph.php?hg=1&expId=$expId&s=1&f=confidence_d'>\n";
+		echo "<img border='0' width='400' height='200' src='ctfgraph.php?"
+			."w=800&h=600&hg=1&expId=$expId&s=1&xmin=0.3&f=confidence_d' alt='please wait...'></a>\n";
+	echo "</td></tr>";
+	}
+
+	// Row 1
+	echo "<tr><td>\n";
+		echo "<h3>Confidence 1/30&Aring; - 1/10&Aring;</h3>";
+		echo "<a href='ctfgraph.php?hg=1&expId=$expId&s=1&f=confidence_30_10'>\n";
+		echo "<img border='0' width='400' height='200' src='ctfgraph.php?"
+			."w=800&h=600&hg=1&expId=$expId&s=1&xmin=0.3&f=confidence_30_10' alt='please wait...'></a>\n";
+	echo "</td><td>\n";
+		echo "<h3>Confidence 5 Peaks</h3>";
+		echo "<a href='ctfgraph.php?hg=1&expId=$expId&s=1&f=confidence_5_peak'>\n";
+		echo "<img border='0' width='400' height='200' src='ctfgraph.php?"
+			."w=800&h=600&hg=1&expId=$expId&s=1&xmin=0.3&f=confidence_5_peak' alt='please wait...'></a>\n";
+	echo "</td></tr>";
+	// Row 2
+	echo "<tr><td>\n";
+		echo "<h3>Resolution at 0.8</h3>";
+		echo "<a href='ctfgraph.php?hg=1&expId=$expId&s=1&xmin=5&xmax=50&f=resolution_80_percent'>\n";
+		echo "<img border='0' width='400' height='200' src='ctfgraph.php?"
+			."w=800&h=600&hg=1&expId=$expId&s=1&xmin=4&xmax=30&f=resolution_80_percent' alt='please wait...'></a>\n";
+	echo "</td><td>\n";
+		echo "<h3>Resolution at 0.5</h3>";
+		echo "<a href='ctfgraph.php?hg=1&expId=$expId&s=1&xmin=5&xmax=30&f=resolution_50_percent'>\n";
+		echo "<img border='0' width='400' height='200' src='ctfgraph.php?"
+			."w=800&h=600&hg=1&expId=$expId&s=1&xmin=4&xmax=30&f=resolution_50_percent' alt='please wait...'></a>\n";
+	echo "</td></tr>";
+	// Row 3
+	echo "<tr><td>\n";
+		echo "<h3>Confidence values during run</h3>\n";
+		echo "<a href='ctfgraph.php?hg=0&expId=$expId&s=1&f=confidence'>\n";
+		echo "<img border='0' width='400' height='200' src='ctfgraph.php?"
+			."w=800&h=600&hg=0&expId=$expId&s=1&f=confidence'></a>\n";
+	echo "</td><td>\n";
+	// very hacky
+		$sessiondata = getSessionList($projectId, $expId);
+		$preset = end($sessiondata['presets']);
+		echo "<h3>Difference from Leginon for preset '$preset'</h3>\n";
+		echo "<a href='autofocacegraph.php?hg=0&expId=$expId&s=1&f=difference&preset=$preset'>\n";
+		echo "<img border='0' width='400' height='200' src='autofocacegraph.php?"
+			."hg=0&expId=$expId&s=1&f=difference&preset=$preset' alt='please wait...'></a>\n";
+	echo "</td></tr>";
+	echo "</table>";
+	$ctfdownlink = "<h3>";
+	$ctfdownlink .= "<a href='downloadctfdata.php?expId=$expId'>\n";
+	$ctfdownlink .= "  <img style='vertical-align:middle' src='img/download_arrow.png' border='0' width='16' height='17' alt='download best ctf data'>&nbsp;download best ctf data\n";
 	$ctfdownlink .= "</a></h3>\n";
 	echo $ctfdownlink;
+
+	$ctfdownlink = "<h3>";
+	$ctfdownlink .= "<a href='downloadctfemxfile.php?expId=$expId'>\n";
+	$ctfdownlink .= "  <img style='vertical-align:middle' src='img/download_arrow.png' border='0' width='16' height='17' alt='download best ctf data'>&nbsp;download best ctf EMX file\n";
+	$ctfdownlink .= "</a></h3>\n";
+	echo $ctfdownlink;
+
+
+	echo "<hr/>\n";
 
 	foreach ($ctfrundatas as $ctfrundata) {
 		$ctfrunid=$ctfrundata['DEF_id'];
@@ -111,13 +296,12 @@ if ($ctfrundatas) {
 		}
 
 		//echo "ctfdata".print_r($ctfdata);
-		if ($ctfdata['stig']!=1 && $ctfdata!=0) {
-			$fields = array('defocus1', 'confidence', 'confidence_d', 'amplitude_contrast');
-		}
-		else {
-			$fields = array('defocus1', 'defocus2', 'confidence', 'angle_astigmatism', 'amplitude_contrast');
-		}
-		$stats = $ctf->getCTFStats($fields, $sessionId, $ctfrunid);
+		$fields = array('defocus1', 'defocus2', 
+			//'confidence', 'confidence_d', 
+			'angle_astigmatism', 'amplitude_contrast',  
+			'confidence_30_10', 'confidence_5_peak',  
+			'resolution_80_percent', 'resolution_50_percent');
+		$stats = $ctf->getCTFStats($fields, $expId, $ctfrunid);
 		$display_ctf=false;
 		foreach($stats as $field=>$data) {
 			//echo $field."&nbsp;=>&nbsp;".$data."<br/>\n";
@@ -127,13 +311,13 @@ if ($ctfrundatas) {
 				$p = $leginondata->getPresetFromImageId($imageId);
 				$stats[$field][$k]['preset'] = $p['name'];
 				$cdf = '<a href="ctfgraph.php?hg=1&expId='
-						.$sessionId.'&rId='.$ctfrunid.'&f='.$field.'&preset='.$p['name'].'">'
+						.$expId.'&rId='.$ctfrunid.'&f='.$field.'&preset='.$p['name'].'">'
 					.'<img border="0" src="ctfgraph.php?w=100&hg=1&expId='
-						.$sessionId.'&rId='.$ctfrunid.'&f='.$field.'&preset='.$p['name'].'"></a>';
+						.$expId.'&rId='.$ctfrunid.'&f='.$field.'&preset='.$p['name'].'"></a>';
 				$stats[$field][$k]['img'] = $cdf;
 			}
 		}
-		$display_keys = array ( 'preset', 'nb', 'min', 'max', 'avg', 'stddev');
+		$display_keys = array ( 'nb', 'min', 'max', 'avg', 'stddev');
 		if ($display_ctf) {
 			$popupstr = "<a href=\"javascript:infopopup(";
 			foreach ($aceparamsfields as $param) {
@@ -147,28 +331,37 @@ if ($ctfrundatas) {
 			echo "<table cellspacing='3'>";
 
 			echo "<tr>";
-				echo "<td>\n";
+				echo "<td colspan='10'>\n";
 				$j = "";
 				if ($ctfdata['hidden'] == 1) {
 					$j.= " <font color='#cc0000'>HIDDEN</font>\n";
 					$j.= " <input class='edit' type='submit' name='unhideRun".$ctfrunid."' value='unhide'>\n";
 				} else $j.= " <input class='edit' type='submit' name='hideRun".$ctfrunid."' value='hide'>\n";
-				echo apdivtitle("Ctf Run: ".$ctfrunid." ".$popupstr."<b>".$rName."</b></a>$j\n");
-
+				$j .= "<input class='edit' type='button' onClick='parent.location=\"dropctf.php?expId=$expId&ctfId=$ctfrunid\"' value='delete'>\n";
+				$downloadLink = "(<font size='-2'><a href='downloadctfdata.php?expId=$expId&runId=$ctfrunid'>\n";
+				$downloadLink .= "  <img style='vertical-align:middle' src='img/download_arrow.png' border='0' width='16' height='17' alt='download coordinates'>";
+				$downloadLink .= "  &nbsp;download ctf data\n";
+				$downloadLink .= "</a></font>)\n";
+				echo apdivtitle("Ctf Run: ".$ctfrunid." ".$popupstr."<b>".$rName."</b></a>".$j."&nbsp$downloadLink\n");
+				
 				echo "</td>\n";
 			echo "</tr>\n";
 
 			echo "<tr bgcolor='#ffffff'>\n";
-				echo "<td>Path:&nbsp;<i>".$ctfdata['path']."</i></td>\n";
+				echo "<td>Time:</td><td><i>".$ctfdata['DEF_timestamp']."</i></td>\n";
+			echo "</tr>\n";
+
+			echo "<tr bgcolor='#ffffff'>\n";
+				echo "<td>Path:</td><td><i>".$ctfdata['path']."</i></td>\n";
 			echo "</tr>\n";
 
 			if ($ctfdata['resamplefr']) {
 				echo "<tr bgcolor='#ffffff'>\n";
-					echo "<td>Resample Freq:&nbsp;".$ctfdata['resamplefr']."</td>\n";
+					echo "<td>Resample Freq</td><td>".$ctfdata['resamplefr']."</td>\n";
 				echo "</tr>\n";
 			} elseif ($ctfdata['bin']) {
 				echo "<tr bgcolor='#ffffff'>\n";
-					echo "<td>Binning:&nbsp;".$ctfdata['bin']."</td>\n";
+					echo "<td>Binning</td><td>".$ctfdata['bin']."</td>\n";
 				echo "</tr>\n";
 			}
 

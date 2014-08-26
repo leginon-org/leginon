@@ -38,6 +38,8 @@ class MrcToJpgLoop(filterLoop.FilterLoop):
 			help="Maximum image size", metavar="INT")
 		self.parser.add_option("--quality", dest="quality", type="int", default=70,
 			help="Quality of the final jpeg images", metavar="INT")
+		self.parser.add_option("--fft", dest="fft", action="store_true",
+			help="Create jpgs of the FFT")
 
 	def processImage(self, imgdata, filtarray):			
 		#Ignore array filter
@@ -45,12 +47,20 @@ class MrcToJpgLoop(filterLoop.FilterLoop):
 		imgmax = self.params['max']
 		imgmin = self.params['min']
 
-		outfile = os.path.join(self.params['rundir'], imgdata['filename']+".jpg")
+		outfile = os.path.join(self.params['rundir'], imgdata['filename'])
+		if self.params['fft'] is True:
+			outfile+=".fft"
+		outfile+=".jpg"
 		if imgmin > imgmax:
 			imgmax = array.max()
 			imgmin = array.min()
 		shape = array.shape
 		maxdim = max(shape)
+		if self.params['fft'] is True:
+			## fft's are binned by 2
+			array = imagefun.bin(array,2)
+			array = imagefun.power(array)
+			maxdim/=2
 		bin = int(math.ceil(float(maxdim/self.params['imgsize'])))	
 		array = imagefun.bin(array,bin)
 		jpg.write(array, outfile, min=imgmin, max=imgmax, quality=self.params['quality'])

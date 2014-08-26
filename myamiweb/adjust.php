@@ -11,7 +11,7 @@ $title = "Image Adjust";
 if ($displayname=$_GET['displayname'])
 	$title .=" - ".$displayname;
 
-$defaultmax = 255;
+$defaultmax = 100;
 if (!$min=$_GET['pmin'])
 	$min=0;
 if (!$max=$_GET['pmax'])
@@ -23,7 +23,7 @@ if (!$currentfilter=$_GET['filter'])
 if (!$currentbinning=$_GET['binning'])
 	$currentbinning='auto';
 if (!$currentfftbin=$_GET['fftbin'])
-	$currentfftbin='b';
+	$currentfftbin='a';
 if (!$currentquality=$_GET['t'])
 	$currentquality='80';
 if (!$currentgradient=$_GET['gr'])
@@ -80,8 +80,8 @@ if ($scaletype=="s") {
 <html>
 <head>
 <?php
-require "getgrad.php";
-require "inc/filter.inc";
+require_once "getgrad.php";
+require_once "inc/filter.inc";
 
 $filterdata = new filter();
 $filtertypes = $filterdata->getFilterTypes();
@@ -95,7 +95,7 @@ $fftbintypes = $filterdata->getFFTBinTypes();
 <script type="text/javascript"><!--
 <?php
 echo"
-var jsmaxgrad = 255
+var jsmaxgrad = 100
 var jsminpix = $min
 var jsmaxpix = $max
 var jsmingradpix = 0
@@ -150,10 +150,8 @@ function getImageInfo() {
 	pnormminval = ((meanval - 3*stdevval)-minval)*100/(maxval-minval)
 	pnormmaxval = ((meanval + 3*stdevval)-minval)*100/(maxval-minval)
 
-	document.getElementById('pmin').value=Math.round(pnormminval)
-	document.getElementById('pmax').value=Math.round(pnormmaxval)
-	document.getElementById('pminrel').value=normminval.toFixed(1)
-	document.getElementById('pmaxrel').value=normmaxval.toFixed(1)
+	document.getElementById('pminrel').value=pnormminval.toFixed(1)
+	document.getElementById('pmaxrel').value=pnormmaxval.toFixed(1)
 		}
 	}
 	xmlhttp.send(null)
@@ -183,10 +181,16 @@ function setscale() {
 	scale=""
 	auto=false
 		scaletype = document.adjustform.scaletype
+		
 		for (i=0; i<scaletype.length; i++){
 			if(scaletype[i].checked) {
 			 scale=scaletype[i].value
 			}
+		}
+		if (scale=='minmax' && eval("parentwindow."+jsviewname+"fft_bt_st")){
+			scale = 'stdev'
+			for (i=0; i<scaletype.length; i++) 
+				scaletype[i].checked=(scaletype[i].value==scale) ? true : false;
 		}
 		if (scale=="minmax") {
 				objpmin=document.getElementById('pminrel')
@@ -203,8 +207,6 @@ function setscale() {
 					objpmin.style.border=jserrorborder
 					return false;
 				}
-				jsminpix=(jsminpix-rminval)*255/(rmaxval-rminval)
-				jsmaxpix=(jsmaxpix-rminval)*255/(rmaxval-rminval)
 		} else if (scale=="stdev") {
 				auto=true
 				objnstdev=document.getElementById('nstdev')
@@ -248,33 +250,46 @@ function setloadfromjpg() {
 }
 
 function update() {
+		
 	if(!setscale()) {
 		return false
 	}
-	if (binninglist = document.adjustform.binning)
-		jsbinning=binninglist.options[binninglist.selectedIndex].value;
-	parentwindow.setbinning(jsviewname,jsbinning);
 
-	if (fftbinlist = document.adjustform.fftbin)
-		jsfftbin=fftbinlist.options[fftbinlist.selectedIndex].value;
-	parentwindow.setfftbin(jsviewname,jsfftbin);
+	//auto load uses all default	
+	if (jsloadfromjpg == 1) {
+		parentwindow.setbinning(jsviewname,'auto');
+		parentwindow.setfilter(jsviewname,'default');
+		parentwindow.setautoscale(jsviewname,'s;5');
+		parentwindow.setquality(jsviewname,'80');
+		parentwindow.setgradient(jsviewname,'default');
+		parentwindow.setfftbin(jsviewname,'b');
+	} else {
+		
+		if (binninglist = document.adjustform.binning)
+			jsbinning=binninglist.options[binninglist.selectedIndex].value;
+		parentwindow.setbinning(jsviewname,jsbinning);
 
-	if (filterlist = document.adjustform.filter)
-		jsfilter=filterlist.options[filterlist.selectedIndex].value;
-	parentwindow.setfilter(jsviewname,jsfilter);
-	if (!eval("parentwindow."+jsviewname+"filter_bt_st"))
-		if (jsfilter!="default")
-			eval("parentwindow.toggleButton('"+jsviewname+"filter_bt', 'filter_bt')");
-	parentwindow.setminmax(jsviewname,jsminpix,jsmaxpix);
-	parentwindow.setautoscale(jsviewname,jsautoscale);
-	parentwindow.setloadfromjpg(jsviewname,jsloadfromjpg);
-	if (qualitylist = document.adjustform.quality)
-		jsquality=qualitylist.options[qualitylist.selectedIndex].value;
-	parentwindow.setquality(jsviewname,jsquality);
-	if (gradientlist = document.adjustform.gradientlist) {
-		jsgradient=gradientlist.options[gradientlist.selectedIndex].value;
-		parentwindow.setgradient(jsviewname,jsgradient);
+		if (fftbinlist = document.adjustform.fftbin)
+			jsfftbin=fftbinlist.options[fftbinlist.selectedIndex].value;
+		parentwindow.setfftbin(jsviewname,jsfftbin);
+
+		if (filterlist = document.adjustform.filter)
+			jsfilter=filterlist.options[filterlist.selectedIndex].value;
+		parentwindow.setfilter(jsviewname,jsfilter);
+		if (!eval("parentwindow."+jsviewname+"filter_bt_st"))
+			if (jsfilter!="default")
+				eval("parentwindow.toggleButton('"+jsviewname+"filter_bt', 'filter_bt')");
+		parentwindow.setautoscale(jsviewname,jsautoscale);
+		if (qualitylist = document.adjustform.quality)
+			jsquality=qualitylist.options[qualitylist.selectedIndex].value;
+		parentwindow.setquality(jsviewname,jsquality);
+		if (gradientlist = document.adjustform.gradientlist) {
+			jsgradient=gradientlist.options[gradientlist.selectedIndex].value;
+			parentwindow.setgradient(jsviewname,jsgradient);
+		}
 	}
+	parentwindow.setminmax(jsviewname,jsminpix,jsmaxpix);
+	parentwindow.setloadfromjpg(jsviewname,jsloadfromjpg);
 	parentwindow.newfile(jsviewname);
 }
 
@@ -314,54 +329,6 @@ function setGroup(groupRef, state) {
 }
 
 function setpminrel() {
-	if (o=document.getElementById('pmin')) {
-		m=o.value
-		o.style.border=jsdefaultborder
-		if (isNaN(m)) {
-			o.style.border=jserrorborder
-			return false;
-		}
-		if (m>100) {
-			m=100
-		}
-		if (m<0) {
-			m=0
-		}
-		o.value=m
-		if (po=document.getElementById('pminrel')) {
-			m=m*(rmaxval-rminval)/100 + rminval
-			m=(m>rmaxval) ? rmaxval  : m
-			po.value=m.toFixed(1)
-		}
-	}
-	update()
-}
-
-function setpmaxrel() {
-	if (o=document.getElementById('pmax')) {
-		m=o.value
-		o.style.border=jsdefaultborder
-		if (isNaN(m)) {
-			o.style.border=jserrorborder
-			return false;
-		}
-		if (m>100) {
-			m=100
-		}
-		if (m<0) {
-			m=0
-		}
-		o.value=m
-		if (po=document.getElementById('pmaxrel')) {
-			m=m*(rmaxval-rminval)/100 + rminval
-			m=(m<rminval) ? rminval  : m
-			po.value=m.toFixed(1)
-		}
-	}
-	update()
-}
-
-function setpmin() {
 	if (o=document.getElementById('pminrel')) {
 		m=o.value
 		o.style.border=jsdefaultborder
@@ -369,41 +336,41 @@ function setpmin() {
 			o.style.border=jserrorborder
 			return false;
 		}
-		if (m<rminval) {
-			m=rminval
+		m = Number(m)
+		if (pm=document.getElementById('pmaxrel')) {
+			if (pm.value == m) m = m - 0.1
+			if (pm.value == 0) pm.value=100
 		}
-		if (m>rmaxval) {
-			m=rmaxval
+		if (m>100) {
+			m=100
+		}
+		if (m<0) {
+			m=0
 		}
 		o.value=m
-		if (po=document.getElementById('pmin')) {
-			m=(m-rminval)*100/(rmaxval-rminval)
-			m=(m<0) ? 0 : m
-			po.value=m.toFixed(1)
-		}
 	}
 	update()
 }
 
-function setpmax() {
+function setpmaxrel() {
 	if (o=document.getElementById('pmaxrel')) {
 		m=o.value
+		o.style.border=jsdefaultborder
 		if (isNaN(m)) {
 			o.style.border=jserrorborder
 			return false;
 		}
-		if (m<rminval) {
-			m=rminval
+		m = Number(m)
+		if (pm=document.getElementById('pminrel')) {
+			if (pm.value == m) m = m + 0.1
 		}
-		if (m>rmaxval) {
-			m=rmaxval
+		if (m>100) {
+			m=100
+		}
+		if (m<0) {
+			m=0
 		}
 		o.value=m
-		if (po=document.getElementById('pmax')) {
-			m=(m-rminval)*100/(rmaxval-rminval)
-			m=(m>100) ? 100 : m
-			po.value=m.toFixed(1)
-		}
 	}
 	update()
 }
@@ -411,6 +378,13 @@ function setpmax() {
  // --> 
 </script>
 <style type="text/css">
+spanwarning {
+	font-family: Arial;
+	font-size: 12px;
+	padding:0;
+	margin:3px 0px;
+	color:red;
+}
 span, ul, li {
 	font-family: Arial;
 	font-size: 12px;
@@ -479,15 +453,13 @@ display:block;
 	<input name="scaletype" value="minmax" type="radio"  <?=$state?> <?=$sel_mnmx?> onclick="update()" >
 	<span style="margin-left:10px">min</span>
 	<span style="margin-left:25px">max</span>
+	<spanwarning style="margin-left:10px">*not for fft image</span>
 	</p>
-	<p style="margin:0px 0px 0px 25px; padding:0">
-	<input class="b" id="pminrel" size="3" value="<?=$min?>" type="text"  <?=$state?> onclick="selectradio('minmax')" onchange="setpmin()" ><span style="margin-left:8px">&nbsp;</span>
-  <input class="b" id="pmaxrel" size="3" value="<?=$max?>" type="text"  <?=$state?> onclick="selectradio('minmax')" onchange="setpmax()" > 
-	image value</p>
+	
 	<p style="margin:1px 0px 0px 25px; padding:0">
-	<input class="b" id="pmin" size="3" value="<?=$min?>" type="text"  <?=$state?> onclick="selectradio('minmax')" onchange="setpminrel()" >%
-  <input class="b" id="pmax" size="3" value="<?=$max?>" type="text"  <?=$state?> onclick="selectradio('minmax')" onchange="setpmaxrel()" >% 
-	relative value</p>
+	<input class="b" id="pminrel" size="3" value="<?=$min?>" type="text"  <?=$state?> onclick="selectradio('minmax')" onchange="setpminrel()" >%
+  	<input class="b" id="pmaxrel" size="3" value="<?=$max?>" type="text"  <?=$state?> onclick="selectradio('minmax')" onchange="setpmaxrel()" >% 
+	<br />relative value (0 ~ 100)</p>
 	</div>
 	</div>
 	<li>
@@ -497,8 +469,8 @@ display:block;
 	<li>
 	<input name="scaletype" value="cdf" type="radio"  <?=$state?> <?=$sel_cdf?> onclick="update()" >
 	CDF
-	<input class="b" id="permin" size="2" value="<?=$def_permin?>" type="text"  <?=$state?> onclick="selectradio('cdf')" onchange="update()" > to
-	<input class="b" id="permax" size="2" value="<?=$def_permax?>" type="text"  <?=$state?> onclick="selectradio('cdf')" onchange="update()" > 
+	<input class="b" id="permin" size="3" value="<?=$def_permin?>" type="text"  <?=$state?> onclick="selectradio('cdf')" onchange="update()" > to
+	<input class="b" id="permax" size="3" value="<?=$def_permax?>" type="text"  <?=$state?> onclick="selectradio('cdf')" onchange="update()" > 
 	</li>
 <?php
 displaygrad($options, $imgsrc);

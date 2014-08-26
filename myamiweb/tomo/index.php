@@ -15,6 +15,12 @@ login_header('Tomography');
 <form name="tomography" method="POST" action="index.php">
 
 <?php
+if ($_GET['tid']) {
+	$tiltSeriesId = $_GET['tid'];
+	$sessionInfo = $tomography->getTiltSeriesSession($tiltSeriesId);
+	$sessionId = $sessionInfo['DEF_id'];
+}
+
 $sessionId = ($_POST['sessionId']) ? $_POST['sessionId'] : $sessionId;
 $tiltSeriesId = ($_POST['tiltSeriesId']) ? $_POST['tiltSeriesId'] : $tiltSeriesId;
 $showmodel = ($_POST['showmodel']== 'on') ? 'CHECKED' : '';
@@ -42,6 +48,8 @@ $tiltSeriesNumber = $tiltSeriesSelector_array[1];
 $tiltSeriesData = $tomography->getTiltSeriesData($tiltSeriesId);
 $first_filename = $tiltSeriesData[0]['filename'];
 $tiltSeriesName = substr($first_filename,0,strrpos($first_filename,'_'));
+
+$tiltSeriesDose = $tomography->getTiltSeriesDose($tiltSeriesData);
 
 $width = 800;
 $height = 300;
@@ -104,6 +112,7 @@ if($tiltSeriesId != NULL) {
 	thumbnails($tiltSeriesId, $tomography);
 	echo '</td></tr><tr><td>';
 	echo "$tiltSeriesName &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <b>tiltSeriesId =</b> $tiltSeriesId";
+	echo ";<b> total Dose=</b> $tiltSeriesDose e/&Aring;^2";
 	echo '</td><td>';
 	if ($deletestatus == 'deleted') {
 		echo "<b> --- Images in this series are deleted ---</b>";

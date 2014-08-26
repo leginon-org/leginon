@@ -22,6 +22,7 @@ from appionlib import apDisplay
 from appionlib import apImage
 from appionlib import apFile
 from appionlib import apEMAN
+from appionlib import apMovie
 from appionlib.apSpider import volFun
 
 def getTiltdataList(tiltseriesdata,othertiltdata=None):
@@ -42,6 +43,14 @@ def getAlignerdata(alignerid):
 	q = appiondata.ApTomoAlignerParamsData()
 	alignerdata = q.direct_query(alignerid)
 	return alignerdata
+
+def getAligndir(alignerdata):
+	rundir = alignerdata['alignrun']['path']['path']
+	if alignerdata['protomo']:
+		aligndir = os.path.join(rundir,'align')
+	else:
+		aligndir = rundir
+	return aligndir
 
 def getAlignmentFromDB(alignerdata,center):
 	q = appiondata.ApProtomoModelData(aligner=alignerdata)
@@ -123,15 +132,18 @@ def orderImageList(imagelist):
 	reftilts = []
 	for i,imagedata in enumerate(imagelist):
 		tilt = imagedata['scope']['stage position']['a']*180/3.14159
-		
+
 		if tilt < start_tilt+0.02 and tilt > start_tilt-0.02:
-			qimage = leginon.leginondata.AcquisitionImageData()
-			nextimagedata = imagelist[i+1]
-			nexttilt = nextimagedata['scope']['stage position']['a']*180/3.14159
-			direction = (nexttilt - tilt)
-			# switch group in getCorrelationPeak not here
-			tilt = tilt+0.02*direction
-			reftilts.append(tilt)
+			if len(imagelist) >= 2:
+				qimage = leginon.leginondata.AcquisitionImageData()
+				nextimagedata = imagelist[i+1]
+				nexttilt = nextimagedata['scope']['stage position']['a']*180/3.14159
+				direction = (nexttilt - tilt)
+				# switch group in getCorrelationPeak not here
+				tilt = tilt+0.02*direction
+				reftilts.append(tilt)
+			else:
+				reftilts.append(tilt)
 		tiltangledict[tilt] = imagedata
 	tiltkeys = tiltangledict.keys()
 	tiltkeys.sort()
@@ -176,9 +188,10 @@ def getCorrelatorBinning(imageshape):
 		correlation_bin = 1
 	return correlation_bin
 	
-def writeTiltSeriesStack(stackdir,stackname,ordered_mrc_files):
+def writeTiltSeriesStack(stackdir,stackname,ordered_mrc_files,apix=1):
 		stackpath = os.path.join(stackdir, stackname)
 		print stackpath
+		apixdict = {'x':apix,'y':apix}
 		if os.path.exists(stackpath):
 			stheader = mrc.readHeaderFromFile(stackpath)
 			stshape = stheader['shape']
@@ -188,8 +201,10 @@ def writeTiltSeriesStack(stackdir,stackname,ordered_mrc_files):
 				apDisplay.printMsg("No need to get new stack of the tilt series")
 			else:
 				apImage.writeMrcStack(stackdir,stackname,order3dmrc_files, 1)
+				mrc.updateFilePixelSize(stackpath,apixdict)
 		else:
 			apImage.writeMrcStack(stackdir,stackname,ordered_mrc_files, 1)
+			mrc.updateFilePixelSize(stackpath,apixdict)
 
 def calcRelativeShifts(globalshift):
 	relativeshifts = []
@@ -259,6 +274,13 @@ def getGlobalShift(ordered_imagelist, corr_bin, refimg):
 	globalshifts = shiftHalfSeries(zeroshift, globalshifts, refimg)
 	return globalshifts
 		
+def convertGlobalToLocalAffines(affines):
+	localaffines = []
+	localaffines.append(affines[0] * affines[0].I)
+	for i in range(len(affines)-1):
+		localaffines.append(affines[i+1] * affines[i].I)
+	return localaffines
+
 def simpleCorrelation(array1,array2):
 	c = correlator.Correlator()
 	p = peakfinder.PeakFinder()
@@ -360,6 +382,28 @@ def getTomoPixelSize(imagedata):
 def getTomoImageShape(imagedata):
 	return (imagedata['camera']['dimension']['y'],imagedata['camera']['dimension']['x'])
 
+def getDefaultAzimuthFromLeginon(imagedata):
+	qpredict = leginon.leginondata.TomographyPredictionData(image=imagedata)
+	results = qpredict.query(results=1)
+	if results:
+		return 90.0 - (results[0]['predicted position']['phi']) * 180.0 / 3.14159
+	else:
+		return 90.0
+
+def getAverageAzimuthFromSeries(imgtree):
+	# this somewhat duplicates the getDefaultAzimuthFromLegionon but is slightly different
+	
+	predict1=apDatabase.getPredictionDataForImage(imgtree[0])
+	predict2=apDatabase.getPredictionDataForImage(imgtree[-1])
+	phi1=predict1[0]['predicted position']['phi']*180/math.pi
+	phi2=predict2[0]['predicted position']['phi']*180/math.pi
+	
+	###Azimuth is determined from phi. In protomo tilt axis is measured from x where phi is from y
+	###Note there is a mirror between how Leginon reads images vs how protomo does
+	azimuth=90-((phi1+phi2)/2)
+	apDisplay.printMsg(("Azimuth is %f" % azimuth))
+	return azimuth
+
 def	insertImodXcorr(rotation,filtersigma1,filterradius,filtersigma2):
 	paramsq = appiondata.ApImodXcorrParamsData()
 	paramsq['RotationAngle'] = rotation
@@ -376,25 +420,28 @@ def	insertTiltsInAlignRun(alignrundata,tiltdata,settingsdata,primary=True):
 	q['primary_tiltseries'] = primary
 	return publish(q)
 
-def insertTomoAlignmentRun(sessiondata,leginoncorrdata,imodxcorrdata,protomorundata,bin,name,path,description=None):
+def insertTomoAlignmentRun(sessiondata,leginontomosettingsdata,imodxcorrparamsdata,protomorunparamsdata,raptorparamsdata,bin,name,path,description=None,bad_alignment=False):
 	pathq = appiondata.ApPathData(path=os.path.abspath(path))
 	qalign = appiondata.ApTomoAlignmentRunData(session=sessiondata,
 			bin=bin,name=name, path=pathq)
-	if leginoncorrdata:
-		qalign['coarseLeginonParams'] = leginoncorrdata
-	if imodxcorrdata:
-		qalign['coarseImodParams'] = imodxcorrdata
-	if protomorundata:
-		qalign['fineProtomoParams'] = protomorundata
+	if leginontomosettingsdata:
+		qalign['coarseLeginonParams'] = leginontomosettingsdata
+	if imodxcorrparamsdata:
+		qalign['coarseImodParams'] = imodxcorrparamsdata
+	if protomorunparamsdata:
+		qalign['fineProtomoParams'] = protomorunparamsdata
+	if raptorparamsdata:
+		qalign['raptorParams'] = raptorparamsdata
 	results = qalign.query()
 	if not results:
+		qalign['badAlign'] = bad_alignment
 		qalign['description'] = description
 		qalign.insert()
 		return qalign
 	return results[0]
 
 def insertAlignerParams(alignrundata,params,protomodata=None,refineparamsdata=None,goodrefineparamsdata=None,imagedata=None):
-	# protomoaligner parameters
+	# single use of aligner for a given alignment run
 	alignerq = appiondata.ApTomoAlignerParamsData()
 	alignerq['alignrun'] = alignrundata
 	alignerq['description'] = params['description']
@@ -429,14 +476,17 @@ def insertSubTomoRun(sessiondata,selectionrunid,stackid,name,invert=False,subbin
 			pick=pickdata,stack=stackdata,runname=name,invert=invert,subbin=subbin)
 	return publish(qrun)
 
-def insertFullTomoRun(sessiondata,path,runname,method,imageidlist=''):
+def insertFullTomoRun(sessiondata,path,runname,method):
 	runq = appiondata.ApFullTomogramRunData()
 	runq['session'] = sessiondata
 	runq['path'] = appiondata.ApPathData(path=os.path.abspath(path))
 	runq['runname'] = runname
 	runq['method'] = method
-	runq['excluded'] = imageidlist
 	return publish(runq)
+
+def getFullTomoRunById(runid):
+	runq = appiondata.ApFullTomogramRunData()
+	return runq.direct_query(runid)
 
 def checkExistingFullTomoData(path,name):
 	pathq = appiondata.ApPath(path=path)
@@ -450,6 +500,9 @@ def checkExistingFullTomoData(path,name):
 		return None
 	else:
 		return results[0]
+
+def getFullTomoRunData(fulltomorunId):
+	return appiondata.ApFullTomogramRunData.direct_query(fulltomorunId)
 
 def getFullTomoData(fulltomoId):
 	return appiondata.ApFullTomogramData.direct_query(fulltomoId)
@@ -471,7 +524,7 @@ def uploadTomo(params):
 	else:
 		fullbin = 1
 		subbin = params['bin']
-	alignrun = insertTomoAlignmentRun(sessiondata,None,None,None,fullbin,runname,params['aligndir'],'manual alignment from upload')
+	alignrun = insertTomoAlignmentRun(sessiondata,None,None,None,None,fullbin,runname,params['aligndir'],'manual alignment from upload')
 	# only tilt series in one alignrun for now
 	insertTiltsInAlignRun(alignrun, tiltdata,None,True)
 	alignerdata = insertAlignerParams(alignrun,params)
@@ -483,7 +536,7 @@ def uploadTomo(params):
 		uploadfile = params['zprojfile']
 		projectimagedata = uploadZProjection(runname,firstimagedata,uploadfile)
 		fullrundata = insertFullTomoRun(sessiondata,path,runname,'upload')
-		return insertFullTomogram(sessiondata,tiltdata,alignerdata,fullrundata,name,description,projectimagedata,thickness,fullbin)
+		return insertFullTomogram(sessiondata,tiltdata,alignerdata,fullrundata,name,description,projectimagedata,thickness,None,fullbin,[])
 	else:
 		projectimagedata = None
 		fulltomopath = params['rundir'].replace('/'+params['volume'],'')
@@ -491,7 +544,7 @@ def uploadTomo(params):
 		dummydescription = 'fake full tomogram for subtomogram upload'
 		thickness = params['shape'][0] * subbin
 		fullrundata = insertFullTomoRun(sessiondata,fulltomopath,runname,'upload')
-		fulltomogram = insertFullTomogram(sessiondata,tiltdata,alignerdata,fullrundata,dummyname,dummydescription,projectimagedata,thickness,fullbin)
+		fulltomogram = insertFullTomogram(sessiondata,tiltdata,alignerdata,fullrundata,dummyname,dummydescription,projectimagedata,thickness,None,fullbin,[])
 		apix = apDatabase.getPixelSize(firstimagedata)
 		tomoq = appiondata.ApTomogramData()
 		tomoq['session'] = sessiondata
@@ -506,7 +559,7 @@ def uploadTomo(params):
 				None,None,runname,params['invert'],subbin)
 		return insertSubTomogram(fulltomogram,subtomorundata,None,0,dimension,path,name,index,pixelsize,description)
 
-def insertFullTomogram(sessiondata,tiltdata,aligner,fullrundata,name,description,projectimagedata,thickness,bin=1):
+def insertFullTomogram(sessiondata,tiltdata,aligner,fullrundata,name,description,projectimagedata,thickness,reconparamdata=None,bin=1,imageidlist=[]):
 	tomoq = appiondata.ApFullTomogramData()
 	tomoq['session'] = sessiondata
 	tomoq['tiltseries'] = tiltdata
@@ -517,7 +570,17 @@ def insertFullTomogram(sessiondata,tiltdata,aligner,fullrundata,name,description
 	tomoq['zprojection'] = projectimagedata
 	tomoq['thickness'] = thickness
 	tomoq['bin'] = bin
+	tomoq['excluded'] = imageidlist
+	tomoq['reconparam'] = reconparamdata
 	return publish(tomoq)
+
+def insertFullReconParams(tilt_angle_offset=0.0,zshift=0.0,tilt_axis_tilt=0.0,tilt_axis_rotate=0.0):
+	q = appiondata.ApTomoReconParamsData()
+	q['tilt_angle_offset'] = tilt_angle_offset
+	q['z_shift'] = zshift
+	q['tilt_axis_tilt_out_xyplane'] = tilt_axis_tilt
+	q['tilt_axis_rotation_in_xyplane'] = tilt_axis_rotate
+	return publish(q)
 
 def getLastVolumeIndex(fulltomodata):
 	tomoq = appiondata.ApTomogramData(fulltomogram=fulltomodata)
@@ -574,7 +637,15 @@ def array2jpg(pictpath,im,imin=None,imax=None,size=512):
 		range = stats['mean']-3*stats['std'],stats['mean']+3*stats['std']
 	numpil.write(im,jpgpath, format = 'JPEG', limits=range)
 
-def makeAlignStackMovie(filename,xsize=512):
+def makeAlignStackMovie(filename,xsize=2**16):
+	'''
+	Make movie based on align stack.  Default size is the size
+	of the align stack
+	'''
+	if not os.path.exists(filename):
+		apDisplay.printWarning('align stack does not exist. No movie making.')
+		return
+
 	apDisplay.printMsg('Making movie','blue')
 	mrcpath = filename
 	dirpath = os.path.dirname(mrcpath)
@@ -608,13 +679,10 @@ def makeAlignStackMovie(filename,xsize=512):
 		array2jpg(pictpath1,slice,stats['mean']-6*stats['std'],stats['mean']+6*stats['std'],xsize)
 		array2jpg(pictpath2,slice,stats['mean']-6*stats['std'],stats['mean']+6*stats['std'],xsize)
 	apDisplay.printMsg('Putting the jpg files together to flash video...')
-	moviename = dirpath+'/minialign'+key+'.flv'
-	print 'moviename',moviename
-	cmd = 'mencoder -nosound -mf type=jpg:fps=24 -ovc lavc -lavcopts vcodec=flv -of lavf -lavfopts format=flv -o '+moviename+' "mf://'+rootpath+'_slice*.jpg"'
-	proc = subprocess.Popen(cmd, shell=True)
-	proc.wait()
-	proc = subprocess.Popen('/bin/rm '+rootpath+'_slice*.jpg', shell=True)
-	proc.wait()
+	moviepath = dirpath+'/minialign'+key
+	framepath = rootpath+'_slice%05d.jpg'
+	apMovie.makemp4('jpg',framepath,moviepath,False)
+	apMovie.makeflv('jpg',framepath,moviepath)
 
 def makeMovie(filename,xsize=512):
 	apDisplay.printMsg('Making movie','blue')
@@ -654,12 +722,9 @@ def makeMovie(filename,xsize=512):
 			# adjust and shrink each image
 			array2jpg(pictpath,slice,stats['mean']-8*stats['std'],stats['mean']+8*stats['std'],xsize)
 		apDisplay.printMsg('Putting the jpg files together to flash video...')
-		moviename = dirpath+'/minitomo%s'%key+'.flv'
-		cmd = 'mencoder -nosound -mf type=jpg:fps=24 -ovc lavc -lavcopts vcodec=flv -of lavf -lavfopts format=flv -o '+moviename+' "mf://'+rootpath+'_avg*.jpg"'
-		proc = subprocess.Popen(cmd, shell=True)
-		proc.wait()
-		proc = subprocess.Popen('/bin/rm '+rootpath+'_avg*.jpg', shell=True)
-		proc.wait()
+		moviepath = dirpath+'/minitomo%s'%key+'.flv'
+		framepath = rootpath+'_avg*.jpg'
+		apMovie.makeflv('jpg',framepath,moviepath)
 
 def makeProjection(filename,xsize=512):
 	mrcpath = filename

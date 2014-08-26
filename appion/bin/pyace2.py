@@ -2,23 +2,27 @@
 
 #pythonlib
 import os
-import sys
 import re
+import sys
 import math
 import time
 import glob
 import numpy
+import shutil
 import subprocess
 #appion
-from appionlib import appionLoop2
-from appionlib import appiondata
+from appionlib import apFile
+from appionlib import apParam
 from appionlib import apImage
 from appionlib import apDisplay
 from appionlib import apDatabase
-from appionlib import apCtf
-from appionlib import apParam
-from appionlib import apFile
-from pyami import mrc
+from appionlib import appiondata
+from appionlib import appionLoop2
+from appionlib import apInstrument
+from appionlib.apCtf import ctfdb
+from appionlib.apCtf import ctfinsert
+# other myami
+from pyami import mrc, primefactor, imagefun
 
 class Ace2Loop(appionLoop2.AppionLoop):
 	"""
@@ -36,6 +40,7 @@ class Ace2Loop(appionLoop2.AppionLoop):
 		self.powerspecdir = os.path.join(self.params['rundir'], "opimages")
 		apParam.createDirectory(self.powerspecdir, warning=False)
 		self.ace2exe = self.getACE2Path()
+		self.ctfrundata = None
 		return
 
 	#======================
@@ -52,7 +57,7 @@ class Ace2Loop(appionLoop2.AppionLoop):
 	def postLoopFunctions(self):
 		pattern = os.path.join(self.params['rundir'], self.params['sessionname']+'*.corrected.mrc')
 		apFile.removeFilePattern(pattern)
-		apCtf.printCtfSummary(self.params)
+		ctfdb.printCtfSummary(self.params, self.imgtree)
 
 	#======================
 	def reprocessImage(self, imgdata):
@@ -66,7 +71,7 @@ class Ace2Loop(appionLoop2.AppionLoop):
 		if self.params['reprocess'] is None:
 			return True
 
-		ctfvalue, conf = apCtf.getBestCtfValueForImage(imgdata, msg=False, method="ace2")
+		ctfvalue = ctfdb.getBestCtfByResolution(imgdata, msg=False)
 
 		if ctfvalue is None:
 			return True
@@ -78,10 +83,9 @@ class Ace2Loop(appionLoop2.AppionLoop):
 		return True
 
 	#======================
-
 	def processImage(self, imgdata):
-
-		bestdef, bestconf = apCtf.getBestCtfValueForImage(imgdata, msg=True, method="ace2")
+		self.ctfvalues = {}
+		bestdef  = ctfdb.getBestCtfByResolution(imgdata, msg=True)
 		apix = apDatabase.getPixelSize(imgdata)
 		if (not (self.params['onepass'] and self.params['zeropass'])):
 			maskhighpass = False
@@ -103,6 +107,18 @@ class Ace2Loop(appionLoop2.AppionLoop):
 			clippedmrc = apImage.frame_cut(mrcarray,[dims[0],dims[0]])
 			ace2inputpath = os.path.join(self.params['rundir'],imgdata['filename']+".mrc")
 			apImage.arrayToMrc(clippedmrc,ace2inputpath,msg=False)
+
+		### pad out image to speed up FFT calculations for non-standard image sizes
+		print "checking prime factor"
+		if primefactor.isGoodStack(dimx) is False:
+			goodsize = primefactor.getNextEvenPrime(dimx)
+			factor = float(goodsize) / float(dimx)
+			apDisplay.printMsg("padding image:  %ix%i to %ix%i" % (dimx,dimy,dimx*factor,dimy*factor))
+			mrcarray = apImage.mrcToArray(ace2inputpath,msg=False)
+#			paddedmrc = imagefun.pad(mrcarray, None, factor)
+			paddedmrc = apImage.frame_constant(mrcarray, (dimx*factor,dimy*factor), cval=mrcarray.mean())
+			ace2inputpath = os.path.join(self.params['rundir'],imgdata['filename']+".mrc")
+			apImage.arrayToMrc(paddedmrc,ace2inputpath,msg=False)
 
 		inputparams = {
 			'input': ace2inputpath,
@@ -166,16 +182,31 @@ class Ace2Loop(appionLoop2.AppionLoop):
 		apDisplay.printMsg("ace2 completed in " + apDisplay.timeString(time.time()-t0))
 
 		### parse log file
-		self.ctfvalues = {}
+		self.ctfvalues = {
+			'cs': self.params['cs'],
+			'volts': imgdata['scope']['high tension'],
+		}
 		logf = open(imagelog, "r")
+		apDisplay.printMsg("reading log file %s"%(imagelog))
 		for line in logf:
 			sline = line.strip()
-			if re.search("^Final Defocus:", sline):
-				parts = sline.split()
-				self.ctfvalues['defocus1'] = float(parts[2])
-				self.ctfvalues['defocus2'] = float(parts[3])
+			if re.search("^Final Defocus: ", sline):
+				### old ACE2
+				apDisplay.printError("This old version of ACE2 has a bug in the astigmastism, please upgrade ACE2 now")
+				#parts = sline.split()
+				#self.ctfvalues['defocus1'] = float(parts[2])
+				#self.ctfvalues['defocus2'] = float(parts[3])
 				### convert to degrees
-				self.ctfvalues['angle_astigmatism'] = math.degrees(float(parts[4]))
+				#self.ctfvalues['angle_astigmatism'] = math.degrees(float(parts[4]))
+			elif re.search("^Final Defocus \(m,m,deg\):", sline):
+				### new ACE2
+				apDisplay.printMsg("Reading new ACE2 defocus")
+				parts = sline.split()
+				#print parts
+				self.ctfvalues['defocus1'] = float(parts[3])
+				self.ctfvalues['defocus2'] = float(parts[4])
+				# ace2 defines negative angle from +x toward +y
+				self.ctfvalues['angle_astigmatism'] = -float(parts[5])
 			elif re.search("^Amplitude Contrast:",sline):
 				parts = sline.split()
 				self.ctfvalues['amplitude_contrast'] = float(parts[2])
@@ -195,16 +226,10 @@ class Ace2Loop(appionLoop2.AppionLoop):
 		apDisplay.printMsg("Angle astigmatism: %.2f degrees"%(self.ctfvalues['angle_astigmatism']))
 		apDisplay.printMsg("Amplitude contrast: %.2f percent"%(ampconst))
 
-		if bestconf is None:
-			apDisplay.printColor("Final confidence: %.3f"%(self.ctfvalues['confidence']),'cyan')
-		elif self.ctfvalues['confidence'] > bestconf:
-			apDisplay.printColor("Final confidence: %.3f > %.3f"%(self.ctfvalues['confidence'], bestconf),'green')
-		else:
-			apDisplay.printColor("Final confidence: %.3f < %.3f"%(self.ctfvalues['confidence'], bestconf),'yellow')
+		apDisplay.printColor("Final confidence: %.3f"%(self.ctfvalues['confidence']),'cyan')
 
 		### double check that the values are reasonable
-
-		if avgdf < self.params['maxdefocus'] or avgdf > self.params['mindefocus']:
+		if avgdf > self.params['maxdefocus'] or avgdf < self.params['mindefocus']:
 			apDisplay.printWarning("bad defocus estimate, not committing values to database")
 			self.badprocess = True
 
@@ -219,7 +244,7 @@ class Ace2Loop(appionLoop2.AppionLoop):
 		## create power spectra jpeg
 		mrcfile = imgdata['filename']+".mrc.edge.mrc"
 		if os.path.isfile(mrcfile):
-			jpegfile = os.path.join(self.powerspecdir, imgdata['filename']+".jpg")
+			jpegfile = os.path.join(self.powerspecdir, apDisplay.short(imgdata['filename'])+".jpg")
 			ps = apImage.mrcToArray(mrcfile,msg=False)
 			c = numpy.array(ps.shape)/2.0
 			ps[c[0]-0,c[1]-0] = ps.mean()
@@ -234,8 +259,9 @@ class Ace2Loop(appionLoop2.AppionLoop):
 			cutoff = ps.mean()
 			ps = numpy.where(ps < cutoff, cutoff, ps)
 			#print "%.3f -- %.3f -- %.3f"%(ps.min(), ps.mean(), ps.max())
-			apImage.arrayToJpeg(ps, jpegfile,msg=False)
+			apImage.arrayToJpeg(ps, jpegfile, msg=False)
 			apFile.removeFile(mrcfile)
+			self.ctfvalues['graph3'] = jpegfile
 		otherfiles = glob.glob(imgdata['filename']+".*.txt")
 
 		### remove extra debugging files
@@ -250,40 +276,18 @@ class Ace2Loop(appionLoop2.AppionLoop):
 		if maskhighpass and os.path.isfile(ace2inputpath):
 			apFile.removeFile(ace2inputpath)
 
-		#print self.ctfvalues
 		return
-
-
-		self.parser.add_option("--mindefocus", dest="mindefocus", type="float", default=-0.1e-6,
-			help="Minimal acceptable defocus (in meters)", metavar="#")
-		self.parser.add_option("--maxdefocus", dest="maxdefocus", type="float", default=-10e-6,
-			help="Maximal acceptable defocus (in meters)", metavar="#")
-		self.parser.add_option("--edge1", dest="edge_b", type="float", default=12.0,
-			help="Canny edge parameters Blur Sigma", metavar="#")
-		self.parser.add_option("--edge2", dest="edge_t", type="float", default=0.001,
-			help="Canny edge parameters Edge Treshold(0.0-1.0)", metavar="#")
-		self.parser.add_option("--rotblur", dest="rotblur", type="float", default=0.0,
-			help="Rotational blur for low contrast CTF (in degrees), default 0", metavar="#")
-		### true/false
-		self.parser.add_option("--refine2d", dest="refine2d", default=False,
-			action="store_true", help="Refine the defocus after initial ACE with 2d cross-correlation")
-		self.parser.add_option("--verbose", dest="verbose", default=False,
-			action="store_true", help="Show all ace2 messages")
-		self.parser.add_option("--onepass", dest="onepass", type="float",
-			help="Mask High pass filter radius for end of gradient mask in Angstroms", metavar="FLOAT")
-		self.parser.add_option("--zeropass", dest="zeropass", type="float",
-			help="Mask High pass filter radius for zero mask in Angstroms", metavar="FLOAT")
-
 
 	#======================
 	def commitToDatabase(self, imgdata):
-		if self.ctfvalues is None:
-			apDisplay.printWarning("ctf tilt failed to find any values")
-			return False
+		if self.ctfrundata is None:
+			self.insertRunData()
 
-		apDisplay.printMsg("Committing ctf parameters for "
-			+apDisplay.short(imgdata['filename'])+" to database")
+		ctfinsert.validateAndInsertCTFData(imgdata, self.ctfvalues, self.ctfrundata, self.params['rundir'])
+		return True
 
+	#======================
+	def insertRunData(self):
 		paramq = appiondata.ApAce2ParamsData()
 		paramq['bin']     = self.params['bin']
 		paramq['reprocess'] = self.params['reprocess']
@@ -300,38 +304,21 @@ class Ace2Loop(appionLoop2.AppionLoop):
 
 		runq=appiondata.ApAceRunData()
 		runq['name']    = self.params['runname']
-		runq['session'] = imgdata['session']
+		runq['session'] = self.getSessionData()
 		runq['hidden']  = False
 		runq['path']    = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
 		runq['ace2_params'] = paramq
-
-		ctfq = appiondata.ApCtfData()
-		ctfq['acerun']   = runq
-		ctfq['image']    = imgdata
-		ctfq['cs']       = self.params['cs']
-		ctfq['mat_file'] = imgdata['filename']+".mrc.ctf.txt"
-		jpegfile = os.path.join(self.powerspecdir, imgdata['filename']+".jpg")
-		if os.path.isfile(jpegfile):
-			ctfq['graph1'] = imgdata['filename']+".jpg"
-		ctfq['ctfvalues_file'] = imgdata['filename']+".mrc.norm.txt"
-		ctfvaluelist = ('defocus1','defocus2','amplitude_contrast','angle_astigmatism','confidence','confidence_d')
-		for i in range(len(ctfvaluelist)):
-			key = ctfvaluelist[i]
-			ctfq[key] = self.ctfvalues[key]
-
-		ctfq.insert()
-		return True
+		runq.insert()
+		self.ctfrundata = runq
 
 	#======================
 	def setupParserOptions(self):
 		### values
 		self.parser.add_option("-b", "--bin", dest="bin", type="int", default=1,
 			help="Binning of the image before FFT", metavar="#")
-		self.parser.add_option("-c", "--cs", dest="cs", type="float", default=2.0,
-			help="Spherical aberation of the microscope", metavar="#")
-		self.parser.add_option("--mindefocus", dest="mindefocus", type="float", default=-0.1e-6,
+		self.parser.add_option("--mindefocus", dest="mindefocus", type="float", default=0.1e-6,
 			help="Minimal acceptable defocus (in meters)", metavar="#")
-		self.parser.add_option("--maxdefocus", dest="maxdefocus", type="float", default=-10e-6,
+		self.parser.add_option("--maxdefocus", dest="maxdefocus", type="float", default=15e-6,
 			help="Maximal acceptable defocus (in meters)", metavar="#")
 		self.parser.add_option("--edge1", dest="edge_b", type="float", default=12.0,
 			help="Canny edge parameters Blur Sigma", metavar="#")
@@ -342,8 +329,10 @@ class Ace2Loop(appionLoop2.AppionLoop):
 		### true/false
 		self.parser.add_option("--refine2d", dest="refine2d", default=False,
 			action="store_true", help="Refine the defocus after initial ACE with 2d cross-correlation")
-		self.parser.add_option("--verbose", dest="verbose", default=False,
+		self.parser.add_option("--verbose", dest="verbose", default=True,
 			action="store_true", help="Show all ace2 messages")
+		self.parser.add_option("--quiet", dest="verbose", default=True,
+			action="store_false", help="Hide all ace2 messages")
 		self.parser.add_option("--onepass", dest="onepass", type="float",
 			help="Mask High pass filter radius for end of gradient mask in Angstroms", metavar="FLOAT")
 		self.parser.add_option("--zeropass", dest="zeropass", type="float",
@@ -356,11 +345,13 @@ class Ace2Loop(appionLoop2.AppionLoop):
 		if self.params['bin'] < 1:
 			apDisplay.printError("bin must be positive")
 		if (self.params['mindefocus'] is not None and
-				(self.params['mindefocus'] < -1e-3 or self.params['mindefocus'] > 1e-9)):
-			apDisplay.printError("min defocus is not in an acceptable range, e.g. mindefocus=-1.5e-6")
+				(self.params['mindefocus'] > 1e-3 or self.params['mindefocus'] < 1e-9)):
+			apDisplay.printError("min defocus is not in an acceptable range, e.g. mindefocus=1.5e-6")
 		if (self.params['maxdefocus'] is not None and
-				(self.params['maxdefocus'] < -1e-3 or self.params['maxdefocus'] > -1e-9)):
-			apDisplay.printError("max defocus is not in an acceptable range, e.g. maxdefocus=-1.5e-6")
+				(self.params['maxdefocus'] > 1e-3 or self.params['maxdefocus'] < 1e-9)):
+			apDisplay.printError("max defocus is not in an acceptable range, e.g. maxdefocus=1.5e-6")
+		### set cs value
+		self.params['cs'] = apInstrument.getCsValueFromSession(self.getSessionData())
 
 		return
 

@@ -62,8 +62,20 @@ class Correlator(object):
 	def swapQuadrants(self, image):
 		return imagefun.swap_quadrants(image)
 
+	def getCenterSquareImage(self, array):
+		shape = array.shape
+		if shape[0] == shape[1] and (shape[0] % int(self.correlation_binning)) == 0:
+			return array
+		minsize = min(shape)
+		worksize = (min(shape) / int(self.correlation_binning)) * self.correlation_binning
+		offsety = (shape[0] - worksize) / 2
+		endy = offsety + worksize
+		offsetx = (shape[1] - worksize) / 2
+		endx = offsetx + worksize
+		return array[offsety:endy,offsetx:endx]
+
 	def correlate(self, imagedata, tiltcorrection=True, channel=None,wiener=False,taper=0,corrtype='phase'):
-		image = imagedata['image']
+		image = self.getCenterSquareImage(imagedata['image'])
 		if len(image.shape) != 2 or image.shape[0] != image.shape[1]:
 			raise ValueError
 
@@ -74,6 +86,9 @@ class Correlator(object):
 		camdata['binning'] = {'x':camdata['binning']['x']*self.correlation_binning, 'y':camdata['binning']['y']*self.correlation_binning}
 		newimagedata = leginon.leginondata.AcquisitionImageData(initializer=imagedata)
 		newimagedata['camera']=camdata
+		# numpy 2.0 does not allow inplace assignment involving different kinds
+		# convert to float first
+		image = image.astype(numpy.float)
 		mean = image.mean()
 		image -= mean
 

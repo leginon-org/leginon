@@ -8,11 +8,11 @@
  *      Simple viewer to view a image using mrcmodule
  */
 
-require "inc/particledata.inc";
-require "inc/processing.inc";
-require "inc/leginon.inc";
-require "inc/viewer.inc";
-require "inc/project.inc";
+require_once "inc/particledata.inc";
+require_once "inc/processing.inc";
+require_once "inc/leginon.inc";
+require_once "inc/viewer.inc";
+require_once "inc/project.inc";
 
 // IF VALUES SUBMITTED, EVALUATE DATA
 if ($_POST['process']) {
@@ -47,12 +47,12 @@ function createImgRejectorForm($extra=false, $title='imgRejector.py Launcher', $
 	<script LANGUAGE='JavaScript'>
 	  function enableace(){
 	    if (document.viewerform.acecheck.checked){
-	      document.viewerform.acecutoff.disabled=false;
-	      document.viewerform.acecutoff.value='0.8';
+	      document.viewerform.ctfcutoff.disabled=false;
+	      document.viewerform.ctfcutoff.value='0.8';
 	    }
 	    else {
-	      document.viewerform.acecutoff.disabled=true;
-	      document.viewerform.acecutoff.value='0.8';
+	      document.viewerform.ctfcutoff.disabled=true;
+	      document.viewerform.ctfcutoff.value='0.8';
 	    }
 	  }
 	  </SCRIPT>\n";
@@ -74,7 +74,7 @@ function createImgRejectorForm($extra=false, $title='imgRejector.py Launcher', $
 	}
 
 	// Set any existing parameters in form
-	$runidval = ($_POST['runid']) ? $_POST['runid'] : 'reject1';	 
+	$runidval = ($_POST['runname']) ? $_POST['runname'] : 'reject1';	 
 	$commitcheck = 'CHECKED';
 	$noacecheck = ($_POST['noace']=='on') ? 'CHECKED' : ($ctfdata ? 'CHECKED' : '');
 	$nopickscheck = ($_POST['nopicks']=='on') ? 'CHECKED' : '';
@@ -84,15 +84,15 @@ function createImgRejectorForm($extra=false, $title='imgRejector.py Launcher', $
 	// ace check params
 	$acecheck = ($_POST['acecheck']=='on') ? 'CHECKED' : '';
 	$acedisable = ($_POST['acecheck']=='on') ? '' : 'DISABLED';
-	$acecutoff = ($_POST['acecheck']=='on') ? $_POST['acecutoff'] : '0.8';
+	$ctfcutoff = ($_POST['acecheck']=='on') ? $_POST['ctfcutoff'] : '0.8';
 	echo "<table border=0 class=tableborder>\n";
 	echo "<tr>\n";
 	echo "<td valign='TOP'>\n";
 	echo "<table cellpadding='5' border='0'>\n";
 	echo "<tr>\n";
 	echo "<td valign='TOP'>\n";
-	echo docpop('runid','<b>Reject Run Name:</b>');
-	echo "<input type='text' name='runid' value='$runidval'>\n";
+	echo docpop('runname','<b>Reject Run Name:</b>');
+	echo "<input type='text' name='runname' value='$runidval'>\n";
 	echo "<br />\n";
 	echo "<br />\n";
 	echo docpop('outdir','<b>Output Directory:</b>');
@@ -163,7 +163,7 @@ function createImgRejectorForm($extra=false, $title='imgRejector.py Launcher', $
 		<input type='checkbox' name='acecheck' onclick='enableace(this)' $acecheck>
 		ACE Confidence Cutoff<br />
 		&nbsp;&nbsp;&nbsp;
-		Use Values Above: <input type='text' name='acecutoff' $acedisable value='$acecutoff' size='4'>
+		Use Values Above: <input type='text' name='ctfcutoff' $acedisable value='$ctfcutoff' size='4'>
 		<FONT SIZE=-2>(btw 0.0 - 1.0)</FONT>
 		</td></tr>\n";
 
@@ -174,9 +174,9 @@ function createImgRejectorForm($extra=false, $title='imgRejector.py Launcher', $
 		// check if user has changed values on submit
 		$minval = ($_POST['dfmin']!=$min && $_POST['dfmin']!='' && $_POST['dfmin']!='-') ? $_POST['dfmin'] : $min;
 		$maxval = ($_POST['dfmax']!=$max && $_POST['dfmax']!='' && $_POST['dfmax']!='-') ? $_POST['dfmax'] : $max;
-		$sessionpath=ereg_replace("E","e",$sessionpath);
-		$minval = ereg_replace("E","e",round($minval,8));
-		$maxval = ereg_replace("E","e",round($maxval,8));
+		$sessionpath=preg_replace("%E%","e",$sessionpath);
+		$minval = preg_replace("%E%","e",round($minval,8));
+		$maxval = preg_replace("%E%","e",round($maxval,8));
 		echo"
 		<tr>
 			<td valign='TOP'>
@@ -211,77 +211,65 @@ function createImgRejectorForm($extra=false, $title='imgRejector.py Launcher', $
 }
 
 function runImgRejector() {
+	/* *******************
+	PART 1: Get variables
+	******************** */
 	$expId = $_GET['expId'];
-	$runid = $_POST['runid'];
+	$runname = $_POST['runname'];
 	$outdir = $_POST['outdir'];
 	$commit = ($_POST['commit']=="on") ? 'commit' : '';
 
 	if ($_POST[preset]) $dbimages=$_POST['sessionname'].",".$_POST['preset'];
-
-	$command.="imgRejector.py ";
-
-	//make sure a session was selected
-	if (!$outdir) createImgRejectorForm("<b>ERROR:</b> Select an experiment session");
-
-	// ace cutoff
-	if ($_POST['acecheck']=='on') {
-		$acecutoff = $_POST['acecutoff'];
-		if ($acecutoff > 1 || $acecutoff < 0 || !$acecutoff) 
-			createImgRejectorForm("<b>ERROR:</b> Ace cutoff must be between 0 & 1");
-	}
-
+	
 	// check defocus cutoffs
 	$dfmin = ($_POST['dfmin']==$_POST['dbmin'] || $_POST['dfmin']>$_POST['dbmin']) ? '' : $_POST['dfmin'];
 	$dfmax = ($_POST['dfmax']==$_POST['dbmax'] || $_POST['dfmax']<$_POST['dbmax']) ? '' : $_POST['dfmax'];
-
+	
+	/* *******************
+	PART 2: Check for conflicts, if there is an error display the form again
+	******************** */
+	//make sure a session was selected
+	if (!$outdir) createImgRejectorForm("<b>ERROR:</b> Select an experiment session");
+	
+	// ctf cutoff
+	if ($_POST['acecheck']=='on') {
+		$ctfcutoff = $_POST['ctfcutoff'];
+		if ($ctfcutoff > 1 || $ctfcutoff < 0 || !$ctfcutoff) 
+			createImgRejectorForm("<b>ERROR:</b> CTF cutoff must be between 0 & 1");
+	}
+	
+	/* *******************
+	PART 3: Create program command
+	******************** */
+	$command.="imgRejector.py ";
 	$command.="--projectid=".getProjectId()." ";
-	$command.="--runname=$runid ";
-	$command.="--rundir=".$outdir."/".$runid." ";
+	$command.="--runname=$runname ";
+	$command.="--rundir=".$outdir."/".$runname." ";
 	if ($_POST['preset']) $command.="--preset=".$_POST['preset']." ";
 	$command.="--session=".$_POST['sessionname']." ";
 	if ($_POST['commit']=='on') $command.="--commit ";
 	if ($_POST['notiltpairs']=='on') $command.="--notiltpairs ";
 	if ($_POST['nopicks']=='on') $command.="--nopicks ";
 	if ($_POST['noace']=='on') $command.="--noace ";
-	if ($acecutoff) $command.="--acecutoff=$acecutoff ";
+	if ($ctfcutoff) $command.="--ctfcutoff=$ctfcutoff ";
 	if ($dfmin) $command.="--mindefocus=$dfmin ";
 	if ($dfmax) $command.="--maxdefocus=$dfmax ";
 	$command.="--no-wait ";
 
-	// submit job to cluster
-	if ($_POST['process']=="Run Image Rejector") {
-		$user = $_SESSION['username'];
-		$password = $_SESSION['password'];
+	/* *******************
+	PART 4: Create header info, i.e., references
+	******************** */
+	$headinfo .= appionRef();
+	
+	/* *******************
+	PART 5: Show or Run Command
+	******************** */
+	// submit command
+	$errors = showOrSubmitCommand($command, $headinfo, 'imgRejector', $nproc);
 
-		if (!($user && $password)) createImgRejectorForm("<b>ERROR:</b> Enter a user name and password");
-
-		$sub = submitAppionJob($command,$outdir,$runid,$expId,$testimage);
-		
-		// if errors:
-		if ($sub) createImgRejectorForm("<b>ERROR:</b> $sub");
-		exit;
-	}
-
-	processing_header("ImgRejector Run","ImgRejector Params");
-
-	echo appionRef();
-
-	echo"
-	<table width='600' border='1'>
-	<tr><td colspan='2'>
-	<b>ImgRejector Command:</b><br />
-	$command
-	</td></tr>
-	<tr><td>runid</td><td>$runid</td></tr>
-	<tr><td>outdir</td><td>$outdir</td></tr>
-	<tr><td>commit</td><td>".$_POST['commit']."</td></tr>
-	<tr><td>notiltpairs</td><td>".$_POST['notiltpairs']."</td></tr>
-	<tr><td>nopicks</td><td>".$_POST['nopicks']."</td></tr>
-	<tr><td>noace</td><td>".$_POST['noace']."</td></tr>
-	<tr><td>ace cutoff</td><td>$acecutoff</td></tr>
-	<tr><td>minimum defocus</td><td>$dfmin</td></tr>
-	<tr><td>maximum defocus</td><td>$dfmax</td></tr>
-	</table>\n";
-	processing_footer(True,True);
+	// if error display them
+	if ($errors)
+		createImgRejectorForm("<b>ERROR:</b> $errors");
+	
 }
 ?>

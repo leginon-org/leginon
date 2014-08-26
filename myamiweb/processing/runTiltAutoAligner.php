@@ -8,12 +8,12 @@
  *	Simple viewer to view a image using mrcmodule
  */
 
-require "inc/particledata.inc";
-require "inc/leginon.inc";
-require "inc/project.inc";
-require "inc/viewer.inc";
-require "inc/processing.inc";
-require "inc/appionloop.inc";
+require_once "inc/particledata.inc";
+require_once "inc/leginon.inc";
+require_once "inc/project.inc";
+require_once "inc/viewer.inc";
+require_once "inc/processing.inc";
+require_once "inc/appionloop.inc";
 	
 // IF VALUES SUBMITTED, EVALUATE DATA
 if ($_POST['process']) {
@@ -112,13 +112,21 @@ function createTiltAutoAlignerForm($extra=false, $title='Tilt Auto Aligner Launc
 		echo "</SELECT>\n";
 	}
 	$diam = ($_POST['diam']) ? $_POST['diam'] : "";
-	echo"
-		<TD CLASS='tablebg'>
-		<B>Particle Diameter:</B><br />
-		<INPUT TYPE='text' NAME='diam' VALUE='$diam' SIZE='4'>\n";
-	echo docpop('pdiam',' Particle diameter for result images');
+	$tiltaxis = ($_POST['tiltaxis']) ? $_POST['tiltaxis'] : "0.0";
+	echo"<TD CLASS='tablebg'>\n";
+	echo "<b>Parameters:</b><br/>\n";
+
+	echo docpop('pdiam',' Particle diameter');
+	echo "<INPUT TYPE='text' NAME='diam' VALUE='$diam' SIZE='4'>\n";
+
 	echo "<FONT SIZE=-2><I>(in &Aring;ngstroms)</I></FONT>
+		<br>";
+
+	echo docpop('tiltaxis',' Initial Tilt Axis');
+	echo "<INPUT TYPE='text' NAME='tiltaxis' VALUE='$tiltaxis' SIZE='4'>\n";
+	echo "<FONT SIZE=-2><I>(in degrees)</I></FONT>
 		<br><br>";
+
 	/*echo"
 		<B>Picking Icon:</B><br>
 		<SELECT NAME='shape'>\n";
@@ -166,10 +174,20 @@ function createTiltAutoAlignerForm($extra=false, $title='Tilt Auto Aligner Launc
 }
 
 function runTiltAutoAligner() {
+	/* *******************
+	PART 1: Get variables
+	******************** */
 	$expId   = $_GET['expId'];
 	$outdir  = $_POST['outdir'];
 	$runname = $_POST['runname'];
 
+	/* *******************
+	PART 2: Check for conflicts, if there is an error display the form again
+	******************** */
+
+	/* *******************
+	PART 3: Create program command
+	******************** */
 	$command ="tiltAutoAligner.py ";
 
 	$apcommand = parseAppionLoopParams($_POST);
@@ -202,37 +220,25 @@ function runTiltAutoAligner() {
 	$ftype=$_POST['ftype'];
 	$command .= " --outtype=$ftype";
 
-	if ($_POST['process'] == "Run Tilt Auto Aligner") {
-		$user = $_SESSION['username'];
-		$password = $_SESSION['password'];
+	$tiltaxis=$_POST['tiltaxis'];
+	$command .= " --init-tilt-axis=$tiltaxis";
 
-		if (!($user && $password))
-			createTiltAutoAlignerForm("<b>ERROR:</b> Enter a user name and password");
+	/* *******************
+	PART 4: Create header info, i.e., references
+	******************** */
+	// Add reference to top of the page
+	$headinfo .= referenceBox("DoG Picker and TiltPicker: software tools to facilitate particle selection in single particle electron microscopy.", 2009, "Voss NR, Yoshioka CK, Radermacher M, Potter CS, Carragher B.", "J Struct Biol.", 166, 2, 19374019, 2768396, false, false);
+	
+	/* *******************
+	PART 5: Show or Run Command
+	******************** */
+	// submit command
+	$errors = showOrSubmitCommand($command, $headinfo, 'tiltalign', $nproc);
 
-		$sub = submitAppionJob($command,$outdir,$runname,$expId,'tiltalign',False,True);
-		// if errors:
-		if ($sub)
-			createTiltAutoAlignerForm("<b>ERROR:</b> $sub");
-		exit;
-
-	} else {
-
-		processing_header("Tilt Auto Aligner Command","Tilt Auto Aligner Command");
-
-		echo referenceBox("DoG Picker and TiltPicker: software tools to facilitate particle selection in single particle electron microscopy.", 2009, "Voss NR, Yoshioka CK, Radermacher M, Potter CS, Carragher B.", "J Struct Biol.", 166, 2, 19374019, 2768396, false, false);
-
-		echo"
-			<TABLE WIDTH='600'>
-			<TR><TD COLSPAN='2'>
-			<B>Tilt Aligner Command:</B><br>
-			$command<HR>
-			</TD></tr>";
-
-		appionLoopSummaryTable();
-		particleLoopSummaryTable();
-		echo"</table>\n";
-		processing_footer();
-	}
+	// if error display them
+	if ($errors)
+		createTiltAutoAlignerForm("<b>ERROR:</b> $errors");
+	
 }
 
 ?>

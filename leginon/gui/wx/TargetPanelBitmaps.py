@@ -75,11 +75,20 @@ def targetIcon(color, shape):
 			dc.DrawText("#", 0, 0)
 		elif shape == 'area':
 			dc.DrawRectangle(1, 1, 14, 14)
+		elif shape == 'exp':
+			dc.DrawCircle(7, 7, 7)
+			dc.DrawLine(4, 4, 4, 9)
+			dc.DrawLine(4, 9, 9, 9)
+			dc.DrawLine(9, 9, 9, 4)
+			dc.DrawLine(9, 4, 4, 4)
 		elif shape == 'polygon':
 			dc.DrawLine(3, 1, 13, 1)
 			dc.DrawLine(13, 1, 13, 13)
 			dc.DrawLine(13, 13, 7, 13)
 			dc.DrawLine(7, 13, 3, 1)
+		elif shape == 'spline':
+			dc.DrawLine(3, 1, 10, 6)
+			dc.DrawLine(10, 6, 13, 13)
 		dc.EndDrawing()
 		dc.SelectObject(wx.NullBitmap)
 		bitmap.SetMask(wx.Mask(bitmap, wx.WHITE))
@@ -108,6 +117,8 @@ def getTargetBitmap(color, shape='+', size=global_width):
 			bitmap = targetBitmap_circle(color, width=size)
 		elif shape == 'area':
 			bitmap = targetBitmap_square(color, width=size)
+		elif shape == 'exp':
+			bitmap = targetBitmap_exp(color, width=size)
 		else:
 			raise RuntimeError('invalid target shape: '+shape)
 		targetbitmaps[color,shape,size] = bitmap
@@ -183,6 +194,22 @@ def targetBitmap_square(color, width=global_width):
 	return bitmap
 
 #--------------------
+def targetBitmap_exp(color, width=global_width):
+	bitmap = wx.EmptyBitmap(width, width)
+	dc = wx.MemoryDC()
+	dc.SelectObject(bitmap)
+	dc.BeginDrawing()
+	dc.Clear()
+	dc.SetBrush(wx.Brush(color, wx.TRANSPARENT))
+	dc.SetPen(wx.Pen(color, penwidth))
+	dc.DrawRectangle(4, 4, width-6, width-6)
+	dc.DrawCircle(width/2, width/2, width/2-1)
+	dc.EndDrawing()
+	dc.SelectObject(wx.NullBitmap)
+	bitmap.SetMask(wx.Mask(bitmap, wx.WHITE))
+	return bitmap
+
+#--------------------
 def targetBitmap_diamond(color, width=global_width):
 	bitmap = wx.EmptyBitmap(width, width)
 	dc = wx.MemoryDC()
@@ -240,7 +267,7 @@ def targetBitmap_circle(color, width=global_width):
 
 #--------------------
 def getTargetBitmaps(color, shape='+', size=global_width):
-	selectedcolor = wx.Color(color.Red()/2, color.Green()/2, color.Blue()/2,)
+	selectedcolor = wx.Colour(color.Red()/2, color.Green()/2, color.Blue()/2,)
 	return getTargetBitmap(color, shape, size), getTargetBitmap(selectedcolor, shape, size)
 
 

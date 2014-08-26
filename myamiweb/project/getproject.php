@@ -1,17 +1,17 @@
 <?php
-require "inc/project.inc.php";
-require "inc/leginon.inc";
+require_once "inc/project.inc.php";
+require_once "inc/leginon.inc";
 if (SAMPLE_TRACK) {
-	require "inc/confirmlib.php";
-	require "inc/packagelib.php";
-	require "inc/samplelib.php";
-	require "inc/gridlib.php";
-	require "inc/statusreport.inc.php";
-	require "inc/note.inc.php";
+	require_once "inc/confirmlib.php";
+	require_once "inc/packagelib.php";
+	require_once "inc/samplelib.php";
+	require_once "inc/gridlib.php";
+	require_once "inc/statusreport.inc.php";
+	require_once "inc/note.inc.php";
 }
-require "inc/utilpj.inc.php";
+require_once "inc/utilpj.inc.php";
 
-$share =  (@require "inc/share.inc.php") ? true : false;
+$share =  (@require_once "inc/share.inc.php") ? true : false;
 $share =  (privilege('shareexperiments') >=1) ? $share : false;
 
 if ($_GET['projectId']) {
@@ -44,6 +44,7 @@ $projectinfo = $project->getProjectInfo($selectedprojectId);
 $projectowners = $project->getProjectOwners($selectedprojectId);
 $projectname = ": ".$projectinfo['Name'];
 
+// unlink the Processing DB from this project if user selected "unlink" button
 if ($_POST['updateprocessing']) {
 	$q="delete from processingdb where `REF|projects|project`='$selectedprojectId'";
 	$r=$project->mysql->SQLQuery($q);
@@ -78,6 +79,8 @@ if ($_POST['createprocessing'] || $linkprocessing) {
 			$filename = "../xml/appion_extra.xml";
 			$leginondata->mysql->setSQLHost( array('db'=>$dbname) );
 			$leginondata->importTables($filename);
+			//set db back in leginondata or later query would go wrong
+			$leginondata->mysql->setSQLHost( array('db'=>DB_LEGINON) );
 
 			$data=array();
 			$data['REF|projects|project']=$selectedprojectId;
@@ -91,10 +94,9 @@ if (!$p_prefix = trim(DEF_PROCESSING_PREFIX)) {
 	$p_prefix = false;
 }
 
-$q="select appiondb from processingdb where `REF|projects|project`='$selectedprojectId'";
-list($r)=$project->mysql->getSQLResult($q);
+// Get the name of the processing database for this project
+$processingdb = $project->getProcessingDB( $selectedprojectId );
 
-$processingdb=$r['appiondb'];
 $title = "Project".$projectname;
 login_header($title);
 project_header($title, 'init()');
@@ -356,7 +358,7 @@ if (SAMPLE_TRACK) {
 			$smpn=$samplenumbers[$sampleId];
 			$gbn=$grids[$k]['grbox'];
 			$gn=$grids[$k]['number'];
-			$gn=ereg_replace("0","",$gn);
+			$gn=preg_replace("%0%","",$gn);
 			$gridinfos[$projectinfo['Name'].'.'.$pkgn.'.'.$smpn.'.'.$gbn.'.'.$gn]=$sId;
 		}
 
@@ -373,8 +375,17 @@ if (SAMPLE_TRACK) {
 }
 
 // Experiments 
+	// toggle showing projects with few images if user selected the "show" or "hide" projects button
+	if ($_POST['showHidden']) {
+		$toggleHidden = '<input type="submit" name="hideHidden" value="hide experiments with too few images">';
+		$showHidden = True;
+	} else {
+		$toggleHidden = '<input type="submit" name="showHidden" value="show all">';
+		$showHidden = False;
+	}
+	
 	$experimentIds = $project->getExperiments($projectId);
-	echo divtitle(count($experimentIds).' Experiments');
+	echo divtitle(count($experimentIds).' Experiments '.$toggleHidden);
 	if ($is_admin)
 		echo '<a alt="upload" target="_blank" class="header" href="'.UPLOAD_URL.'?projectId='.$selectedprojectId.'">upload images to new session</a>';
 
@@ -390,18 +401,30 @@ if (SAMPLE_TRACK) {
 			continue;
 		$numimg = $leginondata->getNumImages($info['SessionId']);
 		$totalsecs = $leginondata->getSessionDuration($info['SessionId']);
-
+		
+		// if there are no images, never show this experiment
+		if ( $numimg == 0 ) continue;
+		
+		// if there is not much data in the experiment, mark it as one to hide
+		$hide = ($numimg < 3 || $totalsecs < 60) ? True : False;
+		if ( $hide && !$showHidden ) {
+			continue;
+		}
+		
 		$sessions[trim($info['SessionId'])]=$info['Name'];
 		$sessionlink="<a class='header' target='viewer' href='".VIEWER_URL.$info['SessionId']."'>".$info['Name']."</a>";
 		$experiments[$k]['name']=$sessionlink;
 		$experiments[$k]['sessionid']=$info['SessionId'];
 		$experiments[$k]['user']=$info['User'];
 		$experiments[$k]['description']=$info['Purpose'];
+		$experiments[$k]['Image path']=$info['Image path'];
+		
 
 		if ($numimg > 0)
 			$experiments[$k]['totalimg']=$numimg;
 
-		if ($numimg < 3 || $totalsecs < 60) {
+		// if there is not much data in this experiment, grey out the name and description
+		if ($hide) {
 			// these sessions have no image and link is broken
 			$experiments[$k]['name'] = "<font color='#bbbbbb'>".$info['Name']."</font>";
 			$experiments[$k]['description'] = "<font color='#bbbbbb'>".$experiments[$k]['description']."</font>";
@@ -424,7 +447,29 @@ if (SAMPLE_TRACK) {
 		}
 		$summarylink="<a class='header' target='viewer' href='".SUMMARY_URL.$info['SessionId']."'>summary&raquo;</a>";
 		$experiments[$k]['summary']=$summarylink;
+		
+		// Add the number of Processing Runs
+		$numProcessingRuns = $project->getExperimentProcessingRunCount( $processingdb, $info['SessionId'] );
+		$experiments[$k]['numruns'] = $numProcessingRuns;
+
+		// Add the date of the last Processing Run
+		$lastProcessingRunDate = $project->getLastExperimentProcessingRunDate( $processingdb, $info['SessionId'] );
+		$experiments[$k]['lastrundate'] = $lastProcessingRunDate;
+		
+		// Add the number of Reconstructions
+		$numRecons = $project->getExperimentReconCount( $processingdb, $info['SessionId'] );
+		$experiments[$k]['numrecons'] = $numRecons;
 	}
+	
+// sort the experiment array if needed
+$orderBy = $_GET['sort'];
+if ( $orderBy ) {
+	$orderByArray = array();		
+	foreach ($experiments as $key => $exp) {
+		$orderByArray[$key] = $exp[$orderBy];
+	}
+	array_multisort( $orderByArray, SORT_DESC, $experiments );
+}
 
 $columns=array(
 	'name'=>'Name',
@@ -432,15 +477,21 @@ $columns=array(
 	'user'=>'User',
 	'description'=>'Description',
 	'totalimg'=>'Total images',
-	'totaltime'=>'Total Duration'
+	'totaltime'=>'Total Duration',
+	'numrecons'=>'Reconstructions',
+	'numruns'=>'Processing Runs',
+	'lastrundate'=>'Last Run',
+	'Image path'=>'Image Path'
 	);
 if ($share) {
 	$columns['share']="Sharing";
 }
 	$columns['summary']="";
 
+// display the Experiment Table
 $display_header=true;
-echo data2table($experiments, $columns, $display_header);
+$tableoption = "class='tableborder' border='1' cellpadding='5'";
+echo data2table($experiments, $columns, $display_header, $tableoption, $selectedprojectId);
 	
 if ($view=='d') {
 	echo divtitle('Share :: Users');

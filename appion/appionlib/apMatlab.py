@@ -6,12 +6,15 @@ import re
 import sys
 import math
 import shutil
+import time
+import subprocess
 #appion
 from appionlib import appiondata
 from appionlib import apParam
 from appionlib import apDisplay
-from appionlib import apCtf
+from appionlib.apCtf import ctfdb
 from appionlib import apImage
+from appionlib import apDBImage
 from appionlib import apDatabase
 
 try:
@@ -19,11 +22,49 @@ try:
 except:
 	apDisplay.printWarning("Matlab module did not get imported")
 
+
+#=====================
+def printResults(params, nominal, ctfvalue):
+	"""
+	This is only used by ACE1
+	"""
+	nom1 = float(-nominal*1e6)
+	defoc1 = float(ctfvalue[0]*1e6)
+	if (params['stig']==1):
+		defoc2 = float(ctfvalue[1]*1e6)
+	else:
+		defoc2=None
+	conf1 = float(ctfvalue[16])
+	conf2 = float(ctfvalue[17])
+
+	if(conf1 > 0 and conf2 > 0):
+		totconf = math.sqrt(conf1*conf2)
+	else:
+		totconf = 0.0
+	if (params['stig']==0):
+		if nom1 != 0: pererror = (nom1-defoc1)/nom1
+		else: pererror = 1.0
+		labellist = ["Nominal","Defocus","PerErr","Conf1","Conf2","TotConf",]
+		numlist = [nom1,defoc1,pererror,conf1,conf2,totconf,]
+		typelist = [0,0,0,1,1,1,]
+		apDisplay.printDataBox(labellist,numlist,typelist)
+	else:
+		avgdefoc = (defoc1+defoc2)/2.0
+		if nom1 != 0: pererror = (nom1-avgdefoc)/nom1
+		else: pererror = 1.0
+		labellist = ["Nominal","Defocus1","Defocus2","PerErr","Conf1","Conf2","TotConf",]
+		numlist = [nom1,defoc1,defoc2,pererror,conf1,conf2,totconf,]
+		typelist = [0,0,0,0,1,1,1,]
+		apDisplay.printDataBox(labellist,numlist,typelist)
+	return
+
+#=====================
 def runAce(matlab, imgdata, params, showprev=True):
 	imgname = imgdata['filename']
 
 	if showprev is True:
-		bestctfvalue, bestconf = apCtf.getBestCtfValueForImage(imgdata)
+		bestctfvalue = ctfdb.getBestCtfByResolution(imgdata)
+		bestconf = ctfdb.calculateConfidenceScore(bestctfvalue)
 		if bestctfvalue:
 			print ( "Prev best: '"+bestctfvalue['acerun']['name']+"', conf="+
 				apDisplay.colorProb(bestconf)+", defocus="+str(round(-1.0*abs(bestctfvalue['defocus1']*1.0e6),2))+
@@ -31,7 +72,7 @@ def runAce(matlab, imgdata, params, showprev=True):
 
 	if params['uncorrected']:
 		tmpname='temporaryCorrectedImage.mrc'
-		imgarray = apImage.correctImage(imgdata, params)
+		imgarray = apDBImage.correctImage(imgdata)
 		imgpath = os.path.join(params['rundir'],tmpname)
 		apImage.arrayToMrc(imgarray, imgpath)
 		print "processing", imgpath
@@ -42,7 +83,8 @@ def runAce(matlab, imgdata, params, showprev=True):
 	if params['nominal'] is not None:
 		nominal=params['nominal']
 	elif params['newnominal'] is True:
-		nominal = apCtf.getBestDefocusForImage(imgdata, msg=True)
+		bestctfvalue = ctfdb.getBestCtfByResolution(imgdata)
+		nominal = bestctfvalue['defocus1']
 	if nominal is None:
 		nominal = imgdata['scope']['defocus']
 
@@ -81,11 +123,12 @@ def runAce(matlab, imgdata, params, showprev=True):
 	ctfvalue = pymat.get(matlab, 'ctfparams')
 	ctfvalue=ctfvalue[0]
 
-	apCtf.printResults(params, nominal, ctfvalue)
+	printResults(params, nominal, ctfvalue)
 
 	return ctfvalue
 
 
+#=====================
 def runAceDrift(matlab,imgdict,params):
 	imgname = imgdict['filename']
 	imgpath = os.path.join(imgdict['session']['image path'], imgname+'.mrc')
@@ -106,6 +149,7 @@ def runAceDrift(matlab,imgdict,params):
 
 	pymat.eval(matlab,acecommand)
 
+#=====================
 def runAceCorrect(imgdict,params):
 	imgname = imgdict['filename']
 	imgpath = os.path.join(imgdict['session']['image path'], imgname+'.mrc')
@@ -113,7 +157,8 @@ def runAceCorrect(imgdict,params):
 	voltage = (imgdict['scope']['high tension'])
 	apix    = apDatabase.getPixelSize(imgdict)
 
-	ctfvalues, conf = apCtf.getBestCtfValueForImage(imgdict)
+	ctfvalues = ctfdb.getBestCtfByResolution(imgdata)
+	conf = ctfdb.calculateConfidenceScore(bestctfvalue)
 
 	ctdimname = imgname
 	ctdimpath = os.path.join(params['rundir'],ctdimname)
@@ -121,7 +166,7 @@ def runAceCorrect(imgdict,params):
 
 	#pdb.set_trace()
 	acecorrectcommand=("ctfcorrect1('%s', '%s', '%.32f', '%.32f', '%f', '%f', '%f');" % \
-		(imgpath, ctdimpath, ctfvalues['defocus1'], ctfvalues['defocus2'], ctfvalues['angle_astigmatism'], voltage, apix))
+		(imgpath, ctdimpath, ctfvalues['defocus1'], ctfvalues['defocus2'], -ctfvalues['angle_astigmatism'], voltage, apix))
 	print acecorrectcommand
 	try:
 		matlab = pymat.open("matlab -nosplash")
@@ -133,7 +178,7 @@ def runAceCorrect(imgdict,params):
 
 	return
 
-
+#=====================
 def setScopeParams(matlab,params):
 	tempdir = params['tempdir']+"/"
 	if os.path.isdir(tempdir):
@@ -149,6 +194,7 @@ def setScopeParams(matlab,params):
 		apDisplay.printError("Temp directory, '"+params['tempdir']+"' not present.")
 	return
 
+#=====================
 def setAceConfig(matlab,params):
 	tempdir=params['tempdir']+"/"
 	if os.path.isdir(tempdir):
@@ -169,6 +215,7 @@ def setAceConfig(matlab,params):
 		apDisplay.printError("Temp directory, '"+tempdir+"' not present.")
 	return
 
+#=====================
 def checkMatlabPath(params=None):
 	'''
 	Return immediately if MATLABPATH environment variable is already set.
@@ -197,6 +244,7 @@ def checkMatlabPath(params=None):
 		apDisplay.environmentError()
 		raise RuntimeError('Could not find ace.m.  Check MATLABPATH environment variable.')
 
+#=====================
 def updateMatlabPath(matlabpath):
 	data1 = os.environ.copy()
 	data1['MATLABPATH'] =  matlabpath
@@ -204,6 +252,7 @@ def updateMatlabPath(matlabpath):
 	#os.environ.get('MATLABPATH')
 	return
 
+#=====================
 def makeMatlabCmd(header,footer,plist):
 	cmd = header
 	for p in plist:
@@ -217,3 +266,31 @@ def makeMatlabCmd(header,footer,plist):
 	cmd += footer
 	return cmd
 
+#=====================
+def runMatlabScript(matlabscript,xvfb=True):
+	waited = False
+	t0 = time.time()
+	if xvfb:
+		cmd = "xvfb-run matlab -nodesktop < %s;" % (matlabscript)
+	else:
+		cmd = 'matlab -nodesktop -nosplash -nodisplay -r "run %s;exit"' % (matlabscript)
+	matlabproc = subprocess.Popen(cmd, shell=True)
+	out, err = matlabproc.communicate()
+	### continuous check
+	waittime = 2.0
+	while matlabproc.poll() is None:
+		if waittime > 10:
+			waited = True
+			sys.stderr.write(".")
+			waittime *= 1.1
+			time.sleep(waittime)
+	
+	tdiff = time.time() - t0
+	if tdiff > 20:
+		apDisplay.printMsg("completed in "+apDisplay.timeString(tdiff))
+	elif waited is True:
+		print ""
+	proc_code = matlabproc.returncode
+	if proc_code != 0:
+		apDisplay.printWarning("Matlab failed with subprocess error code %d" % proc_code)
+		

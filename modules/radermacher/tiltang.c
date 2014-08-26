@@ -10,12 +10,11 @@
 PyObject* tiltang(PyObject *self, PyObject *args) {
 	/* Convert python variables */
 	PyObject *a1, *a2;
+	// minimum area of a triangle (in pixels) for it to be considered valid
+	float arealim = 100.0;
 
-	PyObject *pynull = PyInt_FromLong(0);
-
-	float arealim;
-	if (!PyArg_ParseTuple(args, "OOf", &a1, &a2, &arealim))
-		return pynull;
+	if (!PyArg_ParseTuple(args, "OO|f", &a1, &a2, &arealim))
+		return NULL;
 
 	float lenlim = sqrt(arealim);
 	//lenlim = fround(lenlim, 4);
@@ -27,8 +26,10 @@ PyObject* tiltang(PyObject *self, PyObject *args) {
 	int npoint = MIN(PyArray_DIMS(a1)[0], PyArray_DIMS(a2)[0]);
 
 	/* Requires 3 points for a measurement*/
-	if (npoint < 3)
-		return pynull;
+	if (npoint < 3) {
+		PyErr_Format(PyExc_ValueError, "Need at least 3 points for measurement");
+		return NULL;
+	}
 	//long posstri = factorial(npoint) / factorial(npoint - 3) / 6;
 	long posstri = npoint*(npoint-1)*(npoint-2) / 6;
 	//printf("TOTAL triangles: %ld, npoint: %d\n", posstri, npoint);
@@ -135,8 +136,8 @@ PyObject* tiltang(PyObject *self, PyObject *args) {
 		printf("Areas used for theta: %.0f out of %.0f (%ld)\n", numtri, tottri, posstri); 
 
 	if (numtri == 0) {
-		printf("\nERROR: Unable to compute tilt angle; Need 3 triangles with area > arealim!\n");
-		return pynull;
+		PyErr_Format(PyExc_ValueError, "Need at least 3 triangles with area > arealim.");
+		return NULL;
 	}
 
 	//printf("sum = %.3f sumsq = %.3f numtri = %.1f\n",sum,sumsq,numtri);
@@ -211,8 +212,6 @@ PyObject* tiltang(PyObject *self, PyObject *args) {
 	PyObject *pylenlim = PyFloat_FromDouble((double) lenlim);
 	PyDict_SetItemString(result, "lenlim", pylenlim);
 	Py_DECREF(pylenlim);
-
-	Py_DECREF(pynull);
 
 	return result;
 }

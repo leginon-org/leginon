@@ -1,0 +1,24 @@
+     18 mrcread
+     16 mrcdestroy
+     10 mrctoimage
+      8 mrcupdateheader - set min,max,stdev,mean of mrc header in memory
+      6 mrcbinning
+      5 mrcinfo
+      5 mrcgetinfo
+      5 imagehistogram
+      4 mrcstdevscale
+      4 mrccdfscale
+
+      4 mrcgaussianfilter - inc/filter.inc smooth functions, tomo/jpeg.php
+      2 imagegaussianfilter inc/filter.inc smooth functions
+      1 mrcfftw - inc/filter.inc:  getfft
+
+      4 imagicinfo
+      1 imagicread - read imagic file to mrc structure
+
+      1 imagegradient - create gradient on the fly (could be static?)
+
+      1 mrcsy - getMosaic in image.inc
+      1 mrcsx - getMosaic in image.inc
+      1 mrccreate - getMosaic in image.inc
+      1 mrccopy - getMosaic in image.inc

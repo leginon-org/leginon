@@ -51,7 +51,7 @@ def parseTilt(tiltfile):
 			imagedict[imagenum]['rotation']=rotation			
 	return imagedict, parameterdict, seriesname
 
-def convertShiftsToParams(tilts,shifts,center,imagenames=None):
+def convertShiftsToParams(tilts,shifts,center,default_azimuth=90.0,imagenames=None):
 	imagedict={}
 	parameterdict={}
 	for i, shift in enumerate(shifts):
@@ -65,7 +65,7 @@ def convertShiftsToParams(tilts,shifts,center,imagenames=None):
 		parameterdict['psi']=0.0
 		parameterdict['theta']=0.0
 		parameterdict['phi']=0.0
-		parameterdict['azimuth']=90.0
+		parameterdict['azimuth']=default_azimuth
 	return imagedict,parameterdict,None
 
 def linkImageFiles(imgtree,rawdir):
@@ -84,6 +84,28 @@ def linkImageFiles(imgtree,rawdir):
 			os.remove(linkedpath)
 		if not os.path.isfile(linkedpath):
 			os.symlink(os.path.join(imgpath,imagedata['filename']+'.mrc'),linkedpath)
+	return filenamelist
+
+def getImageFiles(imgtree,rawdir, link=True):
+	#This function should replace linkImageFiles in all calls (i.e. in tomoaligner.py and everywhere else)
+	filenamelist = []
+	for imagedata in imgtree:
+		#set up names
+		imgpath=imagedata['session']['image path']
+		presetname=imagedata['preset']['name']
+		imgprefix=presetname+imagedata['filename'].split(presetname)[-1]
+		imgname=imgprefix+'.mrc'
+		filenamelist.append(imgprefix)
+		
+		destpath = os.path.join(rawdir,imgname)
+		if link is True:
+			#create symlinks to files
+			if os.path.islink(destpath):
+				os.remove(destpath)
+			if not os.path.isfile(destpath):
+				os.symlink(os.path.join(imgpath,imagedata['filename']+'.mrc'),destpath)
+		else: 
+			shutil.copy(os.path.join(imgpath,imagedata['filename']+'.mrc'),destpath)
 	return filenamelist
 
 def writeTiltFile(outfilename, seriesname, imagedict, parameterdict=False):
@@ -115,6 +137,29 @@ def writeTiltFile(outfilename, seriesname, imagedict, parameterdict=False):
 	f.write('\n')
 	for n in keys:
 		f.write('   IMAGE %-5d TILT ANGLE %8.3f   ROTATION %8.3f\n' % (n, imagedict[n]['tilt'], imagedict[n]['rotation']))
+	f.write('\n\n\n END\n\n')
+	f.close()
+
+def writeTiltFile2(outfilename, seriesname, specimen_eulers, azimuth, filenames, imagedict, referenceimage ):
+	f=open(outfilename,'w')
+	f.write('\n')
+	f.write( ' TILT SERIES %s\n' % seriesname)
+	f.write('\n\n   PARAMETER\n')
+	f.write('     PSI   %8.3f\n' % specimen_eulers['psi'])
+	f.write('     THETA %8.3f\n' % specimen_eulers['theta'])
+	f.write('     PHI   %8.3f\n' % specimen_eulers['phi'])
+	f.write('\n\n   PARAMETER\n\n')
+	f.write('     TILT AZIMUTH %8.3f\n' % azimuth)
+	f.write('\n\n')
+	for n in filenames:
+		f.write('   IMAGE %-5d FILE %s\n' % (n, filenames))
+	f.write('\n')
+	for n in keys:
+		f.write('   IMAGE %-5d ORIGIN  [ %8.3f %8.3f ]\n' % (n, imagedict[n]['x'], imagedict[n]['y']))
+	f.write('\n')
+	for n in keys:
+		f.write('   IMAGE %-5d TILT ANGLE %8.3f   ROTATION %8.3f\n' % (n, imagedict[n]['tilt'], imagedict[n]['rotation']))
+	f.write('\n   REFERENCE IMAGE %d\n' % (referenceimage))
 	f.write('\n\n\n END\n\n')
 	f.close()
 
@@ -371,6 +416,17 @@ def insertModel(alignerdata, results):
 	q['theta'] = results[-2]['theta']
 	q['phi'] = results[-2]['phi']
 	q['azimuth'] = results[-2]['azimuth']
+	modeldata = apTomo.publish(q)
+	return modeldata
+
+def insertModel2(alignerdata, geometrydict):
+	# general protomo2 model data
+	q = appiondata.ApProtomoModelData()
+	q['aligner'] = alignerdata
+	q['psi'] = geometrydict['psi']
+	q['theta'] = geometrydict['theta']
+	q['phi'] = geometrydict['phi']
+	q['azimuth'] = geometrydict['azimuth']
 	modeldata = apTomo.publish(q)
 	return modeldata
 

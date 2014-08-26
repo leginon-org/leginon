@@ -16,6 +16,7 @@ class TransportError(socketstreamtransport.TransportError):
 	pass
 
 class Server(socketstreamtransport.Server, SocketServer.ThreadingTCPServer):
+	#allow_reuse_address = True
 	def __init__(self, dh, port=None):
 		socketstreamtransport.Server.__init__(self, dh)
 

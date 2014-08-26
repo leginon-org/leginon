@@ -6,7 +6,7 @@
 #       see  http://ami.scripps.edu/software/leginon-license
 #
 import node
-import leginondata
+from leginon import leginondata
 from pyami import correlator, peakfinder
 import event
 import time

@@ -2,6 +2,7 @@
 
 #pythonlib
 import os
+import sys
 import shutil
 import time
 import numpy
@@ -11,14 +12,18 @@ import glob
 from appionlib import appionLoop2
 from appionlib import apDatabase
 from appionlib import apDisplay
+from appionlib import apDBImage
 from appionlib import apProject
 from appionlib import apEMAN
+from appionlib import apFile
 #leginon
 import leginon.leginondata
 import leginon.projectdata
 import leginon.leginonconfig
+import leginon.ddinfo
 #pyami
 from pyami import mrc
+from pyami import fileutil
 
 class ImageLoader(appionLoop2.AppionLoop):
 	#=====================
@@ -27,6 +32,7 @@ class ImageLoader(appionLoop2.AppionLoop):
 		appionScript OVERRIDE
 		"""
 		self.processcount = 0
+		self.refdata = {}
 		appionLoop2.AppionLoop.__init__(self)
 
 	#=====================
@@ -37,10 +43,6 @@ class ImageLoader(appionLoop2.AppionLoop):
 		### id info
 		self.parser.add_option("--userid", dest="userid", type="int",
 			help="Leginon User database ID", metavar="INT")
-		self.parser.add_option("--scopeid", dest="scopeid", type="int",
-			help="Scope database ID", metavar="INT")
-		self.parser.add_option("--cameraid", dest="cameraid", type="int",
-			help="Camera database ID", metavar="INT")
 
 		self.parser.add_option("--dir", dest="imgdir", type="string", metavar="DIR",
 			help="directory containing MRC files for upload")
@@ -56,6 +58,10 @@ class ImageLoader(appionLoop2.AppionLoop):
 
 		self.parser.add_option("--invert", dest="invert", default=False,
 			action="store_true", help="Invert image density")
+		self.parser.add_option("--norm", dest="normimg", type="string", metavar="PATH",
+			help="normalization image to apply to each upload")
+		self.parser.add_option("--dark", dest="darkimg", type="string", metavar="PATH",
+			help="dark image to apply to each upload frame")
 
 		### mode 1: command line params
 		self.parser.add_option("--tiltgroup", dest="tiltgroup", type="int", default=1,
@@ -68,6 +74,8 @@ class ImageLoader(appionLoop2.AppionLoop):
 			help="nominal magnification")
 		self.parser.add_option("--kv", dest="kv", type="int", metavar="INT",
 			help="high tension (in kilovolts)")
+		self.parser.add_option("--cs", dest="cs", type="float", metavar="#.#",
+			default=2.0, help="spherical aberration constant (in mm), e.g., --cs=2.0")
 		self.parser.add_option("--binx", dest="binx", type="int", metavar="INT",
 			default=1, help="binning in x (default=1)")
 		self.parser.add_option("--biny", dest="biny", type="int", metavar="INT",
@@ -100,6 +108,8 @@ class ImageLoader(appionLoop2.AppionLoop):
 				apDisplay.printError("If not specifying a parameter file, supply a high tension")
 			if self.params['kv'] > 1000:
 				apDisplay.printError("High tension must be in kilovolts (e.g., 120)")
+			if self.params['cs'] < 0.0:
+				apDisplay.printError("Cs value must be in mm (e.g., 2.0)")
 			if self.params['imgdir'] is None:
 				apDisplay.printError("If not specifying a parameter file, specify directory containing images")
 			if not os.path.exists(self.params['imgdir']):
@@ -108,10 +118,6 @@ class ImageLoader(appionLoop2.AppionLoop):
 			#mode 2: batch script
 			apDisplay.printError("Could not find Batch parameter file: %s"%(self.params["batchscript"]))
 
-		if self.params['scopeid'] is None:
-			apDisplay.printError("Please provide a Scope database ID, e.g., --scopeid=12")
-		if self.params['cameraid'] is None:
-			apDisplay.printError("Please provide a Camera database ID, e.g., --cameraid=12")
 		if self.params['sessionname'] is None:
 			apDisplay.printError("Please provide a Session name, e.g., --session=09feb12b")
 		if self.params['projectid'] is None:
@@ -120,6 +126,12 @@ class ImageLoader(appionLoop2.AppionLoop):
 			apDisplay.printError("Please provide a Description, e.g., --description='awesome data'")
 		if self.params['userid'] is None:
 			self.params['userid'] = self.getLeginonUserId()
+
+		if self.params['normimg'] is not None:
+			if not os.path.exists(self.params['normimg']):
+				apDisplay.printError("specified image path for normalization '%s' does not exist\n"%self.params['normimg'])
+		if self.params['normimg'] is None and self.params['darkimg'] is not None:
+			apDisplay.printError("Only dark but not normalization image is not enough forcorrection")
 
 		#This really is not conflict checking but to set up new session.
 		#There is no place in Appion script for this special case
@@ -141,11 +153,15 @@ class ImageLoader(appionLoop2.AppionLoop):
 			### only allows uploading more images if all images are uploaded through appion host.
 			instrumentq = leginon.leginondata.InstrumentData(hostname='appion',name='AppionTEM')
 			appiontems = instrumentq.query()
-			scopeemq = leginon.leginondata.ScopeEMData(session=sessiondatas[0],tem=appiontems[0])
-			appionscopeems = scopeemq.query()
+			allappionscopeems = []
+			for appiontem in appiontems:
+				scopeemq = leginon.leginondata.ScopeEMData(session=sessiondatas[0],tem=appiontem)
+				appionscopeems = scopeemq.query()
+				if appionscopeems:
+					allappionscopeems.extend(appionscopeems)
 			scopeemq = leginon.leginondata.ScopeEMData(session=sessiondatas[0])
 			allscopeems = scopeemq.query()
-			if len(allscopeems) > len(appionscopeems):
+			if len(allscopeems) > len(allappionscopeems):
 
 				apDisplay.printError("You can only add more images to an existing session that contains only appion uploads")
 		else:
@@ -207,7 +223,12 @@ class ImageLoader(appionLoop2.AppionLoop):
 		"""
 		standard appionLoop
 		"""	
-		self.getInstruments()
+		self.c_client = apDBImage.ApCorrectorClient(self.session,True)
+		self.getAppionInstruments()
+		if self.params['normimg']:
+			# need at least normimg to upload reference. darkimg can be faked
+			self.uploadRefImage('norm', self.params['normimg'])
+			self.uploadRefImage('dark', self.params['darkimg'])
 
 	#=====================
 	def run(self):
@@ -257,6 +278,7 @@ class ImageLoader(appionLoop2.AppionLoop):
 			if load > 2.0:
 				apDisplay.printMsg("Load average is high %.2f"%(load))
 				sleeptime = min(load, 60)
+				apDisplay.printMsg("Sleeping %.1f seconds"%(sleeptime))
 				time.sleep(load)
 
 			self._printSummary()
@@ -304,12 +326,76 @@ class ImageLoader(appionLoop2.AppionLoop):
 				+str(self.stats['imagesleft'])+" ) file: "\
 				+apDisplay.short(name), "green")
 			self.stats['lastcount'] = self.stats['count']
-			self._checkMemLeak()
+			if apDisplay.isDebugOn():
+				self._checkMemLeak()
 		# check to see if image has already been processed
 		if self._alreadyProcessed(info):
 			return False
 		self.stats['waittime'] = 0
 		return True
+
+	def newImagePath(self, rootname):
+		'''
+		Returns full path for uploaded image and frames
+		'''
+		extension = '.mrc'
+		newname = rootname+extension
+		newframename = rootname+'.frames'+extension
+		newimagepath = os.path.join(self.session['image path'], newname)
+		if self.session['frame path']:
+			newframepath = os.path.join(self.session['frame path'], newframename)
+		else:
+			newframepath = newimagepath
+		return newimagepath, newframepath
+
+	def getImageDimensions(self, mrcfile):
+		'''
+		Returns dictionary of x,y dimension for an mrc image/image stack
+		'''
+		mrcheader = mrc.readHeaderFromFile(mrcfile)
+		x = int(mrcheader['nx'].astype(numpy.uint16))
+		y = int(mrcheader['ny'].astype(numpy.uint16))
+		return {'x': x, 'y': y}
+
+	def getNumberOfFrames(self, mrcfile):
+		'''
+		Returns number of frames of an mrc image/image stack
+		'''
+		mrcheader = mrc.readHeaderFromFile(mrcfile)
+		return max(1,int(mrcheader['nz'].astype(numpy.uint16)))
+
+	def makeFrameDir(self,newdir):
+		fileutil.mkdirs(newdir)
+
+	def copyFrames(self,source,destination):
+		apFile.safeCopy(source, destination)
+
+	def prepareImageForUpload(self,origfilepath,newframepath=None,nframes=1):	
+		### In order to obey the rule of first save image then insert 
+		### database record, image need to be read as numpy array, not copied
+		### single image should not overload memory
+		apDisplay.printMsg("Reading original image: "+origfilepath)
+		if nframes <= 1:
+			imagearray = mrc.read(origfilepath)
+		else:
+			apDisplay.printMsg('Summing %d frames for image upload' % nframes)
+			imagearray = mrc.sumStack(origfilepath)
+			apDisplay.printMsg('Copying frame stack %s to %s' % (origfilepath,newframepath))
+			self.copyFrames(origfilepath,newframepath)
+		return imagearray
+
+	def correctImage(self,rawarray,nframes):
+		if 'norm' in self.refdata.keys() and self.refdata['norm']:
+			normarray = self.refdata['norm']['image']
+			if 'dark' in self.refdata.keys() and self.refdata['dark']:
+				darkarray = self.refdata['dark']['image']*nframes/self.refdata['dark']['camera']['nframes']
+			else:
+				darkarray = numpy.zeros(rawarray.shape)
+			apDisplay.printMsg('Normalizing image before upload')
+			return self.c_client.normalizeImageArray(rawarray, darkarray, normarray, is_counting=False)
+		else:
+			# no norm/dark to correct
+			return rawarray
 
 	#=====================
 	def processImage(self, imginfo):
@@ -317,17 +403,18 @@ class ImageLoader(appionLoop2.AppionLoop):
 		standard appionLoop
 		"""	
 		self.updatePixelSizeCalibration(imginfo)
-		imgdata = self.makeImageData(imginfo)
 		origimgfilepath = imginfo['original filepath']
-		newimgfilepath = os.path.join(self.params['rundir'], imgdata['filename']+".mrc")
-		apDisplay.printMsg("Copying original image to a new location: "+newimgfilepath)
-		### if input files are mrc, copy to new file location
-		if self.params['filetype'] == "mrc":
-			shutil.copyfile(origimgfilepath, newimgfilepath)
-		### non-mrc images will have already been converted and saved
-		### as a tmp file in the new location
-		else:
-			shutil.move(origimgfilepath, newimgfilepath)
+		newimgfilepath, newframepath = self.newImagePath(imginfo['filename'])
+		nframes = self.getNumberOfFrames(origimgfilepath)
+		if nframes > 1:
+			if not self.session['frame path']:
+				apDisplay.printError('Can not upload frame movies: Frame path for this session not defined. Please start a new session')
+			self.makeFrameDir(self.session['frame path'])
+		## read the image/summed file into memory and copy frames if available
+		imagearray = self.prepareImageForUpload(origimgfilepath,newframepath,nframes)
+
+		imagearray = self.correctImage(imagearray,nframes)
+		imgdata = self.makeImageData(imagearray,imginfo,nframes)
 		pixeldata = None
 		return imgdata, pixeldata
 
@@ -356,9 +443,15 @@ class ImageLoader(appionLoop2.AppionLoop):
 			'comment': description,
 			'user': user,
 			'image path': imagedirectory,
+			'frame path': leginon.ddinfo.getRawFrameSessionPathFromSessionPath(imagedirectory)
 		}
 		sessionq = leginon.leginondata.SessionData(initializer=initializer)
-		return self.publish(sessionq)
+		sessiondata = self.publish(sessionq)
+		# session become unreserved if is committed
+		reservationq = leginon.leginondata.SessionReservationData(name=sessiondata['name'],reserved=False)
+		self.publish(reservationq,True)
+		return sessiondata
+		
 
 	#=====================
 	def linkSessionProject(self, sessiondata, projectid):
@@ -404,6 +497,26 @@ class ImageLoader(appionLoop2.AppionLoop):
 		upfiles = glob.glob(imgdir)
 		if not upfiles:
 			apDisplay.printError("No images for upload in '%s'"%self.params['imgdir'])
+		if self.donedict and len(self.donedict) > 1:
+			apDisplay.printMsg("Cleaning up alreadly uploaded images")
+			newupfiles = []
+			count = 0
+			for imgfile in upfiles:
+				count += 1
+				if count % 10 == 0:
+					sys.stderr.write("..%d "%(len(newupfiles)))
+				basename = os.path.basename(imgfile)
+				justbase = os.path.splitext(basename)[0]
+				newfile = self.params['sessionname']+"_"+justbase
+				try:
+					self.donedict[newfile]
+				except:
+					newupfiles.append(imgfile)
+			sys.stderr.write("\n")
+			if len(newupfiles) > 0:
+				apDisplay.printMsg("Removed %d of %d files :: %d remain to process"%
+					(len(upfiles)-len(newupfiles), len(upfiles), len(newupfiles)))
+				upfiles = newupfiles
 		upfiles.sort()
 		for upfile in upfiles:
 			fname = os.path.abspath(upfile)
@@ -422,7 +535,7 @@ class ImageLoader(appionLoop2.AppionLoop):
 		if info is None:
 			# example
 			info = ['test.mrc','2e-10','1','1','50000','-2e-6','120000']
-		apDisplay.printMsg('reading image info')
+		apDisplay.printMsg('reading image info for %s'%(os.path.abspath(info[0])))
 		try:
 			uploadedInfo = {}
 			uploadedInfo['original filepath'] = os.path.abspath(info[0])
@@ -447,6 +560,7 @@ class ImageLoader(appionLoop2.AppionLoop):
 
 		uploadedInfo['filename'] = self.setNewFilename(uploadedInfo['original filepath'])
 		newimgfilepath = os.path.join(self.params['rundir'],uploadedInfo['filename']+".tmp.mrc")
+
 		### convert to mrc in new session directory if not mrc:
 		if self.params['filetype'] != "mrc":
 			if not os.path.isfile(newimgfilepath):
@@ -455,13 +569,20 @@ class ImageLoader(appionLoop2.AppionLoop):
 				if not os.path.exists(newimgfilepath):
 					apDisplay.printError("image conversion to mrc did not execute properly")
 			uploadedInfo['original filepath'] = newimgfilepath
-		tmpimage = mrc.read(uploadedInfo['original filepath'])
-		# invert image density
+	
+		dims = self.getImageDimensions(uploadedInfo['original filepath'])
+		nframes = self.getNumberOfFrames(uploadedInfo['original filepath'])
 		if self.params['invert'] is True:
-			tmpimage *= -1.0
-			mrc.write(tmpimage,uploadedInfo['original filepath'])
-		shape = tmpimage.shape
-		uploadedInfo['dimension'] = {'x':shape[1],'y':shape[0]}
+			if nframes == 1:
+				tmpimage = mrc.read(uploadedInfo['original filepath'])
+				# invert image density
+				tmpimage *= -1.0
+				mrc.write(tmpimage,uploadedInfo['original filepath'])
+			else:
+				apDisplay.printError('Inverting a stack is not implemented')
+
+		# works for both single and stack
+		uploadedInfo['dimension'] = dims
 		uploadedInfo['session'] = self.session
 		uploadedInfo['pixel size'] = uploadedInfo['unbinned pixelsize']*uploadedInfo['binning']['x']
 		return uploadedInfo
@@ -509,12 +630,37 @@ class ImageLoader(appionLoop2.AppionLoop):
 				return self.publish(tiltq)
 
 	#=====================
-	def getInstruments(self):
-		self.temdata = leginon.leginondata.InstrumentData.direct_query(self.params['scopeid'])
-		self.camdata = leginon.leginondata.InstrumentData.direct_query(self.params['cameraid'])
+	def getAppionInstruments(self):
+		instrumentq = leginon.leginondata.InstrumentData()
+		instrumentq['hostname'] = "appion"
+		instrumentq['name'] = "AppionTEM"
+		instrumentq['cs'] = self.params['cs'] * 1e-3
+		self.temdata = self.publish(instrumentq)
+		
+		instrumentq = leginon.leginondata.InstrumentData()
+		instrumentq['hostname'] = "appion"
+		instrumentq['name'] = "AppionCamera"
+		self.camdata = self.publish(instrumentq)
+		return
 
-	#=====================
-	def makeImageData(self,info):
+	def uploadRefImage(self,reftype,refpath):
+		info = self.readUploadInfo(self.batchinfo[0])
+		if refpath is None:
+			nframes = 1
+			if reftype == 'dark':
+				imagearray = numpy.zeros((info['dimension']['y'],info['dimension']['x']))
+			else:
+				imagearray = numpy.ones((info['dimension']['y'],info['dimension']['x']))
+		else:
+			nframes = self.getNumberOfFrames(refpath)
+			imagearray = self.prepareImageForUpload(refpath,None,nframes)
+		scopedata = self.makeScopeEMData(info)
+		cameradata = self.makeCameraEMData(info,nframes)
+		imagedata = {'image':imagearray,'scope':scopedata,'camera':cameradata}	
+		self.refdata[reftype] = self.c_client.storeCorrectorImageData(imagedata, reftype, 0)
+
+	def makeScopeEMData(self,info):
+		# ScopeEMData
 		scopedata = leginon.leginondata.ScopeEMData(session=self.session,tem =self.temdata)
 		scopedata['defocus'] = info['defocus']
 		scopedata['magnification'] = info['magnification']
@@ -524,18 +670,39 @@ class ImageLoader(appionLoop2.AppionLoop):
 			scopedata['stage position'] = {'x':0.0,'y':0.0,'z':0.0,'a':info['stage a']}
 		else:
 			scopedata['stage position'] = {'x':0.0,'y':0.0,'z':0.0,'a':0.0}
+		return scopedata
+
+	def makeCameraEMData(self,info,nframes):
+
+		# CameraEMData
 		cameradata = leginon.leginondata.CameraEMData(session=self.session,ccdcamera=self.camdata)
 		cameradata['dimension'] = info['dimension']
 		cameradata['binning'] = info['binning']
+		cameradata['offset'] = {'x':0,'y':0}
+		cameradata['save frames'] = (nframes > 1)
+		cameradata['nframes'] = nframes
+		cameradata['frame time'] = 100
+		cameradata['exposure time'] = cameradata['frame time'] * nframes
+		return cameradata
+
+	#=====================
+	def makeImageData(self,imagearray,info,nframes):
+		scopedata = self.makeScopeEMData(info)
+		cameradata = self.makeCameraEMData(info,nframes)
 		presetdata = leginon.leginondata.PresetData(session=self.session,tem=self.temdata,ccdcamera= self.camdata)
+		# PresetData
 		presetdata['name'] = 'upload'
 		presetdata['magnification'] = info['magnification']
+		# ImageData
 		imgdata = leginon.leginondata.AcquisitionImageData(session=self.session,scope=scopedata,camera=cameradata,preset=presetdata)
 		imgdata['tilt series'] = self.getTiltSeries()
 		imgdata['filename'] = info['filename']
 		imgdata['label'] = 'upload'
-		#fake image array to avoid overloading memory
-		imgdata['image'] = numpy.ones((1,1))
+		# single image should not overload memory
+		imgdata['image'] = imagearray
+		# references
+		for key in self.refdata.keys():
+			imgdata[key] = self.refdata[key]
 		self.publish(imgdata)
 		return imgdata
 
@@ -553,6 +720,7 @@ class ImageLoader(appionLoop2.AppionLoop):
 		caldata['session'] = self.session
 		caldata['tem'] = self.temdata
 		caldata['ccdcamera'] = self.camdata
+			
 		# If this pixel size is not what last entered in this upload,
 		# force db insert even if the same values exists because someone might 
 		# have changed the calibration earlier and now you need to change it back
@@ -561,6 +729,7 @@ class ImageLoader(appionLoop2.AppionLoop):
 		else:
 			self.publish(caldata, dbforce=True)
 			self.pixelsizes[mag] = pixelsize
+			apDisplay.printMsg("Sleeping 1 second")
 			time.sleep(1.0)
 
 #=====================

@@ -84,6 +84,7 @@ class Panel(leginon.gui.wx.ClickTargetFinder.Panel):
 		if result == wx.ID_OK:
 			selection = dialog.cmosaic.GetStringSelection()
 			if selection:
+				self.node.setMosaicName(selection)
 				self.node.loadMosaicTiles(selection)
 		elif result == wx.ID_RESET:
 			self.node.clearTiles()
@@ -93,6 +94,10 @@ class Panel(leginon.gui.wx.ClickTargetFinder.Panel):
 		dialog = MosaicSettingsDialog(self)
 		dialog.ShowModal()
 		dialog.Destroy()
+
+	def onShow(self):
+		if self.imagepanel.imagedata is not None:
+			self.onRefreshTargetsButton(None)
 
 	def onRefreshTargetsButton(self, evt):
 		self.node.displayDatabaseTargets()

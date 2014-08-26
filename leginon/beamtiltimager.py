@@ -5,9 +5,9 @@
 #	   For terms of the license agreement
 #	   see  http://ami.scripps.edu/software/leginon-license
 #
-import acquisition
+import manualfocuschecker
 import node
-import leginondata
+from leginon import leginondata
 import calibrationclient
 import threading
 import event
@@ -24,13 +24,15 @@ import subprocess
 import re
 import os
 
-class BeamTiltImager(acquisition.Acquisition):
+hide_incomplete = False
+
+class BeamTiltImager(manualfocuschecker.ManualFocusChecker):
 	panelclass = gui.wx.BeamTiltImager.Panel
 	settingsclass = leginondata.BeamTiltImagerSettingsData
-	defaultsettings = acquisition.Acquisition.defaultsettings
+	defaultsettings = manualfocuschecker.ManualFocusChecker.defaultsettings
 	defaultsettings.update({
 		'process target type': 'focus',
-		'beam tilt': 0.01,
+		'beam tilt': 0.005,
 		'beam tilt count': 1,
 		'sites': 0,
 		'startangle': 0,
@@ -40,22 +42,26 @@ class BeamTiltImager(acquisition.Acquisition):
 		'tableau split': 8,
 	})
 
-	eventinputs = acquisition.Acquisition.eventinputs
-	eventoutputs = acquisition.Acquisition.eventoutputs
+	eventinputs = manualfocuschecker.ManualFocusChecker.eventinputs
+	eventoutputs = manualfocuschecker.ManualFocusChecker.eventoutputs
 
 	def __init__(self, id, session, managerlocation, **kwargs):
 
 		self.correlator = correlator.Correlator()
 		self.correlation_types = ['cross', 'phase']
-		self.tableau_types = ['beam tilt series-power', 'beam tilt series-image','split image-power']
-		self.maskradius = 1.0
-		self.increment = 5e-7
+		self.tableau_types = ['beam tilt series-power','split image-power']
+		if not hide_incomplete:
+			self.tableau_types.append('beam tilt series-image')
+		self.tiltdelta = 5e-3
 		self.tabscale = None
-		acquisition.Acquisition.__init__(self, id, session, managerlocation, **kwargs)
+		manualfocuschecker.ManualFocusChecker.__init__(self, id, session, managerlocation, **kwargs)
+		self.parameter_choice= 'Beam Tilt X'
+		self.increment = 5e-4
 		self.btcalclient = calibrationclient.BeamTiltCalibrationClient(self)
 		self.imageshiftcalclient = calibrationclient.ImageShiftCalibrationClient(self)
 		self.euclient = calibrationclient.EucentricFocusClient(self)
-		self.ace2exe = self.getACE2Path()
+		# ace2 is not used for now.
+		#self.ace2exe = self.getACE2Path()
 
 	def alignRotationCenter(self, defocus1, defocus2):
 		try:
@@ -107,7 +113,7 @@ class BeamTiltImager(acquisition.Acquisition):
 		image = imagedata['image']
 		split = self.settings['tableau split']
 		self.tabimage = tableau.splitTableau(image, split)
-		self.addCornerCTFlabels(imagedata, split)
+		#self.addCornerCTFlabels(imagedata, split)
 		self.tabscale = None
 		self.displayTableau()
 		self.saveTableau()
@@ -125,7 +131,7 @@ class BeamTiltImager(acquisition.Acquisition):
 			for col in (0,(split/2)*splitsize[1],(split-1)*splitsize[1]):
 				colslice = slice(col,col+splitsize[1])
 				splitimage = image[rowslice,colslice]
-				labeled, ctfdata = self.addCTFlabel(splitimage, self.ht, self.rpixelsize, 1, self.defocus)
+				labeled, ctfdata = self.binAndAddCTFlabel(splitimage, self.ht, self.rpixelsize, 1, self.defocus)
 				self.tabimage[rowslice,colslice] = labeled
 
 	def insertTableau(self, imagedata, angle, rad):
@@ -135,7 +141,7 @@ class BeamTiltImager(acquisition.Acquisition):
 			self.ht = imagedata['scope']['high tension']
 			if not self.rpixelsize:
 				self.rpixelsize = self.btcalclient.getImageReciprocalPixelSize(imagedata)
-			binned, ctfdata = self.addCTFlabel(image, self.ht, self.rpixelsize, binning, self.defocus)
+			binned, ctfdata = self.binAndAddCTFlabel(image, self.ht, self.rpixelsize, binning, self.defocus)
 			self.ctfdata.append(ctfdata)
 		else:
 			binned = imagefun.bin(image, binning)
@@ -162,18 +168,32 @@ class BeamTiltImager(acquisition.Acquisition):
 		self.displayTableau()
 		self.saveTableau()
 
+	def catchBadSettings(self,presetdata):
+		if 'beam tilt' in self.settings['tableau type']:
+			if (presetdata['dimension']['x'] > 1024 or presetdata['dimension']['y'] > 1024):
+				self.logger.error('Analysis will be too slow: Reduce preset image dimension')
+				return 'error'
+		# Bad image binning will cause error
+			if presetdata['dimension']['x'] % self.settings['tableau binning'] != 0 or presetdata['dimension']['y'] % self.settings['tableau binning'] != 0:
+				self.logger.error('Preset dimension not dividable by binning. Correct Settings or preset dimension')
+				return 'error'
+		if 'split image' in self.settings['tableau type']:
+			if presetdata['dimension']['x'] % self.settings['tableau split'] != 0 or presetdata['dimension']['y'] % self.settings['tableau split'] != 0:
+				self.logger.error('Preset dimension can not be split evenly. Correct Settings or preset dimension')
+				return 'error'
+
 	def acquire(self, presetdata, emtarget=None, attempt=None, target=None):
 		'''
 		this replaces Acquisition.acquire()
 		Instead of acquiring an image, we acquire a series of beam tilt images
 		'''
-		## sometimes have to apply or un-apply deltaz if image shifted on
-		## tilted specimen
-		if 'beam tilt' in self.settings['tableau type'] and (presetdata['dimension']['x'] > 1024 or presetdata['dimension']['y'] > 1024):
-			self.logger.error('Analysis will be too slow: Reduce preset image dimension')
+		if self.catchBadSettings(presetdata) == 'error':
 			return 'error'
+
 		self.rpixelsize = None
 		self.defocus = presetdata['defocus']
+		## sometimes have to apply or un-apply deltaz if image shifted on
+		## tilted specimen
 		if emtarget is None:
 			self.deltaz = 0
 		else:
@@ -214,7 +234,7 @@ class BeamTiltImager(acquisition.Acquisition):
 			newbt = {'x': oldbt['x'] + bt['x'], 'y': oldbt['y'] + bt['y']}
 			self.instrument.tem.BeamTilt = newbt
 			self.logger.info('New beam tilt: %.4f, %.4f' % (newbt['x'],newbt['y'],))
-			status = acquisition.Acquisition.acquire(self, presetdata, emtarget, channel= channel)
+			status = manualfocuschecker.ManualFocusChecker.acquire(self, presetdata, emtarget, channel= channel)
 			imagedata = self.imagedata
 			self.setImage(imagedata['image'], 'Image')
 			self.instrument.tem.BeamTilt = oldbt
@@ -225,17 +245,19 @@ class BeamTiltImager(acquisition.Acquisition):
 				self.splitTableau(imagedata)
 			elif 'beam tilt series' in self.settings['tableau type']:
 				self.insertTableau(imagedata, angle, rad)
-			try:
-				shiftinfo = self.correlateOriginal(i,imagedata)
-			except Exception, e:
-				self.logger.error('Failed correlation: %s' % e)
-				return 'error'
-			pixelshift = shiftinfo['pixel shift']
-			displace.append((pixelshift['row'],pixelshift['col']))
+			if self.settings['tableau type'] == 'beam tilt series-image':
+				try:
+					shiftinfo = self.correlateOriginal(i,imagedata)
+				except Exception, e:
+					self.logger.error('Failed correlation: %s' % e)
+					return 'error'
+				pixelshift = shiftinfo['pixel shift']
+				displace.append((pixelshift['row'],pixelshift['col']))
 		if 'beam tilt series' in self.settings['tableau type']:
 			self.renderTableau()
-			if 'power' in self.settings['tableau type']:
-				self.calculateAxialComa(self.ctfdata)
+			# not to calculate Axial Coma to save time for now
+			#if 'power' in self.settings['tableau type']:
+			#	self.calculateAxialComa(self.ctfdata)
 		return status
 
 	def alreadyAcquired(self, targetdata, presetname):
@@ -344,10 +366,14 @@ class BeamTiltImager(acquisition.Acquisition):
 			return None
 		return ace2exe
 
-	def addCTFlabel(self, image, ht, rpixelsize, binning=1, defocus=None):
+	def binAndAddCTFlabel(self, image, ht, rpixelsize, binning=1, defocus=None):
 		pow = imagefun.power(image)
 		binned = imagefun.bin(pow, binning)
+		# No ctf estimation until it works better so that this node does not
+		# depend on coma beam-tilt calibration
 		s = None
+		ctfdata = None
+		'''
 		try:
 			ctfdata = fftfun.fitFirstCTFNode(pow,rpixelsize['x'], defocus, ht)
 		except Exception, e:
@@ -361,6 +387,7 @@ class BeamTiltImager(acquisition.Acquisition):
 			ctfdata = self.estimateCTF(imagedata)
 			z0 = (ctfdata['defocus1'] + ctfdata['defocus2']) / 2
 			s = '%d' % (int(z0*1e9),)
+		'''
 		if s:
 			t = numpil.textArray(s)
 			t = ndimage.zoom(t, (min(binned.shape)-40.0)*0.08/(t.shape)[0])
@@ -478,3 +505,20 @@ class BeamTiltImager(acquisition.Acquisition):
 			mcal = (6.4,-7.0)
 			tshape = self.tabimage.shape
 			self.logger.info('Axial Coma(pixels)= (%.2f,%.2f)' % (mcal[0]*b2[0]*1e6+tshape[0]/2,mcal[1]*b2[1]*1e6+tshape[1]/2))
+
+	def getTilt(self):
+		newtilt = self.coma_free_tilt.copy()
+		new_tilt_direction = (-1) * self.tiltdirection
+		newtilt[self.axis] = self.coma_free_tilt[self.axis] + new_tilt_direction * self.tiltdelta
+		self.tiltdirection = new_tilt_direction
+		return newtilt
+
+	def rotationCenterToScope(self):
+		self.btcalclient.rotationCenterToScope()
+		self.coma_free_tilt = self.instrument.tem.BeamTilt
+
+
+	def rotationCenterFromScope(self):
+		self.btcalclient.rotationCenterFromScope()
+
+	

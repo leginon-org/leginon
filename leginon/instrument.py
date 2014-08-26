@@ -11,7 +11,7 @@
 # $State: Exp $
 # $Locker:  $
 
-import leginondata
+from leginon import leginondata
 import remotecall
 import gui.wx.Events
 
@@ -29,6 +29,10 @@ class Proxy(object):
 		self.ccdcamera = None
 		self.camerasize = None
 		self.camerasizes = {}
+		self.camerabinnings = [1]
+		self.allcamerabinnings = {}
+		self.camerabinmethod = None
+		self.camerabinmethods = {}
 		self.session = session
 		self.wxeventhandler = wxeventhandler
 		self.objectservice = objectservice
@@ -50,6 +54,8 @@ class Proxy(object):
 			proxy = self.objectservice.getObjectProxy(nodename, name)
 			self.ccdcameras[name] = proxy
 			self.camerasizes[name] = proxy.CameraSize
+			self.allcamerabinnings[name] = proxy.CameraBinnings
+			self.camerabinmethods[name] = proxy.CameraBinMethod
 			if self.wxeventhandler is not None:
 				names = self.getCCDCameraNames()
 				evt = gui.wx.Events.SetCCDCamerasEvent(self.wxeventhandler, names=names)
@@ -67,6 +73,8 @@ class Proxy(object):
 			del self.ccdcameras[name]
 		try:
 			del self.camerasizes[name]
+			del self.allcamerabinnings[name]
+			del self.camerabinmethods[name]
 		except KeyError:
 			pass
 
@@ -92,10 +100,13 @@ class Proxy(object):
 				return None
 			else:
 				name = self.tem._name
+				cs = self.tem.Cs
 				#dbtype = self.tem.DatabaseType
 		else:
 			if name not in self.tems:
 				raise RuntimeError('no TEM \'%s\' available' % name)
+			else:
+				cs = None
 		instrumentdata = leginondata.InstrumentData()
 		instrumentdata['name'] = name
 		#instrumentdata['type'] = dbtype
@@ -108,7 +119,14 @@ class Proxy(object):
 		## save in DB if not already there
 		if results:
 			dbinstrumentdata = results[0]
+			if dbinstrumentdata['cs'] is None:
+				raise RuntimeError('You must run db schema update script on existing TEMs before using this version of Leginon')
+			elif cs is not None and dbinstrumentdata['cs'] != cs:
+				raise RuntimeError('TEM Cs in instruments.cfg does not match database value. Correct either one to use it in Leginon')
 		else:
+			if cs is None:
+				cs = 2.0e-3
+			instrumentdata['cs'] = cs
 			dbinstrumentdata = instrumentdata
 			dbinstrumentdata.insert()
 		return dbinstrumentdata
@@ -158,7 +176,7 @@ class Proxy(object):
 		try:
 			instrumentdata['hostname'] = self.ccdcameras[name].Hostname
 		except:
-			raise RuntimeError('unable to get TEM hostname')
+			raise RuntimeError('unable to get Camera hostname')
 		results = instrumentdata.query(results=1)
 		## save in DB if not already there
 		if results:
@@ -184,10 +202,14 @@ class Proxy(object):
 		if name is None:
 			self.ccdcamera = None
 			self.camerasize = None
+			self.camerabinnings = [1]
+			self.camerabinmethod = 'exact'
 		else:
 			try:
 				self.ccdcamera = self.ccdcameras[name]
 				self.camerasize = self.camerasizes[name]
+				self.camerabinnings = self.allcamerabinnings[name]
+				self.camerabinmethod = self.camerabinmethods[name]
 			except KeyError:
 				raise NotAvailableError('CCD camera \'%s\' not available' % name)
 		if self.wxeventhandler is not None:
@@ -243,7 +265,11 @@ class Proxy(object):
 		for i, key in enumerate(keys):
 			try:
 				if isinstance(results[i], Exception):
-					raise results[i]
+					# avoid exception for now on TSRI Krios
+					if temname == 'Krios':
+						continue
+					continue
+					#raise results[i]
 			except AttributeError:
 				continue
 			instance[key] = results[i]
@@ -314,12 +340,11 @@ class CCDCamera(remotecall.Locker):
 	def getDatabaseType(self):
 		return 'CCDCamera'
 
-class FastCCDCamera(CCDCamera):
-	pass
-
 parametermapping = (
 	# ScopeEM
+	# The order should base on dependency
 	('system time', 'SystemTime'),
+	('probe mode','ProbeMode'),
 	('magnification', 'Magnification'),
 	('spot size', 'SpotSize'),
 	('image shift', 'ImageShift'),
@@ -333,6 +358,7 @@ parametermapping = (
 	('beam tilt', 'BeamTilt'),
 	('corrected stage position', 'CorrectedStagePosition'),
 	('stage position', 'StagePosition'),
+	('stage speed', 'StageSpeed'),
 	('column pressure', 'ColumnPressure'),
 	('high tension', 'HighTension'),
 	('main screen position', 'MainScreenPosition'),
@@ -351,6 +377,10 @@ parametermapping = (
 	('film date type', 'FilmDateType'),
 	('objective current', 'ObjectiveCurrent'),
 	('exp wait time', 'ExpWaitTime'),
+	('tem energy filtered', 'EnergyFiltered'),
+	('tem energy filter', 'EnergyFilter'),
+	('tem energy filter width', 'EnergyFilterWidth'),
+	('aperture size', 'ApertureSize'),
 	# not used
 	#('beam blank', 'BeamBlank'),
 	#('film exposure', 'filmExposure'),
@@ -376,8 +406,19 @@ parametermapping = (
 	('energy filter', 'EnergyFilter'),
 	('energy filter width', 'EnergyFilterWidth'),
 	('nframes', 'NumberOfFrames'),
+	('align frames', 'AlignFrames'),
+	('align filter', 'AlignFilter'),
 	('save frames', 'SaveRawFrames'),
 	('frames name', 'PreviousRawFramesName'),
 	('use frames', 'UseFrames'),
+	('frame time', 'FrameTime'),
+	('frame flip', 'FrameFlip'),
+	('frame rotate', 'FrameRotate'),
+	('readout delay', 'ReadoutDelay'),
+	('temperature', 'Temperature'),
+	('temperature status', 'TemperatureStatus'),
+	('binned multiplier', 'BinnedMultiplier'),
+	('gain index', 'GainIndex'),
+	('system corrected', 'SystemGainDarkCorrected'),
 )
 

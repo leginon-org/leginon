@@ -20,7 +20,7 @@ from appionlib import apDisplay
 #=====================
 class BasicScript(object):
 	#=====================
-	def __init__(self):
+	def __init__(self,optargs=sys.argv[1:],quiet=False):
 		"""
 		Starts a new function and gets all the parameters
 		"""
@@ -28,25 +28,24 @@ class BasicScript(object):
 		self.startmem = mem.active()
 		self.t0 = time.time()
 		self.createDefaultStats()
-		self.quiet = False
+		self.quiet = quiet
 		self.timestamp = apParam.makeTimestamp()
-		apDisplay.printMsg("Time stamp: "+self.timestamp)
+		if not self.quiet:
+			apDisplay.printMsg("Time stamp: "+self.timestamp)
 		self.functionname = apParam.getFunctionName(sys.argv[0])
-		apDisplay.printMsg("Function name: "+self.functionname)
+		if not self.quiet:
+			apDisplay.printMsg("Function name: "+self.functionname)
 
 		apParam.setUmask()
 		self.parsePythonPath()
 		loadavg = os.getloadavg()[0]
 		if loadavg > 2.0:
+			apDisplay.printMsg("Load average is %.2f, wait for %.1f second " % (round(loadavg,2),loadavg**2))
 			time.sleep(loadavg**2)
 			apDisplay.printMsg("Load average is high "+str(round(loadavg,2)))
 
 		### setup default parser: run directory, etc.
-		self.parser = OptionParser()
-		self.setupParserOptions()
-		self.params = apParam.convertParserToParams(self.parser)
-		self.checkForDuplicateCommandLineInputs()
-
+		self.setParams(optargs)
 		self.checkConflicts()
 
 		### write function log
@@ -55,9 +54,16 @@ class BasicScript(object):
 		### any custom init functions go here
 		self.onInit()
 
+	def setParams(self,optargs=sys.argv[1:]):
+		self.parser = OptionParser()
+		self.setupParserOptions()
+		self.params = apParam.convertParserToParams(self.parser)
+		self.checkForDuplicateCommandLineInputs(optargs)
+
+
 	#=====================
-	def checkForDuplicateCommandLineInputs(self):
-		args = sys.argv[1:]
+	def checkForDuplicateCommandLineInputs(self,optargs=sys.argv[1:]):
+		args = optargs
 		argmdict = {}
 		for arg in args:
 			elements=arg.split('=')
@@ -104,7 +110,8 @@ class BasicScript(object):
 			logfile=self.logfile, msg=(not self.quiet))
 		if self.quiet is False:
 			apDisplay.printMsg("Ended at "+time.strftime("%a, %d %b %Y %H:%M:%S"))
-			apDisplay.printMsg("Memory increase during run: %.3f MB"%((mem.active()-self.startmem)/1024.0))
+			if apDisplay.isDebugOn():
+				apDisplay.printDebug("Memory increase during run: %.3f MB"%((mem.active()-self.startmem)/1024.0))
 			apDisplay.printColor("Total run time:\t"+apDisplay.timeString(time.time()-self.t0),"green")
 
 	#=====================
@@ -175,6 +182,46 @@ class BasicScript(object):
 # This is a low-level file with NO database connections
 # Please keep it this way
 ####
+
+class BasicScriptInstanceRun(object):
+	'''
+	Create an instance of a subclass of BasicScript
+	according to the jobtype and then run it
+	'''
+	def __init__(self):
+		command = sys.argv[1:]
+		self.jobtype = self.getJobType(command)
+		self.app = self.createInst(self.jobtype,command)
+		if self.app is None:
+			apDisplay.printError('No BasicScript subclass instance created')
+		else:
+			self.app.start()
+			self.run()
+			self.app.close()
+
+	def getJobType(self, command):
+		jobtype = None
+		#Search for the command option that specified the job type
+		for option in command:
+			if option.startswith(r'--jobtype='):
+				#We only need the part after the '='
+				jobtype = option.split('=')[1]
+				#Don't process anymore of the list then needed
+				break
+		return jobtype
+
+	def createInst(self, jobtype, command):
+		'''
+		Create Instance of BasicScript or its subclasses according to the jobtype.
+		'''
+		jobInstance = BasicScript()
+		return jobInstance
+
+	def run(self):
+		'''
+		Do something
+		'''
+		pass
 
 ####
 # Usage example

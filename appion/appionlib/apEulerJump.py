@@ -27,6 +27,7 @@ class ApEulerJump(object):
 		self.dbconf = sinedon.getConfig('appiondata')
 		### connect
 		self.db     = MySQLdb.connect(**self.dbconf)
+		self.db.autocommit(True)
 		### create a cursor
 		self.cursor = self.db.cursor()
 		### keep sinedon version too
@@ -34,7 +35,7 @@ class ApEulerJump(object):
 
 
 	#=====================
-	def calculateEulerJumpsForEntireRecon(self, reconrunid, stackid=None, sym=None):
+	def calculateEulerJumpsForEntireRecon(self, reconrunid, stackid=None, sym=None, multimodelrunid=None):
 		if sym is None:
 			sym = self.getSymmetry(reconrunid)
 		if re.match("^icos", sym.lower()):
@@ -55,7 +56,10 @@ class ApEulerJump(object):
 		miscount = 0
 		for stackpart in stackparts:
 			count += 1
-			jumpdata = self.getEulerJumpData(reconrunid, stackpartid=stackpart.dbid, stackid=stackid, sym=sym)
+			if multimodelrunid is None:
+				jumpdata = self.getEulerJumpData(reconrunid, stackpartid=stackpart.dbid, stackid=stackid, sym=sym)
+			else:
+				jumpdata = self.getEulerJumpData(reconrunid, stackpartid=stackpart.dbid, stackid=stackid, sym=sym, multimodelrunid=multimodelrunid)
 			if jumpdata is None:
 				if miscount < 25:
 					continue
@@ -66,14 +70,17 @@ class ApEulerJump(object):
 				timeremain = (time.time()-t0)/(count+1)*(numparts-count)
 				print ("particle=% 5d; median jump=% 3.2f, remain time= %s" % (stackpart['particleNumber'], jumpdata['median'],
 					apDisplay.timeString(timeremain)))
-		apDisplay.printMsg("complete "+str(len(stackparts))+" particles in "+apDisplay.timeString(time.time()-t0))
-		### print stats
-		print "-- median euler jumper stats --"
-		medians = numpy.asarray(medians, dtype=numpy.float32)
-		print ("mean/std :: "+str(round(medians.mean(),2))+" +/- "
-			+str(round(medians.std(),2)))
-		print ("min/max  :: "+str(round(medians.min(),2))+" <> "
-			+str(round(medians.max(),2)))
+		if len(medians) > 0:
+			### print stats
+			apDisplay.printMsg("complete "+str(len(stackparts))+" particles in "+apDisplay.timeString(time.time()-t0))
+			print "-- median euler jumper stats --"
+			medians = numpy.asarray(medians, dtype=numpy.float32)
+			print ("mean/std :: "+str(round(medians.mean(),2))+" +/- "
+				+str(round(medians.std(),2)))
+			print ("min/max  :: "+str(round(medians.min(),2))+" <> "
+				+str(round(medians.max(),2)))
+		else:
+			apDisplay.printWarning("no Euler jumpers inserted into the database, make sure that the angles are read by the recon uploader")			
 		return
 
 	#=====================
@@ -84,26 +91,39 @@ class ApEulerJump(object):
 			return -1
 
 	#=====================
-	def getEulerJumpData(self, reconrunid,  stackpartnum=None, stackpartid=None, stackid=None, sym='d7'):
+	def getEulerJumpData(self, reconrunid,  stackpartnum=None, stackpartid=None, stackid=None, sym='d7', multimodelrunid=None):
 		if stackpartnum is None and stackpartid is None:
 			apDisplay.printError("please provide either stackpartnum or stackpartid")
 		if stackpartid is None:
 			stackpartid = self.getStackPartID(stackpartnum, reconrunid, stackid)
 		### check DB first for data
-		jumpdata = self.getJumpDataFromDB(stackpartid, reconrunid)
+		if multimodelrunid is None:
+			jumpdata = self.getJumpDataFromDB(stackpartid, reconrunid=reconrunid)
+		else:
+			jumpdata = self.getJumpDataFromDB(stackpartid, multimodelrunid=multimodelrunid)
 		if jumpdata is not None:
 			return jumpdata
 		### need to calculate the jump
-		jumpdata = self.calculateJumpData(stackpartid, reconrunid, sym)
+		if multimodelrunid is None:
+			jumpdata = self.calculateJumpData(stackpartid, reconrunid=reconrunid, sym=sym)
+		else:
+			jumpdata = self.calculateJumpData(stackpartid, multimodelrunid=multimodelrunid, sym=sym)
 		if jumpdata is None:
 			### No jump data for particle stackpartid
 			if self.jumperror is False:
 				self.jumperror = True
+				if multimodelrunid is None:
+					id = reconrunid
+				else:
+					id = multimodelrunid
 				apDisplay.printWarning("Could not get or calculate jump data for stackpartid="
-					+str(stackpartid)+" and reconrunid="+str(reconrunid))
+					+str(stackpartid)+" and reconrunid=%d" % id)
 			return None
 		### insert into DB
-		self.insertJumpIntoDB(stackpartid, reconrunid, jumpdata)
+		if multimodelrunid is None:
+			self.insertJumpIntoDB(stackpartid, jumpdata, reconrunid=reconrunid)
+		else:
+			self.insertJumpIntoDB(stackpartid, jumpdata, multimodelrunid=multimodelrunid)
 		return jumpdata
 
 	###########################################
@@ -111,26 +131,48 @@ class ApEulerJump(object):
 	###########################################
 
 	#=====================
-	def insertJumpIntoDB(self, stackpartid, reconrunid, jumpdata):
-		#refinerundata=appiondata.ApRefineRunData.direct_query(reconid)
-		ejumpq = appiondata.ApEulerJumpData()
-		ejumpq['particle'] = appiondata.ApStackParticleData.direct_query(stackpartid)
-		ejumpq['refineRun'] = appiondata.ApRefineRunData.direct_query(reconrunid)
-		for key in ('median', 'mean', 'stdev', 'min', 'max'):
-			ejumpq[key] = jumpdata[key]
-		ejumpq.insert()
-
+	def insertJumpIntoDB(self, stackpartid, jumpdata, reconrunid=None, multimodelrunid=None):
+		if reconrunid is None and multimodelrunid is None:
+			return None
+		else:
+			if multimodelrunid is None:
+				#refinerundata=appiondata.ApRefineRunData.direct_query(reconid)
+				ejumpq = appiondata.ApEulerJumpData()
+				ejumpq['particle'] = appiondata.ApStackParticleData.direct_query(stackpartid)
+				ejumpq['refineRun'] = appiondata.ApRefineRunData.direct_query(reconrunid)
+				for key in ('median', 'mean', 'stdev', 'min', 'max'):
+					ejumpq[key] = jumpdata[key]
+				ejumpq.insert()
+			else:
+				ejumpq = appiondata.ApEulerJumpData()
+				ejumpq['particle'] = appiondata.ApStackParticleData.direct_query(stackpartid)
+				ejumpq['multiModelRefineRun'] = appiondata.ApMultiModelRefineRunData.direct_query(multimodelrunid)
+				for key in ('median', 'mean', 'stdev', 'min', 'max'):
+					ejumpq[key] = jumpdata[key]
+				ejumpq.insert()				
 
 	#=====================
-	def getJumpDataFromDB(self, stackpartid, reconrunid):
-		jumpq = appiondata.ApEulerJumpData()
-		jumpq['particle'] = appiondata.ApStackParticleData.direct_query(stackpartid)
-		jumpq['refineRun'] = appiondata.ApRefineRunData.direct_query(reconrunid)
-		jumpdatas = jumpq.query(results=1)
-		if not jumpdatas:
+	def getJumpDataFromDB(self, stackpartid, reconrunid=None, multimodelrunid=None):
+		if reconrunid is None and multimodelrunid is None:
 			return None
-		return jumpdatas[0]
-
+		elif reconrunid is not None and multimodelrunid is None:
+			jumpq = appiondata.ApEulerJumpData()
+			jumpq['particle'] = appiondata.ApStackParticleData.direct_query(stackpartid)
+			jumpq['refineRun'] = appiondata.ApRefineRunData.direct_query(reconrunid)
+			jumpdatas = jumpq.query(results=1)
+			if not jumpdatas:
+				return None
+			return jumpdatas[0]
+		elif reconrunid is None and multimodelrunid is not None:
+			jumpq = appiondata.ApEulerJumpData()
+			jumpq['particle'] = appiondata.ApStackParticleData.direct_query(stackpartid)
+			jumpq['multiModelRefineRun'] = appiondata.ApMultiModelRefineRunData.direct_query(multimodelrunid)
+			jumpdatas = jumpq.query(results=1)
+			if not jumpdatas:
+				return None
+			return jumpdatas[0]
+		else:
+			return None
 
 	#=====================
 	def getStackPartID(self, stackpartnum, reconrunid, stackid=None):
@@ -147,27 +189,33 @@ class ApEulerJump(object):
 		return stackpartdata[0].dbid
 
 	#=====================
-	def calculateJumpData(self, stackpartid, reconrunid, sym='d7'):
-		#apDisplay.printMsg("calculating jump data for "+str(stackpartid))
-		jumpdata = {}
-		eulers = self.getEulersForParticle(stackpartid, reconrunid)
-		if eulers is None:
+	def calculateJumpData(self, stackpartid, reconrunid=None, multimodelrunid=None, sym='d7'):
+		if reconrunid is None and multimodelrunid is None:
 			return None
-		eulers.sort(self.sortByIteration)
-		distances = []
-		for i in range(len(eulers)-1):
-			#calculate distance (in degrees) for D7 symmetry
-			dist = apEulerCalc.eulerCalculateDistanceSym(eulers[i], eulers[i+1], sym=sym, inplane=True)
-			distances.append(dist)
-			#f.write('%3.3f\t' % (dist))
-		distarray = numpy.asarray(distances, dtype=numpy.float32)
-		jumpdata['median'] = numpy.median(distarray)
-		jumpdata['mean'] = distarray.mean()
-		jumpdata['stdev'] = distarray.std()
-		jumpdata['min'] = distarray.min()
-		jumpdata['max'] = distarray.max()
+		else:
+			#apDisplay.printMsg("calculating jump data for "+str(stackpartid))
+			jumpdata = {}
+			if multimodelrunid is None:
+				eulers = self.getEulersForParticle(stackpartid, reconrunid)
+			else:
+				eulers = self.getEulersForParticle_MMrun(stackpartid, multimodelrunid)
+			if eulers is None:
+				return None
+			eulers.sort(self.sortByIteration)
+			distances = []
+			for i in range(len(eulers)-1):
+				#calculate distance (in degrees) for D7 symmetry
+				dist = apEulerCalc.eulerCalculateDistanceSym(eulers[i], eulers[i+1], sym=sym, inplane=True)
+				distances.append(dist)
+				#f.write('%3.3f\t' % (dist))
+			distarray = numpy.asarray(distances, dtype=numpy.float32)
+			jumpdata['median'] = numpy.median(distarray)
+			jumpdata['mean'] = distarray.mean()
+			jumpdata['stdev'] = distarray.std()
+			jumpdata['min'] = distarray.min()
+			jumpdata['max'] = distarray.max()
 
-		return jumpdata
+			return jumpdata
 
 	#=====================
 	def sortByIteration(self, a, b):
@@ -254,6 +302,42 @@ class ApEulerJump(object):
 		eulertree = self.convertSQLtoEulerTree(results)
 		return eulertree
 
+	#=====================
+	def getEulersForParticle_MMrun(self, stackpartid, multimodelrunid):
+		"""
+		returns euler data for a particular particle and refinement	in multi-model case
+		NOTE: particles can jump between individual refinements (i.e. references) in multi-model refinement. 
+		Therefore, the query is constructed without the use of ApRefineRunData table
+		"""
+	
+		query = (
+			"SELECT \n"
+			+"stackpart.`DEF_id` AS alt, \n"
+			+"partclass.`euler1` AS alt, \n"
+			+"partclass.`euler2` AS az, \n"
+			+"partclass.`euler3` AS phi, \n"
+			+"partclass.`mirror` AS mirror, \n"
+			+"partclass.`refine_keep` AS refine_keep, \n"
+			+"iter.`iteration` AS iteration \n"
+			+"FROM `ApStackParticleData` as stackpart \n"
+			+"LEFT JOIN `ApRefineParticleData` AS partclass \n"
+			+"	ON partclass.`REF|ApStackParticleData|particle` = stackpart.`DEF_id` \n"
+			+"LEFT JOIN `ApMultiModelRefineRunData` AS mmrun \n"
+			+"	ON partclass.`REF|ApMultiModelRefineRunData|multiModelRefineRun` = mmrun.`DEF_id` \n"
+			+"LEFT JOIN `ApRefineIterData` AS iter \n"
+			+"	ON partclass.`REF|ApRefineIterData|refineIter` = iter.`DEF_id` \n"
+			+"WHERE \n"
+			+"	stackpart.`DEF_id` = "+str(stackpartid)+" \n"
+			+"AND \n"
+			+"	partclass.`REF|ApMultiModelRefineRunData|multiModelRefineRun` = "+str(multimodelrunid)+" \n"
+		)
+		self.cursor.execute(query)
+		results = self.cursor.fetchall()
+		if not results:
+			### this particle was not used in the recon
+			return None
+		eulertree = self.convertSQLtoEulerTree(results)
+		return eulertree
 
 	#=====================
 	def convertSQLtoEulerTree(self, results):
@@ -270,7 +354,6 @@ class ApEulerJump(object):
 				euler['iteration'] = int(row[6])
 				eulertree.append(euler)
 			except:
-				print row
 				apDisplay.printError("bad row entry")
 		return eulertree
 

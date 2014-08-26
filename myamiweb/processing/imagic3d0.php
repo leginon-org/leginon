@@ -10,11 +10,11 @@
 */
 
 
-require "inc/particledata.inc";
-require "inc/processing.inc";
-require "inc/leginon.inc";
-require "inc/viewer.inc";
-require "inc/project.inc";
+require_once "inc/particledata.inc";
+require_once "inc/processing.inc";
+require_once "inc/leginon.inc";
+require_once "inc/viewer.inc";
+require_once "inc/project.inc";
 
 // if you don't have stuff in the posts, go to generate3d0(); else jobform();
 if ($_POST['process'])  {
@@ -192,8 +192,8 @@ function jobform($extra=false) {
 	elseif ($clusterId) {
 		$clusterpath = $clusterparams['path'];
 		$clusterclassfile = $clusterparams['avg_imagicfile'];
-		if (ereg(".img", $clusterclassfile)) $clusterclassfile = str_replace(".img", "", $clusterclassfile);
-		if (ereg(".hed", $clusterclassfile)) $clusterclassfile = str_replace(".hed", "", $clusterclassfile);
+		if (preg_match("%.img%", $clusterclassfile)) $clusterclassfile = str_replace(".img", "", $clusterclassfile);
+		if (preg_match("%.hed%", $clusterclassfile)) $clusterclassfile = str_replace(".hed", "", $clusterclassfile);
 		$clusterclassimgfile = $clusterpath."/".$clusterclassfile.".img";
 		$clusterclasshedfile = $clusterpath."/".$clusterclassfile.".hed";
 		$projectiontable.= "<table border='0', width='50'>";
@@ -218,8 +218,8 @@ function jobform($extra=false) {
 	elseif ($tsId) {
 		$tspath = $tsparams['path'];
 		$tsfile = $tsparams['templatename'];
-		if (ereg(".img", $tsfile)) $tsfile = str_replace(".img", "", $tsfile);
-		if (ereg(".hed", $tsfile)) $tsfile = str_replace(".hed", "", $tsfile);
+		if (preg_match("%.img%", $tsfile)) $tsfile = str_replace(".img", "", $tsfile);
+		if (preg_match("%.hed%", $tsfile)) $tsfile = str_replace(".hed", "", $tsfile);
 		$tsimgfile = $tspath."/".$tsfile.".img";
 		$tshedfile = $tspath."/".$tsfile.".hed";
 		$projectiontable.= "<table border='0', width='50'>";

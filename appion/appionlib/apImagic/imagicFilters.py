@@ -10,7 +10,6 @@ from appionlib import apDisplay
 from appionlib import apParam
 from appionlib import pymagic
 
-
 #======================
 def takeoverHeaders(filename, numpart, boxsize):
 	### better workaround than copyFile ... still a workaround though
@@ -84,69 +83,48 @@ def softMask(infile, outfile=None, mask=0.8, falloff=0.1):
 
 
 #======================
-def mask2D(boxsz, mask, infile=False, maskfile="mask2Dimgfile", path=os.path.abspath('.'), keepfiles=False):
+def mask2D(boxsz, mask, infile=False, maskfile="mask2Dimgfile"):
 	"""
 	creates a 2d circular mask
 	if infile is specified, mask is applied to stack & then mask is deleted
 	boxsz is the box size in pixels
 	mask is the size of the mask to apply as a fraction
 	"""
-	imagicroot = checkImagicExecutablePath()
-
-	batchfile = os.path.join(path, 'maskimg.batch')
-	logf = os.path.join(path, 'maskimg.log')
 
 	### generate a 2D mask
-	f=open(batchfile,"w")
-	f.write("#!/bin/csh -f\n")
-	f.write("setenv IMAGIC_BATCH 1\n")
-	f.write("%s/stand/testim.e <<EOF\n"%imagicroot)
-	f.write("%s\n"%maskfile)
-	f.write("%i,%i\n"%(boxsz,boxsz))
-	f.write("real\n")
-	f.write("disc\n")
-	f.write("%.3f\n"%mask)
-	f.write("EOF\n")
+#	f=open(batchfile,"w")
+#	f.write("#!/bin/csh -f\n")
+#	f.write("setenv IMAGIC_BATCH 1\n")
+	apDisplay.printMsg("creating 2D mask")
+	myIm = pymagic.ImagicSession("stand/testim.e")
+	myIm.toImagicQuiet("%s"%maskfile)
+	myIm.toImagicQuiet("%i,%i"%(boxsz,boxsz))
+	myIm.toImagicQuiet("real")
+	myIm.toImagicQuiet("disc")
+	myIm.toImagicQuiet("%.3f"%mask)
+	myIm.close()
 
 	if not infile:
-		f.close()
-		apDisplay.printMsg("creating 2D mask")
-		executeImagicBatchFile(batchfile, logfile=logf)
 		# check proper execution
 		if not os.path.exists(maskfile+".hed"):
 			apDisplay.printError("mask generation did not execute properly")
-		checkLogFileForErrors(logf)
-
-		if keepfiles is not True:
-			os.remove(batchfile)
-			os.remove(logf)
-		return maskfile+".hed"
+		return maskfile
 
 	### if infile is specified, apply mask to images
-	fname,ext=os.path.splitext(infile)
-	if not os.path.exists(fname+".hed"):
-		apDisplay.printError("input file: '%s' is not in imagic format"%infile)
-
+	fname = pymagic.fileFilter(infile)
 	file_ma=fname+"_ma"
 
-	f.write("%s/stand/twoimag.e <<EOF\n"%imagicroot)
-	f.write("mul\n")
-	f.write("%s\n"%fname)
-	f.write("%s\n"%maskfile)
-	f.write("%s\n"%file_ma)
-	f.write("EOF\n")
-	f.close()
-
 	apDisplay.printMsg("applying 2D mask")
-	executeImagicBatchFile(batchfile, logfile=logf)
+	myIm = pymagic.ImagicSession("stand/twoimag.e")
+	myIm.toImagicQuiet("mul")
+	myIm.toImagicQuiet("%s"%fname)
+	myIm.toImagicQuiet("%s"%maskfile)
+	myIm.toImagicQuiet("%s"%file_ma)
+	myIm.close()
+
 	# check proper execution
 	if not os.path.exists(file_ma+".hed"):
 		apDisplay.printError("masking did not execute properly")
-	checkLogFileForErrors(logf)
-
-	if keepfiles is not True:
-		os.remove(batchfile)
-		os.remove(logf)
 
 	return file_ma
 
@@ -164,12 +142,15 @@ def normalize(infile, outfile=None, sigma=10.0, path=os.path.abspath('.'), keepf
 		outname=fname+"_norm"
 
 	myIm = pymagic.ImagicSession("stand/pretreat.e")
+	imagicv = myIm.version()
 	myIm.toImagicQuiet(fname) # input
 	myIm.toImagicQuiet(outname) # output
 	myIm.toImagicQuiet("NORM_VARIANCE") # mode
 	myIm.toImagicQuiet("WHOLE") # mask to be used
 	myIm.toImagicQuiet("%.2f"%sigma) # desired sigma
 	myIm.toImagicQuiet("NO") # remove dust outliers
+	if imagicv >= 110119:
+		myIm.toImagicQuiet("NO")
 	myIm.close()
 
 	# check proper execution

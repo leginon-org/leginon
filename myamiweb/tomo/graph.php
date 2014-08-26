@@ -1,7 +1,7 @@
 <?php
 require_once "tomography.php";
-require "../inc/jpgraph.php";
-require "../inc/jpgraph_line.php";
+require_once "../inc/jpgraph.php";
+require_once "../inc/jpgraph_line.php";
 
 $tiltSeriesId = $_GET['tiltSeriesId'];
 $axis = $_GET['axis'];

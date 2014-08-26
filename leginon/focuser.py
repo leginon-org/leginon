@@ -5,6 +5,7 @@
 #	   For terms of the license agreement
 #	   see  http://ami.scripps.edu/software/leginon-license
 #
+import manualfocuschecker
 import acquisition
 import node, leginondata
 import calibrationclient
@@ -18,20 +19,22 @@ import copy
 import gui.wx.Focuser
 import player
 
-class Focuser(acquisition.Acquisition):
+class Focuser(manualfocuschecker.ManualFocusChecker):
 	panelclass = gui.wx.Focuser.Panel
 	settingsclass = leginondata.FocuserSettingsData
-	defaultsettings = acquisition.Acquisition.defaultsettings
+	defaultsettings = manualfocuschecker.ManualFocusChecker.defaultsettings
 	defaultsettings.update({
 		'process target type': 'focus',
 		'melt time': 0.0,
 		'melt preset': '',
+		'manual focus preset': '',
 		'acquire final': True,
         'process target type': 'focus',
+		'beam tilt settle time': 0.25,
 	})
 
-	eventinputs = acquisition.Acquisition.eventinputs
-	eventoutputs = acquisition.Acquisition.eventoutputs
+	eventinputs = manualfocuschecker.ManualFocusChecker.eventinputs
+	eventoutputs = manualfocuschecker.ManualFocusChecker.eventoutputs
 
 	def __init__(self, id, session, managerlocation, **kwargs):
 
@@ -66,24 +69,18 @@ class Focuser(acquisition.Acquisition):
 			'drift threshold': 3e-10,
 			'reset defocus': None,
 		}
-		self.manualchecklock = threading.Lock()
-		self.maskradius = 1.0
-		self.increment = 5e-7
-		self.man_power = None
-		self.man_image = None
 		self.manualplayer = player.Player(callback=self.onManualPlayer)
-		acquisition.Acquisition.__init__(self, id, session, managerlocation, **kwargs)
+		manualfocuschecker.ManualFocusChecker.__init__(self, id, session, managerlocation, **kwargs)
 		self.btcalclient = calibrationclient.BeamTiltCalibrationClient(self)
 		self.stagetiltcalclient = calibrationclient.StageTiltCalibrationClient(self)
 		self.imageshiftcalclient = calibrationclient.ImageShiftCalibrationClient(self)
 		self.euclient = calibrationclient.EucentricFocusClient(self)
 		self.focus_sequence = self.researchFocusSequence()
-		self.deltaz = 0.0
 
 	def validatePresets(self):
-		### check normal acquisition presets
+		### check normal manualfocuschecker presets
 		try:
-			acquisition.Acquisition.validatePresets(self)
+			manualfocuschecker.ManualFocusChecker.validatePresets(self)
 		except:
 			if self.settings['acquire final']:
 				raise
@@ -180,41 +177,6 @@ class Focuser(acquisition.Acquisition):
 				self.publish(setting_data, database=True, dbforce=True)
 		self.focus_sequence = sequence
 
-	def eucentricFocusToScope(self):
-		errstr = 'Eucentric focus to instrument failed: %s'
-		try:
-			ht = self.instrument.tem.HighTension
-			mag = self.instrument.tem.Magnification
-		except:
-			self.logger.error(errstr % 'unable to access instrument')
-			return
-		eufocdata = self.euclient.researchEucentricFocus(ht, mag)
-		if eufocdata is None:
-			self.logger.error('No eucentric focus found for HT: %s and Mag.: %s' % (ht, mag))
-		else:
-			delta = eufocdata.timestamp.now() - eufocdata.timestamp
-			if delta.days > 90:
-				self.logger.warning('Not setting eucentric focus older than 90 days, HT: %s and Mag.: %s' % (ht, mag))
-			else:
-				eufoc = eufocdata['focus']
-				self.instrument.tem.Focus = eufoc
-
-	def eucentricFocusFromScope(self):
-		errstr = 'Eucentric focus from instrument failed: %s'
-		try:
-			ht = self.instrument.tem.HighTension
-			mag = self.instrument.tem.Magnification
-			foc = self.instrument.tem.Focus
-		except:
-			self.logger.error(errstr % 'unable to access instrument')
-			return
-		try:
-			self.euclient.publishEucentricFocus(ht, mag, foc)
-		except node.PublishError, e:
-			self.logger.error(errstr % 'unable to save')
-			return
-		self.logger.info('Eucentric focus saved to database, HT: %s, Mag.: %s, Focus: %s' % (ht, mag, foc))
-
 	def autoFocus(self, setting, emtarget, resultdata):
 		presetname = setting['preset name']
 		stiglens = 'objective'
@@ -224,6 +186,9 @@ class Focuser(acquisition.Acquisition):
 		### Drift check
 		if setting['check drift']:
 			driftthresh = setting['drift threshold']
+			# move first if needed
+			# TO DO: figure out how drift monitor behaves in RCT if doing this
+			self.conditionalMoveAndPreset(presetname, emtarget)
 			driftresult = self.checkDrift(presetname, emtarget, driftthresh)
 			if driftresult['status'] == 'drifted':
 				self.logger.info('Drift was detected so target will be repeated')
@@ -241,9 +206,7 @@ class Focuser(acquisition.Acquisition):
 
 		## send the autofocus preset to the scope
 		## drift check may have done this already
-		p = self.presetsclient.getCurrentPreset()
-		if p is None or p['name'] != presetname:
-			self.presetsclient.toScope(presetname, emtarget)
+		self.conditionalMoveAndPreset(presetname,emtarget)
 
 		## set to eucentric focus if doing Z correction
 		## WARNING:  this assumes that user will not change
@@ -255,20 +218,37 @@ class Focuser(acquisition.Acquisition):
 			self.logger.info('Eucentric focus set')
 			self.eucset = True
 		else:
+			# Make sure defocus is set according to the preset
+			# Otherwise two defocus correction sequence 
+			# using the same preset would have close
+			# to zero defocus after the first correction
+			p = self.presetsclient.getCurrentPreset()
+			self.instrument.tem.Defocus = p['defocus']
 			self.eucset = False
 		self.reset = True
+		# get original beam to use to reset before return for any reason.
+		# failed in the process or not as a safety
+		beamtilt0 = self.btcalclient.getBeamTilt()
 
 		try:
-			correction = self.btcalclient.measureDefocusStig(btilt, correct_tilt=True, correlation_type=setting['correlation type'], stig=setting['stig correction'], settle=0.25, image0=lastdriftimage)
+			# increased settle time from 0.25 to 0.5 for Falcon protector
+			settletime = self.settings['beam tilt settle time']
+			correction = self.btcalclient.measureDefocusStig(btilt, correct_tilt=True, correlation_type=setting['correlation type'], stig=setting['stig correction'], settle=settletime, image0=lastdriftimage)
 		except calibrationclient.Abort:
+			self.btcalclient.setBeamTilt(beamtilt0)
 			self.logger.info('Measurement of defocus and stig. has been aborted')
 			return 'aborted'
 		except calibrationclient.NoMatrixCalibrationError, e:
+			self.btcalclient.setBeamTilt(beamtilt0)
 			self.player.pause()
 			self.logger.error('Measurement failed without calibration: %s' % e)
 			self.logger.info('Calibrate and then continue...')
 			self.beep()
 			return 'repeat'
+		except:
+			# any other exception
+			self.btcalclient.setBeamTilt(beamtilt0)
+			raise
 
 		if setting['stig correction'] and correction['stigx'] and correction['stigy']:
 			sx = '%.3f' % correction['stigx']
@@ -282,6 +262,7 @@ class Focuser(acquisition.Acquisition):
 		fitmin = correction['min']
 
 		resultdata.update({'defocus':defoc, 'stigx':stigx, 'stigy':stigy, 'min':fitmin, 'drift': lastdrift})
+		self.btcalclient.setBeamTilt(beamtilt0)
 		return 'ok'
 
 		#####################################################################
@@ -378,7 +359,8 @@ class Focuser(acquisition.Acquisition):
 		#	driftthresh = None
 
 		## send the autofocus preset to the scope
-		self.presetsclient.toScope(presetname, emtarget)
+		## drift check or melting may have done this already
+		self.conditionalMoveAndPreset(presetname,emtarget)
 		target = emtarget['target']
 		try:
 			z = self.stagetiltcalclient.measureZ(atilt, correlation_type=setting['correlation type'])
@@ -395,8 +377,13 @@ class Focuser(acquisition.Acquisition):
 		self.logger.info('no measurement selected')
 
 	def alignRotationCenter(self, defocus1, defocus2):
-		bt = self.btcalclient.measureRotationCenter(defocus1, defocus2, correlation_type=None, settle=0.5)
+		try:
+			bt = self.btcalclient.measureRotationCenter(defocus1, defocus2, correlation_type=None, settle=0.5)
+		except Exception, e:
+			self.logger.error('Failed rotation center measurement: %s' % (e,))
 		self.logger.info('Misalignment correction: %.4f, %.4f' % (bt['x'],bt['y'],))
+		if bt['x'] == 0.0 and bt['y'] == 0.0:
+			return
 		oldbt = self.instrument.tem.BeamTilt
 		self.logger.info('Old beam tilt: %.4f, %.4f' % (oldbt['x'],oldbt['y'],))
 		newbt = {'x': oldbt['x'] + bt['x'], 'y': oldbt['y'] + bt['y']}
@@ -452,14 +439,30 @@ class Focuser(acquisition.Acquisition):
 		scopedata.insert(force=True)
 		resultdata['scope'] = scopedata
 		self.publish(resultdata, database=True, dbforce=True)
+		stagenow = self.instrument.tem.StagePosition
+		self.logger.debug('z after step %s %.2f um' % (setting['name'], stagenow['z']*1e6))
 
 		return status
+
+	def conditionalMoveAndPreset(self,target_presetname, emtarget):
+		'''
+		Only call moveAndPreset if this is the first time the target is processed.
+		This reduces time spent in moving.
+		'''
+		p = self.presetsclient.getCurrentPreset()
+		if p is None or p['name'] != target_presetname or self.new_acquire:
+			presetdata = self.presetsclient.getPresetFromDB(target_presetname)
+			self.moveAndPreset(presetdata, emtarget)
+			self.new_acquire = False
+			return
 
 	def acquire(self, presetdata, emtarget=None, attempt=None, target=None):
 		'''
 		this replaces Acquisition.acquire()
 		Instead of acquiring an image, we do autofocus
 		'''
+		self.new_acquire = True
+
 		## sometimes have to apply or un-apply deltaz if image shifted on
 		## tilted specimen
 		if emtarget is None:
@@ -479,9 +482,7 @@ class Focuser(acquisition.Acquisition):
 
 			#### change to melt preset
 			meltpresetname = self.settings['melt preset']
-			p = self.presetsclient.getCurrentPreset()
-			if p is None or p['name'] != meltpresetname:
-				self.presetsclient.toScope(meltpresetname, emtarget)
+			self.conditionalMoveAndPreset(meltpresetname,emtarget)
 			self.logger.info('melt preset: %s' % (meltpresetname,))
 
 			self.startTimer('melt exposeSpecimen')
@@ -507,31 +508,17 @@ class Focuser(acquisition.Acquisition):
 
 		# aquire and save the focus image
 		if self.settings['acquire final']:
-			acquisition.Acquisition.acquire(self, presetdata, emtarget)
+			manualfocuschecker.ManualFocusChecker.acquire(self, presetdata, emtarget)
+		stagenow = self.instrument.tem.StagePosition
+		msg = 'z after all adjustment %.2f um' % (1e6*stagenow['z'])
+		self.testprint('Focuser: '+msg)
+		self.logger.debug(msg)
 
 		return status
 
 	def alreadyAcquired(self, targetdata, presetname):
 		## for now, always do acquire
 		return False
-
-	def manualNow(self):
-		errstr = 'Manual focus failed: %s'
-		presetnames = self.settings['preset order']
-		try:
-			presetname = presetnames[0]
-		except IndexError:
-			message = 'no presets specified for manual focus'
-			self.logger.error(errstr % message)
-			return
-		istr = 'Using preset \'%s\' for manual focus check' % (presetname,)
-		self.logger.info(istr)
-		### Warning:  no target is being used, you are exposing
-		### whatever happens to be under the beam
-		setting = {'preset name': presetname}
-		t = threading.Thread(target=self.manualCheckLoop, args=(setting,None))
-		t.setDaemon(1)
-		t.start()
 
 	def onManualCheck(self):
 		evt = gui.wx.Focuser.ManualCheckEvent(self.panel)
@@ -540,178 +527,6 @@ class Focuser(acquisition.Acquisition):
 	def onManualCheckDone(self):
 		evt = gui.wx.Focuser.ManualCheckDoneEvent(self.panel)
 		self.panel.GetEventHandler().AddPendingEvent(evt)
-
-	def acquireManualFocusImage(self):
-		t0 = time.time()
-		correction = self.settings['correct image']
-		self.manualchecklock.acquire()
-		if correction:
-			imdata = self.acquireCorrectedCameraImageData()
-		else:
-			imdata = self.acquireCameraImageData()
-		imarray = imdata['image']
-		self.manualchecklock.release()
-		pow = imagefun.power(imarray, self.maskradius)
-		self.man_power = pow.astype(numpy.float32)
-		self.man_image = imarray.astype(numpy.float32)
-		self.panel.setManualImage(self.man_image, 'Image')
-		self.panel.setManualImage(self.man_power, 'Power')
-		#sleep if too fast in simulation
-		safetime = 1.0
-		t1 = time.time()
-		if t1-t0 < safetime:
-			time.sleep(safetime-(t1-t0))
-
-	def manualCheckLoop(self, setting, emtarget=None, focusresult=None):
-		## go to preset and target
-		presetname = setting['preset name']
-		if presetname is not None:
-			self.presetsclient.toScope(presetname, emtarget)
-		pixelsize,center = self.getReciprocalPixelSizeFromPreset(presetname)
-		self.ht = self.instrument.tem.HighTension
-		self.panel.onNewPixelSize(pixelsize,center,self.ht)
-		self.logger.info('Starting manual focus loop, please confirm defocus...')
-		self.beep()
-		self.manualplayer.play()
-		self.onManualCheck()
-		while True:
-			state = self.manualplayer.state()
-			if state == 'stop':
-				break
-			elif state == 'pause':
-				if self.manualplayer.wait() == 'stop':
-					break
-				if presetname is not None:
-					self.logger.info('Reseting preset and target after pause')
-					self.logger.debug('preset %s' % (presetname,))
-					self.presetsclient.toScope(presetname, emtarget)
-			# acquire image, show image and power spectrum
-			# allow user to adjust defocus and stig
-			try:
-				self.acquireManualFocusImage()
-			except:
-				raise
-				self.manualchecklock.release()
-				self.manualplayer.pause()
-				self.logger.error('Failed to acquire image, pausing...')
-				continue
-
-		self.onManualCheckDone()
-		self.logger.info('Manual focus check completed')
-		return 'ok'
-
-	def getReciprocalPixelSizeFromPreset(self,presetname):
-		if presetname is None:
-			return None, None
-		q = leginondata.PresetData(session=self.session,name=presetname)
-		results = q.query(results=1)
-		if not results:
-			return None, None
-		presetdata = results[0]
-		scope = presetdata['tem']
-		ccd = presetdata['ccdcamera']
-		mag = presetdata['magnification']
-		unbinned_rpixelsize = self.btcalclient.getPixelSize(mag,tem=scope, ccdcamera=ccd)
-		if unbinned_rpixelsize is None:
-			return None, None
-		binning = presetdata['binning']
-		dimension = presetdata['dimension']
-		rpixelsize = {'x':1.0/(unbinned_rpixelsize*binning['x']*dimension['x']),'y':1.0/(unbinned_rpixelsize*binning['y']*dimension['y'])}
-		# This will not work for non-square image
-		self.rpixelsize = rpixelsize['x']
-		center = {'x':dimension['x'] / 2, 'y':dimension['y'] / 2}
-		return rpixelsize, center
-
-	def estimateAstigmation(self,params):
-		z0, zast, ast_ratio, angle = fftfun.getAstigmaticDefocii(params,self.rpixelsize,self.ht)
-		self.logger.info('z0 %.2f um, zast %.2f um (%.0f %%), angle= %.0f deg' % (z0*1e6,zast*1e6,ast_ratio*100, angle*180.0/math.pi))
-
-	def onFocusUp(self, parameter):
-		self.changeFocus(parameter, 'up')
-		self.panel.manualUpdated()
-
-	def onFocusDown(self, parameter):
-		self.changeFocus(parameter, 'down')
-		self.panel.manualUpdated()
-
-	def onResetDefocus(self):
-		self.manualchecklock.acquire()
-		self.logger.info('Reseting defocus...')
-		if self.deltaz:
-			self.logger.info('temporarily applying defocus offset due to z offset %.3e of image shifted target' % (self.deltaz,))
-			origdefocus = self.instrument.tem.Defocus
-			tempdefocus = origdefocus - self.deltaz
-			self.instrument.tem.Defocus = tempdefocus
-		try:
-			self.resetDefocus()
-			self.logger.info('Defocus reset')
-		finally:
-			if self.deltaz:
-				self.instrument.tem.Defocus = self.deltaz
-				self.logger.info('returned to defocus offset for image shifted target')
-			self.manualchecklock.release()
-			self.panel.manualUpdated()
-
-	def resetDefocus(self):
-		errstr = 'Reset defocus failed: %s'
-		try:
-			self.instrument.tem.resetDefocus()
-		except:
-			self.logger.error(errstr % 'unable to access instrument')
-
-	def onChangeToEucentric(self):
-		self.manualchecklock.acquire()
-		self.logger.info('Changing to eucentric focus')
-		try:
-			self.eucentricFocusToScope()
-		finally:
-			self.manualchecklock.release()
-			self.panel.manualUpdated()
-
-	def onEucentricFromScope(self):
-		self.eucentricFocusFromScope()
-		self.panel.manualUpdated()
-
-	def setFocus(self, value):
-		self.manualchecklock.acquire()
-		if self.deltaz:
-			final = value + self.deltaz
-			self.logger.info('Setting defocus to %.3e + z offset %.3e = %.3e' % (value,self.deltaz, final))
-		else:
-			final = value
-			self.logger.info('Setting defocus to %.3e' % (value,))
-		try:
-			self.instrument.tem.Defocus = final
-		finally:
-			self.manualchecklock.release()
-			self.panel.manualUpdated()
-
-	def changeFocus(self, parameter, direction):
-		delta = self.increment
-		self.manualchecklock.acquire()
-		self.logger.info('Changing %s %s %s' % (parameter, direction, delta))
-		try:
-			if parameter == 'Stage Z':
-				value = self.instrument.tem.StagePosition['z']
-			elif parameter == 'Defocus':
-				value = self.instrument.tem.Defocus
-			if direction == 'up':
-				value += delta
-			elif direction == 'down':
-				value -= delta
-			
-			if parameter == 'Stage Z':
-				self.instrument.tem.StagePosition = {'z': value}
-			elif parameter == 'Defocus':
-				self.instrument.tem.Defocus = value
-		except Exception, e:
-			self.logger.exception('Change focus failed: %s' % e)
-			self.manualchecklock.release()
-			return
-
-		self.manualchecklock.release()
-
-		#self.logger.info('Changed %s %s %s' % (parameter, direction, delta,))
 
 	def correctStig(self, stiglens, deltax, deltay):
 		stig = self.instrument.tem.Stigmator
@@ -749,9 +564,12 @@ class Focuser(acquisition.Acquisition):
 		deltaz = delta * numpy.cos(alpha)
 		newz = stage['z'] + deltaz
 		self.logger.info('Correcting stage Z by %s (defocus change %s at alpha %s)' % (deltaz,delta,alpha))
-		self.instrument.tem.StagePosition = {'z': newz}
-		if reset or (reset is None and self.reset):
-			self.resetDefocus()
+		try:
+			self.instrument.tem.StagePosition = {'z': newz}
+			if reset or (reset is None and self.reset):
+				self.resetDefocus()
+		except ValueError:
+			self.logger.warning('Stage Z correction to %.0f um failed. Likely Limit reached' % (newz*1e6))
 		resultdata['defocus correction'] = setting['correction type']
 		# declare drift
 		self.logger.info('Declaring drift after correcting stage Z')
@@ -766,6 +584,13 @@ class Focuser(acquisition.Acquisition):
 	def onAbortFailure(self):
 		self.btcalclient.abortevent.set()
 
-	def onManualPlayer(self, state):
-		self.panel.playerEvent(state, self.panel.manualdialog)
-	
+	def avoidTargetAdjustment(self,target_to_adjust,recent_target):
+		'''
+		RCT Focus should not adjust targets. refs #2665. It would be better not
+		having specify this by node name but through application node
+		binding.
+		'''
+		if self.name != 'RCT Focus':
+			return False
+		else:
+			return True

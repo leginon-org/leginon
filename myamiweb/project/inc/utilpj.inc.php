@@ -32,7 +32,13 @@ function display_data_table($data, $columns=array(), $display_header=false) {
 	return $html;
 }
 
-function data2table($data, $columns=array(), $display_header=false, $tableoption="class='tableborder' border='1' cellpadding='5'") {
+//----------------------------------------------------------------------------------------------------------
+// return an HTML formatted table.
+//
+// $projectId - if defined, adds the numeric $projectId to the path supplied for sorting the table based 
+// 	on a column clicked on by a user. This field was added for issue #1279.
+//----------------------------------------------------------------------------------------------------------
+function data2table($data, $columns=array(), $display_header=false, $tableoption="class='tableborder' border='1' cellpadding='5'", $projectId=false) {
 	$fields = ($columns) ? $columns : array_keys((array)$data[0]);
 	$html = "<table $tableoption >";
 	if ($display_header) {
@@ -40,7 +46,11 @@ function data2table($data, $columns=array(), $display_header=false, $tableoption
 		$option="";
 		foreach ($fields as $field=>$label) {
 			$l = (is_string($label)) ? $label : $field;
-			$html .= "<td><a href='$PHP_SELF?sort=$field'><b>".$l."</b></a></td>";
+			if ($projectId) {
+				$html .= "<td><a href='$PHP_SELF?projectId=$projectId&sort=$field'><b>".$l."</b></a></td>";
+			} else {	
+				$html .= "<td><a href='$PHP_SELF?sort=$field'><b>".$l."</b></a></td>";
+			}
 		}
 		$html .= "</tr>\n";
 	}

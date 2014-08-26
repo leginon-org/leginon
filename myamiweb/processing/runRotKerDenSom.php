@@ -8,15 +8,15 @@
  *      Simple viewer to view a image using mrcmodule
  */
 
-require "inc/particledata.inc";
-require "inc/leginon.inc";
-require "inc/project.inc";
-require "inc/viewer.inc";
-require "inc/processing.inc";
-require "inc/summarytables.inc";
+require_once "inc/particledata.inc";
+require_once "inc/leginon.inc";
+require_once "inc/project.inc";
+require_once "inc/viewer.inc";
+require_once "inc/processing.inc";
+require_once "inc/summarytables.inc";
 
 // IF VALUES SUBMITTED, EVALUATE DATA
-if ($_POST) {
+if ($_POST['process']) {
 	runrotKerDenSOM();
 } else {
 	createrotKerDenSOMForm();
@@ -258,11 +258,14 @@ function createrotKerDenSOMForm($extra=false, $title='rotKerdenSOM.py Launcher',
 }
 
 function runrotKerDenSOM() {
+	/* *******************
+	PART 1: Get variables
+	******************** */
 	$expId=$_GET['expId'];
 	$runname=$_POST['runname'];
 	$outdir=$_POST['outdir'];
 	$stackval=$_POST['stackid'];
-	list($stackid,$apix,$boxsz,$totpart) = split('\|--\|',$stackval);
+	list($stackid,$apix,$boxsz,$totpart) = preg_split('%\|--\|%',$stackval);
 	$xdim=$_POST['xdim'];
 	$ydim=$_POST['ydim'];
 	$numpart=$_POST['numpart'];
@@ -276,9 +279,14 @@ function runrotKerDenSOM() {
 
 	$spectralowharmonic  = $_POST['spectralowharmonic'];
 	$spectrahighharmonic = $_POST['spectrahighharmonic'];
-
-	//make sure a session was selected
+	
+	$commit = ($_POST['commit']=="on") ? '--commit' : '';
 	$description=$_POST['description'];
+	
+	/* *******************
+	PART 2: Check for conflicts, if there is an error display the form again
+	******************** */
+	//make sure a session was selected
 	if (!$description)
 		createrotKerDenSOMForm("<B>ERROR:</B> Enter a brief description of the particles to be aligned");
 
@@ -298,8 +306,6 @@ function runrotKerDenSOM() {
 	if ($xdim > 15 || $ydim > 15)
 		createrotKerDenSOMForm("<B>ERROR:</B> Dimensions must be less than 16");
 
-	$commit = ($_POST['commit']=="on") ? '--commit' : '';
-
 	// check particle radii
 	$particle = new particledata();
 	$stackparams=$particle->getAlignStackParams($stackid);
@@ -311,6 +317,9 @@ function runrotKerDenSOM() {
 	if (substr($outdir,-1,1)!='/') $outdir.='/';
 	$rundir = $outdir.$runname;
 
+	/* *******************
+	PART 3: Create program command
+	******************** */
 	/*./rotKerdenSOM.py --projectid=237 --rundir=/ami/data00/appion/09jul20b/align/rotkerden2 
 	--description="ty" --runname=rotkerden1 --alignid=3 --xdim=5 
 	--ydim=5 --numpart=1000 --commit --spectrainnerradius  14 --spectraouterradius 18; 
@@ -344,39 +353,20 @@ function runrotKerDenSOM() {
 	else
 		$command.="--no-commit ";
 
-	// submit job to cluster
-	if ($_POST['process']=="Run KerDen SOM") {
-		$user = $_SESSION['username'];
-		$password = $_SESSION['password'];
+	/* *******************
+	PART 4: Create header info, i.e., references
+	******************** */
+	$headinfo .= referenceBox("A Novel Neural Network Technique for Analysis and Classification of EM Single-Particle Images", 2001, "A. Pascual-Montano, L. E. Donate, M. Valle, M. Bárcena, R. D. Pascual-Marqui, J. M. Carazo", "J Struct Biol.", 133, '2/3', 11472094, false, false, "img/xmipp_logo.png");
+	
+	/* *******************
+	PART 5: Show or Run Command
+	******************** */
+	// submit command
+	$errors = showOrSubmitCommand($command, $headinfo, 'alignanalysis', $nproc);
 
-		if (!($user && $password)) createrotKerDenSOMForm("<B>ERROR:</B> Enter a user name and password");
-
-		$sub = submitAppionJob($command,$outdir,$runname,$expId,'alignanalysis');
-		// if errors:
-		if ($sub) createrotKerDenSOMForm("<b>ERROR:</b> $sub");
-		exit;
-	} else {
-		processing_header("Kernel Probability Density Estimator Self-Organizing Map Applied to Rotational Spectra",
-			"Kernel Probability Density Estimator Self-Organizing Map Applied to Rotational Spectra");
-
-		echo referenceBox("A Novel Neural Network Technique for Analysis and Classification of EM Single-Particle Images", 2001, "A. Pascual-Montano, L. E. Donate, M. Valle, M. Bárcena, R. D. Pascual-Marqui, J. M. Carazo", "J Struct Biol.", 133, '2/3', 11472094, false, false, "img/xmipp_logo.png");
-
-		echo"
-		<table width='600' class='tableborder' border='1'>
-		<tr><td colspan='2'>
-		<b>KerDen SOM Command:</b><br />
-		$command
-		</td></tr>
-		<tr><td>run id</td><td>$runname</td></tr>
-		<tr><td>stack id</td><td>$stackid</td></tr>
-		<tr><td>x dimension</td><td>$xdim</td></tr>
-		<tr><td>y dimension</td><td>$xdim</td></tr>
-		<tr><td>num part</td><td>$numpart</td></tr>
-		<tr><td>run dir</td><td>$rundir</td></tr>
-		<tr><td>commit</td><td>$commit</td></tr>
-		</table>\n";
-		processing_footer();
-	}
+	// if error display them
+	if ($errors)
+		createrotKerDenSOMForm("<b>ERROR:</b> $errors");
 }
 ?>
 

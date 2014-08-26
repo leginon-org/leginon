@@ -8,7 +8,7 @@
 #       see  http://ami.scripps.edu/software/leginon-license
 #
 
-import leginondata
+from leginon import leginondata
 import targetfinder
 import holefinderback
 from pyami import ordereddict
@@ -18,6 +18,7 @@ import instrument
 import os.path
 import math
 import gui.wx.HoleFinder
+import itertools
 
 class HoleFinder(targetfinder.TargetFinder):
 	panelclass = gui.wx.HoleFinder.Panel
@@ -60,6 +61,7 @@ class HoleFinder(targetfinder.TargetFinder):
 		'focus min mean thickness': 0.05,
 		'focus max mean thickness': 0.5,
 		'focus max stdev thickness': 0.5,
+		'focus interval': 1,
 	})
 	def __init__(self, id, session, managerlocation, **kwargs):
 		targetfinder.TargetFinder.__init__(self, id, session, managerlocation, **kwargs)
@@ -95,6 +97,9 @@ class HoleFinder(targetfinder.TargetFinder):
 		self.cortypes = ['cross', 'phase']
 		self.focustypes = ['Off', 'Any Hole', 'Good Hole']
 		self.userpause = threading.Event()
+
+		self.foc_counter = itertools.count()
+		self.foc_activated = False
 
 		self.start()
 
@@ -231,24 +236,32 @@ class HoleFinder(targetfinder.TargetFinder):
 
 		focus_points = []
 
-		## replace an acquisition target with a focus target
-		onehole = self.settings['focus hole']
-		if centers and onehole != 'Off':
-			## if only one hole, this is useless
-			if len(allcenters) < 2:
-				self.logger.info('need more than one hole if you want to focus on one of them')
-				centers = []
-			elif onehole == 'Any Hole':
-				fochole = self.focus_on_hole(centers, allcenters)
-				focus_points.append(fochole)
-			elif onehole == 'Good Hole':
-				if len(centers) < 2:
-					self.logger.info('need more than one good hole if you want to focus on one of them')
+		# activate if counter is at a multiple of interval
+		interval = self.settings['focus interval']
+		if interval and not (self.foc_counter.next() % interval):
+			self.foc_activated = True
+		else:
+			self.foc_activated = False
+
+		if self.foc_activated:
+			## replace an acquisition target with a focus target
+			onehole = self.settings['focus hole']
+			if centers and onehole != 'Off':
+				## if only one hole, this is useless
+				if len(allcenters) < 2:
+					self.logger.info('need more than one hole if you want to focus on one of them')
 					centers = []
-				else:
-					## use only good centers
-					fochole = self.focus_on_hole(centers, centers)
+				elif onehole == 'Any Hole':
+					fochole = self.focus_on_hole(centers, allcenters)
 					focus_points.append(fochole)
+				elif onehole == 'Good Hole':
+					if len(centers) < 2:
+						self.logger.info('need more than one good hole if you want to focus on one of them')
+						centers = []
+					else:
+						## use only good centers
+						fochole = self.focus_on_hole(centers, centers)
+						focus_points.append(fochole)
 
 		self.logger.info('Holes with good ice: %s' % (len(centers),))
 		# takes x,y instead of row,col
@@ -259,8 +272,9 @@ class HoleFinder(targetfinder.TargetFinder):
 		else:
 			acq_points = centers
 		# need just one focus point
-		focpoint = self.focus_on_hole(focus_points,focus_points)
-		focus_points = [focpoint]
+		if len(focus_points) > 1 and self.settings['focus template thickness']:
+			focpoint = self.focus_on_hole(focus_points,focus_points)
+			focus_points = [focpoint]
 
 		self.setTargets(acq_points, 'acquisition', block=True)
 		self.setTargets(focus_points, 'focus', block=True)
@@ -335,6 +349,8 @@ class HoleFinder(targetfinder.TargetFinder):
 					self.logger.info('skipping template point %s: out of image bounds' % (vect,))
 					continue
 				newtargets['acquisition'].append(target)
+			if not self.foc_activated:
+				continue
 			for vect in foc_vect:
 				target = center[0]+vect[0], center[1]+vect[1]
 				tarx = target[0]
@@ -438,6 +454,10 @@ class HoleFinder(targetfinder.TargetFinder):
 		self.currentimagedata = imdata
 		self.setImage(imdata['image'], 'Original')
 		if not self.settings['skip']:
+			if self.isFromNewParentImage(imdata):
+				self.logger.debug('Reset focus counter')
+				self.foc_counter = itertools.count()
+				self.resetLastFocusedTargetList(targetlist)
 			autofailed = False
 			try:
 				self.everything()
@@ -454,8 +474,10 @@ class HoleFinder(targetfinder.TargetFinder):
 					break
 				self.panel.targetsSubmitted()
 
-		self.logger.info('Publishing targets...')
+		# set self.last_focused for target publishing	
+		self.setLastFocusedTargetList(targetlist)
 		### publish targets from goodholesimage
+		self.logger.info('Publishing targets...')
 		self.publishTargets(imdata, 'focus', targetlist)
 		self.publishTargets(imdata, 'acquisition', targetlist)
 		self.setStatus('idle')

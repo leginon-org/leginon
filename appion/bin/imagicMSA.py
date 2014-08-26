@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Python script to upload a template to the database, and prepare images for import
+# Python script to analyze an aligned stack using Multivariate Statistics, as implemented in the IMAGIC software suite
 
 
 
@@ -34,8 +34,7 @@ class imagicMultivariateStatisticalAnalysisScript(appionScript.AppionScript):
 			+"[options]")
 
 		### basic params
-		self.parser.add_option("--nproc", dest="nproc", type="int", default=8,
-			help="number of processors to use", metavar="int")
+		self.parser.set_defaults(nproc=8)
 		self.parser.add_option("--alignid", dest="alignid",
 			help="ID of particle stack", metavar="int")
 
@@ -65,6 +64,7 @@ class imagicMultivariateStatisticalAnalysisScript(appionScript.AppionScript):
 	def checkConflicts(self):
 		### check for IMAGIC installation
 		self.imagicroot = apIMAGIC.checkImagicExecutablePath()	
+		self.imagicversion = apIMAGIC.getImagicVersion(self.imagicroot)
 	
 		### check input parameters
 		if self.params['alignid'] is None:
@@ -73,29 +73,28 @@ class imagicMultivariateStatisticalAnalysisScript(appionScript.AppionScript):
 			apDisplay.printError("enter a run ID")
 		if self.params['MSAdistance'] is None:
 			apDisplay.printError("enter distance criteria for MSA program (i.e. eulidean, chisquare, modulation)")
-
 		return
 
 	#=====================
 	def setRunDir(self):
 		# get reference-free classification and reclassification parameters
 		if self.params['alignid'] is not None:
-                	self.alignstackdata = appiondata.ApAlignStackData.direct_query(self.params['alignid'])
-                	path = self.alignstackdata['path']['path']
-                	uppath = os.path.abspath(os.path.join(path, "../.."))
-                	self.params['rundir'] = os.path.join(uppath, "imagicmsa", self.params['runname'])
+			self.alignstackdata = appiondata.ApAlignStackData.direct_query(self.params['alignid'])
+			path = self.alignstackdata['path']['path']
+			uppath = os.path.abspath(os.path.join(path, "../.."))
+			self.params['rundir'] = os.path.join(uppath, "imagicmsa", self.params['runname'])
 
         #=====================
-        def checkAnalysisRun(self):
-                # create a norefParam object
-                analysisrunq = appiondata.ApAlignAnalysisRunData()
-                analysisrunq['runname'] = self.params['runname']
-                analysisrunq['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
-                # ... path makes the run unique:
-                uniquerun = analysisrunq.query(results=1)
-                if uniquerun:
-                        apDisplay.printError("Run name '"+self.params['runname']+"' for stackid="+\
-                                str(self.params['alignid'])+"\nis already in the database")
+	def checkAnalysisRun(self):
+		# create a norefParam object
+		analysisrunq = appiondata.ApAlignAnalysisRunData()
+		analysisrunq['runname'] = self.params['runname']
+		analysisrunq['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
+		# ... path makes the run unique:
+		uniquerun = analysisrunq.query(results=1)
+		if uniquerun:
+			apDisplay.printError("Run name '"+self.params['runname']+"' for stackid="+\
+				str(self.params['alignid'])+"\nis already in the database")
 
 	#=====================
 	def createImagicBatchFile(self):
@@ -178,18 +177,32 @@ class imagicMultivariateStatisticalAnalysisScript(appionScript.AppionScript):
 		else:
 			f.write(str(self.imagicroot)+"/msa/msa.e <<EOF >> imagicMultivariateStatisticalAnalysis.log\n")
 			f.write("NO\n")
+
+		if int(self.imagicversion) > 100312:
+			f.write("DEFINE_LOCAL_FILES\n")
+			f.write(self.params['rundir']+"\n")
+
 		f.write("FRESH_MSA\n")
 		f.write(str(self.params['MSAdistance'])+"\n")
 		f.write("start\n")
-		if self.params['nproc'] > 1:
+
+		if int(self.imagicversion) >= 100312 and self.params['nproc'] > 1:
 			f.write("NO\n")
-#		f.write("NO\n")
+
 		f.write("msamask\n")
 		f.write("eigenimages\n")
+
+		if int(self.imagicversion) > 100312:
+			f.write("NO\n")
+
 		f.write("pixcoos\n")
 		f.write("eigenpixels\n")
 		f.write(str(self.params['numiters'])+"\n")
 		f.write("69\n")
+
+		if int(self.imagicversion) > 100312:
+			f.write("1\n")
+
 		f.write(str(self.params['overcorrection'])+"\n")
 		f.write("my_msa\n")
 		f.write("EOF\n")

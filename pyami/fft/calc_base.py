@@ -10,6 +10,7 @@ Subclasses must define:
 import numpy
 
 import pyami.weakattr
+import pyami.imagefun
 
 class Calculator(object):
 	def __init__(self):
@@ -61,7 +62,7 @@ class Calculator(object):
 		fft_array = self.post_fft(fft_array, full, centered)
 		return fft_array
 
-	def reverse(fft_array):
+	def reverse(self, fft_array):
 		return self._reverse(fft_array)
 
 	def post_fft(self, fft_array, full=False, centered=False, mask=None):
@@ -101,3 +102,8 @@ class Calculator(object):
 		pow = self.post_fft(pow, full, centered, mask)
 		return pow
 
+	def reshape(self, image_array, new_shape):
+		fft_array = self.forward_raw(image_array)
+		new_fft_array = self._fshape(fft_array, new_shape)
+		new_image = self.reverse(new_fft_array)
+		return new_image

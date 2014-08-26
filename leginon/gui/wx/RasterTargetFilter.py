@@ -37,7 +37,6 @@ class Panel(leginon.gui.wx.TargetFilter.Panel):
 		self.toolbar.Bind(wx.EVT_TOOL, self.onToggleAlternateOffset, id=leginon.gui.wx.ToolBar.ID_EXTRACT)
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, True)
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_STOP, True)
-		self.toolbar.Realize()
 
 		self.imagepanel = leginon.gui.wx.TargetPanel.ShapeTargetImagePanel(self, -1)
 		self.imagepanel.addTargetTool('preview', target=True)
@@ -155,7 +154,6 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 
 		## auto raster calculator
 		szcalc = wx.GridBagSizer(5,5)
-		sztype.AddGrowableCol(0)
 		szcalc.Add(self.autobut, (0, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
 		label = wx.StaticText(self, -1, 'Preset for raster')
 		szcalc.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)

@@ -5,8 +5,8 @@
 <title>Data</title>
 <?php
 
-require "config.php";
-require "inc/mysql.inc";
+require_once "config.php";
+require_once "inc/mysql.inc";
 
 $db = new mysql($DB_HOST, $DB_USER, $DB_PASS, $DB);
 
@@ -20,7 +20,7 @@ while ( $row = mysql_fetch_array($Rtables, MYSQL_ASSOC)) {
 	$Rfields = $db->SQLQuery($q);
 	echo "<h3>$table</h3>";
 	while ($fields=mysql_fetch_array($Rfields, MYSQL_ASSOC)) {
-		if (!ereg("^REF\||^DEF_",$fields[Field]))
+		if (!preg_match("%^REF\||^DEF_%",$fields[Field]))
 			echo "$fields[Field] <br>";
 	}
 }

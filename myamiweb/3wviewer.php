@@ -1,8 +1,8 @@
 <?php
-require "inc/leginon.inc";
-require "inc/viewer.inc";
-require "inc/project.inc";
-require "inc/cachedb.inc";
+require_once "inc/leginon.inc";
+require_once "inc/viewer.inc";
+require_once "inc/project.inc";
+require_once "inc/cachedb.inc";
 if (defined('PROCESSING')) {
 	$ptcl = (@require_once "inc/particledata.inc") ? true : false;
 }
@@ -16,7 +16,6 @@ $sessionId = (empty($sessionId)) ? $lastId : $sessionId;
 
 $sessioninfo=$leginondata->getSessionInfo($sessionId);
 $session=$sessioninfo['Name'];
-startcache($session);
 
 $projectdata = new project();
 $projectdb = $projectdata->checkDBConnection();
@@ -38,6 +37,7 @@ if ($ptcl) {
 	list ($jsdata, $particleruns) = getParticleInfo($sessionId);
 	$particle = new particledata();
 	$filenames = $particle->getFilenamesFromLabel($runId, $preset);
+	$aceruns = $particle-> getCtfRunIds($sessionId);
 }
 
 // --- update SessionId while a project is selected
@@ -85,22 +85,28 @@ $javascript = $viewer->getJavascript();
 $view1 = new view('View 1', 'v1');
 $view1->setDataTypes($datatypes);
 $view1->setParam('ptclparams',$particleruns);
+$view1->setParam('aceruns',$aceruns);
 $view1->displayDeqIcon(true);
+$view1->displayDDIcon(true);
 $viewer->add($view1);
 
 $view2 = new view('Main View', 'v2');
 $view2->setControl();
 $view2->setParam('ptclparams',$particleruns);
+$view2->setParam('aceruns',$aceruns);
 $view2->setDataTypes($datatypes);
 $view2->setSize(512);
 $view2->setSpan(2,2);
 $view2->displayDeqIcon(true);
+$view2->displayDDIcon(true);
 $viewer->add($view2);
 
 $view3 = new view('View 3', 'v3');
 $view3->setDataTypes($datatypes);
 $view3->setParam('ptclparams',$particleruns);
+$view3->setParam('aceruns',$aceruns);
 $view3->displayDeqIcon(true);
+$view3->displayDDIcon(true);
 $viewer->add($view3);
 
 

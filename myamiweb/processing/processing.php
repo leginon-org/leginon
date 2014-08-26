@@ -8,11 +8,11 @@
  *  Simple viewer to view a image using mrcmodule
  */
 
-require "inc/particledata.inc";
-require "inc/viewer.inc";
-require "inc/processing.inc";
-require "inc/leginon.inc";
-require "inc/project.inc";
+require_once "inc/particledata.inc";
+require_once "inc/viewer.inc";
+require_once "inc/processing.inc";
+require_once "inc/leginon.inc";
+require_once "inc/project.inc";
 
 if ($_POST['login']) {
   $errors = checkLogin();
@@ -178,13 +178,17 @@ if ($sessionId) {
     $jobdone=0;
     foreach ($subjobs as $j) {
       // skip appion jobs
-      if (!(ereg('.appionsub.',$j['name']))) {
+      if (!(preg_match('%.appionsub.%',$j['name']))) {
 	if ($j['status']=='Q') $jobqueue++;
 	elseif ($j['status']=='R') $jobrun++;
 	elseif ($j['status']=='D') $jobdone++;
       }
     }
   }
+
+  // --- Get Helical Data
+  if ($hiprunIds = $particle->getHipRunIds($sessionId))
+		$hipruns=count($hiprunIds);
 
   echo"</form>";
 
@@ -353,7 +357,7 @@ if ($sessionId) {
   // in.  Then you can submit a job
   if ($stackruns == 0) $nrun = "<font size=-1><i>Create a stack first</i></font>"; 
   elseif (!$_SESSION['loggedin']) {$nrun = "<font size=-1><i>Log in to submit a job</i>\n";}
-  else $nrun = "<a href='emanJobGen.php?expId=$sessionId'>EMAN Reconstruction</a>";
+  else $nrun = "<a href='selectRefinementType.php?expId=$sessionId'>Run Reconstruction</a>";
   if ($stackruns>0) {
     $nrun .= "<br /><a href='uploadrecon.php?expId=$sessionId'>Upload Reconstruction</a>";
   }
@@ -367,6 +371,25 @@ if ($sessionId) {
 	$data[]=array(
     'action'=>array("<br /><b>Pipeline tools:</b>", $celloption)
 	);
+
+  //HELICAL PROCESSING
+  if ($hipruns==0) {$bgcolor=$nonecolor;$gifimg=$nonepic;}
+  else {$bgcolor=$donecolor;$gifimg=$donepic;}
+
+	$celloption="bgcolor='$bgcolor'";
+
+	$action = formatAction($gifimg, "Helical Processing");
+
+  	$result = ($hipruns==0) ? "none" :
+			"<a href='hipsummary.php?expId=$sessionId'>$hipruns completed</a>\n";
+
+  	$nrun = "<a href='runHIP.php?expId=$sessionId'>Helical Image Processing (PHOELIX)</a>";
+
+ 	 $data[]=array(
+		'action'=>array($action, $celloption),
+		'result'=>array($result, $celloption),
+		'newrun'=>array($nrun, $celloption),
+  	);
 
   if ($templates==0) {$bgcolor=$nonecolor; $gifimg=$nonepic;}
   else {$bgcolor=$donecolor; $gifimg=$donepic;}

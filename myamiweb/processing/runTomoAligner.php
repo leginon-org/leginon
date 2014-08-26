@@ -8,11 +8,11 @@
  *      Simple viewer to view a image using mrcmodule
  */
 
-require "inc/particledata.inc";
-require "inc/leginon.inc";
-require "inc/project.inc";
-require "inc/viewer.inc";
-require "inc/processing.inc";
+require_once "inc/particledata.inc";
+require_once "inc/leginon.inc";
+require_once "inc/project.inc";
+require_once "inc/viewer.inc";
+require_once "inc/processing.inc";
 
 // IF VALUES SUBMITTED, EVALUATE DATA
 if ($_POST['process']) {
@@ -24,11 +24,12 @@ else {
 	createTomoAlignerForm();
 }
 
-function buildOutdir($sessioninfo,$tiltseriesnumber) {
+function buildOutdir($sessioninfo,$tiltseriesnumber,$is_raptor) {
 	$outdir=$sessioninfo;
 	$outdir=getBaseAppionPath($sessioninfo);
-	$outdir .="tomo/tiltseries".$tiltseriesnumber;
-	$outdir=$outdir.'/align';
+	$outdir .="/tomo/tiltseries".$tiltseriesnumber;
+	if (!$is_raptor)
+		$outdir=$outdir.'/align';
 	return $outdir;	
 }
 
@@ -62,10 +63,24 @@ function createTomoAlignerForm($extra=false, $title='tomoaligner.py Launcher', $
 	// Set any existing parameters in form that does not depend on other values
 	$tiltseriesId = ($_POST['tiltseriesId']) ? $_POST['tiltseriesId'] : NULL;
 	$tiltseriesId2 = ($_POST['tiltseriesId2']) ? $_POST['tiltseriesId2'] : NULL;
+	// Set alignmethod
+	$defaultmethod = ($lastalignerId)? 'protomo': 'leginon';
+	$alignmethod = ($_POST['alignmethod']) ? $_POST['alignmethod'] : $defaultmethod;
+	$leginoncheck = ($_POST['alignmethod'] == 'leginon' || !($_POST['alignmethod'])) ? "CHECKED" : "";
+	$protomocheck = ($_POST['alignmethod'] == 'protomo') ? "CHECKED" : "";
+	$raptorcheck = ($_POST['alignmethod'] == 'raptor') ? "CHECKED" : "";
+	$protomo2check = ($_POST['alignmethod'] == 'protomo2') ? "CHECKED" : "";
+	# For Jensen Lab
+	#$raptorcheck = ($_POST['alignmethod'] == 'raptor' || !($_POST['alignmethod'])) ? "CHECKED" : "";
+	#$protomo2check = ($_POST['alignmethod'] == 'protomo2') ? "CHECKED" : "";
+	$imodcheck = ($_POST['alignmethod'] == 'imod-shift') ? "CHECKED" : "";
+
+	$runtypes = array('leginon'=>'leginon','raptor'=>'raptor','imod-shift'=>'imodxc','protomo'=>'protomo', 'protomo2'=>'protomo');
 	$alignruns = $particle->countTomoAlignmentRuns($tiltseriesId);
-	$autorunname = ($alignruns) ? 'align'.($alignruns+1):'align1';
-	$runname = ($_POST['lasttiltseries']==$tiltseriesId) ? $_POST['runname']:$autorunname;
+	$autorunname = ($alignruns) ? $runtypes[$alignmethod].($alignruns+1):$runtypes[$alignmethod].'1';
+	$runname = ($_POST && $_POST['lasttiltseries']==$tiltseriesId && $_POST['lastalignmethod']==$alignmethod && $_POST['lastrunname'] && $_POST['lastrunname']!=$_POST['runname']) ? $_POST['runname']:$autorunname;
 	$description = $_POST['description'];
+	// protomo2 parameters
 	$maxIteration = $_POST['maxIteration'];
 	$alignSample = $_POST['alignSample'];
 	$windowX = $_POST['windowX'];
@@ -74,11 +89,12 @@ function createTomoAlignerForm($extra=false, $title='tomoaligner.py Launcher', $
 	$LdiameterY = $_POST['LdiameterY'];
 	$HdiameterX = $_POST['HdiameterX'];
 	$HdiameterY= $_POST['HdiameterY'];
+	//raptor parameters
+	$markersize = ($_POST['markersize']) ? $_POST['markersize'] : 10;
+	$markernumber = ($_POST['markernumber']) ? $_POST['markernumber'] : 0;
+	$reconbin = ($_POST['reconbin']) ? $_POST['reconbin'] : 2;
+	$reconthickness = ($_POST['reconthickness']) ? $_POST['reconthickness'] : 500;
 
-	$protomocheck = ($_POST['alignmethod'] == 'protomo') ? "CHECKED" : "";
-	$protomo2check = ($_POST['alignmethod'] == 'protomo2' || !($_POST['alignmethod'])) ? "CHECKED" : "";
-
-	$imodcheck = ($_POST['alignmethod'] == 'imod-shift') ? "CHECKED" : "";
 	echo"
   <table border=3 class=tableborder>
   <tr>
@@ -166,7 +182,8 @@ function createTomoAlignerForm($extra=false, $title='tomoaligner.py Launcher', $
 			if ($tiltseriesId)
 				echo "<br/><b>Bad Tilt Series! Do not use.</b><br/>";
 		}
-		if (!HIDE_FEATURE) {
+		// Hide secondary tilt series until dual tilt is processable
+		if (false) {
 			echo "</td><td Valign='TOP'>\n";
 			echo $seriesselector_array2[0];
 			echo docpop('tiltseriestwo', '2ndary Tilt Series');
@@ -186,7 +203,7 @@ function createTomoAlignerForm($extra=false, $title='tomoaligner.py Launcher', $
 		$imageinfo = $leginondata->getImageInfo($tiltseriesinfos[0]['imageid']);
 		$imagesize = ($_POST['imagesize']) ? $_POST['imagesize'] : $imageinfo['dimx'];
 	}
-	$outdir=buildOutdir($sessioninfo,$tiltseriesinfos[0]['number']);
+	$outdir=buildOutdir($sessioninfo,$tiltseriesinfos[0]['number'],$raptorcheck);
 	echo "<input type='hidden' name='outdir' value='$outdir'>\n";
 	echo "<input type='hidden' name='imagesize' value='$imagesize'>\n";
 	echo "</td></table>";
@@ -198,6 +215,8 @@ function createTomoAlignerForm($extra=false, $title='tomoaligner.py Launcher', $
 		echo "<input type='hidden' name='runname' value='$runname'>\n";
 	} else {
     echo "<input type='text' name='runname' value='$runname' size='10'>\n";
+		echo "<i>(Changing align method will change the runname)</i>";
+		echo "<input type='hidden' name='lastrunname' value='$runname'>\n";
 	} 
 	//description
 	echo"<P>
@@ -205,13 +224,20 @@ function createTomoAlignerForm($extra=false, $title='tomoaligner.py Launcher', $
       <textarea name='description' ROWS='2' COLS='40'>$description</textarea>
 			<p>\n";
 	echo docpop('tomoalignmethod', 'Method');
-	echo "&nbsp;<input type='radio'onClick=submit() name='alignmethod' value='protomo2' $protomo2check>\n";
-	echo "Protomo 2<font size=-2><i>(default)</i></font>\n";
+	echo "&nbsp;<input type='radio'onClick=submit() name='alignmethod' value='leginon' $leginoncheck>\n";
+	echo "Leginon alignment<i>(default)</i>\n";
 	echo "&nbsp;<input type='radio'onClick=submit() name='alignmethod' value='protomo' $protomocheck>\n";
 	echo "Protomo refinement\n";
 	if (!$lastalignerId) {
 		echo "&nbsp;<input type='radio' onClick=submit() name='alignmethod' value='imod-shift' $imodcheck>\n";
 		echo "Imod shift-only alignment\n";
+		if (HIDE_FEATURE === false) {
+			echo "&nbsp;<input type='radio'onClick=submit() name='alignmethod' value='raptor' $raptorcheck>\n";
+			echo "Raptor<font size=-2><i></i></font>\n";
+			echo "&nbsp;<input type='radio'onClick=submit() name='alignmethod' value='protomo2' $protomo2check>\n";
+			echo "Protomo 2<font size=-2></font>\n";
+		}
+		echo "<input type='hidden' name='lastalignmethod' value='$alignmethod'>\n";
 	}
   echo "</td>
     </tr>
@@ -479,8 +505,7 @@ function createTomoAlignerForm($extra=false, $title='tomoaligner.py Launcher', $
 		<?php } ?>
 	</table>
 <?php 		
-	}
-  	elseif ($protomocheck) {
+	} elseif ($protomocheck) {
 		if ($lastalignerId) {
 			$lastalignparams = $refinedata[0];
 			$defsample = 1;
@@ -521,7 +546,24 @@ function createTomoAlignerForm($extra=false, $title='tomoaligner.py Launcher', $
 		echo "<font>(% of image length (<100))</font>
 		<p>";
 		echo "Maximum region calculated from previous alignment is ".$maxregion;
+	} elseif ($raptorcheck) {
+		echo "
+			<b> <center>Raptor Alignment Reconstruction Params: </center></b>
+      <P>";
+		echo " <input type='text' name='markersize' size='5' value='$markersize'>\n";
+		echo docpop('markersize','Marker Size (nm)');
+		echo "<P>";
+		echo " <input type='text' name='markernumber' size='5' value='$markernumber'>\n";
+		echo docpop('tomomarkersize','Number of Markers to be used');
+		echo "<font>(0 means automatically determined)</font>";
+		echo "<P>";
+		echo " <input type='text' name='reconbin' size='5' value='$reconbin'>\n";
+		echo docpop('extrabin','Reconstruction Binning');
+		echo "<P>";
+		echo " <input type='text' name='reconthickness' size='5' value='$reconthickness'>\n";
+		echo docpop('tomosamplethickness','Tomogram Thickness (pixels in tilt images)');
 	}
+
 	if (!$sessionname) {
 		echo "
 		<br>
@@ -536,7 +578,7 @@ function createTomoAlignerForm($extra=false, $title='tomoaligner.py Launcher', $
     </table>
   </td>
   </tr>
-  <td
+  <td>
 
   <tr>
     <td align='center'>
@@ -607,6 +649,10 @@ function runTomoAligner() {
 	$maxregion=$_POST['maxregion'];
 	$refnum=$_POST['refnum'];
 
+	$markersize=$_POST['markersize'];
+	$markernumber=$_POST['markernumber'];
+	$reconbin=$_POST['reconbin'];
+	$reconthickness=$_POST['reconthickness'];
 	/* *******************
 	PART 2: Check for conflicts, if there is an error display the form again
 	******************** */
@@ -652,6 +698,12 @@ function runTomoAligner() {
 				//put the advance parameters here
 			}
 		}
+		if($alignmethod == 'raptor'){
+			if (!is_numeric($markersize)) createTomoAlignerForm("<b>ERROR:</b> Enter the value of the marker size (nm)");
+			if (!is_numeric($markernumber)) createTomoAlignerForm("<b>ERROR:</b> Enter the estimated number of the marker");
+			if (!is_numeric($reconbin)) createTomoAlignerForm("<b>ERROR:</b> Enter the value of the bin factor  as integer for reconstruction ");
+			if (!is_numeric($reconthickness)) createTomoAlignerForm("<b>ERROR:</b> Enter the value of the specimen thickness (nm)");
+		}
 	} else {
 		//make sure the region is not too large
 		if ($maxregion < $region) 
@@ -661,7 +713,11 @@ function runTomoAligner() {
 	/* *******************
 	PART 3: Create program command
 	******************** */
-	$command = "tomoaligner.py ";
+	if ($alignmethod == 'raptor') {
+		$command = "tomoraptor.py ";
+	} else {
+		$command = "tomoaligner.py ";
+	}
 	$command.="--session=$sessionname ";
 	$command.="--projectid=$projectId ";
 	$command.="--runname=$runname ";
@@ -682,7 +738,9 @@ function runTomoAligner() {
 		$command.="--goodend=$goodend ";
 	}
 	$command.="--rundir=".$outdir.'/'.$runname." ";
-	$command.="--alignmethod=$alignmethod ";
+	if ($alignmethod != 'raptor') {
+		$command.="--alignmethod=$alignmethod ";
+	}
 	if ($alignmethod == 'protomo') {
 		$command.="--cycle=$cycle ";
 		$command.="--sample=$sample ";
@@ -705,6 +763,13 @@ function runTomoAligner() {
 		$command .="--map_size_z=$mapSizeZ ";
 		$command .="--max_iterations=$maxIteration ";
 		
+	}
+
+	if ($alignmethod == 'raptor') {
+		$command .="--markersize=".(int)$markersize." ";
+		$command .="--markernumber=".(int)$markernumber." ";
+		$command .="--reconbin=".(int)$reconbin." ";
+		$command .="--thickness=".(int)$reconthickness." ";
 	}
 	$command.="--description=\"$description\" ";
 	$command.="--commit ";

@@ -8,8 +8,8 @@
  */
 
 
-require "inc/leginon.inc";
-require "inc/image.inc";
+require_once "inc/leginon.inc";
+require_once "inc/image.inc";
 @require_once "inc/project.inc";
 
 $g=true;
@@ -27,7 +27,7 @@ if (!$id=stripslashes($_GET['id'])) {
 $preset = stripslashes($_GET['preset']);
 $t = $_GET['t'];
 if ($t=='png') {
-        $type = "image/x-png";
+        $type = "image/png";
 	$ext = "png";
 } else {
         $type = "image/jpeg";
@@ -51,19 +51,24 @@ if (!$filter=$_GET['flt'])
 if (!$binning=$_GET['binning']) 
 	$binning = 'auto';
 if (!$fftbin=$_GET['fftbin']) 
-	$fftbin = 'b';
+	$fftbin = 'a';
 
 $displayloadingtime = false;
 $displayfilename = ($_GET['df']&1) ? true : false;
 $displaysample= ($_GET['df']&2) ? true : false;
 $loadjpg= ($_GET['lj']==1) ? true : false;
+$cacheonly= ($_GET['conly']==1) ? true : false;
 $displaynptcl = ($_GET['nptcl']) ? true : false;
 $displaylabel = ($_GET['dlbl']) ? true : false;
 $colorby = ($_GET['pcb']) ? $_GET['pcb'] : false;
 $ptclparams= ($displaynptcl) ? array('colorby'=>$colorby, 'displaylabel'=>$displaylabel, 'info'=>trim($_GET['nptcl'])) : false;
 
-if ($g) {
-
+if (!$g) {
+	header("Content-type: image/png");
+	$blkimg = blankimage(256, 64, "missing sessionid or imgid");
+	imagepng($blkimg);
+	imagedestroy($blkimg);
+} else {
 	$params = array (
 		'size'=> $size,
 		'minpix' => $minpix,
@@ -77,6 +82,7 @@ if ($g) {
 		'displaytargets' => $displaytarget,
 		'loadtime' => $displayloadingtime,
 		'loadjpg' => $loadjpg,
+		'cacheonly' => $cacheonly,
 		'autoscale' => $autoscale,
 		'newptcl' => $ptclparams,
 		'ptclsel' => $nptclsel
@@ -117,34 +123,37 @@ if ($g) {
 		$img = $mosaic->getMosaic();
 	} else {
 		$img = getImage($sessionId, $id, $preset, $params);
+
 	}
 
 	if (!$img) {
-		header("Content-type: image/x-png");
-		$blkimg = blankimage();
+		header("Content-type: image/png");
+		$blkimg = blankimage(256, 64, "image not found");
 		imagepng($blkimg);
 		imagedestroy($blkimg);
 		exit();
 	}
-
+	
 	$nimgId = $leginondata->findImage($id, $preset);
 	list($res) = $leginondata->getFilename($nimgId['id']);
 	$filename = $res['filename'];
 	$filenamelen = strlen($filename);
 	$wx = imagesx($img);
 	$ypos=10;
+	$xpos0=10;
 	$pixperchar=6;
 	$margin=10;
+	$font=5;
 	if ($displayfilename) {
 		$filenamepixlen = $filenamelen * $pixperchar;
-		imagestringshadow($img, 2, 10, $ypos, $filename, imagecolorallocate($img,255,255,255));
+		imagestringshadow($img, $font, $xpos0, $ypos, $filename, imagecolorallocate($img,255,255,255));
 		// --- check if filename string fits in imagewidth --- //
 		if ($filenamepixlen>$wx) {
 			$ypos+=12;
 			// --- display rest of filename --- //
 			$strlen = -(int)(($filenamepixlen-$wx)/$pixperchar+2);
 			$subfilename=substr($filename, $strlen);
-			imagestringshadow($img, 2, 10, $ypos, $subfilename, imagecolorallocate($img,255,255,255));
+			imagestringshadow($img, $font, $xpos0, $ypos, $subfilename, imagecolorallocate($img,255,255,255));
 			// --- display sample 12 pix under, if filename is too long
 		}
 	} else {
@@ -175,8 +184,8 @@ if ($g) {
 			$tagbitscopy = $tagbits;
 			$tagbitlens = array();
 			$tagrunninglength = array();
-			foreach ($tagbits as $ti=>$t) {
-				$tagbitlens[] = strlen($t);
+			foreach ($tagbits as $ti=>$ttt) {
+				$tagbitlens[] = strlen($ttt);
 				$tagrunninglength[] = (array_sum($tagbitlens)+$ti)*$pixperchar + 2 * $margin;
 				if ($tagrunninglength[$ti] > $wx) break;
 			}
@@ -184,30 +193,20 @@ if ($g) {
 			if (strlen($tagline) * $pixperchar + 2 * $margin > $wx) continue;
 			// append parser if not the last item
 			$tagline = $tagline.$parser;
-			imagestringshadow($img, 2, $xpos, $ypos, $tagline, imagecolorallocate($img,255,255,255));
+			imagestringshadow($img, $font, $xpos, $ypos, $tagline, imagecolorallocate($img,255,255,255));
 			$tag = substr($tag,strlen($tagline));
 			$taglen = strlen($tag);
 			$tagstrlen = $taglen*$pixperchar + 2 * $margin;
 			$ypos+=12;
 		}
-		imagestringshadow($img, 2, $xpos, $ypos, $tag, imagecolorallocate($img,255,255,255));
+		imagestringshadow($img, $font, $xpos, $ypos, $tag, imagecolorallocate($img,255,255,255));
 	}
 
-	$filename = ereg_replace('mrc$', $ext, $filename);
+	$filename = preg_replace('%mrc$%', $ext, $filename);
 
-	header( "Content-type: $type ");
-	header( "Content-Disposition: inline; filename=".$filename);
-        if ($t=='png')
-                imagepng($img);
-        else
-                imagejpeg($img,'',$quality);
-	imagedestroy($img);
+	$imagerequest = new imageRequester();
+	$imagerequest->displayImageObj($img,$ext,$quality,$filename);
 
-} else {
-	header("Content-type: image/x-png");
-	$blkimg = blankimage();
-	imagepng($blkimg);
-	imagedestroy($blkimg);
 }
 
 ?>

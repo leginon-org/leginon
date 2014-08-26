@@ -30,7 +30,7 @@ class filter {
 				2 => 2,
 				3 => 3,
 				4 => 4,
-				5 => 5
+				8 => 8
 			);
 
 	function getFilterTypes() {
@@ -47,57 +47,29 @@ class filter {
 
 }
 
-function getfft($filename="", $minpix="", $maxpix="", $binning=1, $autoscale=false, $fftbin='b') {
-	list($type,$arg1, $arg2)=explode(";", $autoscale);
-	$mrcimg = mrcread($filename);
-	if ($fftbin == 'a') {
-		mrcfftw($mrcimg,10);
-		mrcbinning($mrcimg, $binning);
-	} else {
-		mrcbinning($mrcimg, $binning);
-		mrcfftw($mrcimg,10);
-	}
-	if ($autoscale) {
-		if ($type=="c") {
-			list($minpix, $maxpix)=mrccdfscale($mrcimg, $arg1, $arg2);
-		} else {
-			list($minpix, $maxpix) = mrcstdevscale($mrcimg, $arg1);
-		}
-	}
-	$img = mrctoimage($mrcimg, $minpix, $maxpix);
-	mrcdestroy($mrcimg);
-	return $img;
-}
-
-function getdefault($filename="", $minpix="", $maxpix="", $binning=1, $type='default') {
-	$densitymax = MAX_PIXEL_VAL;
-	$minpix = ($minpix) ? $minpix : MIN_PIXEL_VAL;
-	$maxpix = ($maxpix) ? $maxpix : $densitymax;
-	
-	if (!is_file($filename))
-		return false;
-	$mrcimg = mrcread($filename);
-	$info = mrcgetinfo($mrcimg);
-	mrcbinning($mrcimg, $binning);
-	$img = mrctoimage($mrcimg, $minpix, $maxpix);
-	mrcdestroy($mrcimg);
-	return $img;
+function getdefault() {
+	$sigma = 0;
+	return $sigma;
 
 }
 
-function smooth1($filename="", $minpix="", $maxpix="", $binning=1 ) {
-	$minpix = ($minpix) ? $minpix : MIN_PIXEL_VAL;
-	$maxpix = ($maxpix) ? $maxpix : MAX_PIXEL_VAL;
-	if (!is_file($filename))
-		return false;
-	$kernel = 5;
+function smooth1() {
 	$sigma = 2.73;
-	$mrcimg = mrcread($filename);
-	mrcgaussianfilter($mrcimg, $binning, $kernel, $sigma);
-	$img = mrctoimage($mrcimg, $minpix, $maxpix);
-	mrcdestroy($mrcimg);
-	return $img;
+	return $sigma;
 }
+
+function smooth2() {
+	$sigma = 1;
+	return $sigma;
+}
+
+function smooth3() {
+	$sigma = 5;
+	return $sigma;
+}
+
+/*  These old smoothing function requires two pass of lpf that redux does
+not handle, yet.
 
 function smooth2($filename="", $minpix="", $maxpix="", $binning=1 ) {
 	$minpix = ($minpix) ? $minpix : MIN_PIXEL_VAL;
@@ -134,3 +106,4 @@ function smooth3($filename="", $minpix="", $maxpix="", $binning=1 ) {
 	
 	return $img;
 }
+*/

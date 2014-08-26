@@ -1,4 +1,5 @@
 import os
+import math
 import subprocess
 import shutil
 from appionlib import apImage
@@ -14,6 +15,13 @@ def writeRawtltFile(path,seriesname,tilts):
 	for tilt in tilts:
 		f.write('%6.2f\n' % (tilt,))
 	f.close()
+
+def linkStackRawtltFiles(stackdir,processdir,seriesname):
+	for ext in ('st','rawtlt'):
+		filename = seriesname+'.'+ext
+		source = os.path.join(stackdir,filename)
+		destination = os.path.join(processdir,filename)
+		apFile.safeSymLink(source, destination)
 
 def readShiftPrexgFile(path, seriesname):
 	prexgname = os.path.join(path,seriesname+'.prexg')
@@ -193,24 +201,199 @@ DONE
 		}
 		if invert:
 			inputparams['scale'] = -inputparams['scale']
+		comfilename = writeTiltCom(processdir,inputparams['alignedstack'],inputparams['recon'],inputparams['tilts'],shape,inputparams['thickness'],0.0,0.0,(0,inputparams['scale']),excludelist)
+
+		runCommand(processdir,'tilt',comfilename,[inputparams['recon'],'tilt.log'])
+
+def writeTiltCom(processdir,align_file,recon_file,tilt_file,imageshape,thickness=100,offset=0.0,xaxistilt=0.0,scale=(0,250.0),excludelist=[]):
 		commands = [
 			"$tilt",
-			inputparams['alignedstack'],
-			inputparams['recon'],
-			"FULLIMAGE %d %d" %(shape[1],shape[0]),
+			align_file,
+			recon_file,
+			"FULLIMAGE %d %d" %(imageshape[1],imageshape[0]),
 			"LOG 0.0",
 			"MODE 2",
+			"OFFSET %.1f" % offset,
 			"PERPENDICULAR",
+			"AdjustOrigin",
 			"RADIAL 0.35 0.05",
-			"SCALE 0.0 %.1f" %(inputparams['scale']),
+			"SCALE %.1f %.1f" % scale,
 			"SUBSETSTART 0 0",
-			"THICKNESS %d" % inputparams['thickness'],
-			"TILTFILE "+inputparams['tilts'],
-			"XAXISTILT 0.0",
+			"THICKNESS %d" % (thickness),
+			"TILTFILE %s" % tilt_file,
+			"XAXISTILT %.1f" % xaxistilt,
 		]
 		if len(excludelist):
-			commands.append("EXCLUDELIST "+ ','.join(map((lambda x: str(x+1)),excludelist))) 
-		writeCommandAndRun(processdir,'tilt',commands,[inputparams['recon'],'tilt.log'])
+			commands.append("EXCLUDELIST2 "+ ','.join(map((lambda x: str(x+1)),excludelist))) 
+		return writeCommand(processdir,'tilt',commands)
+
+def createETomoBoundaryModelEDF(processdir, templatedir, seriesname, sample_thickness,pixelsize):
+	template = open(os.path.join(templatedir,'etomo.edf.template'),'r')
+	lines = template.readlines()
+	template.close()
+	outfile = open(os.path.join(processdir,'%s.edf' % (seriesname)),'w')
+	for i,line in enumerate(lines):
+		if 'Setup.DatasetName' in line:
+			lines[i] = 'Setup.DatasetName=%s\n' % seriesname
+		if 'Setup.PixelSize' in line:
+			lines[i] = 'Setup.PixelSize=%.3f\n' % (pixelsize*1e9)
+		if 'Setup.First.sample.THICKNESS' in line:
+			lines[i] = 'Setup.First.sample.THICKNESS=%d\n' % (sample_thickness)
+	outfile.writelines(lines)
+	outfile.close()
+
+def getETomoExcludeTiltNumber(processdir):
+	values = getETomoParam(processdir,'tilt.com',['EXCLUDELIST ','EXCLUDELIST2 '])
+	excludenumbers = set([])
+	for value in values:
+		bits = value.split(',')
+		excludenumbers = excludenumbers.union(bits)
+	return ','.join(excludenumbers)
+
+def getETomoThickness(processdir,seriesname):
+	values = getETomoParam(processdir,'tilt.com',['THICKNESS '])
+	if len(values) != 1:
+		apDisplay.printError('Tomogram Thickness not found')
+	return int(values[0])
+
+def getETomoBin(processdir,seriesname):
+	edfname = '%s.edf' % (seriesname) 
+	values = getETomoParam(processdir,edfname,['Setup.TomoGenBinningA=','Setup.FinalStackBinningA='])
+	bin = 1
+	for value in values:
+		bin *= int(value)
+	return bin
+
+def getSubTomoBoundary(processdir,seriesname,axis):
+	'''
+	Get the start and end coordinate at a particular axis.
+	The definition of origin may or may not apply to tomograms
+	generated outside imod.
+	'''
+	fulltomopath = os.path.join(processdir,seriesname+'_full.rec')
+	subtomopath = os.path.join(processdir,seriesname+'.rec')
+	fullheader = mrc.readHeaderFromFile(fulltomopath)
+	subheader = mrc.readHeaderFromFile(subtomopath)
+
+	lenkey = axis+'len'
+	originkey = axis+'origin'
+	mkey = 'm'+axis
+	# There is a rotation around x-axis in full tomogram
+	fullorigin = {'xorigin':fullheader['xorigin'],'yorigin':fullheader['zorigin'],'zorigin':fullheader['yorigin']}
+	fullm = {'mx':fullheader['mx'],'my':fullheader['mz'],'mz':fullheader['my']}
+	# full and sub tomo should have the same pixelsize
+	pixelsize = subheader[lenkey] / subheader[mkey]
+	if axis != 'z':
+		start = int((fullorigin[originkey] - subheader[originkey]) / pixelsize)
+	else:
+		# z origin is defined different from x and y
+		start = -int((fullorigin[originkey] + subheader[originkey]) / pixelsize) + int(fullm[mkey])
+	end = start + int(subheader[mkey])
+	return (start,end)
+
+def getImodZShift(processdir):
+	shift_str = getETomoParam(processdir,'tilt.com',['SHIFT'])[0]
+	bits = shift_str.split(' ')
+	return float(bits[-1])
+		
+def getETomoParam(processdir, filename, searchkeys):
+	paramfile = open(os.path.join(processdir,filename),'r')
+	lines = paramfile.readlines()
+	paramfile.close()
+	values = []
+	for line in lines:
+		for key in searchkeys:
+			if key in line:
+				bits = line.split(key)
+				values.append(bits[-1][:-1])
+	return values
+
+def writeETomoNewstComTemplate(processdir, seriesname):
+	'''
+	etomo needs this template to continue after sampling.
+	It also only understand local files.
+	'''
+	inputparams = {
+		'alignedstack': seriesname+".ali",
+		'alignment': seriesname+".xf",
+		'imagestack': seriesname+".st",
+		'bin': 1,
+	}
+	commands = [
+		"$newstack -input "+inputparams['imagestack']+" -output "+inputparams['alignedstack']+" -offset 0,0 -xform "+inputparams['alignment']+" -bin %d" % inputparams['bin'],
+		"$mrctaper "+inputparams['alignedstack'],
+		"$if (-e ./savework) ./savework",
+	]
+	writeCommand(processdir,'newst',commands)
+
+def makeFilesForETomoSampleRecon(processdir, stackdir,aligndir, templatedir, seriesname, thickness, pixelsize,yspacing,has_rotation=False):
+	'''
+	Make or link local files required by etomo to redo sampling, creating tomopitch model, and reconstruct the volume.
+	'''
+	# etomo status file
+	createETomoBoundaryModelEDF(processdir,templatedir,seriesname,thickness,pixelsize)
+	# required by remaking sample tomograms inside etomo
+	if has_rotation:
+		apDisplay.printWarning('eTomo wants to regenerate global alignment from non-rotated local alignment.  This alignment with rotation will not work right')
+	else:
+		# prexf file is generated from database values if this function is called from tomomaker.  It is better not to change it if exists.
+		prexf = seriesname+".prexf"
+		alignprexf = os.path.join(aligndir,prexf)
+		localprexf = os.path.join(processdir,prexf)
+		apFile.safeCopy(alignprexf,localprexf)
+		writeETomoNewstComTemplate(processdir, seriesname)
+		rawtltname = '%s.rawtlt' % (seriesname)
+		shutil.copy(os.path.join(stackdir,rawtltname),os.path.join(processdir,rawtltname))
+	# required by tomopitch model making
+	tomopitchname = 'tomopitch.com'
+	imodcomdir = os.path.join(os.environ['IMOD_DIR'],'com')
+	tomopitchpath = os.path.join(processdir,tomopitchname)
+	shutil.copy(os.path.join(imodcomdir,tomopitchname),tomopitchpath)
+	apFile.replaceUniqueLinePatternInTxtFile(tomopitchpath,'SpacingInY','SpacingInY\t%.1f\n' % yspacing)
+	
+	# required by "Final Aligned Stack" step
+	stackname = '%s.st' % (seriesname)
+	apFile.safeSymLink(os.path.join(stackdir,stackname),os.path.join(processdir,stackname))
+
+def sampleRecon(stackdir, processdir, aligndir, seriesname, samplesize=10, sampleoffset=0.66, thickness=100, excludelist=[]):
+	inputparams = {
+		'alignedstack': seriesname+".ali",
+		'xf': seriesname+".xf",
+		'rawtilts': os.path.join(stackdir, seriesname+".rawtlt"),
+		'tilts': os.path.join(seriesname+".tlt"),
+		'tiltstack': os.path.join(stackdir, seriesname+".st"),
+		'recon': seriesname+"_full.rec",
+		'scale': 250.0,
+		'thickness': thickness,
+	}
+	alignxf = os.path.join(aligndir, seriesname+".xf")
+	linkxf = inputparams['xf']
+	files_to_copy = [(alignxf,linkxf),(inputparams['rawtilts'],inputparams['tilts'])]
+	for filepair in files_to_copy:
+		apFile.safeCopy(filepair[0],filepair[1])
+	st_shape = apFile.getMrcFileShape(inputparams['tiltstack'])
+	# shape is in (z, y, x) size for imod is in (x,y)
+	inputparams['size']=(st_shape[2],st_shape[1])
+	total_tilts = st_shape[0]
+	if samplesize == 'all' or samplesize > total_tilts:
+		samplesize = total_tilts
+	# calculate sampletilt range that reduces the process time
+	sampletilt_start = max(int((total_tilts - samplesize)/2.0),1)
+	sampletilt_end = min(sampletilt_start + samplesize - 1,total_tilts)
+	# calculate the 3 offsets
+	sampleoffset = int (st_shape[1] * sampleoffset / 2.0)
+	st_y_center = int (st_shape[1] / 2.0)
+	sampleoffsets = {'mid':0,'top':sampleoffset,'bot':(-1)*sampleoffset}
+	# write basic tilt.com without processdir
+	comfilename = writeTiltCom(processdir,inputparams['alignedstack'],inputparams['recon'],inputparams['tilts'],inputparams['size'],inputparams['thickness'],0.0,0.0,(0,inputparams['scale']),excludelist)
+	# make commandlines
+	commands = []
+	for key in sampleoffsets.keys():
+		commands.extend([
+			'$newstack -size ,%d -offset 0,%d -xf %s %s %s' % (total_tilts,sampleoffsets[key],inputparams['xf'],inputparams['tiltstack'],inputparams['alignedstack']),
+			'$sampletilt %d %d %d %s %s.rec tilt.com' % (sampletilt_start,sampletilt_end,sampleoffsets[key]+st_y_center,seriesname,key)
+		])
+	writeCommandAndRun(processdir,'sample',commands,[inputparams['alignedstack'],'sample.log'])
 
 def trimVolume(processdir, runname, seriesname, volumename, center, offsetz, size,rotx=True):
 		"""
@@ -232,8 +415,7 @@ trimvol -x 390,460 -z 477,537 -rx 08aug14f_008_full.rec test.rec
 			lookup = {'y':0,'z':1}
 		else:
 			lookup = {'y':1,'z':0}
-		fulltomoheader = mrc.readHeaderFromFile(inputparams['recon'])
-		fullshape = fulltomoheader['shape']
+		fullshape = apFile.getMrcFileShape(inputparams['recon'])
 		center = list(center)
 		center.append(fullshape[lookup['z']]/2+offsetz)
 		inputparams['zrange0'] = max(1,center[2] - size[2]/2)
@@ -330,8 +512,7 @@ clip avg -2d -iz 0-199 temp.mrc projection.mrc
 			'temp': os.path.join(processdir, "temp.rec"),
 			'project': os.path.join(processdir, seriesname+"_zproject.mrc"),
 		}
-		fulltomoheader = mrc.readHeaderFromFile(inputparams['recon'])
-		fullshape = fulltomoheader['shape']
+		fullshape = apFile.getMrcFileShape(inputparams['recon'])
 		commands = []
 		if rotx or flipyz:
 			op = ''
@@ -349,9 +530,13 @@ clip avg -2d -iz 0-199 temp.mrc projection.mrc
 		else:
 			lookup = {'y':1,'z':0}
 			inputparams['3d'] = inputparams['recon']
+		# limit slices for projection to 200 to save time.
+		zcenter = int(fullshape[lookup['z']] / 2)
+		zstart = max(0,zcenter - 100)
+		zend = min(fullshape[lookup['z']]-1,zcenter + 99)
 		commands.append(
 				"$clip avg -2d -iz %d-%d %s %s"
-					% (0,fullshape[lookup['z']]-1,
+					% (zstart,zend,
 					inputparams['3d'],inputparams['project'],
 					),
 			)	
@@ -363,18 +548,26 @@ clip avg -2d -iz 0-199 temp.mrc projection.mrc
 			mrc.write(b,inputparams['project'])
 		return inputparams['project']
 
-def writeCommandAndRun(path,comname, commands, outputlist):		
+def writeCommand(path,comname, commands):		
 		### make standard input for ctftilt
 		commandlines = map((lambda x: x+"\n"), commands)
+		comfilename = comname+".com"
+		comfilepath = os.path.join(path,comfilename)
+		comfile = open(comfilepath, "w")
+		comfile.writelines(commandlines)
+		comfile.close()
+		proc = subprocess.Popen('chmod 755 '+comfilepath, shell=True)
+		proc.wait()
+		return comfilename
+
+def writeCommandAndRun(path,comname, commands, outputlist):		
+		comfilename = writeCommand(path,comname,commands)
+		runCommand(path,comname, comfilename, outputlist)
+
+def runCommand(path,comname, comfilename, outputlist):
 		# change directory because submfg can not handle long path name in front of the command to run
 		currentdir = os.getcwd()
 		os.chdir(path)
-		comfile = open(comname+".com", "w")
-		comfile.writelines(commandlines)
-		comfile.close()
-		proc = subprocess.Popen('chmod 755 '+comname+'.com', shell=True)
-		proc.wait()
-		comfile = open(comname+".com", "r")
 		for output in outputlist:
 			if os.path.isfile(output):
 				# clean up output before running
@@ -382,9 +575,8 @@ def writeCommandAndRun(path,comname, commands, outputlist):
 
 		t0 = time.time()
 		apDisplay.printMsg("running "+comname+" at "+time.asctime())
-		proc = subprocess.Popen("submfg "+comname+".com", shell=True)
+		proc = subprocess.Popen("submfg "+comfilename, shell=True)
 		proc.wait()
-		comfile.close()
 
 		apDisplay.printMsg(comname+" completed in "+apDisplay.timeString(time.time()-t0))
 		os.chdir(currentdir)

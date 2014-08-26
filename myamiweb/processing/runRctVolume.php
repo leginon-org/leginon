@@ -8,12 +8,12 @@
  * Simple viewer to view a image using mrcmodule
  */
 
-require "inc/particledata.inc";
-require "inc/leginon.inc";
-require "inc/project.inc";
-require "inc/viewer.inc";
-require "inc/processing.inc";
-require "inc/summarytables.inc";
+require_once "inc/particledata.inc";
+require_once "inc/leginon.inc";
+require_once "inc/project.inc";
+require_once "inc/viewer.inc";
+require_once "inc/processing.inc";
+require_once "inc/summarytables.inc";
 
 if ($_POST['process']) {
 	// If values submitted, evaluate data
@@ -48,6 +48,7 @@ function createRctVolumeForm($extra=false, $title='rctVolume.py Launcher', $head
 	$maskrad = ($_POST['maskrad']) ? $_POST['maskrad'] : '';
 	$lowpassvol = ($_POST['lowpassvol']) ? $_POST['lowpassvol'] : '10';
 	$highpasspart = ($_POST['highpasspart']) ? $_POST['highpasspart'] : '800';
+	$lowpasspart = ($_POST['lowpasspart']) ? $_POST['lowpasspart'] : '0';
 	$median = ($_POST['median']) ? $_POST['median'] : '3';
 	$numiter = ($_POST['numiter']) ? $_POST['numiter'] : '3';
 	$numpart = ($_POST['numpart']) ? $_POST['numpart'] : '';
@@ -91,7 +92,7 @@ function createRctVolumeForm($extra=false, $title='rctVolume.py Launcher', $head
 	elseif ($clusterid)
 		$defrctname .= "clust".$clusterid;
 	if ($classnum!="") {
-		$classstr = ereg_replace(",","",$classnum);
+		$classstr = preg_replace("%,%","",$classnum);
 		$defrctname .= "class".$classstr;
 	}	else {
 		$defrctname .= "run";
@@ -204,7 +205,7 @@ function createRctVolumeForm($extra=false, $title='rctVolume.py Launcher', $head
 			//handle multiple runs in stack
 			$stackname = $stackparams['shownstackname'];
 			//print_r($stackparams[0]);
-			echo "<OPTION value='$stackid'";
+			echo "<OPTION value='$stackid|$box'";
 			if ($stackid == $tiltstack) echo " SELECTED";
 			echo">$stackid: $stackname ($box boxsize, $numparts parts) $descript...</OPTION>\n";
 		}
@@ -217,8 +218,8 @@ function createRctVolumeForm($extra=false, $title='rctVolume.py Launcher', $head
 
 	echo "<table border='0' cellspacing='8' cellpading='8'><tr><td>\n";
 
-	//Mask radius
-	echo docpop('mask','Mask Radius:<br/>');
+	//Mask radius & boxsize (for error checking)
+	echo docpop('rctmask','Mask Radius:<br/>');
 	echo "<INPUT TYPE='text' NAME='maskrad' SIZE='5' VALUE='$maskrad'>";
 	echo "<FONT SIZE='-2'>(in pixels)</FONT>\n";
 	echo "\n<br/>\n<br/>\n";
@@ -230,14 +231,20 @@ function createRctVolumeForm($extra=false, $title='rctVolume.py Launcher', $head
 	echo "\n<br/>\n<br/>\n";
 
 	//Low pass filter of volume
-	echo docpop('lpval','Volume Low Pass Filter:<br/>');
+	echo docpop('rctvollp','Volume Low Pass Filter:<br/>');
 	echo "<INPUT TYPE='text' NAME='lowpassvol' SIZE='3' VALUE='$lowpassvol'>\n";
 	echo "<FONT SIZE='-2'>(in &Aring;ngstroms)</FONT>\n";
 	echo "\n<br/>\n<br/>\n";
 
 	//High pass filter of particles
-	echo docpop('hpval','Particle High Pass Filter:<br/>');
+	echo docpop('rctparthp','Particle High Pass Filter:<br/>');
 	echo "<INPUT TYPE='text' NAME='highpasspart' SIZE='5' VALUE='$highpasspart'>\n";
+	echo "<FONT SIZE='-2'>(in &Aring;ngstroms)</FONT>\n";
+	echo "\n<br/>\n<br/>\n";
+
+	//Low pass filter of particles
+	echo docpop('rctpartlp','Particle Low Pass Filter:<br/>');
+	echo "<INPUT TYPE='text' NAME='lowpasspart' SIZE='5' VALUE='$lowpasspart'>\n";
 	echo "<FONT SIZE='-2'>(in &Aring;ngstroms)</FONT>\n";
 	echo "\n<br/>\n<br/>\n";
 
@@ -288,14 +295,16 @@ function createRctVolumeForm($extra=false, $title='rctVolume.py Launcher', $head
 */
 
 function runRctVolume() {
+	/* *******************
+	PART 1: Get variables
+	******************** */
 	$expId=$_GET['expId'];
 	$runname=$_POST['runname'];
 	$outdir=$_POST['outdir'];
-
-	$tiltstack = $_POST['tiltstack'];
 	$maskrad = $_POST['maskrad'];
 	$lowpassvol = $_POST['lowpassvol'];
 	$highpasspart = $_POST['highpasspart'];
+	$lowpasspart = $_POST['lowpasspart'];
 	$median = $_POST['median'];
 	$numiter = $_POST['numiter'];
 	$numpart = $_POST['numpart'];
@@ -307,6 +316,13 @@ function runRctVolume() {
 	$mass=$_POST['mass'];
 	$zoom=$_POST['zoom'];
 
+	$stackparams = explode("|",$_POST['tiltstack']);
+	$tiltstack = $stackparams[0];
+	$box = $stackparams[1];
+
+	/* *******************
+	PART 2: Check for conflicts, if there is an error display the form again
+	******************** */
 	if (!$tiltstack)
 		createRctVolumeForm("<B>ERROR:</B> No tilted stack selected");
 
@@ -321,6 +337,9 @@ function runRctVolume() {
 
 	if (!$maskrad)
 		createRctVolumeForm("<B>ERROR:</B> Enter a mask radius");
+
+	if ((intval($box)/2-intval($maskrad))<2)
+		createRctVolumeForm("<B>ERROR:</B> Mask radius needs to be at least 2 pixels smaller than 1/2*boxsize; SPIDER error will result otherwise");
 
 	if (!$runname)
 		createRctVolumeForm("<B>ERROR:</B> Enter a unique run name");
@@ -339,6 +358,9 @@ function runRctVolume() {
 	if (substr($outdir,-1,1)!='/') $outdir.='/';
 	$rundir = $outdir.$runname;
 
+	/* *******************
+	PART 3: Create program command
+	******************** */
 	//putting together command
 	$command ="rctVolume.py ";
 	$command.="--projectid=".getProjectId()." ";
@@ -361,56 +383,35 @@ function runRctVolume() {
 	else
 		$command.="--contour=$contour ";
 	$command.="--lowpassvol=$lowpassvol ";
-	$command.="--highpasspart=$highpasspart ";
+	if ($highpasspart && $highpasspart > 0)
+		$command.="--highpasspart=$highpasspart ";
+	if ($lowpasspart && $lowpasspart > 0)
+		$command.="--lowpasspart=$lowpasspart ";
 	$command.="--median=$median ";
 	if ($minscore)
 		$command.="--min-score=$minscore ";
 	$command.="--commit ";
 
+	/* *******************
+	PART 4: Create header info, i.e., references
+	******************** */
+	// Add reference to top of the page
+	$headinfo .= spiderRef();
+	
+	/* *******************
+	PART 5: Show or Run Command
+	******************** */
+	// Setting the nodes and ppn per issue #2274
+	$nproc = 4;
+	$nodes = 1;
+	$ppn = 4;
 
-	// submit job to cluster
-	if (($_POST['process']=="Rct Volume")) {
-		$user = $_SESSION['username'];
-		$password = $_SESSION['password'];
+	// submit command
+	$errors = showOrSubmitCommand($command, $headinfo, 'rctvolume', $nproc, $testimg=False, $nodes, $ppn);
 
-		if (!($user && $password)) createRctVolumeForm("<B>ERROR:</B> Enter a user name and password");
-
-		$sub = submitAppionJob($command,$outdir,$runname,$expId,'rctvolume',False,False,False,8);
-		// if errors:
-		if ($sub) createRctVolumeForm("<b>ERROR:</b> $sub");
-		exit;
-	} else {
-		processing_header("Rct Volume Command", "Rct Volume Command");
-
-		echo spiderRef();
-
-		echo"
-		<table width='600' border='1'>
-		<tr><td colspan='2'>
-		<font size='+1'>
-		<B>Rct Volume Command:</B><br>
-		$command
-		</font>
-		</td></tr>
-		<tr><td>run name</td><td>$runname</td></tr>
-		<tr><td>align id</td><td>$alignid</td></tr>
-		<tr><td>cluster id</td><td>$clusterid</td></tr>
-		<tr><td>class nums</td><td>$classnum</td></tr>
-		<tr><td>tilt stack</td><td>$tiltstack</td></tr>
-		<tr><td>num iter</td><td>$numiter</td></tr>
-		<tr><td>num particles</td><td>$numpart</td></tr>
-		<tr><td>volume lowpass</td><td>$lowpassvol</td></tr>
-		<tr><td>volume median</td><td>$median</td></tr>
-		<tr><td>particle highpass</td><td>$highpasspart</td></tr>
-		<tr><td>mask rad</td><td>$maskrad</td></tr>
-		<tr><td>Chimera contour</td><td>$contour</td></tr>
-		<tr><td>Chimera mass</td><td>$mass kDa</td></tr>
-		<tr><td>Chimera zoom</td><td>$zoom</td></tr>";
-
-
-		echo"</table>\n";
-		processing_footer();
-	}
+	// if error display them
+	if ($errors)
+		createRctVolumeForm("<b>ERROR:</b> $errors");
 }
 
 ?>

@@ -8,12 +8,14 @@
  *	Display results for each iteration of a refinement
  */
 
-require "inc/particledata.inc";
-require "inc/leginon.inc";
-require "inc/project.inc";
-require "inc/viewer.inc";
-require "inc/processing.inc";
-require "inc/summarytables.inc";
+require_once "inc/particledata.inc";
+require_once "inc/leginon.inc";
+require_once "inc/project.inc";
+require_once "inc/viewer.inc";
+require_once "inc/processing.inc";
+require_once "inc/summarytables.inc";
+require_once "inc/cluster.inc";
+require_once "../inc/path.inc";
 
 // --- check if reconstruction is specified
 
@@ -26,9 +28,14 @@ if ($_POST['process']) {
 function createform($extra=False) {
 	$expId = $_GET['expId'];
 	$refIterId = $_GET['refineIter'];
-
-	$appionlibdir = "/ami/sw/leginon/betaleginon/appion/appionlib";
-
+	
+	// Get the appionlib directory to load the amplitude file from "data" directory
+	// It does not matter which processing host we use
+	// since they all have the same "data" directory
+	$processhosts = (array)getHosts();
+	$cluster = new Cluster( $processhosts[0]["host"] );
+	$appionlibdir = $cluster->getAppionLibDir();
+	
 	$particle = new particledata();
 
 	$info = $particle->getReconInfoFromRefinementId($refIterId);
@@ -149,7 +156,7 @@ function createform($extra=False) {
 	echo "</td></tr>\n";
 
 	foreach ($amplist as $amp) {
-		$ampfile = $appionlibdir.'/data/'.$amp['name'];
+		$ampfile = Path::join($appionlibdir, 'data', $amp['name'] );
 		echo "<TR><td>\n";
 		if (file_exists($ampfile)) {
 			echo "<A HREF='ampcorplot.php?file=$ampfile&width=800&height=600'>";
@@ -184,7 +191,12 @@ function createform($extra=False) {
 	echo "Low-pass filter: \n";
 	echo "</td><td>\n";
 	echo "<input type='text' name='lp' size='3' value='$lpval'> &Aring;ngstroms<br/>\n";
-
+	
+	echo "</tr></td><tr><td>\n";
+	echo "High-pass filter: \n";
+	echo "</td><td>\n";
+	echo "<input type='text' name='hp' size='3' value='$hpval'> &Aring;ngstroms<br/>\n";
+	
 	echo "</tr></td><tr><td>\n";
 	echo "Median filter: \n";
 	echo "</td><td>\n";
@@ -247,6 +259,7 @@ function runPostProc() {
 	$refIterId = $_GET['refineIter'];
 	$ampcor=$_POST['ampcor'];
 	$lp=$_POST['lp'];
+	$hp=$_POST['hp'];
 	$yflip=$_POST['yflip'];
 	$invert=$_POST['invert'];
 	$viper=$_POST['viper'];
@@ -278,8 +291,8 @@ function runPostProc() {
 	******************** */
 	if ($ampcor && $bfactor)
 		createform('<B>ERROR:</B> Select only one of amplitude or b-factor correction');
-	if (!$ampcor && !$bfactor)
-		createform('<B>ERROR:</B> Select an amplitude adjustment curve or b-factor correction');
+	//if (!$ampcor && !$bfactor)
+	//	createform('<B>ERROR:</B> Select an amplitude adjustment curve or b-factor correction');
 	if ($ampcor)
 		list($ampfile, $maxfilt) = explode('|~~|',$ampcor);
 
@@ -295,9 +308,8 @@ function runPostProc() {
 		if ($maxfilt < $apix*2)
 			$maxfilt = $apix*2.1;
 		$command.= "--maxfilt=$maxfilt ";
-	} else {
-		$command.="--bfactor ";
-	}
+	} 
+	if ($bfactor) $command.="--bfactor ";
 	$command.= "--apix=$apix ";
 	$command.= "--res=$res ";
 	$command.= "--sym=$symname ";
@@ -308,6 +320,7 @@ function runPostProc() {
 	if ($mask) $command.="--mask=$mask ";
 	if ($imask) $command.="--imask=$imask ";
 	if ($lp) $command.="--lp=$lp ";
+	if ($hp) $command.="--hp=$hp ";
 	if ($norm=='on') $command.="--norm ";
 	if ($yflip=='on') $command.="--yflip ";
 	if ($invert=='on') $command.="--invert ";

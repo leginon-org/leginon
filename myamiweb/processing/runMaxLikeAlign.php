@@ -9,14 +9,14 @@
  *
  */
 
-require "inc/particledata.inc";
-require "inc/leginon.inc";
-require "inc/project.inc";
-require "inc/viewer.inc";
-require "inc/processing.inc";
+require_once "inc/particledata.inc";
+require_once "inc/leginon.inc";
+require_once "inc/project.inc";
+require_once "inc/viewer.inc";
+require_once "inc/processing.inc";
 
 // IF VALUES SUBMITTED, EVALUATE DATA
-if ($_POST) {
+if ($_POST['process']) {
 	runMaxLikeAlign();
 } else {
 	createMaxLikeAlignForm();
@@ -116,7 +116,7 @@ function createMaxLikeAlignForm($extra=false, $title='maxlikeAlignment.py Launch
 	$runname = ($_POST['runname']) ? $_POST['runname'] : 'maxlike'.($alignruns+1);
 	$description = $_POST['description'];
 	$stackidstr = $_POST['stackval'];
-	list($stackidval) = split('\|--\|',$stackidstr);
+	list($stackidval) = preg_split('%\|--\|%',$stackidstr);
 	$bin = ($_POST['bin']) ? $_POST['bin'] : '1';
 	$numpart = ($_POST['numpart']) ? $_POST['numpart'] : '3000';
 	$lowpass = ($_POST['lowpass']) ? $_POST['lowpass'] : '10';
@@ -341,14 +341,14 @@ function runMaxLikeAlign() {
 	$distribution = $_POST['distribution'];
 
 	// get stack id, apix, & box size from input
-	list($stackid,$apix,$boxsz) = split('\|--\|',$stackval);
+	list($stackid,$apix,$boxsz) = preg_split('%\|--\|%',$stackval);
 	//make sure a session was selected
 
 	if (!$description)
 		createMaxLikeAlignForm("<B>ERROR:</B> Enter a brief description of the particles to be aligned");
 
-	if ($nproc > 16)
-		createMaxLikeAlignForm("<B>ERROR:</B> Let's be reasonable with the nubmer of processors, less than 16 please");
+#	if ($nproc > 16)
+#		createMaxLikeAlignForm("<B>ERROR:</B> Let's be reasonable with the nubmer of processors, less than 16 please");
 
 	//make sure a stack was selected
 	if (!$stackid)
@@ -387,9 +387,9 @@ function runMaxLikeAlign() {
 	$calctime = ($numpart/1000.0)*$numref*($boxsize/$bin)*($boxsize/$bin)/$angle*$secperiter/$nproc;
 	if ($mirror) $calctime *= 2.0;
 	// kill if longer than 10 hours
-	if ($calctime > 10.0*3600.0)
-		createMaxLikeAlignForm("<b>ERROR:</b> Run time per iteration greater than 10 hours<br/>"
-			."<b>Estimated calc time:</b> ".round($calctime/3600.0,2)." hours\n");
+//	if ($calctime > 10.0*3600.0)
+//		createMaxLikeAlignForm("<b>ERROR:</b> Run time per iteration greater than 10 hours<br/>"
+//			."<b>Estimated calc time:</b> ".round($calctime/3600.0,2)." hours\n");
 	elseif (!$fast && $calctime > 1800.0)
 		createMaxLikeAlignForm("<b>ERROR:</b> Run time per iteration greater than 30 minutes without fast mode<br/>"
 			."<b>Estimated calc time:</b> ".round($calctime/60.0,2)." minutes\n");

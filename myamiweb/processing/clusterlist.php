@@ -8,11 +8,11 @@
  *	Simple viewer to view a image using mrcmodule
  */
 
-require "inc/particledata.inc";
-require "inc/leginon.inc";
-require "inc/project.inc";
-require "inc/processing.inc";
-require "inc/summarytables.inc";
+require_once "inc/particledata.inc";
+require_once "inc/leginon.inc";
+require_once "inc/project.inc";
+require_once "inc/processing.inc";
+require_once "inc/summarytables.inc";
   
 $expId = $_GET['expId'];
 $projectId = getProjectId();
@@ -27,7 +27,8 @@ processing_header("Cluster Stack List","Cluster Stack List", $javascript, True);
 $particle = new particledata();
 
 // find each stack entry in database
-$stackdatas = $particle->getAlignStackIdsWithAnalysis($expId, $projectId);
+//$stackdatas = $particle->getAlignStackIdsWithAnalysis($expId, $projectId);
+$stackdatas = $particle->getAlignStackIdsWithClusterRun($expId, $projectId);
 
 if ($stackdatas) {
 	echo "<form name='stackform' method='post' action='$formAction'>\n";

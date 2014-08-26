@@ -8,12 +8,12 @@
  *	Simple viewer to view a image using mrcmodule
  */
 
-require "inc/particledata.inc";
-require "inc/leginon.inc";
-require "inc/project.inc";
-require "inc/viewer.inc";
-require "inc/processing.inc";
-require "inc/appionloop.inc";
+require_once "inc/particledata.inc";
+require_once "inc/leginon.inc";
+require_once "inc/project.inc";
+require_once "inc/viewer.inc";
+require_once "inc/processing.inc";
+require_once "inc/appionloop.inc";
  
 // IF VALUES SUBMITTED, EVALUATE DATA
 if ($_POST['process']) {
@@ -232,6 +232,7 @@ function runMaskMaker() {
 	$diam = $_POST['diam'];
 	$convolve = $_POST['convolve'];
 	$cdiam = $_POST['cdiam'];
+	$expId = $_GET['expId'];
 
 	/* *******************
 	PART 2: Check for conflicts, if there is an error display the form again
@@ -270,24 +271,41 @@ function runMaskMaker() {
 	}
 
 	/* *******************
-	PART 4: Do test image
+	PART 4: Create header info, i.e., references
 	******************** */
 
-	if ($testimage && $_POST['process']=="Run MaskMaker") {
-		$user = $_SESSION['username'];
-		$password = $_SESSION['password'];
-		if (!($user && $password)) createMMForm("<b>ERROR:</b> Enter a user name and password"); 
-		$sub = submitAppionJob($command,$outdir,$runname,$expId,'maskmaker',False,True);
-		// if errors:
-		if ($sub) createMMForm("<b>ERROR:</b> $sub");
-		exit;
-	} elseif ($testimage) {
+	// Add reference to top of the page
+	$headinfo .= appionRef(); // main appion ref
+
+	/* *******************
+	PART 5: Show or Run Command
+	******************** */
+
+	// submit command
+	$errors = showOrSubmitCommand($command, $headinfo, 'maskmaker', 1, $testimage);
+
+	// if error display them
+	if ($errors) {
+		createMMForm($errors);
+	} else if ($testimage) {
 		$outdir=$_POST[outdir];
 		// make sure outdir ends with '/'
 		if (substr($outdir,-1,1)!='/') $outdir.='/';
-		$runname=$_POST[runname];
-		echo  " <B>MaskMaker Command:</B><br>$command<HR>";
-		$testjpg=ereg_replace(".mrc","",$testimage);
+		$runname=$_POST[runname];		// add the appion wrapper to the command for display
+		$wrappedcmd = addAppionWrapper($command);
+			
+		if (substr($outdir,-1,1)!='/') $outdir.='/';
+		$results = "<table width='600' border='0'>\n";
+		$results.= "<tr><td>\n";
+		$results.= "<B>MaskMaker Test Command:</B><br />$wrappedcmd";
+		$results.= "</td></tr></table>\n";
+		$results.= "<br />\n";
+		echo $results;
+		
+		$testjpg = ereg_replace(".mrc","",$_POST['testfilename']);
+		$jpgimg = $outdir.$runname."/jpgs/".$testjpg.".prtl.jpg";
+		
+		$testjpg=preg_replace("%.mrc%","",$testimage);
 		$testdir=$outdir.$runname."/tests/";
 		if (file_exists($testdir)) {
      	// open image directory
@@ -300,35 +318,15 @@ function runMaskMaker() {
 			}
 			closedir($pathdir);
 		}
-//		echo"<form name='viewerform' method='POST' ACTION='$formAction'>\n";
 		if (count($files) > 0) 	{
-			$images=displayTestResults($testimage,$testdir,$files);
+			$images = displayTestResults($testimage,$testdir,$files);
 		} else {
 			echo "<FONT COLOR='RED'><B>NO RESULT YET</B><br></FONT>";
-			echo "<FONT COLOR='RED'><B>Refresh this page when ready</B><br></FONT>";
+			echo "<FONT COLOR='RED'><B>Refresh this page when processing completes</B><br></FONT>";
 		}
-
-		createMMForm($images,'Particle Selection Results','');
-		exit;
-	}
-
-	/* *******************
-	PART 5: Create header info, i.e., references
-	******************** */
-
-	// Add reference to top of the page
-	$headinfo .= appionRef(); // main appion ref
-
-	/* *******************
-	PART 6: Show or Run Command
-	******************** */
-
-	// submit command
-	$errors = showOrSubmitCommand($command, $headinfo, 'maskmaker', 1);
-
-	// if error display them
-	if ($errors)
-		createMMForm($errors);
+		
+		createMMForm(false, 'Particle Selection Test Results', 'Particle Selection Test Results');
+	}		
 	exit;
 }
 

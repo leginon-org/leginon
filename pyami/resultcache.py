@@ -2,7 +2,6 @@
 
 import weakref
 import numpy
-import Image
 import sys
 
 class CachedResult(object):

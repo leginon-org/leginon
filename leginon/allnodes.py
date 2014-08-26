@@ -20,6 +20,9 @@ classtype = 'Pipeline'
 from gridentry import GridEntry
 noderegistry.registerNodeClass(GridEntry,classtype)
 
+from plategridentry import PlateGridEntry
+noderegistry.registerNodeClass(PlateGridEntry,classtype)
+
 from targetmaker import MosaicTargetMaker
 noderegistry.registerNodeClass(MosaicTargetMaker,classtype)
 
@@ -40,6 +43,9 @@ noderegistry.registerNodeClass(HoleFinder,classtype)
 
 from rasterfinder import RasterFinder
 noderegistry.registerNodeClass(RasterFinder,classtype)
+
+from rasterfcfinder import RasterFCFinder
+noderegistry.registerNodeClass(RasterFCFinder,classtype)
 
 from stigacquisition import StigAcquisition
 noderegistry.registerNodeClass(StigAcquisition,classtype)
@@ -62,6 +68,9 @@ noderegistry.registerNodeClass(MosaicClickTargetFinder,classtype)
 from mosaicsectionfinder import MosaicSectionFinder
 noderegistry.registerNodeClass(MosaicSectionFinder,classtype)
 
+from mosaicspotfinder import MosaicSpotFinder
+noderegistry.registerNodeClass(MosaicSpotFinder,classtype)
+
 from robotatlastargetfinder import RobotAtlasTargetFinder
 noderegistry.registerNodeClass(RobotAtlasTargetFinder,classtype)
 
@@ -73,6 +82,10 @@ noderegistry.registerNodeClass(TiltRotateRepeater,classtype)
 
 from robot import Robot
 noderegistry.registerNodeClass(Robot,classtype)
+
+# TargetFinder is registered for setting validataion only
+from targetfinder import TargetFinder
+noderegistry.registerNodeClass(TargetFinder,classtype)
 
 from targetfinder import ClickTargetFinder
 noderegistry.registerNodeClass(ClickTargetFinder,classtype)
@@ -88,6 +101,9 @@ noderegistry.registerNodeClass(Focuser,classtype)
 
 from rctacquisition import RCTAcquisition
 noderegistry.registerNodeClass(RCTAcquisition,classtype)
+
+from tilttracker import TiltTracker
+noderegistry.registerNodeClass(TiltTracker,classtype)
 
 from tomography.tomographysimu import TomographySimu
 noderegistry.registerNodeClass(TomographySimu,classtype)
@@ -119,14 +135,17 @@ noderegistry.registerNodeClass(HoleDepth,classtype)
 from fftmaker import FFTMaker
 noderegistry.registerNodeClass(FFTMaker,classtype)
 
-from alignmentmanager import AlignmentManager
-noderegistry.registerNodeClass(AlignmentManager,classtype)
-
 from autoexposure import AutoExposure
 noderegistry.registerNodeClass(AutoExposure,classtype)
 
 from baker import Baker
 noderegistry.registerNodeClass(Baker,classtype)
+
+from tiltacquisition import TiltAcquisition
+noderegistry.registerNodeClass(TiltAcquisition,classtype)
+
+from tiltalternater import TiltAlternater
+noderegistry.registerNodeClass(TiltAlternater,classtype)
 
 ##############################
 # Calibrations
@@ -150,6 +169,9 @@ noderegistry.registerNodeClass(PixelSizeCalibrator,classtype)
 from dosecalibrator import DoseCalibrator
 noderegistry.registerNodeClass(DoseCalibrator,classtype)
 
+from beamsizecalibrator import BeamSizeCalibrator
+noderegistry.registerNodeClass(BeamSizeCalibrator,classtype)
+
 ##############################
 # Utility
 ##############################
@@ -168,6 +190,15 @@ noderegistry.registerNodeClass(MeasureDose,classtype)
 
 from EM import EM
 noderegistry.registerNodeClass(EM,classtype)
+
+from alignmentmanager import AlignmentManager
+noderegistry.registerNodeClass(AlignmentManager,classtype)
+
+from conditioner import Conditioner
+noderegistry.registerNodeClass(Conditioner,classtype)
+
+from conditioner import AutoNitrogenFiller
+noderegistry.registerNodeClass(AutoNitrogenFiller,classtype)
 
 from maskassessor import MaskAssessor
 noderegistry.registerNodeClass(MaskAssessor,classtype)

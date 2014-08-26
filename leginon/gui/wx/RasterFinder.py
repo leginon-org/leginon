@@ -27,16 +27,16 @@ class Panel(leginon.gui.wx.TargetFinder.Panel):
 		self.imagepanel = leginon.gui.wx.TargetPanel.TargetImagePanel(self, -1)
 		self.imagepanel.addTypeTool('Original', display=True, settings=True)
 		self.imagepanel.selectiontool.setDisplayed('Original', True)
-		self.imagepanel.addTargetTool('Raster', wx.Color(0, 255, 255), settings=True)
+		self.imagepanel.addTargetTool('Raster', wx.Colour(0, 255, 255), settings=True)
 		
-		self.imagepanel.addTargetTool('Polygon Vertices', wx.Color(255,255,0), settings=True, target=True, shape='polygon')
+		self.imagepanel.addTargetTool('Polygon Vertices', wx.Colour(255,255,0), settings=True, target=True, shape='polygon')
 		self.imagepanel.selectiontool.setDisplayed('Polygon Vertices', True)
 		self.imagepanel.setTargets('Polygon Vertices', [])
 	
 
 	
-		self.imagepanel.addTargetTool('Polygon Raster', wx.Color(255,128,0))
-		self.imagepanel.addTargetTool('acquisition', wx.GREEN, target=True, settings=True)
+		self.imagepanel.addTargetTool('Polygon Raster', wx.Colour(255,128,0))
+		self.imagepanel.addTargetTool('acquisition', wx.GREEN, target=True, settings=True, exp=True)
 		self.imagepanel.selectiontool.setDisplayed('acquisition', True)
 		self.imagepanel.addTargetTool('focus', wx.BLUE, target=True, settings=True)
 		self.imagepanel.selectiontool.setDisplayed('focus', True)
@@ -67,13 +67,18 @@ class Panel(leginon.gui.wx.TargetFinder.Panel):
 		elif evt.name == 'Polygon Vertices':
 			dialog = PolygonSettingsDialog(self)
 		elif evt.name == 'acquisition':
-			dialog = FinalSettingsDialog(self)
+			dialog = self._FinalSettingsDialog(self)
 		elif evt.name == 'focus':
-			dialog = FinalSettingsDialog(self)
+			dialog = self._FinalSettingsDialog(self)
 
 		dialog.ShowModal()
 		dialog.Destroy()
 
+	def _FinalSettingsDialog(self,parent):
+		# This "private call" allows the class in the module containing
+		# a subclass to redefine it in that module
+		return FinalSettingsDialog(parent)
+	
 class OriginalSettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
 		return OriginalScrolledSettings(self,self.scrsize,False)
@@ -292,6 +297,7 @@ class FinalSettingsDialog(leginon.gui.wx.Settings.Dialog):
 class FinalScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def initialize(self):
 		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
+		print self.__module__
 		sb = wx.StaticBox(self, -1, 'Ice Analysis')
 		sbszice = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sb = wx.StaticBox(self, -1, 'Focus Targets')
@@ -305,11 +311,6 @@ class FinalScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		self.widgets['ice max mean'] = FloatEntry(self, -1, chars=8)
 		self.widgets['ice max std'] = FloatEntry(self, -1, chars=8, min=0.0)
 		self.widgets['ice min std'] = FloatEntry(self, -1, chars=8, min=0.0)
-		self.widgets['focus convolve'] = wx.CheckBox(self, -1, 'Convolve')
-		self.widgets['focus convolve template'] = \
-			leginon.gui.wx.TargetTemplate.Panel(self, 'Convolve Template')
-		self.widgets['focus constant template'] = \
-			leginon.gui.wx.TargetTemplate.Panel(self, 'Constant Template', targetname='Constant target')
 		self.widgets['acquisition convolve'] = wx.CheckBox(self, -1, 'Convolve')
 		self.widgets['acquisition convolve template'] = \
 			leginon.gui.wx.TargetTemplate.Panel(self, 'Convolve Template')
@@ -345,15 +346,7 @@ class FinalScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 
 		sbszice.Add(szice, 1, wx.EXPAND|wx.ALL, 5)
 
-		szft = wx.GridBagSizer(5, 5)
-		szft.Add(self.widgets['focus convolve'], (0, 0), (1, 2),
-			wx.ALIGN_CENTER_VERTICAL)
-		szft.Add(self.widgets['focus convolve template'], (1, 0), (1, 1),
-			wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
-		szft.Add(self.widgets['focus constant template'], (2, 0), (1, 1),
-			wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
-		szft.AddGrowableCol(0)
-
+		szft = self.FocusFilterSettingsPanel()
 		sbszft.Add(szft, 1, wx.EXPAND|wx.ALL, 5)
 
 		szat = wx.GridBagSizer(5, 5)
@@ -385,6 +378,27 @@ class FinalScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 
 		return [sbszice, szt, szbutton]
 
+	
+	def FocusFilterSettingsPanel(self):
+		self.widgets['focus convolve'] = wx.CheckBox(self, -1, 'Convolve')
+		self.widgets['focus convolve template'] = \
+			leginon.gui.wx.TargetTemplate.Panel(self, 'Convolve Template')
+		self.widgets['focus constant template'] = \
+			leginon.gui.wx.TargetTemplate.Panel(self, 'Constant Template', targetname='Constant target')
+		self.widgets['focus one'] = wx.CheckBox(self, -1, 'Threshold to one focus target')
+		szft = wx.GridBagSizer(5, 5)
+		szft.Add(self.widgets['focus convolve'], (0, 0), (1, 2),
+			wx.ALIGN_CENTER_VERTICAL)
+		szft.Add(self.widgets['focus convolve template'], (1, 0), (1, 1),
+			wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
+		szft.Add(self.widgets['focus constant template'], (2, 0), (1, 1),
+			wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
+		szft.Add(self.widgets['focus one'], (3, 0), (1, 1),
+			wx.ALIGN_CENTER_VERTICAL)
+		szft.AddGrowableCol(0)
+
+		return szft
+
 	def onAnalyzeIceButton(self, evt):
 		self.dialog.setNodeSettings()
 		threading.Thread(target=self.node.ice).start()
@@ -408,9 +422,17 @@ class ScrolledSettings(leginon.gui.wx.TargetFinder.ScrolledSettings):
 			sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
 			self.widgets['skip'] = wx.CheckBox(self, -1, 'Skip automated raster target making')
+			self.widgets['focus interval'] = IntEntry(self, -1, chars=6)
 			sz = wx.GridBagSizer(5, 5)
 			sz.Add(self.widgets['skip'], (0, 0), (1, 1),
 							wx.ALIGN_CENTER_VERTICAL)
+
+			label = wx.StaticText(self, -1, 'Focus every')
+			sz.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+			sz.Add(self.widgets['focus interval'], (1, 1), (1, 1),
+										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
+			label = wx.StaticText(self, -1, 'image')
+			sz.Add(label, (1, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
 			sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
 

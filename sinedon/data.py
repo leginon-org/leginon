@@ -434,6 +434,28 @@ class Data(sinedon.newdict.TypedDict):
 		db = sinedon.connections.getConnection(modulename)
 		db.copyImportMapping(other, self)
 
+	@classmethod
+	def is_deletable(cls):
+		'''
+		Check if this class was defined as "deletable".
+		This is true only if there is a class attribute "__deletable" and it
+		is set to True.
+		'''
+		# have to generate mangled name of the "__deletable" attribute
+		cls_name = cls.__name__
+		deletable_attr = '_' + cls_name + '__deletable'
+		if hasattr(cls, deletable_attr) and getattr(cls, deletable_attr):
+			return True
+		else:
+			return False
+
+	def delete(self, **kwargs):
+		if not self.is_deletable():
+			raise RuntimeError('Attempting to delete object that is not deletable')
+		modulename = self.__module__
+		db = connections.getConnection(modulename)
+		db.delete(self, **kwargs)
+
 	def close(self):
 		modulename = self.__module__
 		db = sinedon.connections.getConnection(modulename)

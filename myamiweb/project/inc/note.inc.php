@@ -305,13 +305,13 @@ class notedata {
 
 	function getFileIcon($filetype) {
 		$icon='btn-file.gif';
-		if (ereg('application.*pdf',$filetype))
+		if (preg_match('%application.*pdf%',$filetype))
 				$icon='btn-pdf.gif';
-		else if (ereg('application.*powerpoint|ppt',$filetype))
+		else if (preg_match('%application.*powerpoint|ppt%',$filetype))
 				$icon='btn-ppt.gif';
-		else if (ereg('application.*msword|doc',$filetype))
+		else if (preg_match('%application.*msword|doc%',$filetype))
 				$icon='btn-word.gif';
-		else if (ereg('application.*excel|xls',$filetype))
+		else if (preg_match('%application.*excel|xls%',$filetype))
 				$icon='btn-xls.gif';
 		else
 				$icon='btn-file.gif';

@@ -273,3 +273,7 @@ display: inline;
 .xb4 {height:2px; margin:0 1px;}
 
 .roundboxcontent {display:block; background:#eeeeee; border:0 solid #999; border-width:0 1px;}
+
+.hidden { display: none; }
+.unhidden { display: block; }
+

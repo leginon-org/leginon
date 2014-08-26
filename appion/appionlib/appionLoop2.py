@@ -10,6 +10,7 @@ import time
 import math
 import random
 import cPickle
+import glob
 #appion
 from appionlib import apDisplay
 from appionlib import apDatabase
@@ -27,7 +28,8 @@ class AppionLoop(appionScript.AppionScript):
 		Starts a new function and gets all the parameters
 		overrides appionScript
 		"""
-		appionScript.AppionScript.__init__(self, True)
+		appionScript.AppionScript.__init__(self)
+		self.rundata = {}
 		### extra appionLoop functions:
 		self._addDefaultParams()
 		self.setFunctionResultKeys()
@@ -35,12 +37,30 @@ class AppionLoop(appionScript.AppionScript):
 		#self.specialCreateOutputDirs()
 		self._initializeDoneDict()
 		self.result_dirs={}
+		self.sleep_minutes = 6
+		self.process_batch_count = 10
+
+	#=====================
+	def setWaitSleepMin(self,minutes):
+		'''
+		Set the wait time between query for new images in minutes
+		'''
+		self.sleep_minutes = minutes
+
+	#=====================
+	def setProcessBatchCount(self,count):
+		'''
+		Set number of images accumulated from database record before processing them
+		'''
+		self.process_batch_count = count
 
 	#=====================
 	def run(self):
 		"""
 		processes all images
 		"""
+		if not self.params['parallel']:
+			self.cleanParallelLock()
 		### get images from database
 		self._getAllImages()
 		os.chdir(self.params['rundir'])
@@ -80,6 +100,7 @@ class AppionLoop(appionScript.AppionScript):
 						apDisplay.printWarning("not committing results to database, all data will be lost")
 						apDisplay.printMsg("to preserve data start script over and add 'commit' flag")
 						self.writeResultsToFiles(imgdata, results)
+					self.loopCleanUp(imgdata)
 				else:
 					apDisplay.printWarning("IMAGE FAILED; nothing inserted into database")
 					self.badprocess = False
@@ -88,12 +109,15 @@ class AppionLoop(appionScript.AppionScript):
 				### FINISH with custom functions
 
 				self._writeDoneDict(imgdata['filename'])
+				if self.params['parallel']:
+					self.unlockParallel(imgdata.dbid)
 
 				loadavg = os.getloadavg()[0]
 				if loadavg > 2.0:
 					apDisplay.printMsg("Load average is high "+str(round(loadavg,2)))
 					loadsquared = loadavg*loadavg
-					time.sleep(loadsquared)
+					apDisplay.printMsg("Sleeping %.1f seconds"%(loadavg))
+					time.sleep(loadavg)
 					apDisplay.printMsg("New load average "+str(round(os.getloadavg()[0],2)))
 
 				self._printSummary()
@@ -122,21 +146,12 @@ class AppionLoop(appionScript.AppionScript):
 		"""
 		return self.commitToDatabase(imgdata)
 
+	def loopCleanUp(self, imgdata):
+		pass
+
 	#######################################################
 	#### ITEMS BELOW SHOULD BE SPECIFIED IN A NEW PROGRAM ####
 	#######################################################
-
-	#=====================
-	def setRunDir(self):
-		if self.params['sessionname'] is not None:
-			#auto set the output directory
-			sessiondata = apDatabase.getSessionDataFromSessionName(self.params['sessionname'])
-			path = os.path.abspath(sessiondata['image path'])
-			pieces = path.split('leginon')
-			path = 'leginon'.join(pieces[:-1]) + 'appion' + pieces[-1]
-			path = re.sub("/rawdata","",path)
-			path = os.path.join(path, self.processdirname, self.params['runname'])
-			self.params['rundir'] = path
 
 	#=====================
 	def setupParserOptions(self):
@@ -203,9 +218,8 @@ class AppionLoop(appionScript.AppionScript):
 	#=====================
 	def insertFunctionRun(self):
 		"""
-		put in run and param insertion to db here
+		put in run and param insertion to db here for insertion during instance initialization if you want to use self.rundata during the run
 		"""
-		self.rundata = {}
 		return
 
 	#=====================
@@ -266,8 +280,10 @@ class AppionLoop(appionScript.AppionScript):
 				+self.params['runname']+" vs. "+os.path.basename(self.params['rundir']))
 		if self.params['mrcnames'] and self.params['preset']:
 			apDisplay.printError("preset can not be specified if particular images have been specified")
-		if self.params['sessionname'] is None and self.params['mrcnames'] is None:
+		if (self.params['sessionname'] is None and self.params['expid'] is None) and self.params['mrcnames'] is None:
 			apDisplay.printError("please specify an mrc name or session")
+		if self.params['sessionname'] is None and self.params['expid'] is not None:
+			self.params['sessionname'] = apDatabase.getSessionDataFromSessionId(self.params['expid'])['name']
 		if self.params['sessionname'] is not None and self.params['projectid'] is not None:
 			### Check that project and images are in sync
 			imgproject = apProject.getProjectIdFromSessionName(self.params['sessionname'])
@@ -322,6 +338,8 @@ class AppionLoop(appionScript.AppionScript):
 			action="store_true", help="Shuffle the images before processing, i.e. process images out of order")
 		self.parser.add_option("--reverse", dest="reverse", default=False,
 			action="store_true", help="Process the images from newest to oldest")
+		self.parser.add_option("--parallel", dest="parallel", default=False,
+			action="store_true", help="parallel appionLoop on different cpu. Only work with the part not using gpu")
 
 	#=====================
 	def _addDefaultParams(self):
@@ -345,7 +363,9 @@ class AppionLoop(appionScript.AppionScript):
 	#=====================
 	def _setRunAndParameters(self):
 		rundata = self.insertFunctionRun()
-		self.rundata = rundata
+		# replace existing rundata only if it is not empty
+		if rundata:
+			self.rundata = rundata
 
 	#=====================
 	def _writeDataToDB(self,idata):
@@ -513,7 +533,8 @@ class AppionLoop(appionScript.AppionScript):
 		"""
 		imgname = imgdata['filename']
 		self._reloadDoneDict()
-		if imgname in self.donedict:
+		try:
+			self.donedict[imgname]
 			if not self.stats['lastimageskipped']:
 				sys.stderr.write("skipping images\n")
 			elif self.stats['skipcount'] % 80 == 0:
@@ -524,7 +545,7 @@ class AppionLoop(appionScript.AppionScript):
 			self.stats['skipcount'] += 1
 			self.stats['count'] += 1
 			return True
-		else:
+		except:
 			self.stats['waittime'] = 0
 			if self.stats['lastimageskipped']:
 				apDisplay.printMsg("\nskipped"+str(self.stats['skipcount'])+" images so far")
@@ -538,6 +559,10 @@ class AppionLoop(appionScript.AppionScript):
 		initilizes several parameters for a new image
 		and checks if it is okay to start processing image
 		"""
+		if self.params['parallel']:
+			if self.lockParallel(imgdata.dbid):
+				apDisplay.printMsg('%s locked by another parallel run in the rundir' % (apDisplay.shortenImageName(imgdata['filename'])))
+				return False
 		#calc images left
 		self.stats['imagesleft'] = self.stats['imagecount'] - self.stats['count']
 
@@ -551,16 +576,21 @@ class AppionLoop(appionScript.AppionScript):
 			elif self.stats['count'] % 80 == 0:
 				sys.stderr.write("\n")
 			self.stats['lastcount'] = self.stats['count']
-			self._checkMemLeak()
+			if apDisplay.isDebugOn():
+				self._checkMemLeak()
 
 		# skip if image doesn't exist:
 		imgpath = os.path.join(imgdata['session']['image path'], imgdata['filename']+'.mrc')
 		if not os.path.isfile(imgpath):
 			apDisplay.printWarning(imgpath+" not found, skipping")
+			if self.params['parallel']:
+				self.unlockParallel(imgdata.dbid)
 			return False
 
 		# check to see if image has already been processed
 		if self._alreadyProcessed(imgdata):
+			if self.params['parallel']:
+				self.unlockParallel(imgdata.dbid)
 			return False
 
 		self.stats['waittime'] = 0
@@ -639,7 +669,7 @@ class AppionLoop(appionScript.AppionScript):
 		swapfree = mem.swapfree()
 		minavailmem = 64*1024; # 64 MB, size of one image
 		if(memfree < minavailmem):
-			apDisplay.printError("Memory is low ("+str(int(memfree/1024))+"MB): there is probably a memory leak")
+			apDisplay.printWarning("Memory is low ("+str(int(memfree/1024))+"MB): there is probably a memory leak")
 
 		if(self.stats['count'] > 15):
 			memlist = self.stats['memlist'][-15:]
@@ -662,13 +692,66 @@ class AppionLoop(appionScript.AppionScript):
 			memleak = rho*slope
 			###
 			if(self.stats['memleak'] > 3 and slope > 20 and memleak > 512 and gain > 2048):
-				apDisplay.printError("Memory leak of "+str(round(memleak,2))+"MB")
+				apDisplay.printWarning("Memory leak of "+str(round(memleak,2))+"MB")
 			elif(memleak > 32):
 				self.stats['memleak'] += 1
 				apDisplay.printWarning("substantial memory leak "+str(round(memleak,2))+"MB")
 				print "(",str(n),round(slope,5),round(rho,5),round(gain,2),")"
 
-	#=====================
+	def skipTestOnImage(self,imgdata):
+		imgname = imgdata['filename']
+		skip = False
+		reason = None
+		#tiltskip is default to None since it might not need evaluation
+		tiltskip = None
+
+		if imgname in self.donedict:
+			skip = True
+			reason = 'done'
+		elif self.reprocessImage(imgdata) is False:
+			self._writeDoneDict(imgname)
+			reason = 'reproc'
+			skip = True
+
+		if skip is True:
+			return skip, reason
+		else:
+		# image not done or reprocessing allowed
+			# check sibling status instead if wanted
+			if self.params['sibassess'] is True:
+				status=apDatabase.getSiblingImgCompleteStatus(imgdata)
+			else:
+				status=apDatabase.getImgCompleteStatus(imgdata) 
+
+			if self.params['norejects'] is True and status is False:
+				reason = 'reject'
+				skip = True
+		
+			elif self.params['bestimages'] is True and status is not True:
+				reason = 'reject'
+				skip = True
+
+			elif ( self.params['tiltangle'] is not None or self.params['tiltangle'] != 'all' ):
+				tiltangle = apDatabase.getTiltAngleDeg(imgdata)
+
+				tiltangle = apDatabase.getTiltAngleDeg(imgdata)
+				if (self.params['tiltangle'] == 'notilt' and abs(tiltangle) > 3.0 ):
+					skip = True
+				elif (self.params['tiltangle'] == 'hightilt' and abs(tiltangle) < 30.0 ):
+					skip = True
+				elif (self.params['tiltangle'] == 'lowtilt' and abs(tiltangle) >= 30.0 ):
+					skip = True
+				### the reason why -2.0 and 2.0 are used is because the tilt angle is saved as 0 +/- a small amount
+				elif (self.params['tiltangle'] == 'minustilt' and tiltangle > -2.0 ):
+					skip = True
+				elif (self.params['tiltangle'] == 'plustilt' and tiltangle < 2.0 ):
+					skip = True
+				if skip == True:
+					reason = 'tilt'
+
+		return skip, reason
+
+#=====================
 	def _removeProcessedImages(self):
 		startlen = len(self.imgtree)
 		donecount = 0
@@ -677,57 +760,19 @@ class AppionLoop(appionScript.AppionScript):
 		tiltcount = 0
 		self.stats['skipcount'] = 0
 		newimgtree = []
+		count = 0
 		for imgdata in self.imgtree:
+			count += 1
+			if count % 10 == 0:
+				sys.stderr.write(".")
+			skip, reason = self.skipTestOnImage(imgdata)
 			imgname = imgdata['filename']
-			skip = False
-
-			if imgname in self.donedict:
-				donecount += 1
-				skip = True
-
-			elif self.reprocessImage(imgdata) is False:
-				self._writeDoneDict(imgname)
-				reproccount += 1
-				skip = True
-
-			# image not done or reprocessing allowed
-			if skip is False:
-				# check sibling status instead if wanted
-				if self.params['sibassess'] is True:
-					status=apDatabase.getSiblingImgCompleteStatus(imgdata)
-				else:
-					status=apDatabase.getImgCompleteStatus(imgdata) 
-
-				if self.params['norejects'] is True and status is False:
+			if skip is True:
+				if reason == 'reproc':
+					reproccount += 1
+				elif reason == 'reject' or reason == 'tilt':
 					self._writeDoneDict(imgname)
 					rejectcount += 1
-					skip = True
-			
-				elif self.params['bestimages'] is True and status is not True:
-					self._writeDoneDict(imgname)
-					rejectcount += 1
-					skip = True
-
-				elif ( self.params['tiltangle'] is not None or self.params['tiltangle'] != 'all' ):
-					tiltangle = apDatabase.getTiltAngleDeg(imgdata)
-					tiltskip = False
-					if (self.params['tiltangle'] == 'notilt' and abs(tiltangle) > 3.0 ):
-						tiltskip = True
-					elif (self.params['tiltangle'] == 'hightilt' and abs(tiltangle) < 30.0 ):
-						tiltskip = True
-					elif (self.params['tiltangle'] == 'lowtilt' and abs(tiltangle) >= 30.0 ):
-						tiltskip = True
-					### the reason why -2.0 and 2.0 are used is because the tilt angle is saved as 0 +/- a small amount
-					elif (self.params['tiltangle'] == 'minustilt' and tiltangle > -2.0 ):
-						tiltskip = True
-					elif (self.params['tiltangle'] == 'plustilt' and tiltangle < 2.0 ):
-						tiltskip = True
-					### skip this tilt?
-					if tiltskip is True:
-						#print "reject:", tiltangle
-						self._writeDoneDict(imgname)
-						tiltcount += 1
-						skip = True
 
 			if skip is True:
 				if self.stats['skipcount'] == 0:
@@ -739,6 +784,7 @@ class AppionLoop(appionScript.AppionScript):
 				self.stats['skipcount'] += 1
 			else:
 				newimgtree.append(imgdata)
+		sys.stderr.write("\n")
 		if self.stats['skipcount'] > 0:
 			self.imgtree = newimgtree
 			sys.stderr.write("\n")
@@ -771,13 +817,14 @@ class AppionLoop(appionScript.AppionScript):
 		if self.params["limit"] is not None:
 			return False
 
-		### CHECK FOR IMAGES, IF MORE THAN 10 JUST GO AHEAD
+		### CHECK FOR IMAGES, IF MORE THAN self.process_batch_count (default 10) JUST GO AHEAD
 		apDisplay.printMsg("Finished all images, checking for more\n")
 		self._getAllImages()
 		### reset counts
 		self.stats['imagecount'] = len(self.imgtree)
 		self.stats['imagesleft'] = self.stats['imagecount'] - self.stats['count']
-		if self.stats['imagesleft'] > 10:
+		### Not sure this really works since imagesleft appears to be negative value AC
+		if  self.stats['imagesleft'] > self.process_batch_count:
 			return True
 
 		### WAIT
@@ -785,9 +832,11 @@ class AppionLoop(appionScript.AppionScript):
 			apDisplay.printWarning("waited longer than three hours for new images with no results, so I am quitting")
 			return False
 		apParam.closeFunctionLog(functionname=self.functionname, logfile=self.logfile, msg=False, stats=self.stats)
-		sys.stderr.write("\nAll images processed. Waiting ten minutes for new images (waited "+str(self.stats['waittime'])+" min so far).")
+		sys.stderr.write("\nAll images processed. Waiting %d minutes for new images (waited %.2f min so far)." % (int(self.sleep_minutes),float(self.stats['waittime'])))
 		twait0 = time.time()
-		for i in range(20):
+		repeats = int(self.sleep_minutes * 60 / 20)
+		for i in range(repeats):
+			apDisplay.printMsg("Sleeping 20 seconds")
 			time.sleep(20)
 			#print a dot every 30 seconds
 			sys.stderr.write(".")

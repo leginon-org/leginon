@@ -1,6 +1,6 @@
 <?php
 
-$mrc2000_format = array(
+$mrc2014_format = array(
     "n" => array(
         "x" => "V",
         "y" => "V",
@@ -37,7 +37,9 @@ $mrc2000_format = array(
     ),
     "space group number" => "V",
     "n symmetry bytes" => "V",
-    "extra" => "x100",
+    "extra1" => "x8",
+    "exttype" => "x4",
+    "extra2" => "x88",
     "origin" => array(
         "x" => "f",
         "y" => "f",
@@ -50,6 +52,9 @@ $mrc2000_format = array(
     "labels" => "a800",
 );
 
+//This mrc stack format is the definition of UCSF Tomography.
+//It is not compatible with CCP4 library but readable by IMOD
+//and libraries not reading bytes 197-220 (base 1)
 $mrc_stack_format = array(
     "n" => array(
         "x" => "V",
@@ -90,7 +95,8 @@ $mrc_stack_format = array(
     "dvid" => "S",
     "n blank" => "S",
     "itst" => "V",
-    "blank" => "a24",
+    "exttype" => "a4",
+    "blank" => "a20",
     "n integers" => "S",
     "n floats" => "S",
     "sub" => "S",
@@ -211,6 +217,7 @@ function getSize($header) {
         2 => 4,
         3 => 2,
         4 => 4,
+        6 => 2,
     );
 
     $n = $header["n->x"]*$header["n->y"]*$header["n->z"];
@@ -350,20 +357,21 @@ $n_results = count($numbers) * $n_results;
 # make stack
 $stack_header = array_diff($header, array());
 $stack_header['n->z'] = $n_results;
-$stack_header['m->z'] = $n_results;
-$stack_header['cell->z'] = $n_results;
+$stack_header['m->z'] = 1;
+$stack_header['cell->z'] = 1.0;
 $stack_header['density->min'] = $min; 
 $stack_header['density->mean'] = $mean;
 $stack_header['density->max'] = $max;
 $stack_header['origin->z'] = $n_results/2;
 $stack_header["n symmetry bytes"] = $mrc_stack_extended_format_size*$n_results;
+$stack_header["exttype"] = 'AGAR';
 $stack_header["n integers"] = 0;
 $stack_header["n floats"] = $mrc_stack_extended_format_size/$float_size;
 
 $stack_size += $mrc_header_size;
 
 #$filename = $results[0]["filename"];
-#$filename = ereg_replace("_[0-9]*$", '_stack.mrc', $filename);
+#$filename = preg_replace("%_[0-9]*$%", '_stack.mrc', $filename);
 $filename = $session['name'].'_'.$atlas_name.'_';
 if ($tiltSeriesNumber < 10) {
 	$filename .= '00'.$tiltSeriesNumber; 
@@ -375,8 +383,8 @@ if ($tiltSeriesNumber < 10) {
 	}
 }
 
-if (!eregi("\.mrc$", $filename))
-	$filename = ereg_replace("$", ".mrc", $filename);
+if (!preg_match("%\.mrc$%i", $filename))
+	$filename = Preg_replace("%$%", ".mrc", $filename);
 
 writeHeader($filename, $stack_size);
 

@@ -3,6 +3,8 @@
 import os
 
 def meminfo2dict():
+	if not os.path.exists('/proc/meminfo'):
+		return None
 	f = open('/proc/meminfo', 'r')
 	lines = f.readlines()
 	f.close()
@@ -19,6 +21,8 @@ def meminfo2dict():
 	return info
 
 def stats(meminfo=meminfo2dict()):
+	if meminfo is None:
+		return
 	total = meminfo['MemTotal']
 	free = meminfo['MemFree']
 	used = total - free
@@ -37,36 +41,50 @@ def stats(meminfo=meminfo2dict()):
 
 def used():
 	meminfo = meminfo2dict()
+	if meminfo is None:
+		return
 	used = meminfo['MemTotal'] - meminfo['MemFree']
 	return used
 
 def active():
 	meminfo = meminfo2dict()
+	if meminfo is None:
+		return
 	used = meminfo['MemTotal'] - meminfo['MemFree'] - meminfo['Cached']
 	return used
 
 def free():
 	meminfo = meminfo2dict()
+	if meminfo is None:
+		return
 	free = meminfo['MemFree'] + meminfo['Cached']
 	return free
 
 def total():
 	meminfo = meminfo2dict()
+	if meminfo is None:
+		return
 	total = meminfo['MemTotal']
 	return total
 
 def swapused():
 	meminfo = meminfo2dict()
+	if meminfo is None:
+		return
 	used = meminfo['SwapTotal'] - meminfo['SwapFree']
 	return used
 
 def swapfree():
 	meminfo = meminfo2dict()
+	if meminfo is None:
+		return
 	free = meminfo['SwapFree']
 	return free
 
 def swaptotal():
 	meminfo = meminfo2dict()
+	if meminfo is None:
+		return
 	total = meminfo['SwapTotal']
 	return total
 

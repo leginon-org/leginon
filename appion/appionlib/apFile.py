@@ -6,6 +6,7 @@ import glob
 import subprocess
 import shutil
 from appionlib import apDisplay
+from pyami import mrc
 
 ####
 # This is a low-level file with NO database connections
@@ -62,7 +63,7 @@ def removeDir(dirname, warn=True):
 #===============
 def removeStack(filename, warn=True):
 	rootname = os.path.splitext(filename)[0]
-	for f in (rootname+".hed", rootname+".img"):
+	for f in (rootname+".hed", rootname+".img", rootname+".hdf"):
 		if os.path.isfile(f):
 			if warn is True:
 				apDisplay.printWarning("removing stack: "+f)
@@ -71,6 +72,23 @@ def removeStack(filename, warn=True):
 				os.remove(f)
 			except:
 				apDisplay.printWarning('%s could not be removed' % f)
+
+#===============
+def moveStack(filename1, filename2, warn=True):
+	### replace one imagic stack with another
+	rootname1 = os.path.splitext(filename1)[0]
+	rootname2 = os.path.splitext(filename2)[0]
+	for ext in (".hed", ".img"):
+		inf = rootname1+ext
+		outf = rootname2+ext
+		if os.path.isfile(inf):
+			if warn is True:
+				apDisplay.printWarning("replacing stack file '%s' with '%s' "%(outf,inf))
+				time.sleep(1)
+			try:
+				shutil.move(inf,outf)
+			except:
+				apDisplay.printWarning('%s could not be replaced with %s' % (outf,inf))
 
 #===============
 def removeFilePattern(pattern, warn=True):
@@ -174,6 +192,52 @@ def numImagesInStack(imgfile, boxsize=None):
 		apDisplay.printError("numImagesInStack() requires an IMAGIC or SPIDER stacks")
 	return numimg
 
+def safeSymLink(source, destination):
+	''' create new symbolic link only if the destination is not a file'''
+	if (os.path.isfile(destination) and not os.path.islink(destination)):
+		apDisplay.printWarning('destination is a non-linked file, linking from %s to %s not performed' % (source,destination))
+		return False
+	else:
+		if (os.path.islink(destination)):
+			os.remove(destination)
+		os.symlink(source,destination)
+	return True
+
+def safeCopy(source, destination):
+	''' copy from source only if the destination is not a file'''
+	if (os.path.isfile(destination) and not os.path.islink(destination)):
+		apDisplay.printWarning('destination is a non-linked file, copying from %s to %s not performed' % (source,destination))
+		return False
+	else:
+		if (os.path.islink(destination)):
+			os.remove(destination)
+		shutil.copy(source,destination)
+	return True
+
+def replaceUniqueLinePatternInTxtFile(filepath,search_string,new_linetext):
+	infile = open(filepath,'r')
+	lines = infile.readlines()
+	infile.close()
+	if new_linetext[-1] != '\n':
+		new_linetext += '\n'
+	newlines = []
+	for line in lines:
+		if search_string in line:
+			apDisplay.printWarning('%s will be replaced by %s in %s' % (line[:-1],new_linetext[:-1],filepath))
+			newline = new_linetext
+		else:
+			newline = line
+		newlines.append(newline)
+	tmppath = filepath+'.tmp'
+	outfile = open(filepath+'.tmp','w')
+	outfile.writelines(newlines)
+	outfile.close()
+	shutil.move(tmppath,filepath)
+
+
+def getMrcFileShape(mrcpath):
+	header = mrc.readHeaderFromFile(mrcpath)
+	return header['shape']
 ####
 # This is a low-level file with NO database connections
 # Please keep it this way

@@ -9,7 +9,7 @@
 
 $pic=ImageCreate(255,1);
 imagecolorallocate($pic, 255, 255, 255);
-header("Content-type: image/x-png");
+header("Content-type: image/png");
 ImagePNG($pic);
 ImageDestroy($pic);
 ?>

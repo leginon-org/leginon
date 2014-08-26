@@ -8,24 +8,25 @@ import remote
 import os
 from pyami import mrc
 import itertools
+from pyscope import falconframe
 
 rawtype = numpy.uint32
 idcounter = itertools.cycle(range(100))
 
 class SimCCDCamera(ccdcamera.CCDCamera):
 	name = 'SimCCDCamera'
+	binning_limits = [1,2,4,8]
+	binmethod = 'exact'
+
 	def __init__(self):
 		ccdcamera.CCDCamera.__init__(self)
-		self.camera_size = {'x': 4096, 'y': 4096}
-		#self.camera_size = {'x': 4096, 'y': 3072}
-		self.binning_values = {'x': [1, 2, 4, 8], 'y': [1, 2, 4, 8]}
 		self.pixel_size = {'x': 2.5e-5, 'y': 2.5e-5}
 		self.exposure_types = ['normal', 'dark', 'bias']
 
 		self.binning = {'x': 1, 'y': 1}
 		self.offset = {'x': 0, 'y': 0}
-		self.dimension = copy.copy(self.camera_size)
-		self.exposure_time = 0.01
+		self.dimension = copy.copy(self.getCameraSize())
+		self.exposure_time = 0.2
 		self.exposure_type = 'normal'
 
 		self.energy_filter = False
@@ -34,12 +35,7 @@ class SimCCDCamera(ccdcamera.CCDCamera):
 		self.views = ('square', 'empty')
 		self.view = 'square'
 		#self.view = 'empty'
-		self.frames_on = True
-		self.frame_rate = 0.05
 		self.inserted = True
-		self.saverawframes = False
-		self.rawframesname = 'frames'
-		self.useframes = ()
 
 	def getRetractable(self):
 		return True
@@ -59,13 +55,17 @@ class SimCCDCamera(ccdcamera.CCDCamera):
 	def getViews(self):
 		return self.views
 
+	def getBinnedMultiplier(self):
+		binning = self.getBinning()
+		return binning['x']*binning['y']
+
 	def getBinning(self):
 		return copy.copy(self.binning)
 
 	def setBinning(self, value):
 		for axis in self.binning.keys():
 			try:
-				if value[axis] not in self.binning_values[axis]:
+				if value[axis] not in self.getCameraBinnings():
 					raise ValueError('invalid binning')
 			except KeyError:
 				pass
@@ -82,7 +82,7 @@ class SimCCDCamera(ccdcamera.CCDCamera):
 	def setOffset(self, value):
 		for axis in self.offset.keys():
 			try:
-				if value[axis] < 0 or value[axis] >= self.camera_size[axis]:
+				if value[axis] < 0 or value[axis] >= self.getCameraSize()[axis]:
 					raise ValueError('invalid offset')
 			except KeyError:
 				pass
@@ -99,7 +99,7 @@ class SimCCDCamera(ccdcamera.CCDCamera):
 	def setDimension(self, value):
 		for axis in self.dimension.keys():
 			try:
-				if value[axis] < 1 or value[axis] > self.camera_size[axis]:
+				if value[axis] < 1 or value[axis] > self.getCameraSize()[axis]:
 					raise ValueError('invalid dimension')
 			except KeyError:
 				pass
@@ -129,8 +129,76 @@ class SimCCDCamera(ccdcamera.CCDCamera):
 			raise ValueError('invalid exposure type')
 		self.exposure_type = value
 
-	def getCameraSize(self):
-		return copy.copy(self.camera_size)
+	def _getImage(self):
+		if not self.validateGeometry():
+			raise ValueError('invalid image geometry')
+
+		for axis in ['x', 'y']:
+			if self.dimension[axis] * self.binning[axis] > self.getCameraSize()[axis]:
+				raise ValueError('invalid dimension/binning combination')
+
+		columns = self.dimension['x']
+		rows = self.dimension['y']
+
+		shape = (rows, columns)
+
+		t0 = time.time()
+		## exposure time
+		time.sleep(self.exposure_time)
+		t1 = time.time()
+		self.exposure_timestamp = (t1 + t0) / 2.0
+
+		return self.getSyntheticImage(shape)
+	
+	def getSyntheticImage(self,shape):
+		dark_mean = 1.0
+		bright_scale = 10
+		if self.exposure_type != 'dark':
+			mean = self.exposure_time * 1000.0 *bright_scale + dark_mean
+			sigma = 0.01 * mean
+		else:
+			mean = dark_mean
+			sigma = 0.1 * mean
+		image = numpy.random.normal(mean, sigma, shape)
+		if self.exposure_type != 'dark':
+			row_offset = random.randint(-shape[0]/16, shape[0]/16) + shape[0]/4
+			column_offset = random.randint(-shape[1]/16, shape[1]/16) + shape[0]/4
+			image[row_offset:row_offset+shape[0]/2,
+				column_offset:column_offset+shape[1]/2] += 0.5 * mean
+		image = numpy.asarray(image, dtype=numpy.uint16)
+		return image
+
+	def getEnergyFiltered(self):
+		return True
+
+	def getEnergyFilter(self):
+		return self.energy_filter
+
+	def setEnergyFilter(self, value):
+		self.energy_filter = bool(value)
+
+	def getEnergyFilterWidth(self):
+		return self.energy_filter_width
+
+	def setEnergyFilterWidth(self, value):
+		self.energy_filter_width = float(value)
+
+	def alignEnergyFilterZeroLossPeak(self):
+		pass
+
+	def getPixelSize(self):
+		return dict(self.pixel_size)
+
+class SimFrameCamera(SimCCDCamera):
+	name = 'SimFrameCamera'
+	def __init__(self):
+		super(SimFrameCamera,self).__init__()
+		self.frame_time = 200
+		self.save_frames = False
+		self.alignframes = False
+		self.alignfilter = 'None'
+		self.rawframesname = 'frames'
+		self.useframes = ()
 
 	def _simBias(self, shape):
 		bias = numpy.arange(100,115)
@@ -184,12 +252,19 @@ class SimCCDCamera(ccdcamera.CCDCamera):
 		#print 'VIEW', transparency
 		return transparency
 
+	def custom_setup(self):
+		'''
+		Place holder for more setup
+		'''
+		pass
+
 	def _getImage(self):
+		self.custom_setup()
 		if not self.validateGeometry():
 			raise ValueError('invalid image geometry')
 
 		for axis in ['x', 'y']:
-			if self.dimension[axis] % self.binning[axis] != 0:
+			if self.dimension[axis] * self.binning[axis] > self.getCameraSize()[axis]:
 				raise ValueError('invalid dimension/binning combination')
 
 		columns = self.dimension['x']
@@ -203,12 +278,8 @@ class SimCCDCamera(ccdcamera.CCDCamera):
 		t1 = time.time()
 		self.exposure_timestamp = (t1 + t0) / 2.0
 
-		if self.frames_on:
-			nframes = self.getNumberOfFrames()
-			exptime = self.frame_rate
-		else:
-			nframes = 1
-			exptime = self.exposure_time
+		nframes = self.getNumberOfFrames()
+		exptime = self.frame_time
 
 		if self.useframes:
 			useframes = []
@@ -220,15 +291,16 @@ class SimCCDCamera(ccdcamera.CCDCamera):
 			useframes = range(nframes)
 		self.useframes = useframes
 
-		print 'SAVERAWFRAMES', self.saverawframes
-		if self.saverawframes:
+		print 'SAVERAWFRAMES', self.save_frames
+		if self.save_frames:
 			self.rawframesname = time.strftime('frames_%Y%m%d_%H%M%S')
 			self.rawframesname += '_%02d' % (idcounter.next(),)
 			try:
 				os.mkdir(self.rawframesname)
 			except:
 				pass
-
+		else:
+			return self.getSyntheticImage(shape)
 		sum = numpy.zeros(shape, numpy.float32)
 
 		for i in range(nframes):
@@ -241,7 +313,7 @@ class SimCCDCamera(ccdcamera.CCDCamera):
 			else:
 				raise RuntimeError('unknown exposure type: %s' % (self.exposure_type,))
 
-			if self.saverawframes:
+			if self.save_frames:
 				print 'SAVE', i
 				mrcname = '%03d.mrc' % (i,)
 				fname = os.path.join(self.rawframesname, mrcname)
@@ -252,41 +324,44 @@ class SimCCDCamera(ccdcamera.CCDCamera):
 
 		return sum
 
-	def getEnergyFiltered(self):
-		return True
-
-	def getEnergyFilter(self):
-		return self.energy_filter
-
-	def setEnergyFilter(self, value):
-		self.energy_filter = bool(value)
-
-	def getEnergyFilterWidth(self):
-		return self.energy_filter_width
-
-	def setEnergyFilterWidth(self, value):
-		self.energy_filter_width = float(value)
-
-	def alignEnergyFilterZeroLossPeak(self):
-		pass
-
-	def getPixelSize(self):
-		return dict(self.pixel_size)
-
+	
 	def getNumberOfFrames(self):
-		if self.frames_on:
-			nframes = int(round(self.exposure_time / self.frame_rate))
+		if not self.frame_time:
+			nframes = int(round(self.exposure_time / self.frame_time))
 			return nframes
 		else:
-			return None
+			return 1
+
+	def getFrameTime(self):
+		ms = self.frame_time * 1000.0
+		return ms
+
+	def setFrameTime(self,ms):
+		seconds = ms / 1000.0
+		self.frame_time = seconds
 
 	def getSaveRawFrames(self):
 		'''Save or Discard'''
-		return self.saverawframes
+		return self.save_frames
 
 	def setSaveRawFrames(self, value):
 		'''True: save frames,  False: discard frames'''
-		self.saverawframes = bool(value)
+		self.save_frames = bool(value)
+
+	def getAlignFrames(self):
+		return self.alignframes
+
+	def setAlignFrames(self, value):
+		self.alignframes = bool(value)
+
+	def getAlignFilter(self):
+		return self.alignfilter
+
+	def setAlignFilter(self, value):
+		if value:
+			self.alignfilter = str(value)
+		else:
+			self.alignfilter = 'None'
 
 	def setNextRawFramesName(self, value):
 		self.rawframesname = value
@@ -298,14 +373,122 @@ class SimCCDCamera(ccdcamera.CCDCamera):
 		return self.rawframesname
 
 	def setUseFrames(self, value):
-		print 'SET USE FRAMES', value
 		self.useframes = value
 
 	def getUseFrames(self):
 		return self.useframes
+	
+class SimFalconFrameCamera(SimFrameCamera):
+	name = 'SimFalconFrameCamera'
+	def __init__(self):
+		super(SimFalconFrameCamera,self).__init__()
+		self.frameconfig = falconframe.FalconFrameConfigXmlMaker(simu=True)
+		self.movie_exposure = 500.0
+		self.start_frame_number = 1
+		self.end_frame_number = 7
+		self.equal_distr_frame_number = 0
+
+	def getNumberOfFrames(self):
+		if self.save_frames:
+			return self.frameconfig.getNumberOfFrameBins()
+		else:
+			return 1
+
+	def calculateMovieExposure(self):
+		'''
+		Movie Exposure is the exposure time to set to ConfigXmlMaker in ms
+		'''
+		self.movie_exposure = self.end_frame_number * self.frameconfig.getBaseFrameTime() * 1000.0
+		self.frameconfig.setExposureTime(self.movie_exposure / 1000.0)
+
+	def getReadoutDelay(self):
+		'''
+		Integrated image readout delay is always base_frame_time.
+		There is no way to change it.
+		'''
+		return None
+
+	def validateUseFramesMax(self,value):
+		'''
+		Return end frame number valid for the integrated image exposure time.
+		'''
+		if not self.save_frames:
+			return 1
+		# find number of frames the exposure time will give as the maximun
+		self.frameconfig.setExposureTime(self.exposure_time)
+		max_input_frame_value = self.frameconfig.getNumberOfAvailableFrames() - 1 
+		return min(max_input_frame_value, max(value,1))
+
+	def setUseFrames(self, frames):
+		'''
+		UseFrames gui for Falcon is a tuple of base_frames that defines
+		the frames used in the movie.  For simplicity in input, we only
+		use the min number as the movie delay and max number as the highest
+		frame number to include.
+		''' 
+		if frames:
+			if len(frames) > 1:
+				self.frameconfig.setFrameReadoutDelay(min(frames))
+			else:
+				self.frameconfig.setFrameReadoutDelay(1)
+			self.end_frame_number = self.validateUseFramesMax(max(frames))
+		else:
+			# default movie to start at frame 1 ( i.e., not include roll-in)
+			self.frameconfig.setFrameReadoutDelay(1)
+			# use impossible large number to get back value for exposure time
+			self.end_frame_number = self.validateUseFramesMax(1000)
+		self.start_frame_number = self.frameconfig.getFrameReadoutDelay()
+		# set equally distributed frames starting frame number
+		if len(frames) >2:
+			framelist = list(frames)
+			framelist.sort()
+			self.equal_distr_frame_number = framelist[1]
+		else:
+			self.equal_distr_frame_number = 0
+		self.frameconfig.setEquallyDistributedStartFrame(self.equal_distr_frame_number)
+
+		self.calculateMovieExposure()
+		# self.useframes is used in simulater to generate simulated sum image
+		self.useframes = tuple(range(self.start_frame_number-self.frameconfig.internal_readout_delay, self.end_frame_number-self.frameconfig.internal_readout_delay))
+
+	def getUseFrames(self):
+		if self.save_frames:
+			if self.equal_distr_frame_number > self.start_frame_number:
+				return (self.start_frame_number,self.equal_distr_frame_number,self.end_frame_number)
+			else:
+				return (self.start_frame_number,self.end_frame_number)
+
+	def setFrameTime(self,ms):
+		'''
+		OutputFrameTime is not detrmined by the user
+		'''
+		pass
+
+	def getFrameTime(self):
+		'''
+		Output frame time is the average time of all frame bins.
+		'''
+		ms = self.movie_exposure / self.getNumberOfFrames()
+		return ms
+
+	def getPreviousRawFramesName(self):
+		return self.frameconfig.getFrameDirName()
+
+	def custom_setup(self):
+		self.calculateMovieExposure()
+		movie_exposure_second = self.movie_exposure/1000.0
+		if self.save_frames:
+			self.frameconfig.makeRealConfigFromExposureTime(movie_exposure_second,self.equal_distr_frame_number,self.start_frame_number)
+		else:
+			self.frameconfig.makeDummyConfig(movie_exposure_second)
 
 class SimOtherCCDCamera(SimCCDCamera):
 	name = 'SimOtherCCDCamera'
+	def __init__(self):
+		super(SimOtherCCDCamera,self).__init__()
+		self.binning_limits = [1,2,4,8]
+		self.binmethod = 'floor'
+
 	def _getImage(self):
 		im = SimCCDCamera._getImage(self)
 		im = 10 * im

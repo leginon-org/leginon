@@ -1,7 +1,7 @@
 <?php
 require_once "../config.php";
 require_once "inc/login.inc";
-require_once "inc/dbemauth.php";
+require_once "inc/dbemauth.inc";
 require_once "inc/menu.inc.php";
 require_once "inc/util.inc";
 require_once "inc/xmlapplicationimport.inc";
@@ -17,14 +17,15 @@ function menu($privilege=1) {
 	if (!TRACK_SAMPLE)
 		$link->addlink('gridtray.php','Grid Tray','', 'preparation', '');
 	$link->addlink('projectstat.php','Project Status','', '', '');
-	$link->addlink('statistics.php','DB statistics','', '', '');
+	//$link->addlink('statistics.php','DB statistics','', '', '');
+	$link->addlink('runStat.php', 'Statistics', '', '', '');
 	$link->Display();
 }
 
 function project_header($title="", $javascript="") {
 	global $_SERVER, $projectauth;
 
-		if (!ereg('login.php', $_SERVER['PHP_SELF'])) {
+		if (!preg_match('%login.php%', $_SERVER['PHP_SELF'])) {
 		}
 	$username = $login_check[0];
 	$privilege = privilege('users');
@@ -443,9 +444,80 @@ class project {
 		   $q .= "WHERE projexp.`REF|projects|project`=".$projectId." ";
 		  $q .= "ORDER BY projexp.`REF|leginondata|SessionData|session` ".$sort." ";
 		$experimentIds = $this->mysql->getSQLResult($q);
+				
 		return $experimentIds;
 	}
+	
+	function getProcessingDB( $projectId ) {
+		// Get the name of the processing database for this project
+		$q = "select appiondb from processingdb where `REF|projects|project`='$projectId'";
+		list($r) = $this->mysql->getSQLResult($q);		
+		$processingdb = $r['appiondb'];	
+		
+		return $processingdb;
+	}
+	
+	function getExperimentProcessingRunCount( $processingdb, $sessionId ) {
+		// Save the current database settings for this connection
+		$originalDB = $this->mysql->getSQLHost();
+				
+		// Switch to the processing database
+		$this->mysql->setSQLHost( array('db'=>$processingdb) );
+		
+		// Count all apAppionJobData Entries for this session
+		$q = "select count(DEF_id) from ApAppionJobData where `REF|leginondata|SessionData|session` = $sessionId";
+		list($r) = $this->mysql->getSQLResult($q);
+		$runCount = $r['count(DEF_id)'];
+		
+		// Switch the processing database back to the original
+		$this->mysql->setSQLHost( array('db'=>$originalDB) );
+		
+		return $runCount;
+	}
+	
+	function getLastExperimentProcessingRunDate( $processingdb, $sessionId ) {
+		// Save the current database settings for this connection
+		$originalDB = $this->mysql->getSQLHost();
+				
+		// Switch to the processing database
+		$this->mysql->setSQLHost( array('db'=>$processingdb) );
+		
+		// Count all apAppionJobData Entries for this session
+		$q = "select max(DEF_timestamp) from ApAppionJobData where `REF|leginondata|SessionData|session` = $sessionId";
+		list($r) = $this->mysql->getSQLResult($q);
+		$lastRunDate = $r['max(DEF_timestamp)'];
+		
+		// Switch the processing database back to the original
+		$this->mysql->setSQLHost( array('db'=>$originalDB) );
+		
+		return $lastRunDate;
+	}
+	
+	function getExperimentReconCount( $processingdb, $sessionId, $showHidden=false ) {
+		// Save the current database settings for this connection
+		$originalDB = $this->mysql->getSQLHost();
+				
+		// Switch to the processing database
+		$this->mysql->setSQLHost( array('db'=>$processingdb) );
+		
+		// Count all apAppionJobData Entries for this session
+		$q = "SELECT COUNT(DISTINCT(refrun.`DEF_id`)) AS refcount  "
+			." FROM `ApRefineRunData` AS refrun "
+			."LEFT JOIN ApRunsInStackData AS runs "
+			." ON refrun.`REF|ApStackData|stack` = runs.`REF|ApStackData|stack` "
+			."LEFT JOIN ApStackRunData AS stackrun "
+			." ON runs.`REF|ApStackRunData|stackRun` = stackrun.`DEF_id` "
+			."WHERE stackrun.`REF|leginondata|SessionData|session` = '$sessionId' ";
+		if (!$showHidden) $q.= " AND (refrun.`hidden` IS NULL OR refrun.`hidden` = 0) ";
+		list($r) = $this->mysql->getSQLResult($q);
+		$reconCount = $r['refcount'];
 
+		// Switch the processing database back to the original
+		$this->mysql->setSQLHost( array('db'=>$originalDB) );
+		
+		return $reconCount;
+	}
+			
 }
 
 ?>

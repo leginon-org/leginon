@@ -4,7 +4,7 @@ import email.MIMEImage
 import email.MIMEMultipart
 import email.MIMEText
 import poplib
-import Image
+from PIL import Image
 import cStringIO
 import NumericImage
 import time

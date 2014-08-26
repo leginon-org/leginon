@@ -7,12 +7,12 @@
  *	see  http://ami.scripps.edu/software/leginon-license
  */
 
-require "inc/particledata.inc";
-require "inc/viewer.inc";
-require "inc/processing.inc";
-require "inc/leginon.inc";
-require "inc/project.inc";
-require "inc/graph.inc";
+require_once "inc/particledata.inc";
+require_once "inc/viewer.inc";
+require_once "inc/processing.inc";
+require_once "inc/leginon.inc";
+require_once "inc/project.inc";
+require_once "inc/graph.inc";
 
 $defaultId=3956;
 $defaultpreset='en';
@@ -39,7 +39,7 @@ if ($viewsql) {
 $axes = array('xcoord','ycoord');
 if ($histogram == true && $histaxis == 'xcoord') 
 	$axes = array('ycoord','xcoord');
-$dbemgraph=&new dbemgraph($positiondata, $axes[0], $axes[1]);
+$dbemgraph = new dbemgraph($positiondata, $axes[0], $axes[1]);
 $dbemgraph->lineplot=False;
 $dbemgraph->title="particle positions for ".$rundata[0]['name'];
 $dbemgraph->yaxistitle=$axes[1]." (pixel)";

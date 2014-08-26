@@ -1,12 +1,12 @@
 <?php
-	require "inc/particledata.inc";
-	require "inc/leginon.inc";
-	require "inc/project.inc";
-	require "inc/viewer.inc";
-	require "inc/processing.inc";
-	require "inc/euler.inc";
-	require "inc/jpgraph.php";
-	require "inc/jpgraph_scatter.php";
+	require_once "inc/particledata.inc";
+	require_once "inc/leginon.inc";
+	require_once "inc/project.inc";
+	require_once "inc/viewer.inc";
+	require_once "inc/processing.inc";
+	require_once "inc/euler.inc";
+	require_once "inc/jpgraph.php";
+	require_once "inc/jpgraph_scatter.php";
 
 	$begin=getmicrotime();
 	$reconId=$_GET['reconId'];
@@ -124,7 +124,7 @@
 
 	function makeTriangle($stats, $outfile="") {
 		if (!$outfile)
-			header("Content-type: image/x-png");
+			header("Content-type: image/png");
 		$myImage = createTriangle($stats->eulers1);
 		echo "Writing to file... ".$outfile."\n";
 		imagepng($myImage, $outfile);
@@ -141,7 +141,7 @@
 	//	$line->SetBarCenter();
 		$graph->add($line);
 		if (!$outfile)
-			header("Content-type: image/x-png");
+			header("Content-type: image/png");
 		$graph->Stroke($outfile);
 		echo "Writing to file... ".$outfile."\n";
 	}

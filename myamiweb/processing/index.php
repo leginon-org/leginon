@@ -14,6 +14,7 @@ require_once "inc/processing.inc";
 require_once "inc/leginon.inc";
 require_once "inc/project.inc";
 require_once "inc/summarytables.inc";
+require_once "inc/publication.inc";
 
 function getNumClassesFromFile ($imagicfile) {
 	$hedfile = $imagicfile;
@@ -60,6 +61,28 @@ if (!$hasProcDB) {
 }
 
 $particle=new particleData();
+// show any recipes if saved
+$recipes = $particle->getAllRecipeData();
+if ($recipes) {
+	# store recipe ids in separate arrays
+	$stackrecipes = array();
+	$astackrecipes = array();
+
+	foreach ($recipes as $recipe) {
+		if ($recipe['stackid']) $stackrecipes[]=$recipe;
+		if ($recipe['alignstackid']) $astackrecipes[]=$recipe;
+	}	
+
+	# List out aligned stack recipes
+	foreach ($astackrecipes as $ar) {
+		echo recipetable($ar);
+	}	
+	# List out stack recipes
+	foreach ($stackrecipes as $ar) {
+		echo recipetable($ar);
+	}	
+}
+
 // show exemplar reconstrucion, if set
 $reconRuns = $particle->getExemplarReconsFromSession($expId);
 
@@ -242,10 +265,11 @@ foreach ($reconRuns as $recon) {
 	$eulerfiles = glob($recon['path'].'/*'.$reconrunid."_".$recon['iteration']."*png");
 	//foreach ($pngimages['eulerfiles'] as $eulername) {
 	foreach ($eulerfiles as $eulername) {
-		if (eregi($reconrunid."_".$recon['iteration']."\.png$", $eulername)) {
+		if (preg_match('%'.$reconrunid."_".$recon['iteration']."\.png$%i", $eulername)) {
 			$eulerfile = $eulername;
-			$opname = ereg_replace("euler","",$eulername);
-			$opname = ereg_replace("-".$reconrunid."_".$recon['iteration']."\.png$","",$opname);
+			$opname = preg_replace("%euler%","",$eulername);
+			// remove "-reconid_iter.png" from name
+			$opname = preg_replace("%-".$reconrunid."_".$recon['iteration']."\.png$%","",$opname);
 			if (file_exists($eulerfile)) {
 			  $eulerhtml .= "<td align='center'>\n";
 			  $eulerhtml .= "<a id='eulerlink".$iteration['iteration']."' href='loadimg.php?filename=".$eulerfile."' target='snapshot'>"
@@ -265,7 +289,7 @@ foreach ($reconRuns as $recon) {
 	$densityfile = $recon['path'].'/'.$recon['volumeDensity'];
 
 	$modhtml .= "<tr><td>";
-	$modhtml .= "download density <a href='download.php?file=$densityfile'>\n";
+	$modhtml .= "download density <a href='download.php?expId=$expId&file=$densityfile'>\n";
 	$modhtml .= "  <img style='vertical-align:middle' src='img/download_arrow.png' border='0' width='16' height='17' alt='download density'>\n";
 	$modhtml .= $recon['volumeDensity']."\n";
 	$modhtml .= "</a><br/>\n";
@@ -274,7 +298,7 @@ foreach ($reconRuns as $recon) {
 	$pngfiles = glob($densityfile."*png");
 	//foreach ($pngimages['pngfiles'] as $snapshot) {
 	foreach ($pngfiles as $snapshot) {
-		if (eregi($recon['volumeDensity'],$snapshot)) {
+		if (preg_match('%'.$recon['volumeDensity'].'%i',$snapshot)) {
 			$snapfile = $snapshot;
 			$modhtml .= "<A HREF='loadimg.php?filename=$snapfile' target='snapshot'><img src='loadimg.php?filename=$snapfile' HEIGHT='80'>\n";
 		}
@@ -303,7 +327,7 @@ foreach ($reconRuns as $recon) {
 
 	// get camera & scope info
 	$camera = $leginondata->getInstrumentInfo($sessioninfo['CameraId']);
-	if (eregi("tecnai", $camera[0]['hostname'])) $scope = "Tecnai F20 Twin";
+	if (preg_match("%tecnai%i", $camera[0]['hostname'])) $scope = "Tecnai F20 Twin";
 	else $scope = "Tecnai G2 Spirit Twin";
 	$cam = ($camera[0]['name'] == 'Tietz SCX') ? 'Tietz F415' : $camera[0]['name'];
 	$camsize = ($camera['0']['name'] == 'Tietz PXL') ? "2k x 2k" : "4k x 4k";
@@ -321,7 +345,7 @@ foreach ($reconRuns as $recon) {
 	echo "<h4>Data collection info</h4>\n";
 	echo "<hr/></p>\n";
 
-	$m .= "<table class='tableborder' border='1' width='600'><tr><td>\n";
+	$m = "<table class='tableborder' border='1' width='600'><tr><td>\n";
 	$m .= "Data were acquired using a $scope transmission electron microscope operating at $kvolt&nbsp;kV, \n";
 	$m .= "using a dose of ~".$dose."&nbsp;e-/&Aring;&sup2; and a nominal underfocus ranging from $maxNomDF to $minNomDF&nbsp;&micro;m.\n";
 	//	$m .= "A Gatan side-entry cryostage/room temp stage was used for data collection.\n";
@@ -341,70 +365,59 @@ foreach ($reconRuns as $recon) {
 	else $m .= "manually selected from the micrographs \n";
 	$m .= "and extracted at a box size of ".$stackparams['boxSize']."&nbsp;pixels. \n";
 	if ($hasCTF) {
-		$acecutoff=($stackparams['aceCutoff']) ? $stackparams['aceCutoff']*100 : '' ;
-		if ($acecutoff)
-			$m .= "Only particles whose CTF estimation had an confidence value of ".$acecutoff."% or better were extracted. \n";
+		$ctfcutoff=($stackparams['aceCutoff']) ? $stackparams['aceCutoff']*100 : '' ;
+		if ($ctfcutoff)
+			$m .= "Only particles whose CTF estimation had an confidence value of ".$ctfcutoff."% or better were extracted. \n";
 		if ($stackparams['phaseFlipped']==1)
 			$m .= "Phase correction of the single particles was carried out by ".$stackparams['fliptype']." during creation of the particle stack. \n";
 	}
-	if ($stackparams['bin']) $m .= "Stacked particles were binned by a factor of ".$stackparams['bin']." for the final reconstruction. \n";
-	$m .= "The final stack contained ".commafy($stackparticles)."&nbsp;particles. \n";
-	if ($clsavgs['SpiCoran']) {
-	  $m .= "The 3D reconstruction was carried out using a combination of both the SPIDER and EMAN reconstruction packages ";
-	  $m .= "(Frank <i>et al.</i>, 1996; Ludtke <i>et al.</i>, 1999). \n";
-	  $m .= "Creation of projections of the 3D model and subsequent classification of the particles was performed by EMAN, \n";
-	  $m .= "after which a SPIDER script was employed to perform a reference-free hierarchical clustering analysis of the particles in each class\n";
-	  $m .= "The resulting SPIDER class that exhibited the highest cross-correlation value to the original model projection of the given class was\n";
-	  $m .= "used in the creation of the 3D density for the following iteration by using EMAN.\n";
+	if ($stackparams['bin']) {
+		$m .= "Stacked particles were binned by a factor of ".$stackparams['bin']." for the final reconstruction. \n";
 	}
-	else $m .= "The 3D reconstruction was carried out using the EMAN reconstruction package (Ludtke <i>et al.</i>, 1999). \n";
-	$m .= "Resolution was assessed by calculating the Fourier Shell Correlation (FSC) at a cutoff of 0.5, \n";
-	$m .= "which provided a value of $halfres&nbsp;&Aring; resolution.\n";
-	$m .= "Calculation of the resolution by Rmeasure (Sousa & Gridgorieff, 2007) at a 0.5 cutoff yielded a resolution of $rmeasureres&nbsp;&Aring;. \n";
-
+	$m .= "The final stack contained ".commafy($stackparticles)."&nbsp;particles. \n";
+	
+	if ($clsavgs['SpiCoran']) {
+		$m .= "The 3D reconstruction was carried out using a combination of both the SPIDER and EMAN reconstruction packages ";
+		$m .= "(Frank <i>et al.</i>, 1996; Ludtke <i>et al.</i>, 1999). \n";
+		$m .= "Creation of projections of the 3D model and subsequent classification of the particles was performed by EMAN, \n";
+		$m .= "after which a SPIDER script was employed to perform a reference-free hierarchical clustering analysis of the particles in each class\n";
+		$m .= "The resulting SPIDER class that exhibited the highest cross-correlation value to the original model projection of the given class was\n";
+		$m .= "used in the creation of the 3D density for the following iteration by using EMAN.\n";
+	}
+	else if ($recon["REF|ApEmanRefineIterData|emanParams"]) {
+		$m .= "The 3D reconstruction was carried out using the EMAN reconstruction package (Ludtke <i>et al.</i>, 1999). \n";
+		$m .= "Resolution was assessed by calculating the Fourier Shell Correlation (FSC) at a cutoff of 0.5, \n";
+		$m .= "which provided a value of $halfres&nbsp;&Aring; resolution.\n";
+		$m .= "Calculation of the resolution by Rmeasure (Sousa & Gridgorieff, 2007) at a 0.5 cutoff yielded a resolution of $rmeasureres&nbsp;&Aring;. \n";
+	} else if ($recon["REF|ApXmippRefineIterData|xmippParams"]) {
+		$m .= "The 3D reconstruction was carried out using the XMIPP reconstruction package (Sorzano <i>et al.</i>, 2004). \n";
+		$m .= "Resolution was assessed by calculating the Fourier Shell Correlation (FSC) at a cutoff of 0.5, \n";
+		$m .= "which provided a value of $halfres&nbsp;&Aring; resolution.\n";
+	} else if ($recon["REF|ApFrealignIterData|frealignParams"]) {
+		$m .= "The 3D reconstruction was carried out using the Frealign reconstruction package (Grigorieff <i>et al.</i>, 2007). \n";
+		$m .= "Resolution was assessed by calculating the Fourier Shell Correlation (FSC) at a cutoff of 0.143, \n";
+		$m .= "which provided a value of $halfres&nbsp;&Aring; resolution.\n";
+	} else if ($recon["REF|ApRelionIterData|relionParams"]) {
+		$m .= "The 3D reconstruction was carried out using the Relion reconstruction package (Scheres <i>et al.</i>, 2012). \n";
+		$m .= "Resolution was assessed by calculating the Fourier Shell Correlation (FSC) at a cutoff of 0.143, \n";
+		$m .= "which provided a value of $halfres&nbsp;&Aring; resolution.\n";
+	} else if ($recon["REF|ApXmippML3DRefineIterData|xmippML3DParams"]) {	
+		$m .= "The 3D reconstruction was carried out using the XMIPP ML3D reconstruction package (Scheres <i>et al.</i>, 2010). \n";
+		$m .= "Resolution was assessed by calculating the Fourier Shell Correlation (FSC) at a cutoff of 0.5, \n";
+		$m .= "which provided a value of $halfres&nbsp;&Aring; resolution.\n";
+	}
 
 	$m .= "</td></tr><tr><td>\n";
 	$m .= "<ul>\n";
-
-	$m .= "<li>
-	Frank, Radermacher, Penczek, Zhu, Li, Ladjadj, and Leith. (1996).
-	<i>“SPIDER and WEB: processing and visualization of images in 3D electron microscopy and related fields.”</i>
-	J Struct Biol v116(1): pp. 190-9.";
-
-	$m .= "<li>
-	Lander, Stagg, Voss, Cheng, <i>et al.</i>, Potter, and Carragher (2009).
-	<i>“Appion: an integrated, database-driven pipeline to facilitate EM image processing.”</i>
-	J Struct Biol v166(1): pp. 95-102.";
-
-	$m .= "<li>
-	Ludtke, Baldwin, and Chiu (1999).
-	<i>“EMAN: semiautomated software for high-resolution single-particle reconstructions.”</i>
-	J Struct Biol v128(1): pp. 82-97.";
-
-	$m .= "<li>
-	Mallick, Carragher, Potter, and Kriegman (2005).
-	<i>“ACE: automated CTF estimation.”</i>
-	Ultramicroscopy v104(1): pp. 8-29.";
-
-	$m .= "<li>
-	Roseman (2003).
-	<i>“Particle finding in electron micrographs using a fast local correlation algorithm.”</i>
-	Ultramicroscopy v94(3-4): pp. 225-36.";
-
-	$m .= "<li>
-	Sousa and Grigorieff (2007).
-	<i>“Ab initio resolution measurement for single particle structures.”</i>
-	J Struct Biol v157(1): pp. 201-10.";
-
-	$m .= "<li>
-	Suloway, Pulokas, Fellmann, Cheng, Guerra, Quispe, Stagg, Potter, and Carragher (2005).
-	<i>“Automated molecular microscopy: the new Leginon system.”</i>
-	J Struct Biol v151(1): pp. 41-60.";
-
-	$m .= "<li>
-	Voss, Yoshioka, Radermacher, Potter, and Carragher (2009).
-	<i>“DoG Picker and TiltPicker: tools to facilitate particle selection in single particle electron microscopy.”</i>
-	J Struct Biol v166(2): pp. 205-13.";
+	
+	// Display relevant publication references
+	$pubKeyList = array("spider", "appion", "eman", "ace", "roseman03", "sousa07", "leginon", "dog", "xmipp", "scheres07", "scheres10" );
+	
+	foreach ($pubKeyList as $pubKey ) {
+		$pub = new Publication($pubKey);
+		$ref = $pub->getShortRef();
+		$m .= "<li> $ref";
+	}
 
 	$m .= "</ul>\n";
 	$m .= "</td></tr></table>\n";

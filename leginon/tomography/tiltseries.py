@@ -52,6 +52,7 @@ class TiltSeries(object):
 		tilt_series_image_data['queue'] = self.queue
 		tilt_series_image_data['list'] = self.list
 		tilt_series_image_data['preset'] = self.preset
+		tilt_series_image_data['label'] = self.node.name
 		tilt_series_image_data['target'] = self.target
 		tilt_series_image_data['emtarget'] = self.emtarget
 		# TODO: put in seperate data

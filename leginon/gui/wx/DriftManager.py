@@ -34,14 +34,13 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_ABORT_DRIFT,
 													'stop',
 													shortHelpString='Abort Drift Check')
-		self.toolbar.Realize()
 
 		# image
 		self.imagepanel = self.imagepanelclass(self, -1)
 		self.imagepanel.addTypeTool('Image', display=True)
 		self.imagepanel.selectiontool.setDisplayed('Image', True)
 		self.imagepanel.addTypeTool('Correlation', display=True)
-		self.imagepanel.addTargetTool('Peak', wx.Color(255,0,0))
+		self.imagepanel.addTargetTool('Peak', wx.Colour(255,0,0))
 
 		self.szmain.Add(self.imagepanel, (1, 0), (1, 1), wx.EXPAND)
 
@@ -79,7 +78,8 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 
 class SettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
-		return ScrolledSettings(self,self.scrsize,False,self.show_basic)
+		scrolling = not self.show_basic
+		return ScrolledSettings(self,self.scrsize,scrolling,self.show_basic)
 
 class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def initialize(self):
@@ -137,9 +137,9 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sbsztest.Add(sztest, 0, wx.ALIGN_CENTER|wx.EXPAND|wx.ALL, 5)
 
 		sz = wx.GridBagSizer(5, 10)
-		sz.Add(szpause, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(sztimeout, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(sbsztest, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALL,15)
+		sz.Add(szpause, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(sztimeout, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(sbsztest, (0, 1), (2, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALL,15)
 		return sz
 
 	def addBasicSettings(self):

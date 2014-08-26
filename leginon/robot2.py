@@ -5,11 +5,11 @@
 #			 For terms of the license agreement
 #			 see	http://ami.scripps.edu/software/leginon-license
 #
-import Image
+from PIL import Image
 import sys
 import threading
 import time
-import leginondata
+from leginon import leginondata
 import emailnotification
 import event
 import instrument

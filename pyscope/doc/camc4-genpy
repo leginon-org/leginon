@@ -1,0 +1,674 @@
+# -*- coding: mbcs -*-
+# Created by makepy.py version 0.5.01
+# By python version 2.7.3 (default, Apr 10 2012, 23:31:26) [MSC v.1500 32 bit (Intel)]
+# From type library '{4AB9E74C-AC91-43D3-8973-5EE5F4467461}'
+# On Mon Nov 26 11:30:36 2012
+'CAMC4 1.0 Type Library'
+makepy_version = '0.5.01'
+python_version = 0x20703f0
+
+import win32com.client.CLSIDToClass, pythoncom, pywintypes
+import win32com.client.util
+from pywintypes import IID
+from win32com.client import Dispatch
+
+# The following 3 lines may need tweaking for the particular server
+# Candidates are pythoncom.Missing, .Empty and .ArgNotFound
+defaultNamedOptArg=pythoncom.Empty
+defaultNamedNotOptArg=pythoncom.Empty
+defaultUnnamedArg=pythoncom.Empty
+
+CLSID = IID('{4AB9E74C-AC91-43D3-8973-5EE5F4467461}')
+MajorVersion = 1
+MinorVersion = 0
+LibraryFlags = 8
+LCID = 0x0
+
+class constants:
+	cpBorder                      =43         # from enum CAMERAPARAMETER
+	cpCameraName                  =2          # from enum CAMERAPARAMETER
+	cpCameraPositionOnTem         =36         # from enum CAMERAPARAMETER
+	cpChipName                    =1          # from enum CAMERAPARAMETER
+	cpCurrentGainIndex            =17         # from enum CAMERAPARAMETER
+	cpCurrentSpeedIndex           =18         # from enum CAMERAPARAMETER
+	cpCurrentTemperature          =20         # from enum CAMERAPARAMETER
+	cpDeadColumns                 =15         # from enum CAMERAPARAMETER
+	cpDynamic                     =7          # from enum CAMERAPARAMETER
+	cpGainFactors                 =9          # from enum CAMERAPARAMETER
+	cpHWGainIndex                 =28         # from enum CAMERAPARAMETER
+	cpHWSpeedIndex                =29         # from enum CAMERAPARAMETER
+	cpIOState                     =33         # from enum CAMERAPARAMETER
+	cpImageGeometry               =19         # from enum CAMERAPARAMETER
+	cpImagePath                   =16         # from enum CAMERAPARAMETER
+	cpIsRetractable               =30         # from enum CAMERAPARAMETER
+	cpLLClearCycles               =40         # from enum CAMERAPARAMETER
+	cpLLClearMode                 =41         # from enum CAMERAPARAMETER
+	cpLLMinBlock                  =37         # from enum CAMERAPARAMETER
+	cpLLNumMinBlock               =38         # from enum CAMERAPARAMETER
+	cpLLNumStripsPerClear         =39         # from enum CAMERAPARAMETER
+	cpLLSCXAmplifier              =42         # from enum CAMERAPARAMETER
+	cpLiveModeAvailable           =12         # from enum CAMERAPARAMETER
+	cpMovePosition                =31         # from enum CAMERAPARAMETER
+	cpNumberOfDeadColumns         =14         # from enum CAMERAPARAMETER
+	cpNumberOfGains               =8          # from enum CAMERAPARAMETER
+	cpNumberOfPorts               =44         # from enum CAMERAPARAMETER
+	cpNumberOfReadoutSpeeds       =10         # from enum CAMERAPARAMETER
+	cpPMode                       =26         # from enum CAMERAPARAMETER
+	cpPixelSizeX                  =5          # from enum CAMERAPARAMETER
+	cpPixelSizeY                  =6          # from enum CAMERAPARAMETER
+	cpPreampDelay                 =25         # from enum CAMERAPARAMETER
+	cpReadoutMode                 =35         # from enum CAMERAPARAMETER
+	cpReadoutSpeeds               =11         # from enum CAMERAPARAMETER
+	cpSerialNumber                =24         # from enum CAMERAPARAMETER
+	cpShutterBox                  =34         # from enum CAMERAPARAMETER
+	cpShutterCloseDelay           =23         # from enum CAMERAPARAMETER
+	cpShutterOpenDelay            =22         # from enum CAMERAPARAMETER
+	cpTemperatureSetpoint         =21         # from enum CAMERAPARAMETER
+	cpTotalDimensionX             =3          # from enum CAMERAPARAMETER
+	cpTotalDimensionY             =4          # from enum CAMERAPARAMETER
+	cpTriggerMode                 =32         # from enum CAMERAPARAMETER
+	cpUseSpeedtabForGainSwitch    =27         # from enum CAMERAPARAMETER
+	cpreserved1                   =13         # from enum CAMERAPARAMETER
+	crBusy                        =2          # from enum CAMERAREQUEST
+	crDeny                        =1          # from enum CAMERAREQUEST
+	crSucceed                     =0          # from enum CAMERAREQUEST
+	ctATC6                        =6          # from enum CAMERATYPE
+	ctF114_FW                     =5          # from enum CAMERATYPE
+	ctF214_FW                     =9          # from enum CAMERATYPE
+	ctF216                        =11         # from enum CAMERATYPE
+	ctF416                        =10         # from enum CAMERATYPE
+	ctF816                        =12         # from enum CAMERATYPE
+	ctF816_FW                     =7          # from enum CAMERATYPE
+	ctFC415                       =8          # from enum CAMERATYPE
+	ctFastScan                    =3          # from enum CAMERATYPE
+	ctPVCam                       =2          # from enum CAMERATYPE
+	ctPXL                         =1          # from enum CAMERATYPE
+	ctSCX                         =4          # from enum CAMERATYPE
+	ctSimulation                  =0          # from enum CAMERATYPE
+	HISTO_BRIGHTNESS_CONTRAST     =0          # from enum HISTO_MODE
+	HISTO_MAX_MIN                 =2          # from enum HISTO_MODE
+	HISTO_NONE                    =3          # from enum HISTO_MODE
+	HISTO_UNDER_OVERFLOW          =1          # from enum HISTO_MODE
+	llHigh                        =3          # from enum LOGLEVEL
+	llLow                         =1          # from enum LOGLEVEL
+	llMedium                      =2          # from enum LOGLEVEL
+	llOff                         =0          # from enum LOGLEVEL
+	rcMemFiles                    =1          # from enum RECORDMODE
+	rcRecHDDAvi                   =2          # from enum RECORDMODE
+	rcRecHDDFiles                 =3          # from enum RECORDMODE
+	REC_FILE_LIMIT                =1          # from enum RECORD_HDD_ALLOCTYPE
+	REC_NO_LIMIT                  =0          # from enum RECORD_HDD_ALLOCTYPE
+	REC_TIME_LIMIT                =2          # from enum RECORD_HDD_ALLOCTYPE
+	smBB                          =0          # from enum SHUTTERMODE
+	smINACTIVE                    =4          # from enum SHUTTERMODE
+	smSH                          =2          # from enum SHUTTERMODE
+	smSH_BB                       =1          # from enum SHUTTERMODE
+	smSH_BB_Trigger               =3          # from enum SHUTTERMODE
+	stBB                          =1          # from enum SHUTTERTYPE
+	stSH                          =0          # from enum SHUTTERTYPE
+
+from win32com.client import DispatchBaseClass
+class ICAMCCallBack(DispatchBaseClass):
+	'ICAMCCallBack Interface'
+	CLSID = IID('{2A20A2ED-7E7D-4AA1-B943-F52A3BAC59B4}')
+	coclass_clsid = None
+
+	def LivePing(self):
+		'method LivePing'
+		return self._oleobj_.InvokeTypes(1, LCID, 1, (24, 0), (),)
+
+	def RequestLock(self):
+		'method RequestLock'
+		return self._oleobj_.InvokeTypes(2, LCID, 1, (3, 0), (),)
+
+	_prop_map_get_ = {
+	}
+	_prop_map_put_ = {
+	}
+	def __iter__(self):
+		"Return a Python iterator for this object"
+		try:
+			ob = self._oleobj_.InvokeTypes(-4,LCID,3,(13, 10),())
+		except pythoncom.error:
+			raise TypeError("This object does not support enumeration")
+		return win32com.client.util.Iterator(ob, None)
+
+class ICAMCLiveCallBack(DispatchBaseClass):
+	'ICAMCLiveCallBack Interface'
+	CLSID = IID('{F8D51FB1-1EDA-4D94-84FF-2FB565555BCD}')
+	coclass_clsid = None
+
+	def FillMCLValues(self, fTemHT=pythoncom.Missing, fTemMagScr=pythoncom.Missing, fTemMagCor=pythoncom.Missing, fTemMagPst=pythoncom.Missing):
+		'method FillMCLValues'
+		return self._ApplyTypes_(5, 1, (24, 0), ((16388, 2), (16388, 2), (16388, 2), (16388, 2)), u'FillMCLValues', None,fTemHT
+			, fTemMagScr, fTemMagCor, fTemMagPst)
+
+	def LiveImageAvailable(self):
+		'method LiveImageAvailable'
+		return self._oleobj_.InvokeTypes(1, LCID, 1, (24, 0), (),)
+
+	def LiveImageRecorded(self, lImgHandle=defaultNamedNotOptArg, lEMVector=defaultNamedNotOptArg, lThumbnail=defaultNamedNotOptArg, lSamePos=defaultNamedNotOptArg):
+		'method LiveImageRecorded'
+		return self._oleobj_.InvokeTypes(3, LCID, 1, (24, 0), ((3, 1), (3, 1), (3, 1), (3, 1)),lImgHandle
+			, lEMVector, lThumbnail, lSamePos)
+
+	def LivePowerAvailable(self):
+		'method LivePowerAvailable'
+		return self._oleobj_.InvokeTypes(2, LCID, 1, (24, 0), (),)
+
+	def LiveStopRecorder(self):
+		'method LiveStopRecorder'
+		return self._oleobj_.InvokeTypes(4, LCID, 1, (24, 0), (),)
+
+	_prop_map_get_ = {
+	}
+	_prop_map_put_ = {
+	}
+	def __iter__(self):
+		"Return a Python iterator for this object"
+		try:
+			ob = self._oleobj_.InvokeTypes(-4,LCID,3,(13, 10),())
+		except pythoncom.error:
+			raise TypeError("This object does not support enumeration")
+		return win32com.client.util.Iterator(ob, None)
+
+class ICamera(DispatchBaseClass):
+	'ICamera Interface'
+	CLSID = IID('{3CF7ED98-2848-4594-B2CD-A792FF72D86C}')
+	coclass_clsid = IID('{ADFA5865-1ACD-4A52-A2C3-65A4A2E6F23A}')
+
+	def AcquireBias(self, lImageHandle=defaultNamedNotOptArg):
+		'method AcquireBias'
+		return self._oleobj_.InvokeTypes(8, LCID, 1, (24, 0), ((3, 1),),lImageHandle
+			)
+
+	def AcquireDark(self, lExpTime=defaultNamedNotOptArg, lImageHandle=defaultNamedNotOptArg):
+		'method AcquireDark'
+		return self._oleobj_.InvokeTypes(7, LCID, 1, (24, 0), ((3, 1), (3, 1)),lExpTime
+			, lImageHandle)
+
+	def AcquireImage(self, lExpTime=defaultNamedNotOptArg, lImageHandle=defaultNamedNotOptArg):
+		'method AcquireImage'
+		return self._oleobj_.InvokeTypes(6, LCID, 1, (24, 0), ((3, 1), (3, 1)),lExpTime
+			, lImageHandle)
+
+	def AcquireReadout(self, lImageHandle=defaultNamedNotOptArg):
+		'method AcquireReadout'
+		return self._oleobj_.InvokeTypes(9, LCID, 1, (24, 0), ((3, 1),),lImageHandle
+			)
+
+	def Format(self, lXOff=defaultNamedNotOptArg, lYOff=defaultNamedNotOptArg, lXDim=defaultNamedNotOptArg, lYDim=defaultNamedNotOptArg
+			, lXBin=defaultNamedNotOptArg, lYBin=defaultNamedNotOptArg):
+		'method Format'
+		return self._oleobj_.InvokeTypes(5, LCID, 1, (24, 0), ((3, 1), (3, 1), (3, 1), (3, 1), (3, 1), (3, 1)),lXOff
+			, lYOff, lXDim, lYDim, lXBin, lYBin
+			)
+
+	def Initialize(self, lWhatCamera=defaultNamedNotOptArg, lMode=defaultNamedNotOptArg):
+		'method Initialize'
+		return self._oleobj_.InvokeTypes(1, LCID, 1, (24, 0), ((3, 1), (3, 1)),lWhatCamera
+			, lMode)
+
+	# The method LParam is actually a property, but must be used as a method to correctly pass the arguments
+	def LParam(self, lWhatParam=defaultNamedNotOptArg):
+		'property LParam'
+		return self._oleobj_.InvokeTypes(3, LCID, 2, (3, 0), ((3, 1),),lWhatParam
+			)
+
+	# The method QueryParameter is actually a property, but must be used as a method to correctly pass the arguments
+	def QueryParameter(self, lWhatParam=defaultNamedNotOptArg):
+		'property QueryParameter'
+		return self._oleobj_.InvokeTypes(11, LCID, 2, (3, 0), ((3, 1),),lWhatParam
+			)
+
+	def RegisterCAMCCallBack(self, ptrCallBack=defaultNamedNotOptArg, bstrLocker=defaultNamedNotOptArg):
+		'method RegisterCAMCCallBack'
+		return self._oleobj_.InvokeTypes(15, LCID, 1, (24, 0), ((9, 0), (8, 1)),ptrCallBack
+			, bstrLocker)
+
+	def RequestLock(self):
+		'method RequestLock'
+		return self._oleobj_.InvokeTypes(13, LCID, 1, (3, 0), (),)
+
+	# The method SParam is actually a property, but must be used as a method to correctly pass the arguments
+	def SParam(self, lWhatParam=defaultNamedNotOptArg):
+		'property SParam'
+		# Result is a Unicode object
+		return self._oleobj_.InvokeTypes(4, LCID, 2, (8, 0), ((3, 1),),lWhatParam
+			)
+
+	# The method SetLParam is actually a property, but must be used as a method to correctly pass the arguments
+	def SetLParam(self, lWhatParam=defaultNamedNotOptArg, arg1=defaultUnnamedArg):
+		'property LParam'
+		return self._oleobj_.InvokeTypes(3, LCID, 4, (24, 0), ((3, 1), (3, 1)),lWhatParam
+			, arg1)
+
+	# The method SetSParam is actually a property, but must be used as a method to correctly pass the arguments
+	def SetSParam(self, lWhatParam=defaultNamedNotOptArg, arg1=defaultUnnamedArg):
+		'property SParam'
+		return self._oleobj_.InvokeTypes(4, LCID, 4, (24, 0), ((3, 1), (8, 1)),lWhatParam
+			, arg1)
+
+	def ShutterOverride(self, type=defaultNamedNotOptArg, bEnableOverride=defaultNamedNotOptArg, bBeamCanPass=defaultNamedNotOptArg):
+		'method ShutterOverride'
+		return self._oleobj_.InvokeTypes(10, LCID, 1, (24, 0), ((3, 1), (3, 1), (3, 1)),type
+			, bEnableOverride, bBeamCanPass)
+
+	def UnInitialize(self, lWhatCamera=defaultNamedNotOptArg):
+		'method UnInitialize'
+		return self._oleobj_.InvokeTypes(2, LCID, 1, (24, 0), ((3, 1),),lWhatCamera
+			)
+
+	def UnlockCAMC(self):
+		'method UnlockCAMC'
+		return self._oleobj_.InvokeTypes(14, LCID, 1, (24, 0), (),)
+
+	_prop_map_get_ = {
+		"ActiveCamera": (12, 2, (3, 0), (), "ActiveCamera", None),
+		"IsLocked": (16, 2, (3, 0), ((16392, 2),), "IsLocked", None),
+		"SHUTTERMODE": (17, 2, (3, 0), (), "SHUTTERMODE", None),
+	}
+	_prop_map_put_ = {
+		"ActiveCamera": ((12, LCID, 4, 0),()),
+		"SHUTTERMODE": ((17, LCID, 4, 0),()),
+	}
+	def __iter__(self):
+		"Return a Python iterator for this object"
+		try:
+			ob = self._oleobj_.InvokeTypes(-4,LCID,3,(13, 10),())
+		except pythoncom.error:
+			raise TypeError("This object does not support enumeration")
+		return win32com.client.util.Iterator(ob, None)
+
+class ICameraLive(DispatchBaseClass):
+	'ICameraLive Interface'
+	CLSID = IID('{0BD58D0C-3640-4734-8B15-9D59E455FFE2}')
+	coclass_clsid = IID('{ADFA5865-1ACD-4A52-A2C3-65A4A2E6F23A}')
+
+	def LoadDarkData(self, ppsaData=defaultNamedNotOptArg):
+		'method LoadDarkData'
+		return self._oleobj_.InvokeTypes(4, LCID, 1, (24, 0), ((24578, 1),),ppsaData
+			)
+
+	def LoadFlatData(self, ppsaData=defaultNamedNotOptArg):
+		'method LoadFlatData'
+		return self._oleobj_.InvokeTypes(3, LCID, 1, (24, 0), ((24578, 1),),ppsaData
+			)
+
+	def RegisterCAMCLiveCallBack(self, ptrCallBack=defaultNamedNotOptArg):
+		'method RegisterCAMCLiveCallBack'
+		return self._oleobj_.InvokeTypes(9, LCID, 1, (24, 0), ((9, 0),),ptrCallBack
+			)
+
+	def SetAdvRecorderParams(self, bUseMultipleFolders=defaultNamedNotOptArg, lImagesPerFolder=defaultNamedNotOptArg):
+		'method SetAdvRecorderParams'
+		return self._oleobj_.InvokeTypes(35, LCID, 1, (24, 0), ((3, 1), (3, 1)),bUseMultipleFolders
+			, lImagesPerFolder)
+
+	def SetAreaHistogram(self, nLeft=defaultNamedNotOptArg, nTop=defaultNamedNotOptArg, nRight=defaultNamedNotOptArg, nBottom=defaultNamedNotOptArg):
+		'method SetAreaHistogram'
+		return self._oleobj_.InvokeTypes(31, LCID, 1, (24, 0), ((3, 1), (3, 1), (3, 1), (3, 1)),nLeft
+			, nTop, nRight, nBottom)
+
+	def SetDataImg(self, lImageHandle=defaultNamedNotOptArg, hEMVector=defaultNamedNotOptArg):
+		'method SetDataImg'
+		return self._oleobj_.InvokeTypes(20, LCID, 1, (24, 0), ((3, 1), (3, 1)),lImageHandle
+			, hEMVector)
+
+	def SetHistoBrightnessContrast(self, ulBrightness=defaultNamedNotOptArg, ulContrast=defaultNamedNotOptArg):
+		'method SetHistoBrightnessContrast'
+		return self._oleobj_.InvokeTypes(16, LCID, 1, (24, 0), ((3, 1), (3, 1)),ulBrightness
+			, ulContrast)
+
+	def SetHistoLeftRight(self, lLeft=defaultNamedNotOptArg, lRight=defaultNamedNotOptArg):
+		'method SetHistoLeftRight'
+		return self._oleobj_.InvokeTypes(34, LCID, 1, (24, 0), ((3, 1), (3, 1)),lLeft
+			, lRight)
+
+	def SetHistoMDParams(self, fOffset=defaultNamedNotOptArg, fFactor=defaultNamedNotOptArg):
+		'method SetHistoMDParams'
+		return self._oleobj_.InvokeTypes(36, LCID, 1, (24, 0), ((4, 1), (4, 1)),fOffset
+			, fFactor)
+
+	def SetHistoMode(self, mode=defaultNamedNotOptArg):
+		'method SetHistoMode'
+		return self._oleobj_.InvokeTypes(32, LCID, 1, (24, 0), ((3, 1),),mode
+			)
+
+	def SetHistoOverflowUnderflow(self, lOverflow=defaultNamedNotOptArg, lUnderflow=defaultNamedNotOptArg):
+		'method SetHistoOverflowUnderflow'
+		return self._oleobj_.InvokeTypes(33, LCID, 1, (24, 0), ((3, 1), (3, 1)),lOverflow
+			, lUnderflow)
+
+	def SetHistogram(self, bHisto=defaultNamedNotOptArg):
+		'method SetHistogram'
+		return self._oleobj_.InvokeTypes(15, LCID, 1, (24, 0), ((3, 1),),bHisto
+			)
+
+	def SetPower(self, bPower=defaultNamedNotOptArg):
+		'method SetPower'
+		return self._oleobj_.InvokeTypes(10, LCID, 1, (24, 0), ((3, 1),),bPower
+			)
+
+	def SetPowerScale(self, fScaleLeft=defaultNamedNotOptArg, fScaleRight=defaultNamedNotOptArg):
+		'method SetPowerScale'
+		return self._oleobj_.InvokeTypes(12, LCID, 1, (24, 0), ((4, 1), (4, 1)),fScaleLeft
+			, fScaleRight)
+
+	def SetRecordHDDAllocType(self, hddAllocType=defaultNamedNotOptArg, dNrFiles=defaultNamedNotOptArg, nHour=defaultNamedNotOptArg, nMin=defaultNamedNotOptArg
+			, nSec=defaultNamedNotOptArg):
+		'method SetRecordHDDAllocType'
+		return self._oleobj_.InvokeTypes(24, LCID, 1, (24, 0), ((3, 1), (5, 1), (3, 1), (3, 1), (3, 1)),hddAllocType
+			, dNrFiles, nHour, nMin, nSec)
+
+	def StartHistoReading(self):
+		'method StartHistoReading'
+		return self._oleobj_.InvokeTypes(13, LCID, 1, (3, 0), (),)
+
+	def StartLive(self, lExpTime=defaultNamedNotOptArg):
+		'method StartLive'
+		return self._oleobj_.InvokeTypes(1, LCID, 1, (24, 0), ((3, 1),),lExpTime
+			)
+
+	def StartPowerReading(self):
+		'method StartPowerReading'
+		return self._oleobj_.InvokeTypes(7, LCID, 1, (3, 0), (),)
+
+	def StartReading(self):
+		'method StartReading'
+		return self._oleobj_.InvokeTypes(5, LCID, 1, (3, 0), (),)
+
+	def StartRecord(self, rcMode=defaultNamedNotOptArg, b8Bit=defaultNamedNotOptArg, bSamePos=defaultNamedNotOptArg):
+		'method StartRecord'
+		return self._oleobj_.InvokeTypes(18, LCID, 1, (24, 0), ((3, 1), (3, 1), (3, 1)),rcMode
+			, b8Bit, bSamePos)
+
+	def StopHistoReading(self, nBufPosition=defaultNamedNotOptArg):
+		'method StopHistoReading'
+		return self._oleobj_.InvokeTypes(14, LCID, 1, (24, 0), ((3, 1),),nBufPosition
+			)
+
+	def StopLive(self):
+		'method StopLive'
+		return self._oleobj_.InvokeTypes(2, LCID, 1, (24, 0), (),)
+
+	def StopPowerReading(self, nBufPosition=defaultNamedNotOptArg):
+		'method StopPowerReading'
+		return self._oleobj_.InvokeTypes(8, LCID, 1, (24, 0), ((3, 1),),nBufPosition
+			)
+
+	def StopReading(self, nBufPosition=defaultNamedNotOptArg):
+		'method StopReading'
+		return self._oleobj_.InvokeTypes(6, LCID, 1, (24, 0), ((3, 1),),nBufPosition
+			)
+
+	def StopRecord(self):
+		'method StopRecord'
+		return self._oleobj_.InvokeTypes(19, LCID, 1, (24, 0), (),)
+
+	_prop_map_get_ = {
+		"AcqDelay": (11, 2, (3, 0), (), "AcqDelay", None),
+		"GetSharedDescr": (21, 2, (8, 0), (), "GetSharedDescr", None),
+		"LiveLastImgSaved": (27, 2, (3, 0), (), "LiveLastImgSaved", None),
+	}
+	_prop_map_put_ = {
+		"AcqDelay": ((11, LCID, 4, 0),()),
+		"ExposureTime": ((17, LCID, 4, 0),()),
+		"IsAreaHistogram": ((30, LCID, 4, 0),()),
+		"PowerMaskPercentage": ((29, LCID, 4, 0),()),
+		"PowerUseLogarithm": ((28, LCID, 4, 0),()),
+		"RecorderImgName": ((23, LCID, 4, 0),()),
+		"RecorderPath": ((22, LCID, 4, 0),()),
+		"RollingAverage": ((25, LCID, 4, 0),()),
+		"RollingAverageParameter": ((26, LCID, 4, 0),()),
+	}
+	def __iter__(self):
+		"Return a Python iterator for this object"
+		try:
+			ob = self._oleobj_.InvokeTypes(-4,LCID,3,(13, 10),())
+		except pythoncom.error:
+			raise TypeError("This object does not support enumeration")
+		return win32com.client.util.Iterator(ob, None)
+
+class IMaintain(DispatchBaseClass):
+	'IMaintain Interface'
+	CLSID = IID('{C745F0BE-27F2-4D8A-B069-C1964CCF7B21}')
+	coclass_clsid = IID('{ADFA5865-1ACD-4A52-A2C3-65A4A2E6F23A}')
+
+	# The method RevisionInformation is actually a property, but must be used as a method to correctly pass the arguments
+	def RevisionInformation(self, lWhatCamera=defaultNamedNotOptArg):
+		'property RevisionInformation'
+		return self._oleobj_.InvokeTypes(1, LCID, 2, (3, 0), ((3, 1),),lWhatCamera
+			)
+
+	def ShowDebugInfo(self, lWhatInfo=defaultNamedNotOptArg):
+		'method ShowDebugInfo'
+		return self._oleobj_.InvokeTypes(3, LCID, 1, (24, 0), ((3, 1),),lWhatInfo
+			)
+
+	_prop_map_get_ = {
+		"ShowTrayIcon": (2, 2, (3, 0), (), "ShowTrayIcon", None),
+		"lLogLevel": (4, 2, (3, 0), (), "lLogLevel", None),
+	}
+	_prop_map_put_ = {
+		"ShowTrayIcon": ((2, LCID, 4, 0),()),
+		"lLogLevel": ((4, LCID, 4, 0),()),
+	}
+	def __iter__(self):
+		"Return a Python iterator for this object"
+		try:
+			ob = self._oleobj_.InvokeTypes(-4,LCID,3,(13, 10),())
+		except pythoncom.error:
+			raise TypeError("This object does not support enumeration")
+		return win32com.client.util.Iterator(ob, None)
+
+class _ICameraEvents:
+	'_ICameraEvents Interface'
+	CLSID = CLSID_Sink = IID('{A5D1467A-56E4-4B84-8CF5-DE923199263E}')
+	coclass_clsid = IID('{ADFA5865-1ACD-4A52-A2C3-65A4A2E6F23A}')
+	_public_methods_ = [] # For COM Server support
+	_dispid_to_func_ = {
+		        1 : "OnCAMCLocked",
+		        2 : "OnCAMCUnlocked",
+		}
+
+	def __init__(self, oobj = None):
+		if oobj is None:
+			self._olecp = None
+		else:
+			import win32com.server.util
+			from win32com.server.policy import EventHandlerPolicy
+			cpc=oobj._oleobj_.QueryInterface(pythoncom.IID_IConnectionPointContainer)
+			cp=cpc.FindConnectionPoint(self.CLSID_Sink)
+			cookie=cp.Advise(win32com.server.util.wrap(self, usePolicy=EventHandlerPolicy))
+			self._olecp,self._olecp_cookie = cp,cookie
+	def __del__(self):
+		try:
+			self.close()
+		except pythoncom.com_error:
+			pass
+	def close(self):
+		if self._olecp is not None:
+			cp,cookie,self._olecp,self._olecp_cookie = self._olecp,self._olecp_cookie,None,None
+			cp.Unadvise(cookie)
+	def _query_interface_(self, iid):
+		import win32com.server.util
+		if iid==self.CLSID_Sink: return win32com.server.util.wrap(self)
+
+	# Event Handlers
+	# If you create handlers, they should have the following prototypes:
+#	def OnCAMCLocked(self):
+#		'method CAMCLocked'
+#	def OnCAMCUnlocked(self):
+#		'method CAMCUnlocked'
+
+
+from win32com.client import CoClassBaseClass
+# This CoClass is known by the name 'CAMC4.Camera.1'
+class Camera(CoClassBaseClass): # A CoClass
+	# Camera Class
+	CLSID = IID('{ADFA5865-1ACD-4A52-A2C3-65A4A2E6F23A}')
+	coclass_sources = [
+		_ICameraEvents,
+	]
+	default_source = _ICameraEvents
+	coclass_interfaces = [
+		ICamera,
+		ICameraLive,
+		IMaintain,
+	]
+	default_interface = ICamera
+
+ICAMCCallBack_vtables_dispatch_ = 0
+ICAMCCallBack_vtables_ = [
+	(( u'LivePing' , ), 1, (1, (), [ ], 1 , 1 , 4 , 0 , 12 , (3, 0, None, None) , 0 , )),
+	(( u'RequestLock' , u'pVal' , ), 2, (2, (), [ (16387, 10, None, None) , ], 1 , 1 , 4 , 0 , 16 , (3, 0, None, None) , 0 , )),
+]
+
+ICAMCLiveCallBack_vtables_dispatch_ = 0
+ICAMCLiveCallBack_vtables_ = [
+	(( u'LiveImageAvailable' , ), 1, (1, (), [ ], 1 , 1 , 4 , 0 , 12 , (3, 0, None, None) , 0 , )),
+	(( u'LivePowerAvailable' , ), 2, (2, (), [ ], 1 , 1 , 4 , 0 , 16 , (3, 0, None, None) , 0 , )),
+	(( u'LiveImageRecorded' , u'lImgHandle' , u'lEMVector' , u'lThumbnail' , u'lSamePos' , 
+			), 3, (3, (), [ (3, 1, None, None) , (3, 1, None, None) , (3, 1, None, None) , (3, 1, None, None) , ], 1 , 1 , 4 , 0 , 20 , (3, 0, None, None) , 0 , )),
+	(( u'LiveStopRecorder' , ), 4, (4, (), [ ], 1 , 1 , 4 , 0 , 24 , (3, 0, None, None) , 0 , )),
+	(( u'FillMCLValues' , u'fTemHT' , u'fTemMagScr' , u'fTemMagCor' , u'fTemMagPst' , 
+			), 5, (5, (), [ (16388, 2, None, None) , (16388, 2, None, None) , (16388, 2, None, None) , (16388, 2, None, None) , ], 1 , 1 , 4 , 0 , 28 , (3, 0, None, None) , 0 , )),
+]
+
+ICamera_vtables_dispatch_ = 1
+ICamera_vtables_ = [
+	(( u'Initialize' , u'lWhatCamera' , u'lMode' , ), 1, (1, (), [ (3, 1, None, None) , 
+			(3, 1, None, None) , ], 1 , 1 , 4 , 0 , 28 , (3, 0, None, None) , 0 , )),
+	(( u'UnInitialize' , u'lWhatCamera' , ), 2, (2, (), [ (3, 1, None, None) , ], 1 , 1 , 4 , 0 , 32 , (3, 0, None, None) , 0 , )),
+	(( u'LParam' , u'lWhatParam' , u'pVal' , ), 3, (3, (), [ (3, 1, None, None) , 
+			(16387, 10, None, None) , ], 1 , 2 , 4 , 0 , 36 , (3, 0, None, None) , 0 , )),
+	(( u'LParam' , u'lWhatParam' , u'pVal' , ), 3, (3, (), [ (3, 1, None, None) , 
+			(3, 1, None, None) , ], 1 , 4 , 4 , 0 , 40 , (3, 0, None, None) , 0 , )),
+	(( u'SParam' , u'lWhatParam' , u'pVal' , ), 4, (4, (), [ (3, 1, None, None) , 
+			(16392, 10, None, None) , ], 1 , 2 , 4 , 0 , 44 , (3, 0, None, None) , 0 , )),
+	(( u'SParam' , u'lWhatParam' , u'pVal' , ), 4, (4, (), [ (3, 1, None, None) , 
+			(8, 1, None, None) , ], 1 , 4 , 4 , 0 , 48 , (3, 0, None, None) , 0 , )),
+	(( u'Format' , u'lXOff' , u'lYOff' , u'lXDim' , u'lYDim' , 
+			u'lXBin' , u'lYBin' , ), 5, (5, (), [ (3, 1, None, None) , (3, 1, None, None) , 
+			(3, 1, None, None) , (3, 1, None, None) , (3, 1, None, None) , (3, 1, None, None) , ], 1 , 1 , 4 , 0 , 52 , (3, 0, None, None) , 0 , )),
+	(( u'AcquireImage' , u'lExpTime' , u'lImageHandle' , ), 6, (6, (), [ (3, 1, None, None) , 
+			(3, 1, None, None) , ], 1 , 1 , 4 , 0 , 56 , (3, 0, None, None) , 0 , )),
+	(( u'AcquireDark' , u'lExpTime' , u'lImageHandle' , ), 7, (7, (), [ (3, 1, None, None) , 
+			(3, 1, None, None) , ], 1 , 1 , 4 , 0 , 60 , (3, 0, None, None) , 0 , )),
+	(( u'AcquireBias' , u'lImageHandle' , ), 8, (8, (), [ (3, 1, None, None) , ], 1 , 1 , 4 , 0 , 64 , (3, 0, None, None) , 0 , )),
+	(( u'AcquireReadout' , u'lImageHandle' , ), 9, (9, (), [ (3, 1, None, None) , ], 1 , 1 , 4 , 0 , 68 , (3, 0, None, None) , 0 , )),
+	(( u'ShutterOverride' , u'type' , u'bEnableOverride' , u'bBeamCanPass' , ), 10, (10, (), [ 
+			(3, 1, None, None) , (3, 1, None, None) , (3, 1, None, None) , ], 1 , 1 , 4 , 0 , 72 , (3, 0, None, None) , 0 , )),
+	(( u'QueryParameter' , u'lWhatParam' , u'pVal' , ), 11, (11, (), [ (3, 1, None, None) , 
+			(16387, 10, None, None) , ], 1 , 2 , 4 , 0 , 76 , (3, 0, None, None) , 0 , )),
+	(( u'ActiveCamera' , u'pVal' , ), 12, (12, (), [ (16387, 10, None, None) , ], 1 , 2 , 4 , 0 , 80 , (3, 0, None, None) , 0 , )),
+	(( u'ActiveCamera' , u'pVal' , ), 12, (12, (), [ (3, 1, None, None) , ], 1 , 4 , 4 , 0 , 84 , (3, 0, None, None) , 0 , )),
+	(( u'RequestLock' , u'pVal' , ), 13, (13, (), [ (16387, 10, None, None) , ], 1 , 1 , 4 , 0 , 88 , (3, 0, None, None) , 0 , )),
+	(( u'UnlockCAMC' , ), 14, (14, (), [ ], 1 , 1 , 4 , 0 , 92 , (3, 0, None, None) , 0 , )),
+	(( u'RegisterCAMCCallBack' , u'ptrCallBack' , u'bstrLocker' , ), 15, (15, (), [ (9, 0, None, "IID('{2A20A2ED-7E7D-4AA1-B943-F52A3BAC59B4}')") , 
+			(8, 1, None, None) , ], 1 , 1 , 4 , 0 , 96 , (3, 0, None, None) , 0 , )),
+	(( u'IsLocked' , u'psLocker' , u'pVal' , ), 16, (16, (), [ (16392, 2, None, None) , 
+			(16387, 10, None, None) , ], 1 , 2 , 4 , 0 , 100 , (3, 0, None, None) , 0 , )),
+	(( u'SHUTTERMODE' , u'pVal' , ), 17, (17, (), [ (16387, 10, None, None) , ], 1 , 2 , 4 , 0 , 104 , (3, 0, None, None) , 0 , )),
+	(( u'SHUTTERMODE' , u'pVal' , ), 17, (17, (), [ (3, 1, None, None) , ], 1 , 4 , 4 , 0 , 108 , (3, 0, None, None) , 0 , )),
+]
+
+ICameraLive_vtables_dispatch_ = 1
+ICameraLive_vtables_ = [
+	(( u'StartLive' , u'lExpTime' , ), 1, (1, (), [ (3, 1, None, None) , ], 1 , 1 , 4 , 0 , 28 , (3, 0, None, None) , 0 , )),
+	(( u'StopLive' , ), 2, (2, (), [ ], 1 , 1 , 4 , 0 , 32 , (3, 0, None, None) , 0 , )),
+	(( u'LoadFlatData' , u'ppsaData' , ), 3, (3, (), [ (24578, 1, None, None) , ], 1 , 1 , 4 , 0 , 36 , (3, 0, None, None) , 0 , )),
+	(( u'LoadDarkData' , u'ppsaData' , ), 4, (4, (), [ (24578, 1, None, None) , ], 1 , 1 , 4 , 0 , 40 , (3, 0, None, None) , 0 , )),
+	(( u'StartReading' , u'nBufPosition' , ), 5, (5, (), [ (16387, 10, None, None) , ], 1 , 1 , 4 , 0 , 44 , (3, 0, None, None) , 0 , )),
+	(( u'StopReading' , u'nBufPosition' , ), 6, (6, (), [ (3, 1, None, None) , ], 1 , 1 , 4 , 0 , 48 , (3, 0, None, None) , 0 , )),
+	(( u'StartPowerReading' , u'nBufPosition' , ), 7, (7, (), [ (16387, 10, None, None) , ], 1 , 1 , 4 , 0 , 52 , (3, 0, None, None) , 0 , )),
+	(( u'StopPowerReading' , u'nBufPosition' , ), 8, (8, (), [ (3, 1, None, None) , ], 1 , 1 , 4 , 0 , 56 , (3, 0, None, None) , 0 , )),
+	(( u'RegisterCAMCLiveCallBack' , u'ptrCallBack' , ), 9, (9, (), [ (9, 0, None, "IID('{F8D51FB1-1EDA-4D94-84FF-2FB565555BCD}')") , ], 1 , 1 , 4 , 0 , 60 , (3, 0, None, None) , 0 , )),
+	(( u'SetPower' , u'bPower' , ), 10, (10, (), [ (3, 1, None, None) , ], 1 , 1 , 4 , 0 , 64 , (3, 0, None, None) , 0 , )),
+	(( u'AcqDelay' , u'pVal' , ), 11, (11, (), [ (16387, 10, None, None) , ], 1 , 2 , 4 , 0 , 68 , (3, 0, None, None) , 0 , )),
+	(( u'AcqDelay' , u'pVal' , ), 11, (11, (), [ (3, 1, None, None) , ], 1 , 4 , 4 , 0 , 72 , (3, 0, None, None) , 0 , )),
+	(( u'SetPowerScale' , u'fScaleLeft' , u'fScaleRight' , ), 12, (12, (), [ (4, 1, None, None) , 
+			(4, 1, None, None) , ], 1 , 1 , 4 , 0 , 76 , (3, 0, None, None) , 0 , )),
+	(( u'StartHistoReading' , u'nBufPosition' , ), 13, (13, (), [ (16387, 10, None, None) , ], 1 , 1 , 4 , 0 , 80 , (3, 0, None, None) , 0 , )),
+	(( u'StopHistoReading' , u'nBufPosition' , ), 14, (14, (), [ (3, 1, None, None) , ], 1 , 1 , 4 , 0 , 84 , (3, 0, None, None) , 0 , )),
+	(( u'SetHistogram' , u'bHisto' , ), 15, (15, (), [ (3, 1, None, None) , ], 1 , 1 , 4 , 0 , 88 , (3, 0, None, None) , 0 , )),
+	(( u'SetHistoBrightnessContrast' , u'ulBrightness' , u'ulContrast' , ), 16, (16, (), [ (3, 1, None, None) , 
+			(3, 1, None, None) , ], 1 , 1 , 4 , 0 , 92 , (3, 0, None, None) , 0 , )),
+	(( u'ExposureTime' , ), 17, (17, (), [ (3, 1, None, None) , ], 1 , 4 , 4 , 0 , 96 , (3, 0, None, None) , 0 , )),
+	(( u'StartRecord' , u'rcMode' , u'b8Bit' , u'bSamePos' , ), 18, (18, (), [ 
+			(3, 1, None, None) , (3, 1, None, None) , (3, 1, None, None) , ], 1 , 1 , 4 , 0 , 100 , (3, 0, None, None) , 0 , )),
+	(( u'StopRecord' , ), 19, (19, (), [ ], 1 , 1 , 4 , 0 , 104 , (3, 0, None, None) , 0 , )),
+	(( u'SetDataImg' , u'lImageHandle' , u'hEMVector' , ), 20, (20, (), [ (3, 1, None, None) , 
+			(3, 1, None, None) , ], 1 , 1 , 4 , 0 , 108 , (3, 0, None, None) , 0 , )),
+	(( u'GetSharedDescr' , u'pVal' , ), 21, (21, (), [ (16392, 10, None, None) , ], 1 , 2 , 4 , 0 , 112 , (3, 0, None, None) , 0 , )),
+	(( u'RecorderPath' , ), 22, (22, (), [ (8, 1, None, None) , ], 1 , 4 , 4 , 0 , 116 , (3, 0, None, None) , 0 , )),
+	(( u'RecorderImgName' , ), 23, (23, (), [ (8, 1, None, None) , ], 1 , 4 , 4 , 0 , 120 , (3, 0, None, None) , 0 , )),
+	(( u'SetRecordHDDAllocType' , u'hddAllocType' , u'dNrFiles' , u'nHour' , u'nMin' , 
+			u'nSec' , ), 24, (24, (), [ (3, 1, None, None) , (5, 1, None, None) , (3, 1, None, None) , 
+			(3, 1, None, None) , (3, 1, None, None) , ], 1 , 1 , 4 , 0 , 124 , (3, 0, None, None) , 0 , )),
+	(( u'RollingAverage' , ), 25, (25, (), [ (3, 1, None, None) , ], 1 , 4 , 4 , 0 , 128 , (3, 0, None, None) , 0 , )),
+	(( u'RollingAverageParameter' , ), 26, (26, (), [ (4, 1, None, None) , ], 1 , 4 , 4 , 0 , 132 , (3, 0, None, None) , 0 , )),
+	(( u'LiveLastImgSaved' , u'pVal' , ), 27, (27, (), [ (16387, 10, None, None) , ], 1 , 2 , 4 , 0 , 136 , (3, 0, None, None) , 0 , )),
+	(( u'PowerUseLogarithm' , ), 28, (28, (), [ (3, 1, None, None) , ], 1 , 4 , 4 , 0 , 140 , (3, 0, None, None) , 0 , )),
+	(( u'PowerMaskPercentage' , ), 29, (29, (), [ (5, 1, None, None) , ], 1 , 4 , 4 , 0 , 144 , (3, 0, None, None) , 0 , )),
+	(( u'IsAreaHistogram' , ), 30, (30, (), [ (3, 1, None, None) , ], 1 , 4 , 4 , 0 , 148 , (3, 0, None, None) , 0 , )),
+	(( u'SetAreaHistogram' , u'nLeft' , u'nTop' , u'nRight' , u'nBottom' , 
+			), 31, (31, (), [ (3, 1, None, None) , (3, 1, None, None) , (3, 1, None, None) , (3, 1, None, None) , ], 1 , 1 , 4 , 0 , 152 , (3, 0, None, None) , 0 , )),
+	(( u'SetHistoMode' , u'mode' , ), 32, (32, (), [ (3, 1, None, None) , ], 1 , 1 , 4 , 0 , 156 , (3, 0, None, None) , 0 , )),
+	(( u'SetHistoOverflowUnderflow' , u'lOverflow' , u'lUnderflow' , ), 33, (33, (), [ (3, 1, None, None) , 
+			(3, 1, None, None) , ], 1 , 1 , 4 , 0 , 160 , (3, 0, None, None) , 0 , )),
+	(( u'SetHistoLeftRight' , u'lLeft' , u'lRight' , ), 34, (34, (), [ (3, 1, None, None) , 
+			(3, 1, None, None) , ], 1 , 1 , 4 , 0 , 164 , (3, 0, None, None) , 0 , )),
+	(( u'SetAdvRecorderParams' , u'bUseMultipleFolders' , u'lImagesPerFolder' , ), 35, (35, (), [ (3, 1, None, None) , 
+			(3, 1, None, None) , ], 1 , 1 , 4 , 0 , 168 , (3, 0, None, None) , 0 , )),
+	(( u'SetHistoMDParams' , u'fOffset' , u'fFactor' , ), 36, (36, (), [ (4, 1, None, None) , 
+			(4, 1, None, None) , ], 1 , 1 , 4 , 0 , 172 , (3, 0, None, None) , 0 , )),
+]
+
+IMaintain_vtables_dispatch_ = 1
+IMaintain_vtables_ = [
+	(( u'RevisionInformation' , u'lWhatCamera' , u'pVal' , ), 1, (1, (), [ (3, 1, None, None) , 
+			(16387, 10, None, None) , ], 1 , 2 , 4 , 0 , 28 , (3, 0, None, None) , 0 , )),
+	(( u'ShowTrayIcon' , u'pVal' , ), 2, (2, (), [ (16387, 10, None, None) , ], 1 , 2 , 4 , 0 , 32 , (3, 0, None, None) , 0 , )),
+	(( u'ShowTrayIcon' , u'pVal' , ), 2, (2, (), [ (3, 1, None, None) , ], 1 , 4 , 4 , 0 , 36 , (3, 0, None, None) , 0 , )),
+	(( u'ShowDebugInfo' , u'lWhatInfo' , ), 3, (3, (), [ (3, 1, None, None) , ], 1 , 1 , 4 , 0 , 40 , (3, 0, None, None) , 0 , )),
+	(( u'lLogLevel' , u'pVal' , ), 4, (4, (), [ (16387, 10, None, None) , ], 1 , 2 , 4 , 0 , 44 , (3, 0, None, None) , 0 , )),
+	(( u'lLogLevel' , u'pVal' , ), 4, (4, (), [ (3, 1, None, None) , ], 1 , 4 , 4 , 0 , 48 , (3, 0, None, None) , 0 , )),
+]
+
+RecordMap = {
+}
+
+CLSIDToClassMap = {
+	'{0BD58D0C-3640-4734-8B15-9D59E455FFE2}' : ICameraLive,
+	'{C745F0BE-27F2-4D8A-B069-C1964CCF7B21}' : IMaintain,
+	'{3CF7ED98-2848-4594-B2CD-A792FF72D86C}' : ICamera,
+	'{F8D51FB1-1EDA-4D94-84FF-2FB565555BCD}' : ICAMCLiveCallBack,
+	'{ADFA5865-1ACD-4A52-A2C3-65A4A2E6F23A}' : Camera,
+	'{A5D1467A-56E4-4B84-8CF5-DE923199263E}' : _ICameraEvents,
+	'{2A20A2ED-7E7D-4AA1-B943-F52A3BAC59B4}' : ICAMCCallBack,
+}
+CLSIDToPackageMap = {}
+win32com.client.CLSIDToClass.RegisterCLSIDsFromDict( CLSIDToClassMap )
+VTablesToPackageMap = {}
+VTablesToClassMap = {
+	'{3CF7ED98-2848-4594-B2CD-A792FF72D86C}' : 'ICamera',
+	'{F8D51FB1-1EDA-4D94-84FF-2FB565555BCD}' : 'ICAMCLiveCallBack',
+	'{0BD58D0C-3640-4734-8B15-9D59E455FFE2}' : 'ICameraLive',
+	'{C745F0BE-27F2-4D8A-B069-C1964CCF7B21}' : 'IMaintain',
+	'{2A20A2ED-7E7D-4AA1-B943-F52A3BAC59B4}' : 'ICAMCCallBack',
+}
+
+
+NamesToIIDMap = {
+	'_ICameraEvents' : '{A5D1467A-56E4-4B84-8CF5-DE923199263E}',
+	'ICAMCCallBack' : '{2A20A2ED-7E7D-4AA1-B943-F52A3BAC59B4}',
+	'IMaintain' : '{C745F0BE-27F2-4D8A-B069-C1964CCF7B21}',
+	'ICamera' : '{3CF7ED98-2848-4594-B2CD-A792FF72D86C}',
+	'ICAMCLiveCallBack' : '{F8D51FB1-1EDA-4D94-84FF-2FB565555BCD}',
+	'ICameraLive' : '{0BD58D0C-3640-4734-8B15-9D59E455FFE2}',
+}
+
+win32com.client.constants.__dicts__.append(constants.__dict__)
+

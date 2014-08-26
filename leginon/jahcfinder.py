@@ -8,7 +8,7 @@
 #       see  http://ami.scripps.edu/software/leginon-license
 #
 
-import leginondata
+from leginon import leginondata
 import targetfinder
 import jahcfinderback
 from pyami import ordereddict
@@ -19,6 +19,7 @@ import os.path
 import math
 import gui.wx.JAHCFinder
 import version
+import itertools
 
 invsqrt2 = math.sqrt(2.0)/2.0
 default_template = os.path.join(version.getInstalledLocation(),'holetemplate.mrc')
@@ -46,6 +47,7 @@ class JAHCFinder(targetfinder.TargetFinder):
 		'template lpf': {
 			'sigma': 1.0,
 		},
+		'template threshold':0.0,
 		'threshold': 3.0,
 		'threshold method': "Threshold = mean + A * stdev",
 		'blobs border': 20,
@@ -69,6 +71,7 @@ class JAHCFinder(targetfinder.TargetFinder):
 		'focus min mean thickness': 0.05,
 		'focus max mean thickness': 0.5,
 		'focus max stdev thickness': 0.5,
+		'focus interval': 1,
 	})
 	extendtypes = ['off', 'full', '3x3']
 	targetnames = targetfinder.TargetFinder.targetnames + ['Blobs']
@@ -108,6 +111,9 @@ class JAHCFinder(targetfinder.TargetFinder):
 		self.focustypes = ['Off', 'Any Hole', 'Good Hole', 'Center']
 		self.userpause = threading.Event()
 
+		self.foc_counter = itertools.count()
+		self.foc_activated = False
+
 		self.start()
 
 	def readImage(self, filename):
@@ -125,13 +131,14 @@ class JAHCFinder(targetfinder.TargetFinder):
 		self.hf.configure_template(diameter, filename, filediameter)
 		self.hf.create_template()
 		cortype = self.settings['template type']
+		cor_image_min = self.settings['template image min']
 		lpfsettings = self.settings['template lpf']
 		corsigma = lpfsettings['sigma']
 		if cortype == 'phase' and corsigma:
 			corfilt = (corsigma,)
 		else:
 			corfilt = None
-		self.hf.configure_correlation(cortype, corfilt)
+		self.hf.configure_correlation(cortype, corfilt,cor_image_min)
 		self.hf.correlate_template()
 		self.setImage(self.hf['correlation'], 'Template')
 
@@ -238,28 +245,36 @@ class JAHCFinder(targetfinder.TargetFinder):
 		centers = self.blobCenters(goodholes)
 		allcenters = self.blobCenters(self.hf['holes'])
 
+		# activate if counter is at a multiple of interval
+		interval = self.settings['focus interval']
+		if interval and not (self.foc_counter.next() % interval):
+			self.foc_activated = True
+		else:
+			self.foc_activated = False
+
 		focus_points = []
 
-		## replace an acquisition target with a focus target
-		onehole = self.settings['focus hole']
-		if centers and onehole != 'Off':
-			## if only one hole, this is useless
-			if len(allcenters) < 2:
-				self.logger.info('need more than one hole if you want to focus on one of them')
-				centers = []
-			elif onehole == 'Center':
-				focus_points.append(self.centerCarbon(allcenters))
-			elif onehole == 'Any Hole':
-				fochole = self.focus_on_hole(centers, allcenters)
-				focus_points.append(fochole)
-			elif onehole == 'Good Hole':
-				if len(centers) < 2:
-					self.logger.info('need more than one good hole if you want to focus on one of them')
+		if self.foc_activated:
+			## replace an acquisition target with a focus target
+			onehole = self.settings['focus hole']
+			if centers and onehole != 'Off':
+				## if only one hole, this is useless
+				if len(allcenters) < 2:
+					self.logger.info('need more than one hole if you want to focus on one of them')
 					centers = []
-				else:
-					## use only good centers
-					fochole = self.focus_on_hole(centers, centers)
+				elif onehole == 'Center':
+					focus_points.append(self.centerCarbon(allcenters))
+				elif onehole == 'Any Hole':
+					fochole = self.focus_on_hole(centers, allcenters)
 					focus_points.append(fochole)
+				elif onehole == 'Good Hole':
+					if len(centers) < 2:
+						self.logger.info('need more than one good hole if you want to focus on one of them')
+						centers = []
+					else:
+						## use only good centers
+						fochole = self.focus_on_hole(centers, centers)
+						focus_points.append(fochole)
 
 		self.logger.info('Holes with good ice: %s' % (len(centers),))
 		# takes x,y instead of row,col
@@ -383,6 +398,8 @@ class JAHCFinder(targetfinder.TargetFinder):
 					self.logger.info('skipping template point %s: out of image bounds' % (vect,))
 					continue
 				newtargets['acquisition'].append(target)
+		if not self.foc_activated:
+			return newtargets
 		for vect in foc_vect:
 			for center in focuscenters:
 				target = center[0]+vect[0], center[1]+vect[1]
@@ -487,12 +504,16 @@ class JAHCFinder(targetfinder.TargetFinder):
 			newblobs = self.panel.getTargetPositions('Blobs')
 			if not newblobs:
 				return False
+			if self.settings['lattice extend'] == 'off':
+				return False
 			for point in self.oldblobs:
 				if point not in newblobs:
+					self.logger.info('Lattice extension is on and blobs changed.')
 					return True
 			if len(newblobs) == len(self.oldblobs):
 				return False
 			else:
+				self.logger.info('Lattice extension is on and some blob added.')
 				return True
 
 	def findTargets(self, imdata, targetlist):
@@ -504,6 +525,10 @@ class JAHCFinder(targetfinder.TargetFinder):
 		self.currentimagedata = imdata
 		self.setImage(imdata['image'], 'Original')
 		if not self.settings['skip']:
+			if self.isFromNewParentImage(imdata):
+				self.logger.debug('Reset focus counter')
+				self.foc_counter = itertools.count()
+				self.resetLastFocusedTargetList(targetlist)
 			autofailed = False
 			try:
 				self.everything()
@@ -520,9 +545,11 @@ class JAHCFinder(targetfinder.TargetFinder):
 				newblobs = self.blobsChanged()
 				if newblobs:
 					try:
+						self.logger.info('Autofinder rerun starting from Lattice fitting')
 						self.usePickedBlobs()
 						self.fitLattice(auto_center=False)
 						self.ice()
+						self.logger.info('Autofinder rerun due to blob editing finished')
 					except Exception, e:
 						raise
 						self.logger.error('Failed: %s' % (e,))
@@ -531,8 +558,10 @@ class JAHCFinder(targetfinder.TargetFinder):
 					break
 				self.panel.targetsSubmitted()
 
-		self.logger.info('Publishing targets...')
+		# set self.last_focused for target publishing	
+		self.setLastFocusedTargetList(targetlist)
 		### publish targets from goodholesimage
+		self.logger.info('Publishing targets...')
 		self.publishTargets(imdata, 'focus', targetlist)
 		self.publishTargets(imdata, 'acquisition', targetlist)
 		self.setStatus('idle')

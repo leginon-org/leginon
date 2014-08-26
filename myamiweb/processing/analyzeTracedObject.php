@@ -8,11 +8,11 @@
  *      Simple viewer to view a image using mrcmodule
  */
 
-require "inc/particledata.inc";
-require "inc/leginon.inc";
-require "inc/project.inc";
-require "inc/viewer.inc";
-require "inc/processing.inc";
+require_once "inc/particledata.inc";
+require_once "inc/leginon.inc";
+require_once "inc/project.inc";
+require_once "inc/viewer.inc";
+require_once "inc/processing.inc";
 
 define("SCRIPT_NAME", 'contouranalysis');
 define("FORM_TITLE", SCRIPT_NAME.' Launcher');
@@ -87,7 +87,7 @@ function createAppionScriptForm($extra=false, $title=FORM_TITLE, $heading=FORM_H
 	if (!$partrunids) {
 		echo "<font class='apcomment'><b>No Particles for this Session</b></font>\n";
 	} else {
-		echo docpop('stackparticles','Tracing Runs:');
+		echo docpop('tracerun','Tracing Runs:');
 		echo "<select name='partrunid' onchange='fromstackToNone()'>\n";
 		echo "<option value='0'>None</option>\n";
 		foreach ($partrunids as $partrun){

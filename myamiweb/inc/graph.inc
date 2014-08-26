@@ -7,12 +7,12 @@
  *	see  http://ami.scripps.edu/software/leginon-license
  */
 
-require "inc/jpgraph.php";
-require "inc/jpgraph_line.php";
-require "inc/jpgraph_scatter.php";
-require "inc/jpgraph_bar.php";
-require "inc/histogram.inc";
-require "inc/image.inc";
+require_once "inc/jpgraph.php";
+require_once "inc/jpgraph_line.php";
+require_once "inc/jpgraph_scatter.php";
+require_once "inc/jpgraph_bar.php";
+require_once "inc/histogram.inc";
+require_once "inc/image.inc";
 
 class dbemGraph {
 
@@ -22,6 +22,10 @@ class dbemGraph {
 	var $datay=array();
 	var $scatterplot=true;
 	var $lineplot=true;
+	var $markstart=false;
+	var $baselineplot=false;
+	var $baselinevalue=0;
+	var $manualscale=false;
 
 	function dbemGraph($data, $xname, $yname) {
 		$this->data=&$data;
@@ -31,6 +35,23 @@ class dbemGraph {
 			$this->datax[] = $t[$xname];
 			$this->datay[] = $t[$yname];
 		}
+	}
+
+	function proportion($margin,$intlimit=true) {
+		$xmin = ($intlimit) ? floor(min($this->datax)):min($this->datax);
+		$ymin = ($intlimit) ? floor(min($this->datay)):min($this->datay);
+		$xmax = ($intlimit) ? ceil(max($this->datax)):max($this->datax);
+		$ymax = ($intlimit) ? ceil(max($this->datay)):max($this->datay);
+		$xrange = ($intlimit) ? ceil(($xmax-$xmin)/2)*2: $xmax-$xmin;
+		$yrange = ($intlimit) ? ceil(($ymax-$ymin)/2)*2: $ymax-$ymin;
+		$range = max($xrange,$yrange);
+		$this->manualscale = true;
+		$xmid = $xmin + $xrange / 2;
+		$ymid = $ymin + $yrange / 2;
+		$this->xmin = $xmid - $range * (0.5 + $margin);
+		$this->ymin = $ymid - $range * (0.5 + $margin);
+		$this->xmax = $xmid + $range * (0.5 + $margin);
+		$this->ymax = $ymid + $range * (0.5 + $margin);
 	}
 
 	function scale(&$d) {
@@ -73,16 +94,20 @@ class dbemGraph {
 		$graph = new Graph($this->width, $this->height,"auto");    
 		if ($this->histogram) {
 			$histogram = new histogram($this->datay);
-			$histogram->setBarsNumber(50);
+			$bars_number = 50;
+			$histogram->setBarsNumber($bars_number);
 			$rdata = $histogram->getData();
-
 			$rdatax = $rdata['x'];
 			$rdatay = $rdata['y'];
 
 			$graph->SetScale("linlin");
-			$graph->img->SetMargin(40,30,20,40);
+			$left_margin = 40;
+			$right_margin = 30;
+			$graph->img->SetMargin($left_margin,$right_margin,20,40);
 
 			$bplot = new BarPlot($rdatay, $rdatax);
+			$bwidth = $histogram->getBarWidth($this->width,$left_margin,$right_margin);
+			$bplot->SetWidth($bwidth);
 			$graph->Add($bplot);
 
 			$graph->title->Set("histogram: ".$this->title);
@@ -108,6 +133,8 @@ class dbemGraph {
 			if ($scientic_notation)
 				$graph->yaxis->SetLabelFormatCallback('sciCallback');
 
+			if ($this->manualscale)
+					$graph->SetScale("linlin",$this->ymin,$this->ymax,$this->xmin,$this->xmax); 
 			if ($this->scatterplot) {
 				$sp1 = new ScatterPlot($this->datay,$this->datax);
 				$sp1->mark->SetType(MARK_CIRCLE);
@@ -121,6 +148,23 @@ class dbemGraph {
 				$p1->SetColor("blue");
 				$graph->Add($p1);
 			}
+
+			if ($this->baselineplot) {
+				$yarray = array($this->baselinevalue,$this->baselinevalue);
+				$xarray = array(min($this->datax),max($this->datax));
+				$p2 = new LinePlot($yarray,$xarray);
+				$p2->SetColor("blue");
+				$graph->Add($p2);
+			}
+
+			if ($this->markstart) {
+				$sp2 = new ScatterPlot(array($this->datay[0]),array($this->datax[0]));
+				$sp2->mark->SetType(MARK_FILLEDCIRCLE);
+				$sp2->mark->SetColor('blue');
+				$sp2->mark->SetWidth(4);
+				$graph->Add($sp2);
+			}
+
 		}
 		$source = $graph->Stroke(_IMG_HANDLER);
 		}

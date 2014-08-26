@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import dbdatakeeper
-import leginondata
+from leginon import leginondata
 import MySQLdb
 import sys
 import getpass
@@ -38,6 +38,7 @@ user = raw_input('DB User: ')
 passwd = getpass.getpass()
 
 db = MySQLdb.connect(host=host, user=user, db=dbname, passwd=passwd)
+db.autocommit(True)
 
 for id in appids:
 	cur = db.cursor()

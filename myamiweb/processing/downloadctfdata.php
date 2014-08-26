@@ -1,14 +1,17 @@
 <?php
 
-require "inc/particledata.inc";
-require "inc/leginon.inc";
-require "inc/project.inc";
-require "inc/viewer.inc";
-require "inc/processing.inc";
+require_once "inc/particledata.inc";
+require_once "inc/leginon.inc";
+require_once "inc/project.inc";
+require_once "inc/viewer.inc";
+require_once "inc/processing.inc";
 
 //This file dumps the best CTF parameters for all images in the session
 
 $sessionId = $_GET['expId'];
+$runId = $_GET['runId'];
+
+checkExptAccessPrivilege($sessionId,'data');
 $appiondb = new particledata();
 
 $ctfrundatas = $appiondb->getCtfRunIds($sessionId, True);
@@ -17,21 +20,29 @@ if (!$ctfrundatas) {
 	exit;
 }
 
-$ctfdatas = $appiondb->getBestCtfInfoForSessionId($sessionId);
+if(empty($runId))
+	$ctfdatas = $appiondb->getBestCtfInfoByResolution($sessionId);
+else
+	$ctfdatas = $appiondb->getCtfInfo($runId);
 
-$data[] = "nominal_def\tdefocus_1\tdefocus_2\tangle_astig\tamp_cont\tconfidence_1\tconfidence_2\timage_name\n";
+$data[] = "image #\tnominal_def\tdefocus_1\tdefocus_2\tangle_astig\tamp_cont\tres(0.8)\tres(0.5)\tconf(30/10)\tconf(5_peak)\tconf\timage_name\n";
 //echo "</br>\n";
 
 foreach ($ctfdatas as $ctfdata) {
 	$filename = $appiondb->getImageNameFromId($ctfdata['REF|leginondata|AcquisitionImageData|image']);
-	$data[] = sprintf("%.4e\t%.5e\t%.5e\t%.5e\t%.4f\t%.4f\t%.4f\t%s\n",
+	$angtxt = str_pad(sprintf("%.3f",$ctfdata['angle_astigmatism']), 9, " ", STR_PAD_LEFT);
+	$data[] = sprintf("%d\t%.4e\t%.5e\t%.5e\t%s\t%.4f\t%.2f\t%.2f\t%.3f\t%.3f\t%.3f\t%s\n",
+		$ctfdata['REF|leginondata|AcquisitionImageData|image'],
 		$ctfdata['defocus'],
 		$ctfdata['defocus1'],
 		$ctfdata['defocus2'],
-		$ctfdata['angle_astigmatism'],
+		$angtxt,
 		$ctfdata['amplitude_contrast'],
+		$ctfdata['resolution_80_percent'],
+		$ctfdata['resolution_50_percent'],
+		$ctfdata['confidence_30_10'],
+		$ctfdata['confidence_5_peak'],
 		$ctfdata['confidence'],
-		$ctfdata['confidence_d'],
 		$filename);
 }
 
@@ -46,12 +57,9 @@ header("Content-Type: application/force-download");
 header("Content-Type: application/download");
 header("Content-Transfer-Encoding: binary");
 header("Content-Length: $size");
-$downname = sprintf("ctfdata-%04d.dat", $sessionId);
+$downname = (empty($runId)) ? sprintf("ctfdata-session%04d.dat", $sessionId) : sprintf("ctfdata-run%04d.dat", $runId);
 header("Content-Disposition: attachment; filename=$downname;");
 foreach ($data as $line) {
 	echo $line;
 }
-
-
-
 

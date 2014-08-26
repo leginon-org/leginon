@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import os
 import ConfigParser
+import pyami.fileutil
 
 debug = False
 
@@ -9,11 +10,10 @@ modulepath = os.path.dirname(__file__)
 
 configfilename = 'sinedon.cfg'
 
-config_locations = [
-	os.path.join('/etc', configfilename),
-	os.path.join(modulepath, configfilename),
-	os.path.join(HOME, configfilename),
-]
+confdirs = pyami.fileutil.get_config_dirs()
+if os.environ.has_key("SINEDON_CFG_PATH"):
+	confdirs.append(os.environ["SINEDON_CFG_PATH"])#added to have an option to have mutiple sinedon.cfg files
+config_locations = [os.path.join(confdir, configfilename) for confdir in confdirs]
 
 configparser = ConfigParser.SafeConfigParser()
 configfiles = configparser.read(config_locations)

@@ -6,11 +6,17 @@ import threading
 import sys
 import time
 import subprocess
+import string
+import random
+import multiprocessing
 #appion
 from appionlib import apDisplay
 from appionlib import apImage
+from appionlib import apDBImage
 from appionlib import apParam
 from appionlib import apFile
+# for FindEM2
+#from pyami import imagefun 
 
 #===========
 def runSpectralFindEM(imgdict, params, thread=False):
@@ -25,6 +31,11 @@ def runSpectralFindEM(imgdict, params, thread=False):
 	ccmaplist = []
 
 	processAndSaveImage(imgdict, params)
+	### FindEM crashes when an input image is longer than 76 characters
+	if len(dwnimgname) > 76:
+		randlink = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(10))
+		randlink+= '.mrc'
+		os.symlink(dwnimgname, randlink)
 
 	if len(params['templatelist']) < 1:
 		apDisplay.printError("templatelist == 0; there are no templates")
@@ -39,7 +50,11 @@ def runSpectralFindEM(imgdict, params, thread=False):
 		params["startang"+str(100+classavg)] = params["startang"+str(classavg)]
 		params["endang"+str(100+classavg)] = params["endang"+str(classavg)]
 		params["incrang"+str(100+classavg)] = params["incrang"+str(classavg)]
-		feed = findEMString(100+classavg, templatename, dwnimgname, ccmapfile1, params)
+		if len(dwnimgname) > 76:
+			feed = findEMString(100+classavg, templatename, randlink, ccmapfile1, params)
+		else:
+			feed = findEMString(100+classavg, templatename, dwnimgname, ccmapfile1, params)
+		sys.exit()
 		execFindEM(feed)
 
 		#Second round: template x template
@@ -78,11 +93,18 @@ def runFindEM(imgdict, params, thread=False):
 	runs a separate thread of findem.exe for each template
 	to get cross-correlation maps
 	"""
+
 	### check image
 	processAndSaveImage(imgdict, params)
 	dwnimgname = imgdict['filename']+".dwn.mrc"
 	if not os.path.isfile(dwnimgname):
 		apDisplay.printError("cound not find image to process: "+dwnimgname)
+	
+	### FindEM crashes when an input image is longer than 76 characters
+	if len(dwnimgname) > 76:
+		randlink = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(10))
+		randlink+= '.mrc'
+		os.symlink(dwnimgname, randlink)
 
 	### check template
 	if len(params['templatelist']) < 1:
@@ -91,40 +113,44 @@ def runFindEM(imgdict, params, thread=False):
 	joblist = []
 	ccmapfilelist = []
 
-	t0 = time.time()
+#	For FindEM2
+#	### generate circular mask for FindEM2
+#	apDisplay.printMsg("creating mask file for template matching")
+#	img = apImage.mrcToArray(params['templatelist'][0])
+#	circlemask = 1 - imagefun.filled_circle(img.shape,img.shape[0]/2*0.95)
+#	apImage.arrayToMrc(circlemask,"tmpmask.mrc")
+#	del img,circlemask
+	
+	workimg = randlink if len(dwnimgname) > 76 else dwnimgname
+
+	### create list of inputs for findem threads
+	feeds = []
 	for i,templatename in enumerate(params['templatelist']):
 		classavg = i + 1
 
-		#DETERMINE OUTPUT FILE NAME
-		#CHANGE THIS TO BE 00%i in future
+		# OUTPUT FILE NAME
 		numstr = "%03d" % classavg
-		#numstr = str(classavg%10)+"00"
 		ccmapfile="cccmaxmap"+numstr+".mrc"
 		apFile.removeFile(ccmapfile)
 
-		#GET FINDEM RUN COMMANDS
-		feed = findEMString(classavg, templatename, dwnimgname, ccmapfile, params)
-
-		#RUN THE PROGRAM
-		if thread is True:
-			job = findemjob(feed)
-			joblist.append(job)
-			job.start()
-		else:
-			execFindEM(feed)
+		feeds.append(findEMString(classavg, templatename, workimg, ccmapfile, params))
 
 		#STORE OUTPUT FILE
 		ccmapfilelist.append(ccmapfile)
 
-	### WAIT FOR THREADS TO COMPLETE
-	if thread is True:
-		apDisplay.printMsg("waiting for "+str(len(joblist))+" findem threads to complete")
-		for i,job in enumerate(joblist):
-			while job.isAlive():
-				sys.stderr.write(".")
-				time.sleep(1.5)
-		sys.stderr.write("\n")
-	apDisplay.printMsg("FindEM finished in "+apDisplay.timeString(time.time()-t0))
+	### launch findem threads
+	t0 = time.time()
+	findemexe = getFindEMPath()
+	pool = multiprocessing.Pool(processes=params['nproc'])
+	runner = findemrunner(findemexe,len(params['templatelist']))
+	for i,feed in enumerate(feeds):
+		pool.apply_async(runner, (i,feed))
+	pool.close()
+	pool.join()
+
+	apDisplay.printMsg("\nFindEM finished in "+apDisplay.timeString(time.time()-t0)+"\n")
+#	For FindEM2
+#	os.remove("tmpmask.mrc")
 
 	### READ OUTPUT FILES
 	ccmaplist = []
@@ -137,38 +163,17 @@ def runFindEM(imgdict, params, thread=False):
 	return ccmaplist
 
 #===========
-class findemjob(threading.Thread):
-	def __init__ (self, feed):
-		threading.Thread.__init__(self)
-		self.feed = feed
-	def run(self):
-		findemexe = getFindEMPath()
-		#apDisplay.printMsg("threading "+os.path.basename(findemexe))
+class findemrunner(object):
+	def __init__(self,exe,numtmplts):
+		self.findemexe = exe
+		self.totnum=numtmplts
+	def __call__(self,num,feed):
+		apDisplay.printMsg("threading %s (%i of %i)" % (os.path.basename(self.findemexe),num+1,self.totnum))
 		logf = open("findem.log", "a")
-		proc = subprocess.Popen( findemexe, shell=True, stdin=subprocess.PIPE, stdout=logf, stderr=logf)
-		fin = proc.stdin
-		fin.write(self.feed)
-		fin.flush()
-		fin.close()
-		proc.wait()
-
-#===========
-def execFindEM(feed):
-	t0 = time.time()
-	findemexe = getFindEMPath()
-	apDisplay.printMsg("running "+os.path.basename(findemexe))
-	logf = open("findem.log", "a")
-	proc = subprocess.Popen( findemexe, shell=True, stdin=subprocess.PIPE, stdout=logf, stderr=logf)
-	fin = proc.stdin
-	fin.write(feed)
-	fin.flush()
-	waittime = 2.0
-	while proc.poll() is None:
-		sys.stderr.write(".")
-		time.sleep(waittime)
-		logf.flush()
-	proc.wait()
-	apDisplay.printMsg("\nfinished in "+apDisplay.timeString(time.time()-t0))
+		p = subprocess.Popen( self.findemexe, stdin=subprocess.PIPE, stdout=logf, stderr=logf)
+		fin = p.stdin
+		fin.write(feed)
+		output,error = p.communicate()
 
 #===========
 def findEMString(classavg, templatename, dwnimgname, ccmapfile, params):
@@ -207,6 +212,11 @@ def findEMString(classavg, templatename, dwnimgname, ccmapfile, params):
 
 	feed += strt+','+end+','+incr+"\n"
 
+#	For FindEM2
+#	#MASK
+#	feed +="tmpmask.mrc\n"
+
+#	For FindEM2, comment out border
 	#BORDER WIDTH
 	borderwidth = str(int((params["diam"]/params["apix"]/params["bin"])/2)+1)
 	feed += borderwidth+"\n"
@@ -221,7 +231,7 @@ def processAndSaveImage(imgdata, params):
 
 	#downsize and filter leginon image
 	if params['uncorrected']:
-		imgarray = apImage.correctImage(imgdata, params)
+		imgarray = apDBImage.correctImage(imgdata)
 	else:
 		imgarray = imgdata['image']
 	imgarray = apImage.preProcessImage(imgarray, params=params, msg=False)
@@ -233,6 +243,8 @@ def processAndSaveImage(imgdata, params):
 def getFindEMPath():
 	unames = os.uname()
 	if unames[-1].find('64') >= 0:
+#		For FindEM2
+#		exename = '/ami/sw/packages/FindEM2/FindEM2_V1.00.exe'
 		exename = 'findem64.exe'
 	else:
 		exename = 'findem32.exe'

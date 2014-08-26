@@ -7,9 +7,9 @@
  *	see  http://ami.scripps.edu/software/leginon-license
  */
 
-require "clitools.php";
-require "inc/leginon.inc";
-require "inc/image.inc";
+require_once "clitools.php";
+require_once "inc/leginon.inc";
+require_once "inc/image.inc";
 require_once "Console/ProgressBar.php";
 
 $CHECKSUM_FILE=0;
@@ -30,7 +30,7 @@ $sessionId=$args['session'];
 $preset=$args['preset'];
 $sessioninfo=$leginondata->getSessionInfo($sessionId);
 $sessionId=$sessioninfo['SessionId'];
-$datatypes = $leginondata->getDatatypes($sessionId);
+$datatypes = $leginondata->getDataTypes($sessionId);
 if ($preset) {
 	if (!is_array($preset)) {
 		$preset=array($preset);
@@ -50,7 +50,7 @@ if ($preset) {
 if (!$path=$sessioninfo['Image path'])
 	$path="/tmp/".$sessioninfo['Name']."/";
 
-$path = ereg_replace("rawdata", "jpegs", $path);
+$path = preg_replace("%rawdata%", "jpegs", $path);
 
 if ($args['outpath'])
 	$path=$args['outpath'];
@@ -72,7 +72,7 @@ if (!$imageIds) {
 
 $t = $args['t'];
 if ($t=='png') {
-        $type = "image/x-png";
+        $type = "image/png";
 	$ext = "png";
 } else {
         $type = "image/jpeg";
@@ -101,7 +101,7 @@ $existing_files = getfiles($path);
 $pbar = new Console_ProgressBar('* %fraction% %bar% %percent% %estimate% ', '#', '-',60, $n_images);
 foreach ($imageIds as $i=>$id) {
 	list($res) = $leginondata->getFilename($id);
-	$filename = ereg_replace('mrc$', $ext, $res['filename']);
+	$filename = preg_replace('%mrc$%', $ext, $res['filename']);
 
 	$filename=$path."/".$filename;
 	
@@ -117,7 +117,7 @@ foreach ($imageIds as $i=>$id) {
 		'loadtime' => $displayloadingtime,
 		'autoscale' => $autoscale,
 		'newptcl' => $displaynptcl,
-		'ptcl' => urldecode($displayparticle)
+		'ptcl' => urldecode($displayparticle),
 	);
 
 	# udpate progress bar
@@ -127,20 +127,18 @@ foreach ($imageIds as $i=>$id) {
 			# continue if exists 
 			continue;
 	}
-
 	$img = getImage($sessionId, $id, "", $params);
 	
 	// when there is no image. skip it....
+	// redux caching does not need to be displayed, either.
 	if($img == false)
 		continue;
-		
 	# write filename
 	if ($t=='png') {
 		imagepng($img, $filename);
 	} else {
 		imagejpeg($img,$filename,$quality);
 	}
-
 	imagedestroy($img);
 	
 }

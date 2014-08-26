@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 
-import Image
+from PIL import Image
 import numpy
 import arraystats
 
-def write(a, filename, min=None, max=None, quality=80, newsize=None):
+def write(a, filename, min=None, max=None, quality=80, newsize=None, stdval=5):
 	'''
 Write a 2-D numpy array to a JPEG file.
 Usage:
@@ -26,11 +26,11 @@ Optional argument 'newsize' is used for scaling the image.
 	if min is None:
 		mean = arraystats.mean(a)
 		std = arraystats.std(a)
-		min = mean - 5 * std
+		min = mean - stdval * std
 	if max is None:
 		mean = arraystats.mean(a)
 		std = arraystats.std(a)
-		max = mean + 5 * std
+		max = mean + stdval * std
 
 	## scale to 8 bit
 	a = numpy.clip(a, min, max)

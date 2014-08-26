@@ -83,7 +83,7 @@ and import the modules:
 
 {{{
 >>> import wx     #wxPython
->>> import Image  #python imaging
+>>> from PIL import Image  #python imaging
 >>> import scipy
 >>> import numpy
 }}}

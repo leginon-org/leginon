@@ -10,7 +10,7 @@ offset means:
 import numpy
 import pyami.quietscipy
 import scipy.ndimage
-import leginondata
+from leginon import leginondata
 import polygon
 import raster
 import time

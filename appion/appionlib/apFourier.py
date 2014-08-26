@@ -326,38 +326,57 @@ def writeFrcPlot(filename, frcdata, apix=1.0, boxsize=None, msg=False):
 		apDisplay.printMsg("wrote data to: "+filename)
 
 #===========
-def getResolution(fscdata, apix=1.0, boxsize=None, filtradius=3):
+def getResolution(fscdata, apix=1.0, boxsize=None, filtradius=3, crit=0.5):
 	if boxsize is None:
 		boxsize = fscdata.shape[0]*2
 	lastx=0
 	lasty=0
 	if filtradius is not None and filtradius > 1:
 		localfscdata = ndimage.gaussian_filter1d(fscdata, sigma=filtradius, mode='reflect')
+	else:
+		localfscdata = fscdata
 	if localfscdata.min() > 0.5:
 		apDisplay.printWarning("Resolution is at Nyquist")
 		return apix*2.0
 	for i in range(localfscdata.shape[0]):
-		x = float(i)
+		x = float(i+1)
 		y = localfscdata[i]
 		if x != 0.0 and x < 0.9:
 			apDisplay.printWarning("FSC is wrong data format")
-		if y > 0.5:
-			#store values for later
-			lastx = x
-			lasty = y
-		else:
-			# get difference of fsc
-			diffy = lasty-y
-			# get distance from 0.5
-			distfsc = (0.5-y) / diffy
-			# get interpolated spatial freq
-			intfsc = x - distfsc * (x-lastx)
-			# convert to Angstroms
-			if intfsc > 0.0:
-				res = boxsize * apix / intfsc
+		if crit==0.143:
+			if y > 0.143:
+				#store values for later
+				lastx = x
+				lasty = y
 			else:
-				res = boxsize * apix
-			return res
+				# get difference of fsc
+				diffy = lasty-y
+				# get distance from 0.5
+				distfsc = (0.143-y) / diffy
+				# get interpolated spatial freq
+				intfsc = x - distfsc * (x-lastx)
+#				m = (y-lasty) / (x-lastx)
+#				b = y-(m*x)
+#				intfsc = (0.5-b)/m
+				# convert to Angstroms
+				if intfsc > 0.0:
+					res = boxsize * apix / intfsc
+				else:
+					res = boxsize * apix
+				return res
+		else:
+			if y > 0.5:
+				lastx = x
+				lasty = y
+			else:
+				diffy = lasty-y
+				distfsc = (0.5-y) / diffy
+				intfsc = x - distfsc * (x-lastx)
+				if intfsc > 0.0:
+					res = boxsize * apix / intfsc
+				else:
+					res = boxsize * apix
+				return res
 	end = localfscdata.shape[0]
 	for value in localfscdata:
 		sys.stderr.write("%.3f > "%(value))

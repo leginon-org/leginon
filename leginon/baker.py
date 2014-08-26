@@ -1,6 +1,6 @@
 import node
 import event
-import leginondata
+from leginon import leginondata
 import time
 import calibrationclient
 from pyami import correlator, peakfinder, imagefun, ordereddict
@@ -10,7 +10,7 @@ import instrument
 import presets
 import types
 import numpy
-import leginondata
+from leginon import leginondata
 import threading
 import player
 

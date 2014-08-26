@@ -88,6 +88,7 @@ class MosaicTargetMaker(TargetMaker):
 			if not self.publishargs:
 				raise AtlasError('no targets calculated')
 			self._publishAtlas(*self.publishargs)
+			self.publishargs = None   # reset to prevent resubmitting
 		except AtlasError, e:
 			self.logger.exception('Atlas creation failed: %s' % e)
 		except Exception, e:

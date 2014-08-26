@@ -1,7 +1,7 @@
 <?php
 $paths = array('.', '..', get_include_path());
 set_include_path(implode(PATH_SEPARATOR, $paths));
-require_once "../config.php";
+require_once dirname(__FILE__).'/../config.php';
 require_once "inc/leginon.inc";
 
 class Tomography {
@@ -134,10 +134,14 @@ class Tomography {
 			."ON (s.DEF_id = a.`REF|ScopeEMData|scope`) "
 			."LEFT JOIN CameraEMData c "
 			."ON (c.DEF_id = a.`REF|CameraEMData|camera`) "
+			."LEFT JOIN PresetData pr "
+			."ON (pr.DEF_id = a.`REF|PresetData|preset`) "
 			."LEFT JOIN TomographyPredictionData p "
 			."ON (a.DEF_id = p.`REF|AcquisitionImageData|image`) "
 			."WHERE a.`REF|TiltSeriesData|tilt series`=$tiltSeriesId "
-			."AND a.`label` IS NULL "
+			."AND (a.`label` is null or a.`label` like '%tomo%') "
+			# exclude aligned data
+			."AND (pr.`name` not like '%-%') "
 			."ORDER BY stage_alpha";
 
 		return $this->mysql->getSQLResult($query);
@@ -168,9 +172,19 @@ class Tomography {
 		return $result[0];
 	}
 
-	function getTiltSeriesData($tiltSeriesId) {
+	function getTiltSeriesData($tiltSeriesId,$excludeAligned=true) {
 		if($tiltSeriesId == NULL)
 			return array();
+
+		# exclude aligned data so that statistics not screwed up
+		if ($excludeAligned) {
+			$exclude_aligned_join = "LEFT JOIN PresetData pr "
+				."ON (pr.DEF_id = a.`REF|PresetData|preset`) ";
+			$exclude_aligned_and = "AND (pr.`name` not like '%-%') ";
+		} else {
+			$exclude_aligned_join = '';
+			$exclude_aligned_and = '';
+		}
 
 		$query = 'SELECT '
 			.'a.DEF_id AS id, '
@@ -192,12 +206,16 @@ class Tomography {
 			.'AcquisitionImageStatsData.mean AS mean, '
 			.'a.filename, '
 			.'a.DEF_id AS imageId, '
-			.'p1.pixelsize AS pixel_size '
+			.'p1.pixelsize AS pixel_size, '
+			.'t.number '
 			.'FROM AcquisitionImageData a '
 			.'LEFT JOIN ScopeEMData s '
 			.'ON s.DEF_id=a.`REF|ScopeEMData|scope` '
 			.'LEFT JOIN CameraEMData c '
 			.'ON c.DEF_id=a.`REF|CameraEMData|camera` '
+			.'LEFT JOIN TiltSeriesData t '
+			.'ON t.DEF_id=a.`REF|TiltSeriesData|tilt series` '
+			.$exclude_aligned_join
 			.'LEFT JOIN TomographyPredictionData '
 			.'ON TomographyPredictionData.`REF|AcquisitionImageData|image`=a.DEF_id '
 			.'LEFT JOIN AcquisitionImageStatsData '
@@ -208,7 +226,9 @@ class Tomography {
 			.'AND p1.`REF|InstrumentData|ccdcamera`=c.`REF|InstrumentData|ccdcamera` '
 			.'AND p1.DEF_timestamp <= a.DEF_timestamp '
 			."WHERE a.`REF|TiltSeriesData|tilt series`=$tiltSeriesId "
-			."AND a.`label` IS NULL "
+			// exclude projections
+			."AND (a.`label` is null or a.`label` like '%tomo%') "
+			.$exclude_aligned_and
 			.'AND '
 			.'p1.DEF_timestamp=(SELECT MAX(p2.DEF_timestamp) '
 			.'FROM PixelSizeCalibrationData p2 '
@@ -217,7 +237,6 @@ class Tomography {
 			.'AND p1.`REF|InstrumentData|tem`=p2.`REF|InstrumentData|tem` '
 			.'AND p1.`REF|InstrumentData|ccdcamera`=p2.`REF|InstrumentData|ccdcamera`) '
 			.'ORDER BY s.`SUBD|stage position|a`;';
-
 		return $this->mysql->getSQLResult($query);
 	}
 
@@ -327,6 +346,32 @@ class Tomography {
 		return $results;
 	}
 
+	function getImageDose($image_id) {
+		// The exposure time in this function is in msec to match 
+		// getTiltSeriesData that is used together.
+		$query = 'SELECT p.dose/1e20 AS dose, '
+			.'p.`exposure time` as exposure_time '
+			.'FROM PresetData p '
+			.'LEFT JOIN AcquisitionImageData a '
+			.'ON a.`REF|PresetData|preset` = p.`DEF_id` '
+			.'WHERE a.`DEF_id` = '.$image_id.' ';
+		$results = $this->mysql->getSQLResult($query);
+		return $results[0];
+	}
+
+	function getTiltSeriesDose($tiltSeriesData) {
+		$first_image_dose_data = $this->getImageDose($tiltSeriesData[0]['id']);
+		$total_exposure_time = 0;
+		foreach ($tiltSeriesData as $tdata) {
+			$total_exposure_time += $tdata['exposure_time'];
+		}
+		if ($first_image_dose_data['dose']) {
+			$total_dose = $first_image_dose_data['dose'] * $total_exposure_time / $first_image_dose_data['exposure_time'];
+			return (int) $total_dose;
+		} else
+			return 'n/a';
+	}
+
 	function getEnergyShift($session_id) {
 		if($session_id == NULL)
 			return array();
@@ -341,7 +386,7 @@ class Tomography {
 	}
 
 	function error_image($message='no results to graph') {
-		header("Content-type: image/x-png");
+		header("Content-type: image/png");
 		$blkimg = imagecreatetruecolor(300,20);
 		$bgc = imagecolorallocate($blkimg, 255,255,255);
 		imagefilledrectangle($blkimg,0,0,300,20, $bgc);
@@ -351,6 +396,6 @@ class Tomography {
 	}
 }
 
-$mysql = &new mysql(DB_HOST, DB_USER, DB_PASS, DB_LEGINON);
+$mysql = new mysql(DB_HOST, DB_USER, DB_PASS, DB_LEGINON);
 $tomography = new Tomography($mysql);
 ?>

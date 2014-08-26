@@ -6,303 +6,91 @@
  */
 
 require_once "inc/particledata.inc";
+require_once "inc/forms/appionLoopTable.inc";
+require_once "inc/forms/runParametersForm.inc";
 
-function createAppionLoopTable ($sessiondata, $defrunname, $outdirname, $leginon=0, $desc=False) {
-	echo "<!-- BEGIN Appion Loop Param -->\n";
-	$norejects = ($_POST[norejects]=="on") ? "CHECKED" : "";
-	$nowait = ($_POST[nowait]=="") ? "" : "CHECKED";
-	//$background = ($_POST[background]=="on") ? "CHECKED" : "";
-	$shuffle = ($_POST['shuffle']=="on") ? "CHECKED" : "";
-	$reverse = ($_POST['reverse']=="on") ? "CHECKED" : "";
-	$limit = $_POST[limit];
-	$tiltangle = $_POST['tiltangle'];
-	// commit is checkmarked by default
-	$commit = ($_POST['commit']=="on" || !$_POST['process']) ? "CHECKED" : "";
-	$apcontinue = $_POST['apcontinue'];
-	// continue is checkmarked by default
-	$apcontinuecheck = ($apcontinue || !$_POST['process']) ? "CHECKED" : "";
-	$apreproccheck = (!$apcontinue && $_POST['process']) ? "CHECKED" : "";
-	$normordercheck = ($_POST['imgorder'] == 'normal' || !$_POST['imgorder']) ? "CHECKED" : "";
-	$reversecheck = ($_POST['imgorder'] == 'reverse') ? "CHECKED" : "";
-	$shufflecheck = ($_POST['imgorder'] == 'shuffle') ? "CHECKED" : "";
 
-	if ($_POST['preset']) $dbimages=$_POST['sessionname'].",".$_POST['preset'];
-	else $alldbimages = $_POST['sessionname'];
-	if ($_POST['testimage']=="on") {
-		if ($_POST['testfilename']) $testimage=trim($_POST['testfilename']);
-	}
-
-	$runname = ($_POST['runname']) ? $_POST['runname'] : $defrunname;
-	echo openRoundBorder();
-	echo docpop('runname','<b>Run Name:</b> ');
-	echo "<input type='text' name='runname' VALUE='$runname'><BR/><BR/>\n";
-	
+function createAppionLoopTable ($sessiondata, $defrunname, $outdirname, $leginon=0, $desc=False, $dd=False) {
 	//check for output directory [appion = 0, leginon = 1]
 	$leg_check = $leginon;
 	
 	$sessioninfo=$sessiondata['info'];
 	if (!empty($sessioninfo)) {
 		$sessionname=$sessioninfo['Name'];
+		echo "<input type='hidden' name='sessionname' value='$sessionname'>\n";
 		$sessionpath=$sessioninfo['Image path'];
 		if (!$leg_check) {
 			$sessionpath=getBaseAppionPath($sessioninfo).'/'.$outdirname;
 		}
 		
 		if ($leg_check) {
-			$sessionpath=ereg_replace("rawdata","",$sessionpath);		
+			$sessionpath=preg_replace("%rawdata%","",$sessionpath);		
 		}
 	}
 
 	$outdir = ($_POST[outdir]) ? $_POST[outdir] : $sessionpath;
-	echo docpop('outdir','<b>Output Directory:</b>');
-	echo "<br />\n";
-	echo "<input type='text' name='outdir' VALUE='$outdir' size='45'><br />\n";
-
-	// write description entry
-	if ($desc!=False) {
-		if ($desc==1) $desc='';
-		echo "<br>\n";
-		echo docpop('stackdescr','<b>Stack Description:</b>');
-		echo "<br>\n";
-		echo "<textarea name='description' rows='2' cols='50'>$desc</textarea>\n";
-		echo "<br>\n";
-	}
-	echo closeRoundBorder();
-	echo "<br />\n";
-
-	$presetval = ($_POST['preset']) ? $_POST['preset'] : 'en';
-	$presets=$sessiondata['presets'];
-	if ($presets && count($presets) > 1) {
-		echo"<B>Preset</B>\n<SELECT name='preset'>\n";
-		foreach ($presets as $preset) {
-			echo "<OPTION VALUE='$preset' ";
-			// make en selected by default
-			if ($preset==$presetval) echo "SELECTED";
-			echo ">$preset</OPTION>\n";
-		}
-		echo"</SELECT><br/>\n";
-	} elseif ($presets) {
-		//only one preset
-		echo"<B>Preset:</B>&nbsp;&nbsp;".$presets[0]."\n\n";
-		echo"<input type='hidden' name='preset' VALUE=".$presets[0]."><br/>\n";
-	} else {
-		//no presets
-		echo"<input type='hidden' name='alldbimages' VALUE=1>\n";
-		echo"<I>No presets for this session<br/>\n"
-			."processing ALL images</I><br/>\n";
-	}
-
-	echo "<hr/>\n";
-	echo "<input type='hidden' name='sessionname' value='$sessionname'>\n";
-
+	
+	//--- Add the Run Parameters Form
+	$showDesc = $desc;
+	$runParamsForm = new RunParametersForm( $runname=$defrunname, $outdir=$outdir, $description='', $desc );
+	echo $runParamsForm->generateForm();
+	
+	//--- Add the Appion Loop Form
 	$particle = new particledata();
 	$maxang = $particle->getMaxTiltAngle($_GET['expId']);
-	if ($maxang > 5) {
-		if ($tiltangle == 'all') $allcheck = 'selected';
-		elseif ($tiltangle == 'notilt') $notiltcheck = 'selected';
-		elseif ($tiltangle == 'hightilt') $hightiltcheck = 'selected';
-		elseif ($tiltangle == 'lowtilt') $lowtiltcheck = 'selected';
-		elseif ($tiltangle == 'minustilt') $minustiltcheck = 'selected';
-		elseif ($tiltangle == 'plustilt') $plustiltcheck = 'selected';
-		echo docpop('tiltangle','Tilt Angle:');
-		echo "<select name='tiltangle'>\n";
-		echo "  <option value='all' $allcheck>all tilt angles</option>\n";
-		echo "  <option value='notilt' $notiltcheck>zero tilt angles only</option>\n";
-		echo "  <option value='hightilt' $hightiltcheck>large tilt angles only</option>\n";
-		echo "  <option value='lowtilt' $lowtiltcheck>small tilt angles only</option>\n";
-		echo "  <option value='minustilt' $minustiltcheck>negative tilt angles only</option>\n";
-		echo "  <option value='plustilt' $plustiltcheck>positive tilt angles only</option>\n";
-		echo "</select>";
-		echo "<br />\n";
-	} else
-		echo "<input type='hidden' name='tiltangle' value='all'>\n";
-
-	echo "<input type='checkbox' name='nowait' $nowait>\n";
-	echo docpop('nowait','Wait for more images after finishing');
-	echo "<br />\n";
-
-	/*echo "<input type='checkbox' name='background' $background>\n";
-	echo docpop('background','Run in background mode');
-	echo "<br />\n";*/
-
-	echo docpop('limit','Limit: ');
-	echo "only process&nbsp; <input type='texlt' name='limit' VALUE='$limit' size='4'>&nbsp; images\n";
-	echo "<br />\n";
-
-	echo docpop('checkimages','<i>Images to process:</i>');
-	echo "<br/>\n";
-	echo "&nbsp;<input type='radio' name='checkimage' value='unrejected' ";
-	if ($_POST['checkimage'] == 'unrejected' || !$_POST['checkimage']) echo "checked";
-	echo ">\n";
-	echo "Do not process hidden or rejected images <font size=-2><i>(default)</i></font><br/>\n";
-	echo "&nbsp;<input type='radio' name='checkimage' value='all' ";
-	if ($_POST['checkimage'] == 'all') echo "checked";
-	echo ">\n";
-	echo "All images independent of status <br/>\n";
-	echo "&nbsp;<input type='radio' name='checkimage' value='best' ";
-	if ($_POST['checkimage'] == 'best') echo "checked";
-	echo ">\n";
-	echo "Exemplar and keep images only<br/>\n";
-
-	echo docpop('imgorder','<i>Image order:</i>'); 
-	echo "<br/>\n";
-	echo "&nbsp;<input type='radio' name='imgorder' value='normal' $normordercheck>\n";
-	echo "Forward <font size=-2><i>(default)</i></font>\n";
-	echo "&nbsp;<input type='radio' name='imgorder' value='reverse' $reversecheck>\n";
-	echo "Reverse\n";
-	echo "&nbsp;<input type='radio' name='imgorder' value='shuffle' $shufflecheck>\n";
-	echo "Shuffle<br/>\n";
-
-	echo docpop('cont','<i>Continuation:</i>'); 
-	echo "<br />\n";
-	echo "&nbsp;<input type='radio' name='apcontinue' value='1' $apcontinuecheck>\n";
-	echo "Continue unfinished run <font size=-2><i>(default)</i></font><br/>\n";
-	echo "&nbsp;<input type='radio' name='apcontinue' value='0' $apreproccheck>\n";
-	echo "Reprocess all images<br/>\n";
-
-	echo "<hr/>\n";
-	echo "<input type='checkbox' name='commit' $commit>\n";
-	echo docpop('commit','<b>Commit results to database</b>');
-	echo "<br/>\n";
-	echo "<hr/>\n";
-	echo "<!-- END Appion Loop Param -->\n";
+	
+	// Create a dictionary of preset value=>desc. Desc appears in the gui, value is returned in the code in a selection box.
+	$presetList = array_combine( $sessiondata['presets'], $sessiondata['presets'] );
+	
+	$appionLoopTable = new AppionLoopTable( $checkimage='unrejected', $nowait='', $imgorder='normal', $limit='',$tiltangle='', $maxtiltangle=$maxang, $apcontinue='1',
+	$commit='on', $presetList=$presetList, $preset="en", $testimage='', $testfilename='' );
+	
+	// Only hide advanced parameters if there is not an advanced user logged in.
+	// Modify user profile to set to an advanced user. 
+	// NOTE: this assumes the Appion user name and the username that is used to log in to the processing page are the same.
+	// We may want to change that someday.
+	$displayAdvanced = $_SESSION['advanced_user'];
+	echo $appionLoopTable->generateForm( $displayAdvanced=$displayAdvanced );		
+	
+	return;
 };
 
-function appionLoopSummaryTable () {
-	if ($_POST[checkimage]=="unrejected") {
-		$norejects = "<font color='green'>true</font>";
-		$bestimages = "<font color='red'>false</font>";
-	} elseif ($_POST[checkimage]=="best") {
-		$norejects = "<font color='green'>true</font>";
-		$bestimages = "<font color='green'>true</font>";
-	} else {
-		$norejects = "<font color='red'>false</font>";
-		$bestimages = "<font color='red'>false</font>";
-	}
-	$nowait = ($_POST[nowait]=="on") ? "<font color='red'>false</font>" : "<font color='green'>true</font>";
-	//$background = ($_POST[background]=="on") ? "<font color='green'>true</font>" : "<font color='red'>false</font>";
-	$shuffle = ($_POST['imgorder']=="shuffle") ? "<font color='green'>true</font>" : "<font color='red'>false</font>";
-	$reverse = ($_POST['imgorder']=="reverse") ? "<font color='green'>true</font>" : "<font color='red'>false</font>";
-	$limit = ($_POST[limit]) ? $_POST[limit] : "all";
-	$tiltangle = $_POST['tiltangle'];
-	$apcontinue = $_POST[apcontinue];
-	$commit = ($_POST[commit]=="on") ? "<font color='green'>true</font>" : "<font color='red'>false</font>";
-	$runname = $_POST[runname];
-	$reverse = ($_POST['reverse']=="on") ? "<font color='green'>true</font>" : "<font color='red'>false</font>";
-	$outdir = $_POST[outdir];
-	if ($_POST[preset]) $dbimages=$_POST[sessionname].",".$_POST[preset];
-	else $alldbimages = $_POST[sessionname];
-	if ($_POST['testimage']=="on") {
-		if ($_POST['testfilename']) $testimage=trim($_POST['testfilename']);
-		$testimage = ereg_replace(" ",",,", $testimage);
-		$testimage = ereg_replace(",,",",",$testimage);
-	}
-
-	echo "<TR><TD>runname</TD><TD>$runname</TD></TR>\n";
-	echo "<TR><TD>output directory</TD><TD>$outdir</TD></TR>\n";
-	echo "<TR><TD>no rejects</TD><TD>$norejects</TD></TR>\n";
-	echo "<TR><TD>only best images</TD><TD>$bestimages</TD></TR>\n";
-	echo "<TR><TD>do not wait for more images</TD><TD>$nowait</TD></TR>\n";
-	echo "<TR><TD>commit to database</TD><TD>$commit</TD></TR>\n";
-	//echo "<TR><TD>background</TD><TD>$background</TD></TR>\n";
-	echo "<TR><TD>shuffle images</TD><TD>$shuffle</TD></TR>\n";
-	echo "<TR><TD>process new images first</TD><TD>$reverse</TD></TR>\n";
-	echo "<TR><TD>image limit</TD><TD>$limit</TD></TR>\n";
-	echo "<TR><TD>tilt angle restriction</TD><TD>$tiltangle</TD></TR>\n";
-	echo "<TR><TD>continue from last image</TD><TD>$apcontinue</TD></TR>\n";
-}
-
+// Returns an error message if there is an error
+// Returns the command flags for the Run Params and appion loop params if there is no error.
+// TODO: These should be separated. Call a validate function then the build command function. Not both in same function. 
 function parseAppionLoopParams () {
 	// CHECK FOR ERRORS
 	$error = checkAppionErrors();
-	if ($error[0] != false) {
+	if ($error != false) {
 		return $error;
-		exit;
-	}
-	// CONVERT DATA
-	if ($_POST[checkimage]=="unrejected") {
-		$norejects = 1;
-		$bestimages = 0;
-	} elseif ($_POST[checkimage]=="best") {
-		$norejects = 0;
-		$bestimages = 1;
-	} else {
-		$norejects = 0;
-		$bestimages = 0;
-	}
-	$nowait = ($_POST['nowait']=="on") ? false : true;
-	//$background = ($_POST['background']=="on") ? true : false;
-	$shuffle = ($_POST['imgorder']=="shuffle") ? true : false;
-	$reverse = ($_POST['imgorder']=="reverse") ? true : false;
-	$limit = $_POST['limit'];
-	$tiltangle = $_POST['tiltangle'];
-	$apcontinue = $_POST['apcontinue'];
-	$commit = ($_POST['commit']=='on') ? true : false;
-	$runname = $_POST['runname'];
-	$outdir = $_POST['outdir'];
-	
-	if ($outdir) {
-		// make sure outdir ends with '/' and append run name
-		if (substr($outdir,-1,1)!='/') $outdir.='/';
-		$rundir = $outdir.$runname;
 	}
 
-	if ($_POST['testimage']=="on") {
-		if ($_POST['testfilename']) $testimage=trim($_POST['testfilename']);
-		$testimage = ereg_replace(" ",",", $testimage);
-		$testimage = ereg_replace(",,",",", $testimage);
-		$apcontinue = false;
-	}
+	// add params from run parameters form
+	$runParametersForm = new RunParametersForm();
+	$command .= $runParametersForm->buildCommand( $_POST );
+			
+	// add params from Appion Loop form
+	$appionLoopTable = new AppionLoopTable();
+	$command .= $appionLoopTable->buildCommand( $_POST );	
 
-	// CREATE COMMAND
-	$command=" ";
-	$command .= " --projectid=".getProjectId()." ";
-	if ($testimage) $command.=" --mrclist=$testimage";
-	elseif ($_POST['preset']) $command.=" --preset=".$_POST['preset'];
-	$command.=" --session=".$_POST['sessionname'];
-	$command.=" --runname=$runname";
-	if ($outdir) $command.=" --rundir=$rundir";
-	if ($norejects) $command.=" --no-rejects";
-	if ($bestimages) $command.=" --best-images";
-	if ($nowait) $command.=" --no-wait";
-	if ($commit)
-		$command.=" --commit";
-	else
-		$command.=" --no-commit";
-	//if ($background) $command.=" --background";
-	if ($reverse) $command.=" --reverse";
-	if ($shuffle) $command.=" --shuffle";
-	if ($limit) $command.=" --limit=$limit";
-
-	if ($tiltangle != '' && $tiltangle != 'all') $command.=" --tiltangle=$tiltangle";
-	if (!$apcontinue) $command.=" --no-continue";
-	else $command.=" --continue";
-
+	// add a space in case there are more params being appended down the road.
 	return $command." ";
 }
 
+// Returns an error message if there are any issues with the parameters of the appion loop forms
+// Returns false if there are no errors.
 function checkAppionErrors () {
-	if (!$_POST[outdir]) {
-		return "<B>ERROR:</B> Select an experiment session";
-		exit;
-	}
-	if ($_POST['testimage']=="on") {
-		if ($_POST['testfilename']) $testimage=trim($_POST['testfilename']);
-		else {
-			return ("<B>ERROR:</B> Specify an mrc file to test these parameters");
-			exit;
-		}
-	}
-	elseif ($_POST['sessionname']) {
-		if ($_POST['preset']) $dbimages=$_POST[sessionname].",".$_POST[preset];
-		elseif(!$_POST['alldbimages']) {
-			return ("<B>ERROR:</B> Select an image preset for template matching");
-			exit;
-		}
-	}
-
-
-	return false;
+	$error = false;
+	
+	// validate params from run parameters form
+	$runParametersForm = new RunParametersForm();
+	$error .= $runParametersForm->validate( $_POST );
+			
+	// validate params from Appion Loop form
+	$appionLoopTable = new AppionLoopTable();
+	$error .= $appionLoopTable->validate( $_POST );	
+	
+	return $error;	
 };
 
 function prettytable2 () {
@@ -321,7 +109,7 @@ function prettytable2 () {
 **
 */
 
-function createParticleLoopTable ($defthresh, $defmaxthresh) {
+function createParticleLoopTable ($defthresh, $defmaxthresh, $showCCsearchMult=False) {
 	echo "<!-- BEGIN Particle Loop Param -->\n";
 	$threshv = ($_POST['thresh']) ? $_POST['thresh'] : $defthresh;
 	$maxthreshv = ($_POST['maxthresh']) ? $_POST['maxthresh'] : $defmaxthresh;
@@ -340,7 +128,8 @@ function createParticleLoopTable ($defthresh, $defmaxthresh) {
 	$defocpairv = ($_POST['defocpair']=="on") ? "CHECKED" : "";
 	$doublesv = ($_POST['doubles']=="on") ? "CHECKED" : "";
 	$planeregv = ($_POST['planereg']=="off") ? "" : "CHECKED";
-
+	$ccsearchmult = ($_POST['ccsearchmult']) ? $_POST['ccsearchmult'] : '1.0';
+		
 	if ($defthresh != -1) {
 		echo "<B>Peak thresholds:</B><br/>\n";
 		echo "<input type='text' name='thresh' VALUE='$threshv' size='4'>\n";
@@ -388,6 +177,12 @@ function createParticleLoopTable ($defthresh, $defmaxthresh) {
 	echo "<br />\n";
 
 	echo "<b>Advanced options:</b><br />\n";
+	if ( $showCCsearchMult ) {
+		echo "<input type='text' name='ccsearchmult' VALUE='$ccsearchmult' size='4'>\n";
+		echo docpop('ccsearchmult','Cross-correlation search multiple');
+		echo "<br/>\n";
+	}
+
 	if ($defthresh != -1) {
 		echo "<input type='text' name='maxsize' VALUE='$maxsizev' size='4'>\n";
 		echo docpop('maxsize','Maximum peak area multiple');
@@ -401,7 +196,7 @@ function createParticleLoopTable ($defthresh, $defmaxthresh) {
 		echo "<br/>\n";
 		echo "&nbsp;<input type='radio' name='peaktype' value='centerofmass' $centerofmasscheck>\n";
 		echo "Center of mass <font size=-2><i>(default)</i></font><br/>\n";
-		echo "&nbsp;<input type='radio' name='peaktype' value='maximum' $maximumcheck DISABLED>\n";
+		echo "&nbsp;<input type='radio' name='peaktype' value='maximum' $maximumcheck>\n";
 		echo "Maximum position";
 		echo "<br/>\n";
 
@@ -417,6 +212,7 @@ function createParticleLoopTable ($defthresh, $defmaxthresh) {
 	echo "<input type='checkbox' name='invert' $invertv>\n";
 	echo docpop('invert',' Invert image density');
 	echo "<br />\n";
+
 	echo "<!-- END Particle Loop Param -->\n";
 }
 

@@ -27,11 +27,17 @@ class Panel(leginon.gui.wx.Acquisition.Panel):
 
 		self.toolbar.AddSeparator()
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_ACQUIRE, 'acquire', shortHelpString='Acquire')
-
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_RESET_ALPHA, 'alpha',
+													shortHelpString='Tilt stage alpha to next value')
+		self.toolbar.RemoveTool(leginon.gui.wx.ToolBar.ID_SIMULATE_TARGET)
+		self.toolbar.RemoveTool(leginon.gui.wx.ToolBar.ID_SIMULATE_TARGET_LOOP)
+		self.toolbar.RemoveTool(leginon.gui.wx.ToolBar.ID_SIMULATE_TARGET_LOOP_STOP)
+		self.toolbar.RemoveTool(leginon.gui.wx.ToolBar.ID_BROWSE_IMAGES)
 		# correlation image
 		self.imagepanel.addTypeTool('Correlation', display=True)
-		self.imagepanel.addTargetTool('Peak', wx.Color(255, 128, 0))
+		self.imagepanel.addTargetTool('Peak', wx.Colour(255, 128, 0))
 		self.toolbar.Bind(wx.EVT_TOOL, self.onAcquireTool, id=leginon.gui.wx.ToolBar.ID_ACQUIRE)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onTiltTool, id=leginon.gui.wx.ToolBar.ID_RESET_ALPHA)
 
 		self.szmain.Layout()
 
@@ -43,9 +49,13 @@ class Panel(leginon.gui.wx.Acquisition.Panel):
 	def onAcquireTool(self, evt):
 		threading.Thread(target=self.node.testAcquire).start()
 
+	def onTiltTool(self, evt):
+		threading.Thread(target=self.node.testTilt).start()
+
 class SettingsDialog(leginon.gui.wx.Acquisition.SettingsDialog):
 	def initialize(self):
-		return ScrolledSettings(self,self.scrsize,False,self.show_basic)
+		scrolling = not self.show_basic
+		return ScrolledSettings(self,self.scrsize,scrolling,self.show_basic)
 
 class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 	def initialize(self):

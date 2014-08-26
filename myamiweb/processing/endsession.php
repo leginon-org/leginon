@@ -1,8 +1,8 @@
 <?php
 $expId=$_GET['expId'];
 $projectId=$_GET['projectId'];
-require "../config.php";
-require "inc/session.inc";
+require_once "../config.php";
+require_once "inc/session.inc";
 setsession();
 endsession();
 if (!empty($expId))

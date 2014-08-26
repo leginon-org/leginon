@@ -1,11 +1,11 @@
 <?php
 
-require "inc/particledata.inc";
-require "inc/leginon.inc";
-require "inc/project.inc";
-require "inc/jpgraph.php";
-require "inc/jpgraph_line.php";
-require "inc/jpgraph_scatter.php";
+require_once "inc/particledata.inc";
+require_once "inc/leginon.inc";
+require_once "inc/project.inc";
+require_once "inc/jpgraph.php";
+require_once "inc/jpgraph_line.php";
+require_once "inc/jpgraph_scatter.php";
 
 define (PARTICLE_DB, $_SESSION['processingdb']);
 
@@ -26,6 +26,15 @@ if (!is_null($minx)) {
 $particle = new particledata();
 $stackparts = $particle->getStackMeanAndStdev($stackid);
 #print_r($stackparts[0])."<br/>\n";
+$nump = count($stackparts);
+$skipval = intval($nump/100000);
+if ($skipval > 1) {
+	$newstackparts = array();
+	for($i = 0; $i<$nump; $i+=$skipval) {
+		$newstackparts[]=$stackparts[$i];
+	}
+	$stackparts=$newstackparts;
+}
 
 $minstdev = 100000;
 $maxstdev = 0;

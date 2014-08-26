@@ -1,63 +1,67 @@
 <?php
-require "inc/leginon.inc";
-require "inc/image.inc";
-require "inc/project.inc";
-require "inc/particledata.inc";
-require "inc/ace.inc";
+require_once "inc/leginon.inc";
+require_once "inc/image.inc";
+require_once "inc/project.inc";
+require_once "inc/particledata.inc";
+require_once "inc/ace.inc";
 
-$imgId=$_GET['id'];
+$imgid=$_GET['id'];
+$runid=$_GET['r'];
 $preset=$_GET['preset'];
 $imgsize=$_GET['s'];
+$graphsc_x=$_GET['scx'];
+$graphsc_y=$_GET['scy'];
+if (!is_numeric($graphsc_x)) $graphsc_x=1;
+if (!is_numeric($graphsc_y)) $graphsc_y=1;
 
+// check the graph
 switch($_GET['g']){
-	case 1: $graph="graph1"; break;
 	case 2: $graph="graph2"; break;
-	// show ctffind image
-	case 3:
-		$graph="graph1";
-		$ctffindvals=True;
-		break;
+	case 3: $graph="graph3"; break;
+	case 4: $graph="graph4"; break;
+	default: $graph="graph1"; break;
 }
 
-$opt=trim($_GET['opt']);
-if (!is_numeric($opt)) {
-	$opt=15;
-}
-if ($opt&1) {
-	$des['d1']['t']=$ACE['d1'];
-	$des['d1']['c']='navy';
-}
-if ($opt&2) {
-	$des['d2']['t']=$ACE['d2'];
-	$des['d2']['c']='red';
-}
-if ($opt&4) {
-	$des['d3']['t']=$ACE['d3'];
-	$des['d3']['c']='orange';
-}
-if ($opt&8) {
-	$des['d4']['t']=$ACE['d4'];
-	$des['d4']['c']='green';
+// check the method
+switch($_GET['m']){
+	case 2: $ctfmethod="ace1"; break;
+	case 3: $ctfmethod="ace2"; break;
+	case 4: $ctfmethod="ctffind"; break;
+	default: $ctfmethod=""; break;
 }
 
-
-$newimage = $leginondata->findImage($imgId, $preset);
-$imgId = $newimage['id'];
-$imageinfo = $leginondata->getImageInfo($imgId);
-$sessionId = $imageinfo['sessionId'];
-$filename = $leginondata->getFilenameFromId($imgId);
-$normfile = trim($filename).'.norm.txt';
+$newimage = $leginondata->findImage($imgid, $preset);
+$imgid = $newimage['id'];
 $ctf = new particledata();
-if ($ctffindvals) {
-	list($ctfdata)  = $ctf->getCtfInfoFromImageId($imgId, $order=False, $ctffind=True);
-	$path=$ctfdata['path'].'/';
+list($ctfdata) = $ctf->getCtfInfoFromImageId($imgid, $order=False, $ctfmethod, $runid);
+$aceparams = $ctf->getAceParams($ctfdata['acerunId']);
+
+// get the filename -- too many conventions...
+$basename = $ctfdata[$graph];
+if (!$basename) {
+	header('Content-type: '.$imagemime);
+	$blkimg = blankimage(256, 64, "CTF $graph not created");
+	imagepng($blkimg);
+	imagedestroy($blkimg);
+	exit(1);
 }
+
+$opfile = $ctfdata['path'].'/opimages/'.$basename;
+$rtfile = $ctfdata['path'].'/'.$basename;
+$key = "opimages/";
+if (file_exists($rtfile))
+	$filename=$rtfile;
+elseif (file_exists($opfile))
+	$filename=$opfile;
 else {
-	list($ctfdata)  = $ctf->getCtfInfoFromImageId($imgId);
-	$path=$ctfdata['path'].'/opimages/';
-	$aceparams = $ctf->getAceParams($ctfdata['acerunId']);
+	header('Content-type: '.$imagemime);
+	$blkimg = blankimage(256, 64, "CTF $graph file not found");
+	imagepng($blkimg);
+	imagedestroy($blkimg);
+	exit(1);
 }
-$filename=$path.$ctfdata[$graph];
+
+// display the file
 (array)$ctfimageinfo = @getimagesize($filename);
 $imagecreate = 'imagecreatefrompng';
 $imagemime = 'image/png';
@@ -67,68 +71,30 @@ switch ($ctfimageinfo['mime']) {
 		$imagemime = $ctfimageinfo['mime'];
 	break;
 }
+
 if ($img=@$imagecreate($filename)) {
-		resample($img, $imgsize);
+	resample($img, $imgsize);
 } else {
-	$acedatafile =$ctfdata['path'].'/'.$normfile;
-	if (file_exists($acedatafile)) {
-		$acedata=readAceNormFile($acedatafile);
-		//ace2 image is always 1024 in size so the radial data go out to 512
-		$datasize = 512;
-		$imagepixelsize = $imageinfo['pixelsize']*$imageinfo['binning'];
-		$imagesize = min($imageinfo['dimx'],$imageinfo['dimy']);
-		$acebin = ($aceparams['bin']) ? $aceparams['bin']:1;
-		$inverse_pixelsize = 1e-10 / (2*$acebin*$datasize*$imagepixelsize);
+	header('Content-type: '.$imagemime);
+	$blkimg = blankimage(256, 64, "CTF $graph file not found");
+	imagepng($blkimg);
+	imagedestroy($blkimg);
+}
 
-		require 'inc/jpgraph.php';
-		require 'inc/jpgraph_line.php';
+function rescaleArray($vals,$scx,$scy) {
+	// need to add a selection for scaling
+	$maxval = max($vals)*$scy;
+	$vlen = count($vals)*$scx;
+	$newvals=array();
 
-		$d1= $acedata['d1'];
-		$d2= $acedata['d2'];
-		$d3= $acedata['d3'];
-		$d4= $acedata['d4'];
-		$inverse_distance= array();
-		for ($i = 0; $i < count($acedata['d1']);$i++) {
-			$inverse_distance[]=$i*$inverse_pixelsize;
-		}
-
-		$graph = new Graph(512,400);
-		$graph->SetScale("linlin");
-		$graph->img->SetMargin(40,40,80,40);
-
-		$graph->ygrid->SetFill(true,'#EFEFEF@0.5','#BBCCFF@0.5');
-		$graph->SetTickDensity(TICKD_SPARSE);
-		$graph->xscale->SetAutoTicks();
-		$graph->xaxis->title->Set('1/Angstrom');
-
-		$ngraph=count((array)$des);
-
-		foreach ((array)$des as $k=>$val) {
-			unset($p);
-			$p = new LinePlot($$k,$inverse_distance);
-			$p->SetColor($val['c']);
-			$p->SetLegend($val['t']);
-			if ($k=='d1' && $ngraph>1) {
-				$graph->AddY2($p);
-			} else {
-				$graph->Add($p);
-			}
-		}
-		if ($ngraph>1 && $des['d1']) {
-			$graph->SetY2Scale("lin");
-			$graph->y2axis->SetColor($des['d1']['c']);
-		}
-		$graph->legend->Pos(0,0,'right','top');
-
-		$graph->legend->SetShadow('gray@0.4',5);
-		$graph->Stroke();
-
-	} else {
-
-		header('Content-type: '.$imagemime);
-		$blkimg = blankimage();
-		imagepng($blkimg);
-		imagedestroy($blkimg);
+	$valcount = 0;
+	foreach ($vals as $val) {
+		if ($val > $maxval) $newvals[]=$maxval;
+		elseif (-$val > $maxval) $newvals[]=-$maxval;
+		else $newvals[]=$val;
+		$valcount++;
+		if ($valcount > $vlen) break;
 	}
+	return $newvals;
 }
 ?>

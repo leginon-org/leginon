@@ -4,24 +4,26 @@ import os, re, sys, time
 import tempfile
 import cPickle
 import math
+import numpy
 import string
 import shutil
 import subprocess
 #appion
 from appionlib import appiondata
-from appionlib import apDatabase
+#from appionlib import apDatabase
 from appionlib import apParam
 from appionlib import apDisplay
-from appionlib import apEMAN
-from appionlib import apEulerDraw
-from appionlib import apChimera
+#from appionlib import apEMAN
+#from appionlib import apEulerDraw
+#from appionlib import apChimera
 from appionlib import apStack
 from appionlib import apFile
-from appionlib import apSymmetry
+from appionlib import apFourier 
+#from appionlib import apSymmetry
 
 #==================
 #==================
-def getResolutionFromFSCFile(fscfile, boxsize, apix, msg=False):
+def getResolutionFromFSCFile(fscfile, boxsize, apix, criteria=0.5, msg=False):
 	"""
 	should use more general apFourier.getResolution()
 	"""
@@ -34,19 +36,21 @@ def getResolutionFromFSCFile(fscfile, boxsize, apix, msg=False):
 	lasty=0
 	for line in f:
 		xy = line.strip().split()
+		if xy[0].startswith('#'):
+			continue
 		x = float(xy[0])
 		y = float(xy[1])
 		if x != 0.0 and x < 0.9:
 			apDisplay.printWarning("FSC is wrong data format")
-		if y > 0.5:
+		if y > criteria:
 			#store values for later
 			lastx = x
 			lasty = y
 		else:
 			# get difference of fsc
 			diffy = lasty-y
-			# get distance from 0.5
-			distfsc = (0.5-y) / diffy
+			# get distance from criteria 0.5 or 0.143
+			distfsc = (criteria-y) / diffy
 			# get interpolated spatial freq
 			intfsc = x - distfsc * (x-lastx)
 			# convert to Angstroms
@@ -56,10 +60,37 @@ def getResolutionFromFSCFile(fscfile, boxsize, apix, msg=False):
 				res = boxsize * apix
 			f.close()
 			return res
-	# fsc did not fall below 0.5
+	# fsc did not fall below criteria 0.5 or 0.143
 	apDisplay.printWarning("Failed to determine resolution")
 	res = boxsize * apix / (lastx + 1)
 	return res
+
+def getResolutionFromGenericFSCFile(fscfile, boxsize, apix, filtradius=3, criterion=0.5, msg=False):
+	"""
+	parses standard 2-column FSC file with 1) spatial frequency and 2) FRC, returns resolution
+	"""
+	if not os.path.isfile(fscfile):
+		apDisplay.printError("fsc file does not exist")
+	if msg is True:
+		apDisplay.printMsg("box: %d, apix: %.3f, file: %s"%(boxsize, apix, fscfile))
+
+	f = open(fscfile, 'r')
+	fscfileinfo = f.readlines()
+	f.close()
+	fscdata = numpy.zeros((int(boxsize)/2), dtype=numpy.float32)
+	for i, info in enumerate(fscfileinfo):		# skip commented out lines
+		if info[0] == "#":
+			pass
+		else: 
+			fscfileinfo = fscfileinfo[i:]
+			break
+	for j, info in enumerate(fscfileinfo):      
+		frc = float(info.split()[1])
+		fscdata[j] = frc
+	res = apFourier.getResolution(fscdata, apix, boxsize, filtradius=filtradius, crit=criterion)
+
+	return res
+
 
 #==================
 #==================
@@ -170,6 +201,8 @@ def getRefinementsFromRun(refinerundata):
 	refineitq['refineRun'] = refinerundata
 	return refineitq.query()
 
+def getRefineIterDataFromIterationId(iterid):
+	return appiondata.ApRefineIterData.direct_query(iterid)
 #==================
 #==================
 def getSessionDataFromReconId(reconid):
@@ -225,6 +258,7 @@ def setGoodBadParticlesFromReconId(reconid):
 	import MySQLdb
 	dbconf = sinedon.getConfig('appiondata')
 	db     = MySQLdb.connect(**dbconf)
+	db.autocommit(True)
 	cursor = db.cursor()
 
 	refinerundata = appiondata.ApRefineRunData.direct_query(reconid)
@@ -284,6 +318,55 @@ def getParticleCount(refineid, cursor, name="refine_keep", isone=True):
 	count = results[0][0]
 	#print count
 	return int(count)
+
+#==================
+def getComponentFromVector(vector, iteration, splitter=None):
+	''' 
+	NOTE: THIS IS MODIFIED FROM XMIPP ARG.PY LIBRARY IN THE XMIPP_PROTOCOLS DIRECTORY 
+	'splitter' can be any string, for example, ':' will split on :
+	'''
+
+	if splitter is not None:
+		listValues = getListFromVector(vector, splitter)
+	else:
+		listValues = getListFromVector(vector)
+	if listValues is None:
+		return None
+	if iteration<0: iteration=0
+	if iteration<len(listValues): 
+		return listValues[iteration]
+	else:
+		return listValues[len(listValues)-1]
+
+#---------------------------------------------------------------------------
+# getListFromVector
+#---------------------------------------------------------------------------
+def getListFromVector(vector, splitter=None):
+	''' 
+	NOTE: THIS IS MODIFIED FROM XMIPP ARG.PY LIBRARY IN THE XMIPP_PROTOCOLS DIRECTORY 
+	'splitter' can be any string, for example, ':' will split on :
+	'''	
+
+	if vector is None:
+		return None
+	if splitter is not None:
+		intervals = string.split(str(vector), splitter)
+	else:
+		intervals = string.split(str(vector))	
+	if len(intervals) == 0:
+#		raise RuntimeError,"Empty vector"
+		return None
+	listValues = []
+	for i in range(len(intervals)):
+		intervalo = intervals[i]
+		listaIntervalo = string.split(intervalo,'x')
+		if len(listaIntervalo) == 1:
+			listValues += listaIntervalo
+		elif len(listaIntervalo) == 2:
+			listValues += [listaIntervalo[1]] * string.atoi(listaIntervalo[0])
+		else:
+			raise RuntimeError,"Unknown syntax: "+intervals
+	return listValues
 
 #==================
 #==================

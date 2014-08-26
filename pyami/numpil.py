@@ -1,6 +1,6 @@
 #!/usr/bin/env python
-import Image
-import ImageDraw
+from PIL import Image
+from PIL import ImageDraw
 import numpy
 import imagefun
 import arraystats
@@ -24,15 +24,19 @@ pilformats = [
 
 def im2numpy(im):
 	width,height = im.size
+	shape = height,width
 	if im.mode == 'F':
 		s = im.tostring()
 		a = numpy.fromstring(s, numpy.float32)
+	elif im.mode == 'RGB':
+		s = im.tostring()
+		a = numpy.fromstring(s, numpy.uint8)
+		shape = shape + (3,)
 	else:
 		im = im.convert('L')
 		s = im.tostring()
 		a = numpy.fromstring(s, numpy.uint8)
-
-	a.shape = height,width
+	a.shape = shape
 	return a
 
 def textArray(text, scale=1):
@@ -57,6 +61,14 @@ def read(imfile):
 	im = Image.open(imfile)
 	im = im2numpy(im)
 	return im
+
+def readInfo(imfile):
+	im = Image.open(imfile)
+	info = {}
+	info.update(im.info)
+	info['nx'], info['ny'] = im.size
+	info['nz'] = 1
+	return info
 
 def write(a, imfile=None, format=None, limits=None, writefloat=False):
 	'''

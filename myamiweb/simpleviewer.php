@@ -8,8 +8,8 @@
  *	Simple viewer to view a image using mrcmodule
  */
 
-require "inc/leginon.inc";
-require "inc/viewer.inc";
+require_once "inc/leginon.inc";
+require_once "inc/viewer.inc";
 
 // --- Set sessionId
 $sessionId=$_POST['sessionId'];
@@ -18,7 +18,7 @@ $sessionId = (empty($sessionId)) ? $lastId : $sessionId;
 $sessions = $leginondata->getSessions('description');
 
 $imageId= $leginondata->getLastFilenameId($sessionId);
-$datatypes = $leginondata->getDatatypes($sessionId);
+$datatypes = $leginondata->getDataTypes($sessionId);
 
 $viewer = new viewer();
 $viewer->setSessionId($sessionId);

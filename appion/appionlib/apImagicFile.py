@@ -19,7 +19,7 @@ import pyami.quietscipy
 from scipy import ndimage
 
 #maximum allowed stack size in gigabytes (GB)
-memorylimit = 1.9
+memorylimit = 3.9
 bytelimit = memorylimit*(1024**3)
 
 #===============
@@ -102,6 +102,17 @@ def numberStackFile(oldheadfile, startnum=0):
 	shutil.move(newheadfile, oldheadfile)
 	apDisplay.printMsg("completed %d particles in %s"%(numimg, apDisplay.timeString(time.time()-t0)))
 	return True
+
+def getPartSegmentLimit(filename):
+	root=os.path.splitext(filename)[0]
+	headerfilename=root + ".hed"
+	headerdict = readImagicHeader(headerfilename)
+	partbytes = 4*headerdict['rows']*headerdict['lines']
+	maxnumpart = int(math.floor(bytelimit / partbytes))
+	maxnumpart = 2 ** int(math.log(maxnumpart)/math.log(2))
+	if maxnumpart < 1:
+		apDisplay.printError("Single image in the stack exceeds %d byte.  This can not be processed. Please bin it down first." % bytelimit)
+	return maxnumpart 
 
 #===============
 def readImagic(filename, first=1, last=None, msg=True):
@@ -248,13 +259,13 @@ def readImagicData(datafilename, headerdict, firstpart=1, numpart=1):
 #===============
 def writeImagic(array, filename, msg=True):
 	"""
-	Rudimentary Imagic stack writer
+	Rudimentary Imagic stack writer: requires 2D images to be in list format
 	Could be improved with more sophisticated error testing and header parsing
 	Currently only reads image data as floats
 	Currently reads header information for only first image in stack
 
 	Inputs:
-		3d numpy array (numimg x row x col)
+		3d numpy array (numimg x row x col) OR python list of 2d numpy arrays (row x col)
 		filename
 	Modifies:
 		overwrites files on disk
@@ -262,6 +273,7 @@ def writeImagic(array, filename, msg=True):
 		none
 	"""
 	if isinstance(array, list):
+		### python list of 2d numpy arrays (row x col)
 		if len(array) == 0:
 			apDisplay.printWarning("writeImagic: no particles to write")
 			return
@@ -298,9 +310,8 @@ def writeImagic(array, filename, msg=True):
 		partnum = i+1
 		headerstr = makeHeaderStr(partnum, array.shape, avg1, stdev1, min1, max1)
 		headfile.write(headerstr)
-		### scale image to maximize range
-		scalepartimg = (partimg-min1)/(max1-min1)
-		datafile.write(scalepartimg.tostring())
+		# write to imagic file
+		datafile.write(partimg.tostring())
 		i += 1
 	headfile.close()
 	datafile.close()

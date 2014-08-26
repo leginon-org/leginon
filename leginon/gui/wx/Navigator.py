@@ -64,7 +64,7 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 		self.imagepanel.addTypeTool('Image', display=True)
 		self.imagepanel.selectiontool.setDisplayed('Image', True)
 		self.imagepanel.addTypeTool('Correlation', display=True)
-		self.imagepanel.addTargetTool('Peak', wx.Color(255,0,0))
+		self.imagepanel.addTargetTool('Peak', wx.Colour(255,0,0))
 
 		self.szmain.Add(self.imagepanel, (0, 0), (1, 1), wx.EXPAND)
 
@@ -87,9 +87,13 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 		## make sure node setting is a value that is in the choice list
 		self.node.settings['move type'] = self.cmovetype.GetStringSelection()
 		self.cmovetype.SetToolTip(wx.ToolTip('Navigion Parameter'))
-		self.toolbar.InsertControl(2, self.cmovetype)
-		self.toolbar.Realize()
+		self.toolbar.InsertControl(4, self.cmovetype)
 
+		self.insertPresetSelector(2)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onGetPresetTool,
+											id=leginon.gui.wx.ToolBar.ID_GET_PRESET)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onSendPresetTool,
+											id=leginon.gui.wx.ToolBar.ID_SEND_PRESET)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onSettingsTool,
 											id=leginon.gui.wx.ToolBar.ID_SETTINGS)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onAcquireTool,
@@ -109,6 +113,43 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 							self.imagepanel)
 		self.test_dialog = ReproTestDialog(self)
 		self.Bind(EVT_TEST, self.onReproTest, self)
+
+	def insertPresetSelector(self,position):
+		'''
+		Select preset to send/get.
+		'''
+		# This needs to be done after self.node is set.
+		self.presetnames = self.node.presetsclient.getPresetNames()
+
+		self.preset_choices = Choice(self.toolbar, -1, choices=self.presetnames)
+		#self.toolbar.InsertTool(position+3,leginon.gui.wx.ToolBar.ID_GET_PRESET,
+		#											'instrumentget',
+		#										shortHelpString='Get preset from scope')
+		self.toolbar.InsertTool(position,leginon.gui.wx.ToolBar.ID_SEND_PRESET,
+													'instrumentset',
+													shortHelpString='Send preset to scope')
+		self.toolbar.InsertControl(position,self.preset_choices)
+		return
+
+	def onShow(self):
+		current_choice = self.preset_choices.GetStringSelection()
+		self.presetnames = self.node.presetsclient.getPresetNames()
+		# This part is needed for wxpython 2.8.  It can be replaced by Set function in 3.0
+		self.preset_choices.Clear()
+		for name in self.presetnames:
+			self.preset_choices.Append(name)
+		if current_choice in self.presetnames:
+			self.preset_choices.SetStringSelection(current_choice)
+
+	def onGetPresetTool(self,evt):
+		presetname = self.preset_choices.GetStringSelection()
+		args = (presetname,)
+		threading.Thread(target=self.node.uiGetPreset,args=args).start()
+
+	def onSendPresetTool(self,evt):
+		presetname = self.preset_choices.GetStringSelection()
+		args = (presetname,)
+		threading.Thread(target=self.node.uiSendPreset,args=args).start()
 
 	def onResetXY(self, evt):
 		self.node.onResetXY()
@@ -335,9 +376,9 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		return sz
 
 	def addSettings(self):
-		overridebox = wx.StaticBox(self, -1, "Override Preset")
+		overridebox = wx.StaticBox(self, -1, "Override Preset during Testing")
 		overridesz = wx.StaticBoxSizer(overridebox, wx.VERTICAL)
-		errbox = wx.StaticBox(self, -1, "Error Checking and Correction")
+		errbox = wx.StaticBox(self, -1, "Error Checking and Correction during Testing")
 		errsz = wx.StaticBoxSizer(errbox, wx.VERTICAL)
 
 		# pause time
@@ -363,7 +404,7 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		self.widgets['instruments'] = leginon.gui.wx.Instrument.SelectionPanel(self, passive=True)
 		self.panel.setInstrumentSelection(self.widgets['instruments'])
 		self.widgets['camera settings'] = leginon.gui.wx.Camera.CameraPanel(self)
-		self.widgets['camera settings'].setSize(self.node.instrument.camerasize)
+		self.widgets['camera settings'].setGeometryLimits({'size':self.node.instrument.camerasize,'binnings':self.node.instrument.camerabinnings,'binmethod':self.node.instrument.camerabinmethod})
 
 		self.widgets['background readout'] = wx.CheckBox(self, -1, 'Background Readout')
 
@@ -408,26 +449,28 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		label = wx.StaticText(self, -1, '')
 		self.widgets['cycle after'] = wx.CheckBox(self, -1, 'Preset cycle after final move')
 		self.widgets['cycle each'] = wx.CheckBox(self, -1, 'Preset cycle after each move')
+		self.widgets['preexpose'] = wx.CheckBox(self, -1, 'Perform pre-exposure from preset')
 		hysfixsz.Add(self.widgets['cycle after'], (0, 0), (1, 1))
 		hysfixsz.Add(self.widgets['cycle each'], (1, 0), (1, 1))
+		hysfixsz.Add(self.widgets['preexpose'], (2, 0), (1, 1))
 
 		## 
-		sz = wx.GridBagSizer(5,5)
-		sz.Add(self.widgets['check calibration'], (0, 0), (1, 1),
+		ccsz = wx.GridBagSizer(5,5)
+		ccsz.Add(self.widgets['check calibration'], (0, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
 		#sz.Add(maxerrsz, (1, 0), (1, 1),
 		#				wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(precsz, (2, 0), (1, 1),
+		ccsz.Add(precsz, (2, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(hysfixsz, (3, 0), (1, 1),
+		ccsz.Add(hysfixsz, (3, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
-		errsz.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
+		errsz.Add(ccsz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
 
 		# settings sizer
 		sz = wx.GridBagSizer(5, 10)
-		sz.Add(overridesz, (0, 0), (1, 1))
-		sz.Add(szpausetime, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(errsz, (2,0), (1,1))
+		sz.Add(overridesz, (0, 0), (6, 1))
+		sz.Add(szpausetime, (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(errsz, (3,1), (1,1))
 		#sz.AddGrowableRow(2)
 		return sz
 

@@ -9,14 +9,13 @@ class SimCCDCamera(ccdcamera.CCDCamera):
 	name = 'SimCCDCamera'
 	def __init__(self):
 		ccdcamera.CCDCamera.__init__(self)
-		self.camera_size = {'x': 4096, 'y': 4096}
 		self.binning_values = {'x': [1, 2, 4, 8], 'y': [1, 2, 4, 8]}
 		self.pixel_size = {'x': 2.5e-5, 'y': 2.5e-5}
 		self.exposure_types = ['normal', 'dark']
 
 		self.binning = {'x': 1, 'y': 1}
 		self.offset = {'x': 0, 'y': 0}
-		self.dimension = copy.copy(self.camera_size)
+		self.dimension = copy.copy(self.getCameraSize())
 		self.exposure_time = 0.01
 		self.exposure_type = 'normal'
 
@@ -46,7 +45,7 @@ class SimCCDCamera(ccdcamera.CCDCamera):
 	def setOffset(self, value):
 		for axis in self.offset.keys():
 			try:
-				if value[axis] < 0 or value[axis] >= self.camera_size[axis]:
+				if value[axis] < 0 or value[axis] >= self.getCameraSize()[axis]:
 					raise ValueError('invalid offset')
 			except KeyError:
 				pass
@@ -63,7 +62,7 @@ class SimCCDCamera(ccdcamera.CCDCamera):
 	def setDimension(self, value):
 		for axis in self.dimension.keys():
 			try:
-				if value[axis] < 1 or value[axis] > self.camera_size[axis]:
+				if value[axis] < 1 or value[axis] > self.getCameraSize()[axis]:
 					raise ValueError('invalid dimension')
 			except KeyError:
 				pass
@@ -93,15 +92,12 @@ class SimCCDCamera(ccdcamera.CCDCamera):
 			raise ValueError('invalid exposure type')
 		self.exposure_type = value
 
-	def getCameraSize(self):
-		return copy.copy(self.camera_size)
-
 	def _getImage(self):
 		if not self.validateGeometry():
 			raise ValueError('invalid image geometry')
 
 		for axis in ['x', 'y']:
-			if self.dimension[axis] % self.binning[axis] != 0:
+			if self.dimension[axis] * self.binning[axis] > self.getCameraSize()[axis]:
 				raise ValueError('invalid dimension/binning combination')
 
 		columns = self.dimension['x']
@@ -118,15 +114,18 @@ class SimCCDCamera(ccdcamera.CCDCamera):
 		if self.exposure_type == 'dark' or self.exposure_time == 0:
 			return numpy.zeros(shape, numpy.uint16)
 		else:
-			mean = self.exposure_time * 1000.0
-			sigma = 0.1 * mean
-			image = numpy.random.normal(mean, sigma, shape)
-			row_offset = random.randint(-shape[0]/8, shape[0]/8) + shape[0]/4
-			column_offset = random.randint(-shape[1]/8, shape[1]/8) + shape[0]/4
-			image[row_offset:row_offset+shape[0]/2,
-				  column_offset:column_offset+shape[1]/2] *= 1.5
-			image = numpy.asarray(image, dtype=numpy.uint16)
-			return image
+			return self.getSyntheticImage(shape)
+
+	def getSyntheticImage(self,shape):
+		mean = self.exposure_time * 1000.0
+		sigma = 0.1 * mean
+		image = numpy.random.normal(mean, sigma, shape)
+		row_offset = random.randint(-shape[0]/8, shape[0]/8) + shape[0]/4
+		column_offset = random.randint(-shape[1]/8, shape[1]/8) + shape[0]/4
+		image[row_offset:row_offset+shape[0]/2,
+		  column_offset:column_offset+shape[1]/2] *= 1.5
+		image = numpy.asarray(image, dtype=numpy.uint16)
+		return image
 
 	def getEnergyFiltered(self):
 		return True
@@ -155,3 +154,18 @@ class SimOtherCCDCamera(SimCCDCamera):
 		im = SimCCDCamera._getImage(self)
 		im = 10 * im
 		return im
+
+	def getRetractable(self):
+		return True
+
+	def setInserted(self, value):
+		if value == self.getInserted():
+			return
+		self.inserted = value
+		time.sleep(10)
+
+	def getInserted(self):
+		if not hasattr(self, 'inserted'):
+			self.inserted = True
+		return self.inserted
+

@@ -5,15 +5,16 @@
  *      For terms of the license agreement
  *      see  http://ami.scripps.edu/software/leginon-license
  *
- *      Create an Eman Job for submission to a cluster
+ *      Create an Spider Job for submission to a cluster
  */
 
-require "inc/particledata.inc";
-require "inc/processing.inc";
-require "inc/leginon.inc";
-require "inc/viewer.inc";
-require "inc/project.inc";
-require "inc/summarytables.inc";
+require_once "inc/particledata.inc";
+require_once "inc/processing.inc";
+require_once "inc/leginon.inc";
+require_once "inc/viewer.inc";
+require_once "inc/project.inc";
+require_once "inc/summarytables.inc";
+require_once "inc/path.inc";
 
 $selectedcluster=$CLUSTER_CONFIGS[0];
 if ($_POST['cluster']) {
@@ -49,7 +50,7 @@ if ($_POST['write']) {
 	if (($_POST['xysearch']+$lastring) > $halfbox) jobForm("ERROR: lastring + xysearch must be less than $halfbox");
 
 	// check that job file doesn't already exist
-	$outdir = formatEndPath($_POST['outdir']);
+	$outdir = Path::formatEndPath($_POST['outdir']);
 	$outdir .= $_POST['jobname'];
 
 	// jobname ends with .job
@@ -74,7 +75,7 @@ elseif ($_POST['submitjob']) {
 
 	$expId = $_GET['expId'];
 	$projectId = getProjectId();
-	$host = $_POST['clustername'];
+	$host = $clusterdata->hostname;
 	$user = $_SESSION['username'];
 	$pass = $_SESSION['password'];
 	if (!($user && $pass)) writeJobFile("<B>ERROR:</B> Enter a user name and password");
@@ -107,35 +108,70 @@ elseif ($_POST['submitjob']) {
 	file_put_contents($tmpjobfile, $clusterjob . $f . $clusterlastline);
 
 	processing_header("SPIDER Job Submitted","SPIDER Job Submitted",$javafunc);
-	echo "<table width='600'>\n";
+	
 
 	// create appion directory & copy job file
-	$cmd = "mkdir -p $outdir;\n";
-	$cmd.= "/bin/cp $tmpjobfile $outdir/$jobfile;\n";
-	exec_over_ssh($_SERVER['SERVER_ADDR'], $user, $pass, $cmd, True);
-
-	$clusterdata->cluster_cmd($host, $user, $pass);
-	// if on guppy, clusterpath is same as outdir
-	$path = formatEndPath($clusterdata->get_path()).$jobname;
-
+	$cmd = "mkdir -p $clusterpath;\n";
+	
+	$rvalue = exec_over_ssh($host, $user, $pass, $cmd, false);
+	if ($rvalue === false ){
+		$errMsg = "Error: Could not create run directory on $host: ";
+		$errMsg .= pconnError();
+		echo "<hr>\n<font color='#CC3333' size='+1'>$errMsg</font>\n";
+		unlink ($tmpjobfile); //make sure to clean up after ourselves
+		exit;
+	}
+	
+	$remoteJobFile = "$clusterpath/$jobfile";
+	$rvalue = scp($host, $user, $pass, $tmpjobfile, $remoteJobFile);	
+	if (!$rvalue){
+		$errMsg = "Error: Copying jobfile to $clusterpath on $host failed: ";
+		$errMsg .= pconnError();
+		echo "<hr>\n<font color='#CC3333' size='+1'>$errMsg</font>\n";
+		unlink($tmpjobfile);//make sure to clean up after ourselves
+		exit;
+	}
+	
+	
+	//The preceding lines make the call to this function redundant as it
+	//is implimented in some cluster configs.
+	//$clusterdata->cluster_cmd($host, $user, $pass);
+	
+	
+	$path = Path::formatEndPath($clusterdata->get_path()).$jobname;
+	echo "<table width='600'>\n";
 	echo "<tr><td>Appion Directory</td><td>$outdir</td></tr>\n";
 	echo "<tr><td>Cluster Job File</td><td>$path.job</td></tr>\n";
 	echo "<tr><td>Job File Name</td><td>$jobname.job</td></tr>\n";
-  
+
 	// submit job on host
 	$cmd = "cd $path; qsub $jobfile;\n";
-	
 	$jobnumstr = exec_over_ssh($host, $user, $pass, $cmd, True);
   
+	//If exec_over_ssh returns false the job submition failed do to a connection
+	//error.
+	if ($jobnumstr === false){		
+		$errMsg = "Error: submitting job to $host failed:  ";
+		$errMsg .= pconnError();
+		echo "</table><p>\n";
+		echo "<hr>\n<font color='#CC3333' size='+1'>$errMsg</font>\n";
+		unlink($tmpjobfile); //make sure to clean up after ourselves
+		exit;
+	}
+	
 	$jobnum = trim($jobnumstr);
 	echo "<tr><td>Cluster Job Id</td><td>$jobnum</td></tr>\n";
-	$jobnum = ereg_replace('\..*','',$jobnum);
+	$jobnum = preg_replace('%\..*%','',$jobnum);
+	
+	// Chech for no-connection related error in job submission.
 	if (!is_numeric($jobnum)) {
 		echo "</table><p>\n";
 		echo "<hr>\n<font color='#CC3333' size='+1'>ERROR: job submission failed</font>\n";
 		processing_footer();
+		unlink($tmpjobfile);//make sure to clean up after ourselves
 		exit;
 	}
+	
 
 	// We need to check the status of the job so that we do not overwrite it in the following updateClusterQueue refs #706
 	$jobinfo = $particle->getJobInfoFromId($jobid);
@@ -162,6 +198,7 @@ elseif ($_POST['submitjob']) {
 	echo "<p><a href='checkRefineJobs.php?expId=$expId'>[Check Status of Jobs Associated with this Experiment]</a><p>\n";
 	echo "<P><hr>\n<font color='#CC3333' size='+1'>Do not hit 'reload' - it will re-submit job</FONT><P>\n";
 	processing_footer(True, True);
+	unlink($tmpjobfile);//make sure to clean up after ourselves
 	exit;
 }
 
@@ -173,7 +210,7 @@ function stackModelForm($extra=False) {
 	$projectId = getProjectId();
 
 	$javafunc="<script src='../js/viewer.js'></script>\n";
-	processing_header("Eman Job Generator","EMAN Job Generator",$javafunc);
+	processing_header("Spider Job Generator","Spider Job Generator",$javafunc);
 
 	if ($expId) {
 		$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
@@ -248,7 +285,7 @@ function jobForm($extra=false) {
 	$leginondata = new leginondata();
 	$sessiondata = $leginondata->getSessionInfo($expId);
 	$sessionpath=getBaseAppionPath($sessiondata).'/recon/';
-	ereg("(.*)appion(.*)recon", $sessionpath, $reg_match);
+	preg_match("%(.*)appion(.*)recon%", $sessionpath, $reg_match);
 	$rootpath = "appion".$reg_match[2]."recon/";
 
 	$clusterdata->set_rootpath($rootpath);
@@ -415,11 +452,6 @@ function jobForm($extra=false) {
 	exit;
 }
 
-function formatEndPath($path) {
-	$path = ereg(DIRECTORY_SEPARATOR."$", $path) ? $path : $path.DIRECTORY_SEPARATOR;
-	return $path;
-}
-
 function getPBSMemoryNeeded($boxsize) {
 	$particle = new particledata();
 	$angles=explode(',',$_POST['ang_inc']);
@@ -450,10 +482,10 @@ function writeJobFile ($extra=False) {
 	$logfile ="$jobname.log";
 	
 	$clustername = C_NAME;
-	$outdir = formatEndPath($_POST['outdir']);
+	$outdir = Path::formatEndPath($_POST['outdir']);
 
 	$clusterpath=$clusterdata->get_path();
-	$clusterpath = formatEndPath($clusterpath);
+	$clusterpath = Path::formatEndPath($clusterpath);
 
 	$clusterdata->post_data();
 

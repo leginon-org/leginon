@@ -7,7 +7,7 @@
  *	see  http://ami.scripps.edu/software/leginon-license
  */
 
-require "inc/admin.inc";
+require_once "inc/admin.inc";
 
 
 $check_str = 'checked="checked"';
@@ -41,7 +41,7 @@ $cameraId = $_POST['cameraId'];
 list($scopeinfo) = $leginondata->getInstrumentInfo($scopeId);
 list($camerainfo) = $leginondata->getInstrumentInfo($cameraId);
 $instrumentname = $scopeinfo['name'].'-'.$camerainfo['name'];
-$instrumentname = ereg_replace(' ','_',$instrumentname);
+$instrumentname = preg_replace('% %','_',$instrumentname);
 $calibrations = is_array($_POST['calibrations']) ? $_POST['calibrations'] : array($_POST['calibrations']);
 $types = $_POST['types'];
 

@@ -8,11 +8,11 @@
  *      Create an IMAGIC Reclassification Job initiating a 3d0 model generation
  */
 
-require "inc/particledata.inc";
-require "inc/processing.inc";
-require "inc/leginon.inc";
-require "inc/viewer.inc";
-require "inc/project.inc";
+require_once "inc/particledata.inc";
+require_once "inc/processing.inc";
+require_once "inc/leginon.inc";
+require_once "inc/viewer.inc";
+require_once "inc/project.inc";
 
 // check for errors in submission form
 if ($_POST['process']) {
@@ -28,7 +28,6 @@ function jobform($extra=false)	{
 	$particle = new particledata();
 	
 	// get session info
-	echo "<form name='viewerform' method='POST' action='$formaction'>\n";
 	$expId=$_GET['expId'];
 	$projectId=getProjectId();
 	$analysisId=$_GET['analysisId'];
@@ -51,15 +50,21 @@ function jobform($extra=false)	{
 	
 	// set commit on by default when first loading page, else set
 	$commitcheck = ($_POST['commit']=='on' || !$_POST['process']) ? 'checked' : '';
+	$alignparams = $particle->getAlignStackParams($alignId);
+	$nump=$alignparams['num_particles'];
 	// Set any existing parameters in form
 	$description = $_POST['description'];
 	$classidval = $_GET['imagicAnalysisId'];
 	$outdir = ($_POST['outdir']) ? $_POST['outdir'] : $sessionpath;
 	$ignore_images = ($_POST['ignore_images']) ? $_POST['ignore_images'] : '0';
 	$ignore_members = ($_POST['ignore_members']) ? $_POST['ignore_members'] : '0';
-	$num_classes = ($_POST['num_classes']) ? $_POST['num_classes'] : '4,16,64';
+	$defaultNumClasses = round(sqrt($nump));
+	$defaultNumClasses.= ",".round(sqrt(4*$nump));
+	$defaultNumClasses.= ",".round(sqrt(16*$nump));
+	$num_classes = ($_POST['num_classes']) ? $_POST['num_classes'] : $defaultNumClasses;
 	$num_factors = ($_POST['num_factors']) ? $_POST['num_factors'] : '8';
 	
+	echo "<form name='viewerform' method='POST' action='$formaction'>\n";
 	echo"
 	<table border='0' class='tableborder'>
 	<TR>
@@ -144,10 +149,14 @@ function jobform($extra=false)	{
 }
 
 function runImagicMSAcluster($extra=false)	{
+	/* *******************
+	PART 1: Get variables
+	******************** */
 	$expId=$_GET['expId'];
 	$projectId=getProjectId();
 	$analysisId=$_GET['analysisId'];
 	$runname=date("yMd").random_letters();
+	$_POST['runname'] = $runname;
 	$outdir=$_POST['outdir'];
 	$classvalues=$_POST['imagicAnalysisId'];
 	$ignore_images=$_POST['ignore_images'];
@@ -160,41 +169,45 @@ function runImagicMSAcluster($extra=false)	{
 	$pass = $_SESSION['password'];
 	
 	// get stack id, apix, box size, and total particles from input
-	list($stackid,$apix,$boxsize,$totpartls) = split('\|--\|',$stackvalues);
+	list($stackid,$apix,$boxsize,$totpartls) = preg_split('%\|--\|%',$stackvalues);
+	/* *******************
+	PART 2: Check for conflicts, if there is an error display the form again
+	******************** */
 
-	// create python command for executing imagic job file	
-	$cmd = "imagicMSAcluster.py";
-	$cmd.= " --projectid=$projectId";
-	$cmd.= " --imagicAnalysisId=$analysisId";
-	$cmd.= " --runname=$runname";
-	$cmd.= " --rundir=$outdir";
-	$cmd.= " --ignore_images=$ignore_images";
-	$cmd.= " --num_classes=$num_classes";
-	$cmd.= " --num_eigenimages=$num_factors";
-	$cmd.= " --ignore_members=$ignore_members";
-	$cmd.= " --description=\"$description\"";
-	if ($commit) $cmd.= " --commit";
-	else $cmd.=" --no-commit";
-
-	if ($_POST['process']=="run imagic") {
-		if (!($user && $pass)) jobform("<B>ERROR:</B> Enter a user name and password");
-
-		$sub = submitAppionJob($cmd,$outdir,$runname,$expId,'partcluster');
-		// if errors:
-		if ($sub) jobform("<b>ERROR:</b> $sub");
-	}
-
-	processing_header("IMAGIC Clustering","IMAGIC Clustering",$javafunc);
-
-	echo "<pre>";
-	echo htmlspecialchars($cmd);
-	echo "</pre>";
-
-	processing_footer();
-	exit;
+	/* *******************
+	PART 3: Create program command
+	******************** */
 	
+	// create python command for executing imagic job file	
+	$command = "imagicMSAcluster.py";
+	$command.= " --projectid=$projectId";
+	$command.= " --imagicAnalysisId=$analysisId";
+	$command.= " --runname=$runname";
+	$command.= " --rundir=$outdir";
+	$command.= " --ignore_images=$ignore_images";
+	$command.= " --num_classes=$num_classes";
+	$command.= " --num_eigenimages=$num_factors";
+	$command.= " --ignore_members=$ignore_members";
+	$command.= " --description=\"$description\"";
+	if ($commit) $command.= " --commit";
+	else $command.=" --no-commit";
 
+	/* *******************
+	PART 4: Create header info, i.e., references
+	******************** */
+	// Add reference to top of the page
+	$headinfo .= imagicRef();
+	
+	/* *******************
+	PART 5: Show or Run Command
+	******************** */
+	// submit command
+	$errors = showOrSubmitCommand($command, $headinfo, 'partcluster', $nproc);
 
+	// if error display them
+	if ($errors)
+		jobform("<b>ERROR:</b> $errors");
+	
 }
 
 function random_letters($length = 2, $letters = 'abcdefghijklmnopqrstuvwxyz') {

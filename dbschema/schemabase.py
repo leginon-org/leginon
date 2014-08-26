@@ -1,10 +1,9 @@
 #!/usr/bin/env python
 import time
 from sinedon import dbupgrade, dbconfig
-from leginon import version
 import updatelib
 
-class SchemaUpdate:
+class SchemaUpdate(object):
 	'''
 		Base Class for database schema upgrade.  Please name the supclass as
 		SchemaUpdatexxxxx where xxxxx is the svn revision number.  See
@@ -14,10 +13,21 @@ class SchemaUpdate:
 	def __init__(self,backup=False):
 		self.project_dbupgrade = dbupgrade.DBUpgradeTools('projectdata', drop=True)
 		self.leginon_dbupgrade = dbupgrade.DBUpgradeTools('leginondata', drop=True)
+		self.updatelib = updatelib.UpdateLib(self.project_dbupgrade)
 		self.selected_revision = self.getSchemaRevision()
 		self.backup = backup
 		self.valid_upgrade = ['leginon','project','appion']
 		self.required_upgrade = self.valid_upgrade
+		self.excluded_appiondbs = []
+		self.setForceUpdate(False)
+
+	def appendToExcluded_AppionDBs(self,dbname):
+		self.excluded_appiondbs.append(dbname)
+
+	def inExcluded_AppionDBList(self,appiondbname):
+		if appiondbname in self.excluded_appiondbs:
+			return True
+		return False
 
 	def setRequiredUpgrade(self,input):
 		list = []
@@ -86,15 +96,28 @@ class SchemaUpdate:
 			appion_dbupgrade = dbupgrade.DBUpgradeTools('appiondata', appiondbname, drop=True)
 			appion_dbupgrade.backupDatabase("%s.sql" % (appiondbname), data=True)
 
+	def commitUpdate(self):
+		'''
+		Log that this update has been completed and therefore can not be repeated.
+		'''
+		if not self.force:
+			self.updatelib.updateDatabaseReset(self.updatelib.db_revision)
+			self.updatelib.updateDatabaseRevision(self.selected_revision)
+			print "\033[35mUpdated install table reset and revision\033[0m"
+		else:
+			print "\033[35mForced Update does not update install table reset and revision\033[0m"
+
+	def setForceUpdate(self,is_force):
+		self.force = is_force
+
 	def run(self):
 		if not self.required_upgrade:
 			print "\033[31mNothing to do\033[0m"
 			return
 		divider = "-------------------------------------------"
-		checkout_revision = updatelib.getCheckOutRevision()
-		revision_in_database = updatelib.getDatabaseRevision(self.project_dbupgrade)
-		print checkout_revision, revision_in_database
-		if updatelib.needUpdate(self.project_dbupgrade,checkout_revision,self.selected_revision) == 'now':
+		checkout_revision = self.updatelib.getCheckOutRevision()
+		revision_in_database = self.updatelib.getDatabaseRevision()
+		if self.updatelib.needUpdate(checkout_revision,self.selected_revision,self.force) == 'now':
 			try:
 				if 'leginon' in self.required_upgrade:
 					# leginon part
@@ -117,6 +140,10 @@ class SchemaUpdate:
 					if self.backup:
 						self.appionbackup(appiondblist)
 					for appiondbname in appiondblist:
+						if self.inExcluded_AppionDBList(appiondbname):
+							print "\033[31mSkipping database %s\033[0m"%(appiondbname)
+							time.sleep(1)
+							continue
 						if not self.project_dbupgrade.databaseExists(appiondbname):
 							print "\033[31merror database %s does not exist\033[0m"%(appiondbname)
 							time.sleep(1)
@@ -129,7 +156,7 @@ class SchemaUpdate:
 				raise
 			print divider
 			print "\033[35mSuccessful Update\033[0m"
-			updatelib.updateDatabaseRevision(self.project_dbupgrade,self.selected_revision)
+			self.commitUpdate()
 
 if __name__ == "__main__":
 	update = SchemaUpdate(backup=False)

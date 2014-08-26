@@ -33,7 +33,6 @@ class Panel(leginon.gui.wx.Calibrator.Panel):
 		#self.Bind(leginon.gui.wx.ImagePanelTools.EVT_MEASUREMENT, self.onMeasurement)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onMeasureTool, id=leginon.gui.wx.ToolBar.ID_MEASURE)
 		self.toolbar.DeleteTool(leginon.gui.wx.ToolBar.ID_ABORT)
-		self.toolbar.Realize()
 
 	def onAcquisitionDone(self, evt):
 		self._acquisitionEnable(True)
@@ -320,7 +319,7 @@ class EditDialog(wx.Dialog):
 
 class PixelSizeListCtrl(wx.ListCtrl, ListCtrlAutoWidthMixin):
 	def __init__(self, parent, id):
-		wx.ListCtrl.__init__(self, parent, id,
+		wx.ListCtrl.__init__(self, parent, id, size=wx.Size(200,100),
 													style=wx.LC_REPORT|wx.LC_HRULES|wx.LC_VRULES)
 		ListCtrlAutoWidthMixin.__init__(self)
 		self.InsertColumn(0, 'Magnification', wx.LIST_FORMAT_RIGHT)

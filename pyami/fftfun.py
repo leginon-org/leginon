@@ -140,6 +140,8 @@ def fitFirstCTFNode(pow, rpixelsize, defocus, ht):
 	if eparams:
 		z0, zast, ast_ratio, alpha = getAstigmaticDefocii(eparams,rpixelsize, ht)
 		return z0,zast,ast_ratio, alpha, eparams
+	else:
+		return None
 
 def getBeamTiltPhaseShiftCorrection(imgshape,beamtilt,Cs,wavelength,pixelsize):
 		beamtilt_size = math.sqrt(beamtilt[0]*beamtilt[0]+beamtilt[1]*beamtilt[1])
@@ -152,14 +154,31 @@ def getBeamTiltPhaseShiftCorrection(imgshape,beamtilt,Cs,wavelength,pixelsize):
 		correction = numpy.cos(phaseshift)+numpy.sin(phaseshift)*complex(0,1)
 		return correction
 
-def correctBeamTiltPhaseShift(imgarray,pixelsize,beamtilt,Cs,ht):
+def correctBeamTiltPhaseShift(imgarray,pixelsize=1e-10,beamtilt=(0.0,0.0),Cs=2e-3,ht=120000):
+		'''
+		Function to correct in phase shift induced by beam tilt.
+		Not fully tested for its effectiveness.
+		length unit in meters, voltage in volts, angles in radians
+		'''
 		fft = fftpack.fft2(imgarray)
 		beamtilt = (0.0,1e-4)
-		Cs = 2e-3
-		pixelsize = 1e-10
-		ht = 120000
 		wavelength = getElectronWavelength(ht)
 		correction = getBeamTiltPhaseShiftCorrection(fft.shape,beamtilt,Cs,wavelength,pixelsize)
 		cfft = fft * correction
 		corrected_image = fftpack.ifft2(cfft)
 		return corrected_image
+
+if __name__ == '__main__':
+	a = mrc.read('test.mrc')
+	# pixel size in meters
+	pixelsize = 6e-10
+	Cs=2e-3
+	ht=300000
+	pow = imagefun.power(a)
+	mrc.write(pow,'pow.mrc')
+	dimension = {'x':a.shape[1],'y':a.shape[0]}
+	imagepixelsize = {'x':pixelsize,'y':pixelsize}
+	rpixelsize = {'x':1.0/(imagepixelsize['x']*dimension['x']),'y':1.0/(imagepixelsize['y']*dimension['y'])}
+	
+	ctfdata = fitFirstCTFNode(pow,rpixelsize['x'], None, ht)
+	print ctfdata

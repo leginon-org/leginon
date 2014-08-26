@@ -1,7 +1,7 @@
 <?php
-require("inc/project.inc.php");
-require("inc/note.inc.php");
-require("inc/mysql.php");
+require_once("inc/project.inc.php");
+require_once("inc/note.inc.php");
+require_once("inc/mysql.php");
 
 $n_width = $_GET['w'];
 $n_height = $_GET['h'];
@@ -28,7 +28,7 @@ if ($n_height) {
         $n_width = ($n_width) ? $n_width : $width/$height*$n_height;
 }
 
-header("Content-type: image/x-png");
+header("Content-type: image/png");
 if ($n_width && $n_height) {
         $dest = imagecreatetruecolor($n_width, $n_height);
         imagecopyresampled($dest, $source, 0, 0, 0, 0, $n_width, $n_height, $width, $height);

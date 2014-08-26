@@ -26,15 +26,19 @@ splitdb = True
 data.holdImages(False)
 
 #================
-def getSpecificImagesFromDB(imglist):
+def getSpecificImagesFromDB(imglist, sessiondata=None):
 	print "Querying database for "+str(len(imglist))+" specific images ... "
 	imgtree=[]
 	for imgname in imglist:
-		if imgname[-4:] == ".mrc" or imgname[-4:] == ".box":
+		if imgname[-4:] == ".mrc" or imgname[-4:] == ".box" or imgname[-4:] == ".pos":
 			imgname = imgname[:-4]
 		if '/' in imgname:
 			imgname = os.path.basename(imgname)
-		imgquery = leginon.leginondata.AcquisitionImageData(filename=imgname)
+		if sessiondata is not None:
+			### slightly faster query
+			imgquery = leginon.leginondata.AcquisitionImageData(filename=imgname, session=sessiondata)
+		else:
+			imgquery = leginon.leginondata.AcquisitionImageData(filename=imgname)
 		imgres   = imgquery.query(readimages=False, results=1)
 		if len(imgres) >= 1:
 			imgtree.append(imgres[0])
@@ -105,6 +109,23 @@ def getAllImagesFromDB(session):
 	return imgtree
 
 #================
+def getImageDataFromSpecificImageId(imageid):
+	imagedata = leginon.leginondata.AcquisitionImageData().direct_query(imageid)
+	if imagedata:
+		return imagedata
+	else:
+		apDisplay.printError('Image (id=%d) does not exist' % (imageid))
+
+#================
+def getRefImageDataFromSpecificImageId(reftype,imageid):
+		q = leginon.leginondata.AcquisitionImageData()
+		imagedata = q.direct_query(imageid)
+		if imagedata:
+			return imagedata[reftype]
+		else:
+			apDisplay.printError('Image (id=%d) to retrieve reference image does not exist' % (imageid))
+
+#================
 def getAllTiltSeriesFromSessionName(sessionname):
 	"""
 	returns list of image data based on session name
@@ -127,6 +148,14 @@ def getExpIdFromSessionName(sessionname):
 		apDisplay.printError("could not find session, "+sessionname)
 
 #================
+def getSessionDataFromSessionId(sessionid):
+	sessionid = int(sessionid)
+	apDisplay.printMsg("Looking up session, %d" % sessionid)
+	sessionq = leginon.leginondata.SessionData()
+	sessioninfo = sessionq.direct_query(sessionid)
+	return sessioninfo
+
+#================
 def getSessionDataFromSessionName(sessionname):
 	apDisplay.printMsg("Looking up session, "+sessionname)
 	sessionq = leginon.leginondata.SessionData(name=sessionname)
@@ -139,14 +168,21 @@ def getSessionDataFromSessionName(sessionname):
 
 #================
 def getTiltSeriesDataFromTiltNumAndSessionId(tiltseries,sessiondata):
-	apDisplay.printMsg("Looking up session, "+ str(sessiondata.dbid));
-	tiltq = leginon.leginondata.TiltSeriesData()
+	apDisplay.printMsg("Looking up session first, "+ str(sessiondata.dbid));
 	tiltseriesq = leginon.leginondata.TiltSeriesData(session=sessiondata,number=tiltseries)
 	tiltseriesdata = tiltseriesq.query(readimages=False,results=1)
 	if tiltseriesdata:
 		return tiltseriesdata[0]
 	else:
-		apDisplay.printError("could not find tilt series, "+sessionname)
+		apDisplay.printError("could not find tilt series, "+str(tiltseries))
+
+
+#================
+def getPredictionDataForImage(imagedata):
+	q=leginon.leginondata.TomographyPredictionData()
+	q['image']=imagedata
+	predictiondata=q.query()
+	return predictiondata
 
 #================
 def getImagesFromTiltSeries(tiltseriesdata,printMsg=True):
@@ -196,6 +232,17 @@ def getSessionName(imgname):
 		apDisplay.printError("Image "+imgname+" not found in database\n")
 
 #================
+def getFrameImageCamera(sessiondata):
+	'''
+	Use latest frame saved image to find digital camera data
+	'''
+	camq = leginon.leginondata.CameraEMData(session=sessiondata)
+	camq['save frames'] = True
+	camems = camq.query(results=1)
+	if camems:
+		return camems[0]['ccdcamera']
+	
+#================
 def getTiltAngleDeg(imgdata):
 	return imgdata['scope']['stage position']['a']*180.0/math.pi
 
@@ -226,6 +273,8 @@ def getPixelSize(imgdata):
 	use image data object to get pixel size
 	multiplies by binning and also by 1e10 to return image pixel size in angstroms
 	shouldn't have to lookup db already should exist in imgdict
+
+	return image pixel size in Angstroms
 	"""
 	pixelsizeq = leginon.leginondata.PixelSizeCalibrationData()
 	pixelsizeq['magnification'] = imgdata['scope']['magnification']
@@ -397,6 +446,14 @@ def getTiltSeriesDoneStatus(tiltseriesdata):
 		results = q.query()
 		if results:
 			return True
+		else:
+			# If there is only one tilt group, target is never done 
+			# only its fromtarget will be done
+			if target['fromtarget']:
+				q = leginon.leginondata.AcquisitionImageTargetData(fromtarget=target['fromtarget'],status='done')
+				results = q.query()
+		if results:
+			return True
 		return False
 
 ### flatfield correction functions
@@ -442,7 +499,7 @@ def getDarkNorm(sessionname, cameraconfig):
 def getImgViewerStatus(imgdata):
 	"""
 	Function that returns whether or not the image was hidden in the viewer
-	False: Image was hidden
+	False: Image was hidden or trash
 	True: Image is an exemplar
 	None: Image is visible
 
@@ -456,6 +513,8 @@ def getImgViewerStatus(imgdata):
 
 	statusdata = statusdatas[0]
 	if statusdata['status']=='hidden':
+		return False
+	if statusdata['status']=='trash':
 		return False
 	if statusdata['status']=='exemplar':
 		return True

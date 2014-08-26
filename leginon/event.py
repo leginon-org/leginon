@@ -8,7 +8,7 @@
 
 # defines the Event and EventHandler classes
 
-import leginondata
+from leginon import leginondata
 import sinedon.data
 import copy
 
@@ -82,6 +82,17 @@ class NodeAvailableEvent(NotificationEvent):
 		)
 	typemap = classmethod(typemap)
 
+import numpy
+import sinedon.newdict
+class ArrayPassingEvent(NotificationEvent):
+	'Event sent by a node to the manager to test array passing'
+	def typemap(cls):
+		return NotificationEvent.typemap() + (
+			('location', dict),
+			('array', sinedon.newdict.MRCArrayType),
+		)
+	typemap = classmethod(typemap)
+
 class NodeUnavailableEvent(NotificationEvent):
 	'Event sent by a node to the manager to indicate that it is inaccessible'
 	pass
@@ -152,6 +163,14 @@ class ConfirmationEvent(NotificationEvent):
 		)
 	typemap = classmethod(typemap)
 
+class ApplicationLaunchedEvent(NotificationEvent):
+	'Event passing the application launched'
+	def typemap(cls):
+		return NotificationEvent.typemap() + (
+			('application', leginondata.ApplicationData),
+		)
+	typemap = classmethod(typemap)
+
 class QueuePublishEvent(PublishEvent):
 	dataclass = leginondata.QueueData
 
@@ -165,6 +184,9 @@ class MeasureDosePublishEvent(PublishEvent):
 	dataclass = leginondata.MeasureDoseData
 
 class FixAlignmentEvent(Event):
+	pass
+
+class FixConditionEvent(Event):
 	pass
 
 class FixBeamEvent(PublishEvent):
@@ -382,6 +404,7 @@ class MoveToTargetEvent(Event):
 			('move precision', float),
 			('accept precision', float),
 			('final image shift', bool),
+			('use target z', bool),
 		)
 	typemap = classmethod(typemap)
 
@@ -406,6 +429,7 @@ class TransformTargetEvent(Event):
 		return Event.typemap() + (
 			('target', leginondata.AcquisitionImageTargetData),
 			('level', str),
+			('use parent mover', bool),
 		)
 	typemap = classmethod(typemap)
 

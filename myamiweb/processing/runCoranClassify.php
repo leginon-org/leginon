@@ -8,15 +8,15 @@
  *      Simple viewer to view a image using mrcmodule
  */
 
-require "inc/particledata.inc";
-require "inc/leginon.inc";
-require "inc/project.inc";
-require "inc/viewer.inc";
-require "inc/processing.inc";
-require "inc/summarytables.inc";
+require_once "inc/particledata.inc";
+require_once "inc/leginon.inc";
+require_once "inc/project.inc";
+require_once "inc/viewer.inc";
+require_once "inc/processing.inc";
+require_once "inc/summarytables.inc";
 
 // IF VALUES SUBMITTED, EVALUATE DATA
-if ($_POST) {
+if ($_POST['process']) {
 	runSpiderCoranClassify();
 } else {
 	createSpiderCoranClassifyForm();
@@ -210,25 +210,30 @@ function createSpiderCoranClassifyForm($extra=false, $title='coranClassify.py La
 }
 
 function runSpiderCoranClassify() {
+	/* *******************
+	PART 1: Get variables
+	******************** */
 	$expId=$_GET['expId'];
 	$runname=$_POST['runname'];
 	$outdir=$_POST['outdir'];
 	$stackval=$_POST['stackval'];
-	list($stackid,$apix,$boxsz) = split('\|--\|',$stackval);
+	list($stackid,$apix,$boxsz) = preg_split('%\|--\|%',$stackval);
 	$maskrad=$_POST['maskrad'];
 	$numfactors=$_POST['numfactors'];
 	$bin=$_POST['bin'];
-
-	//make sure a session was selected
 	$description=$_POST['description'];
+	$commit = ($_POST['commit']=="on") ? '--commit' : '';
+	
+	/* *******************
+	PART 2: Check for conflicts, if there is an error display the form again
+	******************** */
+	//make sure a session was selected
 	if (!$description)
 		createSpiderCoranClassifyForm("<B>ERROR:</B> Enter a brief description of the particles to be aligned");
 
 	//make sure a stack was selected
 	if (!$stackid)
 		createSpiderCoranClassifyForm("<B>ERROR:</B> No stack selected");
-
-	$commit = ($_POST['commit']=="on") ? '--commit' : '';
 
 	// check particle radii
 	$particle = new particledata();
@@ -241,6 +246,9 @@ function runSpiderCoranClassify() {
 	if (substr($outdir,-1,1)!='/') $outdir.='/';
 	$rundir = $outdir.$runname;
 
+	/* *******************
+	PART 3: Create program command
+	******************** */
 	$command ="coranClassify.py ";
 	$command.="--projectid=".getProjectId()." ";
 	$command.="--rundir=$rundir ";
@@ -253,35 +261,20 @@ function runSpiderCoranClassify() {
 	if ($commit) $command.="--commit ";
 	else $command.="--no-commit ";
 
-	// submit job to cluster
-	if ($_POST['process']=="Run Spider Coran Classify") {
-		$user = $_SESSION['username'];
-		$password = $_SESSION['password'];
+	/* *******************
+	PART 4: Create header info, i.e., references
+	******************** */
+	$headinfo .= spiderRef();
+	
+	/* *******************
+	PART 5: Show or Run Command
+	******************** */
+	// submit command
+	$errors = showOrSubmitCommand($command, $headinfo, 'alignanalysis', $nproc);
 
-		if (!($user && $password)) createSpiderCoranClassifyForm("<B>ERROR:</B> Enter a user name and password");
-
-		$sub = submitAppionJob($command,$outdir,$runname,$expId,'alignanalysis');
-		// if errors:
-		if ($sub) createSpiderCoranClassifyForm("<b>ERROR:</b> $sub");
-		exit;
-	}
-	else {
-		processing_header("Spider Coran Classification","Spider Coran Classification");
-		echo spiderRef();
-		echo"
-		<table width='600' class='tableborder' border='1'>
-		<tr><td colspan='2'>
-		<b>Spider Coran Classify Command:</b><br />
-		$command
-		</td></tr>
-		<tr><td>run id</td><td>$runname</td></tr>
-		<tr><td>stack id</td><td>$stackid</td></tr>
-		<tr><td>num factors</td><td>$numfactors</td></tr>
-		<tr><td>binning</td><td>$bin</td></tr>
-		<tr><td>run dir</td><td>$rundir</td></tr>
-		<tr><td>commit</td><td>$commit</td></tr>
-		</table>\n";
-		processing_footer();
-	}
+	// if error display them
+	if ($errors)
+		createSpiderCoranClassifyForm("<b>ERROR:</b> $errors");
+	
 }
 ?>

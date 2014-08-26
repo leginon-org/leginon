@@ -5,7 +5,6 @@ import sys
 
 from pyami import mrc, imagefun
 import wx
-import Image
 from PIL import Image
 import time
 import math
@@ -15,7 +14,7 @@ import scipy
 from scipy import ndimage
 import threading
 #import pyami
-from pyami import arraystats
+from pyami import arraystats, douglaspeucker
 
 #import subprocess
 import manualpicker
@@ -44,12 +43,16 @@ pick_colors = [
 	(255,0,255),
 	(0,255,255),
 	(128,128,0),
+	(128,0,128),
+	(0,128,128),
 	(255,128,128),
+	(128,255,128),
+	(128,128,255),
 ]
 
-class ContourPickerPanel(TargetPanel.TargetImagePanel):
-	def __init__(self, parent, id, callback=None, tool=True):
-		TargetPanel.TargetImagePanel.__init__(self, parent, id, callback=callback, tool=tool)
+class ContourPickerPanel(TargetPanel.TraceTargetImagePanel):
+	def __init__(self, parent, id, mode='horizontal'):
+		TargetPanel.TraceTargetImagePanel.__init__(self, parent, id, mode=mode)
 
 	def addTypeTool(self, name, **kwargs):
 		if self.selectiontool is None:
@@ -106,11 +109,18 @@ class ContourPickerPanel(TargetPanel.TargetImagePanel):
 
 	def _onLeftClick(self, evt):
 		if self.selectedtype is not None:
-			x, y = self.view2image((evt.m_x, evt.m_y))
-			self.addTarget(self.selectedtype.name, x, y)
+			x, y = self.view2image((evt.GetX(), evt.GetY()))
+			has_tracetooltarget = False
+			old = self.getTargets(self.selectedtype.name)
+			self.setTargets(self.selectedtype.name, old + self.tracetool.xypath)
+			if not has_tracetooltarget:
+				self.addTarget(self.selectedtype.name, x, y)
+			
 		self.picker.onEdgeFinding(evt)
 		#if self.selectedtype.name == self.picker.s:
 		#	self.picker.addManualPoint()
+		if self.picker.autoadd.GetValue():
+			self.picker.onSelected(evt)
 
 	def Draw(self, dc):
 	#	now = time.time()
@@ -423,10 +433,10 @@ class PickerApp(wx.App):
 	def OnInit(self):
 		# Redirect text output for debuging purpose
 		#self.RedirectStdio('out.log')
-		self.deselectcolor = wx.Color(40,40,40)
+		self.deselectcolor = wx.Colour(40,40,40)
 
 		self.frame = wx.Frame(None, -1, 'Manual Object Tracer')
-		self.sizer = wx.FlexGridSizer(2,1)
+		self.sizer = wx.FlexGridSizer(3,1)
 
 		### VITAL STATS
 		self.vitalstats = wx.StaticText(self.frame, -1, "Vital Stats:  ", style=wx.ALIGN_LEFT)
@@ -469,16 +479,16 @@ class PickerApp(wx.App):
 
 	def addLabelPicker(self, label):
 		rgb = self.pick_colors.next()
-		self.panel.addTargetTool(label, color=wx.Color(*rgb),
+		self.panel.addTargetTool(label, color=wx.Colour(*rgb),
 			target=True, shape=self.shape, size=self.size)
 		self.panel.setTargets(label, [])
 		self.panel.selectiontool.setTargeting(label, True)
 
 	def doGraphics(self):
 		#for targets in self.oldPolyTargets:
-		#	self.panel.drawContour(wx.Color(220,20,20),targets)	
+		#	self.panel.drawContour(wx.Colour(220,20,20),targets)	
 		for targets in self.polyTargets:
-			self.panel.drawContour(wx.Color(220,20,20),targets)	
+			self.panel.drawContour(wx.Colour(220,20,20),targets)	
 
 	def deleteTarget(self, target):
 		try:
@@ -495,7 +505,6 @@ class PickerApp(wx.App):
 					#del targets
 		except (ValueError,IndexError):
 			pass		
-		print 'ow'
 
 	def addManualPoint(self):
 		def dist(target1,target2):
@@ -612,16 +621,16 @@ class PickerApp(wx.App):
 		self.polyTargets = []
 		self.polyTargetsLabels = []
 		self.s = 'Manually Create Contours'
-		self.panel.addTargetTool(self.s, color=wx.Color(20,220,20),
+		self.panel.addTargetTool(self.s, color=wx.Colour(20,220,20),
 			target=True, shape='polygon')
 		self.panel.setTargets(self.s, [])
 		self.panel.selectiontool.setDisplayed(self.s, True)
 
 		self.s2 = 'Auto Create Contours'
-		self.panel.addTargetTool(self.s2, color=wx.Color(20,220,20),
+		self.panel.addTargetTool(self.s2, color=wx.Colour(20,220,20),
 			target=False, shape='.')
 		self.panel.setTargets(self.s2, [])
-		self.panel.selectiontool.setDisplayed(self.s2, False)
+		self.panel.selectiontool.setDisplayed(self.s2, True)
 		self.panel.selectiontool.setTargeting(self.s, True)
 
 		self.add = wx.Button(self.frame, wx.ID_ADD, '&Add Traced Object')
@@ -629,6 +638,9 @@ class PickerApp(wx.App):
 		self.Bind(wx.EVT_BUTTON, self.onSelected, self.add)
 		self.buttonrow.Add(self.add, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 
+		self.autoadd = wx.CheckBox(self.frame, -1, 'Auto Add')
+		#self.add.SetMinSize((200,40))
+		self.buttonrow.Add(self.autoadd, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 
 		self.removeLast = wx.Button(self.frame, wx.ID_REMOVE, 'Remove &Last Object')
 		self.add.SetMinSize((200,40))
@@ -647,10 +659,7 @@ class PickerApp(wx.App):
 		self.buttonrow.Add(self.textFile, 0,wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 		
 	def onMakeFile(self,evt):
-		session = self.appionloop.params['sessionname']	
-		###change later
-		command = 'contourpickerTextFileGenerator.py ' + '--projectid=%d' % (self.appionloop.params['projectid']) + ' ' + '--session=' + str(session) + ' ' + '--runname='+self.appionloop.params['runname'] + ' ' + '--preset=' + self.appionloop.params['preset'] + ' '+'--rundir=' + self.appionloop.params['rundir']
-		os.system(command)
+		self.appionloop.makeTextFile()
 
 	def onSwitch(self, evt):
 		s = 'Manually Create Contours'
@@ -702,12 +711,20 @@ class PickerApp(wx.App):
 	def onQuit(self, evt):
 		wx.Exit()
 
-	def onSelected(self, evt):#event for the add particle button - clears the main 'manually select particle' tool and calls 'addPolyParticle' to handel the data
+	def onSelected(self, evt):
+		'''event for the add particle button. 
+		It clears the main 'manually select particle' tool and calls 'addPolyParticle' to handel the data
+		'''
 		vertices = []
 		vertices = self.panel.getTargetPositions('Manually Create Contours');
-		if len(vertices)>0:
-			self.addPolyParticle(vertices);
-		self.panel.setTargets('Manually Create Contours', []);
+		if len(vertices)>2:   # ignore and erase contours of 2 or less points
+			# Minimization is not done to object of small number of vertices because it may be distorted
+			if len(vertices)>10:
+				# reduce the number of vertices before saving
+				vertices = self.appionloop.minimizeVerticesByDP(vertices)
+			self.addPolyParticle(vertices)
+		self.panel.setTargets('Manually Create Contours', [])
+		self.panel.xypath = []
 		
 	def onNext(self, evt):
 		self.appionloop.targets = {}
@@ -723,6 +740,8 @@ class PickerApp(wx.App):
 		self.panel.setTargets('Auto Create Contours', [])
 		self.panel.setTargets('Manually Create Contours', [])
 		self.particleTypeList = []
+		self.panel.tracetool.xypath = []
+		self.panel.UpdateDrawing()
 
 	#	for s in self.particles:
 	#		self.panel.setTargets(s, [])
@@ -762,6 +781,16 @@ class ContourPicker(manualpicker.ManualPicker):
 			labels = self.labels,
 		)
 
+	def makeTextFile(self):
+		session = self.params['sessionname']	
+		###change later
+		command = 'contourpickerTextFileGenerator.py ' + '--projectid=%d' % (self.params['projectid']) + ' ' + '--session=' + str(session) + ' ' + '--runname='+self.params['runname'] + ' ' + '--preset=' + self.params['preset'] + ' '+'--rundir=' + self.params['rundir']
+		os.system(command)
+
+	def postLoopFunctions(self):
+		self.makeTextFile()
+		super(ContourPicker,self).postLoopFunctions()
+
 	def runManualPicker(self, imgdata):
 		# Contourpicker does not do assessment.  Setting the current assessment to be
 		# the same as the old prevents committing it to the database
@@ -795,7 +824,7 @@ class ContourPicker(manualpicker.ManualPicker):
 		peaktree=[]
 		for label,targets in self.targets.items():
 			for target in targets:
-				peaktree.append(self.XY2particle(target.x, target.y, label))
+				peaktree.append(self.XY2particle(target.x, target.y, label=label))
 		
 		targetsList = self.getPolyParticlePoints()
 		contourTargets = self.app.panel.getTargets('Auto Create Contours')
@@ -805,14 +834,21 @@ class ContourPicker(manualpicker.ManualPicker):
 		except IndexError:
 			# the first image does not have rundata in the database, yet
 			rundata = self.commitRunToDatabase(imgdata['session'], True)
+		bin = rundata['manparams']['bin']
 		c = None
 		counter = 0
 		for i in range(len(targetsList)):
+			# safe-guard from 1 or 2 point target
+			if len(targetsList[i]) < 3:
+				apDisplay.printWarning('contour %d has only %d points....IGNORED' % (i,len(targetsList[i])))
+				counter += 1
+				continue
 			c=appiondata.ApContourData(name="contour"+str(int(self.startPoint)+i), image=imgdata, x=contourTargets[counter].x, y=contourTargets[counter].y,version=self.maxVersion+1, method='auto', particleType=self.app.particleTypeList[counter], selectionrun=rundata)
 			c.insert()
 			counter += 1
 			for point in targetsList[i]:
-				point1=appiondata.ApContourPointData(x=point[0], y=point[1], contour=c)
+				# save points in the scale of the original image, like particles
+				point1=appiondata.ApContourPointData(x=point[0]*bin, y=point[1]*bin, contour=c)
 				point1.insert()
 
 		return peaktree
@@ -834,6 +870,7 @@ class ContourPicker(manualpicker.ManualPicker):
 		singleTargets = []
 		tubePoints = []
 		self.maxVersion = -1
+		bin = float(self.params['bin'])
 		for i in partd:
 			if not i['version']==None and int(i['version'])>self.maxVersion and i['runname']==self.params['runname']:
 				self.maxVersion = int(i['version'])
@@ -846,7 +883,7 @@ class ContourPicker(manualpicker.ManualPicker):
 				point = points.query()
 				contourList = []
 				for j in point:
-					contourList.append((j['x'], j['y']))
+					contourList.append((int(j['x']/bin), int(j['y'])/bin))
 				oldPolyPoints.append(contourList)
 		return self.app.loadOld((contourPoints,oldPolyPoints,types))
 
@@ -855,6 +892,11 @@ class ContourPicker(manualpicker.ManualPicker):
 		for particle in self.app.polyTargets:
 				targetsList.append(particle)
 		return targetsList
+
+	def minimizeVerticesByDP(self,vertices):
+		verticesarray = douglaspeucker.douglas_peucker(vertices,1)
+		vertices = list(verticesarray)
+		return vertices
 
 if __name__ == '__main__':
 	imgLoop = ContourPicker()

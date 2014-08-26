@@ -4,7 +4,9 @@ import sys
 import socket
 import utility
 from optparse import OptionParser
-from redux.pipelines import StandardPipeline
+import redux.pipes
+import redux.pipeline
+import redux.reduxconfig
 
 class Client(object):
 	def process_request(self, request):
@@ -13,7 +15,11 @@ class Client(object):
 		raise NotImplementedError()
 
 class NetworkClient(Client):
-	def __init__(self, host, port=utility.REDUX_PORT):
+	def __init__(self, host=None, port=None):
+		if host is None:
+			host = redux.reduxconfig.config['server host']
+		if port is None:
+			port = redux.reduxconfig.config['server port']
 		self.host = host
 		self.port = port
 
@@ -34,40 +40,80 @@ class NetworkClient(Client):
 		return self.process_request(request)
 
 class SimpleClient(Client):
+	def __init__(self, *args, **kwargs):
+		import redux.pipeline
+		Client.__init__(self, *args, **kwargs)
 	def process_request(self, request):
 		kwargs = utility.request_to_kwargs(request)
 		return self.process_kwargs(**kwargs)
 
 	def process_kwargs(self, **kwargs):
-		return StandardPipeline().process(**kwargs)
+		if 'pipeline' in kwargs:
+			pl = redux.pipeline.pipeline_by_preset(kwargs['pipeline'])
+		elif 'pipes' in kwargs:
+			pl = redux.pipeline.pipeline_by_string(kwargs['pipes'])		
+		else:
+			pl = redux.pipeline.pipeline_by_preset('standard')
+		return pl.process(**kwargs)
 
-def add_option(parser, optname, help):
-			dest = optname
-			arg = '--%s' % (dest,)
-			parser.add_option(arg, action='store', type='string', dest=dest, help=help)
+def add_option(parser, optname, pipename, help):
+	optnames = [optname]
+	if pipename:
+		optnames.append(pipename+'.'+optname)
+	for name in optnames:
+		arg = '--%s' % (name,)
+		if parser.has_option(arg):
+			continue
+		parser.add_option(arg, action='store', type='string', dest=name, help=help)
+
+def dummy_callback(option, opt, value, parser):
+	pass
 
 def parse_argv():
+	# initial parse to determine pipeline, with help and errors disabled
+	'''
 	parser = OptionParser()
-	for pipe in StandardPipeline.pipeorder:
-		pipe_name = pipe.__name__
-		if pipe.switch_arg:
-			help = '%s: boolean switch to turn it on' % (pipe_name,)
-			add_option(parser, pipe.switch_arg, help)
-		if pipe.required_args:
-			for arg in pipe.required_args:
-				help = '%s: required' % (pipe_name,)
-				add_option(parser, arg, help)
-		if pipe.optional_args:
-			for arg in pipe.optional_args:
-				help = '%s: optional' % (pipe_name,)
-				add_option(parser, arg, help)
+	add_option(parser, 'pipeline', None, 'pipeline preset to use')
+	add_option(parser, 'pipes', None, 'pipeline defined by sequence of pipes:  name:cls,name:cls,...')
 
-	add_option(parser, 'request', 'full request as a single URL option string')
-	add_option(parser, 'server_host', 'redux server host name (if not given, will start built-in redux processor)')
-	add_option(parser, 'server_port', 'redux server port (if not given, will use default port)')
+	parser.remove_option('-h')
+	parser.add_option('-h', action='callback', callback=dummy_callback)
+	parser.error = lambda x: None
+	(options, args) = parser.parse_args()
+	if options.pipeline is not None:
+		pipes = redux.pipeline.pipes_by_preset(options.pipeline)
+	elif options.pipes is not None:
+		pipes = redux.pipeline.pipes_by_string(options.pipes)
+	else:
+		pipes = []
+	'''
+	pipes = redux.pipeline.pipes_by_preset('standard')
+
+	# final parse
+	parser = OptionParser()
+	add_option(parser, 'pipeline', None, 'pipeline preset to use')
+
+	add_option(parser, 'request', None, 'full request as a single URL option string')
+	add_option(parser, 'server_host', None, 'redux server host name (if not given, will start built-in redux processor)')
+	add_option(parser, 'server_port', None, 'redux server port (if not given, will use default port)')
+	add_option(parser, 'pipes', None, 'pipeline defined by sequence of pipes:  name:cls,name:cls,...')
+	add_option(parser, 'cache', None, 'set to "no" to disable cache for this request')
+
+	for pipename,clsname in pipes:
+		cls = redux.pipes.registered[clsname]
+		if cls.switch_arg:
+			help = '%s: boolean switch to turn it on' % (pipename,)
+			add_option(parser, cls.switch_arg, pipename, help)
+		if cls.required_args:
+			for arg in cls.required_args:
+				help = '%s: required' % (pipename,)
+				add_option(parser, arg, pipename, help)
+		if cls.optional_args:
+			for arg in cls.optional_args:
+				help = '%s: optional' % (pipename,)
+				add_option(parser, arg, pipename, help)
 
 	(options, args) = parser.parse_args()
-
 
 	kwargs = {}
 	for key,value in options.__dict__.items():
@@ -84,7 +130,7 @@ def run():
 		if 'server_port' in kwargs and kwargs['server_port']:
 			port = int(kwargs['server_port'])
 		else:
-			port = utility.REDUX_PORT
+			port = redux.reduxconfig.config['server port']
 		client = NetworkClient(kwargs['server_host'], port)
 	else:
 		client = SimpleClient()

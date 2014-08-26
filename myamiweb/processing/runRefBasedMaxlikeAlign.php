@@ -8,11 +8,11 @@
  *      Form for starting a reference-based alignment of a stack
  */
 
-require "inc/particledata.inc";
-require "inc/leginon.inc";
-require "inc/project.inc";
-require "inc/viewer.inc";
-require "inc/processing.inc";
+require_once "inc/particledata.inc";
+require_once "inc/leginon.inc";
+require_once "inc/project.inc";
+require_once "inc/viewer.inc";
+require_once "inc/processing.inc";
 
 // IF VALUES SUBMITTED, EVALUATE DATA
 if ($_POST['process']) {
@@ -199,7 +199,7 @@ function createMaxLikeAlignForm($extra=false, $title='maxlikeAlignment.py Launch
 	$runname = ($_POST['runname']) ? $_POST['runname'] : 'maxlike'.($alignruns+1);
 	$description = $_POST['description'];
 	$stackidstr = $_POST['stackval'];
-	list($stackidval) = split('\|--\|',$stackidstr);
+	list($stackidval) = preg_split('%\|--\|%',$stackidstr);
 	$bin = ($_POST['bin']) ? $_POST['bin'] : '1';
 	$numpart = ($_POST['numpart']) ? $_POST['numpart'] : '3000';
 	$lowpass = ($_POST['lowpass']) ? $_POST['lowpass'] : '10';
@@ -243,7 +243,7 @@ function createMaxLikeAlignForm($extra=false, $title='maxlikeAlignment.py Launch
 	} else {
 		//get template info if coming from resubmitting input
 		$templateIds = templateIds();
-		$templatearray=split(",",$templateIds);
+		$templatearray=preg_split("%,%",$templateIds);
 		$templatetable.="<table><TR>\n";
 		foreach ($templatearray as $templateId) {
 			$templatetable.="<TD VALIGN='TOP'><TABLE CLASS='tableborder'>\n";
@@ -412,6 +412,9 @@ function createMaxLikeAlignForm($extra=false, $title='maxlikeAlignment.py Launch
 }
 
 function runMaxLikeAlign() {
+	/* *******************
+	PART 1: Get variables
+	******************** */
 	$expId=$_GET['expId'];
 	$runname=$_POST['runname'];
 	$outdir=$_POST['outdir'];
@@ -433,9 +436,12 @@ function runMaxLikeAlign() {
 	$nproc = ($_POST['nproc']) ? $_POST['nproc'] : 1;
 
 	// get stack id, apix, & box size from input
-	list($stackid,$apix,$boxsz) = split('\|--\|',$stackval);
+	list($stackid,$apix,$boxsz) = preg_split('%\|--\|%',$stackval);
 	//make sure a session was selected
 
+	/* *******************
+	PART 2: Check for conflicts, if there is an error display the form again
+	******************** */
 	if (!$description)
 		createMaxLikeAlignForm("<B>ERROR:</B> Enter a brief description of the particles to be aligned");
 
@@ -478,6 +484,9 @@ function runMaxLikeAlign() {
 	if (substr($outdir,-1,1)!='/') $outdir.='/';
 	$rundir = $outdir.$runname;
 
+	/* *******************
+	PART 3: Create program command
+	******************** */
 	// setup command
 	$command ="refBasedMaxlikeAlign.py ";
 	$command.="--projectid=".getProjectId()." ";
@@ -507,61 +516,37 @@ function runMaxLikeAlign() {
 	if ($commit) $command.="--commit ";
 	else $command.="--no-commit ";
 	$command.="--converge=$converge ";
-	// submit job to cluster
-	if ($_POST['process']=="Run Max Like Alignment") {
-		$user = $_SESSION['username'];
-		$password = $_SESSION['password'];
 
-		if (!($user && $password)) createMaxLikeAlignForm("<B>ERROR:</B> Enter a user name and password");
+	
+	/* *******************
+	PART 4: Create header info, i.e., references
+	******************** */
+	$headinfo .= referenceBox("Maximum-likelihood multi-reference refinement for electron microscopy images.", 2005, "Scheres SH, Valle M, Nuñez R, Sorzano CO, Marabini R, Herman GT, Carazo JM.", "J Mol Biol.", 348, 1, 15808859, false, false, "img/xmipp_logo.png");
+	$headinfo .= referenceBox("Fast maximum-likelihood refinement of electron microscopy images.", 2005, "Scheres SH, Valle M, Carazo JM.", "Bioinformatics.", 21, "Suppl 2", 16204112, false, false, "img/xmipp_logo.png");
 
-		$sub = submitAppionJob($command,$outdir,$runname,$expId,'partalign',False,False,False,$nproc);
-		// if errors:
-		if ($sub) createMaxLikeAlignForm("<b>ERROR:</b> $sub");
-		exit;
-	}
-	else {
-		processing_header("Max Like Align Run Params","Max Like Align Params");
+	if ($calctime < 60)
+		$headinfo .= "<span style='font-size: larger; color:#999933;'>\n<b>Estimated calc time:</b> "
+			.round($calctime,2)." seconds\n";
+	elseif ($calctime < 3600)
+		$headinfo .= "<span style='font-size: larger; color:#33bb33;'>\n<b>Estimated calc time:</b> "
+			.round($calctime/60.0,2)." minutes\n";
+	else
+		$headinfo .= "<span style='font-size: larger; color:#bb3333;'>\n<b>Estimated calc time:</b> "
+			.round($calctime/3600.0,2)." hours\n";
+	$headinfo .= "for the first iteration</span><br/>"
+		."<i>it gets much faster after the first iteration with the fast mode</i><br/><br/></td></tr>\n";
 
-		echo referenceBox("Maximum-likelihood multi-reference refinement for electron microscopy images.", 2005, "Scheres SH, Valle M, Nuñez R, Sorzano CO, Marabini R, Herman GT, Carazo JM.", "J Mol Biol.", 348, 1, 15808859, false, false, "img/xmipp_logo.png");
 
-		echo referenceBox("Fast maximum-likelihood refinement of electron microscopy images.", 2005, "Scheres SH, Valle M, Carazo JM.", "Bioinformatics.", 21, "Suppl 2", 16204112, false, false, "img/xmipp_logo.png");
+	/* *******************
+	PART 5: Show or Run Command
+	******************** */
+	// submit command
+	$errors = showOrSubmitCommand($command, $headinfo, 'partalign', $nproc);
 
-		echo "<table width='600' class='tableborder' border='1'>";
-		echo "<tr><td colspan='2'><br/>\n";
-		if ($calctime < 60)
-			echo "<span style='font-size: larger; color:#999933;'>\n<b>Estimated calc time:</b> "
-				.round($calctime,2)." seconds\n";
-		elseif ($calctime < 3600)
-			echo "<span style='font-size: larger; color:#33bb33;'>\n<b>Estimated calc time:</b> "
-				.round($calctime/60.0,2)." minutes\n";
-		else
-			echo "<span style='font-size: larger; color:#bb3333;'>\n<b>Estimated calc time:</b> "
-				.round($calctime/3600.0,2)." hours\n";
-		echo "for the first iteration</span><br/>"
-			."<i>it gets much faster after the first iteration with the fast mode</i><br/><br/></td></tr>\n";
-		echo "
-			<tr><td colspan='2'>
-			<b>MaxLike Alignment Command:</b><br />
-			$command
-			</td></tr>
-			<tr><td>run id</td><td>$runname</td></tr>
-			<tr><td>stack id</td><td>$stackid</td></tr>
-			<tr><td>low pass</td><td>$lowpass</td></tr>
-			<tr><td>high pass</td><td>$highpass</td></tr>
-			<tr><td>num part</td><td>$numpart</td></tr>
-			<tr><td>angle increment</td><td>$angle</td></tr>
-			<tr><td>maximum iterations</td><td>$maxiter</td></tr>
-			<TR><td>refids</TD><td>".templateIds()."</TD></tr>
-			<tr><td>binning</td><td>$bin</td></tr>
-			<tr><td>fast</td><td>$fast</td></tr>
-			<tr><td>fast mode</td><td>$fastmode</td></tr>
-			<tr><td>converge</td><td>$converge</td></tr>
-			<tr><td>mirror</td><td>$mirror</td></tr>
-			<tr><td>run dir</td><td>$rundir</td></tr>
-			<tr><td>commit</td><td>$commit</td></tr>
-			</table>\n";
-		processing_footer();
-	}
+	// if error display them
+	if ($errors)
+		createMaxLikeAlignForm("<b>ERROR:</b> $errors");
+	
 }
 
 /*
@@ -576,9 +561,9 @@ function templateIds () {
 	$command = "";
 	// get the list of templates
 	$templatelist=$_POST['templatelist'];
-	$templates=split(",", $templatelist);
+	$templates=preg_split("%,%", $templatelist);
 	foreach ($templates as $tmplt) {
-		list($tmpltNum,$tmpltId)=split(":",$tmplt);
+		list($tmpltNum,$tmpltId)=preg_split("%:%",$tmplt);
 		$templateIds.="$tmpltId,";
 	}
 	$templateIds=substr($templateIds,0,-1);

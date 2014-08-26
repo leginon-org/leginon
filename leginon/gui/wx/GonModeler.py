@@ -14,7 +14,8 @@ import leginon.gui.wx.ToolBar
 
 class SettingsDialog(leginon.gui.wx.Calibrator.SettingsDialog):
 	def initialize(self):
-		return ScrolledSettings(self,self.scrsize,False,self.show_basic)
+		scrolling = not self.show_basic
+		return ScrolledSettings(self,self.scrsize,scrolling,self.show_basic)
 
 class ScrolledSettings(leginon.gui.wx.Calibrator.ScrolledSettings):
 	def initialize(self):
@@ -140,16 +141,16 @@ class Panel(leginon.gui.wx.Calibrator.Panel):
 	settingsdialogclass = SettingsDialog
 	def initialize(self):
 		leginon.gui.wx.Calibrator.Panel.initialize(self)
-		self.toolbar.Realize()
 		ctb = self.toolbar.RemoveTool(leginon.gui.wx.ToolBar.ID_CALIBRATE)
 		atb = self.toolbar.RemoveTool(leginon.gui.wx.ToolBar.ID_ABORT)
-		self.toolbar.AddSeparator()
-		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_MEASURE,
+		self.toolbar.InsertTool(5,leginon.gui.wx.ToolBar.ID_MEASURE,
 													'cam_ruler',
 													shortHelpString='Measure')
-		self.toolbar.AddToolItem(atb)
-		self.toolbar.AddSeparator()
-		self.toolbar.AddToolItem(ctb)
+		# Add again only if remove is successful.
+		if atb is not None and ctb is not None:
+			self.toolbar.AddToolItem(atb)
+			self.toolbar.AddSeparator()
+			self.toolbar.AddToolItem(ctb)
 
 		self.Bind(leginon.gui.wx.Events.EVT_MEASUREMENT_DONE, self.onMeasurementDone)
 

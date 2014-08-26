@@ -1,12 +1,12 @@
 <?php
 
-require "inc/jpgraph.php";
-require "inc/jpgraph_line.php";
-require "inc/jpgraph_scatter.php";
-require "inc/jpgraph_bar.php";
-require "inc/histogram.inc";
-require "inc/leginon.inc";
-require "inc/image.inc";
+require_once "inc/jpgraph.php";
+require_once "inc/jpgraph_line.php";
+require_once "inc/jpgraph_scatter.php";
+require_once "inc/jpgraph_bar.php";
+require_once "inc/histogram.inc";
+require_once "inc/leginon.inc";
+require_once "inc/image.inc";
 
 $defaultId= 1445;
 $sessionId= ($_GET['Id']) ? $_GET['Id'] : $defaultId;
@@ -16,7 +16,9 @@ $minrate = $_GET['minr'];
 $viewdata = $_GET['vd'];
 $viewsql = $_GET['vs'];
 
-$driftdata = $leginondata->getDriftDataFromSessionId($sessionId);
+$result = $leginondata->getDriftDataFromSessionId($sessionId);
+$driftdata = $result[0];
+$unit = $result[1];
 if ($viewsql) {
 	$sql = $leginondata->mysql->getSQLQuery();
 	echo $sql;
@@ -39,12 +41,17 @@ function TimeCallback($aVal) {
     return Date('H:i',$aVal);
 }
 
+$ratescalefactor = 1.0;
+if ($unit === 'Meters') {
+	$ratescalefactor = 1e10;
+	$unit = 'Angstrom';
+}
 if ($data)
 foreach ($data as $drift) {
-	if ($maxrate && $drift['rate'] > $maxrate)
+	if ($maxrate && $drift['rate'] * $ratescalefactor > $maxrate)
 		continue;
 	$datax[] = $drift['unix_timestamp'];
-	$datay[] = $drift['rate']*1.63*4;
+	$datay[] = $drift['rate'] * $ratescalefactor;
 }
 $width = $_GET['w'];
 $height = $_GET['h'];
@@ -67,7 +74,7 @@ if (!$datax && !$datay) {
 		$bplot = new BarPlot($rdatay, $rdatax);
 		$graph->Add($bplot);
 		$graph->title->Set("Drift");
-		$graph->xaxis->title->Set("drift rate pix/s");
+		$graph->xaxis->title->Set("drift rate ".$unit."/s");
 		$graph->yaxis->title->Set("Frequency");
 
 	} else {
@@ -80,7 +87,7 @@ if (!$datax && !$datay) {
 		$graph->xaxis->SetTitlemargin(30);
 		$graph->xaxis->title->Set("time");
 		$graph->yaxis->SetTitlemargin(35);
-		$graph->yaxis->title->Set("drift rate pix/s");
+		$graph->yaxis->title->Set("drift rate ".$unit."/s");
 
 		$sp1 = new ScatterPlot($datay,$datax);
 		$sp1->mark->SetType(MARK_CIRCLE);

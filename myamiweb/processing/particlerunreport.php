@@ -1,11 +1,11 @@
 <?php
-require "inc/particledata.inc";
-require "inc/viewer.inc";
-require "inc/processing.inc";
-//require "inc/util.inc";
-require "inc/leginon.inc";
-require "inc/project.inc";
-require "inc/summarytables.inc";
+require_once "inc/particledata.inc";
+require_once "inc/viewer.inc";
+require_once "inc/processing.inc";
+//require_once "inc/util.inc";
+require_once "inc/leginon.inc";
+require_once "inc/project.inc";
+require_once "inc/summarytables.inc";
 
 $expId = $_GET['expId'];
 $runId = $_GET['rId'];
@@ -49,11 +49,6 @@ if ($templateparams) {
 
 # more display about the particles
 if ($particlestats['totparticles']) {
-	$partdownlink .= "<font size='+1'><a href='downloadparticledata.php?expId=$expId&selectionId=$runId'>\n";
-	$partdownlink .= "  <img style='vertical-align:middle' src='img/download_arrow.png' border='0' width='16' height='17' alt='download stack'>&nbsp;download particle data\n";
-	$partdownlink .= "</a></font><br/>\n";
-
-	echo $partdownlink;
 
 	echo "<h4>Particle Position Histograms</h4>\n";
 	echo "<table cellspacing='1' cellpadding='2'><tr><td>";

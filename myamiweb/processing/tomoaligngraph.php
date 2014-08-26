@@ -1,11 +1,11 @@
 <?php
 
-require "inc/particledata.inc";
-require "inc/leginon.inc";
-require "inc/project.inc";
-require "inc/jpgraph.php";
-require "inc/jpgraph_line.php";
-require "inc/jpgraph_scatter.php";
+require_once "inc/particledata.inc";
+require_once "inc/leginon.inc";
+require_once "inc/project.inc";
+require_once "inc/jpgraph.php";
+require_once "inc/jpgraph_line.php";
+require_once "inc/jpgraph_scatter.php";
 
 define (PARTICLE_DB, $_SESSION['processingdb']);
 
@@ -49,7 +49,7 @@ $title = $titles[$type];
 $miny = 100000;
 $maxy = -100000;
 foreach ($refinedata as $data) {
-	$datax[] = $data['number'];
+	$datax[] = $data['number']+1;
 	$datay[] = $data[$key];
 	$miny = ($miny > $data[$key] && $data['number'] <= $maxx && $data['number'] >= $minx) ? 
 		$data[$key]:$miny;

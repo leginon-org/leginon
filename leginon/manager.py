@@ -10,7 +10,7 @@
 
 import application
 import applications
-import leginondata
+from leginon import leginondata
 import databinder
 import datatransport
 import event
@@ -693,24 +693,47 @@ class Manager(node.Node):
 		apps = [appdict['application'] for appdict in applications.builtin.values()]
 		return apps
 
-	def getApplicationNames(self):
+	def getApplicationNames(self,show_hidden=False):
 		names = []
+		hiddennames = []
 		appdatalist = self.getBuiltinApplications()
 		appdatalist.extend(self.research(leginondata.ApplicationData()))
 		for appdata in appdatalist:
-			if appdata['name'] not in names:
-				names.append(appdata['name'])
+			appname = appdata['name']
+			if appname not in names:
+				if show_hidden is True:
+					names.append(appname)
+				else:
+					if appname not in hiddennames:
+						if not appdata['hide']:
+								names.append(appname)
+						else:
+							hiddennames.append(appname)
 		return names
 
-	def getApplications(self):
+	def getApplications(self,show_hidden=False):
 		apps = {}
+		hiddens = []
 		appdatalist = self.getBuiltinApplications()
 		appdatalist.extend(self.research(leginondata.ApplicationData()))
 		for appdata in appdatalist:
 			appname = appdata['name']
 			if appname not in apps:
 				app = application.Application(self, name=appname)
-				apps[appname] = app
+				if show_hidden:
+					apps[appname] = app
+				else:
+					if appname not in hiddens:
+						if appdata['hide']:
+							hiddens.append(appname)
+						else:
+							apps[appname] = app
+		if not show_hidden:
+			history, map = self.getApplicationHistory()
+			for appname in history:
+				if appname not in apps:
+					app = application.Application(self, name=appname)
+					apps[appname] = app
 		appnames = apps.keys()
 		appnames.sort()
 		orderedapps = ordereddict.OrderedDict()
@@ -741,12 +764,17 @@ class Manager(node.Node):
 		self.frame.GetEventHandler().AddPendingEvent(evt)
 
 	def onApplicationStarted(self, name):
+		evt = event.ApplicationLaunchedEvent(application=self.application.applicationdata,destination='')
+		self.distributeEvents(evt)
 		evt = gui.wx.Manager.ApplicationStartedEvent(name)
 		self.frame.GetEventHandler().AddPendingEvent(evt)
 
 	def onApplicationKilled(self):
 		evt = gui.wx.Manager.ApplicationKilledEvent()
 		self.frame.GetEventHandler().AddPendingEvent(evt)
+
+	def validateApplication(self, app):
+		return app.validateTransformManagerNavigatorBindings()
 
 	def runApplication(self, app):
 		name = app.applicationdata['name']
@@ -787,7 +815,11 @@ class Manager(node.Node):
 		for alias in self.uilauncherselectors.values():
 			aliasvalue = alias.getSelectedValue()
 			self.application.setLauncherAlias(alias.name, aliasvalue)
-		nodenames = self.application.launch()
+		try:
+			nodenames = self.application.launch()
+		except RuntimeError,e:
+			self.logger.error('Application launch failed: %s' % e)
+			return
 		self.waitNodes(nodenames)
 		dat = leginondata.LaunchedApplicationData(session=self.session, application=self.application.applicationdata)
 		self.publish(dat, database=True, dbforce=True)

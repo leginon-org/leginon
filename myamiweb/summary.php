@@ -7,13 +7,13 @@
  *	see  http://ami.scripps.edu/software/leginon-license
  */
 
-require "inc/leginon.inc";
-require "inc/project.inc";
+require_once "inc/leginon.inc";
+require_once "inc/project.inc";
 
 login_header(PROJECT_TITLE);
 
 if (defined('PROCESSING')) {
-	$ptcl = (@require "inc/particledata.inc") ? true : false;
+	$ptcl = (@require_once "inc/particledata.inc") ? true : false;
 }
 
 
@@ -80,7 +80,7 @@ if (!empty($sessioninfo)) {
 	echo "<table border='0'>\n";
 	$i=0;
 	foreach($sessioninfo as $k=>$v) {
-		if (eregi('timestamp', $k))
+		if (preg_match('%timestamp%i', $k))
 			continue;
 		echo formatHtmlRow($k, $v);
 	}
@@ -152,14 +152,14 @@ echo "</tr>";
 echo "<tr>";
 echo "<td valign='top' colspan='1'>";
 echo divtitle("Drift ");
-echo "<a href='driftreport.php?Id=$expId'>report &raquo;</a>";
+echo "<a href='driftreport.php?Id=$expId&maxr=50'>report &raquo;</a>";
 echo "<table border='0'>\n";
 	echo "<tr>";
 		echo "<td>";
 	echo "<a href='avgdriftgraph.php?vd=1&Id=$expId'>[data]</a>";
 	echo "<a href='avgdriftgraph.php?vs=1&Id=$expId'>[sql]</a><br>";
-	echo "<a href='avgdriftgraph.php?Id=$expId'>";
-	echo "<img border='0' src='avgdriftgraph.php?w=256&Id=$expId'>";
+	echo "<a href='avgdriftgraph.php?Id=$expId&maxr=50'>";
+	echo "<img border='0' src='avgdriftgraph.php?w=256&Id=$expId&maxr=50'>";
 	echo "</a>";
 		echo "</td>";
 	echo "</tr>";
@@ -182,7 +182,7 @@ echo "<table border='0'>\n";
 echo "</table>\n";
 echo "</td>";
 echo "</tr>";
-$presets = $leginondata->getDatatypes($expId);
+$presets = $leginondata->getDataTypes($expId);
 	echo "<tr>";
 	echo "<td colspan='2'>";
 	echo divtitle("Image Stats");
@@ -203,9 +203,9 @@ if ($r) {
 ?>
 	<td>
 	Preset: <?php echo $preset; ?>
-	<a href="imagestatsgraph.php?hg=1&vdata=1&Id=<?php echo $sessionId; ?>&preset=<?php echo $preset; ?>">[data]</a>
-	<a href="imagestatsgraph.php?hg=1&vs=1&Id=<?php echo $sessionId; ?>&preset=<?php echo $preset; ?>">[sql]</a><br>
-	<a href="imagestatsgraph.php?hg=1&Id=<?php echo $sessionId; ?>&preset=<?php echo $preset; ?>"><img border="0"  src="imagestatsgraph.php?hg=1&w=210&Id=<?php echo $sessionId; ?>&preset=<?php echo $preset; ?>"></a>
+	<a href="imagestatsgraph.php?vdata=1&Id=<?php echo $sessionId; ?>&preset=<?php echo $preset; ?>">[data]</a>
+	<a href="imagestatsgraph.php?vs=1&Id=<?php echo $sessionId; ?>&preset=<?php echo $preset; ?>">[sql]</a><br>
+	<a href="imagestatsgraph.php?Id=<?php echo $sessionId; ?>&preset=<?php echo $preset; ?>"><img border="0"  src="imagestatsgraph.php?w=210&Id=<?php echo $sessionId; ?>&preset=<?php echo $preset; ?>"></a>
 	</td>
 <?php
 	}
@@ -255,7 +255,7 @@ if (!empty($imageshiftpresets)) {
 		echo "</td>";
 	echo "</tr>";
 	foreach($imageshiftpresets as $preset) {
-		$stats = $leginondata->getImageShift($expId,$preset['name'],True);
+		$stats = $leginondata->getImageScopeXYValues($expId,$preset['name'],'image shift',True);
 		if (!$stats['x']['stddev']) continue;
 		echo "<tr><td colspan='2'>";
 		foreach (array_keys($stats) as $key) 
@@ -295,7 +295,7 @@ if (!empty($imageshiftpresets)) {
 $defocusresults = $leginondata->getFocusResultData($expId, 'both','all','ok');
 	echo "<tr>";
 	echo "<td colspan='2'>";
-	echo divtitle("Autofocus Results - No graph display when not enough data.");
+	echo divtitle("Autofocus Results");
 	if (!empty($defocusresults)) {
 		echo "<table border='0'>\n";
 		echo "<tr>";
@@ -305,6 +305,10 @@ $defocusresults = $leginondata->getFocusResultData($expId, 'both','all','ok');
 		echo "<a href='autofocusgraph.php?Id=$expId'>";
 		echo "<img border='0' src='autofocusgraph.php?Id=$expId&w=256'>";
 		echo "</a>\n";
+		echo "</td><td>\n";
+		echo "<a href='zheightgraph.php?Id=$expId&vd=1'>[data]</a><br>";
+		echo "<a href='zheightgraph.php?Id=$expId'>";
+		echo "<img border='0' src='zheightgraph.php?Id=$expId&w=256'>";
 		echo "</td>\n";
 		echo "</tr>\n";
 		echo "</table>\n";
@@ -391,14 +395,14 @@ if ($particle->hasCtfData($sessionId)) {
 			foreach($data as $k=>$v) {
 				$preset = $bestctf[$field][$k]['name'];
 				if ($field !='difference') {
-					$cdf='<a href="processing/ctfgraph.php?&hg=1&Id='.$sessionId
+					$cdf='<a href="processing/ctfgraph.php?expId='.$sessionId.'&hg=1'
 							.'&s=1&f='.$field.'&preset='.$preset.''.$urlmconf.'">'
-							.'<img border="0" src="processing/ctfgraph.php?w=150&hg=1&Id='.$sessionId
+							.'<img border="0" src="processing/ctfgraph.php?w=150&hg=1&expId='.$sessionId
 							.'&s=1&f='.$field.'&preset='.$preset.''.$urlmconf.'"></a>';
 				} else {	
-					$cdf='<a href="processing/autofocacegraph.php?&hg=0&Id='.$sessionId
+					$cdf='<a href="processing/autofocacegraph.php?hg=0&expId='.$sessionId
 							.'&s=1&f='.$field.'&preset='.$preset.''.$urlmconf.'">'
-							.'<img border="0" src="processing/autofocacegraph.php?w=150&hg=0&Id='.$sessionId
+							.'<img border="0" src="processing/autofocacegraph.php?w=150&hg=0&expId='.$sessionId
 							.'&s=1&f='.$field.'&preset='.$preset.''.$urlmconf.'"></a>';
 				}
 				$bestctf[$field][$k]['img'] = $cdf;

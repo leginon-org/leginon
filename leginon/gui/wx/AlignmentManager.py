@@ -22,8 +22,6 @@ class Panel(leginon.gui.wx.Node.Panel):
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, True)
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT, False)
 
-		self.toolbar.Realize()
-
 		self.SetSizer(self.szmain)
 		self.SetAutoLayout(True)
 		self.SetupScrolling()
@@ -71,10 +69,16 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
 		self.widgets['bypass'] = wx.CheckBox(self, -1, 'Bypass Manager')
-		sz = wx.GridBagSizer(5, 10)
-		sz.Add(self.widgets['bypass'], (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz = wx.GridBagSizer(2, 4)
+		sz_time = wx.GridBagSizer(1, 4)
+		sz.Add(self.widgets['bypass'], (0, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
+		label1 = wx.StaticText(self, -1, 'Wait for at least')
 		self.widgets['repeat time'] = IntEntry(self, -1, chars=6, min = 0)
-		sz.Add(self.widgets['repeat time'], (1, 0), (1, 1), wx.EXPAND)
+		label2 = wx.StaticText(self, -1, 'seconds before preforming alignment')
+		sz_time.Add(label1, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz_time.Add(self.widgets['repeat time'], (0, 1), (1, 1), wx.EXPAND)
+		sz_time.Add(label2, (0, 2), (1, 2), wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
+		sz.Add(sz_time, (1, 0), (1, 2), wx.ALIGN_LEFT|wx.ALL)
 		sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
 		
 

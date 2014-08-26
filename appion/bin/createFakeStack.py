@@ -131,6 +131,7 @@ class fakeStackScript(appionScript.AppionScript):
 			apDisplay.printError("enter a stackid ID, e.g. --stackid=773")
 		dbconf = sinedon.getConfig('appiondata')
 		db     = MySQLdb.connect(**dbconf)
+		db.autocommit(True)
 		self.cursor = db.cursor()
 
 	#=====================

@@ -14,7 +14,6 @@ class setLeginonDefaultValues {
 		}
 		else
 			$this->userId = $userId;
-		
 		$this->sessionId = $this->createNewSession();
 		$this->addDefaultValues();
 	}
@@ -36,14 +35,144 @@ class setLeginonDefaultValues {
 	}
 	
 	function createNewSession(){
-		$sql = "insert into `SessionData` (`name`,`REF|UserData|user`,`comment` ) "
+		$sql = "insert into `SessionData` (`name`,`REF|UserData|user`,`comment`, `hidden` ) "
       		. " VALUES "
       		. " ( concat('importsettings', DATE_FORMAT(now(), '%Y%m%d%H%i%s')), "
-			. " ".$this->userId." ,'import default') ";
+			. " ".$this->userId." ,'import default',1) ";
 		return $this->mysqld->SQLQuery($sql, true);
 	}
 	
 	function addDefaultValues(){
+		$table = "BeamTiltCalibratorSettingsData";
+		$data=array();
+		$data["name"] = "Beam Tilt";
+		$data["isdefault"] = "1";
+		$data["override preset"] = "0";
+		$data["REF|CameraSettingsData|camera settings"] = "1";
+		$data["correlation type"] = "phase";
+		$data["lpf sigma"] = "1.0";
+		$data["defocus beam tilt"] = "0.01";
+		$data["first defocus"] = "-2e-06";
+		$data["second defocus"] = "-4e-06";
+		$data["stig beam tilt"] = "0.01";
+		$data["stig delta"] = "0.2";
+		$data["measure beam tilt"] = "0.01";
+		$data["correct tilt"] = "1";
+		$data["settling time"] = "0.5";
+		$data["comafree beam tilt"] = "0.005";
+		$data["comafree misalign"] = "0.002";
+		$data["imageshift coma tilt"] = "0.005";
+		$data["imageshift coma step"] = "-1e-06";
+		$data["imageshift coma number"] = "1";
+		$data["imageshift coma repeat"] = "1";
+		$data["SUBD|instruments|ccdcamera"] = "None";
+		$data["SUBD|instruments|tem"] = "None";
+		$data["REF|SessionData|session"]= $this->sessionId;
+		$bid19=$this->mysqld->SQLInsert($table, $data);
+
+		$table = "MatrixCalibratorSettingsData";
+		$data=array();
+		$data["name"] = "Matrix";
+		$data["isdefault"] = "1";
+		$data["SUBD|instruments|ccdcamera"] = "None";
+		$data["SUBD|instruments|tem"] = "None";
+		$data["override preset"] = "0";
+		$data["REF|CameraSettingsData|camera settings"] = "1";
+		$data["correlation type"] = "phase";
+		$data["lpf sigma"] = "1.0";
+		$data["image shift tolerance"] = "12";
+		$data["image shift shift fraction"] = "25";
+		$data["image shift n average"] = "1";
+		$data["image shift interval"] = "2e-06";
+		$data["image shift current as base"] = "1";
+		$data["SUBD|image shift base|x"] = "0";
+		$data["SUBD|image shift base|y"] = "0";
+		$data["beam shift tolerance"] = "12";
+		$data["beam shift shift fraction"] = "25";
+		$data["beam shift n average"] = "1";
+		$data["beam shift interval"] = "2e-06";
+		$data["beam shift current as base"] = "1";
+		$data["SUBD|beam shift base|x"] = "0";
+		$data["SUBD|beam shift base|y"] = "0";
+		$data["stage position tolerance"] = "12";
+		$data["stage position shift fraction"] = "25";
+		$data["stage position n average"] = "1";
+		$data["stage position interval"] = "2e-06";
+		$data["stage position current as base"] = "1";
+		$data["SUBD|stage position base|x"] = "0";
+		$data["SUBD|stage position base|y"] = "0";
+		$data["REF|SessionData|session"]= $this->sessionId;
+		$mid6=$this->mysqld->SQLInsert($table, $data);
+
+		$table = "MatrixCalibratorSettingsData";
+		$data=array();
+		$data["name"] = "Matrix Calibrator";
+		$data["isdefault"] = "1";
+		$data["SUBD|instruments|ccdcamera"] = "None";
+		$data["SUBD|instruments|tem"] = "None";
+		$data["override preset"] = "0";
+		$data["REF|CameraSettingsData|camera settings"] = "1";
+		$data["correlation type"] = "phase";
+		$data["lpf sigma"] = "1.0";
+		$data["image shift tolerance"] = "12";
+		$data["image shift shift fraction"] = "25";
+		$data["image shift n average"] = "1";
+		$data["image shift interval"] = "2e-06";
+		$data["image shift current as base"] = "1";
+		$data["SUBD|image shift base|x"] = "0";
+		$data["SUBD|image shift base|y"] = "0";
+		$data["beam shift tolerance"] = "12";
+		$data["beam shift shift fraction"] = "25";
+		$data["beam shift n average"] = "1";
+		$data["beam shift interval"] = "2e-06";
+		$data["beam shift current as base"] = "1";
+		$data["SUBD|beam shift base|x"] = "0";
+		$data["SUBD|beam shift base|y"] = "0";
+		$data["stage position tolerance"] = "12";
+		$data["stage position shift fraction"] = "25";
+		$data["stage position n average"] = "1";
+		$data["stage position interval"] = "2e-06";
+		$data["stage position current as base"] = "1";
+		$data["SUBD|stage position base|x"] = "0";
+		$data["SUBD|stage position base|y"] = "0";
+		$data["REF|SessionData|session"]= $this->sessionId;
+		$mid8=$this->mysqld->SQLInsert($table, $data);
+
+		$table = "PixelSizeCalibratorSettingsData";
+		$data=array();
+		$data["name"] = "Pixel Size";
+		$data["isdefault"] = "1";
+		$data["override preset"] = "0";
+		$data["REF|CameraSettingsData|camera settings"] = "1";
+		$data["correlation type"] = "phase";
+		$data["lpf sigma"] = "1.0";
+		$data["lattice a"] = "69";
+		$data["lattice b"] = "173.5";
+		$data["lattice gamma"] = "90";
+		$data["h1"] = "0";
+		$data["k1"] = "6";
+		$data["h2"] = "0";
+		$data["k2"] = "-6";
+		$data["SUBD|instruments|ccdcamera"] = "None";
+		$data["SUBD|instruments|tem"] = "None";
+		$data["REF|SessionData|session"]= $this->sessionId;
+		$pid6=$this->mysqld->SQLInsert($table, $data);
+
+		$table = "DoseCalibratorSettingsData";
+		$data=array();
+		$data["name"] = "Dose";
+		$data["isdefault"] = "1";
+		$data["SUBD|instruments|ccdcamera"] = "None";
+		$data["SUBD|instruments|tem"] = "None";
+		$data["override preset"] = "0";
+		$data["REF|CameraSettingsData|camera settings"] = "1";
+		$data["correlation type"] = "phase";
+		$data["lpf sigma"] = "1.0";
+		$data["beam diameter"] = "0.16";
+		$data["scale factor"] = "0.88";
+		$data["REF|SessionData|session"]= $this->sessionId;
+		$did6=$this->mysqld->SQLInsert($table, $data);
+
 		$table = "PresetsManagerSettingsData";
 		$data=array();
 		$data["stage always"] = "1";
@@ -55,7 +184,7 @@ class setLeginonDefaultValues {
 		$data["cycle"] = "1";
 		$data["isdefault"] = "1";
 		$data["apply offset"] = "0";
-		$data["smallsize"] = "512";
+		$data["smallsize"] = "1024";
 		$data["blank"] = "0";
 		$data["REF|SessionData|session"]= $this->sessionId;
 		$pid2174=$this->mysqld->SQLInsert($table, $data);
@@ -65,7 +194,7 @@ class setLeginonDefaultValues {
 		$data["correct image"] = "1";
 		$data["SEQ|preset order"] = "[u'gr']";
 		$data["wait for rejects"] = "0";
-		$data["move type"] = "modeled stage position";
+		$data["move type"] = "stage position";
 		$data["save image"] = "1";
 		$data["pause time"] = "1.5";
 		$data["display image"] = "1";
@@ -82,7 +211,6 @@ class setLeginonDefaultValues {
 		$data["final image shift"] = "0";
 		$data["accept precision"] = "0.001";
 		$data["wait for reference"] = "0";
-		$data["wait for transform"] = "0";
 		$data["adjust for transform"] = "no";
 		$data["background"] = "0";
 		$data["use parent tilt"] = "0";
@@ -96,6 +224,8 @@ class setLeginonDefaultValues {
 		$data["target offset col"] = "0";
 		$data["correct image shift coma"] = "0";
 		$data["REF|SessionData|session"]= $this->sessionId;
+		$data["park after list"] = "0";
+		$data["park after target"] = "0";
 		$aid46=$this->mysqld->SQLInsert($table, $data);
 		
 		$table = "AcquisitionSettingsData";
@@ -103,7 +233,7 @@ class setLeginonDefaultValues {
 		$data["correct image"] = "1";
 		$data["SEQ|preset order"] = "[u'sq']";
 		$data["wait for rejects"] = "0";
-		$data["move type"] = "modeled stage position";
+		$data["move type"] = "stage position";
 		$data["save image"] = "1";
 		$data["pause time"] = "1.5";
 		$data["display image"] = "1";
@@ -120,7 +250,6 @@ class setLeginonDefaultValues {
 		$data["final image shift"] = "0";
 		$data["accept precision"] = "0.001";
 		$data["wait for reference"] = "0";
-		$data["wait for transform"] = "0";
 		$data["adjust for transform"] = "no";
 		$data["background"] = "0";
 		$data["use parent tilt"] = "0";
@@ -133,15 +262,55 @@ class setLeginonDefaultValues {
 		$data["target offset row"] = "0";
 		$data["target offset col"] = "0";
 		$data["correct image shift coma"] = "0";
+		$data["park after list"] = "0";
+		$data["park after target"] = "0";
 		$data["REF|SessionData|session"]= $this->sessionId;
 		$aid47=$this->mysqld->SQLInsert($table, $data);
-		
+		$table = "AcquisitionSettingsData";
+		$data=array();
+		$data["correct image"] = "1";
+		$data["SEQ|preset order"] = "[u'rsq']";
+		$data["wait for rejects"] = "0";
+		$data["move type"] = "stage position";
+		$data["save image"] = "1";
+		$data["pause time"] = "1.5";
+		$data["display image"] = "1";
+		$data["wait for process"] = "1";
+		$data["name"] = "RCT Square";
+		$data["wait time"] = "0";
+		$data["iterations"] = "1";
+		$data["isdefault"] = "1";
+		$data["mover"] = "presets manager";
+		$data["move precision"] = "0";
+		$data["process target type"] = "acquisition";
+		$data["save integer"] = "0";
+		$data["drift between"] = "0";
+		$data["final image shift"] = "0";
+		$data["accept precision"] = "0.001";
+		$data["wait for reference"] = "0";
+		$data["adjust for transform"] = "no";
+		$data["background"] = "0";
+		$data["use parent tilt"] = "0";
+		$data["adjust time by tilt"] = "0";
+		$data["reset tilt"] = "0";
+		$data["bad stats response"] = "Continue";
+		$data["high mean"] = "65536";
+		$data["low mean"] = "50";
+		$data["emission off"] = "0";
+		$data["target offset row"] = "0";
+		$data["target offset col"] = "0";
+		$data["correct image shift coma"] = "0";
+		$data["park after list"] = "0";
+		$data["park after target"] = "0";
+		$data["REF|SessionData|session"]= $this->sessionId;
+		$aid47=$this->mysqld->SQLInsert($table, $data);
+
 		$table = "AcquisitionSettingsData";
 		$data=array();
 		$data["correct image"] = "1";
 		$data["SEQ|preset order"] = "[u'hl']";
 		$data["wait for rejects"] = "1";
-		$data["move type"] = "modeled stage position";
+		$data["move type"] = "stage position";
 		$data["save image"] = "1";
 		$data["pause time"] = "1.5";
 		$data["display image"] = "1";
@@ -158,7 +327,6 @@ class setLeginonDefaultValues {
 		$data["final image shift"] = "0";
 		$data["accept precision"] = "0.001";
 		$data["wait for reference"] = "0";
-		$data["wait for transform"] = "0";
 		$data["adjust for transform"] = "one";
 		$data["background"] = "0";
 		$data["use parent tilt"] = "0";
@@ -171,6 +339,8 @@ class setLeginonDefaultValues {
 		$data["target offset row"] = "0";
 		$data["target offset col"] = "0";
 		$data["correct image shift coma"] = "0";
+		$data["park after list"] = "0";
+		$data["park after target"] = "0";
 		$data["REF|SessionData|session"]= $this->sessionId;
 		$aid49=$this->mysqld->SQLInsert($table, $data);
 		
@@ -179,7 +349,7 @@ class setLeginonDefaultValues {
 		$data["correct image"] = "1";
 		$data["SEQ|preset order"] = "[u'hl']";
 		$data["wait for rejects"] = "0";
-		$data["move type"] = "modeled stage position";
+		$data["move type"] = "stage position";
 		$data["save image"] = "1";
 		$data["pause time"] = "2.5";
 		$data["display image"] = "1";
@@ -196,7 +366,6 @@ class setLeginonDefaultValues {
 		$data["final image shift"] = "0";
 		$data["accept precision"] = "0.001";
 		$data["wait for reference"] = "0";
-		$data["wait for transform"] = "0";
 		$data["adjust for transform"] = "one";
 		$data["background"] = "0";
 		$data["use parent tilt"] = "0";
@@ -209,6 +378,8 @@ class setLeginonDefaultValues {
 		$data["target offset row"] = "0";
 		$data["target offset col"] = "0";
 		$data["correct image shift coma"] = "0";
+		$data["park after list"] = "0";
+		$data["park after target"] = "0";
 		$data["REF|SessionData|session"]= $this->sessionId;
 		$aid61=$this->mysqld->SQLInsert($table, $data);
 
@@ -234,7 +405,6 @@ class setLeginonDefaultValues {
 		$data["final image shift"] = "0";
 		$data["accept precision"] = "0.001";
 		$data["wait for reference"] = "0";
-		$data["wait for transform"] = "0";
 		$data["adjust for transform"] = "one";
 		$data["background"] = "0";
 		$data["use parent tilt"] = "0";
@@ -247,6 +417,10 @@ class setLeginonDefaultValues {
 		$data["target offset row"] = "0";
 		$data["target offset col"] = "0";
 		$data["correct image shift coma"] = "0";
+		$data["park after list"] = "0";
+		$data["pause between time"] = "0";
+		$data["park after target"] = "0";
+		$data["use parent mover"] = "1";
 		$data["REF|SessionData|session"]= $this->sessionId;
 		$aid53=$this->mysqld->SQLInsert($table, $data);
 		
@@ -255,7 +429,7 @@ class setLeginonDefaultValues {
 		$data["correct image"] = "1";
 		$data["SEQ|preset order"] = "[u'sq']";
 		$data["wait for rejects"] = "0";
-		$data["move type"] = "modeled stage position";
+		$data["move type"] = "stage position";
 		$data["save image"] = "1";
 		$data["pause time"] = "2.5";
 		$data["display image"] = "1";
@@ -272,7 +446,6 @@ class setLeginonDefaultValues {
 		$data["final image shift"] = "0";
 		$data["accept precision"] = "0.001";
 		$data["wait for reference"] = "0";
-		$data["wait for transform"] = "0";
 		$data["adjust for transform"] = "no";
 		$data["background"] = "0";
 		$data["use parent tilt"] = "0";
@@ -285,6 +458,8 @@ class setLeginonDefaultValues {
 		$data["target offset row"] = "0";
 		$data["target offset col"] = "0";
 		$data["correct image shift coma"] = "0";
+		$data["park after list"] = "0";
+		$data["park after target"] = "0";
 		$data["REF|SessionData|session"]= $this->sessionId;
 		$aid65=$this->mysqld->SQLInsert($table, $data);
 		
@@ -293,7 +468,7 @@ class setLeginonDefaultValues {
 		$data["correct image"] = "1";
 		$data["SEQ|preset order"] = "[u'hl']";
 		$data["wait for rejects"] = "1";
-		$data["move type"] = "modeled stage position";
+		$data["move type"] = "stage position";
 		$data["save image"] = "1";
 		$data["pause time"] = "2.5";
 		$data["display image"] = "1";
@@ -310,7 +485,6 @@ class setLeginonDefaultValues {
 		$data["final image shift"] = "0";
 		$data["accept precision"] = "0.001";
 		$data["wait for reference"] = "0";
-		$data["wait for transform"] = "0";
 		$data["adjust for transform"] = "one";
 		$data["background"] = "0";
 		$data["use parent tilt"] = "0";
@@ -323,6 +497,8 @@ class setLeginonDefaultValues {
 		$data["target offset row"] = "0";
 		$data["target offset col"] = "0";
 		$data["correct image shift coma"] = "0";
+		$data["park after list"] = "0";
+		$data["park after target"] = "0";
 		$data["REF|SessionData|session"]= $this->sessionId;
 		$aid67=$this->mysqld->SQLInsert($table, $data);
 		
@@ -331,7 +507,7 @@ class setLeginonDefaultValues {
 		$data["correct image"] = "1";
 		$data["SEQ|preset order"] = "[u'preview']";
 		$data["wait for rejects"] = "0";
-		$data["move type"] = "modeled stage position";
+		$data["move type"] = "stage position";
 		$data["save image"] = "1";
 		$data["pause time"] = "2.5";
 		$data["display image"] = "1";
@@ -348,7 +524,6 @@ class setLeginonDefaultValues {
 		$data["final image shift"] = "0";
 		$data["accept precision"] = "0.001";
 		$data["wait for reference"] = "0";
-		$data["wait for transform"] = "0";
 		$data["adjust for transform"] = "one";
 		$data["background"] = "0";
 		$data["use parent tilt"] = "0";
@@ -362,6 +537,8 @@ class setLeginonDefaultValues {
 		$data["target offset col"] = "0";
 		$data["correct image shift coma"] = "0";
 		$data["REF|SessionData|session"]= $this->sessionId;
+		$data["park after list"] = "0";
+		$data["park after target"] = "0";
 		$aid69=$this->mysqld->SQLInsert($table, $data);
 		
 		$table = "AcquisitionSettingsData";
@@ -369,7 +546,7 @@ class setLeginonDefaultValues {
 		$data["correct image"] = "1";
 		$data["SEQ|preset order"] = "[u'hl']";
 		$data["wait for rejects"] = "1";
-		$data["move type"] = "modeled stage position";
+		$data["move type"] = "stage position";
 		$data["save image"] = "1";
 		$data["pause time"] = "2.5";
 		$data["display image"] = "1";
@@ -386,7 +563,6 @@ class setLeginonDefaultValues {
 		$data["final image shift"] = "0";
 		$data["accept precision"] = "0.001";
 		$data["wait for reference"] = "0";
-		$data["wait for transform"] = "0";
 		$data["adjust for transform"] = "no";
 		$data["background"] = "1";
 		$data["use parent tilt"] = "0";
@@ -399,6 +575,8 @@ class setLeginonDefaultValues {
 		$data["target offset row"] = "0";
 		$data["target offset col"] = "0";
 		$data["correct image shift coma"] = "0";
+		$data["park after list"] = "0";
+		$data["park after target"] = "0";
 		$data["REF|SessionData|session"]= $this->sessionId;
 		$aid99=$this->mysqld->SQLInsert($table, $data);
 		
@@ -407,7 +585,7 @@ class setLeginonDefaultValues {
 		$data["correct image"] = "1";
 		$data["SEQ|preset order"] = "[u'hl']";
 		$data["wait for rejects"] = "1";
-		$data["move type"] = "modeled stage position";
+		$data["move type"] = "stage position";
 		$data["save image"] = "1";
 		$data["pause time"] = "2.5";
 		$data["display image"] = "1";
@@ -424,7 +602,6 @@ class setLeginonDefaultValues {
 		$data["final image shift"] = "0";
 		$data["accept precision"] = "0.001";
 		$data["wait for reference"] = "0";
-		$data["wait for transform"] = "0";
 		$data["adjust for transform"] = "one";
 		$data["background"] = "0";
 		$data["use parent tilt"] = "0";
@@ -437,6 +614,8 @@ class setLeginonDefaultValues {
 		$data["target offset row"] = "0";
 		$data["target offset col"] = "0";
 		$data["correct image shift coma"] = "0";
+		$data["park after list"] = "0";
+		$data["park after target"] = "0";
 		$data["REF|SessionData|session"]= $this->sessionId;
 		$aid71=$this->mysqld->SQLInsert($table, $data);
 		
@@ -445,7 +624,7 @@ class setLeginonDefaultValues {
 		$data["correct image"] = "1";
 		$data["SEQ|preset order"] = "[u'sq']";
 		$data["wait for rejects"] = "1";
-		$data["move type"] = "modeled stage position";
+		$data["move type"] = "stage position";
 		$data["save image"] = "1";
 		$data["pause time"] = "2.5";
 		$data["display image"] = "1";
@@ -462,8 +641,7 @@ class setLeginonDefaultValues {
 		$data["final image shift"] = "0";
 		$data["accept precision"] = "0.001";
 		$data["wait for reference"] = "0";
-		$data["wait for transform"] = "0";
-		$data["adjust for transform"] = "no";
+		$data["adjust for transform"] = "one";
 		$data["background"] = "0";
 		$data["use parent tilt"] = "0";
 		$data["adjust time by tilt"] = "0";
@@ -475,6 +653,8 @@ class setLeginonDefaultValues {
 		$data["target offset row"] = "0";
 		$data["target offset col"] = "0";
 		$data["correct image shift coma"] = "0";
+		$data["park after list"] = "0";
+		$data["park after target"] = "0";
 		$data["REF|SessionData|session"]= $this->sessionId;
 		$aid59=$this->mysqld->SQLInsert($table, $data);
 		
@@ -483,7 +663,7 @@ class setLeginonDefaultValues {
 		$data["correct image"] = "1";
 		$data["SEQ|preset order"] = "[u'sq']";
 		$data["wait for rejects"] = "0";
-		$data["move type"] = "modeled stage position";
+		$data["move type"] = "stage position";
 		$data["save image"] = "1";
 		$data["pause time"] = "2.5";
 		$data["display image"] = "1";
@@ -500,7 +680,6 @@ class setLeginonDefaultValues {
 		$data["final image shift"] = "0";
 		$data["accept precision"] = "0.001";
 		$data["wait for reference"] = "0";
-		$data["wait for transform"] = "0";
 		$data["adjust for transform"] = "no";
 		$data["background"] = "0";
 		$data["use parent tilt"] = "0";
@@ -513,6 +692,8 @@ class setLeginonDefaultValues {
 		$data["target offset row"] = "0";
 		$data["target offset col"] = "0";
 		$data["correct image shift coma"] = "0";
+		$data["park after list"] = "0";
+		$data["park after target"] = "0";
 		$data["REF|SessionData|session"]= $this->sessionId;
 		$aid55=$this->mysqld->SQLInsert($table, $data);
 		
@@ -521,7 +702,7 @@ class setLeginonDefaultValues {
 		$data["correct image"] = "1";
 		$data["SEQ|preset order"] = "[u'hl']";
 		$data["wait for rejects"] = "1";
-		$data["move type"] = "modeled stage position";
+		$data["move type"] = "stage position";
 		$data["save image"] = "1";
 		$data["pause time"] = "2.5";
 		$data["display image"] = "1";
@@ -538,7 +719,6 @@ class setLeginonDefaultValues {
 		$data["final image shift"] = "0";
 		$data["accept precision"] = "0.001";
 		$data["wait for reference"] = "0";
-		$data["wait for transform"] = "0";
 		$data["adjust for transform"] = "one";
 		$data["background"] = "1";
 		$data["use parent tilt"] = "1";
@@ -551,6 +731,8 @@ class setLeginonDefaultValues {
 		$data["target offset row"] = "0";
 		$data["target offset col"] = "0";
 		$data["correct image shift coma"] = "0";
+		$data["park after list"] = "0";
+		$data["park after target"] = "0";
 		$data["REF|SessionData|session"]= $this->sessionId;
 		$aid73=$this->mysqld->SQLInsert($table, $data);
 		
@@ -559,7 +741,7 @@ class setLeginonDefaultValues {
 		$data["correct image"] = "1";
 		$data["SEQ|preset order"] = "[u'gr']";
 		$data["wait for rejects"] = "0";
-		$data["move type"] = "modeled stage position";
+		$data["move type"] = "stage position";
 		$data["save image"] = "1";
 		$data["pause time"] = "2.5";
 		$data["display image"] = "1";
@@ -576,7 +758,6 @@ class setLeginonDefaultValues {
 		$data["final image shift"] = "0";
 		$data["accept precision"] = "0.001";
 		$data["wait for reference"] = "0";
-		$data["wait for transform"] = "0";
 		$data["adjust for transform"] = "no";
 		$data["background"] = "0";
 		$data["use parent tilt"] = "0";
@@ -589,6 +770,8 @@ class setLeginonDefaultValues {
 		$data["target offset row"] = "0";
 		$data["target offset col"] = "0";
 		$data["correct image shift coma"] = "0";
+		$data["park after list"] = "0";
+		$data["park after target"] = "0";
 		$data["REF|SessionData|session"]= $this->sessionId;
 		$aid80=$this->mysqld->SQLInsert($table, $data);
 		
@@ -597,7 +780,7 @@ class setLeginonDefaultValues {
 		$data["correct image"] = "1";
 		$data["SEQ|preset order"] = "[u'hl']";
 		$data["wait for rejects"] = "0";
-		$data["move type"] = "modeled stage position";
+		$data["move type"] = "stage position";
 		$data["save image"] = "1";
 		$data["pause time"] = "2.5";
 		$data["display image"] = "1";
@@ -614,7 +797,6 @@ class setLeginonDefaultValues {
 		$data["final image shift"] = "0";
 		$data["accept precision"] = "0.001";
 		$data["wait for reference"] = "0";
-		$data["wait for transform"] = "0";
 		$data["adjust for transform"] = "no";
 		$data["background"] = "0";
 		$data["use parent tilt"] = "0";
@@ -627,6 +809,8 @@ class setLeginonDefaultValues {
 		$data["target offset row"] = "0";
 		$data["target offset col"] = "0";
 		$data["correct image shift coma"] = "0";
+		$data["park after list"] = "0";
+		$data["park after target"] = "0";
 		$data["REF|SessionData|session"]= $this->sessionId;
 		$aid82=$this->mysqld->SQLInsert($table, $data);
 		
@@ -635,7 +819,7 @@ class setLeginonDefaultValues {
 		$data["correct image"] = "1";
 		$data["SEQ|preset order"] = "[u'sq']";
 		$data["wait for rejects"] = "0";
-		$data["move type"] = "modeled stage position";
+		$data["move type"] = "stage position";
 		$data["save image"] = "1";
 		$data["pause time"] = "2.5";
 		$data["display image"] = "1";
@@ -652,7 +836,6 @@ class setLeginonDefaultValues {
 		$data["final image shift"] = "0";
 		$data["accept precision"] = "0.001";
 		$data["wait for reference"] = "0";
-		$data["wait for transform"] = "0";
 		$data["adjust for transform"] = "no";
 		$data["background"] = "0";
 		$data["use parent tilt"] = "0";
@@ -665,6 +848,8 @@ class setLeginonDefaultValues {
 		$data["target offset row"] = "0";
 		$data["target offset col"] = "0";
 		$data["correct image shift coma"] = "0";
+		$data["park after list"] = "0";
+		$data["park after target"] = "0";
 		$data["REF|SessionData|session"]= $this->sessionId;
 		$aid86=$this->mysqld->SQLInsert($table, $data);
 		
@@ -673,7 +858,7 @@ class setLeginonDefaultValues {
 		$data["correct image"] = "1";
 		$data["SEQ|preset order"] = "[u'en']";
 		$data["wait for rejects"] = "1";
-		$data["move type"] = "modeled stage position";
+		$data["move type"] = "stage position";
 		$data["save image"] = "1";
 		$data["pause time"] = "2.5";
 		$data["display image"] = "1";
@@ -690,7 +875,6 @@ class setLeginonDefaultValues {
 		$data["final image shift"] = "0";
 		$data["accept precision"] = "0.001";
 		$data["wait for reference"] = "0";
-		$data["wait for transform"] = "0";
 		$data["adjust for transform"] = "one";
 		$data["background"] = "0";
 		$data["use parent tilt"] = "0";
@@ -703,9 +887,51 @@ class setLeginonDefaultValues {
 		$data["target offset row"] = "0";
 		$data["target offset col"] = "0";
 		$data["correct image shift coma"] = "0";
+		$data["park after list"] = "0";
+		$data["park after target"] = "0";
 		$data["REF|SessionData|session"]= $this->sessionId;
 		$aid84=$this->mysqld->SQLInsert($table, $data);
-		
+
+		$table = "AcquisitionSettingsData";
+		$data=array();
+		$data["correct image"] = "1";
+		$data["SEQ|preset order"] = "[u'en']";
+		$data["wait for rejects"] = "1";
+		$data["move type"] = "stage position";
+		$data["save image"] = "1";
+		$data["pause time"] = "2.5";
+		$data["display image"] = "1";
+		$data["wait for process"] = "0";
+		$data["name"] = "Exposure MultiMove";
+		$data["wait time"] = "0";
+		$data["iterations"] = "1";
+		$data["isdefault"] = "1";
+		$data["mover"] = "navigator";
+		$data["move precision"] = "1e-07";
+		$data["process target type"] = "acquisition";
+		$data["save integer"] = "0";
+		$data["drift between"] = "0";
+		$data["final image shift"] = "0";
+		$data["accept precision"] = "5e-07";
+		$data["wait for reference"] = "1";
+		$data["adjust for transform"] = "no";
+		$data["background"] = "0";
+		$data["use parent tilt"] = "0";
+		$data["adjust time by tilt"] = "0";
+		$data["reset tilt"] = "0";
+		$data["bad stats response"] = "Continue";
+		$data["high mean"] = "65536";
+		$data["low mean"] = "50";
+		$data["emission off"] = "0";
+		$data["target offset row"] = "0";
+		$data["target offset col"] = "0";
+		$data["correct image shift coma"] = "0";
+		$data["park after list"] = "0";
+		$data["pause between time"] = "0";
+		$data["park after target"] = "0";
+		$data["REF|SessionData|session"]= $this->sessionId;
+		$aid191=$this->mysqld->SQLInsert($table, $data);
+
 		$table = "FocuserSettingsData";
 		$data=array();
 		$data["acquire final"] = "1";
@@ -726,12 +952,12 @@ class setLeginonDefaultValues {
 		$data["move precision"] = "0";
 		$data["process target type"] = "focus";
 		$data["melt preset"] = "fc";
+		$data["manual focus preset"] = "fc";
 		$data["save integer"] = "0";
 		$data["drift between"] = "0";
 		$data["final image shift"] = "0";
 		$data["accept precision"] = "0.001";
 		$data["wait for reference"] = "0";
-		$data["wait for transform"] = "0";
 		$data["adjust for transform"] = "one";
 		$data["background"] = "0";
 		$data["use parent tilt"] = "0";
@@ -744,6 +970,8 @@ class setLeginonDefaultValues {
 		$data["target offset row"] = "0";
 		$data["target offset col"] = "0";
 		$data["correct image shift coma"] = "0";
+		$data["park after list"] = "0";
+		$data["park after target"] = "0";
 		$data["REF|SessionData|session"]= $this->sessionId;
 		$fid14=$this->mysqld->SQLInsert($table, $data);
 		
@@ -759,7 +987,7 @@ class setLeginonDefaultValues {
 		$data["wait for rejects"] = "0";
 		$data["display image"] = "1";
 		$data["wait for process"] = "0";
-		$data["move type"] = "modeled stage position";
+		$data["move type"] = "stage position";
 		$data["wait time"] = "0";
 		$data["iterations"] = "1";
 		$data["isdefault"] = "1";
@@ -767,12 +995,12 @@ class setLeginonDefaultValues {
 		$data["move precision"] = "0";
 		$data["process target type"] = "focus";
 		$data["melt preset"] = "hl";
+		$data["manual focus preset"] = "fc";
 		$data["save integer"] = "0";
 		$data["drift between"] = "0";
 		$data["final image shift"] = "0";
 		$data["accept precision"] = "0.001";
 		$data["wait for reference"] = "0";
-		$data["wait for transform"] = "0";
 		$data["adjust for transform"] = "one";
 		$data["background"] = "0";
 		$data["use parent tilt"] = "0";
@@ -785,6 +1013,8 @@ class setLeginonDefaultValues {
 		$data["target offset row"] = "0";
 		$data["target offset col"] = "0";
 		$data["correct image shift coma"] = "0";
+		$data["park after list"] = "0";
+		$data["park after target"] = "0";
 		$data["REF|SessionData|session"]= $this->sessionId;
 		$fid12=$this->mysqld->SQLInsert($table, $data);
 		
@@ -800,7 +1030,7 @@ class setLeginonDefaultValues {
 		$data["wait for rejects"] = "0";
 		$data["display image"] = "1";
 		$data["wait for process"] = "0";
-		$data["move type"] = "modeled stage position";
+		$data["move type"] = "stage position";
 		$data["wait time"] = "0";
 		$data["iterations"] = "1";
 		$data["isdefault"] = "1";
@@ -808,12 +1038,12 @@ class setLeginonDefaultValues {
 		$data["move precision"] = "0";
 		$data["process target type"] = "focus";
 		$data["melt preset"] = "fc";
+		$data["manual focus preset"] = "fc";
 		$data["save integer"] = "0";
 		$data["drift between"] = "0";
 		$data["final image shift"] = "0";
 		$data["accept precision"] = "0.001";
 		$data["wait for reference"] = "0";
-		$data["wait for transform"] = "0";
 		$data["adjust for transform"] = "one";
 		$data["background"] = "0";
 		$data["use parent tilt"] = "0";
@@ -826,6 +1056,8 @@ class setLeginonDefaultValues {
 		$data["target offset row"] = "0";
 		$data["target offset col"] = "0";
 		$data["correct image shift coma"] = "0";
+		$data["park after list"] = "0";
+		$data["park after target"] = "0";
 		$data["REF|SessionData|session"]= $this->sessionId;
 		$fid24=$this->mysqld->SQLInsert($table, $data);
 		
@@ -841,7 +1073,7 @@ class setLeginonDefaultValues {
 		$data["wait for rejects"] = "0";
 		$data["display image"] = "1";
 		$data["wait for process"] = "0";
-		$data["move type"] = "modeled stage position";
+		$data["move type"] = "stage position";
 		$data["wait time"] = "0";
 		$data["iterations"] = "1";
 		$data["isdefault"] = "1";
@@ -849,12 +1081,12 @@ class setLeginonDefaultValues {
 		$data["move precision"] = "0";
 		$data["process target type"] = "focus";
 		$data["melt preset"] = "fc";
+		$data["manual focus preset"] = "fc";
 		$data["save integer"] = "0";
 		$data["drift between"] = "0";
 		$data["final image shift"] = "0";
 		$data["accept precision"] = "0";
 		$data["wait for reference"] = "0";
-		$data["wait for transform"] = "0";
 		$data["adjust for transform"] = "one";
 		$data["background"] = "0";
 		$data["use parent tilt"] = "0";
@@ -867,6 +1099,8 @@ class setLeginonDefaultValues {
 		$data["target offset row"] = "0";
 		$data["target offset col"] = "0";
 		$data["correct image shift coma"] = "0";
+		$data["park after list"] = "0";
+		$data["park after target"] = "0";
 		$data["REF|SessionData|session"]= $this->sessionId;
 		$fid22=$this->mysqld->SQLInsert($table, $data);
 		
@@ -882,7 +1116,7 @@ class setLeginonDefaultValues {
 		$data["wait for rejects"] = "0";
 		$data["display image"] = "1";
 		$data["wait for process"] = "0";
-		$data["move type"] = "modeled stage position";
+		$data["move type"] = "stage position";
 		$data["wait time"] = "0";
 		$data["iterations"] = "1";
 		$data["isdefault"] = "1";
@@ -890,13 +1124,13 @@ class setLeginonDefaultValues {
 		$data["move precision"] = "0";
 		$data["process target type"] = "focus";
 		$data["melt preset"] = "fc";
+		$data["manual focus preset"] = "fc";
 		$data["save integer"] = "0";
 		$data["drift between"] = "0";
 		$data["final image shift"] = "0";
 		$data["accept precision"] = "0.001";
 		$data["wait for reference"] = "0";
-		$data["wait for transform"] = "0";
-		$data["adjust for transform"] = "one";
+		$data["adjust for transform"] = "no";
 		$data["background"] = "0";
 		$data["use parent tilt"] = "0";
 		$data["adjust time by tilt"] = "0";
@@ -908,6 +1142,8 @@ class setLeginonDefaultValues {
 		$data["target offset row"] = "0";
 		$data["target offset col"] = "0";
 		$data["correct image shift coma"] = "0";
+		$data["park after list"] = "0";
+		$data["park after target"] = "0";
 		$data["REF|SessionData|session"]= $this->sessionId;
 		$fid20=$this->mysqld->SQLInsert($table, $data);
 		
@@ -931,12 +1167,12 @@ class setLeginonDefaultValues {
 		$data["move precision"] = "0";
 		$data["process target type"] = "focus";
 		$data["melt preset"] = "hl";
+		$data["manual focus preset"] = "fc";
 		$data["save integer"] = "0";
 		$data["drift between"] = "0";
 		$data["final image shift"] = "0";
 		$data["accept precision"] = "0.001";
 		$data["wait for reference"] = "0";
-		$data["wait for transform"] = "0";
 		$data["adjust for transform"] = "no";
 		$data["background"] = "0";
 		$data["use parent tilt"] = "0";
@@ -949,6 +1185,8 @@ class setLeginonDefaultValues {
 		$data["target offset row"] = "0";
 		$data["target offset col"] = "0";
 		$data["correct image shift coma"] = "0";
+		$data["park after list"] = "0";
+		$data["park after target"] = "0";
 		$data["REF|SessionData|session"]= $this->sessionId;
 		$fid32=$this->mysqld->SQLInsert($table, $data);
 		
@@ -964,7 +1202,7 @@ class setLeginonDefaultValues {
 		$data["wait for rejects"] = "0";
 		$data["display image"] = "1";
 		$data["wait for process"] = "0";
-		$data["move type"] = "modeled stage position";
+		$data["move type"] = "stage position";
 		$data["wait time"] = "0";
 		$data["iterations"] = "1";
 		$data["isdefault"] = "1";
@@ -972,12 +1210,12 @@ class setLeginonDefaultValues {
 		$data["move precision"] = "0";
 		$data["process target type"] = "focus";
 		$data["melt preset"] = "gr";
+		$data["manual focus preset"] = "gr";
 		$data["save integer"] = "0";
 		$data["drift between"] = "0";
 		$data["final image shift"] = "0";
 		$data["accept precision"] = "0.001";
 		$data["wait for reference"] = "0";
-		$data["wait for transform"] = "0";
 		$data["adjust for transform"] = "no";
 		$data["background"] = "0";
 		$data["use parent tilt"] = "0";
@@ -990,6 +1228,8 @@ class setLeginonDefaultValues {
 		$data["target offset row"] = "0";
 		$data["target offset col"] = "0";
 		$data["correct image shift coma"] = "0";
+		$data["park after list"] = "0";
+		$data["park after target"] = "0";
 		$data["REF|SessionData|session"]= $this->sessionId;
 		$fid16=$this->mysqld->SQLInsert($table, $data);
 		
@@ -1005,7 +1245,7 @@ class setLeginonDefaultValues {
 		$data["wait for rejects"] = "0";
 		$data["display image"] = "1";
 		$data["wait for process"] = "0";
-		$data["move type"] = "modeled stage position";
+		$data["move type"] = "stage position";
 		$data["wait time"] = "0";
 		$data["iterations"] = "1";
 		$data["isdefault"] = "1";
@@ -1013,12 +1253,12 @@ class setLeginonDefaultValues {
 		$data["move precision"] = "0";
 		$data["process target type"] = "focus";
 		$data["melt preset"] = "hl";
+		$data["manual focus preset"] = "fc";
 		$data["save integer"] = "0";
 		$data["drift between"] = "0";
 		$data["final image shift"] = "0";
 		$data["accept precision"] = "0.001";
 		$data["wait for reference"] = "0";
-		$data["wait for transform"] = "0";
 		$data["adjust for transform"] = "no";
 		$data["background"] = "0";
 		$data["use parent tilt"] = "0";
@@ -1031,6 +1271,8 @@ class setLeginonDefaultValues {
 		$data["target offset row"] = "0";
 		$data["target offset col"] = "0";
 		$data["correct image shift coma"] = "0";
+		$data["park after list"] = "0";
+		$data["park after target"] = "0";
 		$data["REF|SessionData|session"]= $this->sessionId;
 		$fid18=$this->mysqld->SQLInsert($table, $data);
 		
@@ -1046,7 +1288,7 @@ class setLeginonDefaultValues {
 		$data["wait for rejects"] = "0";
 		$data["display image"] = "1";
 		$data["wait for process"] = "0";
-		$data["move type"] = "modeled stage position";
+		$data["move type"] = "stage position";
 		$data["wait time"] = "0";
 		$data["iterations"] = "1";
 		$data["isdefault"] = "1";
@@ -1054,12 +1296,12 @@ class setLeginonDefaultValues {
 		$data["move precision"] = "0";
 		$data["process target type"] = "focus";
 		$data["melt preset"] = "fc";
+		$data["manual focus preset"] = "fc";
 		$data["save integer"] = "0";
 		$data["drift between"] = "0";
 		$data["final image shift"] = "0";
 		$data["accept precision"] = "0.001";
 		$data["wait for reference"] = "0";
-		$data["wait for transform"] = "0";
 		$data["adjust for transform"] = "one";
 		$data["background"] = "0";
 		$data["use parent tilt"] = "0";
@@ -1072,6 +1314,8 @@ class setLeginonDefaultValues {
 		$data["target offset row"] = "0";
 		$data["target offset col"] = "0";
 		$data["correct image shift coma"] = "0";
+		$data["park after list"] = "0";
+		$data["park after target"] = "0";
 		$data["REF|SessionData|session"]= $this->sessionId;
 		$fid26=$this->mysqld->SQLInsert($table, $data);
 		
@@ -1145,7 +1389,7 @@ class setLeginonDefaultValues {
 		$data["name"] = "Square Targeting";
 		$data["scale image"] = "1";
 		$data["wait for done"] = "0";
-		$data["calibration parameter"] = "modeled stage position";
+		$data["calibration parameter"] = "stage position";
 		$data["scale size"] = "512";
 		$data["threshold"] = "100";
 		$data["REF|LowPassFilterSettingsData|lpf"] = $lid10;
@@ -1167,7 +1411,7 @@ class setLeginonDefaultValues {
 		$data["name"] = "Raster Center Targeting";
 		$data["scale image"] = "1";
 		$data["wait for done"] = "0";
-		$data["calibration parameter"] = "modeled stage position";
+		$data["calibration parameter"] = "stage position";
 		$data["scale size"] = "512";
 		$data["threshold"] = "100";
 		$data["ignore images"] = "0";
@@ -1195,7 +1439,7 @@ class setLeginonDefaultValues {
 		$data["name"] = "Rough Tissue Targeting";
 		$data["scale image"] = "1";
 		$data["wait for done"] = "0";
-		$data["calibration parameter"] = "modeled stage position";
+		$data["calibration parameter"] = "stage position";
 		$data["scale size"] = "512";
 		$data["threshold"] = "100";
 		$data["REF|LowPassFilterSettingsData|lpf"] = $lid2;
@@ -1218,7 +1462,7 @@ class setLeginonDefaultValues {
 		$data["name"] = "Atlas View";
 		$data["scale image"] = "1";
 		$data["wait for done"] = "0";
-		$data["calibration parameter"] = "modeled stage position";
+		$data["calibration parameter"] = "stage position";
 		$data["scale size"] = "512";
 		$data["threshold"] = "100";
 		$data["REF|LowPassFilterSettingsData|lpf"] = $lid10;
@@ -1323,7 +1567,8 @@ class setLeginonDefaultValues {
 		$data["blobs min size"] = "0";
 		$data["REF|SessionData|session"]= $this->sessionId;
 		$hid21=$this->mysqld->SQLInsert($table, $data);
-		
+
+
 		$table = "HoleFinderSettingsData";
 		$data=array();
 		$data["lattice tolerance"] = "0.1";
@@ -1374,7 +1619,8 @@ class setLeginonDefaultValues {
 		$data["sigma"] = "1";
 		$data["size"] = "5";
 		$lid4=$this->mysqld->SQLInsert($table, $data);
-		
+
+
 		$table = "JAHCFinderSettingsData";
 		$data=array();
 		$data["lattice tolerance"] = "0.2";
@@ -1462,6 +1708,55 @@ class setLeginonDefaultValues {
 		$data["file diameter"] = "168";
 		$data["ice max mean"] = "5";
 		$data["REF|LowPassFilterSettingsData|edge lpf"] = $lid9;
+		$data["name"] = "Exposure Targeting Q";
+		$data["focus max mean thickness"] = "4";
+		$data["ice max std"] = "0.5";
+		$data["lattice zero thickness"] = "115";
+		$data["blobs max size"] = "10000";
+		$data["queue"] = "1";
+		$data["edge"] = "1";
+		$data["focus max stdev thickness"] = "0.1";
+		$data["threshold method"] = "Threshold = A";
+		$data["sort target"] = "0";
+		$data["blobs min size"] = "10";
+		$data["allow append"] = "0";
+		$data["lattice extend"] = "off";
+		$data["REF|SessionData|session"]= $this->sessionId;
+		$jid72=$this->mysqld->SQLInsert($table, $data);
+
+		$table = "JAHCFinderSettingsData";
+		$data=array();
+		$data["lattice tolerance"] = "0.1";
+		$data["blobs max"] = "1";
+		$data["blobs border"] = "20";
+		$data["lattice spacing"] = "150";
+		$data["focus template thickness"] = "1";
+		$data["skip"] = "0";
+		$data["edge threshold"] = "100";
+		$data["threshold"] = "0.0009";
+		$data["SEQ|focus template"] = "[(-12, -144), (-144, 12), (12, 144), (144, -12)]";
+		$data["edge log sigma"] = "1.4";
+		$data["target template"] = "1";
+		$data["queue drift"] = "1";
+		$data["ignore images"] = "0";
+		$data["REF|LowPassFilterSettingsData|template lpf"] = $lid9;
+		$data["edge absolute"] = "0";
+		$data["ice min mean"] = "0.05";
+		$data["edge log size"] = "9";
+		$data["wait for done"] = "1";
+		$data["isdefault"] = "1";
+		$data["template type"] = "phase";
+		$data["lattice hole radius"] = "35";
+		$data["focus stats radius"] = "50";
+		$data["focus hole"] = "Off";
+		$data["SEQ|acquisition template"] = "[(0, 35), (0, -35)]";
+		$data["template diameter"] = "115";
+		$data["user check"] = "1";
+		$data["edge type"] = "sobel";
+		$data["focus min mean thickness"] = "0.05";
+		$data["file diameter"] = "168";
+		$data["ice max mean"] = "5";
+		$data["REF|LowPassFilterSettingsData|edge lpf"] = $lid9;
 		$data["name"] = "Exposure Targeting";
 		$data["focus max mean thickness"] = "4";
 		$data["ice max std"] = "0.5";
@@ -1477,7 +1772,7 @@ class setLeginonDefaultValues {
 		$data["lattice extend"] = "off";
 		$data["REF|SessionData|session"]= $this->sessionId;
 		$jid20=$this->mysqld->SQLInsert($table, $data);
-		
+
 		$table = "JAHCFinderSettingsData";
 		$data=array();
 		$data["lattice tolerance"] = "0.1";
@@ -1771,7 +2066,7 @@ class setLeginonDefaultValues {
 		$data["raster symmetric"] = "1";
 		$data["sort target"] = "0";
 		$data["raster preset"] = "hl";
-		$data["raster movetype"] = "modeled stage position";
+		$data["raster movetype"] = "stage position";
 		$data["raster overlap"] = "0";
 		$data["skip"] = "0";
 		$data["allow append"] = "0";
@@ -1828,7 +2123,7 @@ class setLeginonDefaultValues {
 		$data["raster spacing"] = "20";
 		$data["raster angle"] = "0";
 		$data["raster preset"] = "hl";
-		$data["raster movetype"] = "modeled stage position";
+		$data["raster movetype"] = "stage position";
 		$data["raster overlap"] = "0";
 		$data["target type"] = "acquisition";
 		$data["ellipse angle"] = "0";
@@ -1882,7 +2177,7 @@ class setLeginonDefaultValues {
 		$data["tilt min"] = "-60";
 		$data["run buffer cycle"] = "0";
 		$data["correct image"] = "1";
-		$data["move type"] = "modeled stage position";
+		$data["move type"] = "stage position";
 		$data["wait for rejects"] = "1";
 		$data["name"] = "Tomography";
 		$data["align zero loss peak"] = "0";
@@ -1906,7 +2201,7 @@ class setLeginonDefaultValues {
 		$data["integer"] = "1";
 		$data["intscale"] = "1";
 		$data["save integer"] = "0";
-		$data["model mag"] = "this preset and lower mags";
+		$data["model mag"] = "custom values";
 		$data["z0 error"] = "2e-06";
 		$data["phi"] = "0";
 		$data["offset"] = "0";
@@ -1921,7 +2216,6 @@ class setLeginonDefaultValues {
 		$data["fit data points"] = "4";
 		$data["taper size"] = "10";
 		$data["wait for reference"] = "0";
-		$data["wait for transform"] = "0";
 		$data["adjust for transform"] = "one";
 		$data["background"] = "0";
 		$data["use parent tilt"] = "0";
@@ -1934,6 +2228,8 @@ class setLeginonDefaultValues {
 		$data["target offset row"] = "0";
 		$data["target offset col"] = "0";
 		$data["correct image shift coma"] = "0";
+		$data["park after list"] = "0";
+		$data["park after target"] = "0";
 		$data["z0"] = "0";
 		$data["use z0"] = "0";
 		$data["REF|SessionData|session"]= $this->sessionId;
@@ -1952,15 +2248,15 @@ class setLeginonDefaultValues {
 		$data["wait for rejects"] = "1";
 		$data["display image"] = "1";
 		$data["wait for process"] = "0";
-		$data["move type"] = "modeled stage position";
+		$data["move type"] = "stage position";
 		$data["minsize"] = "50";
 		$data["maxsize"] = "0.8";
 		$data["stepsize"] = "15";
-		$data["tilts"] = "(-45, 45)";
+		$data["tilts"] = "(-45, 0)";
 		$data["process target type"] = "acquisition";
 		$data["mover"] = "navigator";
 		$data["move precision"] = "6e-08";
-		$data["drift threshold"] = "0";
+		$data["drift threshold"] = "6e-10";
 		$data["drift preset"] = "fa";
 		$data["save integer"] = "0";
 		$data["pause"] = "1";
@@ -1968,10 +2264,9 @@ class setLeginonDefaultValues {
 		$data["lowfilt"] = "1";
 		$data["drift between"] = "0";
 		$data["final image shift"] = "0";
-		$data["accept precision"] = "1e-06";
+		$data["accept precision"] = "5e-07";
 		$data["wait for reference"] = "0";
-		$data["wait for transform"] = "0";
-		$data["adjust for transform"] = "one";
+		$data["adjust for transform"] = "no";
 		$data["background"] = "0";
 		$data["use parent tilt"] = "0";
 		$data["adjust time by tilt"] = "0";
@@ -1983,6 +2278,8 @@ class setLeginonDefaultValues {
 		$data["target offset row"] = "0";
 		$data["target offset col"] = "0";
 		$data["correct image shift coma"] = "0";
+		$data["park after list"] = "0";
+		$data["park after target"] = "0";
 		$data["REF|SessionData|session"]= $this->sessionId;
 		$rid4=$this->mysqld->SQLInsert($table, $data);
 		
@@ -2015,8 +2312,8 @@ class setLeginonDefaultValues {
 		$data["despike"] = "0";
 		$data["n average"] = "3";
 		$data["REF|CameraSettingsData|camera settings"] = "2";
-		$data["SUBD|instruments|ccdcamera"] = "SimCCDCamera";
-		$data["SUBD|instruments|tem"] = "SimTEM";
+		$data["SUBD|instruments|ccdcamera"] = "None";
+		$data["SUBD|instruments|tem"] = "None";
 		$data["isdefault"] = "1";
 		$data["combine"] = "average";
 		$data["clip min"] = "0";
@@ -2028,7 +2325,7 @@ class setLeginonDefaultValues {
 		$data=array();
 		$data["name"] = "Fix Beam";
 		$data["isdefault"] = "1";
-		$data["move type"] = "modeled stage position";
+		$data["move type"] = "stage position";
 		$data["pause time"] = "3";
 		$data["interval time"] = "3600";
 		$data["override preset"] = "0";
@@ -2049,7 +2346,8 @@ class setLeginonDefaultValues {
 		$data["isdefault"] = "1";
 		$data["override preset"] = "0";
 		$data["REF|CameraSettingsData|camera settings"] = "1";
-		$data["correlation type"] = "cross";
+		$data["correlation type"] = "phase";
+		$data["lpf sigma"] = "1.0";
 		$data["measure axis"] = "x";
 		$data["measure points"] = "25";
 		$data["measure interval"] = "5e-06";
@@ -2094,7 +2392,9 @@ class setLeginonDefaultValues {
 		$data["target offset row"] = "0";
 		$data["target offset col"] = "0";
 		$data["correct image shift coma"] = "0";
-		$data["beam tilt"] = "0.01";
+		$data["park after list"] = "0";
+		$data["park after target"] = "0";
+		$data["beam tilt"] = "0.005";
 		$data["beam tilt count"] = "1";
 		$data["sites"] = "4";
 		$data["startangle"] = "0";
@@ -2108,7 +2408,7 @@ class setLeginonDefaultValues {
 		$table = "FocusSequenceData";
 		$data=array();
 		$data["node name"] = "Focus";
-		$data["SEQ|sequence"] = "['Z_to_Eucentric', 'Def_to_Eucentric', 'Manual_after']";
+		$data["SEQ|sequence"] = "['Defocus1', 'Defocus2', 'Manual_after']";
 		$data["isdefault"] = "1";
 		$data["REF|SessionData|session"]= $this->sessionId;
 		$fid1=$this->mysqld->SQLInsert($table, $data);
@@ -2138,7 +2438,7 @@ class setLeginonDefaultValues {
 		$table = "FocusSettingData";
 		$data=array();
 		$data["correlation type"] = "phase";
-		$data["fit limit"] = "1000";
+		$data["fit limit"] = "5000";
 		$data["focus method"] = "Beam Tilt";
 		$data["stig defocus min"] = "2e-06";
 		$data["drift threshold"] = "3e-10";
@@ -2146,7 +2446,7 @@ class setLeginonDefaultValues {
 		$data["correction type"] = "Defocus";
 		$data["check drift"] = "1";
 		$data["preset name"] = "fa";
-		$data["name"] = "Def_to_Eucentric";
+		$data["name"] = "Defocus1";
 		$data["stig defocus max"] = "4e-06";
 		$data["tilt"] = "0.01";
 		$data["node name"] = "Focus";
@@ -2160,7 +2460,29 @@ class setLeginonDefaultValues {
 		$table = "FocusSettingData";
 		$data=array();
 		$data["correlation type"] = "phase";
-		$data["fit limit"] = "1000";
+		$data["fit limit"] = "5000";
+		$data["focus method"] = "Beam Tilt";
+		$data["stig defocus min"] = "2e-06";
+		$data["drift threshold"] = "3e-10";
+		$data["stig correction"] = "0";
+		$data["correction type"] = "Defocus";
+		$data["check drift"] = "0";
+		$data["preset name"] = "fa";
+		$data["name"] = "Defocus2";
+		$data["stig defocus max"] = "4e-06";
+		$data["tilt"] = "0.01";
+		$data["node name"] = "Focus";
+		$data["switch"] = "0";
+		$data["delta min"] = "0";
+		$data["delta max"] = "2e-05";
+		$data["isdefault"] = "1";
+		$data["REF|SessionData|session"]= $this->sessionId;
+		$fid26=$this->mysqld->SQLInsert($table, $data);
+		
+		$table = "FocusSettingData";
+		$data=array();
+		$data["correlation type"] = "phase";
+		$data["fit limit"] = "5000";
 		$data["focus method"] = "Manual";
 		$data["stig defocus min"] = "2e-06";
 		$data["drift threshold"] = "3e-10";
@@ -2182,7 +2504,7 @@ class setLeginonDefaultValues {
 		$table = "FocusSequenceData";
 		$data=array();
 		$data["node name"] = "Z Focus";
-		$data["SEQ|sequence"] = "[u'Stage_Wobble', u'Z_to_Eucentric', 'Manual_after']";
+		$data["SEQ|sequence"] = "[u'Stage_Tilt_Rough', u'Stage_Tilt_Fine', 'Manual_after']";
 		$data["isdefault"] = "1";
 		$data["REF|SessionData|session"]= $this->sessionId;
 		$fid2=$this->mysqld->SQLInsert($table, $data);
@@ -2190,7 +2512,7 @@ class setLeginonDefaultValues {
 		$table = "FocusSettingData";
 		$data=array();
 		$data["correlation type"] = "phase";
-		$data["fit limit"] = "1000";
+		$data["fit limit"] = "5000";
 		$data["focus method"] = "Stage Tilt";
 		$data["stig defocus min"] = "2e-06";
 		$data["drift threshold"] = "3e-10";
@@ -2198,9 +2520,9 @@ class setLeginonDefaultValues {
 		$data["correction type"] = "Stage Z";
 		$data["check drift"] = "0";
 		$data["preset name"] = "sq";
-		$data["name"] = "Stage_Wobble";
+		$data["name"] = "Stage_Tilt_Rough";
 		$data["stig defocus max"] = "4e-06";
-		$data["tilt"] = "0.0349065850398866";
+		$data["tilt"] = "0.017453292519943295";
 		$data["node name"] = "Z Focus";
 		$data["switch"] = "0";
 		$data["delta min"] = "0";
@@ -2212,17 +2534,17 @@ class setLeginonDefaultValues {
 		$table = "FocusSettingData";
 		$data=array();
 		$data["correlation type"] = "phase";
-		$data["fit limit"] = "1500";
-		$data["focus method"] = "Beam Tilt";
+		$data["fit limit"] = "5000";
+		$data["focus method"] = "Stage Tilt";
 		$data["stig defocus min"] = "2e-06";
 		$data["drift threshold"] = "3e-10";
 		$data["stig correction"] = "0";
 		$data["correction type"] = "Stage Z";
 		$data["check drift"] = "0";
 		$data["preset name"] = "hl";
-		$data["name"] = "Z_to_Eucentric";
+		$data["name"] = "Stage_Tilt_Fine";
 		$data["stig defocus max"] = "4e-06";
-		$data["tilt"] = "0.01";
+		$data["tilt"] = "0.017453292519943295";
 		$data["node name"] = "Z Focus";
 		$data["switch"] = "1";
 		$data["delta min"] = "0";
@@ -2256,7 +2578,7 @@ class setLeginonDefaultValues {
 		$table = "FocusSequenceData";
 		$data=array();
 		$data["node name"] = "Tomo Focus";
-		$data["SEQ|sequence"] = "[u'Stage_Tilt_Rough', 'Stage_Tilt_Fine', 'Beam_Tilt_Fine', 'Manual_after']";
+		$data["SEQ|sequence"] = "[u'Stage_Tilt_Fine1', 'Stage_Tilt_Fine2', 'Beam_Tilt_Fine', 'Manual_after']";
 		$data["isdefault"] = "1";
 		$data["REF|SessionData|session"]= $this->sessionId;
 		$fid3=$this->mysqld->SQLInsert($table, $data);
@@ -2272,7 +2594,7 @@ class setLeginonDefaultValues {
 		$data["correction type"] = "Stage Z";
 		$data["check drift"] = "0";
 		$data["preset name"] = "hl";
-		$data["name"] = "Stage_Tilt_Rough";
+		$data["name"] = "Stage_Tilt_Fine1";
 		$data["stig defocus max"] = "4e-06";
 		$data["tilt"] = "0.0174532925199433";
 		$data["node name"] = "Tomo Focus";
@@ -2294,9 +2616,9 @@ class setLeginonDefaultValues {
 		$data["correction type"] = "Stage Z";
 		$data["check drift"] = "0";
 		$data["preset name"] = "hl";
-		$data["name"] = "Stage_Tilt_Fine";
+		$data["name"] = "Stage_Tilt_Fine2";
 		$data["stig defocus max"] = "4e-06";
-		$data["tilt"] = "0.0872664625997165";
+		$data["tilt"] = "0.0174532925199433";
 		$data["node name"] = "Tomo Focus";
 		$data["switch"] = "1";
 		$data["delta min"] = "0";
@@ -2308,7 +2630,7 @@ class setLeginonDefaultValues {
 		$table = "FocusSettingData";
 		$data=array();
 		$data["correlation type"] = "phase";
-		$data["fit limit"] = "2000";
+		$data["fit limit"] = "5000";
 		$data["focus method"] = "Beam Tilt";
 		$data["stig defocus min"] = "2e-06";
 		$data["drift threshold"] = "3e-10";
@@ -2352,7 +2674,7 @@ class setLeginonDefaultValues {
 		$table = "FocusSequenceData";
 		$data=array();
 		$data["node name"] = "Tomo Z Focus";
-		$data["SEQ|sequence"] = "[u'Stage_Tilt_Rough', 'Stage_Tilt_Auto', 'Beam_Tilt_Auto', 'Manual_after']";
+		$data["SEQ|sequence"] = "[u'Stage_Tilt_Rough', 'Stage_Tilt_Fine', 'Beam_Tilt_Auto', 'Manual_after']";
 		$data["isdefault"] = "1";
 		$data["REF|SessionData|session"]= $this->sessionId;
 		$fid4=$this->mysqld->SQLInsert($table, $data);
@@ -2390,7 +2712,7 @@ class setLeginonDefaultValues {
 		$data["correction type"] = "Stage Z";
 		$data["check drift"] = "0";
 		$data["preset name"] = "hl";
-		$data["name"] = "Stage_Tilt_Auto";
+		$data["name"] = "Stage_Tilt_Fine";
 		$data["stig defocus max"] = "4e-06";
 		$data["tilt"] = "0.0174532925199433";
 		$data["node name"] = "Tomo Z Focus";
@@ -2500,7 +2822,7 @@ class setLeginonDefaultValues {
 		$table = "FocusSequenceData";
 		$data=array();
 		$data["node name"] = "Section Z Focus";
-		$data["SEQ|sequence"] = "[u'Stage_Tilt_Rough', u'Stage_Tilt_Fine']";
+		$data["SEQ|sequence"] = "[u'Stage_Tilt_Fine', u'Stage_Tilt_High']";
 		$data["isdefault"] = "1";
 		$data["REF|SessionData|session"]= $this->sessionId;
 		$fid6=$this->mysqld->SQLInsert($table, $data);
@@ -2516,7 +2838,7 @@ class setLeginonDefaultValues {
 		$data["correction type"] = "Stage Z";
 		$data["check drift"] = "0";
 		$data["preset name"] = "hl";
-		$data["name"] = "Stage_Tilt_Rough";
+		$data["name"] = "Stage_Tilt_Fine";
 		$data["stig defocus max"] = "4e-06";
 		$data["tilt"] = "0.0174532925199433";
 		$data["node name"] = "Section Z Focus";
@@ -2538,11 +2860,11 @@ class setLeginonDefaultValues {
 		$data["correction type"] = "Stage Z";
 		$data["check drift"] = "0";
 		$data["preset name"] = "hl";
-		$data["name"] = "Stage_Tilt_Fine";
+		$data["name"] = "Stage_Tilt_High";
 		$data["stig defocus max"] = "4e-06";
 		$data["tilt"] = "0.0349065850398866";
 		$data["node name"] = "Section Z Focus";
-		$data["switch"] = "1";
+		$data["switch"] = "0";
 		$data["delta min"] = "0";
 		$data["delta max"] = "0.001";
 		$data["isdefault"] = "1";
@@ -2552,7 +2874,7 @@ class setLeginonDefaultValues {
 		$table = "FocusSequenceData";
 		$data=array();
 		$data["node name"] = "Grid Focus";
-		$data["SEQ|sequence"] = "[u'Stage_Wabble_Rough']";
+		$data["SEQ|sequence"] = "[u'Stage_Wobble_Rough']";
 		$data["isdefault"] = "1";
 		$data["REF|SessionData|session"]= $this->sessionId;
 		$fid7=$this->mysqld->SQLInsert($table, $data);
@@ -2567,8 +2889,8 @@ class setLeginonDefaultValues {
 		$data["stig correction"] = "0";
 		$data["correction type"] = "Defocus";
 		$data["check drift"] = "0";
-		$data["preset name"] = "Grid";
-		$data["name"] = "Stage_Wabble_Rough";
+		$data["preset name"] = "gr";
+		$data["name"] = "Stage_Wobble_Rough";
 		$data["stig defocus max"] = "4e-06";
 		$data["tilt"] = "0.01";
 		$data["node name"] = "Grid Focus";
@@ -2582,7 +2904,7 @@ class setLeginonDefaultValues {
 		$table = "FocusSequenceData";
 		$data=array();
 		$data["node name"] = "Section Focus";
-		$data["SEQ|sequence"] = "[u'Stage_Wabble_Rough', u'Stage_Wabble_Fine']";
+		$data["SEQ|sequence"] = "[u'Stage_Wobble_Rough', u'Stage_Wobble_Fine']";
 		$data["isdefault"] = "1";
 		$data["REF|SessionData|session"]= $this->sessionId;
 		$fid8=$this->mysqld->SQLInsert($table, $data);
@@ -2598,7 +2920,7 @@ class setLeginonDefaultValues {
 		$data["correction type"] = "Stage Z";
 		$data["check drift"] = "0";
 		$data["preset name"] = "sq";
-		$data["name"] = "Stage_Wabble_Rough";
+		$data["name"] = "Stage_Wobble_Rough";
 		$data["stig defocus max"] = "4e-06";
 		$data["tilt"] = "0.0174532925199433";
 		$data["node name"] = "Section Focus";
@@ -2620,7 +2942,7 @@ class setLeginonDefaultValues {
 		$data["correction type"] = "Stage Z";
 		$data["check drift"] = "0";
 		$data["preset name"] = "hl";
-		$data["name"] = "Stage_Wabble_Fine";
+		$data["name"] = "Stage_Wobble_Fine";
 		$data["stig defocus max"] = "4e-06";
 		$data["tilt"] = "0.0174532925199433";
 		$data["node name"] = "Section Focus";
@@ -2704,8 +3026,263 @@ class setLeginonDefaultValues {
 		$data["isdefault"] = "1";
 		$data["REF|SessionData|session"]= $this->sessionId;
 		$fid24=$this->mysqld->SQLInsert($table, $data);		
+
+		$table = "AlignmentManagerSettingsData";
+		$data=array();
+		$data["name"] = "Align Manager";
+		$data["isdefault"] = "1";
+		$data["bypass"] = "0";
+		$data["reset a"] = "0";
+		$data["reset z"] = "0";
+		$data["reset xy"] = "0";
+		$data["repeat time"] = "3600";
+		$data["REF|SessionData|session"]= $this->sessionId;
+		$aid10=$this->mysqld->SQLInsert($table, $data);
+
+		$table = "AcquisitionSettingsData";
+		$data=array();
+		$data["correct image"] = "1";
+		$data["SEQ|preset order"] = "[u'hl']";
+		$data["wait for rejects"] = "0";
+		$data["move type"] = "stage position";
+		$data["save image"] = "1";
+		$data["pause time"] = "2.5";
+		$data["display image"] = "1";
+		$data["wait for process"] = "0";
+		$data["name"] = "Align Parent Image";
+		$data["wait time"] = "0";
+		$data["iterations"] = "1";
+		$data["isdefault"] = "1";
+		$data["mover"] = "presets manager";
+		$data["move precision"] = "0";
+		$data["process target type"] = "acquisition";
+		$data["save integer"] = "0";
+		$data["drift between"] = "0";
+		$data["final image shift"] = "0";
+		$data["accept precision"] = "0.001";
+		$data["wait for reference"] = "0";
+		$data["adjust for transform"] = "no";
+		$data["background"] = "0";
+		$data["use parent tilt"] = "0";
+		$data["adjust time by tilt"] = "0";
+		$data["reset tilt"] = "0";
+		$data["bad stats response"] = "Continue";
+		$data["high mean"] = "65536";
+		$data["low mean"] = "50";
+		$data["emission off"] = "0";
+		$data["target offset row"] = "0";
+		$data["target offset col"] = "0";
+		$data["correct image shift coma"] = "0";
+		$data["park after list"] = "0";
+		$data["pause between time"] = "0";
+		$data["park after target"] = "0";
+		$data["REF|SessionData|session"]= $this->sessionId;
+		$aid186=$this->mysqld->SQLInsert($table, $data);
+
+		$table = "FocuserSettingsData";
+		$data=array();
+		$data["acquire final"] = "0";
+		$data["SEQ|preset order"] = "[u'fc']";
+		$data["save image"] = "1";
+		$data["pause time"] = "2.5";
+		$data["melt time"] = "0";
+		$data["name"] = "Align Focus";
+		$data["correct image"] = "1";
+		$data["wait for rejects"] = "0";
+		$data["display image"] = "1";
+		$data["wait for process"] = "0";
+		$data["move type"] = "stage position";
+		$data["wait time"] = "0";
+		$data["iterations"] = "1";
+		$data["isdefault"] = "1";
+		$data["mover"] = "presets manager";
+		$data["move precision"] = "0";
+		$data["process target type"] = "acquisition";
+		$data["melt preset"] = "fc";
+		$data["save integer"] = "0";
+		$data["drift between"] = "0";
+		$data["final image shift"] = "0";
+		$data["accept precision"] = "0.001";
+		$data["wait for reference"] = "0";
+		$data["adjust for transform"] = "no";
+		$data["background"] = "0";
+		$data["use parent tilt"] = "0";
+		$data["adjust time by tilt"] = "0";
+		$data["reset tilt"] = "0";
+		$data["bad stats response"] = "Continue";
+		$data["high mean"] = "65536";
+		$data["low mean"] = "50";
+		$data["emission off"] = "0";
+		$data["target offset row"] = "0";
+		$data["target offset col"] = "0";
+		$data["correct image shift coma"] = "0";
+		$data["park after list"] = "0";
+		$data["pause between time"] = "0";
+		$data["park after target"] = "0";
+		$data["manual focus preset"] = "fc";
+		$data["REF|SessionData|session"]= $this->sessionId;
+		$fid106=$this->mysqld->SQLInsert($table, $data);
+
+		$table = "FocusSequenceData";
+		$data=array();
+		$data["node name"] = "Align Focus";
+		$data["SEQ|sequence"] = "[u'Stage Tilt Fine', u'Beam Tilt 1', u'Beam Tilt 2', u'Manual after']";
+		$data["isdefault"] = "1";
+		$data["REF|SessionData|session"]= $this->sessionId;
+		$fid74=$this->mysqld->SQLInsert($table, $data);
+
+		$table = "FocusSettingData";
+		$data=array();
+		$data["correlation type"] = "phase";
+		$data["fit limit"] = "1000";
+		$data["focus method"] = "Stage Tilt";
+		$data["stig defocus min"] = "2e-06";
+		$data["drift threshold"] = "3e-10";
+		$data["stig correction"] = "0";
+		$data["correction type"] = "Stage Z";
+		$data["check drift"] = "0";
+		$data["preset name"] = "hl";
+		$data["name"] = "Stage Tilt Fine";
+		$data["stig defocus max"] = "4e-06";
+		$data["tilt"] = "0.0174532925199433";
+		$data["node name"] = "Align Focus";
+		$data["switch"] = "1";
+		$data["delta min"] = "0";
+		$data["delta max"] = "0.0001";
+		$data["isdefault"] = "1";
+		$data["REF|SessionData|session"]= $this->sessionId;
+		$fid197=$this->mysqld->SQLInsert($table, $data);
+
+		$table = "FocusSettingData";
+		$data=array();
+		$data["correlation type"] = "phase";
+		$data["fit limit"] = "1000";
+		$data["focus method"] = "Beam Tilt";
+		$data["stig defocus min"] = "2e-06";
+		$data["drift threshold"] = "3e-10";
+		$data["stig correction"] = "0";
+		$data["correction type"] = "Defocus";
+		$data["check drift"] = "1";
+		$data["preset name"] = "fa";
+		$data["name"] = "Beam Tilt 1";
+		$data["stig defocus max"] = "4e-06";
+		$data["tilt"] = "0.01";
+		$data["node name"] = "Align Focus";
+		$data["switch"] = "1";
+		$data["delta min"] = "0";
+		$data["delta max"] = "5e-05";
+		$data["isdefault"] = "1";
+		$data["REF|SessionData|session"]= $this->sessionId;
+		$fid198=$this->mysqld->SQLInsert($table, $data);
+
+		$table = "FocusSettingData";
+		$data=array();
+		$data["correlation type"] = "phase";
+		$data["fit limit"] = "1000";
+		$data["focus method"] = "Beam Tilt";
+		$data["stig defocus min"] = "2e-06";
+		$data["drift threshold"] = "3e-10";
+		$data["stig correction"] = "0";
+		$data["correction type"] = "Defocus";
+		$data["check drift"] = "0";
+		$data["preset name"] = "fa";
+		$data["name"] = "Beam Tilt 2";
+		$data["stig defocus max"] = "4e-06";
+		$data["tilt"] = "0.01";
+		$data["node name"] = "Align Focus";
+		$data["switch"] = "1";
+		$data["delta min"] = "0";
+		$data["delta max"] = "2e-05";
+		$data["isdefault"] = "1";
+		$data["REF|SessionData|session"]= $this->sessionId;
+		$fid199=$this->mysqld->SQLInsert($table, $data);
+
+		$table = "FocusSettingData";
+		$data=array();
+		$data["correlation type"] = "phase";
+		$data["fit limit"] = "1000";
+		$data["focus method"] = "Manual";
+		$data["stig defocus min"] = "2e-06";
+		$data["drift threshold"] = "3e-10";
+		$data["stig correction"] = "0";
+		$data["correction type"] = "Defocus";
+		$data["check drift"] = "0";
+		$data["preset name"] = "fc";
+		$data["name"] = "Manual after";
+		$data["stig defocus max"] = "4e-06";
+		$data["tilt"] = "0.01";
+		$data["node name"] = "Align Focus";
+		$data["switch"] = "1";
+		$data["delta min"] = "0";
+		$data["delta max"] = "0.001";
+		$data["isdefault"] = "1";
+		$data["REF|SessionData|session"]= $this->sessionId;
+		$fid200=$this->mysqld->SQLInsert($table, $data);
+
+		$table = "BeamTIltFixerSettingsData";
+		$data=array();
+		$data["name"] = "Align Beam Tilt";
+		$data["isdefault"] = "1";
+		$data["process target type"] = "acquisition";
+		$data["park after list"] = "0";
+		$data["pause time"] = "2.5";
+		$data["pause between time"] = "0";
+		$data["move type"] = "stage position";
+		$data["SEQ|preset order"] = "[u'fc']";
+		$data["correct image"] = "1";
+		$data["display image"] = "1";
+		$data["save image"] = "1";
+		$data["wait for process"] = "0";
+		$data["wait for rejects"] = "1";
+		$data["wait for reference"] = "0";
+		$data["wait time"] = "0";
+		$data["iterations"] = "1";
+		$data["adjust for transform"] = "one";
+		$data["drift between"] = "0";
+		$data["mover"] = "navigator";
+		$data["move precision"] = "2e-07";
+		$data["accept precision"] = "5e-07";
+		$data["final image shift"] = "0";
+		$data["save integer"] = "0";
+		$data["background"] = "0";
+		$data["use parent tilt"] = "0";
+		$data["adjust time by tilt"] = "0";
+		$data["reset tilt"] = "0";
+		$data["bad stats response"] = "Continue";
+		$data["high mean"] = "65536";
+		$data["low mean"] = "50";
+		$data["emission off"] = "0";
+		$data["target offset row"] = "0";
+		$data["target offset col"] = "0";
+		$data["correct image shift coma"] = "0";
+		$data["park after target"] = "0";
+		$data["beam tilt"] = "0.005";
+		$data["min threshold"] = "0.0002";
+		$data["max threshold"] = "0.0015";
+		$data["correct"] = "0";
+		$data["REF|SessionData|session"]= $this->sessionId;
+		$bid20=$this->mysqld->SQLInsert($table, $data);
+
+		$table = "ExposureFixerSettingsData";
+		$data=array();
+		$data["name"] = "Fix Exposure Time";
+		$data["isdefault"] = "1";
+		$data["move type"] = "stage position";
+		$data["pause time"] = "3";
+		$data["interval time"] = "3600";
+		$data["override preset"] = "0";
+		$data["REF|CameraSettingsData|camera settings"] = "1";
+		$data["SEQ|correction presets"] = "[u'en', u'fa']";
+		$data["SUBD|stage position|x"] = "0";
+		$data["SUBD|stage position|y"] = "0";
+		$data["SUBD|stage position|z"] = "0";
+		$data["required dose"] = "20";
+		$data["max exposure time"] = "1000";
+		$data["REF|SessionData|session"]= $this->sessionId;
+		$eid20=$this->mysqld->SQLInsert($table, $data);
+
 	}
-	
+			
 }
 
 

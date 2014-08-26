@@ -6,7 +6,6 @@ import time
 from appionlib import appionLoop2
 from appionlib import apDatabase
 from appionlib import apParticle
-from appionlib import apCtf
 from appionlib.apTilt import apTiltPair
 from appionlib import apDisplay
 

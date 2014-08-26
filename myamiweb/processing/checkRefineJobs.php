@@ -1,9 +1,15 @@
 <?php
-require "inc/particledata.inc";
-require "inc/util.inc";
-require "inc/leginon.inc";
-require "inc/project.inc";
-require "inc/processing.inc";
+// compress this file if the browser accepts it.
+if (substr_count($_SERVER['HTTP_ACCEPT_ENCODING'], 'gzip')) ob_start("ob_gzhandler"); else ob_start();
+
+require_once "inc/particledata.inc";
+require_once "inc/util.inc";
+require_once "inc/leginon.inc";
+require_once "inc/project.inc";
+require_once "inc/processing.inc";
+require_once "inc/refineJobsSingleModel.inc";
+require_once "inc/refineJobsMultiModel.inc";
+
 
 if ($_POST['checkjobs']) {
 	checkJobs($showjobs=True);
@@ -11,33 +17,10 @@ if ($_POST['checkjobs']) {
 	checkJobs();
 }
 
-function checkJobs($showjobs=True, $showall=False, $extra=False) {
+function checkJobs($showjobs=False, $showall=False, $extra=False) {
 	$expId= $_GET['expId'];
 	$particle = new particledata();
 	$projectId=getProjectId();
-
-	// Create DMF commands, this should move the default_cluster.php
-	$javafunc="  <script language='JavaScript'>\n";
-	$javafunc.="  function displayDMF(dmfdir,outdir,has_coran) {\n";
-	$javafunc.="  newwindow=window.open('','name','height=150, width=900')\n";
-	$javafunc.="  newwindow.document.write('<html><body>')\n";
-	$javafunc.="    newwindow.document.write('dmf get '+dmfdir+'/model.tar.gz '+outdir+'/.<br />')\n";
-	$javafunc.="    newwindow.document.write('dmf get '+dmfdir+'/results.tar.gz '+outdir+'/.<br />')\n";
-	$javafunc.="    newwindow.document.write('dmf get '+dmfdir+'/*.job '+outdir+'/.<br />')\n";
-	$javafunc.="    newwindow.document.write('tar -xvf '+outdir+'/model.tar.gz -C '+outdir+'<br />')\n";
-	$javafunc.="    newwindow.document.write('tar -xvf '+outdir+'/results.tar.gz -C '+outdir+'<br />')\n";
-	$javafunc.="  if (has_coran > 0) { \n";
-	$javafunc.="    newwindow.document.write('dmf get '+dmfdir+'/coran.tar.gz '+outdir+'/.<br />')\n";
-	$javafunc.="    newwindow.document.write('tar -xvf '+outdir+'/coran.tar.gz -C '+outdir+'<br />')\n";
-	$javafunc.="    newwindow.document.write('/bin/rm -vf '+outdir+'/coran.tar*<br />')\n";
-	$javafunc.="  } \n";
-	$javafunc.="    newwindow.document.write('/bin/rm -vf '+outdir+'/model.tar*<br />')\n";
-	$javafunc.="    newwindow.document.write('/bin/rm -vf '+outdir+'/results.tar*<br />')\n";
-	$javafunc.="    newwindow.document.write('echo done<br />')\n";
-	$javafunc.="    newwindow.document.write('<p>&nbsp;<br /></body></html>')\n";
-	$javafunc.="    newwindow.document.close()\n";
-	$javafunc.="  }\n";
-	$javafunc.="  </script>\n";
 
 	processing_header("Cluster Jobs", "Cluster Job Status", $javafunc);
 	// write out errors, if any came up:
@@ -52,42 +35,41 @@ function checkJobs($showjobs=True, $showall=False, $extra=False) {
 		echo "<input type='submit' name='checkjobs' value='Check Jobs in Queue'>\n";
 		echo "</form><br/>\n";
 	}
+	
 
-	// change next line for different types of jobs
-	$frealignjobs = $particle->getJobIdsFromSession($expId, 'runfrealign');
-	$emanjobs = $particle->getJobIdsFromSession($expId, 'emanrecon');
-	$jobs = array_merge($frealignjobs, $emanjobs);
-
+	$type = $_GET['type'];
+	if ( $type == "multi" ) 
+	{
+		$refineJobs = new RefineJobsMultiModel($expId);
+	} else {
+		$refineJobs = new RefineJobsSingleModel($expId);
+	}
+	$jobs = $refineJobs->getUnfinishedRefineJobs($showall);
+	
 	// if clicked button, list jobs in queue
 	if ($showjobs && $_SESSION['loggedin'] == true) {
 		showClusterJobTables($jobs);
 	}
-
+	
+	
 	// loop over jobs and show info
-	foreach ($jobs as $job) {
+	foreach ($jobs as $job) {	
 		$jobid = $job['DEF_id'];
-
-		// check if job has been uploaded
-		if ($particle->getReconIdFromAppionJobId($jobid)) {
-			//echo "recon $jobid";
-			continue;
-		}
-
 		$jobinfo = $particle->getJobInfoFromId($jobid);
-		// check if job has been aborted
-		if ($showall != True && $jobinfo['status'] == 'A') {
-			//echo "abort $jobid";
-			continue;
-		}
-
+		
 		// check if job has an associated jobfile
-		$jobfile = $jobinfo['appath'].'/'.$jobinfo['name'];
+		// works only if the file is already send to local appath
+		$jobfile = $job['appath'].'/'.$job['name'];
 		if (!file_exists($jobfile)) {
-			echo divisionHeader($jobinfo);
-			echo "<i>missing job file: $jobfile</i><br/><br/>\n";
-			continue;
+			// multiple qsub refinement does not generate .job but would generate .commands
+			$commandfile = substr($jobfile,0,-3).'commands';
+			if (!file_exists($commandfile)) {
+				echo divisionHeader($jobinfo);
+				echo "<i>missing job or commands file: $jobfile</i><br/><br/>\n";
+				continue;
+			}
 		}
-
+		
 		// display relevant info
 
 		$display_keys['job name'] = $jobinfo['name'];
@@ -114,15 +96,20 @@ function checkJobs($showjobs=True, $showall=False, $extra=False) {
 			echo formatHtmlRow($k,$v);
 		}
 		echo "</table>\n";
-
+		
+		echo "<a href='checkAppionJob.php?expId=$expId&jobId=$jobid'>[check logfile]</a><br />\n";
+		
 		if ($_SESSION['loggedin'] == true && $showjobs) {
 			if ($jobinfo['status']=='R' || $jobinfo['status']=='D') {
 				if ($jobinfo['jobtype'] == 'emanrecon') {
 					// if recon is of type EMAN
-					showEMANJobInfo($jobinfo);
-				} elseif ($jobinfo['jobtype'] == 'runfrealign') {
+					//showEMANJobInfo($jobinfo);
+				} elseif ($jobinfo['jobtype'] == 'frealignrecon') {
 					// if recon is of type FREALIGN
-					showFrealignJobInfo($jobinfo);
+					//showFrealignJobInfo($jobinfo);
+				} elseif ($jobinfo['jobtype'] == 'xmipprecon') {
+					// if recon is of type XMIPP
+					//showXmippJobInfo($jobinfo);	
 				} else {
 					print_r($jobinfo);
 				}
@@ -130,6 +117,7 @@ function checkJobs($showjobs=True, $showall=False, $extra=False) {
 		}
 		echo "<br/><br/>\n\n";
 	}
+	
 	processing_footer();
 	exit;
 }
@@ -153,44 +141,54 @@ function showClusterJobTables($jobs) {
 		if (!in_array($job['cluster'], $clusters))
 			$clusters[] = $job['cluster'];
 	}
-	if ($clusters[0]) {
-		foreach ($clusters as $c) {
-			// from inc/processing.inc
-			$queue = checkClusterJobs($c, $user, $pass);
-			if ($queue) {
-				echo "";
-				// START TABLE
-				echo "<table class='tableborder' border=1 cellspacing=0, cellpadding=5>\n";
-
-				// TABLE HEADER
-				echo "<tr><td colspan='15'><font size='+1'>Jobs currently running on the "
-					."<font color='#339933'><b>$c</b></font>"
-					." cluster</font></td></tr>";
-
-				// LABEL FIELDS
-				echo "<tr>\n";
-				$dispkeys = array('Job ID','User','Queue','Jobname','SessId','NDS','TSK','ReqMem','ReqTime','S','ElapTime');
-				foreach ($dispkeys as $key) {
-					echo "<td><span class='datafield0'>$key</span></td>";
-				}
-				echo "</tr>\n";
-
-				// SHOW DATA
-				$list = streamToArray($queue);
-				foreach ($list as $line) {
+	
+	// compare this list with what we find in the config file
+	// and query each host for jobs belonging to the user.
+	global $PROCESSING_HOSTS;
+	
+	if (!$clusters[0]) {
+		echo "<i>No jobs found on any cluster.</i><br/><br/>\n";
+	} else {
+		foreach ($PROCESSING_HOSTS as $host) {
+			$hostname = $host['host'];
+			
+			if ( in_array($hostname, $clusters) ) {
+				$jobs = checkClusterJobs($hostname, $user, $pass);
+				
+				if ($jobs) {
+					echo "";
+					// START TABLE
+					echo "<table class='tableborder' border=1 cellspacing=0, cellpadding=5>\n";
+	
+					// TABLE HEADER
+					echo "<tr><td colspan='15'><font size='+1'>Jobs currently running on the "
+						."<font color='#339933'><b>$hostname</b></font>"
+						." cluster</font></td></tr>";
+	
+					// LABEL FIELDS
 					echo "<tr>\n";
-					foreach ($line as $i) {echo "<td>$i</td>\n";}
+					$dispkeys = array('Job ID','User','Queue','Jobname','SessId','NDS','TSK','ReqMem','ReqTime','S','ElapTime');
+					foreach ($dispkeys as $key) {
+						echo "<td><span class='datafield0'>$key</span></td>";
+					}
 					echo "</tr>\n";
-				}
-				// CLOSE TABLE
-				echo "</table><br/><br/>\n";
-			} else {
-				echo "<i>no queue on $c cluster</i><br/><br/>\n";
+	
+					// SHOW DATA
+					$list = streamToArray($jobs);
+					foreach ($list as $line) {
+						echo "<tr>\n";
+						foreach ($line as $i) {echo "<td>$i</td>\n";}
+						echo "</tr>\n";
+					}
+					// CLOSE TABLE
+					echo "</table><br/><br/>\n";
+				} else {
+					echo "<i>No jobs found on $hostname cluster for user $user.</i><br/><br/>\n";
+				}								
 			}
 		}
-	} else {
-		echo "<i>no jobs found on any cluster</i><br/><br/>\n";
 	}
+			
 	echo "\n";
 };
 
@@ -207,7 +205,9 @@ function showStatus($jobinfo) {
 		if ($user == $job['user'] || is_null($job['user']))
 			$dlbuttons .= "<input type='BUTTON' onclick=\"parent.location="
 				."('abortjob.php?expId=$expId&jobId=$jobid')\" value='Abort job'>\n";
-		$status='Queued';
+			$dlbuttons .= "<input type='BUTTON' onclick=\"parent.location="
+				."('forcejobstatus.php?expId=$expId&jobId=$jobid')\" value='Force Status to Done'>\n";
+				$status='Queued';
 	} elseif ($jobinfo['status']=='R') {
 		if ($user == $job['user'] || is_null($job['user']))
 			$dlbuttons .= "<input type='BUTTON' onclick=\"parent.location="
@@ -215,16 +215,27 @@ function showStatus($jobinfo) {
 		$status='Running';
 	} elseif ($jobinfo['status']=='A') {
 		$status='Aborted';
+	} elseif ($jobinfo['status']=='E') {
+		$status='Error';
 	} elseif ($jobinfo['status']=='D') {
 		$has_coran = checkCoranTarGz($jobinfo);
-		$dlbuttons = "<input type='BUTTON' onclick=\"displayDMF('"
-			."$jobinfo[dmfpath]','$jobinfo[appath]',$has_coran)\" value='Get files from DMF'>&nbsp;\n";
 		if ($jobinfo['jobtype'] == 'emanrecon') {
-			$dlbuttons .= "<input type='button' onclick=\"parent.location=('"
+			$dlbuttons = "<input type='button' onclick=\"parent.location=('"
 				."uploadrecon.php?expId=$expId&jobId=$jobid')\" value='Upload EMAN results'>&nbsp;\n";
-		} elseif ($jobinfo['jobtype'] == 'runfrealign') {
+		} elseif ($jobinfo['jobtype'] == 'frealignrecon') {
 			$dlbuttons .= "<input type='button' onclick=\"parent.location=('"
-				."uploadFrealign.php?expId=$expId&jobId=$jobid')\" value='Upload FREALIGN results'>&nbsp;\n";
+				."uploadrecon.php?expId=$expId&jobId=$jobid')\" value='Upload FREALIGN results'>&nbsp;\n";
+//			$dlbuttons = "<input type='button' onclick=\"parent.location=('"
+//				."uploadFrealign.php?expId=$expId&jobId=$jobid')\" value='Upload FREALIGN results'>&nbsp;\n";
+		} elseif ($jobinfo['jobtype'] == 'xmipprecon') {
+			$dlbuttons = "<input type='button' onclick=\"parent.location=('"
+				."uploadrecon.php?expId=$expId&jobId=$jobid')\" value='Upload Xmipp results'>&nbsp;\n";
+		} elseif ($jobinfo['jobtype'] == 'xmippml3d') {
+			$dlbuttons = "<input type='button' onclick=\"parent.location=('"
+				."uploadrecon.php?expId=$expId&jobId=$jobid')\" value='Upload Xmippml3d results'>&nbsp;\n";
+		} elseif ($jobinfo['jobtype'] == 'relionrecon') {
+			$dlbuttons = "<input type='button' onclick=\"parent.location=('"
+				."uploadrecon.php?expId=$expId&jobId=$jobid')\" value='Upload Relion results'>&nbsp;\n";
 		}
 		if ($user == $job['user'] || is_null($job['user'])) {
 			$dlbuttons .= "&nbsp;<input type='BUTTON' onclick=\"parent.location="
@@ -290,7 +301,7 @@ function showEMANJobInfo($jobinfo) {
 	$f = file($jobfile);
 	foreach ($f as $line) {
 		if (preg_match('/^\#\sstackId:\s/',$line))
-			$stackid = ereg_replace('# stackId: ', '', trim($line));
+			$stackid = preg_replace('%# stackId: %', '', trim($line));
 	}
 	// get num of particles in stack
 	$numinstack = $particle->getNumStackParticles($stackid);
@@ -316,7 +327,7 @@ function showEMANJobInfo($jobinfo) {
 			// get final resolutions of previous iterations
 			elseif($stat['refinelog'][$i][0]=='RESOLUTIONS') {
 				for ($j=$i+1;$j<count($stat['refinelog']);$j++) {
-					$iternum = ereg_replace(':','', $stat['refinelog'][$j][1]);
+					$iternum = preg_replace('%:%','', $stat['refinelog'][$j][1]);
 					$iterres = $stat['refinelog'][$j][2];
 					$previters[$iternum].=", resolution: ".round($iterres,2)." &Aring;";
 				}
@@ -416,7 +427,7 @@ function showEMANJobInfo($jobinfo) {
 				}
 
 				// if running coran:
-				elseif (ereg('coran',$stat['refinelog'][$i][0])) {
+				elseif (preg_match('%coran%',$stat['refinelog'][$i][0])) {
 					$steps['make3d']['status'] = "<font class='green'> Done</font>";
 					$t = getlogdate($stat['refinelog'][$i]);
 					// set duration of previous run based on time stamp
@@ -482,6 +493,9 @@ function showEMANJobInfo($jobinfo) {
 							$cls = exec_over_ssh($jobinfo['cluster'],$user,$pass,$cmd, True);
 							$cls = trim($cls);
 							// find number of times cycled
+							// At certain point of the refinement cycle cls returns zero. 
+							// This next line  avoids division error
+							if (!is_numeric($cls) or $cls==0) $cls=1;
 							$numt = floor($r/$cls);
 							$m = $r%$cls;
 							$tran = "transforming slice: $m/$cls";
@@ -521,6 +535,24 @@ function showEMANJobInfo($jobinfo) {
 		}
 	}
 };
+/******************************
+******************************/
+function showXmippJobInfo($jobinfo) {
+	$user = $_SESSION['username'];
+	$pass = $_SESSION['password'];
+	$particle = new particledata();
+	$jobfile = $jobinfo['appath'].'/'.$jobinfo['name'];
+
+	// get stack id from job file: ugly, ugly, ugly
+	$f = file($jobfile);
+	foreach ($f as $line) {
+		if (preg_match('/^\#\sstackId:\s/',$line))
+			$stackid = preg_replace('%# stackId: %', '', trim($line));
+	}
+	// get num of particles in stack
+	$numinstack = $particle->getNumStackParticles($stackid);
+
+};
 
 /******************************
 ******************************/
@@ -556,14 +588,18 @@ function checkEMANJobStatus($host,$jobpath,$jobfile,$user,$pass) {
 
 function checkCoranTarGz($jobinfo) {
 	// transfer coran results only if tar.gz exists
-	$user = $_SESSION['username'];
-	$pass = $_SESSION['password'];
-	$cluster = $jobinfo['cluster'];
-	$coranfile = $jobinfo['dmfpath'].'/coran.tar.gz';
-	$cmd = "dmf ls $coranfile";
-	$lscoran = exec_over_ssh($cluster, $user, $pass, $cmd, True);
-	$has_coran = ($lscoran) ? 1:0;
-	return $has_coran;
+	
+	// This function is obsolete. Replace it with a check to the log file after logging results during the run.
+	// Comment this out for now.
+//	$user = $_SESSION['username'];
+//	$pass = $_SESSION['password'];
+//	$cluster = $jobinfo['cluster'];
+//	$coranfile = $jobinfo['dmfpath'].'/coran.tar.gz';
+//	$cmd = "dmf ls $coranfile";
+//	$lscoran = exec_over_ssh($cluster, $user, $pass, $cmd, True);
+//	$has_coran = ($lscoran) ? 1:0;
+//	return $has_coran;
+	return false;
 }
 
 /******************************

@@ -7,7 +7,7 @@
  *	see  http://ami.scripps.edu/software/leginon-license
  */
 
-require "inc/admin.inc";
+require_once "inc/admin.inc";
 
 $login_check = $dbemauth->is_logged();
 if (privilege('data') < 2)

@@ -69,6 +69,11 @@ def imageToArray(im, convertType='uint8', dtype=None, msg=True):
 		grey = im.convert('L')
 		a = numpy.fromstring(grey.tostring(), numpy.uint8)
 		a = numpy.reshape(a, (grey.size[1], grey.size[0]))
+	elif (im.mode=='LA'):
+		apDisplay.printMsg("reading LA and converting to L")
+		grey = im.convert('L')
+		a = numpy.fromstring(grey.tostring(), numpy.uint8)
+		a = numpy.reshape(a, (grey.size[1], grey.size[0]))
 	else:
 		raise ValueError, im.mode+" mode not considered"
 
@@ -167,7 +172,7 @@ def arrayToSpider(numer, filename, msg=True):
 	return
 
 #=========================
-def arrayToJpeg(numer,filename,normalize=True, msg=True):
+def arrayToJpeg(numer, filename, normalize=True, msg=True, quality=85):
 	"""
 	takes a numpy and writes a JPEG
 	best for micrographs and photographs
@@ -179,7 +184,7 @@ def arrayToJpeg(numer,filename,normalize=True, msg=True):
 	image = _arrayToImage(numer)
 	if msg is True:
 		apDisplay.printMsg("writing JPEG: "+apDisplay.short(filename))
-	image.save(filename, "JPEG", quality=85)
+	image.save(filename, "JPEG", quality=quality)
 	return
 
 #=========================

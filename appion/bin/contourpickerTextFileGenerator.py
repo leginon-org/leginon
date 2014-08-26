@@ -2,6 +2,7 @@
 from appionlib import appionScript
 from appionlib import appiondata
 from appionlib import apParticle
+from appionlib import apDisplay
 from leginon import leginondata
 import os
 import sys
@@ -42,6 +43,9 @@ class ContourFileGenerator(appionScript.AppionScript):
 		partq = appiondata.ApContourData()
 		sessiond = sessionq.query()
 		selectionid = apParticle.getSelectionIdFromName(runname, sessionname)
+		if not selectionid:
+			apDisplay.printWarning('No Object Tracing Run found in database, Skipping.......')
+			return
 		selectionrundata = apParticle.getSelectionRunDataFromID(selectionid)
 
 
@@ -49,7 +53,7 @@ class ContourFileGenerator(appionScript.AppionScript):
 		file.write('session_id ' + runname + '\n')
 		file.write('usr_id ' + os.getlogin() + '\n')
 		file.write('experiment_name ' + sessionname + '\n')
-		file.write('experiment_description ' + sessiond[0]['comment'] + '\n')
+		file.write('experiment_description ' + sessiond[0]['comment'].strip() + '\n')
 		file.write('nimages ' + str(len(imgtree)) + '\n')
 
 		for imgdata in imgtree:

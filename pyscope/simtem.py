@@ -7,10 +7,17 @@
 import copy
 import math
 import tem
+import threading
+import time
+
+import itertools
+
 try:
 	import nidaq
 except:
 	nidaq = None
+
+simu_autofiller = False
 
 class SimTEM(tem.TEM):
 	name = 'SimTEM'
@@ -29,6 +36,12 @@ class SimTEM(tem.TEM):
 			50000.0,
 		]
 		self.magnification_index = 0
+
+		self.probe_modes = [
+			'micro',
+			'nano',
+		]
+		self.probe_mode_index = 0
 
 		self.stage_axes = ['x', 'y', 'z', 'a']
 		if nidaq is not None:
@@ -80,6 +93,19 @@ class SimTEM(tem.TEM):
 		self.columnvalveposition = 'open'
 		self.emission = 'on'
 		self.BeamBlank = 'on'
+
+		self.energy_filter = False
+		self.energy_filter_width = 0.0
+
+		self.resetRefrigerant()
+
+	def resetRefrigerant(self):
+		self.level0 = 100.0
+		self.level1 = 100.0
+		if simu_autofiller:
+			t = threading.Thread(target=self.useRefrigerant)
+			t.setDaemon(True)
+			t.start()
 
 	def getColumnValvePositions(self):
 		return ['open', 'closed']
@@ -253,6 +279,22 @@ class SimTEM(tem.TEM):
 	def getMagnificationsInitialized(self):
 		return True
 
+	def getProbeMode(self):
+		index = self.probe_mode_index
+		try:
+			return self.probe_modes[index]
+		except IndexError:
+			raise ValueError('invalid probe mode')
+
+	def setProbeMode(self, value):
+		try:
+			self.probe_mode_index = self.probe_modes.index(str(value))
+		except ValueError:
+			raise ValueError('invalid probe mode')
+
+	def getProbeModes(self):
+		return list(self.probe_modes)
+
 	def getMainScreenPositions(self):
 		return list(self.main_screen_positions)
 
@@ -291,4 +333,55 @@ class SimTEM(tem.TEM):
 		return self.BeamBlank
 		
 	def setBeamBlank(self, bb):
-			self.BeamBlank = bb
+		self.BeamBlank = bb
+
+	def getEnergyFiltered(self):
+		return True
+
+	def getEnergyFilter(self):
+		return self.energy_filter
+
+	def setEnergyFilter(self, value):
+		#print 'TEM energy filter', value
+		self.energy_filter = bool(value)
+
+	def getEnergyFilterWidth(self):
+		return self.energy_filter_width
+
+	def setEnergyFilterWidth(self, value):
+		#print 'TEM energy filter width = ', value
+		self.energy_filter_width = float(value)
+
+	def getRefrigerantLevel(self,id=0):
+		if id == 0:
+			level = self.level0
+		else:
+			level = self.level1
+		print id, level
+		return level
+
+	def runAutoFiller(self):
+		t = threading.Thread(target=self.addRefrigerant)
+		t.setDaemon(True)
+		t.start()
+
+	def useRefrigerant(self):
+		while 1:
+			self.level0 -= 11
+			self.level1 -= 11
+			if self.level1 <= 0:
+				print 'empty col'
+			self.level0 = max(self.level0,0.0)
+			self.level1 = max(self.level1,0.0)
+			print 'using', self.level0, self.level1
+			time.sleep(4)
+
+	def addRefrigerant(self):
+		for i in range(5):
+			self.level0 += 20
+			self.level1 += 20
+			print 'adding', self.level0, self.level1
+			time.sleep(2)
+
+	def exposeSpecimenNotCamera(self,seconds):
+		time.sleep(seconds)

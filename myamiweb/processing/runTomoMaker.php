@@ -8,11 +8,11 @@
  *      Simple viewer to view a image using mrcmodule
  */
 
-require "inc/particledata.inc";
-require "inc/leginon.inc";
-require "inc/project.inc";
-require "inc/viewer.inc";
-require "inc/processing.inc";
+require_once "inc/particledata.inc";
+require_once "inc/leginon.inc";
+require_once "inc/project.inc";
+require_once "inc/viewer.inc";
+require_once "inc/processing.inc";
 
 // IF valueS SUBMITTED, EVALUATE DATA
 if ($_POST['process']) {
@@ -61,6 +61,11 @@ function createTomoMakerForm($extra=false, $title='tomomaker.py Launcher', $head
 	$runname = ($_POST['lasttiltseries']==$tiltseriesId) ? $_POST['runname']:$autorunname;
 	$excludednumber = (strlen($_POST['exclude'])) ? $_POST['exclude']:'';
 	$description = $_POST['description'];
+	$defaultmethod = 'imodwbp';
+	$reconmethod = ($_POST['reconmethod']) ? $_POST['reconmethod'] : $defaultmethod;
+	$imodwbpcheck = ($reconmethod == 'imodwbp') ? "CHECKED" : "";
+	$samplecheck = ($reconmethod == 'etomosample') ? "CHECKED" : "";
+
 
 	$alltiltseries = $particle->getTiltSeries($expId);
 	$seriesselector_array = $particle->getTiltSeriesSelector($alltiltseries,$tiltseriesId); 
@@ -132,13 +137,22 @@ function createTomoMakerForm($extra=false, $title='tomomaker.py Launcher', $head
 			  <b>Tomogram Description:</b><br>
 				<textarea name='description' ROWS='2' COLS='40'>$description</textarea>
 				</td>
-			</tr>
-			<tr>
-				<td valign='TOP' class='tablebg'>";       
-
+			</tr>";
+		echo "<tr><td>";
+		echo docpop('tomoreconmethod', 'Method:');
+		echo "<p>";
+		echo "&nbsp;<input type='radio'onClick=submit() name='reconmethod' value='imodwbp' $imodwbpcheck>\n";
+		echo "Auto Imod weighted-back-projection<br>\n";
+		echo "&nbsp;<input type='radio'onClick=submit() name='reconmethod' value='etomosample' $samplecheck>\n";
+		echo "Create sample tomograms and then manually reconstruct in eTOMO<br>\n";
+		echo "</tr></td>";
+		echo" <tr>
+			<td valign='TOP' class='tablebg'>";       
 		echo "
 			<b> <center>Tomogram Creation Params: </center></b>
-				<P>
+				<P>";
+		if (!$samplecheck) {
+			echo "
 				<input type='text' name='extrabin' size='5' value='$extrabin'>\n";
 			echo docpop('extrabin','Binning');
 			echo "<font>(additional binning in tomogram)</font>
@@ -147,6 +161,13 @@ function createTomoMakerForm($extra=false, $title='tomomaker.py Launcher', $head
 			echo docpop('tomothickness','Tomogram Thickness');
 			echo "<font>(pixels in tilt images)</font>
 			<p><br />";
+		} else {
+			echo "
+				<input type='text' name='thickness' size='8' value='$thickness'>\n";
+			echo docpop('tomothickness','Sample Tomogram Thickness');
+			echo "<font>(pixels in tilt images)</font>
+			<p><br />";
+		}
 	}
 	if (!$sessionname) {
 		echo "
@@ -196,6 +217,7 @@ function runTomoMaker() {
 	$extrabin=$_POST['extrabin'];
 	$thickness=$_POST['thickness'];
 	$excludenumber=$_POST['exclude'];
+	$reconmethod = $_POST['reconmethod'];
 
 	/* *******************
 	PART 2: Check for conflicts, if there is an error display the form again
@@ -209,9 +231,11 @@ function runTomoMaker() {
 	/* *******************
 	PART 3: Create program command
 	******************** */
-	$command = "tomomaker.py ";
+	$prognames = array('imodwbp'=>'imod_wbprecon.py','etomosample'=>'etomo_samplerecon.py','etomorecon'=>'etomo_recon');
+	$command = $prognames[$reconmethod]." ";
 	$command.="--session=$sessionname ";
-	$command.="--bin=$extrabin ";
+	if ($reconmethod != 'etomosample')
+		$command.="--bin=$extrabin ";
 	$command.="--alignerid=$alignerId ";
 	$command.="--projectid=$projectId ";
 	$command.="--runname=$runname ";

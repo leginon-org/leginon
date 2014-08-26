@@ -8,11 +8,11 @@
  *      Simple viewer to view a image using mrcmodule
  */
 
-require "inc/particledata.inc";
-require "inc/leginon.inc";
-require "inc/project.inc";
-require "inc/viewer.inc";
-require "inc/processing.inc";
+require_once "inc/particledata.inc";
+require_once "inc/leginon.inc";
+require_once "inc/project.inc";
+require_once "inc/viewer.inc";
+require_once "inc/processing.inc";
 
 // IF VALUES SUBMITTED, EVALUATE DATA
 if ($_POST['process']) {
@@ -53,14 +53,19 @@ function createMaxLikeAlignForm($extra=false, $title='uploadMaxlikeAlignment.py 
 		echo "<font color='red'><B>No Maximum Likelihood Jobs for this Project</B></FONT>\n";
 	} else {
 		foreach ($maxlikejobs as $maxlikejob) {
-			$jobid = $maxlikejob['DEF_id'];
-			echo "<form name='viewerform' method='POST' action='$formAction&jobid=$jobid'>\n";
-
-			if ($_POST['hideJob'.$jobid] == 'hide') {
-				$particle->updateHide('ApMaxLikeJobData', $jobid, '1');
+			$maxlikeid = $maxlikejob['DEF_id'];
+			echo "<form name='viewerform' method='POST' action='$formAction&maxlikeid=$maxlikeid'>\n";
+			
+			// Post values needed for showOrSubmitCommand()
+			echo "<input type='hidden' name='runname' value='$maxlikeid'>\n";
+			$outdir = $maxlikejob['path'].$maxlikeid;
+			echo "<input type='hidden' name='outdir' value='$outdir'>\n";
+			
+			if ($_POST['hideJob'.$maxlikeid] == 'hide') {
+				$particle->updateHide('ApMaxLikeJobData', $maxlikeid, '1');
 				$maxlikejob['hidden']='1';
-			} elseif ($_POST['hideUndoJob'.$jobid] == 'unhide') {
-				$particle->updateHide('ApMaxLikeJobData', $jobid, '0');
+			} elseif ($_POST['hideUndoJob'.$maxlikeid] == 'unhide') {
+				$particle->updateHide('ApMaxLikeJobData', $maxlikeid, '0');
 				$maxlikejob['hidden']='0';
 			}
 
@@ -69,14 +74,14 @@ function createMaxLikeAlignForm($extra=false, $title='uploadMaxlikeAlignment.py 
 
 			echo "<tr><td colspan='5'>\n";
 			$nameline = "<span style='font-size: larger; color:#111111;'>\n";
-			$nameline .= "Job Id: $jobid &nbsp;\n";
+			$nameline .= "Job Id: $maxlikeid &nbsp;\n";
 			$nameline .= " ".$maxlikejob['runname'];
 			$nameline .= "</span>\n";
 			if ($maxlikejob['hidden'] == 1) {
 				$nameline.= " <font color='#cc0000'>HIDDEN</font>\n";
-				$nameline.= " <input class='edit' type='submit' name='hideUndoJob".$jobid."' value='unhide'>\n";
+				$nameline.= " <input class='edit' type='submit' name='hideUndoJob".$maxlikeid."' value='unhide'>\n";
 				$display_keys['hidden'] = "<font color='#cc0000'>HIDDEN</font>";
-			} else $nameline.= " <input class='edit' type='submit' name='hideJob".$jobid."' value='hide'>\n";
+			} else $nameline.= " <input class='edit' type='submit' name='hideJob".$maxlikeid."' value='hide'>\n";
 
 			echo apdivtitle($nameline);
 			echo "</td></tr>\n";
@@ -94,7 +99,7 @@ function createMaxLikeAlignForm($extra=false, $title='uploadMaxlikeAlignment.py 
 			//echo "</td></tr>\n";
 
 			$display_keys['date time'] = $maxlikejob['DEF_timestamp'];
-			$display_keys['path'] = "<input type='text' name='path".$jobid."' value='".$maxlikejob['path']."' size='40'>\n";
+			$display_keys['path'] = "<input type='text' name='path".$maxlikeid."' value='".$maxlikejob['path']."' size='40'>\n";
 			$display_keys['file prefix'] = $maxlikejob['timestamp'];
 
 			$refstackname = "part".$maxlikejob['timestamp']."_average.hed";
@@ -103,7 +108,7 @@ function createMaxLikeAlignForm($extra=false, $title='uploadMaxlikeAlignment.py 
 				$display_keys['reference stack'] = "<a target='stackview' HREF='viewstack.php?"
 					."file=$refstack&expId=$expId'>".$refstackname."</a>";
 
-			echo "<input type='hidden' name='timestamp".$jobid."' value='".$maxlikejob['timestamp']."'>\n";
+			echo "<input type='hidden' name='timestamp".$maxlikeid."' value='".$maxlikejob['timestamp']."'>\n";
 			foreach($display_keys as $k=>$v) {
 				echo formatHtmlRow($k,$v);
 			}
@@ -114,7 +119,7 @@ function createMaxLikeAlignForm($extra=false, $title='uploadMaxlikeAlignment.py 
 			echo "</td></tr>\n";
 
 			echo "<tr><td colspan='2'>\n";
-			echo getSubmitForm("Upload Job $jobid");
+			echo getSubmitForm("Upload Job $maxlikeid");
 			echo "</td></tr>\n";
 
 			echo "</table>\n";
@@ -139,10 +144,13 @@ function createMaxLikeAlignForm($extra=false, $title='uploadMaxlikeAlignment.py 
 }
 
 function runMaxLikeAlign() {
+	/* *******************
+	PART 1: Get variables
+	******************** */
 	$expId=$_GET['expId'];
-	$jobid = $_GET['jobid'];
-	$timestamp=$_POST['timestamp'.$jobid];
-	$rundir=$_POST['path'.$jobid];
+	$maxlikeid = $_GET['maxlikeid'];
+	$timestamp=$_POST['timestamp'.$maxlikeid];
+	$rundir=$_POST['path'.$maxlikeid];
 	$commit = ($_POST['commit']=="on") ? true : false;
 
 	//make sure a stack was selected
@@ -153,7 +161,13 @@ function runMaxLikeAlign() {
 	$outdir = dirname($rundir);
 	$runname = basename($rundir);
 	if (substr($outdir,-1,1)!='/') $outdir.='/';
-
+	/* *******************
+	PART 2: Check for conflicts, if there is an error display the form again
+	******************** */
+	
+	/* *******************
+	PART 3: Create program command
+	******************** */
 	// setup command
 	$command="uploadMaxlikeAlignment.py ";
 	$command.="--rundir=$rundir ";
@@ -162,39 +176,21 @@ function runMaxLikeAlign() {
 	else $command.="--no-commit ";
 	$command.="--projectid=".getProjectId()." ";
 
-	// submit job to cluster
-	if (substr($_POST['process'],0,11)=="Upload Job ") {
-		$user = $_SESSION['username'];
-		$password = $_SESSION['password'];
+	/* *******************
+	PART 4: Create header info, i.e., references
+	******************** */
+	$headinfo .= referenceBox("Maximum-likelihood multi-reference refinement for electron microscopy images.", 2005, "Scheres SH, Valle M, Nuñez R, Sorzano CO, Marabini R, Herman GT, Carazo JM.", "J Mol Biol.", 348, 1, 15808859, false, false, "img/xmipp_logo.png");
+	$headinfo .= referenceBox("Fast maximum-likelihood refinement of electron microscopy images.", 2005, "Scheres SH, Valle M, Carazo JM.", "Bioinformatics.", 21, "Suppl 2", 16204112, false, false, "img/xmipp_logo.png");
+	
+	/* *******************
+	PART 5: Show or Run Command
+	******************** */
+	// submit command
+	$errors = showOrSubmitCommand($command, $headinfo, 'partalign', $nproc);
 
-		if (!($user && $password)) createMaxLikeAlignForm("<B>ERROR:</B> Enter a user name and password");
-
-		$sub = submitAppionJob($command,$outdir,$runname,$expId,'maxlikeali');
-		// if errors:
-		if ($sub) createMaxLikeAlignForm("<b>ERROR:</b> $sub");
-		exit;
-	}
-	else {
-		processing_header("Max Like Align Upload Params","Max Like Upload Params");
-
-		echo referenceBox("Maximum-likelihood multi-reference refinement for electron microscopy images.", 2005, "Scheres SH, Valle M, Nuñez R, Sorzano CO, Marabini R, Herman GT, Carazo JM.", "J Mol Biol.", 348, 1, 15808859, false, false, "img/xmipp_logo.png");
-
-		echo referenceBox("Fast maximum-likelihood refinement of electron microscopy images.", 2005, "Scheres SH, Valle M, Carazo JM.", "Bioinformatics.", 21, "Suppl 2", 16204112, false, false, "img/xmipp_logo.png");
-
-		echo "<table width='600' class='tableborder' border='1'>";
-		echo "
-			<tr><td colspan='2'>
-			<b>MaxLike Alignment Command:</b><br />
-			$command
-			</td></tr>
-			<tr><td>process</td><td>".substr($_POST['process'],0,11)."</td></tr>
-			<tr><td>jobid</td><td>$_GET[jobid]</td></tr>
-			<tr><td>timestamp</td><td>$timestamp</td></tr>
-			<tr><td>run name</td><td>$runname</td></tr>
-			<tr><td>run directory</td><td>$rundir</td></tr>
-			<tr><td>commit</td><td>$commit</td></tr>
-			</table>\n";
-		processing_footer();
-	}
+	// if error display them
+	if ($errors)
+		createMaxLikeAlignForm("<b>ERROR:</b> $errors");
+	
 }
 ?>

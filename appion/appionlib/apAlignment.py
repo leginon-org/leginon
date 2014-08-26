@@ -33,6 +33,19 @@ def getAlignShift(alignpdata,package):
 	return shift
 
 #=====================
+def getAlignParameters(alignpdata, package):
+	shift = None
+	angle_degrees = alignpdata['rotation']
+	mirror = alignpdata['mirror']
+	if package == "Spider":
+		angle = alignpdata['rotation']*math.pi/180.0
+		shift = {'x':alignpdata['xshift']*math.cos(-angle)-alignpdata['yshift']*math.sin(-angle),
+			'y':alignpdata['xshift']*math.sin(-angle)+alignpdata['yshift']*math.cos(-angle)}
+	elif package == "Xmipp":
+		shift = {'x':alignpdata['xshift'],'y':alignpdata['yshift']}
+	return angle_degrees, shift['x'], shift['y'], mirror
+
+#=====================
 def getAlignPackage(alignrundata):
 	aligntypedict = {
 		'norefrun':'Spider',

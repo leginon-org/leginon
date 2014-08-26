@@ -8,11 +8,11 @@
  *      Simple viewer to view a image using mrcmodule
  */
 
-require "inc/particledata.inc";
-require "inc/viewer.inc";
-require "inc/processing.inc";
-require "inc/leginon.inc";
-require "inc/project.inc";
+require_once "inc/particledata.inc";
+require_once "inc/viewer.inc";
+require_once "inc/processing.inc";
+require_once "inc/leginon.inc";
+require_once "inc/project.inc";
 
 $particle=new particledata();
 
@@ -65,7 +65,7 @@ if (!empty($sessioninfo)) {
 	$sessionpath=$sessioninfo['Image path'];
 	$appionpath=getBaseAppionPath($sessioninfo);
 	$extractpath=$appionpath."/extract/";
-	$origjpgpath=ereg_replace("rawdata","jpgs/",$sessionpath);
+	$origjpgpath=preg_replace("%rawdata%","jpgs/",$sessionpath);
 	$sessionname=$sessioninfo['Name'];
 }
 
@@ -442,7 +442,7 @@ function printToolBar() {
 function getImageStatus ($imgname,$leginondata,$particle,$assessmentrid) {
 	// get the status of the image index
 	
-	$imgbase=split("\.",$imgname);
+	$imgbase=preg_split("%\.%",$imgname);
 	$imgbase=$imgbase[0].".mrc";
 	$statdata['id']=$leginondata->getId(array('MRC|image'=>$imgbase),'AcquisitionImageData','DEF_id');
 	$statdata['status']=$particle->getKeepStatus($statdata['id'],$assessmentrid);

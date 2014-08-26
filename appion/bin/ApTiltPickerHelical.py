@@ -146,7 +146,7 @@ class PickerApp(wx.App):
 		self.picks1 = []
 		self.picks2 = []
 		self.buttonheight = 15
-		self.deselectcolor = wx.Color(240,240,240)
+		self.deselectcolor = wx.Colour(240,240,240)
 
 		self.frame = wx.Frame(None, -1, 'Image Viewer')
 		splitter = wx.SplitterWindow(self.frame)
@@ -155,22 +155,22 @@ class PickerApp(wx.App):
 		self.panel1.parent = self.frame
 		self.panel1.app = self
 
-		self.panel1.addTargetTool('Picked', color=wx.Color(215, 32, 32),
+		self.panel1.addTargetTool('Picked', color=wx.Colour(215, 32, 32),
 			shape=self.pshape, size=self.pshapesize, target=True, numbers=True)
 		self.panel1.setTargets('Picked', [])
 		self.panel1.selectiontool.setTargeting('Picked', True)
 
-		self.panel1.addTargetTool('Aligned', color=wx.Color(32, 128, 215),
+		self.panel1.addTargetTool('Aligned', color=wx.Colour(32, 128, 215),
 			shape=self.ashape, size=self.ashapesize, numbers=True)
 		self.panel1.setTargets('Aligned', [])
 		self.panel1.selectiontool.setDisplayed('Aligned', True)
 
-		self.panel1.addTargetTool('Worst', color=wx.Color(250, 160, 32),
+		self.panel1.addTargetTool('Worst', color=wx.Colour(250, 160, 32),
 			shape=self.eshape, size=self.wshapesize)
 		self.panel1.setTargets('Worst', [])
 		self.panel1.selectiontool.setDisplayed('Worst', True)
 
-		self.panel1.addTargetTool('Polygon', color=wx.Color(32, 215, 32),
+		self.panel1.addTargetTool('Polygon', color=wx.Colour(32, 215, 32),
 			shape='polygon', target=True)
 		self.panel1.setTargets('Polygon', [])
 		self.panel1.selectiontool.setDisplayed('Polygon', True)
@@ -182,22 +182,22 @@ class PickerApp(wx.App):
 		self.panel2.parent = self.frame
 		self.panel2.app = self
 
-		self.panel2.addTargetTool('Picked', color=wx.Color(32, 128, 215),
+		self.panel2.addTargetTool('Picked', color=wx.Colour(32, 128, 215),
 			shape=self.pshape, size=self.pshapesize, target=True, numbers=True)
 		self.panel2.setTargets('Picked', [])
 		self.panel2.selectiontool.setTargeting('Picked', True)
 
-		self.panel2.addTargetTool('Aligned', color=wx.Color(215, 32, 32),
+		self.panel2.addTargetTool('Aligned', color=wx.Colour(215, 32, 32),
 			shape=self.ashape, size=self.ashapesize, numbers=True)
 		self.panel2.setTargets('Aligned', [])
 		self.panel2.selectiontool.setDisplayed('Aligned', True)
 
-		self.panel2.addTargetTool('Worst', color=wx.Color(250, 160, 32),
+		self.panel2.addTargetTool('Worst', color=wx.Colour(250, 160, 32),
 			shape=self.eshape, size=self.wshapesize)
 		self.panel2.setTargets('Worst', [])
 		self.panel2.selectiontool.setDisplayed('Worst', True)
 
-		self.panel2.addTargetTool('Polygon', color=wx.Color(32, 215, 32),
+		self.panel2.addTargetTool('Polygon', color=wx.Colour(32, 215, 32),
 			shape='polygon', target=True)
 		self.panel2.setTargets('Polygon', [])
 		self.panel2.selectiontool.setDisplayed('Polygon', True)
@@ -562,7 +562,7 @@ class PickerApp(wx.App):
 	#---------------------------------------
 	def onToggleNone(self, evt):
 		self.assessnone.SetValue(1)
-		self.assessnone.SetBackgroundColour(wx.Color(200,200,0))
+		self.assessnone.SetBackgroundColour(wx.Colour(200,200,0))
 		self.assesskeep.SetValue(0)
 		self.assesskeep.SetBackgroundColour(self.deselectcolor)
 		self.assessreject.SetValue(0)
@@ -574,7 +574,7 @@ class PickerApp(wx.App):
 		self.assessnone.SetValue(0)
 		self.assessnone.SetBackgroundColour(self.deselectcolor)
 		self.assesskeep.SetValue(1)
-		self.assesskeep.SetBackgroundColour(wx.Color(0,200,0))
+		self.assesskeep.SetBackgroundColour(wx.Colour(0,200,0))
 		self.assessreject.SetValue(0)
 		self.assessreject.SetBackgroundColour(self.deselectcolor)
 		self.assess = True
@@ -586,7 +586,7 @@ class PickerApp(wx.App):
 		self.assesskeep.SetValue(0)
 		self.assesskeep.SetBackgroundColour(self.deselectcolor)
 		self.assessreject.SetValue(1)
-		self.assessreject.SetBackgroundColour(wx.Color(200,0,0))
+		self.assessreject.SetBackgroundColour(wx.Colour(200,0,0))
 		self.assess = False
 
 	#---------------------------------------

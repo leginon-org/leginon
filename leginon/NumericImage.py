@@ -9,7 +9,7 @@
 #
 
 from wx import EmptyImage
-import Image
+from PIL import Image
 import numpy
 import math
 import sys

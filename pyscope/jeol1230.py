@@ -330,7 +330,7 @@ class jeol1230(tem.TEM):
 		if Debug == True:
 			print 'from setFocus'
 		if self.jeol1230lib.setStagePosition('z', float(value)*1e6, 'coarse') ==  True:   # move stage in Z direction only
-			return Ture
+			return True
 		else:
 			return False
 

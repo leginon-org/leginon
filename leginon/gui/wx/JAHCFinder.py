@@ -28,11 +28,11 @@ class Panel(leginon.gui.wx.TargetFinder.Panel):
 		self.imagepanel.selectiontool.setDisplayed('Original', True)
 		self.imagepanel.addTypeTool('Template', display=True, settings=True)
 		self.imagepanel.addTypeTool('Threshold', display=True, settings=True)
-		self.imagepanel.addTargetTool('Blobs', wx.Color(0, 255, 255), target=True, settings=True, shape='o')
-		self.imagepanel.addTargetTool('Lattice', wx.Color(255, 0, 255), settings=True)
-		self.imagepanel.addTargetTool('acquisition', wx.GREEN, target=True, settings=True, numbers=True)
+		self.imagepanel.addTargetTool('Blobs', wx.Colour(0, 255, 255), target=True, settings=True, shape='o')
+		self.imagepanel.addTargetTool('Lattice', wx.Colour(255, 0, 255), settings=True)
+		self.imagepanel.addTargetTool('acquisition', wx.GREEN, target=True, settings=True, numbers=True, exp=True)
 		self.imagepanel.addTargetTool('focus', wx.BLUE, target=True, settings=True)
-		self.imagepanel.addTargetTool('preview', wx.Color(255, 128, 255), target=True)
+		self.imagepanel.addTargetTool('preview', wx.Colour(255, 128, 255), target=True)
 		self.imagepanel.addTargetTool('done', wx.RED)
 		self.imagepanel.selectiontool.setDisplayed('Blobs', True)
 		self.imagepanel.selectiontool.setDisplayed('acquisition', True)
@@ -126,6 +126,8 @@ class TemplateScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		self.widgets['template diameter'] = IntEntry(self, -1, chars=4)
 
 		self.widgets['template type'] = Choice(self, -1, choices=self.node.cortypes)
+		self.widgets['template image min'] = FloatEntry(self, -1,
+																												 chars=4)
 
 		szcor = wx.GridBagSizer(5, 5)
 		label = wx.StaticText(self, -1, 'Use')
@@ -135,22 +137,31 @@ class TemplateScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		label = wx.StaticText(self, -1, 'correlation')
 		szcor.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
+		szcorlimit = wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1, 'Fill image values below')
+		szcorlimit.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szcorlimit.Add(self.widgets['template image min'], (0, 1), (1, 1),
+							wx.ALIGN_CENTER_VERTICAL)
+		label = wx.StaticText(self, -1, 'with mean before correlation')
+		szcorlimit.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+
 		sztemplate = wx.GridBagSizer(5, 5)
-		sztemplate.Add(szcor, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sztemplate.Add(szcor, (0, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
+		sztemplate.Add(szcorlimit, (1, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
 
 		label = wx.StaticText(self, -1, 'Template Filename')
-		sztemplate.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sztemplate.Add(self.widgets['template filename'], (1, 1), (1, 1),
+		sztemplate.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sztemplate.Add(self.widgets['template filename'], (2, 1), (1, 1),
 										wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
 
 		label = wx.StaticText(self, -1, 'Original Template Diameter')
-		sztemplate.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sztemplate.Add(self.widgets['file diameter'], (2, 1), (1, 1),
+		sztemplate.Add(label, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sztemplate.Add(self.widgets['file diameter'], (3, 1), (1, 1),
 										wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
 
 		label = wx.StaticText(self, -1, 'Final Template Diameter')
-		sztemplate.Add(label, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sztemplate.Add(self.widgets['template diameter'], (3, 1), (1, 1),
+		sztemplate.Add(label, (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sztemplate.Add(self.widgets['template diameter'], (4, 1), (1, 1),
 										wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
 
 		sbsztemplate.Add(sztemplate, 1, wx.EXPAND|wx.ALL, 5)
@@ -452,12 +463,19 @@ class ScrolledSettings(leginon.gui.wx.TargetFinder.ScrolledSettings):
 			sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
 			self.widgets['skip'] = wx.CheckBox(self, -1, 'Skip automated hole finder')
+			self.widgets['focus interval'] = IntEntry(self, -1, chars=6)
 			sz = wx.GridBagSizer(5, 5)
 			sz.Add(self.widgets['skip'], (0, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
 
-			sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
+			label = wx.StaticText(self, -1, 'Focus every')
+			sz.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+			sz.Add(self.widgets['focus interval'], (1, 1), (1, 1),
+										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
+			label = wx.StaticText(self, -1, 'image')
+			sz.Add(label, (1, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
+			sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
 			return tfsd + [sbsz]
 
 

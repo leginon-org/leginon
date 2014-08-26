@@ -432,6 +432,10 @@ def makeImageFromLabels(labeled_image,ltotal,goodlabels):
 	else:
 		if len(goodlabels)==ltotal:
 			return labeled_image
+		# Special case when database got more assessed region.  Most likely an user error. See issue #2584
+		if len(goodlabels)>ltotal:
+			apDisplay.printWarning('There are more regions to keep than the number of regions.  Assuming want all!')
+			return labeled_image
 	if len(goodlabels)*2 < ltotal:
 		for i,l1 in enumerate(goodlabels):
 			l=l1+1
@@ -723,8 +727,20 @@ def makeMask(params,image):
 	return regioninfos,equalregions,
 
 def makeKeepMask(maskarray,keeplist1):
-	labeled_maskarray,countlabels=nd.label(maskarray)
+	# label the regions in the mask image array
+	labeled_maskarray,countlabels = nd.label( maskarray )
+	
+	# Remove any regions that are too small (happens with auto-masking)
+	testlog = [False,0,""]
+	infos={}	
+	infos, testlog = getLabeledInfo( maskarray, maskarray, labeled_maskarray, range(1,countlabels+1), False, infos, testlog )
+	goodregions = range(countlabels)
+	goodareas = pruneByArea( infos, 400, 16777216, goodregions)
+	labeled_maskarray, countlabels, infos = makePrunedLabels(labeled_maskarray, countlabels, infos, goodareas)
+	
+	# adjust the index of the regions
 	keeplist0 = map((lambda x: x-1),keeplist1)
+	# make a new image array that only includes the regions that have not been rejected
 	labeled_maskarray = makeImageFromLabels(labeled_maskarray,countlabels,keeplist0)
 	maskarray=getBmaskFromLabeled(labeled_maskarray)
 	return maskarray

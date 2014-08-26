@@ -372,7 +372,7 @@ class ImageTool(object):
 ##
 ##################################
 
-class FitShapeTool(ImageTool):
+class TraceTool(ImageTool):
 	def __init__(self, imagepanel, sizer):
 		bitmap = getBitmap('ellipse.png')
 		tooltip = 'Toggle Fit Shape'
@@ -380,34 +380,78 @@ class FitShapeTool(ImageTool):
 		self.button.SetToggle(False)
 		self.start = None
 		self.xypath = []
+		self.leftisdown = False
+		self.rightisdown = False
+		self.lastx = 0
+		self.lasty = 0
+
+	def OnLeftDown(self, evt):
+		if self.button.GetToggle():
+			self.leftisdown = True
+			self.rightisdown = False
+			self.xypath = []
+			self.fitted_shape_points = []
+			if self.start is not None:
+				x = evt.GetX() #- self.imagepanel.offset[0]
+				y = evt.GetY() #- self.imagepanel.offset[1]
+				x0, y0 = self.start
+				self.xypath.append((x,y))
+			self.start = self.imagepanel.view2image((evt.GetX(), evt.GetY()))
+
+	def OnLeftClick(self, evt):
+		if self.button.GetToggle():
+			self.leftisdown = False
+			self.rightisdown = False
+			self.start = None
+			self.imagepanel.UpdateDrawing()
+
+	def OnRightClick(self, evt):
+		if self.button.GetToggle():
+			self.leftisdown = False
+			self.rightisdown = False
+			self.start = None
+			self.imagepanel.UpdateDrawing()
+
+	def OnMotion(self, evt, dc):
+		if self.button.GetToggle():
+			if self.leftisdown or self.rightisdown:
+				x,y = self.imagepanel.view2image((evt.GetX(), evt.GetY()))
+				self.xypath.append((x,y))
+				return True
+		return False
+
+	def OnToggle(self, value):
+		if not value:
+			self.start = None
+			self.xypath = []
+			self.imagepanel.UpdateDrawing()
+
+	def Draw(self, dc):
+		if self.xypath:
+			dc.SetPen(wx.Pen(wx.RED, 1))
+			dc.SetBrush(wx.TRANSPARENT_BRUSH)
+			scaledpoints = map(self.imagepanel.image2view, self.xypath)
+			if len(scaledpoints) > 1:
+				dc.DrawLines(scaledpoints)
+
+class FitShapeTool(TraceTool):
+	def __init__(self, imagepanel, sizer):
+		TraceTool.__init__(self,imagepanel,sizer)
 		self.shiftxypath = []
 		self.fitted_shape_points = []
-		self.leftisdown = False
 		self.shape_params = None
 		self.shapepoint = None
 		self.shapepointaxis = None
 		self.shapepointangle = None
 		self.start_shape_params = None
-		self.lastx = 0
-		self.lasty = 0
 		self.imagepanel.Bind(leginon.gui.wx.ImagePanelTools.EVT_SHAPE_NEW_CENTER, self.onNewShapeCenter, self.imagepanel)
 		self.imagepanel.Bind(leginon.gui.wx.ImagePanelTools.EVT_SHAPE_NEW_PARAMS, self.onNewShapeParams, self.imagepanel)
 
-	def OnLeftDown(self, evt):
-		if self.button.GetToggle():
-			self.leftisdown = True
-			self.xypath = []
-			self.fitted_shape_points = []
-			if self.start is not None:
-				x = evt.m_x #- self.imagepanel.offset[0]
-				y = evt.m_y #- self.imagepanel.offset[1]
-				x0, y0 = self.start
-				self.xypath.append((x,y))
-			self.start = self.imagepanel.view2image((evt.m_x, evt.m_y))
 
 	def OnLeftClick(self, evt):
 		if self.button.GetToggle():
 			self.leftisdown = False
+			self.rightisdown = False
 			self.start = None
 			self.fitted_shape_points = self.ellipsePoints(self.xypath)
 			self.imagepanel.UpdateDrawing()
@@ -416,8 +460,9 @@ class FitShapeTool(ImageTool):
 		if not self.button.GetToggle():
 			return
 		self.leftisdown = False
+		self.rightisdown = False
 		self.shape_params['shape'] = 'rectangle'
-		x,y = self.imagepanel.view2image((evt.m_x, evt.m_y))
+		x,y = self.imagepanel.view2image((evt.GetX(), evt.GetY()))
 		if len(self.shiftxypath) > 1:
 			self.shiftxypath = []
 		self.shiftxypath.append((x,y))
@@ -428,11 +473,6 @@ class FitShapeTool(ImageTool):
 
 	def distance(self, p1, p2):
 		return math.hypot(p2[0]-p1[0], p2[1]-p1[1])
-
-	def OnRightClick(self, evt):
-		if self.button.GetToggle():
-			self.leftisdown = True
-			self.start = None
 
 	def ellipsePoints(self, points):
 		try:
@@ -525,6 +565,9 @@ class FitShapeTool(ImageTool):
 			if evt.centers:
 				self.shape_params = {'center': numpy.array(evt.centers[0])}
 			return
+		else:
+			if not evt.centers:
+				return
 		oldcenter = self.shape_params['center']
 		centers = []
 		distances = []
@@ -542,14 +585,6 @@ class FitShapeTool(ImageTool):
 			self.shiftxypath = []
 			self.imagepanel.UpdateDrawing()
 
-	#--------------------
-	def OnMotion(self, evt, dc):
-		if self.button.GetToggle():
-			if self.leftisdown:
-				x,y = self.imagepanel.view2image((evt.m_x, evt.m_y))
-				self.xypath.append((x,y))
-				return True
-		return False
 
 	#--------------------
 	def OnToggle(self, value):
@@ -561,19 +596,14 @@ class FitShapeTool(ImageTool):
 			self.imagepanel.UpdateDrawing()
 
 	def Draw(self, dc):
-		if self.xypath:
-			dc.SetPen(wx.Pen(wx.RED, 3))
-			dc.SetBrush(wx.TRANSPARENT_BRUSH)
-			scaledpoints = map(self.imagepanel.image2view, self.xypath)
-			if len(scaledpoints) > 1:
-				dc.DrawLines(scaledpoints)
+		super(FitShapeTool,self).Draw(dc)
 		if self.shiftxypath:
-			dc.SetPen(wx.Pen(wx.RED, 3))
+			dc.SetPen(wx.Pen(wx.RED, 1))
 			dc.SetBrush(wx.TRANSPARENT_BRUSH)
 			scaledpoints = map(self.imagepanel.image2view, self.shiftxypath)
 			dc.DrawPointList(scaledpoints)
 		if self.fitted_shape_points:
-			dc.SetPen(wx.Pen(wx.GREEN, 3))
+			dc.SetPen(wx.Pen(wx.GREEN, 1))
 			dc.SetBrush(wx.TRANSPARENT_BRUSH)
 			polypoints = map(self.imagepanel.image2view, self.fitted_shape_points)
 			dc.DrawPolygon(polypoints)
@@ -614,6 +644,9 @@ class ResolutionTool(ValueTool):
 	def valueString(self, x, y, value):
 		if self.pixelsize and self.center:
 			distance = math.sqrt((x-self.center['x'])**2+(y-self.center['y'])**2)
+			if distance < 1.0:
+				# avoid divide by zero error
+				return ''
 			resolution = 1/math.sqrt(((x-self.center['x'])*self.pixelsize['x'])**2+((y-self.center['y'])*self.pixelsize['y'])**2)
 			defocus = fftfun.calculateDefocus(self.hightension,1/resolution)
 			if resolution < 1e-6:
@@ -630,7 +663,7 @@ class ResolutionTool(ValueTool):
 		self.hightension = evt.hightension
 
 	def OnLeftClick(self, evt):
-		xy = self.imagepanel.view2image((evt.m_x, evt.m_y))
+		xy = self.imagepanel.view2image((evt.GetX(), evt.GetY()))
 		idcevt = ImageClickedEvent(self.imagepanel, xy)
 		self.imagepanel.GetEventHandler().AddPendingEvent(idcevt)
 
@@ -640,7 +673,7 @@ class ResolutionTool(ValueTool):
 
 class CrosshairTool(ImageTool):
 	def __init__(self, imagepanel, sizer):
-		self.color = wx.Color(0,150,150) #dark teal green
+		self.color = wx.Colour(0,150,150) #dark teal green
 		bitmap = leginon.gui.wx.TargetPanelBitmaps.getTargetIconBitmap(self.color, shape='+')
 		tooltip = 'Toggle Center Crosshair'
 		cursor = None
@@ -713,8 +746,8 @@ class RulerTool(ImageTool):
 	def OnLeftClick(self, evt):
 		if self.button.GetToggle():
 			if self.start is not None:
-				x = evt.m_x #- self.imagepanel.offset[0]
-				y = evt.m_y #- self.imagepanel.offset[1]
+				x = evt.GetX() #- self.imagepanel.offset[0]
+				y = evt.GetY() #- self.imagepanel.offset[1]
 				x0, y0 = self.start
 				dx, dy = x - x0, y - y0
 				self.measurement = {
@@ -726,7 +759,7 @@ class RulerTool(ImageTool):
 				}
 				mevt = MeasurementEvent(self.imagepanel, dict(self.measurement))
 				self.imagepanel.GetEventHandler().AddPendingEvent(mevt)
-			self.start = self.imagepanel.view2image((evt.m_x, evt.m_y))
+			self.start = self.imagepanel.view2image((evt.GetX(), evt.GetY()))
 
 	#--------------------
 	def OnRightClick(self, evt):
@@ -752,8 +785,8 @@ class RulerTool(ImageTool):
 	#--------------------
 	def OnMotion(self, evt, dc):
 		if self.button.GetToggle() and self.start is not None:
-			x = evt.m_x #- self.imagepanel.offset[0]
-			y = evt.m_y #- self.imagepanel.offset[1]
+			x = evt.GetX() #- self.imagepanel.offset[0]
+			y = evt.GetY() #- self.imagepanel.offset[1]
 			self.DrawRuler(dc, x, y)
 			return True
 		return False
@@ -803,12 +836,12 @@ class ZoomTool(ImageTool):
 	#--------------------
 	def OnLeftClick(self, evt):
 		if self.button.GetToggle():
-			self.zoomIn(evt.m_x, evt.m_y)
+			self.zoomIn(evt.GetX(), evt.GetY())
 
 	#--------------------
 	def OnRightClick(self, evt):
 		if self.button.GetToggle():
-			self.zoomOut(evt.m_x, evt.m_y)
+			self.zoomOut(evt.GetX(), evt.GetY())
 
 	#--------------------
 	def zoom(self, level, viewcenter):
@@ -860,7 +893,7 @@ class ClickTool(ImageTool):
 			return
 		if self._disable:
 			self._disabled = True
-		xy = self.imagepanel.view2image((evt.m_x, evt.m_y))
+		xy = self.imagepanel.view2image((evt.GetX(), evt.GetY()))
 		idcevt = ImageClickedEvent(self.imagepanel, xy)
 		self.imagepanel.GetEventHandler().AddPendingEvent(idcevt)
 
@@ -909,7 +942,7 @@ class TypeTool(object):
 		togglebutton = self.togglebuttons[toolname]
 		if enable:
 			togglebutton.SetBezelWidth(3)
-			#togglebutton.SetBackgroundColour(wx.Color(160, 160, 160))
+			#togglebutton.SetBackgroundColour(wx.Colour(160, 160, 160))
 		else:
 			togglebutton.SetBezelWidth(0)
 			#togglebutton.SetBackgroundColour(wx.WHITE)
@@ -936,7 +969,7 @@ class TypeTool(object):
 	#--------------------
 	def onToggleDisplay(self, evt):
 		#if self.togglebuttons['display'].GetValue() is True:
-		#	self.togglebuttons['display'].SetBackgroundColour(wx.Color(160,160,160))
+		#	self.togglebuttons['display'].SetBackgroundColour(wx.Colour(160,160,160))
 		#else:
 		#	self.togglebuttons['display'].SetBackgroundColour(wx.WHITE)
 		evt = DisplayEvent(evt.GetEventObject(), self.name, evt.GetIsDown())

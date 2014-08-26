@@ -37,7 +37,6 @@ class Panel(leginon.gui.wx.Node.Panel):
 													shortHelpString='Refresh Trays')
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_GRID, False)
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_EXTRACT, False)
-		self.toolbar.Realize()
 
 		self.ctray = wx.Choice(self, -1)
 		self.ctray.Enable(False)
@@ -363,12 +362,12 @@ class Tray(wx.Panel):
 			self.updateDrawing()
 
 	def onLeftUp(self, evt):
-		position = self._clientToPosition(evt.m_x, evt.m_y)
+		position = self._clientToPosition(evt.GetX(), evt.GetY())
 		if position is not None:
 			self._addGrid(position)
 
 	def onRightUp(self, evt):
-		position = self._clientToPosition(evt.m_x, evt.m_y)
+		position = self._clientToPosition(evt.GetX(), evt.GetY())
 		try:
 			self.gridqueue.remove(position)
 			self.updateDrawing()
@@ -376,7 +375,7 @@ class Tray(wx.Panel):
 			pass
 
 	def onMiddleDown(self, evt):
-		position = self._clientToPosition(evt.m_x, evt.m_y)
+		position = self._clientToPosition(evt.GetX(), evt.GetY())
 		try:
 			self.showlabel = position
 			self.updateDrawing()

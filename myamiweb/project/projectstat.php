@@ -1,6 +1,6 @@
 <?php
-require("inc/project.inc.php");
-require("inc/getleginondata.php");
+require_once("inc/project.inc.php");
+require_once("inc/getleginondata.php");
 
 if (privilege('projects')) {
 	$title = "Projects";

@@ -8,14 +8,15 @@
  *	Simple viewer to view a image using mrcmodule
  */
 
-require "inc/particledata.inc";
-require "inc/leginon.inc";
-require "inc/project.inc";
-require "inc/processing.inc";
-require "inc/summarytables.inc";
+require_once "inc/particledata.inc";
+require_once "inc/leginon.inc";
+require_once "inc/project.inc";
+require_once "inc/processing.inc";
+require_once "inc/summarytables.inc";
+require_once "inc/forms/ddstackForm.inc";
 
 // IF VALUES SUBMITTED, EVALUATE DATA
-if ($_POST) {
+if ($_POST['process']) {
 	runStackIntoPicks();
 } else {
 	createStackIntoPicksForm();
@@ -29,6 +30,7 @@ function createStackIntoPicksForm($extra=false, $title='Run Stack Into Picks', $
 	if ($_GET['showHidden']) $formAction.="&showHidden=True";
 
 	$javascript.= editTextJava();
+	$javascript .= writeJavaPopupFunctions('appion');
 
 	processing_header($title, $heading, $javascript, False);
 	// write out errors, if any came up:
@@ -52,6 +54,7 @@ function createStackIntoPicksForm($extra=false, $title='Run Stack Into Picks', $
 	$description = $_POST['description'];
 	$stackparam = $particle->getStackParams($stackids[0]['stackid']);
 	$outdir = ($_POST['outdir']) ? $_POST['outdir'] : $sessionpath;
+	$ddstackform = new DDStackForm('','Apply to ddframe stack result images','ddstack.transfer2ddstack' );
 
 	if ($stackids) {
 		echo "<form name='stackform' method='post' action='$formAction'>\n";
@@ -66,6 +69,10 @@ function createStackIntoPicksForm($extra=false, $title='Run Stack Into Picks', $
 		echo "<br />\n";
 		echo "<input type='text' name='outdir' value='$outdir' size='50'>\n";
 		echo "<br />\n";
+		echo "<br />\n";
+		echo docpop('ddstack.transfer2ddstack','<b>Apply to dd frame stack result image:</b>');
+		echo "<br />\n";
+		echo $ddstackform->generateForm();
 		echo "<br />\n";
 		echo getSubmitForm("Run Stack Into Picks");
 		echo "</td></tr>\n";
@@ -91,12 +98,19 @@ function createStackIntoPicksForm($extra=false, $title='Run Stack Into Picks', $
 }
 
 function runStackIntoPicks() {
+	$ddstackform = new DDStackForm('','Apply to ddframe stack result images','ddstack.transfer2ddstack' );
+	/* *******************
+	PART 1: Get variables
+	******************** */
 	$expId = $_GET['expId'];
 	$projectId = getProjectId();
 	$runname=$_POST['runname'];
 	$outdir=$_POST['outdir'];
 	$stackid=$_POST['stackid'];
 
+	/* *******************
+	PART 2: Check for conflicts, if there is an error display the form again
+	******************** */
 	if (!$stackid) 
 		createStackIntoPicksForm("<B>ERROR:</B> No stack selected");
 
@@ -104,42 +118,32 @@ function runStackIntoPicks() {
 	if (substr($outdir,-1,1)!='/') $outdir.='/';
 	$rundir = $outdir.$runname;
 
+	/* *******************
+	PART 3: Create program command
+	******************** */
 	$command ="stackIntoPicks.py ";
 	$command.="--projectid=".getProjectId()." ";
 	$command.="--rundir=$rundir ";
 	$command.="--runname=$runname ";
 	$command.="--stackid=$stackid ";
 	$command.="--commit ";
+	$command .= $ddstackform->buildCommand( $_POST );	
 
-	// submit job to cluster
-	if ($_POST['process']=="Run Stack Into Picks") {
-		$user = $_SESSION['username'];
-		$password = $_SESSION['password'];
-		if (!($user && $password))
-			createStackIntoPicksForm("<B>ERROR:</B> Enter a user name and password");
-		$sub = submitAppionJob($command,$outdir,$runname,$expId,'makestack');
-		// if errors:
-		if ($sub)
-			createStackIntoPicksForm("<b>ERROR:</b> $sub");
-		exit;
-	} else {
-		processing_header("Run Stack Into Picks","Run Stack Into Picks");
-		echo appionRef();
+	/* *******************
+	PART 4: Create header info, i.e., references
+	******************** */
+	$headinfo .= appionRef();
+	
+	/* *******************
+	PART 5: Show or Run Command
+	******************** */
+	// submit command
+	$errors = showOrSubmitCommand($command, $headinfo, 'makestack', $nproc);
 
-		echo"
-		<table width='600' class='tableborder' border='1'>
-		<tr><td colspan='2'>
-		<b>Run Stack Into Picks:</b><br />
-		$command
-		</td></tr>
-		<tr><td>run id</td><td>$runname</td></tr>
-		<tr><td>stack id</td><td>$stackid</td></tr>
-		<tr><td>out dir</td><td>$rundir</td></tr>
-		<tr><td>commit</td><td>$commit</td></tr>
-		</table>\n";
-		processing_footer();
-	}
-	exit;
+	// if error display them
+	if ($errors)
+		createStackIntoPicksForm("<b>ERROR:</b> $errors");
+	
 }
 
 

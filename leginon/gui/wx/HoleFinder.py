@@ -29,11 +29,11 @@ class Panel(leginon.gui.wx.TargetFinder.Panel):
 		self.imagepanel.addTypeTool('Edge', display=True, settings=True)
 		self.imagepanel.addTypeTool('Template', display=True, settings=True)
 		self.imagepanel.addTypeTool('Threshold', display=True, settings=True)
-		self.imagepanel.addTargetTool('Blobs', wx.Color(0, 255, 255), shape='o', settings=True)
-		self.imagepanel.addTargetTool('Lattice', wx.Color(255, 0, 255), settings=True)
-		self.imagepanel.addTargetTool('acquisition', wx.GREEN, target=True, settings=True)
+		self.imagepanel.addTargetTool('Blobs', wx.Colour(0, 255, 255), shape='o', settings=True)
+		self.imagepanel.addTargetTool('Lattice', wx.Colour(255, 0, 255), settings=True)
+		self.imagepanel.addTargetTool('acquisition', wx.GREEN, target=True, settings=True,exp=True)
 		self.imagepanel.addTargetTool('focus', wx.BLUE, target=True, settings=True)
-		self.imagepanel.addTargetTool('preview', wx.Color(255, 128, 255), target=True)
+		self.imagepanel.addTargetTool('preview', wx.Colour(255, 128, 255), target=True)
 		self.imagepanel.addTargetTool('done', wx.RED)
 		self.imagepanel.selectiontool.setDisplayed('acquisition', True)
 		self.imagepanel.selectiontool.setDisplayed('done', True)
@@ -482,9 +482,18 @@ class ScrolledSettings(leginon.gui.wx.TargetFinder.ScrolledSettings):
 
 			self.widgets['skip'] = wx.CheckBox(self, -1,
 																		'Skip automated hole finder')
+			self.widgets['focus interval'] = IntEntry(self, -1, chars=6)
+
 			sz = wx.GridBagSizer(5, 5)
 			sz.Add(self.widgets['skip'], (0, 0), (1, 1),
 							wx.ALIGN_CENTER_VERTICAL)
+
+			label = wx.StaticText(self, -1, 'Focus every')
+			sz.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+			sz.Add(self.widgets['focus interval'], (1, 1), (1, 1),
+										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
+			label = wx.StaticText(self, -1, 'image')
+			sz.Add(label, (1, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
 			sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
 

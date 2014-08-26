@@ -43,6 +43,7 @@ class ManualMaskMakerPanel(manualpicker.ManualPickerPanel):
 		if (filename):
 			self.setImage(image.astype(numpy.float32))
 			self.image = image
+			# Read in existing mask vertices here and create a new maskimg as in OnAdd()
 			self.maskimg =  numpy.zeros(self.image.shape)
 ##################################
 ##
@@ -54,7 +55,7 @@ class MaskApp(manualpicker.PickerApp):
 		manualpicker.PickerApp.__init__(self, shape='+', size=16, mask=True)
 
 	def OnInit(self):
-		self.deselectcolor = wx.Color(240,240,240)
+		self.deselectcolor = wx.Colour(240,240,240)
 
 		self.frame = wx.Frame(None, -1, 'Manual Mask Maker')
 		self.sizer = wx.FlexGridSizer(3,1)
@@ -67,7 +68,7 @@ class MaskApp(manualpicker.PickerApp):
 		self.panel = ManualMaskMakerPanel(self.frame, -1)
 
 #		self.panel.addTypeTool('Select Particles', toolclass=TargetPanelTools.TargetTypeTool,
-#			display=wx.Color(220,20,20), target=True, shape=self.shape, size=self.size)
+#			display=wx.Colour(220,20,20), target=True, shape=self.shape, size=self.size)
 
 #		self.panel.setTargets('Select Particles', [])
 #		self.panel.selectiontool.setTargeting('Select Particles', True)
@@ -138,6 +139,8 @@ class MaskApp(manualpicker.PickerApp):
 	def onAdd(self, evt):
 		vertices = []
 		vertices = self.panel.getTargetPositions('Region to Remove')
+		
+		# Write out vertices to mask file
 		def reversexy(coord):
 			clist=list(coord)
 			clist.reverse()
@@ -198,6 +201,11 @@ class ManualPicker(filterLoop.FilterLoop):
 		self.runManualPicker(imgdata)
 
 	def commitToDatabase(self,imgdata):
+        # if a kept mask was created in a previous mask run and the 
+        # assess flag was used (basically combining the 2 runs) there is 
+        # nothing new to commit.  
+		if self.useAcceptedMask: return
+        
 		sessiondata = imgdata['session']
 		rundir = self.params['rundir']
 		maskname = self.params['runname']
@@ -213,13 +221,15 @@ class ManualPicker(filterLoop.FilterLoop):
 			except:
 				apDisplay.printWarning('can not create mask directory')
 		massessrundata,exist = apMask.insertMaskAssessmentRun(sessiondata,maskrundata,assessname)
+		
 		mask = self.maskimg
+		maskfilename = imgdata['filename']+'_mask.png'
+		
 		image = self.image
 		labeled_regions,clabels=nd.label(mask)
 		testlog = [False,0,""]
 		infos={}
 		infos,testlog=apCrud.getLabeledInfo(image,mask,labeled_regions,range(1,clabels+1),False,infos,testlog)
-		maskfilename = imgdata['filename']+'_mask.png'
 		offset=1
 		for l1 in range(0,len(infos)):
 
@@ -227,12 +237,17 @@ class ManualPicker(filterLoop.FilterLoop):
 			info=infos[l]
 			info.append(l)
 			regiondata= apMask.insertMaskRegion(maskrundata,imgdata,info)
+			print "Inserting mask region in database"
+		
 		# PIL alpha channel read does not work
 		#apImage.arrayMaskToPngAlpha(mask, os.path.join(maskdir,maskfilename))
 		apImage.arrayMaskToPng(mask, os.path.join(maskdir,maskfilename))
+
 		allregiondata = apMask.getMaskRegions(maskrundata,imgdata)
+			
 		for regiondata in allregiondata:
 			apMask.insertMaskAssessment(massessrundata,regiondata,1)
+			print "Inserting mask assessment in database."
 
 		if self.assess != self.assessold and self.assess is not None:
 			#imageaccessor run is always named run1
@@ -262,7 +277,8 @@ class ManualPicker(filterLoop.FilterLoop):
 			maskrundata,maskparamsdata = apMask.getMaskParamsByRunName(maskname,sessiondata)
 			if maskrundata:
 				apDisplay.printWarning("Overwrite commited maskrun is not allowed")
-				wx.Exit()
+                # This causes issues when combining runs usung assess flag
+				#wx.Exit()
 
 	###################################################
 	##### END PRE-DEFINED PARTICLE LOOP FUNCTIONS #####
@@ -277,8 +293,35 @@ class ManualPicker(filterLoop.FilterLoop):
 		sys.stderr.write("Pre-processing images before picking\n")
 		count = 0
 		total = len(self.imgtree)
+		# if we are masking based on a previous mask run, and only want to process images with rejected masks,
+		# remove any images with accepted masks from the imgtree.
+		newImageTree = []
 		for imgdata in self.imgtree:
 			count += 1
+				
+	        # useAccecepted mask is true when the assess flag is used, and an 
+	        # accepted mask is found in the indicated mask run that should be retained
+			self.useAcceptedMask = False 
+			
+			# check to see if this image
+			# 1. Does not have a mask region
+			# 2. Has only mask regions that have been rejected
+			# If both are true, continue, otherwise we do not need to display this image.
+			
+			filename = imgdata['filename']		
+			maskAssessRunName = self.params['assessname']
+			sessiondata = apDatabase.getSessionDataFromSessionName(self.params['sessionname'])
+			
+			maskimg,maskbin = apMask.makeInspectedMask( sessiondata, maskAssessRunName, imgdata )
+			if maskimg is not None and maskimg.size:
+				apDisplay.printMsg("Skipping image with accepted mask region.")
+				maskimg = apMask.reshapeMask( imgdata['image'], maskimg )
+				self.maskimg = maskimg
+				self.image = imgdata['image']
+				self.useAcceptedMask = True
+				self.commitToDatabase(imgdata)
+				continue
+			
 			imgpath = os.path.join(self.params['rundir'], imgdata['filename']+'.dwn.mrc')
 			if self.params['continue'] is True and os.path.isfile(imgpath):
 				sys.stderr.write(".")
@@ -289,8 +332,12 @@ class ManualPicker(filterLoop.FilterLoop):
 				sys.stderr.write("#")
 				apFindEM.processAndSaveImage(imgdata, params=self.params)
 
+			newImageTree.append(imgdata)
+
 			if count % 60 == 0:
 				sys.stderr.write(" %d left\n" % (total-count))
+				
+		self.imgtree = newImageTree
 
 	def runManualPicker(self, imgdata):
 		#reset targets
@@ -300,10 +347,16 @@ class ManualPicker(filterLoop.FilterLoop):
 		self.assessold = apDatabase.checkInspectDB(imgdata)
 		self.assess = self.assessold
 		self.app.setAssessStatus()
+        # useAccecepted mask is true when the assess flag is used, and an 
+        # accepted mask is found in the indicated mask run that should be retained
+        # This is checked in the preLoopFunctions().
+		self.useAcceptedMask = False 
 
 		#open new file
 		imgname = imgdata['filename']+'.dwn.mrc'
 		imgpath = os.path.join(self.params['rundir'],imgname)
+		
+		# Add this image to mask vertices file
 		if not self.params['checkmask']:
 			self.app.panel.openImageFile(imgpath)
 		else:
@@ -319,6 +372,15 @@ class ManualPicker(filterLoop.FilterLoop):
 		#targets are copied to self.targets by app
 		#assessment is copied to self.assess by app
 		self.app.panel.openImageFile(None)
+		
+	def showAssessedMask(self,imgfile,imgdata):
+		self.filename = imgfile
+		image = pyami.mrc.read(imgfile)
+		sessiondata = apDatabase.getSessionDataFromSessionName(self.params['sessionname'])
+		maskassessname = self.params['checkmask']
+		mask,maskbin = apMask.makeInspectedMask(sessiondata,maskassessname,imgdata)
+		overlay = apMask.overlayMask(image,mask)
+		self.app.panel.setImage(overlay.astype(numpy.float32))		
 
 
 if __name__ == '__main__':

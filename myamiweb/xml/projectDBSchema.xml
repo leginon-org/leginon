@@ -40,7 +40,7 @@
     <field 
       name="timestamp" 
       type="timestamp" 
-      default="DEFAULT 'CURRENT_TIMESTAMP'" 
+      default="DEFAULT CURRENT_TIMESTAMP" 
     />
     <field 
       name="label" 
@@ -70,7 +70,7 @@
     <field 
       name="timestamp" 
       type="timestamp" 
-      default="DEFAULT 'CURRENT_TIMESTAMP'" 
+      default="DEFAULT CURRENT_TIMESTAMP" 
     />
     <field 
       name="label" 
@@ -151,7 +151,7 @@
     <field 
       name="timestamp" 
       type="timestamp" 
-      default="DEFAULT 'CURRENT_TIMESTAMP'" 
+      default="DEFAULT CURRENT_TIMESTAMP" 
     />
     <field 
       name="label" 
@@ -337,7 +337,8 @@
     <field 
       name="hidden" 
       type="tinyint(1)" 
-      default="default 0"
+      default="DEFAULT '0'"
+      null="NOT NULL"
     />
     <key>PRIMARY KEY (`DEF_id`)</key>
     <key>KEY (`hidden`)</key>
@@ -376,7 +377,7 @@
     <field 
       name="date" 
       type="timestamp" 
-      default="DEFAULT 'CURRENT_TIMESTAMP'" 
+      default="DEFAULT CURRENT_TIMESTAMP" 
     />
   </sqltable>  
   <sqltable name="projectexperiments" >
@@ -521,6 +522,184 @@
     <key>PRIMARY KEY (`DEF_id`)</key>
     <key>KEY `DEF_timestamp` (`DEF_timestamp`)</key>
 	</sqltable>
-
+  <sqltable name="dataStatusReport" >
+    <field 
+      name="DEF_id" 
+      type="int(11)" 
+      null="NOT NULL" 
+      extra="auto_increment" 
+    />
+    <field 
+      name="DEF_timestamp" 
+      type="timestamp" 
+      default="default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP"
+      null="NOT NULL" 
+    />
+    <field 
+      name="appion_project" 
+      type="int(11)" 
+      null="NOT NULL"
+      default="0" 
+    />
+    <field 
+      name="processed_session" 
+      type="int(11)" 
+      null="NOT NULL"
+      default="0" 
+    />
+    <field 
+      name="processed_run" 
+      type="int(11)" 
+      null="NOT NULL"
+      default="0" 
+    />
+    <field 
+      name="last_exp_runtime" 
+      type="timestamp" 
+      null="NOT NULL"
+      default="DEFAULT '0000-00-00 00:00:00'" 
+    />
+    <field 
+      name="ace_run" 
+      type="int(11)" 
+      null="NOT NULL"
+      default="0" 
+    />
+    <field 
+      name="ace2_run" 
+      type="int(11)" 
+      null="NOT NULL"
+      default="0" 
+    />    
+    <field 
+      name="ctfind_run" 
+      type="int(11)" 
+      null="NOT NULL"
+      default="0" 
+    />    
+    <field 
+      name="ace_processed_image" 
+      type="int(11)" 
+      null="NOT NULL"
+      default="0" 
+    />    
+    <field 
+      name="particle_selection" 
+      type="int(11)" 
+      null="NOT NULL"
+      default="0" 
+    />
+    <field 
+      name="dog_picker" 
+      type="int(11)" 
+      null="NOT NULL"
+      default="0" 
+    />    
+    <field 
+      name="manual_picker" 
+      type="int(11)" 
+      null="NOT NULL"
+      default="0" 
+    />    
+    <field 
+      name="tilt_picker" 
+      type="int(11)" 
+      null="NOT NULL"
+      default="0" 
+    />   
+    <field 
+      name="template_picker" 
+      type="int(11)" 
+      null="NOT NULL"
+      default="0" 
+    />    
+    <field 
+      name="selected_particle" 
+      type="bigint(20)" 
+      null="NOT NULL"
+      default="0" 
+    />
+    <field 
+      name="classification" 
+      type="int(11)" 
+      null="NOT NULL"
+      default="0" 
+    />    
+    <field 
+      name="classes" 
+      type="int(11)" 
+      null="NOT NULL"
+      default="0" 
+    />  
+    <field 
+      name="classified_particles" 
+      type="bigint(20)" 
+      null="NOT NULL"
+      default="0" 
+    />    
+    <field 
+      name="RCT_Models" 
+      type="int(11)" 
+      null="NOT NULL"
+      default="0" 
+    />   
+    <field 
+      name="tomogram" 
+      type="int(11)" 
+      null="NOT NULL"
+      default="0" 
+    />    
+    <field 
+      name="stack" 
+      type="int(11)" 
+      null="NOT NULL"
+      default="0" 
+    />
+    <field 
+      name="stack_particle" 
+      type="bigint(20)" 
+      null="NOT NULL"
+      default="0" 
+    />    
+    <field 
+      name="3D_recon" 
+      type="int(11)" 
+      null="NOT NULL"
+      default="0" 
+    />  
+    <field 
+      name="recon_iteration" 
+      type="int(11)" 
+      null="NOT NULL"
+      default="0" 
+    />   
+    <field 
+      name="classified_particle" 
+      type="bigint(20)" 
+      null="NOT NULL"
+      default="0" 
+    />    
+    <field 
+      name="template" 
+      type="int(11)" 
+      null="NOT NULL"
+      default="0" 
+    />
+    <field 
+      name="initial_model" 
+      type="int(11)" 
+      null="NOT NULL"
+      default="0" 
+    />   
+    <field 
+      name="first_exp_runtime" 
+      type="timestamp" 
+      null="NOT NULL"
+      default="DEFAULT '0000-00-00 00:00:00'" 
+    />
+     
+    <key>PRIMARY KEY (`DEF_id`)</key>
+    <key>KEY `DEF_timestamp` (`DEF_timestamp`)</key>
+	</sqltable>
  </definition>
 </defaulttables>

@@ -8,13 +8,13 @@
  *	Display classification info for an iteration
  */
 
-require "inc/jpgraph.php";
-require "inc/jpgraph_line.php";
-require "inc/jpgraph_scatter.php";
-require "inc/jpgraph_bar.php";
-require "inc/histogram.inc";
-require "inc/particledata.inc";
-require "inc/image.inc";
+require_once "inc/jpgraph.php";
+require_once "inc/jpgraph_line.php";
+require_once "inc/jpgraph_scatter.php";
+require_once "inc/jpgraph_bar.php";
+require_once "inc/histogram.inc";
+require_once "inc/particledata.inc";
+require_once "inc/image.inc";
 require_once "inc/leginon.inc";
 
 $refinement=$_GET['refinement'];

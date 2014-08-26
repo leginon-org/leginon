@@ -5,72 +5,61 @@
  *      The Scripps Research Institute, La Jolla, CA
  *      For terms of the license agreement
  *      see  http://ami.scripps.edu/software/leginon-license
+ *      
+ *      This file has basically become an abstaction layer for ssh calls defined in cluster.inc.
+ *      It also provides a global error message that can be accessed with pconnError() after a failed ssh command.
+ *      At some point in the near future, we should be able to remove this file completely and just use the cluster class directly.
  */
 
-$showDebug = false;
-$showErrors = false;
+require_once "../processing/inc/cluster.inc";
 
-function exec_over_ssh($host, $username, $password, $command, $result=false, $port=22) {
-	global $showDebug;
-	global $showErrors;
+$errorMessage = "No error code has been set by the system.";
 
-	if($showDebug) { echo "'$host', '$username', '$command', '$result', '$port'<br/>\n"; }
-
-	if (!function_exists(ssh2_connect)) {
-		if($showErrors) { echo "ssh2_connect function does not exist"; }
-		return false;
+// Set $blocking to true to wait for the command to execute before returning.
+function exec_over_ssh($host, $username, $password, $command, $result=false, $port=22, $max_time=1) 
+{
+	global $errorMessage;		
+	$sshResult = true;
+	
+	try {
+		$cluster = new Cluster($host);
+		$sshResult = $cluster->executeOnHost($username, $password, $command, $result=$result, $port=$port, $max_time=$max_time);
+	} catch(Exception $e) {
+  		$errorMessage = 'Failed to execute command ('.$command.') on host ('.$host.') for user ('.$username.'). Message: ' .$e->getMessage();
+  		$sshResult = false;
 	}
-
-	$connection = ssh2_connect($host, $port);
-	if (!@ssh2_auth_password($connection, $username, $password)) {
-		if($showErrors) { echo "ssh2_connect: could not connect to host: $host"; }
-		return false;
-	}
-
-	if (!$stream = ssh2_exec($connection, $command)) {
-		if($showErrors) { echo "ssh2_connect: could not run command"; }
-		return false;
-	}
-
-	if (!$result)
-		return true;
-	sleep(1.1);
-
-	stream_set_blocking($stream, true);
-	if (function_exists("stream_get_contents")) {
-		if($showDebug) { echo "ssh2_connect: stream_get_contents"; }
-		$result = stream_get_contents($stream);
-	} else {
-		if($showDebug) { echo "ssh2_connect: fread"; }
-		$result = fread($stream,4096);
-		fclose($stream);
-	}
-	if($showDebug) { echo "<br/><pre>\n"; print_r($result); echo "</pre><br/>\n"; }
-	return $result;
+	
+	return $sshResult;
 }
 
-function scp($host, $username, $password, $localfile, $remotefile, $mode=0644, $port=22) {
-	$connection = ssh2_connect($host, $port);
-	if (!@ssh2_auth_password($connection, $username, $password)) {
-		die("Authentication Failed\n");
+function scp($host, $username, $password, $localfile, $remotefile, $mode=0644, $port=22) 
+{
+	global $errorMessage;
+	
+	$sshResult = true;
+	
+	try {
+		$cluster = new Cluster($host);
+		$sshResult = $cluster->copyToHost($username, $password, $localfile, $remotefile, $mode, $port);
+	} catch(Exception $e) {
+  		$errorMessage = 'Error copying file over ssh on host: '.$host.' local file: '.$localfile.' remote file: '.$remotefile.' username: '.$username.' Error Message: ' .$e->getMessage();
+  		$sshResult = false;
 	}
-
-	foreach (array($localfile, $remotefile) as $file) {
-		if (!@is_file($file)) {
-			die("$file: No such file\n");
-		}
-	}
-
-	if (ssh2_scp_send($connection, $localfile, $remotefile, $mode))
-		return true;
-
-	return false;
+	
+	return $sshResult;
 }
 
 function check_ssh($host, $username, $password, $port=22) {
 	$connection = ssh2_connect($host, $port);
 	$is_connected=(!@ssh2_auth_password($connection, $username, $password)) ? false : true;
 	return $is_connected;
+}
+
+function pconnError($errorno='NOTPASSED') 
+{
+	global $errorMessage;
+
+	return $errorMessage;
 }
 
 ?>

@@ -10,6 +10,7 @@
 #include "Node.h"
 
 #include <iostream>
+#include <omp.h>
 
 using namespace std;
 
@@ -97,11 +98,13 @@ float Node::checkDist( float *location )
 {
 	float cumError = 0;
 	float temp = 0;
-
+	float temp2 = 0;
+	#pragma omp parallel for private(temp, temp2) schedule(static) reduction(+:cumError) 
 	for(int i = 0; i < dim; i++)
 	{
 		temp = location[i] - myLocation[i];  //find distance in dimension i
-		cumError += (temp * temp);  //add squared dist from dimension i
+		temp2 = (temp * temp);
+		cumError = cumError + temp2;  //add squared dist from dimension i
 	}
 	
 	return cumError;
@@ -110,6 +113,7 @@ float Node::checkDist( float *location )
 
 void Node::moveToward( float *loc )
 {
+	#pragma omp parallel for schedule(static) 
 	for(int i = 0; i < dim; i ++)
 	{
 		myLocation[i] = myLocation[i] + primLearn*(loc[i] - myLocation[i]);
@@ -134,6 +138,7 @@ void Node::moveToward( float *loc )
 
 void Node::addImage( float *loc )
 {
+    #pragma omp parallel for schedule(static) 
     for(int i = 0; i < dim; i ++)
     {
 	    myLocation[i] = myLocation[i] + secLearn*(loc[i] - myLocation[i]);

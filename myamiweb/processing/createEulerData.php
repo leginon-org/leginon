@@ -1,6 +1,6 @@
 <?php
-require "inc/particledata.inc";
-require "inc/euler.inc";
+require_once "inc/particledata.inc";
+require_once "inc/euler.inc";
 
 	if (!$reconId=$_REQUEST['reconId']) {
 		if ($reconId || !$reconId=$argv[1])	{

@@ -99,13 +99,25 @@ u32 parseACE2CTFFile( char path[], CTFParams c ) {
 		
 		count += sscanf(line," Final Params for image: %s",c->img_path);
 		count += sscanf(line," Final Defocus: %le %le %le",&(c->defocus_x),&(c->defocus_y),&(c->astig_angle));
+		count += sscanf(line," Final Defocus (m,m,deg): %le %le %le",&(c->defocus_x),&(c->defocus_y),&(c->astig_angle));
 		count += sscanf(line," Amplitude Contrast: %le",&(c->amp_c));
 		count += sscanf(line," Voltage: %le",&(c->kv));
+		count += sscanf(line," Voltage (kV): %le",&(c->kv));
 	 	count += sscanf(line," Spherical Aberration: %le",&(c->cs));
+	 	count += sscanf(line," Spherical Aberration (mm): %le",&(c->cs));
 		count += sscanf(line," Angstroms per pixel: %le",&(c->apix));
 		
 	}
 	
+	if (fabs(c->defocus_x) > fabs(c->defocus_y) ) {
+		fprintf(stderr, "Using old values of ace2\nWARNING astig angle could be off by 90 degreees\n\n");
+		c->defocus_x = -1.0 * c->defocus_x;
+		c->defocus_y = -1.0 * c->defocus_y;
+		c->cs = c->cs * 1e3;
+		c->astig_angle = c->astig_angle*DEG;
+	}
+
+
 	fclose(fp);
 	
 	sprintf(c->out_path,"%s.corrected.mrc",c->img_path);
@@ -124,17 +136,18 @@ CTFParams parseACE2CorrectOptions( int argc, char **argv ) {
 	}
 	
 	struct options opts[] = {
-		{ 1,	NULL,	"Path to CTF estimate file",	 			   "ctf",		1 },
-		{ 2,	NULL,	"Path to image file",	 					   "img",		1 },
+		{ 1,	NULL,	"Path to CTF estimate file",	 			"ctf",			1 },
+		{ 2,	NULL,	"Path to image file",	 					"img",			1 },
 		{ 3,	NULL,	"Microscope voltage in kilovolts",			"kv",			1 },
 		{ 4,	NULL,	"Microscope Spherical Aberration in mm",	"cs",			1 },
-		{ 5,	NULL,	"Angstroms per pixel",						  	"apix",		1 },
-		{ 6,	NULL,	"Defocus: x,y,angle in m,m,radians",		"df",			1 },
-		{ 7,	NULL,	"Correct only phase signs",	  		  		"phase",		0 },
-		{ 8,	NULL,	"Correct using wiener filter",		 	   "wiener",	1 },		
-		{ 9,	NULL,	"Apply the given CTF",							"apply", 	0 },
-		{ 10,	NULL, "Set output path",								"out",		1 },
-		{ 0,	NULL,	NULL,													NULL,			0 }
+		{ 5,	NULL,	"Angstroms per pixel",						"apix",			1 },
+		{ 6,	NULL,	"Defocus: x,y,angle in m,m,degrees (underfocus is +)",		"df",			1 },
+		{ 7,	NULL,	"Correct only phase signs",	  				"phase",		0 },
+		{ 8,	NULL,	"Correct using wiener filter",				"wiener",		1 },
+		{ 9,	NULL,	"Apply the given CTF",						"apply", 		0 },
+		{ 10,	NULL,	"Set output path",							"out",			1 },
+		{ 11,   NULL,	"Override amplitude contrast",				"ampc",			1 },
+		{ 0,	NULL,	NULL,										NULL,			0 }
 	};
 	
 	int option = 0;
@@ -164,6 +177,7 @@ CTFParams parseACE2CorrectOptions( int argc, char **argv ) {
 				break;
 			case 6:
 				sscanf(arg,"%le,%le,%le",&(ctfp->defocus_x),&(ctfp->defocus_y),&(ctfp->astig_angle));
+				ctfp->astig_angle = ctfp->astig_angle;
 				break;
 			case 7:
 				ctfp->correction_type &= !CORRECT_WIENER;
@@ -183,6 +197,9 @@ CTFParams parseACE2CorrectOptions( int argc, char **argv ) {
 				break;
 			case 10:
 				strcpy(ctfp->out_path,arg);
+				break;
+			case 11:
+				sscanf(arg,"%le",&(ctfp->amp_c));
 				break;
 			default:
 				break;
@@ -207,9 +224,14 @@ void printFinalCTFParams( CTFParams p, char path[] ) {
 	if ( fp == NULL ) return;
 	
 	fprintf(fp,"Image Path: %s\n",p->img_path);
-	fprintf(fp,"APIX: %le KV: %le CS(mm): %le\n",p->apix,p->kv,p->cs);
-	fprintf(fp,"Defocus(X): %le Defocus(Y): %le Astigmatism Angle: %le\n",p->defocus_x,p->defocus_y,p->astig_angle);
-	fprintf(fp,"Amplitude Contrast: %le\n",p->amp_c);
+	fprintf(fp,"Angstoms per Pixel: %le\n",p->apix);
+	fprintf(fp,"High Tension (kV): %f\n",p->kv);
+	fprintf(fp,"Spherical Abberation, CS (mm): %f\n",p->cs);
+	fprintf(fp,"Defocus(1): %le, Defocus(2): %le\n",p->defocus_x,p->defocus_y);
+	fprintf(fp,"  in meters with underfocus positive |Def1| < |Def2|\n");
+	fprintf(fp,"Astigmatism Angle (Degrees): %f\n",p->astig_angle);
+	fprintf(fp,"  major axis along x-axis is zero, counter-clockwise is +\n");
+	fprintf(fp,"Amplitude Contrast: %f\n",p->amp_c);
 	
 	fclose(fp);
 	
@@ -235,12 +257,12 @@ int main (int argc, char **argv) {
 	
 	u32 cty = ctfp->correction_type;
 	f64 snr = ctfp->wiener;
-	f64 df1 = ctfp->defocus_x;
-	f64 df2 = ctfp->defocus_y;
-	f64 dfr = ctfp->astig_angle;
+	f64 df2 = ctfp->defocus_x;
+	f64 df1 = ctfp->defocus_y;
+	f64 dfr = ctfp->astig_angle/DEG - 1.570796327;
 	f64 ac 	= ctfp->amp_c;
 	f64 apix = ctfp->apix;
-	f64 cs = ctfp->cs;
+	f64 cs = ctfp->cs*1e-3;
 	f64 kv = ctfp->kv;
 	
 	f32 t0 = CPUTIME;	
@@ -278,7 +300,10 @@ int main (int argc, char **argv) {
 	u32 rows = [image sizeOfDimension:1];
 	u32 cols = [image sizeOfDimension:0];
 
-	ArrayP ctf = g2DCTF(df2,df1,-dfr,rows,cols,apix,cs,kv,ac);
+	fprintf(stderr,"g2DCTF(%.1e,%.1e,%.1e,%d,%d,%.1e,%.1e,%.1e,%.1f)\n",
+		df2,df1,dfr,rows,cols,apix,cs,kv,ac);
+
+	ArrayP ctf = g2DCTF(df1,df2,dfr,rows,cols,apix,cs,kv,ac);
 	
 	fprintf(stderr,"\t\t\tDONE in %2.2f secs\n",CPUTIME-t1);
 	
@@ -292,15 +317,26 @@ int main (int argc, char **argv) {
 	
 	if ( cty & CORRECT_PHASE ) {
 		fprintf(stderr,"Correcting image using phase flips...  ");
-		for(i=0;i<size;i++) if ( -cp[i] < 0.0 ) ip[i] = -ip[i];
+		#pragma omp for
+		for(i=0;i<size;i++) {
+			if ( cp[i] < 0.0 ) {
+				ip[i] = -ip[i];
+			}
+		}
 	}
 	if ( cty & CORRECT_WIENER ) {
 		fprintf(stderr,"Correcting image using wiener filter...");
-		for(i=0;i<size;i++) ip[i] = (-ip[i]*cp[i])/(cp[i]*cp[i]+snr);
+		#pragma omp for
+		for(i=0;i<size;i++) {
+			ip[i] = (ip[i]*cp[i])/(cp[i]*cp[i]+snr);
+		}
 	}
 	if ( cty & CORRECT_APPLY ) {
 		fprintf(stderr,"Applying the CTF for Dmitry...         ");
-		for(i=0;i<size;i++) ip[i] = -ip[i]*cp[i];
+		#pragma omp for
+		for(i=0;i<size;i++) {
+			ip[i] = ip[i]*cp[i];
+		}
 	}
 	
 	fprintf(stderr,"\tDONE in %2.2f secs\n",CPUTIME-t1);

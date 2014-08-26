@@ -2,22 +2,24 @@
 
 #pythonlib
 import os
-import sys
 import re
+import sys
 import math
-import cPickle
 import time
-import subprocess
 import shutil
+import cPickle
+import subprocess
 #appion
-from appionlib import appionLoop2
-from appionlib import appiondata
+from appionlib import apFile
 from appionlib import apImage
+from appionlib import apParam
 from appionlib import apDisplay
 from appionlib import apDatabase
-from appionlib import apCtf
-from appionlib import apParam
-from appionlib import apFile
+from appionlib import appiondata
+from appionlib import appionLoop2
+from appionlib import apInstrument
+from appionlib.apCtf import ctfdb
+from appionlib.apCtf import ctfinsert
 
 class ctfEstimateLoop(appionLoop2.AppionLoop):
 	"""
@@ -34,6 +36,7 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 
 	#======================
 	def preLoopFunctions(self):
+		self.ctfrun = None
 		self.powerspecdir = os.path.join(self.params['rundir'], "opimages")
 		apParam.createDirectory(self.powerspecdir, warning=False)
 		self.logdir = os.path.join(self.params['rundir'], "logfiles")
@@ -50,18 +53,18 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 		if unames[-1].find('64') >= 0:
 			exename += '64.exe'
 		else:
-			exename += '32.exe'
+			exename += "3.exe"
 		ctfprgmexe = subprocess.Popen("which "+exename, shell=True, stdout=subprocess.PIPE).stdout.read().strip()
 		if not os.path.isfile(ctfprgmexe):
 			ctfprgmexe = os.path.join(apParam.getAppionDirectory(), 'bin', exename)
 		if not os.path.isfile(ctfprgmexe):
 			apDisplay.printError(exename+" was not found at: "+apParam.getAppionDirectory())
-		apDisplay.printColor("Running program %s"%(exename), "magenta")
+		apDisplay.printMsg("Running program %s"%(exename))
 		return ctfprgmexe
 
 	#======================
 	def postLoopFunctions(self):
-		apCtf.printCtfSummary(self.params)
+		ctfdb.printCtfSummary(self.params, self.imgtree)
 
 	#======================
 	def reprocessImage(self, imgdata):
@@ -74,7 +77,7 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 		"""
 		if self.params['reprocess'] is None:
 			return None
-		ctfvalue, conf = apCtf.getBestCtfValueForImage(imgdata)
+		ctfvalue, conf = ctfdb.getBestCtfValueForImage(imgdata)
 		if ctfvalue is None:
 			return None
 		if conf > self.params['reprocess']:
@@ -95,7 +98,7 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 		CARD 1: Input file name for image
 		CARD 2: Output file name to check result
 		CARD 3: CS[mm], HT[kV], AmpCnst, XMAG, DStep[um],PAve
-		CARD 4: Box, ResMin[A], ResMax[A], dFMin[A], dFMax[A], FStep
+		CARD 4: Box, ResMin[A], ResMax[A], dFMin[A], dFMax[A], FStep,  dAst[A]
 		CTFTILT also asks for TiltA[deg], TiltR[deg] at CARD4
 
 		The output image file to check the result of the fitting
@@ -127,14 +130,39 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 			precision.
 		dFMax: End defocus value for grid search in Angstrom.
 		FStep: Step width for grid search in Angstrom.
+		dAst: An additional parameter, dAst, was added to CARD 4 to restrain 
+			the amount of astigmatism in the CTF fit. This makes the 
+			fitting procedure more robust, especially in cases where 
+			the Thon rings are not easily visible.
 		TiltA: guessed tilt angle
 		TiltR: angular range for initial coarse search 
 		"""
 
 		#get Defocus in Angstroms
-		self.ctfrun = None
-		defocus = imgdata['scope']['defocus']*-1.0e10
-		bestdef = apCtf.getBestDefocusForImage(imgdata, msg=True)*-1.0e10
+		self.ctfvalues = {}
+		nominal = abs(imgdata['scope']['defocus']*-1.0e10)
+		ctfvalue = ctfdb.getBestCtfByResolution(imgdata)
+		if ctfvalue is not None:
+			bestdef = abs(ctfvalue['defocus1']+ctfvalue['defocus2'])/2.0*1.0e10
+		else:
+			bestdef = nominal
+		if ctfvalue is not None and self.params['bestdb'] is True:
+			bestampcontrast = ctfvalue['amplitude_contrast']
+			beststigdiff = abs(ctfvalue['defocus1'] - ctfvalue['defocus2'])*1e10
+		else:
+			bestampcontrast = self.params['amp'+self.params['medium']]
+			beststigdiff = self.params['dast']
+		# dstep is the physical detector pixel size
+		dstep = None
+		if 'camera' in imgdata and imgdata['camera'] and imgdata['camera']['pixel size']:
+			dstep = imgdata['camera']['pixel size']['x']
+		if dstep is None:
+			dstep = apDatabase.getPixelSize(imgdata)*imgdata['scope']['magnification']/10000.0
+			dstep /=1e6
+		dstep = float(dstep)
+		mpixelsize = apDatabase.getPixelSize(imgdata)*1e-10
+		xmag = dstep / mpixelsize
+		apDisplay.printMsg("Xmag=%d, dstep=%.2e, mpix=%.2e"%(xmag, dstep, mpixelsize))
 		inputparams = {
 			'orig': os.path.join(imgdata['session']['image path'], imgdata['filename']+".mrc"),
 			'input': apDisplay.short(imgdata['filename'])+".mrc",
@@ -142,22 +170,33 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 
 			'cs': self.params['cs'],
 			'kv': imgdata['scope']['high tension']/1000.0,
-			'ampcnst': self.params['amp'+self.params['medium']],
-			'mag': float(imgdata['scope']['magnification']),
-			'dstep': apDatabase.getPixelSize(imgdata)*imgdata['scope']['magnification']/10000.0,
+			'ampcnst': bestampcontrast,
+			'xmag': xmag,
+			'dstep': dstep*1e6,
 			'pixavg': self.params['bin'],
 
 			'box': self.params['fieldsize'],
 			'resmin': self.params['resmin'],
 			'resmax': self.params['resmax'],
 			'defstep': self.params['defstep'], #round(defocus/32.0, 1),
+			'dast': beststigdiff,
 		}
-		if bestdef<10000:
-			inputparams['defmin']=2000.0
-			inputparams['defmax']=20000.0
-		else:
-			inputparams['defmin']= round(bestdef*0.5, 1)
-			inputparams['defmax']= round(bestdef*1.5, 1)
+		defrange = self.params['defstep'] * self.params['numstep'] ## do 25 steps in either direction
+		inputparams['defmin']= round(bestdef-defrange, 1) #in meters
+		if inputparams['defmin'] < 0:
+			apDisplay.printWarning("Defocus minimum is less than zero")
+			inputparams['defmin'] = inputparams['defstep']
+		inputparams['defmax']= round(bestdef+defrange, 1) #in meters
+		apDisplay.printColor("Defocus search range: %d A to %d A (%.2f to %.2f um)"
+			%(inputparams['defmin'], inputparams['defmax'], 
+			inputparams['defmin']*1e-4, inputparams['defmax']*1e-4), "cyan")
+
+		### secondary lock check right before it starts on the real part
+		if self.params['parallel'] and os.path.isfile(apDisplay.short(imgdata['filename'])+".mrc"):
+			# This is a secondary image lock check, checking the first output of the process.
+			# It alone is not good enough
+			apDisplay.printWarning('Some other parallel process is working on the same image. Skipping')
+			return
 		### create local link to image
 		if not os.path.exists(inputparams['input']):
 			cmd = "ln -s "+inputparams['orig']+" "+inputparams['input']+"\n"
@@ -171,7 +210,7 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 			str(inputparams['cs'])+","
 			+ str(inputparams['kv'])+","
 			+ str(inputparams['ampcnst'])+","
-			+ str(inputparams['mag'])+","
+			+ str(inputparams['xmag'])+","
 			+ str(inputparams['dstep'])+","
 			+ str(inputparams['pixavg'])+"\n")
 		line4cmd = (
@@ -180,12 +219,13 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 			+ str(inputparams['resmax'])+","
 			+ str(inputparams['defmin'])+","
 			+ str(inputparams['defmax'])+","
-			+ str(inputparams['defstep']))
+			+ str(inputparams['defstep'])+","
+			+ str(inputparams['dast']))
 
 		### additional ctftilt parameters
 		if self.params['ctftilt'] is True:
 			tiltang = apDatabase.getTiltAngleDeg(imgdata)
-			line4cmd += (","+str(tiltang)+",2.5")
+			line4cmd += (","+str(tiltang)+",10")
 		line4cmd += "\n"
 
 		if os.path.isfile(inputparams['output']):
@@ -197,11 +237,16 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 		ctfproglog = os.path.join(self.logdir, os.path.splitext(imgdata['filename'])[0]+"-ctfprog.log")
 		logf = open(ctfproglog, "w")
 		ctfprogproc = subprocess.Popen(self.ctfprgmexe, shell=True, stdin=subprocess.PIPE, stdout=logf)
+		apDisplay.printColor(self.ctfprgmexe, "magenta")
+		apDisplay.printColor(line1cmd.strip(),"magenta")
+		apDisplay.printColor(line2cmd.strip(),"magenta")
+		apDisplay.printColor(line3cmd.strip(),"magenta")
+		apDisplay.printColor(line4cmd.strip(),"magenta")
 		ctfprogproc.stdin.write(line1cmd)
 		ctfprogproc.stdin.write(line2cmd)
 		ctfprogproc.stdin.write(line3cmd)
 		ctfprogproc.stdin.write(line4cmd)
-		ctfprogproc.wait()
+		ctfprogproc.communicate()
 		logf.close()
 
 		apDisplay.printMsg("ctf estimation completed in "+apDisplay.timeString(time.time()-t0))
@@ -228,14 +273,18 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 				for i,bit in enumerate(bits[0:(numvals-2)]):
 					bits[i] = float(bit)
 				self.ctfvalues = {
-					'defocus1':	-float(bits[0])*1e-10,
-					'defocus2':	-float(bits[1])*1e-10,
-					'angle_astigmatism':	-float(bits[2]),
-					'amplitude_contrast':	inputparams['ampcnst'],
+					'defocus1':	float(bits[0])*1e-10,
+					'defocus2':	float(bits[1])*1e-10,
+					# WARNING: this is the negative of the direct result
+					'angle_astigmatism':	float(bits[2]),
+					'amplitude_contrast': inputparams['ampcnst'],
 					'cross_correlation':	float(bits[numvals-3]),
-					'nominal':	defocus*1e-10,
-					'defocusinit':	-bestdef*1e-10,
-					'confidence_d':	round(math.sqrt(abs(float(bits[numvals-3]))), 5)
+					'nominal':	nominal*1e-10,
+					'defocusinit':	bestdef*1e-10,
+					'cs': self.params['cs'],
+					'volts': imgdata['scope']['high tension'],
+					'confidence': float(bits[numvals-3]),
+					'confidence_d': round(math.sqrt(abs(float(bits[numvals-3]))), 5)
 				}
 				if self.params['ctftilt'] is True:
 					self.ctfvalues['tilt_axis_angle']=float(bits[3])
@@ -249,7 +298,7 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 		if self.params['ctftilt'] is True:
 			self.ctfvalues['origtiltang'] = tiltang
 			line1+=" tilt=%.1f,"%tiltang
-		print line1+"\n"
+		apDisplay.printMsg(line1)
 		f.write(line1)
 		line2 = ("def_1=%.1e, def_2=%.1e, astig_angle=%.1f, cross_corr=%.3f,\n" %
 			( self.ctfvalues['defocus1'], self.ctfvalues['defocus2'], self.ctfvalues['angle_astigmatism'],
@@ -257,30 +306,27 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 		if self.params['ctftilt'] is True:
 			line2+= ("tilt_angle=%.1f, tilt_axis_angle=%.1f,\n" %
 				(self.ctfvalues['tilt_angle'], self.ctfvalues['tilt_axis_angle']))
-		print line2
+		apDisplay.printMsg(line2)
 		f.write(line2)
 		f.close()
 
 		#convert powerspectra to JPEG
 		outputjpgbase = os.path.basename(os.path.splitext(inputparams['output'])[0]+".jpg")
 		self.lastjpg = outputjpgbase
-		outputjpg = os.path.join(self.params['rundir'], self.lastjpg)
+		outputjpg = os.path.join(self.powerspecdir, self.lastjpg)
 		powspec = apImage.mrcToArray(inputparams['output'])
 		apImage.arrayToJpeg(powspec, outputjpg)
-		shutil.move(inputparams['output'], os.path.join(self.powerspecdir,inputparams['output']))
-		#apFile.removeFile(inputparams['input'])
+		shutil.move(inputparams['output'], os.path.join(self.powerspecdir, inputparams['output']))
+		self.ctfvalues['graph1'] = outputjpg
 
-		#sys.exit(1)
+		#apFile.removeFile(inputparams['input'])
 
 		return
 
 	#======================
 	def commitToDatabase(self, imgdata):
-		print ""
-		#apCtf.insertAceParams(imgdata, self.params)
 		self.insertCtfTiltRun(imgdata)
-		#apCtf.commitCtfValueToDatabase(imgdata, self.matlab, self.ctfvalue, self.params)
-		self.insertCtfValues(imgdata)
+		ctfinsert.validateAndInsertCTFData(imgdata, self.ctfvalues, self.ctfrun, self.params['rundir'])
 
 	#======================
 	def insertCtfTiltRun(self, imgdata):
@@ -289,7 +335,7 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 
 		# first create an aceparam object
 		paramq = appiondata.ApCtfTiltParamsData()
-		copyparamlist = ('medium','ampcarbon','ampice','fieldsize','cs','bin','resmin','resmax','defstep')
+		copyparamlist = ('medium','ampcarbon','ampice','fieldsize','cs','bin','resmin','resmax','defstep','dast')
 		for p in copyparamlist:
 			if p in self.params:
 				paramq[p] = self.params[p]
@@ -322,29 +368,6 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 		return True
 
 	#======================
-	def insertCtfValues(self, imgdata):
-		if self.ctfvalues is None:
-			apDisplay.printWarning("ctf estimation failed to find any values")
-			return False
-
-		print "Committing ctf parameters for",apDisplay.short(imgdata['filename']), "to database."
-		ctfq = appiondata.ApCtfData()
-		ctfq['acerun'] = self.ctfrun
-		ctfq['image']      = imgdata
-		ctfq['graph1']     = self.lastjpg
-		ctfq['cs']     = self.params['cs']
-
-		ctfvaluelist = ('defocus1','defocus2','defocusinit','angle_astigmatism',\
-			'amplitude_contrast','cross_correlation','confidence_d')
-		if self.params['ctftilt'] is True:
-			ctfvaluelist+= ('tilt_angle','tilt_axis_angle')
-		for i in range(len(ctfvaluelist)):
-			key = ctfvaluelist[i]
-			ctfq[ key ] = self.ctfvalues[key]
-		ctfq.insert()
-		return True
-
-	#======================
 	def setupParserOptions(self):
 		self.parser.add_option("--ampcarbon", dest="ampcarbon", type="float", default=0.07,
 			help="ampcarbon, default=0.07", metavar="#")
@@ -356,31 +379,41 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 			help="fieldsize, default=256", metavar="#")
 		self.parser.add_option("--medium", dest="medium", default="carbon",
 			help="sample medium, default=carbon", metavar="MEDIUM")
-		self.parser.add_option("--cs", dest="cs", type="float", default=2.0,
-			help="cs, default=2.0", metavar="#")
 		self.parser.add_option("--nominal", dest="nominal",
 			help="nominal")
 		self.parser.add_option("--newnominal", dest="newnominal", default=False,
 			action="store_true", help="newnominal")
-		self.parser.add_option("--resmin", dest="resmin", type="float", default=400.0,
+		self.parser.add_option("--resmin", dest="resmin", type="float", default=100.0,
 			help="Low resolution end of data to be fitted", metavar="#")
-		self.parser.add_option("--resmax", dest="resmax", type="float", default=8.0,
+		self.parser.add_option("--resmax", dest="resmax", type="float", default=15.0,
 			help="High resolution end of data to be fitted", metavar="#")
-		self.parser.add_option("--defstep", dest="defstep", type="float", default=5000.0,
+		self.parser.add_option("--defstep", dest="defstep", type="float", default=1000.0,
 			help="Step width for grid search in Angstroms", metavar="#")
+		self.parser.add_option("--numstep", dest="numstep", type="int", default=25,
+			help="Number of steps to search in grid", metavar="#")
+		self.parser.add_option("--dast", dest="dast", type="float", default=100.0,
+			help="dAst was added to CARD 4 to restrain the amount of astigmatism in \
+				the CTF fit. This makes the fitting procedure more robust, especially \
+				in cases where the Thon rings are not easily visible", metavar="#")
+
+		## true/false
 		self.parser.add_option("--ctftilt", dest="ctftilt", default=False,
 			action="store_true", help="Run ctftilt instead of ctffind")
+		self.parser.add_option("--bestdb", "--best-database", dest="bestdb", default=False,
+			action="store_true", help="Use best amplitude contrast and astig difference from database")
 
 	#======================
 	def checkConflicts(self):
 		if not (self.params['medium'] == 'carbon' or self.params['medium'] == 'ice'):
 			apDisplay.printError("medium can only be 'carbon' or 'ice'")
-		if self.params['resmin'] < 50.0:
+		if self.params['resmin'] < 20.0:
 			apDisplay.printError("Please choose a lower resolution for resmin")
-		if self.params['resmax'] > 50.0:
+		if self.params['resmax'] > 15.0 or self.params['resmax'] > self.params['resmin']:
 			apDisplay.printError("Please choose a higher resolution for resmax")
-		if self.params['defstep'] < 300.0 or self.params['defstep'] > 10000.0:
-			apDisplay.printError("Please keep the defstep between 300 & 10000 Angstroms")
+		if self.params['defstep'] < 1.0 or self.params['defstep'] > 10000.0:
+			apDisplay.printError("Please keep the defstep between 1 & 10000 Angstroms")
+		### set cs value
+		self.params['cs'] = apInstrument.getCsValueFromSession(self.getSessionData())
 		return
 
 if __name__ == '__main__':

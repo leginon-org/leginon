@@ -17,6 +17,8 @@ if( !file_exists(dirname(__FILE__).'/../../config.php') ){
 
 
 require_once dirname(__FILE__).'/../../config.php';
+require_once "inc/mysql.inc";
+require_once "inc/path.inc";
 
 class particledata {
 
@@ -91,11 +93,13 @@ class particledata {
 	//------ -------------------- ---------//
 
 	function getTotalAceStats(){
+		// Note: this is only used in procsummary.php and needs to be updated
 		$q = "SELECT count(DISTINCT `REF|ApAceRunData|acerun`) AS runs, "
 			."COUNT(DISTINCT `REF|leginondata|AcquisitionImageData|image`) AS img "
 			."FROM `ApCtfData` ";
 		$r = $this->mysql->getSQLResult($q);
 		$results = $r[0];
+		// seems weird to have hard coded confidence check
 		$q = "SELECT COUNT(DISTINCT `REF|leginondata|AcquisitionImageData|image`) as i "
 			."FROM `ApCtfData` "
 			."WHERE (`confidence`>=0.8 OR `confidence_d`>=0.8)";
@@ -200,7 +204,7 @@ class particledata {
 		$r = $this->mysql->getSQLResult($q);
 		return $r[0];
 	}
-
+	
 	//------ -------------------- ---------//
 	//------ Tomo functions ---------//
 	//------ -------------------- ---------//
@@ -249,6 +253,7 @@ class particledata {
 		$q =  "SELECT a.`DEF_id` as `alignrun id`, "
 			."a.name as `alignrun name`, "
 			."a.bin as bin, "
+			."a.badAlign as badAlign, "
 			."path.`path`, "
 			."tilt.`number` as `tilt number`, "
 			."tia.`REF|leginondata|TiltSeriesData|tiltseries` as tiltseries, ";
@@ -258,9 +263,16 @@ class particledata {
 				."imod.`FilterSigma2` as sigma2, "
 				."imod.`FilterRadius2` as radius2, ";
 		}
+		if ($this->mysql->SQLTableExists('ApRaptorParamsData')) {
+			$q .= "a.`REF|ApRaptorParamsData|raptorParams` as raptorid, "
+				 ."";
+		}
+		if ($this->mysql->SQLTableExists('ApProtomoParamsData')) {
+			$q .= "a.`REF|ApProtomoParamsData|fineProtomoParams` as protomoid, "
+				 ."";
+		}
 		$q .= ""
 			."a.`REF|leginondata|TomographySettingsData|coarseLeginonParams` as xleginonid, "
-			."a.`REF|ApProtomoParamsData|fineProtomoParams` as protomoid, "
 			."a.`description`, "
 			."a.`hidden` "
 			."FROM `ApTomoAlignmentRunData` a "
@@ -271,6 +283,11 @@ class particledata {
 				."LEFT JOIN `ApImodXcorrParamsData` imod "
 				."ON a.`REF|ApImodXcorrParamsData|coarseImodParams` = imod.`DEF_id` ";
 		}
+		if ($this->mysql->SQLTableExists('ApRaptorParamsData')) {
+			$q .= ""
+				."LEFT JOIN `ApRaptorParamsData` raptor "
+				."ON a.`REF|ApRaptorParamsData|raptorParams` = raptor.`DEF_id` ";
+		}
 		$q .= ""
 			."LEFT JOIN `ApTiltsInAlignRunData` tia "
 			."ON tia.`REF|ApTomoAlignmentRunData|alignrun` = a.`DEF_id` "
@@ -279,6 +296,8 @@ class particledata {
 		list($r) = $this->mysql->getSQLResult($q);
 		if ($r['protomoid']) {
 			$r['method'] = 'protomo';
+		} elseif ($r['raptorid']) {
+			$r['method'] = 'raptor';
 		} else {
 			if ($r['imodid']) {
 				$r['method'] = 'imod';
@@ -297,6 +316,14 @@ class particledata {
 	}
 
 	function getTomoAlignerInfoFromAlignmentRun($alignid,$showiHidden=false) {
+		// Workaround the possibility of missing these fields in appion_extra.xml
+		// refs #1223
+		$refinefields = $this->mysql->getFields('ApProtomoRefinementParamsData');
+		$fselect =  (in_array('SUBD|alibox|x',$refinefields)) ? 
+			" f.`SUBD|alibox|x` as `align box x`, "
+			." f.`SUBD|alibox|y` as `align box y`, "
+			:'';
+			
 		// Protomo has more than one iteration(cycle)
 		$q = " SELECT a.`DEF_id` as alignerid, "
 			." a.`REF|ApTomoAlignmentRunData|alignrun` as `alignrunid`, "
@@ -306,8 +333,7 @@ class particledata {
 			." f.`cycle` as `refine cycle`, "
 			." g.`cycle` as `good cycle`, "
 			." f.`alismp` as `align sampling`, "
-			." f.`SUBD|alibox|x` as `align box x`, "
-			." f.`SUBD|alibox|y` as `align box y`, "
+			.$fselect
 			." f.`cormod`, "
 			." f.`imgref`as `refnum`, "
 			." f.`REF|leginondata|AcquisitionImageData|reference` as `refimg`, "
@@ -345,7 +371,32 @@ class particledata {
 	}
 
 	function getAlignerInfo($alignerid) {
-		return $this->getProtomoAlignmentInfo($alignerid);
+		$q = " SELECT ar.`DEF_id` as alignerid, "
+			." FROM `ApTomoAlignerParamsData` ar "
+			."WHERE ar.`DEF_id`=".$alignerid." ";
+		$r = $this->mysql->getSQLResult($q);
+
+		if (!$r[0]['REF|ApProtomoParamsData|protomo']) {
+			$q = " SELECT ar.`DEF_id` as alignerid, "
+			." arun.`DEF_id` as alignrunid, "
+			." arun.`name` as runname, "
+			." arun.`bin` as bin, "
+			." path.`path`, "
+			." tilts.`REF|leginondata|TiltSeriesData|tiltseries` as `tiltseries` "
+			." FROM `ApTomoAlignerParamsData` ar "
+			."LEFT JOIN `ApTomoAlignmentRunData` arun "
+			."ON ar.`REF|ApTomoAlignmentRunData|alignrun` = arun.`DEF_id` "
+			."LEFT JOIN `ApTiltsInAlignRunData` tilts "
+			."ON tilts.`REF|ApTomoAlignmentRunData|alignrun` = arun.`DEF_id` "
+			."LEFT JOIN `ApPathData` path "
+			."ON arun.`REF|ApPathData|path` = path.`DEF_id` "
+			."WHERE ar.`DEF_id`=".$alignerid." "
+			."AND tilts.`primary_tiltseries` = 1 ";
+			$r = $this->mysql->getSQLResult($q);
+			return $r;
+		} else {
+			return $this->getProtomoAlignmentInfo($alignerid);
+		}
 	}
 
 	function getProtomoAlignmentInfo($alignerid) {
@@ -391,11 +442,18 @@ class particledata {
 			."WHERE t.`DEF_id` = " .$tomogramId;
 		list($r) = $this->mysql->getSQLResult($q);
 		if ($r['REF|ApFullTomogramRunData|reconrun']) $has_run=True;
+		if ($r['REF|ApTomoReconParamsData|reconparam']) $has_param=True;
 
 		$q =  "SELECT t.`DEF_id` as DEF_id, ";
 		if ($has_run) {
 			$q .= "r.`runname` as runname, "
 				."r.`method` as `recon method`, ";
+		}
+		if ($has_param) {
+			$q .= "pa.`tilt_angle_offset`, "
+				."pa.`z_shift`, "
+				."pa.`tilt_axis_tilt_out_xyplane`, "
+				."pa.`tilt_axis_rotation_in_xyplane`, ";
 		}
 		$q .= "t.name as tomofilename, "
 			."t.description as description, "
@@ -405,7 +463,7 @@ class particledata {
 			."t.`REF|ApTomoAlignerParamsData|aligner` as aligner, "
 			."t.`REF|leginondata|AcquisitionImageData|zprojection` as zproj_id, "
 			." t.`hidden` ";
-		if ($has_run)
+		if ($has_run && $this->mysql->FieldExists('ApFullTomogramRunData','SEQ|excluded'))
 			$q .= ", r.`SEQ|excluded` as 'excluded imageIds' ";
 		$q .= "FROM `ApFullTomogramData` t ";
 		if ($has_run) {
@@ -414,8 +472,12 @@ class particledata {
 		} else {
 			$q .= "LEFT JOIN `ApPathData` p ON t.`REF|ApPathData|path` = p.`DEF_id` ";
 		}
+		if ($has_param) {
+			$q .= "LEFT JOIN `ApTomoReconParamsData` pa ON t.`REF|ApTomoReconParamsData|reconparam` = pa.`DEF_id` ";
+		}
 		$q .= "LEFT JOIN ".DB_LEGINON.".`TiltSeriesData` tilt ON t.`REF|leginonData|TiltSeriesData|tiltseries` = tilt.`DEF_id` "
 			."WHERE t.`DEF_id` = " .$tomogramId;
+
 		list($r) = $this->mysql->getSQLResult($q);
 		if (!$r['runname']) {
 			$r['runname'] = array_pop(explode('/',$r['path']));
@@ -479,6 +541,30 @@ class particledata {
 		if (!$showHidden && in_array('hidden',$fields))
 			$q .= " AND ( t.`hidden` = 0 OR t.`hidden` IS NULL ) ";
 		return $this->mysql->getSQLResult($q);
+	}
+
+	function getUnfinishedETomoRunsFromSession($sessionId) {
+		$q =  "SELECT t.* "
+			.", p.path as rundir "
+			."FROM `ApFullTomogramRunData` t "
+			."LEFT JOIN `ApPathData` p "
+			."ON p.`DEF_id` = t.`REF|ApPathData|path` "
+			."WHERE t.`REF|leginondata|SessionData|session` = " .$sessionId." "
+			."AND t.`method` LIKE 'etomo' ";
+		$runs = $this->mysql->getSQLResult($q);
+		if (!is_array($runs) || count($runs)==0) return array();
+
+		$ready_for_etomo = array();
+		// only include ones with no full tomogram record in the database
+		foreach ($runs as $r) {
+			$q = "SELECT `DEF_id` "
+				."FROM `ApFullTomogramData` "
+				."WHERE `REF|ApFullTomogramRunData|reconrun`=".$r['DEF_id'];
+			$tomos = $this->mysql->getSQLResult($q);
+			if ( !is_array($tomos) || count($tomos) == 0)
+				$ready_for_etomo[]= $r;
+		}
+		return $ready_for_etomo;
 	}
 
 	function getTomogramsFromSession($sessionId){
@@ -863,7 +949,8 @@ class particledata {
 
 	function getLastCtfTiltRun($sessionId) {
 		$q = "select max(DEF_id) as runId "
-			."from `ApCtfTiltRunData` where `REF|leginondata|SessionData|session`='$sessionId'";
+			."from `ApAceRunData` where (`REF|leginondata|SessionData|session`='$sessionId' "
+			."AND `REF|ApCtfTiltParamsData|ctftilt_params` IS NOT NULL) ";
 		list($r) = $this->mysql->getSQLResult($q);
 		return $r['runId'];
 	}
@@ -882,6 +969,26 @@ class particledata {
 		return $r;
 	}
 
+	// Note, this method needs to be updated each time a new CTF method is added to the database.
+	function getCtfRunMethod( $acerunId )
+	{
+		$aceparams = $this->getAceParams($acerunId);
+		
+		if ( $aceparams['REF|ApAceParamsData|aceparams'] ) {
+			$method = "ace1";
+		} else if ( $aceparams['REF|ApAce2ParamsData|ace2_params'] ) {
+			$method = "ace2";
+		} else if ( $aceparams['REF|ApCtfTiltParamsData|ctftilt_params'] ) {
+			$method = "ctffind";
+		} else if ( $aceparams['REF|ApXmippCtfParamsData|xmipp_ctf_params'] ) {
+			$method = "xmipp";
+		} else {
+			$method = "unknown";
+		}
+		
+		return $method;
+	}
+	
 	function getAceParams($acerunId) {
 		$q = "SELECT *, path.`path` as path, acerun.`DEF_id` as acerun "
 			."FROM ApAceRunData AS acerun "
@@ -933,13 +1040,14 @@ class particledata {
 				$q .= "and r.`DEF_id`='$runId' ";
 			else
 				$q .= "and c.`DEF_id`=(select max(c2.`DEF_id`) from ApCtfData c2 where c2.`REF|leginondata|AcquisitionImageData|image` = c.`REF|leginondata|AcquisitionImageData|image`)";
-		echo $q."<br/><br/>\n";
+		//echo $q."<br/><br/>\n";
 		return $this->mysql->getSQLResult($q);
 	}
 
 	function getCtfInfo($runId) {
 		$q =	"select "
 			."c.`REF|leginondata|AcquisitionImageData|image`, "
+			."s.`defocus`, "
 			."c.`defocus1`, "
 			."c.`defocus2`, "
 			."c.`defocusinit`, "
@@ -960,11 +1068,16 @@ class particledata {
 			."c.`snr` , "
 			."c.`graph1` , "
 			."c.`graph2` "
-			."from ApCtfData c where c.`REF|ApAceRunData|acerun`='$runId'";
+			."from ApCtfData c left join ApAceRunData r on (c. `REF|ApAceRunData|acerun` = r.`DEF_id`) "
+			."left join ".DB_LEGINON.".AcquisitionImageData i on (c.`REF|leginondata|AcquisitionImageData|image` = i.`DEF_id`) "
+			."left join ".DB_LEGINON.".ScopeEMData s on (i.`REF|ScopeEMData|scope` = s.`DEF_id`) "
+			."where c.`REF|ApAceRunData|acerun`='$runId'";
+			
 		return $this->mysql->getSQLResult($q);
+		
 	}
 
-	function getCtfInfoFromImageId($imageId, $order=false, $ctffind=False) {
+	function getCtfInfoFromImageId($imageId, $order=false, $method='', $acerunId='') {
 		$q =	"select "
 			."c.`DEF_id`, "
 			."c.`REF|leginondata|AcquisitionImageData|image`, "
@@ -974,6 +1087,8 @@ class particledata {
 			."c.`defocusinit`, "
 			."c.`amplitude_contrast`, "
 			."c.`angle_astigmatism`, "
+			."c.`tilt_angle`, "
+			."c.`tilt_axis_angle`, "
 			."c.`confidence` , "
 			."c.`confidence_d` , "
 			."c.`cross_correlation` , "
@@ -983,6 +1098,12 @@ class particledata {
 			."p.`path`, "
 			."c.`graph1` , "
 			."c.`graph2` , "
+			."c.`graph3` , "
+			."c.`graph4` , "
+			."c.`confidence_30_10` , "
+			."c.`confidence_5_peak` , "
+			."c.`resolution_80_percent` , "
+			."c.`resolution_50_percent` , "
 			."(c.`defocus1`+c.`defocus2`)/2+s.`defocus` as difference "
 			."from ApCtfData c "
 			."left join(ApAceRunData r, ApPathData p) "
@@ -992,31 +1113,45 @@ class particledata {
 			."left join ".DB_LEGINON.".ScopeEMData s on (i.`REF|ScopeEMData|scope` = s.`DEF_id`) "
 			."where c.`REF|leginondata|AcquisitionImageData|image`='$imageId' ";
 		$q .= " AND c.`graph1` IS NOT NULL ";
-		if ($ctffind) $q .= "AND r.`REF|ApCtfTiltParamsData|ctftilt_params` IS NOT NULL ";
-		if ($ctffind) $q .="ORDER BY (c.`cross_correlation`) DESC";
-		else $q .= "ORDER BY (c.`confidence`*c.`confidence_d`) DESC";
-		if ($order) {
-			$fields = $order['fields'];
-			$q .= " order by ".join(", ",$fields);
+		$q .= " AND (r.`hidden` IS NULL OR r.`hidden` = 0) ";
+		if (is_numeric($acerunId) && $acerunId > 0) {
+			$q .= "AND r.`DEF_id`=".$acerunId." ";
+		} else {
+			if ($method === 'ace1') $q .= "AND r.`REF|ApAceParamsData|aceparams` IS NOT NULL ";
+			elseif ($method === 'ace2') $q .= "AND r.`REF|ApAce2ParamsData|ace2_params` IS NOT NULL ";
+			elseif ($method === 'ctffind') $q .= "AND r.`REF|ApCtfTiltParamsData|ctftilt_params` IS NOT NULL ";
 		}
+		// First order by res80. If some entries of res80 are null, they will be sorted as 999 and end up at the end of the list.
+		// Then sort by res50. If there was a tie from res80, the tie is broken with res50.
+		// Res80 and res50 are only set for newer versions of Appion. For runs that were mase with older versions, we still want to sort by
+		// cross_correlation (ctffind) and confidence (ace1 and ace2). After sorting by resolution, old runs should all be tied with 999, so the
+		// final sort will sort by whichever is not null, the ctffind correlation or the Ace conf.
+		$q .= "	ORDER BY coalesce(resolution_80_percent,999) ASC ";
+		$q .= " , coalesce(resolution_50_percent,999) ASC, coalesce(c.`cross_correlation`,(c.`confidence`*c.`confidence_d`),999) DESC  ";
+		
+		//if ($order) {
+		//	$fields = $order['fields'];
+		//	$q .= " order by ".join(", ",$fields);
+		//}
+
 		return $this->mysql->getSQLResult($q);
 	}
 
 	function getBestCtfInfoForSessionId($sessionId, $limit=false) {
+		// this has been replaced by getBestCtfInfoByResolution() below
+		//echo "<b>getBestCtfInfoForSessionId FUNCTION DISABLED</b><br/><br/>\n";
+		//return array();
 		$q = "select  ctfdata.* "
 			."from "
 			."	( "
 			."	select  "
 			."		i.`filename`, "
-			."		c.`REF|leginondata|AcquisitionImageData|image`, "
-			."		i.`DEF_id`, "
+			."		i.`DEF_id` AS imageid, "
 			."		p.`name`, "
 			."		s.`defocus`, "
-			."		c.`defocus1`, c.`defocus2`, c.`defocusinit`, c.`angle_astigmatism`, c.`amplitude_contrast`, "
-			."		c.`noise1`, c.`noise2`, c.`noise3`, c.`noise4`, "
-			."		c.`envelope1`, c.`envelope2`, c.`envelope3`, c.`envelope4`, c.`lowercutoff`, c.`uppercutoff`, c.`snr`, "
-			."		c.`confidence`,c.`confidence_d` , "
-			."		(c.`defocus1`+c.`defocus2`)/2+s.`defocus` as difference "
+			."    unix_timestamp(i.`DEF_timestamp`) as unix_timestamp, "
+			."		2*ABS(c.defocus1-c.defocus2)/(c.defocus1+c.defocus2) AS difference, "
+			."		c.* "
 			."	from `ApCtfData` c "
 			."	left join ".DB_LEGINON.".`AcquisitionImageData` i on (i.`DEF_id` = c.`REF|leginondata|AcquisitionImageData|image`) "
 			."	left join ".DB_LEGINON.".`PresetData` p on (p.DEF_id = i.`REF|PresetData|preset`) "
@@ -1029,13 +1164,58 @@ class particledata {
 			."	AND  "
 			."  ABS(s.`SUBD|stage position|a`) < 0.9  "
 			."		)  "
-			."		order by (if(confidence_d>confidence, confidence_d, confidence)) desc  "
+			." order by (greatest(COALESCE(confidence,0),COALESCE(confidence_d,0),COALESCE(cross_correlation,0))) DESC "
 			."	) ctfdata ";
-			// if $limit is specified, report only values with confidences > $limit
-			if ($limit) {
-				$q .= " where ctfdata.confidence > $limit || ctfdata.confidence_d > $limit ";
-			}
-			$q .= " group by ctfdata.DEF_id ";
+		// if $limit is specified, report only values with confidences > $limit
+		if ($limit) {
+			$q .= " where ctfdata.confidence > $limit || ctfdata.confidence_d > $limit ";
+		}
+		$q .= " GROUP BY ctfdata.imageid ORDER BY ctfdata.unix_timestamp ";
+		//echo $q."<br/><br/>\n";
+		return $this->mysql->getSQLResult($q);
+	}
+
+	function getBestCtfInfoByResolution($sessionId, $limit=false) {
+		$q = "SELECT  ctfdata.* "
+			."FROM "
+			."	( "
+			."	SELECT  "
+			."		i.`filename`, "
+			."		i.`DEF_id` AS imageid, "
+			."		p.`name`, "
+			."		s.`defocus`, "
+			."    unix_timestamp(i.`DEF_timestamp`) as unix_timestamp, "
+			."		2*ABS(ctf.defocus1-ctf.defocus2)/(ctf.defocus1+ctf.defocus2) AS difference, "
+			."		ctf.* "
+			."	FROM `ApCtfData` AS ctf "
+			."	LEFT JOIN ".DB_LEGINON.".`AcquisitionImageData` AS i ON (i.`DEF_id` = ctf.`REF|leginondata|AcquisitionImageData|image`) "
+			."	LEFT JOIN ".DB_LEGINON.".`PresetData` AS p ON (p.DEF_id = i.`REF|PresetData|preset`) "
+			." LEFT JOIN ".DB_LEGINON.".`ScopeEMData` AS s ON (i.`REF|ScopeEMData|scope` = s.`DEF_id`) "
+			." LEFT JOIN ".DB_LEGINON.".`ViewerImageStatus` AS viewer "
+			."  ON viewer.`REF|AcquisitionImageData|image` = ctf.`REF|leginondata|AcquisitionImageData|image` "
+			."	where "
+			."	ctf.`REF|leginondata|AcquisitionImageData|image` IN  "
+			."	( "
+			."		SELECT a.`DEF_id` from ".DB_LEGINON.".`AcquisitionImageData` AS a  "
+			."		WHERE a.`REF|SessionData|session`='$sessionId'  "
+			."	AND  "
+			."  ABS(s.`SUBD|stage position|a`) < 0.9  "
+			."	AND  "
+			." ( viewer.status IS NULL OR viewer.status != 'hidden' ) "
+			."		)  "
+			// First order by res80. If some entries of res80 are null, they will be sorted as 999 and end up at the end of the list.
+			// Then sort by res50. If there was a tie from res80, the tie is broken with res50.
+			// Res80 and res50 are only set for newer versions of Appion. For runs that were mase with older versions, we still want to sort by
+			// cross_correlation (ctffind) and confidence (ace1 and ace2). After sorting by resolution, old runs should all be tied with 999, so the
+			// final sort will sort by whichever is not null, the ctffind correlation or the Ace conf.
+			."		ORDER BY coalesce(resolution_80_percent,999) ASC "
+			." , coalesce(resolution_50_percent,999) ASC, coalesce(ctf.`cross_correlation`,(ctf.`confidence`*ctf.`confidence_d`),999) DESC  "
+			."	) ctfdata ";
+		// if $limit is specified, report only values with confidences > $limit
+		if ($limit) {
+			$q .= " WHERE ctfdata.confidence > $limit || ctfdata.confidence_d > $limit ";
+		}
+		$q .= " GROUP BY ctfdata.imageid ORDER BY ctfdata.unix_timestamp ";
 		//echo $q."<br/><br/>\n";
 		return $this->mysql->getSQLResult($q);
 	}
@@ -1065,34 +1245,46 @@ class particledata {
 	}
 
 	function getCTFStats($fields, $sessionId, $runId=false) {
+		$dbfields = $this->mysql->getFields('ApCtfData');
 		if (!is_array($fields))
 			return False;
 		foreach ($fields as $field) {
-			$selects[$field] = "c.`REF|leginondata|AcquisitionImageData|image` as id, s.defocus, "
-					. "count(c.DEF_id) as `nb`, "
-					. "min(c.`$field`) as `min`, "
-					. "max(c.`$field`) as `max`, "
-					. "avg(c.`$field`) as `avg`, "
-					. "stddev(c.`$field`) as `stddev`";
+			if (!in_array($field, $dbfields))
+				continue;
+			$selects[$field] = "c.`REF|leginondata|AcquisitionImageData|image` AS id, "
+					//."s.defocus, "
+					. "count(c.DEF_id) AS `nb`, "
+					. "min(c.`$field`) AS `min`, "
+					. "max(c.`$field`) AS `max`, "
+					. "avg(c.`$field`) AS `avg`, "
+					. "stddev(c.`$field`) AS `stddev`";
 		}
 		if (!is_array($selects))
 			return False;
 		$stats = array();
 		foreach ($selects as $k=>$select) {
-			$q =	"select ".$select." "
-			."from ApCtfData c left join ".DB_LEGINON.".AcquisitionImageData i "
-			."on (c.`REF|leginondata|AcquisitionImageData|image`=i.`DEF_id`) "
-			."left join ".DB_LEGINON.".`ScopeEMData` s "
-			."on (i.`REF|ScopeEMData|scope` = s.`DEF_id`) "
-			."left join ".DB_LEGINON.".`PresetData` p "
-			."on (`p`.`DEF_id`=`i`.`REF|PresetData|preset`) "
-			."where i.`REF|SessionData|session`='$sessionId' ";
+			$q =	"SELECT ".$select." "
+				."FROM ApCtfData AS c "
+				."LEFT JOIN ".DB_LEGINON.".AcquisitionImageData i "
+					."ON (c.`REF|leginondata|AcquisitionImageData|image`=i.`DEF_id`) "
+				//."LEFT JOIN ".DB_LEGINON.".`ScopeEMData` s "
+				//	."ON (i.`REF|ScopeEMData|scope` = s.`DEF_id`) "
+				//."LEFT JOIN ".DB_LEGINON.".`PresetData` p "
+				//	."ON (`p`.`DEF_id`=`i`.`REF|PresetData|preset`) "
+				."WHERE i.`REF|SessionData|session`='$sessionId' ";
 			if ($runId)
-				$q .= "and c.`REF|ApAceRunData|acerun`='$runId' ";
-			else
-				$q .= "and c.`DEF_id`=(select max(c2.`DEF_id`) from ApCtfData c2 where c2.`REF|leginondata|AcquisitionImageData|image` = c.`REF|leginondata|AcquisitionImageData|image`)";
-			$q .= "group by p.`name`";
-			//echo $q."<br/><br/>\n";
+				$q .= "AND c.`REF|ApAceRunData|acerun`='$runId' ";
+			else {
+				$q .= "AND c.`DEF_id`=(".
+					"SELECT c2.`DEF_id` FROM ApCtfData AS c2 "
+					."WHERE c2.`REF|leginondata|AcquisitionImageData|image` = c.`REF|leginondata|AcquisitionImageData|image` "
+					."AND c2.resolution_50_percent IS NOT NULL AND c2.resolution_80_percent IS NOT NULL "
+					."ORDER BY (c2.resolution_50_percent+c2.resolution_80_percent) ASC LIMIT 1 "
+				.")";
+			}
+			//$q .= "GROUP BY p.`name`";
+			//if (!$runId)
+			//	echo $q."<br/><br/>\n";
 			$r = $this->mysql->getSQLResult($q);
 			$stats[$k] = $r;
 			//echo print_r($r)."<br/><br/>\n";
@@ -1111,6 +1303,8 @@ class particledata {
 	}
 
 	function getBestStats($fields, $sessionId, $limit=false) {
+		// this function is used to set default values 
+		//   for makestack, imgrejector, summary.php, and index.php
 		if (!is_array($fields))
 			return False;
 		foreach ($fields as $field) {
@@ -1138,7 +1332,7 @@ class particledata {
 				."			p.`name`, "
 				."			s.`defocus`, "
 				."			c.`defocus1`, c.`defocus2`, c.`defocusinit`, c.`angle_astigmatism`, "
-				."			c.`confidence`,c.`confidence_d` , "
+				."			c.`confidence`,c.`confidence_d` , c.`cross_correlation` , "
 				."			(c.`defocus1`+c.`defocus2`)/2+s.`defocus` as difference "
 				."		from `ApCtfData` c "
 				."		left join ".DB_LEGINON.".`AcquisitionImageData` i on (i.DEF_id=c.`REF|leginondata|AcquisitionImageData|image`) "
@@ -1150,7 +1344,8 @@ class particledata {
 				."			select a.`DEF_id` from ".DB_LEGINON.".`AcquisitionImageData` a  "
 				."			where a.`REF|SessionData|session`='$sessionId'  "
 				."			)  "
-				."			order by (if(confidence_d>confidence, confidence_d, confidence)) desc  "
+				."       AND c.resolution_50_percent IS NOT NULL AND c.resolution_80_percent IS NOT NULL "
+				."			ORDER BY (c.resolution_50_percent+c.resolution_80_percent) ASC  "
 				."		) allctfdata "
 				."	group by allctfdata.`REF|leginondata|AcquisitionImageData|image` "
 				."	) ctfdata ";
@@ -1192,9 +1387,31 @@ class particledata {
 		return $stats;
 	}
 
+	function removeCtfRunById($ctfId) {
+		# count the number of values for CTF run
+		$q = "SELECT count(DEF_id) as num "
+			. "FROM `ApCtfData` "
+			. "WHERE `REF|ApAceRunData|acerun` = $ctfId";
+		list($r) = $this->mysql->getSQLResult($q);
+		
+		# remove the CTF data
+		$q = "DELETE from `ApCtfData` "
+			. "WHERE `REF|ApAceRunData|acerun` = $ctfId";
+		$this->mysql->getSQLResult($q);
+		$status.= "Removed ".$r['num']." values from ApCtfData<br/>\n";
+
+		# remove the runid
+		$q = "DELETE from `ApAceRunData` "
+			. "WHERE `DEF_id` = $ctfId";
+		$this->mysql->getSQLResult($q);
+		$status.= "Removed CTF Run ID $ctfId from ApAceRunData table<br/>\n";
+		return $status;
+	}
+
 	//------ -------------------- ---------//
 	//-------particle functions --------//
 	//------ -------------------- ---------//
+	//TODO: the next 2 display functions do not belong in this file!!!
 	function displayParameters ($title,$params,$exclude_fields,$expId,$hide_button_field='',$inform=false) {
 		//standard parameter table display
 
@@ -1204,7 +1421,7 @@ class particledata {
 			,'particleSelection'=>"particlerunreport.php?expId=$expId&rId="
 			,'objectTracing'=>"particlerunreport.php?expId=$expId&rId="
 			,'aligner'=>"tomoalignercyclereport.php?expId=$expId&aId="
-			,'sizingreport'=>""
+			,'sizingreport'=>"sizingreport.php?expId=$expId&sizingId="
 		);
 		if (count($params) ==0) return;
 		echo "<h4>".$title."</h4>";
@@ -1417,7 +1634,7 @@ class particledata {
 		$q = "SELECT stack.*, path.path "
 			."FROM ApTemplateStackData as stack "
 			."LEFT JOIN ApPathData AS path ON "
-								."(stack.`REF|ApPathData|path`=path.`DEF_id`) "
+			."(stack.`REF|ApPathData|path`=path.`DEF_id`) "
 			."WHERE stack.`REF|leginondata|SessionData|session`='$expId' ";
 		if (!$getHidden) $q.= "AND (stack.`hidden` IS NULL OR stack.`hidden` = 0) ";
 		if ($type == "clsavg") $q.= "AND (stack.`cls_avgs` = 1) ";
@@ -1436,6 +1653,43 @@ class particledata {
 		$r = $this->mysql->getSQLResult($q);
 		return $r[0];
 	}
+	
+	// Returns a dictionary of values to be used in stack selector GUI elements
+	function getStackOptions( $stackIds ) 
+	{
+		$options = array();
+		
+		foreach ( $stackIds as $stackid ) {
+			
+			// get stack parameters from database
+			$s = $this->getStackParams( $stackid['stackid'] );
+			
+			// get number of particles in each stack
+			$totalp = $this->getNumStackParticles( $stackid['stackid'] );
+			if ($totalp == 0)
+				continue;
+				
+			$nump = commafy($totalp);
+			
+			// get pixel size of stack
+			$apix = ($this->getStackPixelSizeFromStackId($stackid['stackid']))*1e10;
+			// truncated pixel size
+			$showapix = sprintf("%.2f",$apix);
+			// get box size
+			$box = $s['boxsize'];
+			// get stack path with name
+			$opvals = "$stackid[stackid]|--|$apix|--|$box|--|$totalp|--|$s[path]|--|$s[name]";
+			
+			// if imagic stack, send both hed & img files for dmf
+			if (preg_match('~.hed~', $s['name'])) $opvals.='|--|'.preg_replace('~hed~','img',$s['name']);
+			if (preg_match('~.img~', $s['name'])) $opvals.='|--|'.preg_replace('~img~','hed',$s['name']);
+			
+			// Add this stack to the options dictionary
+			$options[$opvals] = $s[shownstackname]." ID: ".$stackid[stackid]." (".$nump." particles, ".$showapix." &Aring;/pix, ".$box."x".$box.")";
+		}
+		
+		return $options;
+	}
 
 	function getStackSelector($stackIds,$stackidval,$onchange) {
 		/* THIS FUNCTION SHOULD BE MOVED TO summarytables.inc */
@@ -1453,31 +1707,20 @@ class particledata {
 		echo "<SELECT NAME='stackval'";
 		if ($onchange) echo "onchange='".$onchange."'";
 		echo ">\n";
-		foreach ($stackIds as $stackid){
-			// get stack parameters from database
-			$s=$this->getStackParams($stackid['stackid']);
-			// get number of particles in each stack
-			$totalp=$this->getNumStackParticles($stackid['stackid']);
-			$nump=commafy($totalp);
-			// get pixel size of stack
-			$apix=($this->getStackPixelSizeFromStackId($stackid['stackid']))*1e10;
-			// truncated pixel size
-			$showapix=sprintf("%.2f",$apix);
-			// get box size
-			$box = $s['boxsize'];
-			// get stack path with name
-			$opvals = "$stackid[stackid]|--|$apix|--|$box|--|$totalp|--|$s[path]|--|$s[name]";
-			// if imagic stack, send both hed & img files for dmf
-			if (ereg('\.hed', $s['name'])) $opvals.='|--|'.ereg_replace('hed','img',$s['name']);
-			if (ereg('\.img', $s['name'])) $opvals.='|--|'.ereg_replace('img','hed',$s['name']);
 		
-			echo "<OPTION VALUE='$opvals'";
+		$options = $this->getStackOptions($stackIds);
+		foreach ($options as $key => $value) {
+			echo "<OPTION VALUE='$key'";
 			// select previously set stack on resubmita
-			if ($stackid['stackid']==$stackidval) echo " SELECTED";
-			echo">$s[shownstackname] ID: $stackid[stackid] ($nump particles, $showapix &Aring;/pix, ".$box."x".$box.")</OPTION>\n";
+			$stackvals = explode( '|--|', $key );
+			if ( $stackvals[0] == $stackidval ) echo " SELECTED";
+			echo">$value</OPTION>\n";
 		}
+		
 		echo "</SELECT>\n";
-		return $apix;
+		
+		// return the apix value
+		return $stackvals ? $stackvals[1] : '';
 		/* THIS FUNCTION SHOULD BE MOVED TO summarytables.inc */
 	}
 
@@ -1494,6 +1737,27 @@ class particledata {
 			."and p.`REF|leginondata|AcquisitionImageData|image` = '$imageId' ";
 		$r=$this->mysql->getSQLResult($q);
 		return $r;
+	}
+
+	function getTracesFromImageId ($runId, $imageId){
+		$q = "select p.DEF_id as id, "
+			."p.name "
+			."from ApContourData p "
+			."where p.`REF|ApSelectionRunData|selectionrun` = '$runId' "
+			."and p.`REF|leginondata|AcquisitionImageData|image` = '$imageId' ";
+		$r=$this->mysql->getSQLResult($q);
+
+		$allpoints = array();
+		if (!empty($r)) {
+			foreach ($r as $contour) {
+				$q = "select p.x,p.y "
+					."from ApContourPointData p "
+					."where p.`REF|ApContourData|contour` = ".$contour['id']." ";
+				$r=$this->mysql->getSQLResult($q);
+				$allpoints[$contour['id']] = $r;
+			}
+		}
+		return $allpoints;
 	}
 
 	function getLastAssessmentRun ($sessionId){
@@ -1555,10 +1819,17 @@ class particledata {
 		return $r;
 	}
 
-	function getSelectionParams ($runId, $returntype=False) {
+	function getSelectionRunData($runId) {
 		$q = "select * from ApSelectionRunData "
 			." where `DEF_id` = '$runId' ";
-		list($r)=$this->mysql->getSQLResult($q);
+		list($r) = $this->mysql->getSQLResult($q);
+
+		return $r;
+	}
+		
+	
+	function getSelectionParams ($runId, $returntype=False) {
+		$r = $this->getSelectionRunData($runId);
 
 		//print_r ($r);
 		//echo $r['REF|ApSelectionParamsData|params'];
@@ -1609,7 +1880,8 @@ class particledata {
 					." WHERE sr.`REF|leginondata|SessionData|session` = $sessionId "
 					." AND "
 					." p.`trace` = 1 "
-					." GROUP BY c.`REF|ApSelectionRunData|selectionrun` ";
+					." GROUP BY sr.`DEF_id` "
+					." ";
 			$r=$this->mysql->getSQLResult($q);
 			return $r;
 		} else {
@@ -1647,11 +1919,29 @@ class particledata {
 	}
 
 	function getParticles ($runId) {
-		$q="select p.DEF_id, p.xcoord, p.ycoord, p.correlation, p.`REF|leginondata|AcquisitionImageData|image` "
+		$q="select p.DEF_id, p.xcoord, p.ycoord, p.correlation, p.`REF|leginondata|AcquisitionImageData|image`, a.`filename` "
 			."from ApParticleData p "
+			."left join ".DB_LEGINON.".`AcquisitionImageData` a "
+			."on p.`REF|leginondata|AcquisitionImageData|image` = a.`DEF_id` "
 			."where p.`REF|ApSelectionRunData|selectionrun` = '$runId' ";
 		$r=$this->mysql->getSQLResult($q);
 		return $r;
+	}
+	
+	function getParticlesDataWithDeforcusPair($runId){
+		
+		$q="SELECT p.`DEF_id`,p.xcoord, p.ycoord, p.`REF|leginondata|acquisitionImageData|image` as imageNum, "
+			."a.`filename`, "
+			."t.`REF|leginondata|AcquisitionImageData|image2` as pImage, t.shiftx, t.shifty "
+			."FROM ApParticleData as p "
+			."LEFT JOIN ApImageTransformationData t "
+			."ON (p.`REF|leginondata|acquisitionImageData|image` = t.`REF|leginondata|AcquisitionImageData|image1`) "
+			."left join ".DB_LEGINON.".`AcquisitionImageData` a "
+			."on p.`REF|leginondata|AcquisitionImageData|image` = a.`DEF_id` "
+			."WHERE p.`REF|ApSelectionRunData|selectionrun` = '$runId' ";
+		$r=$this->mysql->getSQLResult($q);
+		return $r;	
+		
 	}
 
 	function getImgIdFromSelectionRun ($runId) {
@@ -1730,8 +2020,11 @@ class particledata {
 				." WHERE sr.`DEF_id` = $runId "
 				." AND "
 				." p.`trace` = 1 "
-				." GROUP BY c.`REF|ApSelectionRunData|selectionrun` ";
+				." AND "
+				." c.`DEF_id` is not null "
+				." GROUP BY sr.`DEF_id` ";
 		list($r)=$this->mysql->getSQLResult($q);
+		if (!$r) $r=array('total_object_traced'=>0);
 		return $r;
 	}
 
@@ -1743,6 +2036,17 @@ class particledata {
 		return $r[0]['num'];
 	}
 
+	function getImgIdsFromSessionId ($sessionId){
+		$q = "SELECT "
+			."img.`DEF_id` "
+			."FROM ".DB_LEGINON.".AcquisitionImageData as img "
+			."WHERE "
+			."  img.`REF|SessionData|session` = '$sessionId' ";
+		//echo $q;
+		$r = $this->mysql->getSQLResult($q);
+		return $r;
+	}	
+	
 	function getNumImgsFromSessionId ($sessionId){
 		$q= "SELECT "
 			. "  COUNT(DISTINCT p.`REF|leginondata|AcquisitionImageData|image`) AS num  "
@@ -1754,6 +2058,15 @@ class particledata {
 		#echo $q;
 		$r = $this->mysql->getSQLResult($q);
 		return $r[0]['num'];
+	}
+	
+	function getHighTensionFromSessionId( $sessionId )
+	{
+		$q= "SELECT `high tension` FROM ".DB_LEGINON.".ScopeEMData AS s "
+			. "WHERE s.`REF|SessionData|session`='$sessionId' ";
+		//echo $q;
+		$r = $this->mysql->getSQLResult($q);
+		return $r[0]['high tension'];
 	}
 
 	function getSelectionRunIdFromPath($path){
@@ -1922,24 +2235,89 @@ class particledata {
 		return $r['num'];
 	}
 
-	function getLastParticleRun ($sessionId) {
+	// return the last Def_id value in the provided table
+	function getLastDefId($sessionId, $table) 
+	{
 		$q = "select DEF_id as runId "
-			."from `ApSelectionRunData` "
+			."from `".$table."` "
 			."where `REF|leginondata|SessionData|session` = '$sessionId' "
 			."order by DEF_id desc limit 1";
 		list($r) = $this->mysql->getSQLResult($q);
 		return $r['runId'];
 	}
+	
+	function getLastParticleRun($sessionId) 
+	{
+		return $this->getLastDefId($sessionId, "ApSelectionRunData");
+	}
 
-	function getParticleRunData ($partRunId) {
+	function getLastDDStackRun($sessionId) 
+	{
+		return $this->getLastDefId($sessionId, "ApDDStackRunData");
+	}
+	
+	function hasDDstackData($sessionId) 
+	{
+		$r= ($this->getLastDDStackRun($sessionId)) ? true : false;
+		return $r;
+	}
+		
+	function getParticleRunData($partRunId) 
+	{
+		return getRunData($partRunId, "ApSelectionRunData" );
+	}
+	
+	function getDDStackRunData($partRunId) 
+	{
+		return getRunData($partRunId, "ApSelectionRunData" );
+	}
+
+	function getAlignLogShiftFromDDAlignedImageId($result_imgid,$apix=1)
+	{
+		// get Alignlog path
+		$q = "SELECT rundir.path as rundir, pair.`REF|leginondata|AcquisitionImageData|source` as source_imgid "
+			."FROM `ApDDAlignImagePairData` pair "
+			."LEFT JOIN `ApDDStackRunData` run "
+			."ON pair.`REF|ApDDStackRunData|ddstackrun`=run.`DEF_id` "
+			."LEFT JOIN	`ApPathData` rundir "
+			."ON run.`REF|ApPathData|path` = rundir.`DEF_id` "
+			."WHERE pair.`REF|leginondata|AcquisitionImageData|result` = ".$result_imgid;
+		list($r) = $this->mysql->getSQLResult($q);
+		$source_image_name = $this->getImageNameFromId($r['source_imgid']);
+		$align_log = $r['rundir'].'/'.$source_image_name.'_st_Log.txt';
+		// get shift data
+		$data = array();
+		if (is_file($align_log)) {
+			$text = file_get_contents($align_log);
+			$bits = explode('Sum Frame',$text);
+			if (count($bits) > 1) {
+				$shiftlines = explode("\n",$bits[1]);
+				foreach($shiftlines as $shiftline) {
+					$shiftbits = explode('with xy shift:',$shiftline);
+					if (count($shiftbits) > 1) {
+						$shifts = explode(' ',trim($shiftbits[1]));
+						$data[] = array('x'=>((float) $shifts[0])*$apix,'y'=> ((float) $shifts[count($shifts)-1])*$apix);
+					}
+				}
+			}
+		} else {return $align_log;}
+		return $data;
+	}
+
+	function getRunData($runId, $table) 
+	{
 		$q = "SELECT r.*, p.path "
-			."FROM `ApSelectionRunData` AS r "
+			."FROM `".$table."` AS r "
 			."LEFT JOIN ApPathData AS p ON (r.`REF|ApPathData|path` = p.`DEF_id`) "
-			."WHERE r.`DEF_id` = '$partRunId'";
+			."WHERE r.`DEF_id` = '$runId'";
 		list($r) = $this->mysql->getSQLResult($q);
 		return $r;
 	}
-
+	
+	// Warning: this counts the number of runs, it does not return the 
+	// last run id number used. Since a user can modify the runname,
+	// this is not a safe number to use for a defualt run name. Try
+	// getMaxRunNumber() instead.
 	function getLastRunNumberForType ($sessionId, $table, $field='name') {
 		$q = "SELECT r.`".$field."` "
 			."FROM `".$table."` AS r "
@@ -1953,9 +2331,10 @@ class particledata {
 		return 0;
 	}
 
-	function getParticleRunIds ($sessionId,$showHidden=False) {
+	function getRunIds($sessionId, $table, $showHidden=False) 
+	{
 		$q = "SELECT r.*, p.path "
-			."FROM `ApSelectionRunData` AS r "
+			."FROM `".$table."` AS r "
 			."LEFT JOIN ApPathData AS p "
 			."ON (r.`REF|ApPathData|path` = p.`DEF_id`) "
 			."WHERE r.`REF|leginondata|SessionData|session` = '$sessionId' ";
@@ -1966,7 +2345,61 @@ class particledata {
 		//echo print_r($r)."<br/>\n";
 		return $r;
 	}
+	
+	function getParticleRunIds($sessionId,$showHidden=False) 
+	{
+		return $this->getRunIds($sessionId, "ApSelectionRunData", $showHidden);
+	}
+	
+	function getDDStackRunIds($sessionId,$showHidden=False) 
+	{
+		return $this->getRunIds($sessionId, "ApDDStackRunData", $showHidden);
+	}
+	
+	function getDDStackRunIdsAlign($sessionId,$showHidden=True) 
+	{
+		$q = "SELECT r.`DEF_id` as stackid, r.`runname` as runname "
+			."FROM `ApDDStackRunData` AS r "
+			."LEFT JOIN ApPathData AS p "
+			."ON (r.`REF|ApPathData|path` = p.`DEF_id`) "
+			."LEFT JOIN `ApDDStackParamsData` AS a "
+			."ON (r.`REF|ApDDStackParamsData|params` = a.`DEF_id`) "
+			."WHERE r.`REF|leginondata|SessionData|session` = '$sessionId' "
+			."AND a.`align` = 1 ";
+		if (!$showHidden) $q.= " AND (r.`hidden` IS NULL OR r.`hidden` = 0) ";
+		$q.= "ORDER BY r.`DEF_id` DESC ";
+		//echo $q."<br/>\n";
+		$r = $this->mysql->getSQLResult($q);
+		return $r;
+	}	
+	
+	function getDDStackRunName($stackId,$showHidden=True) 
+	{
+		$q = "SELECT r.`runname` "
+			."FROM `ApDDStackRunData` AS r "
+			."WHERE r.`DEF_id` = '$stackId' ";
+		if (!$showHidden) $q.= " AND (r.`hidden` IS NULL OR r.`hidden` = 0) ";
+		//echo $q."<br/>\n";
+		$r = $this->mysql->getSQLResult($q);
+		//echo print_r($r)."<br/>\n";
+		return $r;
+	}		
 
+	function getDDStackOutdir($stackId,$showHidden=True) 
+	{
+		$q = "SELECT p.`path` "
+			."FROM `ApDDStackRunData` AS r "
+			."LEFT JOIN ApPathData AS p "
+			."ON (r.`REF|ApPathData|path` = p.`DEF_id`) "
+			."WHERE r.`DEF_id` = '$stackId' ";
+		if (!$showHidden) $q.= " AND (r.`hidden` IS NULL OR r.`hidden` = 0) ";
+		//echo $q."<br/>\n";
+		$r = $this->mysql->getSQLResult($q);
+		//echo print_r($r)."<br/>\n";
+		return $r;
+	}	
+	
+	
 	#--------- MAKE STACK FUNCTIONS---------------#
 
 	function getParticleRunsFromStack($stackid) {
@@ -2108,11 +2541,9 @@ class particledata {
 		);
 		$substackname = $substackinfo['substackname'];
 		foreach (array_keys($conditions) as $key) {
-			if (ereg($key,$substackname)) {
+			if (preg_match('%'.$key.'%',$substackname)) {
 				$conditionid = str_replace($key, '', $substackname);
 				$condition = $key;
-			} else {
-			echo ereg($key,$substackname);
 			}
 		}
 		if ($condition) {
@@ -2261,6 +2692,7 @@ class particledata {
 			$r['REF|ApStackData|oldstack'] = $stack_primary_array['REF|ApStackData|oldstack'];
 			//add needed parent stackrun parameters, but not all since they overwrites the primary values
 			$r['tiltangle'] = $params[0]['tiltangle'];
+			$r['phaseFlipped'] = $params[0]['phaseFlipped'];
 			$r['fliptype'] = $params[0]['fliptype'];
 			$r['inverted'] = $params[0]['inverted'];
 			return $r;
@@ -2276,6 +2708,7 @@ class particledata {
 		} else {
 			$r = $runarray;
 			$r['tiltangle'] = $params[0]['tiltangle'];
+			$r['phaseFlipped'] = $params[0]['phaseFlipped'];
 			$r['fliptype'] = $params[0]['fliptype'];
 			$r['inverted'] = $params[0]['inverted'];
 			$r['pixelsize'] = $params[0]['pixelsize'];
@@ -2351,6 +2784,29 @@ class particledata {
 		//echo print_r($r[0])."<br/><br/>\n";
 		return $r;
 	}
+	
+	function getParticlesFromStack($stackId){
+		$q= "SELECT `REF|ApParticleData|particle` AS particleId, mean, stdev, skew, "
+			."kurtosis, edgemean, edgestdev, centermean, centerstdev, min, max "
+			."FROM `ApStackParticleData` "
+			."WHERE `REF|ApStackData|stack` = '$stackId'"; 
+			
+		$r = $this->mysql->getSQLResult($q);
+		return $r;
+	}
+
+	function getParticlePicksFromStack($stackId) {
+		$q="SELECT s.particleNumber as particle, "
+			."p.`REF|leginondata|AcquisitionImageData|image` as imgid, "
+			."p.xcoord, p.ycoord, p.helixnum, p.angle "
+			."FROM `ApStackParticleData` AS s "
+			."LEFT JOIN `ApParticleData` AS p "
+			."ON s.`REF|ApParticleData|particle` = p.`DEF_id` "
+			."WHERE s.`REF|ApStackData|stack` = '$stackId' "
+			."ORDER BY s.particleNumber";
+		$r = $this->mysql->getSQLResult($q);
+		return $r;
+	}
 
 	function getNumStackParticles ($stackId) {
 		$q= "SELECT count(DEF_id) as num "
@@ -2370,6 +2826,167 @@ class particledata {
 			."WHERE `REF|ApStackData|stack` = '$stackId'";
 		$r = $this->mysql->getSQLResult($q);
 		return count($r);
+	}
+
+	function getParticleMovieRunFromId($movierunid) {
+		$q = "SELECT pr . `DEF_id` as runid , "
+		." pr . `movieRunName`, "
+		." path . `path`, "
+		." pr . `REF|leginondata|SessionData|session` as sessionId, "
+		." pr . `REF|ApSelectionRunData|selectionrun` as selectionId "
+		." FROM `ApParticleMovieRunData` pr "
+		." LEFT JOIN `ApPathData` path "
+		." ON pr.`REF|ApPathData|path` = path.`DEF_id` "
+		." WHERE pr.`DEF_id` = ".$movierunid." "
+		." ";
+		list($r) = $this->mysql->getSQLResult($q);
+		return $r;
+	}
+
+	function getNumRefImages ($alignrun) {
+		$q = "SELECT count(DEF_id) as num "
+			."FROM `ApAlignReferenceData` "
+			."WHERE `REF|ApAlignRunData|alignrun` = '$alignrun'";
+		list($r) = $this->mysql->getSQLResult($q);
+		return $r['num'];
+	}
+
+	function removeSelectionRunById($selectionRunId) {
+		# count the number of values for selection run
+		$q = "SELECT count(DEF_id) as num "
+			. "FROM `ApParticleData` "
+			. "WHERE `REF|ApSelectionRunData|selectionrun` = $selectionRunId";
+		list($r) = $this->mysql->getSQLResult($q);
+		
+		# remove the selection data
+		$q = "DELETE from `ApParticleData` "
+			. "WHERE `REF|ApSelectionRunData|selectionrun` = $selectionRunId";
+		$this->mysql->getSQLResult($q);
+		$status.= "Removed ".$r['num']." values from ApParticleData<br/>\n";
+
+		# get path from the entry in ApSelectionRunData
+		$q = "SELECT `REF|ApPathData|path` as path from ApSelectionRunData "
+			."WHERE DEF_id=$selectionRunId";
+		$r = $this->mysql->getSQLResult($q);
+		$pathid = $r[0]['path'];
+		# this path is used to remove the corresponding
+		# entry from ApAppionJobData
+		$q = "DELETE from ApAppionJobData "
+			."WHERE `REF|ApPathData|path`=$pathid ";
+		$this->mysql->getSQLResult($q);
+		$status.= "Removed associated job from ApAppionJobData<br/>\n";
+
+		# remove the runid
+		$q = "DELETE from `ApSelectionRunData` "
+			. "WHERE `DEF_id` = $selectionRunId";
+		$this->mysql->getSQLResult($q);
+		$status.= "Removed Selection Run ID $selectionRunId from ApSelectionRunData table<br/>\n";
+		return $status;
+	}
+
+	function removeAlignStackById($alignStackId) {
+		// Get alignment run for this stack
+		$q = "SELECT `REF|ApAlignRunData|alignrun` as alignrun "
+			. "FROM `ApAlignStackData` "
+			. "WHERE `DEF_id`=$alignStackId ";
+		$r = $this->mysql->getSQLResult($q);
+		$alignrun = $r[0]['alignrun'];
+
+		// delete entry in ApAlignRunData
+		$q = "DELETE from `ApAlignRunData` "
+			. "WHERE `DEF_id`=$alignrun ";
+		$r = $this->mysql->getSQLResult($q);
+		$status = "Removed Alignment ID $alignrun from ApAlignRunData table<br>\n";
+
+		// delete entry in ApAlignReferenceData
+		$q = "DELETE from `ApAlignReferenceData` "
+			. "WHERE `REF|ApAlignRunData|alignrun`=$alignrun ";
+		$r = $this->mysql->getSQLResult($q);
+		$status.= "Removed Aligned References from ApAlignReferenceData table<br>\n";
+
+		// get path the Stack entry in ApStackData
+		$q = "SELECT `REF|ApPathData|path` as path from ApAlignStackData "
+			."WHERE DEF_id=$alignStackId";
+		$r = $this->mysql->getSQLResult($q);
+		$pathid = $r[0]['path'];
+		// this path is used to remove the corresponding
+		// entry from ApAppionJobData
+		$q = "DELETE from ApAppionJobData "
+			."WHERE `REF|ApPathData|path`=$pathid ";
+		$this->mysql->getSQLResult($q);
+		$status.= "Removed associated job from ApAppionJobData<br/>\n";
+	
+		// remove stack from ApStackData
+		$q = "DELETE from `ApAlignStackData` "
+			. "WHERE `DEF_id`=$alignStackId ";
+		$r = $this->mysql->getSQLResult($q);
+		$status.= "Removed Aligned Stack ID $alignStackId from ApAlignStackData table<br>\n";
+		// count the number of particles in ApStackParticleData
+		$q = "SELECT count(DEF_id) as num "
+			."FROM `ApAlignParticleData` "
+			."WHERE `REF|ApAlignStackData|alignstack`=$alignStackId ";
+		list($r) = $this->mysql->getSQLResult($q);
+		$q = "DELETE FROM `ApAlignParticleData` "
+			."WHERE `REF|ApAlignStackData|alignstack`=$alignStackId ";
+		$this->mysql->getSQLResult($q);
+		$status.= "Removed ".$r['num']." particles from ApAlignParticleData<br/>\n";
+
+		return $status;		
+	}
+
+	function removeStackById($stackId) {
+		// Now get the stack run(s) used for this stack
+		$q = "SELECT `REF|ApStackRunData|stackRun` as stackrun "
+			. "FROM `ApRunsInStackData` as rs "
+			. "WHERE `REF|ApStackData|stack` = $stackId ";
+		$r = $this->mysql->getSQLResult($q);
+
+		// delete entry in ApRunsInStackData
+		$q = "delete from `ApRunsInStackData` "
+			. "WHERE `REF|ApStackData|stack` = $stackId";
+		$this->mysql->getSQLResult($q);
+		$status = "Removed Stack ID $stackId from ApRunsInStackData table<br>\n";
+		// check if there are still runs for each stack run:
+		foreach ($r as $srun) {
+			$srunid=$srun['stackrun'];
+			$q = "SELECT count(*) as num from `ApRunsInStackData` "
+				. "WHERE `REF|ApStackRunData|stackRun` = $srunid";
+			$r = $this->mysql->getSQLResult($q);
+			// if no entries left, remove entry in ApStackRunData
+			if ($r[0]['num']==0 ) {
+				$q = "DELETE from `ApStackRunData` "
+					. "WHERE `DEF_id` = $srunid";
+				$this->mysql->getSQLResult($q);
+				$status.= "Removed Stack Run ID $srunid from ApStackRunData table<br/>\n";
+			}
+			else $status.= "Stack Run ID $srunid is used in other stacks, not removing it from the ApStackRunData table<br/>\n";
+		}
+		// get path the Stack entry in ApStackData
+		$q = "SELECT `REF|ApPathData|path` as path from ApStackData "
+			."WHERE DEF_id=$stackId";
+		$r = $this->mysql->getSQLResult($q);
+		$pathid = $r[0]['path'];
+		// this path is used to remove the corresponding
+		// entry from ApAppionJobData
+		$q = "DELETE from ApAppionJobData "
+			."WHERE `REF|ApPathData|path`=$pathid ";
+		$this->mysql->getSQLResult($q);
+		$status.= "Removed associated job from ApAppionJobData<br/>\n";
+		// remove stack from ApStackData
+		$q = "DELETE from ApStackData "
+			." WHERE DEF_id=$stackId ";
+		$this->mysql->getSQLResult($q);
+		$status.= "Removed Stack ID $stackId from ApStackData<br/>\n";
+		// count the number of particles in ApStackParticleData
+		$q = "SELECT count(DEF_id) as num "
+			."FROM `ApStackParticleData` "
+			."WHERE `REF|ApStackData|stack` = '$stackId'";
+		list($r) = $this->mysql->getSQLResult($q);
+		$q = "DELETE from `ApStackParticleData` "
+			. "WHERE `REF|ApStackData|stack` = '$stackId'";
+		$this->mysql->getSQLResult($q);
+		$status.= "Removed ".$r['num']." particles from ApStackParticleData<br/>\n";
+		return $status;
 	}
 
 	//////// fix me ////////
@@ -2457,7 +3074,41 @@ class particledata {
 		return $r2;
 	}
 
-	function getPixelSizeFromImgId ($imgid) {
+	function getMinimumPixelSizeForSession($sessionid) {
+		// for simplicity this ignores any binning..., which may be bad
+		$q="SELECT "
+			."  MIN(pixelsize) AS val "
+			."FROM ".DB_LEGINON.".PixelSizeCalibrationData "
+			."WHERE DEF_id IN "
+			." ( "
+				."SELECT MAX(pix.`DEF_id`) "
+				."FROM ".DB_LEGINON.".`AcquisitionImageData` AS a "
+				."LEFT JOIN ".DB_LEGINON.".`CameraEMData` AS cam "
+				."  ON (a.`REF|CameraEMData|camera` = cam.`DEF_id`) "
+				."LEFT JOIN ".DB_LEGINON.".`ScopeEMData` AS scope "
+				."  ON (a.`REF|ScopeEMData|scope` = scope.`DEF_id`) "
+				.", ".DB_LEGINON.".PixelSizeCalibrationData AS pix "
+				."WHERE "
+				."  a.`REF|SessionData|session` = '$sessionid' "
+				."AND "
+				."  pix.`REF|InstrumentData|tem` = scope.`REF|InstrumentData|tem` "
+				."AND "
+				."  pix.`magnification` = scope.`magnification` "
+				."AND "
+				."  pix.`REF|InstrumentData|ccdcamera` = cam.`REF|InstrumentData|ccdcamera` "
+				."AND "
+				."  pix.`DEF_timestamp` <= a.`DEF_timestamp` "
+				."GROUP BY a.`DEF_id` "
+			." ) ";
+		//echo $q."<br/><br/>\n";
+		$r = $this->mysql->getSQLResult($q);
+		//echo print_r($r)."<br/><br/>\n";
+		$pixelsize = $r[0]['val'];
+		//echo $pixelsize."<br/><br/>\n";
+		return $pixelsize;
+	}
+
+	function getPixelSizeFromImgIdPresetQuery($imgid) {
 		$q="SELECT pd.`SUBD|binning|x` as imgbin, "
 			."  pc.`pixelsize` as ccdpixelsize  "
 			."FROM ".DB_LEGINON.".`AcquisitionImageData` AS a "
@@ -2475,9 +3126,43 @@ class particledata {
 			."AND "
 			."  pc.`DEF_timestamp` <= a.`DEF_timestamp` "
 			."ORDER BY pc.`DEF_timestamp` DESC ";
+		return $q;
+	}
+
+	function getPixelSizeFromImgIdEMQuery($imgid) {
+		// This is the more reliable query for pixel size but may take longer?
+		$q="SELECT ce.`SUBD|binning|x` as imgbin, "
+			."  pc.`pixelsize` as ccdpixelsize  "
+			."FROM ".DB_LEGINON.".`AcquisitionImageData` AS a "
+			."LEFT JOIN ".DB_LEGINON.".`CameraEMData` AS ce "
+			."  ON (a.`REF|CameraEMData|camera` = ce.`DEF_id`) "
+			."LEFT JOIN ".DB_LEGINON.".`ScopeEMData` AS se "
+			."  ON (a.`REF|ScopeEMData|scope` = se.`DEF_id`) "
+			.", ".DB_LEGINON.".PixelSizeCalibrationData pc "
+			."WHERE "
+			."  a.`DEF_id`='$imgid' "
+			."AND "
+			."  pc.`REF|InstrumentData|tem` = se.`REF|InstrumentData|tem` "
+			."AND "
+			."  pc.`magnification` = se.`magnification` "
+			."AND "
+			."  pc.`REF|InstrumentData|ccdcamera` = ce.`REF|InstrumentData|ccdcamera` "
+			."AND "
+			."  pc.`DEF_timestamp` <= a.`DEF_timestamp` "
+			."ORDER BY pc.`DEF_timestamp` DESC ";
+		return $q;
+	}
+
+	function getPixelSizeFromImgId ($imgid) {
+		$q = $this->getPixelSizeFromImgIdPresetQuery($imgid);
 		//echo $q."<br/>\n";
 		list($r2)=$this->mysql->getSQLResult($q);
 		//echo print_r($r2)."<br/>\n";
+		if ($r2 === null) {
+			// If the session has only manual images, there is no preset.
+			$q = $this->getPixelSizeFromImgIdEMQuery($imgid);
+			list($r2)=$this->mysql->getSQLResult($q);
+		}
 		if ($r2['imgbin']) {
 			$pixelsize = $r2['ccdpixelsize']*$r2['imgbin'];
 		} else {
@@ -2517,7 +3202,7 @@ class particledata {
 			$html .= '<td>'.$runId.'</td>';
 			foreach($display_keys as $field) {
 				$data=$particlestats[$field];
-				if (eregi('^min|^max|^avg|^stddev', $field)) $data=format_sci_number($data,4);
+				if (preg_match('%^min|^max|^avg|^stddev%i', $field)) $data=format_sci_number($data,4);
 				$html .= "<td> $data </td> \n";
 			}
 			$html .= "</tr>\n";
@@ -2530,7 +3215,12 @@ class particledata {
 
 	function getAlignStackIds ($sessionId, $showHidden=False) {
 		//$projectId = (int) getProjectFromExpId($expId);
-		$q = "SELECT ast.`DEF_id` AS alignstackid "
+		// get session name, since original stack may be deleted
+		$q = "SELECT name from ".DB_LEGINON.".SessionData "
+			."WHERE DEF_id=$sessionId";
+		$r = $this->mysql->getSQLResult($q);
+		$sname = $r[0]['name'];
+		$q = "SELECT DISTINCT ast.`DEF_id` AS alignstackid "
 			."FROM ApAlignStackData AS ast "
 			."LEFT JOIN ApStackData AS st ON "
 			."  (ast.`REF|ApStackData|stack` = st.`DEF_id`) "
@@ -2538,8 +3228,12 @@ class particledata {
 			."  (runsin.`REF|ApStackData|stack` = st.`DEF_id`) "
 			."LEFT JOIN ApStackRunData as strun ON "
 			."  (runsin.`REF|ApStackRunData|stackRun`=strun.`DEF_id`) "
+			."LEFT JOIN ApPathData ON "
+			."  (ast.`REF|ApPathData|path`=ApPathData.`DEF_id`) "
 			."WHERE "
-			."  strun.`REF|leginondata|SessionData|session` = '$sessionId' ";
+			."  (strun.`REF|leginondata|SessionData|session` = '$sessionId' "
+			."OR "
+			."  ApPathData.`path` LIKE \"%$sname%\") ";
 		if (!$showHidden)
 			$q.= " AND ast.`hidden` != 1 ";
 		$q.= "ORDER BY alignstackid DESC";
@@ -2551,6 +3245,11 @@ class particledata {
 
 	function getAlignStackIdsWithAnalysis ($sessionId, $projectId) {
 		//$projectId = (int) getProjectFromExpId($expId);
+		// get session name, since original stack may be deleted
+		$q = "SELECT name from ".DB_LEGINON.".SessionData "
+			."WHERE DEF_id=$sessionId";
+		$r = $this->mysql->getSQLResult($q);
+		$sname = $r[0]['name'];
 		$q = "SELECT DISTINCT ast.`DEF_id` AS alignstackid "
 			."FROM ApAlignStackData AS ast "
 			."LEFT JOIN ApAlignAnalysisRunData AS analysis ON "
@@ -2561,14 +3260,50 @@ class particledata {
 			."  (runsin.`REF|ApStackData|stack` = st.`DEF_id`) "
 			."LEFT JOIN ApStackRunData as strun ON "
 			."  (runsin.`REF|ApStackRunData|stackRun`=strun.`DEF_id`) "
+			."LEFT JOIN ApPathData ON "
+			."  (ast.`REF|ApPathData|path`=ApPathData.`DEF_id`) "
 			."WHERE "
-			."  strun.`REF|leginondata|SessionData|session` = '$sessionId' "
+			."  (strun.`REF|leginondata|SessionData|session` = '$sessionId' "
+			."OR "
+			."  ApPathData.`path` LIKE \"%$sname%\") "
 			."AND "
 			."  ast.`hidden` != 1 "
 			."AND "
 			."  analysis.`hidden` != 1 "
 			."AND "
 			."  analysis.`DEF_id` IS NOT NULL "
+			."ORDER BY alignstackid DESC";
+		//echo $q."<br/><br/>\n";
+		$r = $this->mysql->getSQLResult($q);
+		//echo print_r($r)."<br/><br/>\n";
+		return $r;
+	}
+	
+	function getAlignStackIdsWithClusterRun ($sessionId, $projectId) {
+		$q = "SELECT name from ".DB_LEGINON.".SessionData "
+			."WHERE DEF_id=$sessionId";
+		$r = $this->mysql->getSQLResult($q);
+		$sname = $r[0]['name'];
+		$q = "SELECT DISTINCT ast.`DEF_id` AS alignstackid "
+			."FROM ApAlignStackData AS ast "
+			."LEFT JOIN ApClusteringRunData AS cluster ON "
+			."  (cluster.`REF|ApAlignStackData|alignstack` = ast.`DEF_id`)"
+			."LEFT JOIN ApStackData AS st ON "
+			."  (ast.`REF|ApStackData|stack` = st.`DEF_id`) "
+			."LEFT JOIN ApRunsInStackData as runsin ON "
+			."  (runsin.`REF|ApStackData|stack` = st.`DEF_id`) "
+			."LEFT JOIN ApStackRunData as strun ON "
+			."  (runsin.`REF|ApStackRunData|stackRun`=strun.`DEF_id`) "
+			."LEFT JOIN ApPathData ON "
+			."  (ast.`REF|ApPathData|path`=ApPathData.`DEF_id`) "
+			."WHERE "
+			."  (strun.`REF|leginondata|SessionData|session` = '$sessionId' "
+			."OR "
+			."  ApPathData.`path` LIKE \"%$sname%\") "
+			."AND "
+			."  ast.`hidden` != 1 "
+			."AND "
+			."  cluster.`DEF_id` IS NOT NULL "
 			."ORDER BY alignstackid DESC";
 		//echo $q."<br/><br/>\n";
 		$r = $this->mysql->getSQLResult($q);
@@ -2626,6 +3361,12 @@ class particledata {
 
 	function getAnalysisRuns ($sessionId, $projectId, $showHidden=False) {
 		// This query left join ApCoranRun probably for historical reason
+		// get session name, since original stack may be deleted
+		$q = "SELECT name from ".DB_LEGINON.".SessionData "
+			."WHERE DEF_id=$sessionId";
+		$r = $this->mysql->getSQLResult($q);
+		$sname = $r[0]['name'];
+
 		$q = "SELECT analysis.`DEF_id` AS analysisid, analysis.* ";
 		if ($this->mysql->SQLTableExists("ApCoranRunData")) {
 			$q .= ", coran.* ";
@@ -2643,8 +3384,12 @@ class particledata {
 			$q .= "LEFT JOIN ApCoranRunData as coran ON "
 			." (analysis.`REF|ApCoranRunData|coranrun` = coran.`DEF_id`) ";
 		}
-		$q .=	"WHERE "
-			." strun.`REF|leginondata|SessionData|session` = '$sessionId' ";
+		$q .=	"LEFT JOIN ApPathData ON "
+			."  (ast.`REF|ApPathData|path`=ApPathData.`DEF_id`) "
+			."WHERE "
+			."  (strun.`REF|leginondata|SessionData|session` = '$sessionId' "
+			."OR "
+			."  ApPathData.`path` LIKE \"%$sname%\") ";
 		if (!$showHidden)
 			$q.= " AND analysis.`hidden` != 1 AND ast.`hidden` != 1 ";
 		$q .= "ORDER BY analysisid DESC ";
@@ -2759,7 +3504,45 @@ class particledata {
 		return $r;
 	}
 
+	function getFinishedCL2DJobs ($projectId) {
+		$q = "SELECT cl2djob.*, path.path "
+			."FROM ApCL2DRunData AS cl2djob "
+			."LEFT JOIN ApPathData as path ON "
+			."  cl2djob.`REF|ApPathData|path` = path.`DEF_id` ";
+		$q .=	"WHERE "
+			."  cl2djob.`REF|projectdata|projects|project` = '$projectId' "
+			." AND "
+			."  cl2djob.`finished` = '1' ";
+			$q .=	" ORDER BY cl2djob.`DEF_id` DESC ";
+		//echo $q."<br/><br/>\n";
+		$r = $this->mysql->getSQLResult($q);
+		//echo print_r($r)."<br/><br/>\n";
+		return $r;
+	}
+
+	function getFinishedSIMPLEClusteringJobs ($projectId) {
+		$q = "SELECT simplejob.*, path.path "
+			."FROM ApSIMPLEClusterRunData AS simplejob "
+			."LEFT JOIN ApPathData as path ON "
+			."  simplejob.`REF|ApPathData|path` = path.`DEF_id` ";
+		$q .=	"WHERE "
+			."  simplejob.`REF|projectdata|projects|project` = '$projectId' "
+			." AND "
+			."  simplejob.`finished` = '1' ";
+			$q .=	" ORDER BY simplejob.`DEF_id` DESC ";
+		//echo $q."<br/><br/>\n";
+		$r = $this->mysql->getSQLResult($q);
+		//echo print_r($r)."<br/><br/>\n";
+		return $r;
+	}
+
 	function getClusteringStacks ($sessionId, $projectId, $showHidden=False) {
+		// get session name, since original stack may be deleted
+		$q = "SELECT name from ".DB_LEGINON.".SessionData "
+			."WHERE DEF_id=$sessionId";
+		$r = $this->mysql->getSQLResult($q);
+		$sname = $r[0]['name'];
+
 		$q = "SELECT cluster.`DEF_id` AS clusterid, clusterrun.*, cluster.*, pd.`path` "
 			."FROM ApClusteringStackData AS cluster "
 			."LEFT JOIN ApClusteringRunData AS clusterrun ON "
@@ -2774,8 +3557,12 @@ class particledata {
 			." (runsin.`REF|ApStackRunData|stackRun`=strun.`DEF_id`) "
 			."LEFT JOIN ApPathData AS pd ON "
 			."  (cluster.`REF|ApPathData|path` = pd.`DEF_id`) "
+			."LEFT JOIN ApPathData ON "
+			."  (ast.`REF|ApPathData|path`=ApPathData.`DEF_id`) "
 			."WHERE "
-			." strun.`REF|leginondata|SessionData|session` = '$sessionId' ";
+			."  (strun.`REF|leginondata|SessionData|session` = '$sessionId' "
+			."OR "
+			."  ApPathData.`path` LIKE \"%$sname%\") ";
 		if (!$showHidden)
 			$q.= " AND cluster.`hidden` != 1 AND ast.`hidden` != 1 ";
 		$q .= "ORDER BY clusterid DESC ";
@@ -2932,24 +3719,124 @@ class particledata {
 		return $r;
 	}
 
-	#--------- MAKE MASK FUNCTIONS---------------#
-
-	function getMaskMakerRunIds ($sessionId) {
-		$q = "select * "
-			."from `ApMaskMakerRunData` where `REF|leginondata|SessionData|session` = '$sessionId'";
-		$r = $this->mysql->getSQLResult($q);
+	#--------- RECIPE BAKING FUNCTIONS---------------#
+	function getAllRecipeData() {
+		# Return all recipe info
+		$q = "SELECT `DEF_id`, `name`, `description`, `ctfrunids`, "
+			."`REF|ApStackData|stack` as stackid, "
+			."`REF|ApAlignStackData|alignstack` as alignstackid "
+			."FROM ApRecipeData";
+		$r=$this->mysql->getSQLResult($q);
 		return $r;
 	}
 
+	function getRecipeDataFromId($rid,$remove=False) {
+		# Return info for recipe, or delete it
+		if ($remove) { 
+			$q = "DELETE FROM ApRecipeData WHERE `DEF_id`=$rid";
+			$r=$this->mysql->SQLQuery($q);
+			return;
+		}
+
+		$q = "SELECT `DEF_id`, `name`, `description`, `ctfrunids`, "
+			."`REF|ApStackData|stack` as stackid, "
+			."`REF|ApAlignStackData|alignstack` as alignstackid "
+			."FROM ApRecipeData "
+			."WHERE `DEF_id`=$rid";
+		echo $q;
+		$r=$this->mysql->getSQLResult($q);
+		return $r[0];
+	}
+
+	function getRecipeNames() {
+		# Return all the names for the recipes in a database
+		$q = "SELECT name FROM ApRecipeData";
+		$r=$this->mysql->getSQLResult($q);
+		if ($r) {
+			$names=array();
+			foreach ($r as $ra) $names[]=$ra['name'];
+		}
+		return $names;
+	}
+
+	function bakeRecipe($name, $description, $stackid, $alignstackid, $ctfrunids=False) {
+		# Make sure row doesn't already exist
+		$q = "SELECT * FROM ApRecipeData "
+			."WHERE ";
+		if ($stackid) $q.="`REF|ApStackData|stack` = $stackid";
+		elseif ($alignstackid) $q.="`REF|ApAlignStackData|alignstack` = $alignstackid ";
+		$r = $this->mysql->getSQLResult($q);
+		if ($r) return("exists");
+
+		$q = "INSERT INTO `ApRecipeData` "
+			."(`name`, `description`,`ctfrunids`,`REF|ApStackData|stack`,`REF|ApAlignStackData|alignstack`) "
+			."VALUES "
+			."('$name','".mysql_real_escape_string($description)."',";
+		$q .= ($ctfrunids) ? "'$ctfrunids'," : "NULL,";
+		$q .= ($stackid) ? "'$stackid'," : "NULL,";
+		$q .= ($alignstackid) ? "'$alignstackid'" : "NULL";
+		$q .= ")";
+		$r=$this->mysql->SQLQuery($q);
+		if ($r) return "ok";
+		
+	}
+
+
+	#--------- MAKE MASK FUNCTIONS---------------#
+
+	function getMaskMakerRunIds ($sessionId) {
+		return $this->getRunIds($sessionId, "ApMaskMakerRunData", True);
+	}
+
+	function getMaskRunPathFromMaskRunId ( $maskRunId ) {
+		$q = "select p.`path` "
+			."from `ApPathData` p "
+			."left join `ApMaskMakerRunData` m "
+			."on (p.`DEF_id` = m.`REF|ApPathData|path`) "
+			."where m.`DEF_id` = $maskRunId ";
+			
+		$r = $this->mysql->getSQLResult($q);
+		if ($r === False) {
+			$dberror = $this->mysql->getError();
+			//echo "error -> $dberror \n";
+			error_log("Error: database error in particledata.inc, getMaskAssessRunIds(): $dberror /n");
+		}
+		return $r;
+	}
+	
 	function getMaskAssessRunIds ($sessionId) {
 		$q = "select * "
 			."from `ApMaskAssessmentRunData` where `REF|leginondata|SessionData|session` = '$sessionId'";
 		$r = $this->mysql->getSQLResult($q);
+		if ($r === False) {
+			$dberror = $this->mysql->getError();
+			//echo "error -> $dberror \n";
+			error_log("Error: database error in particledata.inc, getMaskAssessRunIds(): $dberror /n");
+		}
 		return $r;
 	}
-
+	
+	function getMaskAssessRunId( $sessionId, $maskRunId ) 
+	{
+		$q = "select `DEF_id` "
+			."from `ApMaskAssessmentRunData` where `REF|leginondata|SessionData|session` = '$sessionId' and `REF|ApMaskMakerRunData|maskrun` = $maskRunId";
+		$r = $this->mysql->getSQLResult($q);
+		if ($r === False) {
+			$dberror = $this->mysql->getError();
+			echo "error -> $dberror \n";
+			error_log("Error: database error in particledata.inc, getMaskAssessRunId(): $dberror /n");
+		}
+		$id = $r[0]["DEF_id"];
+		return $id;
+	}
+	
 	function hasMaskMakerData ($sessionId) {
 		$r= ($this->getLastMaskMakerRun($sessionId)) ? true : false;
+		if ($r === False) {
+			$dberror = $this->mysql->getError();
+			//echo "error -> $dberror \n";
+			error_log("Error: database error in particledata.inc, hasMaskMakerData(): $dberror /n");
+		}
 		return $r;
 	}
 
@@ -2960,6 +3847,20 @@ class particledata {
 		return $r[runId];
 	}
 
+	function getMaskMakerRunByPath( $sessionId, $path ) 
+	{
+		$q = "select m.`DEF_id` as runId "
+			."from `ApMaskMakerRunData` m where m.`REF|leginondata|SessionData|session` = $sessionId "
+			."and m.`REF|ApPathData|path` in (SELECT p.`DEF_id` from `ApPathData` AS p where p.`path` LIKE \"%$path%\") ";
+		list($r) = $this->mysql->getSQLResult($q);
+		if ($r === False) {
+			$dberror = $this->mysql->getError();
+			echo "error -> $dberror query -> $q \n";
+			error_log("Error: database error in particledata.inc, updateMaskAssessmentByImage(): $dberror /n");
+		}
+		return $r[runId];
+	}
+	
 	function getMaskMakerParams ($runId) {
 		$q = "select * from ApMaskMakerRunData "
 			." where `DEF_id` = '$runId' ";
@@ -2967,8 +3868,9 @@ class particledata {
 
 		//print_r ($r);
 		//echo $r['REF|ApMaskMakerParamsData|params'];
-		$q = "select s.*, r.name, r.`REF|leginondata|SessionData|session` ";
+		$q = "select s.*, p.path, r.name, r.`REF|leginondata|SessionData|session` ";
 
+		// TODO: does this table even exist?
 		if ($r['REF|ApMaskMakerParamsData|params']) {
 			$maskparamid=$r['REF|ApSelectionParamsData|params'];
 			$q .= "from ApMaskMakerParamsData s "
@@ -3016,8 +3918,9 @@ class particledata {
 	}
 
 	function displayMaskRegionStats ($expId,$particleruns, $display_keys, $inspect=False, $selexval=False) {
-		if (!is_array($particleruns))
+		if (!is_array($particleruns)) {
 			return ;
+		}
 		$html = "<BR>\n<table class='tableborder' border='1' cellspacing='1' cellpadding='5'>\n";
 		$html .= "<tr> <td> </td>";
 		foreach($display_keys as $key) {
@@ -3043,7 +3946,7 @@ class particledata {
 			$html .= "<td><a target='params' href='maskrunreport.php?expId=$expId&rId=$runId'>".$r0['name']."</a></td>";
 			foreach($display_keys as $field) {
 							$data=$regionstats[$field];
-				if (eregi('^areamean|^Imean|^Istddev', $field)) $data=format_sci_number($data,4);
+				if (preg_match('^areamean^', $field) || preg_match('^Imean^', $field) || preg_match('^Istddev^', $field)) $data=format_sci_number($data,4);
 				$html .= "<td> $data </td> \n";
 			}
 			$html .= "</tr>\n";
@@ -3097,6 +4000,96 @@ class particledata {
 		return $r[0];
 
 	}
+	
+	// $maskId is the DEF_id of the region in ApMaskAssessmentData
+	// $newStatus is boolean True or False
+	// True means the region will be considered during stack creation
+	// and particles within the region will not be used. 
+	// False means this region will be ignored and particles within the 
+	// region will still be used for stack creation.
+	function updateMaskAssessment( $maskId, $newStatus) 
+	{
+		$table = "ApMaskAssessmentData";
+		$field = "keep";
+		// make sure the row and column exists 
+		$q = "SELECT `".$field."` "
+			."FROM `".$table."` "
+			."WHERE `DEF_id`=".$maskId." ";
+		$olddata = $this->mysql->getSQLResult($q);
+		if ( array_key_exists($field, $olddata[0]) ) {
+			$data 			= array();
+			$data[$field] 	= $newStatus;
+			$where 			= array('DEF_id'=>$maskId);
+			$this->mysql->SQLUpdate( $table, $data, $where );
+		}
+	}	
+	
+	// Update all the masks for a given image with the new status.
+	// Use the $assessRunId to find the ApMaskMakerRunData ID.
+	// Use the $imageId with the mask maker run id to find all the mask region ids that should change.
+	// Use the mask region id with the assessment run ID to update the status in ApMaskAssessmentData.
+	// For now, not using the assessment run ID, I think there is only one per region.
+	function updateMaskAssessmentByImage( $imageId, $assessRunId, $newStatus) 
+	{
+		// Pull the region id from ApMaskRegionData and give it a key of 
+		// REF|ApMaskRegionData|region to match what we are looking for in ApMaskAssessmentData.
+		$q = "SELECT regions.`DEF_id` as `REF|ApMaskRegionData|region` "
+			."FROM `ApMaskRegionData` as regions "
+			."LEFT JOIN `ApMaskAssessmentRunData` as assessRun "
+			."ON (assessRun.`REF|ApMaskMakerRunData|maskrun` = regions.`REF|ApMaskMakerRunData|maskrun`) "
+			."WHERE assessRun.`DEF_id`=".$assessRunId." AND regions.`REF|leginondata|AcquisitionImageData|image`=".$imageId." ";
+
+		$regionIds = $this->mysql->getSQLResult($q);
+		if ($regionIds === False) {
+			$dberror = $this->mysql->getError();
+			//echo "error -> $dberror query -> $q \n";
+			error_log("Error: database error in particledata.inc, updateMaskAssessmentByImage(): $dberror /n");
+		}
+		
+		// Update keep status
+		$data 			= array();
+		$data["keep"] 	= $newStatus;
+		foreach ( $regionIds as $regionId ) {
+			$this->mysql->SQLUpdate( "ApMaskAssessmentData", $data, $regionId );
+		}
+	}		
+
+	function getMaskAssessment( $imageId, $maskRunId) 
+	{
+		// First find the mask region ID
+		$q = "SELECT `DEF_id` "
+			."FROM `ApMaskRegionData` "
+			."WHERE `REF|leginondata|AcquisitionImageData|image`=".$imageId." and `REF|ApMaskMakerRunData|maskrun`=".$maskRunId." ";
+			
+		$regionIdResult = $this->mysql->getSQLResult($q);
+		if ($regionIdResult === False) {
+			$dberror = $this->mysql->getError();
+			echo "error -> $dberror query -> $q \n";
+			//error_log("Error: database error in particledata.inc, updateMaskAssessmentByImage(): $dberror /n");
+			return;
+		} else if ( empty($regionIdResult) ) {
+			//var_dump($q);
+			return;
+		} else {
+			$regionId = $regionIdResult[0]['DEF_id'];
+		}
+		
+		// Now find the keep status from the region id
+		$table = "ApMaskAssessmentData";
+		$field = "keep";
+		// make sure the row and column exists 
+		$q = "SELECT `".$field."` "
+			."FROM `".$table."` "
+			."WHERE `REF|ApMaskRegionData|region`=".$regionId." ";
+		
+		$r = $this->mysql->getSQLResult($q);
+		if ($r === False) {
+			$dberror = $this->mysql->getError();
+			echo "error -> $dberror query -> $q \n";
+			//error_log("Error: database error in particledata.inc, updateMaskAssessmentByImage(): $dberror /n");
+		}
+		return $r[0]['keep'];
+	}		
 
 	#---------RECONSTRUCTION FUNCTIONS---------------#
 
@@ -3147,6 +4140,20 @@ class particledata {
 		$r = $this->mysql->getSQLResult($q);
 		return $r;
 	}
+	
+	function getModelsFromRefineID( $refineID )
+	{
+		$q = "SELECT model.*, refmodel.filename  "
+			. " FROM `ApRefineInitModelData` AS refmodel, ApInitialModelData AS model "
+			. " WHERE refmodel.`REF|ApPrepRefineData|preprefine` = $refineID "
+			. " AND refmodel.`REF|ApInitialModelData|refmodel` = model.`DEF_id` ";
+
+		//echo $q."<br/><br/>\n";
+		$r = $this->mysql->getSQLResult($q);
+		//echo print_r($r)."<br/><br/>\n";
+		return $r;	
+	}
+	
 
 	function updateExemplar($table, $id, $value) {
 		$q = "SELECT exemplar "
@@ -3171,6 +4178,30 @@ class particledata {
 		$r = $this->mysql->getSQLResult($q);
 		return $r;
 	}
+	
+	function getJobTypesLike( $expId, $pattern )
+	{
+		$q="SELECT DISTINCT(j.`jobtype`) "
+			."FROM `ApAppionJobData` AS j "
+			."WHERE j.`REF|leginondata|SessionData|session` = $expId "
+			."AND j.`jobtype` LIKE '$pattern' ";
+		
+		$r = $this->mysql->getSQLResult($q);
+		
+		return $r;
+	}
+
+	function getJobNameTypesLike( $expId, $name, $pattern )
+	{
+		$q="SELECT * "
+			."FROM `ApAppionJobData` AS j "
+			."WHERE j.`REF|leginondata|SessionData|session` = $expId "
+			."AND j.`name` LIKE '$name' "
+			."AND j.`jobtype` LIKE '$pattern' ";
+		$r = $this->mysql->getSQLResult($q);
+		
+		return $r;
+	}
 
 	function getJobIdsFromSession($expId, $jobtype=False, $status=False, $ignore=True) {
 		$q="SELECT j.*, "
@@ -3184,6 +4215,10 @@ class particledata {
 		if ($ignore) $q.=" AND j.`status` != 'I'";
 		$q.=" ORDER BY j.`DEF_id` DESC ";
 		$r = $this->mysql->getSQLResult($q);
+		if ($r === False) {
+			$dberror = $this->mysql->getError();
+			error_log("Error: database error in particledata.inc, getJobIdsFromSession(): $dberror /n");
+		}
 		return $r;
 	}
 
@@ -3215,12 +4250,13 @@ class particledata {
 		return $r[0];
 	}
 
-	function getJobFileFromPath($path,$name) {
+	function getJobFileFromPath($path,$name=False) {
 		$q="SELECT j.*, p.path "
 			."FROM `ApAppionJobData` AS j "
 			."LEFT JOIN ApPathData AS p ON "
 			."(j.`REF|ApPathData|path` = p.`DEF_id`) "
-			."WHERE p.`path` = '$path' AND j.`name` = '$name'";
+			."WHERE p.`path` = '$path'";
+			if ($name) $q.= " AND j.`name` = '$name'";
 		$r = $this->mysql->getSQLResult($q);
 		return $r;
 	}
@@ -3261,7 +4297,8 @@ class particledata {
 			."FROM `ApAppionJobData` "
 			."WHERE `REF|ApPathData|path` = $pathid AND "
 			."`name` = '$name' AND "
-			."`REF|leginondata|SessionData|session` = $expId";
+			."`REF|leginondata|SessionData|session` = $expId "
+			." AND `jobtype` = $jobtype ";
 		$r = $this->mysql->getSQLResult($q);
 		$jid=$r[0]['DEF_id'];
 		// if not in database, insert
@@ -3335,18 +4372,20 @@ class particledata {
 		$this->mysql->SQLUpdate('ApAppionJobData',$data,$where);
 	}
 
-	function updateClusterJobStatus($jobid, $status) {
+	function updateClusterJobStatus($jobid, $status, $user=false) {
 		$data = array('status'=>$status);
 		$where = array('DEF_id'=>$jobid);
+		if ($user)
+			$where['user'] = $user;
 		$this->mysql->SQLUpdate('ApAppionJobData',$data, $where);
 	}
 
 	function abortClusterJob($jobid, $user=false) {
-		$data = array('status'=>'A');
-		$where = array('DEF_id'=>$jobid);
-		if ($user)
-			$where['user'] = $user;
-		$this->mysql->SQLUpdate('ApAppionJobData', $data, $where);
+		$this->updateClusterJobStatus($jobid,'A',$user);
+	}
+
+	function markDoneAppionJob($jobid, $user=false) {
+		$this->updateClusterJobStatus($jobid,'D',$user);
 	}
 
 	function getSubmittedJobs($expId) {
@@ -3357,7 +4396,23 @@ class particledata {
 		return $r;
 	}
 
-	function getReconIdFromAppionJobId ($jobid) {
+	function abortSimilarJobs($expId,$jobname,$jobtype) {
+		/*
+		This function is used to change status of the multiple attempts of the
+		same job when one of them has been forced by the user to done or abort.
+		*/
+		$aborted_jobids = array();
+		$jobs = $this->getJobNameTypesLike($expId,$jobname,$jobtype);
+		foreach ($jobs as $job) {
+			if ($job['status'] == 'Q') {
+				$this->updateClusterjobStatus($job['DEF_id'],'A',false);
+				$aborted_jobids[]=$job['DEF_id'];
+			}
+		}
+		return $aborted_jobids;
+	}
+
+	function getReconIdFromAppionJobId($jobid) {
 		$q="SELECT * "
 			."FROM `ApRefineRunData` "
 			."WHERE `REF|ApAppionJobData|job` = $jobid";
@@ -3365,7 +4420,86 @@ class particledata {
 		return $r[0];
 	}
 
-	function getReconIdsFromSession ($sessionId, $showHidden=false, $package=false) {
+	function getJobNamesFromJobType( $jobtype, $sessionId )
+	{
+		$q = "select name from `ApAppionJobData` "
+			."where `REF|leginondata|SessionData|session` = $sessionId "
+			."and jobtype = '$jobtype'";
+		$r = $this->mysql->getSQLResult($q);
+
+		if ( $r === False ) {
+			$dberror = $this->mysql->getError();
+			error_log("Error: database error in particledata.inc, getDefaultJobName(): $dberror /n");
+		}
+		return $r;
+	}
+	
+	// parse the runname into its components
+	static function getJobRunIdFromRunname( $runname ) 
+	{
+		// step 1: strip the jobtype and id from the runname
+		
+		// check if the runname has a timestamp appended seperated by '-'
+		// explode returns an empty array if the delimiter is not found and the limit is negative
+		list($baseRunName, $extension) = explode( "-", $runname, -1 );
+		
+		// check if the jobtype and id are followed by a '.' with other stuff 
+		if ( !$baseRunName ) {
+			list($baseRunName, $extension) = explode( ".", $runname, -1 );
+		}
+		if ( !$baseRunName ) {
+			error_log("Error: unable to parse the 'runname' in particledata.inc, getJobRunIdFromRunname./n");
+		}
+
+		// step 2: match the $baseRunName with letters in the front and id with numbers at the end of the string
+		preg_match('/(\D+)(\d+)$/', $baseRunName, $matches);
+		$program = $matches[1];
+		$runId = $matches[2];
+		return $runId;
+	}
+	
+	function getMaxRunNumber( $jobtype, $sessionId )
+	{
+		// get job names corresponding to the desired type for this session
+		$names = $this->getJobNamesFromJobType( $jobtype, $sessionId );
+		
+		// find the name with the greatest incremental id ex. recon4 is greater than recon3
+		$maxRunNumber = 0;
+		if ( !empty($names) ) {
+			foreach ( $names as $name ) {
+				$runNumber = $this->getJobRunIdFromRunname( $name['name'] );
+				$maxRunNumber = ( $runNumber > $maxRunNumber ) ? $runNumber : $maxRunNumber;
+			}
+		}
+		
+		return $maxRunNumber;
+	}
+	
+	function getDefaultJobName( $jobtype, $sessionId )
+	{
+		// check input values
+		if ( !$jobtype ) {
+			error_log("Error: 'jobtype' Parameter in particledata.inc, getDefaultJobName() is not set./n");
+			return False;
+		} 
+		
+		if ( !$sessionId ) {
+			error_log("Error: 'sessionId' Parameter in particledata.inc, getDefaultJobName() is not set./n");
+			return False;
+		}
+		
+		$lastRunNumber = $this->getMaxRunNumber( $jobtype, $sessionId );
+		
+		// increment the current run number and append it to the jobtype to create new jobname
+		$lastRunNumber++;
+		$jobName = $jobtype . $lastRunNumber;
+		
+		return $jobName;
+	}
+	
+	// Warning: do not use this function for counting the number of runs to create a new runname.
+	// try getMaxRunNumber instead.
+	function getReconIdsFromSession($sessionId, $showHidden=false, $package=false) {
 		$q = "SELECT DISTINCT(refrun.`DEF_id`) AS refid, refrun.*, path.path AS path  "
 			." FROM `ApRefineRunData` AS refrun "
 			."LEFT JOIN ApRunsInStackData AS runs "
@@ -3384,12 +4518,59 @@ class particledata {
 		return $r;
 	}
 
-	function getReconIterIdRelatedToStackid ($stackId, $showHidden=False) {
-		// First get a three random particle ids from the stack id
+	// Warning: do not use this function for counting the number of runs to create a new runname.
+	// try getMaxRunNumber instead.
+	function getMultiModelReconIdsFromSession($sessionId, $showHidden=false, $package=false) {
+		$q = "SELECT DISTINCT(refrun.`DEF_id`) AS refid, refrun.*, path.path AS path "
+			." FROM `ApRefineRunData` AS refrun "
+			."LEFT JOIN ApRunsInStackData AS runs "
+			." ON refrun.`REF|ApStackData|stack` = runs.`REF|ApStackData|stack` "
+			."LEFT JOIN ApStackRunData AS stackrun "
+			." ON runs.`REF|ApStackRunData|stackRun` = stackrun.`DEF_id` "
+			."LEFT JOIN ApPathData AS path "
+			." ON refrun.`REF|ApPathData|path` = path.`DEF_id` "
+			."WHERE stackrun.`REF|leginondata|SessionData|session` = '$sessionId' "
+			." AND refrun.`REF|ApMultiModelRefineRunData|multiModelRefineRun` IS NOT NULL ";
+		if (!$showHidden) $q.= " AND (refrun.`hidden` IS NULL OR refrun.`hidden` = 0) ";
+		if ($package) $q.= " AND (refrun.`package` = '$package') ";
+		$q.= " ORDER BY refrun.`DEF_id` DESC";
+		//echo $q."<br/><br/>\n";
+		$r = $this->mysql->getSQLResult($q);
+		//echo print_r($r)."<br/>\n";
+		return $r;
+	}
+	
+	// Warning: do not use this function for counting the number of runs to create a new runname.
+	// try getMaxRunNumber instead.
+	function getSingleModelReconIdsFromSession($sessionId, $showHidden=false, $package=false) {
+		$q = "SELECT DISTINCT(refrun.`DEF_id`) AS refid, refrun.*, path.path AS path "
+			." FROM `ApRefineRunData` AS refrun "
+			."LEFT JOIN ApRunsInStackData AS runs "
+			." ON refrun.`REF|ApStackData|stack` = runs.`REF|ApStackData|stack` "
+			."LEFT JOIN ApStackRunData AS stackrun "
+			." ON runs.`REF|ApStackRunData|stackRun` = stackrun.`DEF_id` "
+			."LEFT JOIN ApPathData AS path "
+			." ON refrun.`REF|ApPathData|path` = path.`DEF_id` "
+			."WHERE stackrun.`REF|leginondata|SessionData|session` = '$sessionId' "
+			." AND refrun.`REF|ApMultiModelRefineRunData|multiModelRefineRun` IS NULL ";
+		if (!$showHidden) $q.= " AND (refrun.`hidden` IS NULL OR refrun.`hidden` = 0) ";
+		if ($package) $q.= " AND (refrun.`package` = '$package') ";
+		$q.= " ORDER BY refrun.`DEF_id` DESC";
+		//echo $q."<br/><br/>\n";
+		$r = $this->mysql->getSQLResult($q);
+		//if ($e=$this->mysql->getError()) {
+			//echo "error -> $e \n";
+		//}
+		//echo print_r($r)."<br/>\n";
+		return $r;
+	}
+	
+	function getReconIterIdRelatedToStackid($stackId, $showHidden=False) {
+		// First get first three particle ids from the stack id
 		$q = "SELECT `REF|ApParticleData|particle` AS partid "
 			." FROM ApStackParticleData AS stpart "
 			."WHERE `REF|ApStackData|stack` = '$stackId' "
-			." ORDER BY RAND() LIMIT 3 ";
+			."LIMIT 3 ";
 		//echo $q."<br/><br/>\n";
 		$r1 = $this->mysql->getSQLResult($q);
 		//echo print_r($r1)."<br/><br/>\n";
@@ -3420,7 +4601,7 @@ class particledata {
 		return $r2;
 	}
 
-	function getExemplarReconsFromSession ($sessionId, $showHidden=False) {
+	function getExemplarReconsFromSession($sessionId, $showHidden=False) {
 		$q = "SELECT refdata.`DEF_id` as refdataid, "
 			."refrun.`DEF_id` as refrunid, "
 			."refdata.*, refrun.*, stackrun.*, runs.*, p.*, params.* "
@@ -3445,7 +4626,7 @@ class particledata {
 		return $r;
 	}
 
-	function getReconIds ($stackId, $showHidden=False) {
+	function getReconIds($stackId, $showHidden=False) {
 		$q = "SELECT * "
 			."FROM `ApRefineRunData` AS r ";
 		if (!$showHidden)
@@ -3579,6 +4760,20 @@ class particledata {
 					."ON (r.`REF|ApXmippRefineIterData|xmippParams` = p.`DEF_id`) "
 					."WHERE r.`REF|ApRefineRunData|refineRun` = '$reconId' "
 					."ORDER BY r.`iteration` ASC ";
+		} elseif ($r[0]['REF|ApFrealignIterData|frealignParams']) {
+			$q = "SELECT * "
+					."FROM `ApRefineIterData` r "
+					."LEFT JOIN `ApFrealignIterData` p "
+					."ON (r.`REF|ApFrealignIterData|frealignParams` = p.`DEF_id`) "
+					."WHERE r.`REF|ApRefineRunData|refineRun` = '$reconId' "
+					."ORDER BY r.`iteration` ASC ";
+		} elseif ($r[0]['REF|ApRelionIterData|relionParams']) {
+			$q = "SELECT * "
+					."FROM `ApRefineIterData` r "
+					."LEFT JOIN `ApRelionIterData` p "
+					."ON (r.`REF|ApRelionIterData|relionParams` = p.`DEF_id`) "
+					."WHERE r.`REF|ApRefineRunData|refineRun` = '$reconId' "
+					."ORDER BY r.`iteration` ASC ";
 		}
 		//echo $q."<br/><br/>\n";
 		$r = $this->mysql->getSQLResult($q);
@@ -3651,7 +4846,13 @@ class particledata {
 		} else {
 			if ($subset=='bad')
 				$q.="AND (refinepart.`refine_keep` = 0 OR refinepart.`refine_keep` IS NULL) ";
-			else
+			elseif (stripos($subset,';')!==false) {
+				$bits = explode(';',$subset);
+				$threeDref_num = $bits[0];
+				$twoDclass_num = $bits[1];
+				if (is_numeric($threeDref_num) && is_numeric($twoDclass_num) && $threeDref_num > 0 && $twoDclass_num >= 0) 
+					$q.="AND (refinepart.`3Dref_num` = $threeDref_num AND refinepart.`2Dclass_num` = $twoDclass_num) ";
+			} else
 				$q.="AND refinepart.`refine_keep` = 1 ";
 		}
 		$q.= "ORDER BY stackpart.`particleNumber` ASC ";
@@ -3660,6 +4861,17 @@ class particledata {
 		//echo print_r($r)."<br/><br/>\n";
 		return $r;
 	}
+	
+	function getNumParticlesFromRefineIter($refineIterId) 
+	{
+		$q = "SELECT COUNT(*) as num_parts ";
+		$q .= "FROM `ApRefineParticleData` AS refinepart "
+			."WHERE refinepart.`REF|ApRefineIterData|refineIter` = '$refineIterId' ";
+		//echo $q."<br/><br/>\n";
+		$r = $this->mysql->getSQLResult($q);
+		//echo print_r($r)."<br/><br/>\n";
+		return $r;
+	}	
 
 	function getPreparedFrealignJobs ($jobid=False, $path=False, $showHidden=true) {
 		$q = "SELECT fre.*, path.path, job.`DEF_id` AS jobid  "
@@ -3680,6 +4892,38 @@ class particledata {
 		return $r;
 	}
 
+	function getPreparedRefineJobs ($jobid=False, $path=False, $showHidden=true, $name=False) {
+		$q = "SELECT ref.*, path.path, job.`DEF_id` AS jobid  "
+			. " FROM `ApPrepRefineData` AS ref "
+			. " LEFT JOIN ApPathData AS path ON ( ref.`REF|ApPathData|path` = path.`DEF_id` ) "
+			. " LEFT JOIN ApAppionJobData AS job ON ( ref.`REF|ApAppionJobData|job` = job.`DEF_id` ) ";
+		if ($jobid) {
+			$q .= " WHERE job.`DEF_id` = '$jobid' ";
+		} elseif ($path) {
+			$q .= " WHERE ref.`REF|ApPathData|path` = '$path' ";
+		} elseif ($name) {
+			$q .= " WHERE ref.`name` = '$name' ";
+		} elseif (!$showHidden) {
+			$q .= " WHERE ref.`hidden` != '1' AND job.`status` = 'D' ";
+		}
+		$q .=  "  ORDER BY ref.`DEF_id` DESC ";
+		//echo $q."<br/><br/>\n";
+		$r = $this->mysql->getSQLResult($q);
+		//echo print_r($r)."<br/><br/>\n";
+		return $r;
+	}
+	
+	function getPreparedRefineStackData ( $refineid ) {
+		$q = "SELECT stack.*, stackref.pixelsize AS parent_pixelsize  "
+			. " FROM ApRefineStackData AS stack "
+			. " LEFT JOIN ApStackData AS stackref ON ( stackref.`DEF_id` = stack.`REF|ApStackData|stackref` ) "
+			. " WHERE stack.`REF|ApPrepRefineData|preprefine` = $refineid ";
+		//echo $q."<br/><br/>\n";
+		$r = $this->mysql->getSQLResult($q);
+		//echo print_r($r)."<br/><br/>\n";
+		return $r;
+	}
+	
 	function getUploadFrealignJobs ($jobid=False, $path=False, $showHidden=true) {
 		$q = "SELECT fre.*, path.path  "
 			. " FROM `ApFrealignPrepareData` AS fre "
@@ -3827,6 +5071,34 @@ class particledata {
 			."WHERE "
 			."  e.`REF|ApRefineRunData|refineRun` = '$refineRunId' "
 			."GROUP BY e.`REF|ApRefineRunData|refineRun` ";
+		//echo $q."<br/><br/>\n";
+		$r = $this->mysql->getSQLResult($q);
+		//echo print_r($r)."<br/><br/>\n";
+		return $r[0];
+	}
+
+	function getEulerJumpsMM ($multiModelRefineRunId) {
+		$q="SELECT "
+			."  e.`DEF_id`, "
+			."  e.`median` "
+			."FROM ApEulerJumpData AS e "
+			."WHERE "
+			."  e.`REF|ApMultiModelRefineRunData|multiModelRefineRun` = '$multiModelRefineRunId' ";
+			//."ORDER BY e.`median` ASC "
+			//."LIMIT 20 ";
+		$r=$this->mysql->getSQLResult($q);
+		return $r;
+	}
+
+	function getAverageMedianJumpMM ($multiModelRefineRunId) {
+		$q = "SELECT "
+			."COUNT(e.`median`) AS count, "
+			."AVG(e.`median`) AS average, "
+			."STDDEV(e.`median`) AS stdev "
+			."FROM ApEulerJumpData AS e "
+			."WHERE "
+			."  e.`REF|ApMultiModelRefineRunData|multiModelRefineRun` = '$multiModelRefineRunId' "
+			."GROUP BY e.`REF|ApMultiModelRefineRunData|multiModelRefineRun` ";
 		//echo $q."<br/><br/>\n";
 		$r = $this->mysql->getSQLResult($q);
 		//echo print_r($r)."<br/><br/>\n";
@@ -4049,6 +5321,66 @@ class particledata {
 		return $r;
 	}
 
+	function hasHelicalInfo($alignid) {
+		$q="SELECT p.helixnum FROM ApAlignParticleData AS a "
+			."LEFT JOIN ApStackParticleData as s "
+			."ON (a.`REF|ApStackParticleData|stackpart`=s.`DEF_id`) "
+			."LEFT JOIN ApParticleData AS p "
+			."ON (s.`REF|ApParticleData|particle`=p.`DEF_id`) "
+			."WHERE "
+			."  a.`REF|ApAlignStackData|alignstack` = '$alignid' "
+			."limit 1";
+		//echo $q;
+		$r = $this->mysql->getSQLResult($q);
+		if ($r[0]['helixnum']) return True;
+		return False;
+	}
+
+	function getNumImagesInAlignment($alignid) {
+		$q="SELECT count(*) as img "
+			." FROM ApAlignParticleData AS a "
+			."LEFT JOIN ApStackParticleData as s "
+			."ON (a.`REF|ApStackParticleData|stackpart`=s.`DEF_id`) "
+			."LEFT JOIN ApParticleData AS p "
+			."ON (s.`REF|ApParticleData|particle`=p.`DEF_id`) "
+			."WHERE "
+			."  a.`REF|ApAlignStackData|alignstack` = '$alignid' "
+			."GROUP BY p.`REF|leginondata|AcquisitionImageData|image` ";
+		$r = $this->mysql->getSQLResult($q);
+		return count($r);
+	}
+
+	function getHelicalInfoForClasses($alignid,$classnums,$onlyNumImgs=False){
+		if ($onlyNumImgs) $q = "SELECT count(*) as img ";
+		else $q="SELECT a.partnum, "
+			." a.xshift, "
+			." a.yshift, "
+			." a.rotation, "
+			." p.`REF|leginondata|AcquisitionImageData|image` as image, "
+			." p.angle, "
+			." p.helixnum ";
+		$q.= " FROM ApAlignParticleData AS a "
+			."LEFT JOIN ApStackParticleData as s "
+			."ON (a.`REF|ApStackParticleData|stackpart`=s.`DEF_id`) "
+			."LEFT JOIN ApParticleData AS p "
+			."ON (s.`REF|ApParticleData|particle`=p.`DEF_id`) "
+			."LEFT JOIN ApAlignReferenceData as ar "
+			."ON (a.`REF|ApAlignReferenceData|ref` = ar.`DEF_id`) "
+			."WHERE "
+			."  a.`REF|ApAlignStackData|alignstack` = '$alignid' "
+			."  AND (";
+		foreach ($classnums as $cnum) {
+			$refnum = strval(intval($cnum)+1);
+			$q .= " ar.`refnum` = '$refnum' OR ";
+		}
+		$q = substr($q, 0, -3);
+		$q .= ")";
+		if ($onlyNumImgs) $q.= "GROUP BY p.`REF|leginondata|AcquisitionImageData|image`";
+		$r = $this->mysql->getSQLResult($q);
+		if ($onlyNumImgs) return count($r);
+		return $r;
+	}
+
 	function getClusteringParticleNumber($clusterId) {
 		$q="SELECT part.`refnum` AS classNumber, "
 			."  COUNT(part.`DEF_id`) AS number, "
@@ -4255,20 +5587,16 @@ class particledata {
 		$r=$this->mysql->getSQLResult($q);
 		return $r[0];
 	}
-
-	function getAngularReconstitutionRuns($sessionId) {
+	
+	function getAutomatedCommonLinesRunsCs($sessionId) {
 		$q="SELECT "
 			."  ar.*, "
 			."  path.`path` AS path "
-			."FROM ApBootstrappedAngularReconstitutionRunData as ar "
+			."FROM ApAutomatedCommonLinesRunData as ar "
 			."LEFT JOIN ApPathData AS path "
 			."  ON ar.`REF|ApPathData|path` = path.`DEF_id` "
+			
 			### add a session entry to table
-			."LEFT JOIN ApTemplateStackData AS ts "
-			."  ON ar.`REF|ApTemplateStackData|templatestackid` = ts.`DEF_id` "
-			."LEFT JOIN SessionData AS sd "
-			."  ON ts.`REF|leginondata|SessionData|session` = sd.`DEF_id` "
-
 			."LEFT JOIN ApClusteringStackData AS clusterstack "
 			."  ON ar.`REF|ApClusteringStackData|clusterid` = clusterstack.`DEF_id` "
 			."LEFT JOIN ApClusteringRunData AS clusterrun ON "
@@ -4282,9 +5610,90 @@ class particledata {
 			."LEFT JOIN ApStackRunData AS stackrun "
 			."  ON stackrun.`DEF_id` = runsinstack.`REF|ApStackRunData|stackRun` "
 			."WHERE "
-			."  stackrun.`REF|leginondata|SessionData|session` = '$sessionId'";
+			."  stackrun.`REF|leginondata|SessionData|session` = '$sessionId' "
+			."ORDER BY ar.`DEF_id` DESC";
 		$r=$this->mysql->getSQLResult($q);
 		return $r;
+	}
+	
+	function getAutomatedCommonLinesRunsTs($sessionId) {
+		$q="SELECT "
+			."  ar.*, "
+			."  path.`path` AS path "
+			."FROM ApAutomatedCommonLinesRunData as ar "
+			."LEFT JOIN ApPathData AS path "
+			."  ON ar.`REF|ApPathData|path` = path.`DEF_id` "
+			
+			### add a session entry to table
+			."LEFT JOIN ApTemplateStackData AS ts "
+			."  ON ar.`REF|ApTemplateStackData|templatestackid` = ts.`DEF_id` "
+			."WHERE "
+			."  ts.`REF|leginondata|SessionData|session` = '$sessionId' "
+			."ORDER BY ar.`DEF_id` DESC";
+		$r=$this->mysql->getSQLResult($q);
+		return $r;
+	}
+
+	function getAutomatedCommonLinesRunInfo($aclId) {
+		$q="SELECT "
+			."  ar.*, "
+			."  path.`path` AS path "
+			."FROM ApAutomatedCommonLinesRunData as ar "
+			."LEFT JOIN ApPathData AS path "
+			."  ON ar.`REF|ApPathData|path` = path.`DEF_id` "
+			
+			### add a session entry to table
+			."LEFT JOIN ApTemplateStackData AS ts "
+			."  ON ar.`REF|ApTemplateStackData|templatestackid` = ts.`DEF_id` "
+			."WHERE "
+			."  ar.`DEF_id` = '$aclId' ";
+		$r=$this->mysql->getSQLResult($q);
+		return $r[0];
+	}
+
+	function getSIMPLEOrigamiRuns($sessionId) {
+		$q="SELECT "
+			."  sr.*, "
+			."  path.`path` AS path "
+			."FROM ApSIMPLEOrigamiRunData as sr "
+			."LEFT JOIN ApPathData AS path "
+			."  ON sr.`REF|ApPathData|path` = path.`DEF_id` "
+			."LEFT JOIN ApSIMPLEOrigamiParamsData AS params "
+			."  ON sr.`REF|ApSIMPLEOrigamiParamsData|simple_params` = params.`DEF_id` "
+			
+			### add a session entry to table
+			."LEFT JOIN ApStackData AS stack "
+			."  ON sr.`REF|ApStackData|stack` = stack.`DEF_id` "
+			."LEFT JOIN ApRunsInStackData AS runsinstack "
+			."  ON stack.`DEF_id` = runsinstack.`REF|ApStackData|stack` "
+			."LEFT JOIN ApStackRunData AS stackrun "
+			."  ON stackrun.`DEF_id` = runsinstack.`REF|ApStackRunData|stackRun` "
+			."WHERE "
+			."  stackrun.`REF|leginondata|SessionData|session` = '$sessionId' "
+			."ORDER BY sr.`DEF_id` DESC";
+		$r=$this->mysql->getSQLResult($q);
+		return $r;
+	}
+	
+	function getSIMPLEOrigamiParams($paramId) {
+		$q="SELECT "
+			." * "
+			."FROM ApSIMPLEOrigamiParamsData as sp "
+			."WHERE sp.`DEF_id` = $paramId";
+		$r=$this->mysql->getSQLResult($q);
+		return $r[0];
+	} 
+
+	function getSIMPLEOrigamiRunInfo($runId) {
+		$q="SELECT "
+			." sr.*, "
+			." path.`path` AS path "
+			."FROM ApSIMPLEOrigamiRunData as sr "
+			."LEFT JOIN ApPathData AS path "
+			."  ON sr.`REF|ApPathData|path` = path.`DEF_id` "
+			."WHERE sr.`DEF_id` = $runId";
+		$r=$this->mysql->getSQLResult($q);
+		return $r[0];
 	}
 
 	function getImagic3dRefinementRunsFromSessionId($sessionId) {
@@ -4321,6 +5730,124 @@ class particledata {
 		return $r;
 	}
 
+	#------------HELICAL FUNCTIONS---------------#
+
+	function getHIPIdsFromSession ($sessionId, $showHidden=false, $package=false) {
+		$q = "SELECT DISTINCT (ApHipRunData.`DEF_id`) AS refid, ApHipRunData.*, path.path AS path "
+			." FROM `ApHipRunData` "
+			."LEFT JOIN ApRunsInStackData AS runs "
+			." ON ApHipRunData.`REF|ApStackData|stack` = runs.`REF|ApStackData|stack` "
+			."LEFT JOIN ApStackRunData AS stackrun "
+			." ON runs.`REF|ApStackRunData|stackRun` = stackrun.`DEF_id` "
+			."LEFT JOIN ApPathData AS path "
+			." ON ApHipRunData.`REF|ApPathData|path` = path.`DEF_id` "
+			."WHERE stackrun.`REF|leginondata|SessionData|session` = '$sessionId' ";
+		if (!$showHidden) $q.= " AND (ApHipRunData.`hidden` IS NULL OR ApHipRunData.`hidden` = 0) ";
+		$q.= " ORDER BY ApHipRunData.`DEF_id` DESC";
+		$r = $this->mysql->getSQLResult($q);
+		return $r;
+	}
+
+	function getHipRunIds ($sessionId) {
+		$q = "SELECT r.*, p.path "
+			."FROM `ApHipRunData` AS r "
+			."LEFT JOIN ApPathData AS p "
+			."ON (r.`REF|ApPathData|path` = p.`DEF_id`) "
+			."WHERE r.`REF|leginondata|SessionData|session` = '$sessionId' ";
+		//if (!$showHidden) $q.= " AND (r.`hidden` IS NULL OR r.`hidden` = 0) ";
+		$q.= "ORDER BY r.`DEF_id` DESC ";
+		$r = $this->mysql->getSQLResult($q);
+		return $r;
+	}
+
+	function getHipRunInfo($hipId) {
+		$q="select r.*, p.path "
+			."FROM `ApHipRunData` AS r "
+			."LEFT JOIN ApPathData AS p ON "
+			."(r.`REF|ApPathData|path` = p.`DEF_id`) "
+			."WHERE r.`DEF_id` = '$hipId' ";
+		list($r) = $this->mysql->getSQLResult($q);
+		return $r;
+	}
+
+	function getHipParamsInfo($hipId) {
+		$q = "SELECT * "
+				."FROM `ApHipParamsData` r "
+				."WHERE r.`REF|ApHipRunData|hipRun` = '$hipId' ";
+		list($r) = $this->mysql->getSQLResult($q);
+		return $r;
+	}
+
+	function getStackIdFromHipId ($hipId) {
+		$q= "SELECT * "
+			."FROM `ApHipRunData` "
+			."WHERE `DEF_id` = '$hipId'";
+		list($r) = $this->mysql->getSQLResult($q);
+		return $r['REF|ApStackData|stack'];
+	}
+
+	function getHipInfoFromRefinementId($refineid) {
+		$q="SELECT *"
+		."FROM "
+		."`ApHipIterData` AS `ApHipIterData` "
+		."LEFT JOIN `ApHipRunData` AS `ApHipRunData` "
+		."ON (`ApHipRunData`.`DEF_id`=`ApHipIterData`.`REF|ApHipRunData|hipRun`) "
+		."LEFT JOIN `ApPathData` AS `ApPathData` "
+		."ON (`ApPathData`.`DEF_id`=`ApHipRunData`.`REF|ApPathData|path`) "
+		."WHERE `ApHipIterData`.`DEF_id`=$refineid ";
+		$r=$this->mysql->getSQLResult($q);
+		return $r[0];
+	}
+
+	function getHipRefinementData ($hipRunId, $iteration=False) {
+		$q = "SELECT * "
+			."FROM `ApHipIterData` "
+			."WHERE `REF|ApHipRunData|hipRun` = $hipRunId ";
+		if ($iteration) $q.="AND `iteration` = $iteration";
+		$r = $this->mysql->getSQLResult($q);
+		return $r;
+	}
+
+	function getHipIterInfo ($hipId,$iteration=0) {
+		$q = "SELECT * "
+				."FROM `ApHipIterData` r "
+				."WHERE r.`REF|ApHipRunData|hipRun` = '$hipId' "
+				."ORDER BY r.`iteration` ASC ";
+		$r = $this->mysql->getSQLResult($q);
+		if ($iteration >0) {
+			return $r[$iteration-1];
+		}
+		return $r;
+	}
+
+	function getHighestResForHip ($hipid) {
+		$q = "SELECT ref.iteration AS iter, res.half AS half, rmeas.rMeasure AS rmeas "
+				."FROM `ApHipIterData` AS ref "
+				."LEFT JOIN `ApResolutionData` AS res "
+				." ON (ref.`REF|ApResolutionData|resolution` = res.`DEF_id`) "
+				."LEFT JOIN `ApRMeasureData` AS rmeas "
+				." ON (ref.`REF|ApRMeasureData|rMeasure` = rmeas.`DEF_id`) "
+				."WHERE ref.`REF|ApHipRunData|hipRun` = '$hipid' "
+				//."ORDER by rmeas.rMeasure ";
+				."ORDER by res.half ";
+		$r = $this->mysql->getSQLResult($q);
+		return $r[0];
+	}
+
+	function getPostProcsFromHipRefId($refid, $getHidden=False) {
+		$q = "SELECT d.*, "
+			."p.path as path , a.path as amppath "
+			."FROM `Ap3dDensityData` AS d "
+			."LEFT JOIN `ApPathData` AS p ON "
+			."(d.`REF|ApPathData|path` = p.`DEF_id`) "
+			."LEFT JOIN `ApPathData` AS a ON "
+			."(d.`REF|ApPathData|ampPath` = a.`DEF_id`) "
+			."WHERE d.`REF|ApHipIterData|hipIter` = $refid ";
+		if (!$getHidden) $q.= "AND (d.`hidden` IS NULL OR d.`hidden` = 0) ";
+		$r = $this->mysql->getSQLResult($q);
+		return $r;
+	}
+	
 	//------ -------------------- ---------//
 	//------ Loop again functions ---------//
 	//------ -------------------- ---------//
@@ -4365,6 +5892,16 @@ class particledata {
 		return $r;
 	}
 
+	function getProgramRunFromJob ($jobid) {
+		$q = "SELECT "
+			."  progrun.`DEF_id` AS id "
+			."FROM ScriptProgramRun as progrun "
+			."WHERE `REF|ApAppionJobData|job` = ".$jobid." "
+			."ORDER BY progrun.`DEF_timestamp` DESC "
+			."LIMIT 1 ";
+		list($r) = $this->mysql->getSQLResult($q);
+		return $r;
+	}
 	function getProgramRunParams ($progrunid) {
 		$q = "SELECT "
 			."  progrun.`DEF_id` AS id,  "
@@ -4415,12 +5952,22 @@ class particledata {
 		return $r;
 	}
 
+	function getJobCommandParams($jobid) {
+		$progrun = $this-> getProgramRunFromJob ($jobid);
+		$samplecommand = $this->getProgramCommands ($progrun['id']);
+		$s = array();
+		if (is_array($samplecommand) && count($samplecommand) > 0)
+			foreach ($samplecommand as $c) $s[$c['name']] = $c['value'];
+		return $s;
+	}
 }
 
+// For euler angles, takes alpha beta gamma and returns a,b,c, maybe?
 function simplify($e) {
 	return $e['a'].','.$e['b'].','.$e['c'];
 }
 
+//TODO: the following functions should not be in this file!
 function displayCTFstats($stats, $display_keys) {
 	if (!is_array($stats) || !is_array($display_keys))
 		return ;
@@ -4445,16 +5992,16 @@ function displayCTFstats($stats, $display_keys) {
 					$val = $row[$key];
 				else
 					continue;
-				if (eregi('defocus', $key))
+				if (preg_match('%defocus%i', $key))
 						$val = format_micro_number($val);
-				if (eregi('^min|^max|^avg|^stddev', $key))
-					if (eregi('defocus', $field) || eregi('nominal', $field)) {
-							$val = format_micro_number($val);
+				if (preg_match('%^min|^max|^avg|^stddev%i', $key))
+					if (preg_match('%defocus%i', $field) || preg_match('%nominal%i', $field)) {
+						$val = format_micro_number($val);
 					} else {
 						$val = format_sci_number($val, 3);
 					}
 				$html .= "<td>";
-				$html .= " ".$val."<br>\n";
+				$html .= " ".$val."<br/>\n";
 				$html .= "</td>";
 			}
 			$html .= "</tr>\n";
@@ -4478,7 +6025,7 @@ function displayCTFdata($data, $display_keys) {
 		foreach($data as $row) {
 			foreach($display_keys as $key) {
 					$val = $row[$key];
-					if (eregi('defocus', $key)) {
+					if (preg_match('%defocus%i', $key)) {
 							$val = format_micro_number($val);
 					}
 				$html .= "<td>";
@@ -4500,18 +6047,36 @@ function getBaseAppionPath($sessioninfo,$new_base='appion') {
 		}
 	}
 
+	// get from leginon session image path
+	$leginon_imagepath = $sessioninfo['Image path'];
 	if (defined('DEFAULT_APPION_PATH') && DEFAULT_APPION_PATH !='') {
-		return DEFAULT_APPION_PATH.'/'.$sessioninfo['Name'];
+		if (defined('APPION_PARENT_ADDITION') && APPION_PARENT_ADDITION !=0) {
+			
+			$parts = explode(DIRECTORY_SEPARATOR,$leginon_imagepath);
+			$session_index = array_search($sessioninfo['Name'],$parts);
+			if ($session_index !== false) {
+				// add extra directory division prior to sessionname
+				$addition_parts = array_splice($parts,$session_index-APPION_PARENT_ADDITION,APPION_PARENT_ADDITION);
+			
+				$appion_path = Path::formatEndPath(Path::formatEndPath(DEFAULT_APPION_PATH).implode(DIRECTORY_SEPARATOR,$addition_parts));
+			} else {
+				// No way to know what to add if sessionname is not part of the path
+				$appion_path = Path::formatEndPath(DEFAULT_APPION_PATH);
+			}
+		} else {
+			// use default alone
+			$appion_path = Path::formatEndPath(DEFAULT_APPION_PATH);
+		}
+		return $appion_path.$sessioninfo['Name'];
 	} else {
-		// get from leginon session image path
-		$leginon_imagepath = $sessioninfo['Image path'];
 		// use this in case that the word leginon is used in two parts of the path
-		ereg("(.*)leginon(.*)rawdata", $leginon_imagepath, $reg_match);
-		if (!is_null($reg_match)) {
+		preg_match("%leginon(.*)rawdata%", $leginon_imagepath, $reg_match);
+		if (!empty($reg_match)) {
 			$path_pieces = explode('leginon',$leginon_imagepath);
 			$pieces_count = count($path_pieces);
 			$appion_basepath = implode('leginon',array_slice($path_pieces,0,$pieces_count-1)).$new_base.$path_pieces[$pieces_count-1]; 
-			$appion_basepath=ereg_replace("/rawdata","",$appion_basepath);		
+			$appion_basepath=preg_replace("%/rawdata%","",$appion_basepath);		
+			$appion_basepath=preg_replace("%/appion\d/%","/appion/",$appion_basepath);		
 		} else {
 			$extra="ERROR: could not determine Appion Path directory automatically. Please enter manually";
 			echo $extra;

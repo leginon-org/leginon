@@ -27,7 +27,8 @@ class AppionTiltSeriesLoop(appionScript.AppionScript):
 		Starts a new function and gets all the parameters
 		overrides appionScript
 		"""
-		appionScript.AppionScript.__init__(self, True)
+		appionScript.AppionScript.__init__(self)
+		self.rundata = {}
 		### extra appionLoop functions:
 		self._addDefaultParams()
 		self.setFunctionResultKeys()
@@ -108,7 +109,7 @@ class AppionTiltSeriesLoop(appionScript.AppionScript):
 
 				#END LOOP OVER IMAGES
 			if self.notdone is True:
-				self.notdone = self._waitForMoreSeries()
+				self.notdone = self._waitForMoreSeries(timeout_min=self.params['timeout'])
 			#END NOTDONE LOOP
 		self.postLoopFunctions()
 		self.close()
@@ -130,18 +131,6 @@ class AppionTiltSeriesLoop(appionScript.AppionScript):
 	#######################################################
 	#### ITEMS BELOW SHOULD BE SPECIFIED IN A NEW PROGRAM ####
 	#######################################################
-
-	#=====================
-	def setRunDir(self):
-		if self.params['sessionname'] is not None:
-			#auto set the output directory
-			sessiondata = apDatabase.getSessionDataFromSessionName(self.params['sessionname'])
-			path = os.path.abspath(sessiondata['image path'])
-			pieces = path.split('leginon')
-			path = 'leginon'.join(pieces[:-1]) + 'appion' + pieces[-1]
-			path = re.sub("/rawdata","",path)
-			path = os.path.join(path, self.processdirname, self.params['runname'])
-			self.params['rundir'] = path
 
 	#=====================
 	def setupParserOptions(self):
@@ -185,6 +174,14 @@ class AppionTiltSeriesLoop(appionScript.AppionScript):
 	#	return
 
 	#=====================
+	def __isShortTiltSeries(self, tiltseriesdata):
+		imgtree = apDatabase.getImagesFromTiltSeries(tiltseriesdata,False)
+		imagelimit = self.params['imagelimit']
+		is_short = len(imgtree) < imagelimit
+		if is_short:
+			apDisplay.printWarning("Tilt series has less than %d images" % imagelimit)
+		return is_short
+
 	def isBadTiltSeries(self, tiltseriesdata):
 		"""
 		use this function to skip bad tilt series before processing
@@ -216,9 +213,8 @@ class AppionTiltSeriesLoop(appionScript.AppionScript):
 	#=====================
 	def insertFunctionRun(self):
 		"""
-		put in run and param insertion to db here
+		put in run and param insertion to db here for insertion during instance initialization if you want to use self.rundata during the run
 		"""
-		self.rundata = {}
 		return
 
 	#=====================
@@ -319,6 +315,10 @@ class AppionTiltSeriesLoop(appionScript.AppionScript):
 			action="store_true", help="Run in background mode, i.e. reduce the number of messages printed")
 		self.parser.add_option("--no-wait", dest="wait", default=True,
 			action="store_false", help="Do not wait for more tilt series after completing loop")
+		self.parser.add_option("--timeout", dest="timeout", type="int", default=180,
+			help="Waiting time out in minutes")
+		self.parser.add_option("--imagelimit", dest="imagelimit", type="int", default=50,
+			help="Minimum number of images in tilt for processing")
 		self.parser.add_option("--no-rejects", dest="norejects", default=False,
 			action="store_true", help="Do not process hidden or rejected images")
 		self.parser.add_option("--best-series", dest="bestseries", default=False,
@@ -348,7 +348,9 @@ class AppionTiltSeriesLoop(appionScript.AppionScript):
 	#=====================
 	def _setRunAndParameters(self):
 		rundata = self.insertFunctionRun()
-		self.rundata = rundata
+		# replace existing rundata only if it is not empty
+		if rundata:
+			self.rundata = rundata
 
 	#=====================
 	def _writeDataToDB(self,idata):
@@ -478,9 +480,14 @@ class AppionTiltSeriesLoop(appionScript.AppionScript):
 			apDisplay.printError("no files specified")
 		# Only use finished tilt series
 		if len(self.seriestree) > 0:
+			indices_to_pop = []
 			for tiltseriesdata in self.seriestree:
 				if not apDatabase.getTiltSeriesDoneStatus(tiltseriesdata):
-					self.seriestree.pop(self.seriestree.index(tiltseriesdata))
+					indices_to_pop.append(self.seriestree.index(tiltseriesdata))
+			indices_to_pop.sort()
+			indices_to_pop.reverse()
+			for index in indices_to_pop:	
+				self.seriestree.pop(index)
 		else:
 			for image in images:
 				tiltseriesdata = image['tilt series']
@@ -550,18 +557,16 @@ class AppionTiltSeriesLoop(appionScript.AppionScript):
 		#calc series left
 		self.stats['seriesleft'] = self.stats['seriescount'] - self.stats['count']
 
+		if self.params['background'] is False:
+			apDisplay.printColor( "\nStarting series %d ( skip:%d, remain:%d ) id:%d"
+				%(tiltseriesdata['number'], self.stats['skipcount'], self.stats['seriesleft'], 
+				tiltseriesdata.dbid,),
+				"green")
 		#only if a series was processed last
 		if(self.stats['lastcount'] != self.stats['count']):
-			if self.params['background'] is False:
-				apDisplay.printColor( "\nStarting series %d ( skip:%d, remain:%d ) id:%d, series: %d"
-					%(self.stats['count'], self.stats['skipcount'], self.stats['seriesleft'], 
-					tiltseriesdata.dbid, tiltseriesdata['number'],),
-					"green")
-			elif self.stats['count'] % 80 == 0:
-				sys.stderr.write("\n")
+			sys.stderr.write("\n")
 			self.stats['lastcount'] = self.stats['count']
 			self._checkMemLeak()
-
 		# skip if last image belong to the series doesn't exist:
 		imgtree = apDatabase.getImagesFromTiltSeries(tiltseriesdata,False)
 		imgpath = os.path.join(tiltseriesdata['session']['image path'], imgtree[0]['filename']+'.mrc')
@@ -570,14 +575,16 @@ class AppionTiltSeriesLoop(appionScript.AppionScript):
 			return False
 
 		# skip if there are some problem with the series
-		if self.isBadTiltSeries(tiltseriesdata):
+		if self.__isShortTiltSeries(tiltseriesdata) or self.isBadTiltSeries(tiltseriesdata):
 			apDisplay.printWarning("Series %d is not good enough for processing, skipping" % (tiltseriesdata['number']))
 			seriesname = "series%3d" % (tiltseriesdata['number'])
 			self._writeDoneDict(seriesname)
+			self.stats['count'] += 1
 			return False
 
 		# check to see if series has already been processed
 		if self._alreadyProcessed(tiltseriesdata):
+			
 			return False
 
 		self.stats['waittime'] = 0
@@ -733,9 +740,9 @@ class AppionTiltSeriesLoop(appionScript.AppionScript):
 		sys.stderr.write("\t------------------------------------------\n")
 
 	#=====================
-	def _waitForMoreSeries(self):
+	def _waitForMoreSeries(self,timeout_min=180):
 		"""
-		pauses 10 mins and then checks for more series to process
+		pauses wait_time mins and then checks for more series to process
 		"""
 		### SKIP MESSAGE
 		if(self.stats['skipcount'] > 0):
@@ -761,14 +768,21 @@ class AppionTiltSeriesLoop(appionScript.AppionScript):
 			return True
 
 		### WAIT
-		if(self.stats['waittime'] > 180):
-			apDisplay.printWarning("waited longer than three hours for new series with no results, so I am quitting")
+		timeout_sec = timeout_min * 60
+		# self.stats['waittime'] is in minutes
+		if(self.stats['waittime'] > timeout_min):
+			timeout_hr = timeout_min / 60.0
+			apDisplay.printWarning("waited longer than %.1f hours for new series with no results, so I am quitting" % timeout_hr)
 			return False
 		apParam.closeFunctionLog(functionname=self.functionname, logfile=self.logfile, msg=False, stats=self.stats)
-		sys.stderr.write("\nAll Series processed. Waiting five minutes for new Series (waited "+str(self.stats['waittime'])+" min so far).")
 		twait0 = time.time()
-		for i in range(15):
-			time.sleep(20)
+		# Wait at least 30 sec and at most 5 % of timeout before checking for new tilt series
+		dot_wait = 30
+		timecheck_sec = max(timeout_sec/20,dot_wait*2)
+		wait_step = max(1,int(round(timecheck_sec * 1.0 / dot_wait)))
+		sys.stderr.write("\nAll Series processed. Waiting %.1f minutes for new Series (waited %.1f min so far" % (timecheck_sec / 60.0, self.stats['waittime']))
+		for i in range(wait_step):
+			time.sleep(dot_wait)
 			#print a dot every 30 seconds
 			sys.stderr.write(".")
 		self.stats['waittime'] += round((time.time()-twait0)/60.0,2)
@@ -816,11 +830,8 @@ class PrintLoop(AppionTiltSeriesLoop):
 		"""
 		You must define how you would like to reject bad tilt series.
 		a simple return will let everything pass.
-		Here we consider a tilt series with less than 4 image collected
-		bad.
 		"""
-		imgtree = apDatabase.getImagesFromTiltSeries(tiltseriesdata,False)
-		return len(imgtree) < 4
+		return False
 
 	def processTiltSeries(self, tiltseriesdata):
 		"""

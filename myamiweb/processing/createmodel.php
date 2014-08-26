@@ -8,11 +8,11 @@
  *      Simple viewer to view a image using mrcmodule
  */
 
-require "inc/particledata.inc";
-require "inc/leginon.inc";
-require "inc/project.inc";
-require "inc/viewer.inc";
-require "inc/processing.inc";
+require_once "inc/particledata.inc";
+require_once "inc/leginon.inc";
+require_once "inc/project.inc";
+require_once "inc/viewer.inc";
+require_once "inc/processing.inc";
 
 // IF VALUES SUBMITTED, EVALUATE DATA
 if ($_POST['process']) {
@@ -121,16 +121,16 @@ function createEMANInitialModelForm($extra=false, $title='createModel.py Launche
 	echo "<tr><td>\n";
 	echo "EMAN manuals: \n";
 	echo "</td><td align='center'>\n";
-	echo "<a href='http://blake.bcm.tmc.edu/eman/eman1/progs/startAny.html'>"
+	echo "<a href='http://blake.bcm.tmc.edu/emanwiki/StartAny'>"
 		."startAny</a>&nbsp;<img src='img/external.png'>\n";
 	echo "</td><td align='center'>\n";
-	echo "<a href='http://blake.bcm.tmc.edu/eman/eman1/progs/startcsym.html'>"
+	echo "<a href='http://blake.bcm.tmc.edu/emanwiki/StartCSym'>"
 		."startcsym</a>&nbsp;<img src='img/external.png'>\n";
 	echo "</td><td align='center'>\n";
-	echo "<a href='http://blake.bcm.tmc.edu/eman/eman1/progs/starticos.html'>"
+	echo "<a href='http://blake.bcm.tmc.edu/emanwiki/StartIcos'>"
 		."starticos</a>&nbsp;<img src='img/external.png'>\n";
 	echo "</td><td align='center'>\n";
-	echo "<a href='http://blake.bcm.tmc.edu/eman/eman1/progs/startoct.html'>"
+	echo "<a href='http://blake.bcm.tmc.edu/emanwiki/StartOct'>"
 		."startoct</a>&nbsp;<img src='img/external.png'>\n";
 	echo "</td></tr></table>\n";
 
@@ -459,10 +459,10 @@ function runCreateModel() {
 	$command.="--cluster-id=$clusterid ";
 	$command.="--symm=$symmetryid ";
 	if ($exclude != "") {
-		$exclude=ereg_replace(" ","",$exclude);
+		$exclude=preg_replace("% %","",$exclude);
 		$command.="--exclude=$exclude ";
 	} elseif ($include != "") {
-		$include=ereg_replace(" ","",$include);
+		$include=preg_replace("% %","",$include);
 		$command.="--include=$include ";
 	}
 	if ($partnum) $command.="--numkeep=$partnum ";
@@ -482,7 +482,7 @@ function runCreateModel() {
 	PART 5: Show or Run Command
 	******************** */
 	// submit command
-	$errors = showOrSubmitCommand($command, $headinfo, 'createmodel', $nproc);
+	$errors = showOrSubmitCommand($command, $headinfo, 'createModel', $nproc);
 	// if error display them
 	if ($errors)
 		createSelectParameterForm($errors);

@@ -48,6 +48,7 @@ class DBUpgradeTools(object):
 			print "\033[32mconnected to db '%s' on server '%s'\033[0m"%(dbconf['db'], dbconf['host'])
 		### connect to db
 		db = MySQLdb.connect(**dbconf)
+		db.autocommit(True)
 		### create cursor
 		self.cursor = db.cursor()
 		self.defid = 'int(20) NOT NULL auto_increment'
@@ -143,7 +144,7 @@ class DBUpgradeTools(object):
 		return False
 
 	#==============
-	def validColumnName(self, column, allowspace=False):
+	def validColumnName(self, column, allowspace=True):
 		"""
 		check name of column for security reasons
 		"""
@@ -351,7 +352,7 @@ class DBUpgradeTools(object):
 		"""
 		if self.validTableName(table) is False:
 			return False
-		if self.validColumnName(column1, allowspace=True) is False:
+		if self.validColumnName(column1) is False:
 			return False
 		if self.validColumnName(column2) is False:
 			return False
@@ -509,7 +510,7 @@ class DBUpgradeTools(object):
 			return False
 		if self.validTableName(table) is False:
 			return False
-		if self.validColumnName(column, allowspace=True) is False:
+		if self.validColumnName(column) is False:
 			return False
 		if self.columnExists(table, column) is False:
 			if messaging['not exist'] is True:
@@ -605,7 +606,7 @@ class DBUpgradeTools(object):
 		"""
 		if self.validTableName(table) is False:
 			return False
-		if self.validColumnName(column, allowspace=True) is False:
+		if self.validColumnName(column) is False:
 			return False
 		if self.columnExists(table, column) is False:
 			if messaging['not exist'] is True:

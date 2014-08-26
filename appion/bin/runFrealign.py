@@ -6,6 +6,7 @@ import time
 import shutil
 import subprocess
 import optparse
+import glob
 
 ### Please do not make classes or import any appion libraries.
 ### This script is meant to run independently of appion so that it can run on a cluster without appion installed
@@ -24,16 +25,24 @@ def setupParserOptions(parser):
 		action="store_true", help="Refine the defocus astigmatism")
 	parser.add_option("--fpart", dest="fpart", default=False,
 		action="store_true", help="Refine the defocus per particle")
-	parser.add_option('--fcref', dest="fcref", default=False,
-		action="store_true", help="apply FOM filter to final reconstruction")
-	parser.add_option('--iblow', dest="iblow", default=1,
-		action="store_true", help="1,2, or 4. Padding factor for reference structure. iblow=4 requires the most memory but results in the fastest search & refinement.")
+	parser.add_option("--iewald", dest="iewald", default=0,
+		action="store", type='choice', choices=['0','1','2','-1','-2'], help="Compensate for the Ewald sphere")
+	parser.add_option("--fbeaut", dest="fbeaut", default=False,
+		action="store_true", help="Final symmetrization of output map")
+	parser.add_option("--ffilt", dest="ffilt", default=False,
+		action="store_true", help="Apply single particle Wiener filter to reconstruction")
+	parser.add_option("--fbfact", dest="fbfact", default=False,
+		action="store_true", help="Calculate and apply B-factor to reconstruction")
+	parser.add_option("--interp", dest="interp", default=0,
+		action="store", type='choice', choices=['0','1'], help="Interpolation scheme")
 
 	####card 2
 	parser.add_option('--mask', dest="mask", type='float',
 		help="mask from center of particle to outer edge")
 	parser.add_option('--imask', dest="imask", default=0, type='float',
 		help="inner mask radius")
+	parser.add_option('--mw', dest="mw", default=0, type='float',
+		help="Molecular weight of complex in kDa")
 	parser.add_option('--wgh', dest="wgh", default=0.07, type='float',
 		help="amplitude contrast")
 	parser.add_option('--xstd', dest="xstd", default=0.0, type='float',
@@ -54,7 +63,15 @@ def setupParserOptions(parser):
 		help="last particle to process")
 
 	####card 5
-	parser.add_option('--sym', dest="sym", help="symmetry. Options are I, O, Dx (e.g. D7), or Cx (e.g. C7)")
+	parser.add_option('--sym', dest="sym", help="symmetry. Options are I, O, Dx (e.g. D7), Cx (e.g. C7), or H")
+	
+	####card 5b
+	parser.add_option('--alpha', dest='alpha', type='float', help='twist per helical subunit in degrees')
+	parser.add_option('--rise', dest='rise', type='float', help='rise per helical subunit in Angroms')
+	parser.add_option('--nsubunits', dest='nsubunits', type='float', help='The number of unique subunits per helical segment')
+	parser.add_option('--nstarts', dest='nstarts', type='int', default=1, help='helical starts')
+	parser.add_option('--stiffness', dest='stiffness', type='float', default=20, help='constrains Eulers from neighboring segments of the same filament. 1 is weak and 100 is very strong.')
+	
 
 	####card 6
 	parser.add_option('--target', dest="target", default=10.0, type='float',
@@ -73,6 +90,8 @@ def setupParserOptions(parser):
 		help="upper limit for low resolution signal")
 	parser.add_option('--lp', dest="lp", default=10.0, type='float',
 		help="lower limit for high resolution signal")
+	parser.add_option('--rclass', dest="rclass", default=10.0, type='float',
+		help="lower limit for high resolution to be included when classifying particles among multiple models")
 	parser.add_option('--rbfact', dest="rbfact", default=0, type='float',
 		help="rbfact to apply to particles before classification. 0.0 applies no rbfact.")
 
@@ -97,6 +116,8 @@ def setupParserOptions(parser):
 		help="input volume")
 	parser.add_option('--outvol', dest='outvol', 
 		help="output volume")
+	parser.add_option('--outtar', dest='outtar', default='iter.tar',
+		help="tar file in which to store all the working files")
 	parser.add_option('--launcher', dest='launcher', default=None,
 		help="job launcher, e.g. qsub or msub")
 	parser.add_option('--queue', dest='queue', default=None,
@@ -107,6 +128,7 @@ def setupParserOptions(parser):
 		help='processors per node')
 	parser.add_option('--wallclock', dest='wallclock', default=4, type='int',
 		help='time limit for processing jobs')
+	parser.add_option('--excludenodes', dest='excludenodes', help='exclude nodes from run,e.g. --excludenodes=hpc-3-20:hpc-3-21 ')
 	
 	
 def parserToParams(parser):
@@ -159,39 +181,47 @@ def createFrealignJobFile(params, jobfile, outparname, first=1, last=None, recon
 
 	### hard coded parameters
 	defaults = {
-		'fstat': False, # memory saving function, calculates many stats, such as SSNR
 		'ifsc': 0, # memory saving function, usually false
 		'fmatch': False, # make matching projection for each particle
-		'iewald': 0.0, #  
-		'fbeaut': True, # 
 		'dfstd': 100,   # defocus standard deviation (in Angstroms), usually +/- 100 A, only for defocus refinement
 		'beamtiltx': 0.0, #assume zero beam tilt
 		'beamtilty': 0.0, #assume zero beam tilt
 	}
 	if recon is True:
-		defaults['fstat'] = True
 		iflag=0
 		ppn=params['ppn']
 		nodes=1
 		inpar=params['outpar']
+		imem=2
+		fdump=False # make this true in the future to implement multicore
 	else:
 		iflag=params['mode']
 		procs=1
 		nodes=1
 		ppn=1
 		inpar=params['inpar']
+		imem=0
+		fdump=False
 	procs=nodes*ppn
 
 	if last is None:
 		last = params['last']
+
 	if logfile is None:
 		logfile = "frealign.out"
+
+	os.system('touch '+logfile)
 
 	f = open(jobfile, 'w')
 	f.write('\n')
 	f.write('#!/bin/bash\n')
-	f.write('#MOAB -l nodes=%d:ppn=%d\n' % (nodes,ppn))
-	f.write('#MOAB -l walltime=%d:00:00\n\n' % params['wallclock'])
+	if ppn == 1:
+		 f.write('#MOAB -l nodes=%d\n' % (nodes))
+	else:
+		f.write('#MOAB -l nodes=%d:ppn=%d\n' % (nodes,ppn))	
+	f.write('#MOAB -l walltime=%d:00:00\n' % params['wallclock'])
+	if params['excludenodes'] is not None:
+		f.write('#MOAB -l excludenodes=%s\n\n' % (params['excludenodes']))
 	f.write('export NCPUS=%d\n\n'%(procs))
 	f.write('cd %s\n\n' % params['rundir'])
 
@@ -204,20 +234,20 @@ def createFrealignJobFile(params, jobfile, outparname, first=1, last=None, recon
 
 	### CARD 1
 		
-	f.write('%s,%d,%s,%s,%s,%s,%d,%s,%s,%s,%d,%s,%d\n' % (
+	f.write('%s,%d,%s,%s,%s,%s,%d,%s,%s,%s,%s,%d,%s,%d,%s\n' % (
 		params['cform'],
 		iflag, 
 		bc(params['fmag']), bc(params['fdef']), #T/F refinements
 		bc(params['fastig']), bc(params['fpart']), #T/F refinements
-		defaults['iewald'], 
-		bc(defaults['fbeaut']), bc(params['fcref']), bc(defaults['fmatch']), 
-		defaults['ifsc'],
-		bc(defaults['fstat']), params['iblow']))
+		params['iewald'], 
+		bc(params['fbeaut']), bc(params['ffilt']), bc(params['fbfact']), 
+		bc(defaults['fmatch']),defaults['ifsc'],
+		bc(fdump),imem, params['interp']))
 
 	### CARD 2
-	f.write('%d,%d,%.3f,%.2f,%.2f,%d,%d,%d,%d,%d\n' % (
+	f.write('%d,%d,%.3f,%.2f,%.2f,%.2f,%d,%d,%d,%d,%d\n' % (
 		params['mask'], params['imask'], 
-		params['apix'], params['wgh'], 
+		params['apix'], params['mw'], params['wgh'], 
 		params['xstd'], params['pbc'], 
 		params['boff'], params['dang'], params['itmax'], params['ipmax']))
 
@@ -231,11 +261,14 @@ def createFrealignJobFile(params, jobfile, outparname, first=1, last=None, recon
 	### CARD 5
 	if params['sym'].lower() == 'icos':
 		f.write('I\n')
+	elif params['sym'].lower() == 'h':
+		f.write('H\n')
+		f.write('%.2f,%.2f,%.2f,%d,%.2f\n' % (params['alpha'],params['rise'],params['nsubunits'],params['nstarts'],params['stiffness']))
 	else:
 		f.write('%s\n' % (params['sym']))
-
+	
 	### CARD 6
-	f.write('%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f\n' % (
+	f.write('%.2f,%.3f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f\n' % (
 		1.0, params['apix'], 
 		params['target'], params['thresh'], 
 		params['cs'], params['kv'], 
@@ -243,9 +276,10 @@ def createFrealignJobFile(params, jobfile, outparname, first=1, last=None, recon
 
 	### CARD 7
 	### lp should be ~25 A for iflag 3 and ~12 A for iflag 1
-	f.write('%.2f,%.2f,%.2f,%.2f,%.2f\n' % (
+	f.write('%.2f,%.2f,%.2f,%.2f,%.2f,%.2f\n' % (
 		params['rrec'], params['hp'], 
-		params['lp'], defaults['dfstd'], params['rbfact']))
+		params['lp'], params['rclass'],
+		defaults['dfstd'], params['rbfact']))
 
 	### CARD 8
 	f.write('%s\n'%(params['stackfile']))
@@ -292,6 +326,7 @@ def createMultipleJobs(params):
 	params['outparlst'] = []
 	params['joblst']=[]
 	params['combinejob']='frealign.combine.sh'
+	params['combineout']='frealign.combine.out'
 	for n in range(params['maxprocs']):
 		firstp = lastp + 1
 		lastp = firstp + partperjob - 1
@@ -305,8 +340,10 @@ def createMultipleJobs(params):
 		params['joblst'].append(jobname)
 		outparname=params['outpar']+'.'+str(n)
 		params['outparlst'].append(outparname)
-		createFrealignJobFile(params, jobname, outparname, firstp, lastp, logfile='frealign'+str(n)+'.out', recon=False)
-	createFrealignJobFile(params,params['combinejob'], 'combine.par', 1, params['last'], logfile='frealign.combine.out', recon=True)
+		logfilename='frealign'+str(n)+'.out'
+		createFrealignJobFile(params, jobname, outparname, firstp, lastp, logfile=logfilename, recon=False)
+		
+	createFrealignJobFile(params,params['combinejob'], 'combine.par', 1, params['last'], logfile=params['combineout'], recon=True)
 
 
 def combineParameterFiles(params):
@@ -351,61 +388,61 @@ def launchJob(params, jobname):
 		jobid=proc.stdout.readlines()
 	return jobid
 
-def checkJobs(params,jobids):
+#def checkJobs(params,jobids):
+#	running=True
+#	while running:
+#		cmd=[params['qstat']]
+#		print cmd
+#		proc=subprocess.Popen(cmd,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+#		print proc.poll(), 'is the current status'
+#		proc.wait()
+#		lines=proc.stdout.readlines()
+#		
+#		print lines
+#		running=False
+#		for line in lines:
+#			words=line.split()
+#			if len(words) > 0 and (words[0] in jobids):
+#				print words[0], jobids			
+#				running=True
+#				print "waiting 5 minutes for jobs to finish"
+#				time.sleep(300)
+#				break
+
+def checkJobs(params, jobids):
 	running=True
 	while running:
-		cmd=[params['qstat']]
-		print cmd
-		proc=subprocess.Popen(cmd,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-		proc.wait()
-		lines=proc.stdout.readlines()
-	
 		running=False
-		for line in lines:
-			words=line.split()
-			if len(words) > 0 and (words[0] in jobids):
-				print words[0], jobids			
+		finishedlst=glob.glob('frealign*.e*')			
+		finishedids=[]	
+		for finished in finishedlst:
+			finishedids.append(finished.split('.')[-1][1:])
+		for job in jobids:
+			if job not in finishedids:
+				print finishedids, jobids
 				running=True
-				print "waiting 5 minutes for jobs to finish"
+				print 'waiting 5 minutes for jobs to finish'
 				time.sleep(300)
 				break
 
-def copyImagic(srcroot,destroot):
-	shutil.copy(srcroot+'.hed',destroot+'.hed')
-	shutil.copy(srcroot+'.img',destroot+'.img')
 		
+def cleanUp(params):
+	shutil.copyfile(params['combineout'],(params['outvol']+'.out'))
+	files=''
+	for n in params['outparlst']:
+		files+=n + ' '
+	for n in params['joblst']:
+		files+=n + ' '
+	files+='frealign*.out' + ' '
+	files+='frealign*.sh.*' + ' '
+	command='tar cf %s %s' % (params['outtar'],files)
+	print command
+	os.system(command)
+	
+	command='rm %s' % (files)
+	print command
+	os.system(command)
 
-##===============
-#def setIBLOW(self):
-#	"""
-#	IBLOW expands the volume in memory, 
-#	larger is faster, but needs more mem; 
-#	can be 1, 2 or 4
-#	"""
-#	self.iblow = 4
-#	if self.calcMemNeeded() > 4e9:
-#		self.iblow = 2
-#	if self.calcMemNeeded() > 4e9:
-#		self.iblow = 1
-#	apDisplay.printMsg("IBLOW set to %d, requiring %s memory"
-#		%(self.iblow, apDisplay.bytes(self.calcMemNeeded())))
-#
-##===============
-#def calcMemNeeded(self):
-#	### from frealign paper
-#	nn1 = self.boxsize
-#	nnbig = nn1 * self.iblow
-#	memneed = 24 * nn1**3 + 4 * nnbig**3 + 200e6
-#
-#	### multiply by number of procs per node
-#	memneed *= self.params['ppn']
-#
-#	## double it just in case
-#	memneed *= 2.0
-#
-#	return memneed
-#
-#
 
 if __name__ =='__main__':
 	
@@ -417,7 +454,7 @@ if __name__ =='__main__':
 	recordLog(sys.argv)
 	
 	#defaults for now
-	params['stackfile']='start.hed'
+	params['stackfile']='start.mrc'
 	params['qstat']='showq'
 	
 
@@ -469,6 +506,9 @@ if __name__ =='__main__':
 			imagicroot=os.path.splitext(params['working'])[0]
 			outimagicroot=os.path.splitext(params['outvol'])[0]
 			copyImagic(imagicroot, outimagicroot)
+		
+		#clean up
+		cleanUp(params)
 
 
 	print "Done!"

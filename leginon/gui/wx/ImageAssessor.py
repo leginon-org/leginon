@@ -49,8 +49,6 @@ class Panel(leginon.gui.wx.TargetFinder.Panel):
 													'stop',
 													shortHelpString='Reject')
 
-		self.toolbar.Realize()
-
 		self.addImagePanel()
 
 		self.szmain.AddGrowableRow(1)
@@ -68,7 +66,7 @@ class Panel(leginon.gui.wx.TargetFinder.Panel):
 		self.imagepanel.addTypeTool('Mask', display=True)
 		self.imagepanel.selectiontool.setDisplayed('Mask', True)
 
-		self.imagepanel.addTargetTool('Regions', wx.Color(0, 255, 255), target=True, display=True)
+		self.imagepanel.addTargetTool('Regions', wx.Colour(0, 255, 255), target=True, display=True)
 		self.imagepanel.selectiontool.setDisplayed('Regions', True)
 		self.imagepanel.setTargets('Regions', [])
 

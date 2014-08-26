@@ -52,6 +52,8 @@ class tiltAligner(particleLoop2.ParticleLoop):
 			help="selection run ids for previous automated picking run", metavar="#,#,#")
 		self.parser.add_option("--pickrunname", dest="pickrunname", type="int",
 			help="previous selection run name, e.g. --pickrunname=dogrun1", metavar="NAME")
+		self.parser.add_option("--init-tilt-axis", dest="inittiltaxis", default=0, type="float",
+			help="Initial Tilt Axis angle", metavar="#")
 
 	#---------------------------------------
 	#---------------------------------------
@@ -301,10 +303,11 @@ class tiltAligner(particleLoop2.ParticleLoop):
 		outfile2 = os.path.join(self.params['pickdatadir'], outname1)
 
 		pixdiam = self.params['diam']/self.params['apix']/self.params['bin']
+		tiltaxis = self.params['inittiltaxis']
 
 		### run tilt automation
 		autotilter = autotilt.autoTilt()
-		result = autotilter.processTiltPair(imgpath, tiltpath, picks1, picks2, theta, outfile1, pixdiam)
+		result = autotilter.processTiltPair(imgpath, tiltpath, picks1, picks2, theta, outfile1, pixdiam, tiltaxis)
 		if result is None:
 			apDisplay.printWarning("Image processing failed")
 			self.badprocess = True

@@ -26,6 +26,9 @@ class UploadImages(appionScript.AppionScript):
 		self.parser.add_option("--kv", dest="kv", type="int", metavar="INT",
 			help="high tension (in kilovolts), e.g., --kv=120")
 
+		self.parser.add_option("--cs", dest="cs", type="float", metavar="#.#",
+			default=2.0, help="spherical aberration constant (in mm), e.g., --cs=2.0")
+
 		self.parser.add_option("--image-dir", dest="imagedir",
 			help="Directory that contains MRC files to upload", metavar="DIR")
 
@@ -159,10 +162,10 @@ class UploadImages(appionScript.AppionScript):
 	def getUnusedSessionName(self):
 		### get standard appion time stamp, e.g., 10jun30
 		sessionq = leginon.leginondata.SessionData()
-		sessionq['name'] = self.timestamp
+		sessionq['name'] = self.params['runname']
 		sessiondatas = sessionq.query(results=1)
 		if not sessiondatas:
-			return self.timestamp
+			return self.params['runname']
 
 		for char in string.lowercase:
 			sessionname = self.timestamp+char
@@ -211,18 +214,13 @@ class UploadImages(appionScript.AppionScript):
 		instrumentq = leginon.leginondata.InstrumentData()
 		instrumentq['hostname'] = "appion"
 		instrumentq['name'] = "AppionTEM"
-		instrumentdatas = instrumentq.query(results=1)
-		if not instrumentdatas:
-			apDisplay.printError("Could not find the default Appion TEM in Leginon")
-		self.temdata = instrumentdatas[0]
+		instrumentq['cs'] = self.params['cs'] * 1e-3
+		self.temdata = instrumentq
 		
 		instrumentq = leginon.leginondata.InstrumentData()
 		instrumentq['hostname'] = "appion"
 		instrumentq['name'] = "AppionCamera"
-		instrumentdatas = instrumentq.query(results=1)
-		if not instrumentdatas:
-			apDisplay.printError("Could not find the default Appion Camera in Leginon")
-		self.camdata = instrumentdatas[0]
+		self.camdata = instrumentq
 		return
 
 	#=====================
@@ -323,7 +321,7 @@ class UploadImages(appionScript.AppionScript):
 		return self.params['defocus']
 
 	#=====================
-	def uploadImageInformation(self, newimagepath, dims, seriescount, numinseries):
+	def uploadImageInformation(self, imagearray, newimagepath, dims, seriescount, numinseries):
 		### setup scope data
 		scopedata = leginon.leginondata.ScopeEMData()
 		scopedata['session'] = self.sessiondata
@@ -353,7 +351,12 @@ class UploadImages(appionScript.AppionScript):
 		presetdata['tem'] = self.temdata
 		presetdata['ccdcamera'] = self.camdata
 		presetdata['magnification'] = self.params['magnification']
-		presetdata['name'] = 'upload%d'%(numinseries)
+
+		presetname = 'upload'
+		# defocal series have different preset for each member
+		if self.params['uploadtype'] == "defocalseries":
+			presetname += '%d' %(numinseries)
+		presetdata['name'] = presetname
 
 		### setup image data
 		imgdata = leginon.leginondata.AcquisitionImageData()
@@ -367,8 +370,8 @@ class UploadImages(appionScript.AppionScript):
 		imgdata['filename'] = basename
 		imgdata['label'] = 'UploadImage'
 
-		### fake small image array to avoid overloading memory
-		imgdata['image'] = numpy.ones((1,1))
+		### use real imagearray to ensure that file is saved before database insert
+		imgdata['image'] = imagearray
 
 		### use this for defocal group data
 		imgdata['target'] = self.setDefocalTargetData(seriescount)
@@ -416,16 +419,13 @@ class UploadImages(appionScript.AppionScript):
 		return newimagepath
 
 	#=====================
-	def copyfile(self, oldmrcfile, newmrcfile):
+	def readFile(self, oldmrcfile):
+		apDisplay.printMsg('Reading %s into memory' % oldmrcfile)
+		imagearray = mrc.read(oldmrcfile)
 		# invert image density
-		if self.params['invert'] is False:
-			shutil.copy(oldmrcfile, newmrcfile)
-		else:
-			tmpimage = mrc.read(oldmrcfile)
-			tmpimage *= -1.0
-			mrc.write(tmpimage,newmrcfile)
-		if apFile.fileSize(oldmrcfile) != apFile.fileSize(newmrcfile):
-			apDisplay.printError("File sizes are different")
+		if self.params['invert'] is True:
+			imagearray *= -1.0
+		return imagearray
 
 	#=====================
 	def getImageDimensions(self, mrcfile):
@@ -465,11 +465,11 @@ class UploadImages(appionScript.AppionScript):
 			### set pixel size in database
 			self.updatePixelSizeCalibration()
 
-			### upload image
-			self.uploadImageInformation(newimagepath, dims, seriescount, numinseries)
+			## read the file. images should be small enough to read into memory
+			imagearray = self.readFile(mrcfile)
 
-			## copy the file
-			self.copyfile(mrcfile, newimagepath)
+			### upload image
+			self.uploadImageInformation(imagearray, newimagepath, dims, seriescount, numinseries)
 
 			### counting
 			numinseries += 1

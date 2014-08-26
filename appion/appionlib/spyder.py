@@ -230,7 +230,6 @@ class SpiderSession:
 
 	def close(self, delturds=1):
 		self.toSpiderQuiet("EN D") # end the spider process,
-		self.toSpiderQuiet("EN D") # end the spider process,
 		self.wait()
 
 		for file in ['fort.1', 'jnkASSIGN1', 

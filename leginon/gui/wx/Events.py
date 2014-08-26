@@ -87,6 +87,7 @@ eventFactory('Edit Focus Calibration', attributes=[
 	'ccd_camera',
 	'high_tension',
 	'magnification',
+	'probe',
 	'parameter',
 	'matrix',
 	'rotation_center',

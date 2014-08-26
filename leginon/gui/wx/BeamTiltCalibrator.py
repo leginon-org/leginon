@@ -15,6 +15,9 @@ from leginon.gui.wx.Entry import FloatEntry, IntEntry
 import leginon.gui.wx.Settings
 import leginon.gui.wx.ToolBar
 
+hide_stig = True
+hide_incomplete = False
+
 class SettingsDialog(leginon.gui.wx.Calibrator.SettingsDialog):
 	def initialize(self):
 		return ScrolledSettings(self,self.scrsize,False)
@@ -60,14 +63,16 @@ class Panel(leginon.gui.wx.Calibrator.Panel):
 		self.imagepanel.addTypeTool('Correlation', display=True)
 		self.imagepanel.addTypeTool('Tableau', display=True)
 		if isinstance(self.imagepanel, leginon.gui.wx.TargetPanel.TargetImagePanel):
-			color = wx.Color(255, 128, 0)
+			color = wx.Colour(255, 128, 0)
 			self.imagepanel.addTargetTool('Peak', color)
 
 		self.szmain.Add(self.imagepanel, (0, 0), (1, 1), wx.EXPAND)
 		self.szmain.AddGrowableRow(0)
 		self.szmain.AddGrowableCol(0)
 		# tools
-		choices = ['Defocus', 'Stigmator', 'Beam-Tilt Coma','Image-Shift Coma']
+		choices = ['Defocus', 'Beam-Tilt Coma']
+		if not hide_stig:
+			choices.append('Stigmator')
 		self.parameter = wx.Choice(self.toolbar, -1, choices=choices)
 		self.parameter.SetSelection(0)
 
@@ -127,7 +132,8 @@ class Panel(leginon.gui.wx.Calibrator.Panel):
 		self.measure_dialog.scrsettings.measure.Enable(enable)
 		if self.node.measurement:
 			self.measure_dialog.scrsettings.correctdefocus.Enable(enable)
-			self.measure_dialog.scrsettings.correctstig.Enable(enable)
+			if not hide_stig:
+				self.measure_dialog.scrsettings.correctstig.Enable(enable)
 		self.measure_dialog.scrsettings.resetdefocus.Enable(enable)
 
 		self.comafree_dialog.measure.Enable(enable)
@@ -205,13 +211,13 @@ class Panel(leginon.gui.wx.Calibrator.Panel):
 		threading.Thread(target=self.node.rotationCenterFromScope).start()
 
 	def onAlignRotationCenter(self, evt):
-		self.align_dialog.Show()
+		self.align_dialog.ShowModal()
 
 	def onMeasureTool(self, evt):
 		self.measure_dialog.ShowModal()
 
 	def onMeasureComafreeTool(self, evt):
-		self.comafree_dialog.Show()
+		self.comafree_dialog.ShowModal()
 
 	def onParameterSettingsTool(self, evt):
 		parameter = self.parameter.GetStringSelection()
@@ -252,7 +258,7 @@ class Panel(leginon.gui.wx.Calibrator.Panel):
 		dialog = EditFocusCalibrationDialog(self, evt.matrix, evt.rotation_center, evt.eucentric_focus, 'Edit Calibration')
 		if dialog.ShowModal() == wx.ID_OK:
 			calibration = dialog.getFocusCalibration()
-			self.node.saveCalibration(calibration, evt.parameter, evt.high_tension, evt.magnification, evt.tem, evt.ccd_camera)
+			self.node.saveCalibration(calibration, evt.parameter, evt.high_tension, evt.magnification, evt.tem, evt.ccd_camera, evt.probe)
 		dialog.Destroy()
 
 	def editCalibration(self, **kwargs):

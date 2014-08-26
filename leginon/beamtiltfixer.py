@@ -7,7 +7,7 @@
 #
 import acquisition
 import node
-import leginondata
+from leginon import leginondata
 import calibrationclient
 import threading
 import event
@@ -30,9 +30,10 @@ class BeamTiltFixer(acquisition.Acquisition):
 	defaultsettings = acquisition.Acquisition.defaultsettings
 	defaultsettings.update({
 		'process target type': 'acquisition',
-		'beam tilt': 0.01,
+		'beam tilt': 0.005,
 		'min threshold': 0.00015,
 		'max threshold': 0.0015,
+		'correct': False,
 	})
 
 	eventinputs = acquisition.Acquisition.eventinputs
@@ -103,7 +104,7 @@ class BeamTiltFixer(acquisition.Acquisition):
 		if targetdata['image'] is not None:
 			self.publishBeamTiltMeasurement(presetdata,targetdata,is_corrected)
 		return imagedata
-	
+
 	def measureBeamTiltAndCorrect(self):
 		is_corrected = False
 		tilt_value = self.settings['beam tilt']
@@ -111,16 +112,23 @@ class BeamTiltFixer(acquisition.Acquisition):
 		btilt0 = calibration_client.getBeamTilt()
 		# measure axial coma beam tilt
 		self.logger.info('Measuring axial coma beam tilt....')
+		if self.settings['correct']:
+			repeat_measurement=2
+		else:
+			repeat_measurement=1
 		try:
-			cftilt = calibration_client.repeatMeasureComaFree(tilt_value, settle=self.settings['pause time'],repeat=2)
+			cftilt = calibration_client.repeatMeasureComaFree(tilt_value, settle=self.settings['pause time'],repeat=repeat_measurement,raise_error=self.settings['correct'])
 			comatilt = {'x':cftilt[0].mean(),'y':cftilt[1].mean()}
 			self.comameasurement = comatilt
 			self.logger.info('Measured beam tilt x:%8.5f, y:%8.5f' % (comatilt['x'],comatilt['y']))
 		except Exception, e:
 			comatilt = None
-			raise
-			self.logger.error('Measurement failed: %s' % e)
-		if comatilt:
+			if not self.settings['correct']:
+				self.logger.warning('No beam tilt estimated: %s' % e)
+			else:
+				self.logger.error('No beam tilt estimated: %s' % e)
+			return calibration_client.tabimage, False
+		if self.settings['correct'] and comatilt:
 			btilt_offset = math.hypot(comatilt['x'],comatilt['y'])
 			if self.settings['min threshold'] < btilt_offset < self.settings['max threshold']:
 				try:
@@ -130,7 +138,7 @@ class BeamTiltFixer(acquisition.Acquisition):
 				except Exception, e:
 					self.logger.error('Beam Tilt Correction failed: %s' % e)
 		return calibration_client.tabimage,is_corrected
-	
+
 	def publishBeamTiltMeasurement(self,presetdata,target,is_corrected=False):
 		beamtiltdata = leginondata.BeamTiltMeasurementData()
 		beamtiltdata['session'] = self.session

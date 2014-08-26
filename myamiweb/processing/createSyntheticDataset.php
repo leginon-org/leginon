@@ -8,12 +8,12 @@
  *	Simple viewer to view a image using mrcmodule
  */
 
-require "inc/particledata.inc";
-require "inc/leginon.inc";
-require "inc/project.inc";
-require "inc/viewer.inc";
-require "inc/processing.inc";
-require "inc/appionloop.inc";
+require_once "inc/particledata.inc";
+require_once "inc/leginon.inc";
+require_once "inc/project.inc";
+require_once "inc/viewer.inc";
+require_once "inc/processing.inc";
+require_once "inc/appionloop.inc";
   
 // IF VALUES SUBMITTED, EVALUATE DATA
 if ($_POST['process']) {
@@ -67,7 +67,7 @@ function chooseModel($extra=False) {
 			$pngfiles=array();
 			$modeldir= opendir($model['path']);
 			while ($f = readdir($modeldir)) {
-				if (eregi($model['name'].'.*\.png$',$f)) $pngfiles[] = $f;
+				if (preg_match('%'.$model['name'].'.*\.png$%i',$f)) $pngfiles[] = $f;
 			}
 			sort($pngfiles);
 			
@@ -82,9 +82,8 @@ function chooseModel($extra=False) {
 				if ($model['DEF_id']==$minf[0]) echo " CHECKED";
 				echo ">\n";
 			}
-			echo"Use ";
-			echo"Model ID: $model[DEF_id]\n";
-			echo "<input type='BUTTON' NAME='rescale' VALUE='Rescale/Resize this model' onclick=\"parent.location='uploadmodel.php?expId=$expId&rescale=TRUE&modelid=$model[DEF_id]'\"><br>\n";
+			echo"Use Model ID: $model[DEF_id]<BR>\n";
+#			echo "<input type='BUTTON' NAME='rescale' VALUE='Rescale/Resize this model' onclick=\"parent.location='uploadmodel.php?expId=$expId&rescale=TRUE&modelid=$model[DEF_id]'\"><br>\n";
 			foreach ($pngfiles as $snapshot) {
 				$snapfile = $model['path'].'/'.$snapshot;
 				echo "<A HREF='loadimg.php?filename=$snapfile' target='snapshot'><img src='loadimg.php?s=80&filename=$snapfile' HEIGHT='80'>\n";
@@ -164,6 +163,16 @@ function syntheticDatasetForm($extra=false, $title='Synthetic Dataset Creation',
 		}
 	}
 
+	function enablepad(){
+		if (document.viewerform.pad.checked){
+			document.viewerform.padval.disabled=false;
+			document.viewerform.padval='2';
+		} else {
+			document.viewerform.padval.disabled=true;
+			document.viewerform.padval='';
+		}
+	}
+
 	function checkprojection() {
 		if (o=document.viewerform.projection) {
 			if ((o_r1=document.viewerform.projinc) && (o_r2=document.viewerform.projstdev)) {
@@ -198,9 +207,17 @@ function syntheticDatasetForm($extra=false, $title='Synthetic Dataset Creation',
 	$sessiondata=getSessionList($projectId,$sessionId,$expId);
 	$sessioninfo=$sessiondata['info'];
 	$sessionpath=getBaseAppionPath($sessioninfo).'/syntheticData/';
-	
+
+	// get model data
+	$particle=new particleData;	
+	if ($modelId) $modeldata = $particle->getInitModelInfo($modelId);
+	else {
+		$model = $_POST['model'];
+		$modellist = explode('|--|', $model);
+		$modeldata = $particle->getInitModelInfo($modellist['0']);
+	}
+
 	// Set any existing parameters in form
-	$particle=new particleData;
 	$datasetruns = 0;
 	$sessionpathval = ($_POST['outdir']) ? $_POST['outdir'] : $sessionpath;
 	while (file_exists($sessionpathval.'dataset'.($datasetruns+1))) {
@@ -216,39 +233,34 @@ function syntheticDatasetForm($extra=false, $title='Synthetic Dataset Creation',
 	$projinc = ($_POST['projinc']) ? $_POST['projinc'] : 5;
 	$projstdev = ($_POST['projstdev']) ? $_POST['projstdev'] : 7;
 	$shiftrad = ($_POST['shiftrad']) ? $_POST['shiftrad'] : 5;
-	$rotang = ($_POST['rotang']) ? $_POST['rotang'] : 360;
+	$rotang = ($_POST['rotang']) ? $_POST['rotang'] : 0;
 	$flip = ($_POST['flip']=='on' || !$_POST['process']) ? 'checked' : '';
-	$snr1 = ($_POST['snr1']) ? $_POST['snr1'] : 1.8;
+	$pad = ($_POST['pad']=='on' || !$_POST['process']) ? 'checked' : '';
+	$padval = ($_POST['padval']) ? $_POST['padval'] : 2;
+	$snr1 = ($_POST['snr1']) ? $_POST['snr1'] : 1.4;
 	$snrtot = ($_POST['snrtot']) ? $_POST['snrtot'] : 0.05;
-	$df1 = ($_POST['df1']) ? $_POST['df1'] : -1.5;
-	$df2 = ($_POST['df2']) ? $_POST['df2'] : -1.5;
+	$radius = ($_POST['radius']) ? $_POST['radius'] : $modeldata[boxsize]/2;
+	$df1 = ($_POST['df1']) ? $_POST['df1'] : 1.5;
+	$df2 = ($_POST['df2']) ? $_POST['df2'] : 1.5;
 	$astigmatism = ($_POST['astigmatism']) ? $_POST['astigmatism'] : 0;
-	$lpfilt = ($_POST['lpfilt']) ? $_POST['lpfilt'] : 5;
-	$hpfilt = ($_POST['hpfilt']) ? $_POST['hpfilt'] : 600;
+	$lpfilt = ($_POST['lpfilt']) ? $_POST['lpfilt'] : '';
+	$hpfilt = ($_POST['hpfilt']) ? $_POST['hpfilt'] : '';
 
 	// default params for javascript
 	$randomdef = ($_POST['randomdef']=='on') ? 'CHECKED' : '';
 	$defstd = ($_POST['randomdef']=='on') ? $_POST['defstd'] : '';
 	$ace2correct = ($_POST['ace2correct']=='on') ? 'CHECKED' : '';
 	$randcor_std = ($_POST['randomdef']=='on') ? $_POST['randcor_std'] : '';
+	$paddisable = ($_POST['pad']=='on') ? '' : 'DISABLED';
 	$randomdefdisable = ($_POST['randomdef']=='on') ? '' : 'DISABLED';
 	$correctiondisable = ($_POST['correction']) ? $_POST['correction'] : "DISABLED";
 	$randcordisable = ($_POST['randcor_std']) ? $_POST['randcor_std'] : "DISABLED";
 	$projstdevdisabled = ($_POST['projection']=='even' && !$extra) ? $_POST['projstdev'] : "DISABLED";
 
-	// get model data
-	
-	if ($modelId) $modeldata = $particle->getInitModelInfo($modelId);
-	else {
-		$model = $_POST['model'];
-		$modellist = explode('|--|', $model);
-		$modeldata = $particle->getInitModelInfo($modellist['0']);
-	}
-
 	$pngfiles=array();
 	$modeldir= opendir($modeldata['path']);
 	while ($f = readdir($modeldir)) {
-		if (eregi($modeldata['name'].'.*\.png$',$f)) $pngfiles[] = $f;
+		if (preg_match('%'.$modeldata['name'].'.*\.png$%i',$f)) $pngfiles[] = $f;
 	}
 	sort($pngfiles);
 	$snapshot1 = $pngfiles[0];
@@ -349,21 +361,34 @@ function syntheticDatasetForm($extra=false, $title='Synthetic Dataset Creation',
 	echo "<br />\n";
 	
 	echo "<input type='checkbox' name='flip' $flip";
-	echo docpop('flip', 'Randomly flip particles');
-	echo "<br><br>\n";
+	echo docpop('flip', ' Randomly flip particles');
+	echo "<br>\n";
 	
+	echo "<input type='checkbox' name='pad' onclick='enablepad(this)' $pad>\n";
+	echo docpop('pad', 'Pad 2D projections before CTF application');
+	echo "<br>\n";
+
+	echo "<input type='text' name='padval' $paddisable value='$padval' size='4'>\n";
+	echo docpop('padval_synthetic',' padding factor ');
+	echo " <font size=-2><i>(factor)</i></font>\n";
+	echo "<br /><br />\n";
+
 	
 	echo "<b>Signal to Noise Ratio:</b><br />\n";
 	echo "<input type='text' name='snr1' value='$snr1' size='4'>\n";
-	echo docpop('snr1',' SNR1 (beam damage, shot noise, etc.) ');
+	echo docpop('snr1',' SNR1 (structural noise) ');
 	echo " <font size=-2><i>(ratio)</i></font>\n";
 	echo "<br />\n";
 	
 	echo "<input type='text' name='snrtot' value='$snrtot' size='4'>\n";
-	echo docpop('snrtot',' SNR Total (digitization) ');
+	echo docpop('snrtot',' SNR Total (shot, detector, digitization noise) ');
 	echo " <font size=-2><i>(ratio)</i></font>\n";
+	echo "<br>\n";
+
+	echo "<input type='text' name='radius' value='$radius' size='4'>\n";
+	echo docpop('radius',' Radius of object inside box ');
+	echo " <font size=-2><i>(pixels)</i></font>\n";
 	echo "<br><br>\n";
-	
 	
 	echo "<b>CTF Application:</b><br />\n";
 	echo "<input type='text' name='df1' value='$df1' size='4'>\n";
@@ -463,8 +488,11 @@ function createSyntheticDataset() {
 	$shiftrad = $_POST['shiftrad'];
 	$rotang = $_POST['rotang'];
 	$flip = $_POST['flip'];
+	$pad = $_POST['pad'];
+	$padval = $_POST['padval'];
 	$snr1 = $_POST['snr1'];
 	$snrtot = $_POST['snrtot'];
+	$radius = $_POST['radius'];
 	$df1 = $_POST['df1'];
 	$df2 = $_POST['df2'];
 	$astigmatism = $_POST['astigmatism'];
@@ -488,9 +516,10 @@ function createSyntheticDataset() {
 	if (!$projcount) syntheticDatasetForm("<B>ERROR:</B> Specify the number of projections (particles)", $title, $heading, $modelId);
 	if (!$pixelsize) syntheticDatasetForm("<B>ERROR:</B> model does not have an associated pixelsize", $title, $heading, $modelId);
 	if (!$boxsize) syntheticDatasetForm("<B>ERROR:</B> model does not have an associated boxsize", $title, $heading, $modelId);
+	if (!$radius) syntheticDatasetForm("<B>ERROR:</B> radius of the particle inside box needs to be specified, this affects the calculated SNR", $title, $heading, $modelId);
 
 	// make sure defocus values are positive
-	if ($df1 > 0 || $df2 > 0) syntheticDatasetForm("<B>ERROR:</B> Make sure that the applied defocus values are negative", $title, $heading, $modelId);
+	if ($df1 < 0 || $df2 < 0) syntheticDatasetForm("<B>ERROR:</B> Make sure that the applied defocus values are positive", $title, $heading, $modelId);
 
 	// other stuff
 	if ($rotang > 360 || $rotang < 0) syntheticDatasetForm("<B>ERROR:</B> Enter rotation angle between 0 and 360", $title, $heading, $modelId);
@@ -521,14 +550,17 @@ function createSyntheticDataset() {
 	$command.="--projcount=$projcount ";
 	if ($projection == "preferred") $command.="--preforient --projstdev=$projstdev ";
 	elseif ($projection == "even") $command.="--projinc=$projinc ";
-	if ($shiftrad) $command.="--shiftrad=$shiftrad ";
-	if ($rotang) $command.="--rotang=$rotang ";
+	if ($shiftrad || $shiftrad==0) $command.="--shiftrad=$shiftrad ";
+	if ($rotang || $rotang==0) $command.="--rotang=$rotang ";
 	if ($flip) $command.="--flip ";
-	else $command.="--no-flip ";
+//	else $command.="--no-flip ";
+	if ($pad) $command.="--padImages ";
+	if ($padval) $command.="--paddingFactor=$padval ";
 	if ($snr1) $command.="--snr1=$snr1 ";
 	if ($snrtot) $command.="--snrtot=$snrtot ";
-	if ($df1) $command.="--df1=$df1 ";
-	if ($df2) $command.="--df2=$df2 ";
+	if ($radius) $command.="--radius=$radius ";
+	if ($df1 || $df1==0) $command.="--df1=$df1 ";
+	if ($df2 || $df2==0) $command.="--df2=$df2 ";
 	if ($astigmatism) $command.="--astigmatism=$astigmatism ";
 	if ($randomdef) {
 		$command.="--randomdef ";

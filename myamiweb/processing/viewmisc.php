@@ -8,11 +8,11 @@
  *	Display results for each iteration of a refinement
  */
 
-require "inc/particledata.inc";
-require "inc/leginon.inc";
-require "inc/project.inc";
-require "inc/viewer.inc";
-require "inc/processing.inc";
+require_once "inc/particledata.inc";
+require_once "inc/leginon.inc";
+require_once "inc/project.inc";
+require_once "inc/viewer.inc";
+require_once "inc/processing.inc";
   
 // --- check if reconstruction is specified
 $reconId = $_GET['reconId'];
@@ -30,10 +30,10 @@ $html .= "<TABLE WIDTH='600' BORDER='1'>\n";
 foreach ($fileinfo as $p) {
   $html .= "<TR><td>";
   $snapfile = $p['path'].'/'.$p['name'];
-  if (ereg('\.txt$',$p['name'])){
+  if (preg_match('%\.txt$%',$p['name'])){
     $html .= "<A HREF='loadtxt.php?filename=$snapfile'>$p[name]</A>\n";
   }
-  elseif (ereg('\.html$',$p['name'])){
+  elseif (preg_match('%\.html$%',$p['name'])){
 		$txt = file_get_contents($snapfile);
     $html .= $txt;
   }

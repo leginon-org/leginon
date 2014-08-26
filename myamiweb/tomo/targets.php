@@ -419,47 +419,47 @@ $mysql = new mysql(DB_HOST, DB_USER, DB_PASS, DB_LEGINON);
 $query_results = $mysql->getSQLResult($target_query);
 $targets = array();
 foreach($query_results as $query_result)
-   $targets[$query_result['id']] = &new Target($query_result);
+   $targets[$query_result['id']] = new Target($query_result);
 
 $query_results = $mysql->getSQLResult($image_query);
 $images = array();
 foreach($query_results as $query_result)
-   $images[$query_result['id']] = &new Image($query_result);
+   $images[$query_result['id']] = new Image($query_result);
 
 $query_results = $mysql->getSQLResult($target_list_query);
 $target_lists = array();
 foreach($query_results as $query_result)
-   $target_lists[$query_result['id']] = &new TargetList($query_result);
+   $target_lists[$query_result['id']] = new TargetList($query_result);
 
 $query_results = $mysql->getSQLResult($image_list_query);
 $image_lists = array();
 foreach($query_results as $query_result)
-   $image_lists[$query_result['id']] = &new ImageList($query_result);
+   $image_lists[$query_result['id']] = new ImageList($query_result);
 
 $query_results = $mysql->getSQLResult($tilt_series_query);
 $tilt_series_array = array();
 foreach($query_results as $query_result)
-   $tilt_series_array[$query_result['id']] = &new TiltSeries($query_result);
+   $tilt_series_array[$query_result['id']] = new TiltSeries($query_result);
 
 $query_results = $mysql->getSQLResult($queue_query);
 $queues = array();
 foreach($query_results as $query_result)
-   $queues[$query_result['id']] = &new Queue($query_result);
+   $queues[$query_result['id']] = new Queue($query_result);
 
 $query_results = $mysql->getSQLResult($mosaic_tile_query);
 $mosaic_tiles = array();
 foreach($query_results as $query_result)
-   $mosaic_tiles[$query_result['id']] = &new MosaicTile($query_result);
+   $mosaic_tiles[$query_result['id']] = new MosaicTile($query_result);
 
 $query_results = $mysql->getSQLResult($reference_target_query);
 $reference_targets = array();
 foreach($query_results as $query_result)
-   $reference_targets[$query_result['id']] = &new ReferenceTarget($query_result);
+   $reference_targets[$query_result['id']] = new ReferenceTarget($query_result);
 
 $query_results = $mysql->getSQLResult($dequeued_query);
 $dequeueds = array();
 foreach($query_results as $query_result)
-   $dequeueds[$query_result['id']] = &new Dequeued($query_result);
+   $dequeueds[$query_result['id']] = new Dequeued($query_result);
 
 foreach(array_keys($targets) as $target_id) {
     $target = &$targets[$target_id];

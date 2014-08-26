@@ -30,6 +30,12 @@ def getProjectIdFromSessionId(sessionid):
 	return projectid
 
 #========================
+def getProjectIdFromImageData(imgdata):
+	sessiondata = imgdata['session']
+	projectid = getProjectIdFromSessionData(sessiondata)
+	return projectid
+
+#========================
 def getProjectIdFromSessionName(sessionname):
 	t0 = time.time()
 	### get session
@@ -101,4 +107,7 @@ def setDBfromProjectId(projectid, die=True):
 	apDisplay.printColor("Connected to database: '"+newdbname+"'", "green")
 	return True
 
+def setAppiondbBySessionName(sessionname, die=True):
+	projectid = getProjectIdFromSessionName(sessionname)
+	setDBfromProjectId(projectid, die=die)
 

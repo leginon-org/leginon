@@ -7,11 +7,12 @@
  *	see  http://ami.scripps.edu/software/leginon-license
  */
 
-require "inc/leginon.inc";
+require_once "inc/leginon.inc";
+require_once "inc/imagerequest.inc";
 
-require "inc/viewer.inc";
+require_once "inc/viewer.inc";
 if (defined('PROCESSING')) {
-	$ptcl = (@require "inc/particledata.inc") ? true : false;
+	$ptcl = (@require_once "inc/particledata.inc") ? true : false;
 }
 
 // display data tree ?
@@ -31,22 +32,20 @@ $newimage = $leginondata->findImage($imgId, $preset);
 $imgId = $newimage['id'];
 
 $imageinfo = $leginondata->getImageInfo($imgId);
-
+if ($imageinfo === false) $imageinfo = $leginondata->getMinimalImageInfo($imgId);
 $sessionId = $imageinfo[sessionId];
 $_GET['expId'] = $sessionId;
-require "inc/project.inc";
+require_once "inc/project.inc";
 
 //Block unauthorized user
 checkExptAccessPrivilege($sessionId);
 
 $path = $leginondata->getImagePath($sessionId);
 $filename = $leginondata->getFilenameFromId($imgId);
-$filesize = getFileSize($path.$filename, 2 );
-$fileinfo = mrcinfo($path.$filename);
-$mrc = mrcread($path.$filename);
-mrcupdateheader($mrc);
-$fileinfo = mrcgetinfo($mrc);
-mrcdestroy($mrc);
+$filepath = $path.$filename;
+$filesize = getFileSize($filepath, 2 );
+$imagerequest = new imageRequester();
+$fileinfo = $imagerequest->requestInfo($filepath);
 $sessioninfo = $leginondata->getSessionInfo($sessionId);
 $presets = $leginondata->getPresets($imgId);
 
@@ -144,7 +143,10 @@ $imageinfokeys = array (
 		'high tension',
 		'gridNb',
 		'trayId',
-		'exposure time'
+		'exposure time',
+		'stage x',
+		'stage y',
+		'stage z'
 		);
 
 $parentimageinfokeys = array (	
@@ -163,9 +165,9 @@ $mrcmode = array (
 		0=>'MRC_MODE_BYTE',
 		1=>'MRC_MODE_SHORT',
 		2=>'MRC_MODE_FLOAT',
-		3=>'MRC_MODE_UNSIGNED_SHORT',
 		// 3=>'MRC_MODE_SHORT_COMPLEX',
-		4=>'MRC_MODE_FLOAT_COMPLEX'
+		4=>'MRC_MODE_FLOAT_COMPLEX',
+		6=>'MRC_MODE_UNSIGNED_SHORT'
 		);
 ?>
 <table border=0>
@@ -198,23 +200,27 @@ if (is_array($imageinfo)) {
 				$v = $leginondata->formatHighTension($v);
 			if ($k=='exposure time') 
 						$leginondata->formatExposuretime($v);
+			if (in_array($k, array('defocus','stage x','stage y','stage z')))
+				$v = $leginondata->formatStagePosition($v);
 
 			echo formatHtmlRow($k,$v);
 		}
 
-	foreach($presets as $k=>$v) {
-		if ($k=='defocus')
-			echo formatHtmlRow($k, $leginondata->formatDefocus($v));
-		else if ($k=='pixelsize') {
-			$v *= $imageinfo['binning'];
-			echo formatHtmlRow($k, $leginondata->formatPixelsize($v));
+	if (is_array($presets) && count($presets) > 0) {
+		foreach($presets as $k=>$v) {
+			if ($k=='defocus')
+				echo formatHtmlRow($k, $leginondata->formatDefocus($v));
+			else if ($k=='pixelsize') {
+				$v *= $imageinfo['binning'];
+				echo formatHtmlRow($k, $leginondata->formatPixelsize($v));
+			}
+			else if ($k=='dose') {
+				if (!empty($v))
+					echo formatHtmlRow($k, $leginondata->formatDose($v));
+			}
+			else
+				echo formatHtmlRow($k, $v);
 		}
-		else if ($k=='dose') {
-			if (!empty($v))
-				echo formatHtmlRow($k, $leginondata->formatDose($v));
-		}
-		else
-			echo formatHtmlRow($k, $v);
 	}
 	echo "</table>";
 }
@@ -222,11 +228,11 @@ if (is_array($imageinfo)) {
 	</td>
 	<td>
 <?php
-if (is_array($fileinfo)) {
+if (is_object($fileinfo)) {
 	echo divtitle("Mrc Header Information");
 	echo "<table border='0'>";
 	foreach($fileinfokeys as $k) {
-		$v = ($k=="mode") ? $mrcmode[$fileinfo[$k]] : $fileinfo[$k];
+		$v = ($k=="mode") ? $mrcmode[$fileinfo->$k] : $fileinfo->$k;
 		echo formatHtmlRow($k, $v);
 	}
 	echo "</table>";
@@ -258,7 +264,7 @@ if (is_array($imageinfo) && $id=$imageinfo[parentId]) {
 	<td>
 <?php
 echo divtitle("Image Relations");
-$datatypes = $leginondata->getDatatypes($sessionId);
+$datatypes = $leginondata->getDataTypes($sessionId);
 echo "<table border='0'>";
 if (is_array($datatypes))
 	foreach ($datatypes as $datatype) {
@@ -324,23 +330,29 @@ echo divtitle("CTF");
 if (!empty($ctfdata)) {
 	echo "<table border='0'>";
 	foreach($ctfdata as $r) {
+		$runid = $r['acerunId'];
 		foreach($r as $k=>$v) {
 			if (!in_array($k, $ctf_display_fields))
 				continue;	
-			if (eregi('defocus', $k))
+			if (preg_match('%defocus%i', $k))
 				$display = format_micro_number($v);
 			elseif ($v-floor($v)) 
 				$display = format_sci_number($v,4,2);
 			elseif ($k=='path') {
-				$graphpath = strstr($v, 'ctffindrun') ? $v : $v.'/opimages';
-				$scale = strstr($v, 'ctffindrun') ? 1 : 0.4;
+				$graphpath = $v.'/opimages';
+				$scale = 0.4;
+				# back compatibility to ctffind runs
+				if ((strstr($v, 'ctffindrun')) && !is_file($graphpath."/".$r['graph1'])) {
+					$graphpath = $v;
+					$scale = 1;
+				}
 				$display=$graphpath;
 			}
 			elseif ($k=='graph1')
 				$display=$graph1name=$v;
 			else
 				$display = $v;
-			if (!ereg('^graph',$k))
+			if (!preg_match('%^graph%',$k))
 				echo formatHtmlRow($k,$display);
 		}
 		$graph1=$graphpath."/".$graph1name;
@@ -349,11 +361,10 @@ if (!empty($ctfdata)) {
 		echo "<td align='left'>\n";
 		echo "<a href='processing/loadimg.php?filename=$graph1'>\n";
 		echo "<img src='processing/loadimg.php?filename=$graph1&scale=$scale'></a></td>\n";
-	  	echo "<td align='left'>\n";
-		if(!strstr($graphpath, 'ctffindrun')){
-	  		echo "<a href='getaceimg.php?preset=all&session=$sessionId&id=$imgId&g=2'>\n";
-	  		echo "<img src='getaceimg.php?preset=all&session=$sessionId&id=$imgId&g=2' width=400></a></td>\n";
-		}
+	  echo "<td align='left'>\n";
+	  echo "<a href='getaceimg.php?preset=all&session=$sessionId&id=$imgId&g=2&r=$runid'>\n";
+	  echo "<img src='getaceimg.php?preset=all&session=$sessionId&id=$imgId&g=2&r=$runid' width=400></a></td>\n";
+
 		echo "</tr>\n";
 		echo "<tr><td colspan=2><hr></td></tr>";	
 	}

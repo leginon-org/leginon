@@ -21,6 +21,8 @@ import leginon.gui.wx.Dialog
 import leginon.gui.wx.ListBox
 import leginon.version
 import leginon.session
+import leginon.ddinfo
+from leginon.gui.wx.Entry import IntEntry
 
 class WizardPage(wx.wizard.PyWizardPage):
 	pass
@@ -111,6 +113,7 @@ class UserPage(WizardPage):
 		if self.sessions:
 			return parent.sessiontypepage
 		else:
+			parent.namepage.suggestName()
 			return parent.namepage
 
 class SessionTypePage(WizardPage):
@@ -262,11 +265,25 @@ class SessionSelectPage(WizardPage):
 		self.clientslabel.SetLabel(label)
 
 	def onEditClientsButton(self, evt):
+		sessiondata = self.getSelectedSession()
+		if sessiondata and self.checkPresetExistance(sessiondata):
+			self.clientEditWarningDialog()
 		dialog = EditClientsDialog(self, self.clients, self.history)
 		if dialog.ShowModal() == wx.ID_OK:
 			self.setClients(dialog.listbox.getValues())
 		dialog.Destroy()
 
+	def clientEditWarningDialog(self):
+		dlg = wx.MessageDialog(self,
+											'You should not switch instrument hosts in this session. Addition is OK.',
+											'Preset Exists In This Session', wx.OK|wx.ICON_WARNING)
+		dlg.ShowModal()
+		dlg.Destroy()
+
+	def checkPresetExistance(self,sessiondata):
+		presets = self.GetParent().setup.getPresets(sessiondata)
+		return bool(presets)
+		
 	def onLimitChange(self, evt):
 		if self.IsShown():
 			self.Freeze()
@@ -361,7 +378,7 @@ class SessionNamePage(WizardPage):
 		sizer.Add(self.holderctrl, (2,1), (1,1))
 
 		sizer.Add(wx.StaticText(self, -1, 'Description:'), (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		self.descriptiontextctrl = wx.TextCtrl(self, -1, '', style=wx.TE_MULTILINE)
+		self.descriptiontextctrl = wx.TextCtrl(self, -1, '', size=wx.Size(-1,50), style=wx.TE_MULTILINE)
 		sizer.Add(self.descriptiontextctrl, (4, 0), (1, 2), wx.EXPAND|wx.ALL)
 
 
@@ -610,6 +627,44 @@ class SessionCreatePage(WizardPage):
 	def GetPrev(self):
 		return self.GetParent().imagedirectorypage
 
+	def GetNext(self):
+		parent = self.GetParent()
+		return parent.c2sizepage
+
+class C2SizePage(WizardPage):
+	def __init__(self, parent):
+		WizardPage.__init__(self, parent)
+		self.pagesizer = wx.GridBagSizer()
+		self.sizer = wx.GridBagSizer()
+
+		self.sizer.Add(wx.StaticText(self, -1,
+									'''Enter illumination limiting aperture size
+(likely C2) you will use at high magnification imaging
+if you would like to see its imprint when targeting'''
+									),
+									(0, 0), (1, 1))
+		
+		c2sizer = wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1, 'C2 size: ')
+		c2sizer.Add(label, (0, 0), (1, 1), wx.ALIGN_LEFT)
+		self.c2sizectrl = IntEntry(self, -1, chars=6, value='100')
+		c2sizer.Add(self.c2sizectrl, (0, 1), (1, 1), wx.ALIGN_RIGHT)
+		label = wx.StaticText(self, -1, 'um')
+		c2sizer.Add(label, (0, 2), (1, 1), wx.ALIGN_LEFT)
+
+		self.sizer.Add(c2sizer, (2, 0), (1, 1), wx.EXPAND|wx.ALL,10)
+
+		self.sizer.AddGrowableCol(0)
+
+		self.pagesizer.Add(self.sizer, (0, 0), (1, 1), wx.ALIGN_CENTER)
+		self.pagesizer.AddGrowableRow(0)
+		self.pagesizer.AddGrowableCol(0)
+
+		self.SetSizerAndFit(self.pagesizer)
+	
+	def GetPrev(self):
+		return self.GetParent().sessioncreatepage
+
 class SetupWizard(wx.wizard.Wizard):
 	def __init__(self, manager):
 		self.manager = manager
@@ -634,6 +689,7 @@ class SetupWizard(wx.wizard.Wizard):
 		self.imagedirectorypage = SessionImageDirectoryPage(self)
 		self.sessionselectpage = SessionSelectPage(self)
 		self.sessioncreatepage = SessionCreatePage(self)
+		self.c2sizepage = C2SizePage(self)
 
 		# initialize page values
 		users = self.getUsers()
@@ -700,6 +756,7 @@ class SetupWizard(wx.wizard.Wizard):
 			user = self.userpage.getSelectedUser()
 			name = self.namepage.nametextctrl.GetValue()
 			description = self.namepage.descriptiontextctrl.GetValue()
+			description = description.strip()
 			holder = self.namepage.holderctrl.GetValue()
 			holderdata = leginon.leginondata.GridHolderData(name=holder)
 			directory = self.imagedirectorypage.directorytextctrl.GetValue()
@@ -714,6 +771,10 @@ class SetupWizard(wx.wizard.Wizard):
 			self.clients = self.sessioncreatepage.clients
 			self.history = self.sessioncreatepage.history
 			self.setup.saveClients(self.session, self.clients)
+		elif page is self.c2sizepage:
+			if self.session:
+				c2size = self.c2sizepage.c2sizectrl.GetValue()
+				self.setup.setC2Size(self.session, self.clients,c2size)
 
 	def onPageChanged(self, evt):
 		page = evt.GetPage()
@@ -747,6 +808,10 @@ class SetupWizard(wx.wizard.Wizard):
 				self.sessiontypepage.sessiontyperadiobox.SetSelection(n)
 		self.sessionselectpage.limitcheckbox.SetValue(sd['limit'])
 		self.sessionselectpage.limitintctrl.SetValue(sd['n limit'])
+		if sd['c2 size']:
+			self.c2sizepage.c2sizectrl.SetValue(sd['c2 size'])
+		else:
+			self.c2sizepage.c2sizectrl.SetValue(100)
 		if sd['selected session'] is not None:
 			s = sd['selected session']
 			n = self.sessionselectpage.sessionchoice.FindString(s)
@@ -763,6 +828,8 @@ class SetupWizard(wx.wizard.Wizard):
 				self.sessionselectpage.limitcheckbox.GetValue(),
 			'n limit':
 				self.sessionselectpage.limitintctrl.GetValue(),
+			'c2 size':
+				self.c2sizepage.c2sizectrl.GetValue(),
 		}
 		return initializer
 
@@ -806,6 +873,11 @@ class Setup(object):
 			raise RuntimeError('No users in the database.')
 		return _indexBy(('firstname','lastname'), userdatalist)
 
+	def getPresets(self,sessiondata):
+		presetq = leginon.leginondata.PresetData(session=sessiondata)
+		presetdatalist = presetq.query()
+		return presetdatalist
+
 	def getSettings(self, userdata):
 		settingsclass = leginon.leginondata.SetupWizardSettingsData
 		defaultsettings = {
@@ -814,6 +886,7 @@ class Setup(object):
 			'limit': True,
 			'n limit': 10,
 			'connect': True,
+			'c2 size': 100,
 		}
 		qsession = leginon.leginondata.SessionData(initializer={'user': userdata})
 		qdata = settingsclass(initializer={'session': qsession})
@@ -863,6 +936,8 @@ class Setup(object):
 		sessiondatalist = self.research(datainstance=sessiondata, results=n)
 		names = []
 		for sessiondata in sessiondatalist:
+			if sessiondata['hidden'] is True:
+				continue
 			name = sessiondata['name']
 			if name is not None:
 				names.append(name)
@@ -876,11 +951,14 @@ class Setup(object):
 
 	def createSession(self, user, name, description, directory):
 		imagedirectory = os.path.join(leginon.leginonconfig.unmapPath(directory), name, 'rawdata').replace('\\', '/')
+		framepath = leginon.ddinfo.getRawFrameSessionPathFromSessionPath(imagedirectory)
 		initializer = {
 			'name': name,
 			'comment': description,
 			'user': user,
 			'image path': imagedirectory,
+			'frame path': framepath,
+			'hidden': False,
 		}
 		return leginon.leginondata.SessionData(initializer=initializer)
 
@@ -895,6 +973,34 @@ class Setup(object):
 		projeq['session'] = sdata[0]
 		projeq['project'] = projdata
 		return projeq
+
+	def getTEM(self,hostname, no_sim=True):
+			temdata = None
+			r = leginon.leginondata.InstrumentData(hostname=hostname).query()
+			if r:
+				for idata in r:
+					if no_sim and 'Sim' in idata['name']:
+						continue
+					if idata['cs']:
+						temdata = idata
+						break
+			return temdata
+
+	def setC2Size(self,session,clients,c2size):
+		temdata = None
+		# set it to the first tem found in the hosts list
+		for host in clients:
+			# avoid simulated tem on clients
+			temdata = self.getTEM(host,True)
+			if temdata:
+				break
+		if not temdata:
+			localhost = socket.gethostname()
+			# use tem on localhost, including simulation
+			temdata = self.getTEM(localhost,False)
+		if temdata and c2size:
+			c2data = leginon.leginondata.C2ApertureSizeData(session=session,tem=temdata,size=c2size)
+			self.publish(c2data, database=True, dbforce=True)
 
 class EditClientsDialog(leginon.gui.wx.Dialog.Dialog):
 	def __init__(self, parent, clients, history):

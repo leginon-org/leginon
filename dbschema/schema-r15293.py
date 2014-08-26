@@ -11,10 +11,11 @@ class SchemaUpdate15293(schemabase.SchemaUpdate):
 	'''
 	def upgradeAppionDB(self):
 		for tablename in ('ApAppionJobData','ApInitialModelData','ApPathData','ApSymmetryData','ApTemplateImageData'):
-			updateq = ("ALTER TABLE "+tablename+" "
-				+" MODIFY `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP "
-		)
-			self.appion_dbupgrade.executeCustomSQL(updateq)
+			if self.appion_dbupgrade.tableExists(tablename):
+				updateq = ("ALTER TABLE "+tablename+" "
+					+" MODIFY `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP "
+					)
+				self.appion_dbupgrade.executeCustomSQL(updateq)
 
 if __name__ == "__main__":
 	update = SchemaUpdate15293()

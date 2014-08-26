@@ -10,14 +10,16 @@
 
 import node
 import event
-import leginondata
+from leginon import leginondata
 from pyami import correlator, peakfinder, ordereddict
 import calibrationclient
 import math
 import numpy
+import scipy.ndimage
 import time
 import threading
 import presets
+import navigator
 import copy
 import EM
 import gui.wx.TransformManager
@@ -29,108 +31,16 @@ import align
 import targethandler
 import tiltcorrector
 import cameraclient
+import player
+import imagehandler
+import transformregistration
+
+hide_incomplete = False
 
 class InvalidStagePosition(Exception):
 	pass
 
-class Registration(object):
-	def __init__(self, node):
-		self.node = node
-		self.stagetiltcorrector = tiltcorrector.VirtualStageTilter(self.node)
-
-	def determinetransformtypes(self, image1, image2):
-		ttype = []
-		alpha1 = image1['scope']['stage position']['a']
-		alpha2 = image2['scope']['stage position']['a']
-		if abs(alpha1 - alpha2)* 180.0 / 3.14159 > 2:
-			ttype.append('tilt')
-		try:
-			beta1 = image1['scope']['stage position']['b']
-			beta2 = image2['scope']['stage position']['b']
-			if abs(beta1 - beta2) * 180.0 / 3.14159 > 2:
-				ttype.append('rotate')
-		except:
-			pass
-		return ttype
-
-	def undoTilt(self,imagedata):
-		# matrix and shift returned from tiltcorrector is that for image transform
-		untilted_array,image2by2matrix,imageshiftvector =self.stagetiltcorrector.getZeroTiltArray(imagedata)
-		affinematrix = numpy.matrix(numpy.identity(3, numpy.float))
-		affinematrix[:2,:2] = image2by2matrix
-		# Matrix for target transform is the inverse of that for image transform 
-		# without shift because the target is defined relative to center of the image
-		return untilted_array,affinematrix.I
-
-	def registerImageData(self,image1,image2):
-		# return target transform matrix
-		transformtypes = self.determinetransformtypes(image1,image2)
-		prepmatrix1 = numpy.matrix(numpy.identity(3, numpy.float))
-		prepmatrix2 = numpy.matrix(numpy.identity(3, numpy.float))
-		array1 = image1['image']
-		array2 = image2['image']
-		for ttype in transformtypes:
-			if ttype == 'tilt':
-				self.node.logger.info('Virtual untilt images before registering')
-				array1, untiltmatrix1 = self.undoTilt(image1)
-				array2, untiltmatrix2 = self.undoTilt(image2)
-				prepmatrix1 *= untiltmatrix1 
-				prepmatrix2 *= untiltmatrix2 
-		matrix = self.register(array1, array2)
-		finalmatrix = matrix * prepmatrix1 * prepmatrix2.I
-		return finalmatrix
-			
-	def register(self, array1, array2):
-		raise NotImplementedError('define "register" method in a subclass of Registration')
-
-class IdentityRegistration(Registration):
-	'''Fake registration.  Always returns identity matrix'''
-	def register(self, array1, array2):
-		return numpy.matrix(numpy.identity(3, numpy.float))
-
-class CorrelationRegistration(Registration):
-	'''Register using peak found in phase correlation image'''
-	def __init__(self, *args, **kwargs):
-		super(CorrelationRegistration, self).__init__(*args, **kwargs)
-		self.correlator = correlator.Correlator()
-		self.peakfinder = peakfinder.PeakFinder()
-
-	def register(self, array1, array2):
-		self.correlator.setImage(0,array1)
-		self.correlator.setImage(1,array2)
-		corrimage = self.correlator.phaseCorrelate()
-		self.node.setImage(corrimage, 'Correlation')
-		peak = self.peakfinder.subpixelPeak(newimage=corrimage)
-		self.node.setTargets([(peak[1],peak[0])], 'Peak')
-		shift = correlator.wrap_coord(peak, corrimage.shape)
-		matrix = numpy.matrix(numpy.identity(3, numpy.float))
-		matrix[2,0] = shift[0]
-		matrix[2,1] = shift[1]
-		return matrix
-
-class KeyPointsRegistration(Registration):
-	def register(self, array1, array2):
-		for minsize in (160,40,10):
-			minsize = int(minsize * (array1.shape[0]/4096.0))
-			resultmatrix = libCVwrapper.MatchImages(array1, array2, minsize=minsize, maxsize=0.9,  WoB=True, BoW=True)
-			if abs(resultmatrix[0,0]) > 0.01 or abs(resultmatrix[0,1]) > 0.01:
-				break
-		return numpy.matrix(resultmatrix)
-
-class LogPolarRegistration(Registration):
-	def register(self, array1, array2):
-		result = align.findRotationScaleTranslation(array1, array2)
-		rotation, scale, shift, rsvalue, value = result
-		matrix = numpy.matrix(numpy.identity(3, numpy.float))
-		matrix[0,0] = scale*math.cos(rotation)
-		matrix[0,1] = -scale*math.sin(rotation)
-		matrix[1,0] = scale*math.sin(rotation)
-		matrix[1,1] = scale*math.cos(rotation)
-		matrix[2,0] = shift[0]
-		matrix[2,1] = shift[1]
-		return matrix
-
-class TargetTransformer(targethandler.TargetHandler):
+class TargetTransformer(targethandler.TargetHandler, imagehandler.ImageHandler):
 	def __init__(self):
 		targethandler.TargetHandler.__init__(self)
 
@@ -160,19 +70,35 @@ class TargetTransformer(targethandler.TargetHandler):
 		else:
 			return mymatrix
 
-	def calculateMatrix(self, image1, image2):
+	def calculateMatrix(self, image1, image2,bad_image2=False):
 		array1 = image1['image']
 		array2 = image2['image']
 		shape = array1.shape
 
-		regtype = self.settings['registration']
+		# If the reacquired image is too dark, puase here
+		if bad_image2:
+			regtype = 'identity'
+		else: 
+			regtype = self.settings['registration']
 		reg = self.registrations[regtype]
 		self.logger.info('Calculating main transform. Registration: %s' % (regtype,))
-		matrix = reg.registerImageData(image1,image2)
+		# If registration fails, revert to identity matrix.
+		# In the future, maybe try loop through several registration
+		# types until one works with confidence.
+		try:
+			matrix = reg.registerImageData(image1,image2)
+		except Exception, exc:
+			self.logger.warning('Registration type "%s" failed: %s' % (regtype, exc))
+			reg = self.registrations['identity']
+			self.logger.warning('Targets will not be transformed.')
+			matrix = reg.registerImageData(image1,image2)
+
 		self.logger.info('Target transform matrix calculated')
 		matrixquery = leginondata.TransformMatrixData()
 		matrixquery['session'] = self.session
 		results = matrixquery.query()
+		# This insertion only happens on the first matrix calculated in the
+		# session since images are not queried
 		if not results:
 			newmatrix = leginondata.TransformMatrixData()
 			newmatrix['session'] = self.session
@@ -181,17 +107,33 @@ class TargetTransformer(targethandler.TargetHandler):
 			newmatrix['matrix'] = matrix
 			newmatrix.insert()
 			results = [newmatrix]
-	
+
 		return matrix
 
 	def matrixTransform(self, target, matrix, newimage=None):
+		'''
+		Transform the most recent version of the targets from target list to new targets.
+		'''
+		# reseachTargets always returns most recent version of the targets
 		alltargets = self.researchTargets(list=target['list'])
 		for t in alltargets:
 			newt = self.matrixTransformOne(t, matrix, newimage)
 			if t['number'] == target['number']:
 				ret = newt
 		return ret
-	
+
+	def matrixTransformMosaic(self, target, matrix, newimage=None):
+		'''
+		Transform the most recent version of the targets from target list to new targets.
+		'''
+		# reseachTargets always returns most recent version of the targets
+		alltargets = self.researchTargets(list=target['list'],image=target['image'])
+		for t in alltargets:
+			newt = self.matrixTransformOne(t, matrix, newimage)
+			if t['number'] == target['number']:
+				ret = newt
+		return ret
+
 	def matrixTransformOne(self, target, matrix,newimage=None):
 		row = target['delta row']
 		col = target['delta column']
@@ -210,8 +152,30 @@ class TargetTransformer(targethandler.TargetHandler):
 			newtarget['preset'] = newimage['preset']
 		newtarget.insert(force=True)
 		return newtarget
-	
-	def transformTarget(self, target, level):
+
+	def isGoodImagePair(self, image1,image2):	
+		'''
+		This detects if the new image acquired is at similar intensity mean as the original.
+		Intensity drops because of microscope or camera problem.  It is worth user attention.
+		'''
+		array1 = image1['image']
+		array2 = image2['image']
+		state = 'ok'
+		if array1.mean()*0.05 > array2.mean():
+			self.logger.error('Mean intensity of the reacquired image is less than 5 percent of the old')
+			self.logger.info('Reacquire if the problem is fixable')
+			self.player.pause()
+			self.setStatus('user input')
+			self.player.wait()
+			self.setStatus('processing')
+			state = self.player.state()
+			if state == 'stop':
+				self.logger.warning('Abort transformation. Use original targets')
+			elif state == 'play':
+				self.logger.info('Reacquire parent image to determin transformation')
+		return state
+
+	def transformTarget(self, target, level, use_parent_mover):
 		parentimage = target['image']
 		matrix = self.lookupMatrix(parentimage)
 		if parentimage is None:
@@ -225,15 +189,34 @@ class TargetTransformer(targethandler.TargetHandler):
 		if matrix is None:
 			parenttarget = parentimage['target']
 			if level == 'all':
-				newparenttarget = self.transformTarget(parenttarget, level)
+				newparenttarget = self.transformTarget(parenttarget, level, use_parent_mover)
 			elif level == 'one':
 				newparenttarget = parenttarget
-			newparentimage = self.reacquire(newparenttarget)
-			if newparentimage is None:
-				return None
-			matrix = self.calculateMatrix(parentimage, newparentimage)
-		newtarget = self.matrixTransform(target, matrix,newparentimage)
+			pairstate = 'play'
+			while pairstate == 'play':
+				if newparenttarget is None:
+					return target
+				newparentimage = self.reacquire(newparenttarget, use_parent_mover)
+				if newparentimage is None:
+					return target
+				pairstate = self.isGoodImagePair(parentimage,newparentimage)
+			# parentimage may not be the last version of the newparentimage
+			lastparentimage = self.getLastParentImage(newparentimage)
+			if not lastparentimage:
+				lastparentimage = parentimage
+			if pairstate != 'stop':
+				# matrix is calculated between the last and the new parentimage
+				matrix = self.calculateMatrix(lastparentimage, newparentimage)
+			else:
+				matrix = self.calculateMatrix(lastparentimage, newparentimage, bad_image2=True)
+		self.logger.info('Transform Matrix calculated from %s' % (lastparentimage['filename'],))
+		self.logger.info('                              to %s' % (newparentimage['filename'],))
+		if parentimage['target']['list'] is None or not parentimage['target']['list']['mosaic']:
+			newtarget = self.matrixTransform(target, matrix,newparentimage)
+		else:
+			newtarget = self.matrixTransformMosaic(target, matrix,newparentimage)
 		return newtarget
+
 
 class TransformManager(node.Node, TargetTransformer):
 	panelclass = gui.wx.TransformManager.Panel
@@ -245,8 +228,12 @@ class TransformManager(node.Node, TargetTransformer):
 		'min mag': 300,
 		'camera settings': cameraclient.default_settings,
 	}
-	eventinputs = node.Node.eventinputs + presets.PresetsClient.eventinputs + [event.TransformTargetEvent]
-	eventoutputs = node.Node.eventoutputs + presets.PresetsClient.eventoutputs + [event.TransformTargetDoneEvent]
+	eventinputs = node.Node.eventinputs + presets.PresetsClient.eventinputs \
+								+ [event.TransformTargetEvent] \
+								+ navigator.NavigatorClient.eventinputs
+	eventoutputs = node.Node.eventoutputs + presets.PresetsClient.eventoutputs \
+								+ [event.TransformTargetDoneEvent] \
+								+ navigator.NavigatorClient.eventoutputs
 	def __init__(self, id, session, managerlocation, **kwargs):
 		node.Node.__init__(self, id, session, managerlocation, **kwargs)
 		TargetTransformer.__init__(self)
@@ -263,15 +250,24 @@ class TransformManager(node.Node, TargetTransformer):
 		self.calclients['beam shift'] = calibrationclient.BeamShiftCalibrationClient(self)
 		self.pixsizeclient = calibrationclient.PixelSizeCalibrationClient(self)
 		self.presetsclient = presets.PresetsClient(self)
+		self.navclient = navigator.NavigatorClient(self)
+		self.target_to_transform = None
+
 		self.addEventInput(event.TransformTargetEvent, self.handleTransformTargetEvent)
 
 		self.registrations = {
-			'correlation': CorrelationRegistration(self),
-			'keypoints': KeyPointsRegistration(self),
-			'logpolar': LogPolarRegistration(self),
+			'correlation': transformregistration.CorrelationRegistration(self),
 		}
+		if not hide_incomplete:
+			self.registrations.update({
+				'keypoints': transformregistration.KeyPointsRegistration(self),
+				'logpolar': transformregistration.LogPolarRegistration(self),
+				'identity': transformregistration.IdentityRegistration(self),
+			})
 
 		self.abortevent = threading.Event()
+		self.player = player.Player(callback=self.onPlayer)
+		self.panel.playerEvent(self.player.state())
 
 		self.start()
 
@@ -317,11 +313,11 @@ class TransformManager(node.Node, TargetTransformer):
 				newscope = origscope
 			else:
 				targetcamera = targetdata['camera']
-		
+
 				## to shift targeted point to center...
 				deltarow = -targetdeltarow
 				deltacol = -targetdeltacolumn
-		
+
 				pixelshift = {'row':deltarow, 'col':deltacol}
 				## figure out scope state that gets to the target
 				calclient = self.calclients[movetype]
@@ -344,36 +340,82 @@ class TransformManager(node.Node, TargetTransformer):
 						raise NoMoveCalibration(message)
 					ydiff = tmpscope['stage position']['y'] - targetscope['stage position']['y']
 					zdiff = ydiff * numpy.sin(targetscope['stage position']['a'])
-	
+
 			### check if stage position is valid
 			if newscope['stage position']:
 				self.validateStagePosition(newscope['stage position'])
-	
+
 			emtargetdata['preset'] = oldpreset
 			emtargetdata['movetype'] = movetype
 			emtargetdata['image shift'] = dict(newscope['image shift'])
 			emtargetdata['beam shift'] = dict(newscope['beam shift'])
 			emtargetdata['stage position'] = dict(newscope['stage position'])
 			emtargetdata['delta z'] = zdiff
-		
+
 		emtargetdata['target'] = targetdata
 		## publish in DB because it will likely be needed later
 		## when returning to the same target,
 		## even after it is removed from memory
 		self.publish(emtargetdata, database=True)
 		return emtargetdata
-	
-	def reacquire(self, targetdata):
+
+	def imageMoveAndPreset(self, imagedata, emtarget, use_parent_mover=False):
+		'''
+		Move and set according to the preset based on the imagedata and emtarget.
+		Mover can either be presets manager or navigator
+		'''
+		status = 'ok'
+		msg = 'imageMoveAndPreset oldimage stage z %.6f' % imagedata['scope']['stage position']['z']
+		self.logger.debug(msg)
+		presetname = imagedata['preset']['name']
+		targetdata = emtarget['target']
+		moverdata = imagedata['mover']
+		#### move and change preset
+		movetype = imagedata['emtarget']['movetype']
+		# If mover is not known, use presets manager
+		if moverdata is None or not use_parent_mover:
+			movefunction = 'presets manager'
+		else:
+			movefunction = moverdata['mover']
+		keep_shift = False
+		if movetype == 'image shift' and movefunction == 'navigator':
+			self.logger.warning('Navigator cannot be used for image shift, using Presets Manager instead')
+			movefunction = 'presets manager'
+		self.setStatus('waiting')
+
+		if movefunction == 'navigator':
+			emtarget = None
+			if targetdata['type'] != 'simulated':
+				precision = moverdata['move precision']
+				accept_precision = moverdata['accept precision']
+				# Use current z in navigator move like in presetsclient
+				status = self.navclient.moveToTarget(targetdata, movetype, precision, accept_precision, final_imageshift=False,use_current_z=True)
+				if status == 'error':
+					return status
+		self.presetsclient.toScope(presetname, emtarget, keep_shift=False)
+		stagenow = self.instrument.tem.StagePosition
+		msg = 'reacquire imageMoveAndPreset end z %.6f' % stagenow['z']
+		self.testprint(msg)
+		self.logger.debug(msg)
+		return status
+
+	def reacquire(self, targetdata, use_parent_mover=False):
+		'''
+		Reacquire parent image that created the targetdata but at current stage z.
+		'''
+		### get old image
 		oldimage = None
 		targetlist = targetdata['list']
+		# targetdata may be outdated due to other target adjustment
+		# This query gives the most recent target of the same specification
 		tquery = leginondata.AcquisitionImageTargetData(session=self.session, list=targetlist, number=targetdata['number'], type=targetdata['type'])
 		aquery = leginondata.AcquisitionImageData(target=tquery)
 		results = aquery.query(readimages=False, results=1)
 		if len(results) > 0:
 			oldimage = results[0]
 		if oldimage is None:
-			print "can not find an image that is acquired with this target"
-			print targetdata.dbid
+			if targetlist:
+				self.logger.error('No image is acquired with target list %d' % targetlist.dbid)
 			return None
 		oldemtarget = oldimage['emtarget']
 		movetype = oldemtarget['movetype']
@@ -385,16 +427,26 @@ class TransformManager(node.Node, TargetTransformer):
 		oldpresetdata = oldimage['preset']
 		presetname = oldpresetdata['name']
 		channel = int(oldimage['correction channel']==0)
-		self.presetsclient.toScope(presetname, emtarget, keep_shift=False)
+		self._moveToLastFocusedStageZ()
+		self.imageMoveAndPreset(oldimage,emtarget,use_parent_mover)
 		targetdata = emtarget['target']
-		imagedata = self.acquireCorrectedCameraImageData(channel)
+		# extra wait for falcon protector or normalization
+		self.logger.info('Wait for %.1f second before reaquire' % self.settings['pause time'])
+		time.sleep(self.settings['pause time'])
+		try:
+			imagedata = self.acquireCorrectedCameraImageData(channel)
+		except Exception, exc:
+			self.logger.error('Reacquire image failed: %s' % (exc,))
+		# The preset used does not always have the original preset's parameters such as image shift
 		currentpresetdata = self.presetsclient.getCurrentPreset()
 		## convert CameraImageData to AcquisitionImageData
 		dim = imagedata['camera']['dimension']
 		pixels = dim['x'] * dim['y']
 		pixeltype = str(imagedata['image'].dtype)
 		## Fix me: Not sure what image list should go in here nor naming of the file
-		imagedata = leginondata.AcquisitionImageData(initializer=imagedata, preset=currentpresetdata, label=self.name, target=targetdata, list=oldimage['list'], emtarget=emtarget, pixels=pixels, pixeltype=pixeltype,grid=oldimage['grid'])
+		# This does not include tilt series nor tilt number.  If included,
+		# rct filenaming becomes corrupted
+		imagedata = leginondata.AcquisitionImageData(initializer=imagedata, preset=currentpresetdata, label=self.name, target=targetdata, list=oldimage['list'], emtarget=emtarget, pixels=pixels, pixeltype=pixeltype,grid=oldimage['grid'],mover=oldimage['mover'],spotmap=oldimage['spotmap'])
 		version = self.recentImageVersion(oldimage)
 		imagedata['version'] = version + 1
 		## set the 'filename' value
@@ -409,6 +461,13 @@ class TransformManager(node.Node, TargetTransformer):
 		self.publish(imagedata, database=True)
 		self.setImage(imagedata['image'], 'Image')
 		return imagedata
+
+	def _moveToLastFocusedStageZ(self):
+		'''
+		Set stage z to the height of an image acquired by the last focusing.
+		This should only be called from inside TrasnformManage
+		'''
+		self.moveToLastFocusedStageZ(self.target_to_transform)
 
 	def recentImageVersion(self, imagedata):
 		# find most recent version of this image
@@ -429,8 +488,10 @@ class TransformManager(node.Node, TargetTransformer):
 		self.setStatus('processing')
 		oldtarget = ev['target']
 		level = ev['level']
+		use_parent_mover = ev['use parent mover']
 		requestingnode = ev['node']
-		newtarget = self.transformTarget(oldtarget, level)
+		self.target_to_transform = oldtarget
+		newtarget = self.transformTarget(oldtarget, level, use_parent_mover)
 		evt = event.TransformTargetDoneEvent()
 		evt['target'] = newtarget
 		evt['destination'] = requestingnode
@@ -527,6 +588,7 @@ class TransformManager(node.Node, TargetTransformer):
 
 		## do correlation
 		pc = self.correlator.phaseCorrelate()
+		pc = scipy.ndimage.gaussian_filter(pc,1)
 		peak = self.peakfinder.subpixelPeak(newimage=pc)
 		rows,cols = self.peak2shift(peak, pc.shape)
 		dist = math.hypot(rows,cols)
@@ -553,3 +615,15 @@ class TransformManager(node.Node, TargetTransformer):
 		disptarget = x,y
 			
 		self.setTargets([disptarget], 'Target')
+
+	def onPlayer(self, state):
+		infostr = ''
+		if state == 'play':
+			infostr += 'Continuing...'
+		elif state == 'pause':
+			infostr += 'Pausing...'
+		elif state == 'stop':
+			infostr += 'Aborting...'
+		if infostr:
+			self.logger.info(infostr)
+		self.panel.playerEvent(state)

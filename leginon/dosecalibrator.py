@@ -113,3 +113,13 @@ class DoseCalibrator(calibrator.Calibrator):
 	def abortCalibration(self):
 		raise NotImplementedError
 
+	def screenDown(self):
+		# check if screen is down
+		self.instrument.MainScreenPosition = 'down'
+		time.sleep(1)
+
+	def screenUp(self):
+		# check if screen is down
+		self.instrument.MainScreenPosition = 'up'
+		time.sleep(1)
+

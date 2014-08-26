@@ -25,6 +25,11 @@ from leginon.gui.wx import Logging
 from leginon.gui.wx import ToolBar
 from leginon.gui.wx import SetupWizard
 
+# inspection tool for wx
+wx_inspection = False
+if wx_inspection:
+	import wx.lib.inspection
+
 AddNodeEventType = wx.NewEventType()
 RemoveNodeEventType = wx.NewEventType()
 AddLauncherEventType = wx.NewEventType()
@@ -127,6 +132,8 @@ class App(wx.App):
 		self.SetTopWindow(self.manager.frame)
 
 		self.manager.frame.Show(True)
+		if wx_inspection:
+			wx.lib.inspection.InspectionTool().Show()
 
 		session = None
 		clients = ()
@@ -317,7 +324,13 @@ class Frame(wx.Frame):
 		dialog = RunApplicationDialog(self, apps, history, launchernames, launchers)
 		if dialog.ShowModal() == wx.ID_OK:
 			app = dialog.getValues()
-			threading.Thread(name='wx.manager runApplication',
+			if not self.manager.validateApplication(app):
+				e = 'Outdated Application'
+				dlg = wx.MessageDialog(self, e, 'Node Create Error', wx.OK|wx.ICON_ERROR)
+				dlg.ShowModal()
+				dlg.Destroy()
+			else:
+				threading.Thread(name='wx.manager runApplication',
 												target=self.manager.runApplication,
 												args=(app,)).start()
 		dialog.Destroy()
@@ -846,7 +859,6 @@ class RunApplicationDialog(wx.Dialog):
 				self.launcherchoices[launcheralias] = choice
 				self.launchersizer.AddGrowableRow(i)
 			self.sizer.Add(self.launchersizer, (1, 0), (1, 2), wx.ALIGN_CENTER)
-		self.sizer.AddGrowableRow(1)
 		self.dialogsizer.Layout()
 		self.Fit()
 

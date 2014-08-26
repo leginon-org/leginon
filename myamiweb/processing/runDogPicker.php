@@ -8,12 +8,13 @@
  *	Simple viewer to view a image using mrcmodule
  */
 
-require "inc/particledata.inc";
-require "inc/leginon.inc";
-require "inc/project.inc";
-require "inc/viewer.inc";
-require "inc/processing.inc";
-require "inc/appionloop.inc";
+require_once "inc/particledata.inc";
+require_once "inc/leginon.inc";
+require_once "inc/project.inc";
+require_once "inc/viewer.inc";
+require_once "inc/processing.inc";
+require_once "inc/appionloop.inc";
+require_once "inc/path.inc";
   
 // IF VALUES SUBMITTED, EVALUATE DATA
 if ($_POST['process']) {
@@ -25,8 +26,8 @@ else {
 }
 
 
-function createDogPickerForm($extra=false, $title='DoG Picker Launcher', $heading='Automated Particle Selection with DoG Picker', $results=false) {
-
+function createDogPickerForm($extra=false, $title='DoG Picker Launcher', $heading='Automated Particle Selection with DoG Picker', $results=false) 
+{
 	// check if coming directly from a session
    $expId = $_GET['expId'];
 	if ($expId) {
@@ -59,8 +60,9 @@ function createDogPickerForm($extra=false, $title='DoG Picker Launcher', $headin
 	</SCRIPT>\n";
 	$javafunctions .= writeJavaPopupFunctions('appion');	
 
-	processing_header("DoG Picker Launcher","Automated Particle Selection with DoG Picker",$javafunctions,True);
-
+	processing_header($title, $heading, $headerstuff=$javafunctions, $pleaseWait=true, $showmenu=true, $printDiv=false, 
+						$guideURL="http://ami.scripps.edu/redmine/projects/appion/wiki/Dog_Picking");
+	
 	if ($extra) {
 		echo "<font color='#cc3333' size='+2'>$extra</font>\n<hr/>\n";
 	}
@@ -141,10 +143,33 @@ function createDogPickerForm($extra=false, $title='DoG Picker Launcher', $headin
 }
 
 function runDogPicker() {
+	/* *******************
+	PART 1: Get variables
+	******************** */
+	
 	$expId   = $_GET['expId'];
 	$outdir  = $_POST['outdir'];
 	$runname = $_POST['runname'];
+	$numslices = (int) $_POST[numslices];
+	$sizerange = $_POST[sizerange];
+	$kfactor = $_POST[kfactor];
+	
+	
+	/* *******************
+	PART 2: Check for conflicts, if there is an error display the form again
+	******************** */
+	if ($numslices) {
+		if($numslices < 2) createDogPickerForm("<B>ERROR:</B> numslices must be more than 1");
+		if(!$sizerange) createDogPickerForm("<B>ERROR:</B> sizerange was not defined");
+		if($sizerange < 2.0) createDogPickerForm("<B>ERROR:</B> sizerange must be more than 2.0");
+	} elseif($kfactor) {
+		if ($kfactor < 1.00001 || $kfactor > 5.0) createDogPickerForm("<B>ERROR:</B> K-factor must between 1.00001 and 5.0");
+	}	
 
+	/* *******************
+	PART 3: Create program command
+	******************** */
+	
 	$command ="dogPicker.py ";
 
 	$apcommand = parseAppionLoopParams($_POST);
@@ -161,85 +186,70 @@ function runDogPicker() {
 	}
 	$command .= $partcommand;
 
-	$numslices = (int) $_POST[numslices];
-	$sizerange = $_POST[sizerange];
-	$kfactor = $_POST[kfactor];
 	if ($numslices) {
-		if($numslices < 2) createDogPickerForm("<B>ERROR:</B> numslices must be more than 1");
-		if(!$sizerange) createDogPickerForm("<B>ERROR:</B> sizerange was not defined");
-		if($sizerange < 2.0) createDogPickerForm("<B>ERROR:</B> sizerange must be more than 2.0");
 		$command .= " --numslices=".$numslices;
 		$command .= " --sizerange=".$sizerange;
 	} elseif($kfactor) {
-		if ($kfactor < 1.00001 || $kfactor > 5.0) createDogPickerForm("<B>ERROR:</B> K-factor must between 1.00001 and 5.0");
 		$command .= " --kfactor=".$kfactor;
 	}
+		
 	if ($_POST['testimage']=="on") {
 		if ($_POST['testfilename']) $testimage=$_POST['testfilename'];
-		$testimage = ereg_replace(" ","\ ",$testimage);
+		$testimage = preg_replace("% %","\ ",$testimage);
 	}
 
-	// submit job to cluster
-	if ($_POST['process']=="Run DogPicker") {
-		$_SESSION['processinghost']=$_POST['processinghost'];
-		$user = $_SESSION['username'];
-		$password = $_SESSION['password'];
+	/* *******************
+	PART 4: Create header info, i.e., references
+	******************** */
 
-		if (!($user && $password)) createDogPickerForm("<B>ERROR:</B> Enter a user name and password");
+	// Add reference to top of the page
+	$headinfo .= referenceBox("DoG Picker and TiltPicker: software tools to facilitate particle selection in single particle electron microscopy.", 
+	2009, "Voss NR, Yoshioka CK, Radermacher M, Potter CS, Carragher B.", "J Struct Biol.", 166, 2, 19374019, 2768396, false, false);	
+	
+	/* *******************
+	PART 5: Show or Run Command
+	******************** */
 
-		$sub = submitAppionJob($command,$outdir,$runname,$expId,'dogpicker',$testimage);
-		// if errors:
-		if ($sub) createDogPickerForm("<b>ERROR:</b> $sub");
+	// submit command
+	$errors = showOrSubmitCommand($command, $headinfo, 'dogpicker', $nproc, $testimage);
 
-		if ($testimage) {
-			if (substr($outdir,-1,1)!='/') $outdir.='/';
-			$results = "<table width='600' border='0'>\n";
-			$results.= "<tr><td>\n";
-			$results.= "<B>DogPicker Command:</B><br />$command";
-			$results.= "</td></tr></table>\n";
-			$results.= "<br />\n";
-			$testjpg = ereg_replace(".mrc","",$_POST['testfilename']);
-			$jpgimg = $outdir.$runname."/jpgs/".$testjpg.".prtl.jpg";
-			$dogmaplist = glob($outdir.$runname."/maps/".$testjpg."*.jpg");
-
+	// if errors display them
+	if ($errors) {
+		createDogPickerForm($errors);
+		
+	} else if ($testimage) {
+		// add the appion wrapper to the command for display
+		$wrappedcmd = addAppionWrapper($command);
+			
+		if (substr($outdir,-1,1)!='/') $outdir.='/';
+		$results = "<table width='600' border='0'>\n";
+		$results.= "<tr><td>\n";
+		$results.= "<B>DogPicker Command:</B><br />$wrappedcmd";
+		$results.= "</td></tr></table>\n";
+		$results.= "<br />\n";
+		$testjpg = preg_replace("%.mrc%","",$_POST['testfilename']);
+		$testResultFile = $testjpg.".prtl.jpg";
+		$jpgimg = Path::join($outdir, $runname, "jpgs", $testResultFile);
+		
+		$pathToMaps = Path::join($outdir, $runname, "maps");
+		
+		if ($_POST['process'] != "Just Show Command") {
+			$filePattern = $testjpg."*.jpg";
+			$pathPattern = Path::join($pathToMaps, $filePattern);
+			$dogmaplist = glob($pathPattern);
 			$results .= writeTestResults($jpgimg, $dogmaplist, $_POST['bin']);
-			createDogPickerForm(false, 'Particle Selection Test Results', 'Particle Selection Test Results', $results);
-		}
-		exit;
-	} else {
-		// display test images even just show command
-		if ($testimage) {
-			if (substr($outdir,-1,1)!='/') $outdir.='/';
-			$results = "<table width='600' border='0'>\n";
-			$results.= "<tr><td>\n";
-			$results.= "<B>DogPicker Command:</B><br />$command";
-			$results.= "</td></tr></table>\n";
-			$results.= "<br />\n";
-			$testjpg=ereg_replace(".mrc","",$_POST['testfilename']);
-			$jpgimg=$outdir.$runname."/jpgs/".$testjpg.".prtl.jpg";
-			$ccclist=array();
-			$cccimg=$outdir.$runname."/maps/".$testjpg.".dogmap1.jpg";
-			$ccclist[]=$cccimg;
-			$results.= writeTestResults($jpgimg,$ccclist,$bin=$_POST['bin'],$_POST['process']);
-			createDogPickerForm(false,'Particle Selection Test Results','Particle Selection Test Results',$results);
 		} else {
-			processing_header("Particle Selection Results","DogPicker Command");
-
-			echo referenceBox("DoG Picker and TiltPicker: software tools to facilitate particle selection in single particle electron microscopy.", 2009, "Voss NR, Yoshioka CK, Radermacher M, Potter CS, Carragher B.", "J Struct Biol.", 166, 2, 19374019, 2768396, false, false);
-
-			echo"
-				<TABLE WIDTH='600'>
-				<tr><td COLSPAN='2'>
-				<B>Dog Picker Command:</B><br />
-				$command<hr>
-				</td></tr>";
-			appionLoopSummaryTable();
-			particleLoopSummaryTable();
-			echo"</table>\n";
-			processing_footer(True, True);
-			exit;
-		}
+			$mapFile = $testjpg.".dogmap1.jpg";
+			$ccclist = array();
+			$cccimg = Path::join($pathToMaps, $mapFile);
+			$ccclist[]=$cccimg;
+			$results.= writeTestResults($jpgimg,$ccclist,$bin=$_POST['bin']);			
+		}		
+		
+		createDogPickerForm(false, 'Particle Selection Test Results', 'Particle Selection Test Results', $results);
 	}
+	
+	exit;
 }
 
 

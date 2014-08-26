@@ -6,7 +6,7 @@
  *	For terms of the license agreement
  *	see  http://ami.scripps.edu/software/leginon-license
  */
-require "inc/particledata.inc";
+require_once "inc/particledata.inc";
 require_once "inc/leginon.inc";
 
 $sessionId= $_GET['Id'];
@@ -16,7 +16,7 @@ $viewsql = ($_GET['vs']==1) ? true : false;
 
 $ctf = new particledata();
 
-$ctfinfo = $ctf->getBestCtfInfoForSessionId($sessionId, $minimum);
+$ctfinfo = $ctf->getBestCtfInfoByResolution($sessionId, $minimum);
 
 if ($viewdata) {
 	//Could use keys for a cleaner output

@@ -1,6 +1,6 @@
 <?php
-require "inc/leginon.inc";
-require "inc/image.inc";
+require_once "inc/leginon.inc";
+require_once "inc/image.inc";
 
 $sessionId = $_GET['sessionId'];
 $imageId = $_GET['imageId'];
@@ -26,7 +26,7 @@ if (!$_GET) {
 	$img = imagecreate(1,1);
 	imagecolorallocate($img, 255, 255, 255);
 }
-Header("Content-type: image/x-png");
+Header("Content-type: image/png");
 imagepng($img);
 imagedestroy($img);
 ?>

@@ -8,11 +8,11 @@
  *      Simple viewer to view a image using mrcmodule
  */
 
-require "inc/particledata.inc";
-require "inc/leginon.inc";
-require "inc/project.inc";
-require "inc/viewer.inc";
-require "inc/processing.inc";
+require_once "inc/particledata.inc";
+require_once "inc/leginon.inc";
+require_once "inc/project.inc";
+require_once "inc/viewer.inc";
+require_once "inc/processing.inc";
 
 // IF VALUES SUBMITTED, EVALUATE DATA
 if ($_POST['process']) {
@@ -93,7 +93,6 @@ function createUploadModelForm($extra=false, $title='UploadModel.py Launcher', $
   <TABLE BORDER=3 CLASS=tableborder>
   <TR>
     <TD VALIGN='TOP'>\n";
-	if (!$densityid &&!$rescale) echo"<A HREF='emanJobGen.php?expId=$expId&modelonly=True'>[rescale an existing model]</A><P>\n";
 	echo"<table>
     <TR>
       <TD VALIGN='TOP'>";
@@ -306,7 +305,7 @@ function runUploadModel() {
 
 	// if error display them
 	if ($errors)
-		createAppionForm($errors);
+		createUploadModelForm($errors);
 	exit;
 }
 ?>

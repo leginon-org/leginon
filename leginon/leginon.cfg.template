@@ -1,0 +1,44 @@
+# default.cfg
+# This is the default configuration file, if you wish to make changes copy this
+# to leginon.cfg in your working directory, home directory or inside the leginon
+# directory. Then modify your settings there.
+
+# path is a base directory, a session subdirectory will automatically be
+# created under it when the first image is saved for that session.
+#
+# Example
+#
+# [Images]
+# path: /data/leginon          # base directory where images will be stored
+
+[Images]
+path:
+
+# Optional. To skip part of leginon start up, enter your full name here.
+#
+# Example
+#
+# [User]
+# fullname: John Doe         # the user firstname lastname
+
+[User]
+fullname:
+
+#[Project]
+#default: Default Project
+
+# Optional. Local drive letters can be mapped to fs on the database server.
+#
+# Example
+#
+# [Drive Mapping]
+# Z: /database/filesystem
+
+[Drive Mapping]
+
+# password entered in GUI
+#[Email]
+#host: smtp.yourdomain.com
+#user: user@yourdomain.com
+#from: user@yourdomain.com
+#to: user@yourdomain.com

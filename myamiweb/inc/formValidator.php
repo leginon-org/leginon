@@ -47,6 +47,12 @@ class formValidator{
 	 * MinLengh : 
 	 * 				addValidation("variableName", "variableValue", "mixlen=3");
 	 * 				addValidation("variableName", "variableValue", "mixlen=3" , "Your own error message");
+	 * MaxValue : 
+	 * 				addValidation("variableName", "variableValue", "maxval=10");
+	 * 				addValidation("variableName", "variableValue", "maxval=10", "Your own error message");
+	 * MinValue : 
+	 * 				addValidation("variableName", "variableValue", "minval=3");
+	 * 				addValidation("variableName", "variableValue", "minval=3" , "Your own error message");
 	 * Email	: 
 	 * 				addValidation("variableName", "variableValue", "email");
 	 * 				addValidation("variableName", "variableValue", "email", "Your own error message");
@@ -115,6 +121,10 @@ class formValidator{
 		return $this->errorMessages;
 	}
 	
+	function setErrorMessage($variableName, $errorMessage){
+		$this->errorMessages[$variableName] = $errorMessage;
+	}
+	
 	function getValidateObjes(){
 		return $this->validateObjs;
 	}
@@ -131,7 +141,7 @@ class formValidator{
 			if(!$this->validate($validateObj)){
 				$result = false;
 
-				$this->errorMessages[$validateObj->getVariableName()] = $validateObj->getErrorOutputMessage();
+				$this->setErrorMessage($validateObj->getVariableName(), $validateObj->getErrorOutputMessage());
 			}			
 		}
 		
@@ -159,6 +169,16 @@ class formValidator{
 			
 			case 'minlen':{
 				$result = $this->validateMinlen($validateObj->getVariableValue(), $validateObj->getTypeOption());
+				break;
+			}
+			
+			case 'maxval':{
+				$result = $this->validateMaxval($validateObj->getVariableValue(), $validateObj->getTypeOption());
+				break;
+			}
+			
+			case 'minval':{
+				$result = $this->validateMinval($validateObj->getVariableValue(), $validateObj->getTypeOption());
 				break;
 			}
 			
@@ -235,6 +255,11 @@ class formValidator{
 				break;
 			}
 			
+			case 'noquote':{
+				$result = $this->validateNoQuote($validateObj->getVariableValue());
+				break;
+			}
+			
 		
 		} //end switch
 
@@ -252,7 +277,23 @@ class formValidator{
 			
 		return $result;	
 	}
-	
+	/*
+	 * Validate "noquote" field
+	 * This will allow quotes as the first and last chars, but nothing in between.
+	 */
+	function validateNoQuote($inputValue){
+		$result = true;
+
+		// remove the first and last chars, it is fine if these are quote chars, as this is generally
+		// necessary if there is a space within the string
+		$str = substr( $inputValue, 1, -1 );
+		
+		if (  (strlen($str) > 0) && (strpos( $str, "'" ) !== false || strpos( $str, '"' ) !== false) ) {
+      		$result = false;
+		}		
+
+		return $result;	
+	}	
 	/*
 	 * Validate Max length of input value
 	 */
@@ -288,11 +329,40 @@ class formValidator{
 	}
 	
 	/*
+	 * Validate Max value of input value
+	 */
+	function validateMaxval($inputValue, $maxval){
+		
+		$result = true;
+		
+		if ( isset($inputValue) ) {			
+			if ($inputValue > $maxval)				
+				$result=false;
+		}
+		return $result;
+	}
+	
+	/*
+	 * Validate Min value of input value
+	 */
+	function validateMinval($inputValue, $minval){
+		
+		$result = true;
+		
+		if ( isset($inputValue) ) {
+			
+			if ($inputValue < $minval)
+				$result=false;
+		}
+		return $result;
+	}
+	
+	/*
 	 * Validate email address
 	 */
 	function validateEmail($email) {
 
-		return eregi("^[_\.0-9a-zA-Z-]+@([0-9a-zA-Z][0-9a-zA-Z-]+\.)+[a-zA-Z]{2,6}$", $email);
+		return preg_match("%^[_\.0-9a-zA-Z-]+@([0-9a-zA-Z][0-9a-zA-Z-]+\.)+[a-zA-Z]{2,6}$%i", $email);
 	}	
 	
 	
@@ -457,6 +527,8 @@ class formValidator{
 define("REQUIRED_VALUE", "Field can not be empty.");
 define("MAXLEN_EXCEEDED", "Please enter an input with length less than %d.");
 define("MINLEN_CHECK_FAILED", "Please enter an input with length more than %d.");
+define("MAXVAL_EXCEEDED", "Please enter a value no greater than %d.");
+define("MINVAL_CHECK_FAILED", "Please enter a value no less than %d.");
 define("EMAIL_CHECK_FAILED", "Please provide a valid email address.");
 define("NUM_CHECK_FAILED", "Please provide a numeric input.");
 define("ALPHA_CHECK_FAILED", "Please provide an alphabetic input.");
@@ -471,6 +543,7 @@ define("FOLDER_PERMISSION_CHECK_FAILED", "Apache user does not have write permis
 define("SMTP_CHECK_FAILED", "SMTP Server checking failed. Please contact your system administrator.");
 define("REMOTE_SERVER_CHECK_FAILED", "REMOTE Server checking failed. Please contact your system administrator.");
 define("DATABASE_CHECK_FAILED", "Database checking failed. Please contact your system administrator.");
+define("REMOVE_QUOTE_CHAR", "Please remove any quote characters from your entry.");
 
 // This is an inner class for formValidator.
 class validatorObj{
@@ -530,6 +603,10 @@ class validatorObj{
 			
 				case 'minlen':		{ $this->errorOutputMessage = sprintf(MINLEN_CHECK_FAILED, $this->getTypeOption()); break;	}
 			
+				case 'maxval':		{ $this->errorOutputMessage = sprintf(MAXVAL_EXCEEDED, $this->getTypeOption()); break;	}
+			
+				case 'minval':		{ $this->errorOutputMessage = sprintf(MINVAL_CHECK_FAILED, $this->getTypeOption()); break;	}
+				
 				case 'email':		{ $this->errorOutputMessage = EMAIL_CHECK_FAILED; break;	}
 			
 				case 'num':			{ $this->errorOutputMessage = NUM_CHECK_FAILED; break;	}
@@ -557,7 +634,9 @@ class validatorObj{
 				case 'remoteServer': { $this->errorOutputMessage = REMOTE_SERVER_CHECK_FAILED; break; }
 				
 				case 'database':	{ $this->errorOutputMessage = DATABASE_CHECK_FAILED; break;	}
-		
+				
+				case 'noquote':	{ $this->errorOutputMessage = REMOVE_QUOTE_CHAR; break;	}
+				
 			} //end switch			
 		}
 		else{

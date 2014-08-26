@@ -8,8 +8,8 @@
  */
 
 
-require 'inc/xmldata.inc';
-require 'inc/image.inc';
+require_once 'inc/xmldata.inc';
+require_once 'inc/image.inc';
 
 $g=true;
 if (!$sessionId=stripslashes($_GET['session'])) {
@@ -22,7 +22,7 @@ if (!$id=stripslashes($_GET['id'])) {
 $preset = stripslashes($_GET['preset']);
 $t = $_GET['t'];
 if ($t=='png') {
-        $type = "image/x-png";
+        $type = "image/png";
 	$ext = "png";
 } else {
         $type = "image/jpeg";
@@ -65,15 +65,11 @@ if ($g) {
 
 	$img = getImageXML($XML_DATA, $id, $preset, $params);
 
-	Header( "Content-type: $type ");
-	Header( "Content-Disposition: inline; filename=".$filename);
-        if ($t=='png')
-                imagepng($img);
-        else
-                imagejpeg($img,'',$quality);
-	imagedestroy($img);
+	$imagerequest = new imageRequester();
+	$imagerequest->displayImageObj($img,$ext,$quality,$filename);
+
 } else {
-	Header("Content-type: image/x-png");
+	Header("Content-type: image/png");
 	$blkimg = blankimage();
 	imagedestroy($blkimg);
 }

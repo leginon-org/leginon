@@ -7,40 +7,31 @@
  *	see  http://ami.scripps.edu/software/leginon-license
  */
 
-require "inc/particledata.inc";
-require "inc/leginon.inc";
-require "inc/jpgraph.php";
-require "inc/jpgraph_line.php";
-require "inc/jpgraph_scatter.php";
-require "inc/jpgraph_bar.php";
-require "inc/histogram.inc";
-require "inc/image.inc";
+require_once "inc/particledata.inc";
+require_once "inc/leginon.inc";
+require_once "inc/project.inc";
+
+require_once "inc/graph.inc";
 
 $defaultId= 1766;
-$sessionId= ($_GET[Id]) ? $_GET[Id] : $defaultId;
+$sessionId= ($_GET['expId']) ? $_GET['expId'] : $defaultId;
 $viewdata = ($_GET['vd']==1) ? true : false;
-$histogram = ($_GET[hg]==1) ? true : false;
+$histogram = ($_GET['hg']==1) ? true : false;
 $f = $_GET[f];
 $preset=$_GET['preset'];
-$summary = ($_GET[s]==1 ) ? true : false;
-$minimum = $_GET[mconf];
+$summary = ($_GET['s']==1 ) ? true : false;
+$minimum = $_GET['mconf'];
+$width=$_GET['w'];
+$height=$_GET['h'];
 
 $ctf = new particledata();
 
 //If summary is true, get only the data with the best confidence
 if ($summary) {
-	$ctfinfo = $ctf->getBestCtfInfoForSessionId($sessionId, $minimum);
+	$ctfinfo = $ctf->getBestCtfInfoByResolution($sessionId, $minimum);
 } else {
 	$runId= ($_GET[rId]);
 	$ctfinfo = $ctf->getCtfInfoWithNominal($sessionId, $runId);
-}
-
-function scicallback($a) {
-	return format_sci_number($a,3,true);
-}
-
-function TimeCallback($aVal) {
-    return Date('H:i',$aVal);
 }
 
 foreach($ctfinfo as $t) {
@@ -53,6 +44,7 @@ foreach($ctfinfo as $t) {
 	$datadef[$id] = $t['defocus'];
 	$where[] = "DEF_id=".$id;
 }
+
 $sqlwhere = "WHERE (".join(' OR ',$where).") and a.`REF|SessionData|session`=".$sessionId ;
 $q = 	"select DEF_id, unix_timestamp(DEF_timestamp) as unix_timestamp, "
 	." DEF_timestamp as timestamp from AcquisitionImageData a "
@@ -60,7 +52,7 @@ $q = 	"select DEF_id, unix_timestamp(DEF_timestamp) as unix_timestamp, "
 	$r = $leginondata->getSQLResult($q);
 	foreach($r as $row) {
 		$e = $leginondata->getPresetFromImageId($row['DEF_id']);
-		$ndata[]=array("timestamp" => $row['timestamp'], "$f"=>$data[$row['DEF_id']]);
+		$ndata[]=array("unix_timestamp" => $row['unix_timestamp'], "$f"=>$data[$row['DEF_id']], "nom_defocus"=>$datadef[$row['DEF_id']]);
 //		$datax[]=$row['unix_timestamp'];
 		$datax[]=$datadef[$row['DEF_id']];
 		$datay[]=$data[$row['DEF_id']];
@@ -72,60 +64,33 @@ if ($viewdata) {
 	exit;
 }
 
-$width = $_GET['w'];
-$height = $_GET['h'];
-if (!$data) {
-	$width = 12;
-	$height = 12;
-	$source = blankimage($width,$height);
-} else {
-	$graph = new Graph(600,400,"auto");    
-	if ($histogram) {
-		$graph->img->SetMargin(60,30,40,50);
-		$histogram = new histogram($data);
-		$histogram->setBarsNumber(50);
-		$rdata = $histogram->getData();
+$display_x = 'nom_defocus';
+$display_y = $f;
+$axes = array($display_x,$display_y);
+if ($histogram == true && $histaxis == 'x') 
+	$axes = array($display_y,$display_x);
+$dbemgraph= new dbemgraph($ndata, $axes[0], $axes[1]);
+$dbemgraph->lineplot=false;
+$dbemgraph->title=$fieldname. ($preset) ? " for preset $preset":'';
+$yunit = ($f == 'defocus1' || $f == 'defocus2' || $f == 'difference') ? ' (um)':'';
+$dbemgraph->yaxistitle=$axes[1].$yunit;
+$dbemgraph->xaxistitle=$axes[0].$yunit;
 
-		$rdatax = $rdata['x'];
-		$rdatay = $rdata['y'];
-		
-		$graph->SetScale("linlin");
-                
-		$bplot = new BarPlot($rdatay, $rdatax);
-		$graph->Add($bplot);
-
-		$graph->title->Set("Histogram $f : $preset ");
-		$graph->xaxis->title->Set("$f");
-		$graph->xaxis->SetTextLabelInterval(3);
-		$graph->xaxis->SetLabelFormatCallback('scicallback');
-		$graph->yaxis->title->Set("Frequency");
-	} else {
-
-		$graph->SetAlphaBlending();
-		$graph->SetScale("linlin",0,'auto'); //,$datax[0],$datax[$n-1]);
-		$graph->img->SetMargin(60,40,40,80);
-		$graph->xaxis->SetLabelFormatCallback('scicallback');
-		$graph->xaxis->SetLabelAngle(90);
-		$graph->xaxis->SetTitlemargin(-30);
-		$graph->xaxis->SetPos("min");
-		$graph->xaxis->title->Set("nominal defocus");
-		$graph->yaxis->SetTitlemargin(35);
-		$graph->yaxis->SetLabelFormatCallback('scicallback');
-		$graph->title->Set("$f - nominal : $preset ");
-
-		$sp1 = new ScatterPlot($datay,$datax);
-		$sp1->mark->SetType(MARK_CIRCLE);
-		$sp1->mark->SetColor('red');
-		$sp1->mark->SetWidth(4);
-		$graph->Add($sp1);
-		$y1 = array(0,0);
-		$p1 = new LinePlot($y1,array(min($datax),max($datax)));
-		$p1->SetColor("blue");
-		$graph->Add($p1);
-	}
-	$source = $graph->Stroke(_IMG_HANDLER);
+if ($viewdata) {
+	$dbemgraph->dumpData(array($display_x, $display_y));
+}
+if ($histogram) {
+	$dbemgraph->histogram=true;
 }
 
-resample($source, $width, $height);
+$xscale = ($histogram) ? 1: 1e-6;
+$dbemgraph->scalex($xscale);
+$yscale = ($f == 'defocus1' || $f == 'defocus2' || $f == 'difference') ? 1e-6:1;
+$dbemgraph->scaley($yscale);
+$dbemgraph->dim($width,$height);
+if ($f == 'difference')
+	$dbemgraph->baselineplot=true;
+
+$dbemgraph->graph();
 
 ?>

@@ -58,7 +58,7 @@ class ScrolledSettings(leginon.gui.wx.Reference.ScrolledSettings):
 		self.widgets['instruments'] = leginon.gui.wx.Instrument.SelectionPanel(self, passive=True)
 		self.panel.setInstrumentSelection(self.widgets['instruments'])
 		self.widgets['camera settings'] = leginon.gui.wx.Camera.CameraPanel(self)
-		self.widgets['camera settings'].setSize(self.node.instrument.camerasize)
+		self.widgets['camera settings'].setGeometryLimits({'size':self.node.instrument.camerasize,'binnings':self.node.instrument.camerabinnings,'binmethod':self.node.instrument.camerabinmethod})
 
 		sz = wx.GridBagSizer(5, 10)
 		sz.Add(self.widgets['override preset'], (0, 0), (1, 1),

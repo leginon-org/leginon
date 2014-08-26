@@ -1,10 +1,10 @@
 <?php
 
-require "inc/project.inc.php";
-require "inc/leginon.inc";
-require "inc/confirmlib.php";
-require "inc/utilpj.inc.php";
-require "inc/aform.php";
+require_once "inc/project.inc.php";
+require_once "inc/leginon.inc";
+require_once "inc/confirmlib.php";
+require_once "inc/utilpj.inc.php";
+require_once "inc/aform.php";
 
 $confirmId = ($_GET['id']) ? $_GET['id'] : $_POST['confirmId'];
 $projectId = ($_GET['pid']) ? $_GET['pid'] : $_POST['projectId'];
@@ -34,14 +34,14 @@ print_r($data_from_post);
 print_r($_POST);
 
 	foreach($map as $k=>$v) {
-		if (ereg("date$", $k)) {
+		if (preg_match("%date$%", $k)) {
 			$$k=mysql::format_date($data_from_post[$v]);
 		} else {
 			$$k=$data_from_post[$v];
 		}
 	}
 
-	$confirmnum=ereg_replace("^C","",$confirmnum);
+	$confirmnum=preg_replace("%^C%","",$confirmnum);
 	if ($_POST['btsubmit']=='add') {
 		$confirmId = $confirm->addConfirm($projectId, $duedate, $deliverables, $confirmnum, $note, $samplerequest, $experimentrequest);
 
@@ -73,7 +73,7 @@ $curconfirm = $confirm->getConfirmInfo($confirmId);
 print_r($curconfirm);
 foreach($map as $k=>$v) {
 	$val=$curconfirm[$k];
-	if (ereg("date$", $k)) {
+	if (preg_match("%date$%", $k)) {
 			$val=mysql::format_date($val, "ymd", "mdy", "-" );
 	}
 	if ($v=="c5") {

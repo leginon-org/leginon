@@ -28,8 +28,6 @@ def getSnapPath():
 		libdir = os.path.dirname(__file__)
 		chimsnappath = os.path.join(libdir, "apChimSnapshot.py")
 	if not os.path.isfile(chimsnappath):
-		chimsnappath = apParam.getExecPath("apChimSnapshot.py")
-	if not os.path.isfile(chimsnappath):
 		apDisplay.printError("Could not find file: apChimSnapshot.py")
 	return chimsnappath
 
@@ -40,6 +38,7 @@ def isValidVolume(volfile):
 	Checks to see if a MRC volume is valid
 	"""
 	if not os.path.isfile(volfile):
+		apDisplay.printWarning("volume path '%s' is not a file"%(volfile))
 		return False
 	volarray = mrc.read(volfile)
 	if volarray.shape[0]*volarray.shape[1]*volarray.shape[2] > 400**3:
@@ -60,7 +59,7 @@ def setVolumeMass(volumefile, apix=1.0, mass=1.0, rna=0.0):
 	use RNA to set the percentage of RNA in the structure
 	"""
 	if isValidVolume(volumefile) is False:
-		apDisplay.printError("Volume file is not valid")
+		apDisplay.printError("Volume file %s is not valid"%(volumefile))
 
 	procbin = apParam.getExecPath("proc2d")
 	emandir = os.path.dirname(procbin)
@@ -71,6 +70,7 @@ def setVolumeMass(volumefile, apix=1.0, mass=1.0, rna=0.0):
 	command = "%s %s %.3f set=%.3f"%(	
 		volumebin, volumefile, apix, mass
 	)
+	print "EMAN: "+command
 	t0 = time.time()
 	proc = subprocess.Popen(command, shell=True)
 	proc.wait()
@@ -88,7 +88,7 @@ def filterAndChimera(density, res=30, apix=None, box=None, chimtype='snapshot',
 	filter volume and then create a few snapshots for viewing on the web
 	"""
 	if isValidVolume(density) is False:
-		apDisplay.printError("Volume file is not valid")
+		apDisplay.printError("Volume file %s is not valid"%(density))
 	if box is None:
 		boxdims = apFile.getBoxSize(density)
 		box = boxdims[0]
@@ -96,7 +96,8 @@ def filterAndChimera(density, res=30, apix=None, box=None, chimtype='snapshot',
 	if not res or str(res) == 'nan':
 		res = 30
 	### low pass filter the volume to 60% of reported res
-	tmpf = density+'.tmp.mrc'
+	tmpf = os.path.abspath(density+'.tmp.mrc')
+	density = os.path.abspath(density)
 	filtres = 0.6*res
 	shrinkby = 1
 	if box is not None and box > 250:
@@ -139,7 +140,7 @@ def filterAndChimera(density, res=30, apix=None, box=None, chimtype='snapshot',
 		renderAnimation(tmpf, contour, zoom, sym, color, silhouette, name=density)
 	elif chimtype != 'animate':
 		renderSnapshots(tmpf, contour, zoom, sym, color, silhouette, name=density)
-	#apFile.removeFile(tmpf)
+	apFile.removeFile(tmpf)
 
 #=========================================
 #=========================================
@@ -172,7 +173,7 @@ def renderSlice(density, box=None, tmpfile=None, sym='c1'):
 #=========================================
 #=========================================
 def renderSnapshots(density, contour=None, zoom=1.0, sym=None, color=None, 
-		silhouette=True, xvfb=True, pdb=None, name=None):
+		silhouette=True, xvfb=False, pdb=None, name=None):
 	"""
 	create a few snapshots for viewing on the web
 	"""
@@ -224,7 +225,7 @@ def renderSnapshots(density, contour=None, zoom=1.0, sym=None, color=None,
 #=========================================
 #=========================================
 def renderAnimation(density, contour=None, zoom=1.0, sym=None, color=None,
-		silhouette=False, xvfb=True, name=None):
+		silhouette=False, xvfb=False, name=None):
 	"""
 	create several snapshots and merge into animated GIF
 	"""
@@ -281,7 +282,7 @@ def renderAnimation(density, contour=None, zoom=1.0, sym=None, color=None,
 
 #=========================================
 #=========================================
-def runChimeraScript(chimscript, xvfb=True):
+def runChimeraScript(chimscript, xvfb=False):
 	if not chimscript or not os.path.isfile(chimscript):
 		print chimscript
 		apDisplay.printError("Could not find file: apChimSnapshot.py")

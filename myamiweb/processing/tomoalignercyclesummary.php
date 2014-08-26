@@ -7,11 +7,11 @@
  *
  */
 
-require "inc/particledata.inc";
-require "inc/leginon.inc";
-require "inc/project.inc";
-require "inc/viewer.inc";
-require "inc/processing.inc";
+require_once "inc/particledata.inc";
+require_once "inc/leginon.inc";
+require_once "inc/project.inc";
+require_once "inc/viewer.inc";
+require_once "inc/processing.inc";
   
 // check if coming directly from a session
 $expId = $_GET['expId'];
@@ -50,6 +50,7 @@ if (!$runinfo['protomoid']) {
 	# old imod alignmentrun may not have aligner
 	$alignerid = (empty($aligners)) ? $alignId : $aligners[0]['alignerid'];
 	echo "<a href='tomoalignercyclereport.php?expId=".$expId."&aId=".$alignerid."'><b>[Redirect to Aligner Report]</b></a>";
+	echo "<p><a href='tomoalignmovie.php?aId=$alignId&expId=$expId'>Alignment Movie</a></p>";
 } else {
 	$allcycles = $particle->getTomoAlignerInfoFromAlignmentRun($alignId,False);
 	if ($_POST && $allcycles) {

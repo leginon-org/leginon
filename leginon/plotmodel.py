@@ -6,7 +6,7 @@ if len(sys.argv) < 3:
 
 import wx
 import wx.lib.plot
-import leginondata
+from leginon import leginondata
 import math
 import gonmodel
 import numpy

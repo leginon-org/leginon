@@ -9,10 +9,10 @@
 
 include ("inc/particledata.inc");
 include ("inc/jpgraph.php");
-include ("inc/jpgraph_utils.inc");
+include ("inc/jpgraph_utils.inc.php");
 include ("inc/jpgraph_line.php");
 include ("inc/jpgraph_scatter.php");
-require ("inc/leginon.inc");
+require_once ("inc/leginon.inc");
 
 $file=$_GET['file'];
 $width=$_GET['width'];
@@ -32,7 +32,7 @@ $sr = array();
 if (is_array($data))
 	foreach ($data as $line) {
 		$line=trim($line);
-		list($x,$a,$r,$y)=split("[\t ]+",$line);
+		list($x,$a,$r,$y)=preg_split("%[\t ]+%",$line);
 		$sr[]=$r;
 		$sx[]=$x;
 		$y=floatval($y);

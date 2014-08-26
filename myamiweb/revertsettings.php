@@ -8,37 +8,70 @@
  */
 
 require_once ("inc/leginon.inc");
-require_once "inc/dbemauth.php";
-require('inc/admin.inc');
+require_once "inc/dbemauth.inc";
+require_once('inc/admin.inc');
+
+// Change $test to true to print out the code_string without executing it.
+$test=false;
 
 $login_check = $dbemauth->is_logged();
 $is_admin = (privilege('users')>1);
 
-function addToGlobalString($array) {
+function addToGlobalString($array,$test=false) {
 	global $code_string ;
-	#$linebreak = "<br/>";
-	$linebreak = "\n";
+	if ($test) {
+		// Use <br/> for printing on page as testing
+		$linebreak = "<br/>";
+	} else {
+		// Use \n for executing
+		$linebreak = "\n";
+	}
 	foreach($array as $content) {
 		$code_string .= $content.$linebreak;
 	}
 }
 
-function revertToDefaults($user_id) {
+function revertToDefaults($user_id,$test=false) {
 	global $code_string;
 	global $leginondata;
 	$array = defaultsettings_fileheader($user_id,$admin_init=false);
-	addToGlobalString($array);
-	$error_html = makeSettingsCode($user_id);
-	#echo $code_string;
-	eval($code_string);
+	addToGlobalString($array,$test);
+	$error_html = makeSettingsCode($user_id,false,false,$test);
+	if ($test) {
+		echo $code_string;
+	} else {
+		eval($code_string);
+	}
+	return $error_html;
+}
+
+function revertToSession($user_id,$sessionid,$test=false) {
+	global $code_string;
+	global $leginondata;
+	global $is_admin;
+	$sessioninfo = $leginondata->getSessionInfo($sessionid,true);
+	if ($sessioninfo['userId']!=$user_id && !$is_admin) return 'Error: Session does not belong to the user';
+	$array = defaultsettings_fileheader($user_id,$admin_init=false,$sessionname=$sessioninfo['Name']);
+	addToGlobalString($array,$test);
+	$error_html = makeSettingsCode($user_id,$sessioninfo['End sqlTimestamp'],$sessioninfo['userId'],$test);
+	if ($test) {
+		echo $code_string;
+	} else {
+		eval($code_string);
+	}
 	return $error_html;
 }
 
 admin_header('onload="init()"');
-$title = "Revert to administrator's Node Settings";
+
+
+$title = "Revert Node Settings";
 if ($_POST['userId'] && !$_POST['orig']) {
 	$title = "";
-	$error_html = revertToDefaults($_POST['userId']);
+	if ($_POST['sessionId'] && is_numeric($_POST['sessionId']))
+		$error_html = revertToSession($_POST['userId'],$_POST['sessionId'],$test);
+	else
+		$error_html = revertToDefaults($_POST['userId'],$test);
 }
 if ($_POST['orig']) {
 	$title = "";
@@ -63,9 +96,9 @@ function init() {
 $code_string = '';
 if ($_POST) {
 	if (!$error_html) {
-		echo "<h4> default settings restored </h4>";
+		echo "<h4> Settings Restored </h4>";
 	} else {
-		echo "<h4> ".$error_html." </h4>";
+		echo "<h3> ".$error_html." </h3>";
 	}
 } else {
 ?>
@@ -82,11 +115,11 @@ if ($_POST) {
 	}
 	$q .=	"order by u.`lastname`";
 	$users = $leginondata->mysql->getSQLResult($q);
+	$sessions = $leginondata->getSessions();
 	if ($is_admin) {
-		$bt_add= "<input class='bt1' type='submit' name='bt' value='add'>";
-		?>
+?>
 		<select name="userId">
-		<?
+<?
 			echo "<option value='default' > -- select user -- </option>";
 			foreach($users as $user) {
 				if ($user['username'] == 'administrator') {
@@ -102,12 +135,30 @@ if ($_POST) {
 					.$lastname
 					."</option>\n";
 			}
-	?>
-	</select>
-<br/>
-<br/>
-	<input type="submit" name="def" value="Revert" >
+?>
+		</select>
+		<br/>
+		<br/>
+		<select name="sessionId">
 <?
+			echo "<option value='default' > -- select a session if you want to revert to it -- </option>";
+			foreach($sessions as $session) {
+				if (!is_numeric($session['id'])) continue;
+				$s = ($session['id']==$_POST['sessionId']) ? "selected" : "";
+				$sessionname = $session['name'];
+				echo "<option value='".$session['id']."' $s >"
+					.$sessionname
+					."</option>\n";
+			}
+?>
+		</select>
+		<p>* If a session is not selected, default is to revert to the latest administrator settings</p>
+		<br/>
+		<br/>
+		<input type="submit" name="def" value="Revert Node Settings" >
+<?
+
+// Administrator revert to the original
 		if (privilege('users') > 3) {
 ?>
 			<h3>            OR

@@ -7,12 +7,15 @@
 import time
 import threading
 import baseinstrument
+import config
 
 class GeometryError(Exception):
 	pass
 
 class CCDCamera(baseinstrument.BaseInstrument):
 	name = 'CCD Camera'
+	binning_limits = [1,2,4,8]
+	binmethod = 'exact'
 
 	capabilities = baseinstrument.BaseInstrument.capabilities + (
 		{'name': 'PixelSize', 'type': 'property'},
@@ -28,15 +31,33 @@ class CCDCamera(baseinstrument.BaseInstrument):
 		## optional:
 		{'name': 'EnergyFilter', 'type': 'property'},
 		{'name': 'EnergyFilterWidth', 'type': 'property'},
+		{'name': 'FrameFlip', 'type': 'property'},
+		{'name': 'FrameRotate', 'type': 'property'},
 	)
 
 	def __init__(self):
+		baseinstrument.BaseInstrument.__init__(self)
+		self.config_name = config.getNameByClass(self.__class__)
+		if self.config_name is None:
+			raise RuntimeError('%s was not found in your instruments.cfg' % (self.__class__.__name__,))
+		conf = config.getConfigured()[self.config_name]
+		self.zplane = conf['zplane']
+		if 'height' in conf and 'width' in conf:
+			self.configured_size = {'x': conf['width'], 'y': conf['height']}
+		else:
+			self.configured_size = None
 		self.buffer = {}
 		self.buffer_ready = {}
 		self.bufferlock = threading.Lock()
 		self.readoutcallback = None
 		self.callbacks = {}
 		self.exposure_timestamp = None
+
+	def getZplane(self):
+		return self.zplane
+
+	def getCameraModelName(self):
+		return self.name
 
 	def calculateCenteredGeometry(self, dimension, binning):
 		camerasize = self.getCameraSize()
@@ -82,9 +103,25 @@ class CCDCamera(baseinstrument.BaseInstrument):
 		except:
 			settings['save frames'] = False
 		try:
+			settings['frame time'] = self.getFrameTime()
+		except:
+			settings['frame time'] = None
+		try:
 			settings['use frames'] = self.getUseFrames()
 		except:
 			settings['use frames'] = ()
+		try:
+			settings['readout delay'] = self.getReadoutDelay()
+		except:
+			settings['readout delay'] = 0
+		try:
+			settings['align frames'] = self.getAlignFrames()
+		except:
+			settings['save frames'] = False
+		try:
+			settings['align frame filter'] = self.getAlignFilter()
+		except:
+			settings['align frame filter'] = 'None'
 		return settings
 
 	def setSettings(self, settings):
@@ -98,6 +135,38 @@ class CCDCamera(baseinstrument.BaseInstrument):
 			self.setUseFrames(settings['use frames'])
 		except:
 			pass
+		try:
+			self.setFrameTime(settings['frame time'])
+		except:
+			pass
+		try:
+			self.setReadoutDelay(settings['readout delay'])
+		except:
+			pass
+		try:
+			self.setAlignFrames(settings['align frames'])
+		except:
+			pass
+		try:
+			self.setAlignFilter(settings['align filter'])
+		except:
+			pass
+
+	def getBinnedMultiplier(self):
+		'''
+Standard hardware binning causes a binned pixel to have
+following:
+	binned value = binning^2 * unbinned value
+	OR
+	unbinned value = binned value / binning^2
+Sometime binning is done in software or modified in software, so there
+could be a non-standard factor:
+	binned value = binning^2 * unbinnned value / M
+	OR
+	unbinned value = M * binned value / binning^2
+This method returns that multiplier, M.  In the standard case, returns 1.0.
+		'''
+		return 1.0
 
 	def getBinning(self):
 		raise NotImplementedError
@@ -135,8 +204,20 @@ class CCDCamera(baseinstrument.BaseInstrument):
 	def getPixelSize(self):
 		raise NotImplementedError
 
+	def getCameraBinnings(self):
+		return self.binning_limits
+
+	def getCameraBinMethod(self):
+		return self.binmethod
+
 	def getCameraSize(self):
-		raise NotImplementedError
+		if self.configured_size is not None:
+			return dict(self.configured_size)
+		else:
+			try:
+				return self._getCameraSize()
+			except:
+				raise RuntimeError('You need to configure "width" and "height" in instruments.cfg, or implement _getCameraSize() in your camera class')
 
 	def getExposureTimestamp(self):
 		return self.exposure_timestamp
@@ -210,5 +291,30 @@ class CCDCamera(baseinstrument.BaseInstrument):
 	def getSaveRawFrames(self):
 		return False
 
-class FastCCDCamera(CCDCamera):
-	name = 'Fast CCD Camera'
+	def getNumberOfFrames(self):
+		return 1
+	#def setSaveRawFrames(self, value):
+	#	raise NotImplementedError
+
+	def getAlignFrames(self):
+		return False
+
+	#def setAlignFrames(self, value):
+	#	raise NotImplementedError
+
+	def getAlignFilter(self):
+		return 'None'
+
+	#def setAlignFilter(self, value):
+	#	raise NotImplementedError
+
+	def getSystemGainDarkCorrected(self):
+		return False
+
+	def getFrameFlip(self):
+		# flip before? rotation
+		return False
+
+	def getFrameRotate(self):
+		# rotation in multiple of 90 degrees
+		return 0

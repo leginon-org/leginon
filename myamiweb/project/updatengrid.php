@@ -1,11 +1,11 @@
 <?php
 
-require "inc/project.inc.php";
-require "inc/leginon.inc";
-require "inc/packagelib.php";
-require "inc/samplelib.php";
-require "inc/gridlib.php";
-require "inc/utilpj.inc.php";
+require_once "inc/project.inc.php";
+require_once "inc/leginon.inc";
+require_once "inc/packagelib.php";
+require_once "inc/samplelib.php";
+require_once "inc/gridlib.php";
+require_once "inc/utilpj.inc.php";
 
 $gridId = ($_GET['id']) ? $_GET['id'] : $_POST['gridId'];
 $projectId = ($_GET['pid']) ? $_GET['pid'] : $_POST['projectId'];
@@ -48,7 +48,7 @@ if ($_POST ) {
 	$data_from_post=from_POST_values(array_values($map));
 
 	foreach($map as $k=>$v) {
-		if (ereg("^date", $k)) {
+		if (preg_match("%^date%", $k)) {
 			$$k=mysql::format_date($data_from_post[$v]);
 		} else {
 			$$k=$data_from_post[$v];
@@ -106,7 +106,7 @@ project_header("Grid $title");
 <font face="Arial, Helvetica, sans-serif" size="2">: required fields</font>
 </p>
 <?
-require "inc/aform.php";
+require_once "inc/aform.php";
 ?>
 <link href="css/aform.css" rel="stylesheet" type="text/css" />
 <?
@@ -123,7 +123,7 @@ $grbox=1;
 if ($gridId) {
 	foreach($map as $k=>$v) {
 		$val=$curgrid[$k];
-		if (ereg("^date", $k)) {
+		if (preg_match("%^date%", $k)) {
 				$val=mysql::format_date($val, "ymd", "mdy", "-" );
 		}
 		$defaults[$v]=$val;

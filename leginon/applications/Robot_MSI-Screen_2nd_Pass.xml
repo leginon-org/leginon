@@ -3,7 +3,7 @@
 - Application XML-Dump
 - http://ami.scripps.edu/ 
 -
-- Application :Robot MSI-Screen 2nd Pass (1.6)
+- Application :Robot MSI-Screen 2nd Pass (3.0)
 - Version     :7
 - Date : 03/03/2009
 -
@@ -185,7 +185,7 @@
     <sqltable name="ApplicationData" >
         <field name="DEF_id" >656</field>
         <field name="DEF_timestamp" >2009-03-03 21:05:11</field>
-        <field name="name" >Robot MSI-Screen 2nd Pass (1.6)</field>
+        <field name="name" >Robot MSI-Screen 2nd Pass (3.0)</field>
         <field name="version" >7</field>
     </sqltable>
   <!-- BindingSpecData -->
@@ -690,6 +690,22 @@
         <field name="launcher alias" >Instrument</field>
         <field name="SEQ|dependencies" >[]</field>
         <field name="REF|ApplicationData|application" >656</field>
+    </sqltable>
+    <sqltable name="BindingSpecData" >
+        <field name="DEF_id" >22079</field>
+        <field name="DEF_timestamp" >2011-10-10 18:25:01</field>
+        <field name="event class string" >MoveToTargetEvent</field>
+        <field name="from node alias" >Target Adjustment</field>
+        <field name="to node alias" >Navigation</field>
+        <field name="REF|ApplicationData|application" >728</field>
+    </sqltable>
+    <sqltable name="BindingSpecData" >
+        <field name="DEF_id" >22111</field>
+        <field name="DEF_timestamp" >2011-10-10 18:25:01</field>
+        <field name="event class string" >MoveToTargetDoneEvent</field>
+        <field name="from node alias" >Navigation</field>
+        <field name="to node alias" >Target Adjustment</field>
+        <field name="REF|ApplicationData|application" >728</field>
     </sqltable>
   <!-- BindingSpecData -->
   <!-- NodeSpecData -->

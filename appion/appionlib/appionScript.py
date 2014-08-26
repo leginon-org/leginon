@@ -9,6 +9,7 @@ import sys
 import pwd
 import time
 import subprocess
+import glob
 from optparse import OptionParser
 #appion
 from appionlib import basicScript
@@ -18,17 +19,19 @@ from appionlib import apProject
 from appionlib import apDatabase
 from appionlib import appiondata
 from appionlib import apWebScript
+from appionlib import apThread
 #leginon
 import leginon.leginonconfig
 import sinedon
 from pyami import mem
 from pyami import version
+from pyami import fileutil
 
 #=====================
 #=====================
 class AppionScript(basicScript.BasicScript):
 	#=====================
-	def __init__(self, useglobalparams=True):
+	def __init__(self,optargs=sys.argv[1:],quiet=False,useglobalparams=True,maxnproc=None):
 		"""
 		Starts a new function and gets all the parameters
 		"""
@@ -37,7 +40,8 @@ class AppionScript(basicScript.BasicScript):
 		self.clusterjobdata = None
 		self.params = {}
 		sys.stdout.write("\n\n")
-		self.quiet = False
+		self.quiet = quiet
+		self.maxnproc = maxnproc
 		self.startmem = mem.active()
 		self.t0 = time.time()
 		self.createDefaultStats()
@@ -52,22 +56,20 @@ class AppionScript(basicScript.BasicScript):
 		self.parsePythonPath()
 		loadavg = os.getloadavg()[0]
 		if loadavg > 2.0:
-			time.sleep(loadavg**2)
 			apDisplay.printMsg("Load average is high "+str(round(loadavg,2)))
+			loadsquared = loadavg*loadavg
+			time.sleep(loadavg)
+			apDisplay.printMsg("New load average "+str(round(os.getloadavg()[0],2)))
+		self.setLockname('lock')
 
 		### setup default parser: run directory, etc.
-		self.parser = OptionParser()
-		if useglobalparams is True:
-			self.setupGlobalParserOptions()
-		self.setupParserOptions()
-		self.params = apParam.convertParserToParams(self.parser)
-		self.checkForDuplicateCommandLineInputs()
+		self.setParams(optargs,useglobalparams)
 		#if 'outdir' in self.params and self.params['outdir'] is not None:
 		#	self.params['rundir'] = self.params['outdir']
 
 		### setup correct database after we have read the project id
 		if 'projectid' in self.params and self.params['projectid'] is not None:
-			apDisplay.printWarning("Using split database")
+			apDisplay.printMsg("Using split database")
 			# use a project database
 			newdbname = apProject.getAppionDBFromProjectId(self.params['projectid'])
 			sinedon.setConfig('appiondata', db=newdbname)
@@ -86,6 +88,13 @@ class AppionScript(basicScript.BasicScript):
 		### setup run directory
 		self.setProcessingDirName()
 		self.setupRunDirectory()
+
+		### Start pool of threads to run subprocesses.
+		### Later you will use self.process_launcher.launch(...) to
+		### put commands into the queue.
+		### There is currently a timeout built into it that will cause
+		### the threads to die if they have no tasks after 10 seconds.
+		self.process_launcher = apThread.ProcessLauncher(2, self.params['rundir'])
 
 		### write function log
 		self.logfile = apParam.writeFunctionLog(sys.argv, msg=(not self.quiet))
@@ -172,6 +181,7 @@ class AppionScript(basicScript.BasicScript):
 		pathq = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
 		clustq = appiondata.ApAppionJobData()
 		clustq['path'] = pathq
+		clustq['jobtype'] = self.functionname.lower()
 		clustdatas = clustq.query()
 		if not clustdatas:
 			### insert a cluster job
@@ -182,7 +192,11 @@ class AppionScript(basicScript.BasicScript):
 			clustq['status'] = "R"
 			clustq['session'] = self.getSessionData()
 			### need a proper way to create a jobtype
-			clustq['jobtype'] = self.functionname.lower()
+			clustq['jobtype']=self.params['jobtype']
+			if not clustq['jobtype']:
+				clustq['jobtype'] = self.functionname.lower()
+			clustq.insert()
+			self.clusterjobdata = clustq
 			return clustq
 		elif len(clustdatas) == 1:
 			### we have an entry
@@ -202,6 +216,7 @@ class AppionScript(basicScript.BasicScript):
 		Using tables to track program run parameters in a generic fashion
 		inspired by Roberto Marabini and Carlos Oscar Sanchez Sorzano from the Xmipp team/Carazo lab
 		"""
+		apDisplay.printMsg("Uploading ScriptData....")
 		prognameq = appiondata.ScriptProgramName()
 		prognameq['name'] = self.functionname
 
@@ -248,9 +263,9 @@ class AppionScript(basicScript.BasicScript):
 			progrunq['revision'] = sline
 		if os.path.isdir(os.path.join(appiondir, ".svn")):
 			if progrunq['revision'] is None:
-				progrunq['revision'] = version.getSubverionRevision(appiondir)
+				progrunq['revision'] = version.getSubversionRevision(appiondir)
 			else:
-				progrunq['revision'] += "-"+version.getSubverionRevision(appiondir)
+				progrunq['revision'] += "-"+version.getSubversionRevision(appiondir)
 		if not progrunq['revision']:
 			progrunq['revision'] = 'unknown'
 		apDisplay.printMsg("Running Appion version '%s'"%(progrunq['revision']))
@@ -307,8 +322,6 @@ class AppionScript(basicScript.BasicScript):
 
 	#=====================
 	def close(self):
-		### run custom closing functions
-		self.onClose()
 		### run basic script closing functions
 		basicScript.BasicScript.close(self)
 		apDisplay.printMsg("Run directory:\n "+self.params['rundir'])
@@ -318,6 +331,14 @@ class AppionScript(basicScript.BasicScript):
 			apWebScript.setJobToDone(clustdata.dbid)
 		self.successful_run = True
 
+
+	def setParams(self,optargs,useglobalparams=True):
+		self.parser = OptionParser()
+		if useglobalparams is True:
+			self.setupGlobalParserOptions()
+		self.setupParserOptions()
+		self.params = apParam.convertParserToParams(self.parser)
+		self.checkForDuplicateCommandLineInputs(optargs)
 
 	#=====================
 	def setupGlobalParserOptions(self):
@@ -340,8 +361,14 @@ class AppionScript(basicScript.BasicScript):
 
 		self.parser.add_option("--expid", "--expId", dest="expid", type="int",
 			help="Session id associated with processing run, e.g. --expId=7159", metavar="#")
+		self.parser.add_option("--nproc", dest="nproc", type="int",
+			help="Number of processor to use", metavar="#")
+
+		# jobtype is a dummy option for now so that it is possible to use the same command line that
+		# is fed to runJob.py to direct command line running.  Do not use the resulting param.
 		self.parser.add_option("--jobtype", dest="jobtype",
 			help="Job Type of processing run, e.g., partalign", metavar="X")
+
 
 
 	#=====================
@@ -353,6 +380,10 @@ class AppionScript(basicScript.BasicScript):
 			apDisplay.printError("enter a runname, e.g. --runname=run1")
 		if self.params['projectid'] is None:
 			apDisplay.printError("enter a project id, e.g. --projectid=159")
+		if self.maxnproc is not None and self.params['nproc'] is not None:
+			if self.params['nproc'] > self.maxnproc:
+				apDisplay.printWarning('You have specify --nproc=%d.\n  However,we know from experience larger than %d processors in this script can cause problem.\n  We have therefore changed --nproc to %d for you.' % (self.params['nproc'],self.maxnproc,self.maxnproc))
+				self.params['nproc'] = self.maxnproc
 
 	#######################################################
 	#### ITEMS BELOW CAN BE SPECIFIED IN A NEW PROGRAM ####
@@ -380,7 +411,7 @@ class AppionScript(basicScript.BasicScript):
 		"""
 		apDisplay.printError("you did not create a 'checkConflicts' function in your script")
 		if self.params['runname'] is None:
-			apDisplay.printError("enter a run name ID, e.g. --runname=run1")
+			apDisplay.printError("enter an unique run name, e.g. --runname=run1")
 		if self.params['description'] is None:
 			apDisplay.printError("enter a description, e.g. --description='awesome data'")
 
@@ -389,6 +420,11 @@ class AppionScript(basicScript.BasicScript):
 		self.processdirname = self.functionname
 
 	def getDefaultBaseAppionDir(self,sessiondata,subdirs=[]):
+		'''
+		This function sets default base appiondir using leginon.cfg image path settings when rundir
+		is not specified in the script. Such case will only occur if user construct the
+		script his/herself, not from web.
+		'''
 		path = leginon.leginonconfig.IMAGE_PATH
 		if path:
 			path = os.path.join(path,sessiondata['name'])
@@ -406,12 +442,18 @@ class AppionScript(basicScript.BasicScript):
 		"""
 		this function only runs if no rundir is defined at the command line
 		"""
+		if self.params['rundir'] is None:
+			if ('sessionname' in self.params and self.params['sessionname'] is not None ):
+				# command line users may use sessionname rather than expId
+				sessiondata = apDatabase.getSessionDataFromSessionName(self.params['sessionname'])
+				self.params['rundir'] = self.getDefaultBaseAppionDir(sessiondata,[self.processdirname,self.params['runname']])
+			else:
+				if ('expId' in self.params and self.params['expId']):
+					# expId should  always be included from appionwrapper derived appionscript
+					sessiondata = apDatabase.getSessionDataFromSessionId(self.params['expId'])
+					self.params['rundir'] = self.getDefaultBaseAppionDir(sessiondata,[self.processdirname,self.params['runname']])
+		# The rest should not be needed with appionwrapper format
 		from appionlib import apStack
-		if ( self.params['rundir'] is None
-		and 'sessionname' in self.params
-		and self.params['sessionname'] is not None ):
-			sessiondata = apDatabase.getSessionDataFromSessionName(self.params['sessionname'])
-			self.params['rundir'] = self.getDefaultBaseAppionDir(sessiondata,[self.processdirname,self.params['runname']])
 		if ( self.params['rundir'] is None
 		and 'reconid' in self.params
 		and self.params['reconid'] is not None ):
@@ -443,6 +485,66 @@ class AppionScript(basicScript.BasicScript):
 	def onClose(self):
 		return
 
+	def runAppionScriptInIndependentThread(self,cmd):
+		self.process_launcher.launch(cmd, shell=True)
+
+	def runAppionScriptInSubprocess(self,cmd,logfilepath):
+		# Running another AppionScript as a subprocess
+		apDisplay.printMsg('running AppionScript:')
+		apDisplay.printMsg('------------------------------------------------')
+		apDisplay.printMsg(cmd)
+		# stderr=subprocess.PIPE only works with shell=True with python 2.4.
+		# works on python 2.6.  Use shell=True now but shell=True does not
+		# work with path changed by appionwrapper.  It behaves as if the wrapper
+		# is not used
+		proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+		stdout_value = proc.communicate()[0]
+		while proc.returncode is None:
+			time.wait(60)
+			stdout_value = proc.communicate()[0]
+		try:
+			logdir = os.path.dirname(logfilepath)
+			apParam.createDirectory(logdir)
+			file = open(logfilepath,'w')
+		except:
+			apDisplay.printError('Log file can not be created, process did not run.')
+		file.write(stdout_value)
+		file.close()
+		if proc.returncode > 0:
+			pieces = cmd.split(' ')
+			apDisplay.printWarning('AppionScript %s had an error. Please check its log file: \n%s' % (pieces[0].upper(),logfilepath))
+		else:
+			apDisplay.printMsg('AppionScript ran successfully')
+		apDisplay.printMsg('------------------------------------------------')
+		return proc.returncode
+
+	#=====================
+	def setLockname(self,name):
+		self.lockname = '_'+name
+
+	def cleanParallelLock(self):
+		for file in glob.glob('%s*' % self.lockname):
+			os.remove(file)
+
+	def lockParallel(self,dbid):
+		'''
+		Check and create lock for dbid when running multiple instances on different
+		hosts. This is as safe as we can do.  If in doubt, add a secondary check
+		for the first output in the function
+		'''
+		try:
+			fileutil.open_if_not_exists('%s%d' % (self.lockname,dbid)).close()
+		except OSError:
+			return True # exists before locking
+		
+	def unlockParallel(self,dbid):
+		try:
+			os.remove('%s%d' % (self.lockname,dbid))
+		except:
+			apDisplay.printError('Parallel unlock failed')
+		
+	#=====================
+	
 class TestScript(AppionScript):
 	def setupParserOptions(self):
 		apDisplay.printMsg("Parser options")

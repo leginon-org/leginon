@@ -8,12 +8,12 @@
  *	Make stack function
  */
 
-require "inc/particledata.inc";
-require "inc/processing.inc";
-require "inc/leginon.inc";
-require "inc/viewer.inc";
-require "inc/project.inc";
-require "inc/appionloop.inc";
+require_once "inc/particledata.inc";
+require_once "inc/processing.inc";
+require_once "inc/leginon.inc";
+require_once "inc/viewer.inc";
+require_once "inc/project.inc";
+require_once "inc/appionloop.inc";
 
 /* Boxsize rules:
 * (1) no prime factor greater than 11
@@ -58,30 +58,143 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	// connect to particle and ctf databases
 	$particle = new particledata();
 	$ctfdata=$particle->hasCtfData($sessionId);
+	$ctftiltdata=$particle->hasCtfTiltData($sessionId);
 	$ctffindids = $particle->getCtfRunIds($sessionId,$showHidden=False,$ctffind=True);
+	$ctfruns = $particle->getCtfRunIds($sessionId,$showHidden=False,$ctffind=False);
 	$partrunids = $particle->getParticleRunIds($sessionId);
 	$massessrunIds = $particle->getMaskAssessRunIds($sessionId);
 	$stackruninfos = $particle->getStackIds($sessionId, True);
 	$nohidestackruninfos = $particle->getStackIds($sessionId, False);
 	$stackruns = ($stackruninfos) ? count($stackruninfos):0;
 
+	$sessiondata=getSessionList($projectId,$sessionId);
+	$sessioninfo=$sessiondata['info'];
+	$sessionpath=getBaseAppionPath($sessioninfo).'/stacks/';
 
+	// Set any existing parameters in form
+	$single = ($_POST['single']) ? $_POST['single'] : 'start.hed';
+	$rundescrval = ($_POST['description']) ? $_POST['description'] : True;
+	$sessionpathval = ($_POST['outdir']) ? $_POST['outdir'] : $sessionpath;
+	$sessionpathval = (substr($sessionpathval, -1) == '/')? $sessionpathval : $sessionpathval.'/';
+	while (file_exists($sessionpathval.'stack'.($stackruns+1)))
+		$stackruns += 1;
+	$runnameval = ($_POST['runname']) ? $_POST['runname'] : 'stack'.($stackruns+1);
+	$partrunval = ($_POST['partrunid']) ? $_POST['partrunid'] : -1;
+	$labelcheck = ($_POST['labelcheck']=='on') ? 'checked' : '';
+	$labeldisable = ($_POST['labelcheck']=='on') ? '' : 'disabled';
+	$fromstackval = ($_POST['fromstackid']) ? $_POST['fromstackid'] : '0';
+	if ($_POST['fromstackid'] && !$_POST['partrunid']) $partrunval = 0;
+	$massessval = $_POST['massessname'];
+	// set phaseflip on by default
+	$phasecheck = ($_POST['ctfcorrect']=='on' || !$_POST['process']) ? 'CHECKED' : '';
+	$boxfilescheck = ($_POST['boxfiles']=='on') ? 'CHECKED' : '';
+	$helicalcheck = ($_POST['helicalcheck']=='on') ? 'CHECKED' : '';
+	$boxmaskcheck = ($_POST['boxmaskcheck']=='on') ? 'CHECKED' : '';
+	$boxdisp = ($_POST['boxmaskcheck']=='on') ? 'block' : 'none';
+	$boxmask = ($_POST['boxmask']) ? $_POST['boxmask'] : '240';
+	$iboxmask = ($_POST['iboxmask']) ? $_POST['iboxmask'] : '0';
+	$boxlen = ($_POST['boxlen']) ? $_POST['boxlen'] : '300';
+	$falloff = ($_POST['falloff']) ? $_POST['falloff'] : '90';
+	$finealigncheck = ($_POST['finealigncheck']=='on') ? 'CHECKED' : '';
+	$inspectcheck = ($_POST['inspected']=='off') ? '' : 'CHECKED';
+	$commitcheck = ($_POST['commit']=='on' || !$_POST['process']) ? 'CHECKED' : '';
 
+	$binval = ($_POST['bin']) ? $_POST['bin'] : '2';
+	$partlimit = $_POST['partlimit'];
+	$lpval = ($_POST['lp']) ? $_POST['lp'] : '';
+	$hpval = ($_POST['hp']) ? $_POST['hp'] : '';
+	// ice check params
+	$iceval = ($_POST['icecheck']=='on') ? $_POST['ice'] : '0.8';
+	$icecheck = ($_POST['icecheck']=='on') ? 'CHECKED' : '';
+	$icedisable = ($_POST['icecheck']=='on') ? '' : 'DISABLED';
+	// ctf check params
+	$ctfcheck = ($_POST['aceconf']=='on') ? 'CHECKED' : '';
+	$ctffindcheck = ($_POST['ctffindonly'])=='on' ? 'CHECKED' : '';
+	$ctfdisable = ($_POST['aceconf']=='on') ? '' : 'DISABLED';
+	$ctfval = ($_POST['aceconf']=='on') ? $_POST['ctf'] : '0.8';
+	$ctfrescheck = ($_POST['ctfres']=='on') ? 'CHECKED' : '';
+	$ctfresdisable = ($_POST['ctfres']=='on') ? '' : 'DISABLED';
+	$ctfres80max = ($_POST['ctfres']=='on') ? $_POST['ctfres80max'] : '';
+	$ctfres50max = ($_POST['ctfres']=='on') ? $_POST['ctfres50max'] : '';
+	$ctfres80min = ($_POST['ctfres']=='on') ? $_POST['ctfres80min'] : '';
+	$ctfres50min = ($_POST['ctfres']=='on') ? $_POST['ctfres50min'] : '';
+	// correlation check params
+	$selexminval = ($_POST['partcutoff']=='on') ? $_POST['correlationmin'] : '0.5';
+	$selexmaxval = ($_POST['partcutoff']=='on') ? $_POST['correlationmax'] : '1.0';
+	$selexcheck = ($_POST['partcutoff']=='on') ? 'CHECKED' : '';
+	$selexdisable = ($_POST['partcutoff']=='on') ? '' : 'DISABLED';
+	// density check (checked by default)
+	$invcheck = ($_POST['stackinv']=='on' || !$_POST['process']) ? 'CHECKED' : '';
+	// normalization check (checked by default)
+	$normcheck = ($_POST['stacknorm']=='on' || !$_POST['process']) ? 'CHECKED' : '';
+	$xmippnormcheck = ($_POST['xmippstacknorm']=='off' || !$_POST['process']) ? '' : 'CHECKED';
+	$xmippbeforecheck = ($_POST['xmippbefore']=='on') ? 'CHECKED' : '';
+	$xmippdisable = ($xmippnormcheck=='CHECKED') ? '' : 'DISABLED';
+	$xmippnormval = ($_POST['xmippnormval']) ? $_POST['xmippnormval'] : '4.5';
+	$overridecheck = ($_POST['override']=='on') ? 'CHECKED' : '';
+	// defocus pair check
+	$defocpaircheck = ($_POST['stackdfpair']=='on') ? 'checked' : '';
+	$ddnframe = $_POST['ddnframe'];
+	$ddstartframe = $_POST['ddstartframe'];
+
+	$ctfoptions = array(
+		'ace2image'=>'Ace 2 Wiener Filter Whole Image',
+		'ace2imagephase'=>'Ace 2 PhaseFlip Whole Image',
+		'spiderimage'=>'SPIDER PhaseFlip Whole Image (no astig)',
+		'emanimage'=>'EMAN1 PhaseFlip Whole Image (no astig)',
+		'emanpart'=>'EMAN1 PhaseFlip Particle (no astig)',
+	);
+	$limitedctfoptions=array(
+		'emanpart'=>'EMAN PhaseFlip by Boxed Stack per Image'
+	);
+	if ($ctftiltdata) {
+		$ctfoptions['emantilt'] = 'EMAN PhaseFlip by Tilt Location';
+		$limitedctfoptions['emantilt'] = 'EMAN PhaseFlip by Tilt Location';
+	}
+	$ctfsortoptions = array(
+		'res80'=>'Resolution 0.8 criteria',
+		'res50'=>'Resolution 0.5 criteria',
+		'resplus'=>'Sum of Res 0.5 + Res 0.8',
+		'maxconf'=>'Maximum confidence value',
+		'conf3010'=>'Confidence btw 1/30A and 1/10A',
+		'conf5peak'=>'5 peaks confidence',
+		'crosscorr'=>'CtfFind cross correlation',
+	);
+ 
 	$javascript="<script src='../js/viewer.js'></script>
 	<script type='text/javascript'>
 
-	function enableace(){
-		if (document.viewerform.acecheck.checked){
-			document.viewerform.ace.disabled=false;
-			document.viewerform.ace.value='0.8';
+	function enablectf(){
+		if (document.viewerform.aceconf.checked){
+			document.viewerform.ctf.disabled=false;
+			document.viewerform.ctf.value='0.8';
 		} else {
-			document.viewerform.ace.disabled=true;
-			document.viewerform.ace.value='0.8';
+			document.viewerform.ctf.disabled=true;
+			document.viewerform.ctf.value='0.8';
 		}
 	}
 
+	function enablectfres() {
+		if (document.viewerform.ctfres.checked){
+			document.viewerform.ctfres80max.disabled=false;
+			document.viewerform.ctfres50max.disabled=false;
+			document.viewerform.ctfres80min.disabled=false;
+			document.viewerform.ctfres50min.disabled=false;
+			document.viewerform.ctfres80max.value='';
+			document.viewerform.ctfres50max.value='';
+			document.viewerform.ctfres80min.value='';
+			document.viewerform.ctfres50min.value='';
+		} else {
+			document.viewerform.ctfres80max.disabled=true;
+			document.viewerform.ctfres50max.disabled=true;
+			document.viewerform.ctfres80min.disabled=true;
+			document.viewerform.ctfres50min.disabled=true;
+		}
+	}
+
+
 	function enablexmipp(){
-		if (document.viewerform.xmippnormcheck.checked){
+		if (document.viewerform.xmippstacknorm.checked){
 			document.viewerform.xmippnormval.disabled=false;
 			document.viewerform.xmippnormval.value='4.5';
 		} else {
@@ -90,16 +203,49 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 		}
 	}
 
+	function toggleboxmask() {
+		if (document.getElementById('boxmaskopts').style.display == 'none' || document.getElementById('boxmaskopts').style.display == '') {
+			document.getElementById('boxmaskopts').style.display = 'block';
+		}
+		else {
+			document.getElementById('boxmaskopts').style.display = 'none';
+		}
+	}
+
+	function normbefore(){
+		if (document.viewerform.xmippbefore.checked){
+			document.viewerform.ctfcorrecttype.options.length=0;\n";
+	$opt=0;
+	foreach ($limitedctfoptions as $key => $text) {
+		$javascript.="document.viewerform.ctfcorrecttype.options[$opt]=new Option('$text','$key');\n";
+		$opt++;
+	}
+
+	$javascript.= "
+		}
+		else {
+			document.viewerform.ctfcorrecttype.options.length=0;\n";
+	$opt=0;
+	foreach ($ctfoptions as $key => $text) {
+		$javascript.="document.viewerform.ctfcorrecttype.options[$opt]=new Option('$text','$key');\n";
+		$opt++;
+	}
+	$javascript.= "
+		}
+	}
+
 	function enablectftype() {
 		if (document.viewerform.ctfcorrect.checked){
 			document.viewerform.ctfcorrecttype.disabled=false;
+			document.viewerform.ctfsorttype.disabled=false;
 		} else {
 			document.viewerform.ctfcorrecttype.disabled=true;
+			document.viewerform.ctfsorttype.disabled=true;
 		}
 	}
 
 	function enableselex(){
-		if (document.viewerform.selexcheck.checked){
+		if (document.viewerform.partcutoff.checked){
 			document.viewerform.correlationmin.disabled=false;
 			document.viewerform.correlationmin.value='0.5';
 			document.viewerform.correlationmax.disabled=false;
@@ -150,55 +296,6 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	}
 
 	echo"<FORM name='viewerform' method='POST' ACTION='$formAction'>\n";
-	$sessiondata=getSessionList($projectId,$sessionId);
-	$sessioninfo=$sessiondata['info'];
-	$sessionpath=getBaseAppionPath($sessioninfo).'/stacks';
-
-	// Set any existing parameters in form
-	$single = ($_POST['single']) ? $_POST['single'] : 'start.hed';
-	$rundescrval = ($_POST['description']) ? $_POST['description'] : True;
-	$sessionpathval = ($_POST['outdir']) ? $_POST['outdir'] : $sessionpath;
-	while (file_exists($sessionpathval.'stack'.($stackruns+1)))
-		$stackruns += 1;
-	$runnameval = ($_POST['runname']) ? $_POST['runname'] : 'stack'.($stackruns+1);
-	$partrunval = ($_POST['partrunid']) ? $_POST['partrunid'] : $partrunids[0]['DEF_id'];
-	$labelcheck = ($_POST['labelcheck']=='on') ? 'checked' : '';
-	$labeldisable = ($_POST['labelcheck']=='on') ? '' : 'disabled';
-	$fromstackval = ($_POST['fromstackid']) ? $_POST['fromstackid'] : '0';
-	if ($_POST['fromstackid'] && !$_POST['partrunid']) $partrunval = 0;
-	$massessval = $_POST['massessname'];
-	// set phaseflip on by default
-	$phasecheck = ($_POST['ctfcorrect']=='on' || !$_POST['process']) ? 'CHECKED' : '';
-	$boxfilescheck = ($_POST['boxfiles']=='on') ? 'CHECKED' : '';
-	$inspectcheck = ($_POST['inspected']=='off') ? '' : 'CHECKED';
-	$commitcheck = ($_POST['commit']=='on' || !$_POST['process']) ? 'CHECKED' : '';
-
-	$binval = ($_POST['bin']) ? $_POST['bin'] : '1';
-	$partlimit = $_POST['partlimit'];
-	$lpval = ($_POST['lp']) ? $_POST['lp'] : '';
-	$hpval = ($_POST['hp']) ? $_POST['hp'] : '';
-	// ice check params
-	$iceval = ($_POST['icecheck']=='on') ? $_POST['ice'] : '0.8';
-	$icecheck = ($_POST['icecheck']=='on') ? 'CHECKED' : '';
-	$icedisable = ($_POST['icecheck']=='on') ? '' : 'DISABLED';
-	// ace check params
-	$acecheck = ($_POST['acecheck']=='on') ? 'CHECKED' : '';
-	$ctffindcheck = ($_POST['ctffindonly'])=='on' ? 'CHECKED' : '';
-	$acedisable = ($_POST['acecheck']=='on') ? '' : 'DISABLED';
-	$aceval = ($_POST['acecheck']=='on') ? $_POST['ace'] : '0.8';
-	// correlation check params
-	$selexminval = ($_POST['selexcheck']=='on') ? $_POST['correlationmin'] : '0.5';
-	$selexmaxval = ($_POST['selexcheck']=='on') ? $_POST['correlationmax'] : '1.0';
-	$selexcheck = ($_POST['selexcheck']=='on') ? 'CHECKED' : '';
-	$selexdisable = ($_POST['selexcheck']=='on') ? '' : 'DISABLED';
-	// density check (checked by default)
-	$invcheck = ($_POST['density']=='invert' || !$_POST['process']) ? 'CHECKED' : '';
-	// normalization check (checked by default)
-	$normcheck = ($_POST['normalize']=='on' || !$_POST['process']) ? 'CHECKED' : '';
-	$xmippnormcheck = ($_POST['xmippnormcheck']=='on' || !$_POST['process']) ? 'CHECKED' : '';
-	$xmippdisable = ($xmippnormcheck=='CHECKED') ? '' : 'DISABLED';
-	$xmippnormval = ($_POST['xmippnormval']) ? $_POST['xmippnormval'] : '4.5';
-	$overridecheck = ($_POST['override']=='on') ? 'CHECKED' : '';
 	
 	echo "<table border=0 class=tableborder>\n";
 	echo "<tr>\n";
@@ -217,39 +314,40 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 #	echo "<textarea name='description' rows='2' cols='50'>$rundescrval</textarea>\n";
 #	echo "<br/>\n";
 #	echo "<br/>\n";
-
+	
 	createAppionLoopTable($sessiondata, $runnameval, "stacks", 0, $rundescrval);
 
 	echo "<b>Density modifications:</b><br/>";
 
-	echo "<input type='checkbox' name='density' $invcheck value='invert'>\n";
+	echo "<input type='checkbox' name='stackinv' $invcheck>\n";
 	echo docpop('stackinv','Invert image density');
 	echo "<br/>\n";
 
-	echo "<input type='checkbox' name='normalize' $normcheck>\n";
+	//
+	// STARTING ADVANCED SECTION 1
+	//
+	// Only hide advanced parameters if there is not an advanced user logged in.
+	// Modify user profile to set to an advanced user. 
+	// NOTE: this assumes the Appion user name and the username that is used to log in to the processing page are the same.
+	// We may want to change that someday.
+	if ( !$_SESSION['advanced_user'] ) {	
+		echo "<a id='Advanced_Stack_Options_1_toggle' href='javascript:toggle(\"Advanced_Stack_Options_1\");' style='color:blue'>";
+		echo "Show Advanced Stack Options</a><br/>\n";
+		echo "<div id='Advanced_Stack_Options_1' style='display: none'>\n";
+	}
+
+	echo "<input type='checkbox' name='stacknorm' $normcheck>\n";
 	echo docpop('stacknorm','Normalize Stack Particles');
 	echo "<br/>\n";
 
-	echo "<input type='checkbox' name='xmippnormcheck' onclick='enablexmipp(this)' $xmippnormcheck>\n";
+	echo "<input type='checkbox' name='xmippstacknorm' onclick='enablexmipp(this)' $xmippnormcheck>\n";
 	echo docpop('xmippstacknorm','XMIPP normalize to sigma:');
 	echo "<input type='text' name='xmippnormval' $xmippdisable value='$xmippnormval' size='4'>";
 	echo "<br/>\n";
 
 	if ($ctfdata) {
-		echo"<input type='checkbox' name='ctfcorrect' onclick='enablectftype(this)' $phasecheck>\n";
-		echo docpop('ctfcorrect','Ctf Correct Particle Images');
-		echo "<br/>\n";
-
-		echo "Ctf Correct Method:\n";
-		echo "&nbsp;&nbsp;<select name='ctfcorrecttype' ";
-		if (!$phasecheck) echo " disabled";
-		echo ">\n";
-		echo "<option value='ace2image'>Ace 2 Wiener Filter Whole Image (default)</option>\n";
-		echo "<option value='spiderimage'>SPIDER PhaseFlip</option>\n";
-		echo "<option value='emanpart'>EMAN PhaseFlip by Stack</option>\n";
-		echo "<option value='emanimage'>EMAN PhaseFlip Whole Image</option>\n";
-		echo "<option value='emantilt'>EMAN PhaseFlip by Tilt Location</option>\n";
-		echo "</select>\n";
+		echo"<input type='checkbox' name='xmippbefore' onclick='normbefore(this)' $xmippbeforecheck>\n";
+		echo docpop('xmippbefore','XMIPP norm before CTF correction');
 		echo "<br/>\n";
 	}
 
@@ -266,10 +364,15 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	echo ">\n";
 	echo "Spider: start.spi<br/>\n";
 
-	//echo "</td></tr></table>";
-	echo "</td><td class='tablebg'>";
-	//echo "<table cellpadding='5' border='0'><tr><td valign='TOP'>";
+	//
+	// ENDING ADVANCED SECTION 1
+	//
+	echo "</div>\n";
 
+	//echo "</td></tr></table>";
+	echo "</td><td class='tablebg' valign='top'>";
+	//echo "<table cellpadding='5' border='0'><tr><td valign='TOP'>";
+	
 	$partruns=count($partrunids);
 
 	if (!$partrunids) {
@@ -282,18 +385,38 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 			$partrunid=$partrun['DEF_id'];
 			$runname=$partrun['name'];
 			$partstats=$particle->getStats($partrunid);
-			$totparts=commafy($partstats['totparticles']);
+			$numPart = $partstats['totparticles'];
+			if ($numPart == 0)
+				continue;
+			$totparts=commafy($numPart);
 			echo "<option value='$partrunid'";
 			// select previously set part on resubmit
 			if ($partrunval==$partrunid) {
 				echo " selected";
-			}
+			} elseif ($partrunval==-1) {
+				echo " selected";
+				$partrunval=$partrunid;
+			}			
 			echo">$runname ($totparts parts)</option>\n";
 		}
 		echo "</select>\n";
 
+		// get particle selection parameters
+		$partrundata = $particle->getSelectionParams($partrunval);
 		// add particle label page
 		$particlelabels = $particle->getParticleLabels($partrunval);
+		// use fromtrace label to activate particle insertion from traced center
+		$traceconverted = false;
+		if ($partrundata[0]['trace'] == 1)
+			$particlelabels[]=array('label'=>'fromtrace');
+		// if "Stored Helices" label, remove from list
+		$particlelabelsEdit=array();
+		foreach ($particlelabels as $row) {
+			$label = $row['label'];
+			if ($label == 'Stored Helices') {$storedhelices = True; continue;}
+			$particlelabelsEdit[]=$row;
+		}
+		$particlelabels=$particlelabelsEdit;
 		if (!empty($particlelabels)) {
 			echo "<br/>\n";
 			echo"<input type='checkbox' name='labelcheck' onclick='enablelabel()' $labelcheck >\n";
@@ -301,14 +424,16 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 			echo "<select name='partlabel' $labeldisable >\n";
 			foreach ($particlelabels as $row) {
 				$label=$row['label'];
+				if ($label == '_trace') $traceconverted = true;
+				if ($label == 'fromtrace' && $traceconverted == true) continue;
 				$sel = (trim($_POST['partlabel'])==$label) ? 'selected' : '';
 				echo '<option value="'.$label.'" '.$sel.' >'.$label."</option>\n";
 			}
+			echo "</select>\n";
 		} else {
 			echo "<input type='hidden' name='labelcheck' value='off' >";
 			echo "<input type='hidden' name='partlabel' value='' >";
 		}
-		echo "</select>\n";
 		echo "<br/><br/>\n";
 
 		// add stack selection page
@@ -335,6 +460,185 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 		echo "<input type='hidden' name='fromstackid' value='0'>";
 	}
 	echo "<br/>\n";
+	echo "<br/>\n";
+
+	// Determine best box size...
+
+	if (!$_POST['boxsize']) {
+		$imgid = $particle->getImgIdFromSelectionRun($partrunval);
+		$partdiam = $partrundata[0]['diam'];
+		$helicalstep = $partrundata[0]['helicalstep'];
+		$pixelsize = $particle->getPixelSizeFromImgId($imgid)*1e10;
+		//echo "Diameter: $partdiam &Aring;<br/>\n";
+		//echo "Image id: $imgid<br/>\n";
+		//echo "Pixel size: $pixelsize &Aring;<br/>\n";
+		if ($helicalstep) {
+			$boxdiam = (int) ($helicalstep/$pixelsize);
+		}
+		else {
+			$pixdiam = (int) ($partdiam/$pixelsize);
+			//echo "Pixel diam: $pixdiam pixels<br/>\n";
+			$boxdiam = (int) ($partdiam/$pixelsize*1.4);
+			//echo "Box diam: $boxdiam pixels<br/>\n";
+		}
+		global $goodboxes;
+		foreach ($goodboxes as $box) {
+			if ($box >= $boxdiam) {
+				$defaultboxsize = $box;
+				break;
+			}
+		}
+		//echo "Box size: $defaultboxsize pixels<br/>\n";
+		$boxszval = $defaultboxsize;
+	} else {
+		$boxszval = $_POST['boxsize'];
+	}
+	echo "<input type='text' name='boxsize' size='5' value='$boxszval'>\n";
+	echo docpop('boxsize','Box Size');
+	echo "(Unbinned, in pixels)<br />\n";
+	echo "<input type='checkbox' name='override' $overridecheck>\n";
+	echo "<font size='-2'>(override boxsize)</font><br/>\n";
+	echo "<br/>\n";
+
+	echo "<input type='text' name='bin' value='$binval' size='4'>\n";
+	echo docpop('stackbin','Binning');
+	echo "<br/>\n";
+	echo "<br/>\n";
+
+	if ($ctfdata) {
+		echo "<table style='border: 1px solid black; padding:5px; background-color:#f9f9ff; ' ><tr ><td>\n\n";
+
+		// use ctf correction
+		echo"<input type='checkbox' name='ctfcorrect' onclick='enablectftype(this)' $phasecheck>\n";
+		echo docpop('ctfcorrect','Ctf Correct Particle Images');
+
+		echo "<br/><br/>";
+		echo "</td></tr><tr><td>\n\n";
+
+		// select correction method
+		echo docpop('ctfcorrectmeth','CTF Correction Method');
+		echo "<br/>\n";
+		echo "&nbsp;&nbsp;<select name='ctfcorrecttype' ";
+		if (!$phasecheck) echo " disabled";
+		echo ">\n";
+		if ($xmippbeforecheck) $ctfoptions=$limitedctfoptions;
+		foreach ($ctfoptions as $key => $text) {
+			$selected = ($_POST['ctfcorrecttype']==$key) ? 'SELECTED':'';
+			echo "<option value='$key' $selected>$text</option>";
+		}
+		echo "</select>\n";
+
+		echo "<br/><br/>";
+		echo "</td></tr><tr><td>\n\n";
+
+		// select cutoff types method
+		echo docpop('ctfsort','CTF Sorting Method');
+		echo "<br/>\n";
+		echo "&nbsp;&nbsp;<select name='ctfsorttype' ";
+		if (!$phasecheck) echo " disabled";
+		echo ">\n";
+		foreach ($ctfsortoptions as $key => $text) {
+			$selected = ($_POST['ctfsorttype']==$key) ? 'SELECTED':'';
+			echo "<option value='$key' $selected>$text</option>";
+		}
+		echo "</select>\n";
+
+		echo "<br/>";
+
+		$empty_array=array(array('DEF_id'=> 0,'name' => 'all'));
+		$ctfruns=array_merge ($empty_array,$ctfruns);
+		echo "-OR- choose a ctf run:\n";
+		echo "&nbsp;&nbsp;<select name='ctfrunID'>\n";
+		foreach ($ctfruns as $ctfrun) {
+			$ID=$ctfrun['DEF_id'];
+			$ctfname=$ctfrun['name'];
+			$selected = ($_POST['ctfrunID']==$ID) ? 'SELECTED':'';
+			echo "<option value='$ID' $selected>$ctfname ($ID)</option>";
+		}
+		echo "</select>\n";
+
+		echo "<br/>";
+
+			// give option of only using ctffind values
+		if ($ctffindids) {
+			echo "-OR- <input type='checkbox' name='ctffindonly' $ctffindcheck>\n";
+			echo docpop('ctffindonly','Only use CTFFIND values');
+			echo "<br/>\n";
+		}
+
+		echo "<br/><br/>";
+		echo "</td></tr><tr><td>\n\n";
+
+		// confidence cutoff
+		echo"<input type='checkbox' name='aceconf' onclick='enablectf(this)' $ctfcheck>\n";
+		echo docpop('aceconf','CTF Confidence Cutoff');
+		echo "<br />\n";
+		echo "Use Values Above:<input type='text' name='ctf' $ctfdisable value='$ctfval' size='4'>
+		(between 0.0 - 1.0)\n";
+
+		echo "<br/><br/>";
+		echo "</td></tr><tr><td>\n\n";
+
+		// resolution cutoff
+		echo"<input type='checkbox' name='ctfres' onclick='enablectfres(this)' $ctfrescheck>\n";
+		echo docpop('ctfres','CTF Resolution Cutoff');
+		echo "<br />\n";
+		echo "&nbsp;&nbsp;Resolution range at 0.8 criteria: <br/>";
+			echo "between <input type='text' name='ctfres80min' value='$ctfres80min' size='4' $ctfresdisable>";
+			echo "and <input type='text' name='ctfres80max' value='$ctfres80max' size='4' $ctfresdisable>";
+			echo "&nbsp; <i>(in &Aring;ngstroms)</i>\n";
+		echo "<br/>\n";
+		echo "&nbsp;&nbsp;Resolution range at 0.5 criteria: <br/>";
+			echo "between <input type='text' name='ctfres50min' value='$ctfres50min' size='4' $ctfresdisable>";
+			echo "and <input type='text' name='ctfres50max' value='$ctfres50max' size='4' $ctfresdisable>";
+			echo "&nbsp; <i>(in &Aring;ngstroms)</i>\n";
+
+		echo "<br/><br/>";
+		echo "</td></tr><tr><td>\n\n";
+
+		// defocus cutoff
+		$fields = array('defocus1', 'defocus2');
+		$bestctf = $particle->getBestStats($fields, $sessionId);
+		// make sure defocus is always negative
+		$min=-1*abs($bestctf['defocus1'][0]['min']);
+		$max=-1*abs($bestctf['defocus1'][0]['max']);
+		//echo $min."<br/>\n";
+		//echo $max."<br/>\n";
+		// check if user has changed values on submit
+		$minval = ($_POST['dfmin']!=$min && $_POST['dfmin']!='' && $_POST['dfmin']!='-') ? $_POST['dfmin'] : $min;
+		$maxval = ($_POST['dfmax']!=$max && $_POST['dfmax']!='' && $_POST['dfmax']!='-') ? $_POST['dfmax'] : $max;
+		$minval = preg_replace("%E%","e",round($minval,8));
+		$maxval = preg_replace("%E%","e",round($maxval,8));
+		$mindbval = preg_replace("%E%","e",round($min,8));
+		$maxdbval = preg_replace("%E%","e",round($max,8));
+		echo"<b>Defocus Limits</b><br />
+				Min <input type='text' name='dfmin' value='$minval' size='8'>
+				<input type='hidden' name='dbmin' value='$mindbval'>
+			 & Max
+				<input type='text' name='dfmax' value='$maxval' size='8'>
+				<input type='hidden' name='dbmax' value='$maxdbval'>
+			\n";
+		echo "<br/>\n";
+		echo "<br/>\n";
+
+
+		echo "</td></tr></table>\n";
+		echo "<br/>\n";
+		echo "<br/>\n";
+	}
+
+	//
+	// STARTING ADVANCED SECTION 2
+	//
+	// Only hide advanced parameters if there is not an advanced user logged in.
+	// Modify user profile to set to an advanced user. 
+	// NOTE: this assumes the Appion user name and the username that is used to log in to the processing page are the same.
+	// We may want to change that someday.
+	if ( !$_SESSION['advanced_user'] ) {
+		echo "<a id='Advanced_Stack_Options_2_toggle' href='javascript:toggle(\"Advanced_Stack_Options_2\");' style='color:blue'>";
+		echo "Show Advanced Stack Options</a><br/>\n";
+		echo "<div id='Advanced_Stack_Options_2' style='display: none'>\n";
+	}
 	echo "<br/>\n";
 
 	$massessruns=count($massessrunIds);
@@ -367,39 +671,23 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	echo "<br/>\n";
 	echo "<br/>\n";
 
-
-	// Determine best box size...
-
-	if (!$_POST['boxsize']) {
-		$partrundata = $particle->getSelectionParams($partrunval);
-		$imgid = $particle->getImgIdFromSelectionRun($partrunval);
-		$partdiam = $partrundata[0]['diam'];
-		$pixelsize = $particle->getPixelSizeFromImgId($imgid)*1e10;
-		//echo "Diameter: $partdiam &Aring;<br/>\n";
-		//echo "Image id: $imgid<br/>\n";
-		//echo "Pixel size: $pixelsize &Aring;<br/>\n";
-		$pixdiam = (int) ($partdiam/$pixelsize);
-		//echo "Pixel diam: $pixdiam pixels<br/>\n";
-		$boxdiam = (int) ($partdiam/$pixelsize*1.4);
-		//echo "Box diam: $boxdiam pixels<br/>\n";
-		global $goodboxes;
-		foreach ($goodboxes as $box) {
-			if ($box >= $boxdiam) {
-				$defaultboxsize = $box;
-				break;
-			}
-		}
-		//echo "Box size: $defaultboxsize pixels<br/>\n";
-		$boxszval = $defaultboxsize;
-	} else {
-		$boxszval = $_POST['boxsize'];
+	// for boxing helical segments
+	if ($storedhelices) {
+		$hstep = ($_POST['boxhstep']) ? $_POST['boxhstep']:'';
+		echo "<input type='text' name='boxhstep' size='5' value='$hstep'>\n";
+		echo docpop('helicalstep', 'Helical Step');
+		echo " <font SIZE=-2><I>(in &Aring;ngstroms)</I></font>\n";
+		echo "<br>\n";
 	}
-	echo "<input type='text' name='boxsize' size='5' value='$boxszval'>\n";
-	echo docpop('boxsize','Box Size');
-	echo "(Unbinned, in pixels)<br />\n";
-	echo "<input type='checkbox' name='override' $overridecheck>\n";
-	echo "<font size='-2'>(override boxsize)</font><br/>\n";
-	echo "<br/>\n";
+
+	// raw frame processing gui assuming presetname is ed
+	// This feature only works with Python 2.6
+	echo "<b>Raw frame processing if available: </b><br/>\n";
+	echo "start frame:<input type='text' name='ddstartframe' value='$ddstartframe' size='3'>\n";
+	echo docpop('makeDDStack.ddstartframe', 'start frame');
+	echo "total frame:<input type='text' name='ddnframe' value='$ddnframe' size='3'>\n";
+	echo docpop('makeDDStack.ddnframe', 'total frames');
+	echo "<br/><br/>\n";
 
 	echo "<b>Filter Values:</b><br/>";
 
@@ -413,74 +701,25 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	echo "<font size=-2><i>(in &Aring;ngstroms)</i></font>\n";
 	echo "<br/>\n";
 
-	echo "<input type='text' name='bin' value='$binval' size='4'>\n";
-	echo docpop('stackbin','Binning');
-	echo "<br/>\n";
-	echo "<br/>\n";
-
 	// commented out for now, since not implemented
 //		<input type='checkbox' name='icecheck' onclick='enableice(this)' $icecheck>
 //		Ice Thickness Cutoff<br />
 //		Use Ice Thinner Than:<input type='text' name='ice' $icedisable value='$iceval' size='4'>
 //		(between 0.0 - 1.0)\n";
 
-	if ($ctfdata) {
-		// give option of only using ctffind values
-		if ($ctffindids) {
-			echo "<input type='checkbox' name='ctffindonly' $ctffindcheck>\n";
-			echo docpop('ctffindonly','Only use CTFFIND values');
-			echo "<br/>\n";
-		}
-		echo"<input type='checkbox' name='acecheck' onclick='enableace(this)' $acecheck>\n";
-		echo docpop('aceconf','CTF Confidence Cutoff');
-		echo "<br />\n";
-		echo "Use Values Above:<input type='text' name='ace' $acedisable value='$aceval' size='4'>
-		(between 0.0 - 1.0)\n";
-		echo "<br/>\n";
-		echo "<br/>\n";
-	}
-
-
-	echo"<input type='checkbox' name='selexcheck' onclick='enableselex(this)' $selexcheck>\n";
+	echo"<input type='checkbox' name='partcutoff' onclick='enableselex(this)' $selexcheck>\n";
 	echo docpop('partcutoff','Particle Correlation Cutoff');
 	echo "<br />\n";
-	echo "Use Values Above:<input type='text' name='correlationmin' $selexdisable value='$selexminval' size='4'><br/>\n";
-	echo "Use Values Below:<input type='text' name='correlationmax' $selexdisable value='$selexmaxval' size='4'><br/>\n";
+	echo "Remove particles with CCC below:<input type='text' name='correlationmin' $selexdisable value='$selexminval' size='4'><br/>\n";
+	echo "Remove particles with CCC above:<input type='text' name='correlationmax' $selexdisable value='$selexmaxval' size='4'><br/>\n";
 	echo "<br/>\n";
 
 	echo "<b>Defocal pairs:</b>\n";
 	echo "<br/>\n";
-	echo "<input type='checkbox' name='defocpair' $defocpair>\n";
+	echo "<input type='checkbox' name='stackdfpair' $defocpaircheck>\n";
 	echo docpop('stackdfpair','Use defocal pairs');
 	echo "<br/>\n";
 	echo "<br/>\n";
-
-	//if there is CTF data, show min & max defocus range
-	if ($ctfdata) {
-		$fields = array('defocus1', 'defocus2');
-		$bestctf = $particle->getBestStats($fields, $sessionId);
-		// make sure defocus is always negative
-		$min=-1*abs($bestctf['defocus1'][0]['min']);
-		$max=-1*abs($bestctf['defocus1'][0]['max']);
-		//echo $min."<br/>\n";
-		//echo $max."<br/>\n";
-		// check if user has changed values on submit
-		$minval = ($_POST['dfmin']!=$min && $_POST['dfmin']!='' && $_POST['dfmin']!='-') ? $_POST['dfmin'] : $min;
-		$maxval = ($_POST['dfmax']!=$max && $_POST['dfmax']!='' && $_POST['dfmax']!='-') ? $_POST['dfmax'] : $max;
-		$minval = ereg_replace("E","e",round($minval,8));
-		$maxval = ereg_replace("E","e",round($maxval,8));
-		$mindbval = ereg_replace("E","e",round($min,8));
-		$maxdbval = ereg_replace("E","e",round($max,8));
-		echo"<b>Defocus Limits</b><br />
-				<input type='text' name='dfmin' value='$minval' size='25'>
-				<input type='hidden' name='dbmin' value='$mindbval'>
-			Minimum<br/>
-				<input type='text' name='dfmax' value='$maxval' size='25'>
-				<input type='hidden' name='dbmax' value='$maxdbval'>
-			Maximum\n";
-		echo "<br/>\n";
-		echo "<br/>\n";
-	}
 
 
 	echo docpop('stacklim','Limit # of particles to: ');
@@ -489,6 +728,47 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	echo "<input type='checkbox' name='boxfiles' $boxfilescheck>\n";
 	echo docpop('boxfiles','Only create EMAN boxfiles');
 	echo "<br />\n";
+
+	echo "<br />\n";
+	if ($storedhelices) {
+		echo "<input type = 'checkbox' name='boxmaskcheck' onclick='toggleboxmask(this)' $boxmaskcheck>\n";
+		echo docpop('boxmaskcheck', 'Boxmask the raw particles');
+		echo "<br />\n";
+		echo "<div id='boxmaskopts' style='display:$boxdisp;'>\n";
+		// parameters
+		echo "<input type='text' name='boxmask' value='$boxmask' size='4'>\n";
+	       	echo docpop('boxmask','Outer Mask Radius: ');
+		echo "(in Angstroms)<br/>\n";
+
+		echo "<input type='text' name='iboxmask' value='$iboxmask' size='4'>\n";
+		echo docpop('iboxmask','Inner Mask Radius');
+		echo "(in Angstroms)<br/>\n";
+
+		echo "<input type='text' name='boxlen' value='$boxlen' size='4'>\n";
+		echo docpop('boxlen','Length Mask: ');
+		echo "(in Angstroms)<br/>\n";
+
+		echo "<input type='text' name='falloff' value='$falloff' size='4'>\n";
+		echo docpop('falloff','Edge Falloff: ');
+		echo "(in Angstroms)\n";
+
+		echo "</div>\n";
+	}
+
+	echo "<b>Helical Alignment:</b>\n";
+	echo "<br />\n";
+	echo "<input type='checkbox' name='helicalcheck' $helicalcheck>\n";
+	echo docpop('helicalcheck','Apply rough helical rotation angles');
+	echo "<br />\n";
+	echo "<input type='checkbox' name='finealigncheck' $finealigncheck>\n";
+	echo docpop('finealigncheck','Apply fine helical rotation angles');
+	echo "<br />\n";
+
+	//
+	// ENDING ADVANCED SECTION 2
+	//
+	echo "</div>\n";
+
 	echo "</td>\n";
 	echo "</tr>\n";
 	echo "<tr>\n";
@@ -509,14 +789,55 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	exit;
 }
 
+
 function runMakestack() {
+	
+	/* *******************
+	PART 1: Get variables
+	******************** */
 	$expId   = $_GET['expId'];
 	$outdir  = $_POST['outdir'];
 	$runname = $_POST['runname'];
 
 	$single=$_POST['single'];
-	//make sure a session was selected
 	$description = $_POST['description'];
+	
+	$invert = ($_POST['stackinv']=='on') ? True : False;
+	$stacknorm = ($_POST['stacknorm']=='on') ? True : False;
+	$ctfcorrect = ($_POST['ctfcorrect']=='on') ? 'ctfcorrect' : '';
+	$ctfcorrecttype = $_POST['ctfcorrecttype'];
+	$ctfsorttype = $_POST['ctfsorttype'];
+	$ctfrunID = $_POST['ctfrunID'];
+	$stig = ($_POST['stig']=='on') ? 'stig' : '';
+	$commit = ($_POST['commit']=="on") ? 'commit' : '';
+	$stackdfpair = ($_POST['stackdfpair']=="on") ? True : False;
+	$boxfiles = ($_POST['boxfiles']);
+	$boxhstep = ($_POST['boxhstep']);
+	$helicalcheck = ($_POST['helicalcheck']);
+	$finealigncheck = ($_POST['finealigncheck']);
+	$ctffindonly = ($_POST['ctffindonly'])=='on' ? True : False;
+	$ddstartframe = $_POST['ddstartframe'];
+	$ddnframe = $_POST['ddnframe'];
+	if ($_POST['boxmaskcheck']=='on') {
+		$boxmask = $_POST['boxmask'].','.$_POST['boxlen'].','.$_POST['iboxmask'].','.$_POST['falloff'];
+	}
+
+	// set image inspection selection
+	$norejects=$inspected=0;
+	if ($_POST['checkimage']=="Non-rejected") {
+		$norejects=1;
+	} elseif ($_POST['checkimage']=="Best") {
+		$norejects=1;
+		$inspected=1;
+	}
+	
+	
+	/* *******************
+	PART 2: Check for conflicts, if there is an error display the form again
+	******************** */
+	// Got a little sloppy here, left some get variable code below to keep some parts easier to read. 
+	
+	//make sure a session was selected
 	if (!$description)
 		createMakestackForm("<b>ERROR:</b> Enter a brief description of the stack");
 
@@ -533,31 +854,13 @@ function runMakestack() {
 	if ($partrunid && $fromstackid)
 		createMakestackForm("<b>ERROR:</b> Choose either a stack or particle run, but not both");
 
-	$invert = ($_POST['density']=='invert') ? 'yes' : 'no';
-	$normalize = ($_POST['normalize']=='on') ? 'yes' : 'no';
-	$ctfcorrect = ($_POST['ctfcorrect']=='on') ? 'ctfcorrect' : '';
-	$ctfcorrecttype = $_POST['ctfcorrecttype'];
-	$stig = ($_POST['stig']=='on') ? 'stig' : '';
-	$commit = ($_POST['commit']=="on") ? 'commit' : '';
-	$defocpair = ($_POST['defocpair']=="on") ? "1" : "0";
-	$boxfiles = ($_POST['boxfiles']);
-	$ctffindonly = ($_POST['ctffindonly'])=='on' ? True : False;
 
 	// xmipp normalization
-	// ace cutoff
-	if ($_POST['xmippnormcheck']=='on') {
+	if ($_POST['xmippstacknorm']=='on') {
 		$xmippnorm=$_POST['xmippnormval'];
 		if ($xmippnorm <= 0 || !$xmippnorm) createMakestackForm("<b>ERROR:</b> Xmipp sigma must be greater than 0" );
 	}
 
-	// set image inspection selection
-	$norejects=$inspected=0;
-	if ($_POST['checkimage']=="Non-rejected") {
-		$norejects=1;
-	} elseif ($_POST['checkimage']=="Best") {
-		$norejects=1;
-		$inspected=1;
-	}
 	// binning amount
 	$bin=$_POST['bin'];
 	if ($bin) {
@@ -596,14 +899,34 @@ function runMakestack() {
 	$hp = $_POST['hp'];
 	if ($hp && !is_numeric($hp)) createMakestackForm("<b>ERROR:</b> high pass filter must be a number");
 
-	// ace cutoff
-	if ($_POST['acecheck']=='on') {
-		$ace=$_POST['ace'];
-		if ($ace > 1 || $ace < 0 || !$ace) createMakestackForm("<b>ERROR:</b> Ace cutoff must be between 0 & 1");
+	// ctf cutoff
+	if ($_POST['aceconf']=='on') {
+		$ctf=$_POST['ctf'];
+		if ($ctf > 1 || $ctf < 0 || !$ctf) createMakestackForm("<b>ERROR:</b> CTF cutoff must be between 0 & 1");
+	}
+
+	// ctf resolution
+	if ($_POST['ctfres']=='on') {
+		$ctfres80min=$_POST['ctfres80min'];
+		if ($ctfres80min && !is_numeric($ctfres80min) )
+			createMakestackForm("<b>ERROR:</b> CTF resolution cutoffs must be a number or blank");
+		$ctfres50min=$_POST['ctfres50min'];
+		if ($ctfres50min && !is_numeric($ctfres50min) )
+			createMakestackForm("<b>ERROR:</b> CTF resolution cutoffs must be a number or blank");
+		$ctfres80max=$_POST['ctfres80max'];
+		if ($ctfres80max && !is_numeric($ctfres80max) )
+			createMakestackForm("<b>ERROR:</b> CTF resolution cutoffs must be a number or blank");
+		$ctfres50max=$_POST['ctfres50max'];
+		if ($ctfres50max && !is_numeric($ctfres50max) )
+			createMakestackForm("<b>ERROR:</b> CTF resolution cutoffs must be a number or blank");
+		if ($ctfres50max && $ctfres50min && $ctfres50max < $ctfres50min )
+			createMakestackForm("<b>ERROR:</b> CTF resolution cutoffs min must be less than the max");
+		if ($ctfres80max && $ctfres80min && $ctfres80max < $ctfres80min )
+			createMakestackForm("<b>ERROR:</b> CTF resolution cutoffs min must be less than the max");
 	}
 
 	// correlation cutoff
-	if ($_POST['selexcheck']=='on') {
+	if ($_POST['partcutoff']=='on') {
 		$correlationmin=$_POST['correlationmin'];
 		$correlationmax=$_POST['correlationmax'];
 		//if ($correlationmin > 1 || $correlationmin < 0) createMakestackForm("<b>ERROR:</b> correlation Min cutoff must be between 0 & 1");
@@ -635,6 +958,14 @@ function runMakestack() {
 		if (!is_numeric($partlimit)) createMakestackForm("<b>ERROR:</b> Particle limit must be an integer");
 	} else $partlimit="none";
 
+	//helical alignment
+	if ($helicalcheck && $finealigncheck)
+		createMakestackForm("<b>ERROR:</b> Select either rough alignment or fine alignment, not both");
+
+	/* *******************
+	PART 3: Create program command
+	******************** */
+	
 	$command = "makestack2.py"." ";
 	$command.="--single=$single ";
 	if ($partrunid)
@@ -643,18 +974,29 @@ function runMakestack() {
 		$command.="--fromstackid=$fromstackid ";
 	if ($lp) $command.="--lowpass=$lp ";
 	if ($hp) $command.="--highpass=$hp ";
-	if ($invert == "yes") $command.="--invert ";
-	if ($invert == "no") $command.="--no-invert ";
-	if ($normalize == "yes") $command.="--normalized ";
+	$command.= ($invert) ? "--invert " : "--no-invert ";
+	if ($stacknorm) $command.="--normalized ";
 	if ($xmippnorm) $command.="--xmipp-normalize=$xmippnorm ";
+	if ($_POST['xmippbefore']=='on') $command.="--xmipp-norm-before ";
 	if ($ctfcorrect) { 
-		$command.="--phaseflip --flip-type=$ctfcorrecttype ";
+		$command.="--phaseflip --flip-type=$ctfcorrecttype --sort-type=$ctfsorttype ";
 	}
 	if ($massessname) $command.="--maskassess=$massessname ";
 	$command.="--boxsize=$boxsize ";
 	if ($bin > 1) $command.="--bin=$bin ";
-	if ($ace) $command.="--acecutoff=$ace ";
-	if ($defocpair) $command.="--defocpair ";
+	if ($ctf) $command.="--ctfcutoff=$ctf ";
+	if ($_POST['ctfres']=='on') {
+		if ($_POST['ctfres80min'])
+			$command.="--ctfres80min=$ctfres80min ";
+		if ($_POST['ctfres50min'])
+			$command.="--ctfres50min=$ctfres50min ";
+		if ($_POST['ctfres80max'])
+			$command.="--ctfres80max=$ctfres80max ";
+		if ($_POST['ctfres50max'])
+			$command.="--ctfres50max=$ctfres50max ";
+	}
+
+	if ($stackdfpair) $command.="--defocpair ";
 	if ($correlationmin) $command.="--mincc=$correlationmin ";
 	if ($correlationmax) $command.="--maxcc=$correlationmax ";
 	if ($dfmin) $command.="--mindef=$dfmin ";
@@ -662,9 +1004,17 @@ function runMakestack() {
 	if ($_POST['fileformat']=='spider') $command.="--spider ";
 	if ($partlimit != "none") $command.="--partlimit=$partlimit ";
 	if ($boxfiles == 'on') $command.="--boxfiles ";
-	$command.="--description=\"$description\" ";
+	// Don't need description here after converting appionloop
+	//$command.="--description=\"$description\" ";
 	if (!empty($partlabel)) $command.="--label=\"$partlabel\" ";
 	if ($ctffindonly) $command.="--ctfmethod=ctffind ";
+	if ($boxhstep) $command.="--helicalstep=$boxhstep ";
+	if ($helicalcheck == 'on') $command.="--rotate ";
+	elseif ($finealigncheck == 'on') $command.="--rotate --finealign ";
+	if ($ddstartframe) $command.=" --ddstartframe=$ddstartframe ";
+	if ($ddnframe) $command.=" --ddnframe=$ddnframe ";
+	if ($ctfrunID) $command.="--ctfrunid=$ctfrunID ";
+	if ($boxmask) $command.="--boxmask='$boxmask' ";
 
 	$apcommand = parseAppionLoopParams($_POST);
 	if ($apcommand[0] == "<") {
@@ -673,51 +1023,22 @@ function runMakestack() {
 	}
 	$command .= $apcommand;
 
-	// submit job to cluster
-	if ($_POST['process']=="Make Stack") {
-		$user = $_SESSION['username'];
-		$password = $_SESSION['password'];
+	/* *******************
+	PART 4: Create header info, i.e., references
+	******************** */
+	$headinfo .= appionRef();
+	
+	
+	/* *******************
+	PART 5: Show or Run Command
+	******************** */
+	// submit command
+	$nproc = 1;
+	$errors = showOrSubmitCommand($command, $headinfo, 'makestack2', $nproc);
 
-		if (!($user && $password)) createMakestackForm("<b>ERROR:</b> Enter a user name and password");
-
-		$sub = submitAppionJob($command,$outdir,$runname,$expId,'makestack2',$testimage);
-		// if errors:
-		if ($sub) createMakestackForm("<b>ERROR:</b> $sub");
-		exit;
-	}
-
-	processing_header("Makestack Run","Makestack Params");
-
-	echo appionRef();
-
-	echo"
-	<table width='600' border='1'>
-	<tr><td colspan='2'>
-	<b>Makestack Command:</b><br />
-	$command
-	</td></tr>";
-	echo appionLoopSummaryTable();
-	echo"
-	<tr><td>stack name</td><td>$single</td></tr>
-	<tr><td>selection Id</td><td>$partrunid</td></tr>
-	<tr><td>particle label</td><td>$partlabel</td></tr>
-	<tr><td>invert</td><td>$invert</td></tr>
-	<tr><td>normalize</td><td>$normalize</td></tr>
-	<tr><td>xmipp-normalize</td><td>$xmippnormalize</td></tr>
-	<tr><td>ctf correct</td><td>$ctfcorrect</td></tr>
-	<tr><td>ctf correct type</td><td>$ctfcorrecttype</td></tr>
-	<tr><td>mask assessment</td><td>$massessname</td></tr>
-	<tr><td>box size</td><td>$boxsize</td></tr>
-	<tr><td>binning</td><td>$bin</td></tr>
-	<tr><td>ace cutoff</td><td>$ace</td></tr>
-	<tr><td>correlationmin cutoff</td><td>$correlationmin</td></tr>
-	<tr><td>correlationmax cutoff</td><td>$correlationmax</td></tr>
-	<tr><td>minimum defocus</td><td>$dfmin</td></tr>
-	<tr><td>maximum defocus</td><td>$dfmax</td></tr>
-	<tr><td>particle limit</td><td>$partlimit</td></tr>
-	<tr><td>spider</td><td>$_POST[fileformat]</td></tr>";
-
-	echo "</table>\n";
-	processing_footer(True,True);
+	// if error display them
+	if ($errors)
+		createMakestackForm("<b>ERROR:</b> $errors");
 }
+	
 ?>

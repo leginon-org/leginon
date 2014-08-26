@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import leginondata
+from leginon import leginondata
 
 def temp_add_drift(settingsclass):
 	typetuple = settingsclass.typemap()

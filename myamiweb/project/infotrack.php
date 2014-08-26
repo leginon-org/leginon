@@ -11,12 +11,12 @@ function init() {
 <body onload="init()">
 <?php
 
-require "inc/project.inc.php";
-require "inc/confirmlib.php";
-require "inc/packagelib.php";
-require "inc/samplelib.php";
-require "inc/gridlib.php";
-require "inc/utilpj.inc.php";
+require_once "inc/project.inc.php";
+require_once "inc/confirmlib.php";
+require_once "inc/packagelib.php";
+require_once "inc/samplelib.php";
+require_once "inc/gridlib.php";
+require_once "inc/utilpj.inc.php";
 $grid = new Grid();
 $confirm = new Confirm();
 $package = new Package();

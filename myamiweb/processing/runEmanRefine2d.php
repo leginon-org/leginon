@@ -9,14 +9,14 @@
  *
  */
 
-require "inc/particledata.inc";
-require "inc/leginon.inc";
-require "inc/project.inc";
-require "inc/viewer.inc";
-require "inc/processing.inc";
+require_once "inc/particledata.inc";
+require_once "inc/leginon.inc";
+require_once "inc/project.inc";
+require_once "inc/viewer.inc";
+require_once "inc/processing.inc";
 
 // IF VALUES SUBMITTED, EVALUATE DATA
-if ($_POST) {
+if ($_POST['process']) {
 	runEMANRefine2d();
 } else {
 	createEMANRefine2dForm();
@@ -71,7 +71,7 @@ function createEMANRefine2dForm($extra=false, $title='EMAN refine2d.py Launcher'
 	$runname = ($_POST['runname']) ? $_POST['runname'] : 'emantwod'.($alignruns+1);
 	$description = $_POST['description'];
 	$stackidstr = $_POST['stackval'];
-	list($stackidval) = split('\|--\|',$stackidstr);
+	list($stackidval) = preg_split('%\|--\|%',$stackidstr);
 	$bin = ($_POST['bin']) ? $_POST['bin'] : '1';
 	$numpart = ($_POST['numpart']) ? $_POST['numpart'] : '3000';
 	$lowpass = ($_POST['lowpass']) ? $_POST['lowpass'] : '10';
@@ -185,6 +185,9 @@ function createEMANRefine2dForm($extra=false, $title='EMAN refine2d.py Launcher'
 }
 
 function runEMANRefine2d() {
+	/* *******************
+	PART 1: Get variables
+	******************** */
 	$expId=$_GET['expId'];
 	$runname=$_POST['runname'];
 	$outdir=$_POST['outdir'];
@@ -199,9 +202,12 @@ function runEMANRefine2d() {
 	$commit = ($_POST['commit']=="on") ? true : false;
 
 	// get stack id, apix, & box size from input
-	list($stackid,$apix,$boxsz) = split('\|--\|',$stackval);
+	list($stackid,$apix,$boxsz) = preg_split('%\|--\|%',$stackval);
 	//make sure a session was selected
 
+	/* *******************
+	PART 2: Check for conflicts, if there is an error display the form again
+	******************** */
 	if (!$description)
 		createEMANRefine2dForm("<B>ERROR:</B> Enter a brief description of the particles to be aligned");
 
@@ -224,6 +230,9 @@ function runEMANRefine2d() {
 	if (substr($outdir,-1,1)!='/') $outdir.='/';
 	$rundir = $outdir.$runname;
 
+	/* *******************
+	PART 3: Create program command
+	******************** */
 	// setup command
 	$command ="emanRefine2d.py ";
 	$command.="--projectid=".getProjectId()." ";
@@ -242,43 +251,20 @@ function runEMANRefine2d() {
 	else
 		$command.="--no-commit ";
 
-	// submit job to cluster
-	if ($_POST['process']=="Run EMAN Refine 2d") {
-		$user = $_SESSION['username'];
-		$password = $_SESSION['password'];
+	/* *******************
+	PART 4: Create header info, i.e., references
+	******************** */
+	$headinfo .= emanRef();
+	
+	/* *******************
+	PART 5: Show or Run Command
+	******************** */
+	// submit command
+	$errors = showOrSubmitCommand($command, $headinfo, 'partalign', $nproc);
 
-		if (!($user && $password))
-			createEMANRefine2dForm("<B>ERROR:</B> Enter a user name and password");
-
-		$sub = submitAppionJob($command,$outdir,$runname,$expId,'partalign');
-
-		// if errors:
-		if ($sub)
-			createEMANRefine2dForm("<b>ERROR:</b> $sub");
-		exit;
-	}
-
-	processing_header("EMAN Refine 2d","EMAN Refine 2d");
-
-	echo emanRef();
-
-	echo "<table width='600' class='tableborder' border='1'>";
-	echo "
-		<tr><td colspan='2'>
-		<b>EMAN Refine 2d Command:</b><br />
-		$command
-		</td></tr>
-		<tr><td>run id</td><td>$runname</td></tr>
-		<tr><td>stack id</td><td>$stackid</td></tr>
-		<tr><td>low pass</td><td>$lowpass</td></tr>
-		<tr><td>high pass</td><td>$highpass</td></tr>
-		<tr><td>num part</td><td>$numpart</td></tr>
-		<tr><td>num classes</td><td>$numclass</td></tr>
-		<tr><td>iterations</td><td>$numiter</td></tr>
-		<tr><td>binning</td><td>$bin</td></tr>
-		<tr><td>run dir</td><td>$rundir</td></tr>
-		<tr><td>commit</td><td>$commit</td></tr>
-		</table>\n";
-	processing_footer();
+	// if error display them
+	if ($errors)
+		createEMANRefine2dForm("<b>ERROR:</b> $errors");
+		
 }
 ?>

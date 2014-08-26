@@ -5,7 +5,7 @@ require("config.php");
 $baseurl=BASE_URL;
 
 
-$db = &new mysql(DB_HOST, DB_USER, DB_PASS, DB_LEGINON);
+$db = new mysql(DB_HOST, DB_USER, DB_PASS, DB_LEGINON);
 
 
 //If no search string is passed, then we can't search
@@ -13,7 +13,7 @@ if(empty($_GET['q'])) {
     echo '&nbsp;';
 } else {
     //Remove whitespace from beginning & end of passed search.
-    $search = split(' ',($_GET['q']));
+    $search = preg_split('% %',($_GET['q']));
 	foreach ($search as $s) {
 		$word = trim($s);
 		if (!$word)

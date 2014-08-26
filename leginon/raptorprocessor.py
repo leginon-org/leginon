@@ -3,7 +3,7 @@ import shutil
 
 import imageprocessor
 import leginon.gui.wx.RaptorProcessor
-import leginondata
+from leginon import leginondata
 import runRaptor
 from pyami import mrc
 

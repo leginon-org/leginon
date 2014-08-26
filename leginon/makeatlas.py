@@ -2,7 +2,7 @@
 
 import mosaic
 import node
-import leginondata
+from leginon import leginondata
 import sys
 from pyami import mrc
 import calibrationclient

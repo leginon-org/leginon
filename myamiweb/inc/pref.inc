@@ -2,7 +2,7 @@
 class ViewerPreference{
 
 	function ViewerPreference() {
-		$this->mysql = &new mysql(DB_HOST, DB_USER, DB_PASS, DB);
+		$this->mysql = new mysql(DB_HOST, DB_USER, DB_PASS, DB);
 	}
 
 	function add_comment_setting($username, $name) {

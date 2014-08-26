@@ -15,6 +15,12 @@ import leginon.gui.wx.Settings
 import leginon.gui.wx.TargetFinder
 import leginon.gui.wx.ToolBar
 
+import os.path
+try:
+	import mlabraw as pymat
+except:
+	pymat = None
+
 class Panel(leginon.gui.wx.TargetFinder.Panel):
 	def initialize(self, focus=True):
 		leginon.gui.wx.TargetFinder.Panel.initialize(self)
@@ -135,15 +141,41 @@ class ScrolledSettings(leginon.gui.wx.TargetFinder.ScrolledSettings):
 			self.widgets['module path'] = filebrowse.FileBrowseButton(self,
 									labelText='Matlab File:', fileMask='*.m')
 
+
 			sz = wx.GridBagSizer(5, 5)
 	#		sz.Add(self.widgets['test image'], (0, 0), (1, 1),
 	#						wx.ALIGN_CENTER_VERTICAL)
 			sz.Add(self.widgets['module path'], (1, 0), (1, 1),
 							wx.ALIGN_CENTER_VERTICAL)
 
+			self.widgets['parametergui path'] = filebrowse.FileBrowseButton(self,
+									labelText='Matlab GUI File:', fileMask='*.m')
+			sz.Add(self.widgets['parametergui path'], (2, 0), (1, 1),
+							wx.ALIGN_CENTER_VERTICAL)
+			paramguibut = wx.Button(self, -1, 'Run parametrization GUI')
+			self.Bind(wx.EVT_BUTTON, self.onRunParamGUI, paramguibut)
+			sz.Add(paramguibut, (3, 0), (1, 1),
+							wx.ALIGN_CENTER_VERTICAL)
+
 			sbsz.Add(sz, 1, wx.EXPAND|wx.ALL, 5)
 
 			return tfsbsz + [sbsz]
+
+	def onRunParamGUI(self, evt):
+	# added for GUI parametrization:
+
+		self.handle = pymat.open()
+		
+		d, f = os.path.split(self.widgets['parametergui path'].GetValue()) #self.settings['parametergui path'])
+
+		if d:
+			pymat.eval(self.handle, 'path(path, \'%s\')' % d)
+
+		if not f[:-2]:
+			raise RuntimeError
+
+		pymat.eval(self.handle, '%s' % f[:-2])
+
 
 if __name__ == '__main__':
 	class App(wx.App):

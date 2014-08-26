@@ -7,13 +7,14 @@
  *	see  http://ami.scripps.edu/software/leginon-license
  */
 
-require "inc/viewer.inc";
-require "inc/leginon.inc";
-require "inc/particledata.inc";
+require_once "inc/viewer.inc";
+require_once "inc/leginon.inc";
+require_once "inc/particledata.inc";
 
 $imgId=$_GET['id'];
 $preset=$_GET['preset'];
 $ctftype = $_GET['ctf'];
+$runId = $_GET['r'];
 
 $newimage = $leginondata->findImage($imgId, $preset);
 $imgId = $newimage['id'];
@@ -23,7 +24,7 @@ $sessionId = $imageinfo['sessionId'];
 $newexpId = $sessionId; // --- variable use by setdatabase() in inc/project.inc
 // These require statements need to be here after $newexpId is defined
 // in order to set processing database properly
-require "inc/project.inc";
+require_once "inc/project.inc";
 
 ?>
 <html>
@@ -38,21 +39,49 @@ require "inc/project.inc";
 <?php
 
 $ctf = new particledata();
-if ($ctftype=='ctffind')
-	list($ctfdata) = $ctf->getCtfInfoFromImageId($imgId,$order=False,$ctffind=True);
-else
-	list($ctfdata)  = $ctf->getCtfInfoFromImageId($imgId);
+list($ctfdata) = $ctf->getCtfInfoFromImageId($imgId,$order=False,$ctftype,$runId);
+
+$ctfdata['cs'] = $leginondata->getCsValueFromSession($sessionId);
 
 $keys[]='runname';
+// estimate parameters
 $keys[]='defocus';
 $keys[]='defocus1';
-if ($ctfdata['angle_astigmatism']) {
+// assume defocus1 and defocus2 are equal if equal at Angstrom level
+$epsilon = 1e-10;
+if (abs($ctfdata['defocus1'] - $ctfdata['defocus2']) > $epsilon) {
 	$keys[]='defocus2';
 	$keys[]='angle_astigmatism';
 }
-if ($ctftype=='ctffind') $keys[]='cross_correlation';
-else $keys[]='confidence';
-$keys[]='confidence_d';
+$keys[]='amplitude_contrast';
+$keys[]='cs';
+// estimate quality
+$keys[]='resolution_80_percent';
+$keys[]='resolution_50_percent';
+$keys[]='confidence_30_10';
+$keys[]='confidence_5_peak';
+if ($ctftype=='ctffind') 
+	$keys[]='cross_correlation';
+else 
+	$keys[]='confidence';
+//$keys[]='confidence_d';
+// add the Cs
+
+
+$keymap = array(
+	"defocus"  => "nomDef",
+	"defocus1"  => "def1",
+	"defocus2"  => "def2",
+	"confidence"  => "conf",
+	"angle_astigmatism"  => "&theta;<sub>astig</sub>",
+	"cross_correlation"  => "cc",
+	"amplitude_contrast" => "amp&nbsp;con",
+	"confidence_30_10" => "conf&nbsp;(30/10)",
+	"confidence_5_peak" => "conf&nbsp;(5 peak)",
+	"resolution_80_percent" => "<br/>res&nbsp;(0.8)",
+	"resolution_50_percent" => "res&nbsp;(0.5)",
+
+);
 
 if ($ctfdata) {
 	echo "<font style='font-size: 12px;'>";
@@ -61,12 +90,16 @@ if ($ctfdata) {
 			if (!array_key_exists($k,$ctfdata))
 				continue;
 			$v=$ctfdata[$k];
-			if (ereg('defocus',$k))
-				echo " <b>$k:</b> ",($leginondata->formatDefocus($v));
-			elseif ($v-floor($v)) 
-				echo " <b>$k:</b> ".format_sci_number($v,4,2);
+			if (array_key_exists($k, $keymap)) 
+				$name = $keymap[$k];
 			else
-				echo " <b>$k:</b> $v";
+				$name = $k;
+			if (preg_match('%defocus%',$k))
+				echo " <b>$name:</b>&nbsp;",($leginondata->formatDefocus($v));
+			elseif ($v-floor($v)) 
+				echo " <b>$name:</b>&nbsp;".format_sci_number($v,2,2);
+			else
+				echo " <b>$name:</b>&nbsp;$v";
 		}
 }
 ?>

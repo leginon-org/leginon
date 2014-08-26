@@ -1,3 +1,4 @@
+import os
 import math
 import time
 import numpy
@@ -188,7 +189,9 @@ class Collection(object):
 		defocus = defocus0
 
 		abort_loop = False
+		abort_on_next = False
 		for i, tilt in enumerate(tilts):
+			print "---------------------tilt %d at %g --------------------" % (i,math.degrees(tilt))
 			self.checkAbort()
 
 			self.logger.info('Current tilt angle: %g degrees.' % math.degrees(tilt))
@@ -237,16 +240,28 @@ class Collection(object):
 			time.sleep(self.settings['tilt pause time'])
 
 			# TODO: error checking
+			# Go through prediction on one extra tilt angle so that the simulater 
+			# can be used to debug prediction failure
+			if abort_on_next:
+				break
 			try:
 				image_data = self.tiltimagedata[self.group][i]
+				abort_on_next = False
 			except IndexError:
 				#image not acquired
-				break
+				abort_on_next = True
 			channel = image_data['correction channel']
 			self.logger.info('Image acquired.')
 
-			image_mean = image_data['image'].mean()
-			image = image_data['image']
+			if os.path.exists(os.path.join(image_data['session']['image path'],image_data['filename'])):
+				# When debugging data from external database, there may not be images to load
+				no_real_image = False
+				image_mean = image_data['image'].mean()
+				image = image_data['image']
+			else:
+				no_real_image = True
+				image_mean = 2 * self.settings['mean threshold']
+				image = image_mean + 0.1*image_mean*numpy.random.random_sample((512,512))
 
 			tilt_series_image_data = image_data
 			filename = tilt_series_image_data['filename']
@@ -268,19 +283,28 @@ class Collection(object):
 
 			self.checkAbort()
 
-			self.logger.info('Correlating image with previous tilt...')
-			#self.correlator.setTiltAxis(predicted_position['phi'])
-			while True:
-				try:
-					correlation_image = self.correlator.correlate(image_data, self.settings['use tilt'], channel=channel, wiener=False,taper=self.settings['taper size'])
-					break
-				except Exception, e:
-					self.logger.warning('Retrying correlate image: %s.' % (e,))
-				for tick in range(15):
-					self.checkAbort()
-					time.sleep(1.0)
+			saved_prediction = self.getPredictionInfo(image_data)
 
-			correlation = self.correlator.getShift(False)
+			self.logger.info('Correlating image with previous tilt...')
+			if no_real_image:
+				correlation_image = numpy.random.random_sample(image.shape)
+				if saved_prediction:
+					correlation = saved_prediction['correlation']
+				else:
+					correlation = {'x':0.0,'y':0.0}
+			else:
+			#self.correlator.setTiltAxis(predicted_position['phi'])
+				while True:
+					try:
+						correlation_image = self.correlator.correlate(image_data, self.settings['use tilt'], channel=channel, wiener=False,taper=self.settings['taper size'])
+						break
+					except Exception, e:
+						self.logger.warning('Retrying correlate image: %s.' % (e,))
+					for tick in range(15):
+						self.checkAbort()
+						time.sleep(1.0)
+
+				correlation = self.correlator.getShift(False)
 			if self.settings['use tilt']:
 				correlation = self.correlator.tiltShift(tilts[i],correlation)
 
@@ -315,7 +339,6 @@ class Collection(object):
 
 			self.checkAbort()
 
-			saved_prediction = self.getPredictionInfo(image_data)
 			if saved_prediction is None:
 				self.logger.warning('No prediction information')
 				abort_loop = True
@@ -328,6 +351,7 @@ class Collection(object):
 					correlation,
 					saved_prediction['correlation'],
 					image_pixel_size,
+					image_data.dbid,
 					image_data['filename'],
 					measured_defocus,
 					measured_fit,
@@ -336,12 +360,12 @@ class Collection(object):
 
 			self.checkAbort()
 
-			if abort_loop:
-				break
+			#if abort_loop:
+			#	break
 
 		self.viewer.clearImages()
 
-	def showPredictionInfo(self,saved_predicted_position, predicted_position, predicted_shift, position, correlation, saved_correlation, image_pixel_size, image, measured_defocus=None, measured_fit=None):
+	def showPredictionInfo(self,saved_predicted_position, predicted_position, predicted_shift, position, correlation, saved_correlation, image_pixel_size, imageid, image, measured_defocus=None, measured_fit=None):
 		print "-----------PREDICTION-------------"
 		keys = saved_predicted_position.keys()
 		keys.sort()
@@ -360,7 +384,7 @@ class Collection(object):
 		initializer = {
 			'predicted shift': predicted_shift,
 			'position': position,
-			'image': image,
+			'image': (imageid,image),
 		}
 		for key in initializer.keys():
 			print key,initializer[key]

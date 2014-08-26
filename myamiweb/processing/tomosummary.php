@@ -7,11 +7,11 @@
  *
  */
 
-require "inc/particledata.inc";
-require "inc/leginon.inc";
-require "inc/project.inc";
-require "inc/viewer.inc";
-require "inc/processing.inc";
+require_once "inc/particledata.inc";
+require_once "inc/leginon.inc";
+require_once "inc/project.inc";
+require_once "inc/viewer.inc";
+require_once "inc/processing.inc";
   
 // check if coming directly from a session
 $expId = $_GET['expId'];
@@ -65,7 +65,11 @@ if ($shownfulltomos) {
 		$fulltomos = $particle->checkforFullTomogram($t['id'], $showhidden);
 		foreach ($fulltomos as $fulltomo) {
 			$fulltomoid = $fulltomo['DEF_id'];
+			$tomogram = $particle->getFullTomogramInfo($fulltomoid);
+			$refinedata = $particle->getAlignerInfo($tomogram['aligner']);
+			$alignment = $particle->getTomoAlignmentInfo($refinedata[0]['alignrunid']);
 			$a = array('tiltseries'=>$t['number'],'fulltomoid'=>$fulltomoid);
+			$a['bad align'] = $alignment['badAlign'];
 			$a = array_merge($a,$fulltomo);
 			$a['subtomo'] = ($a['subtomo'] > 0) ? array('display'=>$a['subtomo'],'link'=>$fulltomoid) : 0;
 			$html .= $particle->displayParametersInSummary($a,$selected_keys,$expId,'fulltomoid');
@@ -149,7 +153,7 @@ if ($tomograms) {
 		$descDiv = ($_SESSION['username']) ? editButton($tomogramid,$tomogram['description']) : $tomogram['description'];
 
 		$html .= "<td>$descDiv</td>\n";
-#		$downloadDiv = "<a href=downloadtomo.php?tomogramId=$tomogramid>[Download Tomogram]</a><br>";
+#		$downloadDiv = "<a href=downloadtomo.php?expId=$expId&tomogramId=$tomogramid>[Download Tomogram]</a><br>";
 #		$html .= "<td>$downloadDiv</td>\n";
 		$html .= "</tr>\n";
 	}

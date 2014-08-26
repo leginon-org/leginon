@@ -6,7 +6,7 @@
 #			 see	http://ami.scripps.edu/software/leginon-license
 #
 
-import leginondata
+from leginon import leginondata
 import event
 import node
 import project
@@ -75,6 +75,8 @@ class ManualAcquisition(node.Node):
 		self.gridbox = None
 		self.grid = None
 		self.gridlabel = None
+		self.insertion = None
+		self.emgrid = None
 
 		self.instrument = instrument.Proxy(self.objectservice,
 																				self.session,
@@ -113,9 +115,9 @@ class ManualAcquisition(node.Node):
 		self.logger.info('Acquiring %scorrected image...' % prefix)
 		self.instrument.ccdcamera.Settings = self.settings['camera settings']
 		if self.settings['dark']:
-			self.instrument.ccdcamera.ExposureType = 'dark'
+			exposuretype = 'dark'
 		else:
-			self.instrument.ccdcamera.ExposureType = 'normal'
+			exposuretype = 'normal'
 
 
 		if self.settings['reduced params']:
@@ -123,13 +125,16 @@ class ManualAcquisition(node.Node):
 		else:
 			scopeclass = leginondata.ScopeEMData
 
-		if correct:
-			imagedata = self.acquireCorrectedCameraImageData(scopeclass=scopeclass)
-		else:
-			imagedata = self.acquireCameraImageData(scopeclass=scopeclass)
+		try:
+			if correct:
+				imagedata = self.acquireCorrectedCameraImageData(scopeclass=scopeclass, type=exposuretype)
+			else:
+				imagedata = self.acquireCameraImageData(scopeclass=scopeclass, type=exposuretype)
+		except Exception, e:
+			self.logger.error('Error acquiring image: %s' % e)
+			raise AcquireError
 
 		image = imagedata['image']
-
 		self.logger.info('Displaying image...')
 		self.getImageStats(image)
 		self.setImage(image)
@@ -201,8 +206,19 @@ class ManualAcquisition(node.Node):
 				n = int(filename[-digits - end:-end])
 				if n > number:
 					number = n
-		if self.defocus != 2:
+
+		# both off increment
+		# switch1 on increment when defocus = 1
+		# switch1 off and swithc2 on :  increment when defocus = 2
+		d1 = self.settings['defocus1switch']
+		d2 = self.settings['defocus2switch']
+		thisd = self.defocus
+		if d1:
+			if thisd == 1:
+				number +=1
+		else:
 			number += 1
+
 		if number >= 10**digits:
 			raise node.PublishError('too many images, time to go home')
 		filename = ('%s_%0' + str(digits) + 'd%s' + '%s') % (prefix, number, suffix, defindex)
@@ -211,14 +227,20 @@ class ManualAcquisition(node.Node):
 	def publishImageData(self, imagedata, save):
 		acquisitionimagedata = leginondata.AcquisitionImageData(initializer=imagedata)
 		if save:
+			griddata = leginondata.GridData()
 			if self.grid is not None:
 				gridinfo = self.gridmapping[self.grid]
-				griddata = leginondata.GridData()
 				griddata['grid ID'] = gridinfo['gridId']
 				emgriddata = leginondata.EMGridData(name=gridinfo['label'],project=gridinfo['projectId'])
 				griddata['emgrid'] = emgriddata
+				griddata['insertion'] = self.insertion
 				acquisitionimagedata['grid'] = griddata
-				self.gridlabel = gridlabeler.getGridLabel(griddata)	
+				self.gridlabel = gridlabeler.getGridLabel(griddata)
+			elif self.emgrid is not None:
+				# New style that uses emgridata only for grid entry
+				griddata['emgrid'] = self.emgrid
+				griddata['insertion'] = self.insertion
+				acquisitionimagedata['grid'] = griddata
 			else:
 				self.gridlabel = ''
 			acquisitionimagedata['label'] = self.settings['image label']
@@ -369,28 +391,41 @@ class ManualAcquisition(node.Node):
 		gridboxlabels.reverse()
 		return gridboxlabels
 
+	def calculateCutSize(self,camsize):
+		## cut down to no more than 1024x1024, adjust offset to keep same center
+		maxcutsize = 1024
+		cutsize = min(camsize['x'],camsize['y'])
+		while cutsize > maxcutsize:
+			cutsize = cutsize / 2
+		return cutsize
+
+	def makeCenterImageCamSettings(self,origcam):
+		# deep copy so internal dicts don't get modified
+		tmpcam = copy.deepcopy(origcam)
+		## deactivate frame saving and align frame flags
+		tmpcam['save frames'] = False
+		tmpcam['align frames'] = False
+
+		camsize = self.instrument.ccdcamera.getCameraSize()
+		cutsize = self.calculateCutSize(camsize)	
+		for axis in ('x','y'):
+			tmpcam['dimension'][axis] = cutsize
+			tmpcam['offset'][axis] = (camsize[axis] / tmpcam['binning'][axis] - cutsize) / 2
+		self.logger.info('Using %dx%d image...' % (tmpcam['dimension']['x'],tmpcam['dimension']['y']))
+		return tmpcam
+
 	def measureDose(self):
 		self.logger.info('acquiring dose image')
 		# configure camera using settings, but only 512x512 to save time
 		origcam = self.settings['camera settings']
-		# deep copy so internal dicts don't get modified
-		tmpcam = copy.deepcopy(origcam)
-
-		## cut down to 512x512, adjust offset to keep same center
-		cutsize = 1024
-		for axis in ('x','y'):
-			change = origcam['dimension'][axis] - cutsize
-			if change > 0:
-				tmpcam['dimension'][axis] = cutsize
-				tmpcam['offset'][axis] += (change / 2)
-
+		tmpcam = self.makeCenterImageCamSettings(origcam)
 		self.instrument.ccdcamera.Settings = tmpcam
 
 		# acquire image
 		imagedata = self.acquireCorrectedCameraImageData()
 
 		# display
-		self.logger.info('Displaying %dx%d dose image...' % (cutsize,cutsize))
+		self.logger.info('Displaying dose image...')
 		self.getImageStats(imagedata['image'])
 		self.setImage(imagedata['image'])
 
@@ -438,12 +473,10 @@ class ManualAcquisition(node.Node):
 		self.beep()
 		camdata1 = {}
 
+		# configure camera using settings, but only 512x512 to save time
+		origcam = self.settings['camera settings']
+		camdata1 = self.makeCenterImageCamSettings(origcam)
 		camdata1['exposure time']=self.focexptime
-		cutsize = 1024
-		camdata1['dimension'] = {'x':cutsize, 'y':cutsize}
-		camdata1['binning'] = {'x':1, 'y':1}
-		camsize = self.instrument.ccdcamera.getCameraSize()
-		camdata1['offset'] = {'x': (camsize['x']-cutsize)/2, 'y':(camsize['y']-cutsize)/2}
 		self.instrument.ccdcamera.Settings = camdata1
 		pixelsize,center = self.getReciprocalPixelSizeFromInstrument()
 		self.ht = self.instrument.tem.HighTension
@@ -585,9 +618,13 @@ class ManualAcquisition(node.Node):
 			self.panel.onUnsetRobotGrid()
 			return
 		griddata = evt['grid']
-		self.getGrids(evt['tray label'])
-		self.grid = '%d - %s' % (evt['grid location'], griddata['emgrid']['name'])
+		self.insertion = griddata['insertion']
 		self.gridlabel = gridlabeler.getGridLabel(griddata)
+		if griddata['grid ID'] is not None:
+			self.getGrids(evt['tray label'])
+			self.grid = '%d - %s' % (evt['grid location'], griddata['emgrid']['name'])
+		else:
+			self.emgrid = griddata['emgrid']
 		self.logger.info('Add grid prefix as '+self.gridlabel)
 		self.panel.onSetRobotGrid()
 
