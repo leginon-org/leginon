@@ -304,7 +304,7 @@ class _Table:
 		c.execute(q)
 		return c
 
-	def insert(self, v=[], force=0):
+	def insert(self, v=[], force=0, archive=False):
 		"""Insert a list of dictionaries into a SQL table. If the data
 		already exist, they won't be inserted again in the table, 
 		unless force is true. The function returns the last inserted row
@@ -313,6 +313,8 @@ class _Table:
 
 		result = None
 
+		if debug:
+			print "IS ARCHIVE",archive
 		if not force:
 			nullfields = []
 			equalpairs = []
@@ -335,7 +337,6 @@ class _Table:
 					whereFormat = whereFormatNULL
 
 			qsel = sqlexpr.SelectAll(self.table, where=whereFormat).sqlRepr()
-			## print qsel
 			try:
 				c.execute(qsel)
 				result=c.fetchone()
@@ -345,8 +346,12 @@ class _Table:
 		if force or not result:
 			q = sqlexpr.Insert(self.table, v).sqlRepr()
 			if debug:
-				print q
+				print 'Insertq',q
 			c.execute(q)
+			if archive:
+				# return the original DEF_id if archiving
+				archive_dbid = v[0]['DEF_id']
+				return archive_dbid
 			## try the new lastrowid attribute first,
 			## then try the old insert_id() method
 			try:
@@ -1502,16 +1507,26 @@ def subSQLColumns(value_dict, data_instance, dbdk):
 
 	return columns, row
 
-def dataSQLColumns(data_instance, dbdk, fail=True):
+def dataSQLColumns(data_instance, dbdk, fail=True, archive=False):
 	columns = []
 	row = {}
+	if debug:
+		print 'data_instance',hasattr(data_instance,'DEF_id')
 	# default columns
-	columns.append({
+	DEF_id_dict = {
 			'Field': 'DEF_id',
 			'Type': 'int(16)',
 			'Key': 'PRIMARY',
-			'Extra':'auto_increment',
-	})
+	}
+	if not archive:
+		DEF_id_dict['Extra'] = 'auto_increment'
+	else:
+		# archive DEF_id field definition can not be auto_increment
+		# default is set to None even though it would never be default
+		DEF_id_dict['Default'] = None
+
+	columns.append(DEF_id_dict)
+
 	columns.append({
 			'Field': 'DEF_timestamp',
 			'Type': 'timestamp',
@@ -1519,6 +1534,9 @@ def dataSQLColumns(data_instance, dbdk, fail=True):
 			'Index': ['DEF_timestamp']
 	})
 
+	# set DEF_id value for archiving
+	if archive and hasattr(data_instance, "dbid") and data_instance.dbid is not None:
+		row['DEF_id'] = data_instance.dbid
 	if hasattr(data_instance, "timestamp") and data_instance.timestamp is not None:
 		row['DEF_timestamp'] = data_instance.timestamp
 

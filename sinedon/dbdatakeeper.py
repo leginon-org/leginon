@@ -14,6 +14,8 @@ import logging
 import _mysql_exceptions
 import MySQLdb.constants.CR
 
+debug = False
+
 class DatabaseError(Exception):
 	pass
 
@@ -251,12 +253,12 @@ class DBDataKeeper(object):
 			finaldict.update(d)
 		return finaldict
 
-	def insert(self, newdata, force=False):
+	def insert(self, newdata, force=False, archive=False):
 		self.lock.acquire()
 		try:
 			while True:
 				try:
-					self._insert(newdata, force=force)
+					self._insert(newdata, force=force, archive=archive)
 					break
 				except Reconnect:
 					self._reconnect()
@@ -297,7 +299,8 @@ class DBDataKeeper(object):
 		obj1.
 		'''
 		dataclass = obj1.__class__.__name__
-		new_dbid = obj1.mappings[self]
+		#new_dbid = obj1.mappings[self]
+		new_dbid = obj2.dbid
 		for source_dbdk, source_dbid in obj1.mappings.items():
 			if source_dbdk is self:
 				continue
@@ -331,7 +334,7 @@ class DBDataKeeper(object):
 			self.imported_data[confkey][dataclass] = {}
 		self.imported_data[confkey][dataclass][source_dbid] = new_dbid
 
-	def recursiveInsert(self, newdata, force=False):
+	def recursiveInsert(self, newdata, force=False, archive=False):
 		'''
 		recursive insert will insert an objects children before
 		inserting an object
@@ -352,7 +355,9 @@ class DBDataKeeper(object):
 			if new_id is None:
 				# Need to import
 				doimport = True
-				force = True
+				# Keep force recursively when archiving
+				if not archive:
+					force = True
 				writeimages = False
 			else:
 				# Already imported
@@ -365,12 +370,14 @@ class DBDataKeeper(object):
 				# is there a way to check if already done before getData()?
 				if True:
 					dat = value.getData()
-					dat.insert()
+					dat.insert(force=force,archive=archive)
 					#self.recursiveInsert(dat)
 
 		## insert this object
 		dbinfo = self.connect_kwargs()
-		dbid = self.flatInsert(newdata, force=force)
+		dbid = self.flatInsert(newdata, force=force, archive=archive)
+		if debug:
+			print "recursive insert flatInsert got dbid", dataclass, dbid
 		for other_db, other_dbid in newdata.mappings.items():
 			if other_db is self:
 				continue
@@ -378,21 +385,24 @@ class DBDataKeeper(object):
 			self.insertImported(other_config['host'], other_config['db'], dataclass, other_dbid, dbid)
 		newdata.setPersistent(dbinfo, dbid)
 
-	def _insert(self, newdata, force=False):
+	def _insert(self, newdata, force=False, archive=False):
 		self.dbd.ping()
 		try:
-			return self.recursiveInsert(newdata, force=force)
+			return self.recursiveInsert(newdata, force=force, archive=archive)
 		except _mysql_exceptions.OperationalError, e:
 			if e.args[0] == MySQLdb.constants.CR.SERVER_LOST:
 				raise Reconnect(e.args[-1])
 			raise InsertError(e.args[-1])
 
-	def flatInsert(self, newdata, force=False, skipinsert=False, fail=True):
+	def flatInsert(self, newdata, force=False, skipinsert=False, fail=True, archive=False):
 		dbconf = self.connect_kwargs()
 		dbname = dbconf['db']
 		tablename = newdata.__class__.__name__
 		table = (dbname, tablename)
-		definition, formatedData = sinedon.sqldict.dataSQLColumns(newdata, self, fail)
+		if debug and archive:
+			print 'newdata dbid at flatinsert at start',tablename,newdata.dbid
+			#newdata.new_dbid = newdata.dbid
+		definition, formatedData = sinedon.sqldict.dataSQLColumns(newdata, self, fail, archive)
 		## check for any new columns that have not been created
 		if table not in self.columns_created:
 			self.columns_created[table] = {}
@@ -410,7 +420,9 @@ class DBDataKeeper(object):
 		myTable = self.dbd.Table(table)
 		if skipinsert is True:
 			return None
-		newid = myTable.insert([formatedData], force=force)
+		if debug:
+			print 'newdata dbid at flatinsert before myTable insert',newdata.dbid
+		newid = myTable.insert([formatedData], force=force, archive=archive)
 		return newid
 
 	def diffData(self, newdata):
