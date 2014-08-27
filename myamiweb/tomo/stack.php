@@ -311,7 +311,7 @@ foreach($results as $result) {
         exit;
     }
 
-    $header = readMRCHeader($handle, $mrc2000_format);
+    $header = readMRCHeader($handle, $mrc2014_format);
 
     $size = getSize($header);
     $stack_size += $mrc_stack_extended_format_size;
