@@ -370,7 +370,9 @@ class DBDataKeeper(object):
 				# is there a way to check if already done before getData()?
 				if True:
 					dat = value.getData()
-					dat.insert(force=force,archive=archive)
+					# The result could be None
+					if dat:
+						dat.insert(force=force,archive=archive)
 					#self.recursiveInsert(dat)
 
 		## insert this object
