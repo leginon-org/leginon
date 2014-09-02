@@ -64,8 +64,8 @@ def runAce(matlab, imgdata, params, showprev=True):
 
 	if showprev is True:
 		bestctfvalue = ctfdb.getBestCtfByResolution(imgdata)
-		bestconf = ctfdb.calculateConfidenceScore(bestctfvalue)
 		if bestctfvalue:
+			bestconf = ctfdb.calculateConfidenceScore(bestctfvalue)
 			print ( "Prev best: '"+bestctfvalue['acerun']['name']+"', conf="+
 				apDisplay.colorProb(bestconf)+", defocus="+str(round(-1.0*abs(bestctfvalue['defocus1']*1.0e6),2))+
 				" microns" )
