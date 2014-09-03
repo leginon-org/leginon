@@ -92,6 +92,7 @@ def printPeakTree(peaktree):
 def findPeaksInMap(imgmap, thresh, pixdiam, count=1, olapmult=1.5, maxpeaks=500, 
 		maxsizemult=1.0, msg=True, tmpldbid=None, mapdiam=None, bin=1, peaktype="maximum"):
 
+	outstr = ''
 	pixrad = pixdiam/2.0
 
 	#MAXPEAKSIZE ==> 1x AREA OF PARTICLE
@@ -100,7 +101,7 @@ def findPeaksInMap(imgmap, thresh, pixdiam, count=1, olapmult=1.5, maxpeaks=500,
 
 	#VARY PEAKS FROM STATS
 	if msg is True:
-		varyThreshold(imgmap, thresh, maxsize)
+		outstr+=varyThreshold(imgmap, thresh, maxsize)
 
 	#GET FINAL PEAKS
 	blobtree, percentcov = findBlobs(imgmap, thresh, maxsize=maxsize,
@@ -110,10 +111,10 @@ def findPeaksInMap(imgmap, thresh, pixdiam, count=1, olapmult=1.5, maxpeaks=500,
 
 	#warnings
 	if msg is True:
-		apDisplay.printMsg("Found "+str(len(peaktree))+" peaks ("+str(percentcov)+"% coverage)")
+		outstr+="Found "+str(len(peaktree))+" peaks ("+str(percentcov)+"% coverage)\n"
 	if(percentcov > 25):
-		apDisplay.printWarning("thresholding covers more than 25% of image;"
-			+" you should increase the threshold")
+		outstr+="thresholding covers more than 25% of image;"
+		outstr+=" you should increase the threshold\n"
 
 	#remove overlaps
 	cutoff = olapmult*pixrad #1.5x particle radius in pixels
@@ -123,11 +124,12 @@ def findPeaksInMap(imgmap, thresh, pixdiam, count=1, olapmult=1.5, maxpeaks=500,
 	if(len(peaktree) > maxpeaks):
 		#orders peaks from biggest to smallest
 		peaktree.sort(_peakCompareBigSmall)
-		apDisplay.printWarning("more than maxpeaks ("+str(maxpeaks)+" peaks), selecting only top peaks")
-		apDisplay.printMsg("Corr best=%.3f, worst=%.3f"
-			%(peaktree[0]['correlation'], peaktree[len(peaktree)-1]['correlation']))
+		outstr+="!!! WARNING: more than maxpeaks ("+str(maxpeaks)+" peaks), selecting only top peaks\n"
+		outstr+="Corr best=%.3f, worst=%.3f\n"%(peaktree[0]['correlation'],
+			peaktree[len(peaktree)-1]['correlation'])
 		peaktree = peaktree[0:maxpeaks]
 
+	apDisplay.printMsg(outstr[5:])
 	return peaktree
 
 
@@ -334,6 +336,7 @@ def peakDistSq(a,b):
 	return (row1-row2)**2 + (col1-col2)**2
 
 def varyThreshold(ccmap, threshold, maxsize):
+	outstr = ''
 	for i in numpy.array([-0.05,-0.02,0.00,0.02,0.05]):
 		thresh      = threshold + float(i)
 		blobtree, percentcov = findBlobs(ccmap, thresh, maxsize=maxsize)
@@ -341,11 +344,12 @@ def varyThreshold(ccmap, threshold, maxsize):
 		lbstr = "%4d" % len(blobtree)
 		pcstr = "%.2f" % percentcov
 		if(thresh == threshold):
-			apDisplay.printMsg("*** selected threshold: "+tstr+" gives "
-				+lbstr+" peaks ("+pcstr+"% coverage ) ***")
+			outstr+="**** selected threshold: "+tstr+" gives "
+			outstr+=lbstr+" peaks ("+pcstr+"% coverage ) ***\n"
 		else:
-			apDisplay.printMsg("    varying threshold: "+tstr+" gives "
-				+lbstr+" peaks ("+pcstr+"% coverage )")
+			outstr+="     varying threshold: "+tstr+" gives "
+			outstr+=lbstr+" peaks ("+pcstr+"% coverage )\n"
+	return outstr
 
 def convertListToPeaks(peaks, params):
 	if peaks is None or len(peaks) == 0:
