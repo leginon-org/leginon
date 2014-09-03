@@ -327,9 +327,6 @@ class CorrectorClient(cameraclient.CameraClient):
 		r = diff * normarray
 		## remove nan and inf
 		r = numpy.where(numpy.isfinite(r), r, 0)
-		## replace 0 with mean
-		if 'GatanK2' in cameradata['ccdcamera']['name']:
-			r = numpy.where(r==0,r.mean(), r)
 		imagedata['image'] = r	
 		imagedata['dark'] = dark
 		imagedata['bright'] = norm['bright']
