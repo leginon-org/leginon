@@ -32,13 +32,10 @@ def findPeaks(imgdict, maplist, params, maptype="ccmaxmap", pikfile=True):
 	msg =       not params['background']
 	pixdiam =   diam/apix/float(bin)
 	pixrad =    diam/apix/2.0/float(bin)
-	tmpldbid =  None
-	mapdiam =   None
 
-	print "procs: ",params['nproc']
 	peaktreelist = Parallel(n_jobs=params['nproc'])(delayed(runFindPeaks)(params,
 		maplist,maptype,pikfile,thresh,pixdiam,count,olapmult,maxpeaks,maxsizemult,
-		msg,mapdiam,bin,peaktype,pixrad,imgdict) for count in range(0,len(maplist)))
+		msg,bin,peaktype,pixrad,imgdict) for count in range(0,len(maplist)))
 
 	peaktree = mergePeakTrees(imgdict, peaktreelist, params, msg, pikfile)
 
@@ -53,8 +50,10 @@ def findPeaks(imgdict, maplist, params, maptype="ccmaxmap", pikfile=True):
 	return peaktree
 
 def runFindPeaks(params,maplist,maptype,pikfile,thresh,pixdiam,count,olapmult,
-		maxpeaks,maxsizemult,msg,mapdiam,bin,peaktype,pixrad,imgdict):
+		maxpeaks,maxsizemult,msg,bin,peaktype,pixrad,imgdict):
 
+	tmpldbid =  None
+	mapdiam =   None
 	imgname = imgdict['filename']
 	mapdir = os.path.join(params['rundir'], "maps")
 
@@ -344,7 +343,7 @@ def varyThreshold(ccmap, threshold, maxsize):
 		lbstr = "%4d" % len(blobtree)
 		pcstr = "%.2f" % percentcov
 		if(thresh == threshold):
-			outstr+="**** selected threshold: "+tstr+" gives "
+			outstr+="*** selected threshold: "+tstr+" gives "
 			outstr+=lbstr+" peaks ("+pcstr+"% coverage ) ***\n"
 		else:
 			outstr+="     varying threshold: "+tstr+" gives "
