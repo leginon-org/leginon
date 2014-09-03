@@ -3,6 +3,7 @@
 import os
 import math
 import numpy
+from joblib import Parallel, delayed
 #PIL
 from PIL import Image
 from PIL import ImageDraw
@@ -19,8 +20,6 @@ def findPeaks(imgdict, maplist, params, maptype="ccmaxmap", pikfile=True):
 	peaktreelist = []
 	count = 0
 
-	imgname = imgdict['filename']
-	mapdir = os.path.join(params['rundir'], "maps")
 	thresh =    float(params["thresh"])
 	bin =       int(params["bin"])
 	diam =      float(params["diam"])
@@ -36,35 +35,12 @@ def findPeaks(imgdict, maplist, params, maptype="ccmaxmap", pikfile=True):
 	tmpldbid =  None
 	mapdiam =   None
 
-	for imgmap in maplist:
-		count += 1
+	print "procs: ",params['nproc']
+	peaktreelist = Parallel(n_jobs=params['nproc'])(delayed(runFindPeaks)(params,
+		maplist,maptype,pikfile,thresh,pixdiam,count,olapmult,maxpeaks,maxsizemult,
+		msg,mapdiam,bin,peaktype,pixrad,imgdict) for count in range(0,len(maplist)))
 
-		if 'templateIds' in params:
-			#template correlator
-			tmpldbid =  params['templateIds'][count-1]
-		elif 'diamarray' in params:
-			#dogpicker
-			mapdiam = params['diamarray'][count-1]
-
-		#find peaks
-		peaktree = findPeaksInMap(imgmap, thresh, pixdiam, count, olapmult, 
-			maxpeaks, maxsizemult, msg, tmpldbid, mapdiam, bin=bin, peaktype=peaktype)
-
-		#remove border peaks
-		peaktree = removeBorderPeaks(peaktree, pixdiam, imgdict['image'].shape[1], imgdict['image'].shape[0])
-
-		#write map to jpeg with highlighted peaks
-		outfile = os.path.join(mapdir, imgname+"."+maptype+str(count)+".jpg")
-		createPeakMapImage(peaktree, imgmap, outfile, pixrad, bin, msg)
-
-		#write pikfile
-		if pikfile is True:
-			peakTreeToPikFile(peaktree, imgname, count, params['rundir'])
-
-		#append to complete list of peaks
-		peaktreelist.append(peaktree)
-
-	peaktree = mergePeakTrees(imgdict, peaktreelist, params, msg, pikfile=pikfile)
+	peaktree = mergePeakTrees(imgdict, peaktreelist, params, msg, pikfile)
 
 	#max threshold
 	if maxthresh is not None:
@@ -73,6 +49,38 @@ def findPeaks(imgdict, maplist, params, maptype="ccmaxmap", pikfile=True):
 		postcount = len(peaktree)
 		#if precount != postcount:
 		apDisplay.printMsg("Filtered %d particles above threshold %.2f"%(precount-postcount,maxthresh))
+
+	return peaktree
+
+def runFindPeaks(params,maplist,maptype,pikfile,thresh,pixdiam,count,olapmult,
+		maxpeaks,maxsizemult,msg,mapdiam,bin,peaktype,pixrad,imgdict):
+
+	imgname = imgdict['filename']
+	mapdir = os.path.join(params['rundir'], "maps")
+
+	imgmap = maplist[count]
+
+	if 'templateIds' in params:
+		#template correlator
+		tmpldbid =  params['templateIds'][count]
+	elif 'diamarray' in params:
+		#dogpicker
+		mapdiam = params['diamarray'][count]
+
+	#find peaks
+	peaktree = findPeaksInMap(imgmap,thresh,pixdiam,count+1,olapmult, 
+		maxpeaks,maxsizemult,msg,tmpldbid,mapdiam,bin,peaktype)
+
+	#remove border peaks
+	peaktree = removeBorderPeaks(peaktree, pixdiam, imgdict['image'].shape[1], imgdict['image'].shape[0])
+
+	#write map to jpeg with highlighted peaks
+	outfile = os.path.join(mapdir, imgname+"."+maptype+str(count+1)+".jpg")
+	createPeakMapImage(peaktree, imgmap, outfile, pixrad, bin, msg)
+
+	#write pikfile
+	if pikfile is True:
+		peakTreeToPikFile(peaktree, imgname, count+1, params['rundir'])
 
 	return peaktree
 
