@@ -134,6 +134,7 @@ class SessionArchiver(Archiver):
 	'''
 	def __init__(self,sessionname):
 		super(SessionArchiver,self).__init__()
+		self.sessionname = sessionname
 		self.setSourceSession(sessionname)
 		self.setDestinationSession(sessionname)
 
@@ -159,7 +160,7 @@ class SessionArchiver(Archiver):
 		q = self.makequery(classname,kwargs)
 		t = source_session.timestamp
 		sessiontime = self.makeTimeStringFromTimeStamp(t)
-		r2 = q.query(results=1,timelimit='19000000000000\tsessiontime')
+		r2 = q.query(results=1,timelimit='19000000000000\t%s' % (sessiontime,))
 		if r2:
 			r1.append(r2[0])
 		r1.reverse()
@@ -172,83 +173,34 @@ class SessionArchiver(Archiver):
 		session by the user.
 		'''
 		source_session = self.getSourceSession()
-		sinedon.setConfig('leginondata', db=self.source_dbname)
+		t = source_session.timestamp
+		sessiontime = self.makeTimeStringFromTimeStamp(t)
 		# search in the session
 		q = self.makequery(classname,kwargs)
 		q['session'] = source_session
 		r1 = q.query()
 		# search by user
 		found_by_user = False
+		# query session again since for some reason it is mapped to destination
+		source_session = self.getSourceSession()
 		if source_session['user'] and source_session.dbid:
 			sessionq = leginondata.SessionData(user=source_session['user'])
 			q = self.makequery(classname,kwargs)
 			q['session'] = sessionq
-			r2 = q.query()
-			for data in r2:
-				if data.timestamp < source_session.timestamp and data['session']['user'] and data['session']['user'].dbid == source_session['user'].dbid:
-					r1.append(data)
-					found_by_user = True
-					break
-
+			r2 = q.query(results=1,timelimit='19000000000000\t%s' % (sessiontime,))
+			if r2:
+				r1.append(r2[0])
+				found_by_user = True
 		# search by isdefault
 		if found_by_user == False:
 			q = self.makequery(classname,kwargs)
 			q['isdefault'] = True
-			r2 = q.query()
-			for data in r2:
-				if data.timestamp < source_session.timestamp:
-					r1.append(data)
-					break
+			r2 = q.query(results=1,timelimit='19000000000000\tsessiontime')
+			if r2:
+				r1.append(r2[0])
 
 		r1.reverse()
 		return r1
-
-	def keepOnesInAndOneBeforeSession(self,datalist):
-		'''
-		Keep data that may affect what is used in the session
-		when the data (i.e., Calibrations) is loaded by querying
-		the most recent entry.
-		'''
-		source_session = self.getSourceSession()
-		sinedon.setConfig('leginondata', db=self.source_dbname)
-		newlist = []
-		for data in datalist:
-			if 'session' in data.keys() and data['session'] and data['session'].dbid == source_session.dbid:
-				newlist.append(data)
-			else:
-				if data.timestamp < source_session.timestamp:
-					newlist.append(data)
-					break
-		return newlist
-
-	def keepOnesInAndOneBeforeByUser(self, datalist):
-		'''
-		Keep data that may affect what is used in the session
-		when the data (i.e., Settings) is loaded by querying
-		the most recent entry preferably from the same user.
-		'''
-		source_session = self.getSourceSession()
-		sinedon.setConfig('leginondata', db=self.source_dbname)
-		newlist = []
-		found_by_user = False
-		for data in datalist:
-			if 'session' in data.keys():
-				if data['session']:
-					if data['session'].dbid == source_session.dbid:
-						newlist.append(data)
-					else:
-						if data.timestamp < source_session.timestamp and data['session']['user'] and data['session']['user'].dbid == source_session['user'].dbid:
-							newlist.append(data)
-							found_by_user = True
-							break
-			
-		if found_by_user == False:
-			for data in datalist:
-				if 'session' in data.keys():
-					if data.timestamp < source_session.timestamp and data['isdefault']:
-						newlist.append(data)
-						break
-		return newlist
 
 	def setSourceSession(self, sessionname):
 		sinedon.setConfig('leginondata', db=self.source_dbname)
@@ -256,6 +208,12 @@ class SessionArchiver(Archiver):
 		self.source_session = self.research(q,most_recent=True)
 
 	def getSourceSession(self):
+		'''
+		Get Source Session data reference.
+		'''
+		#This redo the query since the reference often get mapped to
+		#the destination database for unknown reason after some queries.
+		self.setSourceSession(self.sessionname)
 		return self.source_session
 
 	def setDestinationSession(self, sessionname):
@@ -269,6 +227,11 @@ class SessionArchiver(Archiver):
 		self.reset()
 
 	def getDestinationSession(self):
+		'''
+		Get Destination Session data reference.
+		'''
+		# Redo query for the same reason as in getSourceSession
+		self.setDestinationSession(self.sessionname)
 		return self.destination_session
 
 	def importSession(self, comment=''):
@@ -615,8 +578,6 @@ class SessionArchiver(Archiver):
 					allalias[r['class string']] = []
 				allalias[r['class string']].append(r['alias'])
 		# import settings
-		# for some reason the session is pointed to destination after this if not remapped
-		source_session = self.getSourceSession()
 
 		self.importSettingsByClassAndAlias(allalias)
 
