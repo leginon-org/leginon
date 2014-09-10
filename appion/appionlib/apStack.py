@@ -7,6 +7,7 @@ import time
 import math
 import numpy
 ### appion
+from pyami import mrc
 from pyami import mem
 from appionlib import apDatabase
 from appionlib import apParticle
@@ -16,7 +17,9 @@ from appionlib import appiondata
 from appionlib import apFile
 from appionlib import apParam
 from appionlib import apScriptLog
+from appionlib.apCtf import ctftools
 
+debug = False
 
 ####
 # This is a database connections file with no file functions
@@ -262,6 +265,61 @@ def averageStack(stack="start.hed", outfile="average.mrc", msg=True):
 	emancmd = ( "proc2d "+stackfile+" "+avgmrc+" average" )
 	apEMAN.executeEmanCmd(emancmd, verbose=msg)
 	return True
+
+#======================
+def getParticleContrastFromStackId(stackId):
+	stackData = getOnlyStackData(stackId, msg=False)
+	mrcfile = os.path.join(stackData['path']['path'], "average.mrc")
+	return getParticleContrastFromMrc(mrcfile)
+
+#======================
+def getParticleContrastFromMrc(mrcfile):
+	apDisplay.printMsg("Particle contrast determination is experimental")
+	if not os.path.isfile(mrcfile):
+		apDisplay.printWarning("Could not determine particle contrast, mrc file not found")
+		return None
+	rawimage = mrc.read(mrcfile)
+	boxSize = min(rawimage.shape)-1
+	innerNoise = boxSize/2/20 #one-twentieth the box radius
+	particleRadius = boxSize/2/3 + 1 #one-third the box radius
+	outerLimit = boxSize/2 * 0.9 # 90% of the box radius
+	radialData, densityData = ctftools.rotationalAverage(rawimage, full=True)
+
+	# find indices for radial values
+	innerNoiseIndex = numpy.searchsorted(radialData, innerNoise)
+	partRadIndex = numpy.searchsorted(radialData, particleRadius)
+	outerLimitIndex = numpy.searchsorted(radialData, outerLimit)
+	maxDiam = radialData[-1]
+	
+	innerVal = numpy.median(densityData[innerNoiseIndex:partRadIndex])
+	outerVal = numpy.median(densityData[outerLimitIndex:])
+	#print innerMean, outerMean, mrcfile
+
+	if debug is True:
+		print "%d:%d and %d:%d"%(innerNoiseIndex, partRadIndex, outerLimitIndex, densityData.shape[0])
+		print "inner density %.1f <> outer density %.1f"%(innerVal, outerVal)
+		from matplotlib import pyplot
+		pyplot.plot(radialData, densityData, 'ko-')
+		pyplot.xlabel('Pixel Radius')
+		pyplot.ylabel('Density')
+		xmin, xmax, ymin, ymax = pyplot.axis()
+		pyplot.axhline(y=innerVal, xmin=innerNoise/xmax, xmax=particleRadius/xmax, linewidth=2, color="blue", linestyle='-')
+		#pyplot.axhline(y=innerVal, xmax=particleRadius, linewidth=2, color="cyan", linestyle='-')
+		#print innerVal, radialData[1], particleRadius
+		pyplot.axhline(y=outerVal, xmin=outerLimit/xmax, xmax=maxDiam/xmax, linewidth=2, color="orange", linestyle='-')
+		#pyplot.axhline(y=outerVal, xmax=maxDiam, linewidth=2, color="orange", linestyle='-')
+		#print outerVal, outerLimit, maxDiam
+		pyplot.grid(True)
+		pyplot.show()
+		
+	if innerVal > outerVal:
+		apDisplay.printMsg("Contrast determined as WHITE particles on black background")
+		return "whiteOnBlack"
+	else:
+		apDisplay.printMsg("Contrast determined as BLACK particles on white background")
+		print "BLACK on white", mrcfile	
+		return "blackOnWhite"
+
 
 #===============
 def centerParticles(stack, mask=None, maxshift=None):
