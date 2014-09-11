@@ -42,6 +42,15 @@ class Lattice(object):
 					points.append((v0,v1))
 		return points
 
+	def optimizeRaster(self,all_points, better_points):
+		for better_point in better_points:
+			for i,point in enumerate(all_points):
+				distance = math.hypot(point[0]-better_point[0],point[1]-better_point[1])
+				if distance / self.spacing < self.tolerance:
+					all_points[i] = better_point
+					break
+		return all_points
+		
 	def add_point(self, newpoint):
 		num = len(self.points)
 		if num == 0:
