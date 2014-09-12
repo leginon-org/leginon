@@ -161,10 +161,17 @@ def insertParticlePeakPairs(peaktree1, peaktree2, peakerrors, imgdata1, imgdata2
 	### WRITE PARTICLES TO DATABASE
 	count = 0
 	t0 = time.time()
+	last50 = time.time()
 	apDisplay.printMsg("looping over "+str(len(peaktree1))+" particles")
 	for i in range(len(peaktree1)):
 		if (len(peaktree1)-count) % 50 == 0:
-			sys.stderr.write("<"+str(len(peaktree1)-count))
+			#sys.stderr.write("<"+str(len(peaktree1)-count))
+			print ("%d particles remain, %s time remains, %s per particle, %s last 50 particles"
+				%(len(peaktree1)-count, 
+				apDisplay.timeString((time.time() - t0)/count*(len(peaktree1)-count)),
+				apDisplay.timeString((time.time() - t0)/count),
+				apDisplay.timeString(time.time()-last50),))
+			last50 = time.time()
 		peakdict1 = peaktree1[i]
 		peakdict2 = peaktree2[i]
 		error = peakerrors[i]
@@ -193,10 +200,12 @@ def insertParticlePeakPairs(peaktree1, peaktree2, peakerrors, imgdata1, imgdata2
 		#NEED TO CALCULATE ERROR, ALWAYS POSITIVE
 		partpairq['error'] = error
 
-		presult = partpairq.query()
-		if not presult:
-			count+=1
-			partpairq.insert()
+		#presult = partpairq.query()
+		#if not presult:
+		count+=1
+		partq1.insert(force=True)
+		partq2.insert(force=True)
+		partpairq.insert(force=True)
 
 	apDisplay.printMsg("inserted "+str(count)+" of "+str(len(peaktree1))+" peaks into database"
 		+" in "+apDisplay.timeString(time.time()-t0))
