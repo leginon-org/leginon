@@ -161,6 +161,8 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 			dstep /=1e6
 		dstep = float(dstep)
 		mpixelsize = apDatabase.getPixelSize(imgdata)*1e-10
+		if self.params['apix_man'] is not None:
+			mpixelsize = self.params['apix_man']*1e-10
 		xmag = dstep / mpixelsize
 		apDisplay.printMsg("Xmag=%d, dstep=%.2e, mpix=%.2e"%(xmag, dstep, mpixelsize))
 		inputparams = {
@@ -395,6 +397,11 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 			help="dAst was added to CARD 4 to restrain the amount of astigmatism in \
 				the CTF fit. This makes the fitting procedure more robust, especially \
 				in cases where the Thon rings are not easily visible", metavar="#")
+		self.parser.add_option("--apix_man", dest="apix_man", type="float",
+			help="this option is optional and was added to manually change the pixel size value for \
+				for each micrograph (NOT on the camera), i.e. at the specimen level for the mag. \
+				Currently, this is only needed for Frealign and will replace the database entry",
+				 metavar="#")
 
 		## true/false
 		self.parser.add_option("--ctftilt", dest="ctftilt", default=False,
