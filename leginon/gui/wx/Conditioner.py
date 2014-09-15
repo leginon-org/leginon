@@ -46,7 +46,13 @@ class Panel(leginon.gui.wx.Node.Panel):
 
 class SettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
-		return ScrolledSettings(self,self.scrsize,False)
+		return self._initializeScrolledSettings(False)
+
+	def _initializeScrolledSettings(self,show_scrollbar=False):
+		# This "private call" ensures that a sub class defined in a 
+		# separate module loads its own function defined there
+		# instead of the one in this module containing the parent class
+		return ScrolledSettings(self,self.scrsize,show_scrollbar)
 
 class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def getTitle(self):
