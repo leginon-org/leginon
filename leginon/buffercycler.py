@@ -1,7 +1,10 @@
 #!/usr/bin/env python
 
+# load the parent class module
 from leginon import conditioner
+# load the database definition module
 from leginon import leginondata
+# load the gui class module
 import leginon.gui.wx.BufferCycler
 
 class BufferCycler(conditioner.Conditioner):
@@ -28,7 +31,11 @@ class BufferCycler(conditioner.Conditioner):
 
 	def runBufferCycle(self):
 		try:
+			# self.logger is linked to leginon gui to show information in the logger panel
 			self.logger.info('Running buffer cycle...')
+			# self.instrument contains attributes for direct instrument control such as tem
+			# whose attribute is defined in pyscope tem.TEM and its subclass leginon access
+			# based on instruments.cfg
 			self.instrument.tem.runBufferCycle()
 		except AttributeError:
 			self.logger.warning('No buffer cycle for this instrument')

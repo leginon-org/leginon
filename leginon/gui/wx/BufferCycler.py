@@ -14,14 +14,17 @@ from leginon.gui.wx.Entry import IntEntry
 class Panel(leginon.gui.wx.Conditioner.Panel):
 	icon = 'targetfilter'
 	def onSettingsTool(self, evt):
+		# Redefining this function that calls SettingsDialog class makes sure
+		# that the class in this module is loaded, not the one in the module
+		# containing the parent class
 		dialog = SettingsDialog(self)
 		dialog.ShowModal()
 		dialog.Destroy()
 
 class SettingsDialog(leginon.gui.wx.Conditioner.SettingsDialog):
 	def _initializeScrolledSettings(self,show_scrollbar=False):
-		# This "private call" ensures that the class in this module is loaded
-		# instead of the one in module containing the parent class
+		# Alternative way of ensuring class in this module is loaded:
+		# Use a "private call" like this.
 		return ScrolledSettings(self,self.scrsize,show_scrollbar)
 
 class ScrolledSettings(leginon.gui.wx.Conditioner.ScrolledSettings):
