@@ -280,8 +280,11 @@ class SessionArchiver(Archiver):
 		return source_cameradata, source_temdata, high_tension
 
 	def importGainReferences(self):
+		print "Importing GainReferences...."
 		q = leginondata.AcquisitionImageData(session=self.getSourceSession())
 		images = self.research(q,False)
+
+		sinedon.setConfig('leginondata', db=self.destination_dbname)
 		for image in images:
 			if image['norm'] and image['dark']:
 				image['norm'].insert(archive=True)
@@ -489,6 +492,7 @@ class SessionArchiver(Archiver):
 		This is needed for older data since BrightImageData was
 		not linked to AcquisitionImages previously.
 		'''
+		print "Importing old BrightImages...."
 		destination_session = self.getDestinationSession()
 		sinedon.setConfig('leginondata', db=self.destination_dbname)
 		q = leginondata.NormImageData(session=destination_session)
@@ -537,6 +541,7 @@ class SessionArchiver(Archiver):
 				'IntensityCalibrator':None,
 				'AutoNitrogenFiller':'AutoFillerSettingsData',
 				'EM':None,
+				'FileNames':'ImageProcessorSettingsData',
 		}
 		for classname in allalias.keys():
 			settingsname = classname+'SettingsData'
@@ -665,8 +670,8 @@ class SessionArchiver(Archiver):
 				self.runStep1()
 			if self.isStatusGood():
 				self.runStep2()
-			if self.isStatusGood():
-				self.runStep3()
+				if self.isStatusGood():
+					self.runStep3()
 		self.reset()
 		print ''
 
