@@ -18,7 +18,6 @@ class RemoteJobParamsForm extends BasicForm
 	protected $outdir;
 	protected $description;
 	protected $showDesc;
-	protected $runFolder;
 	protected $processinghost;
 	protected $nodes;
 	protected $ppn;
@@ -31,7 +30,7 @@ class RemoteJobParamsForm extends BasicForm
 	protected $queue;
 	
 	function __construct( $runname='', $outdir='', $description='', $showDesc=True, 
-							$runFolder='',$processinghost='', $nodes='', $ppn='', $rpn='', $mem='', 
+							$processinghost='', $nodes='', $ppn='', $rpn='', $mem='', 
 							$walltime='', $cput='', $localhost='', $remoteoutdir='', $queue='' ) 
 	{
 		parent::__construct();
@@ -41,7 +40,6 @@ class RemoteJobParamsForm extends BasicForm
 		$this->outdir 		= $outdir;
 		$this->description 	= $description;
 		$this->showDesc		= $showDesc;
-		$this->runFolder 	= $runFolder;
 		$this->processinghost = $processinghost;
 		$this->nodes 		= $nodes;
 		$this->ppn 			= $ppn;
@@ -52,21 +50,31 @@ class RemoteJobParamsForm extends BasicForm
 		$this->localhost 	= $localhost;
 		$this->remoteoutdir = $remoteoutdir;
 		$this->queue 		= $queue;
+		$this->showRemoteOutDir	= false;
 	}
-		
+	
+	function setShowRemoteOutDir( $showRemoteOutDir )
+	{
+		$this->showRemoteOutDir = $showRemoteOutDir;
+	}
+	
 	public function generateForm()
 	{
 		// if the form is being reloaded, make sure we keep anything the user already set.
 		$this->updateFormParams();
 		$params = $this->getFormParams();
-				
+		
+		// Create the run parameters form
 		$runParamsForm = new RunParametersForm( $runname=$this->runname, $outdir=$this->outdir, $description='', $this->showDesc );
 		$html .= $runParamsForm->generateForm();
 		
 		$html .= "<H4 style='align=\'center\' >Processing Host Parameters</H4><hr />";
-		$clusterParamsForm = new ClusterParamsForm($this->outDir);
+		
+		// Create the cluster params form 
+		$runFolder = basename($this->outdir);
+		$clusterParamsForm = new ClusterParamsForm($runFolder);
 		$clusterParams = $clusterParamsForm->getFormParams();
-		$clusterParams->hideParam('remoteoutdir');
+		if ( !$this->showRemoteOutDir ) $clusterParams->hideParam('remoteoutdir');
 		$clusterParams->hideParam('rpn');
 		
 		$html.= $clusterParamsForm->generateForm();
@@ -103,7 +111,7 @@ class RemoteJobParamsForm extends BasicForm
 		// Remove params from the command that are not needed by simple remote jobs
 		$command = $clusterParamsForm->removeCommandFlag( $command, "processinghost" );
 		$command = $clusterParamsForm->removeCommandFlag( $command, "rpn" );
-		$command = $clusterParamsForm->removeCommandFlag( $command, "remoteoutdir" );
+		if ( !$this->showRemoteOutDir ) $command = $clusterParamsForm->removeCommandFlag( $command, "remoteoutdir" );
 		$command = $clusterParamsForm->removeCommandFlag( $command, "localhost" );
 		
 		// If the user selects to just show the command, we do not want to supply the selected queue.

@@ -31,7 +31,8 @@ class BasicLayoutForm extends BasicForm
 	protected $guideURL; // The URL that links to an appropriate page in the online Appion User Guide.
 	protected $testable; // Set to true if the form should include a test image input box.
 	protected $showDesc; // If False (default), hides the run decription field, True shows it. 
-	protected $useCluster; // If False (default),uses run parameters form, true uses remoteJobForm params. 
+	protected $useCluster; // If False (default),uses run parameters form, true uses remoteJobForm params.
+	protected $showRemoteOutDir; // If False (default), hides the remoteRunDir field, True shows it if also useCluster is True.  
 	
 	function __construct( $expId, $extraHTML='' ) 
 	{
@@ -122,7 +123,8 @@ class BasicLayoutForm extends BasicForm
 		
 		$showDesc = $this->getShowDesc();
 		if ($this->getUseCluster() ) {
-			$remoteParamsForm = new RemoteJobParamsForm($runname=$defrunname, $outdir=$outdir, $description='', $showDesc);
+			$remoteParamsForm = new RemoteJobParamsForm($defrunname, $outdir,'', $showDesc );
+			$remoteParamsForm->setShowRemoteOutDir( $this->showRemoteOutDir );
 			$html.= $remoteParamsForm->generateForm();
 		} else {
 			// Add the Run Parameters Form
@@ -283,7 +285,18 @@ class BasicLayoutForm extends BasicForm
 		}
 		return $this->useCluster;
 	}
-	
+	function setShowRemoteOutDir( $showRemoteOutDir )
+	{
+		$this->showRemoteOutDir = $showRemoteOutDir;
+	}
+	function getShowRemoteOutDir()
+	{
+		// Default showDesc to False.
+		if ( empty($this->showRemoteOutDir) ){
+			$this->setShowRemoteOutDir(False);
+		}
+		return $this->showRemoteOutDir;
+	}
 	function addTestImageJava()
 	{
 		$javafunctions ="

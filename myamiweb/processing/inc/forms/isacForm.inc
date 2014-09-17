@@ -13,13 +13,14 @@ require_once "inc/particledata.inc"; // needed to look up symmetry values
 class IsacForm extends BasicLayoutForm
 {
 	protected $stackIds;
+	protected $alignStackIds;
 	
 	// Set Default values in the constructor
-	function __construct( $expId, $extraHTML='', $stackId='', $clip='', $bin='1', $numpart='3000', 
+	function __construct( $expId, $extraHTML='', $stackId='', $alignStackId='', $clip='', $bin='1', $numpart='3000', 
 		$lp='10', $hp='2000', $generations='2', $thld_grp='10', $img_per_grp='100', 
 		$stab_ali='5', $ir='', $ou='', $rs='', $ts='', $xr='', $yr='', $maxit='', $FL='',
 		$FH='', $FF='', $init_iter='', $main_iter='', $iter_reali='', $match_first='', $max_round='', 
-		$match_second='', $indep_run='') 
+		$match_second='', $indep_run='', $use_align_stack="" ) 
 	{
 		parent::__construct($expId, $extraHTML);
 		
@@ -40,6 +41,7 @@ class IsacForm extends BasicLayoutForm
 		$this->setUseLegOutDir( False ); // The output directory will be created in the Appion run directory rather than Leginon.
 		$this->setShowDesc( True ); // Flag to hide the description field of the run parameters.
 		$this->setUseCluster( True ); // Shows the processing host params to set processors and memory
+		$this->setShowRemoteOutDir( True ); // Shows the remote out dir field in cluster params (since using apRemoteJob.py which expects it)
 		
 		//------ Add JavaScript functions needed for this form -------------------------//
 		
@@ -61,11 +63,15 @@ class IsacForm extends BasicLayoutForm
 		// set particle & mask radius and lp
 		$javascript .= "}\n";
 		$javascript .= "
-			function enablefastmode() {
-				if (document.viewerform.fast.checked){
-					document.viewerform.fastmode.disabled=false;
+			function useAlignedStack() {
+				if (document.viewerform.use_align_stack.checked){
+					document.viewerform.stack.disabled=true;
+					document.viewerform.alignstack.disabled=false;
+					switchDefaults(document.viewerform.alignstack.value)
 				} else {
-					document.viewerform.fastmode.disabled=true;
+					document.viewerform.stack.disabled=false;
+					document.viewerform.alignstack.disabled=true;
+					switchDefaults(document.viewerform.stack.value)
 				}
 	
 			}
@@ -76,8 +82,9 @@ class IsacForm extends BasicLayoutForm
 		
 		//------ Set Parameters specific to the program that requires this new form -----//
 		
-		$particle = new particledata();
-		$this->stackIds = $particle->getStackIds($expId);
+		$particle 				= new particledata();
+		$this->stackIds 		= $particle->getStackIds($expId);
+		$this->alignStackIds 	= $particle->getAlignStackIds($expId, False);
 	
 		$params = $this->getFormParams();
 		
@@ -87,6 +94,7 @@ class IsacForm extends BasicLayoutForm
 		// Add each of the parameters here. 
 		// addParam( "key", default_value, "Label that appears in GUI")
 		$params->addParam( "stack", $stackId, "Select a stack of particles to use" );
+		$params->addParam( "alignstack", $alignStackId, "Select an aligned stack of particles to use" );
 		$params->addParam( "clip", $clip, "Unbinned clip diameter" );
 		$params->addParam( "bin", $bin, "Particle binning" );
 		$params->addParam( "numpart", $numpart, "Number of particles" );
@@ -117,14 +125,14 @@ class IsacForm extends BasicLayoutForm
 		$params->addParam( "max_round", $max_round, "First phase rounds" );
 		$params->addParam( "match_second", $match_second, "Second phase iterations" );
 		$params->addParam( "indep_run", $indep_run, "m-way matching level" );
+		$params->addParam( "use_align_stack", $use_align_stack, "Use an Aligned Stack" );
 		
 		// Validations
 		$params->addValidation( "numpart", "minval=4" );
 	}
 		
 	// Generate a form for the parameters that are specific to this program 
-	// The Left side will just show the stack and model that the user selected
-	// on the previous pages. This overrides the generateAdditionalFormLeft() 
+	// This overrides the generateAdditionalFormRight() 
 	// function that is found in the BasicLayoutForm class.
 	public function generateAdditionalFormRight()
 	{
@@ -186,7 +194,12 @@ class IsacForm extends BasicLayoutForm
 		// When loading this page the first time, use the switchDefaults javascript function to set 
 		// form parameters based on the currently selected stack.
 		if (!$_POST['process']) {
-			$html.= "<script>switchDefaults(document.viewerform.stack.options[document.viewerform.stack.selectedIndex].value);</script>\n";
+			// TODO: this checkbox is being set to on after switching to off and then reloading page...
+			if ( $params->getParamValue( "use_align_stack" ) == "on" ) {
+				$html.= "<script>document.viewerform.stack.disabled=true;switchDefaults(document.viewerform.alignstack.options[document.viewerform.alignstack.selectedIndex].value);</script>\n";
+			} else {
+				$html.= "<script>switchDefaults(document.viewerform.stack.options[document.viewerform.stack.selectedIndex].value);</script>\n";
+			}
 		}
 		
 		return $html;
@@ -196,19 +209,33 @@ class IsacForm extends BasicLayoutForm
 	{
 		$this->updateFormParams();
 		$params = $this->getFormParams();
+		$particle 	= new particledata();
 		
 		$html .= "
 	    <br />
 	    <H4>Stack Selection</H4>
 	    <hr />";
 		
+		
 		if (!$this->stackIds) {
 			$html .=  "<font color='red'><B>No Stacks for this Session</B></FONT>\n";
 		} else {
 			$onchange 	= "switchDefaults(this.value)";
-			$particle 	= new particledata();
 			$options 	= $particle->getStackOptions($this->stackIds);
 			$html 		.= $params->insertStackedSelectField( "stack", $options,'', '', $onchange );
+		}
+		
+		$html .= "<br />";
+		
+		$html .= $params->insertCheckboxField("use_align_stack", '', 'isac.use_align_stack', "useAlignedStack()" );
+		//$html .= "<br />";
+		
+		if (!$this->alignStackIds) {
+			$html .=  "<font color='red'><B>No Aligned Stacks for this Session</B></FONT>\n";
+		} else {
+			$onchange 	  = "switchDefaults(this.value)";
+			$alignoptions = $particle->getAlignedStackOptions($this->alignStackIds);
+			$html 		  .= $params->insertStackedSelectField( "alignstack", $alignoptions,'', 'isac.alignstack', $onchange );
 		}
 		
 		return $html;
@@ -222,11 +249,21 @@ class IsacForm extends BasicLayoutForm
 		
 		$params = $this->getFormParams();
 		
-		// Extract the stack id from the stack string
-		$stack = $params->getParamValue( "stack" );
-		list($stackid, $apix, $boxsz, $totpart) = preg_split('%\|--\|%',$stack);
+		// Determine if we should use the stack or alignedstack id
+		$command = $this->removeCommandFlag( $command, "use_align_stack" );
 		$command = $this->removeCommandFlag( $command, "stack" );
-		$command = $this->addCommandFlag( $command, "stack", "stack", $stackid );
+		$command = $this->removeCommandFlag( $command, "alignstack" );
+		$use_align_stack = $params->getParamValue( "use_align_stack" );
+
+		if ($use_align_stack == 'on') {
+			$alignstack = $params->getParamValue( "alignstack" );
+			list($alignstackid, $alignapix, $alignboxsz, $aligntotpart) = preg_split('%\|--\|%',$alignstack);
+			$command = $this->addCommandFlag( $command, "alignstack", "alignstack", $alignstackid );
+		} else {
+			$stack = $params->getParamValue( "stack" );
+			list($stackid, $apix, $boxsz, $totpart) = preg_split('%\|--\|%',$stack);
+			$command = $this->addCommandFlag( $command, "stack", "stack", $stackid );			
+		}
 		
 		// can't use dashes - in keys, so add the dash here
 		$command = $this->removeCommandFlag( $command, "numpart" );
@@ -257,7 +294,12 @@ class IsacForm extends BasicLayoutForm
 		$params = $this->getFormParams();
 		
 		// Extract the stack id from the stack string
-		$stack = $params->getParamValue( "stack" );
+		$use_align_stack = $params->getParamValue( "use_align_stack" );
+		if ($use_align_stack == 'on') {
+			$stack = $params->getParamValue( "alignstack" );
+		} else {
+			$stack = $params->getParamValue( "stack" );
+		} 
 		list($stackid, $apix, $boxsz, $totpart) = preg_split('%\|--\|%',$stack);
 		
 		$clip = $params->getParamValue('clip');
@@ -271,118 +313,33 @@ class IsacForm extends BasicLayoutForm
 		return $msg;
 	}	
 	
-	// If the user is not logged in, or there is an error
-	// copying the files, this function returns a string with 
-	// directions for manual copy. If the copy is successful,
-	// this returns and empty string.
-//	public function copyFilesToCluster()
-//	{
-//		// TODO: set these
-//		$host = ''; 
-//		$directory = ''; 
-//		
-//		$copyNeededFlag		= false; // this becomes true if files actually need to be copied 
-//		$printCommandFlag 	= false; // this becomes true if we are unable to execute the copy
-//		$returnCmdString	= ""; // the commands the user needs to enter manually if auto copy fails
-//		$clusterpath		= $directory;
-//			
-//		// if the user is not logged in, we cannot execute the copy for them
-//		$user = $_SESSION['username'];
-//		$pass = $_SESSION['password'];
-//		if (!($user && $pass)) {
-//			$printCommandFlag = true;
-//		}
-//	
-//		$runname = $_POST['runname'];
-//		$rundir = $_POST['outdir'].$runname;
-//		$clusterpath = $clusterpath.$runname;
-//		
-//		// create appion directory & copy list of files to copy
-//		// TODO: where exactly should files be copied to?
-//		$mkdircmd = "mkdir -p $clusterpath;\n";
-//		
-//		if ( !$printCommandFlag ) {
-//			$rvalue = exec_over_ssh($host, $user, $pass, $mkdircmd, false);
-//			if ($rvalue === false ){
-//				// if the mkdir failed, display the commands to the user to run manually
-//				$printCommandFlag = true;
-//				$errMsg = "Error: Could not create run directory on $host: ";
-//				$errMsg .= pconnError();
-//				$returnCmdString .= "<B>ERROR</B> $errMsg <br /><br />";
-//				//echo "<hr>\n<font color='#CC3333' size='+1'>$errMsg</font>\n";
-//			} else {
-//				// TODO: log this to a file
-//				//echo "<hr>\n<font color='#CC3333' size='+1'>Created run directory $clusterpath on $host.</font>\n";
-//			}
-//		}
-//		
-//		// Get list of files to copy
-//		$files_to_remote_host = "files_to_remote_host";
-//		$files_to_remote_host_path = $rundir."/files_to_remote_host";
-//		if (!file_exists($files_to_remote_host_path)) {
-//			jobForm("<B>ERROR:</B> Failed to locate file ".$files_to_remote_host_path);
-//	  	}
-//		
-//	  	$files = file_get_contents($files_to_remote_host_path);
-//	  	
-//	  	if ( $files === false ) {
-//			jobForm("<B>ERROR:</B> Failed to read file ".$files_to_remote_host_path);
-//	  	}
-//	  		
-//		// copy each listed file to the cluster	
-//		// files are separated by a new line charachter
-//		$fileList = explode( "\n", $files );
-//		
-//		// add the files_to_remote_host file to this list to be copied
-//		$fileList[] = $files_to_remote_host;
-//		
-//		foreach ( $fileList as $filename ) {
-//			if ( !$filename ) {
-//				//echo "<hr>\n<font color='#CC3333' size='+1'>$filename not valid.</font>\n";
-//				continue;
-//			}
-//			
-//			// add the path to the current location of the file
-//			$filepath = $rundir."/".$filename;
-//	
-//		    // set path to copy the file to
-//		    $remoteFilePath = "$clusterpath/$filename";
-//		    	    
-//		    // copy the file to the cluster
-//		    if ( $filepath != $remoteFilePath ) {
-//		    	$copyNeededFlag = true;
-//		    	$cpycmd .= " cp $filepath $remoteFilePath; <br />";
-//		    	// if we have not had any errors above, try the copy
-//		    	if ( !$printCommandFlag ) {
-//		    		$rvalue = scp($host, $user, $pass, $filepath, $remoteFilePath);	
-//					if (!$rvalue) {
-//						// if there is an error with the copy, let the user know and display the manual commands
-//						$printCommandFlag = true;
-//						$errMsg = "Failed to copy file ($filepath) to $remoteFilePath on $host: ";
-//						$errMsg .= pconnError();
-//						$returnCmdString .= "<B>ERROR</B> $errMsg <br /><br />";
-//						//echo "<hr>\n<font color='#CC3333' size='+1'>$errMsg</font>\n";
-//					} else {
-//						// TODO: log this to a file
-//						//echo "<hr>\n<font color='#CC3333' size='+1'>Copied $filepath to $remoteFilePath on $host.</font>\n";
-//					}
-//		    	}
-//		    } else {
-//		    	// TODO: log this to a file
-//				//echo "<hr>\n<font color='#CC3333' size='+1'>No need to copy file $filepath to $remoteFilePath.</font>\n";
-//		    }
-//		}	
-//		
-//		// Build the return string if needed
-//		if ( $copyNeededFlag && $printCommandFlag ) {
-//			$returnCmdString .= "<b>You MUST manually execute the following commands (or similar) prior to running the refinement command:</b>";
-//			$returnCmdString .= "<br /><br />";
-//			$returnCmdString .= $mkdircmd;
-//			$returnCmdString .= "<br />";
-//			$returnCmdString .= $cpycmd;
-//		}
-//		
-//		return $returnCmdString;
-//	}
+	// Define this function to create a list of files that need to be copied
+	// to the remote cluster before running. This function will be called by the 
+	// basicForm class when runAppionLoop.php calls copyFilesToCluster().
+	public function setFilesToCopy()
+	{
+		$params = $this->getFormParams();
+		
+		// TODO: stack or align stack?
+		// Extract the stack id from the stack string
+		$stack = $params->getParamValue( "stack" );
+		list($stackid, $apix, $boxsz, $totpart) = preg_split('%\|--\|%',$stack);
+		
+		// Get the stack file path
+		$particle  = new particledata();
+		$stackdata = $particle->getStackParams($stackid);
+		$stackfile = $stackdata['path']."/".$stackdata['name'];
+		
+		// Get the stack file path and name
+		$this->filesToCopy[] = $stackfile;
+	}
+	
+	public function copyFilesToCluster( $host, $directory )
+	{
+		// This is a bit different from the basicForm class, because we need to copy
+		// the stack from its current location to the cluster. However it looks like
+		// apSparxIsac.py is looking up the stack location in the DB so not sure where 
+		// we should be copying to....
+	}
 }
 ?>

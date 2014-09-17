@@ -8,7 +8,7 @@ abstract class RefineJobs
 	protected $particle;
 	protected $expId;
 	private $prepJobs;
-	private $runJobs;
+	protected $runJobs; // make this visible to child classes
 	private $uploadJobs;
 	
 	function __construct($expId) 
@@ -56,6 +56,7 @@ abstract class RefineJobs
 		// move all the jobs into a single dimentional array
 		// so all we have is an array of jobs, not separated by jobtype
 		$this->runJobs = array();
+		
 		foreach ( $jobs as $jobtype ) {
 			foreach ( $jobtype as $job ) {
 				$this->runJobs[] = $job;
@@ -64,6 +65,7 @@ abstract class RefineJobs
 		
 		// Sort the job array by the timestamp (default)
 		$this->sortJobs($this->runJobs);
+		
 	}
 	
 	# Sort a given array of Jobs by the given key

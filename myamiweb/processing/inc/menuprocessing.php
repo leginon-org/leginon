@@ -15,6 +15,7 @@ require_once "inc/viewer.inc";
 require_once "inc/processing.inc";
 require_once "inc/refineJobsMultiModel.inc";
 require_once "inc/refineJobsSingleModel.inc";
+require_once "inc/alignJobs.inc";
 
 
 $expId=$_GET['expId'];
@@ -374,6 +375,19 @@ if (is_numeric($expId)) {
 		if ($maxlikejobs=$particle->getFinishedMaxLikeJobs($projectId)) {
 			$nmaxlikejobs = count($maxlikejobs);
 		}
+		
+		// ISAC runs
+		$isacJobs = new AlignJobs($expId);
+		// run isac stats
+		$isacQueue		= $isacJobs->countRunRefineQueue();
+		$isacRun		= $isacJobs->countRunRefineRun();
+		$isacReadyUpload  = $isacJobs->countRefinesReadyToUpload();
+		
+		$alignrun = $alignrun + $isacRun;
+		
+		// number of jobs to upload
+		$nalignupload = $isacReadyUpload + $nmaxlikejobs;
+		
 		if ($cl2djobs=$particle->getFinishedCL2DJobs($projectId)) {
 			$ncl2djobs = count($cl2djobs);
 		}	
@@ -382,10 +396,12 @@ if (is_numeric($expId)) {
 		}	
 	
 		$alignqueue = count($subclusterjobs['partalign']['queued']);
+		$alignqueue = $alignqueue + $isacQueue;
 
 		$alignresults[] = ($aligndone==0) ? "" : "<a href='alignlist.php?expId=$sessionId'>$alignruns complete</a>";
 		$alignresults[] = ($alignrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=partalign'>$alignrun running</a>";
-		$alignresults[] = ($nmaxlikejobs==0) ? "" : "<a href='runUploadMaxLike.php?expId=$sessionId'>$nmaxlikejobs ready to upload</a>";
+		$alignresults[] = ($nalignupload==0) ? "" : "<a href='checkAlignJobs.php?expId=$sessionId'>$nalignupload ready to upload</a>";
+//		$alignresults[] = ($nmaxlikejobs==0) ? "" : "<a href='runUploadMaxLike.php?expId=$sessionId'>$nalignupload ready to upload</a>";
 //		$alignresults[] = ($ncl2djobs==0) ? "" : "<a href='runUploadCL2D.php?expId=$sessionId'>$ncl2djobs ready to upload</a>";
 		$alignresults[] = ($alignqueue==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=partalign'>$alignqueue queued</a>";
 

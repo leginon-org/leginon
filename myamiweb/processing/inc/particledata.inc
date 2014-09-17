@@ -1655,6 +1655,43 @@ class particledata {
 	}
 	
 	// Returns a dictionary of values to be used in stack selector GUI elements
+	function getAlignedStackOptions( $stackIds ) 
+	{
+		$options = array();
+		
+		foreach ( $stackIds as $stackid ) {
+			
+			// get stack parameters from database
+			$stackParams = $this->getAlignStackParams( $stackid['alignstackid'] );
+			
+			// get number of particles in each stack
+			$totalp = $stackParams['num_particles'];
+			if ($totalp == 0)
+				continue;
+				
+			$nump = commafy($totalp);
+			
+			// get pixel size of stack
+			$apix = $stackParams['pixelsize'];
+			// truncated pixel size
+			$showapix = sprintf("%.2f",$apix);
+			// get box size
+			$box = $stackParams['boxsize'];
+			// get stack path with name
+			$opvals = "$stackid[alignstackid]|--|$apix|--|$box|--|$totalp|--|$stackParams[path]|--|$stackParams[name]";
+			
+			// if imagic stack, send both hed & img files for dmf
+			if (preg_match('~.hed~', $s['name'])) $opvals.='|--|'.preg_replace('~hed~','img',$s['name']);
+			if (preg_match('~.img~', $s['name'])) $opvals.='|--|'.preg_replace('~img~','hed',$s['name']);
+			
+			// Add this stack to the options dictionary
+			$options[$opvals] = $stackParams[runname]." ID: ".$stackid[alignstackid]." (".$nump." particles, ".$showapix." &Aring;/pix, ".$box."x".$box.")";
+		}
+		
+		return $options;
+	}
+	
+	// Returns a dictionary of values to be used in stack selector GUI elements
 	function getStackOptions( $stackIds ) 
 	{
 		$options = array();
@@ -3326,6 +3363,7 @@ class particledata {
 			'spidernoref'=>'REF|ApSpiderNoRefRunData|norefrun',
 			'spiderefbased'=>'REF|ApRefBasedRunData|refbasedrun',
 			'maxlike'=>'REF|ApMaxLikeRunData|maxlikerun',
+			'isac'=>'REF|ApSparxISACRunData|isacrun',
 			'imagicMRA'=>'REF|ApMultiRefAlignRunData|imagicMRA',
 			'editerrun'=>'REF|ApEdIterRunData|editerrun',
 		);
@@ -4412,10 +4450,20 @@ class particledata {
 		return $aborted_jobids;
 	}
 
+	// This tells us if the job has already been uploaded
 	function getReconIdFromAppionJobId($jobid) {
 		$q="SELECT * "
 			."FROM `ApRefineRunData` "
 			."WHERE `REF|ApAppionJobData|job` = $jobid";
+		$r = $this->mysql->getSQLResult($q);
+		return $r[0];
+	}
+	
+	// This tells us if the job has already been uploaded
+	function getAlignRunIdFromAppionPathId($pathid) {
+		$q="SELECT * "
+			."FROM `ApAlignRunData` "
+			."WHERE `REF|ApPathData|path` = $pathid";
 		$r = $this->mysql->getSQLResult($q);
 		return $r[0];
 	}

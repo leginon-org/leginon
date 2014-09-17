@@ -783,6 +783,12 @@
 		default="NULL" 
 	/> 
 	<field 
+		name="REF|ApSparxISACRunData|isacrun" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
 		name="REF|ApEMANRefine2dRunData|refine2drun" 
 		type="INT(20)" 
 		null="NULL" 
@@ -829,6 +835,7 @@
 	<key>KEY `REF|ApSpiderNoRefRunData|norefrun` (`REF|ApSpiderNoRefRunData|norefrun`)</key> 
 	<key>KEY `REF|ApRefBasedRunData|refbasedrun` (`REF|ApRefBasedRunData|refbasedrun`)</key> 
 	<key>KEY `REF|ApMaxLikeRunData|maxlikerun` (`REF|ApMaxLikeRunData|maxlikerun`)</key> 
+	<key>KEY `REF|ApSparxISACRunData|isacrun` (`REF|ApSparxISACRunData|isacrun`)</key> 
 	<key>KEY `REF|ApEMANRefine2dRunData|refine2drun` (`REF|ApEMANRefine2dRunData|refine2drun`)</key> 
 	<key>KEY `REF|ApMultiRefAlignRunData|imagicMRA` (`REF|ApMultiRefAlignRunData|imagicMRA`)</key> 
 	<key>KEY `REF|ApEdIterRunData|editerrun` (`REF|ApEdIterRunData|editerrun`)</key> 
@@ -4593,6 +4600,94 @@
 	<key>KEY `student` (`student`)</key> 
 	<key>KEY `fast` (`fast`)</key> 
 	<key>KEY `REF|ApMaxLikeJobData|job` (`REF|ApMaxLikeJobData|job`)</key> 
+</sqltable>
+<sqltable name="ApSparxISACJobData" >
+	<field 
+		name="DEF_id" 
+		type="int(16)" 
+		null="NOT NULL" 
+		extra="auto_increment" 
+	/> 
+	<field 
+		name="DEF_timestamp" 
+		type="timestamp" 
+		null="NOT NULL" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
+	/> 
+	<field 
+		name="runname" 
+		type="TEXT" 
+		null="NULL" 
+	/> 
+	<field 
+		name="timestamp" 
+		type="TEXT" 
+		null="NULL" 
+	/> 
+	<field 
+		name="REF|ApPathData|path" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="REF|projectdata|projects|project" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="finished" 
+		type="TINYINT(1)" 
+		null="NULL" 
+		default="0" 
+	/> 
+	<field 
+		name="hidden" 
+		type="TINYINT(1)" 
+		null="NULL" 
+		default="0" 
+	/> 
+	<key>PRIMARY KEY (`DEF_id`)</key> 
+	<key>KEY `DEF_timestamp` (`DEF_timestamp`)</key> 
+	<key>KEY `REF|ApPathData|path` (`REF|ApPathData|path`)</key> 
+	<key>KEY `finished` (`finished`)</key> 
+	<key>KEY `hidden` (`hidden`)</key> 
+</sqltable>
+<sqltable name="ApSparxISACRunData" >
+	<field 
+		name="DEF_id" 
+		type="int(16)" 
+		null="NOT NULL" 
+		extra="auto_increment" 
+	/> 
+	<field 
+		name="DEF_timestamp" 
+		type="timestamp" 
+		null="NOT NULL" 
+		default="DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
+	/> 
+	<field 
+		name="runname" 
+		type="TEXT" 
+		null="NULL" 
+	/> 
+	<field 
+		name="REF|ApSparxISACJobData|job" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="REF|ApAlignStackData|alignstackid" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<key>PRIMARY KEY (`DEF_id`)</key> 
+	<key>KEY `DEF_timestamp` (`DEF_timestamp`)</key> 
+	<key>KEY `REF|ApSparxISACJobData|job` (`REF|ApSparxISACJobData|job`)</key> 
+	<key>KEY `REF|ApAlignStackData|alignstackid` (`REF|ApAlignStackData|alignstackid`)</key> 
 </sqltable>
 <sqltable name="ApMiscData" >
 	<field 

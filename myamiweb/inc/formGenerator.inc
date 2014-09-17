@@ -67,9 +67,12 @@ class FormGeneratorLib
 		return $html;
 	}
 	
-	public function insertCheckboxField( $name, $label='', $value='', $checked='', $enable='', $note='', $helpkey='' )
+	public function insertCheckboxField( $name, $label='', $value='', $checked='', $enable='', $note='', $helpkey='', $onchange='' )
 	{
-		$html.= "<INPUT TYPE='checkbox' NAME='$name' $enable VALUE='$value' $checked >\n";
+		$changeString = '';
+		if ( $onchange ) $changeString = " onchange='".$onchange."'";  
+		
+		$html.= "<INPUT TYPE='checkbox' NAME='$name' $enable $changeString VALUE='$value' $checked >\n";
 		$html.= $this->insertLabel( $name, $label, $helpkey );				
 		$html.= $this->insertNote( $note );
 		$html.= "<br/>\n";
