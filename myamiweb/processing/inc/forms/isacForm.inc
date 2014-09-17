@@ -194,11 +194,13 @@ class IsacForm extends BasicLayoutForm
 		// When loading this page the first time, use the switchDefaults javascript function to set 
 		// form parameters based on the currently selected stack.
 		if (!$_POST['process']) {
+			$a = $params->getParamValue( "use_align_stack" );
+			var_dump($a);
 			// TODO: this checkbox is being set to on after switching to off and then reloading page...
 			if ( $params->getParamValue( "use_align_stack" ) == "on" ) {
 				$html.= "<script>document.viewerform.stack.disabled=true;switchDefaults(document.viewerform.alignstack.options[document.viewerform.alignstack.selectedIndex].value);</script>\n";
 			} else {
-				$html.= "<script>switchDefaults(document.viewerform.stack.options[document.viewerform.stack.selectedIndex].value);</script>\n";
+				$html.= "<script>document.viewerform.alignstack.disabled=true;switchDefaults(document.viewerform.stack.options[document.viewerform.stack.selectedIndex].value);</script>\n";
 			}
 		}
 		
