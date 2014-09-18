@@ -200,7 +200,7 @@ function showStatus($jobinfo) {
 	} elseif ($jobinfo['status']=='D') {
 		if ($jobinfo['jobtype'] == 'sparxisac') {
 			$dlbuttons = "<input type='button' onclick=\"parent.location=('"
-				."runUploadMaxLike.php?expId=$expId&jobId=$jobid')\" value='Upload ISAC results'>&nbsp;\n";
+				."runUploadIsac.php?expId=$expId&jobId=$jobid')\" value='Upload ISAC results'>&nbsp;\n";
 		} elseif ($jobinfo['jobtype'] == 'maxlikealignment') {
 			$dlbuttons .= "<input type='button' onclick=\"parent.location=('"
 				."runUploadMaxLike.php?expId=$expId&jobId=$jobid')\" value='Upload MaxLike results'>&nbsp;\n";

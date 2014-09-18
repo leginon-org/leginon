@@ -33,7 +33,7 @@ class AlignJobs extends RefineJobs
 	// override this for ISAC Jobs
 	public function getRefinesReadyToUpload()
 	{ 
-		// Find refines ready to upload
+		// Find alignments ready to upload
 		$refineReadyUpload = array();
 
 		foreach ($this->runJobs as $job ) {
