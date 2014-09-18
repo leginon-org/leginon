@@ -220,12 +220,6 @@ class GatanSocket(object):
 		message_recv = Message(longargs=(0,))
 		self.ExchangeMessages(message_send, message_recv)
 
-	def SetShutterNormallyClosed(self, camera, shutter):
-		funcCode = enum_gs['GS_SetShutterNormallyClosed']
-		message_send = Message(longargs=(funcCode,camera, shutter))
-		message_recv = Message(longargs=(0,))
-		self.ExchangeMessages(message_send, message_recv)
-
 	@logwrap
 	def SetK2Parameters(self, readMode, scaling, hardwareProc, doseFrac, frameTime, alignFrames, saveFrames, filt=''):
 		funcCode = enum_gs['GS_SetK2Parameters']
@@ -261,11 +255,10 @@ class GatanSocket(object):
 
 	@logwrap
 	def SetupFileSaving(self, rotationFlip, dirname, rootname, filePerImage):
-		flags = 3
-		longs = [enum_gs['GS_SetupFileSaving2'], rotationFlip,flags,]
+		longs = [enum_gs['GS_SetupFileSaving'], rotationFlip]
 		bools = [filePerImage,]
 		pixelSize = 1.0
-		dbls = [pixelSize,0.,0.,0.,0.,]
+		dbls = [pixelSize]
 		names_str = dirname + '\0' + rootname + '\0'
 		extra = len(names_str) % 4
 		if extra:
@@ -372,18 +365,6 @@ class GatanSocket(object):
 				remain -= len_recv
 				received += len_recv
 		return imArray
-
-	def ExecuteDMScript(self,command_line):
-		funcCode = enum_gs['GS_ExecuteScript']
-		cmd_str = command_line + '\0'
-		extra = len(cmd_str) % 4
-		if extra:
-			npad = 4 - extra
-			cmd_str = cmd_str + npad * '\0'
-		longarray = numpy.frombuffer(cmd_str, dtype=numpy.int_)
-		message_send = Message(longargs=(funcCode,), longarray=longarray)
-		message_recv = Message(longargs=(0,))
-		self.ExchangeMessages(message_send, message_recv)
 
 def test1():
 	g = GatanSocket()

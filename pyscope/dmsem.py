@@ -291,56 +291,6 @@ class DMSEM(ccdcamera.CCDCamera):
 			sub = remainder % 100
 		return (version_long,'%d.%d.%d' % (major,minor,sub))
 
-	def hasScriptFunction(self, name):
-		script = 'if(DoesFunctionExist("%s")) Exit(1.0) else Exit(-1.0)'
-		script %= name
-		result = self.camera.ExecuteScript(script)
-		return result > 0.0
-
-	def getEnergyFiltered(self):
-		method_names = [
-			'getEnergyFilter',
-			'setEnergyFilter',
-			'getEnergyFilterWidth',
-			'setEnergyFilterWidth',
-			'alignEnergyFilterZeroLossPeak',
-		]
-
-		for method_name in method_names:
-			if not hasattr(self, method_name):
-				return False
-		return True
-
-	def getEnergyFilter(self):
-		script = 'if(%s()) Exit(1.0) else Exit(-1.0)' % (self.script_functions['getEnergyFilter'],)
-		result = self.camera.ExecuteScript(script)
-		return result > 0.0
-
-	def setEnergyFilter(self, value):
-		if value:
-			i = 1
-		else:
-			i = 0
-		script = '%s(%d)' % (self.script_functions['setEnergyFilter'], i)
-		self.camera.ExecuteScript(script)
-
-	def getEnergyFilterWidth(self):
-		script = 'Exit(%s())' % (self.script_functions['getEnergyFilterWidth'],)
-		result = self.camera.ExecuteScript(script)
-		return result
-
-	def setEnergyFilterWidth(self, value):
-		script = 'if(%s(%f)) Exit(1.0) else Exit(-1.0)' % (self.script_functions['setEnergyFilterWidth'], value)
-		result = self.camera.ExecuteScript(script)
-		if result < 0.0:
-			raise RuntimeError('unable to set energy filter width')
-
-	def alignEnergyFilterZeroLossPeak(self):
-		script = 'if(%s()) Exit(1.0) else Exit(-1.0)' % (self.script_functions['alignEnergyFilterZeroLossPeak'],)
-		result = self.camera.ExecuteScript(script)
-		if result < 0.0:
-			raise RuntimeError('unable to align energy filter zero loss peak')
-
 class GatanOrius(DMSEM):
 	name = 'GatanOrius'
 	cameraid = 1
