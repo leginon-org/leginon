@@ -197,9 +197,9 @@ class Cluster
 		}
 
 		$remoteOutputPath = Path::join( $this->baseoutdir, $rootpath );
-		$remoteOutputPath = ($_POST['clusterpath']) ? $_POST['clusterpath'] : $remoteOutputPath;
+		//$remoteOutputPath = ($_POST['clusterpath']) ? $_POST['clusterpath'] : $remoteOutputPath;
 		// Some forms are calling this 'remoteoutdir'
-		$remoteOutputPath = ($_POST['remoteoutdir']) ? $_POST['remoteoutdir'] : $remoteOutputPath;
+		//$remoteOutputPath = ($_POST['remoteoutdir']) ? $_POST['remoteoutdir'] : $remoteOutputPath;
 		$this->remoteOutputPath = $this->formatEndPath( $remoteOutputPath ); 		
 	}
 
