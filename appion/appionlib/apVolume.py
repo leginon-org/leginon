@@ -2,6 +2,7 @@
 import os
 import re
 import time
+import math
 import random
 import shutil
 import string
@@ -123,10 +124,18 @@ def rescaleVolume(infile, outfile, inapix, outapix=None, newbox=None, spider=Non
 
 	emancmd = "proc3d %s %s " % (infile, outfile)
 
-	# only do it if it is bigger than 10%
-	if abs(scalefactor-1.0) > 0.1:
-		emancmd += "scale=%.3f " % scalefactor
-
+	# only rescale if it is bigger than 5% change
+	if abs(scalefactor - 1.0) > 0.05:
+		# if scalefactor is close to integer use shrink (i.e. binning)
+		binning = 1.0/scalefactor
+		#print "bin %.8f ; scale %.8f"%(binning, scalefactor)
+		if binning - math.floor(binning) < 0.1:
+			emancmd += "shrink=%d " % binning
+		else:
+			emancmd += "scale=%.3f " % scalefactor
+	else:
+		apDisplay.printMsg("scaling not necessary")
+		
 	emancmd += "clip=%i,%i,%i norm=0,1 " % (newbox, newbox, newbox)
 	
 
