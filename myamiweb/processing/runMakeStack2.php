@@ -505,15 +505,38 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	echo "<br/>\n";
 	echo "<br/>\n";
 
+
 	if ($ctfdata) {
 		echo "<table style='border: 1px solid black; padding:5px; background-color:#f9f9ff; ' ><tr ><td>\n\n";
-
+		
 		// use ctf correction
 		echo"<input type='checkbox' name='ctfcorrect' onclick='enablectftype(this)' $phasecheck>\n";
 		echo docpop('ctfcorrect','Ctf Correct Particle Images');
 
 		echo "<br/><br/>";
 		echo "</td></tr><tr><td>\n\n";
+
+		// confidence cutoff
+		echo"<input type='checkbox' name='aceconf' onclick='enablectf(this)' $ctfcheck>\n";
+		echo docpop('aceconf','CTF Confidence Cutoff');
+		echo "<br />\n";
+		echo "Use Values Above:<input type='text' name='ctf' $ctfdisable value='$ctfval' size='4'>
+		(between 0.0 - 1.0)\n";
+
+		echo "<br/><br/>";
+
+		//
+		// STARTING ADVANCED CTF SECTION
+		//
+		// Only hide advanced parameters if there is not an advanced user logged in.
+		// Modify user profile to set to an advanced user. 
+		// NOTE: this assumes the Appion user name and the username that is used to log in to the processing page are the same.
+		// We may want to change that someday.
+		if ( !$_SESSION['advanced_user'] ) {
+			echo "<a id='Advanced_Ctf_Options_toggle' href='javascript:toggle(\"Advanced_Ctf_Options\");' style='color:blue'>";
+			echo "Show Advanced CTF Options</a><br/>\n";
+			echo "<div id='Advanced_Ctf_Options' style='display: none'>\n";
+		}
 
 		// select correction method
 		echo docpop('ctfcorrectmeth','CTF Correction Method');
@@ -529,7 +552,7 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 		echo "</select>\n";
 
 		echo "<br/><br/>";
-		echo "</td></tr><tr><td>\n\n";
+		//echo "</td></tr><tr><td>\n\n";
 
 		// select cutoff types method
 		echo docpop('ctfsort','CTF Sorting Method');
@@ -566,18 +589,8 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 			echo "<br/>\n";
 		}
 
-		echo "<br/><br/>";
-		echo "</td></tr><tr><td>\n\n";
-
-		// confidence cutoff
-		echo"<input type='checkbox' name='aceconf' onclick='enablectf(this)' $ctfcheck>\n";
-		echo docpop('aceconf','CTF Confidence Cutoff');
-		echo "<br />\n";
-		echo "Use Values Above:<input type='text' name='ctf' $ctfdisable value='$ctfval' size='4'>
-		(between 0.0 - 1.0)\n";
-
-		echo "<br/><br/>";
-		echo "</td></tr><tr><td>\n\n";
+		echo "<br/>";
+		//echo "</td></tr><tr><td>\n\n";
 
 		// resolution cutoff
 		echo"<input type='checkbox' name='ctfres' onclick='enablectfres(this)' $ctfrescheck>\n";
@@ -594,7 +607,7 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 			echo "&nbsp; <i>(in &Aring;ngstroms)</i>\n";
 
 		echo "<br/><br/>";
-		echo "</td></tr><tr><td>\n\n";
+		//echo "</td></tr><tr><td>\n\n";
 
 		// defocus cutoff
 		$fields = array('defocus1', 'defocus2');
@@ -621,10 +634,13 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 		echo "<br/>\n";
 		echo "<br/>\n";
 
-
+		echo "</div>\n";	
+		
 		echo "</td></tr></table>\n";
 		echo "<br/>\n";
 		echo "<br/>\n";
+		
+	
 	}
 
 	//
