@@ -47,42 +47,44 @@ function createUploadIsacForm($extra=false, $title='uploadSparxISAC.py Launcher'
 
 	// connect to particle database
 	$particle = new particledata();
-	$isacJob = $particle->getJobInfoFromId($jobId);
-	var_dump($isacJob);
+	$isacJob  = $particle->getJobInfoFromId($jobId);
 
 	// set commit on by default when first loading page, else set
 	$commitcheck = ($_POST['commit']=='on' || !$_POST['process']) ? 'checked' : '';
 
-
-	$maxlikeid = $isacJob['DEF_id'];
-	echo "<form name='viewerform' method='POST' action='$formAction&jobId=$maxlikeid'>\n";
+	$jobId = $isacJob['DEF_id'];
+	echo "<form name='viewerform' method='POST' action='$formAction&jobId=$jobId'>\n";
 	
 	// Post values needed for showOrSubmitCommand()
-	echo "<input type='hidden' name='runname' value='$maxlikeid'>\n";
 	$outdir = $isacJob['appath'];
 	echo "<input type='hidden' name='outdir' value='$outdir'>\n";
+	$runname = basename($outdir);
+	echo "<input type='hidden' name='runname' value='$runname'>\n";
 	
-	if ($_POST['hideJob'.$maxlikeid] == 'hide') {
-		$particle->updateHide('ApMaxLikeJobData', $maxlikeid, '1');
-		$isacJob['hidden']='1';
-	} elseif ($_POST['hideUndoJob'.$maxlikeid] == 'unhide') {
-		$particle->updateHide('ApMaxLikeJobData', $maxlikeid, '0');
-		$isacJob['hidden']='0';
-	}
+	
+	// TODO: The ApSparxISACJobData table does not have an entry for this run at this point
+	// so we are unable to implement the hide feature.
+//	if ($_POST['hideJob'.$jobId] == 'hide') {
+//		$particle->updateHide('ApSparxISACJobData', $jobId, '1');
+//		$isacJob['hidden']='1';
+//	} elseif ($_POST['hideUndoJob'.$jobId] == 'unhide') {
+//		$particle->updateHide('ApSparxISACJobData', $jobId, '0');
+//		$isacJob['hidden']='0';
+//	}
 
 	echo openRoundBorder();
 	echo "<table cellspacing='8' cellpading='2' border='0'>\n";
 
 	echo "<tr><td colspan='5'>\n";
 	$nameline = "<span style='font-size: larger; color:#111111;'>\n";
-	$nameline .= "Job Id: $maxlikeid &nbsp;\n";
+	$nameline .= "Job Id: $jobId &nbsp;\n";
 	$nameline .= " ".$isacJob['name'];
 	$nameline .= "</span>\n";
-	if ($isacJob['hidden'] == 1) {
-		$nameline.= " <font color='#cc0000'>HIDDEN</font>\n";
-		$nameline.= " <input class='edit' type='submit' name='hideUndoJob".$maxlikeid."' value='unhide'>\n";
-		$display_keys['hidden'] = "<font color='#cc0000'>HIDDEN</font>";
-	} else $nameline.= " <input class='edit' type='submit' name='hideJob".$maxlikeid."' value='hide'>\n";
+//	if ($isacJob['hidden'] == 1) {
+//		$nameline.= " <font color='#cc0000'>HIDDEN</font>\n";
+//		$nameline.= " <input class='edit' type='submit' name='hideUndoJob".$jobId."' value='unhide'>\n";
+//		$display_keys['hidden'] = "<font color='#cc0000'>HIDDEN</font>";
+//	} else $nameline.= " <input class='edit' type='submit' name='hideJob".$jobId."' value='hide'>\n";
 
 	echo apdivtitle($nameline);
 	echo "</td></tr>\n";
@@ -100,7 +102,7 @@ function createUploadIsacForm($extra=false, $title='uploadSparxISAC.py Launcher'
 	//echo "</td></tr>\n";
 
 	$display_keys['date time'] = $isacJob['DEF_timestamp'];
-	$display_keys['path'] = "<input type='text' name='path".$maxlikeid."' value='".$isacJob['appath']."' size='40'>\n";
+	$display_keys['path'] = "<input type='text' name='path' value='".$isacJob['appath']."' size='40'>\n";
 	$display_keys['file prefix'] = $isacJob['timestamp'];
 
 	// TODO: what are these files called for isac?
@@ -110,7 +112,9 @@ function createUploadIsacForm($extra=false, $title='uploadSparxISAC.py Launcher'
 		$display_keys['reference stack'] = "<a target='stackview' HREF='viewstack.php?"
 			."file=$refstack&expId=$expId'>".$refstackname."</a>";
 
-	echo "<input type='hidden' name='timestamp".$maxlikeid."' value='".$isacJob['timestamp']."'>\n";
+	// TODO: since we are using the ApAppionJob ID rather than the ApSparxISACJob Id, (because there is no
+	// entry in the latter yet), there is no timestamp info available.
+	echo "<input type='hidden' name='timestamp' value='".$isacJob['timestamp']."'>\n";
 	foreach($display_keys as $k=>$v) {
 		echo formatHtmlRow($k,$v);
 	}
@@ -121,7 +125,7 @@ function createUploadIsacForm($extra=false, $title='uploadSparxISAC.py Launcher'
 	echo "</td></tr>\n";
 
 	echo "<tr><td colspan='2'>\n";
-	echo getSubmitForm("Upload Job $maxlikeid");
+	echo getSubmitForm("Upload Job $jobId");
 	echo "</td></tr>\n";
 
 	echo "</table>\n";
@@ -147,9 +151,9 @@ function runUploadIsac() {
 	PART 1: Get variables
 	******************** */
 	$expId=$_GET['expId'];
-	$maxlikeid = $_GET['maxlikeid'];
-	$timestamp=$_POST['timestamp'.$maxlikeid];
-	$rundir=$_POST['path'.$maxlikeid];
+	$jobId = $_GET['jobId'];
+	$timestamp=$_POST['timestamp'];
+	$rundir=$_POST['path'];
 	$commit = ($_POST['commit']=="on") ? true : false;
 
 	//make sure a stack was selected

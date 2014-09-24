@@ -9,6 +9,7 @@ import numpy
 import pprint
 import random
 import cPickle
+import re
 from appionlib import apFile
 from appionlib import apEMAN2
 from appionlib import apStack
@@ -413,11 +414,12 @@ class UploadISAC(appionScript.AppionScript):
 		
 	#=====================
 	def setRunDir(self):
-		if self.params["jobid"] is not None:
-			jobdata = appiondata.ApSparxISACJobData.direct_query(self.params["jobid"])
-			self.params['rundir'] = jobdata['path']['path']
-		else:
-			self.params['rundir'] = os.path.abspath(".")
+		if self.params['rundir'] is None:
+			if self.params["jobid"] is not None:
+				jobdata = appiondata.ApSparxISACJobData.direct_query(self.params["jobid"])
+				self.params['rundir'] = jobdata['path']['path']
+			else:
+				self.params['rundir'] = os.path.abspath(".")
 
 	#=====================
 	def getISACJobData(self, runparams):
