@@ -68,18 +68,6 @@ class DMSEM(ccdcamera.CCDCamera):
 		self.align_frames = False
 		self.align_filter = 'None'
 
-		self.script_functions = [
-			('AFGetSlitState', 'getEnergyFilter'),
-			('AFSetSlitState', 'setEnergyFilter'),
-			('AFGetSlitWidth', 'getEnergyFilterWidth'),
-			('AFSetSlitWidth', 'setEnergyFilterWidth'),
-			('AFDoAlignZeroLoss', 'alignEnergyFilterZeroLossPeak'),
-			('IFCGetSlitState', 'getEnergyFilter'),
-			('IFCSetSlitState', 'setEnergyFilter'),
-			('IFCGetSlitWidth', 'getEnergyFilterWidth'),
-			('IFCSetSlitWidth', 'setEnergyFilterWidth'),
-			('IFCDoAlignZeroLoss', 'alignEnergyFilterZeroLossPeak'),
-		]
 
 	def getOffset(self):
 		return dict(self.offset)
@@ -290,6 +278,56 @@ class DMSEM(ccdcamera.CCDCamera):
 			minor = remainder // 100
 			sub = remainder % 100
 		return (version_long,'%d.%d.%d' % (major,minor,sub))
+
+	def hasScriptFunction(self, name):
+		return self.camera.hasScriptFunction(name)
+
+	def getEnergyFiltered(self):
+		method_names = [
+			'getEnergyFilter',
+			'setEnergyFilter',
+			'getEnergyFilterWidth',
+			'setEnergyFilterWidth',
+			'alignEnergyFilterZeroLossPeak',
+		]
+
+		for method_name in method_names:
+			if not hasattr(self, method_name):
+				return False
+		return True
+
+	def getEnergyFilter(self):
+		'''
+		Return True if post column energy filter is enabled
+		with slit in
+		'''
+		return self.camera.GetEnergyFilter() > 0.0
+
+	def setEnergyFilter(self, value):
+		'''
+		Enable/Disable post column energy filter
+		by retracting the slit
+		'''
+		if value:
+			i = 1
+		else:
+			i = 0
+		result = self.camera.SetEnergyFilter(i)
+		if result < 0.0:
+			raise RuntimeError('unable to set energy filter slit position')
+
+	def getEnergyFilterWidth(self):
+		return self.camera.GetEnergyFilterWidth()
+
+	def setEnergyFilterWidth(self, value):
+		result = self.camera.SetEnergyFilterWidth(value)
+		if result < 0.0:
+			raise RuntimeError('unable to set energy filter width')
+
+	def alignEnergyFilterZeroLossPeak(self):
+		result = self.camera.AlignEnergyFilterZeroLossPeak()
+		if result < 0.0:
+			raise RuntimeError('unable to align energy filter zero loss peak')
 
 class GatanOrius(DMSEM):
 	name = 'GatanOrius'
