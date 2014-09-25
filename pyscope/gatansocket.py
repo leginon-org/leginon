@@ -42,6 +42,7 @@ enum_gs = [
 	'GS_ChunkHandshake',
 	'GS_SetupFileSaving',
 	'GS_GetFileSaveResult',
+	'GS_SetupFileSaving2',
 ]
 # lookup table of function name to function code, starting with 1
 enum_gs = dict([(x,y) for (y,x) in enumerate(enum_gs,1)])
@@ -250,6 +251,12 @@ class GatanSocket(object):
 		message_recv = Message(longargs=(0,))
 		self.ExchangeMessages(message_send, message_recv)
 
+	def SetShutterNormallyClosed(self, camera, shutter):
+		funcCode = enum_gs['GS_SetShutterNormallyClosed']
+		message_send = Message(longargs=(funcCode,camera, shutter))
+		message_recv = Message(longargs=(0,))
+		self.ExchangeMessages(message_send, message_recv)
+
 	@logwrap
 	def SetK2Parameters(self, readMode, scaling, hardwareProc, doseFrac, frameTime, alignFrames, saveFrames, filt=''):
 		funcCode = enum_gs['GS_SetK2Parameters']
@@ -285,10 +292,16 @@ class GatanSocket(object):
 
 	@logwrap
 	def SetupFileSaving(self, rotationFlip, dirname, rootname, filePerImage):
-		longs = [enum_gs['GS_SetupFileSaving'], rotationFlip]
-		bools = [filePerImage,]
 		pixelSize = 1.0
-		dbls = [pixelSize]
+		if False:
+			# compressed tiff file saving
+			flag = 3
+			longs = [enum_gs['GS_SetupFileSaving2'], rotationFlip, flag,]
+			dbls = [pixelSize,0.,0.,0.,0.,]
+		else:
+			longs = [enum_gs['GS_SetupFileSaving'], rotationFlip,]
+			dbls = [pixelSize,]
+		bools = [filePerImage,]
 		names_str = dirname + '\0' + rootname + '\0'
 		extra = len(names_str) % 4
 		if extra:
