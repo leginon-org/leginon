@@ -194,7 +194,9 @@ class CL2D(appionScript.AppionScript):
 		Nlevels=len(glob.glob("part"+self.params['timestamp']+"_level_??_.sel"))
 		for level in range(Nlevels):
 			stack=[]
-			for f in glob.glob("part"+self.params['timestamp']+"_level_%02d_[0-9]*.xmp"%level):
+			files = glob.glob("part"+self.params['timestamp']+"_level_%02d_[0-9]*.xmp"%level)
+			files.sort()
+			for f in files:
 				stack.append(spider.read(f))
 			apImagicFile.writeImagic(stack, "part"+self.params['timestamp']+"_level_%02d_.hed"%level)
 		if self.params['align']:
