@@ -28,6 +28,14 @@ class FormGeneratorLib
 		return $html;
 	}
 	
+	// Generates <input type='HIDDEN' NAME='$name' value='$value'>\n";
+	public function insertHiddenField( $name, $value='' )
+	{
+		$html.= "<input type='HIDDEN' NAME='$name' value='$value'>\n";		
+		
+		return $html;
+	}
+	
 	public function insertTextArea( $name, $label='', $value='', $rows=3, $cols=65, $enable='', $note='', $helpkey='' )
 	{
 		$html.= $this->insertLabel( $name, $label, $helpkey );		

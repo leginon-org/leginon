@@ -33,6 +33,10 @@ class BasicLayoutForm extends BasicForm
 	protected $showDesc; // If False (default), hides the run decription field, True shows it. 
 	protected $useCluster; // If False (default),uses run parameters form, true uses remoteJobForm params.
 	protected $showRemoteOutDir; // If False (default), hides the remoteRunDir field, True shows it if also useCluster is True.  
+	// $enableLocalHost: If True, the local helper host used by cluster jobs to rsync data back to the local run dir is added 
+	// to the command. If False (default), the localhost flag is not added to the command. This is getting to be a messy implementation.
+	// Apologies. With more time I would create 2 different types of remote params forms.
+	protected $enableLocalHost; 
 	
 	function __construct( $expId, $extraHTML='' ) 
 	{
@@ -297,6 +301,18 @@ class BasicLayoutForm extends BasicForm
 		}
 		return $this->showRemoteOutDir;
 	}
+	function setEnableLocalHost( $enableLocalHost )
+	{
+		$this->enableLocalHost = $enableLocalHost;
+	}
+	function getEnableLocalHost()
+	{
+		// Default showDesc to False.
+		if ( empty($this->enableLocalHost) ){
+			$this->setEnableLocalHost(False);
+		}
+		return $this->enableLocalHost;
+	}
 	function addTestImageJava()
 	{
 		$javafunctions ="
@@ -343,7 +359,9 @@ class BasicLayoutForm extends BasicForm
 		$command = parent::buildCommand( $postArray );
 		
 		if ( $this->getUseCluster() ) {
-			$remoteParamsForm = new RemoteJobParamsForm($this->outDir);
+			$remoteParamsForm = new RemoteJobParamsForm( $this->outDir );
+			$enableLocalHost = $this->getEnableLocalHost();
+			$remoteParamsForm->setEnableLocalHost( $enableLocalHost );
 			$command .= $remoteParamsForm->buildCommand( $postArray );
 		} else {
 			// add params from run parameters form

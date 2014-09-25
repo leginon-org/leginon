@@ -42,6 +42,7 @@ class IsacForm extends BasicLayoutForm
 		$this->setShowDesc( True ); // Flag to hide the description field of the run parameters.
 		$this->setUseCluster( True ); // Shows the processing host params to set processors and memory
 		$this->setShowRemoteOutDir( True ); // Shows the remote out dir field in cluster params (since using apRemoteJob.py which expects it)
+		$this->setEnableLocalHost( True ); // ISAC needs to know the local helper host to rsync the results back to the local rundir
 		
 		//------ Add JavaScript functions needed for this form -------------------------//
 		

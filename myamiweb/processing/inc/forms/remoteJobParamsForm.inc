@@ -51,11 +51,17 @@ class RemoteJobParamsForm extends BasicForm
 		$this->remoteoutdir = $remoteoutdir;
 		$this->queue 		= $queue;
 		$this->showRemoteOutDir	= false;
+		$this->enableLocalHost = false;
 	}
 	
 	function setShowRemoteOutDir( $showRemoteOutDir )
 	{
 		$this->showRemoteOutDir = $showRemoteOutDir;
+	}
+	
+	function setEnableLocalHost( $enableLocalHost )
+	{
+		$this->enableLocalHost = $enableLocalHost;
 	}
 	
 	public function generateForm()
@@ -103,7 +109,7 @@ class RemoteJobParamsForm extends BasicForm
 		
 		$clusterParamsForm = new ClusterParamsForm($this->outDir);
 		$command .= $clusterParamsForm->buildCommand( $postArray );
-		
+
 		// add params from run parameters form
 		$runParametersForm = new RunParametersForm();
 		$command .= $runParametersForm->buildCommand( $postArray );
@@ -112,7 +118,7 @@ class RemoteJobParamsForm extends BasicForm
 		$command = $clusterParamsForm->removeCommandFlag( $command, "processinghost" );
 		$command = $clusterParamsForm->removeCommandFlag( $command, "rpn" );
 		if ( !$this->showRemoteOutDir ) $command = $clusterParamsForm->removeCommandFlag( $command, "remoteoutdir" );
-		$command = $clusterParamsForm->removeCommandFlag( $command, "localhost" );
+		if ( !$this->enableLocalHost) $command = $clusterParamsForm->removeCommandFlag( $command, "localhost" );
 		
 		// If the user selects to just show the command, we do not want to supply the selected queue.
 		if ( $postArray['process'] == "Just Show Command" ) {

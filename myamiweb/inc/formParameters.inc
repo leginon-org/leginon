@@ -360,7 +360,21 @@ class FormParameters
 		}
 
 		return $html;
-	}		
+	}	
+
+	// Generates <input type='HIDDEN' NAME='$name' value='$value'>\n";
+	public function insertHiddenField( $name )
+	{
+		// if the parameter has been "hidden" just return an empty string.
+		if ( $this->params[$name]['hidden'] ) {
+			$html = "";
+		} else {
+			$html = $this->formLib->insertHiddenField( $this->params[$name]['name'], 
+														$this->params[$name]['value'] );
+		}
+
+		return $html;
+	}
 	
 }
 
