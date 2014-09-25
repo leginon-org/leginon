@@ -20,7 +20,7 @@ class IsacForm extends BasicLayoutForm
 		$lp='10', $hp='2000', $generations='2', $thld_grp='10', $img_per_grp='100', 
 		$stab_ali='5', $ir='', $ou='', $rs='', $ts='', $xr='', $yr='', $maxit='', $FL='',
 		$FH='', $FF='', $init_iter='', $main_iter='', $iter_reali='', $match_first='', $max_round='', 
-		$match_second='', $indep_run='', $use_align_stack="" ) 
+		$match_second='', $indep_run='', $use_align_stack="", $thld_err="" ) 
 	{
 		parent::__construct($expId, $extraHTML);
 		
@@ -127,6 +127,7 @@ class IsacForm extends BasicLayoutForm
 		$params->addParam( "match_second", $match_second, "Second phase iterations" );
 		$params->addParam( "indep_run", $indep_run, "m-way matching level" );
 		$params->addParam( "use_align_stack", $use_align_stack, "Use an Aligned Stack" );
+		$params->addParam( "thld_err", $thld_err, "Threshold of pixel error" );
 		
 		// Validations
 		$params->addValidation( "numpart", "minval=4" );
@@ -168,14 +169,14 @@ class IsacForm extends BasicLayoutForm
 		$html.= $params->insertTextField( "thld_grp", $fieldSize, '', 'isac.thld_grp' );
 		$html.= $params->insertTextField( "img_per_grp", $fieldSize, '', 'isac.img_per_grp' );
 		$html.= $params->insertTextField( "stab_ali", $fieldSize, '', 'isac.stab_ali' );
+		$html.= $params->insertTextField( "ir", $fieldSize, '', 'isac.ir' );
+		$html.= $params->insertTextField( "ou", $fieldSize, '', 'isac.ou' );
 		
 		$html .= "
 	    <br />
 	    <H4>Advanced ISAC Parameters</H4>
 	    <hr />";
-
-		$html.= $params->insertTextField( "ir", $fieldSize, '', 'isac.ir' );
-		$html.= $params->insertTextField( "ou", $fieldSize, '', 'isac.ou' );
+		
 		$html.= $params->insertTextField( "rs", $fieldSize, '', 'isac.rs' );
 		$html.= $params->insertTextField( "ts", $fieldSize, '', 'isac.ts' );
 		$html.= $params->insertTextField( "xr", $fieldSize, '', 'isac.xr' );
@@ -191,6 +192,7 @@ class IsacForm extends BasicLayoutForm
 		$html.= $params->insertTextField( "max_round", $fieldSize, '', 'isac.max_round' );
 		$html.= $params->insertTextField( "match_second", $fieldSize, '', 'isac.match_second' );
 		$html.= $params->insertTextField( "indep_run", $fieldSize, '', 'isac.indep_run' );
+		$html.= $params->insertTextField( "thld_err", $fieldSize, '', 'isac.thld_err' );
 		
 		// When loading this page the first time, use the switchDefaults javascript function to set 
 		// form parameters based on the currently selected stack.

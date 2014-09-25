@@ -665,5 +665,6 @@ var help = {
 		'alignstack' : 'Aligned stack of particles to use',
 		'img_per_grp' : 'number of images per class in the ideal case (essentially maximum size of class), colon separate for different generations, e.g. 4x100:2x50 means thld_grp=100 for 4 generations  and thld_grp=50 for 2 generations (default 100)',
 		'use_align_stack' : 'Check this box to enable the aligned stack selector. The selected aligned stack will then be used for this ISAC run.',
+		'thld_err' : 'the threshold of pixel error when checking stability, equals root mean square of distances between corresponding pixels from set of found transformations and theirs average transformation, depends linearly on square of radius (parameter ou), colon separate for different generations, e.g. 4x1:2x3 means thld_err=1 for 4 generations and thld_err=3 for 2 generations (default 0.7)',
 	}
 }
