@@ -58,7 +58,7 @@ function createUploadIsacForm($extra=false, $title='uploadSparxISAC.py Launcher'
 	// Post values needed for showOrSubmitCommand()
 	$outdir = $isacJob['appath'];
 	echo "<input type='hidden' name='outdir' value='$outdir'>\n";
-	$runname = basename($outdir);
+	$runname = "upload".basename($outdir);
 	echo "<input type='hidden' name='runname' value='$runname'>\n";
 	
 	
