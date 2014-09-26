@@ -36,16 +36,25 @@ def connect():
 	return gatansocket.myGS
 
 class DMSEM(ccdcamera.CCDCamera):
-	# our name mapped to SerialEM plugin value
-	readmodes = {'linear': 0, 'counting': 1, 'super resolution': 2}
 	ed_mode = None
+	filter_method_names = [
+			'getEnergyFilter',
+			'setEnergyFilter',
+			'getEnergyFilterWidth',
+			'setEnergyFilterWidth',
+			'alignEnergyFilterZeroLossPeak',
+		]
+
 	def __init__(self):
+		self.unsupported = []
 		self.camera = connect()
 
 		self.idcounter = itertools.cycle(range(100))
 
 		ccdcamera.CCDCamera.__init__(self)
 
+		if not self.getEnergyFiltered():
+			self.unsupported.extend(self.filter_method_names)
 		self.bblankerid = 0
 		self.binning = {'x': 1, 'y': 1}
 		self.offset = {'x': 0, 'y': 0}
@@ -67,6 +76,11 @@ class DMSEM(ccdcamera.CCDCamera):
 		self.readout_delay_ms = 0
 		self.align_frames = False
 		self.align_filter = 'None'
+
+	def __getattribute__(self, attr_name):
+		if attr_name in object.__getattribute__(self, 'unsupported'):
+			raise AttributeError('attribute not supported')
+		return object.__getattribute__(self, attr_name)
 
 
 	def getOffset(self):
@@ -283,16 +297,11 @@ class DMSEM(ccdcamera.CCDCamera):
 		return self.camera.hasScriptFunction(name)
 
 	def getEnergyFiltered(self):
-		method_names = [
-			'getEnergyFilter',
-			'setEnergyFilter',
-			'getEnergyFilterWidth',
-			'setEnergyFilterWidth',
-			'alignEnergyFilterZeroLossPeak',
-		]
-
-		for method_name in method_names:
-			if not hasattr(self, method_name):
+		'''
+		Return True if energy filter is available through this DM
+		'''
+		for method_name in self.filter_method_names:
+			if method_name not in self.camera.filter_functions.keys():
 				return False
 		return True
 
@@ -344,6 +353,8 @@ class GatanUltraScan(DMSEM):
 class GatanK2Base(DMSEM):
 	name = 'GatanK2Base'
 	cameraid = 0
+	# our name mapped to SerialEM plugin value
+	readmodes = {'linear': 0, 'counting': 1, 'super resolution': 2}
 	ed_mode = 'base'
 	hw_proc = 'none'
 	binning_limits = [1,2,4,8]
