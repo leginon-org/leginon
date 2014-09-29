@@ -43,6 +43,8 @@ class parseISAC(object):
 	def getGenerationFiles(self):
 		if self.files is None:
 			files = glob.glob("class_averages_generation_*.hdf")
+			if len(files) == 0:
+				apDisplay.printWarning("Could not find class_averages_generation_*.hdf files.")
 			self.files = sorted(files, key=lambda a: self.generationFromFile(a))
 		return self.files
 
