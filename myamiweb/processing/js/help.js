@@ -667,4 +667,19 @@ var help = {
 		'use_align_stack' : 'Check this box to enable the aligned stack selector. The selected aligned stack will then be used for this ISAC run.',
 		'thld_err' : 'the threshold of pixel error when checking stability, equals root mean square of distances between corresponding pixels from set of found transformations and theirs average transformation, depends linearly on square of radius (parameter ou), colon separate for different generations, e.g. 4x1:2x3 means thld_err=1 for 4 generations and thld_err=3 for 2 generations (default 0.7)',
 	}
+	,		
+	'departalign' : {
+		'stackid' : 'Stack on which to do frame alignment.',
+		'output_rotation' : 'Rotate output particles by the specified angle',
+		'darkreference_transform' : 'Please edit help.js to add help info for this parameter.',
+		'gainreference_transform' : 'Please edit help.js to add help info for this parameter.',
+		'defects_columns' : 'Please edit help.js to add help info for this parameter.',
+		'defects_rows' : 'Please edit help.js to add help info for this parameter.',
+		'alignment_correct' : 'Please edit help.js to add help info for this parameter.',
+		'boxes_transform' : 'Please edit help.js to add help info for this parameter.',
+		'radiationdamage_compensate' : 'Please edit help.js to add help info for this parameter.',
+		'radiationdamage_exposurerate' : 'Please edit help.js to add help info for this parameter.',
+		'radiationdamage_apix' : 'Please edit help.js to add help info for this parameter.',
+		'alignment_target' : 'Please edit help.js to add help info for this parameter.',
+	}
 }

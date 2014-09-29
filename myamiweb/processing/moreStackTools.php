@@ -54,6 +54,11 @@ echo "  take an existing stack and create a particle picking run. "
 	." This is good for creating a new stack based on an existing stack with a bigger boxsize .";
 echo "</td></tr>";
 
+echo "<tr><td>";
+echo "  <h3><a href='runAppionLoop.php?expId=$expId&form=deParticleAlignForm'>Run DE particle stack alignment</a></h3>";
+echo "  DE has written a particle alignment script. This depends on particle stacks. ";
+echo "</td></tr>";
+
 echo "</table>";
 processing_footer();
 exit;
