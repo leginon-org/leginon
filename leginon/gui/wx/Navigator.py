@@ -148,8 +148,13 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 
 	def onSendPresetTool(self,evt):
 		presetname = self.preset_choices.GetStringSelection()
+		print 'sending %s' % presetname
+		self._acquisitionEnable(False)
 		args = (presetname,)
 		threading.Thread(target=self.node.uiSendPreset,args=args).start()
+
+	def onSendPresetDone(self):
+		self._acquisitionEnable(True)
 
 	def onResetXY(self, evt):
 		self.node.onResetXY()
@@ -270,9 +275,7 @@ class StageLocationsDialog(wx.Dialog):
 
 	def onToScope(self, evt):
 		name = self.lblocations.GetStringSelection()
-		print 'TOSCOPE', time.time()
 		self.node.toScope(name)
-		print 'TOSCOPEDONE', time.time()
 
 	def onFromScope(self, evt):
 		name = self.lblocations.GetStringSelection()

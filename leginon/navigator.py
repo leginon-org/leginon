@@ -492,6 +492,7 @@ class Navigator(node.Node):
 		self._acquireImage()
 
 	def _acquireImage(self, channel=0):
+		#Must set to the camera to be used by now.
 		try:
 			self.instrument.ccdcamera.SaveRawFrames = False
 		except:
@@ -682,6 +683,7 @@ class Navigator(node.Node):
 		self.setStatus('processing')
 		self.presetsclient.toScope(presetname)
 		self.setStatus('idle')
+		self.panel.onSendPresetDone()
 
 	def onResetXY(self):
 		loc = {'x':0.0,'y':0.0}
