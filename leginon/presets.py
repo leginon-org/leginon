@@ -1237,6 +1237,8 @@ class PresetsManager(node.Node):
 				acquirebin['right'] = None
 				acquirebin['left'] = None
 		self.alignimages = {}
+		if not self.settings['cycle']:
+			presetsorder = presetsorder[:2]
 		for label in presetsorder:
 			presetname = self.alignpresets[label]
 			if not presetname:
@@ -1763,7 +1765,15 @@ class PresetsManager(node.Node):
 			return
 		if preset != selectedpreset:
 			self.logger.info('Send the selected preset to scope')
-			self._cycleToScope(selectedpreset)
+			if self.settings['cycle']:
+				self._cycleToScope(selectedpreset)
+			else:
+				self.toScope(selectedpreset, final=True)
+		else:
+			# Current preset name is the selected preset name.
+			# when a previous beam shift adjustment is done, the instrument beam shift may not be
+			# that of the current preset
+			self.instrument.tem.BeamShift = self.currentpreset['beam shift']
 		self.getValidTempMag()
 
 	def getValidTempMag(self):
@@ -1826,7 +1836,9 @@ class PresetsManager(node.Node):
 
 		# go to temporary mag
 		original_mag = preset['magnification']
+		self.logger.info('Sending Temporary mag: %d' % (temp_mag,))
 		self.instrument.tem.Magnification = temp_mag
+		self.logger.info('Pause for %.1f s' % (self.settings['pause time'],))
 		time.sleep(self.settings['pause time'])
 		self.logger.info('Temporary mag: %d' % (temp_mag,))
 		# temp binning,dimension
@@ -1907,7 +1919,7 @@ class PresetsManager(node.Node):
 		movetype = 'beam shift'
 		self.navclient.moveToTarget(target, movetype)
 
-		### get new beam shift here and apply to whatever
+		### get new beam shift here
 		self.new_beamshift = self.instrument.tem.BeamShift
 
 		if cycle:
