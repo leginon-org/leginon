@@ -59,6 +59,8 @@ Information packet to send and receive on the socket.
 Initialize with the sequences of args (longs, bools, doubles)
 and optional long array.
 	'''
+#Strings are packaged as long array using numpy.frombuffer(buffer,numpy.int_)
+# and can be converted back with longarray.tostring()
 	def __init__(self, longargs=[], boolargs=[], dblargs=[], longarray=[]):
 		# add final longarg with size of the longarray
 		if len(longarray):
@@ -79,7 +81,7 @@ and optional long array.
 		self.array['boolargs'] = boolargs
 		self.array['dblargs'] = dblargs
 		self.array['longarray'] = longarray
-	
+
 		# create numpy arrays for the args and array
 		'''
 		self.longargs = numpy.asarray(longargs, dtype=numpy.int_)
@@ -135,6 +137,32 @@ class GatanSocket(object):
 		self.save_frames = False
 		self.connect()
 
+		self.script_functions = [ 
+			('AFGetSlitState', 'GetEnergyFilter'),
+			('AFSetSlitState', 'SetEnergyFilter'),
+			('AFGetSlitWidth', 'GetEnergyFilterWidth'),
+			('AFSetSlitWidth', 'SetEnergyFilterWidth'),
+			('AFDoAlignZeroLoss', 'AlignEnergyFilterZeroLossPeak'),
+			('IFCGetSlitState', 'GetEnergyFilter'),
+			('IFCSetSlitState', 'SetEnergyFilter'),
+			('IFCGetSlitWidth', 'GetEnergyFilterWidth'),
+			('IFCSetSlitWidth', 'SetEnergyFilterWidth'),
+			('IFCDoAlignZeroLoss', 'AlignEnergyFilterZeroLossPeak'),
+		]
+		self.filter_functions = {}
+		for name, method_name in self.script_functions:
+			if self.hasScriptFunction(name):
+				self.filter_functions[method_name] = name
+			else:
+				pass
+				#self.unsupported.append(method_name)
+
+	def hasScriptFunction(self, name):
+		script = 'if(DoesFunctionExist("%s")) Exit(1.0) else Exit(-1.0)'
+		script %= name
+		result = self.ExecuteGetDoubleScript(script)
+		return result > 0.0
+
 	def connect(self):
 		self.sock = socket.create_connection((self.host,self.port))
 
@@ -174,6 +202,7 @@ class GatanSocket(object):
 		'''common class of function that gets a single long'''
 		funcCode = enum_gs[funcName]
 		message_send = Message(longargs=(funcCode,))
+		# First recieved message longargs is error code
 		message_recv = Message(longargs=(0,0))
 		self.ExchangeMessages(message_send, message_recv)
 		result = message_recv.array['longargs'][1]
@@ -184,6 +213,7 @@ class GatanSocket(object):
 		that returns a single long'''
 		funcCode = enum_gs[funcName]
 		message_send = Message(longargs=(funcCode,longarg))
+		# First recieved message longargs is error code
 		message_recv = Message(longargs=(0,0))
 		self.ExchangeMessages(message_send, message_recv)
 		result = message_recv.array['longargs'][1]
@@ -279,6 +309,38 @@ class GatanSocket(object):
 		message_recv = Message(longargs=(0,))
 		self.ExchangeMessages(message_send, message_recv)
 		
+	def GetEnergyFilter(self):
+		if 'GetEnergyFilter' not in self.filter_functions.keys():
+			return -1.0
+		script = 'if(%s()) Exit(1.0) else Exit(-1.0)' % (self.filter_functions['GetEnergyFilter'],)
+		return self.ExecuteGetDoubleScript(script)
+
+	def SetEnergyFilter(self, value):
+		if 'SetEnergyFilter' not in self.filter_functions.keys():
+			return -1.0
+		if value:
+			i = 1
+		else:
+			i = 0
+		script = 'if(%s(%d)) Exit(1.0) else Exit(-1.0)' % (self.filter_functions['SetEnergyFilter'], i)
+		return self.ExecuteSendScript(script)
+
+	def GetEnergyFilterWidth(self):
+		if 'GetEnergyFilterWidth' not in self.filter_functions.keys():
+			return -1.0
+		script = 'Exit(%s())' % (self.filter_functions['GetEnergyFilterWidth'],)
+		return self.ExecuteGetDoubleScript(script)
+
+	def SetEnergyFilterWidth(self, value):
+		if 'SetEnergyFilterWidth' not in self.filter_functions.keys():
+			return -1.0
+		script = 'if(%s(%f)) Exit(1.0) else Exit(-1.0)' % (self.filter_functions['SetEnergyFilterWidth'], value)
+		return self.ExecuteSendScript(script)
+
+	def AlignEnergyFilterZeroLossPeak(self):
+		script = 'if(%s()) Exit(1.0) else Exit(-1.0)' % (self.filter_functions['AlignEnergyFilterZeroLossPeak'],)
+		return self.ExecuteGetDoubleScript(script)
+
 	@logwrap
 	def GetImage(self, processing, height, width, binning, top, left, bottom, right, exposure, shutterDelay):
 
@@ -360,6 +422,41 @@ class GatanSocket(object):
 				remain -= len_recv
 				received += len_recv
 		return imArray
+
+	def ExecuteSendScript(self, command_line, select_camera=0):
+		recv_longargs_init = (0,)
+		result = self.ExecuteScript(command_line,select_camera,recv_longargs_init)
+		# first longargs is error code. Error if > 0
+		return result.array['longargs'][0]
+
+	def ExecuteGetLongScript(self,command_line, select_camera=0):
+		'''
+		Execute DM script and return the result as integer
+		'''
+		# SerialEMCCD DM TemplatePlugIn::ExecuteScript retval is a double
+		return int(self.ExecuteGetDoubleScript(command_line,select_camera))
+
+	def ExecuteGetDoubleScript(self,command_line, select_camera=0):
+		'''
+		Execute DM script that gets one double float number
+		'''
+		recv_dblargs_init = (0.0,)
+		result = self.ExecuteScript(command_line,select_camera,recv_dblargs_init=recv_dblargs_init)
+		return result.array['dblargs'][0]
+
+	def ExecuteScript(self,command_line, select_camera=0, recv_longargs_init=(0,), recv_dblargs_init=(0.0,), recv_longarray_init=[]):
+		funcCode = enum_gs['GS_ExecuteScript']
+		cmd_str = command_line + '\0'
+		extra = len(cmd_str) % 4
+		if extra:
+			npad = 4 - extra
+			cmd_str = cmd_str + (npad) * '\0'
+		# send the command string as 1D longarray
+		longarray = numpy.frombuffer(cmd_str, dtype=numpy.int_)
+		message_send = Message(longargs=(funcCode,), boolargs=(select_camera,), longarray=longarray)
+		message_recv = Message(longargs=recv_longargs_init, dblargs=recv_dblargs_init, longarray=recv_longarray_init)
+		self.ExchangeMessages(message_send, message_recv)
+		return message_recv
 
 def test1():
 	g = GatanSocket()

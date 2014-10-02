@@ -28,16 +28,25 @@ def connect():
 	return gatansocket.myGS
 
 class DMSEM(ccdcamera.CCDCamera):
-	# our name mapped to SerialEM plugin value
-	readmodes = {'linear': 0, 'counting': 1, 'super resolution': 2}
 	ed_mode = None
+	filter_method_names = [
+			'getEnergyFilter',
+			'setEnergyFilter',
+			'getEnergyFilterWidth',
+			'setEnergyFilterWidth',
+			'alignEnergyFilterZeroLossPeak',
+		]
+
 	def __init__(self):
+		self.unsupported = []
 		self.camera = connect()
 
 		self.idcounter = itertools.cycle(range(100))
 
 		ccdcamera.CCDCamera.__init__(self)
 
+		if not self.getEnergyFiltered():
+			self.unsupported.extend(self.filter_method_names)
 		self.bblankerid = 0
 		self.binning = {'x': 1, 'y': 1}
 		self.offset = {'x': 0, 'y': 0}
@@ -60,18 +69,11 @@ class DMSEM(ccdcamera.CCDCamera):
 		self.align_frames = False
 		self.align_filter = 'None'
 
-		self.script_functions = [
-			('AFGetSlitState', 'getEnergyFilter'),
-			('AFSetSlitState', 'setEnergyFilter'),
-			('AFGetSlitWidth', 'getEnergyFilterWidth'),
-			('AFSetSlitWidth', 'setEnergyFilterWidth'),
-			('AFDoAlignZeroLoss', 'alignEnergyFilterZeroLossPeak'),
-			('IFCGetSlitState', 'getEnergyFilter'),
-			('IFCSetSlitState', 'setEnergyFilter'),
-			('IFCGetSlitWidth', 'getEnergyFilterWidth'),
-			('IFCSetSlitWidth', 'setEnergyFilterWidth'),
-			('IFCDoAlignZeroLoss', 'alignEnergyFilterZeroLossPeak'),
-		]
+	def __getattribute__(self, attr_name):
+		if attr_name in object.__getattribute__(self, 'unsupported'):
+			raise AttributeError('attribute not supported')
+		return object.__getattribute__(self, attr_name)
+
 
 	def getOffset(self):
 		return dict(self.offset)
@@ -223,6 +225,51 @@ class DMSEM(ccdcamera.CCDCamera):
 		return self.readout_delay_ms
 
 
+	def hasScriptFunction(self, name):
+		return self.camera.hasScriptFunction(name)
+
+	def getEnergyFiltered(self):
+		'''
+		Return True if energy filter is available through this DM
+		'''
+		for method_name in self.filter_method_names:
+			if method_name not in self.camera.filter_functions.keys():
+				return False
+		return True
+
+	def getEnergyFilter(self):
+		'''
+		Return True if post column energy filter is enabled
+		with slit in
+		'''
+		return self.camera.GetEnergyFilter() > 0.0
+
+	def setEnergyFilter(self, value):
+		'''
+		Enable/Disable post column energy filter
+		by retracting the slit
+		'''
+		if value:
+			i = 1
+		else:
+			i = 0
+		result = self.camera.SetEnergyFilter(i)
+		if result < 0.0:
+			raise RuntimeError('unable to set energy filter slit position')
+
+	def getEnergyFilterWidth(self):
+		return self.camera.GetEnergyFilterWidth()
+
+	def setEnergyFilterWidth(self, value):
+		result = self.camera.SetEnergyFilterWidth(value)
+		if result < 0.0:
+			raise RuntimeError('unable to set energy filter width')
+
+	def alignEnergyFilterZeroLossPeak(self):
+		result = self.camera.AlignEnergyFilterZeroLossPeak()
+		if result < 0.0:
+			raise RuntimeError('unable to align energy filter zero loss peak')
+
 class GatanOrius(DMSEM):
 	name = 'GatanOrius'
 	cameraid = 1
@@ -238,6 +285,8 @@ class GatanUltraScan(DMSEM):
 class GatanK2Base(DMSEM):
 	name = 'GatanK2Base'
 	cameraid = 0
+	# our name mapped to SerialEM plugin value
+	readmodes = {'linear': 0, 'counting': 1, 'super resolution': 2}
 	ed_mode = 'base'
 	hw_proc = 'none'
 	binning_limits = [1,2,4,8]
