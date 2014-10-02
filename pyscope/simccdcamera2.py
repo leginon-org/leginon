@@ -13,13 +13,16 @@ from pyscope import falconframe
 rawtype = numpy.uint32
 idcounter = itertools.cycle(range(100))
 
+has_energy_filter = False
+
 class SimCCDCamera(ccdcamera.CCDCamera):
 	name = 'SimCCDCamera'
 	binning_limits = [1,2,4,8]
 	binmethod = 'exact'
 
 	def __init__(self):
-		ccdcamera.CCDCamera.__init__(self)
+		self.unsupported = []
+		super(SimCCDCamera,self).__init__()
 		self.pixel_size = {'x': 2.5e-5, 'y': 2.5e-5}
 		self.exposure_types = ['normal', 'dark', 'bias']
 
@@ -36,6 +39,19 @@ class SimCCDCamera(ccdcamera.CCDCamera):
 		self.view = 'square'
 		#self.view = 'empty'
 		self.inserted = True
+		if not has_energy_filter:
+			self.unsupported = [
+					'getEnergyFilter',
+					'setEnergyFilter',
+					'getEnergyFilterWidth',
+					'setEnergyFilterWidth',
+					'alignEnergyFilterZeroLossPeak',
+			]
+
+	def __getattribute__(self, attr_name):
+		if attr_name in object.__getattribute__(self, 'unsupported'):
+			raise AttributeError('attribute not supported')
+		return object.__getattribute__(self, attr_name)
 
 	def getRetractable(self):
 		return True
@@ -169,7 +185,7 @@ class SimCCDCamera(ccdcamera.CCDCamera):
 		return image
 
 	def getEnergyFiltered(self):
-		return True
+		return has_energy_filter
 
 	def getEnergyFilter(self):
 		return self.energy_filter
