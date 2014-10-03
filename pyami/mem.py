@@ -1,10 +1,12 @@
 #!/usr/bin/env python
 
 import os
+import re
+import subprocess
 
 def meminfo2dict():
 	if not os.path.exists('/proc/meminfo'):
-		return None
+		return meminfo2dictMacOSX()
 	f = open('/proc/meminfo', 'r')
 	lines = f.readlines()
 	f.close()
@@ -20,6 +22,39 @@ def meminfo2dict():
 		info[key] = value
 	return info
 
+def meminfo2dictMacOSX():
+	if not os.path.exists('/usr/bin/vm_stat'):
+		return None
+	cmd = "/usr/bin/vm_stat"
+	proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+	data = proc.stdout.readlines()
+	line = data[0]
+	m = re.search("page size of ([0-9]+) bytes", line)
+	if not m or not m.groups():
+		return None
+	# want page size in kilobytes
+	pagesize = int(m.groups()[0])/1024
+	meminfo = {}
+	for line in data:
+		name,value = line.split(":")
+		value = value.strip()
+		if name == "Pages free":
+			free = float(value)*pagesize
+		if name == "Pages active":
+			active = float(value)*pagesize
+		if name == "Pages inactive":
+			inactive = float(value)*pagesize
+		if name == "Pages wired down":
+			wireddown = float(value)*pagesize
+	meminfo['MemTotal'] = int(free + active + inactive + wireddown)
+	meminfo['MemFree'] = int(free)
+	meminfo['Cached'] = 0
+	meminfo['Buffers'] = 0
+	meminfo['SwapTotal'] = 0
+	meminfo['SwapFree']	= 0
+	meminfo['MemUsed'] = int(active + inactive + wireddown)
+	return meminfo
+	
 def stats(meminfo=meminfo2dict()):
 	if meminfo is None:
 		return
