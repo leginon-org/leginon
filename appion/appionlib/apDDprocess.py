@@ -578,12 +578,31 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		a = self.modifyFrameImage(a,offset,crop_end,bin)
 		return a
 
+	def handleOldFrameOrientation(self):
+		# No flip rotation as default
+		return False, 0
+
 	def modifyFrameImage(self,a,offset,crop_end,bin):
 		a = numpy.asarray(a,dtype=numpy.float32)
-		# temporary fix for DM 2.3.1 on krioscam1
-		if self.image['camera']['ccdcamera']['hostname']=='krioscam1':
-			apDisplay.printWarning("flipping the frame")
-			a = numpy.flipud(a)
+		frame_flip = self.image['camera']['frame flip']
+		frame_rotate = self.image['camera']['frame rotate']
+		apDisplay.printDebug('frame flip %s, frame_rotate %s' % (frame_flip,frame_rotate))
+		if frame_rotate is None:
+			# old data have no orientation record
+			frame_flip,frame_rotate = self.handleOldFrameOrientation()
+		apDisplay.printDebug('frame flip %s, frame_rotate %s' % (frame_flip,frame_rotate))
+		if frame_flip:
+			if frame_rotate and frame_rotate == 2:
+				# Faster to just flip left-right than up-down flip + rotate
+				apDisplay.printColor("flipping the frame left-right",'blue')
+				a = numpy.fliplr(a)
+				frame_rotate = 0
+			else:
+				apDisplay.printColor("flipping the frame up-down",'blue')
+				a = numpy.flipud(a)
+		if frame_rotate:
+			apDisplay.printColor("rotating the frame by %d degrees" % (frame_rotate*90,),'blue')
+			a = numpy.rot90(a,frame_rotate)
 		a = a[offset['y']:crop_end['y'],offset['x']:crop_end['x']]
 		if bin['x'] > 1:
 			if bin['x'] == bin['y']:
