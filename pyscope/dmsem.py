@@ -497,9 +497,15 @@ class GatanK2Base(DMSEM):
 		return tuple(range(nframes))
 
 	def getFrameFlip(self):
+		'''
+		Frame Flip is defined as up-down flip
+		'''
 		return self.isDM231orUp()
 
 	def getFrameRotate(self):
+		'''
+		Frame Rotate direction is defined as x to -y rotation applied after up-down flip
+		'''
 		return 0
 
 class GatanK2Linear(GatanK2Base):

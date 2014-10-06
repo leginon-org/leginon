@@ -423,9 +423,15 @@ class TIA_Falcon(TIA):
 		return True
 
 	def getFrameFlip(self):
+		'''
+		Frame Flip is defined as up-down flip
+		'''
 		return False
 
 	def getFrameRotate(self):
+		'''
+		Frame Rotate direction is defined as x to -y rotation applied after up-down flip
+		'''
 		return 3
 
 class TIA_Orius(TIA):
