@@ -8,6 +8,7 @@ import threading
 # frame flipping configuration.
 FRAME_LR_FLIP = True
 # frame rotate configuration. multiple of 90 degrees if needed
+# after the flip.  Direction + is x to -y.
 FRAME_ROTATE = 0
 
 # Shared global connection to the DE Server
@@ -346,15 +347,22 @@ class DD(DECameraBase):
 
 	def finalizeGeometry(self, image):
 		image = self.as_super.finalizeGeometry(image)
-		if self.getFrameFlip():
+		if self.getFrameFlip() and self.getFrameRotate() == 2:
 			image = numpy.fliplr(image)
 		return image
 
 	def getFrameFlip(self):
+		'''
+		Defned as up-down flip
+		'''
 		return FRAME_LR_FLIP
 
 	def getFrameRotate(self):
-		return FRAME_ROTATE
+		'''
+		Defined as x to -y rotation, incremented by 90 degrees
+		'''
+		# DE-12 orientation on FEI F20
+		return FRAME_ROTATE + 2
 
 class DE12(DD):
 	name = 'DE12'
