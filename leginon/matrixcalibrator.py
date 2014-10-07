@@ -279,5 +279,5 @@ class MatrixCalibrator(calibrator.Calibrator):
 		tem = self.instrument.getTEMData()
 		cam = self.instrument.getCCDCameraData()
 		ht = self.instrument.tem.HighTension
-		p2 = stagecal.pixelToPixel(tem, cam, ht, mag1, mag2, p1)
+		p2 = stagecal.pixelToPixel(tem, cam, tem, cam, ht, mag1, mag2, p1)
 		return p2
