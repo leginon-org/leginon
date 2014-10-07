@@ -110,6 +110,15 @@ class GatanK2Processing(apDDprocess.DDFrameProcessing):
 		a = self.modifyFrameImage(a,offset,crop_end,bin)
 		return a
 
+	def handleOldFrameOrientation(self):
+		# Account for DM 2.3.1 change
+		r = leginondata.K2FrameDMVersionChangeData(k2camera=self.image['camera']['ccdcamera']).query()
+		if r:
+			if self.image.dbid > r[0]['image'].dbid:
+				return r[0]['frame flip'],r[0]['frame rotate']
+		# No flip rotation as default
+		return False, 0
+
 	def isOldNRAMMData(self):
 		'''
 		Work around old NRAMM data that has a bad reference, but not in any

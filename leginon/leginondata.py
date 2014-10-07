@@ -2508,3 +2508,15 @@ class C2ApertureSizeData(InSessionData):
 			('size', int),
 		)
 	typemap = classmethod(typemap)
+
+class K2FrameDMVersionChangeData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('k2camera', InstrumentData),
+			('image', AcquisitionImageData),
+			('frame flip', bool),
+			('frame rotate', int),
+			('dm version', list),
+		)
+	typemap = classmethod(typemap)
+
