@@ -142,6 +142,8 @@ class RasterScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		szauto.Add(self.widgets['raster overlap'], (2, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
 		movetypes = self.node.calclients.keys()
+		# beam size is not a valid move type
+		movetypes.remove('beam size')
 		self.widgets['raster movetype'] = Choice(self, -1, choices=movetypes)
 		label = wx.StaticText(self, -1, 'Move Type')
 		szauto.Add(label, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
