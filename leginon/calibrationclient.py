@@ -1260,7 +1260,7 @@ class ImageShiftCalibrationClient(SimpleMatrixCalibrationClient):
 	def parameter(self):
 		return 'image shift'
 
-	def pixelToPixel(self, old_tem, old_ccdcamera, new_tem, new_ccdcamera, ht, mag1, mag2, p1):
+	def pixelToPixel(self, tem1, ccdcamera1, tem2, ccdcamera2, ht, mag1, mag2, p1):
 		'''
 		Using physical position as a global coordinate system, we can
 		do pixel to pixel transforms between mags.
@@ -1270,8 +1270,8 @@ class ImageShiftCalibrationClient(SimpleMatrixCalibrationClient):
 		need to be properly calibrated for this to work right
 		'''
 		par = self.parameter()
-		matrix1 = self.retrieveMatrix(old_tem, old_ccdcamera, par, ht, mag1)
-		matrix2 = self.retrieveMatrix(new_tem, new_ccdcamera, par, ht, mag2)
+		matrix1 = self.retrieveMatrix(tem1, ccdcamera1, par, ht, mag1)
+		matrix2 = self.retrieveMatrix(tem2, ccdcamera2, par, ht, mag2)
 		matrix2inv = numpy.linalg.inv(matrix2)
 		p1 = numpy.array(p1)
 		physicalpos = numpy.dot(matrix1, p1)
@@ -1305,7 +1305,7 @@ class StageCalibrationClient(SimpleMatrixCalibrationClient):
 	def parameter(self):
 		return 'stage position'
 
-	def pixelToPixel(self, tem, ccdcamera, ht, mag1, mag2, p1):
+	def pixelToPixel(self, tem1, ccdcamera1, tem2, ccdcamera2, ht, mag1, mag2, p1):
 		'''
 		Using stage position as a global coordinate system, we can
 		do pixel to pixel transforms between mags.
@@ -1313,8 +1313,8 @@ class StageCalibrationClient(SimpleMatrixCalibrationClient):
 		a pixel vector at mag1.
 		'''
 		par = self.parameter()
-		matrix1 = self.retrieveMatrix(tem, ccdcamera, par, ht, mag1)
-		matrix2 = self.retrieveMatrix(tem, ccdcamera, par, ht, mag2)
+		matrix1 = self.retrieveMatrix(tem1, ccdcamera1, par, ht, mag1)
+		matrix2 = self.retrieveMatrix(tem2, ccdcamera2, par, ht, mag2)
 		matrix2inv = numpy.linalg.inv(matrix2)
 		p1 = numpy.array(p1)
 		stagepos = numpy.dot(matrix1, p1)
@@ -1668,7 +1668,7 @@ class ModeledStageCalibrationClient(MatrixCalibrationClient):
 	def parameter(self):
 		return 'stage position'
 
-	def pixelToPixel(self, tem, ccdcamera, ht, mag1, mag2, p1):
+	def pixelToPixel(self, tem1, ccdcamera1, tem2, ccdcamera2, ht, mag1, mag2, p1):
 		'''
 		Using stage position as a global coordinate system, we can
 		do pixel to pixel transforms between mags.
@@ -1677,18 +1677,20 @@ class ModeledStageCalibrationClient(MatrixCalibrationClient):
 		'''
 
 		scope = leginondata.ScopeEMData()
-		scope['tem'] = tem
+		scope['tem'] = tem1
 		scope['high tension'] = ht
 		scope['stage position'] = {'x':0.0, 'y':0.0}
 		camera = leginondata.CameraEMData()
-		camera['ccdcamera'] = ccdcamera
+		camera['ccdcamera'] = ccdcamera1
 		camera['binning'] = {'x':1,'y':1}
 
 		scope['magnification'] = mag1
 		pixelshift = {'row':p1[0], 'col':p1[1]}
 		newscope = self.transform(pixelshift, scope, camera)
 
+		scope['tem'] = tem2
 		scope['magnification'] = mag2
+		camera['ccdcamera'] = ccdcamera2
 		position = newscope['stage position']
 		pix = self.itransform(position, scope, camera)
 
