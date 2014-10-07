@@ -164,11 +164,12 @@ def insertParticlePeakPairs(peaktree1, peaktree2, peakerrors, imgdata1, imgdata2
 	last50 = time.time()
 	apDisplay.printMsg("looping over "+str(len(peaktree1))+" particles")
 	for i in range(len(peaktree1)):
-		if (len(peaktree1)-count) % 50 == 0:
+		remaining_peaks = len(peaktree1)-count
+		if count and remaining_peaks and remaining_peaks % 50 == 0:
 			#sys.stderr.write("<"+str(len(peaktree1)-count))
 			print ("%d particles remain, %s time remains, %s per particle, %s last 50 particles"
 				%(len(peaktree1)-count, 
-				apDisplay.timeString((time.time() - t0)/count*(len(peaktree1)-count)),
+				apDisplay.timeString((time.time() - t0)/count*(remaining_peaks)),
 				apDisplay.timeString((time.time() - t0)/count),
 				apDisplay.timeString(time.time()-last50),))
 			last50 = time.time()
