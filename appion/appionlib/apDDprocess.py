@@ -582,8 +582,7 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		# No flip rotation as default
 		return False, 0
 
-	def modifyFrameImage(self,a,offset,crop_end,bin):
-		a = numpy.asarray(a,dtype=numpy.float32)
+	def getImageFrameOrientation(self):
 		frame_flip = self.image['camera']['frame flip']
 		frame_rotate = self.image['camera']['frame rotate']
 		apDisplay.printDebug('frame flip %s, frame_rotate %s' % (frame_flip,frame_rotate))
@@ -591,6 +590,11 @@ class DDFrameProcessing(DirectDetectorProcessing):
 			# old data have no orientation record
 			frame_flip,frame_rotate = self.handleOldFrameOrientation()
 		apDisplay.printDebug('frame flip %s, frame_rotate %s' % (frame_flip,frame_rotate))
+		return frame_flip, frame_rotate
+
+	def modifyFrameImage(self,a,offset,crop_end,bin):
+		a = numpy.asarray(a,dtype=numpy.float32)
+		frame_flip, frame_rotate = self.getImageFrameOrientation()
 		if frame_flip:
 			if frame_rotate and frame_rotate == 2:
 				# Faster to just flip left-right than up-down flip + rotate
@@ -928,13 +932,15 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		self.setupDarkNormMrcs(use_full_raw_area)
 		rawframestack_path = self.getRawFrameStackPath()
 		if not os.path.isfile(self.tempframestackpath) and os.path.isfile(rawframestack_path):
-			# temporary fix for DM 2.3.1 on krioscam1
-			if self.image['camera']['ccdcamera']['hostname']=='krioscam1':
-				apDisplay.printWarning("flipping and rotating frame stack")
+			# frame flipping of the mrc ddstack
+			frame_flip, frame_rotate = self.getImageFrameOrientation()
+			if frame_flip or frame_rotate:
+				if frame_rotate:
+					apDisplay.printError("stack rotation not implemented")
+				apDisplay.printColor("flipping frame stack",'blue')
 				a = mrc.read(rawframestack_path)
-				a = numpy.swapaxes(a,0,1)
-				a = numpy.flipud(a)
-				a = numpy.swapaxes(a,0,1)
+				# 3D array left-right flip creates the effect of up-down flip on axis 1 and 2
+				a = numpy.fliplr(a)
 				mrc.write(a,self.tempframestackpath)
 			else:
 				os.symlink(rawframestack_path,self.tempframestackpath)
