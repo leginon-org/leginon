@@ -19,6 +19,7 @@ import redux.pipeline
 import pyami.version
 
 class RequestHandler(SocketServer.StreamRequestHandler):
+	
 	def handle(self):
 		#for request in self.rfile:
 		#	self.run_process(request)
@@ -28,22 +29,21 @@ class RequestHandler(SocketServer.StreamRequestHandler):
 
 	def run_process(self, request):
 		try:
-			try:
-				kwargs = redux.utility.request_to_kwargs(request)
-				if 'pipeline' in kwargs:
-					pipeline = redux.pipeline.pipeline_by_preset(kwargs['pipeline'])
-				elif 'pipes' in kwargs:
-					pipeline = redux.pipeline.pipeline_by_string(kwargs['pipes'])		
-				else:
-					pipeline = redux.pipeline.pipeline_by_preset('standard')
-				result = pipeline.process(**kwargs)
-			except Exception, e:
-				timestamp = str(time.time())
-				result = 'REDUX ERROR ' + timestamp + ' ' + str(e)
-				sys.stderr.write(timestamp+'\n')
-				traceback.print_exc(file=sys.stderr)
-		finally:
+			kwargs = redux.utility.request_to_kwargs(request)
+			if 'pipeline' in kwargs:
+				pipeline = redux.pipeline.pipeline_by_preset(kwargs['pipeline'])
+			elif 'pipes' in kwargs:
+				pipeline = redux.pipeline.pipeline_by_string(kwargs['pipes'])		
+			else:
+				pipeline = redux.pipeline.pipeline_by_preset('standard')
+			result = pipeline.process(**kwargs)
 			self.wfile.write(result)
+		except Exception as e:
+			error = 'REDUX ERROR %d %s'%(time.time(), e)
+			logger.error(error)
+			logger.error(traceback.format_exc())
+			self.wfile.write(error)
+		finally:
 			self.wfile.flush()
 
 # Although we have tried using Forking and Threading servers, there have

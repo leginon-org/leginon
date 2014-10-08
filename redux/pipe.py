@@ -65,6 +65,7 @@ class Pipe(object):
 	optional_defaults = {}
 	cache_file = True
 	def __init__(self, **kwargs):
+		self.kwargs = kwargs
 		self.disable_cache = False
 		self.parse_args(**kwargs)
 		self.make_hash()
@@ -103,9 +104,7 @@ class Pipe(object):
 		return self.signature != other.signature
 
 	def __str__(self):
-		parts = ['%s=%s' % (name,value) for (name,value) in self.signature[1]]
-		allparts = ','.join(parts)
-		return '%s(%s,%s)' % (self.__class__.__name__, id(self), allparts)
+		return '%s(%s,%s)' % (self.__class__.__name__, id(self), self.kwargs)
 
 	def __repr__(self):
 		return self.__str__()
@@ -149,7 +148,7 @@ class Pipe(object):
 
 		if args_missing:
 			if args_present:
-				raise redux.exceptions.PipeMissingArgs('got some args: %s, but missing: %s' % (args_present, args_missing))
+				raise redux.exceptions.PipeMissingArgs('', self, args_missing)
 			else:
 				raise redux.exceptions.PipeNoArgs('pipe useless with no args')
 
