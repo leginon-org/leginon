@@ -107,6 +107,9 @@ def write(a, imfile=None, format=None, limits=None, writefloat=False):
 	except KeyError:
 		## bad file format
 		sys.stderr.write('Bad PIL image format.  Try one of these: %s\n' % (pilformats,))
+	except:
+		# Other exceptions
+		raise
 
 if __name__ == '__main__':
 	a = textArray('Hello')
