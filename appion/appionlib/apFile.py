@@ -35,7 +35,7 @@ def md5sumfile(fname):
 #===============
 def removeFile(filename, warn=False):
 	f = os.path.abspath(filename)
-	if os.path.isfile(f):
+	if os.path.isfile(f) or os.path.islink(f):
 		if warn is True:
 			apDisplay.printWarning("removing file:"+f)
 			time.sleep(1)
