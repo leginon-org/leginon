@@ -429,7 +429,9 @@ class frealignJob(appionScript.AppionScript):
 		f.write('frealign.exe << EOF > '+logfile+'\n')
 
 		### CARD 1
-		f.write('%s,%d,%s,%s,%s,%s,%d,%s,%s,%s,%d,%s,%d\n' % (
+		###   CFORM,IFLAG,FMAG,FDEF,FASTIG,FPART,IEWALD,
+		### FBEAUT,FCREF,FMATCH,IFSC,FSTAT,IBLOW
+		f.write('%s,%d, %s,%s,%s,%s, %d, %s,%s,%s, %d,%s,%d\n' % (
 			self.defaults['cform'],
 			iflag, 
 			self.bc(self.params['fmag']), self.bc(self.params['fdef']), #T/F refinements
