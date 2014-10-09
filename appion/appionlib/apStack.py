@@ -132,6 +132,12 @@ def getOneParticleFromStackId(stackid, particlenumber=1, msg=True):
 	return stackparticledata[0]
 
 #===============
+def getKiloVoltsFromStackId(stackid, msg=False):
+	stackPart = getOneParticleFromStackId(stackid, msg=msg)
+	kv = stackPart['particle']['image']['scope']['high tension']/1000.0
+	return kv
+
+#===============
 def getOnlyStackData(stackid, msg=True):
 	if msg is True:
 		apDisplay.printMsg("Getting stack data for stackid="+str(stackid))
