@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import os
+import sys
 from appionlib import apRecon
 from appionlib import apDisplay
 from appionlib import basicScript
@@ -39,8 +40,8 @@ class getResScript(basicScript.BasicScript):
 	def start(self):
 		res = apRecon.getResolutionFromFSCFile(self.params['fscfile'], 
 			self.params['boxsize'], self.params['apix'], self.params['criteria'])
-		apDisplay.printColor( ("resolution: %.5f" % (res)), "cyan")
-
+		apDisplay.printColor( ("resolution: %.5f at criteria %.3f" % (res, self.params['criteria'])), "cyan")
+		sys.stdout.write("%s resolution %.5f (%.3f)\n"%(self.params['fscfile'], res, self.params['criteria']))
 
 #=====================
 if __name__ == "__main__":

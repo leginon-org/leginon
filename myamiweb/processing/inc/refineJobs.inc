@@ -126,14 +126,16 @@ abstract class RefineJobs
 		
 		foreach ($prepRefineRuns as $refinejob) {
 			if ( !in_array( $refinejob['method'], $this->methods ) ) continue;
-			
+			//echo $refinejob['method']." -- test <br/>\n";
 			$refinerun = $this->particle->getClusterJobByTypeAndPath($refinejob['method'], $refinejob['path']);
 			if (!$refinerun) {
+				//echo $refinejob['method']." -- PASS <br/>\n";
 				$refinejobs[] = $refinejob;
 			}
-		}	
-
-		return 	$refinejobs;
+		}
+		//echo "<br/>RETURN<br/>";
+		//print_r($refinejobs);
+		return $refinejobs;
 	}
 	
 	public function countRefinesReadyToRun()
