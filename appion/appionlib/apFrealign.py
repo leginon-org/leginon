@@ -145,7 +145,7 @@ def parseFrealign9ParamFile(paramfile,test=False):
 	return partdict
 
 def getStackParticlesInOrder(params):
-	partorderfile = os.path.join(params['rundir'],'stackpartorder.list')
+	partorderfile = os.path.join(params['rundir'], 'stackpartorder.list')
 	stackid = params['stackid']
 	if not os.path.isfile(partorderfile):
 		return apStack.getStackParticlesFromId(stackid)
@@ -155,7 +155,7 @@ def getStackParticlesInOrder(params):
 	partsort = list(partorder)
 	partsort.sort()
 	if partsort == partorder:
-			return apStack.getStackParticlesFromId(stackid)
+		return apStack.getStackParticlesFromId(stackid)
 	apDisplay.printMsg("Preped stack has different order from the original stack.  Getting information by the order of the preped stack")
 	stpartdatas = []
 	for partnum in partorder:
@@ -292,14 +292,38 @@ def writeParticleParamLine(particleparams, fileobject):
 	fileobject.write("%7d%8.2f%8.2f%8.2f%8.2f%8.2f%7.f.%6d%9.1f%9.1f%8.2f%7.2f%8.2f%7d\n" 
 		% (p['ptclnum'],p['psi'],p['theta'],p['phi'],p['shx'],p['shy'],p['mag'],
 		p['film'],p['df1'],p['df2'],p['angast'],p['presa'],p['dpres'],p['pnumber']))
-
+		
 #===============
 def writeParticleParamLineExtended(particleparams, fileobject):
 	p=particleparams
-	
 	fileobject.write("%7d%8.2f%8.2f%8.2f%8.2f%8.2f%7.f.%6d%9.1f%9.1f%8.2f%7.2f%8.2f%7d%9.2f\n" 
 		% (p['ptclnum'],p['psi'],p['theta'],p['phi'],p['shx'],p['shy'],p['mag'],
 		p['film'],p['df1'],p['df2'],p['angast'],p['presa'],p['dpres'],p['pnumber'],p['ampcont']))
+
+#===============
+def readParticleParamLine(line):
+	particleparams = {
+		'ptclnum': 	int(line[:7]),
+		'psi': 		float(line[7:15]),
+		'theta': 	float(line[15:23]),
+		'phi': 		float(line[23:31]),
+		'shx': 		float(line[31:39]),
+		'shy':  	float(line[39:47]),
+		'mag':  	float(line[47:55]),
+		'film': 	int(line[55:61]),
+		'df1':  	float(line[61:70]),
+		'df2':  	float(line[70:79]),
+		'angast': 	float(line[79:87]),
+		'presa': 	float(line[87:94]),
+		'dpres': 	float(line[94:102]),
+		'pnumber': 	int(line[102:109]),
+	}
+	if len(line) >= 117:
+		particleparams['ampcont'] = float(line[109:117])
+
+	import pprint
+	pprint.pprint( particleparams )
+	return particleparams
 
 #===============
 def createFrealignJob (params, jobname, nodenum=None, mode=None, inpar=None, invol=None, first=None, last=None, norecon=False):
