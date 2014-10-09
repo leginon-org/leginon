@@ -25,6 +25,8 @@ def yflip_copy(mrc_header, fin, fout):
 
 def imagic_to_mrc(imagic_name, mrc_name, yflip=False):
 	# read imagic header
+	if imagic_name.endswith('.hed') or imagic_name.endswith('.img'):
+		imagic_name = imagic_name[:-4]
 	hed_name = imagic_name + '.hed'
 	dat_name = imagic_name + '.img'
 	imagic_header = pyami.imagic.readImagicHeader(hed_name)
