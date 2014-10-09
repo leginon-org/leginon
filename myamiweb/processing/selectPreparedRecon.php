@@ -62,7 +62,7 @@ function selectRefineJob($extra=False) {
 		$refinementJobs = new RefineJobsMultiModel($expId);
 	}	
 	$refinejobs = $refinementJobs->getRefinesReadyToRun();
-	
+	// print_r($refinejobs);
 	// write out errors, if any came up:
 	if ($extra)
 		echo "<font color='#cc3333' size='+2'>$extra</font>\n<hr/>\n";

@@ -116,7 +116,7 @@ abstract class RefineJobs
 	{ 
 		// Get all preparred refines
 		$prepRefineRuns = $this->particle->getPreparedRefineJobs(false, false, false);
-		
+		// echo $prepRefineRuns;
 		// Get the number of prepared refines that have not yet been run
 		$refinejobs = array();
 		
