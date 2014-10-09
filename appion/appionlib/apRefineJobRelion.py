@@ -195,26 +195,6 @@ class RelionSingleModelRefineJob(apRefineJob.RefineJob):
 #			# return to recondir
 #			self.addSimpleCommand('cd %s' % self.params['recondir'])
 
-	def createStarFile(self, relionParams):
-		'''
-		Create a file with the required constant strings in it
-   		''' 
-		fileContents = """data_
-loop_
-_rlnImageName
-_rlnMicrographName
-_rlnDefocusU
-_rlnDefocusV
-_rlnDefocusAngle
-_rlnVoltage
-_rlnSphericalAberration
-_rlnAmplitudeContrast
-"""
-						
-		f = open(relionParams["i"],'w')
-		f.write(fileContents)
-		f.close()
-
 
 	def makePreIterationScript(self):
 		tasks = {}
@@ -222,17 +202,6 @@ _rlnAmplitudeContrast
 		relionParams = self.setRelionParameters()
 		self.addToLog('....Saving Relion Parameters for use during Upload step....')
 		self.saveRunParamsToFile( relionParams )
-
-		self.addToLog('....Creating Relion .star file....')
-		self.createStarFile(relionParams)
-		stackpath = os.path.join( self.params['remoterundir'], self.params['stackname'][:-5] ) #remove 5 chars (.mrcs) from the name
-		stackpath = stackpath + ".mrcs"
-		
-		kv = str(self.params['kv'])
-		cs = str(self.params['cs'])
-		starCommandInsidePart = '{if ($1!="C") {print $1"@'+stackpath+'", $8, $9, $10, $11, " '+kv+' '+cs+' ",$15}  }'
-		starCommand = "awk '"+starCommandInsidePart+"' < params.000.par >> %s" % (relionParams["i"])
-		tasks = self.addToTasks( tasks, starCommand )
 		
 		self.addToLog('....Creating Relion Command....')
 		command = self.createRelionCommand( relionParams )		
