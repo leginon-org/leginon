@@ -17,13 +17,18 @@ from appionlib import apDisplay
 from appionlib import apEMAN
 from appionlib import apInstrument
 
+#=====================
+#=====================
+#=====================
 class Prep3DRefinement(appionScript.AppionScript):
+	#=====================
 	def onInit(self):
 		self.setRefineMethod()
 		self.files_to_send = []
 		self.invert = False
 		self.originalStackData = apStack.Stack( self.params['stackid'] )
 
+	#=====================
 	def setRefineMethod(self):
 		'''
 		Refine method will be used to classify the prepared run
@@ -41,7 +46,7 @@ class Prep3DRefinement(appionScript.AppionScript):
 		self.parser.add_option("--lowpass", dest="lowpass", type="int", default=0,
 			help="Low pass filter radius (in Angstroms) of the particles", metavar="#")
 		self.parser.add_option("--bin", dest="bin", type="int", default=1,
-			help="Binning of the particles", metavar="#")
+			help="Binning of the particles", metavar="#")	
 		self.parser.add_option("--highpass", dest="highpass", type="int", default=0,
 			help="High pass filter radius (in Angstroms) of the particles", metavar="#")
 		# Initial 3D model manipulation usually only one
@@ -67,12 +72,14 @@ class Prep3DRefinement(appionScript.AppionScript):
 		self.modelids = map((lambda x: int(x)),self.params['modelid'].split(','))
 		self.checkPackageConflicts()
 
+	#=====================
 	def checkPackageConflicts(self):
 		'''
 		Conflict checking of the single parameters specific to the refinement package
 		'''
 		pass
 
+	#=====================
 	def proc2dFormatConversion(self):
 		# default is Imagic
 		if self.stackspidersingle:
@@ -83,6 +90,7 @@ class Prep3DRefinement(appionScript.AppionScript):
 			format = ''
 		return extname, format
 
+	#=====================
 	def proc3dFormatConversion(self):
 		# default is mrc
 		if self.modelspidersingle:
@@ -91,6 +99,7 @@ class Prep3DRefinement(appionScript.AppionScript):
 			extname = 'mrc'
 		return extname
 
+	#=====================
 	def calcClipSize(slef,oldboxsize,bin):
 		'''
 		This keeps the clipsize dividable by binning
@@ -101,6 +110,7 @@ class Prep3DRefinement(appionScript.AppionScript):
 		return clipsize
 
 
+	#=====================
 	def preprocessStack(self):
 		'''
 		Use database particle stack file to create a stack file with binning and filtering
@@ -164,7 +174,8 @@ class Prep3DRefinement(appionScript.AppionScript):
 		self.stack['apix'] = self.stack['apix'] * self.params['bin']
 		return outstack
 			
-	def preprocessModelWithProc3d(self,rescale=True):
+	#=====================
+	def preprocessModelWithProc3d(self, rescale=True):
 		'''
 		Use EMAN proc3d to scale initial or mask model to that of the refinestack and format
 		'''
@@ -185,6 +196,7 @@ class Prep3DRefinement(appionScript.AppionScript):
 		self.model['format'] = extname
 		return outmodelfile
 
+	#=====================
 	def convertRefineModelIcosSymmetry(self,modelname,extname,modelfile,apix):
 		'''
 		This default conversion changes all to (2 3 5) Viper/3DEM convention.
@@ -200,6 +212,7 @@ class Prep3DRefinement(appionScript.AppionScript):
 			apVolume.crowther2viper(modelfile, tempfile, spider=self.modelspidersingle,apix=self.stack['apix'])
 			shutil.copy(tempfile,modelfile)
 
+	#=====================
 	def setFormat(self):
 		'''
 		This is used to set output format in preprocessing.
@@ -210,6 +223,7 @@ class Prep3DRefinement(appionScript.AppionScript):
 		self.stackspidersingle = False
 		self.modelspidersingle = False
 
+	#=====================
 	def __initializeStack(self):
 		# This sets parameters of our new stack based on the params of the original stack
 		# TODO: use originalStackData to populate these
@@ -220,7 +234,10 @@ class Prep3DRefinement(appionScript.AppionScript):
 		self.stack['file'] = os.path.join(self.stack['data']['path']['path'], self.stack['data']['name'])
 		self.stack['format'] = 'imagic'
 		self.stack['phaseflipped'] = self.originalStackData.phaseFlipped
+		self.stack['contrast'] = apStack.getParticleContrastFromStackId(self.params['stackid'])
+		self.stack['kv'] = apStack.getKiloVoltsFromStackId(self.params['stackid'])
 
+	#=====================
 	def __initializeModel(self,modelid,ismask=False):
 		self.model = {}
 		self.model['data'] = apModel.getModelFromId(modelid)
@@ -230,20 +247,24 @@ class Prep3DRefinement(appionScript.AppionScript):
 		self.model['format'] = self.model['data']['name'].split('.')[-1]
 		self.model['ismask'] = ismask
 
+	#=====================
 	def setProcessingDirName(self):
 		self.processdirname = 'recon'
 
+	#=====================
 	def convertToRefineStack(self):
 		'''
 		Stack conversions that can not be achieved by proc2d
 		'''
 		pass
 
+	#=====================
 	def __saveFilesToSend(self):
 		f = open(os.path.join(self.params['rundir'],'files_to_remote_host'), 'w')
 		f.writelines(map((lambda x: x+'\n'),self.files_to_send))
 		f.close()
 
+	#=====================
 	def __commitRefineStack(self,prepdata):
 		'''
 		Save parameters used to create refinestack in the database.
@@ -266,6 +287,7 @@ class Prep3DRefinement(appionScript.AppionScript):
 		q['phaseflipped'] = self.stack['phaseflipped']
 		q.insert()
 
+	#=====================
 	def __commitRefineInitModel(self,prepdata):
 		q = appiondata.ApRefineInitModelData()
 		q['preprefine'] = prepdata
@@ -275,6 +297,7 @@ class Prep3DRefinement(appionScript.AppionScript):
 		q['apix'] = self.model['apix']
 		q.insert()
 
+	#=====================
 	def __commitRefineMaskVol(self,prepdata):
 		q = appiondata.ApRefineMaskVolData()
 		q['preprefine'] = prepdata
@@ -284,6 +307,7 @@ class Prep3DRefinement(appionScript.AppionScript):
 		q['apix'] = self.model['apix']
 		q.insert()
 
+	#=====================
 	def commitToDatabase(self):
 		### create a prepRefine table
 		prepq = appiondata.ApPrepRefineData()
@@ -305,26 +329,44 @@ class Prep3DRefinement(appionScript.AppionScript):
 			prepdata = r[0]
 		return prepdata
 
+	#=====================
 	def addToFilesToSend(self,filepath):
 		basename = os.path.basename(filepath)
 		self.files_to_send.append(basename)
 
+	#=====================
 	def addStackToSend(self,filepath):
 		self.addToFilesToSend(filepath)
 
+	#=====================
 	def addModelToSend(self,filepath):
 		self.addToFilesToSend(filepath)
 
+	#=====================
 	def __processStack(self,prepdata):
 		'''
 		Convert stack in database to refinestack in the format the refine method needs
 		'''
+		apDisplay.printColor("Step 3A: create self.stack dict with parameter info", "purple")		
 		self.__initializeStack()
-		self.preprocessStack() # proc2d stuff
-		self.convertToRefineStack() # if makeStack2 is needed (for things like ctf-correction changes)
+		
+		### from original stack create a new stack file with binning and filtering ready for processing.
+		### proc2d stuff, returns self.stack['file']
+		### Neil: why is a value returned but not set
+		apDisplay.printColor("Step 3B: from original stack create a new stack file"
+			+" with binning and filtering ready for processing", "purple")				
+		self.preprocessStack() 
+		
+		### if makeStack2 is needed (for things like ctf-correction changes)
+		### Neil: why do we preprocess the stack if we just make a new one in the next step
+		apDisplay.printColor("Step 3C: run makeStack2 if needed (for things like ctf-correction changes)", "purple")	
+		self.convertToRefineStack()
+		
+		#Neil: why have a separate function to do one line?
 		self.addStackToSend(self.stack['file'])
 		self.__commitRefineStack(prepdata)
 
+	#=====================
 	def __processModel(self,prepdata,modelid,ismask=False):
 		'''
 		Convert model in database to refinemodel in the format required by the refine method
@@ -338,6 +380,7 @@ class Prep3DRefinement(appionScript.AppionScript):
 		else:
 			self.__commitRefineMaskVol(prepdata)
 
+	#=====================
 	def processMaskVol(self,prepdata):
 		'''
 		Additional process needed for the model used as mask volume.
@@ -346,6 +389,16 @@ class Prep3DRefinement(appionScript.AppionScript):
 		'''
 		pass
 
+	#=====================
+	def preProcessPreparations(self):
+		'''
+		Place holder for any other preparation needed.
+		Currently only Frealign may use this if initial euler angles
+		come from a committed refinement iteration
+		'''
+		pass
+
+	#=====================
 	def otherPreparations(self):
 		'''
 		Place holder for any other preparation needed.
@@ -354,20 +407,33 @@ class Prep3DRefinement(appionScript.AppionScript):
 		'''
 		pass
 
-
 	#=====================
 	def start(self):
+		apDisplay.printColor("Step 1: commit ApPrepRefineData to database", "purple")			
 		prepdata = self.commitToDatabase()
 		self.setFormat()
-		# manipulate stack
+		
+		apDisplay.printColor("Step 2: pre-process package specific preparations", "purple")
+		#self.preProcessPreparations()
+		
+		apDisplay.printColor("Step 3: manipulate stack for refinement", "purple")
 		self.__processStack(prepdata)
-		#manipulate models
+		
+		apDisplay.printColor("Step 4: manipulate models for refinement", "purple")
 		for modelid in self.modelids:
 			self.__processModel(prepdata,modelid,False)
+
+		apDisplay.printColor("Step 5: process mask volume", "purple")			
 		self.processMaskVol(prepdata)
-		self.otherPreparations()
-		self.__saveFilesToSend()
 		
+		apDisplay.printColor("Step 6: other package specific preparations", "purple")
+		self.otherPreparations()
+
+		apDisplay.printColor("Step 7: save files to send", "purple")		
+		self.__saveFilesToSend()
+
+#=====================
+#=====================		
 #=====================
 if __name__ == "__main__":
 	app = Prep3DRefinement()
