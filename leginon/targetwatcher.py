@@ -49,6 +49,7 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 		self.panel.playerEvent(self.player.state())
 		self.targetlistevents = {}
 		self.startQueueProcessor()
+		self.is_firstimage = False
 
 	def processData(self, newdata):
 		if isinstance(newdata, leginondata.ImageTargetListData):
@@ -136,6 +137,8 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 				self.setStatus('idle')
 				return
 
+			# initialize is_first-image
+			self.is_firstimage = True
 			#tilt the stage first
 			if self.settings['use parent tilt']:
 				state1 = leginondata.ScopeEMData()
@@ -267,6 +270,8 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 					break
 
 				# end of target repeat loop
+			# next target is not a first-image
+			self.is_firstimage = False
 
 		self.reportTargetListDone(newdata, targetliststatus)
 		if self.settings['park after list']:

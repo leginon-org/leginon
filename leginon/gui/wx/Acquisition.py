@@ -43,6 +43,8 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		szmovetype = self.createMoveTypeSizer()
 		# pause time
 		szpausetime = self.createPauseTimeSizer()
+		# extra pause for first image
+		szfirstpause = self.createFirstPauseTimeSizer()
 		# process
 		self.widgets['wait for process'] = wx.CheckBox(self, -1,
 																				'Wait for a node to process the image')
@@ -54,12 +56,13 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		szleft = wx.GridBagSizer(3, 10)
 		szleft.Add(szmovetype, (0, 0), (1, 2), wx.ALIGN_LEFT|wx.ALL)
 		szleft.Add(szpausetime, (1, 0), (1, 2), wx.ALIGN_LEFT|wx.ALL)
-		szleft.Add(self.widgets['wait for process'], (2, 0), (1, 2), wx.ALIGN_LEFT|wx.ALL)
-		szleft.Add(sz_transform, (3, 0), (1, 2), wx.ALIGN_LEFT|wx.ALL)
+		szleft.Add(szfirstpause, (2, 0), (1, 2), wx.ALIGN_LEFT|wx.ALL)
+		szleft.Add(self.widgets['wait for process'], (3, 0), (1, 2), wx.ALIGN_LEFT|wx.ALL)
+		szleft.Add(sz_transform, (4, 0), (1, 2), wx.ALIGN_LEFT|wx.ALL)
 
 		sz = wx.GridBagSizer(3, 3)
-		sz.Add(szleft, (0, 0), (4, 2), wx.ALIGN_CENTER)
-		sz.Add(self.widgets['preset order'], (0, 2), (4, 2), wx.ALIGN_CENTER)
+		sz.Add(szleft, (0, 0), (5, 2), wx.ALIGN_CENTER)
+		sz.Add(self.widgets['preset order'], (0, 2), (5, 2), wx.ALIGN_CENTER)
 		return sz
 
 	def setPresetOrderWidget(self):
@@ -98,6 +101,25 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 								(0, 1), (1, 1),
 								wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
 		szpausetime.Add(wx.StaticText(self, -1, 'seconds before acquiring image'),
+								(0, 2), (1, 1),
+								wx.ALIGN_CENTER_VERTICAL)
+		return szpausetime
+
+	def createFirstPauseTimeSizer(self):
+		# pause time
+		self.widgets['first pause time'] = FloatEntry(self, -1,
+																		min=0.0,
+																		allownone=False,
+																		chars=4,
+																		value='0.0')
+		szpausetime = wx.GridBagSizer(5, 5)
+		szpausetime.Add(wx.StaticText(self, -1, 'Wait extra'),
+								(0, 0), (1, 1),
+								wx.ALIGN_CENTER_VERTICAL)
+		szpausetime.Add(self.widgets['first pause time'],
+								(0, 1), (1, 1),
+								wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		szpausetime.Add(wx.StaticText(self, -1, 'seconds before the first image'),
 								(0, 2), (1, 1),
 								wx.ALIGN_CENTER_VERTICAL)
 		return szpausetime
@@ -348,6 +370,8 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		szmovetype = self.createMoveTypeSizer()
 		# pasue time
 		szpausetime = self.createPauseTimeSizer()
+		# extra pause for first image
+		szfirstpause = self.createFirstPauseTimeSizer()
 
 		sz_save = self.createImageOptionsSizer()
 		sz_emission = self.createEmissionSizer()
@@ -378,13 +402,14 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		# left with 2 columns
 		sz.Add(szmovetype, (0, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(szpausetime, (1, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(szfirstpause, (2, 0), (1, 2), wx.ALIGN_LEFT|wx.ALL)
 		# left with 1 column
-		sz.Add(sz_save, (2,0), (2,1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(sz_emission, (4,0), (1,1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(sz_tilt, (5,0), (2,1), wx.ALIGN_TOP)
-		sz.Add(sbszsim, (7,0), (2,1), wx.ALIGN_BOTTOM)
+		sz.Add(sz_save, (3,0), (2,1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(sz_emission, (5,0), (1,1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(sz_tilt, (6,0), (2,1), wx.ALIGN_TOP)
+		sz.Add(sbszsim, (8,0), (2,1), wx.ALIGN_BOTTOM)
 		# middle with 1 column
-		sz.Add(sz_misc, (2,1), (7,1), wx.ALIGN_TOP)
+		sz.Add(sz_misc, (3,1), (7,1), wx.ALIGN_TOP)
 		# right
 		sz.Add(szright, (0,2),(9,1), wx.ALIGN_TOP)
 		return sz
