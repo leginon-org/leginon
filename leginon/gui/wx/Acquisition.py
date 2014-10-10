@@ -39,51 +39,17 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		return [sbsz]
 
 	def addBasicSettings(self):
-		# move type
-		movetypes = self.node.getMoveTypes()
-		self.widgets['move type'] = Choice(self, -1, choices=movetypes)
-		szmovetype = wx.GridBagSizer(5, 5)
-		szmovetype.Add(wx.StaticText(self, -1, 'Use'),
-										(0, 0), (1, 1),
-										wx.ALIGN_CENTER_VERTICAL)
-		szmovetype.Add(self.widgets['move type'],
-										(0, 1), (1, 1),
-										wx.ALIGN_CENTER_VERTICAL)
-		szmovetype.Add(wx.StaticText(self, -1, 'to move to target'),
-										(0, 2), (1, 1),
-										wx.ALIGN_CENTER_VERTICAL)
+		# movetype
+		szmovetype = self.createMoveTypeSizer()
 		# pause time
-		self.widgets['pause time'] = FloatEntry(self, -1,
-																		min=0.0,
-																		allownone=False,
-																		chars=4,
-																		value='0.0')
-		szpausetime = wx.GridBagSizer(5, 5)
-		szpausetime.Add(wx.StaticText(self, -1, 'Wait'),
-								(0, 0), (1, 1),
-								wx.ALIGN_CENTER_VERTICAL)
-		szpausetime.Add(self.widgets['pause time'],
-								(0, 1), (1, 1),
-								wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
-		szpausetime.Add(wx.StaticText(self, -1, 'seconds before acquiring image'),
-								(0, 2), (1, 1),
-								wx.ALIGN_CENTER_VERTICAL)
+		szpausetime = self.createPauseTimeSizer()
 		# process
 		self.widgets['wait for process'] = wx.CheckBox(self, -1,
 																				'Wait for a node to process the image')
 		# transform
-		self.widgets['adjust for transform'] = Choice(self, -1, choices=['no', 'one', 'all'])
-		sz_transform = wx.GridBagSizer(0, 0)
-		label = wx.StaticText(self, -1, 'Adjust target using')
-		sz_transform.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz_transform.Add(self.widgets['adjust for transform'], (0, 1), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL)
-		label = wx.StaticText(self, -1, 'ancestor(s)')
-		sz_transform.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz_transform = self.createTransformSizer()
 		# preset order
-		presets = self.node.presetsclient.getPresetNames()
-		self.widgets['preset order'] = EditPresetOrder(self, -1)
-		self.widgets['preset order'].setChoices(presets)
+		self.setPresetOrderWidget()
 
 		szleft = wx.GridBagSizer(3, 10)
 		szleft.Add(szmovetype, (0, 0), (1, 2), wx.ALIGN_LEFT|wx.ALL)
@@ -96,12 +62,12 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sz.Add(self.widgets['preset order'], (0, 2), (4, 2), wx.ALIGN_CENTER)
 		return sz
 
-	def addSettings(self):
-		sbsim = wx.StaticBox(self, -1, 'Simulated Target Loop')
-		sbszsim = wx.StaticBoxSizer(sbsim, wx.VERTICAL)
-		sbeval = wx.StaticBox(self, -1, 'Evaluate Image Stats')
-		sbsz_evaluate = wx.StaticBoxSizer(sbeval, wx.VERTICAL)
+	def setPresetOrderWidget(self):
+		presets = self.node.presetsclient.getPresetNames()
+		self.widgets['preset order'] = EditPresetOrder(self, -1)
+		self.widgets['preset order'].setChoices(presets)
 
+	def createMoveTypeSizer(self):
 		# move type
 		movetypes = self.node.getMoveTypes()
 		self.widgets['move type'] = Choice(self, -1, choices=movetypes)
@@ -115,7 +81,9 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		szmovetype.Add(wx.StaticText(self, -1, 'to move to target'),
 										(0, 2), (1, 1),
 										wx.ALIGN_CENTER_VERTICAL)
+		return szmovetype
 
+	def createPauseTimeSizer(self):
 		# pause time
 		self.widgets['pause time'] = FloatEntry(self, -1,
 																		min=0.0,
@@ -132,12 +100,9 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		szpausetime.Add(wx.StaticText(self, -1, 'seconds before acquiring image'),
 								(0, 2), (1, 1),
 								wx.ALIGN_CENTER_VERTICAL)
+		return szpausetime
 
-		# preset order
-		presets = self.node.presetsclient.getPresetNames()
-		self.widgets['preset order'] = EditPresetOrder(self, -1)
-		self.widgets['preset order'].setChoices(presets)
-
+	def createPauseBetweenTimeSizer(self):
 		# extra pause between presets
 		self.widgets['pause between time'] = FloatEntry(self, -1,
 																		min=0.0,
@@ -154,38 +119,132 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		szpausebtime.Add(wx.StaticText(self, -1, 'extra seconds between presets'),
 								(0, 2), (1, 1),
 								wx.ALIGN_CENTER_VERTICAL)
+		return szpausebtime
 
-		# misc. checkboxes
-		self.widgets['correct image'] = wx.CheckBox(self, -1, 'Correct image')
-		self.widgets['save integer'] = wx.CheckBox(self, -1, 'Float->Integer')
-		self.widgets['display image'] = wx.CheckBox(self, -1, 'Display image')
-		self.widgets['save image'] = wx.CheckBox(self, -1, 'Save image to database')
-		self.widgets['emission off'] = wx.CheckBox(self, -1, 'Turn emission off upon timeout')
+	def createBadResponseSizer(self):
+		self.widgets['bad stats response'] = Choice(self, -1, choices=['Continue', 'Pause', 'Recheck', 'Abort one','Abort all'])
+		sz_response = wx.BoxSizer(wx.HORIZONTAL)
+		sz_response.Add(self.widgets['bad stats response'])
+		sz_response.Add(wx.StaticText(self, -1, ' target list(s)'))
+		return sz_response
+	
+	def createBadEvaluateSizer(self):
+		self.widgets['low mean'] = FloatEntry(self, -1, chars=4)
+		self.widgets['high mean'] = FloatEntry(self, -1, chars=4)
+		sz_evaluate = wx.BoxSizer(wx.HORIZONTAL)
+		sz_evaluate.Add(wx.StaticText(self, -1, 'between'))
+		sz_evaluate.Add(self.widgets['low mean'])
+		sz_evaluate.Add(wx.StaticText(self, -1, 'and'))
+		sz_evaluate.Add(self.widgets['high mean'])
+		return sz_evaluate
+
+	def createBadRangeSizer(self):
+		self.widgets['bad stats type'] = Choice(self, -1, choices=['Mean', 'Slope'])
+		# range sizer
+		sz_range= wx.GridBagSizer(0, 0)
+		sz_range.Add(wx.StaticText(self, -1, 'when image'), (0,0),(1,1), wx.ALIGN_RIGHT)
+		sz_range.Add(self.widgets['bad stats type'],(0,1),(1,1))
+		sz_range.Add(wx.StaticText(self, -1, 'is NOT'), (0,2),(1,1), wx.ALIGN_LEFT)
+		return sz_range
+
+	def createBadRecheckSizer(self):
+		# recheck
+		self.widgets['recheck pause time'] = IntEntry(self, -1, chars=8)
+		sz_recheck = wx.GridBagSizer(0, 0)
+		label = wx.StaticText(self, -1, 'Wait for')
+		sz_recheck.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz_recheck.Add(self.widgets['recheck pause time'], (0, 1), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+		label = wx.StaticText(self, -1, 'second if recheck')
+		sz_recheck.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		return sz_recheck
+
+	def createBadStatsEvaluateResponseBoxSizer(self):
+		sbeval = wx.StaticBox(self, -1, 'Evaluate Image Stats')
+		sbsz_evaluate = wx.StaticBoxSizer(sbeval, wx.VERTICAL)
+
+		sz_response = self.createBadResponseSizer()
+		sz_range = self.createBadRangeSizer()
+		sz_evaluate = self.createBadEvaluateSizer()
+		sz_recheck = self.createBadRecheckSizer()
+		# bad stats email
+		passwordbut = wx.Button(self, -1, 'Enter Email Password')
+		self.Bind(wx.EVT_BUTTON, self.onEnterPassword, passwordbut)
+		# evaluate box sizer
+		sbsz_evaluate.Add(sz_response, 0, wx.ALIGN_CENTER|wx.ALL, 0)
+		sbsz_evaluate.Add(sz_range, 0, wx.ALIGN_CENTER|wx.ALL,0)
+		sbsz_evaluate.Add(sz_evaluate, 0, wx.ALIGN_CENTER|wx.ALL,0)
+		sbsz_evaluate.Add(passwordbut, 0, wx.ALIGN_CENTER|wx.ALL, 3)
+		sbsz_evaluate.Add(sz_recheck, 0, wx.ALIGN_CENTER|wx.ALL, 3)
+		return sbsz_evaluate
+
+	def createTransformSizer(self):
+		self.widgets['adjust for transform'] = Choice(self, -1, choices=['no', 'one', 'all'])
+	
+		sz_transform = wx.GridBagSizer(0, 0)
+		label = wx.StaticText(self, -1, 'Adjust target using')
+		sz_transform.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz_transform.Add(self.widgets['adjust for transform'], (0, 1), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+		label = wx.StaticText(self, -1, 'ancestor(s)')
+		sz_transform.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		return sz_transform
+
+	def createUseParentMoverSizer(self):
+		self.widgets['use parent mover'] = wx.CheckBox(self, -1, 'Use ancestor image mover in adjustment')
+	
+		sz_transform = wx.GridBagSizer(0, 0)
+		label = wx.StaticText(self, -1, 'Adjust target using')
+		sz_transform.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz_transform.Add(self.widgets['use parent mover'],(1,0),(1,3))
+		return sz_transform
+
+	def createOffsetSizer(self):
+		# set widgets
+		self.widgets['target offset row'] = IntEntry(self, -1, chars=6)
+		self.widgets['target offset col'] = IntEntry(self, -1, chars=6)
+		# make sizer
+		sz_offset = wx.BoxSizer(wx.HORIZONTAL)
+		sz_offset.Add(wx.StaticText(self, -1, 'offset target x:'))
+		sz_offset.Add(self.widgets['target offset col'])
+		sz_offset.Add(wx.StaticText(self, -1, 'y:'))
+		sz_offset.Add(self.widgets['target offset row'])
+		return sz_offset
+
+	def createMiscSizer(self):
+		# set widgets
 		self.widgets['wait for process'] = wx.CheckBox(self, -1,
 																				'Wait for a node to process the image')
 		self.widgets['wait for rejects'] = wx.CheckBox(self, -1,
 																				'Publish and wait for rejected targets')
 		self.widgets['wait for reference'] = wx.CheckBox(self, -1,
 																				'Publish and wait for the reference target')
-		self.widgets['adjust for transform'] = Choice(self, -1, choices=['no', 'one', 'all'])
-		self.widgets['use parent mover'] = wx.CheckBox(self, -1, 'Use ancestor image mover in adjustment')
 		self.widgets['drift between'] = wx.CheckBox(self, -1, 'Declare drift between targets')
 		self.widgets['background'] = wx.CheckBox(self, -1, 'Acquire in the background')
-		self.widgets['use parent tilt'] = wx.CheckBox(self, -1, 'Tilt the stage like its parent image')
-		self.widgets['adjust time by tilt'] = wx.CheckBox(self, -1, 'Adjust exposure time by tilt')
-		self.widgets['reset tilt'] = wx.CheckBox(self, -1, 'Reset stage when done')
-		if not hide_incomplete:
-			self.widgets['correct image shift coma'] = wx.CheckBox(self, -1, 'Correct image shift coma effect')
-		self.widgets['target offset row'] = IntEntry(self, -1, chars=6)
-		self.widgets['target offset col'] = IntEntry(self, -1, chars=6)
-
 		self.widgets['park after target'] = wx.CheckBox(self, -1, 'Park after every target acquired')
 		self.widgets['park after list'] = wx.CheckBox(self, -1, 'Park after every target list')
+		# set sizers
+		sz_misc = wx.BoxSizer(wx.VERTICAL)
+		sz_misc.Add(self.widgets['wait for process'])
+		sz_misc.Add(self.widgets['wait for rejects'])
+		sz_misc.Add(self.widgets['wait for reference'])
+		sz_misc.Add(self.createTransformSizer())
+		sz_misc.Add(self.createUseParentMoverSizer())
+		sz_misc.Add(self.createOffsetSizer())
+		sz_misc.Add(self.widgets['drift between'])
+		sz_misc.Add(self.widgets['background'])
+		sz_misc.Add(self.widgets['park after target'])
+		sz_misc.Add(self.widgets['park after list'])
+		sz_misc.Add(self.createBadStatsEvaluateResponseBoxSizer())
+		return sz_misc
+
+	def createSimulatedTargetLoopBoxSizer(self):
+		sbsim = wx.StaticBox(self, -1, 'Simulated Target Loop')
+		sbszsim = wx.StaticBoxSizer(sbsim, wx.VERTICAL)
 
 		# simulate loop settings
 		self.widgets['wait time'] = FloatEntry(self, -1, min=0.0, chars=6)
 		self.widgets['iterations'] = IntEntry(self, -1, min=0.0, chars=6)
-
 		szwaittime = wx.GridBagSizer(5, 5)
 		label = wx.StaticText(self, -1, 'Wait Time:')
 		szwaittime.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
@@ -199,19 +258,22 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sziterations.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sziterations.Add(self.widgets['iterations'], (0, 1), (1, 1),
 		wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
-
+		# simluate target loop
 		szsim = wx.GridBagSizer(5, 5)
 		szsim.Add(szwaittime, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		szsim.Add(sziterations, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-
 		sbszsim.Add(szsim, 0, wx.ALIGN_CENTER)
+		return sbszsim
 
+	def createMoverChoiceSizer(self):
 		szmover = wx.GridBagSizer(5, 5)
 		label = wx.StaticText(self, -1, 'Mover:')
 		self.widgets['mover'] = Choice(self, -1, choices=['presets manager','navigator'])
 		szmover.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		szmover.Add(self.widgets['mover'], (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		return szmover
 
+	def createMovePrecisionSizer(self):
 		szmoveprec = wx.GridBagSizer(5, 5)
 		label = wx.StaticText(self, -1, 'Navigator Target Tolerance (m):')
 		self.widgets['move precision'] = FloatEntry(self, -1, min=0.0, chars=6)
@@ -223,7 +285,9 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		szmoveprec.Add(self.widgets['accept precision'], (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
 		self.widgets['final image shift'] = wx.CheckBox(self, -1, 'Final Image Shift')
 		szmoveprec.Add(self.widgets['final image shift'], (2,0), (1,2))
+		return szmoveprec
 
+	def createProcessTargetTypeSizer(self):
 		sz_target_type = wx.GridBagSizer(5, 5)
 		label = wx.StaticText(self, -1, 'Process')
 		sz_target_type.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
@@ -231,9 +295,15 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sz_target_type.Add(self.widgets['process target type'], (0, 1), (1, 1), wx.ALIGN_CENTER)
 		label = wx.StaticText(self, -1, 'targets')
 		sz_target_type.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		return sz_target_type
 
+	def createImageOptionsSizer(self):
+		# set widgets
+		self.widgets['correct image'] = wx.CheckBox(self, -1, 'Correct image')
+		self.widgets['save integer'] = wx.CheckBox(self, -1, 'Float->Integer')
+		self.widgets['display image'] = wx.CheckBox(self, -1, 'Display image')
+		self.widgets['save image'] = wx.CheckBox(self, -1, 'Save image to database')
 		# settings sizer
-		sz = wx.GridBagSizer(5, 5)
 		sz_save = wx.GridBagSizer(0, 0)
 		sz_save.Add(self.widgets['save image'], (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz_save.Add(self.widgets['save integer'], (1, 0), (1, 1),
@@ -242,9 +312,25 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 						wx.ALIGN_CENTER_VERTICAL)
 		sz_save.Add(self.widgets['display image'], (3, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
+		return sz_save
+ 
+	def createEmissionSizer(self):
+		#set widget
+		self.widgets['emission off'] = wx.CheckBox(self, -1, 'Turn emission off upon timeout')
+		# mskr sizer
 		sz_emission = wx.GridBagSizer(0, 0)
 		sz_emission.Add(self.widgets['emission off'], (0, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
+		return sz_emission
+ 
+	def createTiltSizer(self):
+		# set widgets
+		self.widgets['use parent tilt'] = wx.CheckBox(self, -1, 'Tilt the stage like its parent image')
+		self.widgets['adjust time by tilt'] = wx.CheckBox(self, -1, 'Adjust exposure time by tilt')
+		self.widgets['reset tilt'] = wx.CheckBox(self, -1, 'Reset stage when done')
+		if not hide_incomplete:
+			self.widgets['correct image shift coma'] = wx.CheckBox(self, -1, 'Correct image shift coma effect')
+		# set sizers
 		sz_tilt = wx.GridBagSizer(0, 0)
 		sz_tilt.Add(self.widgets['adjust time by tilt'], (0, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
@@ -255,80 +341,51 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		if not hide_incomplete:
 			sz_tilt.Add(self.widgets['correct image shift coma'], (3, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
+		return sz_tilt
 
-		self.widgets['bad stats response'] = Choice(self, -1, choices=['Continue', 'Pause', 'Recheck', 'Abort one','Abort all'])
-		self.widgets['bad stats type'] = Choice(self, -1, choices=['Mean', 'Slope'])
-		self.widgets['low mean'] = FloatEntry(self, -1, chars=4)
-		self.widgets['high mean'] = FloatEntry(self, -1, chars=4)
-		self.widgets['recheck pause time'] = IntEntry(self, -1, chars=8)
-		passwordbut = wx.Button(self, -1, 'Enter Email Password')
-		self.Bind(wx.EVT_BUTTON, self.onEnterPassword, passwordbut)
+	def addSettings(self):
+		# move type
+		szmovetype = self.createMoveTypeSizer()
+		# pasue time
+		szpausetime = self.createPauseTimeSizer()
 
-		sz_response = wx.BoxSizer(wx.HORIZONTAL)
-		sz_response.Add(self.widgets['bad stats response'])
-		sz_response.Add(wx.StaticText(self, -1, ' target list(s)'))
-		sz_evaluate = wx.BoxSizer(wx.HORIZONTAL)
-		sz_evaluate.Add(wx.StaticText(self, -1, 'between'))
-		sz_evaluate.Add(self.widgets['low mean'])
-		sz_evaluate.Add(wx.StaticText(self, -1, 'and'))
-		sz_evaluate.Add(self.widgets['high mean'])
-	
-		sbsz_evaluate.Add(sz_response, 0, wx.ALIGN_CENTER|wx.ALL, 0)
-		sz_range= wx.GridBagSizer(0, 0)
-		sz_range.Add(wx.StaticText(self, -1, 'when image'), (0,0),(1,1), wx.ALIGN_RIGHT)
-		sz_range.Add(self.widgets['bad stats type'],(0,1),(1,1))
-		sz_range.Add(wx.StaticText(self, -1, 'is NOT'), (0,2),(1,1), wx.ALIGN_LEFT)
-		sbsz_evaluate.Add(sz_range, 0, wx.ALIGN_CENTER|wx.ALL,0)
-		sbsz_evaluate.Add(sz_evaluate, 0, wx.ALIGN_CENTER|wx.ALL,0)
-		sbsz_evaluate.Add(passwordbut, 0, wx.ALIGN_CENTER|wx.ALL, 3)
+		sz_save = self.createImageOptionsSizer()
+		sz_emission = self.createEmissionSizer()
+		sz_tilt = self.createTiltSizer()
+		sbszsim = self.createSimulatedTargetLoopBoxSizer()
 
-		sz_recheck = wx.GridBagSizer(0, 0)
-		label = wx.StaticText(self, -1, 'Wait for')
-		sz_recheck.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz_recheck.Add(self.widgets['recheck pause time'], (0, 1), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL)
-		label = wx.StaticText(self, -1, 'second if recheck')
-		sz_recheck.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sbsz_evaluate.Add(sz_recheck, 0, wx.ALIGN_CENTER|wx.ALL, 3)
-		
-		sz_transform = wx.GridBagSizer(0, 0)
-		label = wx.StaticText(self, -1, 'Adjust target using')
-		sz_transform.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz_transform.Add(self.widgets['adjust for transform'], (0, 1), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL)
-		label = wx.StaticText(self, -1, 'ancestor(s)')
-		sz_transform.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz_transform.Add(self.widgets['use parent mover'],(1,0),(1,3))
-		sz_offset = wx.BoxSizer(wx.HORIZONTAL)
-		sz_offset.Add(wx.StaticText(self, -1, 'offset target x:'))
-		sz_offset.Add(self.widgets['target offset col'])
-		sz_offset.Add(wx.StaticText(self, -1, 'y:'))
-		sz_offset.Add(self.widgets['target offset row'])
-		sz_misc = wx.BoxSizer(wx.VERTICAL)
-		sz_misc.Add(self.widgets['wait for process'])
-		sz_misc.Add(self.widgets['wait for rejects'])
-		sz_misc.Add(self.widgets['wait for reference'])
-		sz_misc.Add(sz_transform)
-		sz_misc.Add(sz_offset)
-		sz_misc.Add(self.widgets['drift between'])
-		sz_misc.Add(self.widgets['background'])
-		sz_misc.Add(self.widgets['park after target'])
-		sz_misc.Add(self.widgets['park after list'])
-		sz_misc.Add(sbsz_evaluate)
+		# misc
+		sz_misc = self.createMiscSizer()
 
+		# preset order
+		self.setPresetOrderWidget()
+		# extra pause between presets
+		szpausebtime = self.createPauseBetweenTimeSizer()
+		# mover
+		szmover = self.createMoverChoiceSizer()
+		szmoveprec = self.createMovePrecisionSizer()
+		sz_target_type = self.createProcessTargetTypeSizer()
+
+		# 3rd column
 		szright = wx.GridBagSizer(3, 3)
 		szright.Add(self.widgets['preset order'], (0, 0), (4, 1), wx.ALIGN_CENTER)
 		szright.Add(szpausebtime, (4,0), (1,1), wx.ALIGN_CENTER_VERTICAL)
 		szright.Add(szmover, (5,0), (1,1), wx.ALIGN_CENTER_VERTICAL)
 		szright.Add(szmoveprec, (6,0), (1,1), wx.ALIGN_CENTER_VERTICAL)
 		szright.Add(sz_target_type, (7,0), (1,1), wx.ALIGN_CENTER_VERTICAL)
+
+		sz = wx.GridBagSizer(5, 5)
+		# left with 2 columns
 		sz.Add(szmovetype, (0, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(szpausetime, (1, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
+		# left with 1 column
 		sz.Add(sz_save, (2,0), (2,1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(sz_emission, (4,0), (1,1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(sz_tilt, (5,0), (2,1), wx.ALIGN_TOP)
 		sz.Add(sbszsim, (7,0), (2,1), wx.ALIGN_BOTTOM)
+		# middle with 1 column
 		sz.Add(sz_misc, (2,1), (7,1), wx.ALIGN_TOP)
+		# right
 		sz.Add(szright, (0,2),(9,1), wx.ALIGN_TOP)
 		return sz
 
