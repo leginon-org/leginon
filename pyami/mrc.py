@@ -718,9 +718,7 @@ Open filename as a memory mapped MRC file.  The returned object is
 a numpy ndarray object wrapped around the memory mapped file.
 	'''
 	## read only the header and parse it
-	f = open(filename, 'rb')
-	f.close()
-	headerdict = parseHeader(1024)
+	headerdict = readHeaderFromFile(filename)
 	headerbytes = getHeaderBytesFromFile(filename)
 
 	## open memory mapped file
