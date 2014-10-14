@@ -121,6 +121,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 	defaultsettings = dict(targetwatcher.TargetWatcher.defaultsettings)
 	defaultsettings.update({
 		'pause time': 2.5,
+		'first pause time': 0,
 		'pause between time': 0,
 		'move type': 'image shift',
 		'preset order': [],
@@ -760,6 +761,13 @@ class Acquisition(targetwatcher.TargetWatcher):
 		pausetime = self.settings['pause time']
 		if reduce_pause:
 			pausetime = min(pausetime, 2.5)
+		elif self.is_firstimage and self.settings['first pause time'] > 0.1:
+			# pause longer for the first image of the first target
+			# this is used for the first image taken that touches the edge of the hole
+			# in a multiple high mag target in a c-flat or quantifoil hole
+			extra_pausetime = self.settings['first pause time']
+			self.logger.info('Pause extra %s s for first image' % extra_pausetime)
+			pausetime += extra_pausetime
 
 		self.logger.info('pausing for %s s' % (pausetime,))
 
@@ -769,6 +777,8 @@ class Acquisition(targetwatcher.TargetWatcher):
 		time.sleep(pausetime)
 		self.waitPositionCameraDone()
 		self.stopTimer('pause')
+		# the next image will not be first even if repeated
+		self.is_firstimage = False
 
 		if debug:
 			print tnum, 'MOVEANDPRESETPAUSE DONE', time.time() - t0
@@ -1095,6 +1105,8 @@ class Acquisition(targetwatcher.TargetWatcher):
 
 	def simulateTarget(self):
 		self.setStatus('processing')
+		# no need to pause longer for simulateTarget
+		self.is_firstimage = False
 		currentpreset = self.presetsclient.getCurrentPreset()
 		if currentpreset is None:
 			try:

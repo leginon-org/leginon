@@ -6,8 +6,10 @@ import ccdcamera
 import threading
 
 # frame flipping configuration.
+# default here is for DE-12 orientation on FEI F20
 FRAME_LR_FLIP = True
 # frame rotate configuration. multiple of 90 degrees if needed
+# after the flip.  Direction + is x to -y.
 FRAME_ROTATE = 0
 
 # Shared global connection to the DE Server
@@ -346,15 +348,21 @@ class DD(DECameraBase):
 
 	def finalizeGeometry(self, image):
 		image = self.as_super.finalizeGeometry(image)
-		if self.getFrameFlip():
+		if self.getFrameFlip() and self.getFrameRotate() == 2:
 			image = numpy.fliplr(image)
 		return image
 
 	def getFrameFlip(self):
+		'''
+		Frame Flip is defined as up-down flip
+		'''
 		return FRAME_LR_FLIP
 
 	def getFrameRotate(self):
-		return FRAME_ROTATE
+		'''
+		Frame Rotate direction is defined as x to -y rotation applied after up-down flip
+		'''
+		return FRAME_ROTATE + 2
 
 class DE12(DD):
 	name = 'DE12'

@@ -378,6 +378,8 @@ function alignstacksummarytable($alignstackid, $mini=false, $showOptions=True) {
 		$type = 'score';
 	elseif ($stackdata['REF|ApMaxLikeRunData|maxlikerun'])
 		$type = 'spread';
+	elseif ($stackdata['REF|ApSparxISACRunData|isacrun'])
+		$type = 'spread';
 	elseif ($stackdata['REF|ApMultiRefAlignRunData|imagicMRA'])
 		$type = 'correlation';
 	elseif ($stackdata['REF|ApTopolRepRunData|topreprun'])

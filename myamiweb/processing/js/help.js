@@ -662,6 +662,24 @@ var help = {
 		'thld_err' : 'the threshold of pixel error when checking stability, equals root mean square of distances between corresponding pixels from set of found transformations and theirs average transformation, depends linearly on square of radius (parameter ou), colon separate for different generations, e.g. 4x1:2x3 means thld_err=1 for 4 generations and thld_err=3 for 2 generations (default 0.7)',
 		'indep_run' : 'specifies the level of m-way matching for reproducibility tests. The default = 4 will perform full ISAC to 4-way matching. Value indep_run=2 will restrict ISAC to 2-way matching and 3 to 3-way matching. Note the number of used MPI processes requested in mpirun must be a multiplicity of indep_run, colon separate for different generations, e.g. 4x4:2x2 means indep_run=4 for 4 generations and indep_run=2 for 2 generations (default 4)',
 		'generations' : 'number of approaches on the dataset',
+		'alignstack' : 'Aligned stack of particles to use',
 		'img_per_grp' : 'number of images per class in the ideal case (essentially maximum size of class), colon separate for different generations, e.g. 4x100:2x50 means thld_grp=100 for 4 generations  and thld_grp=50 for 2 generations (default 100)',
+		'use_align_stack' : 'Check this box to enable the aligned stack selector. The selected aligned stack will then be used for this ISAC run.',
+		'thld_err' : 'the threshold of pixel error when checking stability, equals root mean square of distances between corresponding pixels from set of found transformations and theirs average transformation, depends linearly on square of radius (parameter ou), colon separate for different generations, e.g. 4x1:2x3 means thld_err=1 for 4 generations and thld_err=3 for 2 generations (default 0.7)',
+	}
+	,		
+	'departalign' : {
+		'stackid' : 'Stack on which to do frame alignment.',
+		'output_rotation' : 'Rotate output particles by the specified angle',
+		'darkreference_transform' : 'Please edit help.js to add help info for this parameter.',
+		'gainreference_transform' : 'Please edit help.js to add help info for this parameter.',
+		'defects_columns' : 'Please edit help.js to add help info for this parameter.',
+		'defects_rows' : 'Please edit help.js to add help info for this parameter.',
+		'alignment_correct' : 'Please edit help.js to add help info for this parameter.',
+		'boxes_transform' : 'Please edit help.js to add help info for this parameter.',
+		'radiationdamage_compensate' : 'Please edit help.js to add help info for this parameter.',
+		'radiationdamage_exposurerate' : 'Please edit help.js to add help info for this parameter.',
+		'radiationdamage_apix' : 'Please edit help.js to add help info for this parameter.',
+		'alignment_target' : 'Please edit help.js to add help info for this parameter.',
 	}
 }

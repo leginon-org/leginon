@@ -11,16 +11,13 @@ config_locations = [os.path.join(confdir, configfilename) for confdir in confdir
 configparser = ConfigParser.SafeConfigParser()
 configfiles = configparser.read(config_locations)
 
-def printConfigFiles():
-	'''
-	print config files loaded for debugging purposes
-	'''
-	print "Config files used: "
-	for configfile in configfiles:
-		print '\t%s' % (configfile,)
-
 # default config
-config = {'server host':'localhost', 'server port':55123, 'cache on': False}
+config = {
+	'server host' :'localhost', 
+	'server port' :55123, 
+	'cache on'    : False,
+	'files'	      : configfiles,
+}
 
 # from config file
 config['server host'] = configparser.get('server','host')
@@ -42,5 +39,4 @@ def printConfig():
 		print '\t%s: %s' % (key,value)
 
 if __name__ == '__main__':
-	printConfigFiles()
 	printConfig()

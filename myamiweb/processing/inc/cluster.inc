@@ -206,7 +206,11 @@ class Cluster
 	function getPath($outdir="recon") 
 	{
 		$path = $_POST['clusterpath'] ? $_POST['clusterpath'] : $this->remoteOutputPath;
-		$path = Path::join( $path, $outdir );
+		// Check what the current basename is and don't add the outdir if they match.
+		// There is a good chance that the page is being reloaded and we don't want it to occur mutiple times.
+		if ( basename( $path ) != $outdir ) {
+			$path = Path::join( $path, $outdir );
+		}
 		$path = $this->formatEndPath($path);
 		return $path;
 	}

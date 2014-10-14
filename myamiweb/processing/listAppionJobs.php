@@ -21,8 +21,9 @@ function checkJobs($showjob=False,$showall=False,$extra=False) {
 
 	
 	// get info for specified job types
-	$jobinfo = $particle->getJobIdsFromSession($expId,$jobtype,'R');
+	$jobinfo = $particle->getJobIdsFromSession($expId,$jobtype,'R');	
 	$jobinfo = array_merge($jobinfo,$particle->getJobIdsFromSession($expId,$jobtype,'Q'));
+	
 	// for makestack-related jobs, check all flavors:
 	if ($jobtype=='makestack') {
 		$jobinfo = array();
@@ -32,6 +33,19 @@ function checkJobs($showjob=False,$showall=False,$extra=False) {
 			$st = $particle->getJobIdsFromSession($expId,$stacktype,'R');
 			$st = array_merge($st,$particle->getJobIdsFromSession($expId,$stacktype,'Q'));
 			if (!empty($st)) foreach ($st as $j) $jobinfo[]=$j;
+		}
+	}
+	
+	// TODO: this is a really bad way to do this. It should use the alignJobs.inc file.
+	// for partalign-related jobs, check all flavors:
+	if ($jobtype=='partalign') {
+		$jobinfo = array();
+		$aligntypes = array('partalign','sparxisac', 'runxmipp3cl2d', 'runxmippcl2d');
+		$aligns = array();
+		foreach ($aligntypes as $aligntype) {
+			$aligns = $particle->getJobIdsFromSession($expId,$aligntype,'R');
+			$aligns = array_merge($aligns,$particle->getJobIdsFromSession($expId,$aligntype,'Q'));
+			if (!empty($aligns)) foreach ($aligns as $a) $jobinfo[]=$a;
 		}
 	}
 

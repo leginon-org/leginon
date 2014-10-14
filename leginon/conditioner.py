@@ -11,9 +11,9 @@ import itertools
 
 class Conditioner(node.Node):
 	'''
-	This fixes scope conditions such as vacuum and autofiller status
-	by triggering the respective pump after a timeout before target list processing
-	of a TargetWatcher that requests the fix.
+	This fixes one or more instrument condition
+	by triggering a condition fixing function after a timeout 
+	before target list processing of a TargetWatcher that requests the fix.
 	'''
 	panelclass = leginon.gui.wx.Conditioner.Panel
 	settingsclass = leginondata.ConditionerSettingsData
@@ -39,21 +39,38 @@ class Conditioner(node.Node):
 		self.start()
 
 	def setCTypes(self):
-		self.addCType('buffer_cycle')
+		'''
+		Define a unique condition type (CType) for database record.
+		Required definition in the subclass
+		'''
+		#self.addCType('your_type_name')
+		raise NotImplementedError()
 
 	def addCType(self,ctypename):
+		'''
+		Add a ctype to the class list
+		'''
 		self.ctypes.append(ctypename)
 
 	def makeConditioningRequests(self):
+		'''
+		Reset condition fixing request timeout
+		'''
 		if not self.settings['bypass']:
 			for ctype in self.ctypes:
 				self.saveConditioningRequest(ctype)
 
 	def saveConditioningRequest(self, ctype):
-			crequestdata = leginondata.ConditioningRequestData(session=self.session, type=ctype)
-			crequestdata.insert()
+		'''
+		Save timestamped conditioning request to database
+		'''
+		crequestdata = leginondata.ConditioningRequestData(session=self.session, type=ctype)
+		crequestdata.insert()
 
 	def queryConditionRequests(self):
+		'''
+		Get the most recent conditioning request from all ctypes
+		'''
 		self.requests = {}
 		for ctype in self.ctypes:
 			crequestquery = leginondata.ConditioningRequestData(session=self.session, type=ctype)
@@ -62,6 +79,9 @@ class Conditioner(node.Node):
 				self.requests[ctype] = crequests[0]
 
 	def queryConditioningDone(self, crequest):
+		'''
+		Get the most recent conditioning request that fixing was completed, i.e., not bypassed.
+		'''
 		cdonequery = leginondata.ConditioningDoneData(session=self.session, request=crequest)
 		done_conditions = cdonequery.query(results=1)
 		if done_conditions:
@@ -70,10 +90,16 @@ class Conditioner(node.Node):
 			return None
 
 	def saveConditioningDone(self, crequestdata):
+		'''
+		Record that a condition is fixed.
+		'''
 		conditiondonedata = leginondata.ConditioningDoneData(session=self.session, request=crequestdata)
 		conditiondonedata.insert(force=True)
 
 	def handleFixConditionEvent(self, evt):
+		'''
+		Handle FixConditionEvent with bypass option and exceptions.
+		'''
 		self.logger.info('handle condition fixing')
 		self.setStatus('processing')
 		if self.settings['bypass']:
@@ -91,6 +117,10 @@ class Conditioner(node.Node):
 		self.setStatus('idle')
 
 	def _handleFixConditionEvent(self, evt):
+		'''
+		Internal function to handl FixConditionEvent. Only fix condition
+		if "repeat time" settings has passed since last done.
+		'''
 		self.queryConditionRequests()
 		for ctype in self.requests:
 			crequest = self.requests[ctype]
@@ -105,21 +135,37 @@ class Conditioner(node.Node):
 			self.fixCondition(ctype)
 			self.saveConditioningDone(crequest)
 
+	def onPlayer(self, state):
+		'''
+		Print in logger the current status of the player buttons
+		'''
+		infostr = ''
+		if state == 'pause':
+			infostr += 'Pausing...'
+		elif state == 'stop':
+			infostr += 'Continue'
+		if infostr:
+			self.logger.info(infostr)
+		self.panel.playerEvent(state)
+
 	def fixCondition(self, condition_type):
+		'''
+		Handle fix condition request on a given condition type
+		'''
 		self.logger.info('handle fix condition request')
-		self.runBufferCycle()
+		self._fixCondition(condition_type)
 		self.logger.info('done %s' % (condition_type))
 
-	def runBufferCycle(self):
-		try:
-			self.logger.info('Running buffer cycle...')
-			self.instrument.tem.runBufferCycle()
-		except AttributeError:
-			self.logger.warning('No buffer cycle for this instrument')
-		except Exception, e:
-			self.logger.error('Run buffer cycle failed: %s' % e)
-
+	def _fixCondition(self, condition_type):
+		'''
+		Define what to do in the subclass to fix the condition of a given type
+		'''
+		self.logger.info('Base Class not really doing anything')
+	
 	def onTest(self):
+		'''
+		Run fixCondition once as a test
+		'''
 		for ctype in self.ctypes:
 			self.testprint('ctype %s' % ctype)
 			self.fixCondition(ctype)
@@ -145,7 +191,7 @@ class AutoNitrogenFiller(Conditioner):
 	def setCTypes(self):
 		self.addCType('autofiller')
 
-	def fixCondition(self, condition_type):
+	def _fixCondition(self, condition_type):
 		self.setStatus('processing')
 		self.logger.info('handle fix condition request')
 		self.monitorRefillWithIsBusy()
@@ -281,16 +327,6 @@ class AutoNitrogenFiller(Conditioner):
 					self.logger.debug('Wait for refilling loader at %.1f %%' % (new_loader_level,))
 				time.sleep(sleeptime)
 		return loader_filled
-
-	def onPlayer(self, state):
-		infostr = ''
-		if state == 'pause':
-			infostr += 'Pausing...'
-		elif state == 'stop':
-			infostr += 'Continue'
-		if infostr:
-			self.logger.info(infostr)
-		self.panel.playerEvent(state)
 
 	def getRefrigerantLevels(self):
 		loader_level = self.instrument.tem.getRefrigerantLevel(0)

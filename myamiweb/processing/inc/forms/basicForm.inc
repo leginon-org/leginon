@@ -18,6 +18,7 @@ class BasicForm
 	protected $defaultParamSets; 	// an array of parameter sets of type RefineFormParameters used for populating forms
 	protected $formParams; 			// the current user selected or modified parameter set
 	protected $pubKeyList;
+	protected $filesToCopy;			// an array of filenames that should be copied to remote rundir
 	
 	function __construct() 
 	{
@@ -56,11 +57,105 @@ class BasicForm
 		return $html;
 	}
 	
-	// Returns the HTML to display extra info at the top of the submited form
-	// This is just for extending classes to use. Override only if needed.
-	public function copyFilesToCluster()
+	// Override this function if your form needs to copy files to a remote server
+	// Files should be in the local rundir and will be copied to the remote run dir.
+	// This is called by copyFilesToCluster which is called by runAppionLoop.php.
+	public function setFilesToCopy()
 	{
-		return "";
+		$this->filesToCopy = '';
+	}
+	
+	// Copies any files to the cluster that may be needed. If the copy fails, returns a 
+	// command the user can run to execute the copy manually. If the copy is successful,
+	// this should return an empty string.
+	// This is called by runAppionLoop.php. Returns empty string if no files are set to copy.
+	public function copyFilesToCluster( $host, $directory )
+	{
+		$this->setFilesToCopy();
+		if ( !$this->filesToCopy ) return "";
+		
+		$copyNeededFlag		= false; // this becomes true if files actually need to be copied 
+		$printCommandFlag 	= false; // this becomes true if we are unable to execute the copy
+		$returnCmdString	= ""; // the commands the user needs to enter manually if auto copy fails
+		$clusterpath		= $directory;
+			
+		// if the user is not logged in, we cannot execute the copy for them
+		$user = $_SESSION['username'];
+		$pass = $_SESSION['password'];
+		if (!($user && $pass)) {
+			$printCommandFlag = true;
+		}
+	
+		$runname = $_POST['runname'];
+		$rundir = $_POST['outdir'].$runname;
+		$clusterpath = $clusterpath.$runname;
+		
+		// create appion directory & copy list of files to copy
+		// TODO: where exactly should files be copied to?
+		$mkdircmd = "mkdir -p $clusterpath;\n";
+		
+		if ( !$printCommandFlag ) {
+			$rvalue = exec_over_ssh($host, $user, $pass, $mkdircmd, false);
+			if ($rvalue === false ){
+				// if the mkdir failed, display the commands to the user to run manually
+				$printCommandFlag = true;
+				$errMsg = "Error: Could not create run directory on $host: ";
+				$errMsg .= pconnError();
+				$returnCmdString .= "<B>ERROR</B> $errMsg <br /><br />";
+				//echo "<hr>\n<font color='#CC3333' size='+1'>$errMsg</font>\n";
+			} else {
+				// TODO: log this to a file
+				//echo "<hr>\n<font color='#CC3333' size='+1'>Created run directory $clusterpath on $host.</font>\n";
+			}
+		}
+		
+		foreach ( $this->filesToCopy as $filepath ) {
+			if ( !$filename ) {
+				//echo "<hr>\n<font color='#CC3333' size='+1'>$filename not valid.</font>\n";
+				continue;
+			}
+			
+			// add the path to the current location of the file
+			$filepath = $rundir."/".$filename;
+			
+		    // set path to copy the file to
+		    $remoteFilePath = "$clusterpath/$filename";
+		    	    
+		    // copy the file to the cluster
+		    if ( $filepath != $remoteFilePath ) {
+		    	$copyNeededFlag = true;
+		    	$cpycmd .= " cp $filepath $remoteFilePath; <br />";
+		    	// if we have not had any errors above, try the copy
+		    	if ( !$printCommandFlag ) {
+		    		$rvalue = scp($host, $user, $pass, $filepath, $remoteFilePath);	
+					if (!$rvalue) {
+						// if there is an error with the copy, let the user know and display the manual commands
+						$printCommandFlag = true;
+						$errMsg = "Failed to copy file ($filepath) to $remoteFilePath on $host: ";
+						$errMsg .= pconnError();
+						$returnCmdString .= "<B>ERROR</B> $errMsg <br /><br />";
+						//echo "<hr>\n<font color='#CC3333' size='+1'>$errMsg</font>\n";
+					} else {
+						// TODO: log this to a file
+						//echo "<hr>\n<font color='#CC3333' size='+1'>Copied $filepath to $remoteFilePath on $host.</font>\n";
+					}
+		    	}
+		    } else {
+		    	// TODO: log this to a file
+				//echo "<hr>\n<font color='#CC3333' size='+1'>No need to copy file $filepath to $remoteFilePath.</font>\n";
+		    }
+		}	
+		
+		// Build the return string if needed
+		if ( $copyNeededFlag && $printCommandFlag ) {
+			$returnCmdString .= "<b>You MUST manually execute the following commands (or similar) prior to running the refinement command:</b>";
+			$returnCmdString .= "<br /><br />";
+			$returnCmdString .= $mkdircmd;
+			$returnCmdString .= "<br />";
+			$returnCmdString .= $cpycmd;
+		}
+		
+		return $returnCmdString;
 	}
 		
 	// Extending classes should override this function to return the appropriate

@@ -74,7 +74,6 @@ class TemplateCorrelationLoop(particleLoop2.ParticleLoop):
 			action="store_true", help="Use spectral correlation instead of normal correlation")
 		self.parser.add_option("--use-mirrors", dest="templatemirrors", default=False,
 			action="store_true", help="Use mirrors as additional templates")
-
 		return
 
 	##=======================
@@ -122,6 +121,13 @@ class TemplateCorrelationLoop(particleLoop2.ParticleLoop):
 				self.params['incrang'+str(i+1)]  = float(angs[2])
 				self.params['mirror'+str(i+1)]  = True
 			i+=1
+		### get number of processors:
+		nproc = apParam.getNumProcessors()
+		if not self.params['nproc']:
+			self.params['nproc'] = nproc
+		elif nproc < self.params['nproc']:
+			apDisplay.printWarning("Limiting number of processors to the %i that are available"%nproc)
+			self.params['nproc'] = nproc
 		return
 
 	##=======================

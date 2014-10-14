@@ -74,7 +74,7 @@ class RemoteJob(basicScript.BasicScript):
 		self.params['remoterundir'] = os.path.abspath( os.path.expanduser(self.params['remoterundir']) )
 		if self.params['rundir'] != self.params['remoterundir'] and not self.params['localhost']:
 			apDisplay.printError('local host not defined for result transfer')
-		self.params['nproc'] = self.params['rpn'] * self.params['nodes']
+		self.params['nproc'] = self.params['ppn'] * self.params['nodes']
 		self.checkPackageConflicts()
 		self.__convertListParams()
 

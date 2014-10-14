@@ -197,6 +197,9 @@ noderegistry.registerNodeClass(AlignmentManager,classtype)
 from conditioner import Conditioner
 noderegistry.registerNodeClass(Conditioner,classtype)
 
+from buffercycler import BufferCycler
+noderegistry.registerNodeClass(BufferCycler,classtype)
+
 from conditioner import AutoNitrogenFiller
 noderegistry.registerNodeClass(AutoNitrogenFiller,classtype)
 

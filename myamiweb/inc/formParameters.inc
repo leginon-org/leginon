@@ -274,8 +274,9 @@ class FormParameters
 	// that the checkbox has been checked by the user. 
 	// TODO: May want to clean up the hard coded 'on' value as it is referenced
 	// in basicForm.inc as well to indicate that a flag should be added to a command. 
-	public function insertCheckboxField( $name, $note='', $helpkey='' )
+	public function insertCheckboxField( $name, $note='', $helpkey='', $onchange=''  )
 	{
+
 		// if the parameter has been "hidden" just return an empty string.
 		if ( $this->params[$name]['hidden'] ) {
 			$html = "";
@@ -288,7 +289,8 @@ class FormParameters
 														$checked, 
 														$this->params[$name]['enable'], 
 														$note,
-														$helpkey );
+														$helpkey,
+														$onchange );
 		}
 
 		return $html;
@@ -358,7 +360,21 @@ class FormParameters
 		}
 
 		return $html;
-	}		
+	}	
+
+	// Generates <input type='HIDDEN' NAME='$name' value='$value'>\n";
+	public function insertHiddenField( $name )
+	{
+		// if the parameter has been "hidden" just return an empty string.
+		if ( $this->params[$name]['hidden'] ) {
+			$html = "";
+		} else {
+			$html = $this->formLib->insertHiddenField( $this->params[$name]['name'], 
+														$this->params[$name]['value'] );
+		}
+
+		return $html;
+	}
 	
 }
 

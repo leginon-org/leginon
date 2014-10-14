@@ -28,11 +28,14 @@ class DEProcessing(apDDprocess.DDFrameProcessing):
 	def getFrameNameFromNumber(self,frame_number):
 		return 'RawImage_%d.tif' % frame_number
 
+	def handleOldFrameOrientation(self):
+		return True, 2
+
 	def readFrameImage(self,frameimage_path,offset,crop_end,bin):
 		tif = tifffile.TIFFfile(frameimage_path)
 		a = tif.asarray()
 		a = self.modifyFrameImage(a,offset,crop_end,bin)
-		return a[:,::-1]
+		return a
 
 if __name__ == '__main__':
 	dd = DEProcessing()

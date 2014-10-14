@@ -418,13 +418,13 @@ class MosaicSectionFinder(mosaictargetfinder.MosaicClickTargetFinder):
 			self.logger.warning('need displayed atlas to calculate the spacing and angle')
 			return self.settings['raster spacing'],self.settings['raster angle']
 
-		tem = imagedata['scope']['tem']
-		cam = imagedata['camera']['ccdcamera']
 		ht = imagedata['scope']['high tension']
 
 		# transforming from target mag
 		targetpresetname = self.settings['raster preset']
 		targetpreset = self.presetsclient.getPresetByName(targetpresetname)
+		tem1 = targetpreset['tem']
+		cam1 = targetpreset['ccdcamera']
 		mag1 = targetpreset['magnification']
 		dim1 = targetpreset['dimension']['x']
 		bin1 = targetpreset['binning']['x']
@@ -432,11 +432,13 @@ class MosaicSectionFinder(mosaictargetfinder.MosaicClickTargetFinder):
 		p1 = (0,fulldim)
 
 		# transforming into mag of atlas
+		tem2 = imagedata['scope']['tem']
+		cam2 = imagedata['camera']['ccdcamera']
 		mag2 = imagedata['scope']['magnification']
 		bin2 = imagedata['camera']['binning']['x']
 
 		try:
-			p2 = self.calclients[self.settings['raster movetype']].pixelToPixel(tem, cam, ht, mag1, mag2, p1)
+			p2 = self.calclients[self.settings['raster movetype']].pixelToPixel(tem1, cam1, tem2,cam2, ht, mag1, mag2, p1)
 		except Exception, e:
 			self.logger.warning('Failed to calculate raster: %s' % e)
 

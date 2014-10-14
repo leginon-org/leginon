@@ -51,6 +51,13 @@ class RefineCTF(appionLoop2.AppionLoop):
 		self.parser.add_option("--refineIter", dest="refineIter", type="int", default=130,
 			help="maximum number of refinement interations")
 
+		self.parser.add_option("--maxAmpCon", dest="maxAmpCon", type="float", default=0.25,
+			help="maximum value allowed for amplitude contrast")
+
+		self.parser.add_option("--minAmpCon", dest="minAmpCon", type="float", default=0.01,
+			help="minimum value allowed for amplitude contrast")
+
+
 	#====================================
 	#====================================
 	def checkConflicts(self):
@@ -80,8 +87,9 @@ class RefineCTF(appionLoop2.AppionLoop):
 			os.mkdir(self.powerspecdir)
 		self.readFreqFile()
 		self.debug = False
-		self.maxAmpCon = 0.25
-
+		self.maxAmpCon = self.params['maxAmpCon']
+		self.minAmpCon = self.params['minAmpCon']
+		
 	#====================================
 	#====================================
 	def processImage(self, imgdata):
@@ -290,7 +298,7 @@ class RefineCTF(appionLoop2.AppionLoop):
 		if res5 is None:
 			res5 = 100
 
-		if (res8+res5) < self.bestres and 0.0 < self.ctfvalues['amplitude_contrast'] < self.maxAmpCon:
+		if (res8+res5) < self.bestres and self.minAmpCon < self.ctfvalues['amplitude_contrast'] < self.maxAmpCon:
 			apDisplay.printColor("Congrats! Saving best resolution values %.3e and %.2f"
 				%(defocus, self.ctfvalues['amplitude_contrast']), "green")
 			self.bestres = (res8+res5)
@@ -598,7 +606,7 @@ class RefineCTF(appionLoop2.AppionLoop):
 	#====================================
 	#====================================
 	def fixAmpContrast(self, defocus, raddata, PSDarray, lowerbound, upperbound):
-		if self.ctfvalues['amplitude_contrast'] > 0 and self.ctfvalues['amplitude_contrast'] < self.maxAmpCon:
+		if self.ctfvalues['amplitude_contrast'] > self.minAmpCon and self.ctfvalues['amplitude_contrast'] < self.maxAmpCon:
 			return defocus
 		bad = True
 		newdefocus = defocus
@@ -819,8 +827,8 @@ class RefineCTF(appionLoop2.AppionLoop):
 			self.ctfvalues['defocus1'] = self.ctfvalues['defocus']
 			self.ctfvalues['defocus2'] = self.ctfvalues['defocus']
 
-		if self.ctfvalues['amplitude_contrast'] < 0.0:
-			self.ctfvalues['amplitude_contrast'] = 0.0
+		if self.ctfvalues['amplitude_contrast'] < self.minAmpCon:
+			self.ctfvalues['amplitude_contrast'] = self.minAmpCon
 		if self.ctfvalues['amplitude_contrast'] > self.maxAmpCon:
 			self.ctfvalues['amplitude_contrast'] = self.maxAmpCon
 

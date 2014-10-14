@@ -1661,6 +1661,7 @@ class AcquisitionSettingsData(TargetWatcherSettingsData):
 	def typemap(cls):
 		return TargetWatcherSettingsData.typemap() + (
 			('pause time', float),
+			('first pause time', float),
 			('pause between time', float),
 			('move type', str),
 			('preset order', list),
@@ -2476,6 +2477,11 @@ class ConditionerSettingsData(SettingsData):
 		)
 	typemap = classmethod(typemap)
 
+class BufferCyclerSettingsData(ConditionerSettingsData):
+	def typemap(cls):
+		return ConditionerSettingsData.typemap()
+	typemap = classmethod(typemap)
+
 class AutoFillerSettingsData(ConditionerSettingsData):
 	def typemap(cls):
 		return ConditionerSettingsData.typemap() + (
@@ -2510,3 +2516,15 @@ class C2ApertureSizeData(InSessionData):
 			('size', int),
 		)
 	typemap = classmethod(typemap)
+
+class K2FrameDMVersionChangeData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('k2camera', InstrumentData),
+			('image', AcquisitionImageData),
+			('frame flip', bool),
+			('frame rotate', int),
+			('dm version', list),
+		)
+	typemap = classmethod(typemap)
+

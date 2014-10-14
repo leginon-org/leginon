@@ -39,6 +39,7 @@ class MagnificationsUninitialized(Exception):
 
 class Tecnai(tem.TEM):
 	name = 'Tecnai'
+	use_normalization = False
 	def __init__(self):
 		tem.TEM.__init__(self)
 		self.correctedstage = True
@@ -270,7 +271,6 @@ class Tecnai(tem.TEM):
 			pass
 		else:
 			raise ValueError
-		
 		setattr(self.tecnai.Illumination, self.intensity_prop, intensity)
 
 	def getDarkFieldMode(self):
@@ -531,13 +531,15 @@ class Tecnai(tem.TEM):
 		return float(self.tecnai.Projection.Defocus)
 	
 	def setDefocus(self, defocus, relative = 'absolute'):
+		old_defocus = self.tecnai.Projection.Defocus
 		if relative == 'relative':
-			defocus += self.tecnai.Projection.Defocus
+			defocus += old_defocus
 		elif relative == 'absolute':
 			pass
 		else:
 			raise ValueError
-		
+		# normalize by always sending Eucentric focus first
+		self.tecnai.Projection.Focus = 0.0
 		self.tecnai.Projection.Defocus = defocus
 	
 	def resetDefocus(self):
@@ -563,6 +565,30 @@ class Tecnai(tem.TEM):
 	def setMainScreenScale(self, mainscreenscale):
 		self.mainscreenscale = mainscreenscale
 
+	def normalizeProjectionForMagnificationChange(self, new_mag_index):
+		'''
+		Normalize objective and projector if submode indices are
+		not adjacent.  This is necessary because of a lack of feature
+		in the normalization options from TUI. Insert this before
+		new magnification is set.
+		'''
+		try:
+			# This assumes that we are still at the old mag.
+			old_submode_index = self.tecnai.Projection.SubMode
+		except:
+			raise ValueError('can not get projection submode')
+		self.setMagnificationIndex(new_mag_index)
+		new_submode_index = self.tecnai.Projection.SubMode
+		if abs(old_submode_index - new_submode_index) > 1:
+		#if True:
+			# normalizeLens function returns after it finishes
+			self.normalizeLens('allprojection')
+		else:
+			# mag settings returns before normalization initiated
+			# from TUI is finished
+			time.sleep(2)
+		return
+
 	def setMagnification(self, mag):
 		if not self.getMagnificationsInitialized():
 			raise MagnificationsUninitialized
@@ -579,7 +605,8 @@ class Tecnai(tem.TEM):
 			index = self.magnifications.index(mag)
 		except ValueError:
 			raise ValueError('invalid magnification')
-
+		if self.use_normalization:
+			self.normalizeProjectionForMagnificationChange(index)
 		self.setMagnificationIndex(index)
 		return
 
@@ -1224,6 +1251,7 @@ class Tecnai(tem.TEM):
 
 class Krios(Tecnai):
 	name = 'Krios'
+	use_normalization = True
 	def __init__(self):
 		Tecnai.__init__(self)
 		self.correctedstage = False
@@ -1237,3 +1265,4 @@ class Krios(Tecnai):
 
 class Talos(Tecnai):
 	name = 'Talos'
+	use_normalization = True

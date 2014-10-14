@@ -66,7 +66,7 @@ function runAppionLoop() {
 	/* *******************
 	 PART 2: Copy any needed files to the cluster
 	******************** */
-	$copyCommand = $form->copyFilesToCluster();
+	$copyCommand = $form->copyFilesToCluster($_POST['processinghost'],$_POST['remoteoutdir']);
 	
 	/* *******************************
 	PART 3: Create program command
@@ -78,6 +78,7 @@ function runAppionLoop() {
 	***************************** */
 	$headinfo = $form->showReference(); 
 	$headinfo.= $copyCommand;
+	$headinfo.= "<br />";
 	$jobType  = $form->getJobType();
 
 	// submit command

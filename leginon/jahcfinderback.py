@@ -373,6 +373,7 @@ class HoleFinder(object):
 			holes = []
 		elif extend == 'full':
 			best_lattice_points = best_lattice.raster(shape)
+			best_lattice_points = best_lattice.optimizeRaster(best_lattice_points,best_lattice.points)
 			holes = self.points_to_blobs(best_lattice_points)
 		elif extend == '3x3':
 			best_lattice_points = self.convolve3x3WithBlobPoints(points)

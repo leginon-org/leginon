@@ -14,6 +14,7 @@ from appionlib import appiondata
 from appionlib import apPeaks
 from appionlib import apParticle
 from appionlib import apDog
+from appionlib import apParam
 #legacy
 #import selexonFunctions  as sf1
 
@@ -42,6 +43,13 @@ class dogPicker(particleLoop2.ParticleLoop):
 			apDisplay.printError("too many slices defined by numslices, should be more like 2-6")
 		if self.params['sizerange'] is not None and self.params['sizerange'] >= 1.95*self.params['diam']:
 			apDisplay.printError("size range has be less than twice the diameter")
+		### get number of processors:
+		nproc = apParam.getNumProcessors()
+		if not self.params['nproc']:
+			self.params['nproc'] = nproc
+		elif nproc < self.params['nproc']:
+			apDisplay.printWarning("Limiting number of processors to the %i that are available"%nproc)
+			self.params['nproc'] = nproc
 		return
 
 	#================

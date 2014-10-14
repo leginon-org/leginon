@@ -109,6 +109,9 @@ class ClusterParamsForm extends BasicForm
 		
 		//--- Cluster Parameters
 		$html.= "<table border='0' cellpadding='4' cellspacing='4'>\n";
+		
+		// Insert Hidden Fields so they stick around after a reload
+		$html.= $params->insertHiddenField("localhost");
 
 		// row 1
 		// add cluster selection box

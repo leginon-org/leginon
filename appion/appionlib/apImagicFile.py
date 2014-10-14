@@ -518,10 +518,10 @@ def readSingleParticleFromStack(filename, partnum=1, boxsize=None, msg=True):
 	return partimg
 
 #===============
-def mergeStacks(stacklist, mergestack):
+def mergeStacks(stacklist, mergestack, msg=True):
 	### initialization
 	t0 = time.time()
-	apFile.removeStack(mergestack)
+	apFile.removeStack(mergestack, warn=msg)
 	root=os.path.splitext(mergestack)[0]
 	mergeheader = root+".hed"
 	mergedata   = root+".img"
@@ -535,7 +535,8 @@ def mergeStacks(stacklist, mergestack):
 		### size checks
 		npart = apFile.numImagesInStack(stackdatafile)
 		size = apFile.fileSize(stackdatafile)
-		apDisplay.printMsg("%d particles in %s (%s)"%(npart, stackdatafile, apDisplay.bytes(size)))
+		if msg is True:
+			apDisplay.printMsg("%d particles in %s (%s)"%(npart, stackdatafile, apDisplay.bytes(size)))
 		totalsize += size
 		numpart += npart
 
@@ -545,11 +546,13 @@ def mergeStacks(stacklist, mergestack):
 	fout.close()
 	if numpart < 1:
 		apDisplay.printError("found %d particles"%(numpart))
-	apDisplay.printMsg("found %d particles"%(numpart))
+	if msg is True:
+		apDisplay.printMsg("found %d particles"%(numpart))
 	finalsize = apFile.fileSize(mergedata)
 	if finalsize != totalsize:
 		apDisplay.printError("size mismatch %s vs. %s"%(apDisplay.bytes(finalsize), apDisplay.bytes(totalsize)))
-	apDisplay.printMsg("size match %s vs. %s"%(apDisplay.bytes(finalsize), apDisplay.bytes(totalsize)))
+	if msg is True:
+		apDisplay.printMsg("size match %s vs. %s"%(apDisplay.bytes(finalsize), apDisplay.bytes(totalsize)))
 
 	### merge header files
 	#apDisplay.printError("not finished")
@@ -561,7 +564,8 @@ def mergeStacks(stacklist, mergestack):
 		headfile = open(headerfilename, 'rb')
 		### size checks
 		size = apFile.fileSize(headerfilename)
-		apDisplay.printMsg("%s (%d kB)"%(headerfilename, size/1024))
+		if msg is True:
+			apDisplay.printMsg("%s (%d kB)"%(headerfilename, size/1024))
 		totalsize += size
 
 		#apDisplay.printMsg("%d\t%s"%(npart, stackfile))
@@ -601,12 +605,17 @@ def mergeStacks(stacklist, mergestack):
 			partnum += 1
 			i += 1
 	mergehead.close()
-	apDisplay.printMsg("wrote %d particles"%(numpart))
+	if msg is True:
+		apDisplay.printMsg("wrote %d particles to file %s"%(numpart, mergestack))
 	finalsize = apFile.fileSize(mergeheader)
 	if finalsize != totalsize:
-		apDisplay.printError("size mismatch %s vs. %s"%(apDisplay.bytes(finalsize), apDisplay.bytes(totalsize)))
-	apDisplay.printMsg("size match %s vs. %s"%(apDisplay.bytes(finalsize), apDisplay.bytes(totalsize)))
-	apDisplay.printMsg("finished stack merge in "+apDisplay.timeString(time.time()-t0))	
+		apDisplay.printError("size mismatch %s vs. %s"
+			%(apDisplay.bytes(finalsize), apDisplay.bytes(totalsize)))
+	if msg is True:
+		apDisplay.printMsg("size match %s vs. %s"
+			%(apDisplay.bytes(finalsize), apDisplay.bytes(totalsize)))
+		apDisplay.printMsg("finished stack merge of %s in %s"
+			%(mergestack, apDisplay.timeString(time.time()-t0)))	
 
 #===============	
 def checkImagic4DHeader(oldhedfile,machineonly=False):
@@ -891,5 +900,77 @@ class processStack(object):
 	def postLoop(self):
 		return
 
+#======================
+#======================
+#======================
+#======================
+class splitStackEvenOddClass(processStack):
+	#===============
+	def preLoop(self):
+		#self.oddPartList = 2*numpy.arange(self.numpart/2)+1
+		#self.evenPartList = 2*numpy.arange(self.numpart/2)+2
+		pass
 
+	#===============
+	def processStack(self, stackarray):
+		tempstackfile = "temp.%03d.hed"%(self.index)
+		self.stacksToMerge.append(tempstackfile)
+		#flipping so particles are unchanged
+		flippedStack = []
+		for partarray in stackarray:
+			flippedpartarray = numpy.flipud(partarray)
+			flippedpartarray = numpy.fliplr(flippedpartarray)
+			flippedStack.append(flippedpartarray)
+		apFile.removeStack(tempstackfile, warn=self.msg)
+		writeImagic(flippedStack, tempstackfile, msg=self.msg)
+		self.index += len(stackarray)
+		
+	#===============
+	def wrtieOddParticles(self, stackfile, outfile=None):
+		numpart = apFile.numImagesInStack(stackfile)
+		oddPartList = 2*numpy.arange(numpart/2)+1
+		self.stacksToMerge = []
+		if outfile is None:
+			root=os.path.splitext(stackfile)[0]
+			outfile = root+".odd.hed"			
+		self.start(stackfile, partlist=oddPartList)
+		mergeStacks(self.stacksToMerge, outfile, self.msg)
+		for tempstackfile in self.stacksToMerge:
+			apFile.removeStack(tempstackfile, warn=self.msg)
+		return outfile	
+		
+	#===============
+	def wrtieEvenParticles(self, stackfile, outfile=None):
+		numpart = apFile.numImagesInStack(stackfile)
+		evenPartList = 2*numpy.arange(numpart/2)+2
+		self.stacksToMerge = []
+		if outfile is None:
+			root=os.path.splitext(stackfile)[0]
+			outfile = root+".even.hed"
+		self.start(stackfile, partlist=evenPartList)
+		mergeStacks(self.stacksToMerge, outfile, self.msg)
+		for tempstackfile in self.stacksToMerge:
+			apFile.removeStack(tempstackfile, warn=self.msg)
+		return outfile
+		
+	#===============
+	def processParticle(self, partarray):
+		sys.exit(1)
 
+#======================
+def splitStackEvenOdd(stackfile, rundir=None, msg=False):
+	if rundir is not None:
+		basename = os.path.basename(stackfile)
+		root = os.path.splitext(basename)[0]
+		oddfile = os.path.join(rundir, root+".odd.hed")
+		evenfile = os.path.join(rundir, root+".even.hed")
+	else:
+		oddfile = None
+		evenfile = None		
+	splitClass = splitStackEvenOddClass(msg)
+	oddfile = splitClass.wrtieOddParticles(stackfile, oddfile)
+	evenfile = splitClass.wrtieEvenParticles(stackfile, evenfile)
+	if msg is True:
+		apDisplay.printMsg("Created even/odd split stacks %s and %s from original stack %s"
+			%(oddfile, evenfile, stackfile))
+	return oddfile, evenfile

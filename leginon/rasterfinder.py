@@ -87,13 +87,13 @@ class RasterFinder(targetfinder.TargetFinder):
 			return None, None
 		imagedata = self.currentimagedata
 
-		tem = imagedata['scope']['tem']
-		cam = imagedata['camera']['ccdcamera']
 		ht = imagedata['scope']['high tension']
 
 		# transforming from target mag
 		targetpresetname = self.settings['raster preset']
 		targetpreset = self.presetsclient.getPresetByName(targetpresetname)
+		tem1 = targetpreset['tem']
+		cam1 = targetpreset['ccdcamera']
 		mag1 = targetpreset['magnification']
 		dim1 = targetpreset['dimension']['x']
 		bin1 = targetpreset['binning']['x']
@@ -101,11 +101,17 @@ class RasterFinder(targetfinder.TargetFinder):
 		p1 = (0,fulldim)
 
 		# transforming into mag of atlas
+		tem2 = imagedata['scope']['tem']
+		cam2 = imagedata['camera']['ccdcamera']
 		mag2 = imagedata['scope']['magnification']
 		bin2 = imagedata['camera']['binning']['x']
 
 		movetype = self.settings['raster movetype']
-		p2 = self.calclients[movetype].pixelToPixel(tem, cam, ht, mag1, mag2, p1)
+		try:
+			p2 = self.calclients[movetype].pixelToPixel(tem1, cam1, tem2, cam2, ht, mag1, mag2, p1)
+		except RuntimeError, e:
+					self.logger.exception('Raster conversion failed: %s' % e)
+					return self.settings['raster spacing'], self.settings['raster angle']
 		# bin
 		p2 = p2[0]/float(bin2), p2[1]/float(bin2)
 		# overlap

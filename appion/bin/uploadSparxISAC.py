@@ -9,6 +9,7 @@ import numpy
 import pprint
 import random
 import cPickle
+import re
 from appionlib import apFile
 from appionlib import apEMAN2
 from appionlib import apStack
@@ -42,6 +43,8 @@ class parseISAC(object):
 	def getGenerationFiles(self):
 		if self.files is None:
 			files = glob.glob("class_averages_generation_*.hdf")
+			if len(files) == 0:
+				apDisplay.printWarning("Could not find class_averages_generation_*.hdf files.")
 			self.files = sorted(files, key=lambda a: self.generationFromFile(a))
 		return self.files
 
@@ -413,11 +416,12 @@ class UploadISAC(appionScript.AppionScript):
 		
 	#=====================
 	def setRunDir(self):
-		if self.params["jobid"] is not None:
-			jobdata = appiondata.ApSparxISACJobData.direct_query(self.params["jobid"])
-			self.params['rundir'] = jobdata['path']['path']
-		else:
-			self.params['rundir'] = os.path.abspath(".")
+		if self.params['rundir'] is None:
+			if self.params["jobid"] is not None:
+				jobdata = appiondata.ApSparxISACJobData.direct_query(self.params["jobid"])
+				self.params['rundir'] = jobdata['path']['path']
+			else:
+				self.params['rundir'] = os.path.abspath(".")
 
 	#=====================
 	def getISACJobData(self, runparams):

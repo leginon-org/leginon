@@ -68,13 +68,14 @@ def call(func, timeout=None, *args, **kwargs):
 
 #### Tests ########
 if __name__ == '__main__':
-	def test_function(t=None):
-		print 'This function returns after  seconds' % (t,)
-		while t is None:
-			print time.time()
-			time.sleep(1)
+	def test_function(t=0):
+		print 'This function returns after %.2f seconds' % (t,)
 		time.sleep(t)
 		return 'DONE'
 
-	ret = call(test_function, timeout=2, t=None)
+	import sys
+	ftime = 0
+	if len(sys.argv) > 1:
+		ftime = float(sys.argv[1])
+	ret = call(test_function, timeout=2, t=ftime)
 	print 'RET', ret

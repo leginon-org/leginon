@@ -44,6 +44,16 @@ mrc2numpy = {
 	6: numpy.uint16,    # according to UCSF
 }
 
+# mapping of image/volume type
+mrcmaptype = {
+	0: 'real space',
+	1: 'real space',
+	2: 'real space',
+	3: 'transform',
+	4: 'transform',
+	6: 'real space',
+}
+
 ## mapping of numpy type to MRC mode
 numpy2mrc = {
 	## convert these to int8

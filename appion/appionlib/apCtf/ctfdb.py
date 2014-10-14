@@ -118,6 +118,8 @@ def getCtfValueForCtfRunId(imgdata, ctfrunid=None, msg=False):
 #=====================
 def calculateConfidenceScore(ctfdata, ctfavg=True):
 	# get ctf confidence values
+	if ctfdata is None:
+		return None
 
 	conf1 = ctfdata['confidence']
 	conf2 = ctfdata['confidence_d']

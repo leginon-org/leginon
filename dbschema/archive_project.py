@@ -3,6 +3,7 @@ import sinedon
 from sinedon import dbconfig
 from leginon import leginondata
 from leginon import projectdata
+from leginon import correctorclient
 import time
 
 # set direct_query values
@@ -113,12 +114,28 @@ class Archiver(object):
 				break
 		return brightdata
 
+	def makequery(self,classname,kwargs):
+		'''
+		Make SQL query of leginondata from class name and keyword arguments.
+		'''
+		q = getattr(leginondata,classname)()
+		for key in kwargs.keys():
+			# leginondata keys never contains '_'
+			realkey = key.replace('_',' ')
+			q[realkey] = kwargs[key]
+		return q
+
+	def makeTimeStringFromTimeStamp(self,timestamp):
+		t = timestamp
+		return '%04d%02d%02d%02d%02d%02d' % (t.year,t.month,t.day,t.hour,t.minute,t.second)
+
 class SessionArchiver(Archiver):
 	'''
 	Archive a Session identified by session name
 	'''
 	def __init__(self,sessionname):
 		super(SessionArchiver,self).__init__()
+		self.sessionname = sessionname
 		self.setSourceSession(sessionname)
 		self.setDestinationSession(sessionname)
 
@@ -128,7 +145,7 @@ class SessionArchiver(Archiver):
 		images = leginondata.AcquisitionImageData(session=source_session).query()
 		return bool(images)
 
-	def researchCalibration(self, q):
+	def researchCalibration(self, classname, **kwargs):
 		'''
 		Find calibration that may be used by the source session.
 		This could be those in the session or the last one in a previous
@@ -136,71 +153,55 @@ class SessionArchiver(Archiver):
 		'''
 		source_session = self.getSourceSession()
 		sinedon.setConfig('leginondata', db=self.source_dbname)
-		r = q.query()
-		r =self.keepOnesInAndOneBeforeSession(r)
-		r.reverse()
-		return r
+		# search in the session
+		q = self.makequery(classname,kwargs)
+		q['session'] = source_session
+		r1 = q.query()
+		# seartch for one before session started
+		q = self.makequery(classname,kwargs)
+		t = source_session.timestamp
+		sessiontime = self.makeTimeStringFromTimeStamp(t)
+		r2 = q.query(results=1,timelimit='19000000000000\t%s' % (sessiontime,))
+		if r2:
+			r1.append(r2[0])
+		r1.reverse()
+		return r1
 
-	def researchSettings(self, q):
+	def researchSettings(self, classname,**kwargs):
 		'''
 		Find Legion Settings that may be used by the source session.
 		This could be those in the session or the last one in a previous
 		session by the user.
 		'''
 		source_session = self.getSourceSession()
-		sinedon.setConfig('leginondata', db=self.source_dbname)
-		r = q.query()
-		r =self.keepOnesInAndOneBeforeByUser(r)
-		r.reverse()
-		return r
-
-	def keepOnesInAndOneBeforeSession(self,datalist):
-		'''
-		Keep data that may affect what is used in the session
-		when the data (i.e., Calibrations) is loaded by querying
-		the most recent entry.
-		'''
-		source_session = self.getSourceSession()
-		sinedon.setConfig('leginondata', db=self.source_dbname)
-		newlist = []
-		for data in datalist:
-			if 'session' in data.keys() and data['session'].dbid == source_session.dbid:
-				newlist.append(data)
-			else:
-				if data.timestamp < source_session.timestamp:
-					newlist.append(data)
-					break
-		return newlist
-
-	def keepOnesInAndOneBeforeByUser(self, datalist):
-		'''
-		Keep data that may affect what is used in the session
-		when the data (i.e., Calibrations) is loaded by querying
-		the most recent entry preferably from the same user.
-		'''
-		source_session = self.getSourceSession()
-		sinedon.setConfig('leginondata', db=self.source_dbname)
-		newlist = []
+		t = source_session.timestamp
+		sessiontime = self.makeTimeStringFromTimeStamp(t)
+		# search in the session
+		q = self.makequery(classname,kwargs)
+		q['session'] = source_session
+		r1 = q.query()
+		# search by user
 		found_by_user = False
-		for data in datalist:
-			if 'session' in data.keys():
-				if data['session'].dbid == source_session.dbid:
-					newlist.append(data)
-				else:
-					if data.timestamp < source_session.timestamp and data['session']['user'].dbid == source_session['user'].dbid:
-						newlist.append(data)
-						found_by_user = True
-						break
-			else:
-				print "Error: not an insession class"
+		# query session again since for some reason it is mapped to destination
+		source_session = self.getSourceSession()
+		if source_session['user'] and source_session.dbid:
+			sessionq = leginondata.SessionData(user=source_session['user'])
+			q = self.makequery(classname,kwargs)
+			q['session'] = sessionq
+			r2 = q.query(results=1,timelimit='19000000000000\t%s' % (sessiontime,))
+			if r2:
+				r1.append(r2[0])
+				found_by_user = True
+		# search by isdefault
 		if found_by_user == False:
-			for data in datalist:
-				if 'session' in data.keys():
-					if data.timestamp < source_session.timestamp and data['session']['user']['username'] == 'administrator':
-						self.replaceItem(data,'isdefault',False)
-						newlist.append(data)
-						break
-		return newlist
+			q = self.makequery(classname,kwargs)
+			q['isdefault'] = True
+			r2 = q.query(results=1,timelimit='19000000000000\tsessiontime')
+			if r2:
+				r1.append(r2[0])
+
+		r1.reverse()
+		return r1
 
 	def setSourceSession(self, sessionname):
 		sinedon.setConfig('leginondata', db=self.source_dbname)
@@ -208,6 +209,12 @@ class SessionArchiver(Archiver):
 		self.source_session = self.research(q,most_recent=True)
 
 	def getSourceSession(self):
+		'''
+		Get Source Session data reference.
+		'''
+		#This redo the query since the reference often get mapped to
+		#the destination database for unknown reason after some queries.
+		self.setSourceSession(self.sessionname)
 		return self.source_session
 
 	def setDestinationSession(self, sessionname):
@@ -221,6 +228,11 @@ class SessionArchiver(Archiver):
 		self.reset()
 
 	def getDestinationSession(self):
+		'''
+		Get Destination Session data reference.
+		'''
+		# Redo query for the same reason as in getSourceSession
+		self.setDestinationSession(self.sessionname)
 		return self.destination_session
 
 	def importSession(self, comment=''):
@@ -269,42 +281,58 @@ class SessionArchiver(Archiver):
 		return source_cameradata, source_temdata, high_tension
 
 	def importGainReferences(self):
+		print "Importing GainReferences...."
 		q = leginondata.AcquisitionImageData(session=self.getSourceSession())
 		images = self.research(q,False)
+		c_client = correctorclient.CorrectorClient()
+		norm_ids = []
 		for image in images:
-			if image['norm'] and image['dark']:
-				image['norm'].insert(archive=True)
-				image['dark'].insert(archive=True)
+			if image['norm'] and image['norm'].dbid not in norm_ids:
+				norm_ids.append(image['norm'].dbid)
+				# also archive alternative channel
+				altnorm = c_client.getAlternativeChannelNorm(image['norm'])
+				if altnorm and altnorm.dbid not in norm_ids:
+					norm_ids.append(altnorm.dbid)
+		# ascending sort
+		norm_ids.sort()
+		norms = []
+		for dbid in norm_ids:
+			norms.append(leginondata.NormImageData.direct_query(dbid))
+		sinedon.setConfig('leginondata', db=self.destination_dbname)
+		for norm in norms:
+			if norm:
+				norm.insert(archive=True)
+				if norm['dark']:
+					norm['dark'].insert(archive=True)
 
 	def importCalibrations(self, source_cam, source_tem,high_tension):
 		print "Importing calibrations...."
+
+		simumags = [50,100,500,1000,5000,25000,50000]
+		matrixtypes = ('image shift','stage position','defocus','stigx','stigy','beam shift','beam-tilt coma','image-shift coma')
 		sinedon.setConfig('leginondata', db=self.source_dbname)
+
 		#magnifications
-		q = leginondata.MagnificationsData(instrument=source_tem)
-		mags = self.researchCalibration(q)
+		# magnifications is not insession data
+		mags = leginondata.MagnificationsData(instrument=source_tem).query(results=1)
 		if mags:
 			magnifications = mags[0]['magnifications']
 		else:
 			# simulator magnifications
-			magnifications=[50,100,500,1000,5000,25000,50000]
+			magnifications = simumags
 
 		#camera sensitivity calibrations
-		q = leginondata.CameraSensitivityCalibrationData(tem=source_tem,ccdcamera=source_cam)
-		q['high tension'] = high_tension
-		senses = self.researchCalibration(q)
+		senses = self.researchCalibration('CameraSensitivityCalibrationData',tem=source_tem,ccdcamera=source_cam,high_tension=high_tension)
 
 		#camera sensitivity calibrations
 		beamsizes = []
 		for probe in ('micro','nano'):
-			q = leginondata.BeamSizeCalibrationData(tem=source_tem,ccdcamera=source_cam)
-			q['probe mode'] = probe
-			beamsizes.extend(self.researchCalibration(q))
+			beamsizes.extend(self.researchCalibration('BeamSizeCalibrationData',tem=source_tem,ccdcamera=source_cam,probe_mode=probe))
 
 		#Modeled Stage calibrations
 		model = {}
 		for axis in ('x','y'):
-			q = leginondata.StageModelCalibrationData(tem=source_tem,ccdcamera=source_cam,axis=axis)
-			model[axis] = self.researchCalibration(q)
+			model[axis] = self.researchCalibration('StageModelCalibrationData',tem=source_tem,ccdcamera=source_cam,axis=axis)
 
 		pixel = {}
 		matrix = {}
@@ -314,41 +342,30 @@ class SessionArchiver(Archiver):
 		for mag in magnifications:
 			#pixelsize calibrations
 			q = leginondata.PixelSizeCalibrationData(tem=source_tem,ccdcamera=source_cam,magnification=mag)
-			pixel[mag] = self.researchCalibration(q)
+			pixel[mag] = self.researchCalibration('PixelSizeCalibrationData',tem=source_tem,ccdcamera=source_cam,magnification=mag)
 
 			#matrix calibrations
 			matrix[mag] = {}
-			for matrixtype in ('image shift','stage position','defocus','stigx','stigy','beam shift','beam-tilt coma','image-shift coma'):
-				q = leginondata.MatrixCalibrationData(tem=source_tem,ccdcamera=source_cam,magnification=mag,type=matrixtype)
-				q['high tension'] = high_tension
-				matrix[mag][matrixtype] = self.researchCalibration(q)
+			for matrixtype in matrixtypes:
+				matrix[mag][matrixtype] = self.researchCalibration('MatrixCalibrationData',tem=source_tem,ccdcamera=source_cam,magnification=mag,type=matrixtype,high_tension=high_tension)
 
 			#Modeled Mag Stage calibrations
 			modelmag[mag]={}
 			for axis in ('x','y'):
-				q = leginondata.StageModelMagCalibrationData(tem=source_tem,ccdcamera=source_cam,magnification=mag,axis=axis)
-				q['high tension'] = high_tension
-				modelmag[mag][axis] = self.researchCalibration(q)
+				modelmag[mag][axis] = self.researchCalibration('StageModelMagCalibrationData',tem=source_tem,ccdcamera=source_cam,magnification=mag,axis=axis,high_tension=high_tension)
 
 			#eucenter focus calibrations
 			ucenter[mag]={}
-			q = leginondata.EucentricFocusData(tem=source_tem,magnification=mag)
-			ucenter[mag] = self.researchCalibration(q)
+			ucenter[mag] = self.researchCalibration('EucentricFocusData',tem=source_tem,magnification=mag)
 
 			#eucenter focus calibrations
 			rcenter[mag]={}
-			q = leginondata.RotationCenterData(tem=source_tem,magnification=mag)
-			rcenter[mag] = self.researchCalibration(q)
+			rcenter[mag] = self.researchCalibration('RotationCenterData',tem=source_tem,magnification=mag)
 
 		sinedon.setConfig('leginondata', db=self.destination_dbname)
 		#magnifications
-		if mags:
-			for m in mags:
-				m.insert(archive=True)
-		else:
-			# simulator magnifications
-			magdata=leginondata.MagnificationsData()
-			magdata['magnifications']=[50,100,500,1000,5000,25000,50000]
+		for m in mags:
+			m.insert(archive=True)
 		#camera sensitivity calibrations
 		for sense in senses:
 			sense.insert(archive=True)
@@ -367,7 +384,7 @@ class SessionArchiver(Archiver):
 				for p in pixel[mag]:
 					p.insert(archive=True)
 			#matrix calibrations
-			for matrixtype in ('image shift','stage position','defocus','stigx','stigy','beam shift','beam-tilt coma','image-shift coma'):
+			for matrixtype in matrixtypes:
 				if matrix[mag][matrixtype]:
 					for m in matrix[mag][matrixtype]:
 						m.insert(archive=True)
@@ -490,6 +507,7 @@ class SessionArchiver(Archiver):
 		This is needed for older data since BrightImageData was
 		not linked to AcquisitionImages previously.
 		'''
+		print "Importing old BrightImages...."
 		destination_session = self.getDestinationSession()
 		sinedon.setConfig('leginondata', db=self.destination_dbname)
 		q = leginondata.NormImageData(session=destination_session)
@@ -538,6 +556,7 @@ class SessionArchiver(Archiver):
 				'IntensityCalibrator':None,
 				'AutoNitrogenFiller':'AutoFillerSettingsData',
 				'EM':None,
+				'FileNames':'ImageProcessorSettingsData',
 		}
 		for classname in allalias.keys():
 			settingsname = classname+'SettingsData'
@@ -549,8 +568,7 @@ class SessionArchiver(Archiver):
 				print 'importing %s Settings....' % (classname,)
 				for node_name in (allalias[classname]):
 					try:
-						q = getattr(leginondata,settingsname)(name=node_name)
-						results = self.researchSettings(q)
+						results = self.researchSettings(settingsname,name=node_name)
 					except:
 						raise
 						print 'ERROR: %s class node %s settings query failed' % (classname,node_name)
@@ -580,17 +598,13 @@ class SessionArchiver(Archiver):
 					allalias[r['class string']] = []
 				allalias[r['class string']].append(r['alias'])
 		# import settings
-		# for some reason the session is pointed to destination after this if not remapped
-		source_session = self.getSourceSession()
 
 		self.importSettingsByClassAndAlias(allalias)
 
 		print 'importing Focus Sequence Settings....'
 		sequence_names = []
 		for node_name in (allalias['Focuser']):
-			q = leginondata.FocusSequenceData()
-			q['node name'] = node_name
-			results = self.researchSettings(q)
+			results = self.researchSettings('FocusSequenceData',node_name=node_name)
 			self.publish(results)
 			for r in results:
 				sequence = r['sequence']
@@ -599,9 +613,7 @@ class SessionArchiver(Archiver):
 						sequence_names.append(s)
 		for node_name in (allalias['Focuser']):
 			for seq_name in sequence_names:
-				q = leginondata.FocusSettingData(name=seq_name)
-				q['node name'] = node_name
-				results = self.researchSettings(q)
+				results = self.researchSettings('FocusSettingData',node_name=node_name,name=seq_name)
 				self.publish(results)
 
 	def importViewerImageStatus(self):
@@ -673,8 +685,8 @@ class SessionArchiver(Archiver):
 				self.runStep1()
 			if self.isStatusGood():
 				self.runStep2()
-			if self.isStatusGood():
-				self.runStep3()
+				if self.isStatusGood():
+					self.runStep3()
 		self.reset()
 		print ''
 
@@ -687,6 +699,7 @@ def archiveProject(projectid):
 	source_sessions = projectdata.projectexperiments(project=p).query()
 	session_names = map((lambda x:x['session']['name']),source_sessions)
 	session_names.reverse()  #oldest first
+	print session_names
 	for session_name in session_names:		
 		app = SessionArchiver(session_name)
 		app.run()
