@@ -167,7 +167,6 @@ class GatanSocket(object):
 		script = 'if(DoesFunctionExist("%s")) Exit(1.0) else Exit(-1.0)'
 		script %= name
 		result = self.ExecuteGetDoubleScript(script)
-		print name, result
 		return result > 0.0
 
 	def connect(self):
