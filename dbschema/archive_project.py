@@ -3,6 +3,7 @@ import sinedon
 from sinedon import dbconfig
 from leginon import leginondata
 from leginon import projectdata
+from leginon import correctorclient
 import time
 
 # set direct_query values
@@ -283,12 +284,26 @@ class SessionArchiver(Archiver):
 		print "Importing GainReferences...."
 		q = leginondata.AcquisitionImageData(session=self.getSourceSession())
 		images = self.research(q,False)
-
-		sinedon.setConfig('leginondata', db=self.destination_dbname)
+		c_client = correctorclient.CorrectorClient()
+		norm_ids = []
 		for image in images:
-			if image['norm'] and image['dark']:
-				image['norm'].insert(archive=True)
-				image['dark'].insert(archive=True)
+			if image['norm'] and image['norm'].dbid not in norm_ids:
+				norm_ids.append(image['norm'].dbid)
+				# also archive alternative channel
+				altnorm = c_client.getAlternativeChannelNorm(image['norm'])
+				if altnorm and altnorm.dbid not in norm_ids:
+					norm_ids.append(altnorm.dbid)
+		# ascending sort
+		norm_ids.sort()
+		norms = []
+		for dbid in norm_ids:
+			norms.append(leginondata.NormImageData.direct_query(dbid))
+		sinedon.setConfig('leginondata', db=self.destination_dbname)
+		for norm in norms:
+			if norm:
+				norm.insert(archive=True)
+				if norm['dark']:
+					norm['dark'].insert(archive=True)
 
 	def importCalibrations(self, source_cam, source_tem,high_tension):
 		print "Importing calibrations...."
