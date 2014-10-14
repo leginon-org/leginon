@@ -148,19 +148,26 @@ class GatanSocket(object):
 			('IFCGetSlitWidth', 'GetEnergyFilterWidth'),
 			('IFCSetSlitWidth', 'SetEnergyFilterWidth'),
 			('IFCDoAlignZeroLoss', 'AlignEnergyFilterZeroLossPeak'),
+			('IFGetSlitIn', 'GetEnergyFilter'),
+			('IFSetSlitIn', 'SetEnergyFilter'),
+			('IFGetSlitWidth', 'GetEnergyFilterWidth'),
+			('IFSetSlitWidth', 'SetEnergyFilterWidth'),
+			('GT_CenterZLP', 'AlignEnergyFilterZeroLossPeak'),
 		]
 		self.filter_functions = {}
 		for name, method_name in self.script_functions:
 			if self.hasScriptFunction(name):
 				self.filter_functions[method_name] = name
-			else:
-				pass
-				#self.unsupported.append(method_name)
+		if 'SetEnergeFilter' in self.filter_functions.keys() and self.filter_functions['SetEnergyFilter'] == 'IFSetSlitIn':
+			self.wait_for_filter = '; IFWaitForFilter()'
+		else:
+			self.wait_for_filter = ''
 
 	def hasScriptFunction(self, name):
 		script = 'if(DoesFunctionExist("%s")) Exit(1.0) else Exit(-1.0)'
 		script %= name
 		result = self.ExecuteGetDoubleScript(script)
+		print name, result
 		return result > 0.0
 
 	def connect(self):
@@ -322,7 +329,7 @@ class GatanSocket(object):
 			i = 1
 		else:
 			i = 0
-		script = 'if(%s(%d)) Exit(1.0) else Exit(-1.0)' % (self.filter_functions['SetEnergyFilter'], i)
+		script = '%s(%d) %s' % (self.filter_functions['SetEnergyFilter'], i, self.wait_for_filter)
 		return self.ExecuteSendScript(script)
 
 	def GetEnergyFilterWidth(self):
@@ -338,7 +345,7 @@ class GatanSocket(object):
 		return self.ExecuteSendScript(script)
 
 	def AlignEnergyFilterZeroLossPeak(self):
-		script = 'if(%s()) Exit(1.0) else Exit(-1.0)' % (self.filter_functions['AlignEnergyFilterZeroLossPeak'],)
+		script = 'if(%s()) (%s; Exit(1.0)} else Exit(-1.0)' % (self.filter_functions['AlignEnergyFilterZeroLossPeak'], self.wait_for_filter)
 		return self.ExecuteGetDoubleScript(script)
 
 	@logwrap
