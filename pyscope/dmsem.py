@@ -301,6 +301,7 @@ class DMSEM(ccdcamera.CCDCamera):
 		Return True if energy filter is available through this DM
 		'''
 		for method_name in self.filter_method_names:
+			method_name = method_name[0].upper() + method_name[1:]
 			if method_name not in self.camera.filter_functions.keys():
 				return False
 		return True
