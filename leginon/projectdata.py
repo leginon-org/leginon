@@ -69,3 +69,10 @@ class userdetails(Data):
 		)
 	typemap = classmethod(typemap)
 
+class shareexperiments(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('user', leginon.leginondata.UserData),
+			('experiment', leginon.leginondata.SessionData),
+		)
+	typemap = classmethod(typemap)
