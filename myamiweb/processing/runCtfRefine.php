@@ -116,10 +116,10 @@ function createForm($extra=false) {
 	echo "<input type='text' name='numRefineIter' value='$numRefineIter' size='4'><br/>\n";
 	echo "<br/><br/>\n";
 
-	echo "Allowed amplitude contrast range: ";
-	echo "<input type='text' name='minAmpCon' value='$minAmpCon' size='6'><br/>\n";
+	echo "Allowed amplitude contrast range:<br/>";
+	echo "<input type='text' name='minAmpCon' value='$minAmpCon' size='6'>\n";
 	echo " -- ";
-	echo "<input type='text' name='maxAmpCon' value='$maxAmpCon' size='6'><br/>\n";
+	echo "<input type='text' name='maxAmpCon' value='$maxAmpCon' size='6'>\n";
 
 	echo "<br/><br/>\n";
 
@@ -220,8 +220,8 @@ function runProgram() {
 
 	if (is_numeric($maxAmpCon) && is_numeric($minAmpCon) && $minAmpCon == $maxAmpCon) {
 		// values are too close give it some range
-		$minAmpCon -= 0.01;
-		$maxAmpCon += 0.01;
+		$minAmpCon -= 0.001;
+		$maxAmpCon += 0.001;
 	}
 	
 	/* *******************
