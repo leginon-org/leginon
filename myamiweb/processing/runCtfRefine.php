@@ -87,6 +87,9 @@ function createForm($extra=false) {
 
 	$reprocess = ($_POST['reprocess']) ? $_POST['reprocess'] : 10;
 	$numRefineIter = ($_POST['numRefineIter']) ? $_POST['numRefineIter'] : 100;
+	$maxAmpCon = ($_POST['maxAmpCon']) ? $_POST['maxAmpCon'] : 0.25;
+	$minAmpCon = ($_POST['minAmpCon']) ? $_POST['minAmpCon'] : 0.01;
+
 	$reslimit = ($_POST['reslimit']) ? $_POST['reslimit'] : ceil($nyquistlimit*1.5);
 	if ($reslimit < $nyquistlimit) {
 		$reslimit = ceil($nyquistlimit*1.5);
@@ -112,6 +115,14 @@ function createForm($extra=false) {
 	echo "Number of Refinement Iterations: ";
 	echo "<input type='text' name='numRefineIter' value='$numRefineIter' size='4'><br/>\n";
 	echo "<br/><br/>\n";
+
+	echo "Allowed amplitude contrast range: ";
+	echo "<input type='text' name='minAmpCon' value='$minAmpCon' size='6'><br/>\n";
+	echo " -- ";
+	echo "<input type='text' name='maxAmpCon' value='$maxAmpCon' size='6'><br/>\n";
+
+	echo "<br/><br/>\n";
+
 
 	echo "<INPUT TYPE='checkbox' NAME='confcheck' onclick='enableconf(this)' $confcheck >\n";
 	echo "Reprocess Above Resolution Value<br />\n";
@@ -156,6 +167,9 @@ function runProgram() {
 
 	$reslimit=trim($_POST['reslimit']);
 	$numRefineIter=trim($_POST['numRefineIter']);
+	$maxAmpCon=trim($_POST['maxAmpCon']);
+	$minAmpCon=trim($_POST['minAmpCon']);
+	
 	$reprocess=trim($_POST['reprocess']);
 	
 	/* *******************
@@ -188,6 +202,28 @@ function runProgram() {
 		exit;
 	}
 
+	if ($maxAmpCon && !is_numeric($maxAmpCon)) {
+		createForm("Please provide a valid amplitude contrast value".$maxAmpCon);
+		exit;
+	}
+
+	if ($minAmpCon && !is_numeric($minAmpCon)) {
+		createForm("Please provide a valid amplitude contrast value".$minAmpCon);
+		exit;
+	}
+
+	if (is_numeric($maxAmpCon) && is_numeric($minAmpCon) && $minAmpCon > $maxAmpCon) {
+		createForm("Please provide a valid amplitude contrast value, "
+			."minimum value must be less than maximum value");
+		exit;
+	}
+
+	if (is_numeric($maxAmpCon) && is_numeric($minAmpCon) && $minAmpCon == $maxAmpCon) {
+		// values are too close give it some range
+		$minAmpCon -= 0.01;
+		$maxAmpCon += 0.01;
+	}
+	
 	/* *******************
 	PART 3: Create program command
 	******************** */
@@ -200,10 +236,13 @@ function runProgram() {
 	}
 	$command .= $apcommand;
 	$command .= "--reslimit=$reslimit ";
-	$command .= "--refineIter=$numRefineIter ";	
+	$command .= "--refineIter=$numRefineIter ";
+	if (is_numeric($maxAmpCon))
+		$command .= "--maxAmpCon=$maxAmpCon ";	
+	if (is_numeric($minAmpCon))
+		$command .= "--minAmpCon=$minAmpCon ";	
 	if (is_numeric($reprocess))
 		$command .= "--reprocess=".$reprocess." ";
-
 
 	/* *******************
 	PART 4: Create header info, i.e., references
