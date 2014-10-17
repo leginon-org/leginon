@@ -1,3 +1,4 @@
+import os
 import sys
 import sinedon
 from sinedon import dbconfig
@@ -128,6 +129,34 @@ class Archiver(object):
 	def makeTimeStringFromTimeStamp(self,timestamp):
 		t = timestamp
 		return '%04d%02d%02d%02d%02d%02d' % (t.year,t.month,t.day,t.hour,t.minute,t.second)
+
+class UserArchiver(Archiver):
+	def __init__(self,projectid):
+		super(UserArchiver,self).__init__()
+		self.projectid = projectid
+
+	def getEssentialUsers(self):
+		'''
+		EssentialUsers are those who are owners or need to share exeperiment with
+		and the administrator who is needed if settings is to be restored.
+		A file of the list is saved while using normal sinedon and now needs to
+		be imported to the destination leginon database.
+		'''
+		useridfile = 'archive_users_%d.cfg' % (self.projectid,)
+		if os.path.isfile(useridfile):
+			f = open(useridfile,'r')
+			lines = f.readlines()
+			f.close()
+			return map((lambda x: int(x)),lines)
+		else:
+			return []
+
+	def run(self):
+		userids = self.getEssentialUsers()
+		for id in userids:
+			sinedon.setConfig('leginondata', db=self.source_dbname)
+			userdata = leginondata.UserData().direct_query(id)
+			self.publish([userdata,])
 
 class SessionArchiver(Archiver):
 	'''
@@ -324,10 +353,10 @@ class SessionArchiver(Archiver):
 		#camera sensitivity calibrations
 		senses = self.researchCalibration('CameraSensitivityCalibrationData',tem=source_tem,ccdcamera=source_cam,high_tension=high_tension)
 
-		#camera sensitivity calibrations
+		#beam size calibrations
 		beamsizes = []
 		for probe in ('micro','nano'):
-			beamsizes.extend(self.researchCalibration('BeamSizeCalibrationData',tem=source_tem,ccdcamera=source_cam,probe_mode=probe))
+			beamsizes.extend(self.researchCalibration('BeamSizeCalibrationData',tem=source_tem,probe_mode=probe))
 
 		#Modeled Stage calibrations
 		model = {}
@@ -574,24 +603,29 @@ class SessionArchiver(Archiver):
 						print 'ERROR: %s class node %s settings query failed' % (classname,node_name)
 					self.publish(results)
 
+	def importLaunchedApplications(self):
+		print 'importing Applications....'
+		source_session = self.getSourceSession()
+		q = leginondata.LaunchedApplicationData(session=source_session)
+		launched_apps = self.research(q)
+		self.publish(launched_apps)
+
+		for appdata in map((lambda x: x['application']), launched_apps):
+			q = leginondata.NodeSpecData(application=appdata)
+			nodespecs = self.research(q)
+			self.publish(nodespecs)
+
+			q = leginondata.BindingSpecData(application=appdata)
+			bindingspecs = self.research(q)
+			self.publish(bindingspecs)
+
 	def importSettings(self):
 		source_session = self.getSourceSession()
 		q = leginondata.LaunchedApplicationData(session=source_session)
-		results = self.research(q)
-		applications = {}
-		for launchedapp in results:
-			if launchedapp['application'].dbid not in applications.keys():
-				applications[launchedapp['application'].dbid] = launchedapp['application']
-			sinedon.setConfig('leginondata', db=self.destination_dbname)
-			q = leginondata.ApplicationData(name=launchedapp['application']['name'])
-			r = q.query(results=1)
-			if r:
-				new_app = r[0]
-				self.replaceItem(launchedapp,'application',new_app)
-		self.publish(results)	
+		launched_apps = self.research(q)
 		allalias = {}
-		for application in applications.values():
-			q = leginondata.NodeSpecData(application=application)
+		for appdata in map((lambda x: x['application']), launched_apps):
+			q = leginondata.NodeSpecData(application=appdata)
 			results = self.research(q)
 			for r in results:
 				if r['class string'] not in allalias.keys():
@@ -672,6 +706,7 @@ class SessionArchiver(Archiver):
 		self.importDeQueue()
 		self.importDrifts()
 		self.importFocusResults()
+		self.importLaunchedApplications()
 		self.importSettings()
 		self.importViewerImageStatus()
 		self.importIceThickness()
@@ -690,10 +725,17 @@ class SessionArchiver(Archiver):
 		self.reset()
 		print ''
 
+def archiveEssentialUsers(projectid):
+	print "Importing Default Users...."
+	userarchiver = UserArchiver(projectid)
+	userarchiver.run()
+
 def archiveProject(projectid):
 	'''
-	Archive all sessions in the project identified by id number
+	Archive all users and sessions in the project identified by id number
 	'''
+	archiveEssentialUsers(projectid)
+
 	from leginon import projectdata
 	p = projectdata.projects().direct_query(projectid)
 	source_sessions = projectdata.projectexperiments(project=p).query()

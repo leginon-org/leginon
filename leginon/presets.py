@@ -1562,9 +1562,12 @@ class PresetsManager(node.Node):
 
 	def getValue(self, instrument_type, instrument_name, parameter, event):
 		# HACK: fix me
+		# called from gui/wx/PresetsManager
 		try:
 			value = self._getValue(instrument_type, instrument_name, parameter)
 			self.last_value = value
+		except Exception, e:
+			pass
 		finally:
 			event.set()
 
@@ -1581,7 +1584,7 @@ class PresetsManager(node.Node):
 				raise ValueError('no instrument type \'%s\'' % instrument_type)
 		except Exception, e:
 			self.logger.error('Get value failed: %s' % (e,))
-			raise e
+			raise
 
 	def onAlignImageClicked(self, label, xy):
 		p = self.alignpresets[label]

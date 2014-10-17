@@ -215,7 +215,7 @@ class DirectDetectorProcessing(object):
 			if 'startframe' not in params.keys() or params['startframe'] is None:
 				framelist = range(self.getNumberOfFrameSavedFromImageData(self.image))
 			else:
-				framelist = range(params['startframe'],self.getNumberOfFrameSavedFromImageData(self.image)-params['startframe'])
+				framelist = range(params['startframe'],self.getNumberOfFrameSavedFromImageData(self.image))
 		else:
 			framelist = range(params['startframe'],params['startframe']+params['nframe'])
 		if 'driftlimit' not in params.keys() or not params['driftlimit']:
