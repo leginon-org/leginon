@@ -199,7 +199,7 @@ class frealignJob(appionScript.AppionScript):
 		particleid = stackp['particle'].dbid
 
 		# find particle in reference stack
-		refstackp = apStack.getStackParticleFromParticleId(particleid, self.oldreconstackid, nodie=True)
+		refstackp = apStack.getStackParticleFromParticleId(particleid, self.oldreconstackid, noDie=True)
 		if not refstackp:
 			percentnoeuler = 100*self.noeulers/float(self.params['last'])
 			apDisplay.printWarning('No eulers for particle %d (%.1f%%)' % (pnum, percentnoeuler))
