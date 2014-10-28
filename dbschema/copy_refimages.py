@@ -23,7 +23,7 @@ class ImageCopier(object):
 		# assumes that the path separator is '/'
 		while tail[0] == '/':
 			tail = tail[1:]
-		new_image_path = os.path.join(output_base_path,datainst['session']['name']],tail)
+		new_image_path = os.path.join(output_base_path,datainst['session']['name'],tail)
 		print new_image_path
 		fileutil.mkdirs(new_image_path)
 		filename = datainst['filename']+'.mrc'
@@ -51,7 +51,7 @@ class SessionReferenceCopier(object):
 
 	def setSession(self, sessionname):
 		q = leginondata.SessionData(name=sessionname)
-		r = q.query(results=1)[0]
+		r = q.query(results=1)
 		if r:
 			self.session = r[0]
 		else:
@@ -96,7 +96,7 @@ class SessionReferenceCopier(object):
 					self.image_copier.saveImageFromImageData(self,refdata)
 
 	def run(self):
-		image_sessiondata = self.getSourceSession()
+		image_sessiondata = self.getSession()
 
 		print "****Session %s ****" % (image_sessiondata['name'])
 		if self.hasImagesInSession():
@@ -113,20 +113,20 @@ def copyProjectReferences(projectid,destination_base_path):
 	source_sessions = projectdata.projectexperiments(project=p).query()
 	session_names = map((lambda x:x['session']['name']),source_sessions)
 	session_names.reverse()  #oldest first
-	print session_names
 	
-	for session_name in session_names[-1:]:
+	for session_name in session_names:
 		app = SessionReferenceCopier(session_name,destination_base_path)
 		app.run()
 		app = None
 
 if __name__ == '__main__':
 	import sys
-	if len(sys.argv) != 2:
+	if len(sys.argv) != 3:
 		print "Usage: python copy_project_references.py <project id number> <destination base path"
 		print " destination base path is the path before dividing by sessionname"
-		print " For example, '/archive/leginon/'
+		print " For example, '/archive/leginon/'"
 		sys.exit()
 	projectid = int(sys.argv[1])
+	dest_path = sys.argv[2]
 
-	copyProjectReference(projectid)
+	copyProjectReferences(projectid, dest_path)
