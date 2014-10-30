@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import os
 import sys
+import shutil
 import sinedon
 from pyami import fileutil
 from leginon import leginondata
@@ -23,12 +24,12 @@ class ImageCopier(object):
 		# assumes that the path separator is '/'
 		while tail[0] == '/':
 			tail = tail[1:]
-		new_image_path = os.path.join(output_base_path,datainst['session']['name'],tail)
-		print new_image_path
+		new_image_path = os.path.join(self.output_base_path,datainst['session']['name'],tail)
 		fileutil.mkdirs(new_image_path)
 		filename = datainst['filename']+'.mrc'
 		source = os.path.join(old_image_path,filename)
 		destination = os.path.join(new_image_path,filename)
+		print 'copy to ', destination
 		shutil.copy(source,destination)
 
 class SessionReferenceCopier(object):
@@ -64,6 +65,32 @@ class SessionReferenceCopier(object):
 		'''
 		return self.session
 
+	def findBrightImageFromNorm(self,normdata):
+		'''
+		Find BrighetImageData based on imported NormImageData.
+		This is needed for older data since BrightImageData was
+		not linked to AcquisitionImages previously.
+		'''
+		if normdata['bright']:
+			return normdata['bright']
+		timestamp = normdata.timestamp
+		normcam = normdata['camera']
+		qcam = leginondata.CameraEMData(dimension=normcam['dimension'],
+				offset=normcam['offset'], binning=normcam['binning'],
+				ccdcamera=normcam['ccdcamera'])
+		qcam['exposure type'] = 'normal'
+		qcam['energy filtered'] = normcam['energy filtered']
+
+		normscope = normdata['scope']
+		qscope = leginondata.ScopeEMData(tem=normscope['tem'])
+		qscope['high tension'] = normscope['high tension']
+		q = leginondata.BrightImageData(camera=qcam,scope=qscope,channel=normdata['channel'])
+		brightlist = q.query()
+		for brightdata in brightlist:
+			if brightdata.timestamp < timestamp:
+				break
+		return brightdata
+
 	def getReferenceIds(self):
 		print "Finding References...."
 		q = leginondata.AcquisitionImageData(session=self.session)
@@ -73,7 +100,7 @@ class SessionReferenceCopier(object):
 		for reftype in ('bright','dark','norm'):
 			self.refids[reftype] = []
 			for image in images:
-				if image[reftype] is not None and image[reftype].dbid not in refids[reftype]:
+				if image[reftype] is not None and image[reftype].dbid not in self.refids[reftype]:
 					self.refids[reftype].append(image[reftype].dbid)
 					if reftype == 'norm':
 						bright_from_norm = self.findBrightImageFromNorm(image[reftype])
@@ -93,7 +120,7 @@ class SessionReferenceCopier(object):
 				if not self.isInImageSession(refdata):
 					# ref images in the image session would be copied when the image session is copied
 					# Only do the ones not in the image session
-					self.image_copier.saveImageFromImageData(self,refdata)
+					self.image_copier.saveImageFromImageData(refdata)
 
 	def run(self):
 		image_sessiondata = self.getSession()
@@ -113,7 +140,7 @@ def copyProjectReferences(projectid,destination_base_path):
 	source_sessions = projectdata.projectexperiments(project=p).query()
 	session_names = map((lambda x:x['session']['name']),source_sessions)
 	session_names.reverse()  #oldest first
-	
+
 	for session_name in session_names:
 		app = SessionReferenceCopier(session_name,destination_base_path)
 		app.run()
