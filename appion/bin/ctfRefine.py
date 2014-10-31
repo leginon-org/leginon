@@ -97,6 +97,7 @@ class RefineCTF(appionLoop2.AppionLoop):
 		fftpath = os.path.join(self.powerspecdir, apDisplay.short(imgdata['filename'])+'.powerspec.mrc')
 		self.processAndSaveFFT(imgdata, fftpath)
 		self.runRefineCTF(imgdata, fftpath)
+		apFile.removeFile(fftpath)
 		return
 
 	#====================================
@@ -259,8 +260,8 @@ class RefineCTF(appionLoop2.AppionLoop):
 	#====================================
 	#====================================
 	def printBestValues(self):
-		if self.bestres > 200:
-			return
+		#if self.bestres > 200:
+		#	return
 		avgRes = self.bestres/2.0
 		defocus = self.bestvalues['defocus']
 		ampCon = self.bestvalues['amplitude_contrast']
@@ -598,7 +599,7 @@ class RefineCTF(appionLoop2.AppionLoop):
 				self.ctfvalues['amplitude_contrast'] = results[0]
 				newdefocus = results[1]
 			avgres = self.getResolution(newdefocus, raddata, PSDarray, lowerbound)
-			if avgres > self.bestres:
+			if avgres < self.bestres:
 				defocus = newdefocus
 		self.printBestValues()
 		return self.fixAmpContrast(defocus, raddata, PSDarray, lowerbound, upperbound)
@@ -827,10 +828,13 @@ class RefineCTF(appionLoop2.AppionLoop):
 			self.ctfvalues['defocus1'] = self.ctfvalues['defocus']
 			self.ctfvalues['defocus2'] = self.ctfvalues['defocus']
 
-		if self.ctfvalues['amplitude_contrast'] < self.minAmpCon:
-			self.ctfvalues['amplitude_contrast'] = self.minAmpCon
-		if self.ctfvalues['amplitude_contrast'] > self.maxAmpCon:
-			self.ctfvalues['amplitude_contrast'] = self.maxAmpCon
+		try:
+			if self.ctfvalues['amplitude_contrast'] < self.minAmpCon:
+				self.ctfvalues['amplitude_contrast'] = self.minAmpCon
+			if self.ctfvalues['amplitude_contrast'] > self.maxAmpCon:
+				self.ctfvalues['amplitude_contrast'] = self.maxAmpCon
+		except KeyError:
+			pass
 
 		if abs(self.ctfvalues['defocus1']) > abs(self.ctfvalues['defocus2']):
 			# incorrect, need to shift angle by 90 degrees
