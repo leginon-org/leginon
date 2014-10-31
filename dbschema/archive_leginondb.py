@@ -636,6 +636,8 @@ class SessionArchiver(Archiver):
 		self.importSettingsByClassAndAlias(allalias)
 
 		print 'importing Focus Sequence Settings....'
+		if 'Focuser' not in allalias.keys():
+			return
 		sequence_names = []
 		for node_name in (allalias['Focuser']):
 			results = self.researchSettings('FocusSequenceData',node_name=node_name)
