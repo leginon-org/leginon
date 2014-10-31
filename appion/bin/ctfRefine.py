@@ -8,6 +8,7 @@ import copy
 import numpy
 import random
 #import subprocess
+from appionlib import apFile
 from appionlib import apParam
 from appionlib import apDisplay
 from appionlib import appiondata
@@ -260,8 +261,8 @@ class RefineCTF(appionLoop2.AppionLoop):
 	#====================================
 	#====================================
 	def printBestValues(self):
-		#if self.bestres > 200:
-		#	return
+		if self.bestres > 200:
+			return
 		avgRes = self.bestres/2.0
 		defocus = self.bestvalues['defocus']
 		ampCon = self.bestvalues['amplitude_contrast']
@@ -827,6 +828,8 @@ class RefineCTF(appionLoop2.AppionLoop):
 			self.ctfvalues['angle_astigmatism'] = 0.0
 			self.ctfvalues['defocus1'] = self.ctfvalues['defocus']
 			self.ctfvalues['defocus2'] = self.ctfvalues['defocus']
+			self.badprocess = True
+			return
 
 		try:
 			if self.ctfvalues['amplitude_contrast'] < self.minAmpCon:
