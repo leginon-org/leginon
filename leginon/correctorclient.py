@@ -551,6 +551,9 @@ class CorrectorClient(cameraclient.CameraClient):
 		# find one that is writable
 		refsession = None
 		for r in refsessions:
+			# some modified database may have emptied the old session
+			if not r['session']:
+				continue
 			impath = r['session']['image path']
 			if os.access(impath, os.W_OK):
 				refsession = r
