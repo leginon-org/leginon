@@ -85,7 +85,7 @@ class Cache(pyami.resultcache.ResultCache):
 	def file_get(self, pipeline):
 		resultfilename = self.result_filename(pipeline)
 		try:
-			f = self.diskcache.open(resultfilename, 'r')
+			f = self.diskcache.open(resultfilename, 'rb')
 		except:
 			return None
 		result = pipeline[-1].get_result(f)
