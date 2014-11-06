@@ -38,7 +38,7 @@ class CtfDisplay(object):
 		self.outerAngstrom1D = 3.0
 		# plotlimit2DAngstrom trims the power spectrum generated
 		#from self.outerAngstrom1D limit for the 2D plot
-		self.plotlimit2DAngstrom = 7.7
+		self.plotlimit2DAngstrom = 5.0
 		return
 
 	#====================
