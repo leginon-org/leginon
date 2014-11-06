@@ -230,8 +230,18 @@ def trimPowerSpectraToOuterResolution(powerspec, outerresolution, freq):
 		apDisplay.printWarning("Requested resolution (%.3f) is not available (%.3f)"
 			%(outerresolution, initmaxres))
 		outerresolution = initmaxres
-	pixellimitradius = int(math.ceil(1./(freq * outerresolution)))
+		pixellimitradius = min(powerspec.shape[0],powerspec.shape[1]) / 2
+	else:
+		pixellimitradius = int(math.ceil(1./(freq * outerresolution)))
 	goodpixellimitradius = primefactor.getNextEvenPrime(pixellimitradius)
+	# If outerresolution input is larger than initmaxres, the way goodpixellimitradius
+	# is calculated above may make the result larger than half the image dimension.
+	while goodpixellimitradius > min(powerspec.shape[0],powerspec.shape[1])/2:
+		pixellimitradius -= 2
+		if debug is True:
+			print "__Recalculate pixel limit dimension with: ", pixellimitradius
+		goodpixellimitradius = primefactor.getNextEvenPrime(pixellimitradius)
+
 	finalres = 1./(freq * goodpixellimitradius)
 	if debug is True:
 		print "__Pixel limit dimension: ", goodpixellimitradius
