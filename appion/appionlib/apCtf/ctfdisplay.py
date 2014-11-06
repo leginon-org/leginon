@@ -35,6 +35,10 @@ class CtfDisplay(object):
 		### global params that do NOT change with image
 		self.ringwidth = 1.0
 		self.debug = False
+		self.outerAngstrom1D = 3.0
+		# plotlimit2DAngstrom trims the power spectrum generated
+		#from self.outerAngstrom1D limit for the 2D plot
+		self.plotlimit2DAngstrom = 7.7
 		return
 
 	#====================
@@ -368,7 +372,7 @@ class CtfDisplay(object):
 			'-', color="blue", alpha=0.5, linewidth=0.5)
 		pyplot.plot(raddatasq[fpi:], normpeakdata[fpi:],
 			'.', color="blue", alpha=0.75, markersize=2.0)
-		self.setPyPlotXLabels(raddatasq, maxloc=1/5.**2, square=True)
+		self.setPyPlotXLabels(raddatasq, maxloc=1.0/self.outerAngstrom1D**2, square=True)
 		pyplot.grid(True, linestyle=':', )
 		pyplot.ylim(-0.05, 1.05)
 
@@ -549,7 +553,8 @@ class CtfDisplay(object):
 		### assumes that x values are 1/Angstroms^2, which give the best plot
 		newlocs = []
 		newlabels = []
-		#print "maxloc=", maxloc
+		if self.debug is True:
+			print "maxloc=", maxloc
 		for loc in locs:
 			if loc < minloc + xstd/4:
 				continue
@@ -932,7 +937,7 @@ class CtfDisplay(object):
 
 	#====================
 	#====================
-	def CTFpowerspec(self, imgdata, ctfdata, fftpath=None, fftfreq=None, outerbound=3e-10, twod=True):
+	def CTFpowerspec(self, imgdata, ctfdata, fftpath=None, fftfreq=None, twod=True):
 		"""
 		Make a nice looking powerspectra with lines for location of Thon rings
 
@@ -942,11 +947,12 @@ class CtfDisplay(object):
 				amplitude constrast - ( a cos + sqrt(1-a^2) sin format)
 				defocus1 > defocus2
 				angle - in degrees, positive x-axis is zero
-			outerbound = 5 #Angstrom resolution  (in meters)
+			outerbound =  resolution  (in meters)
+			self.plotlimit2DAngstrum - spectrum resolution limit (in Angstroms)
 				outside this radius is trimmed away
 		"""
+		outerbound = self.outerAngstrom1D * 1e-10
 		### setup initial parameters for image
-		#outerbound = outerbound * 2*math.sqrt(random.random())
 		self.imgname = imgdata['filename']
 		if self.debug is True:
 			print apDisplay.short(self.imgname)
@@ -1004,7 +1010,7 @@ class CtfDisplay(object):
 			return None
 
 		if twod is True:
-			self.drawPowerSpecImage(normpowerspec)
+			self.drawPowerSpecImage(normpowerspec,outerresolution=self.plotlimit2DAngstrom)
 
 		ctfdisplaydict = {
 			'powerspecfile': self.powerspecfile,
