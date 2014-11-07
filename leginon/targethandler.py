@@ -179,7 +179,7 @@ class TargetHandler(object):
 
 			# process all target lists in the queue
 			for targetlist in active:
-				state = self.player.wait()
+				state = self.clearBeamPath()
 				if state == 'stopqueue' or self.inDequeued(targetlist):
 					self.logger.info('Queue aborted, skipping target list')
 				else:
@@ -370,6 +370,13 @@ class TargetHandler(object):
 	def markTargetsDone(self, targets):
 		for target in targets:
 			self.reportTargetStatus(target, 'done')
+
+	def clearBeamPath(self):
+		'''
+		Check column valve and any other obstacles for the beam
+		to reach the camera.Simply pass player state here.
+		'''
+		return self.player.state()
 
 class TargetWaitHandler(TargetHandler):
 	eventinputs = TargetHandler.eventinputs + [event.TargetListDoneEvent]

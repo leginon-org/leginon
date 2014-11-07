@@ -20,7 +20,7 @@ import leginon.gui.wx.Icons
 
 import leginon.targethandler
 
-hide_incomplete = False
+hide_incomplete = True
 
 class SettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
@@ -344,7 +344,7 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sz_emission.Add(self.widgets['emission off'], (0, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
 		return sz_emission
- 
+
 	def createTiltSizer(self):
 		# set widgets
 		self.widgets['use parent tilt'] = wx.CheckBox(self, -1, 'Tilt the stage like its parent image')
@@ -365,6 +365,15 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 						wx.ALIGN_CENTER_VERTICAL)
 		return sz_tilt
 
+	def createClearBeamPathSizer(self):
+		#set widget
+		self.widgets['clear beam path'] = wx.CheckBox(self, -1, 'Verify opened gun valve before acquiring')
+		# mskr sizer
+		sz_beampath = wx.GridBagSizer(0, 0)
+		sz_beampath.Add(self.widgets['clear beam path'], (0, 0), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+		return sz_beampath
+
 	def addSettings(self):
 		# move type
 		szmovetype = self.createMoveTypeSizer()
@@ -376,6 +385,7 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sz_save = self.createImageOptionsSizer()
 		sz_emission = self.createEmissionSizer()
 		sz_tilt = self.createTiltSizer()
+		sz_beampath = self.createClearBeamPathSizer()
 		sbszsim = self.createSimulatedTargetLoopBoxSizer()
 
 		# misc
@@ -407,11 +417,12 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sz.Add(sz_save, (3,0), (2,1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(sz_emission, (5,0), (1,1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(sz_tilt, (6,0), (2,1), wx.ALIGN_TOP)
-		sz.Add(sbszsim, (8,0), (2,1), wx.ALIGN_BOTTOM)
+		sz.Add(sz_beampath, (8,0), (1,1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(sbszsim, (9,0), (2,1), wx.ALIGN_BOTTOM)
 		# middle with 1 column
-		sz.Add(sz_misc, (3,1), (7,1), wx.ALIGN_TOP)
+		sz.Add(sz_misc, (3,1), (8,1), wx.ALIGN_TOP)
 		# right
-		sz.Add(szright, (0,2),(9,1), wx.ALIGN_TOP)
+		sz.Add(szright, (0,2),(11,1), wx.ALIGN_TOP)
 		return sz
 
 	def onEnterPassword(self, evt):

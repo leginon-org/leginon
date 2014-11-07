@@ -1652,6 +1652,7 @@ class TargetWatcherSettingsData(SettingsData):
 		return SettingsData.typemap() + (
 			('process target type', str),
 			('park after list', bool),
+			('clear beam path', bool),
 		)
 	typemap = classmethod(typemap)
 
