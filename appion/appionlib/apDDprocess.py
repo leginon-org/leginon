@@ -37,7 +37,7 @@ def initializeDDFrameprocess(sessionname,wait_flag=False):
 	elif 'DE' in dcamdata['name']:
 		from appionlib import apDEprocess
 		return apDEprocess.DEProcessing(wait_flag)
-	elif 'TIA' in dcamdata['name']:
+	elif 'TIA' in dcamdata['name'] or 'Falcon' in dcamdata['name']:
 		from appionlib import apFalconProcess
 		return apFalconProcess.FalconProcessing(wait_flag)
 	elif 'Appion' in dcamdata['name']:
@@ -56,6 +56,7 @@ class DirectDetectorProcessing(object):
 		self.setTempDir()
 		self.sumframelist = None
 		self.altchannel_cycler = itertools.cycle([False,True])
+		self.frame_modified = False
 
 	def setImageId(self,imageid):
 		from leginon import leginondata
@@ -604,9 +605,11 @@ class DDFrameProcessing(DirectDetectorProcessing):
 			else:
 				apDisplay.printColor("flipping the frame up-down",'blue')
 				a = numpy.flipud(a)
+			self.frame_modified = True
 		if frame_rotate:
 			apDisplay.printColor("rotating the frame by %d degrees" % (frame_rotate*90,),'blue')
 			a = numpy.rot90(a,frame_rotate)
+			self.frame_modified = True
 		a = a[offset['y']:crop_end['y'],offset['x']:crop_end['x']]
 		if bin['x'] > 1:
 			if bin['x'] == bin['y']:
@@ -934,14 +937,15 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		if not os.path.isfile(self.tempframestackpath) and os.path.isfile(rawframestack_path):
 			# frame flipping of the mrc ddstack
 			frame_flip, frame_rotate = self.getImageFrameOrientation()
-			if frame_flip or frame_rotate:
+			if frame_flip or frame_rotate and not self.frame_modified:
 				if frame_rotate:
 					apDisplay.printError("stack rotation not implemented")
-				apDisplay.printColor("flipping frame stack",'blue')
-				a = mrc.read(rawframestack_path)
-				# 3D array left-right flip creates the effect of up-down flip on axis 1 and 2
-				a = numpy.fliplr(a)
-				mrc.write(a,self.tempframestackpath)
+				if frame_flip:
+					apDisplay.printColor("flipping frame stack",'blue')
+					a = mrc.read(rawframestack_path)
+					# 3D array left-right flip creates the effect of up-down flip on axis 1 and 2
+					a = numpy.fliplr(a)
+					mrc.write(a,self.tempframestackpath)
 			else:
 				os.symlink(rawframestack_path,self.tempframestackpath)
 			apDisplay.printMsg('link %s to %s.' % (rawframestack_path, self.tempframestackpath))
