@@ -500,6 +500,7 @@ class Focuser(manualfocuschecker.ManualFocusChecker):
 			message = 'Processing focus setting \'%s\'...' % setting['name']
 			self.logger.info(message)
 			self.startTimer('processFocusSetting')
+			self.clearBeamPath()
 			status = self.processFocusSetting(setting, emtarget=emtarget)
 			self.stopTimer('processFocusSetting')
 			## repeat means give up and do the whole target over
@@ -508,6 +509,7 @@ class Focuser(manualfocuschecker.ManualFocusChecker):
 
 		# aquire and save the focus image
 		if self.settings['acquire final']:
+			self.clearBeamPath()
 			manualfocuschecker.ManualFocusChecker.acquire(self, presetdata, emtarget)
 		stagenow = self.instrument.tem.StagePosition
 		msg = 'z after all adjustment %.2f um' % (1e6*stagenow['z'])

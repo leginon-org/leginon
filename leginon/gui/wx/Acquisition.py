@@ -96,6 +96,15 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sz.Add(self.widgets['preset order'], (0, 2), (4, 2), wx.ALIGN_CENTER)
 		return sz
 
+	def createClearBeamPathSizer(self):
+		#set widget
+		self.widgets['clear beam path'] = wx.CheckBox(self, -1, 'Verify opened gun valve before acquiring')
+		# mskr sizer
+		sz_beampath = wx.GridBagSizer(0, 0)
+		sz_beampath.Add(self.widgets['clear beam path'], (0, 0), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+		return sz_beampath
+
 	def addSettings(self):
 		sbsim = wx.StaticBox(self, -1, 'Simulated Target Loop')
 		sbszsim = wx.StaticBoxSizer(sbsim, wx.VERTICAL)
@@ -256,6 +265,8 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 			sz_tilt.Add(self.widgets['correct image shift coma'], (3, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
 
+		sz_beampath = self.createClearBeamPathSizer()
+
 		self.widgets['bad stats response'] = Choice(self, -1, choices=['Continue', 'Pause', 'Recheck', 'Abort one','Abort all'])
 		self.widgets['bad stats type'] = Choice(self, -1, choices=['Mean', 'Slope'])
 		self.widgets['low mean'] = FloatEntry(self, -1, chars=4)
@@ -327,9 +338,10 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sz.Add(sz_save, (2,0), (2,1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(sz_emission, (4,0), (1,1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(sz_tilt, (5,0), (2,1), wx.ALIGN_TOP)
-		sz.Add(sbszsim, (7,0), (2,1), wx.ALIGN_BOTTOM)
-		sz.Add(sz_misc, (2,1), (7,1), wx.ALIGN_TOP)
-		sz.Add(szright, (0,2),(9,1), wx.ALIGN_TOP)
+		sz.Add(sz_beampath, (7,0), (1,1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(sbszsim, (8,0), (2,1), wx.ALIGN_BOTTOM)
+		sz.Add(sz_misc, (2,1), (8,1), wx.ALIGN_TOP)
+		sz.Add(szright, (0,2),(10,1), wx.ALIGN_TOP)
 		return sz
 
 	def onEnterPassword(self, evt):

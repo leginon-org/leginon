@@ -14,6 +14,7 @@ import threading
 import targethandler
 import node
 import player
+import time
 
 class PauseRepeatException(Exception):
 	'''Raised within processTargetData method if the target should be
@@ -31,6 +32,7 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 	defaultsettings = {
 		'process target type': 'acquisition',
 		'park after list': False,
+		'clear beam path': False,
 	}
 
 	eventinputs = watcher.Watcher.eventinputs + targethandler.TargetHandler.eventinputs + [event.TargetListDoneEvent,
@@ -52,6 +54,7 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 
 	def processData(self, newdata):
 		if isinstance(newdata, leginondata.ImageTargetListData):
+			self.clearBeamPath()
 			self.setStatus('processing')
 			self.startTimer('processTargetList')
 			self.processTargetList(newdata)
@@ -208,7 +211,7 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 			# ...
 			if self.player.state() == 'pause':
 				self.setStatus('user input')
-			state = self.player.wait()
+			state = self.clearBeamPath()
 			self.setStatus('processing')
 			# abort
 			if state in ('stop', 'stopqueue'):
@@ -349,3 +352,36 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 	def fixCondition(self):
 		raise NotImplementedError()
 
+	def clearBeamPath(self):
+		'''
+		Check column valve and any other obsticles for the beam
+		to reach the camera.  This is a work around for some scopes
+		that closes column valve that senses a tiny spike in pressure
+		that is recoverable.
+		'''
+		# This should be set to be long enough for scope to respond
+		# if the vacuum is really bad.
+		valve_opening_wait_time_seconds = 5
+
+		if not self.settings['clear beam path']:
+			return self.player.state()
+		# Check column valve
+		if self.instrument.tem.ColumnValvePosition == 'closed':
+			self.logger.info('found column valve closed')
+			if self.player.state() == 'stopqueue':
+				return self.player.state()
+			# Try to reopen the column
+			self.logger.info('Opening column valve....')
+			self.instrument.tem.ColumnValvePosition = 'open'
+			# Test if the opening is successful
+			time.sleep(valve_opening_wait_time_seconds)
+			if self.instrument.tem.ColumnValvePosition == 'closed':
+				# Pause if the scope closes the column valve again
+				self.logger.warning('column valve failed to open')
+				if self.player.state() == 'play':
+					self.player.pause()
+					self.setStatus('user input')
+				return self.player.wait()
+			else:
+				self.logger.info('column valve opened successfully')
+				return self.player.state()
