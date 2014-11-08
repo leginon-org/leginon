@@ -63,8 +63,8 @@ def getRawFrameSessionPathFromSessionPath(session_path):
 	This function allows frame path to be passed in as well.
 
 	Possible senerios:
-	1. input: /mydata/leginon/mysession/rawdata;  output: /mydata/leginon/mysession/rawdata.
-	2. input: /mydata/leginon/myuser/mysession/rawdata;  output: /mydata/leginon/myuser/mysession/rawdata.
+	1. input: /mydata/leginon/mysession/rawdata;  output: /mydata/frames/mysession/rawdata.
+	2. input: /mydata/leginon/myuser/mysession/rawdata;  output: /mydata/frames/myuser/mysession/rawdata.
 	3. input: /mydata/frames/mysession/rawdata; output=input
 	'''
 	# goal is to replace legdir with framedir
