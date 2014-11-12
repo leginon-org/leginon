@@ -308,7 +308,7 @@ class RefineCTF(appionLoop2.AppionLoop):
 			self.bestvalues['defocus'] = defocus
 			self.bestellipse = copy.deepcopy(self.ellipseParams)
 		elif show is True:
-			if (res8+res5) > self.bestres:
+			if (res8+res5) >= self.bestres:
 				print ("not saving values %.2f, need an average better than %.2f"
 					%((res8+res5), self.bestres))
 			elif not (self.minAmpCon < self.ctfvalues['amplitude_contrast'] < self.maxAmpCon):
