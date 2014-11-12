@@ -308,7 +308,15 @@ class RefineCTF(appionLoop2.AppionLoop):
 			self.bestvalues['defocus'] = defocus
 			self.bestellipse = copy.deepcopy(self.ellipseParams)
 		elif show is True:
-			print "not saving values %.2f, need an average better than %.2f"%((res8+res5), self.bestres)
+			if (res8+res5) > self.bestres:
+				print ("not saving values %.2f, need an average better than %.2f"
+					%((res8+res5), self.bestres))
+			elif not (self.minAmpCon < self.ctfvalues['amplitude_contrast'] < self.maxAmpCon):
+				print ("not saving values amplitude contrast %.4f out of range (%.4f <> %.4f)"
+					%(self.ctfvalues['amplitude_contrast'], self.minAmpCon, self.maxAmpCon))
+			else:
+				apDisplay.printError("Something went wrong")
+				
 
 		## normalize the data
 		PSD -= (PSD[lowerBoundIndex:]).min()
@@ -620,7 +628,7 @@ class RefineCTF(appionLoop2.AppionLoop):
 			if amplitudecontrast is None:
 				apDisplay.printWarning("FAILED to fix amplitude contrast")
 				return defocus
-			elif amplitudecontrast < 0:
+			elif amplitudecontrast < self.minAmpCon:
 				apDisplay.printColor("Amp Cont: %.3f too small, decrease defocus %.3e"%
 					(amplitudecontrast, newdefocus), "blue")
 				scaleFactor = 0.999 - abs(amplitudecontrast)/5.
