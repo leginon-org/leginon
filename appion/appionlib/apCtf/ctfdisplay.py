@@ -634,12 +634,9 @@ class CtfDisplay(object):
 
 	#====================
 	#====================
-	def drawPowerSpecImage(self, origpowerspec, maxsize=1200, outerresolution=7.7):
+	def drawPowerSpecImage(self, origpowerspec, maxsize=1200):
 
-		### would be nice to have a more intelligent way to set 'outerresolution'
-		###   based on defocus and measured CTF resolution
-
-		origpowerspec = ctftools.trimPowerSpectraToOuterResolution(origpowerspec, outerresolution, self.trimfreq)
+		origpowerspec = ctftools.trimPowerSpectraToOuterResolution(origpowerspec, self.plotlimit2DAngstrom, self.trimfreq)
 
 		if self.debug is True:
 			print "origpowerspec shape", origpowerspec.shape
@@ -947,8 +944,7 @@ class CtfDisplay(object):
 				amplitude constrast - ( a cos + sqrt(1-a^2) sin format)
 				defocus1 > defocus2
 				angle - in degrees, positive x-axis is zero
-			outerbound =  resolution  (in meters)
-			self.plotlimit2DAngstrum - spectrum resolution limit (in Angstroms)
+			outerbound is now set by self.outerAngstrom1D (in Angstroms)
 				outside this radius is trimmed away
 		"""
 		outerbound = self.outerAngstrom1D * 1e-10
@@ -987,7 +983,7 @@ class CtfDisplay(object):
 			self.trimfreq = fftfreq
 		else:
 			powerspec, self.trimfreq = ctftools.powerSpectraToOuterResolution(image, 
-				outerbound*1e10, self.apix)
+				self.outerAngstrom1D, self.apix)
 		self.trimapix = 1.0/(self.trimfreq * powerspec.shape[0])
 
 		#print "Median filter image..."
