@@ -1006,7 +1006,7 @@ class CtfDisplay(object):
 			return None
 
 		if twod is True:
-			self.drawPowerSpecImage(normpowerspec,outerresolution=self.plotlimit2DAngstrom)
+			self.drawPowerSpecImage(normpowerspec)
 
 		ctfdisplaydict = {
 			'powerspecfile': self.powerspecfile,
