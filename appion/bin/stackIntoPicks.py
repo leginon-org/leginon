@@ -66,8 +66,12 @@ class StackIntoPicksScript(appionScript.AppionScript):
 			return False
 		for pairdata in alldata:
 			if apDatabase.getImgCompleteStatus(pairdata['result']) is False:
+				# bad status
 				continue
+			# good status
 			return pairdata['result']
+		# no data with valid image status
+		return False
 
 	def getNewImageFromDDStack(self,imagedata):
 		'''
@@ -82,9 +86,23 @@ class StackIntoPicksScript(appionScript.AppionScript):
 		if alignpairdata is False:
 			apDisplay.printWarning('Image not used for nor a result of alignment.  Will not transfer pick')
 			return False
-		self.dd.setImageData(alignpairdata['source'])
+		# search for aligned image from source and specific ddstackrun
+		source_image = alignpairdata['source']
+		self.dd.setImageData(source_image)
 		allpairs = self.dd.getAllAlignImagePairData(self.newddstackrun,query_source=True)
 		newalignedimagedata = self.chooseValidResultImageInDDAlignPairs(allpairs)
+		# repeat without specifying the ddstack
+		# This is required due to possibility of new ddstack runs that need
+		# to continue from an archived runs due to failure in the middle
+		# This assumes that the most recent aligned image  is the one to use.
+		if newalignedimagedata is False:
+			if source_image.dbid not in self.other_ddstack_used:
+				apDisplay.printWarning('Matched aligned image not found for %s in specified ddstack %s.  Searching in all ddstacks' % (source_image['filename'],self.newddstackrun['runname']))
+			allpairs = self.dd.getAllAlignImagePairData(None,query_source=True)
+			newalignedimagedata = self.chooseValidResultImageInDDAlignPairs(allpairs)
+			self.other_ddstack_used.append(source_image.dbid)
+			# set ddstack run back
+			self.dd.setDDStackRun(self.newddstackrun)
 		if newalignedimagedata is False:
 			apDisplay.printWarning('Matched aligned image not found in ddstack.  Will not transfer pick')
 			return False
@@ -101,6 +119,7 @@ class StackIntoPicksScript(appionScript.AppionScript):
 			apDisplay.printError("Runname already exists")
 
 		if self.params['ddstack']:
+			self.other_ddstack_used = []
 			self.dd = apDDprocess.DDStackProcessing()
 			self.dd.setDDStackRun(self.params['ddstack'])
 			self.newddstackrun = self.dd.getDDStackRun(show_msg=True)
