@@ -511,7 +511,10 @@ class generalReconUploader(appionScript.AppionScript):
 			prtlq['shifty'] = particledata[i]['shifty']
 			prtlq['mirror'] = 0
 #			prtlq['mirror'] = particledata[i]['mirror']
-			prtlq['3Dref_num'] = particledata[i]['refnum']
+			try:
+				prtlq['3Dref_num'] = particledata[i]['refnum']
+			except:
+				pass
 			try:
 				prtlq['2Dclass_num'] = particledata[i]['clsnum']
 			except:
@@ -721,7 +724,10 @@ def readParticleFileByFilePath(pdatafile,porderfile=''):
 		alldata['omega'] = float(data[3])
 		alldata['shiftx'] = float(data[4])
 		alldata['shifty'] = float(data[5])
-		alldata['refnum'] = float(data[6])
+		try:
+			alldata['refnum'] = float(data[6])
+		except:
+			pass
 		try:
 			alldata['clsnum'] = float(data[7])
 		except:

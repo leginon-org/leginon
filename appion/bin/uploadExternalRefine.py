@@ -36,7 +36,10 @@ class uploadExternalPackageScript(reconUploader.generalReconUploader):
 					apDisplay.printError("you must have a particle data file in the 'external_package_results' directory")										
 										
 				### make chimera snapshot of volume
-				self.createChimeraVolumeSnapshot(vol, iteration, j+1)
+				try:
+					self.createChimeraVolumeSnapshot(vol, iteration, j+1)
+				except:
+					apDisplay.printWarning("could not create Chimera volume snapshots")
 				
 				### instantiate database objects
 				self.insertRefinementRunData(iteration, j+1)
@@ -48,7 +51,7 @@ class uploadExternalPackageScript(reconUploader.generalReconUploader):
 		
 #=====================
 if __name__ == "__main__":
-	refine3d = uploadExternalPackageScript(maxnproc=1)
+	refine3d = uploadExternalPackageScript()
 	refine3d.start()
 	refine3d.close()
 
