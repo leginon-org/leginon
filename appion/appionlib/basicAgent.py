@@ -1,4 +1,5 @@
 from appionlib import torqueHost
+from appionlib import sgeHost
 from appionlib import apConfig
 import sys
 
@@ -24,6 +25,8 @@ class BasicAgent(object):
                 processingHost = torqueHost.TorqueHost(configDict)
             elif 'MOABTORQUE' == processingHostType or 'MOAB' == processingHostType:
                 processingHost = torqueHost.MoabTorqueHost(configDict)
+            elif 'SGE' == processingHostType.upper():
+                processingHost = sgeHost.SGEHost(configDict)
             else:
                 sys.stderr.write("Unknown processing host type, using default\n")
                 processingHost = torqueHost.TorqueHost(configDict)
