@@ -855,6 +855,23 @@ def test_update_header():
 def fix_file_machine_stamp(filename):
 	update_file_header(filename,{'byteorder':byteorderstr[sys.byteorder]})
 
+def appendFileLabel(filename,labelstring):
+	h = readHeaderFromFile(filename)
+	nlabels = h['nlabels']
+	nextlabelname = 'label%d' % nlabels
+	if nlabels == 10:
+		raise ValueError('All labels are used')
+	if h[nextlabelname]:
+		raise RunTimeError('Next label indicated by NLABL is not empty')
+	if len(labelstring) > 80:
+		raise ValueError('Input string too long to fit in one label. Max length=80')
+	update_file_header(filename,
+				{'label%d' % nlabels:labelstring,'nlabels':nlabels+1})
+
+def readAllFileLabels(filename):
+	h = readHeaderFromFile(filename)
+	return map((lambda x:h['label%d' % x]),range(10))
+
 if __name__ == '__main__':
 	#testHeader()
 	#testWrite()
