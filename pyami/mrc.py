@@ -321,7 +321,14 @@ Parse the 1024 byte MRC header into a header dictionary.
 		type = field[1]
 		if type == 'string':
 			length = field[2]
-			newheader[name] = headerbytes[pos:pos+length]
+			# remove trailing zeros(1) to make the string more readable
+			full_string = headerbytes[pos:pos+length]
+			first_zeros = full_string.find(zeros(1))
+			newheader[name] = ''
+			if first_zeros > 0:
+				newheader[name] = full_string[:first_zeros]
+			elif first_zeros < 0:
+				newheader[name] = full_string
 		else:
 			length = 4
 			word = pos/4
