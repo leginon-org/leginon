@@ -475,6 +475,45 @@ def xmippTransform(a, rot=0, shift=(0,0), mirror=False, order=2):
 
 	return b
 
+#=========================
+def highPassFilter(data, hpFilterSize, apix=None):
+	"""
+	performs a hyperbolic tangent high pass filter 
+	in python using only numpy libraries that is
+	designed to be similar to EMAN1 proc2d
+	
+	Note: hpFilterSize is in real space units
+	"""
+	if apix is not None:
+		pixelradius = hpFilterSize/apix
+	else:
+		pixelradius = hpFilterSize
+	filter = tanhFilter(hpFilterSize, data.shape)
+	fftdata = ffteng.transform(data)
+	fftdata = numpy.fft.fftshift(fftdata)
+	fftdata *= filter
+	fftdata = numpy.fft.fftshift(fftdata)
+	flipdata = numpy.real(numpy.fft.ifft2(fftdata))
+	return flipdata
+
+#=========================
+def tanhFilter(pixelradius, shape, fuzzyEdge=1):
+	"""
+	creates hyperbolic tangent mask of size pixelradius
+	into a numpy array of defined shape
+
+	fuzzyEdge makes the edge of the hyperbolic tangent more fuzzy
+	"""
+	xhalfshape = shape[0]/2.0
+	x = numpy.arange(-xhalfshape, xhalfshape, 1) + 0.5
+	yhalfshape = shape[1]/2.0
+	y = numpy.arange(-yhalfshape, yhalfshape, 1) + 0.5
+	xx, yy = numpy.meshgrid(x, y)
+	radial = xx**2 + yy**2 #- 0.5
+	radial = numpy.sqrt(radial)
+	filter = numpy.tanh(radial/fuzzyEdge - 1.01*(max(shape))/float(pixelradius)/fuzzyEdge)/2.0 + 0.5
+	return filter
+
 ####
 # This is a low-level file with NO database connections
 # Please keep it this way
