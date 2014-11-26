@@ -53,6 +53,9 @@ class TiltAlternater(acquisition.Acquisition):
 			tilt = self.tilts[self.tiltindex]
 			self.instrument.tem.setStagePosition({'a':tilt})
 			super(TiltAlternater, self).processTargetData(targetdata, attempt)
+		else:
+			# process as normal
+			super(TiltAlternater, self).processTargetData(targetdata, attempt)
 		self.tiltindex += 1
 
 	def waitForRejects(self):
