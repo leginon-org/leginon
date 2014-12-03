@@ -149,7 +149,11 @@ class subStackScript(appionScript.AppionScript):
 				classnum = int(part['refnum'])-1
 			else:
 				alignpart = part
-				classnum = int(part['ref']['refnum'])-1
+				try:
+					classnum = int(part['ref']['refnum'])-1
+				except:
+					apDisplay.printWarning("particle %d was not put into any class" % (part['partnum']))
+					classnum = None
 			emanstackpartnum = alignpart['stackpart']['particleNumber']-1
 
 			### check shift
@@ -157,7 +161,10 @@ class subStackScript(appionScript.AppionScript):
 				shift = math.hypot(alignpart['xshift'], alignpart['yshift'])
 				if shift > self.params['maxshift']:
 					excludeParticle += 1
-					f.write("%d\t%d\t%d\texclude\n"%(count, emanstackpartnum, classnum))
+					if classnum is not None:
+						f.write("%d\t%d\t%d\texclude\n"%(count, emanstackpartnum, classnum))
+					else:
+						f.write("%d\t%d\texclude\n"%(count, emanstackpartnum))
 					badshift += 1
 					continue
 
@@ -167,7 +174,10 @@ class subStackScript(appionScript.AppionScript):
 				if ( alignpart['score'] is not None
 				 and alignpart['score'] < self.params['minscore'] ):
 					excludeParticle += 1
-					f.write("%d\t%d\t%d\texclude\n"%(count, emanstackpartnum, classnum))
+					if classnum is not None:
+						f.write("%d\t%d\t%d\texclude\n"%(count, emanstackpartnum, classnum))
+					else:
+						f.write("%d\t%d\texclude\n"%(count, emanstackpartnum))
 					badscore += 1
 					continue
 
@@ -175,19 +185,26 @@ class subStackScript(appionScript.AppionScript):
 				if ( alignpart['spread'] is not None
 				 and alignpart['spread'] < self.params['minscore'] ):
 					excludeParticle += 1
-					f.write("%d\t%d\t%d\texclude\n"%(count, emanstackpartnum, classnum))
+					if classnum is not None:
+						f.write("%d\t%d\t%d\texclude\n"%(count, emanstackpartnum, classnum))
+					else:
+						f.write("%d\t%d\texclude\n"%(count, emanstackpartnum))
 					badspread += 1
 					continue
 
-			if includelist and classnum in includelist:
-				includeParticle.append(emanstackpartnum)
-				f.write("%d\t%d\t%d\tinclude\n"%(count, emanstackpartnum, classnum))
-			elif excludelist and not classnum in excludelist:
-				includeParticle.append(emanstackpartnum)
-				f.write("%d\t%d\t%d\tinclude\n"%(count, emanstackpartnum, classnum))
+			if classnum is not None:
+				if includelist and classnum in includelist:
+					includeParticle.append(emanstackpartnum)
+					f.write("%d\t%d\t%d\tinclude\n"%(count, emanstackpartnum, classnum))
+				elif excludelist and not classnum in excludelist:
+					includeParticle.append(emanstackpartnum)
+					f.write("%d\t%d\t%d\tinclude\n"%(count, emanstackpartnum, classnum))
+				else:
+					excludeParticle += 1
+					f.write("%d\t%d\t%d\texclude\n"%(count, emanstackpartnum, classnum))
 			else:
 				excludeParticle += 1
-				f.write("%d\t%d\t%d\texclude\n"%(count, emanstackpartnum, classnum))
+				f.write("%d\t%d\texclude\n"%(count, emanstackpartnum))
 
 		f.close()
 		includeParticle.sort()

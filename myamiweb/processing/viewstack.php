@@ -14,7 +14,7 @@ require_once "inc/viewer.inc";
 require_once "inc/processing.inc";
 require_once "inc/viewstack.inc";
 require_once "inc/imagerequest.inc";
-require_once "inc/viewstack.inc";
+//require_once "inc/viewstack.inc";
 
 $filename=$_GET['file'];
 $expId =$_GET['expId'];
@@ -67,6 +67,9 @@ if ($reconId) {
 }
 if ($alignId) {
 	$classnumber=$particle->getAlignParticleNumber($alignId);
+	// line below used for CL2D, where mysql query returns particles that weren't assigned to any class
+	// as empty array with classNumber null
+	if (is_null($classnumber[0]["classNumber"])) $classnumber = array_slice($classnumber,1);
 	$helical = $particle->hasHelicalInfo($alignId);
 } elseif ($clusterId) {
 	$classnumber=$particle->getClusteringParticleNumber($clusterId);
