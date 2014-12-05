@@ -201,6 +201,12 @@ class Jeol(tem.TEM):
 			return 'closed'
 
 	def setColumnValvePosition(self, position):
+		if position == 'open':
+			self.feg3.SetBeamValve(1)
+		elif posision == 'closed':
+			self.feg3.SetBeamValve(0)
+		else:
+			raise ValueError
 		pass
 
 	# intensity is controlled by condenser lens 3
@@ -1100,3 +1106,8 @@ class Jeol(tem.TEM):
 	def getProbeModes(self):
 		return ['default']
 
+	def exposeSpecimenNotCamera(self,exptime=0):
+		pos = self.getMainScreenPosition()
+		self.setMainScreenPosition('down')
+		time.sleep(exptime)
+		self.setMainScreenPosition(pos)
