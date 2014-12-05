@@ -136,7 +136,7 @@ class Jeol(tem.TEM):
 	def getGunTilt(self):
 		tilt_x, tilt_y, result = self.def3.GetGunA1()
 		return {'x' : toLeginon(tilt_x), 'y' : toLeginon(tilt_y)}
-    
+
 	def setGunTilt(self, vector, relative = "absolute"):
 		current_tilt = self.getGunTilt()
 		tilt_x = current_tilt['x']
@@ -178,9 +178,9 @@ class Jeol(tem.TEM):
 			raise ValueError
 
 		self.def3.SetGunA2(toJeol(shift_x), toJeol(shift_y))
-  
- 	def getHighTensionStates(self):
-  		return ['off', 'on', 'disabled']
+
+	def getHighTensionStates(self):
+		return ['off', 'on', 'disabled']
 
 	def getHighTension(self):
 		ht, result = self.ht3.GetHTValue()
@@ -249,7 +249,7 @@ class Jeol(tem.TEM):
 		return {"condenser": {"x": toLeginon(c_x), "y": toLeginon(c_y)},
 			"objective": {"x": toLeginon(o_x), "y": toLeginon(o_y)},
 			"diffraction": {"x": toLeginon(d_x), "y": toLeginon(d_y)}} 
-    
+
 	def setStigmator(self, stigs, relative = "absolute"):
 		for key in stigs.keys():
 			stigmators = self.getStigmator()
@@ -287,7 +287,7 @@ class Jeol(tem.TEM):
 				result = self.def3.SetILs(toJeol(stigmator["x"]), toJeol(stigmator["y"]))
 			else:
 				raise ValueError
-    
+ 
 	def getSpotSize(self):
 		spot_size, result = self.eos3.GetSpotSize()
 		return spot_size + 1
@@ -352,7 +352,7 @@ class Jeol(tem.TEM):
 			scale_x, scale_y = BEAMSHIFT_FACTOR_X_MAG1, BEAMSHIFT_FACTOR_Y_MAG1
 		else:
 			raise RuntimeError('Beam shift functions not implemented in this mode (%d, "%s")' % (mode, name))
-		
+
 		if relative == 'relative':
 			current_shift = self.getBeamShift()
 			if 'x' in vector:
@@ -375,7 +375,6 @@ class Jeol(tem.TEM):
 
 		result = self.def3.SetCLA1(x, y)
 
-    	
 	def getImageShift(self):
 		mode, name, result = self.eos3.GetFunctionMode() 
 		if mode == LOWMAG_MODE:
@@ -388,7 +387,7 @@ class Jeol(tem.TEM):
 		else:
 			raise RuntimeError('Image shift functions not implemented in this mode (%d, "%s")' % (mode, name))		
 		return {"x": (shift_x - ZERO)*scale_x, "y": (shift_y - ZERO)*scale_y}
-	
+
 	def setImageShift(self, vector, relative = "absolute"):
 		mode, name, result = self.eos3.GetFunctionMode() 
 		if mode == LOWMAG_MODE:
@@ -415,7 +414,7 @@ class Jeol(tem.TEM):
 
 		if mode == LOWMAG_MODE:
 			#result = self.def3.SetIS2(int(round((shift_x)/scale_x))+ZERO, int(round((shift_y)/scale_y))+ZERO)
-                        result = self.def3.SetIS1(int(round((shift_x)/scale_x))+ZERO, int(round((shift_y)/scale_y))+ZERO)
+			result = self.def3.SetIS1(int(round((shift_x)/scale_x))+ZERO, int(round((shift_y)/scale_y))+ZERO)
 		elif mode == MAG1_MODE:
 			result = self.def3.SetIS1(int(round((shift_x)/scale_x))+ZERO, int(round((shift_y)/scale_y))+ZERO)
 
@@ -448,7 +447,7 @@ class Jeol(tem.TEM):
 			self._setOL(coarse_value, fine_value)
 		else:
 			raise RuntimeError('Focus functions not implemented in this mode (%d, "%s")' % (mode, name))
-	  
+
 	def getDefocus(self):
 		mode, name, result = self.eos3.GetFunctionMode() 
 		if mode == LOWMAG_MODE:
@@ -460,7 +459,7 @@ class Jeol(tem.TEM):
 			return OL_SCALE*(OLf - self.zeroOLf + COARSE_SCALE*(OLc - self.zeroOLc))
 		else:
 			raise RuntimeError('Defocus functions not implemented in this mode (%d, "%s")' % (mode, name))
-		
+
 	def setDefocus(self, defocus, relative='absolute'):
 		mode, name, result = self.eos3.GetFunctionMode()
 		
@@ -476,7 +475,7 @@ class Jeol(tem.TEM):
 			else:
 				raise RuntimeError('Defocus functions not implemented in this mode (%d, "%s")' % (mode, name))
 			return
-		
+
 		if mode == LOWMAG_MODE:
 			if relative == 'relative':
 				defocus += self.getDefocus()
@@ -499,7 +498,6 @@ class Jeol(tem.TEM):
 		else:
 			raise RuntimeError('Defocus functions not implemented in this mode (%d, "%s")' % (mode, name))
 
-	
 	def _resetDefocus(self):
 		mode, name, result = self.eos3.GetFunctionMode() 
 		if mode == LOWMAG_MODE and self.zeroOM is None:
@@ -507,7 +505,7 @@ class Jeol(tem.TEM):
 		elif mode == MAG1_MODE and None in (self.zeroOLc, self.zeroOLf):
 			self.zeroOLc, result = self.lens3.GetOLc()
 			self.zeroOLf, result = self.lens3.GetOLf()
-	
+
 	def resetDefocus(self):
 		mode, name, result = self.eos3.GetFunctionMode() 
 		if mode == LOWMAG_MODE:
@@ -518,7 +516,6 @@ class Jeol(tem.TEM):
 		else:
 			raise RuntimeError('Defocus functions not implemented in this mode (%d, "%s")' % (mode, name))
 
-    
 	def getMagnification(self):
 		mode, name, result = self.eos3.GetFunctionMode() 
 
@@ -555,11 +552,11 @@ class Jeol(tem.TEM):
 				return (low_magnifications + magnifications).index(magnification)
 			except ValueError:
 				raise ValueError('invalid magnification')
-	
+
 	def setMagnification(self, value):
 
 		mode, name, result = self.eos3.GetFunctionMode()
-		
+
 		if value in low_magnifications:
 			if mode != LOWMAG_MODE:
 				result = self.eos3.SelectFunctionMode(LOWMAG_MODE)
@@ -569,7 +566,7 @@ class Jeol(tem.TEM):
 
 		if value in magnifications:
 			if mode != MAG1_MODE:
-				result = self.eos3.SelectFunctionMode(MAG1_MODE)      
+				result = self.eos3.SelectFunctionMode(MAG1_MODE) 
 			self.eos3.SetSelector(magnifications.index(value))
 			self._resetDefocus()
 			return
@@ -590,13 +587,13 @@ class Jeol(tem.TEM):
 
 	def _isStageMoving(self):
 		# check if stage is moving
-                x, y, z, tx, ty, result = self.stage3.GetStatus()
-                return x or y or z or tx or ty
+		x, y, z, tx, ty, result = self.stage3.GetStatus()
+		return x or y or z or tx or ty
 
 	def _waitForStage(self):
 		# wait for stage to stop moving
-                while self._isStageMoving(): 
-                        time.sleep(0.1)
+		while self._isStageMoving(): 
+			time.sleep(0.1)
 
 	def setStagePosition(self, position, relative='absolute'):
 		# move relative or absolute, add current position for relative
@@ -614,23 +611,23 @@ class Jeol(tem.TEM):
 
 		# set stage position and wait for movement to stop
 		if 'z' in position:
-                        result = self.stage3.SetZ(position['z']*STAGE_SCALE_XYZ)
+			result = self.stage3.SetZ(position['z']*STAGE_SCALE_XYZ)
 
 		if 'x' in position:
-                        result = self.stage3.SetX(position['x']*STAGE_SCALE_XYZ)
+			result = self.stage3.SetX(position['x']*STAGE_SCALE_XYZ)
 
 		if 'y' in position:
-                        result = self.stage3.SetY(position['y']*STAGE_SCALE_XYZ)
+			result = self.stage3.SetY(position['y']*STAGE_SCALE_XYZ)
 
 		if 'a' in position:
-                        result = self.stage3.SetTiltXAngle(math.degrees(position['a']))
+			result = self.stage3.SetTiltXAngle(math.degrees(position['a']))
 
 		if 'b' in position:
-                        result = self.stage3.SetTiltYAngle(math.degrees(position['b']))
+			result = self.stage3.SetTiltYAngle(math.degrees(position['b']))
 
-                self._waitForStage()
+		self._waitForStage()
 
-        '''	
+'''	
 	def setStagePosition(self, position, relative = "absolute"):
 		if relative == "relative":
 			pos = self.getStagePosition()
@@ -674,7 +671,7 @@ class Jeol(tem.TEM):
 			time.sleep(.1)
 			x, y, z, tx, ty, result = self.stage3.GetStatus()
 
-			
+
 		try:
 			tmp_y = position['y'] + STAGE_BACKLASH
 			result = self.stage3.SetY(tmp_y * STAGE_SCALE_XYZ)
@@ -699,7 +696,7 @@ class Jeol(tem.TEM):
 			while tx: 
 				time.sleep(.1)
 				x, y, z, tx, ty, result = self.stage3.GetStatus()
-	
+
 		try:
 			result = self.stage3.SetTiltYAngle(math.degrees(position["b"]))
 		except KeyError:
@@ -709,11 +706,11 @@ class Jeol(tem.TEM):
 			while ty: 
 				time.sleep(.1)
 				x, y, z, tx, ty, result = self.stage3.GetStatus()
-				
+
 		try:
 			tmp_x = position['x'] - STAGE_BACKLASH
 			result = self.stage3.SetX(tmp_x * STAGE_SCALE_XYZ)
-			
+
 		except KeyError:
 			# for stage hysteresis removal
 			tmp_pos = self.getStagePosition()
@@ -726,7 +723,7 @@ class Jeol(tem.TEM):
 			time.sleep(.1)
 			x, y, z, tx, ty, result = self.stage3.GetStatus()
 
-			
+
 		try:
 			tmp_y = position['y'] - STAGE_BACKLASH
 			result = self.stage3.SetY(tmp_y * STAGE_SCALE_XYZ)
@@ -741,9 +738,9 @@ class Jeol(tem.TEM):
 		while y: 
 			time.sleep(.1)
 			x, y, z, tx, ty, result = self.stage3.GetStatus()
-				
+
 		# for stage hysteresis removal
-		
+
 		try:
 			result = self.stage3.SetX(position["x"] * STAGE_SCALE_XYZ)
 		except KeyError:
@@ -765,10 +762,10 @@ class Jeol(tem.TEM):
 				x, y, z, tx, ty, result = self.stage3.GetStatus()
 
 		return 0
-        '''
+'''
 	def getLowDoseStates(self):
 		return ['on', 'off', 'disabled']
-    	
+
 	def getLowDose(self):
 		mode, result = self.mds3.GetMdsMode()
 		if mode == MDS_OFF: 
@@ -783,12 +780,12 @@ class Jeol(tem.TEM):
 			result = self.mds3.EndMDSMode()
 		elif ld == 'on':
 			result = self.mds3.SetSearchMode()
-		else:		
+		else:
 			raise ValueError
 
 	def getLowDoseModes(self):
 		return ['exposure', 'focus1', 'search', 'unknown', 'disabled']
-		
+
 	def getLowDoseMode(self):
 		mode, result = self.mds3.GetMdsMode()
 		if mode == MDS_OFF:
@@ -813,7 +810,7 @@ class Jeol(tem.TEM):
 			result = self.mds3.EndMdsMode()
 		else:
 			raise ValueError
-    
+ 
 	def getDiffractionMode(self):
 		mode, result = self.eos3.GetFunctionMode()
 		if mode in (LOWMAG_MODE, MAG1_MODE):
@@ -822,7 +819,7 @@ class Jeol(tem.TEM):
 			return "diffraction"
 		else:
 			raise SystemError
-	
+
 	def setDiffractionMode(self, mode):
 		if mode == "imaging":
 			result = self.eos3.SelectFunctionMode(MAG1_MODE)
@@ -830,23 +827,23 @@ class Jeol(tem.TEM):
 			result = self.eos3.SelectFunctionMode(DIFF_MODE)
 		else:
 			raise ValueError
-	
+
 		return 0
-	
+
 	def getScreenCurrent(self):
 		value, result = self.camera3.GetCurrentDensity()
 		return value*CURRENT_DENSITY_SCALE
 
 	def getMainScreenPositions(self):
 		return ['up', 'down', 'unknown']
-		
+
 	def getMainScreenPosition(self):
 		position, result = self.detector3.GetPosition(MAIN_SCREEN)
 		if position == 1:
 			return 'down'
 		else:
 			return 'up'
-		
+
 	def setMainScreenPosition(self, position):
 		if position == 'up':
 			result = self.detector3.SetPosition(MAIN_SCREEN, 0)
@@ -1036,10 +1033,10 @@ class Jeol(tem.TEM):
 		result = self.apt3.SelectKind(current_kind)
 
 	def _setSpecialMag(self):
-                result = self.eos3.SelectFunctionMode(MAG1_MODE)
-                result = self.lens3.SetOLc(12646)
-                result = self.lens3.SetOLf(34439)
-                result = self.lens3.SetOM(41801)
+		result = self.eos3.SelectFunctionMode(MAG1_MODE)
+		result = self.lens3.SetOLc(12646)
+		result = self.lens3.SetOLf(34439)
+		result = self.lens3.SetOM(41801)
 
 	'''
 	Camera function list
