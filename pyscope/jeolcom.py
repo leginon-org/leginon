@@ -136,7 +136,7 @@ class Jeol(tem.TEM):
 	def getGunTilt(self):
 		tilt_x, tilt_y, result = self.def3.GetGunA1()
 		return {'x' : toLeginon(tilt_x), 'y' : toLeginon(tilt_y)}
-
+ 
 	def setGunTilt(self, vector, relative = "absolute"):
 		current_tilt = self.getGunTilt()
 		tilt_x = current_tilt['x']
@@ -207,7 +207,6 @@ class Jeol(tem.TEM):
 			self.feg3.SetBeamValve(0)
 		else:
 			raise ValueError
-		pass
 
 	# intensity is controlled by condenser lens 3
 	def getIntensity(self):
@@ -221,7 +220,7 @@ class Jeol(tem.TEM):
 			pass
 		else:
 			raise ValueError
-	
+
 		result = self.lens3.SetCL3(int(round(intensity*MAX)))
 		
 	def getDarkFieldMode(self):
@@ -255,7 +254,7 @@ class Jeol(tem.TEM):
 		return {"condenser": {"x": toLeginon(c_x), "y": toLeginon(c_y)},
 			"objective": {"x": toLeginon(o_x), "y": toLeginon(o_y)},
 			"diffraction": {"x": toLeginon(d_x), "y": toLeginon(d_y)}} 
-
+ 
 	def setStigmator(self, stigs, relative = "absolute"):
 		for key in stigs.keys():
 			stigmators = self.getStigmator()
@@ -267,7 +266,7 @@ class Jeol(tem.TEM):
 				stigmator = stigmators["diffraction"]
 			else:
 				raise ValueError
-	
+
 			if relative == "relative":
 				try:
 					stigs[key]["x"] += stigmator["x"]
@@ -293,7 +292,7 @@ class Jeol(tem.TEM):
 				result = self.def3.SetILs(toJeol(stigmator["x"]), toJeol(stigmator["y"]))
 			else:
 				raise ValueError
- 
+
 	def getSpotSize(self):
 		spot_size, result = self.eos3.GetSpotSize()
 		return spot_size + 1
@@ -311,7 +310,7 @@ class Jeol(tem.TEM):
 	def getBeamTilt(self):
 		tilt_x, tilt_y, result = self.def3.GetCLA2()
 		return {"x": (tilt_x - ZERO)*BEAMTILT_FACTOR_X, "y": (tilt_y - ZERO)*BEAMTILT_FACTOR_Y}
-		
+
 	def setBeamTilt(self, vector, relative = "absolute"):
 		current_tilt = self.getBeamTilt()
 		tilt_x = current_tilt['x']
@@ -358,7 +357,7 @@ class Jeol(tem.TEM):
 			scale_x, scale_y = BEAMSHIFT_FACTOR_X_MAG1, BEAMSHIFT_FACTOR_Y_MAG1
 		else:
 			raise RuntimeError('Beam shift functions not implemented in this mode (%d, "%s")' % (mode, name))
-
+		
 		if relative == 'relative':
 			current_shift = self.getBeamShift()
 			if 'x' in vector:
@@ -419,8 +418,7 @@ class Jeol(tem.TEM):
 			raise ValueError
 
 		if mode == LOWMAG_MODE:
-			#result = self.def3.SetIS2(int(round((shift_x)/scale_x))+ZERO, int(round((shift_y)/scale_y))+ZERO)
-			result = self.def3.SetIS1(int(round((shift_x)/scale_x))+ZERO, int(round((shift_y)/scale_y))+ZERO)
+			result = self.def3.SetIS2(int(round((shift_x)/scale_x))+ZERO, int(round((shift_y)/scale_y))+ZERO)
 		elif mode == MAG1_MODE:
 			result = self.def3.SetIS1(int(round((shift_x)/scale_x))+ZERO, int(round((shift_y)/scale_y))+ZERO)
 
@@ -521,7 +519,7 @@ class Jeol(tem.TEM):
 			self.zeroOLc, result = self.lens3.GetOLc()
 		else:
 			raise RuntimeError('Defocus functions not implemented in this mode (%d, "%s")' % (mode, name))
-
+ 
 	def getMagnification(self):
 		mode, name, result = self.eos3.GetFunctionMode() 
 
@@ -633,7 +631,7 @@ class Jeol(tem.TEM):
 
 		self._waitForStage()
 
-'''	
+'''
 	def setStagePosition(self, position, relative = "absolute"):
 		if relative == "relative":
 			pos = self.getStagePosition()
@@ -646,11 +644,11 @@ class Jeol(tem.TEM):
 			pass
 		else:
 			raise ValueError
-			
+
 		value = self.checkStagePosition(position)
 		if not value:
 			return
-			
+
 		try:
 			result = self.stage3.SetZ(position["z"] * STAGE_SCALE_XYZ)
 		except KeyError:
@@ -692,7 +690,7 @@ class Jeol(tem.TEM):
 		while y: 
 			time.sleep(.1)
 			x, y, z, tx, ty, result = self.stage3.GetStatus()
-		
+
 		try:
 			result = self.stage3.SetTiltXAngle(math.degrees(position["a"]))
 		except KeyError:
@@ -1044,7 +1042,7 @@ class Jeol(tem.TEM):
 		result = self.lens3.SetOLf(34439)
 		result = self.lens3.SetOM(41801)
 
-	'''
+'''
 	Camera function list
 		::TakePhoto 
 		::CancelPhoto 
@@ -1056,24 +1054,24 @@ class Jeol(tem.TEM):
 		::GetShutterPosition	- Shutter positions are
 		::SetShutterPosition	- 0 : open / 1 : close / 2 : exposure
 		::ExposeShutter
-	'''	
+'''
 	def getCameraStatus(self):
 		status, result = self.camera3.GetStatus()
 		return status
-		
+
 	def setFilmLoadingMode(self, feed = 0):
 		result = self.camera3.SelectFilmLoadingMode(feed)
-		
+
 	def takePhoto(self):
 		result = self.camera3.TakePhoto()
-		
+
 	def cancelPhoto(self):
 		result = self.camera3.CancelPhoto()
 
 	def getExposeTime(self):
 		time, result = self.camera3.GetExpTime()
 		return time
-	
+
 	def setExposeTime(self, time):
 		result = self.camera3.SetExpTime(time)
 
@@ -1088,11 +1086,11 @@ class Jeol(tem.TEM):
 		time.sleep(6)
 		
 		return
-		
+
 	def postFilmExposure(self, value):
 		if not value:
 			return
-			
+
 		result = self.camera3.EjectFilm()
 		
 		return
