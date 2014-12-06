@@ -305,7 +305,7 @@ class CL2D(appionScript.AppionScript):
 		self.badpartlist = []
 		partlist = []
 		for i in range(self.params['numpart']):
-			partlist.append(i)+1
+			partlist.append(i+1)
 		missingcount = 0
 		for p in partlist:
 			if p not in xmipplist:
