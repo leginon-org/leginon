@@ -293,6 +293,7 @@ class CL2D(appionScript.AppionScript):
 				listOfParticles=[]
 				for line in fh:
 						fileName=line.split(" ")[0]
+						### particle numbering starts at 0
 						particleNumber=os.path.split(fileName)[1][4:10]
 						listOfParticles.append(particleNumber)
 						xmipplist.append(int(particleNumber))
@@ -305,7 +306,7 @@ class CL2D(appionScript.AppionScript):
 		self.badpartlist = []
 		partlist = []
 		for i in range(self.params['numpart']):
-			partlist.append(i+1)
+			partlist.append(i)
 		missingcount = 0
 		for p in partlist:
 			if p not in xmipplist:
@@ -421,11 +422,12 @@ class CL2D(appionScript.AppionScript):
 				refq['ssnr_resolution'] = self.resdict[ref]
 
 			### setup particle info ... NOTE: ALIGNMENT PARAMETERS ARE NOT SAVED IN XMIPP 2.4
-			for partnum in D[ref]:
+			for partnum in D[ref]: # particle numbering in D[ref] starts with 0
 				alignpartq = appiondata.ApAlignParticleData()
 				alignpartq['partnum'] = int(partnum)+1
 				alignpartq['alignstack'] = self.alignstackdata
-				stackpartdata = apStack.getStackParticle(self.runparams['stackid'], int(partnum)+1)	### particle numbering starts with 0!!!!!!!
+				### particle numbering in Appion db starts with 1
+				stackpartdata = apStack.getStackParticle(self.runparams['stackid'], int(partnum)+1)
 				alignpartq['stackpart'] = stackpartdata
 				alignpartq['ref'] = refq
 				### insert
@@ -435,7 +437,7 @@ class CL2D(appionScript.AppionScript):
 
 		### insert bad particles
 		if len(self.badpartlist) > 0:
-			for p in self.badpartlist:
+			for p in self.badpartlist: # particle numbering in badpartlist starts with 0
 				refq = appiondata.ApAlignReferenceData()
 				refq['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
 				refq['alignrun'] = self.alignstackdata['alignrun']
@@ -443,6 +445,7 @@ class CL2D(appionScript.AppionScript):
 				alignpartq = appiondata.ApAlignParticleData()
 				alignpartq['partnum'] = int(p)+1
 				alignpartq['alignstack'] = self.alignstackdata
+				### particle numbering in Appion db starts with 1
 				stackpartdata = apStack.getStackParticle(self.runparams['stackid'], int(p)+1)
 				alignpartq['stackpart'] = stackpartdata
 				alignpartq['bad'] = 1
