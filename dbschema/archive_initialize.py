@@ -19,17 +19,28 @@ class Searcher(object):
 	def getAdministratorUserId(self):
 		return leginondata.UserData(username='administrator').query()[0].dbid
 		#return leginondata.UserData(username='anonymous').query()[0].dbid
+
+	def getIdFromDataList(self,datalist):
+		'''
+		get dbid from a list of data object that may contain None.
+		'''		
+		valid_objects = filter(lambda x: x is not None,datalist)
+		return map((lambda x: x.dbid),valid_objects)
 		
 	def getOwnerUserId(self):
 		owners = projectdata.projectowners(project=self.project).query()
-		return map((lambda x: x['user'].dbid),owners)
+		users = map((lambda x: x['user']),owners)
+		return self.getIdFromDataList(users)
 		
 	def getSharerUserId(self):
 		project_sessions = projectdata.projectexperiments(project=self.project).query()
 		allsharers = []
 		for session in map((lambda x:x['session']),project_sessions):
+			if session is None or session['name'] != '14may29anchitestA7':
+				continue
 			sharers = projectdata.shareexperiments(experiment=session).query()
-			allsharers.extend(map((lambda x: x['user'].dbid),sharers))
+			users = map((lambda x: x['user']),sharers)
+			allsharers.extend(self.getIdFromDataList(users))
 		return allsharers
 		
 	def run(self):

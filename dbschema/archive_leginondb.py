@@ -528,8 +528,6 @@ class SessionArchiver(Archiver):
 		for focus in focii:
 			focus.insert(archive=True)
 
-
-
 	def importBrightImages(self):
 		'''
 		Import BrighetImageData based on imported NormImageData.
@@ -652,6 +650,19 @@ class SessionArchiver(Archiver):
 				results = self.researchSettings('FocusSettingData',node_name=node_name,name=seq_name)
 				self.publish(results)
 
+	def importLastPresets(self):
+		# some presets such as fa and fc is never used in image acquisition
+		print 'importing all last version of presets....'
+		source_session = self.getSourceSession()
+		q = leginondata.PresetData(session=source_session)
+		allpresets = self.research(q)
+		lastpresets = {}
+		for p in allpresets:
+			if p['name'] not in lastpresets:
+				lastpresets[p['name']] = p
+		lastpreset_list = map((lambda x: lastpresets[x]),lastpresets.keys())
+		self.publish(lastpreset_list)
+
 	def importViewerImageStatus(self):
 		print "Importing ViewerImageStatus...."
 		source_session = self.getSourceSession()
@@ -672,6 +683,9 @@ class SessionArchiver(Archiver):
 
 	def importTomographyPrediction(self):
 		self.importSessionDependentData('TomographyPredictionData')
+
+	def importConnectToClients(self):
+		self.importSessionDependentData('ConnectToClientsData')
 
 	def runStep1(self):
 		'''
@@ -696,7 +710,7 @@ class SessionArchiver(Archiver):
 
 	def runStep3(self):
 		'''
-		STEP 2: import image dependent data and other data not
+		STEP 3: import image dependent data and other data not
 		recursively inserted by the first two steps.
 		'''
 		# These are image dependent.
@@ -708,7 +722,9 @@ class SessionArchiver(Archiver):
 		self.importDeQueue()
 		self.importDrifts()
 		self.importFocusResults()
+		self.importLastPresets()
 		self.importLaunchedApplications()
+		self.importConnectToClients()
 		self.importSettings()
 		self.importViewerImageStatus()
 		self.importIceThickness()
@@ -743,8 +759,7 @@ def archiveProject(projectid):
 	source_sessions = projectdata.projectexperiments(project=p).query()
 	session_names = map((lambda x:x['session']['name']),source_sessions)
 	session_names.reverse()  #oldest first
-	print session_names
-	for session_name in session_names:		
+	for session_name in session_names:
 		app = SessionArchiver(session_name)
 		app.run()
 		app = None
