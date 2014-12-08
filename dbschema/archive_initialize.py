@@ -1,4 +1,9 @@
 #!/usr/bin/env python
+'''
+This module creates archive_users_%projectid.cfg.  It maker
+sure the few users that is essential for the project is imported
+even if they have not created any session that will be imported later.
+'''
 import os
 
 from leginon import projectdata, leginondata
@@ -10,11 +15,14 @@ def checkSinedon():
 		print "currently from %s",sinedon.__file__
 		sys.exit(1)
 
-class Searcher(object):
+class UserSearcher(object):
 	def __init__(self, projectid):
-		self.project = projectdata.projects().direct_query(projectid)
+		self.setProject(projectid)
 		self.essential_userids = [self.getAdministratorUserId(),]
 		self.run()
+
+	def setProject(self, projectid):
+		self.project = projectdata.projects().direct_query(projectid)
 
 	def getAdministratorUserId(self):
 		return leginondata.UserData(username='administrator').query()[0].dbid
@@ -59,4 +67,4 @@ if __name__=="__main__":
 		sys.exit()
 	checkSinedon()
 	projectid = int(sys.argv[1])
-	app = Searcher(projectid)
+	app = UserSearcher(projectid)

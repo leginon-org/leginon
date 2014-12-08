@@ -49,8 +49,8 @@ class ArchiveRun(object):
 			print "EXIT WITH ERROR"
 			sys.exit(1)
 
-	def runScript(self, pythonfile):
-		sinedon_base_path = os.path.split(os.path.abspath(self.dbcopy_sinedon_path))[0]
+	def runScript(self, sinedon_base_path, pythonfile):
+		sinedon_base_path = os.path.split(os.path.abspath(sinedon_base_path))[0]
 		cmd = 'export PYTHONPATH=%s:$PYTHONPATH; python %s' % (sinedon_base_path,pythonfile)
 		self.runSubProcess(cmd)
 
@@ -95,24 +95,30 @@ class ArchiveRun(object):
 		else:
 			os.remove(self.sinedon_cfg_file)
 
+	def initializeArchive(self, projectid):
+			self.writeSinedonCfg(self.old_leginondb,self.old_projectdb,self.new_leginondb)
+			script_path = os.path.join(self.normal_dbschema_path,'archive_initialize.py')
+			self.runScript(self.normal_sinedon_path, '%s %d' % (script_path, projectid,))
+
 	def archiveLeginonDB(self, projectid):
 			self.writeSinedonCfg(self.old_leginondb,self.old_projectdb,self.new_leginondb)
 			script_path = os.path.join(self.normal_dbschema_path,'archive_leginondb.py')
-			self.runScript('%s %d' % (script_path, projectid,))
+			self.runScript(self.dbcopy_sinedon_path, '%s %d' % (script_path, projectid,))
 
 	def archiveProjectDB(self, projectid):
 			self.writeSinedonCfg(self.new_leginondb,self.old_projectdb,self.new_projectdb)
 			script_path = os.path.join(self.normal_dbschema_path,'archive_projectdb.py')
-			self.runScript('%s %d' % (script_path, projectid,))
+			self.runScript(self.dbcopy_sinedon_path, '%s %d' % (script_path, projectid,))
 
 	def activateArchive(self):
 			self.writeSinedonCfg(self.new_leginondb,self.new_projectdb)
 			script_path = os.path.join(self.normal_dbschema_path,'archive_activate.py')
-			self.runScript('%s' % (script_path,))
+			self.runScript(self.dbcopy_sinedon_path, '%s' % (script_path,))
 
 	def run(self):
 		self.backupSinedonCfg()
 		for projectid in self.projectids:
+			self.initializeArchive(projectid)
 			self.archiveLeginonDB(projectid)
 			self.archiveProjectDB(projectid)
 		self.activateArchive()

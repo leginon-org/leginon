@@ -576,6 +576,24 @@ class SessionArchiver(Archiver):
 				targetlist[imageid].insert(archive=True)
 		print '\nimported %d images' % (len(images) - skipped)
 
+	def importFocusSequenceSettings(self, allalias):
+		print 'importing Focus Sequence Settings....'
+		if 'Focuser' not in allalias.keys():
+			return
+		sequence_names = []
+		for node_name in (allalias['Focuser']):
+			results = self.researchSettings('FocusSequenceData',node_name=node_name)
+			self.publish(results)
+			for r in results:
+				sequence = r['sequence']
+				for s in sequence:
+					if s not in sequence_names:
+						sequence_names.append(s)
+		for node_name in (allalias['Focuser']):
+			for seq_name in sequence_names:
+				results = self.researchSettings('FocusSettingData',node_name=node_name,name=seq_name)
+				self.publish(results)
+
 	def importSettingsByClassAndAlias(self,allalias):
 		unusual_settingsnames = {
 				'AlignZeroLossPeak':None,
@@ -600,6 +618,8 @@ class SessionArchiver(Archiver):
 						raise
 						print 'ERROR: %s class node %s settings query failed' % (classname,node_name)
 					self.publish(results)
+		# FocusSequence and FocusSettings needs a different importing method
+		self.importFocusSequenceSettings(allalias)
 
 	def importLaunchedApplications(self):
 		print 'importing Applications....'
@@ -618,6 +638,9 @@ class SessionArchiver(Archiver):
 			self.publish(bindingspecs)
 
 	def importSettings(self):
+		'''
+		Import Settings based on launched applications of the session
+		'''
 		source_session = self.getSourceSession()
 		q = leginondata.LaunchedApplicationData(session=source_session)
 		launched_apps = self.research(q)
@@ -630,25 +653,7 @@ class SessionArchiver(Archiver):
 					allalias[r['class string']] = []
 				allalias[r['class string']].append(r['alias'])
 		# import settings
-
 		self.importSettingsByClassAndAlias(allalias)
-
-		print 'importing Focus Sequence Settings....'
-		if 'Focuser' not in allalias.keys():
-			return
-		sequence_names = []
-		for node_name in (allalias['Focuser']):
-			results = self.researchSettings('FocusSequenceData',node_name=node_name)
-			self.publish(results)
-			for r in results:
-				sequence = r['sequence']
-				for s in sequence:
-					if s not in sequence_names:
-						sequence_names.append(s)
-		for node_name in (allalias['Focuser']):
-			for seq_name in sequence_names:
-				results = self.researchSettings('FocusSettingData',node_name=node_name,name=seq_name)
-				self.publish(results)
 
 	def importLastPresets(self):
 		# some presets such as fa and fc is never used in image acquisition
