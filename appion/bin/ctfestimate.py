@@ -143,7 +143,12 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 		nominal = abs(imgdata['scope']['defocus']*-1.0e10)
 		ctfvalue = ctfdb.getBestCtfByResolution(imgdata)
 		if ctfvalue is not None:
+			"""
 			## CTFFIND V3.5 (7-March-2012) prefers the smaller of the two values for astigmatic images
+			I found that say you have an image with 1.1um and 1.5um defocus astigmatism. If you give 
+			CTFFIND 1.3um defocus and 0.5um astig (dast) then it will try to fit 1.3um and 1.8um, so 
+			you need to give it the minimum value (1.1um) for it fit 1.1um and 1.5um.
+			"""
 			bestdef = min(ctfvalue['defocus1'],ctfvalue['defocus2'])*1.0e10
 		else:
 			bestdef = nominal
