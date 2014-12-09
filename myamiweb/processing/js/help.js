@@ -52,6 +52,7 @@ var help = {
 		'resmin' : 'This is the lowest resolution (in Angstroms) that will be considered when fitting the CTF.',
 		'resmax' : 'This is the highest resolution (in Angstroms) that will be considered when fitting the CTF.',
 		'defstep' : 'Step size (in Angstroms) used when searching for the defocus.',
+		'ctffindBestdb' : 'Use best amplitude contrast, resolution max, and astigmatism difference from database',		
 		'numstep' : 'Number of steps to search, really defines the search area as defocus_step times num_steps.',
 		'dast' : 'Expected amount of astigmatism in Angstrom. This is an additional parameter that was added to CARD 4 to restrain the amount of astigmatism in the CTF fit. This makes the fitting procedure more robust, especially in cases where the Thon rings are not easily visible',
 		'cs' : 'Spherical abberation, abbreviated as Cs, it corresponds to the imperfection produced by the lenses in the electron microscope.  This is a physical property of a microscope and does not change.',

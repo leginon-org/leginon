@@ -143,15 +143,23 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 		nominal = abs(imgdata['scope']['defocus']*-1.0e10)
 		ctfvalue = ctfdb.getBestCtfByResolution(imgdata)
 		if ctfvalue is not None:
-			bestdef = abs(ctfvalue['defocus1']+ctfvalue['defocus2'])/2.0*1.0e10
+			## CTFFIND V3.5 (7-March-2012) prefers the smaller of the two values for astigmatic images
+			bestdef = min(ctfvalue['defocus1'],ctfvalue['defocus2'])*1.0e10
 		else:
 			bestdef = nominal
 		if ctfvalue is not None and self.params['bestdb'] is True:
-			bestampcontrast = ctfvalue['amplitude_contrast']
-			beststigdiff = abs(ctfvalue['defocus1'] - ctfvalue['defocus2'])*1e10
+			bestampcontrast = round(ctfvalue['amplitude_contrast'],3)
+			beststigdiff = round(abs(ctfvalue['defocus1'] - ctfvalue['defocus2'])*1e10,1)
 		else:
 			bestampcontrast = self.params['amp'+self.params['medium']]
 			beststigdiff = self.params['dast']
+
+		if ctfvalue is not None and self.params['bestdb'] is True:
+			### set res max from resolution_80_percent
+			gmean = math.sqrt(ctfvalue['resolution_80_percent']*ctfvalue['resolution_50_percent'])
+			self.params['resmax'] = round(gmean,2)
+			apDisplay.printColor("Setting resmax to the geometric mean of resolution values", "purple")
+
 		# dstep is the physical detector pixel size
 		dstep = None
 		if 'camera' in imgdata and imgdata['camera'] and imgdata['camera']['pixel size']:
@@ -385,7 +393,7 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 			help="nominal")
 		self.parser.add_option("--newnominal", dest="newnominal", default=False,
 			action="store_true", help="newnominal")
-		self.parser.add_option("--resmin", dest="resmin", type="float", default=100.0,
+		self.parser.add_option("--resmin", dest="resmin", type="float", default=50.0,
 			help="Low resolution end of data to be fitted", metavar="#")
 		self.parser.add_option("--resmax", dest="resmax", type="float", default=15.0,
 			help="High resolution end of data to be fitted", metavar="#")

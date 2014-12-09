@@ -96,6 +96,9 @@ function runCtfFind() {
 	$command.="--defstep=$defstep ";
 	$command.="--numstep=$numstep ";
 	$command.="--dast=$dast ";
+	if ($_POST['bestdb'])
+		$command.=" --bestdb ";		
+	
 
 	$progname = "CtfFind";
 	if ($ctftilt) {
@@ -181,6 +184,20 @@ function createCtfFindForm($extra=false) {
 		  obj.defstep.value = 100;
 		  return;
 		}
+		function bestdbChange(obj) {
+			if (obj.bestdb.checked) {
+				obj.ampice.style.backgroundColor = '#bbbbbb';		
+				obj.ampcarbon.style.backgroundColor = '#bbbbbb';
+				obj.resmax.style.backgroundColor = '#bbbbbb';
+				obj.dast.style.backgroundColor = '#bbbbbb';
+			} else {
+				obj.ampice.style.backgroundColor = '#ffffff';		
+				obj.ampcarbon.style.backgroundColor = '#ffffff';
+				obj.resmax.style.backgroundColor = '#ffffff';
+				obj.dast.style.backgroundColor = '#ffffff';
+			}			
+		  return;
+		}		
 		function updateDFsearch() {
 		  var dstep = parseFloat(document.getElementById('defstep').value);
 		  var numstep = parseFloat(document.getElementById('numstep').value);
@@ -259,7 +276,16 @@ function createCtfFindForm($extra=false) {
 	echo "<br/><br/>\n";
 
 	echo "<INPUT TYPE='text' NAME='binval' VALUE='$form_bin' SIZE='4'>\n";
-	echo docpop('binval','Binning');
+	echo docpop('binval','Pre-Binning');
+	echo "<br/><br/>\n";
+	
+	if ($lastrunnumber > 1) {
+		echo "<input type='checkbox' name='bestdb' $bestdbcheck onClick='bestdbChange(this.form)'>\n";
+		echo docpop('ctffindBestdb','Use best values from DB');
+	} else {
+		echo "<i>Use best values from DB is not available"
+			."<br/>($lastrunnumber ctf runs)</i>\n";
+	}
 	echo "<br/><br/>\n";
 
 	echo "<b>$progname Values</b><br/>\n";
