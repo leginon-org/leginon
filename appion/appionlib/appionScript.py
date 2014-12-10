@@ -54,12 +54,12 @@ class AppionScript(basicScript.BasicScript):
 		self.appiondir = apParam.getAppionDirectory()
 		apDisplay.printMsg("Appion directory: "+self.appiondir)
 		self.parsePythonPath()
-		loadavg = os.getloadavg()[0]
-		if loadavg > 2.0:
-			apDisplay.printMsg("Load average is high "+str(round(loadavg,2)))
-			loadsquared = loadavg*loadavg
-			time.sleep(loadavg)
-			apDisplay.printMsg("New load average "+str(round(os.getloadavg()[0],2)))
+# 		loadavg = os.getloadavg()[0]
+# 		if loadavg > 2.0:
+# 			apDisplay.printMsg("Load average is high "+str(round(loadavg,2)))
+# 			loadsquared = loadavg*loadavg
+# 			time.sleep(loadavg)
+# 			apDisplay.printMsg("New load average "+str(round(os.getloadavg()[0],2)))
 		self.setLockname('lock')
 
 		### setup default parser: run directory, etc.
