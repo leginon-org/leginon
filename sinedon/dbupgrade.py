@@ -25,6 +25,7 @@ messaging = {
 	'create query': True,
 	'update query': True,
 	'insert query': True,
+	'delete query': True,
 }
 
 class DBUpgradeTools(object):
