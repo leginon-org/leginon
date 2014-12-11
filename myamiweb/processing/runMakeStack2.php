@@ -136,7 +136,8 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	$defocpaircheck = ($_POST['stackdfpair']=='on') ? 'checked' : '';
 	$ddnframe = $_POST['ddnframe'];
 	$ddstartframe = $_POST['ddstartframe'];
-
+	$forceInsert = ($_POST['forceInsert'])=='on' ? True : False;
+	
 	$ctfoptions = array(
 		'ace2image'=>'Ace 2 Wiener Filter Whole Image',
 		'ace2imagephase'=>'Ace 2 PhaseFlip Whole Image',
@@ -504,6 +505,11 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	echo docpop('stackbin','Binning');
 	echo "<br/>\n";
 	echo "<br/>\n";
+	echo "<input type='checkbox' name='forceInsert' $forceInsert>\n";
+	echo docpop('force','Fast Insert');
+	
+	echo "<br/>\n";
+	echo "<br/>\n";
 
 
 	if ($ctfdata) {
@@ -834,6 +840,8 @@ function runMakestack() {
 	$ctffindonly = ($_POST['ctffindonly'])=='on' ? True : False;
 	$ddstartframe = $_POST['ddstartframe'];
 	$ddnframe = $_POST['ddnframe'];
+	$forceInsert = ($_POST['forceInsert'])=='on' ? True : False;
+	
 	if ($_POST['boxmaskcheck']=='on') {
 		$boxmask = $_POST['boxmask'].','.$_POST['boxlen'].','.$_POST['iboxmask'].','.$_POST['falloff'];
 	}
@@ -882,7 +890,7 @@ function runMakestack() {
 	if ($bin) {
 		if (!is_numeric($bin)) createMakestackForm("<b>ERROR:</b> Binning amount must be an integer");
 	}
-
+	
 	// box size
 	$boxsize = $_POST['boxsize'];
 	if (!$boxsize)
@@ -1031,7 +1039,8 @@ function runMakestack() {
 	if ($ddnframe) $command.=" --ddnframe=$ddnframe ";
 	if ($ctfrunID) $command.="--ctfrunid=$ctfrunID ";
 	if ($boxmask) $command.="--boxmask='$boxmask' ";
-
+	if ($forceInsert) $command.="--forceInsert ";
+	
 	$apcommand = parseAppionLoopParams($_POST);
 	if ($apcommand[0] == "<") {
 		createMakestackForm($apcommand);

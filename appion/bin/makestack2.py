@@ -888,7 +888,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 			apDisplay.printColor("Inserting stack parameters into database", "cyan")
 			if self.params['commit'] is True:
 				rinstackq['stack'] = stackq
-				rinstackq.insert()
+				rinstackq.insert(force=self.params['forceInsert'])
 			return
 		elif uniqrundatas and not uniqstackdatas:
 			apDisplay.printError("Weird, run data without stack already in the database")
@@ -972,6 +972,9 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 			action="store_false", help="contrast of the micrographs")
 		self.parser.add_option("--spider", dest="spider", default=False,
 			action="store_true", help="create a spider stack")
+		self.parser.add_option("--forceInsert", dest="forceInsert", default=False,
+			action="store_true", help="insert new entries without checking if corresponding data already exists")
+		
 		self.parser.add_option("--normalized", dest="normalized", default=False,
 			action="store_true", help="normalize the entire stack")
 		self.parser.add_option("--xmipp-norm-before", dest="xmipp-norm-before", default=False,
@@ -1168,7 +1171,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 		if self.framelist and self.params['commit'] is True:
 			# insert framelist
 			q = appiondata.ApStackImageFrameListData(stack=self.stackdata,image=imgdata,frames=self.framelist)
-			q.insert()
+			q.insert(force=self.params['forceInsert'])
 		t0 = time.time()
 		### loop over the particles and insert
 		for i in range(len(self.boxedpartdatas)):
@@ -1198,7 +1201,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 			stpartq['centermean'] = round(partmeandict['centermean'],4)
 			stpartq['centerstdev'] = round(partmeandict['centerstdev'],4)
 			if self.params['commit'] is True:
-				stpartq.insert()
+				stpartq.insert(force=self.params['forceInsert'])
 		self.insertdbtimes.append(time.time()-t0)
 
 	#=======================
