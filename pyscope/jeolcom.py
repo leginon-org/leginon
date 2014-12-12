@@ -713,7 +713,7 @@ class Jeol(tem.TEM):
 
 		self._waitForStage()
 
-'''
+	'''
 	def setStagePosition(self, position, relative = "absolute"):
 		if relative == "relative":
 			pos = self.getStagePosition()
@@ -845,7 +845,7 @@ class Jeol(tem.TEM):
 				x, y, z, tx, ty, result = self.stage3.GetStatus()
 
 		return 0
-'''
+	'''
 
 	def getLowDoseStates(self):
 		return ['on', 'off', 'disabled']
@@ -1121,7 +1121,7 @@ class Jeol(tem.TEM):
 		result = self.lens3.SetOLf(34439)
 		result = self.lens3.SetOM(41801)
 
-'''
+	'''
 	Camera function list
 		::TakePhoto 
 		::CancelPhoto 
@@ -1133,7 +1133,7 @@ class Jeol(tem.TEM):
 		::GetShutterPosition	- Shutter positions are
 		::SetShutterPosition	- 0 : open / 1 : close / 2 : exposure
 		::ExposeShutter
-'''	
+	'''	
 	def getCameraStatus(self):
 		status, result = self.camera3.GetStatus()
 		return status
