@@ -7,9 +7,15 @@ from leginon import projectdata
 from leginon import correctorclient
 import time
 
-# set direct_query values
-# exclude preset lable
-excludelist = ()
+# exclude preset label
+exclude_preset_list = []
+
+# exclude session name
+exclude_session_list = []
+
+# skip checking sessions probably archived.
+# Do not turn this option on unless you know what you are doing
+SKIP_ARCHIVED = False
 
 def checkSinedon():
 	try:
@@ -82,7 +88,7 @@ class Archiver(object):
 	def avoidExcludedImage(self,fulllist):
 		shortlist = []
 		for data in fulllist:
-			if data['image']['label'] in excludelist:
+			if data['image']['label'] in exclude_preset_list:
 				continue
 			else:
 				shortlist.append(data)
@@ -155,6 +161,7 @@ class UserArchiver(Archiver):
 		userids = self.getEssentialUsers()
 		for id in userids:
 			sinedon.setConfig('leginondata', db=self.source_dbname)
+			print 'querying user %d' % id
 			userdata = leginondata.UserData().direct_query(id)
 			self.publish([userdata,])
 
@@ -167,6 +174,14 @@ class SessionArchiver(Archiver):
 		self.sessionname = sessionname
 		self.setSourceSession(sessionname)
 		self.setDestinationSession(sessionname)
+		self.bad_settings_class = []
+
+	def isSessionInArchive(self):
+		destination_session = self.getDestinationSession()
+		if destination_session is None and self.sessionname not in exclude_session_list:
+			return False
+		else:
+			return True
 
 	def hasImagesInSession(self):
 		source_session = self.getSourceSession()
@@ -567,7 +582,7 @@ class SessionArchiver(Archiver):
 				print ""
 			else:
 				print ".",
-			if image['label'] in excludelist:
+			if image['label'] in exclude_preset_list:
 				skipped += 1
 				continue
 			imageid = image.dbid
@@ -615,8 +630,9 @@ class SessionArchiver(Archiver):
 					try:
 						results = self.researchSettings(settingsname,name=node_name)
 					except:
-						raise
-						print 'ERROR: %s class node %s settings query failed' % (classname,node_name)
+						if classname not in self.bad_settings_class:
+							print 'ERROR: %s class node %s settings query failed' % (classname,node_name)
+							self.bad_settings_class.append(classname)
 					self.publish(results)
 		# FocusSequence and FocusSettings needs a different importing method
 		self.importFocusSequenceSettings(allalias)
@@ -749,7 +765,7 @@ class SessionArchiver(Archiver):
 		print ''
 
 def archiveEssentialUsers(projectid):
-	print "Importing Default Users...."
+	print "Importing Default Users for %d...." % (projectid,)
 	userarchiver = UserArchiver(projectid)
 	userarchiver.run()
 
@@ -759,20 +775,28 @@ def archiveProject(projectid):
 	'''
 	archiveEssentialUsers(projectid)
 
+	print 'Finding sessions for the project....'
 	from leginon import projectdata
 	p = projectdata.projects().direct_query(projectid)
 	source_sessions = projectdata.projectexperiments(project=p).query()
 	session_names = map((lambda x:x['session']['name']),source_sessions)
 	session_names.reverse()  #oldest first
+	print 'Found %d sessions for the project' %  (len(session_names))
 	for session_name in session_names:
+		# Don't archive sessions before 2011
+		if int(session_name[:2]) < 11:
+			continue
 		app = SessionArchiver(session_name)
+		if SKIP_ARCHIVED and app.isSessionInArchive():
+			print 'Session %s already archived' % session_name
+			continue
 		app.run()
 		app = None
 
 if __name__ == '__main__':
 	import sys
 	if len(sys.argv) != 2:
-		print "Usage: python archive_project.py <project id number>"
+		print "Usage: python archive_leginondb.py <project id number>"
 		print ""
 		print "sinedon.cfg should include a module"
 		print "[importdata]"
