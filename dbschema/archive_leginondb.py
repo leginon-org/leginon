@@ -13,6 +13,9 @@ exclude_preset_list = []
 # exclude session name
 exclude_session_list = []
 
+# archive only session in and after this year
+YEAR = 1999
+
 # skip checking sessions probably archived.
 # Do not turn this option on unless you know what you are doing
 SKIP_ARCHIVED = False
@@ -784,7 +787,7 @@ def archiveProject(projectid):
 	print 'Found %d sessions for the project' %  (len(session_names))
 	for session_name in session_names:
 		# Don't archive sessions before 2011
-		if int(session_name[:2]) < 11:
+		if int(session_name[:2]) < (YEAR-2000):
 			continue
 		app = SessionArchiver(session_name)
 		if SKIP_ARCHIVED and app.isSessionInArchive():
