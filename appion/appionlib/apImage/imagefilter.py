@@ -476,13 +476,15 @@ def xmippTransform(a, rot=0, shift=(0,0), mirror=False, order=2):
 	return b
 
 #=========================
-def highPassFilter(data, hpFilterSize, apix=None):
+def highPassFilter2(data, hpFilterSize, apix=None):
 	"""
 	performs a hyperbolic tangent high pass filter 
 	in python using only numpy libraries that is
 	designed to be similar to EMAN1 proc2d
 	
 	Note: hpFilterSize is in real space units
+
+	Note: named highPassFilter2 to avoid duplication of the existing function in this module
 	"""
 	if apix is not None:
 		pixelradius = hpFilterSize/apix
