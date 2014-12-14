@@ -101,6 +101,9 @@ class SessionReferenceCopier(object):
 			self.refids[reftype] = []
 			for image in images:
 				if image[reftype] is not None and image[reftype].dbid not in self.refids[reftype]:
+					# reference images only useful for frame processing
+					if image['camera']['save frames'] is False:
+						continue
 					self.refids[reftype].append(image[reftype].dbid)
 					if reftype == 'norm':
 						bright_from_norm = self.findBrightImageFromNorm(image[reftype])
