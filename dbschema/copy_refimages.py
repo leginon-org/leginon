@@ -141,7 +141,11 @@ def copyProjectReferences(projectid,destination_base_path):
 	from leginon import projectdata
 	p = projectdata.projects().direct_query(projectid)
 	source_sessions = projectdata.projectexperiments(project=p).query()
-	session_names = map((lambda x:x['session']['name']),source_sessions)
+	session_names = []
+	for projectexpt in source_sessions:
+		# skip None
+		if projectexpt['session'] and projectexpt['session']['name']:
+			session_names.append(projectexpt['session']['name'])
 	session_names.reverse()  #oldest first
 
 	for session_name in session_names:
