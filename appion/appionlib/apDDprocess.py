@@ -1147,6 +1147,8 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		cmd = 'dosefgpu_driftcorr %s -gpu %d -fcs %s -dsp 0' % (self.tempframestackpath,self.gpuid,temp_aligned_sumpath)
 		# Options
 		cmd += self.addDoseFDriftCorrOptions()
+		# binning
+		cmd += ' -bin %d' % (self.getNewBinning())
 		# gain dark references
 		cmd += gain_dark_cmd
 		is_sum_with_dosefgpu =  self.isSumSubStackWithDosefgpu()
