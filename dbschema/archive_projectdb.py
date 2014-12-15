@@ -199,8 +199,13 @@ class ProjectArchiver(Archiver):
 		
 	def importProjectExperiments(self):
 		projectexperiments = self.importProjectDependentData('projectexperiments')
-		
-		sessionids = map((lambda x: x['session'].dbid),projectexperiments)
+		sessionids = []
+		# There are cases without session alias
+		for p in projectexperiments:
+			if p['session'] is None:
+				print ' projectexperiment id %d has no session reference' % p.dbid
+				continue
+			sessionids.append(p['session'].dbid)
 		self.importShareExperiments(sessionids)
 
 	def importProjectOwners(self):
@@ -224,19 +229,17 @@ class ProjectArchiver(Archiver):
 		results = self.research(q)
 		for r in results:
 			if r[leginon_alias] and r[leginon_alias].dbid in leginon_ids:
-				self.publish([r,])
-		
+				try:
+					self.publish([r,])
+				except:
+					open('error.log','a')
+					f.write('%s,%d,%s,%d\n' %(project_classname,r.dbid,leginon_alias,r[leginon_alias].dbid))
+					f.close()
 	def importUserDetails(self):
 		self.importLeginonDependentData('userdetails', 'UserData', 'user')
 
 	def importShareExperiments(self,expids):
-		if not expids:
-			# fake import to create table
-			q = projectdata.ShareExperiments().direct_query(1)
-			results = self.research(q)
-			self.publish(results)
-		else:
-			self.importLeginonValueDependentData('shareexperiments',expids,'experiment')
+		self.importLeginonValueDependentData('shareexperiments',expids,'experiment')
 
 	def importInstall(self):
 		print "Importing Installation Log...."

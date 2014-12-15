@@ -91,7 +91,7 @@ class Archiver(object):
 	def avoidExcludedImage(self,fulllist):
 		shortlist = []
 		for data in fulllist:
-			if data['image']['label'] in exclude_preset_list:
+			if data['image'] and data['image']['label'] and data['image']['label'] in exclude_preset_list:
 				continue
 			else:
 				shortlist.append(data)
@@ -309,6 +309,7 @@ class SessionArchiver(Archiver):
 
 	def importInstrument(self):
 		print "Importing instrument...."
+		self.is_upload = False
 		# guess instrument from the last image
 		sinedon.setConfig('leginondata', db=self.source_dbname)
 		q = leginondata.AcquisitionImageData(session=self.getSourceSession())
@@ -316,10 +317,18 @@ class SessionArchiver(Archiver):
 		# we know there are images for the session.
 		tem = last_image['scope']['tem']
 		camera = last_image['camera']['ccdcamera']
+		if tem is None:
+			# old uploaded session such as 12jun29b
+			self.is_upload = True
+			return None, None, 200000
+
 		high_tension = last_image['scope']['high tension']
 		q = leginondata.InstrumentData()
 		source_temdata = q.direct_query(tem.dbid)
 		source_cameradata = q.direct_query(camera.dbid)
+
+		if 'appion' in source_temdata['name'].lower():
+			self.is_upload = True
 
 		sinedon.setConfig('leginondata', db=self.destination_dbname)
 		tem.insert(archive=True)
@@ -718,10 +727,12 @@ class SessionArchiver(Archiver):
 		'''
 		self.importSession()
 		source_cam, source_tem,high_tension = self.importInstrument()
-		self.importCalibrations(source_cam,source_tem,high_tension)
-		self.importC2ApertureSize()
 		self.importGainReferences()
 		self.importBrightImages()
+		if self.is_upload:
+			return True
+		self.importCalibrations(source_cam,source_tem,high_tension)
+		self.importC2ApertureSize()
 		return True
 
 	def runStep2(self):
@@ -737,6 +748,9 @@ class SessionArchiver(Archiver):
 		STEP 3: import image dependent data and other data not
 		recursively inserted by the first two steps.
 		'''
+		self.importViewerImageStatus()
+		if self.is_upload:
+			return
 		# These are image dependent.
 		self.importImageDDinfo()
 		self.importImageStats()
@@ -750,7 +764,6 @@ class SessionArchiver(Archiver):
 		self.importLaunchedApplications()
 		self.importConnectToClients()
 		self.importSettings()
-		self.importViewerImageStatus()
 		self.importIceThickness()
 		self.importTomographyPrediction()
 

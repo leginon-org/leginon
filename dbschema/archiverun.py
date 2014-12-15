@@ -95,6 +95,11 @@ class ArchiveRun(object):
 		else:
 			os.remove(self.sinedon_cfg_file)
 
+	def archiveDefaultSettings(self):
+			self.writeSinedonCfg(self.old_leginondb,self.old_projectdb,self.new_leginondb)
+			script_path = os.path.join(self.normal_dbschema_path,'archive_defaultsettings.py')
+			self.runScript(self.dbcopy_sinedon_path, '%s' % (script_path,))
+
 	def initializeArchive(self, projectid):
 			self.writeSinedonCfg(self.old_leginondb,self.old_projectdb,self.new_leginondb)
 			script_path = os.path.join(self.normal_dbschema_path,'archive_initialize.py')
@@ -115,12 +120,26 @@ class ArchiveRun(object):
 			script_path = os.path.join(self.normal_dbschema_path,'archive_activate.py')
 			self.runScript(self.dbcopy_sinedon_path, '%s' % (script_path,))
 
+	def deactivateArchive(self):
+			self.writeSinedonCfg(self.new_leginondb,self.new_projectdb)
+			script_path = os.path.join(self.normal_dbschema_path,'archive_deactivate.py')
+			self.runScript(self.dbcopy_sinedon_path, '%s' % (script_path,))
+
+	def cleanupImportMappingData(self):
+			self.writeSinedonCfg(self.new_leginondb,self.new_projectdb)
+			script_path = os.path.join(self.normal_dbschema_path,'archive_cleanimport.py')
+			self.runScript(self.normal_sinedon_path, '%s' % (script_path,))
+
 	def run(self):
 		self.backupSinedonCfg()
+		self.cleanupImportMappingData()
+		self.deactivateArchive()
+		self.archiveDefaultSettings()
 		for projectid in self.projectids:
 			self.initializeArchive(projectid)
 			self.archiveLeginonDB(projectid)
 			self.archiveProjectDB(projectid)
+			self.cleanupImportMappingData()
 		self.activateArchive()
 		self.restoreSinedonCfg()
 
