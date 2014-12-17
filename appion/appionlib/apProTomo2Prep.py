@@ -12,12 +12,7 @@ from appionlib import apImod
 from appionlib import apDisplay
 from appionlib import appiondata
 from appionlib import apProTomo
-
-
-'''
-This currently works with the protomo tutorial dataset only. See issue #1026 for more info.
-'''
-
+from appionlib import apDatabase
 
 		
 #=====================
@@ -71,6 +66,52 @@ def convertShiftsToOrigin(shifts,imagesize_x, imagesize_y):
 	return newshift
 		
 
+#=======================
+def prepareTiltFile(sessionname, seriesname, tiltfilename, tiltseriesnumber, raw_path, link, coarse=True):
+	'''
+	Creates tlt file from basic image information and copies raw images
+	'''
+	
+	sessiondata = apDatabase.getSessionDataFromSessionName(sessionname)
+	tiltseriesdata = apDatabase.getTiltSeriesDataFromTiltNumAndSessionId(tiltseriesnumber,sessiondata)
+	tiltdata = apTomo.getImageList([tiltseriesdata])
+	apDisplay.printMsg("getting imagelist")
+
+	tilts,ordered_imagelist,ordered_mrc_files,refimg = apTomo.orderImageList(tiltdata)
+	#tilts are tilt angles, ordered_imagelist are imagedata, ordered_mrc_files are paths to files, refimg is an int
+	maxtilt = max([abs(tilts[0]),abs(tilts[-1])])
+	apDisplay.printMsg("highest tilt angle is %f" % maxtilt)
+	
+	if coarse == "True":
+		azimuth = apTomo.getAverageAzimuthFromSeries(ordered_imagelist)
+		
+		rawexists = apParam.createDirectory(raw_path)
+		
+		if link == "True":
+			apDisplay.printMsg("linking raw images")
+		else:
+			apDisplay.printMsg("copying raw images")
+		newfilenames = apProTomo.getImageFiles(ordered_imagelist, raw_path, link)
+	
+		###create tilt file
+		#get image size from the first image
+		imagesizex = tiltdata[0]['image'].shape[1]
+		imagesizey = tiltdata[0]['image'].shape[0]
+		
+		#shift half tilt series relative to eachother
+		#SS I'm arbitrarily making the bin parameter here 1 because it's not necessary to sample at this point
+		shifts = apTomo.getGlobalShift(ordered_imagelist, 1, refimg)
+		
+		#OPTION: refinement might be more robust by doing one round of IMOD aligment to prealign images before doing protomo refine
+		origins = convertShiftsToOrigin(shifts, imagesizex, imagesizey)
+	
+		#determine azimuth
+		azimuth = apTomo.getAverageAzimuthFromSeries(ordered_imagelist)
+		writeTiltFile2(tiltfilename, seriesname, newfilenames, origins, tilts, azimuth, refimg)
+	
+	return maxtilt
+
+
 #=====================
 def writeTiltFile(tiltfile, seriesname, imagedict, azimuth, refimg ):
 	'''
@@ -110,7 +151,7 @@ def writeTiltFile(tiltfile, seriesname, imagedict, azimuth, refimg ):
 
 #====================
 # This function duplicates the one above. Should migrate to this one in the future. 
-def writeTileFile2(tiltfile, seriesname, imagelist, origins, tilts, azimuth, refimg):
+def writeTiltFile2(tiltfile, seriesname, imagelist, origins, tilts, azimuth, refimg):
 	
 	try:
 		f = open(tiltfile,'w')
@@ -153,22 +194,32 @@ def modifyParamFile(filein, fileout, paramdict):
             
 #=====================
 def createParamDict(params):
-	paramdict = { 'AP_windowsize_x':params['region_x'],
-                'AP_windowsize_y':params['region_y'],
-                'AP_sampling': params['sampling'],
+	paramdict = { 'AP_windowsize_x':params['r1_region_x'],
+                'AP_windowsize_y':params['r1_region_y'],
+		'APc_windowsize_x':params['region_x'],
+                'APc_windowsize_y':params['region_y'],
+                'AP_sampling': params['r1_sampling'],
+		'APc_sampling': params['sampling'],
+		'AP_map_sampling': params['map_sampling'],
 		'AP_thickness': params['thickness'],
 		'AP_cos_alpha': params['cos_alpha'],
-		'AP_lp_diam_x': params['lowpass_diameter_x'],
-		'AP_lp_diam_y': params['lowpass_diameter_y'],
-		'AP_lp_apod_x': params['lowpass_apod_x'],
-                'AP_lp_apod_y': params['lowpass_apod_y'],
-		'AP_hp_diam_x': params['highpass_diameter_x'],
-		'AP_hp_diam_y': params['highpass_diameter_y'],
-		'AP_hp_apod_x': params['highpass_apod_x'],
-		'AP_hp_apod_y': params['highpass_apod_y'], 
+		'AP_lp_diam_x': params['r1_lowpass_diameter_x'],
+		'AP_lp_diam_y': params['r1_lowpass_diameter_y'],
+		'AP_lp_apod_x': params['r1_lowpass_apod_x'],
+                'AP_lp_apod_y': params['r1_lowpass_apod_y'],
+		'AP_hp_diam_x': params['r1_highpass_diameter_x'],
+		'AP_hp_diam_y': params['r1_highpass_diameter_y'],
+		'AP_hp_apod_x': params['r1_highpass_apod_x'],
+		'AP_hp_apod_y': params['r1_highpass_apod_y'],
+		'APc_lp_diam_x': params['lowpass_diameter_x'],
+		'APc_lp_diam_y': params['lowpass_diameter_y'],
+		'APc_lp_apod_x': params['lowpass_apod_x'],
+                'APc_lp_apod_y': params['lowpass_apod_y'],
+		'APc_hp_diam_x': params['highpass_diameter_x'],
+		'APc_hp_diam_y': params['highpass_diameter_y'],
+		'APc_hp_apod_x': params['highpass_apod_x'],
+		'APc_hp_apod_y': params['highpass_apod_y'],
 		'AP_corr_mode': params['corr_mode'],
-		'AP_search_x' : params['peak_search_radius_x'],
-		'AP_search_y' : params['peak_search_radius_y'],
 		'AP_raw_path': params['raw_path'],
 		'AP_binning': params['binning'],
 		'AP_preprocessing': params['preprocessing'],
@@ -177,24 +228,39 @@ def createParamDict(params):
 		'AP_border': params['border'],
 		'AP_clip_low': params['clip_low'],
 		'AP_clip_high': params['clip_high'],
+		'AP_thr_low': params['thr_low'],
+		'AP_thr_high': params['thr_high'],
 		'AP_gradient': params['gradient'],
 		'AP_iter_gradient': params['iter_gradient'],
 		'AP_filter': params['filter'],
-		'AP_kernel_x': params['kernel_x'],
-		'AP_kernel_y': params['kernel_y'],
+		'AP_kernel_x': params['r1_kernel_x'],
+		'AP_kernel_y': params['r1_kernel_y'],
+		'APc_kernel_x': params['kernel_x'],
+		'APc_kernel_y': params['kernel_y'],
+		'AP_grow': params['grow'],
 		'AP_window_area': params['window_area'],
-		'AP_mask_apod_x': params['mask_apod_x'],
-		'AP_mask_apod_y': params['mask_apod_y'],
-		'AP_mask_width': params['mask_width'],
+		'AP_mask_apod_x': params['r1_mask_apod_x'],
+		'AP_mask_apod_y': params['r1_mask_apod_y'],
+		'AP_mask_width_x': params['r1_mask_width_x'],
+		'AP_mask_width_y': params['r1_mask_width_y'],
+		'APc_mask_apod_x': params['mask_apod_x'],
+		'APc_mask_apod_y': params['mask_apod_y'],
+		'APc_mask_width_x': params['mask_width_x'],
+		'APc_mask_width_y': params['mask_width_y'],
 		'AP_do_estimation': params['do_estimation'],
 		'AP_max_correction': params['max_correction'],
 		'AP_correlation_size_x': params['correlation_size_x'],
 		'AP_correlation_size_y': params['correlation_size_y'],
-		'AP_peak_search_radius_x': params['peak_search_radius_x'],
-		'AP_peak_search_radius_y': params['peak_search_radius_y'],
+		'AP_peak_search_radius_x': params['r1_peak_search_radius_x'],
+		'AP_peak_search_radius_y': params['r1_peak_search_radius_y'],
+		'APc_peak_search_radius_x': params['peak_search_radius_x'],
+		'APc_peak_search_radius_y': params['peak_search_radius_y'],
 		'AP_orientation': params['orientation'],
 		'AP_azimuth': params['azimuth'],
+		'AP_elevation': params['elevation'],
 		'AP_rotation': params['rotation'],
+		'AP_scale': params['scale'],
+		'AP_norotations': params['norotations'],
 		'AP_logging': params['logging'],
 		'AP_loglevel': params['loglevel'],
 		'AP_map_size_x': params['map_size_x'],
@@ -204,7 +270,6 @@ def createParamDict(params):
 		'AP_image_extension': params['image_file_type'],
 		'AP_cachedir': params['cachedir'],
 		'AP_protomo_outdir': params['protomo_outdir'],
-		'AP_restart': params['restart'],
 		'AP_grid_limit': params['gridsearch_limit'],
 		'AP_grid_step': params['gridsearch_step'] }
 	return paramdict				
