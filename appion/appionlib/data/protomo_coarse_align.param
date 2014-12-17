@@ -7,17 +7,17 @@
 (* raw image.                                                          *)
 
 (* ====================================================================*)
-(* comments that start with AP are replaced with user defined values   *)
-(* if these                                                            *)
+(* comments that start with AP or APc (coarse) user defined values     *)
+(* with are replaced from within Appion.                               *)
 (* ====================================================================*) 
 
 tiltseries {
 
- W = { AP_windowsize_x, AP_windowsize_y } (* AP orig window *)
+ W = { APc_windowsize_x, APc_windowsize_y } (* AP orig window *)
 
  O = AP_thickness 	(* AP orig thickness *)
 
- S = AP_sampling             (* AP sampling *)
+ S = APc_sampling             (* AP sampling *)
 
  N = W/S (* window size at sampling S *)
 
@@ -43,12 +43,16 @@ tiltseries {
 
    clip: { AP_clip_low, AP_clip_high }   (* specified as a multiple of the standard deviation *)
 
+   thr: { AP_thr_low, AP_thr_high }   (* specified as density values *)
+
+   grow: AP_grow
+   
    mask {
      gradient: AP_gradient
      iter: AP_iter_gradient
      filter: "AP_filter"
-     kernel: { AP_kernel_x, AP_kernel_y }
-     clip: { AP_clip_low, AP_clip_high } * 3/3.5
+     kernel: { APc_kernel_x, APc_kernel_y }
+     clip: { AP_clip_low, AP_clip_high }
    }
 
  }
@@ -59,38 +63,55 @@ tiltseries {
    area: AP_window_area  (* AP window area *)
 
    mask {
-     apodization: { AP_mask_apod_x, AP_mask_apod_y }
-     width: AP_mask_width
+     apodization: { APc_mask_apod_x, APc_mask_apod_y }
+     width: { APc_mask_width_x, APc_mask_width_y }
    }
 
    lowpass {
-     diameter:    { AP_lp_diam_x, AP_lp_diam_y } * S (* AP lowpass diameter *)
-     apodization: { AP_lp_apod_x, AP_lp_apod_y } * S (* AP lowpass apodization *)
+     diameter:    { APc_lp_diam_x, APc_lp_diam_y } * S (* AP lowpass diameter *)
+     apodization: { APc_lp_apod_x, APc_lp_apod_y } * S (* AP lowpass apodization *)
    }
 
    highpass {
-     diameter:    { AP_hp_diam_x, AP_hp_diam_y } * S (* AP highpass diameter *)
-     apodization: { AP_hp_apod_x, AP_hp_apod_y } * S (* AP highpass apodization *)
+     diameter:    { APc_hp_diam_x, APc_hp_diam_y } * S (* AP highpass diameter *)
+     apodization: { APc_hp_apod_x, APc_hp_apod_y } * S (* AP highpass apodization *)
    }
 
  }
 
 
+ reference {
+
+   body: T / F
+   select: "AP_select_images"  (* AP select specific images in the tilt series *)
+ 
+   exclude: "AP_exclude_images"  (* AP exclude specific images from the tilt series *)
+ }
+ 
+ 
  align {
 
+   include: "AP_select_images"  (* AP select specific images in the tilt series *)
+ 
+   exclude: "AP_exclude_images"  (* AP exclude specific images from the tilt series *)
+   
    gridsearch {
      limit: AP_grid_limit
      step: AP_grid_step
    }
    
    mask {
-     apodization: { AP_mask_apod_x, AP_mask_apod_y }
-     width: AP_mask_width
+     apodization: { APc_mask_apod_x, APc_mask_apod_y }
+     width: { APc_mask_width_x, APc_mask_width_y }
    }
 
    correlation {
      mode: "AP_corr_mode"      (* AP corr mode *)
      size: { AP_correlation_size_x, AP_correlation_size_y } 
+   }
+   
+   peaksearch {
+     radius: { APc_peak_search_radius_x, APc_peak_search_radius_y }
    }
 
  }
@@ -100,8 +121,12 @@ tiltseries {
 
    orientation: AP_orientation
    azimuth: AP_azimuth
+   elevation: AP_elevation
    rotation: AP_rotation
-
+   scale: AP_scale
+   include: "AP_select_images"  (* AP select specific images in the tilt series *)
+ 
+   exclude: "AP_exclude_images"  (* AP exclude specific images from the tilt series *)
    logging: AP_logging  (* AP enable diagnostic terminal output *)
    loglevel: AP_loglevel  (* AP increase verbosity of diagnostic output *)
 
@@ -110,16 +135,18 @@ tiltseries {
 
  map {
 
-   size: { AP_map_size_x, AP_map_size_y, AP_map_size_z } 
+   size: { AP_map_size_x, AP_map_size_y, AP_map_size_z }   (* AP reconstruction map size *)
    body: T / F
-   sampling: S
-
+   sampling: APc_sampling  (* AP reconstruction map sampling *)
+   select: "AP_select_images"  (* AP select specific images in the tilt series reconstruction *)
+   
+   exclude: "AP_exclude_images"  (* AP exclude specific images from the tilt series reconstruction *)
    lowpass {
-     diameter:    { AP_lp_diam_x, AP_lp_diam_y } * S/2
-     apodization: { AP_lp_apod_x, AP_lp_apod_y } * S * 0.4
+     diameter:    { APc_lp_diam_x, APc_lp_diam_y } * S
+     apodization: { APc_lp_apod_x, APc_lp_apod_y } * S
    }
 
-   logging: AP_logging  (* AP enable diagnostic terminal output *)
+   logging: false  (* AP enable diagnostic terminal output *)
 
  }
 
@@ -134,7 +161,5 @@ tiltseries {
  outdir: "AP_protomo_outdir"  (* AP directory where other output files are stored *)
 
  logging: AP_logging  (* AP enable diagnostic terminal output *)
-
- restart: AP_restart
 
 }
