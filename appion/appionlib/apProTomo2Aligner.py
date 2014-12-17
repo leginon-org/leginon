@@ -276,4 +276,4 @@ def makeReconstructionGifs(seriesname, iteraion, rundir, outdir, pixelsize, samp
 		apDisplay.printMsg("Done creating reconstruction gif!")
 	except:
 		apDisplay.printMsg("Alignment Images could not be generated. Make sure i3 and imagemagick are in your $PATH. Make sure that pyami and scipy are in your $PYTHONPATH.\n")
-	
+		
