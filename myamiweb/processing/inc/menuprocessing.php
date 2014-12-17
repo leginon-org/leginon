@@ -747,6 +747,10 @@ if (is_numeric($expId)) {
 			'result'=>$taresults,
 		);
 		$nruns[] = array(
+			'name'=>"<a href='selectBatchAlignTiltSeries.php?expId=$sessionId'>Batch Align Tilt Series</a>",
+			'result'=>$taresults,
+		);
+		$nruns[] = array(
 			'name'=>"<a href='runTomoMaker.php?expId=$sessionId'>Create full tomogram</a>",
 			'result'=>$tmresults,
 		);
