@@ -350,8 +350,7 @@ def getPrototypeParamFile(outparamfile):
 	shutil.copyfile(origparamfile,newparamfile)
 
 def getPrototypeParamPath():
-	#appiondir=apParam.getAppionDirectory()
-	appiondir='/panfs/storage.local/imb/home/ajn10d/myami/appion'
+	appiondir=apParam.getAppionDirectory()
 	origparamfile=os.path.join(appiondir,'appionlib','data','protomo.param')
 	coarse_origparamfile=os.path.join(appiondir,'appionlib','data','protomo_coarse_align.param')
 	return coarse_origparamfile, origparamfile
