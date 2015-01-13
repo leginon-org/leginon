@@ -148,7 +148,7 @@ class EditPresetDialog(leginon.gui.wx.Dialog.Dialog):
 		try:
 			probes = self.tems[self.parameters['tem']['name']]['probe modes']
 		except:
-			mags = []
+			probes = []
 		return probes
 
 	def getTEMChoices(self):
@@ -341,8 +341,8 @@ class EditPresetDialog(leginon.gui.wx.Dialog.Dialog):
 
 		self.initializeApertureSelection()
 
-		sizer.Add(self.bools['skip'], (12, 0), (1, 4), wx.ALIGN_LEFT)
-		sizer.Add(self.bools['alt channel'], (13, 0), (1, 4), wx.ALIGN_LEFT)
+		sizer.Add(self.bools['skip'], (13, 0), (1, 4), wx.ALIGN_LEFT)
+		sizer.Add(self.bools['alt channel'], (14, 0), (1, 4), wx.ALIGN_LEFT)
 
 		sizer.Add(self.labels['ccdcamera'], (0, 5), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sizer.Add(self.choices['ccdcamera'], (0, 6), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.EXPAND)
@@ -441,11 +441,11 @@ class EditPresetDialog(leginon.gui.wx.Dialog.Dialog):
 				i += 1
 			self.aperture_sizer.AddGrowableCol(1)
 			self.aperture_sbsizer.Add(self.aperture_sizer, 0, wx.EXPAND|wx.ALL, 5)
-			self._sz.Add(self.aperture_sbsizer, (11, 0), (1, 3), wx.ALIGN_CENTER|wx.EXPAND|wx.HORIZONTAL)
+			self._sz.Add(self.aperture_sbsizer, (12, 0), (1, 3), wx.ALIGN_CENTER|wx.EXPAND|wx.HORIZONTAL)
 			button =  bitmapButton(self, 'instrumentget', 'Set this value from the instrument value')
 			self._buttons['tem']['aperture sizes'] = button
 			self.Bind(wx.EVT_BUTTON, self.onButton, button)
-			self._sz.Add(self._buttons['tem']['aperture sizes'], (11, 3), (1, 1), wx.ALIGN_CENTER)
+			self._sz.Add(self._buttons['tem']['aperture sizes'], (12, 3), (1, 1), wx.ALIGN_CENTER)
 			self._sz.Layout()
 
 	def setTEMItemChoices(self,tem,itemgroupname,itemname,func=str):
