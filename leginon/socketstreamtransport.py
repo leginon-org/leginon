@@ -115,7 +115,8 @@ class Handler(SocketServer.StreamRequestHandler):
 				start = i * CHUNK_SIZE
 				end = start + CHUNK_SIZE
 				chunk = s[start:end]
-				self.wfile.write(chunk)
+				#Peng Hack
+				self.request.send(chunk)
 			self.wfile.flush()
 		except Exception, e:
 			estr = 'error responding to request, %s' % e
@@ -164,7 +165,16 @@ class Client(object):
 			raise TransportError('error creating socket file, %s' % e)
 			
 		try:
-			pickle.dump(request, sfile, pickle.HIGHEST_PROTOCOL)
+			#Peng Hack
+			ss = pickle.dumps(request, pickle.HIGHEST_PROTOCOL)
+			psize = len(ss)
+			nchunks = int(math.ceil(float(psize) / float(CHUNK_SIZE)))
+			for i in range(nchunks):
+				start = i * CHUNK_SIZE
+				end = start + CHUNK_SIZE
+				chunk = ss[start:end]
+				s.send(chunk)
+			sfile.flush()		
 		except Exception, e:
 			raise TransportError('error pickling request, %s' % e)
 
