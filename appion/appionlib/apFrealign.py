@@ -780,7 +780,7 @@ def scale_parfile_frealign9_03(infile, outfile, mult, newmag=0):
 	ff.close()
 
 #=================
-def frealign8_to_frealign9(infile, outfile, apix, occ=0, logp=5000, sigma=1, score=50.0, change=0):
+def frealign8_to_frealign9(infile, outfile, apix, occ=100, logp=5000, sigma=1, score=50.0, change=0):
 	''' modified for version 9.06 and above, character spaces for version <9.06 is different for logp value '''
 	### output file
 	ff = open(outfile, "w")
@@ -1262,14 +1262,14 @@ def average_value_frealign9(inparfile, *values):
 			vlist.append(params[i+1][v])
 		print "average %s:" % (v), numpy.average(vlist)
 
-def Relion_to_Frealign8(starfile, parfile, mag):
+def Relion_to_Frealign8(starfile, parfile, mag=None):
 	star = starFile.StarFile(starfile)
 	star.read()
 	dataBlock = star.getDataBlock("data_images")
 	loopDict  = dataBlock.getLoopDict()
 	
 	### write Frealign8 file
-	ff = open(frealignfile, "w")
+	ff = open(parfile, "w")
 	ff.write("%s%8s%8s%8s%8s%8s%8s%6s%9s%9s%8s\n" \
 		% ("C      ","PSI","THETA","PHI","SHX","SHY","MAG","FILM","DF1","DF2","ANGAST"))
 
@@ -1288,6 +1288,12 @@ def Relion_to_Frealign8(starfile, parfile, mag):
 		dy = float(loopDict[i]['_rlnDefocusU'])
 		astig = float(loopDict[i]['_rlnDefocusAngle'])
 
+		if mag is None:
+			try:
+				mag = float(loopDict[i]['_rlnMagnification'])
+			except:
+				apDisplay.printError("magnification not specified, need to specify magnification")
+
 		phi, theta, psi = apEulerCalc.convertXmippEulersToFrealign(rlnrot, rlntilt, rlnpsi)
 
 		if dx != olddx:
@@ -1297,3 +1303,48 @@ def Relion_to_Frealign8(starfile, parfile, mag):
 		ff.write("%7d%8.2f%8.2f%8.2f%8.2f%8.2f%8d%6d%9.1f%9.1f%8.2f\n" \
 			% (i+1, psi, theta, phi, shiftx, shifty, mag, micn, dx, dy, astig))
 	ff.close()
+
+def Relion_to_Frealign9(starfile, parfile, apix, mag=None, occ=100, logp=5000, sigma=1, score=50.0, change=0):
+	star = starFile.StarFile(starfile)
+	star.read()
+	dataBlock = star.getDataBlock("data_images")
+	loopDict  = dataBlock.getLoopDict()
+	
+	### write Frealign8 file
+	ff = open(parfile, "w")
+	ff.write("%s%8s%8s%8s%10s%10s%8s%6s%9s%9s%8s%8s%10s%11s%8s%8s\n" \
+		% ("C      ","PSI","THETA","PHI","SHX","SHY","MAG","FILM","DF1","DF2","ANGAST","OCC","-LogP","SIGMA","SCORE","CHANGE"))
+
+	olddx = 0
+	micn = 0
+	for i in range(len(loopDict)):
+		if i % 1000 == 0:
+			print "done with %d particles" % i
+
+		rlnrot = float(loopDict[i]['_rlnAngleRot'])
+		rlntilt = float(loopDict[i]['_rlnAngleTilt'])
+		rlnpsi = float(loopDict[i]['_rlnAnglePsi'])
+		shiftx = float(loopDict[i]['_rlnOriginX']) * -1
+		shifty = float(loopDict[i]['_rlnOriginY']) * -1
+		dx = float(loopDict[i]['_rlnDefocusU'])
+		dy = float(loopDict[i]['_rlnDefocusU'])
+		astig = float(loopDict[i]['_rlnDefocusAngle'])
+		if mag is None:
+			try:
+				mag = float(loopDict[i]['_rlnMagnification'])
+			except:
+				apDisplay.printError("magnification not specified, need to specify magnification")
+
+		phi, theta, psi = apEulerCalc.convertXmippEulersToFrealign(rlnrot, rlntilt, rlnpsi)
+		Fx = shiftx * apix
+		Fy = shifty * apix
+
+		if dx != olddx:
+			micn += 1
+			olddx = dx
+
+		ff.write("%7d%8.2f%8.2f%8.2f%10.2f%10.2f%8d%6d%9.1f%9.1f%8.2f%8.2f%10d%11.4f%8.2f%8.2f\n" \
+			% (i+1, psi, theta, phi, Fx, Fy, mag, micn, dx, dy, astig, occ, logp, sigma, score, change))
+	ff.close()
+
+
