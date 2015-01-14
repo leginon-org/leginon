@@ -19,7 +19,7 @@ require_once "inc/processing.inc";
 // IF VALUES SUBMITTED, EVALUATE DATA
 	
 if ($_POST['process']) {
-	runAngularReconstitution();
+	runOptiMod();
 }
 else {
 	createOptiModForm();
@@ -92,9 +92,11 @@ function createOptiModForm($extra=False, $title='OptiMod.py Launcher', $heading=
 	
 	// Set any existing parameters in form
 	$sessionpathval = ($_POST['outdir']) ? $_POST['outdir'] : $sessionpath;
-	while (file_exists($sessionpathval.'acl'.($aclruns+1)))
+
+	$aclruns = count($aclRuns);
+	while (file_exists($sessionpathval.'optimod'.($aclruns)))
 		$aclruns += 1;
-	$runname = ($_POST['runname']) ? $_POST['runname'] : 'acl'.($aclruns+1);
+	$runname = ($_POST['runname']) ? $_POST['runname'] : 'optimod'.($aclruns+1);
 	$description = $_POST['description'];
 	$clusteridstr = $_POST['clustervals'];
 	list($clusterid,$apix,$boxsz,$num_classes,$totprtls) = split('\|--\|', $clusteridstr);
@@ -105,10 +107,10 @@ function createOptiModForm($extra=False, $title='OptiMod.py Launcher', $heading=
 	$rtsidstr = $_POST['rtsvals'];
 	list($rtsid,$rapix,$rboxsz,$rtotprtls,$rtype) = split('\|--\|', $rtsidstr);
 	$weight = ($_POST && !$_POST['weight']) ? '' : 'checked';
-	$prealign = ($_POST && !$_POST['prealign']) ? '' : 'checked';
+	$prealign = ($_POST && !$_POST['prealign']) ? '' : '';
 	$scale = ($_POST && !$_POST['scale']) ? '' : 'checked';
 	$nvol = ($_POST['nvol']) ? $_POST['nvol'] : '300';
-	$nproc = ($_POST['nproc']) ? $_POST['nproc'] : '8';
+	$nproc = ($_POST['nproc']) ? $_POST['nproc'] : '1';
 	$threes = ($_POST && !$_POST['threes']) ? '' : 'checked';
 	$asqfilt = ($_POST['asqfilt']=='on') ? 'checked' : '';
 //	$linmask = ($_POST['linmask']) ? $_POST['linmask'] : '0.67';
@@ -128,7 +130,7 @@ function createOptiModForm($extra=False, $title='OptiMod.py Launcher', $heading=
 		echo "<table border='0' cellpadding='5'>\n";
 			echo "<tr><td>\n";
 				echo openRoundBorder();
-				echo docpop('runname','<b>Angular Reconstitution Run Name:</b>');
+				echo docpop('runname','<b>OptiMod Run Name:</b>');
 				echo "<input type='text' name='runname' value='$runname'>\n";
 				echo "<br />\n";
 				echo "<br />\n";
@@ -137,7 +139,7 @@ function createOptiModForm($extra=False, $title='OptiMod.py Launcher', $heading=
 				echo "<input type='text' name='outdir' value='$sessionpathval' size='38'>\n";
 				echo "<br />\n";
 				echo "<br />\n";
-				echo docpop('descr','<b>Description of Angular Reconstitution Run:</b>');
+				echo docpop('descr','<b>Description of OptiMod Run:</b>');
 				echo "<br />\n";
 				echo "<textarea name='description' rows='3' cols='50'>$description</textarea>\n";
 				echo closeRoundBorder();
@@ -207,10 +209,12 @@ function createOptiModForm($extra=False, $title='OptiMod.py Launcher', $heading=
 				echo docpop('scale','Scale class averages to 64x64 pixels');
 				echo "<br>";
 	
-				echo "<INPUT TYPE='checkbox' NAME='prealign' $prealign>\n";
-				echo docpop('prealign','Iteratively align class averages to each other');
-				echo "<br>";
-	
+				if (!HIDE_IMAGIC) {
+					echo "<INPUT TYPE='checkbox' NAME='prealign' $prealign>\n";
+					echo docpop('prealign','Iteratively align class averages to each other');
+					echo "<br>";
+				}
+		
 				echo "<br/>\n";
 				echo "<b>Iterative Initial Model Calculation Package</b>\n";
 				echo "<br/>\n";
@@ -400,7 +404,7 @@ function createOptiModForm($extra=False, $title='OptiMod.py Launcher', $heading=
 	
 }
 	
-function runAngularReconstitution() {
+function runOptiMod() {
 	/* *******************
 	PART 1: Get variables
 	******************** */
@@ -469,8 +473,8 @@ function runAngularReconstitution() {
 		createOptiModForm("<B>ERROR:</B> Enter the number of volumes that you wish to create using Angular Reconstitution");
 	if ($immethod == 'eman' && !$images_per_volume)
 		createOptiModForm("<B>ERROR:</B> Enter the number images within each volumes for EMAN cross-common lines");
-	if ($nproc > 8)
-		createOptiModForm("<B>ERROR:</B> Cannot currently use more than 8 processors with Imagic parallelization");
+	if ($nproc > 1)
+		createOptiModForm("<B>ERROR:</B> Cannot currently use more than 1 processor in parallel mode");
 
 	/* *******************
 	PART 3: Create program command
