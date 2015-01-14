@@ -2,6 +2,10 @@ import subprocess
 import sys
 from appionlib import processingHost
 
+### the -pe variable seems to be specific to SGE cluster, set here, could use more error checking
+ 
+parallel_environment = "bpho_dmitry"
+
 class SGEHost(processingHost.ProcessingHost):
 	def __init__ (self, configDict=None):
 		processingHost.ProcessingHost.__init__(self)  #initialize parent
@@ -40,14 +44,17 @@ class SGEHost(processingHost.ProcessingHost):
 			ppn = 1
 		nproc = nodes * ppn
 		if nproc > 1:
-			header += self.scriptPrefix +" -pe bpho_parallel "+str(nproc)
-			header += "\n"
+			try: 
+				header += self.scriptPrefix +" -pe %s %d" % (parallel_environment, nproc)
+				header += "\n"
+			except:
+				apDisplay.printWarning("parallel environment not specified")
 		
 #		if currentJob.getCpuTime():
 #			header += self.scriptPrefix +" -l cput=" + str(currentJob.getCpuTime()) + ":00:00\n"
 			
 		if currentJob.getMem():
-			header += self.scriptPrefix +" -mem=" + str(currentJob.getMem()) + 'G\n'
+			header += self.scriptPrefix +" -l mem_free=" + str(currentJob.getMem()) + 'G\n'
 		
 #		if currentJob.getPmem():
 #			header += self.scriptPrefix +" -l pmem=" + str(currentJob.getPmem()) + "mb\n"

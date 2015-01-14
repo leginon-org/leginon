@@ -77,7 +77,13 @@ function checkJobs($showjob=False,$showall=False,$extra=False) {
 	if ($queue) {
 		echo "<p>Jobs currently running on the <b>$c</b> cluster:<p>\n";
 		$list = streamToArray($queue);
-		$dispkeys = array('Job ID','User','Queue','Jobname','SessId','NDS','TSK','ReqMem','ReqTime','S','ElapTime');
+		$cluster = checkClusterType($user);
+		if ($cluster == "sge") {
+			$dispkeys = array('Job ID','Priority','Name','User','State','Submit/Start Date','Start time','Queue','Slots');
+		}
+		else {
+			$dispkeys = array('Job ID','User','Queue','Jobname','SessId','NDS','TSK','ReqMem','ReqTime','S','ElapTime');
+		}
 		echo "<table class='tableborder' border=1 cellspacing=0, cellpadding=5>\n";
 		echo "<tr>\n";
 		foreach ($dispkeys as $key) {

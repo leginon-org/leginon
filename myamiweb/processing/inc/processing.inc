@@ -443,9 +443,34 @@ function getSessionList($projectId,$sessionId){
 
 // TODO: what if the cluster does not use qstat? Moab uses mstat or some thing like that.
 function checkClusterJobs($processhost, $user, $pass) {
-	$cmd = "qstat -au ".$user." | egrep '^[0-9]'";
-	$subjobs = exec_over_ssh($processhost, $user, $pass, $cmd, true, $port=22, $max_time=10);
+	$cluster = checkClusterType($user);
+	if ($cluster == 'sge') {
+		$cmd = "qstat -u ".$user." | egrep '^[0-9]'";
+		$subjobs = exec_over_ssh($processhost, $user, $pass, $cmd, true, $port=22, $max_time=10);
+#		print_r($subjobs);
+	}
+	else {
+		$cmd = "qstat -au ".$user." | egrep '^[0-9]'";
+		$subjobs = exec_over_ssh($processhost, $user, $pass, $cmd, true, $port=22, $max_time=10);
+	}
 	return $subjobs;
+}
+
+function checkClusterType($user) {
+	$appioncfg = "~".$user."/.appion.cfg";
+#	$appioncfg = "/data2/log-l/.appion.cfg";
+//	echo $appioncfg;
+	if (file_exists($appioncfg)) {
+		$contents = file_get_contents($appioncfg);
+		$contents = explode("\n", $contents);
+		foreach($contents as $line) {
+			if (strpos($line,'ProcessingHostType')!== false) {
+				$str = explode("=", $line);
+				$cluster = $str[1];
+			}
+		}
+	}
+	return strtolower($cluster);
 }
 
 function checkRequiredFileError($path,$filename) {
