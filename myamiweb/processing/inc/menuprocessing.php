@@ -446,28 +446,26 @@ if (is_numeric($expId)) {
 			);
 //			}
 		}
-		if (!HIDE_IMAGIC && !HIDE_FEATURE) {
-			// ===================================================================
-			// template stacks (class averages & forward projections)
-			// ===================================================================
+		// ===================================================================
+		// template stacks (class averages & forward projections)
+		// ===================================================================
 
-			$tsresults=array();
-			if ($tstacks=$particle->getTemplateStacksFromProject($projectId)) {
-				$tsdone = count($tstacks);
-			}
-			if ($tstacks_session=$particle->getTemplateStacksFromSession($sessionId)) {
-				$tsdone_session = count($tstacks_session);
-			}
-			$tsruns = count($subclusterjobs['templatestack']['running']);
-			$tsqueue = count($subclusterjobs['templatestack']['queued']);
-			$tsresults[] = ($tsdone==0) ? "" : "<a href='selectTemplateStack.php?expId=$sessionId'>$tsdone complete</a>";
-			$tsresults[] = ($tsruns==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=templatestack'>$tsruns running</a>";
-			$tsresults[] = ($tsqueue==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=templatestack'>$tsqueue queued</a>";
-			$nruns[] = array(
-				'name'=>"<a href='selectTemplateStack.php?expId=$sessionId'>Template Stacks</a>",
-				'result'=>$tsresults,
-			);
+		$tsresults=array();
+		if ($tstacks=$particle->getTemplateStacksFromProject($projectId)) {
+			$tsdone = count($tstacks);
 		}
+		if ($tstacks_session=$particle->getTemplateStacksFromSession($sessionId)) {
+			$tsdone_session = count($tstacks_session);
+		}
+		$tsruns = count($subclusterjobs['templatestack']['running']);
+		$tsqueue = count($subclusterjobs['templatestack']['queued']);
+		$tsresults[] = ($tsdone_session==0) ? "" : "<a href='selectTemplateStack.php?expId=$sessionId'>$tsdone_session complete</a>";
+		$tsresults[] = ($tsruns==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=templatestack'>$tsruns running</a>";
+		$tsresults[] = ($tsqueue==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=templatestack'>$tsqueue queued</a>";
+		$nruns[] = array(
+			'name'=>"<a href='selectTemplateStack.php?expId=$sessionId'>Template Stacks</a>",
+			'result'=>$tsresults,
+		);
 
 		$data[] = array(
 			'action' => array($action, $celloption),
@@ -540,21 +538,19 @@ if (is_numeric($expId)) {
 	}
 	
 	/* IMAGIC Angular Reconstitution */
-	if (!HIDE_IMAGIC) {
-		if (($aligndone >= 1 && $clusterdone >=1) || ($tsdone >= 1)) {
-			$OptiModRunsTs = $particle->getAutomatedCommonLinesRunsTs($sessionId);
-			$OptiModRunsCs = $particle->getAutomatedCommonLinesRunsCs($sessionId);
-			$OptiModdone = count(array_merge((array)$OptiModRunsTs, (array)$OptiModRunsCs));
-			$OptiModqueue = count($subclusterjobs['optimod']['queued']);
-			$OptiModrun = count($subclusterjobs['optimod']['running']);
-			$OptiModresults[] = ($OptiModdone > 0) ? "<a href='OptiModSummary.php?expId=$sessionId'>$OptiModdone complete</a>" : '';
-			$OptiModresults[] = ($OptiModrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=optimod'>$OptiModrun running</a>";
-			$OptiModresults[] = ($OptiModqueue==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=optimod'>$OptiModqueue queued</a>";
-			$nruns[] = array(
-				'name'=>"<a href='runOptiMod.php?expId=$sessionId'>OptiMod Common Lines</a>",
-				'result'=>$OptiModresults,
-			);
-		}
+	if (($aligndone >= 1 && $clusterdone >=1) || ($tsdone >= 1)) {
+		$OptiModRunsTs = $particle->getAutomatedCommonLinesRunsTs($sessionId);
+		$OptiModRunsCs = $particle->getAutomatedCommonLinesRunsCs($sessionId);
+		$OptiModdone = count(array_merge((array)$OptiModRunsTs, (array)$OptiModRunsCs));
+		$OptiModqueue = count($subclusterjobs['optimod']['queued']);
+		$OptiModrun = count($subclusterjobs['optimod']['running']);
+		$OptiModresults[] = ($OptiModdone > 0) ? "<a href='OptiModSummary.php?expId=$sessionId'>$OptiModdone complete</a>" : '';
+		$OptiModresults[] = ($OptiModrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=optimod'>$OptiModrun running</a>";
+		$OptiModresults[] = ($OptiModqueue==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=optimod'>$OptiModqueue queued</a>";
+		$nruns[] = array(
+			'name'=>"<a href='runOptiMod.php?expId=$sessionId'>OptiMod Common Lines</a>",
+			'result'=>$OptiModresults,
+		);
 	}
 
 	if ( (array)$nruns ) {
