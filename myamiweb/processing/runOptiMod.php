@@ -85,7 +85,7 @@ function createOptiModForm($extra=False, $title='OptiMod.py Launcher', $heading=
 	echo "<FORM NAME='viewerform' method='POST' ACTION='$formAction'>\n";
 	$sessiondata=getSessionList($projectId,$sessionId);
 	$sessioninfo=$sessiondata['info'];
-	$sessionpath=getBaseAppionPath($sessioninfo).'/abinitio';
+	$sessionpath=getBaseAppionPath($sessioninfo).'/abinitio/';
 	
 	// set commit on by default when first loading page, else set
 	$commitcheck = ($_POST['commit']=='on' || !$_POST['process']) ? 'checked' : '';	
@@ -94,7 +94,7 @@ function createOptiModForm($extra=False, $title='OptiMod.py Launcher', $heading=
 	$sessionpathval = ($_POST['outdir']) ? $_POST['outdir'] : $sessionpath;
 
 	$aclruns = count($aclRuns);
-	while (file_exists($sessionpathval.'optimod'.($aclruns)))
+	while (file_exists($sessionpathval.'optimod'.($aclruns+1)))
 		$aclruns += 1;
 	$runname = ($_POST['runname']) ? $_POST['runname'] : 'optimod'.($aclruns+1);
 	$description = $_POST['description'];
