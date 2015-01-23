@@ -170,7 +170,10 @@ class EditListBox(OrderListBox):
         OrderListBox._bind(self)
         self.Bind(wx.EVT_BUTTON, self.onInsert, self.insertbutton)
         self.Bind(wx.EVT_BUTTON, self.onDelete, self.deletebutton)
+        # enable insertion either by entering new choice
+        # or by selecting existing choices
         self.Bind(wx.EVT_TEXT, self.onText, self.textentry)
+        self.Bind(wx.EVT_COMBOBOX, self.onText, self.textentry)
     
     def setSelected(self, string):
         result = OrderListBox.setSelected(self, string)
@@ -220,7 +223,7 @@ if __name__ == '__main__':
     class App(wx.App):
         def OnInit(self):
             frame = wx.Frame(None, -1, 'List Box Test')
-            panel = EditListBox(frame, -1, 'Test', [])
+            panel = EditListBox(frame, -1, 'Test', ['test1','test2'])
             frame.Fit()
             self.SetTopWindow(frame)
             frame.Show()
