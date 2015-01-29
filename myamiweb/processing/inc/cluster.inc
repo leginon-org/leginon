@@ -31,7 +31,7 @@ class Cluster
 	private $remoteOutputPath;
 	private $baseoutdir;
 	private $localHelperHost; // local host used by remote host to rsync results
-	private $loginMehtod;     //Method used to login to cluster curently only USERPASSWORD or SHAREDKEY
+	private $loginMethod;     //Method used to login to cluster curently only USERPASSWORD or SHAREDKEY
 	private $loginUserName;   //Username for shared logins
 	private $publicKey;		  //Location of publickey file(s)
 	private $privateKey;	  //Location of private key file(s)
