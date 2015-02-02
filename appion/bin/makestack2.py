@@ -1028,7 +1028,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 		if self.params['maskassess'] is not None and not self.params['checkmask']:
 			apDisplay.printMsg("running mask assess")
 			self.params['checkmask'] = True
-		if self.params['xmipp-norm'] is not None and self.params['xmipp-norm-before'] is not None:
+		if self.params['xmipp-norm'] is not None or self.params['xmipp-norm-before'] is not None:
 			self.xmippexe = apParam.getExecPath("xmipp_normalize", die=True)
 		if self.params['particlelabel'] == 'user' and self.params['rotate'] is True:
 			apDisplay.printError("User selected targets do not have rotation angles")
@@ -1121,7 +1121,6 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 
 	#=======================
 	def xmippNormStack(self, stackpath):
-			return
 			### convert stack into single spider files
 			selfile = apXmipp.breakupStackIntoSingleFiles(stackpath)	
 
