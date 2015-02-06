@@ -197,7 +197,7 @@ class TargetImagePanel(leginon.gui.wx.ImagePanel.ImagePanel):
 	#--------------------
 	def drawPolygon(self, dc, color, targets, close=True):
 		dc.SetPen(wx.Pen(color, 3))
-		dc.SetBrush(wx.Brush(color, 1))
+		dc.SetBrush(wx.Brush(color, wx.SOLID))
 		#if self.scaleImage():
 		if False:
 			xscale = self.scale[0]
@@ -250,7 +250,7 @@ class TargetImagePanel(leginon.gui.wx.ImagePanel.ImagePanel):
 	def drawImageArea(self, dc, color, targets):
 		scale = self.getScale()
 		dc.SetPen(wx.Pen(color, 1))
-		dc.SetBrush(wx.Brush(color, 1))
+		dc.SetBrush(wx.Brush(color, wx.SOLID))
 		scaledpoints = [(target.x,target.y) for target in targets]
 		imagevector = self.imagevector
 		dia = (scale[0]*(imagevector[0]/2+imagevector[1]/2), scale[1]*(imagevector[0]/2-imagevector[1]/2))
@@ -264,7 +264,7 @@ class TargetImagePanel(leginon.gui.wx.ImagePanel.ImagePanel):
 	def drawImageExposure(self, dc, color, targets):
 		scale = self.getScale()
 		dc.SetPen(wx.Pen(color, 1))
-		dc.SetBrush(wx.Brush(color, 1))
+		dc.SetBrush(wx.Brush(color, wx.SOLID))
 		scaledpoints = [(target.x,target.y) for target in targets]
 		imagevector = self.imagevector
 		dia = (scale[0]*(imagevector[0]/2+imagevector[1]/2), scale[1]*(imagevector[0]/2-imagevector[1]/2))
