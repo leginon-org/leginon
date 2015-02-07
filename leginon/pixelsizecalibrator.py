@@ -126,7 +126,7 @@ class PixelSizeCalibrator(calibrator.Calibrator):
 		caldata['session'] = self.session
 		caldata['tem'] = temdata
 		caldata['ccdcamera'] = camdata
-		self.publish(caldata, database=True)
+		self.publish(caldata, database=True, dbforce=True)
 
 	def calculatePixelSize(self):
 		if self.shape is None:
