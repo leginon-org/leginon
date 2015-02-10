@@ -1,5 +1,6 @@
 from leginon import leginondata
 import threading
+import time
 
 default_settings = leginondata.CameraSettingsData()
 default_settings['dimension'] = {'x': 1024, 'y': 1024}
@@ -87,9 +88,30 @@ class CameraClient(object):
 			self.instrument.setCCDCamera(orig_camera_name)
 		self.position_camera_done_event.set()
 
+	def liftScreenBeforeExposure(self,exposure_type='normal'):
+		'''
+		Life main screen if it is down for non-dark exposure
+		'''
+		if exposure_type == 'dark':
+			# Do not do anything if a dark image is about to be acquired
+			return
+		try:
+			state = self.instrument.tem.MainScreenPosition
+			state = 'down'
+		except:
+			pass
+		if state != 'up':
+			self.instrument.tem.MainScreenPosition = 'up'
+
+	def prepareToAcquire(self,allow_retracted=False,exposure_type='normal'):
+		t1 = threading.Thread(target=self.positionCamera(allow_retracted=allow_retracted))
+		t2 = threading.Thread(target=self.liftScreenBeforeExposure(exposure_type))
+		while t1.isAlive() or t2.isAlive():
+			time.sleep(0.5)
+
 	def acquireCameraImageData(self, scopeclass=leginondata.ScopeEMData, allow_retracted=False, type='normal'):
 		'''Acquire a raw image from the currently configured CCD camera'''
-		self.positionCamera(allow_retracted=allow_retracted)
+		self.prepareToAcquire(allow_retracted,exposure_type=type)
 		## set type to normal or dark
 		self.instrument.ccdcamera.ExposureType = type
 
