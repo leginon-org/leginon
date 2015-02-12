@@ -2527,3 +2527,14 @@ class K2FrameDMVersionChangeData(Data):
 		)
 	typemap = classmethod(typemap)
 
+class ProjectionSubModeMappingData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('magnification list', MagnificationsData),
+			('name', str),
+			('submode index', int),
+			('magnification', int),
+		)
+	typemap = classmethod(typemap)
+
+

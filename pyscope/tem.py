@@ -71,6 +71,7 @@ class TEM(baseinstrument.BaseInstrument):
 		{'name': 'StagePosition', 'type': 'property'},
 		{'name': 'Stigmator', 'type': 'property'},
 		{'name': 'TurboPump', 'type': 'property'},
+		{'name': 'ProjectionSubModeMap', 'type': 'property'},
 
 		######## methods
 		{'name': 'filmExposure', 'type': 'method'},
@@ -89,6 +90,7 @@ class TEM(baseinstrument.BaseInstrument):
 		baseinstrument.BaseInstrument.__init__(self)
 		self.config_name = config.getNameByClass(self.__class__)
 		self.cs = config.getConfigured()[self.config_name]['cs']
+		self.projection_submode_map = {}
 
 	def getCs(self):
 		return self.cs
@@ -98,3 +100,19 @@ class TEM(baseinstrument.BaseInstrument):
 
 	def exposeSpecimenNotCamera(self,seconds):
 		raise NotImplementedError()
+
+	def getProjectionSubModeMap(self):
+		return self.projection_submode_map
+
+	def setProjectionSubModeMap(self, mode_map):
+		'''
+		called by EM.py to set self.projetion_submode_map
+		{mag:(mode_name,mode_id)}
+		'''
+		self.projection_submode_map = mode_map
+
+	def addProjectionSubModeMap(self, mag, mode_name, mode_id, overwrite=False):
+		# Only do it once
+		if not overwrite and mag in self.projection_submode_map.keys():
+			return
+		self.projection_submode_map[mag] = (mode_name,mode_id)

@@ -273,8 +273,22 @@ class SimTEM(tem.TEM):
 			raise ValueError('invalid magnification index')
 		self.magnification_index = value
 
+	def findMagnifications(self):
+		# fake finding magnifications and set projection submod mappings
+		self.setProjectionSubModeMap({})
+		for mag in self.magnifications:
+			if mag < 5000:
+				self.addProjectionSubModeMap(mag,'mode0',0)
+			else:
+				self.addProjectionSubModeMap(mag,'mode1',1)
+
 	def getMagnifications(self):
 		return list(self.magnifications)
+
+	def setMagnifications(self, magnifications):
+		self.magnifications = magnifications
+
+		self.magnifications = magnifications
 
 	def getMagnificationsInitialized(self):
 		return True

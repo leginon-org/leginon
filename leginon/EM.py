@@ -140,7 +140,20 @@ class EM(node.Node):
 		except IndexError:
 			self.logger.warning('No magnifications saved for %s' % name)
 			return
+		self.setProjectionSubModeMap(instance, result)
 		instance.setMagnifications(result['magnifications'])
+
+	def setProjectionSubModeMap(self, instance, maglistdata):
+		mode_map = {}
+		# find
+		if maglistdata:
+			mapq = leginondata.ProjectionSubModeMappingData()
+			mapq['magnification list'] = maglistdata
+			map_results = mapq.query()
+			for mapping in map_results:
+				if mapping['magnification'] not in mode_map.keys():
+					mode_map[mapping['magnification']] = (mapping['name'], mapping['submode index'])
+			instance.setProjectionSubModeMap(mode_map)
 
 	def getMagnifications(self, name):
 		try:
@@ -148,18 +161,42 @@ class EM(node.Node):
 		except KeyError:
 			raise ValueError('no instrument %s' % name)
 		self.logger.info('Getting magnifications from the instrument...')
+		# This sets both magnifications and projection submode mappings
 		instance.findMagnifications()
+		magnificationsdata = self.saveMagnifications(instance,name)
+		self.saveProjectionSubMap(instance,name,magnificationsdata)
+		self.panel.onGetMagnificationsDone()
+
+	def saveMagnifications(self, instance, tem_name):
 		self.logger.info('Saving...')
 		instrumentdata = leginondata.InstrumentData()
-		instrumentdata['name'] = name
+		instrumentdata['name'] = tem_name
 		instrumentdata['hostname'] = instance.getHostname()
+
 		instrumentdata['cs'] = instance.getCs()
 		magnificationsdata = leginondata.MagnificationsData()
 		magnificationsdata['instrument'] = instrumentdata
 		magnificationsdata['magnifications'] = instance.getMagnifications()
 		self.publish(magnificationsdata, database=True, dbforce=True)
 		self.logger.info('Magnifications saved.')
-		self.panel.onGetMagnificationsDone()
+		return magnificationsdata
+
+
+	def saveProjectionSubMap(self, instance, tem_name, magnificationsdata):
+		#Get ProjectionSubModeMapping
+		try:
+			mappings = instance.getProjectionSubModeMap()
+		except KeyError:
+			raise ValueError('no projection submode mappings %s' % tem_name)
+		self.logger.info('Saving Projection Submode Mappings...')
+		for mag in magnificationsdata['magnifications']:
+			mappingsdata = leginondata.ProjectionSubModeMappingData()
+			mappingsdata['magnification list'] = magnificationsdata
+			mappingsdata['magnification'] = mag
+			mappingsdata['name'] = mappings[mag][0]
+			mappingsdata['submode index'] = mappings[mag][1]
+			self.publish(mappingsdata, database=True, dbforce=True)
+		self.logger.info('Submode mappings saved.')
 
 	def resetDefocus(self, name):
 		self.instruments[name]._execute(self.name, 'resetDefocus', 'method')
