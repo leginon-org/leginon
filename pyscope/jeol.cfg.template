@@ -1,0 +1,71 @@
+[tem option]
+USE_PLA = True
+# does the 2scope have an energy filter
+ENERGY_FILTER = True
+
+[tem]
+
+[lens]
+# lens class
+# convert Objective Lens clicks to Focus in meters
+OM_SCALE = 6.4e-9
+#confirmed at NYSBC JEM3200
+OL_SCALE = 4.35e-9
+
+[camera]
+# convert to pA/???^2
+CURRENT_DENSITY_SCALE = 1e-16
+
+[def]
+# deflector class
+# convert beam tilt clicks to angle in radians
+#BEAMTILT_FACTOR_X = 0.00000065
+#BEAMTILT_FACTOR_Y = 0.00000062
+
+BEAMTILT_FACTOR_X = 1.307e-6
+BEAMTILT_FACTOR_Y = 1.307e-6
+
+# convert shift clicks to distance in meters
+BEAMSHIFT_FACTOR_X_MAG1 = 4.8e-5
+BEAMSHIFT_FACTOR_Y_MAG1 = 4.8e-5
+BEAMSHIFT_FACTOR_X_LOWMAG = 0.000000092
+BEAMSHIFT_FACTOR_Y_LOWMAG = 0.000000092
+
+#IMAGESHIFT_FACTOR_X_MAG1 = 0.000508
+IMAGESHIFT_FACTOR_X_MAG1 = 0.000000000308
+IMAGESHIFT_FACTOR_Y_MAG1 = 0.000000000308
+#IMAGESHIFT_FACTOR_Y_MAG1 = 0.000000000334
+IMAGESHIFT_FACTOR_X_MAG1_4000 = 12
+IMAGESHIFT_FACTOR_Y_MAG1_4000 = 12
+IMAGESHIFT_FACTOR_X_LOWMAG = 0.0000000132
+IMAGESHIFT_FACTOR_Y_LOWMAG = 0.00000001
+
+[stage]
+# stage class
+# convert from click to distance in meters
+#STAGE_SCALE_XYZ = 0.18e4 for high mag
+#for low mag 
+STAGE_SCALE_XYZ = 1e9 
+#STAGE_SCALE_XYZ = 0.18e4
+# not currently performing manual backlash correction in meters
+#STAGE_BACKLASH = 2e-6
+
+#[apt]
+# aperture class
+#CLA_SIZES = [0, 150e-6, 70e-6, 50e-6, 20e-6]
+#OLA_SIZES = [0, 50e-6, 30e-6, 15e-6, 5e-6]
+#HCA_SIZES = [0, 120e-6, 60e-6, 40e-6, 20e-6]
+#SAA_SIZES = [0, 100e-6, 50e-6, 20e-6, 10e-6]
+
+[om standard focus]
+100:44639
+120:43127
+150:43127
+200:56576
+250:63775
+[ol standard focus]
+5000:1180080
+4000:1157760
+#3000=35156,32768
+		
+
