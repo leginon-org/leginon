@@ -5,10 +5,7 @@ from pyscope import tem
 from pyscope import jeolconfig
 
 # function modes
-MAG1_MODE = 0
-MAG2_MODE = 1
-LOWMAG_MODE = 2
-DIFF_MODE = 4
+FUNCTION_MODES = {'mag1':0,'mag2':1,'lowmag':2,'diff':3}
 
 # identifier for dector
 MAIN_SCREEN = 13
@@ -77,7 +74,8 @@ class Jeol(tem.TEM):
 
 		self.setJeolConfigs()
 
-		self.magnifications = [] 
+		self.magnifications = []
+		self.submode_mags = {}
 		# initialize zero defocus values as unset
 		self.zero_defocus_om = self.getJeolConfig('om standard focus')
 		self.zero_defocus_ol = self.getJeolConfig('ol standard focus')
@@ -93,6 +91,29 @@ class Jeol(tem.TEM):
 			return self.jeolconfigs[optionname]
 		else:
 			return self.jeolconfigs[optionname][itemname]
+
+	def setProjectionSubModes(self):
+		mode_names = self.getJeolConfig('eos','use_modes')
+		for name in mode_names:
+			mode_index = FUNCTION_MODES[name]
+			self.projection_submodes[mode_index] = name
+
+	def setProjectionSubModeMap(self, mode_map):
+		'''
+		called by EM.py to set self.projetion_submode_map
+		{mag:(mode_name,mode_id)}
+		'''
+		self.projection_submode_map = mode_map
+		self.setProjectionSubModeMags()
+
+	def setProjectionSubModeMags(self):
+		if not self.submode_mags:
+			for m in self.projection_submode_map:
+				v = self.projection_submode_map[m]
+				if v[1] not in self.submode_mags.keys():
+					self.submode_mags[v[1]] = []
+				self.submode_mags[v[1]].append(m)
+			map((lambda x: self.submode_mags[x].sort()),self.submode_mags.keys())
 
 	def normalizeLens(self, lens = "all"):
 		pass
@@ -299,9 +320,9 @@ class Jeol(tem.TEM):
 
 	def getBeamShift(self):
 		mode, name, result = self.eos3.GetFunctionMode() 
-		if mode == LOWMAG_MODE:
+		if mode == FUNCTION_MODES['lowmag']:
 			scale_x, scale_y = self.getJeolConfig('def','beamshift_factor_x_lowmag'), self.getJeolConfig('def','beamshift_factor_y_lowmag')
-		elif mode == MAG1_MODE:
+		elif mode == FUNCTION_MODES['mag1']:
 			scale_x, scale_y = self.getJeolConfig('def','beamshift_factor_x_mag1'), self.getJeolConfig('def','beamshift_factor_y_mag1')
 		else:
 			raise RuntimeError('Beam shift functions not implemented in this mode (%d, "%s")' % (mode, name))
@@ -315,9 +336,9 @@ class Jeol(tem.TEM):
 	def setBeamShift(self, vector, relative = "absolute"):
 
 		mode, name, result = self.eos3.GetFunctionMode() 
-		if mode == LOWMAG_MODE:
+		if mode == FUNCTION_MODES['lowmag']:
 			scale_x, scale_y = self.getJeolConfig('def','beamshift_factor_x_lowmag'), self.getJeolConfig('def','beamshift_factor_y_lowmag')
-		elif mode == MAG1_MODE:
+		elif mode == FUNCTION_MODES['mag1']:
 			scale_x, scale_y = self.getJeolConfig('def','beamshift_factor_x_mag1'), self.getJeolConfig('def','beamshift_factor_y_mag1')
 		else:
 			raise RuntimeError('Beam shift functions not implemented in this mode (%d, "%s")' % (mode, name))
@@ -346,13 +367,13 @@ class Jeol(tem.TEM):
  
 	def getImageShift(self):
 		mode, name, result = self.eos3.GetFunctionMode() 
-		if mode == LOWMAG_MODE:
+		if mode == FUNCTION_MODES['lowmag']:
 			scale_x, scale_y = self.getJeolConfig('def','imageshift_factor_x_lowmag'), self.getJeolConfig('def','imageshift_factor_y_lowmag')
 			if self.getJeolConfig('tem option','use_pla'):
 				shift_x, shift_y, result = self.def3.GetPLA()
 			else:
 				shift_x, shift_y, result = self.def3.GetIS1()
-		elif mode == MAG1_MODE:
+		elif mode == FUNCTION_MODES['mag1']:
 			scale_x, scale_y = self.getJeolConfig('def','imageshift_factor_x_mag1'), self.getJeolConfig('def','imageshift_factor_y_mag1')
 			if self.getMagnification() <= 4000:
 				scale_x *= self.getJeolConfig('def','imageshift_factor_x_mag1_4000')
@@ -367,9 +388,9 @@ class Jeol(tem.TEM):
 	
 	def setImageShift(self, vector, relative = "absolute"):
 		mode, name, result = self.eos3.GetFunctionMode() 
-		if mode == LOWMAG_MODE:
+		if mode == FUNCTION_MODES['lowmag']:
 			scale_x, scale_y = self.getJeolConfig('def','imageshift_factor_x_lowmag'), self.getJeolConfig('def','imageshift_factor_y_lowmag')
-		elif mode == MAG1_MODE:
+		elif mode == FUNCTION_MODES['mag1']:
 			scale_x, scale_y = self.getJeolConfig('def','imageshift_factor_x_mag1'), self.getJeolConfig('def','imageshift_factor_y_mag1')
 			if self.getMagnification() <= 4000:
 				scale_x *= self.getJeolConfig('def','imageshift_factor_x_mag1_4000')
@@ -392,12 +413,12 @@ class Jeol(tem.TEM):
 		else:
 			raise ValueError
 
-		if mode == LOWMAG_MODE:
+		if mode == FUNCTION_MODES['lowmag']:
 			if self.getJeolConfig('tem option','use_pla'):
 				result = self.def3.SetPLA(int(round((shift_x)/scale_x))+ZERO, int(round((shift_y)/scale_y))+ZERO)
 			else:
 				result = self.def3.SetIS1(int(round((shift_x)/scale_x))+ZERO, int(round((shift_y)/scale_y))+ZERO)
-		elif mode == MAG1_MODE:
+		elif mode == FUNCTION_MODES['mag1']:
 			if self.getJeolConfig('tem option','use_pla'):
 				result = self.def3.SetPLA(int(round((shift_x)/scale_x))+ZERO, int(round((shift_y)/scale_y))+ZERO)
 			else:
@@ -411,10 +432,10 @@ class Jeol(tem.TEM):
 
 	def getFocus(self):
 		mode, name, result = self.eos3.GetFunctionMode() 
-		if mode == LOWMAG_MODE:
+		if mode == FUNCTION_MODES['lowmag']:
 			OM, result = self.lens3.GetOM()
 			return self.getJeolConfig('lens','om_scale')*OM
-		elif mode == MAG1_MODE:
+		elif mode == FUNCTION_MODES['mag1']:
 			OLf, result = self.lens3.GetOLf()
 			OLc, result = self.lens3.GetOLc()
 			OL = self.fromOLcOLf(OLc,OLf)
@@ -424,9 +445,9 @@ class Jeol(tem.TEM):
 
 	def setFocus(self, value):
 		mode, name, result = self.eos3.GetFunctionMode()
-		if mode == LOWMAG_MODE:
+		if mode == FUNCTION_MODES['lowmag']:
 			self.lens3.SetOM(int(round(value/self.getJeolConfig('lens','om_scale'))))
-		elif mode == MAG1_MODE:
+		elif mode == FUNCTION_MODES['mag1']:
 			# ZERO is when OLc=8000 hexa OLf=0000
 			value = int(round(value/self.getJeolConfig('lens','ol_scale')))
 			OLc, OLf = self.toOLcOLf(value)
@@ -445,7 +466,7 @@ class Jeol(tem.TEM):
 
 	def setZeroDefocusOM(self):
 		mag = self.getMagnification()
-		if mag not in self.projection_submode_map['lowmag'][1]:
+		if self.projection_submode_map[mag][0] != 'lowmag':
 			return
 		zero_defocus_om, result = self.lens3.GetOM()
 		self.zero_defocus_om[mag] = zero_defocus_om
@@ -464,7 +485,7 @@ class Jeol(tem.TEM):
 	def setZeroDefocusOL(self):
 		mag = self.getMagnification()
 		# set zero_defocus_ol only if it is a is in the range
-		if mag not in self.projection_submode_map['mag1'][1]:
+		if self.projection_submode_map[mag][0] != 'mag1':
 			return None, None
 		zero_defocus_olc, result = self.lens3.GetOLc()
 		zero_defocus_olf, result = self.lens3.GetOLf()
@@ -474,11 +495,11 @@ class Jeol(tem.TEM):
 
 	def getDefocus(self):
 		mode, name, result = self.eos3.GetFunctionMode() 
-		if mode == LOWMAG_MODE:
+		if mode == FUNCTION_MODES['lowmag']:
 			OM, result = self.lens3.GetOM()
 			zero_defocus_om = self.getZeroDefocusOM()
 			return self.getJeolConfig('lens','om_scale')*(OM - zero_defocus_om)
-		elif mode == MAG1_MODE:
+		elif mode == FUNCTION_MODES['mag1']:
 			OLf, result = self.lens3.GetOLf()
 			OLc, result = self.lens3.GetOLc()
 			zero_defocus_olc, zero_defocus_olf = self.getZeroDefocusOL()
@@ -498,22 +519,22 @@ class Jeol(tem.TEM):
 				return
 			elif relative != 'absolute':
 				raise ValueError
-			elif mode == LOWMAG_MODE:
+			elif mode == FUNCTION_MODES['lowmag']:
 				self.lens3.SetOM(self.getZeroDefocusOM())
-			elif mode == MAG1_MODE:
+			elif mode == FUNCTION_MODES['mag1']:
 				zero_defocus_olc, zero_defocus_olf = self.getZeroDefocusOL()
 				self._setOL(zero_defocus_olc, zero_defocus_olf)
 			else:
 				raise RuntimeError('Defocus functions not implemented in this mode (%d, "%s")' % (mode, name))
 			return
 		
-		if mode == LOWMAG_MODE:
+		if mode == FUNCTION_MODES['lowmag']:
 			if relative == 'relative':
 				defocus += self.getDefocus()
 			elif relative != 'absolute':
 				raise ValueError
 			self.lens3.SetOM(self.getZeroDefocusOM() + int(round(defocus/self.getJeolConfig('lens','om_scale'))))
-		elif mode == MAG1_MODE:
+		elif mode == FUNCTION_MODES['mag1']:
 			if relative == 'relative':
 				raise RuntimeError('not implemented')
 			elif relative == 'absolute':
@@ -539,17 +560,17 @@ class Jeol(tem.TEM):
 
 	def _resetDefocus(self):
 		mode, name, result = self.eos3.GetFunctionMode() 
-		if mode == LOWMAG_MODE and not self.getZeroDefocusOM():
+		if mode == FUNCTION_MODES['lowmag'] and not self.getZeroDefocusOM():
 			self.setZeroDefocusOM()
 		# only set if not set previously.  Does this mean it only get set once in a session ?
-		elif mode == MAG1_MODE and not self.getZeroDefocusOL():
+		elif mode == FUNCTION_MODES['mag1'] and not self.getZeroDefocusOL():
 			self.setZeroDefocusOL()
 	
 	def resetDefocus(self):
 		mode, name, result = self.eos3.GetFunctionMode() 
-		if mode == LOWMAG_MODE:
+		if mode == FUNCTION_MODES['lowmag']:
 			self.setZeroDefocusOM()
-		elif mode == MAG1_MODE:
+		elif mode == FUNCTION_MODES['mag1']:
 			self.setZeroDefocusOL()
 		else:
 			raise RuntimeError('Defocus functions not implemented in this mode (%d, "%s")' % (mode, name))
@@ -584,10 +605,9 @@ class Jeol(tem.TEM):
 		if self.magnifications:
 			# do not duplicate if exists already
 			return
-		for key in mode_map.keys():
-			# add to magnifications list
-			self.magnifications.extend(list(mode_map[key][1]))
-		self.magnifications.sort()
+		mags = mode_map.keys()
+		mags.sort()
+		self.magnifications = mags
 
 	def getMagnificationsInitialized(self):
 		if self.magnifications:
@@ -600,37 +620,29 @@ class Jeol(tem.TEM):
 		savedmode, name, result = self.eos3.GetFunctionMode()
 		savedmag, unit_str, label_str, result = self.eos3.GetMagValue()
 
-		if savedmode not in (LOWMAG_MODE,MAG1_MODE):
+		if savedmode not in (FUNCTION_MODES['lowmag'],FUNCTION_MODES['mag1']):
 			raise ValueError('Current function mode %s not implemented' % name)
 		mags = {}
-		for magmode in (LOWMAG_MODE,MAG1_MODE):
-			self.eos3.SelectFunctionMode(magmode)
-			mags[magmode] = []
-			index=0
+		for mode_name in self.getJeolConfig('eos','use_modes'):
+			mode_index = FUNCTION_MODES[mode_name]
+			self.eos3.SelectFunctionMode(mode_index)
+			mags[mode_index] = []
+			mag_index=0
 			while True:
-				self.eos3.SetSelector(index)
+				self.eos3.SetSelector(mag_index)
 				magvalue = self.eos3.GetMagValue()
 				mag = magvalue[0]
 				# no error is returned when index is out of range.  The mag just
 				# does not change.
-				if mag not in mags[magmode]:
-					mags[magmode].append(mag)
-					index += 1
+				if mag not in mags[mode_index]:
+					mags[mode_index].append(mag)
+					self.addProjectionSubModeMap(mag,mode_name,mode_index,overwrite=True)
+					mag_index += 1
 				else:
 					break
-		# If a magnification value can belong to both mode,
-		# use MAG1 not LOWMAG
-		editlist = list(mags[LOWMAG_MODE])
-		editlist.reverse()
-		for mag in editlist:
-			if mag in mags[MAG1_MODE]:
-				mags[LOWMAG_MODE].remove(mag)
-
-		# setting self.projection_submode_map
-		self.addProjectionSubModeMap('mag1',0,mags[MAG1_MODE])
-		self.addProjectionSubModeMap('lowmag',1,mags[LOWMAG_MODE])
 		# set magnifications now that self.projection_submode_map is set
 		self.setMagnificationsFromProjectionSubModes()
+		self.setProjectionSubModeMags()
 		# return to the original mag
 		self.setMagnification(savedmag)
 
@@ -646,6 +658,9 @@ class Jeol(tem.TEM):
 		if value <= len(self.magnifications):
 			return self.setMagnification(self.magnifications[value])
 
+	def calculateSelectorIndex(self, mode_index, mag):
+		return self.submode_mags[mode_index].index(mag)
+
 	def setMagnification(self, value):
 		'''
 		Set Magnification by value string or number
@@ -659,25 +674,30 @@ class Jeol(tem.TEM):
 			except:
 				raise TypeError
 	
-		mode, name, result = self.eos3.GetFunctionMode()
-		
-		if value in self.projection_submode_map['lowmag'][1]:
-			if mode != LOWMAG_MODE:
-				result = self.eos3.SelectFunctionMode(LOWMAG_MODE)
-				#set to an arbitrary low mag to remove distortion
-				self.eos3.SetSelector(self.projection_submode_map['lowmag'][1].index(self.projection_submode_map['lowmag'][1][-1]))
-			self.eos3.SetSelector(self.projection_submode_map['lowmag'][1].index(value))
-			self._resetDefocus()
-			return
-		
-		if value in self.projection_submode_map['mag1'][1]:
-			if mode != MAG1_MODE:
-				result = self.eos3.SelectFunctionMode(MAG1_MODE)   
-			self.eos3.SetSelector(self.projection_submode_map['mag1'][1].index(value))
-			self._resetDefocus()
-			return
+		if value not in self.projection_submode_map.keys():
+			raise ValueError
 
-		raise ValueError
+		if not self.submode_mags:
+			raise RuntimeError
+		
+		old_mode_index, name, result = self.eos3.GetFunctionMode()
+		new_mode_name = self.projection_submode_map[value][0]
+		new_mode_index = self.projection_submode_map[value][1]
+		result = self.eos3.SelectFunctionMode(new_mode_index)
+		if new_mode_index == FUNCTION_MODES['lowmag'] and old_mode_index != FUNCTION_MODES['lowmag']:
+				#set to an arbitrary low mag to remove distortion
+				self.eos3.SetSelector(self.submode_mags[FUNCTION_MODES['lowmag']][-1])
+		self.eos3.SetSelector(self.calculateSelectorIndex(new_mode_index, value))
+		self._resetDefocus()
+		return
+
+	def getProjectionSubModeIndex(self):
+		mode_index, name, result = self.eos3.GetFunctionMode()
+		return mode_index
+
+	def getProjectionSubModeName(self):
+		mode_index, name, result = self.eos3.GetFunctionMode()
+		return name
 
 	def getStagePosition(self):
 		x, y, z, a, b, result = self.stage3.GetPos()
@@ -916,18 +936,18 @@ class Jeol(tem.TEM):
    
 	def getDiffractionMode(self):
 		mode, result = self.eos3.GetFunctionMode()
-		if mode in (LOWMAG_MODE, MAG1_MODE):
+		if mode in (FUNCTION_MODES['lowmag'], FUNCTION_MODES['mag1']):
 			return "imaging"
-		elif mode == DIFF_MODE:
+		elif mode == FUNCTION_MODES['diff']:
 			return "diffraction"
 		else:
 			raise SystemError
 
 	def setDiffractionMode(self, mode):
 		if mode == "imaging":
-			result = self.eos3.SelectFunctionMode(MAG1_MODE)
+			result = self.eos3.SelectFunctionMode(FUNCTION_MODES['mag1'])
 		elif mode == "diffraction":
-			result = self.eos3.SelectFunctionMode(DIFF_MODE)
+			result = self.eos3.SelectFunctionMode(FUNCTION_MODES['diff'])
 		else:
 			raise ValueError
 		return 0
@@ -1141,7 +1161,7 @@ class Jeol(tem.TEM):
 		result = self.apt3.SelectKind(current_kind)
 
 	def _setSpecialMag(self):
-		result = self.eos3.SelectFunctionMode(MAG1_MODE)
+		result = self.eos3.SelectFunctionMode(FUNCTION_MODES['mag1'])
 		result = self.lens3.SetOLc(12646)
 		result = self.lens3.SetOLf(34439)
 		result = self.lens3.SetOM(41801)

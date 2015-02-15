@@ -56,8 +56,16 @@ def parse():
 							configured[name][key] = True
 						elif valuestring.lower() == 'false':
 							configured[name][key] = False
+						elif ',' in valuestring:
+							items = configparser.get(name,key).split(',')
+							try:
+								#list of floats for aparture sizes
+								configured[name][key] = map((lambda x: float(x)), items)
+							except:
+								#list of strings for mag mode 
+								configured[name][key] = map((lambda x: x.strip()), items)
 						else:
-							print name,key, configparser.get(name,key)
+							print 'error parsing', name,key, configparser.get(name,key)
 							pass
 	return configured
 
@@ -67,4 +75,5 @@ def getConfigured():
 		parse()
 	return configured
 
-print getConfigured()
+if __name__ == '__main__':
+	print getConfigured()

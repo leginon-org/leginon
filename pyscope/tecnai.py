@@ -42,6 +42,11 @@ class Tecnai(tem.TEM):
 	use_normalization = False
 	def __init__(self):
 		tem.TEM.__init__(self)
+		self.projection_submodes = {1:'LM',2:'Mi',3:'SA',4:'Mh',5:'LAD',6:'D'}
+		self.special_submode_mags = {}
+		#self.special_submode_mags = {380:('EFTEM',3)}
+		self.projection_submode_map = self.special_submode_mags.copy()
+		
 		self.correctedstage = True
 		pythoncom.CoInitializeEx(pythoncom.COINIT_MULTITHREADED)
 
@@ -565,6 +570,22 @@ class Tecnai(tem.TEM):
 	def setMainScreenScale(self, mainscreenscale):
 		self.mainscreenscale = mainscreenscale
 
+	def getProjectionSubModeIndex(self):
+		'''
+		get from current condition.
+		'''
+		return self.tecnai.Projection.SubMode
+
+	def getProjectionSubModeName(self):
+		'''
+		get from current condition.
+		'''
+		mag = self.getMagnification()
+		if mag not in self.special_submode_mags:
+			return self.projection_submodes[self.tecnai.Projection.SubMode]
+		else:
+			return self.special_submode_mags[mag][0]
+
 	def normalizeProjectionForMagnificationChange(self, new_mag_index):
 		'''
 		Normalize objective and projector if submode indices are
@@ -578,7 +599,7 @@ class Tecnai(tem.TEM):
 		except:
 			raise ValueError('can not get projection submode')
 		self.setMagnificationIndex(new_mag_index)
-		new_submode_index = self.tecnai.Projection.SubMode
+		new_submode_index = self.getProjectionSubModeIndex()
 		if abs(old_submode_index - new_submode_index) > 1:
 		#if True:
 			# normalizeLens function returns after it finishes
@@ -640,12 +661,27 @@ class Tecnai(tem.TEM):
 			index = self.getMagnificationIndex()
 			if index == previousindex:
 				break
-			magnifications.append(self.getMagnification())
+			mag = self.getMagnification()
+			magnifications.append(mag)
+			self.registerProjectionSubMode(mag)
 			previousindex = index
 			index += 1
+		print self.getProjectionSubModeMap()
 		self.setMagnifications(magnifications)
 		self.setMagnificationIndex(savedindex)
-	
+
+	def registerProjectionSubMode(self, mag):
+		'''
+		Add current magnification to submode_mags.
+		TEM Scripting orders magnificatiions by projection submode.
+		'''
+		mode_id = self.getProjectionSubModeIndex()
+		name = self.getProjectionSubModeName()
+		print mag, mode_id,name
+		if mode_id not in self.projection_submodes.keys():
+			raise ValueError('unknown projection submode')
+		self.projection_submode_map[mag] = (name,mode_id)
+
 	def getStagePosition(self):
 		value = {}
 		value['x'] = float(self.tecnai.Stage.Position.X)
