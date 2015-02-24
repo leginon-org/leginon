@@ -1,11 +1,13 @@
 import time
 import math
+import sys
 import comtypes.client
 from pyscope import tem
 from pyscope import jeolconfig
 
 # function modes
 FUNCTION_MODES = {'mag1':0,'mag2':1,'lowmag':2,'diff':3}
+FUNCTION_MODE_ORDERED_NAMES = ['mag1','mag2','lowmag','diff']
 
 # identifier for dector
 MAIN_SCREEN = 13
@@ -68,9 +70,15 @@ class Jeol(tem.TEM):
 
 		# wait for interface to activate
 		result = None
-		while result != 0:
+		timeout = False
+		t0 = time.time()
+		while result != 0 and not timeout:
 			ht, result = self.ht3.GetHTValue()
 			time.sleep(1)
+			t1 = time.time()
+			if t1-t0 > 60:
+				timout = True
+				sys.exit(1)
 
 		self.setJeolConfigs()
 
@@ -424,10 +432,10 @@ class Jeol(tem.TEM):
 			else:
 				result = self.def3.SetIS1(int(round((shift_x)/scale_x))+ZERO, int(round((shift_y)/scale_y))+ZERO)
 
-	def _setOL(self, coarse_value, fine_value):
+	def setOLWithBeamShift(self, value):
+		##### NEED TO MAKE THIS ACCESSIBLE FROM OUTSIDE
 		beam_shift_x, beam_shift_y, result = self.def3.GetCLA1()
-		result = self.lens3.SetOLc(coarse_value)
-		result = self.lens3.SetOLf(fine_value)
+		self.setRawOLFocus(value)
 		result = self.def3.SetCLA1(beam_shift_x, beam_shift_y)
 
 	def getFocus(self):
@@ -436,9 +444,7 @@ class Jeol(tem.TEM):
 			OM, result = self.lens3.GetOM()
 			return self.getJeolConfig('lens','om_scale')*OM
 		elif mode == FUNCTION_MODES['mag1']:
-			OLf, result = self.lens3.GetOLf()
-			OLc, result = self.lens3.GetOLc()
-			OL = self.fromOLcOLf(OLc,OLf)
+			OL = self.getRawOLFocus()
 			return self.getJeolConfig('lens','ol_scale')*(OL)
 		else:
 			raise RuntimeError('Focus functions not implemented in this mode (%d, "%s")' % (mode, name))
@@ -450,10 +456,20 @@ class Jeol(tem.TEM):
 		elif mode == FUNCTION_MODES['mag1']:
 			# ZERO is when OLc=8000 hexa OLf=0000
 			value = int(round(value/self.getJeolConfig('lens','ol_scale')))
-			OLc, OLf = self.toOLcOLf(value)
-			self._setOL(OLc, OLf)
+			self.setOLWithBeamShift(value)
 		else:
 			raise RuntimeError('Focus functions not implemented in this mode (%d, "%s")' % (mode, name))
+
+	def setRawOLFocus(self, value):
+		OLc, OLf = self.toOLcOLf(value)
+		self.lens3.SetOLc(OLc)
+		self.lens3.SetOLf(OLf)
+
+	def getRawOLFocus(self):
+		OLf, result = self.lens3.GetOLf()
+		OLc, result = self.lens3.GetOLc()
+		OL = self.fromOLcOLf(OLc,OLf)
+		return OL
 
 	def getZeroDefocusOM(self):
 		mag = self.getMagnification()
@@ -474,24 +490,25 @@ class Jeol(tem.TEM):
 
 	def getZeroDefocusOL(self):
 		mag = self.getMagnification()
-		zero_defocus_olc = None
-		zero_defocus_olf = None
+		zero_defocus_ol = None
 		if mag in self.zero_defocus_ol.keys():
 			zero_defocus_olc, zero_defocus_olf = self.zero_defocus_ol[mag]
 		elif self.zero_defocus_ol.keys():
 			zero_defocus_olc, zero_defocus_olf = self.toOLcOLf(self.zero_defocus_ol[max(self.zero_defocus_ol.keys())])
-		return zero_defocus_olc, zero_defocus_olf
+		try:
+			zero_defocus_ol = self.fromOLcOLf(zero_defocus_olc,zero_defocus_olf)
+		except:
+			# cases that are not covered by if causes return None
+			pass
+		return zero_defocus_ol
 
 	def setZeroDefocusOL(self):
 		mag = self.getMagnification()
 		# set zero_defocus_ol only if it is a is in the range
 		if self.projection_submode_map[mag][0] != 'mag1':
-			return None, None
-		zero_defocus_olc, result = self.lens3.GetOLc()
-		zero_defocus_olf, result = self.lens3.GetOLf()
-		self.zero_defocus_ol[mag] = self.fromOLcOLf(zero_defocus_olc,zero_defocus_olf)
-		print 'setZeroDefocusOL result',zero_defocus_olc, zero_defocus_olf
-		return zero_defocus_olc, zero_defocus_olf
+			print 'outside the mag range for zero defocus OL'
+			return
+		self.zero_defocus_ol[mag] = getRawOLFocus()
 
 	def getDefocus(self):
 		mode, name, result = self.eos3.GetFunctionMode() 
@@ -500,13 +517,8 @@ class Jeol(tem.TEM):
 			zero_defocus_om = self.getZeroDefocusOM()
 			return self.getJeolConfig('lens','om_scale')*(OM - zero_defocus_om)
 		elif mode == FUNCTION_MODES['mag1']:
-			OLf, result = self.lens3.GetOLf()
-			OLc, result = self.lens3.GetOLc()
-			zero_defocus_olc, zero_defocus_olf = self.getZeroDefocusOL()
-			print 'zero_defocus_olc, OLc', zero_defocus_olc, OLc
-			print 'zero_defocus_olf, OLf', zero_defocus_olf, OLf
-			OL = self.fromOLcOLf(OLc,OLf)
-			zero_defocus_ol = self.fromOLcOLf(zero_defocus_olc,zero_defocus_olf)
+			OL = self.getRawOLFocus()
+			zero_defocus_ol = self.getZeroDefocusOL()
 			return self.getJeolConfig('lens','ol_scale')*(OL - zero_defocus_ol)
 		else:
 			raise RuntimeError('Defocus functions not implemented in this mode (%d, "%s")' % (mode, name))
@@ -522,8 +534,8 @@ class Jeol(tem.TEM):
 			elif mode == FUNCTION_MODES['lowmag']:
 				self.lens3.SetOM(self.getZeroDefocusOM())
 			elif mode == FUNCTION_MODES['mag1']:
-				zero_defocus_olc, zero_defocus_olf = self.getZeroDefocusOL()
-				self._setOL(zero_defocus_olc, zero_defocus_olf)
+				zero_defocus_ol = self.getZeroDefocusOL()
+				self.setOLWithBeamShift(zero_defocus_ol)
 			else:
 				raise RuntimeError('Defocus functions not implemented in this mode (%d, "%s")' % (mode, name))
 			return
@@ -539,10 +551,8 @@ class Jeol(tem.TEM):
 				raise RuntimeError('not implemented')
 			elif relative == 'absolute':
 				value = int(round(defocus/self.getJeolConfig('lens','ol_scale')))
-				zero_defocus_olc, zero_defocus_olf = self.getZeroDefocusOL()
-				zero_defocus_ol = self.fromOLcOLf(zero_defocus_olc,zero_defocus_olf)
-				OLc, OLf = self.toOLcOLf(zero_defocus_ol + value)
-				self._setOL(OLc, OLf)
+				zero_defocus_ol = self.getZeroDefocusOL()
+				self.setOLWithBeamShift(zero_defocus_ol + value)
 			else:
 				raise ValueError
 
@@ -697,7 +707,7 @@ class Jeol(tem.TEM):
 
 	def getProjectionSubModeName(self):
 		mode_index, name, result = self.eos3.GetFunctionMode()
-		return name
+		return FUNCTION_MODE_ORDERED_NAMES[mode_index]
 
 	def getStagePosition(self):
 		x, y, z, a, b, result = self.stage3.GetPos()
