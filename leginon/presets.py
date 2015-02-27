@@ -30,6 +30,9 @@ import numpy
 import itertools
 idcounter = itertools.cycle(range(100))
 
+## submodetransform
+PROJECTION_MODE_TRANSFORM = False
+
 class PresetChangeError(Exception):
 	pass
 
@@ -1467,6 +1470,9 @@ class PresetsManager(node.Node):
 				pixrow = pixelshift1['row'] * oldpreset['binning']['y']
 				pixcol = pixelshift1['col'] * oldpreset['binning']['x']
 				pixvect1 = numpy.array((pixrow, pixcol))
+				###
+				if PROJECTION_MODE_TRANSFORM and self.isLMtoSA(oldpreset['magnification'],newpreset['magnification']):
+					pixvect1 = self.specialTransform(pixvect1)
 				pixvect2 = self.calclients['image'].pixelToPixel(old_tem,old_ccdcamera,new_tem, new_ccdcamera, ht,oldpreset['magnification'],newpreset['magnification'],pixvect1)
 				pixelshift2 = {'row':pixvect2[0] / newpreset['binning']['y'],'col':pixvect2[1] / newpreset['binning']['x']}
 				newscope = self.calclients['image'].transform(pixelshift2, fakescope2, fakecam2)
@@ -1948,3 +1954,14 @@ class PresetsManager(node.Node):
 		self.updatePreset(presetname, params)
 		self.logger.info('completed update to %s' % (presetname,))
 		self.confirmEvent(evt)
+	
+	def isLMtoSA(self,mag1,mag2):
+		print mag1,mag2
+		return (mag1 <=350 and mag2 >=4700)
+
+	def specialTransform(self,pixelvect):
+		# This matrix gives a 90 degree rotation from +x to +y axis.
+		m = numpy.matrix([[0,1],[-1,0]])
+		rotated_vect = numpy.dot(pixelvect,numpy.asarray(m))
+		self.logger.info('rotate %s to %s' % (pixelvect, rotated_vect))
+		return rotated_vect
