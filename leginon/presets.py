@@ -31,7 +31,7 @@ import itertools
 idcounter = itertools.cycle(range(100))
 
 ## submodetransform
-PROJECTION_MODE_TRANSFORM = False
+PROJECTION_MODE_TRANSFORM = True
 
 class PresetChangeError(Exception):
 	pass
@@ -1957,11 +1957,13 @@ class PresetsManager(node.Node):
 	
 	def isLMtoSA(self,mag1,mag2):
 		print mag1,mag2
-		return (mag1 <=350 and mag2 >=4700)
+		return (mag1 <=4000 and mag2 >=5000)
 
 	def specialTransform(self,pixelvect):
 		# This matrix gives a 90 degree rotation from +x to +y axis.
-		m = numpy.matrix([[0,1],[-1,0]])
+		rotate_angle_degrees = 140
+		a = math.radians(rotate_angle_degrees)
+		m = numpy.matrix([[math.cos(a),math.sin(a)],[-math.sin(a),math.cos(a)]])
 		rotated_vect = numpy.dot(pixelvect,numpy.asarray(m))
 		self.logger.info('rotate %s to %s' % (pixelvect, rotated_vect))
 		return rotated_vect
