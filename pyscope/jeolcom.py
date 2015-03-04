@@ -460,6 +460,13 @@ class Jeol(tem.TEM):
 		else:
 			raise RuntimeError('Focus functions not implemented in this mode (%d, "%s")' % (mode, name))
 
+	def setRawOMFocus(self, value):
+		self.lens3.SetOM(int(value))
+
+	def getRawOMFocus(self):
+		OM, result = self.lens3.GetOM()
+		return OM
+
 	def setRawOLFocus(self, value):
 		OLc, OLf = self.toOLcOLf(value)
 		self.lens3.SetOLc(OLc)
@@ -492,14 +499,9 @@ class Jeol(tem.TEM):
 		mag = self.getMagnification()
 		zero_defocus_ol = None
 		if mag in self.zero_defocus_ol.keys():
-			zero_defocus_olc, zero_defocus_olf = self.zero_defocus_ol[mag]
+			zero_defocus_ol = self.zero_defocus_ol[mag]
 		elif self.zero_defocus_ol.keys():
-			zero_defocus_olc, zero_defocus_olf = self.toOLcOLf(self.zero_defocus_ol[max(self.zero_defocus_ol.keys())])
-		try:
-			zero_defocus_ol = self.fromOLcOLf(zero_defocus_olc,zero_defocus_olf)
-		except:
-			# cases that are not covered by if causes return None
-			pass
+			zero_defocus_ol = self.zero_defocus_ol[max(self.zero_defocus_ol.keys())]
 		return zero_defocus_ol
 
 	def setZeroDefocusOL(self):
@@ -508,7 +510,7 @@ class Jeol(tem.TEM):
 		if self.projection_submode_map[mag][0] != 'mag1':
 			print 'outside the mag range for zero defocus OL'
 			return
-		self.zero_defocus_ol[mag] = getRawOLFocus()
+		self.zero_defocus_ol[mag] = self.getRawOLFocus()
 
 	def getDefocus(self):
 		mode, name, result = self.eos3.GetFunctionMode() 
