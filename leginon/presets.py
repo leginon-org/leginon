@@ -31,7 +31,7 @@ import itertools
 idcounter = itertools.cycle(range(100))
 
 ## submodetransform
-PROJECTION_MODE_TRANSFORM = True
+PROJECTION_MODE_TRANSFORM = False
 
 class PresetChangeError(Exception):
 	pass
