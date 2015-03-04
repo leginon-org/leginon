@@ -162,6 +162,11 @@ define('DEFAULT_APPION_PATH',"");
 // The result is a subdivision of data by user, for example, as configured in each user's leginon/leginon.cfg or upon creation of the Leginon session--- //
 define('APPION_PARENT_ADDITION',0); 
 
+// --- negative index of the directory before the sessionname used to replace the elemenr of DEFAULT_APPION_PATH --- //
+// Thre result is a subdivision of data by user before appion/leginon directories.
+// --- note that this has no effect if APPION_PARENT_ADDITION is larger than 0
+//define('APPION_PARENT_REPLACEMENT',-2); 
+
 // --- sample tracking ---//
 define('SAMPLE_TRACK', false);
 

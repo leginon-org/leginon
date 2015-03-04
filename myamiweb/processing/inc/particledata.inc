@@ -6098,15 +6098,20 @@ function getBaseAppionPath($sessioninfo,$new_base='appion') {
 	// get from leginon session image path
 	$leginon_imagepath = $sessioninfo['Image path'];
 	if (defined('DEFAULT_APPION_PATH') && DEFAULT_APPION_PATH !='') {
-		if (defined('APPION_PARENT_ADDITION') && APPION_PARENT_ADDITION !=0) {
-			
-			$parts = explode(DIRECTORY_SEPARATOR,$leginon_imagepath);
-			$session_index = array_search($sessioninfo['Name'],$parts);
-			if ($session_index !== false) {
+		$parts = explode(DIRECTORY_SEPARATOR,$leginon_imagepath);
+		$session_index = array_search($sessioninfo['Name'],$parts);
+		if ($session_index !== false) {
+			if (defined('APPION_PARENT_ADDITION') && APPION_PARENT_ADDITION > 0) {
 				// add extra directory division prior to sessionname
 				$addition_parts = array_splice($parts,$session_index-APPION_PARENT_ADDITION,APPION_PARENT_ADDITION);
-			
 				$appion_path = Path::formatEndPath(Path::formatEndPath(DEFAULT_APPION_PATH).implode(DIRECTORY_SEPARATOR,$addition_parts));
+			} elseif (defined('APPION_PARENT_REPLACEMENT') && APPION_PARENT_REPLACEMENT < 0) {
+				# replace one part into DEFAULT_APPION_PATH
+				$replace_part = $parts[$session_index+APPION_PARENT_REPLACEMENT];
+				echo "replace=".$replace_part;
+				$appion_parts = explode(DIRECTORY_SEPARATOR,PATH::formatEndPath(DEFAULT_APPION_PATH));
+				array_splice($appion_parts,APPION_PARENT_REPLACEMENT-1,1,array($replace_part));
+				$appion_path = Path::formatEndPath(implode(DIRECTORY_SEPARATOR,$appion_parts));
 			} else {
 				// No way to know what to add if sessionname is not part of the path
 				$appion_path = Path::formatEndPath(DEFAULT_APPION_PATH);
