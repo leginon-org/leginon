@@ -155,16 +155,19 @@ define('TEMP_IMAGES_DIR', "");
 define('USE_APPION_WRAPPER', false);
 // --- define('APPION_WRAPPER_PATH', ""); --- //
 
-// --- default appion base directory to store processing results (parallel to leginon image directory defined in leginon/leginon.cfg) --- //
+// --- default appion base directory to store processing results (Normally `parallel to leginon image directory defined in leginon/leginon.cfg) --- // 
+// note:  This should end with the directory named "appion"
 define('DEFAULT_APPION_PATH',"");
 
 // --- number of parent directories before the sessionname to append after DEFAULT_APPION_PATH --- // 
-// The result is a subdivision of data by user, for example, as configured in each user's leginon/leginon.cfg or upon creation of the Leginon session--- //
+// The result is a subdivision of data by user after DEFAULT_APPION_PATH, as configured in each user's leginon/leginon.cfg or upon creation of the Leginon session--- //
 define('APPION_PARENT_ADDITION',0); 
 
 // --- negative index of the directory before the sessionname used to replace the elemenr of DEFAULT_APPION_PATH --- //
-// Thre result is a subdivision of data by user before appion/leginon directories.
-// --- note that this has no effect if APPION_PARENT_ADDITION is larger than 0
+// --- negative index of the directory before the last directory named "leginon"
+// in DEFAULT_APPION_PATH used to replace the element of DEFAULT_APPION_PATH
+// before the last directory named "appion"--- //
+// Thre result is a subdivision of data by user or group before appion/leginon directories.
 //define('APPION_PARENT_REPLACEMENT',-2); 
 
 // --- sample tracking ---//
