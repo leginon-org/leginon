@@ -79,7 +79,7 @@ class ScaleCalibrator(object):
 			self.logger.error('Move property not set')
 
 		if self.move_property == 'OL':
-			value = [self.tem.getRawOLFocus(),]
+			value = [self.tem.getRawFocusOL(),]
 		else:
 			attr_name = self.getAttrNamePrefix(is_get=True)+self.move_property
 			value = getattr(self.move_class_instance,attr_name)()
@@ -92,7 +92,7 @@ class ScaleCalibrator(object):
 		if not self.move_property:
 			self.logger.error('Move property not set')
 		if self.move_property == 'OL':
-			self.tem.setRawOLFocus(value)
+			self.tem.setRawFocusOL(value)
 		else:
 			attr_name = self.getAttrNamePrefix(is_get=False)+self.move_property
 			self._setValue(attr_name,value)

@@ -83,8 +83,9 @@ class Jeol(tem.TEM):
 		self.setJeolConfigs()
 
 		self.magnifications = []
+		# submode_mags keys are submode_indices and values are magnification list in the submode
 		self.submode_mags = {}
-		# initialize zero defocus values as unset
+		# initialize zero defocus values from jeol.cfg
 		self.zero_defocus_om = self.getJeolConfig('om standard focus')
 		self.zero_defocus_ol = self.getJeolConfig('ol standard focus')
 
@@ -109,12 +110,18 @@ class Jeol(tem.TEM):
 	def setProjectionSubModeMap(self, mode_map):
 		'''
 		called by EM.py to set self.projetion_submode_map
-		{mag:(mode_name,mode_id)}
+		self.projection_submode_map {mag:(mode_name,mode_id)}
+		and
+		self.submode_mags {mode_id:[mags]}
 		'''
 		self.projection_submode_map = mode_map
 		self.setProjectionSubModeMags()
 
 	def setProjectionSubModeMags(self):
+		'''
+		initialize a dictionary of submode_indices
+		mapped to sorted magnification list
+		'''
 		if not self.submode_mags:
 			for m in self.projection_submode_map:
 				v = self.projection_submode_map[m]
@@ -432,10 +439,9 @@ class Jeol(tem.TEM):
 			else:
 				result = self.def3.SetIS1(int(round((shift_x)/scale_x))+ZERO, int(round((shift_y)/scale_y))+ZERO)
 
-	def setOLWithBeamShift(self, value):
-		##### NEED TO MAKE THIS ACCESSIBLE FROM OUTSIDE
+	def setFocusOLWithBeamShift(self, value):
 		beam_shift_x, beam_shift_y, result = self.def3.GetCLA1()
-		self.setRawOLFocus(value)
+		self.setRawFocusOL(value)
 		result = self.def3.SetCLA1(beam_shift_x, beam_shift_y)
 
 	def getFocus(self):
@@ -444,7 +450,7 @@ class Jeol(tem.TEM):
 			OM, result = self.lens3.GetOM()
 			return self.getJeolConfig('lens','om_scale')*OM
 		elif mode == FUNCTION_MODES['mag1']:
-			OL = self.getRawOLFocus()
+			OL = self.getRawFocusOL()
 			return self.getJeolConfig('lens','ol_scale')*(OL)
 		else:
 			raise RuntimeError('Focus functions not implemented in this mode (%d, "%s")' % (mode, name))
@@ -456,23 +462,23 @@ class Jeol(tem.TEM):
 		elif mode == FUNCTION_MODES['mag1']:
 			# ZERO is when OLc=8000 hexa OLf=0000
 			value = int(round(value/self.getJeolConfig('lens','ol_scale')))
-			self.setOLWithBeamShift(value)
+			self.setFocusOLWithBeamShift(value)
 		else:
 			raise RuntimeError('Focus functions not implemented in this mode (%d, "%s")' % (mode, name))
 
-	def setRawOMFocus(self, value):
+	def setRawFocusOM(self, value):
 		self.lens3.SetOM(int(value))
 
-	def getRawOMFocus(self):
+	def getRawFocusOM(self):
 		OM, result = self.lens3.GetOM()
 		return OM
 
-	def setRawOLFocus(self, value):
+	def setRawFocusOL(self, value):
 		OLc, OLf = self.toOLcOLf(value)
 		self.lens3.SetOLc(OLc)
 		self.lens3.SetOLf(OLf)
 
-	def getRawOLFocus(self):
+	def getRawFocusOL(self):
 		OLf, result = self.lens3.GetOLf()
 		OLc, result = self.lens3.GetOLc()
 		OL = self.fromOLcOLf(OLc,OLf)
@@ -510,7 +516,20 @@ class Jeol(tem.TEM):
 		if self.projection_submode_map[mag][0] != 'mag1':
 			print 'outside the mag range for zero defocus OL'
 			return
-		self.zero_defocus_ol[mag] = self.getRawOLFocus()
+		# set at the closest mag value but not higher
+		items = self.zero_defocus_ol.items()
+		ol_mags = self.zero_defocus_ol.keys()
+		ol_mags.sort()
+		while ol_mags:
+			if mag >= int(ol_mags[-1]):
+				break
+			ol_mags.pop()
+		if len(ol_mags):
+			print 'zero_defocus set at %d' % (int(ol_mags[-1]))
+			self.zero_defocus_ol[ol_mags[-1]] = self.getRawFocusOL()
+		else:
+			print 'zero_defocus no ol_mags set at %d' % (int(mag))
+			self.zero_defocus_ol['%d' % (int(mag),)] = self.getRawFocusOL()
 
 	def getDefocus(self):
 		mode, name, result = self.eos3.GetFunctionMode() 
@@ -519,7 +538,7 @@ class Jeol(tem.TEM):
 			zero_defocus_om = self.getZeroDefocusOM()
 			return self.getJeolConfig('lens','om_scale')*(OM - zero_defocus_om)
 		elif mode == FUNCTION_MODES['mag1']:
-			OL = self.getRawOLFocus()
+			OL = self.getRawFocusOL()
 			zero_defocus_ol = self.getZeroDefocusOL()
 			return self.getJeolConfig('lens','ol_scale')*(OL - zero_defocus_ol)
 		else:
@@ -537,7 +556,7 @@ class Jeol(tem.TEM):
 				self.lens3.SetOM(self.getZeroDefocusOM())
 			elif mode == FUNCTION_MODES['mag1']:
 				zero_defocus_ol = self.getZeroDefocusOL()
-				self.setOLWithBeamShift(zero_defocus_ol)
+				self.setFocusOLWithBeamShift(zero_defocus_ol)
 			else:
 				raise RuntimeError('Defocus functions not implemented in this mode (%d, "%s")' % (mode, name))
 			return
@@ -554,7 +573,7 @@ class Jeol(tem.TEM):
 			elif relative == 'absolute':
 				value = int(round(defocus/self.getJeolConfig('lens','ol_scale')))
 				zero_defocus_ol = self.getZeroDefocusOL()
-				self.setOLWithBeamShift(zero_defocus_ol + value)
+				self.setFocusOLWithBeamShift(zero_defocus_ol + value)
 			else:
 				raise ValueError
 
@@ -571,11 +590,13 @@ class Jeol(tem.TEM):
 		return OLc * COARSE_SCALE + OLf
 
 	def _resetDefocus(self):
+		print '_resetDefocus is called'
 		mode, name, result = self.eos3.GetFunctionMode() 
 		if mode == FUNCTION_MODES['lowmag'] and not self.getZeroDefocusOM():
 			self.setZeroDefocusOM()
 		# only set if not set previously.  Does this mean it only get set once in a session ?
 		elif mode == FUNCTION_MODES['mag1'] and not self.getZeroDefocusOL():
+			print 'setZeroDefocusOL in _resetDefocus'
 			self.setZeroDefocusOL()
 	
 	def resetDefocus(self):
@@ -605,7 +626,6 @@ class Jeol(tem.TEM):
 	def setMagnifications(self, mags):
 		# This is called by EM node with magnifications list input
 		self.magnifications = mags
-		print 'magnifications set from EM node'
 
 		# This might be possible to be moved to somewhere else
 		if self.projection_submode_map:
@@ -628,6 +648,9 @@ class Jeol(tem.TEM):
 			return False
 
 	def findMagnifications(self):
+		'''
+		Go through magnifications to register magnifications.
+		'''
 		# One of the first functions to run during installation to get valid magnification values
 		savedmode, name, result = self.eos3.GetFunctionMode()
 		savedmag, unit_str, label_str, result = self.eos3.GetMagValue()
