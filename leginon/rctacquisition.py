@@ -275,6 +275,33 @@ class RCTAcquisition(acquisition.Acquisition):
 			return True
 		return False
 
+	def affineToText(self, affineresult):
+		return libCVwrapper.affineToText(result)
+
+	def checkArrayMinMax(self,arrayold, arraynew):
+		libCVwrapper.checkArrayMinMax(self, arrayold, arraynew)
+
+	def runMatchImages(self, arrayold, arraynew):
+		timeout = 300
+		minsize = self.settings['minsize']
+		maxsize = self.settings['maxsize']
+		#result = libCVwrapper.MatchImages(arrayold, arraynew, minsize, maxsize)
+		result = pyami.timedproc.call('leginon.libCVwrapper', 'MatchImages', args=(arrayold, arraynew, minsize, maxsize), timeout=timeout)
+		self.logger.info("result matrix= "+str(numpy.asarray(result*100, dtype=numpy.int8).ravel()))
+		return result
+					
+	def runFindRegions(self, im):
+		minsize = self.settings['minsize']
+		maxsize = self.settings['maxsize']
+		timeout = 300
+		#regions, image  = libCVwrapper.FindRegions(im, minsize, maxsize)
+		self.logger.info('running libCV.FindRegions, timeout = %d' % (timeout,))
+		regions,image = pyami.timedproc.call('leginon.libCVwrapper', 'FindRegions', args=(im,minsize,maxsize), timeout=timeout)
+		return regions,image
+
+	def checkCVResult(self,result):
+		return libCVwrapper.checkLibCVResult(self, result)
+
 	#====================
 	def trackStage(self, image0, tilt0, tilt, tilt0targets):
 		#import pprint
@@ -344,30 +371,22 @@ class RCTAcquisition(acquisition.Acquisition):
 				result = numpy.array(self.shiftmatrix_maker.register(arrayold, arraynew))
 			else:
 
-				print '============ Craig stuff ============'
+				print '============ CV stuff ============'
 
-				self.logger.info('Craig\'s libCV stuff')
-				minsize = self.settings['minsize']
-				maxsize = self.settings['maxsize']
-				libCVwrapper.checkArrayMinMax(self, arrayold, arraynew)
+				self.logger.info('CV stuff')
+				self.checkArrayMinMax(arrayold, arraynew)
 
 				print 'tilt', tilts[i]*180/3.14159
 
-				timeout = 300
-				#result = libCVwrapper.MatchImages(arrayold, arraynew, minsize, maxsize)
 				try:
-					result = pyami.timedproc.call('leginon.libCVwrapper', 'MatchImages', args=(arrayold, arraynew, minsize, maxsize), timeout=timeout)
-					self.logger.info("result matrix= "+str(numpy.asarray(result*100, dtype=numpy.int8).ravel()))
+					result = self.runMatchImages(arrayold,arraynew)
 				except:
-					self.logger.error('libCV MatchImages failed')
+					self.logger.error('CV library MatchImages failed')
 					return None,None
 					
-				#difftilt = degrees(abs(tilts[int(i)])-abs(tilts[int(i-1)]))
-				#result = self.apTiltShiftMethod(arrayold, arraynew, difftilt)
-
-				check = libCVwrapper.checkLibCVResult(self, result)
+				check = self.checkCVResult(result)
 				if check is False:
-					self.logger.warning("libCV failed: redoing tilt %.2f"%(tilt,))
+					self.logger.warning("CV transform failed: redoing tilt %.2f"%(tilt,))
 					### redo this tilt; becomes an infinite loop if the image goes black
 					retries += 1
 					if retries <= 2:
@@ -379,21 +398,21 @@ class RCTAcquisition(acquisition.Acquisition):
 						i -= 1
 					else:
 						retries = 0
-						print "Tilt libCV FAILED"
-						self.logger.error("libCV failed: giving up")
+						print "Tilt CV FAILED"
+						self.logger.error("CV tilt transform failed: giving up")
 						return None, None
 					continue
 				else:
 					retries = 0			
-				print '============ Craig stuff done ============'
+				print '============ CV match images done ============'
 
 			self.logger.info("result matrix= "+str(numpy.asarray(result*100, dtype=numpy.int8).ravel()))
-			self.logger.info( "Inter Matrix: "+libCVwrapper.affineToText(result) )
+			self.logger.info( "Inter Matrix: "+self.affineToText(result) )
 
 			runningresult = numpy.dot(runningresult, result)
 			# transformTargets for display purposes only
 			self.transformTargets(runningresult, tilt0targets)
-			self.logger.info( "Running Matrix: "+libCVwrapper.affineToText(runningresult) )
+			self.logger.info( "Running Matrix: "+self.affineToText(runningresult) )
 			self.logger.info("running result matrix= "+str(numpy.asarray(runningresult*100, dtype=numpy.int8).ravel()))
 			imageold = imagenew
 			arrayold = arraynew
@@ -413,7 +432,7 @@ class RCTAcquisition(acquisition.Acquisition):
 		self.setTargets([], 'Peak')
 		self.publishDisplayWait(imagedata)
 
-		self.logger.info( "FINAL Matrix: "+libCVwrapper.affineToText(runningresult) )
+		self.logger.info( "FINAL Matrix: "+self.affineToText(runningresult) )
 		#self.logger.info('Final Matrix: %s' % (runningresult,))
 		return (runningresult, imagedata)
 
@@ -612,21 +631,13 @@ class RCTAcquisition(acquisition.Acquisition):
 			im = ndimage.gaussian_filter(im, lowfilt)
 		self.setImage(im)
 
-		# find regions
-		minsize = self.settings['minsize']
-		maxsize = self.settings['maxsize']
-		timeout = 300
-		#regions, image  = libCVwrapper.FindRegions(im, minsize, maxsize)
-		self.logger.info('running libCV.FindRegions, timeout = %d' % (timeout,))
 		try:
-			regions,image = pyami.timedproc.call('leginon.libCVwrapper', 'FindRegions', args=(im,minsize,maxsize), timeout=timeout)
+			regions,image = self.runFindRegions(im)
 		except:
-			self.logger.error('libCV.FindRegions failed')
+			self.logger.error('CV Find Features failed')
 			regions = []
 			image = None
 
-		# this is copied from targetfinder:
-		#regions,image = libCVwrapper.FindRegions(self.mosaicimage, minsize, maxsize)
 		n = len(regions)
 		self.logger.info('Regions found: %s' % (n,))
 		self.displayRegions(regions)
