@@ -88,10 +88,11 @@ class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 		self.widgets['pause'] = FloatEntry(self, -1, chars=2, value='1')
 		sizer.Add(self.widgets['pause'], (1,3), (1,1), wx.ALL|wx.ALIGN_CENTER_VERTICAL, bordersize)
 
+		'''
 		label = wx.StaticText(self, -1, 'Min Feature Size')
 		sizer.Add(label, (2,0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		self.widgets['minsize'] = FloatEntry(self, -1, chars=6, value='0.0')
-		sizer.Add(self.widgets['minsize'], (2,1), (1,1), wx.ALL|wx.ALIGN_CENTER_VERTICAL, bordersize)
+		#sizer.Add(self.widgets['minsize'], (2,1), (1,1), wx.ALL|wx.ALIGN_CENTER_VERTICAL, bordersize)
 
 		label = wx.StaticText(self, -1, 'Max Feature Size')
 		sizer.Add(label, (2, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
@@ -102,6 +103,7 @@ class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 		sizer.Add(label, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		self.widgets['medfilt'] = IntEntry(self, -1, chars=2, value='0')
 		sizer.Add(self.widgets['medfilt'], (3,1), (1,1), wx.ALL|wx.ALIGN_CENTER_VERTICAL, bordersize)
+		'''
 
 		label = wx.StaticText(self, -1, 'LowPass Filter (pixels)')
 		sizer.Add(label, (3, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
@@ -136,6 +138,7 @@ class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 		self.widgets['tilts'] = Entry(self, -1, chars=15, style=wx.ALIGN_RIGHT)
 		sizer.Add(self.widgets['tilts'], (0,2), (1,2), wx.ALL|wx.EXPAND|wx.ALIGN_CENTER_VERTICAL, bordersize)
 
+		'''
 		label = wx.StaticText(self, -1, 'Min Feature Size')
 		sizer.Add(label, (1,0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		self.widgets['minsize'] = FloatEntry(self, -1, chars=6, value='0.0')
@@ -150,6 +153,7 @@ class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 		sizer.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		self.widgets['medfilt'] = IntEntry(self, -1, chars=2, value='0')
 		sizer.Add(self.widgets['medfilt'], (2,1), (1,1), wx.ALL|wx.ALIGN_CENTER_VERTICAL, bordersize)
+		'''
 
 		label = wx.StaticText(self, -1, 'LowPass Filter (pixels)')
 		sizer.Add(label, (2, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
