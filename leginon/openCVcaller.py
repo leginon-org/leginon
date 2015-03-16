@@ -190,29 +190,29 @@ def convertImage(image1, thresh=0):
 	return image1
 
 #-----------------------
-def checkOpenCVResult(self, result, is_small_tilt_difference):
+def checkOpenCVResult(logger, result, is_small_tilt_difference):
 	"""
 	Tests whether the openCV resulting affine matrix is reasonable for tilting
 	Modified from original from libCV
 	"""
 	if result[0][0] < 0.5 or result[1][1] < 0.5:
 		#max tilt angle of 60 degrees
-		self.logger.warning("Bad openCV result: bad tilt in matrix: "+affineToText(result))
+		logger.warning("Bad openCV result: bad tilt in matrix: "+affineToText(result))
 		print ("Bad openCV result: bad tilt in matrix: "+affineToText(result))
 		return False
 	elif abs(result[0][0]) * abs(result[1][1]) > .9781 and not is_small_tilt_difference:
 		#min tilt angle of 12 degrees
-		self.logger.warning("Bad openCV result: bad tilt in matrix: "+affineToText(result))
+		logger.warning("Bad openCV result: bad tilt in matrix: "+affineToText(result))
 		print ("Bad openCV result: bad tilt in matrix: "+affineToText(result))
 		return False	 
 	elif abs(result[0][0]) > 1.1 or abs(result[1][1]) > 1.1:
 		#restrict maximum allowable expansion
-		self.logger.warning("Bad openCV result: image expansion: "+affineToText(result))
+		logger.warning("Bad openCV result: image expansion: "+affineToText(result))
 		print ("Bad openCV result: image expansion: "+affineToText(result))
 		return False
 	elif abs(result[0][1]) > 0.1 or abs(result[1][0]) > 0.1:
 		#max rotation angle of 5.7 degrees
-		self.logger.warning("Bad openCV result: too much rotation: "+affineToText(result))
+		logger.warning("Bad openCV result: too much rotation: "+affineToText(result))
 		print ("Bad openCV result: too much rotation: "+affineToText(result))
 		return False
 	return True

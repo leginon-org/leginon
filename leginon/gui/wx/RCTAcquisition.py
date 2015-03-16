@@ -107,7 +107,7 @@ class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 
 		label = wx.StaticText(self, -1, 'LowPass Filter (pixels)')
 		sizer.Add(label, (3, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		self.widgets['lowfilt'] = FloatEntry(self, -1, chars=2, value='0.0')
+		self.widgets['lowfilt'] = IntEntry(self, -1, chars=2, value='0')
 		sizer.Add(self.widgets['lowfilt'], (3,3), (1,1), wx.ALL|wx.ALIGN_CENTER_VERTICAL, bordersize)
 
 		label = wx.StaticText(self, -1, 'Drift threshold')
@@ -157,7 +157,7 @@ class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 
 		label = wx.StaticText(self, -1, 'LowPass Filter (pixels)')
 		sizer.Add(label, (2, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		self.widgets['lowfilt'] = FloatEntry(self, -1, chars=2, value='0.0')
+		self.widgets['lowfilt'] = IntEntry(self, -1, chars=2, value='0')
 		sizer.Add(self.widgets['lowfilt'], (2,3), (1,1), wx.ALL|wx.ALIGN_CENTER_VERTICAL, bordersize)
 
 		sbsz.Add(sizer, 0, wx.ALIGN_CENTER|wx.ALL, 2)

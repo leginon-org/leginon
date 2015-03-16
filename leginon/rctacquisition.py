@@ -85,7 +85,7 @@ class RCTAcquisition(acquisition.Acquisition):
 		'tilts': '(-45, 0)',
 		'stepsize': 42.0,
 		'pause': 1.0,
-		'lowfilt': 1.0,
+		'lowfilt': 1,
 		'medfilt': 2,
 		'minsize': 50,
 		'maxsize': 0.8,
@@ -302,7 +302,7 @@ class RCTAcquisition(acquisition.Acquisition):
 		return features
 
 	def checkCVResult(self,result, is_small_tilt_diff=False):
-		return openCVcaller.checkOpenCVResult(self, result, is_small_tilt_diff)
+		return openCVcaller.checkOpenCVResult(self.logger, result, is_small_tilt_diff)
 
 	def modifyImage(self, array, thresh=0, do_phase_correlation=False):
 		if do_phase_correlation:
@@ -311,6 +311,10 @@ class RCTAcquisition(acquisition.Acquisition):
 		else:
 			medfilt = int(self.settings['medfilt'])
 			blur = int(self.settings['lowfilt'])
+			if blur % 2 == 0:
+				self.logger.warning('openCV blur function takes only odd number')
+				blur += 1
+				self.logger.warning('advance lowfilt used to %d' % blur)
 		if medfilt > 1:
 			array = ndimage.median_filter(array, size=medfilt)
 		return openCVcaller.modifyImage(array,blur,thresh)
