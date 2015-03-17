@@ -732,6 +732,7 @@ class Jeol(tem.TEM):
 
 	def getProjectionSubModeName(self):
 		mode_index, name, result = self.eos3.GetFunctionMode()
+		# can not return name because both 0 and 1 index function mode returns 'mag' as name.
 		return FUNCTION_MODE_ORDERED_NAMES[mode_index]
 
 	def getStagePosition(self):
