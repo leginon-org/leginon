@@ -8,7 +8,10 @@
 from leginon import leginondata
 import acquisition
 import gui.wx.RCTAcquisition
-import openCVcaller
+try:
+	import openCVcaller
+except:
+	print "openCV caller import failed. Can not run RCT"
 import pyami.timedproc
 import numpy
 import time
