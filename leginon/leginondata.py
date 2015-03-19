@@ -2225,7 +2225,7 @@ class RCTAcquisitionSettingsData(AcquisitionSettingsData):
 			('minsize', float),
 			('maxsize', float),
 			('medfilt', int),
-			('lowfilt', float),
+			('lowfilt', int),
 			('drift threshold', float),
 			('drift preset', str),
 		)
