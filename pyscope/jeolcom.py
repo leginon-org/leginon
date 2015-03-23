@@ -80,6 +80,7 @@ class Jeol(tem.TEM):
 				timout = True
 				sys.exit(1)
 
+		self.has_auto_apt = self.testAutomatedAperture()
 		self.setJeolConfigs()
 
 		self.magnifications = []
@@ -100,6 +101,14 @@ class Jeol(tem.TEM):
 			return self.jeolconfigs[optionname]
 		else:
 			return self.jeolconfigs[optionname][itemname]
+
+	def testAutomatedAperture(self):
+		result = 10000
+		for i in range(10):
+			if result != 0:
+				time.sleep(.1)
+				result = self.apt3.SelectKind(2)
+		return result == 0
 
 	def setProjectionSubModes(self):
 		mode_names = self.getJeolConfig('eos','use_modes')
@@ -590,13 +599,11 @@ class Jeol(tem.TEM):
 		return OLc * COARSE_SCALE + OLf
 
 	def _resetDefocus(self):
-		print '_resetDefocus is called'
 		mode, name, result = self.eos3.GetFunctionMode() 
 		if mode == FUNCTION_MODES['lowmag'] and not self.getZeroDefocusOM():
 			self.setZeroDefocusOM()
 		# only set if not set previously.  Does this mean it only get set once in a session ?
 		elif mode == FUNCTION_MODES['mag1'] and not self.getZeroDefocusOL():
-			print 'setZeroDefocusOL in _resetDefocus'
 			self.setZeroDefocusOL()
 	
 	def resetDefocus(self):
@@ -1085,17 +1092,20 @@ class Jeol(tem.TEM):
 			kind = self._getApertureKind(name)
 			# Despite the name, this gives not the size
 			# but a number as the current aperture position
-			index, result = self.apt3.GetSize(kind)
+			if not self.has_auto_apt:
+				index = 0
+			else:
+				index, result = self.apt3.GetSize(kind)
 
-			for i in range(10):
+				for i in range(10):
+					if result != 0:
+						time.sleep(.1)
+						size, result = self.apt3.GetSize(kind)
+
 				if result != 0:
-					time.sleep(.1)
-					size, result = self.apt3.GetSize(kind)
+					raise SystemError('Get %s aperture size failed' % name)
 
-			if result != 0:
-				raise SystemError('Get %s aperture size failed' % name)
-
-			size_list = self._getApertureSizes(name)
+				size_list = self._getApertureSizes(name)
 
 			try:
 				sizes[name] = size_list[index]
@@ -1112,6 +1122,9 @@ class Jeol(tem.TEM):
 			kind = self._getApertureKind(name)
 
 			size_list = self._getApertureSizes(name)
+
+			if sizes[name] is None:
+				return
 
 			try:
 				index = size_list.index(sizes[name])
