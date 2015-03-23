@@ -595,7 +595,10 @@ class CL2D(appionScript.AppionScript):
  						+self.params['timestamp']+"_level_"+digits+"_.hed", package="Xmipp 3", verbose=True)
  			
  		if self.params['align']:
- 			apParam.runCmd("xmipp_image_convert -i images.xmd -o alignedStack.hed", package="Xmipp 3", verbose=True)
+			apParam.runCmd("xmipp_transform_geometry -i images.xmd -o %s_aligned.stk --apply_transform" % self.params['timestamp'], package="Xmipp 3", verbose=True)
+ 			apParam.runCmd("xmipp_image_convert -i %s_aligned.xmd -o alignedStack.hed" % self.params['timestamp'], package="Xmipp 3", verbose=True)
+			apFile.removeFile("%s_aligned.xmd" % self.params['timestamp'])
+			apFile.removeFile("%s_aligned.stk" % self.params['timestamp'])
  		
  		self.parseOutput()
  		apParam.dumpParameters(self.params, "cl2d-"+self.params['timestamp']+"-params.pickle")
