@@ -123,6 +123,7 @@ class ScaleCalibrator(object):
 		self.axes = value_list
 
 	def getAxes(self):
+		self.axes.sort()
 		return self.axes
 
 	def applyMovement(self,axis=None):
@@ -132,11 +133,11 @@ class ScaleCalibrator(object):
 						(self.move_property,self.physical_shift*100, axis))
 			else:
 				if axis in ('a','b'):
-					raw_input('Move %s by %d degrees ' %
-							(self.move_property,math.degrees(self.physical_shift)))
+					raw_input('Move %s %s axis by %d degrees ' %
+							(self.move_property,axis,math.degrees(self.physical_shift)))
 				else:
-					raw_input('Move %s by %d um ' %
-							(self.move_property,self.physical_shift / 1e-6))
+					raw_input('Move %s %s axis by %d um ' %
+							(self.move_property,axis,self.physical_shift / 1e-6))
 		else:
 			raw_input('Move %s by %d um ' %
 					(self.move_property,self.physical_shift*1e6))
@@ -202,6 +203,7 @@ class ScaleCalibrator(object):
 		except Exception, e:
 			self.logger.error(e.__str__())
 			return
+		print 'Prepare to calibrate %s:' % (property_name)
 		raw_input('Waiting for you to setup the initial condition... (hit any key to continue. ')
 		pos0 = self.getCurrentValue()
 		if type(pos0) == type({}):
@@ -249,6 +251,7 @@ class ScaleCalibrator(object):
 				else:
 					screen_shift = 0.01 # 1 cm
 				self.measureShift(self.calibrations[effect_type][1],screen_shift)
+		raw_input('hit any key to end')
 
 class JeolScaleCalibrator(ScaleCalibrator):
 	def initializeTEM(self):
@@ -284,8 +287,10 @@ class JeolScaleCalibrator(ScaleCalibrator):
 				}
 		}
 		self.configs = self.all_configs.copy()
-		self.configs['lens']['focus'] = self.chooseFocusMoveProperty()
-		self.configs['def']['imageshift'] = self.chooseImageShiftMoveProperty()
+		if 'imageshift' in self.configs['def'].keys():
+			self.configs['def']['imageshift'] = self.chooseImageShiftMoveProperty()
+		if 'focus' in self.configs['lens'].keys():
+			self.configs['lens']['focus'] = self.chooseFocusMoveProperty()
 
 	def getCalibrationRequired(self):
 		self.mag = self.tem.getMagnification()
