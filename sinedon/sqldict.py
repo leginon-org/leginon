@@ -182,7 +182,9 @@ class SQLDict(object):
 			db	= "DB_NAME"
 			passwd	= "DB_PASS"
 		"""
-
+		if 'port' in kwargs:
+			kwargs['port'] = int(kwargs['port'])
+		
 		try:
 			self.db = sqldb.connect(**kwargs)
 			self.connected = True
