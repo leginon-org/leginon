@@ -40,6 +40,7 @@ class ScaleCalibrator(object):
 		self.done_submodes = []
 		self.initializeTEM()
 		self.defineOptions()
+		self.last_standard_focus = None
 
 	def initializeTEM(self):
 		self.is_cap_prefix = False
@@ -78,8 +79,9 @@ class ScaleCalibrator(object):
 		if not self.move_property:
 			self.logger.error('Move property not set')
 
-		if self.move_property == 'OL':
-			value = [self.tem.getRawFocusOL(),]
+		if self.move_property in ('OL','OM'):
+			attr_name = 'getRawFocus%s' % (self.move_property)
+			value = [getattr(self.tem,attr_name)(),]
 		else:
 			attr_name = self.getAttrNamePrefix(is_get=True)+self.move_property
 			value = getattr(self.move_class_instance,attr_name)()
@@ -91,8 +93,9 @@ class ScaleCalibrator(object):
 		'''
 		if not self.move_property:
 			self.logger.error('Move property not set')
-		if self.move_property == 'OL':
-			self.tem.setRawFocusOL(value)
+		if self.move_property in ('OL','OM'):
+			attr_name = 'setRawFocus%s' % (self.move_property)
+			getattr(self.tem,attr_name)(value)
 		else:
 			attr_name = self.getAttrNamePrefix(is_get=False)+self.move_property
 			self._setValue(attr_name,value)
@@ -231,6 +234,15 @@ class ScaleCalibrator(object):
 		stage_shift = 10e-6 # 10 um
 		return stage_shift
 
+	def displayStandardFocus(self, mag):
+		raw_input('Push Standard Focus button on your TEM panel... (hit any key to continue. ')
+		# current_calibration should be set to focus by now
+		self.setMoveProperty(self.current_calibration[1])
+		raw_focus_value = self.getCurrentValue()
+		print raw_focus_value, mag
+		if self.last_standard_focus is None or self.last_standard_focus != raw_focus_value:
+			self.logger.info('New Standard Focus at %d = %d' % (mag, raw_focus_value))
+
 	def calibrateAll(self):
 		#for i, mag in enumerate(self.tem.getMagnifications()):
 		for i, mag in enumerate([500, 5000,]):
@@ -247,6 +259,7 @@ class ScaleCalibrator(object):
 					self.measureStageShift(self.calibrations[effect_type][1],xy_shift,10e-6,20.0)
 					continue
 				elif effect_type == 'focus':
+					self.displayStandardFocus(mag)
 					screen_shift = 1e-5
 				else:
 					screen_shift = 0.01 # 1 cm
