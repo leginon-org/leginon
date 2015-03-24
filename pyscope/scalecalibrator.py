@@ -14,7 +14,7 @@ class Logger(object):
 		try:
 			answer = int(answer)
 		except:
-			self.outputError('Not an Integer')
+			self.error('Not an Integer')
 			self.inputInt(msg)
 		return answer
 
@@ -26,12 +26,21 @@ class Logger(object):
 		else:
 			return False
 
+	def warning(self,msg):
+		self.output('Warning',msg)
+
 	def error(self,msg):
-		raise
 		self.output('Error',msg)
 
 	def info(self,msg):
 		self.output('Info',msg)
+
+	def cfg(self,module_name,item,value):
+		if 'standard focus' not in module_name:
+			sep = '='
+		else:
+			sep = ':'
+		print('\n[%s]\n%s%s%s\n' % (module_name,item,sep,value))
 
 class ScaleCalibrator(object):
 	def __init__(self):
@@ -41,6 +50,7 @@ class ScaleCalibrator(object):
 		self.initializeTEM()
 		self.defineOptions()
 		self.last_standard_focus = None
+		self.effect_type = None
 
 	def initializeTEM(self):
 		self.is_cap_prefix = False
@@ -191,13 +201,22 @@ class ScaleCalibrator(object):
 		self.logger.info('measured digital shift = %d' % (shift))
 		if self.isStageMovement():
 			# stage clicks / scale = effect
-			self.logger.info('measured shift scale = %.1f' % (float(shift) / self.getPhysicalShift()))
+			self.logger.cfg('stage','STAGE_SCALE_XYZ', '%.1e' % (float(shift) / self.getPhysicalShift()))
 		elif self.isFocus():
 			# others clicks * scale = effect
-			self.logger.info('measured shift scale = %.3e' % (float(self.getPhysicalShift() / shift)))
+			self.logger.cfg('lens','%s_SCALE' % (self.move_property.upper()),'%.1e' % (float(self.getPhysicalShift() / shift)))
 		else:
 			# others clicks * scale = effect
-			self.logger.info('measured shift scale = %.3e' % (float(self.getPhysicalShift() / (self.getScreenMag() * shift))))
+			self.logger.cfg('def',
+					'%s_FACTOR_%s%s' % (self.effect_type.upper(),axis.upper(),self.getSubModeConfigString()),
+					'%.1e' % (float(self.getPhysicalShift() / (self.getScreenMag() * shift)))
+			)
+
+	def getSubModeConfigString(self):
+		if self.effect_type.upper() == 'BEAMTILT':
+			return ''
+		else:
+			return '_%s' % self.submode.upper()
 
 	def measureShift(self, property_name, physical_shift):
 		try:
@@ -234,24 +253,54 @@ class ScaleCalibrator(object):
 		stage_shift = 10e-6 # 10 um
 		return stage_shift
 
+	def selectMagList(self):
+		all_mags = self.tem.getMagnifications()
+		selected_mags = [None,]
+		while not set(selected_mags).issubset(set(all_mags)):
+			if selected_mags[0] is not None:
+				self.logger.warning('Contains invalid magnification')
+			try:
+				selected_mags = map((lambda x:int(x)),raw_input('Enter mags to calibrate with "," as separator:').split(','))
+			except:
+				pass
+			print selected_mags
+		return selected_mags
+
+	def selectMagRange(self):
+		all_mags = self.tem.getMagnifications()
+		start_mag = None
+		end_mag = None
+		while start_mag not in all_mags:
+			if start_mag is not None:
+				self.logger.warning('invalid magnification')
+			start_mag = self.logger.inputInt('Enter the lowest mag to calibrate:')
+		while end_mag not in all_mags:
+			if end_mag is not None:
+				self.logger.warning('invalid magnification')
+			end_mag = self.logger.inputInt('Enter the highest mag to calibrate:')
+		return all_mags[all_mags.index(start_mag):all_mags.index(end_mag)+1]
+
 	def displayStandardFocus(self, mag):
 		raw_input('Push Standard Focus button on your TEM panel... (hit any key to continue. ')
 		# current_calibration should be set to focus by now
 		self.setMoveProperty(self.current_calibration[1])
 		raw_focus_value = self.getCurrentValue()
-		print raw_focus_value, mag
 		if self.last_standard_focus is None or self.last_standard_focus != raw_focus_value:
-			self.logger.info('New Standard Focus at %d = %d' % (mag, raw_focus_value))
+			self.logger.cfg('%s standard focus' % (self.move_property,),
+					'%d' % (mag,),
+					'%d' % (raw_focus_value,)
+			)
 
 	def calibrateAll(self):
-		#for i, mag in enumerate(self.tem.getMagnifications()):
-		for i, mag in enumerate([500, 5000,]):
+		mags_to_calibrate = self.selectMagList()
+		for i, mag in enumerate(mags_to_calibrate):
 			self.tem.setMagnification(mag)
 			self.logger.info('Current magnification = %d' % (int(mag)))
 			if i == 0:
 				self.confirmMainScreenMagnification()
 			self.calibrations = self.getCalibrationRequired()
 			for effect_type in self.calibrations.keys():
+				self.effect_type = effect_type
 				self.current_calibration = self.calibrations[effect_type]
 				self.setMoveClassInstance(effect_type)
 				if effect_type == 'stage':
@@ -264,6 +313,12 @@ class ScaleCalibrator(object):
 				else:
 					screen_shift = 0.01 # 1 cm
 				self.measureShift(self.calibrations[effect_type][1],screen_shift)
+
+		# standard focus
+		self.logger.info('Standard Focus Recording....')
+		for mag in self.selectMagRange():
+			self.tem.setMagnification(mag)
+			self.displayStandardFocus(mag)
 		raw_input('hit any key to end')
 
 class JeolScaleCalibrator(ScaleCalibrator):
@@ -278,7 +333,7 @@ class JeolScaleCalibrator(ScaleCalibrator):
 
 	def defineOptions(self):
 		self.use_pla = self.logger.inputBoolean('Using PLA for image shift?')
-
+		self.logger.cfg('tem option','USE_PLA','%s' % (str(self.use_pla)))
 	def getEffectPropertyDict(self):
 		'''
 		Choose from TEM module the move property.
