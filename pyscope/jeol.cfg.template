@@ -1,19 +1,20 @@
-# This configuration file is based on JEM-2100F at NYSBC
 [tem option]
 USE_PLA = False
-# true if the scope has an energy filter
+# does the scope have an energy filter
 ENERGY_FILTER = False
+#lower range of mag1 with different neutral and deflector values
+M_MAG_MAX = 4000
 
 [eos]
-# electron optics class
 USE_MODES = lowmag, mag1
 
 [lens]
 # lens class
 # convert Objective Lens clicks to Focus in meters
-OM_SCALE = 1e-8
+FOCUS_SCALE%LOWMAG = 1e-8
 #confirmed at NYSBC JEM2100F
-OL_SCALE = 2.0e-9
+FOCUS_SCALE%MAG1 = 2.0e-9
+FOCUS_SCALE%M = 2.0e-9
 
 [camera]
 # convert to pA/???^2
@@ -22,26 +23,37 @@ CURRENT_DENSITY_SCALE = 1e-16
 [def]
 # deflector class
 # convert beam tilt clicks to angle in radians
-BEAMTILT_FACTOR_X = 6.7e-6
-BEAMTILT_FACTOR_Y = 6.7e-6
+#BEAMTILT_SCALE_X = 0.000000325
+#BEAMTILT_SCALE_Y = 0.000000325
+
+BEAMTILT_SCALE%MAG1%X = 6.7e-6
+BEAMTILT_SCALE%MAG1%Y = 6.7e-6
+BEAMTILT_SCALE%M%X = 5.7e-6
+BEAMTILT_SCALE%M%Y = 5.7e-6
+BEAMTILT_SCALE%LOWMAG%X = 7.7e-6
+BEAMTILT_SCALE%LOWMAG%Y = 7.7e-6
 
 # convert shift clicks to distance in meters
-BEAMSHIFT_FACTOR_X_MAG1 = 1.1e-9
-BEAMSHIFT_FACTOR_Y_MAG1 = 1.1e-9
-BEAMSHIFT_FACTOR_X_LOWMAG = 5e-8
-BEAMSHIFT_FACTOR_Y_LOWMAG = 5e-8
+BEAMSHIFT_SCALE%MAG1%X = 1.1e-9
+BEAMSHIFT_SCALE%MAG1%Y = 1.1e-9
+IMAGESHIFT_SCALE%M%X = 1.1e-9
+IMAGESHIFT_SCALE%M%Y = 1.1e-9
+BEAMSHIFT_SCALE%LOWMAG%X = 5e-8
+BEAMSHIFT_SCALE%LOWMAG%Y = 5e-8
 
-IMAGESHIFT_FACTOR_X_MAG1 = 9.5e-10
-IMAGESHIFT_FACTOR_Y_MAG1 = 9.5e-10
-IMAGESHIFT_FACTOR_X_MAG1_4000 = 0.63
-IMAGESHIFT_FACTOR_Y_MAG1_4000 = 0.63
-IMAGESHIFT_FACTOR_X_LOWMAG = 3e-8
-IMAGESHIFT_FACTOR_Y_LOWMAG = 3e-8
+IMAGESHIFT_SCALE%MAG1%X = 9.5e-10
+IMAGESHIFT_SCALE%MAG1%Y = 9.5e-10
+IMAGESHIFT_SCALE%M%X = 6.5e-10
+IMAGESHIFT_SCALE%M%Y = 6.5e-10
+IMAGESHIFT_SCALE%LOWMAG%X = 3e-8
+IMAGESHIFT_SCALE%LOWMAG%Y = 3e-8
 
 [stage]
 # stage class
 # convert from click to distance in meters
-STAGE_SCALE_XYZ = 1e9 
+STAGE_SCALE%X = 1e9 
+STAGE_SCALE%Y = 1e9 
+STAGE_SCALE%Z = 1e9 
 # not currently performing manual backlash correction in meters
 #STAGE_BACKLASH = 2e-6
 
@@ -67,4 +79,20 @@ SAA_SIZES = 0, 100e-6, 50e-6, 20e-6, 10e-6
 2000:333029
 1500:333029
 		
+[neutral imageshift]
+50:31751,32214
+200:31751,32214
+3000:30328, 33648
+25000:32304,32856
 
+[neutral beamshift]
+50:31842,29474
+200:31842,29474
+3000:31882,31749
+25000:31882,31749
+
+[neutral beamtilt]
+50:80000,80000
+200:31842,29474
+3000:31882,31749
+25000:31882,31749

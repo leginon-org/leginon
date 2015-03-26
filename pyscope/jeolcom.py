@@ -110,6 +110,48 @@ class Jeol(tem.TEM):
 				result = self.apt3.SelectKind(2)
 		return result == 0
 
+	def subDivideMode(self,mode_name,mag):
+		if mode_name == 'mag1' and mag <= self.getJeolConfig('lens','m_mag_max'):
+			return 'm'
+		return mode_name
+
+	def getScale(self,key,mag=None):
+		'''
+		Get Scale Factor set in jeol.cfg. If axes are involved, return
+		values for all axes
+		'''
+		options = {'beamtilt':'def','beamshift':'def','imageshift':'def','focus':'lens','stage':'stage'}
+		optionname = options[key]
+		value = self.getJeolConfig(optionname,key+'_scale')
+		if key == 'stage':
+			return value
+		else:
+			# depends on mag to choose ['mag1','m','lowmag']
+			if mag is None:
+				mag = self.getMagnification()
+			try:
+				mode_name,mode_id = self.projection_submode_map[mag]
+				mode_subname = self.subDivideMode(mode_name,mag)
+				return value[mode_name]
+			except:
+				raise RuntimeError('%s function not implemented in mag %d' % (key,mag))
+
+	def getNeutral(self,key,mag=None):
+		'''
+		Get Scale Factor set in jeol.cfg. If axes are involved, return
+		values for all axes
+		Valid keys are 'beamshift','imageshift','beamtilt'
+		'''
+		optionname = 'neutral '+key
+		if mag is None:
+			mag = self.getMagnification()
+		try:
+			value = self.getJeolConfig(optionname,mag)
+			return {'x':value[0],'y':value[1]}
+		except:
+			print optionname,mag
+			raise RuntimeError('%s function not configured at mag %d' % (key,mag))
+
 	def setProjectionSubModes(self):
 		mode_names = self.getJeolConfig('eos','use_modes')
 		for name in mode_names:
@@ -317,62 +359,55 @@ class Jeol(tem.TEM):
 		result = self.eos3.SelectSpotSize(ss - 1)
 	
 	def getBeamTilt(self):
-		tilt_x, tilt_y, result = self.def3.GetCLA2()
-		return {"x": (tilt_x - ZERO)*self.getJeolConfig('def','beamtilt_factor_x'), "y": (tilt_y - ZERO)*self.getJeolConfig('def','beamtilt_factor_y')}
+		scale = self.getScale('beamtilt')
+		neutral = self.getNeutral('beamtilt')
+		raw={}
+		out={}
+		raw['x'], raw['y'], result = self.def3.GetCLA2()
+		for axis in raw.keys():
+			out[axis] = (raw[axis] - neutral[axis])*scale[axis]
+		return out
 
 	def setBeamTilt(self, vector, relative = "absolute"):
+		scale = self.getScale('beamtilt')
+		neutral = self.getNeutral('beamtilt')
 		current_tilt = self.getBeamTilt()
-		tilt_x = current_tilt['x']
-		tilt_y = current_tilt['y']
+		tilt = current_tilt.copy()
 		if relative == 'relative':
-			if 'x' in vector:
-				tilt_x += vector['x']
-			if 'y' in vector:
-				tilt_y += vector['y']
+			for axis in vector.keys():
+				tilt[axis] += vector[axis]
 		elif relative == 'absolute':
-			if 'x' in vector:
-				tilt_x = vector['x']
-			if 'y' in vector:
-				tilt_y = vector['y']
+			for axis in vector.keys():
+				tilt[axis] = vector[axis]
 		else:
 			raise ValueError
 
-		tilt_x = int(round(tilt_x/self.getJeolConfig('def','beamtilt_factor_x'))) + ZERO
-		tilt_y = int(round(tilt_y/self.getJeolConfig('def','beamtilt_factor_y'))) + ZERO
+		raw_output={}
+		raw_output['x'], raw_output['y'], result = self.def3.GetCLA2()
+		for axis in vector.keys():
+			raw_output[axis] = int(round(tilt[axis]/scale[axis]))+neutral[axis]
 
-		result = self.def3.SetCLA2(tilt_x, tilt_y)
+		result = self.def3.SetCLA2(raw_output['x'], raw_output['y'])
 
 	def getBeamShift(self):
-		mode, name, result = self.eos3.GetFunctionMode() 
-		if mode == FUNCTION_MODES['lowmag']:
-			scale_x, scale_y = self.getJeolConfig('def','beamshift_factor_x_lowmag'), self.getJeolConfig('def','beamshift_factor_y_lowmag')
-		elif mode == FUNCTION_MODES['mag1']:
-			scale_x, scale_y = self.getJeolConfig('def','beamshift_factor_x_mag1'), self.getJeolConfig('def','beamshift_factor_y_mag1')
-		else:
-			raise RuntimeError('Beam shift functions not implemented in this mode (%d, "%s")' % (mode, name))
+		scale = self.getScale('beamshift')
+		neutral = self.getNeutral('beamshift')
 		shift_x, shift_y, result = self.def3.GetCLA1()
 
-		x = (shift_x - ZERO)*scale_x
-		y = (shift_y - ZERO)*scale_y
+		x = (shift_x - neutral['x'])*scale['x']
+		y = (shift_y - neutral['y'])*scale['y']
 
 		return {"x": x, "y": y}
 
 	def setBeamShift(self, vector, relative = "absolute"):
-
-		mode, name, result = self.eos3.GetFunctionMode() 
-		if mode == FUNCTION_MODES['lowmag']:
-			scale_x, scale_y = self.getJeolConfig('def','beamshift_factor_x_lowmag'), self.getJeolConfig('def','beamshift_factor_y_lowmag')
-		elif mode == FUNCTION_MODES['mag1']:
-			scale_x, scale_y = self.getJeolConfig('def','beamshift_factor_x_mag1'), self.getJeolConfig('def','beamshift_factor_y_mag1')
-		else:
-			raise RuntimeError('Beam shift functions not implemented in this mode (%d, "%s")' % (mode, name))
-		
+		scale = self.getScale('beamshift')
+		neutral = self.getNeutral('beamshift')
+		current = self.getBeamShift()
 		if relative == 'relative':
-			current_shift = self.getBeamShift()
 			if 'x' in vector:
-				shift_x = vector['x'] + current_shift['x']
+				shift_x = vector['x'] + current['x']
 			if 'y' in vector:
-				shift_y = vector['y'] + current_shift['y']
+				shift_y = vector['y'] + current['y']
 		elif relative == 'absolute':
 			if 'x' in vector:
 				shift_x = vector['x']
@@ -381,46 +416,44 @@ class Jeol(tem.TEM):
 		else:
 			raise ValueError
 
-		x, y, result = self.def3.GetCLA1()
-		if 'x' in vector:
-			x = int(round(shift_x/scale_x))+ZERO
-		if 'y' in vector:
-			y = int(round(shift_y/scale_y))+ZERO
+		shift = current.copy()
+		if relative == 'relative':
+			for axis in vector.keys():
+				shift[axis] += vector[axis]
+		elif relative == 'absolute':
+			for axis in vector.keys():
+				shift[axis] = vector[axis]
+		else:
+			raise ValueError
+		raw_output={}
+		raw_output['x'], raw_output['y'], result = self.def3.GetCLA1()
+		for axis in vector.keys():
+			raw_output[axis] = int(round(shift[axis]/scale[axis]))+neutral[axis]
 
-		result = self.def3.SetCLA1(x, y)
+		result = self.def3.SetCLA1(raw_output['x'], raw_output['y'])
  
 	def getImageShift(self):
+		scale = self.getScale('imageshift')
+		neutral = self.getNeutral('imageshift')
 		mode, name, result = self.eos3.GetFunctionMode() 
 		if mode == FUNCTION_MODES['lowmag']:
-			scale_x, scale_y = self.getJeolConfig('def','imageshift_factor_x_lowmag'), self.getJeolConfig('def','imageshift_factor_y_lowmag')
 			if self.getJeolConfig('tem option','use_pla'):
 				shift_x, shift_y, result = self.def3.GetPLA()
 			else:
 				shift_x, shift_y, result = self.def3.GetIS1()
 		elif mode == FUNCTION_MODES['mag1']:
-			scale_x, scale_y = self.getJeolConfig('def','imageshift_factor_x_mag1'), self.getJeolConfig('def','imageshift_factor_y_mag1')
-			if self.getMagnification() <= 4000:
-				scale_x *= self.getJeolConfig('def','imageshift_factor_x_mag1_4000')
-				scale_y *= self.getJeolConfig('def','imageshift_factor_y_mag1_4000')
 			if self.getJeolConfig('tem option','use_pla'):
 				shift_x, shift_y, result = self.def3.GetPLA()
 			else:
 				shift_x, shift_y, result = self.def3.GetIS1()
 		else:
 			raise RuntimeError('Image shift functions not implemented in this mode (%d, "%s")' % (mode, name))		
-		return {"x": (shift_x - ZERO)*scale_x, "y": (shift_y - ZERO)*scale_y}
+		return {"x": (shift_x - neutral['x'])*scale['x'], "y": (shift_y - neutral['y'])*scale['y']}
 	
 	def setImageShift(self, vector, relative = "absolute"):
+		scale = self.getScale('imageshift')
+		neutral = self.getNeutral('imageshift')
 		mode, name, result = self.eos3.GetFunctionMode() 
-		if mode == FUNCTION_MODES['lowmag']:
-			scale_x, scale_y = self.getJeolConfig('def','imageshift_factor_x_lowmag'), self.getJeolConfig('def','imageshift_factor_y_lowmag')
-		elif mode == FUNCTION_MODES['mag1']:
-			scale_x, scale_y = self.getJeolConfig('def','imageshift_factor_x_mag1'), self.getJeolConfig('def','imageshift_factor_y_mag1')
-			if self.getMagnification() <= 4000:
-				scale_x *= self.getJeolConfig('def','imageshift_factor_x_mag1_4000')
-				scale_y *= self.getJeolConfig('def','imageshift_factor_y_mag1_4000')
-		else:
-			raise RuntimeError('Image shift functions not implemented in this mode (%d, "%s")' % (mode, name))
 		current_shift = self.getImageShift()
 		shift_x = current_shift['x']
 		shift_y = current_shift['y']
@@ -437,16 +470,10 @@ class Jeol(tem.TEM):
 		else:
 			raise ValueError
 
-		if mode == FUNCTION_MODES['lowmag']:
-			if self.getJeolConfig('tem option','use_pla'):
-				result = self.def3.SetPLA(int(round((shift_x)/scale_x))+ZERO, int(round((shift_y)/scale_y))+ZERO)
-			else:
-				result = self.def3.SetIS1(int(round((shift_x)/scale_x))+ZERO, int(round((shift_y)/scale_y))+ZERO)
-		elif mode == FUNCTION_MODES['mag1']:
-			if self.getJeolConfig('tem option','use_pla'):
-				result = self.def3.SetPLA(int(round((shift_x)/scale_x))+ZERO, int(round((shift_y)/scale_y))+ZERO)
-			else:
-				result = self.def3.SetIS1(int(round((shift_x)/scale_x))+ZERO, int(round((shift_y)/scale_y))+ZERO)
+		if self.getJeolConfig('tem option','use_pla'):
+			result = self.def3.SetPLA(int(round((shift_x)/scale['x']))+neutral['x'], int(round((shift_y)/scale['y']))+neutral['y'])
+		else:
+			result = self.def3.SetIS1(int(round((shift_x)/scale['x']))+neutral['x'], int(round((shift_y)/scale['y']))+neutral['y'])
 
 	def setFocusOLWithBeamShift(self, value):
 		beam_shift_x, beam_shift_y, result = self.def3.GetCLA1()
@@ -454,23 +481,22 @@ class Jeol(tem.TEM):
 		result = self.def3.SetCLA1(beam_shift_x, beam_shift_y)
 
 	def getFocus(self):
+		scale = self.getScale('focus')
 		mode, name, result = self.eos3.GetFunctionMode() 
 		if mode == FUNCTION_MODES['lowmag']:
-			OM, result = self.lens3.GetOM()
-			return self.getJeolConfig('lens','om_scale')*OM
+			raw_focus = self.getRawFocusOM()
 		elif mode == FUNCTION_MODES['mag1']:
-			OL = self.getRawFocusOL()
-			return self.getJeolConfig('lens','ol_scale')*(OL)
-		else:
-			raise RuntimeError('Focus functions not implemented in this mode (%d, "%s")' % (mode, name))
+			raw_focus = self.getRawFocusOL()
+		return scale*raw_focus
 
 	def setFocus(self, value):
+		scale = self.getScale('focus')
 		mode, name, result = self.eos3.GetFunctionMode()
 		if mode == FUNCTION_MODES['lowmag']:
-			self.lens3.SetOM(int(round(value/self.getJeolConfig('lens','om_scale'))))
+			self.setRawFocusOM(int(round(value/scale)))
 		elif mode == FUNCTION_MODES['mag1']:
 			# ZERO is when OLc=8000 hexa OLf=0000
-			value = int(round(value/self.getJeolConfig('lens','ol_scale')))
+			value = int(round(value/scale))
 			self.setFocusOLWithBeamShift(value)
 		else:
 			raise RuntimeError('Focus functions not implemented in this mode (%d, "%s")' % (mode, name))
@@ -541,15 +567,16 @@ class Jeol(tem.TEM):
 			self.zero_defocus_ol['%d' % (int(mag),)] = self.getRawFocusOL()
 
 	def getDefocus(self):
+		scale = self.getScale('focus')
 		mode, name, result = self.eos3.GetFunctionMode() 
 		if mode == FUNCTION_MODES['lowmag']:
-			OM, result = self.lens3.GetOM()
+			OM = self.getRawFocusOM()
 			zero_defocus_om = self.getZeroDefocusOM()
-			return self.getJeolConfig('lens','om_scale')*(OM - zero_defocus_om)
+			return scale*(OM - zero_defocus_om)
 		elif mode == FUNCTION_MODES['mag1']:
 			OL = self.getRawFocusOL()
 			zero_defocus_ol = self.getZeroDefocusOL()
-			return self.getJeolConfig('lens','ol_scale')*(OL - zero_defocus_ol)
+			return scale*(OL - zero_defocus_ol)
 		else:
 			raise RuntimeError('Defocus functions not implemented in this mode (%d, "%s")' % (mode, name))
 
@@ -570,17 +597,18 @@ class Jeol(tem.TEM):
 				raise RuntimeError('Defocus functions not implemented in this mode (%d, "%s")' % (mode, name))
 			return
 		
+		scale = self.getScale('focus')
 		if mode == FUNCTION_MODES['lowmag']:
 			if relative == 'relative':
 				defocus += self.getDefocus()
 			elif relative != 'absolute':
 				raise ValueError
-			self.lens3.SetOM(self.getZeroDefocusOM() + int(round(defocus/self.getJeolConfig('lens','om_scale'))))
+			self.lens3.SetOM(self.getZeroDefocusOM() + int(round(defocus/scale)))
 		elif mode == FUNCTION_MODES['mag1']:
 			if relative == 'relative':
 				raise RuntimeError('not implemented')
 			elif relative == 'absolute':
-				value = int(round(defocus/self.getJeolConfig('lens','ol_scale')))
+				value = int(round(defocus/scale))
 				zero_defocus_ol = self.getZeroDefocusOL()
 				self.setFocusOLWithBeamShift(zero_defocus_ol + value)
 			else:
@@ -743,11 +771,12 @@ class Jeol(tem.TEM):
 		return FUNCTION_MODE_ORDERED_NAMES[mode_index]
 
 	def getStagePosition(self):
+		scale = self.getScale('stage')
 		x, y, z, a, b, result = self.stage3.GetPos()
 		position = {
-			'x' : x/self.getJeolConfig('stage','stage_scale_xyz'),
-			'y' : y/self.getJeolConfig('stage','stage_scale_xyz'),
-			'z' : z/self.getJeolConfig('stage','stage_scale_xyz'),
+			'x' : x/scale['x'],
+			'y' : y/scale['y'],
+			'z' : z/scale['z'],
 			'a' : math.radians(a),
 			'b' : math.radians(b)
 		}
@@ -764,6 +793,7 @@ class Jeol(tem.TEM):
 			time.sleep(0.1)
 
 	def setStagePosition(self, position, relative='absolute'):
+		scale = self.getScale('stage')
 		# move relative or absolute, add current position for relative
 		if relative == 'relative':
 			current_position = self.getStagePosition()
@@ -779,13 +809,13 @@ class Jeol(tem.TEM):
 
 		# set stage position and wait for movement to stop
 		if 'z' in position:
-			result = self.stage3.SetZ(position['z']*self.getJeolConfig('stage','stage_scale_xyz'))
+			result = self.stage3.SetZ(position['z']*scale['z'])
 
 		if 'x' in position:
-			result = self.stage3.SetX(position['x']*self.getJeolConfig('stage','stage_scale_xyz'))
+			result = self.stage3.SetX(position['x']*scale['y'])
 
 		if 'y' in position:
-			result = self.stage3.SetY(position['y']*self.getJeolConfig('stage','stage_scale_xyz'))
+			result = self.stage3.SetY(position['y']*scale['x'])
 
 		if 'a' in position:
 			result = self.stage3.SetTiltXAngle(math.degrees(position['a']))
@@ -797,6 +827,7 @@ class Jeol(tem.TEM):
 
 	'''
 	def setStagePosition(self, position, relative = "absolute"):
+		scale = self.getScale('stage')
 		if relative == "relative":
 			pos = self.getStagePosition()
 			position["x"] += pos["x"] 
@@ -814,7 +845,7 @@ class Jeol(tem.TEM):
 			return
 
 		try:
-			result = self.stage3.SetZ(position["z"] * self.getJeolConfig('stage','stage_scale_xyz'))
+			result = self.stage3.SetZ(position["z"] * scale['z'])
 		except KeyError:
 			pass
 		else:
@@ -825,14 +856,14 @@ class Jeol(tem.TEM):
 
 		try:
 			tmp_x = position['x'] + STAGE_BACKLASH
-			result = self.stage3.SetX(tmp_x * self.getJeolConfig('stage','stage_scale_xyz'))
+			result = self.stage3.SetX(tmp_x * scale['x'])
 
 		except KeyError:
 			# for stage hysteresis removal
 			tmp_pos = self.getStagePosition()
 			position['x'] = tmp_pos['x']
 			tmp_x = position['x'] + STAGE_BACKLASH
-			result = self.stage3.SetX(tmp_x * self.getJeolConfig('stage','stage_scale_xyz'))
+			result = self.stage3.SetX(tmp_x * scale['x'])
 		# else:
 		x = 1
 		while x: 
@@ -841,13 +872,13 @@ class Jeol(tem.TEM):
 
 		try:
 			tmp_y = position['y'] + STAGE_BACKLASH
-			result = self.stage3.SetY(tmp_y * self.getJeolConfig('stage','stage_scale_xyz'))
+			result = self.stage3.SetY(tmp_y * scale['y'])
 		except KeyError:
 			# for stage hysteresis removal
 			tmp_pos = self.getStagePosition()
 			position['y'] = tmp_pos['y']
 			tmp_y = position['y'] + STAGE_BACKLASH
-			result = self.stage3.SetY(tmp_y * self.getJeolConfig('stage','stage_scale_xyz'))
+			result = self.stage3.SetY(tmp_y * scale['y'])
 		# else:
 		y = 1
 		while y: 
@@ -876,14 +907,14 @@ class Jeol(tem.TEM):
 
 		try:
 			tmp_x = position['x'] - STAGE_BACKLASH
-			result = self.stage3.SetX(tmp_x * self.getJeolConfig('stage','stage_scale_xyz'))
+			result = self.stage3.SetX(tmp_x * scale['x'])
 
 		except KeyError:
 			# for stage hysteresis removal
 			tmp_pos = self.getStagePosition()
 			position['x'] = tmp_pos['x']
 			tmp_x = position['x'] - STAGE_BACKLASH
-			result = self.stage3.SetX(tmp_x * self.getJeolConfig('stage','stage_scale_xyz'))
+			result = self.stage3.SetX(tmp_x * scale['x'])
 		# else:
 		x = 1
 		while x: 
@@ -892,13 +923,13 @@ class Jeol(tem.TEM):
 
 		try:
 			tmp_y = position['y'] - STAGE_BACKLASH
-			result = self.stage3.SetY(tmp_y * self.getJeolConfig('stage','stage_scale_xyz'))
+			result = self.stage3.SetY(tmp_y * scale['y'])
 		except KeyError:
 			# for stage hysteresis removal
 			tmp_pos = self.getStagePosition()
 			position['y'] = tmp_pos['y']
 			tmp_y = position['y'] - STAGE_BACKLASH
-			result = self.stage3.SetY(tmp_y * self.getJeolConfig('stage','stage_scale_xyz'))
+			result = self.stage3.SetY(tmp_y * scale['y'])
 		# else:
 		y = 1
 		while y: 
@@ -907,7 +938,7 @@ class Jeol(tem.TEM):
 				
 		# for stage hysteresis removal
 		try:
-			result = self.stage3.SetX(position["x"] * self.getJeolConfig('stage','stage_scale_xyz'))
+			result = self.stage3.SetX(position["x"] * scale['x'])
 		except KeyError:
 			pass
 		else:
@@ -917,7 +948,7 @@ class Jeol(tem.TEM):
 				x, y, z, tx, ty, result = self.stage3.GetStatus()
 
 		try:
-			result = self.stage3.SetY(position["y"] * self.getJeolConfig('stage','stage_scale_xyz'))
+			result = self.stage3.SetY(position["y"] * scale['y'])
 		except KeyError:
 			pass
 		else:

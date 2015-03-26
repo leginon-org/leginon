@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-
+import copy
 import sys
 import ConfigParser
 import imp
@@ -8,71 +8,122 @@ import inspect
 import pyscope
 import pyami.fileutil
 
-configured = {}
-configfiles = None
+class JeolConfigParser(object):
+	def __init__(self):
+		self.configparser = ConfigParser.SafeConfigParser()
+		self.configured = {}
+		self.configfiles = None
 
-def parse():
-	global configured, configfiles
+	def newHierarchyDict(self,keys,value):
+		d = map((lambda x:{}),range(len(keys)+1))
+		d[0] = value
+		keys.reverse()
+		for i in range(len(keys)):
+			d[i+1][keys[i]] = d[i]
+		return copy.deepcopy(d[len(keys)])
 
-	configparser = ConfigParser.SafeConfigParser()
-
-	# use the path of this module
-	modpath = pyscope.__path__
-
-	# read instruments.cfg
-	confdirs = pyami.fileutil.get_config_dirs()
-	filenames = [os.path.join(confdir, 'jeol.cfg') for confdir in confdirs]
-	one_exists = False
-	for filename in filenames:
-		if os.path.exists(filename):
-			one_exists = True
-	if not one_exists:
-		print 'please configure at least one of these:  %s' % (filenames,)
-		sys.exit()
-	try:
-		configfiles = configparser.read(filenames)
-	except:
-		print 'error reading %s' % (filenames,)
-		sys.exit()
-
-	# parse
-	names = configparser.sections()
-
-	for name in names:
-		configured[name] = {}
-		keys = configparser.options(name)
-		for key in keys:
+	def formatValue(self,name, key):
+		value = None
+		try:
+			value = int(self.configparser.get(name, key))
+		except:
 			try:
-				configured[name][key] = int(configparser.get(name, key))
+				value = float(self.configparser.get(name, key))
 			except:
 				try:
-					configured[name][key] = float(configparser.get(name, key))
+					value = self.configparser.getboolen(name,key)
 				except:
-					try:
-						configured[name][key] = configparser.getboolen(name,key)
-					except:
-						valuestring = configparser.get(name,key)
-						if valuestring.lower() == 'true':
-							configured[name][key] = True
-						elif valuestring.lower() == 'false':
-							configured[name][key] = False
-						elif ',' in valuestring:
-							items = configparser.get(name,key).split(',')
-							try:
-								#list of floats for aparture sizes
-								configured[name][key] = map((lambda x: float(x)), items)
-							except:
-								#list of strings for mag mode 
-								configured[name][key] = map((lambda x: x.strip()), items)
-						else:
-							print 'error parsing', name,key, configparser.get(name,key)
-							pass
-	return configured
+					valuestring = self.configparser.get(name,key)
+					if valuestring.lower() == 'true':
+						value = True
+					elif valuestring.lower() == 'false':
+						value = False
+					elif ',' in valuestring:
+						items = self.configparser.get(name,key).split(',')
+						
+						try:
+							#list of floats for aparture sizes
+							value = map((lambda x: float(x)), items)
+							#test last value since first might be 0
+							if int(value[-1]) == value[-1]:
+								#list of integers for lens or deflector neutrals
+								value = map((lambda x: int(x)), value)
+						except:
+							#list of strings for mag mode 
+							value = map((lambda x: x.strip()), items)
+					else:
+						value = valuestring
+		return value
+
+	def addHierarchyValue(self,name,levels,value):
+		if len(self.configured[name].keys()) == 0:
+			self.configured[name] = self.newHierarchyDict(levels,value)
+			return
+		if len(levels) == 1:
+			self.configured[name][levels[0]] = value
+		else:
+			if len(levels) == 2:
+				self.configured[name][levels[0]][levels[1]]=value
+			if len(levels) == 3:
+				if levels[0] not in self.configured[name].keys():
+					self.configured[name].update(self.newHierarchyDict(levels,value))
+					return
+				elif levels[1] not in self.configured[name][levels[0]].keys():
+					self.configured[name][levels[0]].update(self.newHierarchyDict(levels[1:],value))
+					return
+				else:
+					self.configured[name][levels[0]][levels[1]][levels[2]]=value
+
+	def convertKeys(self,keys):
+		newkeys = []
+		for key in keys:
+			try:
+				newkey = int(key)
+			except:
+				newkey = key
+			newkeys.append(newkey)
+		return newkeys
+
+	def parse(self):
+		print 'parsing'
+		# use the path of this module
+		modpath = pyscope.__path__
+
+		# read instruments.cfg
+		confdirs = pyami.fileutil.get_config_dirs()
+		filenames = [os.path.join(confdir, 'jeol.cfg') for confdir in confdirs]
+		one_exists = False
+		for filename in filenames:
+			if os.path.exists(filename):
+				one_exists = True
+		if not one_exists:
+			print 'please configure at least one of these:  %s' % (filenames,)
+			sys.exit()
+		try:
+			self.configfiles = self.configparser.read(filenames)
+		except:
+			print 'error reading %s' % (filenames,)
+			sys.exit()
+
+		# parse
+		names = self.configparser.sections()
+
+		for name in names:
+			self.configured[name] = {}
+			hierarchy_keys = self.configparser.options(name)
+			for hi_key in hierarchy_keys:
+				value = self.formatValue(name,hi_key)
+				levels = hi_key.split('%')
+				levels = self.convertKeys(levels)
+				self.addHierarchyValue(name,levels,value)
+		return self.configured
+
 
 def getConfigured():
-	global configured
+	app = JeolConfigParser()
+	configured = app.configured
 	if not configured:
-		parse()
+		configured = app.parse()
 	return configured
 
 if __name__ == '__main__':

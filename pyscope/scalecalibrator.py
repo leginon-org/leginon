@@ -201,22 +201,27 @@ class ScaleCalibrator(object):
 		self.logger.info('measured digital shift = %d' % (shift))
 		if self.isStageMovement():
 			# stage clicks / scale = effect
-			self.logger.cfg('stage','STAGE_SCALE_XYZ', '%.1e' % (float(shift) / self.getPhysicalShift()))
+			self.logger.cfg('stage','STAGE_SCALE%%%s' %axis.upper(), '%.1e' % (float(shift) / self.getPhysicalShift()))
 		elif self.isFocus():
 			# others clicks * scale = effect
-			self.logger.cfg('lens','%s_SCALE' % (self.move_property.upper()),'%.1e' % (float(self.getPhysicalShift() / shift)))
+			self.logger.cfg('lens','%s_SCALE%%%s' % (self.effect_type.upper(),self.getSubModeString()),'%.1e' % (float(self.getPhysicalShift() / shift)))
 		else:
 			# others clicks * scale = effect
 			self.logger.cfg('def',
-					'%s_FACTOR_%s%s' % (self.effect_type.upper(),axis.upper(),self.getSubModeConfigString()),
+					'%s_SCALE%%%s%%%s' % (self.effect_type.upper(),self.getSubModeString(),axis.upper()),
 					'%.1e' % (float(self.getPhysicalShift() / (self.getScreenMag() * shift)))
 			)
+	def getSubModeString(self):
+		return self.subDivideMode(self.submode,self.mag)
 
-	def getSubModeConfigString(self):
-		if self.effect_type.upper() == 'BEAMTILT':
-			return ''
-		else:
-			return '_%s' % self.submode.upper()
+	def subDivideMode(self,mode_name,mag):
+		name_lower = mode_name.lower()
+		is_lower = (name_lower == mode_name)
+		if name_lower == 'mag1' and mag <= self.max_m:
+			name_lower = 'm'
+		if not is_lower:
+			name_lower = name_lower.upper()
+		return name_lower
 
 	def measureShift(self, property_name, physical_shift):
 		try:
@@ -259,6 +264,8 @@ class ScaleCalibrator(object):
 		while not set(selected_mags).issubset(set(all_mags)):
 			if selected_mags[0] is not None:
 				self.logger.warning('Contains invalid magnification')
+				self.logger.info('valid magnification:')
+				print all_mags
 			try:
 				selected_mags = map((lambda x:int(x)),raw_input('Enter mags to calibrate with "," as separator:').split(','))
 			except:
@@ -282,6 +289,8 @@ class ScaleCalibrator(object):
 
 	def displayStandardFocus(self, mag):
 		raw_input('Push Standard Focus button on your TEM panel... (hit any key to continue. ')
+		self.effect_type = 'focus'
+		self.current_calibration = self.calibrations[self.effect_type]
 		# current_calibration should be set to focus by now
 		self.setMoveProperty(self.current_calibration[1])
 		raw_focus_value = self.getCurrentValue()
@@ -298,7 +307,7 @@ class ScaleCalibrator(object):
 			self.logger.info('Current magnification = %d' % (int(mag)))
 			if i == 0:
 				self.confirmMainScreenMagnification()
-			self.calibrations = self.getCalibrationRequired()
+			self.calibrations = self.getCalibrationRequired(first=(i==0))
 			for effect_type in self.calibrations.keys():
 				self.effect_type = effect_type
 				self.current_calibration = self.calibrations[effect_type]
@@ -308,7 +317,6 @@ class ScaleCalibrator(object):
 					self.measureStageShift(self.calibrations[effect_type][1],xy_shift,10e-6,20.0)
 					continue
 				elif effect_type == 'focus':
-					self.displayStandardFocus(mag)
 					screen_shift = 1e-5
 				else:
 					screen_shift = 0.01 # 1 cm
@@ -318,6 +326,8 @@ class ScaleCalibrator(object):
 		self.logger.info('Standard Focus Recording....')
 		for mag in self.selectMagRange():
 			self.tem.setMagnification(mag)
+			# ignore submode dependency to do it at all mags
+			self.calibrations = self.getCalibrationRequired(accept_all=True)
 			self.displayStandardFocus(mag)
 		raw_input('hit any key to end')
 
@@ -326,14 +336,22 @@ class JeolScaleCalibrator(ScaleCalibrator):
 		# scope model independent
 		self.modes = ['MAG1','LOWMAG']
 		self.all_axes = {'def3':['x','y'],'stage3':['x','y','z','a','b']}
-		self.projection_submode_dependent = ['CLA1','CLA2']
+		# move_property scale that does not depend on submode
+		self.projection_submode_independent = ['Pos','CL3']
 		self.is_cap_prefix = True
 		self.tem = jeolcom.Jeol()
 		self.tem.findMagnifications()
+		self.last_mag = 0
 
 	def defineOptions(self):
 		self.use_pla = self.logger.inputBoolean('Using PLA for image shift?')
 		self.logger.cfg('tem option','USE_PLA','%s' % (str(self.use_pla)))
+		self.has_efilter = self.logger.inputBoolean('Need energy filter control?')
+		self.logger.cfg('tem option','ENERGY_FILTER','%s' % (str(self.has_efilter)))
+		self.max_m = self.logger.inputInt(
+				'Give the highest MAG1 magnification with unique neutral deflector value and standard focus\n Normally 4000: ')
+		self.logger.cfg('tem option','MAX_M','%s' % (str(self.max_m)))
+
 	def getEffectPropertyDict(self):
 		'''
 		Choose from TEM module the move property.
@@ -342,12 +360,12 @@ class JeolScaleCalibrator(ScaleCalibrator):
 		# tem_module->effect_type->move_property
 		self.all_configs = {
 				'lens': {
-						'intensity': 'CL3',
+						#'intensity': 'CL3',
 						'focus':		{'MAG1':'OL', 'LOWMAG':'OM'},
 				},
 				'def':	{
-						'beamshift': 'CLA1',
-						'beamtilt': 'CLA2',
+						#'beamshift': 'CLA1',
+						#'beamtilt': 'CLA2',
 						'imageshift': {False:'IS1',True:'PLA'},
 				},
 				'stage': {
@@ -360,14 +378,17 @@ class JeolScaleCalibrator(ScaleCalibrator):
 		if 'focus' in self.configs['lens'].keys():
 			self.configs['lens']['focus'] = self.chooseFocusMoveProperty()
 
-	def getCalibrationRequired(self):
+	def getCalibrationRequired(self,first=False,accept_all=False):
 		self.mag = self.tem.getMagnification()
 		self.submode = self.tem.getProjectionSubModeName().upper()
 		self.getEffectPropertyDict()
 		set_attrs = self.constructAttributeNames()
 		for effect_type in set_attrs.keys():
 			attrname = set_attrs[effect_type][1]
-			if self.isCalibrated(attrname):
+			# remove calibrated
+			if first:
+				continue
+			if not accept_all and self.isCalibrated(attrname):
 				del set_attrs[effect_type]
 		print 'required', set_attrs
 		return set_attrs
@@ -385,16 +406,30 @@ class JeolScaleCalibrator(ScaleCalibrator):
 		return self.use_pla
 
 	def isNewSubMode(self):
-		if self.done_submodes and self.submode in self.done_submodes:
+		print 'done_submode',self.done_submodes
+		divided_submode = self.getSubModeString()
+		if self.done_submodes and divided_submode in self.done_submodes:
 			return False
-		self.done_submodes.append(self.submode)
+		self.done_submodes.append(divided_submode)
 		return True
 
-	def isCalibrated(self,move_property):
-		if move_property in self.projection_submode_dependent and not self.isNewSubMode():
+	def isNewMag(self):
+		if self.mag != self.last_mag:
+			self.last_mag = self.mag
 			return True
-		#default, recalibration
 		return False
+
+	def isCalibrated(self,move_property):
+		if move_property in self.projection_submode_independent:
+			return True
+		is_new_submode = self.isNewSubMode()
+		is_new_mag = self.isNewMag()
+		if is_new_mag:
+			is_cal = not is_new_submode
+		else:
+			is_cal = self.last_is_cal
+		self.last_is_cal = is_cal
+		return is_cal
 
 	def constructAttributeNames(self):
 		results = {}
