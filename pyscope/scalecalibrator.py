@@ -217,8 +217,13 @@ class ScaleCalibrator(object):
 	def subDivideMode(self,mode_name,mag):
 		name_lower = mode_name.lower()
 		is_lower = (name_lower == mode_name)
-		if name_lower == 'mag1' and mag <= self.max_m:
-			name_lower = 'm'
+		if name_lower == 'mag1':
+			if mag > self.max_ls2:
+				name_lower = 'ls3'
+			elif mag > self.max_ls1:
+				name_lower = 'ls2'
+			else:
+				name_lower = 'ls1'
 		if not is_lower:
 			name_lower = name_lower.upper()
 		return name_lower
@@ -348,9 +353,12 @@ class JeolScaleCalibrator(ScaleCalibrator):
 		self.logger.cfg('tem option','USE_PLA','%s' % (str(self.use_pla)))
 		self.has_efilter = self.logger.inputBoolean('Need energy filter control?')
 		self.logger.cfg('tem option','ENERGY_FILTER','%s' % (str(self.has_efilter)))
-		self.max_m = self.logger.inputInt(
-				'Give the highest MAG1 magnification with unique neutral deflector value and standard focus\n Normally 4000: ')
-		self.logger.cfg('tem option','MAX_M','%s' % (str(self.max_m)))
+		#self.max_m = self.logger.inputInt(
+		#		'Give the highest MAG1 magnification with unique neutral deflector value and standard focus\n Normally 4000: ')
+		#self.logger.cfg('tem option','MAX_M','%s' % (str(self.max_m)))
+		self.max_ls1 = 4000
+		self.max_ls2 = 30000
+		self.max_ls3 = 100000
 
 	def getEffectPropertyDict(self):
 		'''
@@ -361,15 +369,15 @@ class JeolScaleCalibrator(ScaleCalibrator):
 		self.all_configs = {
 				'lens': {
 						#'intensity': 'CL3',
-						'focus':		{'MAG1':'OL', 'LOWMAG':'OM'},
+						#'focus':		{'MAG1':'OL', 'LOWMAG':'OM'},
 				},
 				'def':	{
 						#'beamshift': 'CLA1',
-						#'beamtilt': 'CLA2',
-						'imageshift': {False:'IS1',True:'PLA'},
+						'beamtilt': 'CLA2',
+						#'imageshift': {False:'IS1',True:'PLA'},
 				},
 				'stage': {
-						'stage': 'Pos',
+						#'stage': 'Pos',
 				}
 		}
 		self.configs = self.all_configs.copy()

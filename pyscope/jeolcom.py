@@ -111,8 +111,16 @@ class Jeol(tem.TEM):
 		return result == 0
 
 	def subDivideMode(self,mode_name,mag):
-		if mode_name == 'mag1' and mag <= self.getJeolConfig('lens','m_mag_max'):
-			return 'm'
+		if mode_name == 'mag1':
+			if mag > self.getJeolConfig('tem option','ls2_mag_max'):
+				return 'ls3'
+			elif mag > self.getJeolConfig('tem option','ls1_mag_max'):
+				return 'ls2'
+			else:
+				return 'ls1'
+		if mode_name == 'lowmag':
+			if mag <= self.getJeolConfig('tem option','lm1_mag_max'):
+				return 'lm1'
 		return mode_name
 
 	def getScale(self,key,mag=None):
@@ -126,14 +134,15 @@ class Jeol(tem.TEM):
 		if key == 'stage':
 			return value
 		else:
-			# depends on mag to choose ['mag1','m','lowmag']
+			# depends on mag to choose ['ls1','ls2','ls3','lowmag']
 			if mag is None:
 				mag = self.getMagnification()
 			try:
 				mode_name,mode_id = self.projection_submode_map[mag]
 				mode_subname = self.subDivideMode(mode_name,mag)
-				return value[mode_name]
+				return value[mode_subname]
 			except:
+				raise
 				raise RuntimeError('%s function not implemented in mag %d' % (key,mag))
 
 	def getNeutral(self,key,mag=None):
