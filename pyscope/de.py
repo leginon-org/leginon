@@ -6,8 +6,8 @@ import ccdcamera
 import threading
 
 # frame flipping configuration.
-# default here is for DE-12 orientation on FEI F20
-FRAME_LR_FLIP = True
+# default here is for DE-20 orientation on JEM-3200FSC
+FRAME_LR_FLIP = False
 # frame rotate configuration. multiple of 90 degrees if needed
 # after the flip.  Direction + is x to -y.
 FRAME_ROTATE = 0
@@ -329,6 +329,12 @@ class DE12Survey(DECameraBase):
 	def __init__(self):
 		DECameraBase.__init__(self)
 		self.dimension = {'x': 1024, 'y': 1024}
+
+class DE20Survey(DECameraBase):
+	name = 'DE20 Survey'
+	def __init__(self):
+		DECameraBase.__init__(self)
+		self.dimension = {'x': 2048, 'y': 1920}
 
 class DD(DECameraBase):
 	name = 'DD'
