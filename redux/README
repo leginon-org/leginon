@@ -5,7 +5,7 @@ raw MRC images.  It includes a caching mechanism to reduce processing time at
 the expence of disk or memory usage.
 
 INSTALL:
-prerequisites: python, numpy, scipy, pyfilesystem, pyami, numextension, gdbm, fftw3 
+prerequisites: python, numpy, scipy, pyfilesystem, pyami, numextension, fftw3 
 	Install using "python setup.py install" or just use a local sandbox and just
 make sure redux is in your pythonpath
 

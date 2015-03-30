@@ -4,7 +4,6 @@ import os
 import sys
 import pyami.resultcache
 import pyami.fileutil
-import gdbm
 import cachefs
 import threading
 
