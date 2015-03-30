@@ -45,7 +45,14 @@ function createSubStackForm($extra=false, $title='subStack.py Launcher', $headin
 	$formAction.=($include) ? "&include=$include" : "";
 	$formAction.=($exclude) ? "&exclude=$exclude" : "";
 	$formAction.=($mean) ? "&mean=$mean" : "";
-	
+
+	// get outdir path
+	$sessiondata=getSessionList($projectId,$expId);
+	$sessioninfo=$sessiondata['info'];
+
+	// get path for submission
+	$outdir=getBaseAppionPath($sessioninfo).'/stacks';
+
 	// Set any existing parameters in form
 	if (!$description) $description = $_POST['description'];
 	// set sub-stack name
@@ -54,18 +61,25 @@ function createSubStackForm($extra=false, $title='subStack.py Launcher', $headin
 	else
 		$defrunname = 'sub'.$stackId;
 	$runname = ($_POST['runname']) ? $_POST['runname'] : $defrunname;
-
+	if (file_exists($outdir.'/'.$runname)) $count += 1;
+	while (file_exists($outdir.'/'.$runname.'_'.$count)) {
+		$count += 1;
+	}
+	if ($count != 0) $runname = $runname.'_'.$count;
 	$subcheck = ($_POST['subsplit']=='sub' || !$_POST['process']) ? 'checked' : '';		
 	$firstpdisable = ($subcheck) ? '' : 'disabled';		
 	$lastpdisable = ($subcheck) ? '' : 'disabled';		
 	$splitcheck = ($_POST['subsplit']=='split') ? 'checked' : '';	
 	$randomcheck = ($_POST['subsplit']=='random') ? 'checked' : '';
+	$keepcheck = ($_POST['subsplit']=='keepfile') ? 'checked' : '';
 	$randomdisable = ($randomcheck) ? '' : 'disabled';	
+	$keepdisable = ($keepcheck) ? '' : 'disabled';
 	$splitdisable = ($splitcheck) ? '' : 'disabled';		
 	$split = ($_POST['split']) ? $_POST['split'] : '2';		
 	$firstp = ($_POST['firstp']) ? $_POST['firstp'] : '';		
 	$lastp = ($_POST['lastp']) ? $_POST['lastp'] : '';
 	$numOfParticles = ($_POST['numOfParticles']) ? $_POST['numOfParticles'] : '';
+	$keepListFile = ($_POST['keepListFile']) ? $_POST['keepListFile'] : '';
 	$correctbtcheck = ($_POST['correctbt']=='on') ? 'checked' : '';
 	$commitcheck = ($_POST['commit']=='on' || !$_POST['process']) ? 'checked' : '';
 	$reversecheck = ($_POST['reverse']=='on') ? 'checked' : '';
@@ -74,12 +88,6 @@ function createSubStackForm($extra=false, $title='subStack.py Launcher', $headin
 	$maxx = (is_numeric($_POST['maxx'])) ? $_POST['maxx'] : '';
 	$miny = (is_numeric($_POST['miny'])) ? $_POST['miny'] : '';
 	$maxy = (is_numeric($_POST['maxy'])) ? $_POST['maxy'] : '';
-	// get outdir path
-	$sessiondata=getSessionList($projectId,$expId);
-	$sessioninfo=$sessiondata['info'];
-
-	// get path for submission
-	$outdir=getBaseAppionPath($sessioninfo).'/stacks';
 
 	$javafunctions .= writeJavaPopupFunctions('appion');
 	$javafunctions .="<script language='JavaScript'>\n";
@@ -91,6 +99,8 @@ function createSubStackForm($extra=false, $title='subStack.py Launcher', $headin
 	$javafunctions .="    document.viewerform.split.value='2';\n";
 	$javafunctions .="    document.viewerform.numOfParticles.disabled=true;\n";
 	$javafunctions .="    document.viewerform.numOfParticles.value='';\n";
+	$javafunctions .="    document.viewerform.keepListFile.disabled=true;\n";
+	$javafunctions .="    document.viewerform.keepListFile.value='';\n";
 	$javafunctions .="  }\n";
 	$javafunctions .="  else if (check=='random'){\n";
 	$javafunctions .="    document.viewerform.split.disabled=true;\n";
@@ -99,6 +109,18 @@ function createSubStackForm($extra=false, $title='subStack.py Launcher', $headin
 	$javafunctions .="    document.viewerform.split.value='2';\n";
 	$javafunctions .="    document.viewerform.numOfParticles.disabled=false;\n";
 	$javafunctions .="    document.viewerform.numOfParticles.value='';\n";
+	$javafunctions .="    document.viewerform.keepListFile.disabled=true;\n";
+	$javafunctions .="    document.viewerform.keepListFile.value='';\n";
+	$javafunctions .="  }\n";
+	$javafunctions .="  else if (check=='keepfile'){\n";
+	$javafunctions .="    document.viewerform.split.disabled=true;\n";
+	$javafunctions .="    document.viewerform.firstp.disabled=true;\n";
+	$javafunctions .="    document.viewerform.lastp.disabled=true;\n";
+	$javafunctions .="    document.viewerform.split.value='2';\n";
+	$javafunctions .="    document.viewerform.numOfParticles.disabled=true;\n";
+	$javafunctions .="    document.viewerform.numOfParticles.value='';\n";
+	$javafunctions .="    document.viewerform.keepListFile.disabled=false;\n";
+	$javafunctions .="    document.viewerform.keepListFile.value='';\n";
 	$javafunctions .="  }\n";
 	$javafunctions .="  else {\n";
 	$javafunctions .="    document.viewerform.split.disabled=true;\n";
@@ -109,6 +131,8 @@ function createSubStackForm($extra=false, $title='subStack.py Launcher', $headin
 	$javafunctions .="    document.viewerform.lastp.value='';\n";
 	$javafunctions .="    document.viewerform.numOfParticles.disabled=true;\n";
 	$javafunctions .="    document.viewerform.numOfParticles.value='';\n";
+	$javafunctions .="    document.viewerform.keepListFile.disabled=true;\n";
+	$javafunctions .="    document.viewerform.keepListFile.value='';\n";
 	$javafunctions .="  }\n";
 	$javafunctions .="}";
 	$javafunctions .="</script>\n";
@@ -224,7 +248,7 @@ function createSubStackForm($extra=false, $title='subStack.py Launcher', $headin
 		echo "<input type='radio' name='subsplit' onclick='subORsplit(\"sub\")' value='sub' $subcheck>\n";
 		echo "<b>Select Subset of Particles (1-$nump)</b><br />\n";
 		echo docpop('firstp', '<b>First:</b> ');
-     	echo "<input type='text' name='firstp' value='$firstp' size='7' $firstpdisable><br />\n";
+		echo "<input type='text' name='firstp' value='$firstp' size='7' $firstpdisable><br />\n";
 		echo docpop('lastp', '<b>Last:</b> ');
 		echo "<input type='text' name='lastp' value='$lastp' size='7' $lastpdisable> (included)<br />\n";
 		echo "</td><td width='50%' valign='top'>\n";
@@ -237,7 +261,11 @@ function createSubStackForm($extra=false, $title='subStack.py Launcher', $headin
 		echo "<input type='radio' name='subsplit' onclick='subORsplit(\"random\")' value='random' $randomcheck>\n";
 		echo "<b>Select Random Subset (less than $nump)</b><br />\n";
 		echo docpop('numOfParticlePop', '<b>Number of Particles:</b> ');
-     	echo "<input type='text' name='numOfParticles' size='5' value='$numOfParticles' $randomdisable><br />\n";
+		echo "<input type='text' name='numOfParticles' size='5' value='$numOfParticles' $randomdisable><br />\n";
+		echo "<tr><td COLSPAN=2>";
+		echo "<input type='radio' name='subsplit' onclick='subORsplit(\"keepfile\")' value='keepfile' $keepcheck>\n";
+		echo "<b>Full path to list file (EMAN-style list, starts with 0)</b><br />\n";
+		echo "<input type='text' name='keepListFile' size='50' value='$keepListFile'  $keepdisable><br />\n";
 		if (!HIDE_FEATURE) {
 			echo "</td></tr>";
 			echo "<tr><td COLSPAN=2>";
@@ -292,6 +320,7 @@ function runSubStack() {
 	$correctbt=$_POST['correctbt'];
 	$stackId = $_POST['stackId'];
 	$numOfParticles = $_POST['numOfParticles'];
+	$keepListFile = $_POST['keepListFile'];
 	$minx = (is_numeric($_POST['minx'])) ? $_POST['minx'] : '';	
 	$maxx = (is_numeric($_POST['maxx'])) ? $_POST['maxx'] : '';
 	$miny = (is_numeric($_POST['miny'])) ? $_POST['miny'] : '';
@@ -317,6 +346,10 @@ function runSubStack() {
 			}
 			elseif($subsplit == 'random'){
 				if(!$numOfParticles) createSubStackForm("<b>ERROR:</b> Enter number of Particles");
+			}
+			elseif($subsplit == 'keepfile'){
+				if(!$keepListFile) createSubStackForm("<b>ERROR:</b> Enter keep-list filename");
+				if(!file_exists($keepListFile)) createSubStackForm("<b>ERROR:</b> File ".$keepListFile." does not exist.");
 			}
 			elseif (!$split) {
 				if (!$firstp) createSubStackForm("<b>ERROR:</b> Enter # of stacks");
@@ -344,6 +377,7 @@ function runSubStack() {
 		if ($firstp!='' && $lastp) $command.="--first=".($firstp)." --last=".($lastp)." ";
 		elseif ($split) $command.="--split=$split ";
 		elseif ($numOfParticles) $command.="--random=$numOfParticles ";
+		elseif ($keepListFile) $command.="--keep-file=$keepListFile ";
 	} elseif ($include) {
 		$command.="--include=".$include." ";
 	} elseif ($exclude) {
