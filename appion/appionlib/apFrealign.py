@@ -139,7 +139,7 @@ def parseFrealign9ParamFile(paramfile,test=False):
 	f.close()
 
 	if len(partdict) < 2:
-		apDislay.printError("No particles found in parameter file %s" % (paramfile))
+		apDisplay.printError("No particles found in parameter file %s" % (paramfile))
 
 	apDisplay.printMsg("Processed %d particles" % (len(partdict)))
 	return partdict
@@ -686,6 +686,49 @@ def combineMultipleJobs(params):
 	createFrealignJob(params,combinejobname,mode=0,invol=params['itervol'],inpar=paramname)
 	proc = subprocess.Popen('csh '+combinejobname, shell=True)
 	proc.wait()
+
+
+#===============
+def readFrealign9_06ParamLine(dict_value, occdef=100, logpdef=5000, sigmadef=1, scoredef=50.0, changedef=0):
+	### code for general usage
+	partnum = dict_value['partnum']
+	psi = dict_value['psi']
+	theta = dict_value['theta']
+	phi = dict_value['phi']
+	shx = dict_value['shiftx'] 
+	shy = dict_value['shifty']
+	mag = dict_value['mag']
+	micnum = dict_value['micn']
+	dx = dict_value['defx']
+	dy = dict_value['defy']
+	ast = dict_value['astig']
+	try:
+		occ = dict_value['occ']
+	except:
+		occ = occdef
+	try:
+		logp = dict_value['logp']
+	except:
+		logp = logpdef
+	try:
+		sigma = p['sigma']
+	except:
+		sigma = sigmadef
+	try:
+		score = p['score']
+	except:
+		score = scoredef
+	try:
+		change = p['change']
+	except:
+		change = changedef
+	
+	d = {
+		'i':partnum,'psi':psi,'theta':theta,'phi':phi,'shx':shx,'shy':shy,'mag':mag,'micn':micnum,
+		'dx':dx,'dy':dy,'ast':ast,'occ':occ,'logp':logp,'sigma':sigma,'score':score,'change':change
+	}
+	return d 
+
 
 #===============
 def scale_parfile_frealign8(infile, outfile, mult, newmag=0):
@@ -1262,6 +1305,33 @@ def average_value_frealign9(inparfile, *values):
 			vlist.append(params[i+1][v])
 		print "average %s:" % (v), numpy.average(vlist)
 
+
+#=================
+def replace_CTFs_Frealign9(inparfile, outparfile, ctffile):
+	### CTF file with values dx dy astig in three columns
+
+	params = parseFrealign9ParamFile(inparfile)
+	f = open(ctffile, "r")
+	flines = f.readlines()
+	fstrip = [l.strip().split() for l in flines]
+	f.close()
+
+	ff = open(outparfile, "w")
+	ff.write("%s%8s%8s%8s%10s%10s%8s%6s%9s%9s%8s%8s%10s%11s%8s%8s\n" \
+		% ("C      ","PSI","THETA","PHI","SHX","SHY","MAG","FILM","DF1","DF2","ANGAST","OCC","-LogP","SIGMA","SCORE","CHANGE"))
+
+	for i,p in params.iteritems():
+#		d = readFrealign9_06ParamLine(p)
+		p['defx']  = float(fstrip[i][0])
+		p['defy']  = float(fstrip[i][1])
+		p['astig'] = float(fstrip[i][2])
+		ff.write("%7d%8.2f%8.2f%8.2f%10.2f%10.2f%8d%6d%9.1f%9.1f%8.2f%8.2f%10d%11.4f%8.2f%8.2f\n" \
+			% (p['partnum'], p['psi'], p['theta'], p['phi'], p['shiftx'], p['shifty'], p['mag'], p['micn'], 
+			p['defx'], p['defy'], p['astig'], p['occ'], p['logp'], p['sigma'], p['score'], p['change']))
+	ff.close()
+
+
+#==================
 def Relion_to_Frealign8(starfile, parfile, mag=None):
 	star = starFile.StarFile(starfile)
 	star.read()
