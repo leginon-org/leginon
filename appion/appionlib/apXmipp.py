@@ -635,3 +635,21 @@ def readDocfile(docfile, returnheader=False):
 		return d, header
 	else:
 		return d
+
+def selFileToList(selfile, list):
+	''' reads selfile, writes sorted list of numbers, eman style '''
+	f = open(selfile, "r")
+	lines = f.readlines()
+	f.close()
+	split = [l.strip().split() for l in lines]
+	filenames = [s[0] for s in split]
+	fileorder = []
+	for file in filenames:
+		match = re.match('[A-Za-z]+([0-9]+)\.[A-Za-z]+', file.split('/')[-1])
+		if (match):
+			filenumber=int(match.groups()[0])
+			fileorder.append(filenumber)
+	f = open(list, "w")
+	for n in fileorder:
+		f.write("%d\n" % n)
+	f.close()
