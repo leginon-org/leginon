@@ -1,4 +1,4 @@
-
+import os
 ###MRC functions for Frealign
 from appionlib import apParam
 from pyami import mrc
