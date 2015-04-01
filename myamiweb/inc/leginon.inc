@@ -2056,6 +2056,8 @@ class leginondata {
 		}
 		$applicationinfo['version'] = $newversion;
 		$appinsert = $this->modifyApplicationDataInsert($appinsert,'version',$newversion);
+		//always not hidden
+		$appinsert = $this->modifyApplicationDataInsert($appinsert,'hide',0);
 		$sqldata['ApplicationData'][0] = $appinsert;
 		//--- insert new ApplicationData data;
 		foreach ($sqldata as $table=>$queries) {
