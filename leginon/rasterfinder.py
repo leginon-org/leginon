@@ -340,6 +340,15 @@ class RasterFinder(targetfinder.TargetFinder):
 		# ice
 		self.ice()
 
+	def waitForUserCheck(self):
+			self.setStatus('user input')
+			self.twobeeps()
+			self.logger.info('Waiting for user to check targets...')
+			self.panel.submitTargets()
+			self.userpause.clear()
+			self.userpause.wait()
+			self.setStatus('processing')
+
 	def findTargets(self, imdata, targetlist):
 		## display image
 		self.setImage(imdata['image'], 'Original')
@@ -355,11 +364,10 @@ class RasterFinder(targetfinder.TargetFinder):
 
 		## user part
 		if self.settings['user check']:
-			self.setStatus('user input')
-			self.logger.info('Waiting for user to check targets...')
-			self.panel.submitTargets()
-			self.userpause.clear()
-			self.userpause.wait()
+			while True:
+				self.waitForUserCheck()
+				if not self.processPreviewTargets(imdata, targetlist):
+					break
 			self.panel.targetsSubmitted()
 			self.setStatus('processing')
 
