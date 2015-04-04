@@ -85,7 +85,7 @@ class JeolConfigParser(object):
 		return newkeys
 
 	def parse(self):
-		print 'parsing'
+		print "parsing jeol.cfg...."
 		# use the path of this module
 		modpath = pyscope.__path__
 

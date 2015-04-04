@@ -6,8 +6,8 @@ from pyscope import tem
 from pyscope import jeolconfig
 
 # function modes
-FUNCTION_MODES = {'mag1':0,'mag2':1,'lowmag':2,'diff':3}
-FUNCTION_MODE_ORDERED_NAMES = ['mag1','mag2','lowmag','diff']
+FUNCTION_MODES = {'mag1':0,'mag2':1,'lowmag':2,'samag':3,'diff':4}
+FUNCTION_MODE_ORDERED_NAMES = ['mag1','mag2','lowmag','samag','diff']
 
 # identifier for dector
 MAIN_SCREEN = 13
@@ -131,18 +131,17 @@ class Jeol(tem.TEM):
 		options = {'beamtilt':'def','beamshift':'def','imageshift':'def','focus':'lens','stage':'stage'}
 		optionname = options[key]
 		value = self.getJeolConfig(optionname,key+'_scale')
-		if key == 'stage':
+		if key == 'stage' or key == 'beamtilt':
 			return value
 		else:
-			# depends on mag to choose ['ls1','ls2','ls3','lowmag']
 			if mag is None:
 				mag = self.getMagnification()
 			try:
 				mode_name,mode_id = self.projection_submode_map[mag]
+				# depends on mag to choose ['ls1','ls2','ls3','lm1']
 				mode_subname = self.subDivideMode(mode_name,mag)
 				return value[mode_subname]
 			except:
-				raise
 				raise RuntimeError('%s function not implemented in mag %d' % (key,mag))
 
 	def getNeutral(self,key,mag=None):

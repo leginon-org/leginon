@@ -192,6 +192,11 @@ class ScaleCalibrator(object):
 			return True
 		return False
 
+	def isBeamTilt(self):
+		if self.move_property == 'CLA2':
+			return True
+		return False
+
 	def calculateScaleAtAxis(self, pos0, pos1, axis=None):
 		if axis is None:
 			shift = pos1 - pos0 + 1e-20
@@ -202,6 +207,10 @@ class ScaleCalibrator(object):
 		if self.isStageMovement():
 			# stage clicks / scale = effect
 			self.logger.cfg('stage','STAGE_SCALE%%%s' %axis.upper(), '%.1e' % (float(shift) / self.getPhysicalShift()))
+		elif self.isBeamTilt():
+			# beamtilt clicks * scale = math.atan(effect / camera_length)
+			scale = math.atan(float(self.getPhysicalShift()) / (self.mag * 0.01)) / shift
+			self.logger.cfg('lens','%s_SCALE%%%s' % (self.effect_type.upper(),axis.upper()),'%.1e' % (scale))
 		elif self.isFocus():
 			# others clicks * scale = effect
 			self.logger.cfg('lens','%s_SCALE%%%s' % (self.effect_type.upper(),self.getSubModeString()),'%.1e' % (float(self.getPhysicalShift() / shift)))
@@ -211,6 +220,7 @@ class ScaleCalibrator(object):
 					'%s_SCALE%%%s%%%s' % (self.effect_type.upper(),self.getSubModeString(),axis.upper()),
 					'%.1e' % (float(self.getPhysicalShift() / (self.getScreenMag() * shift)))
 			)
+
 	def getSubModeString(self):
 		return self.subDivideMode(self.submode,self.mag)
 
@@ -292,20 +302,7 @@ class ScaleCalibrator(object):
 			end_mag = self.logger.inputInt('Enter the highest mag to calibrate:')
 		return all_mags[all_mags.index(start_mag):all_mags.index(end_mag)+1]
 
-	def displayStandardFocus(self, mag):
-		raw_input('Push Standard Focus button on your TEM panel... (hit any key to continue. ')
-		self.effect_type = 'focus'
-		self.current_calibration = self.calibrations[self.effect_type]
-		# current_calibration should be set to focus by now
-		self.setMoveProperty(self.current_calibration[1])
-		raw_focus_value = self.getCurrentValue()
-		if self.last_standard_focus is None or self.last_standard_focus != raw_focus_value:
-			self.logger.cfg('%s standard focus' % (self.move_property,),
-					'%d' % (mag,),
-					'%d' % (raw_focus_value,)
-			)
-
-	def calibrateAll(self):
+	def calibrateInImageMode(self):
 		mags_to_calibrate = self.selectMagList()
 		for i, mag in enumerate(mags_to_calibrate):
 			self.tem.setMagnification(mag)
@@ -327,13 +324,21 @@ class ScaleCalibrator(object):
 					screen_shift = 0.01 # 1 cm
 				self.measureShift(self.calibrations[effect_type][1],screen_shift)
 
-		# standard focus
-		self.logger.info('Standard Focus Recording....')
-		for mag in self.selectMagRange():
-			self.tem.setMagnification(mag)
-			# ignore submode dependency to do it at all mags
-			self.calibrations = self.getCalibrationRequired(accept_all=True)
-			self.displayStandardFocus(mag)
+
+	def calibrateInDiffractionMode(self):
+		self.calibrations = self.getDiffractionCalibrationRequired()
+		for effect_type in self.calibrations.keys():
+			self.effect_type = effect_type
+			self.current_calibration = self.calibrations[effect_type]
+			self.setMoveClassInstance(effect_type)
+			screen_shift = 0.01 # 1 cm
+			self.measureShift(self.calibrations[effect_type][1],screen_shift)
+		raw_input('hit any key to return to MAG1')
+		self.tem.setDiffractionMode('imaging')
+
+	def calibrateAll(self):
+		self.calibrateInImageMode()
+		self.calibrateInDiffractionMode()
 		raw_input('hit any key to end')
 
 class JeolScaleCalibrator(ScaleCalibrator):
@@ -345,22 +350,26 @@ class JeolScaleCalibrator(ScaleCalibrator):
 		self.projection_submode_independent = ['Pos','CL3']
 		self.is_cap_prefix = True
 		self.tem = jeolcom.Jeol()
+		# set to MAG1 first
+		self.tem.setDiffractionMode('imaging')
 		self.tem.findMagnifications()
 		self.last_mag = 0
 
 	def defineOptions(self):
-		self.use_pla = self.logger.inputBoolean('Using PLA for image shift?')
+		self.use_pla = self.tem.getJeolConfig('tem option','use_pla') 
 		self.logger.cfg('tem option','USE_PLA','%s' % (str(self.use_pla)))
-		self.has_efilter = self.logger.inputBoolean('Need energy filter control?')
+		self.has_efilter = self.tem.getJeolConfig('tem option','energy_filter') 
 		self.logger.cfg('tem option','ENERGY_FILTER','%s' % (str(self.has_efilter)))
-		#self.max_m = self.logger.inputInt(
-		#		'Give the highest MAG1 magnification with unique neutral deflector value and standard focus\n Normally 4000: ')
-		#self.logger.cfg('tem option','MAX_M','%s' % (str(self.max_m)))
-		self.max_ls1 = 4000
-		self.max_ls2 = 30000
-		self.max_ls3 = 100000
+		self.max_ls1 = self.tem.getJeolConfig('tem option','ls1_mag_max') 
+		self.logger.cfg('tem option','LS1_MAG_MAX','%d' % (self.max_ls1))
+		self.max_ls2 = self.tem.getJeolConfig('tem option','ls2_mag_max') 
+		self.logger.cfg('tem option','LS2_MAG_MAX','%d' % (self.max_ls2))
+		self.max_ls3 = self.tem.getJeolConfig('tem option','ls3_mag_max') 
+		self.logger.cfg('tem option','LS3_MAG_MAX','%d' % (self.max_ls3))
+		self.max_lm1 = self.tem.getJeolConfig('tem option','lm1_mag_max') 
+		self.logger.cfg('tem option','LM1_MAG_MAX','%d' % (self.max_lm1))
 
-	def getEffectPropertyDict(self):
+	def getImagingEffectPropertyDict(self):
 		'''
 		Choose from TEM module the move property.
 		Projection submode must be set first.
@@ -369,15 +378,14 @@ class JeolScaleCalibrator(ScaleCalibrator):
 		self.all_configs = {
 				'lens': {
 						#'intensity': 'CL3',
-						#'focus':		{'MAG1':'OL', 'LOWMAG':'OM'},
+						'focus':		{'MAG1':'OL', 'LOWMAG':'OM'},
 				},
 				'def':	{
-						#'beamshift': 'CLA1',
-						'beamtilt': 'CLA2',
-						#'imageshift': {False:'IS1',True:'PLA'},
+						'beamshift': 'CLA1',
+						'imageshift': {False:'IS1',True:'PLA'},
 				},
 				'stage': {
-						#'stage': 'Pos',
+						'stage': 'Pos',
 				}
 		}
 		self.configs = self.all_configs.copy()
@@ -385,11 +393,17 @@ class JeolScaleCalibrator(ScaleCalibrator):
 			self.configs['def']['imageshift'] = self.chooseImageShiftMoveProperty()
 		if 'focus' in self.configs['lens'].keys():
 			self.configs['lens']['focus'] = self.chooseFocusMoveProperty()
+	def getDiffractionEffectPropertyDict(self):
+		self.configs = {
+				'def':	{
+						'beamtilt': 'CLA2',
+				},
+		}
 
 	def getCalibrationRequired(self,first=False,accept_all=False):
 		self.mag = self.tem.getMagnification()
 		self.submode = self.tem.getProjectionSubModeName().upper()
-		self.getEffectPropertyDict()
+		self.getImagingEffectPropertyDict()
 		set_attrs = self.constructAttributeNames()
 		for effect_type in set_attrs.keys():
 			attrname = set_attrs[effect_type][1]
@@ -399,6 +413,16 @@ class JeolScaleCalibrator(ScaleCalibrator):
 			if not accept_all and self.isCalibrated(attrname):
 				del set_attrs[effect_type]
 		print 'required', set_attrs
+		return set_attrs
+
+	def getDiffractionCalibrationRequired(self):
+		self.logger.info('Switching to Diffraction Mode')
+		self.tem.setDiffractionMode('diffraction')
+		self.submode = self.tem.getProjectionSubModeName().upper()
+		raw_input('Adjust camera length to the desired value >=100 cm, Hit any key when done')
+		self.mag = self.tem.getMagnification()
+		self.getDiffractionEffectPropertyDict()
+		set_attrs = self.constructAttributeNames()
 		return set_attrs
 
 	def chooseFocusMoveProperty(self):

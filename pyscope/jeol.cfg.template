@@ -29,14 +29,8 @@ CURRENT_DENSITY_SCALE = 1e-16
 [def]
 # deflector class
 # convert beam tilt clicks to angle in radians
-BEAMTILT_SCALE%LS3%X = 5.56e-6
-BEAMTILT_SCALE%LS3%Y = 5.56e-6
-BEAMTILT_SCALE%LS2%X = 5.56e-6
-BEAMTILT_SCALE%LS2%Y = 5.56e-6
-BEAMTILT_SCALE%LS1%X = 5.56e-6
-BEAMTILT_SCALE%LS1%Y = 5.56e-6
-BEAMTILT_SCALE%LOWMAG%X = 5.56e-6
-BEAMTILT_SCALE%LOWMAG%Y = 5.56e-6
+BEAMTILT_SCALE%X = 5.56e-6
+BEAMTILT_SCALE%Y = 5.56e-6
 
 # convert shift clicks to distance in meters
 BEAMSHIFT_SCALE%LS3%X = 1.56e-8
