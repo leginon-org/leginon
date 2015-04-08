@@ -358,6 +358,9 @@ class RCTAcquisition(acquisition.Acquisition):
 				try:
 					result = pyami.timedproc.call('leginon.libCVwrapper', 'MatchImages', args=(arrayold, arraynew, minsize, maxsize), timeout=timeout)
 					self.logger.info("result matrix= "+str(numpy.asarray(result*100, dtype=numpy.int8).ravel()))
+				except OSError, e:
+					self.logger.error('Possible subprocess %s' % e.strerror)
+					return None,None
 				except:
 					self.logger.error('libCV MatchImages failed')
 					return None,None
@@ -620,6 +623,9 @@ class RCTAcquisition(acquisition.Acquisition):
 		self.logger.info('running libCV.FindRegions, timeout = %d' % (timeout,))
 		try:
 			regions,image = pyami.timedproc.call('leginon.libCVwrapper', 'FindRegions', args=(im,minsize,maxsize), timeout=timeout)
+		except OSError, e:
+			self.logger.error('Possible subprocess %s' % e.strerror)
+			return None,None
 		except:
 			self.logger.error('libCV.FindRegions failed')
 			regions = []
