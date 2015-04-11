@@ -569,6 +569,7 @@ class CL2D(appionScript.AppionScript):
  			+" --iter "+str(self.params['maxiter'])
  			+" --odir "+str(self.params['rundir'])
  			+" --oroot "+ "part"+str(self.params['timestamp'])
+			+" --classifyAllImages"
  		)
  
  		if self.params['correlation']:
