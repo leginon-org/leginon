@@ -106,11 +106,11 @@ class CL2D(appionScript.AppionScript):
 		self.mpirun = self.checkMPI()
 		if self.mpirun is None:
 			apDisplay.printError("There is no MPI installed")
+
 		if self.params['nproc'] is None:
-			self.params['nproc'] = apParam.getNumProcessors()
+			self.params['nproc'] = self.params['nodes']*self.params['ppn']
 		if self.params['nproc'] < 2:
 			apDisplay.printError("Only the MPI version of CL2D is currently supported, must run with > 1 CPU")
-
 	#=====================
 	def setRunDir(self):
 		self.stackdata = apStack.getOnlyStackData(self.params['stackid'], msg=False)
