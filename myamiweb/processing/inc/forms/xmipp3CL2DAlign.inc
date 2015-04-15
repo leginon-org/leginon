@@ -33,7 +33,7 @@ class Xmipp3CL2DAlign extends BasicLayoutForm
 		$this->setTitle( 'XMIPP 3 CL2D Launcher' ); // Shows up in the browser tab
 		$this->setHeading( 'Xmipp 3 Clustering 2D Alignment' ); // shows at the top of the processing page
 		$this->setExeFile( 'runXmipp3CL2D.py' ); // added to the command string
-		$this->setGuideURL( "http://ami.scripps.edu/redmine/projects/appion/wiki/Xmipp_3_Clustering_2D_Alignment" );
+		$this->setGuideURL( "http://emg.nysbc.org/redmine/projects/appion/wiki/Xmipp_3_Clustering_2D_Alignment" );
 		$this->setTestable( False ); // True to activate "test single image".
 		$this->setUseLegOutDir( False ); // The output directory will be created in the Appion run directory rather than Leginon.
 		$this->setShowDesc( True ); // Flag to hide the description field of the run parameters.
@@ -234,7 +234,7 @@ class Xmipp3CL2DAlign extends BasicLayoutForm
 		if (!$commit) {
 			$command.= " --no-commit ";
 		}
-		
+		$command.= " --nproc=".$postArray['nodes']*$postArray['ppn']." ";
 		return $command;		
 	}
 	
