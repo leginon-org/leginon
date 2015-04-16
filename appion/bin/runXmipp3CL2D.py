@@ -75,8 +75,6 @@ class CL2D(appionScript.AppionScript):
 		self.parser.add_option("--walltime", dest="walltime", type="int", default=24,
 			help="Maximum walltime in hours", metavar="#")
 		self.parser.add_option('--cput', dest='cput', type='int', default=None)
-		self.parser.add_option("--nproc", dest="nproc", type="int", default=2,
-			help="Number of processors (nodes*ppn)", metavar="#")
 
 	#=====================
 	def checkConflicts(self):
