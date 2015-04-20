@@ -371,7 +371,7 @@ class Navigator(node.Node):
 						break
 
 				# final image shift
-				if status != 'error' and movetype != 'image shift' and final_imageshift:
+				if status != 'error' and 'shift' not in movetype and final_imageshift:
 					self.logger.info('making final correction with image shift')
 					self._move(r, c, 'image shift')
 					
