@@ -1471,7 +1471,7 @@ class PresetsManager(node.Node):
 				pixcol = pixelshift1['col'] * oldpreset['binning']['x']
 				pixvect1 = numpy.array((pixrow, pixcol))
 				###
-				if PROJECTION_MODE_TRANSFORM and self.isLMtoSA(oldpreset['magnification'],newpreset['magnification']):
+				if PROJECTION_MODE_TRANSFORM and self.isLensSeriesChange(oldpreset['magnification'],newpreset['magnification']):
 					pixvect1 = self.specialTransform(pixvect1)
 				pixvect2 = self.calclients['image'].pixelToPixel(old_tem,old_ccdcamera,new_tem, new_ccdcamera, ht,oldpreset['magnification'],newpreset['magnification'],pixvect1)
 				pixelshift2 = {'row':pixvect2[0] / newpreset['binning']['y'],'col':pixvect2[1] / newpreset['binning']['x']}
@@ -1955,13 +1955,14 @@ class PresetsManager(node.Node):
 		self.logger.info('completed update to %s' % (presetname,))
 		self.confirmEvent(evt)
 	
-	def isLMtoSA(self,mag1,mag2):
-		print mag1,mag2
+	def isLensSeriesChange(self,mag1,mag2):
 		return (mag1 <=4000 and mag2 >=5000)
 
-	def specialTransform(self,pixelvect):
-		# This matrix gives a 90 degree rotation from +x to +y axis.
-		rotate_angle_degrees = 140
+	def specialTransform(self,pixelvect,tem):
+		# This matrix gives a given degree rotation from +x to +y axis.
+		if tem['hostname'] != 'jem-2100f':
+			return pixelvect
+		rotate_angle_degrees = 142
 		a = math.radians(rotate_angle_degrees)
 		m = numpy.matrix([[math.cos(a),math.sin(a)],[-math.sin(a),math.cos(a)]])
 		rotated_vect = numpy.dot(pixelvect,numpy.asarray(m))
