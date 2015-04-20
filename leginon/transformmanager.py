@@ -372,26 +372,33 @@ class TransformManager(node.Node, TargetTransformer):
 		moverdata = imagedata['mover']
 		#### move and change preset
 		movetype = imagedata['emtarget']['movetype']
+		oldimage_target_type = imagedata['target']['type']
 		# If mover is not known, use presets manager
-		if moverdata is None or not use_parent_mover:
+		if moverdata is None or not use_parent_mover or oldimage_target_type == 'simulated':
 			movefunction = 'presets manager'
 		else:
 			movefunction = moverdata['mover']
 		keep_shift = False
-		if movetype == 'image shift' and movefunction == 'navigator':
-			self.logger.warning('Navigator cannot be used for image shift, using Presets Manager instead')
+		if 'image shift' in movetype and movefunction == 'navigator':
+			self.logger.warning('Navigator cannot be used for %s, using Presets Manager instead' % (movetype,))
 			movefunction = 'presets manager'
 		self.setStatus('waiting')
 
 		if movefunction == 'navigator':
+			preset_client_emtarget = emtarget
 			emtarget = None
 			if targetdata['type'] != 'simulated':
 				precision = moverdata['move precision']
 				accept_precision = moverdata['accept precision']
 				# Use current z in navigator move like in presetsclient
+				# z should be set in acquisition node when it start processing the target list or when self.moveToLastFocusedStageZ is called
 				status = self.navclient.moveToTarget(targetdata, movetype, precision, accept_precision, final_imageshift=False,use_current_z=True)
+				# iterative move may fail when it fails tolerance
 				if status == 'error':
-					return status
+					# use presets manager instead
+					emtarget = preset_client_emtarget
+					self.logger.warning('Reacquire with navigator failed. Use presets magner to complete')
+		# send preset with emtarget
 		self.presetsclient.toScope(presetname, emtarget, keep_shift=False)
 		stagenow = self.instrument.tem.StagePosition
 		msg = 'reacquire imageMoveAndPreset end z %.6f' % stagenow['z']
@@ -428,7 +435,12 @@ class TransformManager(node.Node, TargetTransformer):
 		presetname = oldpresetdata['name']
 		channel = int(oldimage['correction channel']==0)
 		self._moveToLastFocusedStageZ()
-		self.imageMoveAndPreset(oldimage,emtarget,use_parent_mover)
+		stagenow = self.instrument.tem.StagePosition
+		msg = 'after moveToLastFocusedStageZ z %.6f' % stagenow['z']
+		self.logger.debug(msg)
+		# z is not changed within imageMoveAndPreset
+		status = self.imageMoveAndPreset(oldimage,emtarget,use_parent_mover)
+
 		targetdata = emtarget['target']
 		# extra wait for falcon protector or normalization
 		self.logger.info('Wait for %.1f second before reaquire' % self.settings['pause time'])
@@ -485,6 +497,9 @@ class TransformManager(node.Node, TargetTransformer):
 		return version
 
 	def handleTransformTargetEvent(self, ev):
+		stagenow = self.instrument.tem.StagePosition
+		msg = 'handleTransformTargetEvent starting z %.6f' % stagenow['z']
+		self.logger.debug(msg)
 		self.setStatus('processing')
 		oldtarget = ev['target']
 		level = ev['level']
