@@ -31,7 +31,7 @@ import itertools
 idcounter = itertools.cycle(range(100))
 
 ## submodetransform
-PROJECTION_MODE_TRANSFORM = False
+PROJECTION_MODE_TRANSFORM = True
 
 class PresetChangeError(Exception):
 	pass
@@ -340,16 +340,26 @@ class PresetsManager(node.Node):
 		for i in range(failtries):
 			try:
 				if emtarget is None or emtarget['movetype'] is None:
+					# can not set with emtarget and moveype
+					# change preset with current values
 					self.logger.info('Changing preset to "%s"' % pname)
 					if ievent['keep image shift']:
+						dx = 0.0
+						dy = 0.0
 						# figure out image shift offset from current preset
-						scope_ishift = self.instrument.tem.ImageShift
-						if self.currentpreset is None:
-							dx = scope_ishift['x']
-							dy = scope_ishift['y']
+						temname = self.currentpreset['tem']['name']
+						if 'Jeol' not in temname:
+							scope_ishift = self.instrument.tem.ImageShift
+							if self.currentpreset is None:
+								dx = scope_ishift['x']
+								dy = scope_ishift['y']
+							else:
+								dx = scope_ishift['x'] - self.currentpreset['image shift']['x']
+								dy = scope_ishift['y'] - self.currentpreset['image shift']['y']
 						else:
-							dx = scope_ishift['x'] - self.currentpreset['image shift']['x']
-							dy = scope_ishift['y'] - self.currentpreset['image shift']['y']
+							# Avoid unknown bug with JEOL scopes:
+							#can not read pre-existing image shift offset at this point
+							self.logger.info('Jeol hack: pre-existing image shift offset dy=0,0')
 					self._cycleToScope(pname)
 					if ievent['keep image shift']:
 						self.logger.info('Keeping pre-existing image shift offset')
