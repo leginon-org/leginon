@@ -456,7 +456,8 @@ class Jeol(tem.TEM):
 				shift_x, shift_y, result = self.def3.GetIS1()
 		else:
 			raise RuntimeError('Image shift functions not implemented in this mode (%d, "%s")' % (mode, name))		
-		return {"x": (shift_x - neutral['x'])*scale['x'], "y": (shift_y - neutral['y'])*scale['y']}
+		result = {"x": (shift_x - neutral['x'])*scale['x'], "y": (shift_y - neutral['y'])*scale['y']}
+		return result
 	
 	def setImageShift(self, vector, relative = "absolute"):
 		scale = self.getScale('imageshift')
@@ -801,7 +802,6 @@ class Jeol(tem.TEM):
 			time.sleep(0.1)
 
 	def setStagePosition(self, position, relative='absolute'):
-		scale = self.getScale('stage')
 		# move relative or absolute, add current position for relative
 		if relative == 'relative':
 			current_position = self.getStagePosition()
@@ -814,7 +814,20 @@ class Jeol(tem.TEM):
 			pass
 		else:
 			raise ValueError
+		self._setStagePosition(position)
+		# JEM stage call may return without giving error when the position is not reached.
+		# Noticed this at NYSBC JEM-2100f
+		# Make it to retry.
+		accuracy = {'x':1e-6,'y':1e-6, 'z':1e-6}
+		for axis in accuracy.keys():
+			if axis in position.keys():
+				newposition = self.getStagePosition()
+				if abs(newposition[axis] - position[axis]) > accuracy[axis]:
+					print 'stage %s not reached' % axis
+					self._setStagePosition(position)
 
+	def _setStagePosition(self, position):
+		scale = self.getScale('stage')
 		# set stage position and wait for movement to stop
 		if 'z' in position:
 			result = self.stage3.SetZ(position['z']*scale['z'])
