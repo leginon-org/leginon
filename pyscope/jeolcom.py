@@ -262,7 +262,7 @@ class Jeol(tem.TEM):
 	def setColumnValvePosition(self, position):
 		if position == 'open':
 			self.feg3.SetBeamValve(1)
-		elif posision == 'closed':
+		elif position == 'closed':
 			self.feg3.SetBeamValve(0)
 		else:
 			raise ValueError
