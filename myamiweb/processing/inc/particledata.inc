@@ -2324,7 +2324,7 @@ class particledata {
 		list($r) = $this->mysql->getSQLResult($q);
 		$bin_text = ($r['bin'] == 1) ? '':'_'.$r['bin'].'x';
 		$source_image_name = $this->getImageNameFromId($r['source_imgid']);
-		$align_log = $r['rundir'].'/'.$source_image_name.'_st'.$bin_text,'_Log.txt';
+		$align_log = $r['rundir'].'/'.$source_image_name.'_st'.$bin_text.'_Log.txt';
 		// get shift data
 		$data = array();
 		if (is_file($align_log)) {
