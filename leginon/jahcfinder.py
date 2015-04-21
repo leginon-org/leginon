@@ -125,7 +125,11 @@ class JAHCFinder(targetfinder.TargetFinder):
 		diameter = self.settings['template diameter']
 		filediameter = self.settings['file diameter']
 		if self.settings['template filename'] != '':
-			filename = self.settings['template filename']
+			if os.path.isfile(self.settings['template filename']):
+				filename = self.settings['template filename']
+			else:
+				self.logger.warning('Specified template not found. Use default')
+				filename = default_template
 		else:
 			filename = default_template
 		self.hf.configure_template(diameter, filename, filediameter)
