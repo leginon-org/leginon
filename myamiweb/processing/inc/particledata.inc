@@ -2318,11 +2318,13 @@ class particledata {
 			."ON pair.`REF|ApDDStackRunData|ddstackrun`=run.`DEF_id` "
 			."LEFT JOIN	`ApPathData` rundir "
 			."ON run.`REF|ApPathData|path` = rundir.`DEF_id` "
-			."LEF JOIN `ApDDStackParamsData params "
-			."ON run.`REF|ApDDStackParamsData` = params.`DEF_id` "
+			."LEFT JOIN `ApDDStackParamsData` params "
+			."ON run.`REF|ApDDStackParamsData|params` = params.`DEF_id` "
 			."WHERE pair.`REF|leginondata|AcquisitionImageData|result` = ".$result_imgid;
 		list($r) = $this->mysql->getSQLResult($q);
-		$bin_text = ($r['bin'] == 1) ? '':'_'.$r['bin'].'x';
+		// Log filename depends on the binning
+		$bin = ((int) $r['bin'] < 1) ? 1:(int) $['bin'];
+		$bin_text = ($bin == 1) ? '':'_'.$bin.'x';
 		$source_image_name = $this->getImageNameFromId($r['source_imgid']);
 		$align_log = $r['rundir'].'/'.$source_image_name.'_st'.$bin_text.'_Log.txt';
 		// get shift data
