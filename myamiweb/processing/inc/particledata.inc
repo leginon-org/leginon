@@ -2323,7 +2323,7 @@ class particledata {
 			."WHERE pair.`REF|leginondata|AcquisitionImageData|result` = ".$result_imgid;
 		list($r) = $this->mysql->getSQLResult($q);
 		// Log filename depends on the binning
-		$bin = ((int) $r['bin'] < 1) ? 1:(int) $['bin'];
+		$bin = ((int) $r['bin'] < 1) ? 1:(int) $r['bin'];
 		$bin_text = ($bin == 1) ? '':'_'.$bin.'x';
 		$source_image_name = $this->getImageNameFromId($r['source_imgid']);
 		$align_log = $r['rundir'].'/'.$source_image_name.'_st'.$bin_text.'_Log.txt';
