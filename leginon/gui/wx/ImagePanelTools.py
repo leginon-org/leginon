@@ -106,12 +106,13 @@ class ShapeNewParamsEvent(wx.PyCommandEvent):
 		self.params = params
 
 class ImageNewPixelSizeEvent(wx.PyCommandEvent):
-	def __init__(self, source, pixelsize,center,hightension):
+	def __init__(self, source, pixelsize,center,hightension,cs):
 		wx.PyCommandEvent.__init__(self, ImageNewPixelSizeEventType, source.GetId())
 		self.SetEventObject(source)
 		self.pixelsize = pixelsize
 		self.center = center
 		self.hightension = hightension
+		self.cs = cs
 
 #--------------------
 def getColorMap():
@@ -648,7 +649,7 @@ class ResolutionTool(ValueTool):
 				# avoid divide by zero error
 				return ''
 			resolution = 1/math.sqrt(((x-self.center['x'])*self.pixelsize['x'])**2+((y-self.center['y'])*self.pixelsize['y'])**2)
-			defocus = fftfun.calculateDefocus(self.hightension,1/resolution)
+			defocus = fftfun.calculateDefocus(self.hightension,1/resolution,self.cs)
 			if resolution < 1e-6:
 				resolutionstr = "%.2f nm" % (resolution*1e9,)
 			else:
@@ -661,6 +662,7 @@ class ResolutionTool(ValueTool):
 		self.pixelsize = evt.pixelsize
 		self.center = evt.center
 		self.hightension = evt.hightension
+		self.cs = evt.cs
 
 	def OnLeftClick(self, evt):
 		xy = self.imagepanel.view2image((evt.GetX(), evt.GetY()))

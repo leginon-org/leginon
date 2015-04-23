@@ -6,11 +6,11 @@ import numpy
 from pyami import imagefun, ellipse, mrc
 from scipy import ndimage,fftpack
 
-def getAstigmaticDefocii(params,rpixelsize, ht):
+def getAstigmaticDefocii(params,rpixelsize, ht, cs):
 	minr = rpixelsize * min(params['a'],params['b'])
-	maxz = calculateDefocus(ht,minr)
+	maxz = calculateDefocus(ht,minr,cs)
 	maxr = rpixelsize * max(params['a'],params['b'])
-	minz = calculateDefocus(ht,maxr)
+	minz = calculateDefocus(ht,maxr,cs)
 	z0 = (maxz + minz) / 2.0
 	zast = maxz - z0
 	ast_ratio = zast / z0
@@ -37,12 +37,14 @@ def getElectronWavelength(ht):
 def calculateDefocus(ht, s, Cs=2.0e-3):
 		# unit is meters
 	wavelength = getElectronWavelength(ht)
+	print 'Cs in calculateDefocus', Cs
 	return (Cs*wavelength**3*s**4/2+1.0)/(wavelength * s**2)
 
 def calculateFirstNode(ht,z,Cs=2.0e-3):
 	# length unit is meters, and ht in Volts
 	'''This works for defocus larger than about 110 nm underfocus at 120kV'''
 	wavelength = getElectronWavelength(ht)
+	print 'Cs in calculateFirstNode', Cs
 	a = Cs*(wavelength**3)/4.0
 	b = z*wavelength/2
 	c = 0.5
@@ -120,13 +122,13 @@ def find_ast_ellipse(grad,thr,dmean,drange):
 	else:
 		return None
 
-def fitFirstCTFNode(pow, rpixelsize, defocus, ht):
+def fitFirstCTFNode(pow, rpixelsize, defocus, ht, cs):
 	filter = ndimage.gaussian_filter(pow,3)
 	grad = ndimage.gaussian_gradient_magnitude(filter,3)
 	thr = imagefun.threshold(grad,grad.mean()+3*grad.std())
 	if defocus:
 		z = abs(defocus)
-		s = calculateFirstNode(ht,z)
+		s = calculateFirstNode(ht,z,cs)
 		dmean = max(0.8*s/rpixelsize, 30)
 	else:
 		shape = pow.shape
@@ -138,7 +140,7 @@ def fitFirstCTFNode(pow, rpixelsize, defocus, ht):
 	drange = max(dmean / 4, 10)
 	eparams = find_ast_ellipse(grad,thr,dmean,drange)
 	if eparams:
-		z0, zast, ast_ratio, alpha = getAstigmaticDefocii(eparams,rpixelsize, ht)
+		z0, zast, ast_ratio, alpha = getAstigmaticDefocii(eparams,rpixelsize, ht, cs)
 		return z0,zast,ast_ratio, alpha, eparams
 	else:
 		return None
@@ -180,5 +182,5 @@ if __name__ == '__main__':
 	imagepixelsize = {'x':pixelsize,'y':pixelsize}
 	rpixelsize = {'x':1.0/(imagepixelsize['x']*dimension['x']),'y':1.0/(imagepixelsize['y']*dimension['y'])}
 	
-	ctfdata = fitFirstCTFNode(pow,rpixelsize['x'], None, ht)
+	ctfdata = fitFirstCTFNode(pow,rpixelsize['x'], None, ht, Cs)
 	print ctfdata

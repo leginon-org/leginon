@@ -68,8 +68,8 @@ class Panel(leginon.gui.wx.Node.Panel):
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_STOP, False)
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, True)
 
-	def onNewPixelSize(self, pixelsize,center,hightension):
-		idcevt = leginon.gui.wx.ImagePanelTools.ImageNewPixelSizeEvent(self.imagepanel, pixelsize,center,hightension)
+	def onNewPixelSize(self, pixelsize,center,hightension,cs):
+		idcevt = leginon.gui.wx.ImagePanelTools.ImageNewPixelSizeEvent(self.imagepanel, pixelsize,center,hightension,cs)
 		self.imagepanel.GetEventHandler().AddPendingEvent(idcevt)
 		self.center = center
 

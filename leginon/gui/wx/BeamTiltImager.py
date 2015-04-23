@@ -122,9 +122,9 @@ class Panel(leginon.gui.wx.Acquisition.Panel):
 	def manualUpdated(self):
 		self.manualdialog.manualUpdated()
 	
-	def onNewPixelSize(self, pixelsize,center,hightension):
+	def onNewPixelSize(self, pixelsize,center,hightension, cs):
 		self.manualdialog.center = center
-		self.manualdialog.onNewPixelSize(pixelsize,center,hightension)
+		self.manualdialog.onNewPixelSize(pixelsize,center,hightension,cs)
 
 class SettingsDialog(leginon.gui.wx.Acquisition.SettingsDialog):
 	def initialize(self):

@@ -262,12 +262,13 @@ class ManualFocusDialog(wx.Frame):
 	def onSetImage(self, evt):
 		self.imagepanel.setImageType(evt.typename, evt.image)
 
-	def onNewPixelSize(self, pixelsize,center,hightension):
-		idcevt = leginon.gui.wx.ImagePanelTools.ImageNewPixelSizeEvent(self.imagepanel, pixelsize,center,hightension)
+	def onNewPixelSize(self, pixelsize,center,hightension, cs):
+		idcevt = leginon.gui.wx.ImagePanelTools.ImageNewPixelSizeEvent(self.imagepanel, pixelsize,center,hightension,cs)
 		self.imagepanel.GetEventHandler().AddPendingEvent(idcevt)
 		self.center = center
 		self.pixelsize = pixelsize
 		self.hightension = hightension
+		self.cs = cs
 
 	def onShapeFound(self, evt):
 		centers = [(self.center['y'],self.center['x']),]
@@ -279,7 +280,7 @@ class ManualFocusDialog(wx.Frame):
 		if not self.imagepanel.selectiontool.isDisplayed('Power'):
 			return
 		resolution = 1/math.sqrt(((evt.xy[0]-self.center['x'])*self.pixelsize['x'])**2+((evt.xy[1]-self.center['y'])*self.pixelsize['y'])**2)
-		defocus = fftfun.calculateDefocus(self.hightension,1/resolution)
+		defocus = fftfun.calculateDefocus(self.hightension,1/resolution,self.cs)
 		self.node.increment = defocus
 		self.settingsdialog.increment.SetValue(self.node.increment)
 

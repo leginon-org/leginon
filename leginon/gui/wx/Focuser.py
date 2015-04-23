@@ -155,9 +155,9 @@ class Panel(leginon.gui.wx.Acquisition.Panel):
 	def onAlignRotationCenter(self, evt):
 		self.align_dialog.Show()
 
-	def onNewPixelSize(self, pixelsize,center,hightension):
+	def onNewPixelSize(self, pixelsize,center,hightension,cs):
 		self.manualdialog.center = center
-		self.manualdialog.onNewPixelSize(pixelsize,center,hightension)
+		self.manualdialog.onNewPixelSize(pixelsize,center,hightension,cs)
 
 class SettingsDialog(leginon.gui.wx.Acquisition.SettingsDialog):
 	def initialize(self):

@@ -466,6 +466,11 @@ class ManualAcquisition(node.Node):
 		evt = gui.wx.ManualAcquisition.ManualCheckDoneEvent(self.panel)
 		self.panel.GetEventHandler().AddPendingEvent(evt)
 
+	def getTEMCsValue(self):
+		scopedata = self.instrument.getData(leginondata.ScopeEMData)
+		cs = scopedata['tem']['cs']
+		return cs
+
 	def manualCheckLoop(self, presetname=None, emtarget=None):
 		## copied and simplified from focuser.py
 		## go to preset and target
@@ -480,7 +485,8 @@ class ManualAcquisition(node.Node):
 		self.instrument.ccdcamera.Settings = camdata1
 		pixelsize,center = self.getReciprocalPixelSizeFromInstrument()
 		self.ht = self.instrument.tem.HighTension
-		self.panel.onNewPixelSize(pixelsize,center,self.ht)
+		self.cs = self.getTEMCsValue()
+		self.panel.onNewPixelSize(pixelsize,center,self.ht,self.cs)
 		self.manualplayer.play()
 		self.onManualCheck()
 		while True:
@@ -545,7 +551,7 @@ class ManualAcquisition(node.Node):
 		return pixelsize, center
 
 	def estimateAstigmation(self,params):
-		z0, zast, ast_ratio, angle = fftfun.getAstigmaticDefocii(params,self.rpixelsize,self.ht)
+		z0, zast, ast_ratio, angle = fftfun.getAstigmaticDefocii(params,self.rpixelsize,self.ht, self.cs)
 		self.logger.info('z0 %.2f um, zast %.2f um (%.0f %%), angle= %.0f deg' % (z0*1e6,zast*1e6,ast_ratio*100, angle*180.0/math.pi))
 
 	def saveComment(self):

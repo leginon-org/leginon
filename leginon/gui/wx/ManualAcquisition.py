@@ -223,9 +223,9 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 		self._acquisitionEnable(False)
 		self.node.acquisitionLoopStop()
 
-	def onNewPixelSize(self, pixelsize,center,hightension):
+	def onNewPixelSize(self, pixelsize,center,hightension,cs):
 		self.manualdialog.center = center
-		self.manualdialog.onNewPixelSize(pixelsize,center,hightension)
+		self.manualdialog.onNewPixelSize(pixelsize,center,hightension,cs)
 
 class GridDialog(wx.Dialog):
 	def __init__(self, parent):
@@ -622,8 +622,8 @@ class ManualFocusDialog(wx.MiniFrame):
 	def onSetImage(self, evt):
 		self.imagepanel.setImageType(evt.typename, evt.image)
 
-	def onNewPixelSize(self, pixelsize,center,hightension):
-		idcevt = leginon.gui.wx.ImagePanelTools.ImageNewPixelSizeEvent(self.imagepanel, pixelsize,center,hightension)
+	def onNewPixelSize(self, pixelsize,center,hightension,cs):
+		idcevt = leginon.gui.wx.ImagePanelTools.ImageNewPixelSizeEvent(self.imagepanel, pixelsize,center,hightension,cs)
 		self.imagepanel.GetEventHandler().AddPendingEvent(idcevt)
 		self.center = center
 

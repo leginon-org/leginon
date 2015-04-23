@@ -48,8 +48,9 @@ class FFTMaker(imagewatcher.ImageWatcher):
 			shape = pow.shape
 			center = {'x':shape[1]/2,'y':shape[0]/2}
 			self.ht = imagedata['scope']['high tension']
+			self.cs = imagedata['scope']['tem']['cs']
 			self.rpixelsize = rpixelsize
-			self.panel.onNewPixelSize(rpixelsize,center,self.ht)
+			self.panel.onNewPixelSize(rpixelsize,center,self.ht,self.cs)
 			if imagedata['filename'] and self.settings['save']:
 				self.publishPowerImage(imagedata,pow)
 
@@ -73,7 +74,7 @@ class FFTMaker(imagewatcher.ImageWatcher):
 	def estimateAstigmation(self,params):
 		if self.rpixelsize['x'] != self.rpixelsize['y']:
 			self.logger.error('Astigmatic defocus calculation not implemented for unequal x, y pixelsizes')
-		z0, zast, ast_ratio, angle = fftfun.getAstigmaticDefocii(params,self.rpixelsize['x'],self.ht)
+		z0, zast, ast_ratio, angle = fftfun.getAstigmaticDefocii(params,self.rpixelsize['x'],self.ht,self.cs)
 		self.logger.info('z0 %.3f um, zast %.3f um (%.0f ), angle= %.1f deg' % (z0*1e6,zast*1e6,ast_ratio*100, angle*180.0/math.pi))
 
 	def publishPowerImage(self, imagedata, powimage):

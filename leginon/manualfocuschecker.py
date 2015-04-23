@@ -117,6 +117,11 @@ class ManualFocusChecker(acquisition.Acquisition):
 		if t1-t0 < safetime:
 			time.sleep(safetime-(t1-t0))
 
+	def getTEMCsValue(self):
+		scopedata = self.instrument.getData(leginondata.ScopeEMData)
+		cs = scopedata['tem']['cs']
+		return cs
+
 	def manualCheckLoop(self, setting, emtarget=None, focusresult=None):
 		## go to preset and target
 		presetname = setting['preset name']
@@ -124,7 +129,8 @@ class ManualFocusChecker(acquisition.Acquisition):
 			self.presetsclient.toScope(presetname, emtarget)
 		pixelsize,center = self.getReciprocalPixelSizeFromPreset(presetname)
 		self.ht = self.instrument.tem.HighTension
-		self.panel.onNewPixelSize(pixelsize,center,self.ht)
+		self.cs = self.getTEMCsValue()
+		self.panel.onNewPixelSize(pixelsize,center,self.ht,self.cs)
 		self.logger.info('Starting manual focus loop, please confirm defocus...')
 		self.beep()
 		self.manualplayer.play()

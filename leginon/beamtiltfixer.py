@@ -13,7 +13,7 @@ import threading
 import event
 import time
 import math
-from pyami import correlator, peakfinder, imagefun, numpil,arraystats,fftfun
+from pyami import correlator, peakfinder, imagefun, numpil,arraystats
 import numpy
 from scipy import ndimage
 import copy

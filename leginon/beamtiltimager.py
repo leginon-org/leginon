@@ -120,6 +120,7 @@ class BeamTiltImager(manualfocuschecker.ManualFocusChecker):
 
 	def addCornerCTFlabels(self, imagedata, split):
 		self.ht = imagedata['scope']['high tension']
+		self.cs = imagedata['scope']['tem']['cs']
 		image = imagedata['image']
 		if not self.rpixelsize:
 			self.rpixelsize = self.btcalclient.getImageReciprocalPixelSize(imagedata)
@@ -131,7 +132,7 @@ class BeamTiltImager(manualfocuschecker.ManualFocusChecker):
 			for col in (0,(split/2)*splitsize[1],(split-1)*splitsize[1]):
 				colslice = slice(col,col+splitsize[1])
 				splitimage = image[rowslice,colslice]
-				labeled, ctfdata = self.binAndAddCTFlabel(splitimage, self.ht, self.rpixelsize, 1, self.defocus)
+				labeled, ctfdata = self.binAndAddCTFlabel(splitimage, self.ht, self.cs, self.rpixelsize, 1, self.defocus)
 				self.tabimage[rowslice,colslice] = labeled
 
 	def insertTableau(self, imagedata, angle, rad):
@@ -141,7 +142,7 @@ class BeamTiltImager(manualfocuschecker.ManualFocusChecker):
 			self.ht = imagedata['scope']['high tension']
 			if not self.rpixelsize:
 				self.rpixelsize = self.btcalclient.getImageReciprocalPixelSize(imagedata)
-			binned, ctfdata = self.binAndAddCTFlabel(image, self.ht, self.rpixelsize, binning, self.defocus)
+			binned, ctfdata = self.binAndAddCTFlabel(image, self.ht, self.cs, self.rpixelsize, binning, self.defocus)
 			self.ctfdata.append(ctfdata)
 		else:
 			binned = imagefun.bin(image, binning)
@@ -366,7 +367,7 @@ class BeamTiltImager(manualfocuschecker.ManualFocusChecker):
 			return None
 		return ace2exe
 
-	def binAndAddCTFlabel(self, image, ht, rpixelsize, binning=1, defocus=None):
+	def binAndAddCTFlabel(self, image, ht, cs, rpixelsize, binning=1, defocus=None):
 		pow = imagefun.power(image)
 		binned = imagefun.bin(pow, binning)
 		# No ctf estimation until it works better so that this node does not
@@ -375,7 +376,7 @@ class BeamTiltImager(manualfocuschecker.ManualFocusChecker):
 		ctfdata = None
 		'''
 		try:
-			ctfdata = fftfun.fitFirstCTFNode(pow,rpixelsize['x'], defocus, ht)
+			ctfdata = fftfun.fitFirstCTFNode(pow,rpixelsize['x'], defocus, ht, cs)
 		except Exception, e:
 			self.logger.error("ctf fitting failed: %s" % e)
 			ctfdata = None

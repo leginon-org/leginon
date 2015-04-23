@@ -18,8 +18,6 @@ import sys
 import math
 import wx
 
-from pyami import fftfun
-
 from leginon.gui.wx.Choice import Choice
 from leginon.gui.wx.Entry import Entry
 import leginon.gui.wx.Acquisition

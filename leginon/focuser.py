@@ -13,7 +13,7 @@ import threading
 import event
 import time
 import math
-from pyami import imagefun, fftfun, ordereddict
+from pyami import imagefun, ordereddict
 import numpy
 import copy
 import gui.wx.Focuser

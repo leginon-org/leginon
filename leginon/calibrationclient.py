@@ -211,13 +211,14 @@ class CalibrationClient(object):
 		nextimage = self.acquireImage(nextscope, settle, correct_tilt=False)
 		## get ctf parameters
 		self.ht = nextimage['scope']['high tension']
+		self.cs = nextimage['scope']['tem']['cs']
 		if not self.rpixelsize:
 			self.rpixelsize = self.getImageReciprocalPixelSize(nextimage)
 		imagearray = nextimage['image']
 		if imagearray.max() == 0:
 			raise RuntimeError('Bad image intensity range')
 		pow = imagefun.power(imagearray)
-		ctfdata = fftfun.fitFirstCTFNode(pow,self.rpixelsize['x'], None, self.ht)
+		ctfdata = fftfun.fitFirstCTFNode(pow,self.rpixelsize['x'], None, self.ht, self.cs)
 
 		self.checkAbort()
 		if ctfdata is not None:
@@ -246,7 +247,7 @@ class CalibrationClient(object):
 			self.ht = imagedata['scope']['high tension']
 			if not self.rpixelsize:
 				self.rpixelsize = self.getImageReciprocalPixelSize(imagedata)
-			ctfdata = fftfun.fitFirstCTFNode(pow,self.rpixelsize['x'], None, self.ht)
+			ctfdata = fftfun.fitFirstCTFNode(pow,self.rpixelsize['x'], None, self.ht, self.cs)
 			self.ctfdata.append(ctfdata)
 
 			# show defocus estimate on tableau
@@ -1270,13 +1271,30 @@ class ImageShiftCalibrationClient(SimpleMatrixCalibrationClient):
 		need to be properly calibrated for this to work right
 		'''
 		par = self.parameter()
-		matrix1 = self.retrieveMatrix(tem1, ccdcamera1, par, ht, mag1)
-		matrix2 = self.retrieveMatrix(tem2, ccdcamera2, par, ht, mag2)
-		matrix2inv = numpy.linalg.inv(matrix2)
-		p1 = numpy.array(p1)
-		physicalpos = numpy.dot(matrix1, p1)
-		p2 = numpy.dot(matrix2inv, physicalpos)
+		physicalpos = self.pixelToPosition(tem1,ccdcamera1, par, ht, mag1, p1)
+		p2 = self.positionToPixel(tem2,ccdcamera2, par, ht, mag2, physicalpos)
 		return p2
+
+	def pixelToPosition(self,tem, ccdcamera, matrix_type, ht, mag, pixel_shift):
+		'''
+		Using matrix to transform a pixel shift on camera to relative physical position.
+		'''
+		par = matrix_type
+		matrix = self.retrieveMatrix(tem, ccdcamera, par, ht, mag)
+		shift = numpy.array(pixel_shift)
+		physicalpos = numpy.dot(matrix, pixel_shift)
+		return physicalpos
+
+	def positionToPixel(self,tem, ccdcamera, matrix_type, ht, mag, position):
+		'''
+		Using matrix to transform a relative physical position to pixel shift on camera.
+		'''
+		par = matrix_type
+		matrix = self.retrieveMatrix(tem, ccdcamera, par, ht, mag)
+		matrix_inv = numpy.linalg.inv(matrix)
+		physicalpos = numpy.array(position)
+		pixel_shift = numpy.dot(matrix_inv, physicalpos)
+		return pixel_shift
 
 class BeamShiftCalibrationClient(SimpleMatrixCalibrationClient):
 	mover = False
