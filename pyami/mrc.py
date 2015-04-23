@@ -628,6 +628,36 @@ def appendArray(a, f):
 		end = start + items_per_write
 		b[start:end].tofile(f)
 
+def substackFromMRCStack(mrcstack, outfile, listfile):
+	''' 
+	f=/path/to/stack.mrc, list=EMAN-style list, numbering starts with 0, writes output mrc stack 
+	'''
+	# read list, EMAN-style, one line per integer, numbersing starts with 0
+	l = open(listfile, "r")
+	llines = l.readlines()
+	locs = [int(line.strip()) for line in llines]
+	locs.sort()
+	l.close()
+
+	# get number of particles
+	header = read_file_header(mrcstack)
+	npart = header['shape'][0]
+	print npart
+
+	# read each individual particle and append to new mrc
+	i = 0
+	for loc in locs:
+		if i == 0:
+			a = read(mrcstack, zslice=0)
+			write(a, outfile)
+		else:
+			a = read(mrcstack, zslice=loc)
+			append(a, outfile)
+		if i % 1000 == 0:
+			print "written %d images to stack" % i 
+		i+=1
+
+
 def update_file_header(filename, headerdict):
 	'''
 	open the MRC header, update the fields given by headerdict
@@ -770,7 +800,7 @@ def saveSumStack(filename,outfile,dtype=numpy.float32):
 	a = sumStack(filename,dtype)
 	write(a, outfile)
 
-def averageStack(filename):
+def averageStack(filename,dtype=numpy.float32):
 	h = readHeaderFromFile(filename)
 	nslices = h['nz']
 	for i in range(nslices):
@@ -783,7 +813,7 @@ def averageStack(filename):
 
 def saveAverageStack(filename,outfile,dtype=numpy.float32):
 	a = averageStack(filename,dtype)
-	mrc.write(a, outfile)
+	write(a, outfile)
 
 def testHeader():
 	infilename = sys.argv[1]
