@@ -140,6 +140,7 @@ class MatrixCalibrator(calibrator.Calibrator):
 				change = actual2 - actual1
 				if change == 0.0:
 					raise CalibrationError('change in %s is zero' % self.parameter)
+				self.logger.info('scope %s axis % s change between images: %s' % (self.parameter,axis,change))
 
 				perpix = change / totalpix
 
@@ -147,14 +148,16 @@ class MatrixCalibrator(calibrator.Calibrator):
 				## 12%
 				#tol = 12/100.0
 				tol = self.settings['%s tolerance' % self.parameter]/100.0
-				err = abs(perpix - pixsize) / pixsize
+				err = (perpix - pixsize) / pixsize
 
 				s = 'Pixel size error: %.2f' % (err*100.0)
 				s += '%'
 				s += ' (per pixel %s)' % perpix
 				self.logger.info(s)
 
-				if err > tol:
+				self.logger.info('Or config scale multification = %.2f' % (perpix / pixsize))
+
+				if abs(err) > tol:
 					self.logger.warning('Failed pixel size tolerance')
 					continue
 
