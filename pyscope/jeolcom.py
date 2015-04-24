@@ -151,14 +151,20 @@ class Jeol(tem.TEM):
 		Valid keys are 'beamshift','imageshift','beamtilt'
 		'''
 		optionname = 'neutral '+key
+		value = [0,0]
+
 		if mag is None:
 			mag = self.getMagnification()
 		try:
 			value = self.getJeolConfig(optionname,mag)
-			return {'x':value[0],'y':value[1]}
 		except:
-			print optionname,mag
-			raise RuntimeError('%s function not configured at mag %d' % (key,mag))
+			try:
+				lens_series = self.getLensSeriesDivision(mag)
+				value = self.getJeolConfig(optionname,lens_series)
+			except:
+				print optionname,mag
+				raise RuntimeError('%s function not configured at mag %d' % (key,mag))
+		return {'x':value[0],'y':value[1]}
 
 	def setProjectionSubModes(self):
 		mode_names = self.getJeolConfig('eos','use_modes')
@@ -778,6 +784,12 @@ class Jeol(tem.TEM):
 		mode_index, name, result = self.eos3.GetFunctionMode()
 		# can not return name because both 0 and 1 index function mode returns 'mag' as name.
 		return FUNCTION_MODE_ORDERED_NAMES[mode_index]
+
+	def getLensSeriesDivision(self,mag):
+		mode_name,mode_id = self.projection_submode_map[mag]
+		# depends on mag to choose ['ls1','ls2','ls3','lm1']
+		mode_subname = self.subDivideMode(mode_name,mag)
+		return mode_subname
 
 	def getStagePosition(self):
 		scale = self.getScale('stage')

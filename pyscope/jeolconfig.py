@@ -128,3 +128,4 @@ def getConfigured():
 
 if __name__ == '__main__':
 	print getConfigured()
+	raw_input('Hit any key to quit.')
