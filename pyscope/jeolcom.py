@@ -663,7 +663,17 @@ class Jeol(tem.TEM):
 		return value
 
 	def getMagnification(self):
-		mag = self._getMagnification()
+		mag = None
+		trials = 0
+		maxtrials = 10
+		# repeat get since found on NYSBC 3200FSC that it may not return value on the first try
+		while not mag:
+			mag = self._getMagnification()
+			if trials:
+				print 'unsuccessful getMagnification(). trial %d' %d
+				if trials > maxtrials:
+					raise RuntimeError('getMagnification abort after %d trials' % maxtrials)
+			trials += 1
 		return mag
 
 	def getMainScreenMagnification(self):
@@ -830,7 +840,7 @@ class Jeol(tem.TEM):
 		# JEM stage call may return without giving error when the position is not reached.
 		# Noticed this at NYSBC JEM-2100f
 		# Make it to retry.
-		accuracy = {'x':1e-6,'y':1e-6, 'z':1e-6}
+		accuracy = {'x':1e-7,'y':1e-7, 'z':1e-6, 'a':math.radians(0.5)}
 		for axis in accuracy.keys():
 			if axis in position.keys():
 				newposition = self.getStagePosition()
