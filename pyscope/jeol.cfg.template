@@ -8,6 +8,8 @@ LS1_MAG_MAX = 5000
 LS2_MAG_MAX = 30000
 LS3_MAG_MAX = 100000
 LM1_MAG_MAX = 200
+#desable control of auto apertures if not working
+USE_AUTO_APT = False
 
 [eos]
 # electron optics class

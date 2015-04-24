@@ -80,8 +80,8 @@ class Jeol(tem.TEM):
 				timout = True
 				sys.exit(1)
 
-		self.has_auto_apt = self.testAutomatedAperture()
 		self.setJeolConfigs()
+		self.has_auto_apt = self.testAutomatedAperture()
 
 		self.magnifications = []
 		# submode_mags keys are submode_indices and values are magnification list in the submode
@@ -108,7 +108,7 @@ class Jeol(tem.TEM):
 			if result != 0:
 				time.sleep(.1)
 				result = self.apt3.SelectKind(2)
-		return result == 0
+		return result == 0 and self.jeolconfigs('tem option','use_auto_apt')
 
 	def subDivideMode(self,mode_name,mag):
 		if mode_name == 'mag1':
@@ -1129,7 +1129,7 @@ class Jeol(tem.TEM):
 		else:
 			raise ValueError('Invalid aperture name specified')
 
-	def _getApertureSizes(self, name):
+	def _getApertureSizesOfKind(self, name):
 		if name == 'condenser':
 			return self.getJeolConfig('apt','cla_sizes')
 		elif name == 'objective':
@@ -1148,7 +1148,7 @@ class Jeol(tem.TEM):
 		names = self.getApertures()
 
 		for name in names:
-			sizes[name] = self._getApertureSizes(name)
+			sizes[name] = self._getApertureSizesOfKind(name)
 
 		return sizes
 
@@ -1160,42 +1160,27 @@ class Jeol(tem.TEM):
 		'''
 		sizes = {}
 
-		names = self.getApertures()
-
-		for name in names:
-			kind = self._getApertureKind(name)
-			# Despite the name, this gives not the size
-			# but a number as the current aperture position
-			if not self.has_auto_apt:
-				index = 0
-			else:
-				index, result = self.apt3.GetSize(kind)
-
-				for i in range(10):
-					if result != 0:
-						time.sleep(.1)
-						size, result = self.apt3.GetSize(kind)
-
-				if result != 0:
-					raise SystemError('Get %s aperture size failed' % name)
-
-				size_list = self._getApertureSizes(name)
+		positions = self.getAperturePosition()
+		for name in positions.keys():
+			size_list = self._getApertureSizesOfKind(name)
 
 			try:
-				sizes[name] = size_list[index]
+				sizes[name] = size_list[positions[name]]
 			except ValueError:
 				raise SystemError('No %s aperture size for index %d' % (name,index))
 
 		return sizes
 
 	def setApertureSize(self, sizes):
+		if not self.has_auto_apt:
+			return
 
 		current_kind, result = self.apt3.GetKind()
 
 		for name in sizes:
 			kind = self._getApertureKind(name)
 
-			size_list = self._getApertureSizes(name)
+			size_list = self._getApertureSizesOfKind(name)
 
 			if sizes[name] is None:
 				return
@@ -1239,6 +1224,11 @@ class Jeol(tem.TEM):
 
 		names = self.getApertures()
 
+		if not self.has_auto_apt:
+			for name in names:
+				positions[name] = 0
+			return positions
+
 		current_kind, result = self.apt3.GetKind()
 
 		for name in names:
@@ -1262,8 +1252,10 @@ class Jeol(tem.TEM):
 		return positions
 
 	def setAperturePosition(self, positions):
-		current_kind, result = self.apt3.GetKind()
+		if not self.has_auto_apt:
+			return
 
+		current_kind, result = self.apt3.GetKind()
 		for name in positions:
 			p = positions[name]
 			if 'x' in p and type(p['x']) is not int:
