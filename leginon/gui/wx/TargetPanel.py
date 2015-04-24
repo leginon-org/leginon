@@ -498,6 +498,8 @@ if __name__ == '__main__':
 			frame.Show(True)
 			return True
 
+	if filename is None:
+		filename = raw_input('Enter file path: ')
 	app = MyApp(0,box)
 	if filename is None:
 		app.panel.setImage(None)
