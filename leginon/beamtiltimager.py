@@ -60,6 +60,9 @@ class BeamTiltImager(manualfocuschecker.ManualFocusChecker):
 		self.btcalclient = calibrationclient.BeamTiltCalibrationClient(self)
 		self.imageshiftcalclient = calibrationclient.ImageShiftCalibrationClient(self)
 		self.euclient = calibrationclient.EucentricFocusClient(self)
+		self.rpixelsize = None
+		self.ht = None
+		self.cs = None
 		# ace2 is not used for now.
 		#self.ace2exe = self.getACE2Path()
 
@@ -139,9 +142,6 @@ class BeamTiltImager(manualfocuschecker.ManualFocusChecker):
 		image = imagedata['image']
 		binning = self.settings['tableau binning']
 		if self.settings['tableau type'] != 'beam tilt series-image':
-			self.ht = imagedata['scope']['high tension']
-			if not self.rpixelsize:
-				self.rpixelsize = self.btcalclient.getImageReciprocalPixelSize(imagedata)
 			binned, ctfdata = self.binAndAddCTFlabel(image, self.ht, self.cs, self.rpixelsize, binning, self.defocus)
 			self.ctfdata.append(ctfdata)
 		else:
@@ -237,6 +237,11 @@ class BeamTiltImager(manualfocuschecker.ManualFocusChecker):
 			self.logger.info('New beam tilt: %.4f, %.4f' % (newbt['x'],newbt['y'],))
 			status = manualfocuschecker.ManualFocusChecker.acquire(self, presetdata, emtarget, channel= channel)
 			imagedata = self.imagedata
+			# get these values once
+			if not self.rpixelsize or not self.ht or not self.cs:
+				self.rpixelsize = self.btcalclient.getImageReciprocalPixelSize(imagedata)
+				self.ht = imagedata['scope']['high tension']
+				self.cs = imagedata['scope']['tem']['cs']
 			self.setImage(imagedata['image'], 'Image')
 			self.instrument.tem.BeamTilt = oldbt
 			angle = anglelist[i]
