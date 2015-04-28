@@ -1113,6 +1113,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 				self.validatePresets()
 			except InvalidPresetsSequence:
 				self.logger.error('Configure at least one preset in the settings for this node.')
+				self.setStatus('idle')
 				return
 			presetnames = self.settings['preset order']
 			currentpreset = self.presetsclient.getPresetByName(presetnames[0])
