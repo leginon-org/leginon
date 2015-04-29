@@ -56,6 +56,10 @@ class JeolConfigParser(object):
 		return value
 
 	def addHierarchyValue(self,name,levels,value):
+		'''
+		Add values to configured up to 3 levels.
+		'''
+		# This can be written perttier, but will do for now.
 		if len(self.configured[name].keys()) == 0:
 			self.configured[name] = self.newHierarchyDict(levels,value)
 			return
@@ -63,6 +67,8 @@ class JeolConfigParser(object):
 			self.configured[name][levels[0]] = value
 		else:
 			if len(levels) == 2:
+				if levels[0] not in self.configured[name].keys():
+					self.configured[name][levels[0]]={}
 				self.configured[name][levels[0]][levels[1]]=value
 			if len(levels) == 3:
 				if levels[0] not in self.configured[name].keys():
