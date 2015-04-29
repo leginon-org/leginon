@@ -131,7 +131,7 @@ def listFileFromRelionStarFile(starfile, outlist, datablock="data_images"):
 
  	star = starFile.StarFile(starfile)
 	star.read()
-	dataBlock = star.getDataBlock("data_images")
+	dataBlock = star.getDataBlock(datablock)
 	loopDict = dataBlock.getLoopDict()
 
 	allparts = []
