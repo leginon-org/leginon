@@ -2,6 +2,9 @@ from leginon import leginondata
 import threading
 import time
 
+# Change this to False to avoid automated screen lifting
+AUTO_SCREEN_UP = True
+
 default_settings = leginondata.CameraSettingsData()
 default_settings['dimension'] = {'x': 1024, 'y': 1024}
 default_settings['offset'] = {'x': 0, 'y': 0}
@@ -101,11 +104,19 @@ class CameraClient(object):
 		except:
 			pass
 		if state != 'up':
+			self.logger.info('Lifting screen for camera exposure....')
 			self.instrument.tem.MainScreenPosition = 'up'
+
+	def dummyLiftScreen(self):
+		pass
 
 	def prepareToAcquire(self,allow_retracted=False,exposure_type='normal'):
 		t1 = threading.Thread(target=self.positionCamera(allow_retracted=allow_retracted))
-		t2 = threading.Thread(target=self.liftScreenBeforeExposure(exposure_type))
+		if AUTO_SCREEN_UP:
+			t2 = threading.Thread(target=self.liftScreenBeforeExposure(exposure_type))
+		else:
+			t2 = threading.Thread(target=self.dummyLiftScreen())
+
 		while t1.isAlive() or t2.isAlive():
 			time.sleep(0.5)
 
