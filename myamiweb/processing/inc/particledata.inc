@@ -15,7 +15,7 @@ if( !file_exists(dirname(__FILE__).'/../../config.php') ){
 	exit();
 }
 
-
+define('DS', "/");
 require_once dirname(__FILE__).'/../../config.php';
 require_once "inc/mysql.inc";
 require_once "inc/path.inc";
@@ -6104,7 +6104,7 @@ function getBaseAppionPath($sessioninfo,$new_base='appion') {
 	$leginon_imagepath = $sessioninfo['Image path'];
 	if (defined('DEFAULT_APPION_PATH') && DEFAULT_APPION_PATH !='') {
 		$appion_path = Path::formatEndPath(DEFAULT_APPION_PATH);
-		$parts = explode(DIRECTORY_SEPARATOR,PATH::formatEndPath($leginon_imagepath));
+		$parts = explode(DS,PATH::formatEndPath($leginon_imagepath));
 		$session_index = array_search($sessioninfo['Name'],$parts);
 		$leginon_index = lastPathMatchIndex($leginon_imagepath,'leginon');
 		$appion_index = lastPathMatchIndex($appion_path,$new_base);
@@ -6113,14 +6113,14 @@ function getBaseAppionPath($sessioninfo,$new_base='appion') {
 			if (defined('APPION_PARENT_REPLACEMENT') && APPION_PARENT_REPLACEMENT < 0) {
 				# replace one part into DEFAULT_APPION_PATH
 				$replace_part = $parts[$leginon_index+APPION_PARENT_REPLACEMENT];
-				$appion_parts = explode(DIRECTORY_SEPARATOR,$appion_path);
+				$appion_parts = explode(DS,$appion_path);
 				array_splice($appion_parts,$appion_index+APPION_PARENT_REPLACEMENT,1,array($replace_part));
-				$appion_path = Path::formatEndPath(implode(DIRECTORY_SEPARATOR,$appion_parts));
+				$appion_path = Path::formatEndPath(implode(DS,$appion_parts));
 			}
 			if ($parent_addition_number > 0) {
 				// add extra directory division prior to sessionname
 				$addition_parts = array_splice($parts,$session_index-APPION_PARENT_ADDITION,APPION_PARENT_ADDITION);
-				$appion_path = Path::formatEndPath(Path::formatEndPath($appion_path).implode(DIRECTORY_SEPARATOR,$addition_parts));
+				$appion_path = Path::formatEndPath(Path::formatEndPath($appion_path).implode(DS,$addition_parts));
 			}
 		} else {
 			// use default alone
@@ -6151,8 +6151,8 @@ function lastPathMatchIndex($haypath, $needle) {
 	$path_pieces = explode($needle,$haypath);
 	$pieces_count = count($path_pieces);
 	if ($pieces_count > 1) {
-		$last_needle_parts = explode(DIRECTORY_SEPARATOR,$path_pieces[$pieces_count-1]);
-		$hay_parts = explode(DIRECTORY_SEPARATOR,$haypath);
+		$last_needle_parts = explode(DS,$path_pieces[$pieces_count-1]);
+		$hay_parts = explode(DS,$haypath);
 		$last_needle_index = count($hay_parts) - count($last_needle_parts);
 		return $last_needle_index;
 	} else {

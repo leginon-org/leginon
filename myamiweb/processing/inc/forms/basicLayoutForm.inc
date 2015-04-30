@@ -237,7 +237,7 @@ class BasicLayoutForm extends BasicForm
 	{
 		// If the guide URL has not been set, use the main guide menu page.
 		if ( empty($this->guideURL) ){
-			$this->setGuideURL("http://ami.scripps.edu/redmine/projects/appion/wiki/Appion_Processing");
+			$this->setGuideURL("http://emg.nysbc.org/redmine/projects/appion/wiki/Appion_Processing");
 		}
 		return $this->guideURL;
 	}

@@ -93,7 +93,7 @@ require_once('setupUtils.inc');
 		
 		if(!empty($phpModulesMessages)){
 			echo "There are some php module(s) missing. Please install the missing module(s) before you start.<br />
-				  For more information please check <a target='_blank' href='http://ami.scripps.edu/redmine/projects/appion/wiki/Download_additional_Software_(CentOS_Specific)'>
+				  For more information please check <a target='_blank' href='http://emg.nysbc.org/redmine/projects/appion/wiki/Download_additional_Software_(CentOS_Specific)'>
 				  Install Complete list of additional packages</a>.<br /><br />";
 			foreach($phpModulesMessages as $message)
 				echo $message . '<br />';

@@ -57,7 +57,7 @@ function createDogPickerForm($extra=false, $title='DoG Picker Launcher', $headin
 	$javafunctions .= writeJavaPopupFunctions('appion');	
 
 	processing_header($title, $heading, $headerstuff=$javafunctions, $pleaseWait=true, $showmenu=true, $printDiv=false, 
-						$guideURL="http://ami.scripps.edu/redmine/projects/appion/wiki/Dog_Picking");
+						$guideURL="http://emg.nysbc.org/redmine/projects/appion/wiki/Dog_Picking");
 	
 	if ($extra) {
 		echo "<font color='#cc3333' size='+2'>$extra</font>\n<hr/>\n";

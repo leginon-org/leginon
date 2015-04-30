@@ -12,14 +12,14 @@ require_once("../inc/mysql.inc");
 							3.  The database username does not have access privilege to this 
 								database. You need to make sure this database user has certain 
 								access privileges to the database. Please visit 
-								<a href='http://ami.scripps.edu/redmine/projects/appion/wiki/Setup_MySQL_database' 
+								<a href='http://emg.nysbc.org/redmine/projects/appion/wiki/Setup_MySQL_database' 
 								target='_blank'>Database setup</a> for more detailed information.<br />";
 	
 	$dbConnectionSolution = "Solution:<br />
 							 1.	You might have entered the wrong database hostname, username or password.<br />&nbsp;&nbsp;&nbsp;&nbsp;
 							    You can go back to the <a href='index.php'>setup wizard</a> to edit this information.<br /><br />
 							 2.	Your database server is not running.<br />&nbsp;&nbsp;&nbsp;&nbsp;
-							 	Please visit <a href='http://ami.scripps.edu/redmine/projects/appion/wiki/Setup_MySQL_database' 
+							 	Please visit <a href='http://emg.nysbc.org/redmine/projects/appion/wiki/Setup_MySQL_database' 
 								target='_blank'>Database setup</a> for more detailed information.<br /><br />
 							 3.	Your database server is not using standard port number 3306.<br />&nbsp;&nbsp;&nbsp;&nbsp;
 							    If your database is using a different port, please follow the following example for setting up your host name.<br />&nbsp;&nbsp;&nbsp;&nbsp;
@@ -28,7 +28,7 @@ require_once("../inc/mysql.inc");
 							 4.	If your web server and database server are on different machines,<br />&nbsp;&nbsp;&nbsp;&nbsp;
 							 	please make sure there is no firewall between the web server and the database server.<br /><br />
 							 5.	Please make sure the database server's user is allowed to connect from the web host.<br />&nbsp;&nbsp;&nbsp;&nbsp;
-							    Please visit <a href='http://ami.scripps.edu/redmine/projects/appion/wiki/Setup_MySQL_database' 
+							    Please visit <a href='http://emg.nysbc.org/redmine/projects/appion/wiki/Setup_MySQL_database' 
 								target='_blank'>Database setup</a> for more detailed information.<br />";
 	$confNotExistSolution = "Solution:<br />
 							 There is no config.php in your myamiweb directory<br />

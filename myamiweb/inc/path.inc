@@ -11,11 +11,11 @@
  * $path = Path::formatEndPath($path)
  * 
  */
-
+define('DS', "/");
 class Path 
 {
 	// make sure a path ends with a single path separator.
-	public static function formatEndPath( $path, $dirSeparator=DIRECTORY_SEPARATOR ) 
+	public static function formatEndPath( $path, $dirSeparator=DS ) 
 	{
 		$formattedPath = preg_match("%".$dirSeparator."$%", $path) ? $path : $path.$dirSeparator;
 		return $formattedPath;

@@ -160,7 +160,7 @@ require_once('../inc/formValidator.php');
 	
 		<h3>Enter Redux Image Server location and port:</h3>
 		<p>Enter the name of the server that is running the Redux image server, ex. redux.schools.edu:</p>
-		<p><a href="http://ami.scripps.edu/redmine/projects/appion/wiki/Install_Redux_image_server">Redux Server Setup Guide</a></p>
+		<p><a href="http://emg.nysbc.org/redmine/projects/appion/wiki/Install_Redux_image_server">Redux Server Setup Guide</a></p>
 		<p>(Enter "localhost" if Redux server is on the webserver computer)</p>
 		<input type="text" size=35 name="server_host" 
 		<?php 			
@@ -242,7 +242,7 @@ require_once('../inc/formValidator.php');
 		<h3>Enter Appion database prefix:</h3>
 		<p>We recommend using 'ap' as the Appion database prefix.<br /> 
 		   This prefix must match the prefix used during step number 11 of the 
-		   <a href="http://ami.scripps.edu/redmine/projects/appion/wiki/Database_Server_Installation">Database Server Setup</a>. </p>
+		   <a href="http://emg.nysbc.org/redmine/projects/appion/wiki/Database_Server_Installation">Database Server Setup</a>. </p>
 		<div id="error"><?php if($errMsg['def_processing_prefix']) echo $errMsg['def_processing_prefix']; ?></div>
 		<input type="text" size=10 name="def_processing_prefix" 
 		<?php 

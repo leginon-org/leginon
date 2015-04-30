@@ -11,7 +11,7 @@
 // This file should display a list of each testsuite run for this session.
 //
 // Information on writing appion tests is available at:
-// http://ami.scripps.edu/redmine/projects/appion/wiki/Appion_Testing
+// http://emg.nysbc.org/redmine/projects/appion/wiki/Appion_Testing
 //--------------------------------------------------------------------------------------
 
 require_once "inc/basicreport.inc";

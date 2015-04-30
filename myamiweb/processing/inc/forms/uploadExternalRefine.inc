@@ -36,7 +36,7 @@ class UploadExternalRefine extends BasicLayoutForm
 		$this->setTitle( 'Upload Reconstruction' );
 		$this->setHeading( 'Upload External Reconstruction' );
 		$this->setExeFile( 'uploadExternalRefine.py' );
-		$this->setGuideURL( "http://ami.scripps.edu/redmine/projects/appion/wiki/Upload_Refinement" );
+		$this->setGuideURL( "http://emg.nysbc.org/redmine/projects/appion/wiki/Upload_Refinement" );
 		$this->setTestable( False ); // True to activate "test single image".
 		$this->setUseLegOutDir( False ); // The output directory will be created in the Appion run directory rather than Leginon.
 		$this->setShowDesc( True ); // Flag to hide the description field of the run parameters.

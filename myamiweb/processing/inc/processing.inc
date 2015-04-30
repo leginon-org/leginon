@@ -191,7 +191,7 @@ function apdivtitle($title) {
 }
 
 function processing_header($title,$heading=false,$headerstuff=false,$pleaseWait=false,$showmenu=true,$printDiv=false, 
-							$guideURL="http://ami.scripps.edu/redmine/projects/appion/wiki/Appion_Processing") 
+							$guideURL="http://emg.nysbc.org/redmine/projects/appion/wiki/Appion_Processing") 
 {
 	$expId = $_GET['expId'];
 	if (!is_numeric($expId) || $expId == 0) {
@@ -941,7 +941,7 @@ $xvfb=False, $xtra=False, $nproc=1, $ppn=0, $nodes=0, $walltime="240", $cputime=
 	$jobnum = $matches[0][0];
 	if (!is_numeric($jobnum)) {
 		echo "</table><p>\n";
-		echo "ERROR in job submission. Check ".$rundir." to ensure you have write access to this directory. You can also copy the command from above into ".$processhost." terminal for more info. </br></br>Note for systems administrators: ensure the ,.appio.cfg configuration file is correct (http://ami.scripps.edu/redmine/projects/appion/wiki/Configure_appioncfg)\n".$jobdata."\n".$matches[0][0]."\n";
+		echo "ERROR in job submission. Check ".$rundir." to ensure you have write access to this directory. You can also copy the command from above into ".$processhost." terminal for more info. </br></br>Note for systems administrators: ensure the ,.appio.cfg configuration file is correct (http://emg.nysbc.org/redmine/projects/appion/wiki/Configure_appioncfg)\n".$jobdata."\n".$matches[0][0]."\n";
 		processing_footer();
 		exit;
 	}

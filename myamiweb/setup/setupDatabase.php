@@ -55,7 +55,7 @@ require_once('../inc/formValidator.php');
 		<font>The web tools require one database for Leginon, one database to manage projects,<br />
 		and at least one database for Appion. (example : "dbemdata", "project", "ap100")<br />
 		Appion requires all three types of database, but Leginon does not require an Appion database<br />
-		Please visit <a href="http://ami.scripps.edu/redmine/projects/appion/wiki/Setup_MySQL_database" target="_blank">
+		Please visit <a href="http://emg.nysbc.org/redmine/projects/appion/wiki/Setup_MySQL_database" target="_blank">
 		Database setup</a> for more detailed information before you fill in this form.</font><br /><br />
 		
 		<div id="error"><?php if($errMsg['db_validate']) echo $errMsg['db_validate']."<br /><br />"; ?></div>

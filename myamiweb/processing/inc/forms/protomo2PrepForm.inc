@@ -27,7 +27,7 @@ class Protomo2PrepForm extends BasicLayoutForm
 		$this->setTitle( 'Protomo Alignment Preparation Launcher' );
 		$this->setHeading( 'Protomo Alignment Preparation' );
 		$this->setExeFile( 'protomo2prep.py' );
-		$this->setGuideURL( "http://ami.scripps.edu/redmine/projects/appion/wiki/" );
+		$this->setGuideURL( "http://emg.nysbc.org/redmine/projects/appion/wiki/" );
 		$this->setTestable( False ); // True to activate "test single image".
 		$this->setUseLegOutDir( False ); // The output directory will be created in the Appion run directory rather than Leginon.
 		$this->setShowDesc( False ); // Flag to hide the description field of the run parameters.

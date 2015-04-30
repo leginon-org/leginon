@@ -36,7 +36,7 @@ function createMaskitonForm($extra=false, $title='Maskiton Launcher', $heading='
 	$stackval 	= $_POST['stackval'];
 
 	processing_header($title,$heading,$javascript, $pleaseWait=false, $showmenu=true, $printDiv=false, 
-						$guideURL="http://ami.scripps.edu/redmine/projects/appion/wiki/Maskiton");
+						$guideURL="http://emg.nysbc.org/redmine/projects/appion/wiki/Maskiton");
 	// write out errors, if any came up:
 	if ($extra) {
 		echo "<font color='#cc3333' size='+2'>$extra</font>\n<hr/>\n";

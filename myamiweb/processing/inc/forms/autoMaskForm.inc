@@ -25,7 +25,7 @@ class AutoMaskForm extends BasicLoopForm
 		$this->setTitle( 'Auto Masking Launcher' );
 		$this->setHeading( 'Automated Masking with EM Hole Finder' );
 		$this->setExeFile( 'automasker.py' );
-		$this->setGuideURL( "http://ami.scripps.edu/redmine/projects/appion/wiki/Appion_Processing" );
+		$this->setGuideURL( "http://emg.nysbc.org/redmine/projects/appion/wiki/Appion_Processing" );
 		$this->setTestable( True ); // True to activate "test single image".
 		$this->setUseLegOutDir( False ); // The output directory will be created in the Appion run directory rather than Leginon.
 		$this->setShowDesc( False ); // Flag to hide the description field of the run parameters.

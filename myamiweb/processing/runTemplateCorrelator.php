@@ -134,7 +134,7 @@ function createTemplateForm($extra=False) {
 
 	processing_header($title="Template Correlator Launcher", $heading="Automated Particle Selection with Template Correlator", 
 						$headerstuff=$javafunctions, $pleaseWait=false, $showmenu=true, $printDiv=false, 
-						$guideURL="http://ami.scripps.edu/redmine/projects/appion/wiki/Template_Picking");
+						$guideURL="http://emg.nysbc.org/redmine/projects/appion/wiki/Template_Picking");
 						
 	if ($extra) echo "<font color='#cc3333' size='+2'>$extra</font>\n<hr/>\n";
 	echo"<FORM name='viewerform' method='POST' ACTION='$formAction'><P>\n";
@@ -266,7 +266,7 @@ function createTCForm($extra=false, $title='Template Correlator Launcher',
 		 </SCRIPT>\n";
 	$javafunctions .= writeJavaPopupFunctions('appion');
 	processing_header($title, $heading, $headerstuff=$javafunctions, $pleaseWait=true, $showmenu=true, $printDiv=false, 
-						$guideURL="http://ami.scripps.edu/redmine/projects/appion/wiki/Template_Picking");	
+						$guideURL="http://emg.nysbc.org/redmine/projects/appion/wiki/Template_Picking");	
 	
 	// write out errors, if any came up:
 	if ($extra) {

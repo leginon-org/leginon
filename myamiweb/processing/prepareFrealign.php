@@ -70,7 +70,7 @@ function stackModelForm($extra=False) {
 	#echo "<table cellpadding='10' class='tableborder' border='1'>\n";
 	#echo "<tr><td>\n";
 	#echo "<h3><font color='#cc3333'> Warning: Handedness of output volume will be flipped! </font></h3>";
-	#echo "<p align='center'><a target='_blank' href='http://ami.scripps.edu/redmine/issues/399'>[see more info and workaround here]</a>";
+	#echo "<p align='center'><a target='_blank' href='http://emg.nysbc.org/redmine/issues/399'>[see more info and workaround here]</a>";
 	#echo "</td></tr>\n";
 	#echo "</table>\n\n";
 	#echo "<br />";
@@ -78,7 +78,7 @@ function stackModelForm($extra=False) {
 	echo "<table cellpadding='10' class='tableborder' border='1'>\n";
 	echo "<tr><td>\n";
 	echo "<h3><font color='#cc3333'> Note: Frealign requires a non-ctf corrected stack with black density on white background and the stack must contain the same particles as the stack used for the EMAN reconstruction that initial orientations will be imported from. </font></h3>";
-	echo "<p align='center'><a target='_blank' href='http://ami.scripps.edu/redmine/projects/appion/wiki/Frealign_Refinement'>[Refer to the wikipages for more info and workflow]</a>";
+	echo "<p align='center'><a target='_blank' href='http://emg.nysbc.org/redmine/projects/appion/wiki/Frealign_Refinement'>[Refer to the wikipages for more info and workflow]</a>";
 	echo "</td></tr>\n";
 	echo "</table>\n\n";
 	echo "<br />";

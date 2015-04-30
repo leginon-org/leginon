@@ -89,14 +89,14 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 	$parentId = getImageIdFromPreset($leginondata,$imageId,$preset);
 	$pic = __getImageFile($leginondata,$parentId,$p['loadjpg'],$p['fft'],$p['cacheonly']);
 
-	if (!$pic || !is_file($pic)) {
-		$messages = array('File not found: ');
-		if ($p['cacheonly'] && $p['loadjpg']) {
-			$messages[] = 'Cached Image Not Ready.';
-		}
-		$messages[] = $pic;
-		return makeBlankImageWithErrorMessage($messages);
-	}
+// 	if (!$pic || !is_file($pic)) {
+// 		$messages = array('File not found: ');
+// 		if ($p['cacheonly'] && $p['loadjpg']) {
+// 			$messages[] = 'Cached Image Not Ready.';
+// 		}
+// 		$messages[] = $pic;
+// 		return makeBlankImageWithErrorMessage($messages);
+// 	}
 	// pass on whether the image is from cache
 	$p['iscache']= (strpos($pic,'jpg'))? true:false;
 

@@ -71,7 +71,7 @@ echo " <p> first you select template and then this method uses the "
 	." command to align your particles to the selected templates. Multiprocessing additions has made this extremely fast (~1 hour)."
 	."<br/>"
 	."<br/>"
-	."This method is broken on SPIDER version 18 or newer, <a href='http://ami.scripps.edu/redmine/issues/2064'>see bug report</a>"
+	."This method is broken on SPIDER version 18 or newer, <a href='http://emg.nysbc.org/redmine/issues/2064'>see bug report</a>"
 	."</p>\n";
 //echo "  <img src='img/align-rsm.png' width='125'><br/>\n";
 echo "</td></tr>\n";

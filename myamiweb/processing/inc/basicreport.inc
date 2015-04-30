@@ -10,7 +10,7 @@
 //--------------------------------------------------------------------------------------
 // This file contains the SQL and html required to display a basic report page based on 
 // the database table name provided to the class. For more information see:
-// http://ami.scripps.edu/redmine/projects/appion/wiki/Using_basicReportinc
+// http://emg.nysbc.org/redmine/projects/appion/wiki/Using_basicReportinc
 //--------------------------------------------------------------------------------------
 
 

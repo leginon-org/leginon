@@ -33,7 +33,7 @@ class deParticleAlignForm extends BasicLayoutForm
 		$this->setTitle( 'DE Particle Alignment' ); // Shows up in the browser tab
 		$this->setHeading( 'DE Particle Alignment' ); // shows at the top of the processing page
 		$this->setExeFile( 'de_aligner.py' ); // added to the command string
-		$this->setGuideURL( "http://http://ami.scripps.edu/redmine/projects/appion/wiki/Run_DE_Particle_Frame_Alignment" );
+		$this->setGuideURL( "http://http://emg.nysbc.org/redmine/projects/appion/wiki/Run_DE_Particle_Frame_Alignment" );
 		$this->setTestable( False ); // True to activate "test single image".
 		$this->setUseLegOutDir( False ); // The output directory will be created in the Appion run directory rather than Leginon.
 		$this->setShowDesc( False ); // Flag to hide the description field of the run parameters.
