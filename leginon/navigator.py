@@ -236,16 +236,18 @@ class Navigator(node.Node):
 			self.panel.navigateDone()
 			return True
 
+		# Display the movement applied
 		if movetype.endswith('stage position'):
-			moveparam = 'stage position'
+			moveparams = ['stage position',]
 		elif movetype == 'image beam shift':
-			moveparam = 'image shift'
+			moveparams = ['image shift','beam shift']
 		else:
-			moveparam = movetype
-		scopeshift = {'moveparam': moveparam, 'x':None, 'y':None}
-		for axis in ('x','y'):
-			scopeshift[axis] = newstate[moveparam][axis] - scope[moveparam][axis]
-		self.logger.info('change in %(moveparam)s: %(x).4e, %(y).4e' % scopeshift)
+			moveparams = [movetype,]
+		for moveparam in moveparams:
+			scopeshift = {'moveparam': moveparam, 'x':None, 'y':None}
+			for axis in ('x','y'):
+				scopeshift[axis] = newstate[moveparam][axis] - scope[moveparam][axis]
+			self.logger.info('change in %(moveparam)s: %(x).4e, %(y).4e' % scopeshift)
 
 		# Avoid changing stage z according to imagedata here since it is handled 
 		# before the move
