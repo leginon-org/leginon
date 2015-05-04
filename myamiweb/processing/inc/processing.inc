@@ -889,6 +889,19 @@ $xvfb=False, $xtra=False, $nproc=1, $ppn=0, $nodes=0, $walltime="240", $cputime=
   		// Don't return yet, perhaps we don't have access to the dir from the web server.
   		// This message will be prepended to a later occuring error.
   	}
+	
+	if ($testimg) {
+		//submit directly to head node on cluster if testing 1 image
+		$cmd = "cd $rundir; $command; exit;";
+		$jobdata = exec_over_ssh($processhost, $user, $pass, $cmd, True, $port=22, $max_time=160);
+		if ( empty($jobdata) ) {		
+			$errMsg .= "Job submission to $processhost failed for command:<br> <font color=black size='-1'>$command</font> <br> ";
+			$errMsg .= pconnError();
+			return $errMsg;
+		} else {
+			return;
+		}
+	}
 
 
 	// Set names of cluster job file and output log
