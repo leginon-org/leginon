@@ -11,7 +11,7 @@ from pyami import fileutil
 #leginon
 from leginon import ddinfo
 #appion
-from appionlib import appionLoop2
+from appionlib import appionPBS
 from appionlib import apDisplay
 from appionlib import apDDprocess
 from appionlib import apDatabase
@@ -23,7 +23,7 @@ import glob
 from pyami import mrc
 
 
-class MakeAlignedSumLoop(appionLoop2.AppionLoop):
+class MakeAlignedSumLoop(appionPBS.AppionPBS):
 	#=====================
 	def setupParserOptions(self):
 		configuration_options = deProcessFrames.ConfigurationOptions( )
@@ -55,15 +55,9 @@ class MakeAlignedSumLoop(appionLoop2.AppionLoop):
 
 		self.parser.add_option("--alignlabel", dest="alignlabel", default='a',
 			help="label to be appended to the presetname, e.g. --label=a gives ed-a as the aligned preset for preset ed", metavar="CHAR")
-		self.parser.add_option('--dryrun', dest='dryrun', action='store_true', default=False, help="Just show the command, but do not execute")
 		self.parser.add_option("--border", dest='border', type='int', default=0, help='Clip border specified border pixels and pad back out with mean value')
 		self.parser.add_option("--hackcopy", dest='hackcopy', action='store_true', default=False, help='Copy corrected image to session directory and overwrite the original image, saving the orignal with a new extension ".orig.mrc"')
-		self.parser.add_option("--override-dark", dest='override-dark', default=None, help='Override value in the database for the dark image for flat field correction. A full path to the image should be provided')
-		self.parser.add_option("--override-darknframes", dest='override-darknframes', type='int', default=None, help='Override value in the database for the number of frames for the dark image for flat field correction.')
-
-		self.parser.add_option("--override-bright", dest='override-bright', default=None, help='Override value in the database for the bright image for flat field correction. A full path to the image should be provided')
-		self.parser.add_option("--override-brightnframes", dest='override-brightnframes', type='int', default=None, help='Override value in the database for the number of frames for bright image for flat field correction.')
-
+		
 	#=======================
 	def checkConflicts(self):
 		#if override-dark or bright selected, should check for override-darkframes
@@ -94,6 +88,168 @@ class MakeAlignedSumLoop(appionLoop2.AppionLoop):
 		self.setProcessBatchCount(1)
 		self.params['output_fileformat'] = 'mrc'
 
+	def copyTargets(self,imgdata,scratchdir):
+		targetdict={}
+		#copy flatfields
+		
+		brightrefpath=imgdata['bright']['session']['image path']
+		brightrefname=imgdata['bright']['filename']+'.mrc'
+		brightref=os.path.join(brightrefpath,brightrefname)
+		shutil.copy(brightref,scratchdir)
+		targetdict['brightref']=os.path.join(scratchdir,brightrefname)
+		
+		darkrefpath=imgdata['dark']['session']['image path']
+		darkrefname=imgdata['dark']['filename']+'.mrc'
+		darkref=os.path.join(darkrefpath,darkrefname)
+		shutil.copy(darkref,scratchdir)
+		targetdict['darkref']=os.path.join(scratchdir,darkrefname)
+		
+		#################################### do away with override flatfield option
+		#copy frames
+		framesdirname=imgdata['filename']+'.frames'
+		apDisplay.printMsg('Copying frames %s' % (framesdirname))
+		framespath=imgdata['session']['frame path']
+		framespathname=os.path.join(framespath,framesdirname)
+		try:
+			shutil.copytree(framespathname,os.path.join(scratchdir, framesdirname))
+		except:
+			apDisplay.printWarning('there was a problem copying the frames for %s' % (imgdata['filename']))
+		targetdict['framespathname']=os.path.join(scratchdir,framesdirname)
+		
+		#define outpath
+		targetdict['outpath']=os.path.join(scratchdir,imgdata['filename'])
+		return targetdict
+
+	def generateCommand(self, imgdata, targetdict):
+		
+		# need to avoid non-frame saved image for proper caching
+		if imgdata is None or imgdata['camera']['save frames'] != True:
+			apDisplay.printWarning('%s skipped for no-frame-saved\n ' % imgdata['filename'])
+			return
+
+		### set processing image
+		try:
+			self.dd.setImageData(imgdata)
+		except Exception, e:
+			apDisplay.printWarning(e.args[0])
+			return
+
+
+		# Align
+		# Doing the alignment
+
+		kev=imgdata['scope']['high tension']/1000
+		apix=apDatabase.getPixelSize(imgdata)
+		nframes=imgdata['camera']['nframes']
+		dose=imgdata['preset']['dose']/10**20
+
+		#set appion specific options
+		#flatfield references
+		self.params['gainreference_filename']=targetdict['brightref']		
+		brightnframes=imgdata['bright']['camera']['nframes']
+		self.params['gainreference_framecount']=brightnframes
+
+		self.params['darkreference_filename']=targetdict['darkref']		
+		darknframes=imgdata['dark']['camera']['nframes']
+		self.params['darkreference_framecount']=darknframes
+		
+		self.params['input_framecount']=nframes
+		#self.params['run_verbosity']=3
+		self.params['output_invert']=0
+		self.params['radiationdamage_apix']=apix
+		self.params['radiationdamage_voltage']=kev
+		self.params['radiationdamage_exposurerate']=dose/nframes
+		#self.params['boxes_boxsize']=boxsize
+
+		if os.path.exists(targetdict['outpath']):
+			shutil.rmtree(targetdict['outpath'])
+		os.mkdir(targetdict['outpath'])
+
+		command=['deProcessFrames.py']
+		keys=self.params.keys()
+		keys.sort()
+		for key in keys:
+			param=self.params[key]
+			#print key, param, type(param)
+			if param == None or param=='':
+				pass
+			else:
+				option='--%s=%s' % (key,param)
+				command.append(option)
+		command.append(targetdict['outpath'])
+		#framespath=imgdata['session']['frame path']
+		#framespathname=os.path.join(framespath,imgdata['filename']+'.frames')
+		framespathname=targetdict['framespathname']
+		
+		#check to see if there are frames in the path
+		framesinpath=len(glob.glob(os.path.join(framespathname,'*')))
+		if framesinpath == 0:
+			apDisplay.printWarning('%s skipped because %d frames were found' % (imgdata['filename'],framesinpath))
+			return
+		
+		command.append(framespathname)
+		return command
+		
+	def collectResults(self, imgdata,targetdict):
+		
+		#cleanup and reformat image
+		try:
+			innamepath=glob.glob(os.path.join(targetdict['outpath'],'*.mrc'))[0]
+			print innamepath
+		except IndexError:
+			apDisplay.printWarning('queued job for %s failed' % (imgdata['filename']))
+			return
+		outname=imgdata['filename']+'-'+self.params['alignlabel']+'.mrc'
+		outnamepath=os.path.join(targetdict['outpath'],outname)
+		if self.params['border'] != 0:
+			command=['proc2d',innamepath, outnamepath]
+			header=mrc.readHeaderFromFile(innamepath)
+			origx=header['nx']
+			origy=header['ny']
+			newx=origx-self.params['border']
+			newy=origy-self.params['border']
+			command.append('clip=%d,%d' % (newx,newy))
+			print command
+			subprocess.call(command)
+			
+			
+			command=['proc2d',outnamepath,outnamepath]
+			command.append('clip=%d,%d' % (origx,origy))
+			command.append('edgenorm')
+			print command
+			subprocess.call(command)
+	
+		if self.params['hackcopy'] is True:
+			origpath=imgdata['session']['image path']
+			archivecopy=os.path.join(origpath,imgdata['filename']+'.orig.mrc')
+			if os.path.exists(archivecopy) is True:
+				apDisplay.printMsg('archive copy for %s already exists, so skipping archive' % (archivecopy))
+			else:
+				shutil.move(os.path.join(origpath,imgdata['filename']+'.mrc'), archivecopy)
+			shutil.copyfile(outnamepath, os.path.join(origpath,imgdata['filename']+'.mrc'))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 	#=======================
 	def processImage(self, imgdata):
 		# need to avoid non-frame saved image for proper caching
@@ -115,6 +271,7 @@ class MakeAlignedSumLoop(appionLoop2.AppionLoop):
 		kev=imgdata['scope']['high tension']/1000
 		apix=apDatabase.getPixelSize(imgdata)
 		nframes=imgdata['camera']['nframes']
+		dose=imgdata['preset']['dose']/10**20
 
 		#set appion specific options
 		#flatfield references
@@ -152,6 +309,7 @@ class MakeAlignedSumLoop(appionLoop2.AppionLoop):
 		self.params['output_invert']=0
 		self.params['radiationdamage_apix']=apix
 		self.params['radiationdamage_voltage']=kev
+		self.params['radiationdamage_exposurerate']=dose/nframes
 		#self.params['boxes_boxsize']=boxsize
 
 		outpath=os.path.join(self.params['rundir'],imgdata['filename'])
