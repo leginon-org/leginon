@@ -428,11 +428,13 @@ def commitSubStack(params, newname=False, centered=False, oldstackparts=None, so
 	apDisplay.printMsg("Inserting stack particles")
 	count = 0
 	newpartnum = 1
+	t0 = time.time()
 	for origpartnum in listfilelines:
 		count += 1
 		if count % 100 == 0:
-			sys.stderr.write("\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b")
-			sys.stderr.write(str(count)+" of "+(str(total))+" complete")
+			perpart=(time.time()-t0)/count
+			tleft = (total-count)*perpart
+			sys.stderr.write(str(count)+" of "+(str(total))+" complete, %s left   \r"%(apDisplay.timeString(tleft)))
 
 		# Find corresponding particle in old stack
 		# Use previously queried particles if possible, otherwise
