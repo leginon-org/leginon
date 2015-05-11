@@ -43,6 +43,7 @@ class JAHCFinder(targetfinder.TargetFinder):
 		'template diameter': 40,
 		'template filename': default_template,
 		'file diameter': 168,
+		'template invert': False,
 		'template type': 'cross',
 		'template lpf': {
 			'sigma': 1.0,
@@ -120,10 +121,14 @@ class JAHCFinder(targetfinder.TargetFinder):
 		self.hf['original'] = targetfinder.TargetFinder.readImage(self, filename)
 
 	def correlateTemplate(self):
+		'''
+		Set configuration and then create template and correlate
+		'''
 		self.logger.info('correlate ring template')
 		# convert diameters to radii
 		diameter = self.settings['template diameter']
 		filediameter = self.settings['file diameter']
+		invert = self.settings['template invert']
 		if self.settings['template filename'] != '':
 			if os.path.isfile(self.settings['template filename']):
 				filename = self.settings['template filename']
@@ -132,7 +137,7 @@ class JAHCFinder(targetfinder.TargetFinder):
 				filename = default_template
 		else:
 			filename = default_template
-		self.hf.configure_template(diameter, filename, filediameter)
+		self.hf.configure_template(diameter, filename, filediameter, invert)
 		self.hf.create_template()
 		cortype = self.settings['template type']
 		cor_image_min = self.settings['template image min']

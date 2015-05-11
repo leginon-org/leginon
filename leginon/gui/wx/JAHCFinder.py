@@ -103,68 +103,9 @@ class TemplateSettingsDialog(leginon.gui.wx.Settings.Dialog):
 class TemplateScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def initialize(self):
 		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
-		sb = wx.StaticBox(self, -1, 'Low Pass Filter (Phase Correlation)')
-		sbszlpf = wx.StaticBoxSizer(sb, wx.VERTICAL)
-		sb = wx.StaticBox(self, -1, 'Template Correlation')
-		sbsztemplate = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
-		self.widgets['template lpf'] = {}
-		self.widgets['template lpf']['sigma'] = FloatEntry(self, -1,
-																												min=0.0, chars=4)
-
-		szlpf = wx.GridBagSizer(5, 5)
-		label = wx.StaticText(self, -1, 'Sigma:')
-		szlpf.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szlpf.Add(self.widgets['template lpf']['sigma'], (0, 1), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
-		szlpf.AddGrowableCol(1)
-
-		sbszlpf.Add(szlpf, 1, wx.EXPAND|wx.ALL, 5)
-
-		self.widgets['template filename'] = Entry(self, -1, chars=12)
-		self.widgets['file diameter'] = IntEntry(self, -1, chars=4)
-		self.widgets['template diameter'] = IntEntry(self, -1, chars=4)
-
-		self.widgets['template type'] = Choice(self, -1, choices=self.node.cortypes)
-		self.widgets['template image min'] = FloatEntry(self, -1,
-																												 chars=4)
-
-		szcor = wx.GridBagSizer(5, 5)
-		label = wx.StaticText(self, -1, 'Use')
-		szcor.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szcor.Add(self.widgets['template type'], (0, 1), (1, 1),
-							wx.ALIGN_CENTER_VERTICAL)
-		label = wx.StaticText(self, -1, 'correlation')
-		szcor.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-
-		szcorlimit = wx.GridBagSizer(5, 5)
-		label = wx.StaticText(self, -1, 'Fill image values below')
-		szcorlimit.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szcorlimit.Add(self.widgets['template image min'], (0, 1), (1, 1),
-							wx.ALIGN_CENTER_VERTICAL)
-		label = wx.StaticText(self, -1, 'with mean before correlation')
-		szcorlimit.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-
-		sztemplate = wx.GridBagSizer(5, 5)
-		sztemplate.Add(szcor, (0, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
-		sztemplate.Add(szcorlimit, (1, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
-
-		label = wx.StaticText(self, -1, 'Template Filename')
-		sztemplate.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sztemplate.Add(self.widgets['template filename'], (2, 1), (1, 1),
-										wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
-
-		label = wx.StaticText(self, -1, 'Original Template Diameter')
-		sztemplate.Add(label, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sztemplate.Add(self.widgets['file diameter'], (3, 1), (1, 1),
-										wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
-
-		label = wx.StaticText(self, -1, 'Final Template Diameter')
-		sztemplate.Add(label, (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sztemplate.Add(self.widgets['template diameter'], (4, 1), (1, 1),
-										wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
-
-		sbsztemplate.Add(sztemplate, 1, wx.EXPAND|wx.ALL, 5)
+		sbsztemplate = self.createTemplateCorrelationBox()
+		sbszlpf = self.createTemplateLPFBox()
 
 		self.btest = wx.Button(self, -1, 'Test')
 		szbutton = wx.GridBagSizer(5, 5)
@@ -175,6 +116,101 @@ class TemplateScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		self.Bind(wx.EVT_BUTTON, self.onTestButton, self.btest)
 
 		return [sbsztemplate, sbszlpf, szbutton]
+
+	def createTemplateLPFBox(self):
+		sb = wx.StaticBox(self, -1, 'Low Pass Filter (Phase Correlation)')
+		sbszlpf = wx.StaticBoxSizer(sb, wx.VERTICAL)
+
+		self.widgets['template lpf'] = {}
+		self.widgets['template lpf']['sigma'] = FloatEntry(self, -1,
+																												min=0.0, chars=4)
+		szlpf = wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1, 'Sigma:')
+		szlpf.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szlpf.Add(self.widgets['template lpf']['sigma'], (0, 1), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
+		szlpf.AddGrowableCol(1)
+
+		sbszlpf.Add(szlpf, 1, wx.EXPAND|wx.ALL, 5)
+
+		return sbszlpf
+
+	def createTemplateCorrelationBox(self):
+		sb = wx.StaticBox(self, -1, 'Template Correlation')
+		sbsztemplate = wx.StaticBoxSizer(sb, wx.VERTICAL)
+		sz = wx.GridBagSizer(5, 5)
+		newrow,newcol = self.createTemplateCorrelationChoice(sz, (0,0))
+		newrow,newcol = self.createTemplateMinEntry(sz, (newrow,0))
+		newrow,newcol = self.createTemplateInvertCheckBox(sz, (newrow,0))
+		newrow,newcol = self.createTemplateFilenameEntry(sz, (newrow,0))
+		newrow,newcol = self.createTemplateOriginalDiameterEntry(sz, (newrow,0))
+		newrow,newcol = self.createTemplateDiameterEntry(sz, (newrow,0))
+		sbsztemplate.Add(sz, 1, wx.EXPAND|wx.ALL, 5)
+		return sbsztemplate
+
+	def addToSizer(self,sz, item, start_position, total_length,align=wx.ALIGN_LEFT):	
+		# sz is changed in-place.  Therefore, must be named such where this function is called.
+		sz.Add(item, start_position, total_length,
+				  align)
+		return start_position[0]+total_length[0],start_position[1]+total_length[1]
+
+	def createTemplateCorrelationChoice(self, sz, start_position):
+		# define widget
+		self.widgets['template type'] = Choice(self, -1, choices=self.node.cortypes)
+		# make sizer
+		szcor = wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1, 'Use')
+		szcor.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szcor.Add(self.widgets['template type'], (0, 1), (1, 1),
+							wx.ALIGN_CENTER_VERTICAL)
+		label = wx.StaticText(self, -1, 'correlation')
+		szcor.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		# add to main
+		total_length = (1,2)
+		return self.addToSizer(sz, szcor, start_position, total_length)
+
+	def createTemplateFilenameEntry(self, sz, start_position):
+		# define widget
+		self.widgets['template filename'] = Entry(self, -1, chars=20)
+		label = wx.StaticText(self, -1, 'Template Filename')
+		# add to main
+		newrow,newcol = self.addToSizer(sz, label, start_position, (1,1))
+		newrow,newcol = self.addToSizer(sz, self.widgets['template filename'], (start_position[0],newcol), (1,2), wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
+		return newrow, newcol
+
+	def createTemplateInvertCheckBox(self, sz, start_position):
+		self.widgets['template invert'] = wx.CheckBox(self, -1,
+			'invert template for correlation')
+		return self.addToSizer(sz, self.widgets['template invert'], (start_position[0],0), (1,2))
+
+	def	createTemplateOriginalDiameterEntry(self, sz, start_position):
+		self.widgets['file diameter'] = IntEntry(self, -1, chars=4)
+		label = wx.StaticText(self, -1, 'Original Template Diameter')
+		# add to main
+		newrow, newcol = self.addToSizer(sz, label, start_position, (1,1))
+		return self.addToSizer(sz, self.widgets['file diameter'], (start_position[0],newcol), (1,1), wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
+
+	def	createTemplateDiameterEntry(self, sz, start_position):
+		self.widgets['template diameter'] = IntEntry(self, -1, chars=4)
+		label = wx.StaticText(self, -1, 'Final Template Diameter')
+		# add to main
+		newrow, newcol = self.addToSizer(sz, label, start_position, (1,1))
+		return self.addToSizer(sz, self.widgets['template diameter'], (start_position[0],newcol), (1,1), wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
+
+	def	createTemplateMinEntry(self, sz, start_position):
+		self.widgets['template image min'] = FloatEntry(self, -1,
+																												min=0.0, chars=8)
+		# make local sizer
+		szcorlimit = wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1, 'Fill image values below')
+		szcorlimit.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szcorlimit.Add(self.widgets['template image min'], (0, 1), (1, 1),
+							wx.ALIGN_CENTER_VERTICAL)
+		label = wx.StaticText(self, -1, 'with mean before correlation')
+		szcorlimit.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+
+		# fill sizer
+		return self.addToSizer(sz, szcorlimit, start_position, (1,3))
 
 	def onTestButton(self, evt):
 		self.dialog.setNodeSettings()

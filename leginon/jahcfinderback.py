@@ -124,7 +124,7 @@ class HoleFinder(object):
 
 		## some default configuration parameters
 		self.save_mrc = False
-		self.template_config = {'ring_list': [(25,30)]}
+		self.template_config = {'template filename':'', 'template diameter':168, 'file diameter':168, 'invert':False}
 		self.correlation_config = {'cortype': 'cross', 'corfilt': (1.0,)}
 		self.threshold = 3.0
 		self.threshold_method = "Threshold = mean + A * stdev"
@@ -153,13 +153,15 @@ class HoleFinder(object):
 		## update this result
 		self.__results[key] = image
 
-	def configure_template(self, diameter=None, filename=None, filediameter=None):
+	def configure_template(self, diameter=None, filename=None, filediameter=None, invert=False):
 		if diameter is not None:
 			self.template_config['template diameter'] = diameter
 		if filename is not None:
 			self.template_config['template filename'] = filename
 		if filediameter is not None:
 			self.template_config['file diameter'] = filediameter
+		if invert is not None:
+			self.template_config['invert'] = bool(invert)
 
 	def read_hole_template(self, filename):
 		if filename in hole_template_files:
@@ -169,14 +171,23 @@ class HoleFinder(object):
 		return im
 
 	def create_template(self):
+		'''
+		Create hole template from file. 
+		'''
+		#self.template_config should be set before calling this.
 		fromimage = 'original'
 		if self.__results[fromimage] is None:
 			raise RuntimeError('need image %s before creating template' % (fromimage,))
-		self.configure_template()
 
 		# read template file
 		filename = self.template_config['template filename']
 		tempim = self.read_hole_template(filename)
+
+		# invert if needed
+		if self.template_config['invert']:
+			self.logger.info('invert template for correlation')
+			tempim_med = (tempim.min() + tempim.max()) / 2
+			tempim = -tempim + 2 * tempim_med
 
 		# create template of proper size
 		shape = self.__results[fromimage].shape
@@ -218,8 +229,11 @@ class HoleFinder(object):
 		return masked.filled(masked.mean())
 
 	def correlate_template(self):
+		'''
+		Correlate template that is already created and configured.
+		'''
 		fromimage = 'original'
-		if None in (self.__results[fromimage], self.__results['template']):
+		if self.__results[fromimage] is None or self.__results['template'] is None:
 			raise RuntimeError('need image %s and template before correlation' % (fromimage,))
 		edges = self.__results[fromimage]
 		edges = self.maskBlack(edges)
@@ -284,7 +298,7 @@ class HoleFinder(object):
 		find blobs on a thresholded image
 		'''
 		if picks is None:
-			if None in (self.__results['threshold'],self.__results['correlation']):
+			if self.__results['threshold'] is None or self.__results['correlation'] is None:
 				raise RuntimeError('need correlation image and threshold image to find blobs')
 			im = self.__results['correlation']
 			mask = self.__results['threshold']
@@ -389,7 +403,7 @@ class HoleFinder(object):
 			self.__update_result('holes', holes)
 
 	def mark_holes(self):
-		if None in (self.__results['holes'], self.__results['original']):
+		if self.__results['holes'] is None or self.__results['original'] is None:
 			raise RuntimeError('need original image and holes before marking holes')
 		image = self.__results['original']
 		im = image.copy()
@@ -490,6 +504,9 @@ class HoleFinder(object):
 		self.__update_result('holes2', holes2)
 
 	def find_holes(self):
+		'''
+		For testing purpose. Configuration must be done already.
+		'''
 		self.create_template()
 		self.correlate_template()
 		self.threshold_correlation()

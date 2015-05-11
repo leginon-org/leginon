@@ -1467,6 +1467,7 @@ class JAHCFinderSettingsData(HoleFinderSettingsData):
 			('template diameter', int),
 			('file diameter', int),
 			('template filename', str),
+			('template invert', bool),
 			('template image min', float),
 			('lattice extend', str),
 		)
