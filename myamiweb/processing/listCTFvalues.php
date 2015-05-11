@@ -138,7 +138,7 @@ foreach ($s as $part) {
 		$l = sprintf($format,$p,$df1,$df2,$ang,$kev,$cs,$amp,$helixStuff);
 
 	if ($df1 == 0) {
-		file_put_contents($fpath,"ERROR\n",FILE_APPEND | LOCK_EX);
+		file_put_contents($fpath,"ERROR: $img\n",FILE_APPEND | LOCK_EX);
 		$errornum++;
 	}
 	else file_put_contents($fpath,$l,FILE_APPEND | LOCK_EX);
