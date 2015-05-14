@@ -39,9 +39,16 @@ class ProjectData:
 		self.grids = Grid().register(self.db)
 		self.gridlocations = GridLocation().register(self.db)
 
-	def getProjects(self):
-		projq = projectdata.projects()
-		return projq.query()
+	def isLowPrivilegeUser(self, userdata):
+		return userdata['group']['privilege']['projects'] < 3
+
+	def getProjects(self, userdata=None):
+		if userdata and self.isLowPrivilegeUser(userdata):
+			project_owned = projectdata.projectowners(user=userdata).query()
+			return map((lambda x: x['project']), project_owned)
+		else:
+			projq = projectdata.projects()
+			return projq.query()
 
 	def getProjectExperiments(self):
 		projq = projectdata.projectexperiments()
