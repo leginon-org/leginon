@@ -657,6 +657,13 @@ def substackFromMRCStack(mrcstack, outfile, listfile):
 			print "written %d images to stack" % i 
 		i+=1
 
+def invert(in_mrc, out_mrc):
+	''' 
+	invert an mrc image, puts image into memory, so use wisely if image is a large stack
+	'''
+	a = read(in_mrc)
+	a = a*-1
+	write(a, out_mrc)
 
 def update_file_header(filename, headerdict):
 	'''
