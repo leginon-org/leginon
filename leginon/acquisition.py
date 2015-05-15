@@ -638,8 +638,8 @@ class Acquisition(targetwatcher.TargetWatcher):
 			movetype = self.settings['move type']
 			movefunction = self.settings['mover']
 			keep_shift = False
-			if movetype == 'image shift' and movefunction == 'navigator':
-				self.logger.warning('Navigator cannot be used for image shift, using Presets Manager instead')
+			if 'shift' in movetype and movefunction == 'navigator':
+				self.logger.warning('Navigator cannot be used for %s, using Presets Manager instead' % movetype)
 				movefunction = 'presets manager'
 			self.setStatus('waiting')
 			if movefunction == 'navigator':
