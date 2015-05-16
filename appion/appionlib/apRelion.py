@@ -147,7 +147,7 @@ def listFileFromRelionStarFile(starfile, outlist, datablock="data_images"):
 def sortRelionStarFileByParticleNumber(instarfile, outstarfile, datablock="data_images"):
 	star = starFile.StarFile(instarfile)
 	star.read()
-	dataBlock = star.getDataBlock("data_images")
+	dataBlock = star.getDataBlock(datablock)
 	loopDict = dataBlock.getLoopDict()
 	
 	partdict = {}
