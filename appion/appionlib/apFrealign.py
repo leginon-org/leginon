@@ -1,5 +1,6 @@
 #python
 import os
+import copy
 import math
 import numpy
 import shutil
@@ -1320,11 +1321,11 @@ def replace_CTFs_Frealign9(inparfile, outparfile, ctffile):
 	ff.write("%s%8s%8s%8s%10s%10s%8s%6s%9s%9s%8s%8s%10s%11s%8s%8s\n" \
 		% ("C      ","PSI","THETA","PHI","SHX","SHY","MAG","FILM","DF1","DF2","ANGAST","OCC","-LogP","SIGMA","SCORE","CHANGE"))
 
-	for i,p in params.iteritems():
-#		d = readFrealign9_06ParamLine(p)
-		p['defx']  = float(fstrip[i][0])
-		p['defy']  = float(fstrip[i][1])
-		p['astig'] = float(fstrip[i][2])
+	for i,p in params.iteritems(): # note that i starts with 1 for Frealign params
+		# i starts with 0 for numbering
+		p['defx']  = float(fstrip[i-1][0])
+		p['defy']  = float(fstrip[i-1][1])
+		p['astig'] = float(fstrip[i-1][2])
 		ff.write("%7d%8.2f%8.2f%8.2f%10.2f%10.2f%8d%6d%9.1f%9.1f%8.2f%8.2f%10d%11.4f%8.2f%8.2f\n" \
 			% (p['partnum'], p['psi'], p['theta'], p['phi'], p['shiftx'], p['shifty'], p['mag'], p['micn'], 
 			p['defx'], p['defy'], p['astig'], p['occ'], p['logp'], p['sigma'], p['score'], p['change']))
@@ -1374,6 +1375,7 @@ def Relion_to_Frealign8(starfile, parfile, mag=None):
 			% (i+1, psi, theta, phi, shiftx, shifty, mag, micn, dx, dy, astig))
 	ff.close()
 
+#==================
 def Relion_to_Frealign9(starfile, parfile, apix, mag=None, occ=100, logp=5000, sigma=1, score=50.0, change=0):
 	star = starFile.StarFile(starfile)
 	star.read()
@@ -1417,4 +1419,95 @@ def Relion_to_Frealign9(starfile, parfile, apix, mag=None, occ=100, logp=5000, s
 			% (i+1, psi, theta, phi, Fx, Fy, mag, micn, dx, dy, astig, occ, logp, sigma, score, change))
 	ff.close()
 
+#==================
+def randomize_Frealign9_parfile_occupancies(parfile, n, logp=5000, sigma=1, score=50.0, change=0):
+	'''
+		parfile is input parameter file, in frealign9 format, without class number, e.g. RQC_0.par
+		n is number of output .par files to generate
+	'''
 
+	params = parseFrealign9ParamFile(parfile)
+	npart = len(params)
+
+	splitparams = []
+	for i in range(n):
+		splitparams.append(copy.deepcopy(params))
+
+	for i in range(npart): # note that i starts with 1 for Frealign params
+		# i starts with 0 for numbering
+		rand_occ_sample = numpy.random.dirichlet((1,)*n)
+		for j in range(n):
+			splitparams[j][i+1]['occ'] = rand_occ_sample[j]*100
+
+	### write params
+	for j in range(n):
+		outparfile = "%s_r%d.par" % (parfile[:-4], (j+1))	
+		ff = open(outparfile, "w")
+		ff.write("%s%8s%8s%8s%10s%10s%8s%6s%9s%9s%8s%8s%10s%11s%8s%8s\n" \
+			% ("C      ","PSI","THETA","PHI","SHX","SHY","MAG","FILM","DF1","DF2","ANGAST","OCC","-LogP","SIGMA","SCORE","CHANGE"))
+		for i in range(npart):
+			ff.write("%7d%8.2f%8.2f%8.2f%10.2f%10.2f%8d%6d%9.1f%9.1f%8.2f%8.2f%10d%11.4f%8.2f%8.2f\n" \
+				% (	splitparams[j][i+1]['partnum'], 
+					splitparams[j][i+1]['psi'], 
+					splitparams[j][i+1]['theta'], 
+					splitparams[j][i+1]['phi'], 
+					splitparams[j][i+1]['shiftx'], 
+					splitparams[j][i+1]['shifty'], 
+					splitparams[j][i+1]['mag'], 
+					splitparams[j][i+1]['micn'], 
+					splitparams[j][i+1]['defx'], 
+					splitparams[j][i+1]['defy'], 
+					splitparams[j][i+1]['astig'], 
+					splitparams[j][i+1]['occ'], 
+					splitparams[j][i+1]['logp'], 
+					splitparams[j][i+1]['sigma'], 
+					splitparams[j][i+1]['score'], 
+					splitparams[j][i+1]['change']
+				)
+			)
+		ff.close()
+
+#==================
+def combine_best_multimodel_parfiles_into_one(outparfile, *parfiles):
+
+	ff = open(outparfile, "w")
+	ff.write("%s%8s%8s%8s%10s%10s%8s%6s%9s%9s%8s%8s%10s%11s%8s%8s\n" \
+		% ("C      ","PSI","THETA","PHI","SHX","SHY","MAG","FILM","DF1","DF2","ANGAST","OCC","-LogP","SIGMA","SCORE","CHANGE"))
+
+	allparams = []
+	for parfile in parfiles:	
+		allparams.append(parseFrealign9ParamFile(parfile))
+	npart = len(allparams[0])
+
+	for i in range(npart):
+		bestocc = -1
+		bestm = -1
+		for j in range(len(allparams)):
+			occ = allparams[j][i+1]['occ']
+			if occ > bestocc:
+				bestocc = occ
+				bestm = j
+		ff.write("%7d%8.2f%8.2f%8.2f%10.2f%10.2f%8d%6d%9.1f%9.1f%8.2f%8.2f%10d%11.4f%8.2f%8.2f\n" \
+			% (	
+				allparams[bestm][i+1]['partnum'],
+				allparams[bestm][i+1]['psi'],
+				allparams[bestm][i+1]['theta'],
+				allparams[bestm][i+1]['phi'],
+				allparams[bestm][i+1]['shiftx'],
+				allparams[bestm][i+1]['shifty'],
+				allparams[bestm][i+1]['mag'],
+				allparams[bestm][i+1]['micn'],
+				allparams[bestm][i+1]['defx'],
+				allparams[bestm][i+1]['defy'],
+				allparams[bestm][i+1]['astig'],
+				100,
+#				allparams[bestm][i+1]['occ'],
+				allparams[bestm][i+1]['logp'],
+				allparams[bestm][i+1]['sigma'],
+				allparams[bestm][i+1]['score'],
+				allparams[bestm][i+1]['change']
+			)
+		)
+
+	ff.close()
+	return
