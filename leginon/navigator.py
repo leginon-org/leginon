@@ -480,6 +480,8 @@ class Navigator(node.Node):
 			except ValueError, e:
 				self.logger.error('Cannot set instruments: %s' % (e,))
 				return
+			except instrument.NotAvailableError, e:
+				self.logger.error('%s' % (e,))
 			try:
 				self.instrument.ccdcamera.Settings = self.settings['camera settings']
 			except Exception, e:
