@@ -237,8 +237,11 @@ class TopologyRepScript(appionScript.AppionScript):
 		apDisplay.printColor("Inserting particle alignment data, please wait", "cyan")
 		for partdict in partlist:
 			count += 1
-			if count % 100 == 0:
-				sys.stderr.write(".")
+			if count % (len(partlist)/100) == 0:
+				pleft = int(float(count)/len(partlist)*100)
+				perpart = (time.time()-t0)/count
+				tleft = (len(partlist)-count)*perpart
+				sys.stderr.write("%3i%% complete, %s left    \r"%(pleft,apDisplay.timeString(tleft)))
 
 			### set up reference
 			refq = appiondata.ApAlignReferenceData()
@@ -269,8 +272,9 @@ class TopologyRepScript(appionScript.AppionScript):
 			### insert
 			if self.params['commit'] is True:
 				inserted += 1
-				alignpartq.insert()
+				alignpartq.insert(force=True)
 
+		sys.stderr.write("100% complete\t\n")
 		apDisplay.printColor("\ninserted "+str(inserted)+" of "+str(count)+" particles into the database in "
 			+apDisplay.timeString(time.time()-t0), "cyan")
 
@@ -494,7 +498,7 @@ class TopologyRepScript(appionScript.AppionScript):
 		f.write("#!/bin/csh -f\n")
 		f.write("setenv IMAGIC_BATCH 1\n")
 		if self.params['nproc'] > 1:
-			f.write("%s/openmpi/bin/mpirun -np %i -x IMAGIC_BATCH %s/align/mralign.e_mpi << EOF\n" %(self.imagicroot,self.params['nproc'],self.imagicroot))
+			f.write("mpirun -np %i -x IMAGIC_BATCH %s/align/mralign.e_mpi << EOF\n" %(self.params['nproc'],self.imagicroot))
 			if int(self.imagicversion) != 110119:
 				f.write("YES\n")
 				f.write("%i\n"%self.params['nproc'])
@@ -593,7 +597,7 @@ class TopologyRepScript(appionScript.AppionScript):
 
 		f.write("setenv IMAGIC_BATCH 1\n")
 		if self.params['msaproc'] > 1:
-			f.write("%s/openmpi/bin/mpirun -np %i -x IMAGIC_BATCH %s/msa/msa.e_mpi << EOF\n" %(self.imagicroot,self.params['msaproc'],self.imagicroot))
+			f.write("mpirun -np %i -x IMAGIC_BATCH %s/msa/msa.e_mpi << EOF\n" %(self.params['msaproc'],self.imagicroot))
 			if int(self.imagicversion) != 110119:
 				f.write("YES\n")
 				f.write("%i\n"%self.params['msaproc'])
@@ -1013,8 +1017,8 @@ class TopologyRepScript(appionScript.AppionScript):
 
 		origstack = self.params['localstack']
 		### find number of processors
-		if self.params['nproc'] is None:
-			self.params['nproc'] = apParam.getNumProcessors()
+#		if self.params['nproc'] is None:
+		self.params['nproc'] = apParam.getNumProcessors()
 
 		if self.params['uploadonly'] is not True:
 			aligntime = time.time()
