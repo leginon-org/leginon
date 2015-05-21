@@ -31,7 +31,7 @@ import itertools
 idcounter = itertools.cycle(range(100))
 
 ## submodetransform
-PROJECTION_MODE_TRANSFORM = True
+SPECIAL_TRANSFORM = False
 
 class PresetChangeError(Exception):
 	pass
@@ -1474,16 +1474,21 @@ class PresetsManager(node.Node):
 			try:
 				'''
 				pixelshift is the shift value in the unit of the binned pixel
-				pixelvector is the shift value in the unit of binned pixel
+				pixelvector is the shift value in the unit of unbinned pixel
 				'''
 				pixelshift1 = self.calclients['image'].itransform(myimage, fakescope1, fakecam1)
+				### Transform as unbinned pixel shift vector
 				pixrow = pixelshift1['row'] * oldpreset['binning']['y']
 				pixcol = pixelshift1['col'] * oldpreset['binning']['x']
 				pixvect1 = numpy.array((pixrow, pixcol))
-				###
-				if PROJECTION_MODE_TRANSFORM and self.isLensSeriesChange(oldpreset['magnification'],newpreset['magnification']):
-					pixvect1 = self.specialTransform(pixvect1,new_tem)
+				# image rotation
+				pixvect1 = self.imageRotationTransform(pixvect1,oldpreset,newpreset)
+				# extra rotation
+				if SPECIAL_TRANSFORM:
+					pixvect1 = self.specialTransform(pixvect1,new_tem,oldpreset['magnification'],newpreset['magnification'])
+				# magnification and camera (if camera is different)
 				pixvect2 = self.calclients['image'].pixelToPixel(old_tem,old_ccdcamera,new_tem, new_ccdcamera, ht,oldpreset['magnification'],newpreset['magnification'],pixvect1)
+
 				pixelshift2 = {'row':pixvect2[0] / newpreset['binning']['y'],'col':pixvect2[1] / newpreset['binning']['x']}
 				newscope = self.calclients['image'].transform(pixelshift2, fakescope2, fakecam2)
 				myimage = newscope['image shift']
@@ -1494,9 +1499,12 @@ class PresetsManager(node.Node):
 			except Exception, e:
 				self.logger.error('Image shift transform failed:  %s' % (e,))
 		else:
-			## this assumes that image shift is preserved through a mag change
-			## although this may not always be true.  In particular, I think
-			## that LM and M/SA mag ranges have different image shift coord systems
+			## movetype that is not image or image-beam shift
+			# This part transform the extra image shift of the oldimage in
+			# emtargetdata to the new image.
+			# This assumes that image shift is preserved through a mag change
+			# although this may not always be true.  In particular, I think
+			# that LM and M/SA mag ranges have different image shift coord systems
 			myimage['x'] -= oldimageshift['x']
 			myimage['y'] -= oldimageshift['y']
 			myimage['x'] += newimageshift['x']
@@ -1966,11 +1974,17 @@ class PresetsManager(node.Node):
 		self.confirmEvent(evt)
 	
 	def isLensSeriesChange(self,mag1,mag2):
+		# This is used in specialTransform to restrict the magnifications at
+		# which the transform is applied
 		return (mag1 <=4000 and mag2 >=5000)
 
-	def specialTransform(self,pixelvect,tem):
+	def specialTransform(self,pixelvect,tem, mag1, mag2):
+		'''
+		Rotation Transform that we have not considered.
+		This should be modified to fit the specific case
+		'''
 		# This matrix gives a given degree rotation from +x to +y axis.
-		if tem['hostname'] != 'jem-2100f':
+		if tem['hostname'] != 'jem-2100f' or not self.isLensSerisChange(mag1,mag2):
 			return pixelvect
 		rotate_angle_degrees = 142
 		a = math.radians(rotate_angle_degrees)
@@ -1978,3 +1992,21 @@ class PresetsManager(node.Node):
 		rotated_vect = numpy.dot(pixelvect,numpy.asarray(m))
 		self.logger.info('rotate %s to %s' % (pixelvect, rotated_vect))
 		return rotated_vect
+
+	def imageRotationTransform(self,pixvect, preset1,preset2):
+		'''
+		Pixel vector need to be rotated to account for the rotation of
+		specimen image rotation on the camera and the rotation of
+		image shift coil relative to the specimen
+		'''
+		ht = self.getHighTension()
+		imageshift_axis_rotation = self.calclients['image'].calculateCalibrationAngleDifference(preset1['tem'],preset1['ccdcamera'],preset2['tem'], preset2['ccdcamera'], ht,preset1['magnification'],preset2['magnification'])
+		stage_axis_rotation = self.calclients['stage'].calculateCalibrationAngleDifference(preset1['tem'],preset1['ccdcamera'],preset2['tem'], preset2['ccdcamera'], ht,preset1['magnification'],preset2['magnification'])
+		# This is the rotation needs to be applied to the pixvect of preset1
+		a = stage_axis_rotation - imageshift_axis_rotation
+		m = numpy.matrix([[math.cos(a),math.sin(a)],[-math.sin(a),math.cos(a)]])
+		rotated_vect = numpy.dot(pixvect,numpy.asarray(m))
+		self.logger.info('Adjust for image rotation: rotate %s to %s' % (pixvect, rotated_vect))
+		return rotated_vect
+
+		return pixvect

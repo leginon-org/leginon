@@ -13,6 +13,7 @@
 
 import node, leginondata, event
 import numpy
+import numpy.linalg
 import scipy
 import pyami.quietscipy
 import scipy.ndimage
@@ -1253,6 +1254,29 @@ class SimpleMatrixCalibrationClient(MatrixCalibrationClient):
 		}
 
 		return pixel_shift
+
+	def calculateCalibrationAngleDifference(self, tem1, ccdcamera1, tem2, ccdcamera2, ht, mag1, mag2):
+		par = self.parameter()
+		matrix1 = self.retrieveMatrix(tem1, ccdcamera1, par, ht, mag1)
+		matrix2 = self.retrieveMatrix(tem2, ccdcamera2, par, ht, mag2)
+		return self.angleFromMatrix(matrix2) - self.angleFromMatrix(matrix1)
+
+	def angleFromMatrix(self, matrix):
+		'''
+		calculate calibration 2D vectors (as an ndimage array)
+		average angle to the axis of (1,0),(0,1) vectors, respectively.
+		The result return is in radians
+		'''
+		print matrix
+		angles = []
+		angles.append(math.atan2(matrix[0,1],matrix[0,0]))
+		# y axis is assumed to be 90 degrees from x
+		yangle = math.atan2(matrix[1,1],matrix[1,0]) - math.pi/2
+		if yangle < -math.pi:
+			yangle += 2*math.pi
+		angles.append(yangle)
+		angle_average = sum(angles) / 2
+		return angle_average
 
 class ImageShiftCalibrationClient(SimpleMatrixCalibrationClient):
 	def __init__(self, node):
