@@ -309,8 +309,12 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 		### write to log file
 		f = open("ctfvalues.log", "a")
 		f.write("=== "+imgdata['filename']+" ===\n")
+		if not self.ctfvalues:
+			nominaldf =  imgdata['scope']['defocus']
+		else:
+			nominaldf = self.ctfvalues['nominal']
 		line1 = ("nominal=%.1e, bestdef=%.1e," %
-			( self.ctfvalues['nominal'], self.ctfvalues['defocusinit']))
+			( nominaldf, self.ctfvalues['defocusinit']))
 		if self.params['ctftilt'] is True:
 			self.ctfvalues['origtiltang'] = tiltang
 			line1+=" tilt=%.1f,"%tiltang
