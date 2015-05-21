@@ -242,12 +242,12 @@ if ($ctfrundatas) {
 	// Row 2
 	echo "<tr><td>\n";
 		echo "<h3>Resolution at 0.8</h3>";
-		echo "<a href='ctfgraph.php?hg=1&expId=$expId&s=1&xmin=5&xmax=50&f=resolution_80_percent'>\n";
+		echo "<a href='ctfgraph.php?hg=1&expId=$expId&s=1&xmin=2&xmax=50&f=resolution_80_percent'>\n";
 		echo "<img border='0' width='400' height='200' src='ctfgraph.php?"
 			."w=800&h=600&hg=1&expId=$expId&s=1&xmin=4&xmax=30&f=resolution_80_percent' alt='please wait...'></a>\n";
 	echo "</td><td>\n";
 		echo "<h3>Resolution at 0.5</h3>";
-		echo "<a href='ctfgraph.php?hg=1&expId=$expId&s=1&xmin=5&xmax=30&f=resolution_50_percent'>\n";
+		echo "<a href='ctfgraph.php?hg=1&expId=$expId&s=1&xmin=2&xmax=30&f=resolution_50_percent'>\n";
 		echo "<img border='0' width='400' height='200' src='ctfgraph.php?"
 			."w=800&h=600&hg=1&expId=$expId&s=1&xmin=4&xmax=30&f=resolution_50_percent' alt='please wait...'></a>\n";
 	echo "</td></tr>";
