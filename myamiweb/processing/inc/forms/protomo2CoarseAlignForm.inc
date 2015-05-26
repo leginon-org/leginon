@@ -24,12 +24,6 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 	$link='', $shift_limit='30' , $angle_limit='40' )
 	{
 		parent::__construct($expId, $extraHTML);
-		print "_POST:" . "<br>";
-		var_dump($_POST);
-		print "_GET:" . "<br>";
-		var_dump($_GET);
-		print "_SESSION:" . "<br>";
-		var_dump($_SESSION);
 		
 		global $imageinfo;
 		

@@ -23,12 +23,6 @@ class Protomo2BatchForm extends BasicLayoutForm
 	$map_sampling='8', $map_size_x='512', $map_size_y='512', $map_size_z='200', $video_type='')
 	{
 		parent::__construct($expId, $extraHTML);
-		print "_POST:" . "<br>";
-		var_dump($_POST);
-		print "_GET:" . "<br>";
-		var_dump($_GET);
-		print "_SESSION:" . "<br>";
-		var_dump($_SESSION);
 		
 		$tiltseriesId = ($_POST['tiltseriesId']) ? $_POST['tiltseriesId'] : NULL;
 		$particle = new particledata();
