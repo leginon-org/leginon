@@ -94,6 +94,8 @@ tiltseries {
    estimate: AP_do_estimation
 
    maxcorrection: AP_max_correction
+   maxshift: AP_max_shift
+   translimit: AP_translimit
    
    norotations: AP_norotations
    include: "AP_select_images"  (* AP select specific images in the tilt series *)
