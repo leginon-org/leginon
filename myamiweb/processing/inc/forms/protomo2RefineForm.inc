@@ -21,8 +21,8 @@ class Protomo2RefineForm extends BasicLayoutForm
 {
 	function __construct( $expId, $extraHTML, $sessionname='', $tiltseries='', $dimx='', $dimy='', $r1_region_x='', $r2_region_x='', $r3_region_x='', $r4_region_x='', $r1_region_y='', $r2_region_y='',
 	$r3_region_y='', $r4_region_y='', $r1_sampling='8', $r2_sampling='4', $r3_sampling='2', $r4_sampling='', $map_sampling='8', $thickness='1000', $pixelsize='', $r1_lp_diam_x='15',
-	$r2_lp_diam_x='10', $r3_lp_diam_x='8', $r4_lp_diam_x='', $r1_lp_apod_x='25', $r2_lp_apod_x='15', $r3_lp_apod_x='10', $r4_lp_apod_x='', $r1_lp_diam_y='15', $r2_lp_diam_y='10',
-	$r3_lp_diam_y='8', $r4_lp_diam_y='', $r1_lp_apod_y='25', $r2_lp_apod_y='15', $r3_lp_apod_y='10', $r4_lp_apod_y='', $r1_hp_diam_x='250', $r2_hp_diam_x='350', $r3_hp_diam_x='500',
+	$r2_lp_diam_x='15', $r3_lp_diam_x='15', $r4_lp_diam_x='', $r1_lp_apod_x='25', $r2_lp_apod_x='15', $r3_lp_apod_x='10', $r4_lp_apod_x='', $r1_lp_diam_y='15', $r2_lp_diam_y='15',
+	$r3_lp_diam_y='15', $r4_lp_diam_y='', $r1_lp_apod_y='25', $r2_lp_apod_y='15', $r3_lp_apod_y='10', $r4_lp_apod_y='', $r1_hp_diam_x='250', $r2_hp_diam_x='350', $r3_hp_diam_x='500',
 	$r4_hp_diam_x='', $r1_hp_diam_y='250', $r2_hp_diam_y='350', $r3_hp_diam_y='500', $r4_hp_diam_y='', $r1_hp_apod_x='75', $r2_hp_apod_x='100', $r3_hp_apod_x='150', $r4_hp_apod_x='',
 	$r1_hp_apod_y='75', $r2_hp_apod_y='100', $r3_hp_apod_y='150', $r4_hp_apod_y='', $corr_mode='mcf', $raw_path='', $r1_iters='10', $r2_iters='5', $r3_iters='2', $r4_iters='', $param='',
 	$binning='true', $preprocessing='true', $select_images='', $exclude_images='', $border='100', $clip_low='3.5', $clip_high='3.5', $thr_low='', $thr_high='', $gradient='true',
