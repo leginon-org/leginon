@@ -19,13 +19,20 @@ $_SESSION['erase_coarse'] = 0;
 
 class Protomo2RefineForm extends BasicLayoutForm
 {
-	function __construct( $expId, $extraHTML, $sessionname='', $tiltseries='', $r1_region_x='', $r2_region_x='', $r3_region_x='', $r4_region_x='', $r1_region_y='', $r2_region_y='', $r3_region_y='', $r4_region_y='', $r1_sampling='8', $r2_sampling='4', $r3_sampling='2', $r4_sampling='', $map_sampling='8', $thickness='1000', $pixelsize='', $r1_lp_diam_x='10', $r2_lp_diam_x='5', $r3_lp_diam_x='2', $r4_lp_diam_x='', $r1_lp_apod_x='25', $r2_lp_apod_x='15', $r3_lp_apod_x='10', $r4_lp_apod_x='',
-	$r1_lp_diam_y='10', $r2_lp_diam_y='5', $r3_lp_diam_y='2', $r4_lp_diam_y='', $r1_lp_apod_y='25', $r2_lp_apod_y='15', $r3_lp_apod_y='10', $r4_lp_apod_y='', $r1_hp_diam_x='250', $r2_hp_diam_x='350', $r3_hp_diam_x='500', $r4_hp_diam_x='', $r1_hp_diam_y='250', $r2_hp_diam_y='350', $r3_hp_diam_y='500', $r4_hp_diam_y='', $r1_hp_apod_x='75', $r2_hp_apod_x='100', $r3_hp_apod_x='150', $r4_hp_apod_x='', $r1_hp_apod_y='75', $r2_hp_apod_y='100', $r3_hp_apod_y='150', $r4_hp_apod_y='', $corr_mode='mcf', $raw_path='', $r1_iters='10', $r2_iters='5', $r3_iters='2', $r4_iters='', $param='', $binning='true',
-	$preprocessing='true', $select_images='', $exclude_images='', $border='100', $clip_low='3.5', $clip_high='3.5', $thr_low='', $thr_high='', $gradient='true', $gradient_switch='', $iter_gradient='', $iter_gradient_switch='', $filter='median',
-	$r1_kernel_x='', $r2_kernel_x='', $r3_kernel_x='', $r4_kernel_x='', $r1_kernel_y='', $r2_kernel_y='', $r3_kernel_y='', $r4_kernel_y='', $grow='0', $window_area='0.95', $mask_apod_x='', $mask_apod_y='', $mask_width_x='', $mask_width_y='', $do_estimation='false', $norotations='false', $max_correction='',
-	$correlation_size_x='160', $correlation_size_y='160', $r1_peak_search_radius_x='300', $r2_peak_search_radius_x='300', $r3_peak_search_radius_x='300', $r4_peak_search_radius_x='', $r1_peak_search_radius_y='300', $r2_peak_search_radius_y='300', $r3_peak_search_radius_y='300', $r4_peak_search_radius_y='', $orientation='true', $orientation_switch='', $azimuth='true', $azimuth_switch='', $elevation='false', $elevation_switch='',
-	$rotation='true', $rotation_switch='', $scale='false', $scale_switch='', $logging='true', $loglevel='2', $map_size_x='512', $map_size_y='512', $map_size_z='200', $filename_prefix='', $image_file_type='', $cachedir='cache',
-	$protomo_outdir='out', $retry='5', $retry_shrink='0.9', $gui_coarse_align='', $create_reconstruction='true', $keep_recons='false', $gif_optimize='true', $restart_cycle='' )
+	function __construct( $expId, $extraHTML, $sessionname='', $tiltseries='', $dimx='', $dimy='', $r1_region_x='', $r2_region_x='', $r3_region_x='', $r4_region_x='', $r1_region_y='', $r2_region_y='',
+	$r3_region_y='', $r4_region_y='', $r1_sampling='8', $r2_sampling='4', $r3_sampling='2', $r4_sampling='', $map_sampling='8', $thickness='1000', $pixelsize='', $r1_lp_diam_x='15',
+	$r2_lp_diam_x='10', $r3_lp_diam_x='8', $r4_lp_diam_x='', $r1_lp_apod_x='25', $r2_lp_apod_x='15', $r3_lp_apod_x='10', $r4_lp_apod_x='', $r1_lp_diam_y='15', $r2_lp_diam_y='10',
+	$r3_lp_diam_y='8', $r4_lp_diam_y='', $r1_lp_apod_y='25', $r2_lp_apod_y='15', $r3_lp_apod_y='10', $r4_lp_apod_y='', $r1_hp_diam_x='250', $r2_hp_diam_x='350', $r3_hp_diam_x='500',
+	$r4_hp_diam_x='', $r1_hp_diam_y='250', $r2_hp_diam_y='350', $r3_hp_diam_y='500', $r4_hp_diam_y='', $r1_hp_apod_x='75', $r2_hp_apod_x='100', $r3_hp_apod_x='150', $r4_hp_apod_x='',
+	$r1_hp_apod_y='75', $r2_hp_apod_y='100', $r3_hp_apod_y='150', $r4_hp_apod_y='', $corr_mode='mcf', $raw_path='', $r1_iters='10', $r2_iters='5', $r3_iters='2', $r4_iters='', $param='',
+	$binning='true', $preprocessing='true', $select_images='', $exclude_images='', $border='100', $clip_low='3.5', $clip_high='3.5', $thr_low='', $thr_high='', $gradient='true',
+	$gradient_switch='', $iter_gradient='', $iter_gradient_switch='', $filter='median', $r1_kernel_x='', $r2_kernel_x='', $r3_kernel_x='', $r4_kernel_x='', $r1_kernel_y='', $r2_kernel_y='',
+	$r3_kernel_y='', $r4_kernel_y='', $grow='0', $window_area='0.95', $mask_apod_x='', $mask_apod_y='', $mask_width_x='', $mask_width_y='', $do_estimation='false', $norotations='false',
+	$max_correction='', $correlation_size_x='160', $correlation_size_y='160', $r1_peak_search_radius_x='300', $r2_peak_search_radius_x='300', $r3_peak_search_radius_x='300',
+	$r4_peak_search_radius_x='', $r1_peak_search_radius_y='300', $r2_peak_search_radius_y='300', $r3_peak_search_radius_y='300', $r4_peak_search_radius_y='', $orientation='true',
+	$orientation_switch='', $azimuth='true', $azimuth_switch='', $elevation='false', $elevation_switch='', $rotation='true', $rotation_switch='', $scale='false', $scale_switch='',
+	$logging='true', $loglevel='2', $map_size_x='512', $map_size_y='512', $map_size_z='200', $filename_prefix='', $image_file_type='', $cachedir='cache', $protomo_outdir='out',
+	$retry='12', $retry_shrink='0.9', $gui_coarse_align='', $create_reconstruction='true', $keep_recons='false', $video_type='', $restart_cycle='' )
 	{
 		parent::__construct($expId, $extraHTML);
 		//print "_POST:" . "<br>";
@@ -38,8 +45,8 @@ class Protomo2RefineForm extends BasicLayoutForm
 		global $imageinfo;
 		$_POST['runname']=$_SESSION['runname'];
 		$_POST['outdir']=$_SESSION['outdir'];
-		$r1_region_x = $r2_region_x = $r3_region_x = $imageinfo['dimx']*0.75;
-		$r1_region_y = $r2_region_y = $r3_region_y = $imageinfo['dimy']*0.75;
+		$r1_region_x = $r2_region_x = $r3_region_x = $imageinfo['dimx']*0.5;
+		$r1_region_y = $r2_region_y = $r3_region_y = $imageinfo['dimy']*0.5;
 		$map_size_x = $imageinfo['dimx']/$map_sampling;
 		$map_size_y = $imageinfo['dimy']/$map_sampling;
 		$r1_kernel_x = $r2_kernel_x = $r3_kernel_x = intval($r1_region_x/$r1_sampling);
@@ -51,6 +58,8 @@ class Protomo2RefineForm extends BasicLayoutForm
 		$restart_cycle = $_SESSION['restart_cycle'];
 		$image_file_type = pathinfo($imageinfo['filename'], PATHINFO_EXTENSION);
 		$_SESSION['image_file_type'] = $image_file_type;
+		$_SESSION['dimx'] = $imageinfo['dimx'];
+		$_SESSION['dimy'] = $imageinfo['dimy'];
 		$_POST['pixelsize'] = $imageinfo['pixelsize']*pow(10,10);
 		//------ Set Parameters for the parent class, BasicLoopForm (general Appion params) -----//
 		
@@ -199,12 +208,12 @@ class Protomo2RefineForm extends BasicLayoutForm
 		$params->addParam( "protomo_outdir", $protomo_outdir, "Output Directory" );
 		$params->addParam( "retry", $retry, "Number of Refinement Retries Allowed" );
 		$params->addParam( "retry_shrink", $retry_shrink, "Window Size Fraction to Shrink Each Retry Attempt" );
-		$params->addParam( "create_reconstruction", $create_reconstruction, "Create a Reconstruction Gif" );
+		$params->addParam( "create_reconstruction", $create_reconstruction, "Create a Reconstruction Video" );
 		$params->addParam( "keep_recons", $keep_recons, "Keep Intermediate Reconstruction" );
 		$params->addParam( "map_size_x", $map_size_x, "Reconstructon Size (x)" );
 		$params->addParam( "map_size_y", $map_size_y, "Reconstructon Size (y)" );
 		$params->addParam( "map_size_z", $map_size_z, "Reconstructon Size (z)" );
-		$params->addParam( "gif_optimize", $gif_optimize, "Gif Optimization" );
+		$params->addParam( "video_type", $video_type, "Video Type" );
 		$params->addParam( "restart_cycle", $restart_cycle, "Restart Refinement at Iteration" );
 		
 		// Validations
@@ -227,10 +236,10 @@ class Protomo2RefineForm extends BasicLayoutForm
 			<b><center>Either remove all previous Refinements by running this series of commands:</center></b>";
 			$html .= "<br></br>
 			<center><code>rm ".$_SESSION['outdir'].$_SESSION['runname']."/*.corr<br>
-			rm ".$_SESSION['outdir'].$_SESSION['runname']."/gifs/correlations/series".sprintf('%04d',$_SESSION['tiltseries'])."[0-9][0-9]_cor.*<br>
-			rm ".$_SESSION['outdir'].$_SESSION['runname']."/gifs/reconstructions/series".sprintf('%04d',$_SESSION['tiltseries'])."[0-9][0-9]_bck.*<br>
-			rm ".$_SESSION['outdir'].$_SESSION['runname']."/gifs/corrplots/series".sprintf('%04d',$_SESSION['tiltseries'])."*<br>
-			rm ".$_SESSION['outdir'].$_SESSION['runname']."/gifs/tiltseries/series".sprintf('%04d',$_SESSION['tiltseries'])."*<br></code></center>";
+			rm ".$_SESSION['outdir'].$_SESSION['runname']."/media/correlations/series".sprintf('%04d',$_SESSION['tiltseries'])."[0-9][0-9]_cor.*<br>
+			rm ".$_SESSION['outdir'].$_SESSION['runname']."/media/reconstructions/series".sprintf('%04d',$_SESSION['tiltseries'])."[0-9][0-9]_bck.*<br>
+			rm ".$_SESSION['outdir'].$_SESSION['runname']."/media/corrplots/series".sprintf('%04d',$_SESSION['tiltseries'])."*<br>
+			rm ".$_SESSION['outdir'].$_SESSION['runname']."/media/tiltseries/series".sprintf('%04d',$_SESSION['tiltseries'])."*<br></code></center>";
 			//mv ".$_SESSION['outdir'].$_SESSION['runname']."/coarse_series".sprintf('%04d',$_SESSION['tiltseries']).".i3t ".$_SESSION['outdir'].$_SESSION['runname']."/series".sprintf('%04d',$_SESSION['tiltseries']).".i3t<br>
 			//rm ".$_SESSION['outdir'].$_SESSION['runname']."/series".sprintf('%04d',$_SESSION['tiltseries'])."[0-9][0-9].*<br>
 			//rm ".$_SESSION['outdir'].$_SESSION['runname']."/cache/"."series".sprintf('%04d',$_SESSION['tiltseries'])."*.<br>
@@ -484,12 +493,11 @@ class Protomo2RefineForm extends BasicLayoutForm
 			$html.= '<select name="create_reconstruction" style="width:66px">';
 			$html.= '<option selected value="true">true</option>';
 			$html.= '<option value="false">false</option>';
-			$html.= '</select>'; $html.= docpop('protomo_create_reconstruction', ' Create Reconstruction Gifs').'<br>';
-			//$html.= $params->insertTextField( "gif_optimize", $fieldSize );
-			$html.= '<select name="gif_optimize" style="width:66px">';
-			$html.= '<option selected value="true">true</option>';
-			$html.= '<option value="false">false</option>';
-			$html.= '</select>'; $html.= docpop('protomo_gif_optimize', ' Optimize Reconstruction Gifs').'<br>';
+			$html.= '</select>'; $html.= docpop('protomo_create_reconstruction2', ' Create Reconstruction Videos').'<br>';
+			$html.= '<select name="video_type" style="width:66px">';
+			$html.= '<option value="gif">Gif</option>';
+			$html.= '<option selected value="html5vid">HTML5</option>';
+			$html.= '</select>'; $html.= docpop('protomo_video_type', ' Video Type').'<br>';
 			$html.= $params->insertTextField( "map_sampling", $fieldSize );
 			$html.= $params->insertTextField( "map_size_x", $fieldSize );
 			$html.= $params->insertTextField( "map_size_y", $fieldSize );
@@ -523,10 +531,14 @@ class Protomo2RefineForm extends BasicLayoutForm
 		$t=time();
 		
 		$pixelsize=$_POST['pixelsize'];
+		$dimx=$_SESSION['dimx'];
+		$dimy=$_SESSION['dimy'];
 		$image_file_type=$_SESSION['image_file_type'];
 		$command.="--tiltseries=$tiltseries ";
 		$command.="--sessionname=$sessionname ";
 		$command.="--pixelsize=$pixelsize ";
+		$command.="--dimx=$dimx ";
+		$command.="--dimy=$dimy ";
 		$command.="--image_file_type=$image_file_type ";
 		$command.="--coarse=False ";
 		

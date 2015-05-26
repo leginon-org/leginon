@@ -15,7 +15,6 @@ $tiltseries=$_SESSION['tiltseries'];
 $sessionname=$_SESSION['sessionname'];
 $outdir=$_SESSION['outdir'];
 $runname=$_SESSION['runname'];
-$iters=$_SESSION['iters'];
 $imageinfo=$_SESSION['imageinfo'];
 
 class Protomo2BatchSummary extends BasicLayoutForm
@@ -34,7 +33,6 @@ class Protomo2BatchSummary extends BasicLayoutForm
 		$_POST['outdir']=$_SESSION['outdir'];
 		//------ Set Parameters for the parent class, BasicLoopForm (general Appion params) -----//
 
-		
 		// Set the publications to be references on the web pages
 		$pubList = array('protomo');
 		$this->setPublications( $pubList );
@@ -62,52 +60,60 @@ class Protomo2BatchSummary extends BasicLayoutForm
 		
 		global $outdir;
 		global $runname;
+		$trimmed_runname=preg_replace("/\d+$/","",$runname).'0001';
+		print $trimmed_runname;
+		$test= glob("$outdir/$trimmed_runname/media/correlations/s*.mp4");
+		print $test;
+		foreach (glob("$outdir/$trimmed_runname/media/correlations/s*.mp4") as $filename){
+			print $filename."<br />";
+		}
+		$rec_files = glob("$outdir/$runname/media/reconstructions/s*.gif");
 		
-		$corrpeak_files = glob("$outdir/$runname/gifs/correlations/s*.gif");
-		$rec_files = glob("$outdir/$runname/gifs/reconstructions/s*.gif");
+		// Table of all of the correlation peaks for easy identification of bad alignment iterations
+		$html .= "
+	<hr />
+	<center><H4><b>Best Iteration Correlation Peak for Each Tilt Series ".docpop('corrimageinfo_refine', '(Info)')."</b></H4></center>
+	<hr />";
 		
-		// Horizontal table of all of the correlation peaks for easy identification of bad alignment iterations
 		$i = 0;
+		$j = -1;
 		$html .= '<table id="" class="display" cellspacing="0" border="1" width="100%">';
-		foreach ($corrpeak_files as $corr)
+		$html .= "<tr>";
+		if (count($corrpeak_files) > 0)
 		{
-			$ite=$i+1;
-			$corrpeak_gif = "loadimg.php?rawgif=1&filename=".$corrpeak_files[$i];
-			$html .= "Iteration #".$ite;
-			$html .= '<td><center><img src="'.$corrpeak_gif.'"></td>';
-			$i++;
+		do {
+			foreach ($corrpeak_files as $corr)
+			{
+				$ite=$i+1;
+				if ($ite <= count($corrpeak_files) AND $ite > 0) {
+					$html .= '<th><a href="protomo2RefineIterationSummary.php?iter='.$ite.'&outdir='.$outdir.'&runname='.$runname.'&tiltseries='.$tiltseries.'" target="_blank">Tilt Series #'.$ite.'</a></th>';
+				}
+				if ($ite % 4 == 0 OR $ite < 1) {
+					$html .= "</tr><tr>";
+					$j++;
+					break;
+				}
+				$i++;
+			}
+			$i = 0 + 4*$j;
+			foreach ($corrpeak_files as $corr)
+			{
+				$ite=$i+1;
+				if ($ite <= count($corrpeak_files) AND $ite > 0) {
+					$corrpeak_gif = "loadimg.php?rawgif=1&filename=".$corrpeak_files[$i];
+					$html .= '<td><center><a href="protomo2RefineIterationSummary.php?iter='.$ite.'&outdir='.$outdir.'&runname='.$runname.'&tiltseries='.$tiltseries.'" target="_blank"><img src="'.$corrpeak_gif.'"/></a></center></td>';
+				}
+				if ($ite % 4 == 0 OR $ite < 1) {
+					$html .= "</tr><tr>";
+					$i++;
+					break;
+				}
+				$i++;
+			}
+		} while ($i < count($corrpeak_files));
 		}
-		$html .= '</tr><tr></table>';
+		$html .= '</tr><tr></table><br>';
 		
-		// Display Refinement for final iteration of each Tilt Series
-		for ($i = 0; $i < max(count($corrpeak_files),count($rec_files)); $i++)
-		{
-			$ite=$i+1;
-			$rec_gif = "loadimg.php?rawgif=1&filename=".$rec_files[$i];
-			$corrpeak_gif = "loadimg.php?rawgif=1&filename=".$corrpeak_files[$i];
-			$html .= "
-		<hr />
-		<center><H3><b>Refinement Iteration #$ite</b></H3></center>
-		<hr />";
-			$html .= "
-		<br />
-		<center><H4>Tilt Series Correlation Peaks</H4></center>
-		<br />";
-			if (isset($corrpeak_files[$i])) {
-				$html .= '<center><img src="'.$corrpeak_gif.'" alt="correlations" />'."<br /><br /><hr /></center>";
-			} else {
-				$html .= "<b>Depiction Correlation Peak Gif for Iteration $ite either failed to generate or is still processing</b>";
-			}
-			$html .= "
-		<br />
-		<center><H4>Tilt Series Preliminary Reconstruction After Refinement</H4></center>
-		<br />";
-			if (isset($rec_files[$i])) {
-				$html .= '<center><img src="'.$rec_gif.'" alt="reconstruction" /></center>'."<br /><br />";
-			} else {
-				$html .= "<center><b>Depiction Reconstruction Gif for Iteration $ite either failed to generate or is still processing</b></center>";
-			}
-		}
 		
 		$html .= "<br></br>
 			<a href='runAppionLoop.php?expId=".$this->expId."&form=Protomo2ReconstructForm'><b><center>[Click here to continue onto <font size='4'>Reconstruction</font> if protomo2aligner.py has finished <br>and you're happy with the alignment result in the final iteration] <font size='5'>→</font></center></b></a>";

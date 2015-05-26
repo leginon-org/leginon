@@ -54,7 +54,7 @@ class Protomo2RefineSummary extends BasicLayoutForm
 		
 	}
 	
-	// Display plots and gifs
+	// Display plots and videos
 	public function generateAdditionalFormLeft()
 	{
 		$this->updateFormParams();
@@ -64,8 +64,17 @@ class Protomo2RefineSummary extends BasicLayoutForm
 		global $runname;
 		global $tiltseries;
 		
-		$corrpeak_files = glob("$outdir/$runname/gifs/correlations/s*.gif");
-		$rec_files = glob("$outdir/$runname/gifs/reconstructions/s*.gif");
+		$corrpeak_gif_files = glob("$outdir/$runname/media/correlations/s*.gif");
+		$corrpeak_vid_files = glob("$outdir/$runname/media/correlations/s*.{mp4,ogv,webm}",GLOB_BRACE);
+		$qa_gif_file = "$outdir/$runname/media/quality_assessment/series".sprintf('%04d',$tiltseries)."_quality_assessment.gif";
+		$rec_files = glob("$outdir/$runname/media/reconstructions/s*.gif");
+		
+		$qa_gif = "loadimg.php?rawgif=1&filename=".$qa_gif_file;
+		print $qa_gif_file;
+		//print $qa_gif;
+		foreach(array_keys($initial_tilt_vid_files) as $paramName)
+			echo $paramName . "<br>";
+			echo $initial_tilt_vid_files["$paramName"] . "<br>";
 		
 		// Table of all of the correlation peaks for easy identification of bad alignment iterations
 		$html .= "
@@ -77,40 +86,83 @@ class Protomo2RefineSummary extends BasicLayoutForm
 		$j = -1;
 		$html .= '<table id="" class="display" cellspacing="0" border="1" width="100%">';
 		$html .= "<tr>";
-		if (count($corrpeak_files) > 0)
+		if (count($corrpeak_gif_files) > 0)
 		{
-		do {
-			foreach ($corrpeak_files as $corr)
-			{
-				$ite=$i+1;
-				if ($ite <= count($corrpeak_files) AND $ite > 0) {
-					$html .= '<th><a href="protomo2RefineIterationSummary.php?iter='.$ite.'&outdir='.$outdir.'&runname='.$runname.'&tiltseries='.$tiltseries.'" target="_blank">Iteration #'.$ite.'</a></th>';
-				}
-				if ($ite % 4 == 0 OR $ite < 1) {
-					$html .= "</tr><tr>";
-					$j++;
-					break;
-				}
-				$i++;
-			}
-			$i = 0 + 4*$j;
-			foreach ($corrpeak_files as $corr)
-			{
-				$ite=$i+1;
-				if ($ite <= count($corrpeak_files) AND $ite > 0) {
-					$corrpeak_gif = "loadimg.php?rawgif=1&filename=".$corrpeak_files[$i];
-					$html .= '<td><center><a href="protomo2RefineIterationSummary.php?iter='.$ite.'&outdir='.$outdir.'&runname='.$runname.'&tiltseries='.$tiltseries.'" target="_blank"><img src="'.$corrpeak_gif.'"/></a></center></td>';
-				}
-				if ($ite % 4 == 0 OR $ite < 1) {
-					$html .= "</tr><tr>";
+			do {
+				foreach ($corrpeak_gif_files as $corr)
+				{
+					$ite=$i+1;
+					if ($ite <= count($corrpeak_gif_files) AND $ite > 0) {
+						$html .= '<th><a href="protomo2RefineIterationSummary.php?iter='.$ite.'&outdir='.$outdir.'&runname='.$runname.'&tiltseries='.$tiltseries.'" target="_blank">Iteration #'.$ite.'</a></th>';
+					}
+					if ($ite % 4 == 0 OR $ite < 1) {
+						$html .= "</tr><tr>";
+						$j++;
+						break;
+					}
 					$i++;
-					break;
 				}
-				$i++;
-			}
-		} while ($i < count($corrpeak_files));
+				$i = 0 + 4*$j;
+				foreach ($corrpeak_gif_files as $corr)
+				{
+					$ite=$i+1;
+					if ($ite <= count($corrpeak_gif_files) AND $ite > 0) {
+						$corrpeak_gif = "loadimg.php?rawgif=1&filename=".$corrpeak_gif_files[$i];
+						$html .= '<td><center><a href="protomo2RefineIterationSummary.php?iter='.$ite.'&outdir='.$outdir.'&runname='.$runname.'&tiltseries='.$tiltseries.'" target="_blank"><img src="'.$corrpeak_gif.'"/></a></center></td>';
+					}
+					if ($ite % 4 == 0 OR $ite < 1) {
+						$html .= "</tr><tr>";
+						$i++;
+						break;
+					}
+					$i++;
+				}
+			} while ($i < count($corrpeak_gif_files));
+		}
+		elseif (count($corrpeak_vid_files) > 0)
+		{
+			do {
+				foreach ($corrpeak_vid_files as $corr)
+				{
+					$ite=$i+1;
+					if ($ite <= count($corrpeak_vid_files)/3 AND $ite > 0) {
+						$html .= '<th><a href="protomo2RefineIterationSummary.php?iter='.$ite.'&outdir='.$outdir.'&runname='.$runname.'&tiltseries='.$tiltseries.'" target="_blank">Iteration #'.$ite.'</a></th>';
+					}
+					if ($ite % 4 == 0 OR $ite < 1) {
+						$html .= "</tr><tr>";
+						$j++;
+						break;
+					}
+					$i++;
+				}
+				$i = 0 + 4*$j;
+				foreach ($corrpeak_vid_files as $corr)
+				{
+					$ite=$i+1;
+					if ($ite <= count($corrpeak_vid_files)/3 AND $ite > 0) {
+						$corrpeak_vid_mp4 = "loadvid.php?filename=".$corrpeak_vid_files[$i];
+						$html .= '<td><center><a href="protomo2RefineIterationSummary.php?iter='.$ite.'&outdir='.$outdir.'&runname='.$runname.'&tiltseries='.$tiltseries.'" target="_blank">
+							 <video id="corrpeakVideos" autoplay loop>
+							 <source src="'.$corrpeak_vid_mp4.'" type="video/mp4" loop>
+							 </video></a></center></td>';
+					}
+					if ($ite % 4 == 0 OR $ite < 1) {
+						$html .= "</tr><tr>";
+						$i++;
+						break;
+					}
+					$i++;
+				}
+			} while ($i < count($corrpeak_vid_files)/3);
 		}
 		$html .= '</tr><tr></table><br>';
+		
+		// Quality assessment for each iteration
+		$html .= "
+	<hr />
+	<center><H4><b>Quality Assessment ".docpop('quality_assessment', '(Info)')."</b></H4></center>
+	<hr />";
+		$html .= '<center><img src="'.$qa_gif.'" alt="qa" width="550" />'."</center>";
 		
 		// Display Refinement Summary for each iteration (disabled because it overloads the browser=[)
 		//$html.='<script type="text/javascript">
@@ -130,10 +182,10 @@ class Protomo2RefineSummary extends BasicLayoutForm
 		//<center><input type="button" style="width:150px;height:30px;" onclick="return toggleMe(\'para1\')" value="View All Iterations"></center><br>
 		//<div id="para1" style="display:none">';
 		//
-		//for ($j = 0; $j < max(count($corrpeak_files),count($rec_files)); $j++)
+		//for ($j = 0; $j < max(count($corrpeak_gif_files),count($rec_files)); $j++)
 		//{
 		//	$ite=$j+1;
-		//	$corrpeak_gif = "loadimg.php?rawgif=1&filename=".$corrpeak_files[$j];
+		//	$corrpeak_gif = "loadimg.php?rawgif=1&filename=".$corrpeak_gif_files[$j];
 		//	$rec_gif = "loadimg.php?rawgif=1&filename=".$rec_files[$j];
 		//	
 		//	$html .= "
@@ -144,7 +196,7 @@ class Protomo2RefineSummary extends BasicLayoutForm
 		//<br />
 		//<center><H4>Tilt Series Correlation Peaks</H4></center>
 		//<br />";
-		//	if (isset($corrpeak_files[$j])) {
+		//	if (isset($corrpeak_gif_files[$j])) {
 		//		$html .= '<center><img src="'.$corrpeak_gif.'" alt="correlations" />'."<br /><br /><hr /></center>";
 		//	} else {
 		//		$html .= "<b>Depiction Correlation Peak Gif for Iteration $ite either failed to generate or is still processing</b>";
@@ -165,7 +217,7 @@ class Protomo2RefineSummary extends BasicLayoutForm
 		//}
 		
 		// Only display link to next step in tomo processing if at least one iteration is complete
-		if (count($corrpeak_files) < 1)
+		if (max(count($corrpeak_gif_files),count($corrpeak_vid_files)) < 1)
 		{
 			$html .= "<br></br>
 			<b><center>[Refresh this page after at least one Refinement iteration completes]</center><br></b>";

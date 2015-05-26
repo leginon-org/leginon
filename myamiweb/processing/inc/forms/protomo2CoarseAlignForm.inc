@@ -15,20 +15,21 @@ session_start();
 
 class Protomo2CoarseAlignForm extends BasicLayoutForm
 {
-	function __construct( $expId, $extraHTML, $region_x='512', $region_y='512', $sampling='8', $map_sampling='8', $thickness='1000', $pixelsize='', $lp_diam_x='10', $lp_diam_y='10', $lp_apod_x='50',
+	function __construct( $expId, $extraHTML, $region_x='512', $region_y='512', $sampling='8', $map_sampling='8', $thickness='1000', $pixelsize='', $lp_diam_x='20', $lp_diam_y='20', $lp_apod_x='50',
 	$lp_apod_y='50', $hp_diam_x='500', $hp_diam_y='500', $hp_apod_x='150', $hp_apod_y='150', $corr_mode='mcf', $raw_path='', $iters='', $param='', $binning='true',
 	$preprocessing='true', $select_images='', $exclude_images='', $border='100', $clip_low='3.5', $clip_high='3.5', $thr_low='', $thr_high='', $gradient='true', $iter_gradient='false', $filter='median',
-	$kernel_x='', $kernel_y='', $grow='0', $window_area='0.95', $mask_apod_x='', $mask_apod_y='', $mask_width_x='', $mask_width_y='',
+	$kernel_x='', $kernel_y='', $grow='0', $window_area='0.95', $mask_apod_x='', $mask_apod_y='', $mask_width_x='', $mask_width_y='', $dimx='', $dimy='',
 	$correlation_size_x='192', $correlation_size_y='192', $peak_search_radius_x='', $peak_search_radius_y='', $logging='true', $loglevel='2', $map_size_x='512', $map_size_y='512', $map_size_z='200', $filename_prefix='', $image_file_type='', $cachedir='cache',
-	$protomo_outdir='out', $gui_coarse_align='', $grid_limit='2.0', $grid_step='0.1', $retry='5', $retry_shrink='0.9', $create_reconstruction='true', $keep_recons='false', $region_x='512', $gif_optimize='true', $link='' )
+	$protomo_outdir='out', $gui_coarse_align='', $grid_limit='2.0', $grid_step='0.1', $retry='10', $retry_shrink='0.9', $create_reconstruction='true', $keep_recons='false', $region_x='512', $video_type='',
+	$link='', $shift_limit='30' , $angle_limit='40' )
 	{
 		parent::__construct($expId, $extraHTML);
-		//print "_POST:" . "<br>";
-		//var_dump($_POST);
-		//print "_GET:" . "<br>";
-		//var_dump($_GET);
-		//print "_SESSION:" . "<br>";
-		//var_dump($_SESSION);
+		print "_POST:" . "<br>";
+		var_dump($_POST);
+		print "_GET:" . "<br>";
+		var_dump($_GET);
+		print "_SESSION:" . "<br>";
+		var_dump($_SESSION);
 		
 		global $imageinfo;
 		
@@ -95,8 +96,8 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 		$_SESSION['imageinfo'] = $imageinfo;
 		$_SESSION['tiltseries'] = $tiltseriesinfos[0]['number'];
 		
-		$region_x = intval($imageinfo['dimx']*0.75);
-		$region_y = intval($imageinfo['dimy']*0.75);
+		$region_x = intval($imageinfo['dimx']*0.6);
+		$region_y = intval($imageinfo['dimy']*0.6);
 		$map_size_x = intval($imageinfo['dimx']/$map_sampling);
 		$map_size_y = intval($imageinfo['dimy']/$map_sampling);
 		$kernel_x = intval($region_x/$sampling);
@@ -107,6 +108,8 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 		$mask_apod_y = intval($region_y/$sampling);
 		$image_file_type = pathinfo($imageinfo['filename'], PATHINFO_EXTENSION);
 		$_SESSION['image_file_type'] = $image_file_type;
+		$_SESSION['dimx'] = $imageinfo['dimx'];
+		$_SESSION['dimy'] = $imageinfo['dimy'];
 		$_POST['pixelsize'] = $imageinfo['pixelsize']*pow(10,10);
 		$_POST['peak_search_radius_x'] = $imageinfo['dimx']/2;
 		$_POST['peak_search_radius_y'] = $imageinfo['dimy']/2;
@@ -197,13 +200,15 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 		$params->addParam( "gridsearch_step", $grid_step, "Gridseach Angle Step Size (<strong>Required Parameter</strong>)" );
 		$params->addParam( "retry", $retry, "Coarse Alignment Retries" );
 		$params->addParam( "retry_shrink", $retry_shrink, "Window Size Fraction to Shrink Each Retry Attempt" );
-		$params->addParam( "create_reconstruction", $create_reconstruction, "Create a Reconstruction Gif" );
+		$params->addParam( "create_reconstruction", $create_reconstruction, "Create a Reconstruction Video" );
 		$params->addParam( "keep_recons", $keep_recons, "Keep Intermediate Reconstruction" );
 		$params->addParam( "map_size_x", $map_size_x, "Reconstructon Size (x)" );
 		$params->addParam( "map_size_y", $map_size_y, "Reconstructon Size (y)" );
 		$params->addParam( "map_size_z", $map_size_z, "Reconstructon Size (z)" );
-		$params->addParam( "gif_optimize", $gif_optimize, "Gif Optimization" );
+		$params->addParam( "video_type", $video_type, "Video Type" );
 		$params->addParam( "link", $link, "Link or Copy Raw Images?" );
+		$params->addParam( "shift_limit", $shift_limit, "Shift Limit" );
+		$params->addParam( "angle_limit", $angle_limit, "Angle Limit" );
 
 		
 		// Validations
@@ -219,7 +224,10 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 	// Generate a form for the parameters that are specific to this program (not Appion params)
 	public function generateAdditionalFormLeft()
 	{
-		
+		$filename='/lustre/cryo/lustre/appiondata/15apr12b/protomo_alignments/protomorun2/series000309.corr';
+		$lines = file($filename, FILE_IGNORE_NEW_LINES);
+		print $filename;
+		print $lines;
 		
 		if ($_SESSION['erase_coarse']==1)
 		{
@@ -274,6 +282,8 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 			$html.= $params->insertTextField( "sampling", $fieldSize );
 			$html.= $params->insertTextField( "select_images", $fieldSize );
 			$html.= $params->insertTextField( "exclude_images", $fieldSize );
+			$html.= $params->insertTextFieldInRow( "shift_limit", $fieldSize ).'│ ';
+			$html.= $params->insertTextField( "angle_limit", $fieldSize );
 			//$html.= $params->insertTextField( "logging", $fieldSize );
 			$html.= '<select name="logging" style="width:66px">';
 			$html.= '<option selected value="true">true</option>';
@@ -375,12 +385,11 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 			$html.= '<select name="create_reconstruction" style="width:66px">';
 			$html.= '<option selected value="true">true</option>';
 			$html.= '<option value="false">false</option>';
-			$html.= '</select>'; $html.= docpop('protomo_create_reconstruction', ' Create a Reconstruction Gif').'<br>';
-			//$html.= $params->insertTextField( "gif_optimize", $fieldSize );
-			$html.= '<select name="gif_optimize" style="width:66px">';
-			$html.= '<option selected value="true">true</option>';
-			$html.= '<option value="false">false</option>';
-			$html.= '</select>'; $html.= docpop('protomo_gif_optimize', ' Optimize Reconstruction Gif').'<br>';
+			$html.= '</select>'; $html.= docpop('protomo_create_reconstruction', ' Create a Reconstruction Video').'<br>';
+			$html.= '<select name="video_type" style="width:66px">';
+			$html.= '<option value="gif">Gif</option>';
+			$html.= '<option selected value="html5vid">HTML5</option>';
+			$html.= '</select>'; $html.= docpop('protomo_video_type', ' Video Type').'<br>';
 			$html.= $params->insertTextField( "map_sampling", $fieldSize );
 			$html.= $params->insertTextField( "map_size_x", $fieldSize );
 			$html.= $params->insertTextField( "map_size_y", $fieldSize );
@@ -412,10 +421,14 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 		$sessionname=$_POST['sessionname'];
 		$tiltseries=$_SESSION['tiltseries'];
 		$pixelsize=$_POST['pixelsize'];
+		$dimx=$_SESSION['dimx'];
+		$dimy=$_SESSION['dimy'];
 		$image_file_type=$_SESSION['image_file_type'];
 		$command.="--session=$sessionname ";
 		$command.="--tiltseries=$tiltseries ";
 		$command.="--pixelsize=$pixelsize ";
+		$command.="--dimx=$dimx ";
+		$command.="--dimy=$dimy ";
 		$command.="--image_file_type=$image_file_type ";
 		$command.="--coarse=True ";
 		

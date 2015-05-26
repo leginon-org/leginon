@@ -54,7 +54,7 @@ class Protomo2CoarseAlignSummary extends BasicLayoutForm
 		
 	}
 	
-	// Display plots and gifs
+	// Display plots and videos
 	public function generateAdditionalFormLeft()
 	{
 		$this->updateFormParams();
@@ -63,86 +63,142 @@ class Protomo2CoarseAlignSummary extends BasicLayoutForm
 		global $outdir;
 		global $runname;
 		
-		$corrpeak_files = glob("$outdir/$runname/gifs/correlations/c*.gif");
-		$initial_tilt_files = glob("$outdir/$runname/gifs/tiltseries/i*.gif");
-		$tilt_files = glob("$outdir/$runname/gifs/tiltseries/c*.gif");
-		$rec_files = glob("$outdir/$runname/gifs/reconstructions/c*.gif");
-		//print $outdir.'/'.$runname;
-		//foreach(array_keys($corrpeak_files) as $paramName)
+		$corrpeak_gif_files = glob("$outdir/$runname/media/correlations/c*.gif");
+		$corrpeak_vid_files = glob("$outdir/$runname/media/correlations/c*.{mp4,ogv,webm}",GLOB_BRACE);
+		$initial_tilt_gif_files = glob("$outdir/$runname/media/tiltseries/i*.gif");
+		$initial_tilt_vid_files = glob("$outdir/$runname/media/tiltseries/i*.{mp4,ogv,webm}",GLOB_BRACE);
+		$tilt_gif_files = glob("$outdir/$runname/media/tiltseries/c*.gif");
+		$tilt_vid_files = glob("$outdir/$runname/media/tiltseries/c*.{mp4,ogv,webm}",GLOB_BRACE);
+		$rec_gif_files = glob("$outdir/$runname/media/reconstructions/c*.gif");
+		$rec_vid_files = glob("$outdir/$runname/media/reconstructions/c*.{mp4,ogv,webm}",GLOB_BRACE);
+		
+		//print $outdir.'/'.$runname . "<br>";
+		//foreach(array_keys($initial_tilt_vid_files) as $paramName)
 		//	echo $paramName . "<br>";
-		//	echo $corrpeak_files["$paramName"] . "<br>";
+		//	echo $initial_tilt_vid_files["$paramName"] . "<br>";
 		
 		// Display Coarse Alignment Summary
-		for ($i = 0; $i < max(count($corrpeak_files),count($rec_files)); $i++)
-		{
-			$ite=$i+1;
-			$corrpeak_gif = "loadimg.php?rawgif=1&filename=".$corrpeak_files[$i];
-			$initial_tilt_gif = "loadimg.php?rawgif=1&filename=".$initial_tilt_files[$i];
-			$tilt_gif = "loadimg.php?rawgif=1&filename=".$tilt_files[$i];
-			$rec_gif = "loadimg.php?rawgif=1&filename=".$rec_files[$i];
-			
-			$html .= "
-		<br />
-		<center><H4>Tilt Series Correlation Peaks</H4></center>
-		<br />";
-			if (isset($corrpeak_files[$i])) {
-				$html .= '<center><img src="'.$corrpeak_gif.'" alt="correlations" />'."<br /></center>";
-				$html .= '<center>'.docpop('corrimageinfo_coarse', 'Image Info').'<br /><br /><hr /></center>';
-			} else {
-				$html .= "<center><b>Depiction Correlation Peak Gif for Coarse Alignment either failed to generate or is still processing</b></center>";
-			}
-			
-			$html.='<br /><script type="text/javascript">
-			function toggleMe(a){
-			var e=document.getElementById(a);
-			if(!e)return true;
-			if(e.style.display=="none"){
-			e.style.display="block"
-			}
-			else{
-			e.style.display="none"
-			}
-			return true;
-			}
-			</script>
-			
-			<center><input type="button" style="width:150px;height:30px;" onclick="return toggleMe(\'para1\')" value="View Initial Tilt Series"></center><br>
-			<div id="para1" style="display:none">';
-			$html .= "
-		<br />
-		<center><H4>Initial Tilt Series Before Coarse Alignment</H4></center>
-		<br />";
-			if (isset($initial_tilt_files[$i])) {
-				$html .= '<center><img src="'.$initial_tilt_gif.'" alt="tiltseries" />'."<br /></center>";
-				$html .= '<center>'.docpop('initialtiltimageinfo_coarse', 'Image Info').'<br /><br /></center>';
-			} else {
-				$html .= "<center><b>Depiction Tilt Series Gif for unaligned tilt series either failed to generate or is still processing</b></center>";
-			}
-			$html .= '</div>';
-			
-			$html .= "
-		<hr /><center><H4>Tilt Series After Coarse Alignment</H4></center>
-		<br />";
-			if (isset($tilt_files[$i])) {
-				$html .= '<center><img src="'.$tilt_gif.'" alt="tiltseries" />'."<br /></center>";
-				$html .= '<center>'.docpop('tiltimageinfo_coarse', 'Image Info').'<br /><br /><hr /></center>';
-			} else {
-				$html .= "<center><b>Depiction Tilt Series Gif for Coarse Alignment either failed to generate or is still processing</b></center>";
-			}
-			$html .= "
-		<br />
-		<center><H4>Tilt Series Reconstruction After Coarse Alignment</H4></center>
-		<br />";
-			if (isset($rec_files[$i])) {
-				$html .= '<center><img src="'.$rec_gif.'" alt="reconstruction" />'."<br /></center>";
-				$html .= '<center>'.docpop('reconimageinfo_coarse', 'Image Info').'<br /><br /><hr /></center>';
-			} else {
-				$html .= "<center><b>Depiction Reconstruction Gif for Coarse Alignment either failed to generate or is still processing</b></center>";
-			}
+		$corrpeak_gif = "loadimg.php?rawgif=1&filename=".$corrpeak_gif_files[0];
+		$corrpeak_mp4 = "loadvid.php?filename=".$corrpeak_vid_files[0];
+		$corrpeak_ogv = "loadvid.php?filename=".$corrpeak_vid_files[1];
+		$corrpeak_webm = "loadvid.php?filename=".$corrpeak_vid_files[2];
+		$download_corrpeak_mp4 = "downloadvid.php?filename=".$corrpeak_vid_files[0];
+		$initial_tilt_gif = "loadimg.php?rawgif=1&filename=".$initial_tilt_gif_files[0];
+		$initial_tilt_mp4 = "loadvid.php?filename=".$initial_tilt_vid_files[0];
+		$initial_tilt_ogv = "loadvid.php?filename=".$initial_tilt_vid_files[1];
+		$initial_tilt_webm = "loadvid.php?filename=".$initial_tilt_vid_files[2];
+		$download_initial_tilt_mp4 = "downloadvid.php?filename=".$initial_tilt_vid_files[0];
+		$tilt_gif = "loadimg.php?rawgif=1&filename=".$tilt_gif_files[0];
+		$tilt_mp4 = "loadvid.php?filename=".$tilt_vid_files[0];
+		$tilt_ogv = "loadvid.php?filename=".$tilt_vid_files[1];
+		$tilt_webm = "loadvid.php?filename=".$tilt_vid_files[2];
+		$download_tilt_mp4 = "downloadvid.php?filename=".$tilt_vid_files[0];
+		$rec_gif = "loadimg.php?rawgif=1&filename=".$rec_gif_files[0];
+		$rec_mp4 = "loadvid.php?filename=".$rec_vid_files[0];
+		$rec_ogv = "loadvid.php?filename=".$rec_vid_files[1];
+		$rec_webm = "loadvid.php?filename=".$rec_vid_files[2];
+		$download_rec_mp4 = "downloadvid.php?filename=".$rec_vid_files[0];
+		
+		$html .= "
+	<br />
+	<center><H4>Tilt Series Correlation Peaks</H4></center>
+	<br />";
+		if (isset($corrpeak_gif_files[0])) {
+			$html .= '<center><img src="'.$corrpeak_gif.'" alt="correlations" />'."<br /></center>";
+			$html .= '<center>'.docpop('corrimageinfo_coarse', 'Image Info').'</center>';
+			$html .= '<p align="right"><a href="'.$download_corrpeak_mp4.'">Download Video</a></p><br /><br /><hr />';
+		} elseif (isset($corrpeak_vid_files[0])){
+			$html .= '<center><video id="corrpeakVideos" autoplay loop>
+				  <source src="'.$corrpeak_mp4.'" type="video/mp4" loop>'.'<br />
+				  <source src="'.$corrpeak_webm.'" type="video/webm" loop>'.'<br />
+				  <source src="'.$corrpeak_ogv.'" type="video/ogg" loop>'.'<br />
+				  HTML5 video is not supported by your browser.
+				  </video></center>';
+			$html .= '<center>'.docpop('corrimageinfo_coarse', 'Image Info').'</center>';
+			$html .= '<p align="right"><a href="'.$download_corrpeak_mp4.'">Download Video</a></p><hr />';
+		} else {
+			$html .= "<center><b>Depiction Correlation Peak Video for Coarse Alignment either failed to generate or is still processing</b></center>";
+		}
+		
+		$html.='<br /><script type="text/javascript">
+		function toggleMe(a){
+		var e=document.getElementById(a);
+		if(!e)return true;
+		if(e.style.display=="none"){
+		e.style.display="block"
+		}
+		else{
+		e.style.display="none"
+		}
+		return true;
+		}
+		</script>
+		
+		<center><input type="button" style="width:150px;height:30px;" onclick="return toggleMe(\'para1\')" value="View Initial Tilt Series"></center><br>
+		<div id="para1" style="display:none">';
+		$html .= "
+	<center><H4>Tilt Series Before Coarse Alignment</H4></center>
+	<br />";
+		if (isset($initial_tilt_gif_files[0])) {
+			$html .= '<center><img src="'.$initial_tilt_gif.'" alt="tiltseries" />'."<br /></center>";
+			$html .= '<center>'.docpop('initialtiltimageinfo_coarse', 'Image Info').'<br /><br /></center>';
+			$html .= '<p align="right"><a href="'.$download_initial_tilt_mp4.'">Download Video</a></p><br /><br />';
+		} elseif (isset($initial_tilt_vid_files[0])){
+			$html .= '<center><video id="initialTiltVideos" controls autoplay loop>
+				  <source src="'.$initial_tilt_mp4.'" type="video/mp4" loop>'.'<br />
+				  <source src="'.$initial_tilt_webm.'" type="video/webm" loop>'.'<br />
+				  <source src="'.$initial_tilt_ogv.'" type="video/ogg" loop>'.'<br />
+				  HTML5 video is not supported by your browser.
+				  </video></center>';
+			$html .= '<center>'.docpop('initialtiltimageinfo_coarse', 'Image Info').'</center>';
+			$html .= '<p align="right"><a href="'.$download_initial_tilt_mp4.'">Download Video</a></p>';
+		} else {
+			$html .= "<center><b>Depiction Tilt Series Video for unaligned tilt series either failed to generate or is still processing</b></center>";
+		}
+		$html .= '</div>';
+		
+		$html .= "
+	<hr /><br /><center><H4>Tilt Series After Coarse Alignment</H4></center>
+	<br />";
+		if (isset($tilt_gif_files[0])) {
+			$html .= '<center><img src="'.$tilt_gif.'" alt="tiltseries" />'."<br /></center>";
+			$html .= '<center>'.docpop('tiltimageinfo_coarse', 'Image Info').'</center>';
+			$html .= '<p align="right"><a href="'.$download_tilt_mp4.'">Download Video</a></p><br /><br /><hr />';
+		} elseif (isset($tilt_vid_files[0])){
+			$html .= '<center><video id="tiltVideos" controls autoplay loop>
+				  <source src="'.$tilt_mp4.'" type="video/mp4" loop>'.'<br />
+				  <source src="'.$tilt_webm.'" type="video/webm" loop>'.'<br />
+				  <source src="'.$tilt_ogv.'" type="video/ogg" loop>'.'<br />
+				  HTML5 video is not supported by your browser.
+				  </video></center>';
+			$html .= '<center>'.docpop('tiltimageinfo_coarse', 'Image Info').'</center>';
+			$html .= '<p align="right"><a href="'.$download_tilt_mp4.'">Download Video</a></p><hr />';
+		} else {
+			$html .= "<center><b>Depiction Tilt Series Video for Coarse Alignment either failed to generate or is still processing</b></center>";
+		}
+		$html .= "
+	<br />
+	<center><H4>Tilt Series Reconstruction After Coarse Alignment</H4></center>
+	<br />";
+		if (isset($rec_gif_files[0])) {
+			$html .= '<center><img src="'.$rec_gif.'" alt="reconstruction" />'."<br /></center>";
+			$html .= '<center>'.docpop('reconimageinfo_coarse', 'Image Info').'<br /><br /></center>';
+			$html .= '<p align="right"><a href="'.$download_rec_mp4.'">Download Video</a></p><br /><br /><hr />';
+		} elseif (isset($rec_vid_files[0])){
+			$html .= '<center><video id="reconVideos" controls autoplay loop>
+				  <source src="'.$rec_mp4.'" type="video/mp4" loop>'.'<br />
+				  <source src="'.$rec_webm.'" type="video/webm" loop>'.'<br />
+				  <source src="'.$rec_ogv.'" type="video/ogg" loop>'.'<br />
+				  HTML5 video is not supported by your browser.
+				  </video></center>';
+			$html .= '<center>'.docpop('reconimageinfo_coarse', 'Image Info').'</center>';
+			$html .= '<p align="right"><a href="'.$download_rec_mp4.'">Download Video</a></p><hr />';
+		} else {
+			$html .= "<center><b>Depiction Reconstruction Video for Coarse Alignment either failed to generate or is still processing</b></center>";
 		}
 		
 		// Only display link to next step in tomo processing if Coarse Alignment is complete
-		if (count($rec_files) < 1)
+		if (max(count($tilt_gif_files),count($tilt_vid_files)) < 1)
 		{
 			$html .= "<br></br>
 			<b><center>[Refresh this page after Coarse Alignment completes]</center><br></b>";

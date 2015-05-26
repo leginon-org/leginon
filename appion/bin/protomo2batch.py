@@ -1,463 +1,1122 @@
 #!/usr/bin/env python
-# 
-# This script provides the user access to the protomo command line interface,
-# allowing for the initial coarse alignment and subsequent iterative alignments and
-# reconstruction to be performed serially across a range of tiltseries. Three param files
-# are required: One for coarse alignment, once for refinement, and one for reconstruction.
-# 
-# *To be used from Appion 'Batch Align Tilt Series'
 
+from __future__ import division
 import os
 import sys
-import math
 import glob
-import scipy
+import time
+import optparse
 import subprocess
-from multiprocessing import Pool
-from appionlib import basicScript
+import multiprocessing as mp
 from appionlib import apDisplay
-from appionlib import apDatabase
-from appionlib import apProTomo2Prep
-from appionlib import apTomo
-from appionlib import apProTomo
-from appionlib import apParam
-from pyami import mrc
+from appionlib import apProTomo2Aligner
 
 try:
 	import protomo
 except:
 	print "protomo did not get imported"
 
-cwd=os.getcwd()
-wd=''
+def parseOptions():
+	parser=optparse.OptionParser()
+	parser.add_option('--sessionname', dest='sessionname',
+		help= 'Session date, e.g. 14sep04a')
+	parser.add_option('--projectid', dest='projectid',
+		help= 'Project id, e.g. ap20')
+	parser.add_option('--voltage', dest='voltage', type="int",
+		help= 'Microscope voltage in keV, e.g. 300')
+	parser.add_option('--cs', dest='cs', type="float",
+		help= 'Microscope spherical abberation, e.g. 2.7')
+	parser.add_option('--amp_contrast', dest='amp_contrast', type="float", default=0.07,
+		help= 'Amplitude contrast, e.g. 0.07')
+	parser.add_option('--rundir', dest='rundir',
+		help= 'Base run directory where all tiltseriesXXXX folders will be made, e.g. /path/to/protomodir/')
+	parser.add_option('--tiltseriesranges', dest='tiltseriesranges',
+		help= 'Range of tilt series numbers to be processed. Should be in a comma/hyphen-separated list, e.g. 3,4,6-10')
+	parser.add_option("--link", dest="link",  default=True,
+		help="Link raw images if True, copy if False, e.g. --link=False")
+	parser.add_option("--procs", dest="procs", default=1,
+		help="Number of processors to use, 'all' defaults to use all processors on running machine e.g. --procs=4")
+	parser.add_option("--coarse_param_file", dest="coarse_param_file",
+		help="External Coarse Alignment param file. e.g. --coarse_param_file=/path/to/coarse.param", metavar="FILE")
+	parser.add_option("--refine_param_file", dest="refine_param_file",
+		help="External Refinement param file. e.g. --refine_param_file=/path/to/refine.param", metavar="FILE")
+	parser.add_option("--recon_param_file", dest="recon_param_file",
+		help="External Recnostruction param file. e.g. --recon_param_file=/path/to/recon.param", metavar="FILE")
+	parser.add_option("--pixelsize", dest="pixelsize", type="float",
+		help="Pixelsize of raw images in angstroms/pixel, e.g. --pixelsize=3.5", metavar="float")
+	parser.add_option("--sampling", dest="sampling",  default="8", type="int",
+		help="Sampling rate of raw data, e.g. --sampling=4")
+	parser.add_option("--map_sampling", dest="map_sampling",  default="8", type="int",
+		help="Sampling rate of raw data for use in reconstruction, e.g. --map_sampling=4")
+	parser.add_option("--image_file_type", dest="image_file_type",
+		help="Filetype extension for images. Protomo supports CCP4, EM, FFF, IMAGIC, MRC, SPIDER, SUPRIM,and TIFF, e.g. --image_file_type=mrc")
+	parser.add_option("--prep_files", dest="prep_files",
+		help="Access leginondb to create tlt file and link/copy raw images, e.g. --prep_files=False")
+	parser.add_option("--coarse_align", dest="coarse_align",
+		help="Perform coarse alignment, e.g. --coarse_align=False")
+	parser.add_option("--refine", dest="refine",
+		help="Perform refinement, e.g. --refine=True")
+	parser.add_option("--reconstruct", dest="reconstruct",
+		help="Perform reconstruction, e.g. --reconstruct=True")
+	parser.add_option("--all_tilt_videos", dest="all_tilt_videos",
+		help="Make tilt series depiction videos for every iteration if True, e.g. --all_tilt_videos=False")
+	parser.add_option("--all_recon_videos", dest="all_recon_videos",
+		help="Make reconstruction depiction videos for every iteration if True, e.g. --all_recon_videos=False")
+	parser.add_option("--coarse_retry_align", dest="coarse_retry_align",  type="int",  default="10",
+		help="Number of times to retry coarse alignment, which sometimes fails because the search area is too big, e.g. --coarse_retry_align=5", metavar="int")
+	parser.add_option("--coarse_retry_shrink", dest="coarse_retry_shrink",  type="float",  default="0.9",
+		help="How much to shrink the window size from the previous retry, e.g. --coarse_retry_shrink=0.75", metavar="float")
+	parser.add_option("--refine_retry_align", dest="refine_retry_align",  type="int",  default="12",
+		help="Number of times to retry refinement, which sometimes fails because the search area is too big, e.g. --refine_retry_align=5", metavar="int")
+	parser.add_option("--refine_retry_shrink", dest="refine_retry_shrink",  type="float",  default="0.9",
+		help="How much to shrink the window size from the previous retry, e.g. --refine_retry_shrink=0.75", metavar="float")
+	parser.add_option("--video_type", dest="video_type",  type="float",  default="0.9",
+		help="Appion: Create either gifs or html5 videos using 'gif' or 'html5vid', respectively, e.g. --video_type=html5vid")
+	parser.add_option("--restart_cycle", dest="restart_cycle",
+		help="Restart a Refinement at this iteration, e.g. --restart_cycle=2 or --restart_cycle=best")	
+	parser.add_option('--shift_limit', dest='shift_limit', type='float', metavar='float',
+		help='Percentage of image size, above which shifts with higher shifts will be discarded for all images, e.g. --shift_limit=50')
+	parser.add_option('--angle_limit', dest='angle_limit', type='float', metavar='float',
+		help='Only remove images from the tilt file greater than abs(angle_limit), e.g. --angle_limit=35')
+	parser.add_option('--dimx', dest='dimx', type='int', metavar='int',
+		help='Dimension (x) of micrographs, e.g. --dimx=4096')
+	parser.add_option('--dimy', dest='dimy', type='int', metavar='int',
+		help='Dimension (y) of micrographs, e.g. --dimy=4096')
+	parser.add_option("--region_x", dest="region_x", default=512, type="int",
+		help="Pixels in x to use for region matching, e.g. --region_x=1024", metavar="int")
+	parser.add_option("--region_y", dest="region_y", default=512, type="int",
+		help="Pixels in y to use for region matching, e.g. --region_y=1024", metavar="int")
+	parser.add_option("--r1_region_x", dest="r1_region_x", default=512, type="int",
+		help="Pixels in x to use for region matching, e.g. --r1_region=1024", metavar="int")
+	parser.add_option("--r2_region_x", dest="r2_region_x", default=512, type="int",
+		help="Pixels in x to use for region matching, e.g. --r2_region=1024", metavar="int")
+	parser.add_option("--r3_region_x", dest="r3_region_x", default=512, type="int",
+		help="Pixels in x to use for region matching, e.g. --r3_region=1024", metavar="int")
+	parser.add_option("--r4_region_x", dest="r4_region_x", default=512, type="int",
+		help="Pixels in x to use for region matching, e.g. --r4_region=1024", metavar="int")
+	parser.add_option("--r1_region_y", dest="r1_region_y", default=512, type="int",
+		help="Pixels in y to use for region matching, e.g. --r1_region=1024", metavar="int")
+	parser.add_option("--r2_region_y", dest="r2_region_y", default=512, type="int",
+		help="Pixels in y to use for region matching, e.g. --r2_region=1024", metavar="int")
+	parser.add_option("--r3_region_y", dest="r3_region_y", default=512, type="int",
+		help="Pixels in y to use for region matching, e.g. --r3_region=1024", metavar="int")
+	parser.add_option("--r4_region_y", dest="r4_region_y", default=512, type="int",
+		help="Pixels in y to use for region matching, e.g. --r4_region=1024", metavar="int")
+	parser.add_option("--lowpass_diameter_x", dest="lowpass_diameter_x",  default=0.5, type="float",
+		help="in fractions of nyquist, e.g. --lowpass_diameter_x=0.4", metavar="float")
+	parser.add_option("--r1_lowpass_diameter_x", dest="r1_lowpass_diameter_x",  default=0.5, type="float",
+		help="in fractions of nyquist, e.g. --r1_lowpass_diameter_x=0.4", metavar="float")
+	parser.add_option("--r2_lowpass_diameter_x", dest="r2_lowpass_diameter_x",  default=0.5, type="float",
+		help="in fractions of nyquist, e.g. --r2_lowpass_diameter_x=0.4", metavar="float")
+	parser.add_option("--r3_lowpass_diameter_x", dest="r3_lowpass_diameter_x",  default=0.5, type="float",
+		help="in fractions of nyquist, e.g. --r3_lowpass_diameter_x=0.4", metavar="float")
+	parser.add_option("--r4_lowpass_diameter_x", dest="r4_lowpass_diameter_x",  default=0.5, type="float",
+		help="in fractions of nyquist, e.g. --r4_lowpass_diameter_x=0.4", metavar="float")
+	parser.add_option("--lowpass_diameter_y", dest="lowpass_diameter_y",  default=0.5, type="float",
+		help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --lowpass_diameter_y=0.4", metavar="float")
+	parser.add_option("--r1_lowpass_diameter_y", dest="r1_lowpass_diameter_y",  default=0.5, type="float",
+		help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --r1_lowpass_diameter_y=0.4", metavar="float")
+	parser.add_option("--r2_lowpass_diameter_y", dest="r2_lowpass_diameter_y",  default=0.5, type="float",
+		help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --r2_lowpass_diameter_y=0.4", metavar="float")
+	parser.add_option("--r3_lowpass_diameter_y", dest="r3_lowpass_diameter_y",  default=0.5, type="float",
+		help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --lowpass_diameter_y=0.4", metavar="float")
+	parser.add_option("--r4_lowpass_diameter_y", dest="r4_lowpass_diameter_y",  default=0.5, type="float",
+		help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --r4_lowpass_diameter_y=0.4", metavar="float")
+	parser.add_option("--lowpass_apod_x", dest="lowpass_apod_x", default=0.05, type="float",
+		help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --lowpass_diameter_x=0.4", metavar="float")
+	parser.add_option("--r1_lowpass_apod_x", dest="r1_lowpass_apod_x", default=0.05, type="float",
+		help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --r1_lowpass_diameter_x=0.4", metavar="float")
+	parser.add_option("--r2_lowpass_apod_x", dest="r2_lowpass_apod_x", default=0.05, type="float",
+		help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --r2_lowpass_diameter_x=0.4", metavar="float")
+	parser.add_option("--r3_lowpass_apod_x", dest="r3_lowpass_apod_x", default=0.05, type="float",
+		help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --r3_lowpass_diameter_x=0.4", metavar="float")
+	parser.add_option("--r4_lowpass_apod_x", dest="r4_lowpass_apod_x", default=0.05, type="float",
+		help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --r4_lowpass_diameter_x=0.4", metavar="float")
+	parser.add_option("--lowpass_apod_y", dest="lowpass_apod_y", default=0.05, type="float",
+		help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --lowpass_diameter_y=0.4", metavar="float")
+	parser.add_option("--r1_lowpass_apod_y", dest="r1_lowpass_apod_y", default=0.05, type="float",
+		help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --r1_lowpass_diameter_y=0.4", metavar="float")
+	parser.add_option("--r2_lowpass_apod_y", dest="r2_lowpass_apod_y", default=0.05, type="float",
+		help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --r2_lowpass_diameter_y=0.4", metavar="float")
+	parser.add_option("--r3_lowpass_apod_y", dest="r3_lowpass_apod_y", default=0.05, type="float",
+		help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --r3_lowpass_diameter_y=0.4", metavar="float")
+	parser.add_option("--r4_lowpass_apod_y", dest="r4_lowpass_apod_y", default=0.05, type="float",
+		help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --r4_lowpass_diameter_y=0.4", metavar="float")
+	parser.add_option("--highpass_diameter_x", dest="highpass_diameter_x", default=0.001, type="float",
+		help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --highpass_diameter_x=0.02", metavar="float")
+	parser.add_option("--r1_highpass_diameter_x", dest="r1_highpass_diameter_x", default=0.001, type="float",
+		help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --r1_highpass_diameter_x=0.02", metavar="float")
+	parser.add_option("--r2_highpass_diameter_x", dest="r2_highpass_diameter_x", default=0.001, type="float",
+		help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --r2_highpass_diameter_x=0.02", metavar="float")
+	parser.add_option("--r3_highpass_diameter_x", dest="r3_highpass_diameter_x", default=0.001, type="float",
+		help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --r3_highpass_diameter_x=0.02", metavar="float")
+	parser.add_option("--r4_highpass_diameter_x", dest="r4_highpass_diameter_x", default=0.001, type="float",
+		help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --r4_highpass_diameter_x=0.02", metavar="float")
+	parser.add_option("--highpass_diameter_y", dest="highpass_diameter_y", default=0.001, type="float",
+		help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --highpass_diameter_y=0.02", metavar="float")
+	parser.add_option("--r1_highpass_diameter_y", dest="r1_highpass_diameter_y", default=0.001, type="float",
+		help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --r1_highpass_diameter_y=0.02", metavar="float")
+	parser.add_option("--r2_highpass_diameter_y", dest="r2_highpass_diameter_y", default=0.001, type="float",
+		help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --r2_highpass_diameter_y=0.02", metavar="float")
+	parser.add_option("--r3_highpass_diameter_y", dest="r3_highpass_diameter_y", default=0.001, type="float",
+		help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --r3_highpass_diameter_y=0.02", metavar="float")
+	parser.add_option("--r4_highpass_diameter_y", dest="r4_highpass_diameter_y", default=0.001, type="float",
+		help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --r4_highpass_diameter_y=0.02", metavar="float")
+	parser.add_option("--highpass_apod_x", dest="highpass_apod_x", default=0.002, type="float",
+		help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --highpass_diameter_x=0.02", metavar="float")
+	parser.add_option("--r1_highpass_apod_x", dest="r1_highpass_apod_x", default=0.002, type="float",
+		help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --r1_highpass_diameter_x=0.02", metavar="float")
+	parser.add_option("--r2_highpass_apod_x", dest="r2_highpass_apod_x", default=0.002, type="float",
+		help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --r2_highpass_diameter_x=0.02", metavar="float")
+	parser.add_option("--r3_highpass_apod_x", dest="r3_highpass_apod_x", default=0.002, type="float",
+		help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --r3_highpass_diameter_x=0.02", metavar="float")
+	parser.add_option("--r4_highpass_apod_x", dest="r4_highpass_apod_x", default=0.002, type="float",
+		help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --r4_highpass_diameter_x=0.02", metavar="float")
+	parser.add_option("--highpass_apod_y", dest="highpass_apod_y", default=0.002, type="float",
+		help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --highpass_diameter_y=0.02", metavar="float")
+	parser.add_option("--r1_highpass_apod_y", dest="r1_highpass_apod_y", default=0.002, type="float",
+		help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --r1_highpass_diameter_y=0.02", metavar="float")
+	parser.add_option("--r2_highpass_apod_y", dest="r2_highpass_apod_y", default=0.002, type="float",
+		help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --r2_highpass_diameter_y=0.02", metavar="float")
+	parser.add_option("--r3_highpass_apod_y", dest="r3_highpass_apod_y", default=0.002, type="float",
+		help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --r3_highpass_diameter_y=0.02", metavar="float")
+	parser.add_option("--r4_highpass_apod_y", dest="r4_highpass_apod_y", default=0.002, type="float",
+		help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --r4_highpass_diameter_y=0.02", metavar="float")
+	parser.add_option("--thickness", dest="thickness",  default=300, type="float",
+	        help="Estimated thickness of unbinned specimen (in pixels), e.g. --thickness=100.0", metavar="float")
+	parser.add_option("--iters", dest="iters", default=1, type="int",
+		help="Number of alignment and geometry refinement iterations, e.g. --iters=4", metavar="int")
+	parser.add_option("--r1_iters", dest="r1_iters", default=1, type="int",
+		help="Number of alignment and geometry refinement iterations, e.g. --r1_iters=4", metavar="int")
+	parser.add_option("--r2_iters", dest="r2_iters", default=0, type="int",
+		help="Number of alignment and geometry refinement iterations, e.g. --r2_iters=4", metavar="int")
+	parser.add_option("--r3_iters", dest="r3_iters", default=0, type="int",
+		help="Number of alignment and geometry refinement iterations, e.g. --r3_iters=4", metavar="int")
+	parser.add_option("--r4_iters", dest="r4_iters", default=0, type="int",
+		help="Number of alignment and geometry refinement iterations, e.g. --r4_iters=4", metavar="int")
+	parser.add_option("--r1_sampling", dest="r1_sampling",  default=8, type="int",
+		help="Sampling rate of raw data, e.g. --r1_sampling=4")
+	parser.add_option("--r2_sampling", dest="r2_sampling",  default=6, type="int",
+		help="Sampling rate of raw data, e.g. --r2_sampling=4")
+	parser.add_option("--r3_sampling", dest="r3_sampling",  default=4, type="int",
+		help="Sampling rate of raw data, e.g. --r3_sampling=4")
+	parser.add_option("--r4_sampling", dest="r4_sampling",  default=2, type="int",
+		help="Sampling rate of raw data, e.g. --r4_sampling=4")
+	parser.add_option("--gradient", dest="gradient",  default="true",
+		help="Enable linear gradient subtraction for preprocessing masks, e.g. --gradient=false")
+	parser.add_option("--gradient_switch", dest="gradient_switch",  type="int",
+		help="Enable linear gradient subtraction for preprocessing masks, e.g. --gradient_switch=3")
+	parser.add_option("--iter_gradient", dest="iter_gradient",  default="true",
+		help="Iterate gradient subtraction once, e.g. --iter_gradient=false")
+	parser.add_option("--iter_gradient_switch", dest="iter_gradient_switch",  type="int",
+		help="Iterate gradient subtraction once, e.g. --iter_gradient_switch=3")
+	parser.add_option("--kernel_x", dest="kernel_x", default=3,  type="int",
+		help="Filter window size, e.g. --kernel_x=5", metavar="int")
+	parser.add_option("--r1_kernel_x", dest="r1_kernel_x", default=3,  type="int",
+		help="Filter window size, e.g. --r1_kernel_x=5", metavar="int")
+	parser.add_option("--r2_kernel_x", dest="r2_kernel_x", default=3,  type="int",
+		help="Filter window size, e.g. --r2_kernel_x=5", metavar="int")
+	parser.add_option("--r3_kernel_x", dest="r3_kernel_x", default=3,  type="int",
+		help="Filter window size, e.g. --r3_kernel_x=5", metavar="int")
+	parser.add_option("--r4_kernel_x", dest="r4_kernel_x", default=3,  type="int",
+		help="Filter window size, e.g. --r4_kernel_x=5", metavar="int")
+	parser.add_option("--kernel_y", dest="kernel_y", default=3,  type="int",
+		help="Filter window size, e.g. --kernel_y=5", metavar="int")
+	parser.add_option("--r1_kernel_y", dest="r1_kernel_y", default=3,  type="int",
+		help="Filter window size, e.g. --r1_kernel_y=5", metavar="int")
+	parser.add_option("--r2_kernel_y", dest="r2_kernel_y", default=3,  type="int",
+		help="Filter window size, e.g. --r2_kernel_y=5", metavar="int")
+	parser.add_option("--r3_kernel_y", dest="r3_kernel_y", default=3,  type="int",
+		help="Filter window size, e.g. --r3_kernel_y=5", metavar="int")
+	parser.add_option("--r4_kernel_y", dest="r4_kernel_y", default=3,  type="int",
+		help="Filter window size, e.g. --r4_kernel_y=5", metavar="int")
+	parser.add_option("--peak_search_radius_x", dest="peak_search_radius_x",  type="float",  default="100",
+		help="Defines peak search region, e.g. --peak_search_radius_x=19.0", metavar="float")
+	parser.add_option("--r1_peak_search_radius_x", dest="r1_peak_search_radius_x",  type="float",  default="100",
+		help="Defines peak search region, e.g. --r1_peak_search_radius_x=19.0", metavar="float")
+	parser.add_option("--r2_peak_search_radius_x", dest="r2_peak_search_radius_x",  type="float",  default="100",
+		help="Defines peak search region, e.g. --r2_peak_search_radius_x=19.0", metavar="float")
+	parser.add_option("--r3_peak_search_radius_x", dest="r3_peak_search_radius_x",  type="float",  default="100",
+		help="Defines peak search region, e.g. --r3_peak_search_radius_x=19.0", metavar="float")
+	parser.add_option("--r4_peak_search_radius_x", dest="r4_peak_search_radius_x",  type="float",  default="100",
+		help="Defines peak search region, e.g. --r4_peak_search_radius_x=19.0", metavar="float")
+	parser.add_option("--peak_search_radius_y", dest="peak_search_radius_y",  type="float",  default="100",
+		help="Defines peak search region, e.g. --peak_search_radius_y=19.0", metavar="float")
+	parser.add_option("--r1_peak_search_radius_y", dest="r1_peak_search_radius_y",  type="float",  default="100",
+		help="Defines peak search region, e.g. --r1_peak_search_radius_y=19.0", metavar="float")
+	parser.add_option("--r2_peak_search_radius_y", dest="r2_peak_search_radius_y",  type="float",  default="100",
+		help="Defines peak search region, e.g. --r2_peak_search_radius_y=19.0", metavar="float")
+	parser.add_option("--r3_peak_search_radius_y", dest="r3_peak_search_radius_y",  type="float",  default="100",
+		help="Defines peak search region, e.g. --r3_peak_search_radius_y=19.0", metavar="float")
+	parser.add_option("--r4_peak_search_radius_y", dest="r4_peak_search_radius_y",  type="float",  default="100",
+		help="Defines peak search region, e.g. --r4_peak_search_radius_y=19.0", metavar="float")
+	parser.add_option("--orientation", dest="orientation",  default="true",
+		help="Include orientation angles in refinement, e.g. --orientation=false")
+	parser.add_option("--orientation_switch", dest="orientation_switch",  type="int",
+		help="Include orientation angles in refinement, e.g. --orientation_switch=3")
+	parser.add_option("--azimuth", dest="azimuth",  default="true",
+		help="Include tilt azimuth in refinement, e.g. --azimuth=false")
+	parser.add_option("--azimuth_switch", dest="azimuth_switch",  type="int",
+		help="Include tilt azimuth in refinement, e.g. --azimuth_switch=3")
+	parser.add_option("--elevation", dest="elevation",  default="false",
+		help="Include tilt axis elevation in refinement, e.g. --elevation=true")
+	parser.add_option("--elevation_switch", dest="elevation_switch",  type="int",
+		help="Include tilt axis elevation in refinement, e.g. --elevation_switch=3")
+	parser.add_option("--rotation", dest="rotation",  default="true",
+		help="Include in-plane rotations in refinement, e.g. --rotation=false")
+	parser.add_option("--rotation_switch", dest="rotation_switch",  type="int",
+		help="Include in-plane rotations in refinement, e.g. --rotation_switch=3")
+	parser.add_option("--scale", dest="scale",  default="false",
+		help="Include scale factors (magnification) in refinement, e.g. --scale=true")
+	parser.add_option("--scale_switch", dest="scale_switch",  type="int",
+		help="Include scale factors (magnification) in refinement, e.g. --scale_switch=3")
+	parser.add_option("--mask_width_x", dest="mask_width_x",  default="1024",
+		help="Rectangular mask width (x), e.g. --mask_width_x=2")
+	parser.add_option("--r1_mask_width_x", dest="r1_mask_width_x",  default="1024",
+		help="Rectangular mask width (x), e.g. --r1_mask_width_x=2")
+	parser.add_option("--r2_mask_width_x", dest="r2_mask_width_x",  default="1024",
+		help="Rectangular mask width (x), e.g. --r2_mask_width_x=2")
+	parser.add_option("--r3_mask_width_x", dest="r3_mask_width_x",  default="1024",
+		help="Rectangular mask width (x), e.g. --r3_mask_width_x=2")
+	parser.add_option("--r4_mask_width_x", dest="r4_mask_width_x",  default="1024",
+		help="Rectangular mask width (x), e.g. --r4_mask_width_x=2")
+	parser.add_option("--mask_width_y", dest="mask_width_y",  default="1024",
+		help="Rectangular mask width (y), e.g. --mask_width_y=2")
+	parser.add_option("--r1_mask_width_y", dest="r1_mask_width_y",  default="1024",
+		help="Rectangular mask width (y), e.g. --r1_mask_width_y=2")
+	parser.add_option("--r2_mask_width_y", dest="r2_mask_width_y",  default="1024",
+		help="Rectangular mask width (y), e.g. --r2_mask_width_y=2")
+	parser.add_option("--r3_mask_width_y", dest="r3_mask_width_y",  default="1024",
+		help="Rectangular mask width (y), e.g. --r3_mask_width_y=2")
+	parser.add_option("--r4_mask_width_y", dest="r4_mask_width_y",  default="1024",
+		help="Rectangular mask width (y), e.g. --r4_mask_width_y=2")
+	parser.add_option("--mask_apod_x", dest="mask_apod_x",  default="10",
+		help="Apodization for rectangular and ellipsoidal masks, e.g. --mask_apod_x=10")
+	parser.add_option("--r1_mask_apod_x", dest="r1_mask_apod_x",  default="10",
+		help="Apodization for rectangular and ellipsoidal masks, e.g. --r1_mask_apod_x=10")
+	parser.add_option("--r2_mask_apod_x", dest="r2_mask_apod_x",  default="10",
+		help="Apodization for rectangular and ellipsoidal masks, e.g. --r2_mask_apod_x=10")
+	parser.add_option("--r3_mask_apod_x", dest="r3_mask_apod_x",  default="10",
+		help="Apodization for rectangular and ellipsoidal masks, e.g. --r3_mask_apod_x=10")
+	parser.add_option("--r4_mask_apod_x", dest="r4_mask_apod_x",  default="10",
+		help="Apodization for rectangular and ellipsoidal masks, e.g. --r4_mask_apod_x=10")
+	parser.add_option("--mask_apod_y", dest="mask_apod_y",  default="10",
+		help="Apodization for rectangular and ellipsoidal masks, e.g. --mask_apod_y=10")
+	parser.add_option("--r1_mask_apod_y", dest="r1_mask_apod_y",  default="10",
+		help="Apodization for rectangular and ellipsoidal masks, e.g. --r1_mask_apod_y=10")
+	parser.add_option("--r2_mask_apod_y", dest="r2_mask_apod_y",  default="10",
+		help="Apodization for rectangular and ellipsoidal masks, e.g. --r2_mask_apod_y=10")
+	parser.add_option("--r3_mask_apod_y", dest="r3_mask_apod_y",  default="10",
+		help="Apodization for rectangular and ellipsoidal masks, e.g. --r3_mask_apod_y=10")
+	parser.add_option("--r4_mask_apod_y", dest="r4_mask_apod_y",  default="10",
+		help="Apodization for rectangular and ellipsoidal masks, e.g. --r4_mask_apod_y=10")
+	parser.add_option("--refresh_i3t", dest="refresh_i3t",  default="False",
+		help="If a Protomo run is interrupted the i3t file may be unusable. This option removes the i3t file so that protomoRefine can create a new one, e.g. --refresh_i3t=True")
+	parser.add_option("--fix_frames", dest="fix_frames",  default="False",
+		help="Internal use only")
+	parser.add_option("--screening_mode", dest="screening_mode",  default="False",
+		help="Protomo Screening Mode to be run during data collection. This mode will continually query leginon database for tilt series number N+1. When tilt series N+1 shows up, tilt series N will be processed through coarse alignment, producing normal depiction videos. Screening mode is configured to parallelize video production just like is done in protomo2aligner.py. The coarse_param_file option must be set., e.g. --screening_mode=True")
+	parser.add_option("--screening_start", dest="screening_start",  default=1,
+		help="Which tilt series number will screening mode begin on?, e.g. --screening_start=10")
+	parser.add_option("--ctf_correct", dest="ctf_correct",
+		help="CTF correct images using ctf correction runs from Appion, e.g. --ctf_correct=True")
+	
+	options, args=parser.parse_args()
+	
+	if len(args) != 0 or len(sys.argv) == 1:
+		parser.print_help()
+		sys.exit()
+	
+	return options
 
-#=====================
-class ProTomo2Batch(basicScript.BasicScript):
-	#=====================
-	def setupParserOptions(self):
-		self.parser.set_usage( "Usage: %prog --tiltseriesnumber=<#> --sessionname=<sessionname> [options]"
-			+"\nFor batch alignment and reconstruction: %prog --tiltseriesnumber=<#> --sessionname=<sessionname>"
-			+"--coarse_param_file=/path/to/coarse.param --refine_param_file=/path/to/refine.param"
-			+"--recon_param_file=/path/to/recon.param --numtiltseries=50 [options]")
-		
-		self.parser.add_option("--sessionname", dest="sessionname", help="Session date, e.g. --sessionname=14aug02a")
-		
-		self.parser.add_option("--runname", dest="runname", help="Name of protmorun directory as made by Appion")
-		
-		self.parser.add_option('-R', '--rundir', dest='rundir', help="Path of run directory")
-		
-		self.parser.add_option("--tiltseries", dest="tiltseries", help="Name of Protomo series, e.g. --tiltseries=31")
-		
-		self.parser.add_option("--iters", dest="iters", default=1, type="int",
-			help="Number of Refinement iterations, e.g. --iters=4", metavar="int")
-		
-		self.parser.add_option("--procs", dest="procs", default=1,
-			help="Number of processors to use, 'all' defaults to use all processors on running machine e.g. --procs=4")
-		
-		self.parser.add_option("--coarse_param_file", dest="coarse_param_file",
-			help="External Coarse Alignment param file. e.g. --coarse_param_file=/path/to/coarse.param", metavar="FILE")
-		
-		self.parser.add_option("--refine_param_file", dest="refine_param_file",
-			help="External Refinement param file. e.g. --refine_param_file=/path/to/refine.param", metavar="FILE")
-		
-		self.parser.add_option("--recon_param_file", dest="recon_param_file",
-			help="External Recnostruction param file. e.g. --recon_param_file=/path/to/recon.param", metavar="FILE")
-	
-		self.parser.add_option("--numtiltseries", dest="numtiltseries", type="int",
-			help="Number of tilt series in session to batch process, e.g. --numtiltseries=4", metavar="int")
-		
-		self.parser.add_option("--tiltseriesranges", dest="tiltseriesranges",
-			help="One or more ranges of tilt series to be processed. Only use numbers, commas, and hyphens., e.g. --tiltseriesranges=4,10-21,28-44,77", metavar="int")
-		
-		self.parser.add_option("--link_recons", dest="link_recons",
-			help="Directory to hardlink completed reconstructions to, e.g. --link_recons=/path/to/batch_dir", metavar="int")
-		
-		self.parser.add_option("--jobtype", dest="jobtype", help="Appion jobtype")
-		
-		self.parser.add_option("--projectid", dest="projectid", help="Appion project ID")
-		
-		self.parser.add_option("--expid", dest="expid", help="Appion experiment ID")
-		
-		self.parser.add_option("--link", dest="link",  default=True,
-			help="Link raw images if True, copy if False, e.g. --link=False")
-		
-	#=====================
-	def checkConflicts(self):
-		pass
-		
-		#check if files exist
-		#check if necessary options exist
-		
-		return True
 
-	#=====================
-	def onInit(self):
-		"""
-		Advanced function that runs things before other things are initialized.
-		For example, open a log file or connect to the database.
-		"""
-		return
+def hyphen_range(s):
+	"""
+	Takes a range in form of "a-b" and generate a list of numbers between a and b inclusive.
+	also accepts comma separated ranges like "a-b,c-d,f" will build a list which will include
+	numbers from a to b, a to d, and f.
+	Taken from http://code.activestate.com/recipes/577279-generate-list-of-numbers-from-hyphenated-and-comma/
+	"""
+	s="".join(s.split())#removes white space
+	r=set()
+	for x in s.split(','):
+	    t=x.split('-')
+	    if len(t) not in [1,2]: raise SyntaxError("hash_range is given its arguement as "+s+" which seems not correctly formated.")
+	    r.add(int(t[0])) if len(t)==1 else r.update(set(range(int(t[0]),int(t[1])+1)))
+	l=list(r)
+	l.sort()
+	return l
 
-	#=====================
-	def onClose(self):
-		"""
-		Advanced function that runs things after all other things are finished.
-		For example, close a log file.
-		"""
-		return
+
+def variableSetup(rundir, tiltseriesnumber, prep):
+	"""
+	Sets up commonly used variables in other functions.
+	"""
+	tiltdirname="/tiltseries%04d" % (tiltseriesnumber)
+	tiltdir=rundir+tiltdirname
+	seriesnumber = "%04d" % tiltseriesnumber
+	seriesname = 'series'+str(seriesnumber)
+	tiltfilename = seriesname+'.tlt'
+	tiltfilename_full=tiltdir+'/'+tiltfilename
+	raw_path = os.path.join(tiltdir,'raw')
+	if (prep is "True"):
+		os.system("mkdir -p %s" % tiltdir)
+		rawimagecount=0
+	else:
+		cmd="awk '/FILE /{print}' %s | wc -l" % (tiltfilename_full)
+		proc=subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
+		(rawimagecount, err) = proc.communicate()
+		rawimagecount=int(rawimagecount)
 	
+	return tiltdirname, tiltdir, seriesnumber, seriesname, tiltfilename, tiltfilename_full, raw_path, rawimagecount
+
+
+def editParamFile(tiltdir, param_full, raw_path):
+	"""
+	Edit param file to replace pathlist, cachedir, and outdir.
+	"""
+	newcachedir=tiltdir+'/cache'
+	newoutdir=tiltdir+'/out'
+	command1="grep -n 'pathlist' %s | awk '{print $1}' | sed 's/://'" % (param_full)
+	proc=subprocess.Popen(command1, stdout=subprocess.PIPE, shell=True)
+	(pathlistline, err) = proc.communicate()
+	pathlistline=int(pathlistline)
+	command2="grep -n 'cachedir' %s | awk '{print $1}' | sed 's/://'" % (param_full)
+	proc=subprocess.Popen(command2, stdout=subprocess.PIPE, shell=True)
+	(cachedirline, err) = proc.communicate()
+	cachedirline=int(cachedirline)
+	command3="grep -n 'outdir' %s | awk '{print $1}' | sed 's/://'" % (param_full)
+	proc=subprocess.Popen(command3, stdout=subprocess.PIPE, shell=True)
+	(outdirline, err) = proc.communicate()
+	outdirline=int(outdirline)
+	command11="sed -i \'%ss|.*| pathlist: \"%s\"  (* AP path to raw directory *)|\' %s" % (pathlistline, raw_path, param_full)
+	os.system(command11)
+	command22="sed -i \'%ss|.*| cachedir: \"%s\"  (* AP directory where cache files are stored *)|\' %s" % (cachedirline, newcachedir, param_full)
+	os.system(command22)
+	command33="sed -i \'%ss|.*| outdir: \"%s\"  (* AP directory where other output files are stored *)|\' %s" % (outdirline, newoutdir, param_full)
+	os.system(command33)
+
+
+def countDirs(rundir, count_dir):
+	"""
+	Counts the number of numbered directories in rundir name 'count_dir01-99'.
+	"""
+	num_count_dirs=0
+	for i in range(1,100):
+		d=count_dir+"%02d" % i
+		dirname=rundir+'/'+d
+		if os.path.isdir(dirname):
+			num_count_dirs+=1
+		else:
+			break
 	
-	#=====================
-	#def alignAndReconstruct(n):
-	#	print n
+	return num_count_dirs
+
+
+def protomoFixFrameMrcs(tiltseriesnumber, options):
+	"""
+	Reads raw image mrcs into pyami and writes them back out. No transforms. This fixes a Protomo issue.
+	"""
+	tiltdirname,tiltdir,seriesnumber,seriesname,tiltfilename,tiltfilename_full,raw_path,rawimagecount = variableSetup(options.rundir, tiltseriesnumber, prep="False")
 	
-	#=====================
-	def start(self):
-		# PARALLEL PROCESSING!!! WORK DAMN YOU!
-		#if self.params['procs'] == 'all':
-		#	self.params['procs'] = None
-		#elif self.params['procs'] > self.params['numtiltseries']:
-		#	self.params['procs'] = self.params['numtiltseries']
-		#pool = Pool(self.params['procs'])
-		#tiltseriesrange = range(self.params['numtiltseries'])
-		#chunksize = 1
-		#pool.map(self.alignAndReconstruct, [0, 1, 2, 3, 4], 1)
-		#pool.close()
-		#pool.join()
-		#print "\nDone Aligning and Reconstructing %s tiltseries in session %s\n" % (self.params['numtiltseries'],self.params['sessionname'])
-		
-		def hyphen_range(s):
-			"""
-			Takes a range in form of "a-b" and generate a list of numbers between a and b inclusive.
-			also accepts comma separated ranges like "a-b,c-d,f" will build a list which will include
-			numbers from a to b, a to d, and f.
-			Taken from http://code.activestate.com/recipes/577279-generate-list-of-numbers-from-hyphenated-and-comma/
-			"""
-			s="".join(s.split())#removes white space
-			r=set()
-			for x in s.split(','):
-			    t=x.split('-')
-			    if len(t) not in [1,2]: raise SyntaxError("hash_range is given its arguement as "+s+" which seems not correctly formated.")
-			    r.add(int(t[0])) if len(t)==1 else r.update(set(range(int(t[0]),int(t[1])+1)))
-			l=list(r)
-			l.sort()
-			return l
-		
-		global wd
-		wd=self.params['link_recons']
-		self.params['rundir']=os.path.dirname(self.params['rundir']) #Need to be up one directory
-		tiltseriesranges=hyphen_range(self.params['tiltseriesranges'])
-		for tiltseriesnumber in tiltseriesranges:
-			#=====================
-			##PREP##
-			#=====================
-			apDisplay.printMsg("Beginning Processing of Tilt Series #%s from %s\n" % (tiltseriesnumber, self.params['sessionname']))
-			tiltdirname="/tiltseries%04d" % (tiltseriesnumber)
-			tiltdir=self.params['rundir']+tiltdirname
-			seriesnumber = "%04d" % tiltseriesnumber
-			seriesname = 'series'+str(seriesnumber)
-			tiltfilename = seriesname+'.tlt'
-			tiltfilename_full=tiltdir+'/'+tiltfilename
-			raw_path = os.path.join(tiltdir,'raw')
-			os.system("mkdir -p %s" % tiltdir)
-			os.chdir(tiltdir)
-			
-			apDisplay.printMsg('Preparing raw images and initial tilt file')
+	apProTomo2Aligner.fixFrameMrcs(raw_path)
+	
+	apDisplay.printMsg("Done fixing mrcs for Tilt Series #%s" % tiltseriesnumber)	
+
+
+def protomoPrep(sessionname, rundir, tiltseriesnumber, link, pixelsize, dimx, dimy, shift_limit, angle_limit, map_sampling, image_file_type, video_type):
+	"""
+	Creates tiltseries directory, links/copies raw images, and creates series*.tlt file.
+	"""
+	tiltdirname,tiltdir,seriesnumber,seriesname,tiltfilename,tiltfilename_full,raw_path,rawimagecount = variableSetup(rundir, tiltseriesnumber, prep="True")
+	
+	apProTomo2Prep.prepareTiltFile(sessionname, seriesname, tiltfilename_full, tiltseriesnumber, raw_path, link, coarse="True")
+	
+	cmd="awk '/FILE /{print}' %s | wc -l" % (tiltfilename_full)
+	proc=subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
+	(rawimagecount, err) = proc.communicate()
+	rawimagecount=int(rawimagecount)
+	
+	apDisplay.printMsg("Creating initial tilt series video...")
+	#apProTomo2Aligner.makeTiltSeriesVideos(seriesname, 0, tiltfilename_full, rawimagecount, tiltdir, raw_path, pixelsize, map_sampling, image_file_type, video_type, "Initial")
+	
+	#Removing highly shifted images
+	bad_images, bad_kept_images=apProTomo2Aligner.removeHighlyShiftedImages(tiltfilename_full, dimx, dimy, shift_limit, angle_limit)
+	if bad_images:
+		apDisplay.printMsg('Images %s were removed from the tilt file because their shifts exceed %s%% of the (x) and/or (y) dimensions.' % (bad_images, shift_limit))
+		if bad_kept_images:
+			apDisplay.printMsg('Images %s exceeded the allowed shift, but were at tilt angles less than the %s degree angle limit.' % (bad_kept_images, angle_limit))
+	else:
+		if bad_kept_images:
+			apDisplay.printMsg('Images %s exceeded the allowed shift, but were at tilt angles less than the %s degree angle limit.' % (bad_kept_images, angle_limit))
+		apDisplay.printMsg('No images were removed from the .tlt file due to high shifts.')
+	
+	apDisplay.printMsg("Finished Preparing Files and Directories for Tilt Series #%s." % (tiltseriesnumber))
+	
+
+def protomoCoarseAlign(coarse_param_file, rundir, outdir, tiltseriesnumber, pixelsize, sampling, map_sampling, video_type, coarse_retry_align, coarse_retry_shrink, region_x, region_y, image_file_type, all_tilt_videos, all_recon_videos):
+	"""
+	Performs Protomo gridsearch alignment, then prepares files for refinement.
+	Correlation peak video is made.
+	Depiction videos are made if requested.
+	"""
+	tiltdirname,tiltdir,seriesnumber,seriesname,tiltfilename,tiltfilename_full,raw_path,rawimagecount = variableSetup(rundir, tiltseriesnumber, prep="False")
+	os.chdir(tiltdir)
+	name='coarse_'+seriesname
+	cpparam="cp %s %s/%s.param" % (coarse_param_file,tiltdir,name)
+	os.system(cpparam)
+	coarse_param_full=tiltdir+'/'+name+'.param'
+	editParamFile(tiltdir, coarse_param_full, raw_path)
+	
+	apDisplay.printMsg('Starting Protomo Coarse Alignment')
+	coarse_seriesparam=protomo.param(coarse_param_full)
+	coarse_seriesgeom=protomo.geom(tiltfilename_full)
+	try:
+		series=protomo.series(coarse_seriesparam,coarse_seriesgeom)
+		#Align and restart alignment if failed
+		retry=0
+		new_region_x=region_x/sampling   #Just initializing
+		new_region_y=region_y/sampling   #Just initializing
+		while (retry <= coarse_retry_align):
 			try:
-				apProTomo2Prep.prepareTiltFile(self.params['sessionname'], seriesname, tiltfilename, tiltseriesnumber, raw_path, link=self.params['link'])
-			except:
-				apDisplay.printMsg("Failed to generate .tlt file. Skipping Tilt Series #%s...\n" % (tiltseriesnumber))
-				continue
-			
-			
-			#=====================
-			##COARSE ALIGNMENT##
-			#=====================
-			name='coarse_'+seriesname
-			cpparam="cp %s %s/%s.param" % (self.params['coarse_param_file'],tiltdir,name)
-			os.system(cpparam)
-			coarse_param_full=tiltdir+'/'+name+'.param'
-			
-			#Edit param file to replace pathlist, cachedir, and outdir
-			newcachedir=tiltdir+'/cache'
-			newoutdir=tiltdir+'/out'
-			command1="grep -n 'pathlist' %s | awk '{print $1}' | sed 's/://'" % (coarse_param_full)
-			proc=subprocess.Popen(command1, stdout=subprocess.PIPE, shell=True)
-			(pathlistline, err) = proc.communicate()
-			pathlistline=int(pathlistline)
-			command2="grep -n 'cachedir' %s | awk '{print $1}' | sed 's/://'" % (coarse_param_full)
-			proc=subprocess.Popen(command2, stdout=subprocess.PIPE, shell=True)
-			(cachedirline, err) = proc.communicate()
-			cachedirline=int(cachedirline)
-			command3="grep -n 'outdir' %s | awk '{print $1}' | sed 's/://'" % (coarse_param_full)
-			proc=subprocess.Popen(command3, stdout=subprocess.PIPE, shell=True)
-			(outdirline, err) = proc.communicate()
-			outdirline=int(outdirline)
-			command11="sed -i \'%ss|.*| pathlist: \"%s\"  (* AP path to raw directory *)|\' %s" % (pathlistline, raw_path, coarse_param_full)
-			os.system(command11)
-			command22="sed -i \'%ss|.*| cachedir: \"%s\"  (* AP directory where cache files are stored *)|\' %s" % (cachedirline, newcachedir, coarse_param_full)
-			os.system(command22)
-			command33="sed -i \'%ss|.*| outdir: \"%s\"  (* AP directory where other output files are stored *)|\' %s" % (outdirline, newoutdir, coarse_param_full)
-			os.system(command33)
-			
-			apDisplay.printMsg('Starting Protomo Coarse Alignment')
-			coarse_seriesparam=protomo.param(coarse_param_full)
-			coarse_seriesgeom=protomo.geom(tiltfilename_full)
-			try:
-				series=protomo.series(coarse_seriesparam,coarse_seriesgeom)
+				if (retry > 0):
+					new_region_x = int(new_region_x*coarse_retry_shrink)
+					new_region_y = int(new_region_y*coarse_retry_shrink)
+					apDisplay.printMsg("Coarse Alignment for Tilt Series #%s failed. Retry #%s with %s%% smaller Window Size: (%s, %s)..." % (tiltseriesnumber, retry, 100-int(100*coarse_retry_shrink), new_region_x, new_region_y))
+					newsize = "{ %s %s }" % (new_region_x, new_region_y)
+					series.setparam("window.size", newsize)
+				retry+=1
 				series.align()
-	
-				corrfile=name+'.corr'
-				series.corr(corrfile)
-				
-				#archive results
-				tiltfile=name+'.tlt'
-				series.geom(1).write(tiltfile)
-				
-				cleanup="mkdir coarse_out; ln coarse*.* coarse_out; rm %s.corr; ln %s.i3t %s.i3t" % (name, name, seriesname)
-				os.system(cleanup)
-				
-				# Make correlation peak gif for depiction			
-				os.system("mkdir -p %s/gifs/correlations" % tiltdir)
-				try:
-					img=name+'00_cor.img';
-					mrcf=name+'00_cor.mrc';
-					gif=name+'00_cor.gif';
-					png='*.png';
-					out_path=os.path.join(tiltdir,'out');
-					img_full=out_path+'/'+img;
-					mrc_full=out_path+'/'+mrcf;
-					gif_path=os.path.join(tiltdir,'gifs','correlations');
-					gif_full=gif_path+'/'+gif;
-					png_full=gif_path+'/'+png;
-					# Convert the corr peak *.img file to mrc for further processing
-					os.system("i3cut -fmt mrc %s %s" % (img_full, mrc_full))
-					
-					volume = mrc.read(mrc_full);
-					slices = len(volume) - 1;
-					
-					# Convert the *.mrc to a series of pngs
-					print "\nCreating correlation peak gif..."
-					for i in range(0, slices):
-						slice = os.path.join(gif_path,"slice%04d.png" % (i));
-						scipy.misc.imsave(slice, volume[i]);
-					command = "convert -delay 10 -loop 0 -gravity South -background white -splice 0x18 -annotate 0 'Frame: %%[fx:t+1]' %s %s" % (png_full, gif_full);
-					os.system(command);
-					command2 = "rm %s" % (png_full);
-					os.system(command2);
-					print "Done!\n"
-				except:
-					print "\nAlignment Correlation Peak Images could not be generated. Make sure i3 and imagemagick are in your $PATH. Make sure that pyami and scipy are in your $PYTHONPATH.\n"
-				
-				apDisplay.printMsg("Coarse Alignment Finished!\n")
-				
-				
-				#=====================
-				##REFINEMENTS##
-				#=====================
-				name=seriesname
-				cpparam="cp %s %s/%s.param" % (self.params['refine_param_file'],tiltdir,name)
-				os.system(cpparam)
-				refine_param_full=tiltdir+'/'+name+'.param'
-				
-				#Edit param file to replace pathlist, cachedir, and outdir
-				command1="grep -n 'pathlist' %s | awk '{print $1}' | sed 's/://'" % (refine_param_full)
-				proc=subprocess.Popen(command1, stdout=subprocess.PIPE, shell=True)
-				(pathlistline, err) = proc.communicate()
-				pathlistline=int(pathlistline)
-				command2="grep -n 'cachedir' %s | awk '{print $1}' | sed 's/://'" % (refine_param_full)
-				proc=subprocess.Popen(command2, stdout=subprocess.PIPE, shell=True)
-				(cachedirline, err) = proc.communicate()
-				cachedirline=int(cachedirline)
-				command3="grep -n 'outdir' %s | awk '{print $1}' | sed 's/://'" % (refine_param_full)
-				proc=subprocess.Popen(command3, stdout=subprocess.PIPE, shell=True)
-				(outdirline, err) = proc.communicate()
-				outdirline=int(outdirline)
-				command11="sed -i \'%ss|.*| pathlist: \"%s\"  (* AP path to raw directory *)|\' %s" % (pathlistline, raw_path, refine_param_full)
-				os.system(command11)
-				command22="sed -i \'%ss|.*| cachedir: \"%s\"  (* AP directory where cache files are stored *)|\' %s" % (cachedirline, newcachedir, refine_param_full)
-				os.system(command22)
-				command33="sed -i \'%ss|.*| outdir: \"%s\"  (* AP directory where other output files are stored *)|\' %s" % (outdirline, newoutdir, refine_param_full)
-				os.system(command33)
-				
-				apDisplay.printMsg('Starting Protomo Refinement')
-				refine_seriesparam=protomo.param(refine_param_full)
-				del series
-				series=protomo.series(refine_seriesparam)
-				for n in range(self.params['iters']):
-					apDisplay.printMsg("Startng Refinement Iteration #%s for Tilt Series #%s from %s\n" % (n+1, tiltseriesnumber, self.params['sessionname']))
-					series.align()
-	
-					it="%02d" % (n)
-					itt="%02d" % (n+1)
-					ite="_ite%02d" % (n)
-					basename='%s%s' % (name,it)
-					corrfile=basename+'.corr'
-					series.corr(corrfile)
-					series.fit()
-					series.update()
-	
-					#archive results
-					tiltfile=basename+'.tlt'
-					series.geom(0).write(tiltfile)
-					
-					# Make correlation peak gifs for depiction			
-					try:
-						img=name+it+'_cor.img';
-						mrcf=name+it+'_cor.mrc';
-						gif=name+it+'_cor.gif';
-						png='*.png';
-						out_path=os.path.join(tiltdir,'out');
-						img_full=out_path+'/'+img;
-						mrc_full=out_path+'/'+mrcf;
-						gif_path=os.path.join(tiltdir,'gifs','correlations');
-						gif_full=gif_path+'/'+gif;
-						png_full=gif_path+'/'+png;
-						# Convert the corr peak *.img file to mrc for further processing
-						os.system("i3cut -fmt mrc %s %s" % (img_full, mrc_full))
-						
-						volume = mrc.read(mrc_full);
-						slices = len(volume) - 1;
-						
-						# Convert the *.mrc to a series of pngs
-						print "\nCreating correlation peak gif for iteration #%s..." % (n+1)
-						for i in range(0, slices):
-							slice = os.path.join(gif_path,"slice%04d.png" % (i));
-							scipy.misc.imsave(slice, volume[i]);
-						command = "convert -delay 10 -loop 0 -gravity South -background white -splice 0x18 -annotate 0 'Frame: %%[fx:t+1]' %s %s" % (png_full, gif_full);
-						os.system(command);
-						command2 = "rm %s" % (png_full);
-						os.system(command2);
-						print "Done!\n"
-					except:
-						print "\nAlignment Correlation Peak Images could not be generated. Make sure i3 and imagemagick are in your $PATH. Make sure that pyami and scipy are in your $PYTHONPATH.\n"
-					
-					# Generate gif of reconstruction of the last iteration for depiction
-					os.system("mkdir -p %s/gifs/reconstructions" % tiltdir)
-					
-					if n+1 == self.params['iters']:
-						print "\nGenerating Refinement Reconstruction for Final Iteration (%s)\n" % (n+1)
-						try:
-							img=name+itt+'_bck.img';
-							mrcf=name+itt+'_bck.mrc';
-							gif=name+itt+'_bck.gif';
-							img_full='out'+'/'+img;
-							mrc_full='out'+'/'+mrcf;
-							gif_path=os.path.join(tiltdir,'gifs','reconstructions');
-							gif_full=gif_path+'/'+gif;
-							png_full=gif_path+'/'+png;
-							
-							# Create intermediate reconstruction
-							series.mapfile()
-							
-							# Convert the reconstruction *.img file to mrc for further processing
-							os.system("i3cut -fmt mrc %s %s" % (img_full, mrc_full))
-							
-							volume = mrc.read(mrc_full);
-							slices = len(volume) - 1;
-							
-							# Convert the *.mrc to a series of pngs
-							print "\nCreating reconstruction gif for iteration #%s..." % (n+1)
-							for i in range(0, slices):
-								slice = os.path.join(gif_path,"slice%04d.png" % (i));
-								scipy.misc.imsave(slice, volume[i]);
-							# Determine if the resulting gif will be too large, if so resize it during conversion
-							dim_x = len(volume[2]);
-							if dim_x > 640:
-								dim_x = 640;
-								dim_y = int(round((640/dim_x) * dim_y));
-								command = "convert -delay 10 -loop 0 -gravity South -background white -splice 0x18 -annotate 0 'Z-Slice: %%[fx:t+1] of ' -layers Optimize -resize %dx%d %s %s" % (dim_x, dim_y, png_full, gif_full);
-								os.system(command);
-								command2 = "rm %s" % (png_full);
-								os.system(command2);
-								command3 = "rm %s %s" % (img_full, mrc_full);
-								os.system(command3);
-							else:
-								command = "convert -delay 10 -loop 0 -gravity South -background white -splice 0x18 -annotate 0 'Z-Slice: %%[fx:t+1]' -layers Optimize %s %s" % (png_full, gif_full);
-								os.system(command);
-								command2 = "rm %s" % (png_full);
-								os.system(command2);
-								command3 = "rm %s %s" % (img_full, mrc_full);
-								os.system(command3);
-							print "Done!\n"
-							
-						except:
-							print "\nRefinement Images could not be generated. Make sure i3 and imagemagick are in your $PATH. Make sure that pyami and scipy are in your $PYTHONPATH.\n"
-						
-						apDisplay.printMsg("Refinement Finished!\n")
-				
-				
-				#=====================
-				##RECONSTRUCTION##
-				#=====================
-				name=seriesname
-				cpparam="cp %s %s/%s.param" % (self.params['recon_param_file'],tiltdir,name)
-				os.system(cpparam)
-				recon_param_full=tiltdir+'/'+name+'.param'
-				
-				#Edit param file to replace pathlist, cachedir, and outdir
-				command1="grep -n 'pathlist' %s | awk '{print $1}' | sed 's/://'" % (recon_param_full)
-				proc=subprocess.Popen(command1, stdout=subprocess.PIPE, shell=True)
-				(pathlistline, err) = proc.communicate()
-				pathlistline=int(pathlistline)
-				command2="grep -n 'cachedir' %s | awk '{print $1}' | sed 's/://'" % (recon_param_full)
-				proc=subprocess.Popen(command2, stdout=subprocess.PIPE, shell=True)
-				(cachedirline, err) = proc.communicate()
-				cachedirline=int(cachedirline)
-				command3="grep -n 'outdir' %s | awk '{print $1}' | sed 's/://'" % (recon_param_full)
-				proc=subprocess.Popen(command3, stdout=subprocess.PIPE, shell=True)
-				(outdirline, err) = proc.communicate()
-				outdirline=int(outdirline)
-				command11="sed -i \'%ss|.*| pathlist: \"%s\"  (* AP path to raw directory *)|\' %s" % (pathlistline, raw_path, recon_param_full)
-				os.system(command11)
-				command22="sed -i \'%ss|.*| cachedir: \"%s\"  (* AP directory where cache files are stored *)|\' %s" % (cachedirline, newcachedir, recon_param_full)
-				os.system(command22)
-				command33="sed -i \'%ss|.*| outdir: \"%s\"  (* AP directory where other output files are stored *)|\' %s" % (outdirline, newoutdir, recon_param_full)
-				os.system(command33)
-				
-				apDisplay.printMsg('Starting Protomo Reconstructon')
-				
-				# Create reconstruction
-				recon_seriesparam=protomo.param(recon_param_full)
-				del series
-				series=protomo.series(recon_seriesparam)
-				series.mapfile()
-				
-				# Convert to mrc
-				img=seriesname+itt+'_bck.img';
-				mrcf=seriesname+itt+'_bck.mrc';
-				img_full=tiltdir+'/out/'+img;
-				mrc_full=tiltdir+'/out/'+mrcf;
-				os.system("i3cut -fmt mrc %s %s" % (img_full, mrc_full))
-				
-				# Normalize
-				err=0;
-				try:
-					command="e2proc3d.py --process=normalize %s %s" % (mrc_full, mrc_full)
-					os.system(command)
-				except:
-					apDisplay.printMsg("e2proc3d not found. Trying proc3d...")
-					err=1	# Error thrown. Try proc3d
-				if err:
-					try:
-						command="proc3d %s %s norm" % (mrc_full, mrc_full)
-						os.system(command)
-					except:
-						apDisplay.printMsg("proc3d not found. Skipping normalization.")
-				
-				apDisplay.printMsg('Reconstruction Complete!')
-				apDisplay.printMsg("Tilt Series #%s from %s has Finished Processing\n" % (tiltseriesnumber, self.params['sessionname']))
-				
+				final_retry=retry-1
+				retry = coarse_retry_align + 1 #Alignment worked, don't retry anymore
 			except:
-				apDisplay.printMsg("Alignment failed. Skipping Tilt Series #%s...\n" % (tiltseriesnumber))
+				if (retry > coarse_retry_align):
+					apDisplay.printMsg("Coarse Alignment failed after rescaling the search area %s time(s)." % (retry-1))
+					apDisplay.printMsg("Window Size (x) was windowed down to %s" % (new_region_x*sampling))
+					apDisplay.printMsg("Window Size (y) was windowed down to %s" % (new_region_y*sampling))
+					apDisplay.printMsg("Put values less than these into thesponding parameter boxes on the Protomo Coarse Alignment Appion webpage and try again.\n")
+				pass
 		
-#=====================
-#=====================
-if __name__ == '__main__':
-	protomo2batch = ProTomo2Batch()
-	protomo2batch.start()
-	protomo2batch.close()
-	protomo2batch_log=cwd+'/'+'protomo2batch.log'
-	cleanup="mv %s %s; mv %s %s; mv %s %s; mv %s %s;" % (protomo2batch_log, wd, self.params['coarse_param_file'], wd, self.params['refine_param_file'], wd, self.params['recon_param_file'], wd)
-	os.system(cleanup)
+		corrfile=name+'.corr'
+		series.corr(corrfile)
+		
+		#archive results
+		tiltfile=name+'.tlt'
+		series.geom(1).write(tiltfile)
+		
+		cleanup="mkdir %s/coarse_out; cp %s/coarse*.* %s/coarse_out; rm %s/*.corr; mv %s/%s.tlt %s/coarse_out/initial_%s.tlt; cp %s/%s.tlt %s/%s.tlt" % (tiltdir, tiltdir, tiltdir, tiltdir, tiltdir, seriesname, tiltdir, seriesname, tiltdir, name, tiltdir, seriesname)
+		os.system(cleanup)
+	except:
+		apDisplay.printMsg("Alignment failed. Skipping Tilt Series #%s...\n" % (tiltseriesnumber))
+		return
+	
+	apDisplay.printMsg("Creating Coarse Alignment Depictions")
+	apProTomo2Aligner.makeCoarseCorrPeakVideos(name, 0, tiltdir, outdir, video_type, "Coarse")
+	if (all_tilt_videos == "True"):
+		apDisplay.printMsg("Creating Coarse Alignment tilt series video...")
+		apProTomo2Aligner.makeTiltSeriesVideos(seriesname, 0, tiltfile, rawimagecount, tiltdir, raw_path, pixelsize, map_sampling, image_file_type, video_type, "Coarse")
+	if (all_recon_videos == "True"):
+		apDisplay.printMsg("Generating Coarse Alignment reconstruction...")
+		series.mapfile()
+		apProTomo2Aligner.makeReconstructionVideos(name, 0, tiltdir, outdir, pixelsize, sampling, map_sampling, video_type, keep_recons="false", align_step="Coarse")
 
+
+def protomoRefine(tiltseriesnumber, refine_options):
+	tiltdirname,tiltdir,seriesnumber,seriesname,tiltfilename,tiltfilename_full,raw_path,rawimagecount = variableSetup(refine_options.rundir, tiltseriesnumber, prep="False")
+	os.chdir(tiltdir)
+	name=seriesname
+	cpparam="cp %s %s/%s.param" % (refine_options.refine_param_file,tiltdir,name)
+	os.system(cpparam)
+	refine_param_full=tiltdir+'/'+name+'.param'
+	editParamFile(tiltdir, refine_param_full, raw_path)
+	start=0  #Counter for prevous iterations
+	i3tfile=tiltdir+'/'+seriesname+'.i3t'
+	if refine_options.refresh_i3t == "True":
+		os.system("rm %s" % i3tfile)
+		tiltfilename=max(glob.iglob('*.tlt'), key=os.path.getctime)
+		tiltfilename_full=tiltdir+'/'+tiltfilename
+	refine_seriesparam=protomo.param(refine_param_full)
+	if os.path.exists(i3tfile):
+		series=protomo.series(refine_seriesparam)
+	else:
+		refine_seriesgeom=protomo.geom(tiltfilename_full)
+		series=protomo.series(refine_seriesparam, refine_seriesgeom)
+	
+	#figure out starting number
+	previters=glob.glob(name+'*.corr')
+	if len(previters) > 0:
+		previters.sort()
+		lastiter=previters[-1]
+		start=int(lastiter.split(name)[1].split('.')[0])+1
+	
+	#rewind to previous iteration if requested
+	if (type(refine_options.restart_cycle) == int):
+		apDisplay.printMsg("Rewinding to iteration %s" % (refine_options.restart_cycle))
+		start=refine_options.restart_cycle
+		series.setcycle(start-1)
+	elif (refine_options.restart_cycle == 'best'):
+		del series
+		tiltfilename_full=tiltdir+'/'+name+'.tlt'
+		best=glob.glob('best*')
+		best=int(os.path.splitext(best[0])[1][1:])-1
+		best_iteration="%02d" % best
+		apDisplay.printMsg("Restarting using geometry information from iteration %s" % (best+1))
+		qadir=tiltdir+'/media/quality_assessment/'
+		#Move best .tlt file to series####.tlt. Move quality assessments, best tlt, corr, corrplots, corr video, tilt video, and recon video to tiltdir/media/quality_assessment/run##/
+		num_run_dirs=countDirs(qadir, 'run')+1
+		run_number="%02d" % num_run_dirs
+		old_run_dir=qadir+'/run'+run_number+'/'
+		os.system('mkdir %s' % old_run_dir)
+		best_tlt=tiltdir+'/'+name+best_iteration+'.tlt'
+		best_corr=tiltdir+'/'+name+best_iteration+'.corr'
+		best_corr_plots=tiltdir+'/media/corrplots/'+name+best_iteration+'*'
+		best_corr_video=tiltdir+'/media/correlations/'+name+best_iteration+'*'
+		best_tilt_video=tiltdir+'/media/tiltseries/'+name+best_iteration+'*'
+		best_recon_video=tiltdir+'/media/reconstructions/'+name+best_iteration+'*'
+		cmd='cp %s %s; mv %s %s;' % (best_tlt, tiltfilename_full, best_tlt, old_run_dir)
+		cmd+='mv best* %s; mv worst* %s;' % (old_run_dir, old_run_dir)
+		cmd+='mv %s %s;' % (best_corr, old_run_dir)
+		cmd+='mv %s %s;' % (best_corr_plots, old_run_dir)
+		cmd+='mv %s %s;' % (best_corr_video, old_run_dir)
+		cmd+='mv %s %s 2>/dev/null;' % (best_tilt_video, old_run_dir)
+		cmd+='mv %s %s 2>/dev/null;' % (best_recon_video, old_run_dir)
+		cmd+='mv media/quality_assessment/%s* %s;' % (name, old_run_dir)
+		cmd+='rm %s[0,1,2,3,4,5,6,7,8,9]* %s cache/%s* 2>/dev/null;' % (name, i3tfile, name)
+		cmd+='rm -r media/tiltseries/ media/reconstructions/ 2>/dev/null'
+		os.system(cmd)
+		
+		start=0
+		refine_seriesgeom=protomo.geom(tiltfilename_full)
+		series=protomo.series(refine_seriesparam, refine_seriesgeom)
+		
+	
+	# Get map sizes and map sampling from recon .param file so that the refinement reconstructions can be scaled properly for each iteration.
+	cmd1="awk '/AP reconstruction map size/{print $3}' %s | sed 's/,//g'" % (refine_options.recon_param_file)
+	proc=subprocess.Popen(cmd1, stdout=subprocess.PIPE, shell=True)
+	(recon_map_size_x, err) = proc.communicate()
+	recon_map_size_x=int(recon_map_size_x)
+	cmd2="awk '/AP reconstruction map size/{print $4}' %s | sed 's/,//g'" % (refine_options.recon_param_file)
+	proc=subprocess.Popen(cmd2, stdout=subprocess.PIPE, shell=True)
+	(recon_map_size_y, err) = proc.communicate()
+	recon_map_size_y=int(recon_map_size_y)
+	cmd3="awk '/AP reconstruction map size/{print $5}' %s | sed 's/,//g'" % (refine_options.recon_param_file)
+	proc=subprocess.Popen(cmd3, stdout=subprocess.PIPE, shell=True)
+	(recon_map_size_z, err) = proc.communicate()
+	recon_map_size_z=int(recon_map_size_z)
+	cmd4="awk '/AP reconstruction map sampling/{print $2}' %s" % (refine_options.recon_param_file)
+	proc=subprocess.Popen(cmd4, stdout=subprocess.PIPE, shell=True)
+	(recon_map_sampling, err) = proc.communicate()
+	recon_map_sampling=int(recon_map_sampling)
+
+	iters=refine_options.r1_iters+refine_options.r2_iters+refine_options.r3_iters+refine_options.r4_iters
+	round1={"window.size":"{ %s %s }" % (refine_options.r1_region_x,refine_options.r1_region_y),"window.lowpass.diameter":"{ %s %s }" % (refine_options.r1_lowpass_diameter_x,refine_options.r1_lowpass_diameter_y),"map.lowpass.diameter":"{ %s %s }" % (refine_options.r1_lowpass_diameter_x,refine_options.r1_lowpass_diameter_y),"window.lowpass.apodization":"{ %s %s }" % (refine_options.r1_lowpass_apod_x,refine_options.r1_lowpass_apod_y),"map.lowpass.apodization":"{ %s %s }" % (refine_options.r1_lowpass_apod_x,refine_options.r1_lowpass_apod_y),"window.highpass.apodization":"{ %s %s }" % (refine_options.r1_highpass_apod_x,refine_options.r1_highpass_apod_y),"window.highpass.diameter":"{ %s %s }" % (refine_options.r1_highpass_diameter_x,refine_options.r1_highpass_diameter_y),"sampling":"%s" % (refine_options.r1_sampling),"map.sampling":"%s" % (refine_options.r1_sampling),"preprocess.mask.kernel":"{ %s %s }" % (refine_options.r1_kernel_x,refine_options.r1_kernel_y),"align.peaksearch.radius":"{ %s %s }" % (refine_options.r1_peak_search_radius_x,refine_options.r1_peak_search_radius_y),"window.mask.width":"{ %s %s }" % (refine_options.r1_mask_width_x,refine_options.r1_mask_width_y),"align.mask.width":"{ %s %s }" % (refine_options.r1_mask_width_x,refine_options.r1_mask_width_y),"window.mask.apodization":"{ %s %s }" % (refine_options.r1_mask_apod_x,refine_options.r1_mask_apod_y),"align.mask.apodization":"{ %s %s }" % (refine_options.r1_mask_apod_x,refine_options.r1_mask_apod_y)}#,"map.size":"{ %s, %s, %s }" % (refine_options.r1_mask_apod_x,refine_options.r1_mask_apod_y)}			
+	round2={"window.size":"{ %s %s }" % (refine_options.r2_region_x,refine_options.r2_region_y),"window.lowpass.diameter":"{ %s %s }" % (refine_options.r2_lowpass_diameter_x,refine_options.r2_lowpass_diameter_y),"map.lowpass.diameter":"{ %s %s }" % (refine_options.r2_lowpass_diameter_x,refine_options.r2_lowpass_diameter_y),"window.lowpass.apodization":"{ %s %s }" % (refine_options.r2_lowpass_apod_x,refine_options.r2_lowpass_apod_y),"map.lowpass.apodization":"{ %s %s }" % (refine_options.r2_lowpass_apod_x,refine_options.r2_lowpass_apod_y),"window.highpass.apodization":"{ %s %s }" % (refine_options.r2_highpass_apod_x,refine_options.r2_highpass_apod_y),"window.highpass.diameter":"{ %s %s }" % (refine_options.r2_highpass_diameter_x,refine_options.r2_highpass_diameter_y),"sampling":"%s" % (refine_options.r2_sampling),"map.sampling":"%s" % (refine_options.r2_sampling),"preprocess.mask.kernel":"{ %s %s }" % (refine_options.r2_kernel_x,refine_options.r2_kernel_y),"align.peaksearch.radius":"{ %s %s }" % (refine_options.r2_peak_search_radius_x,refine_options.r2_peak_search_radius_y),"window.mask.width":"{ %s %s }" % (refine_options.r2_mask_width_x,refine_options.r2_mask_width_y),"align.mask.width":"{ %s %s }" % (refine_options.r2_mask_width_x,refine_options.r2_mask_width_y),"window.mask.apodization":"{ %s %s }" % (refine_options.r2_mask_apod_x,refine_options.r2_mask_apod_y),"align.mask.apodization":"{ %s %s }" % (refine_options.r2_mask_apod_x,refine_options.r2_mask_apod_y)}
+	round3={"window.size":"{ %s %s }" % (refine_options.r3_region_x,refine_options.r3_region_y),"window.lowpass.diameter":"{ %s %s }" % (refine_options.r3_lowpass_diameter_x,refine_options.r3_lowpass_diameter_y),"map.lowpass.diameter":"{ %s %s }" % (refine_options.r3_lowpass_diameter_x,refine_options.r3_lowpass_diameter_y),"window.lowpass.apodization":"{ %s %s }" % (refine_options.r3_lowpass_apod_x,refine_options.r3_lowpass_apod_y),"map.lowpass.apodization":"{ %s %s }" % (refine_options.r3_lowpass_apod_x,refine_options.r3_lowpass_apod_y),"window.highpass.apodization":"{ %s %s }" % (refine_options.r3_highpass_apod_x,refine_options.r3_highpass_apod_y),"window.highpass.diameter":"{ %s %s }" % (refine_options.r3_highpass_diameter_x,refine_options.r3_highpass_diameter_y),"sampling":"%s" % (refine_options.r3_sampling),"map.sampling":"%s" % (refine_options.r3_sampling),"preprocess.mask.kernel":"{ %s %s }" % (refine_options.r3_kernel_x,refine_options.r3_kernel_y),"align.peaksearch.radius":"{ %s %s }" % (refine_options.r3_peak_search_radius_x,refine_options.r3_peak_search_radius_y),"window.mask.width":"{ %s %s }" % (refine_options.r3_mask_width_x,refine_options.r3_mask_width_y),"align.mask.width":"{ %s %s }" % (refine_options.r3_mask_width_x,refine_options.r3_mask_width_y),"window.mask.apodization":"{ %s %s }" % (refine_options.r3_mask_apod_x,refine_options.r3_mask_apod_y),"align.mask.apodization":"{ %s %s }" % (refine_options.r3_mask_apod_x,refine_options.r3_mask_apod_y)}
+	round4={"window.size":"{ %s %s }" % (refine_options.r4_region_x,refine_options.r4_region_y),"window.lowpass.diameter":"{ %s %s }" % (refine_options.r4_lowpass_diameter_x,refine_options.r4_lowpass_diameter_y),"map.lowpass.diameter":"{ %s %s }" % (refine_options.r4_lowpass_diameter_x,refine_options.r4_lowpass_diameter_y),"window.lowpass.apodization":"{ %s %s }" % (refine_options.r4_lowpass_apod_x,refine_options.r4_lowpass_apod_y),"map.lowpass.apodization":"{ %s %s }" % (refine_options.r4_lowpass_apod_x,refine_options.r4_lowpass_apod_y),"window.highpass.apodization":"{ %s %s }" % (refine_options.r4_highpass_apod_x,refine_options.r4_highpass_apod_y),"window.highpass.diameter":"{ %s %s }" % (refine_options.r4_highpass_diameter_x,refine_options.r4_highpass_diameter_y),"sampling":"%s" % (refine_options.r4_sampling),"map.sampling":"%s" % (refine_options.r4_sampling),"preprocess.mask.kernel":"{ %s %s }" % (refine_options.r4_kernel_x,refine_options.r4_kernel_y),"align.peaksearch.radius":"{ %s %s }" % (refine_options.r4_peak_search_radius_x,refine_options.r4_peak_search_radius_y),"window.mask.width":"{ %s %s }" % (refine_options.r4_mask_width_x,refine_options.r4_mask_width_y),"align.mask.width":"{ %s %s }" % (refine_options.r4_mask_width_x,refine_options.r4_mask_width_y),"window.mask.apodization":"{ %s %s }" % (refine_options.r4_mask_apod_x,refine_options.r4_mask_apod_y),"align.mask.apodization":"{ %s %s }" % (refine_options.r4_mask_apod_x,refine_options.r4_mask_apod_y)}
+	switches={"preprocess.mask.gradient":{"%s" % (refine_options.gradient):refine_options.gradient_switch},"preprocess.mask.iter":{"%s" % (refine_options.iter_gradient):refine_options.iter_gradient_switch},"fit.orientation":{"%s" % (refine_options.orientation):refine_options.orientation_switch},"fit.azimuth":{"%s" % (refine_options.azimuth):refine_options.azimuth_switch},"fit.elevation":{"%s" % (refine_options.elevation):refine_options.elevation_switch},"fit.rotation":{"%s" % (refine_options.rotation):refine_options.rotation_switch},"fit.scale":{"%s" % (refine_options.scale):refine_options.scale_switch}}
+	
+	for n in range(start,iters):
+		#change parameters depending on rounds
+		if (n+1 <= start+refine_options.r1_iters):
+			r=1  #Round number
+			region_x=refine_options.r1_region_x
+			region_y=refine_options.r1_region_y
+			sampling=refine_options.r1_sampling
+			for val in round1:
+				series.setparam(val,round1[val])
+		elif (n+1 == start+refine_options.r1_iters+refine_options.r2_iters):
+			r=2
+			region_x=refine_options.r2_region_x
+			region_y=refine_options.r2_region_y
+			sampling=refine_options.r2_sampling
+			for val in round2:
+				series.setparam(val,round2[val])
+		elif (n+1 == start+refine_options.r1_iters+refine_options.r2_iters+refine_options.r3_iters):
+			r=3
+			region_x=refine_options.r3_region_x
+			region_y=refine_options.r3_region_y
+			sampling=refine_options.r3_sampling
+			for val in round3:
+				series.setparam(val,round3[val])
+		elif (n+1 == start+refine_options.r1_iters+refine_options.r2_iters+refine_options.r3_iters+refine_options.r4_iters):
+			r=4
+			region_x=refine_options.r4_region_x
+			region_y=refine_options.r4_region_y
+			sampling=refine_options.r4_sampling
+			for val in round4:
+				series.setparam(val,round4[val])
+		
+		#change parameters depending on switches
+		for switch in switches:
+			for key in switches[switch]:
+				if (switches[switch][key] == n+1-start):
+					if (key == "true"):
+						newval="false"
+					else:
+						newval="true"
+					series.setparam(switch,newval)
+		
+		apDisplay.printMsg("Beginning Iteration #%s, Round #%s\n" % (start+n+1,r))
+		#print "after:";series.setparam('map.sampling');series.setparam('sampling');
+		#Align and restart alignment if failed
+		retry=0
+		brk=0
+		new_region_x=region_x/sampling   #Just initializing
+		new_region_y=region_y/sampling   #Just initializing
+		while (retry <= refine_options.refine_retry_align):
+			try:
+				if (retry > 0):
+					new_region_x = int(new_region_x*refine_options.refine_retry_shrink)
+					new_region_y = int(new_region_y*refine_options.refine_retry_shrink)
+					apDisplay.printMsg("Refinement failed for Tilt Series #%s. Retry #%s with %s%% smaller Window Size: (%s, %s)..." % (tiltseriesnumber, retry, 100-int(100*refine_options.refine_retry_shrink), new_region_x*sampling, new_region_y*sampling))
+					newsize = "{ %s %s }" % (new_region_x, new_region_y)
+					series.setparam("window.size", newsize)
+				retry+=1
+				series.align()
+				final_retry=retry-1
+				retry = refine_options.refine_retry_align + 1 #Alignment worked, don't retry anymore
+			except:
+				if (retry > refine_options.refine_retry_align):
+					apDisplay.printMsg("Refinement Iteration #%s failed after resampling the search area %s time(s)." % (start+n+1, retry-1))
+					apDisplay.printMsg("Window Size (x) was windowed down to %s" % (new_region_x*sampling))
+					apDisplay.printMsg("Window Size (y) was windowed down to %s" % (new_region_y*sampling))
+					apDisplay.printMsg("Put values less than these into the corresponding parameter boxes on the Protomo Refinement Appion webpage and try again.\n")
+					brk=1
+				pass
+
+		apDisplay.printMsg("Finished Iteration #%s, Round #%s Refinement!\n" % (start+n+1,r))
+		if (brk == 1):   #resampling failed, break out of all refinement iterations
+			break
+		it="%02d" % ((n+start))
+		itt="%02d" % ((n+start+1))
+		ite="_ite%02d" % ((n+start))
+		basename='%s%s' % (name,it)
+		corrfile=basename+'.corr'
+		series.corr(corrfile)
+		series.fit()
+		series.update()
+
+		#archive results
+		tiltfile=basename+'.tlt'
+		series.geom(0).write(tiltfile)
+		
+		#Produce quality assessment statistics and plot image using corrfile information
+		apDisplay.printMsg("Creating quality assessment statistics...")
+		numcorrfiles=len(glob.glob1(tiltdir,'*.corr'))
+		for i in range(numcorrfiles):
+			it="%02d" % (i)
+			basename='%s%s' % (name,it)
+			corrfile=basename+'.corr'
+			apProTomo2Aligner.makeQualityAssessment(name, i, tiltdir, corrfile)
+			if i == numcorrfiles-1:
+				apProTomo2Aligner.makeQualityAssessmentImage(name, tiltdir, refine_options.r1_iters, refine_options.r1_sampling, refine_options.r2_iters, refine_options.r2_sampling, refine_options.r3_iters, refine_options.r3_sampling, refine_options.r4_iters, refine_options.r4_sampling)
+		it="%02d" % ((n+start))
+		basename='%s%s' % (name,it)
+		corrfile=basename+'.corr'
+		
+		apDisplay.printMsg("Creating Refinement Depictions")
+		apProTomo2Aligner.makeCoarseCorrPeakVideos(name, it, tiltdir, 'out', refine_options.video_type, "Refinement")  #Correlation peak videos are always made.
+		apProTomo2Aligner.makeCorrPlotImages(name, it, tiltdir, corrfile)  #Correlation plots are always made.
+		if (refine_options.all_tilt_videos == "True"):  #Tilt series videos are only made if requested
+			apDisplay.printMsg("Creating Refinement tilt series video...")
+			apProTomo2Aligner.makeTiltSeriesVideos(name, it, tiltfilename_full, rawimagecount, tiltdir, raw_path, refine_options.pixelsize, refine_options.map_sampling, refine_options.image_file_type, refine_options.video_type, "Refinement")
+		if (refine_options.all_recon_videos == "True"):  #Reconstruction videos are only made if requested
+			apDisplay.printMsg("Generating Refinement reconstruction...")
+			series.mapfile()
+			apProTomo2Aligner.makeReconstructionVideos(name, itt, tiltdir, 'out', refine_options.pixelsize, refine_options.sampling, refine_options.map_sampling, refine_options.video_type, keep_recons="false", align_step="Refinement")
+	
+
+def protomoReconstruct(tiltseriesnumber, recon_options):
+	"""
+	Reconstruct a tilt series by back pojection.
+	Options are given to specify which iteration to reconstruct from and
+	whether to exclue any very high tilts 
+	"""
+	tiltdirname,tiltdir,seriesnumber,seriesname,tiltfilename,tiltfilename_full,raw_path,rawimagecount = variableSetup(recon_options.rundir, tiltseriesnumber, prep="False")
+	os.chdir(tiltdir)
+	
+
+
+def protomoScreening(tiltseriesnumber, screening_options):
+	"""
+	Screening Mode. Tilt files, directories, and images will be prepared.
+	Tilt Series will be coarsely aligned and depiction videos made in parallel.
+	This is intended to be used during data collection.
+	"""
+	tiltdirname,tiltdir,seriesnumber,seriesname,tiltfilename,tiltfilename_full,raw_path,rawimagecount = variableSetup(screening_options.rundir, tiltseriesnumber, prep="True")
+	os.chdir(tiltdir)
+	apProTomo2Prep.prepareTiltFile(screening_options.sessionname, seriesname, tiltfilename_full, tiltseriesnumber, raw_path, screening_options.link, coarse="True")
+	
+	cmd="awk '/FILE /{print}' %s | wc -l" % (tiltfilename_full)
+	proc=subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
+	(rawimagecount, err) = proc.communicate()
+	rawimagecount=int(rawimagecount)
+	jobs1=[]
+	apDisplay.printMsg("Creating initial tilt series video in the background...")
+	jobs1.append(mp.Process(target=apProTomo2Aligner.makeTiltSeriesVideos, args=(seriesname, 0, tiltfilename_full, rawimagecount, tiltdir, raw_path, screening_options.pixelsize, screening_options.map_sampling, screening_options.image_file_type, screening_options.video_type, "Initial",)))
+	for job in jobs1:
+		job.start()
+	time.sleep(4)
+	
+	#Removing highly shifted images
+	bad_images, bad_kept_images=apProTomo2Aligner.removeHighlyShiftedImages(tiltfilename_full, screening_options.dimx, screening_options.dimy, screening_options.shift_limit, screening_options.angle_limit)
+	if bad_images:
+		apDisplay.printMsg('Images %s were removed from the tilt file because their shifts exceed %s%% of the (x) and/or (y) dimensions.' % (bad_images, screening_options.shift_limit))
+		if bad_kept_images:
+			apDisplay.printMsg('Images %s exceeded the allowed shift, but were at tilt angles less than the %s degree angle limit.' % (bad_kept_images, screening_options.angle_limit))
+	else:
+		if bad_kept_images:
+			apDisplay.printMsg('Images %s exceeded the allowed shift, but were at tilt angles less than the %s degree angle limit.' % (bad_kept_images, screening_options.angle_limit))
+		apDisplay.printMsg('No images were removed from the .tlt file due to high shifts.')
+	
+	apDisplay.printMsg("Finished Preparing Files and Directories for Tilt Series #%s." % (tiltseriesnumber))
+	
+	name='coarse_'+seriesname
+	cpparam="cp %s %s/%s.param" % (screening_options.coarse_param_file,tiltdir,name)
+	os.system(cpparam)
+	coarse_param_full=tiltdir+'/'+name+'.param'
+	editParamFile(tiltdir, coarse_param_full, raw_path)
+	
+	apDisplay.printMsg('Starting Protomo Coarse Alignment')
+	coarse_seriesparam=protomo.param(coarse_param_full)
+	coarse_seriesgeom=protomo.geom(tiltfilename_full)
+	try:
+		series=protomo.series(coarse_seriesparam,coarse_seriesgeom)
+		#Align and restart alignment if failed
+		retry=0
+		brk=0
+		new_region_x=screening_options.region_x/screening_options.sampling   #Just initializing
+		new_region_y=screening_options.region_y/screening_options.sampling   #Just initializing
+		while (retry <= screening_options.coarse_retry_align):
+			try:
+				if (retry > 0):
+					new_region_x = int(new_region_x*screening_options.coarse_retry_shrink)
+					new_region_y = int(new_region_y*screening_options.coarse_retry_shrink)
+					apDisplay.printMsg("Coarse Alignment for Tilt Series #%s failed. Retry #%s with %s%% smaller Window Size: (%s, %s)..." % (tiltseriesnumber, retry, 100-int(100*screening_options.coarse_retry_shrink), new_region_x, new_region_y))
+					newsize = "{ %s %s }" % (new_region_x, new_region_y)
+					series.setparam("window.size", newsize)
+				retry+=1
+				series.align()
+				final_retry=retry-1
+				retry = screening_options.coarse_retry_align + 1 #Alignment worked, don't retry anymore
+			except:
+				if (retry > screening_options.coarse_retry_align):
+					apDisplay.printMsg("Coarse Alignment failed after rescaling the search area %s time(s)." % (retry-1))
+					apDisplay.printMsg("Window Size (x) was windowed down to %s" % (new_region_x*screening_options.sampling))
+					apDisplay.printMsg("Window Size (y) was windowed down to %s" % (new_region_y*screening_options.sampling))
+					apDisplay.printMsg("Put values less than these into thesponding parameter boxes on the Protomo Coarse Alignment Appion webpage and try again.\n")
+					brk=1
+				pass
+		
+		if (brk == 1):   #resampling failed, break out of all refinement iterations
+			#Finish background process
+			for job in jobs1:
+				job.join()
+			return None
+		
+		corrfile=name+'.corr'
+		series.corr(corrfile)
+		
+		#archive results
+		tiltfile=name+'.tlt'
+		series.geom(1).write(tiltfile)
+		
+		cleanup="mkdir %s/coarse_out; cp %s/coarse*.* %s/coarse_out; rm %s/*.corr; mv %s/%s.tlt %s/coarse_out/initial_%s.tlt; cp %s/%s.tlt %s/%s.tlt" % (tiltdir, tiltdir, tiltdir, tiltdir, tiltdir, seriesname, tiltdir, seriesname, tiltdir, name, tiltdir, seriesname)
+		os.system(cleanup)
+	except:
+		apDisplay.printMsg("Alignment failed. Skipping Tilt Series #%s...\n" % (tiltseriesnumber))
+		return
+	
+	apDisplay.printMsg("Creating Coarse Alignment Depictions in Parallel")
+	
+	# For multiprocessing
+	jobs2=[]
+	
+	# Make correlation peak videos for depiction			
+	jobs2.append(mp.Process(target=apProTomo2Aligner.makeCoarseCorrPeakVideos, args=(name, 0, tiltdir, screening_options.outdir, screening_options.video_type, "Coarse",)))
+	
+	# Make tiltseries video for depiction
+	apDisplay.printMsg("Creating Coarse Alignment tilt series video...")
+	jobs2.append(mp.Process(target=apProTomo2Aligner.makeTiltSeriesVideos, args=(seriesname, 0, tiltfile, rawimagecount, tiltdir, raw_path, screening_options.pixelsize, screening_options.map_sampling, screening_options.image_file_type, screening_options.video_type, "Coarse",)))
+	
+	# Send off processes in the background
+	for job in jobs2:
+		job.start()
+	
+	apDisplay.printMsg("Generating Coarse Alignment reconstruction...")
+	series.mapfile()
+	apProTomo2Aligner.makeReconstructionVideos(name, 0, tiltdir, screening_options.outdir, screening_options.pixelsize, screening_options.sampling, screening_options.map_sampling, screening_options.video_type, keep_recons="false", align_step="Coarse")
+	
+	# Join processes
+	for job in jobs1:
+		job.join()
+	for job in jobs2:
+		job.join()
+	
+	apDisplay.printMsg("Coarse Alignment for tilt series #%s finished!\n" % tiltseriesnumber)
+
+
+def ctfCorrect(tiltseriesnumber, ctf_options):
+	"""
+	Leginondb will be queried to get the 'best' defocus estimate on a per-image basis.
+	Confident defoci will be gathered and unconfident defoci will be interpolated.
+	Images will be CTF corrected by phase flipping using ctfphaseflip from the IMOD package.
+	"""
+	try:
+		tiltdirname,tiltdir,seriesnumber,seriesname,tiltfilename,tiltfilename_full,raw_path,rawimagecount = variableSetup(ctf_options.rundir, tiltseriesnumber, prep="False")
+		os.chdir(tiltdir)
+		os.system("mkdir %s/ctf_correction" % tiltdir)
+		defocus_file_full=tiltdir+'/ctf_correction/'+seriesname+'_defocus.txt'
+		tilt_file_full=tiltdir+'/ctf_correction/'+seriesname+'_tilts.txt'
+		image_list_full=tiltdir+'/ctf_correction/'+seriesname+'_images.txt'
+		uncorrected_stack=tiltdir+'/ctf_correction/stack_uncorrected.mrc'
+		corrected_stack=tiltdir+'/ctf_correction/stack_corrected.mrc'
+		out_full=tiltdir+'/ctf_correction/out'
+		log_file_full=tiltdir+'/ctf_correction/ctf_correction.log'
+		
+		sinedon.setConfig('appiondata', db=ctf_options.projectid)
+		sessiondata = apDatabase.getSessionDataFromSessionName(ctf_options.sessionname)
+		tiltseriesdata = apDatabase.getTiltSeriesDataFromTiltNumAndSessionId(tiltseriesnumber,sessiondata)
+		tiltdata = apTomo.getImageList([tiltseriesdata])
+		tilts,ordered_imagelist,ordered_mrc_files,refimg = apTomo.orderImageList(tiltdata)
+		if os.path.isfile(log_file_full): #Throw exception if already ctf corrected
+			sys.exit()
+		
+		estimated_defocus=[]
+		for image in range(len(ordered_imagelist)):
+			imgctfdata=ctfdb.getBestCtfValue(ordered_imagelist[image], msg=False)
+			try:
+				#imgctfdata['resolution_50_percent']  #If this fails then the defocus hasn't been estimated through Appion
+				if imgctfdata['resolution_50_percent'] < 100.0: #if there's a yellow ring in Appion, trust defocus estimation
+					estimated_defocus.append((imgctfdata['defocus1']+imgctfdata['defocus2'])*1000000000/2)
+				else:  #Poorly estimated. Guess its value later
+					estimated_defocus.append(999999999)
+			except:  #No data. Guess its value later
+				estimated_defocus.append(999999999)
+		
+		#Find mean and stdev to prune out confident defocus values that are way off
+		defocus_stats_list=filter(lambda a: a != 999999999, estimated_defocus)
+		avg=np.array(defocus_stats_list).mean()
+		stdev=np.array(defocus_stats_list).std()
+		
+		good_tilts=[]
+		good_defocus_list=[]
+		for tilt, defocus in zip(tilts, estimated_defocus):
+			if (defocus != 999999999) and (defocus < avg + stdev) and (defocus > avg - stdev):
+				good_defocus_list.append(defocus)
+				good_tilts.append(tilt)
+		
+		#Using a linear best fit because quadratic and cubic go off the rails. Estimation doesn't need to be extremely accurate anyways.
+		x=np.linspace(int(round(tilts[0])), int(round(tilts[len(tilts)-1])), 1000)
+		s=scipy.interpolate.UnivariateSpline(good_tilts,good_defocus_list,k=1)
+		y=s(x)
+		
+		#Make defocus list with good values and interpolations for bad values
+		finished_defocus_list=[]
+		for tilt, defocus in zip(tilts, estimated_defocus):
+			if (defocus != 999999999) and (defocus < avg + stdev) and (defocus > avg - stdev):
+				finished_defocus_list.append(int(round(defocus)))
+			else:  #Interpolate
+				finished_defocus_list.append(int(round(y[int(round(tilt))])))
+		
+		new_avg=np.array(finished_defocus_list).mean()
+		new_stdev=np.array(finished_defocus_list).std()
+		
+		#Write defocus file, tilt file, and image list file for ctfphaseflip and newstack
+		f = open(defocus_file_full,'w')
+		f.write("%d\t%d\t%.2f\t%.2f\t%d\t2\n" % (1,1,tilts[0],tilts[0],finished_defocus_list[0]))
+		for i in range(1,len(tilts)):
+			f.write("%d\t%d\t%.2f\t%.2f\t%d\n" % (i+1,i+1,tilts[i],tilts[i],finished_defocus_list[i]))
+		f.close()
+		
+		f = open(tilt_file_full,'w')
+		for tilt in tilts:
+			f.write("%.2f\n" %tilt)
+		f.close()
+		
+		mrc_list=[]
+		for image in ordered_mrc_files:
+			mrc_list.append(raw_path+'/'+image[-10:])
+		f = open(image_list_full,'w')
+		f.write("%d\n" % len(tilts))
+		for filename in mrc_list:
+			f.write(filename+'\n')
+			f.write("%d\n" % 0)
+		f.close()
+		
+		f = open(log_file_full,'w')
+		#Make stack for correction,phase flip, extract images, replace images
+		cmd1="newstack -fileinlist %s -output %s > %s" % (image_list_full, uncorrected_stack, log_file_full)
+		f.write("%s\n\n" % cmd1)
+		print cmd1
+		subprocess.check_call([cmd1], shell=True)
+		#os.system(cmd1)
+		
+		cmd2="ctfphaseflip -input %s -output %s -AngleFile %s -defFn %s -pixelSize %s -volt %s -DefocusTol 200 -iWidth 20 -SphericalAberration %s -AmplitudeContrast %s 2>&1 | tee %s" % (uncorrected_stack, corrected_stack, tilt_file_full, defocus_file_full, ctf_options.pixelsize, ctf_options.voltage, ctf_options.cs, ctf_options.amp_contrast, log_file_full)
+		f.write("\n\n%s\n\n" % cmd2)
+		print cmd2
+		subprocess.check_call([cmd2], shell=True)
+		#os.system(cmd2)
+		
+		cmd3="newstack -split 1 -append mrc %s %s >> %s" % (corrected_stack, out_full, log_file_full)
+		f.write("\n\n%s\n\n" % cmd3)
+		print cmd3
+		subprocess.check_call([cmd3], shell=True)
+		#os.system(cmd3)
+		f.write("\n\n")
+		
+		apDisplay.printMsg("Overwriting uncorrected raw images with CTF corrected images")
+		new_images=glob.glob(tiltdir+'/ctf_correction/out*mrc')
+		new_images.sort()
+		for i in range(len(new_images)):
+			cmd4="rm %s; ln %s %s" % (mrc_list[i], new_images[i], mrc_list[i])
+			f.write("%s\n" % cmd4)
+			os.system(cmd4)
+		
+		cleanup="rm %s %s" % (uncorrected_stack, corrected_stack)
+		os.system(cleanup)
+		output1="%.2f%% of the images for tilt series #%s had poor defocus estimates or fell outside of one standard deviation from the original mean." % (100*(len(estimated_defocus)-len(defocus_stats_list))/len(estimated_defocus), tiltseriesnumber)
+		output2="The defocus mean and standard deviation for tilt series #%s after interpolating poor values is %.2f and %.2f microns, respectively." % (tiltseriesnumber, new_avg/1000, new_stdev/1000)
+		f.write("\n");f.write(output1);f.write("\n");f.write(output2);f.write("\n");f.close()
+		apDisplay.printMsg(output1)
+		apDisplay.printMsg(output2)
+		apDisplay.printMsg("CTF correction finished for tilt series #%s!" % tiltseriesnumber)
+		
+	except SystemExit:
+		apDisplay.printMsg("It looks like you've already CTF corrected tilt series #%s. Aborting!" % tiltseriesnumber)
+	
+	except subprocess.CalledProcessError:
+		apDisplay.printMsg("An IMOD command failed. Make sure IMOD is in your $PATH.")
+	
+	except:
+		apDisplay.printMsg("CTF correction could not be completed. Make sure IMOD, numpy, and scipy are in your $PATH. Make sure defocus has been estimated through Appion.\n")
+
+
+if __name__ == '__main__':
+	options=parseOptions()
+	options=apProTomo2Aligner.AngstromsToProtomo(options)
+	tiltseriesranges=hyphen_range(options.tiltseriesranges)
+	
+	if (options.procs == "all"):
+		options.procs=mp.cpu_count()
+	else:
+		options.procs=int(options.procs)
+	
+	if (options.prep_files == "True"):
+		from appionlib import apProTomo2Prep   #If you want to run protomo on a machine that doesn't have MYSQL/leginondb access, then this will fail to import
+		
+		apDisplay.printMsg("Preparing Files and Directories for Protomo")
+		
+		if (options.procs > 5): #For tilt series of size 5k x 4k by 37 tilts, each protomoPrep process will consume over 6GB of ram. If the ram is maxed out, the system will revert to disk swap and slow down this step considerably.
+			procs=5
+		else:
+			procs=options.procs
+		for i, j in zip(tiltseriesranges, range(1,len(tiltseriesranges)+1)):
+			p = mp.Process(target=protomoPrep, args=(options.sessionname, options.rundir, i, options.link, options.pixelsize, options.dimx, options.dimy, options.shift_limit, options.angle_limit, options.map_sampling, options.image_file_type, options.video_type,))
+			p.start()
+			
+			#If max number of processors is reached, wait for them to finish. This isn't the most efficient way, but it's the only way I know how to accomplish this right now...
+			if (j % procs == 0) and (j != 0):
+				[p.join() for p in mp.active_children()]
+		
+		[p.join() for p in mp.active_children()]
+		apDisplay.printMsg("Files and Directories Prepared for tilt series %s!" % options.tiltseriesranges)
+	
+	
+	#Protomo doesn't like how proc2d writes mrc files. Our frame alignment script uses proc2d. This function and its options are hidden from general users.
+	if (options.fix_frames == "True" and options.link == "False"):
+		apDisplay.printMsg("Fixing raw image mrcs...")
+		for i, j in zip(tiltseriesranges, range(1,len(tiltseriesranges)+1)):
+			p = mp.Process(target=protomoFixFrameMrcs, args=(i, options,))
+			p.start()
+			
+			if (j % options.procs == 0) and (j != 0):
+				[p.join() for p in mp.active_children()]
+		
+		[p.join() for p in mp.active_children()]
+		apDisplay.printMsg("Frames Fixed for tilt series %s!" % options.tiltseriesranges)
+	
+	
+	if (options.coarse_align == "True"):
+		apDisplay.printMsg("Performing Coarse Alignments")
+		for i, j in zip(tiltseriesranges, range(1,len(tiltseriesranges)+1)):
+			p = mp.Process(target=protomoCoarseAlign, args=(options.coarse_param_file, options.rundir, 'out', i, options.pixelsize, options.sampling, options.map_sampling, options.video_type, options.coarse_retry_align, options.coarse_retry_shrink, options.region_x, options.region_y, options.image_file_type, options.all_tilt_videos, options.all_recon_videos,))
+			p.start()
+			
+			if (j % options.procs == 0) and (j != 0):
+				[p.join() for p in mp.active_children()]
+		
+		[p.join() for p in mp.active_children()]
+		apDisplay.printMsg("Coarse Alignments Finished for tilt series %s!" % options.tiltseriesranges)
+	
+	if (options.refine == "True"):
+		apDisplay.printMsg("Performing Refinements")
+		for i, j in zip(tiltseriesranges, range(1,len(tiltseriesranges)+1)):
+			p = mp.Process(target=protomoRefine, args=(i, options,))
+			p.start()
+			
+			if (j % options.procs == 0) and (j != 0):
+				[p.join() for p in mp.active_children()]
+		
+		[p.join() for p in mp.active_children()]
+		apDisplay.printMsg("Refinements Finished for tilt series %s!" % options.tiltseriesranges)
+	
+	
+	if (options.reconstruct == "True"):
+		apDisplay.printMsg("Creating Reconstructions")
+		for i, j in zip(tiltseriesranges, range(len(tiltseriesranges))):
+			p = mp.Process(target=protomoReconstruct, args=(i, options,))
+			p.start()
+			
+			if (j % (options.procs-1) == 0) and (j != 0):
+				[p.join() for p in mp.active_children()]
+		
+		[p.join() for p in mp.active_children()]
+		apDisplay.printMsg("Reconstructions Finished for tilt series %s!" % options.tiltseriesranges)
+	
+	
+	if (options.ctf_correct == "True"):
+		import sinedon   #If you want to run protomo on a machine that doesn't have MYSQL/leginondb access, then these will fail to import
+		import numpy as np
+		import scipy.interpolate
+		from appionlib import apDatabase
+		from appionlib import apTomo
+		from appionlib.apCtf import ctfdb
+		
+		apDisplay.printMsg("Performing CTF Correction")
+		for i, j in zip(tiltseriesranges, range(1,len(tiltseriesranges)+1)):
+			p = mp.Process(target=ctfCorrect, args=(i, options,))
+			p.start()
+			
+			if (j % options.procs == 0) and (j != 0):
+				[p.join() for p in mp.active_children()]
+		
+		[p.join() for p in mp.active_children()]
+		apDisplay.printMsg("CTF Correction Finished for tilt series %s!" % options.tiltseriesranges)
+	
+	
+	if (options.screening_mode == "True" and options.prep_files == "False" and options.coarse_align == "False" and options.refine == "False" and options.reconstruct == "False"):
+		from appionlib import apDatabase   #If you want to run protomo on a machine that doesn't have MYSQL/leginondb access, then these will fail to import
+		from appionlib import apProTomo2Prep
+		
+		apDisplay.printMsg("Apption-Protomo Screening Mode")
+		apDisplay.printMsg("Tilt files, directories, and images will be prepared.")
+		apDisplay.printMsg("Tilt Series will be coarsely aligned and depiction videos made in parallel.")
+		apDisplay.printMsg("This is intended to be used during data collection.")
+		
+		tiltseriesnumber=options.screening_start
+		while True:
+			try:
+				sessiondata = apDatabase.getSessionDataFromSessionName(options.sessionname)
+				tiltseriesdata = apDatabase.getTiltSeriesDataFromTiltNumAndSessionId(tiltseriesnumber+1,sessiondata)
+				
+				#If tilt series N+1 exists, then tilt series N is ready to be processed
+				protomoScreening(tiltseriesnumber, options)
+				
+				tiltseriesnumber+=1
+			except:
+				#Wait for tilt series N to finish collecting
+				apDisplay.printMsg("Waiting for tilt series #%s to finish being collected. Sleeping for 1 minute..." % tiltseriesnumber)
+				time.sleep(60)
+		
+	

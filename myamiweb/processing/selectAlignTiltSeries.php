@@ -23,14 +23,14 @@ processing_header("Align Tilt Series","Align Tilt Series Page", $javascript,Fals
 // Selection Header
 echo "<table border='0' width='640'>\n";
 echo "<tr><td>\n";
-echo "  <h2>Tilt Series Alignment Procedures</h2>\n";
+echo "  <h2>Indvidual Tilt Series Alignment and Reconstruction Procedures</h2>\n";
 echo "  <h4>\n";
 echo "    Tilt series may have been made with or without \n"
 	."fiducial markers. Some tilt series are amenable \n"
 	."to automated alignment while others require (some) \n"
 	."manual alignment.";
 echo "  <h4>\n";
-echo "    The idea with Protomo and eTomo \n"
+echo "    The idea with Protomo \n"
         ."is for the user to work through aligning a single tilt \n"
         ."series in a session, then use the parameters that \n"
         ."produce acceptable results on the entire tilt series \n"
@@ -66,15 +66,15 @@ echo "</td></tr>\n";
 ** eTomo 4.8.13 Dev.
 */
 
-echo "<tr><td width='100' align='center'>\n";
-echo "  <img src='' width='96'>\n";
-echo "</td><td>\n";
-echo "  <h3><a href='runEtomo.php?expId=$expId'>eTomo - Not Yet Implemented!</a></h3>\n";
-echo " <p>Here eTomo is operated completely through the command line using batchruntomo. "
-	."Batchruntomo runs all the operations required to align a tilt series and build a tomogram. "
-	."Batchruntomo can work on more than one data set and can run on multiple local processors and GPUs. "
-	."</p>\n";
-echo "</td></tr>\n";
+//echo "<tr><td width='100' align='center'>\n";
+//echo "  <img src='' width='96'>\n";
+//echo "</td><td>\n";
+//echo "  <h3><a href='runEtomo.php?expId=$expId'>eTomo - Not Yet Implemented!</a></h3>\n";
+//echo " <p>Here eTomo is operated completely through the command line using batchruntomo. "
+//	."Batchruntomo runs all the operations required to align a tilt series and build a tomogram. "
+//	."Batchruntomo can work on more than one data set and can run on multiple local processors and GPUs. "
+//	."</p>\n";
+//echo "</td></tr>\n";
 
 
 /*

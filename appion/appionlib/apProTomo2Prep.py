@@ -92,7 +92,7 @@ def prepareTiltFile(sessionname, seriesname, tiltfilename, tiltseriesnumber, raw
 		else:
 			apDisplay.printMsg("copying raw images")
 		newfilenames = apProTomo.getImageFiles(ordered_imagelist, raw_path, link)
-	
+		
 		###create tilt file
 		#get image size from the first image
 		imagesizex = tiltdata[0]['image'].shape[1]
@@ -248,7 +248,9 @@ def createParamDict(params):
 		'APc_mask_width_x': params['mask_width_x'],
 		'APc_mask_width_y': params['mask_width_y'],
 		'AP_do_estimation': params['do_estimation'],
+		'AP_translimit': params['translimit'],
 		'AP_max_correction': params['max_correction'],
+		'AP_max_shift': params['max_shift'],
 		'AP_correlation_size_x': params['correlation_size_x'],
 		'AP_correlation_size_y': params['correlation_size_y'],
 		'AP_peak_search_radius_x': params['r1_peak_search_radius_x'],
