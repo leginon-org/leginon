@@ -60,6 +60,9 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 		logfiles = glob.glob("*it*.log")
 		for logfile in logfiles:
 			m = re.search("it0*([0-9]*).log$", logfile)
+			if not m: #handle a case when logfile is like blahmaskitonmaxlike7.appionsub.log
+			 	apDisplay.printWarning('No match for re.search("it0*([0-9]*).log$" in '+logfile)
+			 	continue
 			iternum = int(m.groups()[0])
 			if iternum > lastiter:
 				lastiter = iternum
