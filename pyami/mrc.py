@@ -510,7 +510,7 @@ def readDataFromFile(fobj, headerdict, zslice=None):
 	else:
 		start = 1024 + zslice * framesize
 		shape = headerdict['shape'][-2:]  # only a 2-D slice
-	datalen = reduce(numpy.multiply, shape)
+	datalen = numpy.prod(shape)
 	fobj.seek(start)
 	a = numpy.fromfile(fobj, dtype=headerdict['dtype'], count=datalen)
 	a.shape = shape
