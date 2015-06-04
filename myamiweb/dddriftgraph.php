@@ -21,10 +21,13 @@ $size = ($_GET['s']) ? $_GET['s'] : 255;
 $width=$size;
 $height=$size;
 
-$pixelinfo = $leginondata->getPresets($aligned_imgid, $presets=array('pixelsize'));
+$imageinfo = $leginondata->getImageInfo($aligned_imgid);
+$presets = $leginondata->getPresets($aligned_imgid, array('pixelsize'));
+// pixelsize from getPresets is camera pixel ?
+$pixelsize = $presets['pixelsize']*$imageinfo['binning'];
 
 $particle=new particledata;
-$data = $particle->getAlignLogShiftFromDDAlignedImageId($aligned_imgid,$pixelinfo['pixelsize']*1e10);
+$data = $particle->getAlignLogShiftFromDDAlignedImageId($aligned_imgid,$pixelsize*1e10);
 
 if (is_array($data) && (count($data)> 1)) {
 	$dbemgraph= new dbemgraph($data, 'x', 'y');

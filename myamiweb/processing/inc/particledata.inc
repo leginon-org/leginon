@@ -2249,16 +2249,21 @@ class particledata {
 	function getAlignLogShiftFromDDAlignedImageId($result_imgid,$apix=1)
 	{
 		// get Alignlog path
-		$q = "SELECT rundir.path as rundir, pair.`REF|leginondata|AcquisitionImageData|source` as source_imgid "
+		$q = "SELECT rundir.path as rundir, pair.`REF|leginondata|AcquisitionImageData|source` as source_imgid, params.bin as bin "
 			."FROM `ApDDAlignImagePairData` pair "
 			."LEFT JOIN `ApDDStackRunData` run "
 			."ON pair.`REF|ApDDStackRunData|ddstackrun`=run.`DEF_id` "
 			."LEFT JOIN	`ApPathData` rundir "
 			."ON run.`REF|ApPathData|path` = rundir.`DEF_id` "
+			."LEFT JOIN `ApDDStackParamsData` params "
+			."ON run.`REF|ApDDStackParamsData|params` = params.`DEF_id` "
 			."WHERE pair.`REF|leginondata|AcquisitionImageData|result` = ".$result_imgid;
 		list($r) = $this->mysql->getSQLResult($q);
+		// Log filename depends on the binning
+		$bin = ((int) $r['bin'] < 1) ? 1:(int) $r['bin'];
+		$bin_text = ($bin == 1) ? '':'_'.$bin.'x';
 		$source_image_name = $this->getImageNameFromId($r['source_imgid']);
-		$align_log = $r['rundir'].'/'.$source_image_name.'_st_Log.txt';
+		$align_log = $r['rundir'].'/'.$source_image_name.'_st'.$bin_text.'_Log.txt';
 		// get shift data
 		$data = array();
 		if (is_file($align_log)) {
