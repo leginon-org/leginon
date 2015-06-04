@@ -210,13 +210,15 @@ def run_once(parent_src_path,cam_host,dest_head,method):
 		# ignore irrelevent source files or folders
 		# gatan k2 summit data ends with '.mrc'
 		# de folder starts with '20'
-		if ext != '.mrc' and  ext != '.frames' and not name.startswith('20'):
+		# falcon mrchack stacks ends with '.mrcs'
+		if not ext.startswith('.mrc') and  ext != '.frames' and not name.startswith('20'):
 			continue
 		print '**running', src_path
 
 		# query for Leginon image
-		if ext == '.mrc':
-			frames_name = name[:-4]
+		if ext.startswith('.mrc'):
+			ext_len = len(ext)
+			frames_name = name[:-ext_len]
 			dst_suffix = '.frames.mrc'
 		else:
 			frames_name = name
