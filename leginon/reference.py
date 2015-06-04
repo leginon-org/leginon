@@ -64,6 +64,7 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 		self.reference_target = None
 
 		self.last_processed = None
+		self.last_processed = time.time()
 
 
 		if self.__class__ == Reference:
