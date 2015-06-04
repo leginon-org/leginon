@@ -174,6 +174,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 											event.FixBeamEvent,
 											event.FixAlignmentEvent,
 											event.FixConditionEvent,
+											event.AlignZeroLossPeakPublishEvent,
 											event.ImageListPublishEvent, event.ReferenceTargetPublishEvent] \
 											+ navigator.NavigatorClient.eventoutputs
 
@@ -359,6 +360,17 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.onTarget = False
 		return newtargetdata
 
+	def tuneEnergyFilter(self, presetname):
+		presetdata = self.presetsclient.getPresetByName(presetname)
+		if presetdata['energy filter'] or presetdata['tem energy filter']:
+			self.alignZeroLossPeak(presetname)
+	
+	def alignZeroLossPeak(self, preset_name):
+		request_data = leginondata.AlignZeroLossPeakData()
+		request_data['session'] = self.session
+		request_data['preset'] = preset_name
+		self.publish(request_data, database=True, pubevent=True, wait=True)
+
 	def processTargetData(self, targetdata, attempt=None):
 		'''
 		This is called by TargetWatcher.processData when targets available
@@ -366,6 +378,8 @@ class Acquisition(targetwatcher.TargetWatcher):
 		a target (going to presets, acquiring images, etc.)
 		'''
 
+		zlp_preset_name = self.settings['preset order'][-1]
+		self.tuneEnergyFilter(zlp_preset_name)
 		try:
 			self.validatePresets()
 		except InvalidPresetsSequence, e:

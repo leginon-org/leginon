@@ -20,8 +20,7 @@ class CalibrationError(Exception):
 class Tomography(leginon.acquisition.Acquisition):
 	eventinputs = leginon.acquisition.Acquisition.eventinputs
 	eventoutputs = leginon.acquisition.Acquisition.eventoutputs + \
-					[leginon.event.AlignZeroLossPeakPublishEvent,
-						leginon.event.MeasureDosePublishEvent]
+					[ leginon.event.MeasureDosePublishEvent]
 
 	panelclass = leginon.gui.wx.tomography.Tomography.Panel
 	settingsclass = leginon.leginondata.TomographySettingsData
@@ -567,18 +566,19 @@ class Tomography(leginon.acquisition.Acquisition):
 		m = 'Loaded %d points from %d previous series' % (n_points, n_groups)
 		self.logger.info(m)
 
-	def alignZeroLossPeak(self, preset_name):
-		request_data = leginon.leginondata.AlignZeroLossPeakData()
-		request_data['session'] = self.session
-		request_data['preset'] = preset_name
-		self.publish(request_data, database=True, pubevent=True, wait=True)
-
 	def measureDose(self, preset_name):
 		request_data = leginon.leginondata.MeasureDoseData()
 		request_data['session'] = self.session
 		request_data['preset'] = preset_name
 		self.publish(request_data, database=True, pubevent=True, wait=True)
 
+	def tuneEnergyFilter(self, presetname):
+		'''
+		Overwrite the same function in Acquisition.py so that it does
+		not do anything when accessed from tilt series acquisition.
+		'''
+		pass
+	
 	def processTargetData(self, *args, **kwargs):
 		self.setStatus('waiting')
 		self.fixCondition()

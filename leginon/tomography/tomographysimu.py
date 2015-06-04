@@ -21,8 +21,7 @@ class CalibrationError(Exception):
 class TomographySimu(leginon.acquisition.Acquisition):
 	eventinputs = leginon.acquisition.Acquisition.eventinputs
 	eventoutputs = leginon.acquisition.Acquisition.eventoutputs + \
-					[leginon.event.AlignZeroLossPeakPublishEvent,
-						leginon.event.MeasureDosePublishEvent]
+					[ leginon.event.MeasureDosePublishEvent,]
 
 	panelclass = leginon.gui.wx.tomography.TomographySimu.Panel
 	settingsclass = leginon.leginondata.TomographySimuSettingsData
