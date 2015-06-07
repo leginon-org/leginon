@@ -138,7 +138,11 @@ class JAHCFinder(targetfinder.TargetFinder):
 		else:
 			filename = default_template
 		self.hf.configure_template(diameter, filename, filediameter, invert)
-		self.hf.create_template()
+		try:
+			self.hf.create_template()
+		except Exception, e:
+			self.logger.error(e)
+			return
 		cortype = self.settings['template type']
 		cor_image_min = self.settings['template image min']
 		lpfsettings = self.settings['template lpf']
@@ -148,7 +152,11 @@ class JAHCFinder(targetfinder.TargetFinder):
 		else:
 			corfilt = None
 		self.hf.configure_correlation(cortype, corfilt,cor_image_min)
-		self.hf.correlate_template()
+		try:
+			self.hf.correlate_template()
+		except Exception, e:
+			self.logger.error(e)
+			return
 		self.setImage(self.hf['correlation'], 'Template')
 
 	def threshold(self):
@@ -156,7 +164,11 @@ class JAHCFinder(targetfinder.TargetFinder):
 		tvalue = self.settings['threshold']
 		tmeth = self.settings['threshold method']
 		self.hf.configure_threshold(tvalue, tmeth)
-		self.hf.threshold_correlation()
+		try:
+			self.hf.threshold_correlation()
+		except Exception, e:
+			self.logger.error(e)
+			return
 		# convert to Float32 to prevent seg fault
 		self.setImage(self.hf['threshold'], 'Threshold')
 
@@ -187,7 +199,11 @@ class JAHCFinder(targetfinder.TargetFinder):
 		minblobsize = self.settings['blobs min size']
 		maxblobs = self.settings['blobs max']
 		self.hf.configure_blobs(border=border, maxblobsize=blobsize, maxblobs=maxblobs, minblobsize=minblobsize)
-		self.hf.find_blobs()
+		try:
+			self.hf.find_blobs()
+		except Exception, e:
+			self.logger.error(e)
+			return
 		blobs = self.hf['blobs']
 		targets = self.blobStatsTargets(blobs)
 		self.logger.info('Number of blobs: %s' % (len(targets),))
@@ -196,7 +212,11 @@ class JAHCFinder(targetfinder.TargetFinder):
 	def usePickedBlobs(self):
 		self.logger.info('find blobs')
 		picks = self.panel.getTargetPositions('Blobs')
-		self.hf.find_blobs(picks)
+		try:
+			self.hf.find_blobs(picks)
+		except Exception, e:
+			self.logger.error(e)
+			return
 		blobs = self.hf['blobs']
 		targets = self.blobStatsTargets(blobs)
 		self.logger.info('Number of blobs: %s' % (len(targets),))
@@ -232,10 +252,18 @@ class JAHCFinder(targetfinder.TargetFinder):
 		self.icecalc.set_i0(i0)
 
 		self.hf.configure_lattice(spacing=latspace, tolerance=lattol, extend=extend)
-		self.hf.blobs_to_lattice(auto_center=False)
+		try:
+			self.hf.blobs_to_lattice(auto_center=False)
+		except Exception, e:
+			self.logger.error(e)
+			return
 
 		self.hf.configure_holestats(radius=r)
-		self.hf.calc_holestats()
+		try:
+			self.hf.calc_holestats()
+		except Exception, e:
+			self.logger.error(e)
+			return
 
 		holes = self.hf['holes']
 		targets = self.holeStatsTargets(holes)
@@ -249,7 +277,11 @@ class JAHCFinder(targetfinder.TargetFinder):
 		tmax = self.settings['ice max mean']
 		tstd = self.settings['ice max std']
 		self.hf.configure_ice(i0=i0,tmin=tmin,tmax=tmax,tstd=tstd)
-		self.hf.calc_ice()
+		try:
+			self.hf.calc_ice()
+		except Exception, e:
+			self.logger.error(e)
+			return
 		goodholes = self.hf['holes2']
 		centers = self.blobCenters(goodholes)
 		allcenters = self.blobCenters(self.hf['holes'])

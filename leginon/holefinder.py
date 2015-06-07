@@ -117,7 +117,11 @@ class HoleFinder(targetfinder.TargetFinder):
 		lowpasssig = lpfsettings['sigma']
 		edgethresh = self.settings['edge threshold']
 		self.hf.configure_edges(filter=filt, size=n, sigma=sig, absvalue=ab, lpsig=lowpasssig, thresh=edgethresh, edges=edges)
-		self.hf.find_edges()
+		try:
+			self.hf.find_edges()
+		except Exception, e:
+			self.logger.error(e)
+			return
 		# convert to Float32 to prevent seg fault
 		self.setImage(self.hf['edges'], 'Edge')
 
@@ -130,7 +134,11 @@ class HoleFinder(targetfinder.TargetFinder):
 			radring = (ring[0] / 2.0, ring[1] / 2.0)
 			radlist.append(radring)
 		self.hf.configure_template(ring_list=radlist)
-		self.hf.create_template()
+		try:
+			self.hf.create_template()
+		except Exception, e:
+			self.logger.error(e)
+			return
 		cortype = self.settings['template type']
 		lpfsettings = self.settings['template lpf']
 		corsigma = lpfsettings['sigma']
@@ -139,14 +147,22 @@ class HoleFinder(targetfinder.TargetFinder):
 		else:
 			corfilt = None
 		self.hf.configure_correlation(cortype, corfilt)
-		self.hf.correlate_template()
+		try:
+			self.hf.correlate_template()
+		except Exception, e:
+			self.logger.error(e)
+			return
 		self.setImage(self.hf['correlation'], 'Template')
 
 	def threshold(self):
 		self.logger.info('threshold')
 		tvalue = self.settings['threshold']
 		self.hf.configure_threshold(tvalue)
-		self.hf.threshold_correlation()
+		try:
+			self.hf.threshold_correlation()
+		except Exception, e:
+			self.logger.error(e)
+			return
 		# convert to Float32 to prevent seg fault
 		self.setImage(self.hf['threshold'], 'Threshold')
 
@@ -176,7 +192,11 @@ class HoleFinder(targetfinder.TargetFinder):
 		blobsize = self.settings['blobs max size']
 		maxblobs = self.settings['blobs max']
 		self.hf.configure_blobs(border=border, maxblobsize=blobsize, maxblobs=maxblobs)
-		self.hf.find_blobs()
+		try:
+			self.hf.find_blobs()
+		except Exception, e:
+			self.logger.error(e)
+			return
 		blobs = self.hf['blobs']
 		targets = self.blobStatsTargets(blobs)
 		self.logger.info('Number of blobs: %s' % (len(targets),))
@@ -208,7 +228,11 @@ class HoleFinder(targetfinder.TargetFinder):
 		lattol = self.settings['lattice tolerance']
 
 		self.hf.configure_lattice(spacing=latspace, tolerance=lattol)
-		self.hf.blobs_to_lattice()
+		try:
+			self.hf.blobs_to_lattice()
+		except Exception, e:
+			self.logger.error(e)
+			return
 		self.logger.info('Number of lattice blobs: %s' % (len(self.hf['holes']),))
 		self.latticeHoleStats()
 
@@ -217,7 +241,11 @@ class HoleFinder(targetfinder.TargetFinder):
 		i0 = self.settings['lattice zero thickness']
 		self.icecalc.set_i0(i0)
 		self.hf.configure_holestats(radius=r)
-		self.hf.calc_holestats()
+		try:
+			self.hf.calc_holestats()
+		except Exception, e:
+			self.logger.error(e)
+			return
 		holes = self.hf['holes']
 		targets = self.holeStatsTargets(holes)
 		self.setTargets(targets, 'Lattice')
@@ -229,7 +257,11 @@ class HoleFinder(targetfinder.TargetFinder):
 		tmax = self.settings['ice max mean']
 		tstd = self.settings['ice max std']
 		self.hf.configure_ice(i0=i0,tmin=tmin,tmax=tmax,tstd=tstd)
-		self.hf.calc_ice()
+		try:
+			self.hf.calc_ice()
+		except Exception, e:
+			self.logger.error(e)
+			return
 		goodholes = self.hf['holes2']
 		centers = self.blobCenters(goodholes)
 		allcenters = self.blobCenters(self.hf['holes'])
