@@ -19,7 +19,7 @@ import copy
 import threading
 import time
 import unique
-from pyami import ordereddict, imagefun, arraystats
+from pyami import ordereddict, imagefun, arraystats, primefactor
 import gui.wx.PresetsManager
 import instrument
 import random
@@ -1302,6 +1302,8 @@ class PresetsManager(node.Node):
 			minlength = min((fullcamdim['x']/bin,fullcamdim['y']/bin))
 			if minlength <= imagelength:
 				break
+		# always use even prime
+		minlength = primefactor.getAllEvenPrimes(minlength)[-1]
 		return minlength
 		
 	def _acquireSpecialImage(self, preset, acquirestr='', mode='', imagelength=None, binning=None):
@@ -1487,6 +1489,8 @@ class PresetsManager(node.Node):
 				if SPECIAL_TRANSFORM:
 					pixvect1 = self.specialTransform(pixvect1,new_tem,oldpreset['magnification'],newpreset['magnification'])
 				# magnification and camera (if camera is different)
+				# Transform pixelvect1 at magnification to new magnification according to image-shift matrix
+				# WHAT IF WE USE STAGE INSTEAD OF IMAGE HERE ? CAN IT SOLVE LENS SERIES PROBLEM ?
 				pixvect2 = self.calclients['image'].pixelToPixel(old_tem,old_ccdcamera,new_tem, new_ccdcamera, ht,oldpreset['magnification'],newpreset['magnification'],pixvect1)
 
 				pixelshift2 = {'row':pixvect2[0] / newpreset['binning']['y'],'col':pixvect2[1] / newpreset['binning']['x']}
