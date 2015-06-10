@@ -1171,7 +1171,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 			# insert framelist
 			q = appiondata.ApStackImageFrameListData(stack=self.stackdata,image=imgdata,frames=self.framelist)
 			q.insert(force=self.params['forceInsert'])
-		t0 = time.time()
+		#t0 = time.time()
 		### loop over the particles and insert
 		for i in range(len(self.boxedpartdatas)):
 			partdata = self.boxedpartdatas[i]
@@ -1184,10 +1184,11 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 			stpartq['stack'] = self.stackdata
 			stpartq['stackRun'] = self.stackrundata
 			stpartq['particleNumber'] = self.particleNumber
-			stpartdata = stpartq.query(results=1)
-			if stpartdata:
-				apDisplay.printError("trying to insert a duplicate particle")
-
+			if not self.params['forceInsert']:
+				stpartdata = stpartq.query(results=1)
+				if stpartdata:
+					apDisplay.printError("trying to insert a duplicate particle")
+	
 			stpartq['particle'] = partdata
 			stpartq['mean'] = round(partmeandict['mean'],8)
 			stpartq['stdev'] = round(partmeandict['stdev'],8)
@@ -1199,10 +1200,11 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 			stpartq['edgestdev'] = round(partmeandict['edgestdev'],4)
 			stpartq['centermean'] = round(partmeandict['centermean'],4)
 			stpartq['centerstdev'] = round(partmeandict['centerstdev'],4)
+			
 			if self.params['commit'] is True:
 				stpartq.insert(force=self.params['forceInsert'])
-		self.insertdbtimes.append(time.time()-t0)
-
+		#self.insertdbtimes.append(time.time()-t0)
+		
 	#=======================
 	def loopCleanUp(self,imgdata):
 		super(Makestack2Loop,self).loopCleanUp(imgdata)
