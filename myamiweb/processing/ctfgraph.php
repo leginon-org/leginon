@@ -18,6 +18,8 @@ define (PARTICLE_DB, $_SESSION['processingdb']);
 $sessionId = $_GET['expId'];
 $viewdata = ($_GET['vd']==1) ? true : false;
 $histogram = ($_GET['hg']==1) ? true : false;
+$cutoff = ($_GET['cutoff']) ? $_GET['cutoff'] : false;
+$bydf = ($_GET['bydf']) ? $_GET['bydf'] : 'confidence';
 $f = $_GET['f'];
 $preset= ($_GET['preset']) ? $_GET['preset'] : '';
 $summary = ($_GET['s']==1 ) ? true : false;
@@ -51,6 +53,20 @@ foreach($ctfinfo as $t) {
 	else
 		$value=$t[$f];
 
+	// if grouping by defocus, set cutoff
+	if ($cutoff) {
+		// first check if value exists
+		if (!$t[$bydf]) continue;
+		// check if within set range
+		if ((substr($bydf,0,10)=='resolution' && $t[$bydf] > $cutoff) ||
+		   (substr($bydf,0,10)!='resolution' && $t[$bydf] < $cutoff))
+			continue;
+		// get average defocus
+		$df1=$t['defocus1'];
+		$df2=$t['defocus2'];
+		$value = ($df1+$df2)/2;
+	}
+
 	if ($xmax && $value > $xmax)
 		continue;
 	if ($xmin && $value < $xmin)
@@ -71,7 +87,7 @@ $dbemgraph = new dbemgraph($ndata, $axes[0], $axes[1]);
 $dbemgraph->lineplot=true;
 $dbemgraph->title=$fieldname. ($preset) ? " for preset $preset":'';
 $yunit = ($f == 'defocus1' || $f == 'defocus2') ? ' (um)':'';
-$dbemgraph->yaxistitle=$axes[1].$yunit;
+$dbemgraph->yaxistitle= ($cutoff) ? 'avg defocus (um)' : $axes[1].$yunit;
 
 if ($viewdata) {
 	$dbemgraph->dumpData(array($display_x, $display_y));

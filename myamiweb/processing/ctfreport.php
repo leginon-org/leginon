@@ -56,6 +56,28 @@ foreach ($aceparamsfields as $param) {
 $javafunctions.= "newwindow.document.write('</table></BODY></HTML>');\n";
 $javafunctions.= "newwindow.document.close();\n";
 $javafunctions.= "}\n";
+
+// for cutoff values
+$javafunctions.= "function changeCutoff(sel) {\n";
+$javafunctions.= "  if (sel.value.substring(0,10)=='resolution') {\n";
+$javafunctions.= "    document.getElementById('cval').innerHTML='&Aring;';\n";
+$javafunctions.= "  } else {document.getElementById('cval').innerHTML='0-1';}\n";
+$javafunctions.= "}\n";
+$javafunctions.= "function submitCutoff() {\n";
+$javafunctions.= "  var sel = document.getElementById('bydf').value;\n";
+$javafunctions.= "  var cutoff = document.getElementById('cutoff').value;\n";
+$javafunctions.= "  if ((sel.substring(0,10)!='resolution') && \n";
+$javafunctions.= "    (cutoff >= 1 || cutoff <= 0)) {\n";
+$javafunctions.= "    alert ('Enter a cutoff value between 0 and 1');\n";
+$javafunctions.= "    return false;\n";
+$javafunctions.= "  }\n";
+$javafunctions.= "  var cimg = document.getElementById('cutoffimg');\n";
+$javafunctions.= "  var imgsrc = 'ctfgraph.php?w=600&h=350&hg=1&expId=$expId&s=1'\n";
+$javafunctions.= "  imgsrc += '&f=defocus1&cutoff='+ cutoff + '&bydf=' + sel;\n";
+$javafunctions.= "  cimg.src = imgsrc;\n";
+$javafunctions.= "  cimg.width='600';\n";
+$javafunctions.= "  cimg.height='350';\n";
+$javafunctions.= "}\n";
 $javafunctions.= "</script>\n";
 $javafunctions.= editTextJava();
 
@@ -90,12 +112,12 @@ if (count($ctfrundatas) != count($hidectfrundatas) && !$_GET['showHidden']) {
 if ($ctfrundatas) {
 	if ($showmore > 0) {
 		$showmorelink = $_SERVER['PHP_SELF']."?expId=$expId&showmore=0";
-		echo "<a href='$showmorelink'>[show less statistics]</a><br/>\n";
+		echo "<a href='$showmorelink'>[show less statistics]</a>\n";
 	}	else {
 		$showmorelink = $_SERVER['PHP_SELF']."?expId=$expId&showmore=1";
-		echo "<a href='$showmorelink'>[show all statistics]</a><br/>\n";
-	}		
-
+		echo "<a href='$showmorelink'>[show all statistics]</a>\n";
+	}
+	echo "<br/>\n";
 	echo "<h3>Summary of confidence values from all runs</h3>\n";
 
 	echo "<table>\n";
@@ -212,13 +234,17 @@ if ($ctfrundatas) {
 			."w=800&h=600&hg=1&expId=$expId&s=1&xmin=-90&xmax=90&f=angle_astigmatism' alt='please wait...'></a>\n";
 	echo "</td></tr>";
 
+	$confidenceOpts=array();
+
 	if ($showmore > 0) {
 	// Row 0
+	$confidenceOpts[]='confidence';
 	echo "<tr><td>\n";
 		echo "<h3>Merged Confidence</h3>";
 		echo "<a href='ctfgraph.php?hg=1&expId=$expId&s=1&f=confidence'>\n";
 		echo "<img border='0' width='400' height='200' src='ctfgraph.php?"
 			."w=800&h=600&hg=1&expId=$expId&s=1&xmin=0.3&f=confidence' alt='please wait...'></a>\n";
+	$confidenceOpts[]='confidence_d';
 	echo "</td><td>\n";
 		echo "<h3>Confidence D</h3>";
 		echo "<a href='ctfgraph.php?hg=1&expId=$expId&s=1&f=confidence_d'>\n";
@@ -228,11 +254,13 @@ if ($ctfrundatas) {
 	}
 
 	// Row 1
+	$confidenceOpts[]='confidence_30_10';
 	echo "<tr><td>\n";
 		echo "<h3>Confidence 1/30&Aring; - 1/10&Aring;</h3>";
 		echo "<a href='ctfgraph.php?hg=1&expId=$expId&s=1&f=confidence_30_10'>\n";
 		echo "<img border='0' width='400' height='200' src='ctfgraph.php?"
 			."w=800&h=600&hg=1&expId=$expId&s=1&xmin=0.3&f=confidence_30_10' alt='please wait...'></a>\n";
+	$confidenceOpts[]='confidence_5_peak';
 	echo "</td><td>\n";
 		echo "<h3>Confidence 5 Peaks</h3>";
 		echo "<a href='ctfgraph.php?hg=1&expId=$expId&s=1&f=confidence_5_peak'>\n";
@@ -240,11 +268,13 @@ if ($ctfrundatas) {
 			."w=800&h=600&hg=1&expId=$expId&s=1&xmin=0.3&f=confidence_5_peak' alt='please wait...'></a>\n";
 	echo "</td></tr>";
 	// Row 2
+	$confidenceOpts[]='resolution_80_percent';
 	echo "<tr><td>\n";
 		echo "<h3>Resolution at 0.8</h3>";
 		echo "<a href='ctfgraph.php?hg=1&expId=$expId&s=1&xmin=2&xmax=50&f=resolution_80_percent'>\n";
 		echo "<img border='0' width='400' height='200' src='ctfgraph.php?"
 			."w=800&h=600&hg=1&expId=$expId&s=1&xmin=2&xmax=30&f=resolution_80_percent' alt='please wait...'></a>\n";
+	$confidenceOpts[]='resolution_50_percent';
 	echo "</td><td>\n";
 		echo "<h3>Resolution at 0.5</h3>";
 		echo "<a href='ctfgraph.php?hg=1&expId=$expId&s=1&xmin=2&xmax=30&f=resolution_50_percent'>\n";
@@ -267,6 +297,27 @@ if ($ctfrundatas) {
 			."hg=0&expId=$expId&s=1&f=difference&preset=$preset' alt='please wait...'></a>\n";
 	echo "</td></tr>";
 	echo "</table>";
+
+	// show defocus histograms with different cutoffs
+	echo "<hr>\n";
+	echo "<h3>Generate defocus histogram with applied cutoff</h3>\n";
+
+	echo "<table cellpadding=5 cellspacing=0 border=0><tr><td>\n";
+	echo "<b>Cutoff method: </b><select name='bydf' id='bydf' onChange='changeCutoff(this)'>\n";
+	foreach ($confidenceOpts as $confm) {
+		echo "<option>$confm</option>\n";
+	}
+	echo "</select>\n";
+	echo "</td></tr><tr><td>\n";
+
+	echo "<b>Cutoff value (<span id='cval'>0-1</span>): </b><input name='cutoff' type='text' id='cutoff' size='5'>\n";
+	echo "</td></tr><tr><td>\n";
+
+	echo "<input type='submit' name='applycutoff' value='Generate Histogram' onclick='submitCutoff()'>\n";
+	echo "</td></tr></table>\n";
+	echo "<img id='cutoffimg' name='cutoffimg' border='0'>\n";
+	echo "<hr>\n";
+
 	$ctfdownlink = "<h3>";
 	$ctfdownlink .= "<a href='downloadctfdata.php?expId=$expId'>\n";
 	$ctfdownlink .= "  <img style='vertical-align:middle' src='img/download_arrow.png' border='0' width='16' height='17' alt='download best ctf data'>&nbsp;download best ctf data\n";
