@@ -136,8 +136,7 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	$defocpaircheck = ($_POST['stackdfpair']=='on') ? 'checked' : '';
 	$ddnframe = $_POST['ddnframe'];
 	$ddstartframe = $_POST['ddstartframe'];
-	$forceInsert = ($_POST['forceInsert'])=='on' ? True : False;
-	
+	$forceInsert = ($_POST['forceInsert']=='on' || !isset($_POST['forceInsert'])) ? 'CHECKED' : '';
 	$ctfoptions = array(
 		'ace2image'=>'Ace 2 Wiener Filter Whole Image',
 		'ace2imagephase'=>'Ace 2 PhaseFlip Whole Image',
