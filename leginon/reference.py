@@ -32,6 +32,7 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 					presets.PresetsClient.eventoutputs
 
 	defaultsettings = {
+		'bypass': True,
 		'move type': 'stage position',
 		'pause time': 3.0,
 		'interval time': 0.0,
@@ -71,6 +72,8 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 			self.start()
 
 	def processData(self, incoming_data):
+		if self.settings['bypass']:
+			return
 		if isinstance(incoming_data, leginondata.ReferenceTargetData):
 			self.processReferenceTarget(incoming_data)
 
@@ -219,6 +222,8 @@ class AlignZeroLossPeak(Reference):
 		self.start()
 
 	def processData(self, incoming_data):
+		if self.settings['bypass']:
+			return
 		Reference.processData(self, incoming_data)
 		if isinstance(incoming_data, leginondata.AlignZeroLossPeakData):
 			self.processRequest(incoming_data)

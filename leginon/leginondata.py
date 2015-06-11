@@ -2292,6 +2292,7 @@ class ClickTargetTransformerSettingsData(SettingsData):
 class ReferenceSettingsData(SettingsData):
 	def typemap(cls):
 		return SettingsData.typemap() + (
+			('bypass', bool),
 			('move type', str),
 			('pause time', float),
 			('interval time', float),
