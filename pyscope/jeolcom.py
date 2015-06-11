@@ -82,6 +82,7 @@ class Jeol(tem.TEM):
 
 		self.setJeolConfigs()
 		self.has_auto_apt = self.testAutomatedAperture()
+		self.relax_beam = False
 
 		self.magnifications = []
 		# submode_mags keys are submode_indices and values are magnification list in the submode
@@ -112,7 +113,11 @@ class Jeol(tem.TEM):
 
 	def subDivideMode(self,mode_name,mag):
 		if mode_name == 'mag1':
-			if mag > self.getJeolConfig('tem option','ls2_mag_max'):
+			if mag > self.getJeolConfig('tem option','ls4_mag_max'):
+				return 'ls5'
+			elif mag > self.getJeolConfig('tem option','ls3_mag_max'):
+				return 'ls4'
+			elif mag > self.getJeolConfig('tem option','ls2_mag_max'):
 				return 'ls3'
 			elif mag > self.getJeolConfig('tem option','ls1_mag_max'):
 				return 'ls2'
@@ -285,7 +290,9 @@ class Jeol(tem.TEM):
 			pass
 		else:
 			raise ValueError
+		self._setIntensity(intensity)
 
+	def _setIntensity(self, intensity):
 		result = self.lens3.SetCL3(int(round(intensity*MAX)))
 		
 	def getDarkFieldMode(self):
@@ -441,10 +448,13 @@ class Jeol(tem.TEM):
 			raise ValueError
 		raw_output={}
 		raw_output['x'], raw_output['y'], result = self.def3.GetCLA1()
+		print 'before', raw_output, vector
 		for axis in vector.keys():
 			raw_output[axis] = int(round(shift[axis]/scale[axis]))+neutral[axis]
-
+		print 'after', raw_output
 		result = self.def3.SetCLA1(raw_output['x'], raw_output['y'])
+		if self.relax_beam:
+			self.relaxBeam()
  
 	def getImageShift(self):
 		scale = self.getScale('imageshift')
@@ -487,6 +497,7 @@ class Jeol(tem.TEM):
 
 		if self.getJeolConfig('tem option','use_pla'):
 			result = self.def3.SetPLA(int(round((shift_x)/scale['x']))+neutral['x'], int(round((shift_y)/scale['y']))+neutral['y'])
+			time.sleep(0.5)
 		else:
 			result = self.def3.SetIS1(int(round((shift_x)/scale['x']))+neutral['x'], int(round((shift_y)/scale['y']))+neutral['y'])
 
@@ -503,6 +514,30 @@ class Jeol(tem.TEM):
 		elif mode == FUNCTION_MODES['mag1']:
 			raw_focus = self.getRawFocusOL()
 		return scale*raw_focus
+
+	def relaxBeam(self,steps=3,interval=0.1,totaltime=2):
+		'''
+		Emulate Lens Relaxation of CL3 in JEOL interface to stablize beam shift
+		'''
+		t0 = time.time()
+		value_original = self.getIntensity()
+		self.lens3.setNtrl(0)
+		value_ntrl = self.getIntensity()
+		# at least move 0.05 of the max scale
+		full = max(abs(value_original - value_ntrl),0.05)
+		diff = full / steps
+		for i in range(3):
+			magnitude = full - i * diff
+			self._setIntensity(value_ntrl - magnitude)
+			time.sleep(interval)
+			self._setIntensity(value_ntrl + magnitude)
+			time.sleep(interval)
+			print 'step', i
+		self._setIntensity(value_original)
+		t = time.time()
+		if t-t0 < totaltime:
+			time.sleep(t-t0)
+		return
 
 	def setFocus(self, value):
 		scale = self.getScale('focus')
@@ -775,14 +810,25 @@ class Jeol(tem.TEM):
 		if not self.submode_mags:
 			raise RuntimeError
 		
+		current_mag = self.getMagnification()
+
 		old_mode_index, name, result = self.eos3.GetFunctionMode()
 		new_mode_name = self.projection_submode_map[value][0]
 		new_mode_index = self.projection_submode_map[value][1]
 		result = self.eos3.SelectFunctionMode(new_mode_index)
 		if new_mode_index == FUNCTION_MODES['lowmag'] and old_mode_index != FUNCTION_MODES['lowmag']:
 				#set to an arbitrary low mag to remove distortion
-				self.eos3.SetSelector(self.submode_mags[FUNCTION_MODES['lowmag']][-1])
+				relax_mag = self.submode_mags[FUNCTION_MODES['lowmag']][-1]
+				self.eos3.SetSelector(self.calculateSelectorIndex(new_mode_index, relax_mag))
+				time.sleep(1)
 		self.eos3.SetSelector(self.calculateSelectorIndex(new_mode_index, value))
+
+		if value != current_mag and value > 30000:
+			print 'need relaxing'
+			self.relax_beam = True
+		else:
+			self.relax_beam = False
+
 		self._resetDefocus()
 		return
 
@@ -797,7 +843,7 @@ class Jeol(tem.TEM):
 
 	def getLensSeriesDivision(self,mag):
 		mode_name,mode_id = self.projection_submode_map[mag]
-		# depends on mag to choose ['ls1','ls2','ls3','lm1']
+		# depends on mag to choose ['ls1','ls2','ls3'...,'lm1']
 		mode_subname = self.subDivideMode(mode_name,mag)
 		return mode_subname
 
@@ -1071,7 +1117,7 @@ class Jeol(tem.TEM):
 
 	def getScreenCurrent(self):
 		value, result = self.camera3.GetCurrentDensity()
-		return value*self.getJeolConfig('camera','curent_density_scale')
+		return value*self.getJeolConfig('camera','current_density_scale')
 
 	def getMainScreenPositions(self):
 		return ['up', 'down', 'unknown']
