@@ -1535,7 +1535,6 @@ class PresetsManager(node.Node):
 			mydefocus = random.uniform(mymin, mymax)
 			self.logger.info('Random defocus for preset %s:  %s' % (newpreset['name'], mydefocus))
 
-
 		### create ScopeEMData with preset and target shift
 		scopedata = leginondata.ScopeEMData()
 		scopedata.friendly_update(newpreset)
@@ -1565,8 +1564,11 @@ class PresetsManager(node.Node):
 
 		## send data to instruments
 		try:
+			self.logger.info('setting scopedata')
 			self.instrument.setData(scopedata)
+			self.logger.info('scopedata set')
 			self.instrument.setData(cameradata)
+			self.logger.info('cameradata set')
 			newstage = self.instrument.tem.StagePosition
 			msg = '%s targetToScope %.6f' % (newpresetname,newstage['z'])
 			self.testprint('Presetmanager:' + msg)
