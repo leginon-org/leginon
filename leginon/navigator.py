@@ -267,6 +267,10 @@ class Navigator(node.Node):
 		return False
 
 	def move_away_move_back(self, label, moves, distance, angle=None):
+		'''
+		Test reproducibility of the stage from position of a given distance.
+		'''
+		self.logger.info('start reproducibility test')
 		# initial move
 		origstage = self.instrument.tem.StagePosition
 		origx = origstage['x']
@@ -317,6 +321,7 @@ class Navigator(node.Node):
 			repdata['error pixels c'] = c
 			repdata['error meters'] = dist
 			repdata.insert(force=True)
+		self.logger.info('reproducibility test done')
 
 	def cycleToPreset(self, preset=None, keep_shift=False):
 		if preset is None:
