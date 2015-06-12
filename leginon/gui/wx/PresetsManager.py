@@ -1034,7 +1034,7 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 		self._presetsEnable(False)
 		target = self.node.fromScope
 		# The True in the last argument copies beam shift to all presets at the same mag
-		args = (name,None,None,True)
+		args = (name,None,None,False)
 		threading.Thread(target=target, args=args).start()
 
 	def onNewFromScope(self, evt):
@@ -1429,6 +1429,7 @@ class AlignDialog(leginon.gui.wx.Dialog.Dialog):
 	def onClose(self, evt):
 		self.enableStart()
 		self.node.doneAllAlignPresets()
+		self.EndModal(0)
 
 class BeamDialog(wx.Dialog):
 	def __init__(self, parent, node):
