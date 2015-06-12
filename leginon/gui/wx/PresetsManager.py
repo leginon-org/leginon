@@ -1809,7 +1809,10 @@ class Parameters(wx.StaticBoxSizer):
 			self.values['defocus range'].SetLabel(s)
 
 			for key in ['image shift', 'beam shift']:
-				s = '(%g, %g)' % (parameters[key]['x'], parameters[key]['y'])
+				try:
+					s = '(%g, %g)' % (parameters[key]['x'], parameters[key]['y'])
+				except TypeError:
+					s = '(None, None)'
 				self.values[key].SetLabel(s)
 
 			for key in ['film', 'tem energy filter', 'energy filter', 'skip', 'save frames']:
