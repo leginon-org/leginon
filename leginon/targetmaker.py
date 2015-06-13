@@ -178,7 +178,7 @@ class MosaicTargetMaker(TargetMaker):
 
 	def getCameraParameters(self, camera):
 		try:
-			return camera['binning']['x'], camera['dimension']['x']
+			return camera['binning']['x'], camera['dimension']
 		except KeyError:
 			raise AtlasError('unable to get camera geometry')
 
@@ -218,8 +218,8 @@ class MosaicTargetMaker(TargetMaker):
 			center = None
 		self.updateState(preset, scope, camera, center)
 		pixelsize = self.getPixelSize(scope, camera)
-		binning, imagesize = self.getCameraParameters(camera)
-		targets = self.makeCircle(radius, overlap, pixelsize, binning, imagesize)
+		binning, imagedimension = self.getCameraParameters(camera)
+		targets = self.makeCircle(radius, overlap, pixelsize, binning, imagedimension)
 		return targets, scope, camera, preset
 
 	def _publishAtlas(self, targets, scope, camera, preset, evt=None):
@@ -232,6 +232,7 @@ class MosaicTargetMaker(TargetMaker):
 			raise AtlasError('unable to publish atlas targets')
 
 		for target in targets:
+			# target should be in (drow,dcol)
 			targetdata = self.newTargetForGrid(grid,
 																					target[0], target[1],
 																					scope=scope, camera=camera,
@@ -244,22 +245,26 @@ class MosaicTargetMaker(TargetMaker):
 		self.publish(targetlist, pubevent=True)
 		self.logger.info('Atlas targets published')
 
-	def makeCircle(self, radius, overlap, pixelsize, binning, imagesize):
+	def makeCircle(self, radius, overlap, pixelsize, binning, dimension):
 		maxtargets = self.settings['max targets']
 		maxsize = self.settings['max size']
 
-		imagesize = int(round(imagesize*(1.0 - overlap)))
-		if imagesize <= 0:
-			raise AtlasSizeError('invalid overlap')
+		imagetile = {}
+		for axis in ('x','y'):
+			imagetile[axis] = int(round(dimension[axis]*(1.0 - overlap)))
+			if imagetile[axis] <= 0:
+				raise AtlasSizeError('invalid overlap')
 
 		pixelradius = radius/(pixelsize*binning)
 		if pixelradius > maxsize/2:
 			raise AtlasSizeError('final image will be huge, try using more binning')
 
-		lines = [imagesize/2]
-		while lines[-1] < pixelradius - imagesize:
-			lines.append(lines[-1] + imagesize)
+		tile_y_size = imagetile['y']
+		lines = [tile_y_size/2]
+		while lines[-1] < pixelradius - tile_y_size:
+			lines.append(lines[-1] + tile_y_size)
 
+		# pixels are the y coordinates of the circle intercept at a given line
 		pixels = [pixelradius*2]
 		for i in lines:
 			if i > pixelradius:
@@ -271,23 +276,24 @@ class MosaicTargetMaker(TargetMaker):
 
 		images = []
 		for i in pixels:
-			images.append(int(math.ceil(i/imagesize)))
+			images.append(int(math.ceil(i/imagetile['y'])))
 
 		targets = []
 		sign = 1
 		for n, i in enumerate(images):
-			xs = range(-sign*imagesize*(i - 1)/2, sign*imagesize*(i + 1)/2,
-									sign*imagesize)
-			y = n*imagesize
-			for x in xs:
-				targets.insert(0, (x, y))
-				if y > 0:
-					targets.append((x, -y))
+			ys = range(-sign*imagetile['y']*(i - 1)/2, sign*imagetile['y']*(i + 1)/2,
+									sign*imagetile['y'])
+			x = n*imagetile['x']
+			for y in ys:
+				# target should be in (drow,dcol)
+				targets.insert(0, (y, x))
+				if x > 0:
+					targets.append((y, -x))
 			sign = -sign
 
-		txs, tys = zip(*targets)
-		xsize = max(txs) - min(txs) + imagesize
-		ysize = max(tys) - min(tys) + imagesize
+		tys, txs = zip(*targets)
+		ysize = max(tys) - min(tys) + imagetile['y']
+		xsize = max(txs) - min(txs) + imagetile['x']
 
 		self.logger.info('Calculated atlas with size %dx%d pixels, from %d target(s)' % (xsize, ysize, len(targets)))
 
