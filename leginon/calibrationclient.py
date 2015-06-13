@@ -1215,6 +1215,8 @@ class SimpleMatrixCalibrationClient(MatrixCalibrationClient):
 		new = leginondata.ScopeEMData(initializer=scope)
 		## make a copy of this since it will be modified
 		new[par] = dict(scope[par])
+		# By defining new parameters by change, physical movement scale
+		# in physical unit has to be accurate.
 		new[par]['x'] += changex
 		new[par]['y'] += changey
 		return new
@@ -1229,6 +1231,8 @@ class SimpleMatrixCalibrationClient(MatrixCalibrationClient):
 			scope['magnification'],
 		)
 		shift = dict(position)
+		# By defining shift by position, physical movement scale
+		# in physical unit has to be accurate.
 		shift['x'] -= scope[parameter]['x']
 		shift['y'] -= scope[parameter]['y']
 
