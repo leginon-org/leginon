@@ -100,8 +100,8 @@ class CameraClient(object):
 			return
 		try:
 			state = self.instrument.tem.MainScreenPosition
-			state = 'down'
 		except:
+			state = 'down'
 			pass
 		if state != 'up':
 			self.logger.info('Lifting screen for camera exposure....')
