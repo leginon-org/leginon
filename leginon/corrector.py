@@ -181,6 +181,7 @@ class Corrector(imagewatcher.ImageWatcher):
 			brightdata = self.retrieveCorrectorImageFromSettings('bright', channel)
 			darkdata = self.retrieveCorrectorImageFromSettings('dark', channel)
 			imarray = brightdata['image'] - darkdata['image']
+		self.maskimg = numpy.zeros(imarray.shape)
 		self.displayImage(imarray)
 		self.currentimage = imarray
 		self.beep()
