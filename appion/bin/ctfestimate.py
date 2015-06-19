@@ -372,8 +372,11 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 			if not (runnames[0]['ctftilt_params'] == paramq):
 				for i in runnames[0]['ctftilt_params']:
 					if runnames[0]['ctftilt_params'][i] != paramq[i]:
+						# float value such as cs of 4.1 is not quite equal
+						if type(paramq[i]) == type(1.0) and abs(runnames[0]['ctftilt_params'][i]-paramq[i]) < 0.00001:
+							continue
 						apDisplay.printWarning("the value for parameter '"+str(i)+"' is different from before")
-				apDisplay.printError("All parameters for a single CTF estimation run must be identical! \n"+\
+						apDisplay.printError("All parameters for a single CTF estimation run must be identical! \n"+\
 						     "please check your parameter settings.")
 			self.ctfrun = runnames[0]
 			return False
