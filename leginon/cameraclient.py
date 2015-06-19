@@ -4,6 +4,7 @@ import time
 
 # Change this to False to avoid automated screen lifting
 AUTO_SCREEN_UP = True
+AUTO_COLUMN_VALVE_OPEN = True
 
 default_settings = leginondata.CameraSettingsData()
 default_settings['dimension'] = {'x': 1024, 'y': 1024}
@@ -107,7 +108,23 @@ class CameraClient(object):
 			self.logger.info('Lifting screen for camera exposure....')
 			self.instrument.tem.MainScreenPosition = 'up'
 
-	def dummyLiftScreen(self):
+	def openColumnValveBeforeExposure(self,exposure_type='normal'):
+		'''
+		Open Column Valve if it is closed for non-dark exposure
+		'''
+		if exposure_type == 'dark':
+			# Do not do anything if a dark image is about to be acquired
+			return
+		try:
+			state = self.instrument.tem.ColumnValvePosition
+		except:
+			state = 'closed'
+			pass
+		if state != 'open':
+			self.logger.info('Open Column Valve for camera exposure....')
+			self.instrument.tem.ColumnValvePosition = 'open'
+
+	def dummy(self):
 		pass
 
 	def prepareToAcquire(self,allow_retracted=False,exposure_type='normal'):
@@ -115,9 +132,14 @@ class CameraClient(object):
 		if AUTO_SCREEN_UP:
 			t2 = threading.Thread(target=self.liftScreenBeforeExposure(exposure_type))
 		else:
-			t2 = threading.Thread(target=self.dummyLiftScreen())
+			t2 = threading.Thread(target=self.dummy())
 
-		while t1.isAlive() or t2.isAlive():
+		if AUTO_COLUMN_VALVE_OPEN:
+			t3 = threading.Thread(target=self.openColumnValveBeforeExposure(exposure_type))
+		else:
+			t3 = threading.Thread(target=self.dummy())
+
+		while t1.isAlive() or t2.isAlive() or t3.isAlive():
 			time.sleep(0.5)
 
 	def acquireCameraImageData(self, scopeclass=leginondata.ScopeEMData, allow_retracted=False, type='normal'):
