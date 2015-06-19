@@ -371,6 +371,7 @@ class MeasureDose(Reference):
 		'move type': 'stage position',
 		'pause time': 3.0,
 		'interval time': 900.0,
+		'bypass': True,
 	}
 	# relay measure does events
 	eventinputs = Reference.eventinputs + [event.MeasureDosePublishEvent]
