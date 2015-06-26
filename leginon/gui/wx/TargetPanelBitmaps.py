@@ -1,4 +1,4 @@
-#!/usr/bin/python -O
+#!/usr/bin/env python -O
 # The Leginon software is Copyright 2004
 # The Scripps Research Institute, La Jolla, CA
 # For terms of the license agreement
