@@ -159,13 +159,13 @@ class GatanSocket(object):
 		for name, method_name in self.script_functions:
 			if self.hasScriptFunction(name):
 				self.filter_functions[method_name] = name
-		if 'SetEnergeFilter' in self.filter_functions.keys() and self.filter_functions['SetEnergyFilter'] == 'IFSetSlitIn':
-			self.wait_for_filter = '; IFWaitForFilter()'
+		if 'SetEnergyFilter' in self.filter_functions.keys() and self.filter_functions['SetEnergyFilter'] == 'IFSetSlitIn':
+			self.wait_for_filter = 'IFWaitForFilter();'
 		else:
 			self.wait_for_filter = ''
 
 	def hasScriptFunction(self, name):
-		script = 'if(DoesFunctionExist("%s")) Exit(1.0) else Exit(-1.0)'
+		script = 'if ( DoesFunctionExist("%s") ) { Exit(1.0); } else { Exit(-1.0); }'
 		script %= name
 		result = self.ExecuteGetDoubleScript(script)
 		return result > 0.0
@@ -336,7 +336,7 @@ class GatanSocket(object):
 	def GetEnergyFilter(self):
 		if 'GetEnergyFilter' not in self.filter_functions.keys():
 			return -1.0
-		script = 'if(%s()) Exit(1.0) else Exit(-1.0)' % (self.filter_functions['GetEnergyFilter'],)
+		script = 'if ( %s() ) { Exit(1.0); } else { Exit(-1.0) }' % (self.filter_functions['GetEnergyFilter'],)
 		return self.ExecuteGetDoubleScript(script)
 
 	def SetEnergyFilter(self, value):
@@ -346,7 +346,7 @@ class GatanSocket(object):
 			i = 1
 		else:
 			i = 0
-		script = '%s(%d) %s' % (self.filter_functions['SetEnergyFilter'], i, self.wait_for_filter)
+		script = '%s(%d); %s' % (self.filter_functions['SetEnergyFilter'], i, self.wait_for_filter)
 		return self.ExecuteSendScript(script)
 
 	def GetEnergyFilterWidth(self):
@@ -358,11 +358,11 @@ class GatanSocket(object):
 	def SetEnergyFilterWidth(self, value):
 		if 'SetEnergyFilterWidth' not in self.filter_functions.keys():
 			return -1.0
-		script = 'if(%s(%f)) Exit(1.0) else Exit(-1.0)' % (self.filter_functions['SetEnergyFilterWidth'], value)
+		script = 'if ( %s(%f) ) { Exit(1.0); } else { Exit(-1.0); }' % (self.filter_functions['SetEnergyFilterWidth'], value)
 		return self.ExecuteSendScript(script)
 
 	def AlignEnergyFilterZeroLossPeak(self):
-		script = 'if(%s()) (%s; Exit(1.0)} else Exit(-1.0)' % (self.filter_functions['AlignEnergyFilterZeroLossPeak'], self.wait_for_filter)
+		script = ' if ( %s() ) { %s Exit(1.0); } else { Exit(-1.0); }' % (self.filter_functions['AlignEnergyFilterZeroLossPeak'], self.wait_for_filter)
 		return self.ExecuteGetDoubleScript(script)
 
 	@logwrap
