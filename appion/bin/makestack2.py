@@ -346,7 +346,9 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 
 	def postProcessParticleStack(self,imgdata,imgstackfile,boxedpartdatas,parttree_length):
 		### if xmipp-norm before phaseflip:
-		if self.params['xmipp-norm'] is not None and self.params['xmipp-norm-before'] is True:
+		if (self.params['usexmipp'] is True
+		 and self.params['xmipp-norm'] is not None
+		 and self.params['xmipp-norm-before'] is True):
 			self.xmippNormStack(imgstackfile)
 
 		### phase flipping
@@ -979,6 +981,8 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 			action="store_true", help="normalize the entire stack")
 		self.parser.add_option("--xmipp-norm-before", dest="xmipp-norm-before", default=False,
 			action="store_true", help="xmipp normalize before phaseflipping")
+		self.parser.add_option("--no-xmipp", dest="usexmipp", default=True,
+			action="store_false", help="do not use Xmipp")
 
 		self.parser.add_option("--no-meanplot", dest="meanplot", default=True,
 			action="store_false", help="do not make stack mean plot")
@@ -1028,7 +1032,9 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 		if self.params['maskassess'] is not None and not self.params['checkmask']:
 			apDisplay.printMsg("running mask assess")
 			self.params['checkmask'] = True
-		if self.params['xmipp-norm'] is not None or self.params['xmipp-norm-before'] is not None:
+		if (self.params['usexmipp'] is True
+		 and (self.params['xmipp-norm'] is not None
+		 or self.params['xmipp-norm-before'] is not None)):
 			self.xmippexe = apParam.getExecPath("xmipp_normalize", die=True)
 		if self.params['particlelabel'] == 'user' and self.params['rotate'] is True:
 			apDisplay.printError("User selected targets do not have rotation angles")
@@ -1109,7 +1115,9 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 				apStackMeanPlot.makeStackMeanPlot(stackid)
 
 		### apply xmipp normalization
-		if self.params['xmipp-norm'] is not None and self.params['xmipp-norm-before'] is False:
+		if (self.params['usexmipp'] is True
+		 and self.params['xmipp-norm'] is not None
+		 and self.params['xmipp-norm-before'] is False):
 			self.xmippNormStack(stackpath)
 
 		apDisplay.printColor("Timing stats", "blue")
@@ -1121,6 +1129,8 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 
 	#=======================
 	def xmippNormStack(self, stackpath):
+			if self.params['usexmipp'] is False:
+				return
 			### convert stack into single spider files
 			selfile = apXmipp.breakupStackIntoSingleFiles(stackpath)	
 
