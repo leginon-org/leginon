@@ -1178,6 +1178,18 @@ class SimpleMatrixCalibrationClient(MatrixCalibrationClient):
 		matrix = numpy.linalg.inv(matrix)
 		return matrix
 
+	def MatrixToMeasurement(self, matrix):
+		'''
+		convert matrix in [TEM parameter]/pixel to a mesurement in pixels/[TEM parameter] 
+		'''
+		matrix = numpy.linalg.inv(matrix)
+		measurement = {'x':{},'y':{}}
+		measurement['x']['row'] = matrix[0,0]
+		measurement['x']['col'] = matrix[0,1]
+		measurement['y']['row'] = matrix[1,0]
+		measurement['y']['col'] = matrix[1,1]
+		return measurement
+
 	def transform(self, pixelshift, scope, camera):
 		'''
 		Calculate a new scope state from the given pixelshift
@@ -1271,7 +1283,6 @@ class SimpleMatrixCalibrationClient(MatrixCalibrationClient):
 		average angle to the axis of (1,0),(0,1) vectors, respectively.
 		The result return is in radians
 		'''
-		print matrix
 		angles = []
 		angles.append(math.atan2(matrix[0,1],matrix[0,0]))
 		# y axis is assumed to be 90 degrees from x
@@ -1281,6 +1292,10 @@ class SimpleMatrixCalibrationClient(MatrixCalibrationClient):
 		angles.append(yangle)
 		angle_average = sum(angles) / 2
 		return angle_average
+
+	def matrixFromPixelAndPositionShift(self,pixelshift_matrix, positionshift_matrix, image_bin=1):
+		ipixelshift = numpy.linalg.inv(image_bin*pixelshift_matrix)
+		return numpy.dot(positionshift_matrix,ipixelshift)
 
 class ImageShiftCalibrationClient(SimpleMatrixCalibrationClient):
 	def __init__(self, node):

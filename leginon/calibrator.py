@@ -52,9 +52,9 @@ class Calibrator(node.Node):
 			return None
 		return ht
 
-	def currentState(self):
+	def currentState(self,dataclass=leginondata.ScopeEMData):
 		try:
-			dat = self.instrument.getData(leginondata.ScopeEMData)
+			dat = self.instrument.getData(dataclass)
 		except:
 			return None
 		return dat

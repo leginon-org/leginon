@@ -160,6 +160,9 @@ noderegistry.registerNodeClass(GonModeler,classtype)
 from matrixcalibrator import MatrixCalibrator
 noderegistry.registerNodeClass(MatrixCalibrator,classtype)
 
+from imagebeamcalibrator import ImageBeamCalibrator
+noderegistry.registerNodeClass(ImageBeamCalibrator,classtype)
+
 from beamtiltcalibrator import BeamTiltCalibrator
 noderegistry.registerNodeClass(BeamTiltCalibrator,classtype)
 

@@ -1926,7 +1926,7 @@ class BeamTiltCalibratorSettingsData(CalibratorSettingsData):
 			('imageshift coma repeat', int),
 		)
 	typemap = classmethod(typemap)
-
+		
 class MatrixCalibratorSettingsData(CalibratorSettingsData):
 	def typemap(cls):
 		parameters = ['image shift', 'beam shift', 'stage position']
@@ -1939,6 +1939,13 @@ class MatrixCalibratorSettingsData(CalibratorSettingsData):
 			parameterstypemap.append(('%s current as base' % parameter, bool))
 			parameterstypemap.append(('%s base' % parameter, dict))
 		return CalibratorSettingsData.typemap() + tuple(parameterstypemap)
+	typemap = classmethod(typemap)
+
+class ImageBeamCalibratorSettingsData(CalibratorSettingsData):
+	def typemap(cls):
+		return CalibratorSettingsData.typemap() + (
+			('image shift delta', float),
+		)
 	typemap = classmethod(typemap)
 
 class ManualAcquisitionSettingsData(SettingsData):
@@ -2538,5 +2545,4 @@ class ProjectionSubModeMappingData(Data):
 			('magnification', int),
 		)
 	typemap = classmethod(typemap)
-
 

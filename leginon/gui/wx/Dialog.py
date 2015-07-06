@@ -59,3 +59,15 @@ class Dialog(wx.Dialog):
 		self.szbuttons.Add(self.buttons[label], (0, col), (1, 1), flags)
 		return self.buttons[label]
 
+class ConfirmationDialog(Dialog):
+	def onInitialize(self):
+		self.bok = self.addButton('&OK')
+		self.bcancel = self.addButton('&Cancel')
+		self.Bind(wx.EVT_BUTTON, self.onOK, self.bok)
+		self.Bind(wx.EVT_BUTTON, self.onCancel, self.bcancel)
+
+	def onOK(self,evt):
+		self.EndModal(wx.ID_OK)
+
+	def onCancel(self,evt):
+		self.EndModal(wx.ID_Cancel)
