@@ -4,6 +4,7 @@ import math
 import numpy
 import os
 import shutil
+from pyami import mrc
 from appionlib import apParam
 from appionlib import apTomo
 from appionlib import apImod
@@ -86,7 +87,7 @@ def linkImageFiles(imgtree,rawdir):
 			os.symlink(os.path.join(imgpath,imagedata['filename']+'.mrc'),linkedpath)
 	return filenamelist
 
-def getImageFiles(imgtree,rawdir, link=True):
+def getImageFiles(imgtree,rawdir, link):
 	#This function should replace linkImageFiles in all calls (i.e. in tomoaligner.py and everywhere else)
 	filenamelist = []
 	for imagedata in imgtree:
@@ -96,9 +97,8 @@ def getImageFiles(imgtree,rawdir, link=True):
 		imgprefix=presetname+imagedata['filename'].split(presetname)[-1]
 		imgname=imgprefix+'.mrc'
 		filenamelist.append(imgprefix)
-		
 		destpath = os.path.join(rawdir,imgname)
-		if link is True:
+		if link == "True":
 			#create symlinks to files
 			if os.path.islink(destpath):
 				os.remove(destpath)
@@ -106,6 +106,11 @@ def getImageFiles(imgtree,rawdir, link=True):
 				os.symlink(os.path.join(imgpath,imagedata['filename']+'.mrc'),destpath)
 		else: 
 			shutil.copy(os.path.join(imgpath,imagedata['filename']+'.mrc'),destpath)
+			
+			#Y-flip raw images because Protomo
+			image=mrc.read(destpath)
+			image=numpy.flipud(image)
+			mrc.write(image,destpath)
 	return filenamelist
 
 def writeTiltFile(outfilename, seriesname, imagedict, parameterdict=False):

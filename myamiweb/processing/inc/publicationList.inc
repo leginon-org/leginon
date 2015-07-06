@@ -302,4 +302,17 @@ $PUBLICATIONS['xmipp3CL2D'] = array(
 'logo' => 'img/xmipp_logo.png',
 'pages' => '');
 
+$PUBLICATIONS['imodctf'] = array(
+'title' => 'CTF determination and correction for low dose tomographic tilt series',
+'year' => '2009',
+'authorlist' => 'Quanren Xiong, Mary K. Morphew, Cindi L. Schwartz, Andreas H. Hoenger, David N. Mastronarde',
+'journal' => 'J Struct Biol.',
+'volume' => '168',
+'issue' => '3',
+'pmid' => '19732834',
+'pmcid' => '',
+'doi' => 'doi:10.1016/j.jsb.2009.08.016',
+'logo' => '',
+'pages' => '');
+
 ?>

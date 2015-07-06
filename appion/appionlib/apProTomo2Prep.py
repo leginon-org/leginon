@@ -61,13 +61,13 @@ def convertShiftsToOrigin(shifts,imagesize_x, imagesize_y):
 	origin_y=imagesize_y/2.0
 	for shift in shifts:
 		newx=origin_x+shift['x']
-		newy=origin_y+shift['y']
+		newy=origin_y-shift['y']
 		newshift.append({'x':newx,'y':newy})
 	return newshift
 		
 
 #=======================
-def prepareTiltFile(sessionname, seriesname, tiltfilename, tiltseriesnumber, raw_path, link, coarse=True):
+def prepareTiltFile(sessionname, seriesname, tiltfilename, tiltseriesnumber, raw_path, link=False, coarse=True):
 	'''
 	Creates tlt file from basic image information and copies raw images
 	'''
@@ -87,11 +87,8 @@ def prepareTiltFile(sessionname, seriesname, tiltfilename, tiltseriesnumber, raw
 		
 		rawexists = apParam.createDirectory(raw_path)
 		
-		if link == "True":
-			apDisplay.printMsg("linking raw images")
-		else:
-			apDisplay.printMsg("copying raw images")
-		newfilenames = apProTomo.getImageFiles(ordered_imagelist, raw_path, link)
+		apDisplay.printMsg("Copying raw images and y-flipping for Protomo...") #Linking removed because raw images need to be y-flipped for Protomo:(.
+		newfilenames = apProTomo.getImageFiles(ordered_imagelist, raw_path, link=False)
 		
 		###create tilt file
 		#get image size from the first image

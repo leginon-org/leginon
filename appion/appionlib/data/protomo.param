@@ -29,7 +29,7 @@ tiltseries {
 
  binning: AP_binning  (* AP enable/disable binning of raw images *)
 
- preprocessing: AP_preprocessing  (* AP enable/disable preprocessing of raw images *)
+ preprocessing: AP_preprocessing  (* AP enable or disable preprocessing of raw images *)
  
  select: "AP_select_images"  (* AP select specific images in the tilt series *)
  
@@ -142,9 +142,8 @@ tiltseries {
    select: "AP_select_images"  (* AP select specific images in the tilt series reconstruction *)
    
    exclude: "AP_exclude_images"  (* AP exclude specific images from the tilt series reconstruction *)
-   lowpass {
+   lowpass {  (* AP lowpass map *)
      diameter:    { AP_lp_diam_x, AP_lp_diam_y } * S
-     apodization: { AP_lp_apod_x, AP_lp_apod_y } * S
    }
 
    logging: false  (* AP enable diagnostic terminal output *)

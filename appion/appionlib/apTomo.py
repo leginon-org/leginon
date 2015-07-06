@@ -265,7 +265,7 @@ def shiftHalfSeries(zeroshift,globalshifts, refimg):
 		globalshifts[i]['y']=shift['y']+zeroshift['shifty']
 	return globalshifts
 
-def getGlobalShift(ordered_imagelist, corr_bin, refimg):
+def getGlobalShift(ordered_imagelist, corr_bin, refimg, yflip=False):
 	apDisplay.printMsg("getting global shift values")
 	globalshifts = []
 	for i, imagedata in enumerate(ordered_imagelist):

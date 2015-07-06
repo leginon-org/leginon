@@ -6,10 +6,12 @@ matplotlib.use('Agg')  #Removes the X11 requirement for pylab
 import os
 import sys
 import glob
+import time
 import scipy
 import pylab
 import subprocess
 import numpy as np
+import multiprocessing as mp
 from appionlib import apDisplay
 from appionlib.apImage import imagenorm
 from pyami import mrc
@@ -292,7 +294,7 @@ def unShiftTiltFile(tiltfile, dimx, dimy, shift_limit):
 
 def bestWorstIteration(rundir):
 	'''
-	Estimates the best and worst iteration of a tilt series alignment based on Correction Factors in the .corr files.
+	Estimates the best and worst iteration of a tilt-series alignment based on Correction Factors in the .corr files.
 	'''
 	corrfiles=glob.glob('%s/*.corr' % rundir)
 	metric=[]
@@ -336,6 +338,7 @@ def makeCoarseCorrPeakVideos(seriesname, iteration, rundir, outdir, video_type, 
 			mp4=seriesname+'00_cor.mp4'
 			webm=seriesname+'00_cor.webm'
 		else: #align_step == "Refinement"
+			iteration=format(iteration[1:] if iteration.startswith('0') else iteration) #Protomo filenaming conventions are %2 unless iteration number is more than 2 digits.
 			img=seriesname+iteration+'_cor.img'
 			mrcf=seriesname+iteration+'_cor.mrc'
 			gif=seriesname+iteration+'_cor.gif'
@@ -361,7 +364,7 @@ def makeCoarseCorrPeakVideos(seriesname, iteration, rundir, outdir, video_type, 
 		slices = len(volume) - 1
 		# Convert the *.mrc to a series of pngs
 		apDisplay.printMsg("Creating correlation peak video...")
-		for i in range(0, slices):
+		for i in range(0, slices+1):
 			slice = os.path.join(vid_path,"slice%04d.png" % (i))
 			scipy.misc.imsave(slice, volume[i])
 			#Add frame numbers
@@ -433,32 +436,49 @@ def makeQualityAssessment(seriesname, iteration, rundir, corrfile):
 		f = open(txtqa_full,'a')
 		f.write("%s %s %s %s %s %s\n" % (iteration+1, avgx, avgy, stdx, stdy, metric))
 		f.close()
+		
+		return metric
 	except:
 		apDisplay.printMsg("Quality assessment statistics could not be generated. Make sure numpy is in your $PYTHONPATH.\n")
 
 
-def makeQualityAssessmentImage(seriesname, rundir, r1_iters, r1_sampling, r2_iters=0, r2_sampling=0, r3_iters=0, r3_sampling=0, r4_iters=0, r4_sampling=0):
+def makeQualityAssessmentImage(tiltseriesnumber, sessionname, seriesname, rundir, r1_iters, r1_sampling, r1_lp, r2_iters=0, r2_sampling=0, r2_lp=0, r3_iters=0, r3_sampling=0, r3_lp=0, r4_iters=0, r4_sampling=0, r4_lp=0, r5_iters=0, r5_sampling=0, r5_lp=0, r6_iters=0, r6_sampling=0, r6_lp=0, r7_iters=0, r7_sampling=0, r7_lp=0, r8_iters=0, r8_sampling=0, r8_lp=0, scaling="False", elevation="False"):
 	'''
-	Creates Quality Assessment Plot Image for Depiction. Also adds best and worst iteration to qa text file.
+	Creates Quality Assessment Plot Image for Depiction. Also adds best and worst iteration to qa text file. Returns best iteration number and CCMS value.
 	'''
 	def line_prepender(filename, line):
 		with open(filename, 'r+') as f:
 			content = f.read()
 			f.seek(0, 0)
 			f.write(line.rstrip('\r\n') + '\n' + content)
-	
+	font="full"
 	try: #If anything fails, it's likely that something isn't in the path
 		apDisplay.printMsg("Creating quality assessment plot image...")
 		figqa_full=rundir+'/media/quality_assessment/'+seriesname+'_quality_assessment.png'
 		txtqa_full=rundir+'/media/quality_assessment/'+seriesname+'_quality_assessment.txt'
-		if (r2_iters != 0 and r3_iters != 0 and r4_iters != 0):
-			title="R1: Iterations 1-%s @ bin %s | R2: Iterations %s-%s @ bin %s\nR3: Iterations %s-%s @ bin %s | R4: Iterations %s-%s @ bin %s" % (r1_iters, r1_sampling, r1_iters+1, r1_iters+r2_iters, r2_sampling, r1_iters+r2_iters+1, r1_iters+r2_iters+r3_iters, r3_sampling, r1_iters+r2_iters+r3_iters+1, r1_iters+r2_iters+r3_iters+r4_iters, r4_sampling)
-		elif (r2_iters != 0 and r3_iters != 0 and r4_iters == 0):
-			title="R1: Iterations 1-%s @ bin %s | R2: Iterations %s-%s @ bin %s\nR3: Iterations %s-%s @ bin %s" % (r1_iters, r1_sampling, r1_iters+1, r1_iters+r2_iters, r2_sampling, r1_iters+r2_iters+1, r1_iters+r2_iters+r3_iters, r3_sampling)
-		elif (r2_iters != 0 and r3_iters == 0 and r4_iters == 0):
-			title="R1: Iterations 1-%s @ bin %s | R2: Iterations %s-%s @ bin %s" % (r1_iters, r1_sampling, r1_iters+1, r1_iters+r2_iters, r2_sampling)
-		elif (r2_iters == 0 and r3_iters == 0 and r4_iters == 0):
-			title="R1: Iterations 1-%s @ bin %s" % (r1_iters, r1_sampling)
+		pylab.clf()
+		if (r2_iters != 0 and r3_iters != 0 and r4_iters != 0 and r5_iters != 0 and r6_iters != 0 and r7_iters != 0 and r8_iters != 0): #R1-R8
+			title="Tilt-Series #%s, Session %s | R1: Iters 1-%s @ bin=%s, lp=%s | R2: Iters %s-%s @ bin=%s, lp=%s\nR3: Iters %s-%s @ bin=%s, lp=%s | R4: Iters %s-%s @ bin=%s, lp=%s | R5: Iters %s-%s @ bin=%s, lp=%s\nR6: Iters %s-%s @ bin=%s, lp=%s | R7: Iters %s-%s @ bin=%s, lp=%s | R8: Iters %s-%s @ bin=%s, lp=%s | (R6-R8 have scaling=%s and elevation=%s)" % (tiltseriesnumber, sessionname, r1_iters, r1_sampling, r1_lp, r1_iters+1, r1_iters+r2_iters, r2_sampling, r2_lp, r1_iters+r2_iters+1, r1_iters+r2_iters+r3_iters, r3_sampling, r3_lp, r1_iters+r2_iters+r3_iters+1, r1_iters+r2_iters+r3_iters+r4_iters, r4_sampling, r4_lp, r1_iters+r2_iters+r3_iters+r4_iters+1, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters, r5_sampling, r5_lp, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters+1, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters+r6_iters, r6_sampling, r6_lp, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters+r6_iters+1, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters+r6_iters+r7_iters, r7_sampling, r7_lp, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters+r6_iters+r7_iters+1, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters+r6_iters+r7_iters+r8_iters, r8_sampling, r8_lp, scaling, elevation)
+			font="small"
+		elif (r2_iters != 0 and r3_iters != 0 and r4_iters != 0 and r5_iters != 0 and r6_iters != 0 and r7_iters != 0 and r8_iters == 0): #R1-R7
+			title="Tilt-Series #%s, Session %s | R1: Iters 1-%s @ bin=%s, lp=%s | R2: Iters %s-%s @ bin=%s, lp=%s\nR3: Iters %s-%s @ bin=%s, lp=%s | R4: Iters %s-%s @ bin=%s, lp=%s | R5: Iters %s-%s @ bin=%s, lp=%s\nR6: Iters %s-%s @ bin=%s, lp=%s | R7: Iters %s-%s @ bin=%s, lp=%s | (R6-R7 have scaling=%s and elevation=%s)" % (tiltseriesnumber, sessionname, r1_iters, r1_sampling, r1_lp, r1_iters+1, r1_iters+r2_iters, r2_sampling, r2_lp, r1_iters+r2_iters+1, r1_iters+r2_iters+r3_iters, r3_sampling, r3_lp, r1_iters+r2_iters+r3_iters+1, r1_iters+r2_iters+r3_iters+r4_iters, r4_sampling, r4_lp, r1_iters+r2_iters+r3_iters+r4_iters+1, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters, r5_sampling, r5_lp, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters+1, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters+r6_iters, r6_sampling, r6_lp, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters+r6_iters+1, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters+r6_iters+r7_iters, r7_sampling, r7_lp, scaling, elevation)
+			font="small"
+		elif (r2_iters != 0 and r3_iters != 0 and r4_iters != 0 and r5_iters != 0 and r6_iters != 0 and r7_iters == 0 and r8_iters == 0): #R1-R6
+			title="Tilt-Series #%s, Session %s\nR1: Iters 1-%s @ bin=%s, lp=%s | R2: Iters %s-%s @ bin=%s, lp=%s | R3: Iters %s-%s @ bin=%s, lp=%s\nR4: Iters %s-%s @ bin=%s, lp=%s | R5: Iters %s-%s @ bin=%s, lp=%s | R6: Iters %s-%s @ bin=%s, lp=%s\n(R6 has scaling=%s and elevation=%s)" % (tiltseriesnumber, sessionname, r1_iters, r1_sampling, r1_lp, r1_iters+1, r1_iters+r2_iters, r2_sampling, r2_lp, r1_iters+r2_iters+1, r1_iters+r2_iters+r3_iters, r3_sampling, r3_lp, r1_iters+r2_iters+r3_iters+1, r1_iters+r2_iters+r3_iters+r4_iters, r4_sampling, r4_lp, r1_iters+r2_iters+r3_iters+r4_iters+1, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters, r5_sampling, r5_lp, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters+1, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters+r6_iters, r6_sampling, r6_lp, scaling, elevation)
+			font="medium"
+		elif (r2_iters != 0 and r3_iters != 0 and r4_iters != 0 and r5_iters != 0 and r6_iters == 0 and r7_iters == 0 and r8_iters == 0): #R1-R5
+			title="Tilt-Series #%s, Session %s\nR1: Iters 1-%s @ bin=%s, lp=%s | R2: Iters %s-%s @ bin=%s, lp=%s | R3: Iters %s-%s @ bin=%s, lp=%s\nR4: Iters %s-%s @ bin=%s, lp=%s | R5: Iters %s-%s @ bin=%s, lp=%s" % (tiltseriesnumber, sessionname, r1_iters, r1_sampling, r1_lp, r1_iters+1, r1_iters+r2_iters, r2_sampling, r2_lp, r1_iters+r2_iters+1, r1_iters+r2_iters+r3_iters, r3_sampling, r3_lp, r1_iters+r2_iters+r3_iters+1, r1_iters+r2_iters+r3_iters+r4_iters, r4_sampling, r4_lp, r1_iters+r2_iters+r3_iters+r4_iters+1, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters, r5_sampling, r5_lp)
+			font="medium"
+		elif (r2_iters != 0 and r3_iters != 0 and r4_iters != 0 and r5_iters == 0 and r6_iters == 0 and r7_iters == 0 and r8_iters == 0): #R1-R4
+			title="Tilt-Series #%s, Session %s\nR1: Iters 1-%s @ bin=%s, lp=%s | R2: Iters %s-%s @ bin=%s, lp=%s\nR3: Iters %s-%s @ bin=%s, lp=%s | R4: Iters %s-%s @ bin=%s, lp=%s" % (tiltseriesnumber, sessionname, r1_iters, r1_sampling, r1_lp, r1_iters+1, r1_iters+r2_iters, r2_sampling, r2_lp, r1_iters+r2_iters+1, r1_iters+r2_iters+r3_iters, r3_sampling, r3_lp, r1_iters+r2_iters+r3_iters+1, r1_iters+r2_iters+r3_iters+r4_iters, r4_sampling, r4_lp)
+			font="large"
+		elif (r2_iters != 0 and r3_iters != 0 and r4_iters == 0 and r5_iters == 0 and r6_iters == 0 and r7_iters == 0 and r8_iters == 0): #R1-R3
+			title="Tilt-Series #%s, Session %s\nR1: Iters 1-%s @ bin=%s, lp=%s | R2: Iters %s-%s @ bin=%s, lp=%s\nR3: Iters %s-%s @ bin=%s, lp=%s" % (tiltseriesnumber, sessionname, r1_iters, r1_sampling, r1_lp, r1_iters+1, r1_iters+r2_iters, r2_sampling, r2_lp, r1_iters+r2_iters+1, r1_iters+r2_iters+r3_iters, r3_sampling, r3_lp)
+			font="large"
+		elif (r2_iters != 0 and r3_iters == 0 and r4_iters == 0 and r5_iters == 0 and r6_iters == 0 and r7_iters == 0 and r8_iters == 0): #R1-R2
+			title="Tilt-Series #%s, Session %s\nR1: Iters 1-%s @ bin=%s, lp=%s | R2: Iters %s-%s @ bin=%s, lp=%s" % (tiltseriesnumber, sessionname, r1_iters, r1_sampling, r1_lp, r1_iters+1, r1_iters+r2_iters, r2_sampling, r2_lp)
+		elif (r2_iters == 0 and r3_iters == 0 and r4_iters == 0 and r5_iters == 0 and r6_iters == 0 and r7_iters == 0 and r8_iters == 0): #R1
+			title="Tilt-Series #%s, Session %s\nR1: Iters 1-%s @ bin=%s, lp=%s" % (tiltseriesnumber, sessionname, r1_iters, r1_sampling, r1_lp)
 		
 		f=open(txtqa_full,'r')
 		lines=f.readlines()
@@ -475,16 +495,22 @@ def makeQualityAssessmentImage(seriesname, rundir, r1_iters, r1_sampling, r2_ite
 		well_aligned=[]
 		for i in range(1,len(metric)+1):
 			x.append(i)
-			well_aligned.append(0.025)
+			well_aligned.append(0.02)
 		
-		pylab.clf()
 		pylab.plot(range(1,len(metric)+1), metric)
 		pylab.plot(x, well_aligned, '--g')
+		if font=="small":
+			pylab.rcParams["axes.titlesize"] = 9.5
+		elif font=="medium":
+			pylab.rcParams["axes.titlesize"] = 10.5
+		elif font=="large":
+			pylab.rcParams["axes.titlesize"] = 11.25
+		
 		pylab.xlabel("Iteration")
-		pylab.ylabel("Sum(correction(x),correction(y),stdev(x),stdev(y))")
+		pylab.ylabel("CCMS")
 		pylab.title(title)
-		pylab.gca().set_xlim(left=1)
-		pylab.gca().set_ylim(bottom=0.0)
+		pylab.gca().set_xlim(xmin=1)
+		pylab.gca().set_ylim(ymin=0.0)
 		pylab.grid(True)
 		pylab.minorticks_on()
 		pylab.savefig(figqa_full)
@@ -498,13 +524,14 @@ def makeQualityAssessmentImage(seriesname, rundir, r1_iters, r1_sampling, r2_ite
 		best=[i for i, j in enumerate(metric) if j == best][0]+1
 		worst=max(metric)
 		worst=[i for i, j in enumerate(metric) if j == worst][0]+1
-		line_prepender(txtqa_full, "#Worst iteration: %s\n" % worst)
-		line_prepender(txtqa_full, "#Best iteration: %s\n" % best)
+		line_prepender(txtqa_full, "#Worst iteration: %s with CCMS = %s\n" % (worst, max(metric)))
+		line_prepender(txtqa_full, "#Best iteration: %s with CCMS = %s\n" % (best, min(metric)))
 		
 		os.system("cd media/quality_assessment; rm %s/best* 2> /dev/null; rm %s/worst* 2> /dev/null" % (rundir,rundir))
 		open("best.%s" % best,"a").close()
 		open("worst.%s" % worst,"a").close()
 		apDisplay.printMsg("Done creating quality assessment statistics and plot!")
+		return best, min(metric)
 	except:
 		apDisplay.printMsg("Quality assessment plot image could not be generated. Make sure pylab and numpy are in your $PYTHONPATH.\n")
 
@@ -615,110 +642,125 @@ def makeCorrPlotImages(seriesname, iteration, rundir, corrfile):
 		apDisplay.printMsg("Correlation Plots could not be generated. Make sure pylab and numpy are in your $PYTHONPATH.\n")
 	
 
-def makeTiltSeriesVideos(seriesname, iteration, tiltfilename, rawimagecount, rundir, raw_path, pixelsize, map_sampling, image_file_type, video_type, align_step):
+def makeTiltSeriesVideos(seriesname, iteration, tiltfilename, rawimagecount, rundir, raw_path, pixelsize, map_sampling, image_file_type, video_type, parallel, align_step):
 	'''
-	Creates Tilt Series Videos for Depiction
+	Creates Tilt-Series Videos for Depiction
 	'''
+	def processTiltImages(i,tiltfilename,raw_path,image_file_type,map_sampling,rundir,pixelsize,rawimagecount):
+		try: #If the image isn't in the .tlt file, skip it
+			#Get information from tlt file. This needs to versatile for differently formatted .tlt files, so awk it is.
+			cmd1="awk '/IMAGE %s /{print}' %s | awk '{for (j=1;j<=NF;j++) if($j ~/FILE/) print $(j+1)}' | tr '\n' ' ' | sed 's/ //g'" % (i+1, tiltfilename)
+			proc=subprocess.Popen(cmd1, stdout=subprocess.PIPE, shell=True)
+			(filename, err) = proc.communicate()
+			cmd2="awk '/IMAGE %s /{print}' %s | awk '{for (j=1;j<=NF;j++) if($j ~/ORIGIN/) print $(j+2)}'" % (i+1, tiltfilename)
+			proc=subprocess.Popen(cmd2, stdout=subprocess.PIPE, shell=True)
+			(originx, err) = proc.communicate()
+			originx=float(originx)
+			cmd3="awk '/IMAGE %s /{print}' %s | awk '{for (j=1;j<=NF;j++) if($j ~/ORIGIN/) print $(j+3)}'" % (i+1, tiltfilename)
+			proc=subprocess.Popen(cmd3, stdout=subprocess.PIPE, shell=True)
+			(originy, err) = proc.communicate()
+			originy=float(originy)
+			cmd4="awk '/IMAGE %s /{print}' %s | awk '{for (j=1;j<=NF;j++) if($j ~/ROTATION/) print $(j+1)}'" % (i+1, tiltfilename)
+			proc=subprocess.Popen(cmd4, stdout=subprocess.PIPE, shell=True)
+			(rotation, err) = proc.communicate()
+			rotation=float(rotation)
+			cmd5="awk '/IMAGE %s /{print}' %s | awk '{for (j=1;j<=NF;j++) if($j ~/TILT/) print $(j+2)}'" % (i+1, tiltfilename)
+			proc=subprocess.Popen(cmd5, stdout=subprocess.PIPE, shell=True)
+			(tilt_angle, err) = proc.communicate()
+			tilt_angle=float(tilt_angle)
+			
+			#Convert raw image to mrc if necessary
+			mrcf=raw_path+'/'+filename+'.'+image_file_type
+			if image_file_type != 'mrc':
+				f2=mrcf
+				mrcf=raw_path+'/'+filename+'.mrc'
+				cmd="proc2d %s %s mrc" % (f2, mrcf)
+				os.system(cmd)
+			
+			#Load image
+			image=mrc.read(mrcf)
+			image=imagenorm.normStdev(image)
+			
+			dimx=len(image[0])
+			dimy=len(image)
+			
+			transx=int((dimx/2) - originx)
+			transy=int((dimy/2) - originy)
+			
+			#Shifts are relative to protomo output; ie. as seen in tomoalign-gui. Note: tomoalign-gui is flipped vertically.
+			#Translate pixels left or right?
+			if originx > dimx/2:    #shift left
+				image=np.roll(image,transx,axis=1)
+				for k in range(-1,transx-1,-1):
+					image[:,k]=0
+			elif originx < dimx/2:    #shift right
+				image=np.roll(image,transx,axis=1)
+				for k in range(transx):
+					image[:,k]=0
+			# dont shift if originx = dimx/2
+			
+			#Translate pixels up or down?
+			if originy < dimy/2:    #shift down
+				image=np.roll(image,transy,axis=0)
+				for k in range(transy):
+					image[k]=0
+			elif originy > dimy/2:    #shift up
+				image=np.roll(image,transy,axis=0)
+				for k in range(-1,transy-1,-1):
+					image[k]=0
+			# dont shift if originy = dimy/2
+			
+			#Downsample image
+			if (map_sampling != 1):
+				image=imfun.bin2f(image,map_sampling)
+			else:
+				apDisplay.printMsg("No downsampling will be performed on the depiction images.")
+				apDisplay.printMsg("Warning: Depiction video might be so large that it breaks your web browser!")
+			
+			#Write translated image
+			vid_path=os.path.join(rundir,'media','tiltseries')
+			if align_step == "Initial":
+				tiltimage = os.path.join(vid_path,"initial_tilt%04d.png" % (i))
+			elif align_step == "Coarse":
+				tiltimage = os.path.join(vid_path,"coarse_tilt%04d.png" % (i))
+			else: #align_step == "Refinement"
+				tiltimage = os.path.join(vid_path,"tilt%04d.png" % (i))
+			os.system("mkdir -p %s 2>/dev/null" % (vid_path))
+			scipy.misc.imsave(tiltimage, image)
+			
+			#Rotate
+			if (rotation != 0.000):
+				image=Image.open(tiltimage)
+				image.rotate(rotation).save(tiltimage)
+			
+			#Add scalebar
+			scalesize=5000/(pixelsize * map_sampling)    #500nm scaled by sampling
+			command = "convert -gravity South -background white -splice 0x20 -strokewidth 0 -stroke black -strokewidth 5 -draw \"line %s,%s,5,%s\" -gravity SouthWest -pointsize 13 -fill black -strokewidth 0  -draw \"translate 50,0 text 0,0 '500 nm'\" %s %s" % (scalesize, dimy/map_sampling+3, dimy/map_sampling+3, tiltimage, tiltimage)
+			os.system(command)
+			
+			#Add frame numbers and tilt angles
+			tilt_degrees = float("{0:.1f}".format(tilt_angle))
+			degrees='deg'
+			command3 = "convert -gravity South -annotate 0 'Tilt Image: %s/%s' -gravity SouthEast -annotate 0 '%s %s' %s %s" % (i+1, rawimagecount, tilt_degrees, degrees, tiltimage, tiltimage)
+			os.system(command3)
+		except:
+			pass
+	
 	try: #If anything fails, it's likely that something isn't in the path
+		if parallel=="True":
+			procs=mp.cpu_count()-1
+		elif (parallel=="True" and align_step=="Coarse"):
+			procs=2
+		else:
+			procs=1
 		for i in range(rawimagecount):
-			try: #If the image isn't in the .tlt file, skip it
-				#Get information from tlt file. This needs to versatile for differently formatted .tlt files, so awk it is.
-				cmd1="awk '/IMAGE %s /{print}' %s | awk '{for (j=1;j<=NF;j++) if($j ~/FILE/) print $(j+1)}' | tr '\n' ' ' | sed 's/ //g'" % (i+1, tiltfilename)
-				proc=subprocess.Popen(cmd1, stdout=subprocess.PIPE, shell=True)
-				(filename, err) = proc.communicate()
-				cmd2="awk '/IMAGE %s /{print}' %s | awk '{for (j=1;j<=NF;j++) if($j ~/ORIGIN/) print $(j+2)}'" % (i+1, tiltfilename)
-				proc=subprocess.Popen(cmd2, stdout=subprocess.PIPE, shell=True)
-				(originx, err) = proc.communicate()
-				originx=float(originx)
-				cmd3="awk '/IMAGE %s /{print}' %s | awk '{for (j=1;j<=NF;j++) if($j ~/ORIGIN/) print $(j+3)}'" % (i+1, tiltfilename)
-				proc=subprocess.Popen(cmd3, stdout=subprocess.PIPE, shell=True)
-				(originy, err) = proc.communicate()
-				originy=float(originy)
-				cmd4="awk '/IMAGE %s /{print}' %s | awk '{for (j=1;j<=NF;j++) if($j ~/ROTATION/) print $(j+1)}'" % (i+1, tiltfilename)
-				proc=subprocess.Popen(cmd4, stdout=subprocess.PIPE, shell=True)
-				(rotation, err) = proc.communicate()
-				rotation=float(rotation)
-				cmd5="awk '/IMAGE %s /{print}' %s | awk '{for (j=1;j<=NF;j++) if($j ~/TILT/) print $(j+2)}'" % (i+1, tiltfilename)
-				proc=subprocess.Popen(cmd5, stdout=subprocess.PIPE, shell=True)
-				(tilt_angle, err) = proc.communicate()
-				tilt_angle=float(tilt_angle)
-				
-				#Convert raw image to mrc if necessary
-				mrcf=raw_path+'/'+filename+'.'+image_file_type
-				if image_file_type != 'mrc':
-					f=mrcf
-					mrcf=raw_path+'/'+filename+'.mrc'
-					cmd="proc2d %s %s mrc" % (f, mrcf)
-					os.system(cmd)
-				
-				#Load image
-				image=mrc.read(mrcf)
-				image=imagenorm.normStdev(image)
+			p2 = mp.Process(target=processTiltImages, args=(i,tiltfilename,raw_path,image_file_type,map_sampling,rundir,pixelsize,rawimagecount,))
+			p2.start()
 			
-				dimx=len(image[0])
-				dimy=len(image)
-				
-				transx=int((dimx/2) - originx)
-				transy=int((dimy/2) - originy)
-				
-				#Shifts are relative to protomo output; ie. as seen in tomoalign-gui. Note: tomoalign-gui is flipped vertically.
-				#Translate pixels left or right?
-				if originx > dimx/2:    #shift left
-					image=np.roll(image,transx,axis=1)
-					for k in range(-1,transx-1,-1):
-						image[:,k]=0
-				elif originx < dimx/2:    #shift right
-					image=np.roll(image,transx,axis=1)
-					for k in range(transx):
-						image[:,k]=0
-				# dont shift if originx = dimx/2
-				
-				#Translate pixels up or down?
-				if originy < dimy/2:    #shift down
-					image=np.roll(image,transy,axis=0)
-					for k in range(transy):
-						image[k]=0
-				elif originy > dimy/2:    #shift up
-					image=np.roll(image,transy,axis=0)
-					for k in range(-1,transy-1,-1):
-						image[k]=0
-				# dont shift if originy = dimy/2
-				
-				#Downsample image
-				if (map_sampling != 1):
-					image=imfun.bin2f(image,map_sampling)
-				else:
-					apDisplay.printMsg("No downsampling will be performed on the depiction images.")
-					apDisplay.printMsg("Warning: Depiction video might be so large that it breaks your web browser!")
-				
-				#Write translated image
-				vid_path=os.path.join(rundir,'media','tiltseries')
-				if align_step == "Initial":
-					tiltimage = os.path.join(vid_path,"initial_tilt%04d.png" % (i))
-				elif align_step == "Coarse":
-					tiltimage = os.path.join(vid_path,"coarse_tilt%04d.png" % (i))
-				else: #align_step == "Refinement"
-					tiltimage = os.path.join(vid_path,"tilt%04d.png" % (i))
-				os.system("mkdir -p %s 2>/dev/null" % (vid_path))
-				scipy.misc.imsave(tiltimage, image)
-				
-				#Rotate
-				if (rotation != 0.000):
-					image=Image.open(tiltimage)
-					image.rotate(rotation).save(tiltimage)
-				
-				#Add scalebar
-				scalesize=5000/(pixelsize * map_sampling)    #500nm scaled by sampling
-				command = "convert -gravity South -background white -splice 0x20 -strokewidth 0 -stroke black -strokewidth 5 -draw \"line %s,%s,5,%s\" -gravity SouthWest -pointsize 13 -fill black -strokewidth 0  -draw \"translate 50,0 text 0,0 '500 nm'\" %s %s" % (scalesize, dimy/map_sampling+3, dimy/map_sampling+3, tiltimage, tiltimage)
-				os.system(command)
-				#Add frame numbers and tilt angles
-				tilt_degrees = float("{0:.1f}".format(tilt_angle))
-				degrees='deg'
-				command3 = "convert -gravity South -annotate 0 'Tilt Image: %s/%s' -gravity SouthEast -annotate 0 '%s %s' %s %s" % (i+1, rawimagecount, tilt_degrees, degrees, tiltimage, tiltimage)
-				os.system(command3)
-			except:
-				pass
-			
+			if (i % (int(procs/3)) == 0) and (i != 0):
+				[p2.join() for p2 in mp.active_children()]
+		[p2.join() for p2 in mp.active_children()]
+		
 		#Turn pngs into a video with Frame # and delete pngs
 		if align_step == "Initial":
 			gif='initial_'+seriesname+'.gif'
@@ -741,6 +783,7 @@ def makeTiltSeriesVideos(seriesname, iteration, tiltfilename, rawimagecount, run
 			webm=seriesname+iteration+'.webm'
 			png='*.png'
 			pngff='tilt%04d.png'
+		vid_path=os.path.join(rundir,'media','tiltseries')
 		png_full=vid_path+'/'+png
 		pngff_full=vid_path+'/'+pngff
 		gif_full=vid_path+'/'+gif
@@ -762,20 +805,33 @@ def makeTiltSeriesVideos(seriesname, iteration, tiltfilename, rawimagecount, run
 		os.system(command2)
 		
 		if align_step == "Initial":
-			apDisplay.printMsg("Done creating initial tilt series video!")
+			apDisplay.printMsg("Done creating initial tilt-series video!")
 		elif align_step == "Coarse":
-			apDisplay.printMsg("Done creating coarse tilt series video!")
+			apDisplay.printMsg("Done creating coarse tilt-series video!")
 		else: #align_step == "Refinement"
-			apDisplay.printMsg("Done creating tilt series video!")
+			apDisplay.printMsg("Done creating tilt-series video!")
 		
 	except:
-		apDisplay.printMsg("Tilt Series Images and/or Videos could not be generated. Make sure ffmpeg and imagemagick is in your $PATH. Make sure that pyami, scipy, numpy, and PIL are in your $PYTHONPATH.\n")
+		apDisplay.printMsg("Tilt-Series Images and/or Videos could not be generated. Make sure ffmpeg and imagemagick is in your $PATH. Make sure that pyami, scipy, numpy, and PIL are in your $PYTHONPATH.\n")
 		
 
-def makeReconstructionVideos(seriesname, iteraion, rundir, outdir, pixelsize, sampling, map_sampling, video_type, keep_recons, align_step):
+def makeReconstructionVideos(seriesname, iteraion, rundir, outdir, pixelsize, sampling, map_sampling, video_type, keep_recons, parallel, align_step):
 	'''
 	Creates Reconstruction Videos for Depiction
 	'''
+	def processReconImages(i,vid_path,volume,pixelsize,map_sampling,dimy):
+		filename="slice%04d.png" % (i)
+		slice = os.path.join(vid_path,filename)
+		scipy.misc.imsave(slice, volume[i])
+		
+		#Add scalebar
+		scalesize=5000/(pixelsize * map_sampling)    #500nm scaled by sampling
+		cmd1 = "convert -gravity South -background white -splice 0x20 -strokewidth 0 -stroke black -strokewidth 5 -draw \"line %s,%s,5,%s\" -gravity SouthWest -pointsize 13 -fill black -strokewidth 0  -draw \"translate 50,0 text 0,0 '500 nm'\" %s %s" % (scalesize, dimy+3, dimy+3, slice, slice)
+		os.system(cmd1)
+		#Add frame numbers
+		cmd2 = "convert -gravity South -annotate 0 'Z-Slice: %s/%s' %s %s" % (i+1, slices+1, slice, slice)
+		os.system(cmd2)
+	
 	try: #If anything fails, it's likely that something isn't in the path
 		os.system("mkdir -p %s/media/reconstructions 2>/dev/null" % rundir)
 		if align_step == "Coarse":
@@ -806,36 +862,29 @@ def makeReconstructionVideos(seriesname, iteraion, rundir, outdir, pixelsize, sa
 		
 		# Convert the reconstruction *.img file to mrc for further processing
 		os.system("i3cut -fmt mrc %s %s" % (img_full, mrc_full))
+		#Normalizing here doesn't change video normalization.
+		
 		apDisplay.printMsg("Done generating reconstruction...")
 		
 		volume = mrc.read(mrc_full)
 		slices = len(volume) - 1
+		dimx=len(volume[0][0])
+		dimy=len(volume[0])
 		
 		# Convert the *.mrc to a series of pngs
+		
+		if parallel=="True":
+			procs=mp.cpu_count()
+		else:
+			procs=1
 		apDisplay.printMsg("Creating reconstruction video...")
-		for i in range(0, slices):
-			filename="slice%04d.png" % (i)
-			slice = os.path.join(vid_path,filename)
+		for i in range(0,slices+1):
+			p3 = mp.Process(target=processReconImages, args=(i,vid_path,volume,pixelsize,map_sampling,dimy,))
+			p3.start()
 			
-			#Downsample image
-			if (map_sampling > sampling):
-				image=imfun.bin2f(volume[i],map_sampling/sampling)
-				scipy.misc.imsave(slice, image)
-				dimx=len(image[0])
-				dimy=len(image)
-			else:
-				scipy.misc.imsave(slice, volume[i])
-				dimx=len(volume[i][0])
-				dimy=len(volume[i])
-			
-			#Add scalebar
-			scalesize=5000/(pixelsize * map_sampling)    #500nm scaled by sampling
-			cmd1 = "convert -gravity South -background white -splice 0x20 -strokewidth 0 -stroke black -strokewidth 5 -draw \"line %s,%s,5,%s\" -gravity SouthWest -pointsize 13 -fill black -strokewidth 0  -draw \"translate 50,0 text 0,0 '500 nm'\" %s %s" % (scalesize, dimy+3, dimy+3, slice, slice)
-			os.system(cmd1)
-			#Add frame numbers
-			cmd2 = "convert -gravity South -annotate 0 'Z-Slice: %s/%s' %s %s" % (i+1, slices+1, slice, slice)
-			os.system(cmd2)
-
+			if (i % (procs-1) == 0) and (i != 0):
+				[p3.join() for p3 in mp.active_children()]
+		
 		if video_type == "gif":
 			command = "convert -delay 11 -loop 0 -layers Optimize %s %s;" % (png_full, gif_full)
 			command += "ffmpeg -y -v 0 -framerate 9 -i %s -codec:v libx264 -profile:v baseline -pix_fmt yuv420p -g 30 %s" % (pngff_full, mp4_full)
@@ -853,3 +902,48 @@ def makeReconstructionVideos(seriesname, iteraion, rundir, outdir, pixelsize, sa
 	except:
 		apDisplay.printMsg("Alignment Images and/or Videos could not be generated. Make sure i3, ffmpeg, and imagemagick are in your $PATH. Make sure that pyami and scipy are in your $PYTHONPATH.\n")
 		
+
+def makeDefocusPlot(name, ctfdir, defocus_file_full):
+	try: #If anything fails, it's likely that something isn't in the path
+		defcus_fig_full=ctfdir+name+'_defocus.png'
+		
+		f=open(defocus_file_full,'r')
+		lines=f.readlines()
+		f.close()
+		
+		iterlines=iter(lines)
+		angles=[]
+		defocus=[]
+		for line in iterlines:
+			vals=line.split()
+			angles.append(float(vals[3]))
+			defocus.append(float(vals[4])/1000)
+		
+		pylab.plot(angles,defocus)
+		pylab.xlabel("Tilt Image Angle (degrees)")
+		pylab.ylabel("Defocus (microns)")
+		pylab.title("Measured and Interpolated Defoci for all Images")
+		pylab.grid(True)
+		pylab.minorticks_on()
+		pylab.savefig(defcus_fig_full)
+		pylab.clf()
+		apDisplay.printMsg("Done creating Defocus Plot!")
+	except:
+		apDisplay.printMsg("Defocus plot could not be generated. Make sure pylab is in your $PATH. Make sure that scipy are in your $PYTHONPATH.\n")
+
+
+def makeCTFPlot(ctfdir, defocus_file_full):
+	try: #If anything fails, it's likely that something isn't in the path
+		f=open(defocus_file_full,'r')
+		lines=f.readlines()
+		f.close()
+		
+		iterlines=iter(lines)
+		defocus=[]
+		for line in iterlines:
+			vals=line.split()
+			defocus.append(float(vals[4])/1000)
+		
+		apDisplay.printMsg("Done creating CTF Plot!")
+	except:
+		apDisplay.printMsg("CTF plot could not be generated. Make sure pylab is in your $PATH. Make sure that scipy are in your $PYTHONPATH.\n")

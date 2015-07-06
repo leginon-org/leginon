@@ -16,18 +16,17 @@ require_once "inc/project.inc";
 require_once "inc/appionloop.inc";
 require_once "inc/particledata.inc";
 
-$outdir=$_GET['outdir'];
-$runname=$_GET['runname'];
+$rundir=$_GET['rundir'];
 $iter=$_GET['iter'];
 $tiltseries=$_GET['tiltseries'];
 
-$corrpeak_gif_files = glob("$outdir/$runname/media/correlations/s*.gif");
-$corrpeak_vid_files = glob("$outdir/$runname/media/correlations/series".sprintf('%04d',$tiltseries).sprintf('%02d',$iter-1)."_cor.{mp4,ogv,webm}",GLOB_BRACE);
-$corr_gif_files = glob("$outdir/$runname/media/corrplots/series".sprintf('%04d',$tiltseries).sprintf('%03d',$iter-1)."*.gif");
-$tilt_gif_files = glob("$outdir/$runname/media/tiltseries/s*.gif");
-$tilt_vid_files = glob("$outdir/$runname/media/tiltseries/series".sprintf('%04d',$tiltseries).sprintf('%03d',$iter-1).".{mp4,ogv,webm}",GLOB_BRACE);
-$rec_gif_files = glob("$outdir/$runname/media/reconstructions/s*.gif");
-$rec_vid_files = glob("$outdir/$runname/media/reconstructions/series".sprintf('%04d',$tiltseries).sprintf('%02d',$iter)."_bck.{mp4,ogv,webm}",GLOB_BRACE);
+$corrpeak_gif_files = glob("$rundir/tiltseries".$tiltseries."/media/correlations/s*.gif");
+$corrpeak_vid_files = glob("$rundir/tiltseries".$tiltseries."/media/correlations/series".$tiltseries.sprintf('%02d',$iter-1)."_cor.{mp4,ogv,webm}",GLOB_BRACE);
+$corr_gif_files = glob("$rundir/tiltseries".$tiltseries."/media/corrplots/series".$tiltseries.sprintf('%03d',$iter-1)."*.gif");
+$tilt_gif_files = glob("$rundir/tiltseries".$tiltseries."/media/tiltseries/s*.gif");
+$tilt_vid_files = glob("$rundir/tiltseries".$tiltseries."/media/tiltseries/series".$tiltseries.sprintf('%03d',$iter-1).".{mp4,ogv,webm}",GLOB_BRACE);
+$rec_gif_files = glob("$rundir/tiltseries".$tiltseries."/media/reconstructions/s*.gif");
+$rec_vid_files = glob("$rundir/tiltseries".$tiltseries."/media/reconstructions/series".$tiltseries.sprintf('%02d',$iter)."_bck.{mp4,ogv,webm}",GLOB_BRACE);
 
 $corrpeak_gif = "loadimg.php?rawgif=1&filename=".$corrpeak_gif_files[$iter-1];
 $corrpeak_mp4 = "loadvid.php?filename=".$corrpeak_vid_files[0];
@@ -50,7 +49,7 @@ $rec_webm = "loadvid.php?filename=".$rec_vid_files[2];
 $download_rec_mp4 = "downloadvid.php?filename=".$rec_vid_files[0];
 
 $html .= "
-	<center><H3><b>Refinement Iteration #$iter</b></H3></center>
+	<center><H3><b>Tilt Series #".ltrim($tiltseries, '0').", Refinement Iteration #$iter</b></H3></center>
 	<hr />";
 $html .= "
 	<H4><center><b>Correlation Peak</b></center></H4>";
@@ -88,7 +87,7 @@ $html .= '<td><img src="'.$corr_coa.'" alt="coa" width="500" />'."<br /></td>";
 $html .= '</tr><tr></table></center><br><hr />';
 
 $html .= "
-	<H4><center><b>Tilt-Series</b></center></H4>";
+	<H4><center><b>Tilt Series</b></center></H4>";
         
 if (isset($tilt_gif_files[0])) {
 	$html .= '<center><img src="'.$tilt_gif.'" alt="correlations" /></center>';
@@ -103,7 +102,7 @@ if (isset($tilt_gif_files[0])) {
         //$html .= '<center>'.docpop('tiltimageinfo_coarse', 'Image Info').'</center>';
         $html .= '<p align="right"><a href="'.$download_tilt_mp4.'">Download Video</a></p><hr />';
 } else {
-        $html .= "<center><b>Depiction Tilt-Series Video for Refinement Iteration ".$iter." either failed to generate, is still processing, or wasn't requested.</b></center>";
+        $html .= "<center><b>Depiction Tilt Series Video for Refinement Iteration ".$iter." either failed to generate, is still processing, or wasn't requested.</b></center>";
 }
 
 $html .= "

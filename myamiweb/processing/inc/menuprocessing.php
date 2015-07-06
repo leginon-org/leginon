@@ -739,11 +739,11 @@ if (is_numeric($expId)) {
 			'result'=>$tarresults,
 		);
 		$nruns[] = array(
-			'name'=>"<a href='selectAlignTiltSeries.php?expId=$sessionId'>Align Tilt Series</a>",
+			'name'=>"<a href='selectAlignTiltSeries.php?expId=$sessionId'>Align Tilt-Series</a>",
 			'result'=>$taresults,
 		);
 		$nruns[] = array(
-			'name'=>"<a href='selectBatchAlignTiltSeries.php?expId=$sessionId'>Batch Align Tilt Series</a>",
+			'name'=>"<a href='selectBatchAlignTiltSeries.php?expId=$sessionId'>Batch Align Tilt-Series</a>",
 			'result'=>$taresults,
 		);
 		$nruns[] = array(

@@ -9,26 +9,24 @@ import os
 import sys
 import math
 import glob
+import time
 import subprocess
 import numpy as np
 import multiprocessing as mp
 from appionlib import basicScript
 from appionlib import apDisplay
-#from appionlib import apDatabase
 from appionlib import apProTomo2Aligner
 from appionlib import apProTomo2Prep
-#from appionlib import apTomo
-#from appionlib import apProTomo
-#from appionlib import apParam
 
 try:
 	import protomo
 except:
-	print "protomo did not get imported"
+	print "Protomo did not get imported"
 
 # Required for cleanup at end
 cwd=os.getcwd()
 rundir=''
+time_start = time.strftime("%Yyr%mm%dd-%Hhr%Mm%Ss")
 
 #=====================
 class ProTomo2Aligner(basicScript.BasicScript):
@@ -78,6 +76,9 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		self.parser.add_option("--r4_region_x", dest="r4_region_x", default=512, type="int",
 			help="Pixels in x to use for region matching, e.g. --r4_region=1024", metavar="int")
 		
+		self.parser.add_option("--r5_region_x", dest="r5_region_x", default=512, type="int",
+			help="Pixels in x to use for region matching, e.g. --r5_region=1024", metavar="int")
+		
 		self.parser.add_option("--region_y", dest="region_y", default=512, type="int",
 			help="Pixels in y to use for region matching, e.g. --region=1024", metavar="int")
 		
@@ -92,6 +93,9 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		
 		self.parser.add_option("--r4_region_y", dest="r4_region_y", default=512, type="int",
 			help="Pixels in y to use for region matching, e.g. --r4_region=1024", metavar="int")
+		
+		self.parser.add_option("--r5_region_y", dest="r5_region_y", default=512, type="int",
+			help="Pixels in y to use for region matching, e.g. --r5_region=1024", metavar="int")
 		
 		self.parser.add_option("--lowpass_diameter_x", dest="lowpass_diameter_x",  default=0.5, type="float",
 			help="in fractions of nyquist, e.g. --lowpass_diameter_x=0.4", metavar="float")
@@ -108,110 +112,134 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		self.parser.add_option("--r4_lowpass_diameter_x", dest="r4_lowpass_diameter_x",  default=0.5, type="float",
 			help="in fractions of nyquist, e.g. --r4_lowpass_diameter_x=0.4", metavar="float")
 		
+		self.parser.add_option("--r5_lowpass_diameter_x", dest="r5_lowpass_diameter_x",  default=0.5, type="float",
+			help="in fractions of nyquist, e.g. --r5_lowpass_diameter_x=0.4", metavar="float")
+		
 		self.parser.add_option("--lowpass_diameter_y", dest="lowpass_diameter_y",  default=0.5, type="float",
-			help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --lowpass_diameter_y=0.4", metavar="float")
+			help="Provide in angstroms. This will be converted to Protomo units, e.g. --lowpass_diameter_y=0.4", metavar="float")
 		
 		self.parser.add_option("--r1_lowpass_diameter_y", dest="r1_lowpass_diameter_y",  default=0.5, type="float",
-			help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --r1_lowpass_diameter_y=0.4", metavar="float")
+			help="Provide in angstroms. This will be converted to Protomo units, e.g. --r1_lowpass_diameter_y=0.4", metavar="float")
 		
 		self.parser.add_option("--r2_lowpass_diameter_y", dest="r2_lowpass_diameter_y",  default=0.5, type="float",
-			help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --r2_lowpass_diameter_y=0.4", metavar="float")
+			help="Provide in angstroms. This will be converted to Protomo units, e.g. --r2_lowpass_diameter_y=0.4", metavar="float")
 		
 		self.parser.add_option("--r3_lowpass_diameter_y", dest="r3_lowpass_diameter_y",  default=0.5, type="float",
-			help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --lowpass_diameter_y=0.4", metavar="float")
+			help="Provide in angstroms. This will be converted to Protomo units, e.g. --lowpass_diameter_y=0.4", metavar="float")
 		
 		self.parser.add_option("--r4_lowpass_diameter_y", dest="r4_lowpass_diameter_y",  default=0.5, type="float",
-			help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --r4_lowpass_diameter_y=0.4", metavar="float")
+			help="Provide in angstroms. This will be converted to Protomo units, e.g. --r4_lowpass_diameter_y=0.4", metavar="float")
+		
+		self.parser.add_option("--r5_lowpass_diameter_y", dest="r5_lowpass_diameter_y",  default=0.5, type="float",
+			help="Provide in angstroms. This will be converted to Protomo units, e.g. --r5_lowpass_diameter_y=0.4", metavar="float")
 		
 		self.parser.add_option("--lowpass_apod_x", dest="lowpass_apod_x", default=0.05, type="float",
-			help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --lowpass_diameter_x=0.4", metavar="float")
+			help="Provide in angstroms. This will be converted to Protomo units, e.g. --lowpass_diameter_x=0.4", metavar="float")
 		
 		self.parser.add_option("--r1_lowpass_apod_x", dest="r1_lowpass_apod_x", default=0.05, type="float",
-			help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --r1_lowpass_diameter_x=0.4", metavar="float")
+			help="Provide in angstroms. This will be converted to Protomo units, e.g. --r1_lowpass_diameter_x=0.4", metavar="float")
 		
 		self.parser.add_option("--r2_lowpass_apod_x", dest="r2_lowpass_apod_x", default=0.05, type="float",
-			help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --r2_lowpass_diameter_x=0.4", metavar="float")
+			help="Provide in angstroms. This will be converted to Protomo units, e.g. --r2_lowpass_diameter_x=0.4", metavar="float")
 		
 		self.parser.add_option("--r3_lowpass_apod_x", dest="r3_lowpass_apod_x", default=0.05, type="float",
-			help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --r3_lowpass_diameter_x=0.4", metavar="float")
+			help="Provide in angstroms. This will be converted to Protomo units, e.g. --r3_lowpass_diameter_x=0.4", metavar="float")
 		
 		self.parser.add_option("--r4_lowpass_apod_x", dest="r4_lowpass_apod_x", default=0.05, type="float",
-			help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --r4_lowpass_diameter_x=0.4", metavar="float")
+			help="Provide in angstroms. This will be converted to Protomo units, e.g. --r4_lowpass_diameter_x=0.4", metavar="float")
+		
+		self.parser.add_option("--r5_lowpass_apod_x", dest="r5_lowpass_apod_x", default=0.05, type="float",
+			help="Provide in angstroms. This will be converted to Protomo units, e.g. --r5_lowpass_diameter_x=0.4", metavar="float")
 		
 		self.parser.add_option("--lowpass_apod_y", dest="lowpass_apod_y", default=0.05, type="float",
-			help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --lowpass_diameter_y=0.4", metavar="float")
+			help="Provide in angstroms. This will be converted to Protomo units, e.g. --lowpass_diameter_y=0.4", metavar="float")
 		
 		self.parser.add_option("--r1_lowpass_apod_y", dest="r1_lowpass_apod_y", default=0.05, type="float",
-			help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --r1_lowpass_diameter_y=0.4", metavar="float")
+			help="Provide in angstroms. This will be converted to Protomo units, e.g. --r1_lowpass_diameter_y=0.4", metavar="float")
 		
 		self.parser.add_option("--r2_lowpass_apod_y", dest="r2_lowpass_apod_y", default=0.05, type="float",
-			help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --r2_lowpass_diameter_y=0.4", metavar="float")
+			help="Provide in angstroms. This will be converted to Protomo units, e.g. --r2_lowpass_diameter_y=0.4", metavar="float")
 		
 		self.parser.add_option("--r3_lowpass_apod_y", dest="r3_lowpass_apod_y", default=0.05, type="float",
-			help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --r3_lowpass_diameter_y=0.4", metavar="float")
+			help="Provide in angstroms. This will be converted to Protomo units, e.g. --r3_lowpass_diameter_y=0.4", metavar="float")
 		
 		self.parser.add_option("--r4_lowpass_apod_y", dest="r4_lowpass_apod_y", default=0.05, type="float",
-			help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --r4_lowpass_diameter_y=0.4", metavar="float")
+			help="Provide in angstroms. This will be converted to Protomo units, e.g. --r4_lowpass_diameter_y=0.4", metavar="float")
+		
+		self.parser.add_option("--r5_lowpass_apod_y", dest="r5_lowpass_apod_y", default=0.05, type="float",
+			help="Provide in angstroms. This will be converted to Protomo units, e.g. --r5_lowpass_diameter_y=0.4", metavar="float")
 		
 		self.parser.add_option("--highpass_diameter_x", dest="highpass_diameter_x", default=0.001, type="float",
-			help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --highpass_diameter_x=0.02", metavar="float")
+			help="Provide in angstroms. This will be converted to Protomo units, e.g. --highpass_diameter_x=0.02", metavar="float")
 		
 		self.parser.add_option("--r1_highpass_diameter_x", dest="r1_highpass_diameter_x", default=0.001, type="float",
-			help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --r1_highpass_diameter_x=0.02", metavar="float")
+			help="Provide in angstroms. This will be converted to Protomo units, e.g. --r1_highpass_diameter_x=0.02", metavar="float")
 		
 		self.parser.add_option("--r2_highpass_diameter_x", dest="r2_highpass_diameter_x", default=0.001, type="float",
-			help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --r2_highpass_diameter_x=0.02", metavar="float")
+			help="Provide in angstroms. This will be converted to Protomo units, e.g. --r2_highpass_diameter_x=0.02", metavar="float")
 		
 		self.parser.add_option("--r3_highpass_diameter_x", dest="r3_highpass_diameter_x", default=0.001, type="float",
-			help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --r3_highpass_diameter_x=0.02", metavar="float")
+			help="Provide in angstroms. This will be converted to Protomo units, e.g. --r3_highpass_diameter_x=0.02", metavar="float")
 		
 		self.parser.add_option("--r4_highpass_diameter_x", dest="r4_highpass_diameter_x", default=0.001, type="float",
-			help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --r4_highpass_diameter_x=0.02", metavar="float")
+			help="Provide in angstroms. This will be converted to Protomo units, e.g. --r4_highpass_diameter_x=0.02", metavar="float")
+		
+		self.parser.add_option("--r5_highpass_diameter_x", dest="r5_highpass_diameter_x", default=0.001, type="float",
+			help="Provide in angstroms. This will be converted to Protomo units, e.g. --r5_highpass_diameter_x=0.02", metavar="float")
 		
 		self.parser.add_option("--highpass_diameter_y", dest="highpass_diameter_y", default=0.001, type="float",
-			help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --highpass_diameter_y=0.02", metavar="float")
+			help="Provide in angstroms. This will be converted to Protomo units, e.g. --highpass_diameter_y=0.02", metavar="float")
 
 		self.parser.add_option("--r1_highpass_diameter_y", dest="r1_highpass_diameter_y", default=0.001, type="float",
-			help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --r1_highpass_diameter_y=0.02", metavar="float")
+			help="Provide in angstroms. This will be converted to Protomo units, e.g. --r1_highpass_diameter_y=0.02", metavar="float")
 
 		self.parser.add_option("--r2_highpass_diameter_y", dest="r2_highpass_diameter_y", default=0.001, type="float",
-			help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --r2_highpass_diameter_y=0.02", metavar="float")
+			help="Provide in angstroms. This will be converted to Protomo units, e.g. --r2_highpass_diameter_y=0.02", metavar="float")
 
 		self.parser.add_option("--r3_highpass_diameter_y", dest="r3_highpass_diameter_y", default=0.001, type="float",
-			help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --r3_highpass_diameter_y=0.02", metavar="float")
+			help="Provide in angstroms. This will be converted to Protomo units, e.g. --r3_highpass_diameter_y=0.02", metavar="float")
 
 		self.parser.add_option("--r4_highpass_diameter_y", dest="r4_highpass_diameter_y", default=0.001, type="float",
-			help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --r4_highpass_diameter_y=0.02", metavar="float")
+			help="Provide in angstroms. This will be converted to Protomo units, e.g. --r4_highpass_diameter_y=0.02", metavar="float")
+
+		self.parser.add_option("--r5_highpass_diameter_y", dest="r5_highpass_diameter_y", default=0.001, type="float",
+			help="Provide in angstroms. This will be converted to Protomo units, e.g. --r5_highpass_diameter_y=0.02", metavar="float")
 
 		self.parser.add_option("--highpass_apod_x", dest="highpass_apod_x", default=0.002, type="float",
-			help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --highpass_diameter_x=0.02", metavar="float")
+			help="Provide in angstroms. This will be converted to Protomo units, e.g. --highpass_diameter_x=0.02", metavar="float")
 		
 		self.parser.add_option("--r1_highpass_apod_x", dest="r1_highpass_apod_x", default=0.002, type="float",
-			help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --r1_highpass_diameter_x=0.02", metavar="float")
+			help="Provide in angstroms. This will be converted to Protomo units, e.g. --r1_highpass_diameter_x=0.02", metavar="float")
 		
 		self.parser.add_option("--r2_highpass_apod_x", dest="r2_highpass_apod_x", default=0.002, type="float",
-			help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --r2_highpass_diameter_x=0.02", metavar="float")
+			help="Provide in angstroms. This will be converted to Protomo units, e.g. --r2_highpass_diameter_x=0.02", metavar="float")
 		
 		self.parser.add_option("--r3_highpass_apod_x", dest="r3_highpass_apod_x", default=0.002, type="float",
-			help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --r3_highpass_diameter_x=0.02", metavar="float")
+			help="Provide in angstroms. This will be converted to Protomo units, e.g. --r3_highpass_diameter_x=0.02", metavar="float")
 		
 		self.parser.add_option("--r4_highpass_apod_x", dest="r4_highpass_apod_x", default=0.002, type="float",
-			help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --r4_highpass_diameter_x=0.02", metavar="float")
+			help="Provide in angstroms. This will be converted to Protomo units, e.g. --r4_highpass_diameter_x=0.02", metavar="float")
+		
+		self.parser.add_option("--r5_highpass_apod_x", dest="r5_highpass_apod_x", default=0.002, type="float",
+			help="Provide in angstroms. This will be converted to Protomo units, e.g. --r5_highpass_diameter_x=0.02", metavar="float")
 		
 		self.parser.add_option("--highpass_apod_y", dest="highpass_apod_y", default=0.002, type="float",
-			help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --highpass_diameter_y=0.02", metavar="float")
+			help="Provide in angstroms. This will be converted to Protomo units, e.g. --highpass_diameter_y=0.02", metavar="float")
 
 		self.parser.add_option("--r1_highpass_apod_y", dest="r1_highpass_apod_y", default=0.002, type="float",
-			help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --r1_highpass_diameter_y=0.02", metavar="float")
+			help="Provide in angstroms. This will be converted to Protomo units, e.g. --r1_highpass_diameter_y=0.02", metavar="float")
 
 		self.parser.add_option("--r2_highpass_apod_y", dest="r2_highpass_apod_y", default=0.002, type="float",
-			help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --r2_highpass_diameter_y=0.02", metavar="float")
+			help="Provide in angstroms. This will be converted to Protomo units, e.g. --r2_highpass_diameter_y=0.02", metavar="float")
 
 		self.parser.add_option("--r3_highpass_apod_y", dest="r3_highpass_apod_y", default=0.002, type="float",
-			help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --r3_highpass_diameter_y=0.02", metavar="float")
+			help="Provide in angstroms. This will be converted to Protomo units, e.g. --r3_highpass_diameter_y=0.02", metavar="float")
 
 		self.parser.add_option("--r4_highpass_apod_y", dest="r4_highpass_apod_y", default=0.002, type="float",
-			help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --r4_highpass_diameter_y=0.02", metavar="float")
+			help="Provide in angstroms. This will be converted to Protomo units, e.g. --r4_highpass_diameter_y=0.02", metavar="float")
+
+		self.parser.add_option("--r5_highpass_apod_y", dest="r5_highpass_apod_y", default=0.002, type="float",
+			help="Provide in angstroms. This will be converted to Protomo units, e.g. --r5_highpass_diameter_y=0.02", metavar="float")
 
 		self.parser.add_option("--thickness", dest="thickness",  default=300, type="float",
 			help="Estimated thickness of unbinned specimen (in pixels), e.g. --thickness=100.0", metavar="float")
@@ -237,7 +265,10 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		self.parser.add_option("--r4_iters", dest="r4_iters", default=0, type="int",
 			help="Number of alignment and geometry refinement iterations, e.g. --r4_iters=4", metavar="int")
 
-		self.parser.add_option("--sampling", dest="sampling",  default="4", type="int",
+		self.parser.add_option("--r5_iters", dest="r5_iters", default=0, type="int",
+			help="Number of alignment and geometry refinement iterations, e.g. --r5_iters=4", metavar="int")
+
+		self.parser.add_option("--sampling", dest="sampling",  default=8, type="int",
 			help="Sampling rate of raw data, e.g. --sampling=4")
 		
 		self.parser.add_option("--r1_sampling", dest="r1_sampling",  default=8, type="int",
@@ -252,7 +283,10 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		self.parser.add_option("--r4_sampling", dest="r4_sampling",  default=2, type="int",
 			help="Sampling rate of raw data, e.g. --r4_sampling=4")
 		
-		self.parser.add_option("--map_sampling", dest="map_sampling",  default="8", type="int",
+		self.parser.add_option("--r5_sampling", dest="r5_sampling",  default=2, type="int",
+			help="Sampling rate of raw data, e.g. --r5_sampling=4")
+		
+		self.parser.add_option("--map_sampling", dest="map_sampling",  default=8, type="int",
 			help="Sampling rate of raw data for use in reconstruction, e.g. --map_sampling=4")
 			
 		self.parser.add_option("--border", dest="border", default=100,  type="int",
@@ -301,6 +335,9 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		self.parser.add_option("--r4_kernel_x", dest="r4_kernel_x", default=3,  type="int",
 			help="Filter window size, e.g. --r4_kernel_x=5", metavar="int")
 
+		self.parser.add_option("--r5_kernel_x", dest="r5_kernel_x", default=3,  type="int",
+			help="Filter window size, e.g. --r5_kernel_x=5", metavar="int")
+
 		self.parser.add_option("--kernel_y", dest="kernel_y", default=3,  type="int",
 			help="Filter window size, e.g. --kernel_y=5", metavar="int")
 		
@@ -315,6 +352,9 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		
 		self.parser.add_option("--r4_kernel_y", dest="r4_kernel_y", default=3,  type="int",
 			help="Filter window size, e.g. --r4_kernel_y=5", metavar="int")
+		
+		self.parser.add_option("--r5_kernel_y", dest="r5_kernel_y", default=3,  type="int",
+			help="Filter window size, e.g. --r5_kernel_y=5", metavar="int")
 		
 		self.parser.add_option("--radius_x", dest="radius_x",  type="float",
 			help="Widths of the Gaussian function, e.g. --radius_x=5", metavar="float")
@@ -372,6 +412,9 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		self.parser.add_option("--r4_peak_search_radius_x", dest="r4_peak_search_radius_x",  type="float",  default="100",
 			help="Defines peak search region, e.g. --r4_peak_search_radius_x=19.0", metavar="float")
 
+		self.parser.add_option("--r5_peak_search_radius_x", dest="r5_peak_search_radius_x",  type="float",  default="100",
+			help="Defines peak search region, e.g. --r5_peak_search_radius_x=19.0", metavar="float")
+
 		self.parser.add_option("--peak_search_radius_y", dest="peak_search_radius_y",  type="float",  default="100",
 			help="Defines peak search region, e.g. --peak_search_radius_y=19.0", metavar="float")
 		
@@ -386,6 +429,9 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		
 		self.parser.add_option("--r4_peak_search_radius_y", dest="r4_peak_search_radius_y",  type="float",  default="100",
 			help="Defines peak search region, e.g. --r4_peak_search_radius_y=19.0", metavar="float")
+		
+		self.parser.add_option("--r5_peak_search_radius_y", dest="r5_peak_search_radius_y",  type="float",  default="100",
+			help="Defines peak search region, e.g. --r5_peak_search_radius_y=19.0", metavar="float")
 		
 		#self.parser.add_option("--cmdiameter_x", dest="cmdiameter_x",  type="float",
 		#	help="Size of region for center of mass calculation, e.g. --cmdiameter_x=19.0", metavar="float")
@@ -403,10 +449,10 @@ class ProTomo2Aligner(basicScript.BasicScript):
 			help="Protomo2 only: Size of the reconstructed tomogram in the Z direction, e.g. --map_size_z=128", metavar="int")
 		
 		self.parser.add_option("--map_lowpass_diameter_x", dest="map_lowpass_diameter_x",  type="float",
-			help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --map_lowpass_diameter_x=0.5", metavar="float")
+			help="Provide in angstroms. This will be converted to Protomo units, e.g. --map_lowpass_diameter_x=0.5", metavar="float")
 		
 		self.parser.add_option("--map_lowpass_diameter_y", dest="map_lowpass_diameter_y",  type="float",
-			help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --map_lowpass_diameter_y=0.5", metavar="float")
+			help="Provide in angstroms. This will be converted to Protomo units, e.g. --map_lowpass_diameter_y=0.5", metavar="float")
 		
 		self.parser.add_option("--image_file_type", dest="image_file_type",
 			help="Filetype extension for images. Protomo supports CCP4, EM, FFF, IMAGIC, MRC, SPIDER, SUPRIM,and TIFF, e.g. --image_file_type=mrc")
@@ -425,10 +471,10 @@ class ProTomo2Aligner(basicScript.BasicScript):
 			help="Enable/disable binning of raw image files, e.g. --binning=false")
 		
 		self.parser.add_option("--select_images", dest="select_images",  default="0-999999",
-			help='Select specific images in the tilt series, e.g. --select_images="1,2,5-7"')
+			help='Select specific images in the tilt-series, e.g. --select_images="1,2,5-7"')
 		
 		self.parser.add_option("--exclude_images", dest="exclude_images",  default="999999",
-			help='Select specific images in the tilt series, e.g. --exclude_images="1,2,5-7"')
+			help='Select specific images in the tilt-series, e.g. --exclude_images="1,2,5-7"')
 		
 		self.parser.add_option("--logging", dest="logging",  default="true",
 			help="Enable diagnostic terminal output, e.g. --logging=false")
@@ -487,6 +533,9 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		self.parser.add_option("--r4_mask_width_x", dest="r4_mask_width_x",  default="1024",
 			help="Rectangular mask width (x), e.g. --r4_mask_width_x=2")
 		
+		self.parser.add_option("--r5_mask_width_x", dest="r5_mask_width_x",  default="1024",
+			help="Rectangular mask width (x), e.g. --r5_mask_width_x=2")
+		
 		self.parser.add_option("--mask_width_y", dest="mask_width_y",  default="1024",
 			help="Rectangular mask width (y), e.g. --mask_width_y=2")
 		
@@ -501,6 +550,9 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		
 		self.parser.add_option("--r4_mask_width_y", dest="r4_mask_width_y",  default="1024",
 			help="Rectangular mask width (y), e.g. --r4_mask_width_y=2")
+		
+		self.parser.add_option("--r5_mask_width_y", dest="r5_mask_width_y",  default="1024",
+			help="Rectangular mask width (y), e.g. --r5_mask_width_y=2")
 		
 		self.parser.add_option("--mask_apod_x", dest="mask_apod_x",  default="10",
 			help="Apodization for rectangular and ellipsoidal masks, e.g. --mask_apod_x=10")
@@ -517,6 +569,9 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		self.parser.add_option("--r4_mask_apod_x", dest="r4_mask_apod_x",  default="10",
 			help="Apodization for rectangular and ellipsoidal masks, e.g. --r4_mask_apod_x=10")
 		
+		self.parser.add_option("--r5_mask_apod_x", dest="r5_mask_apod_x",  default="10",
+			help="Apodization for rectangular and ellipsoidal masks, e.g. --r5_mask_apod_x=10")
+		
 		self.parser.add_option("--mask_apod_y", dest="mask_apod_y",  default="10",
 			help="Apodization for rectangular and ellipsoidal masks, e.g. --mask_apod_y=10")
 		
@@ -532,6 +587,9 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		self.parser.add_option("--r4_mask_apod_y", dest="r4_mask_apod_y",  default="10",
 			help="Apodization for rectangular and ellipsoidal masks, e.g. --r4_mask_apod_y=10")
 		
+		self.parser.add_option("--r5_mask_apod_y", dest="r5_mask_apod_y",  default="10",
+			help="Apodization for rectangular and ellipsoidal masks, e.g. --r5_mask_apod_y=10")
+		
 		self.parser.add_option("--coarse", dest="coarse",  default=False,
 			help="To perform an initial coarse alignment, set to 'True'. Requires gridsearch, corr, and mask options, e.g. --coarse=True")
 		
@@ -546,7 +604,10 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		
 		self.parser.add_option("--retry_shrink", dest="retry_shrink",  type="float",  default="0.9",
 			help="How much to shrink the window size from the previous retry, e.g. --retry_shrink=0.75", metavar="float")
-	
+		
+		self.parser.add_option("--create_tilt_video", dest="create_tilt_video",
+			help="Appion: Create a tilt-series video for depiction, e.g. --create_tilt_video=false")
+		
 		self.parser.add_option("--create_reconstruction", dest="create_reconstruction",
 			help="Appion: Create a reconstruction and video for depiction, e.g. --create_reconstruction=false")
 		
@@ -603,7 +664,14 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		self.params['highpass_apod_x'] = self.params['pixelsize']/self.params['highpass_apod_x']
 		self.params['highpass_apod_y'] = self.params['pixelsize']/self.params['highpass_apod_y']
 		
+		#Backup lp values for depiction purposes
+		r1_lp=0
+		r2_lp=0
+		r3_lp=0
+		r4_lp=0
+		r5_lp=0
 		if coarse == "False":
+			r1_lp=(self.params['r1_lowpass_diameter_x']+self.params['r1_lowpass_diameter_y'])/2
 			self.params['r1_lowpass_diameter_x'] = 2*self.params['pixelsize']/self.params['r1_lowpass_diameter_x']
 			self.params['r1_lowpass_diameter_y'] = 2*self.params['pixelsize']/self.params['r1_lowpass_diameter_y']
 			self.params['r1_highpass_diameter_x'] = 2*self.params['pixelsize']/self.params['r1_highpass_diameter_x']
@@ -613,6 +681,7 @@ class ProTomo2Aligner(basicScript.BasicScript):
 			self.params['r1_highpass_apod_x'] = self.params['pixelsize']/self.params['r1_highpass_apod_x']
 			self.params['r1_highpass_apod_y'] = self.params['pixelsize']/self.params['r1_highpass_apod_y']
 			try:
+				r2_lp=(self.params['r2_lowpass_diameter_x']+self.params['r2_lowpass_diameter_y'])/2
 				self.params['r2_lowpass_diameter_x'] = 2*self.params['pixelsize']/self.params['r2_lowpass_diameter_x']
 			except:
 				pass
@@ -645,6 +714,7 @@ class ProTomo2Aligner(basicScript.BasicScript):
 			except:
 				pass
 			try:
+				r3_lp=(self.params['r3_lowpass_diameter_x']+self.params['r3_lowpass_diameter_y'])/2
 				self.params['r3_lowpass_diameter_x'] = 2*self.params['pixelsize']/self.params['r3_lowpass_diameter_x']
 			except:
 				pass
@@ -677,6 +747,7 @@ class ProTomo2Aligner(basicScript.BasicScript):
 			except:
 				pass
 			try:
+				r4_lp=(self.params['r4_lowpass_diameter_x']+self.params['r4_lowpass_diameter_y'])/2
 				self.params['r4_lowpass_diameter_x'] = 2*self.params['pixelsize']/self.params['r4_lowpass_diameter_x']
 			except:
 				pass
@@ -708,6 +779,41 @@ class ProTomo2Aligner(basicScript.BasicScript):
 				self.params['r4_highpass_apod_y'] = self.params['pixelsize']/self.params['r4_highpass_apod_y']
 			except:
 				pass
+			try:
+				r5_lp=(self.params['r5_lowpass_diameter_x']+self.params['r5_lowpass_diameter_y'])/2
+				self.params['r5_lowpass_diameter_x'] = 2*self.params['pixelsize']/self.params['r5_lowpass_diameter_x']
+			except:
+				pass
+			try:
+				self.params['r5_lowpass_diameter_y'] = 2*self.params['pixelsize']/self.params['r5_lowpass_diameter_y']
+			except:
+				pass
+			try:
+				self.params['r5_highpass_diameter_x'] = 2*self.params['pixelsize']/self.params['r5_highpass_diameter_x']
+			except:
+				pass
+			try:
+				self.params['r5_highpass_diameter_y'] = 2*self.params['pixelsize']/self.params['r5_highpass_diameter_y']
+			except:
+				pass
+			try:
+				self.params['r5_lowpass_apod_x'] = self.params['pixelsize']/self.params['r5_lowpass_apod_x']
+			except:
+				pass
+			try:
+				self.params['r5_lowpass_apod_y'] = self.params['pixelsize']/self.params['r5_lowpass_apod_y']
+			except:
+				pass
+			try:
+				self.params['r5_highpass_apod_x'] = self.params['pixelsize']/self.params['r5_highpass_apod_x']
+			except:
+				pass
+			try:
+				self.params['r5_highpass_apod_y'] = self.params['pixelsize']/self.params['r5_highpass_apod_y']
+			except:
+				pass
+		
+		return r1_lp, r2_lp, r3_lp, r4_lp, r5_lp
 	
 	#=====================
 	def start(self):
@@ -715,6 +821,10 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		###setup
 		global rundir
 		rundir=self.params['rundir']
+		global cwd
+		global time_start
+		f = open('%s/protomo2aligner.log' % cwd,'a');f.write("\n")
+		f.write('Start time: %s\n' % time_start)
 		self.params['raw_path']=os.path.join(rundir,'raw')
 		raw_path=self.params['raw_path']
 		if os.path.exists(rundir):
@@ -733,23 +843,29 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		###Do queries and make tlt file if first run
 		if self.params['coarse'] == 'True':
 			apDisplay.printMsg('Preparing raw images and initial tilt file')
+			f.write('Preparing raw images and initial tilt file\n')
 			self.params['maxtilt'] = apProTomo2Prep.prepareTiltFile(self.params['sessionname'], seriesname, tiltfilename, int(self.params['tiltseries']), raw_path, link=self.params['link'], coarse="True")
 			#Removing highly shifted images
 			bad_images, bad_kept_images=apProTomo2Aligner.removeHighlyShiftedImages(tiltfilename_full, self.params['dimx'], self.params['dimy'], self.params['shift_limit'], self.params['angle_limit'])
 			if bad_images:
 				apDisplay.printMsg('Images %s were removed from the tilt file because their shifts exceed %s%% of the (x) and/or (y) dimensions.' % (bad_images, self.params['shift_limit']))
+				f.write('Images %s were removed from the tilt file because their shifts exceed %s%% of the (x) and/or (y) dimensions.\n' % (bad_images, self.params['shift_limit']))
 				if bad_kept_images:
 					apDisplay.printMsg('Images %s exceeded the allowed shift, but were at tilt angles less than the %s degree angle limit.' % (bad_kept_images, self.params['angle_limit']))
+					f.write('Images %s exceeded the allowed shift, but were at tilt angles less than the %s degree angle limit.\n' % (bad_kept_images, self.params['angle_limit']))
 			else:
 				if bad_kept_images:
 					apDisplay.printMsg('Images %s exceeded the allowed shift, but were at tilt angles less than the %s degree angle limit.' % (bad_kept_images, self.params['angle_limit']))
+					f.write('Images %s exceeded the allowed shift, but were at tilt angles less than the %s degree angle limit.\n' % (bad_kept_images, self.params['angle_limit']))
 				apDisplay.printMsg('No images were removed from the .tlt file due to high shifts.')
+				f.write('No images were removed from the .tlt file due to high shifts.\n')
 		else: #Just get maxtilt
 			self.params['maxtilt'] = apProTomo2Prep.prepareTiltFile(self.params['sessionname'], seriesname, tiltfilename, int(self.params['tiltseries']), raw_path, link=self.params['link'], coarse="False")
 		
 		#Protomo doesn't like how proc2d writes mrc files. Our frame alignment script uses proc2d. This function and its options are hidden from general users.
 		if (self.params['coarse'] == 'True' and self.params['fix_frames'] == "True" and self.params['link'] == "False"):
 			apDisplay.printMsg("Fixing raw image mrcs...")
+			f.write('Fixing raw image mrcs...\n')
 			apProTomo2Aligner.fixFrameMrcs(raw_path)
 			
 		[p.join() for p in mp.active_children()]	
@@ -760,7 +876,7 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		rawimagecount=int(rawimagecount)
 		
 		###convert angstroms to pixels
-		self.pixelsToAngstroms(coarse=self.params['coarse'])
+		r1_lp, r2_lp, r3_lp, r4_lp, r5_lp = self.pixelsToAngstroms(coarse=self.params['coarse'])
 		
 		###create param file
 		param_out=seriesname+'.param'
@@ -778,16 +894,23 @@ class ProTomo2Aligner(basicScript.BasicScript):
 			apProTomo2Prep.modifyParamFile(coarse_param_in, coarse_param_out_full, paramdict)
 			coarse_seriesparam=protomo.param(coarse_param_out_full)
 
-		apDisplay.printMsg('Starting protomo alignment')
+		apDisplay.printMsg('Starting Protomo alignment')
+		f.write('Starting Protomo alignment\n')
 		
 		#create series object and use presence of i3t to determine if protomo has been run once already
 		
 		if self.params['coarse'] == 'True':
 			jobs1=[]
-			apDisplay.printMsg("Creating initial tilt series video in the background...")
-			jobs1.append(mp.Process(target=apProTomo2Aligner.makeTiltSeriesVideos, args=(seriesname, 0, tiltfilename_full, rawimagecount, rundir, raw_path, self.params['pixelsize'], self.params['map_sampling'], self.params['image_file_type'], self.params['video_type'], "Initial",)))
-			for job in jobs1:
-				job.start()
+			if self.params['create_tilt_video'] == "true":
+				apDisplay.printMsg("Creating initial tilt-series video in the background...")
+				f.write('Creating initial tilt-series video in the background...\n')
+				jobs1.append(mp.Process(target=apProTomo2Aligner.makeTiltSeriesVideos, args=(seriesname, 0, tiltfilename_full, rawimagecount, rundir, raw_path, self.params['pixelsize'], self.params['map_sampling'], self.params['image_file_type'], self.params['video_type'], "True", "Initial",)))
+				for job in jobs1:
+					job.start()
+			else:
+				apDisplay.printMsg("Skipping initial tilt-series depiction\n")
+				f.write('Skipping initial tilt-series depiction\n')
+			
 			coarse_i3tfile=rundir+'/'+'coarse_'+seriesname+'.i3t'
 			if os.path.exists(coarse_i3tfile):
 				series=protomo.series(coarse_seriesparam)
@@ -816,6 +939,7 @@ class ProTomo2Aligner(basicScript.BasicScript):
 						new_region_x = int(new_region_x*self.params['retry_shrink'])
 						new_region_y = int(new_region_y*self.params['retry_shrink'])
 						apDisplay.printMsg("Coarse Alignment failed. Retry #%s with %s%% smaller Window Size: (%s, %s)..." % (retry, 100-int(100*self.params['retry_shrink']), new_region_x, new_region_y))
+						f.write('Coarse Alignment failed. Retry #%s with %s%% smaller Window Size: (%s, %s)...\n' % (retry, 100-int(100*self.params['retry_shrink']), new_region_x, new_region_y))
 						newsize = "{ %s %s }" % (new_region_x, new_region_y)
 						series.setparam("window.size", newsize)
 					retry+=1
@@ -828,6 +952,10 @@ class ProTomo2Aligner(basicScript.BasicScript):
 						apDisplay.printMsg("Window Size (x) was windowed down to %s" % (new_region_x*self.params['sampling']))
 						apDisplay.printMsg("Window Size (y) was windowed down to %s" % (new_region_y*self.params['sampling']))
 						apDisplay.printMsg("Put values less than these into the corresponding parameter boxes on the Protomo Coarse Alignment Appion webpage and try again.\n")
+						f.write('Coarse Alignment failed after rescaling the search area %s time(s).\n' % (retry-1))
+						f.write('Window Size (x) was windowed down to %s\n' % (new_region_x*self.params['sampling']))
+						f.write('Window Size (y) was windowed down to %s\n' % (new_region_y*self.params['sampling']))
+						f.write('Put values less than these into the corresponding parameter boxes on the Protomo Coarse Alignment Appion webpage and try again.\n')
 						brk=1
 					pass
 			
@@ -859,6 +987,7 @@ class ProTomo2Aligner(basicScript.BasicScript):
 			series.geom(1).write(tiltfile)
 			
 			apDisplay.printMsg("Creating Depiction Videos in Parallel...")
+			f.write('Creating Depiction Videos in Parallel...\n')
 			
 			# For multiprocessing
 			jobs2=[]
@@ -867,9 +996,14 @@ class ProTomo2Aligner(basicScript.BasicScript):
 			jobs2.append(mp.Process(target=apProTomo2Aligner.makeCoarseCorrPeakVideos, args=(name, 0, rundir, self.params['protomo_outdir'], self.params['video_type'], "Coarse",)))
 			
 			# Make tiltseries video for depiction
-			apDisplay.printMsg("Creating Coarse Alignment tilt series video...")
-			jobs2.append(mp.Process(target=apProTomo2Aligner.makeTiltSeriesVideos, args=(seriesname, 0, tiltfile, rawimagecount, rundir, raw_path, self.params['pixelsize'], self.params['map_sampling'], self.params['image_file_type'], self.params['video_type'], "Coarse",)))
-			
+			if self.params['create_tilt_video'] == "true":
+				apDisplay.printMsg("Creating Coarse Alignment tilt-series video...")
+				f.write('Creating Coarse Alignment tilt-series video...\n')
+				jobs2.append(mp.Process(target=apProTomo2Aligner.makeTiltSeriesVideos, args=(seriesname, 0, tiltfile, rawimagecount, rundir, raw_path, self.params['pixelsize'], self.params['map_sampling'], self.params['image_file_type'], self.params['video_type'], "True", "Coarse",)))
+			else:
+				apDisplay.printMsg("Skipping tilt-series depiction\n")
+				f.write('Skipping tilt-series depiction\n')
+				
 			# Send off processes in the background
 			for job in jobs2:
 				job.start()
@@ -878,11 +1012,12 @@ class ProTomo2Aligner(basicScript.BasicScript):
 			if self.params['create_reconstruction'] == "true":			
 				# Create intermediate reconstruction
 				apDisplay.printMsg("Generating Coarse Alignment reconstruction...")
+				f.write('Generating Coarse Alignment reconstruction...\n')
 				series.mapfile()
-				apProTomo2Aligner.makeReconstructionVideos(name, 0, rundir, self.params['protomo_outdir'], self.params['pixelsize'], self.params['sampling'], self.params['map_sampling'], self.params['video_type'], self.params['keep_recons'], align_step="Coarse")
-				
+				apProTomo2Aligner.makeReconstructionVideos(name, 0, rundir, self.params['protomo_outdir'], self.params['pixelsize'], self.params['sampling'], self.params['map_sampling'], self.params['video_type'], self.params['keep_recons'], "True", align_step="Coarse")
 			else:
 				apDisplay.printMsg("Skipping reconstruction depiction\n")
+				f.write('Skipping reconstruction depiction\n')
 			
 			# Join processes
 			for job in jobs1:
@@ -896,14 +1031,21 @@ class ProTomo2Aligner(basicScript.BasicScript):
 			if final_retry > 0:
 				if bad_images:
 					apDisplay.printMsg('Images %s were removed from the tilt file because their shifts exceed %s%% of the (x) and/or (y) dimensions.' % (bad_images, self.params['shift_limit']))
+					f.write('Images %s were removed from the tilt file because their shifts exceed %s%% of the (x) and/or (y) dimensions.\n' % (bad_images, self.params['shift_limit']))
 				else:
 					apDisplay.printMsg('No images were removed from the .tlt file due to high shifts.')
+					f.write('No images were removed from the .tlt file due to high shifts.\n')
 				apDisplay.printMsg("Coarse Alignment finished after retrying %s time(s) due to the sampled search area being too small." % (final_retry))
 				apDisplay.printMsg("Window Size (x) was windowed down to %s" % (new_region_x*self.params['sampling']))
 				apDisplay.printMsg("Window Size (y) was windowed down to %s" % (new_region_y*self.params['sampling']))
 				apDisplay.printMsg("Put these values into the corresponding parameter boxes on the Protomo Refinement Appion webpage.\n")
+				f.write('Coarse Alignment finished after retrying %s time(s) due to the sampled search area being too small.\n' % (final_retry))
+				f.write('Window Size (x) was windowed down to %s\n' % (new_region_x*self.params['sampling']))
+				f.write('Window Size (y) was windowed down to %s\n' % (new_region_y*self.params['sampling']))
+				f.write('Put these values into the corresponding parameter boxes on the Protomo Refinement Appion webpage.\n' % (final_retry))
 			
 			apDisplay.printMsg("Coarse Alignment finished!\n")
+			f.write('Coarse Alignment finished!\n')
 
 		else: # Normal refinement with area matching
 			name=seriesname
@@ -919,60 +1061,124 @@ class ProTomo2Aligner(basicScript.BasicScript):
 			#rewind to previous iteration if requested
 			if (type(self.params['restart_cycle']) == int):
 				apDisplay.printMsg("Rewinding to iteration %s" % (self.params['restart_cycle']))
+				f.write('Rewinding to iteration %s\n' % (self.params['restart_cycle']))
 				start=self.params['restart_cycle']
 				series.setcycle(start-1)
 			
 			
 			
-			iters=self.params['r1_iters']+self.params['r2_iters']+self.params['r3_iters']+self.params['r4_iters']
-			round1={"window.size":"{ %s %s }" % (self.params['r1_region_x'],self.params['r1_region_y']),"window.lowpass.diameter":"{ %s %s }" % (self.params['r1_lowpass_diameter_x'],self.params['r1_lowpass_diameter_y']),"map.lowpass.diameter":"{ %s %s }" % (self.params['r1_lowpass_diameter_x'],self.params['r1_lowpass_diameter_y']),"window.lowpass.apodization":"{ %s %s }" % (self.params['r1_lowpass_apod_x'],self.params['r1_lowpass_apod_y']),"map.lowpass.apodization":"{ %s %s }" % (self.params['r1_lowpass_apod_x'],self.params['r1_lowpass_apod_y']),"window.highpass.apodization":"{ %s %s }" % (self.params['r1_highpass_apod_x'],self.params['r1_highpass_apod_y']),"window.highpass.diameter":"{ %s %s }" % (self.params['r1_highpass_diameter_x'],self.params['r1_highpass_diameter_y']),"sampling":"%s" % (self.params['r1_sampling']),"map.sampling":"%s" % (self.params['r1_sampling']),"preprocess.mask.kernel":"{ %s %s }" % (self.params['r1_kernel_x'],self.params['r1_kernel_y']),"align.peaksearch.radius":"{ %s %s }" % (self.params['r1_peak_search_radius_x'],self.params['r1_peak_search_radius_y']),"window.mask.width":"{ %s %s }" % (self.params['r1_mask_width_x'],self.params['r1_mask_width_y']),"align.mask.width":"{ %s %s }" % (self.params['r1_mask_width_x'],self.params['r1_mask_width_y']),"window.mask.apodization":"{ %s %s }" % (self.params['r1_mask_apod_x'],self.params['r1_mask_apod_y']),"align.mask.apodization":"{ %s %s }" % (self.params['r1_mask_apod_x'],self.params['r1_mask_apod_y'])}			
-			round2={"window.size":"{ %s %s }" % (self.params['r2_region_x'],self.params['r2_region_y']),"window.lowpass.diameter":"{ %s %s }" % (self.params['r2_lowpass_diameter_x'],self.params['r2_lowpass_diameter_y']),"map.lowpass.diameter":"{ %s %s }" % (self.params['r2_lowpass_diameter_x'],self.params['r2_lowpass_diameter_y']),"window.lowpass.apodization":"{ %s %s }" % (self.params['r2_lowpass_apod_x'],self.params['r2_lowpass_apod_y']),"map.lowpass.apodization":"{ %s %s }" % (self.params['r2_lowpass_apod_x'],self.params['r2_lowpass_apod_y']),"window.highpass.apodization":"{ %s %s }" % (self.params['r2_highpass_apod_x'],self.params['r2_highpass_apod_y']),"window.highpass.diameter":"{ %s %s }" % (self.params['r2_highpass_diameter_x'],self.params['r2_highpass_diameter_y']),"sampling":"%s" % (self.params['r2_sampling']),"map.sampling":"%s" % (self.params['r2_sampling']),"preprocess.mask.kernel":"{ %s %s }" % (self.params['r2_kernel_x'],self.params['r2_kernel_y']),"align.peaksearch.radius":"{ %s %s }" % (self.params['r2_peak_search_radius_x'],self.params['r2_peak_search_radius_y']),"window.mask.width":"{ %s %s }" % (self.params['r2_mask_width_x'],self.params['r2_mask_width_y']),"align.mask.width":"{ %s %s }" % (self.params['r2_mask_width_x'],self.params['r2_mask_width_y']),"window.mask.apodization":"{ %s %s }" % (self.params['r2_mask_apod_x'],self.params['r2_mask_apod_y']),"align.mask.apodization":"{ %s %s }" % (self.params['r2_mask_apod_x'],self.params['r2_mask_apod_y'])}
-			round3={"window.size":"{ %s %s }" % (self.params['r3_region_x'],self.params['r3_region_y']),"window.lowpass.diameter":"{ %s %s }" % (self.params['r3_lowpass_diameter_x'],self.params['r3_lowpass_diameter_y']),"map.lowpass.diameter":"{ %s %s }" % (self.params['r3_lowpass_diameter_x'],self.params['r3_lowpass_diameter_y']),"window.lowpass.apodization":"{ %s %s }" % (self.params['r3_lowpass_apod_x'],self.params['r3_lowpass_apod_y']),"map.lowpass.apodization":"{ %s %s }" % (self.params['r3_lowpass_apod_x'],self.params['r3_lowpass_apod_y']),"window.highpass.apodization":"{ %s %s }" % (self.params['r3_highpass_apod_x'],self.params['r3_highpass_apod_y']),"window.highpass.diameter":"{ %s %s }" % (self.params['r3_highpass_diameter_x'],self.params['r3_highpass_diameter_y']),"sampling":"%s" % (self.params['r3_sampling']),"map.sampling":"%s" % (self.params['r3_sampling']),"preprocess.mask.kernel":"{ %s %s }" % (self.params['r3_kernel_x'],self.params['r3_kernel_y']),"align.peaksearch.radius":"{ %s %s }" % (self.params['r3_peak_search_radius_x'],self.params['r3_peak_search_radius_y']),"window.mask.width":"{ %s %s }" % (self.params['r3_mask_width_x'],self.params['r3_mask_width_y']),"align.mask.width":"{ %s %s }" % (self.params['r3_mask_width_x'],self.params['r3_mask_width_y']),"window.mask.apodization":"{ %s %s }" % (self.params['r3_mask_apod_x'],self.params['r3_mask_apod_y']),"align.mask.apodization":"{ %s %s }" % (self.params['r3_mask_apod_x'],self.params['r3_mask_apod_y'])}
-			round4={"window.size":"{ %s %s }" % (self.params['r4_region_x'],self.params['r4_region_y']),"window.lowpass.diameter":"{ %s %s }" % (self.params['r4_lowpass_diameter_x'],self.params['r4_lowpass_diameter_y']),"map.lowpass.diameter":"{ %s %s }" % (self.params['r4_lowpass_diameter_x'],self.params['r4_lowpass_diameter_y']),"window.lowpass.apodization":"{ %s %s }" % (self.params['r4_lowpass_apod_x'],self.params['r4_lowpass_apod_y']),"map.lowpass.apodization":"{ %s %s }" % (self.params['r4_lowpass_apod_x'],self.params['r4_lowpass_apod_y']),"window.highpass.apodization":"{ %s %s }" % (self.params['r4_highpass_apod_x'],self.params['r4_highpass_apod_y']),"window.highpass.diameter":"{ %s %s }" % (self.params['r4_highpass_diameter_x'],self.params['r4_highpass_diameter_y']),"sampling":"%s" % (self.params['r4_sampling']),"map.sampling":"%s" % (self.params['r4_sampling']),"preprocess.mask.kernel":"{ %s %s }" % (self.params['r4_kernel_x'],self.params['r4_kernel_y']),"align.peaksearch.radius":"{ %s %s }" % (self.params['r4_peak_search_radius_x'],self.params['r4_peak_search_radius_y']),"window.mask.width":"{ %s %s }" % (self.params['r4_mask_width_x'],self.params['r4_mask_width_y']),"align.mask.width":"{ %s %s }" % (self.params['r4_mask_width_x'],self.params['r4_mask_width_y']),"window.mask.apodization":"{ %s %s }" % (self.params['r4_mask_apod_x'],self.params['r4_mask_apod_y']),"align.mask.apodization":"{ %s %s }" % (self.params['r4_mask_apod_x'],self.params['r4_mask_apod_y'])}
+			iters=self.params['r1_iters']+self.params['r2_iters']+self.params['r3_iters']+self.params['r4_iters']+self.params['r5_iters']
+			round1={"window.size":"{ %s %s }" % (self.params['r1_region_x'],self.params['r1_region_y']),"window.lowpass.diameter":"{ %s %s }" % (self.params['r1_lowpass_diameter_x'],self.params['r1_lowpass_diameter_y']),"map.lowpass.diameter":"{ %s %s }" % (self.params['r1_lowpass_diameter_x'],self.params['r1_lowpass_diameter_y']),"window.lowpass.apodization":"{ %s %s }" % (self.params['r1_lowpass_apod_x'],self.params['r1_lowpass_apod_y']),"window.highpass.apodization":"{ %s %s }" % (self.params['r1_highpass_apod_x'],self.params['r1_highpass_apod_y']),"window.highpass.diameter":"{ %s %s }" % (self.params['r1_highpass_diameter_x'],self.params['r1_highpass_diameter_y']),"sampling":"%s" % (self.params['r1_sampling']),"map.sampling":"%s" % (self.params['r1_sampling']),"preprocess.mask.kernel":"{ %s %s }" % (self.params['r1_kernel_x'],self.params['r1_kernel_y']),"align.peaksearch.radius":"{ %s %s }" % (self.params['r1_peak_search_radius_x'],self.params['r1_peak_search_radius_y']),"window.mask.width":"{ %s %s }" % (self.params['r1_mask_width_x'],self.params['r1_mask_width_y']),"align.mask.width":"{ %s %s }" % (self.params['r1_mask_width_x'],self.params['r1_mask_width_y']),"window.mask.apodization":"{ %s %s }" % (self.params['r1_mask_apod_x'],self.params['r1_mask_apod_y']),"align.mask.apodization":"{ %s %s }" % (self.params['r1_mask_apod_x'],self.params['r1_mask_apod_y'])}			
+			round2={"window.size":"{ %s %s }" % (self.params['r2_region_x'],self.params['r2_region_y']),"window.lowpass.diameter":"{ %s %s }" % (self.params['r2_lowpass_diameter_x'],self.params['r2_lowpass_diameter_y']),"map.lowpass.diameter":"{ %s %s }" % (self.params['r2_lowpass_diameter_x'],self.params['r2_lowpass_diameter_y']),"window.lowpass.apodization":"{ %s %s }" % (self.params['r2_lowpass_apod_x'],self.params['r2_lowpass_apod_y']),"window.highpass.apodization":"{ %s %s }" % (self.params['r2_highpass_apod_x'],self.params['r2_highpass_apod_y']),"window.highpass.diameter":"{ %s %s }" % (self.params['r2_highpass_diameter_x'],self.params['r2_highpass_diameter_y']),"sampling":"%s" % (self.params['r2_sampling']),"map.sampling":"%s" % (self.params['r2_sampling']),"preprocess.mask.kernel":"{ %s %s }" % (self.params['r2_kernel_x'],self.params['r2_kernel_y']),"align.peaksearch.radius":"{ %s %s }" % (self.params['r2_peak_search_radius_x'],self.params['r2_peak_search_radius_y']),"window.mask.width":"{ %s %s }" % (self.params['r2_mask_width_x'],self.params['r2_mask_width_y']),"align.mask.width":"{ %s %s }" % (self.params['r2_mask_width_x'],self.params['r2_mask_width_y']),"window.mask.apodization":"{ %s %s }" % (self.params['r2_mask_apod_x'],self.params['r2_mask_apod_y']),"align.mask.apodization":"{ %s %s }" % (self.params['r2_mask_apod_x'],self.params['r2_mask_apod_y'])}
+			round3={"window.size":"{ %s %s }" % (self.params['r3_region_x'],self.params['r3_region_y']),"window.lowpass.diameter":"{ %s %s }" % (self.params['r3_lowpass_diameter_x'],self.params['r3_lowpass_diameter_y']),"map.lowpass.diameter":"{ %s %s }" % (self.params['r3_lowpass_diameter_x'],self.params['r3_lowpass_diameter_y']),"window.lowpass.apodization":"{ %s %s }" % (self.params['r3_lowpass_apod_x'],self.params['r3_lowpass_apod_y']),"window.highpass.apodization":"{ %s %s }" % (self.params['r3_highpass_apod_x'],self.params['r3_highpass_apod_y']),"window.highpass.diameter":"{ %s %s }" % (self.params['r3_highpass_diameter_x'],self.params['r3_highpass_diameter_y']),"sampling":"%s" % (self.params['r3_sampling']),"map.sampling":"%s" % (self.params['r3_sampling']),"preprocess.mask.kernel":"{ %s %s }" % (self.params['r3_kernel_x'],self.params['r3_kernel_y']),"align.peaksearch.radius":"{ %s %s }" % (self.params['r3_peak_search_radius_x'],self.params['r3_peak_search_radius_y']),"window.mask.width":"{ %s %s }" % (self.params['r3_mask_width_x'],self.params['r3_mask_width_y']),"align.mask.width":"{ %s %s }" % (self.params['r3_mask_width_x'],self.params['r3_mask_width_y']),"window.mask.apodization":"{ %s %s }" % (self.params['r3_mask_apod_x'],self.params['r3_mask_apod_y']),"align.mask.apodization":"{ %s %s }" % (self.params['r3_mask_apod_x'],self.params['r3_mask_apod_y'])}
+			round4={"window.size":"{ %s %s }" % (self.params['r4_region_x'],self.params['r4_region_y']),"window.lowpass.diameter":"{ %s %s }" % (self.params['r4_lowpass_diameter_x'],self.params['r4_lowpass_diameter_y']),"map.lowpass.diameter":"{ %s %s }" % (self.params['r4_lowpass_diameter_x'],self.params['r4_lowpass_diameter_y']),"window.lowpass.apodization":"{ %s %s }" % (self.params['r4_lowpass_apod_x'],self.params['r4_lowpass_apod_y']),"window.highpass.apodization":"{ %s %s }" % (self.params['r4_highpass_apod_x'],self.params['r4_highpass_apod_y']),"window.highpass.diameter":"{ %s %s }" % (self.params['r4_highpass_diameter_x'],self.params['r4_highpass_diameter_y']),"sampling":"%s" % (self.params['r4_sampling']),"map.sampling":"%s" % (self.params['r4_sampling']),"preprocess.mask.kernel":"{ %s %s }" % (self.params['r4_kernel_x'],self.params['r4_kernel_y']),"align.peaksearch.radius":"{ %s %s }" % (self.params['r4_peak_search_radius_x'],self.params['r4_peak_search_radius_y']),"window.mask.width":"{ %s %s }" % (self.params['r4_mask_width_x'],self.params['r4_mask_width_y']),"align.mask.width":"{ %s %s }" % (self.params['r4_mask_width_x'],self.params['r4_mask_width_y']),"window.mask.apodization":"{ %s %s }" % (self.params['r4_mask_apod_x'],self.params['r4_mask_apod_y']),"align.mask.apodization":"{ %s %s }" % (self.params['r4_mask_apod_x'],self.params['r4_mask_apod_y'])}
+			round5={"window.size":"{ %s %s }" % (self.params['r5_region_x'],self.params['r5_region_y']),"window.lowpass.diameter":"{ %s %s }" % (self.params['r5_lowpass_diameter_x'],self.params['r5_lowpass_diameter_y']),"map.lowpass.diameter":"{ %s %s }" % (self.params['r5_lowpass_diameter_x'],self.params['r5_lowpass_diameter_y']),"window.lowpass.apodization":"{ %s %s }" % (self.params['r5_lowpass_apod_x'],self.params['r5_lowpass_apod_y']),"window.highpass.apodization":"{ %s %s }" % (self.params['r5_highpass_apod_x'],self.params['r5_highpass_apod_y']),"window.highpass.diameter":"{ %s %s }" % (self.params['r5_highpass_diameter_x'],self.params['r5_highpass_diameter_y']),"sampling":"%s" % (self.params['r5_sampling']),"map.sampling":"%s" % (self.params['r5_sampling']),"preprocess.mask.kernel":"{ %s %s }" % (self.params['r5_kernel_x'],self.params['r5_kernel_y']),"align.peaksearch.radius":"{ %s %s }" % (self.params['r5_peak_search_radius_x'],self.params['r5_peak_search_radius_y']),"window.mask.width":"{ %s %s }" % (self.params['r5_mask_width_x'],self.params['r5_mask_width_y']),"align.mask.width":"{ %s %s }" % (self.params['r5_mask_width_x'],self.params['r5_mask_width_y']),"window.mask.apodization":"{ %s %s }" % (self.params['r5_mask_apod_x'],self.params['r5_mask_apod_y']),"align.mask.apodization":"{ %s %s }" % (self.params['r5_mask_apod_x'],self.params['r5_mask_apod_y'])}
 			switches={"preprocess.mask.gradient":{"%s" % (self.params['gradient']):self.params['gradient_switch']},"preprocess.mask.iter":{"%s" % (self.params['iter_gradient']):self.params['iter_gradient_switch']},"fit.orientation":{"%s" % (self.params['orientation']):self.params['orientation_switch']},"fit.azimuth":{"%s" % (self.params['azimuth']):self.params['azimuth_switch']},"fit.elevation":{"%s" % (self.params['elevation']):self.params['elevation_switch']},"fit.rotation":{"%s" % (self.params['rotation']):self.params['rotation_switch']},"fit.scale":{"%s" % (self.params['scale']):self.params['scale_switch']}}
+			
+			apDisplay.printMsg("Beginning Refinements")
+			f.write('Beginning Refinements')
 			
 			for n in range(iters):
 				#change parameters depending on rounds
-				if (n+1 <= self.params['r1_iters']):
+				if (n+1 == start+1):
 					r=1  #Round number
+					apDisplay.printMsg("Beginning Refinement Iteration #%s, Round #%s\n" % (n+1,r))
+					f.write('Beginning Refinement Iteration #%s, Round #%s\n' % (n+1,r))
+					apDisplay.printMsg("lowpass = %s angstroms\n" % r1_lp)
+					f.write("lowpass = %s angstroms\n" % r1_lp)
 					region_x=self.params['r1_region_x']
 					region_y=self.params['r1_region_y']
 					sampling=self.params['r1_sampling']
+					f.write("\nRound %s\n" % (r))
+					apDisplay.printMsg("Round %s\n" % (r))
 					for val in round1:
+						f.write("%s %s\n" % (val,round1[val]))
+						apDisplay.printMsg("%s %s" % (val,round1[val]))
 						series.setparam(val,round1[val])
-				elif (n+1 == self.params['r1_iters']+self.params['r2_iters']):
+				elif (n+1 == start+self.params['r1_iters']+1):
 					r=2
+					apDisplay.printMsg("Beginning Refinement Iteration #%s, Round #%s\n" % (n+1,r))
+					f.write('Beginning Refinement Iteration #%s, Round #%s\n' % (n+1,r))
+					apDisplay.printMsg("lowpass = %s angstroms\n" % r2_lp)
+					f.write("lowpass = %s angstroms\n" % r2_lp)
 					region_x=self.params['r2_region_x']
 					region_y=self.params['r2_region_y']
 					sampling=self.params['r2_sampling']
+					f.write("\nRound %s,region_x: %s, region_y: %s, sampling: %s\n" % (r,region_x,region_y,sampling))
+					apDisplay.printMsg("Round %s,region_x: %s, region_y: %s, sampling: %s" % (r,region_x,region_y,sampling))
 					for val in round2:
+						f.write("%s %s\n" % (val,round2[val]))
+						apDisplay.printMsg("%s %s" % (val,round2[val]))
 						series.setparam(val,round2[val])
-				elif (n+1 == self.params['r1_iters']+self.params['r2_iters']+self.params['r3_iters']):
+				elif (n+1 == start+self.params['r1_iters']+self.params['r2_iters']+1):
 					r=3
+					apDisplay.printMsg("Beginning Refinement Iteration #%s, Round #%s\n" % (n+1,r))
+					f.write('Beginning Refinement Iteration #%s, Round #%s\n' % (n+1,r))
+					apDisplay.printMsg("lowpass = %s angstroms\n" % r3_lp)
+					f.write("lowpass = %s angstroms\n" % r3_lp)
 					region_x=self.params['r3_region_x']
 					region_y=self.params['r3_region_y']
 					sampling=self.params['r3_sampling']
+					f.write("\nRound %s\n" % (r))
+					apDisplay.printMsg("Round %s\n" % (r))
 					for val in round3:
+						f.write("%s %s\n" % (val,round3[val]))
+						apDisplay.printMsg("%s %s" % (val,round3[val]))
 						series.setparam(val,round3[val])
-				elif (n+1 == self.params['r1_iters']+self.params['r2_iters']+self.params['r3_iters']+self.params['r4_iters']):
+				elif (n+1 == start+self.params['r1_iters']+self.params['r2_iters']+self.params['r3_iters']+1):
 					r=4
+					apDisplay.printMsg("Beginning Refinement Iteration #%s, Round #%s\n" % (n+1,r))
+					f.write('Beginning Refinement Iteration #%s, Round #%s\n' % (n+1,r))
+					apDisplay.printMsg("lowpass = %s angstroms\n" % r4_lp)
+					f.write("lowpass = %s angstroms\n" % r4_lp)
 					region_x=self.params['r4_region_x']
 					region_y=self.params['r4_region_y']
 					sampling=self.params['r4_sampling']
+					f.write("\nRound %s\n" % (r))
+					apDisplay.printMsg("Round %s\n" % (r))
 					for val in round4:
+						f.write("%s %s\n" % (val,round4[val]))
+						apDisplay.printMsg("%s %s" % (val,round4[val]))
 						series.setparam(val,round4[val])
+				elif (n+1 == start+self.params['r1_iters']+self.params['r2_iters']+self.params['r3_iters']+self.params['r4_iters']+1):
+					r=5
+					apDisplay.printMsg("Beginning Refinement Iteration #%s, Round #%s\n" % (n+1,r))
+					f.write('Beginning Refinement Iteration #%s, Round #%s\n' % (n+1,r))
+					apDisplay.printMsg("lowpass = %s angstroms\n" % r5_lp)
+					f.write("lowpass = %s angstroms\n" % r5_lp)
+					region_x=self.params['r5_region_x']
+					region_y=self.params['r5_region_y']
+					sampling=self.params['r5_sampling']
+					f.write("\nRound %s\n" % (r))
+					apDisplay.printMsg("Round %s\n" % (r))
+					for val in round5:
+						f.write("%s %s\n" % (val,round5[val]))
+						apDisplay.printMsg("%s %s" % (val,round5[val]))
+						series.setparam(val,round5[val])
+				else:
+					f.write("No Round parameters changed for Iteration #%s\n" % (n+1))
+					apDisplay.printMsg("No Round parameters changed for Iteration #%s\n" % (n+1))
+					apDisplay.printMsg("Beginning Refinement Iteration #%s, Round #%s\n" % (n+1,r))
+					f.write('Beginning Refinement Iteration #%s, Round #%s\n' % (n+1,r))
 				
 				#change parameters depending on switches
+				toggle=0
 				for switch in switches:
 					for key in switches[switch]:
 						if (switches[switch][key] == n+1):
+							toggle=1
 							if (key == "true"):
 								newval="false"
+								f.write("%s switched from true to false on Iteration #%s" % (switch, n+1))
+								apDisplay.printMsg("%s switched from true to false on Iteration #%s" % (switch, n+1))
 							else:
 								newval="true"
+								f.write("%s switched from false to true on Iteration #%s" % (switch, n+1))
+								apDisplay.printMsg("%s switched from false to true on Iteration #%s" % (switch, n+1))
 							series.setparam(switch,newval)
-				
-				apDisplay.printMsg("Beginning Iteration #%s, Round #%s\n" % (n+1,r))
+				if toggle == 0:
+					f.write("No parameters were switched for Iteration #%s\n" % (n+1))
+					apDisplay.printMsg("No parameters were switched for Iteration #%s\n" % (n+1))
 				
 				#Align and restart alignment if failed
 				retry=0
@@ -985,6 +1191,7 @@ class ProTomo2Aligner(basicScript.BasicScript):
 							new_region_x = int(new_region_x*self.params['retry_shrink'])
 							new_region_y = int(new_region_y*self.params['retry_shrink'])
 							apDisplay.printMsg("Refinement failed. Retry #%s with %s%% smaller Window Size: (%s, %s)..." % (retry, 100-int(100*self.params['retry_shrink']), new_region_x*sampling, new_region_y*sampling))
+							f.write('Refinement failed. Retry #%s with %s%% smaller Window Size: (%s, %s)...\n' % (retry, 100-int(100*self.params['retry_shrink']), new_region_x*sampling, new_region_y*sampling))
 							newsize = "{ %s %s }" % (new_region_x, new_region_y)
 							series.setparam("window.size", newsize)
 						retry+=1
@@ -997,15 +1204,19 @@ class ProTomo2Aligner(basicScript.BasicScript):
 							apDisplay.printMsg("Window Size (x) was windowed down to %s" % (new_region_x*sampling))
 							apDisplay.printMsg("Window Size (y) was windowed down to %s" % (new_region_y*sampling))
 							apDisplay.printMsg("Put values less than these into the corresponding parameter boxes on the Protomo Refinement Appion webpage and try again.\n")
+							f.write('Refinement Iteration #%s failed after resampling the search area %s time(s).\n' % (n+1, retry-1))
+							f.write('Window Size (x) was windowed down to %s\n' % (new_region_x*sampling))
+							f.write('Window Size (y) was windowed down to %s\n' % (new_region_y*sampling))
+							f.write('Put values less than these into the corresponding parameter boxes on the Protomo Refinement Appion webpage and try again.\n')
 							brk=1
 						pass
 
 				if (brk == 1):   #resampling failed, break out of all refinement iterations
 					break
 				
-				it="%02d" % ((n+start))
+				it="%03d" % ((n+start))
 				itt="%02d" % ((n+start+1))
-				ite="_ite%02d" % ((n+start))
+				#ite="_ite%02d" % ((n+start))
 				basename='%s%s' % (name,it)
 				corrfile=basename+'.corr'
 				series.corr(corrfile)
@@ -1018,46 +1229,66 @@ class ProTomo2Aligner(basicScript.BasicScript):
 				
 				#Produce quality assessment statistics and plot image using corrfile information
 				apDisplay.printMsg("Creating quality assessment statistics...")
+				f.write('Creating quality assessment statistics...\n')
 				numcorrfiles=len(glob.glob1(rundir,'*.corr'))
 				for i in range(numcorrfiles):
-					it="%02d" % (i)
+					it="%03d" % (i)
 					basename='%s%s' % (name,it)
 					corrfile=basename+'.corr'
-					apProTomo2Aligner.makeQualityAssessment(name, i, rundir, corrfile)
+					metric=apProTomo2Aligner.makeQualityAssessment(name, i, rundir, corrfile)
 					if i == numcorrfiles-1:
-						apProTomo2Aligner.makeQualityAssessmentImage(name, rundir, self.params['r1_iters'], self.params['r1_sampling'], self.params['r2_iters'], self.params['r2_sampling'], self.params['r3_iters'], self.params['r3_sampling'], self.params['r4_iters'], self.params['r4_sampling'])
-				it="%02d" % ((n+start))
+						apProTomo2Aligner.makeQualityAssessmentImage(self.params['tiltseries'], self.params['sessionname'], name, rundir, self.params['r1_iters'], self.params['r1_sampling'], r1_lp, self.params['r2_iters'], self.params['r2_sampling'], r2_lp, self.params['r3_iters'], self.params['r3_sampling'], r3_lp, self.params['r4_iters'], self.params['r4_sampling'], r4_lp, self.params['r5_iters'], self.params['r5_sampling'], r5_lp)
+				it="%03d" % ((n+start))
 				basename='%s%s' % (name,it)
 				corrfile=basename+'.corr'
 				
 				apDisplay.printMsg("Creating Depiction Videos for Iteration #%s in Parallel..." % (n+1))
+				f.write('Creating Depiction Videos for Iteration #%s in Parallel...\n' % (n+1))
 					
 				# For multiprocessing
 				jobs=[]
 				
 				# Make correlation peak videos for depiction			
 				jobs.append(mp.Process(target=apProTomo2Aligner.makeCoarseCorrPeakVideos, args=(name, it, rundir, self.params['protomo_outdir'], self.params['video_type'], "Refinement")))
-					
+				
 				# Make correlation plot pngs for depiction
 				jobs.append(mp.Process(target=apProTomo2Aligner.makeCorrPlotImages, args=(name, it, rundir, corrfile)))
 				
 				# Make tiltseries video for depiction
-				apDisplay.printMsg("Creating Refinement tilt series video for iteration #%s..." % (n+1))
-				jobs.append(mp.Process(target=apProTomo2Aligner.makeTiltSeriesVideos, args=(seriesname, it, tiltfile, rawimagecount, rundir, raw_path, self.params['pixelsize'], self.params['map_sampling'], self.params['image_file_type'], self.params['video_type'], "Refinement")))
+				if self.params['create_tilt_video'] == "true":
+					apDisplay.printMsg("Creating Refinement tilt-series video for iteration #%s..." % (n+1))
+					f.write('Creating Refinement tilt-series video for iteration #%s...\n' % (n+1))
+					jobs.append(mp.Process(target=apProTomo2Aligner.makeTiltSeriesVideos, args=(seriesname, it, tiltfile, rawimagecount, rundir, raw_path, self.params['pixelsize'], self.params['map_sampling'], self.params['image_file_type'], self.params['video_type'], "True", "Refinement",)))
+				else:
+					apDisplay.printMsg("Skipping tilt-series depiction\n")
+					f.write('Skipping tilt-series depiction\n')
 				
 				# Send off processes in the background
 				for job in jobs:
 					job.start()
 				
 				# Generate intermediate reconstructions and videos for depiction
-				if self.params['create_reconstruction'] == "true":			
+				if self.params['create_reconstruction'] == "true":
 					# Create intermediate reconstruction
 					apDisplay.printMsg("Generating Refinement reconstruction for iteration #%s..." % (n+1))
+					f.write('Generating Refinement reconstruction for iteration #%s...\n' % (n+1))
+					#Rescale if necessary
+					s='r%s_sampling' % r
+					if self.params['map_sampling'] != self.params[s]:
+						#new_map_size_x=int(self.params['map_size_x']*self.params['map_sampling']/self.params[s])
+						#new_map_size_y=int(self.params['map_size_y']*self.params['map_sampling']/self.params[s])
+						#new_map_size_z=int(self.params['map_size_z']*self.params['map_sampling']/self.params[s])
+						#new_map_size="{ %s %s %s }" % (new_map_size_x, new_map_size_y, new_map_size_z)
+						new_map_sampling='%s' % self.params['map_sampling']
+						series.setparam("sampling",new_map_sampling)
+						series.setparam("map.sampling",new_map_sampling)
+						#series.setparam("map.size",new_map_size)
 					series.mapfile()
-					apProTomo2Aligner.makeReconstructionVideos(name, itt, rundir, self.params['protomo_outdir'], self.params['pixelsize'], sampling, self.params['map_sampling'], self.params['video_type'], self.params['keep_recons'], align_step="Refinement")
+					apProTomo2Aligner.makeReconstructionVideos(name, itt, rundir, self.params['protomo_outdir'], self.params['pixelsize'], sampling, self.params['map_sampling'], self.params['video_type'], self.params['keep_recons'], "True", align_step="Refinement")
 					
 				else:
 					apDisplay.printMsg("Skipping reconstruction depiction\n")
+					f.write('Skipping reconstruction depiction\n')
 				
 				# Join processes
 				for job in jobs:
@@ -1067,10 +1298,17 @@ class ProTomo2Aligner(basicScript.BasicScript):
 					apDisplay.printMsg("Refinement Iteration #%s finished after retrying %s time(s) due to the sampled search area being too small." % (n+1, final_retry))
 					apDisplay.printMsg("Window Size (x) was windowed down to %s" % (new_region_x*sampling))
 					apDisplay.printMsg("Window Size (y) was windowed down to %s" % (new_region_y*sampling))
+					f.write('Refinement Iteration #%s finished after retrying %s time(s) due to the sampled search area being too small.\n' % (n+1, final_retry))
+					f.write('Window Size (x) was windowed down to %s\n' % (new_region_x*sampling))
+					f.write('Window Size (y) was windowed down to %s\n' % (new_region_y*sampling))
 					resized_x=new_region_x*sampling
 					resized_y=new_region_y*sampling
-			
-		
+				
+				apDisplay.printMsg("CCMS = %s for Iteration #%s of Tilt-Series #%s." % (round(metric,5), start+n+1, self.params['tiltseries']))
+				f.write('CCMS = %s for Iteration #%s of Tilt-Series #%s.\n' % (round(metric,5), start+n+1, self.params['tiltseries']))
+		time_end = time.strftime("%Yyr%mm%dd-%Hhr%Mm%Ss")
+		f.write("End time: %s" % time_end)
+		f.close()
 		
 #=====================
 #=====================
@@ -1079,6 +1317,6 @@ if __name__ == '__main__':
 	protomo2aligner.start()
 	protomo2aligner.close()
 	protomo2aligner_log=cwd+'/'+'protomo2aligner.log'
-	cleanup="mv %s %s" % (protomo2aligner_log, rundir)
+	cleanup="mv %s %s/protomo2aligner_%s.log" % (protomo2aligner_log, rundir, time_start)
 	os.system(cleanup)
 
