@@ -80,6 +80,7 @@ class TEM(baseinstrument.BaseInstrument):
 		{'name': 'postFilmExposure', 'type': 'method'},
 		{'name': 'preFilmExposure', 'type': 'method'},
 		{'name': 'resetDefocus', 'type': 'method'},
+		{'name': 'relaxBeam', 'type': 'method'},
 		{'name': 'runBufferCycle', 'type': 'method'},
 
 		## optional:
@@ -124,3 +125,9 @@ class TEM(baseinstrument.BaseInstrument):
 		except:
 			# get an error if setProjectionSubModeMapping is not called from leginon/EM.py
 			raise NotImplementedError()
+
+	def relaxBeam(self,steps=3,interval=0.1,totaltime=2):
+		'''
+		Only needed for JEOL scopes
+		'''
+		pass
