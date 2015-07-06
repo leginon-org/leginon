@@ -19,20 +19,20 @@ $_SESSION['erase_coarse'] = 0;
 
 class Protomo2RefineForm extends BasicLayoutForm
 {
-	function __construct( $expId, $extraHTML, $sessionname='', $tiltseries='', $dimx='', $dimy='', $r1_region_x='', $r2_region_x='', $r3_region_x='', $r4_region_x='', $r1_region_y='', $r2_region_y='',
-	$r3_region_y='', $r4_region_y='', $r1_sampling='8', $r2_sampling='4', $r3_sampling='2', $r4_sampling='', $map_sampling='8', $thickness='1000', $pixelsize='', $r1_lp_diam_x='15',
-	$r2_lp_diam_x='15', $r3_lp_diam_x='15', $r4_lp_diam_x='', $r1_lp_apod_x='25', $r2_lp_apod_x='15', $r3_lp_apod_x='10', $r4_lp_apod_x='', $r1_lp_diam_y='15', $r2_lp_diam_y='15',
-	$r3_lp_diam_y='15', $r4_lp_diam_y='', $r1_lp_apod_y='25', $r2_lp_apod_y='15', $r3_lp_apod_y='10', $r4_lp_apod_y='', $r1_hp_diam_x='250', $r2_hp_diam_x='350', $r3_hp_diam_x='500',
-	$r4_hp_diam_x='', $r1_hp_diam_y='250', $r2_hp_diam_y='350', $r3_hp_diam_y='500', $r4_hp_diam_y='', $r1_hp_apod_x='75', $r2_hp_apod_x='100', $r3_hp_apod_x='150', $r4_hp_apod_x='',
-	$r1_hp_apod_y='75', $r2_hp_apod_y='100', $r3_hp_apod_y='150', $r4_hp_apod_y='', $corr_mode='mcf', $raw_path='', $r1_iters='10', $r2_iters='5', $r3_iters='2', $r4_iters='', $param='',
+	function __construct( $expId, $extraHTML, $sessionname='', $tiltseries='', $dimx='', $dimy='', $r1_region_x='', $r2_region_x='', $r3_region_x='', $r4_region_x='', $r5_region_x='', $r1_region_y='', $r2_region_y='',
+	$r3_region_y='', $r4_region_y='', $r5_region_y='', $r1_sampling='8', $r2_sampling='4', $r3_sampling='2', $r4_sampling='1', $r5_sampling='', $map_sampling='8', $thickness='1000', $pixelsize='', $r1_lp_diam_x='15',
+	$r2_lp_diam_x='15', $r3_lp_diam_x='15', $r4_lp_diam_x='15', $r5_lp_diam_x='', $r1_lp_apod_x='25', $r2_lp_apod_x='20', $r3_lp_apod_x='15', $r4_lp_apod_x='10', $r5_lp_apod_x='', $r1_lp_diam_y='15', $r2_lp_diam_y='15',
+	$r3_lp_diam_y='15', $r4_lp_diam_y='15', $r5_lp_diam_y='', $r1_lp_apod_y='25', $r2_lp_apod_y='20', $r3_lp_apod_y='15', $r4_lp_apod_y='10', $r5_lp_apod_y='', $r1_hp_diam_x='250', $r2_hp_diam_x='350', $r3_hp_diam_x='450',
+	$r4_hp_diam_x='550', $r5_hp_diam_x='', $r1_hp_diam_y='250', $r2_hp_diam_y='350', $r3_hp_diam_y='450', $r4_hp_diam_y='550', $r5_hp_diam_y='', $r1_hp_apod_x='75', $r2_hp_apod_x='100', $r3_hp_apod_x='150', $r4_hp_apod_x='200', $r5_hp_apod_x='',
+	$r1_hp_apod_y='75', $r2_hp_apod_y='100', $r3_hp_apod_y='150', $r4_hp_apod_y='200', $r5_hp_apod_y='', $corr_mode='mcf', $raw_path='', $r1_iters='15', $r2_iters='10', $r3_iters='5', $r4_iters='3', $r5_iters='', $param='',
 	$binning='true', $preprocessing='true', $select_images='', $exclude_images='', $border='100', $clip_low='3.5', $clip_high='3.5', $thr_low='', $thr_high='', $gradient='true',
-	$gradient_switch='', $iter_gradient='', $iter_gradient_switch='', $filter='median', $r1_kernel_x='', $r2_kernel_x='', $r3_kernel_x='', $r4_kernel_x='', $r1_kernel_y='', $r2_kernel_y='',
-	$r3_kernel_y='', $r4_kernel_y='', $grow='0', $window_area='0.95', $mask_apod_x='', $mask_apod_y='', $mask_width_x='', $mask_width_y='', $do_estimation='false', $norotations='false',
+	$gradient_switch='', $iter_gradient='', $iter_gradient_switch='', $filter='median', $r1_kernel_x='', $r2_kernel_x='', $r3_kernel_x='', $r4_kernel_x='', $r5_kernel_x='', $r1_kernel_y='', $r2_kernel_y='',
+	$r3_kernel_y='', $r4_kernel_y='', $r5_kernel_y='', $grow='0', $window_area='0.95', $mask_apod_x='', $mask_apod_y='', $mask_width_x='', $mask_width_y='', $do_estimation='false', $norotations='false',
 	$max_correction='', $correlation_size_x='160', $correlation_size_y='160', $r1_peak_search_radius_x='300', $r2_peak_search_radius_x='300', $r3_peak_search_radius_x='300',
-	$r4_peak_search_radius_x='', $r1_peak_search_radius_y='300', $r2_peak_search_radius_y='300', $r3_peak_search_radius_y='300', $r4_peak_search_radius_y='', $orientation='true',
+	$r4_peak_search_radius_x='300', $r5_peak_search_radius_x='', $r1_peak_search_radius_y='300', $r2_peak_search_radius_y='300', $r3_peak_search_radius_y='300', $r4_peak_search_radius_y='300', $r5_peak_search_radius_y='', $orientation='true',
 	$orientation_switch='', $azimuth='true', $azimuth_switch='', $elevation='false', $elevation_switch='', $rotation='true', $rotation_switch='', $scale='false', $scale_switch='',
 	$logging='true', $loglevel='2', $map_size_x='512', $map_size_y='512', $map_size_z='200', $filename_prefix='', $image_file_type='', $cachedir='cache', $protomo_outdir='out',
-	$retry='12', $retry_shrink='0.9', $gui_coarse_align='', $create_reconstruction='true', $keep_recons='false', $video_type='', $restart_cycle='' )
+	$retry='20', $retry_shrink='0.9', $gui_coarse_align='', $create_reconstruction='true', $create_tilt_video='true', $keep_recons='false', $video_type='', $restart_cycle='' )
 	{
 		parent::__construct($expId, $extraHTML);
 		//print "_POST:" . "<br>";
@@ -45,16 +45,22 @@ class Protomo2RefineForm extends BasicLayoutForm
 		global $imageinfo;
 		$_POST['runname']=$_SESSION['runname'];
 		$_POST['outdir']=$_SESSION['outdir'];
-		$r1_region_x = $r2_region_x = $r3_region_x = $imageinfo['dimx']*0.5;
-		$r1_region_y = $r2_region_y = $r3_region_y = $imageinfo['dimy']*0.5;
+		$r1_region_x = $r2_region_x = $r3_region_x = $r4_region_x = $imageinfo['dimx']*0.5;
+		$r1_region_y = $r2_region_y = $r3_region_y = $r4_region_y = $imageinfo['dimy']*0.5;
+		$r1_lp_diam_x = $r2_lp_diam_x = $r3_lp_diam_x = $r4_lp_diam_x = round(pow(10,10)*$imageinfo['pixelsize']*8);
+		$r1_lp_diam_y = $r2_lp_diam_y = $r3_lp_diam_y = $r4_lp_diam_y = round(pow(10,10)*$imageinfo['pixelsize']*8);
+		$r1_lp_apod_x = $r2_lp_apod_x = $r3_lp_apod_x = $r4_lp_apod_x = round(pow(10,10)*$imageinfo['pixelsize']*8);
+		$r1_lp_apod_y = $r2_lp_apod_y = $r3_lp_apod_y = $r4_lp_apod_y = round(pow(10,10)*$imageinfo['pixelsize']*8);
+		$r1_hp_diam_x = $r2_hp_diam_x = $r3_hp_diam_x = $r4_hp_diam_x = round(($imageinfo['dimx']+$imageinfo['dimy'])/(2*8));
+		$r1_hp_diam_y = $r2_hp_diam_y = $r3_hp_diam_y = $r4_hp_diam_y = round(($imageinfo['dimx']+$imageinfo['dimy'])/(2*8));
 		$map_size_x = $imageinfo['dimx']/$map_sampling;
 		$map_size_y = $imageinfo['dimy']/$map_sampling;
-		$r1_kernel_x = $r2_kernel_x = $r3_kernel_x = intval($r1_region_x/$r1_sampling);
-		$r1_kernel_y = $r2_kernel_y = $r3_kernel_y = intval($r1_region_y/$r1_sampling);
-		$r1_mask_width_x = $r2_mask_width_x = $r3_mask_width_x = intval($r1_region_x/$r1_sampling);
-		$r1_mask_width_y = $r2_mask_width_y = $r3_mask_width_y = intval($r1_region_y/$r1_sampling);
-		$r1_mask_apod_x = $r2_mask_apod_x = $r3_mask_apod_x = intval($r1_region_x/$r1_sampling);
-		$r1_mask_apod_y = $r2_mask_apod_y = $r3_mask_apod_y = intval($r1_region_y/$r1_sampling);
+		$r1_kernel_x = $r2_kernel_x = $r3_kernel_x = $r4_kernel_x = intval($r1_region_x/$r1_sampling);
+		$r1_kernel_y = $r2_kernel_y = $r3_kernel_y = $r4_kernel_y = intval($r1_region_y/$r1_sampling);
+		$r1_mask_width_x = $r2_mask_width_x = $r3_mask_width_x = $r4_mask_width_x = intval($r1_region_x/$r1_sampling);
+		$r1_mask_width_y = $r2_mask_width_y = $r3_mask_width_y = $r4_mask_width_y = intval($r1_region_y/$r1_sampling);
+		$r1_mask_apod_x = $r2_mask_apod_x = $r3_mask_apod_x = $r4_mask_apod_x = intval($r1_region_x/$r1_sampling);
+		$r1_mask_apod_y = $r2_mask_apod_y = $r3_mask_apod_y = $r4_mask_apod_y = intval($r1_region_y/$r1_sampling);
 		$restart_cycle = $_SESSION['restart_cycle'];
 		$image_file_type = pathinfo($imageinfo['filename'], PATHINFO_EXTENSION);
 		$_SESSION['image_file_type'] = $image_file_type;
@@ -83,83 +89,99 @@ class Protomo2RefineForm extends BasicLayoutForm
 		// The help section corresponds to the array key for these parameters found in help.js for popup help.
 		$params->setHelpSection( "protomo" );
 				
-		$params->addParam( "tiltseries", $tiltseries, "Tilt Series #" );
+		$params->addParam( "tiltseries", $tiltseries, "Tilt-Series #" );
 		$params->addParam( "r1_region_x", $r1_region_x, "R1" );
 		$params->addParam( "r2_region_x", $r2_region_x, "R2" );
 		$params->addParam( "r3_region_x", $r3_region_x, "R3" );
-		$params->addParam( "r4_region_x", $r4_region_x, "R4 │ Window Size (x) (<strong>Required Parameter</strong>)" );
+		$params->addParam( "r4_region_x", $r4_region_x, "R4" );
+		$params->addParam( "r5_region_x", $r5_region_x, "R5 │ Window Size (x) (<strong>Critical Parameter</strong>)" );
 		$params->addParam( "r1_region_y", $r1_region_y, "R1" );
 		$params->addParam( "r2_region_y", $r2_region_y, "R2" );
 		$params->addParam( "r3_region_y", $r3_region_y, "R3" );
-		$params->addParam( "r4_region_y", $r4_region_y, "R4 │ Window Size (y) (<strong>Required Parameter</strong>)" );
+		$params->addParam( "r4_region_y", $r4_region_y, "R4" );
+		$params->addParam( "r5_region_y", $r5_region_y, "R5 │ Window Size (y) (<strong>Critical Parameter</strong>)" );
 		$params->addParam( "r1_sampling", $r1_sampling, "R1" );
 		$params->addParam( "r2_sampling", $r2_sampling, "R2" );
 		$params->addParam( "r3_sampling", $r3_sampling, "R3" );
-		$params->addParam( "r4_sampling", $r4_sampling, "R4 │ Sampling" );
+		$params->addParam( "r4_sampling", $r4_sampling, "R4" );
+		$params->addParam( "r5_sampling", $r5_sampling, "R5 │ Sampling" );
 		$params->addParam( "map_sampling", $map_sampling, "Sampling for Depiction" );
-		$params->addParam( "thickness", $thickness, "Thickness, in angstroms (<strong>Required Parameter</strong>)" );
+		$params->addParam( "thickness", $thickness, "Thickness, in angstroms (<strong>Critical Parameter</strong>)" );
 		$params->addParam( "r1_mask_width_x", $r1_mask_width_x, "R1" );
 		$params->addParam( "r2_mask_width_x", $r2_mask_width_x, "R2" );
 		$params->addParam( "r3_mask_width_x", $r3_mask_width_x, "R3" );
-		$params->addParam( "r4_mask_width_x", $r4_mask_width_x, "R4 │ Rectangular Mask Width (x)" );
+		$params->addParam( "r4_mask_width_x", $r4_mask_width_x, "R4" );
+		$params->addParam( "r5_mask_width_x", $r5_mask_width_x, "R5 │ Rectangular Mask Width (x)" );
 		$params->addParam( "r1_mask_width_y", $r1_mask_width_y, "R1" );
 		$params->addParam( "r2_mask_width_y", $r2_mask_width_y, "R2" );
 		$params->addParam( "r3_mask_width_y", $r3_mask_width_y, "R3" );
-		$params->addParam( "r4_mask_width_y", $r4_mask_width_y, "R4 │ Rectangular Mask Width (y)" );
+		$params->addParam( "r4_mask_width_y", $r4_mask_width_y, "R4" );
+		$params->addParam( "r5_mask_width_y", $r5_mask_width_y, "R5 │ Rectangular Mask Width (y)" );
 		$params->addParam( "r1_lowpass_diameter_x", $r1_lp_diam_x, "R1" );
 		$params->addParam( "r2_lowpass_diameter_x", $r2_lp_diam_x, "R2" );
 		$params->addParam( "r3_lowpass_diameter_x", $r3_lp_diam_x, "R3" );
-		$params->addParam( "r4_lowpass_diameter_x", $r4_lp_diam_x, "R4 │ Lowpass Filter (x)" );
+		$params->addParam( "r4_lowpass_diameter_x", $r4_lp_diam_x, "R4" );
+		$params->addParam( "r5_lowpass_diameter_x", $r5_lp_diam_x, "R5 │ Lowpass Filter (x) (<strong>Critical Parameter</strong>)" );
 		$params->addParam( "r1_lowpass_diameter_y", $r1_lp_diam_y, "R1" );
 		$params->addParam( "r2_lowpass_diameter_y", $r2_lp_diam_y, "R2" );
 		$params->addParam( "r3_lowpass_diameter_y", $r3_lp_diam_y, "R3" );
-		$params->addParam( "r4_lowpass_diameter_y", $r4_lp_diam_y, "R4 │ Lowpass Filter (y)" );
+		$params->addParam( "r4_lowpass_diameter_y", $r4_lp_diam_y, "R4" );
+		$params->addParam( "r5_lowpass_diameter_y", $r5_lp_diam_y, "R5 │ Lowpass Filter (y) (<strong>Critical Parameter</strong>)" );
 		$params->addParam( "r1_highpass_diameter_x", $r1_hp_diam_x, "R1" );
 		$params->addParam( "r2_highpass_diameter_x", $r2_hp_diam_x, "R2" );
 		$params->addParam( "r3_highpass_diameter_x", $r3_hp_diam_x, "R3" );
-		$params->addParam( "r4_highpass_diameter_x", $r4_hp_diam_x, "R4 │ Highpass Filter (x)" );
+		$params->addParam( "r4_highpass_diameter_x", $r4_hp_diam_x, "R4" );
+		$params->addParam( "r5_highpass_diameter_x", $r5_hp_diam_x, "R5 │ Highpass Filter (x)" );
 		$params->addParam( "r1_highpass_diameter_y", $r1_hp_diam_y, "R1" );
 		$params->addParam( "r2_highpass_diameter_y", $r2_hp_diam_y, "R2" );
 		$params->addParam( "r3_highpass_diameter_y", $r3_hp_diam_y, "R3" );
-		$params->addParam( "r4_highpass_diameter_y", $r4_hp_diam_y, "R4 │ Highpass Filter (y)" );
+		$params->addParam( "r4_highpass_diameter_y", $r4_hp_diam_y, "R4" );
+		$params->addParam( "r5_highpass_diameter_y", $r5_hp_diam_y, "R5 │ Highpass Filter (y)" );
 		$params->addParam( "r1_mask_apod_x", $r1_mask_apod_x, "R1" );
 		$params->addParam( "r2_mask_apod_x", $r2_mask_apod_x, "R2" );
 		$params->addParam( "r3_mask_apod_x", $r3_mask_apod_x, "R3" );
-		$params->addParam( "r4_mask_apod_x", $r4_mask_apod_x, "R4 │ Apodization (x) for Masks" );
+		$params->addParam( "r4_mask_apod_x", $r4_mask_apod_x, "R4" );
+		$params->addParam( "r5_mask_apod_x", $r5_mask_apod_x, "R5 │ Apodization (x) for Masks" );
 		$params->addParam( "r1_mask_apod_y", $r1_mask_apod_y, "R1" );
 		$params->addParam( "r2_mask_apod_y", $r2_mask_apod_y, "R2" );
 		$params->addParam( "r3_mask_apod_y", $r3_mask_apod_y, "R3" );
-		$params->addParam( "r4_mask_apod_y", $r4_mask_apod_y, "R4 │ Apodization (y) for Masks" );
+		$params->addParam( "r4_mask_apod_y", $r4_mask_apod_y, "R4" );
+		$params->addParam( "r5_mask_apod_y", $r5_mask_apod_y, "R5 │ Apodization (y) for Masks" );
 		$params->addParam( "r1_lowpass_apod_x", $r1_lp_apod_x, "R1" );
 		$params->addParam( "r2_lowpass_apod_x", $r2_lp_apod_x, "R2" );
 		$params->addParam( "r3_lowpass_apod_x", $r3_lp_apod_x, "R3" );
-		$params->addParam( "r4_lowpass_apod_x", $r4_lp_apod_x, "R4 │ Lowpass Apodization Filter (x)" );
+		$params->addParam( "r4_lowpass_apod_x", $r4_lp_apod_x, "R4" );
+		$params->addParam( "r5_lowpass_apod_x", $r5_lp_apod_x, "R5 │ Lowpass Apodization Filter (x)" );
 		$params->addParam( "r1_lowpass_apod_y", $r1_lp_apod_y, "R1" );
 		$params->addParam( "r2_lowpass_apod_y", $r2_lp_apod_y, "R2" );
 		$params->addParam( "r3_lowpass_apod_y", $r3_lp_apod_y, "R3" );
-		$params->addParam( "r4_lowpass_apod_y", $r4_lp_apod_y, "R4 │ Lowpass Apodization Filter (y)" );
+		$params->addParam( "r4_lowpass_apod_y", $r4_lp_apod_y, "R4" );
+		$params->addParam( "r5_lowpass_apod_y", $r5_lp_apod_y, "R5 │ Lowpass Apodization Filter (y)" );
 		$params->addParam( "r1_highpass_apod_x", $r1_hp_apod_x, "R1" );
 		$params->addParam( "r2_highpass_apod_x", $r2_hp_apod_x, "R2" );
 		$params->addParam( "r3_highpass_apod_x", $r3_hp_apod_x, "R3" );
-		$params->addParam( "r4_highpass_apod_x", $r4_hp_apod_x, "R4 │ Highpass Apodization Filter (x)" );
+		$params->addParam( "r4_highpass_apod_x", $r4_hp_apod_x, "R4" );
+		$params->addParam( "r5_highpass_apod_x", $r5_hp_apod_x, "R5 │ Highpass Apodization Filter (x)" );
 		$params->addParam( "r1_highpass_apod_y", $r1_hp_apod_y, "R1" );
 		$params->addParam( "r2_highpass_apod_y", $r2_hp_apod_y, "R2" );
 		$params->addParam( "r3_highpass_apod_y", $r3_hp_apod_y, "R3" );
-		$params->addParam( "r4_highpass_apod_y", $r4_hp_apod_y, "R4 │ Highpass Apodization Filter (y)" );
+		$params->addParam( "r4_highpass_apod_y", $r4_hp_apod_y, "R4" );
+		$params->addParam( "r5_highpass_apod_y", $r5_hp_apod_y, "R5 │ Highpass Apodization Filter (y)" );
 		$params->addParam( "corr_mode", $corr_mode, "Correlation Mode (xcf, mcf, pcf, dbl)" );
 		$params->addParam( "raw_path", $raw_path, "Raw Image Path" );
 		$params->addParam( "r1_iters", $r1_iters, "R1" );
 		$params->addParam( "r2_iters", $r2_iters, "R2" );
 		$params->addParam( "r3_iters", $r3_iters, "R3" );
-		$params->addParam( "r4_iters", $r4_iters, "R4 │ Alignment Iterations" );
+		$params->addParam( "r4_iters", $r4_iters, "R4" );
+		$params->addParam( "r5_iters", $r5_iters, "R5 │ Alignment Iterations" );
 		$params->addParam( "param_file", $param, "External Param File" );
 		$params->addParam( "binning", $binning, "Raw Image Binning" );
 		$params->addParam( "preprocessing", $preprocessing, "Raw Image Preprocessing" );
 		$params->addParam( "select_images", $select_images, "Select Specific Images" );
 		$params->addParam( "exclude_images", $exclude_images, "Exclude Specific Images" );
 		$params->addParam( "border", $border, "Border Width for Exclusion" );
-		$params->addParam( "clip_low", $clip_low, "Lower Clip (in SD)" );
-		$params->addParam( "clip_high", $clip_high, "Upper Clip (in SD)" );
+		$params->addParam( "clip_low", $clip_low, "Lower Clip (in SDs)" );
+		$params->addParam( "clip_high", $clip_high, "Upper Clip (in SDs)" );
 		$params->addParam( "thr_low", $thr_low, "Lower Threshold (in density values)" );
 		$params->addParam( "thr_high", $thr_high, "Upper Threshold (in density values)" );
 		$params->addParam( "gradient", $gradient, "Linear Gradient Subtraction" );
@@ -170,11 +192,13 @@ class Protomo2RefineForm extends BasicLayoutForm
 		$params->addParam( "r1_kernel_x", $r1_kernel_x, "R1" );
 		$params->addParam( "r2_kernel_x", $r2_kernel_x, "R2" );
 		$params->addParam( "r3_kernel_x", $r3_kernel_x, "R3" );
-		$params->addParam( "r4_kernel_x", $r4_kernel_x, "R4 │ Filter Window Size (x)" );
+		$params->addParam( "r4_kernel_x", $r4_kernel_x, "R4" );
+		$params->addParam( "r5_kernel_x", $r5_kernel_x, "R5 │ Filter Window Size (x)" );
 		$params->addParam( "r1_kernel_y", $r1_kernel_y, "R1" );
 		$params->addParam( "r2_kernel_y", $r2_kernel_y, "R2" );
 		$params->addParam( "r3_kernel_y", $r3_kernel_y, "R3" );
-		$params->addParam( "r4_kernel_y", $r4_kernel_y, "R4 │ Filter Window Size (y)" );
+		$params->addParam( "r4_kernel_y", $r4_kernel_y, "R4" );
+		$params->addParam( "r5_kernel_y", $r5_kernel_y, "R5 │ Filter Window Size (y)" );
 		$params->addParam( "grow", $grow, "Grow Binary Mask" );
 		$params->addParam( "window_area", $window_area, "Window Area Fraction" );
 		$params->addParam( "do_estimation", $do_estimation, "Estimate Geometric Parameters" );
@@ -185,11 +209,13 @@ class Protomo2RefineForm extends BasicLayoutForm
 		$params->addParam( "r1_peak_search_radius_x", $r1_peak_search_radius_x, "R1" );
 		$params->addParam( "r2_peak_search_radius_x", $r2_peak_search_radius_x, "R2" );
 		$params->addParam( "r3_peak_search_radius_x", $r3_peak_search_radius_x, "R3" );
-		$params->addParam( "r4_peak_search_radius_x", $r4_peak_search_radius_x, "R4 │ Peak Search Redius (x)" );
+		$params->addParam( "r4_peak_search_radius_x", $r4_peak_search_radius_x, "R4" );
+		$params->addParam( "r5_peak_search_radius_x", $r5_peak_search_radius_x, "R5 │ Peak Search Redius (x)" );
 		$params->addParam( "r1_peak_search_radius_y", $r1_peak_search_radius_y, "R1" );
 		$params->addParam( "r2_peak_search_radius_y", $r2_peak_search_radius_y, "R2" );
 		$params->addParam( "r3_peak_search_radius_y", $r3_peak_search_radius_y, "R3" );
-		$params->addParam( "r4_peak_search_radius_y", $r4_peak_search_radius_y, "R4 │ Peak Search Radius (y)" );
+		$params->addParam( "r4_peak_search_radius_y", $r4_peak_search_radius_y, "R4" );
+		$params->addParam( "r5_peak_search_radius_y", $r5_peak_search_radius_y, "R5 │ Peak Search Radius (y)" );
 		$params->addParam( "orientation", $orientation, "Include Orientation Angles in Refinement" );
 		$params->addParam( "orientation_switch", $orientation_switch, "Switch at Iteration" );
 		$params->addParam( "azimuth", $azimuth, "Include Tilt Azimuth in Refinement" );
@@ -208,6 +234,7 @@ class Protomo2RefineForm extends BasicLayoutForm
 		$params->addParam( "protomo_outdir", $protomo_outdir, "Output Directory" );
 		$params->addParam( "retry", $retry, "Number of Refinement Retries Allowed" );
 		$params->addParam( "retry_shrink", $retry_shrink, "Window Size Fraction to Shrink Each Retry Attempt" );
+		$params->addParam( "create_tilt_video", $create_tilt_video, "Create Tilt-Series Videos" );
 		$params->addParam( "create_reconstruction", $create_reconstruction, "Create a Reconstruction Video" );
 		$params->addParam( "keep_recons", $keep_recons, "Keep Intermediate Reconstruction" );
 		$params->addParam( "map_size_x", $map_size_x, "Reconstructon Size (x)" );
@@ -267,11 +294,13 @@ class Protomo2RefineForm extends BasicLayoutForm
 			$html.= $params->insertTextFieldInRow( "r1_iters", $fieldSize2 ).'│ ';
 			$html.= $params->insertTextFieldInRow( "r2_iters", $fieldSize2 ).'│ ';
 			$html.= $params->insertTextFieldInRow( "r3_iters", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextField( "r4_iters", $fieldSize2 );
+			$html.= $params->insertTextFieldInRow( "r4_iters", $fieldSize2 ).'│ ';
+			$html.= $params->insertTextField( "r5_iters", $fieldSize2 );
 			$html.= $params->insertTextFieldInRow( "r1_sampling", $fieldSize2 ).'│ ';
 			$html.= $params->insertTextFieldInRow( "r2_sampling", $fieldSize2 ).'│ ';
 			$html.= $params->insertTextFieldInRow( "r3_sampling", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextField( "r4_sampling", $fieldSize2 );
+			$html.= $params->insertTextFieldInRow( "r4_sampling", $fieldSize2 ).'│ ';
+			$html.= $params->insertTextField( "r5_sampling", $fieldSize2 );
 			$html.= $params->insertTextField( "raw_path", $fieldSize );
 			//$html.= $params->insertTextField( "param_file", $fieldSize );
 			//$html.= $params->insertTextField( "filename_prefix", $fieldSize );
@@ -328,11 +357,13 @@ class Protomo2RefineForm extends BasicLayoutForm
 			$html.= $params->insertTextFieldInRow( "r1_kernel_x", $fieldSize2 ).'│ ';
 			$html.= $params->insertTextFieldInRow( "r2_kernel_x", $fieldSize2 ).'│ ';
 			$html.= $params->insertTextFieldInRow( "r3_kernel_x", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextField( "r4_kernel_x", $fieldSize2 );
+			$html.= $params->insertTextFieldInRow( "r4_kernel_x", $fieldSize2 ).'│ ';
+			$html.= $params->insertTextField( "r5_kernel_x", $fieldSize2 );
 			$html.= $params->insertTextFieldInRow( "r1_kernel_y", $fieldSize2 ).'│ ';
 			$html.= $params->insertTextFieldInRow( "r2_kernel_y", $fieldSize2 ).'│ ';
 			$html.= $params->insertTextFieldInRow( "r3_kernel_y", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextField( "r4_kernel_y", $fieldSize2 );
+			$html.= $params->insertTextFieldInRow( "r4_kernel_y", $fieldSize2 ).'│ ';
+			$html.= $params->insertTextField( "r5_kernel_y", $fieldSize2 );
 			$html.= $params->insertTextField( "grow", $fieldSize );
 			
 			$html .= "
@@ -343,11 +374,13 @@ class Protomo2RefineForm extends BasicLayoutForm
 			$html.= $params->insertTextFieldInRow( "r1_region_x", $fieldSize2 ).'│ ';
 			$html.= $params->insertTextFieldInRow( "r2_region_x", $fieldSize2 ).'│ ';
 			$html.= $params->insertTextFieldInRow( "r3_region_x", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextField( "r4_region_x", $fieldSize2 );
+			$html.= $params->insertTextFieldInRow( "r4_region_x", $fieldSize2 ).'│ ';
+			$html.= $params->insertTextField( "r5_region_x", $fieldSize2 );
 			$html.= $params->insertTextFieldInRow( "r1_region_y", $fieldSize2 ).'│ ';
 			$html.= $params->insertTextFieldInRow( "r2_region_y", $fieldSize2 ).'│ ';
 			$html.= $params->insertTextFieldInRow( "r3_region_y", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextField( "r4_region_y", $fieldSize2 );
+			$html.= $params->insertTextFieldInRow( "r4_region_y", $fieldSize2 ).'│ ';
+			$html.= $params->insertTextField( "r5_region_y", $fieldSize2 );
 			$html.= $params->insertTextField( "thickness", $fieldSize );
 			$html.= $params->insertTextField( "window_area", $fieldSize );
 			
@@ -359,51 +392,63 @@ class Protomo2RefineForm extends BasicLayoutForm
 			$html.= $params->insertTextFieldInRow( "r1_mask_width_x", $fieldSize2 ).'│ ';
 			$html.= $params->insertTextFieldInRow( "r2_mask_width_x", $fieldSize2 ).'│ ';
 			$html.= $params->insertTextFieldInRow( "r3_mask_width_x", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextField( "r4_mask_width_x", $fieldSize2 );
+			$html.= $params->insertTextFieldInRow( "r4_mask_width_x", $fieldSize2 ).'│ ';
+			$html.= $params->insertTextField( "r5_mask_width_x", $fieldSize2 );
 			$html.= $params->insertTextFieldInRow( "r1_mask_width_y", $fieldSize2 ).'│ ';
 			$html.= $params->insertTextFieldInRow( "r2_mask_width_y", $fieldSize2 ).'│ ';
 			$html.= $params->insertTextFieldInRow( "r3_mask_width_y", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextField( "r4_mask_width_y", $fieldSize2 );
+			$html.= $params->insertTextFieldInRow( "r4_mask_width_y", $fieldSize2 ).'│ ';
+			$html.= $params->insertTextField( "r5_mask_width_y", $fieldSize2 );
 			$html.= $params->insertTextFieldInRow( "r1_lowpass_diameter_x", $fieldSize2 ).'│ ';
 			$html.= $params->insertTextFieldInRow( "r2_lowpass_diameter_x", $fieldSize2 ).'│ ';
 			$html.= $params->insertTextFieldInRow( "r3_lowpass_diameter_x", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextField( "r4_lowpass_diameter_x", $fieldSize2 );
+			$html.= $params->insertTextFieldInRow( "r4_lowpass_diameter_x", $fieldSize2 ).'│ ';
+			$html.= $params->insertTextField( "r5_lowpass_diameter_x", $fieldSize2 );
 			$html.= $params->insertTextFieldInRow( "r1_lowpass_diameter_y", $fieldSize2 ).'│ ';
 			$html.= $params->insertTextFieldInRow( "r2_lowpass_diameter_y", $fieldSize2 ).'│ ';
 			$html.= $params->insertTextFieldInRow( "r3_lowpass_diameter_y", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextField( "r4_lowpass_diameter_y", $fieldSize2 );
+			$html.= $params->insertTextFieldInRow( "r4_lowpass_diameter_y", $fieldSize2 ).'│ ';
+			$html.= $params->insertTextField( "r5_lowpass_diameter_y", $fieldSize2 );
 			$html.= $params->insertTextFieldInRow( "r1_highpass_diameter_x", $fieldSize2 ).'│ ';
 			$html.= $params->insertTextFieldInRow( "r2_highpass_diameter_x", $fieldSize2 ).'│ ';
 			$html.= $params->insertTextFieldInRow( "r3_highpass_diameter_x", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextField( "r4_highpass_diameter_x", $fieldSize2 );
+			$html.= $params->insertTextFieldInRow( "r4_highpass_diameter_x", $fieldSize2 ).'│ ';
+			$html.= $params->insertTextField( "r5_highpass_diameter_x", $fieldSize2 );
 			$html.= $params->insertTextFieldInRow( "r1_highpass_diameter_y", $fieldSize2 ).'│ ';
 			$html.= $params->insertTextFieldInRow( "r2_highpass_diameter_y", $fieldSize2 ).'│ ';
 			$html.= $params->insertTextFieldInRow( "r3_highpass_diameter_y", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextField( "r4_highpass_diameter_y", $fieldSize2 );
+			$html.= $params->insertTextFieldInRow( "r4_highpass_diameter_y", $fieldSize2 ).'│ ';
+			$html.= $params->insertTextField( "r5_highpass_diameter_y", $fieldSize2 );
 			$html.= $params->insertTextFieldInRow( "r1_mask_apod_x", $fieldSize2 ).'│ ';
 			$html.= $params->insertTextFieldInRow( "r2_mask_apod_x", $fieldSize2 ).'│ ';
 			$html.= $params->insertTextFieldInRow( "r3_mask_apod_x", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextField( "r4_mask_apod_x", $fieldSize2 );
+			$html.= $params->insertTextFieldInRow( "r4_mask_apod_x", $fieldSize2 ).'│ ';
+			$html.= $params->insertTextField( "r5_mask_apod_x", $fieldSize2 );
 			$html.= $params->insertTextFieldInRow( "r1_mask_apod_y", $fieldSize2 ).'│ ';
 			$html.= $params->insertTextFieldInRow( "r2_mask_apod_y", $fieldSize2 ).'│ ';
 			$html.= $params->insertTextFieldInRow( "r3_mask_apod_y", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextField( "r4_mask_apod_y", $fieldSize2 );
+			$html.= $params->insertTextFieldInRow( "r4_mask_apod_y", $fieldSize2 ).'│ ';
+			$html.= $params->insertTextField( "r5_mask_apod_y", $fieldSize2 );
 			$html.= $params->insertTextFieldInRow( "r1_lowpass_apod_x", $fieldSize2 ).'│ ';
 			$html.= $params->insertTextFieldInRow( "r2_lowpass_apod_x", $fieldSize2 ).'│ ';
 			$html.= $params->insertTextFieldInRow( "r3_lowpass_apod_x", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextField( "r4_lowpass_apod_x", $fieldSize2 );
+			$html.= $params->insertTextFieldInRow( "r4_lowpass_apod_x", $fieldSize2 ).'│ ';
+			$html.= $params->insertTextField( "r5_lowpass_apod_x", $fieldSize2 );
 			$html.= $params->insertTextFieldInRow( "r1_lowpass_apod_y", $fieldSize2 ).'│ ';
 			$html.= $params->insertTextFieldInRow( "r2_lowpass_apod_y", $fieldSize2 ).'│ ';
 			$html.= $params->insertTextFieldInRow( "r3_lowpass_apod_y", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextField( "r4_lowpass_apod_y", $fieldSize2 );
+			$html.= $params->insertTextFieldInRow( "r4_lowpass_apod_y", $fieldSize2 ).'│ ';
+			$html.= $params->insertTextField( "r5_lowpass_apod_y", $fieldSize2 );
 			$html.= $params->insertTextFieldInRow( "r1_highpass_apod_x", $fieldSize2 ).'│ ';
 			$html.= $params->insertTextFieldInRow( "r2_highpass_apod_x", $fieldSize2 ).'│ ';
 			$html.= $params->insertTextFieldInRow( "r3_highpass_apod_x", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextField( "r4_highpass_apod_x", $fieldSize2 );
+			$html.= $params->insertTextFieldInRow( "r4_highpass_apod_x", $fieldSize2 ).'│ ';
+			$html.= $params->insertTextField( "r5_highpass_apod_x", $fieldSize2 );
 			$html.= $params->insertTextFieldInRow( "r1_highpass_apod_y", $fieldSize2 ).'│ ';
 			$html.= $params->insertTextFieldInRow( "r2_highpass_apod_y", $fieldSize2 ).'│ ';
 			$html.= $params->insertTextFieldInRow( "r3_highpass_apod_y", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextField( "r4_highpass_apod_y", $fieldSize2 );
+			$html.= $params->insertTextFieldInRow( "r4_highpass_apod_y", $fieldSize2 ).'│ ';
+			$html.= $params->insertTextField( "r5_highpass_apod_y", $fieldSize2 );
 			
 			$html .= "
 		    <br />
@@ -420,11 +465,13 @@ class Protomo2RefineForm extends BasicLayoutForm
 			$html.= $params->insertTextFieldInRow( "r1_peak_search_radius_x", $fieldSize2 ).'│ ';
 			$html.= $params->insertTextFieldInRow( "r2_peak_search_radius_x", $fieldSize2 ).'│ ';
 			$html.= $params->insertTextFieldInRow( "r3_peak_search_radius_x", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextField( "r4_peak_search_radius_x", $fieldSize2 );
+			$html.= $params->insertTextFieldInRow( "r4_peak_search_radius_x", $fieldSize2 ).'│ ';
+			$html.= $params->insertTextField( "r5_peak_search_radius_x", $fieldSize2 );
 			$html.= $params->insertTextFieldInRow( "r1_peak_search_radius_y", $fieldSize2 ).'│ ';
 			$html.= $params->insertTextFieldInRow( "r2_peak_search_radius_y", $fieldSize2 ).'│ ';
 			$html.= $params->insertTextFieldInRow( "r3_peak_search_radius_y", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextField( "r4_peak_search_radius_y", $fieldSize2 );
+			$html.= $params->insertTextFieldInRow( "r4_peak_search_radius_y", $fieldSize2 ).'│ ';
+			$html.= $params->insertTextField( "r5_peak_search_radius_y", $fieldSize2 );
 			
 			$html .= "
 		    <br />
@@ -490,6 +537,10 @@ class Protomo2RefineForm extends BasicLayoutForm
 			$html.= $params->insertTextField( "correlation_size_x", $fieldSize );
 			$html.= $params->insertTextField( "correlation_size_y", $fieldSize );
 			//$html.= $params->insertTextField( "create_reconstruction", $fieldSize );
+			$html.= '<select name="create_tilt_video" style="width:66px">';
+			$html.= '<option selected value="true">true</option>';
+			$html.= '<option value="false">false</option>';
+			$html.= '</select>'; $html.= docpop('protomo_create_tilt_video2', ' Create Tilt-Series Videos').'<br>';
 			$html.= '<select name="create_reconstruction" style="width:66px">';
 			$html.= '<option selected value="true">true</option>';
 			$html.= '<option value="false">false</option>';
@@ -506,7 +557,7 @@ class Protomo2RefineForm extends BasicLayoutForm
 			$html.= '<select name="keep_recons" style="width:66px">';
 			$html.= '<option value="true">true</option>';
 			$html.= '<option selected value="false">false</option>';
-			$html.= '</select>'; $html.= docpop('protomo_keep_recons', ' Keep Intermediate Reconstruction').'<br>';
+			$html.= '</select>'; $html.= docpop('protomo_keep_recons', ' Keep Intermediate Reconstructions').'<br>';
 			
 			$html .= "<hr />";
 		    
@@ -514,7 +565,7 @@ class Protomo2RefineForm extends BasicLayoutForm
 			if (empty($_POST['r1_region_x']) OR empty($_POST['r1_region_y']) OR empty($_POST['thickness']) OR empty($_POST['r1_iters']) AND !isset($_POST['process']))
 			{
 				$html .= "<br></br>
-				<b><center>[Enter the Required Parameters and click 'Just Show Command' to proceed]</center></b><br>";
+				<b><center>[Enter the the required parameters and click 'Just Show Command' to proceed]</center></b><br>";
 			}
 		}
 		return $html;
@@ -560,7 +611,7 @@ class Protomo2RefineForm extends BasicLayoutForm
 		$_SESSION['runname'] = $_POST['runname'];
 		$_SESSION['sessionname'] = $sessionname;
 		$_SESSION['outdir'] = $_POST['outdir'];
-		$_SESSION['iters'] = $_POST['r1_iters'] + $_POST['r2_iters'] + $_POST['r3_iters'] + $_POST['r4_iters'];
+		$_SESSION['iters'] = $_POST['r1_iters'] + $_POST['r2_iters'] + $_POST['r3_iters'] + $_POST['r4_iters'] + $_POST['r5_iters'];
 		$_SESSION['imageinfo'] = $imageinfo;
 		$_SESSION['protomo_outdir'] = $_POST['protomo_outdir'];
 

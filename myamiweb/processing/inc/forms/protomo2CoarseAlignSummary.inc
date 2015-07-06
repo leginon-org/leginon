@@ -101,7 +101,7 @@ class Protomo2CoarseAlignSummary extends BasicLayoutForm
 		
 		$html .= "
 	<br />
-	<center><H4>Tilt Series Correlation Peaks</H4></center>
+	<center><H4>Tilt-Series Correlation Peaks</H4></center>
 	<br />";
 		if (isset($corrpeak_gif_files[0])) {
 			$html .= '<center><img src="'.$corrpeak_gif.'" alt="correlations" />'."<br /></center>";
@@ -134,10 +134,10 @@ class Protomo2CoarseAlignSummary extends BasicLayoutForm
 		}
 		</script>
 		
-		<center><input type="button" style="width:150px;height:30px;" onclick="return toggleMe(\'para1\')" value="View Initial Tilt Series"></center><br>
+		<center><input type="button" style="width:150px;height:30px;" onclick="return toggleMe(\'para1\')" value="View Initial Tilt-Series"></center><br>
 		<div id="para1" style="display:none">';
 		$html .= "
-	<center><H4>Tilt Series Before Coarse Alignment</H4></center>
+	<center><H4>Tilt-Series Before Coarse Alignment</H4></center>
 	<br />";
 		if (isset($initial_tilt_gif_files[0])) {
 			$html .= '<center><img src="'.$initial_tilt_gif.'" alt="tiltseries" />'."<br /></center>";
@@ -153,12 +153,12 @@ class Protomo2CoarseAlignSummary extends BasicLayoutForm
 			$html .= '<center>'.docpop('initialtiltimageinfo_coarse', 'Image Info').'</center>';
 			$html .= '<p align="right"><a href="'.$download_initial_tilt_mp4.'">Download Video</a></p>';
 		} else {
-			$html .= "<center><b>Depiction Tilt Series Video for unaligned tilt series either failed to generate or is still processing</b></center>";
+			$html .= "<center><b>Depiction Tilt-Series Video for unaligned tilt-series either failed to generate, is still processing, or wasn't requested</b></center>";
 		}
 		$html .= '</div>';
 		
 		$html .= "
-	<hr /><br /><center><H4>Tilt Series After Coarse Alignment</H4></center>
+	<hr /><br /><center><H4>Tilt-Series After Coarse Alignment</H4></center>
 	<br />";
 		if (isset($tilt_gif_files[0])) {
 			$html .= '<center><img src="'.$tilt_gif.'" alt="tiltseries" />'."<br /></center>";
@@ -174,11 +174,11 @@ class Protomo2CoarseAlignSummary extends BasicLayoutForm
 			$html .= '<center>'.docpop('tiltimageinfo_coarse', 'Image Info').'</center>';
 			$html .= '<p align="right"><a href="'.$download_tilt_mp4.'">Download Video</a></p><hr />';
 		} else {
-			$html .= "<center><b>Depiction Tilt Series Video for Coarse Alignment either failed to generate or is still processing</b></center>";
+			$html .= "<center><b>Depiction Tilt-Series Video for Coarse Alignment either failed to generate, is still processing, or wasn't requested</b></center>";
 		}
 		$html .= "
 	<br />
-	<center><H4>Tilt Series Reconstruction After Coarse Alignment</H4></center>
+	<center><H4>Tilt-Series Reconstruction After Coarse Alignment</H4></center>
 	<br />";
 		if (isset($rec_gif_files[0])) {
 			$html .= '<center><img src="'.$rec_gif.'" alt="reconstruction" />'."<br /></center>";
@@ -194,11 +194,11 @@ class Protomo2CoarseAlignSummary extends BasicLayoutForm
 			$html .= '<center>'.docpop('reconimageinfo_coarse', 'Image Info').'</center>';
 			$html .= '<p align="right"><a href="'.$download_rec_mp4.'">Download Video</a></p><hr />';
 		} else {
-			$html .= "<center><b>Depiction Reconstruction Video for Coarse Alignment either failed to generate or is still processing</b></center>";
+			$html .= "<center><b>Depiction Reconstruction Video for Coarse Alignment either failed to generate, is still processing, or wasn't requested</b></center>";
 		}
 		
 		// Only display link to next step in tomo processing if Coarse Alignment is complete
-		if (max(count($tilt_gif_files),count($tilt_vid_files)) < 1)
+		if (max(count($corrpeak_gif_files),count($corrpeak_vid_files)) < 1)
 		{
 			$html .= "<br></br>
 			<b><center>[Refresh this page after Coarse Alignment completes]</center><br></b>";

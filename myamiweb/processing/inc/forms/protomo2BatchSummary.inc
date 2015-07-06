@@ -11,7 +11,6 @@ require_once "basicLayoutForm.inc";
 require_once "inc/leginon.inc";
 
 session_start();
-$tiltseries=$_SESSION['tiltseries'];
 $sessionname=$_SESSION['sessionname'];
 $outdir=$_SESSION['outdir'];
 $runname=$_SESSION['runname'];
@@ -22,6 +21,12 @@ class Protomo2BatchSummary extends BasicLayoutForm
 	function __construct( $expId, $extraHTML )
 	{
 		parent::__construct($expId, $extraHTML);
+		//print "_POST:" . "<br>";
+		//var_dump($_POST);
+		//print "_GET:" . "<br>";
+		//var_dump($_GET);
+		//print "_SESSION:" . "<br>";
+		//var_dump($_SESSION);
 		
 		$_POST['runname']=$_SESSION['runname'];
 		$_POST['outdir']=$_SESSION['outdir'];
@@ -46,7 +51,7 @@ class Protomo2BatchSummary extends BasicLayoutForm
 		
 	}
 	
-	// Display plots and gifs
+	// Display CCMS plots
 	public function generateAdditionalFormLeft()
 	{
 		$this->updateFormParams();
@@ -54,65 +59,47 @@ class Protomo2BatchSummary extends BasicLayoutForm
 		
 		global $outdir;
 		global $runname;
-		$trimmed_runname=preg_replace("/\d+$/","",$runname).'0001';
-		print $trimmed_runname;
-		$test= glob("$outdir/$trimmed_runname/media/correlations/s*.mp4");
-		print $test;
-		foreach (glob("$outdir/$trimmed_runname/media/correlations/s*.mp4") as $filename){
-			print $filename."<br />";
-		}
-		$rec_files = glob("$outdir/$runname/media/reconstructions/s*.gif");
+		$rundir=$outdir.'/'.$runname;
+		$tilts = glob("$rundir/.t*");
+		$qalist=array();
+		foreach(array_keys($tilts) as $paramName)
+			//echo $paramName . "<br>";
+			//echo $tiltseries["$paramName"]. "<br>";
+			//$ext = pathinfo($tiltseries["$paramName"], PATHINFO_EXTENSION);
+			$qalist[]=pathinfo($tilts["$paramName"], PATHINFO_EXTENSION);
+		$tiltlist=array();
+		foreach(array_keys($qalist) as $paramName)
+			$tiltlist[]=$rundir.'/tiltseries'.$paramName.'/media/quality_assessment/series'.$paramName.'_quality_assessment.gif';
 		
-		// Table of all of the correlation peaks for easy identification of bad alignment iterations
+		// Table of all of the CCMS plots for easy identification
 		$html .= "
 	<hr />
-	<center><H4><b>Best Iteration Correlation Peak for Each Tilt Series ".docpop('corrimageinfo_refine', '(Info)')."</b></H4></center>
+	<center><H4><b>CCMS Plot for Each Tilt-Series ".docpop('quality_assessment', '(Info)')."</b></H4></center>
 	<hr />";
 		
 		$i = 0;
-		$j = -1;
 		$html .= '<table id="" class="display" cellspacing="0" border="1" width="100%">';
 		$html .= "<tr>";
-		if (count($corrpeak_files) > 0)
+		if (count($qalist) > 0)
 		{
 		do {
-			foreach ($corrpeak_files as $corr)
+			foreach ($qalist as $tilt)
 			{
 				$ite=$i+1;
-				if ($ite <= count($corrpeak_files) AND $ite > 0) {
-					$html .= '<th><a href="protomo2RefineIterationSummary.php?iter='.$ite.'&outdir='.$outdir.'&runname='.$runname.'&tiltseries='.$tiltseries.'" target="_blank">Tilt Series #'.$ite.'</a></th>';
+				if ($ite <= count($qalist) AND $ite > 0) {
+					$ccms_gif = "loadimg.php?rawgif=1&filename=".$rundir.'/tiltseries'.$qalist[$i].'/media/quality_assessment/series'.$qalist[$i].'_quality_assessment.gif';
+					$html .= '<td><center><a href="protomo2BatchTiltSummary.php?rundir='.$rundir.'&tiltseries='.$qalist[$i].'" target="_blank"><img src="'.$ccms_gif.'"width="400" /></a></center></td>';
 				}
-				if ($ite % 4 == 0 OR $ite < 1) {
-					$html .= "</tr><tr>";
-					$j++;
-					break;
-				}
-				$i++;
-			}
-			$i = 0 + 4*$j;
-			foreach ($corrpeak_files as $corr)
-			{
-				$ite=$i+1;
-				if ($ite <= count($corrpeak_files) AND $ite > 0) {
-					$corrpeak_gif = "loadimg.php?rawgif=1&filename=".$corrpeak_files[$i];
-					$html .= '<td><center><a href="protomo2RefineIterationSummary.php?iter='.$ite.'&outdir='.$outdir.'&runname='.$runname.'&tiltseries='.$tiltseries.'" target="_blank"><img src="'.$corrpeak_gif.'"/></a></center></td>';
-				}
-				if ($ite % 4 == 0 OR $ite < 1) {
+				if ($ite % 3 == 0 OR $ite < 1) {
 					$html .= "</tr><tr>";
 					$i++;
 					break;
 				}
 				$i++;
 			}
-		} while ($i < count($corrpeak_files));
+		} while ($i < count($qalist));
 		}
 		$html .= '</tr><tr></table><br>';
-		
-		
-		$html .= "<br></br>
-			<a href='runAppionLoop.php?expId=".$this->expId."&form=Protomo2ReconstructForm'><b><center>[Click here to continue onto <font size='4'>Reconstruction</font> if protomo2aligner.py has finished <br>and you're happy with the alignment result in the final iteration] <font size='5'>→</font></center></b></a>";
-		$html .= "<br></br>
-			<a href='runAppionLoop.php?expId=".$this->expId."&form=Protomo2RefineForm'><b><center><font size='5'>←</font> [Click here to go back to <font size='4'>Refinement</font>]</center></b></a><br>";
 		
 		return $html;
 	}	
@@ -123,25 +110,16 @@ class Protomo2BatchSummary extends BasicLayoutForm
 	{
 		$html = parent::showReference( $postArray );
 		
-		global $tiltseries;
 		global $sessionname;
 		global $runname;
 		global $outdir;
-		global $iters;
 		global $imageinfo;
 
-		$_SESSION['tiltseries'] = $tiltseries;
 		$_SESSION['runname'] = $runname;
 		$_SESSION['sessionname'] = $sessionname;
 		$_SESSION['outdir'] = $outdir;
-		$_SESSION['iters'] = $iters;
 		$_SESSION['imageinfo'] = $imageinfo;
 
-		$html .= "<br></br>
-			<a href='runAppionLoop.php?expId=".$this->expId."&form=Protomo2ReconstructForm'><b><center>[Click here to continue onto <font size='4'>Reconstruction</font> if protomo2aligner.py has finished <br>and you're happy with the alignment result in the final iteration] <font size='5'>→</font></center></b></a>";
-		$html .= "<br></br>
-			<a href='runAppionLoop.php?expId=".$this->expId."&form=Protomo2RefineForm'><b><center><font size='5'>←</font> [Click here to go back to <font size='4'>Refinement</font>]</center></b></a><br>";
-		
 		return $html;
 	}
 }

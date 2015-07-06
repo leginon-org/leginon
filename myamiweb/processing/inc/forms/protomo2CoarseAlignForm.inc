@@ -20,10 +20,16 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 	$preprocessing='true', $select_images='', $exclude_images='', $border='100', $clip_low='3.5', $clip_high='3.5', $thr_low='', $thr_high='', $gradient='true', $iter_gradient='false', $filter='median',
 	$kernel_x='', $kernel_y='', $grow='0', $window_area='0.95', $mask_apod_x='', $mask_apod_y='', $mask_width_x='', $mask_width_y='', $dimx='', $dimy='',
 	$correlation_size_x='192', $correlation_size_y='192', $peak_search_radius_x='', $peak_search_radius_y='', $logging='true', $loglevel='2', $map_size_x='512', $map_size_y='512', $map_size_z='200', $filename_prefix='', $image_file_type='', $cachedir='cache',
-	$protomo_outdir='out', $gui_coarse_align='', $grid_limit='2.0', $grid_step='0.1', $retry='10', $retry_shrink='0.9', $create_reconstruction='true', $keep_recons='false', $region_x='512', $video_type='',
-	$link='', $shift_limit='30' , $angle_limit='40' )
+	$protomo_outdir='out', $gui_coarse_align='', $grid_limit='2.0', $grid_step='0.1', $retry='10', $retry_shrink='0.9', $create_reconstruction='true', $create_tilt_video='true', $keep_recons='false', $region_x='512', $video_type='',
+	$shift_limit='30' , $angle_limit='40' )
 	{
 		parent::__construct($expId, $extraHTML);
+		//print "_POST:" . "<br>";
+		//var_dump($_POST);
+		//print "_GET:" . "<br>";
+		//var_dump($_GET);
+		//print "_SESSION:" . "<br>";
+		//var_dump($_SESSION);
 		
 		global $imageinfo;
 		
@@ -40,7 +46,7 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 		$particle = new particledata();
 		$leginondata = new leginondata();
 		
-		// Select tilt series
+		// Select tilt-series
 		$alltiltseries = $particle->getTiltSeries($_GET['expId']);
 		$seriesselector_array = $particle->getTiltSeriesSelector($alltiltseries,$tiltseriesId);
 		$seriesselector_array2 = $particle->getTiltSeriesSelector($alltiltseries,$tiltseriesId2,'tiltseriesId2'); 
@@ -60,36 +66,40 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 			$tiltseriesinfos2 = array();
 		}
 		$html.=  $seriesselector_array[0];
-		$html.=  docpop('protomo_tiltseries', ' Tilt Series');
+		$html.=  docpop('protomo_tiltseries', ' Tilt-Series');
 		if (count($tiltseriesinfos) && $tiltseriesId) {
 			$html.=  "
-			<br/><br/><b>First Image in the Tilt Series:</b><br/>"
+			<br/><br/><b>First Image in the Tilt-Series:</b><br/>"
 				.$tiltseriesinfos[0]['filename'].".".pathinfo($imageinfo['filename'], PATHINFO_EXTENSION);
 		} else {
 			if ($tiltseriesId)
-				$html.=  "<br/><b>Bad Tilt Series! Do not use.</b><br/>";
+				$html.=  "<br/><b>Bad Tilt-Series! Do not use.</b><br/>";
 		}
-		// Hide secondary tilt series until dual tilt is processable
+		// Hide secondary tilt-series until dual tilt is processable
 		if (false) {
 			$html.=  "</td><td Valign='TOP'>\n";
 			$html.=  $seriesselector_array2[0];
-			$html.=  docpop('tiltseriestwo', 'Secondary Tilt Series');
+			$html.=  docpop('tiltseriestwo', 'Secondary Tilt-Series');
 		}
 		if (count($tiltseriesinfos2) && $tiltseriesId2) {
 			if ($tiltseriesId2==$tiltseriesId){
-				$html.=  "<br/><b>2nd tilt series must be different.</b><br/>";
+				$html.=  "<br/><b>2nd tilt-series must be different.</b><br/>";
 			} else {
 				$html.=  "
-					<br/><b>First Image in the Tilt Series:</b><br/>"
+					<br/><b>First Image in the Tilt-Series:</b><br/>"
 					.$tiltseriesinfos2[0]['filename'].".".pathinfo($imageinfo['filename'], PATHINFO_EXTENSION);
 			}
 		} else {
 			if ($tiltseriesId2)
-				$html.=  "<br/><b>Bad Tilt Series! Do not use.</b><br/>";
+				$html.=  "<br/><b>Bad Tilt-Series! Do not use.</b><br/>";
 		}
 		$_SESSION['imageinfo'] = $imageinfo;
 		$_SESSION['tiltseries'] = $tiltseriesinfos[0]['number'];
 		
+		$lp_diam_x = round(pow(10,10)*$imageinfo['pixelsize']*10);
+		$lp_diam_y = round(pow(10,10)*$imageinfo['pixelsize']*10);
+		$hp_diam_x = round(($imageinfo['dimx']+$imageinfo['dimy'])/(2*8));
+		$hp_diam_y = round(($imageinfo['dimx']+$imageinfo['dimy'])/(2*8));
 		$region_x = intval($imageinfo['dimx']*0.6);
 		$region_y = intval($imageinfo['dimy']*0.6);
 		$map_size_x = intval($imageinfo['dimx']/$map_sampling);
@@ -133,14 +143,14 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 		// The help section corresponds to the array key for these parameters found in help.js for popup help.
 		$params->setHelpSection( "protomo" );
 		
-		$params->addParam( "tiltseries", $tiltseries, "Tilt Series #" );
-		$params->addParam( "region_x", $region_x, "Window Size (x) (<strong>Required Parameter</strong>)" );
-		$params->addParam( "region_y", $region_y, "Window Size (y) (<strong>Required Parameter</strong>)" );
+		$params->addParam( "tiltseries", $tiltseries, "Tilt-Series #" );
+		$params->addParam( "region_x", $region_x, "Window Size (x) (<strong>Critical Parameter</strong>)" );
+		$params->addParam( "region_y", $region_y, "Window Size (y) (<strong>Critical Parameter</strong>)" );
 		$params->addParam( "sampling", $sampling, "Sampling" );
 		$params->addParam( "map_sampling", $map_sampling, "Sampling for Depiction" );
-		$params->addParam( "thickness", $thickness, "Thickness, in angstroms (<strong>Required Parameter</strong>)" );
-		$params->addParam( "lowpass_diameter_x", $lp_diam_x, "Lowpass Filter (x)" );
-		$params->addParam( "lowpass_diameter_y", $lp_diam_y, "Lowpass Filter (y)" );
+		$params->addParam( "thickness", $thickness, "Thickness, in angstroms (<strong>Critical Parameter</strong>)" );
+		$params->addParam( "lowpass_diameter_x", $lp_diam_x, "Lowpass Filter (x) (<strong>Critical Parameter</strong>)" );
+		$params->addParam( "lowpass_diameter_y", $lp_diam_y, "Lowpass Filter (y) (<strong>Critical Parameter</strong>)" );
 		$params->addParam( "lowpass_apod_x", $lp_apod_x, "Lowpass Apodization Filter (x)" );
 		$params->addParam( "lowpass_apod_y", $lp_apod_y, "Lowpass Apodization Filter (y)" );
 		$params->addParam( "highpass_diameter_x", $hp_diam_x, "Highpass Filter (x)" );
@@ -156,8 +166,8 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 		$params->addParam( "select_images", $select_images, "Select Specific Images" );
 		$params->addParam( "exclude_images", $exclude_images, "Exclude Specific Images" );
 		$params->addParam( "border", $border, "Border Width for Exclusion" );
-		$params->addParam( "clip_low", $clip_low, "Lower Clip (in SD)" );
-		$params->addParam( "clip_high", $clip_high, "Upper Clip (in SD)" );
+		$params->addParam( "clip_low", $clip_low, "Lower Clip (in SDs)" );
+		$params->addParam( "clip_high", $clip_high, "Upper Clip (in SDs)" );
 		$params->addParam( "thr_low", $thr_low, "Lower Threshold (in density values)" );
 		$params->addParam( "thr_high", $thr_high, "Upper Threshold (in density values)" );
 		$params->addParam( "gradient", $gradient, "Linear Gradient Subtraction" );
@@ -190,17 +200,18 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 		$params->addParam( "cachedir", $cachedir, "Cache Directory" );
 		$params->addParam( "protomo_outdir", $protomo_outdir, "Output Directory" );
 		//$params->addParam( "gui_coarse_align", $gui_coarse_align, "Coarse Alignment equivalent to 'Align All' in tomoaign-gui (<strong>Over-rides other options</strong>) (NOT IMPLEMENTED YET!!)" );
-		$params->addParam( "gridsearch_limit", $grid_limit, "Gridseach +-Angle Limit (<strong>Required Parameter</strong>)" );
-		$params->addParam( "gridsearch_step", $grid_step, "Gridseach Angle Step Size (<strong>Required Parameter</strong>)" );
+		$params->addParam( "gridsearch_limit", $grid_limit, "Gridseach +-Angle Limit (<strong>Critical Parameter</strong>)" );
+		$params->addParam( "gridsearch_step", $grid_step, "Gridseach Angle Step Size (<strong>Critical Parameter</strong>)" );
 		$params->addParam( "retry", $retry, "Coarse Alignment Retries" );
 		$params->addParam( "retry_shrink", $retry_shrink, "Window Size Fraction to Shrink Each Retry Attempt" );
+		$params->addParam( "create_tilt_video", $create_tilt_video, "Create Tilt-Series Videos" );
 		$params->addParam( "create_reconstruction", $create_reconstruction, "Create a Reconstruction Video" );
 		$params->addParam( "keep_recons", $keep_recons, "Keep Intermediate Reconstruction" );
 		$params->addParam( "map_size_x", $map_size_x, "Reconstructon Size (x)" );
 		$params->addParam( "map_size_y", $map_size_y, "Reconstructon Size (y)" );
 		$params->addParam( "map_size_z", $map_size_z, "Reconstructon Size (z)" );
 		$params->addParam( "video_type", $video_type, "Video Type" );
-		$params->addParam( "link", $link, "Link or Copy Raw Images?" );
+		//$params->addParam( "link", $link, "Link or Copy Raw Images?" );
 		$params->addParam( "shift_limit", $shift_limit, "Shift Limit" );
 		$params->addParam( "angle_limit", $angle_limit, "Angle Limit" );
 
@@ -220,8 +231,8 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 	{
 		$filename='/lustre/cryo/lustre/appiondata/15apr12b/protomo_alignments/protomorun2/series000309.corr';
 		$lines = file($filename, FILE_IGNORE_NEW_LINES);
-		print $filename;
-		print $lines;
+		//print $filename;
+		//print $lines;
 		
 		if ($_SESSION['erase_coarse']==1)
 		{
@@ -237,7 +248,7 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 		{
 			global $html;
 			$html .= "<br></br>
-			<b><center>[Choose a Tilt Series to align to proceed]</center></b>";
+			<b><center>[Choose a Tilt-Series to align to proceed]</center></b>";
 		}
 		else
 		{
@@ -260,10 +271,10 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 			//$html.= $params->insertTextField( "cachedir", $fieldSize );
 			//$html.= $params->insertTextField( "protomo_outdir", $fieldSize );
 			//$html.= $params->insertTextField( "preprocessing", $fieldSize );
-			$html.= '<select name="link" style="width:66px">';
-			$html.= '<option selected value="True">Link</option>';
-			$html.= '<option value="False">Copy</option>';
-			$html.= '</select>'; $html.= docpop('protomo_link', ' Link or Copy Raw Images?').'<br>';
+			//$html.= '<select name="link" style="width:66px">';
+			//$html.= '<option selected value="True">Link</option>';
+			//$html.= '<option value="False">Copy</option>';
+			//$html.= '</select>'; $html.= docpop('protomo_link', ' Link or Copy Raw Images?').'<br>';
 			$html.= '<select name="preprocessing" style="width:66px">';
 			$html.= '<option selected value="true">true</option>';
 			$html.= '<option value="false">false</option>';
@@ -376,6 +387,10 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 			$html.= $params->insertTextField( "correlation_size_x", $fieldSize );
 			$html.= $params->insertTextField( "correlation_size_y", $fieldSize );
 			//$html.= $params->insertTextField( "create_reconstruction", $fieldSize );
+			$html.= '<select name="create_tilt_video" style="width:66px">';
+			$html.= '<option selected value="true">true</option>';
+			$html.= '<option value="false">false</option>';
+			$html.= '</select>'; $html.= docpop('protomo_create_tilt_video', ' Create Tilt-Series Videos').'<br>';
 			$html.= '<select name="create_reconstruction" style="width:66px">';
 			$html.= '<option selected value="true">true</option>';
 			$html.= '<option value="false">false</option>';
@@ -400,7 +415,7 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 			if ((empty($_POST['region_x']) OR empty($_POST['region_y']) OR empty($_POST['thickness']) OR empty($_POST['grid_limit']) OR empty($_POST['grid_step'])) AND !isset($_POST['process']))
 			{
 				$html .= "<br></br>
-				<b><center>[Enter the Required Parameters and click 'Just Show Command' to proceed]</center><br></b>";
+				<b><center>[Enter all required parameters and click 'Just Show Command' to proceed]</center><br></b>";
 			}
 		}
 		return $html;

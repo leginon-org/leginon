@@ -67,14 +67,23 @@ class Protomo2RefineSummary extends BasicLayoutForm
 		$corrpeak_gif_files = glob("$outdir/$runname/media/correlations/s*.gif");
 		$corrpeak_vid_files = glob("$outdir/$runname/media/correlations/s*.{mp4,ogv,webm}",GLOB_BRACE);
 		$qa_gif_file = "$outdir/$runname/media/quality_assessment/series".sprintf('%04d',$tiltseries)."_quality_assessment.gif";
-		$rec_files = glob("$outdir/$runname/media/reconstructions/s*.gif");
+		//$rec_files = glob("$outdir/$runname/media/reconstructions/s*.gif");
 		
 		$qa_gif = "loadimg.php?rawgif=1&filename=".$qa_gif_file;
-		print $qa_gif_file;
+		
 		//print $qa_gif;
 		foreach(array_keys($initial_tilt_vid_files) as $paramName)
 			echo $paramName . "<br>";
 			echo $initial_tilt_vid_files["$paramName"] . "<br>";
+		
+		
+		// Quality assessment for each iteration
+		$html .= "
+	<hr />
+	<center><H4><b>Quality Assessment ".docpop('quality_assessment', '(Info)')."</b></H4></center>
+	<hr />";
+		$html .= '<center><img src="'.$qa_gif.'" alt="qa" width="666" />'."</center>";
+		$html .= '<center>'.docpop('quality_assessment2', 'CCMS Info').'</center><br>';
 		
 		// Table of all of the correlation peaks for easy identification of bad alignment iterations
 		$html .= "
@@ -157,13 +166,6 @@ class Protomo2RefineSummary extends BasicLayoutForm
 		}
 		$html .= '</tr><tr></table><br>';
 		
-		// Quality assessment for each iteration
-		$html .= "
-	<hr />
-	<center><H4><b>Quality Assessment ".docpop('quality_assessment', '(Info)')."</b></H4></center>
-	<hr />";
-		$html .= '<center><img src="'.$qa_gif.'" alt="qa" width="550" />'."</center>";
-		
 		// Display Refinement Summary for each iteration (disabled because it overloads the browser=[)
 		//$html.='<script type="text/javascript">
 		//function toggleMe(a){
@@ -194,7 +196,7 @@ class Protomo2RefineSummary extends BasicLayoutForm
 		//<hr />";
 		//	$html .= "
 		//<br />
-		//<center><H4>Tilt Series Correlation Peaks</H4></center>
+		//<center><H4>Tilt-Series Correlation Peaks</H4></center>
 		//<br />";
 		//	if (isset($corrpeak_gif_files[$j])) {
 		//		$html .= '<center><img src="'.$corrpeak_gif.'" alt="correlations" />'."<br /><br /><hr /></center>";
@@ -203,7 +205,7 @@ class Protomo2RefineSummary extends BasicLayoutForm
 		//	}
 		//	$html .= "
 		//<br />
-		//<center><H4>Tilt Series Preliminary Reconstruction After Refinement</H4></center>
+		//<center><H4>Tilt-Series Preliminary Reconstruction After Refinement</H4></center>
 		//<br />";
 		//	if (isset($rec_files[$j])) {
 		//		$html .= '<center><img src="'.$rec_gif.'" alt="reconstruction" /></center>'."<br /><br />";
