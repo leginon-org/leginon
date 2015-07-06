@@ -67,6 +67,9 @@ class Jeol(tem.TEM):
 		self.feg3 = self.tem3.CreateFEG3()
 		self.filter3 = self.tem3.CreateFilter3()
 		self.apt3 = self.tem3.CreateApt3()
+		self.backlash_skip = 10e-6
+		self.backlash_scale = {'x':30e-6,'y':10e-6}
+		self.backlash_pause = 0.1
 
 		# wait for interface to activate
 		result = None
@@ -109,10 +112,11 @@ class Jeol(tem.TEM):
 			if result != 0:
 				time.sleep(.1)
 				result = self.apt3.SelectKind(2)
-		return result == 0 and self.jeolconfigs('tem option','use_auto_apt')
+		return result == 0 and self.getJeolConfig('tem option','use_auto_apt')
 
 	def subDivideMode(self,mode_name,mag):
 		if mode_name == 'mag1':
+			# TO DO: need to check key exists
 			if mag > self.getJeolConfig('tem option','ls4_mag_max'):
 				return 'ls5'
 			elif mag > self.getJeolConfig('tem option','ls3_mag_max'):
@@ -171,6 +175,10 @@ class Jeol(tem.TEM):
 				raise RuntimeError('%s function not configured at mag %d' % (key,mag))
 		return {'x':value[0],'y':value[1]}
 
+	def getLimit(self,key):
+		if key == 'piezo':
+			#2100F at NYSBC
+			return {'x':1.75e-6,'y':1.75e-6}
 	def setProjectionSubModes(self):
 		mode_names = self.getJeolConfig('eos','use_modes')
 		for name in mode_names:
@@ -186,6 +194,13 @@ class Jeol(tem.TEM):
 		'''
 		self.projection_submode_map = mode_map
 		self.setProjectionSubModeMags()
+
+	def getBacklashParams(self):
+		return self.backlash_skip,self.backlash_pause
+
+	def setBacklashParams(self, skip, pause):
+		self.backlash_skip = skip
+		self.backlash_pause = pause
 
 	def setProjectionSubModeMags(self):
 		'''
@@ -448,10 +463,9 @@ class Jeol(tem.TEM):
 			raise ValueError
 		raw_output={}
 		raw_output['x'], raw_output['y'], result = self.def3.GetCLA1()
-		print 'before', raw_output, vector
 		for axis in vector.keys():
 			raw_output[axis] = int(round(shift[axis]/scale[axis]))+neutral[axis]
-		print 'after', raw_output
+
 		result = self.def3.SetCLA1(raw_output['x'], raw_output['y'])
 		if self.relax_beam:
 			self.relaxBeam()
@@ -532,7 +546,6 @@ class Jeol(tem.TEM):
 			time.sleep(interval)
 			self._setIntensity(value_ntrl + magnitude)
 			time.sleep(interval)
-			print 'step', i
 		self._setIntensity(value_original)
 		t = time.time()
 		if t-t0 < totaltime:
@@ -705,7 +718,7 @@ class Jeol(tem.TEM):
 		while not mag:
 			mag = self._getMagnification()
 			if trials:
-				print 'unsuccessful getMagnification(). trial %d' %d
+				print 'unsuccessful getMagnification(). trial %d' % (trials,) 
 				if trials > maxtrials:
 					raise RuntimeError('getMagnification abort after %d trials' % maxtrials)
 			trials += 1
@@ -823,8 +836,8 @@ class Jeol(tem.TEM):
 				time.sleep(1)
 		self.eos3.SetSelector(self.calculateSelectorIndex(new_mode_index, value))
 
-		if value != current_mag and value > 30000:
-			print 'need relaxing'
+		if value != current_mag and value > 2000:
+			#print 'need relaxing'
 			self.relax_beam = True
 		else:
 			self.relax_beam = False
@@ -866,10 +879,57 @@ class Jeol(tem.TEM):
 
 	def _waitForStage(self):
 		# wait for stage to stop moving
-		while self._isStageMoving(): 
+		while self._isStageMoving():
 			time.sleep(0.1)
 
-	def setStagePosition(self, position, relative='absolute'):
+	def printPosition(self, tag, p):
+		pr = {}
+		for axis in ('x','y'):
+			if axis not in p.keys():
+				pr[axis] = '     '
+			else:
+				pr[axis] = '%5.1f' % (p[axis]*1e6)
+		print tag+' '+pr['x']+','+pr['y']
+
+	def stageDriftRelaxation(self, current_position, position):
+		STAGE_BACKLASH = self.backlash_scale
+		tmp_position = current_position.copy()
+		self.printPosition('current', current_position)
+		self.printPosition('targett', position)
+		has_changed = False
+		for axis in position.keys():
+			if axis not in ('x','y'):
+				continue
+			shift = current_position[axis]-position[axis]
+			if abs(shift) > 0.9e-6:
+				#shift_sign = int(shift/abs(shift))
+				shift_sign = 1
+				tmp_position[axis] = -shift_sign*0.5*shift + position[axis]
+				has_changed = True
+		self.printPosition('relax', tmp_position)
+		if has_changed:
+			print 'set to tmp_position'
+			self._setStageXY(tmp_position)
+			time.sleep(self.backlash_pause)
+
+	def stageBacklashCorrection(self, current_position, position):
+		STAGE_BACKLASH = self.backlash_scale
+		tmp_position = {}
+		for axis in position.keys():
+			if axis not in ('x','y'):
+				continue
+
+			if True:
+				#shift_sign = int(shift/abs(shift))
+				shift_sign = 1
+				tmp_position[axis] = shift_sign * STAGE_BACKLASH[axis] + position[axis]
+		self.printPosition('backlash', tmp_position)
+		if tmp_position:
+			print 'correcting backlash'
+			self._setStageXY(tmp_position)
+			time.sleep(self.backlash_pause)
+
+	def setStagePosition(self, position, relative='absolute', backlash=True):
 		# move relative or absolute, add current position for relative
 		if relative == 'relative':
 			current_position = self.getStagePosition()
@@ -882,171 +942,207 @@ class Jeol(tem.TEM):
 			pass
 		else:
 			raise ValueError
-		self._setStagePosition(position)
+
+		# set non backlash axis first
+		self.setStageZ(position)
+		self.setStageAB(position)
+
+		self.setStageXY(position)
+
+	def setStageXY(self, position):
+		if not set(('x','y')).intersection(position.keys()):
+			return
+		pos = position.copy()
+		limit = {'x': 1e-3,'y': 1e-3}
+		for axis in ('x','y'):
+			if axis not in pos:
+				pos[axis] = self.getStagePosition()[axis]
+				continue
+			if abs(pos[axis]) > limit[axis]:
+				raise ValueError('%s limit reached. Ignore' % axis)
+		# set axes that need backlash correction
+		backlash = True
+		if backlash:
+			current_position = self.getStagePosition()
+			shift = math.hypot(current_position['x']-pos['x'],current_position['y']-pos['y'])
+			if shift > self.backlash_skip:
+				self.stageBacklashCorrection(current_position,pos)
+			elif shift > 5e-7:
+				self.stageDriftRelaxation(current_position, pos)
+		self._setStageXthenY(pos)
+		#self.confirmStagePosition(pos,'xy')
+
+	def confirmStagePosition(self, position, axes='z'):
 		# JEM stage call may return without giving error when the position is not reached.
 		# Noticed this at NYSBC JEM-2100f
 		# Make it to retry.
-		accuracy = {'x':1e-7,'y':1e-7, 'z':1e-6, 'a':math.radians(0.5)}
-		for axis in accuracy.keys():
-			if axis in position.keys():
-				newposition = self.getStagePosition()
-				if abs(newposition[axis] - position[axis]) > accuracy[axis]:
-					print 'stage %s not reached' % axis
-					self._setStagePosition(position)
+		accuracy = {'x':1.5e-7,'y':1.5e-7, 'z':0.5e-6, 'a':0.001}
+		new_position = self.getStagePosition()
+		for axis in axes:
+			if axis in position.keys() and abs(new_position[axis] - position[axis]) > accuracy[axis]:
+				self.printPosition('new', new_position)
+				self.printPosition('target', position)
+				print 'stage %s not reached' % axis
+				axis_position = {axis:position[axis]}
+				self.setStagePositionByAxis(position,axis)
 
-	def _setStagePosition(self, position):
+	def setStagePositionByAxis(self, position, axis):
+                keys = position.keys()
+		if axis not in keys:
+			return
+		if axis in ('a','b'):
+			self._setStageAB(position,axis)
+		elif axis == 'z':
+			self._setStageZ(position)
+		else:
+			self._setStageXthenY(position)
+
+	def setStageZ(self, position):
+		if 'z' not in position:
+			return
+		# limit check
+		limit = {'z': 220e-6}
+		if abs(position['z']) > limit['z']:
+			raise ValueError('z limit reached. Ignore')
+		self._setStageZ(position)
+
+	def _setStageZ(self, position):
+		'''
+		set stage in z. position must be in range and has z value.
+		'''
+		scale = self.getScale('stage')
+		p = {'z':position['z']}
+		result = self.stage3.SetZ(p['z']*scale['z'])
+		self._waitForStage()
+		self.confirmStagePosition(p,('z',))
+
+	def setStageAB(self, position):
+		if 'a' not in position and 'b' not in position:
+			return
+		limit = {'a': math.radians(70),'b': 0.0001}
+		print 'before abz move', position
+		for axis in ('a','b'):
+			if axis not in position:
+				continue
+			if abs(position[axis]) > limit[axis]:
+				raise ValueError('%s limit reached. Ignore' % axis)
+			self._setStageAB(position,axis)
+	
+	def _setStageAB(self, position, axis='a'):
+		'''
+		set stage A or B
+		'''
 		scale = self.getScale('stage')
 		# set stage position and wait for movement to stop
-		if 'z' in position:
-			result = self.stage3.SetZ(position['z']*scale['z'])
+		angle_axes = {'a':'x','b':'y'}
+		attr = getattr(self.stage3,'SetTilt%sAngle' % angle_axes[axis])
+		result = attr(math.degrees(position['a']))
+		self._waitForStage()
+		self.confirmStagePosition(position,'a')
 
-		if 'x' in position:
-			result = self.stage3.SetX(position['x']*scale['y'])
-
-		if 'y' in position:
-			result = self.stage3.SetY(position['y']*scale['x'])
-
-		if 'a' in position:
-			result = self.stage3.SetTiltXAngle(math.degrees(position['a']))
-
-		if 'b' in position:
-			result = self.stage3.SetTiltYAngle(math.degrees(position['b']))
-
+	def _setStageXY(self, position):
+		'''
+		Set stage in xy direction wait to stop.
+		position must have both xy axis values and within limit.
+		'''
+		if self.hasPiezoStage():
+			print 'reset piezo'
+			self.resetPiezoPosition()
+		scale = self.getScale('stage')
+		self.printPosition('_set', position)
+		raw_position={'x':position['x']*scale['x'],'y':position['y']*scale['y']}
+		#result = self.stage3.SetPosition(raw_position[0],raw_position[1])
+		print raw_position
+		result = self.stage3.SetX(raw_position['x'])
+		result = self.stage3.SetY(raw_position['y'])
 		self._waitForStage()
 
-	'''
-	def setStagePosition(self, position, relative = "absolute"):
+	def _setStageXthenY(self, position):
+		'''
+		Set stage in x direction wait to stop and then to y direction.
+		position can have only one key
+		'''
 		scale = self.getScale('stage')
-		if relative == "relative":
-			pos = self.getStagePosition()
-			position["x"] += pos["x"] 
-			position["y"] += pos["y"] 
-			position["z"] += pos["z"]
-			position["a"] += pos["a"]
-			position["b"] += pos["b"]
-		elif relative == "absolute":
+		self.printPosition('_setXthenY', position)
+		if 'x' in position.keys():
+			raw_position=position['x']*scale['x']
+			result = self.stage3.SetX(raw_position)
+			self._waitForStage()
+		if 'y' in position.keys():
+			raw_position=position['y']*scale['y']
+			print 'rawY', raw_position
+			result = self.stage3.SetY(raw_position)
+			self._waitForStage()
+
+	def hasPiezoStage(self):
+		# Need to be in jeol.cfg
+		return False
+
+	'''
+	def getPiezoPosition(self):
+		# TO DO put this in jeol.com as 'piezo'
+		scale = self.getScale('stage')
+		x, y, result = self.stage3.GetPiezoPosi()
+		position = {
+			'x' : x/scale['x'],
+			'y' : y/scale['y'],
+		}
+		self.printPosition('got',position)
+		return position
+
+	def setPiezoPosition(self, position, relative = 'absolute'):
+		# move relative or absolute, add current position for relative
+		if relative == 'relative':
+			current_position = self.getPiezoPosition()
+			for axis in position:
+				try:
+					position[axis] += current_position[axis]
+				except KeyError:
+					pass
+		elif relative == 'absolute':
 			pass
 		else:
 			raise ValueError
 
-		value = self.checkStagePosition(position)
-		if not value:
-			return
+		# limit check
+		limit = self.getLimit('piezo')
+		for axis in ('x','y'):
+			if axis in position and abs(position[axis]) > limit[axis]:
+				raise ValueError('%s limit reached. Ignore' % axis)
+		
+		print 'piezo target', position
+		# set axes that need backlash correction
+		self._setPiezoPosition(position)
 
-		try:
-			result = self.stage3.SetZ(position["z"] * scale['z'])
-		except KeyError:
-			pass
-		else:
-			z = 1
-			while z: 
-				time.sleep(.1)
-				x, y, z, tx, ty, result = self.stage3.GetStatus()
+	def _setPiezoPosition(self, position):
+		status = self.stage3.selDrvMode(1)
+		time.sleep(1)
+		if status != 0:
+			raise RuntimeError('No PiezoStage')
+		scale = self.getScale('stage')
+		for axis in ('x','y'):
+			if axis not in position:
+				position[axis] = self.getPiezoPosition()[axis]
+		raw_position=(position['x']*scale['x'],position['y']*scale['y'])
+		#result = self.stage3.SetPosition(raw_position[0],raw_position[1])
+		print raw_position
+		result = self.stage3.SetX(raw_position[0])
+		result = self.stage3.SetY(raw_position[1])
+		self._waitForStage()
+		for i in range(30):
+			p = self.getPiezoPosition()
+			if abs(p['x'] - position['x']) < 1e-8 and abs(p['y']-position['y']) < 1e-8:
+				break
+			self.stage3.selDrvMode(1)
+			result = self.stage3.SetX(raw_position[0])
+			result = self.stage3.SetY(raw_position[1])
+			#self._waitForStage()
+			time.sleep(0.5)
+		print 'set DriveBack'
+		status = self.stage3.selDrvMode(0)
 
-		try:
-			tmp_x = position['x'] + STAGE_BACKLASH
-			result = self.stage3.SetX(tmp_x * scale['x'])
-
-		except KeyError:
-			# for stage hysteresis removal
-			tmp_pos = self.getStagePosition()
-			position['x'] = tmp_pos['x']
-			tmp_x = position['x'] + STAGE_BACKLASH
-			result = self.stage3.SetX(tmp_x * scale['x'])
-		# else:
-		x = 1
-		while x: 
-			time.sleep(.1)
-			x, y, z, tx, ty, result = self.stage3.GetStatus()
-
-		try:
-			tmp_y = position['y'] + STAGE_BACKLASH
-			result = self.stage3.SetY(tmp_y * scale['y'])
-		except KeyError:
-			# for stage hysteresis removal
-			tmp_pos = self.getStagePosition()
-			position['y'] = tmp_pos['y']
-			tmp_y = position['y'] + STAGE_BACKLASH
-			result = self.stage3.SetY(tmp_y * scale['y'])
-		# else:
-		y = 1
-		while y: 
-			time.sleep(.1)
-			x, y, z, tx, ty, result = self.stage3.GetStatus()
-
-		try:
-			result = self.stage3.SetTiltXAngle(math.degrees(position["a"]))
-		except KeyError:
-			pass
-		else:
-			tx = 1
-			while tx: 
-				time.sleep(.1)
-				x, y, z, tx, ty, result = self.stage3.GetStatus()
-
-		try:
-			result = self.stage3.SetTiltYAngle(math.degrees(position["b"]))
-		except KeyError:
-			pass
-		else:
-			ty = 1
-			while ty: 
-				time.sleep(.1)
-				x, y, z, tx, ty, result = self.stage3.GetStatus()
-
-		try:
-			tmp_x = position['x'] - STAGE_BACKLASH
-			result = self.stage3.SetX(tmp_x * scale['x'])
-
-		except KeyError:
-			# for stage hysteresis removal
-			tmp_pos = self.getStagePosition()
-			position['x'] = tmp_pos['x']
-			tmp_x = position['x'] - STAGE_BACKLASH
-			result = self.stage3.SetX(tmp_x * scale['x'])
-		# else:
-		x = 1
-		while x: 
-			time.sleep(.1)
-			x, y, z, tx, ty, result = self.stage3.GetStatus()
-
-		try:
-			tmp_y = position['y'] - STAGE_BACKLASH
-			result = self.stage3.SetY(tmp_y * scale['y'])
-		except KeyError:
-			# for stage hysteresis removal
-			tmp_pos = self.getStagePosition()
-			position['y'] = tmp_pos['y']
-			tmp_y = position['y'] - STAGE_BACKLASH
-			result = self.stage3.SetY(tmp_y * scale['y'])
-		# else:
-		y = 1
-		while y: 
-			time.sleep(.1)
-			x, y, z, tx, ty, result = self.stage3.GetStatus()
-				
-		# for stage hysteresis removal
-		try:
-			result = self.stage3.SetX(position["x"] * scale['x'])
-		except KeyError:
-			pass
-		else:
-			x = 1
-			while x: 
-				time.sleep(.1)
-				x, y, z, tx, ty, result = self.stage3.GetStatus()
-
-		try:
-			result = self.stage3.SetY(position["y"] * scale['y'])
-		except KeyError:
-			pass
-		else:
-			y = 1
-			while y: 
-				time.sleep(.1)
-				x, y, z, tx, ty, result = self.stage3.GetStatus()
-
-		return 0
+	def resetPiezoPosition(self):
+		self._setPiezoPosition({'x':0.0,'y':0.0})
 	'''
 
 	def getLowDoseStates(self):
@@ -1209,6 +1305,25 @@ class Jeol(tem.TEM):
 		positions = self.getAperturePosition()
 		for name in positions.keys():
 			size_list = self._getApertureSizesOfKind(name)
+
+		for name in names:
+			kind = self._getApertureKind(name)
+			# Despite the name, this gives not the size
+			# but a number as the current aperture position
+			if not self.has_auto_apt:
+				index = 0
+			else:
+				index, result = self.apt3.GetSize(kind)
+
+				for i in range(10):
+					if result != 0:
+						time.sleep(.1)
+						size, result = self.apt3.GetSize(kind)
+
+				if result != 0:
+					raise SystemError('Get %s aperture size failed' % name)
+
+				size_list = self._getApertureSizes(name)
 
 			try:
 				sizes[name] = size_list[positions[name]]
