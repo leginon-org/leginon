@@ -10,6 +10,7 @@ import sys
 import math
 import glob
 import time
+import shutil
 import subprocess
 import numpy as np
 import multiprocessing as mp
@@ -839,12 +840,15 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		seriesname='series'+seriesnumber
 		tiltfilename=seriesname+'.tlt'
 		tiltfilename_full=rundir+'/'+tiltfilename
+		originaltilt=rundir+'/original.tlt'
 
 		###Do queries and make tlt file if first run
 		if self.params['coarse'] == 'True':
 			apDisplay.printMsg('Preparing raw images and initial tilt file')
 			f.write('Preparing raw images and initial tilt file\n')
 			self.params['maxtilt'] = apProTomo2Prep.prepareTiltFile(self.params['sessionname'], seriesname, tiltfilename, int(self.params['tiltseries']), raw_path, link=self.params['link'], coarse="True")
+			#Backup original tilt file
+			shutil.copy(tiltfilename_full,originaltilt)
 			#Removing highly shifted images
 			bad_images, bad_kept_images=apProTomo2Aligner.removeHighlyShiftedImages(tiltfilename_full, self.params['dimx'], self.params['dimy'], self.params['shift_limit'], self.params['angle_limit'])
 			if bad_images:
