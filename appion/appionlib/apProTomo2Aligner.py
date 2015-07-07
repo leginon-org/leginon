@@ -215,8 +215,8 @@ def removeHighlyShiftedImages(tiltfile, dimx, dimy, shift_limit, angle_limit):
 		proc=subprocess.Popen(cmd2, stdout=subprocess.PIPE, shell=True)
 		(originy, err) = proc.communicate()
 		originy=float(originy)
-		cmd2="awk '/IMAGE %s /{print}' %s | awk '{for (j=1;j<=NF;j++) if($j ~/TILT/) print $(j+2)}'" % (i+1, tiltfile)
-		proc=subprocess.Popen(cmd2, stdout=subprocess.PIPE, shell=True)
+		cmd3="awk '/IMAGE %s /{print}' %s | awk '{for (j=1;j<=NF;j++) if($j ~/TILT/) print $(j+2)}'" % (i+1, tiltfile)
+		proc=subprocess.Popen(cmd3, stdout=subprocess.PIPE, shell=True)
 		(tilt_angle, err) = proc.communicate()
 		tilt_angle=float(tilt_angle)
 		
@@ -819,10 +819,11 @@ def makeReconstructionVideos(seriesname, iteraion, rundir, outdir, pixelsize, sa
 	'''
 	Creates Reconstruction Videos for Depiction
 	'''
-	def processReconImages(i,vid_path,volume,pixelsize,map_sampling,dimy):
+	def processReconImages(i,vid_path,volume,minval,maxval,pixelsize,map_sampling,dimy):
 		filename="slice%04d.png" % (i)
 		slice = os.path.join(vid_path,filename)
-		scipy.misc.imsave(slice, volume[i])
+		#scipy.misc.imsave(slice, volume[i])  #This command normalizes per-image
+		scipy.misc.toimage(volume[i], cmin=minval, cmax=maxval).save(slice)  #This command normalizes over the volume
 		
 		#Add scalebar
 		scalesize=5000/(pixelsize * map_sampling)    #500nm scaled by sampling
@@ -870,6 +871,8 @@ def makeReconstructionVideos(seriesname, iteraion, rundir, outdir, pixelsize, sa
 		slices = len(volume) - 1
 		dimx=len(volume[0][0])
 		dimy=len(volume[0])
+		minval=np.amin(volume)
+		maxval=np.amax(volume)
 		
 		# Convert the *.mrc to a series of pngs
 		
@@ -879,7 +882,7 @@ def makeReconstructionVideos(seriesname, iteraion, rundir, outdir, pixelsize, sa
 			procs=1
 		apDisplay.printMsg("Creating reconstruction video...")
 		for i in range(0,slices+1):
-			p3 = mp.Process(target=processReconImages, args=(i,vid_path,volume,pixelsize,map_sampling,dimy,))
+			p3 = mp.Process(target=processReconImages, args=(i,vid_path,volume,minval,maxval,pixelsize,map_sampling,dimy,))
 			p3.start()
 			
 			if (i % (procs-1) == 0) and (i != 0):
