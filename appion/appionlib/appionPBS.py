@@ -89,8 +89,8 @@ class AppionPBS(appionLoop2.AppionLoop):
 						
 						#process image(s)
 						scratchdir=self._setupScratchDir(imgdata)
-						targetdict=self.copyTargets(imgdata,scratchdir)
 						apDisplay.printMsg('Copying %s data to %s' % (imgdata['filename'], scratchdir))
+						targetdict=self.copyTargets(imgdata,scratchdir)
 						
 						command=self.generateCommand(imgdata,targetdict)						
 						jobname=self.setupJob(scratchdir, imgdata, command)
@@ -210,7 +210,7 @@ class AppionPBS(appionLoop2.AppionLoop):
 		jobpath=os.path.join(scratchdir,jobname)
 		f=open(jobpath,'w')
 		f.write('#!/bin/csh\n')
-		f.write('#%s -l nodes=1:ppn=%d\n' % (self.params['queue_style']), self.params['queue_ppn'])
+		f.write('#%s -l nodes=1:ppn=%d\n' % (self.params['queue_style'], self.params['queue_ppn']))
 		f.write('#%s -l walltime=%d:00:00\n' % (self.params['queue_style'], self.params['walltime']))
 		f.write('#%s -l pmem=%dgb\n\n' % (self.params['queue_style'], self.params['queue_memory']))
 		f.write('cd %s\n\n' % scratchdir )
