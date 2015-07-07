@@ -114,10 +114,10 @@ function runPyAce() {
 	$command.="--medium=$medium ";
 	$command.="--drange=$drange ";
 	$command.="--display=$display ";
-	$command.="--stig=$stig";
-	if ($nominal) $command.=" --nominal=$nominal";
-	if ($reprocess) $command.=" --reprocess=$reprocess";
-	if ($newnominal) $command.=" --newnominal";
+	$command.="--stig=$stig ";
+	if ($nominal) $command.=" --nominal=$nominal ";
+	if ($reprocess) $command.=" --reprocess=$reprocess ";
+	if ($newnominal) $command.=" --newnominal ";
 	$apcommand = parseAppionLoopParams($_POST);
 	if ($apcommand[0] == "<") {
 		createPyAceForm($apcommand);
