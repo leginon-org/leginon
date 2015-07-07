@@ -104,8 +104,8 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 		$region_y = intval($imageinfo['dimy']*0.6);
 		$map_size_x = intval($imageinfo['dimx']/$map_sampling);
 		$map_size_y = intval($imageinfo['dimy']/$map_sampling);
-		$kernel_x = intval($region_x/$sampling);
-		$kernel_y = intval($region_y/$sampling);
+		$kernel_x = 5;
+		$kernel_y = 5;
 		$mask_width_x = intval($region_x/$sampling);
 		$mask_width_y = intval($region_y/$sampling);
 		$mask_apod_x = intval($region_x/$sampling);

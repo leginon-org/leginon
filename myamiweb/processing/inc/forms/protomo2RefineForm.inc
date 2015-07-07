@@ -55,8 +55,8 @@ class Protomo2RefineForm extends BasicLayoutForm
 		$r1_hp_diam_y = $r2_hp_diam_y = $r3_hp_diam_y = $r4_hp_diam_y = round(($imageinfo['dimx']+$imageinfo['dimy'])/(2*8));
 		$map_size_x = $imageinfo['dimx']/$map_sampling;
 		$map_size_y = $imageinfo['dimy']/$map_sampling;
-		$r1_kernel_x = $r2_kernel_x = $r3_kernel_x = $r4_kernel_x = intval($r1_region_x/$r1_sampling);
-		$r1_kernel_y = $r2_kernel_y = $r3_kernel_y = $r4_kernel_y = intval($r1_region_y/$r1_sampling);
+		$r1_kernel_x = $r2_kernel_x = $r3_kernel_x = $r4_kernel_x = 5;
+		$r1_kernel_y = $r2_kernel_y = $r3_kernel_y = $r4_kernel_y = 5;
 		$r1_mask_width_x = $r2_mask_width_x = $r3_mask_width_x = $r4_mask_width_x = intval($r1_region_x/$r1_sampling);
 		$r1_mask_width_y = $r2_mask_width_y = $r3_mask_width_y = $r4_mask_width_y = intval($r1_region_y/$r1_sampling);
 		$r1_mask_apod_x = $r2_mask_apod_x = $r3_mask_apod_x = $r4_mask_apod_x = intval($r1_region_x/$r1_sampling);
