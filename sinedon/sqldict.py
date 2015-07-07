@@ -1221,6 +1221,9 @@ def matrix2dict(matrix, name=None):
 			raise ValueError("Wrong shape: must be at least 2x1 or 1x2")
 	except AttributeError:
 		raise TypeError("Must be numpy array") 
+	# force numpy.matrix to numpy.ndarray
+	matrix = numpy.array(matrix)
+
 	d={}
 	i=0
 	for row in matrix:
