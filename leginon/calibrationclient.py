@@ -556,13 +556,14 @@ class MatrixCalibrationClient(CalibrationClient):
 			timestamp = caldata.timestamp
 		return timestamp
 
-	def storeMatrix(self, ht, mag, type, matrix, tem=None, ccdcamera=None, probe=None):
+	def storeMatrix(self, ht, mag, caltype, matrix, tem=None, ccdcamera=None, probe=None):
 		'''
-		stores a new calibration matrix
+		stores a new calibration matrix.
 		'''
-		caldata = leginondata.MatrixCalibrationData(session=self.node.session, magnification=mag, type=type, matrix=matrix, probe=probe)
-		self.setDBInstruments(caldata,tem,ccdcamera)
+		# the matrix stored needs to be ndarray type
 		newmatrix = numpy.array(matrix, numpy.float64)
+		caldata = leginondata.MatrixCalibrationData(session=self.node.session, magnification=mag, type=caltype, matrix=newmatrix, probe=probe)
+		self.setDBInstruments(caldata,tem,ccdcamera)
 		caldata['high tension'] = ht
 		self.node.publish(caldata, database=True, dbforce=True)
 
@@ -1294,8 +1295,11 @@ class SimpleMatrixCalibrationClient(MatrixCalibrationClient):
 		return angle_average
 
 	def matrixFromPixelAndPositionShift(self,pixelshift_matrix, positionshift_matrix, image_bin=1):
+		'''
+		returns calibration matrix as ndarray type from pixel shift and position shift matrix(or ndarray)
+		'''
 		ipixelshift = numpy.linalg.inv(image_bin*pixelshift_matrix)
-		return numpy.dot(positionshift_matrix,ipixelshift)
+		return numpy.array(numpy.dot(positionshift_matrix,ipixelshift))
 
 class ImageShiftCalibrationClient(SimpleMatrixCalibrationClient):
 	def __init__(self, node):
