@@ -24,17 +24,7 @@ class Aborted(Exception):
 
 class ImageBeamCalibrator(calibrator.Calibrator):
 	'''
-	Calibrates a microscope parameter with image pixel coordinates.
-	Configure in the 'Set Parameters' section:
-	  'Parameter':  microscope parameter
-	  'N Average':  how many measurements to average, each 
-	     measurement is seperated by 'Interval'
-	  'Base':  where to start (this is a little weird now)
-	  'Delta':  amount to shift the parameter in measurement
-	  'Camera State':  camera configuration
-	  Then 'Set Parameters'
-	Then 'Calibrate'
-	(Valid Shift is currently being ignored)
+	Calibrates beam shift required for compensate image shift.
 	'''
 	panelclass = gui.wx.ImageBeamCalibrator.Panel
 	settingsclass = leginondata.ImageBeamCalibratorSettingsData
@@ -58,153 +48,168 @@ class ImageBeamCalibrator(calibrator.Calibrator):
 
 		self.axislist = ['x', 'y']
 		self.aborted = threading.Event()
-		self.userpause = threading.Event()
 
 		self.start()
 
-	# calibrate needs to take a specific value
 	def calibrate(self):
+		'''
+		The initialization of interactive calibration
+		'''
 		if self.initInstruments():
+			# has error when initialize instruments
+			self.instrument_status = 'bad'
 			return
 		self.aborted.clear()
-
-		calclient = self.parameters[self.parameter]
-
-		# This gives base for beam shift
-		self.parameter = 'beam shift'
-		beambase = self.getBase()
-		self.parameter = 'image shift'
-		imagebase = self.getBase()
-
 		mag, mags = self.getMagnification()
 		pixsize = self.pixsizeclient.retrievePixelSize(None, None, mag)
 
 		cam = self.instrument.ccdcamera
+
+		self.image_pixelshift_matrix = numpy.array(numpy.matrix(((0.0,0.0),(0.0,0.0))))
+		self.beam_positionshift_matrix = numpy.array(numpy.matrix(((0.0,0.0),(0.0,0.0))))
+		self.axismap = {'x':0,'y':1}
+
+	def getBaseImageBeamShift(self):
+		# This gives base for both beam shift and image shift to return to
+		self.parameter = 'beam shift'
+		self.beambase = self.getParameter()
+		self.parameter = 'image shift'
+		self.imagebase = self.getParameter()
+
+	def moveImage(self,axis):
+		i = self.axismap[axis]
+		# get pixel shift by image shift
 		delta = self.settings['image shift delta']
 		self.logger.debug('Delta %s' % delta)
+		self.parameter = 'image shift'
+		calclient = self.parameters[self.parameter]
+		position = self.getParameter()
+		position[axis] += delta
+		calclient = self.parameters[self.parameter]
+		self.scope,self.camera = self.getCurrentScopeCameraEMData()
+		# shift in pixel for the camera config
+		shift = calclient.itransform(position, self.scope, self.camera)
+		# TO DO: shifts -> shiftinfo ?
+		rowpix = shift['row']
+		colpix = shift['col']
+		self.image_pixelshift_matrix[i] = (rowpix,colpix)
 
-		image_pixelshift_matrix = numpy.matrix(((0.0,0.0),(0.0,0.0)))
-		beam_positionshift_matrix = numpy.matrix(((0.0,0.0),(0.0,0.0)))
+		### set image shift
+		basevalue = self.imagebase[axis]
+		newvalue = basevalue + delta
+		self.logger.debug('New value %s' % newvalue)
 
-		for i,axis in enumerate(self.axislist):
-			# get pixel shift by image shift
-			self.parameter = 'image shift'
-			position = {'x':0.0,'y':0.0}
-			position[axis] = delta
-			calclient = self.parameters[self.parameter]
-			scope, camera = self.getCurrentTEMCameraData()
-			# shift in pixel for the camera config
-			shift = calclient.itransform(position, scope, camera)
-			# TO DO: shifts -> shiftinfo ?
-			rowpix = shift['row']
-			colpix = shift['col']
-			totalpix = abs(rowpix + 1j * colpix)
-			image_pixelshift_matrix[i] = (rowpix,colpix)
+		state1 = self.makeState(basevalue, axis)
+		state2 = self.makeState(newvalue, axis)
+		self.instrument.tem.ImageShift = state2
+		self.logger.debug('States %s, %s' % (state1, state2))
 
-			### set image shift
-			basevalue = imagebase[axis]
-			newvalue = basevalue + delta
-			self.logger.debug('New value %s' % newvalue)
+		self.logger.info('Shift between images: (%.2f, %.2f)' % (colpix, rowpix))
 
-			state1 = self.makeState(basevalue, axis)
-			state2 = self.makeState(newvalue, axis)
-			self.instrument.tem.ImageShift = state2
-			self.logger.debug('States %s, %s' % (state1, state2))
+	def saveBeamShift(self,axis):	
+		i = self.axismap[axis]
+		# ui move beam
+		self.parameter = 'beam shift'
+		newbeamstate = self.instrument.tem.BeamShift
+		# simulator test
+		newbeamstate[axis] = newbeamstate[axis]+1e-6
+		self.logger.info('got new state')
 
-			self.logger.info('Shift between images: (%.2f, %.2f)' % (colpix, rowpix))
-			if totalpix == 0.0:
-				raise CalibrationError('total pixel shift is zero')
+		if newbeamstate == self.beambase:
+			raise CalibrationError('change in %s is zero' % self.parameter)
+		beamchange = {'x':newbeamstate['x']-self.beambase['x'],'y':newbeamstate['y']-self.beambase['y']}
+		self.logger.info('scope %s axis % s change : (x,y)=(%s,%s)' % (self.parameter,axis,beamchange['x'],beamchange['y']))
 
-			# ui move beam
-			self.parameter = 'beam shift'
-			newbeamstate = self.uiMoveBeam(axis)
-			self.logger.info('got new state')
-			if self.aborted.isSet():
-				raise Aborted()
+		self.beam_positionshift_matrix[i] = (beamchange['x'],beamchange['y'])
+
+	def returnToBase(self):
+		try:
+			# return to base
+			self.logger.info('Returning to original state')
+			emdata = leginondata.ScopeEMData()
+			emdata['image shift'] = self.imagebase
+			emdata['beam shift'] = self.beambase
+			self.instrument.setData(emdata)
+		except Exception, e:
+			self.logger.exception('Could not return to original state: %s', e)
+			self.panel.calibrationDone()
 
 
-			if newbeamstate == beambase:
-				raise CalibrationError('change in %s is zero' % self.parameter)
-			beamchange = {'x':newbeamstate['x']-beambase['x'],'y':newbeamstate['y']-beambase['y']}
-			self.logger.info('scope %s axis % s change : (x,y)=(%s,%s)' % (self.parameter,axis,beamchange['x'],beamchange['y']))
-
-			beam_positionshift_matrix[i] = (beamchange['x'],beamchange['y'])
-
-			if self.aborted.isSet():
-				raise Aborted()
-
-		# return to base
-		emdata = leginondata.ScopeEMData()
-		emdata['image shift'] = imagebase
-		emdata['beam shift'] = beambase
-		self.instrument.setData(emdata)
-
+	def calculateMatrix(self):
 		mag, mags = self.getMagnification()
 		ht = self.getHighTension()
+	
+		self.parameter = 'beam shift'
+		calclient = self.parameters[self.parameter]
+		self.matrix = calclient.matrixFromPixelAndPositionShift((-1)*self.image_pixelshift_matrix, self.beam_positionshift_matrix, self.camera['binning']['x'])
 
-		matrix = calclient.matrixFromPixelAndPositionShift((-1)*image_pixelshift_matrix, beam_positionshift_matrix, camera['binning']['x'])
-		print matrix
+	def saveCalibration(self):
 		self.logger.info('Matrix saved')
-		self.logger.debug('Matrix %s' % matrix)
-		calclient.storeMatrix(ht, mag, self.parameter, matrix)
+		self.logger.debug('Matrix %s' % self.matrix)
+		self.parameter = 'beam shift'
+		calclient = self.parameters[self.parameter]
+		tem = self.instrument.getTEMData()
+		cam = self.instrument.getCCDCameraData()
+		calclient.storeMatrix(self.scope['high tension'], self.scope['magnification'], self.parameter, self.matrix,tem,cam)
 		self.beep()
 
-	def uiMoveBeam(self, axis='x'):
-		self.setStatus('user input')
-		self.logger.info('wait for user to move beam back to center')
-		value = {'x':0.0,'y':0.0}
-		value[axis] = value[axis]+2e-6
-		self.instrument.tem.BeamShift = value
-		base = self.panel.moveBeam(axis)
-		return base
+	def prepareStep2(self):
+		'''
+		Prepare to move beam in x
+		'''
+		# update base image beam values to return to later
+		self.getBaseImageBeamShift()
+		self.moveImage('x')
 
-	def uiMoveBeamDone(self):
-		self.userpause.clear()
-		return self.getBase()
-		
+	def prepareStep3(self):
+		'''
+		Prepare to move beam in y
+		'''
+		self.saveBeamShift('x')
+		self.returnToBase()
+		self.moveImage('y')
+
+	def finish(self):
+		'''
+		Prepare to save calibration.
+		'''
+		self.saveBeamShift('y')
+		self.returnToBase()
+		self.calculateMatrix()
+
 	def uiCalibrate(self):
+		self.instrument_status = 'good'
 		try:
-			self.getParameter()
-		except Exception, e:
-			self.logger.exception('Unable to get parameter, aborting calibration: %s', e)
-			self.panel.calibrationDone()
-			return
-
-		try:
+			self.getBaseImageBeamShift()
 			self.calibrate()
+			# if all goes well, return here
+			return
 		except calibrationclient.NoPixelSizeError:
 			self.logger.error(
 								'Unable to get pixel size, aborting calibration')
 		except CalibrationError, e:
 			self.logger.error('Bad calibration measurement, aborting: %s', e)
 		except Exception, e:
-			raise
 			self.logger.exception('Calibration failed: %s', e)
-		else:
-			self.logger.info('Calibration completed successfully')
-		# return to original state
-		try:
-			self.setParameter()
-		except Exception, e:
-			self.logger.exception('Could not return to original state: %s', e)
-		self.panel.calibrationDone()
-
-	def getParameter(self):
-		self.saveparam = self.instrument.getData(leginondata.ScopeEMData)[self.parameter]
-		self.logger.debug('Storing parameter %s, %s'
-											% (self.parameter, self.saveparam))
-
-	def setParameter(self):
-		self.logger.info('Returning to original state')
-		emdata = leginondata.ScopeEMData()
-		emdata[self.parameter] = self.saveparam
-		self.instrument.setData(emdata)
+		except AttributeError, e:
+			self.logger.exception('Calibration failed: %s', e)
+		# abort in all error
+		self.instrument_status = 'bad'
+		self.uiAbort()
 
 	def uiAbort(self):
-		self.userpause.clear()
-		self.aborted.set()
+		try:
+			self.aborted.set()
+			self.returnToBase()
+		except AttributeError, e:
+			# attribute error comes from base not assigned in uiCalibrate.
+			# In other words, nothing has been done successfully.
+			pass
+		except Exception, e:
+			raise
+		self.logger.info('Calibration canceled')
 
-	def getBase(self):
+	def getParameter(self):
 		self.logger.info('%s current as base' % self.parameter)
 		emdata = self.currentState()
 		base = emdata[self.parameter]
@@ -213,49 +218,10 @@ class ImageBeamCalibrator(calibrator.Calibrator):
 	def makeState(self, value, axis):
 		return {self.parameter: {axis: value}}
 
-	def getCurrentTEMCameraData(self):
+	def getCurrentScopeCameraEMData(self):
 		if self.instrument.tem is None:
 			raise RuntimeError('cannot access TEM')
 		emdata = self.currentState(leginondata.ScopeEMData)
 		camdata = self.currentState(leginondata.CameraEMData)
 		return emdata, camdata
 
-	def getCurrentCalibration(self):
-		try:
-			calclient = self.parameters[self.parameter]
-		except KeyError:
-			raise RuntimeError('no parameter selected')
-		tem, cam = self.getCurrentTEMCameraData()
-		par = self.parameter
-		ht = self.instrument.tem.HighTension
-		mag = self.instrument.tem.Magnification
-		return calclient.researchMatrix(tem, cam, par, ht, mag)
-
-	def editCurrentCalibration(self):
-		try:
-			calibrationdata = self.getCurrentCalibration()
-		except calibrationclient.NoMatrixCalibrationError, e:
-			if e.state is None:
-				raise e
-			else:
-				self.logger.warning('No calibration found for current state: %s' % e)
-				calibrationdata = e.state
-		except Exception, e:
-			self.logger.error('Calibration edit failed: %s' % e)
-			return
-		self.panel.editCalibration(calibrationdata)
-
-	def saveCalibration(self, matrix, parameter, ht, mag, tem, ccdcamera):
-		try:
-			calclient = self.parameters[parameter]
-		except KeyError:
-			raise RuntimeError('no parameter selected')
-		calclient.storeMatrix(ht, mag, parameter, matrix, tem, ccdcamera)
-
-	def pixelToPixel(self, mag1, mag2, p1):
-		stagecal = self.parameters['stage position']
-		tem = self.instrument.getTEMData()
-		cam = self.instrument.getCCDCameraData()
-		ht = self.instrument.tem.HighTension
-		p2 = stagecal.pixelToPixel(tem, cam, tem, cam, ht, mag1, mag2, p1)
-		return p2
