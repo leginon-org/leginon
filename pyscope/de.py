@@ -11,6 +11,8 @@ FRAME_LR_FLIP = False
 # frame rotate configuration. multiple of 90 degrees if needed
 # after the flip.  Direction + is x to -y.
 FRAME_ROTATE = 0
+# always use all available frames
+USE_ALL_FRAMES = True
 
 # Shared global connection to the DE Server
 __deserver = None
@@ -118,6 +120,12 @@ class DECameraBase(ccdcamera.CCDCamera):
 
 		#update a few essential camera properties to default values
 		self.setProperty('Correction Mode', 'Uncorrected Raw')
+		self.setProperty('Image Size X', self.dimension['x'])
+		self.setProperty('Image Size Y', self.dimension['y'])
+		self.setProperty('ROI Dimension X', self.dimension['x'])
+		self.setProperty('ROI Dimension Y', self.dimension['y'])
+		self.setProperty('ROI Offset X', 0)
+		self.setProperty('ROI Offset Y', 0)
 
 	def getProperty(self, name):		
 		value = de_getProperty(self.name, name)
@@ -181,6 +189,8 @@ class DECameraBase(ccdcamera.CCDCamera):
 		self.offset = offdict
 
 	def finalizeGeometry(self, image):
+		# DE camera offsets and dimensions are not sent to
+		# the camera but are handled in this function.
 		row_start = self.offset['y'] * self.binning['y']
 		col_start = self.offset['x'] * self.binning['x']
 		nobin_rows = self.dimension['y'] * self.binning['y']
@@ -197,7 +207,7 @@ class DECameraBase(ccdcamera.CCDCamera):
 
 	def getBinnedMultiplier(self):
 		'''
-		Our software binning calculates a binned pixel
+		DE software binning calculates a binned pixel
 		as the average of the component pixels, which is
 		different that typical hardware binning.  This will
 		return a multiplier that can be used to calculate
@@ -240,7 +250,9 @@ class DECameraBase(ccdcamera.CCDCamera):
 		self.setProperty('Exposure Mode', value.capitalize()) 
 
 	def getNumberOfFrames(self):
-		return self.getProperty('Total Number of Frames')
+		result = self.getProperty('Total Number of Frames')
+		#print 'number of frames:', result
+		return result
 
 	def getSaveRawFrames(self):
 		'''Save or Discard'''
@@ -280,6 +292,8 @@ class DECameraBase(ccdcamera.CCDCamera):
 
 	def setUseFrames(self, frames):
 		total_frames = self.getNumberOfFrames()
+		if USE_ALL_FRAMES:
+			frames = None
 		if frames:
 			nskip = frames[0]
 			last = frames[-1]
@@ -296,6 +310,7 @@ class DECameraBase(ccdcamera.CCDCamera):
 	def getFrameTime(self):
 		fps = self.getProperty('Frames Per Second')
 		ms = (1.0 / fps) * 1000.0
+		print 'frametime', ms
 		return ms
 
 	def setFrameTime(self, ms):
@@ -349,6 +364,8 @@ class DD(DECameraBase):
 
 		self.as_super.__init__()
 		self.setProperty('Ignore Number of Frames', 0)
+		self.default_frametime = 40
+		self.setFrameTime(self.default_frametime)
 		frame_time_ms = self.getFrameTime()
 		self.setProperty('Preexposure Time (seconds)', frame_time_ms/1000.0)		
 
