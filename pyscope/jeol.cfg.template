@@ -5,14 +5,14 @@ USE_PLA = True
 ENERGY_FILTER = False
 #relax beam if switch above none-zero magnification if needed
 RELAX_BEAM_MAG = 0
+#disable control of auto apertures if not working or not available
+USE_AUTO_APT = False
 #lower range of mag1 with different neutral and deflector values
 LS1_MAG_MAX = 5000
 LS2_MAG_MAX = 30000
 LS3_MAG_MAX = 100000
 LS4_MAG_MAX = 250000
 LM1_MAG_MAX = 200
-#desable control of auto apertures if not working or not available
-USE_AUTO_APT = False
 
 [eos]
 # electron optics class
@@ -39,6 +39,8 @@ BEAMTILT_SCALE%X = 5.56e-6
 BEAMTILT_SCALE%Y = 5.56e-6
 
 # convert shift clicks to distance in meters
+BEAMSHIFT_SCALE%LS4%X = 1.56e-8
+BEAMSHIFT_SCALE%LS4%Y = 2.64e-8
 BEAMSHIFT_SCALE%LS3%X = 1.56e-8
 BEAMSHIFT_SCALE%LS3%Y = 2.64e-8
 BEAMSHIFT_SCALE%LS2%X = 1.56e-8
@@ -50,6 +52,8 @@ BEAMSHIFT_SCALE%LOWMAG%Y = 6.9e-8
 BEAMSHIFT_SCALE%LM1%X = 1.2e-7
 BEAMSHIFT_SCALE%LM1%Y = 1.2e-7
 
+IMAGESHIFT_SCALE%LS4%X = 1.6e-10
+IMAGESHIFT_SCALE%LS4%Y = 1.6e-10
 IMAGESHIFT_SCALE%LS3%X = 1.6e-10
 IMAGESHIFT_SCALE%LS3%Y = 1.6e-10
 IMAGESHIFT_SCALE%LS2%X = 3.0e-10
@@ -67,8 +71,25 @@ IMAGESHIFT_SCALE%LM1%Y = 1.2e-7
 STAGE_SCALE%X = 1e9 
 STAGE_SCALE%Y = 1e9 
 STAGE_SCALE%Z = 1e9 
-# not currently performing manual backlash correction in meters
-#STAGE_BACKLASH = 2e-6
+# backlash correction in meters
+BACKLASH_SCALE%X = 10e-6
+BACKLASH_SCALE%Y = 30e-6
+# minimal move distance where full backlash correction starts
+BACKLASH_LIMIT%FULL = 10e-6
+# minimal move distance where scaled down backlash correction starts
+BACKLASH_LIMIT%REDUCED = 0.5e-6
+# limits of stage movement
+STAGE_LIMIT%X = 1e-3
+STAGE_LIMIT%Y = 1e-3
+STAGE_LIMIT%Z = 220e-6
+STAGE_LIMIT%A = 1.2217
+STAGE_LIMIT%B = 3.141593
+# accuracy of stage movement
+ACCURACY%X = 2e-7
+ACCURACY%Y = 2e-7
+ACCURACY%Z = 5e-7
+ACCURACY%A = 174e-3
+ACCURACY%B = 174-3
 
 [apt]
 # aperture class
@@ -99,6 +120,7 @@ LOWMAG:36176,20016
 LS1:32768,32768
 LS2:32768,32768
 LS3:32768,32768
+LS4:32768,32768
 
 [neutral beamshift]
 LM1:31956,33466
@@ -106,6 +128,7 @@ LOWMAG:31956,33466
 LS1:31815,34953
 LS2:31815,34953
 LS3:31815,34953
+LS4:31815,34953
 
 [neutral beamtilt]
 LM1:32768,32678
@@ -113,3 +136,4 @@ LOWMAG:32768,32678
 LS1:32768,32678
 LS2:32768,32678
 LS3:32768,32678
+LS4:32768,32678

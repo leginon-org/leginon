@@ -5,6 +5,8 @@ import comtypes.client
 from pyscope import tem
 from pyscope import jeolconfig
 
+DEBUG = True
+
 # function modes
 FUNCTION_MODES = {'mag1':0,'mag2':1,'lowmag':2,'samag':3,'diff':4}
 FUNCTION_MODE_ORDERED_NAMES = ['mag1','mag2','lowmag','samag','diff']
@@ -33,6 +35,9 @@ SCALE_FACTOR = 32767
 # coarse-fine ratio for OL
 COARSE_SCALE = 32
 
+def debug_print(message):
+	if DEBUG:
+		print message
 
 def toJeol(val):
 	return ZERO + int(round(SCALE_FACTOR * val))
@@ -67,8 +72,7 @@ class Jeol(tem.TEM):
 		self.feg3 = self.tem3.CreateFEG3()
 		self.filter3 = self.tem3.CreateFilter3()
 		self.apt3 = self.tem3.CreateApt3()
-		self.backlash_skip = 10e-6
-		self.backlash_scale = {'x':30e-6,'y':10e-6}
+		self.backlash_start = 10e-6
 		self.backlash_pause = 0.1
 
 		# wait for interface to activate
@@ -90,10 +94,12 @@ class Jeol(tem.TEM):
 		self.magnifications = []
 		# submode_mags keys are submode_indices and values are magnification list in the submode
 		self.submode_mags = {}
-		# initialize zero defocus values from jeol.cfg
+		# initialize values from jeol.cfg
 		self.zero_defocus_om = self.getJeolConfig('om standard focus')
 		self.zero_defocus_ol = self.getJeolConfig('ol standard focus')
-
+		self.stage_limit = self.getJeolConfig('stage','stage_limit')
+		self.backlash_scale = self.getJeolConfig('stage','backlash_scale')
+		self.backlash_limit = self.getJeolConfig('stage','backlash_limit')
 	def __del__(self):
 		comtypes.CoUninitialize()
 
@@ -151,7 +157,6 @@ class Jeol(tem.TEM):
 				mode_subname = self.subDivideMode(mode_name,mag)
 				return value[mode_subname]
 			except:
-				raise
 				raise RuntimeError('%s function not implemented in mag %d' % (key,mag))
 
 	def getNeutral(self,key,mag=None):
@@ -172,7 +177,7 @@ class Jeol(tem.TEM):
 				lens_series = self.getLensSeriesDivision(mag)
 				value = self.getJeolConfig(optionname,lens_series)
 			except:
-				print optionname,mag
+				debug_print('%s,%d') % (optionname,int(mag))
 				raise RuntimeError('%s function not configured at mag %d' % (key,mag))
 		return {'x':value[0],'y':value[1]}
 
@@ -180,6 +185,7 @@ class Jeol(tem.TEM):
 		if key == 'piezo':
 			#2100F at NYSBC
 			return {'x':1.75e-6,'y':1.75e-6}
+
 	def setProjectionSubModes(self):
 		mode_names = self.getJeolConfig('eos','use_modes')
 		for name in mode_names:
@@ -197,10 +203,10 @@ class Jeol(tem.TEM):
 		self.setProjectionSubModeMags()
 
 	def getBacklashParams(self):
-		return self.backlash_skip,self.backlash_pause
+		return self.backlash_limit,self.backlash_pause
 
 	def setBacklashParams(self, skip, pause):
-		self.backlash_skip = skip
+		self.backlash_limit = skip
 		self.backlash_pause = pause
 
 	def setProjectionSubModeMags(self):
@@ -613,7 +619,7 @@ class Jeol(tem.TEM):
 		mag = self.getMagnification()
 		# set zero_defocus_ol only if it is a is in the range
 		if self.projection_submode_map[mag][0] != 'mag1':
-			print 'outside the mag range for zero defocus OL'
+			debug_print('outside the mag range for zero defocus OL')
 			return
 		# set at the closest mag value but not higher
 		items = self.zero_defocus_ol.items()
@@ -624,10 +630,10 @@ class Jeol(tem.TEM):
 				break
 			ol_mags.pop()
 		if len(ol_mags):
-			print 'zero_defocus set at %d' % (int(ol_mags[-1]))
+			debug_print('zero_defocus set at %d' % (int(ol_mags[-1])))
 			self.zero_defocus_ol[ol_mags[-1]] = self.getRawFocusOL()
 		else:
-			print 'zero_defocus no ol_mags set at %d' % (int(mag))
+			debug_print('zero_defocus no ol_mags set at %d' % (int(mag)))
 			self.zero_defocus_ol['%d' % (int(mag),)] = self.getRawFocusOL()
 
 	def getDefocus(self):
@@ -719,7 +725,7 @@ class Jeol(tem.TEM):
 		while not mag:
 			mag = self._getMagnification()
 			if trials:
-				print 'unsuccessful getMagnification(). trial %d' % (trials,) 
+				debug_prinT('unsuccessful getMagnification(). trial %d' % (trials,)) 
 				if trials > maxtrials:
 					raise RuntimeError('getMagnification abort after %d trials' % maxtrials)
 			trials += 1
@@ -838,7 +844,7 @@ class Jeol(tem.TEM):
 		self.eos3.SetSelector(self.calculateSelectorIndex(new_mode_index, value))
 
 		if self.getJeolConfig('tem option','relax_beam_mag') and value != current_mag and value > self.getJeolConfig('tem option','relax_beam_mag'):
-			#print 'need relaxing'
+			debug_print('need relaxing')
 			self.relax_beam = True
 		else:
 			self.relax_beam = False
@@ -890,31 +896,35 @@ class Jeol(tem.TEM):
 				pr[axis] = '     '
 			else:
 				pr[axis] = '%5.1f' % (p[axis]*1e6)
-		print tag+' '+pr['x']+','+pr['y']+','+pr['a']
+		if DEBUG:
+			debug_print(tag+' '+pr['x']+','+pr['y']+','+pr['a'])
 
-	def stageDriftRelaxation(self, current_position, position):
-		STAGE_BACKLASH = self.backlash_scale
+	def reducedStageBacklashCorrection(self, current_position, position):
+		'''
+		Reduced backlash Correction at half of the shift distance at each axis.
+		'''
 		tmp_position = current_position.copy()
-		self.printPosition('current', current_position)
-		self.printPosition('targett', position)
 		has_changed = False
 		for axis in position.keys():
 			if axis not in ('x','y'):
 				continue
 			shift = current_position[axis]-position[axis]
-			if abs(shift) > 0.9e-6:
+			if abs(shift) > self.backlash_limit['reduced']:
+				# shift to half the distance as tmp_position
 				#shift_sign = int(shift/abs(shift))
 				shift_sign = 1
 				tmp_position[axis] = -shift_sign*0.5*shift + position[axis]
 				has_changed = True
-		self.printPosition('relax', tmp_position)
 		if has_changed:
-			print 'set to tmp_position'
+			debug_print('set to tmp_position in reduced backlash correction')
 			self._setStageXY(tmp_position)
 			time.sleep(self.backlash_pause)
 
-	def stageBacklashCorrection(self, current_position, position):
-		STAGE_BACKLASH = self.backlash_scale
+	def fullStageBacklashCorrection(self, current_position, position):
+		'''
+		Stage Backlash Correction as implemented in JEM Instrument
+		Position Module
+		'''
 		tmp_position = {}
 		for axis in position.keys():
 			if axis not in ('x','y'):
@@ -923,10 +933,10 @@ class Jeol(tem.TEM):
 			if True:
 				#shift_sign = int(shift/abs(shift))
 				shift_sign = 1
-				tmp_position[axis] = shift_sign * STAGE_BACKLASH[axis] + position[axis]
-		self.printPosition('backlash', tmp_position)
+				tmp_position[axis] = shift_sign * self.backlash_scale[axis] + position[axis]
+		self.printPosition('backlash',tmp_position)
 		if tmp_position:
-			print 'correcting backlash'
+			debug_print('correcting backlash')
 			self._setStageXY(tmp_position)
 			time.sleep(self.backlash_pause)
 
@@ -954,22 +964,21 @@ class Jeol(tem.TEM):
 		if not set(('x','y')).intersection(position.keys()):
 			return
 		pos = position.copy()
-		limit = {'x': 1e-3,'y': 1e-3}
 		for axis in ('x','y'):
 			if axis not in pos:
 				pos[axis] = self.getStagePosition()[axis]
 				continue
-			if abs(pos[axis]) > limit[axis]:
+			if abs(pos[axis]) > self.stage_limit[axis]:
 				raise ValueError('%s limit reached. Ignore' % axis)
 		# set axes that need backlash correction
 		backlash = True
 		if backlash:
 			current_position = self.getStagePosition()
 			shift = math.hypot(current_position['x']-pos['x'],current_position['y']-pos['y'])
-			if shift > self.backlash_skip:
-				self.stageBacklashCorrection(current_position,pos)
-			elif shift > 5e-7:
-				self.stageDriftRelaxation(current_position, pos)
+			if shift > self.backlash_limit['full']:
+				self.fullStageBacklashCorrection(current_position,pos)
+			elif shift > self.backlash_limit['reduced']:
+				self.reducedStageBacklashCorrection(current_position, pos)
 		self._setStageXthenY(pos)
 		#self.confirmStagePosition(pos,'xy')
 
@@ -977,15 +986,13 @@ class Jeol(tem.TEM):
 		# JEM stage call may return without giving error when the position is not reached.
 		# Noticed this at NYSBC JEM-2100f
 		# Make it to retry.
-		accuracy = {'x':1.5e-7,'y':1.5e-7, 'z':0.5e-6, 'a':0.002}
+		accuracy = self.getJeolConfig('stage','accuracy')
 		new_position = self.getStagePosition()
 		for axis in axes:
-			if axis in position.keys():
-			 delta = abs(new_position[axis] - position[axis])
-			 if delta > accuracy[axis]:
+			if axis in position.keys() and abs(new_position[axis] - position[axis]) > accuracy[axis]:
 				self.printPosition('new', new_position)
 				self.printPosition('target', position)
-				print 'stage %s not reached,delta=%.1f' % (axis,delta*1e6)
+				debug_print('stage %s not reached' % axis)
 				axis_position = {axis:position[axis]}
 				self.setStagePositionByAxis(position,axis)
 
@@ -1004,8 +1011,7 @@ class Jeol(tem.TEM):
 		if 'z' not in position:
 			return
 		# limit check
-		limit = {'z': 220e-6}
-		if abs(position['z']) > limit['z']:
+		if abs(position['z']) > self.stage_limit['z']:
 			raise ValueError('z limit reached. Ignore')
 		self._setStageZ(position)
 
@@ -1022,18 +1028,16 @@ class Jeol(tem.TEM):
 	def setStageAB(self, position):
 		if 'a' not in position and 'b' not in position:
 			return
-		limit = {'a': math.radians(70),'b': 0.0001}
-		print 'before abz move', position
 		for axis in ('a','b'):
 			if axis not in position:
 				continue
-			if abs(position[axis]) > limit[axis]:
+			if abs(position[axis]) > self.stage_limit[axis]:
 				raise ValueError('%s limit reached. Ignore' % axis)
 			self._setStageAB(position,axis)
 	
 	def _setStageAB(self, position, axis='a'):
 		'''
-		set stage A or B
+		set stage A or B. Must be within limit
 		'''
 		scale = self.getScale('stage')
 		# set stage position and wait for movement to stop
@@ -1046,17 +1050,16 @@ class Jeol(tem.TEM):
 
 	def _setStageXY(self, position):
 		'''
-		Set stage in xy direction wait to stop.
-		position must have both xy axis values and within limit.
+		Set stage in xy direction and then wait to stop.
+		This makes it move in diagonal direction.
+		Position must have both xy axis values and within limit.
 		'''
 		if self.hasPiezoStage():
-			print 'reset piezo'
+			debug_print('reset piezo')
 			self.resetPiezoPosition()
 		scale = self.getScale('stage')
-		self.printPosition('_set', position)
+		self.printPosition('_setXY', position)
 		raw_position={'x':position['x']*scale['x'],'y':position['y']*scale['y']}
-		#result = self.stage3.SetPosition(raw_position[0],raw_position[1])
-		print raw_position
 		result = self.stage3.SetX(raw_position['x'])
 		result = self.stage3.SetY(raw_position['y'])
 		self._waitForStage()
@@ -1064,17 +1067,17 @@ class Jeol(tem.TEM):
 	def _setStageXthenY(self, position):
 		'''
 		Set stage in x direction wait to stop and then to y direction.
+		The movement is therefore zigzag.
 		position can have only one key
 		'''
-		scale = self.getScale('stage')
 		self.printPosition('_setXthenY', position)
+		scale = self.getScale('stage')
 		if 'x' in position.keys():
 			raw_position=position['x']*scale['x']
 			result = self.stage3.SetX(raw_position)
 			self._waitForStage()
 		if 'y' in position.keys():
 			raw_position=position['y']*scale['y']
-			print 'rawY', raw_position
 			result = self.stage3.SetY(raw_position)
 			self._waitForStage()
 
@@ -1114,7 +1117,7 @@ class Jeol(tem.TEM):
 			if axis in position and abs(position[axis]) > limit[axis]:
 				raise ValueError('%s limit reached. Ignore' % axis)
 		
-		print 'piezo target', position
+		debug_print('piezo target %s' % (position,))
 		# set axes that need backlash correction
 		self._setPiezoPosition(position)
 
@@ -1129,7 +1132,7 @@ class Jeol(tem.TEM):
 				position[axis] = self.getPiezoPosition()[axis]
 		raw_position=(position['x']*scale['x'],position['y']*scale['y'])
 		#result = self.stage3.SetPosition(raw_position[0],raw_position[1])
-		print raw_position
+		debug_print('%s' % (raw_position,))
 		result = self.stage3.SetX(raw_position[0])
 		result = self.stage3.SetY(raw_position[1])
 		self._waitForStage()
@@ -1142,7 +1145,7 @@ class Jeol(tem.TEM):
 			result = self.stage3.SetY(raw_position[1])
 			#self._waitForStage()
 			time.sleep(0.5)
-		print 'set DriveBack'
+		debug_print('set DriveBack')
 		status = self.stage3.selDrvMode(0)
 
 	def resetPiezoPosition(self):
