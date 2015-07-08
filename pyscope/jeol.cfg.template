@@ -3,12 +3,15 @@
 USE_PLA = True
 # true if the scope has an energy filter
 ENERGY_FILTER = False
+#relax beam if switch above none-zero magnification if needed
+RELAX_BEAM_MAG = 0
 #lower range of mag1 with different neutral and deflector values
 LS1_MAG_MAX = 5000
 LS2_MAG_MAX = 30000
 LS3_MAG_MAX = 100000
+LS4_MAG_MAX = 250000
 LM1_MAG_MAX = 200
-#desable control of auto apertures if not working
+#desable control of auto apertures if not working or not available
 USE_AUTO_APT = False
 
 [eos]
@@ -23,6 +26,7 @@ FOCUS_SCALE%LOWMAG = 6.4e-9
 FOCUS_SCALE%LS1 = 5.79e-9
 FOCUS_SCALE%LS2 = 5.79e-9
 FOCUS_SCALE%LS3 = 5.79e-9
+FOCUS_SCALE%LS4 = 5.79e-9
 
 [camera]
 # convert to pA/???^2

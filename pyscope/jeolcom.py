@@ -151,6 +151,7 @@ class Jeol(tem.TEM):
 				mode_subname = self.subDivideMode(mode_name,mag)
 				return value[mode_subname]
 			except:
+				raise
 				raise RuntimeError('%s function not implemented in mag %d' % (key,mag))
 
 	def getNeutral(self,key,mag=None):
@@ -467,7 +468,7 @@ class Jeol(tem.TEM):
 			raw_output[axis] = int(round(shift[axis]/scale[axis]))+neutral[axis]
 
 		result = self.def3.SetCLA1(raw_output['x'], raw_output['y'])
-		if self.relax_beam:
+		if self.getJeolConfig('tem option','relax_beam_mag') and self.relax_beam:
 			self.relaxBeam()
  
 	def getImageShift(self):
@@ -836,7 +837,7 @@ class Jeol(tem.TEM):
 				time.sleep(1)
 		self.eos3.SetSelector(self.calculateSelectorIndex(new_mode_index, value))
 
-		if value != current_mag and value > 2000:
+		if self.getJeolConfig('tem option','relax_beam_mag') and value != current_mag and value > self.getJeolConfig('tem option','relax_beam_mag'):
 			#print 'need relaxing'
 			self.relax_beam = True
 		else:
@@ -877,19 +878,19 @@ class Jeol(tem.TEM):
 		x, y, z, tx, ty, result = self.stage3.GetStatus()
 		return x or y or z or tx or ty
 
-	def _waitForStage(self):
+	def _waitForStage(self,sleeptime=0.1):
 		# wait for stage to stop moving
 		while self._isStageMoving():
-			time.sleep(0.1)
+			time.sleep(sleeptime)
 
 	def printPosition(self, tag, p):
 		pr = {}
-		for axis in ('x','y'):
+		for axis in ('x','y','a'):
 			if axis not in p.keys():
 				pr[axis] = '     '
 			else:
 				pr[axis] = '%5.1f' % (p[axis]*1e6)
-		print tag+' '+pr['x']+','+pr['y']
+		print tag+' '+pr['x']+','+pr['y']+','+pr['a']
 
 	def stageDriftRelaxation(self, current_position, position):
 		STAGE_BACKLASH = self.backlash_scale
@@ -976,13 +977,15 @@ class Jeol(tem.TEM):
 		# JEM stage call may return without giving error when the position is not reached.
 		# Noticed this at NYSBC JEM-2100f
 		# Make it to retry.
-		accuracy = {'x':1.5e-7,'y':1.5e-7, 'z':0.5e-6, 'a':0.001}
+		accuracy = {'x':1.5e-7,'y':1.5e-7, 'z':0.5e-6, 'a':0.002}
 		new_position = self.getStagePosition()
 		for axis in axes:
-			if axis in position.keys() and abs(new_position[axis] - position[axis]) > accuracy[axis]:
+			if axis in position.keys():
+			 delta = abs(new_position[axis] - position[axis])
+			 if delta > accuracy[axis]:
 				self.printPosition('new', new_position)
 				self.printPosition('target', position)
-				print 'stage %s not reached' % axis
+				print 'stage %s not reached,delta=%.1f' % (axis,delta*1e6)
 				axis_position = {axis:position[axis]}
 				self.setStagePositionByAxis(position,axis)
 
@@ -1038,6 +1041,7 @@ class Jeol(tem.TEM):
 		attr = getattr(self.stage3,'SetTilt%sAngle' % angle_axes[axis])
 		result = attr(math.degrees(position['a']))
 		self._waitForStage()
+		# on JEM2100F isStageMoving gives false all the time in alpha since the motor moves fast but not accrurately.  Must confirm
 		self.confirmStagePosition(position,'a')
 
 	def _setStageXY(self, position):
