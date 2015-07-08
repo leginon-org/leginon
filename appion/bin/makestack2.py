@@ -974,9 +974,10 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 			action="store_false", help="contrast of the micrographs")
 		self.parser.add_option("--spider", dest="spider", default=False,
 			action="store_true", help="create a spider stack")
-		self.parser.add_option("--forceInsert", dest="forceInsert", default=False,
+		self.parser.add_option("--forceInsert", dest="forceInsert", default=True,
 			action="store_true", help="insert new entries without checking if corresponding data already exists")
-		
+		self.parser.add_option("--no-forceInsert", dest="forceInsert", action="store_false",  
+							help="check for duplicates before inserting new particles")
 		self.parser.add_option("--normalized", dest="normalized", default=False,
 			action="store_true", help="normalize the entire stack")
 		self.parser.add_option("--xmipp-norm-before", dest="xmipp-norm-before", default=False,

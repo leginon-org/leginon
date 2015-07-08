@@ -1039,6 +1039,7 @@ function runMakestack() {
 	if ($ctfrunID) $command.="--ctfrunid=$ctfrunID ";
 	if ($boxmask) $command.="--boxmask='$boxmask' ";
 	if ($forceInsert) $command.="--forceInsert ";
+	else $command.="--no-forceInsert ";
 	
 	$apcommand = parseAppionLoopParams($_POST);
 	if ($apcommand[0] == "<") {
