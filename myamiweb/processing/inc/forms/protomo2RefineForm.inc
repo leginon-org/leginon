@@ -263,16 +263,16 @@ class Protomo2RefineForm extends BasicLayoutForm
 			<b><center>Either remove all previous Refinements by copying and pasting this series of commands into a terminal window (you can copy them all at once):</center></b>";
 			$html .= "<br></br>
 			<center><code>rm ".$_SESSION['outdir'].$_SESSION['runname']."/series".sprintf('%04d',$_SESSION['tiltseries'])."*.corr<br>
-			rm ".$_SESSION['outdir'].$_SESSION['runname']."/media/correlations/series".sprintf('%04d',$_SESSION['tiltseries'])."*<br>
-			rm ".$_SESSION['outdir'].$_SESSION['runname']."/media/reconstructions/series".sprintf('%04d',$_SESSION['tiltseries'])."*<br>
-			rm ".$_SESSION['outdir'].$_SESSION['runname']."/media/corrplots/series".sprintf('%04d',$_SESSION['tiltseries'])."*<br>
-			rm ".$_SESSION['outdir'].$_SESSION['runname']."/media/tiltseries/series".sprintf('%04d',$_SESSION['tiltseries'])."*<br>
-			rm ".$_SESSION['outdir'].$_SESSION['runname']."/media/quality_assessment/series".sprintf('%04d',$_SESSION['tiltseries'])."*<br>
-			rm ".$_SESSION['outdir'].$_SESSION['runname']."/cache/series".sprintf('%04d',$_SESSION['tiltseries'])."*<br>
-			rm ".$_SESSION['outdir'].$_SESSION['runname']."/out/series".sprintf('%04d',$_SESSION['tiltseries'])."*<br>
-			rm ".$_SESSION['outdir'].$_SESSION['runname']."/series".sprintf('%04d',$_SESSION['tiltseries']).".i3t<br>
-			rm ".$_SESSION['outdir'].$_SESSION['runname']."/best.*<br>
-			rm ".$_SESSION['outdir'].$_SESSION['runname']."/worst.*<br></code></center>";
+			rm ".$_SESSION['outdir']."/".$_SESSION['runname']."/media/correlations/series".sprintf('%04d',$_SESSION['tiltseries'])."*<br>
+			rm ".$_SESSION['outdir']."/".$_SESSION['runname']."/media/reconstructions/series".sprintf('%04d',$_SESSION['tiltseries'])."*<br>
+			rm ".$_SESSION['outdir']."/".$_SESSION['runname']."/media/corrplots/series".sprintf('%04d',$_SESSION['tiltseries'])."*<br>
+			rm ".$_SESSION['outdir']."/".$_SESSION['runname']."/media/tiltseries/series".sprintf('%04d',$_SESSION['tiltseries'])."*<br>
+			rm ".$_SESSION['outdir']."/".$_SESSION['runname']."/media/quality_assessment/series".sprintf('%04d',$_SESSION['tiltseries'])."*<br>
+			rm ".$_SESSION['outdir']."/".$_SESSION['runname']."/cache/series".sprintf('%04d',$_SESSION['tiltseries'])."*<br>
+			rm ".$_SESSION['outdir']."/".$_SESSION['runname']."/out/series".sprintf('%04d',$_SESSION['tiltseries'])."*<br>
+			rm ".$_SESSION['outdir']."/".$_SESSION['runname']."/series".sprintf('%04d',$_SESSION['tiltseries']).".i3t<br>
+			rm ".$_SESSION['outdir']."/".$_SESSION['runname']."/best.*<br>
+			rm ".$_SESSION['outdir']."/".$_SESSION['runname']."/worst.*<br></code></center>";
 			
 			$html .= "<br></br>
 			<a href='runAppionLoop.php?expId=".$this->expId."&form=Protomo2RefineForm'><b><center>and then Click here or Refresh this page to continue,</center></b></a>";
