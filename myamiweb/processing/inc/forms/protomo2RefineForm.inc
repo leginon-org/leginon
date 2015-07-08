@@ -273,10 +273,7 @@ class Protomo2RefineForm extends BasicLayoutForm
 			rm ".$_SESSION['outdir'].$_SESSION['runname']."/series".sprintf('%04d',$_SESSION['tiltseries']).".i3t<br>
 			rm ".$_SESSION['outdir'].$_SESSION['runname']."/best.*<br>
 			rm ".$_SESSION['outdir'].$_SESSION['runname']."/worst.*<br></code></center>";
-			//mv ".$_SESSION['outdir'].$_SESSION['runname']."/coarse_series".sprintf('%04d',$_SESSION['tiltseries']).".i3t ".$_SESSION['outdir'].$_SESSION['runname']."/series".sprintf('%04d',$_SESSION['tiltseries']).".i3t<br>
-			//rm ".$_SESSION['outdir'].$_SESSION['runname']."/series".sprintf('%04d',$_SESSION['tiltseries'])."[0-9][0-9].*<br>
-			//rm ".$_SESSION['outdir'].$_SESSION['runname']."/cache/"."series".sprintf('%04d',$_SESSION['tiltseries'])."*.<br>
-			//rm ".$_SESSION['outdir'].$_SESSION['runname']."/out/series".sprintf('%04d',$_SESSION['tiltseries'])."[0-9][0-9]_cor.*<br>
+			
 			$html .= "<br></br>
 			<a href='runAppionLoop.php?expId=".$this->expId."&form=Protomo2RefineForm'><b><center>and then Click here or Refresh this page to continue,</center></b></a>";
 			$html .= "<br></br>
