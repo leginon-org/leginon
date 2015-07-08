@@ -260,13 +260,19 @@ class Protomo2RefineForm extends BasicLayoutForm
 		if ($_SESSION['erase_refine']==1)
 		{
 			$html .= "<br></br>
-			<b><center>Either remove all previous Refinements by running this series of commands:</center></b>";
+			<b><center>Either remove all previous Refinements by copying and pasting this series of commands into a terminal window (you can copy them all at once):</center></b>";
 			$html .= "<br></br>
-			<center><code>rm ".$_SESSION['outdir'].$_SESSION['runname']."/*.corr<br>
-			rm ".$_SESSION['outdir'].$_SESSION['runname']."/media/correlations/series".sprintf('%04d',$_SESSION['tiltseries'])."[0-9][0-9]_cor.*<br>
-			rm ".$_SESSION['outdir'].$_SESSION['runname']."/media/reconstructions/series".sprintf('%04d',$_SESSION['tiltseries'])."[0-9][0-9]_bck.*<br>
+			<center><code>rm ".$_SESSION['outdir'].$_SESSION['runname']."/series".sprintf('%04d',$_SESSION['tiltseries'])."*.corr<br>
+			rm ".$_SESSION['outdir'].$_SESSION['runname']."/media/correlations/series".sprintf('%04d',$_SESSION['tiltseries'])."*<br>
+			rm ".$_SESSION['outdir'].$_SESSION['runname']."/media/reconstructions/series".sprintf('%04d',$_SESSION['tiltseries'])."*<br>
 			rm ".$_SESSION['outdir'].$_SESSION['runname']."/media/corrplots/series".sprintf('%04d',$_SESSION['tiltseries'])."*<br>
-			rm ".$_SESSION['outdir'].$_SESSION['runname']."/media/tiltseries/series".sprintf('%04d',$_SESSION['tiltseries'])."*<br></code></center>";
+			rm ".$_SESSION['outdir'].$_SESSION['runname']."/media/tiltseries/series".sprintf('%04d',$_SESSION['tiltseries'])."*<br>
+			rm ".$_SESSION['outdir'].$_SESSION['runname']."/media/quality_assessment/series".sprintf('%04d',$_SESSION['tiltseries'])."*<br>
+			rm ".$_SESSION['outdir'].$_SESSION['runname']."/cache/series".sprintf('%04d',$_SESSION['tiltseries'])."*<br>
+			rm ".$_SESSION['outdir'].$_SESSION['runname']."/out/series".sprintf('%04d',$_SESSION['tiltseries'])."*<br>
+			rm ".$_SESSION['outdir'].$_SESSION['runname']."/series".sprintf('%04d',$_SESSION['tiltseries']).".i3t<br>
+			rm ".$_SESSION['outdir'].$_SESSION['runname']."/best.*<br>
+			rm ".$_SESSION['outdir'].$_SESSION['runname']."/worst.*<br></code></center>";
 			//mv ".$_SESSION['outdir'].$_SESSION['runname']."/coarse_series".sprintf('%04d',$_SESSION['tiltseries']).".i3t ".$_SESSION['outdir'].$_SESSION['runname']."/series".sprintf('%04d',$_SESSION['tiltseries']).".i3t<br>
 			//rm ".$_SESSION['outdir'].$_SESSION['runname']."/series".sprintf('%04d',$_SESSION['tiltseries'])."[0-9][0-9].*<br>
 			//rm ".$_SESSION['outdir'].$_SESSION['runname']."/cache/"."series".sprintf('%04d',$_SESSION['tiltseries'])."*.<br>
