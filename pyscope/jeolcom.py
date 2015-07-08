@@ -5,7 +5,7 @@ import comtypes.client
 from pyscope import tem
 from pyscope import jeolconfig
 
-DEBUG = True
+DEBUG = False
 
 # function modes
 FUNCTION_MODES = {'mag1':0,'mag2':1,'lowmag':2,'samag':3,'diff':4}
