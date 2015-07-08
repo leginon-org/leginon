@@ -16,9 +16,9 @@ class CentosInstallation(object):
 
 	def setReleaseDependantValues(self):
 		# need to change to branch when release
-		#self.svnCmd = "svn co http://ami.scripps.edu/svn/myami/branches/myami-redux " + self.svnMyamiDir
+		#self.svnCmd = "svn co http://emg.nysbc.org/svn/myami/branches/myami-redux " + self.svnMyamiDir
 		
-		self.svnCmd = "svn co http://ami.scripps.edu/svn/myami/trunk " + self.svnMyamiDir
+		self.svnCmd = "svn co http://emg.nysbc.org/svn/myami/trunk " + self.svnMyamiDir
 		# redhat release related values
 		self.redhatRelease = '6.8' # currently used to decide the name of the epel download.
 		self.torqueLibPath = '/var/lib/torque/'
@@ -121,7 +121,7 @@ class CentosInstallation(object):
 		
 		if not returnValue:
 			print("========================")
-			print("ERROR: Please disable SELinux before running this auto installation. Visit http://ami.scripps.edu/redmine/projects/appion/wiki/Install_Appion_and_Leginon_using_the_auto-installation_tool .")
+			print("ERROR: Please disable SELinux before running this auto installation. Visit http://emg.nysbc.org/redmine/projects/appion/wiki/Install_Appion_and_Leginon_using_the_auto-installation_tool .")
 			print("Exiting installation...")
 			print("========================")
 			return False
@@ -426,10 +426,10 @@ class CentosInstallation(object):
 		
 		# select 32 or 64 bit file to download
 		if self.machine == "i686" or self.machine == "i386" :
-			fileLocation = "http://ami.scripps.edu/redmine/attachments/download/632/eman-linux-x86-cluster-1.9.tar.gz"
+			fileLocation = "http://emg.nysbc.org/redmine/attachments/download/632/eman-linux-x86-cluster-1.9.tar.gz"
 			fileName = "eman-linux-x86-cluster-1.9.tar.gz"
 		else :
-			fileLocation = "http://ami.scripps.edu/redmine/attachments/download/631/eman-linux-x86_64-cluster-1.9.tar.gz"
+			fileLocation = "http://emg.nysbc.org/redmine/attachments/download/631/eman-linux-x86_64-cluster-1.9.tar.gz"
 			fileName = "eman-linux-x86_64-cluster-1.9.tar.gz"
 
 		# download the tar file and unzip it
@@ -476,7 +476,7 @@ class CentosInstallation(object):
 	def installSpider(self):
 		self.writeToLog("--- Start install Spider")
 		
-		fileLocation = "http://ami.scripps.edu/redmine/attachments/download/638/spidersmall.18.10.tar.gz"
+		fileLocation = "http://emg.nysbc.org/redmine/attachments/download/638/spidersmall.18.10.tar.gz"
 		fileName = "spidersmall.18.10.tar.gz"
 
 		# download the tar file and unzip it
@@ -539,7 +539,7 @@ setenv SPBIN_DIR ${SPIDERDIR}/bin/''')
 		
 		dirName = "Xmipp-2.4-src"
 		tarFileName = dirName + ".tar.gz"
-		tarFileLocation = "http://ami.scripps.edu/redmine/attachments/download/636/" + tarFileName
+		tarFileLocation = "http://emg.nysbc.org/redmine/attachments/download/636/" + tarFileName
 
 		# download the source code tar file and unzip it
 		command = "wget -c " + tarFileLocation
@@ -624,7 +624,7 @@ setenv LD_LIBRARY_PATH ${LD_LIBRARY_PATH}:${XMIPPDIR}/lib:%s''' % (MpiLibDir))
 	def installFrealign(self):
 		self.writeToLog("--- Start install Frealign")
 		
-		fileLocation = "http://ami.scripps.edu/redmine/attachments/download/740/frealign_v8.09_110505.tar.gz"
+		fileLocation = "http://emg.nysbc.org/redmine/attachments/download/740/frealign_v8.09_110505.tar.gz"
 		fileName = "frealign_v8.09_110505.tar.gz"
 
 		# download the tar file and unzip it
@@ -1021,7 +1021,7 @@ setenv LD_LIBRARY_PATH ${LD_LIBRARY_PATH}:${XMIPPDIR}/lib:%s''' % (MpiLibDir))
 		print "===================================="
 		print ""
 		
-		value = raw_input("Please enter the registration key. You must be registered at http://ami.scripps.edu/redmine to recieve a registration key: ")
+		value = raw_input("Please enter the registration key. You must be registered at http://emg.nysbc.org/redmine to recieve a registration key: ")
 		value = value.strip()
 
 		self.regKey = value
@@ -1075,7 +1075,7 @@ setenv LD_LIBRARY_PATH ${LD_LIBRARY_PATH}:${XMIPPDIR}/lib:%s''' % (MpiLibDir))
 	
 	def downloadSampleImages(self):
 	   
-		getImageCmd = "wget -P/tmp/images http://ami.scripps.edu/redmine/attachments/download/112/06jul12a_00015gr_00028sq_00004hl_00002en.mrc http://ami.scripps.edu/redmine/attachments/download/113/06jul12a_00015gr_00028sq_00023hl_00002en.mrc http://ami.scripps.edu/redmine/attachments/download/114/06jul12a_00015gr_00028sq_00023hl_00004en.mrc http://ami.scripps.edu/redmine/attachments/download/115/06jul12a_00022gr_00013sq_00002hl_00004en.mrc http://ami.scripps.edu/redmine/attachments/download/116/06jul12a_00022gr_00013sq_00003hl_00005en.mrc http://ami.scripps.edu/redmine/attachments/download/109/06jul12a_00022gr_00037sq_00025hl_00004en.mrc http://ami.scripps.edu/redmine/attachments/download/110/06jul12a_00022gr_00037sq_00025hl_00005en.mrc http://ami.scripps.edu/redmine/attachments/download/111/06jul12a_00035gr_00063sq_00012hl_00004en.mrc"
+		getImageCmd = "wget -P/tmp/images http://emg.nysbc.org/redmine/attachments/download/112/06jul12a_00015gr_00028sq_00004hl_00002en.mrc http://emg.nysbc.org/redmine/attachments/download/113/06jul12a_00015gr_00028sq_00023hl_00002en.mrc http://emg.nysbc.org/redmine/attachments/download/114/06jul12a_00015gr_00028sq_00023hl_00004en.mrc http://emg.nysbc.org/redmine/attachments/download/115/06jul12a_00022gr_00013sq_00002hl_00004en.mrc http://emg.nysbc.org/redmine/attachments/download/116/06jul12a_00022gr_00013sq_00003hl_00005en.mrc http://emg.nysbc.org/redmine/attachments/download/109/06jul12a_00022gr_00037sq_00025hl_00004en.mrc http://emg.nysbc.org/redmine/attachments/download/110/06jul12a_00022gr_00037sq_00025hl_00005en.mrc http://emg.nysbc.org/redmine/attachments/download/111/06jul12a_00035gr_00063sq_00012hl_00004en.mrc"
 
 		print getImageCmd
 		proc = subprocess.Popen(getImageCmd, shell=True)
