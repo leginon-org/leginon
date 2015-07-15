@@ -474,7 +474,7 @@ class Jeol(tem.TEM):
 			raw_output[axis] = int(round(shift[axis]/scale[axis]))+neutral[axis]
 
 		result = self.def3.SetCLA1(raw_output['x'], raw_output['y'])
-		if self.getJeolConfig('tem option','relax_beam_mag') and self.relax_beam:
+		if self.getJeolConfig('tem option','cl3_relaxation_mag') and self.relax_beam:
 			self.relaxBeam()
  
 	def getImageShift(self):
@@ -725,7 +725,7 @@ class Jeol(tem.TEM):
 		while not mag:
 			mag = self._getMagnification()
 			if trials:
-				debug_prinT('unsuccessful getMagnification(). trial %d' % (trials,)) 
+				debug_print('unsuccessful getMagnification(). trial %d' % (trials,)) 
 				if trials > maxtrials:
 					raise RuntimeError('getMagnification abort after %d trials' % maxtrials)
 			trials += 1
@@ -843,7 +843,7 @@ class Jeol(tem.TEM):
 				time.sleep(1)
 		self.eos3.SetSelector(self.calculateSelectorIndex(new_mode_index, value))
 
-		if self.getJeolConfig('tem option','relax_beam_mag') and value != current_mag and value > self.getJeolConfig('tem option','relax_beam_mag'):
+		if self.getJeolConfig('tem option','cl3_relaxation_mag') and value != current_mag and value > self.getJeolConfig('tem option','cl3_relaxation_mag'):
 			debug_print('need relaxing')
 			self.relax_beam = True
 		else:
