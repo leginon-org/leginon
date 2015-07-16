@@ -454,14 +454,16 @@ def bestWorstIteration(rundir):
 	return best, worst
 	
 
-def fixFrameMrcs(rundir):
+def fixImages(rawpath):
 	'''
-	Reads raw image mrcs into pyami and writes them back out. No transforms. This fixes a Protomo issue.
+	Reads raw image mrcs into pyami, normalizes, converts datatype to float32, and writes them back out. No transforms. This might fix Protomo issues.
 	'''
-	os.chdir(rundir)
-	mrcs=glob.glob('ex*mrc')
+	os.chdir(rawpath)
+	mrcs=glob.glob('*mrc')
 	for image in mrcs:
 		f=mrc.read(image)
+		f=imagenorm.normStdev(f)
+		f=numpy.float32(f)
 		mrc.write(f,image)
 	
 	

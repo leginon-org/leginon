@@ -100,16 +100,23 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 		$lp_diam_y = round(pow(10,10)*$imageinfo['pixelsize']*10);
 		$hp_diam_x = round(($imageinfo['dimx']+$imageinfo['dimy'])/(2*8));
 		$hp_diam_y = round(($imageinfo['dimx']+$imageinfo['dimy'])/(2*8));
+		$lp_apod_x=2.5*$lp_diam_x;
+		$lp_apod_y=2.5*$lp_diam_y;
+		$hp_apod_x=$hp_diam_x/2;
+		$hp_apod_y=$hp_diam_y/2;
 		$region_x = intval($imageinfo['dimx']*0.6);
 		$region_y = intval($imageinfo['dimy']*0.6);
-		$map_size_x = intval($imageinfo['dimx']/$map_sampling);
-		$map_size_y = intval($imageinfo['dimy']/$map_sampling);
 		$kernel_x = 5;
 		$kernel_y = 5;
-		$mask_width_x = intval($region_x/$sampling);
-		$mask_width_y = intval($region_y/$sampling);
-		$mask_apod_x = intval($region_x/$sampling);
-		$mask_apod_y = intval($region_y/$sampling);
+		$mask_apod_x = 10;
+		$mask_apod_y = 10;
+		$Nx=$region_x/$sampling;
+		$Ny=$region_y/$sampling;
+		$mask_width_x = $Nx-2.5*$mask_apod_x;
+		$mask_width_y = $Ny-2.5*$mask_apod_y;
+		$map_size_x = intval($imageinfo['dimx']/$map_sampling);
+		$map_size_y = intval($imageinfo['dimy']/$map_sampling);
+		
 		$image_file_type = pathinfo($imageinfo['filename'], PATHINFO_EXTENSION);
 		$_SESSION['image_file_type'] = $image_file_type;
 		$_SESSION['dimx'] = $imageinfo['dimx'];
@@ -343,14 +350,14 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 		    <H4>Mask Parameters ".docpop('maskparam_info', '(Info)')."</H4>
 		    <hr />";
 		    
-			$html.= $params->insertTextField( "mask_width_x", $fieldSize );
-			$html.= $params->insertTextField( "mask_width_y", $fieldSize );
 			$html.= $params->insertTextField( "lowpass_diameter_x", $fieldSize );
 			$html.= $params->insertTextField( "lowpass_diameter_y", $fieldSize );
 			$html.= $params->insertTextField( "highpass_diameter_x", $fieldSize );
 			$html.= $params->insertTextField( "highpass_diameter_y", $fieldSize );
 			$html.= $params->insertTextField( "mask_apod_x", $fieldSize );
 			$html.= $params->insertTextField( "mask_apod_y", $fieldSize );
+			$html.= $params->insertTextField( "mask_width_x", $fieldSize );
+			$html.= $params->insertTextField( "mask_width_y", $fieldSize );
 			$html.= $params->insertTextField( "lowpass_apod_x", $fieldSize );
 			$html.= $params->insertTextField( "lowpass_apod_y", $fieldSize );
 			$html.= $params->insertTextField( "highpass_apod_x", $fieldSize );

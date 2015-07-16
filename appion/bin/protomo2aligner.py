@@ -630,7 +630,7 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		self.parser.add_option("--link", dest="link",  default=True,
 			help="Link raw images if True, copy if False, e.g. --link=False")
 		
-		self.parser.add_option("--fix_frames", dest="fix_frames",  default="False",
+		self.parser.add_option("--fix_images", dest="fix_images",  default="False",
 			help="Internal use only")
 	
 	#=====================
@@ -662,10 +662,10 @@ class ProTomo2Aligner(basicScript.BasicScript):
 	#=====================
 	def angstromsToProtomo(self, coarse=False):
 		self.params['thickness'] = self.params['thickness']/self.params['pixelsize']
-		self.params['lowpass_diameter_x'] = 2*self.params['pixelsize']*self.params['sampling']/self.params['lowpass_diameter_x']
-		self.params['lowpass_diameter_y'] = 2*self.params['pixelsize']*self.params['sampling']/self.params['lowpass_diameter_y']
-		self.params['highpass_diameter_x'] = 2*self.params['pixelsize']*self.params['sampling']/self.params['highpass_diameter_x']
-		self.params['highpass_diameter_y'] = 2*self.params['pixelsize']*self.params['sampling']/self.params['highpass_diameter_y']
+		self.params['lowpass_diameter_x'] = self.params['pixelsize']*self.params['sampling']/self.params['lowpass_diameter_x']
+		self.params['lowpass_diameter_y'] = self.params['pixelsize']*self.params['sampling']/self.params['lowpass_diameter_y']
+		self.params['highpass_diameter_x'] = self.params['pixelsize']*self.params['sampling']/self.params['highpass_diameter_x']
+		self.params['highpass_diameter_y'] = self.params['pixelsize']*self.params['sampling']/self.params['highpass_diameter_y']
 		self.params['lowpass_apod_x'] = self.params['pixelsize']*self.params['sampling']/self.params['lowpass_apod_x']
 		self.params['lowpass_apod_y'] = self.params['pixelsize']*self.params['sampling']/self.params['lowpass_apod_y']
 		self.params['highpass_apod_x'] = self.params['pixelsize']*self.params['sampling']/self.params['highpass_apod_x']
@@ -680,10 +680,10 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		r1_lp=r2_lp=r3_lp=r4_lp=r5_lp=0
 		if coarse == "False":
 			r1_lp=(self.params['r1_lowpass_diameter_x']+self.params['r1_lowpass_diameter_y'])/2
-			self.params['r1_lowpass_diameter_x'] = 2*self.params['pixelsize']*self.params['r1_sampling']/self.params['r1_lowpass_diameter_x']
-			self.params['r1_lowpass_diameter_y'] = 2*self.params['pixelsize']*self.params['r1_sampling']/self.params['r1_lowpass_diameter_y']
-			self.params['r1_highpass_diameter_x'] = 2*self.params['pixelsize']*self.params['r1_sampling']/self.params['r1_highpass_diameter_x']
-			self.params['r1_highpass_diameter_y'] = 2*self.params['pixelsize']*self.params['r1_sampling']/self.params['r1_highpass_diameter_y']
+			self.params['r1_lowpass_diameter_x'] = self.params['pixelsize']*self.params['r1_sampling']/self.params['r1_lowpass_diameter_x']
+			self.params['r1_lowpass_diameter_y'] = self.params['pixelsize']*self.params['r1_sampling']/self.params['r1_lowpass_diameter_y']
+			self.params['r1_highpass_diameter_x'] = self.params['pixelsize']*self.params['r1_sampling']/self.params['r1_highpass_diameter_x']
+			self.params['r1_highpass_diameter_y'] = self.params['pixelsize']*self.params['r1_sampling']/self.params['r1_highpass_diameter_y']
 			self.params['r1_lowpass_apod_x'] = self.params['pixelsize']*self.params['r1_sampling']/self.params['r1_lowpass_apod_x']
 			self.params['r1_lowpass_apod_y'] = self.params['pixelsize']*self.params['r1_sampling']/self.params['r1_lowpass_apod_y']
 			self.params['r1_highpass_apod_x'] = self.params['pixelsize']*self.params['r1_sampling']/self.params['r1_highpass_apod_x']
@@ -691,19 +691,19 @@ class ProTomo2Aligner(basicScript.BasicScript):
 			r1_body=(self.params['thickness']/self.params['r1_sampling'])/self.params['cos_alpha']
 			try:
 				r2_lp=(self.params['r2_lowpass_diameter_x']+self.params['r2_lowpass_diameter_y'])/2
-				self.params['r2_lowpass_diameter_x'] = 2*self.params['pixelsize']*self.params['r2_sampling']/self.params['r2_lowpass_diameter_x']
+				self.params['r2_lowpass_diameter_x'] = self.params['pixelsize']*self.params['r2_sampling']/self.params['r2_lowpass_diameter_x']
 			except:
 				pass
 			try:
-				self.params['r2_lowpass_diameter_y'] = 2*self.params['pixelsize']*self.params['r2_sampling']/self.params['r2_lowpass_diameter_y']
+				self.params['r2_lowpass_diameter_y'] = self.params['pixelsize']*self.params['r2_sampling']/self.params['r2_lowpass_diameter_y']
 			except:
 				pass
 			try:
-				self.params['r2_highpass_diameter_x'] = 2*self.params['pixelsize']*self.params['r2_sampling']/self.params['r2_highpass_diameter_x']
+				self.params['r2_highpass_diameter_x'] = self.params['pixelsize']*self.params['r2_sampling']/self.params['r2_highpass_diameter_x']
 			except:
 				pass
 			try:
-				self.params['r2_highpass_diameter_y'] = 2*self.params['pixelsize']*self.params['r2_sampling']/self.params['r2_highpass_diameter_y']
+				self.params['r2_highpass_diameter_y'] = self.params['pixelsize']*self.params['r2_sampling']/self.params['r2_highpass_diameter_y']
 			except:
 				pass
 			try:
@@ -725,19 +725,19 @@ class ProTomo2Aligner(basicScript.BasicScript):
 				pass
 			try:
 				r3_lp=(self.params['r3_lowpass_diameter_x']+self.params['r3_lowpass_diameter_y'])/2
-				self.params['r3_lowpass_diameter_x'] = 2*self.params['pixelsize']*self.params['r3_sampling']/self.params['r3_lowpass_diameter_x']
+				self.params['r3_lowpass_diameter_x'] = self.params['pixelsize']*self.params['r3_sampling']/self.params['r3_lowpass_diameter_x']
 			except:
 				pass
 			try:
-				self.params['r3_lowpass_diameter_y'] = 2*self.params['pixelsize']*self.params['r3_sampling']/self.params['r3_lowpass_diameter_y']
+				self.params['r3_lowpass_diameter_y'] = self.params['pixelsize']*self.params['r3_sampling']/self.params['r3_lowpass_diameter_y']
 			except:
 				pass
 			try:
-				self.params['r3_highpass_diameter_x'] = 2*self.params['pixelsize']*self.params['r3_sampling']/self.params['r3_highpass_diameter_x']
+				self.params['r3_highpass_diameter_x'] = self.params['pixelsize']*self.params['r3_sampling']/self.params['r3_highpass_diameter_x']
 			except:
 				pass
 			try:
-				self.params['r3_highpass_diameter_y'] = 2*self.params['pixelsize']*self.params['r3_sampling']/self.params['r3_highpass_diameter_y']
+				self.params['r3_highpass_diameter_y'] = self.params['pixelsize']*self.params['r3_sampling']/self.params['r3_highpass_diameter_y']
 			except:
 				pass
 			try:
@@ -759,19 +759,19 @@ class ProTomo2Aligner(basicScript.BasicScript):
 				pass
 			try:
 				r4_lp=(self.params['r4_lowpass_diameter_x']+self.params['r4_lowpass_diameter_y'])/2
-				self.params['r4_lowpass_diameter_x'] = 2*self.params['pixelsize']*self.params['r4_sampling']/self.params['r4_lowpass_diameter_x']
+				self.params['r4_lowpass_diameter_x'] = self.params['pixelsize']*self.params['r4_sampling']/self.params['r4_lowpass_diameter_x']
 			except:
 				pass
 			try:
-				self.params['r4_lowpass_diameter_y'] = 2*self.params['pixelsize']*self.params['r4_sampling']/self.params['r4_lowpass_diameter_y']
+				self.params['r4_lowpass_diameter_y'] = self.params['pixelsize']*self.params['r4_sampling']/self.params['r4_lowpass_diameter_y']
 			except:
 				pass
 			try:
-				self.params['r4_highpass_diameter_x'] = 2*self.params['pixelsize']*self.params['r4_sampling']/self.params['r4_highpass_diameter_x']
+				self.params['r4_highpass_diameter_x'] = self.params['pixelsize']*self.params['r4_sampling']/self.params['r4_highpass_diameter_x']
 			except:
 				pass
 			try:
-				self.params['r4_highpass_diameter_y'] = 2*self.params['pixelsize']*self.params['r4_sampling']/self.params['r4_highpass_diameter_y']
+				self.params['r4_highpass_diameter_y'] = self.params['pixelsize']*self.params['r4_sampling']/self.params['r4_highpass_diameter_y']
 			except:
 				pass
 			try:
@@ -793,19 +793,19 @@ class ProTomo2Aligner(basicScript.BasicScript):
 				pass
 			try:
 				r5_lp=(self.params['r5_lowpass_diameter_x']+self.params['r5_lowpass_diameter_y'])/2
-				self.params['r5_lowpass_diameter_x'] = 2*self.params['pixelsize']*self.params['r5_sampling']/self.params['r5_lowpass_diameter_x']
+				self.params['r5_lowpass_diameter_x'] = self.params['pixelsize']*self.params['r5_sampling']/self.params['r5_lowpass_diameter_x']
 			except:
 				pass
 			try:
-				self.params['r5_lowpass_diameter_y'] = 2*self.params['pixelsize']*self.params['r5_sampling']/self.params['r5_lowpass_diameter_y']
+				self.params['r5_lowpass_diameter_y'] = self.params['pixelsize']*self.params['r5_sampling']/self.params['r5_lowpass_diameter_y']
 			except:
 				pass
 			try:
-				self.params['r5_highpass_diameter_x'] = 2*self.params['pixelsize']*self.params['r5_sampling']/self.params['r5_highpass_diameter_x']
+				self.params['r5_highpass_diameter_x'] = self.params['pixelsize']*self.params['r5_sampling']/self.params['r5_highpass_diameter_x']
 			except:
 				pass
 			try:
-				self.params['r5_highpass_diameter_y'] = 2*self.params['pixelsize']*self.params['r5_sampling']/self.params['r5_highpass_diameter_y']
+				self.params['r5_highpass_diameter_y'] = self.params['pixelsize']*self.params['r5_sampling']/self.params['r5_highpass_diameter_y']
 			except:
 				pass
 			try:
@@ -896,9 +896,9 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		self.params['cos_alpha']=math.cos(self.params['maxtilt']*math.pi/180)
 		
 		#Protomo doesn't like how proc2d writes mrc files. Our frame alignment script uses proc2d. This function and its options are hidden from general users.
-		if (self.params['coarse'] == 'True' and self.params['fix_frames'] == "True" and self.params['link'] == "False"):
-			apDisplay.printMsg("Fixing raw image mrcs...")
-			f.write('Fixing raw image mrcs...\n')
+		if (self.params['coarse'] == 'True' and self.params['fix_images'] == "True" and self.params['link'] == "False"):
+			apDisplay.printMsg("Fixing raw images...")
+			f.write('Fixing raw images...\n')
 			apProTomo2Aligner.fixFrameMrcs(raw_path)
 		
 		###convert angstroms to pixels
