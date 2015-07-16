@@ -10,6 +10,7 @@ from appionlib import apTomo
 from appionlib import apImod
 from appionlib import apDisplay
 from appionlib import appiondata
+from appionlib.apImage import imagenorm
 
 def parseTilt(tiltfile):
 	f=open(tiltfile)
@@ -107,9 +108,11 @@ def getImageFiles(imgtree,rawdir, link):
 		else: 
 			shutil.copy(os.path.join(imgpath,imagedata['filename']+'.mrc'),destpath)
 			
-			#Y-flip raw images because Protomo
+			#Y-flip raw images, normalize them, and conver them to float32 because Protomo
 			image=mrc.read(destpath)
 			image=numpy.flipud(image)
+			image=imagenorm.normStdev(image)
+			image=numpy.float32(image)
 			mrc.write(image,destpath)
 	return filenamelist
 

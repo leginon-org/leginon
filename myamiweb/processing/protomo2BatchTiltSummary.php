@@ -27,7 +27,7 @@ $qa_gif = "loadimg.php?rawgif=1&filename=".$qa_gif_file;
 // Quality assessment for each iteration
 $html .= "
 <hr />
-<center><H3><b>Quality Assessment for Tilt Series #".ltrim($tiltseries, '0')."</b></H3></center>
+<center><H3><b>Quality Assessment for Tilt-Series #".ltrim($tiltseries, '0')."</b></H3></center>
 <hr />";
 $html .= '<center><img src="'.$qa_gif.'" alt="qa" width="666" />'."</center>";
 

@@ -17,9 +17,11 @@ from appionlib.apImage import imagenorm
 from pyami import mrc
 from pyami import imagefun as imfun
 from PIL import Image
+from PIL import ImageDraw
+from PIL import ImageFont
 
 
-def AngstromsToProtomo(options):
+def angstromsToProtomo(options):
 	"""
 	Dirty but reliable way to convert Angstroms to protomo units.
 	"""
@@ -28,166 +30,305 @@ def AngstromsToProtomo(options):
 	except:
 		pass
 	try:
-		options.lowpass_diameter_x = 2*options.pixelsize/options.lowpass_diameter_x
+		options.lowpass_diameter_x = 2*options.pixelsize*options.sampling/options.lowpass_diameter_x
 	except:
 		pass
 	try:
-		options.lowpass_diameter_y = 2*options.pixelsize/options.lowpass_diameter_y
+		options.lowpass_diameter_y = 2*options.pixelsize*options.sampling/options.lowpass_diameter_y
 	except:
 		pass
 	try:
-		options.highpass_diameter_x = 2*options.pixelsize/options.highpass_diameter_x
+		options.highpass_diameter_x = 2*options.pixelsize*options.sampling/options.highpass_diameter_x
 	except:
 		pass
 	try:
-		options.highpass_diameter_y = 2*options.pixelsize/options.highpass_diameter_y
+		options.highpass_diameter_y = 2*options.pixelsize*options.sampling/options.highpass_diameter_y
 	except:
 		pass
 	try:
-		options.lowpass_apod_x = options.pixelsize/options.lowpass_apod_x
+		options.lowpass_apod_x = options.pixelsize*options.sampling/options.lowpass_apod_x
 	except:
 		pass
 	try:
-		options.lowpass_apod_y = options.pixelsize/options.lowpass_apod_y
+		options.lowpass_apod_y = options.pixelsize*options.sampling/options.lowpass_apod_y
 	except:
 		pass
 	try:
-		options.highpass_apod_x = options.pixelsize/options.highpass_apod_x
+		options.highpass_apod_x = options.pixelsize*options.sampling/options.highpass_apod_x
 	except:
 		pass
 	try:
-		options.highpass_apod_y = options.pixelsize/options.highpass_apod_y
+		options.highpass_apod_y = options.pixelsize*options.sampling/options.highpass_apod_y
 	except:
 		pass
 	try:
-		options.r1_lowpass_diameter_x = 2*options.pixelsize/options.r1_lowpass_diameter_x
+		options.r1_lowpass_diameter_x = 2*options.pixelsize*options.r1_sampling/options.r1_lowpass_diameter_x
 	except:
 		pass
 	try:
-		options.r1_lowpass_diameter_y = 2*options.pixelsize/options.r1_lowpass_diameter_y
+		options.r1_lowpass_diameter_y = 2*options.pixelsize*options.r1_sampling/options.r1_lowpass_diameter_y
 	except:
 		pass
 	try:
-		options.r1_highpass_diameter_x = 2*options.pixelsize/options.r1_highpass_diameter_x
+		options.r1_highpass_diameter_x = 2*options.pixelsize*options.r1_sampling/options.r1_highpass_diameter_x
 	except:
 		pass
 	try:
-		options.r1_highpass_diameter_y = 2*options.pixelsize/options.r1_highpass_diameter_y
+		options.r1_highpass_diameter_y = 2*options.pixelsize*options.r1_sampling/options.r1_highpass_diameter_y
 	except:
 		pass
 	try:
-		options.r1_lowpass_apod_x = options.pixelsize/options.r1_lowpass_apod_x
+		options.r1_lowpass_apod_x = options.pixelsize*options.r1_sampling/options.r1_lowpass_apod_x
 	except:
 		pass
 	try:
-		options.r1_lowpass_apod_y = options.pixelsize/options.r1_lowpass_apod_y
+		options.r1_lowpass_apod_y = options.pixelsize*options.r1_sampling/options.r1_lowpass_apod_y
 	except:
 		pass
 	try:
-		options.r1_highpass_apod_x = options.pixelsize/options.r1_highpass_apod_x
+		options.r1_highpass_apod_x = options.pixelsize*options.r1_sampling/options.r1_highpass_apod_x
 	except:
 		pass
 	try:
-		options.r1_highpass_apod_y = options.pixelsize/options.r1_highpass_apod_y
+		options.r1_highpass_apod_y = options.pixelsize*options.r1_sampling/options.r1_highpass_apod_y
 	except:
 		pass
 	try:
-		options.r2_lowpass_diameter_x = 2*options.pixelsize/options.r2_lowpass_diameter_x
+		options.r2_lowpass_diameter_x = 2*options.pixelsize*options.r2_sampling/options.r2_lowpass_diameter_x
 	except:
 		pass
 	try:
-		options.r2_lowpass_diameter_y = 2*options.pixelsize/options.r2_lowpass_diameter_y
+		options.r2_lowpass_diameter_y = 2*options.pixelsize*options.r2_sampling/options.r2_lowpass_diameter_y
 	except:
 		pass
 	try:
-		options.r2_highpass_diameter_x = 2*options.pixelsize/options.r2_highpass_diameter_x
+		options.r2_highpass_diameter_x = 2*options.pixelsize*options.r2_sampling/options.r2_highpass_diameter_x
 	except:
 		pass
 	try:
-		options.r2_highpass_diameter_y = 2*options.pixelsize/options.r2_highpass_diameter_y
+		options.r2_highpass_diameter_y = 2*options.pixelsize*options.r2_sampling/options.r2_highpass_diameter_y
 	except:
 		pass
 	try:
-		options.r2_lowpass_apod_x = options.pixelsize/options.r2_lowpass_apod_x
+		options.r2_lowpass_apod_x = options.pixelsize*options.r2_sampling/options.r2_lowpass_apod_x
 	except:
 		pass
 	try:
-		options.r2_lowpass_apod_y = options.pixelsize/options.r2_lowpass_apod_y
+		options.r2_lowpass_apod_y = options.pixelsize*options.r2_sampling/options.r2_lowpass_apod_y
 	except:
 		pass
 	try:
-		options.r2_highpass_apod_x = options.pixelsize/options.r2_highpass_apod_x
+		options.r2_highpass_apod_x = options.pixelsize*options.r2_sampling/options.r2_highpass_apod_x
 	except:
 		pass
 	try:
-		options.r2_highpass_apod_y = options.pixelsize/options.r2_highpass_apod_y
+		options.r2_highpass_apod_y = options.pixelsize*options.r2_sampling/options.r2_highpass_apod_y
 	except:
 		pass
 	try:
-		options.r3_lowpass_diameter_x = 2*options.pixelsize/options.r3_lowpass_diameter_x
+		options.r3_lowpass_diameter_x = 2*options.pixelsize*options.r3_sampling/options.r3_lowpass_diameter_x
 	except:
 		pass
 	try:
-		options.r3_lowpass_diameter_y = 2*options.pixelsize/options.r3_lowpass_diameter_y
+		options.r3_lowpass_diameter_y = 2*options.pixelsize*options.r3_sampling/options.r3_lowpass_diameter_y
 	except:
 		pass
 	try:
-		options.r3_highpass_diameter_x = 2*options.pixelsize/options.r3_highpass_diameter_x
+		options.r3_highpass_diameter_x = 2*options.pixelsize*options.r3_sampling/options.r3_highpass_diameter_x
 	except:
 		pass
 	try:
-		options.r3_highpass_diameter_y = 2*options.pixelsize/options.r3_highpass_diameter_y
+		options.r3_highpass_diameter_y = 2*options.pixelsize*options.r3_sampling/options.r3_highpass_diameter_y
 	except:
 		pass
 	try:
-		options.r3_lowpass_apod_x = options.pixelsize/options.r3_lowpass_apod_x
+		options.r3_lowpass_apod_x = options.pixelsize*options.r3_sampling/options.r3_lowpass_apod_x
 	except:
 		pass
 	try:
-		options.r3_lowpass_apod_y = options.pixelsize/options.r3_lowpass_apod_y
+		options.r3_lowpass_apod_y = options.pixelsize*options.r3_sampling/options.r3_lowpass_apod_y
 	except:
 		pass
 	try:
-		options.r3_highpass_apod_x = options.pixelsize/options.r3_highpass_apod_x
+		options.r3_highpass_apod_x = options.pixelsize*options.r3_sampling/options.r3_highpass_apod_x
 	except:
 		pass
 	try:
-		options.r3_highpass_apod_y = options.pixelsize/options.r3_highpass_apod_y
+		options.r3_highpass_apod_y = options.pixelsize*options.r3_sampling/options.r3_highpass_apod_y
 	except:
 		pass
 	try:
-		options.r4_lowpass_diameter_x = 2*options.pixelsize/options.r4_lowpass_diameter_x
+		options.r4_lowpass_diameter_x = 2*options.pixelsize*options.r4_sampling/options.r4_lowpass_diameter_x
 	except:
 		pass
 	try:
-		options.r4_lowpass_diameter_y = 2*options.pixelsize/options.r4_lowpass_diameter_y
+		options.r4_lowpass_diameter_y = 2*options.pixelsize*options.r4_sampling/options.r4_lowpass_diameter_y
 	except:
 		pass
 	try:
-		options.r4_highpass_diameter_x = 2*options.pixelsize/options.r4_highpass_diameter_x
+		options.r4_highpass_diameter_x = 2*options.pixelsize*options.r4_sampling/options.r4_highpass_diameter_x
 	except:
 		pass
 	try:
-		options.r4_highpass_diameter_y = 2*options.pixelsize/options.r4_highpass_diameter_y
+		options.r4_highpass_diameter_y = 2*options.pixelsize*options.r4_sampling/options.r4_highpass_diameter_y
 	except:
 		pass
 	try:
-		options.r4_lowpass_apod_x = options.pixelsize/options.r4_lowpass_apod_x
+		options.r4_lowpass_apod_x = options.pixelsize*options.r4_sampling/options.r4_lowpass_apod_x
 	except:
 		pass
 	try:
-		options.r4_lowpass_apod_y = options.pixelsize/options.r4_lowpass_apod_y
+		options.r4_lowpass_apod_y = options.pixelsize*options.r4_sampling/options.r4_lowpass_apod_y
 	except:
 		pass
 	try:
-		options.r4_highpass_apod_x = options.pixelsize/options.r4_highpass_apod_x
+		options.r4_highpass_apod_x = options.pixelsize*options.r4_sampling/options.r4_highpass_apod_x
 	except:
 		pass
 	try:
-		options.r4_highpass_apod_y = options.pixelsize/options.r4_highpass_apod_y
+		options.r4_highpass_apod_y = options.pixelsize*options.r4_sampling/options.r4_highpass_apod_y
+	except:
+		pass
+	try:
+		options.r5_lowpass_diameter_x = 2*options.pixelsize*options.r5_sampling/options.r5_lowpass_diameter_x
+	except:
+		pass
+	try:
+		options.r5_lowpass_diameter_y = 2*options.pixelsize*options.r5_sampling/options.r5_lowpass_diameter_y
+	except:
+		pass
+	try:
+		options.r5_highpass_diameter_x = 2*options.pixelsize*options.r5_sampling/options.r5_highpass_diameter_x
+	except:
+		pass
+	try:
+		options.r5_highpass_diameter_y = 2*options.pixelsize*options.r5_sampling/options.r5_highpass_diameter_y
+	except:
+		pass
+	try:
+		options.r5_lowpass_apod_x = options.pixelsize*options.r5_sampling/options.r5_lowpass_apod_x
+	except:
+		pass
+	try:
+		options.r5_lowpass_apod_y = options.pixelsize*options.r5_sampling/options.r5_lowpass_apod_y
+	except:
+		pass
+	try:
+		options.r5_highpass_apod_x = options.pixelsize*options.r5_sampling/options.r5_highpass_apod_x
+	except:
+		pass
+	try:
+		options.r5_highpass_apod_y = options.pixelsize*options.r5_sampling/options.r5_highpass_apod_y
+	except:
+		pass
+	try:
+		options.r6_lowpass_diameter_x = 2*options.pixelsize*options.r6_sampling/options.r6_lowpass_diameter_x
+	except:
+		pass
+	try:
+		options.r6_lowpass_diameter_y = 2*options.pixelsize*options.r6_sampling/options.r6_lowpass_diameter_y
+	except:
+		pass
+	try:
+		options.r6_highpass_diameter_x = 2*options.pixelsize*options.r6_sampling/options.r6_highpass_diameter_x
+	except:
+		pass
+	try:
+		options.r6_highpass_diameter_y = 2*options.pixelsize*options.r6_sampling/options.r6_highpass_diameter_y
+	except:
+		pass
+	try:
+		options.r6_lowpass_apod_x = options.pixelsize*options.r6_sampling/options.r6_lowpass_apod_x
+	except:
+		pass
+	try:
+		options.r6_lowpass_apod_y = options.pixelsize*options.r6_sampling/options.r6_lowpass_apod_y
+	except:
+		pass
+	try:
+		options.r6_highpass_apod_x = options.pixelsize*options.r6_sampling/options.r6_highpass_apod_x
+	except:
+		pass
+	try:
+		options.r6_highpass_apod_y = options.pixelsize*options.r6_sampling/options.r6_highpass_apod_y
+	except:
+		pass
+	try:
+		options.r7_lowpass_diameter_x = 2*options.pixelsize*options.r7_sampling/options.r7_lowpass_diameter_x
+	except:
+		pass
+	try:
+		options.r7_lowpass_diameter_y = 2*options.pixelsize*options.r7_sampling/options.r7_lowpass_diameter_y
+	except:
+		pass
+	try:
+		options.r7_highpass_diameter_x = 2*options.pixelsize*options.r7_sampling/options.r7_highpass_diameter_x
+	except:
+		pass
+	try:
+		options.r7_highpass_diameter_y = 2*options.pixelsize*options.r7_sampling/options.r7_highpass_diameter_y
+	except:
+		pass
+	try:
+		options.r7_lowpass_apod_x = options.pixelsize*options.r7_sampling/options.r7_lowpass_apod_x
+	except:
+		pass
+	try:
+		options.r7_lowpass_apod_y = options.pixelsize*options.r7_sampling/options.r7_lowpass_apod_y
+	except:
+		pass
+	try:
+		options.r7_highpass_apod_x = options.pixelsize*options.r7_sampling/options.r7_highpass_apod_x
+	except:
+		pass
+	try:
+		options.r7_highpass_apod_y = options.pixelsize*options.r7_sampling/options.r7_highpass_apod_y
+	except:
+		pass
+	try:
+		options.r8_lowpass_diameter_x = 2*options.pixelsize*options.r8_sampling/options.r8_lowpass_diameter_x
+	except:
+		pass
+	try:
+		options.r8_lowpass_diameter_y = 2*options.pixelsize*options.r8_sampling/options.r8_lowpass_diameter_y
+	except:
+		pass
+	try:
+		options.r8_highpass_diameter_x = 2*options.pixelsize*options.r8_sampling/options.r8_highpass_diameter_x
+	except:
+		pass
+	try:
+		options.r8_highpass_diameter_y = 2*options.pixelsize*options.r8_sampling/options.r8_highpass_diameter_y
+	except:
+		pass
+	try:
+		options.r8_lowpass_apod_x = options.pixelsize*options.r8_sampling/options.r8_lowpass_apod_x
+	except:
+		pass
+	try:
+		options.r8_lowpass_apod_y = options.pixelsize*options.r8_sampling/options.r8_lowpass_apod_y
+	except:
+		pass
+	try:
+		options.r8_highpass_apod_x = options.pixelsize*options.r8_sampling/options.r8_highpass_apod_x
+	except:
+		pass
+	try:
+		options.r8_highpass_apod_y = options.pixelsize*options.r8_sampling/options.r8_highpass_apod_y
 	except:
 		pass
 	return options
+
+
+def nextLargestSize(limit):
+	'''
+	This returns the next largest integer that is divisible by 2, 3, 5, or 7, for FFT purposes.
+	'''
+	l=[]
+	for i in range(2,limit):
+		if (i % 2 == 0 and ((i % 3 == 0 and i % 5 == 0 or i % 7 == 0) or (i % 3 == 0 or i % 5 == 0 and i % 7 == 0) or (i % 5 == 0 or i % 3 == 0 and i % 7 == 0))):
+			l.append(i)
+	return l[-1]
 
 
 def removeHighlyShiftedImages(tiltfile, dimx, dimy, shift_limit, angle_limit):
@@ -458,27 +599,27 @@ def makeQualityAssessmentImage(tiltseriesnumber, sessionname, seriesname, rundir
 		txtqa_full=rundir+'/media/quality_assessment/'+seriesname+'_quality_assessment.txt'
 		pylab.clf()
 		if (r2_iters != 0 and r3_iters != 0 and r4_iters != 0 and r5_iters != 0 and r6_iters != 0 and r7_iters != 0 and r8_iters != 0): #R1-R8
-			title="Tilt-Series #%s, Session %s | R1: Iters 1-%s @ bin=%s, lp=%s | R2: Iters %s-%s @ bin=%s, lp=%s\nR3: Iters %s-%s @ bin=%s, lp=%s | R4: Iters %s-%s @ bin=%s, lp=%s | R5: Iters %s-%s @ bin=%s, lp=%s\nR6: Iters %s-%s @ bin=%s, lp=%s | R7: Iters %s-%s @ bin=%s, lp=%s | R8: Iters %s-%s @ bin=%s, lp=%s | (R6-R8 have scaling=%s and elevation=%s)" % (tiltseriesnumber, sessionname, r1_iters, r1_sampling, r1_lp, r1_iters+1, r1_iters+r2_iters, r2_sampling, r2_lp, r1_iters+r2_iters+1, r1_iters+r2_iters+r3_iters, r3_sampling, r3_lp, r1_iters+r2_iters+r3_iters+1, r1_iters+r2_iters+r3_iters+r4_iters, r4_sampling, r4_lp, r1_iters+r2_iters+r3_iters+r4_iters+1, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters, r5_sampling, r5_lp, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters+1, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters+r6_iters, r6_sampling, r6_lp, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters+r6_iters+1, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters+r6_iters+r7_iters, r7_sampling, r7_lp, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters+r6_iters+r7_iters+1, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters+r6_iters+r7_iters+r8_iters, r8_sampling, r8_lp, scaling, elevation)
+			title="Session %s, Tilt-Series #%s | R1: Iters 1-%s @ bin=%s, lp=%s | R2: Iters %s-%s @ bin=%s, lp=%s\nR3: Iters %s-%s @ bin=%s, lp=%s | R4: Iters %s-%s @ bin=%s, lp=%s | R5: Iters %s-%s @ bin=%s, lp=%s\nR6: Iters %s-%s @ bin=%s, lp=%s | R7: Iters %s-%s @ bin=%s, lp=%s | R8: Iters %s-%s @ bin=%s, lp=%s | (R6-R8 have scaling=%s and elevation=%s)" % (sessionname, tiltseriesnumber, r1_iters, r1_sampling, r1_lp, r1_iters+1, r1_iters+r2_iters, r2_sampling, r2_lp, r1_iters+r2_iters+1, r1_iters+r2_iters+r3_iters, r3_sampling, r3_lp, r1_iters+r2_iters+r3_iters+1, r1_iters+r2_iters+r3_iters+r4_iters, r4_sampling, r4_lp, r1_iters+r2_iters+r3_iters+r4_iters+1, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters, r5_sampling, r5_lp, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters+1, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters+r6_iters, r6_sampling, r6_lp, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters+r6_iters+1, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters+r6_iters+r7_iters, r7_sampling, r7_lp, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters+r6_iters+r7_iters+1, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters+r6_iters+r7_iters+r8_iters, r8_sampling, r8_lp, scaling, elevation)
 			font="small"
 		elif (r2_iters != 0 and r3_iters != 0 and r4_iters != 0 and r5_iters != 0 and r6_iters != 0 and r7_iters != 0 and r8_iters == 0): #R1-R7
-			title="Tilt-Series #%s, Session %s | R1: Iters 1-%s @ bin=%s, lp=%s | R2: Iters %s-%s @ bin=%s, lp=%s\nR3: Iters %s-%s @ bin=%s, lp=%s | R4: Iters %s-%s @ bin=%s, lp=%s | R5: Iters %s-%s @ bin=%s, lp=%s\nR6: Iters %s-%s @ bin=%s, lp=%s | R7: Iters %s-%s @ bin=%s, lp=%s | (R6-R7 have scaling=%s and elevation=%s)" % (tiltseriesnumber, sessionname, r1_iters, r1_sampling, r1_lp, r1_iters+1, r1_iters+r2_iters, r2_sampling, r2_lp, r1_iters+r2_iters+1, r1_iters+r2_iters+r3_iters, r3_sampling, r3_lp, r1_iters+r2_iters+r3_iters+1, r1_iters+r2_iters+r3_iters+r4_iters, r4_sampling, r4_lp, r1_iters+r2_iters+r3_iters+r4_iters+1, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters, r5_sampling, r5_lp, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters+1, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters+r6_iters, r6_sampling, r6_lp, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters+r6_iters+1, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters+r6_iters+r7_iters, r7_sampling, r7_lp, scaling, elevation)
+			title="Session %s, Tilt-Series #%s | R1: Iters 1-%s @ bin=%s, lp=%s | R2: Iters %s-%s @ bin=%s, lp=%s\nR3: Iters %s-%s @ bin=%s, lp=%s | R4: Iters %s-%s @ bin=%s, lp=%s | R5: Iters %s-%s @ bin=%s, lp=%s\nR6: Iters %s-%s @ bin=%s, lp=%s | R7: Iters %s-%s @ bin=%s, lp=%s | (R6-R7 have scaling=%s and elevation=%s)" % (sessionname, tiltseriesnumber, r1_iters, r1_sampling, r1_lp, r1_iters+1, r1_iters+r2_iters, r2_sampling, r2_lp, r1_iters+r2_iters+1, r1_iters+r2_iters+r3_iters, r3_sampling, r3_lp, r1_iters+r2_iters+r3_iters+1, r1_iters+r2_iters+r3_iters+r4_iters, r4_sampling, r4_lp, r1_iters+r2_iters+r3_iters+r4_iters+1, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters, r5_sampling, r5_lp, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters+1, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters+r6_iters, r6_sampling, r6_lp, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters+r6_iters+1, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters+r6_iters+r7_iters, r7_sampling, r7_lp, scaling, elevation)
 			font="small"
 		elif (r2_iters != 0 and r3_iters != 0 and r4_iters != 0 and r5_iters != 0 and r6_iters != 0 and r7_iters == 0 and r8_iters == 0): #R1-R6
-			title="Tilt-Series #%s, Session %s\nR1: Iters 1-%s @ bin=%s, lp=%s | R2: Iters %s-%s @ bin=%s, lp=%s | R3: Iters %s-%s @ bin=%s, lp=%s\nR4: Iters %s-%s @ bin=%s, lp=%s | R5: Iters %s-%s @ bin=%s, lp=%s | R6: Iters %s-%s @ bin=%s, lp=%s\n(R6 has scaling=%s and elevation=%s)" % (tiltseriesnumber, sessionname, r1_iters, r1_sampling, r1_lp, r1_iters+1, r1_iters+r2_iters, r2_sampling, r2_lp, r1_iters+r2_iters+1, r1_iters+r2_iters+r3_iters, r3_sampling, r3_lp, r1_iters+r2_iters+r3_iters+1, r1_iters+r2_iters+r3_iters+r4_iters, r4_sampling, r4_lp, r1_iters+r2_iters+r3_iters+r4_iters+1, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters, r5_sampling, r5_lp, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters+1, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters+r6_iters, r6_sampling, r6_lp, scaling, elevation)
+			title="Session %s, Tilt-Series #%s\nR1: Iters 1-%s @ bin=%s, lp=%s | R2: Iters %s-%s @ bin=%s, lp=%s | R3: Iters %s-%s @ bin=%s, lp=%s\nR4: Iters %s-%s @ bin=%s, lp=%s | R5: Iters %s-%s @ bin=%s, lp=%s | R6: Iters %s-%s @ bin=%s, lp=%s\n(R6 has scaling=%s and elevation=%s)" % (sessionname, tiltseriesnumber, r1_iters, r1_sampling, r1_lp, r1_iters+1, r1_iters+r2_iters, r2_sampling, r2_lp, r1_iters+r2_iters+1, r1_iters+r2_iters+r3_iters, r3_sampling, r3_lp, r1_iters+r2_iters+r3_iters+1, r1_iters+r2_iters+r3_iters+r4_iters, r4_sampling, r4_lp, r1_iters+r2_iters+r3_iters+r4_iters+1, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters, r5_sampling, r5_lp, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters+1, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters+r6_iters, r6_sampling, r6_lp, scaling, elevation)
 			font="medium"
 		elif (r2_iters != 0 and r3_iters != 0 and r4_iters != 0 and r5_iters != 0 and r6_iters == 0 and r7_iters == 0 and r8_iters == 0): #R1-R5
-			title="Tilt-Series #%s, Session %s\nR1: Iters 1-%s @ bin=%s, lp=%s | R2: Iters %s-%s @ bin=%s, lp=%s | R3: Iters %s-%s @ bin=%s, lp=%s\nR4: Iters %s-%s @ bin=%s, lp=%s | R5: Iters %s-%s @ bin=%s, lp=%s" % (tiltseriesnumber, sessionname, r1_iters, r1_sampling, r1_lp, r1_iters+1, r1_iters+r2_iters, r2_sampling, r2_lp, r1_iters+r2_iters+1, r1_iters+r2_iters+r3_iters, r3_sampling, r3_lp, r1_iters+r2_iters+r3_iters+1, r1_iters+r2_iters+r3_iters+r4_iters, r4_sampling, r4_lp, r1_iters+r2_iters+r3_iters+r4_iters+1, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters, r5_sampling, r5_lp)
+			title="Session %s, Tilt-Series #%s\nR1: Iters 1-%s @ bin=%s, lp=%s | R2: Iters %s-%s @ bin=%s, lp=%s | R3: Iters %s-%s @ bin=%s, lp=%s\nR4: Iters %s-%s @ bin=%s, lp=%s | R5: Iters %s-%s @ bin=%s, lp=%s" % (sessionname, tiltseriesnumber, r1_iters, r1_sampling, r1_lp, r1_iters+1, r1_iters+r2_iters, r2_sampling, r2_lp, r1_iters+r2_iters+1, r1_iters+r2_iters+r3_iters, r3_sampling, r3_lp, r1_iters+r2_iters+r3_iters+1, r1_iters+r2_iters+r3_iters+r4_iters, r4_sampling, r4_lp, r1_iters+r2_iters+r3_iters+r4_iters+1, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters, r5_sampling, r5_lp)
 			font="medium"
 		elif (r2_iters != 0 and r3_iters != 0 and r4_iters != 0 and r5_iters == 0 and r6_iters == 0 and r7_iters == 0 and r8_iters == 0): #R1-R4
-			title="Tilt-Series #%s, Session %s\nR1: Iters 1-%s @ bin=%s, lp=%s | R2: Iters %s-%s @ bin=%s, lp=%s\nR3: Iters %s-%s @ bin=%s, lp=%s | R4: Iters %s-%s @ bin=%s, lp=%s" % (tiltseriesnumber, sessionname, r1_iters, r1_sampling, r1_lp, r1_iters+1, r1_iters+r2_iters, r2_sampling, r2_lp, r1_iters+r2_iters+1, r1_iters+r2_iters+r3_iters, r3_sampling, r3_lp, r1_iters+r2_iters+r3_iters+1, r1_iters+r2_iters+r3_iters+r4_iters, r4_sampling, r4_lp)
+			title="Session %s, Tilt-Series #%s\nR1: Iters 1-%s @ bin=%s, lp=%s | R2: Iters %s-%s @ bin=%s, lp=%s\nR3: Iters %s-%s @ bin=%s, lp=%s | R4: Iters %s-%s @ bin=%s, lp=%s" % (sessionname, tiltseriesnumber, r1_iters, r1_sampling, r1_lp, r1_iters+1, r1_iters+r2_iters, r2_sampling, r2_lp, r1_iters+r2_iters+1, r1_iters+r2_iters+r3_iters, r3_sampling, r3_lp, r1_iters+r2_iters+r3_iters+1, r1_iters+r2_iters+r3_iters+r4_iters, r4_sampling, r4_lp)
 			font="large"
 		elif (r2_iters != 0 and r3_iters != 0 and r4_iters == 0 and r5_iters == 0 and r6_iters == 0 and r7_iters == 0 and r8_iters == 0): #R1-R3
-			title="Tilt-Series #%s, Session %s\nR1: Iters 1-%s @ bin=%s, lp=%s | R2: Iters %s-%s @ bin=%s, lp=%s\nR3: Iters %s-%s @ bin=%s, lp=%s" % (tiltseriesnumber, sessionname, r1_iters, r1_sampling, r1_lp, r1_iters+1, r1_iters+r2_iters, r2_sampling, r2_lp, r1_iters+r2_iters+1, r1_iters+r2_iters+r3_iters, r3_sampling, r3_lp)
+			title="Session %s, Tilt-Series #%s\nR1: Iters 1-%s @ bin=%s, lp=%s | R2: Iters %s-%s @ bin=%s, lp=%s\nR3: Iters %s-%s @ bin=%s, lp=%s" % (sessionname, tiltseriesnumber, r1_iters, r1_sampling, r1_lp, r1_iters+1, r1_iters+r2_iters, r2_sampling, r2_lp, r1_iters+r2_iters+1, r1_iters+r2_iters+r3_iters, r3_sampling, r3_lp)
 			font="large"
 		elif (r2_iters != 0 and r3_iters == 0 and r4_iters == 0 and r5_iters == 0 and r6_iters == 0 and r7_iters == 0 and r8_iters == 0): #R1-R2
-			title="Tilt-Series #%s, Session %s\nR1: Iters 1-%s @ bin=%s, lp=%s | R2: Iters %s-%s @ bin=%s, lp=%s" % (tiltseriesnumber, sessionname, r1_iters, r1_sampling, r1_lp, r1_iters+1, r1_iters+r2_iters, r2_sampling, r2_lp)
+			title="Session %s, Tilt-Series #%s\nR1: Iters 1-%s @ bin=%s, lp=%s | R2: Iters %s-%s @ bin=%s, lp=%s" % (sessionname, tiltseriesnumber, r1_iters, r1_sampling, r1_lp, r1_iters+1, r1_iters+r2_iters, r2_sampling, r2_lp)
 		elif (r2_iters == 0 and r3_iters == 0 and r4_iters == 0 and r5_iters == 0 and r6_iters == 0 and r7_iters == 0 and r8_iters == 0): #R1
-			title="Tilt-Series #%s, Session %s\nR1: Iters 1-%s @ bin=%s, lp=%s" % (tiltseriesnumber, sessionname, r1_iters, r1_sampling, r1_lp)
+			title="Session %s, Tilt-Series #%s\nR1: Iters 1-%s @ bin=%s, lp=%s" % (sessionname, tiltseriesnumber, r1_iters, r1_sampling, r1_lp)
 		
 		f=open(txtqa_full,'r')
 		lines=f.readlines()
@@ -642,11 +783,11 @@ def makeCorrPlotImages(seriesname, iteration, rundir, corrfile):
 		apDisplay.printMsg("Correlation Plots could not be generated. Make sure pylab and numpy are in your $PYTHONPATH.\n")
 	
 
-def makeTiltSeriesVideos(seriesname, iteration, tiltfilename, rawimagecount, rundir, raw_path, pixelsize, map_sampling, image_file_type, video_type, parallel, align_step):
+def makeTiltSeriesVideos(seriesname, iteration, tiltfilename, rawimagecount, rundir, raw_path, pixelsize, map_sampling, image_file_type, video_type, tilt_clip, parallel, align_step):
 	'''
 	Creates Tilt-Series Videos for Depiction
 	'''
-	def processTiltImages(i,tiltfilename,raw_path,image_file_type,map_sampling,rundir,pixelsize,rawimagecount):
+	def processTiltImages(i,tiltfilename,raw_path,image_file_type,map_sampling,rundir,pixelsize,rawimagecount,tilt_clip):
 		try: #If the image isn't in the .tlt file, skip it
 			#Get information from tlt file. This needs to versatile for differently formatted .tlt files, so awk it is.
 			cmd1="awk '/IMAGE %s /{print}' %s | awk '{for (j=1;j<=NF;j++) if($j ~/FILE/) print $(j+1)}' | tr '\n' ' ' | sed 's/ //g'" % (i+1, tiltfilename)
@@ -680,6 +821,13 @@ def makeTiltSeriesVideos(seriesname, iteration, tiltfilename, rawimagecount, run
 			#Load image
 			image=mrc.read(mrcf)
 			image=imagenorm.normStdev(image)
+			
+			#Clip values greater than 5 sigma above or below the mean
+			if tilt_clip == "true":
+				clip_min=image.mean()-5*image.std()
+				clip_max=image.mean()+5*image.std()
+				image=np.clip(image,clip_min,clip_max)
+				image=imagenorm.normStdev(image)
 			
 			dimx=len(image[0])
 			dimy=len(image)
@@ -754,7 +902,7 @@ def makeTiltSeriesVideos(seriesname, iteration, tiltfilename, rawimagecount, run
 		else:
 			procs=1
 		for i in range(rawimagecount):
-			p2 = mp.Process(target=processTiltImages, args=(i,tiltfilename,raw_path,image_file_type,map_sampling,rundir,pixelsize,rawimagecount,))
+			p2 = mp.Process(target=processTiltImages, args=(i,tiltfilename,raw_path,image_file_type,map_sampling,rundir,pixelsize,rawimagecount,tilt_clip,))
 			p2.start()
 			
 			if (i % (int(procs/3)) == 0) and (i != 0):
@@ -815,15 +963,30 @@ def makeTiltSeriesVideos(seriesname, iteration, tiltfilename, rawimagecount, run
 		apDisplay.printMsg("Tilt-Series Images and/or Videos could not be generated. Make sure ffmpeg and imagemagick is in your $PATH. Make sure that pyami, scipy, numpy, and PIL are in your $PYTHONPATH.\n")
 		
 
-def makeReconstructionVideos(seriesname, iteraion, rundir, outdir, pixelsize, sampling, map_sampling, video_type, keep_recons, parallel, align_step):
+def makeReconstructionVideos(seriesname, iteraion, rundir, rx, ry, show_window_size, outdir, pixelsize, sampling, map_sampling, video_type, keep_recons, parallel, align_step):
 	'''
 	Creates Reconstruction Videos for Depiction
 	'''
-	def processReconImages(i,vid_path,volume,minval,maxval,pixelsize,map_sampling,dimy):
+	def processReconImages(i,slices,vid_path,volume,minval,maxval,pixelsize,map_sampling,dimx,dimy,show_window_size,rx,ry):
 		filename="slice%04d.png" % (i)
 		slice = os.path.join(vid_path,filename)
-		#scipy.misc.imsave(slice, volume[i])  #This command normalizes per-image
-		scipy.misc.toimage(volume[i], cmin=minval, cmax=maxval).save(slice)  #This command normalizes over the volume
+		
+		#Pixel density scaling
+		#scipy.misc.imsave(slice, volume[i])  #This command scales pixel values per-image
+		scipy.misc.toimage(volume[i], cmin=minval, cmax=maxval).save(slice)  #This command scales pixel values over the whole volume
+		
+		#Add rectangle showing the search area, but only to the sections that were aligned to
+		if (show_window_size == 'true' and (slices+1)/4 < i and slices+1-((slices+1)/4) > i):
+			x1=int((dimx-rx)/2)
+			y1=int((dimy-ry)/2)
+			x2=int(dimx-x1)
+			y2=int(dimy-y1)
+			
+			im=Image.open(slice)
+			im.convert("RGB")
+			draw=ImageDraw.Draw(im)
+			draw.rectangle([x1,y1,x2,y2])
+			im.save(slice)
 		
 		#Add scalebar
 		scalesize=5000/(pixelsize * map_sampling)    #500nm scaled by sampling
@@ -860,6 +1023,8 @@ def makeReconstructionVideos(seriesname, iteraion, rundir, outdir, pixelsize, sa
 		webm_full=vid_path+'/'+webm
 		png_full=vid_path+'/'+png
 		pngff_full=vid_path+'/'+pngff
+		rx=int(rx/map_sampling)
+		ry=int(ry/map_sampling)
 		
 		# Convert the reconstruction *.img file to mrc for further processing
 		os.system("i3cut -fmt mrc %s %s" % (img_full, mrc_full))
@@ -882,7 +1047,7 @@ def makeReconstructionVideos(seriesname, iteraion, rundir, outdir, pixelsize, sa
 			procs=1
 		apDisplay.printMsg("Creating reconstruction video...")
 		for i in range(0,slices+1):
-			p3 = mp.Process(target=processReconImages, args=(i,vid_path,volume,minval,maxval,pixelsize,map_sampling,dimy,))
+			p3 = mp.Process(target=processReconImages, args=(i,slices,vid_path,volume,minval,maxval,pixelsize,map_sampling,dimx,dimy,show_window_size,rx,ry,))
 			p3.start()
 			
 			if (i % (procs-1) == 0) and (i != 0):

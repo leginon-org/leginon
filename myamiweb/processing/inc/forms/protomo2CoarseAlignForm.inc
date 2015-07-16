@@ -19,8 +19,8 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 	$lp_apod_y='50', $hp_diam_x='500', $hp_diam_y='500', $hp_apod_x='150', $hp_apod_y='150', $corr_mode='mcf', $raw_path='', $iters='', $param='', $binning='true',
 	$preprocessing='true', $select_images='', $exclude_images='', $border='100', $clip_low='3.5', $clip_high='3.5', $thr_low='', $thr_high='', $gradient='true', $iter_gradient='false', $filter='median',
 	$kernel_x='', $kernel_y='', $grow='0', $window_area='0.95', $mask_apod_x='', $mask_apod_y='', $mask_width_x='', $mask_width_y='', $dimx='', $dimy='',
-	$correlation_size_x='192', $correlation_size_y='192', $peak_search_radius_x='', $peak_search_radius_y='', $logging='true', $loglevel='2', $map_size_x='512', $map_size_y='512', $map_size_z='200', $filename_prefix='', $image_file_type='', $cachedir='cache',
-	$protomo_outdir='out', $gui_coarse_align='', $grid_limit='2.0', $grid_step='0.1', $retry='10', $retry_shrink='0.9', $create_reconstruction='true', $create_tilt_video='true', $keep_recons='false', $region_x='512', $video_type='',
+	$correlation_size_x='192', $correlation_size_y='192', $peak_search_radius_x='', $peak_search_radius_y='', $logging='true', $loglevel='2', $map_size_x='512', $map_size_y='512', $filename_prefix='', $image_file_type='', $cachedir='cache',
+	$protomo_outdir='out', $gui_coarse_align='', $grid_limit='2.0', $grid_step='0.1', $retry='10', $retry_shrink='0.9', $create_reconstruction='true', $show_window_size='true', $create_tilt_video='true', $keep_recons='false', $region_x='512', $video_type='',
 	$shift_limit='30' , $angle_limit='40' )
 	{
 		parent::__construct($expId, $extraHTML);
@@ -206,10 +206,11 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 		$params->addParam( "retry_shrink", $retry_shrink, "Window Size Fraction to Shrink Each Retry Attempt" );
 		$params->addParam( "create_tilt_video", $create_tilt_video, "Create Tilt-Series Videos" );
 		$params->addParam( "create_reconstruction", $create_reconstruction, "Create a Reconstruction Video" );
+		$params->addParam( "show_window_size", $show_window_size, "Show Window Size in Reconstruction Video" );
 		$params->addParam( "keep_recons", $keep_recons, "Keep Intermediate Reconstruction" );
 		$params->addParam( "map_size_x", $map_size_x, "Reconstructon Size (x)" );
 		$params->addParam( "map_size_y", $map_size_y, "Reconstructon Size (y)" );
-		$params->addParam( "map_size_z", $map_size_z, "Reconstructon Size (z)" );
+		//$params->addParam( "map_size_z", $map_size_z, "Reconstructon Size (z)" );
 		$params->addParam( "video_type", $video_type, "Video Type" );
 		//$params->addParam( "link", $link, "Link or Copy Raw Images?" );
 		$params->addParam( "shift_limit", $shift_limit, "Shift Limit" );
@@ -332,6 +333,8 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 		    
 			$html.= $params->insertTextField( "region_x", $fieldSize );
 			$html.= $params->insertTextField( "region_y", $fieldSize );
+			$html.= $params->insertTextField( "retry", $fieldSize );
+			$html.= $params->insertTextField( "retry_shrink", $fieldSize );
 			$html.= $params->insertTextField( "thickness", $fieldSize );
 			$html.= $params->insertTextField( "window_area", $fieldSize );
 			
@@ -361,8 +364,6 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 			//$html.= $params->insertCheckboxField( "gui_coarse_align" );
 			$html.= $params->insertTextField( "gridsearch_limit", $fieldSize );
 			$html.= $params->insertTextField( "gridsearch_step", $fieldSize );
-			$html.= $params->insertTextField( "retry", $fieldSize );
-			$html.= $params->insertTextField( "retry_shrink", $fieldSize );
 			
 			$html .= "
 		    <br />
@@ -395,6 +396,10 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 			$html.= '<option selected value="true">true</option>';
 			$html.= '<option value="false">false</option>';
 			$html.= '</select>'; $html.= docpop('protomo_create_reconstruction', ' Create a Reconstruction Video').'<br>';
+			$html.= '<select name="show_window_size" style="width:66px">';
+			$html.= '<option selected value="true">true</option>';
+			$html.= '<option value="false">false</option>';
+			$html.= '</select>'; $html.= docpop('protomo_show_window_size', ' Show Window Size in Reconstruction Videos').'<br>';
 			$html.= '<select name="video_type" style="width:66px">';
 			$html.= '<option value="gif">Gif</option>';
 			$html.= '<option selected value="html5vid">HTML5</option>';
@@ -402,7 +407,7 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 			$html.= $params->insertTextField( "map_sampling", $fieldSize );
 			$html.= $params->insertTextField( "map_size_x", $fieldSize );
 			$html.= $params->insertTextField( "map_size_y", $fieldSize );
-			$html.= $params->insertTextField( "map_size_z", $fieldSize );
+			//$html.= $params->insertTextField( "map_size_z", $fieldSize );
 			//$html.= $params->insertTextField( "keep_recons", $fieldSize );
 			$html.= '<select name="keep_recons" style="width:66px">';
 			$html.= '<option value="true">true</option>';

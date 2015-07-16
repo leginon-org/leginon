@@ -1560,7 +1560,7 @@ def ctfCorrect(tiltseriesnumber, ctf_options):
 
 if __name__ == '__main__':
 	options=parseOptions()
-	options=apProTomo2Aligner.AngstromsToProtomo(options)
+	options=apProTomo2Aligner.angstromsToProtomo(options)
 	tiltseriesranges=hyphen_range(options.tiltseriesranges)
 	
 	if (options.procs == "all"):

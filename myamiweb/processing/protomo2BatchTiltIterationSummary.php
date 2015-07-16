@@ -49,7 +49,7 @@ $rec_webm = "loadvid.php?filename=".$rec_vid_files[2];
 $download_rec_mp4 = "downloadvid.php?filename=".$rec_vid_files[0];
 
 $html .= "
-	<center><H3><b>Tilt Series #".ltrim($tiltseries, '0').", Refinement Iteration #$iter</b></H3></center>
+	<center><H3><b>Tilt-Series #".ltrim($tiltseries, '0').", Refinement Iteration #$iter</b></H3></center>
 	<hr />";
 $html .= "
 	<H4><center><b>Correlation Peak</b></center></H4>";
@@ -87,7 +87,7 @@ $html .= '<td><img src="'.$corr_coa.'" alt="coa" width="500" />'."<br /></td>";
 $html .= '</tr><tr></table></center><br><hr />';
 
 $html .= "
-	<H4><center><b>Tilt Series</b></center></H4>";
+	<H4><center><b>Tilt-Series</b></center></H4>";
         
 if (isset($tilt_gif_files[0])) {
 	$html .= '<center><img src="'.$tilt_gif.'" alt="correlations" /></center>';
@@ -102,7 +102,7 @@ if (isset($tilt_gif_files[0])) {
         //$html .= '<center>'.docpop('tiltimageinfo_coarse', 'Image Info').'</center>';
         $html .= '<p align="right"><a href="'.$download_tilt_mp4.'">Download Video</a></p><hr />';
 } else {
-        $html .= "<center><b>Depiction Tilt Series Video for Refinement Iteration ".$iter." either failed to generate, is still processing, or wasn't requested.</b></center>";
+        $html .= "<center><b>Depiction Tilt-Series Video for Refinement Iteration ".$iter." either failed to generate, is still processing, or wasn't requested.</b></center>";
 }
 
 $html .= "

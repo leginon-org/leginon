@@ -24,15 +24,15 @@ class Protomo2RefineForm extends BasicLayoutForm
 	$r2_lp_diam_x='15', $r3_lp_diam_x='15', $r4_lp_diam_x='15', $r5_lp_diam_x='', $r1_lp_apod_x='25', $r2_lp_apod_x='20', $r3_lp_apod_x='15', $r4_lp_apod_x='10', $r5_lp_apod_x='', $r1_lp_diam_y='15', $r2_lp_diam_y='15',
 	$r3_lp_diam_y='15', $r4_lp_diam_y='15', $r5_lp_diam_y='', $r1_lp_apod_y='25', $r2_lp_apod_y='20', $r3_lp_apod_y='15', $r4_lp_apod_y='10', $r5_lp_apod_y='', $r1_hp_diam_x='250', $r2_hp_diam_x='350', $r3_hp_diam_x='450',
 	$r4_hp_diam_x='550', $r5_hp_diam_x='', $r1_hp_diam_y='250', $r2_hp_diam_y='350', $r3_hp_diam_y='450', $r4_hp_diam_y='550', $r5_hp_diam_y='', $r1_hp_apod_x='75', $r2_hp_apod_x='100', $r3_hp_apod_x='150', $r4_hp_apod_x='200', $r5_hp_apod_x='',
-	$r1_hp_apod_y='75', $r2_hp_apod_y='100', $r3_hp_apod_y='150', $r4_hp_apod_y='200', $r5_hp_apod_y='', $corr_mode='mcf', $raw_path='', $r1_iters='15', $r2_iters='10', $r3_iters='5', $r4_iters='3', $r5_iters='', $param='',
+	$r1_hp_apod_y='75', $r2_hp_apod_y='100', $r3_hp_apod_y='150', $r4_hp_apod_y='200', $r5_hp_apod_y='', $corr_mode='mcf', $raw_path='', $r1_iters='15', $r2_iters='10', $r3_iters='5', $r4_iters='5', $r5_iters='', $param='',
 	$binning='true', $preprocessing='true', $select_images='', $exclude_images='', $border='100', $clip_low='3.5', $clip_high='3.5', $thr_low='', $thr_high='', $gradient='true',
 	$gradient_switch='', $iter_gradient='', $iter_gradient_switch='', $filter='median', $r1_kernel_x='', $r2_kernel_x='', $r3_kernel_x='', $r4_kernel_x='', $r5_kernel_x='', $r1_kernel_y='', $r2_kernel_y='',
 	$r3_kernel_y='', $r4_kernel_y='', $r5_kernel_y='', $grow='0', $window_area='0.95', $mask_apod_x='', $mask_apod_y='', $mask_width_x='', $mask_width_y='', $do_estimation='false', $norotations='false',
 	$max_correction='', $correlation_size_x='160', $correlation_size_y='160', $r1_peak_search_radius_x='300', $r2_peak_search_radius_x='300', $r3_peak_search_radius_x='300',
 	$r4_peak_search_radius_x='300', $r5_peak_search_radius_x='', $r1_peak_search_radius_y='300', $r2_peak_search_radius_y='300', $r3_peak_search_radius_y='300', $r4_peak_search_radius_y='300', $r5_peak_search_radius_y='', $orientation='true',
 	$orientation_switch='', $azimuth='true', $azimuth_switch='', $elevation='false', $elevation_switch='', $rotation='true', $rotation_switch='', $scale='false', $scale_switch='',
-	$logging='true', $loglevel='2', $map_size_x='512', $map_size_y='512', $map_size_z='200', $filename_prefix='', $image_file_type='', $cachedir='cache', $protomo_outdir='out',
-	$retry='20', $retry_shrink='0.9', $gui_coarse_align='', $create_reconstruction='true', $create_tilt_video='true', $keep_recons='false', $video_type='', $restart_cycle='' )
+	$logging='true', $loglevel='2', $map_size_x='512', $map_size_y='512', $filename_prefix='', $image_file_type='', $cachedir='cache', $protomo_outdir='out', $tilt_clip='',
+	$retry='20', $retry_shrink='0.9', $gui_coarse_align='', $create_reconstruction='true', $show_window_size='true', $create_tilt_video='true', $keep_recons='false', $video_type='', $restart_cycle='' )
 	{
 		parent::__construct($expId, $extraHTML);
 		//print "_POST:" . "<br>";
@@ -236,10 +236,12 @@ class Protomo2RefineForm extends BasicLayoutForm
 		$params->addParam( "retry_shrink", $retry_shrink, "Window Size Fraction to Shrink Each Retry Attempt" );
 		$params->addParam( "create_tilt_video", $create_tilt_video, "Create Tilt-Series Videos" );
 		$params->addParam( "create_reconstruction", $create_reconstruction, "Create a Reconstruction Video" );
+		$params->addParam( "show_window_size", $show_window_size, "Show Window Size in Reconstruction Video" );
 		$params->addParam( "keep_recons", $keep_recons, "Keep Intermediate Reconstruction" );
 		$params->addParam( "map_size_x", $map_size_x, "Reconstructon Size (x)" );
 		$params->addParam( "map_size_y", $map_size_y, "Reconstructon Size (y)" );
-		$params->addParam( "map_size_z", $map_size_z, "Reconstructon Size (z)" );
+		//$params->addParam( "map_size_z", $map_size_z, "Reconstructon Size (z)" );
+		$params->addParam( "tilt_clip", $tilt_clip, "Clip Tilt-Series Video Pixel Values" );
 		$params->addParam( "video_type", $video_type, "Video Type" );
 		$params->addParam( "restart_cycle", $restart_cycle, "Restart Refinement at Iteration" );
 		
@@ -316,10 +318,10 @@ class Protomo2RefineForm extends BasicLayoutForm
 			$html.= '<option value="false">false</option>';
 			$html.= '</select>'; $html.= docpop('protomo_preprocessing', ' Raw Image Preprocessing').'<br>';
 			//$html.= $params->insertTextField( "binning", $fieldSize );
-			$html.= '<select name="binning" style="width:66px">';
-			$html.= '<option selected value="true">true</option>';
-			$html.= '<option value="false">false</option>';
-			$html.= '</select>'; $html.= docpop('protomo_binning', ' Raw Image Binning').'<br>';
+			//$html.= '<select name="binning" style="width:66px">';
+			//$html.= '<option selected value="true">true</option>';
+			//$html.= '<option value="false">false</option>';
+			//$html.= '</select>'; $html.= docpop('protomo_binning', ' Raw Image Binning').'<br>';
 			$html.= $params->insertTextField( "select_images", $fieldSize );
 			$html.= $params->insertTextField( "exclude_images", $fieldSize );
 			//$html.= $params->insertTextField( "logging", $fieldSize );
@@ -384,6 +386,8 @@ class Protomo2RefineForm extends BasicLayoutForm
 			$html.= $params->insertTextFieldInRow( "r3_region_y", $fieldSize2 ).'│ ';
 			$html.= $params->insertTextFieldInRow( "r4_region_y", $fieldSize2 ).'│ ';
 			$html.= $params->insertTextField( "r5_region_y", $fieldSize2 );
+			$html.= $params->insertTextField( "retry", $fieldSize );
+			$html.= $params->insertTextField( "retry_shrink", $fieldSize );
 			$html.= $params->insertTextField( "thickness", $fieldSize );
 			$html.= $params->insertTextField( "window_area", $fieldSize );
 			
@@ -492,8 +496,6 @@ class Protomo2RefineForm extends BasicLayoutForm
 			$html.= '<option selected value="false">false</option>';
 			$html.= '</select>'; $html.= docpop('protomo_norotations', ' No In-plane Rotations').'<br>';
 			//$html.= $params->insertTextField( "max_correction", $fieldSize );
-			$html.= $params->insertTextField( "retry", $fieldSize );
-			$html.= $params->insertTextField( "retry_shrink", $fieldSize );
 			
 			$html .= "
 		    <br />
@@ -544,10 +546,18 @@ class Protomo2RefineForm extends BasicLayoutForm
 			$html.= '<option selected value="true">true</option>';
 			$html.= '<option value="false">false</option>';
 			$html.= '</select>'; $html.= docpop('protomo_create_tilt_video2', ' Create Tilt-Series Videos').'<br>';
+			$html.= '<select name="tilt_clip" style="width:66px">';
+			$html.= '<option selected value="true">true</option>';
+			$html.= '<option value="false">false</option>';
+			$html.= '</select>'; $html.= docpop('protomo_tilt_clip', ' Clip Tilt-Series Video Pixel Values').'<br>';
 			$html.= '<select name="create_reconstruction" style="width:66px">';
 			$html.= '<option selected value="true">true</option>';
 			$html.= '<option value="false">false</option>';
 			$html.= '</select>'; $html.= docpop('protomo_create_reconstruction2', ' Create Reconstruction Videos').'<br>';
+			$html.= '<select name="show_window_size" style="width:66px">';
+			$html.= '<option selected value="true">true</option>';
+			$html.= '<option value="false">false</option>';
+			$html.= '</select>'; $html.= docpop('protomo_show_window_size', ' Show Window Size in Reconstruction Videos').'<br>';
 			$html.= '<select name="video_type" style="width:66px">';
 			$html.= '<option value="gif">Gif</option>';
 			$html.= '<option selected value="html5vid">HTML5</option>';
@@ -555,7 +565,7 @@ class Protomo2RefineForm extends BasicLayoutForm
 			$html.= $params->insertTextField( "map_sampling", $fieldSize );
 			$html.= $params->insertTextField( "map_size_x", $fieldSize );
 			$html.= $params->insertTextField( "map_size_y", $fieldSize );
-			$html.= $params->insertTextField( "map_size_z", $fieldSize );
+			//$html.= $params->insertTextField( "map_size_z", $fieldSize );
 			//$html.= $params->insertTextField( "keep_recons", $fieldSize );
 			$html.= '<select name="keep_recons" style="width:66px">';
 			$html.= '<option value="true">true</option>';

@@ -87,7 +87,7 @@ def prepareTiltFile(sessionname, seriesname, tiltfilename, tiltseriesnumber, raw
 		
 		rawexists = apParam.createDirectory(raw_path)
 		
-		apDisplay.printMsg("Copying raw images and y-flipping for Protomo...") #Linking removed because raw images need to be y-flipped for Protomo:(.
+		apDisplay.printMsg("Copying raw images, y-flipping, normalizing, and converting images to float32 for Protomo...") #Linking removed because raw images need to be y-flipped for Protomo:(.
 		newfilenames = apProTomo.getImageFiles(ordered_imagelist, raw_path, link=False)
 		
 		###create tilt file

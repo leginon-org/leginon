@@ -68,13 +68,13 @@ tiltseries {
    }
 
    lowpass {
-     diameter:    { AP_lp_diam_x, AP_lp_diam_y } * S (* AP lowpass diameter *)
-     apodization: { AP_lp_apod_x, AP_lp_apod_y } * S (* AP lowpass apodization *)
+     diameter:    { AP_lp_diam_x, AP_lp_diam_y } (* AP lowpass diameter *)
+     apodization: { AP_lp_apod_x, AP_lp_apod_y } (* AP lowpass apodization *)
    }
 
    highpass {
-     diameter:    { AP_hp_diam_x, AP_hp_diam_y } * S (* AP highpass diameter *)
-     apodization: { AP_hp_apod_x, AP_hp_apod_y } * S (* AP highpass apodization *)
+     diameter:    { AP_hp_diam_x, AP_hp_diam_y } (* AP highpass diameter *)
+     apodization: { AP_hp_apod_x, AP_hp_apod_y } (* AP highpass apodization *)
    }
 
  }
@@ -143,7 +143,7 @@ tiltseries {
    
    exclude: "AP_exclude_images"  (* AP exclude specific images from the tilt series reconstruction *)
    lowpass {  (* AP lowpass map *)
-     diameter:    { AP_lp_diam_x, AP_lp_diam_y } * S
+     diameter:    { AP_lp_diam_x, AP_lp_diam_y }
    }
 
    logging: false  (* AP enable diagnostic terminal output *)

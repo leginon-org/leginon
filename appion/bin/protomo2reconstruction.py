@@ -146,7 +146,7 @@ class ProTomo2Reconstruction(basicScript.BasicScript):
 		proc=subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
 		(lowpassmapline, err) = proc.communicate()
 		lowpassmapline=int(lowpassmapline)
-		if self.params['recon_lowpass'] == False:
+		if self.params['recon_lowpass'] == "False":
 			#Remove lowpass filter from param
 			cmd2="sed -i \"%ss/.*//\" %s;" % (lowpassmapline, param_out_full)
 			cmd2+="sed -i \"%ss/.*//\" %s;" % (lowpassmapline+1, param_out_full)
