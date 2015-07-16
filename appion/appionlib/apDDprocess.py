@@ -274,6 +274,9 @@ class DDFrameProcessing(DirectDetectorProcessing):
 			self.__setRawFrameInfoFromImage()
 		else:
 			self.__setRawFrameInfoFromDDStack()
+		if debug:
+			apDisplay.printMsg('%s' % (self.image['filename']))
+			apDisplay.printMsg('%s' % ( self.framestackpath))
 		# These two are only used if alignment of the frames are made
 		self.aligned_sumpath = os.path.join(self.rundir,self.image['filename']+'_c.mrc')
 		self.aligned_stackpath = os.path.join(self.rundir,self.framestackpath[:-4]+'_c'+self.framestackpath[-4:])
@@ -319,6 +322,8 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		return self.framesname
 
 	def setRawFrameDir(self,path):
+		if debug:
+			apDisplay.printMsg('setting rawframedir %s' % (path,))
 		self.rawframe_dir = path
 
 	def getRawFrameDir(self):
