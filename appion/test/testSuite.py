@@ -121,7 +121,7 @@ class testScript(appionScript.AppionScript):
 		}
 		for key in imgdict.keys():
 			imgfile = os.path.join(self.params['rundir'], imgdict[key])
-			url = ("http://ami.scripps.edu/redmine/attachments/download/%d/%s"
+			url = ("http://emg.nysbc.org/redmine/attachments/download/%d/%s"
 				%(key, imgdict[key]))
 			apDisplay.printMsg("Downloading image '%s'"%(imgdict[key]))
 			urlretrieve(url, imgfile)

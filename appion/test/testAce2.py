@@ -87,27 +87,27 @@ class TestAce2(unittest.TestCase):
         self.assertAlmostEqual(self.confidence, conf, places=1)        
     
     def test_ast_n_overfocus(self):
-        imageUrl = "http://ami.scripps.edu/redmine/attachments/1632/12oct01e_00059en.mrc"
+        imageUrl = "http://emg.nysbc.org/redmine/attachments/1632/12oct01e_00059en.mrc"
         self.runAce2Test(imageUrl, defocus1=5.568862e-07,defocus2=6.559742e-07,angAstig=-70.235983,ampCont=0.091264,conf=0.815827)
 
     def test_ast_n_underfocus(self):
-        imageUrl = "http://ami.scripps.edu/redmine/attachments/1644/12oct01e_00055en.mrc"
+        imageUrl = "http://emg.nysbc.org/redmine/attachments/1644/12oct01e_00055en.mrc"
         self.runAce2Test(imageUrl, defocus1=1.280421e-06 ,defocus2=1.318144e-06,angAstig=15.267624,ampCont=0.192086,conf=0.947226)
 
     def test_ast_a_overfocus(self):
-        imageUrl = "http://ami.scripps.edu/redmine/attachments/1635/12oct01e_00041ea.mrc"
+        imageUrl = "http://emg.nysbc.org/redmine/attachments/1635/12oct01e_00041ea.mrc"
         self.runAce2Test(imageUrl, defocus1=1.337478e-06 ,defocus2=1.482890e-06 ,angAstig=72.485569,ampCont=0.050000,conf=0.863265)
 
     def test_ast_a_underfocus(self):
-        imageUrl = "http://ami.scripps.edu/redmine/attachments/1633/12oct01e_00032ea.mrc"
+        imageUrl = "http://emg.nysbc.org/redmine/attachments/1633/12oct01e_00032ea.mrc"
         self.runAce2Test(imageUrl, defocus1=1.773057e-06 ,defocus2=1.867818e-06 ,angAstig=-66.550039,ampCont=0.182214,conf=0.957607)
 
     def test_ast_b_overfocus(self):
-        imageUrl = "http://ami.scripps.edu/redmine/attachments/1637/12oct01e_00050eb.mrc"
+        imageUrl = "http://emg.nysbc.org/redmine/attachments/1637/12oct01e_00050eb.mrc"
         self.runAce2Test(imageUrl, defocus1=1.477478e-06 ,defocus2=1.674565e-06 ,angAstig=-64.236799,ampCont=0.050000,conf=0.876410)
 
     def test_ast_b_underfocus(self):
-        imageUrl = "http://ami.scripps.edu/redmine/attachments/1630/12oct01e_00054eb.mrc"
+        imageUrl = "http://emg.nysbc.org/redmine/attachments/1630/12oct01e_00054eb.mrc"
         self.runAce2Test(imageUrl, defocus1=1.533405e-06 ,defocus2=1.649353e-06 ,angAstig=29.912167,ampCont=0.194930,conf=0.958123)
 
 if __name__ == '__main__':

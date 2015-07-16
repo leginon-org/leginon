@@ -600,7 +600,7 @@ class CheckPackages(object):
             msg = "!!!! EMAN ERROR: !!!!\n" 
             msg += "%s\n" % (stderrdata,)
             msg += "You may install EMAN with the instructions found here:\n" 
-            msg += "    http://ami.scripps.edu/redmine/projects/appion/wiki/Install_EMAN" 
+            msg += "    http://emg.nysbc.org/redmine/projects/appion/wiki/Install_EMAN" 
             raise Exception(msg)
         
         return True
@@ -621,7 +621,7 @@ class CheckPackages(object):
             msg =  '!!!! Xmipp ERROR: !!!!\n'
             msg += "%s\n" % (stderrdata,)
             msg += ' You may install Xmipp with the instructions found here: \n'
-            msg += '    http://ami.scripps.edu/redmine/projects/appion/wiki/Install_Xmipp'
+            msg += '    http://emg.nysbc.org/redmine/projects/appion/wiki/Install_Xmipp'
             raise Exception(msg)
     
         return True

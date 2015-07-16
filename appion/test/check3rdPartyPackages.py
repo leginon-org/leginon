@@ -60,6 +60,6 @@ for nameKey, desc in packageDict.iteritems():
     if pathValue is None:
         outString += "|\tFrom %s, (%s) %s\n|\n"%(desc[0], nameKey,  desc[1])
         
-outString += "For installation instructions visit:\n\t http://ami.scripps.edu/redmine/projects/appion/wiki/Processing_Server_Installation\n"
+outString += "For installation instructions visit:\n\t http://emg.nysbc.org/redmine/projects/appion/wiki/Processing_Server_Installation\n"
 apDisplay.printColor(outString,"cyan")
 

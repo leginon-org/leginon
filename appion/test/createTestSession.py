@@ -88,7 +88,7 @@ class testScript(appionScript.AppionScript):
 		}
 		for key in imgdict.keys():
 			imgfile = os.path.join(self.params['rundir'], imgdict[key])
-			url = ("http://ami.scripps.edu/redmine/attachments/download/%d/%s"
+			url = ("http://emg.nysbc.org/redmine/attachments/download/%d/%s"
 				%(key, imgdict[key]))
 			apDisplay.printMsg("Downloading image '%s'"%(imgdict[key]))
 			if os.path.isfile(imgfile) and apFile.fileSize(imgfile) == 67109888:

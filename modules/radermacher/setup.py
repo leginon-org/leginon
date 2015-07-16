@@ -20,7 +20,7 @@ setup(
 	description='Radermacher functions for use in Appion',
 	author='Neil R. Voss',
 	author_email='vossman77@yahoo.com',
-	url='http://ami.scripps.edu/redmine/projects/appion/wiki/Compile_Radermacher',
+	url='http://emg.nysbc.org/redmine/projects/appion/wiki/Compile_Radermacher',
 	license="Apache v2.0",
 	ext_modules=[module]
 )
