@@ -24,8 +24,8 @@ class Protomo2RefineForm extends BasicLayoutForm
 	$r2_lp_diam_x='15', $r3_lp_diam_x='15', $r4_lp_diam_x='15', $r5_lp_diam_x='', $r1_lp_apod_x='25', $r2_lp_apod_x='20', $r3_lp_apod_x='15', $r4_lp_apod_x='10', $r5_lp_apod_x='', $r1_lp_diam_y='15', $r2_lp_diam_y='15',
 	$r3_lp_diam_y='15', $r4_lp_diam_y='15', $r5_lp_diam_y='', $r1_lp_apod_y='25', $r2_lp_apod_y='20', $r3_lp_apod_y='15', $r4_lp_apod_y='10', $r5_lp_apod_y='', $r1_hp_diam_x='250', $r2_hp_diam_x='350', $r3_hp_diam_x='450',
 	$r4_hp_diam_x='550', $r5_hp_diam_x='', $r1_hp_diam_y='250', $r2_hp_diam_y='350', $r3_hp_diam_y='450', $r4_hp_diam_y='550', $r5_hp_diam_y='', $r1_hp_apod_x='75', $r2_hp_apod_x='100', $r3_hp_apod_x='150', $r4_hp_apod_x='200', $r5_hp_apod_x='',
-	$r1_hp_apod_y='75', $r2_hp_apod_y='100', $r3_hp_apod_y='150', $r4_hp_apod_y='200', $r5_hp_apod_y='', $corr_mode='mcf', $raw_path='', $r1_iters='15', $r2_iters='10', $r3_iters='5', $r4_iters='5', $r5_iters='', $param='',
-	$binning='true', $preprocessing='true', $select_images='', $exclude_images='', $border='100', $clip_low='3.5', $clip_high='3.5', $thr_low='', $thr_high='', $gradient='true',
+	$r1_hp_apod_y='75', $r2_hp_apod_y='100', $r3_hp_apod_y='150', $r4_hp_apod_y='200', $r5_hp_apod_y='', $raw_path='', $r1_iters='15', $r2_iters='10', $r3_iters='5', $r4_iters='5', $r5_iters='', $param='',
+	$binning='true', $preprocessing='true', $select_images='', $exclude_images='', $border='100', $clip_low='3.5', $clip_high='3.5', $thr_low='', $thr_high='', $gradient='true', $r1_corr_mode='mcf', $r2_corr_mode='mcf', $r3_corr_mode='mcf', $r4_corr_mode='mcf', $r5_corr_mode='',
 	$gradient_switch='', $iter_gradient='', $iter_gradient_switch='', $filter='median', $r1_kernel_x='', $r2_kernel_x='', $r3_kernel_x='', $r4_kernel_x='', $r5_kernel_x='', $r1_kernel_y='', $r2_kernel_y='',
 	$r3_kernel_y='', $r4_kernel_y='', $r5_kernel_y='', $grow='0', $window_area='0.95', $mask_apod_x='', $mask_apod_y='', $mask_width_x='', $mask_width_y='', $do_estimation='false', $norotations='false',
 	$max_correction='', $correlation_size_x='160', $correlation_size_y='160', $r1_peak_search_radius_x='300', $r2_peak_search_radius_x='300', $r3_peak_search_radius_x='300',
@@ -195,7 +195,11 @@ class Protomo2RefineForm extends BasicLayoutForm
 		$params->addParam( "r3_highpass_apod_y", $r3_hp_apod_y, "R3" );
 		$params->addParam( "r4_highpass_apod_y", $r4_hp_apod_y, "R4" );
 		$params->addParam( "r5_highpass_apod_y", $r5_hp_apod_y, "R5 │ Highpass Apodization Filter (y)" );
-		$params->addParam( "corr_mode", $corr_mode, "Correlation Mode (xcf, mcf, pcf, dbl)" );
+		$params->addParam( "r1_corr_mode", $r1_corr_mode, "R1" );
+		$params->addParam( "r2_corr_mode", $r2_corr_mode, "R2" );
+		$params->addParam( "r3_corr_mode", $r3_corr_mode, "R3" );
+		$params->addParam( "r4_corr_mode", $r4_corr_mode, "R4" );
+		$params->addParam( "r5_corr_mode", $r5_corr_mode, "R5 | Correlation Mode (xcf, mcf, pcf, dbl)" );
 		$params->addParam( "raw_path", $raw_path, "Raw Image Path" );
 		$params->addParam( "r1_iters", $r1_iters, "R1" );
 		$params->addParam( "r2_iters", $r2_iters, "R2" );
@@ -490,13 +494,37 @@ class Protomo2RefineForm extends BasicLayoutForm
 		    <H4>Cross-Correlation Parameters ".docpop('crosscorrparam_info', '(Info)')."</H4>
 		    <hr />";
 			
-			//$html.= $params->insertTextField( "corr_mode", $fieldSize );
-			$html.= '<select name="corr_mode" style="width:66px">';
+			$html.= '<select name="r1_corr_mode" style="width:51px">';
 			$html.= '<option value="xcf">xcf</option>';
 			$html.= '<option selected value="mcf">mcf</option>';
 			$html.= '<option value="pcf">pcf</option>';
 			$html.= '<option value="dbl">dbl</option>';
-			$html.= '</select>'; $html.= docpop('protomo_corr_mode', ' Correlation Mode (xcf, mcf, pcf, dbl)').'<br>';
+			$html.= '</select>'; $html.= docpop('protomo_r1_corr_mode', ' R1').'│ ';
+			$html.= '<select name="r2_corr_mode" style="width:51px">';
+			$html.= '<option value="xcf">xcf</option>';
+			$html.= '<option selected value="mcf">mcf</option>';
+			$html.= '<option value="pcf">pcf</option>';
+			$html.= '<option value="dbl">dbl</option>';
+			$html.= '</select>'; $html.= docpop('protomo_r2_corr_mode', ' R2').'│ ';
+			$html.= '<select name="r3_corr_mode" style="width:51px">';
+			$html.= '<option value="xcf">xcf</option>';
+			$html.= '<option selected value="mcf">mcf</option>';
+			$html.= '<option value="pcf">pcf</option>';
+			$html.= '<option value="dbl">dbl</option>';
+			$html.= '</select>'; $html.= docpop('protomo_r3_corr_mode', ' R3').'│ ';
+			$html.= '<select name="r4_corr_mode" style="width:51px">';
+			$html.= '<option value="xcf">xcf</option>';
+			$html.= '<option selected value="mcf">mcf</option>';
+			$html.= '<option value="pcf">pcf</option>';
+			$html.= '<option value="dbl">dbl</option>';
+			$html.= '</select>'; $html.= docpop('protomo_r4_corr_mode', ' R4').'│ ';
+			$html.= '<select name="r5_corr_mode" style="width:51px">';
+			$html.= '<option value=""></option>';
+			$html.= '<option value="xcf">xcf</option>';
+			$html.= '<option value="mcf">mcf</option>';
+			$html.= '<option value="pcf">pcf</option>';
+			$html.= '<option value="dbl">dbl</option>';
+			$html.= '</select>'; $html.= docpop('protomo_r5_corr_mode', ' R5 | Correlation Mode').'<br>';
 			$html.= $params->insertTextFieldInRow( "r1_peak_search_radius_x", $fieldSize2 ).'│ ';
 			$html.= $params->insertTextFieldInRow( "r2_peak_search_radius_x", $fieldSize2 ).'│ ';
 			$html.= $params->insertTextFieldInRow( "r3_peak_search_radius_x", $fieldSize2 ).'│ ';
