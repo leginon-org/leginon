@@ -57,8 +57,14 @@ class Protomo2RefineForm extends BasicLayoutForm
 		$r4_lp_diam_y = round(pow(10,10)*$imageinfo['pixelsize']*25);
 		$r1_hp_diam_x = $r2_hp_diam_x = $r3_hp_diam_x = $r4_hp_diam_x = round(($imageinfo['dimx']+$imageinfo['dimy'])/(2*8));
 		$r1_hp_diam_y = $r2_hp_diam_y = $r3_hp_diam_y = $r4_hp_diam_y = round(($imageinfo['dimx']+$imageinfo['dimy'])/(2*8));
-		$r1_lp_apod_x = $r2_lp_apod_x = $r3_lp_apod_x = $r4_lp_apod_x = round(2.5*$r1_lp_diam_x);
-		$r1_lp_apod_y = $r2_lp_apod_y = $r3_lp_apod_y = $r4_lp_apod_y = round(2.5*$r1_lp_diam_y);
+		$r1_lp_apod_x = round(2.5*$r1_lp_diam_x);
+		$r2_lp_apod_x = round(2.5*$r2_lp_diam_x);
+		$r3_lp_apod_x = round(2.5*$r3_lp_diam_x);
+		$r4_lp_apod_x = round(2.5*$r4_lp_diam_x);
+		$r1_lp_apod_y = round(2.5*$r1_lp_diam_y);
+		$r2_lp_apod_y = round(2.5*$r2_lp_diam_y);
+		$r3_lp_apod_y = round(2.5*$r3_lp_diam_y);
+		$r4_lp_apod_y = round(2.5*$r4_lp_diam_y);
 		$r1_hp_apod_x = $r2_hp_apod_x = $r3_hp_apod_x = $r4_hp_apod_x = round($r1_hp_diam_x/2);
 		$r1_hp_apod_y = $r2_hp_apod_y = $r3_hp_apod_y = $r4_hp_apod_y = round($r1_hp_diam_y/2);
 		$map_size_x = $imageinfo['dimx']/$map_sampling;
