@@ -627,11 +627,12 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		self.parser.add_option("--restart_cycle", dest="restart_cycle",
 			help="Restart a Refinement at this iteration, e.g. --restart_cycle=2")
 		
-		self.parser.add_option("--link", dest="link",  default=True,
+		self.parser.add_option("--link", dest="link",  default="False",
 			help="Link raw images if True, copy if False, e.g. --link=False")
 		
 		self.parser.add_option("--fix_images", dest="fix_images",  default="False",
 			help="Internal use only")
+	
 	
 	#=====================
 	def checkConflicts(self):

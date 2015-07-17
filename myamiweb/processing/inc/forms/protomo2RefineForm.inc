@@ -47,12 +47,18 @@ class Protomo2RefineForm extends BasicLayoutForm
 		$_POST['outdir']=$_SESSION['outdir'];
 		$r1_region_x = $r2_region_x = $r3_region_x = $r4_region_x = $imageinfo['dimx']*0.5;
 		$r1_region_y = $r2_region_y = $r3_region_y = $r4_region_y = $imageinfo['dimy']*0.5;
-		$r1_lp_diam_x = $r2_lp_diam_x = $r3_lp_diam_x = $r4_lp_diam_x = round(pow(10,10)*$imageinfo['pixelsize']*8);
-		$r1_lp_diam_y = $r2_lp_diam_y = $r3_lp_diam_y = $r4_lp_diam_y = round(pow(10,10)*$imageinfo['pixelsize']*8);
-		$r1_lp_apod_x = $r2_lp_apod_x = $r3_lp_apod_x = $r4_lp_apod_x = 2.5*$r1_lp_diam_x;
-		$r1_lp_apod_y = $r2_lp_apod_y = $r3_lp_apod_y = $r4_lp_apod_y = 2.5*$r1_lp_diam_y;
+		$r1_lp_diam_x = round(pow(10,10)*$imageinfo['pixelsize']*50);
+		$r2_lp_diam_x = round(pow(10,10)*$imageinfo['pixelsize']*40);
+		$r3_lp_diam_x = round(pow(10,10)*$imageinfo['pixelsize']*30);
+		$r4_lp_diam_x = round(pow(10,10)*$imageinfo['pixelsize']*25);
+		$r1_lp_diam_y = round(pow(10,10)*$imageinfo['pixelsize']*50);
+		$r2_lp_diam_y = round(pow(10,10)*$imageinfo['pixelsize']*40);
+		$r3_lp_diam_y = round(pow(10,10)*$imageinfo['pixelsize']*30);
+		$r4_lp_diam_y = round(pow(10,10)*$imageinfo['pixelsize']*25);
 		$r1_hp_diam_x = $r2_hp_diam_x = $r3_hp_diam_x = $r4_hp_diam_x = round(($imageinfo['dimx']+$imageinfo['dimy'])/(2*8));
 		$r1_hp_diam_y = $r2_hp_diam_y = $r3_hp_diam_y = $r4_hp_diam_y = round(($imageinfo['dimx']+$imageinfo['dimy'])/(2*8));
+		$r1_lp_apod_x = $r2_lp_apod_x = $r3_lp_apod_x = $r4_lp_apod_x = 2.5*$r1_lp_diam_x;
+		$r1_lp_apod_y = $r2_lp_apod_y = $r3_lp_apod_y = $r4_lp_apod_y = 2.5*$r1_lp_diam_y;
 		$r1_hp_apod_x = $r2_hp_apod_x = $r3_hp_apod_x = $r4_hp_apod_x = $r1_lp_diam_x/2;
 		$r1_hp_apod_y = $r2_hp_apod_y = $r3_hp_apod_y = $r4_hp_apod_y = $r1_lp_diam_y/2;
 		$map_size_x = $imageinfo['dimx']/$map_sampling;
@@ -61,10 +67,10 @@ class Protomo2RefineForm extends BasicLayoutForm
 		$r1_kernel_y = $r2_kernel_y = $r3_kernel_y = $r4_kernel_y = 5;
 		$r1_mask_apod_x = $r2_mask_apod_x = $r3_mask_apod_x = $r4_mask_apod_x = 10;
 		$r1_mask_apod_y = $r2_mask_apod_y = $r3_mask_apod_y = $r4_mask_apod_y = 10;
-		$Nx=$r1_region_x/$sampling;
-		$Ny=$r1_region_y/$sampling;
-		$r1_mask_width_x = $r2_mask_width_x = $r3_mask_width_x = $r4_mask_width_x = $Nx-2.5*$r1_mask_apod_x;
-		$r1_mask_width_y = $r2_mask_width_y = $r3_mask_width_y = $r4_mask_width_y = $Ny-2.5*$r1_mask_apod_y;
+		$Nx1=$r1_region_x/$r1_sampling;
+		$Ny1=$r1_region_y/$r1_sampling;
+		$r1_mask_width_x = $r2_mask_width_x = $r3_mask_width_x = $r4_mask_width_x = $Nx1-2.5*$r1_mask_apod_x;
+		$r1_mask_width_y = $r2_mask_width_y = $r3_mask_width_y = $r4_mask_width_y = $Ny1-2.5*$r1_mask_apod_y;
 		$restart_cycle = $_SESSION['restart_cycle'];
 		$image_file_type = pathinfo($imageinfo['filename'], PATHINFO_EXTENSION);
 		$_SESSION['image_file_type'] = $image_file_type;
@@ -208,8 +214,8 @@ class Protomo2RefineForm extends BasicLayoutForm
 		$params->addParam( "do_estimation", $do_estimation, "Estimate Geometric Parameters" );
 		$params->addParam( "norotations", "$norotations", "No In-plane Rotations" );
 		$params->addParam( "max_correction", $max_correction, "Correction Cutoff" );
-		$params->addParam( "correlation_size_x", $correlation_size_x, "Size (x) of Cross-Correlation Image" );
-		$params->addParam( "correlation_size_y", $correlation_size_y, "Size (y) of Cross-Correlation Image" );
+		$params->addParam( "correlation_size_x", $correlation_size_x, "Size (x) of Cross-Correlation Video" );
+		$params->addParam( "correlation_size_y", $correlation_size_y, "Size (y) of Cross-Correlation Video" );
 		$params->addParam( "r1_peak_search_radius_x", $r1_peak_search_radius_x, "R1" );
 		$params->addParam( "r2_peak_search_radius_x", $r2_peak_search_radius_x, "R2" );
 		$params->addParam( "r3_peak_search_radius_x", $r3_peak_search_radius_x, "R3" );
@@ -317,10 +323,6 @@ class Protomo2RefineForm extends BasicLayoutForm
 			//$html.= $params->insertTextField( "cachedir", $fieldSize );
 			//$html.= $params->insertTextField( "protomo_outdir", $fieldSize );
 			//$html.= $params->insertTextField( "preprocessing", $fieldSize );
-			$html.= '<select name="preprocessing" style="width:66px">';
-			$html.= '<option selected value="true">true</option>';
-			$html.= '<option value="false">false</option>';
-			$html.= '</select>'; $html.= docpop('protomo_preprocessing', ' Raw Image Preprocessing').'<br>';
 			//$html.= $params->insertTextField( "binning", $fieldSize );
 			//$html.= '<select name="binning" style="width:66px">';
 			//$html.= '<option selected value="true">true</option>';
@@ -341,6 +343,10 @@ class Protomo2RefineForm extends BasicLayoutForm
 		    <H4>Preprocessing Parameters ".docpop('preprocparam_info', '(Info)')."</H4>
 		    <hr />";
 		    
+			$html.= '<select name="preprocessing" style="width:66px">';
+			$html.= '<option selected value="true">true</option>';
+			$html.= '<option value="false">false</option>';
+			$html.= '</select>'; $html.= docpop('protomo_preprocessing', ' Raw Image Preprocessing').'<br>';
 			//$html.= $params->insertTextField( "gradient", $fieldSize );
 			$html.= '<select name="gradient" style="width:66px">';
 			$html.= '<option selected value="true">true</option>';

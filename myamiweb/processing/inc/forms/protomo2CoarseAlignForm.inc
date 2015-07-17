@@ -96,8 +96,8 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 		$_SESSION['imageinfo'] = $imageinfo;
 		$_SESSION['tiltseries'] = $tiltseriesinfos[0]['number'];
 		
-		$lp_diam_x = round(pow(10,10)*$imageinfo['pixelsize']*10);
-		$lp_diam_y = round(pow(10,10)*$imageinfo['pixelsize']*10);
+		$lp_diam_x = round(pow(10,10)*$imageinfo['pixelsize']*75);
+		$lp_diam_y = round(pow(10,10)*$imageinfo['pixelsize']*75);
 		$hp_diam_x = round(($imageinfo['dimx']+$imageinfo['dimy'])/(2*8));
 		$hp_diam_y = round(($imageinfo['dimx']+$imageinfo['dimy'])/(2*8));
 		$lp_apod_x=2.5*$lp_diam_x;
@@ -191,8 +191,8 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 		//$params->addParam( "do_estimation", $do_estimation, "Estimate Geometric Parameters" );
 		//$params->addParam( "norotations", "$norotations", "No In-plane Rotations" );
 		//$params->addParam( "max_correction", $max_correction, "Correction Cutoff" );
-		$params->addParam( "correlation_size_x", $correlation_size_x, "Size (x) of Cross-Correlation Image" );
-		$params->addParam( "correlation_size_y", $correlation_size_y, "Size (y) of Cross-Correlation Image" );
+		$params->addParam( "correlation_size_x", $correlation_size_x, "Size (x) of Cross-Correlation Video" );
+		$params->addParam( "correlation_size_y", $correlation_size_y, "Size (y) of Cross-Correlation Video" );
 		$params->addParam( "peak_search_radius_x", $peak_search_radius_x, "Peak Search Radius (x)" );
 		$params->addParam( "peak_search_radius_y", $peak_search_radius_y, "Peak Search Radius (y)" );
 		//$params->addParam( "orientation", $orientation, "Include Orientation Angles in Refinement" );
@@ -207,8 +207,8 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 		$params->addParam( "cachedir", $cachedir, "Cache Directory" );
 		$params->addParam( "protomo_outdir", $protomo_outdir, "Output Directory" );
 		//$params->addParam( "gui_coarse_align", $gui_coarse_align, "Coarse Alignment equivalent to 'Align All' in tomoaign-gui (<strong>Over-rides other options</strong>) (NOT IMPLEMENTED YET!!)" );
-		$params->addParam( "gridsearch_limit", $grid_limit, "Gridseach +-Angle Limit (<strong>Critical Parameter</strong>)" );
-		$params->addParam( "gridsearch_step", $grid_step, "Gridseach Angle Step Size (<strong>Critical Parameter</strong>)" );
+		$params->addParam( "gridsearch_limit", $grid_limit, "Grid Search +-Angle Limit (<strong>Critical Parameter</strong>)" );
+		$params->addParam( "gridsearch_step", $grid_step, "Grid Search Angle Step Size (<strong>Critical Parameter</strong>)" );
 		$params->addParam( "retry", $retry, "Coarse Alignment Retries" );
 		$params->addParam( "retry_shrink", $retry_shrink, "Window Size Fraction to Shrink Each Retry Attempt" );
 		$params->addParam( "create_tilt_video", $create_tilt_video, "Create Tilt-Series Videos" );
@@ -283,15 +283,11 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 			//$html.= '<option selected value="True">Link</option>';
 			//$html.= '<option value="False">Copy</option>';
 			//$html.= '</select>'; $html.= docpop('protomo_link', ' Link or Copy Raw Images?').'<br>';
-			$html.= '<select name="preprocessing" style="width:66px">';
-			$html.= '<option selected value="true">true</option>';
-			$html.= '<option value="false">false</option>';
-			$html.= '</select>'; $html.= docpop('protomo_preprocessing', ' Raw Image Preprocessing').'<br>';
 			//$html.= $params->insertTextField( "binning", $fieldSize );
-			$html.= '<select name="binning" style="width:66px">';
-			$html.= '<option selected value="true">true</option>';
-			$html.= '<option value="false">false</option>';
-			$html.= '</select>'; $html.= docpop('protomo_binning', ' Raw Image Binning').'<br>';
+			//$html.= '<select name="binning" style="width:66px">';
+			//$html.= '<option selected value="true">true</option>';
+			//$html.= '<option value="false">false</option>';
+			//$html.= '</select>'; $html.= docpop('protomo_binning', ' Raw Image Binning').'<br>';
 			$html.= $params->insertTextField( "sampling", $fieldSize );
 			$html.= $params->insertTextField( "select_images", $fieldSize );
 			$html.= $params->insertTextField( "exclude_images", $fieldSize );
@@ -309,6 +305,10 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 		    <H4>Preprocessing Parameters ".docpop('preprocparam_info', '(Info)')."</H4>
 		    <hr />";
 		    
+			$html.= '<select name="preprocessing" style="width:66px">';
+			$html.= '<option selected value="true">true</option>';
+			$html.= '<option value="false">false</option>';
+			$html.= '</select>'; $html.= docpop('protomo_preprocessing', ' Raw Image Preprocessing').'<br>';
 			//$html.= $params->insertTextField( "gradient", $fieldSize );
 			$html.= '<select name="gradient" style="width:66px">';
 			$html.= '<option selected value="true">true</option>';
@@ -365,7 +365,7 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 			
 			$html .= "
 		    <br />
-		    <H4>Coarse Gridsearch Parameters ".docpop('gridsearchparam_info', '(Info)')."</H4>
+		    <H4>Coarse Grid Search Parameters ".docpop('gridsearchparam_info', '(Info)')."</H4>
 		    <hr />";
 		    
 			//$html.= $params->insertCheckboxField( "gui_coarse_align" );

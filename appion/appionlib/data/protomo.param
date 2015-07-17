@@ -1,5 +1,3 @@
-(* Parameters for HIGH tilt series *)
-
 (* Units are pixels for real space quantities, or reciprocal pixels    *)
 (* for reciprocal space quantities, unless otherwise stated. The units *)
 (* refer to the sampled image. The spatial frequencies for filters are *)
