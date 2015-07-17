@@ -467,7 +467,7 @@ def fixImages(rawpath):
 		mrc.write(f,image)
 	
 	
-def makeCoarseCorrPeakVideos(seriesname, iteration, rundir, outdir, video_type, align_step):
+def makeCorrPeakVideos(seriesname, iteration, rundir, outdir, video_type, align_step):
 	'''
 	Creates Cross Correlation Peak Videos for Coarse Alignment.
 	'''
@@ -1074,6 +1074,9 @@ def makeReconstructionVideos(seriesname, iteraion, rundir, rx, ry, show_window_s
 		
 
 def makeDefocusPlot(name, ctfdir, defocus_file_full):
+	'''
+	Creates a plot of the measured and interpolated defocus values. Not implemented yet.
+	'''
 	try: #If anything fails, it's likely that something isn't in the path
 		defcus_fig_full=ctfdir+name+'_defocus.png'
 		
@@ -1103,6 +1106,9 @@ def makeDefocusPlot(name, ctfdir, defocus_file_full):
 
 
 def makeCTFPlot(ctfdir, defocus_file_full):
+	'''
+	Creates a plot of the CTF function based on the average of the estimated defocus values. Not implemented yet.
+	'''
 	try: #If anything fails, it's likely that something isn't in the path
 		f=open(defocus_file_full,'r')
 		lines=f.readlines()
@@ -1117,3 +1123,66 @@ def makeCTFPlot(ctfdir, defocus_file_full):
 		apDisplay.printMsg("Done creating CTF Plot!")
 	except:
 		apDisplay.printMsg("CTF plot could not be generated. Make sure pylab is in your $PATH. Make sure that scipy are in your $PYTHONPATH.\n")
+
+
+def makeAngleRefinementPlots(rundir, seriesname):
+	'''
+	Creates a plot of the tilt azimuth and a plot of theta (see Protomo user guide or doi:10.1016/j.ultramic.2005.07.007) over all completed iterations.
+	'''
+	try: #If anything fails, it's likely that something isn't in the path
+		apDisplay.printMsg("Creating angle refinement plot image...")
+		os.chdir(rundir)
+		os.system("mkdir -p %s/media/angle_refinement 2>/dev/null" % rundir)
+		azimuth_full=rundir+'/media/angle_refinement/'+seriesname+'_azimuth.png'
+		theta_full=rundir+'/media/angle_refinement/'+seriesname+'_theta.png'
+		pylab.clf()
+		
+		tiltfiles=glob.glob("%s*.tlt" % seriesname)
+		tiltfiles.sort()
+		
+		i=0
+		iters=[]
+		azimuths=[]
+		thetas=[]
+		for tiltfile in tiltfiles:
+			cmd1="awk '/AZIMUTH /{print $3}' %s" % tiltfile
+			proc=subprocess.Popen(cmd1, stdout=subprocess.PIPE, shell=True)
+			(azimuth, err) = proc.communicate()
+			azimuth=float(azimuth)
+			azimuths.append(azimuth)
+			
+			cmd2="awk '/THETA /{print $2}' %s" % tiltfile
+			proc=subprocess.Popen(cmd2, stdout=subprocess.PIPE, shell=True)
+			(theta, err) = proc.communicate()
+			if theta == '':  #tlt file from Coarse Alignment has no theta estimation.
+				theta=0
+			else:
+				theta=float(theta)
+			thetas.append(theta)
+			
+			iters.append(float(i))
+			i+=1
+		
+		pylab.plot(iters, azimuths)
+		pylab.xlabel("Iteration")
+		pylab.ylabel("Azimuth (degrees)")
+		pylab.title("Tilt Azimuth Refinement")
+		pylab.minorticks_on()
+		pylab.savefig(azimuth_full)
+		pylab.clf()
+		
+		pylab.plot(iters, thetas)
+		pylab.xlabel("Iteration")
+		pylab.ylabel("Theta (degrees)")
+		pylab.title("Tilt Angle Refinement for Theta")
+		pylab.minorticks_on()
+		pylab.savefig(theta_full)
+		pylab.clf()
+		
+		#rename pngs to be gifs so that Appion will display it properly (this is a ridiculous redux workaround to display images with white backgrounds by changing png filename extensions to gif and then using loadimg.php?rawgif=1 to load them, but oh well)
+		os.system('mv %s %s' % (azimuth_full,azimuth_full[:-3]+"gif"))
+		os.system('mv %s %s' % (theta_full,theta_full[:-3]+"gif"))
+		
+		apDisplay.printMsg("Done creating angle refinement plots!")
+	except:
+		apDisplay.printMsg("Angle refinement plots could not be generated. Make sure pylab is in your $PATH.\n")

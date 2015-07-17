@@ -1036,7 +1036,7 @@ class ProTomo2Aligner(basicScript.BasicScript):
 			jobs2=[]
 			
 			# Make correlation peak videos for depiction			
-			jobs2.append(mp.Process(target=apProTomo2Aligner.makeCoarseCorrPeakVideos, args=(name, 0, rundir, self.params['protomo_outdir'], self.params['video_type'], "Coarse",)))
+			jobs2.append(mp.Process(target=apProTomo2Aligner.makeCorrPeakVideos, args=(name, 0, rundir, self.params['protomo_outdir'], self.params['video_type'], "Coarse",)))
 			
 			# Make tiltseries video for depiction
 			if self.params['create_tilt_video'] == "true":
@@ -1307,10 +1307,13 @@ class ProTomo2Aligner(basicScript.BasicScript):
 				jobs=[]
 				
 				# Make correlation peak videos for depiction			
-				jobs.append(mp.Process(target=apProTomo2Aligner.makeCoarseCorrPeakVideos, args=(name, it, rundir, self.params['protomo_outdir'], self.params['video_type'], "Refinement")))
+				jobs.append(mp.Process(target=apProTomo2Aligner.makeCorrPeakVideos, args=(name, it, rundir, self.params['protomo_outdir'], self.params['video_type'], "Refinement")))
 				
 				# Make correlation plot pngs for depiction
 				jobs.append(mp.Process(target=apProTomo2Aligner.makeCorrPlotImages, args=(name, it, rundir, corrfile)))
+				
+				# Make refinement plots of tilt azimuth and theta
+				jobs.append(mp.Process(target=apProTomo2Aligner.makeAngleRefinementPlots, args=(rundir, name,)))
 				
 				# Make tiltseries video for depiction
 				if self.params['create_tilt_video'] == "true":

@@ -624,7 +624,7 @@ def protomoCoarseAlign(tiltseriesnumber, coarse_options):
 	os.system('touch %s/.tiltseries.%04d' % (coarse_options.rundir, tiltseriesnumber))
 	
 	apDisplay.printMsg("Creating Coarse Alignment Depictions")
-	apProTomo2Aligner.makeCoarseCorrPeakVideos(name, 0, tiltdir, 'out', coarse_options.video_type, "Coarse")
+	apProTomo2Aligner.makeCorrPeakVideos(name, 0, tiltdir, 'out', coarse_options.video_type, "Coarse")
 	if (coarse_options.all_tilt_videos == "True"):
 		apDisplay.printMsg("Creating Coarse Alignment tilt-series video...")
 		apProTomo2Aligner.makeTiltSeriesVideos(seriesname, 0, tiltfile, rawimagecount, tiltdir, raw_path, coarse_options.pixelsize, coarse_options.map_sampling, coarse_options.image_file_type, coarse_options.video_type, "False", "Coarse")
@@ -842,7 +842,7 @@ def protomoRefine(tiltseriesnumber, refine_options):
 		corrfile=basename+'.corr'
 		
 		apDisplay.printMsg("Creating Refinement Depictions")
-		apProTomo2Aligner.makeCoarseCorrPeakVideos(name, it, tiltdir, 'out', refine_options.video_type, "Refinement")  #Correlation peak videos are always made.
+		apProTomo2Aligner.makeCorrPeakVideos(name, it, tiltdir, 'out', refine_options.video_type, "Refinement")  #Correlation peak videos are always made.
 		apProTomo2Aligner.makeCorrPlotImages(name, it, tiltdir, corrfile)  #Correlation plots are always made.
 		if (refine_options.all_tilt_videos == "True"):  #Tilt series videos are only made if requested
 			apDisplay.printMsg("Creating Refinement tilt-series video...")
@@ -1365,7 +1365,7 @@ def protomoScreening(tiltseriesnumber, screening_options):
 	jobs2=[]
 	
 	# Make correlation peak videos for depiction			
-	jobs2.append(mp.Process(target=apProTomo2Aligner.makeCoarseCorrPeakVideos, args=(name, 0, tiltdir, 'out', screening_options.video_type, "Coarse",)))
+	jobs2.append(mp.Process(target=apProTomo2Aligner.makeCorrPeakVideos, args=(name, 0, tiltdir, 'out', screening_options.video_type, "Coarse",)))
 	
 	# Make tiltseries video for depiction
 	apDisplay.printMsg("Creating Coarse Alignment tilt-series video...")

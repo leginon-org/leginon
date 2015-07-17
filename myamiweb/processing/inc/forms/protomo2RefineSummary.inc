@@ -67,23 +67,29 @@ class Protomo2RefineSummary extends BasicLayoutForm
 		$corrpeak_gif_files = glob("$outdir/$runname/media/correlations/s*.gif");
 		$corrpeak_vid_files = glob("$outdir/$runname/media/correlations/s*.{mp4,ogv,webm}",GLOB_BRACE);
 		$qa_gif_file = "$outdir/$runname/media/quality_assessment/series".sprintf('%04d',$tiltseries)."_quality_assessment.gif";
-		//$rec_files = glob("$outdir/$runname/media/reconstructions/s*.gif");
+		$azimuth_gif_file = "$outdir/$runname/media/angle_refinement/series".sprintf('%04d',$tiltseries)."_azimuth.gif";
+		$theta_gif_file = "$outdir/$runname/media/angle_refinement/series".sprintf('%04d',$tiltseries)."_theta.gif";
 		
 		$qa_gif = "loadimg.php?rawgif=1&filename=".$qa_gif_file;
+		$azimuth_gif = "loadimg.php?rawgif=1&filename=".$azimuth_gif_file;
+		$theta_gif = "loadimg.php?rawgif=1&filename=".$theta_gif_file;
 		
-		//print $qa_gif;
-		foreach(array_keys($initial_tilt_vid_files) as $paramName)
-			echo $paramName . "<br>";
-			echo $initial_tilt_vid_files["$paramName"] . "<br>";
-		
+		//foreach(array_keys($initial_tilt_vid_files) as $paramName)
+		//	echo $paramName . "<br>";
+		//	echo $initial_tilt_vid_files["$paramName"] . "<br>";
 		
 		// Quality assessment for each iteration
 		$html .= "
 	<hr />
 	<center><H4><b>Quality Assessment ".docpop('quality_assessment', '(Info)')."</b></H4></center>
 	<hr />";
+		$html .= '<table id="" class="display" cellspacing="0" border="0" width="100%">';
+		$html .= '<tr><td rowspan="2">';
 		$html .= '<center><img src="'.$qa_gif.'" alt="qa" width="666" />'."</center>";
-		$html .= '<center>'.docpop('quality_assessment2', 'CCMS Info').'</center><br>';
+		$html .= '<center>'.docpop('quality_assessment2', 'CCMS Info').'</center><br></td>';
+		$html .= '<td><center><img src="'.$azimuth_gif.'" alt="azimuth" width="400" />'."</center></td></tr>";
+		$html .= '<td><center><img src="'.$theta_gif.'" alt="theta" width="400" />'."</center></td></tr>";
+		$html .= '</tr></td></table>';
 		
 		// Table of all of the correlation peaks for easy identification of bad alignment iterations
 		$html .= "
@@ -93,7 +99,7 @@ class Protomo2RefineSummary extends BasicLayoutForm
 		
 		$i = 0;
 		$j = -1;
-		$html .= '<table id="" class="display" cellspacing="0" border="1" width="100%">';
+		$html .= '<table id="" class="display" cellspacing="0" border="1" align="center">';
 		$html .= "<tr>";
 		if (count($corrpeak_gif_files) > 0)
 		{
