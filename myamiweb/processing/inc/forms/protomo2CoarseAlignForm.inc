@@ -102,8 +102,8 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 		$hp_diam_y = round(($imageinfo['dimx']+$imageinfo['dimy'])/(2*8));
 		$lp_apod_x=2.5*$lp_diam_x;
 		$lp_apod_y=2.5*$lp_diam_y;
-		$hp_apod_x=$hp_diam_x/2;
-		$hp_apod_y=$hp_diam_y/2;
+		$hp_apod_x=round($hp_diam_x/2);
+		$hp_apod_y=round($hp_diam_y/2);
 		$region_x = intval($imageinfo['dimx']*0.6);
 		$region_y = intval($imageinfo['dimy']*0.6);
 		$kernel_x = 5;

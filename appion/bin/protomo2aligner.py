@@ -388,6 +388,10 @@ class ProTomo2Aligner(basicScript.BasicScript):
 			help="Protomo2 only: TODO, e.g. --reference_apodization_y=10.0", metavar="float")
 
 		self.correlation_modes = ( "xcf", "mcf", "pcf", "dbl" )
+		self.parser.add_option("--corr_mode", dest="corr_mode",
+			help="Protomo2 only: Correlation mode, standard (xcf), mutual (mcf), phase only (pcf), phase doubled (dbl), e.g. --correlation_mode=xcf", metavar="CorrMode",
+			type="choice", choices=self.correlation_modes, default="mcf" )
+	
 		self.parser.add_option("--r1_corr_mode", dest="r1_corr_mode",
 			help="Protomo2 only: Correlation mode, standard (xcf), mutual (mcf), phase only (pcf), phase doubled (dbl), e.g. --correlation_mode=xcf", metavar="CorrMode",
 			type="choice", choices=self.correlation_modes, default="mcf" )
