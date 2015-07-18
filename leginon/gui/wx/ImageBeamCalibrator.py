@@ -5,8 +5,6 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 
-from multiprocessing.pool import ThreadPool
-import threading
 import wx
 
 from leginon.gui.wx.Entry import IntEntry, FloatEntry
