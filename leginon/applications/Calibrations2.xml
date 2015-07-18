@@ -3,7 +3,7 @@
 - Application XML-Dump
 - http://ami.scripps.edu/ 
 -
-- Application :Calibrations2 (3.1)
+- Application :Calibrations2 (3.2)
 - Version     :0
 - Date : 09/27/2010
 -
@@ -116,7 +116,7 @@
     <sqltable name="ApplicationData" >
         <field name="DEF_id" >717</field>
         <field name="DEF_timestamp" >2010-09-27 12:10:39</field>
-        <field name="name" >Calibrations2 (3.1)</field>
+        <field name="name" >Calibrations2 (3.2)</field>
         <field name="version" >0</field>
         <field name="hide" >0</field>
     </sqltable>
@@ -158,7 +158,7 @@
         <field name="DEF_timestamp" >2010-09-27 12:10:39</field>
         <field name="event class string" >PresetChangedEvent</field>
         <field name="from node alias" >Presets Manager</field>
-        <field name="to node alias" >Intensity</field>
+        <field name="to node alias" >Image Beam Comp</field>
         <field name="REF|ApplicationData|application" >717</field>
     </sqltable>
     <sqltable name="BindingSpecData" >
@@ -214,7 +214,7 @@
         <field name="DEF_timestamp" >2010-09-27 12:10:39</field>
         <field name="event class string" >PresetChangedEvent</field>
         <field name="from node alias" >Presets Manager</field>
-        <field name="to node alias" >Focus</field>
+        <field name="to node alias" >Cal Focus</field>
         <field name="REF|ApplicationData|application" >717</field>
     </sqltable>
     <sqltable name="BindingSpecData" >
@@ -237,7 +237,7 @@
         <field name="DEF_id" >21368</field>
         <field name="DEF_timestamp" >2010-09-27 12:10:39</field>
         <field name="event class string" >ChangePresetEvent</field>
-        <field name="from node alias" >Focus</field>
+        <field name="from node alias" >Cal Focus</field>
         <field name="to node alias" >Presets Manager</field>
         <field name="REF|ApplicationData|application" >717</field>
     </sqltable>
@@ -263,8 +263,8 @@
     <sqltable name="NodeSpecData" >
         <field name="DEF_id" >8271</field>
         <field name="DEF_timestamp" >2010-09-27 12:10:39</field>
-        <field name="class string" >IntensityCalibrator</field>
-        <field name="alias" >Intensity</field>
+        <field name="class string" >ImageBeamCalibrator</field>
+        <field name="alias" >Image Beam Comp</field>
         <field name="launcher alias" >main</field>
         <field name="SEQ|dependencies" >[]</field>
         <field name="REF|ApplicationData|application" >717</field>
@@ -354,7 +354,7 @@
         <field name="DEF_id" >8280</field>
         <field name="DEF_timestamp" >2010-09-27 12:10:39</field>
         <field name="class string" >Focuser</field>
-        <field name="alias" >Focus</field>
+        <field name="alias" >Cal Focus</field>
         <field name="launcher alias" >main</field>
         <field name="SEQ|dependencies" >[]</field>
         <field name="REF|ApplicationData|application" >717</field>
