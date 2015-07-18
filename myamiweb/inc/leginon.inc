@@ -2039,7 +2039,7 @@ class leginondata {
 		//--- Check if application exits
 		$applicationinfo = $fieldvalues['ApplicationData'];
 		foreach($applicationinfo as $k=>$v) {
-			if (preg_match('%DEF_%',$k) || preg_match('%version%',$k)) continue;
+			if (preg_match('%DEF_%',$k) || preg_match('%version%',$k) || preg_match('%hide%',$k)) continue;
 			$sqlwhere[] = "`$k`=$v";
 		}
 		$where = implode(" AND ", $sqlwhere);
