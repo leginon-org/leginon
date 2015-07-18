@@ -31,6 +31,10 @@
       name="version" 
       type="int(20)" 
     />
+    <field 
+      name="hide" 
+      type="tinyint(1)" 
+    />
     <key>PRIMARY KEY (`DEF_id`)</key>
     <key>KEY `DEF_timestamp` (`DEF_timestamp`)</key>
   </sqltable>
@@ -187,6 +191,7 @@
         <field name="DEF_timestamp" >2009-03-03 21:05:11</field>
         <field name="name" >Robot MSI-Screen 2nd Pass (3.0)</field>
         <field name="version" >7</field>
+        <field name="hide" >0</field>
     </sqltable>
   <!-- BindingSpecData -->
     <sqltable name="BindingSpecData" >

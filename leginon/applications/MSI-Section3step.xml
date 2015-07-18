@@ -32,6 +32,10 @@
       name="version" 
       type="int(20)" 
     />
+    <field 
+      name="hide" 
+      type="tinyint(1)" 
+    />
     <key>PRIMARY KEY (`DEF_id`)</key>
     <key>KEY `DEF_timestamp` (`DEF_timestamp`)</key>
   </sqltable>
@@ -114,6 +118,7 @@
         <field name="DEF_timestamp" >2010-10-19 19:01:56</field>
         <field name="name" >MSI-Section3step (3.0)</field>
         <field name="version" >3</field>
+        <field name="hide" >0</field>
     </sqltable>
   <!-- BindingSpecData -->
     <sqltable name="BindingSpecData" >

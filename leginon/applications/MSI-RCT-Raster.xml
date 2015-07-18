@@ -31,6 +31,10 @@
       name="version" 
       type="int(20)" 
     />
+    <field 
+      name="hide" 
+      type="tinyint(1)" 
+    />
     <key>PRIMARY KEY (`DEF_id`)</key>
     <key>KEY `DEF_timestamp` (`DEF_timestamp`)</key>
   </sqltable>
@@ -187,6 +191,7 @@
         <field name="DEF_timestamp" >2009-02-24 18:38:28</field>
         <field name="name" >MSI-RCT raster (3.0)</field>
         <field name="version" >2</field>
+        <field name="hide" >0</field>
     </sqltable>
   <!-- BindingSpecData -->
     <sqltable name="BindingSpecData" >
