@@ -857,7 +857,8 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		rundir=self.params['rundir']
 		global cwd
 		global time_start
-		f = open('%s/protomo2aligner.log' % cwd,'a');f.write("\n")
+		shutil.copy('%s/protomo2aligner.log' % cwd, "%s/protomo2aligner_%s.log" % (rundir, time_start))
+		f = open("%s/protomo2aligner_%s.log" % (rundir, time_start),'a');f.write("\n")
 		f.write('Start time: %s\n' % time_start)
 		self.params['raw_path']=os.path.join(rundir,'raw')
 		raw_path=self.params['raw_path']
@@ -1132,22 +1133,22 @@ class ProTomo2Aligner(basicScript.BasicScript):
 			round5={"window.size":"{ %s %s }" % (self.params['r5_region_x'],self.params['r5_region_y']),"window.lowpass.diameter":"{ %s %s }" % (self.params['r5_lowpass_diameter_x'],self.params['r5_lowpass_diameter_y']),"map.lowpass.diameter":"{ %s %s }" % (self.params['r5_lowpass_diameter_x'],self.params['r5_lowpass_diameter_y']),"window.lowpass.apodization":"{ %s %s }" % (self.params['r5_lowpass_apod_x'],self.params['r5_lowpass_apod_y']),"window.highpass.apodization":"{ %s %s }" % (self.params['r5_highpass_apod_x'],self.params['r5_highpass_apod_y']),"window.highpass.diameter":"{ %s %s }" % (self.params['r5_highpass_diameter_x'],self.params['r5_highpass_diameter_y']),"sampling":"%s" % (self.params['r5_sampling']),"map.sampling":"%s" % (self.params['r5_sampling']),"preprocess.mask.kernel":"{ %s %s }" % (self.params['r5_kernel_x'],self.params['r5_kernel_y']),"align.peaksearch.radius":"{ %s %s }" % (self.params['r5_peak_search_radius_x'],self.params['r5_peak_search_radius_y']),"window.mask.width":"{ %s %s }" % (self.params['r5_mask_width_x'],self.params['r5_mask_width_y']),"align.mask.width":"{ %s %s }" % (self.params['r5_mask_width_x'],self.params['r5_mask_width_y']),"window.mask.apodization":"{ %s %s }" % (self.params['r5_mask_apod_x'],self.params['r5_mask_apod_y']),"align.mask.apodization":"{ %s %s }" % (self.params['r5_mask_apod_x'],self.params['r5_mask_apod_y']),"reference.body":"%s" % (r5_body),"map.body":"%s" % (r5_body),"align.correlation.mode":"%s" % (self.params['r5_corr_mode'])}
 			switches={"preprocess.mask.gradient":{"%s" % (self.params['gradient']):self.params['gradient_switch']},"preprocess.mask.iter":{"%s" % (self.params['iter_gradient']):self.params['iter_gradient_switch']},"fit.orientation":{"%s" % (self.params['orientation']):self.params['orientation_switch']},"fit.azimuth":{"%s" % (self.params['azimuth']):self.params['azimuth_switch']},"fit.elevation":{"%s" % (self.params['elevation']):self.params['elevation_switch']},"fit.rotation":{"%s" % (self.params['rotation']):self.params['rotation_switch']},"fit.scale":{"%s" % (self.params['scale']):self.params['scale_switch']}}
 			
-			apDisplay.printMsg("Beginning Refinements")
-			f.write('Beginning Refinements')
+			apDisplay.printMsg("Beginning Refinements\n")
+			f.write('\nBeginning Refinements\n')
 			
 			for n in range(start,iters):
 				#change parameters depending on rounds
 				if (n+1 == start+1):
 					r=1  #Round number
 					apDisplay.printMsg("Beginning Refinement Iteration #%s, Round #%s\n" % (start+n+1,r))
-					f.write('Beginning Refinement Iteration #%s, Round #%s\n' % (start+n+1,r))
+					f.write('\nBeginning Refinement Iteration #%s, Round #%s\n' % (start+n+1,r))
 					apDisplay.printMsg("lowpass = %s angstroms\n" % r1_lp)
 					f.write("lowpass = %s angstroms\n" % r1_lp)
 					region_x=self.params['r1_region_x']
 					region_y=self.params['r1_region_y']
 					sampling=self.params['r1_sampling']
-					f.write("\nRound #%s. Parameters in Protomo units:\n" % (r))
-					apDisplay.printMsg("\nRound #%s. Parameters in Protomo units:\n" % (r))
+					f.write("\nRound #%s. Parameters in Protomo units (note: At binned by %s, pixelsize is %s, Nyquist is %s):\n" % (r, sampling, sampling*self.params['pixelsize'], 2*sampling*self.params['pixelsize']))
+					apDisplay.printMsg("Round #%s. Parameters in Protomo units (note: At binned by %s, pixelsize is %s, Nyquist is %s):\n" % (r, sampling, sampling*self.params['pixelsize'], 2*sampling*self.params['pixelsize']))
 					for val in round1:
 						f.write("%s = %s\n" % (val,round1[val]))
 						apDisplay.printMsg("%s = %s" % (val,round1[val]))
@@ -1155,14 +1156,14 @@ class ProTomo2Aligner(basicScript.BasicScript):
 				elif (n+1 == start+self.params['r1_iters']+1):
 					r=2
 					apDisplay.printMsg("Beginning Refinement Iteration #%s, Round #%s\n" % (start+n+1,r))
-					f.write('Beginning Refinement Iteration #%s, Round #%s\n' % (start+n+1,r))
+					f.write('\nBeginning Refinement Iteration #%s, Round #%s\n' % (start+n+1,r))
 					apDisplay.printMsg("lowpass = %s angstroms\n" % r2_lp)
 					f.write("lowpass = %s angstroms\n" % r2_lp)
 					region_x=self.params['r2_region_x']
 					region_y=self.params['r2_region_y']
 					sampling=self.params['r2_sampling']
 					f.write("\nRound #%s. Parameters in Protomo units:\n" % (r))
-					apDisplay.printMsg("\nRound #%s. Parameters in Protomo units:\n" % (r))
+					apDisplay.printMsg("Round #%s. Parameters in Protomo units:\n" % (r))
 					for val in round2:
 						f.write("%s = %s\n" % (val,round2[val]))
 						apDisplay.printMsg("%s = %s" % (val,round2[val]))
@@ -1170,14 +1171,14 @@ class ProTomo2Aligner(basicScript.BasicScript):
 				elif (n+1 == start+self.params['r1_iters']+self.params['r2_iters']+1):
 					r=3
 					apDisplay.printMsg("Beginning Refinement Iteration #%s, Round #%s\n" % (start+n+1,r))
-					f.write('Beginning Refinement Iteration #%s, Round #%s\n' % (start+n+1,r))
+					f.write('\nBeginning Refinement Iteration #%s, Round #%s\n' % (start+n+1,r))
 					apDisplay.printMsg("lowpass = %s angstroms\n" % r3_lp)
 					f.write("lowpass = %s angstroms\n" % r3_lp)
 					region_x=self.params['r3_region_x']
 					region_y=self.params['r3_region_y']
 					sampling=self.params['r3_sampling']
 					f.write("\nRound #%s. Parameters in Protomo units:\n" % (r))
-					apDisplay.printMsg("\nRound #%s. Parameters in Protomo units:\n" % (r))
+					apDisplay.printMsg("Round #%s. Parameters in Protomo units:\n" % (r))
 					for val in round3:
 						f.write("%s = %s\n" % (val,round3[val]))
 						apDisplay.printMsg("%s = %s" % (val,round3[val]))
@@ -1185,14 +1186,14 @@ class ProTomo2Aligner(basicScript.BasicScript):
 				elif (n+1 == start+self.params['r1_iters']+self.params['r2_iters']+self.params['r3_iters']+1):
 					r=4
 					apDisplay.printMsg("Beginning Refinement Iteration #%s, Round #%s\n" % (start+n+1,r))
-					f.write('Beginning Refinement Iteration #%s, Round #%s\n' % (start+n+1,r))
+					f.write('\nBeginning Refinement Iteration #%s, Round #%s\n' % (start+n+1,r))
 					apDisplay.printMsg("lowpass = %s angstroms\n" % r4_lp)
 					f.write("lowpass = %s angstroms\n" % r4_lp)
 					region_x=self.params['r4_region_x']
 					region_y=self.params['r4_region_y']
 					sampling=self.params['r4_sampling']
 					f.write("\nRound #%s. Parameters in Protomo units:\n" % (r))
-					apDisplay.printMsg("\nRound #%s. Parameters in Protomo units:\n" % (r))
+					apDisplay.printMsg("Round #%s. Parameters in Protomo units:\n" % (r))
 					for val in round4:
 						f.write("%s = %s\n" % (val,round4[val]))
 						apDisplay.printMsg("%s = %s" % (val,round4[val]))
@@ -1200,21 +1201,23 @@ class ProTomo2Aligner(basicScript.BasicScript):
 				elif (n+1 == start+self.params['r1_iters']+self.params['r2_iters']+self.params['r3_iters']+self.params['r4_iters']+1):
 					r=5
 					apDisplay.printMsg("Beginning Refinement Iteration #%s, Round #%s\n" % (start+n+1,r))
-					f.write('Beginning Refinement Iteration #%s, Round #%s\n' % (start+n+1,r))
+					f.write('\nBeginning Refinement Iteration #%s, Round #%s\n' % (start+n+1,r))
 					apDisplay.printMsg("lowpass = %s angstroms\n" % r5_lp)
 					f.write("lowpass = %s angstroms\n" % r5_lp)
 					region_x=self.params['r5_region_x']
 					region_y=self.params['r5_region_y']
 					sampling=self.params['r5_sampling']
 					f.write("\nRound #%s. Parameters in Protomo units:\n" % (r))
-					apDisplay.printMsg("\nRound #%s. Parameters in Protomo units:\n" % (r))
+					apDisplay.printMsg("Round #%s. Parameters in Protomo units:\n" % (r))
 					for val in round5:
 						f.write("%s = %s\n" % (val,round5[val]))
 						apDisplay.printMsg("%s = %s" % (val,round5[val]))
 						series.setparam(val,round5[val])
 				else:
-					f.write("No Round parameters changed for Iteration #%s\n" % (start+n+1))
+					f.write("\nNo Round parameters changed for Iteration #%s\n" % (start+n+1))
 					apDisplay.printMsg("No Round parameters changed for Iteration #%s\n" % (start+n+1))
+					apDisplay.printMsg("Beginning Refinement Iteration #%s, Round #%s\n" % (start+n+1,r))
+					f.write('\nBeginning Refinement Iteration #%s, Round #%s\n' % (start+n+1,r))
 				
 				#change parameters depending on switches
 				toggle=0
@@ -1235,9 +1238,6 @@ class ProTomo2Aligner(basicScript.BasicScript):
 					f.write("No parameters were switched for Iteration #%s\n" % (start+n+1))
 					apDisplay.printMsg("No parameters were switched for Iteration #%s\n" % (start+n+1))
 				
-				
-				apDisplay.printMsg("Beginning Refinement Iteration #%s, Round #%s\n" % (start+n+1,r))
-				f.write('Beginning Refinement Iteration #%s, Round #%s\n' % (start+n+1,r))
 				
 				#Align and restart alignment if failed
 				retry=0
@@ -1381,7 +1381,3 @@ if __name__ == '__main__':
 	protomo2aligner = ProTomo2Aligner()
 	protomo2aligner.start()
 	protomo2aligner.close()
-	protomo2aligner_log=cwd+'/'+'protomo2aligner.log'
-	cleanup="mv %s %s/protomo2aligner_%s.log" % (protomo2aligner_log, rundir, time_start)
-	os.system(cleanup)
-
