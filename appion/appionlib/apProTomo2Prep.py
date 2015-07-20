@@ -103,7 +103,7 @@ def prepareTiltFile(sessionname, seriesname, tiltfilename, tiltseriesnumber, raw
 		origins = convertShiftsToOrigin(shifts, imagesizex, imagesizey)
 	
 		#determine azimuth
-		azimuth = apTomo.getAverageAzimuthFromSeries(ordered_imagelist)
+		#azimuth = apTomo.getAverageAzimuthFromSeries(ordered_imagelist)
 		writeTiltFile2(tiltfilename, seriesname, newfilenames, origins, tilts, azimuth, refimg)
 	
 	return maxtilt

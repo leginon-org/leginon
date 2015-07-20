@@ -131,13 +131,13 @@ def orderImageList(imagelist):
 	tiltangledict = {}
 	reftilts = []
 	for i,imagedata in enumerate(imagelist):
-		tilt = imagedata['scope']['stage position']['a']*180/3.14159
+		tilt = imagedata['scope']['stage position']['a']*180/math.pi
 
 		if tilt < start_tilt+0.02 and tilt > start_tilt-0.02:
 			if len(imagelist) >= 2:
 				qimage = leginon.leginondata.AcquisitionImageData()
 				nextimagedata = imagelist[i+1]
-				nexttilt = nextimagedata['scope']['stage position']['a']*180/3.14159
+				nexttilt = nextimagedata['scope']['stage position']['a']*180/math.pi
 				direction = (nexttilt - tilt)
 				# switch group in getCorrelationPeak not here
 				tilt = tilt+0.02*direction
@@ -400,11 +400,11 @@ def getAverageAzimuthFromSeries(imgtree):
 	
 	###Azimuth is determined from phi. In protomo tilt axis is measured from x where phi is from y
 	###Note there is a mirror between how Leginon reads images vs how protomo does
-	azimuth=90-((phi1+phi2)/2)
-	apDisplay.printMsg(("Azimuth is %f" % azimuth))
+	azimuth=-(90-((phi1+phi2)/2))   # Made negative because now images are y-flipped because Protomo
+	apDisplay.printMsg(("Azimuth is %f (relative to y-flipped images)" % azimuth))
 	return azimuth
 
-def	insertImodXcorr(rotation,filtersigma1,filterradius,filtersigma2):
+def insertImodXcorr(rotation,filtersigma1,filterradius,filtersigma2):
 	paramsq = appiondata.ApImodXcorrParamsData()
 	paramsq['RotationAngle'] = rotation
 	paramsq['FilterSigma1'] = filtersigma1

@@ -99,6 +99,7 @@ class Protomo2RefineSummary extends BasicLayoutForm
 		
 		$i = 0;
 		$j = -1;
+		$numcolumns=5;
 		$html .= '<table id="" class="display" cellspacing="0" border="1" align="center">';
 		$html .= "<tr>";
 		if (count($corrpeak_gif_files) > 0)
@@ -110,14 +111,14 @@ class Protomo2RefineSummary extends BasicLayoutForm
 					if ($ite <= count($corrpeak_gif_files) AND $ite > 0) {
 						$html .= '<th><a href="protomo2RefineIterationSummary.php?iter='.$ite.'&outdir='.$outdir.'&runname='.$runname.'&tiltseries='.$tiltseries.'" target="_blank">Iteration #'.$ite.'</a></th>';
 					}
-					if ($ite % 4 == 0 OR $ite < 1) {
+					if ($ite % $numcolumns == 0 OR $ite < 1) {
 						$html .= "</tr><tr>";
 						$j++;
 						break;
 					}
 					$i++;
 				}
-				$i = 0 + 4*$j;
+				$i = 0 + $numcolumns*$j;
 				foreach ($corrpeak_gif_files as $corr)
 				{
 					$ite=$i+1;
@@ -125,7 +126,7 @@ class Protomo2RefineSummary extends BasicLayoutForm
 						$corrpeak_gif = "loadimg.php?rawgif=1&filename=".$corrpeak_gif_files[$i];
 						$html .= '<td><center><a href="protomo2RefineIterationSummary.php?iter='.$ite.'&outdir='.$outdir.'&runname='.$runname.'&tiltseries='.$tiltseries.'" target="_blank"><img src="'.$corrpeak_gif.'"/></a></center></td>';
 					}
-					if ($ite % 4 == 0 OR $ite < 1) {
+					if ($ite % $numcolumns == 0 OR $ite < 1) {
 						$html .= "</tr><tr>";
 						$i++;
 						break;
@@ -143,14 +144,14 @@ class Protomo2RefineSummary extends BasicLayoutForm
 					if ($ite <= count($corrpeak_vid_files)/3 AND $ite > 0) {
 						$html .= '<th><a href="protomo2RefineIterationSummary.php?iter='.$ite.'&outdir='.$outdir.'&runname='.$runname.'&tiltseries='.$tiltseries.'" target="_blank">Iteration #'.$ite.'</a></th>';
 					}
-					if ($ite % 4 == 0 OR $ite < 1) {
+					if ($ite % $numcolumns == 0 OR $ite < 1) {
 						$html .= "</tr><tr>";
 						$j++;
 						break;
 					}
 					$i++;
 				}
-				$i = 0 + 4*$j;
+				$i = 0 + $numcolumns*$j;
 				foreach ($corrpeak_vid_files as $corr)
 				{
 					$ite=$i+1;
@@ -161,7 +162,7 @@ class Protomo2RefineSummary extends BasicLayoutForm
 							 <source src="'.$corrpeak_vid_mp4.'" type="video/mp4" loop>
 							 </video></a></center></td>';
 					}
-					if ($ite % 4 == 0 OR $ite < 1) {
+					if ($ite % $numcolumns == 0 OR $ite < 1) {
 						$html .= "</tr><tr>";
 						$i++;
 						break;

@@ -1164,6 +1164,7 @@ def makeAngleRefinementPlots(rundir, seriesname):
 			i+=1
 		
 		pylab.plot(iters, azimuths)
+		pylab.rcParams["axes.titlesize"] = 12
 		pylab.xlabel("Iteration")
 		pylab.ylabel("Azimuth (degrees)")
 		pylab.title("Tilt Azimuth Refinement")
@@ -1173,6 +1174,7 @@ def makeAngleRefinementPlots(rundir, seriesname):
 		pylab.clf()
 		
 		pylab.plot(iters, thetas)
+		pylab.rcParams["axes.titlesize"] = 12
 		pylab.xlabel("Iteration")
 		pylab.ylabel("Theta (degrees)")
 		pylab.title("Tilt Angle Refinement for Theta")
