@@ -165,7 +165,7 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 		$params->addParam( "highpass_apod_x", $hp_apod_x, "Highpass Apodization Filter (x)" );
 		$params->addParam( "highpass_apod_y", $hp_apod_y, "Highpass Apodization Filter (y)" );
 		$params->addParam( "corr_mode", $corr_mode, "Correlation Mode (xcf, mcf, pcf, dbl)" );
-		$params->addParam( "raw_path", $raw_path, "Raw Image Path" );
+		$params->addParam( "raw_path", $raw_path, "Alternate Raw Image Path" );
 		$params->addParam( "iters", $iters, "Alignment Iterations" );
 		$params->addParam( "param_file", $param, "External Param File" );
 		$params->addParam( "binning", $binning, "Raw Image Binning" );

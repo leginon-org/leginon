@@ -200,7 +200,7 @@ class Protomo2RefineForm extends BasicLayoutForm
 		$params->addParam( "r3_corr_mode", $r3_corr_mode, "R3" );
 		$params->addParam( "r4_corr_mode", $r4_corr_mode, "R4" );
 		$params->addParam( "r5_corr_mode", $r5_corr_mode, "R5 | Correlation Mode (xcf, mcf, pcf, dbl)" );
-		$params->addParam( "raw_path", $raw_path, "Raw Image Path" );
+		$params->addParam( "raw_path", $raw_path, "Alternate Raw Image Path" );
 		$params->addParam( "r1_iters", $r1_iters, "R1" );
 		$params->addParam( "r2_iters", $r2_iters, "R2" );
 		$params->addParam( "r3_iters", $r3_iters, "R3" );
