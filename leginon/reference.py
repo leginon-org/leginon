@@ -204,6 +204,7 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 class AlignZeroLossPeak(Reference):
 	settingsclass = leginondata.AlignZLPSettingsData
 	defaultsettings = {
+		'bypass': True,
 		'move type': 'stage position',
 		'pause time': 3.0,
 		'interval time': 900.0,
