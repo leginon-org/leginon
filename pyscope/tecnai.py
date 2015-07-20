@@ -330,19 +330,33 @@ class Tecnai(tem.TEM):
 		value = {'condenser': {'x': None, 'y': None},
 							'objective': {'x': None, 'y': None},
 							'diffraction': {'x': None, 'y': None}}
-		value['condenser']['x'] = \
-			float(self.tecnai.Illumination.CondenserStigmator.X)
-		value['condenser']['y'] = \
-			float(self.tecnai.Illumination.CondenserStigmator.Y)
-		value['objective']['x'] = \
-			float(self.tecnai.Projection.ObjectiveStigmator.X)
-		value['objective']['y'] = \
-			float(self.tecnai.Projection.ObjectiveStigmator.Y)
-		value['diffraction']['x'] = \
-			float(self.tecnai.Projection.DiffractionStigmator.X)
-		value['diffraction']['y'] = \
-			float(self.tecnai.Projection.DiffractionStigmator.Y)
+		try:
 
+			value['condenser']['x'] = \
+				float(self.tecnai.Illumination.CondenserStigmator.X)
+			value['condenser']['y'] = \
+				float(self.tecnai.Illumination.CondenserStigmator.Y)
+		except:
+			# use the default value None if values not float
+			pass
+		try:
+			value['objective']['x'] = \
+				float(self.tecnai.Projection.ObjectiveStigmator.X)
+			value['objective']['y'] = \
+				float(self.tecnai.Projection.ObjectiveStigmator.Y)
+		except:
+			# use the default value None if values not float
+			pass
+		try:
+			value['diffraction']['x'] = \
+				float(self.tecnai.Projection.DiffractionStigmator.X)
+			value['diffraction']['y'] = \
+				float(self.tecnai.Projection.DiffractionStigmator.Y)
+		except:
+			# use the default value None if values not float
+			# this is known to happen in newer version of std Scripting
+			# in imaging mode
+			pass
 		return value
 		
 	def setStigmator(self, stigs, relative = 'absolute'):
@@ -437,9 +451,12 @@ class Tecnai(tem.TEM):
 	
 	def getBeamShift(self):
 		value = {'x': None, 'y': None}
-		value['x'] = float(self.tom.Illumination.BeamShiftPhysical.X)
-		value['y'] = float(self.tom.Illumination.BeamShiftPhysical.Y)
-
+		try:
+			value['x'] = float(self.tom.Illumination.BeamShiftPhysical.X)
+			value['y'] = float(self.tom.Illumination.BeamShiftPhysical.Y)
+		except:
+			# return None if has exception
+			pass
 		return value
 
 	def setBeamShift(self, vector, relative = 'absolute'):
@@ -470,8 +487,12 @@ class Tecnai(tem.TEM):
 	
 	def getImageShift(self):
 		value = {'x': None, 'y': None}
-		value['x'] = float(self.tecnai.Projection.ImageBeamShift.X)
-		value['y'] = float(self.tecnai.Projection.ImageBeamShift.Y)
+		try:
+			value['x'] = float(self.tecnai.Projection.ImageBeamShift.X)
+			value['y'] = float(self.tecnai.Projection.ImageBeamShift.Y)
+		except:
+			# return None if has exception
+			pass
 		return value
 	
 	def setImageShift(self, vector, relative = 'absolute'):
@@ -683,11 +704,17 @@ class Tecnai(tem.TEM):
 		self.projection_submode_map[mag] = (name,mode_id)
 
 	def getStagePosition(self):
-		value = {}
-		value['x'] = float(self.tecnai.Stage.Position.X)
-		value['y'] = float(self.tecnai.Stage.Position.Y)
-		value['z'] = float(self.tecnai.Stage.Position.Z)
-		value['a'] = float(self.tecnai.Stage.Position.A)
+		value = {'x':None,'y':None,'z':None,'a':None,'b':None}
+		try:
+			value['x'] = float(self.tecnai.Stage.Position.X)
+			value['y'] = float(self.tecnai.Stage.Position.Y)
+			value['z'] = float(self.tecnai.Stage.Position.Z)
+		except:
+			pass
+		try:
+			value['a'] = float(self.tecnai.Stage.Position.A)
+		except:
+			pass
 		if use_nidaq:
 			value['b'] = nidaq.getBeta() * 3.14159 / 180.0
 		else:
