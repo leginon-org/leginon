@@ -683,14 +683,14 @@ class ProTomo2Aligner(basicScript.BasicScript):
 	#=====================
 	def angstromsToProtomo(self, coarse=False):
 		self.params['thickness'] = self.params['thickness']/self.params['pixelsize']
-		self.params['lowpass_diameter_x'] = self.params['pixelsize']*self.params['sampling']/self.params['lowpass_diameter_x']
-		self.params['lowpass_diameter_y'] = self.params['pixelsize']*self.params['sampling']/self.params['lowpass_diameter_y']
-		self.params['highpass_diameter_x'] = self.params['pixelsize']*self.params['sampling']/self.params['highpass_diameter_x']
-		self.params['highpass_diameter_y'] = self.params['pixelsize']*self.params['sampling']/self.params['highpass_diameter_y']
-		self.params['lowpass_apod_x'] = self.params['pixelsize']*self.params['sampling']/self.params['lowpass_apod_x']
-		self.params['lowpass_apod_y'] = self.params['pixelsize']*self.params['sampling']/self.params['lowpass_apod_y']
-		self.params['highpass_apod_x'] = self.params['pixelsize']*self.params['sampling']/self.params['highpass_apod_x']
-		self.params['highpass_apod_y'] = self.params['pixelsize']*self.params['sampling']/self.params['highpass_apod_y']
+		self.params['lowpass_diameter_x'] = 2*self.params['pixelsize']*self.params['sampling']/self.params['lowpass_diameter_x']
+		self.params['lowpass_diameter_y'] = 2*self.params['pixelsize']*self.params['sampling']/self.params['lowpass_diameter_y']
+		self.params['highpass_diameter_x'] = 2*self.params['pixelsize']*self.params['sampling']/self.params['highpass_diameter_x']
+		self.params['highpass_diameter_y'] = 2*self.params['pixelsize']*self.params['sampling']/self.params['highpass_diameter_y']
+		self.params['lowpass_apod_x'] = 2*self.params['pixelsize']*self.params['sampling']/self.params['lowpass_apod_x']
+		self.params['lowpass_apod_y'] = 2*self.params['pixelsize']*self.params['sampling']/self.params['lowpass_apod_y']
+		self.params['highpass_apod_x'] = 2*self.params['pixelsize']*self.params['sampling']/self.params['highpass_apod_x']
+		self.params['highpass_apod_y'] = 2*self.params['pixelsize']*self.params['sampling']/self.params['highpass_apod_y']
 		
 		#Set map_size_z (for reconstruction depictions) to be 2 times the thickness (thickness plus 50% on both sizes)
 		self.params['map_size_z']=int(2*self.params['thickness']/self.params['sampling'])
@@ -701,148 +701,148 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		r1_lp=r2_lp=r3_lp=r4_lp=r5_lp=0
 		if coarse == "False":
 			r1_lp=(self.params['r1_lowpass_diameter_x']+self.params['r1_lowpass_diameter_y'])/2
-			self.params['r1_lowpass_diameter_x'] = self.params['pixelsize']*self.params['r1_sampling']/self.params['r1_lowpass_diameter_x']
-			self.params['r1_lowpass_diameter_y'] = self.params['pixelsize']*self.params['r1_sampling']/self.params['r1_lowpass_diameter_y']
-			self.params['r1_highpass_diameter_x'] = self.params['pixelsize']*self.params['r1_sampling']/self.params['r1_highpass_diameter_x']
-			self.params['r1_highpass_diameter_y'] = self.params['pixelsize']*self.params['r1_sampling']/self.params['r1_highpass_diameter_y']
-			self.params['r1_lowpass_apod_x'] = self.params['pixelsize']*self.params['r1_sampling']/self.params['r1_lowpass_apod_x']
-			self.params['r1_lowpass_apod_y'] = self.params['pixelsize']*self.params['r1_sampling']/self.params['r1_lowpass_apod_y']
-			self.params['r1_highpass_apod_x'] = self.params['pixelsize']*self.params['r1_sampling']/self.params['r1_highpass_apod_x']
-			self.params['r1_highpass_apod_y'] = self.params['pixelsize']*self.params['r1_sampling']/self.params['r1_highpass_apod_y']
+			self.params['r1_lowpass_diameter_x'] = 2*self.params['pixelsize']*self.params['r1_sampling']/self.params['r1_lowpass_diameter_x']
+			self.params['r1_lowpass_diameter_y'] = 2*self.params['pixelsize']*self.params['r1_sampling']/self.params['r1_lowpass_diameter_y']
+			self.params['r1_highpass_diameter_x'] = 2*self.params['pixelsize']*self.params['r1_sampling']/self.params['r1_highpass_diameter_x']
+			self.params['r1_highpass_diameter_y'] = 2*self.params['pixelsize']*self.params['r1_sampling']/self.params['r1_highpass_diameter_y']
+			self.params['r1_lowpass_apod_x'] = 2*self.params['pixelsize']*self.params['r1_sampling']/self.params['r1_lowpass_apod_x']
+			self.params['r1_lowpass_apod_y'] = 2*self.params['pixelsize']*self.params['r1_sampling']/self.params['r1_lowpass_apod_y']
+			self.params['r1_highpass_apod_x'] = 2*self.params['pixelsize']*self.params['r1_sampling']/self.params['r1_highpass_apod_x']
+			self.params['r1_highpass_apod_y'] = 2*self.params['pixelsize']*self.params['r1_sampling']/self.params['r1_highpass_apod_y']
 			r1_body=(self.params['thickness']/self.params['r1_sampling'])/self.params['cos_alpha']
 			try:
 				r2_lp=(self.params['r2_lowpass_diameter_x']+self.params['r2_lowpass_diameter_y'])/2
-				self.params['r2_lowpass_diameter_x'] = self.params['pixelsize']*self.params['r2_sampling']/self.params['r2_lowpass_diameter_x']
+				self.params['r2_lowpass_diameter_x'] = 2*self.params['pixelsize']*self.params['r2_sampling']/self.params['r2_lowpass_diameter_x']
 			except:
 				pass
 			try:
-				self.params['r2_lowpass_diameter_y'] = self.params['pixelsize']*self.params['r2_sampling']/self.params['r2_lowpass_diameter_y']
+				self.params['r2_lowpass_diameter_y'] = 2*self.params['pixelsize']*self.params['r2_sampling']/self.params['r2_lowpass_diameter_y']
 			except:
 				pass
 			try:
-				self.params['r2_highpass_diameter_x'] = self.params['pixelsize']*self.params['r2_sampling']/self.params['r2_highpass_diameter_x']
+				self.params['r2_highpass_diameter_x'] = 2*self.params['pixelsize']*self.params['r2_sampling']/self.params['r2_highpass_diameter_x']
 			except:
 				pass
 			try:
-				self.params['r2_highpass_diameter_y'] = self.params['pixelsize']*self.params['r2_sampling']/self.params['r2_highpass_diameter_y']
+				self.params['r2_highpass_diameter_y'] = 2*self.params['pixelsize']*self.params['r2_sampling']/self.params['r2_highpass_diameter_y']
 			except:
 				pass
 			try:
-				self.params['r2_lowpass_apod_x'] = self.params['pixelsize']*self.params['r2_sampling']/self.params['r2_lowpass_apod_x']
+				self.params['r2_lowpass_apod_x'] = 2*self.params['pixelsize']*self.params['r2_sampling']/self.params['r2_lowpass_apod_x']
 			except:
 				pass
 			try:
-				self.params['r2_lowpass_apod_y'] = self.params['pixelsize']*self.params['r2_sampling']/self.params['r2_lowpass_apod_y']
+				self.params['r2_lowpass_apod_y'] = 2*self.params['pixelsize']*self.params['r2_sampling']/self.params['r2_lowpass_apod_y']
 			except:
 				pass
 			try:
-				self.params['r2_highpass_apod_x'] = self.params['pixelsize']*self.params['r2_sampling']/self.params['r2_highpass_apod_x']
+				self.params['r2_highpass_apod_x'] = 2*self.params['pixelsize']*self.params['r2_sampling']/self.params['r2_highpass_apod_x']
 			except:
 				pass
 			try:
-				self.params['r2_highpass_apod_y'] = self.params['pixelsize']*self.params['r2_sampling']/self.params['r2_highpass_apod_y']
+				self.params['r2_highpass_apod_y'] = 2*self.params['pixelsize']*self.params['r2_sampling']/self.params['r2_highpass_apod_y']
 				r2_body=(self.params['thickness']/self.params['r2_sampling'])/self.params['cos_alpha']
 			except:
 				pass
 			try:
 				r3_lp=(self.params['r3_lowpass_diameter_x']+self.params['r3_lowpass_diameter_y'])/2
-				self.params['r3_lowpass_diameter_x'] = self.params['pixelsize']*self.params['r3_sampling']/self.params['r3_lowpass_diameter_x']
+				self.params['r3_lowpass_diameter_x'] = 2*self.params['pixelsize']*self.params['r3_sampling']/self.params['r3_lowpass_diameter_x']
 			except:
 				pass
 			try:
-				self.params['r3_lowpass_diameter_y'] = self.params['pixelsize']*self.params['r3_sampling']/self.params['r3_lowpass_diameter_y']
+				self.params['r3_lowpass_diameter_y'] = 2*self.params['pixelsize']*self.params['r3_sampling']/self.params['r3_lowpass_diameter_y']
 			except:
 				pass
 			try:
-				self.params['r3_highpass_diameter_x'] = self.params['pixelsize']*self.params['r3_sampling']/self.params['r3_highpass_diameter_x']
+				self.params['r3_highpass_diameter_x'] = 2*self.params['pixelsize']*self.params['r3_sampling']/self.params['r3_highpass_diameter_x']
 			except:
 				pass
 			try:
-				self.params['r3_highpass_diameter_y'] = self.params['pixelsize']*self.params['r3_sampling']/self.params['r3_highpass_diameter_y']
+				self.params['r3_highpass_diameter_y'] = 2*self.params['pixelsize']*self.params['r3_sampling']/self.params['r3_highpass_diameter_y']
 			except:
 				pass
 			try:
-				self.params['r3_lowpass_apod_x'] = self.params['pixelsize']*self.params['r3_sampling']/self.params['r3_lowpass_apod_x']
+				self.params['r3_lowpass_apod_x'] = 2*self.params['pixelsize']*self.params['r3_sampling']/self.params['r3_lowpass_apod_x']
 			except:
 				pass
 			try:
-				self.params['r3_lowpass_apod_y'] = self.params['pixelsize']*self.params['r3_sampling']/self.params['r3_lowpass_apod_y']
+				self.params['r3_lowpass_apod_y'] = 2*self.params['pixelsize']*self.params['r3_sampling']/self.params['r3_lowpass_apod_y']
 			except:
 				pass
 			try:
-				self.params['r3_highpass_apod_x'] = self.params['pixelsize']*self.params['r3_sampling']/self.params['r3_highpass_apod_x']
+				self.params['r3_highpass_apod_x'] = 2*self.params['pixelsize']*self.params['r3_sampling']/self.params['r3_highpass_apod_x']
 			except:
 				pass
 			try:
-				self.params['r3_highpass_apod_y'] = self.params['pixelsize']*self.params['r3_sampling']/self.params['r3_highpass_apod_y']
+				self.params['r3_highpass_apod_y'] = 2*self.params['pixelsize']*self.params['r3_sampling']/self.params['r3_highpass_apod_y']
 				r3_body=(self.params['thickness']/self.params['r3_sampling'])/self.params['cos_alpha']
 			except:
 				pass
 			try:
 				r4_lp=(self.params['r4_lowpass_diameter_x']+self.params['r4_lowpass_diameter_y'])/2
-				self.params['r4_lowpass_diameter_x'] = self.params['pixelsize']*self.params['r4_sampling']/self.params['r4_lowpass_diameter_x']
+				self.params['r4_lowpass_diameter_x'] = 2*self.params['pixelsize']*self.params['r4_sampling']/self.params['r4_lowpass_diameter_x']
 			except:
 				pass
 			try:
-				self.params['r4_lowpass_diameter_y'] = self.params['pixelsize']*self.params['r4_sampling']/self.params['r4_lowpass_diameter_y']
+				self.params['r4_lowpass_diameter_y'] = 2*self.params['pixelsize']*self.params['r4_sampling']/self.params['r4_lowpass_diameter_y']
 			except:
 				pass
 			try:
-				self.params['r4_highpass_diameter_x'] = self.params['pixelsize']*self.params['r4_sampling']/self.params['r4_highpass_diameter_x']
+				self.params['r4_highpass_diameter_x'] = 2*self.params['pixelsize']*self.params['r4_sampling']/self.params['r4_highpass_diameter_x']
 			except:
 				pass
 			try:
-				self.params['r4_highpass_diameter_y'] = self.params['pixelsize']*self.params['r4_sampling']/self.params['r4_highpass_diameter_y']
+				self.params['r4_highpass_diameter_y'] = 2*self.params['pixelsize']*self.params['r4_sampling']/self.params['r4_highpass_diameter_y']
 			except:
 				pass
 			try:
-				self.params['r4_lowpass_apod_x'] = self.params['pixelsize']*self.params['r4_sampling']/self.params['r4_lowpass_apod_x']
+				self.params['r4_lowpass_apod_x'] = 2*self.params['pixelsize']*self.params['r4_sampling']/self.params['r4_lowpass_apod_x']
 			except:
 				pass
 			try:
-				self.params['r4_lowpass_apod_y'] = self.params['pixelsize']*self.params['r4_sampling']/self.params['r4_lowpass_apod_y']
+				self.params['r4_lowpass_apod_y'] = 2*self.params['pixelsize']*self.params['r4_sampling']/self.params['r4_lowpass_apod_y']
 			except:
 				pass
 			try:
-				self.params['r4_highpass_apod_x'] = self.params['pixelsize']*self.params['r4_sampling']/self.params['r4_highpass_apod_x']
+				self.params['r4_highpass_apod_x'] = 2*self.params['pixelsize']*self.params['r4_sampling']/self.params['r4_highpass_apod_x']
 			except:
 				pass
 			try:
-				self.params['r4_highpass_apod_y'] = self.params['pixelsize']*self.params['r4_sampling']/self.params['r4_highpass_apod_y']
+				self.params['r4_highpass_apod_y'] = 2*self.params['pixelsize']*self.params['r4_sampling']/self.params['r4_highpass_apod_y']
 				r4_body=(self.params['thickness']/self.params['r4_sampling'])/self.params['cos_alpha']
 			except:
 				pass
 			try:
 				r5_lp=(self.params['r5_lowpass_diameter_x']+self.params['r5_lowpass_diameter_y'])/2
-				self.params['r5_lowpass_diameter_x'] = self.params['pixelsize']*self.params['r5_sampling']/self.params['r5_lowpass_diameter_x']
+				self.params['r5_lowpass_diameter_x'] = 2*self.params['pixelsize']*self.params['r5_sampling']/self.params['r5_lowpass_diameter_x']
 			except:
 				pass
 			try:
-				self.params['r5_lowpass_diameter_y'] = self.params['pixelsize']*self.params['r5_sampling']/self.params['r5_lowpass_diameter_y']
+				self.params['r5_lowpass_diameter_y'] = 2*self.params['pixelsize']*self.params['r5_sampling']/self.params['r5_lowpass_diameter_y']
 			except:
 				pass
 			try:
-				self.params['r5_highpass_diameter_x'] = self.params['pixelsize']*self.params['r5_sampling']/self.params['r5_highpass_diameter_x']
+				self.params['r5_highpass_diameter_x'] = 2*self.params['pixelsize']*self.params['r5_sampling']/self.params['r5_highpass_diameter_x']
 			except:
 				pass
 			try:
-				self.params['r5_highpass_diameter_y'] = self.params['pixelsize']*self.params['r5_sampling']/self.params['r5_highpass_diameter_y']
+				self.params['r5_highpass_diameter_y'] = 2*self.params['pixelsize']*self.params['r5_sampling']/self.params['r5_highpass_diameter_y']
 			except:
 				pass
 			try:
-				self.params['r5_lowpass_apod_x'] = self.params['pixelsize']*self.params['r5_sampling']/self.params['r5_lowpass_apod_x']
+				self.params['r5_lowpass_apod_x'] = 2*self.params['pixelsize']*self.params['r5_sampling']/self.params['r5_lowpass_apod_x']
 			except:
 				pass
 			try:
-				self.params['r5_lowpass_apod_y'] = self.params['pixelsize']*self.params['r5_sampling']/self.params['r5_lowpass_apod_y']
+				self.params['r5_lowpass_apod_y'] = 2*self.params['pixelsize']*self.params['r5_sampling']/self.params['r5_lowpass_apod_y']
 			except:
 				pass
 			try:
-				self.params['r5_highpass_apod_x'] = self.params['pixelsize']*self.params['r5_sampling']/self.params['r5_highpass_apod_x']
+				self.params['r5_highpass_apod_x'] = 2*self.params['pixelsize']*self.params['r5_sampling']/self.params['r5_highpass_apod_x']
 			except:
 				pass
 			try:
-				self.params['r5_highpass_apod_y'] = self.params['pixelsize']*self.params['r5_sampling']/self.params['r5_highpass_apod_y']
+				self.params['r5_highpass_apod_y'] = 2*self.params['pixelsize']*self.params['r5_sampling']/self.params['r5_highpass_apod_y']
 				r5_body=(self.params['thickness']/self.params['r5_sampling'])/self.params['cos_alpha']
 			except:
 				pass

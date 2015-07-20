@@ -47,14 +47,14 @@ class Protomo2RefineForm extends BasicLayoutForm
 		$_POST['outdir']=$_SESSION['outdir'];
 		$r1_region_x = $r2_region_x = $r3_region_x = $r4_region_x = $imageinfo['dimx']*0.5;
 		$r1_region_y = $r2_region_y = $r3_region_y = $r4_region_y = $imageinfo['dimy']*0.5;
-		$r1_lp_diam_x = round(pow(10,10)*$imageinfo['pixelsize']*30);
-		$r2_lp_diam_x = round(pow(10,10)*$imageinfo['pixelsize']*25);
-		$r3_lp_diam_x = round(pow(10,10)*$imageinfo['pixelsize']*20);
-		$r4_lp_diam_x = round(pow(10,10)*$imageinfo['pixelsize']*15);
-		$r1_lp_diam_y = round(pow(10,10)*$imageinfo['pixelsize']*30);
-		$r2_lp_diam_y = round(pow(10,10)*$imageinfo['pixelsize']*25);
-		$r3_lp_diam_y = round(pow(10,10)*$imageinfo['pixelsize']*20);
-		$r4_lp_diam_y = round(pow(10,10)*$imageinfo['pixelsize']*15);
+		$r1_lp_diam_x = round(pow(10,10)*$imageinfo['pixelsize']*60);
+		$r2_lp_diam_x = round(pow(10,10)*$imageinfo['pixelsize']*50);
+		$r3_lp_diam_x = round(pow(10,10)*$imageinfo['pixelsize']*40);
+		$r4_lp_diam_x = round(pow(10,10)*$imageinfo['pixelsize']*30);
+		$r1_lp_diam_y = round(pow(10,10)*$imageinfo['pixelsize']*60);
+		$r2_lp_diam_y = round(pow(10,10)*$imageinfo['pixelsize']*50);
+		$r3_lp_diam_y = round(pow(10,10)*$imageinfo['pixelsize']*40);
+		$r4_lp_diam_y = round(pow(10,10)*$imageinfo['pixelsize']*30);
 		$r1_hp_diam_x = $r2_hp_diam_x = $r3_hp_diam_x = $r4_hp_diam_x = round(($imageinfo['dimx']+$imageinfo['dimy'])/(2*8));
 		$r1_hp_diam_y = $r2_hp_diam_y = $r3_hp_diam_y = $r4_hp_diam_y = round(($imageinfo['dimx']+$imageinfo['dimy'])/(2*8));
 		$r1_lp_apod_x = round(2.5*$r1_lp_diam_x);
@@ -302,9 +302,12 @@ class Protomo2RefineForm extends BasicLayoutForm
 			rm ".$_SESSION['outdir']."/".$_SESSION['runname']."/media/corrplots/series".sprintf('%04d',$_SESSION['tiltseries'])."*<br>
 			rm ".$_SESSION['outdir']."/".$_SESSION['runname']."/media/tiltseries/series".sprintf('%04d',$_SESSION['tiltseries'])."*<br>
 			rm ".$_SESSION['outdir']."/".$_SESSION['runname']."/media/quality_assessment/series".sprintf('%04d',$_SESSION['tiltseries'])."*<br>
+			rm ".$_SESSION['outdir']."/".$_SESSION['runname']."/media/angle_refinement/series".sprintf('%04d',$_SESSION['tiltseries'])."*<br>
 			rm ".$_SESSION['outdir']."/".$_SESSION['runname']."/cache/series".sprintf('%04d',$_SESSION['tiltseries'])."*<br>
 			rm ".$_SESSION['outdir']."/".$_SESSION['runname']."/out/series".sprintf('%04d',$_SESSION['tiltseries'])."*<br>
 			rm ".$_SESSION['outdir']."/".$_SESSION['runname']."/series".sprintf('%04d',$_SESSION['tiltseries']).".i3t<br>
+			rm ".$_SESSION['outdir']."/".$_SESSION['runname']."/series".sprintf('%04d',$_SESSION['tiltseries']).".param<br>
+			rm ".$_SESSION['outdir']."/".$_SESSION['runname']."/series".sprintf('%04d',$_SESSION['tiltseries'])."[0,1,2,3,4,5,6,7,8,9]*<br>
 			rm ".$_SESSION['outdir']."/".$_SESSION['runname']."/best.*<br>
 			rm ".$_SESSION['outdir']."/".$_SESSION['runname']."/worst.*<br></code></center>";
 			

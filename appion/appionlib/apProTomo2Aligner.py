@@ -656,7 +656,7 @@ def makeQualityAssessmentImage(tiltseriesnumber, sessionname, seriesname, rundir
 		pylab.gca().set_ylim(ymin=0.0)
 		pylab.grid(True)
 		pylab.minorticks_on()
-		pylab.savefig(figqa_full)
+		pylab.savefig(figqa_full, bbox_inches='tight')
 		pylab.clf()
 		
 		#rename png to be a gif so that Appion will display it properly (this is a ridiculous redux workaround to display images with white backgrounds by changing png filename extensions to gif and then using loadimg.php?rawgif=1 to load them, but oh well)

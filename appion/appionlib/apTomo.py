@@ -11,7 +11,11 @@ try:
 except:
 	no_wx = True
 import leginon.leginondata
-from pyami import arraystats, mrc, imagefun, numpil,correlator, peakfinder
+from pyami import arraystats, mrc, imagefun, correlator, peakfinder
+try:
+	from pyami import numpil
+except:
+	pass
 from appionlib import appiondata
 try:
 	import node
