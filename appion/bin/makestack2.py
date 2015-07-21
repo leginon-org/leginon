@@ -84,7 +84,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 		self.stats['lastpeaks'] = len(self.boxedpartdatas)
 
 		apDisplay.printMsg("do not break function now otherwise it will corrupt run")
-		time.sleep(1.0)
+		#time.sleep(1.0)
 
 		### merge image particles into big stack
 		totalpart = self.mergeImageStackIntoBigStack(self.imgstackfile, imgdata)
@@ -222,7 +222,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 		if len(partdatas) == 0 or len(parttree) == 0:
 			apDisplay.printColor(self.shortname+" has no remaining particles and has been rejected\n","cyan")
 			return None, None, None
-		
+
 		### set up output file path
 		imgstackfile = os.path.join(self.params['rundir'], self.shortname+".hed")
 
@@ -298,7 +298,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 		for i in range(len(boxedpartdatas)):
 			partdata = boxedpartdatas[i]
 			partarray = imagicdata['images'][i]
-			
+
 			### if particle stdev == 0, then it is all constant, i.e., a bad particle
 			stdev = float(partarray.std())
 			if stdev < 1.0e-6:
@@ -618,8 +618,8 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 			else:
 				apDisplay.printWarning("|def1| > |def2|, flipping defocus axes")
 				df1 = abs(bestctfvalue['defocus2'])
-				df2 = abs(bestctfvalue['defocus1'])		
-				angast = bestctfvalue['angle_astigmatism'] + 90			
+				df2 = abs(bestctfvalue['defocus1'])
+				angast = bestctfvalue['angle_astigmatism'] + 90
 			amp = bestctfvalue['amplitude_contrast']
 			kv = imgdata['scope']['high tension']/1000
 			cs = self.getCS(bestctfvalue)/1000
@@ -676,7 +676,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 		ace2proc.wait()
 		if self.stats['count'] <= 1:
 			### ace2 always crashes on first image??? .fft_wisdom file??
-			time.sleep(1)
+			time.sleep(0.1)
 			if self.params['verbose'] is True:
 				ace2proc = subprocess.Popen(ace2cmd, shell=True)
 			else:
@@ -710,7 +710,6 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 		imgname = imgdata['filename']
 		spi_imgpath = os.path.join(self.params['rundir'], self.shortname+".spi")
 
-		
 		df1 = abs(bestctfvalue['defocus1'])
 		df2 = abs(bestctfvalue['defocus2'])
 		defocus = (df1+df2)/2*1.0e6
@@ -722,7 +721,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 		# find cs
 		cs = self.getCS(bestctfvalue)
 
-		# convert image to spider
+		# convert image to spider ###proc2d
 		emancmd="proc2d %s %s spidersingle"%(inimgpath,spi_imgpath)
 		apEMAN.executeEmanCmd(emancmd, showcmd=True)
 		apDisplay.printMsg("phaseflipping entire micrograph with defocus "+str(round(defocus,3))+" microns")
@@ -730,7 +729,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 		defocus *= 10000 
 		outimgpath = filters.phaseFlipImage(spi_imgpath,cs,defocus,voltage,imgsize,apix)
 
-		# convert image back to mrc
+		# convert image back to mrc ###proc2d
 		mrcname = os.path.join(self.params['rundir'], self.shortname+".mrc.corrected.mrc")
 		emancmd="proc2d %s %s"%(outimgpath,mrcname)
 		apEMAN.executeEmanCmd(emancmd, showcmd=True)
@@ -738,17 +737,17 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 		os.remove(spi_imgpath)
 
 		return mrcname
-		
 
-############################################################
-## General functions
-############################################################
+	############################################################
+	## General functions
+	############################################################
 	#=======================
 	def mergeImageStackIntoBigStack(self, imgstackfile, imgdata):
 		# if applying a boxmask, write to a temporary file before adding to main stack
 		bigimgstack = os.path.join(self.params['rundir'], self.params['single'])
 		if self.params['boxmask'] is not None:
 			bigimgstack = os.path.splitext(imgstackfile)[0]+"-premask.hed"
+		### here is the craziness
 		emancmd="proc2d %s %s" %(imgstackfile, bigimgstack)
 		### normalization
 		if self.params['normalized'] is True:
@@ -828,7 +827,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 			if p.lower() in self.params:
 				stparamq[p] = self.params[p.lower()]
 			elif p=='aceCutoff' and self.params['ctfcutoff']:
-				stparamq[p] = self.params['ctfcutoff']	
+				stparamq[p] = self.params['ctfcutoff']
 			else:
 				apDisplay.printMsg("missing "+p.lower())
 		if self.params['phaseflipped'] is True:
@@ -976,8 +975,8 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 			action="store_true", help="create a spider stack")
 		self.parser.add_option("--forceInsert", dest="forceInsert", default=True,
 			action="store_true", help="insert new entries without checking if corresponding data already exists")
-		self.parser.add_option("--no-forceInsert", dest="forceInsert", action="store_false",  
-							help="check for duplicates before inserting new particles")
+		self.parser.add_option("--no-forceInsert", dest="forceInsert", action="store_false",
+			help="check for duplicates before inserting new particles")
 		self.parser.add_option("--normalized", dest="normalized", default=False,
 			action="store_true", help="normalize the entire stack")
 		self.parser.add_option("--xmipp-norm-before", dest="xmipp-norm-before", default=False,
@@ -1133,7 +1132,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 			if self.params['usexmipp'] is False:
 				return
 			### convert stack into single spider files
-			selfile = apXmipp.breakupStackIntoSingleFiles(stackpath)	
+			selfile = apXmipp.breakupStackIntoSingleFiles(stackpath)
 
 			### setup Xmipp command
 			apDisplay.printMsg("Using Xmipp to normalize particle stack")
@@ -1160,7 +1159,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 			### clean up directory
 			apFile.removeFile(selfile)
 			apFile.removeDir("partfiles")
-			
+
 	#=======================
 	def printTimeStats(self, name, timelist):
 		if len(timelist) < 2:
@@ -1199,7 +1198,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 				stpartdata = stpartq.query(results=1)
 				if stpartdata:
 					apDisplay.printError("trying to insert a duplicate particle")
-	
+
 			stpartq['particle'] = partdata
 			stpartq['mean'] = round(partmeandict['mean'],8)
 			stpartq['stdev'] = round(partmeandict['stdev'],8)
@@ -1211,11 +1210,11 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 			stpartq['edgestdev'] = round(partmeandict['edgestdev'],4)
 			stpartq['centermean'] = round(partmeandict['centermean'],4)
 			stpartq['centerstdev'] = round(partmeandict['centerstdev'],4)
-			
+
 			if self.params['commit'] is True:
 				stpartq.insert(force=self.params['forceInsert'])
 		#self.insertdbtimes.append(time.time()-t0)
-		
+
 	#=======================
 	def loopCleanUp(self,imgdata):
 		super(Makestack2Loop,self).loopCleanUp(imgdata)
@@ -1226,6 +1225,3 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 if __name__ == '__main__':
 	makeStack = Makestack2Loop()
 	makeStack.run()
-
-
-
