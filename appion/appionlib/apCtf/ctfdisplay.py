@@ -629,7 +629,7 @@ class CtfDisplay(object):
 
 	#====================
 	#====================
-	def drawPowerSpecImage(self, origpowerspec, maxsize=1200, outerresolution=7.7):
+	def drawPowerSpecImage(self, origpowerspec, maxsize=1200, outerresolution=5.0):
 
 		### would be nice to have a more intelligent way to set 'outerresolution'
 		###   based on defocus and measured CTF resolution
@@ -932,7 +932,7 @@ class CtfDisplay(object):
 
 	#====================
 	#====================
-	def CTFpowerspec(self, imgdata, ctfdata, fftpath=None, fftfreq=None, outerbound=5e-10, twod=True):
+	def CTFpowerspec(self, imgdata, ctfdata, fftpath=None, fftfreq=None, outerbound=3e-10, twod=True):
 		"""
 		Make a nice looking powerspectra with lines for location of Thon rings
 
