@@ -4,7 +4,7 @@ USE_PLA = True
 # true if the scope has an energy filter
 ENERGY_FILTER = False
 #relax beam if switch above none-zero magnification if needed
-RELAX_BEAM_MAG = 0
+CL3_RELAXATION_MAG = 0
 #disable control of auto apertures if not working or not available
 USE_AUTO_APT = False
 #lower range of mag1 with different neutral and deflector values
