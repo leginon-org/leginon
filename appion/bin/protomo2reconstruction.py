@@ -150,8 +150,10 @@ class ProTomo2Reconstruction(basicScript.BasicScript):
 			#Remove lowpass filter from param
 			cmd2="sed -i \"%ss/.*//\" %s;" % (lowpassmapline, param_out_full)
 			cmd2+="sed -i \"%ss/.*//\" %s;" % (lowpassmapline+1, param_out_full)
-			cmd2+="sed -i \"%ss/.*//\" %s" % (lowpassmapline+2, param_out_full)
+			cmd2+="sed -i \"%ss/.*//\" %s;" % (lowpassmapline+2, param_out_full)
+			cmd2+="sed -i \"%ss/.*//\" %s" % (lowpassmapline+3, param_out_full)
 			
+			#Set preprocessing to false
 			cmd3="grep -n 'AP enable or disable preprocessing of raw images' %s | awk '{print $1}' | sed 's/://'" % (param_out_full)
 			proc=subprocess.Popen(cmd3, stdout=subprocess.PIPE, shell=True)
 			(preprocessingline, err) = proc.communicate()
@@ -160,8 +162,8 @@ class ProTomo2Reconstruction(basicScript.BasicScript):
 			cmd33="sed -i \'%ss|.*| preprocessing: false  (* AP enable or disable preprocessing of raw images *)|\' %s" % (preprocessingline, param_out_full)
 			os.system(cmd33)
 		else:
-			self.params['recon_lp_diam_x'] = 2*self.params['pixelsize']/self.params['recon_lp_diam_x']
-			self.params['recon_lp_diam_y'] = 2*self.params['pixelsize']/self.params['recon_lp_diam_y']
+			self.params['recon_lp_diam_x'] = 2*self.params['pixelsize']*self.params['recon_map_sampling']/self.params['recon_lp_diam_x']
+			self.params['recon_lp_diam_y'] = 2*self.params['pixelsize']*self.params['recon_map_sampling']/self.params['recon_lp_diam_y']
 			cmd2="sed -i \"%ss/.*/     diameter:    { %s, %s } * S/\" %s" % (lowpassmapline+1, self.params['recon_lp_diam_x'], self.params['recon_lp_diam_y'], param_out_full)
 		os.system(cmd2)
 		

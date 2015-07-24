@@ -62,17 +62,17 @@ tiltseries {
 
    mask {
      apodization: { AP_mask_apod_x, AP_mask_apod_y }
-     width: { AP_mask_width_x, AP_mask_width_y }
+     width: { AP_mask_width_x, AP_mask_width_y }  (* If working on your own, consider using N - 2.5 * apodization *)
    }
 
    lowpass {
-     diameter:    { AP_lp_diam_x, AP_lp_diam_y } (* AP lowpass diameter *)
-     apodization: { AP_lp_apod_x, AP_lp_apod_y } (* AP lowpass apodization *)
+     diameter:    { AP_lp_diam_x, AP_lp_diam_y } (* AP lowpass diameter *)  (* If working on your own, consider using { lp_diam_x, lp_diam_y } * S *)
+     apodization: { AP_lp_apod_x, AP_lp_apod_y } (* AP lowpass apodization *)  (* If working on your own, consider using { lp_apod_x, lp_apod_y } * S *)
    }
 
    highpass {
-     diameter:    { AP_hp_diam_x, AP_hp_diam_y } (* AP highpass diameter *)
-     apodization: { AP_hp_apod_x, AP_hp_apod_y } (* AP highpass apodization *)
+     diameter:    { AP_hp_diam_x, AP_hp_diam_y } (* AP highpass diameter *)  (* If working on your own, consider using { lp_diam_x, lp_diam_y } * S *)
+     apodization: { AP_hp_apod_x, AP_hp_apod_y } (* AP highpass apodization *)  (* If working on your own, consider using { hp_apod_x, hp_apod_y } * S *)
    }
 
  }
@@ -101,7 +101,7 @@ tiltseries {
    exclude: "AP_exclude_images"  (* AP exclude specific images from the tilt series *)
    mask {
      apodization: { AP_mask_apod_x, AP_mask_apod_y }
-     width: { AP_mask_width_x, AP_mask_width_y }
+     width: { AP_mask_width_x, AP_mask_width_y }  (* If working on your own, consider using N - 2.5 * apodization *)
    }
 
    correlation {
@@ -141,7 +141,7 @@ tiltseries {
    
    exclude: "AP_exclude_images"  (* AP exclude specific images from the tilt series reconstruction *)
    lowpass {  (* AP lowpass map *)
-     diameter:    { AP_lp_diam_x, AP_lp_diam_y }
+     diameter:    { AP_lp_diam_x, AP_lp_diam_y }  (* If working on your own, consider using { lp_diam_x, lp_diam_y } * S *)
    }
 
    logging: false  (* AP enable diagnostic terminal output *)

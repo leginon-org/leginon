@@ -324,11 +324,30 @@ def nextLargestSize(limit):
 	'''
 	This returns the next largest integer that is divisible by 2, 3, 5, or 7, for FFT purposes.
 	'''
-	l=[]
-	for i in range(2,limit):
-		if (i % 2 == 0 and ((i % 3 == 0 and i % 5 == 0 or i % 7 == 0) or (i % 3 == 0 or i % 5 == 0 and i % 7 == 0) or (i % 5 == 0 or i % 3 == 0 and i % 7 == 0))):
-			l.append(i)
-	return l[-1]
+	def lowestRoots(n,factor):
+		r=n%factor
+		p=n//factor
+		while r==0 and p > factor:
+			r=p%factor
+			p=p//factor
+		if p==factor and r==0:
+			return p
+		else:
+			return p*factor+r
+	
+	primes=[2,3,5,7]
+	good=[]
+	for n in range(0,limit,2):
+		lowest=lowestRoots(n,primes[0])
+		if lowest==primes[0]:
+			good.append(n)
+		else:
+			for p in primes[1:]:
+				lowest=lowestRoots(lowest,p)
+				if lowest==p:
+					good.append(n)
+					break
+	return good[-1]
 
 
 def removeHighlyShiftedImages(tiltfile, dimx, dimy, shift_limit, angle_limit):
@@ -467,6 +486,73 @@ def fixImages(rawpath):
 		mrc.write(f,image)
 	
 	
+def removeForRestart(restart_iteration, name, rundir):
+	# Remove cache files
+	os.system("rm %s/cache/%s* 2>/dev/null" % (rundir, name))
+	
+	# Remove tlt files
+	tlt_list=glob.glob("%s/%s*.tlt" % (rundir, name))
+	if len(tlt_list) != 0:
+		tlt_list.sort()
+		tlt_list.append('dummy') #because Python lists as ranges end one before the end.
+		for tlt in tlt_list[restart_iteration:-1]:
+			os.system('rm %s 2>/dev/null' % tlt)
+	
+	# Remove corr files
+	corr_list=glob.glob("%s/%s*.corr" % (rundir, name))
+	if len(corr_list) != 0:
+		corr_list.sort()
+		corr_list.append('dummy')
+		for corr in corr_list[restart_iteration:-1]:
+			os.system('rm %s 2>/dev/null' % corr)
+	
+	# Remove out dir files
+	cor_list=glob.glob("%s/out/%s*_cor*.mrc" % (rundir, name))
+	if len(cor_list) != 0:
+		cor_list.sort()
+		cor_list.append('dummy')
+		for cor in cor_list[restart_iteration:-1]:
+			os.system('rm %s 2>/dev/null' % cor)
+	bck_list=glob.glob("%s/out/%s*_bck*.mrc" % (rundir, name))
+	if len(bck_list) != 0:
+		bck_list.sort()
+		bck_list.append('dummy')
+		for bck in bck_list[restart_iteration:-1]:
+			os.system('rm %s 2>/dev/null' % bck)
+	
+	# Remove media
+	os.system('rm %s/media/quality_assessment/%s* 2>/dev/null' % (rundir, name))
+	os.system('rm %s/media/angle_refinement/%s* 2>/dev/null' % (rundir, name))
+	tilt_mp4_list=glob.glob("%s/media/tiltseries/%s*.mp4" % (rundir, name))
+	if len(tilt_mp4_list) != 0:
+		tilt_mp4_list.sort()
+		tilt_mp4_list.append('dummy')
+		for tilt_mp4 in tilt_mp4_list[restart_iteration:-1]:
+			os.system('rm %s* 2>/dev/null' % tilt_mp4[:-3])
+	recon_mp4_list=glob.glob("%s/media/reconstructions/%s*.mp4" % (rundir, name))
+	if len(recon_mp4_list) != 0:
+		recon_mp4_list.sort()
+		recon_mp4_list.append('dummy')
+		for recon_mp4 in recon_mp4_list[restart_iteration:-1]:
+			os.system('rm %s* 2>/dev/null' % recon_mp4[:-3])
+	corr_mp4_list=glob.glob("%s/media/correlations/%s*.mp4" % (rundir, name))
+	if len(corr_mp4_list) != 0:
+		corr_mp4_list.sort()
+		corr_mp4_list.append('dummy')
+		for corr_mp4 in corr_mp4_list[restart_iteration:-1]:
+			os.system('rm %s* 2>/dev/null' % corr_mp4[:-3])
+	corr_gif_list=glob.glob("%s/media/corrplots/%s*_coa*" % (rundir, name))
+	if len(corr_gif_list) != 0:
+		corr_gif_list.sort()
+		corr_gif_list.append('dummy')
+		for corr_gif in corr_gif_list[restart_iteration:-1]:
+			os.system('rm %s* 2>/dev/null' % corr_gif[:-7])
+	
+	os.system('rm %s/best* 2>/dev/null' % rundir)
+	os.system('rm %s/worst* 2>/dev/null' % rundir)
+	
+
+
 def makeCorrPeakVideos(seriesname, iteration, rundir, outdir, video_type, align_step):
 	'''
 	Creates Cross Correlation Peak Videos for Coarse Alignment.
@@ -884,8 +970,8 @@ def makeTiltSeriesVideos(seriesname, iteration, tiltfilename, rawimagecount, run
 				image.rotate(rotation).save(tiltimage)
 			
 			#Add scalebar
-			scalesize=5000/(pixelsize * map_sampling)    #500nm scaled by sampling
-			command = "convert -gravity South -background white -splice 0x20 -strokewidth 0 -stroke black -strokewidth 5 -draw \"line %s,%s,5,%s\" -gravity SouthWest -pointsize 13 -fill black -strokewidth 0  -draw \"translate 50,0 text 0,0 '500 nm'\" %s %s" % (scalesize, dimy/map_sampling+3, dimy/map_sampling+3, tiltimage, tiltimage)
+			scalesize=2500/(pixelsize * map_sampling)    #500nm scaled by sampling
+			command = "convert -gravity South -background white -splice 0x20 -strokewidth 0 -stroke black -strokewidth 5 -draw \"line %s,%s,5,%s\" -gravity SouthWest -pointsize 13 -fill black -strokewidth 0  -draw \"translate 50,0 text 0,0 '250 nm'\" %s %s" % (scalesize, dimy/map_sampling+3, dimy/map_sampling+3, tiltimage, tiltimage)
 			os.system(command)
 			
 			#Add frame numbers and tilt angles
@@ -991,8 +1077,8 @@ def makeReconstructionVideos(seriesname, iteraion, rundir, rx, ry, show_window_s
 			im.save(slice)
 		
 		#Add scalebar
-		scalesize=5000/(pixelsize * map_sampling)    #500nm scaled by sampling
-		cmd1 = "convert -gravity South -background white -splice 0x20 -strokewidth 0 -stroke black -strokewidth 5 -draw \"line %s,%s,5,%s\" -gravity SouthWest -pointsize 13 -fill black -strokewidth 0  -draw \"translate 50,0 text 0,0 '500 nm'\" %s %s" % (scalesize, dimy+3, dimy+3, slice, slice)
+		scalesize=2500/(pixelsize * map_sampling)    #500nm scaled by sampling
+		cmd1 = "convert -gravity South -background white -splice 0x20 -strokewidth 0 -stroke black -strokewidth 5 -draw \"line %s,%s,5,%s\" -gravity SouthWest -pointsize 13 -fill black -strokewidth 0  -draw \"translate 50,0 text 0,0 '250 nm'\" %s %s" % (scalesize, dimy+3, dimy+3, slice, slice)
 		os.system(cmd1)
 		#Add frame numbers
 		cmd2 = "convert -gravity South -annotate 0 'Z-Slice: %s/%s' %s %s" % (i+1, slices+1, slice, slice)
@@ -1177,7 +1263,7 @@ def makeAngleRefinementPlots(rundir, seriesname):
 		pylab.rcParams["axes.titlesize"] = 12
 		pylab.xlabel("Iteration")
 		pylab.ylabel("Theta (degrees)")
-		pylab.title("Tilt Angle Refinement for Theta")
+		pylab.title("Tilt Angle (Theta) Refinement")
 		pylab.grid(True)
 		pylab.minorticks_on()
 		pylab.savefig(theta_full, bbox_inches='tight')

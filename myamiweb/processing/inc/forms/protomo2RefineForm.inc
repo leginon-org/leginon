@@ -20,19 +20,19 @@ $_SESSION['erase_coarse'] = 0;
 class Protomo2RefineForm extends BasicLayoutForm
 {
 	function __construct( $expId, $extraHTML, $sessionname='', $tiltseries='', $dimx='', $dimy='', $r1_region_x='', $r2_region_x='', $r3_region_x='', $r4_region_x='', $r5_region_x='', $r1_region_y='', $r2_region_y='',
-	$r3_region_y='', $r4_region_y='', $r5_region_y='', $r1_sampling='8', $r2_sampling='4', $r3_sampling='2', $r4_sampling='1', $r5_sampling='', $map_sampling='8', $thickness='1000', $pixelsize='', $r1_lp_diam_x='15',
+	$r3_region_y='', $r4_region_y='', $r5_region_y='', $r1_sampling='8', $r2_sampling='4', $r3_sampling='2', $r4_sampling='1', $r5_sampling='1', $map_sampling='8', $thickness='1000', $pixelsize='', $r1_lp_diam_x='15',
 	$r2_lp_diam_x='15', $r3_lp_diam_x='15', $r4_lp_diam_x='15', $r5_lp_diam_x='', $r1_lp_apod_x='25', $r2_lp_apod_x='20', $r3_lp_apod_x='15', $r4_lp_apod_x='10', $r5_lp_apod_x='', $r1_lp_diam_y='15', $r2_lp_diam_y='15',
 	$r3_lp_diam_y='15', $r4_lp_diam_y='15', $r5_lp_diam_y='', $r1_lp_apod_y='25', $r2_lp_apod_y='20', $r3_lp_apod_y='15', $r4_lp_apod_y='10', $r5_lp_apod_y='', $r1_hp_diam_x='250', $r2_hp_diam_x='350', $r3_hp_diam_x='450',
 	$r4_hp_diam_x='550', $r5_hp_diam_x='', $r1_hp_diam_y='250', $r2_hp_diam_y='350', $r3_hp_diam_y='450', $r4_hp_diam_y='550', $r5_hp_diam_y='', $r1_hp_apod_x='75', $r2_hp_apod_x='100', $r3_hp_apod_x='150', $r4_hp_apod_x='200', $r5_hp_apod_x='',
-	$r1_hp_apod_y='75', $r2_hp_apod_y='100', $r3_hp_apod_y='150', $r4_hp_apod_y='200', $r5_hp_apod_y='', $raw_path='', $r1_iters='15', $r2_iters='10', $r3_iters='5', $r4_iters='5', $r5_iters='', $param='',
+	$r1_hp_apod_y='75', $r2_hp_apod_y='100', $r3_hp_apod_y='150', $r4_hp_apod_y='200', $r5_hp_apod_y='', $raw_path='', $r1_iters='15', $r2_iters='10', $r3_iters='5', $r4_iters='5', $r5_iters='0', $param='',
 	$binning='true', $preprocessing='true', $select_images='', $exclude_images='', $border='100', $clip_low='3.5', $clip_high='3.5', $thr_low='', $thr_high='', $gradient='true', $r1_corr_mode='mcf', $r2_corr_mode='mcf', $r3_corr_mode='mcf', $r4_corr_mode='mcf', $r5_corr_mode='',
 	$gradient_switch='', $iter_gradient='', $iter_gradient_switch='', $filter='median', $r1_kernel_x='', $r2_kernel_x='', $r3_kernel_x='', $r4_kernel_x='', $r5_kernel_x='', $r1_kernel_y='', $r2_kernel_y='',
 	$r3_kernel_y='', $r4_kernel_y='', $r5_kernel_y='', $grow='0', $window_area='0.95', $mask_apod_x='', $mask_apod_y='', $mask_width_x='', $mask_width_y='', $do_estimation='false', $norotations='false',
 	$max_correction='', $correlation_size_x='160', $correlation_size_y='160', $r1_peak_search_radius_x='300', $r2_peak_search_radius_x='300', $r3_peak_search_radius_x='300',
-	$r4_peak_search_radius_x='300', $r5_peak_search_radius_x='', $r1_peak_search_radius_y='300', $r2_peak_search_radius_y='300', $r3_peak_search_radius_y='300', $r4_peak_search_radius_y='300', $r5_peak_search_radius_y='', $orientation='true',
+	$r4_peak_search_radius_x='300', $r5_peak_search_radius_x='300', $r1_peak_search_radius_y='300', $r2_peak_search_radius_y='300', $r3_peak_search_radius_y='300', $r4_peak_search_radius_y='300', $r5_peak_search_radius_y='300', $orientation='true',
 	$orientation_switch='', $azimuth='true', $azimuth_switch='', $elevation='false', $elevation_switch='', $rotation='true', $rotation_switch='', $scale='false', $scale_switch='',
 	$logging='true', $loglevel='2', $map_size_x='512', $map_size_y='512', $filename_prefix='', $image_file_type='', $cachedir='cache', $protomo_outdir='out', $tilt_clip='',
-	$retry='20', $retry_shrink='0.9', $gui_coarse_align='', $create_reconstruction='true', $show_window_size='true', $create_tilt_video='true', $keep_recons='false', $video_type='', $restart_cycle='' )
+	$gui_coarse_align='', $create_reconstruction='true', $show_window_size='true', $create_tilt_video='true', $keep_recons='false', $video_type='', $restart_cycle='' )
 	{
 		parent::__construct($expId, $extraHTML);
 		//print "_POST:" . "<br>";
@@ -45,34 +45,38 @@ class Protomo2RefineForm extends BasicLayoutForm
 		global $imageinfo;
 		$_POST['runname']=$_SESSION['runname'];
 		$_POST['outdir']=$_SESSION['outdir'];
-		$r1_region_x = $r2_region_x = $r3_region_x = $r4_region_x = $imageinfo['dimx']*0.5;
-		$r1_region_y = $r2_region_y = $r3_region_y = $r4_region_y = $imageinfo['dimy']*0.5;
-		$r1_lp_diam_x = round(pow(10,10)*$imageinfo['pixelsize']*60);
-		$r2_lp_diam_x = round(pow(10,10)*$imageinfo['pixelsize']*50);
-		$r3_lp_diam_x = round(pow(10,10)*$imageinfo['pixelsize']*40);
-		$r4_lp_diam_x = round(pow(10,10)*$imageinfo['pixelsize']*30);
-		$r1_lp_diam_y = round(pow(10,10)*$imageinfo['pixelsize']*60);
-		$r2_lp_diam_y = round(pow(10,10)*$imageinfo['pixelsize']*50);
-		$r3_lp_diam_y = round(pow(10,10)*$imageinfo['pixelsize']*40);
-		$r4_lp_diam_y = round(pow(10,10)*$imageinfo['pixelsize']*30);
-		$r1_hp_diam_x = $r2_hp_diam_x = $r3_hp_diam_x = $r4_hp_diam_x = round(($imageinfo['dimx']+$imageinfo['dimy'])/(2*8));
-		$r1_hp_diam_y = $r2_hp_diam_y = $r3_hp_diam_y = $r4_hp_diam_y = round(($imageinfo['dimx']+$imageinfo['dimy'])/(2*8));
+		$r1_region_x = $r2_region_x = $r3_region_x = $r4_region_x = $r5_region_x = $imageinfo['dimx']*0.75;
+		$r1_region_y = $r2_region_y = $r3_region_y = $r4_region_y = $r5_region_y = $imageinfo['dimy']*0.75;
+		$r1_lp_diam_x = round(pow(10,10)*$imageinfo['pixelsize']*80);
+		$r2_lp_diam_x = round(pow(10,10)*$imageinfo['pixelsize']*40);
+		$r3_lp_diam_x = round(pow(10,10)*$imageinfo['pixelsize']*20);
+		$r4_lp_diam_x = round(pow(10,10)*$imageinfo['pixelsize']*10);
+		$r5_lp_diam_x = round(pow(10,10)*$imageinfo['pixelsize']*8);
+		$r1_lp_diam_y = round(pow(10,10)*$imageinfo['pixelsize']*80);
+		$r2_lp_diam_y = round(pow(10,10)*$imageinfo['pixelsize']*40);
+		$r3_lp_diam_y = round(pow(10,10)*$imageinfo['pixelsize']*20);
+		$r4_lp_diam_y = round(pow(10,10)*$imageinfo['pixelsize']*10);
+		$r5_lp_diam_y = round(pow(10,10)*$imageinfo['pixelsize']*8);
+		$r1_hp_diam_x = $r2_hp_diam_x = $r3_hp_diam_x = $r4_hp_diam_x = $r5_hp_diam_x = min($r1_region_x, $r1_region_y);
+		$r1_hp_diam_y = $r2_hp_diam_y = $r3_hp_diam_y = $r4_hp_diam_y = $r5_hp_diam_y = min($r1_region_x, $r1_region_y);
 		$r1_lp_apod_x = round(2.5*$r1_lp_diam_x);
 		$r2_lp_apod_x = round(2.5*$r2_lp_diam_x);
 		$r3_lp_apod_x = round(2.5*$r3_lp_diam_x);
 		$r4_lp_apod_x = round(2.5*$r4_lp_diam_x);
+		$r5_lp_apod_x = round(2.5*$r5_lp_diam_x);
 		$r1_lp_apod_y = round(2.5*$r1_lp_diam_y);
 		$r2_lp_apod_y = round(2.5*$r2_lp_diam_y);
 		$r3_lp_apod_y = round(2.5*$r3_lp_diam_y);
 		$r4_lp_apod_y = round(2.5*$r4_lp_diam_y);
-		$r1_hp_apod_x = $r2_hp_apod_x = $r3_hp_apod_x = $r4_hp_apod_x = round($r1_hp_diam_x/2);
-		$r1_hp_apod_y = $r2_hp_apod_y = $r3_hp_apod_y = $r4_hp_apod_y = round($r1_hp_diam_y/2);
+		$r5_lp_apod_y = round(2.5*$r5_lp_diam_y);
+		$r1_hp_apod_x = $r2_hp_apod_x = $r3_hp_apod_x = $r4_hp_apod_x = $r5_hp_apod_x = round($r1_hp_diam_x/2);
+		$r1_hp_apod_y = $r2_hp_apod_y = $r3_hp_apod_y = $r4_hp_apod_y = $r5_hp_apod_y = round($r1_hp_diam_y/2);
 		$map_size_x = $imageinfo['dimx']/$map_sampling;
 		$map_size_y = $imageinfo['dimy']/$map_sampling;
-		$r1_kernel_x = $r2_kernel_x = $r3_kernel_x = $r4_kernel_x = 5;
-		$r1_kernel_y = $r2_kernel_y = $r3_kernel_y = $r4_kernel_y = 5;
-		$r1_mask_apod_x = $r2_mask_apod_x = $r3_mask_apod_x = $r4_mask_apod_x = 10;
-		$r1_mask_apod_y = $r2_mask_apod_y = $r3_mask_apod_y = $r4_mask_apod_y = 10;
+		$r1_kernel_x = $r2_kernel_x = $r3_kernel_x = $r4_kernel_x = $r5_kernel_x = 5;
+		$r1_kernel_y = $r2_kernel_y = $r3_kernel_y = $r4_kernel_y = $r5_kernel_y = 5;
+		$r1_mask_apod_x = $r2_mask_apod_x = $r3_mask_apod_x = $r4_mask_apod_x = $r5_mask_apod_x = 10;
+		$r1_mask_apod_y = $r2_mask_apod_y = $r3_mask_apod_y = $r4_mask_apod_y = $r5_mask_apod_y = 10;
 		$Nx1=$r1_region_x/$r1_sampling;
 		$Ny1=$r1_region_y/$r1_sampling;
 		$Nx2=$r2_region_x/$r2_sampling;
@@ -81,14 +85,18 @@ class Protomo2RefineForm extends BasicLayoutForm
 		$Ny3=$r3_region_y/$r3_sampling;
 		$Nx4=$r4_region_x/$r4_sampling;
 		$Ny4=$r4_region_y/$r4_sampling;
+		$Nx5=$r5_region_x/$r5_sampling;
+		$Ny5=$r5_region_y/$r5_sampling;
 		$r1_mask_width_x = $Nx1-2.5*$r1_mask_apod_x;
 		$r2_mask_width_x = $Nx2-2.5*$r2_mask_apod_x;
 		$r3_mask_width_x = $Nx3-2.5*$r3_mask_apod_x;
 		$r4_mask_width_x = $Nx4-2.5*$r4_mask_apod_x;
+		$r5_mask_width_x = $Nx5-2.5*$r5_mask_apod_x;
 		$r1_mask_width_y = $Ny1-2.5*$r1_mask_apod_y;
 		$r2_mask_width_y = $Ny2-2.5*$r2_mask_apod_y;
 		$r3_mask_width_y = $Ny3-2.5*$r3_mask_apod_y;
 		$r4_mask_width_y = $Ny4-2.5*$r4_mask_apod_y;
+		$r5_mask_width_y = $Ny5-2.5*$r5_mask_apod_y;
 		$restart_cycle = $_SESSION['restart_cycle'];
 		$image_file_type = pathinfo($imageinfo['filename'], PATHINFO_EXTENSION);
 		$_SESSION['image_file_type'] = $image_file_type;
@@ -264,8 +272,6 @@ class Protomo2RefineForm extends BasicLayoutForm
 		$params->addParam( "image_file_type", $image_file_type, "Image Extension" );
 		$params->addParam( "cachedir", $cachedir, "Cache Directory" );
 		$params->addParam( "protomo_outdir", $protomo_outdir, "Output Directory" );
-		$params->addParam( "retry", $retry, "Number of Refinement Retries Allowed" );
-		$params->addParam( "retry_shrink", $retry_shrink, "Window Size Fraction to Shrink Each Retry Attempt" );
 		$params->addParam( "create_tilt_video", $create_tilt_video, "Create Tilt-Series Videos" );
 		$params->addParam( "create_reconstruction", $create_reconstruction, "Create a Reconstruction Video" );
 		$params->addParam( "show_window_size", $show_window_size, "Show Window Size in Reconstruction Video" );
@@ -296,8 +302,7 @@ class Protomo2RefineForm extends BasicLayoutForm
 			$html .= "<br></br>
 			<b><center>Either remove all previous Refinements by copying and pasting this series of commands into a terminal window (you can copy them all at once):</center></b>";
 			$html .= "<br></br>
-			<center><code>rm ".$_SESSION['outdir'].$_SESSION['runname']."/series".sprintf('%04d',$_SESSION['tiltseries'])."*.corr<br>
-			rm ".$_SESSION['outdir']."/".$_SESSION['runname']."/media/correlations/series".sprintf('%04d',$_SESSION['tiltseries'])."*<br>
+			<center><code>rm ".$_SESSION['outdir']."/".$_SESSION['runname']."/media/correlations/series".sprintf('%04d',$_SESSION['tiltseries'])."*<br>
 			rm ".$_SESSION['outdir']."/".$_SESSION['runname']."/media/reconstructions/series".sprintf('%04d',$_SESSION['tiltseries'])."*<br>
 			rm ".$_SESSION['outdir']."/".$_SESSION['runname']."/media/corrplots/series".sprintf('%04d',$_SESSION['tiltseries'])."*<br>
 			rm ".$_SESSION['outdir']."/".$_SESSION['runname']."/media/tiltseries/series".sprintf('%04d',$_SESSION['tiltseries'])."*<br>
@@ -421,10 +426,8 @@ class Protomo2RefineForm extends BasicLayoutForm
 			$html.= $params->insertTextFieldInRow( "r3_region_y", $fieldSize2 ).'│ ';
 			$html.= $params->insertTextFieldInRow( "r4_region_y", $fieldSize2 ).'│ ';
 			$html.= $params->insertTextField( "r5_region_y", $fieldSize2 );
-			$html.= $params->insertTextField( "retry", $fieldSize );
-			$html.= $params->insertTextField( "retry_shrink", $fieldSize );
-			$html.= $params->insertTextField( "thickness", $fieldSize );
 			$html.= $params->insertTextField( "window_area", $fieldSize );
+			$html.= $params->insertTextField( "thickness", $fieldSize );
 			
 			$html .= "
 		    <br />
@@ -522,10 +525,9 @@ class Protomo2RefineForm extends BasicLayoutForm
 			$html.= '<option value="dbl">dbl</option>';
 			$html.= '</select>'; $html.= docpop('protomo_r4_corr_mode', ' R4').'│ ';
 			$html.= '<select name="r5_corr_mode" style="width:51px">';
-			$html.= '<option value=""></option>';
 			$html.= '<option value="xcf">xcf</option>';
 			$html.= '<option value="mcf">mcf</option>';
-			$html.= '<option value="pcf">pcf</option>';
+			$html.= '<option selected value="pcf">pcf</option>';
 			$html.= '<option value="dbl">dbl</option>';
 			$html.= '</select>'; $html.= docpop('protomo_r5_corr_mode', ' R5 | Correlation Mode').'<br>';
 			$html.= $params->insertTextFieldInRow( "r1_peak_search_radius_x", $fieldSize2 ).'│ ';

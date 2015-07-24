@@ -620,12 +620,6 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		self.parser.add_option("--gridsearch_step", dest="gridsearch_step",  type="float",  default=0.1,
 			help="Protomo2.4 only: Gridseach angle step size for coarse alignment, e.g. --gridsearch_step=0.5", metavar="float")
 		
-		self.parser.add_option("--retry", dest="retry",  type="int",  default="3",
-			help="Number of times to retry alignment, which sometimes fails because the search area is too big, e.g. --retry=5", metavar="int")
-		
-		self.parser.add_option("--retry_shrink", dest="retry_shrink",  type="float",  default="0.9",
-			help="How much to shrink the window size from the previous retry, e.g. --retry_shrink=0.75", metavar="float")
-		
 		self.parser.add_option("--create_tilt_video", dest="create_tilt_video",
 			help="Appion: Create a tilt-series video for depiction, e.g. --create_tilt_video=false")
 		
@@ -644,8 +638,8 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		self.parser.add_option("--video_type", dest="video_type",
 			help="Appion: Create either gifs or html5 videos using 'gif' or 'html5vid', respectively, e.g. --video_type=html5vid")
 		
-		self.parser.add_option("--restart_cycle", dest="restart_cycle",
-			help="Restart a Refinement at this iteration, e.g. --restart_cycle=2")
+		self.parser.add_option("--restart_cycle", dest="restart_cycle",  type="int",  default=0,
+			help="Restart a Refinement at this iteration, e.g. --restart_cycle=2", metavar="int")
 		
 		self.parser.add_option("--link", dest="link",  default="False",
 			help="Link raw images if True, copy if False, e.g. --link=False")
@@ -857,9 +851,6 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		rundir=self.params['rundir']
 		global cwd
 		global time_start
-		shutil.copy('%s/protomo2aligner.log' % cwd, "%s/protomo2aligner_%s.log" % (rundir, time_start))
-		f = open("%s/protomo2aligner_%s.log" % (rundir, time_start),'a');f.write("\n")
-		f.write('Start time: %s\n' % time_start)
 		self.params['raw_path']=os.path.join(rundir,'raw')
 		raw_path=self.params['raw_path']
 		if os.path.exists(rundir):
@@ -869,6 +860,9 @@ class ProTomo2Aligner(basicScript.BasicScript):
 			os.chdir(rundir)
 		self.params['cachedir']=rundir+'/'+self.params['cachedir']
 		self.params['protomo_outdir']=rundir+'/'+self.params['protomo_outdir']
+		shutil.copy('%s/protomo2aligner.log' % cwd, "%s/protomo2aligner_%s.log" % (rundir, time_start))
+		f = open("%s/protomo2aligner_%s.log" % (rundir, time_start),'a');f.write("\n")
+		f.write('Start time: %s\n' % time_start)
 		
 		seriesnumber = "%04d" % int(self.params['tiltseries'])
 		seriesname='series'+seriesnumber
@@ -979,23 +973,24 @@ class ProTomo2Aligner(basicScript.BasicScript):
 			#Align and restart alignment if failed
 			retry=0
 			brk=0
-			new_region_x=self.params['region_x']/self.params['sampling']   #Just initializing
-			new_region_y=self.params['region_y']/self.params['sampling']   #Just initializing
-			while (retry <= self.params['retry']):
+			end=0
+			new_region_x=int(self.params['region_x']/self.params['sampling'])   #Just initializing
+			new_region_y=int(self.params['region_y']/self.params['sampling'])   #Just initializing
+			while (min(new_region_x,new_region_x) != 20 and end == 0):
 				try:
 					if (retry > 0):
-						new_region_x = int(new_region_x*self.params['retry_shrink'])
-						new_region_y = int(new_region_y*self.params['retry_shrink'])
-						apDisplay.printMsg("Coarse Alignment failed. Retry #%s with %s%% smaller Window Size: (%s, %s)..." % (retry, 100-int(100*self.params['retry_shrink']), new_region_x, new_region_y))
-						f.write('Coarse Alignment failed. Retry #%s with %s%% smaller Window Size: (%s, %s)...\n' % (retry, 100-int(100*self.params['retry_shrink']), new_region_x, new_region_y))
+						new_region_x = apProTomo2Aligner.nextLargestSize(new_region_x)
+						new_region_y = apProTomo2Aligner.nextLargestSize(new_region_y)
+						apDisplay.printMsg("Coarse Alignment failed. Retry #%s with Window Size: (%s, %s) (at sampling %s)..." % (retry, new_region_x, new_region_y, self.params['sampling']))
+						f.write('Coarse Alignment failed. Retry #%s with Window Size: (%s, %s) (at sampling %s)...\n' % (retry, new_region_x, new_region_y, self.params['sampling']))
 						newsize = "{ %s %s }" % (new_region_x, new_region_y)
 						series.setparam("window.size", newsize)
 					retry+=1
 					series.align()
 					final_retry=retry-1
-					retry = self.params['retry'] + 1 #Alignment worked, don't retry anymore
+					end=1
 				except:
-					if (retry > self.params['retry']):
+					if (min(new_region_x,new_region_x) == 20):
 						apDisplay.printMsg("Coarse Alignment failed after rescaling the search area %s time(s)." % (retry-1))
 						apDisplay.printMsg("Window Size (x) was windowed down to %s" % (new_region_x*self.params['sampling']))
 						apDisplay.printMsg("Window Size (y) was windowed down to %s" % (new_region_y*self.params['sampling']))
@@ -1109,20 +1104,14 @@ class ProTomo2Aligner(basicScript.BasicScript):
 				start=int(lastiter.split(name)[1].split('.')[0])+1
 			
 			#rewind to previous iteration if requested
-			if (type(self.params['restart_cycle']) == int):
+			if (self.params['restart_cycle'] > 0):
 				apDisplay.printMsg("Rewinding to iteration %s" % (self.params['restart_cycle']))
 				f.write('Rewinding to iteration %s\n' % (self.params['restart_cycle']))
 				start=self.params['restart_cycle']-1
 				series.setcycle(start)
 				
 				#Remove all files after this iteration
-				os.remove()
-				for i in range():
-					
-					try:
-						os.remove()
-					except OSError:
-						pass
+				apProTomo2Aligner.removeForRestart(self.params['restart_cycle'], name, rundir)
 			
 			
 			iters=start+self.params['r1_iters']+self.params['r2_iters']+self.params['r3_iters']+self.params['r4_iters']+self.params['r5_iters']
@@ -1136,9 +1125,9 @@ class ProTomo2Aligner(basicScript.BasicScript):
 			apDisplay.printMsg("Beginning Refinements\n")
 			f.write('\nBeginning Refinements\n')
 			
-			for n in range(start,iters):
+			for n in range(iters):
 				#change parameters depending on rounds
-				if (n+1 == start+1):
+				if (n+1 == 1):
 					r=1  #Round number
 					apDisplay.printMsg("Beginning Refinement Iteration #%s, Round #%s\n" % (start+n+1,r))
 					f.write('\nBeginning Refinement Iteration #%s, Round #%s\n' % (start+n+1,r))
@@ -1148,12 +1137,12 @@ class ProTomo2Aligner(basicScript.BasicScript):
 					region_y=self.params['r1_region_y']
 					sampling=self.params['r1_sampling']
 					f.write("\nRound #%s. Parameters in Protomo units (note: At binned by %s, pixelsize is %s Angstroms, Nyquist is %s Angstroms):\n" % (r, sampling, sampling*self.params['pixelsize'], 2*sampling*self.params['pixelsize']))
-					apDisplay.printMsg("Round #%s. Parameters in Protomo units (note: At binned by %s, pixelsize is %s, Nyquist is %s):\n" % (r, sampling, sampling*self.params['pixelsize'], 2*sampling*self.params['pixelsize']))
+					apDisplay.printMsg("Round #%s. Parameters in Protomo units (note: At binned by %s, pixelsize is %s Angstroms, Nyquist is %s Angstroms):\n" % (r, sampling, sampling*self.params['pixelsize'], 2*sampling*self.params['pixelsize']))
 					for val in round1:
 						f.write("%s = %s\n" % (val,round1[val]))
 						apDisplay.printMsg("%s = %s" % (val,round1[val]))
 						series.setparam(val,round1[val])
-				elif (n+1 == start+self.params['r1_iters']+1):
+				elif (n+1 == self.params['r1_iters']+1):
 					r=2
 					apDisplay.printMsg("Beginning Refinement Iteration #%s, Round #%s\n" % (start+n+1,r))
 					f.write('\nBeginning Refinement Iteration #%s, Round #%s\n' % (start+n+1,r))
@@ -1163,12 +1152,12 @@ class ProTomo2Aligner(basicScript.BasicScript):
 					region_y=self.params['r2_region_y']
 					sampling=self.params['r2_sampling']
 					f.write("\nRound #%s. Parameters in Protomo units (note: At binned by %s, pixelsize is %s Angstroms, Nyquist is %s Angstroms):\n" % (r, sampling, sampling*self.params['pixelsize'], 2*sampling*self.params['pixelsize']))
-					apDisplay.printMsg("Round #%s. Parameters in Protomo units (note: At binned by %s, pixelsize is %s, Nyquist is %s):\n" % (r, sampling, sampling*self.params['pixelsize'], 2*sampling*self.params['pixelsize']))
+					apDisplay.printMsg("Round #%s. Parameters in Protomo units (note: At binned by %s, pixelsize is %s Angstroms, Nyquist is %s Angstroms):\n" % (r, sampling, sampling*self.params['pixelsize'], 2*sampling*self.params['pixelsize']))
 					for val in round2:
 						f.write("%s = %s\n" % (val,round2[val]))
 						apDisplay.printMsg("%s = %s" % (val,round2[val]))
 						series.setparam(val,round2[val])
-				elif (n+1 == start+self.params['r1_iters']+self.params['r2_iters']+1):
+				elif (n+1 == self.params['r1_iters']+self.params['r2_iters']+1):
 					r=3
 					apDisplay.printMsg("Beginning Refinement Iteration #%s, Round #%s\n" % (start+n+1,r))
 					f.write('\nBeginning Refinement Iteration #%s, Round #%s\n' % (start+n+1,r))
@@ -1178,12 +1167,12 @@ class ProTomo2Aligner(basicScript.BasicScript):
 					region_y=self.params['r3_region_y']
 					sampling=self.params['r3_sampling']
 					f.write("\nRound #%s. Parameters in Protomo units (note: At binned by %s, pixelsize is %s Angstroms, Nyquist is %s Angstroms):\n" % (r, sampling, sampling*self.params['pixelsize'], 2*sampling*self.params['pixelsize']))
-					apDisplay.printMsg("Round #%s. Parameters in Protomo units (note: At binned by %s, pixelsize is %s, Nyquist is %s):\n" % (r, sampling, sampling*self.params['pixelsize'], 2*sampling*self.params['pixelsize']))
+					apDisplay.printMsg("Round #%s. Parameters in Protomo units (note: At binned by %s, pixelsize is %s Angstroms, Nyquist is %s Angstroms):\n" % (r, sampling, sampling*self.params['pixelsize'], 2*sampling*self.params['pixelsize']))
 					for val in round3:
 						f.write("%s = %s\n" % (val,round3[val]))
 						apDisplay.printMsg("%s = %s" % (val,round3[val]))
 						series.setparam(val,round3[val])
-				elif (n+1 == start+self.params['r1_iters']+self.params['r2_iters']+self.params['r3_iters']+1):
+				elif (n+1 == self.params['r1_iters']+self.params['r2_iters']+self.params['r3_iters']+1):
 					r=4
 					apDisplay.printMsg("Beginning Refinement Iteration #%s, Round #%s\n" % (start+n+1,r))
 					f.write('\nBeginning Refinement Iteration #%s, Round #%s\n' % (start+n+1,r))
@@ -1193,12 +1182,12 @@ class ProTomo2Aligner(basicScript.BasicScript):
 					region_y=self.params['r4_region_y']
 					sampling=self.params['r4_sampling']
 					f.write("\nRound #%s. Parameters in Protomo units (note: At binned by %s, pixelsize is %s Angstroms, Nyquist is %s Angstroms):\n" % (r, sampling, sampling*self.params['pixelsize'], 2*sampling*self.params['pixelsize']))
-					apDisplay.printMsg("Round #%s. Parameters in Protomo units (note: At binned by %s, pixelsize is %s, Nyquist is %s):\n" % (r, sampling, sampling*self.params['pixelsize'], 2*sampling*self.params['pixelsize']))
+					apDisplay.printMsg("Round #%s. Parameters in Protomo units (note: At binned by %s, pixelsize is %s Angstroms, Nyquist is %s Angstroms):\n" % (r, sampling, sampling*self.params['pixelsize'], 2*sampling*self.params['pixelsize']))
 					for val in round4:
 						f.write("%s = %s\n" % (val,round4[val]))
 						apDisplay.printMsg("%s = %s" % (val,round4[val]))
 						series.setparam(val,round4[val])
-				elif (n+1 == start+self.params['r1_iters']+self.params['r2_iters']+self.params['r3_iters']+self.params['r4_iters']+1):
+				elif (n+1 == self.params['r1_iters']+self.params['r2_iters']+self.params['r3_iters']+self.params['r4_iters']+1):
 					r=5
 					apDisplay.printMsg("Beginning Refinement Iteration #%s, Round #%s\n" % (start+n+1,r))
 					f.write('\nBeginning Refinement Iteration #%s, Round #%s\n' % (start+n+1,r))
@@ -1208,7 +1197,7 @@ class ProTomo2Aligner(basicScript.BasicScript):
 					region_y=self.params['r5_region_y']
 					sampling=self.params['r5_sampling']
 					f.write("\nRound #%s. Parameters in Protomo units (note: At binned by %s, pixelsize is %s Angstroms, Nyquist is %s Angstroms):\n" % (r, sampling, sampling*self.params['pixelsize'], 2*sampling*self.params['pixelsize']))
-					apDisplay.printMsg("Round #%s. Parameters in Protomo units (note: At binned by %s, pixelsize is %s, Nyquist is %s):\n" % (r, sampling, sampling*self.params['pixelsize'], 2*sampling*self.params['pixelsize']))
+					apDisplay.printMsg("Round #%s. Parameters in Protomo units (note: At binned by %s, pixelsize is %s Angstroms, Nyquist is %s Angstroms):\n" % (r, sampling, sampling*self.params['pixelsize'], 2*sampling*self.params['pixelsize']))
 					for val in round5:
 						f.write("%s = %s\n" % (val,round5[val]))
 						apDisplay.printMsg("%s = %s" % (val,round5[val]))
@@ -1223,7 +1212,7 @@ class ProTomo2Aligner(basicScript.BasicScript):
 				toggle=0
 				for switch in switches:
 					for key in switches[switch]:
-						if (switches[switch][key] == start+n+1):
+						if (switches[switch][key] == n+1):
 							toggle=1
 							if (key == "true"):
 								newval="false"
@@ -1242,23 +1231,24 @@ class ProTomo2Aligner(basicScript.BasicScript):
 				#Align and restart alignment if failed
 				retry=0
 				brk=0
-				new_region_x=region_x/sampling   #Just initializing
-				new_region_y=region_y/sampling   #Just initializing
-				while (retry <= self.params['retry']):
+				end=0
+				new_region_x=int(region_x/sampling)   #Just initializing
+				new_region_y=int(region_y/sampling)   #Just initializing
+				while (min(new_region_x,new_region_x) != 20 and end == 0):
 					try:
 						if (retry > 0):
-							new_region_x = int(new_region_x*self.params['retry_shrink'])
-							new_region_y = int(new_region_y*self.params['retry_shrink'])
-							apDisplay.printMsg("Refinement failed. Retry #%s with %s%% smaller Window Size: (%s, %s)..." % (retry, 100-int(100*self.params['retry_shrink']), new_region_x*sampling, new_region_y*sampling))
-							f.write('Refinement failed. Retry #%s with %s%% smaller Window Size: (%s, %s)...\n' % (retry, 100-int(100*self.params['retry_shrink']), new_region_x*sampling, new_region_y*sampling))
+							new_region_x = apProTomo2Aligner.nextLargestSize(new_region_x)
+							new_region_y = apProTomo2Aligner.nextLargestSize(new_region_y)
+							apDisplay.printMsg("Refinement failed. Retry #%s with Window Size: (%s, %s) (at sampling %s)..." % (retry, new_region_x*sampling, new_region_y*sampling, sampling))
+							f.write('Refinement failed. Retry #%s with Window Size: (%s, %s) (at sampling %s)...\n' % (retry, new_region_x*sampling, new_region_y*sampling, sampling))
 							newsize = "{ %s %s }" % (new_region_x, new_region_y)
 							series.setparam("window.size", newsize)
 						retry+=1
 						series.align()
 						final_retry=retry-1
-						retry = self.params['retry'] + 1 #Alignment worked, don't retry anymore
+						end=1
 					except:
-						if (retry > self.params['retry']):
+						if (min(new_region_x,new_region_x) == 20):
 							apDisplay.printMsg("Refinement Iteration #%s failed after resampling the search area %s time(s)." % (start+n+1, retry-1))
 							apDisplay.printMsg("Window Size (x) was windowed down to %s" % (new_region_x*sampling))
 							apDisplay.printMsg("Window Size (y) was windowed down to %s" % (new_region_y*sampling))
@@ -1296,7 +1286,7 @@ class ProTomo2Aligner(basicScript.BasicScript):
 					corrfile=basename+'.corr'
 					metric=apProTomo2Aligner.makeQualityAssessment(name, i, rundir, corrfile)
 					if i == numcorrfiles-1:
-						apProTomo2Aligner.makeQualityAssessmentImage(self.params['tiltseries'], self.params['sessionname'], name, rundir, self.params['r1_iters'], self.params['r1_sampling'], r1_lp, self.params['r2_iters'], self.params['r2_sampling'], r2_lp, self.params['r3_iters'], self.params['r3_sampling'], r3_lp, self.params['r4_iters'], self.params['r4_sampling'], r4_lp, self.params['r5_iters'], self.params['r5_sampling'], r5_lp)
+						apProTomo2Aligner.makeQualityAssessmentImage(self.params['tiltseries'], self.params['sessionname'], name, rundir, start+self.params['r1_iters'], self.params['r1_sampling'], r1_lp, start+self.params['r2_iters'], self.params['r2_sampling'], r2_lp, start+self.params['r3_iters'], self.params['r3_sampling'], r3_lp, start+self.params['r4_iters'], self.params['r4_sampling'], r4_lp, start+self.params['r5_iters'], self.params['r5_sampling'], r5_lp)
 				it="%03d" % ((n+start))
 				basename='%s%s' % (name,it)
 				corrfile=basename+'.corr'

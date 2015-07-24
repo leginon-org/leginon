@@ -19,8 +19,8 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 	$lp_apod_y='50', $hp_diam_x='500', $hp_diam_y='500', $hp_apod_x='150', $hp_apod_y='150', $corr_mode='mcf', $raw_path='', $iters='', $param='', $binning='true',
 	$preprocessing='true', $select_images='', $exclude_images='', $border='100', $clip_low='3.5', $clip_high='3.5', $thr_low='', $thr_high='', $gradient='true', $iter_gradient='false', $filter='median',
 	$kernel_x='', $kernel_y='', $grow='0', $window_area='0.95', $mask_apod_x='', $mask_apod_y='', $mask_width_x='', $mask_width_y='', $dimx='', $dimy='',
-	$correlation_size_x='192', $correlation_size_y='192', $peak_search_radius_x='', $peak_search_radius_y='', $logging='true', $loglevel='2', $map_size_x='512', $map_size_y='512', $filename_prefix='', $image_file_type='', $cachedir='cache',
-	$protomo_outdir='out', $gui_coarse_align='', $grid_limit='2.0', $grid_step='0.1', $retry='10', $retry_shrink='0.9', $create_reconstruction='true', $show_window_size='true', $create_tilt_video='true', $keep_recons='false', $region_x='512', $video_type='',
+	$correlation_size_x='192', $correlation_size_y='192', $peak_search_radius_x='300', $peak_search_radius_y='300', $logging='true', $loglevel='2', $map_size_x='512', $map_size_y='512', $filename_prefix='', $image_file_type='', $cachedir='cache',
+	$protomo_outdir='out', $gui_coarse_align='', $grid_limit='2.0', $grid_step='0.1', $create_reconstruction='true', $show_window_size='true', $create_tilt_video='true', $keep_recons='false', $region_x='512', $video_type='',
 	$shift_limit='30' , $angle_limit='40' )
 	{
 		parent::__construct($expId, $extraHTML);
@@ -96,16 +96,16 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 		$_SESSION['imageinfo'] = $imageinfo;
 		$_SESSION['tiltseries'] = $tiltseriesinfos[0]['number'];
 		
-		$lp_diam_x = round(pow(10,10)*$imageinfo['pixelsize']*70);
-		$lp_diam_y = round(pow(10,10)*$imageinfo['pixelsize']*70);
-		$hp_diam_x = round(($imageinfo['dimx']+$imageinfo['dimy'])/(2*8));
-		$hp_diam_y = round(($imageinfo['dimx']+$imageinfo['dimy'])/(2*8));
+		$region_x = intval($imageinfo['dimx']*0.75);
+		$region_y = intval($imageinfo['dimy']*0.75);
+		$lp_diam_x = round(pow(10,10)*$imageinfo['pixelsize']*75);
+		$lp_diam_y = round(pow(10,10)*$imageinfo['pixelsize']*75);
+		$hp_diam_x = min($region_x, $region_y);
+		$hp_diam_y = min($region_x, $region_y);
 		$lp_apod_x=2.5*$lp_diam_x;
 		$lp_apod_y=2.5*$lp_diam_y;
 		$hp_apod_x=round($hp_diam_x/2);
 		$hp_apod_y=round($hp_diam_y/2);
-		$region_x = intval($imageinfo['dimx']*0.6);
-		$region_y = intval($imageinfo['dimy']*0.6);
 		$kernel_x = 5;
 		$kernel_y = 5;
 		$mask_apod_x = 10;
@@ -122,8 +122,8 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 		$_SESSION['dimx'] = $imageinfo['dimx'];
 		$_SESSION['dimy'] = $imageinfo['dimy'];
 		$_POST['pixelsize'] = $imageinfo['pixelsize']*pow(10,10);
-		$_POST['peak_search_radius_x'] = $imageinfo['dimx']/2;
-		$_POST['peak_search_radius_y'] = $imageinfo['dimy']/2;
+		//$_POST['peak_search_radius_x'] = $imageinfo['dimx']/2;
+		//$_POST['peak_search_radius_y'] = $imageinfo['dimy']/2;
 		
 		//foreach(array_keys($imageinfo) as $paramName)
 		//	echo $paramName . "<br>";
@@ -206,11 +206,8 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 		$params->addParam( "image_file_type", $image_file_type, "Image Extension" );
 		$params->addParam( "cachedir", $cachedir, "Cache Directory" );
 		$params->addParam( "protomo_outdir", $protomo_outdir, "Output Directory" );
-		//$params->addParam( "gui_coarse_align", $gui_coarse_align, "Coarse Alignment equivalent to 'Align All' in tomoaign-gui (<strong>Over-rides other options</strong>) (NOT IMPLEMENTED YET!!)" );
 		$params->addParam( "gridsearch_limit", $grid_limit, "Grid Search +-Angle Limit (<strong>Critical Parameter</strong>)" );
 		$params->addParam( "gridsearch_step", $grid_step, "Grid Search Angle Step Size (<strong>Critical Parameter</strong>)" );
-		$params->addParam( "retry", $retry, "Coarse Alignment Retries" );
-		$params->addParam( "retry_shrink", $retry_shrink, "Window Size Fraction to Shrink Each Retry Attempt" );
 		$params->addParam( "create_tilt_video", $create_tilt_video, "Create Tilt-Series Videos" );
 		$params->addParam( "create_reconstruction", $create_reconstruction, "Create a Reconstruction Video" );
 		$params->addParam( "show_window_size", $show_window_size, "Show Window Size in Reconstruction Video" );
@@ -340,8 +337,6 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 		    
 			$html.= $params->insertTextField( "region_x", $fieldSize );
 			$html.= $params->insertTextField( "region_y", $fieldSize );
-			$html.= $params->insertTextField( "retry", $fieldSize );
-			$html.= $params->insertTextField( "retry_shrink", $fieldSize );
 			$html.= $params->insertTextField( "thickness", $fieldSize );
 			$html.= $params->insertTextField( "window_area", $fieldSize );
 			
