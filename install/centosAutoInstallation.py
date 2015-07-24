@@ -1009,6 +1009,12 @@ setenv LD_LIBRARY_PATH ${LD_LIBRARY_PATH}:${XMIPPDIR}/lib:%s''' % (MpiLibDir))
 			
 	def getMyami(self):
 		#TODO: handle "svn: is already a working copy for a different URL" case
+
+
+                if os.path.exists('/tmp/myami/'):
+
+                        shutil.rmtree('/tmp/myami/')
+
 		self.runCommand(self.svnCmd)
 
 	def getDefaultValues(self):
