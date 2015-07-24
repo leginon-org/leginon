@@ -282,7 +282,7 @@ if ($imgdir) {
 			// save sorted file list
 			foreach($files as $t) $fileList[] = $t[0];
 			// display image			
-			displayImagePanel($_POST, /*$fileList*/$files, $imgdir, $leginondata, $particle, $assessmentrid, $maskAssessRunId, $maskRunId );
+			displayImagePanel(/*$fileList*/$files, $imgdir, $leginondata, $particle, $assessmentrid, $maskAssessRunId, $maskRunId );
 			//echo "read ".count($files)." files in ".(microtime()-$starttime)." seconds<br/>\n";
 		}
 		else echo"<FONT class='apcomment'>No file found in this directory with extension: $ext or preset: $presettype </FONT><HR>\n";
@@ -343,7 +343,7 @@ echo appionRef();
 processing_footer();
 
 //****************************************
-function displayImagePanel($_POST,$files,$imgdir,$leginondata,$particle,$assessmentrid, $maskAssessRunId, $maskRunId ) {
+function displayImagePanel($files,$imgdir,$leginondata,$particle,$assessmentrid, $maskAssessRunId, $maskRunId ) {
 	$numfiles = count($files);
 	$imgindex = ($_POST['imgindex']) ? $_POST['imgindex'] : '0';
 	$imgperpage = ($_POST['imgperpage']) ? $_POST['imgperpage'] : 15;
