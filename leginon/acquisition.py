@@ -23,6 +23,7 @@ import instrument
 import gui.wx.Acquisition
 import gui.wx.Presets
 import navigator
+import appclient
 import numpy
 import numpy.linalg
 import math
@@ -211,6 +212,8 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.time0 = time.time()
 		self.times = []
 		self.intensities = []
+		self.alignzlp_bound = False
+		self.alignzlp_warned = False
 
 		self.duplicatetypes = ['acquisition', 'focus']
 		self.presetlocktypes = ['acquisition', 'target', 'target list']
@@ -219,6 +222,14 @@ class Acquisition(targetwatcher.TargetWatcher):
 			self.timedebug = {}
 
 		self.start()
+
+	def handleApplicationEvent(self,evt):
+		'''
+		Find the AlignZeroLossPeak class or its subclass instance bound
+		to this node upon application loading.
+		'''
+		app = evt['application']
+		self.alignzlp_bound = appclient.getNextNodeThruBinding(app,self.name,'AlignZeroLossPeakPublishEvent','AlignZeroLossPeak')
 
 	def checkSettings(self, settings):
 		problems = []
@@ -363,8 +374,13 @@ class Acquisition(targetwatcher.TargetWatcher):
 	def tuneEnergyFilter(self, presetname):
 		presetdata = self.presetsclient.getPresetByName(presetname)
 		if presetdata['energy filter'] or presetdata['tem energy filter']:
-			self.alignZeroLossPeak(presetname)
-	
+			if self.alignzlp_bound:
+				self.alignZeroLossPeak(presetname)
+			else:
+				if not self.alignzlp_warned:
+					self.logger.warning('Energy filter activated but can not tune without binding to Align ZLP')
+					self.alignzlp_warned = True	
+
 	def alignZeroLossPeak(self, preset_name):
 		request_data = leginondata.AlignZeroLossPeakData()
 		request_data['session'] = self.session
