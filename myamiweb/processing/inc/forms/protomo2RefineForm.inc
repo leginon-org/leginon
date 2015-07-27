@@ -250,7 +250,7 @@ class Protomo2RefineForm extends BasicLayoutForm
 		$params->addParam( "r2_peak_search_radius_x", $r2_peak_search_radius_x, "R2" );
 		$params->addParam( "r3_peak_search_radius_x", $r3_peak_search_radius_x, "R3" );
 		$params->addParam( "r4_peak_search_radius_x", $r4_peak_search_radius_x, "R4" );
-		$params->addParam( "r5_peak_search_radius_x", $r5_peak_search_radius_x, "R5 │ Peak Search Redius (x)" );
+		$params->addParam( "r5_peak_search_radius_x", $r5_peak_search_radius_x, "R5 │ Peak Search Radius (x)" );
 		$params->addParam( "r1_peak_search_radius_y", $r1_peak_search_radius_y, "R1" );
 		$params->addParam( "r2_peak_search_radius_y", $r2_peak_search_radius_y, "R2" );
 		$params->addParam( "r3_peak_search_radius_y", $r3_peak_search_radius_y, "R3" );
@@ -330,6 +330,26 @@ class Protomo2RefineForm extends BasicLayoutForm
 		
 			$fieldSize = 5;
 			$fieldSize2 = 3;
+			
+			//Initialize presets
+			//if (!isset($_POST['preset'])) {$_POST['preset']=1;}
+			//
+			//$presets=array("", "Generic - 25 nm", "Generic - 50 nm", "Generic - 100 nm");
+			//$html.= '<br><select name="preset" onchange=submit() style="width:130px">';
+			//for ($i = 1; $i < count($presets)+1; $i++) {
+			//	$html.= '<option ';
+			//	if ($i == $_POST['preset']) {
+			//		$html.= 'selected ';
+			//	}
+			//	$html.= 'value="'.$i.'">'.$presets[$i-1].'</option>';
+			//}
+			//$html.= '</select>'; $html.= docpop('protomo_refine_presets', ' Presets<br>');
+			//
+			//if ($_POST['preset'] == 2)
+			//{
+			//	$r1_lp_apod_x = 666;
+			//	echo $r1_lp_apod_x;
+			//}
 			
 			$html .= "
 		    <br />

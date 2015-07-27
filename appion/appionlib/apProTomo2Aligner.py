@@ -347,7 +347,7 @@ def nextLargestSize(limit):
 				if lowest==p:
 					good.append(n)
 					break
-	return good[-1]
+	return int(good[-1])
 
 
 def removeHighlyShiftedImages(tiltfile, dimx, dimy, shift_limit, angle_limit):

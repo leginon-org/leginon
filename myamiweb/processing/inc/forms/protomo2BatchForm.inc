@@ -49,7 +49,7 @@ class Protomo2BatchForm extends BasicLayoutForm
 		$leginondata = new leginondata();
 		$alltiltseries = $particle->getTiltSeries($_GET['expId']);
 		$seriesselector_array = $particle->getTiltSeriesSelector($alltiltseries,$tiltseriesId);
-		#$voltage=$_SESSION['high tension']/1000;   #Even though this is the right key, I can't call high tension???
+		//$voltage=$_SESSION['high tension']/1000;   //Even though this is the right key, I can't call high tension???
 		
 		$iters=$_SESSION['recon_iter'];
 		$coarse_param_file=$_SESSION['outdir'].'/'.$_SESSION['runname'].'/ready_for_batch/coarse_series'.sprintf('%04d',$_SESSION['tiltseries']).'.param';
@@ -278,10 +278,10 @@ class Protomo2BatchForm extends BasicLayoutForm
 		$fieldSize2 = 3;
 		$fieldSize3 = 30;
 		
-		#Initialize steps
+		//Initialize steps
 		if (!isset($_POST['firststep'])) {$_POST['firststep']=1;}
 		if (!isset($_POST['laststep'])) {$_POST['laststep']=3;}
-		#Check for impossible setting
+		//Check for impossible setting
 		if ($_POST['firststep'] > $_POST['laststep']) {$_POST['laststep']=$_POST['firststep'];}
 		if ($_POST['firststep'] == 5 or $_POST['firststep'] == 8 or $_POST['laststep'] == 5 or $_POST['laststep'] == 8) {$_POST['firststep']=1; $_POST['laststep']=3;}
 		if (($_POST['firststep'] == 1 or $_POST['firststep'] == 2 or $_POST['firststep'] == 3 or $_POST['firststep'] == 4) and ($_POST['laststep'] == 6 or $_POST['laststep'] == 7 or $_POST['laststep'] == 9)) {$_POST['laststep']=4;}
@@ -573,7 +573,7 @@ class Protomo2BatchForm extends BasicLayoutForm
 		global $sessionname;
 		global $numtiltseries;
 		
-		#Determine what additonal commands need to be given
+		//Determine what additonal commands need to be given
 		if ($_POST['firststep'] == 1 or $_POST['firststep'] == 2 or $_POST['firststep'] == 3 or $_POST['firststep'] == 4 or $_POST['firststep'] == 6 or $_POST['firststep'] == 7) {$command.="--automation=False ";}
 		if ($_POST['firststep'] == 1 and $_POST['laststep'] == 1) {$command.="--prep_files=True --coarse_align=False --refine=False --reconstruct=False ";}
 		if ($_POST['firststep'] == 1 and $_POST['laststep'] == 2) {$command.="--prep_files=True --coarse_align=True --refine=False --reconstruct=False ";}
@@ -619,7 +619,7 @@ class Protomo2BatchForm extends BasicLayoutForm
 		// Only display link to next step in tomo processing if on completed Command page
 		if (isset($_POST['procs']) AND isset($_POST['refine_param_file']) AND isset($_POST['tiltseriesranges']))
 		{
-			#$trimmed_runname=preg_replace("/\d+$/","",$_POST['runname']);
+			//$trimmed_runname=preg_replace("/\d+$/","",$_POST['runname']);
 			$folders='tiltseriesXXXX';
 			$html .= "<br></br>
 			<a href='runAppionLoop.php?expId=".$this->expId."&form=Protomo2BatchSummary'><b><center>[Click here to View Batch Alignment and Reconstructon Results after protomo2batch.py has been run] <font size='5'>→</font></center></b></a>";

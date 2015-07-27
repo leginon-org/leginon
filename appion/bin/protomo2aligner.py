@@ -289,7 +289,22 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		
 		self.parser.add_option("--map_sampling", dest="map_sampling",  default=8, type="int",
 			help="Sampling rate of raw data for use in reconstruction, e.g. --map_sampling=4")
-			
+		
+		self.parser.add_option("--r1_body", dest="r1_body",  default=0, type="float",
+			help="Body size (see Protomo docs). For internal use only.")
+		
+		self.parser.add_option("--r2_body", dest="r2_body",  default=0, type="float",
+			help="Body size (see Protomo docs). For internal use only.")
+		
+		self.parser.add_option("--r3_body", dest="r3_body",  default=0, type="float",
+			help="Body size (see Protomo docs). For internal use only.")
+		
+		self.parser.add_option("--r4_body", dest="r4_body",  default=0, type="float",
+			help="Body size (see Protomo docs). For internal use only.")
+		
+		self.parser.add_option("--r5_body", dest="r5_body",  default=0, type="float",
+			help="Body size (see Protomo docs). For internal use only.")
+		
 		self.parser.add_option("--border", dest="border", default=100,  type="int",
 			help="Width of area at the image edge to exclude from image statistics, e.g. --border=100", metavar="int")
 		
@@ -689,8 +704,6 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		#Set map_size_z (for reconstruction depictions) to be 2 times the thickness (thickness plus 50% on both sizes)
 		self.params['map_size_z']=int(2*self.params['thickness']/self.params['sampling'])
 		
-		#Initialize body values
-		r1_body=r2_body=r3_body=r4_body=r5_body=0
 		#Backup lp values for depiction purposes
 		r1_lp=r2_lp=r3_lp=r4_lp=r5_lp=0
 		if coarse == "False":
@@ -703,7 +716,7 @@ class ProTomo2Aligner(basicScript.BasicScript):
 			self.params['r1_lowpass_apod_y'] = 2*self.params['pixelsize']*self.params['r1_sampling']/self.params['r1_lowpass_apod_y']
 			self.params['r1_highpass_apod_x'] = 2*self.params['pixelsize']*self.params['r1_sampling']/self.params['r1_highpass_apod_x']
 			self.params['r1_highpass_apod_y'] = 2*self.params['pixelsize']*self.params['r1_sampling']/self.params['r1_highpass_apod_y']
-			r1_body=(self.params['thickness']/self.params['r1_sampling'])/self.params['cos_alpha']
+			self.params['r1_body']=(self.params['thickness']/self.params['r1_sampling'])/self.params['cos_alpha']
 			try:
 				r2_lp=(self.params['r2_lowpass_diameter_x']+self.params['r2_lowpass_diameter_y'])/2
 				self.params['r2_lowpass_diameter_x'] = 2*self.params['pixelsize']*self.params['r2_sampling']/self.params['r2_lowpass_diameter_x']
@@ -735,7 +748,7 @@ class ProTomo2Aligner(basicScript.BasicScript):
 				pass
 			try:
 				self.params['r2_highpass_apod_y'] = 2*self.params['pixelsize']*self.params['r2_sampling']/self.params['r2_highpass_apod_y']
-				r2_body=(self.params['thickness']/self.params['r2_sampling'])/self.params['cos_alpha']
+				self.params['r2_body']=(self.params['thickness']/self.params['r2_sampling'])/self.params['cos_alpha']
 			except:
 				pass
 			try:
@@ -769,7 +782,7 @@ class ProTomo2Aligner(basicScript.BasicScript):
 				pass
 			try:
 				self.params['r3_highpass_apod_y'] = 2*self.params['pixelsize']*self.params['r3_sampling']/self.params['r3_highpass_apod_y']
-				r3_body=(self.params['thickness']/self.params['r3_sampling'])/self.params['cos_alpha']
+				self.params['r3_body']=(self.params['thickness']/self.params['r3_sampling'])/self.params['cos_alpha']
 			except:
 				pass
 			try:
@@ -803,7 +816,7 @@ class ProTomo2Aligner(basicScript.BasicScript):
 				pass
 			try:
 				self.params['r4_highpass_apod_y'] = 2*self.params['pixelsize']*self.params['r4_sampling']/self.params['r4_highpass_apod_y']
-				r4_body=(self.params['thickness']/self.params['r4_sampling'])/self.params['cos_alpha']
+				self.params['r4_body']=(self.params['thickness']/self.params['r4_sampling'])/self.params['cos_alpha']
 			except:
 				pass
 			try:
@@ -837,11 +850,11 @@ class ProTomo2Aligner(basicScript.BasicScript):
 				pass
 			try:
 				self.params['r5_highpass_apod_y'] = 2*self.params['pixelsize']*self.params['r5_sampling']/self.params['r5_highpass_apod_y']
-				r5_body=(self.params['thickness']/self.params['r5_sampling'])/self.params['cos_alpha']
+				self.params['r5_body']=(self.params['thickness']/self.params['r5_sampling'])/self.params['cos_alpha']
 			except:
 				pass
 		
-		return r1_lp, r2_lp, r3_lp, r4_lp, r5_lp, r1_body, r2_body, r3_body, r4_body, r5_body
+		return r1_lp, r2_lp, r3_lp, r4_lp, r5_lp, self.params['r1_body'], self.params['r2_body'], self.params['r3_body'], self.params['r4_body'], self.params['r5_body']
 	
 	#=====================
 	def start(self):
@@ -869,7 +882,7 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		tiltfilename=seriesname+'.tlt'
 		tiltfilename_full=rundir+'/'+tiltfilename
 		originaltilt=rundir+'/original.tlt'
-
+		
 		###Do queries and make tlt file if first run
 		if self.params['coarse'] == 'True':
 			apDisplay.printMsg('Preparing raw images and initial tilt file')
@@ -918,7 +931,7 @@ class ProTomo2Aligner(basicScript.BasicScript):
 			apProTomo2Aligner.fixFrameMrcs(raw_path)
 		
 		###convert angstroms to pixels
-		r1_lp, r2_lp, r3_lp, r4_lp, r5_lp, r1_body, r2_body, r3_body, r4_body, r5_body = self.angstromsToProtomo(coarse=self.params['coarse'])
+		r1_lp, r2_lp, r3_lp, r4_lp, r5_lp, self.params['r1_body'], self.params['r2_body'], self.params['r3_body'], self.params['r4_body'], self.params['r5_body'] = self.angstromsToProtomo(coarse=self.params['coarse'])
 		
 		###create param file
 		param_out=seriesname+'.param'
@@ -1115,11 +1128,11 @@ class ProTomo2Aligner(basicScript.BasicScript):
 			
 			
 			iters=start+self.params['r1_iters']+self.params['r2_iters']+self.params['r3_iters']+self.params['r4_iters']+self.params['r5_iters']
-			round1={"window.size":"{ %s %s }" % (self.params['r1_region_x'],self.params['r1_region_y']),"window.lowpass.diameter":"{ %s %s }" % (self.params['r1_lowpass_diameter_x'],self.params['r1_lowpass_diameter_y']),"map.lowpass.diameter":"{ %s %s }" % (self.params['r1_lowpass_diameter_x'],self.params['r1_lowpass_diameter_y']),"window.lowpass.apodization":"{ %s %s }" % (self.params['r1_lowpass_apod_x'],self.params['r1_lowpass_apod_y']),"window.highpass.apodization":"{ %s %s }" % (self.params['r1_highpass_apod_x'],self.params['r1_highpass_apod_y']),"window.highpass.diameter":"{ %s %s }" % (self.params['r1_highpass_diameter_x'],self.params['r1_highpass_diameter_y']),"sampling":"%s" % (self.params['r1_sampling']),"map.sampling":"%s" % (self.params['r1_sampling']),"preprocess.mask.kernel":"{ %s %s }" % (self.params['r1_kernel_x'],self.params['r1_kernel_y']),"align.peaksearch.radius":"{ %s %s }" % (self.params['r1_peak_search_radius_x'],self.params['r1_peak_search_radius_y']),"window.mask.width":"{ %s %s }" % (self.params['r1_mask_width_x'],self.params['r1_mask_width_y']),"align.mask.width":"{ %s %s }" % (self.params['r1_mask_width_x'],self.params['r1_mask_width_y']),"window.mask.apodization":"{ %s %s }" % (self.params['r1_mask_apod_x'],self.params['r1_mask_apod_y']),"align.mask.apodization":"{ %s %s }" % (self.params['r1_mask_apod_x'],self.params['r1_mask_apod_y']),"reference.body":"%s" % (r1_body),"map.body":"%s" % (r1_body),"align.correlation.mode":"%s" % (self.params['r1_corr_mode'])}
-			round2={"window.size":"{ %s %s }" % (self.params['r2_region_x'],self.params['r2_region_y']),"window.lowpass.diameter":"{ %s %s }" % (self.params['r2_lowpass_diameter_x'],self.params['r2_lowpass_diameter_y']),"map.lowpass.diameter":"{ %s %s }" % (self.params['r2_lowpass_diameter_x'],self.params['r2_lowpass_diameter_y']),"window.lowpass.apodization":"{ %s %s }" % (self.params['r2_lowpass_apod_x'],self.params['r2_lowpass_apod_y']),"window.highpass.apodization":"{ %s %s }" % (self.params['r2_highpass_apod_x'],self.params['r2_highpass_apod_y']),"window.highpass.diameter":"{ %s %s }" % (self.params['r2_highpass_diameter_x'],self.params['r2_highpass_diameter_y']),"sampling":"%s" % (self.params['r2_sampling']),"map.sampling":"%s" % (self.params['r2_sampling']),"preprocess.mask.kernel":"{ %s %s }" % (self.params['r2_kernel_x'],self.params['r2_kernel_y']),"align.peaksearch.radius":"{ %s %s }" % (self.params['r2_peak_search_radius_x'],self.params['r2_peak_search_radius_y']),"window.mask.width":"{ %s %s }" % (self.params['r2_mask_width_x'],self.params['r2_mask_width_y']),"align.mask.width":"{ %s %s }" % (self.params['r2_mask_width_x'],self.params['r2_mask_width_y']),"window.mask.apodization":"{ %s %s }" % (self.params['r2_mask_apod_x'],self.params['r2_mask_apod_y']),"align.mask.apodization":"{ %s %s }" % (self.params['r2_mask_apod_x'],self.params['r2_mask_apod_y']),"reference.body":"%s" % (r2_body),"map.body":"%s" % (r2_body),"align.correlation.mode":"%s" % (self.params['r2_corr_mode'])}
-			round3={"window.size":"{ %s %s }" % (self.params['r3_region_x'],self.params['r3_region_y']),"window.lowpass.diameter":"{ %s %s }" % (self.params['r3_lowpass_diameter_x'],self.params['r3_lowpass_diameter_y']),"map.lowpass.diameter":"{ %s %s }" % (self.params['r3_lowpass_diameter_x'],self.params['r3_lowpass_diameter_y']),"window.lowpass.apodization":"{ %s %s }" % (self.params['r3_lowpass_apod_x'],self.params['r3_lowpass_apod_y']),"window.highpass.apodization":"{ %s %s }" % (self.params['r3_highpass_apod_x'],self.params['r3_highpass_apod_y']),"window.highpass.diameter":"{ %s %s }" % (self.params['r3_highpass_diameter_x'],self.params['r3_highpass_diameter_y']),"sampling":"%s" % (self.params['r3_sampling']),"map.sampling":"%s" % (self.params['r3_sampling']),"preprocess.mask.kernel":"{ %s %s }" % (self.params['r3_kernel_x'],self.params['r3_kernel_y']),"align.peaksearch.radius":"{ %s %s }" % (self.params['r3_peak_search_radius_x'],self.params['r3_peak_search_radius_y']),"window.mask.width":"{ %s %s }" % (self.params['r3_mask_width_x'],self.params['r3_mask_width_y']),"align.mask.width":"{ %s %s }" % (self.params['r3_mask_width_x'],self.params['r3_mask_width_y']),"window.mask.apodization":"{ %s %s }" % (self.params['r3_mask_apod_x'],self.params['r3_mask_apod_y']),"align.mask.apodization":"{ %s %s }" % (self.params['r3_mask_apod_x'],self.params['r3_mask_apod_y']),"reference.body":"%s" % (r3_body),"map.body":"%s" % (r3_body),"align.correlation.mode":"%s" % (self.params['r3_corr_mode'])}
-			round4={"window.size":"{ %s %s }" % (self.params['r4_region_x'],self.params['r4_region_y']),"window.lowpass.diameter":"{ %s %s }" % (self.params['r4_lowpass_diameter_x'],self.params['r4_lowpass_diameter_y']),"map.lowpass.diameter":"{ %s %s }" % (self.params['r4_lowpass_diameter_x'],self.params['r4_lowpass_diameter_y']),"window.lowpass.apodization":"{ %s %s }" % (self.params['r4_lowpass_apod_x'],self.params['r4_lowpass_apod_y']),"window.highpass.apodization":"{ %s %s }" % (self.params['r4_highpass_apod_x'],self.params['r4_highpass_apod_y']),"window.highpass.diameter":"{ %s %s }" % (self.params['r4_highpass_diameter_x'],self.params['r4_highpass_diameter_y']),"sampling":"%s" % (self.params['r4_sampling']),"map.sampling":"%s" % (self.params['r4_sampling']),"preprocess.mask.kernel":"{ %s %s }" % (self.params['r4_kernel_x'],self.params['r4_kernel_y']),"align.peaksearch.radius":"{ %s %s }" % (self.params['r4_peak_search_radius_x'],self.params['r4_peak_search_radius_y']),"window.mask.width":"{ %s %s }" % (self.params['r4_mask_width_x'],self.params['r4_mask_width_y']),"align.mask.width":"{ %s %s }" % (self.params['r4_mask_width_x'],self.params['r4_mask_width_y']),"window.mask.apodization":"{ %s %s }" % (self.params['r4_mask_apod_x'],self.params['r4_mask_apod_y']),"align.mask.apodization":"{ %s %s }" % (self.params['r4_mask_apod_x'],self.params['r4_mask_apod_y']),"reference.body":"%s" % (r4_body),"map.body":"%s" % (r4_body),"align.correlation.mode":"%s" % (self.params['r4_corr_mode'])}
-			round5={"window.size":"{ %s %s }" % (self.params['r5_region_x'],self.params['r5_region_y']),"window.lowpass.diameter":"{ %s %s }" % (self.params['r5_lowpass_diameter_x'],self.params['r5_lowpass_diameter_y']),"map.lowpass.diameter":"{ %s %s }" % (self.params['r5_lowpass_diameter_x'],self.params['r5_lowpass_diameter_y']),"window.lowpass.apodization":"{ %s %s }" % (self.params['r5_lowpass_apod_x'],self.params['r5_lowpass_apod_y']),"window.highpass.apodization":"{ %s %s }" % (self.params['r5_highpass_apod_x'],self.params['r5_highpass_apod_y']),"window.highpass.diameter":"{ %s %s }" % (self.params['r5_highpass_diameter_x'],self.params['r5_highpass_diameter_y']),"sampling":"%s" % (self.params['r5_sampling']),"map.sampling":"%s" % (self.params['r5_sampling']),"preprocess.mask.kernel":"{ %s %s }" % (self.params['r5_kernel_x'],self.params['r5_kernel_y']),"align.peaksearch.radius":"{ %s %s }" % (self.params['r5_peak_search_radius_x'],self.params['r5_peak_search_radius_y']),"window.mask.width":"{ %s %s }" % (self.params['r5_mask_width_x'],self.params['r5_mask_width_y']),"align.mask.width":"{ %s %s }" % (self.params['r5_mask_width_x'],self.params['r5_mask_width_y']),"window.mask.apodization":"{ %s %s }" % (self.params['r5_mask_apod_x'],self.params['r5_mask_apod_y']),"align.mask.apodization":"{ %s %s }" % (self.params['r5_mask_apod_x'],self.params['r5_mask_apod_y']),"reference.body":"%s" % (r5_body),"map.body":"%s" % (r5_body),"align.correlation.mode":"%s" % (self.params['r5_corr_mode'])}
+			round1={"window.size":"{ %s %s }" % (self.params['r1_region_x'],self.params['r1_region_y']),"window.lowpass.diameter":"{ %s %s }" % (self.params['r1_lowpass_diameter_x'],self.params['r1_lowpass_diameter_y']),"map.lowpass.diameter":"{ %s %s }" % (self.params['r1_lowpass_diameter_x'],self.params['r1_lowpass_diameter_y']),"window.lowpass.apodization":"{ %s %s }" % (self.params['r1_lowpass_apod_x'],self.params['r1_lowpass_apod_y']),"window.highpass.apodization":"{ %s %s }" % (self.params['r1_highpass_apod_x'],self.params['r1_highpass_apod_y']),"window.highpass.diameter":"{ %s %s }" % (self.params['r1_highpass_diameter_x'],self.params['r1_highpass_diameter_y']),"sampling":"%s" % (self.params['r1_sampling']),"map.sampling":"%s" % (self.params['r1_sampling']),"preprocess.mask.kernel":"{ %s %s }" % (self.params['r1_kernel_x'],self.params['r1_kernel_y']),"align.peaksearch.radius":"{ %s %s }" % (self.params['r1_peak_search_radius_x'],self.params['r1_peak_search_radius_y']),"window.mask.width":"{ %s %s }" % (self.params['r1_mask_width_x'],self.params['r1_mask_width_y']),"align.mask.width":"{ %s %s }" % (self.params['r1_mask_width_x'],self.params['r1_mask_width_y']),"window.mask.apodization":"{ %s %s }" % (self.params['r1_mask_apod_x'],self.params['r1_mask_apod_y']),"align.mask.apodization":"{ %s %s }" % (self.params['r1_mask_apod_x'],self.params['r1_mask_apod_y']),"reference.body":"%s" % (self.params['r1_body']),"map.body":"%s" % (self.params['r1_body']),"align.correlation.mode":"%s" % (self.params['r1_corr_mode'])}
+			round2={"window.size":"{ %s %s }" % (self.params['r2_region_x'],self.params['r2_region_y']),"window.lowpass.diameter":"{ %s %s }" % (self.params['r2_lowpass_diameter_x'],self.params['r2_lowpass_diameter_y']),"map.lowpass.diameter":"{ %s %s }" % (self.params['r2_lowpass_diameter_x'],self.params['r2_lowpass_diameter_y']),"window.lowpass.apodization":"{ %s %s }" % (self.params['r2_lowpass_apod_x'],self.params['r2_lowpass_apod_y']),"window.highpass.apodization":"{ %s %s }" % (self.params['r2_highpass_apod_x'],self.params['r2_highpass_apod_y']),"window.highpass.diameter":"{ %s %s }" % (self.params['r2_highpass_diameter_x'],self.params['r2_highpass_diameter_y']),"sampling":"%s" % (self.params['r2_sampling']),"map.sampling":"%s" % (self.params['r2_sampling']),"preprocess.mask.kernel":"{ %s %s }" % (self.params['r2_kernel_x'],self.params['r2_kernel_y']),"align.peaksearch.radius":"{ %s %s }" % (self.params['r2_peak_search_radius_x'],self.params['r2_peak_search_radius_y']),"window.mask.width":"{ %s %s }" % (self.params['r2_mask_width_x'],self.params['r2_mask_width_y']),"align.mask.width":"{ %s %s }" % (self.params['r2_mask_width_x'],self.params['r2_mask_width_y']),"window.mask.apodization":"{ %s %s }" % (self.params['r2_mask_apod_x'],self.params['r2_mask_apod_y']),"align.mask.apodization":"{ %s %s }" % (self.params['r2_mask_apod_x'],self.params['r2_mask_apod_y']),"reference.body":"%s" % (self.params['r2_body']),"map.body":"%s" % (self.params['r2_body']),"align.correlation.mode":"%s" % (self.params['r2_corr_mode'])}
+			round3={"window.size":"{ %s %s }" % (self.params['r3_region_x'],self.params['r3_region_y']),"window.lowpass.diameter":"{ %s %s }" % (self.params['r3_lowpass_diameter_x'],self.params['r3_lowpass_diameter_y']),"map.lowpass.diameter":"{ %s %s }" % (self.params['r3_lowpass_diameter_x'],self.params['r3_lowpass_diameter_y']),"window.lowpass.apodization":"{ %s %s }" % (self.params['r3_lowpass_apod_x'],self.params['r3_lowpass_apod_y']),"window.highpass.apodization":"{ %s %s }" % (self.params['r3_highpass_apod_x'],self.params['r3_highpass_apod_y']),"window.highpass.diameter":"{ %s %s }" % (self.params['r3_highpass_diameter_x'],self.params['r3_highpass_diameter_y']),"sampling":"%s" % (self.params['r3_sampling']),"map.sampling":"%s" % (self.params['r3_sampling']),"preprocess.mask.kernel":"{ %s %s }" % (self.params['r3_kernel_x'],self.params['r3_kernel_y']),"align.peaksearch.radius":"{ %s %s }" % (self.params['r3_peak_search_radius_x'],self.params['r3_peak_search_radius_y']),"window.mask.width":"{ %s %s }" % (self.params['r3_mask_width_x'],self.params['r3_mask_width_y']),"align.mask.width":"{ %s %s }" % (self.params['r3_mask_width_x'],self.params['r3_mask_width_y']),"window.mask.apodization":"{ %s %s }" % (self.params['r3_mask_apod_x'],self.params['r3_mask_apod_y']),"align.mask.apodization":"{ %s %s }" % (self.params['r3_mask_apod_x'],self.params['r3_mask_apod_y']),"reference.body":"%s" % (self.params['r3_body']),"map.body":"%s" % (self.params['r3_body']),"align.correlation.mode":"%s" % (self.params['r3_corr_mode'])}
+			round4={"window.size":"{ %s %s }" % (self.params['r4_region_x'],self.params['r4_region_y']),"window.lowpass.diameter":"{ %s %s }" % (self.params['r4_lowpass_diameter_x'],self.params['r4_lowpass_diameter_y']),"map.lowpass.diameter":"{ %s %s }" % (self.params['r4_lowpass_diameter_x'],self.params['r4_lowpass_diameter_y']),"window.lowpass.apodization":"{ %s %s }" % (self.params['r4_lowpass_apod_x'],self.params['r4_lowpass_apod_y']),"window.highpass.apodization":"{ %s %s }" % (self.params['r4_highpass_apod_x'],self.params['r4_highpass_apod_y']),"window.highpass.diameter":"{ %s %s }" % (self.params['r4_highpass_diameter_x'],self.params['r4_highpass_diameter_y']),"sampling":"%s" % (self.params['r4_sampling']),"map.sampling":"%s" % (self.params['r4_sampling']),"preprocess.mask.kernel":"{ %s %s }" % (self.params['r4_kernel_x'],self.params['r4_kernel_y']),"align.peaksearch.radius":"{ %s %s }" % (self.params['r4_peak_search_radius_x'],self.params['r4_peak_search_radius_y']),"window.mask.width":"{ %s %s }" % (self.params['r4_mask_width_x'],self.params['r4_mask_width_y']),"align.mask.width":"{ %s %s }" % (self.params['r4_mask_width_x'],self.params['r4_mask_width_y']),"window.mask.apodization":"{ %s %s }" % (self.params['r4_mask_apod_x'],self.params['r4_mask_apod_y']),"align.mask.apodization":"{ %s %s }" % (self.params['r4_mask_apod_x'],self.params['r4_mask_apod_y']),"reference.body":"%s" % (self.params['r4_body']),"map.body":"%s" % (self.params['r4_body']),"align.correlation.mode":"%s" % (self.params['r4_corr_mode'])}
+			round5={"window.size":"{ %s %s }" % (self.params['r5_region_x'],self.params['r5_region_y']),"window.lowpass.diameter":"{ %s %s }" % (self.params['r5_lowpass_diameter_x'],self.params['r5_lowpass_diameter_y']),"map.lowpass.diameter":"{ %s %s }" % (self.params['r5_lowpass_diameter_x'],self.params['r5_lowpass_diameter_y']),"window.lowpass.apodization":"{ %s %s }" % (self.params['r5_lowpass_apod_x'],self.params['r5_lowpass_apod_y']),"window.highpass.apodization":"{ %s %s }" % (self.params['r5_highpass_apod_x'],self.params['r5_highpass_apod_y']),"window.highpass.diameter":"{ %s %s }" % (self.params['r5_highpass_diameter_x'],self.params['r5_highpass_diameter_y']),"sampling":"%s" % (self.params['r5_sampling']),"map.sampling":"%s" % (self.params['r5_sampling']),"preprocess.mask.kernel":"{ %s %s }" % (self.params['r5_kernel_x'],self.params['r5_kernel_y']),"align.peaksearch.radius":"{ %s %s }" % (self.params['r5_peak_search_radius_x'],self.params['r5_peak_search_radius_y']),"window.mask.width":"{ %s %s }" % (self.params['r5_mask_width_x'],self.params['r5_mask_width_y']),"align.mask.width":"{ %s %s }" % (self.params['r5_mask_width_x'],self.params['r5_mask_width_y']),"window.mask.apodization":"{ %s %s }" % (self.params['r5_mask_apod_x'],self.params['r5_mask_apod_y']),"align.mask.apodization":"{ %s %s }" % (self.params['r5_mask_apod_x'],self.params['r5_mask_apod_y']),"reference.body":"%s" % (self.params['r5_body']),"map.body":"%s" % (self.params['r5_body']),"align.correlation.mode":"%s" % (self.params['r5_corr_mode'])}
 			switches={"preprocess.mask.gradient":{"%s" % (self.params['gradient']):self.params['gradient_switch']},"preprocess.mask.iter":{"%s" % (self.params['iter_gradient']):self.params['iter_gradient_switch']},"fit.orientation":{"%s" % (self.params['orientation']):self.params['orientation_switch']},"fit.azimuth":{"%s" % (self.params['azimuth']):self.params['azimuth_switch']},"fit.elevation":{"%s" % (self.params['elevation']):self.params['elevation_switch']},"fit.rotation":{"%s" % (self.params['rotation']):self.params['rotation_switch']},"fit.scale":{"%s" % (self.params['scale']):self.params['scale_switch']}}
 			
 			apDisplay.printMsg("Beginning Refinements\n")
@@ -1330,15 +1343,33 @@ class ProTomo2Aligner(basicScript.BasicScript):
 					#Rescale if necessary
 					s='r%s_sampling' % r
 					if self.params['map_sampling'] != self.params[s]:
-						#new_map_size_x=int(self.params['map_size_x']*self.params['map_sampling']/self.params[s])
-						#new_map_size_y=int(self.params['map_size_y']*self.params['map_sampling']/self.params[s])
-						#new_map_size_z=int(self.params['map_size_z']*self.params['map_sampling']/self.params[s])
-						#new_map_size="{ %s %s %s }" % (new_map_size_x, new_map_size_y, new_map_size_z)
 						new_map_sampling='%s' % self.params['map_sampling']
 						series.setparam("sampling",new_map_sampling)
 						series.setparam("map.sampling",new_map_sampling)
-						#series.setparam("map.size",new_map_size)
-					series.mapfile()
+						
+						#Rescale the lowpass, lowpass apod, and body for depiction
+						lpx='r%s_lowpass_diameter_x' % r
+						lpy='r%s_lowpass_diameter_y' % r
+						lpax='r%s_lowpass_apod_x' % r
+						lpay='r%s_lowpass_apod_y' % r
+						b='r%s_body' % r
+						new_lp_x = self.params[lpx]*self.params['map_sampling']/self.params[s]
+						new_lp_y = self.params[lpy]*self.params['map_sampling']/self.params[s]
+						new_lp_apod_x = self.params[lpax]*self.params['map_sampling']/self.params[s]
+						new_lp_apod_y = self.params[lpay]*self.params['map_sampling']/self.params[s]
+						new_body = self.params[b]*self.params[s]/self.params['map_sampling']
+						series.setparam("map.lowpass.diameter", "{ %s %s }" % (new_lp_x, new_lp_y))
+						#series.setparam("map.lowpass.apodization", "{ %s %s }" % (new_lp_apod_x, new_lp_apod_y))
+						series.setparam("map.body", "%s" % (self.params['r4_body']))
+						
+						series.mapfile()
+						
+						#Reset sampling values for next iteration
+						series.setparam("sampling",'%s' % self.params[s])
+						series.setparam("map.sampling",'%s' % self.params[s])
+					else:
+						series.mapfile()
+					
 					rx='r%s_region_x' % r
 					ry='r%s_region_y' % r
 					apProTomo2Aligner.makeReconstructionVideos(name, itt, rundir, self.params[rx], self.params[ry], self.params['show_window_size'], self.params['protomo_outdir'], self.params['pixelsize'], sampling, self.params['map_sampling'], self.params['video_type'], self.params['keep_recons'], "True", align_step="Refinement")
