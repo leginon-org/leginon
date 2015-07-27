@@ -329,10 +329,11 @@ class protomoAligner(appionScript.AppionScript):
 				# protomo2 CAN function with negative origin
 				apImage.shiftMRCStartToZero(file)
 				
-			# TODO: This function hangs when using Protomo2
 			apDisplay.printMsg("getting pixelsize")
 			pixelsize = apTomo.getTomoPixelSize(ordered_imagelist[refimg])
-			
+			if pixelsize is None:
+				apDisplay.printError('Pixel Size not retrieved. Invalid tilt series for processing')
+
 		imgshape = apTomo.getTomoImageShape(ordered_imagelist[refimg])
 		corr_bin = apTomo.getCorrelatorBinning(imgshape)
 		center = {'x':imgshape[1]/2,'y':imgshape[0]/2}

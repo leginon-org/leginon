@@ -194,7 +194,7 @@ def getCorrelatorBinning(imageshape):
 	
 def writeTiltSeriesStack(stackdir,stackname,ordered_mrc_files,apix=1):
 		stackpath = os.path.join(stackdir, stackname)
-		print stackpath
+		apDisplay.printMsg('stack path: %s' % (stackpath,))
 		apixdict = {'x':apix,'y':apix}
 		if os.path.exists(stackpath):
 			stheader = mrc.readHeaderFromFile(stackpath)
@@ -374,6 +374,17 @@ def getTomographySettings(sessiondata,tiltdata):
 		return qtomo.direct_query(settingsid)
 
 def getTomoPixelSize(imagedata):
+	'''
+	Get tomography tilt series image pixelsize through the same emtarget
+	'''
+	if imagedata['emtarget'] is None:
+		# uploaded images has no emtarget.  This will cause the next query looks
+		# for all images in the database
+		if imagedata['label'] != 'projection':
+			return apDatabase.getPixelSize(imagedata)
+		else:
+			# Should not trust projection pixel size since it can be different
+			return None
 	imageq = leginon.leginondata.AcquisitionImageData(emtarget=imagedata['emtarget'])
 	imageresults = imageq.query(readimages=False)
 	for tomoimagedata in imageresults:
