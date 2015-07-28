@@ -504,11 +504,12 @@ def readDataFromFile(fobj, headerdict, zslice=None):
 	'''
 	bytes_per_pixel = headerdict['dtype'].itemsize
 	framesize = bytes_per_pixel * headerdict['nx'] * headerdict['ny']
+	header_bytes = 1024 + headerdict['nsymbt']
 	if zslice is None:
-		start = 1024  # right after header
+		start = header_bytes  # right after header
 		shape = headerdict['shape']
 	else:
-		start = 1024 + zslice * framesize
+		start = header_bytes + zslice * framesize
 		shape = headerdict['shape'][-2:]  # only a 2-D slice
 	datalen = numpy.prod(shape)
 	fobj.seek(start)
