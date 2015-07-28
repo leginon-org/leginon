@@ -12,6 +12,7 @@ import string
 from EMAN2 import *
 from sparx import *
 #appion
+import sinedon.directq
 from appionlib import appionScript
 from appionlib import apDisplay
 from appionlib import apFile
@@ -234,7 +235,68 @@ class TopologyRepScript(appionScript.AppionScript):
 		count = 0
 		inserted = 0
 		t0 = time.time()
-		apDisplay.printColor("Inserting particle alignment data, please wait", "cyan")
+		apDisplay.printColor("\nPreparing to insert particle alignment data, please wait", "cyan")
+
+		# get path data
+		pathq = appiondata.ApPathData()
+		pathq['path'] = os.path.abspath(self.params['rundir'])
+		pathdata = pathq.query(results=1)
+		pathid = pathdata[0].dbid
+
+		# align run id
+		alignrunid = self.alignstackdata['alignrun'].dbid
+
+		# get stack particle ids
+		stackpdbdict={}
+		sqlcmd = "SELECT particleNumber,DEF_id "+ \
+			"FROM ApStackParticleData "+ \
+			"WHERE `REF|ApStackData|stack`=%i"%(self.params['stackid'])
+		results = sinedon.directq.complexMysqlQuery('appiondata',sqlcmd)
+
+		for part in results:
+			pnum = int(part['particleNumber'])
+			stackpdbdict[pnum]=int(part['DEF_id'])
+
+		apDisplay.printColor("found "+str(len(results))+" particles in "
+			+apDisplay.timeString(time.time()-t0), "cyan")
+
+		t0 = time.time()
+		apDisplay.printColor("\nInserting class averages into database","cyan")
+		# insert reference image data
+		reflistvals = []
+		for i in range(1,max(partrefdict.values())+1):
+			sqlvals="(%i,%i,'%s',%i,%i)"%( \
+				i,self.params['currentiter'], \
+				os.path.basename(self.params['currentcls'])+".img", \
+				alignrunid,pathid)
+			reflistvals.append(sqlvals)
+
+		sqlcmd = "INSERT INTO `ApAlignReferenceData` ("+ \
+			"`refnum`,`iteration`,`imagicfile`,"+ \
+			"`REF|ApAlignRunData|alignrun`,`REF|ApPathData|path`) "
+		sqlcmd += "VALUES "+",".join(reflistvals)
+		sinedon.directq.complexMysqlQuery('appiondata',sqlcmd)
+
+		# get DEF_ids from inserted references
+		refq = appiondata.ApAlignReferenceData()
+		refq['iteration'] = self.params['currentiter']
+		refq['imagicfile'] = os.path.basename(self.params['currentcls'])+".img"
+		refq['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
+		refq['alignrun'] = self.alignstackdata['alignrun']
+		refresults = refq.query()
+
+		# save DEF_ids to dictionary
+		refdbiddict={}
+		for ref in refresults:
+			refdbiddict[ref['refnum']]=ref.dbid
+
+		apDisplay.printColor("inserted "+str(len(refdbiddict))+" class averages in "
+			+apDisplay.timeString(time.time()-t0), "cyan")
+
+		t0 = time.time()
+		apDisplay.printColor("\nAssembling database insertion command","cyan")
+		partlistvals = []
+
 		for partdict in partlist:
 			count += 1
 			if count % (len(partlist)/100) == 0:
@@ -243,40 +305,43 @@ class TopologyRepScript(appionScript.AppionScript):
 				tleft = (len(partlist)-count)*perpart
 				sys.stderr.write("%3i%% complete, %s left    \r"%(pleft,apDisplay.timeString(tleft)))
 
-			### set up reference
-			refq = appiondata.ApAlignReferenceData()
-			## get reference number from partrefdict
-			refq['refnum'] = partrefdict[int(partdict['partnum'])]
-			refq['iteration'] = self.params['currentiter']
-			refq['imagicfile'] = os.path.basename(self.params['currentcls'])+".img"
-			refq['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
-			refq['alignrun'] = self.alignstackdata['alignrun']
-			reffile = os.path.join(self.params['rundir'], refq['imagicfile'])
-			if not os.path.isfile(reffile):
-				apDisplay.printError("could not find reference file: "+reffile)
+			partnum = int(partdict['partnum'])
+			refnum = partrefdict[partnum]
+			refnum_dbid = refdbiddict[refnum]
+			stackpart_dbid = stackpdbdict[partnum]
 
-			### set up particle
-			alignpartq = appiondata.ApAlignParticleData()
-			## EMAN particles start with 0, database starts at 1
-			alignpartq['partnum'] = partdict['partnum']
-			alignpartq['alignstack'] = self.alignstackdata
-			stackpartdata = apStack.getStackParticle(self.params['stackid'], partdict['partnum'])
-			alignpartq['stackpart'] = stackpartdata
-			alignpartq['xshift'] = partdict['xshift']
-			alignpartq['yshift'] = partdict['yshift']
-			alignpartq['rotation'] = partdict['inplane']
-			alignpartq['mirror'] = partdict['mirror']
-			alignpartq['correlation'] = partdict['cc']
-			alignpartq['ref'] = refq
+			sqlvals = "(%i,%i,%i,%s,%s,%s,%i,%s,%i)"%( \
+				partdict['partnum'], alignrunid, stackpart_dbid, \
+				partdict['xshift'], partdict['yshift'], \
+				partdict['inplane'], partdict['mirror'], \
+				partdict['cc'],refnum_dbid) 
 
-			### insert
-			if self.params['commit'] is True:
-				inserted += 1
-				alignpartq.insert(force=True)
-
+			partlistvals.append(sqlvals)
+		
 		sys.stderr.write("100% complete\t\n")
-		apDisplay.printColor("\ninserted "+str(inserted)+" of "+str(count)+" particles into the database in "
-			+apDisplay.timeString(time.time()-t0), "cyan")
+
+		apDisplay.printColor("Inserting particle information into database","cyan")
+
+		# start big insert cmd
+		sqlstart = "INSERT INTO `ApAlignParticleData` (" + \
+			"`partnum`,`REF|ApAlignStackData|alignstack`," + \
+			"`REF|ApStackParticleData|stackpart`," + \
+			"`xshift`,`yshift`,`rotation`,`mirror`," + \
+			"`correlation`,`REF|ApAlignReferenceData|ref`) " + \
+			"VALUES "
+
+		# break up command into groups of 100K inserts
+		# this is a workaround for the max_allowed_packet at 16MB
+		n = 100000
+		sqlinserts = [partlistvals[i:i+n] \
+			for i in range(0, len(partlistvals), n)]
+
+		for sqlinsert in sqlinserts:
+			sqlcmd=sqlstart+",".join(sqlinsert)
+			sinedon.directq.complexMysqlQuery('appiondata',sqlcmd)
+
+		apDisplay.printColor("\nInserted "+ str(count)+" particles into the database in "
+			+ apDisplay.timeString(time.time()-t0), "cyan")
 
 	#=====================
 	def writeTopolRepLog(self, text):
@@ -1072,12 +1137,15 @@ class TopologyRepScript(appionScript.AppionScript):
 			## get last iteration
 			alliters = glob.glob("iter*")
 			alliters.sort()
-			os.chdir(alliters[-1])
-			self.params['iterdir'] = os.path.abspath(".")
+
 			## get iteration number from iter dir
 			self.params['currentiter'] = int(alliters[-1][-2:])
-			self.params['alignedstack'] = os.path.abspath("mrastack")
+			self.params['iterdir'] = os.path.join(self.params['rundir'],alliters[-1])
 			self.params['currentcls'] = "classes%02i"%(self.params['currentiter'])
+
+			## go into last iteration directory
+			os.chdir(self.params['iterdir'])
+			self.params['alignedstack'] = os.path.abspath("mrastack")
 			if os.path.isfile(os.path.join(self.params['rundir'],self.params['currentcls']+".hed")):
 				p1 = os.path.join(self.params['rundir'],self.params['currentcls'])
 				p2 = os.path.join(self.params['iterdir'],self.params['currentcls'])
