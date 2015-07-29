@@ -1173,7 +1173,8 @@ class TopologyRepScript(appionScript.AppionScript):
 			shutil.move(self.params['alignedstack']+".hed","mrastack.hed")
 			shutil.move(self.params['alignedstack']+".img","mrastack.img")
 			# rewrite header
-			imagicFilters.takeoverHeaders("mrastack",self.params['numpart'],self.workingboxsize)
+			if self.params['mramethod'] == "imagic" or self.params['msamethod'] == 'imagic':
+				imagicFilters.takeoverHeaders("mrastack",self.params['numpart'],self.workingboxsize)
 
 		# move actual averages to current directory
 		if self.params['msamethod']=='can':
