@@ -179,11 +179,13 @@ def pixelLimitFilter(imgarray, pixlimit=0):
 	std1 = imgarray.std()
 	upperbound = mean1 + pixlimit * std1
 	lowerbound = mean1 - pixlimit * std1
-#	print mean1,std1
+#	print mean1, std1
 	imgarray2 = numpy.asarray(imgarray)
 #	print imgarray2
-	imgarray2 = numpy.where(imgarray2 > upperbound, upperbound, imgarray2)
-	imgarray2 = numpy.where(imgarray2 < lowerbound, lowerbound, imgarray2)
+	upperreplace = numpy.random.random((imgarray2.shape)) * upperbound
+	imgarray2 = numpy.where(imgarray2 > upperbound, upperreplace, imgarray2)
+	lowerreplace = numpy.random.random((imgarray2.shape)) * lowerbound
+	imgarray2 = numpy.where(imgarray2 < lowerbound, lowerreplace, imgarray2)
 #	print imgarray2
 	return imgarray2
 
@@ -309,8 +311,8 @@ def planeRegression(imgarray, msg=True):
 	"""
 	performs a two-dimensional linear regression and subtracts it from an image
 	essentially a fast high pass filter
+	z' = a*x + b*y + c
 	"""
-
 
 	### create index arrays, e.g., [1, 2, 3, 4, 5, ..., N]
 	def retx(y,x):
@@ -324,6 +326,60 @@ def planeRegression(imgarray, msg=True):
 	xarray = xarray/(ysize-1.0) - 0.5
 	yarray = yarray/(xsize-1.0) - 0.5
 
+	### get running sums
+	count =  float(xsize*ysize)
+	xsum =   xarray.sum()
+	xsumsq = (xarray*xarray).sum()
+	ysum =   yarray.sum()
+	ysumsq = (yarray*yarray).sum()
+	xysum =  (xarray*yarray).sum()
+	xzsum =  (xarray*imgarray).sum()
+	yzsum =  (yarray*imgarray).sum()
+	zsum =   imgarray.sum()
+	zsumsq = (imgarray*imgarray).sum()
+
+	### create linear algebra matrices
+	leftmat = numpy.array( [[xsumsq, xysum, xsum], [xysum, ysumsq, ysum], [xsum, ysum, count]], dtype=numpy.float64)
+	rightmat = numpy.array( [xzsum, yzsum, zsum], dtype=numpy.float64)
+
+	### solve eigen vectors
+	resvec = linalg.solve(leftmat,rightmat)
+
+	### show solution
+	if msg is True:
+		apDisplay.printMsg("plane_regress: x-slope: %.3f, y-slope: %.3f, xy-intercept: %.3f"
+			%(resvec[0], resvec[1], resvec[2]))
+
+	### subtract plane from array
+	newarray = imgarray - xarray*resvec[0] - yarray*resvec[1] - resvec[2]
+	return newarray
+
+
+#=========================
+def parabolicRegression(imgarray, msg=True):
+	"""
+	performs a two-dimensional linear regression and subtracts it from an image
+	essentially a fast high pass filter
+	z' = a*x^2 + b*x*y + c*y^2 + d*x + e*y + f
+	"""
+
+	### create index arrays, e.g., [1, 2, 3, 4, 5, ..., N]
+	def retx(y,x):
+		return x
+	def rety(y,x):
+		return y
+	xarray = numpy.fromfunction(retx, imgarray.shape, dtype=numpy.float32)
+	yarray = numpy.fromfunction(rety, imgarray.shape, dtype=numpy.float32)
+	xsize = imgarray.shape[0]
+	ysize = imgarray.shape[1]
+	xarray = xarray/(ysize-1.0) - 0.5
+	yarray = yarray/(xsize-1.0) - 0.5
+	x2array = xarray**2
+	y2array = yarray**2
+	xyarray = xarray*yarray
+	
+	raise NotImplementedError
+	
 	### get running sums
 	count =  float(xsize*ysize)
 	xsum =   xarray.sum()
