@@ -236,13 +236,24 @@ acquisition.
 			self.selectSetup()
 			self.custom_setup()
 			self.finalizeSetup()
-			t0 = time.time()
+		except:
+			raise RunTimeError('Error setting camera acquisition parameters')
+
+		t0 = time.time()
+
+		try:
 			self.acqman.Acquire()
 			t1 = time.time()
 			self.exposure_timestamp = (t1 + t0) / 2.0
 			arr = self.im.Data.Array
+		except:
+			raise RunTimeError('Camera Acquisition Error in getting array')
+
+		try:
 			arr.shape = (self.dimension['y'],self.dimension['x'])
 			arr = numpy.flipud(arr)
+		except AttributeError, e:
+			print 'comtypes did not return an numpy 2D array, but %s' % (type(arr)
 		except Exception, e:
 			print e
 			arr = None
