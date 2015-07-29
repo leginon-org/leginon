@@ -125,27 +125,26 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	$selexdisable = ($_POST['partcutoff']=='on') ? '' : 'DISABLED';
 	// density check (checked by default)
 	$invcheck = ($_POST['stackinv']=='on' || !$_POST['process']) ? 'CHECKED' : '';
-	// normalization check (checked by default)
-	$normcheck = ($_POST['stacknorm']=='on' || !$_POST['process']) ? 'CHECKED' : '';
-	$xmippnormcheck = ($_POST['xmippstacknorm']=='off' || !$_POST['process']) ? '' : 'CHECKED';
-	$xmippbeforecheck = ($_POST['xmippbefore']=='on') ? 'CHECKED' : '';
-	$xmippdisable = ($xmippnormcheck=='CHECKED') ? '' : 'DISABLED';
-	$xmippnormval = ($_POST['xmippnormval']) ? $_POST['xmippnormval'] : '4.5';
 	$overridecheck = ($_POST['override']=='on') ? 'CHECKED' : '';
 	// defocus pair check
 	$defocpaircheck = ($_POST['stackdfpair']=='on') ? 'checked' : '';
 	$ddnframe = $_POST['ddnframe'];
 	$ddstartframe = $_POST['ddstartframe'];
 	$forceInsert = ($_POST['forceInsert']=='on' || (!isset($_POST['forceInsert']) && !$_POST) ) ? 'CHECKED' : '';
+	$pixlimitv = ($_POST['pixlimit']) ? $_POST['pixlimit'] : '';
+	$normoptions = array(
+		'edgenorm'=>'normalize by mean 0 stdev 1 in based on edge pixels',
+		'none'=>'do not normalize particle images',
+		'boxnorm'=>'normalize by mean 0 stdev 1 in whole box',
+		'rampnorm'=>'normalize by subtracting a least squares 2D plane',
+		//'parabolic'=>'normalize by subtracting a least squares 2D parabola',
+	);
 	$ctfoptions = array(
 		'ace2image'=>'Ace 2 Wiener Filter Whole Image',
 		'ace2imagephase'=>'Ace 2 PhaseFlip Whole Image',
 		'spiderimage'=>'SPIDER PhaseFlip Whole Image (no astig)',
 		'emanimage'=>'EMAN1 PhaseFlip Whole Image (no astig)',
 		'emanpart'=>'EMAN1 PhaseFlip Particle (no astig)',
-	);
-	$limitedctfoptions=array(
-		'emanpart'=>'EMAN PhaseFlip by Boxed Stack per Image'
 	);
 	if ($ctftiltdata) {
 		$ctfoptions['emantilt'] = 'EMAN PhaseFlip by Tilt Location';
@@ -160,7 +159,6 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 		'conf5peak'=>'5 peaks confidence',
 		'crosscorr'=>'CtfFind cross correlation',
 	);
- 
 	$javascript="<script src='../js/viewer.js'></script>
 	<script type='text/javascript'>
 
@@ -193,44 +191,12 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	}
 
 
-	function enablexmipp(){
-		if (document.viewerform.xmippstacknorm.checked){
-			document.viewerform.xmippnormval.disabled=false;
-			document.viewerform.xmippnormval.value='4.5';
-		} else {
-			document.viewerform.xmippnormval.disabled=true;
-			document.viewerform.xmippnormval.value='4.5';
-		}
-	}
-
 	function toggleboxmask() {
 		if (document.getElementById('boxmaskopts').style.display == 'none' || document.getElementById('boxmaskopts').style.display == '') {
 			document.getElementById('boxmaskopts').style.display = 'block';
 		}
 		else {
 			document.getElementById('boxmaskopts').style.display = 'none';
-		}
-	}
-
-	function normbefore(){
-		if (document.viewerform.xmippbefore.checked){
-			document.viewerform.ctfcorrecttype.options.length=0;\n";
-	$opt=0;
-	foreach ($limitedctfoptions as $key => $text) {
-		$javascript.="document.viewerform.ctfcorrecttype.options[$opt]=new Option('$text','$key');\n";
-		$opt++;
-	}
-
-	$javascript.= "
-		}
-		else {
-			document.viewerform.ctfcorrecttype.options.length=0;\n";
-	$opt=0;
-	foreach ($ctfoptions as $key => $text) {
-		$javascript.="document.viewerform.ctfcorrecttype.options[$opt]=new Option('$text','$key');\n";
-		$opt++;
-	}
-	$javascript.= "
 		}
 	}
 
@@ -336,20 +302,17 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 		echo "<div id='Advanced_Stack_Options_1' style='display: none'>\n";
 	}
 
-	echo "<input type='checkbox' name='stacknorm' $normcheck>\n";
-	echo docpop('stacknorm','Normalize Stack Particles');
+	// select normalization method
+	echo docpop('normalizemethod','Normalization Method');
 	echo "<br/>\n";
-
-	echo "<input type='checkbox' name='xmippstacknorm' onclick='enablexmipp(this)' $xmippnormcheck>\n";
-	echo docpop('xmippstacknorm','XMIPP normalize to sigma:');
-	echo "<input type='text' name='xmippnormval' $xmippdisable value='$xmippnormval' size='4'>";
-	echo "<br/>\n";
-
-	if ($ctfdata) {
-		echo"<input type='checkbox' name='xmippbefore' onclick='normbefore(this)' $xmippbeforecheck>\n";
-		echo docpop('xmippbefore','XMIPP norm before CTF correction');
-		echo "<br/>\n";
+	echo "&nbsp;&nbsp;<select name='normalizemethod' ";
+	echo ">\n";
+	foreach ($normoptions as $key => $text) {
+		$selected = ($_POST['normalizemethod']==$key) ? 'SELECTED':'';
+		echo "<option value='$key' $selected>$text</option>";
 	}
+	echo "</select>\n";
+	echo "<br/><br/>";
 
 	echo "<i>File format:</i>";
 	echo "<br/>\n";
@@ -513,7 +476,7 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 
 	if ($ctfdata) {
 		echo "<table style='border: 1px solid black; padding:5px; background-color:#f9f9ff; ' ><tr ><td>\n\n";
-		
+
 		// use ctf correction
 		echo"<input type='checkbox' name='ctfcorrect' onclick='enablectftype(this)' $phasecheck>\n";
 		echo docpop('ctfcorrect','Ctf Correct Particle Images');
@@ -549,7 +512,6 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 		echo "&nbsp;&nbsp;<select name='ctfcorrecttype' ";
 		if (!$phasecheck) echo " disabled";
 		echo ">\n";
-		if ($xmippbeforecheck) $ctfoptions=$limitedctfoptions;
 		foreach ($ctfoptions as $key => $text) {
 			$selected = ($_POST['ctfcorrecttype']==$key) ? 'SELECTED':'';
 			echo "<option value='$key' $selected>$text</option>";
@@ -722,6 +684,10 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	echo "<font size=-2><i>(in &Aring;ngstroms)</i></font>\n";
 	echo "<br/>\n";
 
+	echo "<input type='text' name='pixlimit' VALUE='$pixlimitv' size='4'>\n";
+	echo docpop('pixlimit',' Pixel Limit');
+	echo "<font size=-2><I>(in Standard Deviations; 0 = off)</I></font><br />\n";
+
 	// commented out for now, since not implemented
 //		<input type='checkbox' name='icecheck' onclick='enableice(this)' $icecheck>
 //		Ice Thickness Cutoff<br />
@@ -824,7 +790,7 @@ function runMakestack() {
 	$description = $_POST['description'];
 	
 	$invert = ($_POST['stackinv']=='on') ? True : False;
-	$stacknorm = ($_POST['stacknorm']=='on') ? True : False;
+	$normalizemethod = $_POST['normalizemethod'];
 	$ctfcorrect = ($_POST['ctfcorrect']=='on') ? 'ctfcorrect' : '';
 	$ctfcorrecttype = $_POST['ctfcorrecttype'];
 	$ctfsorttype = $_POST['ctfsorttype'];
@@ -878,12 +844,6 @@ function runMakestack() {
 		createMakestackForm("<b>ERROR:</b> Choose either a stack or particle run, but not both");
 
 
-	// xmipp normalization
-	if ($_POST['xmippstacknorm']=='on') {
-		$xmippnorm=$_POST['xmippnormval'];
-		if ($xmippnorm <= 0 || !$xmippnorm) createMakestackForm("<b>ERROR:</b> Xmipp sigma must be greater than 0" );
-	}
-
 	// binning amount
 	$bin=$_POST['bin'];
 	if ($bin) {
@@ -921,6 +881,10 @@ function runMakestack() {
 	// hp filter
 	$hp = $_POST['hp'];
 	if ($hp && !is_numeric($hp)) createMakestackForm("<b>ERROR:</b> high pass filter must be a number");
+
+	// pixlimit filter
+	$pixlimit = $_POST['pixlimit'];
+	if ($pixlimit && !is_numeric($pixlimit)) createMakestackForm("<b>ERROR:</b> pixel limit filter must be a number");
 
 	// ctf cutoff
 	if ($_POST['aceconf']=='on') {
@@ -997,10 +961,9 @@ function runMakestack() {
 		$command.="--fromstackid=$fromstackid ";
 	if ($lp) $command.="--lowpass=$lp ";
 	if ($hp) $command.="--highpass=$hp ";
+	if ($pixlimit) $command.="--pixlimit=$pixlimit ";
 	$command.= ($invert) ? "--invert " : "--no-invert ";
-	if ($stacknorm) $command.="--normalized ";
-	if ($xmippnorm) $command.="--xmipp-normalize=$xmippnorm ";
-	if ($_POST['xmippbefore']=='on') $command.="--xmipp-norm-before ";
+	if ($normalizemethod) $command.="--normalize-method=$normalizemethod ";
 	if ($ctfcorrect) { 
 		$command.="--phaseflip --flip-type=$ctfcorrecttype --sort-type=$ctfsorttype ";
 	}
@@ -1039,7 +1002,6 @@ function runMakestack() {
 	if ($ctfrunID) $command.="--ctfrunid=$ctfrunID ";
 	if ($boxmask) $command.="--boxmask='$boxmask' ";
 	if ($forceInsert) $command.="--forceInsert ";
-	else $command.="--no-forceInsert ";
 	
 	$apcommand = parseAppionLoopParams($_POST);
 	if ($apcommand[0] == "<") {

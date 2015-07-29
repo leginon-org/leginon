@@ -103,6 +103,7 @@ def numberStackFile(oldheadfile, startnum=0):
 	apDisplay.printMsg("completed %d particles in %s"%(numimg, apDisplay.timeString(time.time()-t0)))
 	return True
 
+#===============
 def getPartSegmentLimit(filename):
 	root=os.path.splitext(filename)[0]
 	headerfilename=root + ".hed"
@@ -171,8 +172,6 @@ def readImagic(filename, first=1, last=None, msg=True):
 
 #===============	
 def readImagicHeader(headerfilename):
-
-
 	headfile=open(headerfilename,'rb')
 	
 	# Header information for each image contained in 256 4-byte chunks
@@ -331,8 +330,17 @@ def getImageInfo(im):
 	stdev1=ndimage.standard_deviation(im)
 	min1=ndimage.minimum(im)
 	max1=ndimage.maximum(im)
-
 	return avg1,stdev1,min1,max1
+
+#===============
+def makeHeaderStrFromArray(partnum, partarray):
+	shape = 	(partnum, partarray.shape[0], partarray.shape[1])
+	avg = 		partarray.mean()
+	stdev = 	partarray.std()
+	maxval =	partarray.max()
+	minval = 	partarray.min()
+	#print partnum, shape, avg, stdev, maxval, minval
+	return makeHeaderStr(partnum, shape, avg, stdev, maxval, minval)
 
 #===============
 def makeHeaderStr(partnum, shape, avg, stdev, maxval, minval):
@@ -392,7 +400,6 @@ def makeHeaderStr(partnum, shape, avg, stdev, maxval, minval):
 		### fill in the rest with garbage
 		headerstr += floatToFourByte(0)
 	return headerstr
-
 
 #===============
 def intToFourByte(intnum):
@@ -517,6 +524,158 @@ def readSingleParticleFromStack(filename, partnum=1, boxsize=None, msg=True):
 		apDisplay.printError("could not read particle from stack")
 	return partimg
 
+
+#===============
+def appendParticleToStackFile(partarray, mergestackfile, msg=True):
+	"""
+	takes a 2D numpy array and add to stack file
+	
+	due to hack, we must re-number the stack later
+	"""
+	### initialization
+	t0 = time.time()
+	root=os.path.splitext(mergestackfile)[0]
+	mergeheaderfile = root+".hed"
+	mergedatafile   = root+".img"
+
+	### merge data files
+	premergesize = apFile.fileSize(mergedatafile)	
+	
+	mergedata = file(mergedatafile, 'ab')
+	part32bit = numpy.asarray(partarray, dtype=numpy.float32)
+	mergedata.write(part32bit.tobytes())
+	mergedata.close()
+
+	finalsize = apFile.fileSize(mergedatafile)
+	addsize = len(part32bit.tobytes())
+	if finalsize != addsize + premergesize:
+		apDisplay.printError("size mismatch %s vs. %s + %s = %s"%(
+			apDisplay.bytes(finalsize), apDisplay.bytes(addsize),
+			apDisplay.bytes(premergesize), apDisplay.bytes(premergesize+addsize)))
+	elif msg is True:
+		apDisplay.printMsg("size match %s vs. %s + %s = %s"%(
+			apDisplay.bytes(finalsize), apDisplay.bytes(addsize),
+			apDisplay.bytes(premergesize), apDisplay.bytes(premergesize+addsize)))
+
+	### merge header files
+	premergenumpart = apFile.numImagesInStack(mergeheaderfile)
+	mergehead = open(mergeheaderfile, 'ab')
+	#print partarray.shape
+	headerstr = makeHeaderStrFromArray(premergenumpart+1, partarray)
+	mergehead.write(headerstr)
+	mergehead.close()
+	
+	finalnumpart = apFile.numImagesInStack(mergeheaderfile)
+	if finalnumpart != 1 + premergenumpart:
+		apDisplay.printError("size mismatch %d vs. %d + %d = %d"
+			%(finalnumpart, 1, premergenumpart, 1 + premergenumpart))	
+	elif msg is True:
+		apDisplay.printMsg("size match %d vs. %d + %d = %d"
+			%(finalnumpart, 1, premergenumpart, 1 + premergenumpart))	
+	return True
+
+#===============
+def appendParticleListToStackFile(partlist, mergestackfile, msg=True):
+	"""
+	takes a list of 2D numpy arrays and add to stack file
+	
+	due to hack, we must re-number the stack later
+	"""
+	### initialization
+	t0 = time.time()
+	root=os.path.splitext(mergestackfile)[0]
+	mergeheaderfile = root+".hed"
+	mergedatafile   = root+".img"
+
+	### merge data files
+	premergesize = apFile.fileSize(mergedatafile)	
+	
+	mergedata = file(mergedatafile, 'ab')
+	for partarray in partlist:	
+		part32bit = numpy.asarray(partarray, dtype=numpy.float32)
+		mergedata.write(part32bit.tobytes())
+	mergedata.close()
+
+	finalsize = apFile.fileSize(mergedatafile)
+	addsize = len(part32bit.tobytes() * len(partlist))
+	if finalsize != addsize + premergesize:
+		apDisplay.printError("size mismatch %s vs. %s + %s = %s"%(
+			apDisplay.bytes(finalsize), apDisplay.bytes(addsize),
+			apDisplay.bytes(premergesize), apDisplay.bytes(premergesize+addsize)))
+	elif msg is True:
+		apDisplay.printMsg("size match %s vs. %s + %s = %s"%(
+			apDisplay.bytes(finalsize), apDisplay.bytes(addsize),
+			apDisplay.bytes(premergesize), apDisplay.bytes(premergesize+addsize)))
+
+	### merge header files
+	premergenumpart = apFile.numImagesInStack(mergeheaderfile)
+	mergehead = open(mergeheaderfile, 'ab')
+	count = 0
+	for partarray in partlist:
+		count += 1
+		headerstr = makeHeaderStrFromArray(premergenumpart+count, partarray)
+		mergehead.write(headerstr)
+	mergehead.close()
+
+	numberStackFile(mergeheaderfile)
+	
+	finalnumpart = apFile.numImagesInStack(mergeheaderfile)
+	addpart = len(partlist)
+	if finalnumpart != addpart + premergenumpart:
+		apDisplay.printError("size mismatch %d vs. %d + %d = %d"
+			%(finalnumpart, addpart, premergenumpart, addpart+premergenumpart))	
+	elif msg is True:
+		apDisplay.printMsg("size match %d vs. %d + %d = %d"
+			%(finalnumpart, addpart, premergenumpart, addpart+premergenumpart))	
+	return True
+
+
+#===============
+def appendStackFileToStackFile(stackfile, mergestackfile, msg=True):
+	"""
+	takes two stack files and merges them into second file
+	"""
+	### initialization
+	t0 = time.time()
+	root=os.path.splitext(mergestackfile)[0]
+	mergeheaderfile = root+".hed"
+	mergedatafile   = root+".img"
+	root = os.path.splitext(stackfile)[0]
+	stackheaderfile = root+".hed"
+	stackdatafile   = root+".img"
+
+	### merge data files
+	addnumpart = apFile.numImagesInStack(stackheaderfile)
+	addsize = apFile.fileSize(stackdatafile)
+	premergenumpart = apFile.numImagesInStack(mergeheaderfile)
+	premergesize = apFile.fileSize(mergedatafile)	
+	
+	fout = file(mergedatafile, 'ab')
+	fin = file(stackdatafile, 'rb')
+	shutil.copyfileobj(fin, fout, 65536)
+	fin.close()
+	fout.close()
+
+	finalsize = apFile.fileSize(mergedatafile)
+	if finalsize != addsize + premergesize:
+		apDisplay.printError("size mismatch %s vs. %s + %s = %s"%(
+			apDisplay.bytes(finalsize), apDisplay.bytes(addsize),
+			apDisplay.bytes(premergesize), apDisplay.bytes(premergesize+addsize)))
+
+	### merge header files
+	fout = file(mergeheaderfile, 'ab')
+	fin = file(stackheaderfile, 'rb')
+	shutil.copyfileobj(fin, fout, 65536)
+	fin.close()
+	fout.close()
+
+	numberStackFile(mergeheaderfile)
+	finalnumpart = apFile.numImagesInStack(mergeheaderfile)
+	if finalnumpart != addnumpart + premergenumpart:
+		apDisplay.printError("size mismatch %d vs. %d + %d = %d"
+			%(finalnumpart, addnumpart, premergenumpart, addnumpart + premergenumpart))	
+	
+	
 #===============
 def mergeStacks(stacklist, mergestack, msg=True):
 	### initialization

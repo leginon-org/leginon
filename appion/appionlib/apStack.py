@@ -9,6 +9,7 @@ import numpy
 ### appion
 from pyami import mrc
 from pyami import mem
+from pyami import imagic
 from appionlib import apDatabase
 from appionlib import apParticle
 from appionlib import apEMAN
@@ -28,6 +29,10 @@ debug = False
 
 #===============
 def makeNewStack(oldstack, newstack, listfile=None, remove=False, bad=False):
+	"""
+	selects particular particles from a stack
+	need to remove proc2d
+	"""
 	if not os.path.isfile(oldstack):
 		apDisplay.printWarning("could not find old stack: "+oldstack)
 	if os.path.isfile(newstack):
@@ -268,8 +273,14 @@ def averageStack(stack="start.hed", outfile="average.mrc", msg=True):
 		apDisplay.printWarning("could not create stack average, average.mrc")
 		return False
 	avgmrc = os.path.join(os.path.dirname(stackfile), outfile)
-	emancmd = ( "proc2d "+stackfile+" "+avgmrc+" average" )
-	apEMAN.executeEmanCmd(emancmd, verbose=msg)
+	particles = imagic.read(stack)
+	summedParticle = numpy.zeros((particles[0].shape))
+	for partarray in particles:
+		summedParticle += partarray
+	averagePartice = summedParticle/float(len(particles))
+	#emancmd = ( "proc2d "+stackfile+" "+avgmrc+" average" )
+	#apEMAN.executeEmanCmd(emancmd, verbose=msg)
+	mrc.write(averagePartice, avgmrc)
 	return True
 
 #======================

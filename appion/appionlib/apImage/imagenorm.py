@@ -6,9 +6,11 @@ import math
 ## numpy
 import numpy
 import pyami.quietscipy
+from pyami import imagefun
 from scipy import ndimage
 ## appion
 from appionlib import apDisplay
+from appionlib.apImage import imagefilter
 
 ####
 # This is a low-level file with NO database connections
@@ -66,7 +68,7 @@ def normStdevMask(img,mask):
 	"""
 	normalize an image with mean = 0 and stddev = 1.0 only inside a mask
 	"""
-	n1	 = mask.sum()
+	n1 = mask.sum()
 	if n1 == 0:
 		return img
 	sum1   = (img*mask).sum()
@@ -75,6 +77,33 @@ def normStdevMask(img,mask):
 	std1   = math.sqrt((sumsq1 - sum1*sum1/n1)/(n1-1))
 	std2   = img.std()
 	return (img - avg1) / std1
+
+#=========================
+def edgeNorm(imgarray):
+	"""
+	normalize an image with mean = 0 and stddev = 1.0
+	in the outer ring of a particle
+	"""
+	edgeMask = imagefun.filled_circle(imgarray.shape)
+	return normStdevMask(imgarray, edgeMask)
+
+#=========================
+def rampNorm(imgarray):
+	"""
+	normalize an image by subtracting a fit 2D plane
+	and stdev of 1 in the edge
+	"""
+	imgarray = imagefilter.planeRegression(imgarray, msg=False)
+	return edgeNorm(imgarray)
+
+#=========================
+def parabolicNorm(imgarray):
+	"""
+	normalize an image by subtracting a fit 2D parabola
+	and stdev of 1 in the edge
+	"""
+	imgarray = imagefilter.parabolicRegression(imgarray, msg=False)
+	return edgeNorm(imgarray)
 
 #=========================
 def maxNormalizeImage(a, stdevLimit=3.0):
@@ -132,7 +161,6 @@ def normalizeImage(img, stdevLimit=3.0, minlevel=0.0, maxlevel=255.0, trim=0.0):
 		#we have a mask-like object
 		return img * 255
 	#print min1, max1
-
 
 	img = (img - min1)/(max1 - min1)*imrange + minlevel
 	img = numpy.where(img > maxlevel, 255.0, img)
