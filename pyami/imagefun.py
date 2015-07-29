@@ -134,12 +134,14 @@ def filled_sphere(shape, radius, center=None):
 	return numpy.fromfunction(func, shape)
 
 
-def filled_circle(shape, radius, center=None):
+def filled_circle(shape, radius=None, center=None):
 	"""
 	creates a circle mask of defined radius and center 
 	in an array of the provided shape
 	with value of 0 inside the circle and 1 outside the circle
 	"""
+	if radius is None:
+		radius = min(shape)/2
 	r2 = radius*radius
 	if center is None:
 		### set to center of array
