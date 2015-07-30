@@ -100,8 +100,8 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 		$region_y = intval($imageinfo['dimy']*0.75);
 		$lp_diam_x = round(pow(10,10)*$imageinfo['pixelsize']*75);
 		$lp_diam_y = round(pow(10,10)*$imageinfo['pixelsize']*75);
-		$hp_diam_x = min($region_x, $region_y);
-		$hp_diam_y = min($region_x, $region_y);
+		$hp_diam_x = round($imageinfo['pixelsize']*pow(10,10)*min($region_x, $region_y));
+		$hp_diam_y = round($imageinfo['pixelsize']*pow(10,10)*min($region_x, $region_y));
 		$lp_apod_x=2.5*$lp_diam_x;
 		$lp_apod_y=2.5*$lp_diam_y;
 		$hp_apod_x=round($hp_diam_x/2);
@@ -349,10 +349,10 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 			$html.= $params->insertTextField( "lowpass_diameter_y", $fieldSize );
 			$html.= $params->insertTextField( "highpass_diameter_x", $fieldSize );
 			$html.= $params->insertTextField( "highpass_diameter_y", $fieldSize );
-			$html.= $params->insertTextField( "mask_apod_x", $fieldSize );
-			$html.= $params->insertTextField( "mask_apod_y", $fieldSize );
 			$html.= $params->insertTextField( "mask_width_x", $fieldSize );
 			$html.= $params->insertTextField( "mask_width_y", $fieldSize );
+			$html.= $params->insertTextField( "mask_apod_x", $fieldSize );
+			$html.= $params->insertTextField( "mask_apod_y", $fieldSize );
 			$html.= $params->insertTextField( "lowpass_apod_x", $fieldSize );
 			$html.= $params->insertTextField( "lowpass_apod_y", $fieldSize );
 			$html.= $params->insertTextField( "highpass_apod_x", $fieldSize );

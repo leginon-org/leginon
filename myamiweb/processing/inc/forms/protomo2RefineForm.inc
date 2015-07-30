@@ -42,61 +42,472 @@ class Protomo2RefineForm extends BasicLayoutForm
 		//print "_SESSION:" . "<br>";
 		//var_dump($_SESSION);
 		
+		global $html; //I can only get the selector form to pass variables properly by defining it globally in the constructor.\
+		$html .= "
+	    <br />
+	    <H4>Parameter Presets ".docpop('preset_info', '(Info)')."</H4>
+	    <hr />";
+			
+		//Initialize presets
+		if (!isset($_POST['preset_size'])) {$_POST['preset_size']=1;}
+		if (!isset($_POST['preset_search'])) {$_POST['preset_search']=1;}
+		if (!isset($_POST['preset_type'])) {$_POST['preset_type']=1;}
+		if ($_POST['preset_size'] == 9) {$_POST['preset_size']=1;} //The dotted line divider
+		
+		//Preset pulldown menus
+		$size_presets=array("Generic", "10 nm objects(s) - Constant lowpass", "25 nm objects(s) - Constant lowpass", "50 nm objects(s) - Constant lowpass", "100 nm objects(s) - Constant lowpass", "250 nm objects(s) - Constant lowpass", "500 nm objects(s) - Constant lowpass", "1000 nm objects(s) - Constant lowpass", "------------------", "10 nm objects(s) - Decreasing lowpass", "25 nm objects(s) - Decreasing lowpass", "50 nm objects(s) - Decreasing lowpass", "100 nm objects(s) - Decreasing lowpass", "250 nm objects(s) - Decreasing lowpass", "500 nm objects(s) - Decreasing lowpass", "1000 nm objects(s) - Decreasing lowpass");
+		$search_presets=array("Generic", "Tiny search (10%)", "Small search (25%)", "Medium search (50%)", "Large search (75%)", "Full search (90%)");
+		$type_presets=array("Generic", "Quick refinement", "Modest refinement", "Full refinement", "Exhaustive refinement");
+		$html.= '<select name="preset_size" onchange=submit() style="width:150px">';
+		for ($i = 1; $i < count($size_presets)+1; $i++) {
+			$html.= '<option ';
+			if ($i == $_POST['preset_size']) {
+				$html.= 'selected ';
+			}
+			$html.= 'value="'.$i.'">'.$size_presets[$i-1].'</option>';
+		}
+		$html.= '</select>'; $html.= docpop('protomo_refine_presets_size', ' Object Size | ');
+		
+		$html.= '<select name="preset_search" onchange=submit() style="width:150px">';
+		for ($i = 1; $i < count($search_presets)+1; $i++) {
+			$html.= '<option ';
+			if ($i == $_POST['preset_search']) {
+				$html.= 'selected ';
+			}
+			$html.= 'value="'.$i.'">'.$search_presets[$i-1].'</option>';
+		}
+		$html.= '</select>'; $html.= docpop('protomo_refine_presets_search', ' Search Area | ');
+		
+		$html.= '<select name="preset_type" onchange=submit() style="width:150px">';
+		for ($i = 1; $i < count($type_presets)+1; $i++) {
+			$html.= '<option ';
+			if ($i == $_POST['preset_type']) {
+				$html.= 'selected ';
+			}
+			$html.= 'value="'.$i.'">'.$type_presets[$i-1].'</option>';
+		}
+		$html.= '</select>'; $html.= docpop('protomo_refine_presets_type', ' Refinement Type<br>');
+		
 		global $imageinfo;
 		$_POST['runname']=$_SESSION['runname'];
 		$_POST['outdir']=$_SESSION['outdir'];
-		$r1_region_x = $r2_region_x = $r3_region_x = $r4_region_x = $r5_region_x = $imageinfo['dimx']*0.75;
-		$r1_region_y = $r2_region_y = $r3_region_y = $r4_region_y = $r5_region_y = $imageinfo['dimy']*0.75;
-		$r1_lp_diam_x = round(pow(10,10)*$imageinfo['pixelsize']*80);
-		$r2_lp_diam_x = round(pow(10,10)*$imageinfo['pixelsize']*40);
-		$r3_lp_diam_x = round(pow(10,10)*$imageinfo['pixelsize']*20);
-		$r4_lp_diam_x = round(pow(10,10)*$imageinfo['pixelsize']*10);
-		$r5_lp_diam_x = round(pow(10,10)*$imageinfo['pixelsize']*8);
-		$r1_lp_diam_y = round(pow(10,10)*$imageinfo['pixelsize']*80);
-		$r2_lp_diam_y = round(pow(10,10)*$imageinfo['pixelsize']*40);
-		$r3_lp_diam_y = round(pow(10,10)*$imageinfo['pixelsize']*20);
-		$r4_lp_diam_y = round(pow(10,10)*$imageinfo['pixelsize']*10);
-		$r5_lp_diam_y = round(pow(10,10)*$imageinfo['pixelsize']*8);
-		$r1_hp_diam_x = $r2_hp_diam_x = $r3_hp_diam_x = $r4_hp_diam_x = $r5_hp_diam_x = min($r1_region_x, $r1_region_y);
-		$r1_hp_diam_y = $r2_hp_diam_y = $r3_hp_diam_y = $r4_hp_diam_y = $r5_hp_diam_y = min($r1_region_x, $r1_region_y);
-		$r1_lp_apod_x = round(2.5*$r1_lp_diam_x);
-		$r2_lp_apod_x = round(2.5*$r2_lp_diam_x);
-		$r3_lp_apod_x = round(2.5*$r3_lp_diam_x);
-		$r4_lp_apod_x = round(2.5*$r4_lp_diam_x);
-		$r5_lp_apod_x = round(2.5*$r5_lp_diam_x);
-		$r1_lp_apod_y = round(2.5*$r1_lp_diam_y);
-		$r2_lp_apod_y = round(2.5*$r2_lp_diam_y);
-		$r3_lp_apod_y = round(2.5*$r3_lp_diam_y);
-		$r4_lp_apod_y = round(2.5*$r4_lp_diam_y);
-		$r5_lp_apod_y = round(2.5*$r5_lp_diam_y);
-		$r1_hp_apod_x = $r2_hp_apod_x = $r3_hp_apod_x = $r4_hp_apod_x = $r5_hp_apod_x = round($r1_hp_diam_x/2);
-		$r1_hp_apod_y = $r2_hp_apod_y = $r3_hp_apod_y = $r4_hp_apod_y = $r5_hp_apod_y = round($r1_hp_diam_y/2);
+		
+		////Preset Defaults////
+		if ($_POST['process'] != "Just Show Command")
+		{
+			//Search Area Presets (placed before size presets because they depend on these)
+			if ($_POST['preset_search'] == 1)  //Generic (50%)
+			{
+				$_POST['r1_region_x'] = $_POST['r2_region_x'] = $_POST['r3_region_x'] = $_POST['r4_region_x'] = $_POST['r5_region_x'] = $r1_region_x = $r2_region_x = $r3_region_x = $r4_region_x = $r5_region_x = $imageinfo['dimx']*0.5;
+				$_POST['r1_region_y'] = $_POST['r2_region_y'] = $_POST['r3_region_y'] = $_POST['r4_region_y'] = $_POST['r5_region_y'] = $r1_region_y = $r2_region_y = $r3_region_y = $r4_region_y = $r5_region_y = $imageinfo['dimy']*0.5;
+				$Nx1=$r1_region_x/$r1_sampling;$Ny1=$r1_region_y/$r1_sampling;
+				$Nx2=$r2_region_x/$r2_sampling;$Ny2=$r2_region_y/$r2_sampling;
+				$Nx3=$r3_region_x/$r3_sampling;$Ny3=$r3_region_y/$r3_sampling;
+				$Nx4=$r4_region_x/$r4_sampling;$Ny4=$r4_region_y/$r4_sampling;
+				$Nx5=$r5_region_x/$r5_sampling;$Ny5=$r5_region_y/$r5_sampling;
+				$_POST['r1_mask_width_x'] = $r1_mask_width_x = $Nx1-2.5*$r1_mask_apod_x;$_POST['r1_mask_width_y'] = $r1_mask_width_y = $Ny1-2.5*$r1_mask_apod_y;
+				$_POST['r2_mask_width_x'] = $r2_mask_width_x = $Nx2-2.5*$r2_mask_apod_x;$_POST['r2_mask_width_y'] = $r2_mask_width_y = $Ny2-2.5*$r2_mask_apod_y;
+				$_POST['r3_mask_width_x'] = $r3_mask_width_x = $Nx3-2.5*$r3_mask_apod_x;$_POST['r3_mask_width_y'] = $r3_mask_width_y = $Ny3-2.5*$r3_mask_apod_y;
+				$_POST['r4_mask_width_x'] = $r4_mask_width_x = $Nx4-2.5*$r4_mask_apod_x;$_POST['r4_mask_width_y'] = $r4_mask_width_y = $Ny4-2.5*$r4_mask_apod_y;
+				$_POST['r5_mask_width_x'] = $r5_mask_width_x = $Nx5-2.5*$r5_mask_apod_x;$_POST['r5_mask_width_y'] = $r5_mask_width_y = $Ny5-2.5*$r5_mask_apod_y;
+				$_POST['r1_highpass_diameter_x'] = $_POST['r2_highpass_diameter_x'] = $_POST['r3_highpass_diameter_x'] = $_POST['r4_highpass_diameter_x'] = $_POST['r5_highpass_diameter_x'] = $r1_hp_diam_x = $r2_hp_diam_x = $r3_hp_diam_x = $r4_hp_diam_x = $r5_hp_diam_x = round($imageinfo['pixelsize']*pow(10,10)*min($r1_region_x, $r1_region_y));
+				$_POST['r1_highpass_diameter_y'] = $_POST['r2_highpass_diameter_y'] = $_POST['r3_highpass_diameter_y'] = $_POST['r4_highpass_diameter_y'] = $_POST['r5_highpass_diameter_y'] = $r1_hp_diam_y = $r2_hp_diam_y = $r3_hp_diam_y = $r4_hp_diam_y = $r5_hp_diam_y = round($imageinfo['pixelsize']*pow(10,10)*min($r1_region_x, $r1_region_y));
+				$_POST['r1_highpass_apod_x'] = $_POST['r2_highpass_apod_x'] = $_POST['r3_highpass_apod_x'] = $_POST['r4_highpass_apod_x'] = $_POST['r5_highpass_apod_x'] = $r1_hp_apod_x = $r2_hp_apod_x = $r3_hp_apod_x = $r4_hp_apod_x = $r5_hp_apod_x = round($r1_hp_diam_x/2);
+				$_POST['r1_highpass_apod_y'] = $_POST['r2_highpass_apod_y'] = $_POST['r3_highpass_apod_y'] = $_POST['r4_highpass_apod_y'] = $_POST['r5_highpass_apod_y'] = $r1_hp_apod_y = $r2_hp_apod_y = $r3_hp_apod_y = $r4_hp_apod_y = $r5_hp_apod_y = round($r1_hp_diam_y/2);
+			}
+			
+			if ($_POST['preset_search'] == 2)  //Tiny 10%
+			{
+				$_POST['r1_region_x'] = $_POST['r2_region_x'] = $_POST['r3_region_x'] = $_POST['r4_region_x'] = $_POST['r5_region_x'] = $r1_region_x = $r2_region_x = $r3_region_x = $r4_region_x = $r5_region_x = $imageinfo['dimx']*0.1;
+				$_POST['r1_region_y'] = $_POST['r2_region_y'] = $_POST['r3_region_y'] = $_POST['r4_region_y'] = $_POST['r5_region_y'] = $r1_region_y = $r2_region_y = $r3_region_y = $r4_region_y = $r5_region_y = $imageinfo['dimy']*0.1;
+				$Nx1=$r1_region_x/$r1_sampling;$Ny1=$r1_region_y/$r1_sampling;
+				$Nx2=$r2_region_x/$r2_sampling;$Ny2=$r2_region_y/$r2_sampling;
+				$Nx3=$r3_region_x/$r3_sampling;$Ny3=$r3_region_y/$r3_sampling;
+				$Nx4=$r4_region_x/$r4_sampling;$Ny4=$r4_region_y/$r4_sampling;
+				$Nx5=$r5_region_x/$r5_sampling;$Ny5=$r5_region_y/$r5_sampling;
+				$_POST['r1_mask_width_x'] = $r1_mask_width_x = $Nx1-2.5*$r1_mask_apod_x;$_POST['r1_mask_width_y'] = $r1_mask_width_y = $Ny1-2.5*$r1_mask_apod_y;
+				$_POST['r2_mask_width_x'] = $r2_mask_width_x = $Nx2-2.5*$r2_mask_apod_x;$_POST['r2_mask_width_y'] = $r2_mask_width_y = $Ny2-2.5*$r2_mask_apod_y;
+				$_POST['r3_mask_width_x'] = $r3_mask_width_x = $Nx3-2.5*$r3_mask_apod_x;$_POST['r3_mask_width_y'] = $r3_mask_width_y = $Ny3-2.5*$r3_mask_apod_y;
+				$_POST['r4_mask_width_x'] = $r4_mask_width_x = $Nx4-2.5*$r4_mask_apod_x;$_POST['r4_mask_width_y'] = $r4_mask_width_y = $Ny4-2.5*$r4_mask_apod_y;
+				$_POST['r5_mask_width_x'] = $r5_mask_width_x = $Nx5-2.5*$r5_mask_apod_x;$_POST['r5_mask_width_y'] = $r5_mask_width_y = $Ny5-2.5*$r5_mask_apod_y;
+				$_POST['r1_highpass_diameter_x'] = $_POST['r2_highpass_diameter_x'] = $_POST['r3_highpass_diameter_x'] = $_POST['r4_highpass_diameter_x'] = $_POST['r5_highpass_diameter_x'] = $r1_hp_diam_x = $r2_hp_diam_x = $r3_hp_diam_x = $r4_hp_diam_x = $r5_hp_diam_x = round($imageinfo['pixelsize']*pow(10,10)*min($r1_region_x, $r1_region_y));
+				$_POST['r1_highpass_diameter_y'] = $_POST['r2_highpass_diameter_y'] = $_POST['r3_highpass_diameter_y'] = $_POST['r4_highpass_diameter_y'] = $_POST['r5_highpass_diameter_y'] = $r1_hp_diam_y = $r2_hp_diam_y = $r3_hp_diam_y = $r4_hp_diam_y = $r5_hp_diam_y = round($imageinfo['pixelsize']*pow(10,10)*min($r1_region_x, $r1_region_y));
+				$_POST['r1_highpass_apod_x'] = $_POST['r2_highpass_apod_x'] = $_POST['r3_highpass_apod_x'] = $_POST['r4_highpass_apod_x'] = $_POST['r5_highpass_apod_x'] = $r1_hp_apod_x = $r2_hp_apod_x = $r3_hp_apod_x = $r4_hp_apod_x = $r5_hp_apod_x = round($r1_hp_diam_x/2);
+				$_POST['r1_highpass_apod_y'] = $_POST['r2_highpass_apod_y'] = $_POST['r3_highpass_apod_y'] = $_POST['r4_highpass_apod_y'] = $_POST['r5_highpass_apod_y'] = $r1_hp_apod_y = $r2_hp_apod_y = $r3_hp_apod_y = $r4_hp_apod_y = $r5_hp_apod_y = round($r1_hp_diam_y/2);
+			}
+			
+			if ($_POST['preset_search'] == 3)  //Small 25%
+			{
+				$_POST['r1_region_x'] = $_POST['r2_region_x'] = $_POST['r3_region_x'] = $_POST['r4_region_x'] = $_POST['r5_region_x'] = $r1_region_x = $r2_region_x = $r3_region_x = $r4_region_x = $r5_region_x = $imageinfo['dimx']*0.25;
+				$_POST['r1_region_y'] = $_POST['r2_region_y'] = $_POST['r3_region_y'] = $_POST['r4_region_y'] = $_POST['r5_region_y'] = $r1_region_y = $r2_region_y = $r3_region_y = $r4_region_y = $r5_region_y = $imageinfo['dimy']*0.25;
+				$Nx1=$r1_region_x/$r1_sampling;$Ny1=$r1_region_y/$r1_sampling;
+				$Nx2=$r2_region_x/$r2_sampling;$Ny2=$r2_region_y/$r2_sampling;
+				$Nx3=$r3_region_x/$r3_sampling;$Ny3=$r3_region_y/$r3_sampling;
+				$Nx4=$r4_region_x/$r4_sampling;$Ny4=$r4_region_y/$r4_sampling;
+				$Nx5=$r5_region_x/$r5_sampling;$Ny5=$r5_region_y/$r5_sampling;
+				$_POST['r1_mask_width_x'] = $r1_mask_width_x = $Nx1-2.5*$r1_mask_apod_x;$_POST['r1_mask_width_y'] = $r1_mask_width_y = $Ny1-2.5*$r1_mask_apod_y;
+				$_POST['r2_mask_width_x'] = $r2_mask_width_x = $Nx2-2.5*$r2_mask_apod_x;$_POST['r2_mask_width_y'] = $r2_mask_width_y = $Ny2-2.5*$r2_mask_apod_y;
+				$_POST['r3_mask_width_x'] = $r3_mask_width_x = $Nx3-2.5*$r3_mask_apod_x;$_POST['r3_mask_width_y'] = $r3_mask_width_y = $Ny3-2.5*$r3_mask_apod_y;
+				$_POST['r4_mask_width_x'] = $r4_mask_width_x = $Nx4-2.5*$r4_mask_apod_x;$_POST['r4_mask_width_y'] = $r4_mask_width_y = $Ny4-2.5*$r4_mask_apod_y;
+				$_POST['r5_mask_width_x'] = $r5_mask_width_x = $Nx5-2.5*$r5_mask_apod_x;$_POST['r5_mask_width_y'] = $r5_mask_width_y = $Ny5-2.5*$r5_mask_apod_y;
+				$_POST['r1_highpass_diameter_x'] = $_POST['r2_highpass_diameter_x'] = $_POST['r3_highpass_diameter_x'] = $_POST['r4_highpass_diameter_x'] = $_POST['r5_highpass_diameter_x'] = $r1_hp_diam_x = $r2_hp_diam_x = $r3_hp_diam_x = $r4_hp_diam_x = $r5_hp_diam_x = round($imageinfo['pixelsize']*pow(10,10)*min($r1_region_x, $r1_region_y));
+				$_POST['r1_highpass_diameter_y'] = $_POST['r2_highpass_diameter_y'] = $_POST['r3_highpass_diameter_y'] = $_POST['r4_highpass_diameter_y'] = $_POST['r5_highpass_diameter_y'] = $r1_hp_diam_y = $r2_hp_diam_y = $r3_hp_diam_y = $r4_hp_diam_y = $r5_hp_diam_y = round($imageinfo['pixelsize']*pow(10,10)*min($r1_region_x, $r1_region_y));
+				$_POST['r1_highpass_apod_x'] = $_POST['r2_highpass_apod_x'] = $_POST['r3_highpass_apod_x'] = $_POST['r4_highpass_apod_x'] = $_POST['r5_highpass_apod_x'] = $r1_hp_apod_x = $r2_hp_apod_x = $r3_hp_apod_x = $r4_hp_apod_x = $r5_hp_apod_x = round($r1_hp_diam_x/2);
+				$_POST['r1_highpass_apod_y'] = $_POST['r2_highpass_apod_y'] = $_POST['r3_highpass_apod_y'] = $_POST['r4_highpass_apod_y'] = $_POST['r5_highpass_apod_y'] = $r1_hp_apod_y = $r2_hp_apod_y = $r3_hp_apod_y = $r4_hp_apod_y = $r5_hp_apod_y = round($r1_hp_diam_y/2);
+			}
+			
+			if ($_POST['preset_search'] == 4)  //Medium 50%
+			{
+				$_POST['r1_region_x'] = $_POST['r2_region_x'] = $_POST['r3_region_x'] = $_POST['r4_region_x'] = $_POST['r5_region_x'] = $r1_region_x = $r2_region_x = $r3_region_x = $r4_region_x = $r5_region_x = $imageinfo['dimx']*0.5;
+				$_POST['r1_region_y'] = $_POST['r2_region_y'] = $_POST['r3_region_y'] = $_POST['r4_region_y'] = $_POST['r5_region_y'] = $r1_region_y = $r2_region_y = $r3_region_y = $r4_region_y = $r5_region_y = $imageinfo['dimy']*0.5;
+				$Nx1=$r1_region_x/$r1_sampling;$Ny1=$r1_region_y/$r1_sampling;
+				$Nx2=$r2_region_x/$r2_sampling;$Ny2=$r2_region_y/$r2_sampling;
+				$Nx3=$r3_region_x/$r3_sampling;$Ny3=$r3_region_y/$r3_sampling;
+				$Nx4=$r4_region_x/$r4_sampling;$Ny4=$r4_region_y/$r4_sampling;
+				$Nx5=$r5_region_x/$r5_sampling;$Ny5=$r5_region_y/$r5_sampling;
+				$_POST['r1_mask_width_x'] = $r1_mask_width_x = $Nx1-2.5*$r1_mask_apod_x;$_POST['r1_mask_width_y'] = $r1_mask_width_y = $Ny1-2.5*$r1_mask_apod_y;
+				$_POST['r2_mask_width_x'] = $r2_mask_width_x = $Nx2-2.5*$r2_mask_apod_x;$_POST['r2_mask_width_y'] = $r2_mask_width_y = $Ny2-2.5*$r2_mask_apod_y;
+				$_POST['r3_mask_width_x'] = $r3_mask_width_x = $Nx3-2.5*$r3_mask_apod_x;$_POST['r3_mask_width_y'] = $r3_mask_width_y = $Ny3-2.5*$r3_mask_apod_y;
+				$_POST['r4_mask_width_x'] = $r4_mask_width_x = $Nx4-2.5*$r4_mask_apod_x;$_POST['r4_mask_width_y'] = $r4_mask_width_y = $Ny4-2.5*$r4_mask_apod_y;
+				$_POST['r5_mask_width_x'] = $r5_mask_width_x = $Nx5-2.5*$r5_mask_apod_x;$_POST['r5_mask_width_y'] = $r5_mask_width_y = $Ny5-2.5*$r5_mask_apod_y;
+				$_POST['r1_highpass_diameter_x'] = $_POST['r2_highpass_diameter_x'] = $_POST['r3_highpass_diameter_x'] = $_POST['r4_highpass_diameter_x'] = $_POST['r5_highpass_diameter_x'] = $r1_hp_diam_x = $r2_hp_diam_x = $r3_hp_diam_x = $r4_hp_diam_x = $r5_hp_diam_x = round($imageinfo['pixelsize']*pow(10,10)*min($r1_region_x, $r1_region_y));
+				$_POST['r1_highpass_diameter_y'] = $_POST['r2_highpass_diameter_y'] = $_POST['r3_highpass_diameter_y'] = $_POST['r4_highpass_diameter_y'] = $_POST['r5_highpass_diameter_y'] = $r1_hp_diam_y = $r2_hp_diam_y = $r3_hp_diam_y = $r4_hp_diam_y = $r5_hp_diam_y = round($imageinfo['pixelsize']*pow(10,10)*min($r1_region_x, $r1_region_y));
+				$_POST['r1_highpass_apod_x'] = $_POST['r2_highpass_apod_x'] = $_POST['r3_highpass_apod_x'] = $_POST['r4_highpass_apod_x'] = $_POST['r5_highpass_apod_x'] = $r1_hp_apod_x = $r2_hp_apod_x = $r3_hp_apod_x = $r4_hp_apod_x = $r5_hp_apod_x = round($r1_hp_diam_x/2);
+				$_POST['r1_highpass_apod_y'] = $_POST['r2_highpass_apod_y'] = $_POST['r3_highpass_apod_y'] = $_POST['r4_highpass_apod_y'] = $_POST['r5_highpass_apod_y'] = $r1_hp_apod_y = $r2_hp_apod_y = $r3_hp_apod_y = $r4_hp_apod_y = $r5_hp_apod_y = round($r1_hp_diam_y/2);
+			}
+			
+			if ($_POST['preset_search'] == 5)  //Large 75%
+			{
+				$_POST['r1_region_x'] = $_POST['r2_region_x'] = $_POST['r3_region_x'] = $_POST['r4_region_x'] = $_POST['r5_region_x'] = $r1_region_x = $r2_region_x = $r3_region_x = $r4_region_x = $r5_region_x = $imageinfo['dimx']*0.75;
+				$_POST['r1_region_y'] = $_POST['r2_region_y'] = $_POST['r3_region_y'] = $_POST['r4_region_y'] = $_POST['r5_region_y'] = $r1_region_y = $r2_region_y = $r3_region_y = $r4_region_y = $r5_region_y = $imageinfo['dimy']*0.75;
+				$Nx1=$r1_region_x/$r1_sampling;$Ny1=$r1_region_y/$r1_sampling;
+				$Nx2=$r2_region_x/$r2_sampling;$Ny2=$r2_region_y/$r2_sampling;
+				$Nx3=$r3_region_x/$r3_sampling;$Ny3=$r3_region_y/$r3_sampling;
+				$Nx4=$r4_region_x/$r4_sampling;$Ny4=$r4_region_y/$r4_sampling;
+				$Nx5=$r5_region_x/$r5_sampling;$Ny5=$r5_region_y/$r5_sampling;
+				$_POST['r1_mask_width_x'] = $r1_mask_width_x = $Nx1-2.5*$r1_mask_apod_x;$_POST['r1_mask_width_y'] = $r1_mask_width_y = $Ny1-2.5*$r1_mask_apod_y;
+				$_POST['r2_mask_width_x'] = $r2_mask_width_x = $Nx2-2.5*$r2_mask_apod_x;$_POST['r2_mask_width_y'] = $r2_mask_width_y = $Ny2-2.5*$r2_mask_apod_y;
+				$_POST['r3_mask_width_x'] = $r3_mask_width_x = $Nx3-2.5*$r3_mask_apod_x;$_POST['r3_mask_width_y'] = $r3_mask_width_y = $Ny3-2.5*$r3_mask_apod_y;
+				$_POST['r4_mask_width_x'] = $r4_mask_width_x = $Nx4-2.5*$r4_mask_apod_x;$_POST['r4_mask_width_y'] = $r4_mask_width_y = $Ny4-2.5*$r4_mask_apod_y;
+				$_POST['r5_mask_width_x'] = $r5_mask_width_x = $Nx5-2.5*$r5_mask_apod_x;$_POST['r5_mask_width_y'] = $r5_mask_width_y = $Ny5-2.5*$r5_mask_apod_y;
+				$_POST['r1_highpass_diameter_x'] = $_POST['r2_highpass_diameter_x'] = $_POST['r3_highpass_diameter_x'] = $_POST['r4_highpass_diameter_x'] = $_POST['r5_highpass_diameter_x'] = $r1_hp_diam_x = $r2_hp_diam_x = $r3_hp_diam_x = $r4_hp_diam_x = $r5_hp_diam_x = round($imageinfo['pixelsize']*pow(10,10)*min($r1_region_x, $r1_region_y));
+				$_POST['r1_highpass_diameter_y'] = $_POST['r2_highpass_diameter_y'] = $_POST['r3_highpass_diameter_y'] = $_POST['r4_highpass_diameter_y'] = $_POST['r5_highpass_diameter_y'] = $r1_hp_diam_y = $r2_hp_diam_y = $r3_hp_diam_y = $r4_hp_diam_y = $r5_hp_diam_y = round($imageinfo['pixelsize']*pow(10,10)*min($r1_region_x, $r1_region_y));
+				$_POST['r1_highpass_apod_x'] = $_POST['r2_highpass_apod_x'] = $_POST['r3_highpass_apod_x'] = $_POST['r4_highpass_apod_x'] = $_POST['r5_highpass_apod_x'] = $r1_hp_apod_x = $r2_hp_apod_x = $r3_hp_apod_x = $r4_hp_apod_x = $r5_hp_apod_x = round($r1_hp_diam_x/2);
+				$_POST['r1_highpass_apod_y'] = $_POST['r2_highpass_apod_y'] = $_POST['r3_highpass_apod_y'] = $_POST['r4_highpass_apod_y'] = $_POST['r5_highpass_apod_y'] = $r1_hp_apod_y = $r2_hp_apod_y = $r3_hp_apod_y = $r4_hp_apod_y = $r5_hp_apod_y = round($r1_hp_diam_y/2);
+			}
+			
+			if ($_POST['preset_search'] == 6)  //Full 90%
+			{
+				$_POST['r1_region_x'] = $_POST['r2_region_x'] = $_POST['r3_region_x'] = $_POST['r4_region_x'] = $_POST['r5_region_x'] = $r1_region_x = $r2_region_x = $r3_region_x = $r4_region_x = $r5_region_x = $imageinfo['dimx']*0.9;
+				$_POST['r1_region_y'] = $_POST['r2_region_y'] = $_POST['r3_region_y'] = $_POST['r4_region_y'] = $_POST['r5_region_y'] = $r1_region_y = $r2_region_y = $r3_region_y = $r4_region_y = $r5_region_y = $imageinfo['dimy']*0.9;
+				$Nx1=$r1_region_x/$r1_sampling;$Ny1=$r1_region_y/$r1_sampling;
+				$Nx2=$r2_region_x/$r2_sampling;$Ny2=$r2_region_y/$r2_sampling;
+				$Nx3=$r3_region_x/$r3_sampling;$Ny3=$r3_region_y/$r3_sampling;
+				$Nx4=$r4_region_x/$r4_sampling;$Ny4=$r4_region_y/$r4_sampling;
+				$Nx5=$r5_region_x/$r5_sampling;$Ny5=$r5_region_y/$r5_sampling;
+				$_POST['r1_mask_width_x'] = $r1_mask_width_x = $Nx1-2.5*$r1_mask_apod_x;$_POST['r1_mask_width_y'] = $r1_mask_width_y = $Ny1-2.5*$r1_mask_apod_y;
+				$_POST['r2_mask_width_x'] = $r2_mask_width_x = $Nx2-2.5*$r2_mask_apod_x;$_POST['r2_mask_width_y'] = $r2_mask_width_y = $Ny2-2.5*$r2_mask_apod_y;
+				$_POST['r3_mask_width_x'] = $r3_mask_width_x = $Nx3-2.5*$r3_mask_apod_x;$_POST['r3_mask_width_y'] = $r3_mask_width_y = $Ny3-2.5*$r3_mask_apod_y;
+				$_POST['r4_mask_width_x'] = $r4_mask_width_x = $Nx4-2.5*$r4_mask_apod_x;$_POST['r4_mask_width_y'] = $r4_mask_width_y = $Ny4-2.5*$r4_mask_apod_y;
+				$_POST['r5_mask_width_x'] = $r5_mask_width_x = $Nx5-2.5*$r5_mask_apod_x;$_POST['r5_mask_width_y'] = $r5_mask_width_y = $Ny5-2.5*$r5_mask_apod_y;
+				$_POST['r1_highpass_diameter_x'] = $_POST['r2_highpass_diameter_x'] = $_POST['r3_highpass_diameter_x'] = $_POST['r4_highpass_diameter_x'] = $_POST['r5_highpass_diameter_x'] = $r1_hp_diam_x = $r2_hp_diam_x = $r3_hp_diam_x = $r4_hp_diam_x = $r5_hp_diam_x = round($imageinfo['pixelsize']*pow(10,10)*min($r1_region_x, $r1_region_y));
+				$_POST['r1_highpass_diameter_y'] = $_POST['r2_highpass_diameter_y'] = $_POST['r3_highpass_diameter_y'] = $_POST['r4_highpass_diameter_y'] = $_POST['r5_highpass_diameter_y'] = $r1_hp_diam_y = $r2_hp_diam_y = $r3_hp_diam_y = $r4_hp_diam_y = $r5_hp_diam_y = round($imageinfo['pixelsize']*pow(10,10)*min($r1_region_x, $r1_region_y));
+				$_POST['r1_highpass_apod_x'] = $_POST['r2_highpass_apod_x'] = $_POST['r3_highpass_apod_x'] = $_POST['r4_highpass_apod_x'] = $_POST['r5_highpass_apod_x'] = $r1_hp_apod_x = $r2_hp_apod_x = $r3_hp_apod_x = $r4_hp_apod_x = $r5_hp_apod_x = round($r1_hp_diam_x/2);
+				$_POST['r1_highpass_apod_y'] = $_POST['r2_highpass_apod_y'] = $_POST['r3_highpass_apod_y'] = $_POST['r4_highpass_apod_y'] = $_POST['r5_highpass_apod_y'] = $r1_hp_apod_y = $r2_hp_apod_y = $r3_hp_apod_y = $r4_hp_apod_y = $r5_hp_apod_y = round($r1_hp_diam_y/2);
+			}
+			
+			
+			//Size Presets
+			if ($_POST['preset_size'] == 1)  //Generic - Constant lowpass
+			{
+				$_POST['r1_lowpass_diameter_x'] = $_POST['r1_lowpass_diameter_y'] = $r1_lp_diam_x = $r1_lp_diam_y = min(175, round(0.75*$r1_hp_diam_x));
+				$_POST['r2_lowpass_diameter_x'] = $_POST['r2_lowpass_diameter_y'] = $r2_lp_diam_x = $r2_lp_diam_y = min(150, round(0.75*$r1_hp_diam_x));
+				$_POST['r3_lowpass_diameter_x'] = $_POST['r3_lowpass_diameter_y'] = $r3_lp_diam_x = $r3_lp_diam_y = min(125, round(0.75*$r1_hp_diam_x));
+				$_POST['r4_lowpass_diameter_x'] = $_POST['r4_lowpass_diameter_y'] = $r4_lp_diam_x = $r4_lp_diam_y = min(100, round(0.75*$r1_hp_diam_x));
+				$_POST['r5_lowpass_diameter_x'] = $_POST['r5_lowpass_diameter_y'] = $r5_lp_diam_x = $r5_lp_diam_y = min(75, round(0.75*$r1_hp_diam_x));
+				$_POST['r1_lowpass_apod_x'] = $r1_lp_apod_x = round(2.5*$r1_lp_diam_x);
+				$_POST['r2_lowpass_apod_x'] = $r2_lp_apod_x = round(2.5*$r2_lp_diam_x);
+				$_POST['r3_lowpass_apod_x'] = $r3_lp_apod_x = round(2.5*$r3_lp_diam_x);
+				$_POST['r4_lowpass_apod_x'] = $r4_lp_apod_x = round(2.5*$r4_lp_diam_x);
+				$_POST['r5_lowpass_apod_x'] = $r5_lp_apod_x = round(2.5*$r5_lp_diam_x);
+				$_POST['r1_lowpass_apod_y'] = $r1_lp_apod_y = round(2.5*$r1_lp_diam_y);
+				$_POST['r2_lowpass_apod_y'] = $r2_lp_apod_y = round(2.5*$r2_lp_diam_y);
+				$_POST['r3_lowpass_apod_y'] = $r3_lp_apod_y = round(2.5*$r3_lp_diam_y);
+				$_POST['r4_lowpass_apod_y'] = $r4_lp_apod_y = round(2.5*$r4_lp_diam_y);
+				$_POST['r5_lowpass_apod_y'] = $r5_lp_apod_y = round(2.5*$r5_lp_diam_y);
+				$_POST['thickness'] = $thickness = 1500;
+			}
+			
+			if ($_POST['preset_size'] == 2)  //Size 10 nm - Constant lowpass
+			{
+				$_POST['r1_lowpass_diameter_x'] = $_POST['r2_lowpass_diameter_x'] = $_POST['r3_lowpass_diameter_x'] = $_POST['r4_lowpass_diameter_x'] = $_POST['r5_lowpass_diameter_x'] = $r1_lp_diam_x=$r2_lp_diam_x=$r3_lp_diam_x=$r4_lp_diam_x=$r5_lp_diam_x=min(50, round(0.75*$r1_hp_diam_x));
+				$_POST['r1_lowpass_diameter_y'] = $_POST['r2_lowpass_diameter_y'] = $_POST['r3_lowpass_diameter_y'] = $_POST['r4_lowpass_diameter_y'] = $_POST['r5_lowpass_diameter_y'] = $r1_lp_diam_y=$r2_lp_diam_y=$r3_lp_diam_y=$r4_lp_diam_y=$r5_lp_diam_y=min(50, round(0.75*$r1_hp_diam_y));
+				$_POST['r1_lowpass_apod_x'] = $_POST['r2_lowpass_apod_x'] = $_POST['r3_lowpass_apod_x'] = $_POST['r4_lowpass_apod_x'] = $_POST['r5_lowpass_apod_x'] = $r1_lp_apod_x = $r2_lp_apod_x = $r3_lp_apod_x = $r4_lp_apod_x = $r5_lp_apod_x = round(2.5*$r1_lp_diam_x);
+				$_POST['r1_lowpass_apod_y'] = $_POST['r2_lowpass_apod_y'] = $_POST['r3_lowpass_apod_y'] = $_POST['r4_lowpass_apod_y'] = $_POST['r5_lowpass_apod_y'] = $r1_lp_apod_y = $r2_lp_apod_y = $r3_lp_apod_y = $r4_lp_apod_y = $r5_lp_apod_y = round(2.5*$r1_lp_diam_y);
+				$_POST['thickness'] = $thickness = 500;
+			}
+			
+			if ($_POST['preset_size'] == 3)  //Size 25 nm - Constant lowpass
+			{
+				$_POST['r1_lowpass_diameter_x'] = $_POST['r2_lowpass_diameter_x'] = $_POST['r3_lowpass_diameter_x'] = $_POST['r4_lowpass_diameter_x'] = $_POST['r5_lowpass_diameter_x'] = $r1_lp_diam_x=$r2_lp_diam_x=$r3_lp_diam_x=$r4_lp_diam_x=$r5_lp_diam_x=min(125, round(0.75*$r1_hp_diam_x));
+				$_POST['r1_lowpass_diameter_y'] = $_POST['r2_lowpass_diameter_y'] = $_POST['r3_lowpass_diameter_y'] = $_POST['r4_lowpass_diameter_y'] = $_POST['r5_lowpass_diameter_y'] = $r1_lp_diam_y=$r2_lp_diam_y=$r3_lp_diam_y=$r4_lp_diam_y=$r5_lp_diam_y=min(125, round(0.75*$r1_hp_diam_y));
+				$_POST['r1_lowpass_apod_x'] = $_POST['r2_lowpass_apod_x'] = $_POST['r3_lowpass_apod_x'] = $_POST['r4_lowpass_apod_x'] = $_POST['r5_lowpass_apod_x'] = $r1_lp_apod_x = $r2_lp_apod_x = $r3_lp_apod_x = $r4_lp_apod_x = $r5_lp_apod_x = round(2.5*$r1_lp_diam_x);
+				$_POST['r1_lowpass_apod_y'] = $_POST['r2_lowpass_apod_y'] = $_POST['r3_lowpass_apod_y'] = $_POST['r4_lowpass_apod_y'] = $_POST['r5_lowpass_apod_y'] = $r1_lp_apod_y = $r2_lp_apod_y = $r3_lp_apod_y = $r4_lp_apod_y = $r5_lp_apod_y = round(2.5*$r1_lp_diam_y);
+				$_POST['thickness'] = $thickness = 1250;
+			}
+			
+			if ($_POST['preset_size'] == 4)  //Size 50 nm - Constant lowpass
+			{
+				$_POST['r1_lowpass_diameter_x'] = $_POST['r2_lowpass_diameter_x'] = $_POST['r3_lowpass_diameter_x'] = $_POST['r4_lowpass_diameter_x'] = $_POST['r5_lowpass_diameter_x'] = $r1_lp_diam_x=$r2_lp_diam_x=$r3_lp_diam_x=$r4_lp_diam_x=$r5_lp_diam_x=min(250, round(0.75*$r1_hp_diam_x));
+				$_POST['r1_lowpass_diameter_y'] = $_POST['r2_lowpass_diameter_y'] = $_POST['r3_lowpass_diameter_y'] = $_POST['r4_lowpass_diameter_y'] = $_POST['r5_lowpass_diameter_y'] = $r1_lp_diam_y=$r2_lp_diam_y=$r3_lp_diam_y=$r4_lp_diam_y=$r5_lp_diam_y=min(250, round(0.75*$r1_hp_diam_y));
+				$_POST['r1_lowpass_apod_x'] = $_POST['r2_lowpass_apod_x'] = $_POST['r3_lowpass_apod_x'] = $_POST['r4_lowpass_apod_x'] = $_POST['r5_lowpass_apod_x'] = $r1_lp_apod_x = $r2_lp_apod_x = $r3_lp_apod_x = $r4_lp_apod_x = $r5_lp_apod_x = round(2.5*$r1_lp_diam_x);
+				$_POST['r1_lowpass_apod_y'] = $_POST['r2_lowpass_apod_y'] = $_POST['r3_lowpass_apod_y'] = $_POST['r4_lowpass_apod_y'] = $_POST['r5_lowpass_apod_y'] = $r1_lp_apod_y = $r2_lp_apod_y = $r3_lp_apod_y = $r4_lp_apod_y = $r5_lp_apod_y = round(2.5*$r1_lp_diam_y);
+				$_POST['thickness'] = $thickness = 2500;
+			}
+			
+			if ($_POST['preset_size'] == 5)  //Size 100 nm - Constant lowpass
+			{
+				$_POST['r1_lowpass_diameter_x'] = $_POST['r2_lowpass_diameter_x'] = $_POST['r3_lowpass_diameter_x'] = $_POST['r4_lowpass_diameter_x'] = $_POST['r5_lowpass_diameter_x'] = $r1_lp_diam_x=$r2_lp_diam_x=$r3_lp_diam_x=$r4_lp_diam_x=$r5_lp_diam_x=min(500, round(0.75*$r1_hp_diam_x));
+				$_POST['r1_lowpass_diameter_y'] = $_POST['r2_lowpass_diameter_y'] = $_POST['r3_lowpass_diameter_y'] = $_POST['r4_lowpass_diameter_y'] = $_POST['r5_lowpass_diameter_y'] = $r1_lp_diam_y=$r2_lp_diam_y=$r3_lp_diam_y=$r4_lp_diam_y=$r5_lp_diam_y=min(500, round(0.75*$r1_hp_diam_y));
+				$_POST['r1_lowpass_apod_x'] = $_POST['r2_lowpass_apod_x'] = $_POST['r3_lowpass_apod_x'] = $_POST['r4_lowpass_apod_x'] = $_POST['r5_lowpass_apod_x'] = $r1_lp_apod_x = $r2_lp_apod_x = $r3_lp_apod_x = $r4_lp_apod_x = $r5_lp_apod_x = round(2.5*$r1_lp_diam_x);
+				$_POST['r1_lowpass_apod_y'] = $_POST['r2_lowpass_apod_y'] = $_POST['r3_lowpass_apod_y'] = $_POST['r4_lowpass_apod_y'] = $_POST['r5_lowpass_apod_y'] = $r1_lp_apod_y = $r2_lp_apod_y = $r3_lp_apod_y = $r4_lp_apod_y = $r5_lp_apod_y = round(2.5*$r1_lp_diam_y);
+				$_POST['thickness'] = $thickness = 5000;
+			}
+			
+			if ($_POST['preset_size'] == 6)  //Size 250 nm - Constant lowpass
+			{
+				$_POST['r1_lowpass_diameter_x'] = $_POST['r2_lowpass_diameter_x'] = $_POST['r3_lowpass_diameter_x'] = $_POST['r4_lowpass_diameter_x'] = $_POST['r5_lowpass_diameter_x'] = $r1_lp_diam_x=$r2_lp_diam_x=$r3_lp_diam_x=$r4_lp_diam_x=$r5_lp_diam_x=min(1250, round(0.75*$r1_hp_diam_x));
+				$_POST['r1_lowpass_diameter_y'] = $_POST['r2_lowpass_diameter_y'] = $_POST['r3_lowpass_diameter_y'] = $_POST['r4_lowpass_diameter_y'] = $_POST['r5_lowpass_diameter_y'] = $r1_lp_diam_y=$r2_lp_diam_y=$r3_lp_diam_y=$r4_lp_diam_y=$r5_lp_diam_y=min(1250, round(0.75*$r1_hp_diam_y));
+				$_POST['r1_lowpass_apod_x'] = $_POST['r2_lowpass_apod_x'] = $_POST['r3_lowpass_apod_x'] = $_POST['r4_lowpass_apod_x'] = $_POST['r5_lowpass_apod_x'] = $r1_lp_apod_x = $r2_lp_apod_x = $r3_lp_apod_x = $r4_lp_apod_x = $r5_lp_apod_x = round(2.5*$r1_lp_diam_x);
+				$_POST['r1_lowpass_apod_y'] = $_POST['r2_lowpass_apod_y'] = $_POST['r3_lowpass_apod_y'] = $_POST['r4_lowpass_apod_y'] = $_POST['r5_lowpass_apod_y'] = $r1_lp_apod_y = $r2_lp_apod_y = $r3_lp_apod_y = $r4_lp_apod_y = $r5_lp_apod_y = round(2.5*$r1_lp_diam_y);
+				$_POST['thickness'] = $thickness = 12500;
+			}
+			
+			if ($_POST['preset_size'] == 7)  //Size 500 nm - Constant lowpass
+			{
+				$_POST['r1_lowpass_diameter_x'] = $_POST['r2_lowpass_diameter_x'] = $_POST['r3_lowpass_diameter_x'] = $_POST['r4_lowpass_diameter_x'] = $_POST['r5_lowpass_diameter_x'] = $r1_lp_diam_x=$r2_lp_diam_x=$r3_lp_diam_x=$r4_lp_diam_x=$r5_lp_diam_x=min(2500, round(0.75*$r1_hp_diam_x));
+				$_POST['r1_lowpass_diameter_y'] = $_POST['r2_lowpass_diameter_y'] = $_POST['r3_lowpass_diameter_y'] = $_POST['r4_lowpass_diameter_y'] = $_POST['r5_lowpass_diameter_y'] = $r1_lp_diam_y=$r2_lp_diam_y=$r3_lp_diam_y=$r4_lp_diam_y=$r5_lp_diam_y=min(2500, round(0.75*$r1_hp_diam_y));
+				$_POST['r1_lowpass_apod_x'] = $_POST['r2_lowpass_apod_x'] = $_POST['r3_lowpass_apod_x'] = $_POST['r4_lowpass_apod_x'] = $_POST['r5_lowpass_apod_x'] = $r1_lp_apod_x = $r2_lp_apod_x = $r3_lp_apod_x = $r4_lp_apod_x = $r5_lp_apod_x = round(2.5*$r1_lp_diam_x);
+				$_POST['r1_lowpass_apod_y'] = $_POST['r2_lowpass_apod_y'] = $_POST['r3_lowpass_apod_y'] = $_POST['r4_lowpass_apod_y'] = $_POST['r5_lowpass_apod_y'] = $r1_lp_apod_y = $r2_lp_apod_y = $r3_lp_apod_y = $r4_lp_apod_y = $r5_lp_apod_y = round(2.5*$r1_lp_diam_y);
+				$_POST['thickness'] = $thickness = 25000;
+			}
+			
+			if ($_POST['preset_size'] == 8)  //Size 1000 nm - Constant lowpass
+			{
+				$_POST['r1_lowpass_diameter_x'] = $_POST['r2_lowpass_diameter_x'] = $_POST['r3_lowpass_diameter_x'] = $_POST['r4_lowpass_diameter_x'] = $_POST['r5_lowpass_diameter_x'] = $r1_lp_diam_x=$r2_lp_diam_x=$r3_lp_diam_x=$r4_lp_diam_x=$r5_lp_diam_x=min(5000, round(0.75*$r1_hp_diam_x));
+				$_POST['r1_lowpass_diameter_y'] = $_POST['r2_lowpass_diameter_y'] = $_POST['r3_lowpass_diameter_y'] = $_POST['r4_lowpass_diameter_y'] = $_POST['r5_lowpass_diameter_y'] = $r1_lp_diam_y=$r2_lp_diam_y=$r3_lp_diam_y=$r4_lp_diam_y=$r5_lp_diam_y=min(5000, round(0.75*$r1_hp_diam_y));
+				$_POST['r1_lowpass_apod_x'] = $_POST['r2_lowpass_apod_x'] = $_POST['r3_lowpass_apod_x'] = $_POST['r4_lowpass_apod_x'] = $_POST['r5_lowpass_apod_x'] = $r1_lp_apod_x = $r2_lp_apod_x = $r3_lp_apod_x = $r4_lp_apod_x = $r5_lp_apod_x = round(2.5*$r1_lp_diam_x);
+				$_POST['r1_lowpass_apod_y'] = $_POST['r2_lowpass_apod_y'] = $_POST['r3_lowpass_apod_y'] = $_POST['r4_lowpass_apod_y'] = $_POST['r5_lowpass_apod_y'] = $r1_lp_apod_y = $r2_lp_apod_y = $r3_lp_apod_y = $r4_lp_apod_y = $r5_lp_apod_y = round(2.5*$r1_lp_diam_y);
+				$_POST['thickness'] = $thickness = 50000;
+			}
+			
+			if ($_POST['preset_size'] == 10)  //Size 10 nm - Decreasing lowpass
+			{
+				$_POST['r1_lowpass_diameter_x'] = $_POST['r1_lowpass_diameter_y'] = $r1_lp_diam_x = $r1_lp_diam_y = min(100, round(0.75*$r1_hp_diam_x));
+				$_POST['r2_lowpass_diameter_x'] = $_POST['r2_lowpass_diameter_y'] = $r2_lp_diam_x = $r2_lp_diam_y = min(75, round(0.75*$r1_hp_diam_x));
+				$_POST['r3_lowpass_diameter_x'] = $_POST['r3_lowpass_diameter_y'] = $r3_lp_diam_x = $r3_lp_diam_y = min(50, round(0.75*$r1_hp_diam_x));
+				$_POST['r4_lowpass_diameter_x'] = $_POST['r4_lowpass_diameter_y'] = $r4_lp_diam_x = $r4_lp_diam_y = min(30, round(0.75*$r1_hp_diam_x));
+				$_POST['r5_lowpass_diameter_x'] = $_POST['r5_lowpass_diameter_y'] = $r5_lp_diam_x = $r5_lp_diam_y = min(10, round(0.75*$r1_hp_diam_x));
+				$_POST['r1_lowpass_apod_x'] = $r1_lp_apod_x = round(2.5*$r1_lp_diam_x);
+				$_POST['r2_lowpass_apod_x'] = $r2_lp_apod_x = round(2.5*$r2_lp_diam_x);
+				$_POST['r3_lowpass_apod_x'] = $r3_lp_apod_x = round(2.5*$r3_lp_diam_x);
+				$_POST['r4_lowpass_apod_x'] = $r4_lp_apod_x = round(2.5*$r4_lp_diam_x);
+				$_POST['r5_lowpass_apod_x'] = $r5_lp_apod_x = round(2.5*$r5_lp_diam_x);
+				$_POST['r1_lowpass_apod_y'] = $r1_lp_apod_y = round(2.5*$r1_lp_diam_y);
+				$_POST['r2_lowpass_apod_y'] = $r2_lp_apod_y = round(2.5*$r2_lp_diam_y);
+				$_POST['r3_lowpass_apod_y'] = $r3_lp_apod_y = round(2.5*$r3_lp_diam_y);
+				$_POST['r4_lowpass_apod_y'] = $r4_lp_apod_y = round(2.5*$r4_lp_diam_y);
+				$_POST['r5_lowpass_apod_y'] = $r5_lp_apod_y = round(2.5*$r5_lp_diam_y);
+				$_POST['thickness'] = $thickness = 500;
+			}
+			
+			if ($_POST['preset_size'] == 11)  //Size 25 nm - Decreasing lowpass
+			{
+				$_POST['r1_lowpass_diameter_x'] = $_POST['r1_lowpass_diameter_y'] = $r1_lp_diam_x = $r1_lp_diam_y = min(150, round(0.75*$r1_hp_diam_x));
+				$_POST['r2_lowpass_diameter_x'] = $_POST['r2_lowpass_diameter_y'] = $r2_lp_diam_x = $r2_lp_diam_y = min(125, round(0.75*$r1_hp_diam_x));
+				$_POST['r3_lowpass_diameter_x'] = $_POST['r3_lowpass_diameter_y'] = $r3_lp_diam_x = $r3_lp_diam_y = min(100, round(0.75*$r1_hp_diam_x));
+				$_POST['r4_lowpass_diameter_x'] = $_POST['r4_lowpass_diameter_y'] = $r4_lp_diam_x = $r4_lp_diam_y = min(75, round(0.75*$r1_hp_diam_x));
+				$_POST['r5_lowpass_diameter_x'] = $_POST['r5_lowpass_diameter_y'] = $r5_lp_diam_x = $r5_lp_diam_y = min(50, round(0.75*$r1_hp_diam_x));
+				$_POST['r1_lowpass_apod_x'] = $r1_lp_apod_x = round(2.5*$r1_lp_diam_x);
+				$_POST['r2_lowpass_apod_x'] = $r2_lp_apod_x = round(2.5*$r2_lp_diam_x);
+				$_POST['r3_lowpass_apod_x'] = $r3_lp_apod_x = round(2.5*$r3_lp_diam_x);
+				$_POST['r4_lowpass_apod_x'] = $r4_lp_apod_x = round(2.5*$r4_lp_diam_x);
+				$_POST['r5_lowpass_apod_x'] = $r5_lp_apod_x = round(2.5*$r5_lp_diam_x);
+				$_POST['r1_lowpass_apod_y'] = $r1_lp_apod_y = round(2.5*$r1_lp_diam_y);
+				$_POST['r2_lowpass_apod_y'] = $r2_lp_apod_y = round(2.5*$r2_lp_diam_y);
+				$_POST['r3_lowpass_apod_y'] = $r3_lp_apod_y = round(2.5*$r3_lp_diam_y);
+				$_POST['r4_lowpass_apod_y'] = $r4_lp_apod_y = round(2.5*$r4_lp_diam_y);
+				$_POST['r5_lowpass_apod_y'] = $r5_lp_apod_y = round(2.5*$r5_lp_diam_y);
+				$_POST['thickness'] = $thickness = 1250;
+			}
+			
+			if ($_POST['preset_size'] == 12)  //Size 50 nm - Decreasing lowpass
+			{
+				$_POST['r1_lowpass_diameter_x'] = $_POST['r1_lowpass_diameter_y'] = $r1_lp_diam_x = $r1_lp_diam_y = min(400, round(0.75*$r1_hp_diam_x));
+				$_POST['r2_lowpass_diameter_x'] = $_POST['r2_lowpass_diameter_y'] = $r2_lp_diam_x = $r2_lp_diam_y = min(300, round(0.75*$r1_hp_diam_x));
+				$_POST['r3_lowpass_diameter_x'] = $_POST['r3_lowpass_diameter_y'] = $r3_lp_diam_x = $r3_lp_diam_y = min(200, round(0.75*$r1_hp_diam_x));
+				$_POST['r4_lowpass_diameter_x'] = $_POST['r4_lowpass_diameter_y'] = $r4_lp_diam_x = $r4_lp_diam_y = min(150, round(0.75*$r1_hp_diam_x));
+				$_POST['r5_lowpass_diameter_x'] = $_POST['r5_lowpass_diameter_y'] = $r5_lp_diam_x = $r5_lp_diam_y = min(100, round(0.75*$r1_hp_diam_x));
+				$_POST['r1_lowpass_apod_x'] = $r1_lp_apod_x = round(2.5*$r1_lp_diam_x);
+				$_POST['r2_lowpass_apod_x'] = $r2_lp_apod_x = round(2.5*$r2_lp_diam_x);
+				$_POST['r3_lowpass_apod_x'] = $r3_lp_apod_x = round(2.5*$r3_lp_diam_x);
+				$_POST['r4_lowpass_apod_x'] = $r4_lp_apod_x = round(2.5*$r4_lp_diam_x);
+				$_POST['r5_lowpass_apod_x'] = $r5_lp_apod_x = round(2.5*$r5_lp_diam_x);
+				$_POST['r1_lowpass_apod_y'] = $r1_lp_apod_y = round(2.5*$r1_lp_diam_y);
+				$_POST['r2_lowpass_apod_y'] = $r2_lp_apod_y = round(2.5*$r2_lp_diam_y);
+				$_POST['r3_lowpass_apod_y'] = $r3_lp_apod_y = round(2.5*$r3_lp_diam_y);
+				$_POST['r4_lowpass_apod_y'] = $r4_lp_apod_y = round(2.5*$r4_lp_diam_y);
+				$_POST['r5_lowpass_apod_y'] = $r5_lp_apod_y = round(2.5*$r5_lp_diam_y);
+				$_POST['thickness'] = $thickness = 2500;
+			}
+			
+			if ($_POST['preset_size'] == 13)  //Size 100 nm - Decreasing lowpass
+			{
+				$_POST['r1_lowpass_diameter_x'] = $_POST['r1_lowpass_diameter_y'] = $r1_lp_diam_x = $r1_lp_diam_y = min(800, round(0.75*$r1_hp_diam_x));
+				$_POST['r2_lowpass_diameter_x'] = $_POST['r2_lowpass_diameter_y'] = $r2_lp_diam_x = $r2_lp_diam_y = min(600, round(0.75*$r1_hp_diam_x));
+				$_POST['r3_lowpass_diameter_x'] = $_POST['r3_lowpass_diameter_y'] = $r3_lp_diam_x = $r3_lp_diam_y = min(400, round(0.75*$r1_hp_diam_x));
+				$_POST['r4_lowpass_diameter_x'] = $_POST['r4_lowpass_diameter_y'] = $r4_lp_diam_x = $r4_lp_diam_y = min(300, round(0.75*$r1_hp_diam_x));
+				$_POST['r5_lowpass_diameter_x'] = $_POST['r5_lowpass_diameter_y'] = $r5_lp_diam_x = $r5_lp_diam_y = min(200, round(0.75*$r1_hp_diam_x));
+				$_POST['r1_lowpass_apod_x'] = $r1_lp_apod_x = round(2.5*$r1_lp_diam_x);
+				$_POST['r2_lowpass_apod_x'] = $r2_lp_apod_x = round(2.5*$r2_lp_diam_x);
+				$_POST['r3_lowpass_apod_x'] = $r3_lp_apod_x = round(2.5*$r3_lp_diam_x);
+				$_POST['r4_lowpass_apod_x'] = $r4_lp_apod_x = round(2.5*$r4_lp_diam_x);
+				$_POST['r5_lowpass_apod_x'] = $r5_lp_apod_x = round(2.5*$r5_lp_diam_x);
+				$_POST['r1_lowpass_apod_y'] = $r1_lp_apod_y = round(2.5*$r1_lp_diam_y);
+				$_POST['r2_lowpass_apod_y'] = $r2_lp_apod_y = round(2.5*$r2_lp_diam_y);
+				$_POST['r3_lowpass_apod_y'] = $r3_lp_apod_y = round(2.5*$r3_lp_diam_y);
+				$_POST['r4_lowpass_apod_y'] = $r4_lp_apod_y = round(2.5*$r4_lp_diam_y);
+				$_POST['r5_lowpass_apod_y'] = $r5_lp_apod_y = round(2.5*$r5_lp_diam_y);
+				$_POST['thickness'] = $thickness = 5000;
+			}
+			
+			if ($_POST['preset_size'] == 14)  //Size 250 nm - Decreasing lowpass
+			{
+				$_POST['r1_lowpass_diameter_x'] = $_POST['r1_lowpass_diameter_y'] = $r1_lp_diam_x = $r1_lp_diam_y = min(1500, round(0.75*$r1_hp_diam_x));
+				$_POST['r2_lowpass_diameter_x'] = $_POST['r2_lowpass_diameter_y'] = $r2_lp_diam_x = $r2_lp_diam_y = min(1250, round(0.75*$r1_hp_diam_x));
+				$_POST['r3_lowpass_diameter_x'] = $_POST['r3_lowpass_diameter_y'] = $r3_lp_diam_x = $r3_lp_diam_y = min(1000, round(0.75*$r1_hp_diam_x));
+				$_POST['r4_lowpass_diameter_x'] = $_POST['r4_lowpass_diameter_y'] = $r4_lp_diam_x = $r4_lp_diam_y = min(750, round(0.75*$r1_hp_diam_x));
+				$_POST['r5_lowpass_diameter_x'] = $_POST['r5_lowpass_diameter_y'] = $r5_lp_diam_x = $r5_lp_diam_y = min(500, round(0.75*$r1_hp_diam_x));
+				$_POST['r1_lowpass_apod_x'] = $r1_lp_apod_x = round(2.5*$r1_lp_diam_x);
+				$_POST['r2_lowpass_apod_x'] = $r2_lp_apod_x = round(2.5*$r2_lp_diam_x);
+				$_POST['r3_lowpass_apod_x'] = $r3_lp_apod_x = round(2.5*$r3_lp_diam_x);
+				$_POST['r4_lowpass_apod_x'] = $r4_lp_apod_x = round(2.5*$r4_lp_diam_x);
+				$_POST['r5_lowpass_apod_x'] = $r5_lp_apod_x = round(2.5*$r5_lp_diam_x);
+				$_POST['r1_lowpass_apod_y'] = $r1_lp_apod_y = round(2.5*$r1_lp_diam_y);
+				$_POST['r2_lowpass_apod_y'] = $r2_lp_apod_y = round(2.5*$r2_lp_diam_y);
+				$_POST['r3_lowpass_apod_y'] = $r3_lp_apod_y = round(2.5*$r3_lp_diam_y);
+				$_POST['r4_lowpass_apod_y'] = $r4_lp_apod_y = round(2.5*$r4_lp_diam_y);
+				$_POST['r5_lowpass_apod_y'] = $r5_lp_apod_y = round(2.5*$r5_lp_diam_y);
+				$_POST['thickness'] = $thickness = 12500;
+			}
+			
+			if ($_POST['preset_size'] == 15)  //Size 500 nm - Decreasing lowpass
+			{
+				$_POST['r1_lowpass_diameter_x'] = $_POST['r1_lowpass_diameter_y'] = $r1_lp_diam_x = $r1_lp_diam_y = min(4000, round(0.75*$r1_hp_diam_x));
+				$_POST['r2_lowpass_diameter_x'] = $_POST['r2_lowpass_diameter_y'] = $r2_lp_diam_x = $r2_lp_diam_y = min(3000, round(0.75*$r1_hp_diam_x));
+				$_POST['r3_lowpass_diameter_x'] = $_POST['r3_lowpass_diameter_y'] = $r3_lp_diam_x = $r3_lp_diam_y = min(2000, round(0.75*$r1_hp_diam_x));
+				$_POST['r4_lowpass_diameter_x'] = $_POST['r4_lowpass_diameter_y'] = $r4_lp_diam_x = $r4_lp_diam_y = min(1500, round(0.75*$r1_hp_diam_x));
+				$_POST['r5_lowpass_diameter_x'] = $_POST['r5_lowpass_diameter_y'] = $r5_lp_diam_x = $r5_lp_diam_y = min(1000, round(0.75*$r1_hp_diam_x));
+				$_POST['r1_lowpass_apod_x'] = $r1_lp_apod_x = round(2.5*$r1_lp_diam_x);
+				$_POST['r2_lowpass_apod_x'] = $r2_lp_apod_x = round(2.5*$r2_lp_diam_x);
+				$_POST['r3_lowpass_apod_x'] = $r3_lp_apod_x = round(2.5*$r3_lp_diam_x);
+				$_POST['r4_lowpass_apod_x'] = $r4_lp_apod_x = round(2.5*$r4_lp_diam_x);
+				$_POST['r5_lowpass_apod_x'] = $r5_lp_apod_x = round(2.5*$r5_lp_diam_x);
+				$_POST['r1_lowpass_apod_y'] = $r1_lp_apod_y = round(2.5*$r1_lp_diam_y);
+				$_POST['r2_lowpass_apod_y'] = $r2_lp_apod_y = round(2.5*$r2_lp_diam_y);
+				$_POST['r3_lowpass_apod_y'] = $r3_lp_apod_y = round(2.5*$r3_lp_diam_y);
+				$_POST['r4_lowpass_apod_y'] = $r4_lp_apod_y = round(2.5*$r4_lp_diam_y);
+				$_POST['r5_lowpass_apod_y'] = $r5_lp_apod_y = round(2.5*$r5_lp_diam_y);
+				$_POST['thickness'] = $thickness = 25000;
+			}
+			
+			if ($_POST['preset_size'] == 16)  //Size 1000 nm - Decreasing lowpass
+			{
+				$_POST['r1_lowpass_diameter_x'] = $_POST['r1_lowpass_diameter_y'] = $r1_lp_diam_x = $r1_lp_diam_y = min(8000, round(0.75*$r1_hp_diam_x));
+				$_POST['r2_lowpass_diameter_x'] = $_POST['r2_lowpass_diameter_y'] = $r2_lp_diam_x = $r2_lp_diam_y = min(6000, round(0.75*$r1_hp_diam_x));
+				$_POST['r3_lowpass_diameter_x'] = $_POST['r3_lowpass_diameter_y'] = $r3_lp_diam_x = $r3_lp_diam_y = min(4000, round(0.75*$r1_hp_diam_x));
+				$_POST['r4_lowpass_diameter_x'] = $_POST['r4_lowpass_diameter_y'] = $r4_lp_diam_x = $r4_lp_diam_y = min(3000, round(0.75*$r1_hp_diam_x));
+				$_POST['r5_lowpass_diameter_x'] = $_POST['r5_lowpass_diameter_y'] = $r5_lp_diam_x = $r5_lp_diam_y = min(2000, round(0.75*$r1_hp_diam_x));
+				$_POST['r1_lowpass_apod_x'] = $r1_lp_apod_x = round(2.5*$r1_lp_diam_x);
+				$_POST['r2_lowpass_apod_x'] = $r2_lp_apod_x = round(2.5*$r2_lp_diam_x);
+				$_POST['r3_lowpass_apod_x'] = $r3_lp_apod_x = round(2.5*$r3_lp_diam_x);
+				$_POST['r4_lowpass_apod_x'] = $r4_lp_apod_x = round(2.5*$r4_lp_diam_x);
+				$_POST['r5_lowpass_apod_x'] = $r5_lp_apod_x = round(2.5*$r5_lp_diam_x);
+				$_POST['r1_lowpass_apod_y'] = $r1_lp_apod_y = round(2.5*$r1_lp_diam_y);
+				$_POST['r2_lowpass_apod_y'] = $r2_lp_apod_y = round(2.5*$r2_lp_diam_y);
+				$_POST['r3_lowpass_apod_y'] = $r3_lp_apod_y = round(2.5*$r3_lp_diam_y);
+				$_POST['r4_lowpass_apod_y'] = $r4_lp_apod_y = round(2.5*$r4_lp_diam_y);
+				$_POST['r5_lowpass_apod_y'] = $r5_lp_apod_y = round(2.5*$r5_lp_diam_y);
+				$_POST['thickness'] = $thickness = 50000;
+			}
+			
+			
+			//Refinement Type Presets
+			if ($_POST['preset_type'] == 1)  //Generic refinement
+			{
+				$_POST['r1_iters'] = $r1_iters = '15';
+				$_POST['r2_iters'] = $r2_iters = '10';
+				$_POST['r3_iters'] = $r3_iters = '5';
+				$_POST['r4_iters'] = $r4_iters = '5';
+				$_POST['r5_iters'] = $r5_iters = '0';
+				$_POST['elevation_switch'] = $elevation_switch='';
+				$_POST['scale_switch'] = $scale_switch='';
+			}
+			
+			if ($_POST['preset_type'] == 2)  //Quick refinement
+			{
+				$_POST['r1_iters'] = $r1_iters = '10';
+				$_POST['r2_iters'] = $r2_iters = '5';
+				$_POST['r3_iters'] = $r3_iters = '5';
+				$_POST['r4_iters'] = $r4_iters = '5';
+				$_POST['r5_iters'] = $r5_iters = '0';
+				$_POST['elevation_switch'] = $elevation_switch='';
+				$_POST['scale_switch'] = $scale_switch='';
+			}
+			
+			if ($_POST['preset_type'] == 3)  //Modest refinement
+			{
+				$_POST['r1_iters'] = $r1_iters = '20';
+				$_POST['r2_iters'] = $r2_iters = '15';
+				$_POST['r3_iters'] = $r3_iters = '10';
+				$_POST['r4_iters'] = $r4_iters = '10';
+				$_POST['r5_iters'] = $r5_iters = '0';
+				$_POST['elevation_switch'] = $elevation_switch='';
+				$_POST['scale_switch'] = $scale_switch='';
+			}
+			
+			if ($_POST['preset_type'] == 4)  //Full refinement
+			{
+				$_POST['r1_iters'] = $r1_iters = '20';
+				$_POST['r2_iters'] = $r2_iters = '20';
+				$_POST['r3_iters'] = $r3_iters = '20';
+				$_POST['r4_iters'] = $r4_iters = '20';
+				$_POST['r5_iters'] = $r5_iters = '0';
+				$_POST['elevation_switch'] = $elevation_switch='71';
+				$_POST['scale_switch'] = $scale_switch='71';
+			}
+			
+			if ($_POST['preset_type'] == 5)  //Exhaustive refinement
+			{
+				$_POST['r1_iters'] = $r1_iters = '20';
+				$_POST['r2_iters'] = $r2_iters = '20';
+				$_POST['r3_iters'] = $r3_iters = '20';
+				$_POST['r4_iters'] = $r4_iters = '40';
+				$_POST['r5_iters'] = $r5_iters = '20';
+				$_POST['elevation_switch'] = $elevation_switch='81';
+				$_POST['scale_switch'] = $scale_switch='81';
+			}
+			
+		}
+		
+		//These parameters don't change with Presets
+		
 		$map_size_x = $imageinfo['dimx']/$map_sampling;
 		$map_size_y = $imageinfo['dimy']/$map_sampling;
 		$r1_kernel_x = $r2_kernel_x = $r3_kernel_x = $r4_kernel_x = $r5_kernel_x = 5;
 		$r1_kernel_y = $r2_kernel_y = $r3_kernel_y = $r4_kernel_y = $r5_kernel_y = 5;
 		$r1_mask_apod_x = $r2_mask_apod_x = $r3_mask_apod_x = $r4_mask_apod_x = $r5_mask_apod_x = 10;
 		$r1_mask_apod_y = $r2_mask_apod_y = $r3_mask_apod_y = $r4_mask_apod_y = $r5_mask_apod_y = 10;
-		$Nx1=$r1_region_x/$r1_sampling;
-		$Ny1=$r1_region_y/$r1_sampling;
-		$Nx2=$r2_region_x/$r2_sampling;
-		$Ny2=$r2_region_y/$r2_sampling;
-		$Nx3=$r3_region_x/$r3_sampling;
-		$Ny3=$r3_region_y/$r3_sampling;
-		$Nx4=$r4_region_x/$r4_sampling;
-		$Ny4=$r4_region_y/$r4_sampling;
-		$Nx5=$r5_region_x/$r5_sampling;
-		$Ny5=$r5_region_y/$r5_sampling;
-		$r1_mask_width_x = $Nx1-2.5*$r1_mask_apod_x;
-		$r2_mask_width_x = $Nx2-2.5*$r2_mask_apod_x;
-		$r3_mask_width_x = $Nx3-2.5*$r3_mask_apod_x;
-		$r4_mask_width_x = $Nx4-2.5*$r4_mask_apod_x;
-		$r5_mask_width_x = $Nx5-2.5*$r5_mask_apod_x;
-		$r1_mask_width_y = $Ny1-2.5*$r1_mask_apod_y;
-		$r2_mask_width_y = $Ny2-2.5*$r2_mask_apod_y;
-		$r3_mask_width_y = $Ny3-2.5*$r3_mask_apod_y;
-		$r4_mask_width_y = $Ny4-2.5*$r4_mask_apod_y;
-		$r5_mask_width_y = $Ny5-2.5*$r5_mask_apod_y;
 		$restart_cycle = $_SESSION['restart_cycle'];
 		$image_file_type = pathinfo($imageinfo['filename'], PATHINFO_EXTENSION);
 		$_SESSION['image_file_type'] = $image_file_type;
@@ -317,7 +728,7 @@ class Protomo2RefineForm extends BasicLayoutForm
 			rm ".$_SESSION['outdir']."/".$_SESSION['runname']."/worst.*<br></code></center>";
 			
 			$html .= "<br></br>
-			<a href='runAppionLoop.php?expId=".$this->expId."&form=Protomo2RefineForm'><b><center>and then Click here or Refresh this page to continue,</center></b></a>";
+			<a href='runAppionLoop.php?expId=".$this->expId."&form=Protomo2RefineForm'><b><center>and then Click here or Refresh this page to continue</center></b></a>";
 			$html .= "<br></br>
 			<b><center>Or to continue from a refinement iteration, leave all files in place and <a href='runAppionLoop.php?expId=".$this->expId."&form=Protomo2RefineForm'>Refresh</a> this page.<br>Then enter the iteration you would like to restart from into the 'Restart Refinement at Iteration' box.</center></b>";
 			$_SESSION['erase_refine'] = 0;
@@ -327,29 +738,11 @@ class Protomo2RefineForm extends BasicLayoutForm
 		{
 			$this->updateFormParams();
 			$params = $this->getFormParams();
-		
+			
+			global $html;
+			
 			$fieldSize = 5;
 			$fieldSize2 = 3;
-			
-			//Initialize presets
-			//if (!isset($_POST['preset'])) {$_POST['preset']=1;}
-			//
-			//$presets=array("", "Generic - 25 nm", "Generic - 50 nm", "Generic - 100 nm");
-			//$html.= '<br><select name="preset" onchange=submit() style="width:130px">';
-			//for ($i = 1; $i < count($presets)+1; $i++) {
-			//	$html.= '<option ';
-			//	if ($i == $_POST['preset']) {
-			//		$html.= 'selected ';
-			//	}
-			//	$html.= 'value="'.$i.'">'.$presets[$i-1].'</option>';
-			//}
-			//$html.= '</select>'; $html.= docpop('protomo_refine_presets', ' Presets<br>');
-			//
-			//if ($_POST['preset'] == 2)
-			//{
-			//	$r1_lp_apod_x = 666;
-			//	echo $r1_lp_apod_x;
-			//}
 			
 			$html .= "
 		    <br />
@@ -474,16 +867,6 @@ class Protomo2RefineForm extends BasicLayoutForm
 			$html.= $params->insertTextFieldInRow( "r3_highpass_diameter_y", $fieldSize2 ).'│ ';
 			$html.= $params->insertTextFieldInRow( "r4_highpass_diameter_y", $fieldSize2 ).'│ ';
 			$html.= $params->insertTextField( "r5_highpass_diameter_y", $fieldSize2 );
-			$html.= $params->insertTextFieldInRow( "r1_mask_apod_x", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextFieldInRow( "r2_mask_apod_x", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextFieldInRow( "r3_mask_apod_x", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextFieldInRow( "r4_mask_apod_x", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextField( "r5_mask_apod_x", $fieldSize2 );
-			$html.= $params->insertTextFieldInRow( "r1_mask_apod_y", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextFieldInRow( "r2_mask_apod_y", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextFieldInRow( "r3_mask_apod_y", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextFieldInRow( "r4_mask_apod_y", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextField( "r5_mask_apod_y", $fieldSize2 );
 			$html.= $params->insertTextFieldInRow( "r1_mask_width_x", $fieldSize2 ).'│ ';
 			$html.= $params->insertTextFieldInRow( "r2_mask_width_x", $fieldSize2 ).'│ ';
 			$html.= $params->insertTextFieldInRow( "r3_mask_width_x", $fieldSize2 ).'│ ';
@@ -494,6 +877,16 @@ class Protomo2RefineForm extends BasicLayoutForm
 			$html.= $params->insertTextFieldInRow( "r3_mask_width_y", $fieldSize2 ).'│ ';
 			$html.= $params->insertTextFieldInRow( "r4_mask_width_y", $fieldSize2 ).'│ ';
 			$html.= $params->insertTextField( "r5_mask_width_y", $fieldSize2 );
+			$html.= $params->insertTextFieldInRow( "r1_mask_apod_x", $fieldSize2 ).'│ ';
+			$html.= $params->insertTextFieldInRow( "r2_mask_apod_x", $fieldSize2 ).'│ ';
+			$html.= $params->insertTextFieldInRow( "r3_mask_apod_x", $fieldSize2 ).'│ ';
+			$html.= $params->insertTextFieldInRow( "r4_mask_apod_x", $fieldSize2 ).'│ ';
+			$html.= $params->insertTextField( "r5_mask_apod_x", $fieldSize2 );
+			$html.= $params->insertTextFieldInRow( "r1_mask_apod_y", $fieldSize2 ).'│ ';
+			$html.= $params->insertTextFieldInRow( "r2_mask_apod_y", $fieldSize2 ).'│ ';
+			$html.= $params->insertTextFieldInRow( "r3_mask_apod_y", $fieldSize2 ).'│ ';
+			$html.= $params->insertTextFieldInRow( "r4_mask_apod_y", $fieldSize2 ).'│ ';
+			$html.= $params->insertTextField( "r5_mask_apod_y", $fieldSize2 );
 			$html.= $params->insertTextFieldInRow( "r1_lowpass_apod_x", $fieldSize2 ).'│ ';
 			$html.= $params->insertTextFieldInRow( "r2_lowpass_apod_x", $fieldSize2 ).'│ ';
 			$html.= $params->insertTextFieldInRow( "r3_lowpass_apod_x", $fieldSize2 ).'│ ';
@@ -669,11 +1062,8 @@ class Protomo2RefineForm extends BasicLayoutForm
 	// for other Appion Loop methods and not included in the parent.
 	public function buildCommand( $postArray )
 	{
-		$command   = parent::buildCommand( $postArray );
-		
-		global $tiltseries;
+		$command   = parent::buildCommand( $postArray );global $tiltseries;
 		global $sessionname;
-		$t=time();
 		
 		$pixelsize=$_POST['pixelsize'];
 		$dimx=$_SESSION['dimx'];
@@ -687,7 +1077,8 @@ class Protomo2RefineForm extends BasicLayoutForm
 		$command.="--image_file_type=$image_file_type ";
 		$command.="--coarse=False ";
 		
-		//$command.="> ".$_SESSION['outdir'].$_SESSION['runname']."/".$_SESSION['runname']."_".date("Y-m-d.h:i:s",$t).".log";
+		//Replace default presets with user-defined presets
+		
 		return $command." ";
 	}
 	
@@ -718,5 +1109,6 @@ class Protomo2RefineForm extends BasicLayoutForm
 		
 		return $html;
 	}
+		
 }
 ?>

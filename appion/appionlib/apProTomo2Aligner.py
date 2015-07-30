@@ -323,6 +323,7 @@ def angstromsToProtomo(options):
 def nextLargestSize(limit):
 	'''
 	This returns the next largest integer that is divisible by 2, 3, 5, or 7, for FFT purposes.
+	Algorithm by Scott Stagg.
 	'''
 	def lowestRoots(n,factor):
 		r=n%factor

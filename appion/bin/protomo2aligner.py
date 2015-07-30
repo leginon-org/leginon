@@ -717,6 +717,7 @@ class ProTomo2Aligner(basicScript.BasicScript):
 			self.params['r1_highpass_apod_x'] = 2*self.params['pixelsize']*self.params['r1_sampling']/self.params['r1_highpass_apod_x']
 			self.params['r1_highpass_apod_y'] = 2*self.params['pixelsize']*self.params['r1_sampling']/self.params['r1_highpass_apod_y']
 			self.params['r1_body']=(self.params['thickness']/self.params['r1_sampling'])/self.params['cos_alpha']
+			self.params['map_size_z']=int(2*self.params['thickness']/self.params['map_sampling'])
 			try:
 				r2_lp=(self.params['r2_lowpass_diameter_x']+self.params['r2_lowpass_diameter_y'])/2
 				self.params['r2_lowpass_diameter_x'] = 2*self.params['pixelsize']*self.params['r2_sampling']/self.params['r2_lowpass_diameter_x']
@@ -1144,13 +1145,13 @@ class ProTomo2Aligner(basicScript.BasicScript):
 					r=1  #Round number
 					apDisplay.printMsg("Beginning Refinement Iteration #%s, Round #%s\n" % (start+n+1,r))
 					f.write('\nBeginning Refinement Iteration #%s, Round #%s\n' % (start+n+1,r))
-					apDisplay.printMsg("lowpass = %s angstroms\n" % r1_lp)
-					f.write("lowpass = %s angstroms\n" % r1_lp)
+					apDisplay.printMsg("lowpass = %s Angstroms\n" % r1_lp)
+					f.write("lowpass = %s Angstroms\n" % r1_lp)
 					region_x=self.params['r1_region_x']
 					region_y=self.params['r1_region_y']
 					sampling=self.params['r1_sampling']
-					f.write("\nRound #%s. Parameters in Protomo units (note: At binned by %s, pixelsize is %s Angstroms, Nyquist is %s Angstroms):\n" % (r, sampling, sampling*self.params['pixelsize'], 2*sampling*self.params['pixelsize']))
-					apDisplay.printMsg("Round #%s. Parameters in Protomo units (note: At binned by %s, pixelsize is %s Angstroms, Nyquist is %s Angstroms):\n" % (r, sampling, sampling*self.params['pixelsize'], 2*sampling*self.params['pixelsize']))
+					f.write("\nRound #%s. Parameters in Protomo units (Note: At binned by %s, pixelsize is %s Angstroms, Nyquist is %s Angstroms):\n" % (r, sampling, sampling*self.params['pixelsize'], 2*sampling*self.params['pixelsize']))
+					apDisplay.printMsg("Round #%s. Parameters in Protomo units (Note: At binned by %s, pixelsize is %s Angstroms, Nyquist is %s Angstroms):\n" % (r, sampling, sampling*self.params['pixelsize'], 2*sampling*self.params['pixelsize']))
 					for val in round1:
 						f.write("%s = %s\n" % (val,round1[val]))
 						apDisplay.printMsg("%s = %s" % (val,round1[val]))
