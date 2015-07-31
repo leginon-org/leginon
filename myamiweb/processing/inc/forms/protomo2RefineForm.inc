@@ -42,12 +42,28 @@ class Protomo2RefineForm extends BasicLayoutForm
 		//print "_SESSION:" . "<br>";
 		//var_dump($_SESSION);
 		
-		global $html; //I can only get the selector form to pass variables properly by defining it globally in the constructor.\
+		global $html; //I can only get the selector form to pass variables properly by defining it globally in the constructor.
+		
+		//Initialize Basic/Advanced settings
+		if (!isset($_POST['settings'])) {$_POST['settings']=1;}
+		
+		$settings=array("Basic", "Advanced");
+
+		$html.= '<select name="settings" onchange=submit() style="width:100px">';
+		for ($i = 1; $i < count($settings)+1; $i++) {
+			$html.= '<option ';
+			if ($i == $_POST['settings']) {
+				$html.= 'selected ';
+			}
+			$html.= 'value="'.$i.'">'.$settings[$i-1].'</option>';
+		}
+		$html.= '</select>'; $html.= docpop('protomo_refine_settings', ' Basic/Advanced Settings<br>');
+		
 		$html .= "
 	    <br />
 	    <H4>Parameter Presets ".docpop('preset_info', '(Info)')."</H4>
 	    <hr />";
-			
+		
 		//Initialize presets
 		if (!isset($_POST['preset_size'])) {$_POST['preset_size']=1;}
 		if (!isset($_POST['preset_search'])) {$_POST['preset_search']=1;}
@@ -91,6 +107,61 @@ class Protomo2RefineForm extends BasicLayoutForm
 		global $imageinfo;
 		$_POST['runname']=$_SESSION['runname'];
 		$_POST['outdir']=$_SESSION['outdir'];
+		
+		if ($_POST['settings'] == 1)  //Basic Settings
+		{
+			//General Parameters
+			$_POST['logging'] = $logging = 'true';
+			$_POST['loglevel'] = $loglevel='2';
+			//Preprocessing Parameters
+			$_POST['preprocessing'] = $preprocessing='true';
+			$_POST['gradient'] = $gradient='true';
+			$_POST['iter_gradient'] = $iter_gradient='false';
+			$_POST['filter'] = $filter='median';
+			$_POST['border'] = $border='100';
+			$_POST['clip_low'] = $clip_low='3.5';
+			$_POST['clip_high'] = $clip_high='3.5';
+			$_POST['thr_low'] = $thr_low='';
+			$_POST['thr_high'] = $thr_high='';
+			$_POST['r1_kernel_x'] = $r1_kernel_x='5';
+			$_POST['r2_kernel_x'] = $r2_kernel_x='5';
+			$_POST['r3_kernel_x'] = $r3_kernel_x='5';
+			$_POST['r4_kernel_x'] = $r4_kernel_x='5';
+			$_POST['r5_kernel_x'] = $r5_kernel_x='5';
+			$_POST['r1_kernel_y'] = $r1_kernel_y='5';
+			$_POST['r2_kernel_y'] = $r2_kernel_y='5';
+			$_POST['r3_kernel_y'] = $r3_kernel_y='5';
+			$_POST['r4_kernel_y'] = $r4_kernel_y='5';
+			$_POST['r5_kernel_y'] = $r5_kernel_y='5';
+			$_POST['grow'] = $grow='0';
+			//Window Parameters
+			$_POST['window_area'] = $window_area='0.95';
+			//Mask Parameters
+			$_POST['r1_mask_apod_x'] = $r1_mask_apod_x='10';
+			$_POST['r2_mask_apod_x'] = $r2_mask_apod_x='10';
+			$_POST['r3_mask_apod_x'] = $r3_mask_apod_x='10';
+			$_POST['r4_mask_apod_x'] = $r4_mask_apod_x='10';
+			$_POST['r5_mask_apod_x'] = $r5_mask_apod_x='10';
+			$_POST['r1_mask_apod_y'] = $r1_mask_apod_y='10';
+			$_POST['r2_mask_apod_y'] = $r2_mask_apod_y='10';
+			$_POST['r3_mask_apod_y'] = $r3_mask_apod_y='10';
+			$_POST['r4_mask_apod_y'] = $r4_mask_apod_y='10';
+			$_POST['r5_mask_apod_y'] = $r5_mask_apod_y='10';
+			//Area Matching Parameters
+			$_POST['do_estimation'] = $do_estimation='false';
+			$_POST['norotations'] = $norotations='false';
+			//Depiction Parameters
+			$_POST['correlation_size_x'] = $correlation_size_x='160';
+			$_POST['correlation_size_y'] = $correlation_size_y='160';
+			$_POST['tilt_clip'] = $tilt_clip='true';
+			$_POST['show_window_size'] = $show_window_size='true';
+			$_POST['video_type'] = $video_type='html5vid';
+			$_POST['map_sampling'] = $map_sampling='8';
+			$_POST['map_size_x'] = $map_size_x=$imageinfo['dimx']*0.125;
+			$_POST['map_size_y'] = $map_size_x=$imageinfo['dimy']*0.125;
+			$_POST['keep_recons'] = $keep_recons='false';
+			
+		}
 		
 		////Preset Defaults////
 		if ($_POST['process'] != "Just Show Command")
@@ -744,312 +815,501 @@ class Protomo2RefineForm extends BasicLayoutForm
 			$fieldSize = 5;
 			$fieldSize2 = 3;
 			
-			$html .= "
-		    <br />
-		    <H4>General Parameters ".docpop('genparam_info2', '(Info)')."</H4>
-		    <hr />";
+			if ($_POST['settings'] == 1)  //Basic Settings
+			{
+				$html .= "
+			    <br />
+			    <H4>General Parameters ".docpop('genparam_info2', '(Info)')."</H4>
+			    <hr />";
+				
+				$html.= $params->insertTextFieldInRow( "r1_iters", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r2_iters", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r3_iters", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r4_iters", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextField( "r5_iters", $fieldSize2 );
+				$html.= $params->insertTextFieldInRow( "r1_sampling", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r2_sampling", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r3_sampling", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r4_sampling", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextField( "r5_sampling", $fieldSize2 );
+				$html.= $params->insertTextField( "restart_cycle", $fieldSize2 );
+				
+				$html .= "
+			    <br />
+			    <H4>Window Parameters ".docpop('windowparam_info', '(Info)')."</H4>
+			    <hr />";
+			    
+				$html.= $params->insertTextFieldInRow( "r1_region_x", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r2_region_x", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r3_region_x", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r4_region_x", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextField( "r5_region_x", $fieldSize2 );
+				$html.= $params->insertTextFieldInRow( "r1_region_y", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r2_region_y", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r3_region_y", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r4_region_y", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextField( "r5_region_y", $fieldSize2 );
+				$html.= $params->insertTextField( "thickness", $fieldSize2 );
+				
+				$html .= "
+			    <br />
+			    <H4>Mask Parameters ".docpop('maskparam_info', '(Info)')."</H4>
+			    <hr />";
+			    
+				$html.= $params->insertTextFieldInRow( "r1_lowpass_diameter_x", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r2_lowpass_diameter_x", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r3_lowpass_diameter_x", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r4_lowpass_diameter_x", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextField( "r5_lowpass_diameter_x", $fieldSize2 );
+				$html.= $params->insertTextFieldInRow( "r1_lowpass_diameter_y", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r2_lowpass_diameter_y", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r3_lowpass_diameter_y", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r4_lowpass_diameter_y", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextField( "r5_lowpass_diameter_y", $fieldSize2 );
+				$html.= $params->insertTextFieldInRow( "r1_highpass_diameter_x", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r2_highpass_diameter_x", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r3_highpass_diameter_x", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r4_highpass_diameter_x", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextField( "r5_highpass_diameter_x", $fieldSize2 );
+				$html.= $params->insertTextFieldInRow( "r1_highpass_diameter_y", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r2_highpass_diameter_y", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r3_highpass_diameter_y", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r4_highpass_diameter_y", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextField( "r5_highpass_diameter_y", $fieldSize2 );
+				$html.= $params->insertTextFieldInRow( "r1_mask_width_x", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r2_mask_width_x", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r3_mask_width_x", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r4_mask_width_x", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextField( "r5_mask_width_x", $fieldSize2 );
+				$html.= $params->insertTextFieldInRow( "r1_mask_width_y", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r2_mask_width_y", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r3_mask_width_y", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r4_mask_width_y", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextField( "r5_mask_width_y", $fieldSize2 );
+				$html.= $params->insertTextFieldInRow( "r1_lowpass_apod_x", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r2_lowpass_apod_x", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r3_lowpass_apod_x", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r4_lowpass_apod_x", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextField( "r5_lowpass_apod_x", $fieldSize2 );
+				$html.= $params->insertTextFieldInRow( "r1_lowpass_apod_y", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r2_lowpass_apod_y", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r3_lowpass_apod_y", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r4_lowpass_apod_y", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextField( "r5_lowpass_apod_y", $fieldSize2 );
+				$html.= $params->insertTextFieldInRow( "r1_highpass_apod_x", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r2_highpass_apod_x", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r3_highpass_apod_x", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r4_highpass_apod_x", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextField( "r5_highpass_apod_x", $fieldSize2 );
+				$html.= $params->insertTextFieldInRow( "r1_highpass_apod_y", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r2_highpass_apod_y", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r3_highpass_apod_y", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r4_highpass_apod_y", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextField( "r5_highpass_apod_y", $fieldSize2 );
+				
+				$html .= "
+			    <br />
+			    <H4>Cross-Correlation Parameters ".docpop('crosscorrparam_info', '(Info)')."</H4>
+			    <hr />";
+				
+				$html.= '<select name="r1_corr_mode" style="width:51px">';
+				$html.= '<option value="xcf">xcf</option>';
+				$html.= '<option selected value="mcf">mcf</option>';
+				$html.= '<option value="pcf">pcf</option>';
+				$html.= '<option value="dbl">dbl</option>';
+				$html.= '</select>'; $html.= docpop('protomo_r1_corr_mode', ' R1').'│ ';
+				$html.= '<select name="r2_corr_mode" style="width:51px">';
+				$html.= '<option value="xcf">xcf</option>';
+				$html.= '<option selected value="mcf">mcf</option>';
+				$html.= '<option value="pcf">pcf</option>';
+				$html.= '<option value="dbl">dbl</option>';
+				$html.= '</select>'; $html.= docpop('protomo_r2_corr_mode', ' R2').'│ ';
+				$html.= '<select name="r3_corr_mode" style="width:51px">';
+				$html.= '<option value="xcf">xcf</option>';
+				$html.= '<option selected value="mcf">mcf</option>';
+				$html.= '<option value="pcf">pcf</option>';
+				$html.= '<option value="dbl">dbl</option>';
+				$html.= '</select>'; $html.= docpop('protomo_r3_corr_mode', ' R3').'│ ';
+				$html.= '<select name="r4_corr_mode" style="width:51px">';
+				$html.= '<option value="xcf">xcf</option>';
+				$html.= '<option selected value="mcf">mcf</option>';
+				$html.= '<option value="pcf">pcf</option>';
+				$html.= '<option value="dbl">dbl</option>';
+				$html.= '</select>'; $html.= docpop('protomo_r4_corr_mode', ' R4').'│ ';
+				$html.= '<select name="r5_corr_mode" style="width:51px">';
+				$html.= '<option value="xcf">xcf</option>';
+				$html.= '<option value="mcf">mcf</option>';
+				$html.= '<option selected value="pcf">pcf</option>';
+				$html.= '<option value="dbl">dbl</option>';
+				$html.= '</select>'; $html.= docpop('protomo_r5_corr_mode', ' R5 | Correlation Mode').'<br>';
+				$html.= $params->insertTextFieldInRow( "r1_peak_search_radius_x", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r2_peak_search_radius_x", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r3_peak_search_radius_x", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r4_peak_search_radius_x", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextField( "r5_peak_search_radius_x", $fieldSize2 );
+				$html.= $params->insertTextFieldInRow( "r1_peak_search_radius_y", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r2_peak_search_radius_y", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r3_peak_search_radius_y", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r4_peak_search_radius_y", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextField( "r5_peak_search_radius_y", $fieldSize2 );
+				
+				$html .= "
+			    <br />
+			    <H4>Geometry Refinement Parameters ".docpop('geomrefineparam_info', '(Info)')."</H4>
+			    <hr />";
+				
+				$html.= '<select name="orientation" style="width:66px">';
+				$html.= '<option selected value="true">true</option>';
+				$html.= '<option value="false">false</option>';
+				$html.= '</select>'; $html.= docpop('protomo_orientation', ' Include Orientation Angles in Refinement').'│ ';
+				$html.= $params->insertTextField( "orientation_switch", $fieldSize );
+				$html.= '<select name="azimuth" style="width:66px">';
+				$html.= '<option selected value="true">true</option>';
+				$html.= '<option value="false">false</option>';
+				$html.= '</select>'; $html.= docpop('protomo_azimuth', ' Include Tilt Azimuth in Refinement').'│ ';
+				$html.= $params->insertTextField( "azimuth_switch", $fieldSize );
+				$html.= '<select name="elevation" style="width:66px">';
+				$html.= '<option value="true">true</option>';
+				$html.= '<option selected value="false">false</option>';
+				$html.= '</select>'; $html.= docpop('protomo_elevation', ' Include Tilt Axis Elevation in Refinement').'│ ';
+				$html.= $params->insertTextField( "elevation_switch", $fieldSize );
+				$html.= '<select name="rotation" style="width:66px">';
+				$html.= '<option selected value="true">true</option>';
+				$html.= '<option value="false">false</option>';
+				$html.= '</select>'; $html.= docpop('protomo_rotation', ' Include In-plane Rotations in Refinement').'│ ';
+				$html.= $params->insertTextField( "rotation_switch", $fieldSize );
+				$html.= '<select name="scale" style="width:66px">';
+				$html.= '<option value="true">true</option>';
+				$html.= '<option selected value="false">false</option>';
+				$html.= '</select>'; $html.= docpop('protomo_scale', ' Include Scale Factors (Magnification) in Refinement').'│ ';
+				$html.= $params->insertTextField( "scale_switch", $fieldSize );
+				
+				$html .= "
+			    <br />
+			    <H4>Depiction Parameters ".docpop('depictionparam_info', '(Info)')."</H4>
+			    <hr />";
+				
+				$html.= '<select name="create_tilt_video" style="width:66px">';
+				$html.= '<option selected value="true">true</option>';
+				$html.= '<option value="false">false</option>';
+				$html.= '</select>'; $html.= docpop('protomo_create_tilt_video2', ' Create Tilt-Series Videos').'<br>';
+				$html.= '<select name="create_reconstruction" style="width:66px">';
+				$html.= '<option selected value="true">true</option>';
+				$html.= '<option value="false">false</option>';
+				$html.= '</select>'; $html.= docpop('protomo_create_reconstruction2', ' Create Reconstruction Videos').'<br>';
+				
+				$html .= "<hr />";
+			}
 			
-			$html.= $params->insertTextFieldInRow( "r1_iters", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextFieldInRow( "r2_iters", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextFieldInRow( "r3_iters", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextFieldInRow( "r4_iters", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextField( "r5_iters", $fieldSize2 );
-			$html.= $params->insertTextFieldInRow( "r1_sampling", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextFieldInRow( "r2_sampling", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextFieldInRow( "r3_sampling", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextFieldInRow( "r4_sampling", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextField( "r5_sampling", $fieldSize2 );
-			$html.= $params->insertTextField( "raw_path", $fieldSize );
-			//$html.= $params->insertTextField( "param_file", $fieldSize );
-			//$html.= $params->insertTextField( "filename_prefix", $fieldSize );
-			//$html.= $params->insertTextField( "image_file_type", $fieldSize );
-			//$html.= $params->insertTextField( "cachedir", $fieldSize );
-			//$html.= $params->insertTextField( "protomo_outdir", $fieldSize );
-			//$html.= $params->insertTextField( "preprocessing", $fieldSize );
-			//$html.= $params->insertTextField( "binning", $fieldSize );
-			//$html.= '<select name="binning" style="width:66px">';
-			//$html.= '<option selected value="true">true</option>';
-			//$html.= '<option value="false">false</option>';
-			//$html.= '</select>'; $html.= docpop('protomo_binning', ' Raw Image Binning').'<br>';
-			$html.= $params->insertTextField( "select_images", $fieldSize );
-			$html.= $params->insertTextField( "exclude_images", $fieldSize );
-			//$html.= $params->insertTextField( "logging", $fieldSize );
-			$html.= '<select name="logging" style="width:66px">';
-			$html.= '<option selected value="true">true</option>';
-			$html.= '<option value="false">false</option>';
-			$html.= '</select>'; $html.= docpop('protomo_logging', ' Logging').'<br>';
-			$html.= $params->insertTextField( "loglevel", $fieldSize );
-			$html.= $params->insertTextField( "restart_cycle", $fieldSize );
+			if ($_POST['settings'] == 2)  //Advanced Settings
+			{
+				$html .= "
+			    <br />
+			    <H4>General Parameters ".docpop('genparam_info2', '(Info)')."</H4>
+			    <hr />";
+				
+				$html.= $params->insertTextFieldInRow( "r1_iters", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r2_iters", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r3_iters", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r4_iters", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextField( "r5_iters", $fieldSize2 );
+				$html.= $params->insertTextFieldInRow( "r1_sampling", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r2_sampling", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r3_sampling", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r4_sampling", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextField( "r5_sampling", $fieldSize2 );
+				$html.= $params->insertTextField( "raw_path", $fieldSize );
+				//$html.= $params->insertTextField( "param_file", $fieldSize );
+				//$html.= $params->insertTextField( "filename_prefix", $fieldSize );
+				//$html.= $params->insertTextField( "image_file_type", $fieldSize );
+				//$html.= $params->insertTextField( "cachedir", $fieldSize );
+				//$html.= $params->insertTextField( "protomo_outdir", $fieldSize );
+				//$html.= $params->insertTextField( "preprocessing", $fieldSize );
+				//$html.= $params->insertTextField( "binning", $fieldSize );
+				//$html.= '<select name="binning" style="width:66px">';
+				//$html.= '<option selected value="true">true</option>';
+				//$html.= '<option value="false">false</option>';
+				//$html.= '</select>'; $html.= docpop('protomo_binning', ' Raw Image Binning').'<br>';
+				$html.= $params->insertTextField( "select_images", $fieldSize );
+				$html.= $params->insertTextField( "exclude_images", $fieldSize );
+				//$html.= $params->insertTextField( "logging", $fieldSize );
+				$html.= '<select name="logging" style="width:66px">';
+				$html.= '<option selected value="true">true</option>';
+				$html.= '<option value="false">false</option>';
+				$html.= '</select>'; $html.= docpop('protomo_logging', ' Logging').'<br>';
+				$html.= $params->insertTextField( "loglevel", $fieldSize );
+				$html.= $params->insertTextField( "restart_cycle", $fieldSize );
+				
+				$html .= "
+			    <br />
+			    <H4>Preprocessing Parameters ".docpop('preprocparam_info', '(Info)')."</H4>
+			    <hr />";
+			    
+				$html.= '<select name="preprocessing" style="width:66px">';
+				$html.= '<option selected value="true">true</option>';
+				$html.= '<option value="false">false</option>';
+				$html.= '</select>'; $html.= docpop('protomo_preprocessing', ' Raw Image Preprocessing').'<br>';
+				//$html.= $params->insertTextField( "gradient", $fieldSize );
+				$html.= '<select name="gradient" style="width:66px">';
+				$html.= '<option selected value="true">true</option>';
+				$html.= '<option value="false">false</option>';
+				$html.= '</select>'; $html.= docpop('protomo_gradient', ' Linear Gradient Subtraction').'│ ';
+				$html.= $params->insertTextField( "gradient_switch", $fieldSize );
+				//$html.= $params->insertTextField( "iter_gradient", $fieldSize );
+				$html.= '<select name="iter_gradient" style="width:66px">';
+				$html.= '<option value="true">true</option>';
+				$html.= '<option selected value="false">false</option>';
+				$html.= '</select>'; $html.= docpop('protomo_iter_gradient', ' Iterate Gradient Subtraction Once').'│ ';
+				$html.= $params->insertTextField( "iter_gradient_switch", $fieldSize );
+				//$html.= $params->insertTextField( "filter", $fieldSize );
+				$html.= '<select name="filter" style="width:66px">';
+				$html.= '<option selected value="median">median</option>';
+				$html.= '<option value="gauss">gauss</option>';
+				$html.= '</select>'; $html.= docpop('protomo_filter', ' Preprocessing median/gauss Filter').'<br>';
+				$html.= $params->insertTextField( "border", $fieldSize );
+				$html.= $params->insertTextField( "clip_low", $fieldSize );
+				$html.= $params->insertTextField( "clip_high", $fieldSize );
+				$html.= $params->insertTextField( "thr_low", $fieldSize );
+				$html.= $params->insertTextField( "thr_high", $fieldSize );
+				$html.= $params->insertTextFieldInRow( "r1_kernel_x", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r2_kernel_x", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r3_kernel_x", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r4_kernel_x", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextField( "r5_kernel_x", $fieldSize2 );
+				$html.= $params->insertTextFieldInRow( "r1_kernel_y", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r2_kernel_y", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r3_kernel_y", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r4_kernel_y", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextField( "r5_kernel_y", $fieldSize2 );
+				$html.= $params->insertTextField( "grow", $fieldSize );
+				
+				$html .= "
+			    <br />
+			    <H4>Window Parameters ".docpop('windowparam_info', '(Info)')."</H4>
+			    <hr />";
+			    
+				$html.= $params->insertTextFieldInRow( "r1_region_x", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r2_region_x", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r3_region_x", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r4_region_x", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextField( "r5_region_x", $fieldSize2 );
+				$html.= $params->insertTextFieldInRow( "r1_region_y", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r2_region_y", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r3_region_y", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r4_region_y", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextField( "r5_region_y", $fieldSize2 );
+				$html.= $params->insertTextField( "window_area", $fieldSize );
+				$html.= $params->insertTextField( "thickness", $fieldSize );
+				
+				$html .= "
+			    <br />
+			    <H4>Mask Parameters ".docpop('maskparam_info', '(Info)')."</H4>
+			    <hr />";
+			    
+				$html.= $params->insertTextFieldInRow( "r1_lowpass_diameter_x", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r2_lowpass_diameter_x", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r3_lowpass_diameter_x", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r4_lowpass_diameter_x", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextField( "r5_lowpass_diameter_x", $fieldSize2 );
+				$html.= $params->insertTextFieldInRow( "r1_lowpass_diameter_y", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r2_lowpass_diameter_y", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r3_lowpass_diameter_y", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r4_lowpass_diameter_y", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextField( "r5_lowpass_diameter_y", $fieldSize2 );
+				$html.= $params->insertTextFieldInRow( "r1_highpass_diameter_x", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r2_highpass_diameter_x", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r3_highpass_diameter_x", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r4_highpass_diameter_x", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextField( "r5_highpass_diameter_x", $fieldSize2 );
+				$html.= $params->insertTextFieldInRow( "r1_highpass_diameter_y", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r2_highpass_diameter_y", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r3_highpass_diameter_y", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r4_highpass_diameter_y", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextField( "r5_highpass_diameter_y", $fieldSize2 );
+				$html.= $params->insertTextFieldInRow( "r1_mask_width_x", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r2_mask_width_x", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r3_mask_width_x", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r4_mask_width_x", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextField( "r5_mask_width_x", $fieldSize2 );
+				$html.= $params->insertTextFieldInRow( "r1_mask_width_y", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r2_mask_width_y", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r3_mask_width_y", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r4_mask_width_y", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextField( "r5_mask_width_y", $fieldSize2 );
+				$html.= $params->insertTextFieldInRow( "r1_mask_apod_x", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r2_mask_apod_x", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r3_mask_apod_x", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r4_mask_apod_x", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextField( "r5_mask_apod_x", $fieldSize2 );
+				$html.= $params->insertTextFieldInRow( "r1_mask_apod_y", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r2_mask_apod_y", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r3_mask_apod_y", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r4_mask_apod_y", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextField( "r5_mask_apod_y", $fieldSize2 );
+				$html.= $params->insertTextFieldInRow( "r1_lowpass_apod_x", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r2_lowpass_apod_x", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r3_lowpass_apod_x", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r4_lowpass_apod_x", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextField( "r5_lowpass_apod_x", $fieldSize2 );
+				$html.= $params->insertTextFieldInRow( "r1_lowpass_apod_y", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r2_lowpass_apod_y", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r3_lowpass_apod_y", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r4_lowpass_apod_y", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextField( "r5_lowpass_apod_y", $fieldSize2 );
+				$html.= $params->insertTextFieldInRow( "r1_highpass_apod_x", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r2_highpass_apod_x", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r3_highpass_apod_x", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r4_highpass_apod_x", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextField( "r5_highpass_apod_x", $fieldSize2 );
+				$html.= $params->insertTextFieldInRow( "r1_highpass_apod_y", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r2_highpass_apod_y", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r3_highpass_apod_y", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r4_highpass_apod_y", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextField( "r5_highpass_apod_y", $fieldSize2 );
+				
+				$html .= "
+			    <br />
+			    <H4>Cross-Correlation Parameters ".docpop('crosscorrparam_info', '(Info)')."</H4>
+			    <hr />";
+				
+				$html.= '<select name="r1_corr_mode" style="width:51px">';
+				$html.= '<option value="xcf">xcf</option>';
+				$html.= '<option selected value="mcf">mcf</option>';
+				$html.= '<option value="pcf">pcf</option>';
+				$html.= '<option value="dbl">dbl</option>';
+				$html.= '</select>'; $html.= docpop('protomo_r1_corr_mode', ' R1').'│ ';
+				$html.= '<select name="r2_corr_mode" style="width:51px">';
+				$html.= '<option value="xcf">xcf</option>';
+				$html.= '<option selected value="mcf">mcf</option>';
+				$html.= '<option value="pcf">pcf</option>';
+				$html.= '<option value="dbl">dbl</option>';
+				$html.= '</select>'; $html.= docpop('protomo_r2_corr_mode', ' R2').'│ ';
+				$html.= '<select name="r3_corr_mode" style="width:51px">';
+				$html.= '<option value="xcf">xcf</option>';
+				$html.= '<option selected value="mcf">mcf</option>';
+				$html.= '<option value="pcf">pcf</option>';
+				$html.= '<option value="dbl">dbl</option>';
+				$html.= '</select>'; $html.= docpop('protomo_r3_corr_mode', ' R3').'│ ';
+				$html.= '<select name="r4_corr_mode" style="width:51px">';
+				$html.= '<option value="xcf">xcf</option>';
+				$html.= '<option selected value="mcf">mcf</option>';
+				$html.= '<option value="pcf">pcf</option>';
+				$html.= '<option value="dbl">dbl</option>';
+				$html.= '</select>'; $html.= docpop('protomo_r4_corr_mode', ' R4').'│ ';
+				$html.= '<select name="r5_corr_mode" style="width:51px">';
+				$html.= '<option value="xcf">xcf</option>';
+				$html.= '<option value="mcf">mcf</option>';
+				$html.= '<option selected value="pcf">pcf</option>';
+				$html.= '<option value="dbl">dbl</option>';
+				$html.= '</select>'; $html.= docpop('protomo_r5_corr_mode', ' R5 | Correlation Mode').'<br>';
+				$html.= $params->insertTextFieldInRow( "r1_peak_search_radius_x", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r2_peak_search_radius_x", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r3_peak_search_radius_x", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r4_peak_search_radius_x", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextField( "r5_peak_search_radius_x", $fieldSize2 );
+				$html.= $params->insertTextFieldInRow( "r1_peak_search_radius_y", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r2_peak_search_radius_y", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r3_peak_search_radius_y", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextFieldInRow( "r4_peak_search_radius_y", $fieldSize2 ).'│ ';
+				$html.= $params->insertTextField( "r5_peak_search_radius_y", $fieldSize2 );
+				
+				$html .= "
+			    <br />
+			    <H4>Area Matching Parameters ".docpop('areamatchinparam_info', '(Info)')."</H4>
+			    <hr />";
+				
+				//$html.= $params->insertTextField( "do_estimation", $fieldSize );
+				$html.= '<select name="do_estimation" style="width:66px">';
+				$html.= '<option value="true">true</option>';
+				$html.= '<option selected value="false">false</option>';
+				$html.= '</select>'; $html.= docpop('protomo_do_estimation', ' Estimate Geometric Parameters').'<br>';
+				//$html.= $params->insertTextField( "norotations", $fieldSize );
+				$html.= '<select name="norotations" style="width:66px">';
+				$html.= '<option value="true">true</option>';
+				$html.= '<option selected value="false">false</option>';
+				$html.= '</select>'; $html.= docpop('protomo_norotations', ' No In-plane Rotations').'<br>';
+				//$html.= $params->insertTextField( "max_correction", $fieldSize );
+				
+				$html .= "
+			    <br />
+			    <H4>Geometry Refinement Parameters ".docpop('geomrefineparam_info', '(Info)')."</H4>
+			    <hr />";
+				
+				//$html.= $params->insertTextField( "orientation", $fieldSize );
+				$html.= '<select name="orientation" style="width:66px">';
+				$html.= '<option selected value="true">true</option>';
+				$html.= '<option value="false">false</option>';
+				$html.= '</select>'; $html.= docpop('protomo_orientation', ' Include Orientation Angles in Refinement').'│ ';
+				$html.= $params->insertTextField( "orientation_switch", $fieldSize );
+				//$html.= $params->insertTextField( "azimuth", $fieldSize );
+				$html.= '<select name="azimuth" style="width:66px">';
+				$html.= '<option selected value="true">true</option>';
+				$html.= '<option value="false">false</option>';
+				$html.= '</select>'; $html.= docpop('protomo_azimuth', ' Include Tilt Azimuth in Refinement').'│ ';
+				$html.= $params->insertTextField( "azimuth_switch", $fieldSize );
+				//$html.= $params->insertTextField( "elevation", $fieldSize );
+				$html.= '<select name="elevation" style="width:66px">';
+				$html.= '<option value="true">true</option>';
+				$html.= '<option selected value="false">false</option>';
+				$html.= '</select>'; $html.= docpop('protomo_elevation', ' Include Tilt Axis Elevation in Refinement').'│ ';
+				$html.= $params->insertTextField( "elevation_switch", $fieldSize );
+				//$html.= $params->insertTextField( "rotation", $fieldSize );
+				$html.= '<select name="rotation" style="width:66px">';
+				$html.= '<option selected value="true">true</option>';
+				$html.= '<option value="false">false</option>';
+				$html.= '</select>'; $html.= docpop('protomo_rotation', ' Include In-plane Rotations in Refinement').'│ ';
+				$html.= $params->insertTextField( "rotation_switch", $fieldSize );
+				//$html.= $params->insertTextField( "scale", $fieldSize );
+				$html.= '<select name="scale" style="width:66px">';
+				$html.= '<option value="true">true</option>';
+				$html.= '<option selected value="false">false</option>';
+				$html.= '</select>'; $html.= docpop('protomo_scale', ' Include Scale Factors (Magnification) in Refinement').'│ ';
+				$html.= $params->insertTextField( "scale_switch", $fieldSize );
+				
+				$html .= "
+			    <br />
+			    <H4>Depiction Parameters ".docpop('depictionparam_info', '(Info)')."</H4>
+			    <hr />";
+				
+				
+				$html.= $params->insertTextField( "correlation_size_x", $fieldSize );
+				$html.= $params->insertTextField( "correlation_size_y", $fieldSize );
+				//$html.= $params->insertTextField( "create_reconstruction", $fieldSize );
+				$html.= '<select name="create_tilt_video" style="width:66px">';
+				$html.= '<option selected value="true">true</option>';
+				$html.= '<option value="false">false</option>';
+				$html.= '</select>'; $html.= docpop('protomo_create_tilt_video2', ' Create Tilt-Series Videos').'<br>';
+				$html.= '<select name="tilt_clip" style="width:66px">';
+				$html.= '<option selected value="true">true</option>';
+				$html.= '<option value="false">false</option>';
+				$html.= '</select>'; $html.= docpop('protomo_tilt_clip', ' Clip Tilt-Series Video Pixel Values').'<br>';
+				$html.= '<select name="create_reconstruction" style="width:66px">';
+				$html.= '<option selected value="true">true</option>';
+				$html.= '<option value="false">false</option>';
+				$html.= '</select>'; $html.= docpop('protomo_create_reconstruction2', ' Create Reconstruction Videos').'<br>';
+				$html.= '<select name="show_window_size" style="width:66px">';
+				$html.= '<option selected value="true">true</option>';
+				$html.= '<option value="false">false</option>';
+				$html.= '</select>'; $html.= docpop('protomo_show_window_size', ' Show Window Size in Reconstruction Videos').'<br>';
+				$html.= '<select name="video_type" style="width:66px">';
+				$html.= '<option value="gif">Gif</option>';
+				$html.= '<option selected value="html5vid">HTML5</option>';
+				$html.= '</select>'; $html.= docpop('protomo_video_type', ' Video Type').'<br>';
+				$html.= $params->insertTextField( "map_sampling", $fieldSize );
+				$html.= $params->insertTextField( "map_size_x", $fieldSize );
+				$html.= $params->insertTextField( "map_size_y", $fieldSize );
+				//$html.= $params->insertTextField( "map_size_z", $fieldSize );
+				//$html.= $params->insertTextField( "keep_recons", $fieldSize );
+				$html.= '<select name="keep_recons" style="width:66px">';
+				$html.= '<option value="true">true</option>';
+				$html.= '<option selected value="false">false</option>';
+				$html.= '</select>'; $html.= docpop('protomo_keep_recons', ' Keep Intermediate Reconstructions').'<br>';
+				
+				$html .= "<hr />";
+			}
 			
-			$html .= "
-		    <br />
-		    <H4>Preprocessing Parameters ".docpop('preprocparam_info', '(Info)')."</H4>
-		    <hr />";
-		    
-			$html.= '<select name="preprocessing" style="width:66px">';
-			$html.= '<option selected value="true">true</option>';
-			$html.= '<option value="false">false</option>';
-			$html.= '</select>'; $html.= docpop('protomo_preprocessing', ' Raw Image Preprocessing').'<br>';
-			//$html.= $params->insertTextField( "gradient", $fieldSize );
-			$html.= '<select name="gradient" style="width:66px">';
-			$html.= '<option selected value="true">true</option>';
-			$html.= '<option value="false">false</option>';
-			$html.= '</select>'; $html.= docpop('protomo_gradient', ' Linear Gradient Subtraction').'│ ';
-			$html.= $params->insertTextField( "gradient_switch", $fieldSize );
-			//$html.= $params->insertTextField( "iter_gradient", $fieldSize );
-			$html.= '<select name="iter_gradient" style="width:66px">';
-			$html.= '<option value="true">true</option>';
-			$html.= '<option selected value="false">false</option>';
-			$html.= '</select>'; $html.= docpop('protomo_iter_gradient', ' Iterate Gradient Subtraction Once').'│ ';
-			$html.= $params->insertTextField( "iter_gradient_switch", $fieldSize );
-			//$html.= $params->insertTextField( "filter", $fieldSize );
-			$html.= '<select name="filter" style="width:66px">';
-			$html.= '<option selected value="median">median</option>';
-			$html.= '<option value="gauss">gauss</option>';
-			$html.= '</select>'; $html.= docpop('protomo_filter', ' Preprocessing median/gauss Filter').'<br>';
-			$html.= $params->insertTextField( "border", $fieldSize );
-			$html.= $params->insertTextField( "clip_low", $fieldSize );
-			$html.= $params->insertTextField( "clip_high", $fieldSize );
-			$html.= $params->insertTextField( "thr_low", $fieldSize );
-			$html.= $params->insertTextField( "thr_high", $fieldSize );
-			$html.= $params->insertTextFieldInRow( "r1_kernel_x", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextFieldInRow( "r2_kernel_x", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextFieldInRow( "r3_kernel_x", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextFieldInRow( "r4_kernel_x", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextField( "r5_kernel_x", $fieldSize2 );
-			$html.= $params->insertTextFieldInRow( "r1_kernel_y", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextFieldInRow( "r2_kernel_y", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextFieldInRow( "r3_kernel_y", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextFieldInRow( "r4_kernel_y", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextField( "r5_kernel_y", $fieldSize2 );
-			$html.= $params->insertTextField( "grow", $fieldSize );
-			
-			$html .= "
-		    <br />
-		    <H4>Window Parameters ".docpop('windowparam_info', '(Info)')."</H4>
-		    <hr />";
-		    
-			$html.= $params->insertTextFieldInRow( "r1_region_x", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextFieldInRow( "r2_region_x", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextFieldInRow( "r3_region_x", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextFieldInRow( "r4_region_x", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextField( "r5_region_x", $fieldSize2 );
-			$html.= $params->insertTextFieldInRow( "r1_region_y", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextFieldInRow( "r2_region_y", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextFieldInRow( "r3_region_y", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextFieldInRow( "r4_region_y", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextField( "r5_region_y", $fieldSize2 );
-			$html.= $params->insertTextField( "window_area", $fieldSize );
-			$html.= $params->insertTextField( "thickness", $fieldSize );
-			
-			$html .= "
-		    <br />
-		    <H4>Mask Parameters ".docpop('maskparam_info', '(Info)')."</H4>
-		    <hr />";
-		    
-			$html.= $params->insertTextFieldInRow( "r1_lowpass_diameter_x", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextFieldInRow( "r2_lowpass_diameter_x", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextFieldInRow( "r3_lowpass_diameter_x", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextFieldInRow( "r4_lowpass_diameter_x", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextField( "r5_lowpass_diameter_x", $fieldSize2 );
-			$html.= $params->insertTextFieldInRow( "r1_lowpass_diameter_y", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextFieldInRow( "r2_lowpass_diameter_y", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextFieldInRow( "r3_lowpass_diameter_y", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextFieldInRow( "r4_lowpass_diameter_y", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextField( "r5_lowpass_diameter_y", $fieldSize2 );
-			$html.= $params->insertTextFieldInRow( "r1_highpass_diameter_x", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextFieldInRow( "r2_highpass_diameter_x", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextFieldInRow( "r3_highpass_diameter_x", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextFieldInRow( "r4_highpass_diameter_x", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextField( "r5_highpass_diameter_x", $fieldSize2 );
-			$html.= $params->insertTextFieldInRow( "r1_highpass_diameter_y", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextFieldInRow( "r2_highpass_diameter_y", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextFieldInRow( "r3_highpass_diameter_y", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextFieldInRow( "r4_highpass_diameter_y", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextField( "r5_highpass_diameter_y", $fieldSize2 );
-			$html.= $params->insertTextFieldInRow( "r1_mask_width_x", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextFieldInRow( "r2_mask_width_x", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextFieldInRow( "r3_mask_width_x", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextFieldInRow( "r4_mask_width_x", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextField( "r5_mask_width_x", $fieldSize2 );
-			$html.= $params->insertTextFieldInRow( "r1_mask_width_y", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextFieldInRow( "r2_mask_width_y", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextFieldInRow( "r3_mask_width_y", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextFieldInRow( "r4_mask_width_y", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextField( "r5_mask_width_y", $fieldSize2 );
-			$html.= $params->insertTextFieldInRow( "r1_mask_apod_x", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextFieldInRow( "r2_mask_apod_x", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextFieldInRow( "r3_mask_apod_x", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextFieldInRow( "r4_mask_apod_x", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextField( "r5_mask_apod_x", $fieldSize2 );
-			$html.= $params->insertTextFieldInRow( "r1_mask_apod_y", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextFieldInRow( "r2_mask_apod_y", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextFieldInRow( "r3_mask_apod_y", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextFieldInRow( "r4_mask_apod_y", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextField( "r5_mask_apod_y", $fieldSize2 );
-			$html.= $params->insertTextFieldInRow( "r1_lowpass_apod_x", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextFieldInRow( "r2_lowpass_apod_x", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextFieldInRow( "r3_lowpass_apod_x", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextFieldInRow( "r4_lowpass_apod_x", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextField( "r5_lowpass_apod_x", $fieldSize2 );
-			$html.= $params->insertTextFieldInRow( "r1_lowpass_apod_y", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextFieldInRow( "r2_lowpass_apod_y", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextFieldInRow( "r3_lowpass_apod_y", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextFieldInRow( "r4_lowpass_apod_y", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextField( "r5_lowpass_apod_y", $fieldSize2 );
-			$html.= $params->insertTextFieldInRow( "r1_highpass_apod_x", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextFieldInRow( "r2_highpass_apod_x", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextFieldInRow( "r3_highpass_apod_x", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextFieldInRow( "r4_highpass_apod_x", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextField( "r5_highpass_apod_x", $fieldSize2 );
-			$html.= $params->insertTextFieldInRow( "r1_highpass_apod_y", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextFieldInRow( "r2_highpass_apod_y", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextFieldInRow( "r3_highpass_apod_y", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextFieldInRow( "r4_highpass_apod_y", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextField( "r5_highpass_apod_y", $fieldSize2 );
-			
-			$html .= "
-		    <br />
-		    <H4>Cross-Correlation Parameters ".docpop('crosscorrparam_info', '(Info)')."</H4>
-		    <hr />";
-			
-			$html.= '<select name="r1_corr_mode" style="width:51px">';
-			$html.= '<option value="xcf">xcf</option>';
-			$html.= '<option selected value="mcf">mcf</option>';
-			$html.= '<option value="pcf">pcf</option>';
-			$html.= '<option value="dbl">dbl</option>';
-			$html.= '</select>'; $html.= docpop('protomo_r1_corr_mode', ' R1').'│ ';
-			$html.= '<select name="r2_corr_mode" style="width:51px">';
-			$html.= '<option value="xcf">xcf</option>';
-			$html.= '<option selected value="mcf">mcf</option>';
-			$html.= '<option value="pcf">pcf</option>';
-			$html.= '<option value="dbl">dbl</option>';
-			$html.= '</select>'; $html.= docpop('protomo_r2_corr_mode', ' R2').'│ ';
-			$html.= '<select name="r3_corr_mode" style="width:51px">';
-			$html.= '<option value="xcf">xcf</option>';
-			$html.= '<option selected value="mcf">mcf</option>';
-			$html.= '<option value="pcf">pcf</option>';
-			$html.= '<option value="dbl">dbl</option>';
-			$html.= '</select>'; $html.= docpop('protomo_r3_corr_mode', ' R3').'│ ';
-			$html.= '<select name="r4_corr_mode" style="width:51px">';
-			$html.= '<option value="xcf">xcf</option>';
-			$html.= '<option selected value="mcf">mcf</option>';
-			$html.= '<option value="pcf">pcf</option>';
-			$html.= '<option value="dbl">dbl</option>';
-			$html.= '</select>'; $html.= docpop('protomo_r4_corr_mode', ' R4').'│ ';
-			$html.= '<select name="r5_corr_mode" style="width:51px">';
-			$html.= '<option value="xcf">xcf</option>';
-			$html.= '<option value="mcf">mcf</option>';
-			$html.= '<option selected value="pcf">pcf</option>';
-			$html.= '<option value="dbl">dbl</option>';
-			$html.= '</select>'; $html.= docpop('protomo_r5_corr_mode', ' R5 | Correlation Mode').'<br>';
-			$html.= $params->insertTextFieldInRow( "r1_peak_search_radius_x", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextFieldInRow( "r2_peak_search_radius_x", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextFieldInRow( "r3_peak_search_radius_x", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextFieldInRow( "r4_peak_search_radius_x", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextField( "r5_peak_search_radius_x", $fieldSize2 );
-			$html.= $params->insertTextFieldInRow( "r1_peak_search_radius_y", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextFieldInRow( "r2_peak_search_radius_y", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextFieldInRow( "r3_peak_search_radius_y", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextFieldInRow( "r4_peak_search_radius_y", $fieldSize2 ).'│ ';
-			$html.= $params->insertTextField( "r5_peak_search_radius_y", $fieldSize2 );
-			
-			$html .= "
-		    <br />
-		    <H4>Area Matching Parameters ".docpop('areamatchinparam_info', '(Info)')."</H4>
-		    <hr />";
-			
-			//$html.= $params->insertTextField( "do_estimation", $fieldSize );
-			$html.= '<select name="do_estimation" style="width:66px">';
-			$html.= '<option value="true">true</option>';
-			$html.= '<option selected value="false">false</option>';
-			$html.= '</select>'; $html.= docpop('protomo_do_estimation', ' Estimate Geometric Parameters').'<br>';
-			//$html.= $params->insertTextField( "norotations", $fieldSize );
-			$html.= '<select name="norotations" style="width:66px">';
-			$html.= '<option value="true">true</option>';
-			$html.= '<option selected value="false">false</option>';
-			$html.= '</select>'; $html.= docpop('protomo_norotations', ' No In-plane Rotations').'<br>';
-			//$html.= $params->insertTextField( "max_correction", $fieldSize );
-			
-			$html .= "
-		    <br />
-		    <H4>Geometry Refinement Parameters ".docpop('geomrefineparam_info', '(Info)')."</H4>
-		    <hr />";
-			
-			//$html.= $params->insertTextField( "orientation", $fieldSize );
-			$html.= '<select name="orientation" style="width:66px">';
-			$html.= '<option selected value="true">true</option>';
-			$html.= '<option value="false">false</option>';
-			$html.= '</select>'; $html.= docpop('protomo_orientation', ' Include Orientation Angles in Refinement').'│ ';
-			$html.= $params->insertTextField( "orientation_switch", $fieldSize );
-			//$html.= $params->insertTextField( "azimuth", $fieldSize );
-			$html.= '<select name="azimuth" style="width:66px">';
-			$html.= '<option selected value="true">true</option>';
-			$html.= '<option value="false">false</option>';
-			$html.= '</select>'; $html.= docpop('protomo_azimuth', ' Include Tilt Azimuth in Refinement').'│ ';
-			$html.= $params->insertTextField( "azimuth_switch", $fieldSize );
-			//$html.= $params->insertTextField( "elevation", $fieldSize );
-			$html.= '<select name="elevation" style="width:66px">';
-			$html.= '<option value="true">true</option>';
-			$html.= '<option selected value="false">false</option>';
-			$html.= '</select>'; $html.= docpop('protomo_elevation', ' Include Tilt Axis Elevation in Refinement').'│ ';
-			$html.= $params->insertTextField( "elevation_switch", $fieldSize );
-			//$html.= $params->insertTextField( "rotation", $fieldSize );
-			$html.= '<select name="rotation" style="width:66px">';
-			$html.= '<option selected value="true">true</option>';
-			$html.= '<option value="false">false</option>';
-			$html.= '</select>'; $html.= docpop('protomo_rotation', ' Include In-plane Rotations in Refinement').'│ ';
-			$html.= $params->insertTextField( "rotation_switch", $fieldSize );
-			//$html.= $params->insertTextField( "scale", $fieldSize );
-			$html.= '<select name="scale" style="width:66px">';
-			$html.= '<option value="true">true</option>';
-			$html.= '<option selected value="false">false</option>';
-			$html.= '</select>'; $html.= docpop('protomo_scale', ' Include Scale Factors (Magnification) in Refinement').'│ ';
-			$html.= $params->insertTextField( "scale_switch", $fieldSize );
-			
-			$html .= "
-		    <br />
-		    <H4>Depiction Parameters ".docpop('depictionparam_info', '(Info)')."</H4>
-		    <hr />";
-			
-			
-			$html.= $params->insertTextField( "correlation_size_x", $fieldSize );
-			$html.= $params->insertTextField( "correlation_size_y", $fieldSize );
-			//$html.= $params->insertTextField( "create_reconstruction", $fieldSize );
-			$html.= '<select name="create_tilt_video" style="width:66px">';
-			$html.= '<option selected value="true">true</option>';
-			$html.= '<option value="false">false</option>';
-			$html.= '</select>'; $html.= docpop('protomo_create_tilt_video2', ' Create Tilt-Series Videos').'<br>';
-			$html.= '<select name="tilt_clip" style="width:66px">';
-			$html.= '<option selected value="true">true</option>';
-			$html.= '<option value="false">false</option>';
-			$html.= '</select>'; $html.= docpop('protomo_tilt_clip', ' Clip Tilt-Series Video Pixel Values').'<br>';
-			$html.= '<select name="create_reconstruction" style="width:66px">';
-			$html.= '<option selected value="true">true</option>';
-			$html.= '<option value="false">false</option>';
-			$html.= '</select>'; $html.= docpop('protomo_create_reconstruction2', ' Create Reconstruction Videos').'<br>';
-			$html.= '<select name="show_window_size" style="width:66px">';
-			$html.= '<option selected value="true">true</option>';
-			$html.= '<option value="false">false</option>';
-			$html.= '</select>'; $html.= docpop('protomo_show_window_size', ' Show Window Size in Reconstruction Videos').'<br>';
-			$html.= '<select name="video_type" style="width:66px">';
-			$html.= '<option value="gif">Gif</option>';
-			$html.= '<option selected value="html5vid">HTML5</option>';
-			$html.= '</select>'; $html.= docpop('protomo_video_type', ' Video Type').'<br>';
-			$html.= $params->insertTextField( "map_sampling", $fieldSize );
-			$html.= $params->insertTextField( "map_size_x", $fieldSize );
-			$html.= $params->insertTextField( "map_size_y", $fieldSize );
-			//$html.= $params->insertTextField( "map_size_z", $fieldSize );
-			//$html.= $params->insertTextField( "keep_recons", $fieldSize );
-			$html.= '<select name="keep_recons" style="width:66px">';
-			$html.= '<option value="true">true</option>';
-			$html.= '<option selected value="false">false</option>';
-			$html.= '</select>'; $html.= docpop('protomo_keep_recons', ' Keep Intermediate Reconstructions').'<br>';
-			
-			$html .= "<hr />";
-		    
 			// Only display link to next step in tomo processing if on completed Command page
-			if (empty($_POST['r1_region_x']) OR empty($_POST['r1_region_y']) OR empty($_POST['thickness']) OR empty($_POST['r1_iters']) AND !isset($_POST['process']))
+			if (!isset($_POST['process']))
 			{
 				$html .= "<br></br>
 				<b><center>[Enter the the required parameters and click 'Just Show Command' to proceed]</center></b><br>";
