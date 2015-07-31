@@ -562,7 +562,7 @@ function array2table($data, $columns=array(), $display_header=false, $tableoptio
 	$fields = ($columns) ? $columns : array_keys((array)$data[0]);
 	$html = "<table $tableoption >";
 	if ($display_header) {
-		$html .= "<tr>\n";
+		$html .= "<thead><tr>\n";
 		$option="";
 		foreach ($fields as $field=>$label) {
 			$l = (is_string($label)) ? $label : $field;
@@ -574,8 +574,9 @@ function array2table($data, $columns=array(), $display_header=false, $tableoptio
 			}
 			$html .= "<td $option ><b>".$l."</b></td>";
 		}
-		$html .= "</tr>\n";
+		$html .= "</tr></thead>\n";
 	}
+	$html .= "<tbody>";
 	foreach ((array)$data as $n=>$row) {
 		$html .= "<tr>\n";
 		foreach ($fields as $k=>$v) {
@@ -595,6 +596,7 @@ function array2table($data, $columns=array(), $display_header=false, $tableoptio
 		}
 		$html .= "</tr>\n";
 	}
+	$html .= "</tbody>";
 	$html .= "</table>";
 	return $html;
 }
