@@ -14,8 +14,9 @@ except:
 use_nidaq = False
 
 try:
-	import pythoncom
-	import win32com.client
+	import comtypes
+	import comtypes.client
+	com_module =  comtypes
 	import winerror
 except ImportError:
 	pass
@@ -48,13 +49,16 @@ class Tecnai(tem.TEM):
 		self.projection_submode_map = self.special_submode_mags.copy()
 		
 		self.correctedstage = True
-		pythoncom.CoInitializeEx(pythoncom.COINIT_MULTITHREADED)
+		try:
+			com_module.CoInitializeEx(com_module.COINIT_MULTITHREADED)
+		except:
+			com_module.CoInitialize()
 
 		self.tecnai = None
 		# should determine this in updatecom instead of guessing it here
 		for comname in ('Tecnai.Instrument', 'TEMScripting.Instrument.1'):
 			try:
-				self.tecnai = win32com.client.Dispatch(comname)
+				self.tecnai = comtypes.client.CreateObject(comname)
 				break
 			except:
 				pass
@@ -62,22 +66,23 @@ class Tecnai(tem.TEM):
 		# Fatal error
 		if self.tecnai is None:
 			raise RuntimeError('unable to initialize Tecnai interface')
-
+		self.tem_constants = comtypes.client.Constants(self.tecnai)
 		try:
-			self.tom = win32com.client.Dispatch('TEM.Instrument.1')
-		except pythoncom.com_error, (hr, msg, exc, arg):
+			self.tom = comtypes.client.CreateObject('TEM.Instrument.1')
+		except com_module.COMError, (hr, msg, exc, arg):
 			print 'unable to initialize TOM Moniker interface, %s' % msg
                         self.tom = None
 
 		try:
-			self.lowdose = win32com.client.Dispatch('LDServer.LdSrv')
-		except pythoncom.com_error, (hr, msg, exc, arg):
+			self.lowdose = comtypes.client.CreateObject('LDServer.LdSrv')
+		except com_module.COMError, (hr, msg, exc, arg):
 			print 'unable to initialize low dose interface, %s' % msg
 			self.lowdose = None
 
 		try:
-			self.exposure = win32com.client.Dispatch('adaExp.TAdaExp',
-																					clsctx=pythoncom.CLSCTX_LOCAL_SERVER)
+			self.exposure = comtypes.client.CreateObject('adaExp.TAdaExp',
+																					clsctx=com_module.CLSCTX_LOCAL_SERVER)
+			self.adacom_constants = comtypes.client.Constants(self.exposure)
 		except:
 			self.exposure = None
 
@@ -103,8 +108,9 @@ class Tecnai(tem.TEM):
 				self.pressure_prop = gauge
 			except:
 				pass
-		self.probe_str_const = {'micro': win32com.client.constants.imMicroProbe, 'nano': win32com.client.constants.imNanoProbe}
-		self.probe_const_str = {win32com.client.constants.imMicroProbe: 'micro', win32com.client.constants.imNanoProbe: 'nano'}
+
+		self.probe_str_const = {'micro': self.tem_constants.imMicroProbe, 'nano': self.tem_constants.imNanoProbe}
+		self.probe_const_str = {self.tem_constants.imMicroProbe: 'micro', self.tem_constants.imNanoProbe: 'nano'}
 
 	def getMagnificationsInitialized(self):
 		if self.magnifications:
@@ -156,23 +162,23 @@ class Tecnai(tem.TEM):
 		if lens == 'all':
 			self.tecnai.NormalizeAll()
 		elif lens == 'objective':
-			self.tecnai.Projection.Normalize(win32com.client.constants.pnmObjective)
+			self.tecnai.Projection.Normalize(self.tem_constants.pnmObjective)
 		elif lens == 'projector':
-			self.tecnai.Projection.Normalize(win32com.client.constants.pnmProjector)
+			self.tecnai.Projection.Normalize(self.tem_constants.pnmProjector)
 		elif lens == 'allprojection':
-			self.tecnai.Projection.Normalize(win32com.client.constants.pnmAll)
+			self.tecnai.Projection.Normalize(self.tem_constants.pnmAll)
 		elif lens == 'spotsize':
-			self.tecnai.Illumination.Normalize(win32com.client.constants.nmSpotsize)
+			self.tecnai.Illumination.Normalize(self.tem_constants.nmSpotsize)
 		elif lens == 'intensity':
-			self.tecnai.Illumination.Normalize(win32com.client.constants.nmIntensity)
+			self.tecnai.Illumination.Normalize(self.tem_constants.nmIntensity)
 		elif lens == 'condenser':
-			self.tecnai.Illumination.Normalize(win32com.client.constants.nmCondenser)
+			self.tecnai.Illumination.Normalize(self.tem_constants.nmCondenser)
 		elif lens == 'minicondenser':
-			self.tecnai.Illumination.Normalize(win32com.client.constants.nmMiniCondenser)
+			self.tecnai.Illumination.Normalize(self.tem_constants.nmMiniCondenser)
 		elif lens == 'objectivepole':
-			self.tecnai.Illumination.Normalize(win32com.client.constants.nmObjectivePole)
+			self.tecnai.Illumination.Normalize(self.tem_constants.nmObjectivePole)
 		elif lens == 'allillumination':
-			self.tecnai.Illumination.Normalize(win32com.client.constants.nmAll)
+			self.tecnai.Illumination.Normalize(self.tem_constants.nmAll)
 		else:
 			raise ValueError
 
@@ -250,11 +256,11 @@ class Tecnai(tem.TEM):
 
 	def getHighTensionState(self):
 		state = self.tecnai.Gun.HTState
-		if state == win32com.client.constants.htOff:
+		if state == self.tem_constants.htOff:
 			return 'off'
-		elif state == win32com.client.constants.htOn:
+		elif state == self.tem_constants.htOn:
 			return 'on'
-		elif state == win32com.client.constants.htDisabled:
+		elif state == self.tem_constants.htDisabled:
 			return 'disabled'
 		else:
 			raise RuntimeError('unknown high tension state')
@@ -279,22 +285,22 @@ class Tecnai(tem.TEM):
 		setattr(self.tecnai.Illumination, self.intensity_prop, intensity)
 
 	def getDarkFieldMode(self):
-		if self.tecnai.Illumination.DFMode == win32com.client.constants.dfOff:
+		if self.tecnai.Illumination.DFMode == self.tem_constants.dfOff:
 			return 'off'
-		elif self.tecnai.Illumination.DFMode == win32com.client.constants.dfCartesian:
+		elif self.tecnai.Illumination.DFMode == self.tem_constants.dfCartesian:
 			return 'cartesian'
-		elif self.tecnai.Illumination.DFMode == win32com.client.constants.dfConical:
+		elif self.tecnai.Illumination.DFMode == self.tem_constants.dfConical:
 			return 'conical'
 		else:
 			raise SystemError
 		
 	def setDarkFieldMode(self, mode):
 		if mode == 'off':
-			self.tecnai.Illumination.DFMode = win32com.client.constants.dfOff
+			self.tecnai.Illumination.DFMode = self.tem_constants.dfOff
 		elif mode == 'cartesian':
-			self.tecnai.Illumination.DFMode = win32com.client.constants.dfCartesian
+			self.tecnai.Illumination.DFMode = self.tem_constants.dfCartesian
 		elif mode == 'conical':
-			self.tecnai.Illumination.DFMode = win32com.client.constants.dfConical
+			self.tecnai.Illumination.DFMode = self.tem_constants.dfConical
 		else:
 			raise ValueError
 
@@ -743,13 +749,13 @@ class Tecnai(tem.TEM):
 				nidaq.setBeta(deg)
 				continue
 			setattr(pos, key.upper(), value)
-			axes |= getattr(win32com.client.constants, 'axis' + key.upper())
+			axes |= getattr(self.tem_constants, 'axis' + key.upper())
 
 		if axes == 0:
 			return
 		try:
 			self.tecnai.Stage.Goto(pos, axes)
-		except pythoncom.com_error, (hr, msg, exc, arg):
+		except com_module.COMError, (hr, msg, exc, arg):
 			#print 'Stage.Goto failed with error %d: %s' % (hr, msg)
 			if exc is None:
 				raise ValueError('no extended error information, assuming stage limit was hit')
@@ -770,11 +776,11 @@ class Tecnai(tem.TEM):
 
 	def getLowDose(self):
 		try:
-			if (self.lowdose.IsInitialized == 1) and (self.lowdose.LowDoseActive == win32com.client.constants.IsOn):
+			if (self.lowdose.IsInitialized == 1) and (self.lowdose.LowDoseActive == self.tem_constants.IsOn):
 				return 'on'
 			else:
 				return 'off'
-		except pythoncom.com_error, (hr, msg, exc, arg):
+		except com_module.COMError, (hr, msg, exc, arg):
 			if exc is None:
 				# No extended error information, assuming low dose is disabled
 				return 'disabled'
@@ -789,15 +795,15 @@ class Tecnai(tem.TEM):
 	def setLowDose(self, ld):
 		try:
 			if ld == 'off' :
-				self.lowdose.LowDoseActive = win32com.client.constants.IsOff
+				self.lowdose.LowDoseActive = self.tem_constants.IsOff
 			elif ld == 'on':
 				if self.lowdose.IsInitialized == 0:
 					raise RuntimeError('Low dose is not initialized')
 				else:
-					self.lowdose.LowDoseActive = win32com.client.constants.IsOn
+					self.lowdose.LowDoseActive = self.tem_constants.IsOn
 			else:
 				raise ValueError
-		except pythoncom.com_error, (hr, msg, exc, arg):
+		except com_module.COMError, (hr, msg, exc, arg):
 			if exc is None:
 				# No extended error information, assuming low dose is disenabled
 				raise RuntimeError('Low dose is not enabled')
@@ -814,17 +820,17 @@ class Tecnai(tem.TEM):
 
 	def getLowDoseMode(self):
 		try:
-			if self.lowdose.LowDoseState == win32com.client.constants.eExposure:
+			if self.lowdose.LowDoseState == self.tem_constants.eExposure:
 				return 'exposure'
-			elif self.lowdose.LowDoseState == win32com.client.constants.eFocus1:
+			elif self.lowdose.LowDoseState == self.tem_constants.eFocus1:
 				return 'focus1'
-			elif self.lowdose.LowDoseState == win32com.client.constants.eFocus2:
+			elif self.lowdose.LowDoseState == self.tem_constants.eFocus2:
 				return 'focus2'
-			elif self.lowdose.LowDoseState == win32com.client.constants.eSearch:
+			elif self.lowdose.LowDoseState == self.tem_constants.eSearch:
 				return 'search'
 			else:
 				return 'unknown'
-		except pythoncom.com_error, (hr, msg, exc, arg):
+		except com_module.COMError, (hr, msg, exc, arg):
 			if exc is None:
 				# No extended error information, assuming low dose is disenabled
 				return 'disabled'
@@ -839,16 +845,16 @@ class Tecnai(tem.TEM):
 	def setLowDoseMode(self, mode):
 		try:
 			if mode == 'exposure':
-				self.lowdose.LowDoseState = win32com.client.constants.eExposure
+				self.lowdose.LowDoseState = self.tem_constants.eExposure
 			elif mode == 'focus1':
-				self.lowdose.LowDoseState = win32com.client.constants.eFocus1
+				self.lowdose.LowDoseState = self.tem_constants.eFocus1
 			elif mode == 'focus2':
-				self.lowdose.LowDoseState = win32com.client.constants.eFocus2
+				self.lowdose.LowDoseState = self.tem_constants.eFocus2
 			elif mode == 'search':
-				self.lowdose.LowDoseState = win32com.client.constants.eSearch
+				self.lowdose.LowDoseState = self.tem_constants.eSearch
 			else:
 				raise ValueError
-		except pythoncom.com_error, (hr, msg, exc, arg):
+		except com_module.COMError, (hr, msg, exc, arg):
 			if exc is None:
 				# No extended error information, assuming low dose is disenabled
 				raise RuntimeError('Low dose is not enabled')
@@ -861,27 +867,37 @@ class Tecnai(tem.TEM):
 					raise RuntimerError(text)
 	
 	def getDiffractionMode(self):
-		if self.tecnai.Projection.Mode == win32com.client.constants.pmImaging:
+		if self.tecnai.Projection.Mode == self.tem_constants.pmImaging:
 			return 'imaging'
-		elif self.tecnai.Projection.Mode == win32com.client.constants.pmDiffraction:
+		elif self.tecnai.Projection.Mode == self.tem_constants.pmDiffraction:
 			return 'diffraction'
 		else:
 			raise SystemError
 		
 	def setDiffractionMode(self, mode):
 		if mode == 'imaging':
-			self.tecnai.Projection.Mode = win32com.client.constants.pmImaging
+			self.tecnai.Projection.Mode = self.tem_constants.pmImaging
 		elif mode == 'diffraction':
-			self.tecnai.Projection.Mode = win32com.client.constants.pmDiffraction
+			self.tecnai.Projection.Mode = self.tem_constants.pmDiffraction
 		else:
 			raise ValueError
 		
 		return 0
 
 	def getShutterPositions(self):
+		'''
+		Shutter refers to the shutter controlled through adaExp.
+		Use BeamBlanker functions to control pre-specimen shuttering
+		accessable from tem scripting.
+		'''
 		return ['open', 'closed']
 
 	def setShutter(self, state):
+		'''
+		Shutter refers to the shutter controlled through adaExp.
+		Use BeamBlanker functions to control pre-specimen shuttering
+		accessable from tem scripting.
+		'''
 		if self.exposure is None:
 			raise RuntimeError('setShutter requires adaExp')
 		if state == 'open':
@@ -894,6 +910,11 @@ class Tecnai(tem.TEM):
 			raise ValueError('Invalid value for setShutter \'%s\'' % (state,))
 
 	def getShutter(self):
+		'''
+		Shutter refers to the shutter controlled through adaExp.
+		Use BeamBlanker functions to control pre-specimen shuttering
+		accessable from tem scripting.
+		'''
 		if self.exposure is None:
 			raise RuntimeError('getShutter requires adaExp')
 		status = self.exposure.ShutterStatus
@@ -993,16 +1014,16 @@ class Tecnai(tem.TEM):
 		timeout = 5.0
 		sleeptime = 0.05
 		while (self.tecnai.Camera.MainScreen
-						== win32com.client.constants.spUnknown):
+						== self.tem_constants.spUnknown):
 			time.sleep(sleeptime)
-			if self.tecnai.Camera.MainScreen != win32com.client.constants.spUnknown:
+			if self.tecnai.Camera.MainScreen != self.tem_constants.spUnknown:
 				break
 			timeout -= sleeptime
 			if timeout <= 0.0:
 				return 'unknown'
-		if self.tecnai.Camera.MainScreen == win32com.client.constants.spUp:
+		if self.tecnai.Camera.MainScreen == self.tem_constants.spUp:
 			return 'up'
-		elif self.tecnai.Camera.MainScreen == win32com.client.constants.spDown:
+		elif self.tecnai.Camera.MainScreen == self.tem_constants.spDown:
 			return 'down'
 		else:
 			return 'unknown'
@@ -1015,19 +1036,19 @@ class Tecnai(tem.TEM):
 
 	def setMainScreenPosition(self, mode):
 		if mode == 'up':
-			self.tecnai.Camera.MainScreen = win32com.client.constants.spUp
+			self.tecnai.Camera.MainScreen = self.tem_constants.spUp
 		elif mode == 'down':
-			self.tecnai.Camera.MainScreen = win32com.client.constants.spDown
+			self.tecnai.Camera.MainScreen = self.tem_constants.spDown
 		else:
 			raise ValueError
 		time.sleep(2)
 
 	def getHolderStatus(self):
-		if adacom is None:
+		if self.exposure is None:
 			raise RuntimeError('getHolderStatus requires adaExp')
-		if self.exposure.SpecimenHolderInserted == adacom.constants.eInserted:
+		if self.exposure.SpecimenHolderInserted == self.adacom_constants.eInserted:
 			return 'inserted'
-		elif self.exposure.SpecimenHolderInserted == adacom.constants.eNotInserted:
+		elif self.exposure.SpecimenHolderInserted == self.adacom_constants.eNotInserted:
 			return 'not inserted'
 		else:
 			return 'unknown'
@@ -1067,32 +1088,32 @@ class Tecnai(tem.TEM):
 		raise SystemError('no such holder available')
 
 	def getStageStatus(self):
-		if adacom is None:
+		if self.exposure is None:
 			raise RuntimeError('getStageStatus requires adaExp')
-		if self.exposure.GonioLedStatus == adacom.constants.eOn:
+		if self.exposure.GonioLedStatus == self.adacom_constants.eOn:
 			return 'busy'
-		elif self.exposure.GonioLedStatus == adacom.constants.eOff:
+		elif self.exposure.GonioLedStatus == self.adacom_constants.eOff:
 			return 'ready'
 		else:
 			return 'unknown'
 
 	def getTurboPump(self):
-		if adacom is None:
+		if self.exposure is None:
 			raise RuntimeError('getTurboPump requires adaExp')
-		if self.exposure.GetTmpStatus == adacom.constants.eOn:
+		if self.exposure.GetTmpStatus == self.adacom_constants.eOn:
 			return 'on'
-		elif self.exposure.GetTmpStatus == adacom.constants.eOff:
+		elif self.exposure.GetTmpStatus == self.adacom_constants.eOff:
 			return 'off'
 		else:
 			return 'unknown'
 
 	def setTurboPump(self, mode):
-		if adacom is None:
+		if self.exposure is None:
 			raise RuntimeError('setTurboPump requires adaExp')
 		if mode == 'on':
-			self.exposure.SetTmp(adacom.constants.eOn)
+			self.exposure.SetTmp(self.adacom_constants.eOn)
 		elif mode == 'off':
-			self.exposure.SetTmp(adacom.constants.eOff)
+			self.exposure.SetTmp(self.adacom_constants.eOff)
 		else:
 			raise ValueError
 
@@ -1120,17 +1141,17 @@ class Tecnai(tem.TEM):
 
 	def getVacuumStatus(self):
 		status = self.tecnai.Vacuum.Status
-		if status == win32com.client.constants.vsOff:
+		if status == self.tem_constants.vsOff:
 			return 'off'
-		elif status == win32com.client.constants.vsCameraAir:
+		elif status == self.tem_constants.vsCameraAir:
 			return 'camera'
-		elif status == win32com.client.constants.vsBusy:
+		elif status == self.tem_constants.vsBusy:
 			return 'busy'
-		elif status == win32com.client.constants.vsReady:
+		elif status == self.tem_constants.vsReady:
 			return 'ready'
-		elif status == win32com.client.constants.vsUnknown:
+		elif status == self.tem_constants.vsUnknown:
 			return 'unknown'
-		elif status == win32com.client.constants.vsElse:
+		elif status == self.tem_constants.vsElse:
 			return 'else'
 		else:
 			return 'unknown'
@@ -1208,13 +1229,13 @@ class Tecnai(tem.TEM):
 
 	def getFilmDateType(self):
 		filmdatetype = self.tecnai.Camera.PlateLabelDateType
-		if filmdatetype == win32com.client.constants.dtNoDate:
+		if filmdatetype == self.tem_constants.dtNoDate:
 			return 'no date'
-		elif filmdatetype == win32com.client.constants.dtDDMMYY:
+		elif filmdatetype == self.tem_constants.dtDDMMYY:
 			return 'DD-MM-YY'
-		elif filmdatetype == win32com.client.constants.dtMMDDYY:
+		elif filmdatetype == self.tem_constants.dtMMDDYY:
 			return 'MM/DD/YY'
-		elif filmdatetype == win32com.client.constants.dtYYMMDD:
+		elif filmdatetype == self.tem_constants.dtYYMMDD:
 			return 'YY.MM.DD'
 		else:
 			return 'unknown'
@@ -1222,23 +1243,23 @@ class Tecnai(tem.TEM):
 	def setFilmDateType(self, value):
 		if value == 'no date':
 			self.tecnai.Camera.PlateLabelDateType \
-				= win32com.client.constants.dtNoDate
+				= self.tem_constants.dtNoDate
 		elif value == 'DD-MM-YY':
 			self.tecnai.Camera.PlateLabelDateType \
-				= win32com.client.constants.dtDDMMYY
+				= self.tem_constants.dtDDMMYY
 		elif value == 'MM/DD/YY':
 			self.tecnai.Camera.PlateLabelDateType \
-				= win32com.client.constants.dtMMDDYY
+				= self.tem_constants.dtMMDDYY
 		elif value == 'YY.MM.DD':
 			self.tecnai.Camera.PlateLabelDateType \
-				= win32com.client.constants.dtYYMMDD
+				= self.tem_constants.dtYYMMDD
 		else:
 			raise ValueError('Invalid film date type specified')
 
 	def runBufferCycle(self):
 		try:
 			self.tecnai.Vacuum.RunBufferCycle()
-		except pythoncom.com_error, (hr, msg, exc, arg):
+		except com_module.COMError, (hr, msg, exc, arg):
 			if exc is None:
 				raise RuntimeError('no extended error information')
 			else:
