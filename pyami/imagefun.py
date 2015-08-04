@@ -314,7 +314,7 @@ def moment_of_inertia(input, labels, index = None):
 	values are used where labels is larger than zero.
 	"""
 	input = numpy.asarray(input)
-	if labels == None:
+	if labels is None:
 		raise RuntimeError, 'labels are needed'
 	if labels.shape != input.shape:
 		raise RuntimeError, 'input and labels shape are not equal'
