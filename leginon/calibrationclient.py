@@ -1294,12 +1294,32 @@ class SimpleMatrixCalibrationClient(MatrixCalibrationClient):
 		angle_average = sum(angles) / 2
 		return angle_average
 
-	def matrixFromPixelAndPositionShift(self,pixelshift_matrix, positionshift_matrix, image_bin=1):
+	def matrixFromPixelAndPositionShifts(self,pixel_shift1,position_shift1, pixel_shift2, position_shift2, camera_binning):
 		'''
 		returns calibration matrix as ndarray type from pixel shift and position shift matrix(or ndarray)
+		image pixel_shift1 (row,col) is the result of scope position_shift1 (x,y)
+		image pixel_shift2 (row,col) is the result of scope position_shift2 (x,y)
+		camera_binnings {'x':bin_col,'y':bin_row}
 		'''
-		ipixelshift = numpy.linalg.inv(image_bin*pixelshift_matrix)
-		return numpy.array(numpy.dot(positionshift_matrix,ipixelshift))
+		pixel_shift_matrix = self.convertImagePixelShiftsToArray(pixel_shift1,pixel_shift2,camera_binning)
+		position_shift_matrix = self.convertScopePositionShiftsToArray(position_shift1, position_shift2).transpose()
+		ipixel_shift = numpy.linalg.inv(pixel_shift_matrix)
+		return numpy.dot(position_shift_matrix,ipixel_shift)
+
+	def convertImagePixelShiftsToArray(self,pixel_shift1,pixel_shift2,camera_binning):
+		# Need to transpose pixel_shift so the array looks like this:
+		# [[pixel_shift1_row  pixel_shift2_row]
+		#  [pixel_shift2_col  pixel_shift2_col]]
+		bins = numpy.array((camera_binning['y'],camera_binning['x']))
+		pixel_shift_matrix = numpy.array((pixel_shift1*bins,pixel_shift2*bins)).transpose()
+		return pixel_shift_matrix
+
+	def convertScopePositionShiftsToArray(self,position_shift1, position_shift2):
+		'''
+		Scope position shifts is a list of dictionary with keys of 'x' and 'y'
+		'''
+		position_shift_matrix = numpy.array(((position_shift1['x'],position_shift1['y']), (position_shift2['x'],position_shift2['y'])))
+		return position_shift_matrix
 
 class ImageShiftCalibrationClient(SimpleMatrixCalibrationClient):
 	def __init__(self, node):

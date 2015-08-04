@@ -65,8 +65,8 @@ class ImageBeamCalibrator(calibrator.Calibrator):
 
 		cam = self.instrument.ccdcamera
 
-		self.image_pixelshift_matrix = numpy.array(numpy.matrix(((0.0,0.0),(0.0,0.0))))
-		self.beam_positionshift_matrix = numpy.array(numpy.matrix(((0.0,0.0),(0.0,0.0))))
+		self.image_pixelshifts = []
+		self.beam_positionshifts = []
 		self.axismap = {'x':0,'y':1}
 
 	def getBaseImageBeamShift(self):
@@ -89,10 +89,10 @@ class ImageBeamCalibrator(calibrator.Calibrator):
 		self.scope,self.camera = self.getCurrentScopeCameraEMData()
 		# shift in pixel for the camera config
 		shift = calclient.itransform(position, self.scope, self.camera)
-		# TO DO: shifts -> shiftinfo ?
-		rowpix = shift['row']
-		colpix = shift['col']
-		self.image_pixelshift_matrix[i] = (rowpix,colpix)
+		# pixelshift beam has to move is in the opposite direction
+		rowpix = -shift['row']
+		colpix = -shift['col']
+		self.image_pixelshifts.append((rowpix,colpix))
 
 		### set image shift
 		basevalue = self.imagebase[axis]
@@ -106,21 +106,34 @@ class ImageBeamCalibrator(calibrator.Calibrator):
 
 		self.logger.info('Shift between images: (%.2f, %.2f)' % (colpix, rowpix))
 
+	def getBeamState(self,axis):
+		newbeamstate = self.instrument.tem.BeamShift
+		#simulator test
+		tem_name = self.instrument.getTEMName()
+		if 'Sim' in tem_name:
+			self.logger.info('fake beam shift in simulator')
+			if axis == 'x':
+				newbeamstate['x'] = 1.8e-6
+				newbeamstate['y'] = -6.7e-7
+			elif axis == 'y':
+				newbeamstate['x'] = -6.3e-7
+				newbeamstate['y'] = -1.9e-6
+		self.logger.info('got new state')
+		return newbeamstate
+
 	def saveBeamShift(self,axis):	
 		i = self.axismap[axis]
-		# ui move beam
 		self.parameter = 'beam shift'
-		newbeamstate = self.instrument.tem.BeamShift
-		# simulator test
-		newbeamstate[axis] = newbeamstate[axis]+1e-6
-		self.logger.info('got new state')
+
+		newbeanstate = self.getBeamState(axis)
 
 		if newbeamstate == self.beambase:
-			raise CalibrationError('change in %s is zero' % self.parameter)
+			self.logger.error('Calibration Failed: Change in %s is zero' % self.parameter)
+			self.uiAbort()
 		beamchange = {'x':newbeamstate['x']-self.beambase['x'],'y':newbeamstate['y']-self.beambase['y']}
 		self.logger.info('scope %s axis % s change : (x,y)=(%s,%s)' % (self.parameter,axis,beamchange['x'],beamchange['y']))
 
-		self.beam_positionshift_matrix[i] = (beamchange['x'],beamchange['y'])
+		self.beam_positionshifts.append(beamchange)
 
 	def returnToBase(self):
 		try:
@@ -141,7 +154,7 @@ class ImageBeamCalibrator(calibrator.Calibrator):
 	
 		self.parameter = 'beam shift'
 		calclient = self.parameters[self.parameter]
-		self.matrix = calclient.matrixFromPixelAndPositionShift((-1)*self.image_pixelshift_matrix, self.beam_positionshift_matrix, self.camera['binning']['x'])
+		self.matrix = calclient.matrixFromPixelAndPositionShifts(self.image_pixelshifts[0], self.beam_positionshifts[0], self.image_pixelshifts[1], self.beam_positionshifts[1],self.camera['binning'])
 
 	def saveCalibration(self):
 		self.logger.info('Matrix saved')
@@ -212,11 +225,11 @@ class ImageBeamCalibrator(calibrator.Calibrator):
 	def getParameter(self):
 		self.logger.info('%s current as base' % self.parameter)
 		emdata = self.currentState()
-		base = emdata[self.parameter]
+		base = emdata[self.parameter].copy()
 		return base
 
 	def makeState(self, value, axis):
-		return {self.parameter: {axis: value}}
+		return {axis: value}
 
 	def getCurrentScopeCameraEMData(self):
 		if self.instrument.tem is None:
