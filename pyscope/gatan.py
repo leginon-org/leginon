@@ -19,6 +19,7 @@ try:
 	com_module = 'comtypes'
 	client_module = comtypes.client
 except ImportError:
+	print 'comarray no longer available. Please install comtypes'
 	import pythoncom
 	import win32com.client
 	import comarray
@@ -36,6 +37,16 @@ def get_tecnaiccd():
 			pythoncom.CoInitializeEx(pythoncom.COINIT_MULTITHREADED)
 			client_module.tecnaiccd = client_module.dynamic.Dispatch('TecnaiCCD.GatanCamera.2')
 		elif com_module == 'comtypes':
+			try:
+				comtypes.CoInitializeEx(comtypes.COINIT_MULTITHREADED)
+			except WindowsError:
+				'''
+				ConinitializeEx can not change thread property when the module directly
+				creating instance in python command gatan.Gatan().
+				When access remotely through Leginon client, Coinitialize is needed and
+				does not give error.
+				'''
+				comtypes.CoInitialize()
 			client_module.tecnaiccd = client_module.CreateObject('TecnaiCCD.GatanCamera.2')
 	return client_module.tecnaiccd
 
