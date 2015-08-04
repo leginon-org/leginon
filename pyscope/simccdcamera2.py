@@ -509,3 +509,10 @@ class SimOtherCCDCamera(SimCCDCamera):
 		im = SimCCDCamera._getImage(self)
 		im = 10 * im
 		return im
+
+class SimSuperResCamera(SimFrameCamera):
+	name = 'SimSuperResCamera'
+	def __init__(self):
+		super(SimSuperResCamera,self).__init__()
+		self.binning_limits = [1]
+		self.binmethod = 'floor'
