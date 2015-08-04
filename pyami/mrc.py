@@ -32,8 +32,9 @@ cache_size = 10 * 64 * 1024 * 1024
 read_cache = resultcache.ResultCache(cache_size)
 
 ## mapping of MRC mode to numpy type
+# mode 0 is defined to int8 as in MRC2010
 mrc2numpy = {
-	0: numpy.uint8,
+	0: numpy.int8,
 	1: numpy.int16,
 	2: numpy.float32,
 #	3:  complex made of two int16.  No such thing in numpy
@@ -57,13 +58,13 @@ mrcmaptype = {
 ## mapping of numpy type to MRC mode
 numpy2mrc = {
 	## convert these to int8
-	numpy.uint8: 0,
+	numpy.int8: 0,
 	numpy.bool: 0,
 	numpy.bool_: 0,
 
 	## convert these to int16
 	numpy.int16: 1,
-	numpy.int8: 1,
+	numpy.uint8: 1,
 
 	## convert these to float32
 	numpy.float32: 2,
