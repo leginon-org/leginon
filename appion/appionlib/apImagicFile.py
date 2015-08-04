@@ -542,16 +542,12 @@ def appendParticleToStackFile(partarray, mergestackfile, msg=True):
 	premergesize = apFile.fileSize(mergedatafile)	
 	
 	mergedata = file(mergedatafile, 'ab')
-	part32bit = numpy.asarray(partarray, dtype=numpy.float32) 
-	if hasattr(part32bit, "tostring"):
-		part32bit_str = part32bit.tostring()
-	else:
-		part32bit_str = part32bit.tobytes()
-	mergedata.write(part32bit_str)
+	part32bit = numpy.asarray(partarray, dtype=numpy.float32)
+	mergedata.write(part32bit.tostring())
 	mergedata.close()
 
 	finalsize = apFile.fileSize(mergedatafile)
-	addsize = len(part32bit_str)
+	addsize = len(part32bit.tostring())
 	if finalsize != addsize + premergesize:
 		apDisplay.printError("size mismatch %s vs. %s + %s = %s"%(
 			apDisplay.bytes(finalsize), apDisplay.bytes(addsize),
@@ -597,15 +593,11 @@ def appendParticleListToStackFile(partlist, mergestackfile, msg=True):
 	mergedata = file(mergedatafile, 'ab')
 	for partarray in partlist:	
 		part32bit = numpy.asarray(partarray, dtype=numpy.float32)
-		if hasattr(part32bit, "tostring"):
-			part32bit_str = part32bit.tostring()
-		else:
-			part32bit_str = part32bit.tobytes()
-		mergedata.write(part32bit_str)
+		mergedata.write(part32bit.tostring())
 	mergedata.close()
 
 	finalsize = apFile.fileSize(mergedatafile)
-	addsize = len(part32bit_str * len(partlist))
+	addsize = len(part32bit.tostring() * len(partlist))
 	if finalsize != addsize + premergesize:
 		apDisplay.printError("size mismatch %s vs. %s + %s = %s"%(
 			apDisplay.bytes(finalsize), apDisplay.bytes(addsize),
