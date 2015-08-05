@@ -293,7 +293,7 @@ the header data.
 
 def parseHeader(headerbytes):
 	'''
-Parse the 1024 byte MRC header into a header dictionary.
+	Parse the 1024 byte MRC header into a header dictionary.
 	'''
 	## header is comprised of Int32, Float32, and text labels.
 	itype = numpy.dtype('Int32')
@@ -844,6 +844,22 @@ def updateFilePixelSize(filename,pixeldict={}):
 		axislen = '%slen' % (axis)
 		h[axislen] = h[naxis] * pixeldict[axis]
 	update_file_header(filename, h)
+
+
+def readFilePixelSize(filename):
+	'''
+	function to read mrc header xlen so that pixel size calculated
+	from xlen / nx becomes the new pixel size in Angstrom. Valid keys
+	in pixeldict are 'x','y','z'.
+	'''
+	h = readHeaderFromFile(filename)
+	keys = ('x', 'y', 'z',)
+	pixeldict = {}
+	for axis in keys:
+		naxis = 'n%s' % (axis)
+		axislen = '%slen' % (axis)
+		pixeldict[axis] = h[axislen] / float(h[naxis])
+	return pixeldict
 
 def testWrite():
 	a = numpy.zeros((16,16), numpy.float32)
