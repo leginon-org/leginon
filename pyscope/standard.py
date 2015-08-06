@@ -46,6 +46,7 @@ class StandardValues(object):
 			self.getStandardFocus(mag)
 			self.getNeutralShift(mag,'imageshift',self.imageshift_class)
 			self.getNeutralShift(mag,'Beamshift',self.tem.def3.GetCLA1)
+			self.getNeutralShift(mag,'Beamtilt',self.tem.def3.GetCLA2)
 			t = raw_input('Change to a new mag and then hit return key to start\nOtherwise hit other keys to display the summary')
 		self.displayConfig()
 		print ''
