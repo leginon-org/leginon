@@ -797,6 +797,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 				particle = imagenorm.parabolicNorm(particle)	
 
 			### step 4: decimate/bin particles if specified
+			### binning is last, so we maintain most detail and do not have to deal with binned apix
 			if self.params['bin'] > 1:
 				particle = imagefun.bin2(particle, self.params['bin'])
 			
