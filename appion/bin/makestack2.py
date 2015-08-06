@@ -4,13 +4,10 @@
 import os
 import sys
 import math
-import re
 import time
-import glob
-import socket
+import copy
 import numpy
 import subprocess
-import copy
 from scipy import stats
 from scipy import ndimage
 
@@ -25,13 +22,10 @@ from appionlib import apDatabase
 from appionlib import apStack
 from appionlib import appiondata
 from appionlib import apEMAN
-from appionlib import apProject
 from appionlib import apFile
 from appionlib import apParam
-from appionlib import apMask
 from appionlib import apBoxer
 from appionlib import apImagicFile
-from appionlib import apDefocalPairs
 from appionlib import apStackMeanPlot
 from appionlib import apParticleExtractor
 from appionlib.apCtf import ctfdb
@@ -63,7 +57,8 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 		### we better have the same number of particles in the file and the database
 		numfilepart = apFile.numImagesInStack(stackfile)
 		if numfilepart != numdbpart:
-			apDisplay.printError("database and file have different number of particles, create a new stack this one is corrupt")
+			apDisplay.printError("database and file have different number of particles, \n"+
+				"create a new stack this one is corrupt")
 
 		return numfilepart
 
@@ -180,9 +175,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 		Returns integrated and gain/dark corrected image according to framelist
 		'''
 		framelist = self.dd.getFrameList(self.params)
-		'''
-		TO DO handle empty framelist caused by driftlimit
-		'''
+		# FIXME handle empty framelist caused by driftlimit
 		if self.is_dd_frame:
 			return self.dd.correctFrameImage(framelist)
 		if self.is_dd_stack:
@@ -197,7 +190,6 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 		2. -darknorm.dwn.mrc previously created
 		3. -darknorm.dwn.mrc made from dd frames.
 		'''
-		imgname = imgdata['filename']
 		# default path
 		imgpath = os.path.join(imgdata['session']['image path'], imgdata['filename']+".mrc")
 		if self.is_dd:
@@ -231,7 +223,8 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 		### set up output file path
 		imgstackfile = os.path.join(self.params['rundir'], self.shortname+".hed")
 
-		if self.is_dd_stack and (self.params['nframe'] or self.params['driftlimit']) and not self.params['phaseflipped'] and not self.params['rotate']:
+		if (self.is_dd_stack and (self.params['nframe'] or self.params['driftlimit'])
+			and not self.params['phaseflipped'] and not self.params['rotate']):
 			# If processing on whole image is not needed, it is more efficient to use mmap to box frame stack
 			apDisplay.printMsg("boxing "+str(len(parttree))+" particles into temp file: "+imgstackfile)
 			framelist = self.dd.getFrameList(self.params)
@@ -265,10 +258,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 			return None, None, None
 
 		### run apBoxer
-		#emancmd = ("batchboxer input=%s dbbox=%s output=%s newsize=%i"
-		#	%(imgpath, emanboxfile, imgstackfile, self.params['boxsize']))
 		apDisplay.printMsg("boxing "+str(len(parttree))+" particles into temp file: "+imgstackfile)
-
 
 		### method to align helices
 		t0 = time.time()
@@ -395,7 +385,8 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 			bymask = (bymask/2)-(falloff/2)
 
 			self.params['boxmaskf'] = os.path.splitext(imgstackfile)[0]+"-mask.hed"
-			apBoxer.boxMaskStack(self.params['boxmaskf'], boxedpartdatas, boxsz, bxmask, bymask, falloff, bimask, norotate=self.params['rotate'])
+			apBoxer.boxMaskStack(self.params['boxmaskf'], boxedpartdatas, boxsz,
+				bxmask, bymask, falloff, bimask, norotate=self.params['rotate'])
 
 		return imgstackfile
 
@@ -494,7 +485,6 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 	#=======================
 	def phaseFlipParticles(self, imgdata, imgstackfile):
 		apDisplay.printMsg("Applying CTF to particles")
-		imgname = imgdata['filename']
 		ctfimgstackfile = os.path.join(self.params['rundir'], self.shortname+"-ctf.hed")
 
 		### High tension on CM is given in kv instead of v so do not divide by 1000 in that case
@@ -548,7 +538,6 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 
 	#=======================
 	def phaseFlipWholeImage(self, inimgpath, imgdata):
-		imgname = imgdata['filename']
 		outimgpath = os.path.join(self.params['rundir'], self.shortname+"-ctfcorrect.dwn.mrc")
 
 		### High tension on CM is given in kv instead of v so do not divide by 1000 in that case
@@ -711,7 +700,6 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 			self.badprocess = True
 			return None
 
-		imgname = imgdata['filename']
 		spi_imgpath = os.path.join(self.params['rundir'], self.shortname+".spi")
 
 		df1 = abs(bestctfvalue['defocus1'])
@@ -758,14 +746,11 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 		imgstackmemmap = imagic.read(imgstackfile)
 		if self.params['debug'] is True:
 			print "imgstackmemmap.shape", imgstackmemmap.shape
-		emancmd = "sux"
 		apix = self.params['apix'] #apDatabase.getPixelSize(imgdata)
 
-		count = 0
 		boxshape = (self.boxsize, self.boxsize)
 		processedParticles = []
 		for particle in imgstackmemmap:
-			count += 1
 
 			### step 2: filter particles
 			### high / low pass filtering
@@ -853,7 +838,6 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 	#=======================
 	def insertStackRun(self):
 		sessiondata = apDatabase.getSessionDataFromSessionName(self.params['sessionname'])
-		projectnum = apProject.getProjectIdFromSessionName(self.params['sessionname'])
 
 		stparamq = appiondata.ApStackParamsData()
 		paramlist = ('boxSize','bin','aceCutoff','correlationMin','correlationMax',
@@ -877,7 +861,6 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 			stparamq['normalized'] = False
 		else:
 			stparamq['normalized'] = True
-		paramslist = stparamq.query()
 
 		if not 'boxSize' in stparamq or stparamq['boxSize'] is None:
 			print stparamq
@@ -1173,9 +1156,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 	#=======================
 	def commitToDatabase(self, imgdata):
 		### first check if there are any particles to commit
-		try:
-			len(self.boxedpartdatas)
-		except:
+		if not isinstance(self.boxedpartdatas, list) or len(self.boxedpartdatas) == 0:
 			return
 
 		if self.framelist and self.params['commit'] is True:
