@@ -51,13 +51,13 @@ class ApProc2d(basicScript.BasicScript):
 		self.parser.add_option("--norm", "--normalize-method", dest="normalizemethod",
 			help="Normalization method (default: none)", metavar="TYPE",
 			type="choice", choices=self.normoptions, default="none", )
-		self.parser.add_option('--edgenorm', dest='normalizemethod', 
+		self.parser.add_option('--edgenorm', dest='normalizemethod',
 			help="Set normalization method to edgenorm",
 			action='store_const', const='edgenorm', )
-		self.parser.add_option('--rampnorm', dest='normalizemethod', 
+		self.parser.add_option('--rampnorm', dest='normalizemethod',
 			help="Set normalization method to rampnorm",
 			action='store_const', const='rampnorm', )
-			
+
 	#=====================
 	#=====================
 	def checkConflicts(self):
@@ -68,7 +68,7 @@ class ApProc2d(basicScript.BasicScript):
 			apDisplay.printError("Please provide an input file, e.g., --in=file.hed")
 		if self.params['outfile'] is None:
 			apDisplay.printError("Please provide an input file, e.g., --out=file.mrc")
-			
+
 		### Read input file
 		self.inheader = self.readFileHeader(self.params['infile'])
 		self.inputNumParticles = self.inheader['nz']
@@ -195,7 +195,7 @@ class ApProc2d(basicScript.BasicScript):
 		elif filename.endswith('.hed') or filename.endswith('.img'):
 			apImagicFile.appendParticleListToStackFile(partlist, filename,
 				msg=self.params['debug'])
-				
+
 		elif filename.endswith('.spi'):
 			### to be implemented
 			apDisplay.printError("SPIDER is not implemented yet")
@@ -285,10 +285,10 @@ class ApProc2d(basicScript.BasicScript):
 
 		### Works
 		# read from MRC image
-		# read from HED/IMG stack		
+		# read from HED/IMG stack
 		# write to MRC image
-		# write to HED/IMG stack	
-		# append to HED/IMG	stack			
+		# write to HED/IMG stack
+		# append to HED/IMG stack
 		# filter images
 		# implement binning
 		# write to MRC stack
@@ -308,7 +308,7 @@ class ApProc2d(basicScript.BasicScript):
 		# write to EMAN/HDF stack
 		# get apix from HED/IMG header
 		# implement proc2d --list feature
-		# implement proc2d --rotavg		
+		# implement proc2d --rotavg
 		# implement proc2d --clip
 
 		# determine numParticles to add
