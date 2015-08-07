@@ -37,14 +37,12 @@ def getElectronWavelength(ht):
 def calculateDefocus(ht, s, Cs=2.0e-3):
 		# unit is meters
 	wavelength = getElectronWavelength(ht)
-	print 'Cs in calculateDefocus', Cs
 	return (Cs*wavelength**3*s**4/2+1.0)/(wavelength * s**2)
 
 def calculateFirstNode(ht,z,Cs=2.0e-3):
 	# length unit is meters, and ht in Volts
 	'''This works for defocus larger than about 110 nm underfocus at 120kV'''
 	wavelength = getElectronWavelength(ht)
-	print 'Cs in calculateFirstNode', Cs
 	a = Cs*(wavelength**3)/4.0
 	b = z*wavelength/2
 	c = 0.5
