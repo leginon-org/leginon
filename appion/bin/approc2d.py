@@ -2,10 +2,13 @@
 
 import os
 import sys
+import math
 import numpy
 from pyami import mrc
+from pyami import mem
 from pyami import imagic
 from pyami import imagefun
+from appionlib import apFile
 from appionlib import apDisplay
 from appionlib import basicScript
 from appionlib import apImagicFile
@@ -48,7 +51,10 @@ class ApProc2d(basicScript.BasicScript):
 		self.parser.add_option("--norm", "--normalize-method", dest="normalizemethod",
 			help="Normalization method (default: none)", metavar="TYPE",
 			type="choice", choices=self.normoptions, default="none", )
-
+		self.parser.add_option('--edgenorm', dest='normalizemethod', 
+			help="Set normalization method to edgenorm",
+			action='store_const', const='edgenorm', )
+			
 	#=====================
 	#=====================
 	def checkConflicts(self):
@@ -167,10 +173,8 @@ class ApProc2d(basicScript.BasicScript):
 		#Determine extension
 		if filename.endswith('.mrc'):
 			if os.path.exists(filename):
-				f = open(filename, "ab+")
 				partarray = numpy.array(partlist)
-				mrc.appendArray(partarray, f)
-				f.close()
+				mrc.append(partarray, filename)
 			else:
 				f = open(filename, "wb+")
 				partarray = numpy.array(partlist)
@@ -179,15 +183,19 @@ class ApProc2d(basicScript.BasicScript):
 				apix = self.params['apix']
 				pixeldict = {'x': apix, 'y': apix, 'z': apix, }
 				mrc.updateFilePixelSize(filename, pixeldict)
+
 		elif filename.endswith('.hed') or filename.endswith('.img'):
 			apImagicFile.appendParticleListToStackFile(partlist, filename,
 				msg=self.params['debug'])
+				
 		elif filename.endswith('.spi'):
 			### to be implemented
 			apDisplay.printError("SPIDER is not implemented yet")
+
 		elif filename.endswith('.hdf'):
 			### to be implemented
 			apDisplay.printError("HDF is not implemented yet")
+
 		else:
 			apDisplay.printError("unknown stack type")
 		self.particlesWritten += len(partlist)
@@ -219,7 +227,7 @@ class ApProc2d(basicScript.BasicScript):
 			apDisplay.printWarning("Overwriting existing file, %s"%(self.params['outfile']))
 			return 0
 
-		apDisplay.printMsg("Appending to existing file, %s"%(self.params['outfile']))
+		self.message("Appending to existing file, %s"%(self.params['outfile']))
 		## dimensions for new particles must be the same as the old
 		if self.inheader['nx'] != existheader['nx'] or self.inheader['ny'] != existheader['ny']:
 			apDisplay.printError("Dims for existing stack (%dx%d) is different from input stack (%dx%d)"
@@ -227,33 +235,73 @@ class ApProc2d(basicScript.BasicScript):
 
 		return existNumParticles
 
+	#===============
+	def message(self, msg):
+		if self.params['debug'] is True:
+			apDisplay.printMsg("apProc2d: "+msg)
+
+	#=====================
+	#=====================
+	def getParticlesPerCycle(self, stackfile):
+		### amount of free memory on machine (converted to bytes)
+		freememory = mem.free()*1024
+		self.message("Free memory: %s"%(apDisplay.bytes(freememory)))
+		### box size of particle
+		boxsize = apFile.getBoxSize(stackfile)[0]
+		self.message("Box size: %d"%(boxsize))
+		### amount of memory used per particles (4 bytes per pixel)
+		memperpart = boxsize**2 * 4.0
+		self.message("Memory used per part: %s"%(apDisplay.bytes(memperpart)))
+		### maximum number particles that fit into memory
+		maxpartinmem = freememory/memperpart
+		self.message("Max particles in memory: %d"%(maxpartinmem))
+		### number particles to fit into memory
+		partallowed = int(maxpartinmem/20.0)
+		self.message("Particles allowed in memory: %d"%(partallowed))
+		### number particles in stack
+		numpart = self.params['last']
+		if numpart > partallowed:
+			numcycles = math.ceil(numpart/float(partallowed))
+			stepsize = int(numpart/numcycles)
+		else:
+			numcycles = 1
+			stepsize = numpart
+		self.message("Particle loop num cycles: %d"%(numcycles))
+		self.message("Particle loop step size: %d"%(stepsize))
+		return stepsize
+
+
 	#=====================
 	#=====================
 	def start(self):
 
 		### Works
-		# read MRC image
+		# read from MRC image
+		# read from HED/IMG stack		
 		# write to MRC image
+		# write to HED/IMG stack	
+		# append to HED/IMG	stack			
 		# filter images
 		# implement binning
+		# write to MRC stack
+		# append to MRC stack
 
 		### needs more testing
 		# write pixelsize to new MRC file
-		# read MRC stack
-		# read IMAGIC stack
-		# write to HED/IMG
-		# write to MRC stack
-		# append to HED/IMG
-		# append to MRC
 		# get apix from MRC header
+		# implement normalization
 
 		### TODO
-		# read SPIDER
-		# read EMAN/HDF
+		# read from SPIDER stack
+		# read from EMAN/HDF stack
+		# read from SPIDER image
+		# write to SPIDER image
+		# write to SPIDER stack
+		# write to EMAN/HDF stack
 		# get apix from HED/IMG header
 		# implement proc2d --list feature
+		# implement proc2d --rotavg		
 		# implement proc2d --clip
-		# implement normalization
 
 		# determine numParticles to add
 		if self.params['last'] is None:
@@ -276,35 +324,40 @@ class ApProc2d(basicScript.BasicScript):
 		# continuously read all into memory
 		# FIXME: measure memory available and compute based on size of particle box
 		particlesPerCycle = 100
+		self.getParticlesPerCycle(self.params['infile'])
 
 		processedParticles = []
 		for partnum in range(self.params['first'], self.params['first']+addNumParticles):
 			particle = indata[partnum]
 			if self.params['debug'] is True:
-				print partnum, self.params['first'], addNumParticles
-				print indata.shape
-				print particle.shape
+				print "---------"
+				print "Particle Number: %d of %d"%(partnum, addNumParticles)
 			if self.params['pixlimit']:
+				self.message("pixlimit: %s"%(self.params['pixlimit']))
 				particle = imagefilter.pixelLimitFilter(particle, self.params['pixlimit'])
 			if self.params['lowpass']:
+				self.message("lowpass: %s"%(self.params['lowpass']))
 				particle = imagefilter.lowPassFilter(particle, apix=self.params['apix'], radius=self.params['lowpass'])
 			if self.params['highpass']:
+				self.message("highpass: %s"%(self.params['highpass']))
 				particle = imagefilter.highPassFilter2(particle, self.params['highpass'], apix=self.params['apix'])
 			### unless specified, invert the images
 			if self.params['inverted'] is True:
+				self.message("inverted: %s"%(self.params['inverted']))
 				particle = -1.0 * particle
 			### clipping
 			"""
 			if particle.shape != boxshape:
-				if self.boxsize <= particle.shape[0] and self.boxsize <= particle.shape[1]:
+				if boxsize <= particle.shape[0] and boxsize <= particle.shape[1]:
 					particle = imagefilter.frame_cut(particle, boxshape)
 				else:
 					apDisplay.printError("particle shape (%dx%d) is smaller than boxsize (%d)"
-						%(particle.shape[0], particle.shape[1], self.boxsize))
+						%(particle.shape[0], particle.shape[1], boxsize))
 			"""
 
 			### step 3: normalize particles
 			#self.normoptions = ('none', 'boxnorm', 'edgenorm', 'rampnorm', 'parabolic') #normalizemethod
+			self.message("normalize method: %s"%(self.params['normalizemethod']))
 			if self.params['normalizemethod'] == 'boxnorm':
 				particle = imagenorm.normStdev(particle)
 			elif self.params['normalizemethod'] == 'edgenorm':
@@ -326,10 +379,11 @@ class ApProc2d(basicScript.BasicScript):
 				### step 5: merge particle list with larger stack
 				self.appendParticleListToStackFile(processedParticles, self.params['outfile'])
 				processedParticles = []
-
+		if len(processedParticles) > 0:
+			self.appendParticleListToStackFile(processedParticles, self.params['outfile'])
 		print "Wrote %d particles to file "%(self.particlesWritten)
 
 if __name__ == '__main__':
-	approc2d = ApProc2d()
+	approc2d = ApProc2d(quiet=True)
 	approc2d.start()
 	approc2d.close()
