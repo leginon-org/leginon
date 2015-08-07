@@ -48,14 +48,15 @@ def compareHeader(hfile1, hfile2, numround=1):
 					print "%02d\t%03.3e ==> %03.3e" % (i, float1, float2)
 
 #===============
-def numberStackFile(oldheadfile, startnum=0):
+def numberStackFile(oldheadfile, startnum=0, msg=True):
 	"""
 	Takes an Imagic Stack header file and numbers the particles
 
 	based on 
 		http://www.imagescience.de/formats/formats.htm
 	"""
-	apDisplay.printMsg("saving particle numbers to stack header")
+	if msg is True:
+		apDisplay.printMsg("saving particle numbers to stack header")
 	t0 = time.time()
 	newheadfile = (os.path.splitext(oldheadfile)[0]+"-temp.hed")
 
@@ -100,7 +101,8 @@ def numberStackFile(oldheadfile, startnum=0):
 		apDisplay.printError("failed to number particles in stack file")
 	apFile.removeFile(oldheadfile)
 	shutil.move(newheadfile, oldheadfile)
-	apDisplay.printMsg("completed %d particles in %s"%(numimg, apDisplay.timeString(time.time()-t0)))
+	if msg is True:
+		apDisplay.printMsg("completed %d particles in %s"%(numimg, apDisplay.timeString(time.time()-t0)))
 	return True
 
 #===============
@@ -617,7 +619,7 @@ def appendParticleListToStackFile(partlist, mergestackfile, msg=True):
 		mergehead.write(headerstr)
 	mergehead.close()
 
-	numberStackFile(mergeheaderfile)
+	numberStackFile(mergeheaderfile, msg=msg)
 	
 	finalnumpart = apFile.numImagesInStack(mergeheaderfile)
 	addpart = len(partlist)
@@ -669,7 +671,7 @@ def appendStackFileToStackFile(stackfile, mergestackfile, msg=True):
 	fin.close()
 	fout.close()
 
-	numberStackFile(mergeheaderfile)
+	numberStackFile(mergeheaderfile, msg=msg)
 	finalnumpart = apFile.numImagesInStack(mergeheaderfile)
 	if finalnumpart != addnumpart + premergenumpart:
 		apDisplay.printError("size mismatch %d vs. %d + %d = %d"
