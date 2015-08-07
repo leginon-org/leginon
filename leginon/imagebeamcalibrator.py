@@ -125,7 +125,7 @@ class ImageBeamCalibrator(calibrator.Calibrator):
 		i = self.axismap[axis]
 		self.parameter = 'beam shift'
 
-		newbeanstate = self.getBeamState(axis)
+		newbeamstate = self.getBeamState(axis)
 
 		if newbeamstate == self.beambase:
 			self.logger.error('Calibration Failed: Change in %s is zero' % self.parameter)
