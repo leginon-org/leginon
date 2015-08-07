@@ -24,8 +24,8 @@ class ApProc2d(basicScript.BasicScript):
 	def setupParserOptions(self):
 		self.normoptions = ('none', 'boxnorm', 'edgenorm', 'rampnorm', 'parabolic') #normalizemethod
 
-		self.parser.add_option('--in', dest='infile', metavar='FILE', help='Input stack')
-		self.parser.add_option('--out', dest='outfile', metavar='FILE', help='Output stack')
+		self.parser.add_option('--in', dest='infile', metavar='FILE', help='Input image/stack')
+		self.parser.add_option('--out', dest='outfile', metavar='FILE', help='Output image/stack')
 		self.parser.add_option('--lp', '--lowpass', dest='lowpass', type=float,
 			metavar='FLOAT', help='Low pass filter to provided resolution. In Angstroms. ')
 		self.parser.add_option('--hp', '--highpass', dest='highpass', type=float,
@@ -54,6 +54,9 @@ class ApProc2d(basicScript.BasicScript):
 		self.parser.add_option('--edgenorm', dest='normalizemethod', 
 			help="Set normalization method to edgenorm",
 			action='store_const', const='edgenorm', )
+		self.parser.add_option('--rampnorm', dest='normalizemethod', 
+			help="Set normalization method to rampnorm",
+			action='store_const', const='rampnorm', )
 			
 	#=====================
 	#=====================
@@ -61,6 +64,11 @@ class ApProc2d(basicScript.BasicScript):
 		self.headercache = {}
 		self.particlesWritten = 0
 
+		if self.params['infile'] is None:
+			apDisplay.printError("Please provide an input file, e.g., --in=file.hed")
+		if self.params['outfile'] is None:
+			apDisplay.printError("Please provide an input file, e.g., --out=file.mrc")
+			
 		### Read input file
 		self.inheader = self.readFileHeader(self.params['infile'])
 		self.inputNumParticles = self.inheader['nz']
@@ -285,11 +293,11 @@ class ApProc2d(basicScript.BasicScript):
 		# implement binning
 		# write to MRC stack
 		# append to MRC stack
+		# implement normalization
 
 		### needs more testing
 		# write pixelsize to new MRC file
 		# get apix from MRC header
-		# implement normalization
 
 		### TODO
 		# read from SPIDER stack
