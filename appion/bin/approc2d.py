@@ -251,6 +251,12 @@ class ApProc2d(basicScript.BasicScript):
 	#=====================
 	#=====================
 	def getParticlesPerCycle(self, stackfile):
+		"""
+		it more efficient to process X particles and write them to disk rather than
+		  write each particle to disk each time.
+		particles are read using a memory map (numpy.memmap), so we can pretend to
+		  continuously read all into memory
+		"""
 		### amount of free memory on machine (converted to bytes)
 		freememory = mem.free()*1024
 		self.message("Free memory: %s"%(apDisplay.bytes(freememory)))
@@ -330,9 +336,7 @@ class ApProc2d(basicScript.BasicScript):
 		# write each particle to disk each time.
 		#particles are read using a memory map (numpy.memmap), so we can pretend to
 		# continuously read all into memory
-		# FIXME: measure memory available and compute based on size of particle box
-		particlesPerCycle = 100
-		self.getParticlesPerCycle(self.params['infile'])
+		particlesPerCycle = self.getParticlesPerCycle(self.params['infile'])
 
 		processedParticles = []
 		for partnum in range(self.params['first'], self.params['first']+addNumParticles):
