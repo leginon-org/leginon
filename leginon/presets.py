@@ -31,7 +31,7 @@ import itertools
 idcounter = itertools.cycle(range(100))
 
 ## submodetransform
-SPECIAL_TRANSFORM = False
+SPECIAL_TRANSFORM = True
 
 class PresetChangeError(Exception):
 	pass
@@ -1990,7 +1990,7 @@ class PresetsManager(node.Node):
 		This should be modified to fit the specific case
 		'''
 		# This matrix gives a given degree rotation from +x to +y axis.
-		if tem['hostname'] != 'jem-2100f' or not self.isLensSerisChange(mag1,mag2):
+		if tem['hostname'] != 'jem-2100f' or not self.isLensSeriesChange(mag1,mag2):
 			return pixelvect
 		rotate_angle_degrees = 142
 		a = math.radians(rotate_angle_degrees)
