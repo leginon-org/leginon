@@ -17,8 +17,8 @@ Debug = False
 class MagnificationsUninitialized(Exception):
 	pass
 
-class jeol1230(tem.TEM):
-	name = 'jeol1230'
+class Jeol1230(tem.TEM):
+	name = 'Jeol1230'
 	def __init__(self):
 		if Debug == True:
 			print 'from jeol1230.py class_defination'
@@ -62,19 +62,23 @@ class jeol1230(tem.TEM):
 	def getColumnValvePositions(self):
 		if Debug == True:
 			print "from jeol1230.py getColumnValvePositions"
-		return ['on', 'off','unknown']
+		return ['open', 'closed']
 
 	# attension: changed this to beam state
 	def getColumnValvePosition(self):
 		if Debug == True:
 			print 'from jeol1230.py getColumnValvePostion'
-		return self.getBeamState()
+		state = self.getBeamState()
+		position_mapping = {'on':'open','off':'closed','unknown':'closed'}
+		return position_mapping[state]
 
 	# attension: change this to beam state
-	def setColumnValvePosition(self, state = 'off'):
+	def setColumnValvePosition(self, position):
 		if Debug == True:
 			print 'from jeol1230.py setColumnValvePosition'
-		if self.jeol1230lib.setBeamOnOff(state) == True:
+		state_mapping = {'open':'on','closed':'off'}
+		state = state_mapping[position]
+		if self.jeol1230lib.setBeamState(state) == True:
 			return True
 		else:
 			return False
@@ -131,7 +135,7 @@ class jeol1230(tem.TEM):
 	def findMagnifications(self):
 		if Debug == True:
 			print 'from jeol1230.py findMagnifications'
-		magnifications = jeol1230lib.magnification
+		magnifications = self.jeol1230lib.magnification
 		self.setMagnifications(magnifications)
 		return True
 
@@ -721,7 +725,7 @@ class jeol1230(tem.TEM):
 	def getMainScreenPosition(self):
 		if Debug == True:
 			print 'from jeol1230.py getManinScreenPostion'
-		return 'down'
+		return 'up'
 
 	# not implimented
 	def getSmallScreenPositions(self):

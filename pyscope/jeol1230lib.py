@@ -4,6 +4,8 @@
 # ser = serial.Serial(port='COM1', baudrate=9600, bytesize=8, parity='N', stopbits=1, timeout=10, xonxoff=1, rtscts=0)
 # from pyScope import jeol1230lib ; j = jeol1230lib.jeol1230lib(); j.getStagePosition()
 
+import os
+import inspect
 import time
 import serial
 from ctypes import *
@@ -20,7 +22,9 @@ class jeol1230lib(object):
 		self.highMag = [1000, 1200, 1500, 2000, 2500, 3000, 4000, 5000, 6000, 8000, 10000, 12000, 15000, 20000, 25000, 30000, 40000, 50000, 60000, 80000, 100000, 120000, 150000, 200000, 250000, 300000, 400000, 500000]									# 28 SA mags
 		self.magnification = self.lowMag + self.highMag
 		self.equipmentAvailable()
-		self.defocusFile = "C:\\Python25\\Lib\\site-packages\\pyScope\\defocus.cfg"
+		this_file = inspect.currentframe().f_code.co_filename
+		fullmod = os.path.abspath(this_file)
+		self.defocusFile = os.path.join(os.path.dirname(fullmod),'defocus.cfg')
 		self.zeroDefocus = {'zero_time': None, 'zero_oml': None, 'zero_omh': None,'zero_oll': None, 'zero_olh': None}
 		self.zeroDefocus = self.readZeroDefocus()
 		self.zero_oml = int(self.zeroDefocus['zero_oml'])
