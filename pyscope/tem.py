@@ -102,6 +102,15 @@ class TEM(baseinstrument.BaseInstrument):
 	def exposeSpecimenNotCamera(self,seconds):
 		raise NotImplementedError()
 
+	def getProbeMode(self):
+		return 'default'
+
+	def setProbeMode(self, probe_str):
+		pass
+
+	def getProbeModes(self):
+		return ['default']
+
 	def getProjectionSubModeMap(self):
 		return self.projection_submode_map
 

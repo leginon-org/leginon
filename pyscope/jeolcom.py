@@ -1500,15 +1500,6 @@ class Jeol(tem.TEM):
 		result = self.camera3.EjectFilm()
 		return
 
-	def getProbeMode(self):
-		return 'default'
-
-	def setProbeMode(self, probe_str):
-		pass
-
-	def getProbeModes(self):
-		return ['default']
-
 	def exposeSpecimenNotCamera(self,exptime=0):
 		if exptime == 0:
 			return
