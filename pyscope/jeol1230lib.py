@@ -823,21 +823,21 @@ class jeol1230lib(object):
 				break
 			time.sleep(self.wait_time)
 		beamtilt = {'x': None, 'y': None}
-		beamtilt['x'] = int(words[2],16)
-		beamtilt['y'] = int(words[3],16)
+		beamtilt['x'] = int(words[2],16)*2.25e-6 - 32858*2.25e-6
+		beamtilt['y'] = int(words[3],16)*2.25e-6 - 32858*2.25e-6
 		return beamtilt
 
 	# set beam tilt X and Y
 	def setBeamTilt(self,axis,value):
 		if Debug == True:
 			print 'from jeol1230lib.py setBeamTilt'
+		sh = "%x" % int((float(value) + 32858*2.25e-6)/2.25e-6)
 		if Debug == True:
-			print "    Image tilt will be %d in %s direction" % (value, axis)
+			print "    Image tilt will be %d in %s direction" % (sh, axis)
 		if axis == 'x':
 			code = '7'
 		else:
 			code = '8'
-		sh = "%x" % int(value)
 		ss = '104' + '\t' + code + '\t' + str(sh) + '\r'
 		while True:
 			self.ser.flushInput()
