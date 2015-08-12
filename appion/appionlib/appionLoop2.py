@@ -536,7 +536,7 @@ class AppionLoop(appionScript.AppionScript):
 		try:
 			self.donedict[imgname]
 			if not self.stats['lastimageskipped']:
-				sys.stderr.write("skipping images\n")
+				sys.stderr.write("skipping already processed images\n")
 			elif self.stats['skipcount'] % 80 == 0:
 				sys.stderr.write(".\n")
 			else:
@@ -776,7 +776,7 @@ class AppionLoop(appionScript.AppionScript):
 
 			if skip is True:
 				if self.stats['skipcount'] == 0:
-					sys.stderr.write("skipping images\n")
+					sys.stderr.write("skipping processed images\n")
 				elif self.stats['skipcount'] % 80 == 0:
 					sys.stderr.write(".\n")
 				else:
