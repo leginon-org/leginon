@@ -208,7 +208,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 
 		### convert database particle data to coordinates and write boxfile
 		boxfile = os.path.join(self.params['rundir'], imgdata['filename']+".box")
-		parttree, boxedpartdatas = apBoxer.processParticleData(limitimgdata, self.boxsize,
+		parttree, boxedpartdatas = apBoxer.processParticleData(imgdata, self.boxsize,
 			partdatas, shiftdata, boxfile, rotate=self.params['rotate'])
 
 		if self.params['boxfiles']:
@@ -280,9 +280,9 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 					newangle = float(partdict['angle'])-fineangle
 					partdict['angle'] = newangle
 				# rerun apBoxer.boxerRotate with the new parttree containing final angles
-				apBoxer.boxerRotate(imgpath, parttree, imgstackfile, self.boxsize)
+				apBoxer.boxerRotate(imgpath, parttree, imgstackfile, self.boxsize, pixlimit=self.params['pixlimit'])
 		else:
-			apBoxer.boxer(imgpath, parttree, imgstackfile, self.boxsize)
+			apBoxer.boxer(imgpath, parttree, imgstackfile, self.boxsize, pixlimit=self.params['pixlimit'])
 		self.batchboxertimes.append(time.time()-t0)
 
 	#=======================

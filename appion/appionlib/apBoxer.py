@@ -15,15 +15,18 @@ from appionlib import apImagicFile	#write imagic stacks
 from appionlib import apDisplay
 from appionlib.apImage import imagefilter	#image clipping
 
+##=================
 def getBoxStartPosition(imgdata,halfbox,partdata, shiftdata):
 	### xcoord is the upper left area corner of the particle box
 	start_x = int(round( shiftdata['scale']*(partdata['xcoord'] - shiftdata['shiftx']) - halfbox ))
 	start_y = int(round( shiftdata['scale']*(partdata['ycoord'] - shiftdata['shifty']) - halfbox ))	
 	return start_x,start_y
 
+##=================
 def checkBoxInImage(imgdims,start_x,start_y,boxsize):
 	return ( (start_x > 0 and start_x+boxsize <= imgdims['x'])
 		and  (start_y > 0 and start_y+boxsize <= imgdims['y']) )
+
 ##=================
 def processParticleData(imgdata, boxsize, partdatas, shiftdata, boxfile, rotate=False):
 	"""
@@ -90,11 +93,12 @@ def getBoxBoundary(partdict, boxsize):
 	return x1,x2,y1,y2
 
 ##=================
-def boxer(imgfile, parttree, outstack, boxsize):
+def boxer(imgfile, parttree, outstack, boxsize, pixlimit=None):
 	"""
 	boxes the particles and saves them to a imagic file
 	"""
 	imgarray = mrc.read(imgfile)
+	imgarray = imagefilter.pixelLimitFilter(imgarray, pixlimit)
 	boxedparticles = boxerMemory(imgarray, parttree, boxsize)
 	apImagicFile.writeImagic(boxedparticles, outstack)
 	return True
@@ -114,7 +118,7 @@ def boxerMemory(imgarray, parttree, boxsize):
 	return boxedparticles
 
 ##=================
-def boxerRotate(imgfile, parttree, outstack, boxsize):
+def boxerRotate(imgfile, parttree, outstack, boxsize, pixlimit=None):
 	"""
 	boxes the particles with expanded size,
 	applies a rotation to particle,
@@ -124,6 +128,7 @@ def boxerRotate(imgfile, parttree, outstack, boxsize):
 	# size needed is sqrt(2)*boxsize, using 1.5 to be extra safe
 	bigboxsize = int(math.ceil(1.5*boxsize))
 	imgarray = mrc.read(imgfile)
+	imgarray = imagefilter.pixelLimitFilter(imgarray, pixlimit)
 	bigboxedparticles = boxerMemory(imgarray, parttree, bigboxsize)
 	
 	boxedparticles = []
@@ -174,6 +179,7 @@ def boxMaskStack(bmstackf, partdatas, box, xmask, ymask, falloff, imask=None, no
 	os.remove("boxmask.mrc")
 	return bmstackf
 
+##=================
 def boxerFrameStack(framestackpath, parttree, outstack, boxsize,framelist):
 	"""
 	boxes the particles and returns them as a list of numpy arrays
