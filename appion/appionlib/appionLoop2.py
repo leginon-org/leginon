@@ -422,16 +422,19 @@ class AppionLoop(appionScript.AppionScript):
 			f = open(self.donedictfile,'r')
 			self.donedict = cPickle.load(f)
 			f.close()
-			if not 'commit' in self.donedict or self.donedict['commit'] == self.params['commit']:
-				### all is well
+			try:
+				if self.donedict['commit'] == self.params['commit']:
+					### all is well
+					apDisplay.printMsg("Found "+str(len(self.donedict))+" done dictionary entries")
+					return
+				elif self.donedict['commit'] is True and self.params['commit'] is not True:
+					### die
+					apDisplay.printError("Commit flag was enabled and is now disabled, create a new runname")
+				else:
+					### set up fresh dictionary
+					apDisplay.printWarning("'--commit' flag was changed, creating new done dictionary")
+			except KeyError:
 				apDisplay.printMsg("Found "+str(len(self.donedict))+" done dictionary entries")
-				return
-			elif self.donedict['commit'] is True and self.params['commit'] is not True:
-				### die
-				apDisplay.printError("Commit flag was enabled and is now disabled, create a new runname")
-			else:
-				### set up fresh dictionary
-				apDisplay.printWarning("'--commit' flag was changed, creating new done dictionary")
 
 		### set up fresh dictionary
 		self.donedict = {}
@@ -705,10 +708,12 @@ class AppionLoop(appionScript.AppionScript):
 		#tiltskip is default to None since it might not need evaluation
 		tiltskip = None
 
-		if imgname in self.donedict:
-			skip = True
-			reason = 'done'
-		elif self.reprocessImage(imgdata) is False:
+		try:
+			self.donedict[imgname]
+			return True, 'done'
+		except KeyError:
+			pass
+		if self.reprocessImage(imgdata) is False:
 			self._writeDoneDict(imgname)
 			reason = 'reproc'
 			skip = True
