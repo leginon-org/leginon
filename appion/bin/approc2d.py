@@ -26,6 +26,7 @@ class ApProc2d(basicScript.BasicScript):
 
 		self.parser.add_option('--in', dest='infile', metavar='FILE', help='Input image/stack')
 		self.parser.add_option('--out', dest='outfile', metavar='FILE', help='Output image/stack')
+		self.parser.add_option('--list', dest='listfile', metavar='FILE', help='List of particles to keep')
 		self.parser.add_option('--lp', '--lowpass', dest='lowpass', type=float,
 			metavar='FLOAT', help='Low pass filter to provided resolution. In Angstroms. ')
 		self.parser.add_option('--hp', '--highpass', dest='highpass', type=float,
@@ -48,6 +49,8 @@ class ApProc2d(basicScript.BasicScript):
 			action='store_true', help="Append to pre-existing output stack (will guess if not defined)")
 		self.parser.add_option('--debug', dest='debug', help="Show extra debugging messages",
 			action='store_true', default=False, )
+		self.parser.add_option('--average', dest='average', help="Average images into one file",
+			action='store_true', default=False, )
 		self.parser.add_option("--norm", "--normalize-method", dest="normalizemethod",
 			help="Normalization method (default: none)", metavar="TYPE",
 			type="choice", choices=self.normoptions, default="none", )
@@ -68,6 +71,11 @@ class ApProc2d(basicScript.BasicScript):
 			apDisplay.printError("Please provide an input file, e.g., --in=file.hed")
 		if self.params['outfile'] is None:
 			apDisplay.printError("Please provide an input file, e.g., --out=file.mrc")
+
+		if self.params['infile'] == self.params['outfile']:
+			apDisplay.printError("Input file and Output must be different")
+		if os.path.abspath(self.params['infile']) == os.path.abspath(self.params['outfile']):
+			apDisplay.printError("Input file and Output must be different")
 
 		### Read input file
 		self.inheader = self.readFileHeader(self.params['infile'])
@@ -212,6 +220,10 @@ class ApProc2d(basicScript.BasicScript):
 	#=====================
 	#=====================
 	def outFileStatus(self):
+		if self.params['average'] is True:
+			self.params['append'] = False
+			return 0
+
 		if not os.path.exists(self.params['outfile']):
 			self.params['append'] = False
 			return 0
@@ -284,6 +296,25 @@ class ApProc2d(basicScript.BasicScript):
 		self.message("Particle loop step size: %d"%(stepsize))
 		return stepsize
 
+	#=====================
+	#=====================
+	def readKeepList(self):
+		if not os.path.exists(self.params['listfile']):
+			apDisplay.printError("list file not found")
+		f = open(self.params['listfile'], 'r')
+		partlist = []
+		for line in f:
+			sline = line.strip()
+			if sline.startswith('#'):
+				continue
+			try:
+				sint = int(sline)
+			except ValueError:
+				print "unknown int: ", sline
+				continue
+			partlist.append(sint)
+		f.close()
+		return partlist
 
 	#=====================
 	#=====================
@@ -304,6 +335,8 @@ class ApProc2d(basicScript.BasicScript):
 		### needs more testing
 		# write pixelsize to new MRC file
 		# get apix from MRC header
+		# implement proc2d --average
+		# implement proc2d --list feature
 
 		### TODO
 		# read from SPIDER stack
@@ -313,9 +346,7 @@ class ApProc2d(basicScript.BasicScript):
 		# write to SPIDER stack
 		# write to EMAN2/HDF stack
 		# get apix from HED/IMG header
-		# implement proc2d --list feature
 		# implement proc2d --rotavg
-		# implement proc2d --average
 		# implement proc2d --clip
 
 		# determine numParticles to add
@@ -340,7 +371,13 @@ class ApProc2d(basicScript.BasicScript):
 		particlesPerCycle = self.getParticlesPerCycle(self.params['infile'])
 
 		processedParticles = []
-		for partnum in range(self.params['first'], self.params['first']+addNumParticles):
+		if self.params['listfile']:
+			partlist = self.readKeepList()
+		else:
+			partlist = range(self.params['first'], self.params['first']+addNumParticles)
+		count = 0
+		for partnum in partlist:
+			count += 1
 			particle = indata[partnum]
 			if self.params['debug'] is True:
 				print "---------"
@@ -386,14 +423,21 @@ class ApProc2d(basicScript.BasicScript):
 				particle = imagefun.bin2(particle, self.params['bin'])
 
 			### working above this line
-			processedParticles.append(particle)
+			if self.params['average'] is True:
+				summedPartice += particle
+			else:
+				processedParticles.append(particle)
 
 			if len(processedParticles) == particlesPerCycle:
 				### step 5: merge particle list with larger stack
 				self.appendParticleListToStackFile(processedParticles, self.params['outfile'])
+				sys.stderr.write("%d of %d"%(count, len(partlist)))
 				processedParticles = []
 		if len(processedParticles) > 0:
 			self.appendParticleListToStackFile(processedParticles, self.params['outfile'])
+		if self.params['average'] is True:
+			avgParticle = summedPartice/count
+			self.appendParticleListToStackFile([avgParticle,], self.params['outfile'])
 		print "Wrote %d particles to file "%(self.particlesWritten)
 
 if __name__ == '__main__':
