@@ -208,8 +208,6 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 
 		### convert database particle data to coordinates and write boxfile
 		boxfile = os.path.join(self.params['rundir'], imgdata['filename']+".box")
-		if self.params['pixlimit']:
-			limitimgdata = imagefilter.pixelLimitFilter(imgdata, self.params['pixlimit'])
 		parttree, boxedpartdatas = apBoxer.processParticleData(limitimgdata, self.boxsize,
 			partdatas, shiftdata, boxfile, rotate=self.params['rotate'])
 
