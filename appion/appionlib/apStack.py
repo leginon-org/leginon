@@ -268,7 +268,10 @@ def getStackIdFromRecon(reconrunid, msg=True):
 	return stackid
 
 #===============
-def averageStack(stack="start.hed", outfile="average.mrc", msg=True):
+def averageStack(stack="start.hed", outfile="average.mrc", partlist=None, msg=True):
+	"""
+	only works with IMAGIC
+	"""
 	if msg is True:
 		apDisplay.printMsg("averaging stack for summary web page")
 	stackfile = os.path.abspath(stack)
@@ -278,7 +281,10 @@ def averageStack(stack="start.hed", outfile="average.mrc", msg=True):
 	avgmrc = os.path.join(os.path.dirname(stackfile), outfile)
 	particles = imagic.read(stack)
 	summedParticle = numpy.zeros((particles[0].shape))
-	for partarray in particles:
+	if partlist is None:
+		partlist = range(len(particles))
+	for partnum in partlist:
+		partarray = particles[partnum]
 		summedParticle += partarray
 	averagePartice = summedParticle/float(len(particles))
 	#emancmd = ( "proc2d "+stackfile+" "+avgmrc+" average" )
