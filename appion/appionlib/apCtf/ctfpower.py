@@ -39,7 +39,7 @@ def getFieldSize(shape):
 	return fieldsize
 
 #=============
-def power(image, pixelsize, fieldsize=None, mask_radius=0.5):
+def power(image, pixelsize, fieldsize=None, mask_radius=0.5, msg=True):
 	"""
 	computes power spectra of image using sub-field averaging
 
@@ -65,7 +65,8 @@ def power(image, pixelsize, fieldsize=None, mask_radius=0.5):
 	envelop = twodHann(fieldsize)
 	count = 0
 	psdlist = []
-	sys.stderr.write("Computing power spectra in %dx%d blocks"%(fieldsize,fieldsize))
+	if msg is True:
+		sys.stderr.write("Computing power spectra in %dx%d blocks"%(fieldsize,fieldsize))
 	for i in range(xnumstep):
 		for j in range(ynumstep):
 			count += 1
@@ -75,7 +76,7 @@ def power(image, pixelsize, fieldsize=None, mask_radius=0.5):
 			y2 = y1 + f
 			if debug is True:
 				print "%03d: %d:%d, %d:%d"%(count, x1, x2, y1, y2)
-			else:
+			elif msg is True:
 				sys.stderr.write(".")
 			cutout = image[x1:x2, y1:y2]
 			powerspec = imagefun.power(cutout*envelop, mask_radius)
@@ -89,7 +90,7 @@ def power(image, pixelsize, fieldsize=None, mask_radius=0.5):
 			y2 = y1 + f
 			if debug is True:
 				print "%03d: %d:%d, %d:%d"%(count, x1, x2, y1, y2)
-			else:
+			elif msg is True:
 				sys.stderr.write(".")
 			cutout = image[x1:x2, y1:y2]
 			powerspec = imagefun.power(cutout*envelop, mask_radius)
@@ -103,7 +104,7 @@ def power(image, pixelsize, fieldsize=None, mask_radius=0.5):
 			y2 = ysize
 			if debug is True:
 				print "%03d: %d:%d, %d:%d"%(count, x1, x2, y1, y2)
-			else:
+			elif msg is True:
 				sys.stderr.write(".")
 			cutout = image[x1:x2, y1:y2]
 			powerspec = imagefun.power(cutout*envelop, mask_radius)
@@ -114,8 +115,9 @@ def power(image, pixelsize, fieldsize=None, mask_radius=0.5):
 	#poweravg = numpy.array(psdlist).mean(0)
 	apDisplay.printMsg("Computing median of power spectra series")
 	poweravg = numpy.median(psdlist, axis=0)
-	apDisplay.printMsg("Compute PSD with fieldsize %d and %d images complete in %s"
-		%(fieldsize, count, apDisplay.timeString(time.time()-t0)))
+	if msg is True:
+		apDisplay.printMsg("Compute PSD with fieldsize %d and %d images complete in %s"
+			%(fieldsize, count, apDisplay.timeString(time.time()-t0)))
 	return poweravg, freq
 
 #===================
