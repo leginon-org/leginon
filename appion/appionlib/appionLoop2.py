@@ -701,6 +701,7 @@ class AppionLoop(appionScript.AppionScript):
 				apDisplay.printWarning("substantial memory leak "+str(round(memleak,2))+"MB")
 				print "(",str(n),round(slope,5),round(rho,5),round(gain,2),")"
 
+	#=====================
 	def skipTestOnImage(self,imgdata):
 		imgname = imgdata['filename']
 		skip = False
@@ -766,6 +767,7 @@ class AppionLoop(appionScript.AppionScript):
 		self.stats['skipcount'] = 0
 		newimgtree = []
 		count = 0
+		t0 = time.time()
 		for imgdata in self.imgtree:
 			count += 1
 			if count % 10 == 0:
@@ -790,6 +792,7 @@ class AppionLoop(appionScript.AppionScript):
 			else:
 				newimgtree.append(imgdata)
 		sys.stderr.write("\n")
+		apDisplay.printMsg("finished skipping in %s"%(apDisplay.timeString(time.time()-t0)))
 		if self.stats['skipcount'] > 0:
 			self.imgtree = newimgtree
 			sys.stderr.write("\n")
