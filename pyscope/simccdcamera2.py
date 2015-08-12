@@ -311,10 +311,6 @@ class SimFrameCamera(SimCCDCamera):
 		if self.save_frames:
 			self.rawframesname = time.strftime('frames_%Y%m%d_%H%M%S')
 			self.rawframesname += '_%02d' % (idcounter.next(),)
-			try:
-				os.mkdir(self.rawframesname)
-			except:
-				pass
 		else:
 			return self.getSyntheticImage(shape)
 		sum = numpy.zeros(shape, numpy.float32)
@@ -329,11 +325,14 @@ class SimFrameCamera(SimCCDCamera):
 			else:
 				raise RuntimeError('unknown exposure type: %s' % (self.exposure_type,))
 
+			mrcname = '.mrc'
+			fname = self.rawframesname + mrcname
 			if self.save_frames:
 				print 'SAVE', i
-				mrcname = '%03d.mrc' % (i,)
-				fname = os.path.join(self.rawframesname, mrcname)
-				mrc.write(frame, fname)
+				if i == 0:
+					mrc.write(frame, fname)
+				else:
+					mrc.append(frame, fname)
 			if i in self.useframes:
 				print 'SUM', i
 				sum += frame
