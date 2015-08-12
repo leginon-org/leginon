@@ -860,7 +860,7 @@ def makeCorrPlotImages(seriesname, iteration, rundir, corrfile):
 		pylab.clf()
 		pylab.plot(rot)
 		pylab.xlabel("Tilt Image")
-		pylab.ylabel("Image Rotation Relative to 0 degree Image (degrees)")
+		pylab.ylabel("Rotational Differences not yet Corrected (degrees)")
 		pylab.savefig(figrot_full)
 		pylab.clf()
 		

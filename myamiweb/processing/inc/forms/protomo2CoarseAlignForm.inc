@@ -96,8 +96,8 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 		$_SESSION['imageinfo'] = $imageinfo;
 		$_SESSION['tiltseries'] = $tiltseriesinfos[0]['number'];
 		
-		$region_x = intval($imageinfo['dimx']*0.75);
-		$region_y = intval($imageinfo['dimy']*0.75);
+		$region_x = intval($imageinfo['dimx']*0.5);
+		$region_y = intval($imageinfo['dimy']*0.5);
 		$lp_diam_x = round(pow(10,10)*$imageinfo['pixelsize']*75);
 		$lp_diam_y = round(pow(10,10)*$imageinfo['pixelsize']*75);
 		$hp_diam_x = round($imageinfo['pixelsize']*pow(10,10)*min($region_x, $region_y));

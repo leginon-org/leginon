@@ -83,14 +83,16 @@ class Protomo2RefineSummary extends BasicLayoutForm
 	<hr />
 	<center><H4><b>Quality Assessment ".docpop('quality_assessment', '(Info)')."</b></H4></center>
 	<hr />";
-		$html .= '<table id="" class="display" cellspacing="0" border="0" width="100%">';
-		$html .= '<tr><td rowspan="2">';
-		$html .= '<center><a href="protomo2QualityAssessmentPlots.php?outdir='.$outdir.'&runname='.$runname.'&tiltseries='.$tiltseries.'" target="_blank"><img src="'.$qa_gif.'" alt="qa" width="666" />'."</a></center>";
-		$html .= '<center>'.docpop('quality_assessment2', 'CCMS Info').'</center><br></td>';
-		$html .= '<td><center><a href="protomo2QualityAssessmentPlots.php?outdir='.$outdir.'&runname='.$runname.'&tiltseries='.$tiltseries.'" target="_blank"><img src="'.$azimuth_gif.'" alt="azimuth" width="400" />'."</a></center></td></tr>";
-		$html .= '<td><center><a href="protomo2QualityAssessmentPlots.php?outdir='.$outdir.'&runname='.$runname.'&tiltseries='.$tiltseries.'" target="_blank"><img src="'.$theta_gif.'" alt="theta" width="400" />'."</a></center></td></tr>";
-		$html .= '</tr></td></table>';
-		
+		if (count($corrpeak_gif_files) > 0 or count($corrpeak_vid_files) > 0)
+		{
+			$html .= '<table id="" class="display" cellspacing="0" border="0" width="100%">';
+			$html .= '<tr><td rowspan="2">';
+			$html .= '<center><a href="protomo2QualityAssessmentPlots.php?outdir='.$outdir.'&runname='.$runname.'&tiltseries='.$tiltseries.'" target="_blank"><img src="'.$qa_gif.'" alt="qa" width="666" />'."</a></center>";
+			$html .= '<center>'.docpop('quality_assessment2', 'CCMS Info').'</center><br></td>';
+			$html .= '<td><center><a href="protomo2QualityAssessmentPlots.php?outdir='.$outdir.'&runname='.$runname.'&tiltseries='.$tiltseries.'" target="_blank"><img src="'.$azimuth_gif.'" alt="azimuth" width="400" />'."</a></center></td></tr>";
+			$html .= '<td><center><a href="protomo2QualityAssessmentPlots.php?outdir='.$outdir.'&runname='.$runname.'&tiltseries='.$tiltseries.'" target="_blank"><img src="'.$theta_gif.'" alt="theta" width="400" />'."</a></center></td></tr>";
+			$html .= '</tr></td></table>';
+		}
 		// Table of all of the correlation peaks for easy identification of bad alignment iterations
 		$html .= "
 	<hr />

@@ -579,7 +579,7 @@ class Protomo2RefineForm extends BasicLayoutForm
 		$r1_kernel_y = $r2_kernel_y = $r3_kernel_y = $r4_kernel_y = $r5_kernel_y = 5;
 		$r1_mask_apod_x = $r2_mask_apod_x = $r3_mask_apod_x = $r4_mask_apod_x = $r5_mask_apod_x = 10;
 		$r1_mask_apod_y = $r2_mask_apod_y = $r3_mask_apod_y = $r4_mask_apod_y = $r5_mask_apod_y = 10;
-		$restart_cycle = $_SESSION['restart_cycle'];
+		//$restart_cycle = $_SESSION['restart_cycle'];
 		$image_file_type = pathinfo($imageinfo['filename'], PATHINFO_EXTENSION);
 		$_SESSION['image_file_type'] = $image_file_type;
 		$_SESSION['dimx'] = $imageinfo['dimx'];

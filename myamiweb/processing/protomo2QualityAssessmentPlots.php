@@ -29,7 +29,7 @@ $azimuth_gif = "loadimg.php?rawgif=1&filename=".$azimuth_gif_files;
 $theta_gif = "loadimg.php?rawgif=1&filename=".$theta_gif_files;
 
 $html .= "
-	<center><H3><b>Tilt-Series #$tiltseries</b></H3></center>
+	<center><H3><b>Tilt-Series #$tiltseries Quality Assessment Plots</b></H3></center>
 	<hr />";
 
 $html .= "
