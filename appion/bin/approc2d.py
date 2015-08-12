@@ -290,15 +290,15 @@ class ApProc2d(basicScript.BasicScript):
 	def start(self):
 
 		### Works
-		# read from MRC image
+		# read from MRC image/stack
 		# read from HED/IMG stack
 		# write to MRC image
+		# write to MRC stack		
 		# write to HED/IMG stack
+		# append to MRC stack
 		# append to HED/IMG stack
 		# filter images
 		# implement binning
-		# write to MRC stack
-		# append to MRC stack
 		# implement normalization
 
 		### needs more testing
@@ -307,14 +307,15 @@ class ApProc2d(basicScript.BasicScript):
 
 		### TODO
 		# read from SPIDER stack
-		# read from EMAN/HDF stack
 		# read from SPIDER image
+		# read from EMAN2/HDF stack		
 		# write to SPIDER image
 		# write to SPIDER stack
-		# write to EMAN/HDF stack
+		# write to EMAN2/HDF stack
 		# get apix from HED/IMG header
 		# implement proc2d --list feature
 		# implement proc2d --rotavg
+		# implement proc2d --average
 		# implement proc2d --clip
 
 		# determine numParticles to add
