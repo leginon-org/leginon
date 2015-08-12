@@ -7,6 +7,7 @@ import time
 import math
 import numpy
 ### appion
+import sinedon.directq
 from pyami import mrc
 from pyami import mem
 from pyami import imagic
@@ -243,7 +244,9 @@ def checkForPreviousStack(stackname, stackpath=None):
 	stackq['name'] = os.path.basename(stackname)
 	stackdata = stackq.query(results=1)
 	if stackdata:
-		apDisplay.printError("A stack with name "+stackname+" and path "+spath+" already exists!")
+		sdbid = stackdata[0].dbid
+		apDisplay.printError("A stack with name "+stackname+" (id: "+ \
+			str(sdbid)+") and path "+spath+" already exists!")
 	return
 
 #===============
@@ -378,8 +381,11 @@ def commitSubStack(params, newname=False, centered=False, oldstackparts=None, so
 		keepfile
 	"""
 
+	t0 = time.time()
 	oldstackdata = getOnlyStackData(params['stackid'], msg=False)
+	apDisplay.printColor("got old stackdata in "+apDisplay.timeString(time.time()-t0),"cyan")
 
+	t0 = time.time()
 	#create new stack data
 	stackq = appiondata.ApStackData()
 	stackq['path'] = appiondata.ApPathData(path=os.path.abspath(params['rundir']))
@@ -413,7 +419,11 @@ def commitSubStack(params, newname=False, centered=False, oldstackparts=None, so
 
 	## insert now before datamanager cleans up referenced data
 	stackq.insert()
+	apDisplay.printMsg("created new stackdata in "+apDisplay.timeString(time.time()-t0))
 
+	newstackid = stackq.dbid
+
+	t0 = time.time()
 	#Insert particles
 	listfile = params['keepfile']
 
@@ -432,44 +442,61 @@ def commitSubStack(params, newname=False, centered=False, oldstackparts=None, so
 
 	## index old stack particles by number
 	part_by_number = {}
-	if oldstackparts is not None:
-		for part in oldstackparts:
-			part_by_number[part['particleNumber']] = part
 
-	apDisplay.printMsg("Inserting stack particles")
+	# get stack data from original particles
+	sqlcmd = "SELECT * FROM ApStackParticleData " + \
+		"WHERE `REF|ApStackData|stack` = %i"%(params['stackid'])
+	oldstackparts = sinedon.directq.complexMysqlQuery('appiondata',sqlcmd)
+	for part in oldstackparts:
+		part_by_number[part['particleNumber']] = part
+
+	apDisplay.printMsg("Assembling database insertion command")
 	count = 0
 	newpartnum = 1
 	t0 = time.time()
+
+	partlistvals = []	 
 	for origpartnum in listfilelines:
 		count += 1
-		if count % 100 == 0:
-			perpart=(time.time()-t0)/count
-			tleft = (total-count)*perpart
-			sys.stderr.write(str(count)+" of "+(str(total))+" complete, %s left   \r"%(apDisplay.timeString(tleft)))
+		oldstackpartdata = part_by_number[origpartnum]
+		sqlParams = ['particleNumber','REF|ApStackData|stack']
+		vals = [newpartnum,newstackid]
+		for k,v in oldstackpartdata.iteritems():
+			if k in ['DEF_id', 
+				'DEF_timestamp', 
+				'particleNumber', 
+				'REF|ApStackData|stack']:
+				continue
+			sqlParams.append(k)
+			vals.append(v)
+		partlistvals.append("('"+"','".join(str(x) for x in vals)+"')")
 
-		# Find corresponding particle in old stack
-		# Use previously queried particles if possible, otherwise
-		# do new query here (very slow if millions of prtls in DB)
-		try:
-			oldstackpartdata = part_by_number[origpartnum]
-		except KeyError:
-			oldstackpartdata = getStackParticle(params['stackid'], origpartnum)
-
-		# Insert particle
-		newstackq = appiondata.ApStackParticleData()
-		newstackq.update(oldstackpartdata)
-		newstackq['particleNumber'] = newpartnum
-		newstackq['stack'] = stackq
-		if params['commit'] is True:
-			newstackq.insert()
 		newpartnum += 1
+
+	apDisplay.printMsg("Inserting particle information into database")
+
+	sqlstart = "INSERT INTO `ApStackParticleData` (`" + \
+		"`,`".join(sqlParams)+ "`) VALUES "
+	# break up command into groups of 100K inserts
+	# this is a workaround for the max_allowed_packet at 16MB
+	n = 100000
+	sqlinserts = [partlistvals[i:i+n] \
+		for i in range(0, len(partlistvals), n)]
+
+	if params['commit'] is True:
+		for sqlinsert in sqlinserts:
+			sqlcmd=sqlstart+",".join(sqlinsert)
+			sinedon.directq.complexMysqlQuery('appiondata',sqlcmd)
+
 	sys.stderr.write("\n")
 	if newpartnum == 0:
 		apDisplay.printError("No particles were inserted for the stack")
 
-	apDisplay.printMsg("Inserted "+str(newpartnum-1)+" stack particles into the database")
+	apDisplay.printColor("Inserted "+str(newpartnum-1)+ \
+		" stack particles into the database in "+ \
+		apDisplay.timeString(time.time()-t0),"cyan")
 
-	apDisplay.printMsg("Inserting Runs in Stack")
+	apDisplay.printMsg("\nInserting Runs in Stack")
 	runsinstack = getRunsInStack(params['stackid'])
 	for run in runsinstack:
 		newrunsq = appiondata.ApRunsInStackData()
@@ -478,7 +505,7 @@ def commitSubStack(params, newname=False, centered=False, oldstackparts=None, so
 		if params['commit'] is True:
 			newrunsq.insert()
 		else:
-			apDisplay.printWarning("Not commiting to the database")
+			apDisplay.printWarning("Not committing to the database")
 
 	apDisplay.printMsg("finished")
 	return

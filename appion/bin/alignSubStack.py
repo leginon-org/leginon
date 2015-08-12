@@ -8,6 +8,7 @@ import math
 import numpy
 import shutil
 #appion
+import sinedon.directq
 from appionlib import appionScript
 from appionlib import apStack
 from appionlib import apDisplay
@@ -123,15 +124,30 @@ class subStackScript(appionScript.AppionScript):
 		### get particles from align or cluster stack
 		apDisplay.printMsg("Querying database for particles")
 		q0 = time.time()
+
 		if self.params['alignid'] is not None:
-			alignpartq =  appiondata.ApAlignParticleData()
-			alignpartq['alignstack'] = self.alignstackdata
-			particles = alignpartq.query()
+			# DIRECT SQL STUFF
+			sqlcmd = "SELECT " + \
+				"apd.partnum, " + \
+				"apd.xshift, apd.yshift, " + \
+				"apd.rotation, apd.mirror, " + \
+				"apd.spread, apd.correlation, " + \
+				"apd.score, apd.bad, " + \
+				"spd.particleNumber, " + \
+				"ard.refnum "+ \
+				"FROM ApAlignParticleData apd " + \
+				"LEFT JOIN ApStackParticleData spd ON " + \
+				"(apd.`REF|ApStackParticleData|stackpart` = spd.DEF_id) " + \
+				"LEFT JOIN ApAlignReferenceData ard ON" + \
+				"(apd.`REF|ApAlignReferenceData|ref` = ard.DEF_id) " + \
+				"WHERE `REF|ApAlignStackData|alignstack` = %i"%(self.params['alignid'])
+			particles = sinedon.directq.complexMysqlQuery('appiondata',sqlcmd)
+
 		elif self.params['clusterid'] is not None:
 			clusterpartq = appiondata.ApClusteringParticleData()
 			clusterpartq['clusterstack'] = self.clusterstackdata
 			particles = clusterpartq.query()
-		apDisplay.printMsg("Complete in "+apDisplay.timeString(time.time()-q0))
+		apDisplay.printMsg("Completed in %s\n"%(apDisplay.timeString(time.time()-q0)))
 
 		### write included particles to text file
 		includeParticle = []
@@ -139,22 +155,28 @@ class subStackScript(appionScript.AppionScript):
 		badscore = 0
 		badshift = 0
 		badspread = 0
+
 		f = open("test.log", "w")
 		count = 0
+		t0 = time.time()
+		apDisplay.printMsg("Parsing particle information")
+		# find out if there is alignparticle info:
+		usealignp = False
+		if 'alignparticle' in particles[0]:
+			usealignp = True
 		for part in particles:
 			count += 1
-			#partnum = part['partnum']-1
-			if 'alignparticle' in part:
+			if usealignp:
 				alignpart = part['alignparticle']
-				classnum = int(part['refnum'])-1
+				emanstackpartnum = alignpart['stackpart']['particleNumber']-1
 			else:
 				alignpart = part
 				try:
-					classnum = int(part['ref']['refnum'])-1
+					classnum = int(alignpart['refnum'])-1
 				except:
 					apDisplay.printWarning("particle %d was not put into any class" % (part['partnum']))
 					classnum = None
-			emanstackpartnum = alignpart['stackpart']['particleNumber']-1
+				emanstackpartnum = int(alignpart['particleNumber'])-1
 
 			### check shift
 			if self.params['maxshift'] is not None:
@@ -167,7 +189,6 @@ class subStackScript(appionScript.AppionScript):
 						f.write("%d\t%d\texclude\n"%(count, emanstackpartnum))
 					badshift += 1
 					continue
-
 
 			if self.params['minscore'] is not None:
 				### check score
@@ -193,10 +214,10 @@ class subStackScript(appionScript.AppionScript):
 					continue
 
 			if classnum is not None:
-				if includelist and classnum in includelist:
+				if includelist and (classnum in includelist):
 					includeParticle.append(emanstackpartnum)
 					f.write("%d\t%d\t%d\tinclude\n"%(count, emanstackpartnum, classnum))
-				elif excludelist and not classnum in excludelist:
+				elif excludelist and not (classnum in excludelist):
 					includeParticle.append(emanstackpartnum)
 					f.write("%d\t%d\t%d\tinclude\n"%(count, emanstackpartnum, classnum))
 				else:
@@ -205,8 +226,9 @@ class subStackScript(appionScript.AppionScript):
 			else:
 				excludeParticle += 1
 				f.write("%d\t%d\texclude\n"%(count, emanstackpartnum))
-
+			
 		f.close()
+
 		includeParticle.sort()
 		if badshift > 0:
 			apDisplay.printMsg("%d paricles had a large shift"%(badshift))
@@ -214,9 +236,8 @@ class subStackScript(appionScript.AppionScript):
 			apDisplay.printMsg("%d paricles had a low score"%(badscore))
 		if badspread > 0:
 			apDisplay.printMsg("%d paricles had a low spread"%(badspread))
+		apDisplay.printMsg("Completed in %s\n"%(apDisplay.timeString(time.time()-t0)))
 		apDisplay.printMsg("Keeping "+str(len(includeParticle))+" and excluding "+str(excludeParticle)+" particles")
-
-		#print includeParticle
 
 		### write kept particles to file
 		self.params['keepfile'] = os.path.join(self.params['rundir'], "keepfile-"+self.timestamp+".list")
@@ -246,7 +267,6 @@ class subStackScript(appionScript.AppionScript):
 			apStack.commitSubStack(self.params)
 			newstackid = apStack.getStackIdFromPath(newstack)
 			apStackMeanPlot.makeStackMeanPlot(newstackid, gridpoints=4)
-
 
 
 #=====================
