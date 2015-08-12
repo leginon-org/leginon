@@ -140,9 +140,10 @@ class CtfDisplay(object):
 		noisedata3 = CtfNoise.noiseModel(noisefitparams3, raddata)
 
 		## debug only
-		singlenoisefitparams = CtfNoise.modelCTFNoise(raddata[npart1start:npart3end],
-			svalleydata[npart1start:npart3end], "below")
-		singlenoisedata = CtfNoise.noiseModel(singlenoisefitparams, raddata)
+		if self.debug is True:
+			singlenoisefitparams = CtfNoise.modelCTFNoise(raddata[npart1start:npart3end],
+				svalleydata[npart1start:npart3end], "below")
+			singlenoisedata = CtfNoise.noiseModel(singlenoisefitparams, raddata)
 
 		## merge data
 		scale = numpy.arange(npart1end-npart2start, dtype=numpy.float32)
@@ -600,9 +601,10 @@ class CtfDisplay(object):
 		newlocs.append(maxloc)
 		if square is True:
 			maxres = 1.0/math.sqrt(maxloc)
+			label = "1/%.1fA^2"%(maxres)
 		else:
-			maxres = 1.0/maxloc
-		label = "1/%.1fA"%(maxres)
+			maxres = 1.0/maxloc		
+			label = "1/%.1fA"%(maxres)
 		newlabels.append(label)
 
 		# set the labels
