@@ -342,7 +342,7 @@ class SimFrameCamera(SimCCDCamera):
 
 	
 	def getNumberOfFrames(self):
-		if not self.frame_time:
+		if self.frame_time:
 			nframes = int(round(self.exposure_time / self.frame_time))
 			return nframes
 		else:
