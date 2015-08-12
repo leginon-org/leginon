@@ -43,6 +43,9 @@ def initializeDDFrameprocess(sessionname,wait_flag=False):
 	elif 'Appion' in dcamdata['name']:
 		from appionlib import apAppionCamProcess
 		return apAppionCamProcess.AppionCamFrameProcessing(wait_flag)
+	elif 'Sim' in dcamdata['name']:
+		from appionlib import apSimFrameProcess
+		return apSimFrameProcess.SimFrameProcessing(wait_flag)
 	else:
 		apDisplay.printError('Unknown frame camera name %s' % dcamdata['name'])
 
