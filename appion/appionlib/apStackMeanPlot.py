@@ -6,6 +6,7 @@ import os
 import time
 import numpy
 # appion
+import sinedon.directq
 from appionlib import apEMAN
 from appionlib import apFile
 from appionlib import apDisplay
@@ -29,7 +30,12 @@ def makeStackMeanPlot(stackid, gridpoints=16):
 	apDisplay.printMsg("binning stack by "+str(bin))
 	stackdata = apStack.getOnlyStackData(stackid, msg=False)
 	stackfile = os.path.join(stackdata['path']['path'], stackdata['name'])
-	partdatas = apStack.getStackParticlesFromId(stackid, msg=False)
+	# get stats from stack:
+	sqlcmd = "SELECT " + \
+		"particleNumber, mean, stdev " + \
+		"FROM ApStackParticleData " + \
+		"WHERE `REF|ApStackData|stack` = %i"%(stackid)
+	partdatas = sinedon.directq.complexMysqlQuery('appiondata',sqlcmd)
 	#check only first 100 particles for now
 	#partdatas = partdatas[:500]
 	apFile.removeFile("montage"+str(stackid)+".png")
@@ -61,7 +67,7 @@ def makeStackMeanPlot(stackid, gridpoints=16):
 			key = ("%02dx%02d"%(i,j))
 			partlists[key] = []
 
-	### sort paritcles into bins
+	### sort particles into bins
 	for partdata in partdatas:
 		key = meanStdevToKey(partdata['mean'], partdata['stdev'], limits, gridpoints)
 		partnum = int(partdata['particleNumber'])
