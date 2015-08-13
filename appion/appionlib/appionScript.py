@@ -6,7 +6,6 @@ import pyami.quietscipy
 import os
 import re
 import sys
-import pwd
 import time
 import subprocess
 import glob
@@ -139,7 +138,7 @@ class AppionScript(basicScript.BasicScript):
 			return None
 		optaction = self.optdict[dest].action
 		if optaction == 'store':
-			opttype = self.optdict[dest].type
+			#opttype = self.optdict[dest].type
 			value = str(value)
 			if not ' ' in value:
 				usage = argument+"="+value

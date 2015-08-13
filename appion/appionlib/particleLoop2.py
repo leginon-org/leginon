@@ -2,13 +2,10 @@
 
 #pythonlib
 import os
-import sys
-import re
 #appion
 from appionlib import filterLoop
 from appionlib import appionLoop2
 from appionlib import apDisplay
-from appionlib import apDatabase
 from appionlib import apPeaks
 from appionlib import appiondata
 from appionlib import apParticle

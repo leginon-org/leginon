@@ -1,11 +1,8 @@
-#!/usr/bin/python -O
-
-import pyami.quietscipy
+#!/usr/bin/env python
 
 #builtin
 import sys
 import os
-import re
 import time
 import math
 import random
@@ -13,7 +10,6 @@ import cPickle
 #appion
 from appionlib import apDisplay
 from appionlib import apDatabase
-from appionlib import apImage
 from appionlib import apParam
 from appionlib import apProject
 #leginon
@@ -646,7 +642,6 @@ class AppionTiltSeriesLoop(appionScript.AppionScript):
 		#self.stats['memlist'].append(mem.mySize()/1024)
 		self.stats['memlist'].append(mem.active())
 		memfree = mem.free()
-		swapfree = mem.swapfree()
 		minavailmem = 64*1024; # 64 MB, size of one image
 		if(memfree < minavailmem):
 			apDisplay.printError("Memory is low ("+str(int(memfree/1024))+"MB): there is probably a memory leak")

@@ -1,24 +1,20 @@
-#!/usr/bin/python -O
-
-import pyami.quietscipy
+#!/usr/bin/env python 
 
 #builtin
-import sys
 import os
-import re
+import sys
 import time
 import math
 import random
 import cPickle
-import glob
 #appion
 from appionlib import apDisplay
 from appionlib import apDatabase
 from appionlib import apImage
 from appionlib import apParam
 from appionlib import apProject
-#leginon
 from appionlib import appionScript
+#leginon
 from pyami import mem
 
 class AppionLoop(appionScript.AppionScript):
@@ -669,7 +665,6 @@ class AppionLoop(appionScript.AppionScript):
 		#self.stats['memlist'].append(mem.mySize()/1024)
 		self.stats['memlist'].append(mem.active())
 		memfree = mem.free()
-		swapfree = mem.swapfree()
 		minavailmem = 64*1024; # 64 MB, size of one image
 		if(memfree < minavailmem):
 			apDisplay.printWarning("Memory is low ("+str(int(memfree/1024))+"MB): there is probably a memory leak")
@@ -706,9 +701,6 @@ class AppionLoop(appionScript.AppionScript):
 		imgname = imgdata['filename']
 		skip = False
 		reason = None
-		#tiltskip is default to None since it might not need evaluation
-		tiltskip = None
-
 		try:
 			self.donedict[imgname]
 			return True, 'done'
