@@ -465,7 +465,7 @@ class ApProc2dOverride(ApProc2d):
 		self.parser = OptionParser()
 		self.setupParserOptions()
 		self.params = {}
-		(options, args) = self.parser.parse_args()
+		(options, args) = self.parser.parse_args([])
 		for i in self.parser.option_list:
 			if isinstance(i.dest, str):
 				self.params[i.dest] = getattr(options, i.dest)
