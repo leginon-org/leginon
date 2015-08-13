@@ -261,14 +261,16 @@ class CtfNoise(object):
 		numpoints = xdata.shape[0]
 		cutoff = int(math.floor(cutoffper*numpoints))
 		if self.debug is True:
-			print "CUT:", numpoints, cutoff, (numpoints - cutoff)
+			print "CUT: totalpoints=%d: fit1points=%d / fit2points=%d"%(numpoints, cutoff, (numpoints - cutoff))
 		if cutoff < 3 or abs(numpoints - cutoff) < 3:
 			return None, None
 		if self.debug: print "cutoff percent %.3f (%d points)"%(cutoffper, cutoff)
 		### fit first two fifths
+		if self.debug is True: print "fit1"
 		firstlinearfitparams, firstlinearvalue = self.fitLinear(
 			xdata[:cutoff], ctfdata[:cutoff], contraintFunction, maxfun)
 		### fit last two fifths
+		if self.debug is True: print "fit2"		
 		lastlinearfitparams, lastlinearvalue = self.fitLinear(
 			xdata[-cutoff:], ctfdata[-cutoff:], contraintFunction, maxfun)
 
@@ -284,6 +286,7 @@ class CtfNoise(object):
 		xconst =  (b1*xmax - b2*xmin)/xfull #b1*xmax - b2*xmin
 
 		initfitparams = numpy.array([xconst, 0, xlinear, xsquare, 0.0])
+		if self.debug is True: print "modelFitFun"
 		fullvalue = self.modelFitFun(initfitparams, xdata, ctfdata)
 		return initfitparams, fullvalue
 
@@ -567,7 +570,7 @@ class CtfNoise(object):
 		if contraint == "below":
 			minconval = -1e-2
 		elif contraint == "above":
-			minconval = -1e-4
+			minconval = -1e-2
 		else:
 			minconval = -1e-3
 		while constrainval < minconval and valuelist.min() < 1e6:
