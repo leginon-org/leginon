@@ -26,7 +26,6 @@ class RunProc2d(object):
 		self.approc2d.params[name] = value
 
 	def run(self):
-		print "help"
 		self.approc2d.checkConflicts()
 		self.approc2d.start()
 		self.approc2d.close()
@@ -464,5 +463,11 @@ class ApProc2d(basicScript.BasicScript):
 class ApProc2dOverride(ApProc2d):
 	def __init__(self, quiet=True):
 		self.params = {}
+		self.params['first'] = 0
+		self.params['append'] = None
+		self.params['normalizemethod'] = 'none'
+		self.params['invert'] = False
+		self.params['debug'] = False
+		self.params['average'] = False
 		pass
 
