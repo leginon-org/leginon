@@ -2083,7 +2083,21 @@ class particledata {
 		$r = $this->mysql->getSQLResult($q);
 		return $r;
 	}	
-	
+
+	function isSessionRunning($sessionid) {	
+		$q="SELECT "
+			."UNIX_TIMESTAMP(img.`DEF_timestamp`) AS `end` "
+			.",img.filename "
+			."FROM ".DB_LEGINON.".`AcquisitionImageData` AS img "
+			."WHERE `REF|SessionData|session` = '$sessionid' "
+			."AND (`filename` NOT LIKE '%-%' OR `filename` NOT LIKE 'project')"
+			."ORDER BY img.`DEF_timestamp` DESC LIMIT 1";
+		$endinfo = $this->mysql->getSQLResult($q);
+		$lastsecs = time() - $endinfo[0]['end'];
+		$active_time = 60*60;
+		return ($lastsecs <= $active_time) ? true:false;
+	}
+
 	function getNumImgsFromSessionId ($sessionId){
 		$q= "SELECT "
 			. "  COUNT(DISTINCT p.`REF|leginondata|AcquisitionImageData|image`) AS num  "

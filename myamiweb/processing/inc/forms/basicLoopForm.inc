@@ -49,9 +49,12 @@ class BasicLoopForm extends BasicLayoutForm
 		// Get the max tilt angle which determines if the tilt angle select control is displayed
 		$particle = new particledata();
 		$maxang = $particle->getMaxTiltAngle( $this->expId );	
-		
+
+		// Set nowait according to the timestamp of the most recent non-processed image
+		$nowait_default =  $particle->isSessionRunning( $this->expId );
+
 		// Add the Appion Loop Form
-		$appionLoopTable = new AppionLoopTable( $checkimage='unrejected', $nowait='', $imgorder='normal', $limit='',$tiltangle='', $maxtiltangle=$maxang, $apcontinue='1',
+		$appionLoopTable = new AppionLoopTable( $checkimage='unrejected', $nowait=$nowait_default, $imgorder='normal', $limit='',$tiltangle='', $maxtiltangle=$maxang, $apcontinue='1',
 		$commit='on', $presetList=$presetList, $preset="en", $testimage='', $testfilename='' );
 		
 		// Only hide advanced parameters if there is not an advanced user logged in.

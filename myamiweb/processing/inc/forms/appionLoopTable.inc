@@ -65,6 +65,7 @@ class AppionLoopTable extends BasicForm
 			$html.= "<I>No presets for this session<br/>\n"
 				."processing ALL images</I><br/>\n";
 		}
+		$html.= $params->insertCheckboxField( "nowait" );
 		$html.= "<hr/>\n";
 
 		//
@@ -86,7 +87,6 @@ class AppionLoopTable extends BasicForm
 			$html.= "<input type='hidden' name='tiltangle' value='all'>\n";
 		}
 	
-		$html.= $params->insertCheckboxField( "nowait" );
 		$html.= $params->insertTextField( "limit", $fieldSize );	
 		
 		$html.= "<I>Images to process:</I><br />\n";
