@@ -887,7 +887,6 @@ class Stack(object):
         self._format         = None
         self._inverted       = None
         self._normalized     = None
-        self._xmippnorm      = None
         self._defocpair      = None
         self._lowpass        = None
         self._highpass       = None
@@ -948,7 +947,6 @@ class Stack(object):
         self.format         = originalStackParamData['fileType']
         self.inverted       = originalStackParamData['inverted']
         self.normalized     = originalStackParamData['normalized']
-        self.xmippnorm      = originalStackParamData['xmipp-norm']
         self.defocpair      = originalStackParamData['defocpair']
         self.lowpass        = originalStackParamData['lowpass']
         self.highpass       = originalStackParamData['highpass']
@@ -1059,10 +1057,6 @@ class Stack(object):
         if self._normalized is None: self.setStackRunDataParams()
         return self._normalized
     
-    def get_xmippnorm(self):
-        if self._xmippnorm is None: self.setStackRunDataParams()
-        return self._xmippnorm
-    
     def get_defocpair(self):
         if self._defocpair is None: self.setStackRunDataParams()
         return self._defocpair
@@ -1109,7 +1103,6 @@ class Stack(object):
     def set_format(self, format): self._format = format
     def set_inverted(self, inverted): self._inverted = inverted
     def set_normalized(self, normalized): self._normalized = normalized
-    def set_xmippnorm(self, xmippnorm): self._xmippnorm = xmippnorm
     def set_defocpair(self, defocpair): self._defocpair = defocpair
     def set_lowpass(self, lowpass): self._lowpass = lowpass
     def set_highpass(self, highpass): self._highpass = highpass
@@ -1139,7 +1132,6 @@ class Stack(object):
     format          = property( get_format, set_format, doc="The name of this stack." )
     inverted        = property( get_inverted, set_inverted, doc="The name of this stack." )
     normalized      = property( get_normalized, set_normalized, doc="The name of this stack." )
-    xmippnorm       = property( get_xmippnorm, set_xmippnorm, doc="The name of this stack." )
     defocpair       = property( get_defocpair, set_defocpair, doc="The name of this stack." )
     lowpass         = property( get_lowpass, set_lowpass, doc="The name of this stack." )
     highpass        = property( get_highpass, set_highpass, doc="The name of this stack." )
