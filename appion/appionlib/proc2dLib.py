@@ -16,6 +16,22 @@ from appionlib.apImage import imagenorm
 from appionlib.apImage import imagefilter
 from optparse import OptionParser
 
+"""
+Usage:
+
+from appionlib import proc2dLib
+
+a = proc2dLib.RunProc2d()
+subpartlist = [0,3,6,7,9,11,14,16,18,19,20,24,]
+
+a.setValue('infile', 'in.mrc')
+a.setValue('outfile', 'out.mrc')
+a.setValue('apix', 1.31)
+a.setValue('list', subpartlist)
+
+a.run()
+"""
+
 #================================
 #================================
 class RunProc2d(object):
