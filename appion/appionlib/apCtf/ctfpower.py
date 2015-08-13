@@ -80,7 +80,7 @@ def power(image, pixelsize, fieldsize=None, mask_radius=0.5, msg=True):
 	xnumstep = int(math.floor(xsize/float(fieldsize)))*2-1
 	ynumstep = int(math.floor(ysize/float(fieldsize)))*2-1
 	f = fieldsize
-	powersum = numpy.zeros((fieldsize,fieldsize))
+	#powersum = numpy.zeros((fieldsize,fieldsize))
 	#envelop = numpy.ones((fieldsize,fieldsize)) 
 	envelop = twodHann(fieldsize)
 	count = 0
