@@ -16,6 +16,7 @@ import numpy as np
 import multiprocessing as mp
 from appionlib import basicScript
 from appionlib import apDisplay
+from appionlib import appiondata
 from appionlib import apProTomo2Aligner
 from appionlib import apProTomo2Prep
 
@@ -36,11 +37,15 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		self.parser.set_usage( "Usage: %prog --tiltseriesnumber=<#> --sessionname=<sessionname> [options]"
 			+"\nFor initial coarse alignment: %prog --tiltseriesnumber=<#> --sessionname=<sessionname> --coarse=True [options]")
 		
+		self.parser.add_option("--seriesname", dest="seriesname", help="Series name (for database)")
+		
 		self.parser.add_option("--sessionname", dest="sessionname", help="Session date, e.g. --sessionname=14aug02a")
 		
 		self.parser.add_option("--tiltseries", dest="tiltseries", help="Name of Protomo series, e.g. --tiltseries=31")
 		
-		self.parser.add_option("--runname", dest="runname", help="Name of protmorun directory as made by Appion")
+		self.parser.add_option("--runname", dest="runname", help="Name of protomorun directory as made by Appion")
+		
+		self.parser.add_option("--description", dest="description", default="", help="Run description")
 		
 		self.parser.add_option("--jobtype", dest="jobtype", help="Appion jobtype")
 		
@@ -390,16 +395,16 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		self.parser.add_option("--max_shift", dest="max_shift",  type="float",  default=999999,
 			help="Terminate alignment if translational shift exceeds specified value e.g. --max_shift=100", metavar="float")
 
-		self.parser.add_option("--image_apodization_x", dest="image_apodization_x",  type="float",
+		self.parser.add_option("--image_apodization_x", dest="image_apodization_x",  type="float",  default=None,
 			help="Protomo2 only: TODO, e.g. --image_apodization_x=10.0", metavar="float")
 
-		self.parser.add_option("--image_apodization_y", dest="image_apodization_y",  type="float",
+		self.parser.add_option("--image_apodization_y", dest="image_apodization_y",  type="float",  default=None,
 			help="Protomo2 only: TODO, e.g. --image_apodization_y=10.0", metavar="float")
 
-		self.parser.add_option("--reference_apodization_x", dest="reference_apodization_x",  type="float",
+		self.parser.add_option("--reference_apodization_x", dest="reference_apodization_x",  type="float",  default=None,
 			help="Protomo2 only: TODO, e.g. --reference_apodization_x=10.0", metavar="float")
 
-		self.parser.add_option("--reference_apodization_y", dest="reference_apodization_y",  type="float",
+		self.parser.add_option("--reference_apodization_y", dest="reference_apodization_y",  type="float",  default=None,
 			help="Protomo2 only: TODO, e.g. --reference_apodization_y=10.0", metavar="float")
 
 		self.correlation_modes = ( "xcf", "mcf", "pcf", "dbl" )
@@ -659,9 +664,36 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		self.parser.add_option("--link", dest="link",  default="False",
 			help="Link raw images if True, copy if False, e.g. --link=False")
 		
+		self.parser.add_option("--commit", dest="commit",  default="False",
+			help="Commit per-iteration information to database.")
+		
 		self.parser.add_option("--fix_images", dest="fix_images",  default="False",
 			help="Internal use only")
-	
+		
+		#File path returns and extra information for database
+		self.parser.add_option("--corr_peak_gif", dest="corr_peak_gif", default=None)
+		self.parser.add_option("--corr_peak_mp4", dest="corr_peak_mp4", default=None)
+		self.parser.add_option("--corr_peak_ogv", dest="corr_peak_ogv", default=None)
+		self.parser.add_option("--corr_peak_webm", dest="corr_peak_webm", default=None)
+		self.parser.add_option("--tiltseries_gif", dest="tiltseries_gif", default=None)
+		self.parser.add_option("--tiltseries_mp4", dest="tiltseries_mp4", default=None)
+		self.parser.add_option("--tiltseries_ogv", dest="tiltseries_ogv", default=None)
+		self.parser.add_option("--tiltseries_webm", dest="tiltseries_webm", default=None)
+		self.parser.add_option("--recon_gif", dest="recon_gif", default=None)
+		self.parser.add_option("--recon_mp4", dest="recon_mp4", default=None)
+		self.parser.add_option("--recon_ogv", dest="recon_ogv", default=None)
+		self.parser.add_option("--recon_webm", dest="recon_webm", default=None)
+		self.parser.add_option("--qa_gif", dest="qa_gif", default=None)
+		self.parser.add_option("--corr_plot_coa_gif", dest="corr_plot_coa_gif", default=None)
+		self.parser.add_option("--corr_plot_cofx_gif", dest="corr_plot_cofx_gif", default=None)
+		self.parser.add_option("--corr_plot_cofy_gif", dest="corr_plot_cofy_gif", default=None)
+		self.parser.add_option("--corr_plot_rot_gif", dest="corr_plot_rot_gif", default=None)
+		self.parser.add_option("--azimuth_gif", dest="azimuth_gif", default=None)
+		self.parser.add_option("--model_azimuth", dest="model_azimuth", default=None)
+		self.parser.add_option("--model_elevation", dest="model_elevation", default=None)
+		self.parser.add_option("--model_psi", dest="model_psi", default=None)
+		self.parser.add_option("--model_theta", dest="model_theta", default=None)
+		self.parser.add_option("--model_phi", dest="model_phi", default=None)
 	
 	#=====================
 	def checkConflicts(self):
@@ -682,6 +714,161 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		return
 
 	#=====================
+	def insertIterationIntoDatabase(self, r):
+		"""
+		All parameters, geometry model, and output file paths need to be
+		written to the database for each iteration.
+		"""
+		
+		#Set round parameters
+		if r != 0:
+			self.param['region_x'] = self.param['r%s_region_x' % r];self.param['region_y'] = self.param['r%s_region_y' % r];
+			self.param['lowpass_diameter_x'] = self.param['r%s_lowpass_diameter_x' % r];self.param['lowpass_diameter_y'] = self.param['r%s_lowpass_diameter_y' % r];
+			self.param['highpass_diameter_x'] = self.param['r%s_highpass_diameter_x' % r];self.param['highpass_diameter_y'] = self.param['r%s_highpass_diameter_y' % r];
+			self.param['lowpass_apod_x'] = self.param['r%s_lowpass_apod_x' % r];self.param['lowpass_apod_y'] = self.param['r%s_lowpass_apod_y' % r];
+			self.param['highpass_apod_x'] = self.param['r%s_highpass_apod_x' % r];self.param['highpass_apod_y'] = self.param['r%s_highpass_apod_y' % r];
+			self.param['sampling'] = self.param['r%s_sampling' % r];
+			self.param['kernel_x'] = self.param['r%s_kernel_x' % r];self.param['kernel_y'] = self.param['r%s_kernel_y' % r];
+			self.param['corr_mode'] = self.param['r%s_corr_mode' % r];
+			self.param['peak_search_radius_x'] = self.param['r%s_peak_search_radius_x' % r];self.param['peak_search_radius_y'] = self.param['r%s_peak_search_radius_y' % r];
+			self.param['mask_width_x'] = self.param['r%s_mask_width_x' % r];self.param['mask_width_y'] = self.param['r%s_mask_width_y' % r];
+			self.param['mask_apod_x'] = self.param['r%s_mask_apod_x' % r];self.param['mask_apod_y'] = self.param['r%s_mask_apod_y' % r];
+		
+		#Gather iteration parameters model, output files
+		protomodata = appiondata.ApProtomoParamsData()
+		protomodata['series_name'] = self.params['seriesname']
+		protomoparams = appiondata.ApProtomoAlignmentParamsData()
+		protomoparams['shift_limit'] = self.params['shift_limit']
+		protomoparams['angle_limit'] = self.params['angle_limit']
+		protomoparams['translimit'] = self.params['translimit']
+		protomoparams['region_x'] = self.params['region_x']
+		protomoparams['region_y'] = self.params['region_y']
+		protomoparams['lowpass_diameter_x'] = self.params['lowpass_diameter_x']
+		protomoparams['lowpass_diameter_y'] = self.params['lowpass_diameter_y']
+		protomoparams['lowpass_apod_x'] = self.params['lowpass_apod_x']
+		protomoparams['lowpass_apod_y'] = self.params['lowpass_apod_y']
+		protomoparams['highpass_diameter_x'] = self.params['highpass_diameter_x']
+		protomoparams['highpass_diameter_y'] = self.params['highpass_diameter_y']
+		protomoparams['highpass_apod_x'] = self.params['highpass_apod_x']
+		protomoparams['highpass_apod_y'] = self.params['highpass_apod_y']
+		protomoparams['thickness'] = self.params['thickness']
+		protomoparams['param'] = self.params['param']
+		protomoparams['sampling'] = self.params['sampling']
+		protomoparams['map_sampling'] = self.params['map_sampling']
+		protomoparams['border'] = self.params['border']
+		protomoparams['clip_low'] = self.params['clip_low']
+		protomoparams['clip_high'] = self.params['clip_high']
+		protomoparams['thr_low'] = self.params['thr_low']
+		protomoparams['thr_high'] = self.params['thr_high']
+		protomoparams['gradient'] = self.params['gradient']
+		protomoparams['gradient_switch'] = self.params['gradient_switch']
+		protomoparams['iter_gradient'] = self.params['iter_gradient']
+		protomoparams['iter_gradient_switch'] = self.params['iter_gradient_switch']
+		protomoparams['filter'] = self.params['filter']
+		protomoparams['kernel_x'] = self.params['kernel_x']
+		protomoparams['kernel_y'] = self.params['kernel_y']
+		protomoparams['radius_x'] = self.params['radius_x']
+		protomoparams['radius_y'] = self.params['radius_y']
+		protomoparams['grow'] = self.params['grow']
+		protomoparams['do_estimation'] = self.params['do_estimation']
+		protomoparams['max_correction'] = self.params['max_correction']
+		protomoparams['max_shift'] = self.params['max_shift']
+		protomoparams['image_apodization_x'] = self.params['image_apodization_x']
+		protomoparams['image_apodization_y'] = self.params['image_apodization_y']
+		protomoparams['reference_apodization_x'] = self.params['reference_apodization_x']
+		protomoparams['reference_apodization_y'] = self.params['reference_apodization_y']
+		protomoparams['corr_mode'] = self.params['corr_mode']
+		protomoparams['correlation_size_x'] = self.params['correlation_size_x']
+		protomoparams['correlation_size_y'] = self.params['correlation_size_y']
+		protomoparams['peak_search_radius_x'] = self.params['peak_search_radius_x']
+		protomoparams['peak_search_radius_y'] = self.params['peak_search_radius_y']
+		protomoparams['cmdiameter_x'] = self.params['cmdiameter_x']
+		protomoparams['cmdiameter_y'] = self.params['cmdiameter_y']
+		protomoparams['map_size_x'] = self.params['map_size_x']
+		protomoparams['map_size_y'] = self.params['map_size_y']
+		protomoparams['map_size_z'] = self.params['map_size_z']
+		protomoparams['map_lowpass_diameter_x'] = self.params['map_lowpass_diameter_x']
+		protomoparams['map_lowpass_diameter_y'] = self.params['map_lowpass_diameter_y']
+		protomoparams['image_file_type'] = self.params['image_file_type']
+		protomoparams['filename_prefix'] = self.params['filename_prefix']
+		protomoparams['cachedir'] = self.params['cachedir']
+		protomoparams['protomo_outdir'] = self.params['protomo_outdir']
+		protomoparams['preprocessing'] = self.params['preprocessing']
+		protomoparams['binning'] = self.params['binning']
+		protomoparams['select_images'] = self.params['select_images']
+		protomoparams['exclude_images'] = self.params['exclude_images']
+		protomoparams['logging'] = self.params['logging']
+		protomoparams['loglevel'] = self.params['loglevel']
+		protomoparams['window_area'] = self.params['window_area']
+		protomoparams['orientation'] = self.params['orientation']
+		protomoparams['orientation_switch'] = self.params['orientation_switch']
+		protomoparams['azimuth'] = self.params['azimuth']
+		protomoparams['azimuth_switch'] = self.params['azimuth_switch']
+		protomoparams['elevation'] = self.params['elevation']
+		protomoparams['elevation_switch'] = self.params['elevation_switch']
+		protomoparams['rotation'] = self.params['rotation']
+		protomoparams['rotation_switch'] = self.params['rotation_switch']
+		protomoparams['scale'] = self.params['scale']
+		protomoparams['scale_switch'] = self.params['scale_switch']
+		protomoparams['norotations'] = self.params['norotations']
+		protomoparams['mask_width_x'] = self.params['mask_width_x']
+		protomoparams['mask_width_y'] = self.params['mask_width_y']
+		protomoparams['mask_apod_x'] = self.params['mask_apod_x']
+		protomoparams['mask_apod_y'] = self.params['mask_apod_y']
+		protomoparams['coarse'] = self.params['coarse']
+		protomoparams['gridsearch_limit'] = self.params['gridsearch_limit']
+		protomoparams['gridsearch_step'] = self.params['gridsearch_step']
+		protomoparams['create_tilt_video'] = self.params['create_tilt_video']
+		protomoparams['create_reconstruction'] = self.params['create_reconstruction']
+		protomoparams['show_window_size'] = self.params['show_window_size']
+		protomoparams['keep_recons'] = self.params['keep_recons']
+		protomoparams['tilt_clip'] = self.params['tilt_clip']
+		protomoparams['video_type'] = self.params['video_type']
+		protomoparams['restart_cycle'] = self.params['restart_cycle']
+		protomoparams['corr_peak_gif'] = self.params['corr_peak_gif']
+		protomoparams['corr_peak_mp4'] = self.params['corr_peak_mp4']
+		protomoparams['corr_peak_ogv'] = self.params['corr_peak_ogv']
+		protomoparams['corr_peak_webm'] = self.params['corr_peak_webm']
+		protomoparams['tiltseries_gif'] = self.params['tiltseries_gif']
+		protomoparams['tiltseries_mp4'] = self.params['tiltseries_mp4']
+		protomoparams['tiltseries_ogv'] = self.params['tiltseries_ogv']
+		protomoparams['tiltseries_webm'] = self.params['tiltseries_webm']
+		protomoparams['recon_gif'] = self.params['recon_gif']
+		protomoparams['recon_mp4'] = self.params['recon_mp4']
+		protomoparams['recon_ogv'] = self.params['recon_ogv']
+		protomoparams['recon_webm'] = self.params['recon_webm']
+		protomoparams['qa_gif'] = self.params['qa_gif']
+		protomoparams['corr_plot_coa_gif'] = self.params['corr_plot_coa_gif']
+		protomoparams['corr_plot_cofx_gif'] = self.params['corr_plot_cofx_gif']
+		protomoparams['corr_plot_cofy_gif'] = self.params['corr_plot_cofy_gif']
+		protomoparams['corr_plot_rot_gif'] = self.params['corr_plot_rot_gif']
+		protomoparams['azimuth_gif'] = self.params['azimuth_gif']
+		protomoparams['theta_gif'] = self.params['theta_gif']
+		
+		#Get iteration model
+		protomomodel = appiondata.ApProtomoModelData()
+		protomomodel['model_azimuth'] = self.params['model_azimuth']
+		protomomodel['model_elevation'] = self.params['model_elevation']
+		protomomodel['model_psi'] = self.params['model_psi']
+		protomomodel['model_theta'] = self.params['model_theta']
+		protomomodel['model_phi'] = self.params['model_phi']
+		
+		#Insert run information
+		protomorun = appiondata.ApTomoAlignmentRunData()
+		protomorun['session'] = apDatabase.getSessionDataFromSessionName(self.params['sessionname'])
+		protomorun['tiltseries'] = apDatabase.getTiltSeriesDataFromTiltNumAndSessionId(int(self.params['tiltseries']), protomorun['session'])
+		protomorun['refineProtomoParams'] = protomoparams
+		protomorun['sessionname'] = self.params['sessionname']
+		protomorun['rundir'] = os.path.join(self.params['rundir'],self.params['runname'])
+		protomorun['runname'] = self.params['runname']
+		protomorun['description'] = self.params['description']
+		
+		#Insert
+		protomorun.insert()
+		
+		return
+		
+	#=====================
 	def onClose(self):
 		"""
 		Advanced function that runs things after all other things are finished.
@@ -689,6 +876,86 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		"""
 		return
 
+	#=====================
+	def getPerImageTransforms(self, tiltfile, dimx, dimy):
+		"""
+		Sets parameters for shifts, rotatons, and scale to be inserted into database.
+		"""
+		cmd1="awk '/IMAGE /{print $2}' %s | head -n +1" % tiltfile
+		proc=subprocess.Popen(cmd1, stdout=subprocess.PIPE, shell=True)
+		(start, err) = proc.communicate()
+		start=int(start)
+		
+		cmd2="awk '/FILE /{print}' %s | wc -l" % (tiltfilename_full)
+		proc=subprocess.Popen(cmd2, stdout=subprocess.PIPE, shell=True)
+		(rawimagecount, err) = proc.communicate()
+		rawimagecount=int(rawimagecount)
+		
+		for i in range(start, rawimagecount+1):
+			cmd3="awk '/IMAGE %s /{print}' %s | awk '{for (j=1;j<=NF;j++) if($j ~/ORIGIN/) print $(j+2)}'" % (i+1, tiltfile)
+			proc=subprocess.Popen(cmd3, stdout=subprocess.PIPE, shell=True)
+			(originx, err) = proc.communicate()
+			originx=float(originx)
+			cmd4="awk '/IMAGE %s /{print}' %s | awk '{for (j=1;j<=NF;j++) if($j ~/ORIGIN/) print $(j+3)}'" % (i+1, tiltfile)
+			proc=subprocess.Popen(cmd4, stdout=subprocess.PIPE, shell=True)
+			(originy, err) = proc.communicate()
+			originy=float(originy)
+			cmd5="awk '/IMAGE %s /{print}' %s | awk '{for (j=1;j<=NF;j++) if($j ~/ROTATION/) print $(j+1)}'" % (i+1, tiltfile)
+			proc=subprocess.Popen(cmd5, stdout=subprocess.PIPE, shell=True)
+			(rotation, err) = proc.communicate()
+			rotation=float(rotation)
+			cmd6="awk '/IMAGE %s /{print}' %s | awk '{for (j=1;j<=NF;j++) if($j ~/SCALE/) print $(j+1)}'" % (i+1, tiltfile)
+			proc=subprocess.Popen(cmd6, stdout=subprocess.PIPE, shell=True)
+			(scale, err) = proc.communicate()
+			scale=float(scale)
+			
+			transx=int((dimx/2) - originx)
+			transy=int((dimy/2) - originy)
+			
+		return
+		
+	#=====================
+	def getModelAngles(self, tiltfile):
+		"""
+		Sets parameters for model to be inserted into database.
+		"""
+		cmd1="awk '/AZIMUTH /{print $3}' %s" % tiltfile
+		proc=subprocess.Popen(cmd1, stdout=subprocess.PIPE, shell=True)
+		(azimuth, err) = proc.communicate()
+		self.params['model_azimuth']=float(azimuth)
+		try:
+			cmd2="awk '/ELEVATION /{print $3}' %s" % tiltfile
+			proc=subprocess.Popen(cmd2, stdout=subprocess.PIPE, shell=True)
+			(elevation, err) = proc.communicate()
+			self.params['model_elevation']=float(elevation)
+		except ImportError:
+			pass
+		
+		try:
+			cmd3="awk '/PSI /{print $2}' %s" % tiltfile
+			proc=subprocess.Popen(cmd3, stdout=subprocess.PIPE, shell=True)
+			(psi, err) = proc.communicate()
+			self.params['model_psi']=float(psi)
+		except ImportError:
+			pass
+		
+		try:
+			cmd4="awk '/THETA /{print $2}' %s" % tiltfile
+			proc=subprocess.Popen(cmd4, stdout=subprocess.PIPE, shell=True)
+			(theta, err) = proc.communicate()
+			self.params['model_theta']=float(theta)
+		except ImportError:
+			pass
+		
+		try:
+			cmd5="awk '/PHI /{print $2}' %s" % tiltfile
+			proc=subprocess.Popen(cmd5, stdout=subprocess.PIPE, shell=True)
+			(phi, err) = proc.communicate()
+			self.params['model_phi']=float(phi)
+		except ImportError:
+			pass
+		
+	
 	#=====================
 	def angstromsToProtomo(self, coarse=False):
 		self.params['thickness'] = self.params['thickness']/self.params['pixelsize']
@@ -1049,13 +1316,15 @@ class ProTomo2Aligner(basicScript.BasicScript):
 			# For multiprocessing
 			jobs2=[]
 			
-			# Make correlation peak videos for depiction			
+			# Make correlation peak videos for depiction
+			self.params['corr_peak_gif']='media/correlations/'+seriesname+'00_cor.gif';self.params['corr_peak_ogv']='media/correlations/'+seriesname+'00_cor.ogv';self.params['corr_peak_mp4']='media/correlations/'+seriesname+'00_cor.mp4';self.params['corr_peak_webm']='media/correlations/'+seriesname+'00_cor.webm'
 			jobs2.append(mp.Process(target=apProTomo2Aligner.makeCorrPeakVideos, args=(name, 0, rundir, self.params['protomo_outdir'], self.params['video_type'], "Coarse",)))
 			
 			# Make tiltseries video for depiction
 			if self.params['create_tilt_video'] == "true":
 				apDisplay.printMsg("Creating Coarse Alignment tilt-series video...")
 				f.write('Creating Coarse Alignment tilt-series video...\n')
+				self.params['tiltseries_gif']='media/tiltseries/'+'coarse_'+seriesname+'.gif';self.params['tiltseries_ogv']='media/tiltseries/'+'coarse_'+seriesname+'.gif';self.params['tiltseries_mp4']='media/tiltseries/'+'coarse_'+seriesname+'.mp4';self.params['tiltseries_webm']='media/tiltseries/'+'coarse_'+seriesname+'.webm';
 				jobs2.append(mp.Process(target=apProTomo2Aligner.makeTiltSeriesVideos, args=(seriesname, 0, tiltfile, rawimagecount, rundir, raw_path, self.params['pixelsize'], self.params['map_sampling'], self.params['image_file_type'], self.params['video_type'], self.params['tilt_clip'], "True", "Coarse",)))
 			else:
 				apDisplay.printMsg("Skipping tilt-series depiction\n")
@@ -1073,6 +1342,7 @@ class ProTomo2Aligner(basicScript.BasicScript):
 				series.mapfile()
 				rx='region_x'
 				ry='region_y'
+				self.params['recon_gif']='media/reconstructions/'+seriesname+'.gif';self.params['recon_ogv']='media/reconstructions/'+seriesname+'.ogv';self.params['recon_mp4']='media/reconstructions/'+seriesname+'.mp4';self.params['recon_webm']='media/reconstructions/'+seriesname+'.webm';
 				apProTomo2Aligner.makeReconstructionVideos(name, 0, rundir, self.params[rx], self.params[ry], self.params['show_window_size'], self.params['protomo_outdir'], self.params['pixelsize'], self.params['sampling'], self.params['map_sampling'], self.params['video_type'], self.params['keep_recons'], "True", align_step="Coarse")
 			else:
 				apDisplay.printMsg("Skipping reconstruction depiction\n")
@@ -1102,6 +1372,10 @@ class ProTomo2Aligner(basicScript.BasicScript):
 				f.write('Window Size (x) was windowed down to %s\n' % (new_region_x*self.params['sampling']))
 				f.write('Window Size (y) was windowed down to %s\n' % (new_region_y*self.params['sampling']))
 				f.write('Put these values into the corresponding parameter boxes on the Protomo Refinement Appion webpage.\n' % (final_retry))
+			
+			#Insert iteration information into the database
+			if self.params['commit'] == "True":
+				self.insertIterationIntoDatabase(r=0)
 			
 			apDisplay.printMsg("Coarse Alignment finished!\n")
 			f.write('Coarse Alignment finished!\n')
@@ -1141,6 +1415,7 @@ class ProTomo2Aligner(basicScript.BasicScript):
 			
 			for n in range(iters):
 				#change parameters depending on rounds
+				self.params['cycle'] = n+1  #Iterations in Protomo start at 0
 				if (n+1 == 1):
 					r=1  #Round number
 					apDisplay.printMsg("Beginning Refinement Iteration #%s, Round #%s\n" % (start+n+1,r))
@@ -1300,6 +1575,7 @@ class ProTomo2Aligner(basicScript.BasicScript):
 					corrfile=basename+'.corr'
 					metric=apProTomo2Aligner.makeQualityAssessment(name, i, rundir, corrfile)
 					if i == numcorrfiles-1:
+						self.params['qa_gif']='media/quality_assessment/'+seriesname+'_quality_assessment.gif'
 						apProTomo2Aligner.makeQualityAssessmentImage(self.params['tiltseries'], self.params['sessionname'], name, rundir, start+self.params['r1_iters'], self.params['r1_sampling'], r1_lp, start+self.params['r2_iters'], self.params['r2_sampling'], r2_lp, start+self.params['r3_iters'], self.params['r3_sampling'], r3_lp, start+self.params['r4_iters'], self.params['r4_sampling'], r4_lp, start+self.params['r5_iters'], self.params['r5_sampling'], r5_lp)
 				it="%03d" % ((n+start))
 				basename='%s%s' % (name,it)
@@ -1314,19 +1590,23 @@ class ProTomo2Aligner(basicScript.BasicScript):
 				# For multiprocessing
 				jobs=[]
 				
-				# Make correlation peak videos for depiction			
+				# Make correlation peak videos for depiction
+				self.params['corr_peak_gif']='media/correlations/'+seriesname+iteration+'_cor.gif';self.params['corr_peak_ogv']='media/correlations/'+seriesname+iteration+'_cor.ogv';self.params['corr_peak_mp4']='media/correlations/'+seriesname+iteration+'_cor.mp4';self.params['corr_peak_webm']='media/correlations/'+seriesname+iteration+'_cor.webm'
 				jobs.append(mp.Process(target=apProTomo2Aligner.makeCorrPeakVideos, args=(name, it, rundir, self.params['protomo_outdir'], self.params['video_type'], "Refinement")))
 				
 				# Make correlation plot pngs for depiction
+				self.params['corr_plot_coa_gif']='media/corrplots/'+seriesname+iteration+'_coa.gif';self.params['corr_plot_cofx_gif']='media/corrplots/'+seriesname+iteration+'_cofx.gif';self.params['corr_plot_cofy_gif']='media/corrplots/'+seriesname+iteration+'_cofy.gif';self.params['corr_plot_rot_gif']='media/corrplots/'+seriesname+iteration+'_rot.gif';
 				jobs.append(mp.Process(target=apProTomo2Aligner.makeCorrPlotImages, args=(name, it, rundir, corrfile)))
 				
 				# Make refinement plots of tilt azimuth and theta
+				self.params['azimuth_gif']='media/angle_refinement/'+seriesname+'_azimuth.gif';self.params['theta_gif']='media/angle_refinement/'+seriesname+'_theta.gif';
 				jobs.append(mp.Process(target=apProTomo2Aligner.makeAngleRefinementPlots, args=(rundir, name,)))
 				
 				# Make tiltseries video for depiction
 				if self.params['create_tilt_video'] == "true":
 					apDisplay.printMsg("Creating Refinement tilt-series video for iteration #%s..." % (start+n+1))
 					f.write('Creating Refinement tilt-series video for iteration #%s...\n' % (start+n+1))
+					self.params['tiltseries_gif']='media/tiltseries/'+seriesname+iteration+'.gif';self.params['tiltseries_ogv']='media/tiltseries/'+seriesname+iteration+'.gif';self.params['tiltseries_mp4']='media/tiltseries/'+seriesname+iteration+'.mp4';self.params['tiltseries_webm']='media/tiltseries/'+seriesname+iteration+'.webm';
 					jobs.append(mp.Process(target=apProTomo2Aligner.makeTiltSeriesVideos, args=(seriesname, it, tiltfile, rawimagecount, rundir, raw_path, self.params['pixelsize'], self.params['map_sampling'], self.params['image_file_type'], self.params['video_type'], self.params['tilt_clip'], "True", "Refinement",)))
 				else:
 					apDisplay.printMsg("Skipping tilt-series depiction\n")
@@ -1373,6 +1653,7 @@ class ProTomo2Aligner(basicScript.BasicScript):
 					
 					rx='r%s_region_x' % r
 					ry='r%s_region_y' % r
+					self.params['recon_gif']='media/reconstructions/'+seriesname+iteraion+'.gif';self.params['recon_ogv']='media/reconstructions/'+seriesname+iteraion+'.ogv';self.params['recon_mp4']='media/reconstructions/'+seriesname+iteraion+'.mp4';self.params['recon_webm']='media/reconstructions/'+seriesname+iteraion+'.webm';
 					apProTomo2Aligner.makeReconstructionVideos(name, itt, rundir, self.params[rx], self.params[ry], self.params['show_window_size'], self.params['protomo_outdir'], self.params['pixelsize'], sampling, self.params['map_sampling'], self.params['video_type'], self.params['keep_recons'], "True", align_step="Refinement")
 					
 				else:
@@ -1392,7 +1673,13 @@ class ProTomo2Aligner(basicScript.BasicScript):
 					f.write('Window Size (y) was windowed down to %s\n' % (new_region_y*sampling))
 					resized_x=new_region_x*sampling
 					resized_y=new_region_y*sampling
-				
+			
+			#Insert iteration information into the database
+			if self.params['commit']=="True":
+				self.getModelAngles(tiltfile)
+				self.param['seriesname'] = name
+				self.insertIterationIntoDatabase(r)
+		
 		time_end = time.strftime("%Yyr%mm%dd-%Hhr%Mm%Ss")
 		f.write("\nEnd time: %s" % time_end)
 		f.close()

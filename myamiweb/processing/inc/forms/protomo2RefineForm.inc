@@ -71,7 +71,7 @@ class Protomo2RefineForm extends BasicLayoutForm
 		if ($_POST['preset_size'] == 9) {$_POST['preset_size']=1;} //The dotted line divider
 		
 		//Preset pulldown menus
-		$size_presets=array("Generic", "10 nm objects(s) - Constant lowpass", "25 nm objects(s) - Constant lowpass", "50 nm objects(s) - Constant lowpass", "100 nm objects(s) - Constant lowpass", "250 nm objects(s) - Constant lowpass", "500 nm objects(s) - Constant lowpass", "1000 nm objects(s) - Constant lowpass", "------------------", "10 nm objects(s) - Decreasing lowpass", "25 nm objects(s) - Decreasing lowpass", "50 nm objects(s) - Decreasing lowpass", "100 nm objects(s) - Decreasing lowpass", "250 nm objects(s) - Decreasing lowpass", "500 nm objects(s) - Decreasing lowpass", "1000 nm objects(s) - Decreasing lowpass");
+		$size_presets=array("Generic", "10 nm objects(s) - Constant lowpass", "25 nm objects(s) - Constant lowpass", "50 nm objects(s) - Constant lowpass", "100 nm objects(s) - Constant lowpass", "250 nm objects(s) - Constant lowpass", "500 nm objects(s) - Constant lowpass", "1000 nm objects(s) - Constant lowpass", "------------------", "10 nm objects(s) - Decreasing lowpass", "25 nm objects(s) - Decreasing lowpass", "50 nm objects(s) - Decreasing lowpass", "100 nm objects(s) - Decreasing lowpass", "250 nm objects(s) - Decreasing lowpass", "500 nm objects(s) - Decreasing lowpass", "1000 nm objects(s) - Decreasing lowpass", "------------------", "10 nm objects(s) - Steep lowpass", "25 nm objects(s) - Steep lowpass", "50 nm objects(s) - Steep lowpass", "100 nm objects(s) - Steep lowpass", "250 nm objects(s) - Steep lowpass", "500 nm objects(s) - Steep lowpass", "1000 nm objects(s) - Steep lowpass");
 		$search_presets=array("Generic", "Tiny search (10%)", "Small search (25%)", "Medium search (50%)", "Large search (75%)", "Full search (90%)");
 		$type_presets=array("Generic", "Quick refinement", "Modest refinement", "Full refinement", "Exhaustive refinement");
 		$html.= '<select name="preset_size" onchange=submit() style="width:150px">';
@@ -512,6 +512,146 @@ class Protomo2RefineForm extends BasicLayoutForm
 				$_POST['thickness'] = $thickness = 50000;
 			}
 			
+			if ($_POST['preset_size'] == 17)  //Size 10 nm - Steep lowpass
+			{
+				$_POST['r1_lowpass_diameter_x'] = $_POST['r1_lowpass_diameter_y'] = $r1_lp_diam_x = $r1_lp_diam_y = min(50, round(0.75*$r1_hp_diam_x));
+				$_POST['r2_lowpass_diameter_x'] = $_POST['r2_lowpass_diameter_y'] = $r2_lp_diam_x = $r2_lp_diam_y = min(25, round(0.75*$r1_hp_diam_x));
+				$_POST['r3_lowpass_diameter_x'] = $_POST['r3_lowpass_diameter_y'] = $r3_lp_diam_x = $r3_lp_diam_y = min(12.5, round(0.75*$r1_hp_diam_x));
+				$_POST['r4_lowpass_diameter_x'] = $_POST['r4_lowpass_diameter_y'] = $r4_lp_diam_x = $r4_lp_diam_y = min(6.25, round(0.75*$r1_hp_diam_x));
+				$_POST['r5_lowpass_diameter_x'] = $_POST['r5_lowpass_diameter_y'] = $r5_lp_diam_x = $r5_lp_diam_y = min(3.125, round(0.75*$r1_hp_diam_x));
+				$_POST['r1_lowpass_apod_x'] = $r1_lp_apod_x = round(2.5*$r1_lp_diam_x);
+				$_POST['r2_lowpass_apod_x'] = $r2_lp_apod_x = round(2.5*$r2_lp_diam_x);
+				$_POST['r3_lowpass_apod_x'] = $r3_lp_apod_x = round(2.5*$r3_lp_diam_x);
+				$_POST['r4_lowpass_apod_x'] = $r4_lp_apod_x = round(2.5*$r4_lp_diam_x);
+				$_POST['r5_lowpass_apod_x'] = $r5_lp_apod_x = round(2.5*$r5_lp_diam_x);
+				$_POST['r1_lowpass_apod_y'] = $r1_lp_apod_y = round(2.5*$r1_lp_diam_y);
+				$_POST['r2_lowpass_apod_y'] = $r2_lp_apod_y = round(2.5*$r2_lp_diam_y);
+				$_POST['r3_lowpass_apod_y'] = $r3_lp_apod_y = round(2.5*$r3_lp_diam_y);
+				$_POST['r4_lowpass_apod_y'] = $r4_lp_apod_y = round(2.5*$r4_lp_diam_y);
+				$_POST['r5_lowpass_apod_y'] = $r5_lp_apod_y = round(2.5*$r5_lp_diam_y);
+				$_POST['thickness'] = $thickness = 500;
+			}
+			
+			if ($_POST['preset_size'] == 18)  //Size 25 nm - Steep lowpass
+			{
+				$_POST['r1_lowpass_diameter_x'] = $_POST['r1_lowpass_diameter_y'] = $r1_lp_diam_x = $r1_lp_diam_y = min(125, round(0.75*$r1_hp_diam_x));
+				$_POST['r2_lowpass_diameter_x'] = $_POST['r2_lowpass_diameter_y'] = $r2_lp_diam_x = $r2_lp_diam_y = min(62.5, round(0.75*$r1_hp_diam_x));
+				$_POST['r3_lowpass_diameter_x'] = $_POST['r3_lowpass_diameter_y'] = $r3_lp_diam_x = $r3_lp_diam_y = min(31.25, round(0.75*$r1_hp_diam_x));
+				$_POST['r4_lowpass_diameter_x'] = $_POST['r4_lowpass_diameter_y'] = $r4_lp_diam_x = $r4_lp_diam_y = min(15.625, round(0.75*$r1_hp_diam_x));
+				$_POST['r5_lowpass_diameter_x'] = $_POST['r5_lowpass_diameter_y'] = $r5_lp_diam_x = $r5_lp_diam_y = min(7.8125, round(0.75*$r1_hp_diam_x));
+				$_POST['r1_lowpass_apod_x'] = $r1_lp_apod_x = round(2.5*$r1_lp_diam_x);
+				$_POST['r2_lowpass_apod_x'] = $r2_lp_apod_x = round(2.5*$r2_lp_diam_x);
+				$_POST['r3_lowpass_apod_x'] = $r3_lp_apod_x = round(2.5*$r3_lp_diam_x);
+				$_POST['r4_lowpass_apod_x'] = $r4_lp_apod_x = round(2.5*$r4_lp_diam_x);
+				$_POST['r5_lowpass_apod_x'] = $r5_lp_apod_x = round(2.5*$r5_lp_diam_x);
+				$_POST['r1_lowpass_apod_y'] = $r1_lp_apod_y = round(2.5*$r1_lp_diam_y);
+				$_POST['r2_lowpass_apod_y'] = $r2_lp_apod_y = round(2.5*$r2_lp_diam_y);
+				$_POST['r3_lowpass_apod_y'] = $r3_lp_apod_y = round(2.5*$r3_lp_diam_y);
+				$_POST['r4_lowpass_apod_y'] = $r4_lp_apod_y = round(2.5*$r4_lp_diam_y);
+				$_POST['r5_lowpass_apod_y'] = $r5_lp_apod_y = round(2.5*$r5_lp_diam_y);
+				$_POST['thickness'] = $thickness = 1250;
+			}
+			
+			if ($_POST['preset_size'] == 19)  //Size 50 nm - Steep lowpass
+			{
+				$_POST['r1_lowpass_diameter_x'] = $_POST['r1_lowpass_diameter_y'] = $r1_lp_diam_x = $r1_lp_diam_y = min(250, round(0.75*$r1_hp_diam_x));
+				$_POST['r2_lowpass_diameter_x'] = $_POST['r2_lowpass_diameter_y'] = $r2_lp_diam_x = $r2_lp_diam_y = min(125, round(0.75*$r1_hp_diam_x));
+				$_POST['r3_lowpass_diameter_x'] = $_POST['r3_lowpass_diameter_y'] = $r3_lp_diam_x = $r3_lp_diam_y = min(62.5, round(0.75*$r1_hp_diam_x));
+				$_POST['r4_lowpass_diameter_x'] = $_POST['r4_lowpass_diameter_y'] = $r4_lp_diam_x = $r4_lp_diam_y = min(31.25, round(0.75*$r1_hp_diam_x));
+				$_POST['r5_lowpass_diameter_x'] = $_POST['r5_lowpass_diameter_y'] = $r5_lp_diam_x = $r5_lp_diam_y = min(15.625, round(0.75*$r1_hp_diam_x));
+				$_POST['r1_lowpass_apod_x'] = $r1_lp_apod_x = round(2.5*$r1_lp_diam_x);
+				$_POST['r2_lowpass_apod_x'] = $r2_lp_apod_x = round(2.5*$r2_lp_diam_x);
+				$_POST['r3_lowpass_apod_x'] = $r3_lp_apod_x = round(2.5*$r3_lp_diam_x);
+				$_POST['r4_lowpass_apod_x'] = $r4_lp_apod_x = round(2.5*$r4_lp_diam_x);
+				$_POST['r5_lowpass_apod_x'] = $r5_lp_apod_x = round(2.5*$r5_lp_diam_x);
+				$_POST['r1_lowpass_apod_y'] = $r1_lp_apod_y = round(2.5*$r1_lp_diam_y);
+				$_POST['r2_lowpass_apod_y'] = $r2_lp_apod_y = round(2.5*$r2_lp_diam_y);
+				$_POST['r3_lowpass_apod_y'] = $r3_lp_apod_y = round(2.5*$r3_lp_diam_y);
+				$_POST['r4_lowpass_apod_y'] = $r4_lp_apod_y = round(2.5*$r4_lp_diam_y);
+				$_POST['r5_lowpass_apod_y'] = $r5_lp_apod_y = round(2.5*$r5_lp_diam_y);
+				$_POST['thickness'] = $thickness = 2500;
+			}
+			
+			if ($_POST['preset_size'] == 20)  //Size 100 nm - Steep lowpass
+			{
+				$_POST['r1_lowpass_diameter_x'] = $_POST['r1_lowpass_diameter_y'] = $r1_lp_diam_x = $r1_lp_diam_y = min(500, round(0.75*$r1_hp_diam_x));
+				$_POST['r2_lowpass_diameter_x'] = $_POST['r2_lowpass_diameter_y'] = $r2_lp_diam_x = $r2_lp_diam_y = min(250, round(0.75*$r1_hp_diam_x));
+				$_POST['r3_lowpass_diameter_x'] = $_POST['r3_lowpass_diameter_y'] = $r3_lp_diam_x = $r3_lp_diam_y = min(125, round(0.75*$r1_hp_diam_x));
+				$_POST['r4_lowpass_diameter_x'] = $_POST['r4_lowpass_diameter_y'] = $r4_lp_diam_x = $r4_lp_diam_y = min(62.5, round(0.75*$r1_hp_diam_x));
+				$_POST['r5_lowpass_diameter_x'] = $_POST['r5_lowpass_diameter_y'] = $r5_lp_diam_x = $r5_lp_diam_y = min(31.25, round(0.75*$r1_hp_diam_x));
+				$_POST['r1_lowpass_apod_x'] = $r1_lp_apod_x = round(2.5*$r1_lp_diam_x);
+				$_POST['r2_lowpass_apod_x'] = $r2_lp_apod_x = round(2.5*$r2_lp_diam_x);
+				$_POST['r3_lowpass_apod_x'] = $r3_lp_apod_x = round(2.5*$r3_lp_diam_x);
+				$_POST['r4_lowpass_apod_x'] = $r4_lp_apod_x = round(2.5*$r4_lp_diam_x);
+				$_POST['r5_lowpass_apod_x'] = $r5_lp_apod_x = round(2.5*$r5_lp_diam_x);
+				$_POST['r1_lowpass_apod_y'] = $r1_lp_apod_y = round(2.5*$r1_lp_diam_y);
+				$_POST['r2_lowpass_apod_y'] = $r2_lp_apod_y = round(2.5*$r2_lp_diam_y);
+				$_POST['r3_lowpass_apod_y'] = $r3_lp_apod_y = round(2.5*$r3_lp_diam_y);
+				$_POST['r4_lowpass_apod_y'] = $r4_lp_apod_y = round(2.5*$r4_lp_diam_y);
+				$_POST['r5_lowpass_apod_y'] = $r5_lp_apod_y = round(2.5*$r5_lp_diam_y);
+				$_POST['thickness'] = $thickness = 5000;
+			}
+			
+			if ($_POST['preset_size'] == 21)  //Size 250 nm - Steep lowpass
+			{
+				$_POST['r1_lowpass_diameter_x'] = $_POST['r1_lowpass_diameter_y'] = $r1_lp_diam_x = $r1_lp_diam_y = min(1250, round(0.75*$r1_hp_diam_x));
+				$_POST['r2_lowpass_diameter_x'] = $_POST['r2_lowpass_diameter_y'] = $r2_lp_diam_x = $r2_lp_diam_y = min(625, round(0.75*$r1_hp_diam_x));
+				$_POST['r3_lowpass_diameter_x'] = $_POST['r3_lowpass_diameter_y'] = $r3_lp_diam_x = $r3_lp_diam_y = min(312.5, round(0.75*$r1_hp_diam_x));
+				$_POST['r4_lowpass_diameter_x'] = $_POST['r4_lowpass_diameter_y'] = $r4_lp_diam_x = $r4_lp_diam_y = min(156.25, round(0.75*$r1_hp_diam_x));
+				$_POST['r5_lowpass_diameter_x'] = $_POST['r5_lowpass_diameter_y'] = $r5_lp_diam_x = $r5_lp_diam_y = min(78.125, round(0.75*$r1_hp_diam_x));
+				$_POST['r1_lowpass_apod_x'] = $r1_lp_apod_x = round(2.5*$r1_lp_diam_x);
+				$_POST['r2_lowpass_apod_x'] = $r2_lp_apod_x = round(2.5*$r2_lp_diam_x);
+				$_POST['r3_lowpass_apod_x'] = $r3_lp_apod_x = round(2.5*$r3_lp_diam_x);
+				$_POST['r4_lowpass_apod_x'] = $r4_lp_apod_x = round(2.5*$r4_lp_diam_x);
+				$_POST['r5_lowpass_apod_x'] = $r5_lp_apod_x = round(2.5*$r5_lp_diam_x);
+				$_POST['r1_lowpass_apod_y'] = $r1_lp_apod_y = round(2.5*$r1_lp_diam_y);
+				$_POST['r2_lowpass_apod_y'] = $r2_lp_apod_y = round(2.5*$r2_lp_diam_y);
+				$_POST['r3_lowpass_apod_y'] = $r3_lp_apod_y = round(2.5*$r3_lp_diam_y);
+				$_POST['r4_lowpass_apod_y'] = $r4_lp_apod_y = round(2.5*$r4_lp_diam_y);
+				$_POST['r5_lowpass_apod_y'] = $r5_lp_apod_y = round(2.5*$r5_lp_diam_y);
+				$_POST['thickness'] = $thickness = 12500;
+			}
+			
+			if ($_POST['preset_size'] == 22)  //Size 500 nm - Steep lowpass
+			{
+				$_POST['r1_lowpass_diameter_x'] = $_POST['r1_lowpass_diameter_y'] = $r1_lp_diam_x = $r1_lp_diam_y = min(2500, round(0.75*$r1_hp_diam_x));
+				$_POST['r2_lowpass_diameter_x'] = $_POST['r2_lowpass_diameter_y'] = $r2_lp_diam_x = $r2_lp_diam_y = min(1250, round(0.75*$r1_hp_diam_x));
+				$_POST['r3_lowpass_diameter_x'] = $_POST['r3_lowpass_diameter_y'] = $r3_lp_diam_x = $r3_lp_diam_y = min(625, round(0.75*$r1_hp_diam_x));
+				$_POST['r4_lowpass_diameter_x'] = $_POST['r4_lowpass_diameter_y'] = $r4_lp_diam_x = $r4_lp_diam_y = min(312.5, round(0.75*$r1_hp_diam_x));
+				$_POST['r5_lowpass_diameter_x'] = $_POST['r5_lowpass_diameter_y'] = $r5_lp_diam_x = $r5_lp_diam_y = min(156.25, round(0.75*$r1_hp_diam_x));
+				$_POST['r1_lowpass_apod_x'] = $r1_lp_apod_x = round(2.5*$r1_lp_diam_x);
+				$_POST['r2_lowpass_apod_x'] = $r2_lp_apod_x = round(2.5*$r2_lp_diam_x);
+				$_POST['r3_lowpass_apod_x'] = $r3_lp_apod_x = round(2.5*$r3_lp_diam_x);
+				$_POST['r4_lowpass_apod_x'] = $r4_lp_apod_x = round(2.5*$r4_lp_diam_x);
+				$_POST['r5_lowpass_apod_x'] = $r5_lp_apod_x = round(2.5*$r5_lp_diam_x);
+				$_POST['r1_lowpass_apod_y'] = $r1_lp_apod_y = round(2.5*$r1_lp_diam_y);
+				$_POST['r2_lowpass_apod_y'] = $r2_lp_apod_y = round(2.5*$r2_lp_diam_y);
+				$_POST['r3_lowpass_apod_y'] = $r3_lp_apod_y = round(2.5*$r3_lp_diam_y);
+				$_POST['r4_lowpass_apod_y'] = $r4_lp_apod_y = round(2.5*$r4_lp_diam_y);
+				$_POST['r5_lowpass_apod_y'] = $r5_lp_apod_y = round(2.5*$r5_lp_diam_y);
+				$_POST['thickness'] = $thickness = 25000;
+			}
+			
+			if ($_POST['preset_size'] == 23)  //Size 1000 nm - Steep lowpass
+			{
+				$_POST['r1_lowpass_diameter_x'] = $_POST['r1_lowpass_diameter_y'] = $r1_lp_diam_x = $r1_lp_diam_y = min(5000, round(0.75*$r1_hp_diam_x));
+				$_POST['r2_lowpass_diameter_x'] = $_POST['r2_lowpass_diameter_y'] = $r2_lp_diam_x = $r2_lp_diam_y = min(2500, round(0.75*$r1_hp_diam_x));
+				$_POST['r3_lowpass_diameter_x'] = $_POST['r3_lowpass_diameter_y'] = $r3_lp_diam_x = $r3_lp_diam_y = min(1250, round(0.75*$r1_hp_diam_x));
+				$_POST['r4_lowpass_diameter_x'] = $_POST['r4_lowpass_diameter_y'] = $r4_lp_diam_x = $r4_lp_diam_y = min(625, round(0.75*$r1_hp_diam_x));
+				$_POST['r5_lowpass_diameter_x'] = $_POST['r5_lowpass_diameter_y'] = $r5_lp_diam_x = $r5_lp_diam_y = min(310, round(0.75*$r1_hp_diam_x));
+				$_POST['r1_lowpass_apod_x'] = $r1_lp_apod_x = round(2.5*$r1_lp_diam_x);
+				$_POST['r2_lowpass_apod_x'] = $r2_lp_apod_x = round(2.5*$r2_lp_diam_x);
+				$_POST['r3_lowpass_apod_x'] = $r3_lp_apod_x = round(2.5*$r3_lp_diam_x);
+				$_POST['r4_lowpass_apod_x'] = $r4_lp_apod_x = round(2.5*$r4_lp_diam_x);
+				$_POST['r5_lowpass_apod_x'] = $r5_lp_apod_x = round(2.5*$r5_lp_diam_x);
+				$_POST['r1_lowpass_apod_y'] = $r1_lp_apod_y = round(2.5*$r1_lp_diam_y);
+				$_POST['r2_lowpass_apod_y'] = $r2_lp_apod_y = round(2.5*$r2_lp_diam_y);
+				$_POST['r3_lowpass_apod_y'] = $r3_lp_apod_y = round(2.5*$r3_lp_diam_y);
+				$_POST['r4_lowpass_apod_y'] = $r4_lp_apod_y = round(2.5*$r4_lp_diam_y);
+				$_POST['r5_lowpass_apod_y'] = $r5_lp_apod_y = round(2.5*$r5_lp_diam_y);
+				$_POST['thickness'] = $thickness = 50000;
+			}
+			
 			
 			//Refinement Type Presets
 			if ($_POST['preset_type'] == 1)  //Generic refinement
@@ -567,6 +707,7 @@ class Protomo2RefineForm extends BasicLayoutForm
 				$_POST['r5_iters'] = $r5_iters = '20';
 				$_POST['elevation_switch'] = $elevation_switch='81';
 				$_POST['scale_switch'] = $scale_switch='81';
+				$_POST['rotation_switch'] = $rotation_switch='101';
 			}
 			
 		}
@@ -599,7 +740,7 @@ class Protomo2RefineForm extends BasicLayoutForm
 		$this->setGuideURL( "http://www.electrontomography.org/?page_id=317" );
 		$this->setTestable( False ); // True to activate "test single image".
 		$this->setUseLegOutDir( False ); // The output directory will be created in the Appion run directory rather than Leginon.
-		$this->setShowDesc( False ); // Flag to hide the description field of the run parameters.
+		$this->setShowDesc( True ); // Flag to hide the description field of the run parameters.
 		
 		//------ Set Parameters specific to the program that requires this new form -----//
 		$params = $this->getFormParams();

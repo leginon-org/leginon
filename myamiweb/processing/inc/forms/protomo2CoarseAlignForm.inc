@@ -142,7 +142,7 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 		$this->setGuideURL( "http://www.electrontomography.org/?page_id=317" );
 		$this->setTestable( False ); // True to activate "test single image".
 		$this->setUseLegOutDir( False ); // The output directory will be created in the Appion run directory rather than Leginon.
-		$this->setShowDesc( False ); // Flag to hide the description field of the run parameters.
+		$this->setShowDesc( True ); // Flag to hide the description field of the run parameters.
 		
 		//------ Set Parameters specific to the program that requires this new form -----//
 		$params = $this->getFormParams();
@@ -440,7 +440,7 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 		$dimx=$_SESSION['dimx'];
 		$dimy=$_SESSION['dimy'];
 		$image_file_type=$_SESSION['image_file_type'];
-		$command.="--session=$sessionname ";
+		$command.="--sessionname=$sessionname ";
 		$command.="--tiltseries=$tiltseries ";
 		$command.="--pixelsize=$pixelsize ";
 		$command.="--dimx=$dimx ";

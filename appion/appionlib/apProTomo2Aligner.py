@@ -568,7 +568,7 @@ def makeCorrPeakVideos(seriesname, iteration, rundir, outdir, video_type, align_
 			mp4=seriesname+'00_cor.mp4'
 			webm=seriesname+'00_cor.webm'
 		else: #align_step == "Refinement"
-			iteration=format(iteration[1:] if iteration.startswith('0') else iteration) #Protomo filenaming conventions are %2 unless iteration number is more than 2 digits.
+			iteration=format(iteration[1:] if iteration.startswith('0') else iteration) #Protomo filenaming conventions are %2d unless iteration number is more than 2 digits.
 			img=seriesname+iteration+'_cor.img'
 			mrcf=seriesname+iteration+'_cor.mrc'
 			gif=seriesname+iteration+'_cor.gif'
@@ -622,6 +622,10 @@ def makeCorrPeakVideos(seriesname, iteration, rundir, outdir, video_type, align_
 		command3 = "rm %s; rm %s" % (png_full, img_full)
 		os.system(command3)
 		apDisplay.printMsg("Done creating correlation peak video!")
+		if video_type == "gif":
+			return gif_full, None, None
+		else: #video_type == "html5vid"
+			return ogv_full, mp4_full, webm_full
 	except:
 		apDisplay.printMsg("Alignment Correlation Peak Images and/or Videos could not be generated. Make sure i3, ffmpeg, and imagemagick are in your $PATH. Make sure that pyami and scipy are in your $PYTHONPATH.\n")
 
@@ -761,7 +765,7 @@ def makeQualityAssessmentImage(tiltseriesnumber, sessionname, seriesname, rundir
 		open("best.%s" % best,"a").close()
 		open("worst.%s" % worst,"a").close()
 		apDisplay.printMsg("Done creating quality assessment statistics and plot!")
-		return best, min(metric)
+		return best, min(metric), figqa_full
 	except:
 		apDisplay.printMsg("Quality assessment plot image could not be generated. Make sure pylab and numpy are in your $PYTHONPATH.\n")
 
@@ -868,6 +872,8 @@ def makeCorrPlotImages(seriesname, iteration, rundir, corrfile):
 		os.system('mv %s %s;mv %s %s;mv %s %s;mv %s %s' % (figcoa_full,figcoa_full[:-3]+"gif",figcofx_full,figcofx_full[:-3]+"gif",figcofy_full,figcofy_full[:-3]+"gif",figrot_full,figrot_full[:-3]+"gif"))
 		
 		apDisplay.printMsg("Done creating correlation plots!")
+		
+		return figcoa_full[:-3]+"gif", figcofx_full[:-3]+"gif", figcofy_full[:-3]+"gif", figrot_full[:-3]+"gif"
 	except:
 		apDisplay.printMsg("Correlation Plots could not be generated. Make sure pylab and numpy are in your $PYTHONPATH.\n")
 	
@@ -990,7 +996,15 @@ def makeTiltSeriesVideos(seriesname, iteration, tiltfilename, rawimagecount, run
 			procs=2
 		else:
 			procs=1
-		for i in range(rawimagecount):
+		
+		#Get the starting number b/c Protomo tlt files don't require that you start from 1. Lame.
+		cmd="awk '/IMAGE /{print $2}' %s | head -n +1" % tiltfilename
+		proc=subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
+		(start, err) = proc.communicate()
+		start=int(start)
+		
+		#Parallel process the images
+		for i in range(start, rawimagecount+1):
 			p2 = mp.Process(target=processTiltImages, args=(i,tiltfilename,raw_path,image_file_type,map_sampling,rundir,pixelsize,rawimagecount,tilt_clip,))
 			p2.start()
 			
@@ -1048,6 +1062,10 @@ def makeTiltSeriesVideos(seriesname, iteration, tiltfilename, rawimagecount, run
 		else: #align_step == "Refinement"
 			apDisplay.printMsg("Done creating tilt-series video!")
 		
+		if video_type == "gif":
+			return gif_full, None, None
+		else: #video_type == "html5vid"
+			return ogv_full, mp4_full, webm_full
 	except:
 		apDisplay.printMsg("Tilt-Series Images and/or Videos could not be generated. Make sure ffmpeg and imagemagick is in your $PATH. Make sure that pyami, scipy, numpy, and PIL are in your $PYTHONPATH.\n")
 		
@@ -1096,7 +1114,7 @@ def makeReconstructionVideos(seriesname, iteraion, rundir, rx, ry, show_window_s
 			webm=seriesname+'.webm'
 		else: #align_step == "Refinement"
 			img=seriesname+iteraion+'_bck.img'
-		        mrcf=seriesname+iteraion+'_bck.mrc'
+			mrcf=seriesname+iteraion+'_bck.mrc'
 			gif=seriesname+iteraion+'_bck.gif'
 			ogv=seriesname+iteraion+'_bck.ogv'
 			mp4=seriesname+iteraion+'_bck.mp4'
@@ -1156,6 +1174,11 @@ def makeReconstructionVideos(seriesname, iteraion, rundir, rx, ry, show_window_s
 			command3 = "rm %s %s" % (img_full, mrc_full)
 			os.system(command3)
 		apDisplay.printMsg("Done creating reconstruction video!")
+		
+		if video_type == "gif":
+			return gif_full, None, None
+		else: #video_type == "html5vid"
+			return ogv_full, mp4_full, webm_full
 	except:
 		apDisplay.printMsg("Alignment Images and/or Videos could not be generated. Make sure i3, ffmpeg, and imagemagick are in your $PATH. Make sure that pyami and scipy are in your $PYTHONPATH.\n")
 		
