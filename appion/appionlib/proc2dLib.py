@@ -20,15 +20,16 @@ from appionlib.apImage import imagefilter
 
 class RunProc2d(object):
 	def __init__(self):
-		approc2d = ApProc2d(quiet=True)
+		self.approc2d = ApProc2dOverride(quiet=True)
 	
-	def setValue(name, value):
-		approc2d.params[name] = value
-	
-	def run(self):
-		approc2d.start()
-		approc2d.close()
+	def setValue(self, name, value):
+		self.approc2d.params[name] = value
 
+	def run(self):
+		print "help"
+		self.approc2d.checkConflicts()
+		self.approc2d.start()
+		self.approc2d.close()
 
 
 class ApProc2d(basicScript.BasicScript):
@@ -312,6 +313,12 @@ class ApProc2d(basicScript.BasicScript):
 	#=====================
 	#=====================
 	def readKeepList(self):
+		try:
+			partlist = self.params['list']	
+			if isinstance(partlist, list):
+				return partlist
+		except KeyError:
+			pass
 		if not os.path.exists(self.params['listfile']):
 			apDisplay.printError("list file not found")
 		f = open(self.params['listfile'], 'r')
@@ -452,3 +459,10 @@ class ApProc2d(basicScript.BasicScript):
 			avgParticle = summedPartice/count
 			self.appendParticleListToStackFile([avgParticle,], self.params['outfile'])
 		print "Wrote %d particles to file "%(self.particlesWritten)
+
+#=====================
+class ApProc2dOverride(ApProc2d):
+	def __init__(self, quiet=True):
+		self.params = {}
+		pass
+
