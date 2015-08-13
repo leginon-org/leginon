@@ -40,6 +40,8 @@ class MakeFrameStackLoop(apDDLoop.DDStackLoop):
 		# Integer
 		self.parser.add_option("--refimgid", dest="refimgid", type="int",
 			help="Specify a corrected image to do gain/dark correction with", metavar="INT")
+		self.parser.add_option("--trim", dest="trim", type="int", default=0,
+			help="Trim edge off after frame stack gain/dark correction", metavar="INT")
 
 	#=======================
 	def checkConflicts(self):
@@ -92,6 +94,7 @@ class MakeFrameStackLoop(apDDLoop.DDStackLoop):
 		self.dd.setRawFrameType(self.getFrameType())
 		self.dd.setUseGPUFlat(True)
 		self.dd.setSquareOutputShape(self.params['square'])
+		self.dd.setTrimingEdge(self.params['trim'])
 		self.dd.setDoseFDriftCorrOptions(self.params)
 		self.dd.setGPUid(self.params['gpuid'])
 		# keepstack is resolved for various cases in conflict check.  There should be no ambiguity by now

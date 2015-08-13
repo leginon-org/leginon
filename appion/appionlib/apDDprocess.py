@@ -482,6 +482,16 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		apDisplay.printMsg('Setting new camera info....')
 		self.camerainfo = self.__getCameraInfoFromImage(nframe,use_full_raw_area)
 
+	def getTrimingEdge(self):
+		return self.trim
+
+	def setTrimingEdge(self,value):
+		self.trim = int(value)
+
+	def trimArray(self,array):
+		t = self.getTrimingEdge()
+		return array[t:array.shape[0]-t,t:array.shape[1]-t]
+
 	def __getCameraInfoFromImage(self,nframe,use_full_raw_area):
 		'''
 		returns dictionary of camerainfo obtained from the current image
@@ -953,6 +963,8 @@ class DDFrameProcessing(DirectDetectorProcessing):
 					a = mrc.read(rawframestack_path)
 					# 3D array left-right flip creates the effect of up-down flip on axis 1 and 2
 					a = numpy.fliplr(a)
+					if self.getTrimingEdge() > 0:
+						a = self.trimArray(a)
 					mrc.write(a,self.tempframestackpath)
 			else:
 				os.symlink(rawframestack_path,self.tempframestackpath)
@@ -1024,6 +1036,8 @@ class DDFrameProcessing(DirectDetectorProcessing):
 			if array is False:
 				break
 			array = self.modifyImageArray(array)
+			if self.getTrimingEdge() > 0:
+				array = self.trimArray(array)
 			apDisplay.printMsg('final frame shape to put in stack x=%d,y=%d' % (array.shape[1],array.shape[0]))
 			if start_frame == first:
 				# overwrite old stack mrc file
@@ -1066,13 +1080,14 @@ class DDFrameProcessing(DirectDetectorProcessing):
 			dims = camdata['dimension']
 		camerasize = {}
 		newbin = self.getNewBinning()
+		t = self.getTrimingEdge()
 		for axis in ('x','y'):
 			if camdata['binning'][axis] != 1 or camdata['offset'][axis] != 0:
 				apDisplay.printError('Starting image must be unbinned and at full dimension for now')
 			if newbin < camdata['binning'][axis]:
 				apDisplay.displayError('can not change to smaller binning')
 			camerasize[axis] = (camdata['offset'][axis]*2+camdata['dimension'][axis])*camdata['binning'][axis]
-			camdata['dimension'][axis] = dims[axis] * camdata['binning'][axis] / newbin
+			camdata['dimension'][axis] = dims[axis] * camdata['binning'][axis] / newbin - 2*t / newbin
 			camdata['binning'][axis] = newbin
 			camdata['offset'][axis] = (camerasize[axis]/newbin -camdata['dimension'][axis])/2
 		framelist = self.getAlignedSumFrameList()
