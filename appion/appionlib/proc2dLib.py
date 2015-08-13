@@ -9,7 +9,6 @@ from pyami import mem
 from pyami import imagic
 from pyami import imagefun
 from appionlib import apFile
-from appionlib import apParam
 from appionlib import apDisplay
 from appionlib import basicScript
 from appionlib import apImagicFile
@@ -288,10 +287,10 @@ class ApProc2d(basicScript.BasicScript):
 		freememory = mem.free()*1024
 		self.message("Free memory: %s"%(apDisplay.bytes(freememory)))
 		### box size of particle
-		boxsize = apFile.getBoxSize(stackfile)[0]
-		self.message("Box size: %d"%(boxsize))
+		self.boxsize = apFile.getBoxSize(stackfile)[0]
+		self.message("Box size: %d"%(self.boxsize))
 		### amount of memory used per particles (4 bytes per pixel)
-		memperpart = boxsize**2 * 4.0
+		memperpart = self.boxsize**2 * 4.0
 		self.message("Memory used per part: %s"%(apDisplay.bytes(memperpart)))
 		### maximum number particles that fit into memory
 		maxpartinmem = freememory/memperpart
@@ -387,6 +386,9 @@ class ApProc2d(basicScript.BasicScript):
 		# continuously read all into memory
 		particlesPerCycle = self.getParticlesPerCycle(self.params['infile'])
 
+		if self.params['average'] is True:
+			summedPartice = numpy.zeros((self.boxsize,self.boxsize))
+
 		processedParticles = []
 		if self.params['list']:
 			partlist = self.readKeepList()
@@ -467,15 +469,6 @@ class ApProc2dOverride(ApProc2d):
 		for i in self.parser.option_list:
 			if isinstance(i.dest, str):
 				self.params[i.dest] = getattr(options, i.dest)
-		"""
-		self.params = {}
-		self.params['first'] = 0
-		self.params['append'] = None
-		self.params['normalizemethod'] = 'none'
-		self.params['invert'] = False
-		self.params['debug'] = False
-		self.params['average'] = False
-		"""
 		pass
 	
 
