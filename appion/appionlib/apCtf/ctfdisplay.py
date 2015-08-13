@@ -33,10 +33,10 @@ class CtfDisplay(object):
 		### global params that do NOT change with image
 		self.ringwidth = 1.0
 		self.debug = True
-		self.outerAngstrom1D = 5.0
+		self.outerAngstrom1D = 3.0
 		# plotlimit2DAngstrom trims the power spectrum generated
 		#from self.outerAngstrom1D limit for the 2D plot
-		self.plotlimit2DAngstrom = 7.0
+		self.plotlimit2DAngstrom = 5.0
 		## num of sections to divide the 1D spectrum into
 		## initially it was 3 sections to 5 A (or 0.2 A-1)
 		## for going to 3 A (0.33 A-1) should be 5 sections
