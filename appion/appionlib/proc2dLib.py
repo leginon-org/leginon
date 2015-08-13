@@ -39,7 +39,7 @@ class ApProc2d(basicScript.BasicScript):
 
 		self.parser.add_option('--in', dest='infile', metavar='FILE', help='Input image/stack')
 		self.parser.add_option('--out', dest='outfile', metavar='FILE', help='Output image/stack')
-		self.parser.add_option('--list', dest='listfile', metavar='FILE', help='List of particles to keep')
+		self.parser.add_option('--list', dest='list', metavar='FILE', help='List of particles to keep')
 		self.parser.add_option('--lp', '--lowpass', dest='lowpass', type=float,
 			metavar='FLOAT', help='Low pass filter to provided resolution. In Angstroms. ')
 		self.parser.add_option('--hp', '--highpass', dest='highpass', type=float,
@@ -312,15 +312,11 @@ class ApProc2d(basicScript.BasicScript):
 	#=====================
 	#=====================
 	def readKeepList(self):
-		try:
-			partlist = self.params['list']	
-			if isinstance(partlist, list):
-				return partlist
-		except KeyError:
-			pass
-		if not os.path.exists(self.params['listfile']):
+		if isinstance(self.params['list'], list):
+			return self.params['list']
+		if not os.path.exists(self.params['list']):
 			apDisplay.printError("list file not found")
-		f = open(self.params['listfile'], 'r')
+		f = open(self.params['list'], 'r')
 		partlist = []
 		for line in f:
 			sline = line.strip()
@@ -390,7 +386,7 @@ class ApProc2d(basicScript.BasicScript):
 		particlesPerCycle = self.getParticlesPerCycle(self.params['infile'])
 
 		processedParticles = []
-		if self.params['listfile']:
+		if self.params['list']:
 			partlist = self.readKeepList()
 		else:
 			partlist = range(self.params['first'], self.params['first']+addNumParticles)
