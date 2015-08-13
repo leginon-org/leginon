@@ -3,6 +3,7 @@
 import os
 import sys
 import math
+import copy
 import numpy
 import time
 import random
@@ -32,7 +33,7 @@ class CtfDisplay(object):
 	def __init__(self):
 		### global params that do NOT change with image
 		self.ringwidth = 1.0
-		self.debug = False
+		self.debug = True
 		self.outerAngstrom1D = 3.0
 		# plotlimit2DAngstrom trims the power spectrum generated
 		#from self.outerAngstrom1D limit for the 2D plot
@@ -40,7 +41,7 @@ class CtfDisplay(object):
 		## num of sections to divide the 1D spectrum into
 		## initially it was 3 sections to 5 A (or 0.2 A-1)
 		## for going to 3 A (0.33 A-1) should be 5 sections
-		self.numSections = int(math.ceil(20.0/self.outerAngstrom1D))
+		self.numSections = int(math.ceil(15.0/self.outerAngstrom1D))
 		### the following variables control how the section are divided up
 		self.sectionFactor = 3
 		self.overlapFactor = 2
@@ -83,7 +84,6 @@ class CtfDisplay(object):
 		### get all valley (not peak)
 		valley = ctftools.getCtfExtrema(meandefocus, self.trimfreq*1e10, self.cs, self.volts, 
 			self.ampcontrast, numzeros=250, zerotype="valley")
-		firstvalley = valley[0]
 		valleyradii = numpy.array(valley, dtype=numpy.float64)*self.trimfreq
 
 		### do the elliptical average
@@ -105,8 +105,11 @@ class CtfDisplay(object):
 		apDisplay.printColor("PART 2: BACKGROUND NOISE SUBTRACTION", "magenta")
 
 		### split the function up into sections
+		firstvalley = valley[0]
 		firstvalleyindex = numpy.searchsorted(raddata, self.trimfreq*firstvalley)
-		noiseNumPoints = len(raddata) - firstvalleyindex
+		lastvalley = valley[-1]
+		lastvalleyindex = numpy.searchsorted(raddata, self.trimfreq*lastvalley)
+		noiseNumPoints = lastvalleyindex - firstvalleyindex
 		# require at least 10 points past first peak of CTF to perform estimation
 		maxSections = int(math.floor(noiseNumPoints/12.))
 		if numSections > maxSections:
@@ -128,22 +131,34 @@ class CtfDisplay(object):
 			partStart = self.sectionFactor*section
 			partEnd = partStart + (self.sectionFactor+self.overlapFactor)
 			start = valley[0] + noiseNumPoints*partStart/float(numParts)
-			print "Start", start
-			start = int(math.floor(valley[numpy.searchsorted(valley, start)]))
-			print "Start", start
+			startIndex = numpy.searchsorted(valley, start)
+			try:
+				start = valley[startIndex]
+			except IndexError:
+				print "Index Error: start: %.1f -> %d"%(start, firstvalleyindex)				
+				start = firstvalleyindex
+				print start, valley[0]
+				print startIndex, len(valley)
+			start = int(math.floor(start))
 			noiseStartIndexes.append(start)
 			end = firstvalleyindex + noiseNumPoints*partEnd/float(numParts)
-			print "End", end
-			end = int(math.ceil(valley[numpy.searchsorted(valley, end)]))
-			print "End", end			
+			endIndex = numpy.searchsorted(valley, end)
+			try:
+				end = valley[endIndex]
+			except IndexError:
+				print "Index Error: end: %.1f -> %d"%(end, lastvalleyindex)				
+				# fix for going past the last valley
+				end = lastvalleyindex
+			end = int(math.ceil(end))
 			noiseEndIndexes.append(end)
-		#print noiseEndIndexes[-1], len(raddata)
-		noiseStartIndexes[0] = valley[0]
-		mergeIndexes = noiseStartIndexes
+		#noiseStartIndexes[0] = firstvalleyindex
+		mergeIndexes = copy.copy(noiseStartIndexes)
 		mergeIndexes.extend(noiseEndIndexes)
 		mergeIndexes.sort()
 		if self.debug is True:
-			print "mergeIndexes", mergeIndexes	
+			print noiseStartIndexes
+			print noiseEndIndexes
+			print "Noise mergeIndexes", mergeIndexes	
 		### 
 		### PART 2: BACKGROUND NOISE SUBTRACTION
 		### 
@@ -270,21 +285,39 @@ class CtfDisplay(object):
 			partEnd = partStart + (self.sectionFactor+self.overlapFactor)		
 			start = peak[1] + envelopNumPoints*partStart/float(numParts)
 			print "Start", start
-			start = int(math.floor(peak[numpy.searchsorted(valley, start)]))
+			startIndex = numpy.searchsorted(peak, start)
+			try:
+				start = peak[startIndex]
+			except IndexError:
+				print "IndexError"
+				print "start: %.1f -> %d"%(start, firstpeakindex)
+				start = firstpeakindex
+				print start, peak[0]
+				print startIndex, len(peak)
+			start = int(math.floor(start))
 			print "Start", start	
 			envelopStartIndexes.append(start)
 			end = firstpeakindex + envelopNumPoints*partEnd/float(numParts)
 			print "End", end
-			end = int(math.ceil(peak[numpy.searchsorted(valley, end)]))
+			endIndex = numpy.searchsorted(peak, end)
+			try:
+				end = valley[endIndex]
+			except IndexError:
+				# fix for going past the last peak
+				print "IndexError"
+				print "end: %.1f -> %d"%(end, envelopNumPoints)
+				end = envelopNumPoints
+			end = int(math.ceil(end))
 			print "End", end				
 			envelopEndIndexes.append(end)
-		#envelopStartIndexes[0] = peak[1]
-		#print envelopEndIndexes[-1], len(raddata)
-		mergeIndexes = envelopStartIndexes
+		#envelopStartIndexes[0] = firstpeakindex
+		mergeIndexes = copy.copy(envelopStartIndexes)
 		mergeIndexes.extend(envelopEndIndexes)
 		mergeIndexes.sort()		
 		if self.debug is True:
-			print "mergeIndexes", mergeIndexes
+			print envelopStartIndexes
+			print envelopEndIndexes
+			print "Envelop mergeIndexes", mergeIndexes
 
 		### fit the envelope in each section
 		envelopFitParamList = []
