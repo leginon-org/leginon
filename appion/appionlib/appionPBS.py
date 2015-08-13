@@ -43,7 +43,7 @@ class AppionPBS(appionLoop2.AppionLoop):
 		self.parser.add_option("--usequeue", dest='usequeue', action='store_true', default=False, help='Parallelize by submitting individual jobs to PBS style queue')
 		self.parser.add_option("--keepscratch", dest='keepscratch', action='store_true', default=False, help='Keep queue scratch directories')
 		self.parser.add_option("--queue_scratch", dest='queue_scratch', type='str', default=None, help='Scratch directory if queueing up jobs')
-		self.parser.add_option("--queue_name", dest='queue_name', type='str', default='backfill', help='Name of the queue to use')
+		self.parser.add_option("--queue_name", dest='queue_name', type='str', default=None, help='Name of the queue to use')
 		self.parser.add_option("--queue_style", dest='queue_style', type='str', default='PBS', help='Style of the queue to use. Only PBS and MOAB supported.')
 		self.parser.add_option("--walltime", dest='walltime', type='int', default='4', help='Walltime for the queue in hours.')
 		self.parser.add_option("--queue_memory", dest='queue_memory', type='int', default='2', help='Memory required for queued process. In GB')
@@ -214,8 +214,14 @@ class AppionPBS(appionLoop2.AppionLoop):
 		f.write('#%s -l walltime=%d:00:00\n' % (self.params['queue_style'], self.params['walltime']))
 		f.write('#%s -l pmem=%dgb\n\n' % (self.params['queue_style'], self.params['queue_memory']))
 		f.write('cd %s\n\n' % scratchdir )
+		s=''
 		for arg in command:
-			f.write('%s ' % arg )
+			s+=arg
+			s+=' '
+			if len(s) > 75:
+				f.write('%s \\\n' % s )
+				s=' '
+		f.write('%s \n' % s )
 		
 		f.close()
 		print jobpath
@@ -237,7 +243,8 @@ class AppionPBS(appionLoop2.AppionLoop):
 			command.append('qsub')
 		elif self.params['queue_style']=='MOAB':
 			command.append('msub')
-		command.append('-q %s' % self.params['queue_name'])
+		if self.params['queue_name'] is not None:
+			command.append('-q %s' % self.params['queue_name'])
 		command.append(jobname)
 		print command
 		subprocess.call(command)
