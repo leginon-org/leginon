@@ -39,6 +39,26 @@ def getFieldSize(shape):
 	return fieldsize
 
 #=============
+def padpower(image, pixelsize, fieldsize=None, mask_radius=0.5):
+	"""
+	computes power spectra of image using padding
+	"""
+	t0 = time.time()
+	if fieldsize is None:
+		fieldsize = getFieldSize(image.shape)	
+	maxDim = max(image.shape)
+	powerTwo = math.ceil(math.log(maxDim)/math.log(2.0))
+	powerTwoDim = int(2**(powerTwo))
+	squareImage = imagefilter.frame_constant(image, (powerTwoDim,powerTwoDim))
+	envelop = twodHann(powerTwoDim)
+	poweravg = imagefun.power(squareImage*envelop, mask_radius)
+	binning = int(powerTwoDim/fieldsize)
+	imagefun.bin2(poweravg, binning)	
+	freq = 1.0/(poweravg.shape[0]*pixelsize)
+	apDisplay.printMsg("Fast compute PSD with size %d -> %d complete in %s"
+		%(powerTwoDim, fieldsize, apDisplay.timeString(time.time()-t0)))
+	return poweravg, freq
+
 def power(image, pixelsize, fieldsize=None, mask_radius=0.5, msg=True):
 	"""
 	computes power spectra of image using sub-field averaging
