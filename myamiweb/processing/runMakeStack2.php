@@ -314,6 +314,7 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	echo "</select>\n";
 	echo "<br/><br/>";
 
+	/* SPIDER IS BROKEN
 	echo "<i>File format:</i>";
 	echo "<br/>\n";
 
@@ -326,6 +327,8 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	if ($_POST['fileformat'] == 'spider') echo "checked";
 	echo ">\n";
 	echo "Spider: start.spi<br/>\n";
+	*/
+	echo "<input type='hidden' name='fileformat' value='imagic'> ";
 
 	//
 	// ENDING ADVANCED SECTION 1
