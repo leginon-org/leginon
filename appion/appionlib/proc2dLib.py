@@ -16,9 +16,8 @@ from appionlib.apImage import imagenorm
 from appionlib.apImage import imagefilter
 from optparse import OptionParser
 
-# Scott: not inheriting Appion base classes because options are unique and stand alone
-# Neil: basicScript is designed for this
-
+#================================
+#================================
 class RunProc2d(object):
 	def __init__(self):
 		self.approc2d = ApProc2dOverride(quiet=True)
@@ -31,7 +30,8 @@ class RunProc2d(object):
 		self.approc2d.start()
 		self.approc2d.close()
 
-
+#================================
+#================================
 class ApProc2d(basicScript.BasicScript):
 	#=====================
 	#=====================
@@ -462,7 +462,8 @@ class ApProc2d(basicScript.BasicScript):
 			self.appendParticleListToStackFile([avgParticle,], self.params['outfile'])
 		print "Wrote %d particles to file "%(self.particlesWritten)
 
-#=====================
+#================================
+#================================
 class ApProc2dOverride(ApProc2d):
 	def __init__(self, quiet=True):
 		self.parser = OptionParser()
