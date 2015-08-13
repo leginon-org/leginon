@@ -9,11 +9,13 @@ from pyami import mem
 from pyami import imagic
 from pyami import imagefun
 from appionlib import apFile
+from appionlib import apParam
 from appionlib import apDisplay
 from appionlib import basicScript
 from appionlib import apImagicFile
 from appionlib.apImage import imagenorm
 from appionlib.apImage import imagefilter
+from optparse import OptionParser
 
 # Scott: not inheriting Appion base classes because options are unique and stand alone
 # Neil: basicScript is designed for this
@@ -458,6 +460,14 @@ class ApProc2d(basicScript.BasicScript):
 #=====================
 class ApProc2dOverride(ApProc2d):
 	def __init__(self, quiet=True):
+		self.parser = OptionParser()
+		self.setupParserOptions()
+		self.params = {}
+		(options, args) = self.parser.parse_args()
+		for i in self.parser.option_list:
+			if isinstance(i.dest, str):
+				self.params[i.dest] = getattr(options, i.dest)
+		"""
 		self.params = {}
 		self.params['first'] = 0
 		self.params['append'] = None
@@ -465,5 +475,7 @@ class ApProc2dOverride(ApProc2d):
 		self.params['invert'] = False
 		self.params['debug'] = False
 		self.params['average'] = False
+		"""
 		pass
+	
 
