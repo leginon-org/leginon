@@ -74,6 +74,9 @@ class ApProc2d(basicScript.BasicScript):
 		self.parser.add_option('--rampnorm', dest='normalizemethod',
 			help="Set normalization method to rampnorm",
 			action='store_const', const='rampnorm', )
+		self.parser.add_option('--norm', dest='normalizemethod',
+			help="Set normalization method to box norm",
+			action='store_const', const='boxnorm', )
 
 	#=====================
 	#=====================
