@@ -1221,39 +1221,9 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		'''
 		Prepare ImageData to be uploaded after alignment
 		'''
-		label_string = '-%s' % (alignlabel)
 		camdata = self.getAlignedCameraEMData()
-		align_presetdata = leginondata.PresetData(initializer=self.image['preset'])
-		if self.image['preset'] is None:
-			old_name = 'ma'
-			align_presetdata = leginondata.PresetData(
-					name='ma-%s' % (label_string),
-					magnification=self.image['scope']['magnification'],
-					defocus=self.image['scope']['defocus'],
-					tem = self.image['scope']['tem'],
-					ccdcamera = camdata['ccdcamera'],
-					session = self.image['session'],
-			)
-		else:
-			old_name = align_presetdata['name']
-			align_presetdata['name'] = old_name+label_string
-		align_presetdata['dimension'] = camdata['dimension']
-		align_presetdata['binning'] = camdata['binning']
-		align_presetdata['offset'] = camdata['offset']
-		align_presetdata['exposure time'] = camdata['exposure time']
-		# make new imagedata with the align_preset amd aligned CameraEMData
-		imagedata = leginondata.AcquisitionImageData(initializer=self.image)
-		imagedata['preset'] = align_presetdata
-		imagefilename = imagedata['filename']
-		bits = imagefilename.split(old_name)
-		before_string = old_name.join(bits[:-1])
-		newfilename = align_presetdata['name'].join((before_string,bits[-1]))
-		imagedata['camera'] = camdata
-		imagedata['camera']['align frames'] = True
-		imagedata['image'] = mrc.read(self.aligned_sumpath)
-		imagedata['filename'] = apDBImage.makeUniqueImageFilename(imagedata,old_name,align_presetdata['name'])
-		return imagedata
-
+		new_array = mrc.read(self.aligned_sumpath)
+		return apDBImage.makeAlignedImageData(self.image,camdata,new_array,alignlabel)
 
 	def isReadyForAlignment(self):
 		'''
