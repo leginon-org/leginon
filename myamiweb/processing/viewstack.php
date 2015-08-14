@@ -44,7 +44,18 @@ $updateheader=($_GET['uh']==1) ? 1 : 0;
 $pixelsize=(is_numeric($_GET['ps'])) ? trim($_GET['ps']) : 0;
 
 $particle = new particledata();
+
 $maxangle = $particle->getMaxTiltAngle($expId);
+
+if (!file_exists($filename) && $stackId){
+	# no file found, see if it's a virtual stack
+	$orig_stackdata = $particle->getVirtualStackData($stackId);
+	if ($orig_stackdata) {
+		$substack = True;
+		$filename = $orig_stackdata['filename'];
+		$subprtls = $orig_stackdata['particles'];
+	}	
+}
 
 if ($reconId) {
   $stackId=$particle->getStackIdFromReconId($reconId);

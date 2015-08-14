@@ -277,25 +277,34 @@ function stacksummarytable($stackid, $mini=false, $tiny=false, $showOptions=True
 		// Number images used to make stack
 		$display_keys['# images used']=$particle->getNumStackImages($stackid);
 		// Get filesize
-		$display_keys['file size'] = getStackSize($stackdata);
+		$filesize = getStackSize($stackdata);
+		if (!$filesize) {
+			$missing = True;
+			$fsize = displayFileSize(4*$boxsz*$numpart);
+			$fsize = "Generate Missing File: (".$fsize.")";
+			$filesize = "<input class='edit' type='button' onClick='parent.location=\"generateMissingStack.php?expId=$expId&stackId=$stackid\"' value='$fsize'>";
+		}
+		$display_keys['file size'] = $filesize;
 	}
 
 
-	// provide a link to download a stack
-	if (substr($stackdata['name'], -4) == ".hed") {
-		$imgfile = $stackdata['path']."/".substr($stackdata['name'], 0, -4).".img";
-		$hedfile = $stackdata['path']."/".substr($stackdata['name'], 0, -4).".hed";
-		$stacklink .= "<font size='-2'><a href='download.php?expId=$expId&file=$hedfile'>\n";
-		$stacklink .= "  <img style='vertical-align:middle' src='img/download_arrow.png' border='0' width='16' height='17' alt='download hed file'>hed\n";
-		$stacklink .= "</a>\n";
-		$stacklink .= "&nbsp;<a href='download.php?expId=$expId&file=$imgfile'>\n";
-		$stacklink .= "  <img style='vertical-align:middle' src='img/download_arrow.png' border='0' width='16' height='17' alt='download img file'>img\n";
-		$stacklink .= "</a></font>\n";
-	} else {
-		$ext = substr($stackdata['name'], -3);
-		$stacklink .= "<font size='-2'><a href='download.php?expId=$expId&file=$stackfile'>\n";
-		$stacklink .= "  <img style='vertical-align:middle' src='img/download_arrow.png' border='0' width='16' height='17' alt='download stack'>$ext\n";
-		$stacklink .= "</a></font>\n";
+	if ($missing != True) {
+		// provide a link to download a stack
+		if (substr($stackdata['name'], -4) == ".hed") {
+			$imgfile = $stackdata['path']."/".substr($stackdata['name'], 0, -4).".img";
+			$hedfile = $stackdata['path']."/".substr($stackdata['name'], 0, -4).".hed";
+			$stacklink .= "<font size='-2'><a href='download.php?expId=$expId&file=$hedfile'>\n";
+			$stacklink .= "  <img style='vertical-align:middle' src='img/download_arrow.png' border='0' width='16' height='17' alt='download hed file'>hed\n";
+			$stacklink .= "</a>\n";
+			$stacklink .= "&nbsp;<a href='download.php?expId=$expId&file=$imgfile'>\n";
+			$stacklink .= "  <img style='vertical-align:middle' src='img/download_arrow.png' border='0' width='16' height='17' alt='download img file'>img\n";
+			$stacklink .= "</a></font>\n";
+		} else {
+			$ext = substr($stackdata['name'], -3);
+			$stacklink .= "<font size='-2'><a href='download.php?expId=$expId&file=$stackfile'>\n";
+			$stacklink .= "  <img style='vertical-align:middle' src='img/download_arrow.png' border='0' width='16' height='17' alt='download stack'>$ext\n";
+			$stacklink .= "</a></font>\n";
+		}
 	}
 
 	if ($mini) {

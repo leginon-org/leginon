@@ -171,13 +171,15 @@ function getStackSize($stackdata) {
 	$stackimgfile = $stackdata['path']."/".substr($stackdata['name'], 0, -4).".img";
 	else
 	$stackimgfile = $stackdata['path']."/".$stackdata['name'];
-	if (file_exists($stackimgfile)) {
-		$fsize = (int) filesize($stackimgfile);
-		if ($fsize > 1073741824)
-		$size = sprintf("%.2f GB", $fsize/1073741824);
-		else
-		$size = sprintf("%.1f MB", $fsize/1048576);
-	}
+	if (file_exists($stackimgfile))
+		return (displayFileSize((int) filesize($stackimgfile)));
+}
+
+function displayFileSize($fsize) {
+	if ($fsize > 1073741824)
+	$size = sprintf("%.2f GB", $fsize/1073741824);
+	else
+	$size = sprintf("%.1f MB", $fsize/1048576);
 	return $size;
 }
 

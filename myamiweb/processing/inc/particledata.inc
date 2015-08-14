@@ -2570,6 +2570,39 @@ class particledata {
 		return $r;
 	}
 
+	function getVirtualStackData($stackid) {
+		$orig_stackid = '';
+		while ($orig_stackid == '') {
+			# get oldstack from current stackid
+			$r = $this->getParentStackId($stackid);
+			$oldstack = $r['parentid'];
+			if (!$oldstack) return;
+
+			# find out if stackfile exists
+			$stackdata = $this->getStackParams($oldstack);
+			$fname = $stackdata['path']."/".$stackdata['name'];
+			if (file_exists($fname)) {
+				$orig_stackid=$oldstack;
+				$q = "SELECT s1.particleNumber "
+					."FROM `ApStackParticleData` as s1 "
+					."LEFT JOIN `ApStackParticleData` as s2 "
+					."ON s1.`REF|ApParticleData|particle`=s2.`REF|ApParticleData|particle` "
+					."WHERE ("
+					."s1.`REF|ApStackData|stack`=$oldstack and "
+					."s2.`REF|ApStackData|stack`=$stackid) "
+					."ORDER BY s1.particleNumber";
+				$r = $this->mysql->getSQLResult($q);
+				$parts = array();
+				foreach ($r as $val) {$parts[] = $val['particleNumber'];}
+			}
+			else $stackid = $oldstack;
+
+			return array('stackid'=>$orig_stackid,
+				'filename'=>$fname,
+				'particles'=>$parts);
+		}
+	}
+
 	function getClusterRefNumsFromSubStack ($substackid,$clusterstackid) {
 		$q = "SELECT "
 			."cp.`refnum` as classnum "
@@ -2697,7 +2730,7 @@ class particledata {
 			."LEFT JOIN ApPathData AS pd ON "
 			."(sd.`REF|ApPathData|path` = pd.`DEF_id`) "
 			."WHERE sd.`DEF_id` = '$stackId'";
-		//echo $q."<br/>\n";
+		// echo $q."<br/>\n";
 		list($stack_primary_array) = $this->mysql->getSQLResult($q);
 		if (!$stack_primary_array) return;
 		// Get runs in stack
