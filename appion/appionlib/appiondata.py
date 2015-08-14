@@ -418,6 +418,20 @@ class ApCtfTiltParamsData(Data):
 		)
 	typemap = classmethod(typemap)
 
+class ApCtfFind4ParamsData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('bestdb', bool),
+			('ampcontrast', float),
+			('fieldsize', int),
+			('cs', float),
+			('resmin', float),
+			('resmax', float),
+			('defstep', float),
+			('dast', float),
+		)
+	typemap = classmethod(typemap)
+
 class ApCtfData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
