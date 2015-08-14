@@ -39,7 +39,6 @@ class AppionPBS(appionLoop2.AppionLoop):
 		set the input parameters
 		"""
 		appionLoop2.AppionLoop.setupGlobalParserOptions(self)
-		
 		self.parser.add_option("--usequeue", dest='usequeue', action='store_true', default=False, help='Parallelize by submitting individual jobs to PBS style queue')
 		self.parser.add_option("--keepscratch", dest='keepscratch', action='store_true', default=False, help='Keep queue scratch directories')
 		self.parser.add_option("--queue_scratch", dest='queue_scratch', type='str', default=None, help='Scratch directory if queueing up jobs')
@@ -49,6 +48,7 @@ class AppionPBS(appionLoop2.AppionLoop):
 		self.parser.add_option("--queue_memory", dest='queue_memory', type='int', default='2', help='Memory required for queued process. In GB')
 		self.parser.add_option("--queue_ppn", dest='queue_ppn', type='int', default='1', help='Processors per node. The default will typically work.')
 		self.parser.add_option("--njobs", dest='njobs', type='int', default=1, help='Number of jobs to submit to queue')
+		self.parser.add_option("--handlefiles", dest='handlefiles', type='choice', choices=('direct', 'copy', 'link'), default='direct', help='How to process intermediate files')
 		self.parser.add_option("--dryrun", dest='dryrun', action='store_true', default=False,  help="Create jobs but don't submit")
 
 	#=====================
@@ -90,7 +90,7 @@ class AppionPBS(appionLoop2.AppionLoop):
 						#process image(s)
 						scratchdir=self._setupScratchDir(imgdata)
 						apDisplay.printMsg('Copying %s data to %s' % (imgdata['filename'], scratchdir))
-						targetdict=self.copyTargets(imgdata,scratchdir)
+						targetdict=self.getTargets(imgdata,scratchdir,handlefiles=self.params['handlefiles'])
 						
 						command=self.generateCommand(imgdata,targetdict)						
 						jobname=self.setupJob(scratchdir, imgdata, command)
@@ -131,7 +131,7 @@ class AppionPBS(appionLoop2.AppionLoop):
 					self._preliminary(imgdata)
 					
 					#process image(s)
-					targetdict=getTargets(imgdata)
+					targetdict=self.getTargets(imgdata)
 					command=self.generateCommand(targetdict)
 					print command
 					if self.params['dryrun'] is True:
@@ -237,6 +237,7 @@ class AppionPBS(appionLoop2.AppionLoop):
 
 	def launchPBSJob(self,scratchdir, jobname):
 		command=[]
+		print self.params['rundir']
 		cwd=os.getcwd()
 		os.chdir(scratchdir)
 		if self.params['queue_style']=='PBS':
@@ -276,14 +277,14 @@ class AppionPBS(appionLoop2.AppionLoop):
 		apDisplay.printError("you did not create a 'generateCommand' function in your script")
 		raise NotImplementedError()
 
-	def copyTargets(self, imgdict):
-		"""
-		this function copies the required files to the PBS scratch directory
-		it must be overwritten by the child class
-		should return imgdict with necessary modifications for the queued job
-		"""
-		apDisplay.printError("you did not create a 'copyFiles' function in your script")
-		raise NotImplementedError()
+	#def copyTargets(self, imgdict):
+	#	"""
+	#	this function copies the required files to the PBS scratch directory
+	#	it must be overwritten by the child class
+	#	should return imgdict with necessary modifications for the queued job
+	#	"""
+	#	apDisplay.printError("you did not create a 'copyFiles' function in your script")
+	#	raise NotImplementedError()
 
 	def commitResults(self):
 		"""
@@ -315,7 +316,7 @@ class BinLoop(AppionPBS):
 		print 'this is where you would commit stuff'
 		return
 		
-	def copyTargets(self, imgdict, scratchdir):
+	def generateTargets(self, imgdict, scratchdir):
 		srcpath=os.path.join(imgdict['session']['image path'],imgdict['filename']+'.mrc')
 		shutil.copy(srcpath, scratchdir)
 		return imgdict

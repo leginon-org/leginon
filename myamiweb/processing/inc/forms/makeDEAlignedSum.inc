@@ -106,8 +106,6 @@ class makeDEAlignedSum extends BasicLayoutForm
 		$html.= '<option selected value="1">1</option>';
 		$html.= '<option value="0">0</option>';
 		$html.= '</select>'; $html.= docpop('alignment_correct', ' Radiation Damage Compensation Switch').'<br>';
-		//$html.= $params->insertTextField( "alignment_correct", $fieldSize );
-		//$html.= $params->insertTextField( "radiationdamage_compensate", $fieldSize );
 		$html.= $params->insertTextField( "border", $fieldSize );
 		$html.= $params->insertCheckboxField( "hackcopy" );
 		$html.= $params->insertTextField( "defects_columns", $fieldSize );
@@ -117,6 +115,7 @@ class makeDEAlignedSum extends BasicLayoutForm
 		$html.= $params->insertTextField( "queue_scratch", $fieldSize );
 		$html.= $params->insertTextField( "njobs", $fieldSize );
 		$html.= $params->insertTextField( "queue_ppn", $fieldSize );
+		
 		$html.= '<select name="queue_style" style="width:66px">';
 		$html.= '<option selected value="PBS">PBS</option>';
 		$html.= '<option value="MOAB">MOAB</option>';

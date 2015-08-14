@@ -88,36 +88,50 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 		self.setProcessBatchCount(1)
 		self.params['output_fileformat'] = 'mrc'
 
-	def copyTargets(self,imgdata,scratchdir):
+	def getTargets(self, imgdata, scratchdir, handlefiles='direct'):
 		targetdict={}
 		#copy flatfields
 		
 		brightrefpath=imgdata['bright']['session']['image path']
 		brightrefname=imgdata['bright']['filename']+'.mrc'
 		brightref=os.path.join(brightrefpath,brightrefname)
-		shutil.copy(brightref,scratchdir)
-		targetdict['brightref']=os.path.join(scratchdir,brightrefname)
 		
 		darkrefpath=imgdata['dark']['session']['image path']
 		darkrefname=imgdata['dark']['filename']+'.mrc'
 		darkref=os.path.join(darkrefpath,darkrefname)
-		shutil.copy(darkref,scratchdir)
-		targetdict['darkref']=os.path.join(scratchdir,darkrefname)
 		
 		#################################### do away with override flatfield option
-		#copy frames
 		framesdirname=imgdata['filename']+'.frames'
 		apDisplay.printMsg('Copying frames %s' % (framesdirname))
 		framespath=imgdata['session']['frame path']
 		framespathname=os.path.join(framespath,framesdirname)
-		try:
-			shutil.copytree(framespathname,os.path.join(scratchdir, framesdirname))
-		except:
-			apDisplay.printWarning('there was a problem copying the frames for %s' % (imgdata['filename']))
-		targetdict['framespathname']=os.path.join(scratchdir,framesdirname)
 		
-		#define outpath
-		targetdict['outpath']=os.path.join(scratchdir,imgdata['filename'])
+		if handlefiles == 'direct':
+			targetdict['brightref']=brightref
+			targetdict['darkref']=darkref
+			targetdict['framespathname']=framespathname
+			targetdict['outpath']=self.params['rundir']
+		elif handlefiles == 'copy':
+			shutil.copy(brightref,scratchdir)
+			shutil.copy(darkref,scratchdir)
+			targetdict['brightref']=os.path.join(scratchdir,brightrefname)
+			targetdict['darkref']=os.path.join(scratchdir,darkrefname)
+			try:
+				shutil.copytree(framespathname,os.path.join(scratchdir, framesdirname))
+			except:
+				apDisplay.printWarning('there was a problem copying the frames for %s' % (imgdata['filename']))
+			targetdict['framespathname']=os.path.join(scratchdir,framesdirname)
+			targetdict['outpath']=os.path.join(scratchdir,imgdata['filename'])
+			
+		elif handlefiles == 'link':
+			os.symlink(brightref,os.path.join(scratchdir,brightrefname))
+			os.symlink(darkref,os.path.join(scratchdir,darkrefname))
+			os.symlink(framespathname,os.path.join(scratchdir, framesdirname))
+			targetdict['brightref']=os.path.join(scratchdir,brightrefname)
+			targetdict['darkref']=os.path.join(scratchdir,darkrefname)
+			targetdict['framespathname']=os.path.join(scratchdir,framesdirname)
+			targetdict['outpath']=os.path.join(scratchdir,imgdata['filename'])
+		print targetdict
 		return targetdict
 
 	def generateCommand(self, imgdata, targetdict):
