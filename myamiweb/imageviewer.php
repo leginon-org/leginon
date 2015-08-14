@@ -90,6 +90,7 @@ $view1->setControl();
 $view1->setParam('ptclparams',$particleruns);
 $view1->setParam('aceruns',$aceruns);
 $view1->displayDDIcon(true);
+$view1->displayDeqIcon(true);
 $view1->displayComment(true); 
 $view1->addMenuItems($playbackcontrol);
 $view1->setDataTypes($datatypes);
