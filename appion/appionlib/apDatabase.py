@@ -588,6 +588,10 @@ def getDoseFromImageData(imgdata):
 		return None
 	return dose / 1e20
 
+#================
+def getDimensionsFromImageData(imgdata):
+	''' returns dictionary, x & y dimensions, for image '''
+	return imgdata['preset']['dimension']
 
 #================
 def checkInspectDB(imgdata):
