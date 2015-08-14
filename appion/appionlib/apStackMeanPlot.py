@@ -98,6 +98,7 @@ def makeStackMeanPlot(stackid, gridpoints=16):
 		sys.stderr.write("% 3d of % 3d, %s: % 6d"%(count, len(keys), key, len(partlists[key])))
 		avgimg = averageSubStack(partlists[key], stackfile, bin)
 		if avgimg is not False:
+			avgimg = numpy.fliplr(avgimg)
 			mystack.append(avgimg)
 	apImagicFile.writeImagic(mystack, montagestack)
 	sys.stderr.write("\n")
