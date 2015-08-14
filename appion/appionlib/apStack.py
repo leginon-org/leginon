@@ -19,6 +19,7 @@ from appionlib import appiondata
 from appionlib import apFile
 from appionlib import apParam
 from appionlib import apScriptLog
+from appionlib import proc2dLib
 from appionlib.apCtf import ctftools
 
 debug = False
@@ -32,10 +33,10 @@ debug = False
 def makeNewStack(oldstack, newstack, listfile=None, remove=False, bad=False):
 	"""
 	selects particular particles from a stack
-	need to remove proc2d
 	"""
 	if not os.path.isfile(oldstack):
 		apDisplay.printWarning("could not find old stack: "+oldstack)
+
 	if os.path.isfile(newstack):
 		if remove is True:
 			apDisplay.printWarning("removing old stack: "+newstack)
@@ -44,11 +45,15 @@ def makeNewStack(oldstack, newstack, listfile=None, remove=False, bad=False):
 		else:
 			apDisplay.printError("new stack already exists: "+newstack)
 	apDisplay.printMsg("creating a new stack\n\t"+newstack+
-		"\nfrom the oldstack\n\t"+oldstack+"\nusing list file\n\t"+str(listfile))
-	emancmd = "proc2d "+oldstack+" "+newstack
+		"\nfrom the oldstack\n\t"+oldstack+"\n")
+
+	a = proc2dLib.RunProc2d()
+	a.setValue('infile',oldstack)
+	a.setValue('outfile',newstack)
 	if listfile is not None:
-		emancmd += " list="+listfile
-	apEMAN.executeEmanCmd(emancmd, verbose=True)
+		a.setValue('list',listfile)
+	a.run()
+
 	if bad is True and listfile is not None:
 		### run only if num bad particles < num good particles
 		newstacknumpart = apFile.numImagesInStack(newstack)
@@ -61,6 +66,47 @@ def makeNewStack(oldstack, newstack, listfile=None, remove=False, bad=False):
 		else:
 			apDisplay.printMsg("Rejecting more particles than keeping, not creating a bad stack")
 	return
+
+#===============
+def getVirtualStackParticlesFromId(stackid, msg=True):
+	"""
+	virtual stacks do not have stack files on disk, rather are
+	subsets of existing stacks. This function retrieves the original
+	particles based on the particledata.
+	returns oldstackid, filename, particle list
+	"""
+
+	t0 = time.time()
+	if msg is True:
+		apDisplay.printMsg("Querying original particles from stackid="+str(stackid))
+
+	stackdata = getOnlyStackData(stackid, msg=False)
+	try:
+		oldstackid = stackdata['oldstack'].dbid
+	except:
+		apDisplay.printError("Virtual stack: %i does not have original stack information")
+
+	# first find original stack that has a file associated with it
+	orig_stack = None
+	while orig_stack is None:
+		orig_stackdata = getOnlyStackData(oldstackid, msg=False)
+		orig_stackfile = os.path.join(orig_stackdata['path']['path'], orig_stackdata['name'])
+		if not os.path.isfile(orig_stackfile):
+			oldstackid=orig_stackdata['oldstack'].dbid
+		else:
+			apDisplay.printMsg("original stackid: %i"%oldstackid)
+			orig_stack=oldstackid
+
+	sqlcmd = "SELECT s1.* FROM ApStackParticleData s1 "+ \
+		"LEFT JOIN ApStackParticleData s2 ON " + \
+		"(s1.`REF|ApParticleData|particle`=s2.`REF|ApParticleData|particle`) " + \
+		"WHERE (s1.`REF|ApStackData|stack`=" + str(orig_stack) + \
+		" AND s2.`REF|ApStackData|stack`=" + str(stackid) + \
+		") ORDER BY s1.particleNumber"
+
+	pinfo = sinedon.directq.complexMysqlQuery('appiondata',sqlcmd)
+
+	return {'stackid':orig_stack, 'filename':orig_stackfile, 'particles':pinfo}
 
 #===============
 def checkDefocPairFromStackId(stackId):
@@ -375,7 +421,7 @@ def centerParticles(stack, mask=None, maxshift=None):
 	return
 
 #===============
-def commitSubStack(params, newname=False, centered=False, oldstackparts=None, sorted=False):
+def commitSubStack(params, newname=False, centered=False, oldstackparts=None, sorted=False, included=None):
 	"""
 	commit a substack to database
 
@@ -385,6 +431,7 @@ def commitSubStack(params, newname=False, centered=False, oldstackparts=None, so
 		commit
 		rundir
 		keepfile
+	'included' param is a list of included particles, starting at 0
 	"""
 
 	t0 = time.time()
@@ -425,41 +472,54 @@ def commitSubStack(params, newname=False, centered=False, oldstackparts=None, so
 
 	## insert now before datamanager cleans up referenced data
 	stackq.insert()
-	apDisplay.printMsg("created new stackdata in "+apDisplay.timeString(time.time()-t0))
+	apDisplay.printMsg("created new stackdata in %s\n"%(apDisplay.timeString(time.time()-t0)))
 
 	newstackid = stackq.dbid
 
 	t0 = time.time()
-	#Insert particles
-	listfile = params['keepfile']
+	# get list of included particles
+	apDisplay.printMsg("Getting list of particles to include")
 
-	### read list and sort
-	f=open(listfile,'r')
-	listfilelines = []
-	for line in f:
-		sline = line.strip()
-		if re.match("[0-9]+", sline):
-			listfilelines.append(int(sline.split()[0])+1)
-		else:
-			apDisplay.printWarning("Line in listfile is not int: "+str(line))
-	listfilelines.sort()
+	if included:
+		listfilelines = [p+1 for p in included]
+	else:
+		### read list
+		listfilelines = []
+		listfile = params['keepfile']
+
+		f=open(listfile,'r')
+		for line in f:
+			sline = line.strip()
+			if re.match("[0-9]+", sline):
+				listfilelines.append(int(sline.split()[0])+1)
+			else:
+				apDisplay.printWarning("Line in listfile is not int: "+str(line))
+		f.close()
+		listfilelines.sort()
+
 	total = len(listfilelines)
-	f.close()
+	apDisplay.printMsg("Completed in "+apDisplay.timeString(time.time()-t0)+"\n")
 
 	## index old stack particles by number
+	apDisplay.printMsg("Retrieving original stack information")
+	t0 = time.time()
 	part_by_number = {}
-
+	
 	# get stack data from original particles
-	sqlcmd = "SELECT * FROM ApStackParticleData " + \
-		"WHERE `REF|ApStackData|stack` = %i"%(params['stackid'])
-	oldstackparts = sinedon.directq.complexMysqlQuery('appiondata',sqlcmd)
+	if not oldstackparts:
+		sqlcmd = "SELECT * FROM ApStackParticleData " + \
+			"WHERE `REF|ApStackData|stack` = %i"%(params['stackid'])
+		oldstackparts = sinedon.directq.complexMysqlQuery('appiondata',sqlcmd)
+
 	for part in oldstackparts:
 		part_by_number[part['particleNumber']] = part
 
+	apDisplay.printMsg("Completed in "+apDisplay.timeString(time.time()-t0)+"\n")
+	
 	apDisplay.printMsg("Assembling database insertion command")
+	t0 = time.time()
 	count = 0
 	newpartnum = 1
-	t0 = time.time()
 
 	partlistvals = []	 
 	for origpartnum in listfilelines:

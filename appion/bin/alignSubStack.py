@@ -48,6 +48,8 @@ class subStackScript(appionScript.AppionScript):
 			help="save discarded particles into a stack", action="store_true")
 		self.parser.add_option("--exclude-from", dest="excludefrom", default=False,
 			help="converts a keepfile into an exclude file", action="store_true")
+		self.parser.add_option("--write-file", dest='writefile', default=False,
+			help="write the substack file to disk", action="store_true")
 
 	#=====================
 	def checkConflicts(self):
@@ -256,15 +258,31 @@ class subStackScript(appionScript.AppionScript):
 			self.params['description'] += ( " ... %d particle substack with %s classes included"
 				% (numparticles, self.params['keepclasslist']))
 
-		### create the new sub stack
-		apStack.makeNewStack(oldstack, newstack, self.params['keepfile'], bad=self.params['savebad'])
+		outavg = os.path.join(self.params['rundir'],"average.mrc")
 
-		if not os.path.isfile(newstack):
+		### create the new sub stack
+		# first check if virtual stack
+		if not os.path.isfile(oldstack):
+			vstackdata=apStack.getVirtualStackParticlesFromId(self.params['stackid'])
+			vparts = vstackdata['particles']
+			oldstack = vstackdata['filename']
+			# get subset of virtualstack
+			vpartlist = [int(vparts[p]['particleNumber'])-1 for p in includeParticle]
+	
+			if self.params['writefile'] is True:
+				apStack.makeNewStack(oldstack, newstack, vpartlist, bad=self.params['savebad'])
+
+			apStack.averageStack(stack=oldstack,outfile=outavg,partlist=vpartlist)
+		else:
+			if self.params['writefile'] is True:
+				apStack.makeNewStack(oldstack, newstack, self.params['keepfile'], bad=self.params['savebad'])
+			apStack.averageStack(stack=oldstack,outfile=outavg,partlist=includeParticle)
+
+		if self.params['writefile'] is True and not os.path.isfile(newstack):
 			apDisplay.printError("No stack was created")
 
-		apStack.averageStack(stack=newstack)
 		if self.params['commit'] is True:
-			apStack.commitSubStack(self.params)
+			apStack.commitSubStack(self.params,included=includeParticle)
 			newstackid = apStack.getStackIdFromPath(newstack)
 			apStackMeanPlot.makeStackMeanPlot(newstackid, gridpoints=4)
 

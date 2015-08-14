@@ -30,12 +30,21 @@ def makeStackMeanPlot(stackid, gridpoints=16):
 	apDisplay.printMsg("binning stack by "+str(bin))
 	stackdata = apStack.getOnlyStackData(stackid, msg=False)
 	stackfile = os.path.join(stackdata['path']['path'], stackdata['name'])
-	# get stats from stack:
-	sqlcmd = "SELECT " + \
-		"particleNumber, mean, stdev " + \
-		"FROM ApStackParticleData " + \
-		"WHERE `REF|ApStackData|stack` = %i"%(stackid)
-	partdatas = sinedon.directq.complexMysqlQuery('appiondata',sqlcmd)
+	# if no stackfile, likely virtual stack
+	if not os.path.isfile(stackfile):
+		apDisplay.printMsg("possible virtual stack, searching for original stack")
+		vstackdata = apStack.getVirtualStackParticlesFromId(stackid)
+		partdatas = vstackdata['particles']
+		stackfile = vstackdata['filename']
+		stackdata = apStack.getOnlyStackData(vstackdata['stackid'], msg=False)
+	# otherwise get stack info
+	else:
+		# get stats from stack:
+		sqlcmd = "SELECT " + \
+			"particleNumber, mean, stdev " + \
+			"FROM ApStackParticleData " + \
+			"WHERE `REF|ApStackData|stack` = %i"%(stackid)
+		partdatas = sinedon.directq.complexMysqlQuery('appiondata',sqlcmd)
 	#check only first 100 particles for now
 	#partdatas = partdatas[:500]
 	apFile.removeFile("montage"+str(stackid)+".png")

@@ -13,6 +13,7 @@ from EMAN2 import *
 from sparx import *
 #appion
 import sinedon.directq
+from appionlib import proc2dLib
 from appionlib import appionScript
 from appionlib import apDisplay
 from appionlib import apFile
@@ -113,14 +114,23 @@ class TopologyRepScript(appionScript.AppionScript):
 			apDisplay.printError("run name was not defined")
 		stackdata = apStack.getOnlyStackData(self.params['stackid'], msg=False)
 		stackfile = os.path.join(stackdata['path']['path'], stackdata['name'])
-		if self.params['numpart'] > apFile.numImagesInStack(stackfile):
+		# check for virtual stack
+		self.params['virtualdata'] = None
+		if not os.path.isfile(stackfile):
+			vstackdata = apStack.getVirtualStackParticlesFromId(self.params['stackid'])
+			npart = len(vstackdata['particles'])
+			self.params['virtualdata'] = vstackdata
+		else:
+			npart = apFile.numImagesInStack(stackfile)
+
+		if self.params['numpart'] is None:
+			self.params['numpart'] = npart
+		elif self.params['numpart'] > npart:
 			apDisplay.printError("trying to use more particles "+str(self.params['numpart'])
 				+" than available "+str(apFile.numImagesInStack(stackfile)))
 
 		self.boxsize = apStack.getStackBoxsize(self.params['stackid'])
 		self.workingboxsize = math.floor(self.boxsize/self.params['bin'])
-		if self.params['numpart'] is None:
-			self.params['numpart'] = apFile.numImagesInStack(stackfile)
 		if not self.params['mask']:
 			self.params['mask'] = (self.boxsize/2)-2
 		self.workingmask = math.floor(self.params['mask']/self.params['bin'])
@@ -1044,31 +1054,45 @@ class TopologyRepScript(appionScript.AppionScript):
 		self.stack = {}
 		self.stack['data'] = apStack.getOnlyStackData(self.params['stackid'])
 		self.stack['apix'] = apStack.getStackPixelSizeFromStackId(self.params['stackid'])
-		self.stack['part'] = apStack.getOneParticleFromStackId(self.params['stackid'])
-		self.stack['file'] = os.path.join(self.stack['data']['path']['path'], self.stack['data']['name'])
+		#self.stack['part'] = apStack.getOneParticleFromStackId(self.params['stackid'])
+		if self.params['virtualdata'] is not None:
+			self.stack['file'] = self.params['virtualdata']['filename']
+		else:
+			self.stack['file'] = os.path.join(self.stack['data']['path']['path'], self.stack['data']['name'])
 		self.dumpParameters()
 
 		self.params['canexe'] = self.getCANPath()
 
 		### process stack to local file
 		self.params['localstack'] = os.path.join(self.params['rundir'], self.timestamp+".hed")
-		proccmd = "proc2d "+self.stack['file']+" "+self.params['localstack']+" apix="+str(self.stack['apix'])
-		if self.params['bin'] > 1:
-			proccmd += " shrink=%d edgenorm"%(self.params['bin'])
-		proccmd += " last="+str(self.params['numpart']-1)
-		if self.params['invert'] is True:
-			proccmd += " invert"
-		if self.params['highpass'] is not None and self.params['highpass'] > 1:
-			proccmd += " hp="+str(self.params['highpass'])
+
+		a = proc2dLib.RunProc2d()
+		a.setValue('infile',self.stack['file'])
+		a.setValue('outfile',self.params['localstack'])
+		a.setValue('apix',self.stack['apix']*self.params['bin'])
+		a.setValue('bin',self.params['bin'])
+		a.setValue('last',self.params['numpart']-1)
+		a.setValue('append',False)
+
 		if self.params['lowpass'] is not None and self.params['lowpass'] > 1:
-			proccmd += " lp="+str(self.params['lowpass'])
+			a.setValue('lowpass',self.params['lowpass'])
+		if self.params['highpass'] is not None and self.params['highpass'] > 1:
+			a.setValue('highpass',self.params['highpass'])
+		if self.params['invert'] is True:
+			a.setValue('invert') is True
 		if self.params['premask'] is True and self.params['mramethod'] != 'imagic':
-			proccmd += " mask=%i"%self.params['mask']
+			a.setValue('mask',self.params['mask'])
+
+		if self.params['virtualdata'] is not None:
+			vparts = self.params['virtualdata']['particles']
+			plist = [int(p['particleNumber'])-1 for p in vparts]
+			a.setValue('list',plist)
+
 		if self.params['uploadonly'] is not True:
 			if os.path.isfile(os.path.join(self.params['rundir'],"stack.hed")):
 				self.params['localstack']=os.path.join(self.params['rundir'],"stack.hed")
 			else:
-				apEMAN.executeEmanCmd(proccmd, verbose=True)
+				a.run()
 			if self.params['numpart'] != apFile.numImagesInStack(self.params['localstack']):
 				apDisplay.printError("Missing particles in stack")
 
@@ -1193,8 +1217,9 @@ class TopologyRepScript(appionScript.AppionScript):
 		apFile.removeStack(origstack)
 
 		### save to database
-		self.insertRunIntoDatabase()
-		self.insertParticlesIntoDatabase(partlist, partrefdict)
+		if self.params['commit'] is True:
+			self.insertRunIntoDatabase()
+			self.insertParticlesIntoDatabase(partlist, partrefdict)
 
 #=====================
 if __name__ == "__main__":
