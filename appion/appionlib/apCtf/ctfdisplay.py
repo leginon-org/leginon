@@ -11,7 +11,6 @@ from pyami import ellipse
 from pyami import mrc
 from appionlib import apDatabase
 from appionlib import apDisplay
-#from appionlib import lowess
 from appionlib.apImage import imagefile
 from appionlib.apImage import imagefilter
 from matplotlib import use
@@ -33,7 +32,7 @@ class CtfDisplay(object):
 	def __init__(self):
 		### global params that do NOT change with image
 		self.ringwidth = 1.0
-		self.debug = True
+		self.debug = False
 		self.outerAngstrom1D = 3.0
 		# plotlimit2DAngstrom trims the power spectrum generated
 		#from self.outerAngstrom1D limit for the 2D plot
@@ -51,6 +50,51 @@ class CtfDisplay(object):
 	#====================
 	def funcrad(self, r, rdata=None, zdata=None):
 		return numpy.interp(r, rdata, zdata)
+
+
+	#====================
+	#====================
+	def extremaToIndex(self, requestVal, extremaList, raddata):
+		"""
+		takes a peak or valley point and converts to a raddata index
+		"""
+		extremaIndex = numpy.searchsorted(extremaList, requestVal)
+		extremaIndex = numpy.clip(extremaIndex, 1, len(extremaList)-1)
+		left = extremaList[extremaIndex-1]
+		right = extremaList[extremaIndex]
+		extremaIndex -= requestVal - left < right - requestVal
+		extremaVal = extremaList[int(extremaIndex)]
+
+		trimVal = self.trimfreq*extremaVal
+		index = numpy.searchsorted(raddata, trimVal)
+		index = numpy.clip(index, 1, len(raddata)-1)
+		left = raddata[index-1]
+		right = raddata[index]
+		index -= trimVal - left < right - trimVal
+
+		if self.debug is True:
+			print "extremaToIndex Debug"
+			print "... requestVal = %.8f"%(requestVal)
+			print "... extremaIndex = %d"%(extremaIndex)
+			print "... extremaList[extremaIndex-1] = %.8f"%(extremaList[int(extremaIndex)-1])			
+			print "... extremaVal = extremaList[extremaIndex] = %.8f"%(extremaVal)
+			try:
+				print "... extremaList[extremaIndex+1] = %.8f"%(extremaList[int(extremaIndex)+1])
+			except IndexError:
+				pass
+			#print "... extremaList = ", numpy.around(extremaList, 2)
+			print "... trimFreq = %.8f"%(self.trimfreq)
+			print "... extremaVal*trimFreq = %.4f"%(self.trimfreq*extremaVal)
+			print "... index = %d"%(index)
+			#print "... raddata = ", numpy.around(raddata, 2)
+			print "... raddata[index-1] = %.4f"%(raddata[index-1])			
+			print "... raddata[index] = %.4f"%(raddata[index])
+			try:
+				print "... raddata[index+1] = %.4f"%(raddata[index+1])
+			except IndexError:
+				pass
+			
+		return index
 
 	#====================
 	#====================
@@ -106,16 +150,17 @@ class CtfDisplay(object):
 
 		### split the function up into sections
 		firstvalley = valley[0]
-		firstvalleyindex = numpy.searchsorted(raddata, self.trimfreq*firstvalley)
-		lastvalley = valley[-1]
-		lastvalleyindex = numpy.searchsorted(raddata, self.trimfreq*lastvalley)
-		noiseNumPoints = lastvalleyindex - firstvalleyindex
+		firstvalleyindex = self.extremaToIndex(firstvalley, valley, raddata)
+		noiseNumPoints = len(raddata) - firstvalleyindex
 		# require at least 10 points past first peak of CTF to perform estimation
 		maxSections = int(math.floor(noiseNumPoints/12.))
 		if numSections > maxSections:
 			apDisplay.printWarning("Not enough points (%d) for %d sections, reducing to %d sections"
 				%(noiseNumPoints, numSections, maxSections))
 			numSections = maxSections
+		if numSections < 2:
+			apDisplay.printWarning("Too few points to work with, probably bad defocus estimate")
+			return None
 		minPoints = 4 * numSections
 		if noiseNumPoints < minPoints:
 			apDisplay.printWarning("Not enough points past first peak (n=%d < %d) to do background subtraction"
@@ -129,29 +174,13 @@ class CtfDisplay(object):
 		numParts = self.sectionFactor*numSections + self.overlapFactor
 		for section in range(numSections):
 			partStart = self.sectionFactor*section
+			start = firstvalley + noiseNumPoints*partStart/float(numParts)
+			startIndex = self.extremaToIndex(start, valley, raddata)
+			noiseStartIndexes.append(startIndex)
 			partEnd = partStart + (self.sectionFactor+self.overlapFactor)
-			start = valley[0] + noiseNumPoints*partStart/float(numParts)
-			startIndex = numpy.searchsorted(valley, start)
-			try:
-				start = valley[startIndex]
-			except IndexError:
-				print "Index Error: start: %.1f -> %d"%(start, firstvalleyindex)				
-				start = firstvalleyindex
-				print start, valley[0]
-				print startIndex, len(valley)
-			start = int(math.floor(start))
-			noiseStartIndexes.append(start)
-			end = firstvalleyindex + noiseNumPoints*partEnd/float(numParts)
-			endIndex = numpy.searchsorted(valley, end)
-			try:
-				end = valley[endIndex]
-			except IndexError:
-				print "Index Error: end: %.1f -> %d"%(end, lastvalleyindex)				
-				# fix for going past the last valley
-				end = lastvalleyindex
-			end = int(math.ceil(end))
-			noiseEndIndexes.append(end)
-		#noiseStartIndexes[0] = firstvalleyindex
+			end = firstvalley + noiseNumPoints*partEnd/float(numParts)
+			endIndex = self.extremaToIndex(end, valley, raddata)
+			noiseEndIndexes.append(endIndex)
 		mergeIndexes = copy.copy(noiseStartIndexes)
 		mergeIndexes.extend(noiseEndIndexes)
 		mergeIndexes.sort()
@@ -165,7 +194,7 @@ class CtfDisplay(object):
 
 		#do like a minimum filter
 		fitvalleydata = ctfnoise.peakExtender(raddata, rotdata, valleyradii, "below")
-		fitvalleydata = (rotdata+fitvalleydata)/2.0
+		fitvalleydata = (rotdata+3*fitvalleydata)/4.0
 		fitvalleydata = ndimage.minimum_filter(fitvalleydata, 3)
 
 		### fit function below log(CTF), i.e., noise model	
@@ -259,7 +288,7 @@ class CtfDisplay(object):
 		apDisplay.printColor("PART 3: ENVELOPE NORMALIZATION", "magenta")
 
 		### split the function up into sections
-		firstpeakindex = numpy.searchsorted(raddata, firstpeak*self.trimfreq)+1
+		firstpeakindex = self.extremaToIndex(firstpeak, peak, raddata)
 		fpi = firstpeakindex
 
 		envelopNumPoints = len(raddata) - firstpeakindex
@@ -268,7 +297,7 @@ class CtfDisplay(object):
 		expnormlogrotdata = numpy.exp(normlogrotdata)
 		#do like a maximum filter
 		fitpeakdata = ctfnoise.peakExtender(raddata, expnormlogrotdata, peakradii, "above")
-		fitpeakdata = (fitpeakdata+expnormlogrotdata)/2.0
+		fitpeakdata = (3*fitpeakdata+expnormlogrotdata)/4.0
 		fitpeakdata = ndimage.maximum_filter(fitpeakdata, 3)
 		# for some reason, CtfModel is really slow on numbers too high
 		maxvalue = fitpeakdata[fpi:].max()/10
@@ -282,35 +311,13 @@ class CtfDisplay(object):
 		numParts = self.sectionFactor*numSections + self.overlapFactor
 		for section in range(numSections):
 			partStart = self.sectionFactor*section
-			partEnd = partStart + (self.sectionFactor+self.overlapFactor)		
-			start = peak[1] + envelopNumPoints*partStart/float(numParts)
-			print "Start", start
-			startIndex = numpy.searchsorted(peak, start)
-			try:
-				start = peak[startIndex]
-			except IndexError:
-				print "IndexError"
-				print "start: %.1f -> %d"%(start, firstpeakindex)
-				start = firstpeakindex
-				print start, peak[0]
-				print startIndex, len(peak)
-			start = int(math.floor(start))
-			print "Start", start	
-			envelopStartIndexes.append(start)
-			end = firstpeakindex + envelopNumPoints*partEnd/float(numParts)
-			print "End", end
-			endIndex = numpy.searchsorted(peak, end)
-			try:
-				end = valley[endIndex]
-			except IndexError:
-				# fix for going past the last peak
-				print "IndexError"
-				print "end: %.1f -> %d"%(end, envelopNumPoints)
-				end = envelopNumPoints
-			end = int(math.ceil(end))
-			print "End", end				
-			envelopEndIndexes.append(end)
-		#envelopStartIndexes[0] = firstpeakindex
+			start = firstpeak + envelopNumPoints*partStart/float(numParts)
+			startIndex = self.extremaToIndex(start, peak, raddata)
+			envelopStartIndexes.append(startIndex)
+			partEnd = partStart + (self.sectionFactor+self.overlapFactor)			
+			end = firstpeak + envelopNumPoints*partEnd/float(numParts)
+			endIndex = self.extremaToIndex(end, peak, raddata)
+			envelopEndIndexes.append(endIndex)
 		mergeIndexes = copy.copy(envelopStartIndexes)
 		mergeIndexes.extend(envelopEndIndexes)
 		mergeIndexes.sort()		
@@ -444,11 +451,6 @@ class CtfDisplay(object):
 		self.res50 = ctfres.getResolutionFromConf(confraddata, confdata, limit=0.5)
 		if self.res50 is None:
 			self.res50 = 100.0
-			res50max = min(raddata.max(), 1/10.)
-		elif self.res50 > 15.0:
-			res50max = min(raddata.max(), 1/10.)
-		else:
-			res50max = min(raddata.max(), 1.5/self.res50)
 		self.overres50 = ctfres.getResolutionFromConf(overconfraddata, overconfdata, limit=0.5)
 		if self.overres50 is None:
 			self.overres50 = 100.0
@@ -464,7 +466,10 @@ class CtfDisplay(object):
 		titlefontsize=8
 		axisfontsize=7
 		raddatasq = raddata**2
-
+		## auto set max location
+		maxloc = (self.res80*self.res50*self.outerAngstrom1D)**(-1/3.)
+		maxlocsq = maxloc**2
+		
 		pyplot.clf()
 
 		if self.debug is True:
@@ -480,7 +485,7 @@ class CtfDisplay(object):
 		pyplot.plot(raddata[fpi:], rotdata[fpi:], 
 			'.', color="blue", alpha=0.75, markersize=2.0)
 		pyplot.plot(raddata[fpi:], fitvalleydata[fpi:],
-			'-', color="darkgreen", alpha=0.85, linewidth=1.0)
+			'-', color="darkgreen", alpha=0.25, linewidth=1.0)
 		
 		colorList = ['magenta', 'darkred', 'darkorange', 'darkgoldenrod', 'darkgreen', ]
 		for section in range(numSections):
@@ -492,7 +497,7 @@ class CtfDisplay(object):
 
 		pyplot.plot(raddata[fpi:], noisedata[fpi:], 
 			'--', color="purple", alpha=1.0, linewidth=1)
-		self.setPyPlotXLabels(raddata, valleyradii=valleyradii, maxloc=1.0/self.outerAngstrom1D)
+		self.setPyPlotXLabels(raddata, valleyradii=valleyradii, maxloc=maxloc, square=False)
 		pyplot.ylim(ymin=noisedata.min())
 
 		if self.debug is True:
@@ -508,7 +513,7 @@ class CtfDisplay(object):
 		pyplot.plot(raddata[fpi:], normlogrotdata[fpi:],
 			'.', color="blue", alpha=0.75, markersize=2.0)
 		pyplot.plot(raddata[fpi:], numpy.log(fitpeakdata[fpi:]),
-			'-', color="darkgreen", alpha=0.85, linewidth=1.0)
+			'-', color="darkgreen", alpha=0.25, linewidth=1.0)
 
 
 		for section in range(numSections):
@@ -521,7 +526,7 @@ class CtfDisplay(object):
 		logenvelopdata = numpy.log(envelopdata)
 		pyplot.plot(raddata[fpi:], logenvelopdata[fpi:],
 			'--', color="purple", alpha=1.0, linewidth=1)
-		self.setPyPlotXLabels(raddata, peakradii=peakradii, maxloc=1.0/self.outerAngstrom1D)
+		self.setPyPlotXLabels(raddata, peakradii=peakradii, maxloc=maxloc, square=False)
 		pyplot.ylim(ymax=logenvelopdata.max())
 
 		if self.debug is True:
@@ -541,7 +546,7 @@ class CtfDisplay(object):
 			'-', color="blue", alpha=0.5, linewidth=0.5)
 		pyplot.plot(raddatasq[fpi:], normpeakdata[fpi:],
 			'.', color="blue", alpha=0.75, markersize=2.0)
-		self.setPyPlotXLabels(raddatasq, maxloc=1.0/self.outerAngstrom1D**2, square=True)
+		self.setPyPlotXLabels(raddatasq, maxloc=maxlocsq, square=True)
 		pyplot.grid(True, linestyle=':', )
 		pyplot.ylim(-0.05, 1.05)
 
@@ -562,32 +567,35 @@ class CtfDisplay(object):
 		pyplot.ylim(-0.05, 1.05)
 		"""
 
+		confraddatasq = confraddata**2
 		if self.debug is True:
 			apDisplay.printColor("1d plot part 4", "blue")
 		if 'subplot2grid' in dir(pyplot):
 			pyplot.subplot2grid((3,2), (2,0), colspan=2)
+			pyplot.title(r'Resolution limits: %.2f$\AA$ at 0.8 and %.2f$\AA$ at 0.5'
+				%(self.res80, self.res50), fontsize=titlefontsize)
 		else:
 			pyplot.subplot(2,2,4) # 2 rows, 2 columns, plot 4
-		pyplot.title("Resolution limits: %.2fA at 0.8 and %.2fA at 0.5"
-			%(self.res80, self.res50), fontsize=titlefontsize)
+			pyplot.title('Resolution limits: %.2fA at 0.8 and %.2fA at 0.5'
+				%(self.res80, self.res50), fontsize=titlefontsize)
 		pyplot.ylabel("Correlation", fontsize=titlefontsize)
-		pyplot.plot(raddata[fpi:], ctffitdata[fpi:],
+		pyplot.plot(raddatasq[fpi:], ctffitdata[fpi:],
 			'-', color="black", alpha=0.2, linewidth=1)
-		pyplot.plot(raddata[fpi:], normpeakdata[fpi:],
+		pyplot.plot(raddatasq[fpi:], normpeakdata[fpi:],
 			'-', color="blue", alpha=0.2, linewidth=1)
-		#pyplot.plot(raddata[fpi:], normpeakdata[fpi:],
+		#pyplot.plot(raddatasq[fpi:], normpeakdata[fpi:],
 		#	'.', color="black", alpha=0.25, markersize=1.0)
-		pyplot.axvline(x=1.0/self.res80, linewidth=2, color="gold", alpha=0.95, ymin=0, ymax=0.8)
-		pyplot.axvline(x=1.0/self.res50, linewidth=2, color="red", alpha=0.95, ymin=0, ymax=0.5)
+		pyplot.axvline(x=1.0/self.res80**2, linewidth=2, color="gold", alpha=0.75, ymin=0, ymax=0.8)
+		pyplot.axvline(x=1.0/self.res50**2, linewidth=2, color="red", alpha=0.75, ymin=0, ymax=0.5)
 		res80index = numpy.searchsorted(confraddata, 1.0/self.res80)
-		pyplot.plot(confraddata[:res80index+1], confdata[:res80index+1],
+		pyplot.plot(confraddatasq[:res80index+1], confdata[:res80index+1],
 			'-', color="green", alpha=1, linewidth=2)
 		res50index = numpy.searchsorted(confraddata, 1.0/self.res50)
-		pyplot.plot(confraddata[res80index-1:res50index+1], confdata[res80index-1:res50index+1],
+		pyplot.plot(confraddatasq[res80index-1:res50index+1], confdata[res80index-1:res50index+1],
 			'-', color="orange", alpha=1, linewidth=2)
-		pyplot.plot(confraddata[res50index-1:], confdata[res50index-1:],
+		pyplot.plot(confraddatasq[res50index-1:], confdata[res50index-1:],
 			'-', color="red", alpha=1, linewidth=2)
-		self.setPyPlotXLabels(raddata, maxloc=1.0/self.outerAngstrom1D)
+		self.setPyPlotXLabels(raddatasq, maxloc=maxlocsq, square=True)
 		pyplot.grid(True, linestyle=':', )
 		if self.res80 < 99:
 			pyplot.ylim(-0.05, 1.05)
@@ -661,6 +669,16 @@ class CtfDisplay(object):
 		xstd = xdata.std()/2.
 		pyplot.xlim(xmin=minloc, xmax=maxloc)
 		locs, labels = pyplot.xticks()
+		if square is True:
+			if 'subplot2grid' in dir(pyplot):
+				units = r'$\AA^2$'
+			else:
+				units = r'$\mathregular{A^2}$'
+		else:
+			if 'subplot2grid' in dir(pyplot):
+				units = r'$\AA$'
+			else:
+				units = 'A'
 
 		### assumes that x values are 1/Angstroms^2, which give the best plot
 		newlocs = []
@@ -694,9 +712,9 @@ class CtfDisplay(object):
 			if trueloc > maxloc - xstd:
 				continue
 			if trueres < 10 and (trueres*2)%2 == 1:
-				label = "1/%.1fA"%(trueres)
+				label = r'1/%.1f%s'%(trueres, units)
 			else:
-				label = "1/%dA"%(trueres)
+				label = r'1/%d%s'%(trueres, units)
 			if not label in newlabels:
 				newlabels.append(label)
 				newlocs.append(trueloc)
@@ -712,10 +730,9 @@ class CtfDisplay(object):
 		newlocs.append(maxloc)
 		if square is True:
 			maxres = 1.0/math.sqrt(maxloc)
-			label = "1/%.1fA^2"%(maxres)
 		else:
-			maxres = 1.0/maxloc		
-			label = "1/%.1fA"%(maxres)
+			maxres = 1.0/maxloc			
+		label = "1/%.1f%s"%(maxres, units)
 		newlabels.append(label)
 
 		# set the labels
@@ -723,7 +740,7 @@ class CtfDisplay(object):
 		pyplot.xticks(newlocs, newlabels, fontsize=7)
 
 		if square is True:
-			pyplot.xlabel("Resolution (s^2)", fontsize=9)
+			pyplot.xlabel(r"Resolution ($\mathregular{s^2}$)", fontsize=9)
 		else:
 			pyplot.xlabel("Resolution (s)", fontsize=9)
 		if peakradii is not None:
