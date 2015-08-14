@@ -262,6 +262,7 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		self.gpuid = 0
 		self.keep_stack = True
 		self.save_aligned_stack = True
+		self.setTrimingEdge(0)
 		self.alignparams = {}
 		self.hostname = socket.gethostname().split('.')[0]
 		self.setUseAlternativeChannelReference(False)
