@@ -3,11 +3,9 @@
 #pythonlib
 import os
 import re
-import sys
 import math
 import time
 import shutil
-import cPickle
 import subprocess
 #appion
 from appionlib import apFile
@@ -215,9 +213,7 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 			return
 		### create local link to image
 		if not os.path.exists(inputparams['input']):
-			cmd = "ln -s "+inputparams['orig']+" "+inputparams['input']+"\n"
-			proc = subprocess.Popen(cmd, shell=True)
-			proc.wait()
+			os.symlink(inputparams['orig'], inputparams['input'])
 
 		### make standard input for ctf estimation
 		line1cmd = inputparams['input']+"\n"
