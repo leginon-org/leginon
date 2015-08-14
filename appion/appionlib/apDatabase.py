@@ -579,6 +579,17 @@ def checkMag(imgdata,goodmag):
 		return False
 
 #================
+def getDoseFromImageData(imgdata):
+	''' returns dose, in electrons per Angstrom '''
+	try:
+		dose = imgdata['preset']['dose']
+	except:
+		apDisplay.printWarning("dose not available for this image, try another image")
+		return None
+	return dose / 1e20
+
+
+#================
 def checkInspectDB(imgdata):
 	status = getImgViewerStatus(imgdata)
 	if status is False:
