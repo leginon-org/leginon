@@ -64,6 +64,7 @@ function createAlignSubStackForm($extra=false, $title='subStack.py Launcher', $h
 	if (!$description) $description = $_POST['description'];
 	$runname = ($_POST['runname']) ? $_POST['runname'] : $defrunname;
 	$commitcheck = ($_POST['commit']=='on' || !$_POST['process']) ? 'checked' : '';		
+	$writefilecheck = ($_POST['writefile'] =='on') ? 'checked' : '';
 	$savebadcheck = ($_POST['savebad']=='on') ? 'checked' : '';		
 	$maxshift = $_POST['maxshift'] ? $_POST['maxshift'] : '';
 	$minscore = $_POST['minscore'] ? $_POST['minscore'] : '';
@@ -208,9 +209,11 @@ function createAlignSubStackForm($extra=false, $title='subStack.py Launcher', $h
 	echo "<textarea name='description' rows='2' cols='60'>$description</textarea>\n";
 	echo "<br/>\n";
 	echo "<br/>\n";
-
+	echo "<input type='checkbox' name='writefile' $writefilecheck>\n";
+	echo docpop('writefile','<b>Write file to disk</b>');
+	echo "<br/>\n";
 	echo "<input type='checkbox' name='commit' $commitcheck>\n";
-	echo docpop('commit','<b>Commit stack to database');
+	echo docpop('commit','<b>Commit stack to database</b>');
 	echo "<br/>\n";
 	echo "</td>
   </tr>
@@ -245,6 +248,7 @@ function runSubStack() {
 	$maxshift=$_POST['maxshift'];
 	$minscore=$_POST['minscore'];
 	$description=$_POST['description'];
+	$writefile = $_POST['writefile'];
 
 	/* *******************
 	PART 2: Check for conflicts, if there is an error display the form again
@@ -283,6 +287,7 @@ function runSubStack() {
 		$command.="--max-shift=$maxshift ";
 	if ($savebad=='on')
 		$command .="--save-bad ";
+	$command.= ($writefile=='on') ? "--write-file " : "";
 	$command.= ($commit=='on') ? "--commit " : "--no-commit ";
 
 	/* *******************

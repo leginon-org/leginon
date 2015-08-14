@@ -79,6 +79,7 @@ var help = {
 		'stackparticles2' : 'Existing stack providing the coordinates that will be used for extracting the particles',
 		'stackinv' : 'Density of your extracted particles will be inverted.  Three dimensional reconstruction packages usually require light density on a dark background.  2-D alignment algorithms usually do not.',
 		'stacknorm' : 'normalize each of the particle images',
+		'writefile' : 'If unchecked, a virtual stack is created without generating an actual stack file. Stack can be still be processed in Appion, and stack file can be generated later if necessary',
 		'ctfcorrect' : 'CTF correct the particles. When off particles are untouched, when on particles with have their CTF corrected as determined by the method below.',
 		'ctfcorrectmeth' : 'CTF correct the particles, there are currently four methods available, you can CTF correct the whole image and then box the particles or CTF correct the particles after boxing them. A Wiener filter improves the quality of the particles by both phase flipping and adjusting the amplitudes.',
 		'ctfres' : 'Only micrographs with a CTF resolutions values in the range specified will be used in the creation of the stack. The minimum value is rarely used.',
