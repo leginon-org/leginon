@@ -619,20 +619,23 @@ class CtfDisplay(object):
 			#plotspng.show()
 		pyplot.clf()
 
-		if twod is False:
-			return zdata2d
+		### FIXME
+		#if twod is False:
+		return zdata2d
 
 		### 
 		### PART 8: NORMALIZE THE 2D IMAGE
 		### 
 		apDisplay.printColor("PART 8: NORMALIZE THE 2D IMAGE", "magenta")
 
+		"""
 		print zdata2d.shape
 		print pixelrdata.shape
 		print noisedata.shape
 		print envelopdata.shape
 		print valleydata.shape
 		print peakdata.shape
+		"""
 
 		### Convert 1D array into 2D array by un-elliptical average
 		noise2d = ctftools.unEllipticalAverage(pixelrdata, noisedata,
