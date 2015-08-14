@@ -6,6 +6,7 @@ from appionlib import apProject
 from appionlib import apStack
 from appionlib import apDisplay
 from appionlib import proc2dLib
+from appionlib import apStackMeanPlot
 
 def parseOptions():
 	parser=optparse.OptionParser()
@@ -30,7 +31,8 @@ if __name__=="__main__":
 	apProject.setDBfromProjectId(params['projectid'])
 
 	stackdata = apStack.getOnlyStackData(params['stackid'])
-	fname = os.path.join(stackdata['path']['path'], stackdata['name'])
+	stackpath = stackdata['path']['path']
+	fname = os.path.join(stackpath, stackdata['name'])
 
 	# check if stack file already exists
 	if os.path.isfile(fname):
@@ -45,7 +47,14 @@ if __name__=="__main__":
 	a.setValue('list',plist)
 
 	apDisplay.printMsg("generating stack: '%s' with %i particles"%(fname,len(plist)))
-
 	a.run()
 
+	outavg = os.path.join(stackpath, "average.mrc")
+	if not os.path.isfile(outavg):
+		apDisplay.printMsg("averaging stack for summary web page")
+		apStack.averageStack(stack=fname,outfile=outavg)
+
+	montageimg=os.path.join(stackpath,"montage%i.png"%params['stackid'])
+	if not os.path.isfile(montageimg):
+		apStackMeanPlot.makeStackMeanPlot(params['stackid'],gridpoints=4)
 
