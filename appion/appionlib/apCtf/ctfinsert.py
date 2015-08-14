@@ -67,7 +67,10 @@ def validateAndInsertCTFData(imgdata, ctfvalues, rundata, rundir, fftpath=None, 
 			if debug is True:
 				apDisplay.printMsg("%s :: %s"%(key, ctfvalues[key]))
 		elif debug is True:
-			apDisplay.printMsg("SKIPPING %s :: %s"%(key, ctfvalues[key]))
+			try:
+				apDisplay.printMsg("SKIPPING %s :: %s"%(key, ctfvalues[key]))
+			except KeyError:
+				apDisplay.printMsg("SKIPPING %s "%(key))
 	ctfdb.printCtfData(ctfq)
 	ctfq.insert()
 
@@ -199,6 +202,7 @@ def checkParams(ctfvalues):
 		apDisplay.printWarning(msg)
 		return False
 	if not confirm_degrees and radian_suspects > 5:
+		print "confirm_degrees", confirm_degrees
 		msg = "too many (%d) suspicious angle astigmatisms, likely in radians"%(radian_suspects)
 		apDisplay.printWarning(msg)
 
