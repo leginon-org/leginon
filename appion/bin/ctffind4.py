@@ -28,6 +28,45 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 	"""
 
 	#======================
+	def setupParserOptions(self):
+		self.parser.add_option("--ampcontrast", dest="ampcontrast", type="float", default=0.07,
+			help="ampcontrast, default=0.07", metavar="#")
+		self.parser.add_option("--fieldsize", dest="fieldsize", type="int", default=1024,
+			help="fieldsize, default=1024", metavar="#")
+		self.parser.add_option("--nominal", dest="nominal",
+			help="nominal")
+		self.parser.add_option("--newnominal", dest="newnominal", default=False,
+			action="store_true", help="newnominal")
+		self.parser.add_option("--resmin", dest="resmin", type="float", default=50.0,
+			help="Low resolution end of data to be fitted in Angstroms", metavar="#")
+		self.parser.add_option("--resmax", dest="resmax", type="float", default=15.0,
+			help="High resolution end of data to be fitted in Angstroms", metavar="#")
+		self.parser.add_option("--defstep", dest="defstep", type="float", default=1000.0,
+			help="Step width for grid search in microns", metavar="#")
+		self.parser.add_option("--numstep", dest="numstep", type="int", default=25,
+			help="Number of steps to search in grid", metavar="#")
+		self.parser.add_option("--dast", dest="dast", type="float", default=100.0,
+			help="dAst in microns is used to restrain the amount of astigmatism", metavar="#")
+		## true/false
+		self.parser.add_option("--bestdb", "--best-database", dest="bestdb", default=False,
+			action="store_true", help="Use best amplitude contrast and astig difference from database")
+
+	#======================
+	def checkConflicts(self):
+		if self.params['resmin'] > 50.0:
+			apDisplay.printError("Please choose a higher resolution for resmin must be btw 10 and 50")
+		if self.params['resmin'] < 10.0:
+			apDisplay.printError("Please choose a lower resolution for resmin")
+		if self.params['resmax'] > 15.0 or self.params['resmax'] > self.params['resmin']:
+			apDisplay.printError("Please choose a higher resolution for resmax")
+		if self.params['defstep'] < 0.0001 or self.params['defstep'] > 2.0:
+			apDisplay.printError("Please keep the defstep between 0.0001 & 2 microns")
+		### set cs value
+		self.params['cs'] = apInstrument.getCsValueFromSession(self.getSessionData())
+		return
+
+
+	#======================
 	def setProcessingDirName(self):
 		self.processdirname = "ctf"
 
@@ -118,7 +157,7 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 			beststigdiff = round(abs(ctfvalue['defocus1'] - ctfvalue['defocus2'])*1e10,1)
 		else:
 			bestampcontrast = self.params['ampcontrast']
-			beststigdiff = self.params['dast']
+			beststigdiff = self.params['dast']*10000.
 
 		if ctfvalue is not None and self.params['bestdb'] is True:
 			### set res max from resolution_80_percent
@@ -141,7 +180,7 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 			'resmin': self.params['resmin'],
 			'resmax': self.params['resmax'],
 			
-			'defstep': self.params['defstep'], #round(defocus/32.0, 1),
+			'defstep': self.params['defstep']*10000., #round(defocus/32.0, 1),
 			'expect_astig': beststigdiff,
 			'phase': 'no', # this is a secondary amp contrast term for phase plates
 			'newline': '\n',
@@ -279,54 +318,6 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 		runq.insert()
 		self.ctfrun = runq
 		return True
-
-	#======================
-	def setupParserOptions(self):
-		self.parser.add_option("--ampcontrast", dest="ampcontrast", type="float", default=0.07,
-			help="ampcontrast, default=0.07", metavar="#")
-		self.parser.add_option("--bin", dest="bin", type="int", default=1,
-			help="bin, default=1", metavar="#")
-		self.parser.add_option("--fieldsize", dest="fieldsize", type="int", default=1024,
-			help="fieldsize, default=1024", metavar="#")
-		self.parser.add_option("--nominal", dest="nominal",
-			help="nominal")
-		self.parser.add_option("--newnominal", dest="newnominal", default=False,
-			action="store_true", help="newnominal")
-		self.parser.add_option("--resmin", dest="resmin", type="float", default=50.0,
-			help="Low resolution end of data to be fitted", metavar="#")
-		self.parser.add_option("--resmax", dest="resmax", type="float", default=15.0,
-			help="High resolution end of data to be fitted", metavar="#")
-		self.parser.add_option("--defstep", dest="defstep", type="float", default=1000.0,
-			help="Step width for grid search in Angstroms", metavar="#")
-		self.parser.add_option("--numstep", dest="numstep", type="int", default=25,
-			help="Number of steps to search in grid", metavar="#")
-		self.parser.add_option("--dast", dest="dast", type="float", default=100.0,
-			help="dAst was added to CARD 4 to restrain the amount of astigmatism in \
-				the CTF fit. This makes the fitting procedure more robust, especially \
-				in cases where the Thon rings are not easily visible", metavar="#")
-		self.parser.add_option("--apix_man", dest="apix_man", type="float",
-			help="this option is optional and was added to manually change the pixel size value for \
-				for each micrograph (NOT on the camera), i.e. at the specimen level for the mag. \
-				Currently, this is only needed for Frealign and will replace the database entry",
-				 metavar="#")
-
-		## true/false
-		self.parser.add_option("--bestdb", "--best-database", dest="bestdb", default=False,
-			action="store_true", help="Use best amplitude contrast and astig difference from database")
-
-	#======================
-	def checkConflicts(self):
-		if self.params['resmin'] > 50.0:
-			apDisplay.printError("Please choose a higher resolution for resmin must be btw 10 and 50")
-		if self.params['resmin'] < 10.0:
-			apDisplay.printError("Please choose a lower resolution for resmin")
-		if self.params['resmax'] > 15.0 or self.params['resmax'] > self.params['resmin']:
-			apDisplay.printError("Please choose a higher resolution for resmax")
-		if self.params['defstep'] < 1.0 or self.params['defstep'] > 10000.0:
-			apDisplay.printError("Please keep the defstep between 1 & 10000 Angstroms")
-		### set cs value
-		self.params['cs'] = apInstrument.getCsValueFromSession(self.getSessionData())
-		return
 
 if __name__ == '__main__':
 	imgLoop = ctfEstimateLoop()
