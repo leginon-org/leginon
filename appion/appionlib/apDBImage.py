@@ -59,7 +59,7 @@ def makeAlignedImageData(old_imagedata,new_camdata,new_array,alignlabel='a'):
 		Prepare ImageData to be uploaded after alignment
 		'''
 		label_string = '-%s' % (alignlabel)
-		camdata = new_camdata # new CameraEMData for the aligned image
+		camdata = leginondata.CameraEMData(initializer=new_camdata) # new CameraEMData for the aligned image
 		align_presetdata = leginondata.PresetData(initializer=old_imagedata['preset'])
 		if old_imagedata['preset'] is None:
 			old_name = 'ma'
