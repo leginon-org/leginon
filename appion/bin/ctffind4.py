@@ -202,8 +202,8 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 			bits = sline.split()
 			self.ctfvalues = {
 				'imagenum': int(float(bits[0])),
-				'defocus1':	float(bits[1])*1e-10,
-				'defocus2':	float(bits[2])*1e-10,
+				'defocus2':	float(bits[1])*1e-10,
+				'defocus1':	float(bits[2])*1e-10,
 				'angle_astigmatism':	float(bits[3]),
 				'extra_phase':	float(bits[4]),
 				'amplitude_contrast': inputparams['ampcontrast'],
@@ -233,17 +233,18 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 
 	#======================
 	def commitToDatabase(self, imgdata):
-		self.insertCtfTiltRun(imgdata)
+		self.insertCtfRun(imgdata)
+		print 'ctfrun', self.ctfrun
 		ctfinsert.validateAndInsertCTFData(imgdata, self.ctfvalues, self.ctfrun, self.params['rundir'])
 
 	#======================
-	def insertCtfTiltRun(self, imgdata):
+	def insertCtfRun(self, imgdata):
 		if isinstance(self.ctfrun, appiondata.ApAceRunData):
 			return False
 
 		# first create an aceparam object
 		paramq = appiondata.ApCtfFind4ParamsData()
-		copyparamlist = ('ampcontrast','fieldsize','cs','bestdb','resmin','resmax','defstep','dast')
+		copyparamlist = ('ampcontrast','fieldsize','cs','bestdb','resmin','defstep',)
 		for p in copyparamlist:
 			if p in self.params:
 				paramq[p] = self.params[p]
@@ -257,13 +258,24 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 		runnames = runq.query(results=1)
 
 		if (runnames):
-			self.ctfrun = runnames[0]
+			prevrun = runnames[0]
+			if not (prevrun['ctffind4_params'] == paramq):
+				for i in prevrun['ctffind4_params']:
+					if prevrun['ctffind4_params'][i] != paramq[i]:
+						# float value such as cs of 4.1 is not quite equal
+						if type(paramq[i]) == type(1.0) and abs(prevrun['ctffind4_params'][i]-paramq[i]) < 0.00001:
+							continue
+						apDisplay.printWarning("the value for parameter '"+str(i)+"' is different from before")
+						apDisplay.printError("All parameters for a single CTF estimation run must be identical! \n"+\
+						     "please check your parameter settings.")
+			self.ctfrun = prevrun
 			return False
 
 		#create path
 		runq['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
 		runq['hidden'] = False
 		# if no run entry exists, insert new run entry into db
+		runq['ctffind4_params'] = paramq
 		runq.insert()
 		self.ctfrun = runq
 		return True

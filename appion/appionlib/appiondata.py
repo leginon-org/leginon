@@ -350,6 +350,7 @@ class ApAceRunData(Data):
 			('ctftilt_params', ApCtfTiltParamsData),
 			('xmipp_ctf_params', ApXmippCtfParamsData),
 			('ace2_params', ApAce2ParamsData),
+			('ctffind4_params', ApCtfFind4ParamsData),
 			('session', leginon.leginondata.SessionData),
 			('path', ApPathData),
 			('name', str),
@@ -426,9 +427,7 @@ class ApCtfFind4ParamsData(Data):
 			('fieldsize', int),
 			('cs', float),
 			('resmin', float),
-			('resmax', float),
 			('defstep', float),
-			('dast', float),
 		)
 	typemap = classmethod(typemap)
 

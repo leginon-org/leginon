@@ -296,8 +296,8 @@ class CtfDisplay(object):
 		#convert back to exponential data for fitting...
 		expnormlogrotdata = numpy.exp(normlogrotdata)
 		#do like a maximum filter
-		fitpeakdata = ctfnoise.peakExtender(raddata, expnormlogrotdata, peakradii, "above")
-		fitpeakdata = (3*fitpeakdata+expnormlogrotdata)/4.0
+		peakdata = ctfnoise.peakExtender(raddata, expnormlogrotdata, peakradii, "above")
+		fitpeakdata = (3*peakdata+expnormlogrotdata)/4.0
 		fitpeakdata = ndimage.maximum_filter(fitpeakdata, 3)
 		# for some reason, CtfModel is really slow on numbers too high
 		maxvalue = fitpeakdata[fpi:].max()/10
@@ -467,7 +467,9 @@ class CtfDisplay(object):
 		axisfontsize=7
 		raddatasq = raddata**2
 		## auto set max location
-		maxloc = (self.res80*self.res50*self.outerAngstrom1D)**(-1/3.)
+		showres = (self.res80*self.res50*self.outerAngstrom1D)**(1/3.)
+		showres = (showres*self.res50*self.outerAngstrom1D)**(1/3.)
+		maxloc = 1.0/showres
 		maxlocsq = maxloc**2
 		
 		pyplot.clf()
@@ -624,6 +626,13 @@ class CtfDisplay(object):
 		### PART 8: NORMALIZE THE 2D IMAGE
 		### 
 		apDisplay.printColor("PART 8: NORMALIZE THE 2D IMAGE", "magenta")
+
+		print zdata2d.shape
+		print pixelrdata.shape
+		print noisedata.shape
+		print envelopdata.shape
+		print valleydata.shape
+		print peakdata.shape
 
 		### Convert 1D array into 2D array by un-elliptical average
 		noise2d = ctftools.unEllipticalAverage(pixelrdata, noisedata,
