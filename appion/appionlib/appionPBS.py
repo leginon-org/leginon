@@ -113,6 +113,8 @@ class AppionPBS(appionLoop2.AppionLoop):
 						if finished is True:
 							apDisplay.printMsg('%s finished' % (jobdict['jobname']))
 							results=self.collectResults(jobdict['imgdata'],jobdict['targetdict'])
+							self.commitResultsToDatabase(results, jobdict['imgdata'])
+							
 							self._finish(jobdict['imgdata'],results)
 							if self.params['keepscratch'] is False:
 								self._cleanupScratchDir(jobdict['scratchdir'])
@@ -138,7 +140,8 @@ class AppionPBS(appionLoop2.AppionLoop):
 						print "just printing the command and exiting"
 						sys.exit()
 					self.executeCommand(command)
-					self.collectResults(imgdata)
+					results=self.collectResults(imgdata)
+					self.commitResultsToDatabase(results, imgdata)
 				
 					#finish up stuff
 					self._finish(imgdata)

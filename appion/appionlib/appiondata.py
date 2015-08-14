@@ -717,6 +717,8 @@ class ApDDStackParamsData(Data):
 			('bin', int),
 			('unaligned_ddstackrun', ApDDStackRunData),
 			('stack', ApStackData),
+			('method', str),
+			('de_aligner', ApDEAlignerParamsData),
 		)
 	typemap = classmethod(typemap)
 
@@ -726,6 +728,17 @@ class ApDDAlignImagePairData(Data):
 			('source', leginon.leginondata.AcquisitionImageData),
 			('result', leginon.leginondata.AcquisitionImageData),
 			('ddstackrun', ApDDStackRunData),
+		)
+	typemap = classmethod(typemap)
+
+class ApDEAlignerParamsData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('alignment_correct', bool),
+			('alignment_quanta', int),
+			('radiationdamage_compensate', bool),
+			('radiationdamage_multiplier', float),
+			('output_sumranges', str)
 		)
 	typemap = classmethod(typemap)
 

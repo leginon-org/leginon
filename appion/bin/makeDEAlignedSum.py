@@ -21,6 +21,7 @@ from appionlib import appiondata
 import deProcessFrames
 import glob
 from pyami import mrc
+from appionlib import apDBImage
 
 
 class MakeAlignedSumLoop(appionPBS.AppionPBS):
@@ -232,36 +233,18 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 			command.append('edgenorm')
 			print command
 			subprocess.call(command)
+		
+		img=mrc.read(outnamepath)
+		return img
 	
-		if self.params['hackcopy'] is True:
-			origpath=imgdata['session']['image path']
-			archivecopy=os.path.join(origpath,imgdata['filename']+'.orig.mrc')
-			if os.path.exists(archivecopy) is True:
-				apDisplay.printMsg('archive copy for %s already exists, so skipping archive' % (archivecopy))
-			else:
-				shutil.move(os.path.join(origpath,imgdata['filename']+'.mrc'), archivecopy)
-			shutil.copyfile(outnamepath, os.path.join(origpath,imgdata['filename']+'.mrc'))
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+		#if self.params['hackcopy'] is True:
+		#	origpath=imgdata['session']['image path']
+		#	archivecopy=os.path.join(origpath,imgdata['filename']+'.orig.mrc')
+		#	if os.path.exists(archivecopy) is True:
+		#		apDisplay.printMsg('archive copy for %s already exists, so skipping archive' % (archivecopy))
+		#	else:
+		#		shutil.move(os.path.join(origpath,imgdata['filename']+'.mrc'), archivecopy)
+		#	shutil.copyfile(outnamepath, os.path.join(origpath,imgdata['filename']+'.mrc'))
 
 
 	#=======================
@@ -399,30 +382,37 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 #			apFile.removeFile(self.dd.tempframestackpath)
 
 	def insertFunctionRun(self):
-		pass
 		
-#		if self.params['stackid']:
-#			stackdata = apStack.getOnlyStackData(self.params['stackid'])
-#		else:
-#			stackdata = None
-#		qparams = appiondata.ApDDStackParamsData(preset=self.params['preset'],align=self.params['align'],bin=self.params['bin'],stack=stackdata)
-#		qpath = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
-#		sessiondata = self.getSessionData()
-#		q = appiondata.ApDDStackRunData(runname=self.params['runname'],params=qparams,session=sessiondata,path=qpath)
-#		results = q.query()
-#		if results:
-#			return results[0]
-#		else:
-#			if self.params['commit'] is True:
-#				q.insert()
-#				return q
+		stackdata = None
+		qparams = appiondata.ApDDStackParamsData(preset=self.params['preset'],align=None,bin=None,stack=None, method='de_aligner', )
+		qpath = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
+		sessiondata = self.getSessionData()
+		qdeparams=appiondata.ApDEAlignerParamsData()
+		print qdeparams
+		qdeparams['alignment_correct']=self.params['alignment_correct']
+		qdeparams['alignment_quanta']=self.params['alignment_quanta']
+		qdeparams['radiationdamage_compensate']=self.params['radiationdamage_compensate']
+		qdeparams['radiationdamage_multiplier']=self.params['radiationdamage_multiplier']
+		qdeparams['output_sumranges']=self.params['output_sumranges']
+		qparams['de_aligner']=qdeparams
+		
+		q = appiondata.ApDDStackRunData(runname=self.params['runname'],params=qparams,session=sessiondata,path=qpath)
+		results = q.query()
+		
+		if results:
+			return results[0]
+		else:
+			if self.params['commit'] is True:
+				q.insert()
+				return q
 
-	def commitToDatabase(self,imgdata):
-		pass
-#		if self.aligned_imagedata != None:
-#			apDisplay.printMsg('Uploading aligned image as %s' % self.aligned_imagedata['filename'])
-#			q = appiondata.ApDDAlignImagePairData(source=imgdata,result=self.aligned_imagedata,ddstackrun=self.rundata)
-#			q.insert()
+	def commitToDatabase(self,imgdata,newimage):
+		camdata=imgdata['camera']
+		newimagedata=apDBImage.makeAlignedImageData(imgdata,camdata,newimage)
+		if newimagedata != None:
+			apDisplay.printMsg('Uploading aligned image as %s' % newimagedata['filename'])
+			q = appiondata.ApDDAlignImagePairData(source=imgdata,result=newimagedata,ddstackrun=self.rundata)
+			q.insert()
 
 if __name__ == '__main__':
 	makeSum = MakeAlignedSumLoop()
