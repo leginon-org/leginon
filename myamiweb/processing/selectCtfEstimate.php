@@ -60,7 +60,7 @@ echo "  <img src='img/grigorieff_sq_logo.png' width='96'>\n";
 echo "</td><td>\n";
 echo "  <h3><a href='runCtfEstimate.php?expId=$expId'>CTFFIND v3</a></h3>\n";
 echo " <p>CTFFIND uses a robust grid search algorithm to find the optimal "
-	."CTF parameters. Please see the <a href='http://emlab.rose2.brandeis.edu/ctf'> "
+	."CTF parameters. Please see the <a href='http://grigoriefflab.janelia.org/ctf'> "
 	."Grigorieff lab website</a>&nbsp;<img src='img/external.png'> for more information. "
 	."</p>\n";
 echo "</td></tr>\n";
@@ -95,6 +95,19 @@ echo " <p>Uses the <a href='$simplexUrl'>simplex algorithm</a> to refine the 2d 
 	."</p>\n";
 echo "</td></tr>\n";
 
+/*
+** CTFFIND4
+*/
+
+echo "<tr><td width='100' align='center'>\n";
+echo "  <img src='img/grigorieff_sq_logo.png' width='96'>\n";
+echo "</td><td>\n";
+echo "  <h3><a href='runAppionLoop.php?expId=$expId&form=CtfFind4'>CTFFIND v4</a></h3>\n";
+echo " <p>CTFFIND uses a robust grid search algorithm to find the optimal "
+	."CTF parameters. Please see the <a href='http://grigoriefflab.janelia.org/ctf'> "
+	."Grigorieff lab website</a>&nbsp;<img src='img/external.png'> for more information. "
+	."</p>\n";
+echo "</td></tr>\n";
 
 /*
 ** ACE 1
@@ -163,7 +176,7 @@ if (!HIDE_FEATURE)
 		echo "  <h3><a href='runCtfEstimate.php?expId=$expId&ctftilt=1'>CTFTILT</a></h3>\n";
 		echo " <p>CTFTILT uses the same robust grid search algorithm to find the optimal "
 			."CTF parameters, but also includes estimate of the tilt angle. "
-			."Please see the <a href='http://emlab.rose2.brandeis.edu/ctf'> "
+			."Please see the <a href='http://grigoriefflab.janelia.org/ctf'> "
 			."Grigorieff lab website</a><img src='img/external.png'> for more information. "
 			."</p>\n";
 		echo "</td></tr>\n";
