@@ -588,7 +588,7 @@ setenv SPBIN_DIR ${SPIDERDIR}/bin/''')
 
 		# move the main source code directory to global location, like /usr/local
 		self.writeToLog("--- Moving the Xmipp directory to /usr/local/Xmipp.")
-		os.rename(dirName, "/usr/local/Xmipp")
+		shutil.move(dirName, "/usr/local/Xmipp")
 
 		#
 		# set environment variables
