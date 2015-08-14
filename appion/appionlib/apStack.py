@@ -621,6 +621,12 @@ def getStackPixelSizeFromStackId(stackId, msg=True):
 	return stackapix
 
 #===============
+def getMicrographPixelSizeFromStackId(stackid, msg=True):
+	stackPart = getStackParticlesFromId(stackid, msg=True)[0]
+	pixelsize = apDatabase.getPixelSize(stackPart['particle']['image'])       
+	return pixelsize
+
+#===============
 def getStackBoxsize(stackId, msg=True):
 	"""
 	For a given stack id return stack box size
