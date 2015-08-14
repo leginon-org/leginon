@@ -1152,7 +1152,7 @@ def exclude_classes_from_frealign9_parfiles(inparfilebase, outlist, minocc, *cla
 	inparfilebase is the base name of the parameter file, w/ iteration number, but w/o class number
 	e.g. for parameter file input_20_r1.par, inparfilebase is input_20
 	
-	classlist refers to a list with class numbers (starting with 1), e.g. [0,1,4]
+	classlist refers to a list with class numbers (starting with 1), e.g. [1,4,6]
 
 	outlist is a list containing the particle numbers within the relevant classes (starts with 0)
 	'''
@@ -1511,3 +1511,18 @@ def combine_best_multimodel_parfiles_into_one(outparfile, *parfiles):
 
 	ff.close()
 	return
+
+def frealign9_to_spider(inparfile, outspifile):
+        ### set params
+        params = parseFrealign9ParamFile(inparfile)
+	first = 0
+	last = len(params)
+        of = open(outspifile, "w")
+        for i in range(first, last):
+                rot = float(params[i+1]['phi'])
+                theta = float(params[i+1]['theta'])
+                psi = float(params[i+1]['psi'])
+                shx = float(params[i+1]['shiftx'])
+                shy = float(params[i+1]['shifty'])
+                of.write("%10.3f%10.3f%10.3f%10.3f%10.3f\n" % (rot, theta, psi, shx, shy))
+        of.close()
