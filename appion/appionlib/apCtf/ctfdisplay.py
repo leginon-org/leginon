@@ -724,7 +724,7 @@ class CtfDisplay(object):
 			minres = 1.0/math.sqrt(minloc)
 		else:
 			minres = 1.0/minloc
-		label = "1/%dA"%(minres)
+		label = "1/%d%s"%(minres, units)
 		newlabels.append(label)
 
 		newlocs.append(maxloc)
