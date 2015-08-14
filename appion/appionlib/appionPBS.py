@@ -141,7 +141,7 @@ class AppionPBS(appionLoop2.AppionLoop):
 						sys.exit()
 					self.executeCommand(command)
 					results=self.collectResults(imgdata)
-					self.commitResultsToDatabase(results, imgdata)
+					self.loopCommitToDatabase(results, imgdata)
 				
 					#finish up stuff
 					self._finish(imgdata)

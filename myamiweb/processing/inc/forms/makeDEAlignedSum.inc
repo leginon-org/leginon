@@ -38,7 +38,7 @@ class makeDEAlignedSum extends BasicLayoutForm
 		$pubList = array('appion'); // The publication reference key that you added to publicationList.inc
 		$this->setPublications( $pubList );
 		// Job Type should be unique to Appion. Used in the database to determine the type of job being run.
-		$this->setJobType( 'maskmaker' ); 
+		$this->setJobType( 'dealignedframes' ); 
 		// The name of the folder that all runs of this job type will be stored in.
 		$this->setOutputDirectory( 'framealignment' );  
 		// A portion of the run name that will be common (by default) to all runs of this job type. A unique number is appended to individual run names.
