@@ -20,6 +20,7 @@ from appionlib import apImagicFile
 from appionlib import apProject
 from appionlib import apFourier
 from appionlib import starFile 
+from appionlib import proc2dLib
 from pyami import spider
 import sinedon
 import MySQLdb
@@ -86,9 +87,17 @@ class CL2D(appionScript.AppionScript):
 		if self.params['numpart'] > maxparticles:
 			apDisplay.printError("too many particles requested, max: "
 				+ str(maxparticles) + " requested: " + str(self.params['numpart']))
-		stackdata = apStack.getOnlyStackData(self.params['stackid'], msg=False)
-		stackfile = os.path.join(stackdata['path']['path'], stackdata['name'])
-		if self.params['numpart'] > apFile.numImagesInStack(stackfile):
+		self.stackdata = apStack.getOnlyStackData(self.params['stackid'], msg=False)
+		stackfile = os.path.join(self.stackdata['path']['path'], self.stackdata['name'])
+		# check for virtual stack
+		self.params['virtualdata'] = None
+		if not os.path.isfile(stackfile):
+			vstackdata = apStack.getVirtualStackParticlesFromId(self.params['stackid'])
+			npart = len(vstackdata['particles'])
+			self.params['virtualdata'] = vstackdata
+		else:
+			npart = apFile.numImagesInStack(stackfile)
+		if self.params['numpart'] > npart:
 			apDisplay.printError("trying to use more particles "+str(self.params['numpart'])
 				+" than available "+str(apFile.numImagesInStack(stackfile)))
 
@@ -112,7 +121,6 @@ class CL2D(appionScript.AppionScript):
 			apDisplay.printError("Only the MPI version of CL2D is currently supported, must run with > 1 CPU")
 	#=====================
 	def setRunDir(self):
-		self.stackdata = apStack.getOnlyStackData(self.params['stackid'], msg=False)
 		path = self.stackdata['path']['path']
 		uppath = os.path.abspath(os.path.join(path, "../.."))
 		self.params['rundir'] = os.path.join(uppath, "align", self.params['runname'])
@@ -294,7 +302,7 @@ class CL2D(appionScript.AppionScript):
 		for class_item in class_list[2:]:
 			lines = class_item.splitlines()
 			listOfParticles=[]
-			                         #      0             1           2          3           4        5         6          7            8
+						 #      0	     1	   2	  3	   4	5	 6	  7	    8
 			for line in lines[9:]: #['000001_images', 'loop_', ' _image', ' _enabled', ' _ref', ' _flip', ' _shiftX', ' _shiftY', ' _anglePsi',
 				if not line or line.split()[1] == '-1': continue
 				particleNumber = line.split("@")[0]
@@ -533,11 +541,14 @@ class CL2D(appionScript.AppionScript):
 	def start(self):
 #		self.insertCL2DJob()
 		self.stack = {}
-		self.stack['data'] = apStack.getOnlyStackData(self.params['stackid'])
 		self.stack['apix'] = apStack.getStackPixelSizeFromStackId(self.params['stackid'])
 		self.stack['part'] = apStack.getOneParticleFromStackId(self.params['stackid'])
 		self.stack['boxsize'] = apStack.getStackBoxsize(self.params['stackid'])
-		self.stack['file'] = os.path.join(self.stack['data']['path']['path'], self.stack['data']['name'])
+
+		if self.params['virtualdata'] is not None:
+			self.stack['file'] = self.params['virtualdata']['filename']
+		else:
+			self.stack['file'] = os.path.join(self.stackdata['path']['path'], self.stackdata['name'])
 
 		### process stack to local file
 		if self.params['timestamp'] is None:
@@ -546,18 +557,47 @@ class CL2D(appionScript.AppionScript):
 		self.params['localstack'] = os.path.join(self.params['rundir'], self.params['timestamp']+".hed")
  		if os.path.isfile(self.params['localstack']):
  			apFile.removeStack(self.params['localstack'])
- 		proccmd = "proc2d "+self.stack['file']+" "+self.params['localstack']+" apix="+str(self.stack['apix'])
- 		if self.params['bin'] > 1 or self.params['clipsize'] is not None:
- 			clipsize = int(self.clipsize)*self.params['bin']
- 			if clipsize % 2 == 1:
- 				clipsize += 1 ### making sure that clipped boxsize is even
- 			proccmd += " shrink=%d clip=%d,%d "%(self.params['bin'],clipsize,clipsize)
- 		proccmd += " last="+str(self.params['numpart']-1)
- 		if self.params['highpass'] is not None and self.params['highpass'] > 1:
- 			proccmd += " hp="+str(self.params['highpass'])
- 		if self.params['lowpass'] is not None and self.params['lowpass'] > 1:
- 			proccmd += " lp="+str(self.params['lowpass'])
- 		apParam.runCmd(proccmd, "EMAN", verbose=True)
+
+		a = proc2dLib.RunProc2d()
+		a.setValue('infile',self.stack['file'])
+		a.setValue('outfile',self.params['localstack'])
+		a.setValue('apix',self.stack['apix'])
+		a.setValue('bin',self.params['bin'])
+		a.setValue('last',self.params['numpart']-1)
+
+		if self.params['lowpass'] is not None and self.params['lowpass'] > 1:
+			a.setValue('lowpass',self.params['lowpass'])
+		if self.params['highpass'] is not None and self.params['highpass'] > 1:
+			a.setValue('highpass',self.params['highpass'])
+
+		# clip not yet implemented
+#		if self.params['clipsize'] is not None:
+#			clipsize = int(self.clipsize)*self.params['bin']
+#			if clipsize % 2 == 1:
+#				clipsize += 1 ### making sure that clipped boxsize is even
+#			a.setValue('clip',self.params['clipsize'])
+
+		if self.params['virtualdata'] is not None:
+			vparts = self.params['virtualdata']['particles']
+			plist = [int(p['particleNumber'])-1 for p in vparts]
+			a.setValue('list',plist)
+
+		#run proc2d
+		a.run()
+
+# 		proccmd = "proc2d "+self.stack['file']+" "+self.params['localstack']+" apix="+str(self.stack['apix'])
+#		if self.params['bin'] > 1 or self.params['clipsize'] is not None:
+# 			clipsize = int(self.clipsize)*self.params['bin']
+# 			if clipsize % 2 == 1:
+# 				clipsize += 1 ### making sure that clipped boxsize is even
+# 			proccmd += " shrink=%d clip=%d,%d "%(self.params['bin'],clipsize,clipsize)
+# 		proccmd += " last="+str(self.params['numpart']-1)
+# 		if self.params['highpass'] is not None and self.params['highpass'] > 1:
+# 			proccmd += " hp="+str(self.params['highpass'])
+# 		if self.params['lowpass'] is not None and self.params['lowpass'] > 1:
+# 			proccmd += " lp="+str(self.params['lowpass'])
+# 		apParam.runCmd(proccmd, "EMAN", verbose=True)
+
  		if self.params['numpart'] != apFile.numImagesInStack(self.params['localstack']):
  			apDisplay.printError("Missing particles in stack")
 
