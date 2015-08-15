@@ -112,8 +112,8 @@ class TopologyRepScript(appionScript.AppionScript):
 			apDisplay.printError("a number of ending classes was not provided")
 		if self.params['runname'] is None:
 			apDisplay.printError("run name was not defined")
-		stackdata = apStack.getOnlyStackData(self.params['stackid'], msg=False)
-		stackfile = os.path.join(stackdata['path']['path'], stackdata['name'])
+		self.stackdata = apStack.getOnlyStackData(self.params['stackid'], msg=False)
+		stackfile = os.path.join(self.stackdata['path']['path'], self.stackdata['name'])
 		# check for virtual stack
 		self.params['virtualdata'] = None
 		if not os.path.isfile(stackfile):
@@ -140,7 +140,6 @@ class TopologyRepScript(appionScript.AppionScript):
 
 	#=====================
 	def setRunDir(self):
-		self.stackdata = apStack.getOnlyStackData(self.params['stackid'], msg=False)
 		path = self.stackdata['path']['path']
 		uppath = os.path.abspath(os.path.join(path, "../.."))
 		uppath = string.replace(uppath,"/jetstor/APPION","")
@@ -228,7 +227,7 @@ class TopologyRepScript(appionScript.AppionScript):
 		if not os.path.isfile(refstackfile):
 			apDisplay.printError("could not find reference stack file: "+refstackfile)
 
-		alignstackq['stack'] = apStack.getOnlyStackData(self.params['stackid'])
+		alignstackq['stack'] = self.stackdata
 		alignstackq['boxsize'] = math.floor(self.workingboxsize)
 		alignstackq['pixelsize'] = self.stack['apix']*self.params['bin']
 		alignstackq['description'] = self.params['description']
@@ -1052,13 +1051,11 @@ class TopologyRepScript(appionScript.AppionScript):
 	def start(self):
 		self.insertTopolRepJob()
 		self.stack = {}
-		self.stack['data'] = apStack.getOnlyStackData(self.params['stackid'])
 		self.stack['apix'] = apStack.getStackPixelSizeFromStackId(self.params['stackid'])
-		#self.stack['part'] = apStack.getOneParticleFromStackId(self.params['stackid'])
 		if self.params['virtualdata'] is not None:
 			self.stack['file'] = self.params['virtualdata']['filename']
 		else:
-			self.stack['file'] = os.path.join(self.stack['data']['path']['path'], self.stack['data']['name'])
+			self.stack['file'] = os.path.join(self.stackdata['path']['path'], self.stackdata['name'])
 		self.dumpParameters()
 
 		self.params['canexe'] = self.getCANPath()
@@ -1069,7 +1066,7 @@ class TopologyRepScript(appionScript.AppionScript):
 		a = proc2dLib.RunProc2d()
 		a.setValue('infile',self.stack['file'])
 		a.setValue('outfile',self.params['localstack'])
-		a.setValue('apix',self.stack['apix']*self.params['bin'])
+		a.setValue('apix',self.stack['apix'])
 		a.setValue('bin',self.params['bin'])
 		a.setValue('last',self.params['numpart']-1)
 		a.setValue('append',False)
