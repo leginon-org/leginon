@@ -2571,36 +2571,36 @@ class particledata {
 	}
 
 	function getVirtualStackData($stackid) {
-		$orig_stackid = '';
-		while ($orig_stackid == '') {
+		$orig_stack = '';
+		$working_stackid = $stackid;
+		while ($orig_stack == '') {
 			# get oldstack from current stackid
-			$r = $this->getParentStackId($stackid);
-			$oldstack = $r['parentid'];
-			if (!$oldstack) return;
+			$r = $this->getParentStackId($working_stackid);
+			$oldstackid = $r['parentid'];
+			if (!$oldstackid) return;
 
 			# find out if stackfile exists
-			$stackdata = $this->getStackParams($oldstack);
+			$stackdata = $this->getStackParams($oldstackid);
 			$fname = $stackdata['path']."/".$stackdata['name'];
 			if (file_exists($fname)) {
-				$orig_stackid=$oldstack;
+				$orig_stack=$oldstackid;
 				$q = "SELECT s1.particleNumber "
 					."FROM `ApStackParticleData` as s1 "
 					."LEFT JOIN `ApStackParticleData` as s2 "
 					."ON s1.`REF|ApParticleData|particle`=s2.`REF|ApParticleData|particle` "
 					."WHERE ("
-					."s1.`REF|ApStackData|stack`=$oldstack and "
+					."s1.`REF|ApStackData|stack`=$oldstackid and "
 					."s2.`REF|ApStackData|stack`=$stackid) "
 					."ORDER BY s1.particleNumber";
 				$r = $this->mysql->getSQLResult($q);
 				$parts = array();
 				foreach ($r as $val) {$parts[] = $val['particleNumber'];}
 			}
-			else $stackid = $oldstack;
-
-			return array('stackid'=>$orig_stackid,
-				'filename'=>$fname,
-				'particles'=>$parts);
+			else $working_stackid = $oldstackid;
 		}
+		return array('stackid'=>$orig_stack,
+			'filename'=>$fname,
+			'particles'=>$parts);
 	}
 
 	function getClusterRefNumsFromSubStack ($substackid,$clusterstackid) {

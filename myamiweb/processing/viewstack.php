@@ -47,13 +47,19 @@ $particle = new particledata();
 
 $maxangle = $particle->getMaxTiltAngle($expId);
 
+$virtualfilename = False;
 if (!file_exists($filename) && $stackId){
 	# no file found, see if it's a virtual stack
 	$orig_stackdata = $particle->getVirtualStackData($stackId);
 	if ($orig_stackdata) {
+		$virtualfilename = $filename;
 		$substack = True;
 		$filename = $orig_stackdata['filename'];
-		$subprtls = $orig_stackdata['particles'];
+		$particles = $orig_stackdata['particles'];
+		$numbad = count($particles);
+		for ($i=0;$i<$numbad;$i++) {
+			$subprtls[$i]['p'] = intval($particles[$i])-1;
+		}
 	}	
 }
 
@@ -381,7 +387,8 @@ function showHelicalInfo() {
 </head>
 <body onload='load()'>
 <?
-echo "stack: $file_hed";
+$printfilename = ($virtualfilename) ? $virtualfilename : $file_hed;
+echo "stack: $printfilename";
 echo "<br \>";
 echo "#images: $n_images";
 echo "<br \>";
