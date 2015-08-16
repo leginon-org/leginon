@@ -1076,7 +1076,7 @@ class TopologyRepScript(appionScript.AppionScript):
 		if self.params['highpass'] is not None and self.params['highpass'] > 1:
 			a.setValue('highpass',self.params['highpass'])
 		if self.params['invert'] is True:
-			a.setValue('invert') is True
+			a.setValue('invert',True)
 		if self.params['premask'] is True and self.params['mramethod'] != 'imagic':
 			a.setValue('mask',self.params['mask'])
 
