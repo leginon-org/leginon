@@ -169,7 +169,7 @@ function stacksummarytable($stackid, $mini=false, $tiny=false, $showOptions=True
 	$downloadLink .= "</a></font>)\n";
 	$j.= $downloadLink;
 	## link to list ctf values
-	if ($particle->hasCtfData($expId))
+	if ($particle->hasCtfData($expId) && $showOptions)
 		$j.= "<input class='edit' type='button' onClick='window.open(\"listCTFvalues.php?expId=$expId&sId=$stackid\")' value = 'list per-particle CTF info'>\n";
 
 	## Only allow bake for stacks created from particle selection
@@ -278,7 +278,7 @@ function stacksummarytable($stackid, $mini=false, $tiny=false, $showOptions=True
 		$display_keys['# images used']=$particle->getNumStackImages($stackid);
 		// Get filesize
 		$filesize = getStackSize($stackdata);
-		if (!$filesize) {
+		if (!$filesize && $showOptions) {
 			$missing = True;
 			$fsize = displayFileSize(4*$boxsz*$numpart);
 			$fsize = "Generate Missing File: (".$fsize.")";
