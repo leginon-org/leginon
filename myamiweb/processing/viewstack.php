@@ -47,22 +47,6 @@ $particle = new particledata();
 
 $maxangle = $particle->getMaxTiltAngle($expId);
 
-$virtualfilename = False;
-if (!file_exists($filename) && $stackId){
-	# no file found, see if it's a virtual stack
-	$orig_stackdata = $particle->getVirtualStackData($stackId);
-	if ($orig_stackdata) {
-		$virtualfilename = $filename;
-		$substack = True;
-		$filename = $orig_stackdata['filename'];
-		$particles = $orig_stackdata['particles'];
-		$numbad = count($particles);
-		for ($i=0;$i<$numbad;$i++) {
-			$subprtls[$i]['p'] = intval($particles[$i])-1;
-		}
-	}	
-}
-
 if ($reconId) {
   $stackId=$particle->getStackIdFromReconId($reconId);
 	$stack = $particle->getStackParams($stackId);
@@ -125,12 +109,14 @@ if ($subStackClassesString != "") {
 		
 		if ($clusterIdForSubstack) {
 			$stack=$particle->getRawStackFromCluster($clusterIdForSubstack);
+			$stackId = $stack['DEF_id'];
 			$subprtls=$particle->getSubsetParticlesFromCluster($clusterIdForSubstack, $subStackClasses);
 			for ($i=0;$i<count($subprtls);$i++) {
 				$subprtls[$i]['p'] = intval($subprtls[$i]['p'])-1;
 			}
 		} elseif ($alignIdForSubstack) {
 			$stack=$particle->getRawStackFromAlign($alignIdForSubstack);
+			$stackId = $stack['DEF_id'];
 			$subprtls=$particle->getSubsetParticlesFromAlign($alignIdForSubstack, $subStackClasses);
 			for ($i=0;$i<count($subprtls);$i++) {
 				$subprtls[$i]['p'] = intval($subprtls[$i]['p'])-1;
@@ -141,6 +127,27 @@ if ($subStackClassesString != "") {
 	}
 	
 	$numbad = count($subprtls);
+}
+
+$virtualfilename = False;
+if (!file_exists($filename) && $stackId){
+	# no file found, see if it's a virtual stack
+	$orig_stackdata = $particle->getVirtualStackData($stackId);
+	if ($orig_stackdata) {
+		$virtualfilename = $filename;
+		$substack = True;
+		$filename = $orig_stackdata['filename'];
+		$particles = $orig_stackdata['particles'];
+		# set number if particles in subset if not already set
+		$numbad = ($numbad) ? $numbad : count($particles);
+		# add particles to subset array
+		for ($i=0;$i<$numbad;$i++) {
+			# if showing a subset of a virtual stack:
+			if ($subprtls) $plist[$i]['p'] = intval($particles[$subprtls[$i]['p']])-1;	
+			else $plist[$i]['p'] = intval($particles[$i])-1;
+		}
+		$subprtls = $plist;
+	}	
 }
 
 function getimagicfilenames($file) {
