@@ -32,6 +32,9 @@ if __name__=="__main__":
 
 	stackdata = apStack.getOnlyStackData(params['stackid'])
 	stackpath = stackdata['path']['path']
+	# generate stack if it doesn't exist.
+	if not os.path.isdir(stackpath):
+		os.makedirs(stackpath)
 	fname = os.path.join(stackpath, stackdata['name'])
 
 	# check if stack file already exists
@@ -45,13 +48,13 @@ if __name__=="__main__":
 	a.setValue('infile',vstackdata['filename'])
 	a.setValue('outfile',fname)
 	a.setValue('list',plist)
+	a.setValue('apix',apStack.getStackPixelSizeFromStackId(params['stackid']))
 
 	apDisplay.printMsg("generating stack: '%s' with %i particles"%(fname,len(plist)))
 	a.run()
 
 	outavg = os.path.join(stackpath, "average.mrc")
 	if not os.path.isfile(outavg):
-		apDisplay.printMsg("averaging stack for summary web page")
 		apStack.averageStack(stack=fname,outfile=outavg)
 
 	montageimg=os.path.join(stackpath,"montage%i.png"%params['stackid'])

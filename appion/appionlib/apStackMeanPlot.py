@@ -29,7 +29,8 @@ def makeStackMeanPlot(stackid, gridpoints=16):
 			bin+=1
 	apDisplay.printMsg("binning stack by "+str(bin))
 	stackdata = apStack.getOnlyStackData(stackid, msg=False)
-	stackfile = os.path.join(stackdata['path']['path'], stackdata['name'])
+	stackpath = stackdata['path']['path']
+	stackfile = os.path.join(stackpath, stackdata['name'])
 	# if no stackfile, likely virtual stack
 	if not os.path.isfile(stackfile):
 		apDisplay.printMsg("possible virtual stack, searching for original stack")
@@ -89,7 +90,7 @@ def makeStackMeanPlot(stackid, gridpoints=16):
 	keys.sort()
 	count = 0
 	backs = "\b\b\b\b\b\b\b\b\b\b\b"
-	montagestack = "montage"+str(stackid)+".hed"
+	montagestack = os.path.join(stackpath,"montage"+str(stackid)+".hed")
 	apFile.removeStack(montagestack)
 	mystack = []
 	for key in keys:
@@ -103,7 +104,7 @@ def makeStackMeanPlot(stackid, gridpoints=16):
 	apImagicFile.writeImagic(mystack, montagestack)
 	sys.stderr.write("\n")
 	assemblePngs(keys, str(stackid), montagestack)
-	apDisplay.printMsg("/bin/mv -v montage"+str(stackid)+".??? "+stackdata['path']['path'])
+	apDisplay.printMsg("/bin/mv -v montage"+str(stackid)+".??? "+stackpath)
 	apDisplay.printMsg("finished in "+apDisplay.timeString(time.time()-t0))
 
 #===============
@@ -128,6 +129,9 @@ def averageSubStack(partlist, stackfile, bin=1):
 #===============
 def assemblePngs(keys, tag, montagestack):
 	apDisplay.printMsg("assembling pngs into montage")
+	# get path from montagestack
+	stackpath = os.path.dirname(os.path.abspath(montagestack))
+
 	montagecmd = "montage -geometry +4+4 "
 	montagestackdata = apImagicFile.readImagic(montagestack)
 	for i,key in enumerate(keys):
@@ -140,7 +144,7 @@ def assemblePngs(keys, tag, montagestack):
 		#apEMAN.executeEmanCmd(proccmd, verbose=False, showcmd=False)
 		montagecmd += pngfile+" "
 	apDisplay.printMsg("montaging")
-	montagefile = "montage"+tag+".png"
+	montagefile = os.path.join(stackpath,"montage"+tag+".png")
 	montagecmd += montagefile
 	apEMAN.executeEmanCmd(montagecmd, verbose=True)
 	#rotatecmd = "mogrify -rotate 180 -flop "+montagefile
