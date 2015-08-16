@@ -53,7 +53,9 @@ class CL2D(appionScript.AppionScript):
 			help="Bin images by factor", metavar="#")
 		self.parser.add_option("-N", "--num-part", dest="numpart", type="int",
 			help="Number of particles to use", metavar="#")
-			
+		self.parser.add_option("--invert", default=False,
+			action="store_true", help="Invert before alignment")
+	
 		### CL2D params
 		self.parser.add_option("--max-iter", dest="maxiter", type="int", default=20,
 			help="Number of iterations", metavar="#")
@@ -569,13 +571,15 @@ class CL2D(appionScript.AppionScript):
 			a.setValue('lowpass',self.params['lowpass'])
 		if self.params['highpass'] is not None and self.params['highpass'] > 1:
 			a.setValue('highpass',self.params['highpass'])
+		if self.params['invert'] is True:
+			a.setValue('invert',True)
 
 		# clip not yet implemented
 #		if self.params['clipsize'] is not None:
 #			clipsize = int(self.clipsize)*self.params['bin']
 #			if clipsize % 2 == 1:
 #				clipsize += 1 ### making sure that clipped boxsize is even
-#			a.setValue('clip',self.params['clipsize'])
+#			a.setValue('clip',clipsize)
 
 		if self.params['virtualdata'] is not None:
 			vparts = self.params['virtualdata']['particles']
@@ -584,19 +588,6 @@ class CL2D(appionScript.AppionScript):
 
 		#run proc2d
 		a.run()
-
-# 		proccmd = "proc2d "+self.stack['file']+" "+self.params['localstack']+" apix="+str(self.stack['apix'])
-#		if self.params['bin'] > 1 or self.params['clipsize'] is not None:
-# 			clipsize = int(self.clipsize)*self.params['bin']
-# 			if clipsize % 2 == 1:
-# 				clipsize += 1 ### making sure that clipped boxsize is even
-# 			proccmd += " shrink=%d clip=%d,%d "%(self.params['bin'],clipsize,clipsize)
-# 		proccmd += " last="+str(self.params['numpart']-1)
-# 		if self.params['highpass'] is not None and self.params['highpass'] > 1:
-# 			proccmd += " hp="+str(self.params['highpass'])
-# 		if self.params['lowpass'] is not None and self.params['lowpass'] > 1:
-# 			proccmd += " lp="+str(self.params['lowpass'])
-# 		apParam.runCmd(proccmd, "EMAN", verbose=True)
 
  		if self.params['numpart'] != apFile.numImagesInStack(self.params['localstack']):
  			apDisplay.printError("Missing particles in stack")

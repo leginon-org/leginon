@@ -9,20 +9,21 @@ import shutil
 import glob
 import cPickle
 import subprocess
+import numpy
+from pyami import spider
 #appion
 from appionlib import appionScript
 from appionlib import apDisplay
 from appionlib import apFile
-import numpy
 from appionlib import apTemplate
 from appionlib import apStack
 from appionlib import apParam
 from appionlib import apXmipp
 from appionlib import apImage
-from pyami import spider
 from appionlib import appiondata
 from appionlib import apImagicFile
 from appionlib import apProject
+from appionlib import proc2dLib
 import sinedon
 import MySQLdb
 
@@ -82,6 +83,8 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 
 		self.parser.add_option( "--student", dest="student", default=False,
 			action="store_true", help="Use student's T-distribution instead of Gaussian")
+		self.parser.add_option("--invert", default=False,
+			action="store_true", help="Invert before alignment")
 
 		### choices
 		self.fastmodes = ( "normal", "narrow", "wide" )
@@ -111,9 +114,18 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		if self.params['numpart'] > maxparticles:
 			apDisplay.printError("too many particles requested, max: "
 				+ str(maxparticles) + " requested: " + str(self.params['numpart']))
-		stackdata = apStack.getOnlyStackData(self.params['stackid'], msg=False)
-		stackfile = os.path.join(stackdata['path']['path'], stackdata['name'])
-		if self.params['numpart'] > apFile.numImagesInStack(stackfile):
+		self.stackdata = apStack.getOnlyStackData(self.params['stackid'], msg=False)
+		stackfile = os.path.join(self.stackdata['path']['path'], self.stackdata['name'])
+		# check for virtual stack
+		self.params['virtualdata'] = None
+		if not os.path.isfile(stackfile):
+			vstackdata = apStack.getVirtualStackParticlesFromId(self.params['stackid'])
+			npart = len(vstackdata['particles'])
+			self.params['virtualdata'] = vstackdata
+		else:
+			npart = apFile.numImagesInStack(stackfile)
+
+		if self.params['numpart'] > npart:
 			apDisplay.printError("trying to use more particles "+str(self.params['numpart'])
 				+" than available "+str(apFile.numImagesInStack(stackfile)))
 
@@ -129,7 +141,6 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 
 	#=====================
 	def setRunDir(self):
-		self.stackdata = apStack.getOnlyStackData(self.params['stackid'], msg=False)
 		path = self.stackdata['path']['path']
 		uppath = os.path.abspath(os.path.join(path, "../.."))
 		self.params['rundir'] = os.path.join(uppath, "align", self.params['runname'])
@@ -356,28 +367,56 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 	def start(self):
 		self.insertMaxLikeJob()
 		self.stack = {}
-		self.stack['data'] = apStack.getOnlyStackData(self.params['stackid'])
 		self.stack['apix'] = apStack.getStackPixelSizeFromStackId(self.params['stackid'])
-		self.stack['part'] = apStack.getOneParticleFromStackId(self.params['stackid'])
 		self.stack['boxsize'] = apStack.getStackBoxsize(self.params['stackid'])
-		self.stack['file'] = os.path.join(self.stack['data']['path']['path'], self.stack['data']['name'])
+		self.stack['file'] = os.path.join(self.stackdata['path']['path'], self.stackdata['name'])
+		if self.params['virtualdata'] is not None:
+			self.stack['file'] = self.params['virtualdata']['filename']
+		else:
+			self.stack['file'] = os.path.join(self.stackdata['path']['path'], self.stackdata['name'])
+	
 		self.estimateIterTime()
 		self.dumpParameters()
 
 		### process stack to local file
 		self.params['localstack'] = os.path.join(self.params['rundir'], self.timestamp+".hed")
-		proccmd = "proc2d "+self.stack['file']+" "+self.params['localstack']+" apix="+str(self.stack['apix'])
-		if self.params['bin'] > 1 or self.params['clipsize'] is not None:
-			clipsize = int(self.clipsize)*self.params['bin']
-			if clipsize % 2 == 1:
-				clipsize += 1 ### making sure that clipped boxsize is even
-			proccmd += " shrink=%d clip=%d,%d "%(self.params['bin'],clipsize,clipsize)
-		proccmd += " last="+str(self.params['numpart']-1)
-		if self.params['highpass'] is not None and self.params['highpass'] > 1:
-			proccmd += " hp="+str(self.params['highpass'])
+
+		a = proc2dLib.RunProc2d()
+		a.setValue('infile',self.stack['file'])
+		a.setValue('outfile',self.params['localstack'])
+		a.setValue('apix',self.stack['apix'])
+		a.setValue('bin',self.params['bin'])
+		a.setValue('last',self.params['numpart']-1)
+		a.setValue('append',False)
+
 		if self.params['lowpass'] is not None and self.params['lowpass'] > 1:
-			proccmd += " lp="+str(self.params['lowpass'])
-		apParam.runCmd(proccmd, "EMAN", verbose=True)
+			a.setValue('lowpass',self.params['lowpass'])
+		if self.params['highpass'] is not None and self.params['highpass'] > 1:
+			a.setValue('highpass',self.params['highpass'])
+		if self.params['invert'] is True:
+			a.setValue('invert') is True
+
+		if self.params['virtualdata'] is not None:
+			vparts = self.params['virtualdata']['particles']
+			plist = [int(p['particleNumber'])-1 for p in vparts]
+			a.setValue('list',plist)
+
+
+		# clip not yet implemented
+#		self.params['clipsize'] is not None:
+#			clipsize = int(self.clipsize)*self.params['bin']
+#			if clipsize % 2 == 1:
+#				clipsize += 1 ### making sure that clipped boxsize is even
+#			a.setValue('clip',clipsize)
+
+		if self.params['virtualdata'] is not None:
+			vparts = self.params['virtualdata']['particles']
+			plist = [int(p['particleNumber'])-1 for p in vparts]
+			a.setValue('list',plist)
+
+		#run proc2d
+		a.run()
+
 		if self.params['numpart'] != apFile.numImagesInStack(self.params['localstack']):
 			apDisplay.printError("Missing particles in stack")
 
