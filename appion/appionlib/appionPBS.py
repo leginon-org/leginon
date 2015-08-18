@@ -50,6 +50,7 @@ class AppionPBS(appionLoop2.AppionLoop):
 		self.parser.add_option("--njobs", dest='njobs', type='int', default=1, help='Number of jobs to submit to queue')
 		self.parser.add_option("--handlefiles", dest='handlefiles', type='choice', choices=('direct', 'copy', 'link'), default='direct', help='How to process intermediate files')
 		self.parser.add_option("--dryrun", dest='dryrun', action='store_true', default=False,  help="Create jobs but don't submit")
+		self.parser.add_option("--wrapper", dest='wrapper', type='str', default='', help='wrapper string called before command')
 
 	#=====================
 	def run(self):
@@ -92,7 +93,9 @@ class AppionPBS(appionLoop2.AppionLoop):
 						apDisplay.printMsg('Copying %s data to %s' % (imgdata['filename'], scratchdir))
 						targetdict=self.getTargets(imgdata,scratchdir,handlefiles=self.params['handlefiles'])
 						
-						command=self.generateCommand(imgdata,targetdict)						
+						command=self.generateCommand(imgdata,targetdict)
+						comand=self.insertWrapper(command)
+
 						jobname=self.setupJob(scratchdir, imgdata, command)
 						
 						jobs.append({'jobname':jobname, 'scratchdir': scratchdir,'imgdata':imgdata,'targetdict':targetdict})
@@ -154,6 +157,7 @@ class AppionPBS(appionLoop2.AppionLoop):
 
 	def _setupScratchDir (self,imgdata):
 		scratchpath=os.path.join(self.params['queue_scratch'],imgdata['filename'])
+		apDisplay.printMsg('scratch path set to: %s' % scratchpath)
 		if os.path.exists(scratchpath):
 			apDisplay.printWarning('scratch directory exists and will be overwritten')
 			shutil.rmtree(scratchpath)
@@ -288,6 +292,20 @@ class AppionPBS(appionLoop2.AppionLoop):
 	#	"""
 	#	apDisplay.printError("you did not create a 'copyFiles' function in your script")
 	#	raise NotImplementedError()
+
+	def insertWrapper(self, command):
+		"""
+		prepend in the command list appion or other wrapper that sets
+		the environment for the command.
+		"""
+		#  Would prefer loading module in a separate line, but this 
+		#  is good enough for now.
+		if self.params['wrapper']:
+			fpath = self.params['wrapper']
+			if not os.path.isfile(fpath) and os.access(fpath, os.X_OK):
+				apDisplay.printError('Command wrapper %s not exit or not executable')
+			command.insert(0,self.params['wrapper'])
+		return command
 
 	def commitResults(self):
 		"""
