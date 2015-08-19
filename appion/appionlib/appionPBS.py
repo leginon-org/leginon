@@ -91,20 +91,23 @@ class AppionPBS(appionLoop2.AppionLoop):
 						#process image(s)
 						scratchdir=self._setupScratchDir(imgdata)
 						apDisplay.printMsg('Copying %s data to %s' % (imgdata['filename'], scratchdir))
-						targetdict=self.getTargets(imgdata,scratchdir,handlefiles=self.params['handlefiles'])
+						print self.params['handlefiles']
+						targetdict=self.getTargets(imgdata,scratchdir,self.params['handlefiles'])
 						
 						command=self.generateCommand(imgdata,targetdict)
 						comand=self.insertWrapper(command)
 
+						donefile=self.getDoneFile(targetdict)
+
 						jobname=self.setupJob(scratchdir, imgdata, command)
 						
-						jobs.append({'jobname':jobname, 'scratchdir': scratchdir,'imgdata':imgdata,'targetdict':targetdict})
-						self.launchPBSJob(scratchdir, jobname)
+						jobs.append({'jobname':jobname, 'scratchdir': scratchdir,'imgdata':imgdata,'targetdict':targetdict,'donefile':donefile})
 						
 						print command
 						if self.params['dryrun'] is True:
 							print "setting up only the first job and exiting"
 							sys.exit()
+						self.launchPBSJob(scratchdir, jobname)
 						jobn+=1
 							
 					while len(jobs)>0:
@@ -116,7 +119,7 @@ class AppionPBS(appionLoop2.AppionLoop):
 						if finished is True:
 							apDisplay.printMsg('%s finished' % (jobdict['jobname']))
 							results=self.collectResults(jobdict['imgdata'],jobdict['targetdict'])
-							self.commitResultsToDatabase(results, jobdict['imgdata'])
+							#self.commitResultsToDatabase(jobdict['imgdata'], results)
 							
 							self._finish(jobdict['imgdata'],results)
 							if self.params['keepscratch'] is False:
@@ -144,10 +147,9 @@ class AppionPBS(appionLoop2.AppionLoop):
 						sys.exit()
 					self.executeCommand(command)
 					results=self.collectResults(imgdata)
-					self.loopCommitToDatabase(results, imgdata)
 				
 					#finish up stuff
-					self._finish(imgdata)
+					self._finish(imgdata, results)
 
 			if self.notdone is True:
 				self.notdone = self._waitForMoreImages()
@@ -259,23 +261,27 @@ class AppionPBS(appionLoop2.AppionLoop):
 		os.chdir(cwd)
 	
 	def checkJob(self,jobdict):
-		jobouts=glob.glob(os.path.join(jobdict['scratchdir'],jobdict['jobname']+'*'))
+		print "job",os.path.join(jobdict['scratchdir'],jobdict['jobname'])
+		# wait for donefile to appear
+		apDisplay.printMsg("waiting for %s" % jobdict['donefile'])
+		jobouts=glob.glob(jobdict['donefile'])
 		print jobouts
-		if len(jobouts) > 1:
+		if len(jobouts) > 0:
 			return True
 		else:
 			return False
 
-	def getTargets(self,imgdict):
+	def getTargets(self,imgdata,scratchdir='',handlefiles='direct'):
 		"""
-		this function generates the command that is wrapped by the appion script
-		it must be overwritten by the child class
-		the child function must return a string that is the command
+		this function generates the target location for the command to write to.
+		It must be overwritten by the child class
+		the child function must return a dictionary that is to be passed to generateCommand
+		handlefiles can be 'direct', 'copy' or 'link'
 		"""
 		apDisplay.printError("you did not create a 'getTargets' function in your script")
 		raise NotImplementedError()
 		
-	def generateCommand(self,imgdict):
+	def generateCommand(self,imgdata, targetdict={}):
 		"""
 		this function generates the command that is wrapped by the appion script
 		it must be overwritten by the child class
@@ -283,15 +289,6 @@ class AppionPBS(appionLoop2.AppionLoop):
 		"""
 		apDisplay.printError("you did not create a 'generateCommand' function in your script")
 		raise NotImplementedError()
-
-	#def copyTargets(self, imgdict):
-	#	"""
-	#	this function copies the required files to the PBS scratch directory
-	#	it must be overwritten by the child class
-	#	should return imgdict with necessary modifications for the queued job
-	#	"""
-	#	apDisplay.printError("you did not create a 'copyFiles' function in your script")
-	#	raise NotImplementedError()
 
 	def insertWrapper(self, command):
 		"""
@@ -307,20 +304,28 @@ class AppionPBS(appionLoop2.AppionLoop):
 			command.insert(0,self.params['wrapper'])
 		return command
 
+	def getDoneFile(self,targetdict):
+		"""
+		this function returns the final output of the comand to indicate its
+		completion.  The selection should coordinate with generateCommand
+		"""
+		apDisplay.printError("you did not create a 'getDoneFile' function in your script")
+		raise NotImplementedError()
+
 	def commitResults(self):
 		"""
 		
 		"""
 		pass
 				
-	def collectResults(self, imgdata):
+	def collectResults(self, imgdata, targetdict={}):
 		"""
 		this function is for optional post image processing actions
-		should be overwritten in child objects
+		should be overwritten in child objects.
+		The returned results should be a dictionary of sinedon data instance
+		ready to be inserted with an arbitrary key for identification if printed
 		"""
-		apDisplay.printError("you did not create a 'copyFiles' function in your script")
-		raise NotImplementedError()
-		
+		return {}
 				
 
 		
@@ -331,26 +336,38 @@ class BinLoop(AppionPBS):
 		return
 	def checkConflicts(self):
 		return
-	def collectResults(self, imgdata):
-		return		
+	def collectResults(self, imgdata, targetdict={}):
+		return {}	
+
 	def commitToDatabase(self,imgdata):
 		print 'this is where you would commit stuff'
 		return
 		
-	def generateTargets(self, imgdict, scratchdir):
-		srcpath=os.path.join(imgdict['session']['image path'],imgdict['filename']+'.mrc')
-		shutil.copy(srcpath, scratchdir)
-		return imgdict
+	def getTargets(self, imgdata, scratchdir, handlefiles='direct'):
+		srcpath=os.path.join(imgdata['session']['image path'],imgdata['filename']+'.mrc')
+		scratchpath = os.path.join(scratchdir,imgdata['filename']+'.mrc')
+		if handlefiles == 'direct':
+			scratchpath = srcpath
+		if handlefiles == 'copy':
+			shutil.copy(srcpath, scratchpath)
+		elif handlefiles == 'link':
+			os.symlink(srcpath, scratchpath)
 		
-	def generateCommand(self, imgdict):
+		return {'filepath': scratchpath}
+		
+	def generateCommand(self, imgdata, targetdict):
 		command=[]
 		command.append('proc2d')
-		command.append(imgdict['filename']+'.mrc')
-		command.append(imgdict['filename']+'.b2.mrc')
+		base = os.path.basename(targetdict['filepath'])
+		command.append(targetdict['filepath'])
+		command.append(base+'.b2.mrc')
 		command.append('shrink=2')
 		return command
 
-		
+	def getDoneFile(self,targetdict):
+		dir = os.path.dirname(targetdict['filepath'])
+		base = os.path.basename(targetdict['filepath'])
+		return os.path.join(dir,base+'.b2.mrc')
 	
 
 #=====================
