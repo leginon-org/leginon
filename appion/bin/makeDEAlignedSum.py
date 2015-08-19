@@ -134,6 +134,42 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 			targetdict['outpath']=os.path.join(scratchdir,imgdata['filename'])
 		return targetdict
 
+	def calculateListDifference(self,list1,list2):
+		from sets import Set
+		set1 = Set(list1)
+		set2 = Set(list2)
+		list_diff = list(set1.difference(set2))
+		list_diff.sort()
+		return list_diff
+
+	def getCameraDefects(self, imgdata):
+		"""
+		Set defects for camera in self.params if not entered already.
+		"""
+		corrector_plan = imgdata['corrector plan']
+		cam_size = imgdata['camera']['dimension']
+		border = self.params['border']
+		# map name to de params name and leginon corrector plan name
+		namemap = {'x':('columns','cols'),'y':('rows','rows')}
+
+		if not corrector_plan:
+			return
+		for axis in namemap.keys():
+			de_name = 'defects_%s' % namemap[axis][0]
+			leg_name = 'bad_%s' % namemap[axis][1]
+			exclude_list = []
+			# figure out the defects if not specified already
+			if not self.params[de_name] and corrector_plan[leg_name]:
+				# Do not include a location in defects for DE 
+				# process if in the border because large number
+				# of defect correction is slow.
+				if border:
+					exclude_list = range(0,border)
+					exclude_list.extend(range(cam_size[axis]-border,cam_size[axis]))
+				bad = self.calculateListDifference(corrector_plan[leg_name],exclude_list)
+				self.params[de_name] = ','.join(map((lambda x: '%d' % x),bad))
+		# TODO: need to handle bad pixels, too
+
 	def generateCommand(self, imgdata, targetdict):
 		
 		# need to avoid non-frame saved image for proper caching
@@ -166,13 +202,7 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 		self.params['darkreference_filename']=targetdict['darkref']		
 		darknframes=imgdata['dark']['camera']['nframes']
 		self.params['darkreference_framecount']=darknframes
-		if not self.params['defects_columns'] and imgdata['corrector plan'] and imgdata['corrector plan']['bad_cols']:
-			bad_cols = imgdata['corrector plan']['bad_cols']
-			self.params['defects_columns'] = ','.join(map((lambda x: '%d' % x),bad_cols))
-		if not self.params['defects_rows'] and imgdata['corrector plan'] and imgdata['corrector plan']['bad_rows']:
-			bad_rows = imgdata['corrector plan']['bad_rows']
-			self.params['defects_rows'] = ','.join(map((lambda x: '%d' % x),bad_rows))
-		# TO DO: need to handle bad pixels, too
+		self.getCameraDefects(imgdata)
 
 		self.params['input_framecount']=nframes
 		#self.params['run_verbosity']=3
