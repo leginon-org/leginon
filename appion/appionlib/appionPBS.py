@@ -95,11 +95,11 @@ class AppionPBS(appionLoop2.AppionLoop):
 						targetdict=self.getTargets(imgdata,scratchdir,self.params['handlefiles'])
 						
 						command=self.generateCommand(imgdata,targetdict)
-						comand=self.insertWrapper(command)
+						command=self.insertWrapper(command)
 
-						donefile=self.getDoneFile(targetdict)
+						#donefile=self.getDoneFile(targetdict)
 
-						jobname=self.setupJob(scratchdir, imgdata, command)
+						jobname,donefile=self.setupJob(scratchdir, imgdata, command)
 						
 						jobs.append({'jobname':jobname, 'scratchdir': scratchdir,'imgdata':imgdata,'targetdict':targetdict,'donefile':donefile})
 						
@@ -215,13 +215,23 @@ class AppionPBS(appionLoop2.AppionLoop):
 			apDisplay.printWarning("reached image limit of "+str(self.params['limit'])+"; now stopping")
 	
 	def setupJob(self, scratchdir, imgdata, command):
-		jobname=imgdata['filename']+'.sh'
+		jobname=imgdata['filename']+'.csh'
 		jobpath=os.path.join(scratchdir,jobname)
 		f=open(jobpath,'w')
+		
 		f.write('#!/bin/csh\n')
-		f.write('#%s -l nodes=1:ppn=%d\n' % (self.params['queue_style'], self.params['queue_ppn']))
-		f.write('#%s -l walltime=%d:00:00\n' % (self.params['queue_style'], self.params['walltime']))
-		f.write('#%s -l pmem=%dgb\n\n' % (self.params['queue_style'], self.params['queue_memory']))
+		if self.params['queue_style']=='MOAB' or self.params['queue_style']=='PBS':
+			f.write('#%s -l nodes=1:ppn=%d\n' % (self.params['queue_style'], self.params['queue_ppn']))
+			f.write('#%s -l walltime=%d:00:00\n' % (self.params['queue_style'], self.params['walltime']))
+			f.write('#%s -l pmem=%dgb\n\n' % (self.params['queue_style'], self.params['queue_memory']))
+		elif self.params['queue_style']=='SLURM':
+			f.write('#SBATCH -N 1\n')
+			f.write('#SBATCH -n %d\n' % (self.params['queue_ppn']))
+			f.write('#SBATCH -t %d:00:00\n' % (self.params['walltime']))
+			f.write('#SBATCH --mem-per-cpu=%dG\n\n' % (self.params['queue_memory'])) # in gigabytes
+		else:
+			apDisplay.printError('Queue style %s not supported' % (self.params['queue_style']))
+			
 		f.write('cd %s\n\n' % scratchdir )
 		s=''
 		for arg in command:
@@ -231,10 +241,13 @@ class AppionPBS(appionLoop2.AppionLoop):
 				f.write('%s \\\n' % s )
 				s=' '
 		f.write('%s \n' % s )
-		
+		donefile=imgdata['filename']+'.done'
+		f.write('touch %s\n' % (donefile) )
+		f.write('%s \n' % s )
+
 		f.close()
 		print jobpath
-		return(jobname)
+		return(jobname,donefile)
 
 	#def setupJob(self, command):
 	#	"""
@@ -253,8 +266,17 @@ class AppionPBS(appionLoop2.AppionLoop):
 			command.append('qsub')
 		elif self.params['queue_style']=='MOAB':
 			command.append('msub')
+		elif self.params['queue_style']=='SLURM':
+			command.append('sbatch')
+			
 		if self.params['queue_name'] is not None:
-			command.append('-q %s' % self.params['queue_name'])
+			if self.params['queue_style']=='MOAB' or self.params['queue_style']=='PBS':
+				command.append('-q')
+				command.append(self.params['queue_name'])
+			elif self.params['queue_style']=='SLURM':
+				command.append('-p')
+				command.append(self.params['queue_name'])
+				
 		command.append(jobname)
 		print command
 		subprocess.call(command)
@@ -264,8 +286,7 @@ class AppionPBS(appionLoop2.AppionLoop):
 		print "job",os.path.join(jobdict['scratchdir'],jobdict['jobname'])
 		# wait for donefile to appear
 		apDisplay.printMsg("waiting for %s" % jobdict['donefile'])
-		jobouts=glob.glob(jobdict['donefile'])
-		print jobouts
+		jobouts=glob.glob(os.path.join(jobdict['scratchdir'],jobdict['donefile']))
 		if len(jobouts) > 0:
 			return True
 		else:
@@ -304,14 +325,14 @@ class AppionPBS(appionLoop2.AppionLoop):
 			command.insert(0,self.params['wrapper'])
 		return command
 
-	def getDoneFile(self,targetdict):
-		"""
-		this function returns the final output of the comand to indicate its
-		completion.  The selection should coordinate with generateCommand
-		"""
-		apDisplay.printError("you did not create a 'getDoneFile' function in your script")
-		raise NotImplementedError()
-
+	# def getDoneFile(self,targetdict):
+	# 	"""
+	# 	this function returns the final output of the comand to indicate its
+	# 	completion.  The selection should coordinate with generateCommand
+	# 	"""
+	# 	apDisplay.printError("you did not create a 'getDoneFile' function in your script")
+	# 	raise NotImplementedError()
+	# 
 	def commitResults(self):
 		"""
 		

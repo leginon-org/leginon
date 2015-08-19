@@ -241,8 +241,8 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 		command.append(framespathname)
 		return command
 		
-	def getDoneFile(self,targetdict):
-		return os.path.join(targetdict['outpath'],'*sum_???-???.mrc')
+	# def getDoneFile(self,targetdict):
+	# 	return os.path.join(targetdict['outpath'],'*sum_???-???.mrc')
 
 	def collectResults(self, imgdata,targetdict):
 		"""
