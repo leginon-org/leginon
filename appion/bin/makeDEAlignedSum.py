@@ -23,7 +23,6 @@ import glob
 from pyami import mrc
 from appionlib import apDBImage
 
-
 class MakeAlignedSumLoop(appionPBS.AppionPBS):
 	#=====================
 	def setupParserOptions(self):
@@ -128,11 +127,11 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 			os.symlink(brightref,os.path.join(scratchdir,brightrefname))
 			os.symlink(darkref,os.path.join(scratchdir,darkrefname))
 			os.symlink(framespathname,os.path.join(scratchdir, framesdirname))
+			
 			targetdict['brightref']=os.path.join(scratchdir,brightrefname)
 			targetdict['darkref']=os.path.join(scratchdir,darkrefname)
 			targetdict['framespathname']=os.path.join(scratchdir,framesdirname)
 			targetdict['outpath']=os.path.join(scratchdir,imgdata['filename'])
-		print targetdict
 		return targetdict
 
 	def generateCommand(self, imgdata, targetdict):
@@ -167,7 +166,14 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 		self.params['darkreference_filename']=targetdict['darkref']		
 		darknframes=imgdata['dark']['camera']['nframes']
 		self.params['darkreference_framecount']=darknframes
-		
+		if not self.params['defects_columns'] and imgdata['corrector plan'] and imgdata['corrector plan']['bad_cols']:
+			bad_cols = imgdata['corrector plan']['bad_cols']
+			self.params['defects_columns'] = ','.join(map((lambda x: '%d' % x),bad_cols))
+		if not self.params['defects_rows'] and imgdata['corrector plan'] and imgdata['corrector plan']['bad_rows']:
+			bad_rows = imgdata['corrector plan']['bad_rows']
+			self.params['defects_rows'] = ','.join(map((lambda x: '%d' % x),bad_rows))
+		# TO DO: need to handle bad pixels, too
+
 		self.params['input_framecount']=nframes
 		#self.params['run_verbosity']=3
 		self.params['output_invert']=0
@@ -205,8 +211,14 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 		command.append(framespathname)
 		return command
 		
+	def getDoneFile(self,targetdict):
+		return os.path.join(targetdict['outpath'],'*sum_???-???.mrc')
+
 	def collectResults(self, imgdata,targetdict):
-		
+		"""
+		Overwrite collectResults to do final processing of the
+		queue job result and commit
+		"""
 		#cleanup and reformat image
 		try:
 			innamepath=glob.glob(os.path.join(targetdict['outpath'],'*.mrc'))[0]
@@ -234,8 +246,10 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 			print command
 			subprocess.call(command)
 		
-		img=mrc.read(outnamepath)
-		return img
+		newimg_array = mrc.read(outnamepath)
+		self.commitAlignedImageToDatabase(imgdata,newimg_array)
+		# return None since everything is committed within this function.
+		return None
 	
 		#if self.params['hackcopy'] is True:
 		#	origpath=imgdata['session']['image path']
@@ -246,7 +260,7 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 		#		shutil.move(os.path.join(origpath,imgdata['filename']+'.mrc'), archivecopy)
 		#	shutil.copyfile(outnamepath, os.path.join(origpath,imgdata['filename']+'.mrc'))
 
-
+	'''
 	#=======================
 	def processImage(self, imgdata):
 		# need to avoid non-frame saved image for proper caching
@@ -380,7 +394,7 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 #		# Clean up tempdir in case of failed alignment
 #		if self.dd.framestackpath != self.dd.tempframestackpath:
 #			apFile.removeFile(self.dd.tempframestackpath)
-
+	'''
 	def insertFunctionRun(self):
 		
 		stackdata = None
@@ -406,13 +420,21 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 				q.insert()
 				return q
 
-	def commitToDatabase(self,imgdata,newimage):
+	def commitAlignedImageToDatabase(self,imgdata,newimage):
+		if self.params['commit'] is False:
+			return
 		camdata=imgdata['camera']
 		newimagedata=apDBImage.makeAlignedImageData(imgdata,camdata,newimage)
 		if newimagedata != None:
 			apDisplay.printMsg('Uploading aligned image as %s' % newimagedata['filename'])
 			q = appiondata.ApDDAlignImagePairData(source=imgdata,result=newimagedata,ddstackrun=self.rundata)
 			q.insert()
+
+	def commitToDatabase(self,imgdata):
+		"""
+		This commitToDatabase does nothing. The actual commit is handled in commitAlignedImageToDatabase where the input also include the new image array.
+		"""
+		return
 
 if __name__ == '__main__':
 	makeSum = MakeAlignedSumLoop()
