@@ -44,6 +44,11 @@ class ImageLoader(appionLoop2.AppionLoop):
 		self.parser.add_option("--userid", dest="userid", type="int",
 			help="Leginon User database ID", metavar="INT")
 
+		### redefine preset option to default to upload
+		self.parser.remove_option("--preset")
+		self.parser.add_option("--preset", dest="preset", default='upload',
+			help="Image preset associated with all uploaded images, e.g. --preset=upload", metavar="PRESET")
+
 		self.parser.add_option("--dir", dest="imgdir", type="string", metavar="DIR",
 			help="directory containing MRC files for upload")
 		self.filetypes = ("mrc","dm3","dm2","tif")
@@ -691,7 +696,7 @@ class ImageLoader(appionLoop2.AppionLoop):
 		cameradata = self.makeCameraEMData(info,nframes)
 		presetdata = leginon.leginondata.PresetData(session=self.session,tem=self.temdata,ccdcamera= self.camdata)
 		# PresetData
-		presetdata['name'] = 'upload'
+		presetdata['name'] = self.params['preset']
 		presetdata['magnification'] = info['magnification']
 		# ImageData
 		imgdata = leginon.leginondata.AcquisitionImageData(session=self.session,scope=scopedata,camera=cameradata,preset=presetdata)
