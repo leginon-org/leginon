@@ -85,7 +85,7 @@ class makeDEAlignedSum extends BasicLoopForm
 	// The Left side will just show the stack and model that the user selected
 	// on the previous pages. This overrides the generateAdditionalFormLeft() 
 	// function that is found in the BasicLayoutForm class.
-	public function generateAdditionalFormRight($displayAdvanced=True)
+	public function generateAdditionalFormRight($displayAdvanced=False)
 	{
 		$this->updateFormParams();
 		$params = $this->getFormParams();
