@@ -23,9 +23,9 @@ class makeDEAlignedSum extends BasicLoopForm
 	// The first 2 parameters are needed for the BasicLayoutForm class that this class extends from.  
 	// The rest of the parameters are specific to this form.
 	
-	function __construct( $expId, $extraHTML='', $alignment_correct='1', $radiationdamage_compensate='1', $border='',
-	$hackcopy='', $usequeue='', $queue_style='', $queue_scratch='', $njobs='', $queue_ppn='2',
-	$defects_columns='', $defects_rows='' ) 
+	function __construct( $expId, $extraHTML='', $alignment_correct='1', $alignment_quanta='3', $radiationdamage_compensate='1', $border='',
+	$hackcopy='', $usequeue='', $queue_style='', $queue_scratch='', $njobs='', $queue_ppn='2', $queue_name='', $handlefiles='copy',
+	$defects_columns='', $defects_rows='', $darkreference_transform='', $gainreference_transform='', $output_transform='' ) 
 	{
 		// You must first call the parent class(BasicLayoutForm) constructor. 
 		// Pass it the $expId and $extraHTML variables. Errors and test results are passed through $extraHTML.
@@ -54,7 +54,7 @@ class makeDEAlignedSum extends BasicLoopForm
 		// True to activate "test single image" field of Appion Loop parameters.
 		$this->setTestable( True ); 
 		// The output directory will be created in the Appion run directory rather than Leginon.
-		$this->setUseLegOutDir( True );
+		$this->setUseLegOutDir( False );
 		// Flag to hide the description field of the run parameters. True enables the description field.
 		$this->setShowDesc( True ); 
 		// Flag to use the cluster parameter form rather than the run parameter form.
@@ -70,6 +70,7 @@ class makeDEAlignedSum extends BasicLoopForm
 		// addParam( "key", default_value, "Label that appears in GUI")
 		$params->addParam( "alignment_correct", $alignment_correct, "Align frames" );
 		$params->addParam( "radiationdamage_compensate", $radiationdamage_compensate, "Compensate radiation damage" );
+		$params->addParam( "alignment_quanta", $alignment_quanta, "N frames to average for rolling average (odd)" );
 		$params->addParam( "border", $border, "Border" );
 		$params->addParam( "hackcopy", $hackcopy, "Hackcopy" );
 		$params->addParam( "usequeue", $usequeue, "Use Queue" );
@@ -77,8 +78,13 @@ class makeDEAlignedSum extends BasicLoopForm
 		$params->addParam( "queue_scratch", $queue_scratch, "Queue Scratch" );
 		$params->addParam( "njobs", $njobs, "Number of Jobs" );
 		$params->addParam( "queue_ppn", $queue_ppn, "Queue ppn" );
+		$params->addParam( "queue_name", $queue_name, "Queue name" );
+		$params->addParam( "handlefiles", $handlefiles, "Choice of how to handle frames" );
 		$params->addParam( "defects_columns", $defects_columns, "Defective column numbers" );
 		$params->addParam( "defects_rows", $defects_rows, "Defective row numbers" );
+		$params->addParam( "darkreference_transform", $darkreference_transform, "Transformation of dark reference to frames" );
+		$params->addParam( "gainreference_transform", $gainreference_transform, "Transformation of bright reference to frames" );
+		$params->addParam( "output_transform", $output_transform, "Transformation of final summed image" );
 	}
 	
 	// Generate a form for the parameters that are specific to this program 
@@ -106,13 +112,21 @@ class makeDEAlignedSum extends BasicLoopForm
 		$html.= '<option selected value="1">1</option>';
 		$html.= '<option value="0">0</option>';
 		$html.= '</select>'; $html.= docpop('alignment_correct', ' Radiation Damage Compensation Switch').'<br>';
+
+		$html.= $params->insertTextField( "alignment_quanta", $fieldSize );
 		$html.= $params->insertTextField( "border", $fieldSize );
-		$html.= $params->insertCheckboxField( "hackcopy" );
+		
+		$html.= '<select name="handlefiles" style="width:66px">';
+		$html.= '<option selected value="copy">copy</option>';
+		$html.= '<option value="link">link</option>';
+		$html.= '<option value="direct">direct</option>';
+		$html.= '</select>'; $html.= docpop('handlefiles', ' File handling').'<br>';
 		
 		$html.= $params->insertCheckboxField( "usequeue");
-		$html.= $params->insertTextField( "queue_scratch", $fieldSize );
+		$html.= $params->insertTextField( "queue_scratch", 35 );
 		$html.= $params->insertTextField( "njobs", $fieldSize );
 		$html.= $params->insertTextField( "queue_ppn", $fieldSize );
+		$html.= $params->insertTextField( "queue_name", $fieldSize );
 		
 		$html.= '<select name="queue_style" style="width:66px">';
 		$html.= '<option selected value="PBS">PBS</option>';
@@ -131,6 +145,11 @@ class makeDEAlignedSum extends BasicLoopForm
 		}
 			$html.= $params->insertTextField( "defects_columns", $fieldSize );
 			$html.= $params->insertTextField( "defects_rows", $fieldSize );
+			$html.= $params->insertCheckboxField( "hackcopy" );
+			$html.= $params->insertTextField( "darkreference_transform", $fieldSize );
+			$html.= $params->insertTextField( "gainreference_transform", $fieldSize );
+			$html.= $params->insertTextField( "output_transform", $fieldSize );
+
 		//
 		// ENDING ADVANCED SECTION
 		//
