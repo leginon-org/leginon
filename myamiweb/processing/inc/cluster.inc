@@ -44,7 +44,8 @@ class Cluster
 		global $PROCESSING_HOSTS;
 		$appionPathAddon = 0; // This represents the number of path levels of the leginon path to an image to add to the appion path?
 		if (defined('APPION_PARENT_ADDITION') && APPION_PARENT_ADDITION !=0) $appionPathAddon = APPION_PARENT_ADDITION;
-		
+
+		if ( empty($PROCESSING_HOSTS) ) return;		
 		foreach ( $PROCESSING_HOSTS as $hostconfig ) {
 			// We have an issue with machines that have multiple host names.
 			// as a quick fix, we added an 'alias' field in the 
