@@ -222,7 +222,7 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 		for key in keys:
 			param=self.params[key]
 			#print key, param, type(param)
-			if param == None or param=='':
+			if param == None or param=='' or key=='description':
 				pass
 			else:
 				option='--%s=%s' % (key,param)
