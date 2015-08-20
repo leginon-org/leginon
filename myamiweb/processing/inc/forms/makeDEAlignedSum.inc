@@ -13,9 +13,9 @@
 // --modelid=19 --mass=3800 --apix=2.74 --box=160 --numberOfReferences=1 --numiter=1 --timestamp=11jul18z 
 // --symid=25
 
-require_once "basicLayoutForm.inc"; //includes the BasicLayoutForm class that this class extends
+require_once "basicLoopForm.inc";
 
-class makeDEAlignedSum extends BasicLayoutForm
+class makeDEAlignedSum extends BasicLoopForm
 {
 	
 	// This is the constructor function. It is called as soon as this class is 
@@ -81,11 +81,11 @@ class makeDEAlignedSum extends BasicLayoutForm
 		$params->addParam( "defects_rows", $defects_rows, "Defective row numbers" );
 	}
 	
-		// Generate a form for the parameters that are specific to this program 
+	// Generate a form for the parameters that are specific to this program 
 	// The Left side will just show the stack and model that the user selected
 	// on the previous pages. This overrides the generateAdditionalFormLeft() 
 	// function that is found in the BasicLayoutForm class.
-	public function generateAdditionalFormLeft()
+	public function generateAdditionalFormRight($displayAdvanced=True)
 	{
 		$this->updateFormParams();
 		$params = $this->getFormParams();
@@ -108,8 +108,6 @@ class makeDEAlignedSum extends BasicLayoutForm
 		$html.= '</select>'; $html.= docpop('alignment_correct', ' Radiation Damage Compensation Switch').'<br>';
 		$html.= $params->insertTextField( "border", $fieldSize );
 		$html.= $params->insertCheckboxField( "hackcopy" );
-		$html.= $params->insertTextField( "defects_columns", $fieldSize );
-		$html.= $params->insertTextField( "defects_rows", $fieldSize );
 		
 		$html.= $params->insertCheckboxField( "usequeue");
 		$html.= $params->insertTextField( "queue_scratch", $fieldSize );
@@ -122,8 +120,20 @@ class makeDEAlignedSum extends BasicLayoutForm
 		$html.= '<option value="SLURM">SLURM</option>';
 		$html.= '</select>'; $html.= docpop('queue_style', ' Queue Style').'<br>';
 		
-		
-		
+		//
+		// STARTING ADVANCED SECTION
+		//
+		if ( !$displayAdvanced ) {
+			// The javascript toggle makes what is within <div > show up
+			$html.= "<a id='Advanced_DEAlign_Options_toggle' href='javascript:toggle(\"Advanced_DEAlign_Options\");' style='color:blue'>";
+			$html.= "Show Advanced Options</a><br/>\n";
+			$html.= "<div id='Advanced_DEAlign_Options' style='display: none'>\n";
+		}
+			$html.= $params->insertTextField( "defects_columns", $fieldSize );
+			$html.= $params->insertTextField( "defects_rows", $fieldSize );
+		//
+		// ENDING ADVANCED SECTION
+		//
 		return $html;
 	}	
 
