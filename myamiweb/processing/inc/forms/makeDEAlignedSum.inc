@@ -24,7 +24,7 @@ class makeDEAlignedSum extends BasicLoopForm
 	// The rest of the parameters are specific to this form.
 	
 	function __construct( $expId, $extraHTML='', $alignment_correct='1', $alignment_quanta='3', $radiationdamage_compensate='1', $border='',
-	$hackcopy='', $usequeue='', $queue_style='', $queue_scratch='', $njobs='', $queue_ppn='2', $queue_name='', $handlefiles='copy',
+	$hackcopy='', $usequeue='', $queue_style='', $queue_scratch='', $njobs='', $queue_ppn='2', $queue_name='', $queue_memory='4', $handlefiles='copy',
 	$defects_columns='', $defects_rows='', $darkreference_transform='', $gainreference_transform='', $output_transform='', $wrapper='' ) 
 	{
 		// You must first call the parent class(BasicLayoutForm) constructor. 
@@ -87,6 +87,7 @@ class makeDEAlignedSum extends BasicLoopForm
 		$params->addParam( "queue_scratch", $queue_scratch, "Queue Scratch" );
 		$params->addParam( "njobs", $njobs, "Number of Jobs" );
 		$params->addParam( "queue_ppn", $queue_ppn, "Queue ppn" );
+		$params->addParam( "queue_memory", $queue_memory, "Queue memory" );
 		$params->addParam( "queue_name", $queue_name, "Queue name" );
 		$params->addParam( "handlefiles", $handlefiles, "File handling" );
 		$params->addParam( "defects_columns", $defects_columns, "Defective column numbers" );
@@ -124,6 +125,7 @@ class makeDEAlignedSum extends BasicLoopForm
 		$html.= $params->insertTextField( "queue_scratch", 35 );
 		$html.= $params->insertTextField( "njobs", $fieldSize );
 		$html.= $params->insertTextField( "queue_ppn", $fieldSize );
+		$html.= $params->insertTextField( "queue_memory", $fieldSize );
 		$html.= $params->insertTextField( "queue_name", $fieldSize );
 		$html.= $params->insertSelectField( "queue_style", $this->queue_styleList );
 		
