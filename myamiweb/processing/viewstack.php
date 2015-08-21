@@ -128,7 +128,6 @@ if ($subStackClassesString != "") {
 	
 	$numbad = count($subprtls);
 }
-
 $virtualfilename = False;
 if (!file_exists($filename) && $stackId){
 	# no file found, see if it's a virtual stack
@@ -149,7 +148,6 @@ if (!file_exists($filename) && $stackId){
 		$subprtls = $plist;
 	}	
 }
-
 function getimagicfilenames($file) {
 	$file = substr($file, 0, -3);
 	$file_hed = $file."hed";

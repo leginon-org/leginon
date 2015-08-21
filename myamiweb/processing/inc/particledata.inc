@@ -5066,7 +5066,7 @@ class particledata {
 			. " LEFT JOIN ApStackParticleData aspd ON ( aapd.`REF|ApStackParticleData|stackpart` = aspd.`DEF_id`) "
 			. " LEFT JOIN ApStackData asd ON ( aspd.`REF|ApStackData|stack` = asd.`DEF_id`) "
 			. " LEFT JOIN `ApPathData` path ON ( asd.`REF|ApPathData|path` = path.`DEF_id`) "
-			. " WHERE acpd.`REF|ApClusteringStackData|clusterstack` = '$clusterStackId' ";
+			. " WHERE acpd.`REF|ApClusteringStackData|clusterstack` = '$clusterStackId'  LIMIT 1";
 		$r = $this->mysql->getSQLResult($q);
 		return $r[0];
 	}
@@ -5077,7 +5077,7 @@ class particledata {
 			. " LEFT JOIN ApStackParticleData aspd ON ( aapd.`REF|ApStackParticleData|stackpart` = aspd.`DEF_id`) "
 			. " LEFT JOIN ApStackData asd ON ( aspd.`REF|ApStackData|stack` = asd.`DEF_id`) "
 			. " LEFT JOIN `ApPathData` path ON ( asd.`REF|ApPathData|path` = path.`DEF_id`) "
-			. " WHERE aapd.`REF|ApAlignStackData|alignstack` = '$alignStackId' ";
+			. " WHERE aapd.`REF|ApAlignStackData|alignstack` = '$alignStackId' LIMIT 1";
 		$r = $this->mysql->getSQLResult($q);
 		return $r[0];
 	}
@@ -5088,7 +5088,7 @@ class particledata {
 			. " LEFT JOIN ApAlignParticleData aapd ON ( acpd.`REF|ApAlignParticleData|alignparticle` = aapd.`DEF_id` ) "
 			. " LEFT JOIN ApAlignStackData aasd ON ( aapd.`REF|ApAlignStackData|alignstack` = aasd.`DEF_id`) "
 			. " LEFT JOIN `ApPathData` path ON ( aasd.`REF|ApPathData|path` = path.`DEF_id`) "
-			. " WHERE acpd.`REF|ApClusteringStackData|clusterstack` = '$clusterStackId' ";
+			. " WHERE acpd.`REF|ApClusteringStackData|clusterstack` = '$clusterStackId' LIMIT 1";
 		$r = $this->mysql->getSQLResult($q);
 		return $r[0];
 	}
@@ -5098,7 +5098,7 @@ class particledata {
 			. " FROM ApAlignParticleData aapd "
 			. " LEFT JOIN ApAlignStackData aasd ON ( aapd.`REF|ApAlignStackData|alignstack` = aasd.`DEF_id`) "
 			. " LEFT JOIN `ApPathData` path ON ( aasd.`REF|ApPathData|path` = path.`DEF_id`) "
-			. " WHERE aapd.`REF|ApAlignStackData|alignstack` = '$alignStackId' ";
+			. " WHERE aapd.`REF|ApAlignStackData|alignstack` = '$alignStackId' LIMIT 1";
 		$r = $this->mysql->getSQLResult($q);
 		return $r[0];
 	}
