@@ -24,10 +24,10 @@ class stackPolisherScript(appionScript.AppionScript):
 	#=====================
 	def setupParserOptions(self):
 #		super(stackPolisher,self).setupParserOptions()
-		self.parser.set_usage("Usage: %prog --stack-id=ID [options]")
+		self.parser.set_usage("Usage: %prog --stackid=ID [options]")
 
 		# appion stack & ddstack ids
-		self.parser.add_option("-s", "--stack-id", dest="stackid", type="int",
+		self.parser.add_option("-s", "--stackid", dest="stackid", type="int",
 			help="Stack database id", metavar="ID")
 		self.parser.add_option("--ddstackid", dest="ddstackid", type="int",
 			help="ID for ddstack run to make aligned & polished stack (required)", metavar="INT")
@@ -70,6 +70,8 @@ class stackPolisherScript(appionScript.AppionScript):
 			help="", metavar="")
 		self.parser.add_option("--bfactor", dest="bfactor", type=int, default=2000,
 			help="", metavar="")
+		self.parser.add_option("--total_dose", dest="total_dose", type=float, 
+			help="Total dose for all frames, if value not saved in database (optional)", metavar="")
 #		self.parser.add_option("", dest="", type="", default="",
 #			help="", metavar="")
 
@@ -125,7 +127,13 @@ class stackPolisherScript(appionScript.AppionScript):
 		self.params['kv'] = qimage['scope']['high tension']/1000.0
 
 		# query exposure per frame, if not set here
-		dose = apDatabase.getDoseFromImageData(qimage)
+		if self.params['total_dose'] is not None:
+			dose = self.params['total_dose']
+		else:
+			try:
+				dose = apDatabase.getDoseFromImageData(qimage)
+			except:
+				apDisplay.printError("dose not specified and not in database, please specify explicitly")
 		if self.params['expperframe'] is None and self.params['expweight'] is True:
 			if dose is not None:
 				self.params['expperframe'] = dose / nframes
@@ -221,7 +229,7 @@ class stackPolisherScript(appionScript.AppionScript):
 		f.write("$particlepath\n")
 		f.write("$lmbfgsflag\n")
 		f.write("$vecext\n")
-		f.write("$lmbfgsflag\n")
+		f.write("$lmbfgsext\n")
 		f.write("eot")
 
 
@@ -274,7 +282,10 @@ class stackPolisherScript(appionScript.AppionScript):
 				# write new movie to file
 				ddstackfile = os.path.join("movies", orig_dd_file+"_st.mrc")
 				if not os.path.exists(ddstackfile):
-					apDisplay.printError("DD stack not found, cannot run polisher, check your inputs")
+					error = "DD stack %s_st.mrc not found, cannot run polisher, check your inputs " % orig_dd_file
+					error+= "and make sure micrographs are not hidden. May need to rerun ddstack maker "
+					error+= "and remove option --no-rejects to reprocess all micrographs. "
+					apDisplay.printError(error)
 				moviefile.write("%s\n" % ddstackfile)
 
 				# write split inputs
