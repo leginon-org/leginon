@@ -320,7 +320,7 @@ function processing_header($title,$heading=false,$headerstuff=false,$pleaseWait=
 	$html.= "<ul>\n";
 	$html.= "<div style='float: right; padding-right:10px;'>\n";
 	$html.= "<li><a href='procsummary.php?expId=$expId'>[Appion Stats]</a></li>\n";
-	$html.= "<li><font size=+1><b><a href='$guideURL'>[User Guide]</a></b></font></li>\n";
+	$html.= "<li><font size=+1><b><a target='_blank' href='$guideURL'>[User Guide]</a></b></font></li>\n";
 	$html.= "</div>\n";
 	$html.= "<li><b>Project:</font></b> ".$proj_link."</li>\n";
 	if ($session_link) $html.= "<li><b>Session:</b> ".$session_link."</li>\n";
