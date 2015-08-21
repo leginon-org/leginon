@@ -541,6 +541,13 @@ function getNumberOfRequiredNodes($nproc, $ppn)
 //*****************************************************************************
 function addAppionWrapper($command, $processhost=false) 
 {
+		$wrapper = getAppionWrapper($processhost);
+		if ($wrapper) $command = $wrapper." ".$command;
+		return $command;
+}
+
+function getAppionWrapper($processhost=false) 
+{
 	if ( USE_APPION_WRAPPER ) {
 		if ($processhost === false) {
 			$processhost = getSelectedProcessingHost();
@@ -548,9 +555,8 @@ function addAppionWrapper($command, $processhost=false)
 		$cluster = new Cluster( $processhost );
 		$wrapper = $cluster->getWrapperPath();
 		$wrapper = $wrapper ? $wrapper : APPION_WRAPPER_PATH;
-		$command = $wrapper." ".$command;
 	}
-	return $command;
+	return $wrapper;
 }
 
 
