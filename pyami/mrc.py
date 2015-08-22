@@ -650,7 +650,7 @@ def substackFromMRCStack(mrcstack, outfile, listfile):
 	i = 0
 	for loc in locs:
 		if i == 0:
-			a = read(mrcstack, zslice=0)
+			a = read(mrcstack, zslice=loc)
 			write(a, outfile)
 		else:
 			a = read(mrcstack, zslice=loc)
