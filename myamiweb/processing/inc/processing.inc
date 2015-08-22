@@ -1038,9 +1038,8 @@ function writeTestResults($jpg,$ccclist,$bin,$process_str='')
 				$file_time = filemtime($jpg);
 				$mod_time = abs($start_time - $file_time);
   			}
-
-			$curr_wait_time = time() - $start_time;	
-
+		$curr_wait_time = time() - $start_time;	
+		if ($curr_wait_time > 60) break;
 		} while ( (($fileExists===false) && ($curr_wait_time < $max_time )) || (($fileExists===true) && ($mod_time > $max_mod_time)) );
 	}
   
