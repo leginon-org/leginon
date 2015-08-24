@@ -138,7 +138,10 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 
 		#get Defocus in Angstroms
 		self.ctfvalues = {}
-		nominal = abs(imgdata['scope']['defocus']*-1.0e10)
+		if self.params['nominal'] is not None:
+			nominal = abs(self.params['nominal']*1e4)
+		else:
+			nominal = abs(imgdata['scope']['defocus']*-1.0e10)
 		ctfvalue = ctfdb.getBestCtfByResolution(imgdata)
 		if ctfvalue is not None:
 			"""
@@ -151,6 +154,7 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 			bestdef = min(ctfvalue['defocus1'],ctfvalue['defocus2'])*1.0e10
 		else:
 			bestdef = nominal
+	
 		if ctfvalue is not None and self.params['bestdb'] is True:
 			bestampcontrast = round(ctfvalue['amplitude_contrast'],3)
 			beststigdiff = round(abs(ctfvalue['defocus1'] - ctfvalue['defocus2'])*1e10,1)
@@ -398,8 +402,8 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 			help="fieldsize, default=256", metavar="#")
 		self.parser.add_option("--medium", dest="medium", default="carbon",
 			help="sample medium, default=carbon", metavar="MEDIUM")
-		self.parser.add_option("--nominal", dest="nominal",
-			help="nominal")
+		self.parser.add_option("--nominal", dest="nominal", type="float",
+			help="nominal (in microns, absolute value)")
 		self.parser.add_option("--newnominal", dest="newnominal", default=False,
 			action="store_true", help="newnominal")
 		self.parser.add_option("--resmin", dest="resmin", type="float", default=50.0,
