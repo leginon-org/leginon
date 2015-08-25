@@ -134,7 +134,7 @@ def rotationalAverage(image, ringwidth=3.0, innercutradius=None, full=False, med
 	xdataint = numpy.unique(radial)
 	if full is False:
 		### trims any edge artifacts from rotational average
-		outercutsize = (shape[0]/2-2)/ringwidth
+		outercutsize = int((shape[0]/2-2)/ringwidth)
 		if debug is True:
 			apDisplay.printMsg("Num X points %d, Half image size %d, Trim size %d, Ringwidth %.2f, Percent trim %.1f"
 				%(xdataint.shape[0], shape[0]/2-2, outercutsize, ringwidth, 100.*outercutsize/float(xdataint.shape[0])))

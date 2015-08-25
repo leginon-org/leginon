@@ -180,7 +180,13 @@ class CtfDisplay(object):
 			partEnd = partStart + (self.sectionFactor+self.overlapFactor)
 			end = firstvalley + noiseNumPoints*partEnd/float(numParts)
 			endIndex = self.extremaToIndex(end, valley, raddata)
+			if endIndex - startIndex < 4:
+				apDisplay.printWarning("Not enough points (%d) in section %d to do background subtraction"
+					%(endIndex - startIndex, section))
+				return None
+			noiseStartIndexes.append(startIndex)
 			noiseEndIndexes.append(endIndex)
+			
 		mergeIndexes = copy.copy(noiseStartIndexes)
 		mergeIndexes.extend(noiseEndIndexes)
 		mergeIndexes.sort()
@@ -313,10 +319,14 @@ class CtfDisplay(object):
 			partStart = self.sectionFactor*section
 			start = firstpeak + envelopNumPoints*partStart/float(numParts)
 			startIndex = self.extremaToIndex(start, peak, raddata)
-			envelopStartIndexes.append(startIndex)
 			partEnd = partStart + (self.sectionFactor+self.overlapFactor)			
 			end = firstpeak + envelopNumPoints*partEnd/float(numParts)
 			endIndex = self.extremaToIndex(end, peak, raddata)
+			if endIndex - startIndex < 4:
+				apDisplay.printWarning("Not enough points (%d) in section %d to do background subtraction"
+					%(endIndex - startIndex, section))
+				return None
+			envelopStartIndexes.append(startIndex)
 			envelopEndIndexes.append(endIndex)
 		mergeIndexes = copy.copy(envelopStartIndexes)
 		mergeIndexes.extend(envelopEndIndexes)
