@@ -732,8 +732,9 @@ class RefineCTF(appionLoop2.AppionLoop):
 		fftwidth = fftarray.shape[0]
 		maxres = 2.0/(self.freq*fftwidth)
 		if maxres > self.params['reslimit']:
-			apDisplay.printError("Cannot get requested res %.1fA higher than max res %.1fA"
-				%(maxres, self.params['reslimit']))
+			apDisplay.printWarning("Cannot get requested res %.1fA higher than max Nyquist resolution %.1fA"
+				%(self.params['reslimit'], maxres))
+			self.params['reslimit'] = math.ceil(maxres)
 
 		limitwidth = int(math.ceil(2.0/(self.params['reslimit']*self.freq)))
 		limitwidth = primefactor.getNextEvenPrime(limitwidth)
