@@ -48,6 +48,7 @@ def excludeClassesFromRelionDataFile(instarfile, datablock, outlist, outstarfile
 
 	badparts = []
 	goodparts = []
+	loopDictNew = []
 	for i in range(len(loopDict)):
 		rlnpart = float(loopDict[i]['_rlnImageName'].split("@")[0]) # starts with 1
 		rlnclass = float(loopDict[i]['_rlnClassNumber'])
@@ -59,18 +60,17 @@ def excludeClassesFromRelionDataFile(instarfile, datablock, outlist, outstarfile
 				bad = True
 		if bad is True:
 			badparts.append(badpart)
-	for i in range(len(loopDict)):
-		if (i+1) not in badparts:
-			goodparts.append(i+1)
+		else:
+			goodparts.append(int(rlnpart))
+			loopDictNew.append(loopDict[i])
+	badparts.sort()
+	goodparts.sort()
 	f = open(outlist, "w")
 	for gp in goodparts:
 		f.write("%d\n" % (gp-1)) # EMAN-style numbering, starts with 0
 	f.close()
 	
 	# selected star file parameters, write star file with excluded images
-	loopDictNew = []
-	for gp in goodparts:
-		loopDictNew.append(loopDict[gp-1])
 	writeLoopDictToStarFile(loopDictNew, datablock, outstarfile)
 
 def excludeClassesFromRelionDataFile2(starfile, outlist, *classlist):
