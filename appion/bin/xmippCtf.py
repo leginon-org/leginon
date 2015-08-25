@@ -118,6 +118,11 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 
 		### best defocus in negative Angstroms
 		ctfvalue, conf = ctfdb.getBestCtfValueForImage(imgdata, msg=True)
+		if ctfvalue is None:
+			apDisplay.printWarning("Xmipp CTF as implemented in Appion requires an initial CTF estimate to process"
+				+"\nPlease run another CTF program first and try again on this image")
+			self.ctfvalues = None
+			return
 		nominal = (ctfvalue['defocus1']+ctfvalue['defocus2'])/2.0
 		inputstr += ("defocusU=%d\n"%(-abs(ctfvalue['defocus1'])*1.0e10))
 		inputstr += ("defocusV=%d\n"%(-abs(ctfvalue['defocus2'])*1.0e10))
