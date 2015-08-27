@@ -569,6 +569,9 @@ var help = {
 	'simple' : {
 		'clip' : 'Clip the unbinned boxsize',
 		'bin' : 'Binning of the image.  This takes any integer value, but powers of 2 are recommended. Binning quickly shrinks the image to help make the processing faster.',
+                'alignlabel' : 'label to be appended to the presetname, e.g. --label=a gives ed-a as the aligned preset for preset ed.',
+                'alignoffset' : 'number of frame offset in alignment in dosefgpu_driftcorr.',
+                'alignbfactor' : 'alignment B-factor in pix^2 in dosefgpu_driftcorr.',
 		'num-part' : 'number of particles to use',
 		'no_center' : 'center the stack using EMAN’s cenalignint program prior to alignent and classification in SIMPLE. Note: SIMPLE does not search for translational parameters in “cluster”, but it does in “origami”. ; commandval = --no_center (only if unchecked, keep clear if checked).',
 		'ring2' : 'last ring for alignment (in pixels)',
@@ -629,6 +632,10 @@ var help = {
 		'align' : 'Select to align the images.',
 		'defergpu' : 'Select defer gpu if this job will be launched on a computer without GPU capability. The alignment can be done after building the stack by running catchUpDDAlign.py',
 		'bin' : 'Binning of the image.  This takes any integer value, but powers of 2 are recommended. Binning quickly shrinks the image to help make the processing faster.',
+
+                'alignlabel' : 'label to be appended to the presetname, e.g. --label=a gives ed-a as the aligned preset for preset ed.',
+                'alignoffset' : 'number of frame offset in alignment in dosefgpu_driftcorr.',
+                'alignbfactor' : 'alignment B-factor in pix^2 in dosefgpu_driftcorr.',
 		'no_keepstack' : 'Remove any ddstack generated after it is used for alignment and generating aligned sum image to upload. If the stack is needed later. run the same script under the same run but remove --no-keepstack flag, change --commit to --no-commit and change --conitnue to --no-continue.',
 		'ddstartframe' : 'The frame number to begin with for the frame sum. 0 is the first frame acquired.',
 		'ddnframe' : 'The total number of frames that will be used for the sum. Leave blank to default to all frames.',
