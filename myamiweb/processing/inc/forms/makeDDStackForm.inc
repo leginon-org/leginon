@@ -12,7 +12,7 @@ require_once "basicLoopForm.inc";
 class MakeDDStackForm extends BasicLoopForm
 
 {
-	function __construct(  $expId, $extraHTML='',$align='', $defergpu='', $bin=1, $nokeepstack='', $ddstartframe=0, $ddnframe='' ) 
+	function __construct(  $expId, $extraHTML='',$align='', $defergpu='', $bin=1, $nokeepstack='', $ddstartframe=0, $ddnframe='',$alignoffset=7,$alignbfactor=1000,$alignlabel='a' ) 
 	{
 		parent::__construct($expId, $extraHTML);
 		
@@ -44,7 +44,9 @@ class MakeDDStackForm extends BasicLoopForm
 		$params->addParam( "no_keepstack", $nokeepstack, "remove generated stack after uploading aligned sum image" );
 		$params->addParam( "ddstartframe", $ddstartframe, "start frame" );
 		$params->addParam( "ddnframe", $ddnframe, "total frames" );
-		
+		$params->addParam( "alignoffset", $alignoffset, "frame offset" );
+		$params->addParam( "alignbfactor", $alignbfactor, "b factor in motioncorr" );
+		$params->addParam( "alignlabel", $alignlabel, "append label to aligned image" );
 		// Validations
 		//$params->addValidation( "numpart", "req" );
 	}
@@ -54,15 +56,21 @@ class MakeDDStackForm extends BasicLoopForm
 		$this->updateFormParams();
 		$params = $this->getFormParams();
 		
-		$fieldSize = 3;
+		$fieldSize = 4;
 		
 		$html .= "<b>Make DD stack params:</b><br />\n";
 		
 		$html.= $params->insertCheckboxField( "align" );
 		$html.= $params->insertCheckboxField( "defergpu" );
 		$html.= $params->insertCheckboxField( "no_keepstack" );
+		$html.= "<br/><br/>\n";
 		$html.= $params->insertTextFieldInRow( "bin", $fieldSize );
-		
+		$html.= "<br/>\n";
+		$html.= $params->insertTextFieldInRow( "alignlabel", $fieldSize );
+		$html.= "<br/>\n";
+		$html.= $params->insertTextFieldInRow( "alignoffset",$fieldSize );
+		$html.= "<br/>\n";
+		$html.= $params->insertTextFieldInRow( "alignbfactor", $fieldSize );
 		$html.= "<br/><br/>Frames used for sum image after alignment: <br/>\n";
 		$html.= $params->insertTextFieldInRow( "ddstartframe", $fieldSize );
 		$html.= $params->insertTextFieldInRow( "ddnframe", $fieldSize );
