@@ -62,7 +62,6 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 	def checkConflicts(self):
 		#if override-dark or bright selected, should check for override-darkframes
 		pass
-
 		
 	def getFrameType(self):
 		# set how frames are saved depending on what is found in the basepath
@@ -80,6 +79,8 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 		self.dd.setRunDir(self.params['rundir'])
 		self.dd.setRawFrameType(self.getFrameType())
 		self.dd.setDoseFDriftCorrOptions(self.params)
+
+		self.exposurerate_is_default = self.params['radiationdamage_exposurerate'] == 1.0
 		
 		self.imageids = []
 		# Optimize AppionLoop wait time for this since the processing now takes longer than
@@ -191,7 +192,13 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 		kev=imgdata['scope']['high tension']/1000
 		apix=apDatabase.getPixelSize(imgdata)
 		nframes=imgdata['camera']['nframes']
-		dose=imgdata['preset']['dose']/10**20
+		try:
+			dose=apDatabase.getDoseFromImageData(imgdata)
+		except:
+			dose=None
+		# overwrite radiationdamage_exposurerate if it is at default
+		if dose and self.exposurerate_is_default:
+			self.params['radiationdamage_exposurerate']=dose/nframes
 
 		#set appion specific options
 		#flatfield references
@@ -209,7 +216,6 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 		self.params['output_invert']=0
 		self.params['radiationdamage_apix']=apix
 		self.params['radiationdamage_voltage']=kev
-		self.params['radiationdamage_exposurerate']=dose/nframes
 		#self.params['boxes_boxsize']=boxsize
 
 		if os.path.exists(targetdict['outpath']):

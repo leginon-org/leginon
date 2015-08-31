@@ -579,6 +579,16 @@ def checkMag(imgdata,goodmag):
 		return False
 
 #================
+def getDoseFromSessionPresetNames(sessionname, presetname):
+	''' returns dose, in electrons per Angstrom '''
+	sessiondata = leginondata.SessionData(name=sessionname).query()[0]
+	presetdata = leginondata.PresetData(name=presetname,session=sessiondata).query(results=1)[0]
+	dose = presetdata['dose']
+	if not dose:
+		raise RunTimeError("dose not available for %s session and preset %s" % (sessionname,presetname))
+	return dose / 1e20
+
+#================
 def getDoseFromImageData(imgdata):
 	''' returns dose, in electrons per Angstrom '''
 	try:
