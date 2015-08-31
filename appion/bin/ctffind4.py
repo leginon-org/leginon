@@ -162,8 +162,10 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 		if ctfvalue is not None and self.params['bestdb'] is True:
 			### set res max from resolution_80_percent
 			gmean = math.sqrt(ctfvalue['resolution_80_percent']*ctfvalue['resolution_50_percent'])
-			self.params['resmax'] = round(gmean,2)
-			apDisplay.printColor("Setting resmax to the geometric mean of resolution values", "purple")
+			if gmean < self.params['resmin']:
+				# replace only if valid Issue #3291
+				self.params['resmax'] = round(gmean,2)
+				apDisplay.printColor("Setting resmax to the geometric mean of resolution values", "purple")
 
 		# dstep is the physical detector pixel size
 		apix = apDatabase.getPixelSize(imgdata)
