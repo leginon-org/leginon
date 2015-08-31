@@ -176,7 +176,6 @@ class CtfDisplay(object):
 			partStart = self.sectionFactor*section
 			start = firstvalley + noiseNumPoints*partStart/float(numParts)
 			startIndex = self.extremaToIndex(start, valley, raddata)
-			noiseStartIndexes.append(startIndex)
 			partEnd = partStart + (self.sectionFactor+self.overlapFactor)
 			end = firstvalley + noiseNumPoints*partEnd/float(numParts)
 			endIndex = self.extremaToIndex(end, valley, raddata)
