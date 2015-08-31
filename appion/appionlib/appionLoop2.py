@@ -232,6 +232,10 @@ class AppionLoop(appionScript.AppionScript):
 
 	#=====================
 	def commitResultsToDatabase(self, imgdata, results):
+		"""
+		Results are a dictionary of sinedon data instance with new values
+		need to be inserted.
+		"""
 		if results is not None and len(results) > 0:
 			resulttypes = results.keys()
 			for resulttype in resulttypes:
