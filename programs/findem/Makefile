@@ -4,53 +4,51 @@ cc=gcc
 ar=ar cr
 LPATH=.
 BINPATH=.
-FFLAGS=-O3 -Wall -w -fno-second-underscore
-CFLAGS=-O3 -Wall
+FFLAGS=-O3 -w -march=native -mtune=native
+CFLAGS=-O3 -w -march=native -mtune=native
 LIBS=$(LPATH)/imlib2k.a $(LPATH)/ifftlib.a $(LPATH)/genlib.a $(LPATH)/misclib.a $(LPATH)/plot2klib.a
 ARCH=$(shell uname -i)
-ifeq ($(ARCH),x86_64)
-	EXENAME=findem64.exe
-	EXLIBS=-L/usr/lib/gcc/x86_64-redhat-linux/3.4.6/ -lg2c
-else
+ifeq ($(ARCH),x86)
 	EXENAME=findem32.exe
-	EXLIBS=-L/usr/lib/gcc/i386-redhat-linux/3.4.6/ -lg2c
+else
+	EXENAME=findem64.exe
 endif
 
 
-findem:	clean plot2k misc im2k ifft gen findem.f90
+quick:	findem.f90
 	$(f90) $(FFLAGS) $(EXLIBS) -o $(BINPATH)/$(EXENAME) findem.f90 $(LIBS) 
 	chmod 777 $(BINPATH)/$(EXENAME)
 
-quick:	clean findem.f90
+findem:	plot2k misc im2k ifft gen findem.f90
 	$(f90) $(FFLAGS) $(EXLIBS) -o $(BINPATH)/$(EXENAME) findem.f90 $(LIBS) 
 	chmod 777 $(BINPATH)/$(EXENAME)
 
-old:	clean plot2k misc im2k ifft gen oldfindem.f90
+old:	plot2k misc im2k ifft gen oldfindem.f90
 	$(f90) $(FFLAGS) $(EXLIBS) -o $(BINPATH)/oldfindem.exe oldfindem.f90 $(LIBS) 
 	chmod 777 $(BINPATH)/oldfindem.exe
 
-all:	clean plot2k misc im2k ifft gen findem
+all:	plot2k misc im2k ifft gen findem
 
-plot2k:	clean plot2k.c
+plot2k:	$(LPATH)/plot2klib.a
 	$(cc) $(CFLAGS) -c plot2k.c
 	$(ar) $(LPATH)/plot2klib.a plot2k.o
 
-misc:	clean plot2k mtzlib.for lcflib.for miscsubs.for
+misc:	$(LPATH)/misclib.a
 	$(f90) $(FFLAGS) -c lcflib.for
-	$(f77) $(FFLAGS) -c mtzlib.for miscsubs.for
+	$(f90) $(FFLAGS) -c mtzlib.for miscsubs.for
 	$(ar) $(LPATH)/misclib.a lcflib.o mtzlib.o miscsubs.o
 
-im2k:	clean imsubs2000.for imsubs2.for imsubs_common.for
+im2k:	$(LPATH)/imlib2k.a
 	$(f90) $(FFLAGS) -c imsubs2000.for
-	$(f77) $(FFLAGS) -c imsubs2.for
+	$(f90) $(FFLAGS) -c imsubs2.for
 	$(ar) $(LPATH)/imlib2k.a imsubs2.o imsubs2000.o
 
-ifft:	clean ifftsub.for
-	$(f77) $(FFLAGS) -c ifftsub.for
+ifft:	$(LPATH)/ifftlib.a
+	$(f90) $(FFLAGS) -c ifftsub.for
 	$(ar) $(LPATH)/ifftlib.a ifftsub.o
 
-gen:	clean unix.for diskio.for ccplib.for subs.for parser.for symlib.for library.c library.h
-	$(f77) $(FFLAGS) -c unix.for diskio.for subs.for parser.for symlib.for ccplib.for 
+gen:	$(LPATH)/genlib.a
+	$(f90) $(FFLAGS) -c unix.for diskio.for subs.for parser.for symlib.for ccplib.for 
 	$(cc) -c -O3 -DPROTOTYPE -Dalliant -w library.c
 	$(ar) $(LPATH)/genlib.a diskio.o library.o parser.o subs.o symlib.o unix.o ccplib.o
 
