@@ -95,6 +95,9 @@ class AppionPBS(appionLoop2.AppionLoop):
 						targetdict=self.getTargets(imgdata,scratchdir,self.params['handlefiles'])
 						
 						command=self.generateCommand(imgdata,targetdict)
+						# command is not returned if there is error
+						if command is None:
+							continue
 						command=self.insertWrapper(command)
 
 						#donefile=self.getDoneFile(targetdict)
