@@ -44,10 +44,10 @@ class Protomo2RefineForm extends BasicLayoutForm
 		
 		global $html; //I can only get the selector form to pass variables properly by defining it globally in the constructor.
 		
-		//Initialize Basic/Advanced settings
+		//Initialize Express/Basic/Advanced Settings
 		if (!isset($_POST['settings'])) {$_POST['settings']=1;}
 		
-		$settings=array("Basic", "Advanced");
+		$settings=array("Express", "Basic", "Advanced");
 
 		$html.= '<select name="settings" onchange=submit() style="width:100px">';
 		for ($i = 1; $i < count($settings)+1; $i++) {
@@ -57,7 +57,7 @@ class Protomo2RefineForm extends BasicLayoutForm
 			}
 			$html.= 'value="'.$i.'">'.$settings[$i-1].'</option>';
 		}
-		$html.= '</select>'; $html.= docpop('protomo_refine_settings', ' Basic/Advanced Settings<br>');
+		$html.= '</select>'; $html.= docpop('protomo_refine_settings', ' Settings Verbosity<br>');
 		
 		$html .= "
 	    <br />
@@ -69,6 +69,7 @@ class Protomo2RefineForm extends BasicLayoutForm
 		if (!isset($_POST['preset_search'])) {$_POST['preset_search']=1;}
 		if (!isset($_POST['preset_type'])) {$_POST['preset_type']=1;}
 		if ($_POST['preset_size'] == 9) {$_POST['preset_size']=1;} //The dotted line divider
+		if ($_POST['preset_size'] == 17) {$_POST['preset_size']=1;} //The dotted line divider
 		
 		//Preset pulldown menus
 		$size_presets=array("Generic", "10 nm objects(s) - Constant lowpass", "25 nm objects(s) - Constant lowpass", "50 nm objects(s) - Constant lowpass", "100 nm objects(s) - Constant lowpass", "250 nm objects(s) - Constant lowpass", "500 nm objects(s) - Constant lowpass", "1000 nm objects(s) - Constant lowpass", "------------------", "10 nm objects(s) - Decreasing lowpass", "25 nm objects(s) - Decreasing lowpass", "50 nm objects(s) - Decreasing lowpass", "100 nm objects(s) - Decreasing lowpass", "250 nm objects(s) - Decreasing lowpass", "500 nm objects(s) - Decreasing lowpass", "1000 nm objects(s) - Decreasing lowpass", "------------------", "10 nm objects(s) - Steep lowpass", "25 nm objects(s) - Steep lowpass", "50 nm objects(s) - Steep lowpass", "100 nm objects(s) - Steep lowpass", "250 nm objects(s) - Steep lowpass", "500 nm objects(s) - Steep lowpass", "1000 nm objects(s) - Steep lowpass");
@@ -108,7 +109,7 @@ class Protomo2RefineForm extends BasicLayoutForm
 		$_POST['runname']=$_SESSION['runname'];
 		$_POST['outdir']=$_SESSION['outdir'];
 		
-		if ($_POST['settings'] == 1)  //Basic Settings
+		if ($_POST['settings'] == 1 or $_POST['settings'] == 2)  //Express or Basic Settings
 		{
 			//General Parameters
 			$_POST['logging'] = $logging = 'true';
@@ -157,10 +158,9 @@ class Protomo2RefineForm extends BasicLayoutForm
 			$_POST['show_window_size'] = $show_window_size='true';
 			$_POST['video_type'] = $video_type='html5vid';
 			$_POST['map_sampling'] = $map_sampling='8';
-			$_POST['map_size_x'] = $map_size_x=$imageinfo['dimx']*0.125;
-			$_POST['map_size_y'] = $map_size_x=$imageinfo['dimy']*0.125;
+			$_POST['map_size_x'] = $map_size_x=intval($imageinfo['dimx']/$map_sampling);
+			$_POST['map_size_y'] = $map_size_x=intval($imageinfo['dimy']/$map_sampling);
 			$_POST['keep_recons'] = $keep_recons='false';
-			
 		}
 		
 		////Preset Defaults////
@@ -169,8 +169,8 @@ class Protomo2RefineForm extends BasicLayoutForm
 			//Search Area Presets (placed before size presets because they depend on these)
 			if ($_POST['preset_search'] == 1)  //Generic (50%)
 			{
-				$_POST['r1_region_x'] = $_POST['r2_region_x'] = $_POST['r3_region_x'] = $_POST['r4_region_x'] = $_POST['r5_region_x'] = $r1_region_x = $r2_region_x = $r3_region_x = $r4_region_x = $r5_region_x = $imageinfo['dimx']*0.5;
-				$_POST['r1_region_y'] = $_POST['r2_region_y'] = $_POST['r3_region_y'] = $_POST['r4_region_y'] = $_POST['r5_region_y'] = $r1_region_y = $r2_region_y = $r3_region_y = $r4_region_y = $r5_region_y = $imageinfo['dimy']*0.5;
+				$_POST['r1_region_x'] = $_POST['r2_region_x'] = $_POST['r3_region_x'] = $_POST['r4_region_x'] = $_POST['r5_region_x'] = $r1_region_x = $r2_region_x = $r3_region_x = $r4_region_x = $r5_region_x = intval($imageinfo['dimx']*0.5);
+				$_POST['r1_region_y'] = $_POST['r2_region_y'] = $_POST['r3_region_y'] = $_POST['r4_region_y'] = $_POST['r5_region_y'] = $r1_region_y = $r2_region_y = $r3_region_y = $r4_region_y = $r5_region_y = intval($imageinfo['dimy']*0.5);
 				$Nx1=$r1_region_x/$r1_sampling;$Ny1=$r1_region_y/$r1_sampling;
 				$Nx2=$r2_region_x/$r2_sampling;$Ny2=$r2_region_y/$r2_sampling;
 				$Nx3=$r3_region_x/$r3_sampling;$Ny3=$r3_region_y/$r3_sampling;
@@ -189,8 +189,8 @@ class Protomo2RefineForm extends BasicLayoutForm
 			
 			if ($_POST['preset_search'] == 2)  //Tiny 10%
 			{
-				$_POST['r1_region_x'] = $_POST['r2_region_x'] = $_POST['r3_region_x'] = $_POST['r4_region_x'] = $_POST['r5_region_x'] = $r1_region_x = $r2_region_x = $r3_region_x = $r4_region_x = $r5_region_x = $imageinfo['dimx']*0.1;
-				$_POST['r1_region_y'] = $_POST['r2_region_y'] = $_POST['r3_region_y'] = $_POST['r4_region_y'] = $_POST['r5_region_y'] = $r1_region_y = $r2_region_y = $r3_region_y = $r4_region_y = $r5_region_y = $imageinfo['dimy']*0.1;
+				$_POST['r1_region_x'] = $_POST['r2_region_x'] = $_POST['r3_region_x'] = $_POST['r4_region_x'] = $_POST['r5_region_x'] = $r1_region_x = $r2_region_x = $r3_region_x = $r4_region_x = $r5_region_x = intval($imageinfo['dimx']*0.1);
+				$_POST['r1_region_y'] = $_POST['r2_region_y'] = $_POST['r3_region_y'] = $_POST['r4_region_y'] = $_POST['r5_region_y'] = $r1_region_y = $r2_region_y = $r3_region_y = $r4_region_y = $r5_region_y = intval($imageinfo['dimy']*0.1);
 				$Nx1=$r1_region_x/$r1_sampling;$Ny1=$r1_region_y/$r1_sampling;
 				$Nx2=$r2_region_x/$r2_sampling;$Ny2=$r2_region_y/$r2_sampling;
 				$Nx3=$r3_region_x/$r3_sampling;$Ny3=$r3_region_y/$r3_sampling;
@@ -209,8 +209,8 @@ class Protomo2RefineForm extends BasicLayoutForm
 			
 			if ($_POST['preset_search'] == 3)  //Small 25%
 			{
-				$_POST['r1_region_x'] = $_POST['r2_region_x'] = $_POST['r3_region_x'] = $_POST['r4_region_x'] = $_POST['r5_region_x'] = $r1_region_x = $r2_region_x = $r3_region_x = $r4_region_x = $r5_region_x = $imageinfo['dimx']*0.25;
-				$_POST['r1_region_y'] = $_POST['r2_region_y'] = $_POST['r3_region_y'] = $_POST['r4_region_y'] = $_POST['r5_region_y'] = $r1_region_y = $r2_region_y = $r3_region_y = $r4_region_y = $r5_region_y = $imageinfo['dimy']*0.25;
+				$_POST['r1_region_x'] = $_POST['r2_region_x'] = $_POST['r3_region_x'] = $_POST['r4_region_x'] = $_POST['r5_region_x'] = $r1_region_x = $r2_region_x = $r3_region_x = $r4_region_x = $r5_region_x = intval($imageinfo['dimx']*0.25);
+				$_POST['r1_region_y'] = $_POST['r2_region_y'] = $_POST['r3_region_y'] = $_POST['r4_region_y'] = $_POST['r5_region_y'] = $r1_region_y = $r2_region_y = $r3_region_y = $r4_region_y = $r5_region_y = intval($imageinfo['dimy']*0.25);
 				$Nx1=$r1_region_x/$r1_sampling;$Ny1=$r1_region_y/$r1_sampling;
 				$Nx2=$r2_region_x/$r2_sampling;$Ny2=$r2_region_y/$r2_sampling;
 				$Nx3=$r3_region_x/$r3_sampling;$Ny3=$r3_region_y/$r3_sampling;
@@ -229,8 +229,8 @@ class Protomo2RefineForm extends BasicLayoutForm
 			
 			if ($_POST['preset_search'] == 4)  //Medium 50%
 			{
-				$_POST['r1_region_x'] = $_POST['r2_region_x'] = $_POST['r3_region_x'] = $_POST['r4_region_x'] = $_POST['r5_region_x'] = $r1_region_x = $r2_region_x = $r3_region_x = $r4_region_x = $r5_region_x = $imageinfo['dimx']*0.5;
-				$_POST['r1_region_y'] = $_POST['r2_region_y'] = $_POST['r3_region_y'] = $_POST['r4_region_y'] = $_POST['r5_region_y'] = $r1_region_y = $r2_region_y = $r3_region_y = $r4_region_y = $r5_region_y = $imageinfo['dimy']*0.5;
+				$_POST['r1_region_x'] = $_POST['r2_region_x'] = $_POST['r3_region_x'] = $_POST['r4_region_x'] = $_POST['r5_region_x'] = $r1_region_x = $r2_region_x = $r3_region_x = $r4_region_x = $r5_region_x = intval($imageinfo['dimx']*0.5);
+				$_POST['r1_region_y'] = $_POST['r2_region_y'] = $_POST['r3_region_y'] = $_POST['r4_region_y'] = $_POST['r5_region_y'] = $r1_region_y = $r2_region_y = $r3_region_y = $r4_region_y = $r5_region_y = intval($imageinfo['dimy']*0.5);
 				$Nx1=$r1_region_x/$r1_sampling;$Ny1=$r1_region_y/$r1_sampling;
 				$Nx2=$r2_region_x/$r2_sampling;$Ny2=$r2_region_y/$r2_sampling;
 				$Nx3=$r3_region_x/$r3_sampling;$Ny3=$r3_region_y/$r3_sampling;
@@ -249,8 +249,8 @@ class Protomo2RefineForm extends BasicLayoutForm
 			
 			if ($_POST['preset_search'] == 5)  //Large 75%
 			{
-				$_POST['r1_region_x'] = $_POST['r2_region_x'] = $_POST['r3_region_x'] = $_POST['r4_region_x'] = $_POST['r5_region_x'] = $r1_region_x = $r2_region_x = $r3_region_x = $r4_region_x = $r5_region_x = $imageinfo['dimx']*0.75;
-				$_POST['r1_region_y'] = $_POST['r2_region_y'] = $_POST['r3_region_y'] = $_POST['r4_region_y'] = $_POST['r5_region_y'] = $r1_region_y = $r2_region_y = $r3_region_y = $r4_region_y = $r5_region_y = $imageinfo['dimy']*0.75;
+				$_POST['r1_region_x'] = $_POST['r2_region_x'] = $_POST['r3_region_x'] = $_POST['r4_region_x'] = $_POST['r5_region_x'] = $r1_region_x = $r2_region_x = $r3_region_x = $r4_region_x = $r5_region_x = intval($imageinfo['dimx']*0.75);
+				$_POST['r1_region_y'] = $_POST['r2_region_y'] = $_POST['r3_region_y'] = $_POST['r4_region_y'] = $_POST['r5_region_y'] = $r1_region_y = $r2_region_y = $r3_region_y = $r4_region_y = $r5_region_y = intval($imageinfo['dimy']*0.75);
 				$Nx1=$r1_region_x/$r1_sampling;$Ny1=$r1_region_y/$r1_sampling;
 				$Nx2=$r2_region_x/$r2_sampling;$Ny2=$r2_region_y/$r2_sampling;
 				$Nx3=$r3_region_x/$r3_sampling;$Ny3=$r3_region_y/$r3_sampling;
@@ -269,8 +269,8 @@ class Protomo2RefineForm extends BasicLayoutForm
 			
 			if ($_POST['preset_search'] == 6)  //Full 90%
 			{
-				$_POST['r1_region_x'] = $_POST['r2_region_x'] = $_POST['r3_region_x'] = $_POST['r4_region_x'] = $_POST['r5_region_x'] = $r1_region_x = $r2_region_x = $r3_region_x = $r4_region_x = $r5_region_x = $imageinfo['dimx']*0.9;
-				$_POST['r1_region_y'] = $_POST['r2_region_y'] = $_POST['r3_region_y'] = $_POST['r4_region_y'] = $_POST['r5_region_y'] = $r1_region_y = $r2_region_y = $r3_region_y = $r4_region_y = $r5_region_y = $imageinfo['dimy']*0.9;
+				$_POST['r1_region_x'] = $_POST['r2_region_x'] = $_POST['r3_region_x'] = $_POST['r4_region_x'] = $_POST['r5_region_x'] = $r1_region_x = $r2_region_x = $r3_region_x = $r4_region_x = $r5_region_x = intval($imageinfo['dimx']*0.9);
+				$_POST['r1_region_y'] = $_POST['r2_region_y'] = $_POST['r3_region_y'] = $_POST['r4_region_y'] = $_POST['r5_region_y'] = $r1_region_y = $r2_region_y = $r3_region_y = $r4_region_y = $r5_region_y = intval($imageinfo['dimy']*0.9);
 				$Nx1=$r1_region_x/$r1_sampling;$Ny1=$r1_region_y/$r1_sampling;
 				$Nx2=$r2_region_x/$r2_sampling;$Ny2=$r2_region_y/$r2_sampling;
 				$Nx3=$r3_region_x/$r3_sampling;$Ny3=$r3_region_y/$r3_sampling;
@@ -512,7 +512,7 @@ class Protomo2RefineForm extends BasicLayoutForm
 				$_POST['thickness'] = $thickness = 50000;
 			}
 			
-			if ($_POST['preset_size'] == 17)  //Size 10 nm - Steep lowpass
+			if ($_POST['preset_size'] == 18)  //Size 10 nm - Steep lowpass
 			{
 				$_POST['r1_lowpass_diameter_x'] = $_POST['r1_lowpass_diameter_y'] = $r1_lp_diam_x = $r1_lp_diam_y = min(50, round(0.75*$r1_hp_diam_x));
 				$_POST['r2_lowpass_diameter_x'] = $_POST['r2_lowpass_diameter_y'] = $r2_lp_diam_x = $r2_lp_diam_y = min(25, round(0.75*$r1_hp_diam_x));
@@ -532,7 +532,7 @@ class Protomo2RefineForm extends BasicLayoutForm
 				$_POST['thickness'] = $thickness = 500;
 			}
 			
-			if ($_POST['preset_size'] == 18)  //Size 25 nm - Steep lowpass
+			if ($_POST['preset_size'] == 19)  //Size 25 nm - Steep lowpass
 			{
 				$_POST['r1_lowpass_diameter_x'] = $_POST['r1_lowpass_diameter_y'] = $r1_lp_diam_x = $r1_lp_diam_y = min(125, round(0.75*$r1_hp_diam_x));
 				$_POST['r2_lowpass_diameter_x'] = $_POST['r2_lowpass_diameter_y'] = $r2_lp_diam_x = $r2_lp_diam_y = min(62.5, round(0.75*$r1_hp_diam_x));
@@ -552,7 +552,7 @@ class Protomo2RefineForm extends BasicLayoutForm
 				$_POST['thickness'] = $thickness = 1250;
 			}
 			
-			if ($_POST['preset_size'] == 19)  //Size 50 nm - Steep lowpass
+			if ($_POST['preset_size'] == 20)  //Size 50 nm - Steep lowpass
 			{
 				$_POST['r1_lowpass_diameter_x'] = $_POST['r1_lowpass_diameter_y'] = $r1_lp_diam_x = $r1_lp_diam_y = min(250, round(0.75*$r1_hp_diam_x));
 				$_POST['r2_lowpass_diameter_x'] = $_POST['r2_lowpass_diameter_y'] = $r2_lp_diam_x = $r2_lp_diam_y = min(125, round(0.75*$r1_hp_diam_x));
@@ -572,7 +572,7 @@ class Protomo2RefineForm extends BasicLayoutForm
 				$_POST['thickness'] = $thickness = 2500;
 			}
 			
-			if ($_POST['preset_size'] == 20)  //Size 100 nm - Steep lowpass
+			if ($_POST['preset_size'] == 21)  //Size 100 nm - Steep lowpass
 			{
 				$_POST['r1_lowpass_diameter_x'] = $_POST['r1_lowpass_diameter_y'] = $r1_lp_diam_x = $r1_lp_diam_y = min(500, round(0.75*$r1_hp_diam_x));
 				$_POST['r2_lowpass_diameter_x'] = $_POST['r2_lowpass_diameter_y'] = $r2_lp_diam_x = $r2_lp_diam_y = min(250, round(0.75*$r1_hp_diam_x));
@@ -592,7 +592,7 @@ class Protomo2RefineForm extends BasicLayoutForm
 				$_POST['thickness'] = $thickness = 5000;
 			}
 			
-			if ($_POST['preset_size'] == 21)  //Size 250 nm - Steep lowpass
+			if ($_POST['preset_size'] == 22)  //Size 250 nm - Steep lowpass
 			{
 				$_POST['r1_lowpass_diameter_x'] = $_POST['r1_lowpass_diameter_y'] = $r1_lp_diam_x = $r1_lp_diam_y = min(1250, round(0.75*$r1_hp_diam_x));
 				$_POST['r2_lowpass_diameter_x'] = $_POST['r2_lowpass_diameter_y'] = $r2_lp_diam_x = $r2_lp_diam_y = min(625, round(0.75*$r1_hp_diam_x));
@@ -612,7 +612,7 @@ class Protomo2RefineForm extends BasicLayoutForm
 				$_POST['thickness'] = $thickness = 12500;
 			}
 			
-			if ($_POST['preset_size'] == 22)  //Size 500 nm - Steep lowpass
+			if ($_POST['preset_size'] == 23)  //Size 500 nm - Steep lowpass
 			{
 				$_POST['r1_lowpass_diameter_x'] = $_POST['r1_lowpass_diameter_y'] = $r1_lp_diam_x = $r1_lp_diam_y = min(2500, round(0.75*$r1_hp_diam_x));
 				$_POST['r2_lowpass_diameter_x'] = $_POST['r2_lowpass_diameter_y'] = $r2_lp_diam_x = $r2_lp_diam_y = min(1250, round(0.75*$r1_hp_diam_x));
@@ -632,7 +632,7 @@ class Protomo2RefineForm extends BasicLayoutForm
 				$_POST['thickness'] = $thickness = 25000;
 			}
 			
-			if ($_POST['preset_size'] == 23)  //Size 1000 nm - Steep lowpass
+			if ($_POST['preset_size'] == 24)  //Size 1000 nm - Steep lowpass
 			{
 				$_POST['r1_lowpass_diameter_x'] = $_POST['r1_lowpass_diameter_y'] = $r1_lp_diam_x = $r1_lp_diam_y = min(5000, round(0.75*$r1_hp_diam_x));
 				$_POST['r2_lowpass_diameter_x'] = $_POST['r2_lowpass_diameter_y'] = $r2_lp_diam_x = $r2_lp_diam_y = min(2500, round(0.75*$r1_hp_diam_x));
@@ -765,7 +765,7 @@ class Protomo2RefineForm extends BasicLayoutForm
 		$params->addParam( "r4_sampling", $r4_sampling, "R4" );
 		$params->addParam( "r5_sampling", $r5_sampling, "R5 │ Sampling" );
 		$params->addParam( "map_sampling", $map_sampling, "Sampling for Depiction" );
-		$params->addParam( "thickness", $thickness, "Thickness, in angstroms (<strong>Critical Parameter</strong>)" );
+		$params->addParam( "thickness", $thickness, "Thickness (<strong>Critical Parameter</strong>)" );
 		$params->addParam( "r1_mask_width_x", $r1_mask_width_x, "R1" );
 		$params->addParam( "r2_mask_width_x", $r2_mask_width_x, "R2" );
 		$params->addParam( "r3_mask_width_x", $r3_mask_width_x, "R3" );
@@ -907,14 +907,17 @@ class Protomo2RefineForm extends BasicLayoutForm
 		$params->addParam( "restart_cycle", $restart_cycle, "Restart Refinement at Iteration" );
 		
 		// Validations
-		$params->addValidation( "r1_region_x", "req" );
-		$params->addValidation( "r1_region_x", "num" );
-		$params->addValidation( "r1_region_y", "req" );
-		$params->addValidation( "r1_region_y", "num" );
-		$params->addValidation( "thickness", "req" );
-		$params->addValidation( "thickness", "num" );
-		$params->addValidation( "r1_iters", "req" );
-		$params->addValidation( "r1_iters", "num" );
+		if ($_POST['settings'] == 2 or $_POST['settings'] == 3)  //Basic or Advanced Settings
+		{
+			$params->addValidation( "r1_region_x", "req" );
+			$params->addValidation( "r1_region_x", "num" );
+			$params->addValidation( "r1_region_y", "req" );
+			$params->addValidation( "r1_region_y", "num" );
+			$params->addValidation( "thickness", "req" );
+			$params->addValidation( "thickness", "num" );
+			$params->addValidation( "r1_iters", "req" );
+			$params->addValidation( "r1_iters", "num" );
+		}
 	}
 		
 	// Generate a form for the parameters that are specific to this program (not Appion params)
@@ -956,8 +959,11 @@ class Protomo2RefineForm extends BasicLayoutForm
 			$fieldSize = 5;
 			$fieldSize2 = 3;
 			
-			if ($_POST['settings'] == 1)  //Basic Settings
+			if ($_POST['settings'] == 1 or $_POST['settings'] == 2)  //Express or Basic Settings
 			{
+				if ($_POST['settings'] == 1)  //Express Settings just hide all of the Basic Settings. Basic Settings are still required to be on the webpage somewhere.
+					{$html.= '<div id="express" style="display:none">';}
+				
 				$html .= "
 			    <br />
 			    <H4>General Parameters ".docpop('genparam_info2', '(Info)')."</H4>
@@ -1140,9 +1146,11 @@ class Protomo2RefineForm extends BasicLayoutForm
 				$html.= '</select>'; $html.= docpop('protomo_create_reconstruction2', ' Create Reconstruction Videos').'<br>';
 				
 				$html .= "<hr />";
+				if ($_POST['settings'] == 1)  //Express Settings
+					{$html.= "</div>";}
 			}
 			
-			if ($_POST['settings'] == 2)  //Advanced Settings
+			if ($_POST['settings'] == 3)  //Advanced Settings
 			{
 				$html .= "
 			    <br />

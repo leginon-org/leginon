@@ -93,30 +93,266 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 			if ($tiltseriesId2)
 				$html.=  "<br/><b>Bad Tilt-Series! Do not use.</b><br/>";
 		}
+		
+		if (isset($tiltseriesinfos[0]['number']))
+		{
+			//Initialize Express/Basic/Advanced Settings
+			if (!isset($_POST['settings'])) {$_POST['settings']=2;}
+			
+			$settings=array("Express", "Basic", "Advanced");
+	
+			$html.= '<br><br><select name="settings" onchange=submit() style="width:100px">';
+			for ($i = 1; $i < count($settings)+1; $i++) {
+				$html.= '<option ';
+				if ($i == $_POST['settings']) {
+					$html.= 'selected ';
+				}
+				$html.= 'value="'.$i.'">'.$settings[$i-1].'</option>';
+			}
+			$html.= '</select>'; $html.= docpop('protomo_refine_settings', ' Settings Verbosity<br>');
+			
+			$html .= "
+			<br />
+			<H4>Parameter Presets ".docpop('preset_info', '(Info)')."</H4>
+			<hr />";
+			
+			//Initialize presets
+			if (!isset($_POST['preset_size'])) {$_POST['preset_size']=1;}
+			if (!isset($_POST['preset_search'])) {$_POST['preset_search']=1;}
+			
+			//Preset pulldown menus
+			$size_presets=array("Generic", "10 nm", "25 nm", "50 nm", "100 nm", "250 nm", "500 nm", "1000 nm");
+			$search_presets=array("Generic", "Tiny search (10%)", "Small search (25%)", "Medium search (50%)", "Large search (75%)", "Full search (90%)");
+			$html.= '<select name="preset_size" onchange=submit() style="width:150px">';
+			for ($i = 1; $i < count($size_presets)+1; $i++) {
+				$html.= '<option ';
+				if ($i == $_POST['preset_size']) {
+					$html.= 'selected ';
+				}
+				$html.= 'value="'.$i.'">'.$size_presets[$i-1].'</option>';
+			}
+			$html.= '</select>'; $html.= docpop('protomo_refine_presets_size', ' Object Size | ');
+			
+			$html.= '<select name="preset_search" onchange=submit() style="width:150px">';
+			for ($i = 1; $i < count($search_presets)+1; $i++) {
+				$html.= '<option ';
+				if ($i == $_POST['preset_search']) {
+					$html.= 'selected ';
+				}
+				$html.= 'value="'.$i.'">'.$search_presets[$i-1].'</option>';
+			}
+			$html.= '</select>'; $html.= docpop('protomo_refine_presets_search', ' Search Area<br>');
+		}
+		
 		$_SESSION['imageinfo'] = $imageinfo;
 		$_SESSION['tiltseries'] = $tiltseriesinfos[0]['number'];
 		
-		$region_x = intval($imageinfo['dimx']*0.5);
-		$region_y = intval($imageinfo['dimy']*0.5);
-		$lp_diam_x = round(pow(10,10)*$imageinfo['pixelsize']*75);
-		$lp_diam_y = round(pow(10,10)*$imageinfo['pixelsize']*75);
-		$hp_diam_x = round($imageinfo['pixelsize']*pow(10,10)*min($region_x, $region_y));
-		$hp_diam_y = round($imageinfo['pixelsize']*pow(10,10)*min($region_x, $region_y));
-		$lp_apod_x=2.5*$lp_diam_x;
-		$lp_apod_y=2.5*$lp_diam_y;
-		$hp_apod_x=round($hp_diam_x/2);
-		$hp_apod_y=round($hp_diam_y/2);
-		$kernel_x = 5;
-		$kernel_y = 5;
-		$mask_apod_x = 10;
-		$mask_apod_y = 10;
-		$Nx=$region_x/$sampling;
-		$Ny=$region_y/$sampling;
-		$mask_width_x = $Nx-2.5*$mask_apod_x;
-		$mask_width_y = $Ny-2.5*$mask_apod_y;
-		$map_size_x = intval($imageinfo['dimx']/$map_sampling);
-		$map_size_y = intval($imageinfo['dimy']/$map_sampling);
+		if ($_POST['settings'] == 1 or $_POST['settings'] == 2)  //Express or Basic Settings
+		{
+			//General Parameters
+			$_POST['logging'] = $logging = 'true';
+			$_POST['loglevel'] = $loglevel='2';
+			//Preprocessing Parameters
+			$_POST['preprocessing'] = $preprocessing='true';
+			$_POST['gradient'] = $gradient='true';
+			$_POST['iter_gradient'] = $iter_gradient='false';
+			$_POST['filter'] = $filter='median';
+			$_POST['border'] = $border='100';
+			$_POST['clip_low'] = $clip_low='3.5';
+			$_POST['clip_high'] = $clip_high='3.5';
+			$_POST['thr_low'] = $thr_low='';
+			$_POST['thr_high'] = $thr_high='';
+			$_POST['kernel_x'] = $kernel_x='5';
+			$_POST['kernel_y'] = $kernel_y='5';
+			$_POST['grow'] = $grow='0';
+			//Window Parameters
+			$_POST['window_area'] = $window_area='0.95';
+			//Mask Parameters
+			$_POST['mask_apod_x'] = $mask_apod_x='10';
+			$_POST['mask_apod_y'] = $mask_apod_y='10';
+			//Depiction Parameters
+			$_POST['correlation_size_x'] = $correlation_size_x='192';
+			$_POST['correlation_size_y'] = $correlation_size_y='192';
+			$_POST['tilt_clip'] = $tilt_clip='true';
+			$_POST['show_window_size'] = $show_window_size='true';
+			$_POST['video_type'] = $video_type='html5vid';
+			$_POST['map_sampling'] = $map_sampling='8';
+			$_POST['map_size_x'] = $map_size_x=intval($imageinfo['dimx']/$map_sampling);
+			$_POST['map_size_y'] = $map_size_x=intval($imageinfo['dimy']/$map_sampling);
+			$_POST['keep_recons'] = $keep_recons='false';
+		}
 		
+		////Preset Defaults////
+		if ($_POST['process'] != "Just Show Command")
+		{
+			//Search Area Presets (placed before size presets because they depend on these)
+			if ($_POST['preset_search'] == 1)  //Generic (50%)
+			{
+				$_POST['region_x'] = $region_x = intval($imageinfo['dimx']*0.5);
+				$_POST['region_y'] = $region_y = intval($imageinfo['dimy']*0.5);
+				$Nx=$region_x/$sampling;
+				$Ny=$region_y/$sampling;
+				$_POST['mask_width_x'] = $mask_width_x = $Nx-2.5*$mask_apod_x;
+				$_POST['mask_width_y'] = $mask_width_y = $Ny-2.5*$mask_apod_y;
+				$_POST['highpass_diameter_x'] = $hp_diam_x = round($imageinfo['pixelsize']*pow(10,10)*min($region_x, $region_y));
+				$_POST['highpass_diameter_y'] = $hp_diam_y = round($imageinfo['pixelsize']*pow(10,10)*min($region_x, $region_y));
+				$_POST['highpass_apod_x'] = $hp_apod_x=round($hp_diam_x/2);
+				$_POST['highpass_apod_y'] = $hp_apod_y=round($hp_diam_y/2);
+			}
+			
+			if ($_POST['preset_search'] == 2)  //Tiny 10%
+			{
+				$_POST['region_x'] = $region_x = intval($imageinfo['dimx']*0.1);
+				$_POST['region_y'] = $region_y = intval($imageinfo['dimy']*0.1);
+				$Nx=$region_x/$sampling;
+				$Ny=$region_y/$sampling;
+				$_POST['mask_width_x'] = $mask_width_x = $Nx-2.5*$mask_apod_x;
+				$_POST['mask_width_y'] = $mask_width_y = $Ny-2.5*$mask_apod_y;
+				$_POST['highpass_diameter_x'] = $hp_diam_x = round($imageinfo['pixelsize']*pow(10,10)*min($region_x, $region_y));
+				$_POST['highpass_diameter_y'] = $hp_diam_y = round($imageinfo['pixelsize']*pow(10,10)*min($region_x, $region_y));
+				$_POST['highpass_apod_x'] = $hp_apod_x=round($hp_diam_x/2);
+				$_POST['highpass_apod_y'] = $hp_apod_y=round($hp_diam_y/2);
+			}
+			
+			if ($_POST['preset_search'] == 3)  //Small 25%
+			{
+				$_POST['region_x'] = $region_x = intval($imageinfo['dimx']*0.25);
+				$_POST['region_y'] = $region_y = intval($imageinfo['dimy']*0.25);
+				$Nx=$region_x/$sampling;
+				$Ny=$region_y/$sampling;
+				$_POST['mask_width_x'] = $mask_width_x = $Nx-2.5*$mask_apod_x;
+				$_POST['mask_width_y'] = $mask_width_y = $Ny-2.5*$mask_apod_y;
+				$_POST['highpass_diameter_x'] = $hp_diam_x = round($imageinfo['pixelsize']*pow(10,10)*min($region_x, $region_y));
+				$_POST['highpass_diameter_y'] = $hp_diam_y = round($imageinfo['pixelsize']*pow(10,10)*min($region_x, $region_y));
+				$_POST['highpass_apod_x'] = $hp_apod_x=round($hp_diam_x/2);
+				$_POST['highpass_apod_y'] = $hp_apod_y=round($hp_diam_y/2);
+			}
+			
+			if ($_POST['preset_search'] == 4)  //Medium 50%
+			{
+				$_POST['region_x'] = $region_x = intval($imageinfo['dimx']*0.5);
+				$_POST['region_y'] = $region_y = intval($imageinfo['dimy']*0.5);
+				$Nx=$region_x/$sampling;
+				$Ny=$region_y/$sampling;
+				$_POST['mask_width_x'] = $mask_width_x = $Nx-2.5*$mask_apod_x;
+				$_POST['mask_width_y'] = $mask_width_y = $Ny-2.5*$mask_apod_y;
+				$_POST['highpass_diameter_x'] = $hp_diam_x = round($imageinfo['pixelsize']*pow(10,10)*min($region_x, $region_y));
+				$_POST['highpass_diameter_y'] = $hp_diam_y = round($imageinfo['pixelsize']*pow(10,10)*min($region_x, $region_y));
+				$_POST['highpass_apod_x'] = $hp_apod_x=round($hp_diam_x/2);
+				$_POST['highpass_apod_y'] = $hp_apod_y=round($hp_diam_y/2);
+			}
+			
+			if ($_POST['preset_search'] == 5)  //Large 75%
+			{
+				$_POST['region_x'] = $region_x = intval($imageinfo['dimx']*0.75);
+				$_POST['region_y'] = $region_y = intval($imageinfo['dimy']*0.75);
+				$Nx=$region_x/$sampling;
+				$Ny=$region_y/$sampling;
+				$_POST['mask_width_x'] = $mask_width_x = $Nx-2.5*$mask_apod_x;
+				$_POST['mask_width_y'] = $mask_width_y = $Ny-2.5*$mask_apod_y;
+				$_POST['highpass_diameter_x'] = $hp_diam_x = round($imageinfo['pixelsize']*pow(10,10)*min($region_x, $region_y));
+				$_POST['highpass_diameter_y'] = $hp_diam_y = round($imageinfo['pixelsize']*pow(10,10)*min($region_x, $region_y));
+				$_POST['highpass_apod_x'] = $hp_apod_x=round($hp_diam_x/2);
+				$_POST['highpass_apod_y'] = $hp_apod_y=round($hp_diam_y/2);
+			}
+			
+			if ($_POST['preset_search'] == 6)  //Full 90%
+			{
+				$_POST['region_x'] = $region_x = intval($imageinfo['dimx']*0.9);
+				$_POST['region_y'] = $region_y = intval($imageinfo['dimy']*0.9);
+				$Nx=$region_x/$sampling;
+				$Ny=$region_y/$sampling;
+				$_POST['mask_width_x'] = $mask_width_x = $Nx-2.5*$mask_apod_x;
+				$_POST['mask_width_y'] = $mask_width_y = $Ny-2.5*$mask_apod_y;
+				$_POST['highpass_diameter_x'] = $hp_diam_x = round($imageinfo['pixelsize']*pow(10,10)*min($region_x, $region_y));
+				$_POST['highpass_diameter_y'] = $hp_diam_y = round($imageinfo['pixelsize']*pow(10,10)*min($region_x, $region_y));
+				$_POST['highpass_apod_x'] = $hp_apod_x=round($hp_diam_x/2);
+				$_POST['highpass_apod_y'] = $hp_apod_y=round($hp_diam_y/2);
+			}
+			
+			
+			//Size Presets
+			if ($_POST['preset_size'] == 1)  //Generic
+			{
+				$_POST['lowpass_diameter_x'] = $lp_diam_x = min(round(pow(10,10)*$imageinfo['pixelsize']*75), round(0.75*$hp_diam_x));
+				$_POST['lowpass_diameter_y'] = $lp_diam_y = min(round(pow(10,10)*$imageinfo['pixelsize']*75), round(0.75*$hp_diam_x));
+				$_POST['lowpass_apod_x'] = $lp_apod_x = 2.5*$lp_diam_x;
+				$_POST['lowpass_apod_y'] = $lp_apod_y = 2.5*$lp_diam_y;
+				$_POST['thickness'] = $thickness = 1500;
+			}
+			
+			if ($_POST['preset_size'] == 2)  //Size 10 nm
+			{
+				$_POST['lowpass_diameter_x'] = $lp_diam_x = min(50, round(0.75*$hp_diam_x));
+				$_POST['lowpass_diameter_y'] = $lp_diam_y = min(50, round(0.75*$hp_diam_x));
+				$_POST['lowpass_apod_x'] = $lp_apod_x = 2.5*$lp_diam_x;
+				$_POST['lowpass_apod_y'] = $lp_apod_y = 2.5*$lp_diam_y;
+				$_POST['thickness'] = $thickness = 500;
+			}
+			
+			if ($_POST['preset_size'] == 3)  //Size 25 nm
+			{
+				$_POST['lowpass_diameter_x'] = $lp_diam_x = min(125, round(0.75*$hp_diam_x));
+				$_POST['lowpass_diameter_y'] = $lp_diam_y = min(125, round(0.75*$hp_diam_x));
+				$_POST['lowpass_apod_x'] = $lp_apod_x = 2.5*$lp_diam_x;
+				$_POST['lowpass_apod_y'] = $lp_apod_y = 2.5*$lp_diam_y;
+				$_POST['thickness'] = $thickness = 1250;
+			}
+			
+			if ($_POST['preset_size'] == 4)  //Size 50 nm
+			{
+				$_POST['lowpass_diameter_x'] = $lp_diam_x = min(250, round(0.75*$hp_diam_x));
+				$_POST['lowpass_diameter_y'] = $lp_diam_y = min(250, round(0.75*$hp_diam_x));
+				$_POST['lowpass_apod_x'] = $lp_apod_x = 2.5*$lp_diam_x;
+				$_POST['lowpass_apod_y'] = $lp_apod_y = 2.5*$lp_diam_y;
+				$_POST['thickness'] = $thickness = 2500;
+			}
+			
+			if ($_POST['preset_size'] == 5)  //Size 100 nm
+			{
+				$_POST['lowpass_diameter_x'] = $lp_diam_x = min(500, round(0.75*$hp_diam_x));
+				$_POST['lowpass_diameter_y'] = $lp_diam_y = min(500, round(0.75*$hp_diam_x));
+				$_POST['lowpass_apod_x'] = $lp_apod_x = 2.5*$lp_diam_x;
+				$_POST['lowpass_apod_y'] = $lp_apod_y = 2.5*$lp_diam_y;
+				$_POST['thickness'] = $thickness = 5000;
+			}
+			
+			if ($_POST['preset_size'] == 6)  //Size 250 nm
+			{
+				$_POST['lowpass_diameter_x'] = $lp_diam_x = min(1250, round(0.75*$hp_diam_x));
+				$_POST['lowpass_diameter_y'] = $lp_diam_y = min(1250, round(0.75*$hp_diam_x));
+				$_POST['lowpass_apod_x'] = $lp_apod_x = 2.5*$lp_diam_x;
+				$_POST['lowpass_apod_y'] = $lp_apod_y = 2.5*$lp_diam_y;
+				$_POST['thickness'] = $thickness = 12500;
+			}
+			
+			if ($_POST['preset_size'] == 7)  //Size 500 nm
+			{
+				$_POST['lowpass_diameter_x'] = $lp_diam_x = min(2500, round(0.75*$hp_diam_x));
+				$_POST['lowpass_diameter_y'] = $lp_diam_y = min(2500, round(0.75*$hp_diam_x));
+				$_POST['lowpass_apod_x'] = $lp_apod_x = 2.5*$lp_diam_x;
+				$_POST['lowpass_apod_y'] = $lp_apod_y = 2.5*$lp_diam_y;
+				$_POST['thickness'] = $thickness = 25000;
+			}
+			
+			if ($_POST['preset_size'] == 8)  //Size 1000 nm
+			{
+				$_POST['lowpass_diameter_x'] = $lp_diam_x = min(5000, round(0.75*$hp_diam_x));
+				$_POST['lowpass_diameter_y'] = $lp_diam_y = min(5000, round(0.75*$hp_diam_x));
+				$_POST['lowpass_apod_x'] = $lp_apod_x = 2.5*$lp_diam_x;
+				$_POST['lowpass_apod_y'] = $lp_apod_y = 2.5*$lp_diam_y;
+				$_POST['thickness'] = $thickness = 50000;
+			}
+		}
+		
+		//These parameters don't change with Presets
+		
+		$map_size_x = intval($imageinfo['dimx']/$map_sampling);
+		$map_size_x = intval($imageinfo['dimy']/$map_sampling);
+		$kernel_x = '5';
+		$kernel_y = '5';
+		$mask_apod_x='10';
+		$mask_apod_y='10';
 		$image_file_type = pathinfo($imageinfo['filename'], PATHINFO_EXTENSION);
 		$_SESSION['image_file_type'] = $image_file_type;
 		$_SESSION['dimx'] = $imageinfo['dimx'];
@@ -155,7 +391,7 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 		$params->addParam( "region_y", $region_y, "Window Size (y) (<strong>Critical Parameter</strong>)" );
 		$params->addParam( "sampling", $sampling, "Sampling" );
 		$params->addParam( "map_sampling", $map_sampling, "Sampling for Depiction" );
-		$params->addParam( "thickness", $thickness, "Thickness, in angstroms (<strong>Critical Parameter</strong>)" );
+		$params->addParam( "thickness", $thickness, "Thickness (<strong>Critical Parameter</strong>)" );
 		$params->addParam( "lowpass_diameter_x", $lp_diam_x, "Lowpass Filter (x) (<strong>Critical Parameter</strong>)" );
 		$params->addParam( "lowpass_diameter_y", $lp_diam_y, "Lowpass Filter (y) (<strong>Critical Parameter</strong>)" );
 		$params->addParam( "lowpass_apod_x", $lp_apod_x, "Lowpass Apodization Filter (x)" );
@@ -222,23 +458,20 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 
 		
 		// Validations
-		$params->addValidation( "region_x", "req" );
-		$params->addValidation( "region_x", "num" );
-		$params->addValidation( "region_y", "req" );
-		$params->addValidation( "region_y", "num" );
-		$params->addValidation( "thickness", "req" );
-		$params->addValidation( "thickness", "num" );
-		
+		if ($_POST['settings'] == 2 or $_POST['settings'] == 3)  //Basic or Advanced Settings
+		{
+			$params->addValidation( "region_x", "req" );
+			$params->addValidation( "region_x", "num" );
+			$params->addValidation( "region_y", "req" );
+			$params->addValidation( "region_y", "num" );
+			$params->addValidation( "thickness", "req" );
+			$params->addValidation( "thickness", "num" );
+		}
 	}
 		
 	// Generate a form for the parameters that are specific to this program (not Appion params)
 	public function generateAdditionalFormLeft()
 	{
-		$filename='/lustre/cryo/lustre/appiondata/15apr12b/protomo_alignments/protomorun2/series000309.corr';
-		$lines = file($filename, FILE_IGNORE_NEW_LINES);
-		//print $filename;
-		//print $lines;
-		
 		if ($_SESSION['erase_coarse']==1)
 		{
 			$html .= "<br></br>
@@ -257,166 +490,245 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 		}
 		else
 		{
-			$fieldSize = 5;
 			//$imageinfo=$_SESSION['imageinfo'];
 			
 			$this->updateFormParams();
 			$params = $this->getFormParams();
 			
 			global $html;
-			$html .= "
-		    <br><br />
-		    <H4>General Parameters ".docpop('genparam_info', '(Info)')."</H4>
-		    <hr />";
 			
-			$html.= $params->insertTextField( "raw_path", $fieldSize );
-			//$html.= $params->insertTextField( "param_file", $fieldSize );
-			//$html.= $params->insertTextField( "filename_prefix", $fieldSize );
-			//$html.= $params->insertTextField( "image_file_type", $fieldSize );
-			//$html.= $params->insertTextField( "cachedir", $fieldSize );
-			//$html.= $params->insertTextField( "protomo_outdir", $fieldSize );
-			//$html.= $params->insertTextField( "preprocessing", $fieldSize );
-			//$html.= '<select name="link" style="width:66px">';
-			//$html.= '<option selected value="True">Link</option>';
-			//$html.= '<option value="False">Copy</option>';
-			//$html.= '</select>'; $html.= docpop('protomo_link', ' Link or Copy Raw Images?').'<br>';
-			//$html.= $params->insertTextField( "binning", $fieldSize );
-			//$html.= '<select name="binning" style="width:66px">';
-			//$html.= '<option selected value="true">true</option>';
-			//$html.= '<option value="false">false</option>';
-			//$html.= '</select>'; $html.= docpop('protomo_binning', ' Raw Image Binning').'<br>';
-			$html.= $params->insertTextField( "sampling", $fieldSize );
-			$html.= $params->insertTextField( "select_images", $fieldSize );
-			$html.= $params->insertTextField( "exclude_images", $fieldSize );
-			$html.= $params->insertTextFieldInRow( "shift_limit", $fieldSize ).'│ ';
-			$html.= $params->insertTextField( "angle_limit", $fieldSize );
-			//$html.= $params->insertTextField( "logging", $fieldSize );
-			$html.= '<select name="logging" style="width:66px">';
-			$html.= '<option selected value="true">true</option>';
-			$html.= '<option value="false">false</option>';
-			$html.= '</select>'; $html.= docpop('protomo_logging', ' Logging').'<br>';
-			$html.= $params->insertTextField( "loglevel", $fieldSize );
+			$fieldSize = 5;
+			if ($_POST['settings'] == 1 or $_POST['settings'] == 2)  //Express or Basic Settings
+			{
+				if ($_POST['settings'] == 1)  //Express Settings just hide all of the Basic Settings. Basic Settings are still required to be on the webpage somewhere.
+					{$html.= '<div id="express" style="display:none">';}
+				
+				$html .= "
+				<br><br />
+				<H4>General Parameters ".docpop('genparam_info', '(Info)')."</H4>
+				<hr />";
+				
+				$html.= $params->insertTextField( "sampling", $fieldSize );
+				$html.= $params->insertTextFieldInRow( "shift_limit", $fieldSize ).'│ ';
+				$html.= $params->insertTextField( "angle_limit", $fieldSize );
+				
+				$html .= "
+			    <br />
+			    <H4>Window Parameters ".docpop('windowparam_info', '(Info)')."</H4>
+			    <hr />";
+			    
+				$html.= $params->insertTextField( "region_x", $fieldSize );
+				$html.= $params->insertTextField( "region_y", $fieldSize );
+				$html.= $params->insertTextField( "thickness", $fieldSize );
+				
+				$html .= "
+			    <br />
+			    <H4>Mask Parameters ".docpop('maskparam_info', '(Info)')."</H4>
+			    <hr />";
+			    
+				$html.= $params->insertTextField( "lowpass_diameter_x", $fieldSize );
+				$html.= $params->insertTextField( "lowpass_diameter_y", $fieldSize );
+				$html.= $params->insertTextField( "highpass_diameter_x", $fieldSize );
+				$html.= $params->insertTextField( "highpass_diameter_y", $fieldSize );
+				$html.= $params->insertTextField( "mask_width_x", $fieldSize );
+				$html.= $params->insertTextField( "mask_width_y", $fieldSize );
+				$html.= $params->insertTextField( "lowpass_apod_x", $fieldSize );
+				$html.= $params->insertTextField( "lowpass_apod_y", $fieldSize );
+				$html.= $params->insertTextField( "highpass_apod_x", $fieldSize );
+				$html.= $params->insertTextField( "highpass_apod_y", $fieldSize );
+				
+				$html .= "
+				<br />
+				<H4>Coarse Grid Search Parameters ".docpop('gridsearchparam_info', '(Info)')."</H4>
+				<hr />";
+				
+				$html.= $params->insertTextField( "gridsearch_limit", $fieldSize );
+				$html.= $params->insertTextField( "gridsearch_step", $fieldSize );
+				
+				$html .= "
+				<br />
+				<H4>Cross-Correlation Parameters ".docpop('crosscorrparam_info', '(Info)')."</H4>
+				<hr />";
+				
+				$html.= '<select name="corr_mode" style="width:66px">';
+				$html.= '<option value="xcf">xcf</option>';
+				$html.= '<option selected value="mcf">mcf</option>';
+				$html.= '<option value="pcf">pcf</option>';
+				$html.= '<option value="dbl">dbl</option>';
+				$html.= '</select>'; $html.= docpop('protomo_corr_mode', ' Correlation Mode (xcf, mcf, pcf, dbl)').'<br>';
+				$html.= $params->insertTextField( "peak_search_radius_x", $fieldSize );
+				$html.= $params->insertTextField( "peak_search_radius_y", $fieldSize );
+				
+				$html .= "
+				<br />
+				<H4>Depiction Parameters ".docpop('depictionparam_info', '(Info)')."</H4>
+				<hr />";
+				
+				$html.= '<select name="create_tilt_video" style="width:66px">';
+				$html.= '<option selected value="true">true</option>';
+				$html.= '<option value="false">false</option>';
+				$html.= '</select>'; $html.= docpop('protomo_create_tilt_video', ' Create Tilt-Series Videos').'<br>';
+				$html.= '<select name="create_reconstruction" style="width:66px">';
+				$html.= '<option selected value="true">true</option>';
+				$html.= '<option value="false">false</option>';
+				$html.= '</select>'; $html.= docpop('protomo_create_reconstruction', ' Create a Reconstruction Video').'<br>';
+				
+				$html .= "<hr />";
+				if ($_POST['settings'] == 1)  //Express Settings
+					{$html.= "</div>";}
+			}
 			
-			$html .= "
-		    <br />
-		    <H4>Preprocessing Parameters ".docpop('preprocparam_info', '(Info)')."</H4>
-		    <hr />";
-		    
-			$html.= '<select name="preprocessing" style="width:66px">';
-			$html.= '<option selected value="true">true</option>';
-			$html.= '<option value="false">false</option>';
-			$html.= '</select>'; $html.= docpop('protomo_preprocessing', ' Raw Image Preprocessing').'<br>';
-			//$html.= $params->insertTextField( "gradient", $fieldSize );
-			$html.= '<select name="gradient" style="width:66px">';
-			$html.= '<option selected value="true">true</option>';
-			$html.= '<option value="false">false</option>';
-			$html.= '</select>'; $html.= docpop('protomo_gradient', ' Linear Gradient Subtraction').'<br>';
-			//$html.= $params->insertTextField( "iter_gradient", $fieldSize );
-			$html.= '<select name="iter_gradient" style="width:66px">';
-			$html.= '<option value="true">true</option>';
-			$html.= '<option selected value="false">false</option>';
-			$html.= '</select>'; $html.= docpop('protomo_iter_gradient', ' Iterate Gradient Subtraction Once').'<br>';
-			//$html.= $params->insertTextField( "filter", $fieldSize );
-			$html.= '<select name="filter" style="width:66px">';
-			$html.= '<option selected value="median">median</option>';
-			$html.= '<option value="gauss">gauss</option>';
-			$html.= '</select>'; $html.= docpop('protomo_filter', ' Preprocessing median/gauss Filter').'<br>';
-			$html.= $params->insertTextField( "border", $fieldSize );
-			$html.= $params->insertTextField( "clip_low", $fieldSize );
-			$html.= $params->insertTextField( "clip_high", $fieldSize );
-			$html.= $params->insertTextField( "thr_low", $fieldSize );
-			$html.= $params->insertTextField( "thr_high", $fieldSize );
-			$html.= $params->insertTextField( "kernel_x", $fieldSize );
-			$html.= $params->insertTextField( "kernel_y", $fieldSize );
-			$html.= $params->insertTextField( "grow", $fieldSize );
-			
-			$html .= "
-		    <br />
-		    <H4>Window Parameters ".docpop('windowparam_info', '(Info)')."</H4>
-		    <hr />";
-		    
-			$html.= $params->insertTextField( "region_x", $fieldSize );
-			$html.= $params->insertTextField( "region_y", $fieldSize );
-			$html.= $params->insertTextField( "thickness", $fieldSize );
-			$html.= $params->insertTextField( "window_area", $fieldSize );
-			
-			$html .= "
-		    <br />
-		    <H4>Mask Parameters ".docpop('maskparam_info', '(Info)')."</H4>
-		    <hr />";
-		    
-			$html.= $params->insertTextField( "lowpass_diameter_x", $fieldSize );
-			$html.= $params->insertTextField( "lowpass_diameter_y", $fieldSize );
-			$html.= $params->insertTextField( "highpass_diameter_x", $fieldSize );
-			$html.= $params->insertTextField( "highpass_diameter_y", $fieldSize );
-			$html.= $params->insertTextField( "mask_width_x", $fieldSize );
-			$html.= $params->insertTextField( "mask_width_y", $fieldSize );
-			$html.= $params->insertTextField( "mask_apod_x", $fieldSize );
-			$html.= $params->insertTextField( "mask_apod_y", $fieldSize );
-			$html.= $params->insertTextField( "lowpass_apod_x", $fieldSize );
-			$html.= $params->insertTextField( "lowpass_apod_y", $fieldSize );
-			$html.= $params->insertTextField( "highpass_apod_x", $fieldSize );
-			$html.= $params->insertTextField( "highpass_apod_y", $fieldSize );
-			
-			$html .= "
-		    <br />
-		    <H4>Coarse Grid Search Parameters ".docpop('gridsearchparam_info', '(Info)')."</H4>
-		    <hr />";
-		    
-			//$html.= $params->insertCheckboxField( "gui_coarse_align" );
-			$html.= $params->insertTextField( "gridsearch_limit", $fieldSize );
-			$html.= $params->insertTextField( "gridsearch_step", $fieldSize );
-			
-			$html .= "
-		    <br />
-		    <H4>Cross-Correlation Parameters ".docpop('crosscorrparam_info', '(Info)')."</H4>
-		    <hr />";
-			
-			//$html.= $params->insertTextField( "corr_mode", $fieldSize );
-			$html.= '<select name="corr_mode" style="width:66px">';
-			$html.= '<option value="xcf">xcf</option>';
-			$html.= '<option selected value="mcf">mcf</option>';
-			$html.= '<option value="pcf">pcf</option>';
-			$html.= '<option value="dbl">dbl</option>';
-			$html.= '</select>'; $html.= docpop('protomo_corr_mode', ' Correlation Mode (xcf, mcf, pcf, dbl)').'<br>';
-			$html.= $params->insertTextField( "peak_search_radius_x", $fieldSize );
-			$html.= $params->insertTextField( "peak_search_radius_y", $fieldSize );
-			
-			$html .= "
-		    <br />
-		    <H4>Depiction Parameters ".docpop('depictionparam_info', '(Info)')."</H4>
-		    <hr />";
-			
-			$html.= $params->insertTextField( "correlation_size_x", $fieldSize );
-			$html.= $params->insertTextField( "correlation_size_y", $fieldSize );
-			//$html.= $params->insertTextField( "create_reconstruction", $fieldSize );
-			$html.= '<select name="create_tilt_video" style="width:66px">';
-			$html.= '<option selected value="true">true</option>';
-			$html.= '<option value="false">false</option>';
-			$html.= '</select>'; $html.= docpop('protomo_create_tilt_video', ' Create Tilt-Series Videos').'<br>';
-			$html.= '<select name="create_reconstruction" style="width:66px">';
-			$html.= '<option selected value="true">true</option>';
-			$html.= '<option value="false">false</option>';
-			$html.= '</select>'; $html.= docpop('protomo_create_reconstruction', ' Create a Reconstruction Video').'<br>';
-			$html.= '<select name="show_window_size" style="width:66px">';
-			$html.= '<option selected value="true">true</option>';
-			$html.= '<option value="false">false</option>';
-			$html.= '</select>'; $html.= docpop('protomo_show_window_size', ' Show Window Size in Reconstruction Videos').'<br>';
-			$html.= '<select name="video_type" style="width:66px">';
-			$html.= '<option value="gif">Gif</option>';
-			$html.= '<option selected value="html5vid">HTML5</option>';
-			$html.= '</select>'; $html.= docpop('protomo_video_type', ' Video Type').'<br>';
-			$html.= $params->insertTextField( "map_sampling", $fieldSize );
-			$html.= $params->insertTextField( "map_size_x", $fieldSize );
-			$html.= $params->insertTextField( "map_size_y", $fieldSize );
-			//$html.= $params->insertTextField( "map_size_z", $fieldSize );
-			//$html.= $params->insertTextField( "keep_recons", $fieldSize );
-			$html.= '<select name="keep_recons" style="width:66px">';
-			$html.= '<option value="true">true</option>';
-			$html.= '<option selected value="false">false</option>';
-			$html.= '</select>'; $html.= docpop('protomo_keep_recons', ' Keep Intermediate Reconstruction').'<br>';
-	
-			$html .= "<hr />";
+			if ($_POST['settings'] == 3)  //Advanced Settings
+			{
+				$html.= $params->insertTextField( "raw_path", $fieldSize );
+				//$html.= $params->insertTextField( "param_file", $fieldSize );
+				//$html.= $params->insertTextField( "filename_prefix", $fieldSize );
+				//$html.= $params->insertTextField( "image_file_type", $fieldSize );
+				//$html.= $params->insertTextField( "cachedir", $fieldSize );
+				//$html.= $params->insertTextField( "protomo_outdir", $fieldSize );
+				//$html.= $params->insertTextField( "preprocessing", $fieldSize );
+				//$html.= '<select name="link" style="width:66px">';
+				//$html.= '<option selected value="True">Link</option>';
+				//$html.= '<option value="False">Copy</option>';
+				//$html.= '</select>'; $html.= docpop('protomo_link', ' Link or Copy Raw Images?').'<br>';
+				//$html.= $params->insertTextField( "binning", $fieldSize );
+				//$html.= '<select name="binning" style="width:66px">';
+				//$html.= '<option selected value="true">true</option>';
+				//$html.= '<option value="false">false</option>';
+				//$html.= '</select>'; $html.= docpop('protomo_binning', ' Raw Image Binning').'<br>';
+				$html.= $params->insertTextField( "sampling", $fieldSize );
+				$html.= $params->insertTextField( "select_images", $fieldSize );
+				$html.= $params->insertTextField( "exclude_images", $fieldSize );
+				$html.= $params->insertTextFieldInRow( "shift_limit", $fieldSize ).'│ ';
+				$html.= $params->insertTextField( "angle_limit", $fieldSize );
+				//$html.= $params->insertTextField( "logging", $fieldSize );
+				$html.= '<select name="logging" style="width:66px">';
+				$html.= '<option selected value="true">true</option>';
+				$html.= '<option value="false">false</option>';
+				$html.= '</select>'; $html.= docpop('protomo_logging', ' Logging').'<br>';
+				$html.= $params->insertTextField( "loglevel", $fieldSize );
+				
+				$html .= "
+				<br />
+				<H4>Preprocessing Parameters ".docpop('preprocparam_info', '(Info)')."</H4>
+				<hr />";
+				
+				$html.= '<select name="preprocessing" style="width:66px">';
+				$html.= '<option selected value="true">true</option>';
+				$html.= '<option value="false">false</option>';
+				$html.= '</select>'; $html.= docpop('protomo_preprocessing', ' Raw Image Preprocessing').'<br>';
+				//$html.= $params->insertTextField( "gradient", $fieldSize );
+				$html.= '<select name="gradient" style="width:66px">';
+				$html.= '<option selected value="true">true</option>';
+				$html.= '<option value="false">false</option>';
+				$html.= '</select>'; $html.= docpop('protomo_gradient', ' Linear Gradient Subtraction').'<br>';
+				//$html.= $params->insertTextField( "iter_gradient", $fieldSize );
+				$html.= '<select name="iter_gradient" style="width:66px">';
+				$html.= '<option value="true">true</option>';
+				$html.= '<option selected value="false">false</option>';
+				$html.= '</select>'; $html.= docpop('protomo_iter_gradient', ' Iterate Gradient Subtraction Once').'<br>';
+				//$html.= $params->insertTextField( "filter", $fieldSize );
+				$html.= '<select name="filter" style="width:66px">';
+				$html.= '<option selected value="median">median</option>';
+				$html.= '<option value="gauss">gauss</option>';
+				$html.= '</select>'; $html.= docpop('protomo_filter', ' Preprocessing median/gauss Filter').'<br>';
+				$html.= $params->insertTextField( "border", $fieldSize );
+				$html.= $params->insertTextField( "clip_low", $fieldSize );
+				$html.= $params->insertTextField( "clip_high", $fieldSize );
+				$html.= $params->insertTextField( "thr_low", $fieldSize );
+				$html.= $params->insertTextField( "thr_high", $fieldSize );
+				$html.= $params->insertTextField( "kernel_x", $fieldSize );
+				$html.= $params->insertTextField( "kernel_y", $fieldSize );
+				$html.= $params->insertTextField( "grow", $fieldSize );
+				
+				$html .= "
+				<br />
+				<H4>Window Parameters ".docpop('windowparam_info', '(Info)')."</H4>
+				<hr />";
+				
+				$html.= $params->insertTextField( "region_x", $fieldSize );
+				$html.= $params->insertTextField( "region_y", $fieldSize );
+				$html.= $params->insertTextField( "thickness", $fieldSize );
+				$html.= $params->insertTextField( "window_area", $fieldSize );
+				
+				$html .= "
+				<br />
+				<H4>Mask Parameters ".docpop('maskparam_info', '(Info)')."</H4>
+				<hr />";
+				
+				$html.= $params->insertTextField( "lowpass_diameter_x", $fieldSize );
+				$html.= $params->insertTextField( "lowpass_diameter_y", $fieldSize );
+				$html.= $params->insertTextField( "highpass_diameter_x", $fieldSize );
+				$html.= $params->insertTextField( "highpass_diameter_y", $fieldSize );
+				$html.= $params->insertTextField( "mask_width_x", $fieldSize );
+				$html.= $params->insertTextField( "mask_width_y", $fieldSize );
+				$html.= $params->insertTextField( "mask_apod_x", $fieldSize );
+				$html.= $params->insertTextField( "mask_apod_y", $fieldSize );
+				$html.= $params->insertTextField( "lowpass_apod_x", $fieldSize );
+				$html.= $params->insertTextField( "lowpass_apod_y", $fieldSize );
+				$html.= $params->insertTextField( "highpass_apod_x", $fieldSize );
+				$html.= $params->insertTextField( "highpass_apod_y", $fieldSize );
+				
+				$html .= "
+				<br />
+				<H4>Coarse Grid Search Parameters ".docpop('gridsearchparam_info', '(Info)')."</H4>
+				<hr />";
+				
+				//$html.= $params->insertCheckboxField( "gui_coarse_align" );
+				$html.= $params->insertTextField( "gridsearch_limit", $fieldSize );
+				$html.= $params->insertTextField( "gridsearch_step", $fieldSize );
+				
+				$html .= "
+				<br />
+				<H4>Cross-Correlation Parameters ".docpop('crosscorrparam_info', '(Info)')."</H4>
+				<hr />";
+				
+				//$html.= $params->insertTextField( "corr_mode", $fieldSize );
+				$html.= '<select name="corr_mode" style="width:66px">';
+				$html.= '<option value="xcf">xcf</option>';
+				$html.= '<option selected value="mcf">mcf</option>';
+				$html.= '<option value="pcf">pcf</option>';
+				$html.= '<option value="dbl">dbl</option>';
+				$html.= '</select>'; $html.= docpop('protomo_corr_mode', ' Correlation Mode (xcf, mcf, pcf, dbl)').'<br>';
+				$html.= $params->insertTextField( "peak_search_radius_x", $fieldSize );
+				$html.= $params->insertTextField( "peak_search_radius_y", $fieldSize );
+				
+				$html .= "
+				<br />
+				<H4>Depiction Parameters ".docpop('depictionparam_info', '(Info)')."</H4>
+				<hr />";
+				
+				$html.= $params->insertTextField( "correlation_size_x", $fieldSize );
+				$html.= $params->insertTextField( "correlation_size_y", $fieldSize );
+				//$html.= $params->insertTextField( "create_reconstruction", $fieldSize );
+				$html.= '<select name="create_tilt_video" style="width:66px">';
+				$html.= '<option selected value="true">true</option>';
+				$html.= '<option value="false">false</option>';
+				$html.= '</select>'; $html.= docpop('protomo_create_tilt_video', ' Create Tilt-Series Videos').'<br>';
+				$html.= '<select name="create_reconstruction" style="width:66px">';
+				$html.= '<option selected value="true">true</option>';
+				$html.= '<option value="false">false</option>';
+				$html.= '</select>'; $html.= docpop('protomo_create_reconstruction', ' Create a Reconstruction Video').'<br>';
+				$html.= '<select name="show_window_size" style="width:66px">';
+				$html.= '<option selected value="true">true</option>';
+				$html.= '<option value="false">false</option>';
+				$html.= '</select>'; $html.= docpop('protomo_show_window_size', ' Show Window Size in Reconstruction Videos').'<br>';
+				$html.= '<select name="video_type" style="width:66px">';
+				$html.= '<option value="gif">Gif</option>';
+				$html.= '<option selected value="html5vid">HTML5</option>';
+				$html.= '</select>'; $html.= docpop('protomo_video_type', ' Video Type').'<br>';
+				$html.= $params->insertTextField( "map_sampling", $fieldSize );
+				$html.= $params->insertTextField( "map_size_x", $fieldSize );
+				$html.= $params->insertTextField( "map_size_y", $fieldSize );
+				//$html.= $params->insertTextField( "map_size_z", $fieldSize );
+				//$html.= $params->insertTextField( "keep_recons", $fieldSize );
+				$html.= '<select name="keep_recons" style="width:66px">';
+				$html.= '<option value="true">true</option>';
+				$html.= '<option selected value="false">false</option>';
+				$html.= '</select>'; $html.= docpop('protomo_keep_recons', ' Keep Intermediate Reconstruction').'<br>';
+		
+				$html .= "<hr />";
+			}
 			
 			// Only display link to next step in tomo processing if on completed Command page
 			if ((empty($_POST['region_x']) OR empty($_POST['region_y']) OR empty($_POST['thickness']) OR empty($_POST['grid_limit']) OR empty($_POST['grid_step'])) AND !isset($_POST['process']))
