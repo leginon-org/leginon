@@ -95,7 +95,7 @@ def getVirtualStackParticlesFromId(stackid, msg=True):
 			oldstackid=orig_stackdata['oldstack'].dbid
 		else:
 			apDisplay.printMsg("original stackid: %i"%oldstackid)
-			orig_stack=oldstackid
+		orig_stack=oldstackid
 
 	sqlcmd = "SELECT s1.* FROM ApStackParticleData s1 "+ \
 		"LEFT JOIN ApStackParticleData s2 ON " + \
@@ -528,12 +528,17 @@ def commitSubStack(params, newname=False, centered=False, oldstackparts=None, so
 		sqlParams = ['particleNumber','REF|ApStackData|stack']
 		vals = [newpartnum,newstackid]
 		for k,v in oldstackpartdata.iteritems():
+			# First need to convert the keys to column names
+			k = sinedon.directq.datakeyToSqlColumnName(oldstackpartdata,k)
 			if k in ['DEF_id', 
 				'DEF_timestamp', 
 				'particleNumber', 
 				'REF|ApStackData|stack']:
 				continue
 			sqlParams.append(k)
+			# have to insert dbid for referenced data
+			if 'REF|' in k and v is not None:
+				v = v.dbid
 			vals.append(v)
 		partlistvals.append("('"+"','".join(str(x) for x in vals)+"')")
 
