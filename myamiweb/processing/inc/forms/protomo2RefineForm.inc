@@ -663,6 +663,9 @@ class Protomo2RefineForm extends BasicLayoutForm
 				$_POST['r5_iters'] = $r5_iters = '0';
 				$_POST['elevation_switch'] = $elevation_switch='';
 				$_POST['scale_switch'] = $scale_switch='';
+				$_POST['rotation_switch'] = $rotation_switch='';
+				$_POST['azimuth_switch'] = $azimuth_switch='';
+				$_POST['orientation_switch'] = $orientation_switch='';
 			}
 			
 			if ($_POST['preset_type'] == 2)  //Quick refinement
@@ -674,6 +677,9 @@ class Protomo2RefineForm extends BasicLayoutForm
 				$_POST['r5_iters'] = $r5_iters = '0';
 				$_POST['elevation_switch'] = $elevation_switch='';
 				$_POST['scale_switch'] = $scale_switch='';
+				$_POST['rotation_switch'] = $rotation_switch='';
+				$_POST['azimuth_switch'] = $azimuth_switch='';
+				$_POST['orientation_switch'] = $orientation_switch='';
 			}
 			
 			if ($_POST['preset_type'] == 3)  //Modest refinement
@@ -685,6 +691,9 @@ class Protomo2RefineForm extends BasicLayoutForm
 				$_POST['r5_iters'] = $r5_iters = '0';
 				$_POST['elevation_switch'] = $elevation_switch='';
 				$_POST['scale_switch'] = $scale_switch='';
+				$_POST['rotation_switch'] = $rotation_switch='';
+				$_POST['azimuth_switch'] = $azimuth_switch='';
+				$_POST['orientation_switch'] = $orientation_switch='';
 			}
 			
 			if ($_POST['preset_type'] == 4)  //Full refinement
@@ -696,6 +705,9 @@ class Protomo2RefineForm extends BasicLayoutForm
 				$_POST['r5_iters'] = $r5_iters = '0';
 				$_POST['elevation_switch'] = $elevation_switch='71';
 				$_POST['scale_switch'] = $scale_switch='71';
+				$_POST['rotation_switch'] = $rotation_switch='';
+				$_POST['azimuth_switch'] = $azimuth_switch='';
+				$_POST['orientation_switch'] = $orientation_switch='';
 			}
 			
 			if ($_POST['preset_type'] == 5)  //Exhaustive refinement
@@ -708,6 +720,9 @@ class Protomo2RefineForm extends BasicLayoutForm
 				$_POST['elevation_switch'] = $elevation_switch='81';
 				$_POST['scale_switch'] = $scale_switch='81';
 				$_POST['rotation_switch'] = $rotation_switch='101';
+				$_POST['azimuth_switch'] = $azimuth_switch='101';
+				$_POST['orientation_switch'] = $orientation_switch='101';
+				
 			}
 			
 		}

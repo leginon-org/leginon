@@ -580,6 +580,11 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 			
 			if ($_POST['settings'] == 3)  //Advanced Settings
 			{
+				$html .= "
+				<br><br />
+				<H4>General Parameters ".docpop('genparam_info', '(Info)')."</H4>
+				<hr />";
+				
 				$html.= $params->insertTextField( "raw_path", $fieldSize );
 				//$html.= $params->insertTextField( "param_file", $fieldSize );
 				//$html.= $params->insertTextField( "filename_prefix", $fieldSize );
