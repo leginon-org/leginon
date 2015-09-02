@@ -78,8 +78,8 @@ class modelFromEMDB(appionScript.AppionScript):
 		# retrieve emdb from web based on emdb id
 		#xmlurl = ( "ftp://ftp.ebi.ac.uk/pub/databases/emdb/structures/EMD-%d/header/emd-%d.xml"
 		#	%(emdbid, emdbid) )
-		xmlurl = ( "ftp://emdb.rutgers.edu/structures/EMD-%d/header/emd-%d.xml"
-			%(emdbid, emdbid) )
+		xmlurl = ( "http://www.ebi.ac.uk/pdbe/entry/download/EMD-%d/xml"
+			%(emdbid,) )
 
 		apDisplay.printMsg("retrieving emdb XML file: "+xmlurl)
 		tmpfile = urllib.urlretrieve(xmlurl)[0]
