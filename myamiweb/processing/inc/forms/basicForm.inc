@@ -24,6 +24,7 @@ class BasicForm
 	{
 		$this->formParams = $this->createFormParams();
 		$this->setPublications();
+		$this->setLogoImagePath();
 	}	
 	
 	function __destruct() 
@@ -31,6 +32,7 @@ class BasicForm
 		unset( $this->formParams );
 		unset( $this->defaultParamSets );
 		unset( $this->pubKeyList );
+		unset( $this->logoImagePath );
 	}
 	
 	// extending classes should use this to set the 
@@ -55,6 +57,14 @@ class BasicForm
 		}
 		
 		return $html;
+	}
+	
+	// extending classes should use this to set the 
+	// logo image path relative to processing directory 
+	// for example, 'img/dogpicker.jpg'
+	protected function setLogoImagePath($relative_path='')
+	{
+		$this->logoImagePath = $relative_path;
 	}
 	
 	// Override this function if your form needs to copy files to a remote server

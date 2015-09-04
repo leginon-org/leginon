@@ -48,7 +48,7 @@ class MakeDDStackForm extends BasicLoopForm
 		$params->addParam( "alignbfactor", $alignbfactor, "b factor in motioncorr" );
 		$params->addParam( "alignlabel", $alignlabel, "append label to aligned image" );
 		// Validations
-		//$params->addValidation( "numpart", "req" );
+		$params->addValidation( "bin", "num" );
 	}
 		
 	public function generateAdditionalFormRight()

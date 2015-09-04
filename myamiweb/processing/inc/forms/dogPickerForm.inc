@@ -1,0 +1,87 @@
+<?php
+
+/**
+ *	The Leginon software is Copyright 2003 
+ *	The Scripps Research Institute, La Jolla, CA
+ *	For terms of the license agreement
+ *	see  http://ami.scripps.edu/software/leginon-license
+ */
+
+require_once "mathParticleForm.inc";
+
+class DogPickerForm extends MathParticleForm
+
+{
+	function __construct(  $expId, $extraHTML='', $kfactorv=1.2, $numslicesv='',$sizerangev='' ) 
+	{
+		parent::__construct($expId, $extraHTML);
+		
+		//------ Set Parameters for the parent class, BasicLoopForm (general Appion params) -----//
+		
+		// Set the publications to be references on the web pages
+		$pubList = array('dog');
+		$this->setLogoImagePath( 'img/dogpicker.jpg' );
+		$this->setPublications( $pubList );
+		$this->setJobType( 'dogpicker' );
+		$this->setOutputDirectory( 'extract' );
+		$this->setBaseRunName( 'dogrun' );
+		$this->setTitle( 'dogPicker.py Launcher' );
+		$this->setHeading( 'Automated Particle Selection with DoG Picker' );
+		$this->setExeFile( 'dogPicker.py' );
+		$this->setGuideURL( "http://emg.nysbc.org/redmine/projects/appion/wiki/Appion_Processing" );
+		$this->setTestable( True ); // True to activate "test single image".
+		$this->setUseLegOutDir( False ); // The output directory will be created in the Appion run directory rather than Leginon.
+		$this->setShowDesc( False ); // Flag to hide the description field of the run parameters.
+		
+		//------ Set Parameters specific to the program that requires this new form -----//
+		$params = $this->getFormParams();
+		
+		// The help section corresponds to the array key for these parameters found in help.js for popup help.
+		$params->setHelpSection( "particle" );
+				
+		//Advanced parameters
+
+		//Single slice
+		$params->addParam( "kfactor", $kfactorv, "K-factor" );
+		//Multiple slices
+		$params->addParam( "numslices", $numslicesv, "Number of Slices" );
+		$params->addParam( "sizerange", $sizerangev, "Size Range" );
+		
+		// Validations
+		//$params->addValidation( "numpart", "req" );
+	}
+		
+	public function generateAdvancedTableRight() {
+		$this->updateFormParams();
+		$params = $this->getFormParams();
+		
+		$fieldSize = 3;
+
+		$html = parent::generateAdvancedTableRight();
+
+		$html .= $params->insertTextField( "kfactor", $fieldSize, "(slopiness)" );
+		$html .= "<b>Multi-scale dogpicker:</b><br />\n";
+		$html .= $params->insertTextField( "numslices", $fieldSize,"(number of sizes)" );
+		$html .= $params->insertTextField( "sizerange", $fieldSize,"(in &Aring;ngstroms)" );
+		$html .="<br />\n";
+		return $html;
+	}
+	
+	// Override the validate function so that we can verify the DogPicker parameters
+	public function validate( $postArray )
+	{
+		$msg = parent::validate( $postArray );
+		
+		$params = $this->getFormParams();
+		
+		
+		$numslices = $params->getParamValue('numslices');
+		if ( $numslices != "" && $numslices < 2 )
+		{
+			$msg .= "<B>Error:</B> numslices must be more than 1 for multisize picking";
+		}
+		return $msg;
+	}
+
+}
+?>
