@@ -325,6 +325,8 @@ def averageStack(stack="start.hed", outfile="average.mrc", partlist=None, msg=Tr
 		apDisplay.printWarning("could not create stack average, average.mrc")
 		return False
 	avgmrc = os.path.join(os.path.dirname(stackfile), outfile)
+	"""
+	### FIXME memory error
 	particles = imagic.read(stack)
 	summedParticle = numpy.zeros((particles[0].shape))
 	if partlist is None:
@@ -333,9 +335,10 @@ def averageStack(stack="start.hed", outfile="average.mrc", partlist=None, msg=Tr
 		partarray = particles[partnum]
 		summedParticle += partarray
 	averagePartice = summedParticle/float(len(particles))
-	#emancmd = ( "proc2d "+stackfile+" "+avgmrc+" average" )
-	#apEMAN.executeEmanCmd(emancmd, verbose=msg)
 	mrc.write(averagePartice, avgmrc)
+	"""	
+	emancmd = ( "proc2d "+stackfile+" "+avgmrc+" average" )
+	apEMAN.executeEmanCmd(emancmd, verbose=msg)
 	return True
 
 #======================
