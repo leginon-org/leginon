@@ -40,7 +40,7 @@ class CtfDisplay(object):
 		## num of sections to divide the 1D spectrum into
 		## initially it was 3 sections to 5 A (or 0.2 A-1)
 		## for going to 3 A (0.33 A-1) should be 5 sections
-		self.numSections = int(math.ceil(15.0/self.outerAngstrom1D))
+		self.numSections = int(math.ceil(10.0/self.outerAngstrom1D))
 		### the following variables control how the section are divided up
 		self.sectionFactor = 3
 		self.overlapFactor = 2
