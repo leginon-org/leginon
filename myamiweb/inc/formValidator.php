@@ -104,6 +104,8 @@ class formValidator{
 	 *													'username' => 'username',
 	 *													'password' => 'password'), "smtp");
 	 * 
+	 * Exclude : 
+	 * 				addValidation("variableName", "variableValue", "exclude=otherVariableName,otherVariableValue", "Your own error message");
 	 */
 	function addValidation($variableName, $variableValue, $validatorType, $errorOutputMessage=NULL){
 		
@@ -259,6 +261,13 @@ class formValidator{
 				$result = $this->validateNoQuote($validateObj->getVariableValue());
 				break;
 			}
+			case 'exclude':{
+				$splitted = explode(",", $validateObj->getTypeOption());	
+				$other_value = $splitted[1];
+				$result = $this->validateExclude($validateObj->getVariableValue(),$other_value);
+				break;
+			}
+			
 			
 		
 		} //end switch
@@ -375,6 +384,19 @@ class formValidator{
 		}	
 		
 		return false;
+	}
+	
+	function validateExclude($inputValue,$otherValue){
+		//One way exclusion
+		//empty string is considered set.  Check string length as well
+		//to include 0 and "0".
+		if( isset($otherValue) && strlen($otherValue) > 0 ){
+			// Must not set $inputValue if $otherValue is set
+			if ( isset($inputValue) && strlen($inputValue) > 0 )
+				return false;
+		}
+		
+		return true;
 	}
 	
 	/*
@@ -530,7 +552,7 @@ define("MINLEN_CHECK_FAILED", "Please enter an input with length more than %d.")
 define("MAXVAL_EXCEEDED", "Please enter a value no greater than %d.");
 define("MINVAL_CHECK_FAILED", "Please enter a value no less than %d.");
 define("EMAIL_CHECK_FAILED", "Please provide a valid email address.");
-define("NUM_CHECK_FAILED", "Please provide a numeric input.");
+define("NUM_CHECK_FAILED", "Please provide a positive integer input.");
 define("ALPHA_CHECK_FAILED", "Please provide an alphabetic input.");
 define("ALPHA_S_CHECK_FAILED", "Input can only contain alphabetic and space characters.");
 define("ALNUM_S_CHECK_FAILED", "Input can only contain alpha-numeric and space characters.");
@@ -544,6 +566,7 @@ define("SMTP_CHECK_FAILED", "SMTP Server checking failed. Please contact your sy
 define("REMOTE_SERVER_CHECK_FAILED", "REMOTE Server checking failed. Please contact your system administrator.");
 define("DATABASE_CHECK_FAILED", "Database checking failed. Please contact your system administrator.");
 define("REMOVE_QUOTE_CHAR", "Please remove any quote characters from your entry.");
+define("EXCLUDE_CHECK_FAILED", "Can not coexist with %s set to '%s'");
 
 // This is an inner class for formValidator.
 class validatorObj{
@@ -574,8 +597,8 @@ class validatorObj{
 		$splitted = explode("=", $type);	
 		
 		$this->validatorType = $splitted[0];
-		
-		if(isset($splitted[1]) && strlen($splitted[1] > 0))
+	
+		if(isset($splitted[1]) && strlen($splitted[1]))
 			$this->setTypeOption($splitted[1]);
 		
 	}
@@ -636,6 +659,12 @@ class validatorObj{
 				case 'database':	{ $this->errorOutputMessage = DATABASE_CHECK_FAILED; break;	}
 				
 				case 'noquote':	{ $this->errorOutputMessage = REMOVE_QUOTE_CHAR; break;	}
+				case 'exclude':		{ 
+					$splitted = explode(",", $this->getTypeOption());	
+					$other_variable = $splitted[0];
+					$other_value = $splitted[1];
+					$this->errorOutputMessage = sprintf(EXCLUDE_CHECK_FAILED, $other_variable,$other_value); break;	
+				}
 				
 			} //end switch			
 		}
