@@ -1181,10 +1181,14 @@ class ProTomo2Aligner(basicScript.BasicScript):
 			proc=subprocess.Popen(cmd1, stdout=subprocess.PIPE, shell=True)
 			(rawimagecount, err) = proc.communicate()
 			rawimagecount=int(rawimagecount)
+			cmd2="awk '/IMAGE /{print $2}' %s | head -n +1" % tiltfilename
+			proc=subprocess.Popen(cmd2, stdout=subprocess.PIPE, shell=True)
+			(tiltstart, err) = proc.communicate()
+			tiltstart=int(tiltstart)
 			maxtilt=0
-			for i in range(rawimagecount):
-				cmd2="awk '/IMAGE %s /{print}' %s | awk '{for (j=1;j<=NF;j++) if($j ~/TILT/) print $(j+2)}'" % (i+1, tiltfilename_full)
-				proc=subprocess.Popen(cmd2, stdout=subprocess.PIPE, shell=True)
+			for i in range(tiltstart,rawimagecount):
+				cmd3="awk '/IMAGE %s /{print}' %s | awk '{for (j=1;j<=NF;j++) if($j ~/TILT/) print $(j+2)}'" % (i+1, tiltfilename_full)
+				proc=subprocess.Popen(cmd3, stdout=subprocess.PIPE, shell=True)
 				(tilt_angle, err) = proc.communicate()
 				tilt_angle=float(tilt_angle)
 				maxtilt=max(maxtilt,abs(tilt_angle))
@@ -1554,6 +1558,7 @@ class ProTomo2Aligner(basicScript.BasicScript):
 				
 				it="%03d" % ((n+start))
 				itt="%02d" % ((n+start+1))
+				ittt="%02d" % ((n+start))
 				#ite="_ite%02d" % ((n+start))
 				basename='%s%s' % (name,it)
 				corrfile=basename+'.corr'
@@ -1591,11 +1596,11 @@ class ProTomo2Aligner(basicScript.BasicScript):
 				jobs=[]
 				
 				# Make correlation peak videos for depiction
-				self.params['corr_peak_gif']='media/correlations/'+seriesname+iteration+'_cor.gif';self.params['corr_peak_ogv']='media/correlations/'+seriesname+iteration+'_cor.ogv';self.params['corr_peak_mp4']='media/correlations/'+seriesname+iteration+'_cor.mp4';self.params['corr_peak_webm']='media/correlations/'+seriesname+iteration+'_cor.webm'
+				self.params['corr_peak_gif']='media/correlations/'+seriesname+ittt+'_cor.gif';self.params['corr_peak_ogv']='media/correlations/'+seriesname+ittt+'_cor.ogv';self.params['corr_peak_mp4']='media/correlations/'+seriesname+ittt+'_cor.mp4';self.params['corr_peak_webm']='media/correlations/'+seriesname+ittt+'_cor.webm'
 				jobs.append(mp.Process(target=apProTomo2Aligner.makeCorrPeakVideos, args=(name, it, rundir, self.params['protomo_outdir'], self.params['video_type'], "Refinement")))
 				
 				# Make correlation plot pngs for depiction
-				self.params['corr_plot_coa_gif']='media/corrplots/'+seriesname+iteration+'_coa.gif';self.params['corr_plot_cofx_gif']='media/corrplots/'+seriesname+iteration+'_cofx.gif';self.params['corr_plot_cofy_gif']='media/corrplots/'+seriesname+iteration+'_cofy.gif';self.params['corr_plot_rot_gif']='media/corrplots/'+seriesname+iteration+'_rot.gif';
+				self.params['corr_plot_coa_gif']='media/corrplots/'+seriesname+ittt+'_coa.gif';self.params['corr_plot_cofx_gif']='media/corrplots/'+seriesname+ittt+'_cofx.gif';self.params['corr_plot_cofy_gif']='media/corrplots/'+seriesname+ittt+'_cofy.gif';self.params['corr_plot_rot_gif']='media/corrplots/'+seriesname+ittt+'_rot.gif';
 				jobs.append(mp.Process(target=apProTomo2Aligner.makeCorrPlotImages, args=(name, it, rundir, corrfile)))
 				
 				# Make refinement plots of tilt azimuth and theta
@@ -1606,7 +1611,7 @@ class ProTomo2Aligner(basicScript.BasicScript):
 				if self.params['create_tilt_video'] == "true":
 					apDisplay.printMsg("Creating Refinement tilt-series video for iteration #%s..." % (start+n+1))
 					f.write('Creating Refinement tilt-series video for iteration #%s...\n' % (start+n+1))
-					self.params['tiltseries_gif']='media/tiltseries/'+seriesname+iteration+'.gif';self.params['tiltseries_ogv']='media/tiltseries/'+seriesname+iteration+'.gif';self.params['tiltseries_mp4']='media/tiltseries/'+seriesname+iteration+'.mp4';self.params['tiltseries_webm']='media/tiltseries/'+seriesname+iteration+'.webm';
+					self.params['tiltseries_gif']='media/tiltseries/'+seriesname+ittt+'.gif';self.params['tiltseries_ogv']='media/tiltseries/'+seriesname+ittt+'.gif';self.params['tiltseries_mp4']='media/tiltseries/'+seriesname+ittt+'.mp4';self.params['tiltseries_webm']='media/tiltseries/'+seriesname+ittt+'.webm';
 					jobs.append(mp.Process(target=apProTomo2Aligner.makeTiltSeriesVideos, args=(seriesname, it, tiltfile, rawimagecount, rundir, raw_path, self.params['pixelsize'], self.params['map_sampling'], self.params['image_file_type'], self.params['video_type'], self.params['tilt_clip'], "True", "Refinement",)))
 				else:
 					apDisplay.printMsg("Skipping tilt-series depiction\n")
@@ -1653,7 +1658,7 @@ class ProTomo2Aligner(basicScript.BasicScript):
 					
 					rx='r%s_region_x' % r
 					ry='r%s_region_y' % r
-					self.params['recon_gif']='media/reconstructions/'+seriesname+iteraion+'.gif';self.params['recon_ogv']='media/reconstructions/'+seriesname+iteraion+'.ogv';self.params['recon_mp4']='media/reconstructions/'+seriesname+iteraion+'.mp4';self.params['recon_webm']='media/reconstructions/'+seriesname+iteraion+'.webm';
+					self.params['recon_gif']='media/reconstructions/'+seriesname+itt+'.gif';self.params['recon_ogv']='media/reconstructions/'+seriesname+itt+'.ogv';self.params['recon_mp4']='media/reconstructions/'+seriesname+itt+'.mp4';self.params['recon_webm']='media/reconstructions/'+seriesname+itt+'.webm';
 					apProTomo2Aligner.makeReconstructionVideos(name, itt, rundir, self.params[rx], self.params[ry], self.params['show_window_size'], self.params['protomo_outdir'], self.params['pixelsize'], sampling, self.params['map_sampling'], self.params['video_type'], self.params['keep_recons'], "True", align_step="Refinement")
 					
 				else:

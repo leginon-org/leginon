@@ -67,6 +67,7 @@ class Protomo2RefineSummary extends BasicLayoutForm
 		$corrpeak_gif_files = glob("$outdir/$runname/media/correlations/s*.gif");
 		$corrpeak_vid_files = glob("$outdir/$runname/media/correlations/s*.{mp4,ogv,webm}",GLOB_BRACE);
 		$qa_gif_file = "$outdir/$runname/media/quality_assessment/series".sprintf('%04d',$tiltseries)."_quality_assessment.gif";
+		print $qa_gif_file;
 		$azimuth_gif_file = "$outdir/$runname/media/angle_refinement/series".sprintf('%04d',$tiltseries)."_azimuth.gif";
 		$theta_gif_file = "$outdir/$runname/media/angle_refinement/series".sprintf('%04d',$tiltseries)."_theta.gif";
 		

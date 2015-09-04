@@ -1476,7 +1476,7 @@ class Protomo2RefineForm extends BasicLayoutForm
 			if (!isset($_POST['process']))
 			{
 				$html .= "<br></br>
-				<b><center>[Enter the the required parameters and click 'Just Show Command' to proceed]</center></b><br>";
+				<b><center>[Choose appropriate presets and/or edit desired parameters then click 'Just Show Command' to proceed]</center></b><br>";
 			}
 		}
 		return $html;

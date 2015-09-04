@@ -1473,7 +1473,7 @@ def ctfCorrect(tiltseriesnumber, ctf_options):
 		
 		f = open(tilt_file_full,'w')
 		for tilt in tilts:
-			f.write("%.2f\n" %tilt)
+			f.write("%.2f\n" % tilt)
 		f.close()
 		
 		mrc_list=[]
