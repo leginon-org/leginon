@@ -31,7 +31,7 @@ def twodHann(size):
 def getFieldSize(shape):
 	mindim = min(shape)
 	twopower = math.log(float(mindim))/math.log(2.0)
-	fieldsize = 2**(math.floor(twopower-0.9))
+	fieldsize = 2**(math.floor(twopower))
 	if debug is True:
 		print "mindim=", mindim
 		print "twopower=", twopower
