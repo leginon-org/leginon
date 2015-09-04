@@ -61,7 +61,11 @@ function runAppionLoop() {
 	$errorMsg = $form->validate( $_POST );
 	
 	// reload the form with any validation error messages
-	if ( !empty($errorMsg) ) createForm( $errorMsg );
+	if ( !empty($errorMsg) ) {
+		createForm( $errorMsg );
+		//Do not continue to PART 2 if has error;
+		return;
+	}
 	
 	/* *******************
 	 PART 2: Copy any needed files to the cluster
