@@ -664,12 +664,12 @@ fi
 		f = open('protomo.csh', 'w')
 		f.write('''setenv I3ROOT %s
 setenv I3LIB ${I3ROOT}/lib/linux/x86-64
-setenv PATH $PATH:${I3ROOT}/bin/linux/x86-64
+setenv PATH ${PATH}:${I3ROOT}/bin/linux/x86-64
 setenv I3LEGACY "/usr/local/i3-0.9.6"
 if ($?LD_LIBRARY_PATH) then
-   export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${I3LIB}:%s/lib/linux/x86-64"
+	setenv LD_LIBRARY_PATH "${LD_LIBRARY_PATH}:${I3LIB}:%s/lib/linux/x86-64"
 else
-   export LD_LIBRARY_PATH "${I3LIB}:%s/lib/linux/x86-64"
+	setenv LD_LIBRARY_PATH "${I3LIB}:%s/lib/linux/x86-64"
 endif
 ''' % (protomoDir, deplibs, deplibs))
 		f.close()
