@@ -7,12 +7,15 @@ import sys
 import shutil
 import re
 from appionlib import apParam
-from appionlib import apTomo
-from appionlib import apImod
 from appionlib import apDisplay
-from appionlib import appiondata
-from appionlib import apProTomo
-from appionlib import apDatabase
+
+try:
+	from appionlib import apTomo
+	from appionlib import appiondata
+	from appionlib import apProTomo
+	from appionlib import apDatabase
+except:
+	print "MySQLdb not found...database retrieval disabled"
 
 		
 #=====================

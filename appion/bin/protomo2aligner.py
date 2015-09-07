@@ -16,7 +16,6 @@ import numpy as np
 import multiprocessing as mp
 from appionlib import basicScript
 from appionlib import apDisplay
-from appionlib import appiondata
 from appionlib import apProTomo2Aligner
 from appionlib import apProTomo2Prep
 
@@ -24,6 +23,11 @@ try:
 	import protomo
 except:
 	print "Protomo did not get imported"
+
+try:
+	from appionlib import appiondata
+except:
+	print "MySQLdb not found...commit function disabled"
 
 # Required for cleanup at end
 cwd=os.getcwd()
@@ -1429,8 +1433,8 @@ class ProTomo2Aligner(basicScript.BasicScript):
 					region_x=self.params['r1_region_x']
 					region_y=self.params['r1_region_y']
 					sampling=self.params['r1_sampling']
-					f.write("\nRound #%s. Parameters in Protomo units (Note: At binned by %s, pixelsize is %s Angstroms, Nyquist is %s Angstroms):\n" % (r, sampling, sampling*self.params['pixelsize'], 2*sampling*self.params['pixelsize']))
-					apDisplay.printMsg("Round #%s. Parameters in Protomo units (Note: At binned by %s, pixelsize is %s Angstroms, Nyquist is %s Angstroms):\n" % (r, sampling, sampling*self.params['pixelsize'], 2*sampling*self.params['pixelsize']))
+					f.write("\nRound #%s. Parameters in Protomo units:\n(Note: At binned by %s, pixelsize is %s Angstroms, Nyquist is %s Angstroms)\n" % (r, sampling, sampling*self.params['pixelsize'], 2*sampling*self.params['pixelsize']))
+					apDisplay.printMsg("Round #%s. Parameters in Protomo units:\n(Note: At binned by %s, pixelsize is %s Angstroms, Nyquist is %s Angstroms)\n" % (r, sampling, sampling*self.params['pixelsize'], 2*sampling*self.params['pixelsize']))
 					for val in round1:
 						f.write("%s = %s\n" % (val,round1[val]))
 						apDisplay.printMsg("%s = %s" % (val,round1[val]))
@@ -1444,8 +1448,8 @@ class ProTomo2Aligner(basicScript.BasicScript):
 					region_x=self.params['r2_region_x']
 					region_y=self.params['r2_region_y']
 					sampling=self.params['r2_sampling']
-					f.write("\nRound #%s. Parameters in Protomo units (note: At binned by %s, pixelsize is %s Angstroms, Nyquist is %s Angstroms):\n" % (r, sampling, sampling*self.params['pixelsize'], 2*sampling*self.params['pixelsize']))
-					apDisplay.printMsg("Round #%s. Parameters in Protomo units (note: At binned by %s, pixelsize is %s Angstroms, Nyquist is %s Angstroms):\n" % (r, sampling, sampling*self.params['pixelsize'], 2*sampling*self.params['pixelsize']))
+					f.write("\nRound #%s. Parameters in Protomo units:\n(Note: At binned by %s, pixelsize is %s Angstroms, Nyquist is %s Angstroms)\n" % (r, sampling, sampling*self.params['pixelsize'], 2*sampling*self.params['pixelsize']))
+					apDisplay.printMsg("Round #%s. Parameters in Protomo units:\n(Note: At binned by %s, pixelsize is %s Angstroms, Nyquist is %s Angstroms)\n" % (r, sampling, sampling*self.params['pixelsize'], 2*sampling*self.params['pixelsize']))
 					for val in round2:
 						f.write("%s = %s\n" % (val,round2[val]))
 						apDisplay.printMsg("%s = %s" % (val,round2[val]))
@@ -1459,8 +1463,8 @@ class ProTomo2Aligner(basicScript.BasicScript):
 					region_x=self.params['r3_region_x']
 					region_y=self.params['r3_region_y']
 					sampling=self.params['r3_sampling']
-					f.write("\nRound #%s. Parameters in Protomo units (note: At binned by %s, pixelsize is %s Angstroms, Nyquist is %s Angstroms):\n" % (r, sampling, sampling*self.params['pixelsize'], 2*sampling*self.params['pixelsize']))
-					apDisplay.printMsg("Round #%s. Parameters in Protomo units (note: At binned by %s, pixelsize is %s Angstroms, Nyquist is %s Angstroms):\n" % (r, sampling, sampling*self.params['pixelsize'], 2*sampling*self.params['pixelsize']))
+					f.write("\nRound #%s. Parameters in Protomo units:\n(Note: At binned by %s, pixelsize is %s Angstroms, Nyquist is %s Angstroms)\n" % (r, sampling, sampling*self.params['pixelsize'], 2*sampling*self.params['pixelsize']))
+					apDisplay.printMsg("Round #%s. Parameters in Protomo units:\n(Note: At binned by %s, pixelsize is %s Angstroms, Nyquist is %s Angstroms)\n" % (r, sampling, sampling*self.params['pixelsize'], 2*sampling*self.params['pixelsize']))
 					for val in round3:
 						f.write("%s = %s\n" % (val,round3[val]))
 						apDisplay.printMsg("%s = %s" % (val,round3[val]))
@@ -1474,8 +1478,8 @@ class ProTomo2Aligner(basicScript.BasicScript):
 					region_x=self.params['r4_region_x']
 					region_y=self.params['r4_region_y']
 					sampling=self.params['r4_sampling']
-					f.write("\nRound #%s. Parameters in Protomo units (note: At binned by %s, pixelsize is %s Angstroms, Nyquist is %s Angstroms):\n" % (r, sampling, sampling*self.params['pixelsize'], 2*sampling*self.params['pixelsize']))
-					apDisplay.printMsg("Round #%s. Parameters in Protomo units (note: At binned by %s, pixelsize is %s Angstroms, Nyquist is %s Angstroms):\n" % (r, sampling, sampling*self.params['pixelsize'], 2*sampling*self.params['pixelsize']))
+					f.write("\nRound #%s. Parameters in Protomo units:\n(Note: At binned by %s, pixelsize is %s Angstroms, Nyquist is %s Angstroms)\n" % (r, sampling, sampling*self.params['pixelsize'], 2*sampling*self.params['pixelsize']))
+					apDisplay.printMsg("Round #%s. Parameters in Protomo units:\n(Note: At binned by %s, pixelsize is %s Angstroms, Nyquist is %s Angstroms)\n" % (r, sampling, sampling*self.params['pixelsize'], 2*sampling*self.params['pixelsize']))
 					for val in round4:
 						f.write("%s = %s\n" % (val,round4[val]))
 						apDisplay.printMsg("%s = %s" % (val,round4[val]))
@@ -1489,8 +1493,8 @@ class ProTomo2Aligner(basicScript.BasicScript):
 					region_x=self.params['r5_region_x']
 					region_y=self.params['r5_region_y']
 					sampling=self.params['r5_sampling']
-					f.write("\nRound #%s. Parameters in Protomo units (note: At binned by %s, pixelsize is %s Angstroms, Nyquist is %s Angstroms):\n" % (r, sampling, sampling*self.params['pixelsize'], 2*sampling*self.params['pixelsize']))
-					apDisplay.printMsg("Round #%s. Parameters in Protomo units (note: At binned by %s, pixelsize is %s Angstroms, Nyquist is %s Angstroms):\n" % (r, sampling, sampling*self.params['pixelsize'], 2*sampling*self.params['pixelsize']))
+					f.write("\nRound #%s. Parameters in Protomo units:\n(Note: At binned by %s, pixelsize is %s Angstroms, Nyquist is %s Angstroms)\n" % (r, sampling, sampling*self.params['pixelsize'], 2*sampling*self.params['pixelsize']))
+					apDisplay.printMsg("Round #%s. Parameters in Protomo units:\n(Note: At binned by %s, pixelsize is %s Angstroms, Nyquist is %s Angstroms)\n" % (r, sampling, sampling*self.params['pixelsize'], 2*sampling*self.params['pixelsize']))
 					for val in round5:
 						f.write("%s = %s\n" % (val,round5[val]))
 						apDisplay.printMsg("%s = %s" % (val,round5[val]))
@@ -1540,6 +1544,9 @@ class ProTomo2Aligner(basicScript.BasicScript):
 						series.align()
 						final_retry=retry-1
 						end=1
+					except KeyboardInterrupt:
+						end=1
+						brk=1
 					except:
 						if (min(new_region_x,new_region_x) == 20):
 							apDisplay.printMsg("Refinement Iteration #%s failed after resampling the search area %s time(s)." % (start+n+1, retry-1))
@@ -1578,7 +1585,7 @@ class ProTomo2Aligner(basicScript.BasicScript):
 					it="%03d" % (i)
 					basename='%s%s' % (name,it)
 					corrfile=basename+'.corr'
-					metric=apProTomo2Aligner.makeQualityAssessment(name, i, rundir, corrfile)
+					CCMS_shift, CCMS_angle, CCMS_scale, CCMS_sum = apProTomo2Aligner.makeQualityAssessment(name, i, rundir, corrfile)
 					if i == numcorrfiles-1:
 						self.params['qa_gif']='media/quality_assessment/'+seriesname+'_quality_assessment.gif'
 						apProTomo2Aligner.makeQualityAssessmentImage(self.params['tiltseries'], self.params['sessionname'], name, rundir, start+self.params['r1_iters'], self.params['r1_sampling'], r1_lp, start+self.params['r2_iters'], self.params['r2_sampling'], r2_lp, start+self.params['r3_iters'], self.params['r3_sampling'], r3_lp, start+self.params['r4_iters'], self.params['r4_sampling'], r4_lp, start+self.params['r5_iters'], self.params['r5_sampling'], r5_lp)
@@ -1586,8 +1593,17 @@ class ProTomo2Aligner(basicScript.BasicScript):
 				basename='%s%s' % (name,it)
 				corrfile=basename+'.corr'
 				
-				apDisplay.printMsg("CCMS = %s for Iteration #%s of Tilt-Series #%s." % (round(metric,5), start+n+1, self.params['tiltseries']))
-				f.write('CCMS = %s for Iteration #%s of Tilt-Series #%s.\n' % (round(metric,5), start+n+1, self.params['tiltseries']))
+				apDisplay.printMsg("CCMS_shift = %s for Iteration #%s of Tilt-Series #%s." % (round(CCMS_shift,5), start+n+1, self.params['tiltseries']))
+				f.write('CCMS_shift = %s for Iteration #%s of Tilt-Series #%s.\n' % (round(CCMS_shift,5), start+n+1, self.params['tiltseries']))
+				
+				apDisplay.printMsg("CCMS_angle = %s for Iteration #%s of Tilt-Series #%s." % (round(CCMS_angle,5), start+n+1, self.params['tiltseries']))
+				f.write('CCMS_angle = %s for Iteration #%s of Tilt-Series #%s.\n' % (round(CCMS_angle,5), start+n+1, self.params['tiltseries']))
+				
+				apDisplay.printMsg("CCMS_scale = %s for Iteration #%s of Tilt-Series #%s." % (round(CCMS_scale,5), start+n+1, self.params['tiltseries']))
+				f.write('CCMS_scale = %s for Iteration #%s of Tilt-Series #%s.\n' % (round(CCMS_scale,5), start+n+1, self.params['tiltseries']))
+				
+				apDisplay.printMsg("The scaled sum of CCMS values is %s for Iteration #%s of Tilt-Series #%s." % (round(CCMS_sum,5), start+n+1, self.params['tiltseries']))
+				f.write('The scaled sum of CCMS values is #%s for Tilt-Series #%s.\n' % (round(CCMS_sum,5), self.params['tiltseries']))
 				
 				apDisplay.printMsg("Creating Depiction Videos for Iteration #%s in Parallel..." % (start+n+1))
 				f.write('Creating Depiction Videos for Iteration #%s in Parallel...\n' % (start+n+1))
