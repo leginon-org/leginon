@@ -659,12 +659,10 @@ else
 fi
 if [ $PYTHONPATH ];
 then
-   export ${I3ROOT}:${PYTHONPATH}
+   export PYTHONPATH=${I3ROOT}:${PYTHONPATH}
 else
-   export  ${I3ROOT}
+   export  PYTHONPATH=${I3ROOT}
 fi
-
-
 ''' % (protomoDir, deplibs, deplibs))
 		f.close()
 
@@ -684,7 +682,6 @@ if ( $?PYTHONPATH) then
 else
     setenv PYTHONPATH ${I3ROOT}
 endif
-
 ''' % (protomoDir, deplibs, deplibs))
 		f.close()
 		
