@@ -649,13 +649,13 @@ def makeQualityAssessment(seriesname, iteration, rundir, corrfile):
 		lines=f.readlines()
 		f.close()
 		
-		cofangle=[]
+		coa=[]
 		cofx=[]
 		cofy=[]
 		cofscale=[]
 		for line in lines:
 			words=line.split()
-			cofangle.append(float(words[1]))
+			coa.append(float(words[1]))
 			cofx.append(float(words[2]))
 			cofy.append(float(words[3]))
 			cofscale.append(float(words[5]))
@@ -664,9 +664,9 @@ def makeQualityAssessment(seriesname, iteration, rundir, corrfile):
 		avgx=0
 		avgy=0
 		avgscale=0
-		for element in cofangle: #Calculate average distance from 0
+		for element in coa: #Calculate average distance from 0
 			avgangle += abs(element)
-		avgangle = avgangle/len(cofangle)
+		avgangle = avgangle/len(coa)
 		for element in cofx: #Calculate average distance from 1.0
 			avgx += abs(element - 1)
 		avgx = avgx/len(cofx)
@@ -680,16 +680,16 @@ def makeQualityAssessment(seriesname, iteration, rundir, corrfile):
 		stdx = corrdata[:,2].std()
 		stdy = corrdata[:,3].std()
 		stdscale = corrdata[:,5].std()
-		ccms_angle=avgangle + stdangle
+		ccms_rots=avgangle + stdangle
 		ccms_shift=avgx + avgy + stdx + stdy
 		ccms_scale=avgscale + stdscale
-		ccms_sum=ccms_angle*7.2/360 + ccms_shift + ccms_scale   #This is a scaled sum where ccms_angle is put on the same scale as ccms_shift (7.2/360 = 0.02; ie. one degree is now equal to 0.02, both linear scales)
+		ccms_sum=ccms_rots*14.4/360 + ccms_shift + ccms_scale   #This is a scaled sum where ccms_rots is put on the same scale as ccms_shift (14.4/360 = 0.02; ie. 0.5 degrees is now equal to 0.02, both linear scales)
 		
 		f = open(txtqa_full,'a')
-		f.write("%s %s %s %s %s %s %s %s %s %s %s %s %s\n" % (iteration+1, avgx, avgy, stdx, stdy, ccms_shift, avgangle, stdangle, ccms_angle, avgscale, stdscale, ccms_scale, ccms_sum))
+		f.write("%s %s %s %s %s %s %s %s %s %s %s %s %s\n" % (iteration+1, avgx, avgy, stdx, stdy, ccms_shift, avgangle, stdangle, ccms_rots, avgscale, stdscale, ccms_scale, ccms_sum))
 		f.close()
 		
-		return ccms_shift, ccms_angle, ccms_scale, ccms_sum
+		return ccms_shift, ccms_rots, ccms_scale, ccms_sum
 	except:
 		apDisplay.printMsg("Quality assessment statistics could not be generated. Make sure numpy is in your $PYTHONPATH.\n")
 
@@ -738,34 +738,47 @@ def makeQualityAssessmentImage(tiltseriesnumber, sessionname, seriesname, rundir
 		f.close()
 		
 		ccms_shift=[]
-		ccms_angle=[]
+		ccms_rots=[]
 		ccms_scale=[]
 		ccms_sum=[]
+		well_aligned1=[]
+		well_aligned2=[]
+		well_aligned3=[]
 		iterlines=iter(lines)
 		next(iterlines)  #Skip comment line
 		for line in iterlines:
 			words=line.split()
 			ccms_shift.append(float(words[5]))
-			ccms_angle.append(float(words[8]))
+			ccms_rots.append(float(words[8]))
 			ccms_scale.append(float(words[11]))
 			ccms_sum.append(float(words[12]))
+			well_aligned1.append(0.02)
+			well_aligned2.append(0.5)
+			if (ccms_shift[-1] != 0.0) and (ccms_scale[-1] == 0.0) and (ccms_rots[-1] == 0.0):
+				well_aligned3.append(0.02)
+			elif (ccms_shift[-1] == 0.0) and (ccms_scale[-1] != 0.0) and (ccms_rots[-1] == 0.0):
+				well_aligned3.append(0.02)
+			elif (ccms_shift[-1] == 0.0) and (ccms_scale[-1] == 0.0) and (ccms_rots[-1] != 0.0):
+				well_aligned3.append(0.02)
+			elif (ccms_shift[-1] != 0.0) and (ccms_scale[-1] != 0.0) and (ccms_rots[-1] == 0.0):
+				well_aligned3.append(0.04)
+			elif (ccms_shift[-1] != 0.0) and (ccms_scale[-1] == 0.0) and (ccms_rots[-1] != 0.0):
+				well_aligned3.append(0.04)
+			elif (ccms_shift[-1] == 0.0) and (ccms_scale[-1] != 0.0) and (ccms_rots[-1] != 0.0):
+				well_aligned3.append(0.04)
+			else:
+				well_aligned3.append(0.06)
 		
 		x=[]
-		well_aligned1=[]
-		well_aligned2=[]
-		well_aligned3=[]
 		for i in range(1,len(ccms_shift)+1):
 			x.append(i)
-			well_aligned1.append(0.02)
-			well_aligned2.append(1)
-			well_aligned3.append(0.05)
 		
 		fig_base=plt.figure()
 		fig1=fig_base.add_subplot(111)
 		plt.grid(True)
 		
-		l1=fig1.plot(x, ccms_shift, 'DarkOrange', linestyle='-', marker='*', label='CCMS(shifts)')
-		l2=fig1.plot(x, ccms_scale, 'DarkOrange', linestyle='-', marker='.', label='CCMS(scale)')
+		l1=fig1.plot(x, ccms_shift, 'DarkOrange', linestyle='-', marker='.', label='CCMS(shifts)')
+		l2=fig1.plot(x, ccms_scale, 'DarkOrange', linestyle='-', marker='*', label='CCMS(scale)')
 		l12=fig1.plot(x, well_aligned1, 'DarkOrange', linestyle='--')
 		l3=fig1.plot(x, ccms_sum, 'k', linestyle='-', linewidth=1.75, label='Scaled Sum')
 		l33=fig1.plot(x, well_aligned3, 'k', linestyle='--', linewidth=1.5)
@@ -773,9 +786,9 @@ def makeQualityAssessmentImage(tiltseriesnumber, sessionname, seriesname, rundir
 		plt.ylabel('CCMS(shift & scale)')
 		
 		fig2=fig1.twinx()
-		l4=fig2.plot(x, ccms_angle, 'c-', label='CCMS(angle)')
+		l4=fig2.plot(x, ccms_rots, 'c-', label='CCMS(rotations)')
 		lz2=fig2.plot(x, well_aligned2, 'c', linestyle='--')
-		plt.ylabel('CCMS(angle)')
+		plt.ylabel('CCMS(rotations)')
 		
 		h1,l1=fig1.get_legend_handles_labels()
 		h2,l2=fig2.get_legend_handles_labels()
@@ -809,8 +822,8 @@ def makeQualityAssessmentImage(tiltseriesnumber, sessionname, seriesname, rundir
 		best=[i for i, j in enumerate(ccms_sum) if j == best][0]+1
 		worst=max(ccms_sum)
 		worst=[i for i, j in enumerate(ccms_sum) if j == worst][0]+1
-		line_prepender(txtqa_full, "#Worst iteration: %s with CCMS = %s\n" % (worst, max(ccms_sum)))
-		line_prepender(txtqa_full, "#Best iteration: %s with CCMS = %s\n" % (best, min(ccms_sum)))
+		line_prepender(txtqa_full, "#Worst iteration: %s with CCMS(sum) = %s\n" % (worst, max(ccms_sum)))
+		line_prepender(txtqa_full, "#Best iteration: %s with CCMS(sum) = %s\n" % (best, min(ccms_sum)))
 		
 		os.system("cd media/quality_assessment; rm %s/best* 2> /dev/null; rm %s/worst* 2> /dev/null" % (rundir,rundir))
 		open("best.%s" % best,"a").close()

@@ -1585,7 +1585,7 @@ class ProTomo2Aligner(basicScript.BasicScript):
 					it="%03d" % (i)
 					basename='%s%s' % (name,it)
 					corrfile=basename+'.corr'
-					CCMS_shift, CCMS_angle, CCMS_scale, CCMS_sum = apProTomo2Aligner.makeQualityAssessment(name, i, rundir, corrfile)
+					CCMS_shift, CCMS_rots, CCMS_scale, CCMS_sum = apProTomo2Aligner.makeQualityAssessment(name, i, rundir, corrfile)
 					if i == numcorrfiles-1:
 						self.params['qa_gif']='media/quality_assessment/'+seriesname+'_quality_assessment.gif'
 						apProTomo2Aligner.makeQualityAssessmentImage(self.params['tiltseries'], self.params['sessionname'], name, rundir, start+self.params['r1_iters'], self.params['r1_sampling'], r1_lp, start+self.params['r2_iters'], self.params['r2_sampling'], r2_lp, start+self.params['r3_iters'], self.params['r3_sampling'], r3_lp, start+self.params['r4_iters'], self.params['r4_sampling'], r4_lp, start+self.params['r5_iters'], self.params['r5_sampling'], r5_lp)
@@ -1593,14 +1593,14 @@ class ProTomo2Aligner(basicScript.BasicScript):
 				basename='%s%s' % (name,it)
 				corrfile=basename+'.corr'
 				
-				apDisplay.printMsg("CCMS_shift = %s for Iteration #%s of Tilt-Series #%s." % (round(CCMS_shift,5), start+n+1, self.params['tiltseries']))
-				f.write('CCMS_shift = %s for Iteration #%s of Tilt-Series #%s.\n' % (round(CCMS_shift,5), start+n+1, self.params['tiltseries']))
+				apDisplay.printMsg("CCMS(shift) = %s for Iteration #%s of Tilt-Series #%s." % (round(CCMS_shift,5), start+n+1, self.params['tiltseries']))
+				f.write('CCMS(shift) = %s for Iteration #%s of Tilt-Series #%s.\n' % (round(CCMS_shift,5), start+n+1, self.params['tiltseries']))
 				
-				apDisplay.printMsg("CCMS_angle = %s for Iteration #%s of Tilt-Series #%s." % (round(CCMS_angle,5), start+n+1, self.params['tiltseries']))
-				f.write('CCMS_angle = %s for Iteration #%s of Tilt-Series #%s.\n' % (round(CCMS_angle,5), start+n+1, self.params['tiltseries']))
+				apDisplay.printMsg("CCMS(rotations) = %s for Iteration #%s of Tilt-Series #%s." % (round(CCMS_rots,5), start+n+1, self.params['tiltseries']))
+				f.write('CCMS(rotations) = %s for Iteration #%s of Tilt-Series #%s.\n' % (round(CCMS_rots,5), start+n+1, self.params['tiltseries']))
 				
-				apDisplay.printMsg("CCMS_scale = %s for Iteration #%s of Tilt-Series #%s." % (round(CCMS_scale,5), start+n+1, self.params['tiltseries']))
-				f.write('CCMS_scale = %s for Iteration #%s of Tilt-Series #%s.\n' % (round(CCMS_scale,5), start+n+1, self.params['tiltseries']))
+				apDisplay.printMsg("CCMS(scale) = %s for Iteration #%s of Tilt-Series #%s." % (round(CCMS_scale,5), start+n+1, self.params['tiltseries']))
+				f.write('CCMS(scale) = %s for Iteration #%s of Tilt-Series #%s.\n' % (round(CCMS_scale,5), start+n+1, self.params['tiltseries']))
 				
 				apDisplay.printMsg("The scaled sum of CCMS values is %s for Iteration #%s of Tilt-Series #%s." % (round(CCMS_sum,5), start+n+1, self.params['tiltseries']))
 				f.write('The scaled sum of CCMS values is #%s for Tilt-Series #%s.\n' % (round(CCMS_sum,5), self.params['tiltseries']))
