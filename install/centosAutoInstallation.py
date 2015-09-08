@@ -657,6 +657,14 @@ then
 else
    export LD_LIBRARY_PATH="${I3LIB}:%s/lib/linux/x86-64"
 fi
+if [ $PYTHONPATH ];
+then
+   export ${I3ROOT}:${PYTHONPATH}
+else
+   export  ${I3ROOT}
+fi
+
+
 ''' % (protomoDir, deplibs, deplibs))
 		f.close()
 
@@ -671,6 +679,12 @@ if ($?LD_LIBRARY_PATH) then
 else
 	setenv LD_LIBRARY_PATH "${I3LIB}:%s/lib/linux/x86-64"
 endif
+if ( $?PYTHONPATH) then
+    setenv PYTHONPATH ${I3ROOT}:${PYTHONPATH}
+else
+    setenv PYTHONPATH ${I3ROOT}
+endif
+
 ''' % (protomoDir, deplibs, deplibs))
 		f.close()
 		
