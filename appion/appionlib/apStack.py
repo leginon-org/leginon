@@ -512,6 +512,7 @@ def commitSubStack(params, newname=False, centered=False, oldstackparts=None, so
 	if not oldstackparts:
 		sqlcmd = "SELECT * FROM ApStackParticleData " + \
 			"WHERE `REF|ApStackData|stack` = %i"%(params['stackid'])
+		# This result gives dictionary, not data object
 		oldstackparts = sinedon.directq.complexMysqlQuery('appiondata',sqlcmd)
 
 	for part in oldstackparts:
@@ -539,8 +540,13 @@ def commitSubStack(params, newname=False, centered=False, oldstackparts=None, so
 				'REF|ApStackData|stack']:
 				continue
 			sqlParams.append(k)
-			# have to insert dbid for referenced data
-			if 'REF|' in k and v is not None:
+			# oldstackpartdata can either be sinedon data object
+			# as passed through the function call
+			# or a pure dictionary from directq.complexMysqlQuery
+			# In the latter case v is just a long integer, not
+			# data reference.
+			if 'REF|' in k and hasattr(v,'dbid'):
+				# if it is a sinedon data object
 				v = v.dbid
 			vals.append(v)
 		partlistvals.append("('"+"','".join(str(x) for x in vals)+"')")
