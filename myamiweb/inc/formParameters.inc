@@ -170,10 +170,14 @@ class FormParameters
 			// if this parameter has been hidden, skip it.
 			if ( !$this->params[$name]['hidden'] ) {
 				// need to get other variable value in exclude validation
+				// syntax is 'exclude=other_variable'
 				if ( strrpos($requirement,'exclude') !== false ) {
-					$other_variable = explode('=',$requirement)[1];
-					$other_value = $this->getParamValue($other_variable);
-					$requirement .= ','.$other_value;
+					$bits = explode('=',$requirement);
+					if ( count($bits) > 1 ) {
+						$other_variable = $bits[1];
+						$other_value = $this->getParamValue($other_variable);
+						$requirement .= ','.$other_value;
+					}
 				}
 				$validator->addValidation( $name, $this->getParamValue($name), $requirement, $msg );
 			}
