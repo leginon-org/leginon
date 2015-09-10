@@ -37,7 +37,7 @@ class FormParameters
 	final public function addParam( $name, $defaultValue='', $label='', $enable='', $hidden=false )
 	{
 		if ( !empty( $name ) ) {
-			$this->params[$name] = array( "name"=>$name, "value"=>$defaultValue, "label"=>$label, "enable"=>$enable, "hidden"=>$hidden );
+			$this->params[$name] = array( "name"=>$name, "value"=>$defaultValue, "label"=>$label, "enable"=>$enable, "hidden"=>$hidden, "default"=>$defaultValue );
 		}
 	}
 	
@@ -49,6 +49,11 @@ class FormParameters
 	final public function getParamValue( $name ) 
 	{
 		return $this->params[$name]["value"];
+	}
+	
+	final public function getParamDefault( $name ) 
+	{
+		return $this->params[$name]["default"];
 	}
 	
 	final public function setParamLabel( $name, $label ) 
@@ -101,7 +106,6 @@ class FormParameters
 		// Forms with no parameters defined will not have valid params
 		if ( $this->params ) {
 			foreach ( $this->params as $key=>$param ) {
-				
 				// TODO: fix this so we don't get NULL values but keep empty string and 0 and 0.0...
 				if ( !empty( $postArray[$param["name"]] ) || $postArray[$param["name"]] === '0' ) {
 					$value = $postArray[$param["name"]];
@@ -142,10 +146,11 @@ class FormParameters
 		 * folder permission : 			addValidation("variableName", "folder_permission");
 		 * file existence : 			addValidation("variableName", "file_exist");
 		 * Float w/fixed decimal space: addValidation("variableName", "float_d=2");
+		 * Exclude (must not set if the other exist: addValidation("variableName", "exclude="other_variableName","error message");
 	*/
-	public function addValidation( $name, $requirement) 
+	public function addValidation( $name, $requirement, $error_message=NULL) 
 	{
-		$this->validations[] = array( "name"=>$name, "req"=>$requirement );
+		$this->validations[] = array( "name"=>$name, "req"=>$requirement, "msg"=>$error_message );
 	}
 	
 	// override the validate function for error checking.
@@ -161,16 +166,26 @@ class FormParameters
 		foreach ( $this->validations as $validate ) {
 			$name 			= $validate["name"];
 			$requirement 	= $validate["req"];
-			
+			$msg 	= $validate["msg"];
 			// if this parameter has been hidden, skip it.
 			if ( !$this->params[$name]['hidden'] ) {
-				$validator->addValidation( $this->params[$name]['name'], $this->params[$name]['value'], $requirement );
+				// need to get other variable value in exclude validation
+				// syntax is 'exclude=other_variable'
+				if ( strrpos($requirement,'exclude') !== false ) {
+					$bits = explode('=',$requirement);
+					if ( count($bits) > 1 ) {
+						$other_variable = $bits[1];
+						$other_value = $this->getParamValue($other_variable);
+						$requirement .= ','.$other_value;
+					}
+				}
+				$validator->addValidation( $name, $this->getParamValue($name), $requirement, $msg );
 			}
 		}
 
 		$validator->runValidation();
 		$errorArray = $validator->getErrorMessage();
-		
+
 		foreach ( $errorArray as $name => $error ) {
 			$errorMsg .= "<b>Error: </b><i> ".$this->params[$name]['label']."</i> - $error <br />\n";
 		}

@@ -80,7 +80,7 @@ $html .= "</tr><tr>";
 $html .= '<td><img src="'.$corr_cofx.'" alt="cofx" width="500" />'."<br /></td>";
 $html .= '<td><img src="'.$corr_cofy.'" alt="cofy" width="500" />'."<br /></td>";
 $html .= "</tr><tr>";
-$html .= '<th>Rotation Correction Factor</th>';
+$html .= '<th>Image Rotation</th>';
 $html .= '<th>Angle between the (x) and (y) Correction Factors</th>';
 $html .= "</tr><tr>";
 $html .= '<td><img src="'.$corr_rot.'" alt="rot" width="500" />'."<br /></td>";

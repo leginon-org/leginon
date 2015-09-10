@@ -12,6 +12,7 @@ import pylab
 import subprocess
 import numpy as np
 import multiprocessing as mp
+import matplotlib.pyplot as plt
 from appionlib import apDisplay
 from appionlib.apImage import imagenorm
 from pyami import mrc
@@ -640,7 +641,7 @@ def makeQualityAssessment(seriesname, iteration, rundir, corrfile):
 		if iteration == 0:
 			os.system("rm %s/media/quality_assessment/* 2>/dev/null" % rundir)
 			f = open(txtqa_full,'w')
-			f.write("#iteration average_correction_x average_correction_y stdev_x stdev_y sum\n")
+			f.write("#iteration avg_correction_x avg_correction_y stdev_x stdev_y sum_shift avg_correction_angle stdev_angle sum_angle avg_correction_scale stdev_scale sum_scale sum_of_sums\n")
 			f.close()
 		
 		corrdata=np.loadtxt(corrfile)
@@ -648,37 +649,56 @@ def makeQualityAssessment(seriesname, iteration, rundir, corrfile):
 		lines=f.readlines()
 		f.close()
 		
+		coa=[]
 		cofx=[]
 		cofy=[]
+		cofscale=[]
 		for line in lines:
 			words=line.split()
+			coa.append(float(words[1]))
 			cofx.append(float(words[2]))
 			cofy.append(float(words[3]))
+			cofscale.append(float(words[5]))
 		
+		avgangle=0
 		avgx=0
 		avgy=0
+		avgscale=0
+		for element in coa: #Calculate average distance from 0
+			avgangle += abs(element)
+		avgangle = avgangle/len(coa)
 		for element in cofx: #Calculate average distance from 1.0
 			avgx += abs(element - 1)
 		avgx = avgx/len(cofx)
 		for element in cofy: #Calculate average distance from 1.0
 			avgy += abs(element - 1)
 		avgy = avgy/len(cofy)
+		for element in cofscale: #Calculate average distance from 1.0
+			avgscale += abs(element - 1)
+		avgscale = avgscale/len(cofscale)
+		stdangle = corrdata[:,1].std()
 		stdx = corrdata[:,2].std()
 		stdy = corrdata[:,3].std()
-		metric=avgx + avgy + stdx + stdy
+		stdscale = corrdata[:,5].std()
+		ccms_rots=avgangle + stdangle
+		ccms_shift=avgx + avgy + stdx + stdy
+		ccms_scale=avgscale + stdscale
+		ccms_sum=ccms_rots*14.4/360 + ccms_shift + ccms_scale   #This is a scaled sum where ccms_rots is put on the same scale as ccms_shift (14.4/360 = 0.02; ie. 0.5 degrees is now equal to 0.02, both linear scales)
 		
 		f = open(txtqa_full,'a')
-		f.write("%s %s %s %s %s %s\n" % (iteration+1, avgx, avgy, stdx, stdy, metric))
+		f.write("%s %s %s %s %s %s %s %s %s %s %s %s %s\n" % (iteration+1, avgx, avgy, stdx, stdy, ccms_shift, avgangle, stdangle, ccms_rots, avgscale, stdscale, ccms_scale, ccms_sum))
 		f.close()
 		
-		return metric
+		return ccms_shift, ccms_rots, ccms_scale, ccms_sum
 	except:
 		apDisplay.printMsg("Quality assessment statistics could not be generated. Make sure numpy is in your $PYTHONPATH.\n")
 
 
 def makeQualityAssessmentImage(tiltseriesnumber, sessionname, seriesname, rundir, r1_iters, r1_sampling, r1_lp, r2_iters=0, r2_sampling=0, r2_lp=0, r3_iters=0, r3_sampling=0, r3_lp=0, r4_iters=0, r4_sampling=0, r4_lp=0, r5_iters=0, r5_sampling=0, r5_lp=0, r6_iters=0, r6_sampling=0, r6_lp=0, r7_iters=0, r7_sampling=0, r7_lp=0, r8_iters=0, r8_sampling=0, r8_lp=0, scaling="False", elevation="False"):
 	'''
-	Creates Quality Assessment Plot Image for Depiction. Also adds best and worst iteration to qa text file. Returns best iteration number and CCMS value.
+	Creates Quality Assessment Plot Image for Depiction.
+	Adds best and worst iteration to qa text file.
+	Returns best iteration number and CCMS_sum value.
 	'''
 	def line_prepender(filename, line):
 		with open(filename, 'r+') as f:
@@ -690,7 +710,6 @@ def makeQualityAssessmentImage(tiltseriesnumber, sessionname, seriesname, rundir
 		apDisplay.printMsg("Creating quality assessment plot image...")
 		figqa_full=rundir+'/media/quality_assessment/'+seriesname+'_quality_assessment.png'
 		txtqa_full=rundir+'/media/quality_assessment/'+seriesname+'_quality_assessment.txt'
-		pylab.clf()
 		if (r2_iters != 0 and r3_iters != 0 and r4_iters != 0 and r5_iters != 0 and r6_iters != 0 and r7_iters != 0 and r8_iters != 0): #R1-R8
 			title="Session %s, Tilt-Series #%s | R1: Iters 1-%s @ bin=%s, lp=%s | R2: Iters %s-%s @ bin=%s, lp=%s\nR3: Iters %s-%s @ bin=%s, lp=%s | R4: Iters %s-%s @ bin=%s, lp=%s | R5: Iters %s-%s @ bin=%s, lp=%s\nR6: Iters %s-%s @ bin=%s, lp=%s | R7: Iters %s-%s @ bin=%s, lp=%s | R8: Iters %s-%s @ bin=%s, lp=%s | (R6-R8 have scaling=%s and elevation=%s)" % (sessionname, tiltseriesnumber, r1_iters, r1_sampling, r1_lp, r1_iters+1, r1_iters+r2_iters, r2_sampling, r2_lp, r1_iters+r2_iters+1, r1_iters+r2_iters+r3_iters, r3_sampling, r3_lp, r1_iters+r2_iters+r3_iters+1, r1_iters+r2_iters+r3_iters+r4_iters, r4_sampling, r4_lp, r1_iters+r2_iters+r3_iters+r4_iters+1, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters, r5_sampling, r5_lp, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters+1, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters+r6_iters, r6_sampling, r6_lp, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters+r6_iters+1, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters+r6_iters+r7_iters, r7_sampling, r7_lp, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters+r6_iters+r7_iters+1, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters+r6_iters+r7_iters+r8_iters, r8_sampling, r8_lp, scaling, elevation)
 			font="small"
@@ -718,54 +737,99 @@ def makeQualityAssessmentImage(tiltseriesnumber, sessionname, seriesname, rundir
 		lines=f.readlines()
 		f.close()
 		
-		metric=[]
+		ccms_shift=[]
+		ccms_rots=[]
+		ccms_scale=[]
+		ccms_sum=[]
+		well_aligned1=[]
+		well_aligned2=[]
+		well_aligned3=[]
 		iterlines=iter(lines)
-		next(iterlines)
+		next(iterlines)  #Skip comment line
 		for line in iterlines:
 			words=line.split()
-			metric.append(float(words[5]))
+			ccms_shift.append(float(words[5]))
+			ccms_rots.append(float(words[8]))
+			ccms_scale.append(float(words[11]))
+			ccms_sum.append(float(words[12]))
+			well_aligned1.append(0.02)
+			well_aligned2.append(0.5)
+			if (ccms_shift[-1] != 0.0) and (ccms_scale[-1] == 0.0) and (ccms_rots[-1] == 0.0):
+				well_aligned3.append(0.02)
+			elif (ccms_shift[-1] == 0.0) and (ccms_scale[-1] != 0.0) and (ccms_rots[-1] == 0.0):
+				well_aligned3.append(0.02)
+			elif (ccms_shift[-1] == 0.0) and (ccms_scale[-1] == 0.0) and (ccms_rots[-1] != 0.0):
+				well_aligned3.append(0.02)
+			elif (ccms_shift[-1] != 0.0) and (ccms_scale[-1] != 0.0) and (ccms_rots[-1] == 0.0):
+				well_aligned3.append(0.04)
+			elif (ccms_shift[-1] != 0.0) and (ccms_scale[-1] == 0.0) and (ccms_rots[-1] != 0.0):
+				well_aligned3.append(0.04)
+			elif (ccms_shift[-1] == 0.0) and (ccms_scale[-1] != 0.0) and (ccms_rots[-1] != 0.0):
+				well_aligned3.append(0.04)
+			else:
+				well_aligned3.append(0.06)
 		
 		x=[]
-		well_aligned=[]
-		for i in range(1,len(metric)+1):
+		for i in range(1,len(ccms_shift)+1):
 			x.append(i)
-			well_aligned.append(0.02)
 		
-		pylab.plot(range(1,len(metric)+1), metric)
-		pylab.plot(x, well_aligned, '--g')
+		fig_base=plt.figure()
+		fig1=fig_base.add_subplot(111)
+		plt.grid(True)
+		
+		l1=fig1.plot(x, ccms_shift, 'DarkOrange', linestyle='-', marker='.', label='CCMS(shifts)')
+		l2=fig1.plot(x, ccms_scale, 'DarkOrange', linestyle='-', marker='*', label='CCMS(scale)')
+		l12=fig1.plot(x, well_aligned1, 'DarkOrange', linestyle='--')
+		l3=fig1.plot(x, ccms_sum, 'k', linestyle='-', linewidth=1.75, label='Scaled Sum')
+		l33=fig1.plot(x, well_aligned3, 'k', linestyle='--', linewidth=1.5)
+		plt.xlabel('Iterations')
+		plt.ylabel('CCMS(shift & scale)')
+		
+		fig2=fig1.twinx()
+		l4=fig2.plot(x, ccms_rots, 'c-', label='CCMS(rotations)')
+		lz2=fig2.plot(x, well_aligned2, 'c', linestyle='--')
+		plt.ylabel('CCMS(rotations)')
+		
+		h1,l1=fig1.get_legend_handles_labels()
+		h2,l2=fig2.get_legend_handles_labels()
+		fig1.legend(h2+h1,l2+l1,loc='upper right', frameon=False, fontsize=10)
+		
+		fig1.yaxis.label.set_color('DarkOrange')
+		fig1.tick_params(axis='y', colors='DarkOrange')
+		fig2.yaxis.label.set_color('c')
+		fig2.tick_params(axis='y', colors='c')
+		
+		plt.gca().set_xlim(xmin=1)
+		plt.gca().set_ylim(ymin=0.0)
+		plt.minorticks_on()
+		
 		if font=="small":
-			pylab.rcParams["axes.titlesize"] = 9.5
+			plt.rcParams["axes.titlesize"] = 9.5
 		elif font=="medium":
-			pylab.rcParams["axes.titlesize"] = 10.5
+			plt.rcParams["axes.titlesize"] = 10.5
 		elif font=="large":
-			pylab.rcParams["axes.titlesize"] = 11.25
+			plt.rcParams["axes.titlesize"] = 11.25
+		plt.title(title)
 		
-		pylab.xlabel("Iteration")
-		pylab.ylabel("CCMS")
-		pylab.title(title)
-		pylab.gca().set_xlim(xmin=1)
-		pylab.gca().set_ylim(ymin=0.0)
-		pylab.grid(True)
-		pylab.minorticks_on()
-		pylab.savefig(figqa_full, bbox_inches='tight')
-		pylab.clf()
+		plt.savefig(figqa_full, bbox_inches='tight')
+		plt.clf()
 		
 		#rename png to be a gif so that Appion will display it properly (this is a ridiculous redux workaround to display images with white backgrounds by changing png filename extensions to gif and then using loadimg.php?rawgif=1 to load them, but oh well)
 		os.system('mv %s %s' % (figqa_full,figqa_full[:-3]+"gif"))
 		
 		#Guess which iteration is the best
-		best=min(metric)
-		best=[i for i, j in enumerate(metric) if j == best][0]+1
-		worst=max(metric)
-		worst=[i for i, j in enumerate(metric) if j == worst][0]+1
-		line_prepender(txtqa_full, "#Worst iteration: %s with CCMS = %s\n" % (worst, max(metric)))
-		line_prepender(txtqa_full, "#Best iteration: %s with CCMS = %s\n" % (best, min(metric)))
+		best=min(ccms_sum)
+		best=[i for i, j in enumerate(ccms_sum) if j == best][0]+1
+		worst=max(ccms_sum)
+		worst=[i for i, j in enumerate(ccms_sum) if j == worst][0]+1
+		line_prepender(txtqa_full, "#Worst iteration: %s with CCMS(sum) = %s\n" % (worst, max(ccms_sum)))
+		line_prepender(txtqa_full, "#Best iteration: %s with CCMS(sum) = %s\n" % (best, min(ccms_sum)))
 		
 		os.system("cd media/quality_assessment; rm %s/best* 2> /dev/null; rm %s/worst* 2> /dev/null" % (rundir,rundir))
 		open("best.%s" % best,"a").close()
 		open("worst.%s" % worst,"a").close()
 		apDisplay.printMsg("Done creating quality assessment statistics and plot!")
-		return best, min(metric), figqa_full
+		return best, min(ccms_sum), figqa_full
 	except:
 		apDisplay.printMsg("Quality assessment plot image could not be generated. Make sure pylab and numpy are in your $PYTHONPATH.\n")
 
@@ -956,9 +1020,6 @@ def makeTiltSeriesVideos(seriesname, iteration, tiltfilename, rawimagecount, run
 			#Downsample image
 			if (map_sampling != 1):
 				image=imfun.bin2f(image,map_sampling)
-			else:
-				apDisplay.printMsg("No downsampling will be performed on the depiction images.")
-				apDisplay.printMsg("Warning: Depiction video might be so large that it breaks your web browser!")
 			
 			#Write translated image
 			vid_path=os.path.join(rundir,'media','tiltseries')
@@ -1002,6 +1063,10 @@ def makeTiltSeriesVideos(seriesname, iteration, tiltfilename, rawimagecount, run
 		proc=subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
 		(start, err) = proc.communicate()
 		start=int(start)
+		
+		if (map_sampling == 1):
+			apDisplay.printMsg("No downsampling will be performed on the depiction images.")
+			apDisplay.printMsg("Warning: Depiction video might be so large that it breaks your web browser!")
 		
 		#Parallel process the images
 		for i in range(start, rawimagecount+1):
@@ -1237,14 +1302,17 @@ def makeCTFPlot(ctfdir, defocus_file_full):
 
 def makeAngleRefinementPlots(rundir, seriesname):
 	'''
-	Creates a plot of the tilt azimuth and a plot of theta (see Protomo user guide or doi:10.1016/j.ultramic.2005.07.007) over all completed iterations.
+	Creates a plot of the tilt azimuth, a plot of the only orientation angle (theta) that changes,
+	and a plot of the tilt elevation (see Protomo user guide or doi:10.1016/j.ultramic.2005.07.007)
+	over all completed iterations.
 	'''
 	try: #If anything fails, it's likely that something isn't in the path
-		apDisplay.printMsg("Creating angle refinement plot image...")
+		apDisplay.printMsg("Creating angle refinement plot images...")
 		os.chdir(rundir)
 		os.system("mkdir -p %s/media/angle_refinement 2>/dev/null" % rundir)
 		azimuth_full=rundir+'/media/angle_refinement/'+seriesname+'_azimuth.png'
 		theta_full=rundir+'/media/angle_refinement/'+seriesname+'_theta.png'
+		elevation_full=rundir+'/media/angle_refinement/'+seriesname+'_elevation.png'
 		pylab.clf()
 		
 		tiltfiles=glob.glob("%s*.tlt" % seriesname)
@@ -1254,6 +1322,7 @@ def makeAngleRefinementPlots(rundir, seriesname):
 		iters=[]
 		azimuths=[]
 		thetas=[]
+		elevations=[]
 		for tiltfile in tiltfiles:
 			cmd1="awk '/AZIMUTH /{print $3}' %s" % tiltfile
 			proc=subprocess.Popen(cmd1, stdout=subprocess.PIPE, shell=True)
@@ -1269,6 +1338,15 @@ def makeAngleRefinementPlots(rundir, seriesname):
 			else:
 				theta=float(theta)
 			thetas.append(theta)
+			
+			cmd3="awk '/ELEVATION /{print $3}' %s" % tiltfile
+			proc=subprocess.Popen(cmd3, stdout=subprocess.PIPE, shell=True)
+			(elevation, err) = proc.communicate()
+			if elevation == '':  #tlt file may not have ELEVATION
+				elevation=0
+			else:
+				elevation=float(elevation)
+			elevations.append(elevation)
 			
 			iters.append(float(i))
 			i+=1
@@ -1287,15 +1365,26 @@ def makeAngleRefinementPlots(rundir, seriesname):
 		pylab.rcParams["axes.titlesize"] = 12
 		pylab.xlabel("Iteration")
 		pylab.ylabel("Theta (degrees)")
-		pylab.title("Tilt Angle (Theta) Refinement")
+		pylab.title("Orientation Angle (Theta) Refinement")
 		pylab.grid(True)
 		pylab.minorticks_on()
 		pylab.savefig(theta_full, bbox_inches='tight')
 		pylab.clf()
 		
+		pylab.plot(iters, elevations)
+		pylab.rcParams["axes.titlesize"] = 12
+		pylab.xlabel("Iteration")
+		pylab.ylabel("Elevation (degrees)")
+		pylab.title("Tilt Elevation Refinement")
+		pylab.grid(True)
+		pylab.minorticks_on()
+		pylab.savefig(elevation_full, bbox_inches='tight')
+		pylab.clf()
+		
 		#rename pngs to be gifs so that Appion will display it properly (this is a ridiculous redux workaround to display images with white backgrounds by changing png filename extensions to gif and then using loadimg.php?rawgif=1 to load them, but oh well)
 		os.system('mv %s %s' % (azimuth_full,azimuth_full[:-3]+"gif"))
 		os.system('mv %s %s' % (theta_full,theta_full[:-3]+"gif"))
+		os.system('mv %s %s' % (elevation_full,elevation_full[:-3]+"gif"))
 		
 		apDisplay.printMsg("Done creating angle refinement plots!")
 	except:

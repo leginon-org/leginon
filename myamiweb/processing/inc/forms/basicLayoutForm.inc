@@ -37,6 +37,7 @@ class BasicLayoutForm extends BasicForm
 	// to the command. If False (default), the localhost flag is not added to the command. This is getting to be a messy implementation.
 	// Apologies. With more time I would create 2 different types of remote params forms.
 	protected $enableLocalHost; 
+	protected $logoImagePath;
 	
 	function __construct( $expId, $extraHTML='' ) 
 	{
@@ -57,6 +58,46 @@ class BasicLayoutForm extends BasicForm
 	// Override this to output the html required to display program specific parameters
 	// This html will be displayed directly below the appion loop params on the left hand side of the form
 	// TODO: add this function to the generateForm() function when this class is used for something that uses it.
+
+	public function generateAdvancedTableRight() { return False;}
+	// Override this to output the html required to display program specific parameters
+	// This html will be displayed directly below the program params on the right hand side of the form
+	// TODO: add this function to the generateForm() function when this class is used for something that uses it.
+
+
+	public function generateAdvancedFormRight() {
+		// Only hide advanced parameters if there is not an advanced user logged in.
+		// Modify user profile to set to an advanced user. 
+		// NOTE: this assumes the Appion user name and the username that is used to log in to the processing page are the same.
+		// We may want to change that someday.
+		$advancedTableRight = $this->generateAdvancedTableRight();
+		if ( !$advancedTableRight ) { return false; };
+
+		$displayAdvanced = $_SESSION['advanced_user'];
+		if ( !$displayAdvanced ) {
+			$html.= "<a id='Advanced_Program_Options_toggle' href='javascript:toggle(\"Advanced_Program_Options\");' style='color:blue'>";
+			$html.= "Show Advanced Options</a><br/>\n";
+			$html.= "<div id='Advanced_Program_Options' style='display: none'>\n";
+		} 
+		//$html.= "<B>Advanced Options:</B><br />\n";
+			$html .= $this->generateAdvancedTableRight();
+		$html.= "<hr/>\n";
+		$html.= "</div>\n";
+	
+		//
+		// ENDING ADVANCED SECTION
+		//
+	
+		return $html;
+	}
+
+	public function generateFormLogo() {
+		if (file_exists($this->logoImagePath)) {
+			$html .="<center><img src=$this->logoImagePath WIDTH='300'></center><br />\n";
+		}
+		return $html;
+	}
+
 	public function generateAdditionalFormLeft() {return False;}
 	
 	public function generateForm() 
@@ -125,6 +166,7 @@ class BasicLayoutForm extends BasicForm
 				  <tr>
 					<td VALIGN='TOP'>";
 		
+		$html .= $this->generateFormLogo();		
 		$showDesc = $this->getShowDesc();
 		if ($this->getUseCluster() ) {
 			$remoteParamsForm = new RemoteJobParamsForm($defrunname, $outdir,'', $showDesc );
@@ -141,11 +183,16 @@ class BasicLayoutForm extends BasicForm
 
 		// Add parameters specific to the method selected
 		$formRight = $this->generateAdditionalFormRight();
-		if ( $formRight ) {
+		$formRightAdvanced = $this->generateAdvancedFormRight();
+		if ( $formRight || $formRightAdvanced) {
 			$html .= "<td class='tablebg' VALIGN='TOP'>\n";
 			$html .= "<table cellpading='5' border='0'>\n";
 			$html .= "<tr><td valign='top'>\n";
 			$html .= $formRight;
+			$html .= "</td>\n";
+			$html .= "</tr>\n";
+			$html .= "<tr><td valign='top'>\n";
+			$html .= $formRightAdvanced;
 			$html .= "</td>\n";
 			$html .= "</tr>\n";
 			$html .= "</table>\n";

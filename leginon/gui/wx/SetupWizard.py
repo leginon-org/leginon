@@ -626,7 +626,7 @@ class SessionCreatePage(WizardPage):
 		self.sizer.Add(clientssizer, (5, 0), (1, 2), wx.EXPAND)
 
 		self.sizer.Add(wx.StaticText(self, -1,
-					'Please press the "Finish" button if these settings are correct.'),
+					'Please press the "Next" button if these settings are correct.'),
 									(7, 0), (1, 2))
 
 		self.pagesizer.Add(self.sizer, (0, 0), (1, 1), wx.ALIGN_CENTER)

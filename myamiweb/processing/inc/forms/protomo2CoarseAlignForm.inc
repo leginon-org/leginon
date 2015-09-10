@@ -580,6 +580,11 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 			
 			if ($_POST['settings'] == 3)  //Advanced Settings
 			{
+				$html .= "
+				<br><br />
+				<H4>General Parameters ".docpop('genparam_info', '(Info)')."</H4>
+				<hr />";
+				
 				$html.= $params->insertTextField( "raw_path", $fieldSize );
 				//$html.= $params->insertTextField( "param_file", $fieldSize );
 				//$html.= $params->insertTextField( "filename_prefix", $fieldSize );
@@ -734,7 +739,7 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 			if ((empty($_POST['region_x']) OR empty($_POST['region_y']) OR empty($_POST['thickness']) OR empty($_POST['grid_limit']) OR empty($_POST['grid_step'])) AND !isset($_POST['process']))
 			{
 				$html .= "<br></br>
-				<b><center>[Enter all required parameters and click 'Just Show Command' to proceed]</center><br></b>";
+				<b><center>[Choose appropriate presets and/or edit desired parameters then click 'Just Show Command' to proceed]</center><br></b>";
 			}
 		}
 		return $html;

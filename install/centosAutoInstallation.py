@@ -415,11 +415,10 @@ class CentosInstallation(object):
 
 	def installExternalPackages(self):
 		self.writeToLog("--- Start install External Packages")
-		
 		self.installEman()
 		self.installSpider()
 		self.installXmipp()
-
+		self.installProtomo()
 		return True
 
 	def installEman(self):
@@ -621,8 +620,79 @@ setenv LD_LIBRARY_PATH ${LD_LIBRARY_PATH}:${XMIPPDIR}/lib:%s''' % (MpiLibDir))
 		os.chmod(profileDir + bashFile, 0755)
 		os.chmod(profileDir + cShellFile, 0755)
 
+	def installProtomo(self):
+		self.writeToLog("--- Start install Protomo")
+		
+		cwd = os.getcwd()
+		protomoVer = "protomo-2.4.1"
+		zipFileName = protomoVer + ".zip"
+		zipFileLocation = "http://emg.nysbc.org/redmine/attachments/download/4147/" + zipFileName
+		
+		# download the source code tar file and unzip it
+		command = "wget -c " + zipFileLocation
+		self.runCommand(command)
+		command = "unzip -o " + zipFileName
+		self.runCommand(command)
+		
+		use_local = "/usr/local"
+		# move the unzipped folder to a global location
+		self.runCommand("tar -vxjf " + protomoVer + ".tar.bz2 --directory=" + use_local)
+		protomoDir = os.path.join(use_local, protomoVer)
+		deplibs = os.path.join(protomoDir, 'deplibs')
+		if not os.path.isdir(deplibs):
+			os.mkdir(deplibs)		
+		self.runCommand("tar -vxjf deplibs.tar.bz2 --directory=" + deplibs)
+		self.runCommand("tar -vxjf i3-0.9.6.tar.bz2 --directory=" + use_local)
+		
+			# set environment variables
+		   # For BASH, create an protom.sh
+		f = open('protomo.sh', 'w')
+		f.write('''export I3ROOT=%s
+export I3LIB=${I3ROOT}/lib/linux/x86-64
+export PATH=$PATH:${I3ROOT}/bin/linux/x86-64
+export I3LEGACY="/usr/local/i3-0.9.6"
+if [ $LD_LIBRARY_PATH ];
+then
+   export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${I3LIB}:%s/lib/linux/x86-64"
+else
+   export LD_LIBRARY_PATH="${I3LIB}:%s/lib/linux/x86-64"
+fi
+if [ $PYTHONPATH ];
+then
+   export PYTHONPATH=${I3LIB}:${PYTHONPATH}
+else
+   export  PYTHONPATH=${I3LIB}
+fi
+''' % (protomoDir, deplibs, deplibs))
+		f.close()
 
-
+		# For C shell, create an eman.csh
+		f = open('protomo.csh', 'w')
+		f.write('''setenv I3ROOT %s
+setenv I3LIB ${I3ROOT}/lib/linux/x86-64
+setenv PATH ${PATH}:${I3ROOT}/bin/linux/x86-64
+setenv I3LEGACY "/usr/local/i3-0.9.6"
+if ($?LD_LIBRARY_PATH) then
+	setenv LD_LIBRARY_PATH "${LD_LIBRARY_PATH}:${I3LIB}:%s/lib/linux/x86-64"
+else
+	setenv LD_LIBRARY_PATH "${I3LIB}:%s/lib/linux/x86-64"
+endif
+if ( $?PYTHONPATH) then
+    setenv PYTHONPATH ${I3LIB}:${PYTHONPATH}
+else
+    setenv PYTHONPATH ${I3LIB}
+endif
+''' % (protomoDir, deplibs, deplibs))
+		f.close()
+		
+		# add them to the global /etc/profile.d/ folder
+		shutil.copy("protomo.sh", "/etc/profile.d/protomo.sh")
+		shutil.copy("protomo.csh", "/etc/profile.d/protomo.csh")
+		os.chmod("/etc/profile.d/protomo.sh", 0755)
+		os.chmod("/etc/profile.d/protomo.csh", 0755)
+		self.yumInstall(['http://pkgs.repoforge.org/rpmforge-release/rpmforge-release-0.5.3-1.el6.rf.x86_64.rpm'])
+		self.yumInstall(['ffmpeg'])
+		
 	def installFrealign(self):
 		self.writeToLog("--- Start install Frealign")
 		
@@ -1063,7 +1133,7 @@ setenv LD_LIBRARY_PATH ${LD_LIBRARY_PATH}:${XMIPPDIR}/lib:%s''' % (MpiLibDir))
 		questionText = "Would you like to download demo GroEL images and upload them to this installation?"
 		self.doDownloadSampleImages = self.getBooleanInput(questionText)
 		
-		questionText = "Would you like to install EMAN, Xmipp, and Spider at this time?"
+		questionText = "Would you like to install EMAN, Xmipp, Spider, and Protomo at this time?"
 		self.doInstallExternalPackages = self.getBooleanInput(questionText)
 		
 	def getBooleanInput(self, questionText = ''):
