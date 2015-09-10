@@ -169,6 +169,7 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 
 		# dstep is the physical detector pixel size
 		apix = apDatabase.getPixelSize(imgdata)
+		# inputparams defocii and astig are in Angstroms
 		inputparams = {
 			'orig': os.path.join(imgdata['session']['image path'], imgdata['filename']+".mrc"),
 			'input': apDisplay.short(imgdata['filename'])+".mrc",
@@ -187,12 +188,12 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 			'phase': 'no', # this is a secondary amp contrast term for phase plates
 			'newline': '\n',
 		}
-		defrange = self.params['defstep'] * self.params['numstep'] ## do 25 steps in either direction
-		inputparams['defmin']= round(bestdef-defrange, 1) #in meters
+		defrange = self.params['defstep'] * self.params['numstep'] * 1e4 ## do 25 steps in either direction # in angstrum
+		inputparams['defmin']= round(bestdef-defrange, 1) #in angstrom 
 		if inputparams['defmin'] < 0:
 			apDisplay.printWarning("Defocus minimum is less than zero")
 			inputparams['defmin'] = inputparams['defstep']
-		inputparams['defmax']= round(bestdef+defrange, 1) #in meters
+		inputparams['defmax']= round(bestdef+defrange, 1) #in angstrom
 		apDisplay.printColor("Defocus search range: %d A to %d A (%.2f to %.2f um)"
 			%(inputparams['defmin'], inputparams['defmax'], 
 			inputparams['defmin']*1e-4, inputparams['defmax']*1e-4), "cyan")
