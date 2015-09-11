@@ -161,7 +161,8 @@ class Panel(leginon.gui.wx.Acquisition.Panel):
 
 class SettingsDialog(leginon.gui.wx.Acquisition.SettingsDialog):
 	def initialize(self):
-		return ScrolledSettings(self,self.scrsize,False,self.show_basic)
+		scrolling = not self.show_basic
+		return ScrolledSettings(self,self.scrsize,scrolling,self.show_basic)
 
 class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 	def initialize(self):
