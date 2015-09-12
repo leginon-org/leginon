@@ -26,4 +26,5 @@ RUN yum -y install bash-completion nano \
  httpd libssh2-devel libtiff-devel openmpi-devel php php-devel \
  php-gd php-mysql phpMyAdmin 
 
-RUN pip install joblib
+RUN easy_install joblib
+EXPOSE 80
