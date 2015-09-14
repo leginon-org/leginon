@@ -40,7 +40,7 @@ def _processImage(imgarray, bin=1, apix=1.0, lowpass=0.0, highpass=0.0,
 	simgarray = binImg(simgarray, bin)
 	if planeReg is True:
 		simgarray = planeRegression(simgarray, msg)
-	simgarray = highPassFilter2(simgarray, apix, bin, highpass, msg=msg)
+	simgarray = highPassFilter2(simgarray, highpass, apix)
 	#simgarray = fermiHighPassFilter(simgarray, apix, bin, highpass, msg=msg)
 	simgarray = pixelLimitFilter(simgarray, pixlimit)
 	simgarray = lowPassFilter(simgarray, apix, bin, lowpass, msg)
