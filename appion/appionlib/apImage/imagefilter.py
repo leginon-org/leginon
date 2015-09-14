@@ -40,8 +40,8 @@ def _processImage(imgarray, bin=1, apix=1.0, lowpass=0.0, highpass=0.0,
 	simgarray = binImg(simgarray, bin)
 	if planeReg is True:
 		simgarray = planeRegression(simgarray, msg)
-	#simgarray = highPassFilter(simgarray, apix, bin, highpass, msg=msg)
-	simgarray = fermiHighPassFilter(simgarray, apix, bin, highpass, msg=msg)
+	simgarray = highPassFilter2(simgarray, apix, bin, highpass, msg=msg)
+	#simgarray = fermiHighPassFilter(simgarray, apix, bin, highpass, msg=msg)
 	simgarray = pixelLimitFilter(simgarray, pixlimit)
 	simgarray = lowPassFilter(simgarray, apix, bin, lowpass, msg)
 	#simgarray = fermiLowPassFilter(simgarray, apix, bin, lowpass, msg)
@@ -233,7 +233,7 @@ def fermiLowPassFilter(imgarray, apix=1.0, bin=1, radius=0.0, msg=True):
 #=========================
 def highPassFilter(imgarray, apix=1.0, bin=1, radius=0.0, localbin=8, msg=True):
 	"""
-	high pass filter image to radius resolution
+	high pass filter image to radius resolution, using stupid Gaussian filter
 	"""
 	if radius is None or radius < 1 or imgarray.shape[0] < 256:
 		if msg is True:
