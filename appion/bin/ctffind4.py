@@ -161,8 +161,8 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 
 		if ctfvalue is not None and self.params['bestdb'] is True:
 			### set res max from resolution_80_percent
-			gmean = math.sqrt(ctfvalue['resolution_80_percent']*ctfvalue['resolution_50_percent'])
-			if gmean < self.params['resmin']:
+			gmean = (ctfvalue['resolution_80_percent']*ctfvalue['resolution_50_percent']*self.params['resmin'])**(1/3.)
+			if gmean < self.params['resmin']*0.9:
 				# replace only if valid Issue #3291
 				self.params['resmax'] = round(gmean,2)
 				apDisplay.printColor("Setting resmax to the geometric mean of resolution values", "purple")
