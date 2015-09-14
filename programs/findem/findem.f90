@@ -242,7 +242,6 @@ program main
 	CALL itrhdr(2,1)
 	CALL iwrhdr(2,title,ntflag,dmin,dmax,dmean)
 	CALL write_mrcimage2(2,maxmap2,nx,ny,nz,err,sampling)
-	CALL imclose(9)
 	!close(1)
 
 	!PRINT*,'program finished o.k.'
