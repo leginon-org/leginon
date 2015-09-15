@@ -923,6 +923,7 @@ function clustersummarytable($clusterrunid, $mini=false) {
 		}
 		foreach ($clusterdatas as $clusterdata) {
 			$clusterid = $clusterdata['clusterid'];
+			$clusterpixelsize = $clusterdata['pixelsize'] * 1e-10; // Angstrom ????
 			$clusteravgfile = $clusterdata['path']."/".$clusterdata['avg_imagicfile'];
 			$clustervarfile = $clusterdata['path']."/".$clusterdata['var_imagicfile'];
 			if ($clusterdata['REF|ApImagicAlignAnalysisData|imagicMSArun']) {
@@ -935,7 +936,7 @@ function clustersummarytable($clusterrunid, $mini=false) {
 					$level = substr($matches[0],-2,2);
 				}
 				$clustertable .= "<li><span>"
-					."<a target='stackview' href='viewstack.php?expId=$expId&clusterId=$clusterid&file=$clusteravgfile'>"
+					."<a target='stackview' href='viewstack.php?expId=$expId&clusterId=$clusterid&file=$clusteravgfile&ps=$clusterpixelsize'>"
 					.$clusterdata['num_classes']." Class Averages, level ".$level.":</a> (ID $clusterid)&nbsp;"
 					."</span></li>\n";
 			} elseif ($clusterdata['REF|ApSIMPLEClusterRunData|simpleparams']) {

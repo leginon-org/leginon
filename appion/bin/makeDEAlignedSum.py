@@ -222,7 +222,7 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 			shutil.rmtree(targetdict['outpath'])
 		os.mkdir(targetdict['outpath'])
 
-		command=['deProcessFrames.py']
+		command=['runDEProcessFrames.py']
 		keys=self.params.keys()
 		keys.sort()
 		for key in keys:
@@ -283,7 +283,7 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 			subprocess.call(command)
 		
 		newimg_array = mrc.read(outnamepath)
-		self.commitAlignedImageToDatabase(imgdata,newimg_array)
+		self.commitAlignedImageToDatabase(imgdata,newimg_array,self.params['alignlabel'])
 		# return None since everything is committed within this function.
 		return None
 	
@@ -364,7 +364,7 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 			shutil.rmtree(outpath)
 		os.mkdir(outpath)
 
-		command=['deProcessFrames.py']
+		command=['runDEProcessFrames.py']
 		keys=self.params.keys()
 		keys.sort()
 		for key in keys:
@@ -456,11 +456,11 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 				q.insert()
 				return q
 
-	def commitAlignedImageToDatabase(self,imgdata,newimage):
+	def commitAlignedImageToDatabase(self,imgdata,newimage,alignlabel='a'):
 		if self.params['commit'] is False:
 			return
 		camdata=imgdata['camera']
-		newimagedata=apDBImage.makeAlignedImageData(imgdata,camdata,newimage)
+		newimagedata=apDBImage.makeAlignedImageData(imgdata,camdata,newimage,alignlabel)
 		if newimagedata != None:
 			apDisplay.printMsg('Uploading aligned image as %s' % newimagedata['filename'])
 			q = appiondata.ApDDAlignImagePairData(source=imgdata,result=newimagedata,ddstackrun=self.rundata)
