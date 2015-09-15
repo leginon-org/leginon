@@ -456,11 +456,11 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 				q.insert()
 				return q
 
-	def commitAlignedImageToDatabase(self,imgdata,newimage):
+	def commitAlignedImageToDatabase(self,imgdata,newimage,alignlabel='a'):
 		if self.params['commit'] is False:
 			return
 		camdata=imgdata['camera']
-		newimagedata=apDBImage.makeAlignedImageData(imgdata,camdata,newimage)
+		newimagedata=apDBImage.makeAlignedImageData(imgdata,camdata,newimage,alignlabel)
 		if newimagedata != None:
 			apDisplay.printMsg('Uploading aligned image as %s' % newimagedata['filename'])
 			q = appiondata.ApDDAlignImagePairData(source=imgdata,result=newimagedata,ddstackrun=self.rundata)
