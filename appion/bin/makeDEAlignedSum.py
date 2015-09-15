@@ -222,7 +222,7 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 			shutil.rmtree(targetdict['outpath'])
 		os.mkdir(targetdict['outpath'])
 
-		command=['deProcessFrames.py']
+		command=['runDEProcessFrames.py']
 		keys=self.params.keys()
 		keys.sort()
 		for key in keys:
@@ -364,7 +364,7 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 			shutil.rmtree(outpath)
 		os.mkdir(outpath)
 
-		command=['deProcessFrames.py']
+		command=['runDEProcessFrames.py']
 		keys=self.params.keys()
 		keys.sort()
 		for key in keys:
