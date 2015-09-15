@@ -283,7 +283,7 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 			subprocess.call(command)
 		
 		newimg_array = mrc.read(outnamepath)
-		self.commitAlignedImageToDatabase(imgdata,newimg_array)
+		self.commitAlignedImageToDatabase(imgdata,newimg_array,self.params['alignlabel'])
 		# return None since everything is committed within this function.
 		return None
 	
