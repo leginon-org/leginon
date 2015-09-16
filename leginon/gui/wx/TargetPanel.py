@@ -504,7 +504,16 @@ if __name__ == '__main__':
 	if filename is None:
 		app.panel.setImage(None)
 	elif filename[-4:] == '.mrc':
-		image = mrc.read(filename)
+		h = mrc.readHeaderFromFile(filename)
+		if h['mz'] == 0:
+			print 'invalid mz, assumes 1'
+			h['mz'] = 1
+		nframes = h['nz']/h['mz']
+		frame = 0
+		if nframes > 1:
+			frame_str = raw_input('This is an image stack of %d frames or a volume. enter 0 to %d to select a frame to load: ' % (nframes,nframes-1))
+			frame = int(frame_str)
+		image = mrc.read(filename,frame)
 		app.panel.setImage(image.astype(numpy.float32))
 	elif filename[-4:] == '.tif':
 		# This is only for RawImage tiff files taken from DirectElectron DE camera
