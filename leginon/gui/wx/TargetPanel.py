@@ -498,11 +498,11 @@ if __name__ == '__main__':
 			frame.Show(True)
 			return True
 
+	array = None
 	if filename is None:
 		filename = raw_input('Enter file path: ')
-	app = MyApp(0,box)
-	if filename is None:
-		app.panel.setImage(None)
+	if not filename:
+		array = None
 	elif filename[-4:] == '.mrc':
 		h = mrc.readHeaderFromFile(filename)
 		if h['mz'] == 0:
@@ -523,7 +523,7 @@ if __name__ == '__main__':
 				slice_str = raw_input('This is a volume.\n Enter 0 to %d to select a slice to load: ' % (h['nz']-1))
 			frame = int(slice_str)
 		image = mrc.read(filename,frame)
-		app.panel.setImage(image.astype(numpy.float32))
+		array = image.astype(numpy.float32)
 
 	elif filename[-4:] == '.tif':
 		# This is only for RawImage tiff files taken from DirectElectron DE camera
@@ -532,10 +532,12 @@ if __name__ == '__main__':
 		a = tif.asarray()
 		a = numpy.asarray(a,dtype=numpy.float32)
 		# DE RawImage tiff files is mirrored horizontally from Leginon
-		a = a[:,::-1]
-		app.panel.setImage(a)
+		array = a[:,::-1]
 	else:
 		from pyami import numpil
-		app.panel.setImage(numpil.read(filename))
+		array = numpil.read(filename)
+	#start gui
+	app = MyApp(0,box)
+	app.panel.setImage(array)
 	app.MainLoop()
 
