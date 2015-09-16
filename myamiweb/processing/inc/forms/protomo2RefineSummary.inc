@@ -68,11 +68,13 @@ class Protomo2RefineSummary extends BasicLayoutForm
 		$corrpeak_vid_files = glob("$outdir/$runname/media/correlations/s*.{mp4,ogv,webm}",GLOB_BRACE);
 		$qa_gif_file = "$outdir/$runname/media/quality_assessment/series".sprintf('%04d',$tiltseries)."_quality_assessment.gif";
 		$azimuth_gif_file = "$outdir/$runname/media/angle_refinement/series".sprintf('%04d',$tiltseries)."_azimuth.gif";
+		$orientation_gif_file = "$outdir/$runname/media/angle_refinement/series".sprintf('%04d',$tiltseries)."_orientation.gif";
 		$theta_gif_file = "$outdir/$runname/media/angle_refinement/series".sprintf('%04d',$tiltseries)."_theta.gif";
 		$elevation_gif_file = "$outdir/$runname/media/angle_refinement/series".sprintf('%04d',$tiltseries)."_elevation.gif";
 		
 		$qa_gif = "loadimg.php?rawgif=1&filename=".$qa_gif_file;
 		$azimuth_gif = "loadimg.php?rawgif=1&filename=".$azimuth_gif_file;
+		$orientation_gif = "loadimg.php?rawgif=1&filename=".$orientation_gif_file;
 		$theta_gif = "loadimg.php?rawgif=1&filename=".$theta_gif_file;
 		$elevation_gif = "loadimg.php?rawgif=1&filename=".$elevation_gif_file;
 		
@@ -92,7 +94,8 @@ class Protomo2RefineSummary extends BasicLayoutForm
 			$html .= '<center><a href="protomo2QualityAssessmentPlots.php?outdir='.$outdir.'&runname='.$runname.'&tiltseries='.$tiltseries.'" target="_blank"><img src="'.$qa_gif.'" alt="qa" width="700" />'."</a></center>";
 			$html .= '<center>'.docpop('quality_assessment2', 'CCMS Info').'</center><br></td>';
 			$html .= '<td><center><a href="protomo2QualityAssessmentPlots.php?outdir='.$outdir.'&runname='.$runname.'&tiltseries='.$tiltseries.'" target="_blank"><img src="'.$azimuth_gif.'" alt="azimuth" width="300" />'."</a></center></td></tr>";
-			$html .= '<td><center><a href="protomo2QualityAssessmentPlots.php?outdir='.$outdir.'&runname='.$runname.'&tiltseries='.$tiltseries.'" target="_blank"><img src="'.$theta_gif.'" alt="theta" width="300" />'."</a></center></td></tr>";
+			$html .= '<td><center><a href="protomo2QualityAssessmentPlots.php?outdir='.$outdir.'&runname='.$runname.'&tiltseries='.$tiltseries.'" target="_blank"><img src="'.$orientation_gif.'" alt="." width="300" />'."</a></center></td></tr>";
+			$html .= '<td><center><a href="protomo2QualityAssessmentPlots.php?outdir='.$outdir.'&runname='.$runname.'&tiltseries='.$tiltseries.'" target="_blank"><img src="'.$theta_gif.'" alt="." width="300" />'."</a></center></td></tr>";
 			$html .= '<td><center><a href="protomo2QualityAssessmentPlots.php?outdir='.$outdir.'&runname='.$runname.'&tiltseries='.$tiltseries.'" target="_blank"><img src="'.$elevation_gif.'" alt="elevation" width="300" />'."</a></center></td></tr>";
 			$html .= '</tr></td></table>';
 		}
