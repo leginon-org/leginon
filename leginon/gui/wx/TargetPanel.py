@@ -510,11 +510,21 @@ if __name__ == '__main__':
 			h['mz'] = 1
 		nframes = h['nz']/h['mz']
 		frame = 0
-		if nframes > 1:
-			frame_str = raw_input('This is an image stack of %d frames or a volume. enter 0 to %d to select a frame to load: ' % (nframes,nframes-1))
-			frame = int(frame_str)
+		# 2D image stack
+		if h['mz'] == 1:
+			if nframes > 1:
+				# mrc2014 image stack
+				frame_str = raw_input('This is an image stack of %d frames.\n Enter 0 to %d to select a frame to load: ' % (nframes,nframes-1))
+				frame = int(frame_str)
+		else:
+			if nframes > 1:
+				slice_str = raw_input('This is a stack of %d volume.\n Enter 0 to %d to select a slice to load: ' % (nframes,h['nz']-1))
+			else:
+				slice_str = raw_input('This is a volume.\n Enter 0 to %d to select a slice to load: ' % (h['nz']-1))
+			frame = int(slice_str)
 		image = mrc.read(filename,frame)
 		app.panel.setImage(image.astype(numpy.float32))
+
 	elif filename[-4:] == '.tif':
 		# This is only for RawImage tiff files taken from DirectElectron DE camera
 		from pyami import tifffile
