@@ -1992,7 +1992,7 @@ class PresetsManager(node.Node):
 		# This matrix gives a given degree rotation from +x to +y axis.
 		if tem['hostname'] != 'jem-2100f' or not self.isLensSeriesChange(mag1,mag2):
 			return pixelvect
-		rotate_angle_degrees = 142
+		rotate_angle_degrees = 180
 		a = math.radians(rotate_angle_degrees)
 		m = numpy.matrix([[math.cos(a),math.sin(a)],[-math.sin(a),math.cos(a)]])
 		rotated_vect = numpy.dot(pixelvect,numpy.asarray(m))
