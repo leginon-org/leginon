@@ -542,6 +542,8 @@ def highPassFilter2(data, hpFilterSize, apix=None):
 
 	Note: named highPassFilter2 to avoid duplication of the existing function in this module
 	"""
+	if hpFilterSize < 1:
+		return data
 	if apix is not None:
 		pixelradius = hpFilterSize/apix
 	else:
