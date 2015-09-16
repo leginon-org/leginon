@@ -164,6 +164,11 @@ class SelectionTool(wx.Panel):
 				self.parent.setImage(None)
 
 	#--------------------
+	def setEnableSettings(self,name,value=True):
+		tool = self._getTypeTool(name)
+		tool.enableToggleButton('settings',value)
+
+	#--------------------
 	def onDisplay(self, evt):
 		self._setDisplayed(evt.name, evt.value)
 

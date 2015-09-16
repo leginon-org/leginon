@@ -26,6 +26,9 @@ class Panel(leginon.gui.wx.ClickTargetFinder.Panel):
 	icon = 'atlastarget'
 	def initialize(self):
 		leginon.gui.wx.ClickTargetFinder.Panel.initialize(self)
+		self.imagepanel.selectiontool.setEnableSettings('acquisition', False)
+		self.imagepanel.selectiontool.setDisplayed('focus', False)
+		self.imagepanel.selectiontool.setEnableSettings('focus', False)
 
 		self.toolbar.InsertSeparator(4)
 

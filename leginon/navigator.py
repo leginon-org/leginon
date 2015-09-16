@@ -673,8 +673,10 @@ class Navigator(node.Node):
 	def _toScope(self,name, stagedict):
 		try:
 			self.instrument.tem.StagePosition = stagedict
+		except KeyError:
+			self.logger.exception('instrument key %s not available' % (stagedict.keys(),))
 		except:
-			self.logger.exception(errstr % 'unable to set instrument')
+			self.logger.exception('unable to set instrument')
 		else:
 			self.logger.info('Moved to location %s' % (name,))
 

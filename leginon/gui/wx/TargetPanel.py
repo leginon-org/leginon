@@ -1,4 +1,4 @@
-#!/usr/bin/env python -O
+#!/usr/bin/env python
 # The Leginon software is Copyright 2004
 # The Scripps Research Institute, La Jolla, CA
 # For terms of the license agreement
@@ -498,14 +498,33 @@ if __name__ == '__main__':
 			frame.Show(True)
 			return True
 
+	array = None
 	if filename is None:
 		filename = raw_input('Enter file path: ')
-	app = MyApp(0,box)
-	if filename is None:
-		app.panel.setImage(None)
+	if not filename:
+		array = None
 	elif filename[-4:] == '.mrc':
-		image = mrc.read(filename)
-		app.panel.setImage(image.astype(numpy.float32))
+		h = mrc.readHeaderFromFile(filename)
+		if h['mz'] == 0:
+			print 'invalid mz, assumes 1'
+			h['mz'] = 1
+		nframes = h['nz']/h['mz']
+		frame = 0
+		# 2D image stack
+		if h['mz'] == 1:
+			if nframes > 1:
+				# mrc2014 image stack
+				frame_str = raw_input('This is an image stack of %d frames.\n Enter 0 to %d to select a frame to load: ' % (nframes,nframes-1))
+				frame = int(frame_str)
+		else:
+			if nframes > 1:
+				slice_str = raw_input('This is a stack of %d volume.\n Enter 0 to %d to select a slice to load: ' % (nframes,h['nz']-1))
+			else:
+				slice_str = raw_input('This is a volume.\n Enter 0 to %d to select a slice to load: ' % (h['nz']-1))
+			frame = int(slice_str)
+		image = mrc.read(filename,frame)
+		array = image.astype(numpy.float32)
+
 	elif filename[-4:] == '.tif':
 		# This is only for RawImage tiff files taken from DirectElectron DE camera
 		from pyami import tifffile
@@ -513,10 +532,12 @@ if __name__ == '__main__':
 		a = tif.asarray()
 		a = numpy.asarray(a,dtype=numpy.float32)
 		# DE RawImage tiff files is mirrored horizontally from Leginon
-		a = a[:,::-1]
-		app.panel.setImage(a)
+		array = a[:,::-1]
 	else:
 		from pyami import numpil
-		app.panel.setImage(numpil.read(filename))
+		array = numpil.read(filename)
+	#start gui
+	app = MyApp(0,box)
+	app.panel.setImage(array)
 	app.MainLoop()
 
