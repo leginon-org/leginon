@@ -744,6 +744,9 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 		### here is the craziness
 		### step 1: read imgstackfile into memory
 		imgstackmemmap = imagic.read(imgstackfile)
+		### when only particle is read it defaults to a 2D array instead of 3D array
+		if len(imgstackmemmap.shape) < 3:
+			imgstackmemmap = imgstackmemmap.reshape(1, imgstackmemmap.shape[0], imgstackmemmap.shape[1])
 		if self.params['debug'] is True:
 			print "imgstackmemmap.shape", imgstackmemmap.shape
 		apix = self.params['apix'] #apDatabase.getPixelSize(imgdata)

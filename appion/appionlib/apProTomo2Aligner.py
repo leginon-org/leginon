@@ -1302,7 +1302,7 @@ def makeCTFPlot(ctfdir, defocus_file_full):
 
 def makeAngleRefinementPlots(rundir, seriesname):
 	'''
-	Creates a plot of the tilt azimuth, a plot of the only orientation angle (theta) that changes,
+	Creates a plot of the tilt azimuth, a plot of only orientation angles,
 	and a plot of the tilt elevation (see Protomo user guide or doi:10.1016/j.ultramic.2005.07.007)
 	over all completed iterations.
 	'''
@@ -1311,7 +1311,7 @@ def makeAngleRefinementPlots(rundir, seriesname):
 		os.chdir(rundir)
 		os.system("mkdir -p %s/media/angle_refinement 2>/dev/null" % rundir)
 		azimuth_full=rundir+'/media/angle_refinement/'+seriesname+'_azimuth.png'
-		theta_full=rundir+'/media/angle_refinement/'+seriesname+'_theta.png'
+		orientation_full=rundir+'/media/angle_refinement/'+seriesname+'_orientation.png'
 		elevation_full=rundir+'/media/angle_refinement/'+seriesname+'_elevation.png'
 		pylab.clf()
 		
@@ -1321,7 +1321,9 @@ def makeAngleRefinementPlots(rundir, seriesname):
 		i=0
 		iters=[]
 		azimuths=[]
+		psis=[]
 		thetas=[]
+		phis=[]
 		elevations=[]
 		for tiltfile in tiltfiles:
 			cmd1="awk '/AZIMUTH /{print $3}' %s" % tiltfile
@@ -1330,8 +1332,17 @@ def makeAngleRefinementPlots(rundir, seriesname):
 			azimuth=float(azimuth)
 			azimuths.append(azimuth)
 			
-			cmd2="awk '/THETA /{print $2}' %s" % tiltfile
+			cmd2="awk '/PSI /{print $2}' %s" % tiltfile
 			proc=subprocess.Popen(cmd2, stdout=subprocess.PIPE, shell=True)
+			(psi, err) = proc.communicate()
+			if psi == '':  #tlt file from Coarse Alignment has no psi estimation.
+				psi=0
+			else:
+				psi=float(psi)
+			psis.append(psi)
+			
+			cmd3="awk '/THETA /{print $2}' %s" % tiltfile
+			proc=subprocess.Popen(cmd3, stdout=subprocess.PIPE, shell=True)
 			(theta, err) = proc.communicate()
 			if theta == '':  #tlt file from Coarse Alignment has no theta estimation.
 				theta=0
@@ -1339,8 +1350,17 @@ def makeAngleRefinementPlots(rundir, seriesname):
 				theta=float(theta)
 			thetas.append(theta)
 			
-			cmd3="awk '/ELEVATION /{print $3}' %s" % tiltfile
-			proc=subprocess.Popen(cmd3, stdout=subprocess.PIPE, shell=True)
+			cmd4="awk '/PHI /{print $2}' %s" % tiltfile
+			proc=subprocess.Popen(cmd4, stdout=subprocess.PIPE, shell=True)
+			(phi, err) = proc.communicate()
+			if phi == '':  #tlt file from Coarse Alignment has no phi estimation.
+				phi=0
+			else:
+				phi=float(phi)
+			phis.append(phi)
+			
+			cmd5="awk '/ELEVATION /{print $3}' %s" % tiltfile
+			proc=subprocess.Popen(cmd5, stdout=subprocess.PIPE, shell=True)
 			(elevation, err) = proc.communicate()
 			if elevation == '':  #tlt file may not have ELEVATION
 				elevation=0
@@ -1361,14 +1381,17 @@ def makeAngleRefinementPlots(rundir, seriesname):
 		pylab.savefig(azimuth_full, bbox_inches='tight')
 		pylab.clf()
 		
-		pylab.plot(iters, thetas)
+		pylab.plot(iters, psis, label='Psi')
+		pylab.plot(iters, thetas, label='Theta')
+		pylab.plot(iters, phis, label='Phi')
 		pylab.rcParams["axes.titlesize"] = 12
+		pylab.legend(loc='best', fancybox=True, prop=dict(size=11))
 		pylab.xlabel("Iteration")
-		pylab.ylabel("Theta (degrees)")
-		pylab.title("Orientation Angle (Theta) Refinement")
+		pylab.ylabel("Orientation angles (degrees)")
+		pylab.title("Orientation Angle Refinement")
 		pylab.grid(True)
 		pylab.minorticks_on()
-		pylab.savefig(theta_full, bbox_inches='tight')
+		pylab.savefig(orientation_full, bbox_inches='tight')
 		pylab.clf()
 		
 		pylab.plot(iters, elevations)
@@ -1383,7 +1406,7 @@ def makeAngleRefinementPlots(rundir, seriesname):
 		
 		#rename pngs to be gifs so that Appion will display it properly (this is a ridiculous redux workaround to display images with white backgrounds by changing png filename extensions to gif and then using loadimg.php?rawgif=1 to load them, but oh well)
 		os.system('mv %s %s' % (azimuth_full,azimuth_full[:-3]+"gif"))
-		os.system('mv %s %s' % (theta_full,theta_full[:-3]+"gif"))
+		os.system('mv %s %s' % (orientation_full,orientation_full[:-3]+"gif"))
 		os.system('mv %s %s' % (elevation_full,elevation_full[:-3]+"gif"))
 		
 		apDisplay.printMsg("Done creating angle refinement plots!")

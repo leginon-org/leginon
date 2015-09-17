@@ -3418,6 +3418,8 @@ class particledata {
 			'isac'=>'REF|ApSparxISACRunData|isacrun',
 			'imagicMRA'=>'REF|ApMultiRefAlignRunData|imagicMRA',
 			'editerrun'=>'REF|ApEdIterRunData|editerrun',
+			'xmipp2cl2d'=>'REF|ApCL2DRunData|cl2drun',
+			'xmipp3cl2d'=>'REF|ApXMIPP3CL2DRunData|xmipp3cl2drun',
 		);
 		foreach (array_keys($packagerefs) as $package) {
 			if ($r[0][$packagerefs[$package]]) $r[0]['package'] = $package;
