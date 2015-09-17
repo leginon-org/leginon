@@ -130,6 +130,9 @@ def orderImageList(imagelist):
 	imagepath = imagelist[0]['session']['image path']
 	tiltseries = imagelist[0]['tilt series']
 	start_tilt = tiltseries['tilt start']
+	if start_tilt == tiltseries['tilt max'] or start_tilt == tiltseries['tilt min']:
+		tiltkeys = map((lambda x: math.degrees(x['scope']['stage position']['a'])),imagelist)
+		return tiltkeys,imagelist,mrc_files,int(len(tiltkeys)*0.5)  #Assumes tilts are from +alpha to -alpha
 	if start_tilt is None:
 		start_tilt = math.degrees(imagelist[0]['scope']['stage position']['a'])
 	tiltangledict = {}

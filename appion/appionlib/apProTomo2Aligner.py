@@ -384,7 +384,7 @@ def removeHighlyShiftedImages(tiltfile, dimx, dimy, shift_limit, angle_limit):
 		
 		#Identify tilt images from .tlt file whose shift(s) exceed limits
 		if (abs(dimx/2 - originx) > shift_limit*dimx/100) or (abs(dimy/2 - originy) > shift_limit*dimy/100):
-			#If it's not a high tilt angle, then add it to the bad image list.
+			#If it's not a high tilt angle, then add it to the bad kept image list.
 			if (abs(tilt_angle) >= angle_limit):
 				bad_images.append(i+1)
 			else:
@@ -400,6 +400,15 @@ def removeHighlyShiftedImages(tiltfile, dimx, dimy, shift_limit, angle_limit):
 					newtiltfile.write(line)
 		newtiltfile.close()
 	
+	return bad_images, bad_kept_images
+
+
+def removeDarkorBrightmages(tiltfile):
+	'''
+	This removes the entry in the tiltfile for any images whose average pixel values exceed N*stdev from the mean.
+	This may be unecessary so it hasn't been implemented. Maybe later?
+	'''
+	image=mrc.read(mrcf)
 	return bad_images, bad_kept_images
 
 
@@ -1068,14 +1077,17 @@ def makeTiltSeriesVideos(seriesname, iteration, tiltfilename, rawimagecount, run
 			apDisplay.printMsg("No downsampling will be performed on the depiction images.")
 			apDisplay.printMsg("Warning: Depiction video might be so large that it breaks your web browser!")
 		
-		#Parallel process the images
-		for i in range(start, rawimagecount+1):
-			p2 = mp.Process(target=processTiltImages, args=(i,tiltfilename,raw_path,image_file_type,map_sampling,rundir,pixelsize,rawimagecount,tilt_clip,))
-			p2.start()
-			
-			if (i % (int(procs/3)) == 0) and (i != 0):
-				[p2.join() for p2 in mp.active_children()]
-		[p2.join() for p2 in mp.active_children()]
+		if procs == 0 or procs == 1:
+			for i in range(start, rawimagecount+1):
+				processTiltImages(i,tiltfilename,raw_path,image_file_type,map_sampling,rundir,pixelsize,rawimagecount,tilt_clip)
+		else: #Parallel process the images
+			for i in range(start, rawimagecount+1):
+				p2 = mp.Process(target=processTiltImages, args=(i,tiltfilename,raw_path,image_file_type,map_sampling,rundir,pixelsize,rawimagecount,tilt_clip,))
+				p2.start()
+				
+				if (i % (int(procs/3)) == 0) and (i != 0):
+					[p2.join() for p2 in mp.active_children()]
+			[p2.join() for p2 in mp.active_children()]
 		
 		#Turn pngs into a video with Frame # and delete pngs
 		if align_step == "Initial":
@@ -1218,12 +1230,16 @@ def makeReconstructionVideos(seriesname, iteraion, rundir, rx, ry, show_window_s
 		else:
 			procs=1
 		apDisplay.printMsg("Creating reconstruction video...")
-		for i in range(0,slices+1):
-			p3 = mp.Process(target=processReconImages, args=(i,slices,vid_path,volume,minval,maxval,pixelsize,map_sampling,dimx,dimy,show_window_size,rx,ry,))
-			p3.start()
-			
-			if (i % (procs-1) == 0) and (i != 0):
-				[p3.join() for p3 in mp.active_children()]
+		if procs == 1:
+			for i in range(0,slices+1):
+				processReconImages(i,slices,vid_path,volume,minval,maxval,pixelsize,map_sampling,dimx,dimy,show_window_size,rx,ry)
+		else: #Parallelize
+			for i in range(0,slices+1):
+				p3 = mp.Process(target=processReconImages, args=(i,slices,vid_path,volume,minval,maxval,pixelsize,map_sampling,dimx,dimy,show_window_size,rx,ry,))
+				p3.start()
+				
+				if ((i % (procs-1) == 0) and (i != 0)) or (procs == 1):
+					[p3.join() for p3 in mp.active_children()]
 		
 		if video_type == "gif":
 			command = "convert -delay 11 -loop 0 -layers Optimize %s %s;" % (png_full, gif_full)
@@ -1311,7 +1327,7 @@ def makeAngleRefinementPlots(rundir, seriesname):
 		os.chdir(rundir)
 		os.system("mkdir -p %s/media/angle_refinement 2>/dev/null" % rundir)
 		azimuth_full=rundir+'/media/angle_refinement/'+seriesname+'_azimuth.png'
-		orientation_full=rundir+'/media/angle_refinement/'+seriesname+'_orientation.png'
+		orientation_full=rundir+'/media/angle_refinement/'+seriesname+'_theta.png'   #Temporarily keeping the name as theta for backwards compatibility
 		elevation_full=rundir+'/media/angle_refinement/'+seriesname+'_elevation.png'
 		pylab.clf()
 		
