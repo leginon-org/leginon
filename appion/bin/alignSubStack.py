@@ -51,6 +51,9 @@ class subStackScript(appionScript.AppionScript):
 		self.parser.add_option("--write-file", dest='writefile', default=False,
 			help="write the substack file to disk", action="store_true")
 
+	def isCL2D(self, alignstackdata):
+		return (alignstackdata['alignrun']['cl2drun'] or alignstackdata['alignrun']['xmipp3cl2drun'])
+
 	#=====================
 	def checkConflicts(self):
 		### check and make sure we got a practical shift
@@ -71,6 +74,12 @@ class subStackScript(appionScript.AppionScript):
 			self.clusterstackdata = appiondata.ApClusteringStackData.direct_query(self.params['clusterid'])
 			self.alignstackdata = self.clusterstackdata['clusterrun']['alignstack']
 			self.params['stackid'] = self.alignstackdata['stack'].dbid
+
+		# Issue #3566
+		if self.params['minscore'] and self.isCL2D(self.alignstackdata):
+			apDisplay.printError("CL2d classification does not output alignment parameters.  Can not use minscore to remove particles.")
+		if self.params['maxshift'] and self.isCL2D(self.alignstackdata):
+			apDisplay.printError("CL2d classification does not output alignment parameters.  Can not use maxshift to remove particles.")
 
 		### check and make sure we got the stack id
 		if self.params['stackid'] is None:
