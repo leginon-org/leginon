@@ -390,6 +390,7 @@ var help = {
 		/*** Additional Protomo popups ***/
 		'protomo_tiltseries': 'Select the tilt-series number in the current session that corresponds to the tomogram to be processed. Protomo supports CCP4, EM, FFF, IMAGIC, MRC, SPIDER, SUPRIM, and TIFF filetypes. Currently images recorded as individual .mrc files are fully supported.',
 		'protomo_logging' : 'Enable Protomo\'s diagnostic terminal output (type: true/false).',
+		'protomo_parallel' : 'Parallelize depiction image and video generation.<br><br>If you encounter memory errors, try switching this to False.(type: True/False).',
 		'protomo_binning' : 'Enable/disable binning of raw images (type: true/false).',
 		'protomo_preprocessing' : 'Enable/disable preprocessing of raw image files (type: true/false).',
 		'protomo_gradient' : 'Enable/disable linear gradient subtraction for preprocessing masks (type: true/false).',

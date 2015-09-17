@@ -32,7 +32,7 @@ class Protomo2RefineForm extends BasicLayoutForm
 	$r4_peak_search_radius_x='300', $r5_peak_search_radius_x='300', $r1_peak_search_radius_y='300', $r2_peak_search_radius_y='300', $r3_peak_search_radius_y='300', $r4_peak_search_radius_y='300', $r5_peak_search_radius_y='300', $orientation='true',
 	$orientation_switch='', $azimuth='true', $azimuth_switch='', $elevation='false', $elevation_switch='', $rotation='true', $rotation_switch='', $scale='false', $scale_switch='',
 	$logging='true', $loglevel='2', $map_size_x='512', $map_size_y='512', $filename_prefix='', $image_file_type='', $cachedir='cache', $protomo_outdir='out', $tilt_clip='',
-	$gui_coarse_align='', $create_reconstruction='true', $show_window_size='true', $create_tilt_video='true', $keep_recons='false', $video_type='', $restart_cycle='' )
+	$gui_coarse_align='', $create_reconstruction='true', $show_window_size='true', $create_tilt_video='true', $keep_recons='false', $video_type='', $restart_cycle='', $parallel='' )
 	{
 		parent::__construct($expId, $extraHTML);
 		//print "_POST:" . "<br>";
@@ -766,6 +766,7 @@ class Protomo2RefineForm extends BasicLayoutForm
 		$params->setHelpSection( "protomo" );
 				
 		$params->addParam( "tiltseries", $tiltseries, "Tilt-Series #" );
+		$params->addParam( "parallel", $parallel, "Parallelize Non-Protomo Processes" );
 		$params->addParam( "r1_region_x", $r1_region_x, "R1" );
 		$params->addParam( "r2_region_x", $r2_region_x, "R2" );
 		$params->addParam( "r3_region_x", $r3_region_x, "R3" );
@@ -996,6 +997,10 @@ class Protomo2RefineForm extends BasicLayoutForm
 				$html.= $params->insertTextFieldInRow( "r3_sampling", $fieldSize2 ).'│ ';
 				$html.= $params->insertTextFieldInRow( "r4_sampling", $fieldSize2 ).'│ ';
 				$html.= $params->insertTextField( "r5_sampling", $fieldSize2 );
+				$html.= '<select name="parallel" style="width:51px">';
+				$html.= '<option selected value="True">true</option>';
+				$html.= '<option value="False">false</option>';
+				$html.= '</select>'; $html.= docpop('protomo_parallel', ' Parallelize Non-Protomo Processes').'<br>';
 				$html.= $params->insertTextField( "restart_cycle", $fieldSize2 );
 				
 				$html .= "
@@ -1198,6 +1203,10 @@ class Protomo2RefineForm extends BasicLayoutForm
 				//$html.= '</select>'; $html.= docpop('protomo_binning', ' Raw Image Binning').'<br>';
 				$html.= $params->insertTextField( "select_images", $fieldSize );
 				$html.= $params->insertTextField( "exclude_images", $fieldSize );
+				$html.= '<select name="parallel" style="width:66px">';
+				$html.= '<option selected value="True">true</option>';
+				$html.= '<option value="False">false</option>';
+				$html.= '</select>'; $html.= docpop('protomo_parallel', ' Parallelize Non-Protomo Processes').'<br>';
 				//$html.= $params->insertTextField( "logging", $fieldSize );
 				$html.= '<select name="logging" style="width:66px">';
 				$html.= '<option selected value="true">true</option>';

@@ -799,14 +799,24 @@ def makeQualityAssessmentImage(tiltseriesnumber, sessionname, seriesname, rundir
 		lz2=fig2.plot(x, well_aligned2, 'c', linestyle='--')
 		plt.ylabel('CCMS(rotations)')
 		
-		h1,l1=fig1.get_legend_handles_labels()
-		h2,l2=fig2.get_legend_handles_labels()
-		fig1.legend(h2+h1,l2+l1,loc='upper right', frameon=False, fontsize=10)
+		try:
+			h1,l1=fig1.get_legend_handles_labels()
+			h2,l2=fig2.get_legend_handles_labels()
+			fig1.legend(h2+h1,l2+l1,loc='upper right', frameon=False, fontsize=10)
+		except:
+			fig1.legend(h2+h1,l2+l1,loc='upper right')
+			apDisplay.printMsg("Some plotting features won't work because you are using an old version of Matplotlib.")
 		
 		fig1.yaxis.label.set_color('DarkOrange')
-		fig1.tick_params(axis='y', colors='DarkOrange')
+		try:
+			fig1.tick_params(axis='y', colors='DarkOrange')
+		except:
+			pass #Old Matplotlib
 		fig2.yaxis.label.set_color('c')
-		fig2.tick_params(axis='y', colors='c')
+		try:
+			fig2.tick_params(axis='y', colors='c')
+		except:
+			pass #Old Matplotlib
 		
 		plt.gca().set_xlim(xmin=1)
 		plt.gca().set_ylim(ymin=0.0)

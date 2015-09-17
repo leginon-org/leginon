@@ -21,7 +21,7 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 	$kernel_x='', $kernel_y='', $grow='0', $window_area='0.95', $mask_apod_x='', $mask_apod_y='', $mask_width_x='', $mask_width_y='', $dimx='', $dimy='',
 	$correlation_size_x='192', $correlation_size_y='192', $peak_search_radius_x='300', $peak_search_radius_y='300', $logging='true', $loglevel='2', $map_size_x='512', $map_size_y='512', $filename_prefix='', $image_file_type='', $cachedir='cache',
 	$protomo_outdir='out', $gui_coarse_align='', $grid_limit='2.0', $grid_step='0.1', $create_reconstruction='true', $show_window_size='true', $create_tilt_video='true', $keep_recons='false', $region_x='512', $video_type='',
-	$shift_limit='30' , $angle_limit='40' )
+	$shift_limit='30' , $angle_limit='40', $parallel='' )
 	{
 		parent::__construct($expId, $extraHTML);
 		//print "_POST:" . "<br>";
@@ -387,6 +387,7 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 		$params->setHelpSection( "protomo" );
 		
 		$params->addParam( "tiltseries", $tiltseries, "Tilt-Series #" );
+		$params->addParam( "parallel", $parallel, "Parallelize Non-Protomo Processes" );
 		$params->addParam( "region_x", $region_x, "Window Size (x) (<strong>Critical Parameter</strong>)" );
 		$params->addParam( "region_y", $region_y, "Window Size (y) (<strong>Critical Parameter</strong>)" );
 		$params->addParam( "sampling", $sampling, "Sampling" );
@@ -490,8 +491,6 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 		}
 		else
 		{
-			//$imageinfo=$_SESSION['imageinfo'];
-			
 			$this->updateFormParams();
 			$params = $this->getFormParams();
 			
@@ -511,6 +510,10 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 				$html.= $params->insertTextField( "sampling", $fieldSize );
 				$html.= $params->insertTextFieldInRow( "shift_limit", $fieldSize ).'│ ';
 				$html.= $params->insertTextField( "angle_limit", $fieldSize );
+				$html.= '<select name="parallel" style="width:66px">';
+				$html.= '<option selected value="True">true</option>';
+				$html.= '<option value="False">false</option>';
+				$html.= '</select>'; $html.= docpop('protomo_parallel', ' Parallelize Non-Protomo Processes').'<br>';
 				
 				$html .= "
 			    <br />
@@ -606,6 +609,10 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 				$html.= $params->insertTextField( "exclude_images", $fieldSize );
 				$html.= $params->insertTextFieldInRow( "shift_limit", $fieldSize ).'│ ';
 				$html.= $params->insertTextField( "angle_limit", $fieldSize );
+				$html.= '<select name="parallel" style="width:66px">';
+				$html.= '<option selected value="True">true</option>';
+				$html.= '<option value="False">false</option>';
+				$html.= '</select>'; $html.= docpop('protomo_parallel', ' Parallelize Non-Protomo Processes').'<br>';
 				//$html.= $params->insertTextField( "logging", $fieldSize );
 				$html.= '<select name="logging" style="width:66px">';
 				$html.= '<option selected value="true">true</option>';
