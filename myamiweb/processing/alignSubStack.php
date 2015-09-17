@@ -261,7 +261,7 @@ function runSubStack() {
 		createAlignSubStackForm("<B>ERROR:</B> You cannot have both included and excluded classes");
 	if (!$include && !$exclude && !is_numeric($include) && !is_numeric($exclude))
 		createAlignSubStackForm("<B>ERROR:</B> You must specify one of either included and excluded classes");
-	if ($maxshift) {
+	if ($maxshift || $minscore) {
 		//query the database for parameters
 		$particle = new particledata();
 		if ($clusterId)
@@ -269,7 +269,7 @@ function runSubStack() {
 		if ($alignId) $this_alignId = $alignId;
 		$alignparams = $particle->getAlignStackParams ($this_alignId);
 		if (strpos($alignparams['package'],'cl2d') !== false) 
-			createAlignSubStackForm("<B>ERROR:</B> CL2D method does not output shift value. You must not specify maximum alignment shift");
+			createAlignSubStackForm("<B>ERROR:</B> CL2D method does not output alignment values. You must not specify maximum alignment shift nor minimum score");
 	}
 	/* *******************
 	PART 3: Create program command
