@@ -799,9 +799,9 @@ def makeQualityAssessmentImage(tiltseriesnumber, sessionname, seriesname, rundir
 		lz2=fig2.plot(x, well_aligned2, 'c', linestyle='--')
 		plt.ylabel('CCMS(rotations)')
 		
+		h1,l1=fig1.get_legend_handles_labels()
+		h2,l2=fig2.get_legend_handles_labels()
 		try:
-			h1,l1=fig1.get_legend_handles_labels()
-			h2,l2=fig2.get_legend_handles_labels()
 			fig1.legend(h2+h1,l2+l1,loc='upper right', frameon=False, fontsize=10)
 		except:
 			fig1.legend(h2+h1,l2+l1,loc='upper right')
