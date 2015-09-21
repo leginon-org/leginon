@@ -6,7 +6,7 @@ Global {
 	widthtype = percent
 	width = 100
 	heighttype = pixel
-	height = 48
+	height = 24
 	roundcorners = false 
 	transparent = false
 	tintcolor = #ffffff
@@ -55,10 +55,6 @@ Plugin {
 	config {
 		size = 5
 	}
-}
-
-Plugin {
-	type = tray
 }
 
 Plugin {
