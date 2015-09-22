@@ -119,16 +119,7 @@ $i = 0;
  $monthly[7] = $aug;
  $monthly[8] = $sep;
  
- echo "<br><br>".var_dump($monthly)."<br><br>";
- /*
- for($i=0; $i<count($data); $i++)
- {
-    
-   echo $data[$i]->format('Y-m-d H:i:s')."<br>";
    
- }
- */
- 
  
  $jan = 0;
  $feb = 0;
@@ -215,7 +206,6 @@ $i = 0;
  $cumulative[7] = $aug;
  $cumulative[8] = $sep;
  
- echo "<br><br>".var_dump($cumulative)."<br><br>";
  
  
  ?>
