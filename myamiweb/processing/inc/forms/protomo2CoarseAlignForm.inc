@@ -6,6 +6,8 @@
  *	For terms of the license agreement
  *	see  http://ami.scripps.edu/software/leginon-license
  */
+ini_set('display_errors', '0');     # don't show any errors...
+error_reporting(E_ALL | E_STRICT);
 
 require_once "basicLayoutForm.inc";
 require_once "inc/processing.inc";
@@ -176,9 +178,13 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 			$_POST['tilt_clip'] = $tilt_clip='true';
 			$_POST['show_window_size'] = $show_window_size='true';
 			$_POST['video_type'] = $video_type='html5vid';
-			$_POST['map_sampling'] = $map_sampling='8';
+			if ($imageinfo['dimx'] < 2049 or $imageinfo['dimy'] < 2049){
+				$_POST['map_sampling'] = $map_sampling='4';
+			}else{
+				$_POST['map_sampling'] = $map_sampling='8';
+			}
 			$_POST['map_size_x'] = $map_size_x=intval($imageinfo['dimx']/$map_sampling);
-			$_POST['map_size_y'] = $map_size_x=intval($imageinfo['dimy']/$map_sampling);
+			$_POST['map_size_y'] = $map_size_y=intval($imageinfo['dimy']/$map_sampling);
 			$_POST['keep_recons'] = $keep_recons='false';
 		}
 		
@@ -348,7 +354,7 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 		//These parameters don't change with Presets
 		
 		$map_size_x = intval($imageinfo['dimx']/$map_sampling);
-		$map_size_x = intval($imageinfo['dimy']/$map_sampling);
+		$map_size_y = intval($imageinfo['dimy']/$map_sampling);
 		$kernel_x = '5';
 		$kernel_y = '5';
 		$mask_apod_x='10';
@@ -443,8 +449,8 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 		$params->addParam( "image_file_type", $image_file_type, "Image Extension" );
 		$params->addParam( "cachedir", $cachedir, "Cache Directory" );
 		$params->addParam( "protomo_outdir", $protomo_outdir, "Output Directory" );
-		$params->addParam( "gridsearch_limit", $grid_limit, "Grid Search +-Angle Limit (<strong>Critical Parameter</strong>)" );
-		$params->addParam( "gridsearch_step", $grid_step, "Grid Search Angle Step Size (<strong>Critical Parameter</strong>)" );
+		$params->addParam( "gridsearch_limit", $grid_limit, "Grid Search +-Angle Limit" );
+		$params->addParam( "gridsearch_step", $grid_step, "Grid Search Angle Step Size" );
 		$params->addParam( "create_tilt_video", $create_tilt_video, "Create Tilt-Series Videos" );
 		$params->addParam( "create_reconstruction", $create_reconstruction, "Create a Reconstruction Video" );
 		$params->addParam( "show_window_size", $show_window_size, "Show Window Size in Reconstruction Video" );

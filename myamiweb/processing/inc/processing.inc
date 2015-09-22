@@ -147,8 +147,10 @@ function getHostForm() {
 	return $html;
 }
 
-function getSubmitForm($name="Run", $displayhost=true, $warning=false) {
-	$html="<input type='submit' name='process' value='Just Show Command' onclick='pleasewait()'>\n";
+function getSubmitForm($name="Run", $displayhost=true, $warning=false, $button="On") {
+	if ($button == "On") {
+		$html="<input type='submit' name='process' value='Just Show Command' onclick='pleasewait()'>\n";
+	}
 	if ($displayhost && $_SESSION['username']) {
 		$html.=getHostForm();
 	}
