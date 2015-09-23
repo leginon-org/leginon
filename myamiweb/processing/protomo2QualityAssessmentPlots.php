@@ -6,6 +6,8 @@
  *	For terms of the license agreement
  *	see  http://ami.scripps.edu/software/leginon-license
  */
+ini_set('display_errors', '0');     # don't show any errors...
+error_reporting(E_ALL | E_STRICT);
 
 require_once dirname(__FILE__).'/../config.php';
 require_once "inc/path.inc";
@@ -59,10 +61,7 @@ if (isset($azimuth_gif_files)) {
 $html .= "
 	<H4><center><b>Grid Orientation (Theta) Plot</b></center></H4>";
         
-if (isset($orientation_gif_files)) {
-	$html .= '<center><img src="'.$orientation_gif.'" alt="orientation" /></center>
-	<hr />';
-} elseif (isset($theta_gif_files)) {
+if (isset($theta_gif_files)) {
 	$html .= '<center><img src="'.$theta_gif.'" alt="theta" /></center>
 	<hr />';
 } else {

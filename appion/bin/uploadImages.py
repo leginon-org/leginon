@@ -8,11 +8,13 @@ import string
 import shutil
 import leginon.leginondata
 import leginon.projectdata
-from pyami import mrc
+import leginon.ddinfo
+from pyami import mrc, fileutil
 from appionlib import appionScript
 from appionlib import apDisplay
 from appionlib import apParam
 from appionlib import apFile
+from appionlib import apDBImage
 
 #=====================
 #=====================
@@ -52,6 +54,11 @@ class UploadImages(appionScript.AppionScript):
 		self.parser.add_option("--type", dest="uploadtype", default="normal",
 			type="choice", choices=self.uploadtypes,
 			help="Type of upload to perform: "+str(self.uploadtypes), metavar="..")
+
+		self.parser.add_option("--norm", dest="normimg", type="string", metavar="PATH",
+			help="normalization image to apply to each upload")
+		self.parser.add_option("--dark", dest="darkimg", type="string", metavar="PATH",
+			help="dark image to apply to each upload frame")
 
 	#=====================
 	def checkConflicts(self):
@@ -125,11 +132,19 @@ class UploadImages(appionScript.AppionScript):
 		### set leginon dir if undefined
 		if self.params['leginondir'] is None:
 			try:
-				self.params['leginondir'] = leginon.leginonconfig.IMAGE_PATH
+				self.params['leginondir'] = leginon.leginonconfig.unmapPath(leginon.leginonconfig.IMAGE_PATH).replace('\\','/')
 			except AttributeError:
 				apDisplay.printError("Please provide a leginon output directory, "
 					+"e.g., --leginon-output-dir=/data/leginon")
 		self.leginonimagedir = os.path.join(self.params['leginondir'], self.params['sessionname'], 'rawdata')
+		self.leginonframedir = leginon.ddinfo.getRawFrameSessionPathFromSessionPath(self.leginonimagedir)
+
+		# norm and dark images
+		if self.params['normimg'] is not None:
+			if not os.path.exists(self.params['normimg']):
+				apDisplay.printError("specified image path for normalization '%s' does not exist\n"%self.params['normimg'])
+		if self.params['normimg'] is None and self.params['darkimg'] is not None:
+			apDisplay.printError("Only dark but not normalization image is not enough forcorrection")
 
 	#=====================
 	def convertStringToList(self, string):
@@ -232,6 +247,30 @@ class UploadImages(appionScript.AppionScript):
 		mrclist.sort()
 		return mrclist
 
+	def makeScopeEMData(self):
+		### setup scope data
+		scopedata = leginon.leginondata.ScopeEMData()
+		scopedata['session'] = self.sessiondata
+		scopedata['tem'] = self.temdata
+		scopedata['magnification'] = self.params['magnification']
+		scopedata['high tension'] = self.params['kv']*1000
+		scopedata['defocus'] = 0.0
+		scopedata['stage position'] = { 'x': 0.0, 'y': 0.0, 'z': 0.0, 'a': 0.0, }
+		return scopedata
+
+	def makeCameraEMData(self,dimension={'x':1,'y':1}, nframes=1):
+		### setup camera data
+		cameradata = leginon.leginondata.CameraEMData()
+		cameradata['session'] = self.sessiondata
+		cameradata['ccdcamera'] = self.camdata
+		cameradata['dimension'] = dimension
+		cameradata['binning'] = {'x': 1, 'y': 1}
+		cameradata['frame time'] = 100.0
+		cameradata['nframes'] = nframes
+		cameradata['save frames'] = False
+		cameradata['exposure time'] = 100.0
+		return cameradata
+
 	#=====================
 	def setDefocalTargetData(self, seriescount):
 		if self.params['uploadtype'] != "defocalseries":
@@ -245,21 +284,9 @@ class UploadImages(appionScript.AppionScript):
 		targetpresetdata['magnification'] = self.params['magnification']
 		targetpresetdata['name'] = 'target'
 
-		### setup camera data
-		targetcameradata = leginon.leginondata.CameraEMData()
-		targetcameradata['session'] = self.sessiondata
-		targetcameradata['ccdcamera'] = self.camdata
-		targetcameradata['dimension'] = {'x': 1, 'y': 1}
-		targetcameradata['binning'] = {'x': 1, 'y': 1}
+		targetcameradata = self.makeCameraEMData()
 
-		### setup scope data
-		targetscopedata = leginon.leginondata.ScopeEMData()
-		targetscopedata['session'] = self.sessiondata
-		targetscopedata['tem'] = self.temdata
-		targetscopedata['magnification'] = self.params['magnification']
-		targetscopedata['high tension'] = self.params['kv']*1000
-		targetscopedata['defocus'] = 0.0
-		targetscopedata['stage position'] = { 'x': 0.0, 'y': 0.0, 'z': 0.0, 'a': 0.0, }
+		targetscopedata = self.makeScopeEMData()
 
 		### setup image data
 		targetimgdata = leginon.leginondata.AcquisitionImageData()
@@ -321,7 +348,7 @@ class UploadImages(appionScript.AppionScript):
 		return self.params['defocus']
 
 	#=====================
-	def uploadImageInformation(self, imagearray, newimagepath, dims, seriescount, numinseries):
+	def uploadImageInformation(self, imagearray, newimagepath, dims, seriescount, numinseries, nframes):
 		### setup scope data
 		scopedata = leginon.leginondata.ScopeEMData()
 		scopedata['session'] = self.sessiondata
@@ -344,6 +371,10 @@ class UploadImages(appionScript.AppionScript):
 		cameradata['ccdcamera'] = self.camdata
 		cameradata['dimension'] = dims
 		cameradata['binning'] = {'x': 1, 'y': 1}
+		cameradata['save frames'] = (nframes > 1)
+		cameradata['nframes'] = nframes
+		cameradata['frame time'] = 100.0
+		cameradata['exposure time'] = cameradata['frame time'] * nframes
 
 		### setup camera data
 		presetdata = leginon.leginondata.PresetData()
@@ -378,6 +409,10 @@ class UploadImages(appionScript.AppionScript):
 
 		### use this for tilt series data
 		imgdata['tilt series'] = self.getTiltSeries(seriescount)
+
+		# references
+		for key in self.refdata.keys():
+			imgdata[key] = self.refdata[key]
 
 		if self.params['commit'] is True:
 			imgdata.insert()
@@ -414,9 +449,12 @@ class UploadImages(appionScript.AppionScript):
 	def newImagePath(self, mrcfile, numinseries):
 		extension = os.path.splitext(mrcfile)[1]
 		rootname = os.path.splitext(os.path.basename(mrcfile))[0]
-		newname = self.params['sessionname']+"_"+rootname+"_"+str(numinseries)+extension
+		newroot = self.params['sessionname']+"_"+rootname+"_"+str(numinseries)
+		newname = newroot+extension
+		newframename = newroot+'.frames'+extension
 		newimagepath = os.path.join(self.leginonimagedir, newname)
-		return newimagepath
+		newframepath = os.path.join(self.leginonframedir, newframename)
+		return newimagepath, newframepath
 
 	#=====================
 	def readFile(self, oldmrcfile):
@@ -434,18 +472,84 @@ class UploadImages(appionScript.AppionScript):
 		y = int(mrcheader['ny'].astype(numpy.uint16))
 		return {'x': x, 'y': y}
 
+	def getNumberOfFrames(self, mrcfile):
+		mrcheader = mrc.readHeaderFromFile(mrcfile)
+		return max(1,int(mrcheader['nz'].astype(numpy.uint16)))
+
+	def makeFrameDir(self,newdir):
+		fileutil.mkdirs(newdir)
+
+	def copyFrames(self,source,destination):
+		apFile.safeCopy(source, destination)
+		
+	def prepareImageForUpload(self,origfilepath,newframepath=None,nframes=1):	
+		### In order to obey the rule of first save image then insert 
+		### database record, image need to be read as numpy array, not copied
+		### single image should not overload memory
+		apDisplay.printMsg("Reading original image: "+origfilepath)
+		if nframes <= 1:
+			imagearray = mrc.read(origfilepath)
+		else:
+			apDisplay.printMsg('Summing %d frames for image upload' % nframes)
+			imagearray = mrc.sumStack(origfilepath)
+			apDisplay.printMsg('Copying frame stack %s to %s' % (origfilepath,newframepath))
+			self.copyFrames(origfilepath,newframepath)
+		return imagearray
+
+	def uploadRefImage(self,reftype,refpath):
+		if refpath is None:
+			nframes = 1
+			if reftype == 'dark':
+				imagearray = numpy.zeros((self.dims['y'],self.dims['x']))
+			else:
+				apDisplay.printError('It is only o.k. to fake dark reference')
+		else:
+			nframes = self.getNumberOfFrames(refpath)
+			imagearray = self.prepareImageForUpload(refpath,None,nframes)
+		scopedata = self.makeScopeEMData()
+		cameradata = self.makeCameraEMData(dimension=self.dims,nframes=nframes)
+		imagedata = {'image':imagearray,'scope':scopedata,'camera':cameradata}	
+		self.refdata[reftype] = self.c_client.storeCorrectorImageData(imagedata, reftype, 0)
+
+	def correctImage(self,rawarray,nframes):
+		if 'norm' in self.refdata.keys() and self.refdata['norm']:
+			normarray = self.refdata['norm']['image']
+			if 'dark' in self.refdata.keys() and self.refdata['dark']:
+				darkarray = self.refdata['dark']['image']*nframes/self.refdata['dark']['camera']['nframes']
+			else:
+				darkarray = numpy.zeros(rawarray.shape)
+			apDisplay.printMsg('Normalizing image before upload')
+			return self.c_client.normalizeImageArray(rawarray, darkarray, normarray, is_counting=False)
+		else:
+			# no norm/dark to correct
+			return rawarray
+
+	def startInit(self):
+		"""
+		Initialization of variables
+		"""
+		self.refdata = {}
+		### try and get the appion instruments
+		self.getAppionInstruments()
+		### create new session, so we have a place to store the log file
+		self.createNewSession()
+		# For gain/dark corrections
+		self.c_client = apDBImage.ApCorrectorClient(self.sessiondata,True)
+
 	#=====================
 	def start(self):
 		"""
 		This is the core of your function.
 		You decide what happens here!
 		"""
-		### try and get the appion instruments
-		self.getAppionInstruments()
+		self.startInit()
 
-		### create new session, so we have a place to store the log file
-		self.createNewSession()
-
+		if self.params['normimg']:
+			# need at least normimg to upload reference. darkimg can be faked
+			self.dims = self.getImageDimensions(self.params['normimg'])
+			# self.dims is only defined with normimg is present
+			self.uploadRefImage('norm', self.params['normimg'])
+			self.uploadRefImage('dark', self.params['darkimg'])
 		mrclist = self.getImagesInDirectory(self.params['imagedir'])
 
 		for i in range(min(len(mrclist),6)):
@@ -456,20 +560,27 @@ class UploadImages(appionScript.AppionScript):
 		count = 1
 		t0 = time.time()
 		for mrcfile in mrclist:
+			if not os.path.isfile(mrcfile):
+				continue
 			### rename image
-			newimagepath = self.newImagePath(mrcfile, numinseries)
+			newimagepath, newframepath = self.newImagePath(mrcfile, numinseries)
 
 			### get image dimensions
 			dims = self.getImageDimensions(mrcfile)
-
+			nframes = self.getNumberOfFrames(mrcfile)
+			if nframes > 1:
+				self.makeFrameDir(self.leginonframedir)
 			### set pixel size in database
 			self.updatePixelSizeCalibration()
 
-			## read the file. images should be small enough to read into memory
-			imagearray = self.readFile(mrcfile)
+			## read the image/summed file into memory and copy frames if available
+			imagearray = self.prepareImageForUpload(mrcfile,newframepath,nframes)
+
+			## do gain/dark correction if needed
+			imagearray = self.correctImage(imagearray,nframes)
 
 			### upload image
-			self.uploadImageInformation(imagearray, newimagepath, dims, seriescount, numinseries)
+			self.uploadImageInformation(imagearray, newimagepath, dims, seriescount, numinseries, nframes)
 
 			### counting
 			numinseries += 1

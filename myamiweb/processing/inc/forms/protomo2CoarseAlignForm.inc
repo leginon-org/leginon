@@ -6,6 +6,8 @@
  *	For terms of the license agreement
  *	see  http://ami.scripps.edu/software/leginon-license
  */
+ini_set('display_errors', '0');     # don't show any errors...
+error_reporting(E_ALL | E_STRICT);
 
 require_once "basicLayoutForm.inc";
 require_once "inc/processing.inc";
@@ -21,7 +23,7 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 	$kernel_x='', $kernel_y='', $grow='0', $window_area='0.95', $mask_apod_x='', $mask_apod_y='', $mask_width_x='', $mask_width_y='', $dimx='', $dimy='',
 	$correlation_size_x='192', $correlation_size_y='192', $peak_search_radius_x='300', $peak_search_radius_y='300', $logging='true', $loglevel='2', $map_size_x='512', $map_size_y='512', $filename_prefix='', $image_file_type='', $cachedir='cache',
 	$protomo_outdir='out', $gui_coarse_align='', $grid_limit='2.0', $grid_step='0.1', $create_reconstruction='true', $show_window_size='true', $create_tilt_video='true', $keep_recons='false', $region_x='512', $video_type='',
-	$shift_limit='30' , $angle_limit='40' )
+	$shift_limit='30' , $angle_limit='40', $parallel='' )
 	{
 		parent::__construct($expId, $extraHTML);
 		//print "_POST:" . "<br>";
@@ -176,9 +178,13 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 			$_POST['tilt_clip'] = $tilt_clip='true';
 			$_POST['show_window_size'] = $show_window_size='true';
 			$_POST['video_type'] = $video_type='html5vid';
-			$_POST['map_sampling'] = $map_sampling='8';
+			if ($imageinfo['dimx'] < 2049 or $imageinfo['dimy'] < 2049){
+				$_POST['map_sampling'] = $map_sampling='4';
+			}else{
+				$_POST['map_sampling'] = $map_sampling='8';
+			}
 			$_POST['map_size_x'] = $map_size_x=intval($imageinfo['dimx']/$map_sampling);
-			$_POST['map_size_y'] = $map_size_x=intval($imageinfo['dimy']/$map_sampling);
+			$_POST['map_size_y'] = $map_size_y=intval($imageinfo['dimy']/$map_sampling);
 			$_POST['keep_recons'] = $keep_recons='false';
 		}
 		
@@ -348,7 +354,7 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 		//These parameters don't change with Presets
 		
 		$map_size_x = intval($imageinfo['dimx']/$map_sampling);
-		$map_size_x = intval($imageinfo['dimy']/$map_sampling);
+		$map_size_y = intval($imageinfo['dimy']/$map_sampling);
 		$kernel_x = '5';
 		$kernel_y = '5';
 		$mask_apod_x='10';
@@ -387,6 +393,7 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 		$params->setHelpSection( "protomo" );
 		
 		$params->addParam( "tiltseries", $tiltseries, "Tilt-Series #" );
+		$params->addParam( "parallel", $parallel, "Parallelize Non-Protomo Processes" );
 		$params->addParam( "region_x", $region_x, "Window Size (x) (<strong>Critical Parameter</strong>)" );
 		$params->addParam( "region_y", $region_y, "Window Size (y) (<strong>Critical Parameter</strong>)" );
 		$params->addParam( "sampling", $sampling, "Sampling" );
@@ -442,8 +449,8 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 		$params->addParam( "image_file_type", $image_file_type, "Image Extension" );
 		$params->addParam( "cachedir", $cachedir, "Cache Directory" );
 		$params->addParam( "protomo_outdir", $protomo_outdir, "Output Directory" );
-		$params->addParam( "gridsearch_limit", $grid_limit, "Grid Search +-Angle Limit (<strong>Critical Parameter</strong>)" );
-		$params->addParam( "gridsearch_step", $grid_step, "Grid Search Angle Step Size (<strong>Critical Parameter</strong>)" );
+		$params->addParam( "gridsearch_limit", $grid_limit, "Grid Search +-Angle Limit" );
+		$params->addParam( "gridsearch_step", $grid_step, "Grid Search Angle Step Size" );
 		$params->addParam( "create_tilt_video", $create_tilt_video, "Create Tilt-Series Videos" );
 		$params->addParam( "create_reconstruction", $create_reconstruction, "Create a Reconstruction Video" );
 		$params->addParam( "show_window_size", $show_window_size, "Show Window Size in Reconstruction Video" );
@@ -490,8 +497,6 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 		}
 		else
 		{
-			//$imageinfo=$_SESSION['imageinfo'];
-			
 			$this->updateFormParams();
 			$params = $this->getFormParams();
 			
@@ -511,6 +516,10 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 				$html.= $params->insertTextField( "sampling", $fieldSize );
 				$html.= $params->insertTextFieldInRow( "shift_limit", $fieldSize ).'│ ';
 				$html.= $params->insertTextField( "angle_limit", $fieldSize );
+				$html.= '<select name="parallel" style="width:66px">';
+				$html.= '<option selected value="True">true</option>';
+				$html.= '<option value="False">false</option>';
+				$html.= '</select>'; $html.= docpop('protomo_parallel', ' Parallelize Non-Protomo Processes').'<br>';
 				
 				$html .= "
 			    <br />
@@ -606,6 +615,10 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 				$html.= $params->insertTextField( "exclude_images", $fieldSize );
 				$html.= $params->insertTextFieldInRow( "shift_limit", $fieldSize ).'│ ';
 				$html.= $params->insertTextField( "angle_limit", $fieldSize );
+				$html.= '<select name="parallel" style="width:66px">';
+				$html.= '<option selected value="True">true</option>';
+				$html.= '<option value="False">false</option>';
+				$html.= '</select>'; $html.= docpop('protomo_parallel', ' Parallelize Non-Protomo Processes').'<br>';
 				//$html.= $params->insertTextField( "logging", $fieldSize );
 				$html.= '<select name="logging" style="width:66px">';
 				$html.= '<option selected value="true">true</option>';

@@ -6,6 +6,9 @@
  *	For terms of the license agreement
  *	see  http://ami.scripps.edu/software/leginon-license
  */
+ini_set('display_errors', '0');     # don't show any errors...
+error_reporting(E_ALL | E_STRICT);
+
 
 require_once "basicLayoutForm.inc";
 require_once "inc/leginon.inc";
@@ -94,8 +97,7 @@ class Protomo2RefineSummary extends BasicLayoutForm
 			$html .= '<center><a href="protomo2QualityAssessmentPlots.php?outdir='.$outdir.'&runname='.$runname.'&tiltseries='.$tiltseries.'" target="_blank"><img src="'.$qa_gif.'" alt="qa" width="700" />'."</a></center>";
 			$html .= '<center>'.docpop('quality_assessment2', 'CCMS Info').'</center><br></td>';
 			$html .= '<td><center><a href="protomo2QualityAssessmentPlots.php?outdir='.$outdir.'&runname='.$runname.'&tiltseries='.$tiltseries.'" target="_blank"><img src="'.$azimuth_gif.'" alt="azimuth" width="300" />'."</a></center></td></tr>";
-			$html .= '<td><center><a href="protomo2QualityAssessmentPlots.php?outdir='.$outdir.'&runname='.$runname.'&tiltseries='.$tiltseries.'" target="_blank"><img src="'.$orientation_gif.'" alt="." width="300" />'."</a></center></td></tr>";
-			$html .= '<td><center><a href="protomo2QualityAssessmentPlots.php?outdir='.$outdir.'&runname='.$runname.'&tiltseries='.$tiltseries.'" target="_blank"><img src="'.$theta_gif.'" alt="." width="300" />'."</a></center></td></tr>";
+			$html .= '<td><center><a href="protomo2QualityAssessmentPlots.php?outdir='.$outdir.'&runname='.$runname.'&tiltseries='.$tiltseries.'" target="_blank"><img src="'.$theta_gif.'" alt="theta" width="300" />'."</a></center></td></tr>";
 			$html .= '<td><center><a href="protomo2QualityAssessmentPlots.php?outdir='.$outdir.'&runname='.$runname.'&tiltseries='.$tiltseries.'" target="_blank"><img src="'.$elevation_gif.'" alt="elevation" width="300" />'."</a></center></td></tr>";
 			$html .= '</tr></td></table>';
 		}

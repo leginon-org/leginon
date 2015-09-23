@@ -367,7 +367,7 @@ class BinLoop(AppionPBS):
 		print 'this is where you would commit stuff'
 		return
 		
-	def getTargets(self, imgdata, scratchdir, handlefiles='direct'):
+	def getTargets(self, imgdata, scratchdir='', handlefiles='direct'):
 		srcpath=os.path.join(imgdata['session']['image path'],imgdata['filename']+'.mrc')
 		scratchpath = os.path.join(scratchdir,imgdata['filename']+'.mrc')
 		if handlefiles == 'direct':

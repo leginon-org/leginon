@@ -671,6 +671,9 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		self.parser.add_option("--commit", dest="commit",  default="False",
 			help="Commit per-iteration information to database.")
 		
+		self.parser.add_option("--parallel", dest="parallel",  default="True",
+			help="Parallelize image and video production.")
+		
 		self.parser.add_option("--fix_images", dest="fix_images",  default="False",
 			help="Internal use only")
 		
@@ -1235,9 +1238,11 @@ class ProTomo2Aligner(basicScript.BasicScript):
 			if self.params['create_tilt_video'] == "true":
 				apDisplay.printMsg("Creating initial tilt-series video in the background...")
 				f.write('Creating initial tilt-series video in the background...\n')
-				jobs1.append(mp.Process(target=apProTomo2Aligner.makeTiltSeriesVideos, args=(seriesname, 0, tiltfilename_full, rawimagecount, rundir, raw_path, self.params['pixelsize'], self.params['map_sampling'], self.params['image_file_type'], self.params['video_type'], self.params['tilt_clip'], "True", "Initial",)))
+				jobs1.append(mp.Process(target=apProTomo2Aligner.makeTiltSeriesVideos, args=(seriesname, 0, tiltfilename_full, rawimagecount, rundir, raw_path, self.params['pixelsize'], self.params['map_sampling'], self.params['image_file_type'], self.params['video_type'], self.params['tilt_clip'], self.params['parallel'], "Initial",)))
 				for job in jobs1:
 					job.start()
+				if self.params['parallel'] != "True":
+					[p.join() for p in mp.active_children()]
 			else:
 				apDisplay.printMsg("Skipping initial tilt-series depiction\n")
 				f.write('Skipping initial tilt-series depiction\n')
@@ -1317,9 +1322,12 @@ class ProTomo2Aligner(basicScript.BasicScript):
 			#archive results
 			tiltfile=name+'.tlt'
 			series.geom(1).write(tiltfile)
-			
-			apDisplay.printMsg("Creating Depiction Videos in Parallel...")
-			f.write('Creating Depiction Videos in Parallel...\n')
+			if self.params['parallel'] != "True":
+				apDisplay.printMsg("Creating Depiction Videos...")
+				f.write('Creating Depiction Videos...\n')
+			else:
+				apDisplay.printMsg("Creating Depiction Videos in Parallel...")
+				f.write('Creating Depiction Videos in Parallel...\n')
 			
 			# For multiprocessing
 			jobs2=[]
@@ -1327,13 +1335,16 @@ class ProTomo2Aligner(basicScript.BasicScript):
 			# Make correlation peak videos for depiction
 			self.params['corr_peak_gif']='media/correlations/'+seriesname+'00_cor.gif';self.params['corr_peak_ogv']='media/correlations/'+seriesname+'00_cor.ogv';self.params['corr_peak_mp4']='media/correlations/'+seriesname+'00_cor.mp4';self.params['corr_peak_webm']='media/correlations/'+seriesname+'00_cor.webm'
 			jobs2.append(mp.Process(target=apProTomo2Aligner.makeCorrPeakVideos, args=(name, 0, rundir, self.params['protomo_outdir'], self.params['video_type'], "Coarse",)))
-			
+			if self.params['parallel'] != "True":
+				[p.join() for p in mp.active_children()]
 			# Make tiltseries video for depiction
 			if self.params['create_tilt_video'] == "true":
 				apDisplay.printMsg("Creating Coarse Alignment tilt-series video...")
 				f.write('Creating Coarse Alignment tilt-series video...\n')
 				self.params['tiltseries_gif']='media/tiltseries/'+'coarse_'+seriesname+'.gif';self.params['tiltseries_ogv']='media/tiltseries/'+'coarse_'+seriesname+'.gif';self.params['tiltseries_mp4']='media/tiltseries/'+'coarse_'+seriesname+'.mp4';self.params['tiltseries_webm']='media/tiltseries/'+'coarse_'+seriesname+'.webm';
-				jobs2.append(mp.Process(target=apProTomo2Aligner.makeTiltSeriesVideos, args=(seriesname, 0, tiltfile, rawimagecount, rundir, raw_path, self.params['pixelsize'], self.params['map_sampling'], self.params['image_file_type'], self.params['video_type'], self.params['tilt_clip'], "True", "Coarse",)))
+				jobs2.append(mp.Process(target=apProTomo2Aligner.makeTiltSeriesVideos, args=(seriesname, 0, tiltfile, rawimagecount, rundir, raw_path, self.params['pixelsize'], self.params['map_sampling'], self.params['image_file_type'], self.params['video_type'], self.params['tilt_clip'], self.params['parallel'], "Coarse",)))
+				if self.params['parallel'] != "True":
+					[p.join() for p in mp.active_children()]
 			else:
 				apDisplay.printMsg("Skipping tilt-series depiction\n")
 				f.write('Skipping tilt-series depiction\n')
@@ -1351,7 +1362,7 @@ class ProTomo2Aligner(basicScript.BasicScript):
 				rx='region_x'
 				ry='region_y'
 				self.params['recon_gif']='media/reconstructions/'+seriesname+'.gif';self.params['recon_ogv']='media/reconstructions/'+seriesname+'.ogv';self.params['recon_mp4']='media/reconstructions/'+seriesname+'.mp4';self.params['recon_webm']='media/reconstructions/'+seriesname+'.webm';
-				apProTomo2Aligner.makeReconstructionVideos(name, 0, rundir, self.params[rx], self.params[ry], self.params['show_window_size'], self.params['protomo_outdir'], self.params['pixelsize'], self.params['sampling'], self.params['map_sampling'], self.params['video_type'], self.params['keep_recons'], "True", align_step="Coarse")
+				apProTomo2Aligner.makeReconstructionVideos(name, 0, rundir, self.params[rx], self.params[ry], self.params['show_window_size'], self.params['protomo_outdir'], self.params['pixelsize'], self.params['sampling'], self.params['map_sampling'], self.params['video_type'], self.params['keep_recons'], self.params['parallel'], align_step="Coarse")
 			else:
 				apDisplay.printMsg("Skipping reconstruction depiction\n")
 				f.write('Skipping reconstruction depiction\n')
@@ -1605,8 +1616,12 @@ class ProTomo2Aligner(basicScript.BasicScript):
 				apDisplay.printMsg("The scaled sum of CCMS values is %s for Iteration #%s of Tilt-Series #%s." % (round(CCMS_sum,5), start+n+1, self.params['tiltseries']))
 				f.write('The scaled sum of CCMS values is #%s for Tilt-Series #%s.\n' % (round(CCMS_sum,5), self.params['tiltseries']))
 				
-				apDisplay.printMsg("Creating Depiction Videos for Iteration #%s in Parallel..." % (start+n+1))
-				f.write('Creating Depiction Videos for Iteration #%s in Parallel...\n' % (start+n+1))
+				if self.params['parallel'] != "True":
+					apDisplay.printMsg("Creating Depiction Videos for Iteration #%s..." % (start+n+1))
+					f.write('Creating Depiction Videos for Iteration #%s...\n' % (start+n+1))
+				else:
+					apDisplay.printMsg("Creating Depiction Videos for Iteration #%s in Parallel..." % (start+n+1))
+					f.write('Creating Depiction Videos for Iteration #%s in Parallel...\n' % (start+n+1))
 					
 				# For multiprocessing
 				jobs=[]
@@ -1614,21 +1629,29 @@ class ProTomo2Aligner(basicScript.BasicScript):
 				# Make correlation peak videos for depiction
 				self.params['corr_peak_gif']='media/correlations/'+seriesname+ittt+'_cor.gif';self.params['corr_peak_ogv']='media/correlations/'+seriesname+ittt+'_cor.ogv';self.params['corr_peak_mp4']='media/correlations/'+seriesname+ittt+'_cor.mp4';self.params['corr_peak_webm']='media/correlations/'+seriesname+ittt+'_cor.webm'
 				jobs.append(mp.Process(target=apProTomo2Aligner.makeCorrPeakVideos, args=(name, it, rundir, self.params['protomo_outdir'], self.params['video_type'], "Refinement")))
+				if self.params['parallel'] != "True":
+					[p.join() for p in mp.active_children()]
 				
 				# Make correlation plot pngs for depiction
 				self.params['corr_plot_coa_gif']='media/corrplots/'+seriesname+ittt+'_coa.gif';self.params['corr_plot_cofx_gif']='media/corrplots/'+seriesname+ittt+'_cofx.gif';self.params['corr_plot_cofy_gif']='media/corrplots/'+seriesname+ittt+'_cofy.gif';self.params['corr_plot_rot_gif']='media/corrplots/'+seriesname+ittt+'_rot.gif';
 				jobs.append(mp.Process(target=apProTomo2Aligner.makeCorrPlotImages, args=(name, it, rundir, corrfile)))
+				if self.params['parallel'] != "True":
+					[p.join() for p in mp.active_children()]
 				
 				# Make refinement plots of tilt azimuth and theta
 				self.params['azimuth_gif']='media/angle_refinement/'+seriesname+'_azimuth.gif';self.params['theta_gif']='media/angle_refinement/'+seriesname+'_theta.gif';
 				jobs.append(mp.Process(target=apProTomo2Aligner.makeAngleRefinementPlots, args=(rundir, name,)))
+				if self.params['parallel'] != "True":
+					[p.join() for p in mp.active_children()]
 				
 				# Make tiltseries video for depiction
 				if self.params['create_tilt_video'] == "true":
 					apDisplay.printMsg("Creating Refinement tilt-series video for iteration #%s..." % (start+n+1))
 					f.write('Creating Refinement tilt-series video for iteration #%s...\n' % (start+n+1))
 					self.params['tiltseries_gif']='media/tiltseries/'+seriesname+ittt+'.gif';self.params['tiltseries_ogv']='media/tiltseries/'+seriesname+ittt+'.gif';self.params['tiltseries_mp4']='media/tiltseries/'+seriesname+ittt+'.mp4';self.params['tiltseries_webm']='media/tiltseries/'+seriesname+ittt+'.webm';
-					jobs.append(mp.Process(target=apProTomo2Aligner.makeTiltSeriesVideos, args=(seriesname, it, tiltfile, rawimagecount, rundir, raw_path, self.params['pixelsize'], self.params['map_sampling'], self.params['image_file_type'], self.params['video_type'], self.params['tilt_clip'], "True", "Refinement",)))
+					jobs.append(mp.Process(target=apProTomo2Aligner.makeTiltSeriesVideos, args=(seriesname, it, tiltfile, rawimagecount, rundir, raw_path, self.params['pixelsize'], self.params['map_sampling'], self.params['image_file_type'], self.params['video_type'], self.params['tilt_clip'], self.params['parallel'], "Refinement",)))
+					if self.params['parallel'] != "True":
+						[p.join() for p in mp.active_children()]
 				else:
 					apDisplay.printMsg("Skipping tilt-series depiction\n")
 					f.write('Skipping tilt-series depiction\n')
@@ -1675,7 +1698,7 @@ class ProTomo2Aligner(basicScript.BasicScript):
 					rx='r%s_region_x' % r
 					ry='r%s_region_y' % r
 					self.params['recon_gif']='media/reconstructions/'+seriesname+itt+'.gif';self.params['recon_ogv']='media/reconstructions/'+seriesname+itt+'.ogv';self.params['recon_mp4']='media/reconstructions/'+seriesname+itt+'.mp4';self.params['recon_webm']='media/reconstructions/'+seriesname+itt+'.webm';
-					apProTomo2Aligner.makeReconstructionVideos(name, itt, rundir, self.params[rx], self.params[ry], self.params['show_window_size'], self.params['protomo_outdir'], self.params['pixelsize'], sampling, self.params['map_sampling'], self.params['video_type'], self.params['keep_recons'], "True", align_step="Refinement")
+					apProTomo2Aligner.makeReconstructionVideos(name, itt, rundir, self.params[rx], self.params[ry], self.params['show_window_size'], self.params['protomo_outdir'], self.params['pixelsize'], sampling, self.params['map_sampling'], self.params['video_type'], self.params['keep_recons'], self.params['parallel'], align_step="Refinement")
 					
 				else:
 					apDisplay.printMsg("Skipping reconstruction depiction\n")
