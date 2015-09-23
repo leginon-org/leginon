@@ -10,22 +10,19 @@ import threading
 
 import leginon.gui.wx.TargetPanel
 import leginon.gui.wx.Settings
-import leginon.gui.wx.TargetFinder
+import leginon.gui.wx.AutoTargetFinder
 import leginon.gui.wx.Rings
 from leginon.gui.wx.Choice import Choice
 from leginon.gui.wx.Entry import Entry, IntEntry, FloatEntry
 import leginon.gui.wx.TargetTemplate
 import leginon.gui.wx.ToolBar
 
-class Panel(leginon.gui.wx.TargetFinder.Panel):
+class Panel(leginon.gui.wx.AutoTargetFinder.Panel):
 	icon = 'holefinder'
 	def initialize(self):
-		leginon.gui.wx.TargetFinder.Panel.initialize(self)
-		self.SettingsDialog = SettingsDialog
+		leginon.gui.wx.AutoTargetFinder.Panel.initialize(self)
+		self.SettingsDialog = leginon.gui.wx.AutoTargetFinder.SettingsDialog
 
-		self.imagepanel = leginon.gui.wx.TargetPanel.TargetImagePanel(self, -1)
-		self.imagepanel.addTypeTool('Original', display=True, settings=True)
-		self.imagepanel.selectiontool.setDisplayed('Original', True)
 		self.imagepanel.addTypeTool('Template', display=True, settings=True)
 		self.imagepanel.addTypeTool('Threshold', display=True, settings=True)
 		self.imagepanel.addTargetTool('Blobs', wx.Colour(0, 255, 255), target=True, settings=True, shape='o')
@@ -44,14 +41,9 @@ class Panel(leginon.gui.wx.TargetFinder.Panel):
 		self.szmain.AddGrowableRow(1)
 		self.szmain.AddGrowableCol(0)
 
-	def onSettingsTool(self, evt):
-		dialog = SettingsDialog(self,show_basic=True)
-		dialog.ShowModal()
-		dialog.Destroy()
-
 	def onImageSettings(self, evt):
 		if evt.name == 'Original':
-			dialog = OriginalSettingsDialog(self)
+			dialog = leginon.gui.wx.AutoTargetFinder.OriginalSettingsDialog(self)
 			if dialog.ShowModal() == wx.ID_OK:
 				filename = self.node.settings['image filename']
 				self.node.readImage(filename)
@@ -73,28 +65,6 @@ class Panel(leginon.gui.wx.TargetFinder.Panel):
 
 		dialog.ShowModal()
 		dialog.Destroy()
-
-
-class OriginalSettingsDialog(leginon.gui.wx.Settings.Dialog):
-	def initialize(self):
-		return OriginalScrolledSettings(self,self.scrsize,False)
-
-class OriginalScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
-	def initialize(self):
-		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
-		sb = wx.StaticBox(self, -1, 'Original Image')
-		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
-
-		self.widgets['image filename'] = filebrowse.FileBrowseButton(self, -1)
-		self.widgets['image filename'].SetMinSize((500,50))
-		self.dialog.bok.SetLabel('&Load')
-
-		sz = wx.GridBagSizer(5, 5)
-		sz.Add(self.widgets['image filename'], (0, 0), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_CENTER_HORIZONTAL)
-
-		sbsz.Add(sz, 1, wx.EXPAND|wx.ALL, 5)
-		return [sbsz]
 
 class TemplateSettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
@@ -485,34 +455,6 @@ class FinalScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		self.node.clearTargets('acquisition')
 		self.node.clearTargets('focus')
 
-class SettingsDialog(leginon.gui.wx.TargetFinder.SettingsDialog):
-	def initialize(self):
-		return ScrolledSettings(self,self.scrsize,False,self.show_basic)
-
-class ScrolledSettings(leginon.gui.wx.TargetFinder.ScrolledSettings):
-	def initialize(self):
-		tfsd = leginon.gui.wx.TargetFinder.ScrolledSettings.initialize(self)
-		if self.show_basic:
-			return tfsd
-		else:
-			sb = wx.StaticBox(self, -1, 'Hole Finder Settings')
-			sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
-
-			self.widgets['skip'] = wx.CheckBox(self, -1, 'Skip automated hole finder')
-			self.widgets['focus interval'] = IntEntry(self, -1, chars=6)
-			sz = wx.GridBagSizer(5, 5)
-			sz.Add(self.widgets['skip'], (0, 0), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL)
-
-			label = wx.StaticText(self, -1, 'Focus every')
-			sz.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-			sz.Add(self.widgets['focus interval'], (1, 1), (1, 1),
-										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
-			label = wx.StaticText(self, -1, 'image')
-			sz.Add(label, (1, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-
-			sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
-			return tfsd + [sbsz]
 
 
 if __name__ == '__main__':
