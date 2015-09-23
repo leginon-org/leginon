@@ -89,7 +89,7 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 		self.setProcessBatchCount(1)
 		self.params['output_fileformat'] = 'mrc'
 
-	def getTargets(self, imgdata, scratchdir, handlefiles='direct'):
+	def getTargets(self, imgdata, scratchdir='', handlefiles='direct'):
 		targetdict={}
 		#copy flatfields
 		
@@ -106,7 +106,7 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 		apDisplay.printMsg('Copying frames %s' % (framesdirname))
 		framespath=imgdata['session']['frame path']
 		framespathname=os.path.join(framespath,framesdirname)
-		
+	
 		if handlefiles == 'direct':
 			targetdict['brightref']=brightref
 			targetdict['darkref']=darkref
