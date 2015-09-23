@@ -9,7 +9,6 @@
 ini_set('display_errors', '0');     # don't show any errors...
 error_reporting(E_ALL | E_STRICT);
 
-
 require_once "basicLayoutForm.inc";
 require_once "inc/processing.inc";
 require_once "inc/appionloop.inc";
@@ -1530,6 +1529,7 @@ class Protomo2RefineForm extends BasicLayoutForm
 		global $sessionname;
 		global $imageinfo;
 		
+		$_SESSION['thickness'] = $_POST['thickness'];
 		$_SESSION['tiltseries'] = $tiltseries;
 		$_SESSION['runname'] = $_POST['runname'];
 		$_SESSION['sessionname'] = $sessionname;

@@ -13,11 +13,6 @@ import time
 import subprocess
 from appionlib import basicScript
 from appionlib import apDisplay
-from appionlib import apDatabase
-from appionlib import apProTomo2Prep
-from appionlib import apTomo
-from appionlib import apProTomo
-from appionlib import apParam
 
 try:
 	import protomo
@@ -63,8 +58,8 @@ class ProTomo2Reconstruction(basicScript.BasicScript):
 		self.parser.add_option("--recon_map_size_y", dest="recon_map_size_y",  type="int",  default="2048",
 			help="Size of the reconstructed tomogram in the Y direction, e.g. --recon_map_size_y=256", metavar="int")
 
-		self.parser.add_option("--recon_map_size_z", dest="recon_map_size_z",  type="int",  default="800",
-			help="Size of the reconstructed tomogram in the Z direction, e.g. --recon_map_size_z=128", metavar="int")
+		self.parser.add_option("--recon_thickness", dest="recon_thickness",  type="float",  default="2000",
+			help="Thickness of the reconstructed tomogram in the Z direction, in angstroms, e.g. --recon_thickness=1000", metavar="float")
 		
 		self.parser.add_option("--recon_map_sampling", dest="recon_map_sampling",  default="1", type="int",
 			help="Sampling rate of raw data for use in reconstruction, e.g. --recon_map_sampling=4")
@@ -136,7 +131,7 @@ class ProTomo2Reconstruction(basicScript.BasicScript):
 		mapsamplingline=int(mapsamplingline)
 		command11="sed -i \"%ss/.*/ S = %s             (* AP sampling *)/\" %s" % (samplingline, self.params['recon_map_sampling'], param_out_full)
 		os.system(command11)
-		command22="sed -i \"%ss/.*/   size: { %s, %s, %s }  (* AP reconstruction map size *)/\" %s" % (mapsizeline, self.params['recon_map_size_x'], self.params['recon_map_size_y'], self.params['recon_map_size_z'], param_out_full)
+		command22="sed -i \"%ss/.*/   size: { %s, %s, %s }  (* AP reconstruction map size *)/\" %s" % (mapsizeline, self.params['recon_map_size_x'], self.params['recon_map_size_y'], int(round(self.params['recon_thickness']/self.params['pixelsize'])), param_out_full)
 		os.system(command22)
 		command33="sed -i \"%ss/.*/   sampling: %s  (* AP reconstruction map sampling *)/\" %s" % (mapsamplingline, self.params['recon_map_sampling'], param_out_full)
 		os.system(command33)
@@ -214,7 +209,6 @@ class ProTomo2Reconstruction(basicScript.BasicScript):
 		
 		# Link reconstruction to directory
 		try:
-			test=len(self.params['link_recon'])
 			cmd="mkdir -p %s 2>/dev/null; rm %s/%s 2>/dev/null; ln %s %s" % (self.params['link_recon'], self.params['link_recon'], mrcf, mrc_full, self.params['link_recon'])
 			os.system(cmd)
 			apDisplay.printMsg("Reconstruction can be found here:")

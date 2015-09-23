@@ -6,11 +6,14 @@
  *	For terms of the license agreement
  *	see  http://ami.scripps.edu/software/leginon-license
  */
+ini_set('display_errors', '0');     # don't show any errors...
+error_reporting(E_ALL | E_STRICT);
 
 require_once "basicLayoutForm.inc";
 require_once "inc/leginon.inc";
 
 session_start();
+$refine_thickness=$_SESSION['thickness'];
 $tiltseries=$_SESSION['tiltseries'];
 $sessionname=$_SESSION['sessionname'];
 $outdir=$_SESSION['outdir'];
@@ -21,7 +24,7 @@ $_SESSION['erase_refine'] = 0;
 
 class Protomo2ReconstructionForm extends BasicLayoutForm
 {
-	function __construct( $expId, $extraHTML, $commit='false', $recon_iter='', $recon_map_sampling='2', $recon_map_size_x='1024', $recon_map_size_y='1024', $recon_map_size_z='800', $protomo_outdir='',
+	function __construct( $expId, $extraHTML, $commit='false', $recon_iter='', $recon_map_sampling='2', $recon_map_size_x='1024', $recon_map_size_y='1024', $recon_thickness='2000',
 			     $pixelsize='', $recon_lowpass='', $recon_lp_diam_x='15', $recon_lp_diam_y='15')
 	{
 		parent::__construct($expId, $extraHTML);
@@ -34,17 +37,18 @@ class Protomo2ReconstructionForm extends BasicLayoutForm
 		
 		global $imageinfo;
 		global $protomo_outdir;
+		global $refine_thickness;
 		$tiltseries=$_SESSION['tiltseries'];
 		$_POST['runname']=$_SESSION['runname'];
 		$_POST['outdir']=$_SESSION['outdir'];
 		$_POST['protomo_outdir']=$_SESSION['protomo_outdir'];
+		$_POST['pixelsize'] = $imageinfo['pixelsize']*pow(10,10);
 		$recon_iter=$_SESSION['iters'];
 		$recon_map_size_x = $imageinfo['dimx']/$recon_map_sampling;
 		$recon_map_size_y = $imageinfo['dimy']/$recon_map_sampling;
-		$recon_map_size_z = 1600/$recon_map_sampling;
+		$recon_thickness = $refine_thickness;
 		$recon_lp_diam_x = round(pow(10,10)*$imageinfo['pixelsize']*8);
 		$recon_lp_diam_y = round(pow(10,10)*$imageinfo['pixelsize']*8);
-		$_POST['pixelsize'] = $imageinfo['pixelsize']*pow(10,10);
 		
 		//------ Set Parameters for the parent class, BasicLoopForm (general Appion params) -----//
 		
@@ -72,12 +76,11 @@ class Protomo2ReconstructionForm extends BasicLayoutForm
 		$params->addParam( "recon_map_sampling", $recon_map_sampling, "Reconstruction Sampling" );
 		$params->addParam( "recon_map_size_x", $recon_map_size_x, "Reconstructon Size (x)" );
 		$params->addParam( "recon_map_size_y", $recon_map_size_y, "Reconstructon Size (y)" );
-		$params->addParam( "recon_map_size_z", $recon_map_size_z, "Reconstructon Size (z)" );
+		$params->addParam( "recon_thickness", $recon_thickness, "Reconstructon Thickness" );
 		$params->addParam( "recon_lowpass", $recon_lowpass, "Lowpass Filter" );
 		$params->addParam( "recon_lp_diam_x", $recon_lp_diam_x, "(x)" );
 		$params->addParam( "recon_lp_diam_y", $recon_lp_diam_y, "(y)" );
 		$params->addParam( "link_recon", $link_recon, "Link Final Reconstructions to this Directory" );
-		$params->addParam( "protomo_outdir", $protomo_outdir, "Protomo outdir (for internal use)" );
 		
 		// Validations
 		$params->addValidation( "recon_iter", "req" );
@@ -100,14 +103,14 @@ class Protomo2ReconstructionForm extends BasicLayoutForm
 	    <hr />";
 		
 		$html.= $params->insertTextField( "recon_iter", $fieldSize );
-	    	$html.= $params->insertTextField( "recon_map_sampling", $fieldSize );
+	    $html.= $params->insertTextField( "recon_map_sampling", $fieldSize );
 		$html.= $params->insertTextField( "recon_map_size_x", $fieldSize );
 		$html.= $params->insertTextField( "recon_map_size_y", $fieldSize );
-		$html.= $params->insertTextField( "recon_map_size_z", $fieldSize );
+		$html.= $params->insertTextField( "recon_thickness", $fieldSize );
 		$html.= '<select name="recon_lowpass" style="width:66px">';
 		$html.= '<option value="True">True</option>';
 		$html.= '<option selected value="False">False</option>';
-		$html.= '</select>'; $html.= docpop('recon_lowpass', 'Lowpass Filter │ ');
+		$html.= '</select>'; $html.= docpop('recon_lowpass', ' Lowpass Filter │ ');
 		$html.= $params->insertTextFieldInRow( "recon_lp_diam_x", $fieldSize ).'│ ';
 		$html.= $params->insertTextField( "recon_lp_diam_y", $fieldSize );
 		$html.= $params->insertTextField( "link_recon", $fieldSize2 );

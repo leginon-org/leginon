@@ -263,6 +263,7 @@ class Protomo2RefineSummary extends BasicLayoutForm
 		global $iters;
 		global $imageinfo;
 
+		$_SESSION['thickness'] = $_POST['thickness'];
 		$_SESSION['tiltseries'] = $tiltseries;
 		$_SESSION['runname'] = $runname;
 		$_SESSION['sessionname'] = $sessionname;

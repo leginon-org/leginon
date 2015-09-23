@@ -133,7 +133,7 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 				}
 				$html.= 'value="'.$i.'">'.$size_presets[$i-1].'</option>';
 			}
-			$html.= '</select>'; $html.= docpop('protomo_refine_presets_size', ' Object Size | ');
+			$html.= '</select>'; $html.= docpop('protomo_coarse_presets_size', ' Object Size | ');
 			
 			$html.= '<select name="preset_search" onchange=submit() style="width:150px">';
 			for ($i = 1; $i < count($search_presets)+1; $i++) {
@@ -143,7 +143,7 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 				}
 				$html.= 'value="'.$i.'">'.$search_presets[$i-1].'</option>';
 			}
-			$html.= '</select>'; $html.= docpop('protomo_refine_presets_search', ' Search Area<br>');
+			$html.= '</select>'; $html.= docpop('protomo_coarse_presets_search', ' Search Area<br>');
 		}
 		
 		$_SESSION['imageinfo'] = $imageinfo;
