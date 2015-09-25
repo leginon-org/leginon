@@ -90,10 +90,10 @@ def power(image, pixelsize, fieldsize=None, mask_radius=0.5, msg=True):
 	for i in range(xnumstep):
 		for j in range(ynumstep):
 			count += 1
-			x1 = f*i/2
-			x2 = x1 + f
-			y1 = f*j/2
-			y2 = y1 + f
+			x1 = int(f*i/2)
+			x2 = int(x1 + f)
+			y1 = int(f*j/2)
+			y2 = int(y1 + f)
 			if debug is True:
 				print "%03d: %d:%d, %d:%d"%(count, x1, x2, y1, y2)
 			elif msg is True:
