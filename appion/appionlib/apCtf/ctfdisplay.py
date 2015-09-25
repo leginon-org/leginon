@@ -129,7 +129,7 @@ class CtfDisplay(object):
 			self.ampcontrast, numzeros=250, zerotype="valley")
 		valleyradii = numpy.array(valley, dtype=numpy.float64)*self.trimfreq
 
-		### consider the number of sections, address problems with close to focus estimates, #3834
+		### consider the number of sections, address problems with close to focus estimates, #3438
 		if self.debug is True:
 			if len(peak) < 30:
 				print "Peak points", peak		
