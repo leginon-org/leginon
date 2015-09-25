@@ -481,7 +481,7 @@ def ellipticalAverage(image, ellipratio, ellipangle, ringwidth=2.0, innercutradi
 
 	if full is False:
 		### trims any edge artifacts from rotational average
-		outercutsize = (bigshape[0]/2-2)/ringwidth*math.sqrt(2)/2.
+		outercutsize = int((bigshape[0]/2-2)/ringwidth*math.sqrt(2)/2.)
 		if debug is True:
 			apDisplay.printColor("Num X points %d, Half image size %d, Outer cut size %d, Ringwidth %.2f, Percent trim %.1f"
 				%(xdataint.shape[0], bigshape[0]/2-2, outercutsize, ringwidth, 100.*outercutsize/float(xdataint.shape[0])), "yellow")
