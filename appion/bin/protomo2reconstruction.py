@@ -104,7 +104,7 @@ class ProTomo2Reconstruction(basicScript.BasicScript):
 	#=====================
 	def start(self):
 	
-		it="%02d" % (self.params['recon_iter'])
+		it="%03d" % (self.params['recon_iter'])
 		itt="%03d" % (self.params['recon_iter']-1)
 		global wd
 		wd=self.params['rundir']
@@ -179,15 +179,21 @@ class ProTomo2Reconstruction(basicScript.BasicScript):
 			cmd33="sed -i \'%ss|.*| preprocessing: false  (* AP enable or disable preprocessing of raw images *)|\' %s" % (preprocessingline, recon_param_out_full)
 			os.system(cmd33)
 		else:
+			lpavg = int((self.params['recon_lp_diam_x']+self.params['recon_lp_diam_y'])/2)
 			self.params['recon_lp_diam_x'] = 2*self.params['pixelsize']*self.params['recon_map_sampling']/self.params['recon_lp_diam_x']
 			self.params['recon_lp_diam_y'] = 2*self.params['pixelsize']*self.params['recon_map_sampling']/self.params['recon_lp_diam_y']
 			cmd2="sed -i \"%ss/.*/     diameter:    { %s, %s } * S/\" %s" % (lowpassmapline+1, self.params['recon_lp_diam_x'], self.params['recon_lp_diam_y'], recon_param_out_full)
 		os.system(cmd2)
 		
 		# AP Get param files ready for batch processing
+		if self.params['recon_lowpass'] == "False":
+			lp=''
+		else:
+			lp='.lp%s' % lpavg
+		dim='%sx%s' % (self.params['recon_map_size_x'],self.params['recon_map_size_y'])
 		img=seriesname+'00_bck.img'
-		mrcf=seriesname+it+'_bck.bin'+str(self.params['recon_map_sampling'])+'.mrc'
-		mrcfn=seriesname+it+'_bck.bin'+str(self.params['recon_map_sampling'])+'.norm.mrc'
+		mrcf=seriesname+'_ite'+it+'_dim'+dim+'_bck.bin'+str(self.params['recon_map_sampling'])+lp+'.mrc'
+		mrcfn=seriesname+'_ite'+it+'_dim'+dim+'_bck.bin'+str(self.params['recon_map_sampling'])+lp+'.norm.mrc'
 		img_full=recon_out_dir+'/'+img
 		mrc_full=recon_out_dir+'/'+mrcf
 		mrcn_full=recon_out_dir+'/'+mrcfn
@@ -223,7 +229,7 @@ class ProTomo2Reconstruction(basicScript.BasicScript):
 			pass
 		
 		if proc.returncode != 0:
-			print "\n"
+			print ""
 			apDisplay.printMsg("e2proc3d not found or failed to process reconstruction. Trying proc3d...")
 			try:
 				command="proc3d %s %s norm" % (mrc_full, mrcn_full)
@@ -232,7 +238,7 @@ class ProTomo2Reconstruction(basicScript.BasicScript):
 			except:
 				pass
 		if proc.returncode != 0:
-			print "\n"		
+			print ""		
 			apDisplay.printMsg("proc3d not found or failed to process reconstruction. Skipping normalization.")
 		else:
 			os.system('rm %s' % mrc_full)
