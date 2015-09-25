@@ -74,11 +74,6 @@ class Protomo2CoarseAlignSummary extends BasicLayoutForm
 		$rec_gif_files = glob("$outdir/$runname/media/reconstructions/c*.gif");
 		$rec_vid_files = glob("$outdir/$runname/media/reconstructions/c*.{mp4,ogv,webm}",GLOB_BRACE);
 		
-		//print $outdir.'/'.$runname . "<br>";
-		//foreach(array_keys($initial_tilt_vid_files) as $paramName)
-		//	echo $paramName . "<br>";
-		//	echo $initial_tilt_vid_files["$paramName"] . "<br>";
-		
 		// Display Coarse Alignment Summary
 		$corrpeak_gif = "loadimg.php?rawgif=1&filename=".$corrpeak_gif_files[0];
 		$corrpeak_mp4 = "loadvid.php?filename=".$corrpeak_vid_files[0];
@@ -203,7 +198,9 @@ class Protomo2CoarseAlignSummary extends BasicLayoutForm
 		if (max(count($corrpeak_gif_files),count($corrpeak_vid_files)) < 1)
 		{
 			$html .= "<br></br>
-			<b><center>[Refresh this page after Coarse Alignment completes]</center><br></b>";
+				<b><center>[Refresh this page after Coarse Alignment completes]</center><br></b>";
+			$html .= "<br></br>
+				<a href='runAppionLoop.php?expId=".$this->expId."&form=Protomo2CoarseAlignForm'><b><center><font size='5'>←</font> [Click here to go back to <font size='4'>Coarse Alignment</font>]</center></b></a>";
 		} else {
 			$html .= "<br></br>
 				<a href='runAppionLoop.php?expId=".$this->expId."&form=Protomo2RefineForm'><b><center>[Click here to continue onto <font size='4'>Refinement</font> if the Coarse Alignment results are satisfactory] <font size='5'>→</font></center></b></a>";

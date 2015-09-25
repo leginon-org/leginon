@@ -17,12 +17,14 @@ session_start();
 
 class Protomo2CoarseAlignForm extends BasicLayoutForm
 {
-	function __construct( $expId, $extraHTML, $region_x='512', $region_y='512', $sampling='8', $map_sampling='8', $thickness='1000', $pixelsize='', $lp_diam_x='20', $lp_diam_y='20', $lp_apod_x='50',
-	$lp_apod_y='50', $hp_diam_x='500', $hp_diam_y='500', $hp_apod_x='150', $hp_apod_y='150', $corr_mode='mcf', $raw_path='', $iters='', $param='', $binning='true',
-	$preprocessing='true', $select_images='', $exclude_images='', $border='100', $clip_low='3.5', $clip_high='3.5', $thr_low='', $thr_high='', $gradient='true', $iter_gradient='false', $filter='median',
-	$kernel_x='', $kernel_y='', $grow='0', $window_area='0.95', $mask_apod_x='', $mask_apod_y='', $mask_width_x='', $mask_width_y='', $dimx='', $dimy='',
-	$correlation_size_x='192', $correlation_size_y='192', $peak_search_radius_x='300', $peak_search_radius_y='300', $logging='true', $loglevel='2', $map_size_x='512', $map_size_y='512', $filename_prefix='', $image_file_type='', $cachedir='cache',
-	$protomo_outdir='out', $gui_coarse_align='', $grid_limit='2.0', $grid_step='0.1', $create_reconstruction='true', $show_window_size='true', $create_tilt_video='true', $keep_recons='false', $region_x='512', $video_type='',
+	function __construct( $expId, $extraHTML, $region_x='512', $region_y='512', $sampling='8', $map_sampling='8', $thickness='1000', $pixelsize='',
+	$lp_diam_x='20', $lp_diam_y='20', $lp_apod_x='50', $lp_apod_y='50', $hp_diam_x='500', $hp_diam_y='500', $hp_apod_x='150', $hp_apod_y='150',
+	$corr_mode='mcf', $raw_path='', $iters='', $param='', $binning='true', $preprocessing='true', $select_images='', $exclude_images='', $border='100',
+	$clip_low='3.5', $clip_high='3.5', $thr_low='', $thr_high='', $gradient='true', $iter_gradient='false', $filter='median', $kernel_x='', $kernel_y='',
+	$grow='0', $window_area='0.95', $mask_apod_x='', $mask_apod_y='', $mask_width_x='', $mask_width_y='', $dimx='', $dimy='',$correlation_size_x='192',
+	$correlation_size_y='192', $peak_search_radius_x='300', $peak_search_radius_y='300', $logging='true', $loglevel='2', $map_size_x='512',
+	$map_size_y='512', $filename_prefix='', $image_file_type='', $cachedir='cache', $protomo_outdir='out', $grid_limit='2.0', $grid_step='0.1',
+	$create_reconstruction='true', $show_window_size='true', $create_tilt_video='true', $keep_recons='false', $region_x='512', $video_type='',
 	$shift_limit='30' , $angle_limit='40', $parallel='' )
 	{
 		parent::__construct($expId, $extraHTML);
@@ -77,7 +79,9 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 			if ($tiltseriesId)
 				$html.=  "<br/><b>Bad Tilt-Series! Do not use.</b><br/>";
 		}
-		// Hide secondary tilt-series until dual tilt is processable
+		
+		// Hide secondary tilt-series until dual tilt is processable.
+		// Dual tilt-series processing is not in Appion-Protomo (yet)
 		if (false) {
 			$html.=  "</td><td Valign='TOP'>\n";
 			$html.=  $seriesselector_array2[0];
@@ -364,12 +368,7 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 		$_SESSION['dimx'] = $imageinfo['dimx'];
 		$_SESSION['dimy'] = $imageinfo['dimy'];
 		$_POST['pixelsize'] = $imageinfo['pixelsize']*pow(10,10);
-		//$_POST['peak_search_radius_x'] = $imageinfo['dimx']/2;
-		//$_POST['peak_search_radius_y'] = $imageinfo['dimy']/2;
 		
-		//foreach(array_keys($imageinfo) as $paramName)
-		//	echo $paramName . "<br>";
-			//echo $imageinfo["$paramName"] . "<br>";
 		//------ Set Parameters for the parent class, BasicLoopForm (general Appion params) -----//
 		
 		// Set the publications to be references on the web pages
@@ -431,18 +430,10 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 		$params->addParam( "mask_apod_y", $mask_apod_y, "Apodization (y) for Masks" );
 		$params->addParam( "mask_width_x", $mask_width_x, "Rectangular Mask Width (x)" );
 		$params->addParam( "mask_width_y", $mask_width_y, "Rectangular Mask Width (y)" );
-		//$params->addParam( "do_estimation", $do_estimation, "Estimate Geometric Parameters" );
-		//$params->addParam( "norotations", "$norotations", "No In-plane Rotations" );
-		//$params->addParam( "max_correction", $max_correction, "Correction Cutoff" );
 		$params->addParam( "correlation_size_x", $correlation_size_x, "Size (x) of Cross-Correlation Video" );
 		$params->addParam( "correlation_size_y", $correlation_size_y, "Size (y) of Cross-Correlation Video" );
 		$params->addParam( "peak_search_radius_x", $peak_search_radius_x, "Peak Search Radius (x)" );
 		$params->addParam( "peak_search_radius_y", $peak_search_radius_y, "Peak Search Radius (y)" );
-		//$params->addParam( "orientation", $orientation, "Include Orientation Angles in Refinement" );
-		//$params->addParam( "azimuth", $azimuth, "Include Tilt Azimuth in Refinement" );
-		//$params->addParam( "elevation", $elevation, "Include Tilt Axis Elevation in Refinement" );
-		//$params->addParam( "rotation", $rotation, "Include In-plane Rotations in Refinement" );
-		//$params->addParam( "scale", $scale, "Include Scale Factors (Magnification) in Refinement" );
 		$params->addParam( "logging", $logging, "Logging" );
 		$params->addParam( "loglevel", $loglevel, "Logging Level" );
 		$params->addParam( "filename_prefix", $filename_prefix, "Filename Prefix" );
@@ -457,9 +448,7 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 		$params->addParam( "keep_recons", $keep_recons, "Keep Intermediate Reconstruction" );
 		$params->addParam( "map_size_x", $map_size_x, "Reconstructon Size (x)" );
 		$params->addParam( "map_size_y", $map_size_y, "Reconstructon Size (y)" );
-		//$params->addParam( "map_size_z", $map_size_z, "Reconstructon Size (z)" );
 		$params->addParam( "video_type", $video_type, "Video Type" );
-		//$params->addParam( "link", $link, "Link or Copy Raw Images?" );
 		$params->addParam( "shift_limit", $shift_limit, "Shift Limit" );
 		$params->addParam( "angle_limit", $angle_limit, "Angle Limit" );
 
@@ -595,21 +584,6 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 				<hr />";
 				
 				$html.= $params->insertTextField( "raw_path", $fieldSize );
-				//$html.= $params->insertTextField( "param_file", $fieldSize );
-				//$html.= $params->insertTextField( "filename_prefix", $fieldSize );
-				//$html.= $params->insertTextField( "image_file_type", $fieldSize );
-				//$html.= $params->insertTextField( "cachedir", $fieldSize );
-				//$html.= $params->insertTextField( "protomo_outdir", $fieldSize );
-				//$html.= $params->insertTextField( "preprocessing", $fieldSize );
-				//$html.= '<select name="link" style="width:66px">';
-				//$html.= '<option selected value="True">Link</option>';
-				//$html.= '<option value="False">Copy</option>';
-				//$html.= '</select>'; $html.= docpop('protomo_link', ' Link or Copy Raw Images?').'<br>';
-				//$html.= $params->insertTextField( "binning", $fieldSize );
-				//$html.= '<select name="binning" style="width:66px">';
-				//$html.= '<option selected value="true">true</option>';
-				//$html.= '<option value="false">false</option>';
-				//$html.= '</select>'; $html.= docpop('protomo_binning', ' Raw Image Binning').'<br>';
 				$html.= $params->insertTextField( "sampling", $fieldSize );
 				$html.= $params->insertTextField( "select_images", $fieldSize );
 				$html.= $params->insertTextField( "exclude_images", $fieldSize );
@@ -619,7 +593,6 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 				$html.= '<option selected value="True">true</option>';
 				$html.= '<option value="False">false</option>';
 				$html.= '</select>'; $html.= docpop('protomo_parallel', ' Parallelize Non-Protomo Processes').'<br>';
-				//$html.= $params->insertTextField( "logging", $fieldSize );
 				$html.= '<select name="logging" style="width:66px">';
 				$html.= '<option selected value="true">true</option>';
 				$html.= '<option value="false">false</option>';
@@ -635,17 +608,14 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 				$html.= '<option selected value="true">true</option>';
 				$html.= '<option value="false">false</option>';
 				$html.= '</select>'; $html.= docpop('protomo_preprocessing', ' Raw Image Preprocessing').'<br>';
-				//$html.= $params->insertTextField( "gradient", $fieldSize );
 				$html.= '<select name="gradient" style="width:66px">';
 				$html.= '<option selected value="true">true</option>';
 				$html.= '<option value="false">false</option>';
 				$html.= '</select>'; $html.= docpop('protomo_gradient', ' Linear Gradient Subtraction').'<br>';
-				//$html.= $params->insertTextField( "iter_gradient", $fieldSize );
 				$html.= '<select name="iter_gradient" style="width:66px">';
 				$html.= '<option value="true">true</option>';
 				$html.= '<option selected value="false">false</option>';
 				$html.= '</select>'; $html.= docpop('protomo_iter_gradient', ' Iterate Gradient Subtraction Once').'<br>';
-				//$html.= $params->insertTextField( "filter", $fieldSize );
 				$html.= '<select name="filter" style="width:66px">';
 				$html.= '<option selected value="median">median</option>';
 				$html.= '<option value="gauss">gauss</option>';
@@ -692,7 +662,6 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 				<H4>Coarse Grid Search Parameters ".docpop('gridsearchparam_info', '(Info)')."</H4>
 				<hr />";
 				
-				//$html.= $params->insertCheckboxField( "gui_coarse_align" );
 				$html.= $params->insertTextField( "gridsearch_limit", $fieldSize );
 				$html.= $params->insertTextField( "gridsearch_step", $fieldSize );
 				
@@ -701,7 +670,6 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 				<H4>Cross-Correlation Parameters ".docpop('crosscorrparam_info', '(Info)')."</H4>
 				<hr />";
 				
-				//$html.= $params->insertTextField( "corr_mode", $fieldSize );
 				$html.= '<select name="corr_mode" style="width:66px">';
 				$html.= '<option value="xcf">xcf</option>';
 				$html.= '<option selected value="mcf">mcf</option>';
@@ -718,7 +686,6 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 				
 				$html.= $params->insertTextField( "correlation_size_x", $fieldSize );
 				$html.= $params->insertTextField( "correlation_size_y", $fieldSize );
-				//$html.= $params->insertTextField( "create_reconstruction", $fieldSize );
 				$html.= '<select name="create_tilt_video" style="width:66px">';
 				$html.= '<option selected value="true">true</option>';
 				$html.= '<option value="false">false</option>';
@@ -738,8 +705,6 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 				$html.= $params->insertTextField( "map_sampling", $fieldSize );
 				$html.= $params->insertTextField( "map_size_x", $fieldSize );
 				$html.= $params->insertTextField( "map_size_y", $fieldSize );
-				//$html.= $params->insertTextField( "map_size_z", $fieldSize );
-				//$html.= $params->insertTextField( "keep_recons", $fieldSize );
 				$html.= '<select name="keep_recons" style="width:66px">';
 				$html.= '<option value="true">true</option>';
 				$html.= '<option selected value="false">false</option>';

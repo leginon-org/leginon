@@ -24,8 +24,8 @@ $_SESSION['erase_refine'] = 0;
 
 class Protomo2ReconstructionForm extends BasicLayoutForm
 {
-	function __construct( $expId, $extraHTML, $commit='false', $recon_iter='', $recon_map_sampling='2', $recon_map_size_x='1024', $recon_map_size_y='1024', $recon_thickness='2000',
-			     $pixelsize='', $recon_lowpass='', $recon_lp_diam_x='15', $recon_lp_diam_y='15')
+	function __construct( $expId, $extraHTML, $commit='false', $recon_iter='', $recon_map_sampling='2', $recon_map_size_x='4096', $recon_map_size_y='4096',
+	$recon_thickness='2000', $pixelsize='', $recon_lowpass='', $recon_lp_diam_x='15', $recon_lp_diam_y='15')
 	{
 		parent::__construct($expId, $extraHTML);
 		//print "_POST:" . "<br>";

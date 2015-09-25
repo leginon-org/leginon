@@ -81,10 +81,6 @@ class Protomo2RefineSummary extends BasicLayoutForm
 		$theta_gif = "loadimg.php?rawgif=1&filename=".$theta_gif_file;
 		$elevation_gif = "loadimg.php?rawgif=1&filename=".$elevation_gif_file;
 		
-		//foreach(array_keys($initial_tilt_vid_files) as $paramName)
-		//	echo $paramName . "<br>";
-		//	echo $initial_tilt_vid_files["$paramName"] . "<br>";
-		
 		// Quality assessment for each iteration
 		$html .= "
 	<hr />
@@ -101,6 +97,7 @@ class Protomo2RefineSummary extends BasicLayoutForm
 			$html .= '<td><center><a href="protomo2QualityAssessmentPlots.php?outdir='.$outdir.'&runname='.$runname.'&tiltseries='.$tiltseries.'" target="_blank"><img src="'.$elevation_gif.'" alt="elevation" width="300" />'."</a></center></td></tr>";
 			$html .= '</tr></td></table>';
 		}
+		
 		// Table of all of the correlation peaks for easy identification of bad alignment iterations
 		$html .= "
 	<hr />
@@ -183,63 +180,13 @@ class Protomo2RefineSummary extends BasicLayoutForm
 		}
 		$html .= '</tr><tr></table><br>';
 		
-		// Display Refinement Summary for each iteration (disabled because it overloads the browser=[)
-		//$html.='<script type="text/javascript">
-		//function toggleMe(a){
-		//var e=document.getElementById(a);
-		//if(!e)return true;
-		//if(e.style.display=="none"){
-		//e.style.display="block"
-		//}
-		//else{
-		//e.style.display="none"
-		//}
-		//return true;
-		//}
-		//</script>
-		//
-		//<center><input type="button" style="width:150px;height:30px;" onclick="return toggleMe(\'para1\')" value="View All Iterations"></center><br>
-		//<div id="para1" style="display:none">';
-		//
-		//for ($j = 0; $j < max(count($corrpeak_gif_files),count($rec_files)); $j++)
-		//{
-		//	$ite=$j+1;
-		//	$corrpeak_gif = "loadimg.php?rawgif=1&filename=".$corrpeak_gif_files[$j];
-		//	$rec_gif = "loadimg.php?rawgif=1&filename=".$rec_files[$j];
-		//	
-		//	$html .= "
-		//<hr />
-		//<center><H3><b>Refinement Iteration #$ite</b></H3></center>
-		//<hr />";
-		//	$html .= "
-		//<br />
-		//<center><H4>Tilt-Series Correlation Peaks</H4></center>
-		//<br />";
-		//	if (isset($corrpeak_gif_files[$j])) {
-		//		$html .= '<center><img src="'.$corrpeak_gif.'" alt="correlations" />'."<br /><br /><hr /></center>";
-		//	} else {
-		//		$html .= "<b>Depiction Correlation Peak Gif for Iteration $ite either failed to generate or is still processing</b>";
-		//	}
-		//	$html .= "
-		//<br />
-		//<center><H4>Tilt-Series Preliminary Reconstruction After Refinement</H4></center>
-		//<br />";
-		//	if (isset($rec_files[$j])) {
-		//		$html .= '<center><img src="'.$rec_gif.'" alt="reconstruction" /></center>'."<br /><br />";
-		//	} else {
-		//		$html .= "<center><b>Depiction Reconstruction Gif for Iteration $ite either failed to generate or is still processing</b></center>";
-		//	}
-		//	if ($i == $j+1)
-		//	{
-		//		$html .= '</div>';
-		//	}
-		//}
-		
 		// Only display link to next step in tomo processing if at least one iteration is complete
 		if (max(count($corrpeak_gif_files),count($corrpeak_vid_files)) < 1)
 		{
 			$html .= "<br></br>
-			<b><center>[Refresh this page after at least one Refinement iteration completes]</center><br></b>";
+				<b><center>[Refresh this page after at least one Refinement iteration completes]</center><br></b>";
+			$html .= "<br></br>
+				<a href='runAppionLoop.php?expId=".$this->expId."&form=Protomo2RefineForm'><b><center><font size='5'>←</font> [Click here to go back to <font size='4'>Refinement</font>]</center></b></a><br>";
 		} else {
 			$html .= "<br><hr /><br></br>
 				<a href='runAppionLoop.php?expId=".$this->expId."&form=Protomo2ReconstructionForm'><b><center>[Click here to continue onto <font size='4'>Reconstruction</font> if protomo2aligner.py has finished <br>and you're happy with the alignment of at least one iteration] <font size='5'>→</font></center></b></a>";
