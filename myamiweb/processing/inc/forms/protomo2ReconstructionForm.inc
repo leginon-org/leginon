@@ -44,8 +44,8 @@ class Protomo2ReconstructionForm extends BasicLayoutForm
 		$_POST['protomo_outdir']=$_SESSION['protomo_outdir'];
 		$_POST['pixelsize'] = $imageinfo['pixelsize']*pow(10,10);
 		$recon_iter=$_SESSION['iters'];
-		$recon_map_size_x = $imageinfo['dimx']/$recon_map_sampling;
-		$recon_map_size_y = $imageinfo['dimy']/$recon_map_sampling;
+		$recon_map_size_x = $imageinfo['dimx'];
+		$recon_map_size_y = $imageinfo['dimy'];
 		$recon_thickness = $refine_thickness;
 		$recon_lp_diam_x = round(pow(10,10)*$imageinfo['pixelsize']*8);
 		$recon_lp_diam_y = round(pow(10,10)*$imageinfo['pixelsize']*8);

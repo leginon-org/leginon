@@ -20,6 +20,7 @@ $outdir=$_SESSION['outdir'];
 $runname=$_SESSION['runname'];
 $iters=$_SESSION['iters'];
 $imageinfo=$_SESSION['imageinfo'];
+$thickness=$_SESSION['thickness'];
 
 class Protomo2RefineSummary extends BasicLayoutForm
 {
@@ -261,9 +262,10 @@ class Protomo2RefineSummary extends BasicLayoutForm
 		global $runname;
 		global $outdir;
 		global $iters;
+		global $thickness;
 		global $imageinfo;
 
-		$_SESSION['thickness'] = $_POST['thickness'];
+		$_SESSION['thickness'] = $thickness;
 		$_SESSION['tiltseries'] = $tiltseries;
 		$_SESSION['runname'] = $runname;
 		$_SESSION['sessionname'] = $sessionname;
