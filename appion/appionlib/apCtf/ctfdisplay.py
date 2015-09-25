@@ -106,7 +106,6 @@ class CtfDisplay(object):
 		### PART 1: SETUP PARAMETERS AND ELLIPTICAL AVERAGE
 		###
 		apDisplay.printColor("PART 1: SETUP PARAMETERS AND ELLIPTICAL AVERAGE", "magenta")
-		numSections=self.numSections
 		
 		meandefocus = math.sqrt(self.defocus1*self.defocus2)
 		if meandefocus < 0.6e-6:
@@ -129,6 +128,19 @@ class CtfDisplay(object):
 		valley = ctftools.getCtfExtrema(meandefocus, self.trimfreq*1e10, self.cs, self.volts, 
 			self.ampcontrast, numzeros=250, zerotype="valley")
 		valleyradii = numpy.array(valley, dtype=numpy.float64)*self.trimfreq
+
+		### consider the number of sections, address problems with close to focus estimates, #3834
+		if self.debug is True:
+			if len(peak) < 30:
+				print "Peak points", peak		
+			if len(valley) < 30:
+				print "Valley points", valley
+		numSections = self.numSections
+		apDisplay.printMsg("setting the number of sections to default: %d"%(numSections))
+		minExtrema = min(len(peak), len(valley))
+		if minExtrema < numSections:
+			numSections=int(math.floor(minExtrema/3.))+1
+			apDisplay.printMsg("reducing the number of sections to: %d"%(numSections))
 
 		### do the elliptical average
 		if self.ellipratio is None:
@@ -220,12 +232,13 @@ class CtfDisplay(object):
 			noiseDataList.append(noisedata)
 
 		## debug only
-		#if self.debug is True:
+		if self.debug is True:
 			#startIndex = noiseStartIndexes[0]
 			#endIndex = noiseEndIndexes[-1]
 			#singlenoisefitparams = CtfNoise.modelCTFNoise(raddata[startIndex:endIndex],
 			#	fitvalleydata[startIndex:endIndex], "below")
 			#singlenoisedata = CtfNoise.noiseModel(singlenoisefitparams, raddata)
+			pass
 
 		#print noiseStartIndexes
 		#print noiseEndIndexes
