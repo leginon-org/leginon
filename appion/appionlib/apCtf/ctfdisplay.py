@@ -32,7 +32,7 @@ class CtfDisplay(object):
 	def __init__(self):
 		### global params that do NOT change with image
 		self.ringwidth = 1.0
-		self.debug = False
+		self.debug = True
 		self.outerAngstrom1D = 3.0
 		# plotlimit2DAngstrom trims the power spectrum generated
 		#from self.outerAngstrom1D limit for the 2D plot
