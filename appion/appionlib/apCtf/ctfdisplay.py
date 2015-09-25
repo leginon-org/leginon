@@ -221,11 +221,11 @@ class CtfDisplay(object):
 
 		## debug only
 		if self.debug is True:
-			startIndex = noiseStartIndexes[0]
-			endIndex = noiseEndIndexes[-1]
-			singlenoisefitparams = CtfNoise.modelCTFNoise(raddata[startIndex:endIndex],
-				fitvalleydata[startIndex:endIndex], "below")
-			singlenoisedata = CtfNoise.noiseModel(singlenoisefitparams, raddata)
+			#startIndex = noiseStartIndexes[0]
+			#endIndex = noiseEndIndexes[-1]
+			#singlenoisefitparams = CtfNoise.modelCTFNoise(raddata[startIndex:endIndex],
+			#	fitvalleydata[startIndex:endIndex], "below")
+			#singlenoisedata = CtfNoise.noiseModel(singlenoisefitparams, raddata)
 
 		#print noiseStartIndexes
 		#print noiseEndIndexes
@@ -239,13 +239,12 @@ class CtfDisplay(object):
 			overlapEnd = mergeIndexes[section*2+2]
 			if self.debug is True:
 				print "section %d mergedata"%(section), mergedata.shape
+				print "\tinsert from %d to %d (%d)"%(insertStart,insertEnd, insertEnd-insertStart)
+				print "\toverlap from %d to %d (%d)"%(overlapStart,overlapEnd, overlapEnd-overlapStart)
 			scale = numpy.arange(overlapEnd-overlapStart, dtype=numpy.float32)
 			scale /= scale.max()
 			scale *= math.pi/2.0
 			scale = numpy.cos(scale)**2
-			if self.debug is True:
-				print "\tinsert from %d to %d (%d)"%(insertStart,insertEnd, insertEnd-insertStart)
-				print "\toverlap from %d to %d (%d)"%(overlapStart,overlapEnd, overlapEnd-overlapStart)
 			overlapData = (noiseDataList[section][overlapStart:overlapEnd]*(scale) 
 				+ noiseDataList[section+1][overlapStart:overlapEnd]*(1.0-scale))
 			mergedata = numpy.hstack((
@@ -363,13 +362,12 @@ class CtfDisplay(object):
 			overlapEnd = mergeIndexes[section*2+2]
 			if self.debug is True:
 				print "section %d mergedata"%(section), mergedata.shape
+				print "\tinsert from %d to %d (%d)"%(insertStart,insertEnd, insertEnd-insertStart)
+				print "\toverlap from %d to %d (%d)"%(overlapStart,overlapEnd, overlapEnd-overlapStart)
 			scale = numpy.arange(overlapEnd-overlapStart, dtype=numpy.float32)
 			scale /= scale.max()
 			scale *= math.pi/2.0
 			scale = numpy.cos(scale)**2
-			if self.debug is True:
-				print "\tinsert from %d to %d (%d)"%(insertStart,insertEnd, insertEnd-insertStart)
-				print "\toverlap from %d to %d (%d)"%(overlapStart,overlapEnd, overlapEnd-overlapStart)
 			overlapData = (envelopDataList[section][overlapStart:overlapEnd]*(scale) 
 				+ envelopDataList[section+1][overlapStart:overlapEnd]*(1.0-scale))
 			mergedata = numpy.hstack((
