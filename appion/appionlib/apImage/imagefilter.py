@@ -172,21 +172,31 @@ def filterImg(imgarray,apix=1.0,rad=0.0,bin=1):
 	return lowPassFilter(imgarray,apix=apix,bin=1,radius=rad)
 
 #=========================
-def pixelLimitFilter(imgarray, pixlimit=0):
+def pixelLimitFilter(imgarray, pixlimit=0, const=False):
 	if pixlimit < 0.1:
 		return imgarray
 	mean1 = imgarray.mean()
 	std1 = imgarray.std()
 	upperbound = mean1 + pixlimit * std1
 	lowerbound = mean1 - pixlimit * std1
-#	print mean1, std1
 	imgarray2 = numpy.asarray(imgarray)
-#	print imgarray2
-	upperreplace = numpy.random.random((imgarray2.shape)) * upperbound
+	if const is True:
+		## replace noisy peak with new normally distributed values		
+		upperreplace = numpy.ones(imgarray2.shape)*upperbound
+		lowerreplace = numpy.ones(imgarray2.shape)*lowerbound
+	else:
+		## replace noisy peak with new normally distributed values
+		normalreplace = numpy.random.normal(mean1, std1, (imgarray2.shape))
+		## double check still in range
+		if normalreplace.max() > upperbound:
+			normalreplace = numpy.where(normalreplace > upperbound, upperbound, normalreplace)	
+		if normalreplace.min() < lowerbound:
+			normalreplace = numpy.where(normalreplace < lowerbound, lowerbound, normalreplace)
+		upperreplace = normalreplace
+		lowerreplace = normalreplace
+	## replace noisy peak with new values
 	imgarray2 = numpy.where(imgarray2 > upperbound, upperreplace, imgarray2)
-	lowerreplace = numpy.random.random((imgarray2.shape)) * lowerbound
 	imgarray2 = numpy.where(imgarray2 < lowerbound, lowerreplace, imgarray2)
-#	print imgarray2
 	return imgarray2
 
 #=========================
