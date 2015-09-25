@@ -220,7 +220,7 @@ class CtfDisplay(object):
 			noiseDataList.append(noisedata)
 
 		## debug only
-		if self.debug is True:
+		#if self.debug is True:
 			#startIndex = noiseStartIndexes[0]
 			#endIndex = noiseEndIndexes[-1]
 			#singlenoisefitparams = CtfNoise.modelCTFNoise(raddata[startIndex:endIndex],
