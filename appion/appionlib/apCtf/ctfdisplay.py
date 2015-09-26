@@ -131,9 +131,9 @@ class CtfDisplay(object):
 
 		### consider the number of sections, address problems with close to focus estimates, #3438
 		if self.debug is True:
-			if len(peak) < 30:
+			if len(peak) < 130:
 				print "Peak points", peak		
-			if len(valley) < 30:
+			if len(valley) < 130:
 				print "Valley points", valley
 		numSections = self.numSections
 		apDisplay.printMsg("setting the number of sections to default: %d"%(numSections))
