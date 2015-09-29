@@ -63,7 +63,8 @@ class CtfDisplay(object):
 		left = extremaList[extremaIndex-1]
 		right = extremaList[extremaIndex]
 		extremaIndex -= requestVal - left < right - requestVal
-		extremaVal = extremaList[int(extremaIndex)]
+		intIndex = int(extremaIndex)
+		extremaVal = extremaList[intIndex]
 
 		trimVal = self.trimfreq*extremaVal
 		index = numpy.searchsorted(raddata, trimVal)
@@ -76,10 +77,12 @@ class CtfDisplay(object):
 			print "extremaToIndex Debug"
 			print "... requestVal = %.8f"%(requestVal)
 			print "... extremaIndex = %d"%(extremaIndex)
-			print "... extremaList[extremaIndex-1] = %.8f"%(extremaList[int(extremaIndex)-1])			
+			print "... extremaList = ", numpy.array(extremaList, dtype=numpy.uint16)[:intIndex*2]
+			if intIndex > 0:
+				print "... extremaList[extremaIndex-1] = %.8f"%(extremaList[intIndex-1])
 			print "... extremaVal = extremaList[extremaIndex] = %.8f"%(extremaVal)
 			try:
-				print "... extremaList[extremaIndex+1] = %.8f"%(extremaList[int(extremaIndex)+1])
+				print "... extremaList[extremaIndex+1] = %.8f"%(extremaList[intIndex+1])
 			except IndexError:
 				pass
 			#print "... extremaList = ", numpy.around(extremaList, 2)
@@ -93,7 +96,7 @@ class CtfDisplay(object):
 				print "... raddata[index+1] = %.4f"%(raddata[index+1])
 			except IndexError:
 				pass
-			
+
 		return index
 
 	#====================
@@ -106,7 +109,7 @@ class CtfDisplay(object):
 		### PART 1: SETUP PARAMETERS AND ELLIPTICAL AVERAGE
 		###
 		apDisplay.printColor("PART 1: SETUP PARAMETERS AND ELLIPTICAL AVERAGE", "magenta")
-		
+
 		meandefocus = math.sqrt(self.defocus1*self.defocus2)
 		if meandefocus < 0.6e-6:
 			self.ringwidth = 3.0
@@ -130,24 +133,33 @@ class CtfDisplay(object):
 		valleyradii = numpy.array(valley, dtype=numpy.float64)*self.trimfreq
 
 		### consider the number of sections, address problems with close to focus estimates, #3438
-		if self.debug is True:
-			if len(peak) < 130:
-				print "Peak points", peak		
-			if len(valley) < 130:
-				print "Valley points", valley
 		numSections = self.numSections
 		apDisplay.printMsg("setting the number of sections to default: %d"%(numSections))
-		minExtrema = min(len(peak), len(valley))
-		if minExtrema < numSections:
-			numSections=int(math.floor(minExtrema/3.))+1
-			apDisplay.printMsg("reducing the number of sections to: %d"%(numSections))
 
 		### do the elliptical average
 		if self.ellipratio is None:
 			return None
+		if self.debug is True:
+			apDisplay.printMsg("performing elliptical average, please wait")
 		pixelrdata, rotdata = ctftools.ellipticalAverage(zdata2d, self.ellipratio, self.angle,
 			self.ringwidth, firstpeak, full=False)
 		raddata = pixelrdata*self.trimfreq
+
+		### reduce number of sections if needed
+		maxExtrema = pixelrdata[-1]
+		numPeaks = numpy.where(peak > maxExtrema, 0, 1).sum()
+		numValleys = numpy.where(valley > maxExtrema, 0, 1).sum()
+		minExtrema = min(numPeaks, numValleys)
+		extremaPerSection = 7
+		if minExtrema < numSections*extremaPerSection:
+			numSections=int(math.floor(minExtrema/float(extremaPerSection)))+1
+			apDisplay.printMsg("reducing the number of sections to: %d"%(numSections))
+		if self.debug is True:
+			print "Availble peaks = %d, valleys = %d"%(numPeaks, numValleys)
+			print "Peak points", numpy.array(peak, dtype=numpy.uint16)[:numPeaks+1]
+			print "Valley points", numpy.array(valley, dtype=numpy.uint16)[:numValleys+1]
+			print "Maximum point in FFT = %d"%(maxExtrema)
+		#sys.exit(1)
 
 		if self.debug is True:
 			print "Elliptical CTF limits %.1f A -->> %.1fA"%(1./raddata.min(), 1./raddata.max())
@@ -205,6 +217,11 @@ class CtfDisplay(object):
 			print noiseStartIndexes
 			print noiseEndIndexes
 			print "Noise mergeIndexes", mergeIndexes	
+		minGap = numpy.diff(mergeIndexes).min()
+		if minGap < 1:
+			apDisplay.printWarning("a gap of 0 points was found, please see bug #3438")
+			return None
+
 		### 
 		### PART 2: BACKGROUND NOISE SUBTRACTION
 		### 
@@ -346,6 +363,11 @@ class CtfDisplay(object):
 			print envelopStartIndexes
 			print envelopEndIndexes
 			print "Envelop mergeIndexes", mergeIndexes
+		minGap = numpy.diff(mergeIndexes).min()
+		if minGap < 1:
+			apDisplay.printWarning("a gap of 0 points was found, please see bug #3438")
+			return None
+
 
 		### fit the envelope in each section
 		envelopFitParamList = []
