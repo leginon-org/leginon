@@ -500,8 +500,22 @@ class Navigator(node.Node):
 				return
 		self._acquireImage()
 
+	def _restoreSaveFrames(self):
+			# Bug #3614 fi
+			try:
+				self.instrument.ccdcamera.SaveRawFrames = self.was_save_frames
+			except:
+				pass
+
+	def _setWasSaveFrames(self):
+		try:
+			self.was_save_frames = self.instrument.ccdcamera.SaveRawFrames
+		except:
+			self.was_save_frames = False
+
 	def _acquireImage(self, channel=0):
 		#Must set to the camera to be used by now.
+		self._setWasSaveFrames()
 		try:
 			self.instrument.ccdcamera.SaveRawFrames = False
 		except:
@@ -511,12 +525,15 @@ class Navigator(node.Node):
 			imagedata = self.acquireCorrectedCameraImageData(channel=channel)
 		except:
 			self.logger.error('unable to get corrected image')
+			self._restoreSaveFrames()
 			return
 
 		if imagedata is None:
 			self.logger.error('Acquire image failed')
+			self._restoreSaveFrames()
 			return
 
+		self._restoreSaveFrames()
 		self.newImage(imagedata)
 		return imagedata
 
