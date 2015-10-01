@@ -2,7 +2,7 @@
 from appionlib import apDisplay
 try:
 	import deProcessFrames
-except:
-	apDisplay.printError('deProcessFrames.py not in PYTHONPATH')
+except Exception, e:
+	apDisplay.printError(str(e))
 
 deProcessFrames.main()

@@ -49,9 +49,9 @@ function runCtfFind() {
 	$defstep=$_POST['defstep'];
 	$numstep=$_POST['numstep'];
 	$dast=$_POST['dast'];
-	//$nominal=$_POST['nominal'];
+	$nominal= ( $_POST['nominal'] == 'db value') ? false: abs($_POST['nominal']);
 	//$reprocess=$_POST['reprocess'];
-	
+
 	/* *******************
 	PART 2: Check for conflicts, if there is an error display the form again
 	******************** */
@@ -105,7 +105,7 @@ function runCtfFind() {
 		$command.="--ctftilt ";
 		$progname = "CtfTilt";
 	}
-	//if ($nominal) $command.=" nominal=$nominal";
+	if ($nominal) $command.=" --nominal=$nominal";
 	//if ($reprocess) $command.=" reprocess=$reprocess";
 
 	/* *******************
@@ -245,6 +245,7 @@ function createCtfFindForm($extra=false) {
 	$ctftiltcheck = ($_POST['runctftilt']=='on') ? 'CHECKED' : '';
 	$form_dast = ($_POST['dast']) ? $_POST['dast'] : '500';
 
+	$form_nominal = ($_POST['nominal']) ? $_POST['nominal']: 'db value';
 	echo"
 	<TABLE BORDER=0 CLASS=tableborder CELLPADDING=15>
 	<TR>
@@ -286,6 +287,11 @@ function createCtfFindForm($extra=false) {
 		echo "<i>Use best values from DB is not available"
 			."<br/>($lastrunnumber ctf runs)</i>\n";
 	}
+	echo "<br />\n";
+	echo "<B>Override nominal defocus set in experiment:</B><br />\n";
+	echo "Set to:<INPUT TYPE='text' NAME='nominal' VALUE='".$form_nominal."' SIZE='8'>\n";
+	echo "<FONT SIZE=-2><I>(in &mu;m, i.e. <B>2.0</B>)</I></FONT><br />";
+
 	echo "<br/><br/>\n";
 
 	echo "<b>$progname Values</b><br/>\n";
@@ -309,12 +315,13 @@ function createCtfFindForm($extra=false) {
 	echo "<br />\n";
 	echo "Search range: &plusmn; <span id='srange'>";
 	echo round($form_defstep*$form_numstep*1e-4,2);
-	echo "</span>&micro;M<br><br>\n";
+	echo "</span>&micro;m<br><br>\n";
 	echo "<input type='text' name='dast' value='$form_dast' size='6'>\n";
 	echo docpop('dast','Expected astigmatism');
 	echo " (&Aring;ngstroms)<br />\n";
 
 	echo "<br />\n";
+
 
 	echo "<b>PRESET VALUES:</b>";
 	echo "<table border='0'><tr><td>\n";
@@ -332,12 +339,7 @@ function createCtfFindForm($extra=false) {
 	//echo "Reprocess Below Confidence Value<br />\n";
 	//echo "Set Value:<INPUT TYPE='text' NAME='reprocess' DISABLED VALUE='0.8' SIZE='4'>\n";
 	//echo "<FONT SIZE=-2><I>(between 0.0 - 1.0)</I></FONT><br />\n";
-	//echo "<br />\n";
-	//echo "<B>Nominal override:</B><br />\n";
-	//echo "<INPUT TYPE='checkbox' NAME='nominalcheck' onclick='enabledf(this)'>\n";
-	//echo "Override Nominal Defocus<br />\n";
-	//echo "Set Defocus:<INPUT TYPE='text' NAME='nominal' DISABLED VALUE='db value' SIZE='8'>\n";
-	//echo "<FONT SIZE=-2><I>(in meters, i.e. <B>-2.0e-6</B>)</I></FONT><br />";
+		
 	//if ($ctfruns > 0) {
 	//	echo"
 	//		<INPUT TYPE='checkbox' NAME='newnominal'>

@@ -6,6 +6,8 @@
  *	For terms of the license agreement
  *	see  http://ami.scripps.edu/software/leginon-license
  */
+ini_set('display_errors', '0');     # don't show any errors...
+error_reporting(E_ALL | E_STRICT);
 
 require_once "basicLayoutForm.inc";
 require_once "inc/processing.inc";
@@ -18,30 +20,33 @@ $imageinfo=$_SESSION['imageinfo'];
 
 class Protomo2BatchForm extends BasicLayoutForm
 {
-	function __construct( $expId, $extraHTML, $sessionname='', $raw_path='', $dimx='', $dimy='', $procs='all',$coarse_param_file='', $refine_param_file='', $recon_param_file='',
-	$cachedir='', $protomo_outdir='', $link_recons='', $tiltseriesranges='', $firststep='1', $laststep='3', $shift_limit='30' , $angle_limit='40',
-	$r1_sampling='8', $r2_sampling='4', $r3_sampling='2', $r4_sampling='1', $r5_sampling='',
-	$auto_r1_sampling='8', $auto_r2_sampling='6', $auto_r3_sampling='4', $auto_r4_sampling='2', $auto_r5_sampling='1', $auto_r6_sampling='4', $auto_r7_sampling='2', $auto_r8_sampling='1',
-	$r1_iters='20', $r2_iters='15', $r3_iters='10', $r4_iters='5', $r5_iters='',
-	$auto_r1_iters='20', $auto_r2_iters='20', $auto_r3_iters='20', $auto_r4_iters='20', $auto_r5_iters='20',$auto_r6_iters='20', $auto_r7_iters='20', $auto_r8_iters='20',
-	$r1_lp_diam_x='15', $r2_lp_diam_x='15', $r3_lp_diam_x='15', $r4_lp_diam_x='15', $r5_lp_diam_x='', $r6_lp_diam_x='15', $r7_lp_diam_x='15', $r8_lp_diam_x='15',
-	$r1_lp_diam_y='15', $r2_lp_diam_y='15', $r3_lp_diam_y='15', $r4_lp_diam_y='15', $r5_lp_diam_y='', $r6_lp_diam_y='15', $r7_lp_diam_y='15', $r8_lp_diam_y='15',
-	$r1_region_x='', $r2_region_x='', $r3_region_x='', $r4_region_x='', $r5_region_x='', $r1_region_y='', $r2_region_y='',
-	$r3_region_y='', $r4_region_y='', $r5_region_y='', $r1_lp_apod_x='', $r2_lp_apod_x='', $r3_lp_apod_x='', $r4_lp_apod_x='', $r5_lp_apod_x='',
-	$r1_lp_apod_y='', $r2_lp_apod_y='', $r3_lp_apod_y='', $r4_lp_apod_y='', $r5_lp_apod_y='', $r1_hp_apod_x='75', $r2_hp_apod_x='100', $r3_hp_apod_x='150', $r4_hp_apod_x='200', $r5_hp_apod_x='',
-	$r1_hp_apod_y='75', $r2_hp_apod_y='100', $r3_hp_apod_y='150', $r4_hp_apod_y='200', $r5_hp_apod_y='', $r1_peak_search_radius_x='300', $r2_peak_search_radius_x='300', $r3_peak_search_radius_x='300',
-	$r4_peak_search_radius_x='300', $r5_peak_search_radius_x='', $r1_peak_search_radius_y='300', $r2_peak_search_radius_y='300', $r3_peak_search_radius_y='300', $r4_peak_search_radius_y='300', $r5_peak_search_radius_y='', 
-	$coarse_retry_align='10', $coarse_retry_shrink='0.9', $refine_retry_align='50', $refine_retry_shrink='0.95', $all_tilt_videos="False", $all_recon_videos="False",
-	$r1_kernel_x='', $r2_kernel_x='', $r3_kernel_x='', $r4_kernel_x='', $r5_kernel_x='', $r1_kernel_y='', $r2_kernel_y='', $auto_convergence='0.015', $auto_convergence_iters='5',
-	$r3_kernel_y='', $r4_kernel_y='', $r5_kernel_y='', $voltage='300', $cs='0', $amp_contrast='0.07', $iWidth='20', $DefocusTol='200',$map_sampling='8', $pixelsize='', $video_type='')
+	function __construct( $expId, $extraHTML, $sessionname='', $raw_path='', $dimx='', $dimy='', $procs='all',$coarse_param_file='',
+	$refine_param_file='', $recon_param_file='', $cachedir='', $protomo_outdir='', $link_recons='', $tiltseriesranges='', $firststep='1',
+	$laststep='3', $shift_limit='30' , $angle_limit='40', $r1_sampling='8', $r2_sampling='4', $r3_sampling='2', $r4_sampling='1', $r5_sampling='',
+	$auto_r1_sampling='8', $auto_r2_sampling='6', $auto_r3_sampling='4', $auto_r4_sampling='2', $auto_r5_sampling='1', $auto_r6_sampling='4',
+	$auto_r7_sampling='2', $auto_r8_sampling='1', $r1_iters='20', $r2_iters='15', $r3_iters='10', $r4_iters='5', $r5_iters='',
+	$auto_r1_iters='20', $auto_r2_iters='20', $auto_r3_iters='20', $auto_r4_iters='20', $auto_r5_iters='20',$auto_r6_iters='20',
+	$auto_r7_iters='20', $auto_r8_iters='20', $r1_lp_diam_x='15', $r2_lp_diam_x='15', $r3_lp_diam_x='15', $r4_lp_diam_x='15', $r5_lp_diam_x='',
+	$r6_lp_diam_x='15', $r7_lp_diam_x='15', $r8_lp_diam_x='15', $r1_lp_diam_y='15', $r2_lp_diam_y='15', $r3_lp_diam_y='15', $r4_lp_diam_y='15',
+	$r5_lp_diam_y='', $r6_lp_diam_y='15', $r7_lp_diam_y='15', $r8_lp_diam_y='15', $r1_region_x='', $r2_region_x='', $r3_region_x='',
+	$r4_region_x='', $r5_region_x='', $r1_region_y='', $r2_region_y='', $r3_region_y='', $r4_region_y='', $r5_region_y='', $r1_lp_apod_x='',
+	$r2_lp_apod_x='', $r3_lp_apod_x='', $r4_lp_apod_x='', $r5_lp_apod_x='', $r1_lp_apod_y='', $r2_lp_apod_y='', $r3_lp_apod_y='',
+	$r4_lp_apod_y='', $r5_lp_apod_y='', $r1_hp_apod_x='75', $r2_hp_apod_x='100', $r3_hp_apod_x='150', $r4_hp_apod_x='200', $r5_hp_apod_x='',
+	$r1_hp_apod_y='75', $r2_hp_apod_y='100', $r3_hp_apod_y='150', $r4_hp_apod_y='200', $r5_hp_apod_y='', $r1_peak_search_radius_x='300',
+	$r2_peak_search_radius_x='300', $r3_peak_search_radius_x='300', $r4_peak_search_radius_x='300', $r5_peak_search_radius_x='',
+	$r1_peak_search_radius_y='300', $r2_peak_search_radius_y='300', $r3_peak_search_radius_y='300', $r4_peak_search_radius_y='300',
+	$r5_peak_search_radius_y='', $all_tilt_videos="False", $all_recon_videos="False", $r1_kernel_x='', $r2_kernel_x='', $r3_kernel_x='',
+	$r4_kernel_x='', $r5_kernel_x='', $r1_kernel_y='', $r2_kernel_y='', $auto_convergence='0.015', $auto_convergence_iters='5',
+	$r3_kernel_y='', $r4_kernel_y='', $r5_kernel_y='', $voltage='300', $cs='0', $amp_contrast='0.07', $iWidth='20', $DefocusTol='200',
+	$map_sampling='8', $pixelsize='', $video_type='')
 	{
 		parent::__construct($expId, $extraHTML);
-		print "_POST:" . "<br>";
-		var_dump($_POST);
-		print "_GET:" . "<br>";
-		var_dump($_GET);
-		print "_SESSION:" . "<br>";
-		var_dump($_SESSION);
+		//print "_POST:" . "<br>";
+		//var_dump($_POST);
+		//print "_GET:" . "<br>";
+		//var_dump($_GET);
+		//print "_SESSION:" . "<br>";
+		//var_dump($_SESSION);
 		
 		global $imageinfo;
 		$tiltseriesId = ($_POST['tiltseriesId']) ? $_POST['tiltseriesId'] : NULL;
@@ -117,15 +122,10 @@ class Protomo2BatchForm extends BasicLayoutForm
 		$params->addParam( "recon_param_file", $recon_param_file, "Reconstruction Param File" );
 		$params->addParam( "link_recons", $link_recons, "Link Final Reconstructions to this Directory" );
 		$params->addParam( "tiltseriesranges", $tiltseriesranges, "Tilt-Series to Process" );
-		//$params->addParam( "link", $link, "Link or Copy Raw Images?" );
 		$params->addParam( "firststep", $firststep, "First Step" );
 		$params->addParam( "laststep", $laststep, "Last Step" );
 		$params->addParam( "shift_limit", $shift_limit, "Shift Limit" );
 		$params->addParam( "angle_limit", $angle_limit, "Angle Limit" );
-		$params->addParam( "coarse_retry_align", $coarse_retry_align, "Coarse Alignment Retries" );
-		$params->addParam( "coarse_retry_shrink", $coarse_retry_shrink, "Window Size Fraction to Shrink Each Retry Attempt" );
-		$params->addParam( "refine_retry_align", $refine_retry_align, "Refinement Retries" );
-		$params->addParam( "refine_retry_shrink", $refine_retry_shrink, "Window Size Fraction to Shrink Each Retry Attempt" );
 		$params->addParam( "r1_region_x", $r1_region_x, "R1" );
 		$params->addParam( "r2_region_x", $r2_region_x, "R2" );
 		$params->addParam( "r3_region_x", $r3_region_x, "R3" );
@@ -329,10 +329,6 @@ class Protomo2BatchForm extends BasicLayoutForm
 			$html .= "
 		<H3>Preparation Parameters ".docpop('prep_info', '(Info)')."</H3>
 		<hr />";
-			//$html.= '<select name="link" style="width:66px">';
-			//$html.= '<option selected value="True">Link</option>';
-			//$html.= '<option value="False">Copy</option>';
-			//$html.= '</select>'; $html.= docpop('protomo_link', ' Link or Copy Raw Images?').'<br>';
 			$html.= $params->insertTextFieldInRow( "shift_limit", $fieldSize ).'│ ';
 			$html.= $params->insertTextField( "angle_limit", $fieldSize );
 		}
@@ -343,8 +339,6 @@ class Protomo2BatchForm extends BasicLayoutForm
 		<H3>Coarse Alignment Parameters ".docpop('coarse_info', '(Info)')."</H3>
 		<hr />";
 			$html.= $params->insertTextField( "coarse_param_file", $fieldSize3 );
-			$html.= $params->insertTextField( "coarse_retry_align", $fieldSize );
-			$html.= $params->insertTextField( "coarse_retry_shrink", $fieldSize );
 		}
 		
 		if ($_POST['firststep'] <= 3 and $_POST['laststep'] >= 3)
@@ -354,8 +348,6 @@ class Protomo2BatchForm extends BasicLayoutForm
 		<H3>Refinement Parameters ".docpop('refine_info', '(Info)')."</H3>
 		<hr />";
 			$html.= $params->insertTextField( "refine_param_file", $fieldSize3 );
-			$html.= $params->insertTextField( "refine_retry_align", $fieldSize );
-			$html.= $params->insertTextField( "refine_retry_shrink", $fieldSize );
 			$html.= $params->insertTextFieldInRow( "r1_iters", $fieldSize2 ).'│ ';
 			$html.= $params->insertTextFieldInRow( "r2_iters", $fieldSize2 ).'│ ';
 			$html.= $params->insertTextFieldInRow( "r3_iters", $fieldSize2 ).'│ ';
@@ -478,8 +470,6 @@ class Protomo2BatchForm extends BasicLayoutForm
 			$html.= $params->insertTextFieldInRow( "shift_limit", $fieldSize ).'│ ';
 			$html.= $params->insertTextField( "angle_limit", $fieldSize );
 			$html.= $params->insertTextField( "coarse_param_file", $fieldSize3 );
-			$html.= $params->insertTextField( "coarse_retry_align", $fieldSize );
-			$html.= $params->insertTextField( "coarse_retry_shrink", $fieldSize );
 			
 		}
 		

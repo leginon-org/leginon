@@ -1311,6 +1311,10 @@ class PresetsManager(node.Node):
 		self.logger.info('Acquiring %s image' %(acquirestr))
 		camdata0 = leginondata.CameraEMData()
 		camdata0.friendly_update(preset)
+
+		# These will be overwritten to acquire special image
+		was_saving_frames = bool(camdata0['save frames'])
+		was_aligning_frames = bool(camdata0['align frames'])
 	
 		## deactivate frame saving and align frame flags
 		camdata0['save frames'] = False
@@ -1382,9 +1386,12 @@ class PresetsManager(node.Node):
 			self.logger.error(errstr % 'unable to acquire corrected image data')
 			return
 		try:
+			# restore preset parameters Bug #3614
+			camdata0['save frames'] = was_saving_frames
+			camdata0['align frames'] = was_aligning_frames
 			self.instrument.setData(camdata0)
 		except:
-			estr = 'Return to orginial camera dimemsion failed: %s'
+			estr = 'Return to orginial camera state failed: %s'
 			self.logger.error(estr % 'unable to set camera parameters')
 			return
 

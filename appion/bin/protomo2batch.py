@@ -1,4 +1,8 @@
 #!/usr/bin/env python
+# 
+# This script allows the user to process tilt-series in batch through Protomo.
+# It is highly recommended that this script be run using commands generated
+# through the Appion-Protomo web interface.
 
 from __future__ import division
 import os

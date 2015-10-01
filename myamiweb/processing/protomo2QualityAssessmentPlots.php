@@ -24,13 +24,11 @@ $tiltseries=$_GET['tiltseries'];
 
 $qa_gif_file = "$outdir/$runname/media/quality_assessment/series".sprintf('%04d',$tiltseries)."_quality_assessment.gif";
 $azimuth_gif_files = "$outdir/$runname/media/angle_refinement/series".sprintf('%04d',$tiltseries)."_azimuth.gif";
-$orientation_gif_files = "$outdir/$runname/media/angle_refinement/series".sprintf('%04d',$tiltseries)."_orientation.gif";
 $theta_gif_files = "$outdir/$runname/media/angle_refinement/series".sprintf('%04d',$tiltseries)."_theta.gif";
 $elevation_gif_files = "$outdir/$runname/media/angle_refinement/series".sprintf('%04d',$tiltseries)."_elevation.gif";
 
 $qa_gif = "loadimg.php?rawgif=1&filename=".$qa_gif_file;
 $azimuth_gif = "loadimg.php?rawgif=1&filename=".$azimuth_gif_files;
-$orientation_gif = "loadimg.php?rawgif=1&filename=".$orientation_gif_files;
 $theta_gif = "loadimg.php?rawgif=1&filename=".$theta_gif_files;
 $elevation_gif = "loadimg.php?rawgif=1&filename=".$elevation_gif_files;
 

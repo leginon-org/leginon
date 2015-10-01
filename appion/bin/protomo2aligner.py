@@ -677,6 +677,9 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		self.parser.add_option("--fix_images", dest="fix_images",  default="False",
 			help="Internal use only")
 		
+		self.parser.add_option("--my_tlt", dest="my_tlt",  default="False",
+			help="Internal use only")
+		
 		#File path returns and extra information for database
 		self.parser.add_option("--corr_peak_gif", dest="corr_peak_gif", default=None)
 		self.parser.add_option("--corr_peak_mp4", dest="corr_peak_mp4", default=None)
@@ -1159,7 +1162,7 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		originaltilt=rundir+'/original.tlt'
 		
 		###Do queries and make tlt file if first run
-		if self.params['coarse'] == 'True':
+		if (self.params['coarse'] == 'True' and self.params['my_tlt'] == 'False'):
 			apDisplay.printMsg('Preparing raw images and initial tilt file')
 			f.write('Preparing raw images and initial tilt file\n')
 			self.params['maxtilt'] = apProTomo2Prep.prepareTiltFile(self.params['sessionname'], seriesname, tiltfilename, int(self.params['tiltseries']), raw_path, link=self.params['link'], coarse="True")
@@ -1183,6 +1186,25 @@ class ProTomo2Aligner(basicScript.BasicScript):
 			proc=subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
 			(rawimagecount, err) = proc.communicate()
 			rawimagecount=int(rawimagecount)
+		elif (self.params['coarse'] == 'True' and self.params['my_tlt'] == 'True'): #hidden option if user already setup directory, raw_dir, and tlt file
+			apDisplay.printMsg('Using provided tilt file instead of creating one')
+			f.write('Using provided tilt file instead of creating one\n')
+			cmd1="awk '/FILE /{print}' %s | wc -l" % (tiltfilename_full)
+			proc=subprocess.Popen(cmd1, stdout=subprocess.PIPE, shell=True)
+			(rawimagecount, err) = proc.communicate()
+			rawimagecount=int(rawimagecount)
+			cmd2="awk '/IMAGE /{print $2}' %s | head -n +1" % tiltfilename
+			proc=subprocess.Popen(cmd2, stdout=subprocess.PIPE, shell=True)
+			(tiltstart, err) = proc.communicate()
+			tiltstart=int(tiltstart)
+			maxtilt=0
+			for i in range(tiltstart,rawimagecount):
+				cmd3="awk '/IMAGE %s /{print}' %s | awk '{for (j=1;j<=NF;j++) if($j ~/TILT/) print $(j+2)}'" % (i+1, tiltfilename_full)
+				proc=subprocess.Popen(cmd3, stdout=subprocess.PIPE, shell=True)
+				(tilt_angle, err) = proc.communicate()
+				tilt_angle=float(tilt_angle)
+				maxtilt=max(maxtilt,abs(tilt_angle))
+			self.params['maxtilt'] = maxtilt
 		else: #Just get maxtilt for param file
 			cmd1="awk '/FILE /{print}' %s | wc -l" % (tiltfilename_full)
 			proc=subprocess.Popen(cmd1, stdout=subprocess.PIPE, shell=True)
