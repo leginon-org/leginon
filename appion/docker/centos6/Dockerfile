@@ -41,16 +41,33 @@ EXPOSE 80
 
 ### MySQL setup
 RUN cp -fv /usr/share/mysql/my-huge.cnf /etc/my.cnf
-RUN svn co http://emg.nysbc.org/svn/myami/branches/myami-3.1/ /emg/sw/myami-3.1/
-RUN svn co http://emg.nysbc.org/svn/myami/branches/myami-3.1/install/ /emg/sw/appion_install/ && echo 'appion_install'
-RUN ln -sv /emg/sw/myami-3.1/myamiweb /var/www/html/myamiweb
-RUN chmod 777 /var/www/html/myamiweb && echo 'chmod myamiweb'
+RUN svn co http://emg.nysbc.org/svn/myami/branches/myami-3.2/ /emg/sw/myami-3.2/
+RUN svn co http://emg.nysbc.org/svn/myami/branches/myami-3.2/install/ /emg/sw/appion_install/ && echo 'appion_install'
+RUN ln -sv /emg/sw/myami-3.2/myamiweb /var/www/html/ami
+RUN ln -sv /emg/sw/myami-3.2/myamiweb /var/www/html/myamiweb
 EXPOSE 3306
 
 ### Myami setup
-WORKDIR /emg/sw/myami-3.1/
+COPY sinedon.cfg /etc/myami/sinedon.cfg
+COPY leginon.cfg /etc/myami/leginon.cfg
+COPY appion.cfg /etc/myami/appion.cfg
+COPY config.php /emg/sw/myami-3.2/myamiweb/config.php
+COPY docker.sql /emg/sw/myami-3.2/docker.sql
+RUN ln -sv /emg/sw/myami-3.2/appion/appionlib /usr/lib64/python2.6/site-packages/
+#RUN /etc/init.d/mysqld start
+#RUN mysql -u root < /emg/sw/myami-3.2/docker.sql
+WORKDIR /emg/sw/myami-3.2/
 RUN ./pysetup.sh install
 
+### software
+COPY 06jul12a_00015gr_00028sq_00004hl_00002en.mrc /emg/data/leginon/06jul12a/rawdata/
+COPY 06jul12a_00015gr_00028sq_00023hl_00002en.mrc /emg/data/leginon/06jul12a/rawdata/
+COPY 06jul12a_00015gr_00028sq_00023hl_00004en.mrc /emg/data/leginon/06jul12a/rawdata/
+COPY 06jul12a_00022gr_00013sq_00002hl_00004en.mrc /emg/data/leginon/06jul12a/rawdata/
+COPY 06jul12a_00022gr_00013sq_00003hl_00005en.mrc /emg/data/leginon/06jul12a/rawdata/
+COPY 06jul12a_00022gr_00037sq_00025hl_00004en.mrc /emg/data/leginon/06jul12a/rawdata/
+COPY 06jul12a_00022gr_00037sq_00025hl_00005en.mrc /emg/data/leginon/06jul12a/rawdata/
+COPY 06jul12a_00035gr_00063sq_00012hl_00004en.mrc /emg/data/leginon/06jul12a/rawdata/
 
 ### Change to local user
 #RUN mkdir -p /home/appionuser
@@ -76,7 +93,16 @@ RUN chown -R appionuser:users /home/appionuser
 RUN chmod 700 .vnc/xstartup
 EXPOSE 5901
 
+#ADD http://emg.nysbc.org/redmine/attachments/download/631/eman-linux-x86_64-cluster-1.9.tar.gz /emg/sw/eman1/
+#ADD http://emg.nysbc.org/redmine/attachments/download/638/spidersmall.18.10.tar.gz /emg/sw/spider/
+
 #ENV DISPLAY localhost:0
 #RUN vncserver -kill :1
-CMD vncserver :1 -name vnc -geometry 1200x800 && /usr/sbin/httpd && /etc/init.d/mysqld start && tail -f .vnc/*:1.log
+
+COPY bashrc /etc/bashrc
+COPY startup.sh /emg/startup.sh
+CMD /emg/startup.sh
+
+#CMD vncserver -autokill :1 -name vnc -geometry 1200x800 && /usr/sbin/httpd && /etc/init.d/mysqld start && mysql -u root < /emg/sw/myami-3.2/docker.sql && tail -f .vnc/*:1.log
+
 #CMD ["vncserver", ":1", "-geometry 1200x800",  "-fg" ]
