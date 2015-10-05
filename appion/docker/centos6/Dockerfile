@@ -41,23 +41,26 @@ EXPOSE 80
 
 ### MySQL setup
 RUN cp -fv /usr/share/mysql/my-huge.cnf /etc/my.cnf
-RUN svn co http://emg.nysbc.org/svn/myami/branches/myami-3.2/ /emg/sw/myami-3.2/
-RUN svn co http://emg.nysbc.org/svn/myami/branches/myami-3.2/install/ /emg/sw/appion_install/ && echo 'appion_install'
-RUN ln -sv /emg/sw/myami-3.2/myamiweb /var/www/html/ami
-RUN ln -sv /emg/sw/myami-3.2/myamiweb /var/www/html/myamiweb
+RUN svn co http://emg.nysbc.org/svn/myami/branches/myami-3.1/ /emg/sw/myami-3.1/
+RUN svn co http://emg.nysbc.org/svn/myami/branches/myami-3.1/install/ /emg/sw/appion_install/ && echo 'appion_install'
+RUN ln -sv /emg/sw/myami-3.1/myamiweb /var/www/html/ami
+RUN ln -sv /emg/sw/myami-3.1/myamiweb /var/www/html/myamiweb
 EXPOSE 3306
 
 ### Myami setup
 COPY sinedon.cfg /etc/myami/sinedon.cfg
 COPY leginon.cfg /etc/myami/leginon.cfg
 COPY appion.cfg /etc/myami/appion.cfg
-COPY config.php /emg/sw/myami-3.2/myamiweb/config.php
-COPY docker.sql /emg/sw/myami-3.2/docker.sql
-RUN ln -sv /emg/sw/myami-3.2/appion/appionlib /usr/lib64/python2.6/site-packages/
-#RUN /etc/init.d/mysqld start
-#RUN mysql -u root < /emg/sw/myami-3.2/docker.sql
-WORKDIR /emg/sw/myami-3.2/
+COPY redux.cfg /etc/myami/redux.cfg
+COPY config.php /emg/sw/myami-3.1/myamiweb/config.php
+COPY docker.sql /emg/sw/docker.sql
+RUN mkdir -p /var/cache/myami/redux/ && chmod 777 /var/cache/myami/redux/
+RUN ln -sv /emg/sw/myami-3.1/appion/appionlib /usr/lib64/python2.6/site-packages/
+WORKDIR /emg/sw/myami-3.1/
 RUN ./pysetup.sh install
+RUN mkdir /etc/fftw
+RUN python /usr/lib/python2.6/site-packages/pyami/fft/fftwsetup.py 2 4096 4096 && mv -v  ~/fftw3-wisdom-* /etc/fftw/wisdom
+RUN cp -v /emg/sw/myami-3.1/redux/init.d/reduxd /etc/init.d/reduxd
 
 ### software
 COPY 06jul12a_00015gr_00028sq_00004hl_00002en.mrc /emg/data/leginon/06jul12a/rawdata/
@@ -80,7 +83,7 @@ env HOME /home/appionuser
 WORKDIR /home/appionuser
 RUN mkdir -p .vnc
 RUN chmod 777 .vnc
-RUN echo AppionRules | vncpasswd -f > .vnc/passwd
+RUN echo Phys-554 | vncpasswd -f > .vnc/passwd
 RUN chmod 600 .vnc/passwd
 RUN ls .vnc/
 COPY xstartup .vnc/xstartup
@@ -100,9 +103,11 @@ EXPOSE 5901
 #RUN vncserver -kill :1
 
 COPY bashrc /etc/bashrc
+#RUN mkdir -p /home/appionuser/.mozilla/firefox/yvn3wpn8.default
+#COPY profiles.ini  /home/appionuser/.mozilla/firefox/
 COPY startup.sh /emg/startup.sh
 CMD /emg/startup.sh
 
-#CMD vncserver -autokill :1 -name vnc -geometry 1200x800 && /usr/sbin/httpd && /etc/init.d/mysqld start && mysql -u root < /emg/sw/myami-3.2/docker.sql && tail -f .vnc/*:1.log
+#CMD vncserver -autokill :1 -name vnc -geometry 1200x800 && /usr/sbin/httpd && /etc/init.d/mysqld start && mysql -u root < /emg/sw/myami-3.1/docker.sql && tail -f .vnc/*:1.log
 
 #CMD ["vncserver", ":1", "-geometry 1200x800",  "-fg" ]
