@@ -33,9 +33,17 @@ def findPeaks(imgdict, maplist, params, maptype="ccmaxmap", pikfile=True):
 	pixdiam =   diam/apix/float(bin)
 	pixrad =    diam/apix/2.0/float(bin)
 
-	peaktreelist = Parallel(n_jobs=params['nproc'])(delayed(runFindPeaks)(params,
-		maplist,maptype,pikfile,thresh,pixdiam,count,olapmult,maxpeaks,maxsizemult,
-		msg,bin,peaktype,pixrad,imgdict) for count in range(0,len(maplist)))
+	try:
+		peaktreelist = Parallel(n_jobs=params['nproc'])(delayed(runFindPeaks)(params,
+			maplist,maptype,pikfile,thresh,pixdiam,count,olapmult,maxpeaks,maxsizemult,
+			msg,bin,peaktype,pixrad,imgdict) for count in range(0,len(maplist)))
+	except AttributeError:
+		## backup for AttributeError: 'memmap' object has no attribute 'offset', bug #3322
+		peaktreelist = []
+		for count in range(0,len(maplist)):
+			peaktree = runFindPeaks(params,maplist,maptype,pikfile,thresh,pixdiam,count,olapmult,
+				maxpeaks,maxsizemult,msg,bin,peaktype,pixrad,imgdict)
+		peaktreelist.extend(peaktree)
 
 	peaktree = mergePeakTrees(imgdict, peaktreelist, params, msg, pikfile)
 
