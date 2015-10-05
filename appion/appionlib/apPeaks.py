@@ -43,7 +43,7 @@ def findPeaks(imgdict, maplist, params, maptype="ccmaxmap", pikfile=True):
 		for count in range(0,len(maplist)):
 			peaktree = runFindPeaks(params,maplist,maptype,pikfile,thresh,pixdiam,count,olapmult,
 				maxpeaks,maxsizemult,msg,bin,peaktype,pixrad,imgdict)
-		peaktreelist.extend(peaktree)
+		peaktreelist.append(peaktree)
 
 	peaktree = mergePeakTrees(imgdict, peaktreelist, params, msg, pikfile)
 
