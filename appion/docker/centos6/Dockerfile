@@ -72,13 +72,28 @@ COPY 06jul12a_00022gr_00037sq_00025hl_00004en.mrc /emg/data/leginon/06jul12a/raw
 COPY 06jul12a_00022gr_00037sq_00025hl_00005en.mrc /emg/data/leginon/06jul12a/rawdata/
 COPY 06jul12a_00035gr_00063sq_00012hl_00004en.mrc /emg/data/leginon/06jul12a/rawdata/
 
+#RUN mkdir -p /emg/sw/
+ADD eman-linux-x86_64-cluster-1.9.tar.gz /emg/sw
+RUN mv -v /emg/sw/EMAN /emg/sw/eman1
+
+ADD Xmipp-2.4-src.tar.gz /emg/sw
+RUN mv -v /emg/sw/Xmipp-2.4-src /emg/sw/xmipp
+WORKDIR /emg/sw/xmipp
+ENV MPIPATH /usr/lib64/openmpi
+ENV PATH /bin:/usr/bin:/sbin:/usr/sbin:/usr/lib64/openmpi/bin
+RUN ./scons.configure MPI_LIBDIR=/usr/lib64/openmpi/lib  MPI_LIB=mpi  MPI_INCLUDE=/usr/include/openmpi-x86_64
+RUN ./scons.compile
+
+ADD spidersmall.18.10.tar.gz /emg/sw
+RUN ln -sv /emg/sw/spider/bin/spider_linux_mp_opt64 /emg/sw/spider/bin/spider
+
 ### Change to local user
 #RUN mkdir -p /home/appionuser
 RUN useradd -d /home/appionuser -g 100 -p 'Phys-554' -s /bin/bash appionuser && echo 'appionuser' && usermod -aG wheel appionuser
 RUN chmod 777 /home/appionuser
 RUN chown -R appionuser:users /home/appionuser
 #USER appionuser
-env HOME /home/appionuser
+ENV HOME /home/appionuser
 #env HOME /
 WORKDIR /home/appionuser
 RUN mkdir -p .vnc
@@ -96,8 +111,6 @@ RUN chown -R appionuser:users /home/appionuser
 RUN chmod 700 .vnc/xstartup
 EXPOSE 5901
 
-#ADD http://emg.nysbc.org/redmine/attachments/download/631/eman-linux-x86_64-cluster-1.9.tar.gz /emg/sw/eman1/
-#ADD http://emg.nysbc.org/redmine/attachments/download/638/spidersmall.18.10.tar.gz /emg/sw/spider/
 
 #ENV DISPLAY localhost:0
 #RUN vncserver -kill :1

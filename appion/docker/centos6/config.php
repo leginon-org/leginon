@@ -202,7 +202,7 @@ define('STARTUP_MESSAGE', "");
 // --- Redux server Host and Port information. --- //
 // --- define('SERVER_HOST', "redux.schools.edu"); --- //
 // --- define('SERVER_PORT', "55123"); --- //
-define('SERVER_HOST', "locahost");
+define('SERVER_HOST', "localhost");
 define('SERVER_PORT', "55123");
 
 // --- list specifc datasets that have test scripts associated with them --- //
