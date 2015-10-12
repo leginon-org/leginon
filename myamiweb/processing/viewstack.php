@@ -482,7 +482,7 @@ echo "</td></tr></table>\n";
 
 <br />
 <br />
-<div class="scrollpane">
+<div class="stackpane">
    <div id="wholemap">
    </div>
 </div>

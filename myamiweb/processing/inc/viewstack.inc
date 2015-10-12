@@ -30,8 +30,7 @@ function stackViewer($file_hed,$file_img,$n_images,$stackoptions=array()) {
 		border: 1px solid #000000;
 	}
 
-	div.scrollpane {
-		height: 600px;
+	div.stackpane {
 		overflow: auto;
 		border: 1px solid #666;
 		background-color: #ccc;
