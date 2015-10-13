@@ -749,11 +749,11 @@ class Jeol(tem.TEM):
 	
 	def setMagnificationsFromProjectionSubModes(self):
 		mode_map = self.getProjectionSubModeMap()
-		if self.magnifications:
-			# do not duplicate if exists already
-			return
 		mags = mode_map.keys()
 		mags.sort()
+		if self.magnifications and mags == self.magnifications:
+			# do not duplicate if exists already
+			return
 		self.magnifications = mags
 
 	def getMagnificationsInitialized(self):

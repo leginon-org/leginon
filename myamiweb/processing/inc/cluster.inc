@@ -224,21 +224,9 @@ class Cluster
 	}
 	
 	//Returns all available queues on this cluster in an array
-	//TODO: this function may not work with resource managers other than Torque
-	function getAvailableQueues( $username='', $password='' )
+	function getAvailableQueues()
 	{
-		$username = ( $username == '') ? $_SESSION['username'] : $username;
-		$password = ( $password == '') ? $_SESSION['password'] : $password;
-		
-		if ($username &&  $password) {
-			// print all queue names where the queue has more than 1 node
-			$cmd = "qstat -q | awk '$5 > 1{print $1}'";
-			//TODO: check that username and pass are set
-			$queues = $this->executeOnHost( $username, $password, $cmd, true, $port=22, $max_time=10 );
-			$queueArray = explode( "\n", $queues);
-		} else {
-			$queueArray = $this->getQueues();
-		}
+		$queueArray = $this->getQueues();
 		
 		return $queueArray;
 	}

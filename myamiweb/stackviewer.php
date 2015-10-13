@@ -28,8 +28,7 @@ $n_images=$info['count']+1;
 		border: 1px solid #000000;
 	}
 
-	div.scrollpane {
-		height: 400px;
+	div.stackpane {
 		overflow: auto;
 		border: 1px solid #666;
 		background-color: #ccc;
@@ -135,7 +134,7 @@ quality: <select id="quality">
 <input id="loadbutton" type="button" alt="Load" value="Load" onclick="load();">
 <br />
 <br />
-<div class="scrollpane">
+<div class="stackpane">
    <div id="wholemap">
    </div>
 </div>
