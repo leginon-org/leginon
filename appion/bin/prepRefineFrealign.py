@@ -186,7 +186,15 @@ class FrealignPrep3DRefinement(apPrepRefine.Prep3DRefinement):
 		lowpasstext = self.setArgText('lowpass',(self.params['lowpass'],paramdata['lowpass']),False)
 		highpasstext = self.setArgText('highpass',(self.params['highpass'],paramdata['highpass']),True)
 		partlimittext = self.setArgText('partlimit',(numpart,),False)
-		xmipp_normtext = self.setArgText('xmipp-normalize',(paramdata['xmipp-norm'],),True)
+		
+		#normalization
+		normtext = ''
+		if 'xmipp-norm' in paramdata.keys():
+			# myami-3.1 or before
+			normtext = self.setArgText('xmipp-normalize',(paramdata['xmipp-norm'],),True)
+		elif 'normalizemethod' in paramdata.keys():
+			# myami-3.2 or newer
+			normtext = self.setArgText('normalize-method',(paramdata['normalizemethod'],),True)
 		sessionid = int(self.params['expid'])
 		sessiondata = apDatabase.getSessionDataFromSessionId(sessionid)
 		sessionname = sessiondata['name']
@@ -203,7 +211,7 @@ class FrealignPrep3DRefinement(apPrepRefine.Prep3DRefinement):
 			defoctext = ''
 		cmd = '''
 makestack2.py --single=%s --fromstackid=%d %s %s %s %s %s --no-invert --normalized %s --boxsize=%d --bin=%d --description="frealign refinestack based on %s(id=%d)" --projectid=%d --preset=%s --runname=%s --rundir=%s --no-wait --no-commit --no-continue --session=%s --expId=%d --jobtype=makestack2
-		''' % (os.path.basename(newstackimagicfile),stackid,lowpasstext,highpasstext,partlimittext,reversetext,defoctext,xmipp_normtext,unbinnedboxsize,bin,stackpathname,stackid,projectid,presetname,newstackrunname,newstackrundir,sessionname,sessionid)
+		''' % (os.path.basename(newstackimagicfile),stackid,lowpasstext,highpasstext,partlimittext,reversetext,defoctext,normtext,unbinnedboxsize,bin,stackpathname,stackid,projectid,presetname,newstackrunname,newstackrundir,sessionname,sessionid)
 		logfilepath = os.path.join(newstackrundir,'frealignstackrun.log')
 		returncode = self.runAppionScriptInSubprocess(cmd,logfilepath)
 		if returncode > 0:
