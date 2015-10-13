@@ -12,13 +12,14 @@ export APPIONPATH=/emg/sw/myami-3.2/appion
 export EMANDIR=/emg/sw/eman1
 export XMIPPDIR=/emg/sw/xmipp
 export MPIPATH=/usr/lib64/openmpi
+export GRIGPATH=/emg/sw/grigorieff
 
 export SPIDERDIR=/emg/sw/spider
 export SPBIN_DIR=${SPIDERDIR}/bin/
 export SPPROC_DIR=${SPIDERDIR}/proc/
 export SPMAN_DIR=${SPIDERDIR}/man/
 
-export PATH=/usr/bin:/bin:${APPIONPATH}/bin:${EMANDIR}/bin:${XMIPPDIR}/bin:${SPIDERDIR}/bin:${MPIPATH}/bin
+export PATH=/usr/bin:/bin:${APPIONPATH}/bin:${EMANDIR}/bin:${XMIPPDIR}/bin:${SPIDERDIR}/bin:${GRIGPATH}/bin:${MPIPATH}/bin
 export PYTHONPATH=${EMANDIR}/lib
 export LD_LIBRARY_PATH=${EMANDIR}/lib:${XMIPPDIR}/lib:${MPIPATH}/lib
 
