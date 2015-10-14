@@ -199,8 +199,6 @@ if (!HIDE_FEATURE)
 	echo "</td></tr>\n";
 }
 
-if (!HIDE_FEATURE)
-{
 	/*
 	** EMAN reference-free alignment
 	*/
@@ -213,7 +211,6 @@ if (!HIDE_FEATURE)
 		."refine2d.py</a> program"
 		."</p>\n";
 	echo "</td></tr>\n";
-}
 
 /*
 ** Xmipp Maximum Likelihood Reference Based Alignment
