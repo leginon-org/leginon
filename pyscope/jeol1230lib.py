@@ -12,6 +12,12 @@ from ctypes import *
 
 Debug = False
 
+# constants for Jeol Hex value
+MAX = 65535
+# coarse-fine ratio for OL and OM
+COARSE_SCALE = 32
+
+
 class jeol1230lib(object):
 	name = 'jeol1230 library'
 	
@@ -107,7 +113,6 @@ class jeol1230lib(object):
 					break
 				c = c + newc
 			words = c.split()
-			print words[2]
 			if words[0] == '050' and words[1] == '000':
 				if words[2] == '1':
 					highTensionStatus = 'on'
@@ -254,7 +259,6 @@ class jeol1230lib(object):
 	def setMagnification(self, mag):
 		if Debug == True:
 			print 'from jeol1230lib.py setMagnification'
-		print 
 		magRange = 40
 		for i in range(0,magRange):
 			if int(mag) <= self.magnification[i]:
@@ -418,7 +422,7 @@ class jeol1230lib(object):
 		ml = '0'
 		ct = '\t'
 		minimum_stage = {'x': 0.1, 'y': 0.1, 'z': 0.1, 'a': 0.1}
-		maximum_stage = {'x': 1000.0, 'y': 1000.0, 'z': 120.0, 'a': 20.0}
+		maximum_stage = {'x': 1000.0, 'y': 1000.0, 'z': 400.0, 'a': 20.0}
 		stagenow = {'x': None, 'y': None, 'z': None, 'a': None}
 		stagenow = self.getStagePosition()
 		if abs(coord - stagenow[axis]) < minimum_stage[axis]:
@@ -539,10 +543,24 @@ class jeol1230lib(object):
 			time.sleep(self.wait_time)
 		return True
 
-	# get objective lens currents
-	def getObjectiveCurrent(self):
+	def toOLcOLf(self,ticks):
+		'''
+		relative value conversion only, works for both ol and om
+		'''
+		coarse_ticks = ticks / COARSE_SCALE
+		fine_ticks = ticks % COARSE_SCALE
+		return coarse_ticks, fine_ticks
+
+	def fromOLcOLf(self,OLc, OLf):
+		'''
+		Convert to current
+		'''
+		return OLc * COARSE_SCALE + OLf
+
+	# get objective lens input raw values
+	def getRawObjectiveInputs(self):
 		if Debug == True:
-			print 'from jeol1230lib.py getObjectiveCurrent'
+			print 'from jeol1230lib.py getRawObjectiveInputs'
 		while True:
 			self.ser.flushInput()
 			self.ser.flushOutput()
@@ -557,32 +575,62 @@ class jeol1230lib(object):
 			if words[0] == '150' and words[1] == '000':
 				break
 			time.sleep(self.wait_time)
-		oll = words[8]
-		olh = words[9]
-		oml = words[10]
-		omh = words[11]
+		# convert from hex
+		oll = int(words[8],16)
+		olh = int(words[9],16)
+		oml = int(words[10],16)
+		omh = int(words[11],16)
 		if Debug == True:
-			print 'oll %x, olh %x' % (int(oll,16), int(olh,16))
-			print 'oml %x, omh %x' % (int(oml,16), int(omh,16))
+			print 'oll %x, olh %x' % (oll, olh)
+			print 'oml %x, omh %x' % (oml, omh)
+		return oll,olh,oml,omh
+
+	# get objective lens currents
+	def getObjectiveCurrent(self):
+		'''
+		Get objective lens absolute current as a combination of
+		high gain (coarse) and low gain (fine) knobs
+		'''
+		oll,olh,oml,omh = self.getRawObjectiveInputs()
 		if self.getMagnification() >= 1000:
-			current = int(oll,16)*1e5 + int(olh,16)
+			current = self.fromOLcOLf(olh, oll)
 		else:
-			current = int(oml,16)*1e5 + int(omh,16)
+			current = self.fromOLcOLf(omh, oml)
 		return int(current)
 
 	# set obj len currents using relative values; direct lens control is bad
 	def setObjectiveCurrent(self,current):
+		'''
+		Set objective lens absolute current as a combination of
+		high gain (coarse) and low gain (fine) knobs.
+		'''
 		if Debug == True:
 			print 'from jeol1230lib.py setObjectiveCurrent'
+		# get current input values
+		oll,olh,oml,omh = self.getRawObjectiveInputs()
 		if self.getMagnification() >= 1000:
 			code_1 = '9'
 			code_2 = '10'
+			low_gain_ticks = oll
+			high_gain_ticks = olh
 		else:
 			code_1 = '11'
 			code_2 = '12'
+			low_gain_ticks = oml
+			high_gain_ticks = omh
 		c_current = self.getObjectiveCurrent()
-		l = int(int(current)//1e5) - int(int(c_current)//1e5)
-		h = int(int(current)%1e5) - int(int(c_current)%1e5)
+		# The adjustment is relative
+		diff_current = current - c_current
+		h,l = self.toOLcOLf(int(diff_current))
+
+		# Change only low_gain_ticks if the new value can be
+		# in the middle range of the knob.
+		expected_new_low_gain_ticks = h*COARSE_SCALE+low_gain_ticks+l
+		if abs(expected_new_low_gain_ticks) < MAX*3/4 and abs(expected_new_low_gain_ticks) > MAX/4:
+			h = 0
+			l = diff_current
+
+		# The adjustment is relative
 		ss_l = '102' + '\t' + code_1 + '\t' + str(l) + '\r'
 		while True:
 			self.ser.flushInput()
@@ -618,77 +666,71 @@ class jeol1230lib(object):
 
 	# get defocus value in meter
 	def getDefocus(self):
+		# BUG? getDefocus is based on oll/oml only
 		if Debug == True:
 			print 'from jeol1230lib.py getDefocus'
-		while True:
-			self.ser.flushInput()
-			self.ser.flushOutput()
-			self.ser.write('150\t0\r')
-			c = ''
-			while True:
-				newc = self.ser.read()
-				if newc == '\r':
-					break
-				c = c + newc
-			words = c.split()
-			if words[0] == '150' and words[1] == '000':
-				break
-			time.sleep(self.wait_time)
-		oll = words[8]
-		olh = words[9]
-		oml = words[10]
-		omh = words[11]
-		if Debug == True:
-			print '    oll %d, olh %d' % (int(oll,16), int(olh,16))
-			print '    oml %d, omh %d' % (int(oml,16), int(omh,16))
+		focus = self.getRawFocus()
 		if self.getMagnification() >= 1000:
-			defocus = (int(oll,16)-self.zero_oll)*0.0048/1e6
+			defocus = ((focus-self.zero_oll)*0.0048)/1e6
 		else:
-			defocus = (int(oml,16)-self.zero_oml)*0.0048/1e6
+			defocus = ((focus-self.zero_oml)*0.0048)/1e6
 		return float(defocus)
+	
+	def getRawFocus(self):
+		'''
+		Get unscaled focus value
+		'''
+		# BUG? getRwFocus is based on oll/oml only
+
+		oll,olh,oml,omh = self.getRawObjectiveInputs()
+
+		if self.getMagnification() >= 1000:
+			# BUG? This assumes that olh is never changed
+			focus = oll
+		else:
+			# BUG? This assumes that omh is never changed
+			focus = oml
+		return focus
 
 	# set defocus value in meter
 	def setDefocus(self,defocus):
 		if Debug == True:
 			print 'from jeol1230lib.py setDefocus'
-		rel_defocus = float(defocus) - self.getDefocus()
-		while True:
-			self.ser.flushInput()
-			self.ser.flushOutput()
-			self.ser.write('150\t0\r')
-			c = ''
-			while True:
-				newc = self.ser.read()
-				if newc == '\r':
-					break
-				c = c + newc
-			words = c.split()
-			if words[0] == '150' and words[1] == '000':
-				break
-			time.sleep(self.wait_time)
-		current_oll = words[8]
-		current_olh = words[9]
-		current_oml = words[10]
-		current_omh = words[11]
-		diff_olh = self.zero_olh - int(current_olh, 16)
-		diff_omh = self.zero_omh - int(current_omh, 16)
+		# getDefocus is based on oll/oml only
+		rel_focus = float(defocus) - self.getDefocus()
+		state = self.setRelativeFocus(rel_focus)
+		return state
+
+	def setRelativeFocus(self,rel_focus):
+		# read current ol and om values from register 150
+		currnt_oll,current_olh,current_oml,current_omh = self.getRawObjectiveInputs()
+		# difference between current olh/omh and zerodefocus is used to change olh/omh
+		diff_olh = self.zero_olh - current_olh
+		diff_omh = self.zero_omh - current_omh
 		flag = False
+		# First set relative to current
 		if self.getMagnification() >= 1000:
 			code_1 = '9'
 			code_2 = '10'
-			diff_oll = int(rel_defocus*1e6*210)
+			# rel_defocus is handled by oll
+			# BUG ? If rel_focus is large, this will be over limit
+			diff_oll = int(rel_focus*1e6*210)
 			ss_l = '102' + '\t' + code_1 + '\t' + str(diff_oll) + '\r'
 			ss_h = '102' + '\t' + code_2 + '\t' + str(diff_olh) + '\r'
 			if diff_olh != 0:
+				# set olh, too
 				flag = True
 		else:
 			code_1 = '11'
 			code_2 = '12'
-			diff_oml = int(rel_defocus*1e6*210)
+			# rel_focus is expected to be small enough to be handled by oml
+			diff_oml = int(rel_focus*1e6*210)
 			ss_l = '102' + '\t' + code_1 + '\t' + str(diff_oml) + '\r'
 			ss_h = '102' + '\t' + code_2 + '\t' + str(diff_omh) + '\r'
 			if diff_omh != 0:
 				flag = True
+		# Then set difference between zerodefocus and current
+		# flag is true if olh or omh need to be set
 		if flag == True:
 			while True:
 				self.ser.flushInput()
@@ -704,6 +746,7 @@ class jeol1230lib(object):
 				if words[0] == '102' and words[1] == '000':
 					break
 				time.sleep(self.wait_time)
+		# set oll and oml values
 		while True:
 			self.ser.flushInput()
 			self.ser.flushOutput()
@@ -718,38 +761,24 @@ class jeol1230lib(object):
 			if words[0] == '102' and words[1] == '000':
 				break
 			time.sleep(self.wait_time)
+		### NOTE from Anchi ####
+		### setting of focus value is slow.  If getRawFocus right away
+		### it shows that the value is not reached
 		return True
 
 	# set obj lens currents (defocus value) to eucentric focus
 	def resetDefocus(self, value = 0):
 		if Debug == True:
 			print 'from jeol1230lib.py resetDefocus'
-		while True:
-			self.ser.flushInput()
-			self.ser.flushOutput()
-			self.ser.write('150\t0\r')
-			c = ''
-			while True:
-				newc = self.ser.read()
-				if newc == '\r':
-					break
-				c = c + newc
-			words = c.split()
-			if words[0] == '150' and words[1] == '000':
-				break
-			time.sleep(self.wait_time)
-		oll = words[8]
-		olh = words[9]
-		oml = words[10]
-		omh = words[11]
+		oll,olh,oml,omh = self.getRawObjectiveInputs()
 		if self.getMagnification() > 1000:
-			self.zero_oll = int(oll,16)
-			self.zero_olh = int(olh,16)
+			self.zero_oll = oll
+			self.zero_olh = olh
 			self.saveZeroDefocus('zero_oll', self.zero_oll)
 			self.saveZeroDefocus('zero_olh', self.zero_olh)
 		else:
-			self.zero_oml = int(oml,16)
-			self.zero_omh = int(omh,16)
+			self.zero_oml = oml
+			self.zero_omh = omh
 			self.saveZeroDefocus('zero_oml', self.zero_oml)
 			self.saveZeroDefocus('zero_omh', self.zero_omh)
 		self.saveZeroDefocus('zero_time', time.time())
@@ -823,15 +852,15 @@ class jeol1230lib(object):
 				break
 			time.sleep(self.wait_time)
 		beamtilt = {'x': None, 'y': None}
-		beamtilt['x'] = int(words[2],16)*2.25e-6 - 32858*2.25e-6
-		beamtilt['y'] = int(words[3],16)*2.25e-6 - 32858*2.25e-6
+		beamtilt['x'] = int(words[2],16)*1.25e-6 - 32858*1.25e-6
+		beamtilt['y'] = int(words[3],16)*1.25e-6 - 32858*1.25e-6
 		return beamtilt
 
-	# set beam tilt X and Y
+	# set beam tilt X or Y
 	def setBeamTilt(self,axis,value):
 		if Debug == True:
 			print 'from jeol1230lib.py setBeamTilt'
-		sh = "%x" % int((float(value) + 32858*2.25e-6)/2.25e-6)
+		sh = "%x" % int((float(value) + 32858*1.25e-6)/1.25e-6)
 		if Debug == True:
 			print "    Image tilt will be %d in %s direction" % (sh, axis)
 		if axis == 'x':
@@ -878,8 +907,12 @@ class jeol1230lib(object):
 			imageshift['x'] = int(words[2],16)*3.057e-10 - 32768*3.057e-10
 			imageshift['y'] = int(words[3],16)*3.057e-10 - 32768*3.057e-10
 		else:
-			imageshift['x'] = int(words[2],16)*4.375e-9 - 32768*4.375e-9
-			imageshift['y'] = int(words[3],16)*4.375e-9 - 32768*4.375e-9
+			#good for 200x
+			#imageshift['x'] = int(words[2],16)*4.375e-9 - 32768*4.375e-9
+			#imageshift['y'] = int(words[3],16)*4.375e-9 - 32768*4.375e-9
+			#good for 120x
+			imageshift['x'] = int(words[2],16)*2.82e-9 - 32768*2.82e-9
+			imageshift['y'] = int(words[3],16)*2.82e-9 - 32768*2.82e-9
 		return imageshift
 
 	# set Imageshift X and Y
@@ -893,8 +926,9 @@ class jeol1230lib(object):
 		if self.getMagnification() >= 1000:
 			sh = "%x" % int((float(value) + 32768*3.057e-10)/3.057e-10)
 		else:
-			sh = "%x" % int((float(value) + 32768*4.375e-9)/4.375e-9)
+			sh = "%x" % int((float(value) + 32768*2.82e-9)/2.82e-9)
 		ss = '104' + '\t' + code + '\t' + str(sh) + '\r'
+		itr = 0
 		while True:
 			self.ser.flushInput()
 			self.ser.flushOutput()
@@ -908,7 +942,11 @@ class jeol1230lib(object):
 			words = c.split()
 			if words[0] == '104' and words[1] == '000':
 				break
+			itr += 1
 			time.sleep(self.wait_time)
+			if itr > 5:
+				print 'setImageShift failed', value
+				break
 		return True
 
 	# retrieve all the stigmators setting as a single block
