@@ -3,6 +3,9 @@ import math
 from pyscope import jeolcom
 
 class Logger(object):
+	def __init__(self,filename):
+		self.cfgdict = {}
+
 	def input(self, msg):
 		return raw_input(msg)
 
@@ -40,11 +43,35 @@ class Logger(object):
 			sep = '='
 		else:
 			sep = ':'
-		print('\n[%s]\n%s%s%s\n' % (module_name,item,sep,value))
+		option = '%s%s%s\n' % (item,sep,value)
+		print('\n[%s]\n%s\n' % (module_name,option))
+		if module_name not in self.cfgdict:
+			self.cfgdict[module_name] = [option,]
+		else:
+			self.cfgdict[module_name].append(option)
+
+	def writeConfig(self):
+		filename = raw_input('output calibrated jeol.cfg as: ')
+		if not filename:
+			return
+		self.cfg_outfile = open(filename,'w')
+		self.cfg_outfile.write('[tem option]\n')
+		options = self.cfgdict['tem option']
+		options.sort()
+		self.cfg_outfile.write(''.join(options))
+		self.cfg_outfile.write('\n')
+		self.cfgdict.pop('tem option',None)
+		
+		for module_name in self.cfgdict.keys():
+			self.cfg_outfile.write('[%s]\n' % module_name)
+			text = ''.join(self.cfgdict[module_name])
+			self.cfg_outfile.write(text)
+			self.cfg_outfile.write('\n')
+		self.cfg_outfile.close()
 
 class ScaleCalibrator(object):
-	def __init__(self):
-		self.logger = Logger()
+	def __init__(self,filename):
+		self.logger = Logger(filename)
 		self.mag_scale = 1.0
 		self.done_submodes = []
 		self.initializeTEM()
@@ -228,7 +255,11 @@ class ScaleCalibrator(object):
 		name_lower = mode_name.lower()
 		is_lower = (name_lower == mode_name)
 		if name_lower == 'mag1':
-			if mag > self.max_ls2:
+			if mag > self.max_ls4:
+				name_lower = 'ls5'
+			elif mag > self.max_ls3:
+				name_lower = 'ls4'
+			elif mag > self.max_ls2:
 				name_lower = 'ls3'
 			elif mag > self.max_ls1:
 				name_lower = 'ls2'
@@ -337,9 +368,13 @@ class ScaleCalibrator(object):
 		self.tem.setDiffractionMode('imaging')
 
 	def calibrateAll(self):
-		self.calibrateInImageMode()
+		#self.calibrateInImageMode()
 		self.calibrateInDiffractionMode()
+		self.writeConfig()
 		raw_input('hit any key to end')
+
+	def writeConfig(self):
+		self.logger.writeConfig()
 
 class JeolScaleCalibrator(ScaleCalibrator):
 	def initializeTEM(self):
@@ -356,18 +391,19 @@ class JeolScaleCalibrator(ScaleCalibrator):
 		self.last_mag = 0
 
 	def defineOptions(self):
+		# set existing tem options
+		tem_options = self.tem.getJeolConfig('tem option')
+		for key in tem_options.keys():
+			self.logger.cfg('tem option','%s' % key.upper(),tem_options[key])
 		self.use_pla = self.tem.getJeolConfig('tem option','use_pla') 
-		self.logger.cfg('tem option','USE_PLA','%s' % (str(self.use_pla)))
 		self.has_efilter = self.tem.getJeolConfig('tem option','energy_filter') 
-		self.logger.cfg('tem option','ENERGY_FILTER','%s' % (str(self.has_efilter)))
 		self.max_ls1 = self.tem.getJeolConfig('tem option','ls1_mag_max') 
-		self.logger.cfg('tem option','LS1_MAG_MAX','%d' % (self.max_ls1))
 		self.max_ls2 = self.tem.getJeolConfig('tem option','ls2_mag_max') 
-		self.logger.cfg('tem option','LS2_MAG_MAX','%d' % (self.max_ls2))
 		self.max_ls3 = self.tem.getJeolConfig('tem option','ls3_mag_max') 
-		self.logger.cfg('tem option','LS3_MAG_MAX','%d' % (self.max_ls3))
-		self.max_lm1 = self.tem.getJeolConfig('tem option','lm1_mag_max') 
-		self.logger.cfg('tem option','LM1_MAG_MAX','%d' % (self.max_lm1))
+		self.max_ls4 = self.tem.getJeolConfig('tem option','ls4_mag_max') 
+		self.max_lm1 = self.tem.getJeolConfig('tem option','lm1_mag_max')
+		# set constant eos values
+		self.logger.cfg('eos','USE_MODES','lowmag, mag1')
 
 	def getImagingEffectPropertyDict(self):
 		'''
@@ -499,5 +535,6 @@ class JeolScaleCalibrator(ScaleCalibrator):
 			getattr(self.move_class_instance,attr_name)(value[axis])
 			
 if __name__ == "__main__":
-	app = JeolScaleCalibrator()
+	outputfilename = 'jeol_test.cfg'
+	app = JeolScaleCalibrator(outputfilename)
 	app.calibrateAll()
