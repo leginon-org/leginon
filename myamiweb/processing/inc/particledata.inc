@@ -2906,15 +2906,22 @@ class particledata {
 	}
 
 	function getNumStackImages ($stackId) {
+		$r = $this->getStackImages($stackId);
+		return count($r);
+	}
+
+	function getStackImages ($stackId, $limit=null) {
+		//Get unique images in the stack
 		$q= "SELECT DISTINCT im.`DEF_id` AS imgid "
 			."FROM ApStackParticleData AS stpart "
 			."LEFT JOIN ApParticleData AS part "
 			."ON stpart.`REF|ApParticleData|particle` = part.`DEF_id` "
 			."LEFT JOIN ".DB_LEGINON.".`AcquisitionImageData` AS im "
 			."ON part.`REF|leginondata|AcquisitionImageData|image` = im.`DEF_id` "
-			."WHERE `REF|ApStackData|stack` = '$stackId'";
+			."WHERE `REF|ApStackData|stack` = '$stackId' ";
+		if ($limit) $q .= "LIMIT ".$limit." ";
 		$r = $this->mysql->getSQLResult($q);
-		return count($r);
+		return $r;
 	}
 
 	function getParticleMovieRunFromId($movierunid) {
@@ -3221,7 +3228,8 @@ class particledata {
 	function getPixelSizeFromImgIdEMQuery($imgid) {
 		// This is the more reliable query for pixel size but may take longer?
 		$q="SELECT ce.`SUBD|binning|x` as imgbin, "
-			."  pc.`pixelsize` as ccdpixelsize  "
+			."  pc.`pixelsize` as ccdpixelsize,  "
+			."  ce.`SUBD|pixel size|x` as physical_pixelsize  "
 			."FROM ".DB_LEGINON.".`AcquisitionImageData` AS a "
 			."LEFT JOIN ".DB_LEGINON.".`CameraEMData` AS ce "
 			."  ON (a.`REF|CameraEMData|camera` = ce.`DEF_id`) "
@@ -3259,6 +3267,15 @@ class particledata {
 		}
 		return $pixelsize;
 	}
+
+	function getStackCameraPhysicalPixelSize ($stackId) {
+		// return camera physical pixel size in meters
+		$r1 = $this->getStackImages ($stackId, $limit=1);
+		$q = $this->getPixelSizeFromImgIdEMQuery($r1[0]['imgid']);
+		list($r) = $this->mysql->getSQLResult($q);
+		return $r['physical_pixelsize'];
+	}
+
 
 	function displayParticleStats ($particleruns, $display_keys, $inspect=False, $selexval=False, $dispImg=True) {
 		$expId=$_GET['expId'];
@@ -5016,7 +5033,8 @@ class particledata {
 	}
 	
 	function getPreparedRefineStackData ( $refineid ) {
-		$q = "SELECT stack.*, stackref.pixelsize AS parent_pixelsize  "
+		$q = "SELECT stack.*, stackref.pixelsize AS parent_pixelsize, "
+			. "stackref.`DEF_id` AS parent_id "
 			. " FROM ApRefineStackData AS stack "
 			. " LEFT JOIN ApStackData AS stackref ON ( stackref.`DEF_id` = stack.`REF|ApStackData|stackref` ) "
 			. " WHERE stack.`REF|ApPrepRefineData|preprefine` = $refineid ";
