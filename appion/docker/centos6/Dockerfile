@@ -85,8 +85,8 @@ ADD ctffind-4.0.16-linux64.tar.gz /emg/sw/grigorieff/
 RUN mv -v /emg/sw/grigorieff/ctf /emg/sw/grigorieff/ctffind3
 RUN mv -v /emg/sw/grigorieff/ctffind /emg/sw/grigorieff/bin/ctffind4
 RUN ln -sv /emg/sw/grigorieff/ctffind3/ctffind3_mp.exe /emg/sw/grigorieff/bin/ctffind64.exe
-RUN chmod 775 /emg/sw/grigorieff/ctffind3/ctffind3_mp.exe 
-RUN chmod 775 /emg/sw/grigorieff/bin/ctffind4
+RUN chmod 777 /emg/sw/grigorieff/ctffind3/ctffind3_mp.exe 
+RUN chmod 777 /emg/sw/grigorieff/bin/ctffind4
 
 ### software
 COPY 06jul12a_00015gr_00028sq_00004hl_00002en.mrc /emg/data/leginon/06jul12a/rawdata/
@@ -103,9 +103,8 @@ COPY 06jul12a_00035gr_00063sq_00012hl_00004en.mrc /emg/data/leginon/06jul12a/raw
 RUN useradd -d /home/appionuser -g 100 -p 'Phys-554' -s /bin/bash appionuser && echo 'appionuser' && usermod -aG wheel appionuser
 RUN chmod 777 /home/appionuser
 RUN chown -R appionuser:users /home/appionuser
-USER appionuser
+#USER appionuser
 ENV HOME /home/appionuser
-#env HOME /
 WORKDIR /home/appionuser
 RUN mkdir -p .vnc
 RUN chmod 777 .vnc
@@ -122,16 +121,14 @@ RUN chown -R appionuser:users /home/appionuser
 RUN chmod 700 .vnc/xstartup
 EXPOSE 5901
 
+#ADD mysql.tgz /var/lib/mysql/
 COPY bashrc /etc/bashrc
 #RUN mkdir -p /home/appionuser/.mozilla/firefox/yvn3wpn8.default
 #COPY profiles.ini  /home/appionuser/.mozilla/firefox/
-COPY startup.sh /emg/startup.sh
-
+COPY startup.sh /emg/sw/startup.sh
 RUN updatedb
 
-ADD mysql.tgz /var/lib/mysql/
-
-CMD /emg/startup.sh
+CMD /emg/sw/startup.sh
 
 
 
