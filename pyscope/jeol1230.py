@@ -14,6 +14,15 @@ except:
 
 Debug = False
 
+# if a stage position movement is less than the following, then ignore it
+minimum_stage = {
+	'x': 5e-8,
+	'y': 5e-8,
+	'z': 5e-8,
+	'a': 0.004,
+	'b': 0.004,
+}
+
 class MagnificationsUninitialized(Exception):
 	pass
 
@@ -254,18 +263,96 @@ class Jeol1230(tem.TEM):
 		value['a'] = float(pos['a']/57.3)
 		return value
 
+	def checkStagePosition(self, position):
+		'''
+		Filter out the stage position axis which movement is smaller
+		than what is defined in minimum_stage
+		'''
+		current = self.getStagePosition()
+		bigenough = {}
+		for axis in ('x', 'y', 'z', 'a'):
+			# b is ignored
+			if axis in position:
+				delta = abs(position[axis] - current[axis])
+				if delta > minimum_stage[axis]:
+					bigenough[axis] = position[axis]
+		return bigenough
+
+	def confirmStagePosition(self, requested_position, axes=['z',]):
+		'''
+		Resend the requested stage position dict in axes until it reaches the tolerance.
+		'''
+		# JEM stage call may return without giving error when the position is not reached.
+		# Make it to retry.
+		# Used in alpha tilt on Jeol1230
+		accuracy = minimum_stage
+		for axis in axes:
+			self.trys = 0
+			while self.trys < 10:
+				current_position = self.getStagePosition()
+				if axis in requested_position.keys() and abs(current_position[axis] - requested_position[axis]) > accuracy[axis]:
+					self.trys += 1
+					if Debug == True:
+						print 'stage %s not reached' % axis
+						print abs(current_position[axis]-requested_position[axis])
+					self.setStagePositionByAxis(requested_position,axis)
+				else:
+					break
+			self.trys = 0
+
+	def setStagePositionByAxis(self, position, axis):
+ 		'''
+		Set requested position dict in only one axis and ignore the rest.
+		'''
+		keys = position.keys()
+		if axis not in keys:
+			return
+		if axis == 'a':
+			self._setStageA(position)
+		elif axis == 'z':
+			self._setStageZ(position)
+		else:
+			# BUG? This will move both x and y, even though axis is only one of them
+			self._setStageXThenY(position)
+
+	def _setStageZ(position):
+		axis = 'z'
+		value = self.checkStagePosition(position)
+		rawvalue = value[axis]*1e6
+		mode = 'fine'
+		self.jeol1230lib.setStagePosition(axis,rawvalue,mode)
+
+	def _setStageXThenY(position):
+		for axis in ('x','y'):
+			value = self.checkStagePosition(position)
+			rawvalue = value[axis]*1e6
+			mode = 'fine'
+			self.jeol1230lib.setStagePosition(axis,rawvalue,mode)
+
+	def _setStageA(self,position):
+		axis = 'a'
+		value = self.checkStagePosition(position)
+		if not value:
+			return
+		rawvalue = value[axis]*57.4
+		mode = 'fine'
+		self.jeol1230lib.setStagePosition(axis,rawvalue,mode)
+		self.confirmStagePosition(position,['a',])
+
 	# receive position in meter, angle in pi, backlash is 30 um
 	def setStagePosition(self, value):
+		value = self.checkStagePosition(value)
+		if not value:
+			return
 		if Debug == True:
 			print 'from jeol1230.py setStagePosition'
 		Backlash = 30e-6
+
 		prevalue = {'x': None, 'y': None, 'z': None, 'a': None}
 		for axis in ('x', 'y', 'z', 'a'):
 			if axis in value:
 				if axis == 'a':
-					prevalue[axis] = value[axis]*57.4
-					mode = 'fine'
-					self.jeol1230lib.setStagePosition(axis,prevalue[axis],mode)
+					self._setStageA(value)
 				elif axis == 'z':
 					prevalue[axis] = value[axis]*1e6
 					mode = 'fine'
@@ -276,9 +363,12 @@ class Jeol1230(tem.TEM):
 						mode = 'coarse'
 						self.jeol1230lib.setStagePosition(axis,prevalue[axis],mode)
 					else:
+						# This gives 0.7 to 1.2 um reproducibility
+						# set to backlash position in coarse mode
 						prevalue[axis] = (value[axis] - Backlash)*1e6
 						mode = 'coarse'
 						self.jeol1230lib.setStagePosition(axis,prevalue[axis],mode)
+						# set to real position in fine mode
 						prevalue[axis] = value[axis]*1e6
 						mode = 'fine'
 						self.jeol1230lib.setStagePosition(axis,prevalue[axis],mode)			# in micrometer
@@ -315,25 +405,30 @@ class Jeol1230(tem.TEM):
 		else:
 			ss = float(defocus) + self.getDefocus()
 		if self.jeol1230lib.setDefocus(ss) == True:
+			if abs(self.getDefocus()-defocus) > max(abs(defocus/10),1.5e-7):
+				# when defocus differences is large, the first
+				# setDefocus does not reach the set value
+				self.setDefocus(defocus,relative)
 			return True
 		else:
 			return False
 
-	# focus is recoreded as a reference for proceeding Z-height adjustment.
-	# The native focus value from Tecnai is normalized to -1 to 1.
-	# unit is meter
+	# focus value is recorded as encoded objective current
+	# unit is click
 	def getFocus(self):											
 		if Debug == True:
 			print 'from getFocus'
-		pos = self.jeol1230lib.getStagePosition()
-		focus  = float(pos['z'])/1e6
+		#pos = self.jeol1230lib.getStagePosition()
+		#focus  = float(pos['z'])/1e6
+		pos = self.jeol1230lib.getObjectiveCurrent()
+		focus  = pos
 		return focus
 
-	# set focus, unit is meter
+	# set focus, unit is click
 	def setFocus(self, value):
 		if Debug == True:
 			print 'from setFocus'
-		if self.jeol1230lib.setStagePosition('z', float(value)*1e6, 'coarse') ==  True:   # move stage in Z direction only
+		if self.jeol1230lib.setObjectiveCurrent(int(value)) ==  True:   # move stage in Z direction only
 			return True
 		else:
 			return False

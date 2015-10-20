@@ -183,7 +183,12 @@ function jobForm($extra=false)
 	$boxsize 	= $stacks[0][boxsize];	
 	$phaseflipped 	= $stacks[0][phaseflipped];	
 	$stackfilename  = $stacks[0][filename]; 
-	
+	$pstackid = $stacks[0]['parent_id'];
+	# camera physical pixel size is in meters, dstep is in micron	
+	$cam_phys_psize = $particle->getStackCameraPhysicalPixelSize ($pstackid);
+	$dstep = $cam_phys_psize*1e6;
+	for ($i=0; $i < count($stacks); $i++) $stacks[$i]['dstep'] = $dstep;
+
 	// Get the Kv, which is the high tension divided by 1000.
 	$hightension = $particle->getHighTensionFromSessionId( $expId );
 	$kv = $hightension/1000;
@@ -227,6 +232,7 @@ function jobForm($extra=false)
 	$html.= "<input type='hidden' NAME='phaseflipped' value='".$phaseflipped."'>\n";
 	$html.= "<input type='hidden' NAME='lastpart' value='".$lastPart."'>\n";
 	$html.= "<input type='hidden' NAME='kv' value='".$kv."'>\n";
+	$html.= "<input type='hidden' NAME='dstep' value='".$dstep."'>\n";
 	
 	// Start Table
 	$html.= "<TABLE BORDER=0 CLASS=tableborder CELLPADDING=15>";	

@@ -79,6 +79,7 @@ abstract class BasicRefineForm extends BasicForm
 				$this->stackInfo['lastPart'] = $stack[last_part];
 				$this->stackInfo['stackfilename'] = $stack[filename];
 				$this->stackInfo['parent_apix'] = $stack[parent_pixelsize] / 1e-10; // the angstroms per pixel for the original stack the refine stack was made from
+				$this->stackInfo['dstep'] = $stack[dstep];	
 				
 				break;
 			}			

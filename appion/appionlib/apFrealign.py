@@ -200,8 +200,10 @@ def generateParticleParams(params,modeldata,initparfile='params.0.par',extended=
 	params['inpar']=os.path.join(params['rundir'],initparfile)
 	apDisplay.printMsg("Creating parameter file: "+params['inpar'])
 	params['mode']=3
-	stackdata=getStackParticlesInOrder(params)
-	first_imageid = stackdata[0]['particle']['image'].dbid
+	stackpdata=getStackParticlesInOrder(params)
+	first_imageid = stackpdata[0]['particle']['image'].dbid
+	# set magnification with first image
+	frealign_mag = getFrealignStyleParticleMagnification(stackpdata[0],params['bin'])
 	f=open(params['inpar'],'w')
 	params['noClassification']=0
 	if params['reconiterid']:
@@ -214,10 +216,11 @@ def generateParticleParams(params,modeldata,initparfile='params.0.par',extended=
 		print "Writing out particle parameters"
 		
 	if 'last' not in params:
-		params['last'] = len(stackdata)
-	for i, particle in enumerate(stackdata[:params['last']]):
+		params['last'] = len(stackpdata)
+	for i, particle in enumerate(stackpdata[:params['last']]):
 		# defaults
 		particleparams = initializeParticleParams(i)
+		particleparams['mag'] = frealign_mag
 		# for helical reconstructions, film is helix number
 		if particle['particle']['helixnum']:
 			imgid=particle['particle']['image'].dbid
@@ -1526,3 +1529,11 @@ def frealign9_to_spider(inparfile, outspifile):
                 shy = float(params[i+1]['shifty'])
                 of.write("%10.3f%10.3f%10.3f%10.3f%10.3f\n" % (rot, theta, psi, shx, shy))
         of.close()
+
+def getFrealignStyleParticleMagnification(stackpdata,refinestack_bin):
+	stackbin = apStack.getStackBinningFromStackId(stackpdata['stack'].dbid)
+	totalbin =  stackbin * refinestack_bin
+	imgdata = stackpdata['particle']['image']
+	apix = apDatabase.getPixelSize(imgdata) # in angstroms
+	camera_pixel = imgdata['camera']['pixel size']['x']*imgdata['camera']['binning']['x'] # in meters
+	return camera_pixel / (apix * 1e-10 * totalbin)

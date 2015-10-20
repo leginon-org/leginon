@@ -670,6 +670,11 @@ def commitMaskedStack(params, oldstackparts, newname=False):
 	apDisplay.printMsg("finished")
 	return
 
+def getStackBinningFromStackId(stackId):
+	runsindata = getRunsInStack(stackId)
+	stackbin = runsindata[0]['stackRun']['stackParams']['bin']
+	return stackbin
+
 #===============
 def getStackPixelSizeFromStackId(stackId, msg=True):
 	"""
@@ -687,8 +692,7 @@ def getStackPixelSizeFromStackId(stackId, msg=True):
 	apDisplay.printWarning("Getting stack pixel size from leginon DB, not tested on defocal pairs")
 	stackpart = getOneParticleFromStackId(stackId, msg=msg)
 	imgapix = apDatabase.getPixelSize(stackpart['particle']['image'])
-	runsindata = getRunsInStack(stackId)
-	stackbin = runsindata[0]['stackRun']['stackParams']['bin']
+	stackbin = getStackBinningFromStackId(stackId)
 	stackapix = imgapix*stackbin
 	if msg is True:
 		apDisplay.printMsg("Stack "+str(stackId)+" pixel size: "+str(round(stackapix,3)))

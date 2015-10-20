@@ -289,6 +289,7 @@ class FrealignParams extends RefineFormParameters
 		$this->addParam( "phi", $phi, "Phi" );
 		$this->addParam( "x", $x, "X" );
 		$this->addParam( "y", $y, "Y" );
+		$this->addParam( "dstep", $dstep, "Camera physical pixel size in micron" );
 		
 		// disable any general params that do not apply to this method
 		$this->hideParam("outerAlignRadius");

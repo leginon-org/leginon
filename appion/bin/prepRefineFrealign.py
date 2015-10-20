@@ -140,16 +140,20 @@ class FrealignPrep3DRefinement(apPrepRefine.Prep3DRefinement):
 			return
 		# copy existing refined stack if possible
 		existing_refine_stack = apStack.getExistingRefineStack(self.stack['data'],'frealign',False,self.params['last'],self.params['bin'],lowpass=self.params['lowpass'],highpass=self.params['highpass'])
-		if existing_refine_stack:
-			if existing_refine_stack != os.path.join(self.params['rundir'],newstackroot+'.mrc'):
-				shutil.copyfile(existing_refine_stack,newstackroot+'.mrc')
-			new_partorderfile = os.path.join(self.params['rundir'],'stackpartorder.list')
-			existing_partorderfile = os.path.join(os.path.dirname(existing_refine_stack),'stackpartorder.list')
-			# particle order list also need to be copied
-			if not os.path.isfile(new_partorderfile) and os.path.isfile(existing_partorderfile):
-				shutil.copyfile(existing_partorderfile,new_partorderfile)
-			self.setFrealignStack(newstackroot)
-			return
+		try:
+			if existing_refine_stack:
+				if existing_refine_stack != os.path.join(self.params['rundir'],newstackroot+'.mrc'):
+					shutil.copyfile(existing_refine_stack,newstackroot+'.mrc')
+				new_partorderfile = os.path.join(self.params['rundir'],'stackpartorder.list')
+				existing_partorderfile = os.path.join(os.path.dirname(existing_refine_stack),'stackpartorder.list')
+				# particle order list also need to be copied
+				if not os.path.isfile(new_partorderfile) and os.path.isfile(existing_partorderfile):
+					shutil.copyfile(existing_partorderfile,new_partorderfile)
+				self.setFrealignStack(newstackroot)
+				return
+		except:
+			# make one from scratch if there is error
+			apDisplay.printMsg('Error copying existing refine stack, will regenerate')
 		if self.no_ctf_correction:
 			self.ImagicStackToFrealignMrcStack(self.stack['file'])
 			self.setFrealignStack(newstackroot)
@@ -192,9 +196,10 @@ class FrealignPrep3DRefinement(apPrepRefine.Prep3DRefinement):
 		if 'xmipp-norm' in paramdata.keys():
 			# myami-3.1 or before
 			normtext = self.setArgText('xmipp-normalize',(paramdata['xmipp-norm'],),True)
+			normtext = '--normalized '+normtext
 		elif 'normalizemethod' in paramdata.keys():
 			# myami-3.2 or newer
-			normtext = self.setArgText('normalize-method',(paramdata['normalizemethod'],),True)
+			normtext = '--normalize-method=%s' % (paramdata['normalizemethod'],)
 		sessionid = int(self.params['expid'])
 		sessiondata = apDatabase.getSessionDataFromSessionId(sessionid)
 		sessionname = sessiondata['name']
@@ -210,7 +215,7 @@ class FrealignPrep3DRefinement(apPrepRefine.Prep3DRefinement):
 		else:
 			defoctext = ''
 		cmd = '''
-makestack2.py --single=%s --fromstackid=%d %s %s %s %s %s --no-invert --normalized %s --boxsize=%d --bin=%d --description="frealign refinestack based on %s(id=%d)" --projectid=%d --preset=%s --runname=%s --rundir=%s --no-wait --no-commit --no-continue --session=%s --expId=%d --jobtype=makestack2
+makestack2.py --single=%s --fromstackid=%d %s %s %s %s %s --no-invert %s --boxsize=%d --bin=%d --description="frealign refinestack based on %s(id=%d)" --projectid=%d --preset=%s --runname=%s --rundir=%s --no-wait --no-commit --no-continue --session=%s --expId=%d --jobtype=makestack2
 		''' % (os.path.basename(newstackimagicfile),stackid,lowpasstext,highpasstext,partlimittext,reversetext,defoctext,normtext,unbinnedboxsize,bin,stackpathname,stackid,projectid,presetname,newstackrunname,newstackrundir,sessionname,sessionid)
 		logfilepath = os.path.join(newstackrundir,'frealignstackrun.log')
 		returncode = self.runAppionScriptInSubprocess(cmd,logfilepath)

@@ -31,6 +31,8 @@ class FrealignRefineJob(apRefineJob.RefineJob):
 			help="include phi in refinement if set to True")
 		self.parser.add_option('--y', dest='y', default=False, action='store_true',
 			help="include phi in refinement if set to True")
+		self.parser.add_option("--dstep", dest="dstep", type="float",
+			help="Camera physical pixel size in micron", metavar="#")
 
 	#================
 	def setIterationParamList(self):
@@ -97,6 +99,8 @@ class FrealignRefineJob(apRefineJob.RefineJob):
 				#{'name':"sym", 'default':'', 'help':"symmetry. Options are I, O, Dx (e.g. D7), or Cx (e.g. C7)"},
 
 				####card 6
+				# relmag is refined when magnification is refined.
+				# dstep is the physical pixel size of the camera
 				# target is always 30.0
 					#{'name':"target", 'default':30.0, 
 					#	'help':"target phase residual during refinement"},
@@ -150,6 +154,7 @@ class FrealignRefineJob(apRefineJob.RefineJob):
 		self.params['ipmax'] = 10
 		self.params['ifirst'] = 1
 		self.params['relmag'] = 1.0
+		self.params['dstep'] = self.params['dstep']
 		self.params['target'] = 30.0
 		self.params['beamtiltx'] = 0.0
 		self.params['beamtilty'] = 0.0
@@ -210,7 +215,7 @@ class FrealignRefineJob(apRefineJob.RefineJob):
 		card = ("symmetry",)
 		frealign_inputparams.append(card)
 		####card 6
-		card = ("relmag","apix","target", "thresh", "cs", "kv", "beamtiltx", "beamtilty",) 
+		card = ("relmag","dstep","target", "thresh", "cs", "kv", "beamtiltx", "beamtilty",) 
 		frealign_inputparams.append(card)
 		####card 7
 		card = ("rrec", "hp", "lp", "dfstd", "rbfact",)
