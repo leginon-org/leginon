@@ -407,7 +407,7 @@ class ManualAcquisition(node.Node):
 		tmpcam['align frames'] = False
 
 		camsize = self.instrument.ccdcamera.getCameraSize()
-		cutsize = self.calculateCutSize(camsize)	
+		cutsize = min(self.calculateCutSize(camsize),origcam['dimension']['x'],origcam['dimension']['y'])	
 		for axis in ('x','y'):
 			tmpcam['dimension'][axis] = cutsize
 			tmpcam['offset'][axis] = (camsize[axis] / tmpcam['binning'][axis] - cutsize) / 2
