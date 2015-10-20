@@ -42,9 +42,9 @@ def findPeaks(imgdict, maplist, params, maptype="ccmaxmap", pikfile=True):
 		## backup for AttributeError: 'memmap' object has no attribute 'offset', bug #3322
 		peaktreelist = []
 		for count in range(0,len(maplist)):
-			peaktree = runFindPeaks(params,maplist,maptype,pikfile,thresh,pixdiam,count,olapmult,
+			mappeaktree = runFindPeaks(params,maplist,maptype,pikfile,thresh,pixdiam,count,olapmult,
 				maxpeaks,maxsizemult,msg,bin,peaktype,pixrad,imgdict)
-		peaktreelist.append(peaktree)
+			peaktreelist.append(mappeaktree)
 
 	peaktree = mergePeakTrees(imgdict, peaktreelist, params, msg, pikfile)
 
