@@ -333,6 +333,10 @@ class PixelSizeListCtrl(wx.ListCtrl, ListCtrlAutoWidthMixin):
 		return width, height
 
 	def addPixelSize(self, mag, ps, comment):
+		'''
+		This adds pixelsize (mag,ps,comment) to the CtrlList.  It replaces
+		existing values if mag value coincides with existing one.
+		'''
 		mag = int(mag)
 		if ps is None:
 			psstr = ''
@@ -384,9 +388,7 @@ class PixelSizeCalibrationDialog(wx.Dialog):
 		self.mag, self.mags = self.node.getMagnification()
 
 		self.lcpixelsize = PixelSizeListCtrl(self, -1)
-		self.pixelsizes = self.node.getCalibrations()
-		self.pixelsizes.sort()
-		self.pixelsizes.reverse()
+		self.setLocalPixelSizes(self.node.getCalibrations())
 		for ps in self.pixelsizes:
 			mag, ps, comment = ps
 			self.lcpixelsize.addPixelSize(mag, ps, comment)
@@ -424,6 +426,11 @@ class PixelSizeCalibrationDialog(wx.Dialog):
 		self.Bind(wx.EVT_BUTTON, self.onEditButton, self.bedit)
 		self.Bind(wx.EVT_BUTTON, self.onExtrapolateButton, self.bextrapolate)
 
+	def setLocalPixelSizes(self, pixelsizes):
+		self.pixelsizes = pixelsizes
+		self.pixelsizes.sort()
+		self.pixelsizes.reverse()
+
 	def onEditButton(self, evt):
 		selected = self.lcpixelsize.getPixelSizes(wx.LIST_STATE_SELECTED)
 		if len(selected) > 1:
@@ -448,6 +455,8 @@ class PixelSizeCalibrationDialog(wx.Dialog):
 			comment = dialog.tccomment.GetValue()
 			self.node._store(mag, ps, comment)
 			self.lcpixelsize.addPixelSize(mag, ps, comment)
+			# refresh values read by the ExtrapolateDialog
+			self.setLocalPixelSizes(self.lcpixelsize.getPixelSizes())
 		dialog.Destroy()
 
 	def onExtrapolateButton(self, evt):
@@ -464,9 +473,12 @@ class PixelSizeCalibrationDialog(wx.Dialog):
 			extrapolated = dialog.pslc.getPixelSizes()
 			mags = map(lambda (m, p, c): m, self.pixelsizes)
 			for pixelsize in dialog.pslc.getPixelSizes():
+				# refresh values in PixelSizeCalibrationDialog
+				self.lcpixelsize.addPixelSize(*pixelsize)
 				if pixelsize not in self.pixelsizes:
 					self.node._store(*pixelsize)
-					self.lcpixelsize.addPixelSize(*pixelsize)
+			# refresh values read by the gui
+			self.setLocalPixelSizes(extrapolated)
 		dialog.Destroy()
 
 class MeasurementListCtrl(wx.ListCtrl, ListCtrlAutoWidthMixin):
