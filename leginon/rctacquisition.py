@@ -10,8 +10,9 @@ import acquisition
 import gui.wx.RCTAcquisition
 try:
 	import openCVcaller
+	NO_CV = False
 except:
-	print "openCV caller import failed. Can not run RCT"
+	NO_CV = True
 import pyami.timedproc
 import numpy
 import time
@@ -105,7 +106,11 @@ class RCTAcquisition(acquisition.Acquisition):
 		self.tiltseries = None
 		self.tilttest_cycle = 0
 		self.shiftmatrix_maker = transformregistration.CorrelationRegistration(self)
+		self.showCVImportError()
 
+	def showCVImportError(self):
+		if NO_CV:
+			self.logger.error('Computer vision module import error. Can not run RCT')
 	#====================
 	def setImageFilename(self, imagedata):
 		setImageFilename(imagedata, tiltnumber=self.tiltnumber)
