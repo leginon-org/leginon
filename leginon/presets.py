@@ -879,6 +879,13 @@ class PresetsManager(node.Node):
 		if newpreset is None:
 			self.panel.presetsEvent()
 			return
+		# refs #3255 retry if image shift or beam shift parameters are not gotten 
+		trys = 0
+		while trys < 3 and (newpreset['image shift']['x'] is None or newpreset['beam shift']['x'] is None):
+			self.logger.info('scope parameters not complete, retry....')
+			newpreset = self._fromScope(newname, temname, camname, None, copybeam)
+			trys += 1
+
 		self.setOrder()
 		self.panel.setParameters(newpreset)
 		self.logger.info('Preset from instrument: %s' % (newname,))
