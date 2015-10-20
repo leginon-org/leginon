@@ -149,8 +149,9 @@ class RCTAcquisition(acquisition.Acquisition):
 
 			## drift check
 			#self.declareDrift('rct')
-			# dritt is checked only if threshold is bigger than zero
-			if self.settings['drift threshold'] > 0.0001:
+			# drift is checked only if threshold is bigger than zero
+			# drift threshold is in meters/sec
+			if self.settings['drift threshold'] > 1e-8:
 				try:
 					focustarget = self.getFocusTargets(tiltedtargetlist)[0]
 				except:
