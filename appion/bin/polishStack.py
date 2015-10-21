@@ -63,13 +63,13 @@ class stackPolisherScript(appionScript.AppionScript):
 		self.parser.add_option("--expweight", dest="expweight", default=False, action="store_true",
 			help="turns on exposure weighting, dont specify option to turn off exposure weighting", metavar="")
 		self.parser.add_option("--expperframe", dest="expperframe", type=float,
-			help="", metavar="")
+			help="Exposure per frame in electrons per Angstrom squared", metavar="")
 		self.parser.add_option("--rmax1", dest="rmax1", type=int, default=500,
-			help="", metavar="")
+			help="Low resolution cutoff (in Angstroms) used for alignment", metavar="")
 		self.parser.add_option("--rmax2", dest="rmax2", type=int, default=20,
-			help="", metavar="")
+			help="High resolution cutoff (in Angstroms) used for alignment", metavar="")
 		self.parser.add_option("--bfactor", dest="bfactor", type=int, default=2000,
-			help="", metavar="")
+			help="B-factor (in A**2) used for alignment", metavar="")
 		self.parser.add_option("--total_dose", dest="total_dose", type=float, 
 			help="Total dose for all frames, if value not saved in database (optional)", metavar="")
 #		self.parser.add_option("", dest="", type="", default="",
