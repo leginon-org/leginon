@@ -37,7 +37,7 @@ class RelionMaker(veryBasicScript.VeryBasicScript):
 		if self.params['starfile'] is None:
 			print apDisplay.printError("please specify an output starfile")	
 		if self.params['ctfrunid'] is None:
-			print apDisplay.printError("please specify a CTF run ID from Appion db")	
+			print apDisplay.printWarning("using best CTF run ID from Appion db")	
 		if self.params['stackid'] is None:
 			print apDisplay.printError("please specify a stack ID from Appion db")	
 		if self.params['voltage'] is None:
@@ -76,27 +76,40 @@ class RelionMaker(veryBasicScript.VeryBasicScript):
 		### write info to starfile
 		olddx = 0
 		micn = 0
+		oldimgid = None
 		for i in range(len(particledata)):
 			if i % 1000 == 0:
 				print "done with %d particles" % i
 	
 			### CTF info
 			image = particledata[i]['particle']['image']
+			imgid = image.dbid
 			try:
 				ctf = ctfdb.getCtfValueForCtfRunId(image, ctfrunid, msg=False)
 				dx = ctf['defocus1'] * 10e9 
 				dy = ctf['defocus2'] * 10e9 
 				astig = ctf['angle_astigmatism']
 			except: 
-				print "didn't find CTF values for image ", image.dbid
+				ctf = None
+#				print "didn't find CTF values for image ", image.dbid
 	
-	#		ctf = ctf = ctfdb.getBestCtfValueForImage(image, msg=False)
 			if ctf is None:
-				print i, "getting best value"
-				ctf = ctfdb.getBestCtfValueForImage(image, msg=False, method='ctffind')
-				dx = ctf[0]['defocus1'] * 10e9 
-				dy = ctf[0]['defocus2'] * 10e9 
-				astig = ctf[0]['angle_astigmatism']		
+				if oldimgid != imgid:
+					print "particle %d: " % i, "getting best value for image: %d" % imgid
+					ctf = ctfdb.getBestCtfValueForImage(image, msg=False, method='ctffind')
+					dx = ctf[0]['defocus1'] * 10e9 
+					dy = ctf[0]['defocus2'] * 10e9 
+					astig = ctf[0]['angle_astigmatism']		
+					oldctf = ctf
+					oldimgid = imgid
+				else:
+					try:
+						ctf = oldctf
+						dx = oldctf[0]['defocus1'] * 10e9
+						dy = oldctf[0]['defocus2'] * 10e9
+						astig = oldctf[0]['angle_astigmatism']
+					except:
+						apDisplay.printError("no CTF information for image")
 	
 			if dx != olddx:
 				micn += 1
