@@ -128,12 +128,13 @@ class RawTransfer(object):
 			# does not work on Windows
 			abspath = os.path.abspath(src)
 			dirpath,basename = os.path.split(abspath)
-			if src.endswith('/'):
+			if os.path.isdir(src):
 				cmd = 'find %s -type d -empty -prune -exec rmdir --ignore-fail-on-non-empty -p \{\} \;' % (basename,)
 				print 'cd', dirpath
-			print cmd
-			p = subprocess.Popen(cmd, shell=True, cwd=dirpath)
-			p.wait()
+				os.chdir(dirpath)
+				print cmd
+				p = subprocess.Popen(cmd, shell=True, cwd=dirpath)
+				p.wait()
 		else:
 			self.removeEmptyFolders(os.path.abspath(src))
 
