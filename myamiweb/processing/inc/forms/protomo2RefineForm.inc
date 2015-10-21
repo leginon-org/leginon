@@ -13,6 +13,9 @@ require_once "basicLayoutForm.inc";
 require_once "inc/processing.inc";
 require_once "inc/appionloop.inc";
 
+ini_set('session.gc_maxlifetime', 604800);
+session_set_cookie_params(604800);
+
 session_start();
 $tiltseries=$_SESSION['tiltseries'];
 $sessionname=$_SESSION['sessionname'];
@@ -26,22 +29,25 @@ class Protomo2RefineForm extends BasicLayoutForm
 	$r2_sampling='4', $r3_sampling='2', $r4_sampling='1', $r5_sampling='1', $map_sampling='8', $thickness='1000', $pixelsize='', $r1_lp_diam_x='15',
 	$r2_lp_diam_x='15', $r3_lp_diam_x='15', $r4_lp_diam_x='15', $r5_lp_diam_x='', $r1_lp_apod_x='25', $r2_lp_apod_x='20', $r3_lp_apod_x='15',
 	$r4_lp_apod_x='10', $r5_lp_apod_x='', $r1_lp_diam_y='15', $r2_lp_diam_y='15', $r3_lp_diam_y='15', $r4_lp_diam_y='15', $r5_lp_diam_y='',
+	$r1_mask_apod_x='10', $r2_mask_apod_x='10', $r3_mask_apod_x='10', $r4_mask_apod_x='10', $r5_mask_apod_x='10',
+	$r1_mask_apod_y='10', $r2_mask_apod_y='10', $r3_mask_apod_y='10', $r4_mask_apod_y='10', $r5_mask_apod_y='10',
 	$r1_lp_apod_y='25', $r2_lp_apod_y='20', $r3_lp_apod_y='15', $r4_lp_apod_y='10', $r5_lp_apod_y='', $r1_hp_diam_x='250', $r2_hp_diam_x='350',
 	$r3_hp_diam_x='450',$r4_hp_diam_x='550', $r5_hp_diam_x='', $r1_hp_diam_y='250', $r2_hp_diam_y='350', $r3_hp_diam_y='450', $r4_hp_diam_y='550',
 	$r5_hp_diam_y='', $r1_hp_apod_x='75', $r2_hp_apod_x='100', $r3_hp_apod_x='150', $r4_hp_apod_x='200', $r5_hp_apod_x='', $r1_hp_apod_y='75',
-	$r2_hp_apod_y='100', $r3_hp_apod_y='150', $r4_hp_apod_y='200', $r5_hp_apod_y='', $raw_path='', $r1_iters='15', $r2_iters='10', $r3_iters='5',
+	$r2_hp_apod_y='100', $r3_hp_apod_y='150', $r4_hp_apod_y='200', $r5_hp_apod_y='', $r1_iters='15', $r2_iters='10', $r3_iters='5',
 	$r4_iters='5', $r5_iters='0', $param='', $binning='true', $preprocessing='true', $select_images='', $exclude_images='', $border='100',
 	$clip_low='3.5', $clip_high='3.5', $thr_low='', $thr_high='', $gradient='true', $r1_corr_mode='mcf', $r2_corr_mode='mcf', $r3_corr_mode='mcf',
 	$r4_corr_mode='mcf', $r5_corr_mode='', $gradient_switch='', $iter_gradient='', $iter_gradient_switch='', $filter='median', $r1_kernel_x='',
 	$r2_kernel_x='', $r3_kernel_x='', $r4_kernel_x='', $r5_kernel_x='', $r1_kernel_y='', $r2_kernel_y='',$r3_kernel_y='', $r4_kernel_y='',
-	$r5_kernel_y='', $grow='0', $window_area='0.95', $mask_apod_x='', $mask_apod_y='', $mask_width_x='', $mask_width_y='', $do_estimation='false',
+	$r5_kernel_y='', $grow='0', $window_area='0.95', $mask_width_x='', $mask_width_y='', $do_estimation='false',
 	$norotations='false', $max_correction='', $correlation_size_x='160', $correlation_size_y='160', $r1_peak_search_radius_x='300',
 	$r2_peak_search_radius_x='300', $r3_peak_search_radius_x='300', $r4_peak_search_radius_x='300', $r5_peak_search_radius_x='300',
 	$r1_peak_search_radius_y='300', $r2_peak_search_radius_y='300', $r3_peak_search_radius_y='300', $r4_peak_search_radius_y='300',
 	$r5_peak_search_radius_y='300', $orientation='true', $orientation_switch='', $azimuth='true', $azimuth_switch='', $elevation='false',
-	$elevation_switch='', $rotation='true', $rotation_switch='', $scale='false', $scale_switch='', $logging='true', $loglevel='2', $map_size_x='512',
-	$map_size_y='512', $filename_prefix='', $image_file_type='', $cachedir='cache', $protomo_outdir='out', $tilt_clip='', $create_reconstruction='true',
-	$show_window_size='true', $create_tilt_video='true', $keep_recons='false', $video_type='', $restart_cycle='', $parallel='' )
+	$elevation_switch='', $rotation='true', $rotation_switch='', $scale='false', $scale_switch='', $logging='true', $loglevel='2', $slab='true',
+	$map_size_x='512', $map_size_y='512', $filename_prefix='', $image_file_type='', $cachedir='cache', $protomo_outdir='out', $tilt_clip='',
+	$create_reconstruction='true', $show_window_size='true', $create_tilt_video='true', $keep_recons='false', $video_type='', $restart_cycle='',
+	$parallel='')
 	{
 		parent::__construct($expId, $extraHTML);
 		//print "_POST:" . "<br>";
@@ -117,6 +123,11 @@ class Protomo2RefineForm extends BasicLayoutForm
 		global $imageinfo;
 		$_POST['runname']=$_SESSION['runname'];
 		$_POST['outdir']=$_SESSION['outdir'];
+		if ($imageinfo['dimx'] < 2049 or $imageinfo['dimy'] < 2049){
+			$_POST['map_sampling'] = $map_sampling='4';
+		}else{
+			$_POST['map_sampling'] = $map_sampling='8';
+		}
 		
 		if ($_POST['settings'] == 1 or $_POST['settings'] == 2)  //Express or Basic Settings
 		{
@@ -166,11 +177,6 @@ class Protomo2RefineForm extends BasicLayoutForm
 			$_POST['tilt_clip'] = $tilt_clip='true';
 			$_POST['show_window_size'] = $show_window_size='true';
 			$_POST['video_type'] = $video_type='html5vid';
-			if ($imageinfo['dimx'] < 2049 or $imageinfo['dimy'] < 2049){
-				$_POST['map_sampling'] = $map_sampling='4';
-			}else{
-				$_POST['map_sampling'] = $map_sampling='8';
-			}
 			$_POST['map_size_x'] = $map_size_x=intval($imageinfo['dimx']/$map_sampling);
 			$_POST['map_size_y'] = $map_size_x=intval($imageinfo['dimy']/$map_sampling);
 			$_POST['keep_recons'] = $keep_recons='false';
@@ -759,7 +765,7 @@ class Protomo2RefineForm extends BasicLayoutForm
 		//------ Set Parameters for the parent class, BasicLoopForm (general Appion params) -----//
 		
 		// Set the publications to be references on the web pages
-		$pubList = array('protomo');
+		$pubList = array('appion-protomo', 'protomo');
 		$this->setPublications( $pubList );
 		$this->setJobType( 'protomo' );
 		$this->setOutputDirectory( 'protomo_alignments' );
@@ -862,7 +868,6 @@ class Protomo2RefineForm extends BasicLayoutForm
 		$params->addParam( "r3_corr_mode", $r3_corr_mode, "R3" );
 		$params->addParam( "r4_corr_mode", $r4_corr_mode, "R4" );
 		$params->addParam( "r5_corr_mode", $r5_corr_mode, "R5 | Correlation Mode (xcf, mcf, pcf, dbl)" );
-		$params->addParam( "raw_path", $raw_path, "Alternate Raw Image Path" );
 		$params->addParam( "r1_iters", $r1_iters, "R1" );
 		$params->addParam( "r2_iters", $r2_iters, "R2" );
 		$params->addParam( "r3_iters", $r3_iters, "R3" );
@@ -930,6 +935,7 @@ class Protomo2RefineForm extends BasicLayoutForm
 		$params->addParam( "create_reconstruction", $create_reconstruction, "Create a Reconstruction Video" );
 		$params->addParam( "show_window_size", $show_window_size, "Show Window Size in Reconstruction Video" );
 		$params->addParam( "keep_recons", $keep_recons, "Keep Intermediate Reconstruction" );
+		$params->addParam( "slab", $slab, "Slab-Like Object" );
 		$params->addParam( "map_size_x", $map_size_x, "Reconstructon Size (x)" );
 		$params->addParam( "map_size_y", $map_size_y, "Reconstructon Size (y)" );
 		$params->addParam( "tilt_clip", $tilt_clip, "Clip Tilt-Series Video Pixel Values" );
@@ -1167,6 +1173,16 @@ class Protomo2RefineForm extends BasicLayoutForm
 				
 				$html .= "
 			    <br />
+			    <H4>Back-Projection Map Parameters ".docpop('mapparam_info', '(Info)')."</H4>
+			    <hr />";
+				
+				$html.= '<select name="slab" style="width:66px">';
+				$html.= '<option selected value="true">true</option>';
+				$html.= '<option value="false">false</option>';
+				$html.= '</select>'; $html.= docpop('protomo_slab', ' Slab-like Objects').'<br>';
+				
+				$html .= "
+			    <br />
 			    <H4>Depiction Parameters ".docpop('depictionparam_info', '(Info)')."</H4>
 			    <hr />";
 				
@@ -1201,8 +1217,7 @@ class Protomo2RefineForm extends BasicLayoutForm
 				$html.= $params->insertTextFieldInRow( "r3_sampling", $fieldSize2 ).'│ ';
 				$html.= $params->insertTextFieldInRow( "r4_sampling", $fieldSize2 ).'│ ';
 				$html.= $params->insertTextField( "r5_sampling", $fieldSize2 );
-				$html.= $params->insertTextField( "raw_path", $fieldSize );
-				$html.= $params->insertTextField( "select_images", $fieldSize );
+				//$html.= $params->insertTextField( "select_images", $fieldSize );
 				$html.= $params->insertTextField( "exclude_images", $fieldSize );
 				$html.= '<select name="parallel" style="width:66px">';
 				$html.= '<option selected value="True">true</option>';
@@ -1432,9 +1447,18 @@ class Protomo2RefineForm extends BasicLayoutForm
 				
 				$html .= "
 			    <br />
-			    <H4>Depiction Parameters ".docpop('depictionparam_info', '(Info)')."</H4>
+			    <H4>Back-Projection Map Parameters ".docpop('mapparam_info', '(Info)')."</H4>
 			    <hr />";
 				
+				$html.= '<select name="slab" style="width:66px">';
+				$html.= '<option selected value="true">true</option>';
+				$html.= '<option value="false">false</option>';
+				$html.= '</select>'; $html.= docpop('protomo_slab', ' Slab-like Objects').'<br>';
+				
+				$html .= "
+			    <br />
+			    <H4>Depiction Parameters ".docpop('depictionparam_info', '(Info)')."</H4>
+			    <hr />";
 				
 				$html.= $params->insertTextField( "correlation_size_x", $fieldSize );
 				$html.= $params->insertTextField( "correlation_size_y", $fieldSize );
@@ -1521,6 +1545,9 @@ class Protomo2RefineForm extends BasicLayoutForm
 		$_SESSION['iters'] = $_POST['r1_iters'] + $_POST['r2_iters'] + $_POST['r3_iters'] + $_POST['r4_iters'] + $_POST['r5_iters'];
 		$_SESSION['imageinfo'] = $imageinfo;
 		$_SESSION['protomo_outdir'] = $_POST['protomo_outdir'];
+		$_SESSION['preset_size'] = $_POST['preset_size'];
+		$_SESSION['preset_search'] = $_POST['preset_search'];
+		$_SESSION['preset_type'] = $_POST['preset_type'];
 
 		// Only display link to next step in tomo processing if on completed Command page
 		if (isset($_POST['r1_region_x']) AND isset($_POST['r1_region_y']) AND isset($_POST['thickness']) AND isset($_SESSION['iters']) AND isset($_POST['process']))

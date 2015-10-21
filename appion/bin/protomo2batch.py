@@ -21,7 +21,7 @@ from scipy.ndimage.interpolation import rotate as imrotate
 try:
 	import protomo
 except:
-	print "Protomo did not get imported"
+	apDisplay.printWarning("Protomo did not get imported. Alignment and reconstruction functionality won't work.")
 
 def parseOptions():
 	parser=optparse.OptionParser()
@@ -89,7 +89,7 @@ def parseOptions():
 		help="Number of times to retry refinement, which sometimes fails because the search area is too big, e.g. --refine_retry_align=5", metavar="int")
 	parser.add_option("--refine_retry_shrink", dest="refine_retry_shrink",  type="float",  default="0.9",
 		help="How much to shrink the window size from the previous retry, e.g. --refine_retry_shrink=0.75", metavar="float")
-	parser.add_option("--video_type", dest="video_type",  default="gif",
+	parser.add_option("--video_type", dest="video_type",  default="html5vid",
 		help="Appion: Create either gifs or html5 videos using 'gif' or 'html5vid', respectively, e.g. --video_type=html5vid")
 	parser.add_option("--restart_cycle", dest="restart_cycle",
 		help="Restart a Refinement at this iteration, e.g. --restart_cycle=2 or --restart_cycle=best")	
@@ -126,101 +126,101 @@ def parseOptions():
 	parser.add_option("--r5_region_y", dest="r5_region_y", default=512, type="int",
 		help="Pixels in y to use for region matching, e.g. --r5_region=1024", metavar="int")
 	parser.add_option("--lowpass_diameter_x", dest="lowpass_diameter_x",  default=0.5, type="float",
-		help="in fractions of nyquist, e.g. --lowpass_diameter_x=0.4", metavar="float")
+		help="Provide in angstroms. This will be converted to Protomo units, e.g. --lowpass_diameter_x=0.4", metavar="float")
 	parser.add_option("--r1_lowpass_diameter_x", dest="r1_lowpass_diameter_x",  default=0.5, type="float",
-		help="in fractions of nyquist, e.g. --r1_lowpass_diameter_x=0.4", metavar="float")
+		help="Provide in angstroms. This will be converted to Protomo units, e.g. --r1_lowpass_diameter_x=0.4", metavar="float")
 	parser.add_option("--r2_lowpass_diameter_x", dest="r2_lowpass_diameter_x",  default=0.5, type="float",
-		help="in fractions of nyquist, e.g. --r2_lowpass_diameter_x=0.4", metavar="float")
+		help="Provide in angstroms. This will be converted to Protomo units, e.g. --r2_lowpass_diameter_x=0.4", metavar="float")
 	parser.add_option("--r3_lowpass_diameter_x", dest="r3_lowpass_diameter_x",  default=0.5, type="float",
-		help="in fractions of nyquist, e.g. --r3_lowpass_diameter_x=0.4", metavar="float")
+		help="Provide in angstroms. This will be converted to Protomo units, e.g. --r3_lowpass_diameter_x=0.4", metavar="float")
 	parser.add_option("--r4_lowpass_diameter_x", dest="r4_lowpass_diameter_x",  default=0.5, type="float",
-		help="in fractions of nyquist, e.g. --r4_lowpass_diameter_x=0.4", metavar="float")
+		help="Provide in angstroms. This will be converted to Protomo units, e.g. --r4_lowpass_diameter_x=0.4", metavar="float")
 	parser.add_option("--r5_lowpass_diameter_x", dest="r5_lowpass_diameter_x",  default=0.5, type="float",
-		help="in fractions of nyquist, e.g. --r5_lowpass_diameter_x=0.4", metavar="float")
+		help="Provide in angstroms. This will be converted to Protomo units, e.g. --r5_lowpass_diameter_x=0.4", metavar="float")
 	parser.add_option("--lowpass_diameter_y", dest="lowpass_diameter_y",  default=0.5, type="float",
-		help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --lowpass_diameter_y=0.4", metavar="float")
+		help="Provide in angstroms. This will be converted to Protomo units, e.g. --lowpass_diameter_y=0.4", metavar="float")
 	parser.add_option("--r1_lowpass_diameter_y", dest="r1_lowpass_diameter_y",  default=0.5, type="float",
-		help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --r1_lowpass_diameter_y=0.4", metavar="float")
+		help="Provide in angstroms. This will be converted to Protomo units, e.g. --r1_lowpass_diameter_y=0.4", metavar="float")
 	parser.add_option("--r2_lowpass_diameter_y", dest="r2_lowpass_diameter_y",  default=0.5, type="float",
-		help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --r2_lowpass_diameter_y=0.4", metavar="float")
+		help="Provide in angstroms. This will be converted to Protomo units, e.g. --r2_lowpass_diameter_y=0.4", metavar="float")
 	parser.add_option("--r3_lowpass_diameter_y", dest="r3_lowpass_diameter_y",  default=0.5, type="float",
-		help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --lowpass_diameter_y=0.4", metavar="float")
+		help="Provide in angstroms. This will be converted to Protomo units, e.g. --lowpass_diameter_y=0.4", metavar="float")
 	parser.add_option("--r4_lowpass_diameter_y", dest="r4_lowpass_diameter_y",  default=0.5, type="float",
-		help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --r4_lowpass_diameter_y=0.4", metavar="float")
+		help="Provide in angstroms. This will be converted to Protomo units, e.g. --r4_lowpass_diameter_y=0.4", metavar="float")
 	parser.add_option("--r5_lowpass_diameter_y", dest="r5_lowpass_diameter_y",  default=0.5, type="float",
-		help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --r5_lowpass_diameter_y=0.4", metavar="float")
+		help="Provide in angstroms. This will be converted to Protomo units, e.g. --r5_lowpass_diameter_y=0.4", metavar="float")
 	parser.add_option("--lowpass_apod_x", dest="lowpass_apod_x", default=0.05, type="float",
-		help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --lowpass_diameter_x=0.4", metavar="float")
+		help="Provide in angstroms. This will be converted to Protomo units, e.g. --lowpass_diameter_x=0.4", metavar="float")
 	parser.add_option("--r1_lowpass_apod_x", dest="r1_lowpass_apod_x", default=0.05, type="float",
-		help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --r1_lowpass_diameter_x=0.4", metavar="float")
+		help="Provide in angstroms. This will be converted to Protomo units, e.g. --r1_lowpass_diameter_x=0.4", metavar="float")
 	parser.add_option("--r2_lowpass_apod_x", dest="r2_lowpass_apod_x", default=0.05, type="float",
-		help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --r2_lowpass_diameter_x=0.4", metavar="float")
+		help="Provide in angstroms. This will be converted to Protomo units, e.g. --r2_lowpass_diameter_x=0.4", metavar="float")
 	parser.add_option("--r3_lowpass_apod_x", dest="r3_lowpass_apod_x", default=0.05, type="float",
-		help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --r3_lowpass_diameter_x=0.4", metavar="float")
+		help="Provide in angstroms. This will be converted to Protomo units, e.g. --r3_lowpass_diameter_x=0.4", metavar="float")
 	parser.add_option("--r4_lowpass_apod_x", dest="r4_lowpass_apod_x", default=0.05, type="float",
-		help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --r4_lowpass_diameter_x=0.4", metavar="float")
+		help="Provide in angstroms. This will be converted to Protomo units, e.g. --r4_lowpass_diameter_x=0.4", metavar="float")
 	parser.add_option("--r5_lowpass_apod_x", dest="r5_lowpass_apod_x", default=0.05, type="float",
-		help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --r5_lowpass_diameter_x=0.4", metavar="float")
+		help="Provide in angstroms. This will be converted to Protomo units, e.g. --r5_lowpass_diameter_x=0.4", metavar="float")
 	parser.add_option("--lowpass_apod_y", dest="lowpass_apod_y", default=0.05, type="float",
-		help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --lowpass_diameter_y=0.4", metavar="float")
+		help="Provide in angstroms. This will be converted to Protomo units, e.g. --lowpass_diameter_y=0.4", metavar="float")
 	parser.add_option("--r1_lowpass_apod_y", dest="r1_lowpass_apod_y", default=0.05, type="float",
-		help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --r1_lowpass_diameter_y=0.4", metavar="float")
+		help="Provide in angstroms. This will be converted to Protomo units, e.g. --r1_lowpass_diameter_y=0.4", metavar="float")
 	parser.add_option("--r2_lowpass_apod_y", dest="r2_lowpass_apod_y", default=0.05, type="float",
-		help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --r2_lowpass_diameter_y=0.4", metavar="float")
+		help="Provide in angstroms. This will be converted to Protomo units, e.g. --r2_lowpass_diameter_y=0.4", metavar="float")
 	parser.add_option("--r3_lowpass_apod_y", dest="r3_lowpass_apod_y", default=0.05, type="float",
-		help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --r3_lowpass_diameter_y=0.4", metavar="float")
+		help="Provide in angstroms. This will be converted to Protomo units, e.g. --r3_lowpass_diameter_y=0.4", metavar="float")
 	parser.add_option("--r4_lowpass_apod_y", dest="r4_lowpass_apod_y", default=0.05, type="float",
-		help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --r4_lowpass_diameter_y=0.4", metavar="float")
+		help="Provide in angstroms. This will be converted to Protomo units, e.g. --r4_lowpass_diameter_y=0.4", metavar="float")
 	parser.add_option("--r5_lowpass_apod_y", dest="r5_lowpass_apod_y", default=0.05, type="float",
-		help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --r5_lowpass_diameter_y=0.4", metavar="float")
+		help="Provide in angstroms. This will be converted to Protomo units, e.g. --r5_lowpass_diameter_y=0.4", metavar="float")
 	parser.add_option("--highpass_diameter_x", dest="highpass_diameter_x", default=0.001, type="float",
-		help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --highpass_diameter_x=0.02", metavar="float")
+		help="Provide in angstroms. This will be converted to Protomo units, e.g. --highpass_diameter_x=0.02", metavar="float")
 	parser.add_option("--r1_highpass_diameter_x", dest="r1_highpass_diameter_x", default=0.001, type="float",
-		help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --r1_highpass_diameter_x=0.02", metavar="float")
+		help="Provide in angstroms. This will be converted to Protomo units, e.g. --r1_highpass_diameter_x=0.02", metavar="float")
 	parser.add_option("--r2_highpass_diameter_x", dest="r2_highpass_diameter_x", default=0.001, type="float",
-		help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --r2_highpass_diameter_x=0.02", metavar="float")
+		help="Provide in angstroms. This will be converted to Protomo units, e.g. --r2_highpass_diameter_x=0.02", metavar="float")
 	parser.add_option("--r3_highpass_diameter_x", dest="r3_highpass_diameter_x", default=0.001, type="float",
-		help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --r3_highpass_diameter_x=0.02", metavar="float")
+		help="Provide in angstroms. This will be converted to Protomo units, e.g. --r3_highpass_diameter_x=0.02", metavar="float")
 	parser.add_option("--r4_highpass_diameter_x", dest="r4_highpass_diameter_x", default=0.001, type="float",
-		help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --r4_highpass_diameter_x=0.02", metavar="float")
+		help="Provide in angstroms. This will be converted to Protomo units, e.g. --r4_highpass_diameter_x=0.02", metavar="float")
 	parser.add_option("--r5_highpass_diameter_x", dest="r5_highpass_diameter_x", default=0.001, type="float",
-		help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --r5_highpass_diameter_x=0.02", metavar="float")
+		help="Provide in angstroms. This will be converted to Protomo units, e.g. --r5_highpass_diameter_x=0.02", metavar="float")
 	parser.add_option("--highpass_diameter_y", dest="highpass_diameter_y", default=0.001, type="float",
-		help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --highpass_diameter_y=0.02", metavar="float")
+		help="Provide in angstroms. This will be converted to Protomo units, e.g. --highpass_diameter_y=0.02", metavar="float")
 	parser.add_option("--r1_highpass_diameter_y", dest="r1_highpass_diameter_y", default=0.001, type="float",
-		help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --r1_highpass_diameter_y=0.02", metavar="float")
+		help="Provide in angstroms. This will be converted to Protomo units, e.g. --r1_highpass_diameter_y=0.02", metavar="float")
 	parser.add_option("--r2_highpass_diameter_y", dest="r2_highpass_diameter_y", default=0.001, type="float",
-		help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --r2_highpass_diameter_y=0.02", metavar="float")
+		help="Provide in angstroms. This will be converted to Protomo units, e.g. --r2_highpass_diameter_y=0.02", metavar="float")
 	parser.add_option("--r3_highpass_diameter_y", dest="r3_highpass_diameter_y", default=0.001, type="float",
-		help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --r3_highpass_diameter_y=0.02", metavar="float")
+		help="Provide in angstroms. This will be converted to Protomo units, e.g. --r3_highpass_diameter_y=0.02", metavar="float")
 	parser.add_option("--r4_highpass_diameter_y", dest="r4_highpass_diameter_y", default=0.001, type="float",
-		help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --r4_highpass_diameter_y=0.02", metavar="float")
+		help="Provide in angstroms. This will be converted to Protomo units, e.g. --r4_highpass_diameter_y=0.02", metavar="float")
 	parser.add_option("--r5_highpass_diameter_y", dest="r5_highpass_diameter_y", default=0.001, type="float",
-		help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --r5_highpass_diameter_y=0.02", metavar="float")
+		help="Provide in angstroms. This will be converted to Protomo units, e.g. --r5_highpass_diameter_y=0.02", metavar="float")
 	parser.add_option("--highpass_apod_x", dest="highpass_apod_x", default=0.002, type="float",
-		help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --highpass_diameter_x=0.02", metavar="float")
+		help="Provide in angstroms. This will be converted to Protomo units, e.g. --highpass_diameter_x=0.02", metavar="float")
 	parser.add_option("--r1_highpass_apod_x", dest="r1_highpass_apod_x", default=0.002, type="float",
-		help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --r1_highpass_diameter_x=0.02", metavar="float")
+		help="Provide in angstroms. This will be converted to Protomo units, e.g. --r1_highpass_diameter_x=0.02", metavar="float")
 	parser.add_option("--r2_highpass_apod_x", dest="r2_highpass_apod_x", default=0.002, type="float",
-		help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --r2_highpass_diameter_x=0.02", metavar="float")
+		help="Provide in angstroms. This will be converted to Protomo units, e.g. --r2_highpass_diameter_x=0.02", metavar="float")
 	parser.add_option("--r3_highpass_apod_x", dest="r3_highpass_apod_x", default=0.002, type="float",
-		help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --r3_highpass_diameter_x=0.02", metavar="float")
+		help="Provide in angstroms. This will be converted to Protomo units, e.g. --r3_highpass_diameter_x=0.02", metavar="float")
 	parser.add_option("--r4_highpass_apod_x", dest="r4_highpass_apod_x", default=0.002, type="float",
-		help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --r4_highpass_diameter_x=0.02", metavar="float")
+		help="Provide in angstroms. This will be converted to Protomo units, e.g. --r4_highpass_diameter_x=0.02", metavar="float")
 	parser.add_option("--r5_highpass_apod_x", dest="r5_highpass_apod_x", default=0.002, type="float",
-		help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --r5_highpass_diameter_x=0.02", metavar="float")
+		help="Provide in angstroms. This will be converted to Protomo units, e.g. --r5_highpass_diameter_x=0.02", metavar="float")
 	parser.add_option("--highpass_apod_y", dest="highpass_apod_y", default=0.002, type="float",
-		help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --highpass_diameter_y=0.02", metavar="float")
+		help="Provide in angstroms. This will be converted to Protomo units, e.g. --highpass_diameter_y=0.02", metavar="float")
 	parser.add_option("--r1_highpass_apod_y", dest="r1_highpass_apod_y", default=0.002, type="float",
-		help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --r1_highpass_diameter_y=0.02", metavar="float")
+		help="Provide in angstroms. This will be converted to Protomo units, e.g. --r1_highpass_diameter_y=0.02", metavar="float")
 	parser.add_option("--r2_highpass_apod_y", dest="r2_highpass_apod_y", default=0.002, type="float",
-		help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --r2_highpass_diameter_y=0.02", metavar="float")
+		help="Provide in angstroms. This will be converted to Protomo units, e.g. --r2_highpass_diameter_y=0.02", metavar="float")
 	parser.add_option("--r3_highpass_apod_y", dest="r3_highpass_apod_y", default=0.002, type="float",
-		help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --r3_highpass_diameter_y=0.02", metavar="float")
+		help="Provide in angstroms. This will be converted to Protomo units, e.g. --r3_highpass_diameter_y=0.02", metavar="float")
 	parser.add_option("--r4_highpass_apod_y", dest="r4_highpass_apod_y", default=0.002, type="float",
-		help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --r4_highpass_diameter_y=0.02", metavar="float")
+		help="Provide in angstroms. This will be converted to Protomo units, e.g. --r4_highpass_diameter_y=0.02", metavar="float")
 	parser.add_option("--r5_highpass_apod_y", dest="r5_highpass_apod_y", default=0.002, type="float",
-		help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --r5_highpass_diameter_y=0.02", metavar="float")
+		help="Provide in angstroms. This will be converted to Protomo units, e.g. --r5_highpass_diameter_y=0.02", metavar="float")
 	parser.add_option("--thickness", dest="thickness",  default=300, type="float",
 	        help="Estimated thickness of unbinned specimen (in pixels), e.g. --thickness=100.0", metavar="float")
 	parser.add_option("--iters", dest="iters", default=1, type="int",
@@ -243,7 +243,7 @@ def parseOptions():
 		help="Sampling rate of raw data, e.g. --r3_sampling=4")
 	parser.add_option("--r4_sampling", dest="r4_sampling",  default=2, type="int",
 		help="Sampling rate of raw data, e.g. --r4_sampling=4")
-	parser.add_option("--r5_sampling", dest="r5_sampling",  default=2, type="int",
+	parser.add_option("--r5_sampling", dest="r5_sampling",  default=1, type="int",
 		help="Sampling rate of raw data, e.g. --r5_sampling=4")
 	parser.add_option("--gradient", dest="gradient",  default="true",
 		help="Enable linear gradient subtraction for preprocessing masks, e.g. --gradient=false")
@@ -369,9 +369,13 @@ def parseOptions():
 		help="Apodization for rectangular and ellipsoidal masks, e.g. --r4_mask_apod_y=10")
 	parser.add_option("--r5_mask_apod_y", dest="r5_mask_apod_y",  default="10",
 		help="Apodization for rectangular and ellipsoidal masks, e.g. --r5_mask_apod_y=10")
+	parser.add_option("--show_window_size", dest="show_window_size", default="true",
+		help="Appion: Show the window size used for alignment in the reconstruction video, e.g. --show_window_size=false")
+	parser.add_option("--tilt_clip", dest="tilt_clip",  default="true",
+		help="Appion: Clip pixel values for tilt-series video to +-5 sigma, e.g. --tilt_clip=false")
 	parser.add_option("--refresh_i3t", dest="refresh_i3t",  default="False",
 		help="If a Protomo run is interrupted the i3t file may be unusable. This option removes the i3t file so that protomoRefine can create a new one, e.g. --refresh_i3t=True")
-	parser.add_option("--fix_frames", dest="fix_frames",  default="False",
+	parser.add_option("--fix_images", dest="fix_images",  default="False",
 		help="Internal use only")
 	parser.add_option("--screening_mode", dest="screening_mode",  default="False",
 		help="Protomo Screening Mode to be run during data collection. This mode will continually query leginon database for tilt-series number N+1. When tilt-series N+1 shows up, tilt-series N will be processed through coarse alignment, producing normal depiction videos. Screening mode is configured to parallelize video production just like is done in protomo2aligner.py. The coarse_param_file option must be set., e.g. --screening_mode=True")
@@ -445,24 +449,6 @@ def parseOptions():
 	return options
 
 
-def hyphen_range(s):
-	"""
-	Takes a range in form of "a-b" and generate a list of numbers between a and b inclusive.
-	also accepts comma separated ranges like "a-b,c-d,f" will build a list which will include
-	numbers from a to b, a to d, and f.
-	Taken from http://code.activestate.com/recipes/577279-generate-list-of-numbers-from-hyphenated-and-comma/
-	"""
-	s="".join(s.split())#removes white space
-	r=set()
-	for x in s.split(','):
-	    t=x.split('-')
-	    if len(t) not in [1,2]: raise SyntaxError("hash_range is given its arguement as "+s+" which seems not correctly formated.")
-	    r.add(int(t[0])) if len(t)==1 else r.update(set(range(int(t[0]),int(t[1])+1)))
-	l=list(r)
-	l.sort()
-	return l
-
-
 def variableSetup(rundir, tiltseriesnumber, prep):
 	"""
 	Sets up commonly used variables in other functions.
@@ -534,7 +520,7 @@ def protomoFixFrameMrcs(tiltseriesnumber, options):
 	"""
 	tiltdirname,tiltdir,seriesnumber,seriesname,tiltfilename,tiltfilename_full,raw_path,rawimagecount = variableSetup(options.rundir, tiltseriesnumber, prep="False")
 	
-	apProTomo2Aligner.fixFrameMrcs(raw_path)
+	apProTomo2Aligner.fixImages(raw_path)
 	
 	apDisplay.printMsg("Done fixing mrcs for Tilt-Series #%s" % tiltseriesnumber)	
 
@@ -869,8 +855,8 @@ def protomoRefine(tiltseriesnumber, refine_options):
 def protomoReconstruct(tiltseriesnumber, recon_options):
 	"""
 	Reconstruct a tilt-series by back pojection.
-	Options are given to specify which iteration to reconstruct from and
-	whether to exclue any very high tilts.
+	Options are given to specify which iteration to reconstruct
+	from and whether to exclude any very high tilts.
 	Options are given for filtering.
 	"""
 	tiltdirname,tiltdir,seriesnumber,seriesname,tiltfilename,tiltfilename_full,raw_path,rawimagecount = variableSetup(recon_options.rundir, tiltseriesnumber, prep="False")
@@ -1397,8 +1383,8 @@ def ctfCorrect(tiltseriesnumber, ctf_options):
 	Leginondb will be queried to get the 'best' defocus estimate on a per-image basis.
 	Confident defoci will be gathered and unconfident defoci will be interpolated.
 	Images will be CTF corrected by phase flipping using ctfphaseflip from the IMOD package.
-	A plot of the defocus values will is made.
-	A CTF plot using the mean defocus is made.
+	A plot of the defocus values will is made. #TODO
+	A CTF plot using the mean defocus is made. #TODO
 	"""
 	try:
 		tiltdirname,tiltdir,seriesnumber,seriesname,tiltfilename,tiltfilename_full,raw_path,rawimagecount = variableSetup(ctf_options.rundir, tiltseriesnumber, prep="False")
@@ -1407,7 +1393,7 @@ def ctfCorrect(tiltseriesnumber, ctf_options):
 		os.system("mkdir %s" % ctfdir)
 		defocus_file_full=ctfdir+seriesname+'_defocus.txt'
 		tilt_file_full=ctfdir+seriesname+'_tilts.txt'
-		image_list_full=tiltdir+'/ctf_correction/'+seriesname+'_images.txt'
+		image_list_full=ctfdir+seriesname+'_images.txt'
 		uncorrected_stack=ctfdir+'stack_uncorrected.mrc'
 		corrected_stack=ctfdir+'stack_corrected.mrc'
 		out_full=ctfdir+'out'
@@ -1565,7 +1551,7 @@ def ctfCorrect(tiltseriesnumber, ctf_options):
 if __name__ == '__main__':
 	options=parseOptions()
 	options=apProTomo2Aligner.angstromsToProtomo(options)
-	tiltseriesranges=hyphen_range(options.tiltseriesranges)
+	tiltseriesranges=apProTomo2Aligner.hyphen_range(options.tiltseriesranges)
 	
 	if (options.procs == "all"):
 		options.procs=mp.cpu_count()
@@ -1574,7 +1560,7 @@ if __name__ == '__main__':
 	
 	
 	#File Preparation
-	if (options.prep_files == "True"):
+	if (options.prep_files == "True" and options.automation == "False"):
 		from appionlib import apProTomo2Prep   #If you want to run protomo on a machine that doesn't have MYSQL/leginondb access, then this will fail to import
 		
 		apDisplay.printMsg("Preparing Files and Directories for Protomo")
@@ -1597,7 +1583,7 @@ if __name__ == '__main__':
 	
 	
 	#Protomo doesn't like how proc2d writes mrc files. Our frame alignment script uses proc2d. This function and its options are hidden from general users.
-	if (options.fix_frames == "True" and options.link == "False"):
+	if (options.fix_images == "True" and options.link == "False"):
 		apDisplay.printMsg("Fixing raw image mrcs...")
 		for i, j in zip(tiltseriesranges, range(1,len(tiltseriesranges)+1)):
 			p = mp.Process(target=protomoFixFrameMrcs, args=(i, options,))
@@ -1607,11 +1593,11 @@ if __name__ == '__main__':
 				[p.join() for p in mp.active_children()]
 		
 		[p.join() for p in mp.active_children()]
-		apDisplay.printMsg("Frames Fixed for tilt-series %s!" % options.tiltseriesranges)
+		apDisplay.printMsg("Fixed Raw Images for Tilt-Series %s!" % options.tiltseriesranges)
 	
 	
 	#Coarse Alignment
-	if (options.coarse_align == "True"):
+	if (options.coarse_align == "True" and options.automation == "False"):
 		apDisplay.printMsg("Performing Coarse Alignments")
 		for i, j in zip(tiltseriesranges, range(1,len(tiltseriesranges)+1)):
 			p = mp.Process(target=protomoCoarseAlign, args=(i, options,))
@@ -1625,7 +1611,7 @@ if __name__ == '__main__':
 	
 	
 	#Refinement
-	if (options.refine == "True"):
+	if (options.refine == "True" and options.automation == "False"):
 		apDisplay.printMsg("Performing Refinements")
 		for i, j in zip(tiltseriesranges, range(1,len(tiltseriesranges)+1)):
 			p = mp.Process(target=protomoRefine, args=(i, options,))
@@ -1639,7 +1625,7 @@ if __name__ == '__main__':
 	
 	
 	#Reconstruction
-	if (options.reconstruct == "True"):
+	if (options.reconstruct == "True" and options.automation == "False"):
 		apDisplay.printMsg("Creating Reconstructions")
 		for i, j in zip(tiltseriesranges, range(len(tiltseriesranges))):
 			p = mp.Process(target=protomoReconstruct, args=(i, options,))
@@ -1653,7 +1639,7 @@ if __name__ == '__main__':
 	
 	
 	#CTF Correction
-	if (options.ctf_correct == "True"):
+	if (options.ctf_correct == "True" and options.automation == "False"):
 		import sinedon   #If you want to run protomo on a machine that doesn't have MYSQL/leginondb access, then these will fail to import
 		import numpy as np
 		import scipy.interpolate

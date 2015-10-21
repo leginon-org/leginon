@@ -29,9 +29,9 @@ tiltseries {
 
  preprocessing: AP_preprocessing  (* AP enable or disable preprocessing of raw images *)
  
- select: "AP_select_images"  (* AP select specific images in the tilt series *)
+ select: "0-999999"  (* AP select specific images in the tilt series *)
  
- exclude: "AP_exclude_images"  (* AP exclude specific images from the tilt series *)
+ exclude: "999999"  (* AP exclude specific images from the tilt series *)
 
  preprocess {
 
@@ -81,9 +81,10 @@ tiltseries {
  reference {
 
    body: T / F
-   select: "AP_select_images"  (* AP select specific images in the tilt series *)
+   slab: AP_slab  (* AP slab-like object *)
+   select: "0-999999"  (* AP select specific images in the tilt series *)
  
-   exclude: "AP_exclude_images"  (* AP exclude specific images from the tilt series *)
+   exclude: "999999"  (* AP exclude specific images from the tilt series *)
  }
 
 
@@ -96,9 +97,9 @@ tiltseries {
    translimit: AP_translimit
    
    norotations: AP_norotations
-   include: "AP_select_images"  (* AP select specific images in the tilt series *)
+   include: "0-999999"  (* AP select specific images in the tilt series *)
  
-   exclude: "AP_exclude_images"  (* AP exclude specific images from the tilt series *)
+   exclude: "999999"  (* AP exclude specific images from the tilt series *)
    mask {
      apodization: { AP_mask_apod_x, AP_mask_apod_y }
      width: { AP_mask_width_x, AP_mask_width_y }  (* If working on your own, consider using N - 2.5 * apodization *)
@@ -123,9 +124,9 @@ tiltseries {
    elevation: AP_elevation
    rotation: AP_rotation
    scale: AP_scale
-   include: "AP_select_images"  (* AP select specific images in the tilt series *)
+   include: "0-999999"  (* AP select specific images in the tilt series *)
  
-   exclude: "AP_exclude_images"  (* AP exclude specific images from the tilt series *)
+   exclude: "999999"  (* AP exclude specific images from the tilt series *)
    logging: AP_logging  (* AP enable diagnostic terminal output *)
    loglevel: AP_loglevel  (* AP increase verbosity of diagnostic output *)
 
@@ -136,10 +137,11 @@ tiltseries {
 
    size: { AP_map_size_x, AP_map_size_y, AP_map_size_z }  (* AP reconstruction map size *)
    body: T / F
+   slab: AP_slab  (* AP slab-like object *)
    sampling: AP_sampling  (* AP reconstruction map sampling *)
-   select: "AP_select_images"  (* AP select specific images in the tilt series reconstruction *)
+   select: "0-999999"  (* AP select specific images in the tilt series reconstruction *)
    
-   exclude: "AP_exclude_images"  (* AP exclude specific images from the tilt series reconstruction *)
+   exclude: "999999"  (* AP exclude specific images from the tilt series reconstruction *)
    lowpass {  (* AP lowpass map *)
      diameter:    { AP_lp_diam_x, AP_lp_diam_y }  (* If working on your own, consider using { lp_diam_x, lp_diam_y } * S *)
    }

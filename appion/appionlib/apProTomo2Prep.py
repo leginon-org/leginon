@@ -1,21 +1,32 @@
 #!/usr/bin/env python
 
+from __future__ import division
 import math
-import numpy
 import os
-import sys
-import shutil
 import re
+import sys
+import glob
+import shutil
+import subprocess
+import scipy.interpolate
+import numpy as np
+from pyami import mrc
 from appionlib import apParam
 from appionlib import apDisplay
+from appionlib import apProTomo2Aligner
+from appionlib.apImage import imagenorm
+from appionlib.apImage import imagefilter
+from scipy.ndimage.interpolation import rotate as imrotate
 
 try:
+	import sinedon
 	from appionlib import apTomo
 	from appionlib import appiondata
 	from appionlib import apProTomo
 	from appionlib import apDatabase
+	from appionlib.apCtf import ctfdb
 except:
-	print "MySQLdb not found...database retrieval disabled"
+	apDisplay.printWarning("MySQLdb not found...database retrieval disabled")
 
 		
 #=====================
@@ -80,7 +91,7 @@ def prepareTiltFile(sessionname, seriesname, tiltfilename, tiltseriesnumber, raw
 	tiltdata = apTomo.getImageList([tiltseriesdata])
 	apDisplay.printMsg("getting imagelist")
 
-	tilts,ordered_imagelist,ordered_mrc_files,refimg = apTomo.orderImageList(tiltdata)
+	tilts,ordered_imagelist,accumulated_dose_list,ordered_mrc_files,refimg = apTomo.orderImageList(tiltdata)
 	#tilts are tilt angles, ordered_imagelist are imagedata, ordered_mrc_files are paths to files, refimg is an int
 	maxtilt = max([abs(tilts[0]),abs(tilts[-1])])
 	apDisplay.printMsg("highest tilt angle is %f" % maxtilt)
@@ -91,7 +102,7 @@ def prepareTiltFile(sessionname, seriesname, tiltfilename, tiltseriesnumber, raw
 		rawexists = apParam.createDirectory(raw_path)
 		
 		apDisplay.printMsg("Copying raw images, y-flipping, normalizing, and converting images to float32 for Protomo...") #Linking removed because raw images need to be y-flipped for Protomo:(.
-		newfilenames = apProTomo.getImageFiles(ordered_imagelist, raw_path, link=False)
+		newfilenames, new_ordered_imagelist = apProTomo.getImageFiles(ordered_imagelist, raw_path, link=False, copy="True")
 		
 		###create tilt file
 		#get image size from the first image
@@ -109,7 +120,7 @@ def prepareTiltFile(sessionname, seriesname, tiltfilename, tiltseriesnumber, raw
 		#azimuth = apTomo.getAverageAzimuthFromSeries(ordered_imagelist)
 		writeTiltFile2(tiltfilename, seriesname, newfilenames, origins, tilts, azimuth, refimg)
 	
-	return maxtilt
+	return tilts, accumulated_dose_list, new_ordered_imagelist, maxtilt
 
 
 #=====================
@@ -179,19 +190,240 @@ def writeTiltFile2(tiltfile, seriesname, imagelist, origins, tilts, azimuth, ref
 	f.write (" END\n")
 	f.close()
 
+
+#=====================
+def ctfCorrect(seriesname, rundir, projectid, sessionname, tiltseriesnumber, tiltfilename, pixelsize, DefocusTol, iWidth, amp_contrast):
+	"""
+	Leginondb will be queried to get the 'best' defocus estimate on a per-image basis.
+	Confident defoci will be gathered and unconfident defoci will be interpolated.
+	Images will be CTF corrected by phase flipping using ctfphaseflip from the IMOD package.
+	A plot of the defocus values will is made.
+	A CTF plot using the mean defocus is made.
+	"""
+	try:
+		apDisplay.printMsg('CTF correcting all tilt images using defocus values from Leginon database...')
+		os.chdir(rundir)
+		raw_path=rundir+'/raw/'
+		ctfdir='%s/ctf_correction/' % rundir
+		os.system("mkdir %s" % ctfdir)
+		defocus_file_full=ctfdir+seriesname+'_defocus.txt'
+		tilt_file_full=ctfdir+seriesname+'_tilts.txt'
+		image_list_full=ctfdir+seriesname+'_images.txt'
+		uncorrected_stack=ctfdir+'stack_uncorrected.mrc'
+		corrected_stack=ctfdir+'stack_corrected.mrc'
+		out_full=ctfdir+'out'
+		log_file_full=ctfdir+'ctf_correction.log'
+		
+		project='ap'+projectid
+		sinedon.setConfig('appiondata', db=project)
+		sessiondata = apDatabase.getSessionDataFromSessionName(sessionname)
+		tiltseriesdata = apDatabase.getTiltSeriesDataFromTiltNumAndSessionId(tiltseriesnumber,sessiondata)
+		tiltdata = apTomo.getImageList([tiltseriesdata])
+		tilts,ordered_imagelist,accumulated_dose_list,ordered_mrc_files,refimg = apTomo.orderImageList(tiltdata)
+		cs = tiltdata[0]['scope']['tem']['cs']*1000
+		voltage = int(tiltdata[0]['scope']['high tension']/1000)
+		if os.path.isfile(ctfdir+'out/out01.mrc'): #Throw exception if already ctf corrected
+			sys.exit()
+		
+		#Get tilt azimuth
+		cmd="awk '/TILT AZIMUTH/{print $3}' %s" % (tiltfilename)
+		proc=subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
+		(tilt_azimuth, err) = proc.communicate()
+		tilt_azimuth=float(tilt_azimuth)
+		
+		estimated_defocus=[]
+		for image in range(len(ordered_imagelist)):
+			imgctfdata=ctfdb.getBestCtfValue(ordered_imagelist[image], msg=False)
+			try:
+				if imgctfdata['resolution_50_percent'] < 100.0: #if there's a yellow ring in Appion, trust defocus estimation
+					estimated_defocus.append((imgctfdata['defocus1']+imgctfdata['defocus2'])*1000000000/2)
+				else:  #Poorly estimated. Guess its value later
+					estimated_defocus.append(999999999)
+			except:  #No data. Guess its value later
+				estimated_defocus.append(999999999)
+		
+		#Find mean and stdev to prune out confident defocus values that are way off
+		defocus_stats_list=filter(lambda a: a != 999999999, estimated_defocus)
+		avg=np.array(defocus_stats_list).mean()
+		stdev=np.array(defocus_stats_list).std()
+		
+		good_tilts=[]
+		good_defocus_list=[]
+		for tilt, defocus in zip(tilts, estimated_defocus):
+			if (defocus != 999999999) and (defocus < avg + stdev) and (defocus > avg - stdev):
+				good_defocus_list.append(defocus)
+				good_tilts.append(tilt)
+		
+		#Using a linear best fit because quadratic and cubic go off the rails. Estimation doesn't need to be extremely accurate anyways.
+		x=np.linspace(int(round(tilts[0])), int(round(tilts[len(tilts)-1])), 1000)
+		s=scipy.interpolate.UnivariateSpline(good_tilts,good_defocus_list,k=1)
+		y=s(x)
+		
+		#Make defocus list with good values and interpolations for bad values
+		finished_defocus_list=[]
+		for tilt, defocus in zip(tilts, estimated_defocus):
+			if (defocus != 999999999) and (defocus < avg + stdev) and (defocus > avg - stdev):
+				finished_defocus_list.append(int(round(defocus)))
+			else:  #Interpolate
+				finished_defocus_list.append(int(round(y[int(round(tilt))])))
+		
+		new_avg=np.array(finished_defocus_list).mean()
+		new_stdev=np.array(finished_defocus_list).std()
+		
+		#Write defocus file, tilt file, and image list file for ctfphaseflip and newstack
+		f = open(defocus_file_full,'w')
+		f.write("%d\t%d\t%.2f\t%.2f\t%d\t2\n" % (1,1,tilts[0],tilts[0],finished_defocus_list[0]))
+		for i in range(1,len(tilts)):
+			f.write("%d\t%d\t%.2f\t%.2f\t%d\n" % (i+1,i+1,tilts[i],tilts[i],finished_defocus_list[i]))
+		f.close()
+		
+		f = open(tilt_file_full,'w')
+		for tilt in tilts:
+			f.write("%.2f\n" % tilt)
+		f.close()
+		
+		mrc_list=[]
+		for image in ordered_mrc_files:
+			mrc_list.append(raw_path+'/'+image[-10:])
+		f = open(image_list_full,'w')
+		f.write("%d\n" % len(tilts))
+		for filename in mrc_list:
+			f.write(filename+'\n')
+			f.write("%d\n" % 0)
+		f.close()
+		
+		#Rotate and pad images so that they are treated properly by ctfphaseflip.
+		apDisplay.printMsg("Preparing images for IMOD...")
+		for filename in mrc_list:
+			image=mrc.read(filename)
+			dimx=len(image[0])
+			dimy=len(image)
+			#First rotate 90 degrees in counter-clockwise direction. This makes it so positive angle images are higher defocused on the right side of the image
+			image=np.rot90(image, k=-1)
+			#Rotate image and write
+			image=imrotate(image, -tilt_azimuth, order=1) #Linear interpolation is fastest and there is barely a difference between linear and cubic
+			mrc.write(image, filename)
+		
+		f = open(log_file_full,'w')
+		#Make stack for correction,phase flip, extract images, replace images
+		cmd1="newstack -fileinlist %s -output %s > %s" % (image_list_full, uncorrected_stack, log_file_full)
+		f.write("%s\n\n" % cmd1)
+		print cmd1
+		subprocess.check_call([cmd1], shell=True)
+		
+		cmd2="ctfphaseflip -input %s -output %s -AngleFile %s -defFn %s -pixelSize %s -volt %s -DefocusTol %s -iWidth %s -SphericalAberration %s -AmplitudeContrast %s 2>&1 | tee %s" % (uncorrected_stack, corrected_stack, tilt_file_full, defocus_file_full, pixelsize/10, voltage, DefocusTol, iWidth, cs, amp_contrast, log_file_full)
+		f.write("\n\n%s\n\n" % cmd2)
+		print cmd2
+		subprocess.check_call([cmd2], shell=True)
+		
+		cmd3="newstack -split 1 -append mrc %s %s >> %s" % (corrected_stack, out_full, log_file_full)
+		f.write("\n\n%s\n\n" % cmd3)
+		print cmd3
+		subprocess.check_call([cmd3], shell=True)
+		f.write("\n\n")
+		
+		apDisplay.printMsg("Overwriting uncorrected raw images with CTF corrected images")
+		new_images=glob.glob(ctfdir+'out*mrc')
+		new_images.sort()
+		
+		#Unrotate and unpad images
+		for filename in new_images:
+			image=mrc.read(filename)
+			image=imrotate(image, tilt_azimuth, order=1)
+			image=np.rot90(image, k=1)
+			big_dimx=len(image[0])
+			big_dimy=len(image)
+			cropx1=int((big_dimx-dimx)/2)
+			cropx2=int(dimx+(big_dimx-dimx)/2)
+			cropy1=int((big_dimy-dimy)/2)
+			cropy2=int(dimy+(big_dimy-dimy)/2)
+			image=image[cropy1:cropy2,cropx1:cropx2]
+			mrc.write(image, filename)
+		
+		for i in range(len(new_images)):
+			cmd4="rm %s; ln %s %s" % (mrc_list[i], new_images[i], mrc_list[i])
+			f.write("%s\n" % cmd4)
+			os.system(cmd4)
+		
+		#Make plots
+		apProTomo2Aligner.makeDefocusPlot(rundir, seriesname, defocus_file_full)
+		apProTomo2Aligner.makeCTFPlot(rundir, seriesname, defocus_file_full, voltage, cs)
+		
+		cleanup="rm %s %s" % (uncorrected_stack, corrected_stack)
+		os.system(cleanup)
+		output1="%.2f%% of the images for tilt-series #%s had poor defocus estimates or fell outside of one standard deviation from the original mean." % (100*(len(estimated_defocus)-len(defocus_stats_list))/len(estimated_defocus), tiltseriesnumber)
+		output2="The defocus mean and standard deviation for tilt-series #%s after interpolating poor values is %.2f and %.2f microns, respectively." % (tiltseriesnumber, new_avg/1000, new_stdev/1000)
+		f.write("\n");f.write(output1);f.write("\n");f.write(output2);f.write("\n");f.close()
+		apDisplay.printMsg(output1)
+		apDisplay.printMsg(output2)
+		apDisplay.printMsg("CTF correction finished for tilt-series #%s!" % tiltseriesnumber)
+		
+	except subprocess.CalledProcessError:
+		apDisplay.printError("An IMOD command failed, so CTF correction could not be completed. Make sure IMOD is in your $PATH.")
+	
+	except SystemExit:
+		apDisplay.printWarning("It looks like you've already CTF corrected tilt-series #%s. Skipping CTF correction!" % tiltseriesnumber)
+
+	except:
+		apDisplay.printError("CTF correction could not be completed. Make sure IMOD, numpy, and scipy are in your $PATH. Make sure defocus has been estimated through Appion.\n")
+
+
+#=====================
+def doseCompensate(seriesname, rundir, sessionname, tiltseriesnumber, raw_path, pixelsize, dose_presets, dose_a, dose_b, dose_c):
+	"""
+	Images will be lowpass filtered using equation (3) from Grant & Grigorieff, 2015.
+	No changes to the database are made. No backups are made.
+	"""
+	sessiondata = apDatabase.getSessionDataFromSessionName(sessionname)
+	tiltseriesdata = apDatabase.getTiltSeriesDataFromTiltNumAndSessionId(tiltseriesnumber,sessiondata)
+	tiltdata = apTomo.getImageList([tiltseriesdata])
+	tilts, ordered_imagelist, accumulated_dose_list, ordered_mrc_files, refimg = apTomo.orderImageList(tiltdata)
+	newfilenames, new_ordered_imagelist = apProTomo.getImageFiles(ordered_imagelist, raw_path, link=False, copy=False)
+	if (dose_presets == "Light"):
+		dose_a = 0.245
+		dose_b = -1.6
+		dose_c = 12
+	elif (dose_presets == "Moderate"):
+		dose_a = 0.245
+		dose_b = -1.665
+		dose_c = 2.81
+	elif (dose_presets == "Heavy"):
+		dose_a = 0.245
+		dose_b = -1.4
+		dose_c = 2
+	
+	apDisplay.printMsg('Dose compensating all tilt images with a=%s, b=%s, and c=%s...' % (dose_a, dose_b, dose_c))
+	
+	for image, j in zip(new_ordered_imagelist, range(len(new_ordered_imagelist))):
+		lowpass = float(np.real(complex(dose_a/(accumulated_dose_list[j] - dose_c))**(1/dose_b)))  #equation (3) from Grant & Grigorieff, 2015
+		if lowpass < 0.0:
+			lowpass = 0.0
+		im = mrc.read(image)
+		im = imagefilter.lowPassFilter(im, apix=pixelsize, radius=lowpass, msg=False)
+		im=imagenorm.normStdev(im)
+		mrc.write(im, image)
+	
+	#Make plots
+	apProTomo2Aligner.makeDosePlots(rundir, seriesname, tilts, accumulated_dose_list, dose_a, dose_b, dose_c)
+	
+	apDisplay.printMsg("Dose compensation finished for tilt-series #%s!" % tiltseriesnumber)
+	
+	return
+
+
 #=====================
 def modifyParamFile(filein, fileout, paramdict):
 	f = open(filein, 'r')
 	filestring = f.read()
 	f.close()
-        
+	
 	for key, value in paramdict.iteritems():
 		filestring = re.sub(key, str(value), filestring)
-        
+	
 	f = open(fileout, 'w')
 	f.write(filestring)
 	f.close()
-            
+	
 #=====================
 def createParamDict(params):
 	paramdict = { 'AP_windowsize_x':params['r1_region_x'],
@@ -223,8 +455,8 @@ def createParamDict(params):
 		'AP_raw_path': params['raw_path'],
 		'AP_binning': params['binning'],
 		'AP_preprocessing': params['preprocessing'],
-		'AP_select_images': params['select_images'],
-		'AP_exclude_images': params['exclude_images'],
+		#'AP_select_images': params['select_images'],  #Hardcoded to 0-999999 due to redundancy
+		#'AP_exclude_images': params['exclude_images'],  #Hardcoded to 999999. Images are now removed from the .tlt file...I don't trust Protomo
 		'AP_border': params['border'],
 		'AP_clip_low': params['clip_low'],
 		'AP_clip_high': params['clip_high'],
@@ -265,6 +497,7 @@ def createParamDict(params):
 		'AP_norotations': params['norotations'],
 		'AP_logging': params['logging'],
 		'AP_loglevel': params['loglevel'],
+		'AP_slab': params['slab'],
 		'AP_map_size_x': params['map_size_x'],
 		'AP_map_size_y': params['map_size_y'],
 		'AP_map_size_z': params['map_size_z'],

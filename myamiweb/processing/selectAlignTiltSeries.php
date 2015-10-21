@@ -13,10 +13,9 @@ require_once "inc/leginon.inc";
 require_once "inc/project.inc";
 require_once "inc/processing.inc";
 
+session_destroy();
 $expId = $_GET['expId'];
 $formAction=$_SERVER['PHP_SELF']."?expId=$expId";
-$_SESSION['erase_coarse'] = 0;
-$_SESSION['erase_refine'] = 0;
 
 processing_header("Align Tilt-Series","Align Tilt-Series Page", $javascript,False);
 
@@ -25,17 +24,11 @@ echo "<table border='0' width='640'>\n";
 echo "<tr><td>\n";
 echo "  <h2>Indvidual Tilt-Series Alignment and Reconstruction Procedures</h2>\n";
 echo "  <h4>\n";
-echo "    Tilt series may have been prepared with or without \n"
+echo "    Tilt-series may have been prepared with or without \n"
 	."fiducial markers. Some tilt-series are amenable \n"
 	."to automated alignment while others require (some) \n"
 	."manual alignment. Here you will find automated tilt-series \n"
         ."alignment workflows.";
-echo "  <h4>\n";
-echo "    The idea with Protomo \n"
-        ."is for the user to work through aligning a single tilt \n"
-        ."series in a session, then use the parameters that \n"
-        ."produce acceptable results on the entire tilt-series \n"
-        ."session using 'Batch Align Tilt-Series' from the left menu. \n";
 echo "  <h4>\n";
 echo "    <i>(The following workflows use PHP sessions to keep track of \n"
         ."variables. They are designed to be used from start to finish \n"
@@ -59,8 +52,10 @@ echo "  <h3><a href='runAppionLoop.php?expId=$expId&form=Protomo2CoarseAlignForm
 echo " <p> Protomo is a software package used in electron tomography for marker-free alignment and weighted back- "
 	."projection reconstruction of tilt-series. The marker-free alignment is based on cross-correlation methods and "
 	."projection matching. Protomo also includes the refinement of geometric parameters of the tilt-series. "
-	."3D reconstruction is carried out by weighted back-projection with general weighting functions "
-	."that allow varying tilt angle increments. ";
+	."Additionally there are CTF correction and dose compensation procedures.<br><br>"
+	."The idea with Protomo is for the user to work through aligning a single tilt-series in a session, then use the "
+	."parameters that produce acceptable results on the entire tilt-series session using 'Batch Align Tilt-Series' "
+	."from the left menu.";
 echo "</td></tr>\n";
 
 /*

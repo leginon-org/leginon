@@ -1,3 +1,4 @@
+from __future__ import division
 import os
 import time
 import math
@@ -136,10 +137,20 @@ def orderImageList(imagelist):
 	if start_tilt is None:
 		start_tilt = math.degrees(imagelist[0]['scope']['stage position']['a'])
 	tiltangledict = {}
+	tiltangledict2 = {}
 	reftilts = []
+	accumulated_dose=0
 	for i,imagedata in enumerate(imagelist):
+		imagedata_editable=dict(imagedata)  #Making an explicit copy of imagedata so that it can be added to. This doesn't copy the dictionaries inside this dictionary, but it's good enough
 		tilt = imagedata['scope']['stage position']['a']*180/math.pi
-
+		try:
+			dose = imagedata['preset']['dose']*(10**-20)*imagedata['camera']['exposure time']/imagedata['preset']['exposure time']
+		except:
+			apDisplay.printWarning("Dose not found in database for image #%s" % i)
+			dose=1
+		accumulated_dose=accumulated_dose+dose
+		imagedata_editable['accumulated dose'] = accumulated_dose
+		
 		if tilt < start_tilt+0.02 and tilt > start_tilt-0.02:
 			if len(imagelist) >= 2:
 				qimage = leginon.leginondata.AcquisitionImageData()
@@ -152,22 +163,26 @@ def orderImageList(imagelist):
 			else:
 				reftilts.append(tilt)
 		tiltangledict[tilt] = imagedata
-	tiltkeys = tiltangledict.keys()
-	tiltkeys.sort()
+		tiltangledict2[tilt] = imagedata_editable
+	tiltkeys = tiltangledict.keys(); tiltkeys2 = tiltangledict2.keys()
+	tiltkeys.sort(); tiltkeys2.sort()
 	ordered_imagelist = []
+	accumulated_dose_list=[]
 	for key in tiltkeys:
 		imagedata = tiltangledict[key]
+		imagedata_editable = tiltangledict2[key]
 		mrc_name = imagedata['filename'] + '.mrc'
 		fullname = os.path.join(imagepath, mrc_name)
 		mrc_files.append(fullname)
 		ordered_imagelist.append(imagedata)
+		accumulated_dose_list.append(imagedata_editable['accumulated dose'])
 	if len(reftilts) > 2:
 		apDisplay.printError('Got too many images at the start tilt')
 	refimg = tiltkeys.index(max(reftilts))
 	#cut down for testing
 	testing = False
 	if not testing:
-		return tiltkeys,ordered_imagelist,mrc_files,refimg
+		return tiltkeys,ordered_imagelist,accumulated_dose_list,mrc_files,refimg
 	else:
 		print len(tiltkeys),refimg
 		cut = refimg-1

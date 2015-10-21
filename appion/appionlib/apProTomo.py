@@ -88,9 +88,10 @@ def linkImageFiles(imgtree,rawdir):
 			os.symlink(os.path.join(imgpath,imagedata['filename']+'.mrc'),linkedpath)
 	return filenamelist
 
-def getImageFiles(imgtree,rawdir, link):
+def getImageFiles(imgtree, rawdir, link, copy):
 	#This function should replace linkImageFiles in all calls (i.e. in tomoaligner.py and everywhere else)
 	filenamelist = []
+	newimgtree=[]
 	for imagedata in imgtree:
 		#set up names
 		imgpath=imagedata['session']['image path']
@@ -99,14 +100,15 @@ def getImageFiles(imgtree,rawdir, link):
 		imgname=imgprefix+'.mrc'
 		filenamelist.append(imgprefix)
 		destpath = os.path.join(rawdir,imgname)
+		newimgtree.append(destpath)
 		if link == "True":
 			#create symlinks to files
 			if os.path.islink(destpath):
 				os.remove(destpath)
 			if not os.path.isfile(destpath):
 				os.symlink(os.path.join(imgpath,imagedata['filename']+'.mrc'),destpath)
-		else: 
-			shutil.copy(os.path.join(imgpath,imagedata['filename']+'.mrc'),destpath)
+		elif copy == "True": 
+			shutil.copy(os.path.join(imgpath,imagedata['filename']+'.mrc'),destpath)	
 			
 			#Y-flip raw images, normalize them, and conver them to float32 because Protomo
 			image=mrc.read(destpath)
@@ -114,7 +116,8 @@ def getImageFiles(imgtree,rawdir, link):
 			image=imagenorm.normStdev(image)
 			image=numpy.float32(image)
 			mrc.write(image,destpath)
-	return filenamelist
+		#else: just return values
+	return filenamelist, newimgtree
 
 def writeTiltFile(outfilename, seriesname, imagedict, parameterdict=False):
 	f=open(outfilename,'w')

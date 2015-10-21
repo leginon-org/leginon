@@ -40,6 +40,7 @@ $corr_coa = "loadimg.php?rawgif=1&filename=".$corr_gif_files[0];
 $corr_cofx = "loadimg.php?rawgif=1&filename=".$corr_gif_files[1];
 $corr_cofy = "loadimg.php?rawgif=1&filename=".$corr_gif_files[2];
 $corr_rot = "loadimg.php?rawgif=1&filename=".$corr_gif_files[3];
+$corr_scl = "loadimg.php?rawgif=1&filename=".$corr_gif_files[4];
 $tilt_gif = "loadimg.php?rawgif=1&filename=".$tilt_gif_files[$iter-1];
 $tilt_mp4 = "loadvid.php?filename=".$tilt_vid_files[0];
 $tilt_ogv = "loadvid.php?filename=".$tilt_vid_files[1];
@@ -74,7 +75,7 @@ if (isset($corrpeak_gif_files[0])) {
 }
 
 $html .= "
-	<H4><center><b>Correlation Plots</b></center></H4>";
+	<H4><center><b>Correction Factor Plots</b></center></H4>";
 $html .= '<center><table id="" class="display" cellspacing="0" border="1" width=820><tr>';
 $html .= '<th>Correction Factor (x)</th>';
 $html .= '<th>Correction Factor (y)</th>';
@@ -82,11 +83,11 @@ $html .= "</tr><tr>";
 $html .= '<td><img src="'.$corr_cofx.'" alt="cofx" width="500" />'."<br /></td>";
 $html .= '<td><img src="'.$corr_cofy.'" alt="cofy" width="500" />'."<br /></td>";
 $html .= "</tr><tr>";
-$html .= '<th>Image Rotation</th>';
-$html .= '<th>Angle between the (x) and (y) Correction Factors</th>';
+$html .= '<th>Correction Factor for Rotation (degrees)</th>';
+$html .= '<th>Correction Factor for Scaling</th>';
 $html .= "</tr><tr>";
 $html .= '<td><img src="'.$corr_rot.'" alt="rot" width="500" />'."<br /></td>";
-$html .= '<td><img src="'.$corr_coa.'" alt="coa" width="500" />'."<br /></td>";
+$html .= '<td><img src="'.$corr_scl.'" alt="scl" width="500" />'."<br /></td>";
 $html .= '</tr><tr></table></center><br><hr />';
 
 $html .= "

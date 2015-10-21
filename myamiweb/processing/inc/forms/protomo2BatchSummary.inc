@@ -12,6 +12,9 @@ error_reporting(E_ALL | E_STRICT);
 require_once "basicLayoutForm.inc";
 require_once "inc/leginon.inc";
 
+ini_set('session.gc_maxlifetime', 604800);
+session_set_cookie_params(604800);
+
 session_start();
 $sessionname=$_SESSION['sessionname'];
 $outdir=$_SESSION['outdir'];
