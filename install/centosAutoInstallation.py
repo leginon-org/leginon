@@ -1054,8 +1054,6 @@ endif
 				outf.write("define('DB_LEGINON', '%s');\n" % (self.leginonDB))
 			elif line.startswith("define('DB_PROJECT'"):
 				outf.write("define('DB_PROJECT', '%s');\n" % (self.projectDB))
-			elif line.startswith("define('MRC2ANY'"):
-				outf.write("define('MRC2ANY', '%s');\n" % (self.mrc2any))
 			elif "addplugin(\"processing\");" in line:
 				outf.write("addplugin(\"processing\");\n")
 			elif "// $PROCESSING_HOSTS[]" in line:
@@ -1184,7 +1182,6 @@ endif
 		self.projectDB = 'projectdb'
 		self.adminEmail = ''
 		self.csValue = 2.0
-		self.mrc2any = '/usr/bin/mrc2any'
 		self.imagesDir = '/myamiImages'
 
 		self.setReleaseDependantValues()
