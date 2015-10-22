@@ -40,8 +40,6 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 		self.logdir = os.path.join(self.params['rundir'], "logfiles")
 		apParam.createDirectory(self.logdir, warning=False)
 		self.ctfprgmexe = self.getCtfProgPath()
-		print self.ctfprgmexe
-		sys.exit()
 		return
 
 	#======================
@@ -59,7 +57,7 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 			ctfprgmexe = os.path.join(apParam.getAppionDirectory(), 'bin', exename)
 		if not os.path.isfile(ctfprgmexe):
 			apDisplay.printError(exename+" was not found at: "+apParam.getAppionDirectory())
-		apDisplay.printMsg("Running program %s"%(ctfprgmexe))
+		apDisplay.printMsg("Running program %s"%(exename))
 		return ctfprgmexe
 
 	#======================
@@ -433,8 +431,6 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 			action="store_true", help="Run ctftilt instead of ctffind")
 		self.parser.add_option("--bestdb", "--best-database", dest="bestdb", default=False,
 			action="store_true", help="Use best amplitude contrast and astig difference from database")
-		ctfprgmexe = subprocess.Popen("which "+"ctffind64.exe", shell=True, stdout=subprocess.PIPE).stdout.read().strip()
-		print ctfprgmexe
 
 	#======================
 	def checkConflicts(self):
