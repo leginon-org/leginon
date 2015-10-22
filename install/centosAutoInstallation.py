@@ -313,6 +313,10 @@ class CentosInstallation(object):
 		self.runCommand("/sbin/service mysqld stop")
 		# start mysql server
 		os.system("mysqld_safe --skip-grant-tables &")
+		mysql_is_active = False
+                while not mysql_is_active:
+                        mysql_is_active = os.system("mysqladmin -umysql ping") == 0
+                        time.sleep(1.0)
 
 		# run database setup script.
 		cmd = os.path.join(self.svnMyamiDir, 'install/newDBsetup.php -L %s -P %s -H %s -U %s -E %s' % (self.leginonDB, self.projectDB, self.dbHost, self.dbUser, self.adminEmail))
