@@ -54,7 +54,14 @@ $imgbinning = $dimx / $imgwidth;
 $imgmapwidth=128;
 $mapframe_size=$imgmapwidth;
 $mapxyDim = $imageUtil->imageFitIn($dimx, $dimy, $mapframe_size);
-$imgmapheight = $mapxyDim[1];
+if (!$fftflag) {
+	$imgmapheight = (int) $imgmapwidth*$imgheight/$imgwidth;
+} else {
+	//hack to get the right height
+	$imgheight = max($xyDim);
+	$imgmapheight = max($mapxyDim);
+}
+//detail-image vs mini-map
 $ratio = $imgwidth/$imgmapwidth;
 
 // --- for colored images display area in black
@@ -62,6 +69,10 @@ $areacolor = ($_GET['gr']=="spectrum") ? "#000000" : "#00FF00";
 
 // --- set scale
 $iscache = ($lj) ? true:false;
+
+// This is a hack to make default binning and default binorder (a) works
+$prefftxyDim = array($imginfo['dimx'],$imginfo['dimy']);
+
 $display_pixelsize = $imageUtil->getDisplayPixelSize($imginfo['pixelsize'],$imginfo['binning'],$imginfo['dimx'],$imgwidth,$fftflag,$binorder,$prefftxyDim[0],$iscache);
 $filename = $imginfo['filename'];
 //image width is used as the first factor to determine display size
@@ -85,7 +96,9 @@ var jssize=<?=$imgwidth; ?>
 
 var jsimgheight=<?=$imgheight; ?>
 
-var jsmapsize = <?=$imgmapwidth; ?>
+var jsmapwidth=<?=$imgmapwidth; ?>
+
+var jsmapheight=<?=$imgmapheight; ?>
 
 var ratio=<?=$ratio; ?>
 
@@ -270,8 +283,8 @@ function areamousemove(e)
 function setArea(e) {
 		aw = getAreaWidth()
 		ah = getAreaHeight()
-		maxw = jsmapsize-aw-1
-		maxh = jsmapsize-ah-1
+		maxw = jsmapwidth-aw-1
+		maxh = jsmapheight-ah-1
 		nx = e.clientX-sldMouseLeft
 		ny = e.clientY-sldMouseTop
 		nx = (nx>maxw)? maxw : nx
@@ -295,8 +308,8 @@ function updateArea() {
 
 	aw = Math.round(ww/ratio)
 	ah = Math.round(wh/ratio)
-	maxw = jsmapsize-2
-	maxh = jsmapsize-2
+	maxw = jsmapwidth-2
+	maxh = jsmapheight-2
 	aw = (aw>maxw) ? maxw : aw
 	ah = (ah>maxh) ? maxh : ah
   setAreaWidth(aw)

@@ -262,7 +262,7 @@ function update() {
 		parentwindow.setautoscale(jsviewname,'s;5');
 		parentwindow.setquality(jsviewname,'80');
 		parentwindow.setgradient(jsviewname,'default');
-		parentwindow.setfftbin(jsviewname,'b');
+		parentwindow.setfftbin(jsviewname,'a');
 	} else {
 		
 		if (binninglist = document.adjustform.binning)

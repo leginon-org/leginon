@@ -62,6 +62,7 @@ class imageUtil{
 	// Fit the image into the frame size with aspect ratio preserved	
 	function imageFitIn($dimx, $dimy, $frame_size){
 		$ratio = max($dimx,$dimy) / $frame_size;
+		//$ratio = $dimx / $frame_size;
 		if ($ratio > 0) {
 			$dimx = (int) ($dimx / $ratio);
 			$dimy = (int) ($dimy / $ratio);
@@ -90,6 +91,7 @@ class imageUtil{
 			return $this->getRealSpaceDisplayPixelSize($calpixelsize,$camera_binning,$db_dimx,$display_dimx);
 		} else {
 			if ($iscache)
+				// The default size saved in cache
 				return $this->getCacheFFTDisplayPixelSize($calpixelsize,$camera_binning,$db_dimx,$display_dimx,$prefft_dimx);
 			if ($fftbintype=='b') {
 				return $this->getBinBeforeFFTDisplayPixelSize($calpixelsize,$camera_binning,$db_dimx,$display_dimx,$prefft_dimx);
@@ -106,13 +108,15 @@ class imageUtil{
 	}
 
 	function getCacheFFTDisplayPixelSize($calpixelsize,$camera_binning,$db_dimx,$display_dimx,$prefft_dimx) {
-		$source_pixelsize = $this->getBinBeforeFFTDisplayPixelSize($calpixelsize,$camera_binning,$db_dimx,$prefft_dimx,$prefft_dimx);
+		$source_pixelsize = 1 / ($calpixelsize*$camera_binning*$db_dimx);
 		$post_fft_binning = $prefft_dimx / $display_dimx;
 		return  $source_pixelsize * $post_fft_binning;
 	}
 
 	function getBinBeforeFFTDisplayPixelSize($calpixelsize,$camera_binning,$db_dimx,$display_dimx,$prefft_dimx) {
 		// result is in 1/m
+		// This may still be wrong for 5120xany.  But it is more important to get
+		// CacheFFTDisplayPixelSize right so I will leave it as is.
 		$prefft_binning = $db_dimx / $prefft_dimx;
 		return  1 / ($calpixelsize*$camera_binning*$prefft_binning*$display_dimx);
 	}

@@ -313,6 +313,10 @@ class CentosInstallation(object):
 		self.runCommand("/sbin/service mysqld stop")
 		# start mysql server
 		os.system("mysqld_safe --skip-grant-tables &")
+		mysql_is_active = False
+                while not mysql_is_active:
+                        mysql_is_active = os.system("mysqladmin -umysql ping") == 0
+                        time.sleep(1.0)
 
 		# run database setup script.
 		cmd = os.path.join(self.svnMyamiDir, 'install/newDBsetup.php -L %s -P %s -H %s -U %s -E %s' % (self.leginonDB, self.projectDB, self.dbHost, self.dbUser, self.adminEmail))
@@ -1054,8 +1058,6 @@ endif
 				outf.write("define('DB_LEGINON', '%s');\n" % (self.leginonDB))
 			elif line.startswith("define('DB_PROJECT'"):
 				outf.write("define('DB_PROJECT', '%s');\n" % (self.projectDB))
-			elif line.startswith("define('MRC2ANY'"):
-				outf.write("define('MRC2ANY', '%s');\n" % (self.mrc2any))
 			elif "addplugin(\"processing\");" in line:
 				outf.write("addplugin(\"processing\");\n")
 			elif "// $PROCESSING_HOSTS[]" in line:
@@ -1184,7 +1186,6 @@ endif
 		self.projectDB = 'projectdb'
 		self.adminEmail = ''
 		self.csValue = 2.0
-		self.mrc2any = '/usr/bin/mrc2any'
 		self.imagesDir = '/myamiImages'
 
 		self.setReleaseDependantValues()

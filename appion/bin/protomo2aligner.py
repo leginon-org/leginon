@@ -22,12 +22,12 @@ from appionlib import apProTomo2Prep
 try:
 	import protomo
 except:
-	print "Protomo did not get imported"
+	apDisplay.printWarning("Protomo did not get imported. Alignment functionality won't work.")
 
 try:
 	from appionlib import appiondata
 except:
-	print "MySQLdb not found...commit function disabled"
+	apDisplay.printWarning("MySQLdb not found...commit function disabled")
 
 # Required for cleanup at end
 cwd=os.getcwd()
@@ -251,7 +251,7 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		self.parser.add_option("--r5_highpass_apod_y", dest="r5_highpass_apod_y", default=0.002, type="float",
 			help="Provide in angstroms. This will be converted to Protomo units, e.g. --r5_highpass_diameter_y=0.02", metavar="float")
 
-		self.parser.add_option("--thickness", dest="thickness",  default=300, type="float",
+		self.parser.add_option("--thickness", dest="thickness",  default=1000, type="float",
 			help="Estimated thickness of unbinned specimen (in pixels), e.g. --thickness=100.0", metavar="float")
 		
 		self.parser.add_option("--pixelsize", dest="pixelsize", type="float",
@@ -484,14 +484,17 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		#self.parser.add_option("--cmdiameter_y", dest="cmdiameter_y",  type="float",,
 		#	help="Size of region for center of mass calculation, e.g. --cmdiameter_y=19.0", metavar="float")
 
+		self.parser.add_option("--slab", dest="slab", default="true",
+			help="Adjust back-projection body size for a slab-like specimen, e.g. --slab=false")
+
 		self.parser.add_option("--map_size_x", dest="map_size_x",  type="int",  default="1024",
-			help="Protomo2 only: Size of the reconstructed tomogram in the X direction, e.g. --map_size_x=256", metavar="int")
+			help="Size of the reconstructed tomogram in the X direction, e.g. --map_size_x=256", metavar="int")
 
 		self.parser.add_option("--map_size_y", dest="map_size_y",  type="int",  default="1024",
-			help="Protomo2 only: Size of the reconstructed tomogram in the Y direction, e.g. --map_size_y=256", metavar="int")
+			help="Size of the reconstructed tomogram in the Y direction, e.g. --map_size_y=256", metavar="int")
 
 		self.parser.add_option("--map_size_z", dest="map_size_z",  type="int",  default="200",
-			help="Protomo2 only: Size of the reconstructed tomogram in the Z direction, e.g. --map_size_z=128", metavar="int")
+			help="Size of the reconstructed tomogram in the Z direction, e.g. --map_size_z=128", metavar="int")
 		
 		self.parser.add_option("--map_lowpass_diameter_x", dest="map_lowpass_diameter_x",  type="float",
 			help="Provide in angstroms. This will be converted to Protomo units, e.g. --map_lowpass_diameter_x=0.5", metavar="float")
@@ -515,8 +518,8 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		self.parser.add_option("--binning", dest="binning",  default="true",
 			help="Enable/disable binning of raw image files, e.g. --binning=false")
 		
-		self.parser.add_option("--select_images", dest="select_images",  default="0-999999",
-			help='Select specific images in the tilt-series, e.g. --select_images="1,2,5-7"')
+		# self.parser.add_option("--select_images", dest="select_images",  default="0-999999",
+		# 	help='Select specific images in the tilt-series, e.g. --select_images="1,2,5-7"')
 		
 		self.parser.add_option("--exclude_images", dest="exclude_images",  default="999999",
 			help='Select specific images in the tilt-series, e.g. --exclude_images="1,2,5-7"')
@@ -650,7 +653,7 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		self.parser.add_option("--create_reconstruction", dest="create_reconstruction",
 			help="Appion: Create a reconstruction and video for depiction, e.g. --create_reconstruction=false")
 		
-		self.parser.add_option("--show_window_size", dest="show_window_size",
+		self.parser.add_option("--show_window_size", dest="show_window_size",  default="true",
 			help="Appion: Show the window size used for alignment in the reconstruction video, e.g. --show_window_size=false")
 		
 		self.parser.add_option("--keep_recons", dest="keep_recons",
@@ -666,7 +669,31 @@ class ProTomo2Aligner(basicScript.BasicScript):
 			help="Restart a Refinement at this iteration, e.g. --restart_cycle=2", metavar="int")
 		
 		self.parser.add_option("--link", dest="link",  default="False",
-			help="Link raw images if True, copy if False, e.g. --link=False")
+			help="Link raw images if True, copy if False, e.g. --link=False (NOW OBSOLETE)")
+		
+		self.parser.add_option("--ctf_correct", dest="ctf_correct",  default="False",
+			help="CTF correct images before dose compensation and before coarse alignment?, e.g. --ctf_correct=True")
+		
+		self.parser.add_option('--DefocusTol', dest='DefocusTol', type="int", default=200,
+			help='Defocus tolerance in nanometers that limits the width of the strips, e.g. --DefocusTol=200')
+		
+		self.parser.add_option('--iWidth', dest='iWidth', type="int", default=20,
+			help='The distance in pixels between the center lines of two consecutive strips, e.g. --iWidth=20')
+		
+		self.parser.add_option('--amp_contrast', dest='amp_contrast', type="float", default=0.07,
+			help='Amplitude contrast, e.g. --amp_contrast=0.07')
+		
+		self.parser.add_option("--dose_presets", dest="dose_presets",  default="False",
+			help="Dose compensate using equation given by Grant & Grigorieff, 2015, e.g. --dose_presets=Moderate")
+		
+		self.parser.add_option('--dose_a', dest='dose_a', type="float",  default=0.245,
+			help='\'a\' variable in equation (3) of Grant & Grigorieff, 2015, e.g. --dose_a=0.2')
+		
+		self.parser.add_option('--dose_b', dest='dose_b', type="float",  default=-1.665,
+			help='\'b\' variable in equation (3) of Grant & Grigorieff, 2015, e.g. --dose_b=-1.5')
+		
+		self.parser.add_option('--dose_c', dest='dose_c', type="float",  default=2.81,
+			help='\'c\' variable in equation (3) of Grant & Grigorieff, 2015, e.g. --dose_c=2')
 		
 		self.parser.add_option("--commit", dest="commit",  default="False",
 			help="Commit per-iteration information to database.")
@@ -698,6 +725,7 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		self.parser.add_option("--corr_plot_cofx_gif", dest="corr_plot_cofx_gif", default=None)
 		self.parser.add_option("--corr_plot_cofy_gif", dest="corr_plot_cofy_gif", default=None)
 		self.parser.add_option("--corr_plot_rot_gif", dest="corr_plot_rot_gif", default=None)
+		self.parser.add_option("--corr_plot_scl_gif", dest="corr_plot_scl_gif", default=None)
 		self.parser.add_option("--azimuth_gif", dest="azimuth_gif", default=None)
 		self.parser.add_option("--model_azimuth", dest="model_azimuth", default=None)
 		self.parser.add_option("--model_elevation", dest="model_elevation", default=None)
@@ -805,7 +833,7 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		protomoparams['protomo_outdir'] = self.params['protomo_outdir']
 		protomoparams['preprocessing'] = self.params['preprocessing']
 		protomoparams['binning'] = self.params['binning']
-		protomoparams['select_images'] = self.params['select_images']
+		#protomoparams['select_images'] = self.params['select_images']
 		protomoparams['exclude_images'] = self.params['exclude_images']
 		protomoparams['logging'] = self.params['logging']
 		protomoparams['loglevel'] = self.params['loglevel']
@@ -852,6 +880,7 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		protomoparams['corr_plot_cofx_gif'] = self.params['corr_plot_cofx_gif']
 		protomoparams['corr_plot_cofy_gif'] = self.params['corr_plot_cofy_gif']
 		protomoparams['corr_plot_rot_gif'] = self.params['corr_plot_rot_gif']
+		protomoparams['corr_plot_scl_gif'] = self.params['corr_plot_scl_gif']
 		protomoparams['azimuth_gif'] = self.params['azimuth_gif']
 		protomoparams['theta_gif'] = self.params['theta_gif']
 		
@@ -967,7 +996,41 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		
 	
 	#=====================
+	def excludeImages(self, tiltfilename_full, f):
+		#Remove images from .tlt file if user requests
+		if self.params['exclude_images'] != "999999":
+			exclude_images='%s' % self.params['exclude_images']
+			imageranges=apProTomo2Aligner.hyphen_range(exclude_images)
+			for imagenumber in imageranges:
+				apProTomo2Aligner.removeImageFromTiltFile(tiltfilename_full, imagenumber, remove_refimg="False")
+			apDisplay.printMsg("Images %s have been removed from the .tlt file by user request" % imageranges)
+			f.write("Images %s have been removed from the .tlt file by user request" % imageranges)
+		cmd1="awk '/FILE /{print}' %s | wc -l" % (tiltfilename_full)
+		proc=subprocess.Popen(cmd1, stdout=subprocess.PIPE, shell=True)
+		(rawimagecount, err) = proc.communicate()
+		rawimagecount=int(rawimagecount)
+		cmd2="awk '/IMAGE /{print $2}' %s | head -n +1" % (tiltfilename_full)
+		proc=subprocess.Popen(cmd2, stdout=subprocess.PIPE, shell=True)
+		(tiltstart, err) = proc.communicate()
+		tiltstart=int(tiltstart)
+		maxtilt=0
+		for i in range(tiltstart-1,tiltstart+rawimagecount-1):
+			cmd3="awk '/IMAGE %s /{print}' %s | awk '{for (j=1;j<=NF;j++) if($j ~/TILT/) print $(j+2)}'" % (i+1, tiltfilename_full)
+			proc=subprocess.Popen(cmd3, stdout=subprocess.PIPE, shell=True)
+			(tilt_angle, err) = proc.communicate()
+			try:
+				tilt_angle=float(tilt_angle)
+				maxtilt=max(maxtilt,abs(tilt_angle))
+			except: #Image is not in the .tlt file
+				pass
+		return rawimagecount, maxtilt
+	
+	
+	#=====================
 	def angstromsToProtomo(self, coarse=False):
+		#Backup lp values for depiction purposes
+		r1_lp=r2_lp=r3_lp=r4_lp=r5_lp=0
+		r1_lp=(self.params['lowpass_diameter_x']+self.params['lowpass_diameter_y'])/2
 		self.params['thickness'] = self.params['thickness']/self.params['pixelsize']
 		self.params['lowpass_diameter_x'] = 2*self.params['pixelsize']*self.params['sampling']/self.params['lowpass_diameter_x']
 		self.params['lowpass_diameter_y'] = 2*self.params['pixelsize']*self.params['sampling']/self.params['lowpass_diameter_y']
@@ -979,10 +1042,8 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		self.params['highpass_apod_y'] = 2*self.params['pixelsize']*self.params['sampling']/self.params['highpass_apod_y']
 		
 		#Set map_size_z (for reconstruction depictions) to be 2 times the thickness (thickness plus 50% on both sizes)
-		self.params['map_size_z']=int(2*self.params['thickness']/self.params['sampling'])
+		self.params['map_size_z']=int(2*self.params['thickness']/self.params['map_sampling'])
 		
-		#Backup lp values for depiction purposes
-		r1_lp=r2_lp=r3_lp=r4_lp=r5_lp=0
 		if coarse == "False":
 			r1_lp=(self.params['r1_lowpass_diameter_x']+self.params['r1_lowpass_diameter_y'])/2
 			self.params['r1_lowpass_diameter_x'] = 2*self.params['pixelsize']*self.params['r1_sampling']/self.params['r1_lowpass_diameter_x']
@@ -1161,11 +1222,20 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		tiltfilename_full=rundir+'/'+tiltfilename
 		originaltilt=rundir+'/original.tlt'
 		
-		###Do queries and make tlt file if first run
+		###Do queries, make tlt file, CTF correct (optional), dose compensate (optional), remove highly shifted images (optional), and remove high tilt images (optional) if first run from Appion/Leginon database
 		if (self.params['coarse'] == 'True' and self.params['my_tlt'] == 'False'):
 			apDisplay.printMsg('Preparing raw images and initial tilt file')
 			f.write('Preparing raw images and initial tilt file\n')
-			self.params['maxtilt'] = apProTomo2Prep.prepareTiltFile(self.params['sessionname'], seriesname, tiltfilename, int(self.params['tiltseries']), raw_path, link=self.params['link'], coarse="True")
+			tilts, accumulated_dose_list, new_ordered_imagelist, self.params['maxtilt'] = apProTomo2Prep.prepareTiltFile(self.params['sessionname'], seriesname, tiltfilename, int(self.params['tiltseries']), raw_path, link=self.params['link'], coarse="True")
+			
+			#CTF Correction
+			if (self.params['ctf_correct'] == 'True'):
+				apProTomo2Prep.ctfCorrect(seriesname, rundir, self.params['projectid'], self.params['sessionname'], int(self.params['tiltseries']), tiltfilename, self.params['pixelsize'], self.params['DefocusTol'], self.params['iWidth'], self.params['amp_contrast'])
+			
+			#Dose Compensation
+			if (self.params['dose_presets'] != 'False'):
+				apProTomo2Prep.doseCompensate(seriesname, rundir, self.params['sessionname'], int(self.params['tiltseries']), raw_path, self.params['pixelsize'], self.params['dose_presets'], self.params['dose_a'], self.params['dose_b'], self.params['dose_c'])
+			
 			#Backup original tilt file
 			shutil.copy(tiltfilename_full,originaltilt)
 			#Removing highly shifted images
@@ -1182,45 +1252,29 @@ class ProTomo2Aligner(basicScript.BasicScript):
 					f.write('Images %s exceeded the allowed shift, but were at tilt angles less than the %s degree angle limit.\n' % (bad_kept_images, self.params['angle_limit']))
 				apDisplay.printMsg('No images were removed from the .tlt file due to high shifts.')
 				f.write('No images were removed from the .tlt file due to high shifts.\n')
-			cmd="awk '/FILE /{print}' %s | wc -l" % (tiltfilename_full)
-			proc=subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
-			(rawimagecount, err) = proc.communicate()
-			rawimagecount=int(rawimagecount)
+			rawimagecount, maxtilt=self.excludeImages(tiltfilename_full, f)  #Remove images from .tlt file if user requests
 		elif (self.params['coarse'] == 'True' and self.params['my_tlt'] == 'True'): #hidden option if user already setup directory, raw_dir, and tlt file
 			apDisplay.printMsg('Using provided tilt file instead of creating one')
 			f.write('Using provided tilt file instead of creating one\n')
-			cmd1="awk '/FILE /{print}' %s | wc -l" % (tiltfilename_full)
-			proc=subprocess.Popen(cmd1, stdout=subprocess.PIPE, shell=True)
-			(rawimagecount, err) = proc.communicate()
-			rawimagecount=int(rawimagecount)
-			cmd2="awk '/IMAGE /{print $2}' %s | head -n +1" % tiltfilename
-			proc=subprocess.Popen(cmd2, stdout=subprocess.PIPE, shell=True)
-			(tiltstart, err) = proc.communicate()
-			tiltstart=int(tiltstart)
-			maxtilt=0
-			for i in range(tiltstart,rawimagecount):
-				cmd3="awk '/IMAGE %s /{print}' %s | awk '{for (j=1;j<=NF;j++) if($j ~/TILT/) print $(j+2)}'" % (i+1, tiltfilename_full)
-				proc=subprocess.Popen(cmd3, stdout=subprocess.PIPE, shell=True)
-				(tilt_angle, err) = proc.communicate()
-				tilt_angle=float(tilt_angle)
-				maxtilt=max(maxtilt,abs(tilt_angle))
+			bad_images, bad_kept_images=apProTomo2Aligner.removeHighlyShiftedImages(tiltfilename_full, self.params['dimx'], self.params['dimy'], self.params['shift_limit'], self.params['angle_limit'])
+			if bad_images:
+				apDisplay.printMsg('Images %s were removed from the tilt file because their shifts exceed %s%% of the (x) and/or (y) dimensions.' % (bad_images, self.params['shift_limit']))
+				f.write('Images %s were removed from the tilt file because their shifts exceed %s%% of the (x) and/or (y) dimensions.\n' % (bad_images, self.params['shift_limit']))
+				if bad_kept_images:
+					apDisplay.printMsg('Images %s exceeded the allowed shift, but were at tilt angles less than the %s degree angle limit.' % (bad_kept_images, self.params['angle_limit']))
+					f.write('Images %s exceeded the allowed shift, but were at tilt angles less than the %s degree angle limit.\n' % (bad_kept_images, self.params['angle_limit']))
+			else:
+				if bad_kept_images:
+					apDisplay.printMsg('Images %s exceeded the allowed shift, but were at tilt angles less than the %s degree angle limit.' % (bad_kept_images, self.params['angle_limit']))
+					f.write('Images %s exceeded the allowed shift, but were at tilt angles less than the %s degree angle limit.\n' % (bad_kept_images, self.params['angle_limit']))
+				apDisplay.printMsg('No images were removed from the .tlt file due to high shifts.')
+				f.write('No images were removed from the .tlt file due to high shifts.\n')
+			rawimagecount, maxtilt=self.excludeImages(tiltfilename_full, f)  #Remove images from .tlt file if user requests
 			self.params['maxtilt'] = maxtilt
-		else: #Just get maxtilt for param file
-			cmd1="awk '/FILE /{print}' %s | wc -l" % (tiltfilename_full)
-			proc=subprocess.Popen(cmd1, stdout=subprocess.PIPE, shell=True)
-			(rawimagecount, err) = proc.communicate()
-			rawimagecount=int(rawimagecount)
-			cmd2="awk '/IMAGE /{print $2}' %s | head -n +1" % tiltfilename
-			proc=subprocess.Popen(cmd2, stdout=subprocess.PIPE, shell=True)
-			(tiltstart, err) = proc.communicate()
-			tiltstart=int(tiltstart)
-			maxtilt=0
-			for i in range(tiltstart,rawimagecount):
-				cmd3="awk '/IMAGE %s /{print}' %s | awk '{for (j=1;j<=NF;j++) if($j ~/TILT/) print $(j+2)}'" % (i+1, tiltfilename_full)
-				proc=subprocess.Popen(cmd3, stdout=subprocess.PIPE, shell=True)
-				(tilt_angle, err) = proc.communicate()
-				tilt_angle=float(tilt_angle)
-				maxtilt=max(maxtilt,abs(tilt_angle))
+			apDisplay.printMsg("Normalizing and converting raw images to float32 for Protomo...")
+			apProTomo2Aligner.fixImages(raw_path)
+		else: #Refinement. Just get maxtilt for param file
+			rawimagecount, maxtilt=self.excludeImages(tiltfilename_full, f)  #Remove images from .tlt file if user requests
 			self.params['maxtilt'] = maxtilt
 		
 		self.params['cos_alpha']=math.cos(self.params['maxtilt']*math.pi/180)
@@ -1229,7 +1283,7 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		if (self.params['coarse'] == 'True' and self.params['fix_images'] == "True" and self.params['link'] == "False"):
 			apDisplay.printMsg("Fixing raw images...")
 			f.write('Fixing raw images...\n')
-			apProTomo2Aligner.fixFrameMrcs(raw_path)
+			apProTomo2Aligner.fixImages(raw_path)
 		
 		###convert angstroms to pixels
 		r1_lp, r2_lp, r3_lp, r4_lp, r5_lp, self.params['r1_body'], self.params['r2_body'], self.params['r3_body'], self.params['r4_body'], self.params['r5_body'] = self.angstromsToProtomo(coarse=self.params['coarse'])
@@ -1305,13 +1359,17 @@ class ProTomo2Aligner(basicScript.BasicScript):
 					series.align()
 					final_retry=retry-1
 					end=1
+				except KeyboardInterrupt:
+					apDisplay.printMsg("Keyboard Interrupt!")
+					end=1
+					brk=1
 				except:
 					if (min(new_region_x,new_region_x) == 20):
-						apDisplay.printMsg("Coarse Alignment failed after rescaling the search area %s time(s)." % (retry-1))
+						apDisplay.printMsg("Coarse Alignment for Tilt-Series #%s failed after rescaling the search area %s time(s)." % (self.params['tiltseries'], retry-1))
 						apDisplay.printMsg("Window Size (x) was windowed down to %s" % (new_region_x*self.params['sampling']))
 						apDisplay.printMsg("Window Size (y) was windowed down to %s" % (new_region_y*self.params['sampling']))
 						apDisplay.printMsg("Put values less than these into the corresponding parameter boxes on the Protomo Coarse Alignment Appion webpage and try again.\n")
-						f.write('Coarse Alignment failed after rescaling the search area %s time(s).\n' % (retry-1))
+						f.write('Coarse Alignment for Tilt-Series #%s failed after rescaling the search area %s time(s).\n' % (self.params['tiltseries'], retry-1))
 						f.write('Window Size (x) was windowed down to %s\n' % (new_region_x*self.params['sampling']))
 						f.write('Window Size (y) was windowed down to %s\n' % (new_region_y*self.params['sampling']))
 						f.write('Put values less than these into the corresponding parameter boxes on the Protomo Coarse Alignment Appion webpage and try again.\n')
@@ -1383,8 +1441,10 @@ class ProTomo2Aligner(basicScript.BasicScript):
 				series.mapfile()
 				rx='region_x'
 				ry='region_y'
+				lp=round(r1_lp, 1)
+				thickness=int(round(self.params['pixelsize']*self.params['thickness']))
 				self.params['recon_gif']='media/reconstructions/'+seriesname+'.gif';self.params['recon_ogv']='media/reconstructions/'+seriesname+'.ogv';self.params['recon_mp4']='media/reconstructions/'+seriesname+'.mp4';self.params['recon_webm']='media/reconstructions/'+seriesname+'.webm';
-				apProTomo2Aligner.makeReconstructionVideos(name, 0, rundir, self.params[rx], self.params[ry], self.params['show_window_size'], self.params['protomo_outdir'], self.params['pixelsize'], self.params['sampling'], self.params['map_sampling'], self.params['video_type'], self.params['keep_recons'], self.params['parallel'], align_step="Coarse")
+				apProTomo2Aligner.makeReconstructionVideos(name, 0, rundir, self.params[rx], self.params[ry], self.params['show_window_size'], self.params['protomo_outdir'], self.params['pixelsize'], self.params['sampling'], self.params['map_sampling'], lp, thickness, self.params['video_type'], self.params['keep_recons'], self.params['parallel'], align_step="Coarse")
 			else:
 				apDisplay.printMsg("Skipping reconstruction depiction\n")
 				f.write('Skipping reconstruction depiction\n')
@@ -1578,15 +1638,16 @@ class ProTomo2Aligner(basicScript.BasicScript):
 						final_retry=retry-1
 						end=1
 					except KeyboardInterrupt:
+						apDisplay.printMsg("Keyboard Interrupt!")
 						end=1
 						brk=1
 					except:
 						if (min(new_region_x,new_region_x) == 20):
-							apDisplay.printMsg("Refinement Iteration #%s failed after resampling the search area %s time(s)." % (start+n+1, retry-1))
+							apDisplay.printMsg("Refinement Iteration #%s for Tilt-Series #%s failed after resampling the search area %s time(s)." % (start+n+1, self.params['tiltseries'], retry-1))
 							apDisplay.printMsg("Window Size (x) was windowed down to %s" % (new_region_x*sampling))
 							apDisplay.printMsg("Window Size (y) was windowed down to %s" % (new_region_y*sampling))
 							apDisplay.printMsg("Put values less than these into the corresponding parameter boxes on the Protomo Refinement Appion webpage and try again.\n")
-							f.write('Refinement Iteration #%s failed after resampling the search area %s time(s).\n' % (start+n+1, retry-1))
+							f.write('Refinement Iteration #%s for Tilt-Series #%s failed after resampling the search area %s time(s).\n' % (start+n+1, self.params['tiltseries'], retry-1))
 							f.write('Window Size (x) was windowed down to %s\n' % (new_region_x*sampling))
 							f.write('Window Size (y) was windowed down to %s\n' % (new_region_y*sampling))
 							f.write('Put values less than these into the corresponding parameter boxes on the Protomo Refinement Appion webpage and try again.\n')
@@ -1654,8 +1715,8 @@ class ProTomo2Aligner(basicScript.BasicScript):
 				if self.params['parallel'] != "True":
 					[p.join() for p in mp.active_children()]
 				
-				# Make correlation plot pngs for depiction
-				self.params['corr_plot_coa_gif']='media/corrplots/'+seriesname+ittt+'_coa.gif';self.params['corr_plot_cofx_gif']='media/corrplots/'+seriesname+ittt+'_cofx.gif';self.params['corr_plot_cofy_gif']='media/corrplots/'+seriesname+ittt+'_cofy.gif';self.params['corr_plot_rot_gif']='media/corrplots/'+seriesname+ittt+'_rot.gif';
+				# Make correction factor plot pngs for depiction
+				self.params['corr_plot_coa_gif']='media/corrplots/'+seriesname+ittt+'_coa.gif';self.params['corr_plot_cofx_gif']='media/corrplots/'+seriesname+ittt+'_cofx.gif';self.params['corr_plot_cofy_gif']='media/corrplots/'+seriesname+ittt+'_cofy.gif';self.params['corr_plot_rot_gif']='media/corrplots/'+seriesname+ittt+'_rot.gif';self.params['corr_plot_scl_gif']='media/corrplots/'+seriesname+ittt+'_scl.gif';
 				jobs.append(mp.Process(target=apProTomo2Aligner.makeCorrPlotImages, args=(name, it, rundir, corrfile)))
 				if self.params['parallel'] != "True":
 					[p.join() for p in mp.active_children()]
@@ -1689,14 +1750,14 @@ class ProTomo2Aligner(basicScript.BasicScript):
 					f.write('Generating Refinement reconstruction for iteration #%s...\n' % (start+n+1))
 					#Rescale if necessary
 					s='r%s_sampling' % r
+					lpx='r%s_lowpass_diameter_x' % r
+					lpy='r%s_lowpass_diameter_y' % r
 					if self.params['map_sampling'] != self.params[s]:
 						new_map_sampling='%s' % self.params['map_sampling']
 						series.setparam("sampling",new_map_sampling)
 						series.setparam("map.sampling",new_map_sampling)
 						
 						#Rescale the lowpass, lowpass apod, and body for depiction
-						lpx='r%s_lowpass_diameter_x' % r
-						lpy='r%s_lowpass_diameter_y' % r
 						lpax='r%s_lowpass_apod_x' % r
 						lpay='r%s_lowpass_apod_y' % r
 						b='r%s_body' % r
@@ -1719,8 +1780,10 @@ class ProTomo2Aligner(basicScript.BasicScript):
 					
 					rx='r%s_region_x' % r
 					ry='r%s_region_y' % r
+					lp=round(2*self.params['pixelsize']*self.params[s]/((self.params[lpx]+self.params[lpy])/2), 1)
+					thickness=int(round(self.params['pixelsize']*self.params['thickness']))
 					self.params['recon_gif']='media/reconstructions/'+seriesname+itt+'.gif';self.params['recon_ogv']='media/reconstructions/'+seriesname+itt+'.ogv';self.params['recon_mp4']='media/reconstructions/'+seriesname+itt+'.mp4';self.params['recon_webm']='media/reconstructions/'+seriesname+itt+'.webm';
-					apProTomo2Aligner.makeReconstructionVideos(name, itt, rundir, self.params[rx], self.params[ry], self.params['show_window_size'], self.params['protomo_outdir'], self.params['pixelsize'], sampling, self.params['map_sampling'], self.params['video_type'], self.params['keep_recons'], self.params['parallel'], align_step="Refinement")
+					apProTomo2Aligner.makeReconstructionVideos(name, itt, rundir, self.params[rx], self.params[ry], self.params['show_window_size'], self.params['protomo_outdir'], self.params['pixelsize'], sampling, self.params['map_sampling'], lp, thickness, self.params['video_type'], self.params['keep_recons'], self.params['parallel'], align_step="Refinement")
 					
 				else:
 					apDisplay.printMsg("Skipping reconstruction depiction\n")

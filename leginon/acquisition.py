@@ -878,6 +878,18 @@ class Acquisition(targetwatcher.TargetWatcher):
 			del self.timedebug[tkey]
 			print tnum, '************* TOTAL ***', ttt
 
+	def parkAtHighMag(self):
+		# send a preset at the highest magnification to keep the lens warm
+		park_presetname = self.presetsclient.getHighestMagPresetName()
+		self.logger.info('parking the scope to preset %s' % (park_presetname,))
+		self.presetsclient.toScope(park_presetname, None, False)
+		self.logger.info('scope parked at preset %s' % (park_presetname,))
+
+	def park(self):
+		# also go to highest mag.
+		self.parkAtHighMag()
+		super(Acquisition,self).park()
+		
 	def publishDisplayWait(self, imagedata):
 		'''
 		publish image data, display it, then wait for something to 
@@ -892,11 +904,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 
 		if self.settings['park after target']:
 			time.sleep(self.settings['pause time'])
-			# send a preset at the highest magnification to keep the lens warm
-			park_presetname = self.presetsclient.getHighestMagPresetName()
-			self.logger.info('parking the scope to preset %s' % (park_presetname,))
-			self.presetsclient.toScope(park_presetname, None, False)
-			self.logger.info('scope parked at preset %s' % (park_presetname,))
+			self.parkAtHighMag(park_presetname)
 
 		self.reportStatus('output', 'Publishing image...')
 		self.startTimer('publish image')

@@ -12,6 +12,9 @@ error_reporting(E_ALL | E_STRICT);
 require_once "basicLayoutForm.inc";
 require_once "inc/leginon.inc";
 
+ini_set('session.gc_maxlifetime', 604800);
+session_set_cookie_params(604800);
+
 session_start();
 $tiltseries=$_SESSION['tiltseries'];
 $sessionname=$_SESSION['sessionname'];
@@ -38,7 +41,7 @@ class Protomo2CoarseAlignSummary extends BasicLayoutForm
 
 		
 		// Set the publications to be references on the web pages
-		$pubList = array('protomo');
+		$pubList = array('appion-protomo', 'protomo');
 		$this->setPublications( $pubList );
 		$this->setJobType( 'protomo' );
 		$this->setOutputDirectory( 'protomo_alignments' );
@@ -65,6 +68,8 @@ class Protomo2CoarseAlignSummary extends BasicLayoutForm
 		global $outdir;
 		global $runname;
 		
+		$ctf_gif_files = glob("$outdir/$runname/media/ctf_correction/s*.gif");
+		$dose_gif_files = glob("$outdir/$runname/media/dose_compensation/s*.gif");
 		$corrpeak_gif_files = glob("$outdir/$runname/media/correlations/c*.gif");
 		$corrpeak_vid_files = glob("$outdir/$runname/media/correlations/c*.{mp4,ogv,webm}",GLOB_BRACE);
 		$initial_tilt_gif_files = glob("$outdir/$runname/media/tiltseries/i*.gif");
@@ -75,6 +80,10 @@ class Protomo2CoarseAlignSummary extends BasicLayoutForm
 		$rec_vid_files = glob("$outdir/$runname/media/reconstructions/c*.{mp4,ogv,webm}",GLOB_BRACE);
 		
 		// Display Coarse Alignment Summary
+		$ctfplot_gif = "loadimg.php?rawgif=1&filename=".$ctf_gif_files[0];
+		$ctfdefocus_gif = "loadimg.php?rawgif=1&filename=".$ctf_gif_files[1];
+		$dose_gif = "loadimg.php?rawgif=1&filename=".$dose_gif_files[0];
+		$dosecomp_gif = "loadimg.php?rawgif=1&filename=".$dose_gif_files[1];
 		$corrpeak_gif = "loadimg.php?rawgif=1&filename=".$corrpeak_gif_files[0];
 		$corrpeak_mp4 = "loadvid.php?filename=".$corrpeak_vid_files[0];
 		$corrpeak_ogv = "loadvid.php?filename=".$corrpeak_vid_files[1];
@@ -95,6 +104,30 @@ class Protomo2CoarseAlignSummary extends BasicLayoutForm
 		$rec_ogv = "loadvid.php?filename=".$rec_vid_files[1];
 		$rec_webm = "loadvid.php?filename=".$rec_vid_files[2];
 		$download_rec_mp4 = "downloadvid.php?filename=".$rec_vid_files[0];
+		
+		if (isset($ctf_gif_files[0])) {
+			$html .= "
+		<br />	
+		<center><H4>CTF Correction</H4></center>
+		<br />";
+			$html .= '<center><table id="" class="display" cellspacing="0" border="0"><tr>';
+			$html .= '<td><img src="'.$ctfdefocus_gif.'" alt="ctfdefocus_gif" width="400" />'."<br /></td>";
+			$html .= '<td><img src="'.$ctfplot_gif.'" alt="ctfplot_gif" width="400" />'."<br /></td>";
+			$html .= '</tr><tr></table></center><br>';
+			$html .= '<center>'.docpop('ctfplot_info', 'Image Info').'</center><br><hr />';
+		}
+		
+		if (isset($dose_gif_files[0])) {
+			$html .= "
+		<br />	
+		<center><H4>Dose Compensation</H4></center>
+		<br />";
+			$html .= '<center><table id="" class="display" cellspacing="0" border="0"><tr>';
+			$html .= '<td><img src="'.$dose_gif.'" alt="dose_gif" width="400" />'."<br /></td>";
+			$html .= '<td><img src="'.$dosecomp_gif.'" alt="dosecomp_gif" width="400" />'."<br /></td>";
+			$html .= '</tr><tr></table></center><br>';
+			$html .= '<center>'.docpop('doseplot_info', 'Image Info').'</center><br><hr />';
+		}
 		
 		$html .= "
 	<br />

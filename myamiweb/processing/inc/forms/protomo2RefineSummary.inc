@@ -12,6 +12,9 @@ error_reporting(E_ALL | E_STRICT);
 require_once "basicLayoutForm.inc";
 require_once "inc/leginon.inc";
 
+ini_set('session.gc_maxlifetime', 604800);
+session_set_cookie_params(604800);
+
 session_start();
 $tiltseries=$_SESSION['tiltseries'];
 $sessionname=$_SESSION['sessionname'];
@@ -20,6 +23,9 @@ $runname=$_SESSION['runname'];
 $iters=$_SESSION['iters'];
 $imageinfo=$_SESSION['imageinfo'];
 $thickness=$_SESSION['thickness'];
+$preset_size = $_SESSION['preset_size'];
+$preset_search = $_SESSION['preset_search'];
+$preset_type = $_SESSION['preset_type'];
 
 class Protomo2RefineSummary extends BasicLayoutForm
 {
@@ -39,7 +45,7 @@ class Protomo2RefineSummary extends BasicLayoutForm
 
 		
 		// Set the publications to be references on the web pages
-		$pubList = array('protomo');
+		$pubList = array('appion-protomo', 'protomo');
 		$this->setPublications( $pubList );
 		$this->setJobType( 'protomo' );
 		$this->setOutputDirectory( 'protomo_alignments' );
@@ -220,6 +226,9 @@ class Protomo2RefineSummary extends BasicLayoutForm
 		$_SESSION['imageinfo'] = $imageinfo;
 		$_SESSION['erase_refine'] = 1;
 		$_SESSION['restart_cycle'] = $iters;
+		$_SESSION['preset_size'] = $preset_size;
+		$_SESSION['preset_search'] = $preset_search;
+		$_SESSION['preset_type'] = $preset_type;
 		
 		$html .= "<br></br>
 			<a href='runAppionLoop.php?expId=".$this->expId."&form=Protomo2ReconstructionForm'><b><center>[Click here to continue onto <font size='4'>Reconstruction</font> if protomo2aligner.py has finished <br>and you're happy with the alignment of at least one iteration] <font size='5'>→</font></center></b></a>";

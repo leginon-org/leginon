@@ -14,9 +14,15 @@ require_once "inc/processing.inc";
 require_once "inc/appionloop.inc";
 require_once "inc/leginon.inc";
 
+ini_set('session.gc_maxlifetime', 604800);
+session_set_cookie_params(604800);
+
 session_start();
 $sessionname=$_SESSION['sessionname'];
 $imageinfo=$_SESSION['imageinfo'];
+$preset_size = $_SESSION['preset_size'];
+$preset_search = $_SESSION['preset_search'];
+$preset_type = $_SESSION['preset_type'];
 
 class Protomo2BatchForm extends BasicLayoutForm
 {
@@ -27,59 +33,162 @@ class Protomo2BatchForm extends BasicLayoutForm
 	$auto_r7_sampling='2', $auto_r8_sampling='1', $r1_iters='20', $r2_iters='15', $r3_iters='10', $r4_iters='5', $r5_iters='',
 	$auto_r1_iters='20', $auto_r2_iters='20', $auto_r3_iters='20', $auto_r4_iters='20', $auto_r5_iters='20',$auto_r6_iters='20',
 	$auto_r7_iters='20', $auto_r8_iters='20', $r1_lp_diam_x='15', $r2_lp_diam_x='15', $r3_lp_diam_x='15', $r4_lp_diam_x='15', $r5_lp_diam_x='',
-	$r6_lp_diam_x='15', $r7_lp_diam_x='15', $r8_lp_diam_x='15', $r1_lp_diam_y='15', $r2_lp_diam_y='15', $r3_lp_diam_y='15', $r4_lp_diam_y='15',
-	$r5_lp_diam_y='', $r6_lp_diam_y='15', $r7_lp_diam_y='15', $r8_lp_diam_y='15', $r1_region_x='', $r2_region_x='', $r3_region_x='',
+	$r6_lp_diam_x='', $r7_lp_diam_x='', $r8_lp_diam_x='', $r1_lp_diam_y='', $r2_lp_diam_y='', $r3_lp_diam_y='', $r4_lp_diam_y='',
+	$r5_lp_diam_y='', $r6_lp_diam_y='', $r7_lp_diam_y='', $r8_lp_diam_y='', $r1_region_x='', $r2_region_x='', $r3_region_x='',
 	$r4_region_x='', $r5_region_x='', $r1_region_y='', $r2_region_y='', $r3_region_y='', $r4_region_y='', $r5_region_y='', $r1_lp_apod_x='',
 	$r2_lp_apod_x='', $r3_lp_apod_x='', $r4_lp_apod_x='', $r5_lp_apod_x='', $r1_lp_apod_y='', $r2_lp_apod_y='', $r3_lp_apod_y='',
-	$r4_lp_apod_y='', $r5_lp_apod_y='', $r1_hp_apod_x='75', $r2_hp_apod_x='100', $r3_hp_apod_x='150', $r4_hp_apod_x='200', $r5_hp_apod_x='',
-	$r1_hp_apod_y='75', $r2_hp_apod_y='100', $r3_hp_apod_y='150', $r4_hp_apod_y='200', $r5_hp_apod_y='', $r1_peak_search_radius_x='300',
+	$r4_lp_apod_y='', $r5_lp_apod_y='', $r1_hp_apod_x='', $r2_hp_apod_x='', $r3_hp_apod_x='', $r4_hp_apod_x='', $r5_hp_apod_x='',
+	$r1_hp_apod_y='', $r2_hp_apod_y='', $r3_hp_apod_y='', $r4_hp_apod_y='', $r5_hp_apod_y='', $r1_mask_apod_x='10',
+	$r2_mask_apod_x='10', $r3_mask_apod_x='10', $r4_mask_apod_x='10', $r5_mask_apod_x='10', $r1_mask_apod_y='10',
+	$r2_mask_apod_y='10', $r3_mask_apod_y='10', $r4_mask_apod_y='10', $r5_mask_apod_y='10', $r1_peak_search_radius_x='300',
 	$r2_peak_search_radius_x='300', $r3_peak_search_radius_x='300', $r4_peak_search_radius_x='300', $r5_peak_search_radius_x='',
 	$r1_peak_search_radius_y='300', $r2_peak_search_radius_y='300', $r3_peak_search_radius_y='300', $r4_peak_search_radius_y='300',
 	$r5_peak_search_radius_y='', $all_tilt_videos="False", $all_recon_videos="False", $r1_kernel_x='', $r2_kernel_x='', $r3_kernel_x='',
-	$r4_kernel_x='', $r5_kernel_x='', $r1_kernel_y='', $r2_kernel_y='', $auto_convergence='0.015', $auto_convergence_iters='5',
-	$r3_kernel_y='', $r4_kernel_y='', $r5_kernel_y='', $voltage='300', $cs='0', $amp_contrast='0.07', $iWidth='20', $DefocusTol='200',
-	$map_sampling='8', $pixelsize='', $video_type='')
+	$r4_kernel_x='', $r5_kernel_x='', $r1_kernel_y='', $r2_kernel_y='', $r3_kernel_y='', $r4_kernel_y='', $r5_kernel_y='',
+	$auto_convergence='0.015', $auto_convergence_iters='5', $voltage='', $amp_contrast='0.07', $iWidth='20', $DefocusTol='200',
+	$map_sampling='8', $tilt_clip='', $show_window_size='', $pixelsize='', $video_type='')
 	{
 		parent::__construct($expId, $extraHTML);
-		//print "_POST:" . "<br>";
-		//var_dump($_POST);
-		//print "_GET:" . "<br>";
-		//var_dump($_GET);
-		//print "_SESSION:" . "<br>";
-		//var_dump($_SESSION);
+		print "_POST:" . "<br>";
+		var_dump($_POST);
+		print "_GET:" . "<br>";
+		var_dump($_GET);
+		print "_SESSION:" . "<br>";
+		var_dump($_SESSION);
+		
+		//foreach(array_keys($imageinfo) as $paramName){
+		//	echo $paramName . "<br>";
+		//	echo $imageinfo["$paramName"] . "<br>";}
+		
+		global $html;
+		$particle = new particledata();
+		$alltiltseries = $particle->getTiltSeries($_GET['expId']);
+		$numtiltseries = count($alltiltseries);
+		$tiltseriesranges="1-$numtiltseries";
+		
+		//Initialize steps
+		if (!isset($_POST['firststep'])) {$_POST['firststep']=1;}
+		if (!isset($_POST['laststep'])) {$_POST['laststep']=3;}
+		//Check for impossible setting
+		if ($_POST['firststep'] > $_POST['laststep']) {$_POST['laststep']=$_POST['firststep'];}
+		if ($_POST['firststep'] == 5 or $_POST['firststep'] == 8 or $_POST['laststep'] == 5 or $_POST['laststep'] == 8) {$_POST['firststep']=1; $_POST['laststep']=3;}
+		if (($_POST['firststep'] == 1 or $_POST['firststep'] == 2 or $_POST['firststep'] == 3 or $_POST['firststep'] == 4) and ($_POST['laststep'] == 6 or $_POST['laststep'] == 7 or $_POST['laststep'] == 9)) {$_POST['laststep']=4;}
+		if ($_POST['firststep'] == 6){$_POST['laststep']=6;}
+		if ($_POST['firststep'] == 7){$_POST['laststep']=7;}
+		if ($_POST['firststep'] == 9){$_POST['laststep']=9;}
+		
+		$steps=array("File Preparation", "Coarse Alignment", "Refinement", "Reconstruction", "----------------", "Screening Mode", "CTF Correction", "----------------", "Fully Automated");
+		$html .= "<br>
+			<b><center>Number of tilt-series available to process for session $sessionname: <font size='5'>$numtiltseries</font></center></b>";
+		
+		$html.= '<br><select name="firststep" onchange=submit() style="width:130px">';
+		for ($i = 1; $i < count($steps)+1; $i++) {
+			$html.= '<option ';
+			if ($i == $_POST['firststep']) {
+				$html.= 'selected ';
+			}
+			$html.= 'value="'.$i.'">'.$steps[$i-1].'</option>';
+		}
+		$html.= '</select>'; $html.= docpop('protomo_firststep', ' First Step').'<font size="6"> &nbsp&nbsp&nbsp→ &nbsp&nbsp&nbsp</font>';
+		
+		$html.= '<select name="laststep" onchange=submit() style="width:130px">';
+		for ($i = 1; $i < count($steps)+1; $i++) {
+			$html.= '<option ';
+			if ($i == $_POST['laststep']) {
+				$html.= 'selected ';
+			}
+			$html.= 'value="'.$i.'">'.$steps[$i-1].'</option>';
+		}
+		$html.= '</select>'; $html.= docpop('protomo_laststep', ' Last Step').'<br>';
+		global $html2;
+		$html2 .= docpop('preset_info', 'Parameter Presets<br>');
+		
+		//Initialize presets
+		if (!isset($_POST['preset_size'])) {$_POST['preset_size']=1;}
+		if (!isset($_POST['preset_search'])) {$_POST['preset_search']=1;}
+		if (!isset($_POST['preset_type'])) {$_POST['preset_type']=1;}
+		if ($_POST['preset_size'] == 9) {$_POST['preset_size']=1;} //The dotted line divider
+		if ($_POST['preset_size'] == 17) {$_POST['preset_size']=1;} //The dotted line divider
+		
+		//Preset pulldown menus
+		$size_presets=array("Generic", "10 nm objects(s) - Steep lowpass", "25 nm objects(s) - Steep lowpass", "50 nm objects(s) - Steep lowpass", "100 nm objects(s) - Steep lowpass", "250 nm objects(s) - Steep lowpass", "500 nm objects(s) - Steep lowpass", "1000 nm objects(s) - Steep lowpass", "------------------", "10 nm objects(s) - Decreasing lowpass", "25 nm objects(s) - Decreasing lowpass", "50 nm objects(s) - Decreasing lowpass", "100 nm objects(s) - Decreasing lowpass", "250 nm objects(s) - Decreasing lowpass", "500 nm objects(s) - Decreasing lowpass", "1000 nm objects(s) - Decreasing lowpass", "------------------", "10 nm objects(s) - Constant lowpass", "25 nm objects(s) - Constant lowpass", "50 nm objects(s) - Constant lowpass", "100 nm objects(s) - Constant lowpass", "250 nm objects(s) - Constant lowpass", "500 nm objects(s) - Constant lowpass", "1000 nm objects(s) - Constant lowpass");
+		$search_presets=array("Generic", "Tiny search (10%)", "Small search (25%)", "Medium search (50%)", "Large search (75%)", "Full search (90%)");
+		$type_presets=array("Generic", "Quick refinement", "Modest refinement", "Full refinement", "Exhaustive refinement");
+		$html2.= '<select name="preset_size" onchange=submit() style="width:150px">';
+		for ($i = 1; $i < count($size_presets)+1; $i++) {
+			$html2.= '<option ';
+			if ($i == $_POST['preset_size']) {
+				$html2.= 'selected ';
+			}
+			$html2.= 'value="'.$i.'">'.$size_presets[$i-1].'</option>';
+		}
+		$html2.= '</select>'; $html2.= docpop('protomo_refine_presets_size', ' Object Size | ');
+		
+		$html2.= '<select name="preset_search" onchange=submit() style="width:150px">';
+		for ($i = 1; $i < count($search_presets)+1; $i++) {
+			$html2.= '<option ';
+			if ($i == $_POST['preset_search']) {
+				$html2.= 'selected ';
+			}
+			$html2.= 'value="'.$i.'">'.$search_presets[$i-1].'</option>';
+		}
+		$html2.= '</select>'; $html2.= docpop('protomo_refine_presets_search', ' Search Area | ');
+		
+		$html2.= '<select name="preset_type" onchange=submit() style="width:150px">';
+		for ($i = 1; $i < count($type_presets)+1; $i++) {
+			$html2.= '<option ';
+			if ($i == $_POST['preset_type']) {
+				$html2.= 'selected ';
+			}
+			$html2.= 'value="'.$i.'">'.$type_presets[$i-1].'</option>';
+		}
+		$html2.= '</select>'; $html2.= docpop('protomo_refine_presets_type', ' Refinement Type<br><br>');
 		
 		global $imageinfo;
-		$tiltseriesId = ($_POST['tiltseriesId']) ? $_POST['tiltseriesId'] : NULL;
-		$particle = new particledata();
-		$leginondata = new leginondata();
-		$alltiltseries = $particle->getTiltSeries($_GET['expId']);
-		$seriesselector_array = $particle->getTiltSeriesSelector($alltiltseries,$tiltseriesId);
-		//$voltage=$_SESSION['high tension']/1000;   //Even though this is the right key, I can't call high tension???
+		$voltage=$imageinfo['high tension']/1000;
+		$_POST['pixelsize'] = $imageinfo['pixelsize']*pow(10,10);
+		$_POST['runname']=$_SESSION['runname'];
+		$_POST['outdir']=$_SESSION['outdir'];
+		$sessionname=$_SESSION['sessionname'];
 		
-		$iters=$_SESSION['recon_iter'];
 		$coarse_param_file=$_SESSION['outdir'].'/'.$_SESSION['runname'].'/ready_for_batch/coarse_series'.sprintf('%04d',$_SESSION['tiltseries']).'.param';
 		$refine_param_file=$_SESSION['outdir'].'/'.$_SESSION['runname'].'/ready_for_batch/refine_series'.sprintf('%04d',$_SESSION['tiltseries']).'.param';
 		$recon_param_file=$_SESSION['outdir'].'/'.$_SESSION['runname'].'/ready_for_batch/recon_series'.sprintf('%04d',$_SESSION['tiltseries']).'.param';
 		$link_recons=$_SESSION['outdir'].'/'.'batch_tiltseries_out/';
-		$_POST['outdir']=$_SESSION['outdir'];
-		$this->updateFormParams();
-		$params = $this->getFormParams();
-		$particle = new particledata();
-		$alltiltseries = $particle->getTiltSeries($_GET['expId']);
-		$num = count($alltiltseries);
-		global $numtiltseries;
-		$numtiltseries = $num;
-		$tiltseriesranges="1-$numtiltseries";
-		$_POST['pixelsize'] = $imageinfo['pixelsize']*pow(10,10);
-		$sessionname=$_SESSION['sessionname'];
+		
+		$_POST['r1_kernel_x'] = $r1_kernel_x='5';
+		$_POST['r2_kernel_x'] = $r2_kernel_x='5';
+		$_POST['r3_kernel_x'] = $r3_kernel_x='5';
+		$_POST['r4_kernel_x'] = $r4_kernel_x='5';
+		$_POST['r5_kernel_x'] = $r5_kernel_x='5';
+		$_POST['r1_kernel_y'] = $r1_kernel_y='5';
+		$_POST['r2_kernel_y'] = $r2_kernel_y='5';
+		$_POST['r3_kernel_y'] = $r3_kernel_y='5';
+		$_POST['r4_kernel_y'] = $r4_kernel_y='5';
+		$_POST['r5_kernel_y'] = $r5_kernel_y='5';
+		$_POST['r1_mask_apod_x'] = $r1_mask_apod_x='10';
+		$_POST['r2_mask_apod_x'] = $r2_mask_apod_x='10';
+		$_POST['r3_mask_apod_x'] = $r3_mask_apod_x='10';
+		$_POST['r4_mask_apod_x'] = $r4_mask_apod_x='10';
+		$_POST['r5_mask_apod_x'] = $r5_mask_apod_x='10';
+		$_POST['r1_mask_apod_y'] = $r1_mask_apod_y='10';
+		$_POST['r2_mask_apod_y'] = $r2_mask_apod_y='10';
+		$_POST['r3_mask_apod_y'] = $r3_mask_apod_y='10';
+		$_POST['r4_mask_apod_y'] = $r4_mask_apod_y='10';
+		$_POST['r5_mask_apod_y'] = $r5_mask_apod_y='10';
+		$_POST['tilt_clip'] = $tilt_clip='true';
+		$_POST['show_window_size'] = $show_window_size='true';
+		if ($imageinfo['dimx'] < 2049 or $imageinfo['dimy'] < 2049){
+				$_POST['map_sampling'] = $map_sampling='4';
+			}else{
+				$_POST['map_sampling'] = $map_sampling='8';
+			}
 		$r1_region_x = $r2_region_x = $r3_region_x = $r4_region_x = $imageinfo['dimx']*0.5;
 		$r1_region_y = $r2_region_y = $r3_region_y = $r4_region_y = $imageinfo['dimy']*0.5;
 		$r1_kernel_x = $r2_kernel_x = $r3_kernel_x = $r4_kernel_x = intval($r1_region_x/$r1_sampling);
 		$r1_kernel_y = $r2_kernel_y = $r3_kernel_y = $r4_kernel_y = intval($r1_region_y/$r1_sampling);
 		$r1_mask_width_x = $r2_mask_width_x = $r3_mask_width_x = $r4_mask_width_x = intval($r1_region_x/$r1_sampling);
 		$r1_mask_width_y = $r2_mask_width_y = $r3_mask_width_y = $r4_mask_width_y = intval($r1_region_y/$r1_sampling);
-		$r1_mask_apod_x = $r2_mask_apod_x = $r3_mask_apod_x = $r4_mask_apod_x = intval($r1_region_x/$r1_sampling);
-		$r1_mask_apod_y = $r2_mask_apod_y = $r3_mask_apod_y = $r4_mask_apod_y = intval($r1_region_y/$r1_sampling);
 		$r1_lp_apod_x = $r2_lp_apod_x = $r3_lp_apod_x = $r4_lp_apod_x = round(pow(10,10)*$imageinfo['pixelsize']*8);
 		$r1_lp_apod_y = $r2_lp_apod_y = $r3_lp_apod_y = $r4_lp_apod_y = round(pow(10,10)*$imageinfo['pixelsize']*8);
 		$r1_hp_diam_x = $r2_hp_diam_x = $r3_hp_diam_x = $r4_hp_diam_x = round(($imageinfo['dimx']+$imageinfo['dimy'])/(2*8));
@@ -87,15 +196,13 @@ class Protomo2BatchForm extends BasicLayoutForm
 		$r1_lp_diam_x = $r2_lp_diam_x = $r3_lp_diam_x = $r4_lp_diam_x = round(pow(10,10)*$imageinfo['pixelsize']*8);
 		$r1_lp_diam_y = $r2_lp_diam_y = $r3_lp_diam_y = $r4_lp_diam_y = round(pow(10,10)*$imageinfo['pixelsize']*8);
 		
-		global $html;
-		
 		//foreach(array_keys($imageinfo) as $paramName)
 		//	echo $paramName . "<br>";
 			//echo $imageinfo["$paramName"] . "<br>";
 		//------ Set Parameters for the parent class, BasicLoopForm (general Appion params) -----//
 		
 		// Set the publications to be references on the web pages
-		$pubList = array('protomo','imodctf');
+		$pubList = array('appion-protomo', 'protomo','imodctf');
 		$this->setPublications( $pubList );
 		$this->setJobType( 'protomo' );
 		$this->setOutputDirectory( 'protomo_alignments' );
@@ -253,7 +360,6 @@ class Protomo2BatchForm extends BasicLayoutForm
 		$params->addParam( "auto_convergence", $auto_convergence, "Convergence Criteria" );
 		$params->addParam( "auto_convergence_iters", $auto_convergence_iters, "Further Iterations After Convergence" );
 		$params->addParam( "voltage", $voltage, "Microscope voltage" );
-		$params->addParam( "cs", $cs, "Spherical aberration" );
 		$params->addParam( "amp_contrast", $amp_contrast, "Amplitude Contrast" );
 		$params->addParam( "iWidth", $iWidth, "Interpolation Width" );
 		$params->addParam( "DefocusTol", $DefocusTol, "Defocus Tolerance" );
@@ -270,51 +376,15 @@ class Protomo2BatchForm extends BasicLayoutForm
 	{
 		$this->updateFormParams();
 		$params = $this->getFormParams();
-		global $numtiltseries;
 		global $sessionname;
 		global $html;
+		global $html2;
 		
 		$fieldSize = 5;
 		$fieldSize2 = 3;
 		$fieldSize3 = 30;
 		
-		//Initialize steps
-		if (!isset($_POST['firststep'])) {$_POST['firststep']=1;}
-		if (!isset($_POST['laststep'])) {$_POST['laststep']=3;}
-		//Check for impossible setting
-		if ($_POST['firststep'] > $_POST['laststep']) {$_POST['laststep']=$_POST['firststep'];}
-		if ($_POST['firststep'] == 5 or $_POST['firststep'] == 8 or $_POST['laststep'] == 5 or $_POST['laststep'] == 8) {$_POST['firststep']=1; $_POST['laststep']=3;}
-		if (($_POST['firststep'] == 1 or $_POST['firststep'] == 2 or $_POST['firststep'] == 3 or $_POST['firststep'] == 4) and ($_POST['laststep'] == 6 or $_POST['laststep'] == 7 or $_POST['laststep'] == 9)) {$_POST['laststep']=4;}
-		if ($_POST['firststep'] == 6){$_POST['laststep']=6;}
-		if ($_POST['firststep'] == 7){$_POST['laststep']=7;}
-		if ($_POST['firststep'] == 9){$_POST['laststep']=9;}
-		
-		$steps=array("File Preparation", "Coarse Alignment", "Refinement", "Reconstruction", "----------------", "Screening Mode", "CTF Correction", "----------------", "Fully Automated");
-		$html .= "<br>
-			<b><center>Number of tilt-series available to process for session $sessionname: <font size='5'>$numtiltseries</font></center></b>";
-		
-		$html.= '<br><select name="firststep" onchange=submit() style="width:130px">';
-		for ($i = 1; $i < count($steps)+1; $i++) {
-			$html.= '<option ';
-			if ($i == $_POST['firststep']) {
-				$html.= 'selected ';
-			}
-			$html.= 'value="'.$i.'">'.$steps[$i-1].'</option>';
-		}
-		$html.= '</select>'; $html.= docpop('protomo_firststep', ' First Step').'<font size="6"> &nbsp&nbsp&nbsp→ &nbsp&nbsp&nbsp</font>';
-		
-		$html.= '<select name="laststep" onchange=submit() style="width:130px">';
-		for ($i = 1; $i < count($steps)+1; $i++) {
-			$html.= '<option ';
-			if ($i == $_POST['laststep']) {
-				$html.= 'selected ';
-			}
-			$html.= 'value="'.$i.'">'.$steps[$i-1].'</option>';
-		}
-		$html.= '</select>'; $html.= docpop('protomo_laststep', ' Last Step').'<br>';
-		
 		$html .= "
-		
 		<br />
 		<H4>Batch Parameters ".docpop('batch_info', '(Info)')."</H4>
 		<hr />";
@@ -347,6 +417,7 @@ class Protomo2BatchForm extends BasicLayoutForm
 		<br />
 		<H3>Refinement Parameters ".docpop('refine_info', '(Info)')."</H3>
 		<hr />";
+			$html.=$html2;  //Preset Parameters
 			$html.= $params->insertTextField( "refine_param_file", $fieldSize3 );
 			$html.= $params->insertTextFieldInRow( "r1_iters", $fieldSize2 ).'│ ';
 			$html.= $params->insertTextFieldInRow( "r2_iters", $fieldSize2 ).'│ ';
@@ -480,7 +551,6 @@ class Protomo2BatchForm extends BasicLayoutForm
 		<H3>CTF Correction Parameters ".docpop('ctf_info', '(Info)')."</H3>
 		<hr />";
 			$html.= $params->insertTextField( "voltage", $fieldSize );
-			$html.= $params->insertTextField( "cs", $fieldSize );
 			$html.= $params->insertTextField( "amp_contrast", $fieldSize );
 			$html.= $params->insertTextField( "iWidth", $fieldSize );
 			$html.= $params->insertTextField( "DefocusTol", $fieldSize );
@@ -515,7 +585,6 @@ class Protomo2BatchForm extends BasicLayoutForm
 			$html.= $params->insertTextFieldInRow( "auto_r7_sampling", $fieldSize2 ).'│ ';
 			$html.= $params->insertTextField( "auto_r8_sampling", $fieldSize2 );
 			$html.= $params->insertTextField( "voltage", $fieldSize );
-			$html.= $params->insertTextField( "cs", $fieldSize );
 			$html.= $params->insertTextField( "amp_contrast", $fieldSize );
 			$html.= $params->insertTextField( "iWidth", $fieldSize );
 			$html.= $params->insertTextField( "DefocusTol", $fieldSize );
