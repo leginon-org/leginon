@@ -288,7 +288,7 @@ echo "</table>";
 <table border="0">
 <tr valign=top>
 <td width=300>
-<div style="border: 1px solid #000000; height:290; width:270; margin: 0px;padding:0px;  background-color: #CCCCFF">
+<div style="border: 1px solid #000000; width:270; margin: 0px;padding:0px;  background-color: #CCCCFF">
 <?php $viewer->display(); ?>
 </div>
 </td>
