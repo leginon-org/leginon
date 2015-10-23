@@ -27,7 +27,8 @@ class imageOverlay {
 		if ($pixelsize) {
 			$size = ($xyDim[0]) ? $xyDim[0]: 1;
 			$value = $pixelsize;
-			$scalebar = new ScaleBar($this->img, $size, $value);
+			$imgheight = $xyDim[1];
+			$scalebar = new ScaleBar($this->img, $size, $value, $imgheight);
 			$scalebar->display();
 		}
 	}

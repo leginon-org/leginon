@@ -29,10 +29,12 @@ class ScaleBar {
 	var $offsetbarX=10;
 	var $offsetbarY=20;
 
-	function ScaleBar($img, $size, $value) {
+	function ScaleBar($img, $size, $value, $imgheight=0) {
 		// --- value should be in meter --- //
+		if ($imgheight==0) $imgheight=$size;
 		$this->img = $img;
 		$this->size = $size;
+		$this->imgheight = $imgheight;
 		$this->value = $value;
 		$this->findScale();
 		$this->setColor(255,255,255);
@@ -71,7 +73,7 @@ class ScaleBar {
 
 	function display($h="") {
 		// --- display label / scale bar
-		$h = ($h) ? $h : $this->size;
+		$h = ($h) ? $h : $this->imgheight;
 		$offsetbarlabelX = $this->offsetbarX + $this->nbpixels/2;
 		
 		$offsetbarlabelY = $h - $this->offsetbarY - $this->labelfontsize * 4;
