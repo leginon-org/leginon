@@ -149,7 +149,7 @@ else:
 ######################################################################
 ## numpy
 ######################################################################
-minnumpyver = (1, 0, 1)
+minnumpyver = (1, 0)
 minstr = '.'.join(map(str,minnumpyver))
 print '--------------------------------------------------------------'
 print 'numpy:'
@@ -160,7 +160,7 @@ except ImportError:
 	print '    *** Failed to import numpy.  Install numpy first.'
 else:
 	mystr = numpy.__version__
-	mynumpyver = map((lambda x:int(x)),mystr.split('.')[:3])
+	mynumpyver = map((lambda x:int(x)),mystr.split('.')[:2])
 	print '    numpy version: %s' % (mystr,)
 	if versionAtLeast(mynumpyver, minnumpyver):
 		print '        OK (at least %s required)' % (minstr ,)
