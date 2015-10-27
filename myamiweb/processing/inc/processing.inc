@@ -518,6 +518,14 @@ function getNumberOfProcsPerNode( $processingHost )
 	return $ppn;
 }
 
+function getMaxNumberOfProcsPerNode( $processingHost ) 
+{
+	$cluster = new Cluster( $processingHost );
+	$ppn = $cluster->getPpnMax();
+	
+	return $ppn;
+}
+
 function getNumberOfRequiredNodes($nproc, $ppn) 
 {
 	if ($nproc < $ppn) {
@@ -765,8 +773,16 @@ function justShowCommandTable($command, $processhost, $skip_command=false) {
 
 function addProcessingHostParams( $command, $processhost, $nproc, $ppn, $nodes, $walltime, $cputime, $queue )
 {
-	if ($ppn < 1 && !preg_match("/--ppn=/", $command) ) {
-		$ppn = getNumberOfProcsPerNode($processhost);
+	if (!preg_match("/--ppn=/", $command) ) {
+		if ($ppn < 1) {
+			// set to use default ppn if 0
+			$ppn = getNumberOfProcsPerNode($processhost);
+		}
+		$ppnmax = getMaxNumberOfProcsPerNode($processhost);
+		if ($ppn >  $ppnmax) {
+			// set to use max ppn if very large
+			$ppn = $ppnmax;
+		}
 	}
 	if ($nodes < 1 && !preg_match("/--nodes=/", $command) ) {
 		list($nodes, $ppn) = getNumberOfRequiredNodes($nproc, $ppn);
