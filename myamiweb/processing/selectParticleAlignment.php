@@ -193,7 +193,7 @@ if (!HIDE_FEATURE)
 		."&nbsp;<img src='img/external.png'> "
 		." commands to align your particles through multiple iterations of ref-free and ref-based alignments. "
 		."</p><p>\n"
-		."<font color='#aa2222'>WARNING:</font> report all problems to Ed"
+		."<font color='#aa2222'>WARNING:</font> report all problems to Ed Brignole"
 		."</p>\n";
 	//echo "  <img src='img/align-rsm.png' width='125'><br/>\n";
 	echo "</td></tr>\n";
@@ -202,6 +202,7 @@ if (!HIDE_FEATURE)
 	/*
 	** EMAN reference-free alignment
 	*/
+{
 	echo "<tr><td width='100' align='center'>\n";
 	echo "  <img src='img/eman_logo.png' width='64'>\n";
 	echo "</td><td>\n";
@@ -211,6 +212,7 @@ if (!HIDE_FEATURE)
 		."refine2d.py</a> program"
 		."</p>\n";
 	echo "</td></tr>\n";
+}
 
 /*
 ** Xmipp Maximum Likelihood Reference Based Alignment

@@ -450,7 +450,8 @@ function runMaxLikeAlign() {
 		."<i>it gets much faster after the first iteration with the fast mode</i><br/><br/></td></tr></table><br/>\n";
 
 	// submit command
-	$errors = showOrSubmitCommand($command, $headinfo, 'partalign', $nproc);
+	// set ppn to very large number of 1000 to force using ppnmax
+	$errors = showOrSubmitCommand($command, $headinfo, 'partalign', $nproc, false,0,1000);
 
 	// if error display them
 	if ($errors)

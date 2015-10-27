@@ -980,12 +980,15 @@ def makeCorrPlotImages(seriesname, iteration, rundir, corrfile):
 		mintilt=0
 		maxtilt=0
 		for i in range(tiltstart-1,tiltstart+rawimagecount-1):
-			cmd3="awk '/IMAGE %s /{print}' %s | awk '{for (j=1;j<=NF;j++) if($j ~/TILT/) print $(j+2)}'" % (i+1, tiltfile)
-			proc=subprocess.Popen(cmd3, stdout=subprocess.PIPE, shell=True)
-			(tilt_angle, err) = proc.communicate()
-			tilt_angle=float(tilt_angle)
-			mintilt=min(mintilt,tilt_angle)
-			maxtilt=max(maxtilt,tilt_angle)
+			try:
+				cmd3="awk '/IMAGE %s /{print}' %s | awk '{for (j=1;j<=NF;j++) if($j ~/TILT/) print $(j+2)}'" % (i+1, tiltfile)
+				proc=subprocess.Popen(cmd3, stdout=subprocess.PIPE, shell=True)
+				(tilt_angle, err) = proc.communicate()
+				tilt_angle=float(tilt_angle)
+				mintilt=min(mintilt,tilt_angle)
+				maxtilt=max(maxtilt,tilt_angle)
+			except: #Gap in tilt image #s
+				pass
 		
 		corrdata=np.loadtxt(corrfile)
 		f=open(corrfile,'r')
