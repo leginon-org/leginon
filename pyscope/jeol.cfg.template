@@ -74,22 +74,22 @@ STAGE_SCALE%Z = 1e9
 # backlash correction in meters
 BACKLASH_SCALE%X = 10e-6
 BACKLASH_SCALE%Y = 30e-6
-# minimal move distance where full backlash correction starts
+# minimal move distance where full backlash correction starts in meters
 BACKLASH_LIMIT%FULL = 10e-6
 # minimal move distance where scaled down backlash correction starts
 BACKLASH_LIMIT%REDUCED = 0.5e-6
-# limits of stage movement
+# limits of stage movement XYZ in meters, AB in radians
 STAGE_LIMIT%X = 1e-3
 STAGE_LIMIT%Y = 1e-3
 STAGE_LIMIT%Z = 220e-6
 STAGE_LIMIT%A = 1.2217
 STAGE_LIMIT%B = 3.141593
-# accuracy of stage movement
+# accuracy of stage movement XYZ in meters, AB in radians
 ACCURACY%X = 2e-7
 ACCURACY%Y = 2e-7
 ACCURACY%Z = 5e-7
-ACCURACY%A = 174e-3
-ACCURACY%B = 174-3
+ACCURACY%A = 1.74e-3
+ACCURACY%B = 1.74-3
 
 [apt]
 # aperture class
