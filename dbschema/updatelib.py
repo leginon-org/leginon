@@ -57,7 +57,7 @@ class UpdateLib:
 		branch_reset_revision = self.db_revision
 		if not self.getDatabaseReset():
 			if svn_branch == 'trunk':
-				branch_reset_revision = 17973
+				branch_reset_revision = 18034
 			elif svn_branch == 'myami-3.0':
 				branch_reset_revision = 17973
 			elif svn_branch == 'myami-2.2':
