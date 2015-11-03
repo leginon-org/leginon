@@ -10,6 +10,9 @@ excluding_tablenames = ['ImportMappingData','ImportDBConfigData']
 def activateAutoIncrement(database):
 	q = 'Show Tables;'
 	r = database.returnCustomSQL(q)
+	if not r:
+		print "No archive to be deactivate"
+		return
 	if r[0] == 'AcquisitionFFTData':
 		print "Acting on original data. STOP!!!!!"
 		raw_input('kill this!!!!')

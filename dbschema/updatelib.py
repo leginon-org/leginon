@@ -24,6 +24,10 @@ class UpdateLib:
 		if svn_branch == 'trunk':
 			schema_revisions = [12857,13713,14077,14891,15069,15497,15526,15653,16182,16607,17035,17111,17224,17561,17562,17617,17812,17813,17916,18000,18034]
 			appion_only_revisions = [15248,15251,15293,15961,16412,16446,17035,17311,17982]
+
+		elif svn_branch == 'myami-3.2':
+			schema_revisions = [12857,13713,14077,14891,15069,15497,15526,15653,16182,16607,17035,17111,17224,17561,17562,17617,17812,17813,17916,18000,18034]
+			appion_only_revisions = [15248,15251,15293,15961,16412,16446,17035,17311,17982]
 		elif svn_branch == 'myami-3.1':
 			schema_revisions = [12857,13713,14077,14891,15069,15497,15526,15653,16182,16607,17035,17111,17224,17561,17562,17617,17812,17813,17916,18000,18034]
 			appion_only_revisions = [15248,15251,15293,15961,16412,16446,17035,17311,17982]
@@ -57,7 +61,9 @@ class UpdateLib:
 		branch_reset_revision = self.db_revision
 		if not self.getDatabaseReset():
 			if svn_branch == 'trunk':
-				branch_reset_revision = 17973
+				branch_reset_revision = 18034
+			elif svn_branch == 'myami-3.1':
+				branch_reset_revision = 18034
 			elif svn_branch == 'myami-3.0':
 				branch_reset_revision = 17973
 			elif svn_branch == 'myami-2.2':

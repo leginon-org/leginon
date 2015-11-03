@@ -10,7 +10,10 @@ from pyami import mrc
 import itertools
 from pyscope import falconframe
 
+FRAME_DIR = '.'
+
 rawtype = numpy.uint32
+frametype = numpy.uint8
 idcounter = itertools.cycle(range(100))
 
 has_energy_filter = False
@@ -268,6 +271,13 @@ class SimFrameCamera(SimCCDCamera):
 		#print 'VIEW', transparency
 		return transparency
 
+	def convertToInt8(self,array):
+		min = 0
+		max = array.max()
+		array = (array / (numpy.ones(array.shape)*max))*128
+		array = numpy.asarray(array,numpy.int8)
+		return array
+
 	def custom_setup(self):
 		'''
 		Place holder for more setup
@@ -324,9 +334,11 @@ class SimFrameCamera(SimCCDCamera):
 				frame = self._simNormal(shape, exptime)
 			else:
 				raise RuntimeError('unknown exposure type: %s' % (self.exposure_type,))
+			#Keep it small
+			frame = self.convertToInt8(frame)
 
 			mrcname = '.mrc'
-			fname = self.rawframesname + mrcname
+			fname = os.path.join(FRAME_DIR,self.rawframesname + mrcname)
 			if self.save_frames:
 				print 'SAVE', i
 				if i == 0:
@@ -509,9 +521,16 @@ class SimOtherCCDCamera(SimCCDCamera):
 		im = 10 * im
 		return im
 
-class SimSuperResCamera(SimFrameCamera):
-	name = 'SimSuperResCamera'
+class SimK2CountingCamera(SimFrameCamera):
+	name = 'SimK2CountingCamera'
 	def __init__(self):
-		super(SimSuperResCamera,self).__init__()
+		super(SimK2CountingCamera,self).__init__()
+		self.binning_limits = [1,2,4,8]
+		self.binmethod = 'floor'
+
+class SimK2SuperResCamera(SimFrameCamera):
+	name = 'SimK2SuperResCamera'
+	def __init__(self):
+		super(SimK2SuperResCamera,self).__init__()
 		self.binning_limits = [1]
 		self.binmethod = 'floor'

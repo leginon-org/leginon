@@ -152,11 +152,13 @@ class subStackScript(appionScript.AppionScript):
 				"LEFT JOIN ApAlignReferenceData ard ON" + \
 				"(apd.`REF|ApAlignReferenceData|ref` = ard.DEF_id) " + \
 				"WHERE `REF|ApAlignStackData|alignstack` = %i"%(self.params['alignid'])
+			# These are AlignParticles
 			particles = sinedon.directq.complexMysqlQuery('appiondata',sqlcmd)
 
 		elif self.params['clusterid'] is not None:
 			clusterpartq = appiondata.ApClusteringParticleData()
 			clusterpartq['clusterstack'] = self.clusterstackdata
+			# These are ClusteringParticles
 			particles = clusterpartq.query()
 		apDisplay.printMsg("Completed in %s\n"%(apDisplay.timeString(time.time()-q0)))
 
@@ -171,16 +173,26 @@ class subStackScript(appionScript.AppionScript):
 		count = 0
 		t0 = time.time()
 		apDisplay.printMsg("Parsing particle information")
+
 		# find out if there is alignparticle info:
-		usealignp = False
+		is_cluster_pp = False
+		# alignparticle is a key of any particle in particles if the latter is
+		# a CluateringParticle
 		if 'alignparticle' in particles[0]:
-			usealignp = True
+			is_cluster_p = True
+
 		for part in particles:
 			count += 1
-			if usealignp:
+			if is_cluster_p:
+				# alignpart is an item of ClusteringParticle
 				alignpart = part['alignparticle']
+				try:
+					classnum = int(part['refnum'])-1
+				except:
+					apDisplay.printWarning("particle %d was not put into any class" % (part['partnum']))
 				emanstackpartnum = alignpart['stackpart']['particleNumber']-1
 			else:
+				# particle has info from AlignedParticle as results of direct query
 				alignpart = part
 				try:
 					classnum = int(alignpart['refnum'])-1
