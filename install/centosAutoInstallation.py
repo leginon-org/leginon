@@ -18,7 +18,7 @@ class CentosInstallation(object):
 		# need to change to branch when release
 		#self.svnCmd = "svn co http://emg.nysbc.org/svn/myami/branches/myami-redux " + self.svnMyamiDir
 		
-		self.svnCmd = "svn co http://emg.nysbc.org/svn/myami/trunk " + self.svnMyamiDir
+		self.svnCmd = "svn co http://emg.nysbc.org/svn/myami/branches/myami-3.2 " + self.svnMyamiDir
 		# redhat release related values
 		self.redhatRelease = '6.8' # currently used to decide the name of the epel download.
 		self.torqueLibPath = '/var/lib/torque/'
@@ -593,7 +593,9 @@ setenv SPBIN_DIR ${SPIDERDIR}/bin/''')
 
 		# move the main source code directory to global location, like /usr/local
 		self.writeToLog("--- Moving the Xmipp directory to /usr/local/Xmipp.")
-		shutil.move(dirName, "/usr/local/Xmipp")
+		xmipp_dest = "/usr/local/Xmipp"
+		if not os.path.exists(xmipp_dest):
+			shutil.move(dirName, xmipp_dest)
 
 		#
 		# set environment variables
