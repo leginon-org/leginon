@@ -7,11 +7,12 @@ com_module =  comtypes
 items = [
 		('TEM Scripting', ('Tecnai.Instrument', 'TEMScripting.Instrument.1')),
 		('TOM Moniker', ('TEM.Instrument.1',)),
-		('Tecnai Low Dose Kit', ('LDServer.LdSrv')),
-		('Tecnai Exposure Adaptor', ('adaExp.TAdaExp')),
-		('Gatan CCD Camera', ('TecnaiCCD.GatanCamera.2')),
+		('Tecnai Low Dose Kit', ('LDServer.LdSrv',)),
+		('Tecnai Exposure Adaptor', ('adaExp.TAdaExp',)),
+		('Gatan CCD Camera', ('TecnaiCCD.GatanCamera.2',)),
 
 ]
+
 def getTlbFromComname(comname):
 	try:
 		comobj = comtypes.client.CreateObject(comname)
@@ -26,7 +27,7 @@ def makeFile(item):
 	for i, comname in enumerate(comnames):
 		typelibInfo = getTlbFromComname(comname)
 		if typelibInfo is not None:
-			print '\nFound: %s' % comname
+			print '\nFound COM typelib named: %s' % comname
 			break
 	if typelibInfo is None:
 		print '\nError, cannot find typelib for "%s"\n' % (message,)
