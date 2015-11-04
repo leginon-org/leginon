@@ -175,7 +175,7 @@ class subStackScript(appionScript.AppionScript):
 		apDisplay.printMsg("Parsing particle information")
 
 		# find out if there is alignparticle info:
-		is_cluster_pp = False
+		is_cluster_p = False
 		# alignparticle is a key of any particle in particles if the latter is
 		# a CluateringParticle
 		if 'alignparticle' in particles[0]:
