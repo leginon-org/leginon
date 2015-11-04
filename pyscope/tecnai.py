@@ -71,7 +71,7 @@ class Tecnai(tem.TEM):
 			self.tom = comtypes.client.CreateObject('TEM.Instrument.1')
 		except com_module.COMError, (hr, msg, exc, arg):
 			print 'unable to initialize TOM Moniker interface, %s' % msg
-                        self.tom = None
+			self.tom = None
 
 		try:
 			self.lowdose = comtypes.client.CreateObject('LDServer.LdSrv')
@@ -1127,7 +1127,7 @@ class Tecnai(tem.TEM):
 			return 'closed'
 
 	def setColumnValvePosition(self, state):
-                position = self.getColumnValvePosition()
+		position = self.getColumnValvePosition()
 		if position == 'open' and state == 'closed':
 			self.tecnai.Vacuum.ColumnValvesOpen = 0
 			time.sleep(2)
@@ -1135,8 +1135,8 @@ class Tecnai(tem.TEM):
 			self.tecnai.Vacuum.ColumnValvesOpen = 1
 			time.sleep(3) # extra time for camera retract
 		elif state in ('open','closed'):
-                        pass
-                else:
+			pass
+		else:
 			raise ValueError
 
 	def getVacuumStatus(self):
