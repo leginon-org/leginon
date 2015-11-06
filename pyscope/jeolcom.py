@@ -843,6 +843,8 @@ class Jeol(tem.TEM):
 				time.sleep(1)
 		self.eos3.SetSelector(self.calculateSelectorIndex(new_mode_index, value))
 
+		debug_print('relaxation current mag %d' % current_mag)
+		debug_print('relaxation target mag %d' % value)
 		if self.getJeolConfig('tem option','cl3_relaxation_mag') and value != current_mag and value > self.getJeolConfig('tem option','cl3_relaxation_mag'):
 			debug_print('need relaxing')
 			self.relax_beam = True
@@ -988,6 +990,8 @@ class Jeol(tem.TEM):
 		# Make it to retry.
 		accuracy = self.getJeolConfig('stage','accuracy')
 		new_position = self.getStagePosition()
+
+		# check axes character by character
 		for axis in axes:
 			if axis in position.keys() and abs(new_position[axis] - position[axis]) > accuracy[axis]:
 				self.printPosition('new', new_position)
@@ -995,6 +999,8 @@ class Jeol(tem.TEM):
 				debug_print('stage %s not reached' % axis)
 				axis_position = {axis:position[axis]}
 				self.setStagePositionByAxis(position,axis)
+			else:
+				debug_print('stage %s reached' % axis)
 
 	def setStagePositionByAxis(self, position, axis):
                 keys = position.keys()
