@@ -368,7 +368,7 @@ class ScaleCalibrator(object):
 		self.tem.setDiffractionMode('imaging')
 
 	def calibrateAll(self):
-		#self.calibrateInImageMode()
+		self.calibrateInImageMode()
 		self.calibrateInDiffractionMode()
 		self.writeConfig()
 		raw_input('hit any key to end')
@@ -474,7 +474,7 @@ class JeolScaleCalibrator(ScaleCalibrator):
 		return self.use_pla
 
 	def isNewSubMode(self):
-		print 'done_submode',self.done_submodes
+		print '-------------------------'
 		divided_submode = self.getSubModeString()
 		if self.done_submodes and divided_submode in self.done_submodes:
 			return False
