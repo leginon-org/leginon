@@ -54,8 +54,8 @@ class ApProc2d(basicScript.BasicScript):
 	def setupParserOptions(self):
 		self.normoptions = ('none', 'boxnorm', 'edgenorm', 'rampnorm', 'parabolic') #normalizemethod
 
-		self.parser.add_option('--in', dest='infile', metavar='FILE', help='Input image/stack')
-		self.parser.add_option('--out', dest='outfile', metavar='FILE', help='Output image/stack')
+		self.parser.add_option('--in', '-i', dest='infile', metavar='FILE', help='Input image/stack')
+		self.parser.add_option('--out', '-o', dest='outfile', metavar='FILE', help='Output image/stack')
 		self.parser.add_option('--list', dest='list', metavar='FILE', help='List of particles to keep')
 		self.parser.add_option('--lp', '--lowpass', dest='lowpass', type=float,
 			metavar='FLOAT', help='Low pass filter to provided resolution. In Angstroms. ')
@@ -156,7 +156,7 @@ class ApProc2d(basicScript.BasicScript):
 		if not os.path.exists(filename):
 			return None
 		#Determine extension
-		if filename.endswith('.mrc'):
+		if filename.endswith('.mrc') or filename.endswith('.mrcs'):
 			header = mrc.readHeaderFromFile(filename)
 		elif filename.endswith('.hed') or filename.endswith('.img'):
 			header = imagic.readImagicHeader(filename)
@@ -180,7 +180,7 @@ class ApProc2d(basicScript.BasicScript):
 		use memory mapping (mmap) to prevent memory overloads
 		"""
 		#Determine extension
-		if filename.endswith('.mrc'):
+		if filename.endswith('.mrc') or filename.endswith('.mrcs'):
 			data = mrc.mmap(filename)
 			if len(data.shape) == 2:
 				#convert to 3D
