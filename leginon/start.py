@@ -18,7 +18,6 @@ import leginon.project
 try:
 	# This is a local file
 	import leginon.configmatch
-	print leginon.configmatch
 	matchconfigs=True
 except:
 	matchconfigs=False

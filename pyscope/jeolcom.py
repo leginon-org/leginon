@@ -113,12 +113,15 @@ class Jeol(tem.TEM):
 			return self.jeolconfigs[optionname][itemname]
 
 	def testAutomatedAperture(self):
+		if not self.getJeolConfig('tem option','use_auto_apt'):
+			return False
 		result = 10000
 		for i in range(10):
 			if result != 0:
 				time.sleep(.1)
 				result = self.apt3.SelectKind(2)
-		return result == 0 and self.getJeolConfig('tem option','use_auto_apt')
+		# result is 0 if there is no error
+		return result == 0
 
 	def subDivideMode(self,mode_name,mag):
 		if mode_name == 'mag1':
@@ -184,7 +187,7 @@ class Jeol(tem.TEM):
 	def getLimit(self,key):
 		if key == 'piezo':
 			#2100F at NYSBC
-			return {'x':1.75e-6,'y':1.75e-6}
+			return {'x':1.75e-6,'y':1.17e-6}
 
 	def setProjectionSubModes(self):
 		mode_names = self.getJeolConfig('eos','use_modes')
@@ -843,6 +846,8 @@ class Jeol(tem.TEM):
 				time.sleep(1)
 		self.eos3.SetSelector(self.calculateSelectorIndex(new_mode_index, value))
 
+		debug_print('relaxation current mag %d' % current_mag)
+		debug_print('relaxation target mag %d' % value)
 		if self.getJeolConfig('tem option','cl3_relaxation_mag') and value != current_mag and value > self.getJeolConfig('tem option','cl3_relaxation_mag'):
 			debug_print('need relaxing')
 			self.relax_beam = True
@@ -988,6 +993,8 @@ class Jeol(tem.TEM):
 		# Make it to retry.
 		accuracy = self.getJeolConfig('stage','accuracy')
 		new_position = self.getStagePosition()
+
+		# check axes character by character
 		for axis in axes:
 			if axis in position.keys() and abs(new_position[axis] - position[axis]) > accuracy[axis]:
 				self.printPosition('new', new_position)
@@ -995,6 +1002,8 @@ class Jeol(tem.TEM):
 				debug_print('stage %s not reached' % axis)
 				axis_position = {axis:position[axis]}
 				self.setStagePositionByAxis(position,axis)
+			else:
+				debug_print('stage %s reached' % axis)
 
 	def setStagePositionByAxis(self, position, axis):
                 keys = position.keys()
@@ -1054,10 +1063,12 @@ class Jeol(tem.TEM):
 		This makes it move in diagonal direction.
 		Position must have both xy axis values and within limit.
 		'''
+		scale = self.getScale('stage')
 		if self.hasPiezoStage():
 			debug_print('reset piezo')
 			self.resetPiezoPosition()
-		scale = self.getScale('stage')
+			# Somehow scale is ten times bigger internally at the scope at this point
+			scale = {'x':scale['x']/10.0,'y':scale['y']/10.0}
 		self.printPosition('_setXY', position)
 		raw_position={'x':position['x']*scale['x'],'y':position['y']*scale['y']}
 		result = self.stage3.SetX(raw_position['x'])
@@ -1082,7 +1093,7 @@ class Jeol(tem.TEM):
 			self._waitForStage()
 
 	def hasPiezoStage(self):
-		# Need to be in jeol.cfg
+		#return self.getJeolConfig('stage','use_piezo')
 		return False
 
 	'''
@@ -1123,7 +1134,7 @@ class Jeol(tem.TEM):
 
 	def _setPiezoPosition(self, position):
 		status = self.stage3.selDrvMode(1)
-		time.sleep(1)
+		time.sleep(0.5)
 		if status != 0:
 			raise RuntimeError('No PiezoStage')
 		scale = self.getScale('stage')
@@ -1138,7 +1149,9 @@ class Jeol(tem.TEM):
 		self._waitForStage()
 		for i in range(30):
 			p = self.getPiezoPosition()
-			if abs(p['x'] - position['x']) < 1e-8 and abs(p['y']-position['y']) < 1e-8:
+			deltax = abs(p['x'] - position['x'])
+			deltay = abs(p['y']-position['y'])
+			if deltax < 3e-8 and deltay < 3e-8:
 				break
 			self.stage3.selDrvMode(1)
 			result = self.stage3.SetX(raw_position[0])
@@ -1147,9 +1160,22 @@ class Jeol(tem.TEM):
 			time.sleep(0.5)
 		debug_print('set DriveBack')
 		status = self.stage3.selDrvMode(0)
+		time.sleep(0.5)
 
 	def resetPiezoPosition(self):
 		self._setPiezoPosition({'x':0.0,'y':0.0})
+
+	def refreshPiezoStage(self):
+		'''
+		similar to SF refresh
+		'''
+		limit = self.getLimit('piezo')
+		old_position=self.getPiezoPosition()
+		self._setPiezoPosition({'x':-limit['x'],'y':-limit['y']})
+		time.sleep(0.5)
+		self.resetPiezoPosition()
+		# TODO should only move if not close	
+		self._setPiezoPosition(old_position)
 	'''
 
 	def getLowDoseStates(self):

@@ -194,25 +194,22 @@ if (is_numeric($expId)) {
 		"<a href='prtlreport.php?expId=$sessionId'>$prtlruns</a>\n";
 
 	$nrun=array();
-	$nrun[] = array(
-		'name'=>"<a href='runTemplateCorrelator.php?expId=$sessionId'>Template Picking</a>",
-		'result'=>$tresults,
-	);
+
 	$nrun[] = array(
 		'name'=>"<a href='runDogPicker.php?expId=$sessionId'>DoG Picking</a>",
 		'result'=>$dresults,
 	);
-	// The signature feature is added with issue #368, however was not tested prior to 2.0 release.
-	// It should be hidden until it can be tested at AMI. The HIDE_FEATURE flag can be set
-	// in config.php in the myamiweb directory.
+
 	$nrun[] = array(
-		'name'=>"<a href='runSignature.php?expId=$sessionId'>Signature</a>",
-		'result'=>$sresults,
+		'name'=>"<a href='runTemplateCorrelator.php?expId=$sessionId'>Template Picking</a>",
+		'result'=>$tresults,
 	);
+
 	$nrun[] = array(
 		'name'=>"<a href='runManualPicker.php?expId=$sessionId'>Manual Picking</a>",
 		'result'=>$mresults,
 	);
+
 	if (!HIDE_FEATURE)
 	{
 		$nrun[] = array(
@@ -220,6 +217,18 @@ if (is_numeric($expId)) {
 			'result'=>$cresults,
 		);
 	}
+
+	// The signature feature is added with issue #368, however was not tested prior to 2.0 release.
+	// It should be hidden until it can be tested at AMI. The HIDE_FEATURE flag can be set
+	// in config.php in the myamiweb directory.
+	if (!HIDE_FEATURE)
+	{
+		$nrun[] = array(
+			'name'=>"<a href='runSignature.php?expId=$sessionId'>Signature</a>",
+			'result'=>$sresults,
+		);
+	}
+
 	if ($loopruns > 0) {
 		$nrun[] = array(
 			'name'=>"<a href='runLoopAgain.php?expId=$sessionId'>Repeat from other session</a>",
@@ -445,6 +454,9 @@ if (is_numeric($expId)) {
 				'result'=>$clusterresults,
 			);
 //			}
+			// Fix Me: This should be move to after particle alignment
+			$nruns[] = "<a href='selectLocalClassificationType.php?expId=$sessionId'>Run MaskItOn</a>";
+	
 		}
 		// ===================================================================
 		// template stacks (class averages & forward projections)
@@ -506,37 +518,6 @@ if (is_numeric($expId)) {
 		);
 	}
 
-	/* EMAN Common Lines */
-	if ($aligndone >= 1 ) {
-		$clinesdone = count($subclusterjobs['createModel']['done']);
-		$clinesqueue = count($subclusterjobs['createModel']['queued']);
-		$clinesrun = count($subclusterjobs['createModel']['running']);
-		$clinesresults[] = ($clinesdone==0) ? "" : "<a href='densitysummary.php?expId=$sessionId&jobtype=createModel'>$clinesdone complete</a>";
-		$clinesresults[] = ($clinesrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=createModel'>$clinesrun running</a>";
-		$clinesresults[] = ($clinesqueue==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=createModel'>$clinesqueue queued</a>";
-		$nruns[] = array(
-			'name'=>"<a href='createmodel.php?expId=$sessionId'>EMAN Common Lines</a>",
-			'result'=>$clinesresults,
-		);
-
-	}
-
-	/* SIMPLE Common Lines */
-	// TODO: change the jobtype below for simple
-	if ($aligndone >= 1 ) {
-		$simpledone = count($subclusterjobs['abinitio']['done']);
-		$simplequeue = count($subclusterjobs['abinitio']['queued']);
-		$simplerun = count($subclusterjobs['abinitio']['running']);
-		$simpleresults[] = ($simpledone==0) ? "" : "<a href='simpleCommonLinesSummary.php?expId=$sessionId&jobtype=abinitio'>$simpledone complete</a>";
-		$simpleresults[] = ($simplerun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=abinitio'>$simplerun running</a>";
-		$simpleresults[] = ($simplequeue==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=abinitio'>$simplequeue queued</a>";
-		$nruns[] = array(
-			'name'=>"<a href='runSimple.php?expId=$sessionId'>SIMPLE Common Lines</a>",
-			'result'=>$simpleresults,
-		);
-
-	}
-	
 	/* IMAGIC Angular Reconstitution */
 	if (($aligndone >= 1 && $clusterdone >=1) || ($tsdone >= 1)) {
 		$OptiModRunsTs = $particle->getAutomatedCommonLinesRunsTs($sessionId);
@@ -552,6 +533,40 @@ if (is_numeric($expId)) {
 			'result'=>$OptiModresults,
 		);
 	}
+
+	/* EMAN Common Lines */
+	if ($aligndone >= 1 ) {
+		$clinesdone = count($subclusterjobs['createModel']['done']);
+		$clinesqueue = count($subclusterjobs['createModel']['queued']);
+		$clinesrun = count($subclusterjobs['createModel']['running']);
+		$clinesresults[] = ($clinesdone==0) ? "" : "<a href='densitysummary.php?expId=$sessionId&jobtype=createModel'>$clinesdone complete</a>";
+		$clinesresults[] = ($clinesrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=createModel'>$clinesrun running</a>";
+		$clinesresults[] = ($clinesqueue==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=createModel'>$clinesqueue queued</a>";
+		$nruns[] = array(
+			'name'=>"<a href='createmodel.php?expId=$sessionId'>EMAN Common Lines</a>",
+			'result'=>$clinesresults,
+		);
+
+	}
+
+	if (!HIDE_FEATURE)
+	{
+		/* SIMPLE Common Lines */
+		// TODO: change the jobtype below for simple
+		if ($aligndone >= 1 ) {
+			$simpledone = count($subclusterjobs['abinitio']['done']);
+			$simplequeue = count($subclusterjobs['abinitio']['queued']);
+			$simplerun = count($subclusterjobs['abinitio']['running']);
+			$simpleresults[] = ($simpledone==0) ? "" : "<a href='simpleCommonLinesSummary.php?expId=$sessionId&jobtype=abinitio'>$simpledone complete</a>";
+			$simpleresults[] = ($simplerun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=abinitio'>$simplerun running</a>";
+			$simpleresults[] = ($simplequeue==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=abinitio'>$simplequeue queued</a>";
+			$nruns[] = array(
+				'name'=>"<a href='runSimple.php?expId=$sessionId'>SIMPLE Common Lines</a>",
+				'result'=>$simpleresults,
+			);
+		}
+	}
+	
 
 	if ( (array)$nruns ) {
 		$data[] = array(
@@ -826,6 +841,30 @@ if (is_numeric($expId)) {
 		);
 	}
 
+	if ($leginondata->onlyUploadedImagesInSession($sessionId)) {
+		$nruns[] = array(
+			'name'=>"<a href='uploadimage.php?expId=$sessionId'>Upload more images</a>",
+		);
+	}
+
+	$nruns[] = array(
+		'name'=>"<a href='uploadParticles.php?expId=$sessionId'>Upload particles</a>",
+	);
+
+	$result = ($templates==0) ? "" :
+		"<a href='viewtemplates.php?expId=$sessionId'>$templates available</a>";
+	$nruns[] = array(
+		'name'=>"<a href='uploadtemplate.php?expId=$sessionId'>Upload template</a>",
+		'result'=>$result,
+	);
+
+	$nruns[] = array(
+		'name'=>"<a href='uploadstack.php?expId=$sessionId'>Upload stack</a>",
+	);
+	$nruns[] = array(
+		'name'=>"<a href='selectStackForm.php?expId=$sessionId&method=external'>Upload reconstruction</a>",
+	);
+
 	$nruns[] = array(
 		'name'=>"<a href='pdb2density.php?expId=$sessionId'>PDB to Model</a>"
 	);
@@ -834,37 +873,12 @@ if (is_numeric($expId)) {
 		'name'=>"<a href='emdb2density.php?expId=$sessionId'>EMDB to Model</a>"
 	);
 
-	$nruns[] = array(
-		'name'=>"<a href='uploadParticles.php?expId=$sessionId'>Upload particles</a>",
-	);
-
-	$result = ($templates==0) ? "" :
-		"<a href='viewtemplates.php?expId=$sessionId'>$templates available</a>";
-
-	$nruns[] = array(
-		'name'=>"<a href='uploadtemplate.php?expId=$sessionId'>Upload template</a>",
-		'result'=>$result,
-	);
-
 	$result = ($models==0) ? "" :
 		"<a href='viewmodels.php?expId=$sessionId'>$models available</a>";
 
 	$nruns[] = array(
 		'name'=>"<a href='uploadmodel.php?expId=$sessionId'>Upload model</a>",
 		'result'=>$result,
-	);
-
-	if ($leginondata->onlyUploadedImagesInSession($sessionId)) {
-		$nruns[] = array(
-			'name'=>"<a href='uploadimage.php?expId=$sessionId'>Upload more images</a>",
-		);
-	}
-
-	$nruns[] = array(
-		'name'=>"<a href='uploadstack.php?expId=$sessionId'>Upload stack</a>",
-	);
-	$nruns[] = array(
-		'name'=>"<a href='selectStackForm.php?expId=$sessionId&method=external'>Upload reconstruction</a>",
 	);
 
 	$data[] = array(
@@ -915,14 +929,14 @@ if (is_numeric($expId)) {
 	$results[] = ($crudrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=maskmaker'>$crudrun running</a>";
 	$results[] = ($crudqueued==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=maskmaker'>$crudqueued queued</a>";		
 	
+	$nrun = "<a href='manualMaskMaker.php?expId=$sessionId'>Run Manual Masking</a>";
+	$nruns[] = $nrun;
+	
 	$nruns[] = array(
 		'name'=>"<a href='selectMaskingType.php?expId=$sessionId'>Run Automated Masking</a>",
 		'result'=>$results,
 	);
 
-	$nrun = "<a href='manualMaskMaker.php?expId=$sessionId'>Run Manual Masking</a>";
-	$nruns[] = $nrun;
-	
 	$data[] = array(
 		'action' => array($action, $celloption),
 		'result' => array($result),

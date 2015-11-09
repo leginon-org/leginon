@@ -43,8 +43,8 @@ function createMaskitonForm($extra=false, $title='Maskiton Launcher', $heading='
 	}
 	
 	// This stopped working. Users need to upload a stack to the maskiton server to work with it.
-	//echo "<Iframe src='http://maskiton.scripps.edu/masking.html?projectid=$projectId&stackid=$stackval' width='800' height='800'></Iframe><br /><br />\n";
-	echo "<Iframe src='http://maskiton.scripps.edu/' width='800' height='800'></Iframe><br /><br />\n";
+	//echo "<Iframe src='http://maskiton.nysbc.org/masking.html?projectid=$projectId&stackid=$stackval' width='800' height='800'></Iframe><br /><br />\n";
+	echo "<Iframe src='http://maskiton.nysbc.org/' width='800' height='800'></Iframe><br /><br />\n";
 	
 	processing_footer();
 }

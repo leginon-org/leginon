@@ -75,6 +75,20 @@ echo "  Kerden SOM stands for 'Kernel Probability Density Estimator Self-Organiz
 	."<br/><br/>";
 echo "</td></tr>";
 
+//----Xmipp Rotational Kerden SOM Analysis----//
+
+echo "<tr><td width='100' align='center'>\n";
+echo "  <img src='img/xmipp_logo.png' width='64'>\n";
+echo "</td><td>\n";
+echo "  <h3><a href='runRotKerDenSom.php?expId=$expId&alignId=$alignId'>Xmipp Rotational Kerden Self-Organizing Map</a></h3>";
+echo "  This function applies the Kerden SOM to rotational symmetric particles. "
+	."This is especially useful for classifying particles with difference cyclic symmetries."
+	."For more information, please see the following "
+	."<a href='http://xmipp.cnb.csic.es/twiki/bin/view/Xmipp/RotationalSpectraClassification'>Xmipp webpage"
+	."&nbsp;<img border='0' src='img/external.png'></a>. "
+	."<br/><br/>";
+echo "</td></tr>";
+
 //----IMAGIC Multivariate Statistical Analysis----//
 
 if (!HIDE_IMAGIC) {
@@ -90,18 +104,6 @@ if (!HIDE_IMAGIC) {
 	        ."<br/><br/>";
 	echo "</td></tr>";
 }
-
-echo "<tr><td width='100' align='center'>\n";
-echo "  <img src='img/xmipp_logo.png' width='64'>\n";
-echo "</td><td>\n";
-echo "  <h3><a href='runRotKerDenSom.php?expId=$expId&alignId=$alignId'>Xmipp Rotational Kerden Self-Organizing Map</a></h3>";
-echo "  This function applies the Kerden SOM to rotational symmetric particles. "
-	."This is especially useful for classifying particles with difference cyclic symmetries."
-	."For more information, please see the following "
-	."<a href='http://xmipp.cnb.csic.es/twiki/bin/view/Xmipp/RotationalSpectraClassification'>Xmipp webpage"
-	."&nbsp;<img border='0' src='img/external.png'></a>. "
-	."<br/><br/>";
-echo "</td></tr>";
 
 
 // ----Cluster by Affinity Propagation----//

@@ -195,11 +195,11 @@ class Protomo2RefineForm extends BasicLayoutForm
 				$Nx3=$r3_region_x/$r3_sampling;$Ny3=$r3_region_y/$r3_sampling;
 				$Nx4=$r4_region_x/$r4_sampling;$Ny4=$r4_region_y/$r4_sampling;
 				$Nx5=$r5_region_x/$r5_sampling;$Ny5=$r5_region_y/$r5_sampling;
-				$_POST['r1_mask_width_x'] = $r1_mask_width_x = $Nx1-2.5*$r1_mask_apod_x;$_POST['r1_mask_width_y'] = $r1_mask_width_y = $Ny1-2.5*$r1_mask_apod_y;
-				$_POST['r2_mask_width_x'] = $r2_mask_width_x = $Nx2-2.5*$r2_mask_apod_x;$_POST['r2_mask_width_y'] = $r2_mask_width_y = $Ny2-2.5*$r2_mask_apod_y;
-				$_POST['r3_mask_width_x'] = $r3_mask_width_x = $Nx3-2.5*$r3_mask_apod_x;$_POST['r3_mask_width_y'] = $r3_mask_width_y = $Ny3-2.5*$r3_mask_apod_y;
-				$_POST['r4_mask_width_x'] = $r4_mask_width_x = $Nx4-2.5*$r4_mask_apod_x;$_POST['r4_mask_width_y'] = $r4_mask_width_y = $Ny4-2.5*$r4_mask_apod_y;
-				$_POST['r5_mask_width_x'] = $r5_mask_width_x = $Nx5-2.5*$r5_mask_apod_x;$_POST['r5_mask_width_y'] = $r5_mask_width_y = $Ny5-2.5*$r5_mask_apod_y;
+				$_POST['r1_mask_width_x'] = $r1_mask_width_x = intval($Nx1-2.5*$r1_mask_apod_x);$_POST['r1_mask_width_y'] = $r1_mask_width_y = intval($Ny1-2.5*$r1_mask_apod_y);
+				$_POST['r2_mask_width_x'] = $r2_mask_width_x = intval($Nx2-2.5*$r2_mask_apod_x);$_POST['r2_mask_width_y'] = $r2_mask_width_y = intval($Ny2-2.5*$r2_mask_apod_y);
+				$_POST['r3_mask_width_x'] = $r3_mask_width_x = intval($Nx3-2.5*$r3_mask_apod_x);$_POST['r3_mask_width_y'] = $r3_mask_width_y = intval($Ny3-2.5*$r3_mask_apod_y);
+				$_POST['r4_mask_width_x'] = $r4_mask_width_x = intval($Nx4-2.5*$r4_mask_apod_x);$_POST['r4_mask_width_y'] = $r4_mask_width_y = intval($Ny4-2.5*$r4_mask_apod_y);
+				$_POST['r5_mask_width_x'] = $r5_mask_width_x = intval($Nx5-2.5*$r5_mask_apod_x);$_POST['r5_mask_width_y'] = $r5_mask_width_y = intval($Ny5-2.5*$r5_mask_apod_y);
 				$_POST['r1_highpass_diameter_x'] = $_POST['r2_highpass_diameter_x'] = $_POST['r3_highpass_diameter_x'] = $_POST['r4_highpass_diameter_x'] = $_POST['r5_highpass_diameter_x'] = $r1_hp_diam_x = $r2_hp_diam_x = $r3_hp_diam_x = $r4_hp_diam_x = $r5_hp_diam_x = round($imageinfo['pixelsize']*pow(10,10)*min($r1_region_x, $r1_region_y));
 				$_POST['r1_highpass_diameter_y'] = $_POST['r2_highpass_diameter_y'] = $_POST['r3_highpass_diameter_y'] = $_POST['r4_highpass_diameter_y'] = $_POST['r5_highpass_diameter_y'] = $r1_hp_diam_y = $r2_hp_diam_y = $r3_hp_diam_y = $r4_hp_diam_y = $r5_hp_diam_y = round($imageinfo['pixelsize']*pow(10,10)*min($r1_region_x, $r1_region_y));
 				$_POST['r1_highpass_apod_x'] = $_POST['r2_highpass_apod_x'] = $_POST['r3_highpass_apod_x'] = $_POST['r4_highpass_apod_x'] = $_POST['r5_highpass_apod_x'] = $r1_hp_apod_x = $r2_hp_apod_x = $r3_hp_apod_x = $r4_hp_apod_x = $r5_hp_apod_x = round($r1_hp_diam_x/2);
@@ -215,11 +215,11 @@ class Protomo2RefineForm extends BasicLayoutForm
 				$Nx3=$r3_region_x/$r3_sampling;$Ny3=$r3_region_y/$r3_sampling;
 				$Nx4=$r4_region_x/$r4_sampling;$Ny4=$r4_region_y/$r4_sampling;
 				$Nx5=$r5_region_x/$r5_sampling;$Ny5=$r5_region_y/$r5_sampling;
-				$_POST['r1_mask_width_x'] = $r1_mask_width_x = $Nx1-2.5*$r1_mask_apod_x;$_POST['r1_mask_width_y'] = $r1_mask_width_y = $Ny1-2.5*$r1_mask_apod_y;
-				$_POST['r2_mask_width_x'] = $r2_mask_width_x = $Nx2-2.5*$r2_mask_apod_x;$_POST['r2_mask_width_y'] = $r2_mask_width_y = $Ny2-2.5*$r2_mask_apod_y;
-				$_POST['r3_mask_width_x'] = $r3_mask_width_x = $Nx3-2.5*$r3_mask_apod_x;$_POST['r3_mask_width_y'] = $r3_mask_width_y = $Ny3-2.5*$r3_mask_apod_y;
-				$_POST['r4_mask_width_x'] = $r4_mask_width_x = $Nx4-2.5*$r4_mask_apod_x;$_POST['r4_mask_width_y'] = $r4_mask_width_y = $Ny4-2.5*$r4_mask_apod_y;
-				$_POST['r5_mask_width_x'] = $r5_mask_width_x = $Nx5-2.5*$r5_mask_apod_x;$_POST['r5_mask_width_y'] = $r5_mask_width_y = $Ny5-2.5*$r5_mask_apod_y;
+				$_POST['r1_mask_width_x'] = $r1_mask_width_x = intval($Nx1-2.5*$r1_mask_apod_x);$_POST['r1_mask_width_y'] = $r1_mask_width_y = intval($Ny1-2.5*$r1_mask_apod_y);
+				$_POST['r2_mask_width_x'] = $r2_mask_width_x = intval($Nx2-2.5*$r2_mask_apod_x);$_POST['r2_mask_width_y'] = $r2_mask_width_y = intval($Ny2-2.5*$r2_mask_apod_y);
+				$_POST['r3_mask_width_x'] = $r3_mask_width_x = intval($Nx3-2.5*$r3_mask_apod_x);$_POST['r3_mask_width_y'] = $r3_mask_width_y = intval($Ny3-2.5*$r3_mask_apod_y);
+				$_POST['r4_mask_width_x'] = $r4_mask_width_x = intval($Nx4-2.5*$r4_mask_apod_x);$_POST['r4_mask_width_y'] = $r4_mask_width_y = intval($Ny4-2.5*$r4_mask_apod_y);
+				$_POST['r5_mask_width_x'] = $r5_mask_width_x = intval($Nx5-2.5*$r5_mask_apod_x);$_POST['r5_mask_width_y'] = $r5_mask_width_y = intval($Ny5-2.5*$r5_mask_apod_y);
 				$_POST['r1_highpass_diameter_x'] = $_POST['r2_highpass_diameter_x'] = $_POST['r3_highpass_diameter_x'] = $_POST['r4_highpass_diameter_x'] = $_POST['r5_highpass_diameter_x'] = $r1_hp_diam_x = $r2_hp_diam_x = $r3_hp_diam_x = $r4_hp_diam_x = $r5_hp_diam_x = round($imageinfo['pixelsize']*pow(10,10)*min($r1_region_x, $r1_region_y));
 				$_POST['r1_highpass_diameter_y'] = $_POST['r2_highpass_diameter_y'] = $_POST['r3_highpass_diameter_y'] = $_POST['r4_highpass_diameter_y'] = $_POST['r5_highpass_diameter_y'] = $r1_hp_diam_y = $r2_hp_diam_y = $r3_hp_diam_y = $r4_hp_diam_y = $r5_hp_diam_y = round($imageinfo['pixelsize']*pow(10,10)*min($r1_region_x, $r1_region_y));
 				$_POST['r1_highpass_apod_x'] = $_POST['r2_highpass_apod_x'] = $_POST['r3_highpass_apod_x'] = $_POST['r4_highpass_apod_x'] = $_POST['r5_highpass_apod_x'] = $r1_hp_apod_x = $r2_hp_apod_x = $r3_hp_apod_x = $r4_hp_apod_x = $r5_hp_apod_x = round($r1_hp_diam_x/2);
@@ -235,11 +235,11 @@ class Protomo2RefineForm extends BasicLayoutForm
 				$Nx3=$r3_region_x/$r3_sampling;$Ny3=$r3_region_y/$r3_sampling;
 				$Nx4=$r4_region_x/$r4_sampling;$Ny4=$r4_region_y/$r4_sampling;
 				$Nx5=$r5_region_x/$r5_sampling;$Ny5=$r5_region_y/$r5_sampling;
-				$_POST['r1_mask_width_x'] = $r1_mask_width_x = $Nx1-2.5*$r1_mask_apod_x;$_POST['r1_mask_width_y'] = $r1_mask_width_y = $Ny1-2.5*$r1_mask_apod_y;
-				$_POST['r2_mask_width_x'] = $r2_mask_width_x = $Nx2-2.5*$r2_mask_apod_x;$_POST['r2_mask_width_y'] = $r2_mask_width_y = $Ny2-2.5*$r2_mask_apod_y;
-				$_POST['r3_mask_width_x'] = $r3_mask_width_x = $Nx3-2.5*$r3_mask_apod_x;$_POST['r3_mask_width_y'] = $r3_mask_width_y = $Ny3-2.5*$r3_mask_apod_y;
-				$_POST['r4_mask_width_x'] = $r4_mask_width_x = $Nx4-2.5*$r4_mask_apod_x;$_POST['r4_mask_width_y'] = $r4_mask_width_y = $Ny4-2.5*$r4_mask_apod_y;
-				$_POST['r5_mask_width_x'] = $r5_mask_width_x = $Nx5-2.5*$r5_mask_apod_x;$_POST['r5_mask_width_y'] = $r5_mask_width_y = $Ny5-2.5*$r5_mask_apod_y;
+				$_POST['r1_mask_width_x'] = $r1_mask_width_x = intval($Nx1-2.5*$r1_mask_apod_x);$_POST['r1_mask_width_y'] = $r1_mask_width_y = intval($Ny1-2.5*$r1_mask_apod_y);
+				$_POST['r2_mask_width_x'] = $r2_mask_width_x = intval($Nx2-2.5*$r2_mask_apod_x);$_POST['r2_mask_width_y'] = $r2_mask_width_y = intval($Ny2-2.5*$r2_mask_apod_y);
+				$_POST['r3_mask_width_x'] = $r3_mask_width_x = intval($Nx3-2.5*$r3_mask_apod_x);$_POST['r3_mask_width_y'] = $r3_mask_width_y = intval($Ny3-2.5*$r3_mask_apod_y);
+				$_POST['r4_mask_width_x'] = $r4_mask_width_x = intval($Nx4-2.5*$r4_mask_apod_x);$_POST['r4_mask_width_y'] = $r4_mask_width_y = intval($Ny4-2.5*$r4_mask_apod_y);
+				$_POST['r5_mask_width_x'] = $r5_mask_width_x = intval($Nx5-2.5*$r5_mask_apod_x);$_POST['r5_mask_width_y'] = $r5_mask_width_y = intval($Ny5-2.5*$r5_mask_apod_y);
 				$_POST['r1_highpass_diameter_x'] = $_POST['r2_highpass_diameter_x'] = $_POST['r3_highpass_diameter_x'] = $_POST['r4_highpass_diameter_x'] = $_POST['r5_highpass_diameter_x'] = $r1_hp_diam_x = $r2_hp_diam_x = $r3_hp_diam_x = $r4_hp_diam_x = $r5_hp_diam_x = round($imageinfo['pixelsize']*pow(10,10)*min($r1_region_x, $r1_region_y));
 				$_POST['r1_highpass_diameter_y'] = $_POST['r2_highpass_diameter_y'] = $_POST['r3_highpass_diameter_y'] = $_POST['r4_highpass_diameter_y'] = $_POST['r5_highpass_diameter_y'] = $r1_hp_diam_y = $r2_hp_diam_y = $r3_hp_diam_y = $r4_hp_diam_y = $r5_hp_diam_y = round($imageinfo['pixelsize']*pow(10,10)*min($r1_region_x, $r1_region_y));
 				$_POST['r1_highpass_apod_x'] = $_POST['r2_highpass_apod_x'] = $_POST['r3_highpass_apod_x'] = $_POST['r4_highpass_apod_x'] = $_POST['r5_highpass_apod_x'] = $r1_hp_apod_x = $r2_hp_apod_x = $r3_hp_apod_x = $r4_hp_apod_x = $r5_hp_apod_x = round($r1_hp_diam_x/2);
@@ -255,11 +255,11 @@ class Protomo2RefineForm extends BasicLayoutForm
 				$Nx3=$r3_region_x/$r3_sampling;$Ny3=$r3_region_y/$r3_sampling;
 				$Nx4=$r4_region_x/$r4_sampling;$Ny4=$r4_region_y/$r4_sampling;
 				$Nx5=$r5_region_x/$r5_sampling;$Ny5=$r5_region_y/$r5_sampling;
-				$_POST['r1_mask_width_x'] = $r1_mask_width_x = $Nx1-2.5*$r1_mask_apod_x;$_POST['r1_mask_width_y'] = $r1_mask_width_y = $Ny1-2.5*$r1_mask_apod_y;
-				$_POST['r2_mask_width_x'] = $r2_mask_width_x = $Nx2-2.5*$r2_mask_apod_x;$_POST['r2_mask_width_y'] = $r2_mask_width_y = $Ny2-2.5*$r2_mask_apod_y;
-				$_POST['r3_mask_width_x'] = $r3_mask_width_x = $Nx3-2.5*$r3_mask_apod_x;$_POST['r3_mask_width_y'] = $r3_mask_width_y = $Ny3-2.5*$r3_mask_apod_y;
-				$_POST['r4_mask_width_x'] = $r4_mask_width_x = $Nx4-2.5*$r4_mask_apod_x;$_POST['r4_mask_width_y'] = $r4_mask_width_y = $Ny4-2.5*$r4_mask_apod_y;
-				$_POST['r5_mask_width_x'] = $r5_mask_width_x = $Nx5-2.5*$r5_mask_apod_x;$_POST['r5_mask_width_y'] = $r5_mask_width_y = $Ny5-2.5*$r5_mask_apod_y;
+				$_POST['r1_mask_width_x'] = $r1_mask_width_x = intval($Nx1-2.5*$r1_mask_apod_x);$_POST['r1_mask_width_y'] = $r1_mask_width_y = intval($Ny1-2.5*$r1_mask_apod_y);
+				$_POST['r2_mask_width_x'] = $r2_mask_width_x = intval($Nx2-2.5*$r2_mask_apod_x);$_POST['r2_mask_width_y'] = $r2_mask_width_y = intval($Ny2-2.5*$r2_mask_apod_y);
+				$_POST['r3_mask_width_x'] = $r3_mask_width_x = intval($Nx3-2.5*$r3_mask_apod_x);$_POST['r3_mask_width_y'] = $r3_mask_width_y = intval($Ny3-2.5*$r3_mask_apod_y);
+				$_POST['r4_mask_width_x'] = $r4_mask_width_x = intval($Nx4-2.5*$r4_mask_apod_x);$_POST['r4_mask_width_y'] = $r4_mask_width_y = intval($Ny4-2.5*$r4_mask_apod_y);
+				$_POST['r5_mask_width_x'] = $r5_mask_width_x = intval($Nx5-2.5*$r5_mask_apod_x);$_POST['r5_mask_width_y'] = $r5_mask_width_y = intval($Ny5-2.5*$r5_mask_apod_y);
 				$_POST['r1_highpass_diameter_x'] = $_POST['r2_highpass_diameter_x'] = $_POST['r3_highpass_diameter_x'] = $_POST['r4_highpass_diameter_x'] = $_POST['r5_highpass_diameter_x'] = $r1_hp_diam_x = $r2_hp_diam_x = $r3_hp_diam_x = $r4_hp_diam_x = $r5_hp_diam_x = round($imageinfo['pixelsize']*pow(10,10)*min($r1_region_x, $r1_region_y));
 				$_POST['r1_highpass_diameter_y'] = $_POST['r2_highpass_diameter_y'] = $_POST['r3_highpass_diameter_y'] = $_POST['r4_highpass_diameter_y'] = $_POST['r5_highpass_diameter_y'] = $r1_hp_diam_y = $r2_hp_diam_y = $r3_hp_diam_y = $r4_hp_diam_y = $r5_hp_diam_y = round($imageinfo['pixelsize']*pow(10,10)*min($r1_region_x, $r1_region_y));
 				$_POST['r1_highpass_apod_x'] = $_POST['r2_highpass_apod_x'] = $_POST['r3_highpass_apod_x'] = $_POST['r4_highpass_apod_x'] = $_POST['r5_highpass_apod_x'] = $r1_hp_apod_x = $r2_hp_apod_x = $r3_hp_apod_x = $r4_hp_apod_x = $r5_hp_apod_x = round($r1_hp_diam_x/2);
@@ -275,11 +275,11 @@ class Protomo2RefineForm extends BasicLayoutForm
 				$Nx3=$r3_region_x/$r3_sampling;$Ny3=$r3_region_y/$r3_sampling;
 				$Nx4=$r4_region_x/$r4_sampling;$Ny4=$r4_region_y/$r4_sampling;
 				$Nx5=$r5_region_x/$r5_sampling;$Ny5=$r5_region_y/$r5_sampling;
-				$_POST['r1_mask_width_x'] = $r1_mask_width_x = $Nx1-2.5*$r1_mask_apod_x;$_POST['r1_mask_width_y'] = $r1_mask_width_y = $Ny1-2.5*$r1_mask_apod_y;
-				$_POST['r2_mask_width_x'] = $r2_mask_width_x = $Nx2-2.5*$r2_mask_apod_x;$_POST['r2_mask_width_y'] = $r2_mask_width_y = $Ny2-2.5*$r2_mask_apod_y;
-				$_POST['r3_mask_width_x'] = $r3_mask_width_x = $Nx3-2.5*$r3_mask_apod_x;$_POST['r3_mask_width_y'] = $r3_mask_width_y = $Ny3-2.5*$r3_mask_apod_y;
-				$_POST['r4_mask_width_x'] = $r4_mask_width_x = $Nx4-2.5*$r4_mask_apod_x;$_POST['r4_mask_width_y'] = $r4_mask_width_y = $Ny4-2.5*$r4_mask_apod_y;
-				$_POST['r5_mask_width_x'] = $r5_mask_width_x = $Nx5-2.5*$r5_mask_apod_x;$_POST['r5_mask_width_y'] = $r5_mask_width_y = $Ny5-2.5*$r5_mask_apod_y;
+				$_POST['r1_mask_width_x'] = $r1_mask_width_x = intval($Nx1-2.5*$r1_mask_apod_x);$_POST['r1_mask_width_y'] = $r1_mask_width_y = intval($Ny1-2.5*$r1_mask_apod_y);
+				$_POST['r2_mask_width_x'] = $r2_mask_width_x = intval($Nx2-2.5*$r2_mask_apod_x);$_POST['r2_mask_width_y'] = $r2_mask_width_y = intval($Ny2-2.5*$r2_mask_apod_y);
+				$_POST['r3_mask_width_x'] = $r3_mask_width_x = intval($Nx3-2.5*$r3_mask_apod_x);$_POST['r3_mask_width_y'] = $r3_mask_width_y = intval($Ny3-2.5*$r3_mask_apod_y);
+				$_POST['r4_mask_width_x'] = $r4_mask_width_x = intval($Nx4-2.5*$r4_mask_apod_x);$_POST['r4_mask_width_y'] = $r4_mask_width_y = intval($Ny4-2.5*$r4_mask_apod_y);
+				$_POST['r5_mask_width_x'] = $r5_mask_width_x = intval($Nx5-2.5*$r5_mask_apod_x);$_POST['r5_mask_width_y'] = $r5_mask_width_y = intval($Ny5-2.5*$r5_mask_apod_y);
 				$_POST['r1_highpass_diameter_x'] = $_POST['r2_highpass_diameter_x'] = $_POST['r3_highpass_diameter_x'] = $_POST['r4_highpass_diameter_x'] = $_POST['r5_highpass_diameter_x'] = $r1_hp_diam_x = $r2_hp_diam_x = $r3_hp_diam_x = $r4_hp_diam_x = $r5_hp_diam_x = round($imageinfo['pixelsize']*pow(10,10)*min($r1_region_x, $r1_region_y));
 				$_POST['r1_highpass_diameter_y'] = $_POST['r2_highpass_diameter_y'] = $_POST['r3_highpass_diameter_y'] = $_POST['r4_highpass_diameter_y'] = $_POST['r5_highpass_diameter_y'] = $r1_hp_diam_y = $r2_hp_diam_y = $r3_hp_diam_y = $r4_hp_diam_y = $r5_hp_diam_y = round($imageinfo['pixelsize']*pow(10,10)*min($r1_region_x, $r1_region_y));
 				$_POST['r1_highpass_apod_x'] = $_POST['r2_highpass_apod_x'] = $_POST['r3_highpass_apod_x'] = $_POST['r4_highpass_apod_x'] = $_POST['r5_highpass_apod_x'] = $r1_hp_apod_x = $r2_hp_apod_x = $r3_hp_apod_x = $r4_hp_apod_x = $r5_hp_apod_x = round($r1_hp_diam_x/2);
@@ -295,11 +295,11 @@ class Protomo2RefineForm extends BasicLayoutForm
 				$Nx3=$r3_region_x/$r3_sampling;$Ny3=$r3_region_y/$r3_sampling;
 				$Nx4=$r4_region_x/$r4_sampling;$Ny4=$r4_region_y/$r4_sampling;
 				$Nx5=$r5_region_x/$r5_sampling;$Ny5=$r5_region_y/$r5_sampling;
-				$_POST['r1_mask_width_x'] = $r1_mask_width_x = $Nx1-2.5*$r1_mask_apod_x;$_POST['r1_mask_width_y'] = $r1_mask_width_y = $Ny1-2.5*$r1_mask_apod_y;
-				$_POST['r2_mask_width_x'] = $r2_mask_width_x = $Nx2-2.5*$r2_mask_apod_x;$_POST['r2_mask_width_y'] = $r2_mask_width_y = $Ny2-2.5*$r2_mask_apod_y;
-				$_POST['r3_mask_width_x'] = $r3_mask_width_x = $Nx3-2.5*$r3_mask_apod_x;$_POST['r3_mask_width_y'] = $r3_mask_width_y = $Ny3-2.5*$r3_mask_apod_y;
-				$_POST['r4_mask_width_x'] = $r4_mask_width_x = $Nx4-2.5*$r4_mask_apod_x;$_POST['r4_mask_width_y'] = $r4_mask_width_y = $Ny4-2.5*$r4_mask_apod_y;
-				$_POST['r5_mask_width_x'] = $r5_mask_width_x = $Nx5-2.5*$r5_mask_apod_x;$_POST['r5_mask_width_y'] = $r5_mask_width_y = $Ny5-2.5*$r5_mask_apod_y;
+				$_POST['r1_mask_width_x'] = $r1_mask_width_x = intval($Nx1-2.5*$r1_mask_apod_x);$_POST['r1_mask_width_y'] = $r1_mask_width_y = intval($Ny1-2.5*$r1_mask_apod_y);
+				$_POST['r2_mask_width_x'] = $r2_mask_width_x = intval($Nx2-2.5*$r2_mask_apod_x);$_POST['r2_mask_width_y'] = $r2_mask_width_y = intval($Ny2-2.5*$r2_mask_apod_y);
+				$_POST['r3_mask_width_x'] = $r3_mask_width_x = intval($Nx3-2.5*$r3_mask_apod_x);$_POST['r3_mask_width_y'] = $r3_mask_width_y = intval($Ny3-2.5*$r3_mask_apod_y);
+				$_POST['r4_mask_width_x'] = $r4_mask_width_x = intval($Nx4-2.5*$r4_mask_apod_x);$_POST['r4_mask_width_y'] = $r4_mask_width_y = intval($Ny4-2.5*$r4_mask_apod_y);
+				$_POST['r5_mask_width_x'] = $r5_mask_width_x = intval($Nx5-2.5*$r5_mask_apod_x);$_POST['r5_mask_width_y'] = $r5_mask_width_y = intval($Ny5-2.5*$r5_mask_apod_y);
 				$_POST['r1_highpass_diameter_x'] = $_POST['r2_highpass_diameter_x'] = $_POST['r3_highpass_diameter_x'] = $_POST['r4_highpass_diameter_x'] = $_POST['r5_highpass_diameter_x'] = $r1_hp_diam_x = $r2_hp_diam_x = $r3_hp_diam_x = $r4_hp_diam_x = $r5_hp_diam_x = round($imageinfo['pixelsize']*pow(10,10)*min($r1_region_x, $r1_region_y));
 				$_POST['r1_highpass_diameter_y'] = $_POST['r2_highpass_diameter_y'] = $_POST['r3_highpass_diameter_y'] = $_POST['r4_highpass_diameter_y'] = $_POST['r5_highpass_diameter_y'] = $r1_hp_diam_y = $r2_hp_diam_y = $r3_hp_diam_y = $r4_hp_diam_y = $r5_hp_diam_y = round($imageinfo['pixelsize']*pow(10,10)*min($r1_region_x, $r1_region_y));
 				$_POST['r1_highpass_apod_x'] = $_POST['r2_highpass_apod_x'] = $_POST['r3_highpass_apod_x'] = $_POST['r4_highpass_apod_x'] = $_POST['r5_highpass_apod_x'] = $r1_hp_apod_x = $r2_hp_apod_x = $r3_hp_apod_x = $r4_hp_apod_x = $r5_hp_apod_x = round($r1_hp_diam_x/2);
@@ -711,7 +711,7 @@ class Protomo2RefineForm extends BasicLayoutForm
 				$_POST['r4_iters'] = $r4_iters = '10';
 				$_POST['r5_iters'] = $r5_iters = '0';
 				$_POST['elevation_switch'] = $elevation_switch='';
-				$_POST['scale_switch'] = $scale_switch='';
+				$_POST['scale_switch'] = $scale_switch='51';
 				$_POST['rotation_switch'] = $rotation_switch='';
 				$_POST['azimuth_switch'] = $azimuth_switch='';
 				$_POST['orientation_switch'] = $orientation_switch='';
@@ -724,7 +724,7 @@ class Protomo2RefineForm extends BasicLayoutForm
 				$_POST['r3_iters'] = $r3_iters = '20';
 				$_POST['r4_iters'] = $r4_iters = '20';
 				$_POST['r5_iters'] = $r5_iters = '0';
-				$_POST['elevation_switch'] = $elevation_switch='71';
+				$_POST['elevation_switch'] = $elevation_switch='76';
 				$_POST['scale_switch'] = $scale_switch='71';
 				$_POST['rotation_switch'] = $rotation_switch='';
 				$_POST['azimuth_switch'] = $azimuth_switch='';
@@ -738,7 +738,7 @@ class Protomo2RefineForm extends BasicLayoutForm
 				$_POST['r3_iters'] = $r3_iters = '20';
 				$_POST['r4_iters'] = $r4_iters = '40';
 				$_POST['r5_iters'] = $r5_iters = '20';
-				$_POST['elevation_switch'] = $elevation_switch='81';
+				$_POST['elevation_switch'] = $elevation_switch='91';
 				$_POST['scale_switch'] = $scale_switch='81';
 				$_POST['rotation_switch'] = $rotation_switch='101';
 				$_POST['azimuth_switch'] = $azimuth_switch='101';
@@ -981,7 +981,7 @@ class Protomo2RefineForm extends BasicLayoutForm
 			$html .= "<br></br>
 			<a href='runAppionLoop.php?expId=".$this->expId."&form=Protomo2RefineForm'><b><center>and then Click here or Refresh this page to continue</center></b></a>";
 			$html .= "<br></br>
-			<b><center>Or to continue from a refinement iteration, leave all files in place and <a href='runAppionLoop.php?expId=".$this->expId."&form=Protomo2RefineForm'>Refresh</a> this page.<br>Then enter the iteration you would like to restart from into the 'Restart Refinement at Iteration' box.</center></b>";
+			<b><center>Or to continue from a refinement iteration, leave all files in place and <a href='runAppionLoop.php?expId=".$this->expId."&form=Protomo2RefineForm'>Refresh</a> this page.</center></b>"; //<br>Then enter the iteration you would like to restart from into the 'Restart Refinement at Iteration' box.
 			$_SESSION['erase_refine'] = 0;
 			
 		}
@@ -1019,7 +1019,7 @@ class Protomo2RefineForm extends BasicLayoutForm
 				$html.= '<option selected value="True">true</option>';
 				$html.= '<option value="False">false</option>';
 				$html.= '</select>'; $html.= docpop('protomo_parallel', ' Parallelize Non-Protomo Processes').'<br>';
-				$html.= $params->insertTextField( "restart_cycle", $fieldSize2 );
+				//$html.= $params->insertTextField( "restart_cycle", $fieldSize2 );  //Not fully tested. Will be in a future release.
 				
 				$html .= "
 			    <br />
@@ -1228,7 +1228,7 @@ class Protomo2RefineForm extends BasicLayoutForm
 				$html.= '<option value="false">false</option>';
 				$html.= '</select>'; $html.= docpop('protomo_logging', ' Logging').'<br>';
 				$html.= $params->insertTextField( "loglevel", $fieldSize );
-				$html.= $params->insertTextField( "restart_cycle", $fieldSize );
+				//$html.= $params->insertTextField( "restart_cycle", $fieldSize );
 				
 				$html .= "
 			    <br />

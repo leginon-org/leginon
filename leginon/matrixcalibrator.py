@@ -155,7 +155,7 @@ class MatrixCalibrator(calibrator.Calibrator):
 				s += ' (per pixel %s)' % perpix
 				self.logger.info(s)
 
-				self.logger.info('Or config scale multification = %.2f' % (perpix / pixsize))
+				self.logger.info('Or config scale multiplication = %.2f' % (pixsize / perpix))
 
 				if abs(err) > tol:
 					self.logger.warning('Failed pixel size tolerance')

@@ -37,6 +37,34 @@ echo "<br/>\n";
 echo "<table border='1' class='tableborder' width='640'>\n";
 
 /*
+** CTFFIND and CTFTILT
+*/
+
+echo "<tr><td width='100' align='center'>\n";
+echo "  <img src='img/grigorieff_sq_logo.png' width='96'>\n";
+echo "</td><td>\n";
+echo "  <h3><a href='runCtfEstimate.php?expId=$expId'>CTFFIND v3</a></h3>\n";
+echo " <p>CTFFIND uses a robust grid search algorithm to find the optimal "
+	."CTF parameters. Please see the <a href='http://grigoriefflab.janelia.org/ctf'> "
+	."Grigorieff lab website</a>&nbsp;<img src='img/external.png'> for more information. "
+	."</p>\n";
+echo "</td></tr>\n";
+
+/*
+** CTFFIND4
+*/
+
+echo "<tr><td width='100' align='center'>\n";
+echo "  <img src='img/grigorieff_sq_logo.png' width='96'>\n";
+echo "</td><td>\n";
+echo "  <h3><a href='runAppionLoop.php?expId=$expId&form=CtfFind4'>CTFFIND v4</a></h3>\n";
+echo " <p>CTFFIND uses a robust grid search algorithm to find the optimal "
+	."CTF parameters. Please see the <a href='http://grigoriefflab.janelia.org/ctf'> "
+	."Grigorieff lab website</a>&nbsp;<img src='img/external.png'> for more information. "
+	."</p>\n";
+echo "</td></tr>\n";
+
+/*
 ** ACE 2
 */
 
@@ -52,18 +80,23 @@ echo " <p> ACE 2 is an unpublished re-implementation of ACE1, but written in obj
 echo "</td></tr>\n";
 
 /*
-** CTFFIND and CTFTILT
+** ACE 1
 */
-
-echo "<tr><td width='100' align='center'>\n";
-echo "  <img src='img/grigorieff_sq_logo.png' width='96'>\n";
-echo "</td><td>\n";
-echo "  <h3><a href='runCtfEstimate.php?expId=$expId'>CTFFIND v3</a></h3>\n";
-echo " <p>CTFFIND uses a robust grid search algorithm to find the optimal "
-	."CTF parameters. Please see the <a href='http://grigoriefflab.janelia.org/ctf'> "
-	."Grigorieff lab website</a>&nbsp;<img src='img/external.png'> for more information. "
-	."</p>\n";
-echo "</td></tr>\n";
+if (!HIDE_MATLAB)
+{
+	echo "<tr><td width='100' align='center'>\n";
+	echo "  <img src='img/appionlogo.jpg' width='64'>\n";
+	echo "</td><td>\n";
+	echo "  <h3><a href='runPyAce.php?expId=$expId'>ACE 1</a></h3>\n";
+	echo " <p> ACE1 is the original edge detection program for finding the CTF "
+		." parameters. Astigmatism estimation never worked quite right in ACE1 and it "
+		." has a tendency to give false positives, i.e., a high confidence for a poor fit, "
+		." because it will sometimes only try to fit 2 peaks in the powerspectrum. "
+		." Nonetheless, ACE1 has been shown to work on a variety of microscopes and imaging methods. "
+		."<br/><i>Note:</i> requires MATLAB. "
+		."</p>\n";
+	echo "</td></tr>\n";
+}
 
 
 /*
@@ -94,39 +127,6 @@ echo " <p>Uses the <a href='$simplexUrl'>simplex algorithm</a> to refine the 2d 
 	."  the value with the highest CTF resolution "
 	."</p>\n";
 echo "</td></tr>\n";
-
-/*
-** CTFFIND4
-*/
-
-echo "<tr><td width='100' align='center'>\n";
-echo "  <img src='img/grigorieff_sq_logo.png' width='96'>\n";
-echo "</td><td>\n";
-echo "  <h3><a href='runAppionLoop.php?expId=$expId&form=CtfFind4'>CTFFIND v4</a></h3>\n";
-echo " <p>CTFFIND uses a robust grid search algorithm to find the optimal "
-	."CTF parameters. Please see the <a href='http://grigoriefflab.janelia.org/ctf'> "
-	."Grigorieff lab website</a>&nbsp;<img src='img/external.png'> for more information. "
-	."</p>\n";
-echo "</td></tr>\n";
-
-/*
-** ACE 1
-*/
-if (!HIDE_MATLAB)
-{
-	echo "<tr><td width='100' align='center'>\n";
-	echo "  <img src='img/appionlogo.jpg' width='64'>\n";
-	echo "</td><td>\n";
-	echo "  <h3><a href='runPyAce.php?expId=$expId'>ACE 1</a></h3>\n";
-	echo " <p> ACE1 is the original edge detection program for finding the CTF "
-		." parameters. Astigmatism estimation never worked quite right in ACE1 and it "
-		." has a tendency to give false positives, i.e., a high confidence for a poor fit, "
-		." because it will sometimes only try to fit 2 peaks in the powerspectrum. "
-		." Nonetheless, ACE1 has been shown to work on a variety of microscopes and imaging methods. "
-		."<br/><i>Note:</i> requires MATLAB. "
-		."</p>\n";
-	echo "</td></tr>\n";
-}
 
 /*
 ** Interactive CTF
@@ -163,28 +163,39 @@ if (!HIDE_FEATURE)
 	echo "</td></tr>\n";
 }
 
+echo "</table>\n";
 
 //CTFTilt Estimation works and uploads, but fails alot; there is a warning
 if (!HIDE_FEATURE)
 {
 	$particle = new particledata();
-	$maxangle = $particle->getMaxTiltAngle($sessionId);
+	$maxangle = $particle->getMaxTiltAngle($expId);
 	if ($maxangle > 5) {
-		echo "<tr><td width='100' align='center'>\n";
-		echo "  <img src='img/grigorieff_sq_logo.png' width='96'>\n";
-		echo "</td><td>\n";
-		echo "  <h3><a href='runCtfEstimate.php?expId=$expId&ctftilt=1'>CTFTILT</a></h3>\n";
-		echo " <p>CTFTILT uses the same robust grid search algorithm to find the optimal "
-			."CTF parameters, but also includes estimate of the tilt angle. "
-			."Please see the <a href='http://grigoriefflab.janelia.org/ctf'> "
-			."Grigorieff lab website</a><img src='img/external.png'> for more information. "
-			."</p>\n";
-		echo "</td></tr>\n";
+		// Selection Header
+		echo "<table border='0' width='640'>\n";
+			echo "<tr><td>\n";
+			echo "  <h2>CTF Estimation Procedures specialized for tilted images</h2>\n";
+			echo "</td></tr>\n";
+		echo "</table>\n";
+
+		echo "<br/>\n";
+		echo "<table border='1' class='tableborder' width='640'>\n";
+
+			echo "<tr><td width='100' align='center'>\n";
+			echo "  <img src='img/grigorieff_sq_logo.png' width='96'>\n";
+			echo "</td><td>\n";
+			echo "  <h3><a href='runCtfEstimate.php?expId=$expId&ctftilt=1'>CTFTILT</a></h3>\n";
+			echo " <p>CTFTILT uses the same robust grid search algorithm to find the optimal "
+				."CTF parameters, but also includes estimate of the tilt angle. "
+				."Please see the <a href='http://grigoriefflab.janelia.org/ctf'> "
+				."Grigorieff lab website</a><img src='img/external.png'> for more information. "
+				."</p>\n";
+			echo "</td></tr>\n";
+		echo "</table>\n";
 	}
 }
 
 
-echo "</table>\n";
 processing_footer();
 exit;
 

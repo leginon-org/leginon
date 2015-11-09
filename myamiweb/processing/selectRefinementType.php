@@ -41,24 +41,6 @@ echo "<table border='1' class='tableborder' width='640'>\n";
 
 
 /*
-** EMAN1 projection-matchign refinement protocol
-*/
-echo "<tr><td width='100' align='center'>\n";
-echo "  <img src='img/eman_logo.png' width='64'>\n";
-echo "</td><td>\n";
-echo "  <h3><a href='selectStackForm.php?expId=$expId&method=eman'>EMAN1 projection-matching refinement</a></h3>\n";
-echo "<p>This is one of the original projection-matching refinement protocols, as implemented in "
-	."<a href='http://blake.bcm.tmc.edu/eman/eman1/'>EMAN.</a>&nbsp;<img src='img/external.png'> It has been successfully "
-	."tested on many different samples. Within each iteration, the raw particles are classified according to the angular "
-	."sampling of projection directions, then iteratively aligned within each class to reduce the model bias. "
-	."Further classification and particle 'filtering' has been incorporated using a SPIDER protocol that identifies "
-	."and removes the particles with the highest variance (and therefore least correspondence) in the class using the "
-	."<a href='http://www.wadsworth.org/spider_doc/spider/docs/man/cas.html'>"
-	."CA S</a>&nbsp;<img src='img/external.png'> correspondence analysis operation in spider."
-	."</p>\n";
-echo "</td></tr>\n";
-
-/*
 ** Xmipp projection-matching refinement protocol
 */
 
@@ -80,6 +62,24 @@ echo " <p> This is the <a href='http://xmipp.cnb.csic.es/twiki/bin/view/Xmipp/Pr
 echo "</td></tr>\n";
 
 /*
+** Frealign projection-matching refinement protocol
+*/
+echo "<tr><td width='100' align='center'>\n";
+echo "  <img src='img/grigorieff_lab.png' width='96'>\n";
+echo "</td><td>\n";
+echo "  <h3><a href='selectStackForm.php?expId=$expId&method=frealign'>Frealign projection-matching refinement</a></h3>\n";
+echo "<p>The <a href='http://emlab.rose2.brandeis.edu/frealign'>Frealign</a>&nbsp;<img src='img/external.png'> "
+	."(Fourier REconstruction and ALIGNment) projection-matching refinement protocol has been designed to refine a stack "
+	."of particles for which the alignment and classification parameters are approximately known. It therefore also "
+	."relies on a good initial model. The algorithms used in the Frealign package are designed to extract "
+	."as much high resolution information out of the data as possible."
+	."</p>\n";
+echo "<br\>\n";
+echo "<p>Note: Unless your particle has icosahedral symmetry, Frealign requires initial Euler angles determined from other (such as Xmipp) reconstruction refinement procedures."
+		."/p>\n";
+echo "</td></tr>\n";
+
+/*
 ** RELION (for REgularised LIkelihood OptimisatioN)
 */
 
@@ -98,19 +98,35 @@ echo " <p> This is the <a href='http://www2.mrc-lmb.cam.ac.uk/relion/index.php/M
 echo "</td></tr>\n";
 
 /*
-** Frealign projection-matching refinement protocol
+** EMAN1 projection-matchign refinement protocol
 */
 echo "<tr><td width='100' align='center'>\n";
-echo "  <img src='img/grigorieff_lab.png' width='96'>\n";
+echo "  <img src='img/eman_logo.png' width='64'>\n";
 echo "</td><td>\n";
-echo "  <h3><a href='selectStackForm.php?expId=$expId&method=frealign'>Frealign projection-matching refinement</a></h3>\n";
-echo "<p>The <a href='http://emlab.rose2.brandeis.edu/frealign'>Frealign</a>&nbsp;<img src='img/external.png'> "
-	."(Fourier REconstruction and ALIGNment) projection-matching refinement protocol has been designed to refine a stack "
-	."of particles for which the alignment and classification parameters are approximately known. It therefore also "
-	."relies on a good initial model. The algorithms used in the Frealign package are designed to extract "
-	."as much high resolution information out of the data as possible."
+echo "  <h3><a href='selectStackForm.php?expId=$expId&method=eman'>EMAN1 projection-matching refinement</a></h3>\n";
+echo "<p>This is one of the original projection-matching refinement protocols, as implemented in "
+	."<a href='http://blake.bcm.tmc.edu/eman/eman1/'>EMAN.</a>&nbsp;<img src='img/external.png'> It has been successfully "
+	."tested on many different samples. Within each iteration, the raw particles are classified according to the angular "
+	."sampling of projection directions, then iteratively aligned within each class to reduce the model bias. "
+	."Further classification and particle 'filtering' has been incorporated using a SPIDER protocol that identifies "
+	."and removes the particles with the highest variance (and therefore least correspondence) in the class using the "
+	."<a href='http://www.wadsworth.org/spider_doc/spider/docs/man/cas.html'>"
+	."CA S</a>&nbsp;<img src='img/external.png'> correspondence analysis operation in spider."
 	."</p>\n";
 echo "</td></tr>\n";
+
+if (!HIDE_IMAGIC && !HIDE_FEATURE) {
+	/*
+	** IMAGIC Reference Based Alignment
+	*/
+
+	echo "<tr><td width='100' align='center'>\n";
+	echo "  <img src='img/imagic_logo.png' width='64'>\n";
+	echo "</td><td>\n";
+	echo "  <h3><a href='selectStackForm.php?expId=$expId&method=imagic'>IMAGIC Refinement</a></h3>\n";
+	echo " <p></p>\n";
+	echo "</td></tr>\n";
+}
 
 if (!HIDE_FEATURE)
 {
@@ -124,19 +140,6 @@ if (!HIDE_FEATURE)
 	echo "  <h3><a href='selectStackForm.php?expId=$expId&method=spider'>Spider Refinement</a></h3>\n";
 	echo " <p> </p>\n";
 	//echo "  <img src='img/align-rsm.png' width='125'><br/>\n";
-	echo "</td></tr>\n";
-}
-
-if (!HIDE_IMAGIC && !HIDE_FEATURE) {
-	/*
-	** IMAGIC Reference Based Alignment
-	*/
-
-	echo "<tr><td width='100' align='center'>\n";
-	echo "  <img src='img/imagic_logo.png' width='64'>\n";
-	echo "</td><td>\n";
-	echo "  <h3><a href='selectStackForm.php?expId=$expId&method=imagic'>IMAGIC Refinement</a></h3>\n";
-	echo " <p></p>\n";
 	echo "</td></tr>\n";
 }
 

@@ -22,14 +22,26 @@ $tiltseries=$_GET['tiltseries'];
 $corrpeak_gif_files = glob("$rundir/tiltseries".$tiltseries."/media/correlations/s*.gif");
 $corrpeak_vid_files = glob("$rundir/tiltseries".$tiltseries."/media/correlations/s*.{mp4,ogv,webm}",GLOB_BRACE);
 $qa_gif_file = "$rundir/tiltseries".$tiltseries."/media/quality_assessment/series".$tiltseries."_quality_assessment.gif";
+$azimuth_gif_file = "$rundir/tiltseries".$tiltseries."/media/angle_refinement/series".sprintf('%04d',$tiltseries)."_azimuth.gif";
+$orientation_gif_file = "$rundir/tiltseries".$tiltseries."/media/angle_refinement/series".sprintf('%04d',$tiltseries)."_orientation.gif";
+$elevation_gif_file = "$rundir/tiltseries".$tiltseries."/media/angle_refinement/series".sprintf('%04d',$tiltseries)."_elevation.gif";
 $qa_gif = "loadimg.php?rawgif=1&filename=".$qa_gif_file;
+$azimuth_gif = "loadimg.php?rawgif=1&filename=".$azimuth_gif_file;
+$orientation_gif = "loadimg.php?rawgif=1&filename=".$orientation_gif_file;
+$elevation_gif = "loadimg.php?rawgif=1&filename=".$elevation_gif_file;
 
 // Quality assessment for each iteration
 $html .= "
 <hr />
 <center><H3><b>Quality Assessment for Tilt-Series #".ltrim($tiltseries, '0')."</b></H3></center>
 <hr />";
-$html .= '<center><img src="'.$qa_gif.'" alt="qa" width="666" />'."</center>";
+$html .= '<table id="" class="display" cellspacing="0" border="0" width="100%">';
+$html .= '<tr><td rowspan="3">';
+$html .= '<center><img src="'.$qa_gif.'" alt="qa" width="700" />'."</center>";
+$html .= '<td><center><img src="'.$azimuth_gif.'" alt="azimuth" width="275" />'."</center></td></tr>";
+$html .= '<td><center><img src="'.$orientation_gif.'" alt="theta" width="275" />'."</center></td></tr>";
+$html .= '<td><center><img src="'.$elevation_gif.'" alt="elevation" width="275" />'."</center></td></tr>";
+$html .= '</tr></td></table>';
 
 $html .= "
 <hr />
@@ -38,6 +50,7 @@ $html .= "
 
 $i = 0;
 $j = -1;
+$numcolumns=5;
 $html .= '<center><table id="" class="display" cellspacing="0" border="1" width="700">';
 $html .= "<tr>";
 if (count($corrpeak_gif_files) > 0)
@@ -49,14 +62,14 @@ if (count($corrpeak_gif_files) > 0)
 			if ($ite <= count($corrpeak_gif_files) AND $ite > 0) {
 				$html .= '<th><a href="protomo2BatchTiltIterationSummary.php?iter='.$ite.'&rundir='.$rundir.'&tiltseries='.$tiltseries.'" target="_blank">Iteration #'.$ite.'</a></th>';
 			}
-			if ($ite % 4 == 0 OR $ite < 1) {
+			if ($ite % $numcolumns == 0 OR $ite < 1) {
 				$html .= "</tr><tr>";
 				$j++;
 				break;
 			}
 			$i++;
 		}
-		$i = 0 + 4*$j;
+		$i = 0 + $numcolumns*$j;
 		foreach ($corrpeak_gif_files as $corr)
 		{
 			$ite=$i+1;
@@ -64,7 +77,7 @@ if (count($corrpeak_gif_files) > 0)
 				$corrpeak_gif = "loadimg.php?rawgif=1&filename=".$corrpeak_gif_files[$i];
 				$html .= '<td><center><a href="protomo2BatchTiltIterationSummary.php?iter='.$ite.'&rundir='.$rundir.'&tiltseries='.$tiltseries.'" target="_blank"><img src="'.$corrpeak_gif.'"/></a></center></td>';
 			}
-			if ($ite % 4 == 0 OR $ite < 1) {
+			if ($ite % $numcolumns == 0 OR $ite < 1) {
 				$html .= "</tr><tr>";
 				$i++;
 				break;
@@ -79,35 +92,35 @@ elseif (count($corrpeak_vid_files) > 0)
 		foreach ($corrpeak_vid_files as $corr)
 		{
 			$ite=$i+1;
-			if ($ite <= count($corrpeak_vid_files)/1.85 AND $ite > 0) {
+			if ($ite <= count($corrpeak_vid_files)/3 AND $ite > 0) {
 				$html .= '<th><a href="protomo2BatchTiltIterationSummary.php?iter='.$ite.'&rundir='.$rundir.'&tiltseries='.$tiltseries.'" target="_blank">Iteration #'.$ite.'</a></th>';
 			}
-			if ($ite % 4 == 0 OR $ite < 1) {
+			if ($ite % $numcolumns == 0 OR $ite < 1) {
 				$html .= "</tr><tr>";
 				$j++;
 				break;
 			}
 			$i++;
 		}
-		$i = 0 + 4*$j;
+		$i = 0 + $numcolumns*$j;
 		foreach ($corrpeak_vid_files as $corr)
 		{
 			$ite=$i+1;
-			if ($ite <= count($corrpeak_vid_files)/1.85 AND $ite > 0) {
+			if ($ite <= count($corrpeak_vid_files)/3 AND $ite > 0) {
 				$corrpeak_vid_mp4 = "loadvid.php?filename=".$corrpeak_vid_files[$i];
 				$html .= '<td><center><a href="protomo2BatchTiltIterationSummary.php?iter='.$ite.'&rundir='.$rundir.'&tiltseries='.$tiltseries.'" target="_blank">
 					 <video id="corrpeakVideos" autoplay loop>
 					 <source src="'.$corrpeak_vid_mp4.'" type="video/mp4" loop>
 					 </video></a></center></td>';
 			}
-			if ($ite % 4 == 0 OR $ite < 1) {
+			if ($ite % $numcolumns == 0 OR $ite < 1) {
 				$html .= "</tr><tr>";
 				$i++;
 				break;
 			}
 			$i++;
 		}
-	} while ($i < count($corrpeak_vid_files)/1.85);
+	} while ($i < count($corrpeak_vid_files)/3);
 }
 $html .= '</tr><tr></table></center><br>';
 

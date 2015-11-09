@@ -24,12 +24,12 @@ $tiltseries=$_GET['tiltseries'];
 
 $qa_gif_file = "$outdir/$runname/media/quality_assessment/series".sprintf('%04d',$tiltseries)."_quality_assessment.gif";
 $azimuth_gif_files = "$outdir/$runname/media/angle_refinement/series".sprintf('%04d',$tiltseries)."_azimuth.gif";
-$theta_gif_files = "$outdir/$runname/media/angle_refinement/series".sprintf('%04d',$tiltseries)."_theta.gif";
+$orientation_gif_file = "$outdir/$runname/media/angle_refinement/series".sprintf('%04d',$tiltseries)."_orientation.gif";
 $elevation_gif_files = "$outdir/$runname/media/angle_refinement/series".sprintf('%04d',$tiltseries)."_elevation.gif";
 
 $qa_gif = "loadimg.php?rawgif=1&filename=".$qa_gif_file;
 $azimuth_gif = "loadimg.php?rawgif=1&filename=".$azimuth_gif_files;
-$theta_gif = "loadimg.php?rawgif=1&filename=".$theta_gif_files;
+$orientation_gif = "loadimg.php?rawgif=1&filename=".$orientation_gif_file;
 $elevation_gif = "loadimg.php?rawgif=1&filename=".$elevation_gif_files;
 
 $html .= "
@@ -59,8 +59,8 @@ if (isset($azimuth_gif_files)) {
 $html .= "
 	<H4><center><b>Grid Orientation (Theta) Plot</b></center></H4>";
         
-if (isset($theta_gif_files)) {
-	$html .= '<center><img src="'.$theta_gif.'" alt="theta" /></center>
+if (isset($orientation_gif_file)) {
+	$html .= '<center><img src="'.$orientation_gif.'" alt="theta" /></center>
 	<hr />';
 } else {
         $html .= "<center><b>Grid Orientation Plot for Tilt-Series ".$tiltseries." either failed to generate or is processing</b></center>";
@@ -69,7 +69,7 @@ if (isset($theta_gif_files)) {
 $html .= "
 	<H4><center><b>Tilt Elevation Plot</b></center></H4>";
         
-if (isset($theta_gif_files)) {
+if (isset($elevation_gif_files)) {
 	$html .= '<center><img src="'.$elevation_gif.'" alt="theta" /></center>';
 } else {
         $html .= "<center><b>Tilt Elevation Plot for Tilt-Series ".$tiltseries." either failed to generate or is processing</b></center>";

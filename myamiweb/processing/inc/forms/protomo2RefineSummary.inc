@@ -78,13 +78,11 @@ class Protomo2RefineSummary extends BasicLayoutForm
 		$qa_gif_file = "$outdir/$runname/media/quality_assessment/series".sprintf('%04d',$tiltseries)."_quality_assessment.gif";
 		$azimuth_gif_file = "$outdir/$runname/media/angle_refinement/series".sprintf('%04d',$tiltseries)."_azimuth.gif";
 		$orientation_gif_file = "$outdir/$runname/media/angle_refinement/series".sprintf('%04d',$tiltseries)."_orientation.gif";
-		$theta_gif_file = "$outdir/$runname/media/angle_refinement/series".sprintf('%04d',$tiltseries)."_theta.gif";
 		$elevation_gif_file = "$outdir/$runname/media/angle_refinement/series".sprintf('%04d',$tiltseries)."_elevation.gif";
 		
 		$qa_gif = "loadimg.php?rawgif=1&filename=".$qa_gif_file;
 		$azimuth_gif = "loadimg.php?rawgif=1&filename=".$azimuth_gif_file;
 		$orientation_gif = "loadimg.php?rawgif=1&filename=".$orientation_gif_file;
-		$theta_gif = "loadimg.php?rawgif=1&filename=".$theta_gif_file;
 		$elevation_gif = "loadimg.php?rawgif=1&filename=".$elevation_gif_file;
 		
 		// Quality assessment for each iteration
@@ -95,12 +93,12 @@ class Protomo2RefineSummary extends BasicLayoutForm
 		if (count($corrpeak_gif_files) > 0 or count($corrpeak_vid_files) > 0)
 		{
 			$html .= '<table id="" class="display" cellspacing="0" border="0" width="100%">';
-			$html .= '<tr><td rowspan="2">';
+			$html .= '<tr><td rowspan="3">';
 			$html .= '<center><a href="protomo2QualityAssessmentPlots.php?outdir='.$outdir.'&runname='.$runname.'&tiltseries='.$tiltseries.'" target="_blank"><img src="'.$qa_gif.'" alt="qa" width="700" />'."</a></center>";
 			$html .= '<center>'.docpop('quality_assessment2', 'CCMS Info').'</center><br></td>';
-			$html .= '<td><center><a href="protomo2QualityAssessmentPlots.php?outdir='.$outdir.'&runname='.$runname.'&tiltseries='.$tiltseries.'" target="_blank"><img src="'.$azimuth_gif.'" alt="azimuth" width="300" />'."</a></center></td></tr>";
-			$html .= '<td><center><a href="protomo2QualityAssessmentPlots.php?outdir='.$outdir.'&runname='.$runname.'&tiltseries='.$tiltseries.'" target="_blank"><img src="'.$theta_gif.'" alt="theta" width="300" />'."</a></center></td></tr>";
-			$html .= '<td><center><a href="protomo2QualityAssessmentPlots.php?outdir='.$outdir.'&runname='.$runname.'&tiltseries='.$tiltseries.'" target="_blank"><img src="'.$elevation_gif.'" alt="elevation" width="300" />'."</a></center></td></tr>";
+			$html .= '<td><center><a href="protomo2QualityAssessmentPlots.php?outdir='.$outdir.'&runname='.$runname.'&tiltseries='.$tiltseries.'" target="_blank"><img src="'.$azimuth_gif.'" alt="azimuth" width="270" />'."</a></center></td></tr>";
+			$html .= '<td><center><a href="protomo2QualityAssessmentPlots.php?outdir='.$outdir.'&runname='.$runname.'&tiltseries='.$tiltseries.'" target="_blank"><img src="'.$orientation_gif.'" alt="theta" width="270" />'."</a></center></td></tr>";
+			$html .= '<td><center><a href="protomo2QualityAssessmentPlots.php?outdir='.$outdir.'&runname='.$runname.'&tiltseries='.$tiltseries.'" target="_blank"><img src="'.$elevation_gif.'" alt="elevation" width="270" />'."</a></center></td></tr>";
 			$html .= '</tr></td></table>';
 		}
 		
