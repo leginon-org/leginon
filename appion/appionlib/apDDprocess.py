@@ -8,7 +8,6 @@ import math
 import scipy.stats
 import scipy.ndimage as ndimage
 ma = numpy.ma
-import numextension
 import shutil
 from pyami import mrc,imagefun,arraystats,numpil
 from leginon import correctorclient,leginondata,ddinfo

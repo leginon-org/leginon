@@ -7,7 +7,6 @@
 from __future__ import division
 import os
 import sys
-import math
 import glob
 import time
 import shutil
@@ -400,47 +399,47 @@ class ProTomo2Aligner(basicScript.BasicScript):
 			help="Terminate alignment if translational shift exceeds specified value e.g. --max_shift=100", metavar="float")
 
 		self.parser.add_option("--image_apodization_x", dest="image_apodization_x",  type="float",  default=None,
-			help="Protomo2 only: TODO, e.g. --image_apodization_x=10.0", metavar="float")
+			help="TODO, e.g. --image_apodization_x=10.0", metavar="float")
 
 		self.parser.add_option("--image_apodization_y", dest="image_apodization_y",  type="float",  default=None,
-			help="Protomo2 only: TODO, e.g. --image_apodization_y=10.0", metavar="float")
+			help="TODO, e.g. --image_apodization_y=10.0", metavar="float")
 
 		self.parser.add_option("--reference_apodization_x", dest="reference_apodization_x",  type="float",  default=None,
-			help="Protomo2 only: TODO, e.g. --reference_apodization_x=10.0", metavar="float")
+			help="TODO, e.g. --reference_apodization_x=10.0", metavar="float")
 
 		self.parser.add_option("--reference_apodization_y", dest="reference_apodization_y",  type="float",  default=None,
-			help="Protomo2 only: TODO, e.g. --reference_apodization_y=10.0", metavar="float")
+			help="TODO, e.g. --reference_apodization_y=10.0", metavar="float")
 
 		self.correlation_modes = ( "xcf", "mcf", "pcf", "dbl" )
 		self.parser.add_option("--corr_mode", dest="corr_mode",
-			help="Protomo2 only: Correlation mode, standard (xcf), mutual (mcf), phase only (pcf), phase doubled (dbl), e.g. --correlation_mode=xcf", metavar="CorrMode",
+			help="Correlation mode, standard (xcf), mutual (mcf), phase only (pcf), phase doubled (dbl), e.g. --correlation_mode=xcf", metavar="CorrMode",
 			type="choice", choices=self.correlation_modes, default="mcf" )
 	
 		self.parser.add_option("--r1_corr_mode", dest="r1_corr_mode",
-			help="Protomo2 only: Correlation mode, standard (xcf), mutual (mcf), phase only (pcf), phase doubled (dbl), e.g. --correlation_mode=xcf", metavar="CorrMode",
+			help="Correlation mode, standard (xcf), mutual (mcf), phase only (pcf), phase doubled (dbl), e.g. --correlation_mode=xcf", metavar="CorrMode",
 			type="choice", choices=self.correlation_modes, default="mcf" )
 		
 		self.parser.add_option("--r2_corr_mode", dest="r2_corr_mode",
-			help="Protomo2 only: Correlation mode, standard (xcf), mutual (mcf), phase only (pcf), phase doubled (dbl), e.g. --correlation_mode=xcf", metavar="CorrMode",
+			help="Correlation mode, standard (xcf), mutual (mcf), phase only (pcf), phase doubled (dbl), e.g. --correlation_mode=xcf", metavar="CorrMode",
 			type="choice", choices=self.correlation_modes, default="mcf" )
 		
 		self.parser.add_option("--r3_corr_mode", dest="r3_corr_mode",
-			help="Protomo2 only: Correlation mode, standard (xcf), mutual (mcf), phase only (pcf), phase doubled (dbl), e.g. --correlation_mode=xcf", metavar="CorrMode",
+			help="Correlation mode, standard (xcf), mutual (mcf), phase only (pcf), phase doubled (dbl), e.g. --correlation_mode=xcf", metavar="CorrMode",
 			type="choice", choices=self.correlation_modes, default="mcf" )
 		
 		self.parser.add_option("--r4_corr_mode", dest="r4_corr_mode",
-			help="Protomo2 only: Correlation mode, standard (xcf), mutual (mcf), phase only (pcf), phase doubled (dbl), e.g. --correlation_mode=xcf", metavar="CorrMode",
+			help="Correlation mode, standard (xcf), mutual (mcf), phase only (pcf), phase doubled (dbl), e.g. --correlation_mode=xcf", metavar="CorrMode",
 			type="choice", choices=self.correlation_modes, default="mcf" )
 		
 		self.parser.add_option("--r5_corr_mode", dest="r5_corr_mode",
-			help="Protomo2 only: Correlation mode, standard (xcf), mutual (mcf), phase only (pcf), phase doubled (dbl), e.g. --correlation_mode=xcf", metavar="CorrMode",
+			help="Correlation mode, standard (xcf), mutual (mcf), phase only (pcf), phase doubled (dbl), e.g. --correlation_mode=xcf", metavar="CorrMode",
 			type="choice", choices=self.correlation_modes, default="mcf" )
 		
 		self.parser.add_option("--correlation_size_x", dest="correlation_size_x",  type="int",  default="128",
-			help="Protomo2 only: X size of cross correlation peak image, e.g. --correlation_size_x=128", metavar="int")
+			help="X size of cross correlation peak image, e.g. --correlation_size_x=128", metavar="int")
 
 		self.parser.add_option("--correlation_size_y", dest="correlation_size_y",  type="int",  default="128",
-			help="Protomo2 only: Y size of cross correlation peak image, e.g. --correlation_size_y=128", metavar="int")
+			help="Y size of cross correlation peak image, e.g. --correlation_size_y=128", metavar="int")
 		
 		self.parser.add_option("--peak_search_radius_x", dest="peak_search_radius_x",  type="float",  default="100",
 			help="Defines peak search region, e.g. --peak_search_radius_x=19.0", metavar="float")
@@ -1215,6 +1214,7 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		shutil.copy('%s/protomo2aligner.log' % cwd, "%s/protomo2aligner_%s.log" % (rundir, time_start))
 		f = open("%s/protomo2aligner_%s.log" % (rundir, time_start),'a');f.write("\n")
 		f.write('Start time: %s\n' % time_start)
+		apDisplay.printMsg("Writing to log %s/protomo2aligner_%s.log" % (rundir, time_start))
 		
 		seriesnumber = "%04d" % int(self.params['tiltseries'])
 		seriesname='series'+seriesnumber
@@ -1277,7 +1277,7 @@ class ProTomo2Aligner(basicScript.BasicScript):
 			rawimagecount, maxtilt=self.excludeImages(tiltfilename_full, f)  #Remove images from .tlt file if user requests
 			self.params['maxtilt'] = maxtilt
 		
-		self.params['cos_alpha']=math.cos(self.params['maxtilt']*math.pi/180)
+		self.params['cos_alpha']=np.cos(self.params['maxtilt']*np.pi/180)
 		
 		#Protomo doesn't like how proc2d writes mrc files. Our frame alignment script uses proc2d. This function and its options are hidden from general users.
 		if (self.params['coarse'] == 'True' and self.params['fix_images'] == "True" and self.params['link'] == "False"):
@@ -1382,20 +1382,6 @@ class ProTomo2Aligner(basicScript.BasicScript):
 					job.join()
 				return None
 			
-			##write all parameters to a file - this is super hacky, but I don't know any other way to output None function return that only prints stdout to the terminal window on run.
-			#parameters_coarse = ['sampling','binning','preprocessing','select','exclude','preprocess.logging','preprocess.border','preprocess.clip','preprocess.thr','preprocess.grow','preprocess.mask.gradient','preprocess.mask.iter','preprocess.mask.filter','preprocess.mask.kernel','preprocess.mask.clip','window.size','window.area','window.mask.apodization','window.mask.width','window.lowpass.diameter','window.lowpass.apodization','window.highpass.diameter','window.highpass.apodization','reference.body','reference.select','reference.exclude','align.include','align.exclude','align.gridsearch.limit','align.gridsearch.step','align.mask.apodization','align.mask.width','align.correlation.mode','align.correlation.size','align.peaksearch.radius','fit.orientation','fit.azimuth','fit.elevation','fit.rotation','fit.scale','fit.include','fit.exclude','fit.logging','fit.loglevel','map.size','map.body','map.sampling','map.select','map.exclude','map.lowpass.diameter','map.lowpass.apodization','map.logging','suffix','pathlist','cachedir','outdir','logging']
-			#os.system("mkdir tmp; cp %s.* tmp; cd tmp" % (name))   #EVEN A FULL CP DOESN'T WORK! -> protomo.error: file is already in use, coarse_series0003.i3t
-			#fname=self.params['runname']+'_coarse_params.py'
-			#f = open("%s" % (fname), 'w')
-			#f.write("#!/usr/bin/env python\n")
-			#f.write("import protomo\n")
-			#f.write("p=protomo.param('%s')\n" % (coarse_param_out))
-			#f.write("s=protomo.series(p)\n")
-			#for parameter in parameters_coarse:
-			#	f.write("s.setparam(\"%s\")\n" % (parameter))
-			#f.close()
-			#os.system("chmod +x %s; ./%s > ../%s.param.log; cd .." % (fname, fname, name))
-			
 			corrfile=name+'.corr'
 			series.corr(corrfile)
 			
@@ -1478,8 +1464,8 @@ class ProTomo2Aligner(basicScript.BasicScript):
 			if self.params['commit'] == "True":
 				self.insertIterationIntoDatabase(r=0)
 			
-			apDisplay.printMsg("Coarse Alignment finished!\n")
-			f.write('Coarse Alignment finished!\n')
+			apDisplay.printMsg("Finished Coarse Alignment for Tilt-Series #%s!\n" % self.params['tiltseries'])
+			f.write('Finished Coarse Alignment for Tilt-Series #%s!\n' % self.params['tiltseries'])
 
 		else: # Normal refinement with area matching
 			name=seriesname
@@ -1504,23 +1490,23 @@ class ProTomo2Aligner(basicScript.BasicScript):
 			
 			
 			iters=start+self.params['r1_iters']+self.params['r2_iters']+self.params['r3_iters']+self.params['r4_iters']+self.params['r5_iters']
-			round1={"window.size":"{ %s %s }" % (self.params['r1_region_x'],self.params['r1_region_y']),"window.lowpass.diameter":"{ %s %s }" % (self.params['r1_lowpass_diameter_x'],self.params['r1_lowpass_diameter_y']),"map.lowpass.diameter":"{ %s %s }" % (self.params['r1_lowpass_diameter_x'],self.params['r1_lowpass_diameter_y']),"window.lowpass.apodization":"{ %s %s }" % (self.params['r1_lowpass_apod_x'],self.params['r1_lowpass_apod_y']),"window.highpass.apodization":"{ %s %s }" % (self.params['r1_highpass_apod_x'],self.params['r1_highpass_apod_y']),"window.highpass.diameter":"{ %s %s }" % (self.params['r1_highpass_diameter_x'],self.params['r1_highpass_diameter_y']),"sampling":"%s" % (self.params['r1_sampling']),"map.sampling":"%s" % (self.params['r1_sampling']),"preprocess.mask.kernel":"{ %s %s }" % (self.params['r1_kernel_x'],self.params['r1_kernel_y']),"align.peaksearch.radius":"{ %s %s }" % (self.params['r1_peak_search_radius_x'],self.params['r1_peak_search_radius_y']),"window.mask.width":"{ %s %s }" % (self.params['r1_mask_width_x'],self.params['r1_mask_width_y']),"align.mask.width":"{ %s %s }" % (self.params['r1_mask_width_x'],self.params['r1_mask_width_y']),"window.mask.apodization":"{ %s %s }" % (self.params['r1_mask_apod_x'],self.params['r1_mask_apod_y']),"align.mask.apodization":"{ %s %s }" % (self.params['r1_mask_apod_x'],self.params['r1_mask_apod_y']),"reference.body":"%s" % (self.params['r1_body']),"map.body":"%s" % (self.params['r1_body']),"align.correlation.mode":"%s" % (self.params['r1_corr_mode'])}
-			round2={"window.size":"{ %s %s }" % (self.params['r2_region_x'],self.params['r2_region_y']),"window.lowpass.diameter":"{ %s %s }" % (self.params['r2_lowpass_diameter_x'],self.params['r2_lowpass_diameter_y']),"map.lowpass.diameter":"{ %s %s }" % (self.params['r2_lowpass_diameter_x'],self.params['r2_lowpass_diameter_y']),"window.lowpass.apodization":"{ %s %s }" % (self.params['r2_lowpass_apod_x'],self.params['r2_lowpass_apod_y']),"window.highpass.apodization":"{ %s %s }" % (self.params['r2_highpass_apod_x'],self.params['r2_highpass_apod_y']),"window.highpass.diameter":"{ %s %s }" % (self.params['r2_highpass_diameter_x'],self.params['r2_highpass_diameter_y']),"sampling":"%s" % (self.params['r2_sampling']),"map.sampling":"%s" % (self.params['r2_sampling']),"preprocess.mask.kernel":"{ %s %s }" % (self.params['r2_kernel_x'],self.params['r2_kernel_y']),"align.peaksearch.radius":"{ %s %s }" % (self.params['r2_peak_search_radius_x'],self.params['r2_peak_search_radius_y']),"window.mask.width":"{ %s %s }" % (self.params['r2_mask_width_x'],self.params['r2_mask_width_y']),"align.mask.width":"{ %s %s }" % (self.params['r2_mask_width_x'],self.params['r2_mask_width_y']),"window.mask.apodization":"{ %s %s }" % (self.params['r2_mask_apod_x'],self.params['r2_mask_apod_y']),"align.mask.apodization":"{ %s %s }" % (self.params['r2_mask_apod_x'],self.params['r2_mask_apod_y']),"reference.body":"%s" % (self.params['r2_body']),"map.body":"%s" % (self.params['r2_body']),"align.correlation.mode":"%s" % (self.params['r2_corr_mode'])}
-			round3={"window.size":"{ %s %s }" % (self.params['r3_region_x'],self.params['r3_region_y']),"window.lowpass.diameter":"{ %s %s }" % (self.params['r3_lowpass_diameter_x'],self.params['r3_lowpass_diameter_y']),"map.lowpass.diameter":"{ %s %s }" % (self.params['r3_lowpass_diameter_x'],self.params['r3_lowpass_diameter_y']),"window.lowpass.apodization":"{ %s %s }" % (self.params['r3_lowpass_apod_x'],self.params['r3_lowpass_apod_y']),"window.highpass.apodization":"{ %s %s }" % (self.params['r3_highpass_apod_x'],self.params['r3_highpass_apod_y']),"window.highpass.diameter":"{ %s %s }" % (self.params['r3_highpass_diameter_x'],self.params['r3_highpass_diameter_y']),"sampling":"%s" % (self.params['r3_sampling']),"map.sampling":"%s" % (self.params['r3_sampling']),"preprocess.mask.kernel":"{ %s %s }" % (self.params['r3_kernel_x'],self.params['r3_kernel_y']),"align.peaksearch.radius":"{ %s %s }" % (self.params['r3_peak_search_radius_x'],self.params['r3_peak_search_radius_y']),"window.mask.width":"{ %s %s }" % (self.params['r3_mask_width_x'],self.params['r3_mask_width_y']),"align.mask.width":"{ %s %s }" % (self.params['r3_mask_width_x'],self.params['r3_mask_width_y']),"window.mask.apodization":"{ %s %s }" % (self.params['r3_mask_apod_x'],self.params['r3_mask_apod_y']),"align.mask.apodization":"{ %s %s }" % (self.params['r3_mask_apod_x'],self.params['r3_mask_apod_y']),"reference.body":"%s" % (self.params['r3_body']),"map.body":"%s" % (self.params['r3_body']),"align.correlation.mode":"%s" % (self.params['r3_corr_mode'])}
-			round4={"window.size":"{ %s %s }" % (self.params['r4_region_x'],self.params['r4_region_y']),"window.lowpass.diameter":"{ %s %s }" % (self.params['r4_lowpass_diameter_x'],self.params['r4_lowpass_diameter_y']),"map.lowpass.diameter":"{ %s %s }" % (self.params['r4_lowpass_diameter_x'],self.params['r4_lowpass_diameter_y']),"window.lowpass.apodization":"{ %s %s }" % (self.params['r4_lowpass_apod_x'],self.params['r4_lowpass_apod_y']),"window.highpass.apodization":"{ %s %s }" % (self.params['r4_highpass_apod_x'],self.params['r4_highpass_apod_y']),"window.highpass.diameter":"{ %s %s }" % (self.params['r4_highpass_diameter_x'],self.params['r4_highpass_diameter_y']),"sampling":"%s" % (self.params['r4_sampling']),"map.sampling":"%s" % (self.params['r4_sampling']),"preprocess.mask.kernel":"{ %s %s }" % (self.params['r4_kernel_x'],self.params['r4_kernel_y']),"align.peaksearch.radius":"{ %s %s }" % (self.params['r4_peak_search_radius_x'],self.params['r4_peak_search_radius_y']),"window.mask.width":"{ %s %s }" % (self.params['r4_mask_width_x'],self.params['r4_mask_width_y']),"align.mask.width":"{ %s %s }" % (self.params['r4_mask_width_x'],self.params['r4_mask_width_y']),"window.mask.apodization":"{ %s %s }" % (self.params['r4_mask_apod_x'],self.params['r4_mask_apod_y']),"align.mask.apodization":"{ %s %s }" % (self.params['r4_mask_apod_x'],self.params['r4_mask_apod_y']),"reference.body":"%s" % (self.params['r4_body']),"map.body":"%s" % (self.params['r4_body']),"align.correlation.mode":"%s" % (self.params['r4_corr_mode'])}
-			round5={"window.size":"{ %s %s }" % (self.params['r5_region_x'],self.params['r5_region_y']),"window.lowpass.diameter":"{ %s %s }" % (self.params['r5_lowpass_diameter_x'],self.params['r5_lowpass_diameter_y']),"map.lowpass.diameter":"{ %s %s }" % (self.params['r5_lowpass_diameter_x'],self.params['r5_lowpass_diameter_y']),"window.lowpass.apodization":"{ %s %s }" % (self.params['r5_lowpass_apod_x'],self.params['r5_lowpass_apod_y']),"window.highpass.apodization":"{ %s %s }" % (self.params['r5_highpass_apod_x'],self.params['r5_highpass_apod_y']),"window.highpass.diameter":"{ %s %s }" % (self.params['r5_highpass_diameter_x'],self.params['r5_highpass_diameter_y']),"sampling":"%s" % (self.params['r5_sampling']),"map.sampling":"%s" % (self.params['r5_sampling']),"preprocess.mask.kernel":"{ %s %s }" % (self.params['r5_kernel_x'],self.params['r5_kernel_y']),"align.peaksearch.radius":"{ %s %s }" % (self.params['r5_peak_search_radius_x'],self.params['r5_peak_search_radius_y']),"window.mask.width":"{ %s %s }" % (self.params['r5_mask_width_x'],self.params['r5_mask_width_y']),"align.mask.width":"{ %s %s }" % (self.params['r5_mask_width_x'],self.params['r5_mask_width_y']),"window.mask.apodization":"{ %s %s }" % (self.params['r5_mask_apod_x'],self.params['r5_mask_apod_y']),"align.mask.apodization":"{ %s %s }" % (self.params['r5_mask_apod_x'],self.params['r5_mask_apod_y']),"reference.body":"%s" % (self.params['r5_body']),"map.body":"%s" % (self.params['r5_body']),"align.correlation.mode":"%s" % (self.params['r5_corr_mode'])}
+			round1={"window.size":"{ %s %s }" % (int(self.params['r1_region_x']/self.params['r1_sampling']),int(self.params['r1_region_y']/self.params['r1_sampling'])),"window.lowpass.diameter":"{ %s %s }" % (self.params['r1_lowpass_diameter_x'],self.params['r1_lowpass_diameter_y']),"map.lowpass.diameter":"{ %s %s }" % (self.params['r1_lowpass_diameter_x'],self.params['r1_lowpass_diameter_y']),"window.lowpass.apodization":"{ %s %s }" % (self.params['r1_lowpass_apod_x'],self.params['r1_lowpass_apod_y']),"window.highpass.apodization":"{ %s %s }" % (self.params['r1_highpass_apod_x'],self.params['r1_highpass_apod_y']),"window.highpass.diameter":"{ %s %s }" % (self.params['r1_highpass_diameter_x'],self.params['r1_highpass_diameter_y']),"sampling":"%s" % (self.params['r1_sampling']),"map.sampling":"%s" % (self.params['r1_sampling']),"preprocess.mask.kernel":"{ %s %s }" % (self.params['r1_kernel_x'],self.params['r1_kernel_y']),"align.peaksearch.radius":"{ %s %s }" % (self.params['r1_peak_search_radius_x'],self.params['r1_peak_search_radius_y']),"window.mask.width":"{ %s %s }" % (self.params['r1_mask_width_x'],self.params['r1_mask_width_y']),"align.mask.width":"{ %s %s }" % (self.params['r1_mask_width_x'],self.params['r1_mask_width_y']),"window.mask.apodization":"{ %s %s }" % (self.params['r1_mask_apod_x'],self.params['r1_mask_apod_y']),"align.mask.apodization":"{ %s %s }" % (self.params['r1_mask_apod_x'],self.params['r1_mask_apod_y']),"reference.body":"%s" % (self.params['r1_body']),"map.body":"%s" % (self.params['r1_body']),"align.correlation.mode":"%s" % (self.params['r1_corr_mode'])}
+			round2={"window.size":"{ %s %s }" % (int(self.params['r2_region_x']/self.params['r2_sampling']),int(self.params['r2_region_y']/self.params['r2_sampling'])),"window.lowpass.diameter":"{ %s %s }" % (self.params['r2_lowpass_diameter_x'],self.params['r2_lowpass_diameter_y']),"map.lowpass.diameter":"{ %s %s }" % (self.params['r2_lowpass_diameter_x'],self.params['r2_lowpass_diameter_y']),"window.lowpass.apodization":"{ %s %s }" % (self.params['r2_lowpass_apod_x'],self.params['r2_lowpass_apod_y']),"window.highpass.apodization":"{ %s %s }" % (self.params['r2_highpass_apod_x'],self.params['r2_highpass_apod_y']),"window.highpass.diameter":"{ %s %s }" % (self.params['r2_highpass_diameter_x'],self.params['r2_highpass_diameter_y']),"sampling":"%s" % (self.params['r2_sampling']),"map.sampling":"%s" % (self.params['r2_sampling']),"preprocess.mask.kernel":"{ %s %s }" % (self.params['r2_kernel_x'],self.params['r2_kernel_y']),"align.peaksearch.radius":"{ %s %s }" % (self.params['r2_peak_search_radius_x'],self.params['r2_peak_search_radius_y']),"window.mask.width":"{ %s %s }" % (self.params['r2_mask_width_x'],self.params['r2_mask_width_y']),"align.mask.width":"{ %s %s }" % (self.params['r2_mask_width_x'],self.params['r2_mask_width_y']),"window.mask.apodization":"{ %s %s }" % (self.params['r2_mask_apod_x'],self.params['r2_mask_apod_y']),"align.mask.apodization":"{ %s %s }" % (self.params['r2_mask_apod_x'],self.params['r2_mask_apod_y']),"reference.body":"%s" % (self.params['r2_body']),"map.body":"%s" % (self.params['r2_body']),"align.correlation.mode":"%s" % (self.params['r2_corr_mode'])}
+			round3={"window.size":"{ %s %s }" % (int(self.params['r3_region_x']/self.params['r3_sampling']),int(self.params['r3_region_y']/self.params['r3_sampling'])),"window.lowpass.diameter":"{ %s %s }" % (self.params['r3_lowpass_diameter_x'],self.params['r3_lowpass_diameter_y']),"map.lowpass.diameter":"{ %s %s }" % (self.params['r3_lowpass_diameter_x'],self.params['r3_lowpass_diameter_y']),"window.lowpass.apodization":"{ %s %s }" % (self.params['r3_lowpass_apod_x'],self.params['r3_lowpass_apod_y']),"window.highpass.apodization":"{ %s %s }" % (self.params['r3_highpass_apod_x'],self.params['r3_highpass_apod_y']),"window.highpass.diameter":"{ %s %s }" % (self.params['r3_highpass_diameter_x'],self.params['r3_highpass_diameter_y']),"sampling":"%s" % (self.params['r3_sampling']),"map.sampling":"%s" % (self.params['r3_sampling']),"preprocess.mask.kernel":"{ %s %s }" % (self.params['r3_kernel_x'],self.params['r3_kernel_y']),"align.peaksearch.radius":"{ %s %s }" % (self.params['r3_peak_search_radius_x'],self.params['r3_peak_search_radius_y']),"window.mask.width":"{ %s %s }" % (self.params['r3_mask_width_x'],self.params['r3_mask_width_y']),"align.mask.width":"{ %s %s }" % (self.params['r3_mask_width_x'],self.params['r3_mask_width_y']),"window.mask.apodization":"{ %s %s }" % (self.params['r3_mask_apod_x'],self.params['r3_mask_apod_y']),"align.mask.apodization":"{ %s %s }" % (self.params['r3_mask_apod_x'],self.params['r3_mask_apod_y']),"reference.body":"%s" % (self.params['r3_body']),"map.body":"%s" % (self.params['r3_body']),"align.correlation.mode":"%s" % (self.params['r3_corr_mode'])}
+			round4={"window.size":"{ %s %s }" % (int(self.params['r4_region_x']/self.params['r4_sampling']),int(self.params['r4_region_y']/self.params['r4_sampling'])),"window.lowpass.diameter":"{ %s %s }" % (self.params['r4_lowpass_diameter_x'],self.params['r4_lowpass_diameter_y']),"map.lowpass.diameter":"{ %s %s }" % (self.params['r4_lowpass_diameter_x'],self.params['r4_lowpass_diameter_y']),"window.lowpass.apodization":"{ %s %s }" % (self.params['r4_lowpass_apod_x'],self.params['r4_lowpass_apod_y']),"window.highpass.apodization":"{ %s %s }" % (self.params['r4_highpass_apod_x'],self.params['r4_highpass_apod_y']),"window.highpass.diameter":"{ %s %s }" % (self.params['r4_highpass_diameter_x'],self.params['r4_highpass_diameter_y']),"sampling":"%s" % (self.params['r4_sampling']),"map.sampling":"%s" % (self.params['r4_sampling']),"preprocess.mask.kernel":"{ %s %s }" % (self.params['r4_kernel_x'],self.params['r4_kernel_y']),"align.peaksearch.radius":"{ %s %s }" % (self.params['r4_peak_search_radius_x'],self.params['r4_peak_search_radius_y']),"window.mask.width":"{ %s %s }" % (self.params['r4_mask_width_x'],self.params['r4_mask_width_y']),"align.mask.width":"{ %s %s }" % (self.params['r4_mask_width_x'],self.params['r4_mask_width_y']),"window.mask.apodization":"{ %s %s }" % (self.params['r4_mask_apod_x'],self.params['r4_mask_apod_y']),"align.mask.apodization":"{ %s %s }" % (self.params['r4_mask_apod_x'],self.params['r4_mask_apod_y']),"reference.body":"%s" % (self.params['r4_body']),"map.body":"%s" % (self.params['r4_body']),"align.correlation.mode":"%s" % (self.params['r4_corr_mode'])}
+			round5={"window.size":"{ %s %s }" % (int(self.params['r5_region_x']/self.params['r5_sampling']),int(self.params['r5_region_y']/self.params['r5_sampling'])),"window.lowpass.diameter":"{ %s %s }" % (self.params['r5_lowpass_diameter_x'],self.params['r5_lowpass_diameter_y']),"map.lowpass.diameter":"{ %s %s }" % (self.params['r5_lowpass_diameter_x'],self.params['r5_lowpass_diameter_y']),"window.lowpass.apodization":"{ %s %s }" % (self.params['r5_lowpass_apod_x'],self.params['r5_lowpass_apod_y']),"window.highpass.apodization":"{ %s %s }" % (self.params['r5_highpass_apod_x'],self.params['r5_highpass_apod_y']),"window.highpass.diameter":"{ %s %s }" % (self.params['r5_highpass_diameter_x'],self.params['r5_highpass_diameter_y']),"sampling":"%s" % (self.params['r5_sampling']),"map.sampling":"%s" % (self.params['r5_sampling']),"preprocess.mask.kernel":"{ %s %s }" % (self.params['r5_kernel_x'],self.params['r5_kernel_y']),"align.peaksearch.radius":"{ %s %s }" % (self.params['r5_peak_search_radius_x'],self.params['r5_peak_search_radius_y']),"window.mask.width":"{ %s %s }" % (self.params['r5_mask_width_x'],self.params['r5_mask_width_y']),"align.mask.width":"{ %s %s }" % (self.params['r5_mask_width_x'],self.params['r5_mask_width_y']),"window.mask.apodization":"{ %s %s }" % (self.params['r5_mask_apod_x'],self.params['r5_mask_apod_y']),"align.mask.apodization":"{ %s %s }" % (self.params['r5_mask_apod_x'],self.params['r5_mask_apod_y']),"reference.body":"%s" % (self.params['r5_body']),"map.body":"%s" % (self.params['r5_body']),"align.correlation.mode":"%s" % (self.params['r5_corr_mode'])}
 			switches={"preprocess.mask.gradient":{"%s" % (self.params['gradient']):self.params['gradient_switch']},"preprocess.mask.iter":{"%s" % (self.params['iter_gradient']):self.params['iter_gradient_switch']},"fit.orientation":{"%s" % (self.params['orientation']):self.params['orientation_switch']},"fit.azimuth":{"%s" % (self.params['azimuth']):self.params['azimuth_switch']},"fit.elevation":{"%s" % (self.params['elevation']):self.params['elevation_switch']},"fit.rotation":{"%s" % (self.params['rotation']):self.params['rotation_switch']},"fit.scale":{"%s" % (self.params['scale']):self.params['scale_switch']}}
 			
 			apDisplay.printMsg("Beginning Refinements\n")
 			f.write('\nBeginning Refinements\n')
 			
-			for n in range(iters):
+			for n in range(start,start+iters):
 				#change parameters depending on rounds
 				self.params['cycle'] = n+1  #Iterations in Protomo start at 0
-				if (n+1 == 1):
+				if (n+1 == start+1):
 					r=1  #Round number
-					apDisplay.printMsg("Beginning Refinement Iteration #%s, Round #%s\n" % (start+n+1,r))
-					f.write('\nBeginning Refinement Iteration #%s, Round #%s\n' % (start+n+1,r))
+					apDisplay.printMsg("Beginning Refinement Iteration #%s, Round #%s\n" % (n+1,r))
+					f.write('\nBeginning Refinement Iteration #%s, Round #%s\n' % (n+1,r))
 					apDisplay.printMsg("lowpass = %s Angstroms\n" % r1_lp)
 					f.write("lowpass = %s Angstroms\n" % r1_lp)
 					region_x=self.params['r1_region_x']
@@ -1532,10 +1518,10 @@ class ProTomo2Aligner(basicScript.BasicScript):
 						f.write("%s = %s\n" % (val,round1[val]))
 						apDisplay.printMsg("%s = %s" % (val,round1[val]))
 						series.setparam(val,round1[val])
-				elif (n+1 == self.params['r1_iters']+1):
+				elif (n+1 == start+self.params['r1_iters']+1):
 					r=2
-					apDisplay.printMsg("Beginning Refinement Iteration #%s, Round #%s\n" % (start+n+1,r))
-					f.write('\nBeginning Refinement Iteration #%s, Round #%s\n' % (start+n+1,r))
+					apDisplay.printMsg("Beginning Refinement Iteration #%s, Round #%s\n" % (n+1,r))
+					f.write('\nBeginning Refinement Iteration #%s, Round #%s\n' % (n+1,r))
 					apDisplay.printMsg("lowpass = %s angstroms\n" % r2_lp)
 					f.write("lowpass = %s angstroms\n" % r2_lp)
 					region_x=self.params['r2_region_x']
@@ -1547,10 +1533,10 @@ class ProTomo2Aligner(basicScript.BasicScript):
 						f.write("%s = %s\n" % (val,round2[val]))
 						apDisplay.printMsg("%s = %s" % (val,round2[val]))
 						series.setparam(val,round2[val])
-				elif (n+1 == self.params['r1_iters']+self.params['r2_iters']+1):
+				elif (n+1 == start+self.params['r1_iters']+self.params['r2_iters']+1):
 					r=3
-					apDisplay.printMsg("Beginning Refinement Iteration #%s, Round #%s\n" % (start+n+1,r))
-					f.write('\nBeginning Refinement Iteration #%s, Round #%s\n' % (start+n+1,r))
+					apDisplay.printMsg("Beginning Refinement Iteration #%s, Round #%s\n" % (n+1,r))
+					f.write('\nBeginning Refinement Iteration #%s, Round #%s\n' % (n+1,r))
 					apDisplay.printMsg("lowpass = %s angstroms\n" % r3_lp)
 					f.write("lowpass = %s angstroms\n" % r3_lp)
 					region_x=self.params['r3_region_x']
@@ -1562,10 +1548,10 @@ class ProTomo2Aligner(basicScript.BasicScript):
 						f.write("%s = %s\n" % (val,round3[val]))
 						apDisplay.printMsg("%s = %s" % (val,round3[val]))
 						series.setparam(val,round3[val])
-				elif (n+1 == self.params['r1_iters']+self.params['r2_iters']+self.params['r3_iters']+1):
+				elif (n+1 == start+self.params['r1_iters']+self.params['r2_iters']+self.params['r3_iters']+1):
 					r=4
-					apDisplay.printMsg("Beginning Refinement Iteration #%s, Round #%s\n" % (start+n+1,r))
-					f.write('\nBeginning Refinement Iteration #%s, Round #%s\n' % (start+n+1,r))
+					apDisplay.printMsg("Beginning Refinement Iteration #%s, Round #%s\n" % (n+1,r))
+					f.write('\nBeginning Refinement Iteration #%s, Round #%s\n' % (n+1,r))
 					apDisplay.printMsg("lowpass = %s angstroms\n" % r4_lp)
 					f.write("lowpass = %s angstroms\n" % r4_lp)
 					region_x=self.params['r4_region_x']
@@ -1577,10 +1563,10 @@ class ProTomo2Aligner(basicScript.BasicScript):
 						f.write("%s = %s\n" % (val,round4[val]))
 						apDisplay.printMsg("%s = %s" % (val,round4[val]))
 						series.setparam(val,round4[val])
-				elif (n+1 == self.params['r1_iters']+self.params['r2_iters']+self.params['r3_iters']+self.params['r4_iters']+1):
+				elif (n+1 == start+self.params['r1_iters']+self.params['r2_iters']+self.params['r3_iters']+self.params['r4_iters']+1):
 					r=5
-					apDisplay.printMsg("Beginning Refinement Iteration #%s, Round #%s\n" % (start+n+1,r))
-					f.write('\nBeginning Refinement Iteration #%s, Round #%s\n' % (start+n+1,r))
+					apDisplay.printMsg("Beginning Refinement Iteration #%s, Round #%s\n" % (n+1,r))
+					f.write('\nBeginning Refinement Iteration #%s, Round #%s\n' % (n+1,r))
 					apDisplay.printMsg("lowpass = %s angstroms\n" % r5_lp)
 					f.write("lowpass = %s angstroms\n" % r5_lp)
 					region_x=self.params['r5_region_x']
@@ -1593,30 +1579,29 @@ class ProTomo2Aligner(basicScript.BasicScript):
 						apDisplay.printMsg("%s = %s" % (val,round5[val]))
 						series.setparam(val,round5[val])
 				else:
-					f.write("\nNo Round parameters changed for Iteration #%s\n" % (start+n+1))
-					apDisplay.printMsg("No Round parameters changed for Iteration #%s\n" % (start+n+1))
-					apDisplay.printMsg("Beginning Refinement Iteration #%s, Round #%s\n" % (start+n+1,r))
-					f.write('\nBeginning Refinement Iteration #%s, Round #%s\n' % (start+n+1,r))
+					f.write("\nNo Round parameters changed for Iteration #%s\n" % (n+1))
+					apDisplay.printMsg("No Round parameters changed for Iteration #%s\n" % (n+1))
+					apDisplay.printMsg("Beginning Refinement Iteration #%s, Round #%s\n" % (n+1,r))
+					f.write('\nBeginning Refinement Iteration #%s, Round #%s\n' % (n+1,r))
 				
 				#change parameters depending on switches
 				toggle=0
 				for switch in switches:
 					for key in switches[switch]:
-						if (switches[switch][key] == n+1):
+						if (switches[switch][key] == n+1-start):
 							toggle=1
 							if (key == "true"):
 								newval="false"
-								f.write("%s switched from true to false on Iteration #%s" % (switch, start+n+1))
-								apDisplay.printMsg("%s switched from true to false on Iteration #%s" % (switch, start+n+1))
+								f.write("%s switched from true to false on Iteration #%s" % (switch, n+1))
+								apDisplay.printMsg("%s switched from true to false on Iteration #%s" % (switch, n+1))
 							else:
 								newval="true"
 								f.write("%s switched from false to true on Iteration #%s" % (switch, n+1))
-								apDisplay.printMsg("%s switched from false to true on Iteration #%s" % (switch, start+n+1))
+								apDisplay.printMsg("%s switched from false to true on Iteration #%s" % (switch, n+1))
 							series.setparam(switch,newval)
 				if toggle == 0:
-					f.write("No parameters were switched for Iteration #%s\n" % (start+n+1))
-					apDisplay.printMsg("No parameters were switched for Iteration #%s\n" % (start+n+1))
-				
+					f.write("No parameters were switched for Iteration #%s\n" % (n+1))
+					apDisplay.printMsg("No parameters were switched for Iteration #%s\n" % (n+1))
 				
 				#Align and restart alignment if failed
 				retry=0
@@ -1643,11 +1628,11 @@ class ProTomo2Aligner(basicScript.BasicScript):
 						brk=1
 					except:
 						if (min(new_region_x,new_region_x) == 20):
-							apDisplay.printMsg("Refinement Iteration #%s for Tilt-Series #%s failed after resampling the search area %s time(s)." % (start+n+1, self.params['tiltseries'], retry-1))
+							apDisplay.printMsg("Refinement Iteration #%s for Tilt-Series #%s failed after resampling the search area %s time(s)." % (n+1, self.params['tiltseries'], retry-1))
 							apDisplay.printMsg("Window Size (x) was windowed down to %s" % (new_region_x*sampling))
 							apDisplay.printMsg("Window Size (y) was windowed down to %s" % (new_region_y*sampling))
 							apDisplay.printMsg("Put values less than these into the corresponding parameter boxes on the Protomo Refinement Appion webpage and try again.\n")
-							f.write('Refinement Iteration #%s for Tilt-Series #%s failed after resampling the search area %s time(s).\n' % (start+n+1, self.params['tiltseries'], retry-1))
+							f.write('Refinement Iteration #%s for Tilt-Series #%s failed after resampling the search area %s time(s).\n' % (n+1, self.params['tiltseries'], retry-1))
 							f.write('Window Size (x) was windowed down to %s\n' % (new_region_x*sampling))
 							f.write('Window Size (y) was windowed down to %s\n' % (new_region_y*sampling))
 							f.write('Put values less than these into the corresponding parameter boxes on the Protomo Refinement Appion webpage and try again.\n')
@@ -1657,10 +1642,10 @@ class ProTomo2Aligner(basicScript.BasicScript):
 				if (brk == 1):   #resampling failed, break out of all refinement iterations
 					break
 				
-				it="%03d" % ((n+start))
-				itt="%02d" % ((n+start+1))
-				ittt="%02d" % ((n+start))
-				#ite="_ite%02d" % ((n+start))
+				it="%03d" % (n)
+				itt="%02d" % (n+1)
+				ittt="%02d" % (n)
+				#ite="_ite%02d" % (n+start)
 				basename='%s%s' % (name,it)
 				corrfile=basename+'.corr'
 				series.corr(corrfile)
@@ -1679,32 +1664,35 @@ class ProTomo2Aligner(basicScript.BasicScript):
 					it="%03d" % (i)
 					basename='%s%s' % (name,it)
 					corrfile=basename+'.corr'
-					CCMS_shift, CCMS_rots, CCMS_scale, CCMS_sum = apProTomo2Aligner.makeQualityAssessment(name, i, rundir, corrfile)
+					try:  #Sometimes Protomo fails to write a corr file correctly...I don't understand this
+						CCMS_shift, CCMS_rots, CCMS_scale, CCMS_sum = apProTomo2Aligner.makeQualityAssessment(name, i, rundir, corrfile)
+					except NoneType:
+						apDisplay.printMsg("Protomo Failed to Write the correction factor file correctly, usually due to a failed alignment.")
 					if i == numcorrfiles-1:
 						self.params['qa_gif']='media/quality_assessment/'+seriesname+'_quality_assessment.gif'
 						apProTomo2Aligner.makeQualityAssessmentImage(self.params['tiltseries'], self.params['sessionname'], name, rundir, start+self.params['r1_iters'], self.params['r1_sampling'], r1_lp, start+self.params['r2_iters'], self.params['r2_sampling'], r2_lp, start+self.params['r3_iters'], self.params['r3_sampling'], r3_lp, start+self.params['r4_iters'], self.params['r4_sampling'], r4_lp, start+self.params['r5_iters'], self.params['r5_sampling'], r5_lp)
-				it="%03d" % ((n+start))
+				it="%03d" % (n)
 				basename='%s%s' % (name,it)
 				corrfile=basename+'.corr'
 				
-				apDisplay.printMsg("CCMS(shift) = %s for Iteration #%s of Tilt-Series #%s." % (round(CCMS_shift,5), start+n+1, self.params['tiltseries']))
-				f.write('CCMS(shift) = %s for Iteration #%s of Tilt-Series #%s.\n' % (round(CCMS_shift,5), start+n+1, self.params['tiltseries']))
+				apDisplay.printMsg("CCMS(shift) = %s for Iteration #%s of Tilt-Series #%s." % (round(CCMS_shift,5), n+1, self.params['tiltseries']))
+				f.write('CCMS(shift) = %s for Iteration #%s of Tilt-Series #%s.\n' % (round(CCMS_shift,5), n+1, self.params['tiltseries']))
 				
-				apDisplay.printMsg("CCMS(rotations) = %s for Iteration #%s of Tilt-Series #%s." % (round(CCMS_rots,5), start+n+1, self.params['tiltseries']))
-				f.write('CCMS(rotations) = %s for Iteration #%s of Tilt-Series #%s.\n' % (round(CCMS_rots,5), start+n+1, self.params['tiltseries']))
+				apDisplay.printMsg("CCMS(rotations) = %s for Iteration #%s of Tilt-Series #%s." % (round(CCMS_rots,5), n+1, self.params['tiltseries']))
+				f.write('CCMS(rotations) = %s for Iteration #%s of Tilt-Series #%s.\n' % (round(CCMS_rots,5), n+1, self.params['tiltseries']))
 				
-				apDisplay.printMsg("CCMS(scale) = %s for Iteration #%s of Tilt-Series #%s." % (round(CCMS_scale,5), start+n+1, self.params['tiltseries']))
-				f.write('CCMS(scale) = %s for Iteration #%s of Tilt-Series #%s.\n' % (round(CCMS_scale,5), start+n+1, self.params['tiltseries']))
+				apDisplay.printMsg("CCMS(scale) = %s for Iteration #%s of Tilt-Series #%s." % (round(CCMS_scale,5), n+1, self.params['tiltseries']))
+				f.write('CCMS(scale) = %s for Iteration #%s of Tilt-Series #%s.\n' % (round(CCMS_scale,5), n+1, self.params['tiltseries']))
 				
-				apDisplay.printMsg("The scaled sum of CCMS values is %s for Iteration #%s of Tilt-Series #%s." % (round(CCMS_sum,5), start+n+1, self.params['tiltseries']))
+				apDisplay.printMsg("The scaled sum of CCMS values is %s for Iteration #%s of Tilt-Series #%s." % (round(CCMS_sum,5), n+1, self.params['tiltseries']))
 				f.write('The scaled sum of CCMS values is #%s for Tilt-Series #%s.\n' % (round(CCMS_sum,5), self.params['tiltseries']))
 				
 				if self.params['parallel'] != "True":
-					apDisplay.printMsg("Creating Depiction Videos for Iteration #%s..." % (start+n+1))
-					f.write('Creating Depiction Videos for Iteration #%s...\n' % (start+n+1))
+					apDisplay.printMsg("Creating Depiction Videos for Iteration #%s..." % (n+1))
+					f.write('Creating Depiction Videos for Iteration #%s...\n' % (n+1))
 				else:
-					apDisplay.printMsg("Creating Depiction Videos for Iteration #%s in Parallel..." % (start+n+1))
-					f.write('Creating Depiction Videos for Iteration #%s in Parallel...\n' % (start+n+1))
+					apDisplay.printMsg("Creating Depiction Videos for Iteration #%s in Parallel..." % (n+1))
+					f.write('Creating Depiction Videos for Iteration #%s in Parallel...\n' % (n+1))
 					
 				# For multiprocessing
 				jobs=[]
@@ -1713,41 +1701,50 @@ class ProTomo2Aligner(basicScript.BasicScript):
 				self.params['corr_peak_gif']='media/correlations/'+seriesname+ittt+'_cor.gif';self.params['corr_peak_ogv']='media/correlations/'+seriesname+ittt+'_cor.ogv';self.params['corr_peak_mp4']='media/correlations/'+seriesname+ittt+'_cor.mp4';self.params['corr_peak_webm']='media/correlations/'+seriesname+ittt+'_cor.webm'
 				jobs.append(mp.Process(target=apProTomo2Aligner.makeCorrPeakVideos, args=(name, it, rundir, self.params['protomo_outdir'], self.params['video_type'], "Refinement")))
 				if self.params['parallel'] != "True":
+					[p.start() for job in jobs]
 					[p.join() for p in mp.active_children()]
+					jobs=[]
 				
 				# Make correction factor plot pngs for depiction
 				self.params['corr_plot_coa_gif']='media/corrplots/'+seriesname+ittt+'_coa.gif';self.params['corr_plot_cofx_gif']='media/corrplots/'+seriesname+ittt+'_cofx.gif';self.params['corr_plot_cofy_gif']='media/corrplots/'+seriesname+ittt+'_cofy.gif';self.params['corr_plot_rot_gif']='media/corrplots/'+seriesname+ittt+'_rot.gif';self.params['corr_plot_scl_gif']='media/corrplots/'+seriesname+ittt+'_scl.gif';
 				jobs.append(mp.Process(target=apProTomo2Aligner.makeCorrPlotImages, args=(name, it, rundir, corrfile)))
 				if self.params['parallel'] != "True":
+					[p.start() for job in jobs]
 					[p.join() for p in mp.active_children()]
+					jobs=[]
 				
 				# Make refinement plots of tilt azimuth and theta
 				self.params['azimuth_gif']='media/angle_refinement/'+seriesname+'_azimuth.gif';self.params['theta_gif']='media/angle_refinement/'+seriesname+'_theta.gif';
 				jobs.append(mp.Process(target=apProTomo2Aligner.makeAngleRefinementPlots, args=(rundir, name,)))
 				if self.params['parallel'] != "True":
+					[p.start() for job in jobs]
 					[p.join() for p in mp.active_children()]
+					jobs=[]
 				
 				# Make tiltseries video for depiction
 				if self.params['create_tilt_video'] == "true":
-					apDisplay.printMsg("Creating Refinement tilt-series video for iteration #%s..." % (start+n+1))
-					f.write('Creating Refinement tilt-series video for iteration #%s...\n' % (start+n+1))
+					apDisplay.printMsg("Creating Refinement tilt-series video for iteration #%s..." % (n+1))
+					f.write('Creating Refinement tilt-series video for iteration #%s...\n' % (n+1))
 					self.params['tiltseries_gif']='media/tiltseries/'+seriesname+ittt+'.gif';self.params['tiltseries_ogv']='media/tiltseries/'+seriesname+ittt+'.gif';self.params['tiltseries_mp4']='media/tiltseries/'+seriesname+ittt+'.mp4';self.params['tiltseries_webm']='media/tiltseries/'+seriesname+ittt+'.webm';
 					jobs.append(mp.Process(target=apProTomo2Aligner.makeTiltSeriesVideos, args=(seriesname, it, tiltfile, rawimagecount, rundir, raw_path, self.params['pixelsize'], self.params['map_sampling'], self.params['image_file_type'], self.params['video_type'], self.params['tilt_clip'], self.params['parallel'], "Refinement",)))
 					if self.params['parallel'] != "True":
+						[p.start() for job in jobs]
 						[p.join() for p in mp.active_children()]
+						jobs=[]
 				else:
 					apDisplay.printMsg("Skipping tilt-series depiction\n")
 					f.write('Skipping tilt-series depiction\n')
 				
 				# Send off processes in the background
-				for job in jobs:
-					job.start()
+				if self.params['parallel'] == "True":
+					for job in jobs:
+						job.start()
 				
 				# Generate intermediate reconstructions and videos for depiction
 				if self.params['create_reconstruction'] == "true":
 					# Create intermediate reconstruction
-					apDisplay.printMsg("Generating Refinement reconstruction for iteration #%s..." % (start+n+1))
-					f.write('Generating Refinement reconstruction for iteration #%s...\n' % (start+n+1))
+					apDisplay.printMsg("Generating Refinement reconstruction for iteration #%s..." % (n+1))
+					f.write('Generating Refinement reconstruction for iteration #%s...\n' % (n+1))
 					#Rescale if necessary
 					s='r%s_sampling' % r
 					lpx='r%s_lowpass_diameter_x' % r
@@ -1757,18 +1754,13 @@ class ProTomo2Aligner(basicScript.BasicScript):
 						series.setparam("sampling",new_map_sampling)
 						series.setparam("map.sampling",new_map_sampling)
 						
-						#Rescale the lowpass, lowpass apod, and body for depiction
-						lpax='r%s_lowpass_apod_x' % r
-						lpay='r%s_lowpass_apod_y' % r
+						#Rescale the lowpass and body for depiction
 						b='r%s_body' % r
 						new_lp_x = self.params[lpx]*self.params['map_sampling']/self.params[s]
 						new_lp_y = self.params[lpy]*self.params['map_sampling']/self.params[s]
-						new_lp_apod_x = self.params[lpax]*self.params['map_sampling']/self.params[s]
-						new_lp_apod_y = self.params[lpay]*self.params['map_sampling']/self.params[s]
 						new_body = self.params[b]*self.params[s]/self.params['map_sampling']
 						series.setparam("map.lowpass.diameter", "{ %s %s }" % (new_lp_x, new_lp_y))
-						#series.setparam("map.lowpass.apodization", "{ %s %s }" % (new_lp_apod_x, new_lp_apod_y))
-						series.setparam("map.body", "%s" % (self.params['r4_body']))
+						series.setparam("map.body", "%s" % (new_body))
 						
 						series.mapfile()
 						
@@ -1794,21 +1786,24 @@ class ProTomo2Aligner(basicScript.BasicScript):
 					job.join()
 				
 				if final_retry > 0:
-					apDisplay.printMsg("Refinement Iteration #%s finished after retrying %s time(s) due to the sampled search area being too small." % (start+n+1, final_retry))
+					apDisplay.printMsg("Refinement Iteration #%s finished after retrying %s time(s) due to the sampled search area being too small." % (n+1, final_retry))
 					apDisplay.printMsg("Window Size (x) was windowed down to %s" % (new_region_x*sampling))
 					apDisplay.printMsg("Window Size (y) was windowed down to %s" % (new_region_y*sampling))
-					f.write('Refinement Iteration #%s finished after retrying %s time(s) due to the sampled search area being too small.\n' % (start+n+1, final_retry))
+					f.write('Refinement Iteration #%s finished after retrying %s time(s) due to the sampled search area being too small.\n' % (n+1, final_retry))
 					f.write('Window Size (x) was windowed down to %s\n' % (new_region_x*sampling))
 					f.write('Window Size (y) was windowed down to %s\n' % (new_region_y*sampling))
-					resized_x=new_region_x*sampling
-					resized_y=new_region_y*sampling
+				
+				if n == range(iters)[-1]:
+					apDisplay.printMsg("Finished Refinement for Tilt-Series #%s!\n" % self.params['tiltseries'])
+					f.write('Finished Refinement for Tilt-Series #%s!\n' % self.params['tiltseries'])
 			
 			#Insert iteration information into the database
-			if self.params['commit']=="True":
-				self.getModelAngles(tiltfile)
-				self.param['seriesname'] = name
-				self.insertIterationIntoDatabase(r)
+			#if self.params['commit']=="True":
+			#	self.getModelAngles(tiltfile)
+			#	self.param['seriesname'] = name
+			#	self.insertIterationIntoDatabase(r)
 		
+		apDisplay.printMsg("Closing log file %s/protomo2aligner_%s.log" % (rundir, time_start))
 		time_end = time.strftime("%Yyr%mm%dd-%Hhr%Mm%Ss")
 		f.write("\nEnd time: %s" % time_end)
 		f.close()

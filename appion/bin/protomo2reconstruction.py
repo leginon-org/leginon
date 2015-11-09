@@ -156,10 +156,9 @@ class ProTomo2Reconstruction(basicScript.BasicScript):
 		os.system('cp %s %s' % (tilt_out_full, recon_tilt_out_full))
 		os.system('cp %s %s' % (param_out_full,recon_param_out_full))
 		
-		original_tlt=self.params['rundir']+'/original.tlt'
 		#CTF Correction
 		if (self.params['ctf_correct'] == 'True'):
-			apProTomo2Prep.ctfCorrect(seriesname, self.params['rundir'], self.params['projectid'], self.params['sessionname'], int(self.params['tiltseries']), original_tlt, self.params['pixelsize'], self.params['DefocusTol'], self.params['iWidth'], self.params['amp_contrast'])
+			apProTomo2Prep.ctfCorrect(seriesname, self.params['rundir'], self.params['projectid'], self.params['sessionname'], int(self.params['tiltseries']), recon_tilt_out_full, self.params['pixelsize'], self.params['DefocusTol'], self.params['iWidth'], self.params['amp_contrast'])
 		
 		#Dose Compensation
 		if (self.params['dose_presets'] != 'False'):
@@ -229,6 +228,7 @@ class ProTomo2Reconstruction(basicScript.BasicScript):
 		(lowpassmapline, err) = proc.communicate()
 		lowpassmapline=int(lowpassmapline)
 		if self.params['recon_lowpass'] == "False":
+			lp=''
 			#Remove lowpass filter from param
 			cmd2="sed -i \"%ss/.*//\" %s;" % (lowpassmapline, recon_param_out_full)
 			cmd2+="sed -i \"%ss/.*//\" %s;" % (lowpassmapline+1, recon_param_out_full)
@@ -245,16 +245,12 @@ class ProTomo2Reconstruction(basicScript.BasicScript):
 			os.system(cmd33)
 		else:
 			lpavg = int((self.params['recon_lp_diam_x']+self.params['recon_lp_diam_y'])/2)
+			lp='.lp%s' % lpavg
 			self.params['recon_lp_diam_x'] = 2*self.params['pixelsize']*self.params['recon_map_sampling']/self.params['recon_lp_diam_x']
 			self.params['recon_lp_diam_y'] = 2*self.params['pixelsize']*self.params['recon_map_sampling']/self.params['recon_lp_diam_y']
 			cmd2="sed -i \"%ss/.*/     diameter:    { %s, %s } * S/\" %s" % (lowpassmapline+1, self.params['recon_lp_diam_x'], self.params['recon_lp_diam_y'], recon_param_out_full)
 		os.system(cmd2)
 		
-		# AP Get param files ready for batch processing
-		if self.params['recon_lowpass'] == "False":
-			lp=''
-		else:
-			lp='.lp%s' % lpavg
 		dim='%sx%s' % (self.params['recon_map_size_x'],self.params['recon_map_size_y'])
 		ang='%sto%s' % (round(mintilt,1),round(maxtilt,1))
 		img=seriesname+'00_bck.img'
@@ -263,6 +259,8 @@ class ProTomo2Reconstruction(basicScript.BasicScript):
 		img_full=recon_out_dir+'/'+img
 		mrc_full=recon_out_dir+'/'+mrcf
 		mrcn_full=recon_out_dir+'/'+mrcfn
+		
+		# AP Get param files ready for batch processing
 		batchdir=self.params['rundir']+'/'+'ready_for_batch'
 		coarse_param_full=self.params['rundir']+'/coarse_out/'+'coarse_'+param_out
 		recon_param='recon_'+param_out
@@ -271,6 +269,7 @@ class ProTomo2Reconstruction(basicScript.BasicScript):
 		
 		# Create reconstruction
 		os.chdir(recon_dir)
+		os.system("rm %s/cache/%s* %s/*i3t 2>/dev/null" % (recon_dir, seriesname, recon_dir))
 		seriesparam=protomo.param(recon_param_out_full)
 		seriesgeom=protomo.geom(recon_tilt_out_full)
 		series=protomo.series(seriesparam,seriesgeom)
@@ -295,8 +294,7 @@ class ProTomo2Reconstruction(basicScript.BasicScript):
 			pass
 		
 		if proc.returncode != 0:
-			print ""
-			apDisplay.printMsg("e2proc3d not found or failed to process reconstruction. Trying proc3d...")
+			apDisplay.printMsg("\ne2proc3d not found or failed to process reconstruction. Trying proc3d...")
 			try:
 				command="proc3d %s %s norm" % (mrc_full, mrcn_full)
 				proc=subprocess.Popen(command, stdout=subprocess.PIPE, shell=True)
@@ -304,15 +302,14 @@ class ProTomo2Reconstruction(basicScript.BasicScript):
 			except:
 				pass
 		if proc.returncode != 0:
-			print ""		
-			apDisplay.printMsg("proc3d not found or failed to process reconstruction. Skipping normalization.")
+			apDisplay.printMsg("\nproc3d not found or failed to process reconstruction. Skipping normalization.")
 		else:
 			os.system('rm %s' % mrc_full)
 		
 		# Link reconstruction to directory
 		try:
-			cmd1="mkdir -p %s 2>/dev/null; rm %s/%s %s/%s 2>/dev/null; ln %s %s 2>/dev/null" % (self.params['link_recon'], self.params['link_recon'], mrcf, self.params['link_recon'], mrcfn, mrc_full, self.params['link_recon'])
-			cmd2="mkdir -p %s 2>/dev/null; rm %s/%s %s/%s 2>/dev/null; ln %s %s" % (self.params['link_recon'], self.params['link_recon'], mrcf, self.params['link_recon'], mrcfn, mrcn_full, self.params['link_recon'])
+			cmd1="mkdir -p %s 2>/dev/null; rm %s/%s %s/%s 2>/dev/null; ln -f %s %s 2>/dev/null" % (self.params['link_recon'], self.params['link_recon'], mrcf, self.params['link_recon'], mrcfn, mrc_full, self.params['link_recon'])
+			cmd2="mkdir -p %s 2>/dev/null; rm %s/%s %s/%s 2>/dev/null; ln -f %s %s" % (self.params['link_recon'], self.params['link_recon'], mrcf, self.params['link_recon'], mrcfn, mrcn_full, self.params['link_recon'])
 			try:
 				proc=subprocess.Popen(cmd1, stdout=subprocess.PIPE, shell=True)
 				(code, err) = proc.communicate()
@@ -326,17 +323,17 @@ class ProTomo2Reconstruction(basicScript.BasicScript):
 					pass
 			
 			apDisplay.printMsg("Reconstruction can be found in this directory:")
-			if (self.params['link_recon'] != None) or (self.params['link_recon'] != ""):
-				print "\n%s\n" % (self.params['link_recon'])
-			else:
+			if (self.params['link_recon'] == None) or (self.params['link_recon'] == "") or (len(self.params['link_recon']) < 1):
 				print "\n%s\n" % (recon_out_dir)
+			else:
+				print "\n%s\n" % (self.params['link_recon'])
 		except:
 			apDisplay.printMsg("Reconstruction can be found in this directory:")
 			print "\n%s\n" % (recon_out_dir)
 			if proc.returncode != 0:
 				apDisplay.printMsg("The reconstruction in the above directory is not normalized because EMAN1 and EMAN2 were either not found or failed to process the reconstruction.")
 			
-		os.system("rm %s/cache/%s*" % (recon_dir, seriesname))
+		os.system("rm %s/cache/%s* %s/*i3t" % (recon_dir, seriesname, recon_dir))
 
 #=====================
 if __name__ == '__main__':
