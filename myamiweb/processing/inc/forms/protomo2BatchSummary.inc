@@ -20,6 +20,7 @@ $sessionname=$_SESSION['sessionname'];
 $outdir=$_SESSION['outdir'];
 $runname=$_SESSION['runname'];
 $imageinfo=$_SESSION['imageinfo'];
+$refine=$_GET['refine'];
 
 class Protomo2BatchSummary extends BasicLayoutForm
 {
@@ -63,49 +64,111 @@ class Protomo2BatchSummary extends BasicLayoutForm
 		$params = $this->getFormParams();
 		
 		global $outdir;
-		global $runname;
-		$rundir=$outdir.'/'.$runname;
-		$tilts = glob("$rundir/.t*");
+		global $refine;
+		$tilts = glob("$outdir/.tiltseries*");
 		$qalist=array();
 		foreach(array_keys($tilts) as $paramName)
-			//echo $paramName . "<br>";
-			//echo $tiltseries["$paramName"]. "<br>";
-			//$ext = pathinfo($tiltseries["$paramName"], PATHINFO_EXTENSION);
 			$qalist[]=pathinfo($tilts["$paramName"], PATHINFO_EXTENSION);
-		$tiltlist=array();
-		foreach(array_keys($qalist) as $paramName)
-			$tiltlist[]=$rundir.'/tiltseries'.$paramName.'/media/quality_assessment/series'.$paramName.'_quality_assessment.gif';
 		
-		// Table of all of the CCMS plots for easy identification
-		$html .= "
-	<hr />
-	<center><H4><b>CCMS Plot for Each Tilt-Series ".docpop('quality_assessment', '(Info)')."</b></H4></center>
-	<hr />";
 		
-		$i = 0;
-		$html .= '<table id="" class="display" cellspacing="0" border="1" width="100%">';
-		$html .= "<tr>";
-		if (count($qalist) > 0)
+		
+		if (isset($_GET['refine']))
 		{
-		do {
-			foreach ($qalist as $tilt)
-			{
-				$ite=$i+1;
-				if ($ite <= count($qalist) AND $ite > 0) {
-					$ccms_gif = "loadimg.php?rawgif=1&filename=".$rundir.'/tiltseries'.$qalist[$i].'/media/quality_assessment/series'.$qalist[$i].'_quality_assessment.gif';
-					$html .= '<td><center><a href="protomo2BatchTiltSummary.php?rundir='.$rundir.'&tiltseries='.$qalist[$i].'" target="_blank"><img src="'.$ccms_gif.'"width="400" /></a></center></td>';
+				// Table of all of the CCMS plots for easy identification
+				$html .= "
+			<hr />
+			<center><H4><b>CCMS Plot for Each Tilt-Series ".docpop('quality_assessment', '(Info)')."</b></H4></center>
+			<hr />";
+				
+				$i = 0;
+				$j = -1;
+				$numcolumns=3;
+				$html .= '<table id="" class="display" cellspacing="0" border="1" width="100%">';
+				$html .= "<tr>";
+				if (count($qalist) > 0)
+				{
+				do {
+					foreach ($qalist as $tilt)
+					{
+						$ite=$i+1;
+						if ($ite <= count($qalist) AND $ite > 0) {
+							$html .= '<th><a href="protomo2BatchTiltSummary.php?rundir='.$outdir.'&tiltseries='.$qalist[$i].'" target="_blank">Tilt-Series #'.intval($qalist[$i]).'</a></th>';
+						}
+						if ($ite % $numcolumns == 0 OR $ite < 1) {
+							$html .= "</tr><tr>";
+							$j++;
+							break;
+						}
+						$i++;
+					}
+					$i = 0 + $numcolumns*$j;
+					foreach ($qalist as $tilt)
+					{
+						$ite=$i+1;
+						if ($ite <= count($qalist) AND $ite > 0) {
+							$ccms_gif = "loadimg.php?rawgif=1&filename=".$outdir.'/tiltseries'.$qalist[$i].'/media/quality_assessment/series'.$qalist[$i].'_quality_assessment.gif';
+							$html .= '<td><center><a href="protomo2BatchTiltSummary.php?rundir='.$outdir.'&tiltseries='.$qalist[$i].'" target="_blank"><img src="'.$ccms_gif.'"width="350" /></a></center></td>';
+						}
+						if ($ite % $numcolumns == 0 OR $ite < 1) {
+							$html .= "</tr><tr>";
+							$i++;
+							break;
+						}
+						$i++;
+					}
+				} while ($i < count($qalist));
 				}
-				if ($ite % 3 == 0 OR $ite < 1) {
-					$html .= "</tr><tr>";
-					$i++;
-					break;
+				$html .= '</tr><tr></table><br>';
+		}else{
+				// Table of all of the correlation peaks for easy identification
+				$html .= "
+			<hr />
+			<center><H4><b>Coarse Alignment Correlation Peaks for Each Tilt-Series ".docpop('corrimageinfo_coarse', '(Info)')."</b></H4></center>
+			<hr />";
+				
+				$i = 0;
+				$j = -1;
+				$numcolumns=5;
+				$html .= '<table id="" class="display" cellspacing="0" border="1" width="100%">';
+				$html .= "<tr>";
+				if (count($qalist) > 0)
+				{
+				do {
+					foreach ($qalist as $tilt)
+					{
+						$ite=$i+1;
+						if ($ite <= count($qalist) AND $ite > 0) {
+							$html .= '<th><a href="protomo2BatchCoarseSummary.php?rundir='.$outdir.'&tiltseries='.$qalist[$i].'" target="_blank">Tilt-Series #'.intval($qalist[$i]).'</a></th>';
+						}
+						if ($ite % $numcolumns == 0 OR $ite < 1) {
+							$html .= "</tr><tr>";
+							$j++;
+							break;
+						}
+						$i++;
+					}
+					$i = 0 + $numcolumns*$j;
+					foreach ($qalist as $tilt)
+					{
+						$ite=$i+1;
+						if ($ite <= count($qalist) AND $ite > 0) {
+							$corrpeak_gif = "loadimg.php?rawgif=1&filename=".$outdir.'/tiltseries'.$qalist[$i].'/media/correlations/coarse_series'.$qalist[$i].'00_cor.gif';
+							$html .= '<td><center><a href="protomo2BatchCoarseSummary.php?rundir='.$outdir.'&tiltseries='.$qalist[$i].'" target="_blank"><img src="'.$corrpeak_gif.'"/></a></center></td>';
+						}
+						if ($ite % $numcolumns == 0 OR $ite < 1) {
+							$html .= "</tr><tr>";
+							$i++;
+							break;
+						}
+						$i++;
+					}
+				} while ($i < count($qalist));
 				}
-				$i++;
-			}
-		} while ($i < count($qalist));
+				$html .= '</tr><tr></table><br>';
+				
+				$html .= "<br></br>
+					<a href='runAppionLoop.php?expId=".$this->expId."&form=Protomo2BatchSummary&refine=1'><b><center>[Click here to continue on to view <font size='4'>Refinement Results</font> if the Coarse Alignment results are satisfactory] <font size='5'>→</font></center></b></a>";
 		}
-		$html .= '</tr><tr></table><br>';
-		
 		return $html;
 	}	
 	

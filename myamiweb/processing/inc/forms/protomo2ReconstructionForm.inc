@@ -56,9 +56,9 @@ if ($_SESSION['erase_refine'] == 1){  //Just using erase_refine as a token
 class Protomo2ReconstructionForm extends BasicLayoutForm
 {
 	function __construct( $expId, $extraHTML, $commit='false', $negative='', $positive='', $recon_iter='', $recon_map_sampling='2',
-	$recon_map_size_x='4096', $recon_map_size_y='4096',	$recon_thickness='2000', $pixelsize='', $recon_lowpass='', $recon_lp_diam_x='15',
+	$recon_map_size_x='2048', $recon_map_size_y='2048',	$recon_thickness='1500', $pixelsize='', $recon_lowpass='', $recon_lp_diam_x='15',
 	$recon_lp_diam_y='15', $ctf_correct='', $amp_contrast='0.07', $iWidth='20', $DefocusTol='200', $dose_presets='', $dose_a='',
-	$dose_b='', $dose_c='')
+	$dose_b='', $dose_c='', $link_recon='')
 	{
 		parent::__construct($expId, $extraHTML);
 		//print "_POST:" . "<br>";
@@ -138,9 +138,18 @@ class Protomo2ReconstructionForm extends BasicLayoutForm
 		$params = $this->getFormParams();
 		
 		global $unselect;
+		global $outdir;
+		global $runname;
 		
 		$fieldSize = 5;
 		$fieldSize2 = 30;
+		
+		$best_file = glob("$outdir/$runname/best.*");
+		$bestbin1or2_file = glob("$outdir/$runname/bestbin1or2.*");
+		$worst_file = glob("$outdir/$runname/worst.*");
+		$best = pathinfo($best_file[0], PATHINFO_EXTENSION);
+		$bestbin1or2 = pathinfo($bestbin1or2_file[0], PATHINFO_EXTENSION);
+		$worst = pathinfo($worst_file[0], PATHINFO_EXTENSION);
 		
 		$html .= "
 		<br />
@@ -176,8 +185,10 @@ class Protomo2ReconstructionForm extends BasicLayoutForm
 	    <H4>Reconstruction Parameters ".docpop('recon_info2', '(Info)')."</H4>
 	    <hr />";
 		
-		//$html.= $params->insertTextField( "recon_iter", $fieldSize );
 		$html.= '<select name="recon_iter" onchange=submit() style="width:66px">';
+		$html.= '<option value="'.$best.'">Best</option>';
+		$html.= '<option value="'.$bestbin1or2.'">Best w/ bin=1or2</option>';
+		$html.= '<option value="'.$worst.'">Worst</option>';
 		for ($i=1; $i <= $_SESSION['iters']; $i++)
 		{
 			if ($i == $_SESSION['iter'] and $unselect == 0){
@@ -281,7 +292,7 @@ class Protomo2ReconstructionForm extends BasicLayoutForm
 		$_SESSION['outdir'] = $outdir;
 		$_SESSION['iters'] = $iters;
 		$_SESSION['imageinfo'] = $imageinfo;
-		$_SESSION['recon_iter']=$_POST['recon_iter'];
+		$_SESSION['thickness'] = $_POST['thickness'];
 		$_SESSION['preset_size'] = $preset_size;
 		$_SESSION['preset_search'] = $preset_search;
 		$_SESSION['preset_type'] = $preset_type;

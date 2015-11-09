@@ -24,7 +24,7 @@ $iter=$_GET['iter'];
 $tiltseries=$_GET['tiltseries'];
 
 $corrpeak_gif_files = glob("$outdir/$runname/media/correlations/s*.gif");
-$corrpeak_vid_files = glob("$outdir/$runname/media/correlations/series".sprintf('%04d',$tiltseries).sprintf('%02d',$iter-1)."_cor.{mp4,ogv,webm}",GLOB_BRACE);
+$corrpeak_vid_files = glob("$outdir/$runname/media/correlations/series".sprintf('%04d',$tiltseries).sprintf('%03d',$iter-1)."_cor.{mp4,ogv,webm}",GLOB_BRACE);
 $corr_gif_files = glob("$outdir/$runname/media/corrplots/series".sprintf('%04d',$tiltseries).sprintf('%03d',$iter-1)."*.gif");
 $tilt_gif_files = glob("$outdir/$runname/media/tiltseries/s*.gif");
 $tilt_vid_files = glob("$outdir/$runname/media/tiltseries/series".sprintf('%04d',$tiltseries).sprintf('%03d',$iter-1).".{mp4,ogv,webm}",GLOB_BRACE);

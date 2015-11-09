@@ -503,7 +503,7 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 			$html .= "<br></br>
 			<b><center>Remove the previous Coarse Alignment by running this command:</center></b>";
 			$html .= "<br></br>
-			<center><code>rm -r ".$_SESSION['outdir'].$_SESSION['runname']."</code></center>";
+			<center><code>rm -r ".$_SESSION['outdir'].'/'.$_SESSION['runname']."</code></center>";
 			$html .= "<br></br>
 			<a href='runAppionLoop.php?expId=".$this->expId."&form=Protomo2CoarseAlignForm'><b><center>Click here or Refresh this page to continue.</center></b></a>";	
 			$_SESSION['erase_coarse'] = 0;
