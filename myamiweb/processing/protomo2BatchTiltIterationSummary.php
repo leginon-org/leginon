@@ -39,6 +39,7 @@ $corr_coa = "loadimg.php?rawgif=1&filename=".$corr_gif_files[0];
 $corr_cofx = "loadimg.php?rawgif=1&filename=".$corr_gif_files[1];
 $corr_cofy = "loadimg.php?rawgif=1&filename=".$corr_gif_files[2];
 $corr_rot = "loadimg.php?rawgif=1&filename=".$corr_gif_files[3];
+$corr_scl = "loadimg.php?rawgif=1&filename=".$corr_gif_files[4];
 $tilt_gif = "loadimg.php?rawgif=1&filename=".$tilt_gif_files[$iter-1];
 $tilt_mp4 = "loadvid.php?filename=".$tilt_vid_files[0];
 $tilt_ogv = "loadvid.php?filename=".$tilt_vid_files[1];
@@ -51,7 +52,7 @@ $rec_webm = "loadvid.php?filename=".$rec_vid_files[2];
 $download_rec_mp4 = "downloadvid.php?filename=".$rec_vid_files[0];
 
 $html .= "
-	<center><H3><b>Tilt-Series #".ltrim($tiltseries, '0').", Refinement Iteration #$iter</b></H3></center>
+	<center><H3><b>Tilt-Series #".ltrim($tiltseries, '0')."<br>Refinement Iteration #$iter</b></H3></center>
 	<hr />";
 $html .= "
 	<H4><center><b>Correlation Peak</b></center></H4>";
@@ -85,7 +86,7 @@ $html .= '<th>Correction Rotation Factor</th>';
 $html .= '<th>Angle between the (x) and (y) Correction Factors</th>';
 $html .= "</tr><tr>";
 $html .= '<td><img src="'.$corr_rot.'" alt="rot" width="500" />'."<br /></td>";
-$html .= '<td><img src="'.$corr_coa.'" alt="coa" width="500" />'."<br /></td>";
+$html .= '<td><img src="'.$corr_scl.'" alt="scl" width="500" />'."<br /></td>";
 $html .= '</tr><tr></table></center><br><hr />';
 
 $html .= "

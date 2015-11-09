@@ -840,7 +840,7 @@ def protomoCoarseAlign(log_file, tiltseriesnumber, coarse_options):
 		apDisplay.printWarning("Coarse Alignment failed. Skipping Tilt-Series #%s...\n" % (tiltseriesnumber))
 		f.write("Coarse Alignment failed. Skipping Tilt-Series #%s...\n\n" % (tiltseriesnumber))
 		return
-	os.system('touch %s/.tiltseries.%04d' % (coarse_options.rundir, tiltseriesnumber))  #Internal tracker for what has been coarse aligned
+	os.system('touch %s/.tiltseries.%04d' % (tiltdir, tiltseriesnumber))  #Internal tracker for what has been batch processed through alignments
 	
 	apDisplay.printMsg("Creating Coarse Alignment Depiction Videos")
 	f.write("Creating Coarse Alignment Depiction Videos\n")
@@ -1227,10 +1227,11 @@ def protomoReconstruct(log_file, tiltseriesnumber, recon_options):
 		except:
 			apDisplay.printWarning("A binned by 1 or 2 iteration hasn't been run. Reconstructing with the best iteration overall...")
 			f.write("A binned by 1 or 2 iteration hasn't been run. Reconstructing with the best iteration overall...\n")
-			recon_options.recon_iter_presets = "Best"
-		
-	if recon_options.recon_iter_presets == "Best":
-		best=glob.glob(tiltdir+'/best*')
+			best=glob.glob(tiltdir+'/best.*')
+			filename, recon_iter = os.path.splitext(best[0])
+			recon_iter=int(recon_iter[1:])
+	elif recon_options.recon_iter_presets == "Best":
+		best=glob.glob(tiltdir+'/best.*')
 		filename, recon_iter = os.path.splitext(best[0])
 		recon_iter=int(recon_iter[1:])
 	elif recon_options.recon_iter_presets == "Worst":
@@ -1813,7 +1814,7 @@ def protomoAutoRefine(log_file, tiltseriesnumber, auto_refine_options):
 				apDisplay.printMsg("Protomo Failed to Write the correction factor file correctly, usually due to a failed alignment.")
 				f.write("Protomo Failed to Write the correction factor file correctly, usually due to a failed alignment.\n")
 			if i == numcorrfiles-1:
-				apProTomo2Aligner.makeQualityAssessmentImage(tiltseriesnumber, auto_refine_options.sessionname, name, tiltdir, start+auto_refine_options.r1_iters, auto_refine_options.r1_sampling, auto_refine_options.r1_lp, start+auto_refine_options.r2_iters, auto_refine_options.r2_sampling, auto_refine_options.r2_lp, start+auto_refine_options.r3_iters, auto_refine_options.r3_sampling, auto_refine_options.r3_lp, start+auto_refine_options.r4_iters, auto_refine_options.r4_sampling, auto_refine_options.r4_lp, start+auto_refine_options.r5_iters, auto_refine_options.r5_sampling, auto_refine_options.r5_lp)
+				apProTomo2Aligner.makeQualityAssessmentImage(tiltseriesnumber, auto_refine_options.sessionname, name, tiltdir, auto_refine_options.r1_iters, auto_refine_options.r1_sampling, auto_refine_options.r1_lp, auto_refine_options.r2_iters, auto_refine_options.r2_sampling, auto_refine_options.r2_lp, auto_refine_options.r3_iters, auto_refine_options.r3_sampling, auto_refine_options.r3_lp, auto_refine_options.r4_iters, auto_refine_options.r4_sampling, auto_refine_options.r4_lp, auto_refine_options.r5_iters, auto_refine_options.r5_sampling, auto_refine_options.r5_lp)
 		it="%03d" % (n)
 		basename='%s%s' % (name,it)
 		corrfile=basename+'.corr'
@@ -2038,7 +2039,7 @@ def protomoAutoRefine(log_file, tiltseriesnumber, auto_refine_options):
 					apDisplay.printMsg("Protomo Failed to Write the correction factor file correctly, usually due to a failed alignment.")
 					f.write("Protomo Failed to Write the correction factor file correctly, usually due to a failed alignment.\n")
 				if i == numcorrfiles-1:
-					apProTomo2Aligner.makeQualityAssessmentImage(tiltseriesnumber, auto_refine_options.sessionname, name, tiltdir, start+auto_refine_options.r1_iters, auto_refine_options.r1_sampling, auto_refine_options.r1_lp, start+auto_refine_options.r2_iters, auto_refine_options.r2_sampling, auto_refine_options.r2_lp, start+auto_refine_options.r3_iters, auto_refine_options.r3_sampling, auto_refine_options.r3_lp, start+auto_refine_options.r4_iters, auto_refine_options.r4_sampling, auto_refine_options.r4_lp, start+auto_refine_options.r5_iters, auto_refine_options.r5_sampling, auto_refine_options.r5_lp, start+auto_refine_options.r6_iters, auto_refine_options.r6_sampling, auto_refine_options.r6_lp, start+auto_refine_options.r7_iters, auto_refine_options.r7_sampling, auto_refine_options.r7_lp, start+auto_refine_options.r8_iters, auto_refine_options.r8_sampling, auto_refine_options.r8_lp)
+					apProTomo2Aligner.makeQualityAssessmentImage(tiltseriesnumber, auto_refine_options.sessionname, name, tiltdir, auto_refine_options.r1_iters, auto_refine_options.r1_sampling, auto_refine_options.r1_lp, auto_refine_options.r2_iters, auto_refine_options.r2_sampling, auto_refine_options.r2_lp, auto_refine_options.r3_iters, auto_refine_options.r3_sampling, auto_refine_options.r3_lp, auto_refine_options.r4_iters, auto_refine_options.r4_sampling, auto_refine_options.r4_lp, auto_refine_options.r5_iters, auto_refine_options.r5_sampling, auto_refine_options.r5_lp, auto_refine_options.r6_iters, auto_refine_options.r6_sampling, auto_refine_options.r6_lp, auto_refine_options.r7_iters, auto_refine_options.r7_sampling, auto_refine_options.r7_lp, auto_refine_options.r8_iters, auto_refine_options.r8_sampling, auto_refine_options.r8_lp)
 			it="%03d" % (n)
 			basename='%s%s' % (name,it)
 			corrfile=basename+'.corr'
@@ -2221,7 +2222,7 @@ def protomoScreening(log_file, tiltseriesnumber, screening_options):
 		apDisplay.printWarning("Coarse Alignment failed. Skipping Tilt-Series #%s...\n" % (tiltseriesnumber))
 		f.write("Coarse Alignment failed. Skipping Tilt-Series #%s...\n\n" % (tiltseriesnumber))
 		return
-	os.system('touch %s/.tiltseries.%04d' % (screening_options.rundir, tiltseriesnumber))  #Internal tracker for what has been coarse aligned
+	os.system('touch %s/.tiltseries.%04d' % (tiltdir, tiltseriesnumber))  #Internal tracker for what has been processed through alignment
 	
 	jobs2=[]
 	apDisplay.printMsg("Creating Coarse Alignment Depiction Videos")
