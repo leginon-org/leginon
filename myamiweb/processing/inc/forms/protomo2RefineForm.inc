@@ -1194,6 +1194,10 @@ class Protomo2RefineForm extends BasicLayoutForm
 				$html.= '<option selected value="true">true</option>';
 				$html.= '<option value="false">false</option>';
 				$html.= '</select>'; $html.= docpop('protomo_create_reconstruction2', ' Create Reconstruction Videos').'<br>';
+				$html.= '<select name="video_type" style="width:66px">';
+				$html.= '<option value="gif">Gif</option>';
+				$html.= '<option selected value="html5vid">HTML5</option>';
+				$html.= '</select>'; $html.= docpop('protomo_video_type', ' Video Type').'<br>';
 				
 				$html .= "<hr />";
 				if ($_POST['settings'] == 1)  //Express Settings

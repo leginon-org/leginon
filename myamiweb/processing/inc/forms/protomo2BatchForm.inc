@@ -2297,6 +2297,23 @@ class Protomo2BatchForm extends BasicLayoutForm
 			$html.= $params->insertTextField( "map_sampling", $fieldSize );
 		}
 		
+		if ($_POST['firststep'] == 1 and $_POST['laststep'] == 1)
+		{
+			$html .= "
+		<br />
+		<H4>Depiction Parameters ".docpop('depictionparam_info', '(Info)')."</H4>
+		<hr />";
+			$html.= '<select name="all_tilt_videos" style="width:66px">';
+			$html.= '<option selected value="true">true</option>';
+			$html.= '<option value="false">false</option>';
+			$html.= '</select>'; $html.= docpop('protomo_create_tiltvids', ' Create Tilt-Series Videos').'<br>';
+			$html.= '<select name="video_type" style="width:66px">';
+			$html.= '<option value="gif">Gif</option>';
+			$html.= '<option selected value="html5vid">HTML5</option>';
+			$html.= '</select>'; $html.= docpop('protomo_video_type', ' Video Type').'<br>';
+			$html.= $params->insertTextField( "map_sampling", $fieldSize );
+		}
+		
 		// Only display link to next step in tomo processing if on completed Command page
 		if (empty($_POST['procs']) AND empty($_POST['tiltseriesranges']))
 		{
