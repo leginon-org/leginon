@@ -32,6 +32,12 @@ echo "  combine stacks from different sessions into one large stack.";
 echo "</td></tr>";
 
 echo "<tr><td>";
+echo "  <h3><a href='runStackIntoPicks.php?expId=$expId'>Convert Stack into Particle Picks</a></h3>";
+echo "  take an existing stack and create a particle picking run. "
+	." This is good for creating a new stack based on an existing stack with a bigger boxsize .";
+echo "</td></tr>";
+
+echo "<tr><td>";
 echo "  <h3><a href='stacksummary.php?expId=$expId&mean=1'>View Stacks</a></h3>";
 echo "  view a list of the available stacks where you can center the particles"
 	." or filter the stack based on the mean and standard deviation";
@@ -44,21 +50,17 @@ echo "  make a substack based on an alignment or classification. "
 echo "</td></tr>";
 
 echo "<tr><td>";
-echo "  <h3><a href='jumpSubStack.php?expId=$expId'>Jumpers SubStack</a></h3>";
-echo "  make a substack based on particle 'jumpers' from a reconstruction.";
-echo "</td></tr>";
-
-echo "<tr><td>";
-echo "  <h3><a href='runStackIntoPicks.php?expId=$expId'>Convert Stack into Particle Picks</a></h3>";
-echo "  take an existing stack and create a particle picking run. "
-	." This is good for creating a new stack based on an existing stack with a bigger boxsize .";
-echo "</td></tr>";
-
-echo "<tr><td>";
 echo "  <h3><a href='runAppionLoop.php?expId=$expId&form=deParticleAlignForm'>Run DE particle stack alignment</a></h3>";
 echo "  DE has written a particle alignment script. This depends on particle stacks. ";
 echo "</td></tr>";
 
+if (!HIDE_FEATURE)
+{
+	echo "<tr><td>";
+	echo "  <h3><a href='jumpSubStack.php?expId=$expId'>Jumpers SubStack</a></h3>";
+	echo "  make a substack based on particle 'jumpers' from a reconstruction.";
+	echo "</td></tr>";
+}
 echo "</table>";
 processing_footer();
 exit;
