@@ -39,7 +39,7 @@ echo "<form name='templateform' method='post' action='$formAction'>\n";
 
 $particle = new particledata();
 $allavgtomos = $particle->getAveragedTomogramsFromSession($sessionId, True);
-if ($_POST) {
+if (hasPatternInArrayKeys($_POST,'/updateDesc/')) {
 	foreach ($allavgtomos as $t)
 		$particle->updateTableDescriptionAndHiding($_POST,'ApTomoAverageRunData',$t['avgid']);
 }
