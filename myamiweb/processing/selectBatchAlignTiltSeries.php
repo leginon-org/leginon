@@ -24,16 +24,17 @@ echo "<tr><td>\n";
 echo "  <h2>Batch Tilt-Series Alignment and Reconstruction Procedures</h2>\n";
 echo "  <h4>\n";
 echo "    Here you will find the same maintained software packages \n"
-	."as in 'Align tilt-series', but configured to run in \n"
+	."as in 'Align Tilt-Series', but configured to run in \n"
 	."batch mode. Select multiple tilt-series that you wish to run in batch \n"
 	."mode, input the parameters you wish to use in the alignment and \n"
 	."reconstruction of the tilt-series, then copy & paste the command into a terminal window. \n"
-	."Batch mode tilt-series alignment and reconstruction might be \n"
-	."useful for quickly screening tilt-series or for full batch tomogram processing. \n";
+	."Here you will also find a Screening Mode for use during Leginon data collection, \n"
+	."a Fully Automated processing mode for Automatically aligning tilt-series to convergence \n"
+	."in batch, batch CTF Correction, and batch Dose Compensation. \n";
 echo "  <h4>\n";
 echo "    <i>(The following workflows use PHP sessions to keep track of \n"
-        ."variables. They are designed to be used from start to finish \n"
-        ."in a browser independent of all other Appion queries.)</i>";
+        ."variables. They are designed to be used immediately following \n"
+        ."a full \'Align Tilt-Series\' run.)</i>";
 echo "  </h4>\n";
 echo "</td></tr>\n";
 echo "</table>\n";

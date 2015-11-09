@@ -1152,10 +1152,10 @@ def protomoRefine(log_file, tiltseriesnumber, refine_options):
 		basename='%s%s' % (name,it)
 		corrfile=basename+'.corr'
 		
-		apDisplay.printMsg("CCMS(shift) = %s for Iteration #%s of Tilt-Series #%s." % (round(CCMS_shift,5), n+1, tiltseriesnumber))
-		apDisplay.printMsg("CCMS(rotations) = %s for Iteration #%s of Tilt-Series #%s." % (round(CCMS_rots,5), n+1, tiltseriesnumber))
-		apDisplay.printMsg("CCMS(scale) = %s for Iteration #%s of Tilt-Series #%s." % (round(CCMS_scale,5), n+1, tiltseriesnumber))
-		apDisplay.printMsg("The scaled sum of CCMS values is %s for Iteration #%s of Tilt-Series #%s." % (round(CCMS_sum,5), n+1, tiltseriesnumber))
+		apDisplay.printMsg("\033[43mCCMS(shift) = %s\033[0m for Iteration #%s of Tilt-Series #%s." % (round(CCMS_shift,5), n+1, tiltseriesnumber))
+		apDisplay.printMsg("\033[46mCCMS(rotations) = %s\033[0m for Iteration #%s of Tilt-Series #%s." % (round(CCMS_rots,5), n+1, tiltseriesnumber))
+		apDisplay.printMsg("\033[43mCCMS(scale) = %s\033[0m for Iteration #%s of Tilt-Series #%s." % (round(CCMS_scale,5), n+1, tiltseriesnumber))
+		apDisplay.printMsg("\033[1mThe scaled sum of CCMS values is %s\033[0m for Iteration #%s of Tilt-Series #%s." % (round(CCMS_sum,5), n+1, tiltseriesnumber))
 		f.write("CCMS(shift) = %s for Iteration #%s of Tilt-Series #%s.\n" % (round(CCMS_shift,5), n+1, tiltseriesnumber))
 		f.write("CCMS(rotations) = %s for Iteration #%s of Tilt-Series #%s.\n" % (round(CCMS_rots,5), n+1, tiltseriesnumber))
 		f.write("CCMS(scale) = %s for Iteration #%s of Tilt-Series #%s.\n" % (round(CCMS_scale,5), n+1, tiltseriesnumber))
@@ -1634,10 +1634,10 @@ def protomoAutoRefine(log_file, tiltseriesnumber, auto_refine_options):
 		basename='%s%s' % (name,it)
 		corrfile=basename+'.corr'
 		
-		apDisplay.printMsg("CCMS(shift) = %s for Iteration #%s of Tilt-Series #%s." % (round(CCMS_shift,5), n+1, tiltseriesnumber))
-		apDisplay.printMsg("CCMS(rotations) = %s for Iteration #%s of Tilt-Series #%s." % (round(CCMS_rots,5), n+1, tiltseriesnumber))
-		apDisplay.printMsg("CCMS(scale) = %s for Iteration #%s of Tilt-Series #%s." % (round(CCMS_scale,5), n+1, tiltseriesnumber))
-		apDisplay.printMsg("The scaled sum of CCMS values is %s for Iteration #%s of Tilt-Series #%s." % (round(CCMS_sum,5), n+1, tiltseriesnumber))
+		apDisplay.printMsg("\033[43mCCMS(shift) = %s\033[0m for Iteration #%s of Tilt-Series #%s." % (round(CCMS_shift,5), n+1, tiltseriesnumber))
+		apDisplay.printMsg("\033[46mCCMS(rotations) = %s\033[0m for Iteration #%s of Tilt-Series #%s." % (round(CCMS_rots,5), n+1, tiltseriesnumber))
+		apDisplay.printMsg("\033[43mCCMS(scale) = %s\033[0m for Iteration #%s of Tilt-Series #%s." % (round(CCMS_scale,5), n+1, tiltseriesnumber))
+		apDisplay.printMsg("\033[1mThe scaled sum of CCMS values is %s\033[0m for Iteration #%s of Tilt-Series #%s." % (round(CCMS_sum,5), n+1, tiltseriesnumber))
 		f.write("CCMS(shift) = %s for Iteration #%s of Tilt-Series #%s.\n" % (round(CCMS_shift,5), n+1, tiltseriesnumber))
 		f.write("CCMS(rotations) = %s for Iteration #%s of Tilt-Series #%s.\n" % (round(CCMS_rots,5), n+1, tiltseriesnumber))
 		f.write("CCMS(scale) = %s for Iteration #%s of Tilt-Series #%s.\n" % (round(CCMS_scale,5), n+1, tiltseriesnumber))
@@ -1819,10 +1819,10 @@ def protomoAutoRefine(log_file, tiltseriesnumber, auto_refine_options):
 		basename='%s%s' % (name,it)
 		corrfile=basename+'.corr'
 		
-		apDisplay.printMsg("CCMS(shift) = %s for Iteration #%s of Tilt-Series #%s." % (round(CCMS_shift,5), n+1, tiltseriesnumber))
-		apDisplay.printMsg("CCMS(rotations) = %s for Iteration #%s of Tilt-Series #%s." % (round(CCMS_rots,5), n+1, tiltseriesnumber))
-		apDisplay.printMsg("CCMS(scale) = %s for Iteration #%s of Tilt-Series #%s." % (round(CCMS_scale,5), n+1, tiltseriesnumber))
-		apDisplay.printMsg("The scaled sum of CCMS values is %s for Iteration #%s of Tilt-Series #%s." % (round(CCMS_sum,5), n+1, tiltseriesnumber))
+		apDisplay.printMsg("\033[43mCCMS(shift) = %s\033[0m for Iteration #%s of Tilt-Series #%s." % (round(CCMS_shift,5), n+1, tiltseriesnumber))
+		apDisplay.printMsg("\033[46mCCMS(rotations) = %s\033[0m for Iteration #%s of Tilt-Series #%s." % (round(CCMS_rots,5), n+1, tiltseriesnumber))
+		apDisplay.printMsg("\033[43mCCMS(scale) = %s\033[0m for Iteration #%s of Tilt-Series #%s." % (round(CCMS_scale,5), n+1, tiltseriesnumber))
+		apDisplay.printMsg("\033[1mThe scaled sum of CCMS values is %s\033[0m for Iteration #%s of Tilt-Series #%s." % (round(CCMS_sum,5), n+1, tiltseriesnumber))
 		f.write("CCMS(shift) = %s for Iteration #%s of Tilt-Series #%s.\n" % (round(CCMS_shift,5), n+1, tiltseriesnumber))
 		f.write("CCMS(rotations) = %s for Iteration #%s of Tilt-Series #%s.\n" % (round(CCMS_rots,5), n+1, tiltseriesnumber))
 		f.write("CCMS(scale) = %s for Iteration #%s of Tilt-Series #%s.\n" % (round(CCMS_scale,5), n+1, tiltseriesnumber))
@@ -2044,10 +2044,10 @@ def protomoAutoRefine(log_file, tiltseriesnumber, auto_refine_options):
 			basename='%s%s' % (name,it)
 			corrfile=basename+'.corr'
 			
-			apDisplay.printMsg("CCMS(shift) = %s for Iteration #%s of Tilt-Series #%s." % (round(CCMS_shift,5), n+1, tiltseriesnumber))
-			apDisplay.printMsg("CCMS(rotations) = %s for Iteration #%s of Tilt-Series #%s." % (round(CCMS_rots,5), n+1, tiltseriesnumber))
-			apDisplay.printMsg("CCMS(scale) = %s for Iteration #%s of Tilt-Series #%s." % (round(CCMS_scale,5), n+1, tiltseriesnumber))
-			apDisplay.printMsg("The scaled sum of CCMS values is %s for Iteration #%s of Tilt-Series #%s." % (round(CCMS_sum,5), n+1, tiltseriesnumber))
+			apDisplay.printMsg("\033[43mCCMS(shift) = %s\033[0m for Iteration #%s of Tilt-Series #%s." % (round(CCMS_shift,5), n+1, tiltseriesnumber))
+			apDisplay.printMsg("\033[46mCCMS(rotations) = %s\033[0m for Iteration #%s of Tilt-Series #%s." % (round(CCMS_rots,5), n+1, tiltseriesnumber))
+			apDisplay.printMsg("\033[43mCCMS(scale) = %s\033[0m for Iteration #%s of Tilt-Series #%s." % (round(CCMS_scale,5), n+1, tiltseriesnumber))
+			apDisplay.printMsg("\033[1mThe scaled sum of CCMS values is %s\033[0m for Iteration #%s of Tilt-Series #%s." % (round(CCMS_sum,5), n+1, tiltseriesnumber))
 			f.write("CCMS(shift) = %s for Iteration #%s of Tilt-Series #%s.\n" % (round(CCMS_shift,5), n+1, tiltseriesnumber))
 			f.write("CCMS(rotations) = %s for Iteration #%s of Tilt-Series #%s.\n" % (round(CCMS_rots,5), n+1, tiltseriesnumber))
 			f.write("CCMS(scale) = %s for Iteration #%s of Tilt-Series #%s.\n" % (round(CCMS_scale,5), n+1, tiltseriesnumber))
