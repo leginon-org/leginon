@@ -2564,5 +2564,11 @@ if __name__ == '__main__':
 	
 	apDisplay.printMsg("Closing log file %s" % log_file)
 	time_end = time.strftime("%Yyr%mm%dd-%Hhr%Mm%Ss")
+	apDisplay.printMsg('Did everything blow up and now you\'re yelling at your computer screen?')
+	apDisplay.printMsg('If so, kindly email Alex at ajn10d@fsu.edu and include this log file.')
+	apDisplay.printMsg('If everything worked beautifully and you publish it, please use the appropriate citations listed on the Appion webpage!')
+	log.write('Did everything blow up and now you\'re yelling at your computer screen?')
+	log.write('If so, kindly email Alex at ajn10d@fsu.edu and include this log file.')
+	log.write('If everything worked beautifully and you publish it, please use the appropriate citations listed on the Appion webpage!')
 	log.write("\nEnd time: %s" % time_end)
 	log.close()

@@ -1675,16 +1675,16 @@ class ProTomo2Aligner(basicScript.BasicScript):
 				basename='%s%s' % (name,it)
 				corrfile=basename+'.corr'
 				
-				apDisplay.printMsg("CCMS(shift) = %s for Iteration #%s of Tilt-Series #%s." % (round(CCMS_shift,5), n+1, self.params['tiltseries']))
+				apDisplay.printMsg("\033[43mCCMS(shift) = %s\033[0m for Iteration #%s of Tilt-Series #%s." % (round(CCMS_shift,5), n+1, self.params['tiltseries']))
 				f.write('CCMS(shift) = %s for Iteration #%s of Tilt-Series #%s.\n' % (round(CCMS_shift,5), n+1, self.params['tiltseries']))
 				
-				apDisplay.printMsg("CCMS(rotations) = %s for Iteration #%s of Tilt-Series #%s." % (round(CCMS_rots,5), n+1, self.params['tiltseries']))
+				apDisplay.printMsg("\033[46mCCMS(rotations) = %s\033[0m for Iteration #%s of Tilt-Series #%s." % (round(CCMS_rots,5), n+1, self.params['tiltseries']))
 				f.write('CCMS(rotations) = %s for Iteration #%s of Tilt-Series #%s.\n' % (round(CCMS_rots,5), n+1, self.params['tiltseries']))
 				
-				apDisplay.printMsg("CCMS(scale) = %s for Iteration #%s of Tilt-Series #%s." % (round(CCMS_scale,5), n+1, self.params['tiltseries']))
+				apDisplay.printMsg("\033[43mCCMS(scale) = %s\033[0m for Iteration #%s of Tilt-Series #%s." % (round(CCMS_scale,5), n+1, self.params['tiltseries']))
 				f.write('CCMS(scale) = %s for Iteration #%s of Tilt-Series #%s.\n' % (round(CCMS_scale,5), n+1, self.params['tiltseries']))
 				
-				apDisplay.printMsg("The scaled sum of CCMS values is %s for Iteration #%s of Tilt-Series #%s." % (round(CCMS_sum,5), n+1, self.params['tiltseries']))
+				apDisplay.printMsg("\033[1mThe scaled sum of CCMS values is %s\033[0m for Iteration #%s of Tilt-Series #%s." % (round(CCMS_sum,5), n+1, self.params['tiltseries']))
 				f.write('The scaled sum of CCMS values is #%s for Tilt-Series #%s.\n' % (round(CCMS_sum,5), self.params['tiltseries']))
 				
 				if self.params['parallel'] != "True":
@@ -1805,6 +1805,12 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		
 		apDisplay.printMsg("Closing log file %s/protomo2aligner_%s.log" % (rundir, time_start))
 		time_end = time.strftime("%Yyr%mm%dd-%Hhr%Mm%Ss")
+		apDisplay.printMsg('Did everything blow up and now you\'re yelling at your computer screen?')
+		apDisplay.printMsg('If so, kindly email Alex at ajn10d@fsu.edu and include this log file.')
+		apDisplay.printMsg('If everything worked beautifully and you publish it, please use the appropriate citations listed on the Appion webpage!')
+		f.write('Did everything blow up and now you\'re yelling at your computer screen?')
+		f.write('If so, kindly email Alex at ajn10d@fsu.edu and include this log file.')
+		f.write('If everything worked beautifully and you publish it, please use the appropriate citations listed on the Appion webpage!')
 		f.write("\nEnd time: %s" % time_end)
 		f.close()
 		

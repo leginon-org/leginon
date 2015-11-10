@@ -1487,7 +1487,7 @@ class Protomo2BatchForm extends BasicLayoutForm
 		$this->setTitle( 'Protomo Batch Refinement and Reconstruction Launcher' );
 		$this->setHeading( 'Protomo Batch Refinement and Reconstruction' );
 		$this->setExeFile( 'protomo2batch.py' );
-		$this->setGuideURL( "http://www.electrontomography.org/?page_id=317" );
+		$this->setGuideURL( "http://emg.nysbc.org/redmine/projects/appion/wiki/Align_Tilt-Series" );
 		$this->setTestable( False ); // True to activate "test single image".
 		$this->setUseLegOutDir( False ); // The output directory will be created in the Appion run directory rather than Leginon.
 		$this->setShowDesc( False ); // Flag to hide the description field of the run parameters.

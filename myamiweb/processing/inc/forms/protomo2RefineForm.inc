@@ -773,7 +773,7 @@ class Protomo2RefineForm extends BasicLayoutForm
 		$this->setTitle( 'Protomo Refinement Launcher' );
 		$this->setHeading( 'Protomo Refinement' );
 		$this->setExeFile( 'protomo2aligner.py' );
-		$this->setGuideURL( "http://www.electrontomography.org/?page_id=317" );
+		$this->setGuideURL( "http://emg.nysbc.org/redmine/projects/appion/wiki/Align_Tilt-Series" );
 		$this->setTestable( False ); // True to activate "test single image".
 		$this->setUseLegOutDir( False ); // The output directory will be created in the Appion run directory rather than Leginon.
 		$this->setShowDesc( True ); // Flag to hide the description field of the run parameters.
