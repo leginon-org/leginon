@@ -309,7 +309,7 @@ class GatanSocket(object):
 	@logwrap
 	def SetupFileSaving(self, rotationFlip, dirname, rootname, filePerImage, earlyReturnFrameCount=0):
 		pixelSize = 1.0
-		if self.save_frames and if earlyReturnFrameCount > 0:
+		if self.save_frames and earlyReturnFrameCount > 0:
 			# early return flag
 			flag = 128
 			longs = [enum_gs['GS_SetupFileSaving2'], rotationFlip, flag,]
