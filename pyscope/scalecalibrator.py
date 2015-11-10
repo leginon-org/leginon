@@ -239,7 +239,7 @@ class ScaleCalibrator(object):
 			cam_length = self.getCameraLength()
 			# beamtilt clicks * scale = math.atan(effect / camera_length)
 			scale = math.atan(float(self.getPhysicalShift()) / (self.mag * cam_length)) / shift
-			self.logger.cfg('lens','%s_SCALE%%%s' % (self.effect_type.upper(),axis.upper()),'%.1e' % (scale))
+			self.logger.cfg('def','%s_SCALE%%%s' % (self.effect_type.upper(),axis.upper()),'%.1e' % (scale))
 		elif self.isFocus():
 			# others clicks * scale = effect
 			self.logger.cfg('lens','%s_SCALE%%%s' % (self.effect_type.upper(),self.getSubModeString()),'%.1e' % (float(self.getPhysicalShift() / shift)))
