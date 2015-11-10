@@ -1096,7 +1096,7 @@ class Jeol(tem.TEM):
 		#return self.getJeolConfig('stage','use_piezo')
 		return False
 
-	'''
+	"""
 	def getPiezoPosition(self):
 		# TO DO put this in jeol.com as 'piezo'
 		scale = self.getScale('stage')
@@ -1176,7 +1176,7 @@ class Jeol(tem.TEM):
 		self.resetPiezoPosition()
 		# TODO should only move if not close	
 		self._setPiezoPosition(old_position)
-	'''
+	"""
 
 	def getLowDoseStates(self):
 		return ['on', 'off', 'disabled']
