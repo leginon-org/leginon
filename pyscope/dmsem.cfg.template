@@ -15,3 +15,8 @@ ROTATE = 1
 RAW_FRAME_DIR = D:\frames\
 # max number of frames to sum in order to return early
 EARLY_RETURN_FRAME_COUNT = 0
+
+### Orius configuration if exists
+[orius]
+# Camera ID
+CAMERA_ID = 1
