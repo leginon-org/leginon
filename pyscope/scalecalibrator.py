@@ -78,6 +78,7 @@ class ScaleCalibrator(object):
 		self.defineOptions()
 		self.last_standard_focus = None
 		self.effect_type = None
+		self.cam_length = None
 
 	def initializeTEM(self):
 		self.is_cap_prefix = False
@@ -235,8 +236,9 @@ class ScaleCalibrator(object):
 			# stage clicks / scale = effect
 			self.logger.cfg('stage','STAGE_SCALE%%%s' %axis.upper(), '%.1e' % (float(shift) / self.getPhysicalShift()))
 		elif self.isBeamTilt():
+			cam_length = self.getCameraLength()
 			# beamtilt clicks * scale = math.atan(effect / camera_length)
-			scale = math.atan(float(self.getPhysicalShift()) / (self.mag * 0.01)) / shift
+			scale = math.atan(float(self.getPhysicalShift()) / (self.mag * cam_length)) / shift
 			self.logger.cfg('lens','%s_SCALE%%%s' % (self.effect_type.upper(),axis.upper()),'%.1e' % (scale))
 		elif self.isFocus():
 			# others clicks * scale = effect
@@ -357,6 +359,8 @@ class ScaleCalibrator(object):
 
 
 	def calibrateInDiffractionMode(self):
+		while self.tem.getMagnification() < 5000:
+			raw_input('Change mag to above 5000 for diffraction mode calibration.\nHit any key to continue')
 		self.calibrations = self.getDiffractionCalibrationRequired()
 		for effect_type in self.calibrations.keys():
 			self.effect_type = effect_type
@@ -460,6 +464,17 @@ class JeolScaleCalibrator(ScaleCalibrator):
 		self.getDiffractionEffectPropertyDict()
 		set_attrs = self.constructAttributeNames()
 		return set_attrs
+
+	def getCameraLength(self):
+		# get cam_length only once in the whole run
+		while self.cam_length is None:
+				# we do not get camera length from the scope, yet.
+				cam_length_str = raw_input('Enter camera length in meters ')
+				try:
+					self.cam_length = float(cam_length_str)
+				except:
+					pass
+		return self.cam_length
 
 	def chooseFocusMoveProperty(self):
 		return self.all_configs['lens']['focus'][self.submode]
