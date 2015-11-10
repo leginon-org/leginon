@@ -15,17 +15,7 @@ import gatansocket
 import numpy
 import itertools
 import os
-
-# DM Version
-DM_VERSION = '2.30.542.0'
-# the value in DM camera config
-K2_CONFIG_FLIP = True
-# multiple of 90 degrees (i.e. put 1 if 90 degrees, 3 if 270 degrees)
-K2_CONFIG_ROTATE = 3
-# raw frame base directory. Use '\\' as path separator
-RAW_FRAME_DIR = 'D:\\frames\\'
-# early return frame count if larger than zero
-K2_EARLY_RETURN_FRAME_COUNT = 0
+from pyscope import moduleconfig
 
 simulation = False
 if simulation:
@@ -84,6 +74,14 @@ class DMSEM(ccdcamera.CCDCamera):
 			raise AttributeError('attribute not supported')
 		return object.__getattribute__(self, attr_name)
 
+	def setDmsemConfigs(self):
+		self.jeolconfigs = moduleconfig.getConfigured('dmsem.cfg')
+
+	def getDemsemConfig(self,optionname,itemname=None):
+		if itemname is None:
+			return self.jeolconfigs[optionname]
+		else:
+			return self.jeolconfigs[optionname][itemname]
 
 	def getOffset(self):
 		return dict(self.offset)
@@ -209,9 +207,11 @@ class DMSEM(ccdcamera.CCDCamera):
 		print 'received shape',image.shape
 		if self.save_frames or self.align_frames:
 			if not self.isDM231orUp():
-				if K2_CONFIG_ROTATE:
-					image = numpy.rot90(image,4-K2_CONFIG_ROTATE)
-				if K2_CONFIG_FLIP:
+				k2_rotate = self.getDmsemConfig('k2','rotate')
+				k2_flip = self.getDmsemConfig('k2','flip')
+				if k2_rotate:
+					image = numpy.rot90(image,4-k2_rotate)
+				if k2_flip:
 					image = numpy.fliplr(image)
 		# workaround to offset image problem
 		startx = self.getOffset()['x']
@@ -267,8 +267,9 @@ class DMSEM(ccdcamera.CCDCamera):
 		'''
 		version: version_long, major.minor.sub
 		'''
-		if DM_VERSION:
-			bits = map((lambda x:int(x)),DM_VERSION.split('.'))
+		dm_version = self.getDmsemConfig('k2','dm_version')
+		if dm_version:
+			bits = map((lambda x:int(x)),dm_version.split('.'))
 			version_long = (bits[0]+2)*10000 + (bits[1] //10)*100 + bits[1] % 10
 		else:
 			version_long = self.camera.GetDMVersion()
@@ -437,19 +438,20 @@ class GatanK2Base(DMSEM):
 			self.frames_name = frames_name + '%02d' % (self.idcounter.next(),)
 		else:
 			self.frames_name = 'dummy'
+		raw_frame_dir = self.getDmsemConfig('k2','raw_frame_dir')
 		if self.filePerImage:
-			path = RAW_FRAME_DIR + self.frames_name
+			path = raw_frame_dir + self.frames_name
 			fileroot = 'frame'
 		else:
-			path = RAW_FRAME_DIR 
+			path = raw_frame_dir 
 			fileroot = self.frames_name
 
 		# 0 means takes what DM gives
 		rot_flip = 0
 		if not self.isDM231orUp():
 			# Backward compatibility
-			flip = int(not K2_CONFIG_FLIP)  # 0=none, 4=flip columns before rot, 8=flip after
-			rot_flip = K2_CONFIG_ROTATE + flip
+			flip = int(not self.getDmsemConfig('k2','flip'))  # 0=none, 4=flip columns before rot, 8=flip after
+			rot_flip = self.getDmsemConfig('k2','rotate') + flip
 
 		params = {
 			'rotationFlip': rot_flip,
@@ -461,7 +463,7 @@ class GatanK2Base(DMSEM):
 		return params
 
 	def getEarlyReturnFrameCount(self):
-		return K2_EARLY_RETURN_FRAME_COUNT
+		return self.getDmsemConfig('k2','early_return_frame_count')
 
 	def setAlignFrames(self, value):
 		self.align_frames = bool(value)

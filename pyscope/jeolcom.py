@@ -3,7 +3,7 @@ import math
 import sys
 import comtypes.client
 from pyscope import tem
-from pyscope import jeolconfig
+from pyscope import moduleconfig
 
 DEBUG = False
 
@@ -104,7 +104,7 @@ class Jeol(tem.TEM):
 		comtypes.CoUninitialize()
 
 	def setJeolConfigs(self):
-		self.jeolconfigs = jeolconfig.getConfigured()
+		self.jeolconfigs = moduleconfig.getConfigured('jeol.cfg')
 
 	def getJeolConfig(self,optionname,itemname=None):
 		if itemname is None:
