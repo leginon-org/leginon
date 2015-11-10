@@ -27,6 +27,8 @@ def connect():
 		gatansocket.myGS = gatansocket.GatanSocket()
 	return gatansocket.myGS
 
+configs = moduleconfig.getConfigured('dmsem.cfg')
+
 class DMSEM(ccdcamera.CCDCamera):
 	ed_mode = None
 	filter_method_names = [
@@ -74,14 +76,11 @@ class DMSEM(ccdcamera.CCDCamera):
 			raise AttributeError('attribute not supported')
 		return object.__getattribute__(self, attr_name)
 
-	def setDmsemConfigs(self):
-		self.jeolconfigs = moduleconfig.getConfigured('dmsem.cfg')
-
-	def getDemsemConfig(self,optionname,itemname=None):
+	def getDmsemConfig(self,optionname,itemname=None):
 		if itemname is None:
-			return self.jeolconfigs[optionname]
+			return configs[optionname]
 		else:
-			return self.jeolconfigs[optionname][itemname]
+			return configs[optionname][itemname]
 
 	def getOffset(self):
 		return dict(self.offset)
@@ -267,7 +266,7 @@ class DMSEM(ccdcamera.CCDCamera):
 		'''
 		version: version_long, major.minor.sub
 		'''
-		dm_version = self.getDmsemConfig('k2','dm_version')
+		dm_version = self.getDmsemConfig('dm','dm_version')
 		if dm_version:
 			bits = map((lambda x:int(x)),dm_version.split('.'))
 			version_long = (bits[0]+2)*10000 + (bits[1] //10)*100 + bits[1] % 10
@@ -344,19 +343,28 @@ class DMSEM(ccdcamera.CCDCamera):
 
 class GatanOrius(DMSEM):
 	name = 'GatanOrius'
-	cameraid = 1
+	try:
+		cameraid = configs['orius']['camera_id']
+	except:
+		pass
 	binning_limits = [1,2,4]
 	binmethod = 'exact'
 
 class GatanUltraScan(DMSEM):
 	name = 'GatanUltraScan'
-	cameraid = 1
+	try:
+		cameraid = configs['ultrascan']['camera_id']
+	except:
+		pass
 	binning_limits = [1,2,4,8]
 	binmethod = 'exact'
 
 class GatanK2Base(DMSEM):
 	name = 'GatanK2Base'
-	cameraid = 0
+	try:
+		cameraid = configs['k2']['camera_id']
+	except:
+		pass
 	# our name mapped to SerialEM plugin value
 	readmodes = {'linear': 0, 'counting': 1, 'super resolution': 2}
 	ed_mode = 'base'
