@@ -24,6 +24,8 @@ K2_CONFIG_FLIP = True
 K2_CONFIG_ROTATE = 3
 # raw frame base directory. Use '\\' as path separator
 RAW_FRAME_DIR = 'D:\\frames\\'
+# early return frame count if larger than zero
+K2_EARLY_RETURN_FRAME_COUNT = 0
 
 simulation = False
 if simulation:
@@ -454,8 +456,12 @@ class GatanK2Base(DMSEM):
 			'dirname': path,
 			'rootname': fileroot,
 			'filePerImage': self.filePerImage,
+			'earlyReturnFrameCount': self.getEarlyReturnFrameCount(),
 		}
 		return params
+
+	def getEarlyReturnFrameCount(self):
+		return K2_EARLY_RETURN_FRAME_COUNT
 
 	def setAlignFrames(self, value):
 		self.align_frames = bool(value)
