@@ -2,8 +2,6 @@ import os.path
 import wx
 import inspect
 
-wx.InitAllImageHandlers()
-
 bitmaps = {}
 
 def icon(name):
