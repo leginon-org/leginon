@@ -22,7 +22,7 @@ def getGainInfo(gaindata,totalimages):
 	timelst=[]
 	templst=[]
 	gaindict={}
-	print "collecting dark information"
+	print "collecting image information"
 	count=0
 	for imgdata in gaindata[-1*totalimages:]:
 		count+=1
