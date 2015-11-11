@@ -773,7 +773,7 @@ class Protomo2RefineForm extends BasicLayoutForm
 		$this->setTitle( 'Protomo Refinement Launcher' );
 		$this->setHeading( 'Protomo Refinement' );
 		$this->setExeFile( 'protomo2aligner.py' );
-		$this->setGuideURL( "http://www.electrontomography.org/?page_id=317" );
+		$this->setGuideURL( "http://emg.nysbc.org/redmine/projects/appion/wiki/Align_Tilt-Series" );
 		$this->setTestable( False ); // True to activate "test single image".
 		$this->setUseLegOutDir( False ); // The output directory will be created in the Appion run directory rather than Leginon.
 		$this->setShowDesc( True ); // Flag to hide the description field of the run parameters.
@@ -1194,6 +1194,10 @@ class Protomo2RefineForm extends BasicLayoutForm
 				$html.= '<option selected value="true">true</option>';
 				$html.= '<option value="false">false</option>';
 				$html.= '</select>'; $html.= docpop('protomo_create_reconstruction2', ' Create Reconstruction Videos').'<br>';
+				$html.= '<select name="video_type" style="width:66px">';
+				$html.= '<option value="gif">Gif</option>';
+				$html.= '<option selected value="html5vid">HTML5</option>';
+				$html.= '</select>'; $html.= docpop('protomo_video_type', ' Video Type').'<br>';
 				
 				$html .= "<hr />";
 				if ($_POST['settings'] == 1)  //Express Settings

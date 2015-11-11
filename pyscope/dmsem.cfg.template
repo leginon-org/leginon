@@ -1,0 +1,22 @@
+### general dm configurations
+[dm]
+# DM Version
+DM_VERSION = 2.31.734.0
+
+### K2 Summit configuration through SERIALEMCCD plugin
+[k2]
+# Camera ID
+CAMERA_ID = 0
+# the value in DM camera config
+FLIP = True
+# multiple of 90 degrees (i.e. put 1 if 90 degrees, 3 if 270 degrees)
+ROTATE = 1 
+# raw frame base directory. Use '\' as path separator
+RAW_FRAME_DIR = D:\frames\
+# max number of frames to sum in order to return early
+EARLY_RETURN_FRAME_COUNT = 0
+
+### Orius configuration if exists
+[orius]
+# Camera ID
+CAMERA_ID = 1

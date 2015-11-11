@@ -53,7 +53,7 @@ class Protomo2BatchForm extends BasicLayoutForm
 	$elevation_switch='', $rotation='true', $rotation_switch='', $scale='false', $scale_switch='', $screening_start='1',
 	$recon_map_sampling='2', $recon_map_size_x='2048', $recon_map_size_y='2048', $recon_thickness='1500', $recon_iter='',$recon_iter_presets='',
 	$auto_convergence='0.015', $auto_convergence_iters='5', $auto_ctf_correct='', $ctf_correct='', $amp_contrast='0.07', $iWidth='20', $DefocusTol='200',
-	$map_sampling='8', $tilt_clip='', $show_window_size='', $pixelsize='', $video_type='', $dose_presets='', $dose_a='', $dose_b='', $dose_c='')
+	$map_sampling='8', $tilt_clip='', $show_window_size='', $pixelsize='', $video_type='', $dose_presets='', $dose_a='', $dose_b='', $dose_c='', $frame_aligned='')
 	{
 		parent::__construct($expId, $extraHTML);
 		//print "_POST:" . "<br>";
@@ -1487,7 +1487,7 @@ class Protomo2BatchForm extends BasicLayoutForm
 		$this->setTitle( 'Protomo Batch Refinement and Reconstruction Launcher' );
 		$this->setHeading( 'Protomo Batch Refinement and Reconstruction' );
 		$this->setExeFile( 'protomo2batch.py' );
-		$this->setGuideURL( "http://www.electrontomography.org/?page_id=317" );
+		$this->setGuideURL( "http://emg.nysbc.org/redmine/projects/appion/wiki/Align_Tilt-Series" );
 		$this->setTestable( False ); // True to activate "test single image".
 		$this->setUseLegOutDir( False ); // The output directory will be created in the Appion run directory rather than Leginon.
 		$this->setShowDesc( False ); // Flag to hide the description field of the run parameters.
@@ -1503,6 +1503,7 @@ class Protomo2BatchForm extends BasicLayoutForm
 		$params->addParam( "dose_a", $dose_a, "a" );
 		$params->addParam( "dose_b", $dose_b, "b" );
 		$params->addParam( "dose_c", $dose_c, "c" );
+		$params->addParam( "frame_aligned", $frame_aligned, "Use Frame Aligned Images" );
 		$params->addParam( "raw_path", $raw_path, "Raw Image Path" );
 		$params->addParam( "procs", $procs, "Number of Processors" );
 		$params->addParam( "coarse_param_file", $coarse_param_file, "Coarse Alignment Param File" );
@@ -1749,6 +1750,10 @@ class Protomo2BatchForm extends BasicLayoutForm
 			$html .= "
 		<H3>Preparation Parameters ".docpop('prep_info', '(Info)')."</H3>
 		<hr />";
+			$html.= '<br><select name="frame_aligned" style="width:66px">';
+			$html.= '<option value="True">True</option>';
+			$html.= '<option selected value="False">False</option>';
+			$html.= '</select>'; $html.= docpop('protomo_frame_aligned', ' Use Frame Aligned Images').'<br>';
 			$html.= $params->insertTextFieldInRow( "shift_limit", $fieldSize ).'│ ';
 			$html.= $params->insertTextField( "angle_limit", $fieldSize );
 			$html.= '<br><select name="ctf_correct" style="width:66px">';
@@ -2027,6 +2032,10 @@ class Protomo2BatchForm extends BasicLayoutForm
 			$html.= $params->insertTextField( "coarse_param_file", $fieldSize3 );
 			$html.= $params->insertTextField( "refine_param_file", $fieldSize3 );
 			$html.= $params->insertTextField( "recon_param_file", $fieldSize3 ).'<br>';
+			$html.= '<br><select name="frame_aligned" style="width:66px">';
+			$html.= '<option value="True">True</option>';
+			$html.= '<option selected value="False">False</option>';
+			$html.= '</select>'; $html.= docpop('protomo_frame_aligned', ' Use Frame Aligned Images').'<br>';
 			$html.= $params->insertTextFieldInRow( "shift_limit", $fieldSize ).'│ ';
 			$html.= $params->insertTextField( "angle_limit", $fieldSize );
 			$html.= '<select name="auto_ctf_correct" style="width:66px">';
@@ -2290,6 +2299,23 @@ class Protomo2BatchForm extends BasicLayoutForm
 			$html.= '<option selected value="true">true</option>';
 			$html.= '<option value="false">false</option>';
 			$html.= '</select>'; $html.= docpop('protomo_create_reconstruction2', ' Create Reconstruction Videos').'<br>';
+			$html.= '<select name="video_type" style="width:66px">';
+			$html.= '<option value="gif">Gif</option>';
+			$html.= '<option selected value="html5vid">HTML5</option>';
+			$html.= '</select>'; $html.= docpop('protomo_video_type', ' Video Type').'<br>';
+			$html.= $params->insertTextField( "map_sampling", $fieldSize );
+		}
+		
+		if ($_POST['firststep'] == 1 and $_POST['laststep'] == 1)
+		{
+			$html .= "
+		<br />
+		<H4>Depiction Parameters ".docpop('depictionparam_info', '(Info)')."</H4>
+		<hr />";
+			$html.= '<select name="all_tilt_videos" style="width:66px">';
+			$html.= '<option selected value="true">true</option>';
+			$html.= '<option value="false">false</option>';
+			$html.= '</select>'; $html.= docpop('protomo_create_tiltvids', ' Create Tilt-Series Videos').'<br>';
 			$html.= '<select name="video_type" style="width:66px">';
 			$html.= '<option value="gif">Gif</option>';
 			$html.= '<option selected value="html5vid">HTML5</option>';

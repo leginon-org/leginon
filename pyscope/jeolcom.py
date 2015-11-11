@@ -3,7 +3,7 @@ import math
 import sys
 import comtypes.client
 from pyscope import tem
-from pyscope import jeolconfig
+from pyscope import moduleconfig
 
 DEBUG = False
 
@@ -104,7 +104,7 @@ class Jeol(tem.TEM):
 		comtypes.CoUninitialize()
 
 	def setJeolConfigs(self):
-		self.jeolconfigs = jeolconfig.getConfigured()
+		self.jeolconfigs = moduleconfig.getConfigured('jeol.cfg')
 
 	def getJeolConfig(self,optionname,itemname=None):
 		if itemname is None:
@@ -1096,7 +1096,7 @@ class Jeol(tem.TEM):
 		#return self.getJeolConfig('stage','use_piezo')
 		return False
 
-	'''
+	"""
 	def getPiezoPosition(self):
 		# TO DO put this in jeol.com as 'piezo'
 		scale = self.getScale('stage')
@@ -1176,7 +1176,7 @@ class Jeol(tem.TEM):
 		self.resetPiezoPosition()
 		# TODO should only move if not close	
 		self._setPiezoPosition(old_position)
-	'''
+	"""
 
 	def getLowDoseStates(self):
 		return ['on', 'off', 'disabled']

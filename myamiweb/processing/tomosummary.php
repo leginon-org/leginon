@@ -39,8 +39,8 @@ echo "<form name='templateform' method='post' action='$formAction'>\n";
 
 // --- Get Stack Data
 $particle = new particledata();
-if ($_POST) {
-$allfulltomos = $particle->getFullTomogramsFromSession($sessionId,True,True);
+if (hasPatternInArrayKeys($_POST,'/updateDesc/')) {
+	$allfulltomos = $particle->getFullTomogramsFromSession($sessionId,True,True);
 	foreach ($allfulltomos as $t)
 		$particle->updateTableDescriptionAndHiding($_POST,'ApFullTomogramData',$t['DEF_id']);
 }

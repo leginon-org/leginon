@@ -53,7 +53,7 @@ class Protomo2RefineSummary extends BasicLayoutForm
 		$this->setTitle( 'Protomo Refinement Summary' );
 		$this->setHeading( 'Protomo Refinement Summary' );
 		$this->setExeFile( '' );
-		$this->setGuideURL( "http://www.electrontomography.org/?page_id=317" );
+		$this->setGuideURL( "http://emg.nysbc.org/redmine/projects/appion/wiki/Align_Tilt-Series" );
 		$this->setTestable( False ); // True to activate "test single image".
 		$this->setUseLegOutDir( False ); // The output directory will be created in the Appion run directory rather than Leginon.
 		$this->setShowDesc( False ); // Flag to hide the description field of the run parameters.
@@ -73,6 +73,8 @@ class Protomo2RefineSummary extends BasicLayoutForm
 		global $runname;
 		global $tiltseries;
 		
+		$ctf_gif_files = glob("$outdir/$runname/media/ctf_correction/s*.gif");
+		$dose_gif_files = glob("$outdir/$runname/media/dose_compensation/s*.gif");
 		$corrpeak_gif_files = glob("$outdir/$runname/media/correlations/s*.gif");
 		$corrpeak_vid_files = glob("$outdir/$runname/media/correlations/s*.{mp4,ogv,webm}",GLOB_BRACE);
 		$qa_gif_file = "$outdir/$runname/media/quality_assessment/series".sprintf('%04d',$tiltseries)."_quality_assessment.gif";
@@ -80,6 +82,10 @@ class Protomo2RefineSummary extends BasicLayoutForm
 		$orientation_gif_file = "$outdir/$runname/media/angle_refinement/series".sprintf('%04d',$tiltseries)."_orientation.gif";
 		$elevation_gif_file = "$outdir/$runname/media/angle_refinement/series".sprintf('%04d',$tiltseries)."_elevation.gif";
 		
+		$ctfplot_gif = "loadimg.php?rawgif=1&filename=".$ctf_gif_files[0];
+		$ctfdefocus_gif = "loadimg.php?rawgif=1&filename=".$ctf_gif_files[1];
+		$dose_gif = "loadimg.php?rawgif=1&filename=".$dose_gif_files[0];
+		$dosecomp_gif = "loadimg.php?rawgif=1&filename=".$dose_gif_files[1];
 		$qa_gif = "loadimg.php?rawgif=1&filename=".$qa_gif_file;
 		$azimuth_gif = "loadimg.php?rawgif=1&filename=".$azimuth_gif_file;
 		$orientation_gif = "loadimg.php?rawgif=1&filename=".$orientation_gif_file;
@@ -100,6 +106,30 @@ class Protomo2RefineSummary extends BasicLayoutForm
 			$html .= '<td><center><a href="protomo2QualityAssessmentPlots.php?outdir='.$outdir.'&runname='.$runname.'&tiltseries='.$tiltseries.'" target="_blank"><img src="'.$orientation_gif.'" alt="theta" width="270" />'."</a></center></td></tr>";
 			$html .= '<td><center><a href="protomo2QualityAssessmentPlots.php?outdir='.$outdir.'&runname='.$runname.'&tiltseries='.$tiltseries.'" target="_blank"><img src="'.$elevation_gif.'" alt="elevation" width="270" />'."</a></center></td></tr>";
 			$html .= '</tr></td></table>';
+		}
+		
+		if (isset($ctf_gif_files[0])) {
+			$html .= "
+		<br />	
+		<center><H4>CTF Correction</H4></center>
+		<br />";
+			$html .= '<center><table id="" class="display" cellspacing="0" border="0"><tr>';
+			$html .= '<td><a href="protomo2QualityAssessmentPlots.php?outdir='.$outdir.'&runname='.$runname.'&tiltseries='.$tiltseries.'" target="_blank"><img src="'.$ctfdefocus_gif.'" alt="ctfdefocus_gif" width="300" />'."</a><br /></td>";
+			$html .= '<td><a href="protomo2QualityAssessmentPlots.php?outdir='.$outdir.'&runname='.$runname.'&tiltseries='.$tiltseries.'" target="_blank"><img src="'.$ctfplot_gif.'" alt="ctfplot_gif" width="300" />'."</a><br /></td>";
+			$html .= '</tr><tr></table></center><br>';
+			$html .= '<center>'.docpop('ctfplot_info', 'Image Info').'</center><br><hr />';
+		}
+		
+		if (isset($dose_gif_files[0])) {
+			$html .= "
+		<br />	
+		<center><H4>Dose Compensation</H4></center>
+		<br />";
+			$html .= '<center><table id="" class="display" cellspacing="0" border="0"><tr>';
+			$html .= '<td><a href="protomo2QualityAssessmentPlots.php?outdir='.$outdir.'&runname='.$runname.'&tiltseries='.$tiltseries.'" target="_blank"><img src="'.$dose_gif.'" alt="dose_gif" width="300" />'."</a><br /></td>";
+			$html .= '<td><a href="protomo2QualityAssessmentPlots.php?outdir='.$outdir.'&runname='.$runname.'&tiltseries='.$tiltseries.'" target="_blank"><img src="'.$dosecomp_gif.'" alt="dosecomp_gif" width="300" />'."</a><br /></td>";
+			$html .= '</tr><tr></table></center><br>';
+			$html .= '<center>'.docpop('doseplot_info', 'Image Info').'</center><br><hr />';
 		}
 		
 		// Table of all of the correlation peaks for easy identification of bad alignment iterations

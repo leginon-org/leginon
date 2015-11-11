@@ -47,7 +47,7 @@ class Protomo2BatchSummary extends BasicLayoutForm
 		$this->setTitle( 'Protomo Batch Summary' );
 		$this->setHeading( 'Protomo Batch Summary' );
 		$this->setExeFile( '' );
-		$this->setGuideURL( "http://www.electrontomography.org/?page_id=317" );
+		$this->setGuideURL( "http://emg.nysbc.org/redmine/projects/appion/wiki/Align_Tilt-Series" );
 		$this->setTestable( False ); // True to activate "test single image".
 		$this->setUseLegOutDir( False ); // The output directory will be created in the Appion run directory rather than Leginon.
 		$this->setShowDesc( False ); // Flag to hide the description field of the run parameters.
@@ -65,7 +65,7 @@ class Protomo2BatchSummary extends BasicLayoutForm
 		
 		global $outdir;
 		global $refine;
-		$tilts = glob("$outdir/.tiltseries*");
+		$tilts = glob("$outdir/*/.tiltseries*");
 		$qalist=array();
 		foreach(array_keys($tilts) as $paramName)
 			$qalist[]=pathinfo($tilts["$paramName"], PATHINFO_EXTENSION);
@@ -119,6 +119,13 @@ class Protomo2BatchSummary extends BasicLayoutForm
 				} while ($i < count($qalist));
 				}
 				$html .= '</tr><tr></table><br>';
+				
+				$html .= "<br>
+					<b><center>[If you with wish to re-do an alignment with different parameters, remove the corresponding directory:</center></b>";
+				$html .= "
+					<b><center>".$outdir."tiltseriesXXXX</center></b>";
+				$html .= "
+					<a href='runAppionLoop.php?expId=".$this->expId."&form=Protomo2BatchForm'><b><center><font size='5'>←</font> Then click here to go back]</center></b></a>";
 		}else{
 				// Table of all of the correlation peaks for easy identification
 				$html .= "
@@ -168,6 +175,12 @@ class Protomo2BatchSummary extends BasicLayoutForm
 				
 				$html .= "<br></br>
 					<a href='runAppionLoop.php?expId=".$this->expId."&form=Protomo2BatchSummary&refine=1'><b><center>[Click here to continue on to view <font size='4'>Refinement Results</font> if the Coarse Alignment results are satisfactory] <font size='5'>→</font></center></b></a>";
+				$html .= "<br>
+					<b><center>[If you with wish to re-do an alignment with different parameters, remove the corresponding directory:</center></b>";
+				$html .= "
+					<b><center>".$outdir."tiltseriesXXXX</center></b>";
+				$html .= "
+					<a href='runAppionLoop.php?expId=".$this->expId."&form=Protomo2BatchForm'><b><center><font size='5'>←</font> Then click here to go back]</center></b></a>";
 		}
 		return $html;
 	}	

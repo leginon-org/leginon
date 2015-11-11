@@ -15,6 +15,7 @@ debug_log = None
 #debug_log = 'gatansocket.log'
 
 # enum function codes as in GatanSocket.cpp and SocketPathway.cpp
+# need to match exactly both in number and order
 enum_gs = [
 	'GS_ExecuteScript',
 	'GS_SetDebugMode',
@@ -43,6 +44,12 @@ enum_gs = [
 	'GS_SetupFileSaving',
 	'GS_GetFileSaveResult',
 	'GS_SetupFileSaving2',
+	'GS_GetDefectList',
+	'GS_SetK2Parameters2',
+	'GS_StopContinuousCamera',
+	'GS_GetPluginVersion',
+	'GS_GetLastError',
+	'GS_FreeK2GainReference',
 ]
 # lookup table of function name to function code, starting with 1
 enum_gs = dict([(x,y) for (y,x) in enumerate(enum_gs,1)])
@@ -237,6 +244,9 @@ class GatanSocket(object):
 	def GetNumberOfCameras(self):
 		return self.GetLong('GS_GetNumberOfCameras')
 
+	def GetPluginVersion(self):
+		return self.GetLong('GS_GetPluginVersion')
+
 	def IsCameraInserted(self, camera):
 		funcCode = enum_gs['GS_IsCameraInserted']
 		message_send = Message(longargs=(funcCode,camera))
@@ -297,13 +307,13 @@ class GatanSocket(object):
 		self.ExchangeMessages(message_send, message_recv)
 
 	@logwrap
-	def SetupFileSaving(self, rotationFlip, dirname, rootname, filePerImage):
+	def SetupFileSaving(self, rotationFlip, dirname, rootname, filePerImage, earlyReturnFrameCount=0):
 		pixelSize = 1.0
-		if False:
-			# compressed tiff file saving
-			flag = 3
+		if self.save_frames and earlyReturnFrameCount > 0:
+			# early return flag
+			flag = 128
 			longs = [enum_gs['GS_SetupFileSaving2'], rotationFlip, flag,]
-			dbls = [pixelSize,0.,0.,0.,0.,]
+			dbls = [pixelSize,earlyReturnFrameCount,0.,0.,0.,]
 		else:
 			longs = [enum_gs['GS_SetupFileSaving'], rotationFlip,]
 			dbls = [pixelSize,]

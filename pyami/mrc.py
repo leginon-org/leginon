@@ -37,10 +37,11 @@ mrc2numpy = {
 	0: numpy.int8,
 	1: numpy.int16,
 	2: numpy.float32,
-#	3:  complex made of two int16.  No such thing in numpy
+# 3 is complex made of two int16.  No such thing in numpy
 #     however, we could manually build a complex array by reading two
 #     int16 arrays somehow.
 	4: numpy.complex64,
+	5: numpy.uint8,		# UCSF Image uint8
 
 	6: numpy.uint16,    # according to UCSF
 }
@@ -52,6 +53,7 @@ mrcmaptype = {
 	2: 'real space',
 	3: 'transform',
 	4: 'transform',
+	5: 'real space',
 	6: 'real space',
 }
 
@@ -64,7 +66,7 @@ numpy2mrc = {
 
 	## convert these to int16
 	numpy.int16: 1,
-	numpy.uint8: 1,
+	numpy.uint8: 1, # Do not want to convert to mode 5
 
 	## convert these to float32
 	numpy.float32: 2,

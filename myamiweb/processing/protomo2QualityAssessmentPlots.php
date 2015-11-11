@@ -22,11 +22,17 @@ $outdir=$_GET['outdir'];
 $runname=$_GET['runname'];
 $tiltseries=$_GET['tiltseries'];
 
+$ctf_gif_files = glob("$outdir/$runname/media/ctf_correction/s*.gif");
+$dose_gif_files = glob("$outdir/$runname/media/dose_compensation/s*.gif");
 $qa_gif_file = "$outdir/$runname/media/quality_assessment/series".sprintf('%04d',$tiltseries)."_quality_assessment.gif";
 $azimuth_gif_files = "$outdir/$runname/media/angle_refinement/series".sprintf('%04d',$tiltseries)."_azimuth.gif";
 $orientation_gif_file = "$outdir/$runname/media/angle_refinement/series".sprintf('%04d',$tiltseries)."_orientation.gif";
 $elevation_gif_files = "$outdir/$runname/media/angle_refinement/series".sprintf('%04d',$tiltseries)."_elevation.gif";
 
+$ctfplot_gif = "loadimg.php?rawgif=1&filename=".$ctf_gif_files[0];
+$ctfdefocus_gif = "loadimg.php?rawgif=1&filename=".$ctf_gif_files[1];
+$dose_gif = "loadimg.php?rawgif=1&filename=".$dose_gif_files[0];
+$dosecomp_gif = "loadimg.php?rawgif=1&filename=".$dose_gif_files[1];
 $qa_gif = "loadimg.php?rawgif=1&filename=".$qa_gif_file;
 $azimuth_gif = "loadimg.php?rawgif=1&filename=".$azimuth_gif_files;
 $orientation_gif = "loadimg.php?rawgif=1&filename=".$orientation_gif_file;
@@ -70,11 +76,34 @@ $html .= "
 	<H4><center><b>Tilt Elevation Plot</b></center></H4>";
         
 if (isset($elevation_gif_files)) {
-	$html .= '<center><img src="'.$elevation_gif.'" alt="theta" /></center>';
+	$html .= '<center><img src="'.$elevation_gif.'" alt="theta" /></center>
+	<hr />';
 } else {
         $html .= "<center><b>Tilt Elevation Plot for Tilt-Series ".$tiltseries." either failed to generate or is processing</b></center>";
 }
 
+if (isset($ctf_gif_files[0])) {
+	$html .= "
+<br />	
+<center><H4>CTF Correction</H4></center>
+<br />";
+	$html .= '<center><table id="" class="display" cellspacing="0" border="0"><tr>';
+	$html .= '<td><img src="'.$ctfdefocus_gif.'" alt="ctfdefocus_gif" />'."<br /></td>";
+	$html .= '<td><img src="'.$ctfplot_gif.'" alt="ctfplot_gif" />'."<br /></td>";
+	$html .= '</tr><tr></table></center><br>
+	<hr />';
+}
+
+if (isset($dose_gif_files[0])) {
+	$html .= "
+<br />	
+<center><H4>Dose Compensation</H4></center>
+<br />";
+	$html .= '<center><table id="" class="display" cellspacing="0" border="0"><tr>';
+	$html .= '<td><img src="'.$dose_gif.'" alt="dose_gif" />'."<br /></td>";
+	$html .= '<td><img src="'.$dosecomp_gif.'" alt="dosecomp_gif" />'."<br /></td>";
+	$html .= '</tr><tr></table></center><br>';
+}
 
 echo $html
 ?>

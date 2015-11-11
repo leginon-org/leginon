@@ -1,9 +1,11 @@
 #!/usr/bin/env python
 
+import glob
 import math
 import numpy
 import os
 import shutil
+import sys
 from pyami import mrc
 from appionlib import apParam
 from appionlib import apTomo
@@ -88,7 +90,7 @@ def linkImageFiles(imgtree,rawdir):
 			os.symlink(os.path.join(imgpath,imagedata['filename']+'.mrc'),linkedpath)
 	return filenamelist
 
-def getImageFiles(imgtree, rawdir, link, copy):
+def getImageFiles(imgtree, rawdir, link, copy, frame_aligned):
 	#This function should replace linkImageFiles in all calls (i.e. in tomoaligner.py and everywhere else)
 	filenamelist = []
 	newimgtree=[]
@@ -101,14 +103,21 @@ def getImageFiles(imgtree, rawdir, link, copy):
 		filenamelist.append(imgprefix)
 		destpath = os.path.join(rawdir,imgname)
 		newimgtree.append(destpath)
+		image = os.path.join(imgpath,imagedata['filename']+'.mrc')
+		#Use frame aligned image?
+		if frame_aligned == "True":
+			images=glob.glob(image[:-8]+'*'+image[-7:4]+'*')
+			images.sort(key=os.path.getmtime)
+			image = images[-1]
+		
 		if link == "True":
 			#create symlinks to files
 			if os.path.islink(destpath):
 				os.remove(destpath)
 			if not os.path.isfile(destpath):
-				os.symlink(os.path.join(imgpath,imagedata['filename']+'.mrc'),destpath)
+				os.symlink(image,destpath)
 		elif copy == "True": 
-			shutil.copy(os.path.join(imgpath,imagedata['filename']+'.mrc'),destpath)	
+			shutil.copy(image,destpath)	
 			
 			#Y-flip raw images, normalize them, and conver them to float32 because Protomo
 			image=mrc.read(destpath)

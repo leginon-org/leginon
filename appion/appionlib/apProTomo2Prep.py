@@ -81,7 +81,7 @@ def convertShiftsToOrigin(shifts,imagesize_x, imagesize_y):
 		
 
 #=======================
-def prepareTiltFile(sessionname, seriesname, tiltfilename, tiltseriesnumber, raw_path, link=False, coarse=True):
+def prepareTiltFile(sessionname, seriesname, tiltfilename, tiltseriesnumber, raw_path, frame_aligned, link=False, coarse=True):
 	'''
 	Creates tlt file from basic image information and copies raw images
 	'''
@@ -90,8 +90,14 @@ def prepareTiltFile(sessionname, seriesname, tiltfilename, tiltseriesnumber, raw
 	tiltseriesdata = apDatabase.getTiltSeriesDataFromTiltNumAndSessionId(tiltseriesnumber,sessiondata)
 	tiltdata = apTomo.getImageList([tiltseriesdata])
 	apDisplay.printMsg("getting imagelist")
-
-	tilts,ordered_imagelist,accumulated_dose_list,ordered_mrc_files,refimg = apTomo.orderImageList(tiltdata)
+	
+	#This block is here because frame alignment insertion messes things up
+	non_frame_tiltdata=[]
+	for i in range(len(tiltdata)):
+		if 'ex-a' not in tiltdata[i]['filename']:
+			non_frame_tiltdata.append(tiltdata[i])
+	
+	tilts,ordered_imagelist,accumulated_dose_list,ordered_mrc_files,refimg = apTomo.orderImageList(non_frame_tiltdata)
 	#tilts are tilt angles, ordered_imagelist are imagedata, ordered_mrc_files are paths to files, refimg is an int
 	maxtilt = max([abs(tilts[0]),abs(tilts[-1])])
 	apDisplay.printMsg("highest tilt angle is %f" % maxtilt)
@@ -102,7 +108,7 @@ def prepareTiltFile(sessionname, seriesname, tiltfilename, tiltseriesnumber, raw
 		rawexists = apParam.createDirectory(raw_path)
 		
 		apDisplay.printMsg("Copying raw images, y-flipping, normalizing, and converting images to float32 for Protomo...") #Linking removed because raw images need to be y-flipped for Protomo:(.
-		newfilenames, new_ordered_imagelist = apProTomo.getImageFiles(ordered_imagelist, raw_path, link=False, copy="True")
+		newfilenames, new_ordered_imagelist = apProTomo.getImageFiles(ordered_imagelist, raw_path, link=False, copy="True", frame_aligned="True")
 		
 		###create tilt file
 		#get image size from the first image

@@ -1185,6 +1185,15 @@ function updateDescription($table, $editid, $text) {
 	$particle->updateDescription($table, $editid, $desc);
 }
 
+function hasPatternInArrayKeys($post_array,$pattern='/updateDesc/') {
+	$has_pattern = false;
+	if (is_array($post_array) && count($post_array)) {
+		$keys = array_keys($post_array);
+		foreach ($keys as $k) if (preg_match($pattern,$k)) { $has_pattern=true; break; };
+	}
+	return $has_pattern;
+}
+
 /**************************************/
 function pleaseWaitJava() {
 	$java = "<script type=\"text/javascript\" >\n";

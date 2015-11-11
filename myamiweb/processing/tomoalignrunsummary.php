@@ -38,7 +38,7 @@ echo "<form name='templateform' method='post' action='$formAction'>\n";
 
 $particle = new particledata();
 $alltomoaligns = $particle->getTomoAlignmentRunsFromSession($sessionId, True);
-if ($_POST) {
+if (hasPatternInArrayKeys($_POST,'/updateDesc/')) {
 	foreach ($alltomoaligns as $t)
 		$particle->updateTableDescriptionAndHiding($_POST,'ApTomoAlignmentRunData',$t['alignrun id']);
 }

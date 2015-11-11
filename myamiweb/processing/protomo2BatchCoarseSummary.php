@@ -62,38 +62,16 @@ $rec_ogv = "loadvid.php?filename=".$rec_vid_files[1];
 $rec_webm = "loadvid.php?filename=".$rec_vid_files[2];
 $download_rec_mp4 = "downloadvid.php?filename=".$rec_vid_files[0];
 
-if (isset($ctf_gif_files[0])) {
-	$html .= "
-<br />	
-<center><H4>CTF Correction</H4></center>
-<br />";
-	$html .= '<center><table id="" class="display" cellspacing="0" border="0"><tr>';
-	$html .= '<td><img src="'.$ctfdefocus_gif.'" alt="ctfdefocus_gif" width="400" />'."<br /></td>";
-	$html .= '<td><img src="'.$ctfplot_gif.'" alt="ctfplot_gif" width="400" />'."<br /></td>";
-	$html .= '</tr><tr></table></center><br>';
-	$html .= '<center>';
-}
-
-if (isset($dose_gif_files[0])) {
-	$html .= "
-<br />	
-<center><H4>Dose Compensation</H4></center>
-<br />";
-	$html .= '<center><table id="" class="display" cellspacing="0" border="0"><tr>';
-	$html .= '<td><img src="'.$dose_gif.'" alt="dose_gif" width="400" />'."<br /></td>";
-	$html .= '<td><img src="'.$dosecomp_gif.'" alt="dosecomp_gif" width="400" />'."<br /></td>";
-	$html .= '</tr><tr></table></center><br>';
-	$html .= '<center>';
-}
-
 $html .= "
-<br />
+	<center><H3><b>Tilt-Series #".ltrim($tiltseries, '0')."<br>Coarse Alignment</b></H3></center>
+	<hr />";
+$html .= "
 <center><H4>Tilt-Series Correlation Peaks</H4></center>
 <br />";
 if (isset($corrpeak_gif_files[0])) {
 	$html .= '<center><img src="'.$corrpeak_gif.'" alt="correlations" />'."<br /></center>";
 	$html .= '<center>';
-	$html .= '<p align="right"><a href="'.$download_corrpeak_mp4.'">Download Video</a></p><br /><br /><hr />';
+	$html .= '<p align="right"><a href="'.$download_corrpeak_mp4.'">Download Video</a></p><br /><hr />';
 } elseif (isset($corrpeak_vid_files[0])){
 	$html .= '<center><video id="corrpeakVideos" autoplay loop>
 		  <source src="'.$corrpeak_mp4.'" type="video/mp4" loop>'.'<br />
@@ -182,6 +160,30 @@ if (isset($rec_gif_files[0])) {
 	$html .= '<p align="right"><a href="'.$download_rec_mp4.'">Download Video</a></p><hr />';
 } else {
 	$html .= "<center><b>Depiction Reconstruction Video for Coarse Alignment either failed to generate, is still processing, or wasn't requested</b></center>";
+}
+
+if (isset($ctf_gif_files[0])) {
+	$html .= "
+<br />	
+<center><H4>CTF Correction</H4></center>
+<br />";
+	$html .= '<center><table id="" class="display" cellspacing="0" border="0"><tr>';
+	$html .= '<td><img src="'.$ctfdefocus_gif.'" alt="ctfdefocus_gif" width="400" />'."<br /></td>";
+	$html .= '<td><img src="'.$ctfplot_gif.'" alt="ctfplot_gif" width="400" />'."<br /></td>";
+	$html .= '</tr><tr></table></center><br>';
+	$html .= '<center>';
+}
+
+if (isset($dose_gif_files[0])) {
+	$html .= "
+<br />	
+<center><H4>Dose Compensation</H4></center>
+<br />";
+	$html .= '<center><table id="" class="display" cellspacing="0" border="0"><tr>';
+	$html .= '<td><img src="'.$dose_gif.'" alt="dose_gif" width="400" />'."<br /></td>";
+	$html .= '<td><img src="'.$dosecomp_gif.'" alt="dosecomp_gif" width="400" />'."<br /></td>";
+	$html .= '</tr><tr></table></center><br>';
+	$html .= '<center>';
 }
 
 echo $html

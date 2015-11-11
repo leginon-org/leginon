@@ -602,6 +602,8 @@ def parseOptions():
 		help="Full Automation Mode. Turn on scaling if convergence wasn't reached, e.g. --auto_scaling=True")
 	parser.add_option("--parallel", dest="parallel",  default="False",
 		help="Parallelize while you parallelize (parallelizes image and video production). This could break your machine.")
+	parser.add_option("--frame_aligned", dest="frame_aligned",  default="True",
+		help="Use frame-aligned images instead of naively summed images, if present. Frame alignment must have been done with the Launch DE Frame Alignment script.")
 	
 	options, args=parser.parse_args()
 	
@@ -730,7 +732,7 @@ def protomoPrep(log_file, tiltseriesnumber, prep_options):
 	
 	apDisplay.printMsg('Preparing Tilt-Series #%s Images and .tlt File...' % tiltseriesnumber)
 	f.write('Preparing Tilt-Series #%s Images and .tlt File...\n' % tiltseriesnumber)
-	tilts,accumulated_dose_list,new_ordered_imagelist,maxtilt = apProTomo2Prep.prepareTiltFile(prep_options.sessionname, seriesname, tiltfilename_full, tiltseriesnumber, raw_path, link=False, coarse="True")
+	tilts,accumulated_dose_list,new_ordered_imagelist,maxtilt = apProTomo2Prep.prepareTiltFile(prep_options.sessionname, seriesname, tiltfilename_full, tiltseriesnumber, raw_path, prep_options.frame_aligned, link=False, coarse="True")
 	
 	cmd="awk '/FILE /{print}' %s | wc -l" % (tiltfilename_full)  #rawimagecount is zero before this
 	proc=subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
@@ -840,7 +842,7 @@ def protomoCoarseAlign(log_file, tiltseriesnumber, coarse_options):
 		apDisplay.printWarning("Coarse Alignment failed. Skipping Tilt-Series #%s...\n" % (tiltseriesnumber))
 		f.write("Coarse Alignment failed. Skipping Tilt-Series #%s...\n\n" % (tiltseriesnumber))
 		return
-	os.system('touch %s/.tiltseries.%04d' % (coarse_options.rundir, tiltseriesnumber))  #Internal tracker for what has been coarse aligned
+	os.system('touch %s/.tiltseries.%04d' % (tiltdir, tiltseriesnumber))  #Internal tracker for what has been batch processed through alignments
 	
 	apDisplay.printMsg("Creating Coarse Alignment Depiction Videos")
 	f.write("Creating Coarse Alignment Depiction Videos\n")
@@ -1152,10 +1154,10 @@ def protomoRefine(log_file, tiltseriesnumber, refine_options):
 		basename='%s%s' % (name,it)
 		corrfile=basename+'.corr'
 		
-		apDisplay.printMsg("CCMS(shift) = %s for Iteration #%s of Tilt-Series #%s." % (round(CCMS_shift,5), n+1, tiltseriesnumber))
-		apDisplay.printMsg("CCMS(rotations) = %s for Iteration #%s of Tilt-Series #%s." % (round(CCMS_rots,5), n+1, tiltseriesnumber))
-		apDisplay.printMsg("CCMS(scale) = %s for Iteration #%s of Tilt-Series #%s." % (round(CCMS_scale,5), n+1, tiltseriesnumber))
-		apDisplay.printMsg("The scaled sum of CCMS values is %s for Iteration #%s of Tilt-Series #%s." % (round(CCMS_sum,5), n+1, tiltseriesnumber))
+		apDisplay.printMsg("\033[43mCCMS(shift) = %s\033[0m for Iteration #%s of Tilt-Series #%s." % (round(CCMS_shift,5), n+1, tiltseriesnumber))
+		apDisplay.printMsg("\033[46mCCMS(rotations) = %s\033[0m for Iteration #%s of Tilt-Series #%s." % (round(CCMS_rots,5), n+1, tiltseriesnumber))
+		apDisplay.printMsg("\033[43mCCMS(scale) = %s\033[0m for Iteration #%s of Tilt-Series #%s." % (round(CCMS_scale,5), n+1, tiltseriesnumber))
+		apDisplay.printMsg("\033[1mThe scaled sum of CCMS values is %s\033[0m for Iteration #%s of Tilt-Series #%s." % (round(CCMS_sum,5), n+1, tiltseriesnumber))
 		f.write("CCMS(shift) = %s for Iteration #%s of Tilt-Series #%s.\n" % (round(CCMS_shift,5), n+1, tiltseriesnumber))
 		f.write("CCMS(rotations) = %s for Iteration #%s of Tilt-Series #%s.\n" % (round(CCMS_rots,5), n+1, tiltseriesnumber))
 		f.write("CCMS(scale) = %s for Iteration #%s of Tilt-Series #%s.\n" % (round(CCMS_scale,5), n+1, tiltseriesnumber))
@@ -1227,10 +1229,11 @@ def protomoReconstruct(log_file, tiltseriesnumber, recon_options):
 		except:
 			apDisplay.printWarning("A binned by 1 or 2 iteration hasn't been run. Reconstructing with the best iteration overall...")
 			f.write("A binned by 1 or 2 iteration hasn't been run. Reconstructing with the best iteration overall...\n")
-			recon_options.recon_iter_presets = "Best"
-		
-	if recon_options.recon_iter_presets == "Best":
-		best=glob.glob(tiltdir+'/best*')
+			best=glob.glob(tiltdir+'/best.*')
+			filename, recon_iter = os.path.splitext(best[0])
+			recon_iter=int(recon_iter[1:])
+	elif recon_options.recon_iter_presets == "Best":
+		best=glob.glob(tiltdir+'/best.*')
 		filename, recon_iter = os.path.splitext(best[0])
 		recon_iter=int(recon_iter[1:])
 	elif recon_options.recon_iter_presets == "Worst":
@@ -1633,10 +1636,10 @@ def protomoAutoRefine(log_file, tiltseriesnumber, auto_refine_options):
 		basename='%s%s' % (name,it)
 		corrfile=basename+'.corr'
 		
-		apDisplay.printMsg("CCMS(shift) = %s for Iteration #%s of Tilt-Series #%s." % (round(CCMS_shift,5), n+1, tiltseriesnumber))
-		apDisplay.printMsg("CCMS(rotations) = %s for Iteration #%s of Tilt-Series #%s." % (round(CCMS_rots,5), n+1, tiltseriesnumber))
-		apDisplay.printMsg("CCMS(scale) = %s for Iteration #%s of Tilt-Series #%s." % (round(CCMS_scale,5), n+1, tiltseriesnumber))
-		apDisplay.printMsg("The scaled sum of CCMS values is %s for Iteration #%s of Tilt-Series #%s." % (round(CCMS_sum,5), n+1, tiltseriesnumber))
+		apDisplay.printMsg("\033[43mCCMS(shift) = %s\033[0m for Iteration #%s of Tilt-Series #%s." % (round(CCMS_shift,5), n+1, tiltseriesnumber))
+		apDisplay.printMsg("\033[46mCCMS(rotations) = %s\033[0m for Iteration #%s of Tilt-Series #%s." % (round(CCMS_rots,5), n+1, tiltseriesnumber))
+		apDisplay.printMsg("\033[43mCCMS(scale) = %s\033[0m for Iteration #%s of Tilt-Series #%s." % (round(CCMS_scale,5), n+1, tiltseriesnumber))
+		apDisplay.printMsg("\033[1mThe scaled sum of CCMS values is %s\033[0m for Iteration #%s of Tilt-Series #%s." % (round(CCMS_sum,5), n+1, tiltseriesnumber))
 		f.write("CCMS(shift) = %s for Iteration #%s of Tilt-Series #%s.\n" % (round(CCMS_shift,5), n+1, tiltseriesnumber))
 		f.write("CCMS(rotations) = %s for Iteration #%s of Tilt-Series #%s.\n" % (round(CCMS_rots,5), n+1, tiltseriesnumber))
 		f.write("CCMS(scale) = %s for Iteration #%s of Tilt-Series #%s.\n" % (round(CCMS_scale,5), n+1, tiltseriesnumber))
@@ -1813,15 +1816,15 @@ def protomoAutoRefine(log_file, tiltseriesnumber, auto_refine_options):
 				apDisplay.printMsg("Protomo Failed to Write the correction factor file correctly, usually due to a failed alignment.")
 				f.write("Protomo Failed to Write the correction factor file correctly, usually due to a failed alignment.\n")
 			if i == numcorrfiles-1:
-				apProTomo2Aligner.makeQualityAssessmentImage(tiltseriesnumber, auto_refine_options.sessionname, name, tiltdir, start+auto_refine_options.r1_iters, auto_refine_options.r1_sampling, auto_refine_options.r1_lp, start+auto_refine_options.r2_iters, auto_refine_options.r2_sampling, auto_refine_options.r2_lp, start+auto_refine_options.r3_iters, auto_refine_options.r3_sampling, auto_refine_options.r3_lp, start+auto_refine_options.r4_iters, auto_refine_options.r4_sampling, auto_refine_options.r4_lp, start+auto_refine_options.r5_iters, auto_refine_options.r5_sampling, auto_refine_options.r5_lp)
+				apProTomo2Aligner.makeQualityAssessmentImage(tiltseriesnumber, auto_refine_options.sessionname, name, tiltdir, auto_refine_options.r1_iters, auto_refine_options.r1_sampling, auto_refine_options.r1_lp, auto_refine_options.r2_iters, auto_refine_options.r2_sampling, auto_refine_options.r2_lp, auto_refine_options.r3_iters, auto_refine_options.r3_sampling, auto_refine_options.r3_lp, auto_refine_options.r4_iters, auto_refine_options.r4_sampling, auto_refine_options.r4_lp, auto_refine_options.r5_iters, auto_refine_options.r5_sampling, auto_refine_options.r5_lp)
 		it="%03d" % (n)
 		basename='%s%s' % (name,it)
 		corrfile=basename+'.corr'
 		
-		apDisplay.printMsg("CCMS(shift) = %s for Iteration #%s of Tilt-Series #%s." % (round(CCMS_shift,5), n+1, tiltseriesnumber))
-		apDisplay.printMsg("CCMS(rotations) = %s for Iteration #%s of Tilt-Series #%s." % (round(CCMS_rots,5), n+1, tiltseriesnumber))
-		apDisplay.printMsg("CCMS(scale) = %s for Iteration #%s of Tilt-Series #%s." % (round(CCMS_scale,5), n+1, tiltseriesnumber))
-		apDisplay.printMsg("The scaled sum of CCMS values is %s for Iteration #%s of Tilt-Series #%s." % (round(CCMS_sum,5), n+1, tiltseriesnumber))
+		apDisplay.printMsg("\033[43mCCMS(shift) = %s\033[0m for Iteration #%s of Tilt-Series #%s." % (round(CCMS_shift,5), n+1, tiltseriesnumber))
+		apDisplay.printMsg("\033[46mCCMS(rotations) = %s\033[0m for Iteration #%s of Tilt-Series #%s." % (round(CCMS_rots,5), n+1, tiltseriesnumber))
+		apDisplay.printMsg("\033[43mCCMS(scale) = %s\033[0m for Iteration #%s of Tilt-Series #%s." % (round(CCMS_scale,5), n+1, tiltseriesnumber))
+		apDisplay.printMsg("\033[1mThe scaled sum of CCMS values is %s\033[0m for Iteration #%s of Tilt-Series #%s." % (round(CCMS_sum,5), n+1, tiltseriesnumber))
 		f.write("CCMS(shift) = %s for Iteration #%s of Tilt-Series #%s.\n" % (round(CCMS_shift,5), n+1, tiltseriesnumber))
 		f.write("CCMS(rotations) = %s for Iteration #%s of Tilt-Series #%s.\n" % (round(CCMS_rots,5), n+1, tiltseriesnumber))
 		f.write("CCMS(scale) = %s for Iteration #%s of Tilt-Series #%s.\n" % (round(CCMS_scale,5), n+1, tiltseriesnumber))
@@ -2038,15 +2041,15 @@ def protomoAutoRefine(log_file, tiltseriesnumber, auto_refine_options):
 					apDisplay.printMsg("Protomo Failed to Write the correction factor file correctly, usually due to a failed alignment.")
 					f.write("Protomo Failed to Write the correction factor file correctly, usually due to a failed alignment.\n")
 				if i == numcorrfiles-1:
-					apProTomo2Aligner.makeQualityAssessmentImage(tiltseriesnumber, auto_refine_options.sessionname, name, tiltdir, start+auto_refine_options.r1_iters, auto_refine_options.r1_sampling, auto_refine_options.r1_lp, start+auto_refine_options.r2_iters, auto_refine_options.r2_sampling, auto_refine_options.r2_lp, start+auto_refine_options.r3_iters, auto_refine_options.r3_sampling, auto_refine_options.r3_lp, start+auto_refine_options.r4_iters, auto_refine_options.r4_sampling, auto_refine_options.r4_lp, start+auto_refine_options.r5_iters, auto_refine_options.r5_sampling, auto_refine_options.r5_lp, start+auto_refine_options.r6_iters, auto_refine_options.r6_sampling, auto_refine_options.r6_lp, start+auto_refine_options.r7_iters, auto_refine_options.r7_sampling, auto_refine_options.r7_lp, start+auto_refine_options.r8_iters, auto_refine_options.r8_sampling, auto_refine_options.r8_lp)
+					apProTomo2Aligner.makeQualityAssessmentImage(tiltseriesnumber, auto_refine_options.sessionname, name, tiltdir, auto_refine_options.r1_iters, auto_refine_options.r1_sampling, auto_refine_options.r1_lp, auto_refine_options.r2_iters, auto_refine_options.r2_sampling, auto_refine_options.r2_lp, auto_refine_options.r3_iters, auto_refine_options.r3_sampling, auto_refine_options.r3_lp, auto_refine_options.r4_iters, auto_refine_options.r4_sampling, auto_refine_options.r4_lp, auto_refine_options.r5_iters, auto_refine_options.r5_sampling, auto_refine_options.r5_lp, auto_refine_options.r6_iters, auto_refine_options.r6_sampling, auto_refine_options.r6_lp, auto_refine_options.r7_iters, auto_refine_options.r7_sampling, auto_refine_options.r7_lp, auto_refine_options.r8_iters, auto_refine_options.r8_sampling, auto_refine_options.r8_lp)
 			it="%03d" % (n)
 			basename='%s%s' % (name,it)
 			corrfile=basename+'.corr'
 			
-			apDisplay.printMsg("CCMS(shift) = %s for Iteration #%s of Tilt-Series #%s." % (round(CCMS_shift,5), n+1, tiltseriesnumber))
-			apDisplay.printMsg("CCMS(rotations) = %s for Iteration #%s of Tilt-Series #%s." % (round(CCMS_rots,5), n+1, tiltseriesnumber))
-			apDisplay.printMsg("CCMS(scale) = %s for Iteration #%s of Tilt-Series #%s." % (round(CCMS_scale,5), n+1, tiltseriesnumber))
-			apDisplay.printMsg("The scaled sum of CCMS values is %s for Iteration #%s of Tilt-Series #%s." % (round(CCMS_sum,5), n+1, tiltseriesnumber))
+			apDisplay.printMsg("\033[43mCCMS(shift) = %s\033[0m for Iteration #%s of Tilt-Series #%s." % (round(CCMS_shift,5), n+1, tiltseriesnumber))
+			apDisplay.printMsg("\033[46mCCMS(rotations) = %s\033[0m for Iteration #%s of Tilt-Series #%s." % (round(CCMS_rots,5), n+1, tiltseriesnumber))
+			apDisplay.printMsg("\033[43mCCMS(scale) = %s\033[0m for Iteration #%s of Tilt-Series #%s." % (round(CCMS_scale,5), n+1, tiltseriesnumber))
+			apDisplay.printMsg("\033[1mThe scaled sum of CCMS values is %s\033[0m for Iteration #%s of Tilt-Series #%s." % (round(CCMS_sum,5), n+1, tiltseriesnumber))
 			f.write("CCMS(shift) = %s for Iteration #%s of Tilt-Series #%s.\n" % (round(CCMS_shift,5), n+1, tiltseriesnumber))
 			f.write("CCMS(rotations) = %s for Iteration #%s of Tilt-Series #%s.\n" % (round(CCMS_rots,5), n+1, tiltseriesnumber))
 			f.write("CCMS(scale) = %s for Iteration #%s of Tilt-Series #%s.\n" % (round(CCMS_scale,5), n+1, tiltseriesnumber))
@@ -2111,7 +2114,7 @@ def protomoScreening(log_file, tiltseriesnumber, screening_options):
 	
 	apDisplay.printMsg('Preparing Tilt-Series #%s Images and .tlt File...' % tiltseriesnumber)
 	f.write('Preparing Tilt-Series #%s Images and .tlt File...\n' % tiltseriesnumber)
-	tilts,accumulated_dose_list,new_ordered_imagelist,maxtilt = apProTomo2Prep.prepareTiltFile(screening_options.sessionname, seriesname, tiltfilename_full, tiltseriesnumber, raw_path, link=False, coarse="True")
+	tilts,accumulated_dose_list,new_ordered_imagelist,maxtilt = apProTomo2Prep.prepareTiltFile(screening_options.sessionname, seriesname, tiltfilename_full, tiltseriesnumber, raw_path, "False", link=False, coarse="True")
 	os.chdir(tiltdir)
 	
 	cmd="awk '/FILE /{print}' %s | wc -l" % (tiltfilename_full)  #rawimagecount is zero before this
@@ -2221,7 +2224,7 @@ def protomoScreening(log_file, tiltseriesnumber, screening_options):
 		apDisplay.printWarning("Coarse Alignment failed. Skipping Tilt-Series #%s...\n" % (tiltseriesnumber))
 		f.write("Coarse Alignment failed. Skipping Tilt-Series #%s...\n\n" % (tiltseriesnumber))
 		return
-	os.system('touch %s/.tiltseries.%04d' % (screening_options.rundir, tiltseriesnumber))  #Internal tracker for what has been coarse aligned
+	os.system('touch %s/.tiltseries.%04d' % (tiltdir, tiltseriesnumber))  #Internal tracker for what has been processed through alignment
 	
 	jobs2=[]
 	apDisplay.printMsg("Creating Coarse Alignment Depiction Videos")
@@ -2255,6 +2258,7 @@ if __name__ == '__main__':
 	options.rundir = os.path.abspath(os.path.join(options.rundir, os.pardir))  #Can't get the parent directory for rundir in the PHP, so this is the next best thing
 	tiltseriesranges=apProTomo2Aligner.hyphen_range(options.tiltseriesranges)
 	cwd=os.getcwd()
+	os.system("mkdir -p %s 2>/dev/null" % options.rundir)
 	time_start = time.strftime("%Yyr%mm%dd-%Hhr%Mm%Ss")
 	log_file = "%s/protomo2batch_%s.log" % (options.rundir, time_start)
 	log = open(log_file,'w')
@@ -2563,5 +2567,11 @@ if __name__ == '__main__':
 	
 	apDisplay.printMsg("Closing log file %s" % log_file)
 	time_end = time.strftime("%Yyr%mm%dd-%Hhr%Mm%Ss")
+	apDisplay.printMsg('Did everything blow up and now you\'re yelling at your computer screen?')
+	apDisplay.printMsg('If so, kindly email Alex at ajn10d@fsu.edu and include this log file.')
+	apDisplay.printMsg('If everything worked beautifully and you publish it, please use the appropriate citations listed on the Appion webpage!')
+	log.write('Did everything blow up and now you\'re yelling at your computer screen?')
+	log.write('If so, kindly email Alex at ajn10d@fsu.edu and include this log file.')
+	log.write('If everything worked beautifully and you publish it, please use the appropriate citations listed on the Appion webpage!')
 	log.write("\nEnd time: %s" % time_end)
 	log.close()

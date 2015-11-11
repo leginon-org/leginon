@@ -65,7 +65,7 @@ if ($refinedata) {
 
 	echo"</td></tr>\n";
 	echo "</table>\n";
-	if ($_POST) {
+	if (hasPatternInArrayKeys($_POST,'/updateDesc/')) {
 		foreach ($refinedata as $t)
 			$particle->updateTableDescriptionAndHiding($_POST,'ApTomoAlignerParamsData',$t['alignerid']);
 	}
