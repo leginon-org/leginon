@@ -530,7 +530,7 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 		{
 			$html .= "
 			<br />
-			<H4>Manual Parameters ".docpop('manual_info', '(Info)')."</H4>
+			<H4>Manual Setup Parameters ".docpop('manual_info', '(Info)')."</H4>
 			<hr />";
 			$html .= '<form method="post">';
 			$html .= '<input type="text" name="dimx" size="4">'.docpop('protomo_dimx', ' Dim (x)').'| ';
