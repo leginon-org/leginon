@@ -399,3 +399,10 @@ class SimTEM(tem.TEM):
 
 	def exposeSpecimenNotCamera(self,seconds):
 		time.sleep(seconds)
+
+class SimTEM300(SimTEM):
+	name = 'SimTEM300'
+	def __init__(self):
+		SimTEM.__init__(self)
+
+		self.high_tension = 300000.0
