@@ -104,22 +104,22 @@ def getImageFiles(imgtree, rawdir, link, copy, frame_aligned):
 		destpath = os.path.join(rawdir,imgname)
 		newimgtree.append(destpath)
 		imgfullpath = os.path.join(imgpath,imagedata['filename']+'.mrc')
-		#Use frame aligned image?
-		if frame_aligned == True:
+		#Use frame aligned image? This is only for frames aligned with Launch DE Frame Alignment
+		if frame_aligned == "True":
 			images=glob.glob(imgfullpath[:-8]+'*'+imgfullpath[-7:4]+'*')
 			images.sort(key=os.path.getmtime)
 			imgfullpath = images[-1]
 
-		if link == True:
+		if link == "True":
 			#create symlinks to files
 			if os.path.islink(destpath):
 				os.remove(destpath)
 			if not os.path.isfile(destpath):
 				os.symlink(imgfullpath,destpath)
-		elif copy == True:
+		elif copy == "True":
 			shutil.copy(imgfullpath,destpath)	
 			
-			#Y-flip raw images, normalize them, and conver them to float32 because Protomo
+			#Y-flip raw images, normalize them, and convert them to float32 because Protomo
 			image=mrc.read(destpath)
 			image=numpy.flipud(image)
 			image=imagenorm.normStdev(image)
