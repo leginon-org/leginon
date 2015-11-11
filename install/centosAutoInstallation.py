@@ -631,6 +631,7 @@ setenv LD_LIBRARY_PATH ${LD_LIBRARY_PATH}:${XMIPPDIR}/lib:%s''' % (MpiLibDir))
 		
 		cwd = os.getcwd()
 		protomoVer = "protomo-2.4.1"
+		i3Ver = "i3-0.9.6"
 		zipFileName = protomoVer + ".zip"
 		zipFileLocation = "http://emg.nysbc.org/redmine/attachments/download/4147/" + zipFileName
 		
@@ -645,16 +646,19 @@ setenv LD_LIBRARY_PATH ${LD_LIBRARY_PATH}:${XMIPPDIR}/lib:%s''' % (MpiLibDir))
 		self.runCommand("tar -vxjf " + protomoVer + ".tar.bz2 --directory=" + use_local)
 		protomoDir = os.path.join(use_local, protomoVer)
 		deplibs = os.path.join(protomoDir, 'deplibs')
+		i3Dir = os.path.join(protomoDir, i3Ver)
 		if not os.path.isdir(deplibs):
 			os.mkdir(deplibs)		
 		self.runCommand("tar -vxjf deplibs.tar.bz2 --directory=" + deplibs)
-		self.runCommand("tar -vxjf i3-0.9.6.tar.bz2 --directory=" + use_local)
-		
+		self.runCommand("tar -vxjf %s.tar.bz2 --directory=%s" %(i3Ver,protomoDir))
+	
+			
 			# set environment variables
 		   # For BASH, create an protom.sh
 		f = open('protomo.sh', 'w')
 		f.write('''export I3ROOT=%s
-export I3LIB=${I3ROOT}/lib/linux/x86-64
+export PROTOMO2ROOT=%s
+export I3LIB=${PROTMO2ROOT}/lib/linux/x86-64
 export PATH=$PATH:${I3ROOT}/bin/linux/x86-64
 export I3LEGACY="/usr/local/i3-0.9.6"
 if [ $LD_LIBRARY_PATH ];
@@ -669,13 +673,14 @@ then
 else
    export  PYTHONPATH=${I3LIB}
 fi
-''' % (protomoDir, deplibs, deplibs))
+''' % (i3Dir, protomoDir, deplibs, deplibs))
 		f.close()
 
 		# For C shell, create an eman.csh
 		f = open('protomo.csh', 'w')
 		f.write('''setenv I3ROOT %s
-setenv I3LIB ${I3ROOT}/lib/linux/x86-64
+setenv PROTOMO2ROOT %s
+setenv I3LIB ${PROTOMO2ROOT}/lib/linux/x86-64
 setenv PATH ${PATH}:${I3ROOT}/bin/linux/x86-64
 setenv I3LEGACY "/usr/local/i3-0.9.6"
 if ($?LD_LIBRARY_PATH) then
@@ -688,7 +693,7 @@ if ( $?PYTHONPATH) then
 else
     setenv PYTHONPATH ${I3LIB}
 endif
-''' % (protomoDir, deplibs, deplibs))
+''' % (i3Dir, protomoDir, deplibs, deplibs))
 		f.close()
 		
 		# add them to the global /etc/profile.d/ folder
