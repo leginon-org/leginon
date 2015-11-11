@@ -95,7 +95,7 @@ def getVirtualStackParticlesFromId(stackid, msg=True):
 			oldstackid=orig_stackdata['oldstack'].dbid
 		else:
 			apDisplay.printMsg("original stackid: %i"%oldstackid)
-		orig_stack=oldstackid
+			orig_stack=oldstackid
 
 	sqlcmd = "SELECT s1.* FROM ApStackParticleData s1 "+ \
 		"LEFT JOIN ApStackParticleData s2 ON " + \
@@ -106,6 +106,7 @@ def getVirtualStackParticlesFromId(stackid, msg=True):
 
 	pinfo = sinedon.directq.complexMysqlQuery('appiondata',sqlcmd)
 
+	apDisplay.printColor("Original stack: %s"%orig_stackfile,"cyan")
 	return {'stackid':orig_stack, 'filename':orig_stackfile, 'particles':pinfo}
 
 #===============
