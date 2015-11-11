@@ -106,7 +106,10 @@ class ApProc2d(basicScript.BasicScript):
 			apDisplay.printError("Input file and Output must be different")
 		if os.path.abspath(self.params['infile']) == os.path.abspath(self.params['outfile']):
 			apDisplay.printError("Input file and Output must be different")
-
+		### The rest depends on a real file
+		if not os.path.isfile(self.params['infile']):
+			apDisplay.printError("Input file %s does not exist. Please generate if it is a virtual stack" % (self.params['infile']))
+	
 		### Read input file
 		self.inheader = self.readFileHeader(self.params['infile'])
 		self.inputNumParticles = self.inheader['nz']
