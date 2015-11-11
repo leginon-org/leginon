@@ -81,7 +81,7 @@ def convertShiftsToOrigin(shifts,imagesize_x, imagesize_y):
 		
 
 #=======================
-def prepareTiltFile(sessionname, seriesname, tiltfilename, tiltseriesnumber, raw_path, frame_aligned, link=False, coarse=True):
+def prepareTiltFile(sessionname, seriesname, tiltfilename, tiltseriesnumber, raw_path, frame_aligned_images, link=False, coarse=True):
 	'''
 	Creates tlt file from basic image information and copies raw images
 	'''
@@ -108,7 +108,7 @@ def prepareTiltFile(sessionname, seriesname, tiltfilename, tiltseriesnumber, raw
 		rawexists = apParam.createDirectory(raw_path)
 		
 		apDisplay.printMsg("Copying raw images, y-flipping, normalizing, and converting images to float32 for Protomo...") #Linking removed because raw images need to be y-flipped for Protomo:(.
-		newfilenames, new_ordered_imagelist = apProTomo.getImageFiles(ordered_imagelist, raw_path, link=False, copy="True", frame_aligned="True")
+		newfilenames, new_ordered_imagelist = apProTomo.getImageFiles(ordered_imagelist, raw_path, link=False, copy="True", frame_aligned=frame_aligned_images)
 		
 		###create tilt file
 		#get image size from the first image
