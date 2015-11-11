@@ -700,6 +700,9 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		self.parser.add_option("--parallel", dest="parallel",  default="True",
 			help="Parallelize image and video production.")
 		
+		self.parser.add_option("--frame_aligned", dest="frame_aligned",  default="True",
+			help="Use frame-aligned images instead of naively summed images, if present. Frame alignment must have been done with the Launch DE Frame Alignment script.")
+		
 		self.parser.add_option("--fix_images", dest="fix_images",  default="False",
 			help="Internal use only")
 		
@@ -1226,7 +1229,7 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		if (self.params['coarse'] == 'True' and self.params['my_tlt'] == 'False'):
 			apDisplay.printMsg('Preparing raw images and initial tilt file')
 			f.write('Preparing raw images and initial tilt file\n')
-			tilts, accumulated_dose_list, new_ordered_imagelist, self.params['maxtilt'] = apProTomo2Prep.prepareTiltFile(self.params['sessionname'], seriesname, tiltfilename, int(self.params['tiltseries']), raw_path, link=self.params['link'], coarse="True")
+			tilts, accumulated_dose_list, new_ordered_imagelist, self.params['maxtilt'] = apProTomo2Prep.prepareTiltFile(self.params['sessionname'], seriesname, tiltfilename, int(self.params['tiltseries']), raw_path, self.params['frame_aligned'], link="False", coarse="True")
 			
 			#CTF Correction
 			if (self.params['ctf_correct'] == 'True'):

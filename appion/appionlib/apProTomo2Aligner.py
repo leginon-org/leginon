@@ -22,10 +22,8 @@ from PIL import Image
 from PIL import ImageDraw
 
 try:
-	import sinedon
 	from appionlib import apDatabase
 	from appionlib import apTomo
-	from appionlib.apCtf import ctfdb
 except:
 	apDisplay.printWarning("MySQLdb not found...database retrieval disabled")
 
@@ -1583,7 +1581,7 @@ def makeCTFPlot(rundir, seriesname, defocus_file_full, voltage, cs):
 		cs=cs/1000
 		wavelength=(1.226426025488137*10**-9)/((voltage + (voltage**2)*(9.784756346657094*10**-7)))**(1/2)
 		
-		x=np.linspace(0, 2.5*10**9, 1000)
+		x=np.linspace(0, 2.5*10**9, 5000)
 		y=(np.sin((-np.pi*avgdefocus*wavelength*x**2)+(np.pi*cs*(wavelength**3)*x**4)/2)*np.exp(-(np.pi**2)*(q0**2)*(cs*(wavelength**3)*(x**3)-avgdefocus*wavelength*x)**2)*np.exp(-(np.pi*def_spread*wavelength*(x**2)/2)**2))**2
 		
 		plt.clf()

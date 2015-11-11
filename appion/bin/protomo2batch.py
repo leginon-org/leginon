@@ -602,6 +602,8 @@ def parseOptions():
 		help="Full Automation Mode. Turn on scaling if convergence wasn't reached, e.g. --auto_scaling=True")
 	parser.add_option("--parallel", dest="parallel",  default="False",
 		help="Parallelize while you parallelize (parallelizes image and video production). This could break your machine.")
+	parser.add_option("--frame_aligned", dest="frame_aligned",  default="True",
+		help="Use frame-aligned images instead of naively summed images, if present. Frame alignment must have been done with the Launch DE Frame Alignment script.")
 	
 	options, args=parser.parse_args()
 	
@@ -730,7 +732,7 @@ def protomoPrep(log_file, tiltseriesnumber, prep_options):
 	
 	apDisplay.printMsg('Preparing Tilt-Series #%s Images and .tlt File...' % tiltseriesnumber)
 	f.write('Preparing Tilt-Series #%s Images and .tlt File...\n' % tiltseriesnumber)
-	tilts,accumulated_dose_list,new_ordered_imagelist,maxtilt = apProTomo2Prep.prepareTiltFile(prep_options.sessionname, seriesname, tiltfilename_full, tiltseriesnumber, raw_path, link=False, coarse="True")
+	tilts,accumulated_dose_list,new_ordered_imagelist,maxtilt = apProTomo2Prep.prepareTiltFile(prep_options.sessionname, seriesname, tiltfilename_full, tiltseriesnumber, raw_path, prep_options.frame_aligned, link=False, coarse="True")
 	
 	cmd="awk '/FILE /{print}' %s | wc -l" % (tiltfilename_full)  #rawimagecount is zero before this
 	proc=subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
@@ -2112,7 +2114,7 @@ def protomoScreening(log_file, tiltseriesnumber, screening_options):
 	
 	apDisplay.printMsg('Preparing Tilt-Series #%s Images and .tlt File...' % tiltseriesnumber)
 	f.write('Preparing Tilt-Series #%s Images and .tlt File...\n' % tiltseriesnumber)
-	tilts,accumulated_dose_list,new_ordered_imagelist,maxtilt = apProTomo2Prep.prepareTiltFile(screening_options.sessionname, seriesname, tiltfilename_full, tiltseriesnumber, raw_path, link=False, coarse="True")
+	tilts,accumulated_dose_list,new_ordered_imagelist,maxtilt = apProTomo2Prep.prepareTiltFile(screening_options.sessionname, seriesname, tiltfilename_full, tiltseriesnumber, raw_path, "False", link=False, coarse="True")
 	os.chdir(tiltdir)
 	
 	cmd="awk '/FILE /{print}' %s | wc -l" % (tiltfilename_full)  #rawimagecount is zero before this
@@ -2256,6 +2258,7 @@ if __name__ == '__main__':
 	options.rundir = os.path.abspath(os.path.join(options.rundir, os.pardir))  #Can't get the parent directory for rundir in the PHP, so this is the next best thing
 	tiltseriesranges=apProTomo2Aligner.hyphen_range(options.tiltseriesranges)
 	cwd=os.getcwd()
+	os.system("mkdir -p %s 2>/dev/null" % options.rundir)
 	time_start = time.strftime("%Yyr%mm%dd-%Hhr%Mm%Ss")
 	log_file = "%s/protomo2batch_%s.log" % (options.rundir, time_start)
 	log = open(log_file,'w')
