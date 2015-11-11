@@ -337,8 +337,19 @@ def averageStack(stack="start.hed", outfile="average.mrc", partlist=None, msg=Tr
 	averagePartice = summedParticle/float(len(particles))
 	mrc.write(averagePartice, avgmrc)
 	"""	
-	emancmd = ( "proc2d "+stackfile+" "+avgmrc+" average" )
-	apEMAN.executeEmanCmd(emancmd, verbose=msg)
+	# if using proc2d to make average for substack
+	if partlist is not None:
+		tmplstfile=open("tmplstfile.lst",'w')
+		tmplstfile.write("#LST\n")
+		for p in partlist:
+			tmplstfile.write("%i\t%s\n"%(p,stackfile))
+		tmplstfile.close()
+		emancmd = ( "proc2d tmplstfile.lst "+avgmrc+" average" )
+		apEMAN.executeEmanCmd(emancmd, verbose=msg)
+		os.remove("tmplstfile.lst")			
+	else:
+		emancmd = ( "proc2d "+stackfile+" "+avgmrc+" average" )
+		apEMAN.executeEmanCmd(emancmd, verbose=msg)
 	return True
 
 #======================
