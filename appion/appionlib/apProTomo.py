@@ -106,7 +106,7 @@ def getImageFiles(imgtree, rawdir, link, copy, frame_aligned):
 		imgfullpath = os.path.join(imgpath,imagedata['filename']+'.mrc')
 		#Use frame aligned image? This is only for frames aligned with Launch DE Frame Alignment
 		if frame_aligned == "True":
-			images=glob.glob(imgfullpath[:-8]+'*'+imgfullpath[-7:4]+'*')
+			images=glob.glob(imgfullpath[:-8]+'*'+imgfullpath[-7:-4]+'*')
 			images.sort(key=os.path.getmtime)
 			imgfullpath = images[-1]
 
