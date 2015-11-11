@@ -1945,6 +1945,7 @@ class ApProtomoRefinementParamsData(Data):
 	# ## this needs to be expanded to include all protomo2 params
 	typemap = classmethod(typemap)
 
+# ApProtomoALignerParamsData is retired
 class ApProtomoAlignerParamsData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
