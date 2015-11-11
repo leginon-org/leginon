@@ -59,8 +59,7 @@ class AppionPBS(appionLoop2.AppionLoop):
 		if self.params['usequeue'] and self.params['queue_scratch'] and self.params['queue_scratch']:
 			if not os.path.isdir(self.params['queue_scratch']):
 				apDisplay.printError("queue scratch directory %s not exists" % self.params['queue_scratch'])
-			if not os.path.isdir(self.params['queue_scratch']):
-				apDisplay.printError("queue scratch directory %s not exists" % self.params['queue_scratch'])
+
 	#=====================
 	def run(self):
 		"""
