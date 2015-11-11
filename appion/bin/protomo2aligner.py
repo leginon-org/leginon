@@ -1256,22 +1256,9 @@ class ProTomo2Aligner(basicScript.BasicScript):
 				apDisplay.printMsg('No images were removed from the .tlt file due to high shifts.')
 				f.write('No images were removed from the .tlt file due to high shifts.\n')
 			rawimagecount, maxtilt=self.excludeImages(tiltfilename_full, f)  #Remove images from .tlt file if user requests
-		elif (self.params['coarse'] == 'True' and self.params['my_tlt'] == 'True'): #hidden option if user already setup directory, raw_dir, and tlt file
+		elif (self.params['coarse'] == 'True' and self.params['my_tlt'] == 'True'): #if user already setup directory, raw_dir, and tlt file
 			apDisplay.printMsg('Using provided tilt file instead of creating one')
 			f.write('Using provided tilt file instead of creating one\n')
-			bad_images, bad_kept_images=apProTomo2Aligner.removeHighlyShiftedImages(tiltfilename_full, self.params['dimx'], self.params['dimy'], self.params['shift_limit'], self.params['angle_limit'])
-			if bad_images:
-				apDisplay.printMsg('Images %s were removed from the tilt file because their shifts exceed %s%% of the (x) and/or (y) dimensions.' % (bad_images, self.params['shift_limit']))
-				f.write('Images %s were removed from the tilt file because their shifts exceed %s%% of the (x) and/or (y) dimensions.\n' % (bad_images, self.params['shift_limit']))
-				if bad_kept_images:
-					apDisplay.printMsg('Images %s exceeded the allowed shift, but were at tilt angles less than the %s degree angle limit.' % (bad_kept_images, self.params['angle_limit']))
-					f.write('Images %s exceeded the allowed shift, but were at tilt angles less than the %s degree angle limit.\n' % (bad_kept_images, self.params['angle_limit']))
-			else:
-				if bad_kept_images:
-					apDisplay.printMsg('Images %s exceeded the allowed shift, but were at tilt angles less than the %s degree angle limit.' % (bad_kept_images, self.params['angle_limit']))
-					f.write('Images %s exceeded the allowed shift, but were at tilt angles less than the %s degree angle limit.\n' % (bad_kept_images, self.params['angle_limit']))
-				apDisplay.printMsg('No images were removed from the .tlt file due to high shifts.')
-				f.write('No images were removed from the .tlt file due to high shifts.\n')
 			rawimagecount, maxtilt=self.excludeImages(tiltfilename_full, f)  #Remove images from .tlt file if user requests
 			self.params['maxtilt'] = maxtilt
 			apDisplay.printMsg("Normalizing and converting raw images to float32 for Protomo...")

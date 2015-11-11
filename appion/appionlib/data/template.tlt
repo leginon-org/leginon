@@ -1,5 +1,10 @@
+(* Protomo .tlt file template *)
+(* This is a comment *)
+(* Fill in the FILE column with the mrc filenames in your raw directory *)
+(* Fill in the ORIGIN as either the center of the image or the center shifted by the estimated shifts from the data collection software *)
+(* Fill in the TILT ANGLE column with the tilt angles corresponding to the row's filename *)
 
-TILT SERIES series0001
+TILT SERIES series0001  (* This should be the same as your .tlt file filename *)
 
    AXIS
 
@@ -71,7 +76,7 @@ TILT SERIES series0001
    IMAGE 64        FILE ex_064       ORIGIN [ 2048.000 2048.000 ]    TILT ANGLE      62.000    ROTATION        0.000
    IMAGE 65        FILE ex_065       ORIGIN [ 2048.000 2048.000 ]    TILT ANGLE      64.000    ROTATION        0.000
 
-   REFERENCE IMAGE 33
+   REFERENCE IMAGE 33  (* This should be your (first) 0 degree image*)
 
 
  END
