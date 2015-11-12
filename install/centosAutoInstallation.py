@@ -626,6 +626,63 @@ setenv LD_LIBRARY_PATH ${LD_LIBRARY_PATH}:${XMIPPDIR}/lib:%s''' % (MpiLibDir))
 		os.chmod(profileDir + bashFile, 0755)
 		os.chmod(profileDir + cShellFile, 0755)
 
+	def installFFMpeg(self)
+		self.writeToLog("--- Start install FFmpeg")
+
+		use_local = "/usr/local"
+		os.chdir(use_local)
+			
+		ffmpegName = "ffmpeg-git-32bit-static"
+		ffmpegtarFileName = ffmpegName + ".tar.xz"
+                ffmpegtarFileLocation = "http://emg.nysbc.org/redmine/attachments/download/4674/ffmpeg-git-32bit-static.tar.xz"
+                
+		command = "wget -c " + ffmpegtarFileLocation
+		self.runCommand(command)
+
+		command = "tar -zxvf " + ffmpegtarFileName
+		self.runCommand(command)
+
+                 print "-------------Done downloading ffmpeg with wget.------------"
+
+                #ffmpeg tar is compilied daily at http://johnvansickle.com/ffmpeg/. The git static version compiled on 11/11/2015 was used for this ffmpeg installation. The extracted folder name contains the datestamp; make sure to change the datestamp in the extracted folder name if using a newer version of ffmpeg from the johnvansickle site.
+
+                self.runCommand("mv ffmpeg-git-20151111-32bit-static ffmpeg")
+
+		newDir = os.path.join(use_local,"ffmpeg")
+
+		os.chdir(newDir)
+
+		self.runCommand("./ffmpeg")
+
+		#
+		#set environment variables
+		#
+
+		bashFile = "ffmpeg.sh"
+		cShellFile = "ffmpeg.csh"
+		profileDir = "/etc/profile.d/"
+
+		#For BASH, create an ffmpeg.sh
+		f = open(bashFile, 'w')
+		f.write('''export FFMPEGDIR=/usr/local/ffmpeg
+export PATH=${FFMPEGDIR}:${PATH}''')
+		f.close()
+
+		# For C shell, create an ffmpeg.sh
+		f=open(cShellFile,'w')
+		f.write('''setenv FFMPEGDIR=/usr/local/ffmpeg
+setenv PATH ${FFMPEGDIR}:${PATH}''')
+		f.close()
+
+		#add them to the global /etc/profile.d/ folder
+		self.writeToLog("--- Adding ffmpeg.sh and ffmpeg.csh to /etc/profile.d/.")
+		shutil.copy(bashFile, profileDir + cShellFile)
+		shutil.copy(cShellFile, profileDir + cShellFile)
+		os.chmod(profileDir + bashFile, 0755)
+		os.chmod(profileDir + cShell,0755)
+
+
+
 	def installProtomo(self):
 		self.writeToLog("--- Start install Protomo")
 		
@@ -656,6 +713,7 @@ setenv LD_LIBRARY_PATH ${LD_LIBRARY_PATH}:${XMIPPDIR}/lib:%s''' % (MpiLibDir))
 			# set environment variables
 		   # For BASH, create an protom.sh
 		f = open('protomo.sh', 'w')
+		I3Dir = os.path.join(protomoDir,'i3-0.9.6')
 		f.write('''export I3ROOT=%s
 export PROTOMO2ROOT=%s
 export I3LIB=${PROTMO2ROOT}/lib/linux/x86-64
@@ -702,8 +760,9 @@ endif
 		os.chmod("/etc/profile.d/protomo.sh", 0755)
 		os.chmod("/etc/profile.d/protomo.csh", 0755)
 		self.yumInstall(['http://pkgs.repoforge.org/rpmforge-release/rpmforge-release-0.5.3-1.el6.rf.x86_64.rpm'])
-		self.yumInstall(['ffmpeg'])
-		
+
+
+
 	def installFrealign(self):
 		self.writeToLog("--- Start install Frealign")
 		
