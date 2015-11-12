@@ -1793,7 +1793,6 @@ class ProTomo2Aligner(basicScript.BasicScript):
 			#	self.param['seriesname'] = name
 			#	self.insertIterationIntoDatabase(r)
 		
-		apDisplay.printMsg("Closing log file %s/protomo2aligner_%s.log" % (rundir, time_start))
 		time_end = time.strftime("%Yyr%mm%dd-%Hhr%Mm%Ss")
 		apDisplay.printMsg('Did everything blow up and now you\'re yelling at your computer screen?')
 		apDisplay.printMsg('If so, kindly email Alex at ajn10d@fsu.edu and include this log file.')
@@ -1801,6 +1800,7 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		f.write('Did everything blow up and now you\'re yelling at your computer screen?\n')
 		f.write('If so, kindly email Alex at ajn10d@fsu.edu and include this log file\n.')
 		f.write('If everything worked beautifully and you publish it, please use the appropriate citations listed on the Appion webpage!\n')
+		apDisplay.printMsg("\nClosing log file %s/protomo2aligner_%s.log" % (rundir, time_start))
 		f.write("\nEnd time: %s" % time_end)
 		f.close()
 		
