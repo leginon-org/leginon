@@ -83,6 +83,7 @@ function createUploadImageForm($extra=false, $title='UploadImage.py Launcher', $
 	$mag = ($_POST['mag']) ? $_POST['mag'] : "";
 	$df = ($_POST['df']) ? $_POST['df'] : "";
 	$dflist = ($_POST['dflist']) ? $_POST['dflist'] : "";
+	$az = ($_POST['az']) ? $_POST['az'] : "";
 	$tiltlist = ($_POST['tiltlist']) ? $_POST['tiltlist'] : "";
 	$invert_check = ($_POST['invert_check']=='on') ? 'checked' : '';
 	$default_cs = ($from_existing_session) ? $leginondata->getCsValueFromSession($expId):'2.0';
@@ -233,6 +234,10 @@ function createUploadImageForm($extra=false, $title='UploadImage.py Launcher', $
 					('defocus','defocus (microns):','df',$df,4);
 		}
 		if ($utypeval == 'tiltseries') {
+			$keyinput_az = $html_elements->justifiedInputTableRow
+					('azimuth','tilt azimuth (degrees):','az',$az,3);
+		}
+		if ($utypeval == 'tiltseries') {
 			$keyinput_tilt = $html_elements->justifiedInputTableRow
 					('tiltlist','tilt angle list (degrees):','tiltlist',$tiltlist,30);
 		}
@@ -287,6 +292,7 @@ function createUploadImageForm($extra=false, $title='UploadImage.py Launcher', $
 		echo $keyinput_mag;
 		echo $keyinput_ht;
 		echo $keyinput_def;
+		echo $keyinput_az;
 		echo $keyinput_tilt;
 		echo $close_keyinput;
 	}
@@ -417,7 +423,10 @@ function runUploadImage() {
 				createUploadImageForm($errormsg."Specify matched image-per-group and defocii list");
 		}
 		$tiltanglearray = array();
-		if ($uploadtype == 'tiltseries') {
+			if ($uploadtype == 'tiltseries') {
+			$az = $_POST['az'];
+			if (strlen($az)==0)
+				createUploadImageForm($errormsg."Specify a tilt azimuth");
 			$tiltlist = $_POST['tiltlist'];
 			if (!$tiltlist) 
 				createUploadImageForm($errormsg."Specify a tilt angle list");
@@ -463,6 +472,7 @@ function runUploadImage() {
 				$command.="--defocus-list=".implode(',',$mdfarray)." ";
 			else
 				$command.="--defocus=".$mdfarray[0]." ";
+			$command.="--azimuth=$az ";
 			if ($uploadtype == 'tiltseries')
 				$command.="--angle-list=".implode(',',$tiltanglearray)." ";
 		}
