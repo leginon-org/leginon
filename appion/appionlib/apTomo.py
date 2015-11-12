@@ -123,7 +123,7 @@ def getImageDose(imagedata):
 	try:
 		dose = imagedata['preset']['dose']*(10**-20)*imagedata['camera']['exposure time']/imagedata['preset']['exposure time']
 	except:
-		apDisplay.printWarning("Dose not found in database for image %s" % imagedata['filename'])
+		apDisplay.printWarning("Dose not found in database for image %s. Setting dose to 1 Angstrom/pixel" % imagedata['filename'])
 		dose=1
 	return dose
 
@@ -160,12 +160,8 @@ def orderImageList(imagelist):
 	for i,imagedata in enumerate(imagelist):
 		imagedata_editable=dict(imagedata)  #Making an explicit copy of imagedata so that it can be added to. This doesn't copy the dictionaries inside this dictionary, but it's good enough
 		tilt = imagedata['scope']['stage position']['a']*180/math.pi
-		try:
-			dose = imagedata['preset']['dose']*(10**-20)*imagedata['camera']['exposure time']/imagedata['preset']['exposure time']
-		except:
-			apDisplay.printWarning("Dose not found in database for image #%s" % i)
-			dose=1
-		accumulated_dose=accumulated_dose+dose
+		
+		accumulated_dose=accumulated_dose+getImageDose(imagedata)
 		imagedata_editable['accumulated dose'] = accumulated_dose
 		
 		if tilt < start_tilt+0.02 and tilt > start_tilt-0.02:

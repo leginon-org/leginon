@@ -524,7 +524,7 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 			global $html;
 			$html .= "<br></br>
 			<b><center>[Choose a Tilt-Series to align to proceed]</center></b>
-			<b><center>[For manual setup <a href='runAppionLoop.php?expId=".$this->expId."&form=Protomo2CoarseAlignForm&manual=1'>Click here</a>]</center></b><br>";
+			<b><center>[For manual tilt-series setup <a href='runAppionLoop.php?expId=".$this->expId."&form=Protomo2CoarseAlignForm&manual=1'>Click here</a>]</center></b><br>";
 		}
 		elseif ($_GET['manual'] == 1 AND $_POST['submit'] != "Submit Manual Parameters")
 		{

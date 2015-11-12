@@ -703,11 +703,11 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		self.parser.add_option("--frame_aligned", dest="frame_aligned",  default="True",
 			help="Use frame-aligned images instead of naively summed images, if present. Frame alignment must have been done with the Launch DE Frame Alignment script.")
 		
-		self.parser.add_option("--fix_images", dest="fix_images",  default="False",
-			help="Internal use only")
-		
 		self.parser.add_option("--my_tlt", dest="my_tlt",  default="False",
-			help="Internal use only")
+			help="Allows for manual tilt-series setup")
+		
+		self.parser.add_option("--make_searchable", dest="make_searchable",  default="False",
+			help="Hidden option. Places a .tiltseries.XXXX file in the rundir so that it will be found by Batch Summary webpages.")
 		
 		#File path returns and extra information for database
 		self.parser.add_option("--corr_peak_gif", dest="corr_peak_gif", default=None)
@@ -1225,6 +1225,9 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		tiltfilename_full=rundir+'/'+tiltfilename
 		originaltilt=rundir+'/original.tlt'
 		
+		if (self.params['make_searchable'] == "True"):
+			os.system('touch %s/.tiltseries.%04d' % (rundir, self.params['tiltseries']))  #Internal tracker for what has been batch processed through alignments
+		
 		###Do queries, make tlt file, CTF correct (optional), dose compensate (optional), remove highly shifted images (optional), and remove high tilt images (optional) if first run from Appion/Leginon database
 		if (self.params['coarse'] == 'True' and self.params['my_tlt'] == 'False'):
 			apDisplay.printMsg('Preparing raw images and initial tilt file')
@@ -1268,12 +1271,6 @@ class ProTomo2Aligner(basicScript.BasicScript):
 			self.params['maxtilt'] = maxtilt
 		
 		self.params['cos_alpha']=np.cos(self.params['maxtilt']*np.pi/180)
-		
-		#Protomo doesn't like how proc2d writes mrc files. Our frame alignment script uses proc2d. This function and its options are hidden from general users.
-		if (self.params['coarse'] == 'True' and self.params['fix_images'] == "True" and self.params['link'] == "False"):
-			apDisplay.printMsg("Fixing raw images...")
-			f.write('Fixing raw images...\n')
-			apProTomo2Aligner.fixImages(raw_path)
 		
 		###convert angstroms to pixels
 		r1_lp, r2_lp, r3_lp, r4_lp, r5_lp, self.params['r1_body'], self.params['r2_body'], self.params['r3_body'], self.params['r4_body'], self.params['r5_body'] = self.angstromsToProtomo(coarse=self.params['coarse'])
@@ -1800,7 +1797,8 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		f.write('Did everything blow up and now you\'re yelling at your computer screen?\n')
 		f.write('If so, kindly email Alex at ajn10d@fsu.edu and include this log file\n.')
 		f.write('If everything worked beautifully and you publish it, please use the appropriate citations listed on the Appion webpage!\n')
-		apDisplay.printMsg("\nClosing log file %s/protomo2aligner_%s.log" % (rundir, time_start))
+		print "\n"
+		apDisplay.printMsg("Closing log file %s/protomo2aligner_%s.log" % (rundir, time_start))
 		f.write("\nEnd time: %s" % time_end)
 		f.close()
 		
