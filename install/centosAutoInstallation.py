@@ -626,7 +626,7 @@ setenv LD_LIBRARY_PATH ${LD_LIBRARY_PATH}:${XMIPPDIR}/lib:%s''' % (MpiLibDir))
 		os.chmod(profileDir + bashFile, 0755)
 		os.chmod(profileDir + cShellFile, 0755)
 
-	def installFFMpeg(self)
+	def installFFMpeg(self):
 		self.writeToLog("--- Start install FFmpeg")
 
 		use_local = "/usr/local"
@@ -642,7 +642,7 @@ setenv LD_LIBRARY_PATH ${LD_LIBRARY_PATH}:${XMIPPDIR}/lib:%s''' % (MpiLibDir))
 		command = "tar -zxvf " + ffmpegtarFileName
 		self.runCommand(command)
 
-                 print "-------------Done downloading ffmpeg with wget.------------"
+                print "-------------Done downloading ffmpeg with wget.------------"
 
                 #ffmpeg tar is compilied daily at http://johnvansickle.com/ffmpeg/. The git static version compiled on 11/11/2015 was used for this ffmpeg installation. The extracted folder name contains the datestamp; make sure to change the datestamp in the extracted folder name if using a newer version of ffmpeg from the johnvansickle site.
 
