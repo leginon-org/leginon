@@ -557,3 +557,8 @@ class GatanK2Super(GatanK2Base):
 		if self.isDM231orUp():
 			image[:,:] = 0
 
+	def getPixelSize(self):
+		## TODO: move to config file:
+		# pixel size on Gatan K2
+		return {'x': 2.5e-6, 'y': 2.5e-6}
+
