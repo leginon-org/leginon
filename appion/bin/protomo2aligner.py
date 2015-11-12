@@ -1798,9 +1798,9 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		apDisplay.printMsg('Did everything blow up and now you\'re yelling at your computer screen?')
 		apDisplay.printMsg('If so, kindly email Alex at ajn10d@fsu.edu and include this log file.')
 		apDisplay.printMsg('If everything worked beautifully and you publish it, please use the appropriate citations listed on the Appion webpage!')
-		f.write('Did everything blow up and now you\'re yelling at your computer screen?')
-		f.write('If so, kindly email Alex at ajn10d@fsu.edu and include this log file.')
-		f.write('If everything worked beautifully and you publish it, please use the appropriate citations listed on the Appion webpage!')
+		f.write('Did everything blow up and now you\'re yelling at your computer screen?\n')
+		f.write('If so, kindly email Alex at ajn10d@fsu.edu and include this log file\n.')
+		f.write('If everything worked beautifully and you publish it, please use the appropriate citations listed on the Appion webpage!\n')
 		f.write("\nEnd time: %s" % time_end)
 		f.close()
 		
