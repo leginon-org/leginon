@@ -441,8 +441,11 @@ def getAverageAzimuthFromSeries(imgtree):
 	
 	predict1=apDatabase.getPredictionDataForImage(imgtree[0])
 	predict2=apDatabase.getPredictionDataForImage(imgtree[-1])
-	phi1=predict1[0]['predicted position']['phi']*180/math.pi
-	phi2=predict2[0]['predicted position']['phi']*180/math.pi
+	try:
+		phi1=predict1[0]['predicted position']['phi']*180/math.pi
+		phi2=predict2[0]['predicted position']['phi']*180/math.pi
+	except:  #Phi was not recorded
+		phi1=phi2=0
 	
 	###Azimuth is determined from phi. In protomo tilt axis is measured from x where phi is from y
 	###Note there is a mirror between how Leginon reads images vs how protomo does

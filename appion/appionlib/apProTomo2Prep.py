@@ -94,7 +94,7 @@ def prepareTiltFile(sessionname, seriesname, tiltfilename, tiltseriesnumber, raw
 	#This block is here because frame alignment insertion messes things up
 	non_frame_tiltdata=[]
 	for i in range(len(tiltdata)):
-		if tiltdata[i]['camera']['align frames'] == False:
+		if tiltdata[i]['camera']['align frames'] != True:
 			non_frame_tiltdata.append(tiltdata[i])
 	
 	tilts,ordered_imagelist,accumulated_dose_list,ordered_mrc_files,refimg = apTomo.orderImageList(non_frame_tiltdata)
@@ -387,7 +387,7 @@ def doseCompensate(seriesname, rundir, sessionname, tiltseriesnumber, raw_path, 
 	#This block is here because frame alignment insertion messes things up
 	non_frame_tiltdata=[]
 	for i in range(len(tiltdata)):
-		if tiltdata[i]['camera']['align frames'] == False:
+		if tiltdata[i]['camera']['align frames'] != True:
 			non_frame_tiltdata.append(tiltdata[i])
 	
 	tilts, ordered_imagelist, accumulated_dose_list, ordered_mrc_files, refimg = apTomo.orderImageList(non_frame_tiltdata)
