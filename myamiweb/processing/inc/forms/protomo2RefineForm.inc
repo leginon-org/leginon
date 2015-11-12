@@ -21,6 +21,7 @@ $tiltseries=$_SESSION['tiltseries'];
 $sessionname=$_SESSION['sessionname'];
 $imageinfo=$_SESSION['imageinfo'];
 $_SESSION['erase_coarse'] = 0;
+if ($_SESSION['manual'] == 1) {$_POST['image_file_type']='mrc';}
 
 class Protomo2RefineForm extends BasicLayoutForm
 {
@@ -1523,7 +1524,7 @@ class Protomo2RefineForm extends BasicLayoutForm
 		$command.="--pixelsize=$pixelsize ";
 		$command.="--dimx=$dimx ";
 		$command.="--dimy=$dimy ";
-		$command.="--image_file_type=$image_file_type ";
+		if ($_SESSION['manual'] != 1) {$command.="--image_file_type=$image_file_type ";}
 		$command.="--coarse=False ";
 		
 		//Replace default presets with user-defined presets

@@ -600,7 +600,7 @@ def fixImages(rawpath):
 	for image in mrcs:
 		f=mrc.read(image)
 		f=imagenorm.normStdev(f)
-		f=numpy.float32(f)
+		f=np.float32(f)
 		mrc.write(f,image)
 	
 

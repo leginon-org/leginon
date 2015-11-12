@@ -95,7 +95,7 @@ def getVirtualStackParticlesFromId(stackid, msg=True):
 			oldstackid=orig_stackdata['oldstack'].dbid
 		else:
 			apDisplay.printMsg("original stackid: %i"%oldstackid)
-		orig_stack=oldstackid
+			orig_stack=oldstackid
 
 	sqlcmd = "SELECT s1.* FROM ApStackParticleData s1 "+ \
 		"LEFT JOIN ApStackParticleData s2 ON " + \
@@ -106,6 +106,7 @@ def getVirtualStackParticlesFromId(stackid, msg=True):
 
 	pinfo = sinedon.directq.complexMysqlQuery('appiondata',sqlcmd)
 
+	apDisplay.printColor("Original stack: %s"%orig_stackfile,"cyan")
 	return {'stackid':orig_stack, 'filename':orig_stackfile, 'particles':pinfo}
 
 #===============
@@ -337,8 +338,19 @@ def averageStack(stack="start.hed", outfile="average.mrc", partlist=None, msg=Tr
 	averagePartice = summedParticle/float(len(particles))
 	mrc.write(averagePartice, avgmrc)
 	"""	
-	emancmd = ( "proc2d "+stackfile+" "+avgmrc+" average" )
-	apEMAN.executeEmanCmd(emancmd, verbose=msg)
+	# if using proc2d to make average for substack
+	if partlist is not None:
+		tmplstfile=open("tmplstfile.lst",'w')
+		tmplstfile.write("#LST\n")
+		for p in partlist:
+			tmplstfile.write("%i\t%s\n"%(p,stackfile))
+		tmplstfile.close()
+		emancmd = ( "proc2d tmplstfile.lst "+avgmrc+" average" )
+		apEMAN.executeEmanCmd(emancmd, verbose=msg)
+		os.remove("tmplstfile.lst")			
+	else:
+		emancmd = ( "proc2d "+stackfile+" "+avgmrc+" average" )
+		apEMAN.executeEmanCmd(emancmd, verbose=msg)
 	return True
 
 #======================

@@ -449,6 +449,7 @@ class TransformManager(node.Node, TargetTransformer):
 			imagedata = self.acquireCorrectedCameraImageData(channel)
 		except Exception, exc:
 			self.logger.error('Reacquire image failed: %s' % (exc,))
+			#TO DO: Need to handle no imagedata defined with exception here.
 		# The preset used does not always have the original preset's parameters such as image shift
 		currentpresetdata = self.presetsclient.getCurrentPreset()
 		## convert CameraImageData to AcquisitionImageData

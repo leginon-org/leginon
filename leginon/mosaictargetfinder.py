@@ -371,7 +371,8 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		self.logger.debug('Image data processed')
 
 	def hasMosaicImage(self):
-		if None in (self.mosaicimage, self.mosaicimagescale):
+		
+		if self.mosaicimage is None or  self.mosaicimagescale is None:
 			return False
 		return True
 

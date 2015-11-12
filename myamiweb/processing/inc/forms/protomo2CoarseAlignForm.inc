@@ -19,7 +19,15 @@ session_set_cookie_params(604800);
 
 session_start();
 if (isset($_GET['manual'])){$_SESSION['manual'] = $_GET['manual'];}
-
+if ($_SESSION['manual'] == 1 AND $_POST['submit'] != "Submit Manual Parameters")
+{
+	global $imageinfo;
+	$imageinfo['dimx'] = $_POST['dimx'] = $_SESSION['dimx'];
+	$imageinfo['dimy'] = $_POST['dimy'] = $_SESSION['dimy'];
+	$imageinfo['pixelsize'] = $_POST['pixelsize'] = $_SESSION['pixelsize'];
+	$imageinfo['tiltseries'] = $_POST['tiltseries'] = $_SESSION['tiltseries'];
+}
+	
 class Protomo2CoarseAlignForm extends BasicLayoutForm
 {
 	function __construct( $expId, $extraHTML, $region_x='512', $region_y='512', $sampling='8', $map_sampling='', $thickness='1000', $pixelsize='',
@@ -35,7 +43,7 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 	{
 		parent::__construct($expId, $extraHTML);
 		//print "_POST:" . "<br>";
-		//var_dump($_POST);
+		//var_dump($_POST);d
 		//print "_GET:" . "<br>";
 		//var_dump($_GET);
 		//print "_SESSION:" . "<br>";
@@ -166,7 +174,9 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 			$html.= '</select>'; $html.= docpop('protomo_coarse_presets_search', ' Search Area<br>');
 		}
 		
-		$_SESSION['tiltseries'] = $tiltseriesinfos[0]['number'];
+		if ($_SESSION['manual'] != 1) {
+				$_SESSION['tiltseries'] = $tiltseriesinfos[0]['number'];
+		}
 		if ($imageinfo['dimx'] < 2049 or $imageinfo['dimy'] < 2049){
 			$_POST['map_sampling'] = $map_sampling='4';
 		}else{
@@ -513,20 +523,20 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 		{
 			global $html;
 			$html .= "<br></br>
-			<b><center>[Choose a Tilt-Series to align to proceed]</center></b>";
-			//<b><center>[For manual setup <a href='runAppionLoop.php?expId=".$this->expId."&form=Protomo2CoarseAlignForm&manual=1'>Click here</a>]</center></b><br>";
+			<b><center>[Choose a Tilt-Series to align to proceed]</center></b>
+			<b><center>[For manual setup <a href='runAppionLoop.php?expId=".$this->expId."&form=Protomo2CoarseAlignForm&manual=1'>Click here</a>]</center></b><br>";
 		}
-		elseif ($_SESSION['manual'] == 1 AND $_POST['submit'] != "Submit Manual Parameters")
+		elseif ($_GET['manual'] == 1 AND $_POST['submit'] != "Submit Manual Parameters")
 		{
 			$html .= "
 			<br />
-			<H4>Manual Parameters ".docpop('manual_info', '(Info)')."</H4>
+			<H4>Manual Setup Parameters ".docpop('manual_info', '(Info)')."</H4>
 			<hr />";
 			$html .= '<form method="post">';
 			$html .= '<input type="text" name="dimx" size="4">'.docpop('protomo_dimx', ' Dim (x)').'| ';
 			$html .= '<input type="text" name="dimy" size="4">'.docpop('protomo_dimy', ' Dim (y)').'<br>';
 			$html .= '<input type="text" name="pixelsize" size="4">'.docpop('protomo_pixelsize', ' Pixelsize').'<br>';
-			$html .= '<input type="text" name="tiltseries" size="4">'.docpop('protomo_tiltseries', ' Tilt-Series Number').'<br>';
+			$html .= '<input type="text" name="tiltseries" size="4">'.docpop('protomo_tiltseries_manual', ' Tilt-Series Number').'<br>';
 			$html .= '<br><center><input type="submit" name="submit" value="Submit Manual Parameters"><center> </form>';
 		}
 		else
@@ -572,10 +582,12 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 				<hr />";
 				
 				$html.= $params->insertTextField( "sampling", $fieldSize );
-				$html.= '<select name="frame_aligned" style="width:66px">';
-				$html.= '<option value="True">True</option>';
-				$html.= '<option selected value="False">False</option>';
-				$html.= '</select>'; $html.= docpop('protomo_frame_aligned', ' Use Frame Aligned Images').'<br>';
+				if ($_SESSION['manual']!=1) {
+						$html.= '<select name="frame_aligned" style="width:66px">';
+						$html.= '<option value="True">True</option>';
+						$html.= '<option selected value="False">False</option>';
+						$html.= '</select>'; $html.= docpop('protomo_frame_aligned', ' Use Frame Aligned Images').'<br>';
+				}
 				$html.= $params->insertTextFieldInRow( "shift_limit", $fieldSize ).'│ ';
 				$html.= $params->insertTextField( "angle_limit", $fieldSize );
 				$html.= '<select name="parallel" style="width:66px">';
@@ -698,10 +710,12 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 				<hr />";
 				
 				$html.= $params->insertTextField( "sampling", $fieldSize );
-				$html.= '<select name="frame_aligned" style="width:66px">';
-				$html.= '<option value="True">True</option>';
-				$html.= '<option selected value="False">False</option>';
-				$html.= '</select>'; $html.= docpop('protomo_frame_aligned', ' Use Frame Aligned Images').'<br>';
+				if ($_SESSION['manual']!=1) {
+						$html.= '<select name="frame_aligned" style="width:66px">';
+						$html.= '<option value="True">True</option>';
+						$html.= '<option selected value="False">False</option>';
+						$html.= '</select>'; $html.= docpop('protomo_frame_aligned', ' Use Frame Aligned Images').'<br>';
+				}
 				//$html.= $params->insertTextField( "select_images", $fieldSize );
 				$html.= $params->insertTextField( "exclude_images", $fieldSize );
 				$html.= $params->insertTextFieldInRow( "shift_limit", $fieldSize ).'│ ';
@@ -864,8 +878,9 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 		$dimy=$_SESSION['dimy'];
 		$image_file_type=$_POST['image_file_type'];
 		$ctf_correct=$_POST['ctf_correct'];
+		if ($_SESSION['manual']!=1){$command.="--tiltseries=$tiltseries ";}
+		if ($_SESSION['manual']==1){$command.="--my_tlt=True ";}
 		$command.="--sessionname=$sessionname ";
-		$command.="--tiltseries=$tiltseries ";
 		$command.="--pixelsize=$pixelsize ";
 		$command.="--dimx=$dimx ";
 		$command.="--dimy=$dimy ";

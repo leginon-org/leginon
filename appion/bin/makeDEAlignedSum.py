@@ -285,16 +285,17 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 		newimg_array = mrc.read(outnamepath)
 		self.commitAlignedImageToDatabase(imgdata,newimg_array,self.params['alignlabel'])
 		# return None since everything is committed within this function.
-		return None
 	
-		#if self.params['hackcopy'] is True:
-		#	origpath=imgdata['session']['image path']
-		#	archivecopy=os.path.join(origpath,imgdata['filename']+'.orig.mrc')
-		#	if os.path.exists(archivecopy) is True:
-		#		apDisplay.printMsg('archive copy for %s already exists, so skipping archive' % (archivecopy))
-		#	else:
-		#		shutil.move(os.path.join(origpath,imgdata['filename']+'.mrc'), archivecopy)
-		#	shutil.copyfile(outnamepath, os.path.join(origpath,imgdata['filename']+'.mrc'))
+		if self.params['hackcopy'] is True:
+			origpath=imgdata['session']['image path']
+			archivecopy=os.path.join(origpath,imgdata['filename']+'.orig.mrc')
+			if os.path.exists(archivecopy) is True:
+				apDisplay.printMsg('archive copy for %s already exists, so skipping archive' % (archivecopy))
+			else:
+				shutil.move(os.path.join(origpath,imgdata['filename']+'.mrc'), archivecopy)
+			shutil.copyfile(outnamepath, os.path.join(origpath,imgdata['filename']+'.mrc'))
+
+		return None
 
 	'''
 	#=======================
@@ -461,8 +462,13 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 			return
 		camdata=imgdata['camera']
 		newimagedata=apDBImage.makeAlignedImageData(imgdata,camdata,newimage,alignlabel)
-		if newimagedata != None:
+		newimageresults=newimagedata.query()
+		
+		if newimageresults:
+			return
+		else:
 			apDisplay.printMsg('Uploading aligned image as %s' % newimagedata['filename'])
+			newimagedata.insert()
 			q = appiondata.ApDDAlignImagePairData(source=imgdata,result=newimagedata,ddstackrun=self.rundata)
 			q.insert()
 

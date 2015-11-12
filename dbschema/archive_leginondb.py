@@ -705,10 +705,13 @@ class SessionArchiver(Archiver):
 		self.publish(results)
 
 		if not results:
-			# fake an entry to create ViewerImageStatus table
-			sinedon.setConfig('leginondata', db=self.destination_dbname)
-			q = leginondata.ViewerImageStatus(status='hidden')
-			q.insert()
+			q = leginondata.ViewerImageStatus()
+			results = self.research(q)
+			if results:
+				# fake entry with the oldest status
+				# can not use q.insert since auto_increment for DEF_id is not activated
+				results = [results[0],]
+				self.publish(results)
 
 	def importIceThickness(self):
 		self.importSessionDependentData('HoleStatsData')
@@ -797,6 +800,7 @@ def archiveProject(projectid):
 	source_sessions = projectdata.projectexperiments(project=p).query()
 	session_names = map((lambda x:x['session']['name']),source_sessions)
 	session_names.reverse()  #oldest first
+	
 	print 'Found %d sessions for the project' %  (len(session_names))
 	for session_name in session_names:
 		# Don't archive sessions before 2011
