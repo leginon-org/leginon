@@ -423,6 +423,7 @@ class CentosInstallation(object):
 		self.installSpider()
 		self.installXmipp()
 		self.installProtomo()
+		self.installFFmpeg()
 		return True
 
 	def installEman(self):
@@ -626,11 +627,14 @@ setenv LD_LIBRARY_PATH ${LD_LIBRARY_PATH}:${XMIPPDIR}/lib:%s''' % (MpiLibDir))
 		os.chmod(profileDir + bashFile, 0755)
 		os.chmod(profileDir + cShellFile, 0755)
 
-	def installFFMpeg(self):
+	def installFFmpeg(self):
+
+		print "Installing FFmpeg"
 		self.writeToLog("--- Start install FFmpeg")
 
 		use_local = "/usr/local"
-		os.chdir(use_local)
+		cwd = cwd = os.getcwd()
+		
 			
 		ffmpegName = "ffmpeg-git-32bit-static"
 		ffmpegtarFileName = ffmpegName + ".tar.xz"
@@ -639,19 +643,26 @@ setenv LD_LIBRARY_PATH ${LD_LIBRARY_PATH}:${XMIPPDIR}/lib:%s''' % (MpiLibDir))
 		command = "wget -c " + ffmpegtarFileLocation
 		self.runCommand(command)
 
-		command = "tar -zxvf " + ffmpegtarFileName
+		command = "tar -xvf " + ffmpegtarFileName
 		self.runCommand(command)
 
                 print "-------------Done downloading ffmpeg with wget.------------"
 
+		
                 #ffmpeg tar is compilied daily at http://johnvansickle.com/ffmpeg/. The git static version compiled on 11/11/2015 was used for this ffmpeg installation. The extracted folder name contains the datestamp; make sure to change the datestamp in the extracted folder name if using a newer version of ffmpeg from the johnvansickle site.
 
                 self.runCommand("mv ffmpeg-git-20151111-32bit-static ffmpeg")
-
+		
 		newDir = os.path.join(use_local,"ffmpeg")
 
-		os.chdir(newDir)
+		command = "mv ffmpeg "+newDir
 
+		self.runCommand(command)
+
+		os.chdir(newDir)
+		
+		command = "./ffmpeg"
+		
 		self.runCommand("./ffmpeg")
 
 		#
@@ -662,6 +673,7 @@ setenv LD_LIBRARY_PATH ${LD_LIBRARY_PATH}:${XMIPPDIR}/lib:%s''' % (MpiLibDir))
 		cShellFile = "ffmpeg.csh"
 		profileDir = "/etc/profile.d/"
 
+		print "---------------Create bash and csh scripts---------"
 		#For BASH, create an ffmpeg.sh
 		f = open(bashFile, 'w')
 		f.write('''export FFMPEGDIR=/usr/local/ffmpeg
@@ -671,15 +683,20 @@ export PATH=${FFMPEGDIR}:${PATH}''')
 		# For C shell, create an ffmpeg.sh
 		f=open(cShellFile,'w')
 		f.write('''setenv FFMPEGDIR=/usr/local/ffmpeg
-setenv PATH ${FFMPEGDIR}:${PATH}''')
+setenv PATH ${FFMPEGDIR}:${PATH}
+if ($?LD_LIBRARY_PATH) then
+	setenv LD_LIBRARY_PATH "${LD_LIBRARY_PATH}:${FFMPEGDIR}"
+else
+	setenv LD_LIBRARY_PATH "${FFMPEGDIR}"
+endif''')
 		f.close()
 
 		#add them to the global /etc/profile.d/ folder
 		self.writeToLog("--- Adding ffmpeg.sh and ffmpeg.csh to /etc/profile.d/.")
-		shutil.copy(bashFile, profileDir + cShellFile)
+		shutil.copy(bashFile, profileDir + bashFile)
 		shutil.copy(cShellFile, profileDir + cShellFile)
 		os.chmod(profileDir + bashFile, 0755)
-		os.chmod(profileDir + cShell,0755)
+		os.chmod(profileDir + cShellFile,0755)
 
 
 
