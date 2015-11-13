@@ -121,7 +121,7 @@ class Protomo2BatchSummary extends BasicLayoutForm
 				$html .= '</tr><tr></table><br>';
 				
 				$html .= "<br>
-					<b><center>[If you with wish to re-do an alignment with different parameters, remove the corresponding directory:</center></b>";
+					<b><center>[If you wish to re-do an alignment with different parameters, remove the corresponding directory:</center></b>";
 				$html .= "
 					<b><center>".$outdir."tiltseriesXXXX</center></b>";
 				$html .= "

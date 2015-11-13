@@ -855,7 +855,7 @@ def protomoCoarseAlign(log_file, tiltseriesnumber, coarse_options):
 		apDisplay.printMsg("Generating Coarse Alignment reconstruction...")
 		f.write("Generating Coarse Alignment reconstruction...\n")
 		series.mapfile()
-		apProTomo2Aligner.makeReconstructionVideos(name, 0, tiltdir, 1024, 1024, "false", 'out', coarse_options.pixelsize, sampling, map_sampling, lp, thickness, coarse_options.video_type, "false", coarse_options.parallel, align_step="Coarse")
+		apProTomo2Aligner.makeReconstructionVideos(name, 0, tiltdir, 1024, 1024, "true", 'out', coarse_options.pixelsize, sampling, map_sampling, lp, thickness, coarse_options.video_type, "false", coarse_options.parallel, align_step="Coarse")
 	
 	apDisplay.printMsg("Coarse Alignment finished for Tilt-Series #%s!\n" % (tiltseriesnumber))
 	f.write("Coarse Alignment finished for Tilt-Series #%s!\n\n" % (tiltseriesnumber))
@@ -2239,7 +2239,7 @@ def protomoScreening(log_file, tiltseriesnumber, screening_options):
 	apDisplay.printMsg("Generating Coarse Alignment reconstruction...")
 	f.write("Generating Coarse Alignment reconstruction...\n")
 	series.mapfile()
-	apProTomo2Aligner.makeReconstructionVideos(name, 0, tiltdir, 1024, 1024, "false", 'out', screening_options.pixelsize, sampling, map_sampling, lp, thickness, screening_options.video_type, "false", "True", align_step="Coarse")
+	apProTomo2Aligner.makeReconstructionVideos(name, 0, tiltdir, 1024, 1024, "true", 'out', screening_options.pixelsize, sampling, map_sampling, lp, thickness, screening_options.video_type, "false", "True", align_step="Coarse")
 	
 	for job in jobs1:
 		job.join()
