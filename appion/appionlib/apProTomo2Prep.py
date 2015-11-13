@@ -356,7 +356,7 @@ def ctfCorrect(seriesname, rundir, projectid, sessionname, tiltseriesnumber, til
 		apProTomo2Aligner.makeCTFPlot(rundir, seriesname, defocus_file_full, voltage, cs)
 		
 		cleanup="rm %s %s" % (uncorrected_stack, corrected_stack)
-		#os.system(cleanup)
+		os.system(cleanup)
 		output1="%.2f%% of the images for tilt-series #%s had poor defocus estimates or fell outside of one standard deviation from the original mean." % (100*(len(estimated_defocus)-len(defocus_stats_list))/len(estimated_defocus), tiltseriesnumber)
 		output2="The defocus mean and standard deviation for tilt-series #%s after interpolating poor values is %.2f and %.2f microns, respectively." % (tiltseriesnumber, new_avg/1000, new_stdev/1000)
 		f.write("\n");f.write(output1);f.write("\n");f.write(output2);f.write("\n");f.close()
