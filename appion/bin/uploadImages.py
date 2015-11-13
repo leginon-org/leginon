@@ -366,6 +366,8 @@ class UploadImages(appionScript.AppionScript):
 			'z': 0.0,
 			'a': self.getTiltAngle(numinseries),
 		}
+		if self.params['uploadtype'] == "tiltseries":
+			scopedata['stage position']['phi'] = self.params['azimuth']
 
 		### setup camera data
 		cameradata = leginon.leginondata.CameraEMData()
