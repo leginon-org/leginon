@@ -16,11 +16,18 @@ ini_set('session.gc_maxlifetime', 604800);
 session_set_cookie_params(604800);
 
 session_start();
+if (isset($_GET['tiltseries'])) {  //If user is coming from batch
+		$tiltseries=ltrim($_GET['tiltseries'], '0');
+		$outdir=$_GET['rundir'];
+		$runname='tiltseries'.$_GET['tiltseries'];
+		$_SESSION['from_batch']=1;
+}else{
+		$tiltseries=$_SESSION['tiltseries'];
+		$outdir=$_SESSION['outdir'];
+		$runname=$_SESSION['runname'];
+}
 $refine_thickness=$_SESSION['thickness'];
-$tiltseries=$_SESSION['tiltseries'];
 $sessionname=$_SESSION['sessionname'];
-$outdir=$_SESSION['outdir'];
-$runname=$_SESSION['runname'];
 $imageinfo=$_SESSION['imageinfo'];
 $protomo_outdir = $_SESSION['protomo_outdir'];
 $preset_size = $_SESSION['preset_size'];
@@ -297,7 +304,7 @@ class Protomo2ReconstructionForm extends BasicLayoutForm
 		$_SESSION['preset_search'] = $preset_search;
 		$_SESSION['preset_type'] = $preset_type;
 		
-		if ($_POST["process"] == "Just Show Command")
+		if ($_POST["process"] == "Just Show Command" and $_SESSION['from_batch'] == 0)
 		{
 			//$html .= "<br></br>
 				//<a href='runAppionLoop.php?expId=".$this->expId."&form=Protomo2UploadForm'><b><center>[Click here to continue on to <font size='4'>Upload your Reconstruction</font>] <font size='5'>→</font></center></center></b></a>";

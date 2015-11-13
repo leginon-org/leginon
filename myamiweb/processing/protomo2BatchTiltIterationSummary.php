@@ -18,6 +18,14 @@ require_once "inc/project.inc";
 require_once "inc/appionloop.inc";
 require_once "inc/particledata.inc";
 
+ini_set('session.gc_maxlifetime', 604800);
+session_set_cookie_params(604800);
+
+session_start();
+$sessionname=$_SESSION['sessionname'];
+$outdir=$_SESSION['outdir'];
+$imageinfo=$_SESSION['imageinfo'];
+
 $rundir=$_GET['rundir'];
 $iter=$_GET['iter'];
 $tiltseries=$_GET['tiltseries'];
@@ -126,6 +134,8 @@ if (isset($rec_gif_files[0])) {
 } else {
         $html .= "<center><b>Depiction Reconstruction Video for Refinement Iteration ".$iter." either failed to generate, is still processing, or wasn't requested.</b></center>";
 }
+
+$html .= '<a href="runAppionLoop.php?expId='.$_GET['expId'].'&form=Protomo2ReconstructionForm&rundir='.$rundir.'&iter='.$iter.'&tiltseries='.$tiltseries.'" target="_blank"><b><center>[Click here to <font size="4">Reconstruct</font> from this iteration] →</center></b></a><br><br>';
 
 echo $html
 ?>

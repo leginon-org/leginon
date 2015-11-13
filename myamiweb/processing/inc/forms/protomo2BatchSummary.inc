@@ -92,7 +92,7 @@ class Protomo2BatchSummary extends BasicLayoutForm
 					{
 						$ite=$i+1;
 						if ($ite <= count($qalist) AND $ite > 0) {
-							$html .= '<th><a href="protomo2BatchTiltSummary.php?rundir='.$outdir.'&tiltseries='.$qalist[$i].'" target="_blank">Tilt-Series #'.intval($qalist[$i]).'</a></th>';
+							$html .= '<th><a href="protomo2BatchTiltSummary.php?expId='.$_GET['expId'].'&rundir='.$outdir.'&tiltseries='.$qalist[$i].'" target="_blank">Tilt-Series #'.intval($qalist[$i]).'</a></th>';
 						}
 						if ($ite % $numcolumns == 0 OR $ite < 1) {
 							$html .= "</tr><tr>";
@@ -107,7 +107,7 @@ class Protomo2BatchSummary extends BasicLayoutForm
 						$ite=$i+1;
 						if ($ite <= count($qalist) AND $ite > 0) {
 							$ccms_gif = "loadimg.php?rawgif=1&filename=".$outdir.'/tiltseries'.$qalist[$i].'/media/quality_assessment/series'.$qalist[$i].'_quality_assessment.gif';
-							$html .= '<td><center><a href="protomo2BatchTiltSummary.php?rundir='.$outdir.'&tiltseries='.$qalist[$i].'" target="_blank"><img src="'.$ccms_gif.'"width="350" /></a></center></td>';
+							$html .= '<td><center><a href="protomo2BatchTiltSummary.php?expId='.$_GET['expId'].'&rundir='.$outdir.'&tiltseries='.$qalist[$i].'" target="_blank"><img src="'.$ccms_gif.'"width="350" /></a></center></td>';
 						}
 						if ($ite % $numcolumns == 0 OR $ite < 1) {
 							$html .= "</tr><tr>";

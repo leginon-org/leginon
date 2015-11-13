@@ -16,6 +16,14 @@ require_once "inc/project.inc";
 require_once "inc/appionloop.inc";
 require_once "inc/particledata.inc";
 
+ini_set('session.gc_maxlifetime', 604800);
+session_set_cookie_params(604800);
+
+session_start();
+$sessionname=$_SESSION['sessionname'];
+$outdir=$_SESSION['outdir'];
+$imageinfo=$_SESSION['imageinfo'];
+
 $rundir=$_GET['rundir'];
 $tiltseries=$_GET['tiltseries'];
 
@@ -87,7 +95,7 @@ if (count($corrpeak_gif_files) > 0)
 		{
 			$ite=$i+1;
 			if ($ite <= count($corrpeak_gif_files) AND $ite > 0) {
-				$html .= '<th><a href="protomo2BatchTiltIterationSummary.php?iter='.$ite.'&rundir='.$rundir.'&tiltseries='.$tiltseries.'" target="_blank">Iteration #'.$ite.'</a></th>';
+				$html .= '<th><a href="protomo2BatchTiltIterationSummary.php?expId='.$_GET['expId'].'&iter='.$ite.'&rundir='.$rundir.'&tiltseries='.$tiltseries.'" target="_blank">Iteration #'.$ite.'</a></th>';
 			}
 			if ($ite % $numcolumns == 0 OR $ite < 1) {
 				$html .= "</tr><tr>";
@@ -102,7 +110,7 @@ if (count($corrpeak_gif_files) > 0)
 			$ite=$i+1;
 			if ($ite <= count($corrpeak_gif_files) AND $ite > 0) {
 				$corrpeak_gif = "loadimg.php?rawgif=1&filename=".$corrpeak_gif_files[$i];
-				$html .= '<td><center><a href="protomo2BatchTiltIterationSummary.php?iter='.$ite.'&rundir='.$rundir.'&tiltseries='.$tiltseries.'" target="_blank"><img src="'.$corrpeak_gif.'"/></a></center></td>';
+				$html .= '<td><center><a href="protomo2BatchTiltIterationSummary.php?expId='.$_GET['expId'].'&iter='.$ite.'&rundir='.$rundir.'&tiltseries='.$tiltseries.'" target="_blank"><img src="'.$corrpeak_gif.'"/></a></center></td>';
 			}
 			if ($ite % $numcolumns == 0 OR $ite < 1) {
 				$html .= "</tr><tr>";
@@ -120,7 +128,7 @@ elseif (count($corrpeak_vid_files) > 0)
 		{
 			$ite=$i+1;
 			if ($ite <= count($corrpeak_vid_files)/3 AND $ite > 0) {
-				$html .= '<th><a href="protomo2BatchTiltIterationSummary.php?iter='.$ite.'&rundir='.$rundir.'&tiltseries='.$tiltseries.'" target="_blank">Iteration #'.$ite.'</a></th>';
+				$html .= '<th><a href="protomo2BatchTiltIterationSummary.php?expId='.$_GET['expId'].'&iter='.$ite.'&rundir='.$rundir.'&tiltseries='.$tiltseries.'" target="_blank">Iteration #'.$ite.'</a></th>';
 			}
 			if ($ite % $numcolumns == 0 OR $ite < 1) {
 				$html .= "</tr><tr>";
@@ -135,7 +143,7 @@ elseif (count($corrpeak_vid_files) > 0)
 			$ite=$i+1;
 			if ($ite <= count($corrpeak_vid_files)/3 AND $ite > 0) {
 				$corrpeak_vid_mp4 = "loadvid.php?filename=".$corrpeak_vid_files[$i];
-				$html .= '<td><center><a href="protomo2BatchTiltIterationSummary.php?iter='.$ite.'&rundir='.$rundir.'&tiltseries='.$tiltseries.'" target="_blank">
+				$html .= '<td><center><a href="protomo2BatchTiltIterationSummary.php?expId='.$_GET['expId'].'&iter='.$ite.'&rundir='.$rundir.'&tiltseries='.$tiltseries.'" target="_blank">
 					 <video id="corrpeakVideos" autoplay loop>
 					 <source src="'.$corrpeak_vid_mp4.'" type="video/mp4" loop>
 					 </video></a></center></td>';
