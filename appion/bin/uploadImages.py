@@ -49,6 +49,8 @@ class UploadImages(appionScript.AppionScript):
 			help="Defocus in meters to apply to all images", metavar="#.#e#")
 		self.parser.add_option("--invert", dest="invert", default=False,
 			action="store_true", help="Invert image density")
+		self.parser.add_option("--azimuth", dest="azimuth", type="float",
+			help="Tilt azimuth from y-axis in degrees", metavar="#.#")
 
 		self.uploadtypes = ('tiltseries', 'defocalseries', 'normal')
 		self.parser.add_option("--type", dest="uploadtype", default="normal",

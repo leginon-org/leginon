@@ -420,6 +420,8 @@ class ImageLoader(appionLoop2.AppionLoop):
 
 		imagearray = self.correctImage(imagearray,nframes)
 		imgdata = self.makeImageData(imagearray,imginfo,nframes)
+		if self.isTomoTilts():
+			self.makeTomographyPredictionData(imgdata)
 		pixeldata = None
 		return imgdata, pixeldata
 
@@ -539,7 +541,7 @@ class ImageLoader(appionLoop2.AppionLoop):
 	def readUploadInfo(self,info=None):
 		if info is None:
 			# example
-			info = ['test.mrc','2e-10','1','1','50000','-2e-6','120000']
+			info = ['test.mrc','2e-10','1','1','50000','-2e-6','120000','0.0','20.0']
 		apDisplay.printMsg('reading image info for %s'%(os.path.abspath(info[0])))
 		try:
 			uploadedInfo = {}
@@ -553,6 +555,12 @@ class ImageLoader(appionLoop2.AppionLoop):
 			uploadedInfo['high tension'] = int(info[6])
 			if len(info) > 7:
 				uploadedInfo['stage a'] = float(info[7])*math.pi/180.0
+			else:
+				uploadedInfo['stage a'] = 0.0
+			if len(info) > 8:
+				uploadedInfo['dose'] = float(info[8])*1e+20
+			else:
+				uploadedInfo['dose'] = None
 			# add other items in the dictionary and set to instrument in the function
 			# setInfoToInstrument if needed
 		except:
@@ -631,8 +639,37 @@ class ImageLoader(appionLoop2.AppionLoop):
 					series = results[0]['number']+1
 				else:
 					series = 1
+				return self.makeTiltSeries(series)
+
+	def isTomoTilts(self):
+				return self.params['tiltgroup'] and self.params['tiltgroup'] > 2
+
+	def makeTiltSeries(self, series):
 				tiltq = leginon.leginondata.TiltSeriesData(session=self.session,number=series)
+				if self.isTomoTilts():
+					# go back one since it is alread advanced
+					this_index = self.processcount - 1
+					end_index = self.params['tiltgroup'] + this_index
+					if end_index > len(self.batchinfo):
+						apDisplay.printError('Not enough images to determine tilt series parameter')
+					this_tilt_group_info = self.batchinfo[this_index:end_index]
+					tilts = map((lambda x:float(x[7])),this_tilt_group_info)
+					tiltq['tilt min'] = min(tilts)
+					tiltq['tilt max'] = max(tilts)
+					tiltq['tilt start'] = tilts[0]
+					tiltq['tilt step'] = tilts[1] - tilts[0]
 				return self.publish(tiltq)
+
+	def getTiltGroupInfo(self,tilts):
+		return min(tilts),max(tilts),tilts[0],tilts[1]-tilts[0]
+
+	def makeTomographyPredictionData(self,imgdata):
+		predictq = leginon.leginondata.TomographyPredictionData(session=self.session,image=imgdata)
+		predictq['pixel size'] = float(self.batchinfo[0][1])
+		predictq['correlation'] = {'x':0.0,'y':0.0}
+		# Only need phi.  Maybe need user to input this
+		predictq['predicted position'] = {'x':0.0,'y':0.0,'z':0.0,'z0':0.0,'phi':0.0,'optical axis':0.0}
+		return self.publish(predictq)
 
 	#=====================
 	def getAppionInstruments(self):
@@ -698,6 +735,7 @@ class ImageLoader(appionLoop2.AppionLoop):
 		# PresetData
 		presetdata['name'] = self.params['preset']
 		presetdata['magnification'] = info['magnification']
+		presetdata['dose'] = info['dose']
 		# ImageData
 		imgdata = leginon.leginondata.AcquisitionImageData(session=self.session,scope=scopedata,camera=cameradata,preset=presetdata)
 		imgdata['tilt series'] = self.getTiltSeries()

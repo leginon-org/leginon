@@ -855,7 +855,7 @@ def protomoCoarseAlign(log_file, tiltseriesnumber, coarse_options):
 		apDisplay.printMsg("Generating Coarse Alignment reconstruction...")
 		f.write("Generating Coarse Alignment reconstruction...\n")
 		series.mapfile()
-		apProTomo2Aligner.makeReconstructionVideos(name, 0, tiltdir, 1024, 1024, "false", 'out', coarse_options.pixelsize, sampling, map_sampling, lp, thickness, coarse_options.video_type, "false", coarse_options.parallel, align_step="Coarse")
+		apProTomo2Aligner.makeReconstructionVideos(name, 0, tiltdir, 1024, 1024, "true", 'out', coarse_options.pixelsize, sampling, map_sampling, lp, thickness, coarse_options.video_type, "false", coarse_options.parallel, align_step="Coarse")
 	
 	apDisplay.printMsg("Coarse Alignment finished for Tilt-Series #%s!\n" % (tiltseriesnumber))
 	f.write("Coarse Alignment finished for Tilt-Series #%s!\n\n" % (tiltseriesnumber))
@@ -2239,7 +2239,7 @@ def protomoScreening(log_file, tiltseriesnumber, screening_options):
 	apDisplay.printMsg("Generating Coarse Alignment reconstruction...")
 	f.write("Generating Coarse Alignment reconstruction...\n")
 	series.mapfile()
-	apProTomo2Aligner.makeReconstructionVideos(name, 0, tiltdir, 1024, 1024, "false", 'out', screening_options.pixelsize, sampling, map_sampling, lp, thickness, screening_options.video_type, "false", "True", align_step="Coarse")
+	apProTomo2Aligner.makeReconstructionVideos(name, 0, tiltdir, 1024, 1024, "true", 'out', screening_options.pixelsize, sampling, map_sampling, lp, thickness, screening_options.video_type, "false", "True", align_step="Coarse")
 	
 	for job in jobs1:
 		job.join()
@@ -2263,6 +2263,7 @@ if __name__ == '__main__':
 	log_file = "%s/protomo2batch_%s.log" % (options.rundir, time_start)
 	log = open(log_file,'w')
 	log.write('Start time: %s\n\n' % time_start)
+	log.write('Description: %s\n' % options.description)
 	apDisplay.printMsg("Writing to log %s" % log_file)
 	input_command='protomo2batch.py '	
 	for key in options.__dict__:
@@ -2565,13 +2566,14 @@ if __name__ == '__main__':
 				time.sleep(60)
 	
 	
-	apDisplay.printMsg("Closing log file %s" % log_file)
 	time_end = time.strftime("%Yyr%mm%dd-%Hhr%Mm%Ss")
 	apDisplay.printMsg('Did everything blow up and now you\'re yelling at your computer screen?')
 	apDisplay.printMsg('If so, kindly email Alex at ajn10d@fsu.edu and include this log file.')
 	apDisplay.printMsg('If everything worked beautifully and you publish it, please use the appropriate citations listed on the Appion webpage!')
-	log.write('Did everything blow up and now you\'re yelling at your computer screen?')
-	log.write('If so, kindly email Alex at ajn10d@fsu.edu and include this log file.')
-	log.write('If everything worked beautifully and you publish it, please use the appropriate citations listed on the Appion webpage!')
+	log.write('Did everything blow up and now you\'re yelling at your computer screen?\n')
+	log.write('If so, kindly email Alex at ajn10d@fsu.edu and include this log file.\n')
+	log.write('If everything worked beautifully and you publish it, please use the appropriate citations listed on the Appion webpage!\n')
+	print "\n"
+	apDisplay.printMsg("Closing log file %s" % log_file)
 	log.write("\nEnd time: %s" % time_end)
 	log.close()

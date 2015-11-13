@@ -53,6 +53,14 @@ class AppionPBS(appionLoop2.AppionLoop):
 		self.parser.add_option("--wrapper", dest='wrapper', type='str', default='', help='wrapper string called before command')
 
 	#=====================
+	def checkGlobalConflicts(self):
+		appionLoop2.AppionLoop.checkGlobalConflicts(self)
+
+		if self.params['usequeue'] and self.params['queue_scratch'] and self.params['queue_scratch']:
+			if not os.path.isdir(self.params['queue_scratch']):
+				apDisplay.printError("queue scratch directory %s not exists" % self.params['queue_scratch'])
+
+	#=====================
 	def run(self):
 		"""
 		processes all images

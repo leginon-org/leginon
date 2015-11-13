@@ -119,6 +119,20 @@ def getImageList(tiltserieslist):
 			realist.append(imagedata)
 	return realist
 
+def getImageDose(imagedata):
+	try:
+		dose = imagedata['preset']['dose']*(10**-20)*imagedata['camera']['exposure time']/imagedata['preset']['exposure time']
+	except:
+		apDisplay.printWarning("Dose not found in database for image %s. Setting dose to 1 Angstrom/pixel" % imagedata['filename'])
+		dose=1
+	return dose
+
+def getAccumulatedDoses(imagelist):
+	doselist = map((lambda x:getImageDose(x)),imagelist)
+	dosearray = numpy.array(doselist)
+	cumarray = numpy.cumsum(dosearray)
+	return cumarray.tolist()
+
 def orderImageList(imagelist):
 	'''This is complex because the two start tilt images are often sorted wrong if
 			just use alpha tilt.  Therefore, a fake alpha tilt value is created based
@@ -132,8 +146,11 @@ def orderImageList(imagelist):
 	tiltseries = imagelist[0]['tilt series']
 	start_tilt = tiltseries['tilt start']
 	if start_tilt == tiltseries['tilt max'] or start_tilt == tiltseries['tilt min']:
+		# Assume tilts are incremental
 		tiltkeys = map((lambda x: math.degrees(x['scope']['stage position']['a'])),imagelist)
-		return tiltkeys,imagelist,mrc_files,int(len(tiltkeys)*0.5)  #Assumes tilts are from +alpha to -alpha
+		
+		accumulate_dose = getAccumulatedDoses(imagelist)
+		return tiltkeys,imagelist,accumulate_dose,mrc_files,int(len(tiltkeys)*0.5)
 	if start_tilt is None:
 		start_tilt = math.degrees(imagelist[0]['scope']['stage position']['a'])
 	tiltangledict = {}
@@ -143,12 +160,8 @@ def orderImageList(imagelist):
 	for i,imagedata in enumerate(imagelist):
 		imagedata_editable=dict(imagedata)  #Making an explicit copy of imagedata so that it can be added to. This doesn't copy the dictionaries inside this dictionary, but it's good enough
 		tilt = imagedata['scope']['stage position']['a']*180/math.pi
-		try:
-			dose = imagedata['preset']['dose']*(10**-20)*imagedata['camera']['exposure time']/imagedata['preset']['exposure time']
-		except:
-			apDisplay.printWarning("Dose not found in database for image #%s" % i)
-			dose=1
-		accumulated_dose=accumulated_dose+dose
+		
+		accumulated_dose=accumulated_dose+getImageDose(imagedata)
 		imagedata_editable['accumulated dose'] = accumulated_dose
 		
 		if tilt < start_tilt+0.02 and tilt > start_tilt-0.02:
@@ -428,8 +441,11 @@ def getAverageAzimuthFromSeries(imgtree):
 	
 	predict1=apDatabase.getPredictionDataForImage(imgtree[0])
 	predict2=apDatabase.getPredictionDataForImage(imgtree[-1])
-	phi1=predict1[0]['predicted position']['phi']*180/math.pi
-	phi2=predict2[0]['predicted position']['phi']*180/math.pi
+	try:
+		phi1=predict1[0]['predicted position']['phi']*180/math.pi
+		phi2=predict2[0]['predicted position']['phi']*180/math.pi
+	except:  #Phi was not recorded
+		phi1=phi2=0
 	
 	###Azimuth is determined from phi. In protomo tilt axis is measured from x where phi is from y
 	###Note there is a mirror between how Leginon reads images vs how protomo does

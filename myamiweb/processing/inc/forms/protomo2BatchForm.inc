@@ -746,8 +746,8 @@ class Protomo2BatchForm extends BasicLayoutForm
 				$_POST['r3_iters'] = $r3_iters = '20';
 				$_POST['r4_iters'] = $r4_iters = '20';
 				$_POST['r5_iters'] = $r5_iters = '0';
-				$_POST['elevation_switch'] = $elevation_switch='71';
-				$_POST['scale_switch'] = $scale_switch='76';
+				$_POST['elevation_switch'] = $elevation_switch='76';
+				$_POST['scale_switch'] = $scale_switch='71';
 				$_POST['rotation_switch'] = $rotation_switch='';
 				$_POST['azimuth_switch'] = $azimuth_switch='';
 				$_POST['orientation_switch'] = $orientation_switch='';

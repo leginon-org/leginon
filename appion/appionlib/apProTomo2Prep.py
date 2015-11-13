@@ -94,7 +94,7 @@ def prepareTiltFile(sessionname, seriesname, tiltfilename, tiltseriesnumber, raw
 	#This block is here because frame alignment insertion messes things up
 	non_frame_tiltdata=[]
 	for i in range(len(tiltdata)):
-		if 'ex-a' not in tiltdata[i]['filename']:
+		if tiltdata[i]['camera']['align frames'] != True:
 			non_frame_tiltdata.append(tiltdata[i])
 	
 	tilts,ordered_imagelist,accumulated_dose_list,ordered_mrc_files,refimg = apTomo.orderImageList(non_frame_tiltdata)
@@ -383,8 +383,15 @@ def doseCompensate(seriesname, rundir, sessionname, tiltseriesnumber, raw_path, 
 	sessiondata = apDatabase.getSessionDataFromSessionName(sessionname)
 	tiltseriesdata = apDatabase.getTiltSeriesDataFromTiltNumAndSessionId(tiltseriesnumber,sessiondata)
 	tiltdata = apTomo.getImageList([tiltseriesdata])
-	tilts, ordered_imagelist, accumulated_dose_list, ordered_mrc_files, refimg = apTomo.orderImageList(tiltdata)
-	newfilenames, new_ordered_imagelist = apProTomo.getImageFiles(ordered_imagelist, raw_path, link=False, copy=False)
+	
+	#This block is here because frame alignment insertion messes things up
+	non_frame_tiltdata=[]
+	for i in range(len(tiltdata)):
+		if tiltdata[i]['camera']['align frames'] != True:
+			non_frame_tiltdata.append(tiltdata[i])
+	
+	tilts, ordered_imagelist, accumulated_dose_list, ordered_mrc_files, refimg = apTomo.orderImageList(non_frame_tiltdata)
+	newfilenames, new_ordered_imagelist = apProTomo.getImageFiles(ordered_imagelist, raw_path, link=False, copy=False, frame_aligned="False")
 	if (dose_presets == "Light"):
 		dose_a = 0.245
 		dose_b = -1.6
