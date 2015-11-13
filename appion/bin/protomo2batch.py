@@ -2263,6 +2263,7 @@ if __name__ == '__main__':
 	log_file = "%s/protomo2batch_%s.log" % (options.rundir, time_start)
 	log = open(log_file,'w')
 	log.write('Start time: %s\n\n' % time_start)
+	log.write('Description: %s\n' % options.description)
 	apDisplay.printMsg("Writing to log %s" % log_file)
 	input_command='protomo2batch.py '	
 	for key in options.__dict__:

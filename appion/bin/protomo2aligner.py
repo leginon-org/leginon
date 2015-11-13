@@ -1217,6 +1217,7 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		shutil.copy('%s/protomo2aligner.log' % cwd, "%s/protomo2aligner_%s.log" % (rundir, time_start))
 		f = open("%s/protomo2aligner_%s.log" % (rundir, time_start),'a');f.write("\n")
 		f.write('Start time: %s\n' % time_start)
+		f.write('Description: %s\n' % self.params['description'])
 		apDisplay.printMsg("Writing to log %s/protomo2aligner_%s.log" % (rundir, time_start))
 		
 		seriesnumber = "%04d" % int(self.params['tiltseries'])
