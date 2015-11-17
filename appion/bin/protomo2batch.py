@@ -792,28 +792,29 @@ def protomoCoarseAlign(log_file, tiltseriesnumber, coarse_options):
 		series.setparam("map.body", "%s" % body)
 		#Align and restart alignment if failed
 		retry=0
-		brk=0
+		brk=None
 		end=0
 		new_region_x=region_x/sampling   #Just initializing
 		new_region_y=region_y/sampling   #Just initializing
 		while (min(new_region_x,new_region_x) != 20 and end == 0):
 			try:
+				if (brk != None):
+					apDisplay.printMsg("Keyboard Interrupt!")
+					break
 				if (retry > 0):
 					new_region_x = apProTomo2Aligner.nextLargestSize(new_region_x)
 					new_region_y = apProTomo2Aligner.nextLargestSize(new_region_y)
 					apDisplay.printMsg("Coarse Alignment for Tilt-Series #%s failed. Retry #%s with Window Size: (%s, %s) (at sampling %s)..." % (tiltseriesnumber, retry, new_region_x, new_region_y, sampling))
 					f.write("Coarse Alignment for Tilt-Series #%s failed. Retry #%s with Window Size: (%s, %s) (at sampling %s)...\n" % (tiltseriesnumber, retry, new_region_x, new_region_y, sampling))
+					time.sleep(1)  #Allows Ctrl-C to be caught by except
 					newsize = "{ %s %s }" % (new_region_x, new_region_y)
 					series.setparam("window.size", newsize)
 				retry+=1
 				series.align()
 				final_retry=retry-1
 				end=1
-			except KeyboardInterrupt:
-				apDisplay.printMsg("Keyboard Interrupt!")
-				f.write("Keyboard Interrupt!\n")
-				end=1
-				brk=1
+			except KeyboardInterrupt:  #Only catched if not running series.align()
+				brk=sys.exc_info()
 			except:
 				if (min(new_region_x,new_region_x) == 20):
 					apDisplay.printMsg("Coarse Alignment for Tilt-Series #%s failed after rescaling the search area %s time(s)." % (tiltseriesnumber, retry-1))
@@ -824,9 +825,10 @@ def protomoCoarseAlign(log_file, tiltseriesnumber, coarse_options):
 					f.write("Window Size (x) was windowed down to %s\n" % (new_region_x*sampling))
 					f.write("Window Size (y) was windowed down to %s\n" % (new_region_y*sampling))
 					f.write("Put values less than these into thesponding parameter boxes on the Protomo Coarse Alignment Appion webpage and try again.\n\n")
+					brk=1
 				pass
 		
-		if (brk == 1):   #resampling failed, break out of all refinement iterations
+		if (brk != None):   #resampling failed, break out of all refinement iterations
 			return None
 		
 		corrfile=name+'.corr'
@@ -1080,28 +1082,29 @@ def protomoRefine(log_file, tiltseriesnumber, refine_options):
 		
 		#Align and restart alignment if failed
 		retry=0
-		brk=0
+		brk=None
 		end=0
 		new_region_x=region_x/sampling   #Just initializing
 		new_region_y=region_y/sampling   #Just initializing
 		while (min(new_region_x,new_region_x) != 20 and end == 0):
 			try:
+				if (brk != None):
+					apDisplay.printMsg("Keyboard Interrupt!")
+					break
 				if (retry > 0):
 					new_region_x = apProTomo2Aligner.nextLargestSize(new_region_x)
 					new_region_y = apProTomo2Aligner.nextLargestSize(new_region_y)
 					apDisplay.printMsg("Refinement failed for Tilt-Series #%s. Retry #%s with %s%% smaller Window Size: (%s, %s)..." % (tiltseriesnumber, retry, new_region_x*sampling, new_region_y*sampling, sampling))
 					f.write("Refinement failed for Tilt-Series #%s. Retry #%s with %s%% smaller Window Size: (%s, %s)...\n" % (tiltseriesnumber, retry, new_region_x*sampling, new_region_y*sampling, sampling))
+					time.sleep(1)  #Allows Ctrl-C to be caught by except
 					newsize = "{ %s %s }" % (new_region_x, new_region_y)
 					series.setparam("window.size", newsize)
 				retry+=1
 				series.align()
 				final_retry=retry-1
 				end=1
-			except KeyboardInterrupt:
-				apDisplay.printMsg("Keyboard Interrupt!")
-				f.write("Keyboard Interrupt!\n")
-				end=1
-				brk=1
+			except KeyboardInterrupt:  #Only catched if not running series.align()
+				brk=sys.exc_info()
 			except:
 				if (min(new_region_x,new_region_x) == 20):
 					apDisplay.printMsg("Refinement Iteration #%s failed after resampling the search area %s time(s)." % (start+n+1, retry-1))
@@ -1117,7 +1120,7 @@ def protomoRefine(log_file, tiltseriesnumber, refine_options):
 		
 		apDisplay.printMsg("Finished Iteration #%s, Round #%s Refinement!\n" % (n+1,r))
 		f.write("Finished Iteration #%s, Round #%s Refinement!\n\n" % (n+1,r))
-		if (brk == 1):   #resampling failed, break out of all refinement iterations
+		if (brk != None):   #resampling failed, break out of all refinement iterations
 			return
 		
 		it="%03d" % (n)
@@ -1563,28 +1566,29 @@ def protomoAutoRefine(log_file, tiltseriesnumber, auto_refine_options):
 		
 		#Align and restart alignment if failed
 		retry=0
-		brk=0
+		brk=None
 		end=0
 		new_region_x=region_x/sampling   #Just initializing
 		new_region_y=region_y/sampling   #Just initializing
 		while (min(new_region_x,new_region_x) != 20 and end == 0):
 			try:
+				if (brk != None):
+					apDisplay.printMsg("Keyboard Interrupt!")
+					break
 				if (retry > 0):
 					new_region_x = apProTomo2Aligner.nextLargestSize(new_region_x)
 					new_region_y = apProTomo2Aligner.nextLargestSize(new_region_y)
 					apDisplay.printMsg("Refinement failed for Tilt-Series #%s. Retry #%s with %s%% smaller Window Size: (%s, %s)..." % (tiltseriesnumber, retry, new_region_x*sampling, new_region_y*sampling, sampling))
 					f.write("Refinement failed for Tilt-Series #%s. Retry #%s with %s%% smaller Window Size: (%s, %s)...\n" % (tiltseriesnumber, retry, new_region_x*sampling, new_region_y*sampling, sampling))
+					time.sleep(1)  #Allows Ctrl-C to be caught by except
 					newsize = "{ %s %s }" % (new_region_x, new_region_y)
 					series.setparam("window.size", newsize)
 				retry+=1
 				series.align()
 				final_retry=retry-1
 				end=1
-			except KeyboardInterrupt:
-				apDisplay.printMsg("Keyboard Interrupt!")
-				f.write("Keyboard Interrupt!\n")
-				end=1
-				brk=1
+			except KeyboardInterrupt:  #Only catched if not running series.align()
+				brk=sys.exc_info()
 			except:
 				if (min(new_region_x,new_region_x) == 20):
 					apDisplay.printMsg("Refinement Iteration #%s failed after resampling the search area %s time(s)." % (start+n+1, retry-1))
@@ -1600,7 +1604,7 @@ def protomoAutoRefine(log_file, tiltseriesnumber, auto_refine_options):
 		
 		apDisplay.printMsg("Finished Iteration #%s, Round #%s Refinement!\n" % (n+1,r))
 		f.write("Finished Iteration #%s, Round #%s Refinement!\n\n" % (n+1,r))
-		if (brk == 1):   #resampling failed, break out of all refinement iterations
+		if (brk != None):   #resampling failed, break out of all refinement iterations
 			return
 		
 		it="%03d" % (n)
@@ -1748,28 +1752,29 @@ def protomoAutoRefine(log_file, tiltseriesnumber, auto_refine_options):
 		
 		#Align and restart alignment if failed
 		retry=0
-		brk=0
+		brk=None
 		end=0
 		new_region_x=region_x/sampling   #Just initializing
 		new_region_y=region_y/sampling   #Just initializing
 		while (min(new_region_x,new_region_x) != 20 and end == 0):
 			try:
+				if (brk != None):
+					apDisplay.printMsg("Keyboard Interrupt!")
+					break
 				if (retry > 0):
 					new_region_x = apProTomo2Aligner.nextLargestSize(new_region_x)
 					new_region_y = apProTomo2Aligner.nextLargestSize(new_region_y)
 					apDisplay.printMsg("Refinement failed for Tilt-Series #%s. Retry #%s with %s%% smaller Window Size: (%s, %s)..." % (tiltseriesnumber, retry, new_region_x*sampling, new_region_y*sampling, sampling))
 					f.write("Refinement failed for Tilt-Series #%s. Retry #%s with %s%% smaller Window Size: (%s, %s)...\n" % (tiltseriesnumber, retry, new_region_x*sampling, new_region_y*sampling, sampling))
+					time.sleep(1)  #Allows Ctrl-C to be caught by except
 					newsize = "{ %s %s }" % (new_region_x, new_region_y)
 					series.setparam("window.size", newsize)
 				retry+=1
 				series.align()
 				final_retry=retry-1
 				end=1
-			except KeyboardInterrupt:
-				apDisplay.printMsg("Keyboard Interrupt!")
-				f.write("Keyboard Interrupt!\n")
-				end=1
-				brk=1
+			except KeyboardInterrupt:  #Only catched if not running series.align()
+				brk=sys.exc_info()
 			except:
 				if (min(new_region_x,new_region_x) == 20):
 					apDisplay.printMsg("Refinement Iteration #%s failed after resampling the search area %s time(s)." % (start+n+1, retry-1))
@@ -1785,7 +1790,7 @@ def protomoAutoRefine(log_file, tiltseriesnumber, auto_refine_options):
 		
 		apDisplay.printMsg("Finished Iteration #%s, Round #%s Refinement!\n" % (n+1,r))
 		f.write("Finished Iteration #%s, Round #%s Refinement!\n\n" % (n+1,r))
-		if (brk == 1):   #resampling failed, break out of all refinement iterations
+		if (brk != None):   #resampling failed, break out of all refinement iterations
 			return
 		
 		it="%03d" % (n)
@@ -1973,28 +1978,29 @@ def protomoAutoRefine(log_file, tiltseriesnumber, auto_refine_options):
 			
 			#Align and restart alignment if failed
 			retry=0
-			brk=0
+			brk=None
 			end=0
 			new_region_x=region_x/sampling   #Just initializing
 			new_region_y=region_y/sampling   #Just initializing
 			while (min(new_region_x,new_region_x) != 20 and end == 0):
 				try:
+					if (brk != None):
+						apDisplay.printMsg("Keyboard Interrupt!")
+						break
 					if (retry > 0):
 						new_region_x = apProTomo2Aligner.nextLargestSize(new_region_x)
 						new_region_y = apProTomo2Aligner.nextLargestSize(new_region_y)
 						apDisplay.printMsg("Refinement failed for Tilt-Series #%s. Retry #%s with %s%% smaller Window Size: (%s, %s)..." % (tiltseriesnumber, retry, new_region_x*sampling, new_region_y*sampling, sampling))
 						f.write("Refinement failed for Tilt-Series #%s. Retry #%s with %s%% smaller Window Size: (%s, %s)...\n" % (tiltseriesnumber, retry, new_region_x*sampling, new_region_y*sampling, sampling))
+						time.sleep(1)  #Allows Ctrl-C to be caught by except
 						newsize = "{ %s %s }" % (new_region_x, new_region_y)
 						series.setparam("window.size", newsize)
 					retry+=1
 					series.align()
 					final_retry=retry-1
 					end=1
-				except KeyboardInterrupt:
-					apDisplay.printMsg("Keyboard Interrupt!")
-					f.write("Keyboard Interrupt!\n")
-					end=1
-					brk=1
+				except KeyboardInterrupt:  #Only catched if not running series.align()
+					brk=sys.exc_info()
 				except:
 					if (min(new_region_x,new_region_x) == 20):
 						apDisplay.printMsg("Refinement Iteration #%s failed after resampling the search area %s time(s)." % (start+n+1, retry-1))
@@ -2010,7 +2016,7 @@ def protomoAutoRefine(log_file, tiltseriesnumber, auto_refine_options):
 			
 			apDisplay.printMsg("Finished Iteration #%s, Round #%s Refinement!\n" % (n+1,r))
 			f.write("Finished Iteration #%s, Round #%s Refinement!\n\n" % (n+1,r))
-			if (brk == 1):   #resampling failed, break out of all refinement iterations
+			if (brk != None):   #resampling failed, break out of all refinement iterations
 				return
 			
 			it="%03d" % (n)
@@ -2171,28 +2177,29 @@ def protomoScreening(log_file, tiltseriesnumber, screening_options):
 		series.setparam("map.body", "%s" % body)
 		#Align and restart alignment if failed
 		retry=0
-		brk=0
+		brk=None
 		end=0
 		new_region_x=region_x/sampling   #Just initializing
 		new_region_y=region_y/sampling   #Just initializing
 		while (min(new_region_x,new_region_x) != 20 and end == 0):
 			try:
+				if (brk != None):
+					apDisplay.printMsg("Keyboard Interrupt!")
+					break
 				if (retry > 0):
 					new_region_x = apProTomo2Aligner.nextLargestSize(new_region_x)
 					new_region_y = apProTomo2Aligner.nextLargestSize(new_region_y)
 					apDisplay.printMsg("Coarse Alignment for Tilt-Series #%s failed. Retry #%s with Window Size: (%s, %s) (at sampling %s)..." % (tiltseriesnumber, retry, new_region_x, new_region_y, sampling))
 					f.write("Coarse Alignment for Tilt-Series #%s failed. Retry #%s with Window Size: (%s, %s) (at sampling %s)...\n" % (tiltseriesnumber, retry, new_region_x, new_region_y, sampling))
+					time.sleep(1)  #Allows Ctrl-C to be caught by except
 					newsize = "{ %s %s }" % (new_region_x, new_region_y)
 					series.setparam("window.size", newsize)
 				retry+=1
 				series.align()
 				final_retry=retry-1
 				end=1
-			except KeyboardInterrupt:
-				apDisplay.printMsg("Keyboard Interrupt!")
-				f.write("Keyboard Interrupt!\n")
-				end=1
-				brk=1
+			except KeyboardInterrupt:  #Only catched if not running series.align()
+				brk=sys.exc_info()
 			except:
 				if (min(new_region_x,new_region_x) == 20):
 					apDisplay.printMsg("Coarse Alignment for Tilt-Series #%s failed after rescaling the search area %s time(s)." % (tiltseriesnumber, retry-1))
@@ -2203,9 +2210,10 @@ def protomoScreening(log_file, tiltseriesnumber, screening_options):
 					f.write("Window Size (x) was windowed down to %s\n" % (new_region_x*sampling))
 					f.write("Window Size (y) was windowed down to %s\n" % (new_region_y*sampling))
 					f.write("Put values less than these into thesponding parameter boxes on the Protomo Coarse Alignment Appion webpage and try again.\n\n")
+					brk=1
 				pass
 		
-		if (brk == 1):   #resampling failed, break out of all refinement iterations
+		if (brk != None):   #resampling failed, break out of all refinement iterations
 			#Finish background process
 			for job in jobs1:
 				job.join()
