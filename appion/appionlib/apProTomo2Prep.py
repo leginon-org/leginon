@@ -225,7 +225,14 @@ def ctfCorrect(seriesname, rundir, projectid, sessionname, tiltseriesnumber, til
 		sessiondata = apDatabase.getSessionDataFromSessionName(sessionname)
 		tiltseriesdata = apDatabase.getTiltSeriesDataFromTiltNumAndSessionId(tiltseriesnumber,sessiondata)
 		tiltdata = apTomo.getImageList([tiltseriesdata])
-		tilts,ordered_imagelist,accumulated_dose_list,ordered_mrc_files,refimg = apTomo.orderImageList(tiltdata)
+		
+		#This block is here because frame alignment insertion messes things up
+		non_frame_tiltdata=[]
+		for i in range(len(tiltdata)):
+			if tiltdata[i]['camera']['align frames'] != True:
+				non_frame_tiltdata.append(tiltdata[i])
+		
+		tilts,ordered_imagelist,accumulated_dose_list,ordered_mrc_files,refimg = apTomo.orderImageList(non_frame_tiltdata)
 		cs = tiltdata[0]['scope']['tem']['cs']*1000
 		voltage = int(tiltdata[0]['scope']['high tension']/1000)
 		if os.path.isfile(ctfdir+'out/out01.mrc'): #Throw exception if already ctf corrected
