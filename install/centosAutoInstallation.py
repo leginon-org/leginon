@@ -750,7 +750,7 @@ fi
 setenv I3LIB ${I3ROOT}/lib/linux/x86-64
 setenv PATH ${PATH}:${I3ROOT}/bin/linux/x86-64
 setenv I3LEGACY "/usr/local/i3-0.9.6"
-setenv PATH ${PATH}:/usr/local/i3-0.9.6/bin/linux/x86_64
+setenv PATH ${PATH}:/usr/local/i3-0.9.6/bin/linux/x86-64
 setenv PATH ${PATH}:${I3ROOT}/lib/linux/x86-64
 
 if ($?LD_LIBRARY_PATH) then
