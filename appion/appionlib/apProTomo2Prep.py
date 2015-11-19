@@ -81,6 +81,37 @@ def convertShiftsToOrigin(shifts,imagesize_x, imagesize_y):
 		
 
 #=======================
+def frameOrNonFrameTiltdata(tiltdata):
+	'''
+	Takes tiltdata with or without frame aligned images and returns tiltdata with
+	the non-frame aligned images and the most recent frame aligned images.
+	'''
+	#tilt image siblings are determined by their scope dbids. Another way to do this would be to group by parent image.
+	scope_dbid_list=[]
+	for i in range(len(tiltdata)):
+		scope_dbid_list.append(tiltdata[i]['scope'].dbid)
+	
+	frame_tiltdata=[]
+	non_frame_tiltdata=[]
+	completed_images=[]
+	for i in range(len(tiltdata)):
+		if tiltdata[i]['scope'].dbid not in completed_images:
+			image_dbid_list=[]
+			tiltdata_list=[]
+			for j in range(len(scope_dbid_list)):
+				if tiltdata[i]['scope'].dbid == scope_dbid_list[j]:
+					image_dbid_list.append(tiltdata[j].dbid)
+					tiltdata_list.append(tiltdata[j])
+			frame_tiltdata_element=[k for k, x in enumerate(image_dbid_list) if x == max(image_dbid_list)][0]
+			non_frame_tiltdata_element=[k for k, x in enumerate(image_dbid_list) if x == min(image_dbid_list)][0]
+			frame_tiltdata.append(tiltdata_list[frame_tiltdata_element])
+			non_frame_tiltdata.append(tiltdata_list[non_frame_tiltdata_element])
+			completed_images.append(tiltdata[i]['scope'].dbid)
+	
+	return frame_tiltdata, non_frame_tiltdata
+
+
+#=======================
 def prepareTiltFile(sessionname, seriesname, tiltfilename, tiltseriesnumber, raw_path, frame_aligned_images, link=False, coarse=True):
 	'''
 	Creates tlt file from basic image information and copies raw images
@@ -91,24 +122,25 @@ def prepareTiltFile(sessionname, seriesname, tiltfilename, tiltseriesnumber, raw
 	tiltdata = apTomo.getImageList([tiltseriesdata])
 	apDisplay.printMsg("getting imagelist")
 	
-	#This block is here because frame alignment insertion messes things up
-	non_frame_tiltdata=[]
-	for i in range(len(tiltdata)):
-		if tiltdata[i]['camera']['align frames'] != True:
-			non_frame_tiltdata.append(tiltdata[i])
+	frame_tiltdata, non_frame_tiltdata = frameOrNonFrameTiltdata(tiltdata)
+	tilts,ordered_imagelist,accumulated_dose_list,ordered_mrc_files,refimg = apTomo.orderImageList(frame_tiltdata, non_frame_tiltdata, frame_aligned=frame_aligned_images)
+	if frame_aligned_images == "True":  #Azimuth is only present in the non-frame aligned images
+		a,ordered_imagelist_for_azimuth,c,d,e = apTomo.orderImageList(frame_tiltdata, non_frame_tiltdata, frame_aligned="False")
 	
-	tilts,ordered_imagelist,accumulated_dose_list,ordered_mrc_files,refimg = apTomo.orderImageList(non_frame_tiltdata)
 	#tilts are tilt angles, ordered_imagelist are imagedata, ordered_mrc_files are paths to files, refimg is an int
 	maxtilt = max([abs(tilts[0]),abs(tilts[-1])])
 	apDisplay.printMsg("highest tilt angle is %f" % maxtilt)
 	
 	if coarse == "True":
-		azimuth = apTomo.getAverageAzimuthFromSeries(ordered_imagelist)
+		if frame_aligned_images == "True":  #Azimuth is only present in the non-frame aligned images
+			azimuth = apTomo.getAverageAzimuthFromSeries(ordered_imagelist_for_azimuth)
+		else:
+			azimuth = apTomo.getAverageAzimuthFromSeries(ordered_imagelist)
 		
 		rawexists = apParam.createDirectory(raw_path)
 		
 		apDisplay.printMsg("Copying raw images, y-flipping, normalizing, and converting images to float32 for Protomo...") #Linking removed because raw images need to be y-flipped for Protomo:(.
-		newfilenames, new_ordered_imagelist = apProTomo.getImageFiles(ordered_imagelist, raw_path, link=False, copy="True", frame_aligned=frame_aligned_images)
+		newfilenames, new_ordered_imagelist = apProTomo.getImageFiles(ordered_imagelist, raw_path, link=False, copy="True")
 		
 		###create tilt file
 		#get image size from the first image
@@ -122,8 +154,6 @@ def prepareTiltFile(sessionname, seriesname, tiltfilename, tiltseriesnumber, raw
 		#OPTION: refinement might be more robust by doing one round of IMOD aligment to prealign images before doing protomo refine
 		origins = convertShiftsToOrigin(shifts, imagesizex, imagesizey)
 	
-		#determine azimuth
-		#azimuth = apTomo.getAverageAzimuthFromSeries(ordered_imagelist)
 		writeTiltFile2(tiltfilename, seriesname, newfilenames, origins, tilts, azimuth, refimg)
 	
 	return tilts, accumulated_dose_list, new_ordered_imagelist, maxtilt
@@ -198,7 +228,7 @@ def writeTiltFile2(tiltfile, seriesname, imagelist, origins, tilts, azimuth, ref
 
 
 #=====================
-def ctfCorrect(seriesname, rundir, projectid, sessionname, tiltseriesnumber, tiltfilename, pixelsize, DefocusTol, iWidth, amp_contrast):
+def ctfCorrect(seriesname, rundir, projectid, sessionname, tiltseriesnumber, tiltfilename, frame_aligned_images, pixelsize, DefocusTol, iWidth, amp_contrast):
 	"""
 	Leginondb will be queried to get the 'best' defocus estimate on a per-image basis.
 	Confident defoci will be gathered and unconfident defoci will be interpolated.
@@ -225,7 +255,9 @@ def ctfCorrect(seriesname, rundir, projectid, sessionname, tiltseriesnumber, til
 		sessiondata = apDatabase.getSessionDataFromSessionName(sessionname)
 		tiltseriesdata = apDatabase.getTiltSeriesDataFromTiltNumAndSessionId(tiltseriesnumber,sessiondata)
 		tiltdata = apTomo.getImageList([tiltseriesdata])
-		tilts,ordered_imagelist,accumulated_dose_list,ordered_mrc_files,refimg = apTomo.orderImageList(tiltdata)
+		
+		frame_tiltdata, non_frame_tiltdata = frameOrNonFrameTiltdata(tiltdata)
+		tilts,ordered_imagelist,accumulated_dose_list,ordered_mrc_files,refimg = apTomo.orderImageList(frame_tiltdata, non_frame_tiltdata, frame_aligned=frame_aligned_images)
 		cs = tiltdata[0]['scope']['tem']['cs']*1000
 		voltage = int(tiltdata[0]['scope']['high tension']/1000)
 		if os.path.isfile(ctfdir+'out/out01.mrc'): #Throw exception if already ctf corrected
@@ -289,8 +321,10 @@ def ctfCorrect(seriesname, rundir, projectid, sessionname, tiltseriesnumber, til
 		f.close()
 		
 		mrc_list=[]
+		presetname=tiltdata[0]['preset']['name']
 		for image in ordered_mrc_files:
-			mrc_list.append(raw_path+'/'+image[-10:])
+			mrcname=presetname+image.split(presetname)[-1]
+			mrc_list.append(raw_path+'/'+mrcname)
 		f = open(image_list_full,'w')
 		f.write("%d\n" % len(tilts))
 		for filename in mrc_list:
@@ -375,7 +409,7 @@ def ctfCorrect(seriesname, rundir, projectid, sessionname, tiltseriesnumber, til
 
 
 #=====================
-def doseCompensate(seriesname, rundir, sessionname, tiltseriesnumber, raw_path, pixelsize, dose_presets, dose_a, dose_b, dose_c):
+def doseCompensate(seriesname, rundir, sessionname, tiltseriesnumber, frame_aligned_images, raw_path, pixelsize, dose_presets, dose_a, dose_b, dose_c):
 	"""
 	Images will be lowpass filtered using equation (3) from Grant & Grigorieff, 2015.
 	No changes to the database are made. No backups are made.
@@ -384,14 +418,11 @@ def doseCompensate(seriesname, rundir, sessionname, tiltseriesnumber, raw_path, 
 	tiltseriesdata = apDatabase.getTiltSeriesDataFromTiltNumAndSessionId(tiltseriesnumber,sessiondata)
 	tiltdata = apTomo.getImageList([tiltseriesdata])
 	
-	#This block is here because frame alignment insertion messes things up
-	non_frame_tiltdata=[]
-	for i in range(len(tiltdata)):
-		if tiltdata[i]['camera']['align frames'] != True:
-			non_frame_tiltdata.append(tiltdata[i])
-	
-	tilts, ordered_imagelist, accumulated_dose_list, ordered_mrc_files, refimg = apTomo.orderImageList(non_frame_tiltdata)
-	newfilenames, new_ordered_imagelist = apProTomo.getImageFiles(ordered_imagelist, raw_path, link=False, copy=False, frame_aligned="False")
+	frame_tiltdata, non_frame_tiltdata = frameOrNonFrameTiltdata(tiltdata)
+	tilts, ordered_imagelist, accumulated_dose_list, ordered_mrc_files, refimg = apTomo.orderImageList(frame_tiltdata, non_frame_tiltdata, frame_aligned="False")
+	if frame_aligned_images == "True":  #For different image filenames
+		a, ordered_imagelist, c, d, e = apTomo.orderImageList(frame_tiltdata, non_frame_tiltdata, frame_aligned=frame_aligned_images)
+	newfilenames, new_ordered_imagelist = apProTomo.getImageFiles(ordered_imagelist, raw_path, link=False, copy=False)
 	if (dose_presets == "Light"):
 		dose_a = 0.245
 		dose_b = -1.6

@@ -111,6 +111,9 @@ class ProTomo2Reconstruction(basicScript.BasicScript):
 		self.parser.add_option('--dose_c', dest='dose_c', type="float",  default=2.81,
 			help='\'c\' variable in equation (3) of Grant & Grigorieff, 2015, e.g. --dose_c=2')
 		
+		self.parser.add_option("--frame_aligned", dest="frame_aligned",  default="True",
+			help="Use frame-aligned images instead of naively summed images, if present.")
+		
 	#=====================
 	def checkConflicts(self):
 		pass
@@ -158,11 +161,11 @@ class ProTomo2Reconstruction(basicScript.BasicScript):
 		
 		#CTF Correction
 		if (self.params['ctf_correct'] == 'True'):
-			apProTomo2Prep.ctfCorrect(seriesname, self.params['rundir'], self.params['projectid'], self.params['sessionname'], int(self.params['tiltseries']), recon_tilt_out_full, self.params['pixelsize'], self.params['DefocusTol'], self.params['iWidth'], self.params['amp_contrast'])
+			apProTomo2Prep.ctfCorrect(seriesname, self.params['rundir'], self.params['projectid'], self.params['sessionname'], int(self.params['tiltseries']), recon_tilt_out_full, self.params['frame_aligned'], self.params['pixelsize'], self.params['DefocusTol'], self.params['iWidth'], self.params['amp_contrast'])
 		
 		#Dose Compensation
 		if (self.params['dose_presets'] != 'False'):
-			apProTomo2Prep.doseCompensate(self.params['sessionname'], int(self.params['tiltseries']), raw_path, self.params['pixelsize'], self.params['dose_presets'], self.params['dose_a'], self.params['dose_b'], self.params['dose_c'])
+			apProTomo2Prep.doseCompensate(seriesname, self.params['rundir'], self.params['sessionname'], int(self.params['tiltseries']), self.params['frame_aligned'], raw_path, self.params['pixelsize'], self.params['dose_presets'], self.params['dose_a'], self.params['dose_b'], self.params['dose_c'])
 		
 		# Remove high tilts from .tlt file if user requests
 		if (self.params['positive'] < 90) or (self.params['negative'] > -90):

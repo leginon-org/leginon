@@ -727,20 +727,20 @@ def makeCorrPeakVideos(seriesname, iteration, rundir, outdir, video_type, align_
 		if video_type == "gif":
 			if align_step == "Coarse":
 				command2 = "convert -delay 22 -loop 0 %s %s;" % (png_full, gif_full)
-				command2 += "ffmpeg -y -v 0 -framerate 4.5 -i %s -codec:v libx264 -profile:v baseline -pix_fmt yuv420p -g 30 %s" % (pngff_full, mp4_full)
+				command2 += 'ffmpeg -y -v 0 -framerate 4.5 -pattern_type glob -i "%s" -codec:v libx264 -profile:v baseline -pix_fmt yuv420p -g 30 %s' % (png_full, mp4_full)
 			else: #align_step == "Refinement"... Just changing the speed with the delay option
 				command2 = "convert -delay 15 -loop 0 %s %s;" % (png_full, gif_full)
-				command2 += "ffmpeg -y -v 0 -framerate 5.5 -i %s -codec:v libx264 -profile:v baseline -pix_fmt yuv420p -g 30 %s" % (pngff_full, mp4_full)
+				command2 += 'ffmpeg -y -v 0 -framerate 5.5 -pattern_type glob -i "%s" -codec:v libx264 -profile:v baseline -pix_fmt yuv420p -g 30 %s' % (png_full, mp4_full)
 		else: #video_type == "html5vid"
 			if align_step == "Coarse":
 				command2 = "convert -delay 22 -loop 0 %s %s;" % (png_full, gif_full)
-				command2 += "ffmpeg -y -v 0 -framerate 4.5 -i %s -codec:v libtheora -b:v 3000K -g 30 %s;" % (pngff_full, ogv_full)
-				command2 += "ffmpeg -y -v 0 -framerate 4.5 -i %s -codec:v libx264 -profile:v baseline -pix_fmt yuv420p -g 30 %s;" % (pngff_full, mp4_full)
-				command2 += "ffmpeg -y -v 0 -framerate 4.5 -i %s -codec:v libvpx -b:v 3000K -g 30 %s" % (pngff_full, webm_full)
+				command2 += 'ffmpeg -y -v 0 -framerate 4.5 -pattern_type glob -i "%s" -codec:v libtheora -b:v 3000K -g 30 %s;' % (png_full, ogv_full)
+				command2 += 'ffmpeg -y -v 0 -framerate 4.5 -pattern_type glob -i "%s" -codec:v libx264 -profile:v baseline -pix_fmt yuv420p -g 30 %s;' % (png_full, mp4_full)
+				command2 += 'ffmpeg -y -v 0 -framerate 4.5 -pattern_type glob -i "%s" -codec:v libvpx -b:v 3000K -g 30 %s' % (png_full, webm_full)
 			else: #align_step == "Refinement"... Just changing the speed with the framerate option
-				command2 = "ffmpeg -y -v 0 -framerate 5.5 -i %s -codec:v libtheora -b:v 3000K -g 30 %s;" % (pngff_full, ogv_full)
-				command2 += "ffmpeg -y -v 0 -framerate 5.5 -i %s -codec:v libx264 -profile:v baseline -pix_fmt yuv420p -g 30 %s;" % (pngff_full, mp4_full)
-				command2 += "ffmpeg -y -v 0 -framerate 5.5 -i %s -codec:v libvpx -b:v 3000K -g 30 %s" % (pngff_full, webm_full)
+				command2 = 'ffmpeg -y -v 0 -framerate 5.5 -pattern_type glob -i "%s" -codec:v libtheora -b:v 3000K -g 30 %s;' % (png_full, ogv_full)
+				command2 += 'ffmpeg -y -v 0 -framerate 5.5 -pattern_type glob -i "%s" -codec:v libx264 -profile:v baseline -pix_fmt yuv420p -g 30 %s;' % (png_full, mp4_full)
+				command2 += 'ffmpeg -y -v 0 -framerate 5.5 -pattern_type glob -i "%s" -codec:v libvpx -b:v 3000K -g 30 %s' % (png_full, webm_full)
 		os.system(command2)
 		command3 = "rm %s; rm %s" % (png_full, img_full)
 		os.system(command3)
@@ -1375,11 +1375,11 @@ def makeTiltSeriesVideos(seriesname, iteration, tiltfilename, rawimagecount, run
 		#Convert pngs to either a gif or to HTML5 videos
 		if video_type == "gif":
 			command = "convert -delay 22 -loop 0 %s %s;" % (png_full, gif_full)
-			command += "ffmpeg -y -v 0 -framerate 4.5 -i %s -codec:v libx264 -profile:v baseline -pix_fmt yuv420p -g 30 %s" % (pngff_full, mp4_full)
+			command += 'ffmpeg -y -v 0 -framerate 4.5 -pattern_type glob -i "%s" -codec:v libx264 -profile:v baseline -pix_fmt yuv420p -g 30 %s' % (png_full, mp4_full)
 		else: #video_type == "html5vid"
-			command = "ffmpeg -y -v 0 -framerate 4.5 -i %s -codec:v libtheora -b:v 3000K -g 30 %s;" % (pngff_full, ogv_full)
-			command += "ffmpeg -y -v 0 -framerate 4.5 -i %s -codec:v libx264 -profile:v baseline -pix_fmt yuv420p -g 30 %s;" % (pngff_full, mp4_full)
-			command += "ffmpeg -y -v 0 -framerate 4.5 -i %s -codec:v libvpx -b:v 3000K -g 30 %s" % (pngff_full, webm_full)
+			command = 'ffmpeg -y -v 0 -framerate 4.5 -pattern_type glob -i "%s" -codec:v libtheora -b:v 3000K -g 30 %s;' % (png_full, ogv_full)
+			command += 'ffmpeg -y -v 0 -framerate 4.5 -pattern_type glob -i "%s" -codec:v libx264 -profile:v baseline -pix_fmt yuv420p -g 30 %s;' % (png_full, mp4_full)
+			command += 'ffmpeg -y -v 0 -framerate 4.5 -pattern_type glob -i "%s" -codec:v libvpx -b:v 3000K -g 30 %s' % (png_full, webm_full)
 		os.system(command)
 		command2 = "rm %s" % (png_full)
 		os.system(command2)
@@ -1495,11 +1495,11 @@ def makeReconstructionVideos(seriesname, iteraion, rundir, rx, ry, show_window_s
 		
 		if video_type == "gif":
 			command = "convert -delay 11 -loop 0 -layers Optimize %s %s;" % (png_full, gif_full)
-			command += "ffmpeg -y -v 0 -framerate 9 -i %s -codec:v libx264 -profile:v baseline -pix_fmt yuv420p -g 30 %s" % (pngff_full, mp4_full)
+			command += 'ffmpeg -y -v 0 -framerate 9 -pattern_type glob -i "%s" -codec:v libx264 -profile:v baseline -pix_fmt yuv420p -g 30 %s' % (png_full, mp4_full)
 		else: #video_type == "html5vid"
-			command = "ffmpeg -y -v 0 -framerate 9 -i %s -codec:v libtheora -b:v 3000K -g 30 %s;" % (pngff_full, ogv_full)
-			command += "ffmpeg -y -v 0 -framerate 9 -i %s -codec:v libx264 -profile:v baseline -pix_fmt yuv420p -g 30 %s;" % (pngff_full, mp4_full)
-			command += "ffmpeg -y -v 0 -framerate 9 -i %s -codec:v libvpx -b:v 3000K -g 30 %s" % (pngff_full, webm_full)
+			command = 'ffmpeg -y -v 0 -framerate 9 -pattern_type glob -i "%s" -codec:v libtheora -b:v 3000K -g 30 %s;' % (png_full, ogv_full)
+			command += 'ffmpeg -y -v 0 -framerate 9 -pattern_type glob -i "%s" -codec:v libx264 -profile:v baseline -pix_fmt yuv420p -g 30 %s;' % (png_full, mp4_full)
+			command += 'ffmpeg -y -v 0 -framerate 9 -pattern_type glob -i "%s" -codec:v libvpx -b:v 3000K -g 30 %s' % (png_full, webm_full)
 		os.system(command)
 		command2 = "rm %s" % (png_full)
 		os.system(command2)
@@ -1588,7 +1588,7 @@ def makeCTFPlot(rundir, seriesname, defocus_file_full, voltage, cs):
 		plt.figure()
 		plt.plot(x,y)
 		plt.xlabel("Spatial Frequency (1/$\AA$)")
-		plt.ylabel("Phase Contrast Delivered")
+		plt.ylabel("Approximate Phase Contrast Delivered")
 		plt.title("Estimated CTF^2 of Tilt-Series")
 		plt.grid(True)
 		plt.minorticks_on()

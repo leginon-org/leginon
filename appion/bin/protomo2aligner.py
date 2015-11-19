@@ -701,7 +701,7 @@ class ProTomo2Aligner(basicScript.BasicScript):
 			help="Parallelize image and video production.")
 		
 		self.parser.add_option("--frame_aligned", dest="frame_aligned",  default="True",
-			help="Use frame-aligned images instead of naively summed images, if present. Frame alignment must have been done with the Launch DE Frame Alignment script.")
+			help="Use frame-aligned images instead of naively summed images, if present.")
 		
 		self.parser.add_option("--my_tlt", dest="my_tlt",  default="False",
 			help="Allows for manual tilt-series setup")
@@ -1237,11 +1237,11 @@ class ProTomo2Aligner(basicScript.BasicScript):
 			
 			#CTF Correction
 			if (self.params['ctf_correct'] == 'True'):
-				apProTomo2Prep.ctfCorrect(seriesname, rundir, self.params['projectid'], self.params['sessionname'], int(self.params['tiltseries']), tiltfilename, self.params['pixelsize'], self.params['DefocusTol'], self.params['iWidth'], self.params['amp_contrast'])
+				apProTomo2Prep.ctfCorrect(seriesname, rundir, self.params['projectid'], self.params['sessionname'], int(self.params['tiltseries']), tiltfilename, self.params['frame_aligned'], self.params['pixelsize'], self.params['DefocusTol'], self.params['iWidth'], self.params['amp_contrast'])
 			
 			#Dose Compensation
 			if (self.params['dose_presets'] != 'False'):
-				apProTomo2Prep.doseCompensate(seriesname, rundir, self.params['sessionname'], int(self.params['tiltseries']), raw_path, self.params['pixelsize'], self.params['dose_presets'], self.params['dose_a'], self.params['dose_b'], self.params['dose_c'])
+				apProTomo2Prep.doseCompensate(seriesname, rundir, self.params['sessionname'], int(self.params['tiltseries']), self.params['frame_aligned'], raw_path, self.params['pixelsize'], self.params['dose_presets'], self.params['dose_a'], self.params['dose_b'], self.params['dose_c'])
 			
 			#Backup original tilt file
 			shutil.copy(tiltfilename_full,originaltilt)
@@ -1330,29 +1330,31 @@ class ProTomo2Aligner(basicScript.BasicScript):
 			
 			#Align and restart alignment if failed
 			retry=0
-			brk=0
+			brk=None
 			end=0
 			new_region_x=int(self.params['region_x']/self.params['sampling'])   #Just initializing
 			new_region_y=int(self.params['region_y']/self.params['sampling'])   #Just initializing
-			while (min(new_region_x,new_region_x) != 20 and end == 0):
+			while (min(new_region_x,new_region_y) != 20 and end == 0):
 				try:
+					if (brk != None):
+						apDisplay.printMsg("Keyboard Interrupt!")
+						break
 					if (retry > 0):
 						new_region_x = apProTomo2Aligner.nextLargestSize(new_region_x)
 						new_region_y = apProTomo2Aligner.nextLargestSize(new_region_y)
 						apDisplay.printMsg("Coarse Alignment failed. Retry #%s with Window Size: (%s, %s) (at sampling %s)..." % (retry, new_region_x, new_region_y, self.params['sampling']))
 						f.write('Coarse Alignment failed. Retry #%s with Window Size: (%s, %s) (at sampling %s)...\n' % (retry, new_region_x, new_region_y, self.params['sampling']))
+						time.sleep(1)  #Allows Ctrl-C to be caught by except
 						newsize = "{ %s %s }" % (new_region_x, new_region_y)
 						series.setparam("window.size", newsize)
 					retry+=1
 					series.align()
 					final_retry=retry-1
 					end=1
-				except KeyboardInterrupt:
-					apDisplay.printMsg("Keyboard Interrupt!")
-					end=1
-					brk=1
+				except KeyboardInterrupt:  #Only caught if not in series.align()
+					brk=sys.exc_info()
 				except:
-					if (min(new_region_x,new_region_x) == 20):
+					if (min(new_region_x,new_region_y) == 20):
 						apDisplay.printMsg("Coarse Alignment for Tilt-Series #%s failed after rescaling the search area %s time(s)." % (self.params['tiltseries'], retry-1))
 						apDisplay.printMsg("Window Size (x) was windowed down to %s" % (new_region_x*self.params['sampling']))
 						apDisplay.printMsg("Window Size (y) was windowed down to %s" % (new_region_y*self.params['sampling']))
@@ -1364,7 +1366,7 @@ class ProTomo2Aligner(basicScript.BasicScript):
 						brk=1
 					pass
 			
-			if (brk == 1):   #resampling failed, break out of all refinement iterations
+			if (brk != None):   #resampling failed, break out of all refinement iterations
 				#Finish background process
 				for job in jobs1:
 					job.join()
@@ -1446,7 +1448,7 @@ class ProTomo2Aligner(basicScript.BasicScript):
 				f.write('Coarse Alignment finished after retrying %s time(s) due to the sampled search area being too small.\n' % (final_retry))
 				f.write('Window Size (x) was windowed down to %s\n' % (new_region_x*self.params['sampling']))
 				f.write('Window Size (y) was windowed down to %s\n' % (new_region_y*self.params['sampling']))
-				f.write('Put these values into the corresponding parameter boxes on the Protomo Refinement Appion webpage.\n' % (final_retry))
+				f.write('Put these values into the corresponding parameter boxes on the Protomo Refinement Appion webpage.\n')
 			
 			#Insert iteration information into the database
 			if self.params['commit'] == "True":
@@ -1593,29 +1595,31 @@ class ProTomo2Aligner(basicScript.BasicScript):
 				
 				#Align and restart alignment if failed
 				retry=0
-				brk=0
+				brk=None
 				end=0
 				new_region_x=int(region_x/sampling)   #Just initializing
 				new_region_y=int(region_y/sampling)   #Just initializing
-				while (min(new_region_x,new_region_x) != 20 and end == 0):
+				while (min(new_region_x,new_region_y) != 20 and end == 0):
 					try:
+						if (brk != None):
+							apDisplay.printMsg("Keyboard Interrupt!")
+							break
 						if (retry > 0):
 							new_region_x = apProTomo2Aligner.nextLargestSize(new_region_x)
 							new_region_y = apProTomo2Aligner.nextLargestSize(new_region_y)
 							apDisplay.printMsg("Refinement failed. Retry #%s with Window Size: (%s, %s) (at sampling %s)..." % (retry, new_region_x*sampling, new_region_y*sampling, sampling))
 							f.write('Refinement failed. Retry #%s with Window Size: (%s, %s) (at sampling %s)...\n' % (retry, new_region_x*sampling, new_region_y*sampling, sampling))
+							time.sleep(1)  #Allows Ctrl-C to be caught by except
 							newsize = "{ %s %s }" % (new_region_x, new_region_y)
 							series.setparam("window.size", newsize)
 						retry+=1
 						series.align()
 						final_retry=retry-1
 						end=1
-					except KeyboardInterrupt:
-						apDisplay.printMsg("Keyboard Interrupt!")
-						end=1
-						brk=1
+					except KeyboardInterrupt:  #Only caught if not in series.align()
+						brk=sys.exc_info()
 					except:
-						if (min(new_region_x,new_region_x) == 20):
+						if (min(new_region_x,new_region_y) == 20):
 							apDisplay.printMsg("Refinement Iteration #%s for Tilt-Series #%s failed after resampling the search area %s time(s)." % (n+1, self.params['tiltseries'], retry-1))
 							apDisplay.printMsg("Window Size (x) was windowed down to %s" % (new_region_x*sampling))
 							apDisplay.printMsg("Window Size (y) was windowed down to %s" % (new_region_y*sampling))
@@ -1627,7 +1631,7 @@ class ProTomo2Aligner(basicScript.BasicScript):
 							brk=1
 						pass
 
-				if (brk == 1):   #resampling failed, break out of all refinement iterations
+				if (brk != None):   #resampling failed, break out of all refinement iterations
 					break
 				
 				it="%03d" % (n)
@@ -1799,7 +1803,7 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		f.write('If so, kindly email Alex at ajn10d@fsu.edu and include this log file\n.')
 		f.write('If everything worked beautifully and you publish it, please use the appropriate citations listed on the Appion webpage!\n')
 		print "\n"
-		apDisplay.printMsg("Closing log file %s/protomo2aligner_%s.log" % (rundir, time_start))
+		apDisplay.printMsg("Closing log file %s/protomo2aligner_%s.log\n" % (rundir, time_start))
 		f.write("\nEnd time: %s" % time_end)
 		f.close()
 		

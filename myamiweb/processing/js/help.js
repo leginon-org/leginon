@@ -395,7 +395,7 @@ var help = {
 		'protomo_dimy': 'The y-dimension of the tilt images in your \'raw\' directory, in pixels (type: int).',
 		'protomo_pixelsize' : 'Pixelsize, in angstroms/pixel, of the tilt images in your \'raw\' directory (type: float).',
 		'protomo_parallel' : 'Parallelize depiction image and video generation.<br><br>If you encounter memory errors, try switching this to False. If you encounter libgomp errors, try switching this to False (type: True/False).',
-		'protomo_frame_aligned' : 'Use frame-aligned images instead of naively summed images, if present. Frame alignment must have been done with the \'Launch DE Frame Alignment\' script (type: True/False).',
+		'protomo_frame_aligned' : 'Use frame-aligned images instead of naively summed images, if present. If True, the last frame aligned tilt image will be used (type: True/False).',
 		'protomo_binning' : 'Enable/disable binning of raw images (type: true/false).',
 		'protomo_preprocessing' : 'Enable/disable preprocessing of raw image files. Setting this to false turns off all of the options under Preprocessing Parameters (type: true/false).',
 		'protomo_gradient' : 'Enable/disable linear gradient subtraction for preprocessing masks (type: true/false).',

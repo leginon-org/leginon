@@ -16,11 +16,18 @@ ini_set('session.gc_maxlifetime', 604800);
 session_set_cookie_params(604800);
 
 session_start();
+if (isset($_GET['tiltseries'])) {  //If user is coming from batch
+		$tiltseries=ltrim($_GET['tiltseries'], '0');
+		$outdir=$_GET['rundir'];
+		$runname='tiltseries'.$_GET['tiltseries'];
+		$_SESSION['from_batch']=1;
+}else{
+		$tiltseries=$_SESSION['tiltseries'];
+		$outdir=$_SESSION['outdir'];
+		$runname=$_SESSION['runname'];
+}
 $refine_thickness=$_SESSION['thickness'];
-$tiltseries=$_SESSION['tiltseries'];
 $sessionname=$_SESSION['sessionname'];
-$outdir=$_SESSION['outdir'];
-$runname=$_SESSION['runname'];
 $imageinfo=$_SESSION['imageinfo'];
 $protomo_outdir = $_SESSION['protomo_outdir'];
 $preset_size = $_SESSION['preset_size'];
@@ -58,7 +65,7 @@ class Protomo2ReconstructionForm extends BasicLayoutForm
 	function __construct( $expId, $extraHTML, $commit='false', $negative='', $positive='', $recon_iter='', $recon_map_sampling='2',
 	$recon_map_size_x='2048', $recon_map_size_y='2048',	$recon_thickness='1500', $pixelsize='', $recon_lowpass='', $recon_lp_diam_x='15',
 	$recon_lp_diam_y='15', $ctf_correct='', $amp_contrast='0.07', $iWidth='20', $DefocusTol='200', $dose_presets='', $dose_a='',
-	$dose_b='', $dose_c='', $link_recon='')
+	$dose_b='', $dose_c='', $link_recon='', $frame_aligned='')
 	{
 		parent::__construct($expId, $extraHTML);
 		//print "_POST:" . "<br>";
@@ -86,7 +93,7 @@ class Protomo2ReconstructionForm extends BasicLayoutForm
 		//------ Set Parameters for the parent class, BasicLoopForm (general Appion params) -----//
 		
 		// Set the publications to be references on the web pages
-		$pubList = array('appion-protomo', 'protomo');
+		$pubList = array('appion-protomo', 'protomo', 'imodctf', 'dose_comp');
 		$this->setPublications( $pubList );
 		$this->setJobType( 'protomo' );
 		$this->setOutputDirectory( 'protomo_alignments' );
@@ -113,6 +120,7 @@ class Protomo2ReconstructionForm extends BasicLayoutForm
 		$params->addParam( "dose_a", $dose_a, "a" );
 		$params->addParam( "dose_b", $dose_b, "b" );
 		$params->addParam( "dose_c", $dose_c, "c" );
+		$params->addParam( "frame_aligned", $frame_aligned, "Use Frame Aligned Images" );
 		$params->addParam( "negative", $negative, "<strong>–</strong> Angle Limit" );
 		$params->addParam( "positive", $positive, "<strong>+</strong> Angle Limit" );
 		$params->addParam( "recon_iter", $recon_iter, "Refinement Iteration used to generate Reconstruction" );
@@ -155,11 +163,14 @@ class Protomo2ReconstructionForm extends BasicLayoutForm
 		<br />
 		<H4>CTF Correction Parameters ".docpop('ctf_info', '(Info)')."</H4>
 		<hr />";
-		
 		$html.= '<select name="ctf_correct" style="width:66px">';
 		$html.= '<option value="True">True</option>';
 		$html.= '<option selected value="False">False</option>';
 		$html.= '</select>'; $html.= docpop('ctf_correct', ' Correct for CTF').'<br>';
+		$html.= '<select name="frame_aligned" style="width:66px">';
+		$html.= '<option selected value="True">True</option>';
+		$html.= '<option value="False">False</option>';
+		$html.= '</select>'; $html.= docpop('protomo_frame_aligned', ' Use Frame Aligned Images').'<br>';
 		$html.= $params->insertTextField( "amp_contrast", $fieldSize );
 		$html.= $params->insertTextField( "iWidth", $fieldSize );
 		$html.= $params->insertTextField( "DefocusTol", $fieldSize );
@@ -297,7 +308,7 @@ class Protomo2ReconstructionForm extends BasicLayoutForm
 		$_SESSION['preset_search'] = $preset_search;
 		$_SESSION['preset_type'] = $preset_type;
 		
-		if ($_POST["process"] == "Just Show Command")
+		if ($_POST["process"] == "Just Show Command" and $_SESSION['from_batch'] == 0)
 		{
 			//$html .= "<br></br>
 				//<a href='runAppionLoop.php?expId=".$this->expId."&form=Protomo2UploadForm'><b><center>[Click here to continue on to <font size='4'>Upload your Reconstruction</font>] <font size='5'>→</font></center></center></b></a>";
