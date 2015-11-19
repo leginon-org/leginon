@@ -701,7 +701,7 @@ class ProTomo2Aligner(basicScript.BasicScript):
 			help="Parallelize image and video production.")
 		
 		self.parser.add_option("--frame_aligned", dest="frame_aligned",  default="True",
-			help="Use frame-aligned images instead of naively summed images, if present. Frame alignment must have been done with the Launch DE Frame Alignment script.")
+			help="Use frame-aligned images instead of naively summed images, if present.")
 		
 		self.parser.add_option("--my_tlt", dest="my_tlt",  default="False",
 			help="Allows for manual tilt-series setup")

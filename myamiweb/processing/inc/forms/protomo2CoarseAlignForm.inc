@@ -584,8 +584,8 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 				$html.= $params->insertTextField( "sampling", $fieldSize );
 				if ($_SESSION['manual']!=1) {
 						$html.= '<select name="frame_aligned" style="width:66px">';
-						$html.= '<option value="True">True</option>';
-						$html.= '<option selected value="False">False</option>';
+						$html.= '<option selected value="True">True</option>';
+						$html.= '<option value="False">False</option>';
 						$html.= '</select>'; $html.= docpop('protomo_frame_aligned', ' Use Frame Aligned Images').'<br>';
 				}
 				$html.= $params->insertTextFieldInRow( "shift_limit", $fieldSize ).'│ ';
@@ -712,8 +712,8 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 				$html.= $params->insertTextField( "sampling", $fieldSize );
 				if ($_SESSION['manual']!=1) {
 						$html.= '<select name="frame_aligned" style="width:66px">';
-						$html.= '<option value="True">True</option>';
-						$html.= '<option selected value="False">False</option>';
+						$html.= '<option selected value="True">True</option>';
+						$html.= '<option value="False">False</option>';
 						$html.= '</select>'; $html.= docpop('protomo_frame_aligned', ' Use Frame Aligned Images').'<br>';
 				}
 				//$html.= $params->insertTextField( "select_images", $fieldSize );

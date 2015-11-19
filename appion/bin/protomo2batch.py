@@ -603,7 +603,7 @@ def parseOptions():
 	parser.add_option("--parallel", dest="parallel",  default="False",
 		help="Parallelize while you parallelize (parallelizes image and video production). This could break your machine.")
 	parser.add_option("--frame_aligned", dest="frame_aligned",  default="True",
-		help="Use frame-aligned images instead of naively summed images, if present. Frame alignment must have been done with the Launch DE Frame Alignment script.")
+		help="Use frame-aligned images instead of naively summed images, if present.")
 	
 	options, args=parser.parse_args()
 	

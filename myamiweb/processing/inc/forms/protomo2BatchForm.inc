@@ -1751,8 +1751,8 @@ class Protomo2BatchForm extends BasicLayoutForm
 		<H3>Preparation Parameters ".docpop('prep_info', '(Info)')."</H3>
 		<hr />";
 			$html.= '<br><select name="frame_aligned" style="width:66px">';
-			$html.= '<option value="True">True</option>';
-			$html.= '<option selected value="False">False</option>';
+			$html.= '<option selected value="True">True</option>';
+			$html.= '<option value="False">False</option>';
 			$html.= '</select>'; $html.= docpop('protomo_frame_aligned', ' Use Frame Aligned Images').'<br>';
 			$html.= $params->insertTextFieldInRow( "shift_limit", $fieldSize ).'│ ';
 			$html.= $params->insertTextField( "angle_limit", $fieldSize );
@@ -1999,8 +1999,8 @@ class Protomo2BatchForm extends BasicLayoutForm
 		<H3>CTF Correction Parameters ".docpop('ctf_info', '(Info)')."</H3>
 		<hr />";
 			$html.= '<br><select name="frame_aligned" style="width:66px">';
-			$html.= '<option value="True">True</option>';
-			$html.= '<option selected value="False">False</option>';
+			$html.= '<option selected value="True">True</option>';
+			$html.= '<option value="False">False</option>';
 			$html.= '</select>'; $html.= docpop('protomo_frame_aligned', ' Use Frame Aligned Images').'<br>';
 			$html.= $params->insertTextField( "amp_contrast", $fieldSize );
 			$html.= $params->insertTextField( "iWidth", $fieldSize );
@@ -2015,8 +2015,8 @@ class Protomo2BatchForm extends BasicLayoutForm
 		<H3>Dose Compensation Parameters ".docpop('dose_info', '(Info)')."</H3>
 		<hr />";
 			$html.= '<br><select name="frame_aligned" style="width:66px">';
-			$html.= '<option value="True">True</option>';
-			$html.= '<option selected value="False">False</option>';
+			$html.= '<option selected value="True">True</option>';
+			$html.= '<option value="False">False</option>';
 			$html.= '</select>'; $html.= docpop('protomo_frame_aligned', ' Use Frame Aligned Images').'<br>';
 			$html.= '<select name="dose_presets" style="width:87px">';
 			$html.= '<option value="Light">Light</option>';
@@ -2041,8 +2041,8 @@ class Protomo2BatchForm extends BasicLayoutForm
 			$html.= $params->insertTextField( "refine_param_file", $fieldSize3 );
 			$html.= $params->insertTextField( "recon_param_file", $fieldSize3 ).'<br>';
 			$html.= '<br><select name="frame_aligned" style="width:66px">';
-			$html.= '<option value="True">True</option>';
-			$html.= '<option selected value="False">False</option>';
+			$html.= '<option selected value="True">True</option>';
+			$html.= '<option value="False">False</option>';
 			$html.= '</select>'; $html.= docpop('protomo_frame_aligned', ' Use Frame Aligned Images').'<br>';
 			$html.= $params->insertTextFieldInRow( "shift_limit", $fieldSize ).'│ ';
 			$html.= $params->insertTextField( "angle_limit", $fieldSize );
