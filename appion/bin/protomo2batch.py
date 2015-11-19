@@ -857,7 +857,7 @@ def protomoCoarseAlign(log_file, tiltseriesnumber, coarse_options):
 		apDisplay.printMsg("Generating Coarse Alignment reconstruction...")
 		f.write("Generating Coarse Alignment reconstruction...\n")
 		series.mapfile()
-		apProTomo2Aligner.makeReconstructionVideos(name, 0, tiltdir, 1024, 1024, "true", 'out', coarse_options.pixelsize, sampling, map_sampling, lp, thickness, coarse_options.video_type, "false", coarse_options.parallel, align_step="Coarse")
+		apProTomo2Aligner.makeReconstructionVideos(name, 0, tiltdir, region_x, region_y, "true", 'out', coarse_options.pixelsize, sampling, map_sampling, lp, thickness, coarse_options.video_type, "false", coarse_options.parallel, align_step="Coarse")
 	
 	apDisplay.printMsg("Coarse Alignment finished for Tilt-Series #%s!\n" % (tiltseriesnumber))
 	f.write("Coarse Alignment finished for Tilt-Series #%s!\n\n" % (tiltseriesnumber))
