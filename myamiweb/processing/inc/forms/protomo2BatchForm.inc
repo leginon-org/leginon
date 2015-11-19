@@ -1998,6 +1998,10 @@ class Protomo2BatchForm extends BasicLayoutForm
 		<br />
 		<H3>CTF Correction Parameters ".docpop('ctf_info', '(Info)')."</H3>
 		<hr />";
+			$html.= '<br><select name="frame_aligned" style="width:66px">';
+			$html.= '<option value="True">True</option>';
+			$html.= '<option selected value="False">False</option>';
+			$html.= '</select>'; $html.= docpop('protomo_frame_aligned', ' Use Frame Aligned Images').'<br>';
 			$html.= $params->insertTextField( "amp_contrast", $fieldSize );
 			$html.= $params->insertTextField( "iWidth", $fieldSize );
 			$html.= $params->insertTextField( "DefocusTol", $fieldSize );
@@ -2010,6 +2014,10 @@ class Protomo2BatchForm extends BasicLayoutForm
 		<br />
 		<H3>Dose Compensation Parameters ".docpop('dose_info', '(Info)')."</H3>
 		<hr />";
+			$html.= '<br><select name="frame_aligned" style="width:66px">';
+			$html.= '<option value="True">True</option>';
+			$html.= '<option selected value="False">False</option>';
+			$html.= '</select>'; $html.= docpop('protomo_frame_aligned', ' Use Frame Aligned Images').'<br>';
 			$html.= '<select name="dose_presets" style="width:87px">';
 			$html.= '<option value="Light">Light</option>';
 			$html.= '<option selected value="Moderate">Moderate</option>';

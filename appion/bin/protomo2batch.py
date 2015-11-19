@@ -794,9 +794,9 @@ def protomoCoarseAlign(log_file, tiltseriesnumber, coarse_options):
 		retry=0
 		brk=None
 		end=0
-		new_region_x=region_x/sampling   #Just initializing
-		new_region_y=region_y/sampling   #Just initializing
-		while (min(new_region_x,new_region_x) != 20 and end == 0):
+		new_region_x=int(region_x/sampling)   #Just initializing
+		new_region_y=int(region_y/sampling)   #Just initializing
+		while (min(new_region_x,new_region_y) != 20 and end == 0):
 			try:
 				if (brk != None):
 					apDisplay.printMsg("Keyboard Interrupt!")
@@ -813,18 +813,18 @@ def protomoCoarseAlign(log_file, tiltseriesnumber, coarse_options):
 				series.align()
 				final_retry=retry-1
 				end=1
-			except KeyboardInterrupt:  #Only catched if not running series.align()
+			except KeyboardInterrupt:  #Only caught if not in series.align()
 				brk=sys.exc_info()
 			except:
-				if (min(new_region_x,new_region_x) == 20):
+				if (min(new_region_x,new_region_y) == 20):
 					apDisplay.printMsg("Coarse Alignment for Tilt-Series #%s failed after rescaling the search area %s time(s)." % (tiltseriesnumber, retry-1))
 					apDisplay.printMsg("Window Size (x) was windowed down to %s" % (new_region_x*sampling))
 					apDisplay.printMsg("Window Size (y) was windowed down to %s" % (new_region_y*sampling))
-					apDisplay.printMsg("Put values less than these into thesponding parameter boxes on the Protomo Coarse Alignment Appion webpage and try again.\n")
+					apDisplay.printMsg("Put values less than these into the corresponding parameter boxes on the Protomo Coarse Alignment Appion webpage and try again.\n")
 					f.write("Coarse Alignment for Tilt-Series #%s failed after rescaling the search area %s time(s).\n" % (tiltseriesnumber, retry-1))
 					f.write("Window Size (x) was windowed down to %s\n" % (new_region_x*sampling))
 					f.write("Window Size (y) was windowed down to %s\n" % (new_region_y*sampling))
-					f.write("Put values less than these into thesponding parameter boxes on the Protomo Coarse Alignment Appion webpage and try again.\n\n")
+					f.write("Put values less than these into the corresponding parameter boxes on the Protomo Coarse Alignment Appion webpage and try again.\n\n")
 					brk=1
 				pass
 		
@@ -1084,9 +1084,9 @@ def protomoRefine(log_file, tiltseriesnumber, refine_options):
 		retry=0
 		brk=None
 		end=0
-		new_region_x=region_x/sampling   #Just initializing
-		new_region_y=region_y/sampling   #Just initializing
-		while (min(new_region_x,new_region_x) != 20 and end == 0):
+		new_region_x=int(region_x/sampling)   #Just initializing
+		new_region_y=int(region_y/sampling)   #Just initializing
+		while (min(new_region_x,new_region_y) != 20 and end == 0):
 			try:
 				if (brk != None):
 					apDisplay.printMsg("Keyboard Interrupt!")
@@ -1103,10 +1103,10 @@ def protomoRefine(log_file, tiltseriesnumber, refine_options):
 				series.align()
 				final_retry=retry-1
 				end=1
-			except KeyboardInterrupt:  #Only catched if not running series.align()
+			except KeyboardInterrupt:  #Only caught if not in series.align()
 				brk=sys.exc_info()
 			except:
-				if (min(new_region_x,new_region_x) == 20):
+				if (min(new_region_x,new_region_y) == 20):
 					apDisplay.printMsg("Refinement Iteration #%s failed after resampling the search area %s time(s)." % (start+n+1, retry-1))
 					apDisplay.printMsg("Window Size (x) was windowed down to %s" % (new_region_x*sampling))
 					apDisplay.printMsg("Window Size (y) was windowed down to %s" % (new_region_y*sampling))
@@ -1439,7 +1439,7 @@ def ctfCorrect(tiltseriesnumber, ctf_options):
 	"""
 	tiltdirname,tiltdir,seriesnumber,seriesname,tiltfilename,tiltfilename_full,raw_path,tiltstart,rawimagecount,maxtilt = variableSetup(ctf_options.rundir, tiltseriesnumber, prep="False")
 	os.chdir(tiltdir)
-	apProTomo2Prep.ctfCorrect(seriesname, tiltdir, ctf_options.projectid, ctf_options.sessionname, tiltseriesnumber, tiltfilename_full, ctf_options.pixelsize, ctf_options.DefocusTol, ctf_options.iWidth, ctf_options.amp_contrast)
+	apProTomo2Prep.ctfCorrect(seriesname, tiltdir, ctf_options.projectid, ctf_options.sessionname, tiltseriesnumber, tiltfilename_full, ctf_options.frame_aligned, ctf_options.pixelsize, ctf_options.DefocusTol, ctf_options.iWidth, ctf_options.amp_contrast)
 
 
 def doseCompensate(tiltseriesnumber, dose_options):
@@ -1449,7 +1449,7 @@ def doseCompensate(tiltseriesnumber, dose_options):
 	"""
 	tiltdirname,tiltdir,seriesnumber,seriesname,tiltfilename,tiltfilename_full,raw_path,tiltstart,rawimagecount,maxtilt = variableSetup(dose_options.rundir, tiltseriesnumber, prep="False")
 	os.chdir(tiltdir)
-	apProTomo2Prep.doseCompensate(seriesname, tiltdir, dose_options.sessionname, tiltseriesnumber, raw_path, dose_options.pixelsize, dose_options.dose_presets, dose_options.dose_a, dose_options.dose_b, dose_options.dose_c)
+	apProTomo2Prep.doseCompensate(seriesname, tiltdir, dose_options.sessionname, tiltseriesnumber, dose_options.frame_aligned, raw_path, dose_options.pixelsize, dose_options.dose_presets, dose_options.dose_a, dose_options.dose_b, dose_options.dose_c)
 
 
 def protomoAutoRefine(log_file, tiltseriesnumber, auto_refine_options):
@@ -1568,9 +1568,9 @@ def protomoAutoRefine(log_file, tiltseriesnumber, auto_refine_options):
 		retry=0
 		brk=None
 		end=0
-		new_region_x=region_x/sampling   #Just initializing
-		new_region_y=region_y/sampling   #Just initializing
-		while (min(new_region_x,new_region_x) != 20 and end == 0):
+		new_region_x=int(region_x/sampling)   #Just initializing
+		new_region_y=int(region_y/sampling)   #Just initializing
+		while (min(new_region_x,new_region_y) != 20 and end == 0):
 			try:
 				if (brk != None):
 					apDisplay.printMsg("Keyboard Interrupt!")
@@ -1587,10 +1587,10 @@ def protomoAutoRefine(log_file, tiltseriesnumber, auto_refine_options):
 				series.align()
 				final_retry=retry-1
 				end=1
-			except KeyboardInterrupt:  #Only catched if not running series.align()
+			except KeyboardInterrupt:  #Only caught if not in series.align()
 				brk=sys.exc_info()
 			except:
-				if (min(new_region_x,new_region_x) == 20):
+				if (min(new_region_x,new_region_y) == 20):
 					apDisplay.printMsg("Refinement Iteration #%s failed after resampling the search area %s time(s)." % (start+n+1, retry-1))
 					apDisplay.printMsg("Window Size (x) was windowed down to %s" % (new_region_x*sampling))
 					apDisplay.printMsg("Window Size (y) was windowed down to %s" % (new_region_y*sampling))
@@ -1754,9 +1754,9 @@ def protomoAutoRefine(log_file, tiltseriesnumber, auto_refine_options):
 		retry=0
 		brk=None
 		end=0
-		new_region_x=region_x/sampling   #Just initializing
-		new_region_y=region_y/sampling   #Just initializing
-		while (min(new_region_x,new_region_x) != 20 and end == 0):
+		new_region_x=int(region_x/sampling)   #Just initializing
+		new_region_y=int(region_y/sampling)   #Just initializing
+		while (min(new_region_x,new_region_y) != 20 and end == 0):
 			try:
 				if (brk != None):
 					apDisplay.printMsg("Keyboard Interrupt!")
@@ -1773,10 +1773,10 @@ def protomoAutoRefine(log_file, tiltseriesnumber, auto_refine_options):
 				series.align()
 				final_retry=retry-1
 				end=1
-			except KeyboardInterrupt:  #Only catched if not running series.align()
+			except KeyboardInterrupt:  #Only caught if not in series.align()
 				brk=sys.exc_info()
 			except:
-				if (min(new_region_x,new_region_x) == 20):
+				if (min(new_region_x,new_region_y) == 20):
 					apDisplay.printMsg("Refinement Iteration #%s failed after resampling the search area %s time(s)." % (start+n+1, retry-1))
 					apDisplay.printMsg("Window Size (x) was windowed down to %s" % (new_region_x*sampling))
 					apDisplay.printMsg("Window Size (y) was windowed down to %s" % (new_region_y*sampling))
@@ -1980,9 +1980,9 @@ def protomoAutoRefine(log_file, tiltseriesnumber, auto_refine_options):
 			retry=0
 			brk=None
 			end=0
-			new_region_x=region_x/sampling   #Just initializing
-			new_region_y=region_y/sampling   #Just initializing
-			while (min(new_region_x,new_region_x) != 20 and end == 0):
+			new_region_x=int(region_x/sampling)   #Just initializing
+			new_region_y=int(region_y/sampling)   #Just initializing
+			while (min(new_region_x,new_region_y) != 20 and end == 0):
 				try:
 					if (brk != None):
 						apDisplay.printMsg("Keyboard Interrupt!")
@@ -1999,10 +1999,10 @@ def protomoAutoRefine(log_file, tiltseriesnumber, auto_refine_options):
 					series.align()
 					final_retry=retry-1
 					end=1
-				except KeyboardInterrupt:  #Only catched if not running series.align()
+				except KeyboardInterrupt:  #Only caught if not in series.align()
 					brk=sys.exc_info()
 				except:
-					if (min(new_region_x,new_region_x) == 20):
+					if (min(new_region_x,new_region_y) == 20):
 						apDisplay.printMsg("Refinement Iteration #%s failed after resampling the search area %s time(s)." % (start+n+1, retry-1))
 						apDisplay.printMsg("Window Size (x) was windowed down to %s" % (new_region_x*sampling))
 						apDisplay.printMsg("Window Size (y) was windowed down to %s" % (new_region_y*sampling))
@@ -2179,9 +2179,9 @@ def protomoScreening(log_file, tiltseriesnumber, screening_options):
 		retry=0
 		brk=None
 		end=0
-		new_region_x=region_x/sampling   #Just initializing
-		new_region_y=region_y/sampling   #Just initializing
-		while (min(new_region_x,new_region_x) != 20 and end == 0):
+		new_region_x=int(region_x/sampling)   #Just initializing
+		new_region_y=int(region_y/sampling)   #Just initializing
+		while (min(new_region_x,new_region_y) != 20 and end == 0):
 			try:
 				if (brk != None):
 					apDisplay.printMsg("Keyboard Interrupt!")
@@ -2198,18 +2198,18 @@ def protomoScreening(log_file, tiltseriesnumber, screening_options):
 				series.align()
 				final_retry=retry-1
 				end=1
-			except KeyboardInterrupt:  #Only catched if not running series.align()
+			except KeyboardInterrupt:  #Only caught if not in series.align()
 				brk=sys.exc_info()
 			except:
-				if (min(new_region_x,new_region_x) == 20):
+				if (min(new_region_x,new_region_y) == 20):
 					apDisplay.printMsg("Coarse Alignment for Tilt-Series #%s failed after rescaling the search area %s time(s)." % (tiltseriesnumber, retry-1))
 					apDisplay.printMsg("Window Size (x) was windowed down to %s" % (new_region_x*sampling))
 					apDisplay.printMsg("Window Size (y) was windowed down to %s" % (new_region_y*sampling))
-					apDisplay.printMsg("Put values less than these into thesponding parameter boxes on the Protomo Coarse Alignment Appion webpage and try again.\n")
+					apDisplay.printMsg("Put values less than these into the corresponding parameter boxes on the Protomo Coarse Alignment Appion webpage and try again.\n")
 					f.write("Coarse Alignment for Tilt-Series #%s failed after rescaling the search area %s time(s).\n" % (tiltseriesnumber, retry-1))
 					f.write("Window Size (x) was windowed down to %s\n" % (new_region_x*sampling))
 					f.write("Window Size (y) was windowed down to %s\n" % (new_region_y*sampling))
-					f.write("Put values less than these into thesponding parameter boxes on the Protomo Coarse Alignment Appion webpage and try again.\n\n")
+					f.write("Put values less than these into the corresponding parameter boxes on the Protomo Coarse Alignment Appion webpage and try again.\n\n")
 					brk=1
 				pass
 		
@@ -2582,6 +2582,6 @@ if __name__ == '__main__':
 	log.write('If so, kindly email Alex at ajn10d@fsu.edu and include this log file.\n')
 	log.write('If everything worked beautifully and you publish it, please use the appropriate citations listed on the Appion webpage!\n')
 	print "\n"
-	apDisplay.printMsg("Closing log file %s" % log_file)
+	apDisplay.printMsg("Closing log file %s\n" % log_file)
 	log.write("\nEnd time: %s" % time_end)
 	log.close()

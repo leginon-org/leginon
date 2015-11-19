@@ -90,7 +90,7 @@ def linkImageFiles(imgtree,rawdir):
 			os.symlink(os.path.join(imgpath,imagedata['filename']+'.mrc'),linkedpath)
 	return filenamelist
 
-def getImageFiles(imgtree, rawdir, link, copy, frame_aligned):
+def getImageFiles(imgtree, rawdir, link, copy):
 	#This function should replace linkImageFiles in all calls (i.e. in tomoaligner.py and everywhere else)
 	filenamelist = []
 	newimgtree=[]
@@ -104,11 +104,6 @@ def getImageFiles(imgtree, rawdir, link, copy, frame_aligned):
 		destpath = os.path.join(rawdir,imgname)
 		newimgtree.append(destpath)
 		imgfullpath = os.path.join(imgpath,imagedata['filename']+'.mrc')
-		#Use frame aligned image? This is only for frames aligned with Launch DE Frame Alignment
-		if frame_aligned == "True":
-			images=glob.glob(imgfullpath[:-8]+'*'+imgfullpath[-7:-4]+'*')
-			images.sort(key=os.path.getmtime)
-			imgfullpath = images[-1]
 
 		if link == "True":
 			#create symlinks to files

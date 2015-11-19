@@ -133,11 +133,15 @@ def getAccumulatedDoses(imagelist):
 	cumarray = numpy.cumsum(dosearray)
 	return cumarray.tolist()
 
-def orderImageList(imagelist):
+def orderImageList(frame_tiltdata, non_frame_tiltdata, frame_aligned):
 	'''This is complex because the two start tilt images are often sorted wrong if
 			just use alpha tilt.  Therefore, a fake alpha tilt value is created based
 			on the tilt image collected next in time
 	'''
+	if frame_aligned =="True":
+		imagelist = frame_tiltdata
+	else:
+		imagelist = non_frame_tiltdata
 	if not imagelist:
 		apDisplay.printWarning('No images in image list.')
 		return

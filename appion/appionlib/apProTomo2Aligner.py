@@ -1588,7 +1588,7 @@ def makeCTFPlot(rundir, seriesname, defocus_file_full, voltage, cs):
 		plt.figure()
 		plt.plot(x,y)
 		plt.xlabel("Spatial Frequency (1/$\AA$)")
-		plt.ylabel("Phase Contrast Delivered")
+		plt.ylabel("Approximate Phase Contrast Delivered")
 		plt.title("Estimated CTF^2 of Tilt-Series")
 		plt.grid(True)
 		plt.minorticks_on()
