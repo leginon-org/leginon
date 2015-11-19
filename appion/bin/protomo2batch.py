@@ -872,6 +872,7 @@ def protomoRefine(log_file, tiltseriesnumber, refine_options):
 	Depiction videos are made if requested.
 	"""
 	tiltdirname,tiltdir,seriesnumber,seriesname,tiltfilename,tiltfilename_full,raw_path,tiltstart,rawimagecount,maxtilt = variableSetup(refine_options.rundir, tiltseriesnumber, prep="False")
+	os.system('touch %s/.tiltseries.%04d' % (tiltdir, tiltseriesnumber))  #Internal tracker for what has been processed through alignment
 	f = open(log_file,'a')
 	os.chdir(tiltdir)
 	cos_alpha=np.cos(maxtilt*np.pi/180)
