@@ -93,7 +93,7 @@ class Protomo2ReconstructionForm extends BasicLayoutForm
 		//------ Set Parameters for the parent class, BasicLoopForm (general Appion params) -----//
 		
 		// Set the publications to be references on the web pages
-		$pubList = array('appion-protomo', 'protomo');
+		$pubList = array('appion-protomo', 'protomo', 'imodctf', 'dose_comp');
 		$this->setPublications( $pubList );
 		$this->setJobType( 'protomo' );
 		$this->setOutputDirectory( 'protomo_alignments' );
