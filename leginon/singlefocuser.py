@@ -19,7 +19,7 @@ import copy
 import gui.wx.Focuser
 import player
 
-class Focuser(manualfocuschecker.ManualFocusChecker):
+class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 	panelclass = gui.wx.Focuser.Panel
 	settingsclass = leginondata.FocuserSettingsData
 	defaultsettings = manualfocuschecker.ManualFocusChecker.defaultsettings
