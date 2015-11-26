@@ -49,6 +49,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		'queue drift': True,
 		'sort target': False,
 		'allow append': False,
+		'multifocus': False,
 	}
 	eventinputs = imagewatcher.ImageWatcher.eventinputs \
 									+ [event.AcquisitionImagePublishEvent] \
@@ -252,7 +253,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		imageshape = imagearray.shape
 		lastnumber = self.lastTargetNumber(image=imagedata, session=self.session)
 		number = lastnumber + 1
-		if typename == 'focus':
+		if typename == 'focus' and self.settings['multifocus'] is not True:
 			imagetargets = self.getCenterTargets(imagetargets, imageshape)
 		for imagetarget in imagetargets:
 			column, row = imagetarget
@@ -270,7 +271,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		if len(imagetargets) <= 1:
 			return imagetargets
 		else:
-			self.logger.warning('Each image can only have one focus target. Publish only the one closest to the center')
+			self.logger.warning('Publish only the focus target closest to the center')
 			deltas = map((lambda x: math.hypot(x[1]-imageshape[0]/2,x[0]-imageshape[1]/2)),imagetargets)
 			return [imagetargets[deltas.index(min(deltas))],]
 

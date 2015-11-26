@@ -1357,6 +1357,7 @@ class TargetFinderSettingsData(SettingsData):
 			('queue drift', bool),
 			('sort target', bool),
 			('allow append', bool),
+			('multifocus', bool),
 			('skip', bool),
 		)
 	typemap = classmethod(typemap)
