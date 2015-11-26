@@ -208,6 +208,14 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 
 		# process the good ones
 		targetliststatus = 'success'
+		self.processGoodTargets(goodtargets)
+
+		self.reportTargetListDone(newdata, targetliststatus)
+		if self.settings['park after list']:
+			self.park()
+		self.setStatus('idle')
+
+	def processGoodTargets(self, goodtargets):
 		for i, target in enumerate(goodtargets):
 			self.goodnumber = i
 			self.logger.debug('target %s status %s' % (i, target['status'],))
@@ -275,11 +283,6 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 				# end of target repeat loop
 			# next target is not a first-image
 			self.is_firstimage = False
-
-		self.reportTargetListDone(newdata, targetliststatus)
-		if self.settings['park after list']:
-			self.park()
-		self.setStatus('idle')
 
 	def park(self):
 		self.logger.info('parking...')
