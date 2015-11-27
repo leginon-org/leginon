@@ -146,6 +146,8 @@ class Focuser(singlefocuser.SingleFocuser):
 			self.applyAverageCorrection(setting)
 
 	def applyAverageCorrection(self, setting):
+		if not setting['switch']:
+			return
 		# average the results for current
 		if setting['correction type'] == 'Defocus' and len(self.corrected_focus) > 0:
 			defocus0 = self.instrument.tem.Defocus
@@ -210,7 +212,8 @@ class Focuser(singlefocuser.SingleFocuser):
 		else:
 			self.deltaz = emtarget['delta z']
 
-		self.meltIce(emtarget,attempt)
+		if self.current_focus_sequence_step == 0:
+			self.meltIce(emtarget,attempt)
 
 		status = 'unknown'
 
