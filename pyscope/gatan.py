@@ -339,3 +339,6 @@ class Gatan3(Gatan):
 	name = 'Gatan3'
 	cameraid = 3
 
+class Orius(Gatan):
+	name = 'Orius'
+	cameraid = 0
