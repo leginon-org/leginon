@@ -37,6 +37,7 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 		'pause time': 3.0,
 		'interval time': 0.0,
 	}
+	requestdata = None
 
 	def __init__(self, *args, **kwargs):
 		try:
@@ -72,17 +73,29 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 			self.start()
 
 	def processData(self, incoming_data):
+		'''
+		Preocess ReferenceTargetData and more.  Subclass should set
+		self.requestdata
+		'''
 		if self.settings['bypass']:
 			return
 		if isinstance(incoming_data, leginondata.ReferenceTargetData):
 			self.processReferenceTarget(incoming_data)
+		if self.requestdata and isinstance(incoming_data, self.requestdata):
+			self.processRequest(incoming_data)
 
 	def processReferenceTarget(self, target_data):
+		'''
+		Set reference_target
+		'''
 		self.lock.acquire()
 		self.reference_target = target_data
 		self.lock.release()
 
 	def getEMTargetData(self,check_preset_name=None):
+		'''
+		Setup EMTargetData using self.reference_target
+		'''
 		target_data = self.reference_target
 		if target_data is None:
 			raise MoveError('no reference target available')
@@ -124,6 +137,9 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 		return em_target_data
 
 	def moveToTarget(self, preset_name):
+		'''
+		Set Preset and EMTarget to scope
+		'''
 		em_target_data = self.getEMTargetData(preset_name)
 
 		self.publish(em_target_data, database=True)
@@ -213,6 +229,7 @@ class AlignZeroLossPeak(Reference):
 	}
 	eventinputs = Reference.eventinputs + [event.AlignZeroLossPeakPublishEvent]
 	panelclass = gui.wx.AlignZLP.AlignZeroLossPeakPanel
+	requestdata = leginondata.AlignZeroLossPeakData
 	def __init__(self, *args, **kwargs):
 		try:
 			watch = kwargs['watchfor']
@@ -221,13 +238,6 @@ class AlignZeroLossPeak(Reference):
 		kwargs['watchfor'] = watch + [event.AlignZeroLossPeakPublishEvent]
 		Reference.__init__(self, *args, **kwargs)
 		self.start()
-
-	def processData(self, incoming_data):
-		if self.settings['bypass']:
-			return
-		Reference.processData(self, incoming_data)
-		if isinstance(incoming_data, leginondata.AlignZeroLossPeakData):
-			self.processRequest(incoming_data)
 
 	def _processRequest(self, request_data):
 		check_preset_name = self.settings['check preset']
@@ -378,6 +388,7 @@ class MeasureDose(Reference):
 	eventinputs = Reference.eventinputs + [event.MeasureDosePublishEvent]
 	eventoutputs = Reference.eventoutputs
 	panelclass = gui.wx.Reference.MeasureDosePanel
+	requestdata = leginondata.MeasureDoseData
 	def __init__(self, *args, **kwargs):
 		try:
 			watch = kwargs['watchfor']
@@ -386,11 +397,6 @@ class MeasureDose(Reference):
 		kwargs['watchfor'] = watch + [event.MeasureDosePublishEvent]
 		Reference.__init__(self, *args, **kwargs)
 		self.start()
-
-	def processData(self, incoming_data):
-		Reference.processData(self, incoming_data)
-		if isinstance(incoming_data, leginondata.MeasureDoseData):
-			self.processRequest(incoming_data)
 
 	# override move to measure dose...
 	def moveToTarget(self, preset_name):

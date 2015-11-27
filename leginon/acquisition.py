@@ -176,6 +176,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 											event.FixAlignmentEvent,
 											event.FixConditionEvent,
 											event.AlignZeroLossPeakPublishEvent,
+											event.PhasePlatePublishEvent,
 											event.ImageListPublishEvent, event.ReferenceTargetPublishEvent] \
 											+ navigator.NavigatorClient.eventoutputs
 
@@ -213,6 +214,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.times = []
 		self.intensities = []
 		self.alignzlp_bound = False
+		self.phaseplate_bound = False
 		self.alignzlp_warned = False
 
 		self.duplicatetypes = ['acquisition', 'focus']
@@ -230,6 +232,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		'''
 		app = evt['application']
 		self.alignzlp_bound = appclient.getNextNodeThruBinding(app,self.name,'AlignZeroLossPeakPublishEvent','AlignZeroLossPeak')
+		self.phaseplate_bound = appclient.getNextNodeThruBinding(app,self.name,'PhasePlatePublishEvent','PhasePlateAligner')
 
 	def checkSettings(self, settings):
 		problems = []
@@ -371,6 +374,12 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.onTarget = False
 		return newtargetdata
 
+	def tunePhasePlate(self, presetname):
+		# TO DO: need some way to check if there is a phase plate
+		presetdata = self.presetsclient.getPresetByName(presetname)
+		if self.phaseplate_bound:
+				self.nextPhasePlate(presetname)
+
 	def tuneEnergyFilter(self, presetname):
 		presetdata = self.presetsclient.getPresetByName(presetname)
 		if presetdata['energy filter'] or presetdata['tem energy filter']:
@@ -381,11 +390,25 @@ class Acquisition(targetwatcher.TargetWatcher):
 					self.logger.warning('Energy filter activated but can not tune without binding to Align ZLP')
 					self.alignzlp_warned = True	
 
+	def nextPhasePlate(self, preset_name):
+		request_data = leginondata.PhasePlateData()
+		request_data['session'] = self.session
+		request_data['preset'] = preset_name
+		self.publish(request_data, database=True, pubevent=True, wait=True)
+
 	def alignZeroLossPeak(self, preset_name):
 		request_data = leginondata.AlignZeroLossPeakData()
 		request_data['session'] = self.session
 		request_data['preset'] = preset_name
 		self.publish(request_data, database=True, pubevent=True, wait=True)
+
+	def preTargetSetup(self):
+		'''
+		Things to do before move to target and set preset
+		'''
+		zlp_preset_name = self.settings['preset order'][-1]
+		self.logger.info('Tuning before process a target')
+		self.tuneEnergyFilter(zlp_preset_name)
 
 	def processTargetData(self, targetdata, attempt=None):
 		'''
@@ -393,9 +416,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		If called with targetdata=None, this simulates what occurs at
 		a target (going to presets, acquiring images, etc.)
 		'''
-
-		zlp_preset_name = self.settings['preset order'][-1]
-		self.tuneEnergyFilter(zlp_preset_name)
+		self.preTargetSetup()
 		try:
 			self.validatePresets()
 		except InvalidPresetsSequence, e:
@@ -1238,6 +1259,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 			self.logger.error(e)
 
 	def fixCondition(self):
+		# This is done before any rejected targets
 		evt = event.FixConditionEvent()
 		try:
 			status = self.outputEvent(evt, wait=True)
@@ -1245,6 +1267,10 @@ class Acquisition(targetwatcher.TargetWatcher):
 			self.logger.debug(e)
 		except Exception, e:
 			self.logger.error(e)
+		# Phase Plate stuff
+		preset_name = self.settings['preset order'][-1]
+		self.logger.info('Tuning before process a target')
+		self.tunePhasePlate(preset_name)
 
 	def getMoveTypes(self):
 		movetypes = []

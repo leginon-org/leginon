@@ -935,6 +935,9 @@ class ZeroLossCheckData(InSessionData):
 class MeasureDoseData(ReferenceRequestData):
 	pass
 
+class PhasePlateData(ReferenceRequestData):
+	pass
+
 class AdjustPresetData(ReferenceRequestData):
 	pass
 
@@ -2345,6 +2348,12 @@ class AlignZLPSettingsData(ReferenceSettingsData):
 		)
 	typemap = classmethod(typemap)
 
+class PhasePlateAlignerSettingsData(ReferenceSettingsData):
+	def typemap(cls):
+		return ReferenceSettingsData.typemap() + (
+			('charge time', float),
+		)
+	typemap = classmethod(typemap)
 class TimerData(InSessionData):
 	def typemap(cls):
 		return InSessionData.typemap() + (

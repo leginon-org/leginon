@@ -183,6 +183,9 @@ class AlignZeroLossPeakPublishEvent(PublishEvent):
 class MeasureDosePublishEvent(PublishEvent):
 	dataclass = leginondata.MeasureDoseData
 
+class PhasePlatePublishEvent(PublishEvent):
+	dataclass = leginondata.PhasePlateData
+
 class FixAlignmentEvent(Event):
 	pass
 
