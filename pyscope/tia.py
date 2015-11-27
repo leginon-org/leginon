@@ -257,7 +257,7 @@ acquisition.
 			arr.shape = (self.dimension['y'],self.dimension['x'])
 			arr = numpy.flipud(arr)
 		except AttributeError, e:
-			print 'comtypes did not return an numpy 2D array, but %s' % (type(arr)
+			print 'comtypes did not return an numpy 2D array, but %s' % (type(arr))
 		except Exception, e:
 			print e
 			arr = None
