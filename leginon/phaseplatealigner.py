@@ -31,18 +31,15 @@ class PhasePlateAligner(reference.Reference):
 		self.setStatus('processing')
 		self.logger.info('handle request')
 		self.nextPhasePlate()		
-		self.player.wait()
 		self.logger.info('done')
 		self.setStatus('idle')
 		return True
 
 	def nextPhasePlate(self):
-		self.setStatus('user input')
-		self.logger.info('Waiting for user to advance PP and align.')
+		self.setStatus('processing')
+		self.logger.info('Waiting for scope to advance PP')
 		self.instrument.tem.nextPhasePlate()
 		if self.settings['charge time']:
 			self.presets_client.toScope(self.preset_name)
 			self.logger.info('expose for %.1f second' % self.settings['charge time'])
 			self.instrument.tem.exposeSpecimenNotCamera(self.settings['charge time'])
-		self.player.pause()
-		print 'should not be here before dialog close'
