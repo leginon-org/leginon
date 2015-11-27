@@ -152,6 +152,7 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 
 	def _processRequest(self, request_data):
 		preset_name = request_data['preset']
+		self.preset_name = preset_name
 		pause_time = self.settings['pause time']
 		interval_time = self.settings['interval time']
 

@@ -9,7 +9,7 @@ class PhasePlateAligner(reference.Reference):
 	settingsclass = leginondata.PhasePlateAlignerSettingsData
 	defaultsettings = reference.Reference.defaultsettings
 	defaultsettings.update({
-		'charge time': 0.0,
+		'charge time': 2.0,
 	})
 	eventinputs = reference.Reference.eventinputs + [event.PhasePlatePublishEvent]
 	panelclass = gui.wx.PhasePlateAligner.PhasePlateAlignerPanel
@@ -39,5 +39,10 @@ class PhasePlateAligner(reference.Reference):
 	def nextPhasePlate(self):
 		self.setStatus('user input')
 		self.logger.info('Waiting for user to advance PP and align.')
+		self.instrument.tem.nextPhasePlate()
+		if self.settings['charge time']:
+			self.presets_client.toScope(self.preset_name)
+			self.logger.info('expose for %.1f second' % self.settings['charge time'])
+			self.instrument.tem.exposeSpecimenNotCamera(self.settings['charge time'])
 		self.player.pause()
 		print 'should not be here before dialog close'

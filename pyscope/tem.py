@@ -82,6 +82,7 @@ class TEM(baseinstrument.BaseInstrument):
 		{'name': 'resetDefocus', 'type': 'method'},
 		{'name': 'relaxBeam', 'type': 'method'},
 		{'name': 'runBufferCycle', 'type': 'method'},
+		{'name': 'nextPhasePlate', 'type': 'method'},
 
 		## optional:
 		{'name': 'EnergyFilter', 'type': 'property'},
@@ -140,3 +141,6 @@ class TEM(baseinstrument.BaseInstrument):
 		Only needed for JEOL scopes
 		'''
 		pass
+
+	def nextPhasePlate(self):
+		print "next position"

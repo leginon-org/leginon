@@ -81,10 +81,15 @@ class ReferencePanel(leginon.gui.wx.Node.Panel):
 											id=leginon.gui.wx.ToolBar.ID_ABORT)
 
 	def onSettingsTool(self, evt):
-		dialog = SettingsDialog(self)
+		dialog = self._SettingsDialog(self)
 		dialog.ShowModal()
 		dialog.Destroy()
 
+	def _SettingsDialog(self,parent):
+		# This "private call" ensures that the class in this module is loaded
+		# instead of the one in module containing the parent class
+		return SettingsDialog(parent)
+	
 	def onTest(self, evt):
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, False)
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT, True)

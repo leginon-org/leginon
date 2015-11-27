@@ -22,6 +22,7 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		position = self.createMoveTypeChoice((position[0],0))
 		position = self.createPauseTimeEntry((position[0],0))
 		position = self.createIntervalTimeEntry((position[0],0))
+		position = self.createChargeTimeEntry((position[0],0))
 
 		sbsz.Add(self.sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
 
@@ -62,7 +63,21 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		self.sz.Add(self.widgets['bypass'], start_position, (1, 2), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_LEFT)
 		return start_position[0]+1,start_position[1]+1
 
+	def createChargeTimeEntry(self, start_position):
+		self.widgets['charge time'] = FloatEntry(self, -1, min=0.0, allownone=False, chars=4, value='3.0')
+		szpausetime = wx.GridBagSizer(5, 5)
+		szpausetime.Add(wx.StaticText(self, -1, 'Expose for'), (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szpausetime.Add(self.widgets['charge time'], (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		szpausetime.Add(wx.StaticText(self, -1, 'seconds to charge up carbon film phase plate'), (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.sz.Add(szpausetime, start_position, (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		return start_position[0]+1,start_position[1]+1
+
 class PhasePlateAlignerPanel(leginon.gui.wx.Reference.ReferencePanel):
+	def _SettingsDialog(self,parent):
+		# This "private call" ensures that the class in this module is loaded
+		# instead of the one in module containing the parent class
+		return SettingsDialog(parent)
+	
 	def onNodeInitialized(self):
 		super(PhasePlateAlignerPanel,self).onNodeInitialized()
 
