@@ -10,6 +10,7 @@ items = [
 		('Tecnai Low Dose Kit', ('LDServer.LdSrv',)),
 		('Tecnai Exposure Adaptor', ('adaExp.TAdaExp',)),
 		('Gatan CCD Camera', ('TecnaiCCD.GatanCamera.2',)),
+		('TIA', ('ESVision.Application',)),
 
 ]
 
