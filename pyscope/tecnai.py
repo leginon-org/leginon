@@ -1347,6 +1347,9 @@ class Krios(Tecnai):
 			return
 		return self._setStagePosition(value)
 
+class EFKrios(Krios):
+	name = 'EF-Krios'
+
 class Talos(Tecnai):
 	name = 'Talos'
 	use_normalization = True
