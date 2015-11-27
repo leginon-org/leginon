@@ -17,6 +17,10 @@ comtypes.client.tiaccd = connection
 def get_tiaccd():
 	global connection
 	if connection.esv is None:
+		try:
+			comtypes.CoInitializeEx(comtypes.COINIT_MULTITHREADED)
+		except:
+			comtypes.CoInitialize()
 		connection.esv = comtypes.client.CreateObject('ESVision.Application')
 		connection.acqman = connection.esv.AcquisitionManager()
 		connection.ccd = connection.esv.CcdServer()
@@ -284,6 +288,7 @@ acquisition.
 		return False
 
 class TIA_Eagle(TIA):
+	name = 'Eagle'
 	camera_name = 'BM-Eagle'
 # Note:  only known to work with 4kx4k Eagle.
 # Multiplier, "M" determined by acquiring a series of dark/bright pairs
@@ -305,6 +310,7 @@ class TIA_Eagle(TIA):
 			return 7.8
 
 class TIA_Falcon(TIA):
+	name = 'Falcon'
 	camera_name = 'BM-Falcon'
 	binning_limits = [1,2,4]
 
@@ -428,7 +434,11 @@ class TIA_Falcon(TIA):
 		if self.save_frames:
 			self.frameconfig.makeRealConfigFromExposureTime(movie_exposure_second,self.equal_distr_frame_number,self.start_frame_number)
 		else:
-			self.frameconfig.makeDummyConfig(movie_exposure_second)
+			try:
+				self.frameconfig.makeDummyConfig(movie_exposure_second)
+			except:
+				# In case falconframe.py is not set up right
+				pass
 
 	def getSystemGainDarkCorrected(self):
 		return True
@@ -446,6 +456,7 @@ class TIA_Falcon(TIA):
 		return 3
 
 class TIA_Orius(TIA):
+	name = 'Orius'
 	camera_name = 'BM-Orius'
 
 class TIA_Ceta(TIA):
