@@ -411,7 +411,7 @@ def removeHighlyShiftedImages(tiltfile, dimx, dimy, shift_limit, angle_limit):
 	
 	bad_images=[]
 	bad_kept_images=[]
-	for i in range(tiltstart,numimages+1):
+	for i in range(tiltstart,numimages+tiltstart+1):
 		#Get information from tlt file. This needs to versatile for differently formatted .tlt files, so awk it is.
 		cmd1="awk '/IMAGE %s /{print}' %s | awk '{for (j=1;j<=NF;j++) if($j ~/ORIGIN/) print $(j+2)}'" % (i, tiltfile)
 		proc=subprocess.Popen(cmd1, stdout=subprocess.PIPE, shell=True)
@@ -503,7 +503,7 @@ def removeHighTiltsFromTiltFile(tiltfile, negative=-90, positive=90):
 		tiltstart=int(tiltstart)
 		
 		removed_images=[]
-		for i in range(tiltstart,numimages+1):
+		for i in range(tiltstart,numimages+tiltstart+1):
 			try: #If the image isn't in the .tlt file, skip it
 				#Get information from tlt file. This needs to versatile for differently formatted .tlt files, so awk it is.
 				cmd="awk '/IMAGE %s /{print}' %s | awk '{for (j=1;j<=NF;j++) if($j ~/TILT/) print $(j+2)}'" % (i, tiltfile)

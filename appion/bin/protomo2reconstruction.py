@@ -183,12 +183,15 @@ class ProTomo2Reconstruction(basicScript.BasicScript):
 			mintilt=0
 			maxtilt=0
 			for i in range(tiltstart-1,tiltstart+numimages-1):
-				cmd="awk '/IMAGE %s /{print}' %s | awk '{for (j=1;j<=NF;j++) if($j ~/TILT/) print $(j+2)}'" % (i+1, recon_tilt_out_full)
-				proc=subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
-				(tilt_angle, err) = proc.communicate()
-				tilt_angle=float(tilt_angle)
-				mintilt=min(mintilt,tilt_angle)
-				maxtilt=max(maxtilt,tilt_angle)
+				try: #If the image isn't in the .tlt file, skip it
+					cmd="awk '/IMAGE %s /{print}' %s | awk '{for (j=1;j<=NF;j++) if($j ~/TILT/) print $(j+2)}'" % (i+1, recon_tilt_out_full)
+					proc=subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
+					(tilt_angle, err) = proc.communicate()
+					tilt_angle=float(tilt_angle)
+					mintilt=min(mintilt,tilt_angle)
+					maxtilt=max(maxtilt,tilt_angle)
+				except:
+					pass
 		
 		# Backup then edit the Refinement param file, changing the map size, map sampling, cache dir, and out dir
 		refine_param_full=self.params['rundir']+'/'+'refine_'+param_out
