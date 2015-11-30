@@ -504,16 +504,19 @@ def removeHighTiltsFromTiltFile(tiltfile, negative=-90, positive=90):
 		
 		removed_images=[]
 		for i in range(tiltstart,numimages+1):
-			#Get information from tlt file. This needs to versatile for differently formatted .tlt files, so awk it is.
-			cmd="awk '/IMAGE %s /{print}' %s | awk '{for (j=1;j<=NF;j++) if($j ~/TILT/) print $(j+2)}'" % (i, tiltfile)
-			proc=subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
-			(tilt_angle, err) = proc.communicate()
-			tilt_angle=float(tilt_angle)
-		
-			if tilt_angle < negative:
-				removed_images.append(i)
-			elif tilt_angle > positive:
-				removed_images.append(i)
+			try: #If the image isn't in the .tlt file, skip it
+				#Get information from tlt file. This needs to versatile for differently formatted .tlt files, so awk it is.
+				cmd="awk '/IMAGE %s /{print}' %s | awk '{for (j=1;j<=NF;j++) if($j ~/TILT/) print $(j+2)}'" % (i, tiltfile)
+				proc=subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
+				(tilt_angle, err) = proc.communicate()
+				tilt_angle=float(tilt_angle)
+			
+				if tilt_angle < negative:
+					removed_images.append(i)
+				elif tilt_angle > positive:
+					removed_images.append(i)
+			except:
+				pass
 		
 		for image in removed_images:
 			removeImageFromTiltFile(tiltfile, image, remove_refimg="True")
@@ -530,12 +533,15 @@ def removeHighTiltsFromTiltFile(tiltfile, negative=-90, positive=90):
 		mintilt=0
 		maxtilt=0
 		for i in range(tiltstart-1,tiltstart+numimages-1):
-			cmd="awk '/IMAGE %s /{print}' %s | awk '{for (j=1;j<=NF;j++) if($j ~/TILT/) print $(j+2)}'" % (i+1, tiltfile)
-			proc=subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
-			(tilt_angle, err) = proc.communicate()
-			tilt_angle=float(tilt_angle)
-			mintilt=min(mintilt,tilt_angle)
-			maxtilt=max(maxtilt,tilt_angle)
+			try: #If the image isn't in the .tlt file, skip it
+				cmd="awk '/IMAGE %s /{print}' %s | awk '{for (j=1;j<=NF;j++) if($j ~/TILT/) print $(j+2)}'" % (i+1, tiltfile)
+				proc=subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
+				(tilt_angle, err) = proc.communicate()
+				tilt_angle=float(tilt_angle)
+				mintilt=min(mintilt,tilt_angle)
+				maxtilt=max(maxtilt,tilt_angle)
+			except:
+				pass
 	
 	return removed_images, mintilt, maxtilt
 
