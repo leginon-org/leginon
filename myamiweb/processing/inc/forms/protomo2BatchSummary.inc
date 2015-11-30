@@ -77,7 +77,7 @@ class Protomo2BatchSummary extends BasicLayoutForm
 				// Table of all of the CCMS plots for easy identification
 				$html .= "
 			<hr />
-			<center><H4><b>CCMS Plot for Each Tilt-Series ".docpop('quality_assessment', '(Info)')."</b></H4></center>
+			<center><H4><b>CCMS Plot for Each Tilt-Series ".docpop('quality_assessment_batch', '(Info)')."</b></H4></center>
 			<hr />";
 				
 				$i = 0;
