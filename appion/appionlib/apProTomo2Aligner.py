@@ -532,7 +532,7 @@ def removeHighTiltsFromTiltFile(tiltfile, negative=-90, positive=90):
 		tiltstart=int(tiltstart)
 		mintilt=0
 		maxtilt=0
-		for i in range(tiltstart-1,tiltstart+numimages-1):
+		for i in range(tiltstart-1,tiltstart+numimages):
 			try: #If the image isn't in the .tlt file, skip it
 				cmd="awk '/IMAGE %s /{print}' %s | awk '{for (j=1;j<=NF;j++) if($j ~/TILT/) print $(j+2)}'" % (i+1, tiltfile)
 				proc=subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
