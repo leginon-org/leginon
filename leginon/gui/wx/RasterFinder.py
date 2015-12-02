@@ -273,7 +273,6 @@ class FinalSettingsDialog(leginon.gui.wx.Settings.Dialog):
 class FinalScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def initialize(self):
 		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
-		print self.__module__
 		sb = wx.StaticBox(self, -1, 'Ice Analysis')
 		sbszice = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sb = wx.StaticBox(self, -1, 'Focus Targets')

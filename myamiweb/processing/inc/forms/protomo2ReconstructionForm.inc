@@ -125,13 +125,13 @@ class Protomo2ReconstructionForm extends BasicLayoutForm
 		$params->addParam( "positive", $positive, "<strong>+</strong> Angle Limit" );
 		$params->addParam( "recon_iter", $recon_iter, "Refinement Iteration used to generate Reconstruction" );
 		$params->addParam( "recon_map_sampling", $recon_map_sampling, "Reconstruction Sampling" );
-		$params->addParam( "recon_map_size_x", $recon_map_size_x, "Reconstructon Size (x)" );
-		$params->addParam( "recon_map_size_y", $recon_map_size_y, "Reconstructon Size (y)" );
-		$params->addParam( "recon_thickness", $recon_thickness, "Reconstructon Thickness" );
+		$params->addParam( "recon_map_size_x", $recon_map_size_x, "Reconstruction Size (x)" );
+		$params->addParam( "recon_map_size_y", $recon_map_size_y, "Reconstruction Size (y)" );
+		$params->addParam( "recon_thickness", $recon_thickness, "Reconstruction Thickness" );
 		$params->addParam( "recon_lowpass", $recon_lowpass, "Lowpass Filter" );
 		$params->addParam( "recon_lp_diam_x", $recon_lp_diam_x, "(x)" );
 		$params->addParam( "recon_lp_diam_y", $recon_lp_diam_y, "(y)" );
-		$params->addParam( "link_recon", $link_recon, "Link Final Reconstructions to this Directory" );
+		$params->addParam( "link_recon", $link_recon, "Link Final Reconstruction to this Directory" );
 		
 		// Validations
 		$params->addValidation( "recon_iter", "req" );

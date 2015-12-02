@@ -377,7 +377,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 			if self.alignzlp_bound:
 				self.alignZeroLossPeak(presetname)
 			else:
-				if not self.alignzlp_warned:
+				if False:
 					self.logger.warning('Energy filter activated but can not tune without binding to Align ZLP')
 					self.alignzlp_warned = True	
 
@@ -758,7 +758,11 @@ class Acquisition(targetwatcher.TargetWatcher):
 		## convert CameraImageData to AcquisitionImageData
 		dim = imagedata['camera']['dimension']
 		pixels = dim['x'] * dim['y']
-		pixeltype = str(imagedata['image'].dtype)
+		try:
+			pixeltype = str(imagedata['image'].dtype)
+		except:
+			self.logger.error('array not returned from camera')
+			return
 		imagedata = leginondata.AcquisitionImageData(initializer=imagedata, preset=presetdata, label=self.name, target=targetdata, list=self.imagelistdata, emtarget=emtarget, pixels=pixels, pixeltype=pixeltype)
 		imagedata['version'] = 0
 		## store EMData to DB to prevent referencing errors
