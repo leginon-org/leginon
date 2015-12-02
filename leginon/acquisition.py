@@ -45,6 +45,9 @@ class InvalidPresetsSequence(targetwatcher.PauseRepeatException):
 class BadImageStatsPause(targetwatcher.PauseRepeatException):
 	pass
 
+class BadImageAcquirePause(targetwatcher.PauseRestartException):
+	pass
+
 class BadImageStatsAbort(Exception):
 	pass
 
@@ -740,7 +743,9 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.reportStatus('acquisition', 'image acquired')
 		self.stopTimer('acquire getData')
 		if imagedata is None:
-			return 'fail'
+			raise BadImageAcquirePause('failed acquire camera image')
+		if imagedata['image'] is None:
+			raise BadImageAcquirePause('Acquired array is None. Possible camera problem')
 
 		if self.settings['bad stats response'] != 'Continue':
 			self.recheck_counter = itertools.count()
@@ -855,6 +860,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 			imagedata = self.acquireFilm(presetdata, emtarget)
 		else:
 			imagedata = self.acquireCCD(presetdata, emtarget, channel=channel)
+
 
 		self.imagedata = imagedata
 		if self.settings['correct image shift coma']:
@@ -1010,9 +1016,12 @@ class Acquisition(targetwatcher.TargetWatcher):
 			pass
 		self.reportStatus('acquisition', 'image acquired')
 		self.stopTimer('acquire getData')
+		# failed acquireCCD returns None
 		if imagedata is None:
-			return 'fail'
+			raise BadImageAcquirePause('failed acquire')
 		imagearray = imagedata['image']
+		if imagearray is None:
+			raise BadImageAcquirePause('image array is None. Possible camera problem')
 		if recheck_count == 0:
 			# Restrict recover mean value with this too if slope is used
 			self.recover_mean = imagearray.mean() * 0.8
@@ -1167,7 +1176,9 @@ class Acquisition(targetwatcher.TargetWatcher):
 		try:
 			ret = self.processTargetData(targetdata=proctargetdata, attempt=1)
 		except BadImageStatsPause, e:
-			''' FIX ME!!! need to pause and allow repeat? '''
+			self.logger.error('processing target failed: %s' %e)
+			ret = 'aborted'
+		except BadImageAcquirePause, e:
 			self.logger.error('processing target failed: %s' %e)
 			ret = 'aborted'
 		except BadImageStatsAbort, e:

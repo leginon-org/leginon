@@ -21,6 +21,11 @@ class PauseRepeatException(Exception):
 	repeated after a user pause'''
 	pass
 
+class PauseRestartException(Exception):
+	'''Raised within processTargetData method if the target should be
+	repeated after a user pause'''
+	pass
+
 class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 	'''
 	TargetWatcher will watch for TargetLists
@@ -241,6 +246,11 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 				self.startTimer('processTargetData')
 				try:
 					process_status = self.processTargetData(adjustedtarget, attempt=attempt)
+				except PauseRestartException, e:
+					self.player.pause()
+					self.logger.error(str(e) + '... Fix it, then resubmit targets from previous step to repeat')
+					self.beep()
+					process_status = 'repeat'
 				except PauseRepeatException, e:
 					self.player.pause()
 					self.logger.error(str(e) + '... Fix it, then press play to repeat target')
@@ -256,7 +266,11 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 					
 				self.stopTimer('processTargetData')
 
-				if process_status != 'exception':
+				if process_status == 'repeat':
+					# Do not report targetstatus so that it can repeat even if
+					# restart Leginon
+					pass
+				elif process_status != 'exception':
 					self.reportTargetStatus(adjustedtarget, 'done')
 				else:
 					# set targetlist status to abort if exception not user fixable
