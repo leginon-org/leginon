@@ -52,6 +52,8 @@ class AppionScript(basicScript.BasicScript):
 		apDisplay.printMsg("Function name: "+self.functionname)
 		self.appiondir = apParam.getAppionDirectory()
 		apDisplay.printMsg("Appion directory: "+self.appiondir)
+		hostname = apParam.getHostname()
+		apDisplay.printMsg("Processing hostname: "+hostname)
 		self.parsePythonPath()
 # 		loadavg = os.getloadavg()[0]
 # 		if loadavg > 2.0:
