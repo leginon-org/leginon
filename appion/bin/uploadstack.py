@@ -163,6 +163,7 @@ class UploadStack(appionScript.AppionScript):
 			'name': name,
 			'comment': description,
 			'user': user,
+			'hidden': False,
 			'image path': imagedirectory,
 		}
 		sessionq = leginon.leginondata.SessionData(initializer=initializer)

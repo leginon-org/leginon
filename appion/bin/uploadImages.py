@@ -205,6 +205,7 @@ class UploadImages(appionScript.AppionScript):
 		sessionq['image path'] = self.leginonimagedir
 		sessionq['comment'] = self.params['description']
 		sessionq['user'] = userdata
+		sessionq['hidden'] = False
 
 		projectdata = leginon.projectdata.projects.direct_query(self.params['projectid'])
 
