@@ -203,6 +203,7 @@ class UploadImages(appionScript.AppionScript):
 		sessionq = leginon.leginondata.SessionData()
 		sessionq['name'] = self.params['sessionname']
 		sessionq['image path'] = self.leginonimagedir
+		sessionq['frame path'] = self.leginonframedir
 		sessionq['comment'] = self.params['description']
 		sessionq['user'] = userdata
 		sessionq['hidden'] = False
