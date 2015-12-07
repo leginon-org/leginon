@@ -40,6 +40,8 @@ class DDStackLoop(appionLoop2.AppionLoop):
 			help="number of frame offset in alignment in dosefgpu_driftcorr")
 		self.parser.add_option("--alignbfactor", dest="bft", type="float", default=100.0,
 			help="alignment B-factor in pix^2 in dosefgpu_driftcorr")
+		self.parser.add_option("--alignccbox", dest="pbx", type="int", default=128,
+			help="alignment CC search box size in dosefgpu_driftcorr")
 
 	def getUnAlignedImageIds(self,imageids):
 		'''

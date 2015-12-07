@@ -12,7 +12,7 @@ require_once "basicLoopForm.inc";
 class MakeDDStackForm extends BasicLoopForm
 
 {
-	function __construct(  $expId, $extraHTML='',$align='', $defergpu='', $bin=1, $nokeepstack='', $ddstartframe=0, $ddnframe='',$alignoffset=7,$alignbfactor=1000,$alignlabel='a' ) 
+	function __construct(  $expId, $extraHTML='',$align='', $defergpu='', $bin=1, $nokeepstack='', $ddstartframe=0, $ddnframe='',$alignoffset=7,$alignbfactor=1000,$alignccbox=96,$alignlabel='a' ) 
 	{
 		parent::__construct($expId, $extraHTML);
 		
@@ -46,6 +46,7 @@ class MakeDDStackForm extends BasicLoopForm
 		$params->addParam( "ddnframe", $ddnframe, "total frames" );
 		$params->addParam( "alignoffset", $alignoffset, "frame offset" );
 		$params->addParam( "alignbfactor", $alignbfactor, "b factor in motioncorr" );
+		$params->addParam( "alignccbox", $alignccbox, "CC search boxsize in motioncorr" );
 		$params->addParam( "alignlabel", $alignlabel, "append label to aligned image" );
 		// Validations
 		$params->addValidation( "bin", "num" );
@@ -71,6 +72,8 @@ class MakeDDStackForm extends BasicLoopForm
 		$html.= $params->insertTextFieldInRow( "alignoffset",$fieldSize );
 		$html.= "<br/>\n";
 		$html.= $params->insertTextFieldInRow( "alignbfactor", $fieldSize );
+		$html.= "<br/>\n";
+		$html.= $params->insertTextFieldInRow( "alignccbox",$fieldSize );
 		$html.= "<br/><br/>Frames used for sum image after alignment: <br/>\n";
 		$html.= $params->insertTextFieldInRow( "ddstartframe", $fieldSize );
 		$html.= $params->insertTextFieldInRow( "ddnframe", $fieldSize );

@@ -104,7 +104,7 @@ class UploadStack(appionScript.AppionScript):
 			### METHOD 2 : create new session
 			apDisplay.printColor("Creating a new session", "cyan")
 			### die for now
-			sys.exit(1)
+			apDisplay.printError("Uploading stack to a new session not allowed")
 			try:
 				directory = leginon.leginonconfig.mapPath(leginon.leginonconfig.IMAGE_PATH)
 			except AttributeError:
@@ -157,15 +157,19 @@ class UploadStack(appionScript.AppionScript):
 
 	#=====================
 	def createSession(self, user, name, description, directory):
+		# This function should not be used. Please see imageloader.py
 		sys.exit(1)
 		imagedirectory = os.path.join(leginon.leginonconfig.unmapPath(directory), name, 'rawdata').replace('\\', '/')
+		# FIX ME: This should also include frame path
 		initializer = {
 			'name': name,
 			'comment': description,
 			'user': user,
+			'hidden': False,
 			'image path': imagedirectory,
 		}
 		sessionq = leginon.leginondata.SessionData(initializer=initializer)
+		# FIX ME: self.publish does not exist
 		return self.publish(sessionq)
 
 	#=====================

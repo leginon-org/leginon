@@ -1143,7 +1143,7 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		return False
 
 	def setDoseFDriftCorrOptions(self,params):
-		paramkeys = ['bft','fod']
+		paramkeys = ['bft','fod','pbx']
 		for goodkey in paramkeys:
 			if goodkey in params.keys():
 				self.alignparams[goodkey] = params[goodkey]
