@@ -217,6 +217,8 @@ class Jeol(tem.TEM):
 		initialize a dictionary of submode_indices
 		mapped to sorted magnification list
 		'''
+		# self.projection_submode_map key is mag, and item is (mode_name, mode_index)
+		# self.submode_mags key is mode_index, and item is sorted mag list
 		if not self.submode_mags:
 			for m in self.projection_submode_map:
 				v = self.projection_submode_map[m]
@@ -751,6 +753,9 @@ class Jeol(tem.TEM):
 			self._resetDefocus()
 	
 	def setMagnificationsFromProjectionSubModes(self):
+		'''
+		Make a sorted magnifications list
+		'''
 		mode_map = self.getProjectionSubModeMap()
 		mags = mode_map.keys()
 		mags.sort()
@@ -776,12 +781,16 @@ class Jeol(tem.TEM):
 		if savedmode not in (FUNCTION_MODES['lowmag'],FUNCTION_MODES['mag1']):
 			raise ValueError('Current function mode %s not implemented' % name)
 		mags = {}
+		overwritten_mags = []
+		# Iterating mode_name in the order stated in 'use_modes' of jeol.cfg means that
+		# the name lists later will be used to overwrite a duplicated mag.
 		for mode_name in self.getJeolConfig('eos','use_modes'):
 			mode_index = FUNCTION_MODES[mode_name]
 			self.eos3.SelectFunctionMode(mode_index)
 			mags[mode_index] = []
 			mag_index=0
 			while True:
+				overwritten = False
 				self.eos3.SetSelector(mag_index)
 				magvalue = self.eos3.GetMagValue()
 				mag = magvalue[0]
@@ -789,15 +798,33 @@ class Jeol(tem.TEM):
 				# does not change.
 				if mag not in mags[mode_index]:
 					mags[mode_index].append(mag)
-					self.addProjectionSubModeMap(mag,mode_name,mode_index,overwrite=True)
+					# overwrite is set to true so that mag1 mag overwrite the ones in lowmag if
+					# at the sam mag.
+					overwritten = self.addProjectionSubModeMap(mag,mode_name,mode_index,overwrite=True)
+					if overwritten is True:
+						overwritten_mags.append((mode_index,mag))
 					mag_index += 1
 				else:
+					# end of this projection submode
 					break
+		# remove mags above the mag that is overwritten because they will not index correctly.
+		self.removeBrokenMags(overwritten_mags)
+
 		# set magnifications now that self.projection_submode_map is set
 		self.setMagnificationsFromProjectionSubModes()
 		self.setProjectionSubModeMags()
 		# return to the original mag
 		self.setMagnification(savedmag)
+
+	def removeBrokenMags(self, overwritten_mags):
+		if len(overwritten_mags) == 0:
+			return
+		for overwritten_mag_tuple in overwritten_mags:
+			mode_index, mag_cutoff = overwritten_mag_tuple
+			for lower_mode_index in range(mode_index):
+				for mag,submode_info in self.projection_submode_map.items():
+					if mag >= mag_cutoff and submode_info[1] == lower_mode_index:
+						del self.projection_submode[mag]
 
 	def getMagnificationIndex(self, magnification=None):
 		if magnification is None:

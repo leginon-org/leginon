@@ -124,9 +124,14 @@ class TEM(baseinstrument.BaseInstrument):
 
 	def addProjectionSubModeMap(self, mag, mode_name, mode_id, overwrite=False):
 		# Only do it once
-		if not overwrite and mag in self.projection_submode_map.keys():
-			return
+		overwritten = False
+		if mag in self.projection_submode_map.keys():
+			if not overwrite:
+				return overwritten
+			else:
+				overwritten = True
 		self.projection_submode_map[mag] = (mode_name,mode_id)
+		return overwritten
 
 	def getProjectionSubModeName(self):
 		mag = self.getMagnification()
