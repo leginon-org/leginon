@@ -151,7 +151,7 @@ class AppionPBS(appionLoop2.AppionLoop):
 					
 					#process image(s)
 					targetdict=self.getTargets(imgdata)
-					command=self.generateCommand(targetdict)
+					command=self.generateCommand(imgdata,targetdict)
 					print command
 					if self.params['dryrun'] is True:
 						print "just printing the command and exiting"
