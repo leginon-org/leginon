@@ -149,7 +149,10 @@ function getHostForm() {
 
 function getSubmitForm($name="Run", $displayhost=true, $warning=false, $button="On") {
 	if ($button == "On") {
-		$html="<input type='submit' name='process' value='Just Show Command' onclick='pleasewait()'>\n";
+		if ( $_POST['testimage'] )
+			# Refresh Test Results avoids resubmit to cluster that would rerun the test
+			$html = "<input type='submit' name='process' value='Refresh Test Results' onclick='pleasewait()'>\n";
+		$html.="<input type='submit' name='process' value='Just Show Command' onclick='pleasewait()'>\n";
 	}
 	if ($displayhost && $_SESSION['username']) {
 		$html.=getHostForm();
@@ -645,6 +648,11 @@ function showOrSubmitCommand($command, $headinfo, $jobtype, $nproc, $testimg=Fal
 	// Get the processing host
 	$processhost = getSelectedProcessingHost();
 
+	if ($_POST['process'] == "Refresh Test Results" && $testimg) {		
+		// if we are testing an image, return to the parameter page 
+		return;
+	}	
+
 	// until uploadimage works with appionJob submission, it is not allowed to do so
 	if ($_POST['process'] != "Just Show Command" && $jobtype != 'uploadimage') {
 		// Option 1: selected the run button
@@ -1018,19 +1026,22 @@ $xvfb=False, $xtra=False, $nproc=1, $ppn=0, $nodes=0, $walltime="240", $cputime=
 /**************************************/
 function writeTestResults($jpg,$ccclist,$bin,$process_str='')
 {
-	// First, see if we are just showing the command
+	// First, see if we are just showing the command or refreshing the results
 	if ($process_str === '') {
 		$process_str = getProcessString();
 	}
 	$showcmd = preg_match('/[Ss]how/',$process_str);
-	
+	if ( !$showcmd )	{
+		$showcmd = preg_match('/[Rr]efresh/',$process_str);
+	}
+
 	// Remove any white space in the image name
 	$jpg = preg_replace('/\s+/','',$jpg);
 	
 	clearstatcache(); // clear cache
 	$fileExists = is_file($jpg);
   	if ( ($fileExists===false) && $showcmd ) {
-		return "<font color='#990000'>The test results ($jpg) are not ready for display. Refresh the page after the command is run successfully. </font><br />\n";
+		return "<font color='#990000'>The test results ($jpg) are not ready for display. Use <b>Refresh Test Results</b> button below to display it after the command is run successfully. </font><br />\n";
   	}
 	
 	
@@ -1050,14 +1061,14 @@ function writeTestResults($jpg,$ccclist,$bin,$process_str='')
 	// Wait for 1. the file to exist, 2. an existing file to be modified, or 3. timer to run out
 	if (!$showcmd) {
 		do {
-  			clearstatcache(); // filemtime() and file_exists() results are cached, clear it.
+  		clearstatcache(); // filemtime() and file_exists() results are cached, clear it.
 			$fileExists = is_file($jpg);
-  			if ($fileExists) {
+  		if ($fileExists) {
 				$file_time = filemtime($jpg);
 				$mod_time = abs($start_time - $file_time);
-  			}
-		$curr_wait_time = time() - $start_time;	
-		if ($curr_wait_time > 60) break;
+  		}
+			$curr_wait_time = time() - $start_time;	
+			if ($curr_wait_time > $max_time) break;
 		} while ( (($fileExists===false) && ($curr_wait_time < $max_time )) || (($fileExists===true) && ($mod_time > $max_mod_time)) );
 	}
   
@@ -1066,7 +1077,7 @@ function writeTestResults($jpg,$ccclist,$bin,$process_str='')
   	if ($fileExists===false) {
 		$base = basename($jpg);
 		$dir = dirname($jpg);
-		return "<font color='#990000' size='+2'>An Error occurred - the image $base was not found in folder $dir.<br /> Processing may be taking longer than expected. Refresh this page when the image is available to display.</font><br />\n";
+		return "<font color='#990000' >The image $base was not found in folder $dir.<br /> Processing may be taking longer than expected. Click <b>Refresh Test Results</b> when the image is available to display.</font><br />\n";
 	}
 
 	// The results are ready, display them.
