@@ -83,5 +83,30 @@ class DogPickerForm extends MathParticleForm
 		return $msg;
 	}
 
+	// getTestResults() return the HTML code needed to display test results from this method
+	static public function getTestResults( $outdir, $runname, $testfilename )
+	{
+		$testjpg = preg_replace("%.mrc%","",$testfilename);
+		$testResultFile = $testjpg.".prtl.jpg";
+		$jpgimg = Path::join($outdir, $runname, "jpgs", $testResultFile);
+		
+		$pathToMaps = Path::join($outdir, $runname, "maps");
+
+		// Fix me, Not the best way to get binning
+		$bin = $_POST['bin'];		
+		if ($_POST['process'] != "Just Show Command") {
+			$filePattern = $testjpg."*.jpg";
+			$pathPattern = Path::join($pathToMaps, $filePattern);
+			$dogmaplist = glob($pathPattern);
+			$html .= writeTestResults($jpgimg, $dogmaplist, $bin);
+		} else {
+			$mapFile = $testjpg.".dogmap1.jpg";
+			$ccclist = array();
+			$cccimg = Path::join($pathToMaps, $mapFile);
+			$ccclist[]=$cccimg;
+			$html.= writeTestResults($jpgimg,$ccclist,$bin=$bin);			
+		}	
+		return $html;
+	}
 }
 ?>

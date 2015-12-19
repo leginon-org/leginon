@@ -105,11 +105,6 @@ class BasicLayoutForm extends BasicForm
 		//TODO: Don't like this direct echo from the function. Should make this a wrapper for a function that returns the guts.
 		processing_header($this->title, $this->heading, $this->javaFunctions, True, True, False, $this->getGuideURL());	
 		
-		// write out errors, if any came up:
-		if ( !empty($this->extraHTML) ) {
-			$html .= "<font color='#cc3333' size='+2'>$this->extraHTML</font>\n<hr/>\n";
-		}
-		
 		// check if coming directly from a session
 		if ( $this->expId ) {
 			$sessionId = $this->expId;
@@ -162,6 +157,12 @@ class BasicLayoutForm extends BasicForm
 		$html .= "<INPUT TYPE='HIDDEN' NAME='lastSessionId' VALUE='$sessionId'>\n";
 		$html .= "<INPUT TYPE='HIDDEN' NAME='sessionpath' VALUE='$sessionpath'>\n";
 		$html .= "<input type='hidden' name='sessionname' value='$sessionname'>\n";		
+
+		// write out errors,in larger and red font if any came up.
+		if ( !empty($this->extraHTML) ) {
+			$html .= "<font color='#cc3333'>$this->extraHTML</font>\n<hr/>\n";
+		}
+		
 		$html .= "<TABLE BORDER=0 CLASS=tableborder CELLPADDING=15>
 				  <tr>
 					<td VALIGN='TOP'>";
@@ -426,6 +427,23 @@ class BasicLayoutForm extends BasicForm
 		return $command;		
 	}
 	
+	static public function getTestCommand( $command )
+	{
+		$wrappedcmd = addAppionWrapper($command);
+		
+		$html = "<table width='600' border='0'>\n";
+		$html.= "<tr><td>\n";
+		$html.= "<B>Test Command:</B><br />$wrappedcmd";
+		$html.= "</td></tr>\n";
+		$html.= "<tr><td>\n";
+		# Refresh Test Results avoids resubmit to cluster that would rerun the test
+		$html.= "<input type='submit' name='process' value='Refresh Test Results' onclick='pleasewait()'>\n";
+		$html.= "</td></tr></table>\n";
+		$html.= "<br />\n";
+
+		return $html;
+	}
+
 	// Override this function if your program can test a single image.
 	// getTestResults() should return the HTML code needed to display test results any way this method
 	// prefers to have them displayed. The results will be placed below a printout of the test command and 

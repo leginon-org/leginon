@@ -95,15 +95,8 @@ function runAppionLoop() {
 	if ($errors) {
 		createForm($errors);
 	} else if ( $testimage ) {
-		// add the appion wrapper to the test command for display
-		$wrappedcmd = addAppionWrapper($command);
-		
-		$results = "<table width='600' border='0'>\n";
-		$results.= "<tr><td>\n";
-		$results.= "<B>Test Command:</B><br />$wrappedcmd";
-		$results.= "</td></tr></table>\n";
-		$results.= "<br />\n";
-		$html =  $results;
+		// display test command
+		$html =  $form->getTestCommand($command );
 		
 		$runname 	  = $_POST['runname'];		
 		$outdir		  = $_POST['outdir'];
