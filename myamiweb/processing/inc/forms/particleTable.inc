@@ -158,6 +158,7 @@ class ParticleDiameterTable extends BasicForm
 	
 	public function generateForm()
 	{
+		$this->updateFormParams();
 		$params = $this->getFormParams();
 		
 		$fieldSize = 5;
