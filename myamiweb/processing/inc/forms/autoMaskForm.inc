@@ -115,7 +115,7 @@ class AutoMaskForm extends BasicLoopForm
 		} else {
 			// Tell the users what to do if the test results are not found.
 			$html .=  "<FONT COLOR='RED'><B>NO RESULT YET</B><br></FONT>";
-			$html .=  "<FONT COLOR='RED'><B>Refresh this page when processing completes</B><br></FONT>";
+			$html .=  "<FONT COLOR='RED'>Use <B>Refresh Test Results</B> button to display the test results when processing completes<br></FONT>";
 		}
 		
 		return $html;
