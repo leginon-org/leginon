@@ -203,7 +203,8 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 			self.setImage(lastdriftimage['image'], 'Image')
 			if not DOUBLE_TILT_FOCUS:
 				self.logger.info('use final drift image in focuser')
-
+			else:
+				self.logger.info('tilt minus and then plus to measure defocus')
 		else:
 			lastdrift = None
 			lastdriftimage = None
