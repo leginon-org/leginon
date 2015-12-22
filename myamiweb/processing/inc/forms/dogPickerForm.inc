@@ -37,7 +37,7 @@ class DogPickerForm extends MathParticleForm
 		$params = $this->getFormParams();
 		
 		// The help section corresponds to the array key for these parameters found in help.js for popup help.
-		$params->setHelpSection( "particle" );
+		$params->setHelpSection( "appion" );
 				
 		//Advanced parameters
 
