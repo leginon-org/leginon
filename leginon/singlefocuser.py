@@ -19,6 +19,8 @@ import copy
 import gui.wx.Focuser
 import player
 
+DOUBLE_TILT_FOCUS = False
+
 class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 	panelclass = gui.wx.Focuser.Panel
 	settingsclass = leginondata.FocuserSettingsData
@@ -198,8 +200,10 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 				return 'aborted'
 			lastdrift = driftresult['final']
 			lastdriftimage = self.driftimage
-			self.logger.info('using final drift image in focuser')
 			self.setImage(lastdriftimage['image'], 'Image')
+			if not DOUBLE_TILT_FOCUS:
+				self.logger.info('use final drift image in focuser')
+
 		else:
 			lastdrift = None
 			lastdriftimage = None
@@ -234,7 +238,7 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 			# increased settle time from 0.25 to 0.5 for Falcon protector
 			settletime = self.settings['beam tilt settle time']
 			### FIX ME temporarily switch off tilt correction because the calculation may be wrong Issue #3030
-			correction = self.btcalclient.measureDefocusStig(btilt, correct_tilt=False, correlation_type=setting['correlation type'], stig=setting['stig correction'], settle=settletime, image0=lastdriftimage)
+			correction = self.btcalclient.measureDefocusStig(btilt, correct_tilt=False, correlation_type=setting['correlation type'], stig=setting['stig correction'], settle=settletime, image0=lastdriftimage, double_tilt=DOUBLE_TILT_FOCUS)
 		except calibrationclient.Abort:
 			self.btcalclient.setBeamTilt(beamtilt0)
 			self.logger.info('Measurement of defocus and stig. has been aborted')
