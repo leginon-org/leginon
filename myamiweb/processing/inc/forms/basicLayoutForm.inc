@@ -21,7 +21,8 @@ class BasicLayoutForm extends BasicForm
 	protected $javaFunctions;
 	protected $title;
 	protected $heading;
-	protected $extraHTML;
+	protected $errorHTML;
+	protected $infoHTML;
 	protected $outDir;
 	protected $useLegOutDir; // Boolean, (default) False-> outDir is set to Appion directory, True-> outDir uses Leginon Directory
 	protected $expId;
@@ -39,12 +40,13 @@ class BasicLayoutForm extends BasicForm
 	protected $enableLocalHost; 
 	protected $logoImagePath;
 	
-	function __construct( $expId, $extraHTML='' ) 
+	function __construct( $expId, $errorHTML='', $infoHTML='' ) 
 	{
 		parent::__construct();
 		
 		$this->setExpId( $expId );
-		$this->setExtraHTML( $extraHTML );
+		$this->setErrorHTML( $errorHTML );
+		$this->setInfoHTML( $infoHTML );
 		$this->addTestImageJava();
 		$this->addPopupHelpJava();
 		
@@ -157,10 +159,13 @@ class BasicLayoutForm extends BasicForm
 		$html .= "<INPUT TYPE='HIDDEN' NAME='lastSessionId' VALUE='$sessionId'>\n";
 		$html .= "<INPUT TYPE='HIDDEN' NAME='sessionpath' VALUE='$sessionpath'>\n";
 		$html .= "<input type='hidden' name='sessionname' value='$sessionname'>\n";		
-
+		// test command and results also show up here in a table.
+		if ( !empty($this->infoHTML) ) {
+			$html .= "<font color='BLACK' >$this->infoHTML</font>\n<hr/>\n";
+		}
 		// write out errors,in larger and red font if any came up.
-		if ( !empty($this->extraHTML) ) {
-			$html .= "<font color='#cc3333'>$this->extraHTML</font>\n<hr/>\n";
+		if ( !empty($this->errorHTML) ) {
+			$html .= "<font color='#cc3333' size='+2'>$this->errorHTML</font>\n<hr/>\n";
 		}
 		
 		$html .= "<TABLE BORDER=0 CLASS=tableborder CELLPADDING=15>
@@ -249,9 +254,13 @@ class BasicLayoutForm extends BasicForm
 	{
 		$this->heading = $heading;
 	}
-	function setExtraHTML( $extraHTML )
+	function setErrorHTML( $errorHTML )
 	{
-		$this->extraHTML = $extraHTML;
+		$this->errorHTML = $errorHTML;
+	}
+	function setInfoHTML( $infoHTML )
+	{
+		$this->infoHTML = $infoHTML;
 	}
 	function setExpId( $expId )
 	{
@@ -426,7 +435,7 @@ class BasicLayoutForm extends BasicForm
 		
 		return $command;		
 	}
-	
+
 	static public function getTestCommand( $command )
 	{
 		$wrappedcmd = addAppionWrapper($command);
@@ -443,7 +452,7 @@ class BasicLayoutForm extends BasicForm
 
 		return $html;
 	}
-
+	
 	// Override this function if your program can test a single image.
 	// getTestResults() should return the HTML code needed to display test results any way this method
 	// prefers to have them displayed. The results will be placed below a printout of the test command and 

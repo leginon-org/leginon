@@ -12,9 +12,9 @@ require_once "mathParticleForm.inc";
 class DogPickerForm extends MathParticleForm
 
 {
-	function __construct(  $expId, $extraHTML='', $kfactorv=1.2, $numslicesv='',$sizerangev='' ) 
+	function __construct(  $expId, $errorHTML='', $infoHTML='', $kfactorv=1.2, $numslicesv='',$sizerangev='' ) 
 	{
-		parent::__construct($expId, $extraHTML);
+		parent::__construct($expId, $errorHTML, $infoHTML);
 		
 		//------ Set Parameters for the parent class, BasicLoopForm (general Appion params) -----//
 		
@@ -82,6 +82,7 @@ class DogPickerForm extends MathParticleForm
 		}
 		return $msg;
 	}
+
 
 	// getTestResults() return the HTML code needed to display test results from this method
 	static public function getTestResults( $outdir, $runname, $testfilename )

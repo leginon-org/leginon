@@ -12,9 +12,9 @@ require_once "basicLoopForm.inc";
 class MakeDDStackForm extends BasicLoopForm
 
 {
-	function __construct(  $expId, $extraHTML='',$align='', $defergpu='', $bin=1, $nokeepstack='', $ddstartframe=0, $ddnframe='',$alignoffset=7,$alignbfactor=1000,$alignccbox=96,$alignlabel='a' ) 
+	function __construct(  $expId, $errorHTML='', $infoHTML='',$align='', $defergpu='', $bin=1, $nokeepstack='', $ddstartframe=0, $ddnframe='',$alignoffset=7,$alignbfactor=1000,$alignccbox=96,$alignlabel='a' ) 
 	{
-		parent::__construct($expId, $extraHTML);
+		parent::__construct($expId, $errorHTML, $infoHTML);
 		
 		//------ Set Parameters for the parent class, BasicLoopForm (general Appion params) -----//
 		

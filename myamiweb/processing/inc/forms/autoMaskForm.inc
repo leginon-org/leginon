@@ -10,9 +10,9 @@ require_once "basicLoopForm.inc";
 
 class AutoMaskForm extends BasicLoopForm
 {
-	function __construct( $expId, $extraHTML='', $downsample='20', $compsizethresh='50', $adapthresh='500', $blur='10',$dilation='10', $erosion='1') 
+	function __construct( $expId, $errorHTML='', $infoHTML='', $downsample='20', $compsizethresh='50', $adapthresh='500', $blur='10',$dilation='10', $erosion='1') 
 	{
-		parent::__construct($expId, $extraHTML);
+		parent::__construct($expId, $errorHTML, $infoHTML );
 		
 		//------ Set Parameters for the parent class, BasicLoopForm (general Appion params) -----//
 		

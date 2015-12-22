@@ -17,9 +17,9 @@ require_once "particleTable.inc";
 class MathParticleForm extends BasicParticleForm
 {
 
-	function __construct( $expId, $extraHTML='' ) 
+	function __construct( $expId, $errorHTML='', $infoHTML='' ) 
 	{
-		parent::__construct($expId, $extraHTML);	
+		parent::__construct($expId, $errorHTML, $infoHTML );	
 	}
 
 	public function generateParticleTable() {
