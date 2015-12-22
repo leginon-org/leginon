@@ -2318,9 +2318,9 @@ class particledata {
 		return getRunData($partRunId, "ApSelectionRunData" );
 	}
 	
-	function getDDStackRunData($partRunId) 
+	function getDDStackRunData($ddRunId) 
 	{
-		return getRunData($partRunId, "ApSelectionRunData" );
+		return getRunData($partRunId, "ApDDStackRunData" );
 	}
 
 	function getAlignLogShiftFromDDAlignedImageId($result_imgid,$apix=1)

@@ -24,19 +24,19 @@ class FilterTable extends BasicForm
 		$params = $this->getFormParams();
 		
 		// The help section corresponds to the array key for these parameters found in help.js for popup help.
-		$params->setHelpSection( "particle" );
+		$params->setHelpSection( "appion" );
 
 		//Filter Values
-		$params->addParam( "lowpass", $lpv, "Low Pass" );
-		$params->addValidation("lowpass", "num");
-		$params->addParam( "highpass", $hpv, "High Pass" );
-		$params->addValidation("highpass", "num");
-		$params->addParam( "median", $medianv, "Median" );
-		$params->addValidation("median", "num");
+		$params->addParam( "lpval", $lpv, "Low Pass" );
+		$params->addValidation("lpval", "num");
+		$params->addParam( "hpval", $hpv, "High Pass" );
+		$params->addValidation("hpval", "num");
+		$params->addParam( "medianval", $medianv, "Median" );
+		$params->addValidation("medianval", "num");
 		$params->addParam( "pixlimit", $pixlimitv, "Pixel Limit" );
 		$params->addValidation("pixlimit", "float");
-		$params->addParam( "bin", $binv, "Binning" );
-		$params->addValidation("bin", "num");
+		$params->addParam( "binval", $binv, "Binning" );
+		$params->addValidation("binval", "num");
 		$params->addParam( "planereg", $planeregv, "Plane regression" );
 
 		$params->addParam( "invert", $invertv, "Invert image density" );		
@@ -53,14 +53,14 @@ class FilterTable extends BasicForm
 		$html.=  "<!-- BEGIN FilterLoop Param -->\n";
 
 		// Binning
-		$html.= $params->insertTextField( "bin", $fieldSize,"(power of 2)" );	
+		$html.= $params->insertTextField( "binval", $fieldSize,"(power of 2)" );	
 		$html.= "<hr/>\n";
 
 		// Filter
 		$html.= "<B>Filter Values:</B><br />\n";
-		$html.= $params->insertTextField( "lowpass", $fieldSize,"(in &Aring;ngstroms; 0 = off)" );	
-		$html.= $params->insertTextField( "highpass", $fieldSize,"(in &Aring;ngstroms; 0 = off)" );	
-		$html.= $params->insertTextField( "median", $fieldSize,"(in pixels; 0= off)" );	
+		$html.= $params->insertTextField( "lpval", $fieldSize,"(in &Aring;ngstroms; 0 = off)" );	
+		$html.= $params->insertTextField( "hpval", $fieldSize,"(in &Aring;ngstroms; 0 = off)" );	
+		$html.= $params->insertTextField( "medianval", $fieldSize,"(in pixels; 0= off)" );	
 		$html.= $params->insertTextField( "pixlimit", $fieldSize,"(in Standard Deviations; 0 = off)" );	
 		$html.= $params->insertCheckboxField( "planereg" );
 		$html.= "<br/>\n";
@@ -91,7 +91,7 @@ class MathParticleAdvancedTable extends BasicForm
 		$params = $this->getFormParams();
 		
 		// The help section corresponds to the array key for these parameters found in help.js for popup help.
-		$params->setHelpSection( "particle" );
+		$params->setHelpSection( "appion" );
 
 		//Peakfinding parameters
 		$params->addParam( "peaktype", $peaktypev, "Peak extraction type" );
@@ -150,14 +150,15 @@ class ParticleDiameterTable extends BasicForm
 		// Get the form parameters that have been created by the parent class
 		$params = $this->getFormParams();
 	
-		$params->setHelpSection( "particle" );
+		$params->setHelpSection( "appion" );
 
-		$params->addParam( "diam", $pdiamv, "Particle diameter for filtering" );
-		$params->addValidation("diam", "req");
+		$params->addParam( "pdiam", $pdiamv, "Particle diameter for filtering" );
+		$params->addValidation("pdiam", "req");
 	}
 	
 	public function generateForm()
 	{
+		$this->updateFormParams();
 		$params = $this->getFormParams();
 		
 		$fieldSize = 5;
@@ -165,7 +166,7 @@ class ParticleDiameterTable extends BasicForm
 		$html .= "<b>Particle Diameter:</b><br />\n";
 		
 		#$html.= $params->insertCheckboxField( "no_keepstack" );
-		$html.= $params->insertTextField( "diam", $fieldSize,"(in &Aring;ngstroms)" );
+		$html.= $params->insertTextField( "pdiam", $fieldSize,"(in &Aring;ngstroms)" );
 	
 		$html.= "<br/>\n";
 		
@@ -183,7 +184,7 @@ class HelicalTable extends BasicForm
 		// Get the form parameters that have been created by the parent class
 		$params = $this->getFormParams();
 	
-		$params->setHelpSection( "particle" );
+		$params->setHelpSection( "appion" );
 
 		$params->addParam( "helix", $helixv, "Pick along helices" );
 		$params->addParam( "helicalstep", $helicalstepv, "Stepsize for Helical Insert" );
@@ -242,7 +243,7 @@ class ManualTable extends BasicForm
 		// Get the form parameters that have been created by the parent class
 		$params = $this->getFormParams();
 	
-		$params->setHelpSection( "particle" );
+		$params->setHelpSection( "appion" );
 
 		//Single slice
 		$params->addParam( "shape", $shapev, "Picking icon shape" );
@@ -282,7 +283,7 @@ class SimpleParticleTable extends FilterTable
 		$params = $this->getFormParams();
 		
 		// The help section corresponds to the array key for these parameters found in help.js for popup help.
-		$params->setHelpSection( "particle" );
+		$params->setHelpSection( "appion" );
 
 		// Defocal pairs
 		$params->addParam( "defocpair", $defocpairv, "Calculate shifts for defocal pairs" );
@@ -327,11 +328,11 @@ class MathParticleTable extends BasicForm
 		$params = $this->getFormParams();
 
 		// The help section corresponds to the array key for these parameters found in help.js for popup help.
-		$params->setHelpSection( "particle" );
+		$params->setHelpSection( "appion" );
 
 		// Peak thresholds				
-		$params->addParam( "thresh", $threshv, "Minimum threshold" );
-		$params->addValidation("thresh", "float");
+		$params->addParam( "minthresh", $threshv, "Minimum threshold" );
+		$params->addValidation("minthresh", "float");
 		$params->addParam( "maxthresh", $maxthreshv, "Maximum threshold" );
 		$params->addValidation("maxthresh", "float");
 		$params->addParam( "maxpeaks", $maxpeaksv, "Max number of particles allowed per image" );
@@ -348,7 +349,7 @@ class MathParticleTable extends BasicForm
 		$html.=  "<!-- BEGIN Particle Param -->\n";
 
 		$html.= "<B>Peak thresholds:</B><br />\n";
-		$html.= $params->insertTextField( "thresh", $fieldSize );	
+		$html.= $params->insertTextField( "minthresh", $fieldSize );	
 		$html.= $params->insertTextField( "maxthresh", $fieldSize );	
 		$html.= $params->insertTextField( "maxpeaks", $fieldSize );	
 	

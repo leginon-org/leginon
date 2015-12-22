@@ -20,9 +20,9 @@ require_once "inc/forms/runParametersForm.inc";
 class BasicLoopForm extends BasicLayoutForm
 {
 
-	function __construct( $expId, $extraHTML='' ) 
+	function __construct( $expId, $errorHTML='', $infoHTML='' ) 
 	{
-		parent::__construct($expId, $extraHTML);	
+		parent::__construct($expId, $errorHTML, $infoHTML);	
 	}
 	
 	// Override this to output the html required to display program specific parameters

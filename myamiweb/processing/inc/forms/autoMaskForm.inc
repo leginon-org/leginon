@@ -10,9 +10,9 @@ require_once "basicLoopForm.inc";
 
 class AutoMaskForm extends BasicLoopForm
 {
-	function __construct( $expId, $extraHTML='', $downsample='20', $compsizethresh='50', $adapthresh='500', $blur='10',$dilation='10', $erosion='1') 
+	function __construct( $expId, $errorHTML='', $infoHTML='', $downsample='20', $compsizethresh='50', $adapthresh='500', $blur='10',$dilation='10', $erosion='1') 
 	{
-		parent::__construct($expId, $extraHTML);
+		parent::__construct($expId, $errorHTML, $infoHTML );
 		
 		//------ Set Parameters for the parent class, BasicLoopForm (general Appion params) -----//
 		
@@ -115,7 +115,7 @@ class AutoMaskForm extends BasicLoopForm
 		} else {
 			// Tell the users what to do if the test results are not found.
 			$html .=  "<FONT COLOR='RED'><B>NO RESULT YET</B><br></FONT>";
-			$html .=  "<FONT COLOR='RED'><B>Refresh this page when processing completes</B><br></FONT>";
+			$html .=  "<FONT COLOR='RED'>Use <B>Refresh Test Results</B> button to display the test results when processing completes<br></FONT>";
 		}
 		
 		return $html;

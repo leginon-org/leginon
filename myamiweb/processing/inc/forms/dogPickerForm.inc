@@ -12,9 +12,9 @@ require_once "mathParticleForm.inc";
 class DogPickerForm extends MathParticleForm
 
 {
-	function __construct(  $expId, $extraHTML='', $kfactorv=1.2, $numslicesv='',$sizerangev='' ) 
+	function __construct(  $expId, $errorHTML='', $infoHTML='', $kfactorv=1.2, $numslicesv='',$sizerangev='' ) 
 	{
-		parent::__construct($expId, $extraHTML);
+		parent::__construct($expId, $errorHTML, $infoHTML);
 		
 		//------ Set Parameters for the parent class, BasicLoopForm (general Appion params) -----//
 		
@@ -37,7 +37,7 @@ class DogPickerForm extends MathParticleForm
 		$params = $this->getFormParams();
 		
 		// The help section corresponds to the array key for these parameters found in help.js for popup help.
-		$params->setHelpSection( "particle" );
+		$params->setHelpSection( "appion" );
 				
 		//Advanced parameters
 
@@ -83,5 +83,31 @@ class DogPickerForm extends MathParticleForm
 		return $msg;
 	}
 
+
+	// getTestResults() return the HTML code needed to display test results from this method
+	static public function getTestResults( $outdir, $runname, $testfilename )
+	{
+		$testjpg = preg_replace("%.mrc%","",$testfilename);
+		$testResultFile = $testjpg.".prtl.jpg";
+		$jpgimg = Path::join($outdir, $runname, "jpgs", $testResultFile);
+		
+		$pathToMaps = Path::join($outdir, $runname, "maps");
+
+		// Fix me, Not the best way to get binning
+		$bin = $_POST['bin'];		
+		if ($_POST['process'] != "Just Show Command") {
+			$filePattern = $testjpg."*.jpg";
+			$pathPattern = Path::join($pathToMaps, $filePattern);
+			$dogmaplist = glob($pathPattern);
+			$html .= writeTestResults($jpgimg, $dogmaplist, $bin);
+		} else {
+			$mapFile = $testjpg.".dogmap1.jpg";
+			$ccclist = array();
+			$cccimg = Path::join($pathToMaps, $mapFile);
+			$ccclist[]=$cccimg;
+			$html.= writeTestResults($jpgimg,$ccclist,$bin=$bin);			
+		}	
+		return $html;
+	}
 }
 ?>

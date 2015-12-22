@@ -21,7 +21,8 @@ class BasicLayoutForm extends BasicForm
 	protected $javaFunctions;
 	protected $title;
 	protected $heading;
-	protected $extraHTML;
+	protected $errorHTML;
+	protected $infoHTML;
 	protected $outDir;
 	protected $useLegOutDir; // Boolean, (default) False-> outDir is set to Appion directory, True-> outDir uses Leginon Directory
 	protected $expId;
@@ -39,12 +40,13 @@ class BasicLayoutForm extends BasicForm
 	protected $enableLocalHost; 
 	protected $logoImagePath;
 	
-	function __construct( $expId, $extraHTML='' ) 
+	function __construct( $expId, $errorHTML='', $infoHTML='' ) 
 	{
 		parent::__construct();
 		
 		$this->setExpId( $expId );
-		$this->setExtraHTML( $extraHTML );
+		$this->setErrorHTML( $errorHTML );
+		$this->setInfoHTML( $infoHTML );
 		$this->addTestImageJava();
 		$this->addPopupHelpJava();
 		
@@ -105,11 +107,6 @@ class BasicLayoutForm extends BasicForm
 		//TODO: Don't like this direct echo from the function. Should make this a wrapper for a function that returns the guts.
 		processing_header($this->title, $this->heading, $this->javaFunctions, True, True, False, $this->getGuideURL());	
 		
-		// write out errors, if any came up:
-		if ( !empty($this->extraHTML) ) {
-			$html .= "<font color='#cc3333' size='+2'>$this->extraHTML</font>\n<hr/>\n";
-		}
-		
 		// check if coming directly from a session
 		if ( $this->expId ) {
 			$sessionId = $this->expId;
@@ -162,6 +159,15 @@ class BasicLayoutForm extends BasicForm
 		$html .= "<INPUT TYPE='HIDDEN' NAME='lastSessionId' VALUE='$sessionId'>\n";
 		$html .= "<INPUT TYPE='HIDDEN' NAME='sessionpath' VALUE='$sessionpath'>\n";
 		$html .= "<input type='hidden' name='sessionname' value='$sessionname'>\n";		
+		// test command and results also show up here in a table.
+		if ( !empty($this->infoHTML) ) {
+			$html .= "<font color='BLACK' >$this->infoHTML</font>\n<hr/>\n";
+		}
+		// write out errors,in larger and red font if any came up.
+		if ( !empty($this->errorHTML) ) {
+			$html .= "<font color='#cc3333' size='+2'>$this->errorHTML</font>\n<hr/>\n";
+		}
+		
 		$html .= "<TABLE BORDER=0 CLASS=tableborder CELLPADDING=15>
 				  <tr>
 					<td VALIGN='TOP'>";
@@ -248,9 +254,13 @@ class BasicLayoutForm extends BasicForm
 	{
 		$this->heading = $heading;
 	}
-	function setExtraHTML( $extraHTML )
+	function setErrorHTML( $errorHTML )
 	{
-		$this->extraHTML = $extraHTML;
+		$this->errorHTML = $errorHTML;
+	}
+	function setInfoHTML( $infoHTML )
+	{
+		$this->infoHTML = $infoHTML;
 	}
 	function setExpId( $expId )
 	{
@@ -369,9 +379,13 @@ class BasicLayoutForm extends BasicForm
 					if (document.viewerform.testimage.checked){
 						document.viewerform.testfilename.disabled=false;
 						document.viewerform.testfilename.value='';
+						document.viewerform.commit.disabled=true;
+						document.viewerform.commit.checked=false;
 					}	else {
 						document.viewerform.testfilename.disabled=true;
 						document.viewerform.testfilename.value='mrc file name';
+						document.viewerform.commit.disabled=false;
+						document.viewerform.commit.checked=true;
 					}
 				}
 			</script>\n";
@@ -420,6 +434,23 @@ class BasicLayoutForm extends BasicForm
 		$command = $this->exeFile . " " . $command;
 		
 		return $command;		
+	}
+
+	static public function getTestCommand( $command )
+	{
+		$wrappedcmd = addAppionWrapper($command);
+		
+		$html = "<table width='600' border='0'>\n";
+		$html.= "<tr><td>\n";
+		$html.= "<B>Test Command:</B><br />$wrappedcmd";
+		$html.= "</td></tr>\n";
+		$html.= "<tr><td>\n";
+		# Refresh Test Results avoids resubmit to cluster that would rerun the test
+		$html.= "<input type='submit' name='process' value='Refresh Test Results' onclick='pleasewait()'>\n";
+		$html.= "</td></tr></table>\n";
+		$html.= "<br />\n";
+
+		return $html;
 	}
 	
 	// Override this function if your program can test a single image.

@@ -15,7 +15,7 @@ LS4_MAG_MAX = 100000
 LM1_MAG_MAX = 200
 
 [eos]
-# electron optics class
+# electron optics class.  The later mode will be used if a mag is found in more than one modes
 USE_MODES = lowmag, mag1
 
 [lens]

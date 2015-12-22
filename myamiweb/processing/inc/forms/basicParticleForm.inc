@@ -17,9 +17,9 @@ require_once "particleTable.inc";
 class BasicParticleForm extends BasicLoopForm
 {
 
-	function __construct( $expId, $extraHTML='' ) 
+	function __construct( $expId, $errorHTML='', $infoHTML='' ) 
 	{
-		parent::__construct($expId, $extraHTML);	
+		parent::__construct($expId, $errorHTML, $infoHTML );	
 	}
 
 	// Thie overwrite the same function in BasicLoopForm to divide the
