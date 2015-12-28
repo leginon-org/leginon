@@ -237,7 +237,7 @@ class ParticleLoop(filterLoop.FilterLoop):
 		"""
 		filterLoop.FilterLoop.setupGlobalParserOptions(self)
 		### Input value options
-		self.parser.add_option("--thresh", dest="thresh", type="float", default=0.5,
+		self.parser.add_option("--thresh", "--minthresh", dest="thresh", type="float", default=0.5,
 			help="Threshold of map to pick particles", metavar="FLOAT")
 		self.parser.add_option("--maxthresh", dest="maxthresh", type="float", default=2.5,
 			help="Max threshold of map to toss particles", metavar="FLOAT")
@@ -247,7 +247,7 @@ class ParticleLoop(filterLoop.FilterLoop):
 			help="Distance between picked particles in terms of the diameter", metavar="FLOAT")
 		self.parser.add_option("--maxpeaks", dest="maxpeaks", type="int", default=1500,
 			help="Maximum number of pciked particle from an image", metavar="FLOAT")
-		self.parser.add_option("--diam", dest="diam", type="int",
+		self.parser.add_option("--diam", "--pdiam", dest="diam", type="int",
 			help="Diameter of the particle in Angstroms", metavar="INT")
 		### True / False options
 		self.parser.add_option("--nojpegs", dest="nojpegs", default=False,
