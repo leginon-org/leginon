@@ -92,15 +92,15 @@ class FilterLoop(appionLoop2.AppionLoop):
 		"""
 		appionLoop2.AppionLoop.setupGlobalParserOptions(self)
 		### Input value options
-		self.parser.add_option("--lowpass", "--lp", dest="lowpass", type="float",
+		self.parser.add_option("--lowpass", "--lp", "--lpval", dest="lowpass", type="float",
 			help="Low pass filter radius in Angstroms", metavar="FLOAT")
-		self.parser.add_option("--highpass", "--hp", dest="highpass", type="float",
+		self.parser.add_option("--highpass", "--hp", "--hpval", dest="highpass", type="float",
 			help="High pass filter radius in Angstroms", metavar="FLOAT")
-		self.parser.add_option("--median", dest="median", type="int",
+		self.parser.add_option("--median", "--medianval", dest="median", type="int",
 			help="Median filter radius in Pixels", metavar="INT")
 		self.parser.add_option("--pixlimit", dest="pixlimit", type="float",
 			help="Limit pixel values to within <pixlimit> standard deviations", metavar="FLOAT")
-		self.parser.add_option("--bin", "--shrink", "--binby", dest="bin", type="int", default=4,
+		self.parser.add_option("--binval", "--shrink", "--binby", dest="bin", type="int", default=4,
 			help="Bin the image", metavar="INT")
 		### True / False options
 		self.parser.add_option("--invert", dest="invert", default=False,
