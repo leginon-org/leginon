@@ -107,7 +107,7 @@ function getHostForm() {
 	$proc_list = (array)getHosts();
 	$hostArray = $proc_list[0];
 
-	// only list hosts if there are more than 1
+	// only show host selection if there are more than 1
 	if (count($proc_list) > 1){
 		foreach ($proc_list as $host) {
 			if ($host['host'] == $_POST['processinghost']) {
@@ -120,7 +120,8 @@ function getHostForm() {
 		$html.=join("\n",$h);
 		$html.="</select>";
 	} else {
-		$html="<input type='hidden' name=\"processinghost\" value='".$proc_list[0]['host']."'>\n";
+		$html="<b>".$hostArray['host'].":</b>\n";
+		$html.="<input type='hidden' name=\"processinghost\" value='".$proc_list[0]['host']."'>\n";
 	}
 	
 	// TODO: would be nice to change the javascript so that the entire page is not reloaded when new 
