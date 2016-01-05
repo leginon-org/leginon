@@ -20,12 +20,14 @@ class MathParticleForm extends BasicParticleForm
 	function __construct( $expId, $errorHTML='', $infoHTML='' ) 
 	{
 		parent::__construct($expId, $errorHTML, $infoHTML );	
+		$this->mathTable = new MathParticleTable();
+		$this->mathAdvancedTable = new MathParticleAdvancedTable(
+			$peaktype='centerofmass' );
 	}
 
 	public function generateParticleTable() {
 		// put Math ParticleTable at front
-		$mathTable = new MathParticleTable();
-		$html .= $mathTable->generateForm();
+		$html .= $this->mathTable->generateForm();
 	
 		$html .= parent::generateParticleTable();
 	
@@ -34,9 +36,7 @@ class MathParticleForm extends BasicParticleForm
 
 	public function generateAdvancedTableRight() {
 		// Add the Advanced Particle Loop Form
-		$particleAdvancedTable = new MathParticleAdvancedTable(
-	$peaktype='centerofmass' );
-		$html .= $particleAdvancedTable->generateForm();
+		$html .= $this->mathAdvancedTable->generateForm();
 		return $html;
 	}
 
@@ -45,8 +45,7 @@ class MathParticleForm extends BasicParticleForm
 	{
 		$msg = parent::validate( $postArray );
 		
-		$particleTable = new MathParticleTable();
-		$msg .= $particleTable->validate( $postArray );
+		$msg .= $this->mathTable->validate( $postArray );
 		
 		return $msg;
 	}
@@ -58,10 +57,8 @@ class MathParticleForm extends BasicParticleForm
 		$command = parent::buildCommand( $postArray );
 		
 		// add params from Appion Loop form
-		$particleTable = new MathParticleTable();
-		$advancedTable = new MathParticleAdvancedTable();
-		$command .= $particleTable->buildCommand( $postArray );
-		$command .= $advancedTable->buildCommand( $postArray );
+		$command .= $this->mathTable->buildCommand( $postArray );
+		$command .= $this->mathAdvancedTable->buildCommand( $postArray );
 		
 		return $command;		
 	}

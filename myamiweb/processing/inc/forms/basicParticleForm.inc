@@ -19,7 +19,12 @@ class BasicParticleForm extends BasicLoopForm
 
 	function __construct( $expId, $errorHTML='', $infoHTML='' ) 
 	{
-		parent::__construct($expId, $errorHTML, $infoHTML );	
+		parent::__construct($expId, $errorHTML, $infoHTML );
+		$this->particleTable = new SimpleParticleTable;	
+		$this->pDiameterTable = new ParticleDiameterTable();
+
+		// You can change the default of the parameters for the imbeded table in the child functions.
+
 	}
 
 	// Thie overwrite the same function in BasicLoopForm to divide the
@@ -44,9 +49,9 @@ class BasicParticleForm extends BasicLoopForm
 
 	public function generateParticleTable() {
 		// Add the Particle Loop Form
-		$particleTable = new SimpleParticleTable();
+		//$particleTable = SimpleParticleTable();
 		
-		$html .= $particleTable->generateForm();
+		$html .= $this->particleTable->generateForm();
 	
 		return $html;
 	}
@@ -55,8 +60,7 @@ class BasicParticleForm extends BasicLoopForm
 	// overwrite this to return false if don't want Diameter to show
 	public function generateAdditionalFormRightHeader() {
 		// Add the Particle Parameter Table Form
-		$pDiameterTable = new ParticleDiameterTable();
-		$html .= $pDiameterTable->generateForm();
+		$html .= $this->pDiameterTable->generateForm();
 		return $html;
 	}
 		
@@ -73,11 +77,9 @@ class BasicParticleForm extends BasicLoopForm
 	{
 		$msg = parent::validate( $postArray );
 		
-		$pDiameterTable = new ParticleDiameterTable();
-		$msg .= $pDiameterTable->validate( $postArray );
+		$msg .= $this->pDiameterTable->validate( $postArray );
 
-		$particleTable = new SimpleParticleTable();
-		$msg .= $particleTable->validate( $postArray );
+		$msg .= $this->particleTable->validate( $postArray );
 		
 		return $msg;
 	}
@@ -87,11 +89,9 @@ class BasicParticleForm extends BasicLoopForm
 	{	
 		$command = parent::buildCommand( $postArray );
 		
-		// add params from Appion Loop form
-		$pDiameterTable = new ParticleDiameterTable();
-		$particleTable = new SimpleParticleTable();
-		$command .= $pDiameterTable->buildCommand( $postArray );
-		$command .= $particleTable->buildCommand( $postArray );
+		// add params from forms
+		$command .= $this->pDiameterTable->buildCommand( $postArray );
+		$command .= $this->particleTable->buildCommand( $postArray );
 		
 		return $command;		
 	}
