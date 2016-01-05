@@ -39,9 +39,9 @@ function createForm($extra=false) {
 	// The _GET array should include the actual class name of the form to be displayed
 	$formClass = $_GET['form'];
 	$form = new $formClass( $expId, $extra );
-	
-	// Display the form
-	echo $form->generateForm();
+
+	//Display the form in depending on  $_POST
+	echo $form->generateSequenceForm();
 }
 
 function runAppionLoop() {
