@@ -101,6 +101,39 @@ class BasicLayoutForm extends BasicForm
 	}
 
 	public function generateAdditionalFormLeft() {return False;}
+
+	public function generateFormFooter() {return False;}
+
+	private function generateFormHeader()
+	{
+		// create the main form and table
+		$html .= "<form name='viewerform' method='POST' ACTION='$formAction'>\n";
+		return $html;
+	}
+
+	public function generatePreForm()
+	{
+		//TODO: Don't like this direct echo from the function. Should make this a wrapper for a function that returns the guts.
+		processing_header($this->title, $this->heading, $this->javaFunctions, True, True, False, $this->getGuideURL());	
+
+		// check if coming directly from a session
+		if ( $this->expId ) {
+			$sessionId = $this->expId;
+			$formClass = get_class($this);
+			$formAction = $_SERVER['PHP_SELF']."?expId=$this->expId&form=$formClass";
+		}	else {
+			$sessionId = $_POST['sessionId'];
+			$formAction = $_SERVER['PHP_SELF'];	
+		}
+		
+		// Set the session path
+		$projectId   = getProjectId();
+		$sessiondata = getSessionList( $projectId, $sessionId );
+		$sessioninfo = $sessiondata['info'];
+
+		$html .= $this->generateFormHeader();
+		return $html;
+	}
 	
 	public function generateForm() 
 	{
@@ -229,7 +262,11 @@ class BasicLayoutForm extends BasicForm
 		$includeHost = !$this->useCluster;
 		$html .= getSubmitForm("Run Command", $includeHost);
 		$html .= "</td></tr>";
-		
+	
+		// Add any other things to show	
+		$html .= "<tr><td COLSPAN='2' ALIGN='CENTER'>";
+		$html .= $this->generateFormFooter();		
+		$html .= "</td></tr>";
 		// Add any publication references for this method
 		$html .= "<tr><td COLSPAN='2' ALIGN='CENTER'>";
 		$html .= $this->showReference();
