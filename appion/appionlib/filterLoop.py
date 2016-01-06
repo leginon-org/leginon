@@ -103,7 +103,7 @@ class FilterLoop(appionLoop2.AppionLoop):
 			help="Median filter radius in Pixels", metavar="INT")
 		self.parser.add_option("--pixlimit", dest="pixlimit", type="float",
 			help="Limit pixel values to within <pixlimit> standard deviations", metavar="FLOAT")
-		self.parser.add_option("--bin", "--shrink", "--binby", dest="bin", type="int", default=4,
+		self.parser.add_option("--bin","--binval", "--shrink", "--binby", dest="bin", type="int", default=4,
 			help="Bin the image", metavar="INT")
 		### True / False options
 		self.parser.add_option("--invert", dest="invert", default=False,
