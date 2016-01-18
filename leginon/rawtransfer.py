@@ -5,9 +5,10 @@ import sys
 import shutil
 import subprocess
 import time
+import numpy
 import leginon.leginondata
 import leginon.ddinfo
-import pyami.fileutil
+import pyami.fileutil, pyami.mrc
 
 next_time_start = 0
 mtime = 0
@@ -25,6 +26,9 @@ class RawTransfer(object):
 			leginon.leginondata.BrightImageData,
 			leginon.leginondata.NormImageData,
 		]
+		self.refcopy = None
+		if not self.is_win32:
+			self.refcopy = ReferenceCopier()
 
 	def parseParams(self):
 		'''
@@ -260,6 +264,9 @@ class RawTransfer(object):
 				print '    Destination frame path does not starts with %s. Skipped' % (dest_head)
 				continue
 
+			if self.refcopy:
+				self.refcopy.setFrameDir(frames_path)
+
 			# determine user and group of leginon data
 			filename = imdata['filename']
 			if sys.platform == 'win32':
@@ -270,6 +277,10 @@ class RawTransfer(object):
 				gid = stat.st_gid
 			# make full dst_path
 			imname = filename + dst_suffix
+			# copy reference if possible
+			if self.refcopy:
+				self.refcopy.run(imdata, imname)
+			# full path of frames
 			dst_path = os.path.join(frames_path, imname)
 			print 'Destination path: %s' %  (dst_path)
 
@@ -291,6 +302,127 @@ class RawTransfer(object):
 			print 'Sleeping...'
 			time.sleep(check_interval)
 
+
+
+class ReferenceCopier(object):
+	'''
+	Copy references and modify orientation if needed for archiving
+	'''
+
+	def setFrameDir(self, framedir):
+		self.framedir = framedir
+		if not os.path.isdir(self.framedir):
+			raise Exception('Frame directory not exists')
+		self.refdir = os.path.join(framedir,'references')
+		self.reflistpath = os.path.join(self.refdir,'reference_list.txt')
+		self.setupRefDir()
+		self.corrector_plans = {}
+
+	def setupRefDir(self):
+		if not os.path.isdir(self.refdir):
+				pyami.fileutil.mkdirs(self.refdir)
+				if not os.path.isfile(self.reflistpath):
+					fileobj = open(self.reflistpath,'w')
+					header = 'image name\tnorm image\tdark image\tdefect plan id\n'
+					fileobj.write(header)
+					fileobj.close()
+
+	def getRefDir(self):
+		return self.refdir
+
+	def setImage(self,imagedata):
+		self.image = imagedata
+		self.plan = imagedata['corrector plan']
+
+	def run(self, imagedata, frame_dst_name):
+		self.ref_modified = False
+		self.setImage(imagedata)
+		linelist = []
+		linelist.append(frame_dst_name)
+		for reftype in ('norm','dark'):
+			refdata = imagedata[reftype]
+			if not refdata:
+				linelist.append('')
+			else:
+				reffilename = refdata['filename']
+				reffilepath = os.path.join(self.refdir,reffilename+'.mrc')
+				if not os.path.isfile(reffilepath):
+					print('Copying %s reference for image %s ....' % (reftype, imagedata['filename']))
+					refimage = refdata['image']
+					# write the original in its original name
+					pyami.mrc.write(refimage,reffilepath)
+					refimage = self.modifyRefImage(refimage)
+					# scale dark image if needed to one frame
+					if reftype == 'dark' and not (refimage.max() == refimage.min() and refimage.mean() == 0):
+						darkscale = refdata['camera']['nframes']
+						if darkscale != 1 and darkscale != 0:
+							self.ref_modified = True
+							print('  scaling dark image by %d' % (darkscale,))
+							refimage /= darkscale
+					if self.ref_modified:
+						reffilename = reffilename+'_mod'
+						reffilepath = os.path.join(self.refdir,reffilename+'.mrc')
+						pyami.mrc.write(refimage,reffilepath)
+				else:
+					print('%s reference for image %s already copied, skipping....' % (reftype,imagedata['filename']))
+				linelist.append(reffilename+'.mrc')
+		if self.plan:
+				plan_id = self.plan.dbid
+				linelist.append('%d' % (plan_id,))
+				planfilename = 'defect_plan%04d' % (plan_id)
+				planfilepath = os.path.join(self.refdir,planfilename+'.txt')
+				if not os.path.isfile(planfilepath):
+					planfile = open(planfilepath,'w')
+					plantxt = '%s\n%s\n%s\n' % (self.plan['bad col'],self.plan['bad row'],self.plan['bad pixels'])
+					planfile.write(plantxt)
+					planfile.close()
+		# check if the image is already there
+		fileobj = open(self.reflistpath,'r')
+		if frame_dst_name in fileobj.read():
+			print('frame references recorded already')
+			fileobj.close()
+			return
+		else:
+			fileobj.close()
+			# write in the list
+			fileobj2 = open(self.reflistpath,'a')
+			linestr = '\t'.join(linelist)
+			fileobj2.write(linestr+'\n')
+			fileobj2.close()
+
+	def getImageFrameOrientation(self):
+		frame_flip = self.image['camera']['frame flip']
+		frame_rotate = self.image['camera']['frame rotate']
+		return frame_flip, frame_rotate
+
+	def modifyRefImage(self,a):
+		a = numpy.asarray(a,dtype=numpy.float32)
+		frame_flip, frame_rotate = self.getImageFrameOrientation()
+		if frame_flip:
+			self.ref_modified = True	
+			if frame_rotate and frame_rotate == 2:
+				# Faster to just flip left-right than up-down flip + rotate
+				print("  flipping the image left-right")
+				a = numpy.fliplr(a)
+				frame_rotate = 0
+			else:
+				print("  flipping the image up-down")
+				a = numpy.flipud(a)
+		if frame_rotate:
+			self.ref_modified = True	
+			# We are rotating the references here.  Therefore, do it in the other way.
+			frame_rotate = 4 - frame_rotate
+			print("  rotating the image by %d degrees" % (frame_rotate*90,))
+			a = numpy.rot90(a,frame_rotate)
+		return a
+
+def testRefCopy():
+	app = ReferenceCopier()
+	imagedata = leginon.leginondata.AcquisitionImageData.direct_query(1871)
+	app.setFrameDir('/Users/acheng/testdata/frames/15dec04y/rawdata/')
+	app.run(imagedata,imagedata['filename']+'.frames.mrc')
+	
 if __name__ == '__main__':
 		a = RawTransfer()
 		a.run()
+		#testRefCopy()
