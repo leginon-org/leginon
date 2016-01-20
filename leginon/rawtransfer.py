@@ -323,7 +323,7 @@ class ReferenceCopier(object):
 				pyami.fileutil.mkdirs(self.refdir)
 				if not os.path.isfile(self.reflistpath):
 					fileobj = open(self.reflistpath,'w')
-					header = 'image name\tnorm image\tdark image\tdefect plan id\n'
+					header = 'image_name\tflip\trotate\tdark_scale\tnorm_image\tdark_image\tdefect_plan\n'
 					fileobj.write(header)
 					fileobj.close()
 
@@ -335,18 +335,32 @@ class ReferenceCopier(object):
 		self.plan = imagedata['corrector plan']
 
 	def run(self, imagedata, frame_dst_name):
-		self.ref_modified = False
 		self.setImage(imagedata)
 		linelist = []
 		linelist.append(frame_dst_name)
+		# modifications
+		flip,rotate = self.getImageFrameOrientation()
+		dark_scale = self.getDarkScale()
+		geometry_modified = self.needGeometryModified()
+		linelist.append(str(flip)[0])
+		linelist.append('%d' % (int(rotate)*90))
+		linelist.append('%d' % (dark_scale))
+		# reference images
 		for reftype in ('norm','dark'):
 			refdata = imagedata[reftype]
 			if not refdata:
 				linelist.append('')
 			else:
+				scale_modified = self.needScaleModified(reftype)
+				# reference file
 				reffilename = refdata['filename']
 				reffilepath = os.path.join(self.refdir,reffilename+'.mrc')
-				if not os.path.isfile(reffilepath):
+				refdata_reffilepath = os.path.join(refdata['session']['image path'],refdata['filename']+'.mrc')
+				if not os.access(refdata_reffilepath, os.R_OK):
+					print('Error: %s reference for image %s not readable....' % (reftype,imagedata['filename']))
+					print('%s not readable' % (refdata_reffilepath+'.mrc'))
+					reffilename = refdata_reffilepath[:-4]
+				elif not os.path.isfile(reffilepath):
 					print('Copying %s reference for image %s ....' % (reftype, imagedata['filename']))
 					refimage = refdata['image']
 					# write the original in its original name
@@ -356,26 +370,35 @@ class ReferenceCopier(object):
 					if reftype == 'dark' and not (refimage.max() == refimage.min() and refimage.mean() == 0):
 						darkscale = refdata['camera']['nframes']
 						if darkscale != 1 and darkscale != 0:
-							self.ref_modified = True
 							print('  scaling dark image by %d' % (darkscale,))
 							refimage /= darkscale
-					if self.ref_modified:
+					if geometry_modified or scale_modified:
+						# record modified reference and save
 						reffilename = reffilename+'_mod'
 						reffilepath = os.path.join(self.refdir,reffilename+'.mrc')
 						pyami.mrc.write(refimage,reffilepath)
 				else:
 					print('%s reference for image %s already copied, skipping....' % (reftype,imagedata['filename']))
+					if geometry_modified or scale_modified:
+						# record modified reference any way
+						reffilename = reffilename+'_mod'
 				linelist.append(reffilename+'.mrc')
+
+		# writing Corrector Plan if any
 		if self.plan:
 				plan_id = self.plan.dbid
-				linelist.append('%d' % (plan_id,))
 				planfilename = 'defect_plan%04d' % (plan_id)
 				planfilepath = os.path.join(self.refdir,planfilename+'.txt')
-				if not os.path.isfile(planfilepath):
-					planfile = open(planfilepath,'w')
-					plantxt = '%s\n%s\n%s\n' % (self.plan['bad col'],self.plan['bad row'],self.plan['bad pixels'])
-					planfile.write(plantxt)
-					planfile.close()
+				self.writePlanFile(planfilepath,self.plan['bad_cols'],self.plan['bad_rows'],self.plan['bad_pixels'])
+
+				# modify plan
+				if geometry_modified:
+					bad_cols,bad_rows,bad_pixels = self.modifyCorrectorPlan(imagedata['image'].shape,self.plan['bad_cols'],self.plan['bad_rows'],self.plan['bad_pixels'])
+					planfilename += '_mod'
+					planfilepath = os.path.join(self.refdir,planfilename+'.txt')
+					self.writePlanFile(planfilepath,bad_cols,bad_rows,bad_pixels)
+				linelist.append(planfilename)
+					
 		# check if the image is already there
 		fileobj = open(self.reflistpath,'r')
 		if frame_dst_name in fileobj.read():
@@ -390,16 +413,81 @@ class ReferenceCopier(object):
 			fileobj2.write(linestr+'\n')
 			fileobj2.close()
 
+	def writePlanFile(self, planfilepath, bad_cols, bad_rows, bad_pixels):
+		if not os.path.isfile(planfilepath):
+			print('Writing the correction plan %s....' % planfilepath)
+			planfile = open(planfilepath,'w')
+			plantxt = '%s\n%s\n%s\n' % (bad_cols,bad_rows,bad_pixels)
+			planfile.write(plantxt)
+			planfile.close()
+
 	def getImageFrameOrientation(self):
 		frame_flip = self.image['camera']['frame flip']
 		frame_rotate = self.image['camera']['frame rotate']
 		return frame_flip, frame_rotate
 
+	def needGeometryModified(self):
+		frame_flip, frame_rotate = self.getImageFrameOrientation()
+		return frame_flip or frame_rotate
+
+	def getDarkScale(self):
+		darkscale = 1
+		try:
+			if self.image['dark']:
+					refimage = self.image['dark']['image']
+					if not (refimage.max() == refimage.min() and refimage.mean() == 0):
+						darkscale = self.image['dark']['camera']['nframes']
+		except:
+			pass
+		if darkscale == 0:
+			darkscale = 1
+		return darkscale
+
+	def needScaleModified(self,reftype):
+		if reftype == 'norm':
+			return False
+		darkscale = self.getDarkScale()
+		return darkscale != 1 and darkscale != 0
+
+	def modifyCorrectorPlan(self,shape,bad_cols,bad_rows,bad_pixels):
+		a = numpy.zeros(shape)
+		# convert bad pixel coords to array
+		for b in bad_pixels:
+			# bad pixels are written in (x,y)
+			a[b[1],b[0]] = 1
+		frame_flip, frame_rotate = self.getImageFrameOrientation()
+		if frame_flip:
+			if frame_rotate and frame_rotate == 2:
+				# Faster to just flip left-right than up-down flip + rotate
+				print("  flipping the plan left-right")
+				bad_cols = map((lambda x: shape[1]-1-x),bad_cols)
+				frame_rotate = 0
+				a = numpy.fliplr(a)
+			else:
+				print("  flipping the plan up-down")
+				bad_rows = map((lambda x: shape[0]-1-x),bad_rows)
+				a = numpy.flipud(a)
+		if frame_rotate:
+			# We are rotating the plans here.  Therefore, do it in the other way.
+			frame_rotate = 4 - frame_rotate
+			print("  rotating the plan by %d degrees" % (frame_rotate*90,))
+			a = numpy.rot90(a,frame_rotate)
+			for rotate in range(frame_rotate):
+				original_bad_rows = bad_rows
+				new_bad_rows = map((lambda x:shape[0]-x),bad_col)
+				new_bad_col = original_bad_rows
+				bad_rows = tuple(new_bad_rows)	
+				bad_cols = tuple(new_bad_cols)
+		# convert bad pixel arrays to list of coords
+		bad_coord_list = map((lambda x:x.tolist()),numpy.where(a))
+		# bad pixels are written in (x,y)
+		bad_pixels = zip(bad_coord_list[1],bad_coord_list[0])	
+		return bad_cols, bad_rows, bad_pixels
+
 	def modifyRefImage(self,a):
 		a = numpy.asarray(a,dtype=numpy.float32)
 		frame_flip, frame_rotate = self.getImageFrameOrientation()
 		if frame_flip:
-			self.ref_modified = True	
 			if frame_rotate and frame_rotate == 2:
 				# Faster to just flip left-right than up-down flip + rotate
 				print("  flipping the image left-right")
@@ -409,7 +497,6 @@ class ReferenceCopier(object):
 				print("  flipping the image up-down")
 				a = numpy.flipud(a)
 		if frame_rotate:
-			self.ref_modified = True	
 			# We are rotating the references here.  Therefore, do it in the other way.
 			frame_rotate = 4 - frame_rotate
 			print("  rotating the image by %d degrees" % (frame_rotate*90,))
@@ -421,7 +508,9 @@ def testRefCopy():
 	imagedata = leginon.leginondata.AcquisitionImageData.direct_query(1871)
 	app.setFrameDir('/Users/acheng/testdata/frames/15dec04y/rawdata/')
 	app.run(imagedata,imagedata['filename']+'.frames.mrc')
-	
+	app.setImage(imagedata)
+	print app.modifyCorrectorPlan(imagedata['image'].shape,[0,],[0,],[(1000,54),])
+
 if __name__ == '__main__':
 		a = RawTransfer()
 		a.run()
