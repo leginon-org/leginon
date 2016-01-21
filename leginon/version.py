@@ -67,8 +67,8 @@ def getSVNInfo(module_path=''):
 		p = subprocess.Popen('svn info', shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 		svninfo,svnerror = p.communicate()
 		os.chdir(currentpath)
-	except:
-		raise
+	except Exception,e: 
+		print str(e)
 	# releases have no svn info
 	if svnerror:
 		return {}
