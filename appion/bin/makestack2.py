@@ -96,7 +96,10 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 				self.logpeaks = math.ceil(logpeaks)
 				numpeaks = math.ceil(math.exp(self.logpeaks))
 				apDisplay.printMsg("writing averaging stack, next average at %d particles"%(numpeaks))
-				mrc.write(self.summedParticles/float(totalPartices), "average.mrc")
+				if self.params['inverted'] is True:
+					mrc.write(-1.0*self.summedParticles/float(totalPartices), "average.mrc")
+				else:
+					mrc.write(self.summedParticles/float(totalPartices), "average.mrc")
 		return totalpart
 
 	#=======================
