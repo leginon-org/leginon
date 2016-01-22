@@ -11,4 +11,4 @@ if [ ! -d "/emg/data/appion" ]; then
 fi
 
 #need a command that does not end to keep container alive
-tail -f .vnc/*:1.log 
+tail -f /home/appionuser/.vnc/*:1.log 

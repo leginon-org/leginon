@@ -1,7 +1,6 @@
 FROM centos:6
 MAINTAINER Neil Voss <vossman77@yahoo.com>
 
-
 ### install epel
 RUN yum -y update && yum -y install wget epel-release sudo passwd rsync && yum -y clean all
 #RUN wget 'https://dl.fedoraproject.org/pub/epel/epel-release-latest-6.noarch.rpm'
@@ -15,16 +14,16 @@ RUN yum -y update && yum -y install \
  gcc-objc fftw3-devel gsl-devel \
  mysql mysql-server MySQL-python mod_python \
  httpd php php-mysql phpMyAdmin mod_ssl php-pecl-ssh2 \
- gcc-c++ openmpi-devel libtiff-devel \
+ gcc-c++ libtiff-devel \
  php-devel gd-devel re2c fftw3-devel php-gd \
  xorg-x11-server-Xvfb netpbm-progs \
- libssh2-devel mlocate nano elinks \
+ libssh2-devel mlocate nano elinks file \
  numactl compat-libgfortran && yum -y clean all
 ### Trying to do VNC
 RUN yum -y update && yum -y install tigervnc-server xterm xsetroot fluxbox fbpanel && yum -y clean all
-RUN yum -y update && yum -y install mozilla-adblockplus firefox dbus && yum -y clean all
+#RUN yum -y update && yum -y install mozilla-adblockplus firefox dbus && yum -y clean all
 RUN dbus-uuidgen > /var/lib/dbus/machine-id
-RUN easy_install joblib pyfftw3 fs
+RUN easy_install joblib pyfftw3 fs milk
 
 RUN updatedb
 
@@ -42,10 +41,10 @@ EXPOSE 80
 
 ### MySQL setup
 RUN cp -fv /usr/share/mysql/my-huge.cnf /etc/my.cnf
-RUN svn co http://emg.nysbc.org/svn/myami/branches/myami-3.2/ /emg/sw/myami-3.2/
-RUN svn co http://emg.nysbc.org/svn/myami/branches/myami-3.2/install/ /emg/sw/appion_install/ && echo 'appion_install'
-RUN ln -sv /emg/sw/myami-3.2/myamiweb /var/www/html/ami
-RUN ln -sv /emg/sw/myami-3.2/myamiweb /var/www/html/myamiweb
+#RUN svn co http://emg.nysbc.org/svn/myami/branches/myami-3.2/ /emg/sw/myami/
+RUN svn co http://emg.nysbc.org/svn/myami/trunk/ /emg/sw/myami/
+RUN ln -sv /emg/sw/myami/myamiweb /var/www/html/ami
+RUN ln -sv /emg/sw/myami/myamiweb /var/www/html/myamiweb
 #EXPOSE 3306
 
 ### Myami setup
@@ -53,22 +52,26 @@ COPY sinedon.cfg /etc/myami/sinedon.cfg
 COPY leginon.cfg /etc/myami/leginon.cfg
 COPY appion.cfg /etc/myami/appion.cfg
 COPY redux.cfg /etc/myami/redux.cfg
-COPY config.php /emg/sw/myami-3.2/myamiweb/config.php
+COPY config.php /emg/sw/myami/myamiweb/config.php
 COPY docker.sql /emg/sw/docker.sql
+COPY particledata.dat /emg/sw/particledata.dat
 RUN mkdir -p /var/cache/myami/redux/ && chmod 777 /var/cache/myami/redux/
-RUN ln -sv /emg/sw/myami-3.2/appion/appionlib /usr/lib64/python2.6/site-packages/
-WORKDIR /emg/sw/myami-3.2/
+RUN ln -sv /emg/sw/myami/appion/appionlib /usr/lib64/python2.6/site-packages/
+WORKDIR /emg/sw/myami/
 RUN ./pysetup.sh install
 RUN mkdir /etc/fftw
 RUN python /usr/lib/python2.6/site-packages/pyami/fft/fftwsetup.py 2 4096 4096 && mv -v  ~/fftw3-wisdom-* /etc/fftw/wisdom
-RUN cp -v /emg/sw/myami-3.2/redux/init.d/reduxd /etc/init.d/reduxd
+RUN cp -v /emg/sw/myami/redux/init.d/reduxd /etc/init.d/reduxd
 
 ADD Xmipp-2.4-src.tar.gz /emg/sw
 RUN mv -v /emg/sw/Xmipp-2.4-src /emg/sw/xmipp 
 WORKDIR /emg/sw/xmipp
-ENV MPIPATH /usr/lib64/openmpi
-ENV PATH /bin:/usr/bin:/sbin:/usr/sbin:/usr/lib64/openmpi/bin
-RUN ./scons.configure MPI_LIBDIR=/usr/lib64/openmpi/lib  MPI_LIB=mpi  MPI_INCLUDE=/usr/include/openmpi-x86_64
+#RUN yum -y update && yum -y install openmpi-devel && yum -y clean all
+#ENV MPIPATH /usr/lib64/openmpi
+#ENV PATH /bin:/usr/bin:/sbin:/usr/sbin:/usr/lib64/openmpi/bin
+#RUN ./scons.configure MPI_LIBDIR=/usr/lib64/openmpi/lib  MPI_LIB=mpi  MPI_INCLUDE=/usr/include/openmpi-x86_64
+ENV PATH /bin:/usr/bin:/sbin:/usr/sbin
+RUN ./scons.configure
 RUN ./scons.compile
 #FIXME: mpirun does not run as root
 
