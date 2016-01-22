@@ -57,6 +57,7 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 			help="label to be appended to the presetname, e.g. --label=a gives ed-a as the aligned preset for preset ed", metavar="CHAR")
 		self.parser.add_option("--border", dest='border', type='int', default=0, help='Clip border specified border pixels and pad back out with mean value')
 		self.parser.add_option("--hackcopy", dest='hackcopy', action='store_true', default=False, help='Copy corrected image to session directory and overwrite the original image, saving the orignal with a new extension ".orig.mrc"')
+		self.parser.add_option("--skipgain", dest='skipgain', action='store_true', default=False, help='Skip flatfield correction')
 		
 	#=======================
 	def checkConflicts(self):
@@ -91,21 +92,35 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 
 	def getTargets(self, imgdata, scratchdir='', handlefiles='direct'):
 		targetdict={}
-		#copy flatfields
 		
-		brightrefpath=imgdata['bright']['session']['image path']
-		brightrefname=imgdata['bright']['filename']+'.mrc'
-		brightref=os.path.join(brightrefpath,brightrefname)
+		try: 
+			brightrefpath=imgdata['bright']['session']['image path']
+			brightrefname=imgdata['bright']['filename']+'.mrc'
+			brightref=os.path.join(brightrefpath,brightrefname)
+		except:
+			apDisplay.printWarning("Warning, bright reference not found. Frames will not be gain corrected.")
+			brightrefname=None
+			brightref=None
+			
+		try:
+			darkrefpath=imgdata['dark']['session']['image path']
+			darkrefname=imgdata['dark']['filename']+'.mrc'
+			darkref=os.path.join(darkrefpath,darkrefname)
+		except:
+			apDisplay.printWarning("Warning, dark reference not found. Frames will not be gain corrected.")
+			darkrefname=None
+			darkref=None
 		
-		darkrefpath=imgdata['dark']['session']['image path']
-		darkrefname=imgdata['dark']['filename']+'.mrc'
-		darkref=os.path.join(darkrefpath,darkrefname)
-		
-		#################################### do away with override flatfield option
 		framesdirname=imgdata['filename']+'.frames'
-		apDisplay.printMsg('Copying frames %s' % (framesdirname))
+		apDisplay.printMsg('Finding frames %s' % (framesdirname))
 		framespath=imgdata['session']['frame path']
-		framespathname=os.path.join(framespath,framesdirname)
+		framesroot, framesextension=os.path.splitext(glob.glob(os.path.join(framespath, (imgdata['filename']+'*')))[0])
+		framespathname=framesroot+framesextension
+		if framesextension == '.frames':
+			self.params['input_type']='directories'
+		elif framesextension == '.mrc':
+			self.params['input_type']='stacks'
+		apDisplay.printMsg('Frames located at %s' % framespathname)
 	
 		if handlefiles == 'direct':
 			targetdict['brightref']=brightref
@@ -113,24 +128,29 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 			targetdict['framespathname']=framespathname
 			targetdict['outpath']=self.params['rundir']
 		elif handlefiles == 'copy':
-			shutil.copy(brightref,scratchdir)
-			shutil.copy(darkref,scratchdir)
-			targetdict['brightref']=os.path.join(scratchdir,brightrefname)
-			targetdict['darkref']=os.path.join(scratchdir,darkrefname)
+			if self.params['skipgain'] is False and brightref is not None and darkref is not None:
+				shutil.copy(brightref,scratchdir)
+				shutil.copy(darkref,scratchdir)
+				targetdict['brightref']=os.path.join(scratchdir,brightrefname)
+				targetdict['darkref']=os.path.join(scratchdir,darkrefname)
 			try:
-				shutil.copytree(framespathname,os.path.join(scratchdir, framesdirname))
+				if framesextension == '.frames':
+					shutil.copytree(framespathname,os.path.join(scratchdir, framesdirname))
+				elif framesextension == '.mrc':
+					shutil.copy(framespathname,scratchdir)
 			except:
 				apDisplay.printWarning('there was a problem copying the frames for %s' % (imgdata['filename']))
-			targetdict['framespathname']=os.path.join(scratchdir,framesdirname)
+			targetdict['framespathname']=os.path.join(scratchdir,framespathname)
 			targetdict['outpath']=os.path.join(scratchdir,imgdata['filename'])
 			
 		elif handlefiles == 'link':
-			os.symlink(brightref,os.path.join(scratchdir,brightrefname))
-			os.symlink(darkref,os.path.join(scratchdir,darkrefname))
-			os.symlink(framespathname,os.path.join(scratchdir, framesdirname))
-			
-			targetdict['brightref']=os.path.join(scratchdir,brightrefname)
-			targetdict['darkref']=os.path.join(scratchdir,darkrefname)
+			if self.params['skipgain'] is False and brightref is not None and darkref is not None:
+				os.symlink(brightref,os.path.join(scratchdir,brightrefname))
+				os.symlink(darkref,os.path.join(scratchdir,darkrefname))
+				targetdict['brightref']=os.path.join(scratchdir,brightrefname)
+				targetdict['darkref']=os.path.join(scratchdir,darkrefname)
+
+			os.symlink(framespathname,os.path.join(scratchdir, framesdirname))			
 			targetdict['framespathname']=os.path.join(scratchdir,framesdirname)
 			targetdict['outpath']=os.path.join(scratchdir,imgdata['filename'])
 		return targetdict
@@ -202,13 +222,14 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 
 		#set appion specific options
 		#flatfield references
-		self.params['gainreference_filename']=targetdict['brightref']		
-		brightnframes=imgdata['bright']['camera']['nframes']
-		self.params['gainreference_framecount']=brightnframes
+		if self.params['skipgain'] is not True and targetdict['brightref'] is not None and targetdict['darkref'] is not None:
+			self.params['gainreference_filename']=targetdict['brightref']		
+			brightnframes=imgdata['bright']['camera']['nframes']
+			self.params['gainreference_framecount']=brightnframes
 
-		self.params['darkreference_filename']=targetdict['darkref']		
-		darknframes=imgdata['dark']['camera']['nframes']
-		self.params['darkreference_framecount']=darknframes
+			self.params['darkreference_filename']=targetdict['darkref']		
+			darknframes=imgdata['dark']['camera']['nframes']
+			self.params['darkreference_framecount']=darknframes
 		self.getCameraDefects(imgdata)
 
 		self.params['input_framecount']=nframes
@@ -239,10 +260,11 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 		framespathname=targetdict['framespathname']
 		
 		#check to see if there are frames in the path
-		framesinpath=len(glob.glob(os.path.join(framespathname,'*')))
-		if framesinpath == 0:
-			apDisplay.printWarning('%s skipped because %d frames were found' % (imgdata['filename'],framesinpath))
-			return
+		if self.params['input_type'] == 'directories':
+			framesinpath=len(glob.glob(os.path.join(framespathname,'*')))
+			if framesinpath == 0:
+				apDisplay.printWarning('%s skipped because %d frames were found' % (imgdata['filename'],framesinpath))
+				return
 		
 		command.append(framespathname)
 		return command
@@ -297,141 +319,6 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 
 		return None
 
-	'''
-	#=======================
-	def processImage(self, imgdata):
-		# need to avoid non-frame saved image for proper caching
-		if imgdata is None or imgdata['camera']['save frames'] != True:
-			apDisplay.printWarning('%s skipped for no-frame-saved\n ' % imgdata['filename'])
-			return
-
-		### set processing image
-		try:
-			self.dd.setImageData(imgdata)
-		except Exception, e:
-			apDisplay.printWarning(e.args[0])
-			return
-
-
-		# Align
-		# Doing the alignment
-
-		kev=imgdata['scope']['high tension']/1000
-		apix=apDatabase.getPixelSize(imgdata)
-		nframes=imgdata['camera']['nframes']
-		dose=imgdata['preset']['dose']/10**20
-
-		#set appion specific options
-		#flatfield references
-		if self.params['override-bright'] is None:
-			brightrefpath=imgdata['bright']['session']['image path']
-			brightrefname=imgdata['bright']['filename']
-			brightref=os.path.join(brightrefpath,brightrefname+'.mrc')
-			self.params['gainreference_filename']=brightref
-		else:
-			self.params['gainreference_filename']=self.params['override-bright']
-		
-		if self.params['override-brightnframes'] is None:
-			brightnframes=imgdata['bright']['camera']['nframes']
-			self.params['gainreference_framecount']=brightnframes
-		else:
-			self.params['gainreference_framecount']=self.params['override-brightnframes']
-
-
-		if self.params['override-dark'] is None:
-			darkrefpath=imgdata['dark']['session']['image path']
-			darkrefname=imgdata['dark']['filename']
-			darkref=os.path.join(darkrefpath,darkrefname+'.mrc')
-			self.params['darkreference_filename']=darkref
-		else:
-			self.params['darkreference_filename']=self.params['override-dark']
-		
-		if self.params['override-darknframes'] is None:
-			darknframes=imgdata['dark']['camera']['nframes']
-			self.params['darkreference_framecount']=darknframes
-		else:
-			self.params['darkreference_framecount']=self.params['override-darknframes']
-
-		self.params['input_framecount']=nframes
-		#self.params['run_verbosity']=3
-		self.params['output_invert']=0
-		self.params['radiationdamage_apix']=apix
-		self.params['radiationdamage_voltage']=kev
-		self.params['radiationdamage_exposurerate']=dose/nframes
-		#self.params['boxes_boxsize']=boxsize
-
-		outpath=os.path.join(self.params['rundir'],imgdata['filename'])
-		if os.path.exists(outpath):
-			shutil.rmtree(outpath)
-		os.mkdir(outpath)
-
-		command=['runDEProcessFrames.py']
-		keys=self.params.keys()
-		keys.sort()
-		for key in keys:
-			param=self.params[key]
-			#print key, param, type(param)
-			if param == None or param=='':
-				pass
-			else:
-				option='--%s=%s' % (key,param)
-				command.append(option)
-		command.append(outpath)
-		framespath=imgdata['session']['frame path']
-		framespathname=os.path.join(framespath,imgdata['filename']+'.frames')
-		
-		#check to see if there are frames in the path
-		framesinpath=len(glob.glob(os.path.join(framespathname,'*')))
-		if framesinpath == 0:
-			apDisplay.printWarning('%s skipped because %d frames were found' % (imgdata['filename'],framesinpath))
-			return
-		
-		command.append(framespathname)
-		print command
-		if self.params['dryrun'] is False:
-			subprocess.call(command)
-			
-			#cleanup and reformat image
-			innamepath=glob.glob(os.path.join(outpath,'*.mrc'))[0]
-			print innamepath
-			outname=imgdata['filename']+'-'+self.params['alignlabel']+'.mrc'
-			outnamepath=os.path.join(outpath,outname)
-			if self.params['border'] != 0:
-				command=['proc2d',innamepath, outnamepath]
-				header=mrc.readHeaderFromFile(innamepath)
-				origx=header['nx']
-				origy=header['ny']
-				newx=origx-self.params['border']
-				newy=origy-self.params['border']
-				command.append('clip=%d,%d' % (newx,newy))
-				print command
-				subprocess.call(command)
-				
-				
-				command=['proc2d',outnamepath,outnamepath]
-				command.append('clip=%d,%d' % (origx,origy))
-				command.append('edgenorm')
-				print command
-				subprocess.call(command)
-		
-			if self.params['hackcopy'] is True:
-				origpath=imgdata['session']['image path']
-				shutil.move(os.path.join(origpath,imgdata['filename']+'.mrc'), os.path.join(origpath,imgdata['filename']+'.orig.mrc'))
-				shutil.move(outnamepath, os.path.join(origpath,imgdata['filename']+'.mrc'))
-
-#		sys.exit()
-#		if os.path.isfile(self.dd.aligned_sumpath):
-#			self.aligned_imagedata = self.dd.makeAlignedImageData(alignlabel=self.params['alignlabel'])
-#			if os.path.isfile(self.dd.aligned_stackpath):
-#				# aligned_stackpath exists either because keepstack is true
-#				apDisplay.printMsg(' Replacing unaligned stack with the aligned one....')
-#				apFile.removeFile(self.dd.framestackpath)
-#				apDisplay.printMsg('Moving %s to %s' % (self.dd.aligned_stackpath,self.dd.framestackpath))
-#				shutil.move(self.dd.aligned_stackpath,self.dd.framestackpath)
-#		# Clean up tempdir in case of failed alignment
-#		if self.dd.framestackpath != self.dd.tempframestackpath:
-#			apFile.removeFile(self.dd.tempframestackpath)
-	'''
 	def insertFunctionRun(self):
 		
 		stackdata = None
