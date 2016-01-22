@@ -20,6 +20,7 @@ from appionlib import apFile
 from appionlib import apParam
 from appionlib import apScriptLog
 from appionlib import proc2dLib
+from appionlib import apImagicFile
 from appionlib.apCtf import ctftools
 
 debug = False
@@ -318,6 +319,8 @@ def getStackIdFromRecon(reconrunid, msg=True):
 def averageStack(stack="start.hed", outfile="average.mrc", partlist=None, msg=True):
 	"""
 	only works with IMAGIC
+	
+	partlist starts at 1
 	"""
 	if msg is True:
 		apDisplay.printMsg("averaging stack for summary web page")
@@ -325,33 +328,39 @@ def averageStack(stack="start.hed", outfile="average.mrc", partlist=None, msg=Tr
 	if not os.path.isfile(stackfile):
 		apDisplay.printWarning("could not create stack average, average.mrc")
 		return False
-	avgmrc = os.path.join(os.path.dirname(stackfile), outfile)
-	"""
-	### FIXME memory error
-	particles = imagic.read(stack)
-	summedParticle = numpy.zeros((particles[0].shape))
-	if partlist is None:
-		partlist = range(len(particles))
-	for partnum in partlist:
-		partarray = particles[partnum]
-		summedParticle += partarray
-	averagePartice = summedParticle/float(len(particles))
-	mrc.write(averagePartice, avgmrc)
-	"""	
-	# if using proc2d to make average for substack
-	if partlist is not None:
-		tmplstfile=open("tmplstfile.lst",'w')
-		tmplstfile.write("#LST\n")
-		for p in partlist:
-			tmplstfile.write("%i\t%s\n"%(p,stackfile))
-		tmplstfile.close()
-		emancmd = ( "proc2d tmplstfile.lst "+avgmrc+" average" )
-		apEMAN.executeEmanCmd(emancmd, verbose=msg)
-		os.remove("tmplstfile.lst")			
-	else:
-		emancmd = ( "proc2d "+stackfile+" "+avgmrc+" average" )
-		apEMAN.executeEmanCmd(emancmd, verbose=msg)
-	return True
+	avgStack = AverageStack(msg)
+	avgStack.start(stackfile, partlist)
+	if outfile is not None:
+		avgmrc = os.path.join(os.path.dirname(stackfile), outfile)
+		avgStack.save(avgmrc)
+	avgstack = avgStack.getdata()
+	return avgstack
+
+#======================
+#======================
+#======================
+#======================
+class AverageStack(apImagicFile.processStack):
+	#===============
+	def preLoop(self):
+		self.average = numpy.zeros((self.boxsize,self.boxsize))
+		#override self.partlist to get a subset
+		self.count = 0
+
+	#===============
+	def processStack(self, stackarray):
+		if isinstance(stackarray, list):
+			stackarray = numpy.array(stackarray)
+		self.index += stackarray.shape[0]
+		self.average += stackarray.sum(0)
+
+	#===============
+	def save(self, avgfile):
+		mrc.write(self.average/self.index, avgfile)
+
+	#===============
+	def getdata(self):
+		return self.average/self.index
 
 #======================
 def getParticleContrastFromStackId(stackId):

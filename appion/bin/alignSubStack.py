@@ -289,15 +289,18 @@ class subStackScript(appionScript.AppionScript):
 			oldstack = vstackdata['filename']
 			# get subset of virtualstack
 			vpartlist = [int(vparts[p]['particleNumber'])-1 for p in includeParticle]
-	
+
 			if self.params['writefile'] is True:
 				apStack.makeNewStack(oldstack, newstack, vpartlist, bad=self.params['savebad'])
-
-			apStack.averageStack(stack=oldstack,outfile=outavg,partlist=vpartlist)
+			#apStack.averageStack partlist starts at 1
+			avgpartlist = [p+1 for p in vpartlist]
+			apStack.averageStack(stack=oldstack,outfile=outavg,partlist=avgpartlist)
 		else:
 			if self.params['writefile'] is True:
 				apStack.makeNewStack(oldstack, newstack, self.params['keepfile'], bad=self.params['savebad'])
-			apStack.averageStack(stack=oldstack,outfile=outavg,partlist=includeParticle)
+			#apStack.averageStack partlist starts at 1
+			avgpartlist = [p+1 for p in includeParticle]
+			apStack.averageStack(stack=oldstack,outfile=outavg,partlist=avgpartlist)
 
 		if self.params['writefile'] is True and not os.path.isfile(newstack):
 			apDisplay.printError("No stack was created")
