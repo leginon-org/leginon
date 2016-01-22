@@ -18,6 +18,11 @@ class DataJsonLoader(object):
 		for key in kwargs.keys():
 			# leginondata keys never contains '_'
 			realkey = key.replace('_',' ')
+			if type(kwargs[key]) == type([]):
+				if len(kwargs[key]) > 0:
+					if type(kwargs[key][0]) == type([]):
+						# json export saves coordinate tuple as list.  Need to change back in import
+						kwargs[key] = map((lambda x: tuple(x)),kwargs[key])
 			q[realkey] = kwargs[key]
 		return q
 
