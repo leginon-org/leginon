@@ -376,6 +376,8 @@ class Acquisition(targetwatcher.TargetWatcher):
 
 	def tuneEnergyFilter(self, presetname):
 		presetdata = self.presetsclient.getPresetByName(presetname)
+		if not presetdata:
+			return
 		if presetdata['energy filter'] or presetdata['tem energy filter']:
 			if self.alignzlp_bound:
 				self.alignZeroLossPeak(presetname)

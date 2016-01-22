@@ -601,7 +601,8 @@ def getDoseFromImageData(imgdata):
 #================
 def getDimensionsFromImageData(imgdata):
 	''' returns dictionary, x & y dimensions, for image '''
-	return imgdata['preset']['dimension']
+	# There is always reference to CameraEMData
+	return imgdata['camera']['dimension']
 
 #================
 def checkInspectDB(imgdata):
