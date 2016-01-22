@@ -238,6 +238,10 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 	def setLastFocusedTargetList(self,targetlist):
 		if self.panel.getTargetPositions('focus'):
 			self.resetLastFocusedTargetList(targetlist)
+		# Issue #3794 atlas targetlist, manual image, and simulated target need to reset last focused targetlist
+		elif targetlist['image'] is None or targetlist['image']['target'] is None or targetlist['image']['target']['type'] == 'simulated':
+			# parent image is from simulated target
+			self.resetLastFocusedTargetList(targetlist)
 		else:
 			self.last_focused = self.focusing_targetlist
 
