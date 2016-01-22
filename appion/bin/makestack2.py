@@ -96,10 +96,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 				self.logpeaks = math.ceil(logpeaks)
 				numpeaks = math.ceil(math.exp(self.logpeaks))
 				apDisplay.printMsg("writing averaging stack, next average at %d particles"%(numpeaks))
-				if self.params['inverted'] is True:
-					mrc.write(-1.0*self.summedParticles/float(totalPartices), "average.mrc")
-				else:
-					mrc.write(self.summedParticles/float(totalPartices), "average.mrc")
+				mrc.write(self.summedParticles/float(totalPartices), "average.mrc")
 		return totalpart
 
 	#=======================
@@ -315,7 +312,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 			edgestdev = float(ndimage.standard_deviation(partarray, self.edgemap, 1.0))
 			centermean = float(ndimage.mean(partarray, self.edgemap, 0.0))
 			centerstdev = float(ndimage.standard_deviation(partarray, self.edgemap, 0.0))
-			self.summedParticles += partarray
+			#self.summedParticles += partarray
 
 			### take abs of all means, because ctf whole image may become negative
 			partmeandict = {
@@ -794,7 +791,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 
 			#from scipy.misc import toimage
 			#toimage(particle).show()
-
+			self.summedParticles += particle
 			processedParticles.append(particle)
 
 		### step 5: merge particle list with larger stack
@@ -1115,7 +1112,8 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 		self.boxedpartdatas = None
 		### use a radius one pixel less than the boxsize
 		self.edgemap = imagefun.filled_circle((box, box), box/2.0-1.0)
-		self.summedParticles = numpy.zeros((box, box))
+		binbox = self.boxsize/self.params['bin']
+		self.summedParticles = numpy.zeros((binbox, binbox))
 
 	#=======================
 	def postLoopFunctions(self):
