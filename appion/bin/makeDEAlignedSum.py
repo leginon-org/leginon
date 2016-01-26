@@ -140,7 +140,9 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 					shutil.copy(framespathname,scratchdir)
 			except:
 				apDisplay.printWarning('there was a problem copying the frames for %s' % (imgdata['filename']))
-			targetdict['framespathname']=os.path.join(scratchdir,framespathname)
+			targetdict['framespathname']=os.path.join(scratchdir,framesdirname)
+			#print targetdict['framespathname']
+			#sys.exit()
 			targetdict['outpath']=os.path.join(scratchdir,imgdata['filename'])
 			
 		elif handlefiles == 'link':
@@ -258,7 +260,6 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 		#framespath=imgdata['session']['frame path']
 		#framespathname=os.path.join(framespath,imgdata['filename']+'.frames')
 		framespathname=targetdict['framespathname']
-		
 		#check to see if there are frames in the path
 		if self.params['input_type'] == 'directories':
 			framesinpath=len(glob.glob(os.path.join(framespathname,'*')))
@@ -305,7 +306,7 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 			subprocess.call(command)
 		
 		newimg_array = mrc.read(outnamepath)
-		self.commitAlignedImageToDatabase(imgdata,newimg_array,self.params['alignlabel'])
+		self.commitAlignedImageToDatabase(imgdata,newimg_array,alignlabel=self.params['alignlabel'])
 		# return None since everything is committed within this function.
 	
 		if self.params['hackcopy'] is True:
@@ -352,6 +353,7 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 		newimageresults=newimagedata.query()
 		
 		if newimageresults:
+			apDisplay.printWarning("Warning an image named %s already exists in the database. This image will be skipped" % (newimageresults['filename']))
 			return
 		else:
 			apDisplay.printMsg('Uploading aligned image as %s' % newimagedata['filename'])

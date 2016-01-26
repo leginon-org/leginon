@@ -83,6 +83,11 @@ class AppionPBS(appionLoop2.AppionLoop):
 				jobn=1
 				print 1
 				
+				imgdata = self.imgtree[imgnum]
+				### CHECK IF IT IS OKAY TO START PROCESSING IMAGE
+				if not self._startLoop(imgdata):
+					continue
+
 				if self.params['usequeue'] is True:
 					jobs=[]
 					while jobn <= self.params['njobs'] and imgnum < len(self.imgtree):
@@ -100,7 +105,7 @@ class AppionPBS(appionLoop2.AppionLoop):
 						scratchdir=self._setupScratchDir(imgdata)
 						apDisplay.printMsg('Copying %s data to %s' % (imgdata['filename'], scratchdir))
 						print self.params['handlefiles']
-						targetdict=self.getTargets(imgdata,scratchdir,self.params['handlefiles'])
+						targetdict=self.getTargets(imgdata, scratchdir=scratchdir, handlefiles=self.params['handlefiles'])
 						
 						command=self.generateCommand(imgdata,targetdict)
 						# command is not returned if there is error
