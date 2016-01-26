@@ -181,14 +181,7 @@ class makeDEAlignedSum extends BasicLoopForm
 		return $msg;
 	}
 
-	public function buildCommand( $postArray )
-	{
-		$command   = parent::buildCommand( $postArray );
-		$params = $this->getFormParams();
-		return $command." ";
-		
-	}	
-
+	// not need to redefine buildCommand
 }
 
 ?>
