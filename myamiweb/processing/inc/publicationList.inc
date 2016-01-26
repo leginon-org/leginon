@@ -160,6 +160,19 @@ $PUBLICATIONS['roseman03'] = array(
 'logo' => '',
 'pages' => '225-36');
 
+$PUBLICATIONS['roseman04'] = array(
+'title' => 'FindEM--a fast, efficient program for automatic selection of particles from electron micrographs.',
+'year' => '2004',
+'authorlist' => 'Roseman',
+'journal' => 'J. Struct. Biol.',
+'volume' => '145',
+'issue' => '1-2',
+'pmid' => '15065677',
+'pmcid' => '',
+'doi' => '',
+'logo' => 'img/findem.png',
+'pages' => '91-9');
+
 $PUBLICATIONS['sousa07'] = array(
 'title' => 'Ab initio resolution measurement for single particle structures.',
 'year' => '2007',
