@@ -43,7 +43,7 @@ class SchemaUpdate19470(schemabase.SchemaUpdate):
 			c2 = getattr(leginondata,class_name)(initializer=class_data)
 			for field_name in self.searchmap[class_name]:
 				c2[field_name] = map((lambda x: tuple(x)),c2[field_name])
-			c2.insert()
+			c2.insert(force=True)
 
 if __name__ == "__main__":
 	update = SchemaUpdate19470()
