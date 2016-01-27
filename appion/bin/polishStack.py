@@ -145,8 +145,8 @@ class stackPolisherScript(appionScript.AppionScript):
 		self.params['framey'] = int(apDatabase.getDimensionsFromImageData(qimage)['y'])
 
 		# DD info
-		self.dd.setImageData(qimage)
 		self.dd.setDDStackRun(self.params['ddstackid'])
+		self.dd.setImageData(qimage)
 		self.ddstackpath = self.dd.getDDStackRun()['path']['path']
 
 		# check if DD stack has been corrected, it shouldn't be!

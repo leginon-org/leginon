@@ -23,8 +23,8 @@ class makeDEAlignedSum extends BasicLoopForm
 	// The first 2 parameters are needed for the BasicLayoutForm class that this class extends from.  
 	// The rest of the parameters are specific to this form.
 	
-	function __construct( $expId, $extraHTML='', $alignment_correct='1', $alignment_quanta='3', $radiationdamage_compensate='1', $border='',
-	$hackcopy='', $usequeue='', $queue_style='', $queue_scratch='', $njobs='', $queue_ppn='2', $queue_name='', $queue_memory='4', $handlefiles='copy',
+	function __construct( $expId, $extraHTML='', $alignment_correct='1', $alignment_quanta='3', $radiationdamage_compensate='1', $border='70',
+	$hackcopy='', $usequeue='on', $queue_style='', $queue_scratch='', $njobs='4', $queue_ppn='2', $queue_name='', $queue_memory='4', $handlefiles='copy',
 	$defects_columns='', $defects_rows='', $darkreference_transform='', $gainreference_transform='', $output_transform='', $wrapper='' ) 
 	{
 		// You must first call the parent class(BasicLayoutForm) constructor. 
@@ -152,13 +152,36 @@ class makeDEAlignedSum extends BasicLoopForm
 		return $html;
 	}	
 
-	public function buildCommand( $postArray )
+	// Override the validate function so that we can verify parameters from this subform
+	public function validate( $postArray )
 	{
-		$command   = parent::buildCommand( $postArray );
-		return $command." ";
+		$msg = parent::validate( $postArray );
 		
-	}	
+		$params = $this->getFormParams();
+		
+		
+		$usequeue = $params->getParamValue('usequeue');
+		$njobs = $params->getParamValue('njobs');
+		$handlefiles = $params->getParamValue('hanelefiles');
+		$queuescratch = $params->getParamValue('queuescratch');
+		if ( $usequeue == "")
+		{
+			$msg .= "<B>Error:</B> Running without job queuing is not implemented";
+		}
 
+		if ( $usequeue != "" && empty($njobs) )
+		{
+			$msg .= "<B>Error:</B> Number of jobs must be specified when using queue";
+		}
+
+		if ( $handlefile != "direct" && empty($queuescratch) )
+		{
+			$msg .= "<B>Error:</B> Scratch directory must be specified when files are not used directly";
+		}
+		return $msg;
+	}
+
+	// not need to redefine buildCommand
 }
 
 ?>

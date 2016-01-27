@@ -411,7 +411,7 @@ foreach ($reconRuns as $recon) {
 	$m .= "<ul>\n";
 	
 	// Display relevant publication references
-	$pubKeyList = array("spider", "appion", "eman", "ace", "roseman03", "sousa07", "leginon", "dog", "xmipp", "scheres07", "scheres10" );
+	$pubKeyList = array("spider", "appion", "eman", "ace", "roseman04", "sousa07", "leginon", "dog", "xmipp", "scheres07", "scheres10" );
 	
 	foreach ($pubKeyList as $pubKey ) {
 		$pub = new Publication($pubKey);

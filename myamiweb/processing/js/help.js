@@ -111,7 +111,7 @@ var help = {
 		'image2imagedistance' : 'How to measure the distance between two images. Correlation is perfectly adapted to Gaussian noise while correntropy is better suited to non-gaussian distributions',
 		'image2clusterdistance' : 'Minimum distance assigns an image to the cluster with minimum distance as measured by image to image distance. Intracluster distance assigns an image to the cluster where the image is less rare.',
 		'dontAlign' : 'Dont produced an aligned stack',
-		'mirror' : 'Align both regular particles and their mirror image',
+		'use_mirrors' : 'Align both regular particles and their mirror image',
 		'mlsavemem' : 'Save memory by reducing the number of xy shift for the particles for each round.',
 		'partcutoff' : 'The automated particle selection functions assign each paticle a correlation value - here you set a range of correlation values to use.  Correlation values that are very high or low may be contamination of noise on the micrograph.',
 		'factorlist' : 'These images represent a set of eigenvectors, certain traits of the particles should be presented by each eigenvector.  Choosing an image below will use its eigenvectors as a basis for averaging the particles.',
