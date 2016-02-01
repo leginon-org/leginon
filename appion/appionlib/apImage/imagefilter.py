@@ -11,18 +11,11 @@ from numpy import linalg
 ## appion
 from appionlib import apDisplay
 from appionlib.apSpider import filters
-try:
-	from appionlib import apDDprocess
-	dd_imported = True
-except:
-	dd_imported = False
 ## pyami
 from pyami import imagefun, fftengine
 
 ffteng = fftengine.fftEngine()
-if dd_imported:
-	dd = apDDprocess.DirectDetectorProcessing()
-	
+
 ####
 # This is a low-level file with NO database connections
 # Please keep it this way
