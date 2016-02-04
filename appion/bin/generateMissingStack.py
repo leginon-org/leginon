@@ -13,6 +13,10 @@ def parseOptions():
 	parser.add_option('--expid', help='expid', type=int)
 	parser.add_option('--projectid', help='projectid', type=int)
 	parser.add_option('--stackid', help='stackid', type=int)
+	# runname and rundir dummy options allow web submission to cluster by creating
+	# a place for the job file and log to go.
+	parser.add_option('--runname', help='runname dummy', type=str)
+	parser.add_option('--rundir', help='rundir dummy', type=str)
 
 	options,args = parser.parse_args()
 	if len(args) > 0:
