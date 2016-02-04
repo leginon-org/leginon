@@ -162,8 +162,8 @@ class makeDEAlignedSum extends BasicLoopForm
 		
 		$usequeue = $params->getParamValue('usequeue');
 		$njobs = $params->getParamValue('njobs');
-		$handlefiles = $params->getParamValue('hanelefiles');
-		$queuescratch = $params->getParamValue('queuescratch');
+		$handlefiles = $params->getParamValue('handlefiles');
+		$queue_scratch = $params->getParamValue('queue_scratch');
 		if ( $usequeue == "")
 		{
 			$msg .= "<B>Error:</B> Running without job queuing is not implemented";
@@ -174,7 +174,7 @@ class makeDEAlignedSum extends BasicLoopForm
 			$msg .= "<B>Error:</B> Number of jobs must be specified when using queue";
 		}
 
-		if ( $handlefile != "direct" && empty($queuescratch) )
+		if ( $handlefiles != "direct" && empty($queue_scratch) )
 		{
 			$msg .= "<B>Error:</B> Scratch directory must be specified when files are not used directly";
 		}
