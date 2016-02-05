@@ -97,6 +97,8 @@ class AppionPBS(appionLoop2.AppionLoop):
 						self.stats['startimage'] = time.time()
 						imgdata = self.imgtree[imgnum]
 						imgnum += 1
+						if self.rejectImage(imgdata):
+							continue
 						
 						#preliminary stuff
 						self._preliminary(imgdata)
@@ -172,6 +174,13 @@ class AppionPBS(appionLoop2.AppionLoop):
 			#END NOTDONE LOOP
 		self.postLoopFunctions()
 		self.close()
+
+	def rejectImage(self, imgdata):
+		'''
+		Skip processing imgdata based on defined condition.
+		Overwrite this function in subclass
+		'''
+		return False
 
 	def _setupScratchDir (self,imgdata):
 		scratchpath=os.path.join(self.params['queue_scratch'],imgdata['filename'])

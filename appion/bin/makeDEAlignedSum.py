@@ -90,6 +90,12 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 		self.setProcessBatchCount(1)
 		self.params['output_fileformat'] = 'mrc'
 
+	def rejectImage(self, imgdata):
+		'''
+		Skip images without frame saved.
+		'''
+		return not imgdata['camera']['save frames']
+
 	def getTargets(self, imgdata, scratchdir='', handlefiles='direct'):
 		targetdict={}
 		
