@@ -94,7 +94,10 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 		'''
 		Skip images without frame saved.
 		'''
-		return not imgdata['camera']['save frames']
+		is_reject = not imgdata['camera']['save frames']
+		if is_reject:
+			apDisplay.printWarning('%s skipped for no-frame-saved\n ' % imgdata['filename'])
+		return is_reject
 
 	def getTargets(self, imgdata, scratchdir='', handlefiles='direct'):
 		targetdict={}

@@ -152,6 +152,8 @@ class AppionPBS(appionLoop2.AppionLoop):
 					self.stats['startimage'] = time.time()
 					imgdata = self.imgtree[imgnum]
 					imgnum += 1
+					if self.rejectImage(imgdata):
+						continue
 					
 					#preliminary stuff
 					self._preliminary(imgdata)
