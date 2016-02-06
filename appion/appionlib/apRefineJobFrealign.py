@@ -246,7 +246,7 @@ class FrealignRefineJob(apRefineJob.RefineJob):
 		card = ("relmag","dstep","target", "thresh", "cs", "kv", "beamtiltx", "beamtilty",) 
 		frealign_inputparams.append(card)
 		####card 7
-		card = ("rrec", "hp", "lp", "dfstd", "rbfact", "rclas")
+		card = ("rrec", "hp", "lp", "rclas", "dfstd", "rbfact")
 		frealign_inputparams.append(card)
 		return frealign_inputparams
 		
