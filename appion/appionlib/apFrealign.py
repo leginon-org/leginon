@@ -132,6 +132,10 @@ def parseFrealign9ParamFile(paramfile,test=False):
 			paramdict['change'] = float(sline[15])
 		except:
 			paramdict['change'] = 0.0
+		try:
+			paramdict['stackpartnum'] = float(sline[16])
+		except:
+			paramdict['stackpartnum'] = None
 
 		partdict[paramdict['partnum']] = paramdict
 		# test mode returns only two particles
@@ -829,10 +833,14 @@ def scale_parfile_frealign9_03(infile, outfile, mult, newmag=0):
 #=================
 def frealign8_to_frealign9(infile, outfile, apix, occ=100, logp=5000, sigma=1, score=50.0, change=0):
 	''' modified for version 9.06 and above, character spaces for version <9.06 is different for logp value '''
+
 	### output file
 	ff = open(outfile, "w")
-	ff.write("%s%8s%8s%8s%10s%10s%8s%6s%9s%9s%8s%8s%10s%11s%8s%8s\n" \
-		% ("C      ","PSI","THETA","PHI","SHX","SHY","MAG","FILM","DF1","DF2","ANGAST","OCC","-LogP","SIGMA","SCORE","CHANGE"))
+	line="%s%8s%8s%8s%10s%10s%8s%6s%9s%9s%8s%8s%10s%11s%8s%8s" \
+		% ("C      ","PSI","THETA","PHI","SHX","SHY","MAG","FILM","DF1","DF2","ANGAST","OCC","-LogP","SIGMA","SCORE","CHANGE")
+	standard_line_length = len(line)
+	ff.write(line+'\n')
+
 	### read & write params
 	params = parseFrealignParamFile(infile)
 	for i,p in enumerate(params):
@@ -849,8 +857,16 @@ def frealign8_to_frealign9(infile, outfile, apix, occ=100, logp=5000, sigma=1, s
 		dx = float(p['defoc1'])
 		dy = float(p['defoc2'])
 		ast = float(p['astang'])
-		ff.write("%7d%8.2f%8.2f%8.2f%10.2f%10.2f%8d%6d%9.1f%9.1f%8.2f%8.2f%10d%11.4f%8.2f%8.2f\n" \
-			% (partnum, psi, theta, phi, shx, shy, mag, film, dx, dy, ast, occ, logp, sigma, score, change))
+		# Transfer stack particle number if exists for appion database
+		if 'stackpartnum' in p.keys():
+			stackpartnum = int(p['stackpartnum'])
+		else:
+			stackpartnum = None
+		line = "%7d%8.2f%8.2f%8.2f%10.2f%10.2f%8d%6d%9.1f%9.1f%8.2f%8.2f%10d%11.4f%8.2f%8.2f" \
+			% (partnum, psi, theta, phi, shx, shy, mag, film, dx, dy, ast, occ, logp, sigma, score, change)
+		if stackpartnum is not None:
+			line += '%8d' % (stackpartnum)
+		ff.write(line+'\n')
 	ff.close()
 
 #=================

@@ -18,9 +18,11 @@ class FrealignRefineJob(apRefineJob.RefineJob):
 		self.parser.add_option('--recononly', dest='recononly', default=False, action='store_true',
 			help="run recon part only, allowed only if startiter=enditer")
 		self.parser.add_option('--ffilt', dest='ffilt', default=False, action='store_true',
-			help="apply SSNR filter to reconstruction")
+			help="apply Wiener filter to reconstruction")
 		self.parser.add_option('--fpbc', dest='fpbc', default=False, action='store_true',
 			help="phase residual weighting of particles. False gives 100 (equal weighting), True gives 4.0")
+		self.parser.add_option('--fmatch', dest='fmatch', default=False, action='store_true',
+			help='make matching projection for each particle if set to True')
 		self.parser.add_option('--psi', dest='psi', default=False, action='store_true',
 			help="include phi in refinement if set to True")
 		self.parser.add_option('--theta', dest='theta', default=False, action='store_true',
@@ -33,6 +35,10 @@ class FrealignRefineJob(apRefineJob.RefineJob):
 			help="include phi in refinement if set to True")
 		self.parser.add_option("--dstep", dest="dstep", type="float",
 			help="Camera physical pixel size in micron", metavar="#")
+		self.versions = ('9.11','8')
+		self.parser.add_option('--program_version', dest='program_version',
+			help="Frealign version to run", metavar="TYPE",
+			type="choice", default=self.versions[0], choices=self.versions)
 
 	#================
 	def setIterationParamList(self):
@@ -55,26 +61,29 @@ class FrealignRefineJob(apRefineJob.RefineJob):
 				# ffilt is set globally
 				{'name':"fbfact", 'default':False,
 					 'help':"correct B-factor in reconstruction"},
-				{'name':'fmatch', 'default':False, 'help':'make matching projection for each particle'},
+				# fmatch is set globally
 				#ifsc is always 0
 					#{'name':'ifsc','default': 0, 'help':'memory saving function (0:disable)'},
-				#fstat is always False
-					#{'name':'fstat','default': False, 'help':'memory saving function, calculates many stats, such as SSNR'},
-				#iblow is determined by memory requirement
-					#{'name':"iblow", 'default':4,
-					#	'help':"1,2, or 4. Padding factor for reference structure. iblow=4 requires the most memory but results in the fastest search & refinement."},
+				{'name':'fdump', 'default':False, 'help':'dump intemediate files from recon and terminate in order to use merge_3d'},
+				#v9 imem replaces fstat
+				{'name':'imem','default': 3, 'help':'memory saving function (0:disable)'},
+				#v9 interp replaces iblow, always 1 in refine
+					#{'name':"interp", 'default':1,
+					#	'help':"interpretation schemd in 3D recon. 0=Nearest neighbor, 1=Trilinear (more time-consuming)"}, 
 
 				####card 2
 				#{'name':"outerMaskRadius", 
 					#	'help':"mask from center of particle to outer edge"},
 				#{'name':"innerMaskRadius", 'default':0, 
 					#	'help':"inner mask radius"},
+				{'name':"psize", 'default':None, 'help':"pixsel size in Angstrom"},
+				{'name':"mw", 'default':None, 'help':"approximate molecular mass of the particle in kDa"},
 				{'name':"wgh", 'default':0.07, 
 					'help':"amplitude contrast"},
 				#xstd is always 0.0
 					#{'name':"xstd", 'default':0.0, 
 					#	'help':"standard deviations above mean for masking of input model"},
-				#fpbc is the same for all iteration
+				#fpbc is the same for all iteration for phase residual/pseudo B-fractor conversion
 				# boff is always 0.0
 					#{'name':"boff", 'default':75.0,
 					#	'help':"average phase residual of all particles. used for weighting"},
@@ -84,7 +93,7 @@ class FrealignRefineJob(apRefineJob.RefineJob):
 				# itmax is always 10
 					#{'name':"itmax", 'default':10,
 					#	'help':"number of iterations of randomization. used for modes 2 and 4"},
-				# ipmax is always 10
+				# ipmax is always 20
 					#{'name':"ipmax", 'default':0,
 					#	'help':"number of potential matches in a search that should be tested further in local refinement"},
 
@@ -105,26 +114,29 @@ class FrealignRefineJob(apRefineJob.RefineJob):
 					#{'name':"target", 'default':30.0, 
 					#	'help':"target phase residual during refinement"},
 				# to be consistent with other packages, we will use percentDiscard instead of thresh as input param
+				# CHECK: proper THRESH value
 				{'name':"percentDiscard", 'default':0.2,
 					'help':"percent to include"},
 				# cs and kv are options in apRefineJob.py
 				#{'name':"cs", 'default':2.0, 
-				#	'help':"spherical aberation"},
+				#	'help':"spherical aberation (mm)"},
 				#{'name':"kv", 'default':120.0, 
-				#	'help':"accelerlating voltage"},
+				#	'help':"accelerlating voltage (kv)"},
 				# beamtiltx is always 0.0
-					#{'name':'beamtiltx', 'default': 0.0, 'help':'beam tilt in x direction'},
+					#{'name':'beamtiltx', 'default': 0.0, 'help':'beam tilt in x direction (mrad)'},
 				# beamtilty is always 0.0
-					#{'name':'beamtilty', 'default': 0.0, 'help':'beam tilt in y direction'},
+					#{'name':'beamtilty', 'default': 0.0, 'help':'beam tilt in y direction (mrad)'},
 
 				####card 7
-				# rrec is set to 2 * Nyquist limit
-					#{'name':"rrec", 'default':10.0,   
-					#	'help':"resolution to which to limit the reconstruction"},
+				# rrec is set to lp (v9)
+				{'name':"rrec", 'default':None,   
+						'help':"resolution to which to limit the reconstruction"},
 				{'name':"hp", 'default':300.0, 
 					'help':"upper limit for low resolution signal"},
-				{'name':"lp", 'default':10.0, 
+				{'name':"lp", 'default':10.0,
 					'help':"lower limit for high resolution signal"},
+				{'name':"rclas", 'default':None,
+					'help':"lower limit for classification"},
 				# dfstd is always 100.0
 					#{'name':'dfstd', 'default': 100, 'help':'defocus standard deviation (in Angstroms), usually +/- 100 A, only for defocus refinement'},
 				# rbfact is always 30.0
@@ -146,12 +158,12 @@ class FrealignRefineJob(apRefineJob.RefineJob):
 		self.params['fastig'] = False
 		self.params['iewald'] = 0
 		self.params['ifsc'] = 0
-		self.params['fstat'] = False
+		self.params['interp'] = 1
 		self.params['xstd'] = 0.0
 		self.params['boff'] = 0.0
 		self.params['dang'] = 5.0
 		self.params['itmax'] = 10
-		self.params['ipmax'] = 10
+		self.params['ipmax'] = 20
 		self.params['ifirst'] = 1
 		self.params['relmag'] = 1.0
 		self.params['dstep'] = self.params['dstep']
@@ -173,15 +185,31 @@ class FrealignRefineJob(apRefineJob.RefineJob):
 			self.params['pbc'] = 100.0
 		else:
 			self.params['pbc'] = 0.0
-		self.recon_mem,self.params['iblow'] = self.calcRefineMem(self.params['ppn'],self.params['boxsize'],self.params['mem'])
-		self.params['rrec'] = self.params['apix'] * 2
+		self.recon_mem,self.params['imem'] = self.calcRefineMem(self.params['ppn'],self.params['boxsize'],self.params['mem'])
+		# v9 mult_refine_n set it to rmax (=lp in our params)
+		if self.params['rrec'] is None:
+			self.params['rrec'] = self.params['lp']
+		if self.params['rclas'] is None:
+			self.params['rclas'] = self.params['lp']
+		self.setProgram()
+
+	def setProgram(self):
+		program = 'frealign_'
+		if self.params['program_version'] == 8:
+			apDisplay.printError('Frealign 8 is no longer supported')
+		else:
+			self.refine_exe = program + 'v9.exe'
+			self.recon_exe = program + 'v9_mp.exe'
 
 	def checkIterationConflicts(self):
 		''' 
 		Conflict checking of per-iteration parameters
 		'''
 		super(FrealignRefineJob,self).checkIterationConflicts()
+		# FIX ME: not sure if this will com out right if percentDiscard is a fractional number
 		self.params['thresh'] = map((lambda x: 100 - x), self.params['percentDiscard'])
+		# frealign 9.11 mult_refine_n.com set it to 0.0 always
+		self.params['thresh'] = 0.0
 
 	def convertSymmetryNameForPackage(self,inputname):
 		'''
@@ -203,10 +231,10 @@ class FrealignRefineJob(apRefineJob.RefineJob):
 	def setFrealignRefineParams(self):
 		frealign_inputparams = []
 		# card 1
-		card = ("cform", "mode" , "fmag", "fdef", "fastig", "fpart", "iewald","fbeaut", "ffilt", "fbfact", "fmatch", "ifsc", "fstat", "iblow",)
+		card = ("cform", "mode" , "fmag", "fdef", "fastig", "fpart", "iewald","fbeaut", "ffilt", "fbfact", "fmatch", "ifsc", "fdump", "imem", "interp",)
 		frealign_inputparams.append(card)
 		####card 2
-		card = ("outerMaskRadius", "innerMaskRadius", "apix", "wgh", "xstd", "pbc", "boff", "angSampRate", "itmax", "ipmax",)
+		card = ("outerMaskRadius", "innerMaskRadius", "apix", "mw", "wgh", "xstd", "pbc", "boff", "angSampRate", "itmax", "ipmax",)
 		frealign_inputparams.append(card)
 		####card 3
 		card = ("includePsi", "includeTheta", "includePhi", "includeX", "includeY",)
@@ -218,7 +246,7 @@ class FrealignRefineJob(apRefineJob.RefineJob):
 		card = ("relmag","dstep","target", "thresh", "cs", "kv", "beamtiltx", "beamtilty",) 
 		frealign_inputparams.append(card)
 		####card 7
-		card = ("rrec", "hp", "lp", "dfstd", "rbfact",)
+		card = ("rrec", "hp", "lp", "dfstd", "rbfact", "rclas")
 		frealign_inputparams.append(card)
 		return frealign_inputparams
 		
@@ -330,7 +358,7 @@ class FrealignRefineJob(apRefineJob.RefineJob):
 			'hostname'
 			'',
 			'### START FREALIGN ###',
-			'frealign_v8_mp.exe << EOF > frealign.recon.out',
+			'%s << EOF > frealign.recon.out' % (self.recon_exe),
 			])
 		lines_after_input=[
 			'EOF',
@@ -375,7 +403,7 @@ class FrealignRefineJob(apRefineJob.RefineJob):
 				'',
 				'',
 				'### START FREALIGN ###',
-				'frealign_v8.exe << EOF > frealign.proc%03d.out' % proc,
+				'%s << EOF > frealign.proc%03d.out' % (self.refine_exe,proc),
 				]
 			lines_after_input=[
 				'EOF',
@@ -411,15 +439,15 @@ class FrealignRefineJob(apRefineJob.RefineJob):
 		return order
 
 	def calcRefineMem(self,ppn,boxsize,max_mem):
-		# refine only does not need to adjust iblow by available memory
-		if self.params['refineonly']:
-			return int(max_mem),2
-		for iblow  in (4,2,1):
-			memneed = (24*boxsize**3+4*(boxsize*iblow)**3+200e6)*2.0*ppn
-			numgig = math.ceil(memneed/1073741824.0)
-			if numgig <= max_mem:
-				break
-		return int(numgig),iblow
+		# frealign 9 memory is set by imem
+		imem = 3
+		nx = boxsize
+		mem_per_proc = max_mem / ppn
+		mem_big = int(10 * nx**3 * 4 * 66 / 1024**3 +1) / 10
+		numgig = math.ceil(mem_big/1073741824.0)
+		if int(1024 * mem_big) > mem_per_proc:
+			imem = 0
+		return int(numgig), imem
 
 	def makeNewTrialScript(self):
 		self.addSimpleCommand('ln -s  %s threed.000a.mrc' % self.params['modelnames'][0])
@@ -474,8 +502,13 @@ class FrealignRefineJob(apRefineJob.RefineJob):
 		### need iteration 0 recon if params.000.par came from a reconiter
 		# Not using database in case of limited access.
 		initparamfile = 'params.000.par'
-		parttree = apFrealign.parseFrealignParamFile(initparamfile)
-		for p in parttree:
+		if self.params['program_version'] =='9.11':
+			# This output a dictionary of dictionary with partnum as key
+			parttree = apFrealign.parseFrealign9ParamFile(initparamfile)
+			keys = parttree.keys()
+			keys.sort()
+		for k in keys:
+			p = parttree[k]
 			if not (p['psi']==p['phi']==p['theta']==p['shiftx']==p['shifty']):
 				return True
 		return False
