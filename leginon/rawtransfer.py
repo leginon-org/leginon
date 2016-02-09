@@ -277,16 +277,19 @@ class RawTransfer(object):
 				gid = stat.st_gid
 			# make full dst_path
 			imname = filename + dst_suffix
-			# copy reference if possible
-			if self.refcopy:
-				self.refcopy.run(imdata, imname)
 			# full path of frames
 			dst_path = os.path.join(frames_path, imname)
 			print 'Destination path: %s' %  (dst_path)
 
+			if self.refcopy:
+				try:
+					self.refcopy.run(imdata, imname)
+				except:
+					print 'reference copying error. skip'
+			# de only
 			# do actual copy and delete
 			self.transfer(src_path, dst_path, uid, gid,method)
-			# de only
+			# copy reference if possible
 			leginon.ddinfo.saveImageDDinfoToDatabase(imdata,os.path.join(dst_path,'info.txt'))
 
 	def run(self):
@@ -311,8 +314,6 @@ class ReferenceCopier(object):
 
 	def setFrameDir(self, framedir):
 		self.framedir = framedir
-		if not os.path.isdir(self.framedir):
-			raise Exception('Frame directory not exists')
 		self.refdir = os.path.join(framedir,'references')
 		self.reflistpath = os.path.join(self.refdir,'reference_list.txt')
 		self.setupRefDir()
@@ -397,7 +398,7 @@ class ReferenceCopier(object):
 					planfilename += '_mod'
 					planfilepath = os.path.join(self.refdir,planfilename+'.txt')
 					self.writePlanFile(planfilepath,bad_cols,bad_rows,bad_pixels)
-				linelist.append(planfilename)
+				linelist.append(planfilename+'.txt')
 					
 		# check if the image is already there
 		fileobj = open(self.reflistpath,'r')
