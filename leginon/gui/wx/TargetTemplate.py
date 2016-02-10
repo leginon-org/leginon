@@ -177,7 +177,7 @@ class Panel(wx.Panel):
 	def _addTarget(self, target):
 		if not self.validate(target):
 			raise ValueError
-		string = '%s: (%s, %s)' % ((self.targetname,) + target)
+		string = '%s: (%s, %s)' % ((self.targetname,) + tuple(target))
 		self.lbtemplate.Append(string)
 		self._template.append(target)
 
