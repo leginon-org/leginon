@@ -158,7 +158,19 @@ class Jeol(tem.TEM):
 				mode_name,mode_id = self.projection_submode_map[mag]
 				# depends on mag to choose ['ls1','ls2','ls3','lm1']
 				mode_subname = self.subDivideMode(mode_name,mag)
-				return value[mode_subname]
+				scale = value[mode_subname]
+				if key == 'imageshift':
+					if self.getJeolConfig('tem option','use_pla'):
+						# PLA shift shown at specimen depends on magnification
+						scaledict = value[mode_subname].copy()
+						basemag = self.getJeolConfig(optionname,key+'_cal_mag')[mode_subname]
+						for axis in scale.keys():
+							# This is an approximation since defocus will change the ratio
+							scaledict[axis] = scaledict[axis] / (float(mag) / basemag)
+						scale = scaledict.copy()
+					else:
+						scale = value[mode_subname]
+				return scale
 			except:
 				raise RuntimeError('%s function not implemented in mag %d' % (key,mag))
 
