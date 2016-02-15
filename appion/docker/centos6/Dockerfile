@@ -2,28 +2,30 @@ FROM centos:6
 MAINTAINER Neil Voss <vossman77@yahoo.com>
 
 ### install epel
-RUN yum -y update && yum -y install wget epel-release sudo passwd rsync && yum -y clean all
+RUN yum -y update && yum -y install wget epel-release sudo passwd rsync tar openssh-clients && yum -y clean all
 #RUN wget 'https://dl.fedoraproject.org/pub/epel/epel-release-latest-6.noarch.rpm'
 #RUN yum -y localinstall epel-release-latest-6.noarch.rpm
 ### install software
 RUN yum -y update && yum -y install \
  python-tools python-devel python-matplotlib \
  subversion ImageMagick grace gnuplot \
- wxPython numpy scipy python-imaging \
- gcc-gfortran compat-gcc-34-g77 \
- gcc-objc fftw3-devel gsl-devel \
+ wxPython numpy scipy python-imaging python-pip \
+ gcc-gfortran compat-gcc-34-g77  \
+ gcc-objc fftw3-devel gsl-devel boost-python \
  mysql mysql-server MySQL-python mod_python \
  httpd php php-mysql phpMyAdmin mod_ssl php-pecl-ssh2 \
- gcc-c++ libtiff-devel \
+ gcc-c++ libtiff-devel PyOpenGL python-argparse \
  php-devel gd-devel re2c fftw3-devel php-gd \
  xorg-x11-server-Xvfb netpbm-progs \
  libssh2-devel mlocate nano elinks file \
  numactl compat-libgfortran && yum -y clean all
 ### Trying to do VNC
 RUN yum -y update && yum -y install tigervnc-server xterm xsetroot fluxbox fbpanel && yum -y clean all
+### Firefox
 #RUN yum -y update && yum -y install mozilla-adblockplus firefox dbus && yum -y clean all
 RUN dbus-uuidgen > /var/lib/dbus/machine-id
-RUN easy_install joblib pyfftw3 fs milk
+RUN pip install --upgrade pip
+RUN pip install joblib pyfftw3 fs milk
 
 RUN updatedb
 
@@ -63,28 +65,34 @@ RUN mkdir /etc/fftw
 RUN python /usr/lib/python2.6/site-packages/pyami/fft/fftwsetup.py 2 4096 4096 && mv -v  ~/fftw3-wisdom-* /etc/fftw/wisdom
 RUN cp -v /emg/sw/myami/redux/init.d/reduxd /etc/init.d/reduxd
 
-ADD Xmipp-2.4-src.tar.gz /emg/sw
-RUN mv -v /emg/sw/Xmipp-2.4-src /emg/sw/xmipp 
-WORKDIR /emg/sw/xmipp
+#ADD TGZ/Xmipp-2.4-src.tar.gz /emg/sw
+#RUN mv -v /emg/sw/Xmipp-2.4-src /emg/sw/xmipp 
+#WORKDIR /emg/sw/xmipp
 #RUN yum -y update && yum -y install openmpi-devel && yum -y clean all
 #ENV MPIPATH /usr/lib64/openmpi
 #ENV PATH /bin:/usr/bin:/sbin:/usr/sbin:/usr/lib64/openmpi/bin
 #RUN ./scons.configure MPI_LIBDIR=/usr/lib64/openmpi/lib  MPI_LIB=mpi  MPI_INCLUDE=/usr/include/openmpi-x86_64
-ENV PATH /bin:/usr/bin:/sbin:/usr/sbin
-RUN ./scons.configure
-RUN ./scons.compile
+#ENV PATH /bin:/usr/bin:/sbin:/usr/sbin
+#RUN ./scons.configure
+#RUN ./scons.compile
 #FIXME: mpirun does not run as root
+ADD TGZ/xmipp_centos6_docker.tgz /emg/sw
 
-ADD eman-linux-x86_64-cluster-1.9.tar.gz /emg/sw
+ADD TGZ/eman-linux-x86_64-cluster-1.9.tar.gz /emg/sw
 RUN mv -v /emg/sw/EMAN /emg/sw/eman1
 RUN ln -sv /emg/sw/eman1/lib/libpyEM.so.ucs4.py2.6 /emg/sw/eman1/lib/libpyEM.so #FIX ME
 
-ADD spidersmall.13.00.tgz /emg/sw
+### EMAN 2
+### http://emg.nysbc.org/redmine/projects/appion/wiki/Install_EMAN2
+ADD TGZ/eman2_centos6_docker.tgz /emg/sw/
+#ADD eman2.12.source.tar.gz /emg/sw/
+
+ADD TGZ/spidersmall.13.00.tgz /emg/sw
 #RUN ln -sv /emg/sw/spider/bin/spider_linux_mp_opt64 /emg/sw/spider/bin/spider
 
 RUN mkdir -p /emg/sw/grigorieff/bin
-ADD ctf_140609.tar.gz /emg/sw/grigorieff/
-ADD ctffind-4.0.16-linux64.tar.gz /emg/sw/grigorieff/
+ADD TGZ/ctf_140609.tar.gz /emg/sw/grigorieff/
+ADD TGZ/ctffind-4.0.16-linux64.tar.gz /emg/sw/grigorieff/
 RUN mv -v /emg/sw/grigorieff/ctf /emg/sw/grigorieff/ctffind3
 RUN mv -v /emg/sw/grigorieff/ctffind /emg/sw/grigorieff/bin/ctffind4
 RUN ln -sv /emg/sw/grigorieff/ctffind3/ctffind3_mp.exe /emg/sw/grigorieff/bin/ctffind64.exe
@@ -92,14 +100,14 @@ RUN chmod 777 /emg/sw/grigorieff/ctffind3/ctffind3_mp.exe
 RUN chmod 777 /emg/sw/grigorieff/bin/ctffind4
 
 ### software
-COPY 06jul12a_00015gr_00028sq_00004hl_00002en.mrc /emg/data/leginon/06jul12a/rawdata/
-COPY 06jul12a_00015gr_00028sq_00023hl_00002en.mrc /emg/data/leginon/06jul12a/rawdata/
-COPY 06jul12a_00015gr_00028sq_00023hl_00004en.mrc /emg/data/leginon/06jul12a/rawdata/
-COPY 06jul12a_00022gr_00013sq_00002hl_00004en.mrc /emg/data/leginon/06jul12a/rawdata/
-COPY 06jul12a_00022gr_00013sq_00003hl_00005en.mrc /emg/data/leginon/06jul12a/rawdata/
-COPY 06jul12a_00022gr_00037sq_00025hl_00004en.mrc /emg/data/leginon/06jul12a/rawdata/
-COPY 06jul12a_00022gr_00037sq_00025hl_00005en.mrc /emg/data/leginon/06jul12a/rawdata/
-COPY 06jul12a_00035gr_00063sq_00012hl_00004en.mrc /emg/data/leginon/06jul12a/rawdata/
+COPY MRC/06jul12a_00015gr_00028sq_00004hl_00002en.mrc /emg/data/leginon/06jul12a/rawdata/
+COPY MRC/06jul12a_00015gr_00028sq_00023hl_00002en.mrc /emg/data/leginon/06jul12a/rawdata/
+COPY MRC/06jul12a_00015gr_00028sq_00023hl_00004en.mrc /emg/data/leginon/06jul12a/rawdata/
+COPY MRC/06jul12a_00022gr_00013sq_00002hl_00004en.mrc /emg/data/leginon/06jul12a/rawdata/
+COPY MRC/06jul12a_00022gr_00013sq_00003hl_00005en.mrc /emg/data/leginon/06jul12a/rawdata/
+COPY MRC/06jul12a_00022gr_00037sq_00025hl_00004en.mrc /emg/data/leginon/06jul12a/rawdata/
+COPY MRC/06jul12a_00022gr_00037sq_00025hl_00005en.mrc /emg/data/leginon/06jul12a/rawdata/
+COPY MRC/06jul12a_00035gr_00063sq_00012hl_00004en.mrc /emg/data/leginon/06jul12a/rawdata/
 
 ### Change to local user
 #RUN mkdir -p /home/appionuser
@@ -124,11 +132,27 @@ RUN chown -R appionuser:users /home/appionuser
 RUN chmod 700 .vnc/xstartup
 EXPOSE 5901
 
-#ADD mysql.tgz /var/lib/mysql/
+#ADD TGZ/mysql.tgz /var/lib/mysql/
 COPY bashrc /etc/bashrc
 #RUN mkdir -p /home/appionuser/.mozilla/firefox/yvn3wpn8.default
 #COPY profiles.ini  /home/appionuser/.mozilla/firefox/
 COPY startup.sh /emg/sw/startup.sh
+
+#RUN yum -y update && yum -y install \
+# fftw-devel gsl-devel hdf5-devel python-devel numpy \
+# boost-devel freeglut ftgl-devel \
+# mesa-libGLU-devel freetype-devel sip-devel\
+# libjpeg-devel PyQt4-devel cmake ipython \
+# libtiff-devel libpng-devel \
+# PyOpenGL db4-devel python-argparse python-pip \
+# && yum -y clean all
+#RUN ln -sv /usr/lib64/libboost_python.so.5 /usr/lib64/libboost_python.so.1.52.0
+#RUN ln -sv /usr/lib64/libtiff.so.3 /usr/lib64/libtiff.so.5
+#RUN ln -sv /usr/lib64/libjpeg.so.62 /usr/lib64/libjpeg.so.8
+#RUN ln -sv /usr/lib64/libhdf5.so.6 /usr/lib64/libhdf5.so.7
+#RUN ln -sv /usr/lib64/libpng.so.3 /usr/lib64/libpng16.so.16
+#RUN pip install bsddb3 ipython PyOpenGL
+
 RUN updatedb
 
 CMD /emg/sw/startup.sh
