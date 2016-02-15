@@ -339,12 +339,7 @@ function createCtfFindForm($extra=false) {
 	//echo "Reprocess Below Confidence Value<br />\n";
 	//echo "Set Value:<INPUT TYPE='text' NAME='reprocess' DISABLED VALUE='0.8' SIZE='4'>\n";
 	//echo "<FONT SIZE=-2><I>(between 0.0 - 1.0)</I></FONT><br />\n";
-		
-	//if ($ctfruns > 0) {
-	//	echo"
-	//		<INPUT TYPE='checkbox' NAME='newnominal'>
-	//    Use Previously ACE Estimated Defocus";
-	//}
+
 	echo"
 	  </TD>
 	</tr>
