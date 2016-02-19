@@ -150,11 +150,6 @@ define('FLASHPLAYER_URL', "/flashplayer/");
 // $pythonpath="/your/site-packages";
 // putenv("PYTHONPATH=$pythonpath");
 
-// To use mrc2any, you need to install the pyami package which is part
-// of myami.  See installation documentation for help.
-// --- define('MRC2ANY', "/usr/bin/mrc2any" --- //
-define('MRC2ANY', "");
-
 // --- Check if IMAGIC is installed and running, otherwise hide all functions --- //
 define('HIDE_IMAGIC', true);
 
