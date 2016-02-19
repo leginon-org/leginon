@@ -1,12 +1,9 @@
 #!/usr/bin/env python
-
-import os,sys
+import sys
 import optparse
 from appionlib import apProject
-from appionlib import apStack
-from appionlib import apDisplay
-from appionlib import proc2dLib
-from appionlib import apStackMeanPlot
+
+from appionlib import apVirtualStack
 
 def parseOptions():
 	parser=optparse.OptionParser()
@@ -17,6 +14,7 @@ def parseOptions():
 	# a place for the job file and log to go.
 	parser.add_option('--runname', help='runname dummy', type=str)
 	parser.add_option('--rundir', help='rundir dummy', type=str)
+	parser.add_option('--jobtype', help='jobtype dummy', type=str)
 
 	options,args = parser.parse_args()
 	if len(args) > 0:
@@ -34,34 +32,5 @@ if __name__=="__main__":
 	params = parseOptions()
 	apProject.setDBfromProjectId(params['projectid'])
 
-	stackdata = apStack.getOnlyStackData(params['stackid'])
-	stackpath = stackdata['path']['path']
-	# generate stack if it doesn't exist.
-	if not os.path.isdir(stackpath):
-		os.makedirs(stackpath)
-	fname = os.path.join(stackpath, stackdata['name'])
-
-	# check if stack file already exists
-	if os.path.isfile(fname):
-		apDisplay.printError("file: '%s' already exists"%fname)
- 
-	vstackdata = apStack.getVirtualStackParticlesFromId(params['stackid'])
-	plist = [int(p['particleNumber'])-1 for p in vstackdata['particles']]
-
-	a = proc2dLib.RunProc2d()
-	a.setValue('infile',vstackdata['filename'])
-	a.setValue('outfile',fname)
-	a.setValue('list',plist)
-	a.setValue('apix',apStack.getStackPixelSizeFromStackId(params['stackid']))
-
-	apDisplay.printMsg("generating stack: '%s' with %i particles"%(fname,len(plist)))
-	a.run()
-
-	outavg = os.path.join(stackpath, "average.mrc")
-	if not os.path.isfile(outavg):
-		apStack.averageStack(stack=fname,outfile=outavg)
-
-	montageimg=os.path.join(stackpath,"montage%i.png"%params['stackid'])
-	if not os.path.isfile(montageimg):
-		apStackMeanPlot.makeStackMeanPlot(params['stackid'],gridpoints=4)
+	apVirtualStack.generateMissingStack(params['stackid'])
 
