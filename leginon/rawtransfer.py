@@ -103,7 +103,15 @@ class RawTransfer(object):
 			qim = cls(camera=qcam)
 			results = qim.query()
 			if results:
-				return results[0]
+				if len(results) > 1:
+					# fix for issue #3967. Not to work on the aligned images
+					for r in results:
+						if r['camera']['align frames']:
+							continue
+						return r
+				else:
+					# If there is just one, transfer regardlessly.
+					return results[0]
 		return None
 
 	def removeEmptyFolders(self,path):
@@ -139,6 +147,11 @@ class RawTransfer(object):
 				print cmd
 				p = subprocess.Popen(cmd, shell=True, cwd=dirpath)
 				p.wait()
+			if os.path.isfile(src):
+				cmd = 'rm -f %s' % abspath
+				print cmd
+				p = subprocess.Popen(cmd, shell=True, cwd=dirpath)
+
 		else:
 			self.removeEmptyFolders(os.path.abspath(src))
 
@@ -281,15 +294,22 @@ class RawTransfer(object):
 			dst_path = os.path.join(frames_path, imname)
 			print 'Destination path: %s' %  (dst_path)
 
+			# copy reference if possible
 			if self.refcopy:
 				try:
 					self.refcopy.run(imdata, imname)
 				except:
 					print 'reference copying error. skip'
-			# de only
+			# skip  and clean up finished ones. Needed when the
+			# destination user lost write privilege temporarily.
+			if os.path.exists(dst_path):
+				# TO DO ? Probably should check size
+				print 'Destination path %s exists, cleaning up' % dst_path
+				self.cleanUp(src_path,method)
+				return
 			# do actual copy and delete
 			self.transfer(src_path, dst_path, uid, gid,method)
-			# copy reference if possible
+			# de only
 			leginon.ddinfo.saveImageDDinfoToDatabase(imdata,os.path.join(dst_path,'info.txt'))
 
 	def run(self):
