@@ -522,7 +522,9 @@ class Navigator(node.Node):
 			pass
 		time.sleep(self.settings['pause time'])
 		try:
+			self.logger.info('Acquiring...')
 			imagedata = self.acquireCorrectedCameraImageData(channel=channel)
+			self.logger.info('Acquired')
 		except:
 			self.logger.error('unable to get corrected image')
 			self._restoreSaveFrames()

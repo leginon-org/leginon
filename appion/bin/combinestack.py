@@ -12,6 +12,7 @@ from appionlib import appiondata
 from appionlib import apEMAN
 from appionlib import apProject
 from appionlib import apFile
+from appionlib import apVirtualStack
 
 #=====================
 #=====================
@@ -129,6 +130,26 @@ class combineStackScript(appionScript.AppionScript):
 		return
 
 	#=====================
+	def checkStacks(self):
+		### loop through stacks
+		for stackstr in self.params['stackids']:
+			stackid = int(stackstr)
+
+			### get stack data
+			stackdata = apStack.getOnlyStackData(stackid)
+			hedname = stackdata['name']
+			if '.hed' in hedname:
+				stackfilename = hedname.split('.hed')[0]+'.img'
+			else:
+				stackfilename = hedname
+			stackpath = os.path.join(stackdata['path']['path'], stackfilename)
+			if not os.path.isfile(stackpath):
+				# Virtual stack
+				apVirtualStack.generateMissingStack(stackid)
+				if not os.path.isfile(stackpath):
+					apDisplay.printError('Problem generating missing stackfile id=%d missing as  %s. Please generate first before rerun this command.' % (stackid, stackpath))
+
+	#=====================
 	def start(self):
 		### universal particle counter
 		self.partnum = 1
@@ -138,6 +159,8 @@ class combineStackScript(appionScript.AppionScript):
 		if os.path.isfile(self.combinefile):
 			apDisplay.printError("A stack with name "+self.params['stackfilename']+" and path "
 				+self.params['rundir']+" already exists.")
+
+		self.checkStacks()
 
 		### loop through stacks
 		for stackstr in self.params['stackids']:

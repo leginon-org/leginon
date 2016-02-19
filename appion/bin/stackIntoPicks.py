@@ -142,7 +142,12 @@ class StackIntoPicksScript(appionScript.AppionScript):
 		selectrunq['name'] = self.params['runname']
 		selectrunq['hidden'] = False
 		selectrunq['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
-		selectrunq['session'] = apStack.getSessionDataFromStackId(self.params['stackid'])
+		if ('expid' in self.params and self.params['expid']):
+			# Issue 3961 work around: using expId input
+			selectrunq['session'] = apDatabase.getSessionDataFromSessionId(self.params['expid'])
+		else:
+			# This is the session of the first particle
+			selectrunq['session'] = apStack.getSessionDataFromStackId(self.params['stackid'])
 		selectrunq['manparams'] = manualparamsq
 
 		### insert particles

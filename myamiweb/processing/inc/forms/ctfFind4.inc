@@ -45,6 +45,7 @@ class CtfFind4 extends BasicLoopForm
 		$params->addParam( "numstep", $numstep, "Number of Steps to Search" );
 		$params->addParam( "dast", $dast, "Expected Astigmatism (in &mu;m)" );
 		$params->addParam( "bestdb", $bestdb, "Use best values from Database" );
+		$params->addParam( "nominal", $nominal, "Override Nominal Value (in &mu;m)" );
 		
 		// Validations
 		//$params->addValidation( "numpart", "req" );
@@ -71,6 +72,7 @@ class CtfFind4 extends BasicLoopForm
 		$html.= $params->insertTextField( "numstep", $fieldSize );
 		$html.= $params->insertTextField( "dast", $fieldSize );
 		$html.= $params->insertCheckboxField( "bestdb" );
+		$html.= $params->insertTextField( "nominal", $fieldSize );
 
 		
 		return $html;

@@ -33,10 +33,8 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 			help="ampcontrast, default=0.07", metavar="#")
 		self.parser.add_option("--fieldsize", dest="fieldsize", type="int", default=1024,
 			help="fieldsize, default=1024", metavar="#")
-		self.parser.add_option("--nominal", dest="nominal",
-			help="nominal")
-		self.parser.add_option("--newnominal", dest="newnominal", default=False,
-			action="store_true", help="newnominal")
+		self.parser.add_option("--nominal", dest="nominal", type="float",
+			help="nominal override value (in microns, absolute value)")
 		self.parser.add_option("--resmin", dest="resmin", type="float", default=50.0,
 			help="Low resolution end of data to be fitted in Angstroms", metavar="#")
 		self.parser.add_option("--resmax", dest="resmax", type="float", default=15.0,
@@ -139,19 +137,26 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 
 		#get Defocus in Angstroms
 		self.ctfvalues = {}
-		nominal = abs(imgdata['scope']['defocus']*-1.0e10)
-		ctfvalue = ctfdb.getBestCtfByResolution(imgdata)
-		if ctfvalue is not None:
-			"""
-			## CTFFIND V3.5 (7-March-2012) prefers the smaller of the two values for astigmatic images
-			I found that say you have an image with 1.1um and 1.5um defocus astigmatism. If you give 
-			CTFFIND the average value of 1.3um for the defocus and 0.4um astig (dast) then it will 
-			try to fit 1.3um and 1.8um, so you need to give it the minimum value (1.1um) for it to 
-			fit 1.1um and 1.5um.
-			"""
-			bestdef = min(ctfvalue['defocus1'],ctfvalue['defocus2'])*1.0e10
-		else:
+		if self.params['nominal'] is not None:
+			print self.params['nominal']
+			nominal = abs(self.params['nominal']*1e4)
+			apDisplay.printWarning("overriding CTF value with user nominal value %.1f A"%(nominal))
+			ctfvalue = None
 			bestdef = nominal
+		else:
+			nominal = abs(imgdata['scope']['defocus']*-1.0e10)
+			ctfvalue = ctfdb.getBestCtfByResolution(imgdata)
+			if ctfvalue is not None:
+				"""
+				## CTFFIND V3.5 (7-March-2012) prefers the smaller of the two values for astigmatic images
+				I found that say you have an image with 1.1um and 1.5um defocus astigmatism. If you give 
+				CTFFIND the average value of 1.3um for the defocus and 0.4um astig (dast) then it will 
+				try to fit 1.3um and 1.8um, so you need to give it the minimum value (1.1um) for it to 
+				fit 1.1um and 1.5um.
+				"""
+				bestdef = min(ctfvalue['defocus1'],ctfvalue['defocus2'])*1.0e10
+			else:
+				bestdef = nominal
 		if ctfvalue is not None and self.params['bestdb'] is True:
 			bestampcontrast = round(ctfvalue['amplitude_contrast'],3)
 			beststigdiff = round(abs(ctfvalue['defocus1'] - ctfvalue['defocus2'])*1e10,1)
