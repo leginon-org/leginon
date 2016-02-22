@@ -7,15 +7,17 @@
  *	see  http://ami.scripps.edu/software/leginon-license
  */
 
+
 require_once "basicLayoutForm.inc"; //includes the BasicLayoutForm class that this class extends
 require_once "inc/particledata.inc"; // needed to look up symmetry values
 
 class rubinsteinParticlePolisher extends BasicLayoutForm
 {
 	protected $stackIds;
+	protected $unalignedDDStackIds;
 	
 	// Set Default values in the constructor
-	function __construct( $expId, $extraHTML='',$stackId='', $clip='', $bin='1', $num_ref='20', $max_iter='15', $commit='on') 
+	function __construct( $expId, $extraHTML='',$stackId='',$bin='1', $num_ref='20', $max_iter='15', $commit='on')
 	{
 		parent::__construct($expId, $extraHTML);
 		
@@ -25,7 +27,7 @@ class rubinsteinParticlePolisher extends BasicLayoutForm
 		$pubList = array('appion'); // Keys are found in publicationList.inc
 		$this->setPublications( $pubList ); // list of references to display
 		
-		$this->setJobType( 'partalign' ); //Job type stored in database
+		$this->setJobType( 'particlepolishing' ); //Job type stored in database
 		$this->setOutputDirectory( 'rpp' ); // the general folder this job run will be stored in, along with others of this type
 		$this->setBaseRunName( 'rpp' ); // a unique number will be added to this to create the run name
 		$this->setTitle( 'Rubinstein Particle Polishing' ); // Shows up in the browser tab
@@ -34,7 +36,7 @@ class rubinsteinParticlePolisher extends BasicLayoutForm
 		$this->setGuideURL( "http://emg.nysbc.org/redmine/projects/appion/wiki/rubinstein_Particle_Polishing" );
 		$this->setTestable( False ); // True to activate "test single image".
 		$this->setUseLegOutDir( False ); // The output directory will be created in the Appion run directory rather than Leginon.
-		$this->setShowDesc( True ); // Flag to hide the description field of the run parameters.
+		$this->setShowDesc( False ); // Flag to hide the description field of the run parameters.
 		$this->setUseCluster(False ); // Shows the processing host params to set processors and memory
 		
 		//------ Add JavaScript functions needed for this form -------------------------//
@@ -73,6 +75,8 @@ class rubinsteinParticlePolisher extends BasicLayoutForm
 		
 		$particle = new particledata();
 		$this->stackIds = $particle->getStackIds($expId);
+
+		$this->unalignedDDStackIds = $particle->getDDStackRunIdsUnAligned($expId);
 	
 		$params = $this->getFormParams();
 		
@@ -81,24 +85,24 @@ class rubinsteinParticlePolisher extends BasicLayoutForm
 				
 		// Add each of the parameters here. 
 		// addParam( "key", default_value, "Label that appears in GUI")
-		$params->addParam( "stack", $stackId, "Select a stack of particles to use" );
+		$params->addParam( "stack", $stackId, "Select a particle stack" );
 
 		$params->addParam( "commit", $commit, "Commit to Database" );
 		$params->addParam( "micrographs_per_job", $migrographs_per_job, "Micrographs per job");
-		$params->addParam( "num_procs_required", $num_procs_required, "Number of processors required");
+		$params->addParam( "nproc", $nproc, "Number of processors per job default = 1");
 		$params->addParam( "particleradius", $particleradius, "Particle radius");
 		$params->addParam( "expweight", $expweight, "Exposure Weighting (Recommended)");
 		$params->addParam( "localavg", $localavgsigma, "Local averaging (Recommended)");
-		$params->addParam( "localavgsigma", $localavgsigma, "Local averaging weight standard deviation");
 		
-		$params->addParam( "ddstackid", $ddstackid, "DDStack ID");
+		$params->addParam( "ddstackid", $ddstackid, "Select an unaligned framestack");
+		
+		$params->addParam( "localavgsigma", $localavgsigma, "Local averaging weight standard deviation (default = 500)");
 		$params->addParam( "framefirstali", $framefirstali, "First frame to be used in alignment, default =0");
 		$params->addParam( "framelastali", $frameliastali, "Last frame to be used in alignment, default = use all");
 		$params->addParam( "framefirstave", $framefirstave, "First frame to be used in average of frames, default = 0");
 		$params->addParam( "framelastave", $framelastave, "Last frame to be used in average of frames, default = use all");
 		$params->addParam( "smooth", $smooth, "Specify the amount of smoothing");
 		$params->addParam( "exaggerate", $exaggerate, "Factor by which particle trajectories should be exaggerated");
-	//	$params->addParam( "localavg", $localavg, "Perform local averaging of trajectories");
 		$params->addParam( "expperframe", $expperframe, "Exposure per frame in electrons per Angstrom squared");
 		$params->addParam( "rmax1", $rmax1, "Low resolution cutoff (Angstroms)");
 		$params->addParam( "rmax2", $rmax2, "High resolution cutoff (Angstroms)");
@@ -136,7 +140,6 @@ class rubinsteinParticlePolisher extends BasicLayoutForm
                 $html.= $params->insertCheckBoxField( "expweight");
                 $html.= $params->insertCheckBoxField( "localavg" );
                 $html.="<br>";
-                $html.= $params->insertTextField( "localavgsigma", $fieldSize, "", 'appion.localavgsigma' );
 				
 
 
@@ -144,7 +147,9 @@ class rubinsteinParticlePolisher extends BasicLayoutForm
             <br />
             <H4>Optional Parameters</H4>
             <hr />";
-
+		
+                $html.= $params->insertTextField( "localavgsigma", $fieldSize, "", 'appion.localavgsigma' );
+		$html.= $params->insertTextField( "nproc", $fieldSize, "", 'appion.nproc' );
                 $html.= $params->insertTextField( "framefirstali", $fieldSize, "", 'appion.framefirstali' );
                 $html.= $params->insertTextField( "framelastali", $fieldSize, "", 'appion.framelastali' );
                 $html.= $params->insertTextField( "framefirstave", $fieldSize, "", 'appion.framefirstave' );
@@ -165,35 +170,7 @@ class rubinsteinParticlePolisher extends BasicLayoutForm
                 $html.= $params->insertCheckBoxField( "invertoutput");
 
                 $html .= "<br><hr>";
-	/*	
-		$html.= $params->insertTextField( "clip", $fieldSize, "(pixels)", 'appion.clipdiam' );
-		$html.= $params->insertTextField( "numpart", $fieldSize );
-				
-		$html .= "
-	    <br />
-	    <H4>Filters</H4>
-	    <hr />";
-
-		$html.= $params->insertTextField( "lowpass", $fieldSize, "(&Aring;ngstroms)",'appion.lpstackval' );
-		$html.= $params->insertTextField( "highpass", $fieldSize, "(&Aring;ngstroms)", 'appion.hpstackval' );
-*/
-		/*
-		$html .= "
-	    <br />
-	    <H4>Job Parameters</H4>
-	    <hr />";
-
-		$html.= $params->insertTextField( "num_ref", $fieldSize,'','appion.numrefcl2d' );
 	
-
-		$html.= "<I>Image to Image Distance:</I><br />\n";
-		$html.= $params->insertRadioField("img2imgdist", "correntropy", "Correntropy", '', 'appion.image2imagedistance');	
-		$html.= $params->insertRadioField("img2imgdist", "correlation", "Correlation", '', 'appion.image2imagedistance');	
-		
-		$html.= "<I>Image to Cluster Distance:</I><br />\n";
-		$html.= $params->insertRadioField("img2clusterdist", "minimum", "Minimum", '', 'appion.image2clusterdistance');	
-		$html.= $params->insertRadioField("img2clusterdist", "intracluster", "Intracluster", '', 'appion.image2clusterdistance');
-*/		
 		// When loading this page the first time, use the switchDefaults javascript function to set 
 		// form parameters based on the currently selected stack.
 		if (!$_POST['process']) {
@@ -209,13 +186,37 @@ class rubinsteinParticlePolisher extends BasicLayoutForm
 		$params = $this->getFormParams();
 		
 		if (!$this->stackIds) {
-			$html =  "<font color='red'><B>No Stacks for this Session</B></FONT>\n";
+			$html .=  "<font color='red'><B>No Stacks for this Session</B></FONT>\n";
 		} else {
 			$onchange 	= "switchDefaults(this.value)";
 			$particle 	= new particledata();
 			$options 	= $particle->getStackOptions($this->stackIds);
 			$html 		= $params->insertStackedSelectField( "stack", $options,'', '', $onchange );
+			
+			
 		}
+		$html .= "<br />";
+		
+
+		if(!$this->unalignedDDStackIds) {
+			$html = "<font color='red'><B>No unaligned ddstacks for this session</B></FONT>\n";
+		} else{
+			$onchange = "switchDefaults(this.value)";
+			$particle = new particledata();
+
+			for($i=0;$i<count($this->unalignedDDStackIds);$i++)
+			{
+
+				
+				$ddoptions[$this->unalignedDDStackIds[$i]['stackid']] = $this->unalignedDDStackIds[$i]['runname'];
+			//	echo $ddoptions[$i];
+			}
+
+
+			$html .= $params->insertStackedSelectField("ddstackid",$ddoptions,'','',$onchange);
+		}
+
+	
 		
 		$html .= "<br />";
 		$html .= $params->insertCheckboxField("commit");
@@ -233,54 +234,20 @@ class rubinsteinParticlePolisher extends BasicLayoutForm
 		
 		// Extract the stack id from the stack string
 		$stack = $params->getParamValue( "stack" );
+
 		list($stackid, $apix, $boxsz, $totpart) = preg_split('%\|--\|%',$stack);
 		$command = $this->removeCommandFlag( $command, "stack" );
 		$command = $this->addCommandFlag( $command, "stack", "stack", $stackid );
-		
-		// num_ref should be num-ref, but dashes don't work 
-		// well in the php/javascript world, so change it here.
+	
 
-		/*	
-		$command = $this->removeCommandFlag( $command, "num_ref" );
-		$num_ref = $params->getParamValue( "num_ref" );
-		$command.= " --num-ref=".$num_ref." ";
-		
-		// same with numpart
-		$command = $this->removeCommandFlag( $command, "numpart" );
-		$numpart = $params->getParamValue( "numpart" );
-		$command.= " --num-part=".$numpart." ";
-			
+		//var_dump("command = ".$command)."<br>";
+		$ddstackid = $params->getParamValue( "ddstackid" );
+		list($ddstackid,$apix,$boxsz,$totpart) = preg_split('%\|--\|%',$ddstackid);
+		$command = $this->removeCommandFlag( $command, "ddstackid" );
+		$command = $this->addCommandFlag( $command, "ddstackid", "ddstackid", $ddstackid );
+		//	var_dump("command = ".$command)."<br>";
 
-		// Set the clip diameter
-		$command = $this->removeCommandFlag( $command, "clip" );
-		$clip = $params->getParamValue( "clip" );
-		$bin  = $params->getParamValue( "bin" );
-		if ( $clip == $boxsz ) {
-			// no clipping needed
-			$clip = '';
-		} else {
-			// clipping requested
-			$clip = floor($clip/($bin*2.0))*2;
-			$command.= " --clip=$clip ";
-		}
-		// set flag for image to image dist
-		// if it is set to correlation, --correlation should be present,
-		// otherwise no flag.
-		$command = $this->removeCommandFlag( $command, "img2imgdist" );
-		$img2imgdist  = $params->getParamValue( "img2imgdist" );
-		if ($img2imgdist == "correlation") {
-			$command.= " --correlation ";
-		}
-			
-		// set flag for image to cluster dist
-		// if it is set to minimum, --classical_multiref should be
-		// present, otherwise no flag.
-		$command = $this->removeCommandFlag( $command, "img2clusterdist" );
-		$img2clusterdist  = $params->getParamValue( "img2clusterdist" );
-		if ($img2clusterdist == "minimum") {
-			$command.= " --classical_multiref ";
-		}
-*/		
+
 		// If the commit box is checked, add --commit, otherwise --no-commit
 		$commit  = ($params->getParamValue('commit') == 'on' ) ? true : false;
 		if (!$commit) {
@@ -289,7 +256,7 @@ class rubinsteinParticlePolisher extends BasicLayoutForm
 		//$command.= " --nproc=".$postArray['nodes']*$postArray['ppn']." ";
 		return $command;		
 	}
-	
+
 	// Override the validate function to add more complex validations than are available in the formValidator class.
 	public function validate( $postArray )
 	{
@@ -314,14 +281,14 @@ class rubinsteinParticlePolisher extends BasicLayoutForm
 		$localavg = $params->getParamValue('localavg');
 		$particleradius = $params->getParamValue('particleradius');
 		$micrographs_per_job = $params->getParamValue('micrographs_per_job');
-
+		$nproc = $params->getParamValue('nproc');
 
 		if($particleradius==='')
 		{
 		$msg .="<B>Error: </B> Select particle radius in angstroms<br>";
 		}
 
-			echo "micrographs per job = ".$micrographs_per_job;
+			//echo "micrographs per job = ".$micrographs_per_job;
 		if($micrographs_per_job==='')
 		{
 			$msg.="<B>Error: </B> Select the number of micrographs per job<br>";
@@ -335,9 +302,11 @@ class rubinsteinParticlePolisher extends BasicLayoutForm
 			$msg .="<B>Error: </B> Cannot select local averaging weight without local averaging selected<br>";
 		}	
 
+		//Default value for Local average sigma is 500
 		if(($localavg==='on')&&(empty($localavgsigma)))
 		{
-			$msg .=$localavgsigma."<B>Error: </B> Select local averaging weight";
+		//$msg .="<B>Test Test</B><br>";
+		$localavgsigma = 500;
 		}
 
 
