@@ -2433,6 +2433,26 @@ class particledata {
 		return $r;
 	}	
 	
+
+
+        function getDDStackRunIdsUnAligned($sessionId,$showHidden=True)
+        {
+                $q = "SELECT r.`DEF_id` as stackid, r.`runname` as runname "
+                        ."FROM `ApDDStackRunData` AS r "
+                        ."LEFT JOIN ApPathData AS p "
+                        ."ON (r.`REF|ApPathData|path` = p.`DEF_id`) "
+                        ."LEFT JOIN `ApDDStackParamsData` AS a "
+                        ."ON (r.`REF|ApDDStackParamsData|params` = a.`DEF_id`) "
+                        ."WHERE r.`REF|leginondata|SessionData|session` = '$sessionId' "
+                        ."AND a.`align` = 0 ";
+                if (!$showHidden) $q.= " AND (r.`hidden` IS NULL OR r.`hidden` = 0) ";
+                $q.= "ORDER BY r.`DEF_id` DESC ";
+                //echo $q."<br/>\n";
+                $r = $this->mysql->getSQLResult($q);
+                return $r;
+        }
+
+
 	function getDDStackRunName($stackId,$showHidden=True) 
 	{
 		$q = "SELECT r.`runname` "
