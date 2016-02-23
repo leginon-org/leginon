@@ -164,12 +164,13 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 			bestampcontrast = self.params['ampcontrast']
 			beststigdiff = self.params['dast']*10000.
 
+		imageresmax = self.params['resmax']
 		if ctfvalue is not None and self.params['bestdb'] is True:
 			### set res max from resolution_80_percent
 			gmean = (ctfvalue['resolution_80_percent']*ctfvalue['resolution_50_percent']*self.params['resmax'])**(1/3.)
 			if gmean < self.params['resmin']*0.9:
 				# replace only if valid Issue #3291
-				self.params['resmax'] = round(gmean,2)
+				imageresmax = round(gmean,2)
 				apDisplay.printColor("Setting resmax to the geometric mean of resolution values", "purple")
 
 		# dstep is the physical detector pixel size
@@ -186,7 +187,7 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 			'ampcontrast': bestampcontrast,
 			'fieldsize': self.params['fieldsize'],
 			'resmin': self.params['resmin'],
-			'resmax': self.params['resmax'],
+			'resmax': imageresmax,
 			
 			'defstep': self.params['defstep']*10000., #round(defocus/32.0, 1),
 			'expect_astig': beststigdiff,

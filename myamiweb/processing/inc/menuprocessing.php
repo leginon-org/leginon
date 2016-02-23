@@ -803,7 +803,16 @@ if (is_numeric($expId)) {
 
 		$ddStackform = "MakeDDStackForm";
 		
-		
+		$rppresults = array();
+		$rppdone = count($subclusterjobs['particlepolishing']['done']);
+		$rpprun = count($subclusterjobs['particlepolishing']['running']);
+		$rppq = count($subclusterjobs['particlepolishing']['queued']);
+		$rppresults[] = ($rppdone==0) ? "" : "<a href='rppReport.php?expId=$sessionId'>$rppdone complete</a>";
+		$rppresults[] = ($rpprun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=particlepolishing'>$rpprun running</a>";
+		$rppresults[] = ($rppq==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=particlepolishing'>$rppq queued</a>";
+		$rppform = "rubinsteinParticlePolisher";
+
+
 		$nruns=array();
 		$nruns[] = array(
 //			'name'=>"<a href='runMakeDDRawFrameStack.php?expId=$sessionId'>Create frame stack</a>",
@@ -817,7 +826,13 @@ if (is_numeric($expId)) {
 			'name'=>"<a href='runAppionLoop.php?expId=$sessionId&form=makeDEAlignedSum'>Launch DE Frame Alignment</a>",
 
 		);
-		
+
+		$nruns[] = array(
+			'name'=>"<a href='runAppionLoop.php?expId=$sessionId&form=$rppform'>Launch Particle Polishing</a>",
+			'result'=>$rppresults,
+
+		);
+	
 		$data[] = array(
 			'action' => array($action, $celloption),
 			'newrun' => array($nruns, $celloption),

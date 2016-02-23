@@ -17,6 +17,7 @@ from appionlib import apStack
 from appionlib import apProject
 from appionlib import apConfig
 from appionlib import apParallelTasks
+from appionlib import apTaskMonitor
 import sinedon
 
 #class stackPolisher(apRemoteJob.RemoteJob):
@@ -296,7 +297,8 @@ class stackPolisherScript(appionScript.AppionScript):
 				if nmic == self.params['micperjob']:
 					bashfile = self.write_bash_file_for_submission(jobn)
 					os.chmod(bashfile, 0755)
-					command = os.path.join(self.params['rundir'],bashfile)
+					command = 'cd '+self.params['rundir']+'\n'
+					command = command + os.path.join(self.params['rundir'],bashfile)
 					self.joblist.append(command)
 					nmic = 0
 					jobn += 1
@@ -316,7 +318,8 @@ class stackPolisherScript(appionScript.AppionScript):
 		if nmic < self.params['micperjob']:
 			bashfile = self.write_bash_file_for_submission(jobn)
 			os.chmod(bashfile, 0755)
-			command = os.path.join(self.params['rundir'],bashfile)
+			command = 'cd '+self.params['rundir']+'\n'	
+			command = command + os.path.join(self.params['rundir'],bashfile)
 			self.joblist.append(command)
 			splitinputscf.close()
 			splitinputsmf.close()
@@ -353,6 +356,11 @@ class stackPolisherScript(appionScript.AppionScript):
 		# Clean up
 		apDisplay.printMsg("deleting temporary processing files")
 
+                particlePolishMonitor = apTaskMonitor.ParallelTaskMonitor(self.configfile,self.params['rundir'])
+                particlePolishMonitor.Main()
+		
+		stitchcommand = 'polishStackStitch.py --stackid='+str(self.params['stackid'])+' --projectid='+str(self.params['projectid'])+' --rundir='+self.params['rundir']+' --runname='+self.params['runname']+' --ddstackid='+str(self.params['ddstackid'])
+        	os.system(stitchcommand)
 		# Upload results
 		#		if self.params['commit'] is True:
 		#		apStack.commitPolishedStack(self.params, oldstackparts, newname='start.hed')
@@ -367,5 +375,5 @@ if __name__ == "__main__":
 	polisher = stackPolisherScript()
 	polisher.start()
 	polisher.close()
-
+	
 

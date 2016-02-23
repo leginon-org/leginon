@@ -17,7 +17,7 @@ RUN yum -y update && yum -y install \
  httpd php php-mysql phpMyAdmin mod_ssl php-pecl-ssh2 \
  gcc-c++ libtiff-devel PyOpenGL python-argparse \
  php-devel gd-devel re2c fftw3-devel php-gd \
- xorg-x11-server-Xvfb netpbm-progs \
+ xorg-x11-server-Xvfb netpbm-progs qiv \
  libssh2-devel mlocate nano elinks \
  numactl compat-libgfortran && yum -y clean all
 ### Trying to do VNC
