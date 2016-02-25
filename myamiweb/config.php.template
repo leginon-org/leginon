@@ -105,6 +105,12 @@ set_include_path(dirname(__FILE__).PATH_SEPARATOR
 // --- uncomment to enable processing web pages -- //
 // addplugin("processing");
 
+// This will define an external web service for submitting jobs to a cluster
+// This variable will be used to intercept calls to function executeOnHost in 
+// processing/inc/cluster.inc  
+// define('WEBSERVICE_URL', "http://kriosdb.rcc.fsu.edu/job_api/handler.php");
+define('WEBSERVICE_URL', false);
+
 
 // --- Add as many processing hosts as you like -- //
 // --- Please enter your processing host information as in the following example. -- //
