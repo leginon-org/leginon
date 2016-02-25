@@ -1,4 +1,5 @@
 from appionlib import torqueHost
+from appionlib import slurmHost 
 from appionlib import apRefineJobFrealign
 from appionlib import apRefineJobEman
 from appionlib import apRefineJobXmipp

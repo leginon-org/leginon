@@ -1,4 +1,5 @@
 from appionlib import torqueHost
+from appionlib import slurmHost 
 from appionlib import apGenericJob
 from appionlib import basicAgent
 import sys
