@@ -65,12 +65,9 @@ def validateAndInsertCTFData(imgdata, ctfvalues, rundata, rundir, fftpath=None, 
 		if key in ctfvalues:
 			ctfq[key] = ctfvalues[key]
 			if debug is True:
-				apDisplay.printMsg("%s :: %s"%(key, ctfvalues[key]))
+				apDisplay.printMsg("%s :: %s"%(key, ctfvalues.get(key, '')))
 		elif debug is True:
-			try:
-				apDisplay.printMsg("SKIPPING %s :: %s"%(key, ctfvalues[key]))
-			except KeyError:
-				apDisplay.printMsg("SKIPPING %s "%(key))
+			apDisplay.printMsg("SKIPPING %s :: %s"%(key, ctfvalues.get(key, '')))
 	ctfdb.printCtfData(ctfq)
 	ctfq.insert()
 
