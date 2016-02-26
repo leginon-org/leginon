@@ -123,12 +123,9 @@ def calculateConfidenceScore(ctfdata, ctfavg=True):
 
 	conf1 = ctfdata['confidence']
 	conf2 = ctfdata['confidence_d']
-	try:
-		conf3 = ctfdata['confidence_30_10']
-		conf4 = ctfdata['confidence_5_peak']
-		conf = max(conf1, conf2, conf3, conf4)
-	except KeyError:
-		conf = max(conf1, conf2)
+	conf3 = ctfdata.get('confidence_30_10',-1)
+	conf4 = ctfdata.get('confidence_5_peak',-1)
+	conf = max(conf1, conf2, conf3, conf4)
 	if conf < 0:
 		conf = 0
 	return conf
