@@ -10,7 +10,7 @@ RUN yum -y update && yum -y install \
  python-tools python-devel python-matplotlib \
  subversion ImageMagick grace gnuplot \
  wxPython numpy scipy python-imaging python-pip \
- gcc-gfortran compat-gcc-34-g77  \
+ gcc-gfortran compat-gcc-34-g77 libgfortran.x86_64 \
  gcc-objc fftw3-devel gsl-devel boost-python \
  mysql mysql-server MySQL-python mod_python \
  httpd php php-mysql phpMyAdmin mod_ssl php-pecl-ssh2 \
