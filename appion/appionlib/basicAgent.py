@@ -1,4 +1,5 @@
 from appionlib import torqueHost
+from appionlib import slurmHost 
 from appionlib import sgeHost
 from appionlib import apConfig
 import sys
@@ -27,6 +28,8 @@ class BasicAgent(object):
                 processingHost = torqueHost.MoabTorqueHost(configDict)
             elif 'SGE' == processingHostType.upper():
                 processingHost = sgeHost.SGEHost(configDict)
+            elif 'SLURM' == processingHostType.upper():
+                processingHost = slurmHost.SlurmHost(configDict)
             else:
                 sys.stderr.write("Unknown processing host type, using default\n")
                 processingHost = torqueHost.TorqueHost(configDict)
