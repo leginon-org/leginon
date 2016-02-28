@@ -1347,6 +1347,14 @@ class Krios(Tecnai):
 			return
 		return self._setStagePosition(value)
 
+	def normalizeProjectionForMagnificationChange(self, new_mag_index):
+		'''
+		Overwrite projection lens normalization on Titan Krios to do nothing
+		even if it is advisable to use normalization on the instrument.
+		This is done because Titan does not have submode 2 See Issue #3986
+		'''
+		pass
+
 class EFKrios(Krios):
 	name = 'EF-Krios'
 
