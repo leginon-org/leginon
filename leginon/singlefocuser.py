@@ -19,6 +19,8 @@ import copy
 import gui.wx.Focuser
 import player
 
+DOUBLE_TILT_FOCUS = True
+
 class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 	panelclass = gui.wx.Focuser.Panel
 	settingsclass = leginondata.FocuserSettingsData
@@ -67,6 +69,7 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 			'stig defocus max': 4e-6,
 			'check drift': False,
 			'drift threshold': 3e-10,
+			'recheck drift': False,
 			'reset defocus': None,
 		}
 		self.manualplayer = player.Player(callback=self.onManualPlayer)
@@ -190,7 +193,8 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 			# TO DO: figure out how drift monitor behaves in RCT if doing this
 			self.conditionalMoveAndPreset(presetname, emtarget)
 			driftresult = self.checkDrift(presetname, emtarget, driftthresh)
-			if driftresult['status'] == 'drifted':
+			if setting['recheck drift'] and driftresult['status'] == 'drifted':
+				# See Issue #3990
 				self.logger.info('Drift was detected so target will be repeated')
 				return 'repeat'
 			if driftresult['status'] == 'timeout':
@@ -198,8 +202,11 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 				return 'aborted'
 			lastdrift = driftresult['final']
 			lastdriftimage = self.driftimage
-			self.logger.info('using final drift image in focuser')
 			self.setImage(lastdriftimage['image'], 'Image')
+			if not DOUBLE_TILT_FOCUS:
+				self.logger.info('use final drift image in focuser')
+			else:
+				self.logger.info('tilt minus and then plus to measure defocus')
 		else:
 			lastdrift = None
 			lastdriftimage = None
@@ -234,7 +241,7 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 			# increased settle time from 0.25 to 0.5 for Falcon protector
 			settletime = self.settings['beam tilt settle time']
 			### FIX ME temporarily switch off tilt correction because the calculation may be wrong Issue #3030
-			correction = self.btcalclient.measureDefocusStig(btilt, correct_tilt=False, correlation_type=setting['correlation type'], stig=setting['stig correction'], settle=settletime, image0=lastdriftimage)
+			correction = self.btcalclient.measureDefocusStig(btilt, correct_tilt=False, correlation_type=setting['correlation type'], stig=setting['stig correction'], settle=settletime, image0=lastdriftimage, double_tilt=DOUBLE_TILT_FOCUS)
 		except calibrationclient.Abort:
 			self.btcalclient.setBeamTilt(beamtilt0)
 			self.logger.info('Measurement of defocus and stig. has been aborted')
