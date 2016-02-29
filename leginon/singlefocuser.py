@@ -19,7 +19,7 @@ import copy
 import gui.wx.Focuser
 import player
 
-DOUBLE_TILT_FOCUS = False
+DOUBLE_TILT_FOCUS = True
 
 class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 	panelclass = gui.wx.Focuser.Panel
@@ -69,6 +69,7 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 			'stig defocus max': 4e-6,
 			'check drift': False,
 			'drift threshold': 3e-10,
+			'recheck drift': False,
 			'reset defocus': None,
 		}
 		self.manualplayer = player.Player(callback=self.onManualPlayer)
@@ -192,7 +193,8 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 			# TO DO: figure out how drift monitor behaves in RCT if doing this
 			self.conditionalMoveAndPreset(presetname, emtarget)
 			driftresult = self.checkDrift(presetname, emtarget, driftthresh)
-			if driftresult['status'] == 'drifted':
+			if setting['recheck drift'] and driftresult['status'] == 'drifted':
+				# See Issue #3990
 				self.logger.info('Drift was detected so target will be repeated')
 				return 'repeat'
 			if driftresult['status'] == 'timeout':

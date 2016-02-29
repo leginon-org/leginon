@@ -1796,6 +1796,7 @@ class FocusSettingData(InSessionData):
 			('stig defocus min', float),
 			('stig defocus max', float),
 			('check drift', bool),
+			('recheck drift', bool),
 			('drift threshold', float),
 			('reset defocus', bool),
 			('isdefault', bool),

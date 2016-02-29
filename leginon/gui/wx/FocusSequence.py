@@ -136,6 +136,7 @@ class Dialog(leginon.gui.wx.Dialog.Dialog):
 			setting['stig defocus min'] = self.stig_defocus_min_entry.GetValue()
 			setting['stig defocus max'] = self.stig_defocus_max_entry.GetValue()
 		setting['check drift'] = self.check_drift_checkbox.GetValue()
+		setting['recheck drift'] = self.recheck_drift_checkbox.GetValue()
 		setting['drift threshold'] = self.drift_threshold_entry.GetValue()
 		setting['reset defocus'] = self.getResetSetting()
 
@@ -188,6 +189,7 @@ class Dialog(leginon.gui.wx.Dialog.Dialog):
 			self.stig_defocus_min_entry.SetValue(setting['stig defocus min'])
 			self.stig_defocus_max_entry.SetValue(setting['stig defocus max'])
 		self.check_drift_checkbox.SetValue(setting['check drift'])
+		self.recheck_drift_checkbox.SetValue(setting['recheck drift'])
 		self.drift_threshold_entry.SetValue(setting['drift threshold'])
 		self.setResetSetting(setting['reset defocus'])
 
@@ -212,6 +214,7 @@ class Dialog(leginon.gui.wx.Dialog.Dialog):
 			self.delta_max_entry,
 			self.correction_type_choice,
 			self.check_drift_checkbox,
+			self.recheck_drift_checkbox,
 			self.drift_threshold_entry,
 #			self.reset_choice,
 		]
@@ -329,15 +332,19 @@ class Dialog(leginon.gui.wx.Dialog.Dialog):
 		self.check_drift_checkbox = wx.CheckBox(self, -1,
 										   'Wait for drift to be less than')
 		self.drift_threshold_entry = leginon.gui.wx.Entry.FloatEntry(self, -1, chars=6)
+		self.recheck_drift_checkbox = wx.CheckBox(self, -1,
+										   'Repeat drift check until it passes the first time')
 		driftsizer.Add(self.check_drift_checkbox, (0, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
 		self.autowidgets.append(self.check_drift_checkbox)
+		self.autowidgets.append(self.recheck_drift_checkbox)
 		driftsizer.Add(self.drift_threshold_entry, (0, 1), (1, 1),
 						wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
 		self.autowidgets.append(self.drift_threshold_entry)
 		label = wx.StaticText(self, -1, 'm/s')
 		self.autowidgets.append(label)
 		driftsizer.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		driftsizer.Add(self.recheck_drift_checkbox, (1, 0), (1, 3), wx.ALIGN_CENTER_VERTICAL)
 		autosizer.Add(driftsizer, (6, 0), (1, 3), wx.ALIGN_CENTER_VERTICAL)
 
 		if not hide_stig:
@@ -438,6 +445,7 @@ if __name__ == '__main__':
 		'stig defocus min': 2e-6,
 		'stig defocus max': 4e-6,
 		'check drift': False,
+		'recheck drift': False,
 		'drift threshold': 3e-10,
 	}
 
@@ -457,6 +465,7 @@ if __name__ == '__main__':
 		'stig defocus min': 2e-6,
 		'stig defocus max': 4e-6,
 		'check drift': True,
+		'recheck drift': False,
 		'drift threshold': 3e-10,
 		'reset defocus': False,
 	}
