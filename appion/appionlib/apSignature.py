@@ -115,7 +115,9 @@ def processAndSaveImage(imgdata, params):
 		imgarray = apImage.correctImage(imgdata, params)
 	else:
 		imgarray = imgdata['image']
-	imgarray = apImage.preProcessImage(imgarray, params=params, msg=False)
+	imgFilter = apImage.ImageFilter()
+	imgFilter.readParamsDict(params)
+	imgarray = imgFilter.processImage(imgarray)	
 	apImage.arrayToMrc(imgarray, imgpath, msg=False)
 
 	return True

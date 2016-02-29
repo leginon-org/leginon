@@ -27,7 +27,7 @@ class powerSpectraLoop(appionLoop2.AppionLoop):
 		binpowerspectra = imagefun.bin2(powerspectra, self.params['bin'])
 		del powerspectra
 		if self.params['hp'] is True:
-			binpowerspectra = apImage.fermiHighPassFilter(binpowerspectra, apix=4.0, radius=2000.0)
+			binpowerspectra = apImage.tanhHighPassFilter(binpowerspectra, apix=4.0, radius=2000.0)
 		binpowerspectra = apImage.normStdevMed(binpowerspectra, size=5) 
 		binpowerspectra = apImage.pixelLimitFilter(binpowerspectra, pixlimit=4)
 		binpowerspectra = apImage.normRange(binpowerspectra)

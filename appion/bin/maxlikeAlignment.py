@@ -401,13 +401,12 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 			plist = [int(p['particleNumber'])-1 for p in vparts]
 			a.setValue('list',plist)
 
-
 		# clip not yet implemented
-#		self.params['clipsize'] is not None:
-#			clipsize = int(self.clipsize)*self.params['bin']
-#			if clipsize % 2 == 1:
-#				clipsize += 1 ### making sure that clipped boxsize is even
-#			a.setValue('clip',clipsize)
+		if self.params['clipsize'] is not None:
+			clipsize = int(self.clipsize)*self.params['bin']
+			if clipsize % 2 == 1:
+				clipsize += 1 ### making sure that clipped boxsize is even
+			a.setValue('clip',clipsize)
 
 		if self.params['virtualdata'] is not None:
 			vparts = self.params['virtualdata']['particles']
@@ -469,7 +468,7 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 			nproc = nproc = apParam.getNumProcessors()
 		else:
 			nproc = self.params['nproc']
-		mpirun = self.checkMPI()
+		mpirun = None
 		self.estimateIterTime()
 		if nproc > 2 and mpirun is not None:
 			### use multi-processor

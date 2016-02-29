@@ -757,12 +757,12 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 
 			### step 2: filter particles
 			### high / low pass filtering
-			#if self.params['pixlimit']:
-			#	particle = imagefilter.pixelLimitFilter(particle, self.params['pixlimit'])
+			if self.params['pixlimit']:
+				particle = imagefilter.pixelLimitFilter(particle, self.params['pixlimit'])
 			if self.params['lowpass']:
 				particle = imagefilter.lowPassFilter(particle, apix=apix, radius=self.params['lowpass'])
 			if self.params['highpass']:
-				particle = imagefilter.highPassFilter2(particle, self.params['highpass'], apix=apix)
+				particle = imagefilter.tanhHighPassFilter(particle, self.params['highpass'], apix=apix)
 			### unless specified, invert the images
 			if self.params['inverted'] is True:
 				particle = -1.0 * particle
@@ -987,7 +987,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 			help="low pass filter")
 		self.parser.add_option("--hp", "--highpass", dest="highpass", type="float",
 			help="high pass filter")
-		self.parser.add_option("--pixlimit", dest="pixlimit", type="float",
+		self.parser.add_option("--pixlimit", dest="pixlimit", type="float", default=None,
 			help="Limit pixel values to within <pixlimit> standard deviations", metavar="FLOAT")
 		self.parser.add_option("--helicalstep", dest="helicalstep", type="float",
 			help="helical step, in Angstroms")

@@ -1,7 +1,6 @@
 #Part of the new pyappion
 
 ## pythonlib
-import os
 import math
 ## numpy
 import numpy
@@ -31,7 +30,7 @@ def normRange(imgarray):
 #=========================
 def normRangeMed(imgarray, size=5):
 	"""
-	normalize an image to mean = 0 and stddev = 1.0
+	normalize the range of an image between 0 and 1, with median filter
 	"""
 	medimgarray = ndimage.median_filter(imgarray, size=size)
 	min1 = medimgarray.min()
@@ -54,7 +53,7 @@ def normStdev(imgarray):
 #=========================
 def normStdevMed(imgarray, size=3):
 	"""
-	normalize an image to mean = 0 and stddev = 1.0
+	normalize an image to mean = 0 and stddev = 1.0, with median filter
 	"""
 	medimgarray = ndimage.median_filter(imgarray, size=size)
 	avg1=medimgarray.mean()
@@ -66,7 +65,7 @@ def normStdevMed(imgarray, size=3):
 #=========================
 def normStdevMask(img,mask):
 	"""
-	normalize an image with mean = 0 and stddev = 1.0 only inside a mask
+	normalize an image with mean = 0 and stddev = 1.0, only inside a mask
 	"""
 	n1 = mask.sum()
 	if n1 == 0:
@@ -75,7 +74,7 @@ def normStdevMask(img,mask):
 	sumsq1 = (img*img*mask).sum()
 	avg1   = sum1/n1
 	std1   = math.sqrt((sumsq1 - sum1*sum1/n1)/(n1-1))
-	std2   = img.std()
+	#std2   = img.std()
 	return (img - avg1) / std1
 
 #=========================
@@ -135,12 +134,9 @@ def normalizeImage(img, stdevLimit=3.0, minlevel=0.0, maxlevel=255.0, trim=0.0):
 	Normalizes numpy to fit into an image format
 	that is values between 0 (minlevel) and 255 (maxlevel).
 	"""
-	mid = cutEdges(img,trim)
-
+	#mid = cutEdges(img,trim)
 	imrange = maxlevel - minlevel
-
 	#GET IMAGE STATS
-	
 	avg1 = img.mean()
 	stdev1 = img.std()
 	min1 = img.min()

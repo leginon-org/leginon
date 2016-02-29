@@ -477,7 +477,9 @@ def createPeakJpeg(imgdata, peaktree, params, procimgarray=None):
 		#instead of re-processing image use one that is already processed...
 		imgarray = procimgarray
 	else:
-		imgarray = apImage.preProcessImage(imgarray, bin=bin, planeReg=False, params=params)
+		imgFilter = apImage.ImageFilter()
+		imgFilter.readParamsDict(params)
+		imgarray = imgFilter.processImage(imgarray)
 
 	outfile = os.path.join(jpegdir, imgname+".prtl.jpg")
 	msg = not params['background']
@@ -511,14 +513,17 @@ def createTiltedPeakJpeg(imgdata1, imgdata2, peaktree1, peaktree2, params, proci
 	jpegdir = os.path.join(params['rundir'],"jpgs")
 	apParam.createDirectory(jpegdir, warning=False)
 
+	imgFilter = apImage.ImageFilter()
+	imgFilter.readParamsDict(params)
+
 	if procimg1 is not None:
 		imgarray1 = procimg1
 	else:
-		imgarray1 = apImage.preProcessImage(imgdata1['image'], bin=bin, planeReg=False, params=params)
+		imgarray1 = imgFilter.processImage(imgdata1['image'])
 	if procimg2 is not None:
 		imgarray2 = procimg2
 	else:
-		imgarray2 = apImage.preProcessImage(imgdata2['image'], bin=bin, planeReg=False, params=params)
+		imgarray2 = imgFilter.processImage(imgdata2['image'])
 	imgarray = numpy.hstack((imgarray1,imgarray2))
 
 	image = apImage.arrayToImage(imgarray)

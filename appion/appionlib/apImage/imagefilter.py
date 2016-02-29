@@ -1,8 +1,5 @@
-#Part of the new pyappion
 
 ## pythonlib
-import os
-import time
 ## numpy
 import numpy
 import pyami.quietscipy
@@ -13,119 +10,8 @@ from appionlib import apDisplay
 from appionlib.apSpider import filters
 ## pyami
 from pyami import imagefun, fftengine
-
+ 
 ffteng = fftengine.fftEngine()
-
-####
-# This is a low-level file with NO database connections
-# Please keep it this way
-####
-
-#=========================
-def _processImage(imgarray, bin=1, apix=1.0, lowpass=0.0, highpass=0.0,
-		planeReg=True, median=0, invert=False, pixlimit=0, msg=True):
-	"""
-	standard processing for an image
-	"""
-	simgarray = imgarray.copy()
-	if median > 0:
-		simgarray = ndimage.median_filter(simgarray, size=median)
-	simgarray = binImg(simgarray, bin)
-	if planeReg is True:
-		simgarray = planeRegression(simgarray, msg)
-	simgarray = highPassFilter2(simgarray, highpass, apix)
-	#simgarray = fermiHighPassFilter(simgarray, apix, bin, highpass, msg=msg)
-	simgarray = pixelLimitFilter(simgarray, pixlimit)
-	simgarray = lowPassFilter(simgarray, apix, bin, lowpass, msg)
-	#simgarray = fermiLowPassFilter(simgarray, apix, bin, lowpass, msg)
-	if invert is True:
-		simgarray = invertImage(simgarray)
-	simgarray = 255.0*(normRange(simgarray)+1.0e-7)
-	return simgarray
-
-#=========================
-def preProcessImage(imgarray, bin=None, apix=None, lowpass=None, planeReg=None,
-		median=None, highpass=None, correct=False, invert=None, pixlimit=None, msg=None,
-		params={}):
-	"""
-	standard processing for an image
-	"""
-	startt = time.time()
-	#MESSAGING
-	if msg is None:
-		if 'background' in params:
-			msg = not params['background']
-		else:
-			msg = True
-	#BINNING
-	if bin is None:
-		if 'bin' in params:
-			bin = params['bin']
-		else:
-			bin = 1
-	#PLANE REGRESSION
-	if planeReg is None:
-		if 'planereg' in params:
-			planeReg = params['planereg']
-		else:
-			planeReg = False
-	#ANGSTROMS PER PIXEL
-	if apix is None:
-		if 'apix' in params:
-			apix = params['apix']
-		else:
-			apDisplay.printError("'apix' is not defined in preProcessImage()")
-	#MEDIAN FILTER
-	if median is None:
-		if 'median' in params:
-			median = params['median']
-		else:
-			median = 0
-	#LOW PASS FILTER
-	if lowpass is None:
-		if 'lowpass' in params and params['lowpass'] is not None:
-			lowpass = params['lowpass']
-		elif 'lp' in params and params['lp'] is not None:
-			lowpass = params['lp']
-		else:
-			lowpass = 0
-	#INVERT IMAGE
-	if invert is None:
-		if 'invert' in params:
-			invert = params['invert']
-		else:
-			invert = False
-			apDisplay.printWarning("'invert' is not defined in preProcessImage()")
-	#HIGH PASS FILTER
-	if highpass is None:
-		if 'highpass' in params:
-			highpass = params['highpass']
-		elif 'hp' in params:
-			highpass = params['hp']
-		else:
-			highpass = 0
-	#PIXEL LIMITATION FILTER
-	if pixlimit is None:
-		if 'pixlimit' in params:
-			pixlimit = params['pixlimit']
-		else:
-			pixlimit = 0
-	#HIGH PASS FILTER => PLANE REGRESSION
-	result = _processImage(imgarray, bin, apix, lowpass, highpass, planeReg, median, invert, pixlimit, msg)
-	if msg is True:
-		apDisplay.printMsg("filtered image in "+apDisplay.timeString(time.time()-startt))
-	return result
-
-#=========================
-def normRange(imgarray):
-	"""
-	normalize the range of an image between 0 and 1
-	"""
-	min1=imgarray.min()
-	max1=imgarray.max()
-	if min1 == max1:
-		return imgarray - min1
-	return (imgarray - min1)/(max1 - min1)
 
 #=========================
 def binImg(imgarray, bin=1, warn=True):
@@ -165,7 +51,7 @@ def filterImg(imgarray,apix=1.0,rad=0.0,bin=1):
 	return lowPassFilter(imgarray,apix=apix,bin=1,radius=rad)
 
 #=========================
-def pixelLimitFilter(imgarray, pixlimit=0, const=False):
+def pixelLimitFilter(imgarray, pixlimit=0, const=False, msg=True):
 	if pixlimit < 0.1:
 		return imgarray
 	mean1 = imgarray.mean()
@@ -179,15 +65,21 @@ def pixelLimitFilter(imgarray, pixlimit=0, const=False):
 		lowerreplace = numpy.ones(imgarray2.shape)*lowerbound
 	else:
 		## replace noisy peak with new normally distributed values
-		normalreplace = numpy.random.normal(mean1, std1, (imgarray2.shape))
+		normalreplace = numpy.random.normal(mean1, std1/1.5, (imgarray2.shape))
 		## double check still in range
 		if normalreplace.max() > upperbound:
-			normalreplace = numpy.where(normalreplace > upperbound, upperbound, normalreplace)	
+			normalreplace = numpy.where(normalreplace > upperbound, upperbound, normalreplace)
 		if normalreplace.min() < lowerbound:
 			normalreplace = numpy.where(normalreplace < lowerbound, lowerbound, normalreplace)
 		upperreplace = normalreplace
 		lowerreplace = normalreplace
 	## replace noisy peak with new values
+	if msg is True:
+		total = imgarray2.shape[0]*imgarray2.shape[1]
+		repl = numpy.where(imgarray2 > upperbound, 1, 0).sum()
+		repl += numpy.where(imgarray2 < lowerbound, 1, 0).sum()
+		if repl > 0:
+			apDisplay.printMsg("replacing %d of %d pixels with pixel limit"%(repl, total))
 	imgarray2 = numpy.where(imgarray2 > upperbound, upperreplace, imgarray2)
 	imgarray2 = numpy.where(imgarray2 < lowerbound, lowerreplace, imgarray2)
 	return imgarray2
@@ -234,7 +126,7 @@ def fermiLowPassFilter(imgarray, apix=1.0, bin=1, radius=0.0, msg=True):
 	return filtimg
 
 #=========================
-def highPassFilter(imgarray, apix=1.0, bin=1, radius=0.0, localbin=8, msg=True):
+def subtractHighPassFilter(imgarray, apix=1.0, bin=1, radius=0.0, localbin=8, msg=True):
 	"""
 	high pass filter image to radius resolution, using stupid Gaussian filter
 	"""
@@ -296,7 +188,7 @@ def _gradient(cs_shape,zeroradius):
 	def _grad(r):
 		return (r-cut)/(1-cut)
 	g = numpy.piecewise(radii,[radii < cut,numpy.logical_and(radii < 1, radii >=cut),
-         radii>=1-cut],[0,_grad,1])
+		radii>=1-cut],[0,_grad,1])
 	return g
 
 #=========================
@@ -305,7 +197,7 @@ def _center_mask(a, zero_radius,one_radius):
 	center = shape[0]/2, shape[1]/2
 	center_square = a[center[0]-one_radius:center[0]+one_radius, center[1]-one_radius:center[1]+one_radius]
 	cs_shape = center_square.shape
-	cs_center = cs_shape[0]/2, cs_shape[1]/2
+	#cs_center = cs_shape[0]/2, cs_shape[1]/2 #this is never used
 	circ = _gradient(cs_shape,zero_radius)
 	center_square[:] = center_square * circ.astype(center_square.dtype)
 
@@ -339,7 +231,7 @@ def planeRegression(imgarray, msg=True):
 	xzsum =  (xarray*imgarray).sum()
 	yzsum =  (yarray*imgarray).sum()
 	zsum =   imgarray.sum()
-	zsumsq = (imgarray*imgarray).sum()
+	#zsumsq = (imgarray*imgarray).sum()
 
 	### create linear algebra matrices
 	leftmat = numpy.array( [[xsumsq, xysum, xsum], [xysum, ysumsq, ysum], [xsum, ysum, count]], dtype=numpy.float64)
@@ -377,9 +269,9 @@ def parabolicRegression(imgarray, msg=True):
 	ysize = imgarray.shape[1]
 	xarray = xarray/(ysize-1.0) - 0.5
 	yarray = yarray/(xsize-1.0) - 0.5
-	x2array = xarray**2
-	y2array = yarray**2
-	xyarray = xarray*yarray
+	#x2array = xarray**2
+	#y2array = yarray**2
+	#xyarray = xarray*yarray
 	
 	raise NotImplementedError
 	
@@ -393,7 +285,7 @@ def parabolicRegression(imgarray, msg=True):
 	xzsum =  (xarray*imgarray).sum()
 	yzsum =  (yarray*imgarray).sum()
 	zsum =   imgarray.sum()
-	zsumsq = (imgarray*imgarray).sum()
+	#zsumsq = (imgarray*imgarray).sum()
 
 	### create linear algebra matrices
 	leftmat = numpy.array( [[xsumsq, xysum, xsum], [xysum, ysumsq, ysum], [xsum, ysum, count]], dtype=numpy.float64)
@@ -535,23 +427,19 @@ def xmippTransform(a, rot=0, shift=(0,0), mirror=False, order=2):
 	return b
 
 #=========================
-def highPassFilter2(data, hpFilterSize, apix=None):
+def tanhHighPassFilter(data, radius, apix=1.0, bin=1):
 	"""
 	performs a hyperbolic tangent high pass filter 
 	in python using only numpy libraries that is
 	designed to be similar to EMAN1 proc2d
 	
-	Note: hpFilterSize is in real space units
-
-	Note: named highPassFilter2 to avoid duplication of the existing function in this module
+	Note: radius is in real space units
 	"""
-	if hpFilterSize < 1:
-		return data
-	if apix is not None:
-		pixelradius = hpFilterSize/apix
-	else:
-		pixelradius = hpFilterSize
-	filter = tanhFilter(hpFilterSize, data.shape)
+	pixelradius = radius/apix/float(bin)
+	if pixelradius < 1:
+		apDisplay.printWarning("pixel radius too small for high pass filter")
+		return data		
+	filter = tanhFilter(pixelradius, data.shape, fuzzyEdge=2)
 	fftdata = ffteng.transform(data)
 	fftdata = numpy.fft.fftshift(fftdata)
 	fftdata *= filter
@@ -560,13 +448,42 @@ def highPassFilter2(data, hpFilterSize, apix=None):
 	return flipdata
 
 #=========================
-def tanhFilter(pixelradius, shape, fuzzyEdge=1):
+def tanhLowPassFilter(data, radius, apix=1.0, bin=1):
+	"""
+	performs a hyperbolic tangent high pass filter 
+	in python using only numpy libraries that is
+	designed to be similar to EMAN1 proc2d
+	
+	Note: radius is in real space units
+	"""
+	pixelradius = radius/apix/float(bin)
+	if pixelradius < 1:
+		apDisplay.printWarning("pixel radius too small for low pass filter")
+		return data	
+	#opposite of HP filter
+	filter = 1.0 - tanhFilter(pixelradius, data.shape, fuzzyEdge=2)
+	fftdata = ffteng.transform(data)
+	fftdata = numpy.fft.fftshift(fftdata)
+	fftdata *= filter
+	fftdata = numpy.fft.fftshift(fftdata)
+	flipdata = numpy.real(numpy.fft.ifft2(fftdata))
+	return flipdata
+
+filterCache = {}
+
+#=========================
+def tanhFilter(pixelradius, shape, fuzzyEdge=2):
 	"""
 	creates hyperbolic tangent mask of size pixelradius
 	into a numpy array of defined shape
 
 	fuzzyEdge makes the edge of the hyperbolic tangent more fuzzy
 	"""
+	filterKey = "%.3f-%d-%.3f"%(pixelradius, max(shape), fuzzyEdge)
+	try:
+		return filterCache[filterKey]
+	except KeyError:
+		pass
 	xhalfshape = shape[0]/2.0
 	x = numpy.arange(-xhalfshape, xhalfshape, 1) + 0.5
 	yhalfshape = shape[1]/2.0
@@ -575,6 +492,7 @@ def tanhFilter(pixelradius, shape, fuzzyEdge=1):
 	radial = xx**2 + yy**2 #- 0.5
 	radial = numpy.sqrt(radial)
 	filter = numpy.tanh(radial/fuzzyEdge - 1.01*(max(shape))/float(pixelradius)/fuzzyEdge)/2.0 + 0.5
+	filterCache[filterKey] = filter
 	return filter
 
 ####

@@ -37,6 +37,7 @@ def getTemplates(params):
 	if not params['templateIds']:
 		apDisplay.printError("No template ids were specified")
 
+	imgFilter = apImage.ImageFilter()
 	params['templatelist'] = [] #list of scaled files
 	for i,templateid in enumerate(params['templateIds']):
 		index = i+1
@@ -70,7 +71,10 @@ def getTemplates(params):
 		templatearray = scaleTemplate(templatearray, scalefactor)
 		apImage.arrayToMrc(templatearray, scaletemplatepath, msg=False)
 		#bin and filter
-		templatearray = apImage.preProcessImage(templatearray, params=params, highpass=0, planeReg=False, invert=False)
+		
+		imgFilter.readParamsDict(params)
+		imgFilter.invert = False
+		templatearray = imgFilter.processImage(templatearray)
 		#write to file
 		apImage.arrayToMrc(templatearray, filtertemplatepath, msg=False)
 
