@@ -149,6 +149,7 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		self.widgets['queue drift'] = wx.CheckBox(self, -1, 'Declare drift when queue submitted')
 		self.widgets['sort target'] = wx.CheckBox(self, -1, 'Sort targets by shortest path')
 		self.widgets['allow append'] = wx.CheckBox(self, -1, 'Allow target finding on old images')
+		self.widgets['multifocus'] = wx.CheckBox(self, -1, 'Use all focus targetis for averaging')
 		self.Bind(wx.EVT_CHECKBOX, self.onQueueCheckbox, self.widgets['queue'])
 
 		sz = wx.GridBagSizer(5, 5)
@@ -162,8 +163,10 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 						wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.widgets['sort target'], (3, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['multifocus'], (4, 0), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
 		if not hide_incomplete:
-			sz.Add(self.widgets['allow append'], (4, 0), (1, 1),
+			sz.Add(self.widgets['allow append'], (5, 0), (1, 1),
 							wx.ALIGN_CENTER_VERTICAL)
 
 		return sz

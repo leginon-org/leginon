@@ -646,7 +646,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		bt = self.solveEq10_t(fmatrix, defocus1, defocus2, d)
 		return {'x':bt[0], 'y':bt[1]}
 
-	def measureDefocusStig(self, tilt_value, stig=True, correct_tilt=False, correlation_type=None, settle=0.5, image0=None):
+	def measureDefocusStig(self, tilt_value, stig=True, correct_tilt=False, correlation_type=None, settle=0.5, image0=None, double_tilt=False):
 		self.abortevent.clear()
 		tem = self.instrument.getTEMData()
 		cam = self.instrument.getCCDCameraData()
@@ -671,18 +671,28 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 
 		tiltcenter = self.getBeamTilt()
 
-		if image0 is None:
-			image0 = self.acquireImage(None, settle=settle, correct_tilt=correct_tilt)
-
 		### need two tilt displacement measurements to get stig
 		shifts = []
 		tilts = []
 		self.checkAbort()
 		for tiltaxis in tiltaxes:
+			bt1 = dict(tiltcenter)
+			if double_tilt:
+				bt1[tiltaxis] -= tilt_value
+				tilt_scale = 2*tilt_value
+			else:
+				tilt_scale = tilt_value
 			bt2 = dict(tiltcenter)
 			bt2[tiltaxis] += tilt_value
+			state1 = leginondata.ScopeEMData()
+			state1['beam tilt'] = bt1
 			state2 = leginondata.ScopeEMData()
 			state2['beam tilt'] = bt2
+			
+			if image0 is None or double_tilt:
+				# double tilt needs new image0 for each axis
+				image0 = self.acquireImage(state1, settle=settle, correct_tilt=correct_tilt, corchannel=0)
+
 			try:
 				shiftinfo = self.measureScopeChange(image0, state2, settle=settle, correct_tilt=correct_tilt, correlation_type=correlation_type)
 			except Abort:
@@ -692,9 +702,9 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 
 			shifts.append( (pixshift['row'], pixshift['col']) )
 			if tiltaxis == 'x':
-				tilts.append( (tilt_value, 0) )
+				tilts.append( (tilt_scale, 0) )
 			else:
-				tilts.append( (0, tilt_value) )
+				tilts.append( (0, tilt_scale) )
 			try:
 				self.checkAbort()
 			except Abort:

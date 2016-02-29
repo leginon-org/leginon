@@ -935,6 +935,9 @@ class ZeroLossCheckData(InSessionData):
 class MeasureDoseData(ReferenceRequestData):
 	pass
 
+class PhasePlateData(ReferenceRequestData):
+	pass
+
 class AdjustPresetData(ReferenceRequestData):
 	pass
 
@@ -1357,6 +1360,7 @@ class TargetFinderSettingsData(SettingsData):
 			('queue drift', bool),
 			('sort target', bool),
 			('allow append', bool),
+			('multifocus', bool),
 			('skip', bool),
 		)
 	typemap = classmethod(typemap)
@@ -1784,6 +1788,7 @@ class FocusSettingData(InSessionData):
 			('stig defocus min', float),
 			('stig defocus max', float),
 			('check drift', bool),
+			('recheck drift', bool),
 			('drift threshold', float),
 			('reset defocus', bool),
 			('isdefault', bool),
@@ -2344,6 +2349,12 @@ class AlignZLPSettingsData(ReferenceSettingsData):
 		)
 	typemap = classmethod(typemap)
 
+class PhasePlateAlignerSettingsData(ReferenceSettingsData):
+	def typemap(cls):
+		return ReferenceSettingsData.typemap() + (
+			('charge time', float),
+		)
+	typemap = classmethod(typemap)
 class TimerData(InSessionData):
 	def typemap(cls):
 		return InSessionData.typemap() + (
