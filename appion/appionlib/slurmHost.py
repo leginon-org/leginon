@@ -1,6 +1,7 @@
 import processingHost
 import subprocess
 
+# dcshrum@fsu.edu
 class SlurmHost(processingHost.ProcessingHost):
 	def __init__ (self, configDict=None):
 		processingHost.ProcessingHost.__init__(self)  #initialize parent
