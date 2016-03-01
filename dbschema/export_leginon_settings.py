@@ -98,6 +98,8 @@ class SettingsJsonMaker(DataJsonMaker):
 		q = self.makequery(classname,kwargs)
 		q['session'] = self.session
 		r1 = q.query(results=1)
+		if r1:
+			return r1
 		# search by user
 		found_by_user = False
 		if sessiondata['user'] and sessiondata.dbid:
@@ -106,30 +108,30 @@ class SettingsJsonMaker(DataJsonMaker):
 			q['session'] = sessionq
 			r2 = q.query(results=1,timelimit='19000000000000\t%s' % (sessiontime,))
 			if r2:
-				r1.append(r2[0])
-				found_by_user = True
+				return r2
 		# search by isdefault
 		if found_by_user == False:
 			q = self.makequery(classname,kwargs)
 			q['isdefault'] = True
-			r2 = q.query(results=1,timelimit='19000000000000\tsessiontime')
+			r2 = q.query(results=1,timelimit='19000000000000\t%s' % (sessiontime,))
 			if r2:
-				r1.append(r2[0])
-
-		return r1
+				return r2
 
 	def importFocusSequenceSettings(self, allalias):
 		print 'importing Focus Sequence Settings....'
 		if 'Focuser' not in allalias.keys():
 			return
 		sequence_names = []
-		for node_name in (allalias['Focuser']):
+		focuser_aliases = allalias['Focuser']
+		focuser_aliases.sort()
+		for node_name in (focuser_aliases):
 			results = self.researchSettings('FocusSequenceData',node_name=node_name)
 			self.publish(results)
 			for r in results:
 				sequence = r['sequence']
 				for s in sequence:
 					if s not in sequence_names:
+						# only keep the first of the multiple settings in the session
 						sequence_names.append(s)
 		for node_name in (allalias['Focuser']):
 			for seq_name in sequence_names:
@@ -145,13 +147,15 @@ class SettingsJsonMaker(DataJsonMaker):
 				'EM':None,
 				'FileNames':'ImageProcessorSettingsData',
 		}
-		for classname in allalias.keys():
+		aliaskeys = allalias.keys()
+		aliaskeys.sort()
+		for classname in aliaskeys:
 			settingsname = classname+'SettingsData'
 			if classname in unusual_settingsnames.keys():
 				settingsname = unusual_settingsnames[classname]
 			if not settingsname:
 				continue
-			if classname in allalias.keys():
+			if classname in aliaskeys:
 				print 'importing %s Settings....' % (classname,)
 				# allalias[classname] may have duplicates
 				for node_name in (set(allalias[classname])):
@@ -165,7 +169,7 @@ class SettingsJsonMaker(DataJsonMaker):
 		# FocusSequence and FocusSettings needs a different importing method
 		self.importFocusSequenceSettings(allalias)
 
-	def importSettings(self):
+	def importSettings(self,appname=None):
 		'''
 		Import Settings based on launched applications of the session
 		'''
@@ -174,27 +178,37 @@ class SettingsJsonMaker(DataJsonMaker):
 		launched_apps = self.research(q)
 		allalias = {}
 		for appdata in map((lambda x: x['application']), launched_apps):
+			if appname is not None and appname not in appdata['name']:
+				# only export specified application name
+				continue
 			q = leginondata.NodeSpecData(application=appdata)
 			results = self.research(q)
 			for r in results:
 				if r['class string'] not in allalias.keys():
+					# initialize
 					allalias[r['class string']] = []
-				allalias[r['class string']].append(r['alias'])
+				if r['alias'] not in allalias[r['class string']]:
+					# only keep the first of the multiple settings in the session
+					allalias[r['class string']].append(r['alias'])
 		# import settings
 		self.importSettingsByClassAndAlias(allalias)
 
-	def run(self):
+	def run(self, appname=None):
 		source_session = self.getSession()
 		print "****Session %s ****" % (source_session['name'])
-		self.importSettings()
+		self.importSettings(appname)
 		self.writeJsonFile()
 		print ''
 
 if __name__ == '__main__':
 	import sys
-	if len(sys.argv) != 2:
-		print "Usage: python export_leginon_settings.py <sessionname>"
+	if len(sys.argv) < 2:
+		print "Usage: python export_leginon_settings.py <sessionname> <optional partial application name"
 		sys.exit()
 	sessionname = sys.argv[1]
+	if len(sys.argv) == 3:
+		appname = sys.argv[2]
+	else:
+		appname = None
 	app = SettingsJsonMaker(sessionname)
-	app.run()
+	app.run(appname)
