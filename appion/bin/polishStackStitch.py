@@ -53,8 +53,8 @@ class stackPolisherScript(appionScript.AppionScript):
 		qimage = self.stackparts[0]['particle']['image']
 
 		# DD info
-		self.dd.setImageData(qimage)
 		self.dd.setDDStackRun(self.params['ddstackid'])
+		self.dd.setImageData(qimage)
 		self.ddstackpath = self.dd.getDDStackRun()['path']['path']
 
 	#=====================
