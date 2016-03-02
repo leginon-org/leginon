@@ -1024,7 +1024,7 @@ class Jeol(tem.TEM):
 			elif shift > self.backlash_limit['reduced']:
 				self.reducedStageBacklashCorrection(current_position, pos)
 		self._setStageXthenY(pos)
-		#self.confirmStagePosition(pos,'xy')
+		#self.confirmStagePosition(pos,('x','y'))
 
 	def confirmStagePosition(self, position, axes='z'):
 		# JEM stage call may return without giving error when the position is not reached.
@@ -1033,7 +1033,7 @@ class Jeol(tem.TEM):
 		accuracy = self.getJeolConfig('stage','accuracy')
 		new_position = self.getStagePosition()
 
-		# check axes character by character
+		# check axes one by one
 		for axis in axes:
 			if axis in position.keys() and abs(new_position[axis] - position[axis]) > accuracy[axis]:
 				self.printPosition('new', new_position)
@@ -1094,7 +1094,7 @@ class Jeol(tem.TEM):
 		result = attr(math.degrees(position['a']))
 		self._waitForStage()
 		# on JEM2100F isStageMoving gives false all the time in alpha since the motor moves fast but not accrurately.  Must confirm
-		self.confirmStagePosition(position,'a')
+		self.confirmStagePosition(position,('a',))
 
 	def _setStageXY(self, position):
 		'''
