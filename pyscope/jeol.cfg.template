@@ -99,6 +99,9 @@ ACCURACY%Z = 5e-7
 ACCURACY%A = 1e-3
 ACCURACY%B = 1e-3
 
+# number of maximal trials in stage position confirmation
+MAX_TRIALS = 10
+
 [apt]
 # aperture class
 CLA_SIZES = 0, 150e-6, 70e-6, 50e-6, 20e-6

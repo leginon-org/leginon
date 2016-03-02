@@ -1031,18 +1031,23 @@ class Jeol(tem.TEM):
 		# Noticed this at NYSBC JEM-2100f
 		# Make it to retry.
 		accuracy = self.getJeolConfig('stage','accuracy')
+		max_trials = self.getJeolConfig('stage','max_trials')
 		new_position = self.getStagePosition()
 
 		# check axes one by one
 		for axis in axes:
-			if axis in position.keys() and abs(new_position[axis] - position[axis]) > accuracy[axis]:
-				self.printPosition('new', new_position)
-				self.printPosition('target', position)
-				debug_print('stage %s not reached' % axis)
-				axis_position = {axis:position[axis]}
-				self.setStagePositionByAxis(position,axis)
-			else:
-				debug_print('stage %s reached' % axis)
+			trial = 0
+			while trial < max_trials:
+				trial += 1
+				if axis in position.keys() and abs(new_position[axis] - position[axis]) > accuracy[axis]:
+					self.printPosition('new', new_position)
+					self.printPosition('target', position)
+					debug_print('stage %s not reached' % axis)
+					axis_position = {axis:position[axis]}
+					self.setStagePositionByAxis(position,axis)
+				else:
+					debug_print('stage %s reached on trial %d' % (axis, trial))
+					break
 
 	def setStagePositionByAxis(self, position, axis):
                 keys = position.keys()
