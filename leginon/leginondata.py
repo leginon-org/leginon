@@ -1842,6 +1842,17 @@ class TiltAlternaterSettingsData(AcquisitionSettingsData):
 		)
 	typemap = classmethod(typemap)
 
+class MoveAcquisitionSettingsData(AcquisitionSettingsData):
+	def typemap(cls):
+		return AcquisitionSettingsData.typemap() + (
+			('acquire during move', bool),
+			('imaging delay', float),  #seconds
+			('tilt to', float),		#degrees
+			('total move time', float),  #seconds
+			('nsteps', int),
+		)
+	typemap = classmethod(typemap)
+
 class CalibratorSettingsData(SettingsData):
 	def typemap(cls):
 		return SettingsData.typemap() + (
