@@ -35,17 +35,16 @@ class MoveAcquisition(acquisition.Acquisition):
 		self.step_done_event = threading.Event()
 
 	def getParentTilt(self,targetdata):
-		if targetdata['image']:
+		try:
 			parent_tilt = targetdata['image']['scope']['stage position']['a']
-		else:
-			if len(self.tilts):
-				parent_tilt = self.tilts[0]
-			else:
-				parent_tilt = 0.0
+		except:
+			# use current tilt as default
+			p0 = self.instrument.tem.StagePosition
+			parent_tilt = p0['a']
 		return parent_tilt
 
 	def setStageTilt(self,angle):
-		self.instrument.tem.setStagePosition({'a':tilt0})
+		self.instrument.tem.StagePosition = {'a':angle}
 		self.logger.info('Set stage alpha to %.1f degrees' % (math.degrees(angle)))
 
 	def processTargetData(self, targetdata, attempt=None):
@@ -69,9 +68,10 @@ class MoveAcquisition(acquisition.Acquisition):
 	def acquire(self, presetdata, emtarget=None, attempt=None, target=None, channel=None):
 		if not self.settings['acquire during move']:
 			# process as normal
-			super(MoveAcquisition, self).acquire(presetdata, emtarget, attempt, target, channel)
+			return super(MoveAcquisition, self).acquire(presetdata, emtarget, attempt, target, channel)
 
 		reduce_pause = self.onTarget
+		p0 = self.instrument.tem.StagePosition
 
 		if debug:
 			try:
@@ -167,9 +167,5 @@ class MoveAcquisition(acquisition.Acquisition):
 			self.instrument.tem.StagePosition = {'a':new_tilt}
 			p = self.instrument.tem.StagePosition
 			self.waitStepDone()
-		self.logger.info('tilt %.1f degrees reached' % math.degrees(tilt))
-		# ready to go to next target
-		self.logger.info('return tilt to %.1f degrees' % math.degrees(p0['a']))
-		self.instrument.tem.StagePosition = p0
-		self.logger.info('return tilt done' % math.degrees(p0['a']))
+		self.logger.info('tilt of %.1f degrees reached' % math.degrees(tilt))
 		self.move_done_event.set()
