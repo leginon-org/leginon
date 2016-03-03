@@ -55,7 +55,6 @@ class rubinsteinParticlePolisher extends BasicLayoutForm
 		$javascript .= "	if (bestbin < 1) {\n";
 		$javascript .= "		var bestbin = 1 ;}\n";
 		$javascript .= "	document.viewerform.bin.value = bestbin;\n";
-		// set particle & mask radius and lp
 		$javascript .= "}\n";
 		$javascript .= "
 			function enablefastmode() {
@@ -160,7 +159,6 @@ class rubinsteinParticlePolisher extends BasicLayoutForm
                 
                 $html.= $params->insertTextField( "expperframe", $fieldSize, "", 'appion.expperframe' );
                 
-                $html.= $params->insertTextField( "expperframe", $fieldSize, "", 'appion.expperframe' );
                 $html.= $params->insertTextField( "rmax1", $fieldSize, "", 'appion.rmax1' );
                 $html.= $params->insertTextField( "rmax2", $fieldSize, "", 'appion.rmax2' );
                 $html.= $params->insertTextField( "bfactor", $fieldSize, "", 'appion.bfactor' );
@@ -240,12 +238,10 @@ class rubinsteinParticlePolisher extends BasicLayoutForm
 		$command = $this->addCommandFlag( $command, "stack", "stack", $stackid );
 	
 
-		//var_dump("command = ".$command)."<br>";
 		$ddstackid = $params->getParamValue( "ddstackid" );
 		list($ddstackid,$apix,$boxsz,$totpart) = preg_split('%\|--\|%',$ddstackid);
 		$command = $this->removeCommandFlag( $command, "ddstackid" );
 		$command = $this->addCommandFlag( $command, "ddstackid", "ddstackid", $ddstackid );
-		//	var_dump("command = ".$command)."<br>";
 
 
 		// If the commit box is checked, add --commit, otherwise --no-commit
@@ -305,7 +301,6 @@ class rubinsteinParticlePolisher extends BasicLayoutForm
 		//Default value for Local average sigma is 500
 		if(($localavg==='on')&&(empty($localavgsigma)))
 		{
-		//$msg .="<B>Test Test</B><br>";
 		$localavgsigma = 500;
 		}
 

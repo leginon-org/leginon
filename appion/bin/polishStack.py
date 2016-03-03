@@ -207,7 +207,9 @@ class stackPolisherScript(appionScript.AppionScript):
 		f.write("localavgsigma=%d\n" % self.params['localavgsigma'])
 		f.write("expweight=%d\n" % self.params['expweight'])
 		f.write("akv=%d\n" % self.params['kv'])
-		f.write("expperframe=%.3f\n" % self.params['expperframe'])
+		
+		if self.params['expperframe'] is not None:
+			f.write("expperframe=%.3f\n" % self.params['expperframe'])
 		f.write("motweight=0\n") # defaulted to 0, will be removed in next version
 		f.write("vecext=vec\n")
 		f.write("maxparts=100000\n")

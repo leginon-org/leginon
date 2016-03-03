@@ -13,6 +13,8 @@ LS2_MAG_MAX = 4000
 LS3_MAG_MAX = 30000
 LS4_MAG_MAX = 100000
 LM1_MAG_MAX = 200
+#normalize by set to this lowmag mag each time changing from mag1 to lowmag
+LOWMAG_NORMALIZATION_MAG = 200
 
 [eos]
 # electron optics class.  The later mode will be used if a mag is found in more than one modes
@@ -98,6 +100,9 @@ ACCURACY%Y = 1.5e-7
 ACCURACY%Z = 5e-7
 ACCURACY%A = 1e-3
 ACCURACY%B = 1e-3
+
+# number of maximal trials in stage position confirmation
+MAX_TRIALS = 10
 
 [apt]
 # aperture class
