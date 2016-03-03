@@ -67,6 +67,10 @@ class MoveAcquisition(acquisition.Acquisition):
 		self.step_done_event.wait()
 
 	def acquire(self, presetdata, emtarget=None, attempt=None, target=None, channel=None):
+		if not self.settings['acquire during move']:
+			# process as normal
+			super(MoveAcquisition, self).acquire(presetdata, emtarget, attempt, target, channel)
+
 		reduce_pause = self.onTarget
 
 		if debug:
