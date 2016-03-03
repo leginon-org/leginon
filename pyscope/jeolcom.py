@@ -879,8 +879,8 @@ class Jeol(tem.TEM):
 		new_mode_index = self.projection_submode_map[value][1]
 		result = self.eos3.SelectFunctionMode(new_mode_index)
 		if new_mode_index == FUNCTION_MODES['lowmag'] and old_mode_index != FUNCTION_MODES['lowmag']:
-				#set to an arbitrary low mag to remove distortion
-				relax_mag = self.submode_mags[FUNCTION_MODES['lowmag']][-1]
+				#set to a selected low mag to remove distortion
+				relax_mag = self.getJeolConfig('tem option','lowmag_normalization_mag')
 				self.eos3.SetSelector(self.calculateSelectorIndex(new_mode_index, relax_mag))
 				time.sleep(1)
 		self.eos3.SetSelector(self.calculateSelectorIndex(new_mode_index, value))
