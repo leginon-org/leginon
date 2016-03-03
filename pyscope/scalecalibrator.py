@@ -343,6 +343,8 @@ class ScaleCalibrator(object):
 			if i == 0:
 				self.confirmMainScreenMagnification()
 			self.calibrations = self.getCalibrationRequired(first=(i==0))
+			if 'imageshift' in self.calibrations.keys():
+				self.logger.cfg('def','IMAGESHIFT_CAL_MAG%%%s' % (self.getSubModeString()),'%d' % (int(mag)))
 			for effect_type in self.calibrations.keys():
 				self.effect_type = effect_type
 				self.current_calibration = self.calibrations[effect_type]
