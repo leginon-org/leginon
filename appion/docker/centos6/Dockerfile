@@ -87,6 +87,9 @@ RUN ln -sv /emg/sw/eman1/lib/libpyEM.so.ucs4.py2.6 /emg/sw/eman1/lib/libpyEM.so 
 ADD TGZ/eman2_centos6_docker.tgz /emg/sw/
 #ADD eman2.12.source.tar.gz /emg/sw/
 
+### RELION
+ADD TGZ/relion-1.4.tgz /emg/sw/
+
 ADD TGZ/spidersmall.13.00.tgz /emg/sw
 #RUN ln -sv /emg/sw/spider/bin/spider_linux_mp_opt64 /emg/sw/spider/bin/spider
 
