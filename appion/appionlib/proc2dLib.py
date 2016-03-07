@@ -437,13 +437,14 @@ class ApProc2d(basicScript.BasicScript):
 				particle = -1.0 * particle
 
 			### clipping
-			clipshape = (self.params['clip'],self.params['clip'])
-			if particle.shape != clipshape:
-				if self.params['clip'] <= particle.shape[0] and self.params['clip'] <= particle.shape[1]:
-					particle = imagefilter.frame_cut(particle, clipshape)
-				else:
-					apDisplay.printError("particle shape (%dx%d) is smaller than requested clip size (%d)"
-						%(particle.shape[0], particle.shape[1], self.params['clip']))
+			if self.params['clip'] is not None:
+				clipshape = (self.params['clip'],self.params['clip'])
+				if particle.shape != clipshape:
+					if self.params['clip'] <= particle.shape[0] and self.params['clip'] <= particle.shape[1]:
+						particle = imagefilter.frame_cut(particle, clipshape)
+					else:
+						apDisplay.printError("particle shape (%dx%d) is smaller than requested clip size (%d)"
+							%(particle.shape[0], particle.shape[1], self.params['clip']))
 
 			### step 3: normalize particles
 			#self.normoptions = ('none', 'boxnorm', 'edgenorm', 'rampnorm', 'parabolic') #normalizemethod
