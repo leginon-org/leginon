@@ -8,7 +8,7 @@ RUN yum -y update && yum -y install wget epel-release sudo passwd rsync tar open
 ### install software
 RUN yum -y update && yum -y install \
  python-tools python-devel python-matplotlib \
- subversion ImageMagick grace gnuplot \
+ subversion ImageMagick grace gnuplot fltk-devel \
  wxPython numpy scipy python-imaging python-pip \
  gcc-gfortran compat-gcc-34-g77 libgfortran.x86_64 \
  gcc-objc fftw3-devel gsl-devel boost-python \

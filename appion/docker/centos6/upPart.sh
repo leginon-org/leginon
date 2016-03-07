@@ -6,7 +6,7 @@ uploadAppionParticles.py --filename=/emg/sw/particledata.dat --session=06jul12a 
 
 
 makestack2.py --single=start.hed --selectionid=1 --invert \
-  --lp=3 --hp=2000 --pixlimit=3 --bin=2 \
+  --lp=3 --hp=2000 --pixlimit=4.4 --bin=2 \
   --normalize-method=edgenorm --boxsize=480 --forceInsert \
   --description="testing average stack" --runname=stack1 \
   --rundir=/emg/data/appion/06jul12a/stacks/stack1 --commit \
