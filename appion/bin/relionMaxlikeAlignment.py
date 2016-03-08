@@ -35,7 +35,7 @@ class RelionMaxLikeScript(appionScript.AppionScript):
 
 
 		self.parser.set_usage("Usage: %prog --stack=ID [ --num-part=# ]")
-		self.parser.add_option("-N", "--num-part", dest="numpart", type="int",
+		self.parser.add_option("-N", "--numpart", dest="numpart", type="int",
 			help="Number of particles to use", metavar="#")
 		self.parser.add_option("-s", "--stack", dest="stackid", type="int",
 			help="Stack database id", metavar="ID#")
@@ -49,17 +49,31 @@ class RelionMaxLikeScript(appionScript.AppionScript):
 		self.parser.add_option("--bin", dest="bin", type="int", default=1,
 			help="Bin images by factor", metavar="#")
 
-		self.parser.add_option("--max-iter", dest="maxiter", type="int", default=30,
+		self.parser.add_option("--maxIter", "--max-iter", dest="maxiter", type="int", default=30,
 			help="Maximum number of iterations", metavar="#")
-		self.parser.add_option("--num-ref", dest="numrefs", type="int",
+		self.parser.add_option("--numRef", "--num-ref", dest="numrefs", type="int",
 			help="Number of classes to create", metavar="#")
-		self.parser.add_option("--angle-interval", dest="psistep", type="int", default=5,
-			help="In-plane rotation sampling interval (degrees)", metavar="#")
+		self.parser.add_option("--angStep", "--angle-step", dest="psistep", type="int", default=5,
+			help="In-plane rotation sampling step (degrees)", metavar="#")
+		self.parser.add_option("--tau", dest="tau", type="float", default=1,
+			help="Tau2 Fudge Factor (> 1)", metavar="#")
+		
+		# Job parameters that the remotehost need
+		self.parser.add_option("--nodes", dest="nodes", type="int", default=1,
+			help="Number of nodes requested for multi-node capable tasks", metavar="#")
+		self.parser.add_option("--ppn", dest="ppn", type="int", default=1,
+			help="Minimum Processors per node", metavar="#")
+		self.parser.add_option("--mem", dest="mem", type="int", default=4,
+			help="Maximum memory per node (in GB)", metavar="#")
+		self.parser.add_option("--walltime", dest="walltime", type="int", default=24,
+			help="Maximum walltime in hours", metavar="#")
+		self.parser.add_option('--cput', dest='cput', type='int', default=None)
 
-
-		self.parser.add_option("--invert", default=False,
+		self.parser.add_option("--invert", dest='invert', default=False,
 			action="store_true", help="Invert before alignment")
 
+		self.parser.add_option("--flat", "--flatten-solvent", dest='flattensolvent', default=False,
+			action="store_true", help="Flatten Solvent in References")
 
 	#=====================
 	def checkConflicts(self):
@@ -157,10 +171,7 @@ class RelionMaxLikeScript(appionScript.AppionScript):
 		return 1
 		secperiter = 0.12037
 		### get num processors
-		if self.params['nproc'] is None:
-			nproc = apParam.getNumProcessors()
-		else:
-			nproc = self.params['nproc']
+		nproc = self.params['ppn']*self.params['nodes']
 
 		calctime = (
 			(self.params['numpart']/1000.0)
@@ -207,7 +218,7 @@ class RelionMaxLikeScript(appionScript.AppionScript):
 			self.stack['file'] = self.params['virtualdata']['filename']
 		else:
 			self.stack['file'] = os.path.join(self.stackdata['path']['path'], self.stackdata['name'])
-	
+
 		self.estimateIterTime()
 		self.dumpParameters()
 
@@ -221,6 +232,8 @@ class RelionMaxLikeScript(appionScript.AppionScript):
 		a.setValue('bin',self.params['bin'])
 		a.setValue('last',self.params['numpart']-1)
 		a.setValue('append',False)
+		### pixlimit and normalization are required parameters for RELION
+		a.setValue('pixlimit',4.49)
 		a.setValue('normalizemethod','edgenorm')
 
 		if self.params['lowpass'] is not None and self.params['lowpass'] > 1:
@@ -263,16 +276,17 @@ class RelionMaxLikeScript(appionScript.AppionScript):
 			+" --iter %d "%(self.params['maxiter'])
 			+" --K %d "%(self.params['numrefs'])
 			+" --psi_step %d "%(self.params['psistep'])
+			+" --tau2_fudge %.1f "%(self.params['tau'])
 		)
 
 		### find number of processors
-		if self.params['nproc'] is None:
-			nproc = nproc = apParam.getNumProcessors()
-		else:
-			nproc = self.params['nproc']
-		##FIXME: number of processors assigned
+		nproc = self.params['ppn'] * self.params['nodes']
 		relionopts += " --j %d "%(nproc)
-		
+
+		if self.params['flattensolvent'] is True:
+			relionopts += " --flatten_solvent "
+
+
 		self.estimateIterTime()
 		relionexe = apParam.getExecPath("relion_refine", die=True)
 		relioncmd = relionexe+" "+relionopts
