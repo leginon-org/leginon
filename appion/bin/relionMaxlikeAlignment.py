@@ -49,6 +49,9 @@ class RelionMaxLikeScript(appionScript.AppionScript):
 		self.parser.add_option("--bin", dest="bin", type="int", default=1,
 			help="Bin images by factor", metavar="#")
 
+
+		self.parser.add_option("--partDiam", dest="partdiam", type="int",
+			help="Particle diameter in Angstroms", metavar="#")
 		self.parser.add_option("--maxIter", "--max-iter", dest="maxiter", type="int", default=30,
 			help="Maximum number of iterations", metavar="#")
 		self.parser.add_option("--numRef", "--num-ref", dest="numrefs", type="int",
@@ -57,7 +60,7 @@ class RelionMaxLikeScript(appionScript.AppionScript):
 			help="In-plane rotation sampling step (degrees)", metavar="#")
 		self.parser.add_option("--tau", dest="tau", type="float", default=1,
 			help="Tau2 Fudge Factor (> 1)", metavar="#")
-		
+
 		# Job parameters that the remotehost need
 		self.parser.add_option("--nodes", dest="nodes", type="int", default=1,
 			help="Number of nodes requested for multi-node capable tasks", metavar="#")
@@ -277,6 +280,7 @@ class RelionMaxLikeScript(appionScript.AppionScript):
 			+" --K %d "%(self.params['numrefs'])
 			+" --psi_step %d "%(self.params['psistep'])
 			+" --tau2_fudge %.1f "%(self.params['tau'])
+			+" --particle_diameter %.1f "%(self.params['partdiam'])
 		)
 
 		### find number of processors

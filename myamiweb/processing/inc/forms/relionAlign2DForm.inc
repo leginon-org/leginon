@@ -16,7 +16,7 @@ class RelionAlign2DForm extends BasicLayoutForm
 
 	// Set Default values in the constructor
 	function __construct( $expId, $extraHTML='', $stackId='', $clip='', $bin='1', $numpart='3000',
-		$lowpass='10', $highpass='1000', $numRef='3', $maxIter='30', $angStep='5', $tau='1',
+		$lowpass='10', $highpass='1000', $numRef='3', $maxIter='30', $angStep='5', $tau='2', $partDiam='',
 		$flat='on', $commit='on')
 	{
 		parent::__construct($expId, $extraHTML);
@@ -46,12 +46,13 @@ class RelionAlign2DForm extends BasicLayoutForm
 		$javascript .= "<script>\n";
 		$javascript .= "function switchDefaults(stackval) {\n";
 		$javascript .= "	var stackArray = stackval.split('|--|');\n";
-		// remove commas from number
+		// remove commas from number : list($stackid, $apix, $boxsz, $totpart)
 		$javascript .= "	stackArray[3] = stackArray[3].replace(/\,/g,'');\n";
 		$javascript .= "	document.viewerform.numpart.value = stackArray[3];\n";
 		$javascript .= "	document.viewerform.clip.value = stackArray[2];\n";
 		$javascript .= "	document.viewerform.numRef.value = Math.ceil(Math.sqrt(stackArray[3])/10+1);\n";
-		
+		$javascript .= "	document.viewerform.partDiam.value = Math.floor(document.viewerform.clip.value*2/6)*2;\n";
+
 		// set binning
 		$javascript .= "	var bestbin = Math.floor(stackArray[2]/80);\n";
 		$javascript .= "	if (bestbin < 1) {\n";
@@ -81,6 +82,7 @@ class RelionAlign2DForm extends BasicLayoutForm
 		$params->addParam( "numpart", $numpart, "Number of Particles" );
 		$params->addParam( "lowpass", $lowpass, "Low Pass Filter Radius" );
 		$params->addParam( "highpass", $highpass, "High Pass Filter Radius" );
+		$params->addParam( "partDiam", $partDiam, "Particle Diameter" );
 		$params->addParam( "numRef", $numRef, "Number of References" );
 		$params->addParam( "maxIter", $maxIter, "Maximum Number of Iterations" );
 		$params->addParam( "angStep", $angStep, "In-plane Rotation Angle Interval" );
@@ -127,13 +129,14 @@ class RelionAlign2DForm extends BasicLayoutForm
 	    <H4>Alignment Parameters</H4>
 	    <hr />";
 
+		$html.= $params->insertTextField( "partDiam", $fieldSize,"(&Aring;ngstroms)",'appion.diameter' );
 		$html.= $params->insertTextField( "numRef", $fieldSize,'','appion.numref' );
 		$html.= $params->insertTextField( "maxIter", $fieldSize,'','appion.maxiter' );
 		$html.= $params->insertTextField( "angStep", $fieldSize,'(degrees)','appion.angleinc' );
 		$html.= $params->insertTextField( "tau", $fieldSize,'','appion.tau2fudge' );
 		$html.= $params->insertCheckboxField("flat");
 
-		
+
 		// When loading this page the first time, use the switchDefaults javascript function to set
 		// form parameters based on the currently selected stack.
 		if (!$_POST['process']) {
@@ -176,7 +179,7 @@ class RelionAlign2DForm extends BasicLayoutForm
 		list($stackid, $apix, $boxsz, $totpart) = preg_split('%\|--\|%',$stack);
 		$command = $this->removeCommandFlag( $command, "stack" );
 		$command = $this->addCommandFlag( $command, "stack", "stack", $stackid );
-		
+
 		// Set the clip diameter
 		$command = $this->removeCommandFlag( $command, "clip" );
 		$clip = $params->getParamValue( "clip" );
@@ -189,7 +192,7 @@ class RelionAlign2DForm extends BasicLayoutForm
 			$clip = floor($clip/($bin*2.0))*2;
 			$command.= " --clip=$clip ";
 		}
-		
+
 
 		$flat  = ($params->getParamValue('flat') == 'on' ) ? true : false;
 		if (!$flat) {
