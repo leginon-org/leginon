@@ -48,7 +48,7 @@ class Protomo2RefineForm extends BasicLayoutForm
 	$elevation_switch='', $rotation='true', $rotation_switch='', $scale='false', $scale_switch='', $logging='true', $loglevel='2', $slab='true',
 	$map_size_x='512', $map_size_y='512', $filename_prefix='', $image_file_type='', $cachedir='cache', $protomo_outdir='out', $tilt_clip='',
 	$create_reconstruction='true', $show_window_size='true', $create_tilt_video='true', $keep_recons='false', $video_type='', $restart_cycle='',
-	$parallel='')
+	$parallel='', $negative='', $positive='')
 	{
 		parent::__construct($expId, $extraHTML);
 		//print "_POST:" . "<br>";
@@ -787,6 +787,8 @@ class Protomo2RefineForm extends BasicLayoutForm
 				
 		$params->addParam( "tiltseries", $tiltseries, "Tilt-Series #" );
 		$params->addParam( "parallel", $parallel, "Parallelize Non-Protomo Processes" );
+		$params->addParam( "negative", $negative, "<strong>–</strong> Angle Limit" );
+		$params->addParam( "positive", $positive, "<strong>+</strong> Angle Limit" );
 		$params->addParam( "r1_region_x", $r1_region_x, "R1" );
 		$params->addParam( "r2_region_x", $r2_region_x, "R2" );
 		$params->addParam( "r3_region_x", $r3_region_x, "R3" );
@@ -1223,6 +1225,8 @@ class Protomo2RefineForm extends BasicLayoutForm
 				$html.= $params->insertTextFieldInRow( "r4_sampling", $fieldSize2 ).'│ ';
 				$html.= $params->insertTextField( "r5_sampling", $fieldSize2 );
 				//$html.= $params->insertTextField( "select_images", $fieldSize );
+				$html.= $params->insertTextFieldInRow( "negative", $fieldSize ).'│ ';
+				$html.= $params->insertTextField( "positive", $fieldSize );
 				$html.= $params->insertTextField( "exclude_images", $fieldSize );
 				$html.= '<select name="parallel" style="width:66px">';
 				$html.= '<option selected value="True">true</option>';

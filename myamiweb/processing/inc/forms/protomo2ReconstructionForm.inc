@@ -62,7 +62,7 @@ if ($_SESSION['erase_refine'] == 1){  //Just using erase_refine as a token
 
 class Protomo2ReconstructionForm extends BasicLayoutForm
 {
-	function __construct( $expId, $extraHTML, $commit='false', $negative='', $positive='', $recon_iter='', $recon_map_sampling='2',
+	function __construct( $expId, $extraHTML, $commit='false', $negative_recon='', $positive_recon='', $recon_iter='', $recon_map_sampling='2',
 	$recon_map_size_x='2048', $recon_map_size_y='2048',	$recon_thickness='1500', $pixelsize='', $recon_lowpass='', $recon_lp_diam_x='15',
 	$recon_lp_diam_y='15', $ctf_correct='', $amp_contrast='0.07', $iWidth='20', $DefocusTol='200', $dose_presets='', $dose_a='',
 	$dose_b='', $dose_c='', $link_recon='', $frame_aligned='')
@@ -121,8 +121,8 @@ class Protomo2ReconstructionForm extends BasicLayoutForm
 		$params->addParam( "dose_b", $dose_b, "b" );
 		$params->addParam( "dose_c", $dose_c, "c" );
 		$params->addParam( "frame_aligned", $frame_aligned, "Use Frame Aligned Images" );
-		$params->addParam( "negative", $negative, "<strong>–</strong> Angle Limit" );
-		$params->addParam( "positive", $positive, "<strong>+</strong> Angle Limit" );
+		$params->addParam( "negative_recon", $negative_recon, "<strong>–</strong> Angle Limit" );
+		$params->addParam( "positive_recon", $positive_recon, "<strong>+</strong> Angle Limit" );
 		$params->addParam( "recon_iter", $recon_iter, "Refinement Iteration used to generate Reconstruction" );
 		$params->addParam( "recon_map_sampling", $recon_map_sampling, "Reconstruction Sampling" );
 		$params->addParam( "recon_map_size_x", $recon_map_size_x, "Reconstruction Size (x)" );
@@ -217,8 +217,8 @@ class Protomo2ReconstructionForm extends BasicLayoutForm
 		$html.= $params->insertTextField( "recon_map_size_x", $fieldSize );
 		$html.= $params->insertTextField( "recon_map_size_y", $fieldSize );
 		$html.= $params->insertTextField( "recon_thickness", $fieldSize );
-		$html.= $params->insertTextFieldInRow( "negative", $fieldSize ).'│ ';
-		$html.= $params->insertTextField( "positive", $fieldSize );
+		$html.= $params->insertTextFieldInRow( "negative_recon", $fieldSize ).'│ ';
+		$html.= $params->insertTextField( "positive_recon", $fieldSize );
 		$html.= '<select name="recon_lowpass" style="width:66px">';
 		$html.= '<option value="True">True</option>';
 		$html.= '<option selected value="False">False</option>';

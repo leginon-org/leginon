@@ -54,11 +54,11 @@ class ProTomo2Reconstruction(basicScript.BasicScript):
 		self.parser.add_option("--pixelsize", dest="pixelsize", type="float",
 			help="Pixelsize of raw images in angstroms/pixel, e.g. --pixelsize=3.5", metavar="float")
 		
-		self.parser.add_option("--negative", dest="negative", type="float",  default="-90",
-			help="Tilt angle, in degrees, below which all images will be removed, e.g. --negative=-45", metavar="float")
+		self.parser.add_option("--negative_recon", dest="negative_recon", type="float",  default="-90",
+			help="Tilt angle, in degrees, below which all images will be removed, e.g. --negative_recon=-45", metavar="float")
 		
-		self.parser.add_option("--positive", dest="positive", type="float",  default="90",
-			help="Tilt angle, in degrees, above which all images will be removed, e.g. --positive=45", metavar="float")
+		self.parser.add_option("--positive_recon", dest="positive_recon", type="float",  default="90",
+			help="Tilt angle, in degrees, above which all images will be removed, e.g. --positive_recon=45", metavar="float")
 		
 		self.parser.add_option("--recon_map_size_x", dest="recon_map_size_x",  type="int",  default="2048",
 			help="Size of the reconstructed tomogram in the X direction, e.g. --recon_map_size_x=256", metavar="int")
@@ -168,8 +168,8 @@ class ProTomo2Reconstruction(basicScript.BasicScript):
 			apProTomo2Prep.doseCompensate(seriesname, self.params['rundir'], self.params['sessionname'], int(self.params['tiltseries']), self.params['frame_aligned'], raw_path, self.params['pixelsize'], self.params['dose_presets'], self.params['dose_a'], self.params['dose_b'], self.params['dose_c'])
 		
 		# Remove high tilts from .tlt file if user requests
-		if (self.params['positive'] < 90) or (self.params['negative'] > -90):
-			removed_images, mintilt, maxtilt = apProTomo2Aligner.removeHighTiltsFromTiltFile(recon_tilt_out_full, self.params['negative'], self.params['positive'])
+		if (self.params['positive_recon'] < 90) or (self.params['negative_recon'] > -90):
+			removed_images, mintilt, maxtilt = apProTomo2Aligner.removeHighTiltsFromTiltFile(recon_tilt_out_full, self.params['negative_recon'], self.params['positive_recon'])
 			apDisplay.printMsg("Images %s have been removed before reconstruction by weighted back-projection" % removed_images)
 		else:
 			cmd1="awk '/ORIGIN /{print}' %s | wc -l" % (recon_tilt_out_full)

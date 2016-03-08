@@ -70,6 +70,12 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		
 		self.parser.add_option('--translimit', dest='translimit', default=999999, type='float', metavar='float', help='Discard alignment and keep original geometric parameters if translational shift, in pixels, exceeds specified value, e.g. --translimit=50') 
 		
+		self.parser.add_option("--negative_recon", dest="negative_recon", type="float",  default="-90",
+			help="Tilt angle, in degrees, below which all images will be removed, e.g. --negative_recon=-45", metavar="float")
+		
+		self.parser.add_option("--positive_recon", dest="positive_recon", type="float",  default="90",
+			help="Tilt angle, in degrees, above which all images will be removed, e.g. --positive_recon=45", metavar="float")
+		
 		self.parser.add_option("--region_x", dest="region_x", default=512, type="int",
 			help="Pixels in x to use for region matching, e.g. --region=1024", metavar="int")
 		
@@ -1275,6 +1281,11 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		
 		###convert angstroms to pixels
 		r1_lp, r2_lp, r3_lp, r4_lp, r5_lp, self.params['r1_body'], self.params['r2_body'], self.params['r3_body'], self.params['r4_body'], self.params['r5_body'] = self.angstromsToProtomo(coarse=self.params['coarse'])
+		
+		###remove high tilt angles if requested
+		if (self.params['positive_recon'] < 90) or (self.params['negative_recon'] > -90):
+			removed_images, mintilt, maxtilt = apProTomo2Aligner.removeHighTiltsFromTiltFile(tiltfilename_full, self.params['negative_recon'], self.params['positive_recon'])
+			apDisplay.printMsg("High tilt images %s have been removed by request" % removed_images)
 		
 		###create param file
 		param_out=seriesname+'.param'
