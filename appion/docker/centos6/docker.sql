@@ -7815,6 +7815,7 @@ CREATE TABLE `ScriptUserName` (
 --
 -- Neil additions
 --
+-- mysqldump -u root --ext --databases leginondb projectdb ap1 > docker.sql
 
 CREATE USER usr_object@'localhost' IDENTIFIED BY 'Phys-554';
 GRANT ALTER, CREATE, INSERT, SELECT, UPDATE ON leginondb.* TO usr_object@'localhost';
