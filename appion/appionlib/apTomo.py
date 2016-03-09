@@ -195,7 +195,7 @@ def orderImageList(frame_tiltdata, non_frame_tiltdata, frame_aligned):
 		accumulated_dose_list.append(imagedata_editable['accumulated dose'])
 	if len(reftilts) > 2:
 		apDisplay.printError('Got too many images at the start tilt')
-	refimg = tiltkeys.index(max(reftilts))
+	refimg = tiltkeys.index(max(reftilts))+1
 	#cut down for testing
 	testing = False
 	if not testing:
