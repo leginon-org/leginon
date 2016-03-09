@@ -58,6 +58,7 @@ class AppionLoop(appionScript.AppionScript):
 		if not self.params['parallel']:
 			self.cleanParallelLock()
 		### get images from database
+		self.stats['totalcount'] = 0
 		self._getAllImages()
 		os.chdir(self.params['rundir'])
 		self.preLoopFunctions()
@@ -118,7 +119,7 @@ class AppionLoop(appionScript.AppionScript):
 
 				self._printSummary()
 
-				if self.params['limit'] is not None and self.stats['count'] > self.params['limit']:
+				if self.params['limit'] is not None and self.stats['totalcount'] > self.params['limit']:
 					apDisplay.printWarning("reached image limit of "+str(self.params['limit'])+"; now stopping")
 
 				#END LOOP OVER IMAGES
@@ -478,6 +479,9 @@ class AppionLoop(appionScript.AppionScript):
 
 	#=====================
 	def _getAllImages(self):
+		"""
+		get all images whether rejected or not.
+		"""
 		startt = time.time()
 		if self.params['mrcnames'] is not None:
 			mrcfileroot = self.params['mrcnames'].split(",")
@@ -546,6 +550,7 @@ class AppionLoop(appionScript.AppionScript):
 				sys.stderr.write(".")
 			self.stats['lastimageskipped'] = True
 			self.stats['skipcount'] += 1
+			apDisplay.printDebug( "_alreadyProcessed adding to count, skipcount" )
 			self.stats['count'] += 1
 			return True
 		except:
@@ -567,6 +572,7 @@ class AppionLoop(appionScript.AppionScript):
 				apDisplay.printMsg('%s locked by another parallel run in the rundir' % (apDisplay.shortenImageName(imgdata['filename'])))
 				return False
 		#calc images left
+		apDisplay.printDebug('_startLoop imagecount=%d, count=%d' % (self.stats['imagecount'], self.stats['count']))
 		self.stats['imagesleft'] = self.stats['imagecount'] - self.stats['count']
 
 		#only if an image was processed last
@@ -618,13 +624,16 @@ class AppionLoop(appionScript.AppionScript):
 		"""
 		### COP OUT
 		if self.params['background'] is True:
+			apDisplay.printDebug( 'printSummary backgroun adding to stats count and totalcount')
 			self.stats['count'] += 1
+			self.stats['totalcount'] += 1
 			return
 
 		### THIS NEEDS TO BECOME MUCH MORE GENERAL, e.g. Peaks
 		tdiff = time.time()-self.stats['startimage']
 		if not self.params['continue'] or tdiff > 0.1:
-			count = self.stats['count']
+			count = self.stats['totalcount'] + 1
+			apDisplay.printDebug('printSummary set local count to stats totalcount=%d' % (count))
 			#if(count != self.stats['lastcount']):
 			sys.stderr.write("\n\tSUMMARY: "+self.functionname+"\n")
 			self._printLine()
@@ -657,7 +666,9 @@ class AppionLoop(appionScript.AppionScript):
 					sys.stderr.write("\t(- REMAINING TIME: "+apDisplay.timeString(timeremain)+" for "
 						+str(self.stats['imagesleft'])+" images -)\n")
 			#print "\tMEM: ",(mem.active()-startmem)/1024,"M (",(mem.active()-startmem)/(1024*count),"M)"
+			apDisplay.printDebug( 'printSummary adding to stats count')
 			self.stats['count'] += 1
+			self.stats['totalcount'] += 1
 			self._printLine()
 
 	#=====================
@@ -705,6 +716,10 @@ class AppionLoop(appionScript.AppionScript):
 		imgname = imgdata['filename']
 		skip = False
 		reason = None
+		# Check if in donedict first. This means rejected images that
+		# was last tested will not be called rejected, but done
+		# This speeds up this function when rerun but means past image
+		# status can not be reverted.
 		try:
 			self.donedict[imgname]
 			return True, 'done'
@@ -756,6 +771,7 @@ class AppionLoop(appionScript.AppionScript):
 #=====================
 	def _removeProcessedImages(self):
 		startlen = len(self.imgtree)
+		self.stats['imagecount'] = startlen
 		donecount = 0
 		reproccount = 0
 		rejectcount = 0
@@ -763,6 +779,9 @@ class AppionLoop(appionScript.AppionScript):
 		self.stats['skipcount'] = 0
 		newimgtree = []
 		count = 0
+		apDisplay.printDebug("_removeProcessedImages reset count=0")
+		apDisplay.printDebug("previously tested rejected images are count as done")
+		self.stats['count'] = 0
 		t0 = time.time()
 		for imgdata in self.imgtree:
 			count += 1
@@ -774,6 +793,7 @@ class AppionLoop(appionScript.AppionScript):
 				if reason == 'reproc':
 					reproccount += 1
 				elif reason == 'reject' or reason == 'tilt':
+					apDisplay.printDebug('writing rejected images to donedict. Can not revert')
 					self._writeDoneDict(imgname)
 					rejectcount += 1
 
@@ -787,10 +807,14 @@ class AppionLoop(appionScript.AppionScript):
 				self.stats['skipcount'] += 1
 			else:
 				newimgtree.append(imgdata)
+			donecount = self.stats['skipcount'] - reproccount - rejectcount
 		sys.stderr.write("\n")
 		apDisplay.printMsg("finished skipping in %s"%(apDisplay.timeString(time.time()-t0)))
 		if self.stats['skipcount'] > 0:
+			# reset imgtree to values without skipped ones.
 			self.imgtree = newimgtree
+			self.stats['count'] = 0
+			apDisplay.printDebug( 'removeProcessed reset imgtree len=%d and count=%d' % (len(self.imgtree), self.stats['count']))
 			sys.stderr.write("\n")
 			apDisplay.printWarning("skipped "+str(self.stats['skipcount'])+" of "+str(startlen)+" images")
 			apDisplay.printMsg("[[ "+str(reproccount)+" no reprocess "
@@ -805,11 +829,12 @@ class AppionLoop(appionScript.AppionScript):
 	#=====================
 	def _waitForMoreImages(self):
 		"""
-		pauses 10 mins and then checks for more images to process
+		pauses and then checks for more images to process
+		return boolean for loop not done
 		"""
 		### SKIP MESSAGE
 		if(self.stats['skipcount'] > 0):
-			apDisplay.printWarning("Images already processed and were therefore skipped (total "+str(self.stats['skipcount'])+" skipped).")
+			apDisplay.printWarning("skipped total of "+str(self.stats['skipcount'])+" images.")
 			apDisplay.printMsg("to process them again, remove \'continue\' option and run "+self.functionname+" again.")
 			self.stats['skipcount'] = 0
 
