@@ -264,7 +264,9 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 				'confidence_d': round(math.sqrt(abs(float(bits[5]))), 5)
 			}
 
-		print self.ctfvalues
+		if len(self.ctfvalues.keys()) == 0:
+			#
+			apDisplay.printError("CTFFIND4 program did not produce valid results in the log file")
 
 		#convert powerspectra to JPEG
 		outputjpgbase = apDisplay.short(imgdata['filename'])+"-pow.jpg"
