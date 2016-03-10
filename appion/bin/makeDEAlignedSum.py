@@ -55,6 +55,8 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 
 		self.parser.add_option("--alignlabel", dest="alignlabel", default='a',
 			help="label to be appended to the presetname, e.g. --label=a gives ed-a as the aligned preset for preset ed", metavar="CHAR")
+		self.parser.add_option("--refimgid", dest="refimgid", type="int",
+			help="Specify a corrected image to do gain/dark correction with", metavar="INT")
 		self.parser.add_option("--border", dest='border', type='int', default=0, help='Clip border specified border pixels and pad back out with mean value')
 		self.parser.add_option("--hackcopy", dest='hackcopy', action='store_true', default=False, help='Copy corrected image to session directory and overwrite the original image, saving the orignal with a new extension ".orig.mrc"')
 		self.parser.add_option("--skipgain", dest='skipgain', action='store_true', default=False, help='Skip flatfield correction')
@@ -101,10 +103,15 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 
 	def getTargets(self, imgdata, scratchdir='', handlefiles='direct'):
 		targetdict={}
-		
+	
+		if self.params['refimgid']:
+			self.refdata = apDatabase.getImageDataFromSpecificImageId(self.params['refimgid'])
+			apDisplay.printWarning("Reference is based on %s" % self.refdata['filename'])
+		else:
+			self.refdata = imgdata
 		try: 
-			brightrefpath=imgdata['bright']['session']['image path']
-			brightrefname=imgdata['bright']['filename']+'.mrc'
+			brightrefpath=self.refdata['bright']['session']['image path']
+			brightrefname=self.refdata['bright']['filename']+'.mrc'
 			brightref=os.path.join(brightrefpath,brightrefname)
 		except:
 			apDisplay.printWarning("Warning, bright reference not found. Frames will not be gain corrected.")
@@ -112,8 +119,8 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 			brightref=None
 			
 		try:
-			darkrefpath=imgdata['dark']['session']['image path']
-			darkrefname=imgdata['dark']['filename']+'.mrc'
+			darkrefpath=self.refdata['dark']['session']['image path']
+			darkrefname=self.refdata['dark']['filename']+'.mrc'
 			darkref=os.path.join(darkrefpath,darkrefname)
 		except:
 			apDisplay.printWarning("Warning, dark reference not found. Frames will not be gain corrected.")
@@ -235,13 +242,13 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 		#flatfield references
 		if self.params['skipgain'] is not True and targetdict['brightref'] is not None and targetdict['darkref'] is not None:
 			self.params['gainreference_filename']=targetdict['brightref']		
-			brightnframes=imgdata['bright']['camera']['nframes']
+			brightnframes=self.refdata['bright']['camera']['nframes']
 			self.params['gainreference_framecount']=brightnframes
 
 			self.params['darkreference_filename']=targetdict['darkref']		
-			darknframes=imgdata['dark']['camera']['nframes']
+			darknframes=self.refdata['dark']['camera']['nframes']
 			self.params['darkreference_framecount']=darknframes
-		self.getCameraDefects(imgdata)
+		self.getCameraDefects(self.refdata)
 
 		self.params['input_framecount']=nframes
 		#self.params['run_verbosity']=3

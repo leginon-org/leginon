@@ -76,6 +76,9 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 		self.logdir = os.path.join(self.params['rundir'], "logfiles")
 		apParam.createDirectory(self.logdir, warning=False)
 		self.ctfprgmexe = self.getCtfProgPath()
+		# check and process more often because it is slower than data collection
+		self.setWaitSleepMin(1)
+		self.setProcessBatchCount(1)
 		return
 
 	#======================
