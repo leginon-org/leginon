@@ -622,6 +622,9 @@ class AppionLoop(appionScript.AppionScript):
 		"""
 		print summary statistics on last image
 		"""
+		
+		 
+		self.stats['totalcount'] = 0
 		### COP OUT
 		if self.params['background'] is True:
 			apDisplay.printDebug( 'printSummary backgroun adding to stats count and totalcount')
@@ -632,7 +635,7 @@ class AppionLoop(appionScript.AppionScript):
 		### THIS NEEDS TO BECOME MUCH MORE GENERAL, e.g. Peaks
 		tdiff = time.time()-self.stats['startimage']
 		if not self.params['continue'] or tdiff > 0.1:
-			count = self.stats['totalcount'] + 1
+			count = self.stats['totalcount'] += 1
 			apDisplay.printDebug('printSummary set local count to stats totalcount=%d' % (count))
 			#if(count != self.stats['lastcount']):
 			sys.stderr.write("\n\tSUMMARY: "+self.functionname+"\n")
