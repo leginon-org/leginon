@@ -148,6 +148,7 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 		if len(filelist) < 1:
 			apDisplay.printError('frames not found with %s' % framepattern)
 
+		apDisplay.printDebug('%s' % (filelist,))
 		framesroot, framesextension=os.path.splitext(filelist[0])
 		framespathname=framesroot+framesextension
 		if framesextension == '.frames':
