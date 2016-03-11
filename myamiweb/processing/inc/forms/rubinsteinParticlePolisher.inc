@@ -17,7 +17,8 @@ class rubinsteinParticlePolisher extends BasicLayoutForm
 	protected $unalignedDDStackIds;
 	
 	// Set Default values in the constructor
-	function __construct( $expId, $extraHTML='',$stackId='',$bin='1', $num_ref='20', $max_iter='15', $commit='on')
+	function __construct( $expId, $extraHTML='',$stackId='',  $expweight=true, $localavg=true,$localavgsigma='500', $smooth='1.0', $exaggerate='10',$framefirstali='0', $framefirstave='0', $rmax1='500',$rmax2='20',$bfactor='2000',$commit='on')
+
 	{
 		parent::__construct($expId, $extraHTML);
 		
@@ -87,25 +88,24 @@ class rubinsteinParticlePolisher extends BasicLayoutForm
 		$params->addParam( "stack", $stackId, "Select a particle stack" );
 
 		$params->addParam( "commit", $commit, "Commit to Database" );
-		$params->addParam( "micrographs_per_job", $migrographs_per_job, "Micrographs per job");
-		$params->addParam( "nproc", $nproc, "Number of processors per job default = 1");
+		$params->addParam( "micrographs_per_job", $micrographs_per_job, "Micrographs per job");
 		$params->addParam( "particleradius", $particleradius, "Particle radius");
 		$params->addParam( "expweight", $expweight, "Exposure Weighting (Recommended)");
-		$params->addParam( "localavg", $localavgsigma, "Local averaging (Recommended)");
+		$params->addParam( "localavg", $localavg, "Local averaging (Recommended)");
 		
 		$params->addParam( "ddstackid", $ddstackid, "Select an unaligned framestack");
 		
-		$params->addParam( "localavgsigma", $localavgsigma, "Local averaging weight standard deviation (default = 500)");
+		$params->addParam( "localavgsigma", $localavgsigma, "Local averaging weight standard deviation, default = 500");
 		$params->addParam( "framefirstali", $framefirstali, "First frame to be used in alignment, default =0");
 		$params->addParam( "framelastali", $frameliastali, "Last frame to be used in alignment, default = use all");
 		$params->addParam( "framefirstave", $framefirstave, "First frame to be used in average of frames, default = 0");
 		$params->addParam( "framelastave", $framelastave, "Last frame to be used in average of frames, default = use all");
-		$params->addParam( "smooth", $smooth, "Specify the amount of smoothing");
-		$params->addParam( "exaggerate", $exaggerate, "Factor by which particle trajectories should be exaggerated");
-		$params->addParam( "expperframe", $expperframe, "Exposure per frame in electrons per Angstrom squared");
-		$params->addParam( "rmax1", $rmax1, "Low resolution cutoff (Angstroms)");
-		$params->addParam( "rmax2", $rmax2, "High resolution cutoff (Angstroms)");
-		$params->addParam( "bfactor", $bfactor, "B-factor (in A**2) used for all alignment");
+		$params->addParam( "smooth", $smooth, "Specify the amount of smoothing, default = 1.0");
+		$params->addParam( "exaggerate", $exaggerate, "Factor by which particle trajectories should be exaggerated, default = 10");
+		$params->addParam( "expperframe", $expperframe, "Exposure per frame in electrons per Angstrom squared. Default = dose/numframes");
+		$params->addParam( "rmax1", $rmax1, "Low resolution cutoff (Angstroms), default = 500");
+		$params->addParam( "rmax2", $rmax2, "High resolution cutoff (Angstroms), default = 20");
+		$params->addParam( "bfactor", $bfactor, "B-factor (in A**2) used for all alignment, default = 2000");
 		$params->addParam( "total_dose", $total_dose, "Total dose for all frames, if value not saved in database");
 	//	$params->addParam( "output_filetype", $output_filetype, "Output filetype");
 		$params->addParam( "invertoutput", $invertoutput, "Invert output from movie densities");
@@ -148,7 +148,6 @@ class rubinsteinParticlePolisher extends BasicLayoutForm
             <hr />";
 		
                 $html.= $params->insertTextField( "localavgsigma", $fieldSize, "", 'appion.localavgsigma' );
-		$html.= $params->insertTextField( "nproc", $fieldSize, "", 'appion.nproc' );
                 $html.= $params->insertTextField( "framefirstali", $fieldSize, "", 'appion.framefirstali' );
                 $html.= $params->insertTextField( "framelastali", $fieldSize, "", 'appion.framelastali' );
                 $html.= $params->insertTextField( "framefirstave", $fieldSize, "", 'appion.framefirstave' );
@@ -284,7 +283,6 @@ class rubinsteinParticlePolisher extends BasicLayoutForm
 		$msg .="<B>Error: </B> Select particle radius in angstroms<br>";
 		}
 
-			//echo "micrographs per job = ".$micrographs_per_job;
 		if($micrographs_per_job==='')
 		{
 			$msg.="<B>Error: </B> Select the number of micrographs per job<br>";
@@ -299,7 +297,7 @@ class rubinsteinParticlePolisher extends BasicLayoutForm
 		}	
 
 		//Default value for Local average sigma is 500
-		if(($localavg==='on')&&(empty($localavgsigma)))
+		if(($localavg===true)&&(empty($localavgsigma)))
 		{
 		$localavgsigma = 500;
 		}
