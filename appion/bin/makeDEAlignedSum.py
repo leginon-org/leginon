@@ -6,6 +6,7 @@ import sys
 import math
 import shutil
 import subprocess
+import time
 #pyami
 from pyami import fileutil
 #leginon
@@ -130,7 +131,25 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 		framesdirname=imgdata['filename']+'.frames'
 		apDisplay.printMsg('Finding frames %s' % (framesdirname))
 		framespath=imgdata['session']['frame path']
-		framesroot, framesextension=os.path.splitext(glob.glob(os.path.join(framespath, (imgdata['filename']+'*')))[0])
+		framepattern = os.path.join(framespath, (imgdata['filename']+'*'))
+		filelist = glob.glob(framepattern)
+		# frames might be ready even though the image is saved in the database
+		if self.params['wait']:
+			t00 = time.time()
+			t0 = time.time()
+			while len(filelist) == 0:
+				if time.time() -t0 > 60:
+					apDisplay.printMsg('Waiting for frames....')
+					t0 = time.time()
+				if time.time() - t00 > 20 * 60:
+					break
+				time.sleep(10)
+				filelist = glob.glob(framepattern)
+		if len(filelist) < 1:
+			apDisplay.printError('frames not found with %s' % framepattern)
+
+		apDisplay.printDebug('%s' % (filelist,))
+		framesroot, framesextension=os.path.splitext(filelist[0])
 		framespathname=framesroot+framesextension
 		if framesextension == '.frames':
 			self.params['input_type']='directories'
@@ -343,7 +362,6 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 		qpath = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
 		sessiondata = self.getSessionData()
 		qdeparams=appiondata.ApDEAlignerParamsData()
-		print qdeparams
 		qdeparams['alignment_correct']=self.params['alignment_correct']
 		qdeparams['alignment_quanta']=self.params['alignment_quanta']
 		qdeparams['radiationdamage_compensate']=self.params['radiationdamage_compensate']
