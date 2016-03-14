@@ -14,6 +14,9 @@ class BufferCycler(conditioner.Conditioner):
 	settingsclass = leginondata.BufferCyclerSettingsData
 	# Inherit the default settings from the parent class, Conditioner
 	defaultsettings = conditioner.Conditioner.defaultsettings
+	defaultsettings.update({
+			'trip level': -1.0,
+	})
 	# Inherit the eventinputs
 	eventinputs = conditioner.Conditioner.eventinputs
 
@@ -22,6 +25,13 @@ class BufferCycler(conditioner.Conditioner):
 		Define a unique condition type (CType) for database record.
 		'''
 		self.addCType('buffer_cycle')
+
+	def isAboveTripLevel(self):
+		'''
+		only fix condition if above a defined monitored value
+		'''
+		pressure = self.instrument.tem.BufferTankPressure
+		return pressure > self.settings['trip level'] and self.settings['trip level'] > 0
 
 	def _fixCondition(self, condition_type):
 		'''
