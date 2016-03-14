@@ -255,6 +255,7 @@ require_once('tomography.php');
 header("Content-Type: text/plain");
 $tiltSeriesId = $_GET['tiltSeriesId'];
 $tiltSeriesNumber = $_GET['tiltSeriesNumber'];
+$alabel = $_GET['alignlabel'];
 //Use the following to combine two half tilt series separated by 5
 #$numbers = array($tiltSeriesId-5,$tiltSeriesId);
 $numbers = array($tiltSeriesId);
@@ -265,8 +266,7 @@ $mean = 0.0;
 $max = NULL;
 foreach ($numbers as $tiltSeriesId) {
 $session = $tomography->getTiltSeriesSession($tiltSeriesId);
-$results = $tomography->getTiltSeriesData($tiltSeriesId);
-
+$results = $tomography->getTiltSeriesData($tiltSeriesId,$excludeAligned=empty($alabel), $alabel);
 $n_results = count($results);
 $first_imageid = $results[0]["imageId"];
 $parents = $tomography->getImageParent($first_imageid);
@@ -303,6 +303,14 @@ if($n_results > 2) {
     }
     }
 }
+
+// for debugging
+/*
+foreach($results as $result) {
+    $filename = $session['image path'].'/'.$result['filename'].'.mrc';
+		echo $filename.' ';
+}}
+*/
 
 foreach($results as $result) {
     $filename = $session['image path'].'/'.$result['filename'].'.mrc';
