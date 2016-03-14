@@ -170,6 +170,7 @@ class stackPolisherScript(appionScript.AppionScript):
 		if self.params['particleradius'] > self.params['box'] / 2.0:
 			apDisplay.printWarning("specified particle radius greater than box radius, \
 				setting particle radius to 0.8 * boxsize")
+			self.params['particleradius'] = 0.8 * self.params['box'] / 2.0
 
 		# dimensions
 		self.params['framex'] = int(apDatabase.getDimensionsFromImageData(qimage)['x'] * self.stack_micrograph_to_ddstack_bin)
