@@ -78,7 +78,7 @@ function createDogPickerForm($extra=false, $title='DoG Picker Launcher', $headin
 	$prtlruns = count($particle->getParticleRunIds($sessionId, True));
 	$lastrunnumber = $particle->getLastRunNumberForType($sessionId,'ApSelectionRunData','name'); 
 	// Set any existing parameters in form
-	while (file_exists('dogrun'.($lastrunnumber+1)) {
+	while (file_exists('dogrun'.($lastrunnumber+1))) {
 		$lastrunnumber += 1;
 	}
 	$defrunname = ($_POST['runname']) ? $_POST['runname'] : 'dogrun'.($lastrunnumber+1);
@@ -239,12 +239,14 @@ function runDogPicker() {
 		if ($_POST['process'] != "Just Show Command") {
 			$filePattern = $testjpg."*.jpg";
 			$pathPattern = Path::join($pathToMaps, $filePattern);
+			# write only the written files
 			$dogmaplist = glob($pathPattern);
 			$results .= writeTestResults($jpgimg, $dogmaplist, $_POST['bin']);
 		} else {
 			$mapFile = $testjpg.".dogmap1.jpg";
 			$ccclist = array();
 			$cccimg = Path::join($pathToMaps, $mapFile);
+			# does not check if the result jpg is there because missing cccimg is not an error
 			$ccclist[]=$cccimg;
 			$results.= writeTestResults($jpgimg,$ccclist,$bin=$_POST['bin']);			
 		}		
