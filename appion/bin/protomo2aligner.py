@@ -1339,12 +1339,16 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		if self.params['coarse'] == 'True':
 			name='coarse_'+seriesname
 			
+			#Initializing starting window size to be fourier transform friendly in case the values inputted by the user are not
+			new_region_x=apProTomo2Aligner.nextLargestSize(int(self.params['region_x']/self.params['sampling'])+1)
+			new_region_y=apProTomo2Aligner.nextLargestSize(int(self.params['region_y']/self.params['sampling'])+1)
+			newsize = "{ %s %s }" % (new_region_x, new_region_y)
+			series.setparam("window.size", newsize)
+			
 			#Align and restart alignment if failed
 			retry=0
 			brk=None
 			end=0
-			new_region_x=int(self.params['region_x']/self.params['sampling'])   #Just initializing
-			new_region_y=int(self.params['region_y']/self.params['sampling'])   #Just initializing
 			while (min(new_region_x,new_region_y) != 20 and end == 0):
 				try:
 					if (brk != None):
@@ -1604,12 +1608,16 @@ class ProTomo2Aligner(basicScript.BasicScript):
 					f.write("No parameters were switched for Iteration #%s\n" % (n+1))
 					apDisplay.printMsg("No parameters were switched for Iteration #%s\n" % (n+1))
 				
+				#Initializing starting window size to be fourier transform friendly in case the values inputted by the user are not
+				new_region_x=apProTomo2Aligner.nextLargestSize(int(region_x/sampling)+1)
+				new_region_y=apProTomo2Aligner.nextLargestSize(int(region_y/sampling)+1)
+				newsize = "{ %s %s }" % (new_region_x, new_region_y)
+				series.setparam("window.size", newsize)
+				
 				#Align and restart alignment if failed
 				retry=0
 				brk=None
 				end=0
-				new_region_x=int(region_x/sampling)   #Just initializing
-				new_region_y=int(region_y/sampling)   #Just initializing
 				while (min(new_region_x,new_region_y) != 20 and end == 0):
 					try:
 						if (brk != None):
