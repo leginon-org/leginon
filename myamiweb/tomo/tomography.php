@@ -172,7 +172,7 @@ class Tomography {
 		return $result[0];
 	}
 
-	function getTiltSeriesData($tiltSeriesId,$excludeAligned=true) {
+	function getTiltSeriesData($tiltSeriesId,$excludeAligned=true,$alignlabel=false) {
 		if($tiltSeriesId == NULL)
 			return array();
 
@@ -184,6 +184,16 @@ class Tomography {
 		} else {
 			$exclude_aligned_join = '';
 			$exclude_aligned_and = '';
+		}
+
+		# select only  aligned data
+		if (!empty($alignlabel)) {
+			$alignlabel_join = "LEFT JOIN PresetData pr "
+				."ON (pr.DEF_id = a.`REF|PresetData|preset`) ";
+			$alignlabel_and = "AND (pr.`name` like '%-".$alignlabel."%') ";
+		} else {
+			$alignlabel_join = '';
+			$alignlabel_and = '';
 		}
 
 		$query = 'SELECT '
@@ -216,6 +226,7 @@ class Tomography {
 			.'LEFT JOIN TiltSeriesData t '
 			.'ON t.DEF_id=a.`REF|TiltSeriesData|tilt series` '
 			.$exclude_aligned_join
+			.$alignlabel_join
 			.'LEFT JOIN TomographyPredictionData '
 			.'ON TomographyPredictionData.`REF|AcquisitionImageData|image`=a.DEF_id '
 			.'LEFT JOIN AcquisitionImageStatsData '
@@ -229,6 +240,7 @@ class Tomography {
 			// exclude projections
 			."AND (a.`label` is null or a.`label` like '%tomo%') "
 			.$exclude_aligned_and
+			.$alignlabel_and
 			.'AND '
 			.'p1.DEF_timestamp=(SELECT MAX(p2.DEF_timestamp) '
 			.'FROM PixelSizeCalibrationData p2 '

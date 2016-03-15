@@ -12,6 +12,8 @@ class TEM(baseinstrument.BaseInstrument):
 	capabilities = baseinstrument.BaseInstrument.capabilities + (
 		######## get only
 		{'name': 'ColumnPressure', 'type': 'property'},
+		{'name': 'ProjectionPressure', 'type': 'property'},
+		{'name': 'BufferTankPressure', 'type': 'property'},
 		{'name': 'ColumnValvePositions', 'type': 'property'},
 		{'name': 'ExternalShutterStates', 'type': 'property'},
 		{'name': 'FilmAutomaticExposureTime', 'type': 'property'},
@@ -149,3 +151,12 @@ class TEM(baseinstrument.BaseInstrument):
 
 	def nextPhasePlate(self):
 		print "next position"
+
+	def getColumnPressure(self):
+		return 0.0
+
+	def getProjectionChamberPressure(self):
+		return 0.0
+
+	def getBufferTankPressure(self):
+		return 0.0

@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from leginon import singlefocuser
+from leginon import singlefocuser, manualfocuschecker
 import gui.wx.Focuser
 from leginon import leginondata
 from leginon import node, targetwatcher
@@ -232,8 +232,6 @@ class Focuser(singlefocuser.SingleFocuser):
 			## repeat means give up and do the whole target over
 			if status == 'repeat':
 				return 'repeat'
-
-			return status
 
 		# FIX ME: only needed at the last target
 		# aquire and save the focus image

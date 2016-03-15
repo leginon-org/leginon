@@ -23,6 +23,8 @@ if ($_GET['tid']) {
 
 $sessionId = ($_POST['sessionId']) ? $_POST['sessionId'] : $sessionId;
 $tiltSeriesId = ($_POST['tiltSeriesId']) ? $_POST['tiltSeriesId'] : $tiltSeriesId;
+$alabel= ($_POST['alignlabel']) ? $_POST['alignlabel'] : '';
+
 $showmodel = ($_POST['showmodel']== 'on') ? 'CHECKED' : '';
 if ($_POST['action']=='Mark for Deletion') {
 	$tomography->setTiltSeriesDeletionStatus($tiltSeriesId,'marked');
@@ -106,7 +108,8 @@ function init() {
 <?php
 echo $tiltSeriesSelector.'<br>';
 if($tiltSeriesId != NULL) {
-	echo "<a href=stack.php?tiltSeriesId=$tiltSeriesId&tiltSeriesNumber=$tiltSeriesNumber>Download MRC stack</a><br>";
+	echo "<a href=stack.php?tiltSeriesId=$tiltSeriesId&tiltSeriesNumber=$tiltSeriesNumber&alignlabel=".$alabel.">Download MRC stack</a><br>";
+	echo "align label: <INPUT TYPE='text' NAME='alignlabel' SIZE='4' VALUE='".$alabel."'>\n";
 	echo '</td><td>';
 	echo '<table><tr><td colspan=2>';
 	thumbnails($tiltSeriesId, $tomography);

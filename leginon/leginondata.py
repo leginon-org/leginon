@@ -2498,7 +2498,9 @@ class ConditionerSettingsData(SettingsData):
 
 class BufferCyclerSettingsData(ConditionerSettingsData):
 	def typemap(cls):
-		return ConditionerSettingsData.typemap()
+		return ConditionerSettingsData.typemap() + (
+			('trip level', float),
+		)
 	typemap = classmethod(typemap)
 
 class AutoFillerSettingsData(ConditionerSettingsData):

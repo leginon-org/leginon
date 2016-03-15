@@ -6,6 +6,8 @@ import re
 import time
 import math
 import subprocess
+import multiprocessing
+
 #appion
 from appionlib import apRemoteJob
 from appionlib import appionScript
@@ -19,6 +21,9 @@ from appionlib import apConfig
 from appionlib import apParallelTasks
 from appionlib import apTaskMonitor
 import sinedon
+
+# Turn this on if not using job scheduler
+LOCAL_RUN = False
 
 #class stackPolisher(apRemoteJob.RemoteJob):
 class stackPolisherScript(appionScript.AppionScript):
@@ -98,7 +103,6 @@ class stackPolisherScript(appionScript.AppionScript):
 
 		# DD processes
 		self.dd = apDDprocess.DDStackProcessing()
-		print self.dd
 	
 		# get stack data
 		self.stackdata = appiondata.ApStackData.direct_query(self.params['stackid'])
@@ -107,14 +111,6 @@ class stackPolisherScript(appionScript.AppionScript):
 		
 		# query image
 		qimage = self.stackparts[0]['particle']['image']
-
-		# pixel size info
-		self.params['apix'] = apStack.getMicrographPixelSizeFromStackId(self.params['stackid'])
-		self.params['box'] = self.stackdata['boxsize']
-		self.params['particleradius'] = self.params['particleradius'] / self.params['apix']
-		if self.params['particleradius'] > self.params['box'] / 2.0:
-			apDisplay.printWarning("specified particle radius greater than box radius, \
-				setting particle radius to 0.8 * boxsize")
 
 		# micrograph & frame info
 		frames = qimage['use frames']
@@ -141,14 +137,44 @@ class stackPolisherScript(appionScript.AppionScript):
 			else:
 				apDisplay.printError("exposure per frame needs to be specified, cannot find in database")
 	
-		# dimensions
-		self.params['framex'] = int(apDatabase.getDimensionsFromImageData(qimage)['x'])
-		self.params['framey'] = int(apDatabase.getDimensionsFromImageData(qimage)['y'])
-
 		# DD info
 		self.dd.setDDStackRun(self.params['ddstackid'])
+		self.ddstackrun = self.dd.getDDStackRun()
+		self.ddstackpath = self.ddstackrun['path']['path']
+		ddstack_bin = self.ddstackrun['params']['bin']
+
+		# particle stack may come from a binned aligned ddstack run so that its micrograph is binned.
 		self.dd.setImageData(qimage)
-		self.ddstackpath = self.dd.getDDStackRun()['path']['path']
+		# getIsAligned works even though qimage may not be from ddstack set to self.dd
+		alignpairdata = self.dd.getAlignImagePairData(None,query_source=not self.dd.getIsAligned())
+		if alignpairdata is False:
+			apDisplay.printError('Image not used for nor a result of alignment.')
+		if self.dd.getIsAligned():
+			stack_micrograph_bin = alignpairdata['ddstackrun']['params']['bin']
+		else:
+			# qimage is a source image
+			stack_micrograph_bin = 1
+
+		# Binning from ddstack to particle stack
+		self.stack_micrograph_to_ddstack_bin = float(stack_micrograph_bin) / ddstack_bin
+		apDisplay.printDebug('Particle stack micrograph is binned by %d from the source' % (stack_micrograph_bin))
+		apDisplay.printDebug('ddstack movie to be processed is binned by %d from the source' % (ddstack_bin))
+
+		# pixel size info based on ddstack movie to be processed, not particle stack
+		self.params['apix'] = apStack.getMicrographPixelSizeFromStackId(self.params['stackid']) / self.stack_micrograph_to_ddstack_bin
+		apDisplay.printMsg('pixel size of the ddstack to be processed is %.3f Angstroms' % self.params['apix'])
+		self.params['box'] = self.stackdata['boxsize'] * apStack.getStackBinningFromStackId(self.params['stackid']) * self.stack_micrograph_to_ddstack_bin
+
+		# calculate good particle radius
+		self.params['particleradius'] = self.params['particleradius'] / self.params['apix']
+		if self.params['particleradius'] > self.params['box'] / 2.0:
+			apDisplay.printWarning("specified particle radius greater than box radius, \
+				setting particle radius to 0.8 * boxsize")
+			self.params['particleradius'] = 0.8 * self.params['box'] / 2.0
+
+		# dimensions
+		self.params['framex'] = int(apDatabase.getDimensionsFromImageData(qimage)['x'] * self.stack_micrograph_to_ddstack_bin)
+		self.params['framey'] = int(apDatabase.getDimensionsFromImageData(qimage)['y'] * self.stack_micrograph_to_ddstack_bin)
 
 		# check if DD stack has been corrected, it shouldn't be!
 		
@@ -310,8 +336,8 @@ class stackPolisherScript(appionScript.AppionScript):
 				oldmovieid = movieid
 
 			# get & write coordinates
-			xcoord = part['particle']['xcoord']
-			ycoord = part['particle']['ycoord']
+			xcoord = part['particle']['xcoord'] * self.stack_micrograph_to_ddstack_bin
+			ycoord = part['particle']['ycoord'] * self.stack_micrograph_to_ddstack_bin
 			coordfile.write("%-9d%-9d%-9d\n" % (xcoord, ycoord, 0))
 	
 		# close last coordfile
@@ -329,6 +355,40 @@ class stackPolisherScript(appionScript.AppionScript):
 	#=====================
 	def convertAndQueryParams(self):
 		return
+
+	def runShell(self,cmd):
+		print 'running: %s' % cmd
+		proc = subprocess.Popen(cmd, shell=True)
+		(stdoutdata, stderrdata) = proc.communicate()
+
+	def localRun(self):
+		'''
+		multiprocessing run without job scheduler
+		'''
+		p = []
+		for i in range(len(self.joblist)):
+			p.append(multiprocessing.Process(target=self.runShell, args=(self.joblist[i],)))
+			p[i].start()
+		for i in range(len(self.joblist)):
+			p[i].join()
+
+	def queueRun(self):
+		'''
+		multiple queued job submission with a scheduler
+		'''
+		# submission agent object
+		#a = apParallelTasks.Agent(self.configfile)
+		for i in range(len(self.joblist)):
+			jobfile = 'align_polish_parts_%d' % i
+			task = self.joblist[i]
+			#a.Main(jobfile, [task])
+
+		# Clean up
+		apDisplay.printMsg("deleting temporary processing files")
+
+                particlePolishMonitor = apTaskMonitor.ParallelTaskMonitor(self.configfile,self.params['rundir'])
+                particlePolishMonitor.Main()
+
 	#=====================
 	def start(self):
 		# config file for multiple job submission
@@ -346,21 +406,12 @@ class stackPolisherScript(appionScript.AppionScript):
 		
 		# write particle coordinate files
 		self.write_inputs(self.stackparts)
-		
-		# submission agent object
-		a = apParallelTasks.Agent(self.configfile)
-		for i in range(len(self.joblist)):
-			jobfile = 'align_polish_parts_%d' % i
-			task = self.joblist[i]
-			a.Main(jobfile, [task])
 
-		
-		# Clean up
-		apDisplay.printMsg("deleting temporary processing files")
+		if not LOCAL_RUN:
+			self.queueRun()
+		else:
+			self.localRun()		
 
-                particlePolishMonitor = apTaskMonitor.ParallelTaskMonitor(self.configfile,self.params['rundir'])
-                particlePolishMonitor.Main()
-		
 		stitchcommand = 'polishStackStitch.py --stackid='+str(self.params['stackid'])+' --projectid='+str(self.params['projectid'])+' --rundir='+self.params['rundir']+' --runname='+self.params['runname']+' --ddstackid='+str(self.params['ddstackid'])
         	os.system(stitchcommand)
 		# Upload results

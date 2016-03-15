@@ -100,18 +100,26 @@ class Tecnai(tem.TEM):
 
 		## figure out which gauge to use
 		## try to move this to installation
-		gauges_to_try = ['PPc1', 'P4', 'IGP1']
-		self.pressure_prop = None
-		for gauge in gauges_to_try:
-			try:
-				p = self.tecnai.Vacuum.Gauges(gauge)
-				self.pressure_prop = gauge
-			except:
-				pass
+		self.findPresureProps()
 
 		self.probe_str_const = {'micro': self.tem_constants.imMicroProbe, 'nano': self.tem_constants.imNanoProbe}
 		self.probe_const_str = {self.tem_constants.imMicroProbe: 'micro', self.tem_constants.imNanoProbe: 'nano'}
 
+	def findPresureProps(self):
+		self.pressure_prop = {}
+		gauge_map = {}
+		gauges_to_try = {'column':['PPc1','P4','IGP1'],'buffer':['PIRbf','P1'],'projection':['CCGp','P3']}
+		gauges_obj = self.tecnai.Vacuum.Gauges
+		for i in range(gauges_obj.Count):
+			g = gauges_obj.Item(i)
+			gauge_map[g.Name] = i
+		for location in gauges_to_try.keys():
+			self.pressure_prop[location] = None
+			for name in gauges_to_try[location]:
+				if name in gauge_map.keys():
+					self.pressure_prop[location] = gauge_map[name]
+					break
+			
 	def getMagnificationsInitialized(self):
 		if self.magnifications:
 			return True
@@ -1156,10 +1164,21 @@ class Tecnai(tem.TEM):
 		else:
 			return 'unknown'
 
-	def getColumnPressure(self):
-		if self.pressure_prop is None:
+	def getGaugePressure(self,location):
+		if location not in self.pressure_prop.keys():
+			raise KeyError
+		if self.pressure_prop[location] is None:
 			return 0.0
-		return float(self.tecnai.Vacuum.Gauges(self.pressure_prop).Pressure)
+		return float(self.tecnai.Vacuum.Gauges(self.pressure_prop[location]).Pressure)
+
+	def getColumnPressure(self):
+		return self.getGaugePressure('column')
+
+	def getProjectionChamberPressure(self):
+		return self.getGaugePressure('projection')
+
+	def getBufferTankPressure(self):
+		return self.getGaugePressure('buffer')
 
 	def getObjectiveExcitation(self):
 		return float(self.tecnai.Projection.ObjectiveExcitation)
