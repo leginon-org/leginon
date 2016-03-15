@@ -108,15 +108,15 @@ class Tecnai(tem.TEM):
 	def findPresureProps(self):
 		self.pressure_prop = {}
 		gauge_map = {}
-		gauges_to_try = {'column':['PPc1','P4','IGP1'],'buffer':['PIRbf'],'projection':['CCGp',]}
+		gauges_to_try = {'column':['PPc1','P4','IGP1'],'buffer':['PIRbf','P1'],'projection':['CCGp','P3']}
 		gauges_obj = self.tecnai.Vacuum.Gauges
 		for i in range(gauges_obj.Count):
 			g = gauges_obj.Item(i)
 			gauge_map[g.Name] = i
 		for location in gauges_to_try.keys():
-			self.presure_prop[location] = None
+			self.pressure_prop[location] = None
 			for name in gauges_to_try[location]:
-				if name in gauge_map.key():
+				if name in gauge_map.keys():
 					self.pressure_prop[location] = gauge_map[name]
 					break
 			
@@ -1352,20 +1352,6 @@ class Tecnai(tem.TEM):
 		'''
 		return self.tecnai.TemperatureControl.RefrigerantLevel(id)
 
-	def getBufferVacuumStatus(self):
-		count = self.tecnai.Vacuum.Gauges.count
-		gaugenames = []
-		for i in range(count):
-			g = self.tecnai.Vacuum.Gauges.item(i)
-			gaugename = g.name
-			gaugenames.append(gaugename)
-		# 5 is PIRbf
-		gauge = self.tecnai.Vacuum.Gauge(5)
-		gauge.Pressure
-		# PressureLevel is trip level LowMedium=2 MediumHigh=3
-		gauge.PressureLevel
-		# GaugeStatus valid=4
-		if gauge.Status
 class Krios(Tecnai):
 	name = 'Krios'
 	use_normalization = True
