@@ -36,10 +36,12 @@ class Agent (basicAgent.BasicAgent):
 	
 	def Main(self,command):
 				
-		self.processingHost = self.createProcessingHost()
 		
 		jobType = self.getJobType(command)
-		
+                
+		self.processingHost = self.createProcessingHost(command[0], jobType)
+                
+                
 		#Not sure if we want pedanticaly issue warning messages 
 		#if not jobType:
 		#	sys.stderr.write("Warning: Could not determine job type\n")
