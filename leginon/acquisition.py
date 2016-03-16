@@ -179,6 +179,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 											event.FixAlignmentEvent,
 											event.FixConditionEvent,
 											event.AlignZeroLossPeakPublishEvent,
+											event.ScreenCurrentLoggerPublishEvent,
 											event.PhasePlatePublishEvent,
 											event.ImageListPublishEvent, event.ReferenceTargetPublishEvent] \
 											+ navigator.NavigatorClient.eventoutputs
@@ -218,6 +219,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.intensities = []
 		self.alignzlp_bound = False
 		self.phaseplate_bound = False
+		self.screencurrent_bound = False
 		self.alignzlp_warned = False
 
 		self.duplicatetypes = ['acquisition', 'focus']
@@ -230,12 +232,13 @@ class Acquisition(targetwatcher.TargetWatcher):
 
 	def handleApplicationEvent(self,evt):
 		'''
-		Find the AlignZeroLossPeak class or its subclass instance bound
+		Find Reference class or its subclass instance bound
 		to this node upon application loading.
 		'''
 		app = evt['application']
 		self.alignzlp_bound = appclient.getNextNodeThruBinding(app,self.name,'AlignZeroLossPeakPublishEvent','AlignZeroLossPeak')
 		self.phaseplate_bound = appclient.getNextNodeThruBinding(app,self.name,'PhasePlatePublishEvent','PhasePlateAligner')
+		self.screencurrent_bound = appclient.getNextNodeThruBinding(app,self.name,'ScreenCurrentLoggerPublishEvent','ScreenCurrentLogger')
 
 	def checkSettings(self, settings):
 		problems = []
@@ -395,25 +398,48 @@ class Acquisition(targetwatcher.TargetWatcher):
 					self.logger.warning('Energy filter activated but can not tune without binding to Align ZLP')
 					self.alignzlp_warned = True	
 
+	def monitorScreenCurrent(self, presetname):
+		presetdata = self.presetsclient.getPresetByName(presetname)
+		if not presetdata:
+			return
+		if self.screencurrent_bound:
+			self.measureScreenCurrent(presetname)
+
 	def nextPhasePlate(self, preset_name):
+		'''
+		Send Phase Plate Advancement  request
+		'''
 		request_data = leginondata.PhasePlateData()
 		request_data['session'] = self.session
 		request_data['preset'] = preset_name
 		self.publish(request_data, database=True, pubevent=True, wait=True)
 
 	def alignZeroLossPeak(self, preset_name):
+		'''
+		Send align ZLP  request
+		'''
 		request_data = leginondata.AlignZeroLossPeakData()
+		request_data['session'] = self.session
+		request_data['preset'] = preset_name
+		self.publish(request_data, database=True, pubevent=True, wait=True)
+
+	def measureScreenCurrent(self, preset_name): 
+		'''
+		Send screen current measurement request
+		'''
+		request_data = leginondata.ScreenCurrentLoggerData()
 		request_data['session'] = self.session
 		request_data['preset'] = preset_name
 		self.publish(request_data, database=True, pubevent=True, wait=True)
 
 	def preTargetSetup(self):
 		'''
-		Things to do before move to target and set preset
+		Things to do before moving to target and set preset
 		'''
 		zlp_preset_name = self.settings['preset order'][-1]
 		self.logger.info('Tuning before process a target')
 		self.tuneEnergyFilter(zlp_preset_name)
+		self.monitorScreenCurrent(zlp_preset_name)
 
 	def processTargetData(self, targetdata, attempt=None):
 		'''

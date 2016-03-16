@@ -952,6 +952,18 @@ class AdjustPresetData(ReferenceRequestData):
 class FixBeamData(AdjustPresetData):
 	pass
 
+class ScreenCurrentLoggerData(ReferenceRequestData):
+	pass
+
+class ScreenCurrentData(InSessionData):
+	def typemap(cls):
+		return InSessionData.typemap() + (
+			('reference', ReferenceTargetData),
+			('preset', PresetData),
+			('current', float),
+		)
+	typemap = classmethod(typemap)
+
 class ImageTargetListData(InSessionData):
 	def typemap(cls):
 		return InSessionData.typemap() + (
@@ -2379,6 +2391,13 @@ class PhasePlateAlignerSettingsData(ReferenceSettingsData):
 			('charge time', float),
 		)
 	typemap = classmethod(typemap)
+
+class ScreenCurrentLoggerSettingsData(ReferenceSettingsData):
+	def typemap(cls):
+		return ReferenceSettingsData.typemap()
+	typemap = classmethod(typemap)
+
+
 class TimerData(InSessionData):
 	def typemap(cls):
 		return InSessionData.typemap() + (
