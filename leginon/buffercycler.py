@@ -15,7 +15,7 @@ class BufferCycler(conditioner.Conditioner):
 	# Inherit the default settings from the parent class, Conditioner
 	defaultsettings = conditioner.Conditioner.defaultsettings
 	defaultsettings.update({
-			'trip level': -1.0,
+			'trip value': 18.0,
 	})
 	# Inherit the eventinputs
 	eventinputs = conditioner.Conditioner.eventinputs
@@ -26,12 +26,13 @@ class BufferCycler(conditioner.Conditioner):
 		'''
 		self.addCType('buffer_cycle')
 
-	def isAboveTripLevel(self):
+	def isAboveTripValue(self):
 		'''
 		only fix condition if above a defined monitored value
 		'''
 		pressure = self.instrument.tem.BufferTankPressure
-		return pressure > self.settings['trip level'] and self.settings['trip level'] > 0
+		self.logger.info("Buffer Tank Gauge value: %.4e" % pressure)
+		return pressure > self.settings['trip value'] and self.settings['trip value'] > 0
 
 	def _fixCondition(self, condition_type):
 		'''

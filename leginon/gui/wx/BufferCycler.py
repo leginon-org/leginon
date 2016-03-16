@@ -9,7 +9,7 @@ import threading
 import leginon.gui.wx.Conditioner
 import leginon.gui.wx.Settings
 import leginon.gui.wx.ToolBar
-from leginon.gui.wx.Entry import IntEntry
+from leginon.gui.wx.Entry import IntEntry, FloatEntry
 
 class Panel(leginon.gui.wx.Conditioner.Panel):
 	'''
@@ -42,6 +42,28 @@ class ScrolledSettings(leginon.gui.wx.Conditioner.ScrolledSettings):
 	'''
 	The actual class where the settings gui is defined.
 	'''
+	def addSettings(self):
+		super(ScrolledSettings,self).addSettings()
+		self.createTripValueEntry((2,0))
+
+	def createTripValueEntry(self,start_position):
+		self.widgets['trip value'] = FloatEntry(self, -1,
+																		min=-1.0,
+																		allownone=False,
+																		chars=6,
+																		value='-1')
+		szcolstart = wx.GridBagSizer(5, 5)
+		szcolstart.Add(wx.StaticText(self, -1, 'Cycle Buffer Tank when pressure is above'),
+								(0, 0), (1, 1),
+								wx.ALIGN_CENTER_VERTICAL)
+		szcolstart.Add(self.widgets['trip value'],
+								(0, 1), (1, 1),
+								wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		szcolstart.Add(wx.StaticText(self, -1, 'mbar'),
+								(0, 2), (1, 1),
+								wx.ALIGN_CENTER_VERTICAL)
+		self.sz.Add(szcolstart, start_position, (1, 2), wx.ALIGN_LEFT|wx.ALL)
+
 	def getTitle(self):
 		'''
 		Give a unique title for the settings box

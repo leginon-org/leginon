@@ -153,13 +153,13 @@ class Conditioner(node.Node):
 		Handle fix condition request on a given condition type
 		'''
 		self.logger.info('handle fix condition request')
-		if self.isAboveTripLevel():
+		if self.isAboveTripValue():
 			self._fixCondition(condition_type)
 			self.logger.info('done %s' % (condition_type))
 		else:
 			self.logger.info('condition still below trip level, nothing to do')
 
-	def isAboveTripLevel(self):
+	def isAboveTripValue(self):
 		'''
 		only fix condition if above a defined monitored value
 		'''

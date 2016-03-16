@@ -153,10 +153,10 @@ class TEM(baseinstrument.BaseInstrument):
 		print "next position"
 
 	def getColumnPressure(self):
-		return 0.0
+		return 1.0
 
 	def getProjectionChamberPressure(self):
-		return 0.0
+		return 1.0
 
 	def getBufferTankPressure(self):
-		return 0.0
+		return 1.0

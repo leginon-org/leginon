@@ -209,6 +209,9 @@ noderegistry.registerNodeClass(AutoNitrogenFiller,classtype)
 from phaseplatealigner import PhasePlateAligner
 noderegistry.registerNodeClass(PhasePlateAligner,classtype)
 
+from screencurrentlogger import ScreenCurrentLogger
+noderegistry.registerNodeClass(ScreenCurrentLogger,classtype)
+
 from maskassessor import MaskAssessor
 noderegistry.registerNodeClass(MaskAssessor,classtype)
 
