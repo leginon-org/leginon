@@ -791,8 +791,8 @@ class Protomo2RefineForm extends BasicLayoutForm
 		
 		//These parameters don't change with Presets
 		
-		$map_size_x = $imageinfo['dimx']/$map_sampling;
-		$map_size_y = $imageinfo['dimy']/$map_sampling;
+		$map_size_x = intval($imageinfo['dimx']/$map_sampling);
+		$map_size_y = intval($imageinfo['dimy']/$map_sampling);
 		$r1_kernel_x = $r2_kernel_x = $r3_kernel_x = $r4_kernel_x = $r5_kernel_x = 5;
 		$r1_kernel_y = $r2_kernel_y = $r3_kernel_y = $r4_kernel_y = $r5_kernel_y = 5;
 		$r1_mask_apod_x = $r2_mask_apod_x = $r3_mask_apod_x = $r4_mask_apod_x = $r5_mask_apod_x = 10;
