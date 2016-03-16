@@ -14,7 +14,7 @@ class BasicAgent(object):
             self.configFile = configFile
         self.processingHost = None
 
-    def createProcessingHost(self):
+    def createProcessingHost(self, command, jobType):
         if not self.configFile:
             raise ValueError ("Could not create processing host object, configuration file not defined") 
         
@@ -29,7 +29,7 @@ class BasicAgent(object):
             elif 'SGE' == processingHostType.upper():
                 processingHost = sgeHost.SGEHost(configDict)
             elif 'SLURM' == processingHostType.upper():
-                processingHost = slurmHost.SlurmHost(configDict)
+                processingHost = slurmHost.SlurmHost(command, jobType, configDict)
             else:
                 sys.stderr.write("Unknown processing host type, using default\n")
                 processingHost = torqueHost.TorqueHost(configDict)
