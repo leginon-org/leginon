@@ -25,7 +25,7 @@ class makeDEAlignedSum extends BasicLoopForm
 	
 	function __construct( $expId, $extraHTML='', $alignment_correct='1', $alignment_quanta='3', $radiationdamage_compensate='1', $border='70',
 	$hackcopy='', $usequeue='on', $queue_style='', $queue_scratch='', $njobs='4', $queue_ppn='2', $queue_name='', $queue_memory='4', $handlefiles='copy',
-	$defects_columns='', $defects_rows='', $darkreference_transform='', $gainreference_transform='', $output_transform='', $wrapper='' ) 
+	$defects_columns='', $defects_rows='', $darkreference_transform='', $gainreference_transform='', $output_transform='', $wrapper='', $alignlabel='a' ) 
 	{
 		// You must first call the parent class(BasicLayoutForm) constructor. 
 		// Pass it the $expId and $extraHTML variables. Errors and test results are passed through $extraHTML.
@@ -96,6 +96,7 @@ class makeDEAlignedSum extends BasicLoopForm
 		$params->addParam( "gainreference_transform", $gainreference_transform, "Transformation of bright reference to frames" );
 		$params->addParam( "output_transform", $output_transform, "Transformation of final summed image" );
 		$params->addParam( "wrapper", $wrapper, "Environment wrapper to pass into queue jobs" );
+		$params->addParam( "alignlabel", $alignlabel, "label for uploaded aligned sum image" );
 	}
 	
 	// Generate a form for the parameters that are specific to this program 
@@ -114,6 +115,7 @@ class makeDEAlignedSum extends BasicLoopForm
 	    <H4>DE Aligner Params</H4>
 	    <hr />";
 		
+		$html.= $params->insertTextField( "alignlabel", 2 );
 		$html.= $params->insertSelectField( "alignment_correct", $this->switchList );
 		$html.= $params->insertSelectField( "radiationdamage_compensate", $this->switchList );
 		$html.= $params->insertTextField( "alignment_quanta", $fieldSize );

@@ -231,7 +231,7 @@ if (is_numeric($expId)) {
 
 	if ($loopruns > 0) {
 		$nrun[] = array(
-			'name'=>"<a href='runLoopAgain.php?expId=$sessionId'>Repeat from other session</a>",
+			'name'=>"<a href='runLoopAgain.php?expId=$sessionId'>Repeat an image loop run</a>",
 		);
 	}
 	$maxangle = $particle->getMaxTiltAngle($sessionId);
@@ -314,7 +314,7 @@ if (is_numeric($expId)) {
 	
 	if ($loopruns > 0) {
 		$nruns[] = array(
-			'name'=>"<a href='runLoopAgain.php?expId=$sessionId'>Repeat from other session</a>",
+			'name'=>"<a href='runLoopAgain.php?expId=$sessionId'>Repeat an image loop run</a>",
 		);
 	}
 

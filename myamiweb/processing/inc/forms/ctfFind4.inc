@@ -11,7 +11,7 @@ require_once "basicLoopForm.inc";
 class CtfFind4 extends BasicLoopForm
 {
 	function __construct( $expId, $extraHTML='', $ampcontrast='0.07', $fieldsize='1024',
-								$resmin='50', $resmax='10', $defstep='0.1', $numstep='25', $dast='0.05', $bestdb=true) 
+								$resmin='50', $resmax='10', $defstep='0.1', $numstep='25', $dast='0.05', $bestdb=true, $parallel=true) 
 	{
 		parent::__construct($expId, $extraHTML);
 		
@@ -46,6 +46,7 @@ class CtfFind4 extends BasicLoopForm
 		$params->addParam( "dast", $dast, "Expected Astigmatism (in &mu;m)" );
 		$params->addParam( "bestdb", $bestdb, "Use best values from Database" );
 		$params->addParam( "nominal", $nominal, "Override Nominal Value (in &mu;m)" );
+		$params->addParam( "parallel", $parallel, "Allow parallel runs" );
 		
 		// Validations
 		//$params->addValidation( "numpart", "req" );
@@ -73,6 +74,7 @@ class CtfFind4 extends BasicLoopForm
 		$html.= $params->insertTextField( "dast", $fieldSize );
 		$html.= $params->insertCheckboxField( "bestdb" );
 		$html.= $params->insertTextField( "nominal", $fieldSize );
+		$html.= $params->insertCheckboxField( "parallel" );
 
 		
 		return $html;
