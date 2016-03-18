@@ -69,13 +69,17 @@ class Focuser(singlefocuser.SingleFocuser):
 		# initialize
 		self.current_target = None
 		self.current_focus_sequence_step = 0
-		self.corrected_focus = []
-		self.corrected_stagez = []
 		self.delayed_targets = []
+		self.is_last_target_and_focus_step = False
 
 		for j, setting in enumerate(self.focus_sequence):
+			self.corrected_focus = []
+			self.corrected_stagez = []
 			self.current_focus_sequence_step = j
 			for i, target in enumerate(goodtargets):
+				print 'step', j,'len_focus',len(self.focus_sequence),'target',i
+				if j == len(self.focus_sequence)-1 and i == len(goodtargets)-1:
+					self.is_last_target_and_focus_step = True
 				self.goodnumber = i
 				self.logger.debug('target %s status %s' % (i, target['status'],))
 				# ...
@@ -144,11 +148,13 @@ class Focuser(singlefocuser.SingleFocuser):
 				# end of target loop
 	
 			self.applyAverageCorrection(setting)
+			# end of focus sequence loop
 
 	def applyAverageCorrection(self, setting):
 		if not setting['switch']:
 			return
 		# average the results for current
+		print self.corrected_focus
 		if setting['correction type'] == 'Defocus' and len(self.corrected_focus) > 0:
 			defocus0 = self.instrument.tem.Defocus
 			avg_focus = sum(self.corrected_focus) / len(self.corrected_focus)
@@ -200,8 +206,8 @@ class Focuser(singlefocuser.SingleFocuser):
 
 	def acquire(self, presetdata, emtarget=None, attempt=None, target=None):
 		'''
-		this replaces Focuser.acquire()
-		Instead of do all sequence of autofocus, we do one
+		this replaces singlefocuser.Focuser.acquire()
+		Instead of doing all sequence of autofocus, we do one
 		'''
 		self.new_acquire = True
 
@@ -212,6 +218,7 @@ class Focuser(singlefocuser.SingleFocuser):
 		else:
 			self.deltaz = emtarget['delta z']
 
+		# melt only on the first focus sequence
 		if self.current_focus_sequence_step == 0:
 			self.meltIce(emtarget,attempt)
 
@@ -222,20 +229,21 @@ class Focuser(singlefocuser.SingleFocuser):
 			if not setting['switch']:
 				message = 'Skipping focus setting \'%s\'...' % setting['name']
 				self.logger.info(message)
-				return 'ok'
-			message = 'Processing focus setting \'%s\'...' % setting['name']
-			self.logger.info(message)
-			self.startTimer('processFocusSetting')
-			self.clearBeamPath()
-			status = self.processFocusSetting(setting, emtarget=emtarget)
-			self.stopTimer('processFocusSetting')
-			## repeat means give up and do the whole target over
-			if status == 'repeat':
-				return 'repeat'
+				status = 'ok'
+			else:
+				message = 'Processing focus setting \'%s\'...' % setting['name']
+				self.logger.info(message)
+				self.startTimer('processFocusSetting')
+				self.clearBeamPath()
+				status = self.processFocusSetting(setting, emtarget=emtarget)
+				self.stopTimer('processFocusSetting')
+				## TEST ME
+				## repeat status means give up and do the what over ???
 
-		# FIX ME: only needed at the last target
+
 		# aquire and save the focus image
-		if self.settings['acquire final']:
+		# only needed at the last target
+		if status != 'repeat' and self.settings['acquire final'] and  self.is_last_target_and_focus_step:
 			self.clearBeamPath()
 			manualfocuschecker.ManualFocusChecker.acquire(self, presetdata, emtarget)
 
