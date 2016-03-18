@@ -184,6 +184,9 @@ class UploadImages(appionScript.AppionScript):
 		if not sessiondatas:
 			return self.params['runname']
 
+		apDisplay.printColor("Found session name with runname %s, creating new name"%(self.params['runname']), "blue")
+		print sessiondatas[0]
+		sys.exit(1)
 		for char in string.lowercase:
 			sessionname = self.timestamp+char
 			sessionq = leginon.leginondata.SessionData()
@@ -455,7 +458,9 @@ class UploadImages(appionScript.AppionScript):
 	def newImagePath(self, mrcfile, numinseries):
 		extension = os.path.splitext(mrcfile)[1]
 		rootname = os.path.splitext(os.path.basename(mrcfile))[0]
-		newroot = self.params['sessionname']+"_"+rootname+"_"+str(numinseries)
+		newroot = rootname+"_"+str(numinseries)
+		if not newroot.startswith(self.params['sessionname']):
+			newroot = self.params['sessionname']+"_"+newroot
 		newname = newroot+extension
 		newframename = newroot+'.frames'+extension
 		newimagepath = os.path.join(self.leginonimagedir, newname)
