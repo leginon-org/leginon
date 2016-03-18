@@ -51,7 +51,6 @@ class CtfDisplay(object):
 	def funcrad(self, r, rdata=None, zdata=None):
 		return numpy.interp(r, rdata, zdata)
 
-
 	#====================
 	#====================
 	def extremaToIndex(self, requestVal, extremaList, raddata):
@@ -90,7 +89,7 @@ class CtfDisplay(object):
 			print "... extremaVal*trimFreq = %.4f"%(self.trimfreq*extremaVal)
 			print "... index = %d"%(index)
 			#print "... raddata = ", numpy.around(raddata, 2)
-			print "... raddata[index-1] = %.4f"%(raddata[index-1])			
+			print "... raddata[index-1] = %.4f"%(raddata[index-1])
 			print "... raddata[index] = %.4f"%(raddata[index])
 			try:
 				print "... raddata[index+1] = %.4f"%(raddata[index+1])
@@ -103,9 +102,9 @@ class CtfDisplay(object):
 	#====================
 	def normalizeCtf(self, zdata2d, twod=True):
 		"""
-		inner cut radius - radius for number of pixels to clip in the center of image
+		MAIN CTF normalization loop - this is the heart of Neil's CTF method
 		"""
-		### 
+		###
 		### PART 1: SETUP PARAMETERS AND ELLIPTICAL AVERAGE
 		###
 		apDisplay.printColor("PART 1: SETUP PARAMETERS AND ELLIPTICAL AVERAGE", "magenta")
@@ -119,7 +118,7 @@ class CtfDisplay(object):
 			self.ringwidth = 0.5
 
 		### get all peak (not valley)
-		peak = ctftools.getCtfExtrema(meandefocus, self.trimfreq*1e10, self.cs, self.volts, 
+		peak = ctftools.getCtfExtrema(meandefocus, self.trimfreq*1e10, self.cs, self.volts,
 			self.ampcontrast, numzeros=250, zerotype="peak")
 		apDisplay.printMsg("Number of available peaks is %d"%(len(peak)))
 		if len(peak) < 6:
@@ -128,11 +127,11 @@ class CtfDisplay(object):
 		firstpeak = peak[0]
 		peakradii = numpy.array(peak, dtype=numpy.float64)*self.trimfreq
 		### get all valley (not peak)
-		valley = ctftools.getCtfExtrema(meandefocus, self.trimfreq*1e10, self.cs, self.volts, 
+		valley = ctftools.getCtfExtrema(meandefocus, self.trimfreq*1e10, self.cs, self.volts,
 			self.ampcontrast, numzeros=250, zerotype="valley")
 		valleyradii = numpy.array(valley, dtype=numpy.float64)*self.trimfreq
 
-		### consider the number of sections, address problems with close to focus estimates, #3438
+		### consider the number of sections, address problems with close to focus estimates, Bug #3438
 		numSections = self.numSections
 		apDisplay.printMsg("setting the number of sections to default: %d"%(numSections))
 
@@ -142,7 +141,8 @@ class CtfDisplay(object):
 		if self.debug is True:
 			apDisplay.printMsg("performing elliptical average, please wait")
 		pixelrdata, rotdata = ctftools.ellipticalAverage(zdata2d, self.ellipratio, self.angle,
-			self.ringwidth, firstpeak, full=False)
+			self.ringwidth, firstpeak, full=True)
+		#changed to full=True in March 2016 for close to focus estimates and to push for more resolution
 		raddata = pixelrdata*self.trimfreq
 
 		### reduce number of sections if needed
@@ -167,9 +167,9 @@ class CtfDisplay(object):
 		apDisplay.printMsg("Determine and subtract noise model")
 		CtfNoise = ctfnoise.CtfNoise()
 
-		### 
+		###
 		### PART 1B: NUMBER OF SECTIONS
-		### 
+		###
 		apDisplay.printColor("PART 2: BACKGROUND NOISE SUBTRACTION", "magenta")
 
 		### split the function up into sections
@@ -182,17 +182,17 @@ class CtfDisplay(object):
 			apDisplay.printWarning("Not enough points (%d) for %d sections, reducing to %d sections"
 				%(noiseNumPoints, numSections, maxSections))
 			numSections = maxSections
-		if numSections < 2:
-			apDisplay.printWarning("Too few points to work with, probably bad defocus estimate")
+		if numSections < 1:
+			apDisplay.printWarning("Calculated 0 sections, probably bad defocus estimate")
 			return None
-		minPoints = 4 * numSections
+		minPoints = 4 * numSections + 1
 		if noiseNumPoints < minPoints:
 			apDisplay.printWarning("Not enough points past first peak (n=%d < %d) to do background subtraction"
 				%(noiseNumPoints, minPoints))
 			return None
 		# for 3 sections, we take 10 parts, section1=parts1-4; section2=parts3-7; section3=parts6-10;
 		# scale this so each section is always 4 parts, remove the ends.
-	
+
 		noiseStartIndexes = []
 		noiseEndIndexes = []
 		numParts = self.sectionFactor*numSections + self.overlapFactor
@@ -209,29 +209,29 @@ class CtfDisplay(object):
 				return None
 			noiseStartIndexes.append(startIndex)
 			noiseEndIndexes.append(endIndex)
-			
+
 		mergeIndexes = copy.copy(noiseStartIndexes)
 		mergeIndexes.extend(noiseEndIndexes)
 		mergeIndexes.sort()
 		if self.debug is True:
 			print noiseStartIndexes
 			print noiseEndIndexes
-			print "Noise mergeIndexes", mergeIndexes	
+			print "Noise mergeIndexes", mergeIndexes
 		minGap = numpy.diff(mergeIndexes).min()
 		if minGap < 1:
 			apDisplay.printWarning("a gap of 0 points was found, please see bug #3438")
 			return None
 
-		### 
+		###
 		### PART 2: BACKGROUND NOISE SUBTRACTION
-		### 
+		###
 
 		#do like a minimum filter
 		fitvalleydata = ctfnoise.peakExtender(raddata, rotdata, valleyradii, "below")
 		fitvalleydata = (rotdata+3*fitvalleydata)/4.0
 		fitvalleydata = ndimage.minimum_filter(fitvalleydata, 3)
 
-		### fit function below log(CTF), i.e., noise model	
+		### fit function below log(CTF), i.e., noise model
 		noiseFitParamList = []
 		noiseDataList = []
 		for section in range(numSections):
@@ -261,39 +261,42 @@ class CtfDisplay(object):
 		#print noiseEndIndexes
 		## merge data
 		# add crappy "fit" points before the actual fitting, these will be ignored later
-		mergedata = noiseDataList[0][:noiseStartIndexes[0]]
-		for section in range(numSections-1):
-			insertStart = mergeIndexes[section*2]
-			insertEnd = mergeIndexes[section*2+1]
-			overlapStart = insertEnd
-			overlapEnd = mergeIndexes[section*2+2]
+		if numSections == 1:
+			noisedata = noiseDataList[0]
+		else:
+			mergedata = noiseDataList[0][:noiseStartIndexes[0]]
+			for section in range(numSections-1):
+				insertStart = mergeIndexes[section*2]
+				insertEnd = mergeIndexes[section*2+1]
+				overlapStart = insertEnd
+				overlapEnd = mergeIndexes[section*2+2]
+				if self.debug is True:
+					print "section %d mergedata"%(section), mergedata.shape
+					print "\tinsert from %d to %d (%d)"%(insertStart,insertEnd, insertEnd-insertStart)
+					print "\toverlap from %d to %d (%d)"%(overlapStart,overlapEnd, overlapEnd-overlapStart)
+				scale = numpy.arange(overlapEnd-overlapStart, dtype=numpy.float32)
+				scale /= scale.max()
+				scale *= math.pi/2.0
+				scale = numpy.cos(scale)**2
+				overlapData = (noiseDataList[section][overlapStart:overlapEnd]*(scale)
+					+ noiseDataList[section+1][overlapStart:overlapEnd]*(1.0-scale))
+				mergedata = numpy.hstack((
+					mergedata,
+					noiseDataList[section][insertStart:insertEnd],
+					overlapData,
+					))
 			if self.debug is True:
-				print "section %d mergedata"%(section), mergedata.shape
-				print "\tinsert from %d to %d (%d)"%(insertStart,insertEnd, insertEnd-insertStart)
-				print "\toverlap from %d to %d (%d)"%(overlapStart,overlapEnd, overlapEnd-overlapStart)
-			scale = numpy.arange(overlapEnd-overlapStart, dtype=numpy.float32)
-			scale /= scale.max()
-			scale *= math.pi/2.0
-			scale = numpy.cos(scale)**2
-			overlapData = (noiseDataList[section][overlapStart:overlapEnd]*(scale) 
-				+ noiseDataList[section+1][overlapStart:overlapEnd]*(1.0-scale))
-			mergedata = numpy.hstack((
-				mergedata,
-				noiseDataList[section][insertStart:insertEnd],
-				overlapData,
-				))
-		if self.debug is True:
-			print "section %d mergedata"%(section+1), mergedata.shape	
-		### add last section
-		startIndex = noiseEndIndexes[-2]		 
-		endIndex = len(rotdata)
-		if self.debug is True:
-			print "\t", mergedata.shape, endIndex-startIndex
-		mergedata = numpy.hstack((mergedata, noiseDataList[-1][startIndex:endIndex]))
-		if self.debug is True:
-			print "section %d mergedata"%(section+2), mergedata.shape	
+				print "section %d mergedata"%(section+1), mergedata.shape
+			### add last section
+			startIndex = noiseEndIndexes[-2]
+			endIndex = len(rotdata)
+			if self.debug is True:
+				print "\t", mergedata.shape, endIndex-startIndex
+			mergedata = numpy.hstack((mergedata, noiseDataList[-1][startIndex:endIndex]))
+			if self.debug is True:
+				print "section %d mergedata"%(section+2), mergedata.shape	
+			noisedata = mergedata
 
-		noisedata = mergedata
 
 		### DO THE SUBTRACTION
 
@@ -316,9 +319,9 @@ class CtfDisplay(object):
 		if numpy.isnan(normlogrotdata).any() is True:
 			apDisplay.printError("Error in log normalization of CTF data")
 
-		### 
+		###
 		### PART 3: ENVELOPE NORMALIZATION
-		### 
+		###
 		apDisplay.printColor("PART 3: ENVELOPE NORMALIZATION", "magenta")
 
 		### split the function up into sections
@@ -347,7 +350,7 @@ class CtfDisplay(object):
 			partStart = self.sectionFactor*section
 			start = firstpeak + envelopNumPoints*partStart/float(numParts)
 			startIndex = self.extremaToIndex(start, peak, raddata)
-			partEnd = partStart + (self.sectionFactor+self.overlapFactor)			
+			partEnd = partStart + (self.sectionFactor+self.overlapFactor)
 			end = firstpeak + envelopNumPoints*partEnd/float(numParts)
 			endIndex = self.extremaToIndex(end, peak, raddata)
 			if endIndex - startIndex < 4:
@@ -358,7 +361,7 @@ class CtfDisplay(object):
 			envelopEndIndexes.append(endIndex)
 		mergeIndexes = copy.copy(envelopStartIndexes)
 		mergeIndexes.extend(envelopEndIndexes)
-		mergeIndexes.sort()		
+		mergeIndexes.sort()
 		if self.debug is True:
 			print envelopStartIndexes
 			print envelopEndIndexes
@@ -374,7 +377,7 @@ class CtfDisplay(object):
 		envelopDataList = []
 		for section in range(numSections):
 			if self.debug is True:
-				apDisplay.printMsg("fitting envelop section %d of %d"%(section+1, numSections))			
+				apDisplay.printMsg("fitting envelop section %d of %d"%(section+1, numSections))
 			startIndex = envelopStartIndexes[section]
 			endIndex = envelopEndIndexes[section]
 			tfit = time.time()
@@ -384,55 +387,57 @@ class CtfDisplay(object):
 			envelopdata = CtfNoise.noiseModel(envelopfitparams, raddata)
 			envelopdata *= maxvalue
 			if self.debug is True:
-				apDisplay.printMsg("finished in %s"%(apDisplay.timeString(time.time()-tfit)))			
+				apDisplay.printMsg("finished in %s"%(apDisplay.timeString(time.time()-tfit)))
 			envelopDataList.append(envelopdata)
 		fitpeakdata *= maxvalue
 
 		## merge data
-		mergedata = envelopDataList[0][:envelopStartIndexes[0]]
-		for section in range(numSections-1):
-			insertStart = mergeIndexes[section*2]
-			insertEnd = mergeIndexes[section*2+1]
-			overlapStart = insertEnd
-			overlapEnd = mergeIndexes[section*2+2]
+		if numSections == 1:
+			envelopdata = envelopDataList[0]
+		else:
+			mergedata = envelopDataList[0][:envelopStartIndexes[0]]
+			for section in range(numSections-1):
+				insertStart = mergeIndexes[section*2]
+				insertEnd = mergeIndexes[section*2+1]
+				overlapStart = insertEnd
+				overlapEnd = mergeIndexes[section*2+2]
+				if self.debug is True:
+					print "section %d mergedata"%(section), mergedata.shape
+					print "\tinsert from %d to %d (%d)"%(insertStart,insertEnd, insertEnd-insertStart)
+					print "\toverlap from %d to %d (%d)"%(overlapStart,overlapEnd, overlapEnd-overlapStart)
+				scale = numpy.arange(overlapEnd-overlapStart, dtype=numpy.float32)
+				scale /= scale.max()
+				scale *= math.pi/2.0
+				scale = numpy.cos(scale)**2
+				overlapData = (envelopDataList[section][overlapStart:overlapEnd]*(scale)
+					+ envelopDataList[section+1][overlapStart:overlapEnd]*(1.0-scale))
+				mergedata = numpy.hstack((
+					mergedata,
+					envelopDataList[section][insertStart:insertEnd],
+					overlapData,
+					))
 			if self.debug is True:
-				print "section %d mergedata"%(section), mergedata.shape
-				print "\tinsert from %d to %d (%d)"%(insertStart,insertEnd, insertEnd-insertStart)
-				print "\toverlap from %d to %d (%d)"%(overlapStart,overlapEnd, overlapEnd-overlapStart)
-			scale = numpy.arange(overlapEnd-overlapStart, dtype=numpy.float32)
-			scale /= scale.max()
-			scale *= math.pi/2.0
-			scale = numpy.cos(scale)**2
-			overlapData = (envelopDataList[section][overlapStart:overlapEnd]*(scale) 
-				+ envelopDataList[section+1][overlapStart:overlapEnd]*(1.0-scale))
-			mergedata = numpy.hstack((
-				mergedata,
-				envelopDataList[section][insertStart:insertEnd],
-				overlapData,
-				))
-		if self.debug is True:
-			print "section %d mergedata"%(section+1), mergedata.shape	
-		### add last section
-		startIndex = envelopEndIndexes[-2]		 
-		endIndex = len(normexprotdata)
-		if self.debug is True:
-			print "\t", mergedata.shape, endIndex-startIndex
-		mergedata = numpy.hstack((mergedata, envelopDataList[-1][startIndex:endIndex]))
-		if self.debug is True:
-			print "section %d mergedata"%(section+2), mergedata.shape
-
-		envelopdata = mergedata
+				print "section %d mergedata"%(section+1), mergedata.shape
+			### add last section
+			startIndex = envelopEndIndexes[-2]
+			endIndex = len(normexprotdata)
+			if self.debug is True:
+				print "\t", mergedata.shape, endIndex-startIndex
+			mergedata = numpy.hstack((mergedata, envelopDataList[-1][startIndex:endIndex]))
+			if self.debug is True:
+				print "section %d mergedata"%(section+2), mergedata.shape
+			envelopdata = mergedata
 
 		try:
 			normnormexprotdata = normexprotdata / envelopdata
 		except ValueError:
-			print "raise ValueError"			
+			print "raise ValueError"
 			print len(normexprotdata), len(envelopdata)
 			sys.exit(1)
 
-		### 
+		###
 		### PART 4: PEAK EXTENSION
-		### 
+		###
 		apDisplay.printColor("PART 4: PEAK EXTENSION", "magenta")
 
 		### Subtract fit valley locations
@@ -445,9 +450,9 @@ class CtfDisplay(object):
 		peakdata = ndimage.gaussian_filter1d(peakdata, 1)
 		normpeakdata = normvalleydata / peakdata
 
-		### 
+		###
 		### PART 5: CTF FIT AND CONFIDENCE
-		### 
+		###
 		apDisplay.printColor("PART 5: CTF FIT AND CONFIDENCE", "magenta")
 
 		### everything in mks units, because rdata is 1/A multiply be 1e10 to get 1/m
@@ -474,14 +479,14 @@ class CtfDisplay(object):
 		if self.overconf5peak > self.conf5peak*1.1:
 			apDisplay.printWarning("Image is possibly over-focused")
 
-		### 
+		###
 		### PART 6: CTF RESOLUTION LIMITS
-		### 
+		###
 		apDisplay.printColor("PART 6: CTF RESOLUTION LIMITS", "magenta")
 
-		confraddata, confdata = ctfres.getCorrelationProfile(raddata, 
+		confraddata, confdata = ctfres.getCorrelationProfile(raddata,
 			normpeakdata, ctffitdata, peak, self.trimfreq)
-		overconfraddata, overconfdata = ctfres.getCorrelationProfile(raddata, 
+		overconfraddata, overconfdata = ctfres.getCorrelationProfile(raddata,
 			normpeakdata, overctffitdata, peak, self.trimfreq)
 
 		self.res80 = ctfres.getResolutionFromConf(confraddata, confdata, limit=0.8)
@@ -500,9 +505,9 @@ class CtfDisplay(object):
 		apDisplay.printColor("Resolution limit is %.2f at 0.8 and %.2f at 0.5"
 			%(self.res80, self.res50), "green")
 
-		### 
+		###
 		### PART 7: MAKE 1D PLOT SUMMARY FIGURE
-		### 
+		###
 		apDisplay.printColor("PART 7: MAKE 1D PLOT SUMMARY FIGURE", "magenta")
 
 		titlefontsize=8
@@ -513,7 +518,7 @@ class CtfDisplay(object):
 		showres = (showres*self.res50*self.outerAngstrom1D)**(1/3.)
 		maxloc = 1.0/showres
 		maxlocsq = maxloc**2
-		
+
 		pyplot.clf()
 
 		if self.debug is True:
@@ -524,13 +529,13 @@ class CtfDisplay(object):
 			pyplot.subplot(2,2,1) # 2 rows, 2 columns, plot 1
 		pyplot.title("Background Noise Subtraction", fontsize=titlefontsize)
 		pyplot.ylabel("Log(PSD)", fontsize=axisfontsize)
-		pyplot.plot(raddata[fpi:], rotdata[fpi:], 
+		pyplot.plot(raddata[fpi:], rotdata[fpi:],
 			'-', color="blue", alpha=0.5, linewidth=0.5)
-		pyplot.plot(raddata[fpi:], rotdata[fpi:], 
+		pyplot.plot(raddata[fpi:], rotdata[fpi:],
 			'.', color="blue", alpha=0.75, markersize=2.0)
 		pyplot.plot(raddata[fpi:], fitvalleydata[fpi:],
 			'-', color="darkgreen", alpha=0.25, linewidth=1.0)
-		
+
 		colorList = ['magenta', 'darkred', 'darkorange', 'darkgoldenrod', 'darkgreen', ]
 		for section in range(numSections):
 			startIndex = noiseStartIndexes[section]
@@ -539,7 +544,7 @@ class CtfDisplay(object):
 			pyplot.plot(raddata[startIndex:endIndex], noiseDataList[section][startIndex:endIndex],
 				'-', color=color, alpha=0.5, linewidth=2)
 
-		pyplot.plot(raddata[fpi:], noisedata[fpi:], 
+		pyplot.plot(raddata[fpi:], noisedata[fpi:],
 			'--', color="purple", alpha=1.0, linewidth=1)
 		self.setPyPlotXLabels(raddata, valleyradii=valleyradii, maxloc=maxloc, square=False)
 		pyplot.ylim(ymin=noisedata.min())
@@ -648,7 +653,7 @@ class CtfDisplay(object):
 		else:
 			pyplot.ylim(-0.55, 1.05)
 
-		pyplot.subplots_adjust(wspace=0.22, hspace=0.50, 
+		pyplot.subplots_adjust(wspace=0.22, hspace=0.50,
 			bottom=0.08, left=0.07, top=0.95, right=0.965, )
 		self.plotsfile = apDisplay.short(self.imgname)+"-plots.png"
 		apDisplay.printMsg("Saving 1D graph to file %s"%(self.plotsfile))
@@ -663,11 +668,14 @@ class CtfDisplay(object):
 
 		### FIXME
 		#if twod is False:
+		print "high pass filter"
+		zdata2d = imagefilter.tanhLowPassFilter(zdata2d, 2) ## FIX ME
+		zdata2d = imagefilter.tanhHighPassFilter(zdata2d, 200) ## FIX ME
 		return zdata2d
 
-		### 
+		###
 		### PART 8: NORMALIZE THE 2D IMAGE
-		### 
+		###
 		apDisplay.printColor("PART 8: NORMALIZE THE 2D IMAGE", "magenta")
 
 		"""
@@ -691,6 +699,7 @@ class CtfDisplay(object):
 
 		### Do the normalization on the 2d data
 		#blur2d = ndimage.gaussian_filter(zdata2d, 2)
+		zdata2d = imagefilter.tanhLowPassFilter(zdata2d, 2) ## FIX ME
 		normal2d = numpy.exp(zdata2d) - numpy.exp(noise2d)
 		normal2d = normal2d / numpy.exp(envelop2d)
 		normal2d = normal2d - valley2d
@@ -761,7 +770,7 @@ class CtfDisplay(object):
 				trueloc = 1.0/trueres**2
 			else:
 				trueloc = 1.0/trueres
-			#print ("Loc=%.4f, Res=%.2f, TrueRes=%.1f, TrueLoc=%.4f"	
+			#print ("Loc=%.4f, Res=%.2f, TrueRes=%.1f, TrueLoc=%.4f"
 			#	%(loc, origres, trueres, trueloc))
 			if trueloc > maxloc - xstd:
 				continue
@@ -785,7 +794,7 @@ class CtfDisplay(object):
 		if square is True:
 			maxres = 1.0/math.sqrt(maxloc)
 		else:
-			maxres = 1.0/maxloc			
+			maxres = 1.0/maxloc
 		label = "1/%.1f%s"%(maxres, units)
 		newlabels.append(label)
 
@@ -827,8 +836,9 @@ class CtfDisplay(object):
 		#compute elliptical average and merge with original image
 		pixelrdata, rotdata = ctftools.ellipticalAverage(origpowerspec, self.ellipratio, self.angle,
 			self.ringwidth*3, 1, full=True)
-		ellipavgpowerspec = ctftools.unEllipticalAverage(pixelrdata, rotdata, 
+		ellipavgpowerspec = ctftools.unEllipticalAverage(pixelrdata, rotdata,
 			self.ellipratio, self.angle, origpowerspec.shape)
+		ellipavgpowerspec = imagefilter.tanhHighPassFilter(ellipavgpowerspec, 200) ## FIX ME
 		halfshape = origpowerspec.shape[1]/2
 		halfpowerspec = numpy.hstack( (origpowerspec[:,:halfshape] , ellipavgpowerspec[:,halfshape:] ) )
 		if halfpowerspec.shape != origpowerspec.shape:
@@ -854,17 +864,17 @@ class CtfDisplay(object):
 
 		numzeros = 13
 
-		radii1 = ctftools.getCtfExtrema(self.defocus1, self.scalefreq*1e10, 
+		radii1 = ctftools.getCtfExtrema(self.defocus1, self.scalefreq*1e10,
 			self.cs, self.volts, self.ampcontrast, numzeros=numzeros, zerotype="valley")
-		radii2 = ctftools.getCtfExtrema(self.defocus2, self.scalefreq*1e10, 
+		radii2 = ctftools.getCtfExtrema(self.defocus2, self.scalefreq*1e10,
 			self.cs, self.volts, self.ampcontrast, numzeros=numzeros, zerotype="valley")
 
 		#smallest of two defocii
 		firstpeak = radii2[0]
 
-		### 
+		###
 		### PART 9: DRAW THE 2D POWERSPEC IMAGE
-		### 
+		###
 		center = numpy.array(powerspec.shape, dtype=numpy.float)/2.0
 		foundzeros = min(len(radii1), len(radii2))
 		"""
@@ -878,7 +888,7 @@ class CtfDisplay(object):
 			# because |def1| < |def2| ==> firstzero1 > firstzero2
 			major = radii1[i]*2
 			minor = radii2[i]*2
-			ell = Ellipse(xy=center, width=major, height=minor, angle=self.angle+90, 
+			ell = Ellipse(xy=center, width=major, height=minor, angle=self.angle+90,
 				fill=False, edgecolor="yellow", antialiased=True, linewidth=0.5)
 			ax.add_artist(ell)
 		pyplot.subplots_adjust(wspace=0, hspace=0, bottom=0, left=0, top=1, right=1, )
@@ -886,9 +896,9 @@ class CtfDisplay(object):
 		pyplot.savefig(self.newpowerspecfile, format="png", dpi=150, pad_inches=0.0)
 		"""
 
-		### 
+		###
 		### PART 9: DRAW THE 2D POWERSPEC IMAGE
-		### 
+		###
 		apDisplay.printColor("PART 9: DRAW THE 2D POWERSPEC IMAGE", "magenta")
 
 		center = numpy.array(powerspec.shape, dtype=numpy.float)/2.0
@@ -929,7 +939,7 @@ class CtfDisplay(object):
 			# because |def1| < |def2| ==> firstzero1 > firstzero2
 			major = radii1[i]
 			minor = radii2[i]
-			if self.debug is True: 
+			if self.debug is True:
 				print "major=%.1f, minor=%.1f, angle=%.1f"%(major, minor, self.angle)
 			if minor > powerspec.shape[0]/math.sqrt(3):
 				# this limits how far we draw out the ellipses sqrt(3) to corner, just 2 inside line
@@ -959,7 +969,7 @@ class CtfDisplay(object):
 			#print "numpoints", numpoints
 
 
-			points = ellipse.generate_ellipse(major, minor, 
+			points = ellipse.generate_ellipse(major, minor,
 				math.radians(self.angle), center, numpoints, None, "step", True)
 			x = points[:,0]
 			y = points[:,1]
@@ -990,12 +1000,12 @@ class CtfDisplay(object):
 			apDisplay.printError("Too big of outer radius to draw")
 		for i in numpy.arange(-4.0,4.01,0.01):
 			r = pixrad + i
-			blackxy = numpy.array((center[0]-r,center[1]-r, 
+			blackxy = numpy.array((center[0]-r,center[1]-r,
 				center[0]+r,center[1]+r), dtype=numpy.float64)
 			draw.ellipse(tuple(blackxy), outline="black")
 		for i in numpy.arange(-1.50,1.51,0.01):
 			r = pixrad + i
-			whitexy = numpy.array((center[0]-r,center[1]-r, 
+			whitexy = numpy.array((center[0]-r,center[1]-r,
 				center[0]+r,center[1]+r), dtype=numpy.float64)
 			draw.ellipse(tuple(whitexy), outline="#0BB5FF")
 
@@ -1092,7 +1102,7 @@ class CtfDisplay(object):
 		self.defdiff = self.defocus1 - self.defocus2
 		#elliptical ratio is ratio of zero locations NOT defocii
 		self.defocusratio = self.defocus2/self.defocus1
-		self.ellipratio = ctftools.defocusRatioToEllipseRatio(self.defocus1, self.defocus2, 
+		self.ellipratio = ctftools.defocusRatioToEllipseRatio(self.defocus1, self.defocus2,
 			self.initfreq, self.cs, self.volts, self.ampcontrast)
 
 		# get angle within range -90 < angle <= 90
@@ -1159,7 +1169,7 @@ class CtfDisplay(object):
 			powerspec = mrc.read(fftpath).astype(numpy.float64)
 			self.trimfreq = fftfreq
 		else:
-			powerspec, self.trimfreq = ctftools.powerSpectraToOuterResolution(image, 
+			powerspec, self.trimfreq = ctftools.powerSpectraToOuterResolution(image,
 				self.outerAngstrom1D, self.apix)
 		self.trimapix = 1.0/(self.trimfreq * powerspec.shape[0])
 
@@ -1236,7 +1246,7 @@ if __name__ == "__main__":
 	#imagelist = imagelist[:30]
 	random.shuffle(imagelist)
 
-	
+
 	for imgfile in imagelist:
 		apDisplay.printMsg(apDisplay.short(os.path.basename(imgfile)))
 

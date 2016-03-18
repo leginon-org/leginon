@@ -7,7 +7,11 @@ import numpy
 from pyami import mrc
 from pyami import imagefun
 from appionlib import apDisplay
-from appionlib.apImage import imagestat, imagefile, imagefilter
+#from appionlib.apImage import imagestat
+#from appionlib.apImage import imagefile
+#from appionlib.apImage import imagefilter
+
+
 
 ###this file is not allowed to import any apCtf files
 
