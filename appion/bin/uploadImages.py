@@ -186,7 +186,7 @@ class UploadImages(appionScript.AppionScript):
 
 		apDisplay.printColor("Found session name with runname %s, creating new name"%(self.params['runname']), "blue")
 		print sessiondatas[0]
-		sys.exit(1)
+
 		for char in string.lowercase:
 			sessionname = self.timestamp+char
 			sessionq = leginon.leginondata.SessionData()
