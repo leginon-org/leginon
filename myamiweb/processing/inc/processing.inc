@@ -409,14 +409,13 @@ Password: <input type="password" name="password">
 function checkLogin() {
 	// if everything is cool, then return nothing
 	if (!$_SESSION['username']) {
-		if (!$_POST['username'] || !$_POST['password'])		
-		return("Please enter your username and password to server ");
-		// Do not authenticate username & password on webserver, this assumes
-		//the user has access to the webserver.  Until we fix this properly 
-		//just ensure that a username and password have been provided.
-		//if (!check_ssh($_SERVER['SERVER_ADDR'],$_POST['username'],$_POST['password']))
-		//return("Authentication failed to server " . $_SERVER['SERVER_ADDR']);
-		
+		if (!$_POST['username'] || !$_POST['password'])	
+			return("Please enter your username and password to server ");
+		$proc_list = (array)getHosts();
+		//Comment 2 lines below if you have multiple hosts with different user authetication.
+		$first_processing_host = $proc_list[0]['host'];		
+		if (!check_ssh($first_processing_host,$_POST['username'],$_POST['password']))
+			return("Authentication failed to server " . $first_processing_host);
 		## save username and password to the session
 		$_SESSION['username']=$_POST['username'];
 		$_SESSION['password']=$_POST['password'];
