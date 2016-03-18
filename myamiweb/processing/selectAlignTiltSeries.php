@@ -49,14 +49,15 @@ echo "<tr><td width='100' align='center'>\n";
 echo "  <img src='img/protomo.png' width='120'>\n";
 echo "</td><td>\n";
 echo "  <h3><a href='runAppionLoop.php?expId=$expId&form=Protomo2CoarseAlignForm'>Protomo 2.4.1</a></h3>\n";
-echo " <p> Protomo is a software package used in electron tomography for marker-free alignment and weighted back- "
-	."projection reconstruction of tilt-series. The marker-free alignment is based on cross-correlation methods and "
+echo " <p> Protomo is a software package used in electron tomography for marker-free alignment and weighted back-"
+	."projection (WBP) reconstruction of tilt-series. The marker-free alignment is based on cross-correlation methods and "
 	."projection matching. Protomo also includes the refinement of geometric parameters of the tilt-series. "
 	."Additionally there are CTF correction and dose compensation procedures. The option to process tilt-series "
     ."that are not in the Appion/Leginon database is also available.<br><br>"
 	."The idea with Protomo is for the user to work through aligning a single tilt-series in a session, then use the "
 	."parameters that produce acceptable results on the entire tilt-series session using 'Batch Align Tilt-Series' "
 	."from the left menu.<br><br>"
+    ."In addition to Protomo WBP, the user can also choose to reconstruct tomograms with Tomo3D WBP and Tomo3D SIRT.<br><br>"
     ."A set of video tutorials guiding you through the entire process is available in the User Guide at the top-right.";
 echo "</td></tr>\n";
 

@@ -178,7 +178,7 @@ class Protomo2BatchSummary extends BasicLayoutForm
 				$html .= "<br>
 					<b><center>[If you with wish to re-do an alignment with different parameters, remove the corresponding directory:</center></b>";
 				$html .= "
-					<b><center>".rtrim($outdir,'/')."tiltseriesXXXX</center></b>";
+					<b><center>".rtrim($outdir,'/')."/tiltseriesXXXX</center></b>";
 				$html .= "
 					<a href='runAppionLoop.php?expId=".$this->expId."&form=Protomo2BatchForm'><b><center><font size='5'>←</font> Then click here to go back]</center></b></a>";
 		}
