@@ -12,7 +12,6 @@ from pyami import correlator, peakfinder, ordereddict
 import math
 import numpy
 import scipy.ndimage
-import acquisition
 import libCVwrapper
 import align
 import tiltcorrector
