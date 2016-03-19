@@ -252,7 +252,7 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 				'imagenum': int(float(bits[0])),
 				'defocus2':	float(bits[1])*1e-10,
 				'defocus1':	float(bits[2])*1e-10,
-				'angle_astigmatism':	float(bits[3]),
+				'angle_astigmatism':	float(bits[3])+90, # see bug #4047 for astig conversion
 				'extra_phase':	float(bits[4]),
 				'amplitude_contrast': inputparams['ampcontrast'],
 				'cross_correlation':	float(bits[5]),
