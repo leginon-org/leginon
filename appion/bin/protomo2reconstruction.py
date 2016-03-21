@@ -67,7 +67,7 @@ class ProTomo2Reconstruction(basicScript.BasicScript):
 		self.parser.add_option("--positive_recon", dest="positive_recon", type="float",  default="90",
 			help="Tilt angle, in degrees, above which all images will be removed, e.g. --positive_recon=45", metavar="float")
 		
-		self.parser.add_option("--tomo3d_procs", dest="tomo3d_procs",
+		self.parser.add_option("--tomo3d_procs", dest="tomo3d_procs", default=1,
 			help="Number of cores to use in Tomo3D, e.g. --tomo3d_procs=24")
 
 		self.parser.add_option("--tomo3d_options", dest="tomo3d_options",
@@ -247,14 +247,17 @@ class ProTomo2Reconstruction(basicScript.BasicScript):
 		param_out=seriesname+'.param'
 		param_out_full=self.params['rundir']+'/'+param_out
 		tilt_out_full=self.params['rundir']+'/'+seriesname+itt+'.tlt'
+		stack_dir_full=self.params['rundir']+'/stack/'
 		if self.params['reconstruction_method'] == 1:
 			recon_dir=self.params['rundir']+'/recons_protomo/'
 		elif self.params['reconstruction_method'] == 2:
 			recon_dir=self.params['rundir']+'/recons_tomo3d_WBP/'
 		elif self.params['reconstruction_method'] == 3:
 			recon_dir=self.params['rundir']+'/recons_tomo3d_SIRT/'
+		elif self.params['reconstruction_method'] == 4:
+			recon_dir=self.params['rundir']+'/stack_temp/'
 		else:
-			apDisplay.printMsg("Error: Must choose reconstruction_method to be either 1, 2, or 3.")
+			apDisplay.printMsg("Error: Must choose reconstruction_method to be either 1, 2, 3, or 4.")
 			sys.exit()
 		os.system('mkdir %s 2>/dev/null' % recon_dir)
 		recon_param_out_full=recon_dir+'/'+param_out
@@ -390,7 +393,7 @@ class ProTomo2Reconstruction(basicScript.BasicScript):
 			batchdir=self.params['rundir']+'/'+'ready_for_batch'
 			coarse_param_full=self.params['rundir']+'/coarse_out/'+'coarse_'+param_out
 			recon_param='recon_'+param_out
-			command="mkdir %s 2>/dev/null; cp %s %s; cp %s %s; cp %s %s/%s; rm -r %s %s %s*i3t %s/cache %s/out 2>/dev/null" % (batchdir, coarse_param_full, batchdir, refine_param_full, batchdir, param_out_full, batchdir, recon_param, img_full, mrc_full, recon_dir, recon_dir, recon_dir)
+			command="mkdir %s 2>/dev/null; cp %s %s; cp %s %s; cp %s %s/%s; rm -r %s %s %s*i3t %s/cache %s/out %s 2>/dev/null" % (batchdir, coarse_param_full, batchdir, refine_param_full, batchdir, param_out_full, batchdir, recon_param, img_full, mrc_full, recon_dir, recon_dir, recon_dir, stack_dir_full)
 			os.system(command)
 			
 			# Create reconstruction
@@ -435,8 +438,9 @@ class ProTomo2Reconstruction(basicScript.BasicScript):
 			os.system("rm %s/cache/%s* %s/*i3t" % (recon_dir, seriesname, recon_dir))
 		
 		# Tomo3D Setup
-		elif self.params['reconstruction_method'] == 2 or self.params['reconstruction_method'] == 3:
-			apDisplay.printMsg("Translating images and rotating them with proc2d for Tomo3D convention...")
+		elif self.params['reconstruction_method'] == 2 or self.params['reconstruction_method'] == 3 or self.params['reconstruction_method'] == 4:
+			apDisplay.printMsg("Translating images and rotating them with proc2d for Tomo3D/IMOD convention...")
+			os.system('mkdir %s 2>/dev/null' % stack_dir_full)
 			tomo3d_dir = os.path.join(recon_dir,'tomo3d')
 			try:
 				os.mkdir(os.path.join(tomo3d_dir))
@@ -454,10 +458,10 @@ class ProTomo2Reconstruction(basicScript.BasicScript):
 			stack = np.zeros((len(mrc_list),dimx,dimy))
 			for i in range(len(mrc_list)):
 				stack[i,:,:] = mrc.read(mrc_list[i])
-			stack_path = os.path.join(recon_dir,'stack.mrcs')
+			stack_path = os.path.join(stack_dir_full,'stack.mrcs')
 			mrc.write(stack,stack_path)
 			
-			tiltlist = os.path.join(recon_dir,'tiltlist.txt')
+			tiltlist = os.path.join(stack_dir_full,'tiltlist.txt')
 			f=open(tiltlist,'w')
 			for tilt in tilt_list:
 				f.write('%3.3f\n' % tilt)
@@ -470,7 +474,7 @@ class ProTomo2Reconstruction(basicScript.BasicScript):
 				binned_stack = np.zeros((len(mrc_list),int(round(dimx/self.params['recon_map_sampling'])),int(round(dimy/self.params['recon_map_sampling']))))
 				for i in range(len(mrc_list)):
 					binned_stack[i,:,:] = imagefilter.binImg(stack[i,:,:], bin=self.params['recon_map_sampling'])
-				stack_path = os.path.join(recon_dir,'stack_bin%s.mrcs' % self.params['recon_map_sampling'])
+				stack_path = os.path.join(stack_dir_full,'stack_bin%s.mrcs' % self.params['recon_map_sampling'])
 				mrc.write(binned_stack, stack_path)
 		
 		# Tomo3D Reconstruction by WBP
@@ -486,7 +490,7 @@ class ProTomo2Reconstruction(basicScript.BasicScript):
 			mrcf = seriesname+'_ite'+it+'_dim'+dim+'_ang'+ang+'.bin'+str(self.params['recon_map_sampling'])+'_tomo3dSIRT_'+str(self.params['tomo3d_sirt_iters'])+'_iters.mrc'
 			mrc_full = recon_dir + mrcf
 			cmd = 'tomo3d -a %s -i %s -t %s -v 2 -z %s -S -l %s %s -o %s' % (tiltlist, stack_path, self.params['tomo3d_procs'], z, self.params['tomo3d_sirt_iters'], self.params['tomo3d_options'], mrc_full)
-		
+		os.system('rm -r %s 2>/dev/null' % mrc_full)
 		if self.params['reconstruction_method'] == 2 or self.params['reconstruction_method'] == 3:
 			print cmd
 			os.system(cmd)
@@ -497,6 +501,9 @@ class ProTomo2Reconstruction(basicScript.BasicScript):
 			except:
 				apDisplay.printMsg("IMOD function \'trimvol\' not found, trying using pyami. If the file is large and your RAM is small this might not end well...")
 				mrc.write(np.rot90(mrc.read(mrc_full)),mrc_full)
+		
+		if self.params['reconstruction_method'] == 4:
+			os.system('rm -r %s' % recon_dir)
 		
 		# Link reconstruction to directory
 		try:
@@ -523,9 +530,15 @@ class ProTomo2Reconstruction(basicScript.BasicScript):
 				print "\n%s\n" % (self.params['link_recon'])
 		except:
 			apDisplay.printMsg("Reconstruction can be found in this directory:")
-			print "\n%s\n" % (recon_out_dir)
-			if proc.returncode != 0:
-				apDisplay.printMsg("The reconstruction in the above directory is not normalized because EMAN1 and EMAN2 were either not found or failed to process the reconstruction.")
+			if self.params['reconstruction_method'] == 1:
+				print "\n%s\n" % (recon_out_dir)
+				if proc.returncode != 0:
+					apDisplay.printMsg("The reconstruction in the above directory is not normalized because EMAN1 and EMAN2 were either not found or failed to process the reconstruction.")
+			if self.params['reconstruction_method'] == 2 or self.params['reconstruction_method'] == 3:
+				print "\n%s\n" % (recon_dir)
+			else:
+				print "\n%s\n" % (stack_dir_full)
+				os.system('rm -r %s' % recon_dir)
 		
 
 #=====================

@@ -79,7 +79,7 @@ class Protomo2ReconstructionForm extends BasicLayoutForm
 		global $html; //I can only get the selector form to pass variables properly by defining it globally in the constructor.
 		
 		if (!isset($_POST['reconstruction_method'])) {$_POST['reconstruction_method']=1;}
-		$settings=array("Protomo weighted back-projection", "Tomo3D weighted back-projection", "Tomo3D SIRT");
+		$settings=array("Protomo weighted back-projection", "Tomo3D weighted back-projection", "Tomo3D SIRT", "Stack only");
 
 		$html.= '<br><select name="reconstruction_method" onchange=submit() style="width:225px">';
 		for ($i = 1; $i < count($settings)+1; $i++) {
@@ -109,7 +109,13 @@ class Protomo2ReconstructionForm extends BasicLayoutForm
 		//------ Set Parameters for the parent class, BasicLoopForm (general Appion params) -----//
 		
 		// Set the publications to be references on the web pages
-		$pubList = array('appion-protomo', 'protomo', 'imodctf', 'dose_comp', 'tomo3d1', 'tomo3d2');
+		if ($_POST['reconstruction_method'] == 1) {
+			$pubList = array('appion-protomo', 'protomo', 'imodctf', 'dose_comp');
+		} elseif ($_POST['reconstruction_method'] == 2 or $_POST['reconstruction_method'] == 3) {
+			$pubList = array('appion-protomo', 'imodctf', 'dose_comp', 'tomo3d1', 'tomo3d2');
+		} else {
+			$pubList = array('appion-protomo', 'imodctf', 'dose_comp');
+		}
 		$this->setPublications( $pubList );
 		$this->setJobType( 'protomo' );
 		$this->setOutputDirectory( 'protomo_alignments' );
@@ -157,7 +163,9 @@ class Protomo2ReconstructionForm extends BasicLayoutForm
 		// Validations
 		$params->addValidation( "recon_iter", "req" );
 		$params->addValidation( "recon_iter", "num" );
-		$params->addValidation( "recon_thickness", "req" );
+		if ($_POST['reconstruction_method'] == 1 or $_POST['reconstruction_method'] == 2 or $_POST['reconstruction_method'] == 3){
+				$params->addValidation( "recon_thickness", "req" );
+		}
 		
 	}
 	
@@ -214,10 +222,17 @@ class Protomo2ReconstructionForm extends BasicLayoutForm
 		$html.= $params->insertTextFieldInRow( "dose_b", $fieldSize ).'│ ';
 		$html.= $params->insertTextField( "dose_c", $fieldSize );
 		
-		$html .= "
-	    <br />
-	    <H4>Reconstruction Parameters ".docpop('recon_info2', '(Info)')."</H4>
-	    <hr />";
+		if ($_POST['reconstruction_method'] == 4){
+				$html .= "
+				<br />
+				<H4>Stack Parameters ".docpop('stack_info', '(Info)')."</H4>
+				<hr />";
+		} else {
+				$html .= "
+				<br />
+				<H4>Reconstruction Parameters ".docpop('recon_info2', '(Info)')."</H4>
+				<hr />";
+		}
 		
 		$html.= '<select name="recon_iter" onchange=submit() style="width:66px">';
 		$html.= '<option value="'.$best.'">Best</option>';
@@ -237,10 +252,13 @@ class Protomo2ReconstructionForm extends BasicLayoutForm
 		}
 		$html.= '</select>'; $html.= docpop('protomo_recon_iter', ' Refinement Iteration used to generate Reconstruction<br>');
 	    $html.= $params->insertTextField( "recon_map_sampling", $fieldSize );
-		$html.= $params->insertTextField( "recon_map_size_x", $fieldSize );
-		$html.= $params->insertTextField( "recon_map_size_y", $fieldSize );
-		$html.= $params->insertTextField( "recon_thickness", $fieldSize );
+		if ($_POST['reconstruction_method'] == 1){
+				$html.= $params->insertTextField( "recon_map_size_x", $fieldSize );
+				$html.= $params->insertTextField( "recon_map_size_y", $fieldSize );
+				$html.= $params->insertTextField( "recon_thickness", $fieldSize );
+		}
 		if ($_POST['reconstruction_method'] == 2 or $_POST['reconstruction_method'] == 3){
+				$html.= $params->insertTextField( "recon_thickness", $fieldSize );
 				$html.= $params->insertTextField( "tomo3d_procs", $fieldSize );
 		}
 		$html.= $params->insertTextField( "exclude_images", $fieldSize );
@@ -260,7 +278,9 @@ class Protomo2ReconstructionForm extends BasicLayoutForm
 		if ($_POST['reconstruction_method'] == 2 or $_POST['reconstruction_method'] == 3){
 				$html.= $params->insertTextField( "tomo3d_options", $fieldSize2 );
 		}
-		$html.= $params->insertTextField( "link_recon", $fieldSize2 );
+		if ($_POST['reconstruction_method'] == 1 or $_POST['reconstruction_method'] == 2 or $_POST['reconstruction_method'] == 3){
+				$html.= $params->insertTextField( "link_recon", $fieldSize2 );
+		}
 		
 		$html .= "<hr />";
 		
