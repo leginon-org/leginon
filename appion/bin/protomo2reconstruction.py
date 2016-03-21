@@ -458,7 +458,7 @@ class ProTomo2Reconstruction(basicScript.BasicScript):
 			stack = np.zeros((len(mrc_list),dimx,dimy))
 			for i in range(len(mrc_list)):
 				stack[i,:,:] = mrc.read(mrc_list[i])
-			stack_path = os.path.join(stack_dir_full,'stack.mrcs')
+			stack_path = os.path.join(stack_dir_full,'stack_ite'+it+'.mrcs')
 			mrc.write(stack,stack_path)
 			
 			tiltlist = os.path.join(stack_dir_full,'tiltlist.txt')
@@ -474,23 +474,25 @@ class ProTomo2Reconstruction(basicScript.BasicScript):
 				binned_stack = np.zeros((len(mrc_list),int(round(dimx/self.params['recon_map_sampling'])),int(round(dimy/self.params['recon_map_sampling']))))
 				for i in range(len(mrc_list)):
 					binned_stack[i,:,:] = imagefilter.binImg(stack[i,:,:], bin=self.params['recon_map_sampling'])
-				stack_path = os.path.join(stack_dir_full,'stack_bin%s.mrcs' % self.params['recon_map_sampling'])
+				stack_path = os.path.join(stack_dir_full,'stack_ite'+it+'_bin%s.mrcs' % self.params['recon_map_sampling'])
 				mrc.write(binned_stack, stack_path)
 		
 		# Tomo3D Reconstruction by WBP
 		if self.params['reconstruction_method'] == 2:
 			z = int(math.ceil(z / 2.) * 2) # Rounds up the thickness to the nearest even number
-			mrcf = seriesname+'_ite'+it+'_dim'+dim+'_ang'+ang+'.bin'+str(self.params['recon_map_sampling'])+'_tomo3dWBP.mrc'
+			mrcf = seriesname+'_ite'+it+'_ang'+ang+'.bin'+str(self.params['recon_map_sampling'])+'_tomo3dWBP.mrc'
 			mrc_full = recon_dir + mrcf
+			os.system('rm -r %s 2>/dev/null' % mrc_full)
 			cmd = 'tomo3d -a %s -i %s -t %s -v 2 -z %s %s -o %s' % (tiltlist, stack_path, self.params['tomo3d_procs'], z, self.params['tomo3d_options'], mrc_full)
 		
 		# Tomo3D Reconstruction by SIRT
 		elif self.params['reconstruction_method'] == 3:
 			z = int(math.ceil(z / 2.) * 2) # Rounds up the thickness to the nearest even number
-			mrcf = seriesname+'_ite'+it+'_dim'+dim+'_ang'+ang+'.bin'+str(self.params['recon_map_sampling'])+'_tomo3dSIRT_'+str(self.params['tomo3d_sirt_iters'])+'_iters.mrc'
+			mrcf = seriesname+'_ite'+it+'_ang'+ang+'.bin'+str(self.params['recon_map_sampling'])+'_tomo3dSIRT_'+str(self.params['tomo3d_sirt_iters'])+'_iters.mrc'
 			mrc_full = recon_dir + mrcf
+			os.system('rm -r %s 2>/dev/null' % mrc_full)
 			cmd = 'tomo3d -a %s -i %s -t %s -v 2 -z %s -S -l %s %s -o %s' % (tiltlist, stack_path, self.params['tomo3d_procs'], z, self.params['tomo3d_sirt_iters'], self.params['tomo3d_options'], mrc_full)
-		os.system('rm -r %s 2>/dev/null' % mrc_full)
+		
 		if self.params['reconstruction_method'] == 2 or self.params['reconstruction_method'] == 3:
 			print cmd
 			os.system(cmd)
