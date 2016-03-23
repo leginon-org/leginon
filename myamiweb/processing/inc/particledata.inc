@@ -63,6 +63,24 @@ class particledata {
 		return $filename;
 	}
 
+	function getImageDimensionFromId($imageId) {
+		$q = "SELECT "
+			."c.`SUBD|dimension|x` dx, c.`SUBD|dimension|y` dy "
+			."FROM ".DB_LEGINON.".AcquisitionImageData as img "
+			."LEFT JOIN ".DB_LEGINON.".CameraEMData as c "
+			."on img.`REF|CameraEMData|camera`=c.`DEF_id` "
+			."WHERE "
+			."  img.`DEF_id` = '$imageId' "
+			."LIMIT 1 ";
+		//echo $q."<br/><br/>\n";
+		$r = $this->mysql->getSQLResult($q);
+		//echo print_r($r)."<br/><br/>\n";
+		$dx = $r[0]['dx'];
+		$dy = $r[0]['dy'];
+		//echo "$filename<br/><br/>\n";
+		return array('x'=>$dx,'y'=>$dy);
+	}
+
 	function getSessionData ($sessionId) {
 		$q = "SELECT "
 			."s.* "
