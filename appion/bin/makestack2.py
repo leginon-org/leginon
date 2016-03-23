@@ -538,6 +538,9 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 
 	#=======================
 	def phaseFlipWholeImage(self, inimgpath, imgdata):
+		if imgdata['camera']['dimension']['x'] != imgdata['camera']['dimension']['y']:
+			apDisplay.printError("phaseflipping whole image with EMAN1 does not work with non-square image.\nUse another method")
+
 		outimgpath = os.path.join(self.params['rundir'], self.shortname+"-ctfcorrect.dwn.mrc")
 
 		### High tension on CM is given in kv instead of v so do not divide by 1000 in that case
