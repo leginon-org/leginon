@@ -9,7 +9,7 @@ RUN yum -y update && yum -y install wget epel-release sudo passwd rsync tar open
 ### install software
 RUN yum -y update && yum -y install \
  python-tools python-devel python-matplotlib \
- subversion ImageMagick grace gnuplot \
+ subversion ImageMagick grace gnuplot fltk-devel \
  wxPython numpy scipy python-imaging python-pip \
  gcc-gfortran compat-gcc-34-g77 libgfortran.x86_64 \
  gcc-objc fftw3-devel gsl-devel boost-python \
@@ -86,6 +86,9 @@ RUN ln -sv /emg/sw/eman1/lib/libpyEM.so.ucs4.py2.6 /emg/sw/eman1/lib/libpyEM.so 
 ### http://emg.nysbc.org/redmine/projects/appion/wiki/Install_EMAN2
 ADD TGZ/eman2_centos6_docker.tgz /emg/sw/
 #ADD eman2.12.source.tar.gz /emg/sw/
+
+### RELION
+ADD TGZ/relion-1.4.tgz /emg/sw/
 
 ADD TGZ/spidersmall.13.00.tgz /emg/sw
 #RUN ln -sv /emg/sw/spider/bin/spider_linux_mp_opt64 /emg/sw/spider/bin/spider
