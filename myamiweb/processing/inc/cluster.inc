@@ -297,22 +297,18 @@ class Cluster {
         // The returned custom response is customized by the web service to match whatever 
         // the calling code is looking for.  
         if ((WEBSERVICE_URL) and defined('WEBSERVICE_URL')) {
-            $comma = "";
-            $content = '{ "session-data":{';
-            foreach ($_SESSION as $key => $val) {
-                $content = $content . $comma . '"' . $key . '":"' . $val . '"';
-                $comma = ",";
-            }
-
-            $content = $content . ' }, "command":"' . $command . '" }';
-            $response = $this->external_exec("POST", $content);
+            
+            $inputArray = array("session-data"=> $_SESSION, "command" => $command);
+            $clean_json=json_encode($inputArray);
+            $response = $this->external_exec("POST", $clean_json);
             $ar = json_decode($response, true);
-
-            // echo "<li>Command: " . $content . "</li>";
+            
+            //echo "&#9992;<dl><dt>Command: " . $clean_json . "</dt>";
+            //echo "<dd>Response: " . $response . "</dd></dl></li>";
             if ($ar['customResponse'] === 400) {
                 echo '<div style="border: 12px rgb(247, 10, 10) dashed;">';
                 echo '<h3>The webservice is not configured to handle a command that was sent.</h3>';
-                echo "<li>The json content sent with this command: " . $content . "</li>";
+                echo "<li>The json content sent with this command: " . $clean_json . "</li>";
 
                 echo "<dl><Dt>A backtrace of the function(s) that sent this command</dt>";
                 $trace = debug_backtrace();
@@ -324,7 +320,7 @@ class Cluster {
                 echo '</div>';
                 return "";
             }
-
+            
             return $ar['customResponse'];
         }
 
