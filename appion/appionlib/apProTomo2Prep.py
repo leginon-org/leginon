@@ -409,7 +409,7 @@ def ctfCorrect(seriesname, rundir, projectid, sessionname, tiltseriesnumber, til
 
 
 #=====================
-def doseCompensate(seriesname, rundir, sessionname, tiltseriesnumber, frame_aligned_images, raw_path, pixelsize, dose_presets, dose_a, dose_b, dose_c):
+def doseCompensate(seriesname, rundir, sessionname, tiltseriesnumber, frame_aligned_images, raw_path, pixelsize, dose_presets, dose_a, dose_b, dose_c, dose_compensate="True"):
 	"""
 	Images will be lowpass filtered using equation (3) from Grant & Grigorieff, 2015.
 	No changes to the database are made. No backups are made.
@@ -435,22 +435,33 @@ def doseCompensate(seriesname, rundir, sessionname, tiltseriesnumber, frame_alig
 		dose_a = 0.245
 		dose_b = -1.4
 		dose_c = 2
-	
-	apDisplay.printMsg('Dose compensating all tilt images with a=%s, b=%s, and c=%s...' % (dose_a, dose_b, dose_c))
+	if dose_compensate == "True":
+		apDisplay.printMsg('Dose compensating all tilt images with a=%s, b=%s, and c=%s...' % (dose_a, dose_b, dose_c))
+	else:
+		apDisplay.printMsg('Creating dose compensation list with a=%s, b=%s, and c=%s...' % (dose_a, dose_b, dose_c))
+		dose_lp_file = open(os.path.join(rundir,'stack','full_dose_lp_list.txt'), 'w')
 	
 	for image, j in zip(new_ordered_imagelist, range(len(new_ordered_imagelist))):
 		lowpass = float(np.real(complex(dose_a/(accumulated_dose_list[j] - dose_c))**(1/dose_b)))  #equation (3) from Grant & Grigorieff, 2015
 		if lowpass < 0.0:
 			lowpass = 0.0
-		im = mrc.read(image)
-		im = imagefilter.lowPassFilter(im, apix=pixelsize, radius=lowpass, msg=False)
-		im=imagenorm.normStdev(im)
-		mrc.write(im, image)
+		if dose_compensate == "True":
+			im = mrc.read(image)
+			im = imagefilter.lowPassFilter(im, apix=pixelsize, radius=lowpass, msg=False)
+			im=imagenorm.normStdev(im)
+			mrc.write(im, image)
+		else:
+			dose_lp_file.write("%f %f %f\n" % (tilts[j], accumulated_dose_list[j], lowpass))
+	if dose_compensate == "True":
+		apProTomo2Aligner.makeDosePlots(rundir, seriesname, tilts, accumulated_dose_list, dose_a, dose_b, dose_c)
+	else:
+		dose_lp_file.close()
 	
-	#Make plots
-	apProTomo2Aligner.makeDosePlots(rundir, seriesname, tilts, accumulated_dose_list, dose_a, dose_b, dose_c)
 	
-	apDisplay.printMsg("Dose compensation finished for tilt-series #%s!" % tiltseriesnumber)
+	if dose_compensate == "True":
+		apDisplay.printMsg("Dose compensation finished for tilt-series #%s!" % tiltseriesnumber)
+	else:
+		apDisplay.printMsg("Dose compensation list created")
 	
 	return
 

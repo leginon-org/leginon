@@ -273,7 +273,10 @@ class ProTomo2Reconstruction(basicScript.BasicScript):
 		
 		#Dose Compensation
 		if (self.params['dose_presets'] != 'False'):
-			apProTomo2Prep.doseCompensate(seriesname, self.params['rundir'], self.params['sessionname'], int(self.params['tiltseries']), self.params['frame_aligned'], raw_path, self.params['pixelsize'], self.params['dose_presets'], self.params['dose_a'], self.params['dose_b'], self.params['dose_c'])
+			if self.params['reconstruction_method'] == 4:
+				apProTomo2Prep.doseCompensate(seriesname, self.params['rundir'], self.params['sessionname'], int(self.params['tiltseries']), self.params['frame_aligned'], raw_path, self.params['pixelsize'], self.params['dose_presets'], self.params['dose_a'], self.params['dose_b'], self.params['dose_c'], dose_compensate="False")
+			else:
+				apProTomo2Prep.doseCompensate(seriesname, self.params['rundir'], self.params['sessionname'], int(self.params['tiltseries']), self.params['frame_aligned'], raw_path, self.params['pixelsize'], self.params['dose_presets'], self.params['dose_a'], self.params['dose_b'], self.params['dose_c'])
 		
 		# Remove specific images if user requests
 		if (self.params['exclude_images'] != "999999"):
@@ -464,7 +467,7 @@ class ProTomo2Reconstruction(basicScript.BasicScript):
 			tiltlist = os.path.join(stack_dir_full,'tiltlist.txt')
 			f=open(tiltlist,'w')
 			for tilt in tilt_list:
-				f.write('%3.3f\n' % tilt)
+				f.write('%f\n' % tilt)
 			f.close()
 			
 			os.system('rm -rf %s' % tomo3d_dir)
@@ -505,7 +508,39 @@ class ProTomo2Reconstruction(basicScript.BasicScript):
 				mrc.write(np.rot90(mrc.read(mrc_full)),mrc_full)
 		
 		if self.params['reconstruction_method'] == 4:
-			os.system('rm -r %s' % recon_dir)
+			#os.system('rm -r %s' % recon_dir)
+			#Create a list of tilts, accumulated dose, and lowpass to be applied for the requested stack
+			f1=open(os.path.join(self.params['rundir'],'stack','full_dose_lp_list.txt'),'r')
+			f2=open(os.path.join(self.params['rundir'],'stack','stack_dose_lp_list.txt'),'w')
+			for row in f1.readlines():
+				if round(float(row.split(' ')[0]),3) in tilt_list:
+					f2.write("%f %f %f\n" % (float(row.split(' ')[0]), float(row.split(' ')[1]), float(row.split(' ')[2])))
+			f1.close()
+			f2.close()
+			
+			#Create a small python script that, when executed on a stack, will dose compensate that stack using the values from the stack_dose_lp_list
+			f=open(os.path.join(self.params['rundir'],'stack','stack_dose_compensate.py'),'w')
+			f.write("#!/usr/bin/env python\n")
+			f.write("# Use to dose compensate stack after you have done post processing (eg. TomoCTF correction).\n")
+			f.write("# Usage: ./stack_dose_compensate.py stack_dose_lp_list.txt <input_stack> <output_stack>\n")
+			f.write("import sys\n")
+			f.write("import numpy as np\n")
+			f.write("from pyami import mrc\n")
+			f.write("from appionlib.apImage import imagefilter\n")
+			f.write("f=open(sys.argv[1],'r')\n")
+			f.write("stack = mrc.read(sys.argv[2])\n")
+			f.write("lps=[]\n")
+			f.write("for row in f.readlines():\n")
+			f.write("	lps.append(row.split(' ')[2])\n")
+			f.write("f.close()\n")
+			f.write("new_stack=[]\n")
+			f.write("for i in range(len(stack)):\n")
+			f.write("	im = imagefilter.lowPassFilter(stack[i], apix=float(%s), radius=float(lps[i]), msg=False)\n" % self.params['pixelsize'])
+			f.write("	new_stack.append(im)\n")
+			f.write("mrc.write(np.asarray(new_stack), sys.argv[3])\n")
+			f.close()
+			apDisplay.printMsg("Dose compensation script created: stack_dose_compensate.py")
+			os.system("chmod +x %s" % os.path.join(self.params['rundir'],'stack','stack_dose_compensate.py'))
 		
 		# Link reconstruction to directory
 		try:
@@ -540,7 +575,7 @@ class ProTomo2Reconstruction(basicScript.BasicScript):
 				print "\n%s\n" % (recon_dir)
 			else:
 				print "\n%s\n" % (stack_dir_full)
-				os.system('rm -r %s' % recon_dir)
+				os.system('rm -r %s 2>/dev/null' % recon_dir)
 		
 
 #=====================

@@ -503,7 +503,7 @@ def removeHighTiltsFromTiltFile(tiltfile, negative=-90, positive=90):
 		tiltstart=int(tiltstart)
 		
 		removed_images=[]
-		for i in range(tiltstart,numimages+tiltstart):
+		for i in range(tiltstart,numimages+tiltstart+1):
 			try: #If the image isn't in the .tlt file, skip it
 				#Get information from tlt file. This needs to versatile for differently formatted .tlt files, so awk it is.
 				cmd="awk '/IMAGE %s /{print}' %s | awk '{for (j=1;j<=NF;j++) if($j ~/TILT/) print $(j+2)}'" % (i, tiltfile)
