@@ -55,6 +55,14 @@ class CameraClient(object):
 		self.exposure_start_event.set()
 		t.start()
 
+	def protectSpecimen(self,status):
+		if not self.instrument.tem.BeamBlankedDuringCameraExchange or len(self.instrument.ccdcameras) < 2:
+			return
+		if status not in ('on','off'):
+			return
+		self.logger.info('Turn %s beam blanker' % (status,))
+		self.instrument.tem.BeamBlank = status
+
 	def positionCamera(self,camera_name=None, allow_retracted=False):
 		'''
 		Position the camera ready for acquisition
@@ -63,19 +71,35 @@ class CameraClient(object):
 		if camera_name is not None:
 			self.instrument.setCCDCamera(camera_name)
 
+		camera_exchanged = False
+		orig_blank_status = self.instrument.tem.BeamBlank
+		fakek2cam = None
+
 		hosts = map((lambda x: self.instrument.ccdcameras[x].Hostname),self.instrument.ccdcameras.keys())
 		## Retract the cameras that are above this one (higher zplane)
 		## or on the same host but lower because the host often
 		## retract the others regardless of the position but not include
 		## that in the timing.  Often get blank image as a result
 		for name,cam in self.instrument.ccdcameras.items():
+			if 'FakeK2' == name and camera_name is not None and 'GatanK2' in camera_name:
+				## With current camera control on TUI/TIA, K2 behind Falcon can not shutter
+				## unless an unused camera (TIA-Orius) is inserted.
+				## Here it sets the fake camera
+				fakek2cam = cam
+				continue
 			if cam.Zplane > self.instrument.ccdcamera.Zplane or (hosts.count(cam.Hostname) > 1 and cam.Zplane < self.instrument.ccdcamera.Zplane):
 				try:
 					if cam.Inserted:
+						self.protectSpecimen('on')
+						camera_exchanged = True
 						cam.Inserted = False
 						self.logger.info('retracted camera: %s' % (name,))
 				except:
 					pass
+
+		# Insert fake camera for GatanK2
+		if fakek2cam:
+			fakek2cam.Inserted = True
 
 		## insert the current camera, unless allow_retracted
 		if not allow_retracted:
@@ -87,6 +111,10 @@ class CameraClient(object):
 				camname = self.instrument.getCCDCameraName()
 				self.logger.info('inserting camera: %s' % (camname,))
 				self.instrument.ccdcamera.Inserted = True
+
+		if camera_exchanged:
+			self.protectSpecimen(orig_blank_status)
+
 		if camera_name is not None:
 			# set current camera back in case of side effect
 			self.instrument.setCCDCamera(orig_camera_name)

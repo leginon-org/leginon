@@ -7,6 +7,8 @@
 import tem
 import time
 import sys
+import subprocess
+
 try:
 	import nidaq
 except:
@@ -20,6 +22,9 @@ try:
 	import winerror
 except ImportError:
 	pass
+
+# Location of next phase plate AutoIt executable
+AUTOIT_EXE_PATH = "C:\\Program Files\\AutoIt3\\nextphaseplate.exe"
 
 # This scale convert beam tilt readout in radian to 
 # Tecnai or TEM Scripting Illumination.RotationCenter value
@@ -1351,6 +1356,12 @@ class Tecnai(tem.TEM):
 		autoloader, 1 is the column.
 		'''
 		return self.tecnai.TemperatureControl.RefrigerantLevel(id)
+
+	def nextPhasePlate(self):
+		if os.path.isfile(AUTOIT_EXE_PATH):
+			subprocess.call(AUTOIT_EXE_PATH)
+		else:
+			pass
 
 class Krios(Tecnai):
 	name = 'Krios'

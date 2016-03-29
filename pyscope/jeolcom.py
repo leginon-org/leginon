@@ -1576,3 +1576,7 @@ class Jeol(tem.TEM):
 		self.setMainScreenPosition('down')
 		time.sleep(exptime)
 		self.setMainScreenPosition('up')
+
+	def getBeamBlankedDuringCameraExchange(self):
+		# Keep it off because gun shutter is too slow.
+		return Falsee

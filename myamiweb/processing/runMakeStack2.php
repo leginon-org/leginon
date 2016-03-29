@@ -954,6 +954,14 @@ function runMakestack() {
 	if ($helicalcheck && $finealigncheck)
 		createMakestackForm("<b>ERROR:</b> Select either rough alignment or fine alignment, not both");
 
+	// avoid eman whole image if non square image
+	if (!empty($partrunid) &&  $ctfcorrecttype == 'emanimage') {
+		$imgid = $particle->getImgIdFromSelectionRun($partrunid);
+		$dim = $particle->getImageDimensionFromId($imgid);
+		if ($dim['x'] != $dim['y'])
+			createMakestackForm("<b>ERROR:</b>EMAN1 Whole Image CTF Correction takes only square image.  Please choose another method");
+		
+	}
 	/* *******************
 	PART 3: Create program command
 	******************** */
