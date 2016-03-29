@@ -36,6 +36,7 @@ class TEM(baseinstrument.BaseInstrument):
 		{'name': 'SmallScreenPositions', 'type': 'property'},
 		{'name': 'StageStatus', 'type': 'property'},
 		{'name': 'VacuumStatus', 'type': 'property'},
+		{'name': 'BeamBlankedDuringCameraExchange', 'type': 'property'},
 
 		######## get/set
 		{'name': 'BeamBlank', 'type': 'property'},
@@ -160,3 +161,6 @@ class TEM(baseinstrument.BaseInstrument):
 
 	def getBufferTankPressure(self):
 		return 1.0
+
+	def getBeamBlankedDuringCameraExchange(self):
+		return True

@@ -55,6 +55,14 @@ class CameraClient(object):
 		self.exposure_start_event.set()
 		t.start()
 
+	def protectSpecimen(self,status):
+		if not self.instrument.tem.BeamBlankedDuringCameraExchange or len(self.instrument.ccdcameras) < 2:
+			return
+		if status not in ('on','off'):
+			return
+		self.logger.info('Turn %s beam blanker' % (status,))
+		self.instrument.tem.BeamBlank = status
+
 	def positionCamera(self,camera_name=None, allow_retracted=False):
 		'''
 		Position the camera ready for acquisition
@@ -62,6 +70,9 @@ class CameraClient(object):
 		orig_camera_name = self.instrument.getCCDCameraName()
 		if camera_name is not None:
 			self.instrument.setCCDCamera(camera_name)
+
+		camera_exchanged = False
+		orig_blank_status = self.instrument.tem.BeamBlank
 
 		hosts = map((lambda x: self.instrument.ccdcameras[x].Hostname),self.instrument.ccdcameras.keys())
 		## Retract the cameras that are above this one (higher zplane)
@@ -72,6 +83,8 @@ class CameraClient(object):
 			if cam.Zplane > self.instrument.ccdcamera.Zplane or (hosts.count(cam.Hostname) > 1 and cam.Zplane < self.instrument.ccdcamera.Zplane):
 				try:
 					if cam.Inserted:
+						self.protectSpecimen('on')
+						camera_exchanged = True
 						cam.Inserted = False
 						self.logger.info('retracted camera: %s' % (name,))
 				except:
@@ -87,6 +100,10 @@ class CameraClient(object):
 				camname = self.instrument.getCCDCameraName()
 				self.logger.info('inserting camera: %s' % (camname,))
 				self.instrument.ccdcamera.Inserted = True
+
+		if camera_exchanged:
+			self.protectSpecimen(orig_blank_status)
+
 		if camera_name is not None:
 			# set current camera back in case of side effect
 			self.instrument.setCCDCamera(orig_camera_name)

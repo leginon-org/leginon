@@ -953,3 +953,7 @@ class Jeol1230(tem.TEM):
 		if Debug == True:
 			print 'from jeol1230.py runBufferCycle'
 		return NotImplementedError()
+
+	def getBeamBlankedDuringCameraExchange(self):
+		# Keep it off because gun shutter is too slow.
+		return Falsee
