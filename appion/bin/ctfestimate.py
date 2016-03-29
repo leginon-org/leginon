@@ -165,6 +165,9 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 		if ctfvalue is not None and self.params['bestdb'] is True:
 			bestampcontrast = round(ctfvalue['amplitude_contrast'],3)
 			beststigdiff = round(abs(ctfvalue['defocus1'] - ctfvalue['defocus2'])*1e10,1)
+			if beststigdiff < 10:
+				#fit is astigmatic, still allow stig
+				beststigdiff = self.params['dast']
 		else:
 			bestampcontrast = self.params['amp'+self.params['medium']]
 			beststigdiff = self.params['dast']
