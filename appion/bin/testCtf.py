@@ -66,6 +66,9 @@ class CTFTest(appionScript.AppionScript):
 			dbid = int(result[0])
 			imgdata = leginon.leginondata.AcquisitionImageData.direct_query(dbid)
 			#print imgdata.keys()
+			if imgdata is None:
+				apDisplay.printWarning("data not found")
+				continue
 			filename = os.path.join(imgdata['session']['image path'], imgdata['filename']+".mrc")
 			if not os.path.isfile(filename):
 				apDisplay.printWarning("file not found: %s"%(filename))
