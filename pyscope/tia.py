@@ -459,6 +459,16 @@ class TIA_Orius(TIA):
 	name = 'Orius'
 	camera_name = 'BM-Orius'
 
+class FakeK2(TIA):
+	'''
+	This is used when the scope has both TIA controled camera and K2 or other
+	non-TIA controlable camera.  By pretending that there is a TIA camera,
+	BM-Orius in this case, K2 can control the shutter when BM-Orius is inserted
+	through TIA.
+	'''
+	name = 'FakeK2'
+	camera_name = 'BM-Orius'
+
 class TIA_Ceta(TIA):
 	name = 'Ceta'
 	camera_name = 'BM-Ceta'
