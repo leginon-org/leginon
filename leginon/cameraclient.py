@@ -70,6 +70,10 @@ class CameraClient(object):
 		orig_camera_name = self.instrument.getCCDCameraName()
 		if camera_name is not None:
 			self.instrument.setCCDCamera(camera_name)
+			orig_camera_name = camera_name
+		else:
+			camera_name = orig_camera_name
+			
 
 		camera_exchanged = False
 		orig_blank_status = self.instrument.tem.BeamBlank
