@@ -73,6 +73,7 @@ class CameraClient(object):
 
 		camera_exchanged = False
 		orig_blank_status = self.instrument.tem.BeamBlank
+		fakek2cam = None
 
 		hosts = map((lambda x: self.instrument.ccdcameras[x].Hostname),self.instrument.ccdcameras.keys())
 		## Retract the cameras that are above this one (higher zplane)
@@ -80,6 +81,12 @@ class CameraClient(object):
 		## retract the others regardless of the position but not include
 		## that in the timing.  Often get blank image as a result
 		for name,cam in self.instrument.ccdcameras.items():
+			if 'FakeK2' == name and camera_name is not None and 'GatanK2' in camera_name:
+				## With current camera control on TUI/TIA, K2 behind Falcon can not shutter
+				## unless an unused camera (TIA-Orius) is inserted.
+				## Here it sets the fake camera
+				fakek2cam = cam
+				continue
 			if cam.Zplane > self.instrument.ccdcamera.Zplane or (hosts.count(cam.Hostname) > 1 and cam.Zplane < self.instrument.ccdcamera.Zplane):
 				try:
 					if cam.Inserted:
@@ -89,6 +96,10 @@ class CameraClient(object):
 						self.logger.info('retracted camera: %s' % (name,))
 				except:
 					pass
+
+		# Insert fake camera for GatanK2
+		if fakek2cam:
+			fakek2cam.Inserted = True
 
 		## insert the current camera, unless allow_retracted
 		if not allow_retracted:
