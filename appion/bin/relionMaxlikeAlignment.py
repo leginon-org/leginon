@@ -30,6 +30,8 @@ import MySQLdb
 #=====================
 class RelionMaxLikeScript(appionScript.AppionScript):
 
+	execFile = "relion_refine_mpi"
+
 	#=====================
 	def setupParserOptions(self):
 
@@ -68,6 +70,21 @@ class RelionMaxLikeScript(appionScript.AppionScript):
 			help="Minimum Processors per node", metavar="#")
 		self.parser.add_option("--mem", dest="mem", type="int", default=4,
 			help="Maximum memory per node (in GB)", metavar="#")
+
+
+
+                self.parser.add_option("--mpinodes", dest="mpinodes", type=int, default=2,
+                        help="Number of nodes used for the entire job.", metavar="#")
+
+                self.parser.add_option("--mpiprocs", dest="mpiprocs", type=int, default=4,
+                        help="Number of processors allocated for a subjob. For memory intensive jobs, decrease this value.", metavar="#")
+
+	 	self.parser.add_option("--mpithreads", dest="mpithreads", type=int, default=1,
+			help="Number of threads to generate per processor. For memory intensive jobs, increase this value.", metavar="#")
+
+		self.parser.add_option("--mpimem", dest="mpimem", type=int, default=4,
+                        help="Amount of memory (Gb) to allocate per thread. Increase this value for memory intensive jobs. ", metavar="#")
+
 		self.parser.add_option("--walltime", dest="walltime", type="int", default=24,
 			help="Maximum walltime in hours", metavar="#")
 		self.parser.add_option('--cput', dest='cput', type='int', default=None)
@@ -113,11 +130,40 @@ class RelionMaxLikeScript(appionScript.AppionScript):
 		if self.params['numpart'] is None:
 			self.params['numpart'] = apFile.numImagesInStack(stackfile)
 
+                self.mpirun = self.checkMPI()
+                if self.mpirun is None:
+                        apDisplay.printError("There is no MPI installed")
+
+                if self.params['nproc'] is None:
+                        self.params['nproc'] = self.params['mpinodes']*self.params['mpiprocs']
+        #        if self.params['nproc'] < 2:
+        #                apDisplay.printError("Only the MPI version of CL2D is currently supported, must run with > 1 CPU")
+
 	#=====================
 	def setRunDir(self):
 		path = self.stackdata['path']['path']
 		uppath = os.path.abspath(os.path.join(path, "../.."))
 		self.params['rundir'] = os.path.join(uppath, "align", self.params['runname'])
+
+
+
+
+        #=====================
+        def checkMPI(self):
+                mpiexe = apParam.getExecPath("mpirun", die=True)
+                if mpiexe is None:
+                        return None
+                relionexe = apParam.getExecPath(self.execFile, die=True)
+                if relionexe is None:
+                        return None
+                lddcmd = "ldd "+relionexe+" | grep mpi"
+                proc = subprocess.Popen(lddcmd, shell=True, stdout=subprocess.PIPE)
+                proc.wait()
+                lines = proc.stdout.readlines()
+                print "lines=", lines
+                if lines and len(lines) > 0:
+                        return mpiexe
+
 
 	#=====================
 	def dumpParameters(self):
@@ -174,8 +220,8 @@ class RelionMaxLikeScript(appionScript.AppionScript):
 		return 1
 		secperiter = 0.12037
 		### get num processors
-		nproc = self.params['ppn']*self.params['nodes']
-
+		nproc = self.params['mpiprocs']*self.params['mpinodes']
+		print '1. numprocs is = '+str(nproc)
 		calctime = (
 			(self.params['numpart']/1000.0)
 			*self.params['numrefs']
@@ -281,21 +327,34 @@ class RelionMaxLikeScript(appionScript.AppionScript):
 			+" --psi_step %d "%(self.params['psistep'])
 			+" --tau2_fudge %.1f "%(self.params['tau'])
 			+" --particle_diameter %.1f "%(self.params['partdiam'])
+			+" --j %d "%(self.params['mpithreads'])
+			+" --memory_per_thread %d "%(self.params['mpimem'])
+
 		)
 
+		print 'mpinodes is equal to '+str(self.params['mpinodes'])	
 		### find number of processors
-		nproc = self.params['ppn'] * self.params['nodes']
-		relionopts += " --j %d "%(nproc)
+ 		nproc = self.params['mpiprocs'] * self.params['mpinodes']
+		print 'mpiprocs = '+str(self.params['mpiprocs'])
+		print 'mpinodes = '+str(self.params['mpinodes'])
 
 		if self.params['flattensolvent'] is True:
 			relionopts += " --flatten_solvent "
 
 
+                ### use multi-processor command
+#                apDisplay.printColor("Using "+str(self.params['nproc'])+" processors!", "green")
+                apDisplay.printColor("Using "+str(nproc)+" processors!", "green")
 		self.estimateIterTime()
-		relionexe = apParam.getExecPath("relion_refine", die=True)
-		relioncmd = relionexe+" "+relionopts
-		self.writeRelionLog(relioncmd)
-		apParam.runCmd(relioncmd, package="RELION", verbose=True, showcmd=True)
+		relionexe = apParam.getExecPath("relion_refine_mpi", die=True)
+
+#               mpiruncmd = self.mpirun+" -np "+str(self.params['nproc'])+" "+relionexe+" "+relionopts
+                mpiruncmd = self.mpirun+" -np "+str(nproc)+" "+relionexe+" "+relionopts
+
+		self.writeRelionLog(mpiruncmd)
+		
+
+		apParam.runCmd(mpiruncmd, package="RELION", verbose=True, showcmd=True)
 		aligntime = time.time() - aligntime
 		apDisplay.printMsg("Alignment time: "+apDisplay.timeString(aligntime))
 
