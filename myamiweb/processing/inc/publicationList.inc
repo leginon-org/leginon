@@ -380,4 +380,17 @@ $PUBLICATIONS['tomo3d2'] = array(
 'logo' => '',
 'pages' => '');
 
+$PUBLICATIONS['rpp'] = array(
+'title' => 'Alignment of cryo-EM movies of individual particles by optimization of image translations.',
+'year' => '2015',
+'authorlist' => 'Rubinstein JL, Brubaker MA',
+'journal' => 'J Struct Biol.',
+'volume' => '192',
+'issue' => '2',
+'pmid' => '26296328',
+'pmcid' => '',
+'doi' => 'doi:10.1016/j.jsb.2015.08.007',
+'logo' => '',
+'pages' => '188-195');
+
 ?>
