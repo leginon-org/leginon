@@ -25,7 +25,7 @@ class rubinsteinParticlePolisher extends BasicLayoutForm
 		//------ Set Parameters for the parent class, BasicLoopForm (general Appion params) -----//
 		
 		// Set the publications to be references on the web pages
-		$pubList = array('appion'); // Keys are found in publicationList.inc
+		$pubList = array('rpp'); // Keys are found in publicationList.inc
 		$this->setPublications( $pubList ); // list of references to display
 		
 		$this->setJobType( 'particlepolishing' ); //Job type stored in database
