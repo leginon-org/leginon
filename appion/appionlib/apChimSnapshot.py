@@ -366,7 +366,7 @@ class ChimSnapShots(object):
 			self.writeMessageToLog("Error restoring scale bar")
 
 	# -----------------------------------------------------------------------------
-	def hideDust(self, size=100):
+	def hideDust(self, size=10):
 		self.writeMessageToLog("Hide all dust particles less than %d voxels in size"%(size))
 		native = True
 		#try:
