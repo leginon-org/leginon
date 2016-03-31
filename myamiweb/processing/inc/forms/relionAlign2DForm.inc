@@ -17,7 +17,7 @@ class RelionAlign2DForm extends BasicLayoutForm
 	// Set Default values in the constructor
 	function __construct( $expId, $extraHTML='', $stackId='', $clip='', $bin='1', $numpart='3000',
 		$lowpass='10', $highpass='1000', $numRef='3', $maxIter='30', $angStep='5', $tau='2', $partDiam='',
-		$flat='on', $commit='on')
+		$flat='on', $mpinodes='2',$mpiprocs='4',$mpithreads='1',$mpimem='4', $commit='on')
 	{
 		parent::__construct($expId, $extraHTML);
 
@@ -76,6 +76,13 @@ class RelionAlign2DForm extends BasicLayoutForm
 
 		// Add each of the parameters here.
 		// addParam( "key", default_value, "Label that appears in GUI")
+
+		$params->addParam( "mpinodes", $mpinodes, "Number of nodes allocated for entire job." );
+		$params->addParam( "mpiprocs", $mpiprocs, "Number of processors allocated for a subjob. For memory intensive jobs, decrease this value." );
+		$params->addParam( "mpithreads", $mpithreads, "Number of threads to generate per processor. For memory intensive jobs, increase this value." );
+
+		$params->addParam( "mpimem", $mpimem, "Amount of memory (Gb) to allocate per thread. Increase this value for memory intensive jobs." );
+
 		$params->addParam( "stack", $stackId, "Select a stack of particles to use" );
 		$params->addParam( "clip", $clip, "Unbinned Clip Diameter" );
 		$params->addParam( "bin", $bin, "Particle Binning" );
@@ -106,6 +113,19 @@ class RelionAlign2DForm extends BasicLayoutForm
 		$params = $this->getFormParams();
 
 		$fieldSize = 5;
+
+
+  $html .= "
+            <br />
+            <H4>MPI Configuration</H4>
+            <hr />";
+		$html.= "<br />";
+		$html.= $params->insertTextField( "mpinodes", $fieldSize, '', 'appion.mpinodes' );
+                $html.= $params->insertTextField( "mpiprocs", $fieldSize, '', 'appion.mpiprocs' );
+                $html.= $params->insertTextField( "mpithreads", $fieldSize, '', 'appion.mpithreads' );
+
+		$html.= $params->insertTextField( "mpimem", $fieldSize, '', 'appion.mpimem' );
+
 
 		$html .= "
 	    <br />
@@ -211,9 +231,15 @@ class RelionAlign2DForm extends BasicLayoutForm
 	public function validate( $postArray )
 	{
 		$msg = parent::validate( $postArray );
-
+	
 		$params = $this->getFormParams();
 
+		var_dump($params)."<br>";
+		echo 'nodes post = '.$_POST['nodes'].'<br><br>';
+		echo 'mpinodes = '.$mpinodes.'<br><br>';
+
+		//$params->setParamValue("mpinodes",$_POST['nodes']);
+	#	echo 'mpi nodes = '.$params['mpinodes']['value'].'<br><br>';
 		// Extract the stack id from the stack string
 		$stack = $params->getParamValue( "stack" );
 		list($stackid, $apix, $boxsz, $totpart) = preg_split('%\|--\|%',$stack);
