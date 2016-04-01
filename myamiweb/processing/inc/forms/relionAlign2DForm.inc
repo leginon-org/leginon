@@ -234,9 +234,6 @@ class RelionAlign2DForm extends BasicLayoutForm
 	
 		$params = $this->getFormParams();
 
-		var_dump($params)."<br>";
-		echo 'nodes post = '.$_POST['nodes'].'<br><br>';
-		echo 'mpinodes = '.$mpinodes.'<br><br>';
 
 		//$params->setParamValue("mpinodes",$_POST['nodes']);
 	#	echo 'mpi nodes = '.$params['mpinodes']['value'].'<br><br>';
