@@ -362,7 +362,7 @@ class GatanSocket(object):
 		return self.ExecuteSendScript(script)
 
 	def AlignEnergyFilterZeroLossPeak(self):
-		script = 'if(%s()) (%s; Exit(1.0)} else Exit(-1.0)' % (self.filter_functions['AlignEnergyFilterZeroLossPeak'], self.wait_for_filter)
+		script = 'if(%s()) { %s; Exit(1.0); } else { Exit(-1.0); }' % (self.filter_functions['AlignEnergyFilterZeroLossPeak'], self.wait_for_filter)
 		return self.ExecuteGetDoubleScript(script)
 
 	@logwrap
