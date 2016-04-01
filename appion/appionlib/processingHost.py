@@ -92,9 +92,15 @@ class ProcessingHost (object):
             currentJob=self.currentJob
         else:
             raise UnboundLocalError ("Current Job not set")
+        
+        postArray = {   'command':'destinations', 
+                        'username':pwd.getpwuid(os.getuid())[0],
+                        'jobType':self.jobType,
+                        'script':self.command
+        };
+        
         r = requests.post(self.destinationsURL)
-        postData = '{"command": "destinations", "username":"' + pwd.getpwuid(os.getuid())[0] + '", "jobType": "' + self.jobType + '","script": "' + self.command + '"}'
-        r = requests.post(self.destinationsURL, data=postData)
+        r = requests.post(self.destinationsURL, data=json.dumps(postArray))
         
         headerArray = json.loads(r.text)
         
