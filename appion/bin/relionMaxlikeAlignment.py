@@ -237,7 +237,8 @@ class RelionMaxLikeScript(appionScript.AppionScript):
 	def writeRelionLog(self, text):
 		f = open("relion.log", "a")
 		f.write(apParam.getLogHeader())
-		f.write(text+"\n")
+		f.write(text+"\n\n")
+		f.write("***NOTE: The --dont_check_norm flag has been added to the relion_refine_mpi command. Relion normalizes background values differently than other programs, so results may differ from refining in the stand-alone Relion package.\n\n")
 		f.close()
 
 	#=====================
@@ -329,6 +330,7 @@ class RelionMaxLikeScript(appionScript.AppionScript):
 			+" --particle_diameter %.1f "%(self.params['partdiam'])
 			+" --j %d "%(self.params['mpithreads'])
 			+" --memory_per_thread %d "%(self.params['mpimem'])
+			+" --dont_check_norm"
 
 		)
 
