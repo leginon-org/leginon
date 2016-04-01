@@ -336,7 +336,7 @@ class GatanSocket(object):
 	def GetEnergyFilter(self):
 		if 'GetEnergyFilter' not in self.filter_functions.keys():
 			return -1.0
-		script = 'if(%s()) Exit(1.0) else Exit(-1.0)' % (self.filter_functions['GetEnergyFilter'],)
+		script = 'if( %s() ) { Exit(1.0); } else { Exit(-1.0); }' % (self.filter_functions['GetEnergyFilter'],)
 		return self.ExecuteGetDoubleScript(script)
 
 	def SetEnergyFilter(self, value):
