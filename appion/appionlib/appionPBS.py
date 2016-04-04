@@ -51,6 +51,7 @@ class AppionPBS(appionLoop2.AppionLoop):
 		self.parser.add_option("--handlefiles", dest='handlefiles', type='choice', choices=('direct', 'copy', 'link'), default='direct', help='How to process intermediate files')
 		self.parser.add_option("--dryrun", dest='dryrun', action='store_true', default=False,  help="Create jobs but don't submit")
 		self.parser.add_option("--wrapper", dest='wrapper', type='str', default='', help='wrapper string called before command')
+		self.parser.add_option('--stackid', dest='stackid', type='int', default=None, help='Process images from stackid instead of preset data', metavar='INT')
 
 	#=====================
 	def checkGlobalConflicts(self):
@@ -61,31 +62,42 @@ class AppionPBS(appionLoop2.AppionLoop):
 				apDisplay.printError("queue scratch directory %s not exists" % self.params['queue_scratch'])
 
 	#=====================
-	def run(self):
+	def run(self,imgtree=None):
 		"""
 		processes all images
 		"""
 		if not self.params['parallel']:
 			self.cleanParallelLock()
-		### get images from database
-		self._getAllImages()
-		os.chdir(self.params['rundir'])
+		
+		### get images from database if not set in preLoopFunctions
+		
 		self.preLoopFunctions()
+		
+		#Imgtree can get set in three ways: 1) from the obect calling 'run' 2) from preLoopFunctions or 3) from _getAllImages().
+		if hasattr(self,'imgtree') is False:
+			if imgtree is None:
+				self._getAllImages()
+			else:
+				self.imgtree=imgtree
+			
+		os.chdir(self.params['rundir'])
+		
 		### start the loop
 		self.notdone=True
 		self.badprocess = False
 		self.stats['startloop'] = time.time()
-		
+				
 		while self.notdone:
 			apDisplay.printColor("\nBeginning Main Loop", "green")
 			imgnum = 0
 			while imgnum < len(self.imgtree) and self.notdone is True:
+			#while imgnum < len(self.imgtree):
 				jobn=1
-				print 1
-				
+								
 				imgdata = self.imgtree[imgnum]
 				### CHECK IF IT IS OKAY TO START PROCESSING IMAGE
 				if not self._startLoop(imgdata):
+					imgnum+=1
 					continue
 
 				if self.params['usequeue'] is True:
@@ -171,6 +183,8 @@ class AppionPBS(appionLoop2.AppionLoop):
 					#finish up stuff
 					self._finish(imgdata, results)
 
+			if self.params['stackid'] is not None:
+				self.notdone=False
 			if self.notdone is True:
 				self.notdone = self._waitForMoreImages()
 			#END NOTDONE LOOP
@@ -207,7 +221,7 @@ class AppionPBS(appionLoop2.AppionLoop):
 	def _finish(self,imgdata,results):
 		### WRITE db data
 		if self.badprocess is False:
-			if self.params['commit'] is True:
+			if self.params['commit'] is True and self.params['stackid'] is None:
 				if not self.params['background']:
 					apDisplay.printColor(" ==== Committing data to database ==== ", "blue")
 				self.loopCommitToDatabase(imgdata)
@@ -271,7 +285,8 @@ class AppionPBS(appionLoop2.AppionLoop):
 		donefile=imgdata['filename']+'.done'
 		f.write('touch %s\n' % (donefile) )
 		f.write('%s \n' % s )
-
+		#HACK to remove frames
+		f.write ('rm -r *.mrc')
 		f.close()
 		print jobpath
 		return(jobname,donefile)
