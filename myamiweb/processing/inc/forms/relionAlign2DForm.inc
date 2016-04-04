@@ -17,7 +17,7 @@ class RelionAlign2DForm extends BasicLayoutForm
 	// Set Default values in the constructor
 	function __construct( $expId, $extraHTML='', $stackId='', $clip='', $bin='1', $numpart='3000',
 		$lowpass='10', $highpass='1000', $numRef='3', $maxIter='30', $angStep='5', $tau='2', $partDiam='',
-		$flat='on', $mpinodes='2',$mpiprocs='4',$mpithreads='1',$mpimem='4', $commit='on')
+		$flat='on', $zero_mask=False,$mpinodes='2',$mpiprocs='4',$mpithreads='1',$mpimem='4', $commit='on')
 	{
 		parent::__construct($expId, $extraHTML);
 
@@ -95,7 +95,7 @@ class RelionAlign2DForm extends BasicLayoutForm
 		$params->addParam( "angStep", $angStep, "In-plane Rotation Angle Interval" );
 		$params->addParam( "tau", $tau, "Regularisation parameter" );
 		$params->addParam( "flat", $flat, "Flatten Solvent on References " );
-
+		$params->addParam( "zero_mask", $zero_mask, "Zero Masking");
 		$params->addParam( "commit", $commit, "Commit to Database" );
 
 		// Validations
@@ -150,12 +150,13 @@ class RelionAlign2DForm extends BasicLayoutForm
 	    <hr />";
 
 		$html.= $params->insertTextField( "partDiam", $fieldSize,"(&Aring;ngstroms)",'appion.diameter' );
+
 		$html.= $params->insertTextField( "numRef", $fieldSize,'','appion.numref' );
 		$html.= $params->insertTextField( "maxIter", $fieldSize,'','appion.maxiter' );
 		$html.= $params->insertTextField( "angStep", $fieldSize,'(degrees)','appion.angleinc' );
 		$html.= $params->insertTextField( "tau", $fieldSize,'','appion.tau2fudge' );
 		$html.= $params->insertCheckboxField("flat");
-
+		$html.= $params->insertCheckboxField("zero_mask");
 
 		// When loading this page the first time, use the switchDefaults javascript function to set
 		// form parameters based on the currently selected stack.
