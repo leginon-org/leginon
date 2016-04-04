@@ -95,6 +95,8 @@ class RelionMaxLikeScript(appionScript.AppionScript):
 		self.parser.add_option("--flat", "--flatten-solvent", dest='flattensolvent', default=False,
 			action="store_true", help="Flatten Solvent in References")
 
+                self.parser.add_option("--zero_mask", "--zero_mask", dest="zero_mask", default=False,
+                        action="store_true", help="Mask surrounding background in particles to zero (by default the solvent area is filled with random noise)", metavar="#")
 	#=====================
 	def checkConflicts(self):
 		if self.params['stackid'] is None:
@@ -343,6 +345,8 @@ class RelionMaxLikeScript(appionScript.AppionScript):
 		if self.params['flattensolvent'] is True:
 			relionopts += " --flatten_solvent "
 
+		if self.params['zero_mask'] is True:
+			relionopts += " --zero_mask "
 
                 ### use multi-processor command
 #                apDisplay.printColor("Using "+str(self.params['nproc'])+" processors!", "green")
