@@ -75,16 +75,29 @@ class stackPolisherScript(appionScript.AppionScript):
 				a = mrc.read(particlestack)
 				apDisplay.printMsg("appending stack %s" % ddstack)
 				if oldmovieid is None:
-					mrc.write(a, "polished.mrc")
+					mrc.write(a, self.polished_stack_filename)
 				else:
-					mrc.append(a, "polished.mrc")
+					mrc.append(a, self.polished_stack_filename)
 				oldmovieid = movieid
 		
 	#=====================
+	def modifyPolishedMrcHeader(self):
+		'''
+		Modify the mrc header to image stack.
+		mrc module append the particle stacks assuming they are equal size volume
+		while this result should be image stack.
+		'''
+		apDisplay.printMsg("Modify %s header to image stack as defined in MRC2014 standard" % (self.polished_stack_filename,))
+		old_header = mrc.readHeaderFromFile(self.polished_stack_filename)
+		new_header_info = {'mz': 1,'zlen':1,'nzstart':-old_header['nz']/2}
+		mrc.update_file_header(self.polished_stack_filename,new_header_info)
+
+	#=====================
 	def start(self):
-		
-		self.combine_polished_stacks()
-	
+		self.polished_stack_filename = "polished.mrc"
+		#self.combine_polished_stacks()
+		self.modifyPolishedMrcHeader()
+
 		# Clean up
 		apDisplay.printMsg("deleting temporary processing files")
 
