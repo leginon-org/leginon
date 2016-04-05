@@ -89,8 +89,8 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 		self.setWaitSleepMin(0.4)
 		self.setProcessBatchCount(1)
 		self.params['output_fileformat'] = 'mrc'
-		self.imgtree = []
 		if self.params['stackid'] is not None:
+			self.imgtree = []
 			stackdata = apStack.getStackParticlesFromId(self.params['stackid'])
 			stackrundata = apStack.getOnlyStackData(self.params['stackid'])
 			imagedict = {}

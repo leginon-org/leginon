@@ -79,7 +79,6 @@ class AppionPBS(appionLoop2.AppionLoop):
 				self._getAllImages()
 			else:
 				self.imgtree=imgtree
-			
 		os.chdir(self.params['rundir'])
 		
 		### start the loop
