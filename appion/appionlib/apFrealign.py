@@ -1551,5 +1551,10 @@ def getFrealignStyleParticleMagnification(stackpdata,refinestack_bin):
 	totalbin =  stackbin * refinestack_bin
 	imgdata = stackpdata['particle']['image']
 	apix = apDatabase.getPixelSize(imgdata) # in angstroms
-	camera_pixel = imgdata['camera']['pixel size']['x']*imgdata['camera']['binning']['x'] # in meters
+	
+	senser_pixel = imgdata['camera']['pixel size']['x']
+	if senser_pixel is None:
+		senser_pixel = apix*1e-10 / imgdata['scope']['magnification']
+		
+	camera_pixel = senser_pixel*imgdata['camera']['binning']['x'] # in meters
 	return camera_pixel / (apix * 1e-10 * totalbin)

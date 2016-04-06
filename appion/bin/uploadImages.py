@@ -276,6 +276,10 @@ class UploadImages(appionScript.AppionScript):
 		cameradata['nframes'] = nframes
 		cameradata['save frames'] = False
 		cameradata['exposure time'] = 100.0
+		# sensor pixel size in meter is required for frealign preparation Bug #4088
+		sensor_pixelsize = self.params['magnification'] * self.params['mpix']
+		cameradata['pixel size'] = {'x':sensor_pixelsize,'y':sensor_pixelsize}
+
 		return cameradata
 
 	#=====================
