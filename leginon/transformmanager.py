@@ -550,6 +550,7 @@ class TransformManager(node.Node, TargetTransformer):
 
 	def uiDeclareDrift(self):
 		self.declareTransform('manual')
+		self.logger.info('Drift Declared')
 
 	def acquireImage(self, channel=0, correct=True):
 		self.startTimer('drift acquire')
