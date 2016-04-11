@@ -213,7 +213,6 @@ class RelionAlign2DForm extends BasicLayoutForm
 			$command.= " --clip=$clip ";
 		}
 
-
 		$flat  = ($params->getParamValue('flat') == 'on' ) ? true : false;
 		if (!$flat) {
 			$command.= " --flat ";
@@ -231,17 +230,31 @@ class RelionAlign2DForm extends BasicLayoutForm
 	public function validate( $postArray )
 	{
 		$msg = parent::validate( $postArray );
-	
+		
+		global $PROCESSING_HOSTS;
+		echo "<br><br>processing hosts ".($PROCESSING_HOSTS[0]['host']->value);	
+
+		$maxmem = $PROCESSING_HOSTS[0]['memorymax'];
+//		$numnodes = $PROCESSING_HOSTS[0]['
+		echo "mem max = ".$maxmem."<br><br>";
+		var_dump($maxmem);
 		$params = $this->getFormParams();
-
-
-		//$params->setParamValue("mpinodes",$_POST['nodes']);
-	#	echo 'mpi nodes = '.$params['mpinodes']['value'].'<br><br>';
+		$mpithreads = $params->getParamValue('mpithreads');
+		$mpimem = $params->getParamValue('mpimem');
+		$mpiprocs = $params->getParamValue('mpiprocs');			
+		unset($PROCESSING_HOSTS);	
+		
 		// Extract the stack id from the stack string
 		$stack = $params->getParamValue( "stack" );
 		list($stackid, $apix, $boxsz, $totpart) = preg_split('%\|--\|%',$stack);
 
 		$clip = $params->getParamValue('clip');
+
+		if ($mpiprocs*$mpithreads*$mpimem > $maxmem) {
+		$msg .= "<B>Error:</B> Total MPI threads per node * MPI memory/thread is greater than max memory per node. <br>( $mpiprocs procs/node * $mpithreads threads/proc * $mpimem Gb/thread = ".$mpiprocs*$mpithreads*$mpimem." Gb > $maxmem Gb )";
+	
+		return $msg;
+		}
 
 		if ($clip > $boxsz) {
 			// Clip size too big
