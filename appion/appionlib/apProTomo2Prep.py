@@ -439,7 +439,9 @@ def doseCompensate(seriesname, rundir, sessionname, tiltseriesnumber, frame_alig
 		apDisplay.printMsg('Dose compensating all tilt images with a=%s, b=%s, and c=%s...' % (dose_a, dose_b, dose_c))
 	else:
 		apDisplay.printMsg('Creating dose compensation list with a=%s, b=%s, and c=%s...' % (dose_a, dose_b, dose_c))
-		dose_lp_file = open(os.path.join(rundir,'stack','full_dose_lp_list.txt'), 'w')
+		stack_path=os.path.join(rundir,'stack')
+		os.system('mkdir %s 2>/dev/null' % stack_path)
+		dose_lp_file = open(os.path.join(stack_path,'full_dose_lp_list.txt'), 'w')
 	
 	for image, j in zip(new_ordered_imagelist, range(len(new_ordered_imagelist))):
 		lowpass = float(np.real(complex(dose_a/(accumulated_dose_list[j] - dose_c))**(1/dose_b)))  #equation (3) from Grant & Grigorieff, 2015
