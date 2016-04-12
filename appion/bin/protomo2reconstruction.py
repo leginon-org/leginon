@@ -507,7 +507,7 @@ class ProTomo2Reconstruction(basicScript.BasicScript):
 				apDisplay.printMsg("IMOD function \'trimvol\' not found, trying using pyami. If the file is large and your RAM is small this might not end well...")
 				mrc.write(np.rot90(mrc.read(mrc_full)),mrc_full)
 		
-		if self.params['reconstruction_method'] == 4:
+		if self.params['reconstruction_method'] == 4 and self.params['dose_presets'] != "False":
 			#os.system('rm -r %s' % recon_dir)
 			#Create a list of tilts, accumulated dose, and lowpass to be applied for the requested stack
 			f1=open(os.path.join(self.params['rundir'],'stack','full_dose_lp_list.txt'),'r')
