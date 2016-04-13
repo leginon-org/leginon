@@ -34,8 +34,8 @@ def getTiltedCoordinates(img1, img2, tiltdiff, picks1=[], angsearch=True, initti
 	binned2 = apImage.binImg(img2, bin)
 	#apImage.arrayToJpeg(binned1, "binned1.jpg")
 	#apImage.arrayToJpeg(binned2, "binned2.jpg")
-	filt1 = apImage.highPassFilter(binned1, apix=1.0, radius=20.0, localbin=4/bin)
-	filt2 = apImage.highPassFilter(binned2, apix=1.0, radius=20.0, localbin=4/bin)
+	filt1 = apImage.tanhHighPassFilter(binned1, apix=1.0, radius=20.0)
+	filt2 = apImage.tanhHighPassFilter(binned2, apix=1.0, radius=20.0)
 	#apImage.arrayToJpeg(filt1, "filt1.jpg")
 	#apImage.arrayToJpeg(filt2, "filt2.jpg")
 
@@ -200,7 +200,7 @@ def getTiltedRotateShift(img1, img2, tiltdiff, angle=0, bin=1, msg=True):
 	### cross-correlate
 	cc = correlator.cross_correlate(filt1, filt2, pad=True)
 	rad = min(cc.shape)/20.0
-	cc = apImage.highPassFilter(cc, radius=rad)
+	cc = apImage.tanhHighPassFilter(cc, radius=rad)
 	cc = apImage.normRange(cc)
 	cc = blackEdges(cc)
 	cc = apImage.normRange(cc)
