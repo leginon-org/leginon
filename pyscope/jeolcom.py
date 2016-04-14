@@ -100,6 +100,11 @@ class Jeol(tem.TEM):
 		self.stage_limit = self.getJeolConfig('stage','stage_limit')
 		self.backlash_scale = self.getJeolConfig('stage','backlash_scale')
 		self.backlash_limit = self.getJeolConfig('stage','backlash_limit')
+		self.auto_apertures = self.getJeolConfig('apt','auto_apertures')
+		if type(self.auto_apertures) == type('') and not self.auto_apertures == '':
+			# make single entry into an one item list
+			self.auto_apertures = [self.auto_apertures,]
+
 	def __del__(self):
 		comtypes.CoUninitialize()
 
@@ -1050,7 +1055,7 @@ class Jeol(tem.TEM):
 					break
 
 	def setStagePositionByAxis(self, position, axis):
-                keys = position.keys()
+		keys = position.keys()
 		if axis not in keys:
 			return
 		if axis in ('a','b'):
@@ -1383,7 +1388,7 @@ class Jeol(tem.TEM):
 		for name in positions.keys():
 			size_list = self._getApertureSizesOfKind(name)
 
-		for name in names:
+		for name in positions.keys():
 			kind = self._getApertureKind(name)
 			# Despite the name, this gives not the size
 			# but a number as the current aperture position
@@ -1395,15 +1400,15 @@ class Jeol(tem.TEM):
 				for i in range(10):
 					if result != 0:
 						time.sleep(.1)
-						size, result = self.apt3.GetSize(kind)
+						index, result = self.apt3.GetSize(kind)
 
 				if result != 0:
 					raise SystemError('Get %s aperture size failed' % name)
 
-				size_list = self._getApertureSizes(name)
+				size_list = self._getApertureSizesOfKind(name)
 
 			try:
-				sizes[name] = size_list[positions[name]]
+				sizes[name] = size_list[index]
 			except ValueError:
 				raise SystemError('No %s aperture size for index %d' % (name,index))
 
@@ -1419,6 +1424,9 @@ class Jeol(tem.TEM):
 			kind = self._getApertureKind(name)
 
 			size_list = self._getApertureSizesOfKind(name)
+			# skip non-automated apertures
+			if kind not in self.auto_apertures:
+				continue
 
 			if sizes[name] is None:
 				return
@@ -1426,7 +1434,7 @@ class Jeol(tem.TEM):
 			try:
 				index = size_list.index(sizes[name])
 			except ValueError:
-				raise ValueError('Invalid %s aperture size %d specified' % (name, sizes[name]))
+				raise ValueError('Invalid %s aperture size %d specified' % (name, size_list[index]))
 
 			current_index, result = self.apt3.GetSize(kind)
 			for i in range(10):
@@ -1440,20 +1448,25 @@ class Jeol(tem.TEM):
 
 				result = self.apt3.SelectKind(kind)
 
-				if current_index > index:
+				if index > 0 and current_index > index:
+					# This looks like a backlash correction
 					result = self.apt3.SetSize(index - 1)
+					debug_print('backlash %d' % (index - 1))
 					result = None
 					# should add timeout
 					while result != 0:
 						set_index, result = self.apt3.GetSize(kind)
 						time.sleep(.1)
+						debug_print('backlash set_index %d' % set_index)
 
 				result = self.apt3.SetSize(index)
+				debug_print('kind,index %s, %d' % (kind,index))
 				result = None
 				# should add timeout
 				while result != 0:
 					set_index, result = self.apt3.GetSize(kind)
 					time.sleep(.1)
+					debug_print('set_index %d' % (set_index,))
 
 		result = self.apt3.SelectKind(current_kind)
 
@@ -1579,4 +1592,4 @@ class Jeol(tem.TEM):
 
 	def getBeamBlankedDuringCameraExchange(self):
 		# Keep it off because gun shutter is too slow.
-		return Falsee
+		return False
