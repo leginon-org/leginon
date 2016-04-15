@@ -11,7 +11,7 @@ DEBUG = False
 FUNCTION_MODES = {'mag1':0,'mag2':1,'lowmag':2,'samag':3,'diff':4}
 FUNCTION_MODE_ORDERED_NAMES = ['mag1','mag2','lowmag','samag','diff']
 
-# identifier for dector
+# identifier for detector
 MAIN_SCREEN = 13
 
 # MDS modes
@@ -25,6 +25,7 @@ CLA = 1
 OLA = 2
 HCA = 3
 SAA = 4
+APERTURE_MAP = {1:'CLA',2:'OLA',3:'HCA',4:'SAA'}
 
 # constants for Jeol Hex value
 ZERO = 32768
@@ -1342,6 +1343,9 @@ class Jeol(tem.TEM):
 		return ['condenser', 'objective', 'high contrast', 'selected area']
 
 	def _getApertureKind(self, name):
+		'''
+		This gives the id number for named aperture
+		'''
 		if name == 'condenser':
 			return CLA
 		elif name == 'objective':
@@ -1389,18 +1393,18 @@ class Jeol(tem.TEM):
 			size_list = self._getApertureSizesOfKind(name)
 
 		for name in positions.keys():
-			kind = self._getApertureKind(name)
+			kindid = self._getApertureKind(name)
 			# Despite the name, this gives not the size
 			# but a number as the current aperture position
 			if not self.has_auto_apt:
 				index = 0
 			else:
-				index, result = self.apt3.GetSize(kind)
+				index, result = self.apt3.GetSize(kindid)
 
 				for i in range(10):
 					if result != 0:
 						time.sleep(.1)
-						index, result = self.apt3.GetSize(kind)
+						index, result = self.apt3.GetSize(kindid)
 
 				if result != 0:
 					raise SystemError('Get %s aperture size failed' % name)
@@ -1418,14 +1422,14 @@ class Jeol(tem.TEM):
 		if not self.has_auto_apt:
 			return
 
-		current_kind, result = self.apt3.GetKind()
+		current_kindid, result = self.apt3.GetKind()
 
 		for name in sizes:
-			kind = self._getApertureKind(name)
+			kindid = self._getApertureKind(name)
 
 			size_list = self._getApertureSizesOfKind(name)
 			# skip non-automated apertures
-			if kind not in self.auto_apertures:
+			if APERTURE_MAP[kindid] not in self.auto_apertures:
 				continue
 
 			if sizes[name] is None:
@@ -1436,17 +1440,17 @@ class Jeol(tem.TEM):
 			except ValueError:
 				raise ValueError('Invalid %s aperture size %d specified' % (name, size_list[index]))
 
-			current_index, result = self.apt3.GetSize(kind)
+			current_index, result = self.apt3.GetSize(kindid)
 			for i in range(10):
 				if result != 0:
 					time.sleep(.1)
-					current_index, result = self.apt3.GetSize(kind)
+					current_index, result = self.apt3.GetSize(kindid)
 
 			if result != 0:
 				raise SystemError('Get %s aperture size failed' % name)
 			if index != current_index:
 
-				result = self.apt3.SelectKind(kind)
+				result = self.apt3.SelectKind(kindid)
 
 				if index > 0 and current_index > index:
 					# This looks like a backlash correction
@@ -1455,20 +1459,20 @@ class Jeol(tem.TEM):
 					result = None
 					# should add timeout
 					while result != 0:
-						set_index, result = self.apt3.GetSize(kind)
+						set_index, result = self.apt3.GetSize(kindid)
 						time.sleep(.1)
 						debug_print('backlash set_index %d' % set_index)
 
 				result = self.apt3.SetSize(index)
-				debug_print('kind,index %s, %d' % (kind,index))
+				debug_print('kindid,index %d, %d' % (kindid,index))
 				result = None
 				# should add timeout
 				while result != 0:
-					set_index, result = self.apt3.GetSize(kind)
+					set_index, result = self.apt3.GetSize(kindid)
 					time.sleep(.1)
 					debug_print('set_index %d' % (set_index,))
 
-		result = self.apt3.SelectKind(current_kind)
+		result = self.apt3.SelectKind(current_kindid)
 
 	def getAperturePosition(self):
 		positions = {}
@@ -1480,12 +1484,12 @@ class Jeol(tem.TEM):
 				positions[name] = 0
 			return positions
 
-		current_kind, result = self.apt3.GetKind()
+		current_kindid, result = self.apt3.GetKind()
 
 		for name in names:
-			kind = self._getApertureKind(name)
+			kindid = self._getApertureKind(name)
 
-			result = self.apt3.SelectKind(kind)
+			result = self.apt3.SelectKind(kindid)
 
 			x, y, result = self.apt3.GetPosition()
 			for i in range(10):
@@ -1498,7 +1502,7 @@ class Jeol(tem.TEM):
 
 			positions[name] = {'x': x, 'y': y}
 
-		result = self.apt3.SelectKind(current_kind)
+		result = self.apt3.SelectKind(current_kindid)
 
 		return positions
 
@@ -1506,7 +1510,7 @@ class Jeol(tem.TEM):
 		if not self.has_auto_apt:
 			return
 
-		current_kind, result = self.apt3.GetKind()
+		current_kindid, result = self.apt3.GetKind()
 		for name in positions:
 			p = positions[name]
 			if 'x' in p and type(p['x']) is not int:
@@ -1515,16 +1519,16 @@ class Jeol(tem.TEM):
 				raise TypeError
 			
 
-			kind = self._getApertureKind(name)
+			kindid = self._getApertureKind(name)
 
-			result = self.apt3.SelectKind(kind)
+			result = self.apt3.SelectKind(kindid)
 
 			x, y, result = self.apt3.GetPosition()
 
 			if 'x' in p and p['x'] != x or 'y' in p and p['y'] != y:
 				result = self.apt3.SetPosition(p['x'], p['y'])
 
-		result = self.apt3.SelectKind(current_kind)
+		result = self.apt3.SelectKind(current_kindid)
 
 	def _setSpecialMag(self):
 		result = self.eos3.SelectFunctionMode(FUNCTION_MODES['mag1'])
