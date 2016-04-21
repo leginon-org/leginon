@@ -13,6 +13,7 @@ from appionlib import appiondata
 from appionlib import apDatabase
 from appionlib import basicAgent
 from appionlib import apParam
+from appionlib import apGpuJob
 import sys
 import re
 import time
@@ -36,12 +37,10 @@ class Agent (basicAgent.BasicAgent):
 	
 	def Main(self,command):
 				
+		self.processingHost = self.createProcessingHost()
 		
 		jobType = self.getJobType(command)
-                
-		self.processingHost = self.createProcessingHost(command[0], jobType)
-                
-                
+		
 		#Not sure if we want pedanticaly issue warning messages 
 		#if not jobType:
 		#	sys.stderr.write("Warning: Could not determine job type\n")
@@ -103,6 +102,8 @@ class Agent (basicAgent.BasicAgent):
 	def createJobInst(self, jobType, command):
 		jobInstance = None
 		print "Job type: %s"%(jobType)	
+
+
 		if "emanrecon" == jobType:
 			jobInstance = apRefineJobEman.EmanRefineJob(command)
 		elif "frealignrecon" == jobType:
@@ -117,6 +118,9 @@ class Agent (basicAgent.BasicAgent):
 			jobInstance = apSparxISAC.ISACJob(command)
 		elif "jobtest" == jobType:
 			jobInstance = jobtest.jobtestClass()
+		elif "gctf" == jobType:
+			jobInstance = apGpuJob.GpuJob(command)
+
 		else:
 			jobInstance = apGenericJob.genericJob(command)
 		print jobType, command
