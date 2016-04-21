@@ -37,9 +37,9 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 			help="fieldsize, default=1024", metavar="#")
 		self.parser.add_option("--nominal", dest="nominal", type="float",
 			help="nominal override value (in microns, absolute value)")
-		self.parser.add_option("--resL", dest="resmin", type="float", default=50.0,
+		self.parser.add_option("--resmin", dest="resmin", type="float", default=50.0,
 			help="Low resolution end of data to be fitted in Angstroms", metavar="#")
-		self.parser.add_option("--resH", dest="resmax", type="float", default=4.0,
+		self.parser.add_option("--resmax", dest="resmax", type="float", default=4.0,
 			help="High resolution end of data to be fitted in Angstroms", metavar="#")
 		self.parser.add_option("--defstep", dest="defstep", type="float", default=0.05,
 			help="Step width for grid search in microns", metavar="#")
@@ -246,7 +246,6 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 		#		ctfprogproc.stdin.write((' '+str(inputparams[paramName])+' ').strip("\n"))
 		#		apDisplay.printColor((' '+str(inputparams[paramName])+' ').strip("\n"),"magenta")
 				gctfcommandstring = gctfcommandstring + (' '+str(inputparams[paramName])+' ')
-				print 'this is a test test test'
 
 			elif paramName == 'output':
 				continue	
