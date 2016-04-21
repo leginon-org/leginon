@@ -141,6 +141,9 @@ noderegistry.registerNodeClass(AutoExposure,classtype)
 from baker import Baker
 noderegistry.registerNodeClass(Baker,classtype)
 
+from moveacquisition import MoveAcquisition
+noderegistry.registerNodeClass(MoveAcquisition,classtype)
+
 from tiltacquisition import TiltAcquisition
 noderegistry.registerNodeClass(TiltAcquisition,classtype)
 
@@ -168,6 +171,9 @@ noderegistry.registerNodeClass(BeamTiltCalibrator,classtype)
 
 from pixelsizecalibrator import PixelSizeCalibrator
 noderegistry.registerNodeClass(PixelSizeCalibrator,classtype)
+
+from imagerotationcalibrator import ImageRotationCalibrator
+noderegistry.registerNodeClass(ImageRotationCalibrator,classtype)
 
 from dosecalibrator import DoseCalibrator
 noderegistry.registerNodeClass(DoseCalibrator,classtype)

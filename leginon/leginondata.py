@@ -411,6 +411,14 @@ class MatrixCalibrationData(BeamProbeDependentCalibrationData):
 		)
 	typemap = classmethod(typemap)
 
+class ImageRotationCalibrationData(BeamProbeDependentCalibrationData):
+	def typemap(cls):
+		return BeamProbeDependentCalibrationData.typemap() + (
+			('rotation', float),
+			('comment', str),
+		)
+	typemap = classmethod(typemap)
+
 class MoveTestData(InSessionData):
 	def typemap(cls):
 		return InSessionData.typemap() + (
@@ -1846,6 +1854,17 @@ class TiltAlternaterSettingsData(AcquisitionSettingsData):
 		)
 	typemap = classmethod(typemap)
 
+class MoveAcquisitionSettingsData(AcquisitionSettingsData):
+	def typemap(cls):
+		return AcquisitionSettingsData.typemap() + (
+			('acquire during move', bool),
+			('imaging delay', float),  #seconds
+			('tilt to', float),		#degrees
+			('total move time', float),  #seconds
+			('nsteps', int),
+		)
+	typemap = classmethod(typemap)
+
 class CalibratorSettingsData(SettingsData):
 	def typemap(cls):
 		return SettingsData.typemap() + (
@@ -1876,6 +1895,11 @@ class PixelSizeCalibratorSettingsData(CalibratorSettingsData):
 			('k2', int),
 			('distance', float),
 		)
+	typemap = classmethod(typemap)
+
+class ImageRotationCalibratorSettingsData(CalibratorSettingsData):
+	def typemap(cls):
+		return CalibratorSettingsData.typemap()
 	typemap = classmethod(typemap)
 
 class MagCalibratorSettingsData(CalibratorSettingsData):

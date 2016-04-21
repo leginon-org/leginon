@@ -1373,6 +1373,89 @@ class ImageShiftCalibrationClient(SimpleMatrixCalibrationClient):
 		pixel_shift = numpy.dot(matrix_inv, physicalpos)
 		return pixel_shift
 
+class ImageRotationCalibrationClient(ImageShiftCalibrationClient):
+	mover = False
+	def __init__(self, node):
+		ImageShiftCalibrationClient.__init__(self, node)
+
+	def parameter(self):
+		# This need to be set to image shift for other functions.
+		return 'image shift'
+
+	def retrieveLastImageRotations(self, tem, ccdcamera):
+		'''
+		get most recent calibrations at all mags
+		'''
+		caldatalist = self.researchImageRotation(tem, ccdcamera, mag=None)
+		last = {}
+		for caldata in caldatalist:
+			try:
+				mag = caldata['magnification']
+				if mag not in last:
+					last[mag] = caldata
+			except NoCalibrationError:
+				pass
+			except:
+				raise RuntimeError('Failed retrieving last values')
+		return last.values()
+
+	def researchImageRotation(self, tem, ccdcamera, mag=None, ht=None, probe=None):
+		queryinstance = leginondata.ImageRotationCalibrationData()
+		self.setDBInstruments(queryinstance,tem,ccdcamera)
+		if ht is None:
+			ht = self.instrument.tem.HighTension
+		if probe is None:
+			probe = self.instrument.tem.ProbeMode
+		queryinstance['magnification'] = mag
+		queryinstance['high tension'] = ht
+		queryinstance['probe'] = probe
+		caldatalist = self.node.research(datainstance=queryinstance, results=1)
+		return caldatalist
+
+	def retrieveImageRotation(self, tem, ccdcamera, mag, ht=None):
+		'''
+		finds the requested  using magnification
+		'''
+		caldatalist = self.researchImageRotation(tem, ccdcamera, mag, ht)
+		if caldatalist:
+			caldata = caldatalist[0]
+			self.node.logger.info('image rotation calibration dbid: %d' % caldata.dbid)
+			return caldata
+		else:
+			return []
+
+	def pixelToPixel(self, tem1, ccdcamera1, tem2, ccdcamera2, ht, mag1, mag2, p1):
+		'''
+		Using physical position as a global coordinate system, we can
+		do pixel to pixel transforms between mags.
+		This function will calculate a pixel vector at mag2, given
+		a pixel vector at mag1.
+		For image shift, this means: the physical image shift values in meters
+		need to be properly calibrated for this to work right
+		'''
+		par = self.parameter()
+		physicalpos = self.pixelToPosition(tem1,ccdcamera1, 'image shift', ht, mag1, p1)
+		# add an additional rotation in case the image shift axis is not consistent.
+		# This happens with high defocus.
+		physicalpos = self.rotatePosition(tem1,ccdcamera1,ht,mag1, physicalpos, False)
+		physicalpos = self.rotatePosition(tem2,ccdcamera2,ht,mag2, physicalpos, True)
+		p2 = self.positionToPixel(tem2,ccdcamera2, par, ht, mag2, physicalpos)
+		return p2
+
+	def rotatePosition(self, tem, ccdcamera, ht, mag, pixvect, invert=False):
+		try:
+			caldata = self.retrieveImageRotation(tem,ccdcamera,mag,ht)
+			a = caldata['rotation']
+		except:
+			a = 0.0
+		if invert:
+			a = -a
+		m = numpy.matrix([[math.cos(a),math.sin(a)],[-math.sin(a),math.cos(a)]])
+		pixvect = numpy.array(pixvect)
+		rotated_vect = numpy.dot(pixvect,numpy.asarray(m))
+		self.node.logger.info('Adjust for image rotation: rotate %s to %s' % (pixvect, rotated_vect))
+		return rotated_vect
+	
 class BeamShiftCalibrationClient(SimpleMatrixCalibrationClient):
 	mover = False
 	def __init__(self, node):

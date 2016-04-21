@@ -110,6 +110,7 @@ CLA_SIZES = 0, 150e-6, 70e-6, 50e-6, 20e-6
 OLA_SIZES = 0, 50e-6, 30e-6, 15e-6, 5e-6
 HCA_SIZES = 0, 120e-6, 60e-6, 40e-6, 20e-6
 SAA_SIZES = 0, 100e-6, 50e-6, 20e-6, 10e-6
+AUTO_APERTURES = OLA
 
 [om standard focus]
 100:40060
