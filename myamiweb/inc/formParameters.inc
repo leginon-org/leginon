@@ -291,7 +291,6 @@ class FormParameters
 	// in basicForm.inc as well to indicate that a flag should be added to a command. 
 	public function insertCheckboxField( $name, $note='', $helpkey='', $onchange=''  )
 	{
-
 		// if the parameter has been "hidden" just return an empty string.
 		if ( $this->params[$name]['hidden'] ) {
 			$html = "";
@@ -325,6 +324,22 @@ class FormParameters
 														$checked, 
 														$this->params[$name]['enable'], 
 														$note,
+														$helpkey );
+		}
+
+		return $html;
+	}		
+	
+	public function insertSubmitField( $name, $value, $label='', $helpkey='' )
+	{
+		// if the parameter has been "hidden" just return an empty string.
+		if ( $this->params[$name]['hidden'] ) {
+			$html = "";
+		} else {
+			$helpkey = $this->setHelpKey( $name, $helpkey );			
+			$html = $this->formLib->insertSubmitField( $this->params[$name]['name'], 
+														$label, 
+														$value,
 														$helpkey );
 		}
 

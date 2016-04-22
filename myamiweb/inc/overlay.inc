@@ -55,7 +55,7 @@ class imageOverlay {
 			$col = $this->white;
 			$crosscol = $this->white;
 		}
-		if ($targettype == 'acq') {
+		if ($targettype == 'acq' || $targettype == 'preview') {
 			$squarepoints = getsquarepoints($cx, $cy, $angle, $length);
 			drawsquare($this->img, $squarepoints, $crosscol);
 		} else {
