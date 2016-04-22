@@ -70,7 +70,7 @@ class ProTomo2Reconstruction(basicScript.BasicScript):
 		self.parser.add_option("--tomo3d_procs", dest="tomo3d_procs", default=1,
 			help="Number of cores to use in Tomo3D, e.g. --tomo3d_procs=24")
 
-		self.parser.add_option("--tomo3d_options", dest="tomo3d_options",
+		self.parser.add_option("--tomo3d_options", dest="tomo3d_options", default='',
 			help="Number of Tomo3D SIRT iterations, e.g. --tomo3d_options=-m 0.35 -A 7 -w off")
 
 		self.parser.add_option("--tomo3d_sirt_iters", dest="tomo3d_sirt_iters",  type="int",
