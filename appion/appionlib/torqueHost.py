@@ -34,6 +34,9 @@ class TorqueHost(processingHost.ProcessingHost):
 			header += self.scriptPrefix +" -l nodes=" + str(currentJob.getNodes())
 			if currentJob.getPPN():
 				header += ":ppn=" + str(currentJob.getPPN())
+
+			elif currentJob.getGpus():
+				header += ":gpus=" + str(currentJob.getGpus())
 			header += "\n"
 		
 		if currentJob.getCpuTime():
