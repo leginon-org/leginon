@@ -131,7 +131,7 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	$ddnframe = $_POST['ddnframe'];
 	$ddstartframe = $_POST['ddstartframe'];
 	$forceInsert = ($_POST['forceInsert']=='on' || (!isset($_POST['forceInsert']) && !$_POST) ) ? 'CHECKED' : '';
-	$pixlimitv = ($_POST['pixlimit']) ? $_POST['pixlimit'] : '4.4';
+	$pixlimitv = ($_POST['pixlimit']) ? $_POST['pixlimit'] : '0';
 	$normoptions = array(
 		'edgenorm'=>'edgenorm: normalize by mean 0 stdev 1 in based on edge pixels',
 		'none'=>'none: do not normalize particle images',
@@ -469,6 +469,10 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	echo "<input type='text' name='bin' value='$binval' size='4'>\n";
 	echo docpop('stackbin','Binning');
 	echo "<br/>\n";
+
+	echo "<input type='text' name='pixlimit' VALUE='$pixlimitv' size='4'>\n";
+	echo docpop('pixlimit',' Pixel Limit');
+	echo "<font size=-2><I>(in Standard Deviations; 0 = off)</I></font><br />\n";
 	echo "<br/>\n";
 
 	echo "<input type='checkbox' name='forceInsert' $forceInsert>\n";
@@ -687,10 +691,6 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	echo docpop('hpstackval', 'High Pass');
 	echo "<font size=-2><i>(in &Aring;ngstroms)</i></font>\n";
 	echo "<br/>\n";
-
-	echo "<input type='text' name='pixlimit' VALUE='$pixlimitv' size='4'>\n";
-	echo docpop('pixlimit',' Pixel Limit');
-	echo "<font size=-2><I>(in Standard Deviations; 0 = off)</I></font><br />\n";
 
 
 	// commented out for now, since not implemented
