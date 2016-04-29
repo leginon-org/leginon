@@ -246,6 +246,7 @@ class PresetsManager(node.Node):
 		'optimize cycle': True,
 		'mag only': True,
 		'apply offset': False,
+		'disable stage for image shift': False,
 		'blank': False,
 		'smallsize': 1024,
 	}
@@ -1555,7 +1556,13 @@ class PresetsManager(node.Node):
 		scopedata.friendly_update(newpreset)
 		scopedata['image shift'] = myimage
 		scopedata['beam shift'] = mybeam
-		scopedata['stage position'] = mystage
+		# Disable stage move if movetype does not requires it.
+		if self.settings['disable stage for image shift'] and  (emtargetdata['movetype'] == 'image beam shift' or emtargetdata['movetype'] == 'image shift'):
+				self.logger.info('disable stage movement')
+				scopedata['stage position'] = None
+		else:
+				self.logger.info('stage position sent')
+				scopedata['stage position'] = mystage
 		scopedata['defocus'] = mydefocus
 
 		### correct defocus for tilted stage
