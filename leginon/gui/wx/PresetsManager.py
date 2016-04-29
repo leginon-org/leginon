@@ -1154,6 +1154,7 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 																									'Optimize preset cycle')
 		self.widgets['mag only'] = wx.CheckBox(self, -1, 'Cycle magnification only')
 		self.widgets['apply offset'] = wx.CheckBox(self, -1, 'Apply stage tilt axis offset to all image shifts')
+		self.widgets['disable stage for image shift'] = wx.CheckBox(self, -1, 'Disable stage movement when image shift move type is requested')
 
 		self.widgets['blank'] = wx.CheckBox(self, -1, 'Beam blank during preset change')
 		szsmallsize = wx.BoxSizer(wx.HORIZONTAL)
@@ -1182,6 +1183,7 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sz.Add(self.widgets['apply offset'], (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.widgets['blank'], (5, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(szsmallsize, (6, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['disable stage for image shift'], (7, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
 		sbsz.Add(sz, 1, wx.EXPAND|wx.ALL, 5)
 

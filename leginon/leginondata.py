@@ -1273,6 +1273,7 @@ class PresetsManagerSettingsData(SettingsData):
 			('optimize cycle', bool),
 			('mag only', bool),
 			('apply offset', bool),
+			('disable stage for image shift', bool),
 			('blank', bool),
 			('smallsize', int),
 		)
