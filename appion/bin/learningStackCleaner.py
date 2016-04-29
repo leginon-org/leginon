@@ -2,7 +2,9 @@
 
 import os
 import wx
+import sys
 import cfg
+import math
 import numpy
 import random
 import scipy.stats
@@ -12,6 +14,7 @@ from appionlib import apImagicFile
 from appionlib.apImage import imageprocess
 from appionlib.apImage import imagenorm
 from sklearn import svm
+from sklearn import decomposition
 
 ### TODO
 # rm import cfg
@@ -19,23 +22,84 @@ from sklearn import svm
 # fix refresh seg fault
 
 #=========================
+class PCA(object):
+	#---------------
+	def __init__( self, data, boxsize, n_components):
+		"""
+		data = 2D array: rows of 1D images, columns of pixels
+		n_components = number of components to keep
+		"""
+		self.n_components = n_components
+		# calculate the covariance matrix
+		#data -= data.mean()
+		#data /= data.std()
+		#self.pca = decomposition.RandomizedPCA(n_components=n_components, whiten=True)
+		#self.pca = decomposition.KernelPCA(n_components=n_components, kernel='rbf')
+		self.pca = decomposition.PCA(n_components=n_components, whiten=True)
+		print "performing pca"
+		try:
+			self.pca.fit(data)
+		except ValueError:
+			print data
+			raise ValueError
+		print "done"
+		#print "self.pca.components_.shape", self.pca.components_.shape
+		#print "(n_components, boxsize, boxsize)", n_components, boxsize, boxsize
+		#self.eigenrows = numpy.copy(self.pca.components_)
+		self.eigenvalues = self.pca.transform(data)
+		print numpy.around(self.eigenvalues, 3)
+		return
+
+	#---------------
+	def getEigenValue(self, imgStats):
+		try:
+			evals = self.pca.transform(imgStats)[0]
+		except ValueError:
+			print imgStats
+			raise ValueError
+		print "evals=", numpy.around(evals, 3)
+		return evals
+
+#=========================
 class DataClass(object):
 	#---------------
 	def __init__(self):
-		self.stackfile = "/emg/data/appion/06jul12a/stacks/stack1/start.hed"
+		self.stackfile = "/emg/data/appion/06jul12a/stacks/stack1b/start.hed"
+		if len(sys.argv) >1:
+			tempfile = sys.argv[1]
+			if os.path.isfile(tempfile):
+				self.stackfile = tempfile
 		self.numpart = apFile.numImagesInStack(self.stackfile)
 		self.boxsize = apFile.getBoxSize(self.stackfile)[0]
 		print "Num Part %d, Box Size %d"%(self.numpart, self.boxsize)
 		self.edgemap = imagefun.filled_circle((self.boxsize, self.boxsize), self.boxsize/2.0-1.0)
 
+		self.imgproc = imageprocess.ImageFilter()
+		self.imgproc.normalizeType = '256'
+		self.imgproc.pixelLimitStDev = 4.5
+
+		self.imgproc.msg = False
+
 		### create a map to random particles
-		self.particleMap = range(self.numpart)
+		self.particleMap = range(1, self.numpart+1)
 		random.shuffle(self.particleMap)
 		self.particleTarget = {} #0 = ???, 1 = good, 2 = bad
 		self.lastImageRead = 0
 		self.classifier = None
 		self.count = 0
 		self.statCache = {}
+		self.pca = None
+
+	#---------------
+	def readAndProcessParticle(self, partnum):
+		imgarray = apImagicFile.readSingleParticleFromStack(self.stackfile,
+			partnum=partnum, boxsize=self.boxsize, msg=False)
+		procarray = self.imgproc.processImage(imgarray)
+		intarray = numpy.array(procarray, dtype=numpy.uint8)
+		newboxsize = min(intarray.shape)
+		if newboxsize != self.boxsize:
+			self.edgemap = imagefun.filled_circle((newboxsize, newboxsize), newboxsize/2.0-1.0)
+		return intarray
 
 	#---------------
 	def getParticleTarget(self, partNum):
@@ -48,29 +112,131 @@ class DataClass(object):
 		self.particleTarget[partNum] = (value + 1) % 3
 
 	#---------------
+	def predictParticleTarget(self, partnum):
+		if self.classifier is None:
+			return 0
+		evals = self.getEigenValueFromPartNum(partnum)
+		assignedClass = self.classifier.predict(evals)[0]
+		probClass = self.classifier.predict_proba(evals)[0]
+		print "assignedClass: %.1f -- probClass1: %.3f -- probClass2: %.3f"%(assignedClass, probClass[0], probClass[1])
+		if probClass[0] > probClass[1]:
+			assignedClass = 1
+		else:
+			assignedClass = 2
+		return assignedClass
+
+	#---------------
+	def partnumToInputVector(self, partnum):
+		imgarray = self.readAndProcessParticle(partnum)
+		powerspec = imagefun.power(imgarray)
+		partstats = self.particleStats(partnum, powerspec)
+		statArray = numpy.hstack((partstats, imgarray.ravel(), powerspec.ravel()))
+		statArray[numpy.isinf(statArray)] = 0
+		statArray[numpy.isnan(statArray)] = 0
+		return statArray
+
+	#---------------
+	def getEigenValueFromPartNum(self, partnum):
+		statArray = self.partnumToInputVector(partnum)
+		evals = self.pca.getEigenValue(statArray)
+		return evals
+
+	#---------------
 	def readRandomImage(self):
 		partnum = self.particleMap[self.lastImageRead]
-		imgarray = apImagicFile.readSingleParticleFromStack(self.stackfile, 
-			partnum=(partnum+1), boxsize=self.boxsize, msg=False)
+		imgarray = self.readAndProcessParticle(partnum)
+		assignedClass = self.predictParticleTarget(partnum)
 		self.lastImageRead += 1
-		if self.classifier is None:
-			assignedClass = 0
-		else:
-			partstats = self.particleStats(partnum)
-			print partnum, len(partstats), numpy.around(partstats[3:6],3)
-			assignedClass = self.classifier.predict(partstats)[0]
-			probClass = self.classifier.predict_proba(partstats)[0]
-			print "assignedClass: %d -- probClass1: %.3f"%(assignedClass, probClass[0])
+		if self.lastImageRead >= self.numpart:
+			self.lastImageRead = 0
 		return imgarray, partnum, assignedClass
 
 	#---------------
-	def readTargetImageData(self):
+	def readTargetImageStats(self):
 		particleIndexes = self.particleTarget.keys()
 		particleIndexes.sort()
 		partdata = []
 		for partIndex in particleIndexes:
 			partdata.append(self.particleStats(partIndex))
 		return partdata
+
+	#---------------
+	def readGoodTargetImageData(self):
+		particleIndexes = []
+		for partnum, assignedClass in self.particleTarget.items():
+			if assignedClass == 1:
+				particleIndexes.append(partnum)
+		particleIndexes.sort()
+		partdata = []
+		for partnum in particleIndexes:
+			statArray = self.partnumToInputVector(partnum)
+			partdata.append(statArray)
+		return numpy.array(partdata)
+
+	#---------------
+	def particlePCA(self):
+		partdata = self.readGoodTargetImageData()
+		print "performing principal component analysis"
+		print "partdata.shape", partdata.shape
+		n_components = 20
+		if n_components > math.sqrt(partdata.shape[0]):
+			n_components = int(math.floor(math.sqrt(partdata.shape[0])))
+		self.pca = PCA(partdata, self.boxsize, n_components)
+		print "done"
+		particleIndexes = self.particleTarget.keys() 
+		particleIndexes.sort()
+		particleEigenValues = []
+		print "calculating eigen values"
+		for partnum in particleIndexes:
+			evals = self.getEigenValueFromPartNum(partnum)
+			particleEigenValues.append(evals)
+		return particleEigenValues
+
+	#---------------
+	def trainSVM(self):
+		particleEigenValues = self.particlePCA()
+		targetData = self.targetDictToList()
+		if len(numpy.unique(targetData)) < 2:
+			return
+		self.classifier = svm.SVC(gamma=0.001, kernel='rbf', probability=True)
+		print "Training classifier... (please wait)"
+		"""
+		'cache_size', 'class_weight', 'coef0', 'coef_', 'decision_function', 'degree',
+		'epsilon', 'fit', 'gamma', 'get_params', 'kernel', 'label_', 'max_iter', 'nu',
+		'predict', 'predict_log_proba', 'predict_proba', 'probability', 'random_state',
+		'score', 'set_params', 'shrinking', 'tol', 'verbose'
+		"""
+		self.classifier.fit(particleEigenValues, targetData)
+		print "training complete"
+		#predicted = classifier.predict()
+
+	#---------------
+	def particleStats(self, partnum, powerspec=None):
+		"""
+		rather than passing raw pixels, lets pass some key particle stats
+
+		use cache to prevent double reading
+		"""
+		try:
+			return self.statCache[partnum]
+		except KeyError:
+			pass
+		imgarray = self.readAndProcessParticle(partnum)
+		statList = []
+		if self.edgemap.shape != imgarray.shape:
+			newboxsize = min(imgarray.shape)
+			self.edgemap = imagefun.filled_circle((newboxsize, newboxsize), newboxsize/2.0-1.0)
+		statList.extend(self.imageStats(imgarray))
+		statList.extend(self.imageStats(imgarray*self.edgemap))
+		statList.extend(self.imageStats(imgarray*(1-self.edgemap)))
+		if powerspec is None:
+			powerspec = imagefun.power(imgarray)
+		statList.extend(self.imageStats(powerspec))
+		statList.extend(self.imageStats(powerspec*self.edgemap))
+		statList.extend(self.imageStats(powerspec*(1-self.edgemap)))
+		statArray = numpy.array(statList)
+		self.statCache[partnum] = statArray
+		return statArray
 
 	#---------------
 	def imageStats(self, imgarray):
@@ -82,31 +248,6 @@ class DataClass(object):
 		skew = scipy.stats.skew(imgravel)
 		kurt = scipy.stats.kurtosis(imgravel)
 		return [mean,std,minval,maxval,skew,kurt]
-		
-	#---------------
-	def particleStats(self, partnum):
-		"""
-		rather than passing raw pixels, lets pass some key particle stats
-		
-		use cache to prevent double reading
-		"""
-		try:
-			return self.statCache[partnum]
-		except KeyError:
-			pass
-		imgarray = apImagicFile.readSingleParticleFromStack(self.stackfile, 
-			partnum=(partnum+1), boxsize=self.boxsize, msg=False)
-		statList = []
-		statList.extend(self.imageStats(imgarray))
-		statList.extend(self.imageStats(imgarray*self.edgemap))
-		statList.extend(self.imageStats(imgarray*(1-self.edgemap)))
-		powerspec = imagefun.power(imgarray)
-		statList.extend(self.imageStats(powerspec))
-		statList.extend(self.imageStats(powerspec*self.edgemap))
-		statList.extend(self.imageStats(powerspec*(1-self.edgemap)))
-		statArray = numpy.hstack((statList, imgarray.ravel()))
-		self.statCache[partnum] = statArray
-		return statArray
 
 	#---------------
 	def targetDictToList(self):
@@ -116,7 +257,7 @@ class DataClass(object):
 		return targetList
 
 	#---------------
-	def trainSVM(self):
+	def trainSVMOLD(self):
 		partdata = self.readTargetImageData()
 		targetData = self.targetDictToList()
 		if len(numpy.unique(targetData)) < 2:
@@ -276,9 +417,6 @@ class TrainPanel(wx.Panel):
 		self.workPanel = parentPanel
 		self.part_display = False
 
-		self.imgproc = imageprocess.ImageFilter()
-		self.imgproc.msg = False
-
 		# Set up panels
 		self.panel_stats = wx.Panel(self, style=wx.SUNKEN_BORDER|wx.TAB_TRAVERSAL)
 		self.panel_image = wx.Panel(self, style=wx.SUNKEN_BORDER)
@@ -359,18 +497,15 @@ class TrainPanel(wx.Panel):
 
 	#---------------
 	def MakeDisplay(self):
-		print "MakeDisplay 1"
 		nrows = int(self.nrows.GetValue())
 		ncols = int(self.ncols.GetValue())
 		nimg = nrows*ncols
 
-		self.imgproc.lowPass = float(self.lowpass.GetValue())
-		self.imgproc.lowPassType = 'tanh'
-		self.imgproc.highPass = float(self.highpass.GetValue())
+		data.imgproc.lowPass = float(self.lowpass.GetValue())
+		data.imgproc.lowPassType = 'tanh'
+		data.imgproc.highPass = float(self.highpass.GetValue())
 		#self.imgproc.clipping = float(self.clipping.GetValue())
-		self.imgproc.bin = int(self.binning.GetValue())
-
-		print "MakeDisplay 2"
+		data.imgproc.bin = int(self.binning.GetValue())
 
 		# Delete previous objects
 		#self.sizer_image.Destroy()
@@ -381,8 +516,6 @@ class TrainPanel(wx.Panel):
 		imagePanel = self.panel_image
 		imageSizer = self.sizer_image
 
-		print "MakeDisplay 3"
-
 		imgbutton_list = []
 		for i in range(nimg):
 			row = int(i / ncols)
@@ -391,26 +524,16 @@ class TrainPanel(wx.Panel):
 			main.SetStatusText("Preparing image %d of %d for display..."%(i, nimg))
 			filepartnum = main.data.particleMap[i]+1
 			imgarray, partnum, assignedClass = main.data.readRandomImage()
-			procarray = self.imgproc.processImage(imgarray)
-			imgbutton = ImageButton(imagePanel, procarray, partnum)
+			imgbutton = ImageButton(imagePanel, imgarray, partnum)
 			imgbutton.SetPredictedClass(assignedClass)
 			imageSizer.Add(imgbutton, pos=(row, col))
 			imgbutton_list.append(imgbutton)
 
-		print "MakeDisplay 4"
-
-		print "MakeDisplay 4a - hidden"
 		#imagePanel.SetSizerAndFit(imageSizer)
-		print "MakeDisplay 4b - hidden"
 		#self.panel_stats.SetSizerAndFit(self.sizer_stats)
-		print "MakeDisplay 4c - required / crash here"
 		self.panel_image.SetSizerAndFit(self.sizer_image)
-		print "MakeDisplay 4d - required"
 		self.SetSizerAndFit(self.sizer_train)
-		print "MakeDisplay 4e - required"
 		self.workPanel.SetSizerAndFit(self.workPanel.sizer_work)
-
-		print "MakeDisplay 5"
 
 		main.scrolled_window.SetSize(main.GetClientSize())
 		main.SetStatusText('Finished generating new image set.')
