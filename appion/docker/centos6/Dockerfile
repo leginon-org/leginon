@@ -11,8 +11,8 @@ RUN yum -y update && yum -y install \
  subversion ImageMagick grace gnuplot fltk-devel \
  wxPython numpy scipy python-imaging python-pip \
  gcc-gfortran compat-gcc-34-g77 libgfortran.x86_64 \
- gcc-objc fftw3-devel gsl-devel boost-python \
- mysql mysql-server MySQL-python mod_python \
+ gcc-objc fftw3-devel gsl-devel boost-python PyQt4 \
+ mysql mysql-server MySQL-python mod_python ftgl \
  httpd php php-mysql phpMyAdmin mod_ssl php-pecl-ssh2 \
  gcc-c++ libtiff-devel PyOpenGL python-argparse \
  php-devel gd-devel re2c fftw3-devel php-gd \
@@ -25,7 +25,8 @@ RUN yum -y update && yum -y install tigervnc-server xterm xsetroot fluxbox fbpan
 #RUN yum -y update && yum -y install mozilla-adblockplus firefox dbus && yum -y clean all
 RUN dbus-uuidgen > /var/lib/dbus/machine-id
 RUN pip install --upgrade pip
-RUN pip install joblib pyfftw3 fs milk
+RUN pip install joblib pyfftw3 fs scikit-learn==0.14
+python -c 'from sklearn import svm'
 
 RUN updatedb
 
@@ -62,8 +63,9 @@ RUN ln -sv /emg/sw/myami/appion/appionlib /usr/lib64/python2.6/site-packages/
 WORKDIR /emg/sw/myami/
 RUN ./pysetup.sh install
 RUN mkdir /etc/fftw
-RUN python /usr/lib/python2.6/site-packages/pyami/fft/fftwsetup.py 2 4096 4096 && mv -v  ~/fftw3-wisdom-* /etc/fftw/wisdom
+RUN python /usr/lib/python2.6/site-packages/pyami/fft/fftwsetup.py 2 4096 4096 && mv -v ~/fftw3-wisdom-* /etc/fftw/wisdom
 RUN cp -v /emg/sw/myami/redux/init.d/reduxd /etc/init.d/reduxd
+COPY findem64.exe /emg/sw/myami/appion/bin/
 
 #ADD TGZ/Xmipp-2.4-src.tar.gz /emg/sw
 #RUN mv -v /emg/sw/Xmipp-2.4-src /emg/sw/xmipp 
@@ -103,14 +105,16 @@ RUN chmod 777 /emg/sw/grigorieff/ctffind3/ctffind3_mp.exe
 RUN chmod 777 /emg/sw/grigorieff/bin/ctffind4
 
 ### software
-COPY MRC/06jul12a_00015gr_00028sq_00004hl_00002en.mrc /emg/data/leginon/06jul12a/rawdata/
-COPY MRC/06jul12a_00015gr_00028sq_00023hl_00002en.mrc /emg/data/leginon/06jul12a/rawdata/
-COPY MRC/06jul12a_00015gr_00028sq_00023hl_00004en.mrc /emg/data/leginon/06jul12a/rawdata/
-COPY MRC/06jul12a_00022gr_00013sq_00002hl_00004en.mrc /emg/data/leginon/06jul12a/rawdata/
-COPY MRC/06jul12a_00022gr_00013sq_00003hl_00005en.mrc /emg/data/leginon/06jul12a/rawdata/
-COPY MRC/06jul12a_00022gr_00037sq_00025hl_00004en.mrc /emg/data/leginon/06jul12a/rawdata/
-COPY MRC/06jul12a_00022gr_00037sq_00025hl_00005en.mrc /emg/data/leginon/06jul12a/rawdata/
-COPY MRC/06jul12a_00035gr_00063sq_00012hl_00004en.mrc /emg/data/leginon/06jul12a/rawdata/
+COPY MRC/06jul12a/06jul12a_00015gr_00028sq_00004hl_00002en.mrc /emg/data/leginon/06jul12a/rawdata/
+COPY MRC/06jul12a/06jul12a_00015gr_00028sq_00023hl_00002en.mrc /emg/data/leginon/06jul12a/rawdata/
+COPY MRC/06jul12a/06jul12a_00015gr_00028sq_00023hl_00004en.mrc /emg/data/leginon/06jul12a/rawdata/
+COPY MRC/06jul12a/06jul12a_00022gr_00013sq_00002hl_00004en.mrc /emg/data/leginon/06jul12a/rawdata/
+COPY MRC/06jul12a/06jul12a_00022gr_00013sq_00003hl_00005en.mrc /emg/data/leginon/06jul12a/rawdata/
+COPY MRC/06jul12a/06jul12a_00022gr_00037sq_00025hl_00004en.mrc /emg/data/leginon/06jul12a/rawdata/
+COPY MRC/06jul12a/06jul12a_00022gr_00037sq_00025hl_00005en.mrc /emg/data/leginon/06jul12a/rawdata/
+COPY MRC/06jul12a/06jul12a_00035gr_00063sq_00012hl_00004en.mrc /emg/data/leginon/06jul12a/rawdata/
+COPY MRC/template1.mrc /emg/data/leginon/06jul12a/templates/
+COPY MRC/template2.mrc /emg/data/leginon/06jul12a/templates/
 
 ### Change to local user
 #RUN mkdir -p /home/appionuser

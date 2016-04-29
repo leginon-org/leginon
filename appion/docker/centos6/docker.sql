@@ -3493,7 +3493,7 @@ CREATE TABLE `ApAppionJobData` (
   KEY `clusterjobid` (`clusterjobid`),
   KEY `status` (`status`),
   KEY `jobtype_10` (`jobtype`(10))
-) ENGINE=MyISAM AUTO_INCREMENT=3 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -5620,8 +5620,18 @@ CREATE TABLE `ApPathData` (
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `path_index32` (`path`(32))
-) ENGINE=MyISAM AUTO_INCREMENT=5 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=7 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `ApPathData`
+--
+
+LOCK TABLES `ApPathData` WRITE;
+/*!40000 ALTER TABLE `ApPathData` DISABLE KEYS */;
+INSERT INTO `ApPathData` VALUES (5,'2016-04-28 21:15:18','/emg/data/leginon/06jul12a/templates'),(6,'2016-04-28 21:15:18','/usr/lib64/python2.6/site-packages');
+/*!40000 ALTER TABLE `ApPathData` ENABLE KEYS */;
+UNLOCK TABLES;
 
 --
 -- Table structure for table `ApPrepRefineData`
@@ -6965,7 +6975,7 @@ CREATE TABLE `ApTemplateImageData` (
   KEY `md5sum` (`md5sum`),
   KEY `REF|ApAlignStackData|alignstack` (`REF|ApAlignStackData|alignstack`),
   KEY `REF|ApClusteringStackData|clusterstack` (`REF|ApClusteringStackData|clusterstack`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=3 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -6974,6 +6984,7 @@ CREATE TABLE `ApTemplateImageData` (
 
 LOCK TABLES `ApTemplateImageData` WRITE;
 /*!40000 ALTER TABLE `ApTemplateImageData` DISABLE KEYS */;
+INSERT INTO `ApTemplateImageData` VALUES (1,'2016-04-28 21:15:22',5,1,'template1.mrc',3.26,180,'GroEL standard templates',0,'6050bd711d34714aa81c7c4da1146fb3',NULL,NULL,NULL,NULL),(2,'2016-04-28 21:15:24',5,1,'template2.mrc',3.26,180,'GroEL standard templates',0,'63103901516a56a4fe5349cdcbc470dc',NULL,NULL,NULL,NULL);
 /*!40000 ALTER TABLE `ApTemplateImageData` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -7695,7 +7706,7 @@ CREATE TABLE `ScriptHostName` (
   `gpu_vendor` text,
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`)
-) ENGINE=MyISAM AUTO_INCREMENT=3 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -7713,7 +7724,7 @@ CREATE TABLE `ScriptParamName` (
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `REF|ScriptProgramName|progname` (`REF|ScriptProgramName|progname`)
-) ENGINE=MyISAM AUTO_INCREMENT=24 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -7734,7 +7745,7 @@ CREATE TABLE `ScriptParamValue` (
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `REF|ScriptParamName|paramname` (`REF|ScriptParamName|paramname`),
   KEY `REF|ScriptProgramRun|progrun` (`REF|ScriptProgramRun|progrun`)
-) ENGINE=MyISAM AUTO_INCREMENT=24 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -7750,7 +7761,7 @@ CREATE TABLE `ScriptProgramName` (
   `name` text,
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`)
-) ENGINE=MyISAM AUTO_INCREMENT=3 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -7780,7 +7791,7 @@ CREATE TABLE `ScriptProgramRun` (
   KEY `REF|ApPathData|rundir` (`REF|ApPathData|rundir`),
   KEY `REF|ApAppionJobData|job` (`REF|ApAppionJobData|job`),
   KEY `REF|ApPathData|appion_path` (`REF|ApPathData|appion_path`)
-) ENGINE=MyISAM AUTO_INCREMENT=3 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -7799,7 +7810,7 @@ CREATE TABLE `ScriptUserName` (
   `fullname` text,
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`)
-) ENGINE=MyISAM AUTO_INCREMENT=3 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
@@ -7810,7 +7821,7 @@ CREATE TABLE `ScriptUserName` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2016-03-08 18:35:22
+-- Dump completed on 2016-04-28 21:17:16
 
 --
 -- Neil additions
