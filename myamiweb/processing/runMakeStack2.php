@@ -641,6 +641,10 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	} else {
 		echo "Mask Assessment:
 		<select name='massessname'>\n";
+		// add "None" option for no mask selection
+		echo "<OPTION value='None'";
+		if ($massessval=='None') echo " selected";
+		echo ">None</OPTION>\n";
 		foreach ($massessnames as $name) {
 			$massessname = $name;
 			$massessruns = $particle->getMaskAssessRunByName($sessionId,$massessname);
@@ -980,7 +984,7 @@ function runMakestack() {
 	if ($ctfcorrect) { 
 		$command.="--phaseflip --flip-type=$ctfcorrecttype --sort-type=$ctfsorttype ";
 	}
-	if ($massessname) $command.="--maskassess=$massessname ";
+	if ($massessname && $massessname!='None') $command.="--maskassess=$massessname ";
 	$command.="--boxsize=$boxsize ";
 	if ($bin > 1) $command.="--bin=$bin ";
 	if ($ctf) $command.="--ctfcutoff=$ctf ";
