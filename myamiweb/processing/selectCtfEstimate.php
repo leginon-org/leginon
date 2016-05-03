@@ -64,6 +64,23 @@ echo " <p>CTFFIND uses a robust grid search algorithm to find the optimal "
 	."</p>\n";
 echo "</td></tr>\n";
 
+
+
+/*
+** GCTF
+*/
+
+echo "<tr><td width='100' align='center'>\n";
+echo "  <img src='img/grigorieff_sq_logo.png' width='96'>\n";
+echo "</td><td>\n";
+echo "  <h3><a href='runAppionLoop.php?expId=$expId&form=gctf'>GCTF v0.38</a></h3>\n";
+echo " <p>This is a GPU accelerated program for real-time CTF determination, refinement, "
+        ."evaluation and correction. Please see the <a href='http://www.mrc-lmb.cam.ac.uk/kzhang'> "
+        ."Dynein lab website </a>&nbsp;<img src='img/external.png'> for more information. "
+        ."</p>\n";
+echo "</td></tr>\n";
+
+
 /*
 ** ACE 2
 */
