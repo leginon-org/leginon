@@ -243,23 +243,56 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 		border = self.params['border']
 		# map name to de params name and leginon corrector plan name
 		namemap = {'x': ('columns', 'cols'), 'y': ('rows', 'rows')}
-		
-		if not corrector_plan:
-			return
+
+		def formatBadList(badlist):
+			return ','.join(map(lambda x: '%d' % x,badlist))
+
+		badlines = {'x':[],'y':[]}
 		for axis in namemap.keys():
 			de_name = 'defects_%s' % namemap[axis][0]
 			leg_name = 'bad_%s' % namemap[axis][1]
 			exclude_list = []
 			# figure out the defects if not specified already
-			if not self.params[de_name] and corrector_plan[leg_name]:
-				# Do not include a location in defects for DE 
-				# process if in the border because large number
-				# of defect correction is slow.
-				if border:
-					exclude_list = range(0, border)
-					exclude_list.extend(range(cam_size[axis] - border, cam_size[axis]))
-				bad = self.calculateListDifference(corrector_plan[leg_name], exclude_list)
-				self.params[de_name] = ','.join(map(lambda x: '%d' % x, bad))
+			if not self.params[de_name]:
+				if corrector_plan and corrector_plan[leg_name]:
+					# Do not include a location in defects for DE 
+					# process if in the border because large number
+					# of defect correction is slow.
+					if border:
+						exclude_list = range(0, border)
+						exclude_list.extend(range(cam_size[axis] - border, cam_size[axis]))
+					bad = self.calculateListDifference(corrector_plan[leg_name], exclude_list)
+					badlines[axis] = bad
+					self.params[de_name] = formatBadList(bad)
+			else:
+				# overwrite corrector_plan
+				badlines[axis] = map((lambda x:int(x)),self.params[de_name].split(','))
+
+		# Leginon sum image and DE frames flipping does not need to be handled
+		# because DE program handles that by default
+		# camera may be mounted with a rotation so that frames are rotated relative to the image known in Leginon
+		# Here we are transforming from image to frames
+		if imgdata['camera']['frame rotate'] == 1:
+			# row 1 becomes column 1, column 1 becomes dimx-col
+			rotated_bad_rows = map((lambda x: x),badlines['x'])
+			rotated_bad_cols = map((lambda x: cam_size['y']-x-1),badlines['y'])
+			self.params['defects_%s' % namemap['x'][0]] = formatBadList(rotated_bad_cols)
+			self.params['defects_%s' % namemap['y'][0]] = formatBadList(rotated_bad_rows)
+			# allow user to overwrite transforms
+			if self.params['darkreference_transform']+self.params['gainreference_transform']+self.params['output_transform'] == 0:
+				self.params['darkreference_transform'] = 2  #90 degrees
+				self.params['gainreference_transform'] = 2
+				self.params['output_transform'] = 3  #270 degrees
+		elif imgdata['camera']['frame rotate'] == 3:
+			rotated_bad_rows = map((lambda x: cam_size['x']-x-1),badlines['x'])
+			rotated_bad_cols = map((lambda x: x),badlines['y'])
+			self.params['defects_%s' % namemap['x'][0]] = formatBadList(rotated_bad_cols)
+			self.params['defects_%s' % namemap['y'][0]] = formatBadList(rotated_bad_rows)
+			# allow user to overwrite transforms
+			if self.params['darkreference_transform']+self.params['gainreference_transform']+self.params['output_transform'] == 0:
+				self.params['darkreference_transform'] = 3
+				self.params['gainreference_transform'] = 3
+				self.params['output_transform'] = 2
 		# TODO: need to handle bad pixels, too
 
 	def generateCommand(self, imgdata, targetdict):
