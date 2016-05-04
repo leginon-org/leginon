@@ -341,4 +341,18 @@ $PUBLICATIONS['rpp'] = array(
 'logo' => '',
 'pages' => '188-195');
 
+$PUBLICATIONS['gctf'] = array(
+'title' => 'Gctf: real-time CTF determination and correction',
+'year' => '2015',
+'authorlist' => 'Kai Zhang',
+'journal' => 'J Struct Biol.',
+'volume' => '193',
+'issue' => '1',
+'pmid' => '26592709',
+'pmcid' => '4711343',
+'doi' => '10.1016/j.jsb.2015.11.003',
+'logo' => '',
+'pages' => '1-12');
+
+
 ?>
