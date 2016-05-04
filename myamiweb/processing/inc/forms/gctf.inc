@@ -11,7 +11,7 @@ require_once "basicLoopForm.inc";
 class gctf extends BasicLoopForm
 {
 	function __construct( $expId, $extraHTML='', $ampcontrast='0.07', $bestdb=true, 
-		$apcontinue='1', $fieldsize='1024', $dast='0.05',  $bestdb=true,$parallel=true, $do_basic_rotave='0', $do_EPA='0', $overlap='0.5',$convsize='85', $do_Hres_ref='0', $defstep='0.1', $resmin='50',$resmax='4')
+		$apcontinue='1', $fieldsize='1024', $dast='0.1',  $bestdb=true,$parallel=true, $do_basic_rotave='0', $do_EPA='0', $overlap='0.5',$convsize='85', $do_Hres_ref='0', $defstep='0.1', $resmin='50',$resmax='4')
 	{
 		parent::__construct($expId, $extraHTML);
 		
@@ -38,7 +38,7 @@ class gctf extends BasicLoopForm
 				
 		$params->addParam( "ampcontrast", $ampcontrast, "Amplitude contrast" );
 		$params->addParam( "defstep", $defstep, "Step of defocus value, in &mu;m" );
-		$params->addParam( "dast", $dast, "Estimated astigmation" );
+		$params->addParam( "dast", $dast, "Estimated astigmation in &mu;m" );
 		$params->addParam( "bestdb", $bestdb, "Use best values from database" );
 		$params->addParam( "nominal", $nominal, "Override Nominal Value ( in &mu;m)" );
 
