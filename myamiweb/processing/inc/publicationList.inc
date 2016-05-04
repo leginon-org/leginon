@@ -406,5 +406,15 @@ $PUBLICATIONS['gctf'] = array(
 'logo' => '',
 'pages' => '1-12');
 
+$PUBLICATIONS['ctffind4'] = array(
+'title' => 'CTFFIND4: Fast and accurate defocus estimation from electron micrographs.',
+'year' => '2015',
+'authorlist' => 'Rohou A, Grigorieff N.',
+'journal' => 'J Struct Biol.',
+'volume' => '192',
+'issue' => '2',
+'pmid' => '26278980',
+'doi' => '10.1016/j.jsb.2015.08.008',
+'pages' => '216-21');
 
 ?>
