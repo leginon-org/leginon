@@ -18,7 +18,7 @@ class CtfFind4 extends BasicLoopForm
 		//------ Set Parameters for the parent class, BasicLoopForm (general Appion params) -----//
 		
 		// Set the publications to be references on the web pages
-		$pubList = array('appion');
+		$pubList = array('ctffind4');
 		$this->setPublications( $pubList );
 		$this->setJobType( 'ctfestimate' );
 		$this->setOutputDirectory( 'ctf' );

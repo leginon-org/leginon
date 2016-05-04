@@ -70,8 +70,9 @@ echo "</td></tr>\n";
 ** GCTF
 */
 
+if (HIDE_GPU_FEATURE) {
 echo "<tr><td width='100' align='center'>\n";
-echo "  <img src='img/grigorieff_sq_logo.png' width='96'>\n";
+echo "  <img src='img/appionlogo.jpg' width='96'>\n";
 echo "</td><td>\n";
 echo "  <h3><a href='runAppionLoop.php?expId=$expId&form=gctf'>GCTF v0.38</a></h3>\n";
 echo " <p>This is a GPU accelerated program for real-time CTF determination, refinement, "
@@ -79,7 +80,9 @@ echo " <p>This is a GPU accelerated program for real-time CTF determination, ref
         ."Dynein lab website </a>&nbsp;<img src='img/external.png'> for more information. "
         ."</p>\n";
 echo "</td></tr>\n";
+}
 
+else {}
 
 /*
 ** ACE 2
