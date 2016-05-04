@@ -63,8 +63,6 @@ class ApProc2d(basicScript.BasicScript):
 			metavar='FLOAT', help='High pass filter to provided resolution. In Angstroms. ')
 		self.parser.add_option("--pixlimit", dest="pixlimit", type="float",
 			help="Limit pixel values to within <pixlimit> standard deviations", metavar="FLOAT")
-		self.parser.add_option("--clip", dest="clip", type="int",
-			help="Clip to boxsize, --clip=32 (assumes square)", metavar="INT")
 		self.parser.add_option('--apix', dest='apix', type=float,
 			metavar='FLOAT', help='High pass filter to provided resolution. In Angstroms. ')
 		self.parser.add_option('--bin', dest='bin', type=int,
@@ -92,8 +90,6 @@ class ApProc2d(basicScript.BasicScript):
 		self.parser.add_option('--rampnorm', dest='normalizemethod',
 			help="Set normalization method to rampnorm",
 			action='store_const', const='rampnorm', )
-		self.parser.add_option('--xflip', dest='xflip', help="Mirror images across x",
-			action='store_true', default=False, )
 
 	#=====================
 	#=====================
@@ -432,21 +428,20 @@ class ApProc2d(basicScript.BasicScript):
 				particle = imagefilter.lowPassFilter(particle, apix=self.params['apix'], radius=self.params['lowpass'])
 			if self.params['highpass']:
 				self.message("highpass: %s"%(self.params['highpass']))
-				particle = imagefilter.tanhHighPassFilter(particle, self.params['highpass'], apix=self.params['apix'])
+				particle = imagefilter.highPassFilter2(particle, self.params['highpass'], apix=self.params['apix'])
 			### unless specified, invert the images
 			if self.params['inverted'] is True:
 				self.message("inverted: %s"%(self.params['inverted']))
 				particle = -1.0 * particle
-
 			### clipping
-			if self.params['clip'] is not None:
-				clipshape = (self.params['clip'],self.params['clip'])
-				if particle.shape != clipshape:
-					if self.params['clip'] <= particle.shape[0] and self.params['clip'] <= particle.shape[1]:
-						particle = imagefilter.frame_cut(particle, clipshape)
-					else:
-						apDisplay.printError("particle shape (%dx%d) is smaller than requested clip size (%d)"
-							%(particle.shape[0], particle.shape[1], self.params['clip']))
+			"""
+			if particle.shape != boxshape:
+				if boxsize <= particle.shape[0] and boxsize <= particle.shape[1]:
+					particle = imagefilter.frame_cut(particle, boxshape)
+				else:
+					apDisplay.printError("particle shape (%dx%d) is smaller than boxsize (%d)"
+						%(particle.shape[0], particle.shape[1], boxsize))
+			"""
 
 			### step 3: normalize particles
 			#self.normoptions = ('none', 'boxnorm', 'edgenorm', 'rampnorm', 'parabolic') #normalizemethod
