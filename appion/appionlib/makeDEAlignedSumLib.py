@@ -272,28 +272,46 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 		# because DE program handles that by default
 		# camera may be mounted with a rotation so that frames are rotated relative to the image known in Leginon
 		# Here we are transforming from image to frames
-		if imgdata['camera']['frame rotate'] == 1:
-			# row 1 becomes column 1, column 1 becomes dimx-col
-			rotated_bad_rows = map((lambda x: x),badlines['x'])
-			rotated_bad_cols = map((lambda x: cam_size['y']-x-1),badlines['y'])
-			self.params['defects_%s' % namemap['x'][0]] = formatBadList(rotated_bad_cols)
-			self.params['defects_%s' % namemap['y'][0]] = formatBadList(rotated_bad_rows)
-			# allow user to overwrite transforms
-			if self.params['darkreference_transform']+self.params['gainreference_transform']+self.params['output_transform'] == 0:
-				self.params['darkreference_transform'] = 2  #90 degrees
-				self.params['gainreference_transform'] = 2
-				self.params['output_transform'] = 3  #270 degrees
-		elif imgdata['camera']['frame rotate'] == 3:
-			rotated_bad_rows = map((lambda x: cam_size['x']-x-1),badlines['x'])
-			rotated_bad_cols = map((lambda x: x),badlines['y'])
-			self.params['defects_%s' % namemap['x'][0]] = formatBadList(rotated_bad_cols)
-			self.params['defects_%s' % namemap['y'][0]] = formatBadList(rotated_bad_rows)
-			# allow user to overwrite transforms
-			if self.params['darkreference_transform']+self.params['gainreference_transform']+self.params['output_transform'] == 0:
-				self.params['darkreference_transform'] = 3
-				self.params['gainreference_transform'] = 3
-				self.params['output_transform'] = 2
-		# TODO: need to handle bad pixels, too
+		rotate = imgdata['camera']['frame rotate']
+
+		# image transforms
+		# camera frame rotation as key, de (reference,output) transform as value
+		image_transform_map = {0:(0,0),1:(2,3),2:(1,1),3:(3,2)}
+		# allow user to overwrite transforms
+		if self.params['darkreference_transform']+self.params['gainreference_transform']+self.params['output_transform'] == 0:
+				self.params['darkreference_transform'] = image_transform_map[rotate][0]
+				self.params['gainreference_transform'] = image_transform_map[rotate][0]
+				self.params['output_transform'] = image_transform_map[rotate][1]
+
+		# transform mapping
+		def identical(value,axis):
+			return value
+		def reverse(value,axis):
+			return cam_size[axis]-value-1
+		# camera frame rotation as key, de (mapped axis, transform function) as value
+		defectx_transform_map = {0:('cols',identical),1:('rows',identical),2:('cols',reverse),3:('cols',reverse)}
+		defecty_transform_map = {0:('rows',identical),1:('cols',reverse),2:('rows',reverse),3:('rows',identical)}
+
+		# bad columns and rows
+		rotated_bad = {}
+		rotated_bad[defectx_transform_map[rotate][0]] = map((lambda x: defectx_transform_map[rotate][1](x,'x')),badlines['x'])
+		rotated_bad[defecty_transform_map[rotate][0]] = map((lambda x: defecty_transform_map[rotate][1](x,'y')),badlines['y'])
+		self.params['defects_%s' % namemap['x'][0]] = formatBadList(rotated_bad['cols'])
+		self.params['defects_%s' % namemap['y'][0]] = formatBadList(rotated_bad['rows'])
+	
+		# Handle bad pixels, too
+		bad_pixels = corrector_plan['bad_pixels']
+		rotated_bad_pixels = {}
+		xs = map((lambda x:x[0]),bad_pixels)
+		ys = map((lambda x:x[1]),bad_pixels)
+		rotated_bad_pixels[defectx_transform_map[rotate][0]] = map((lambda x: defectx_transform_map[rotate][1](x,'x')),xs)
+		rotated_bad_pixels[defecty_transform_map[rotate][0]] = map((lambda x: defecty_transform_map[rotate][1](x,'y')),ys)
+		bad_boxes = []
+		for i in range(len(bad_pixels)):
+			# Done pixel by pixel, not very efficient
+			box_start = rotated_bad_pixels['cols'][i],rotated_bad_pixels['rows'][i]
+			bad_boxes.append('%d,%d,%d,%d' % (box_start[0],box_start[1],1,1)) # x0,y0,w,h
+		self.params['defects_boxes'] = "+".join(bad_boxes)
 
 	def generateCommand(self, imgdata, targetdict):
 
