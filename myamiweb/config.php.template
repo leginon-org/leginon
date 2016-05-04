@@ -143,6 +143,11 @@ define('HIDE_MATLAB', false);
 // --- hide processing tools still under development. --- //
 define('HIDE_FEATURE', true);
 
+// --- hide processing tools requiring GPU - this is a temporary fix
+// --  processingHost should be modified in the future ---//
+
+define('HIDE_GPU_FEATURE',false);
+
 // --- temporary images upload directory --- //
 define('TEMP_IMAGES_DIR', "");
 
