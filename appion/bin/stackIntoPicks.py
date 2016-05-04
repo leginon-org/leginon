@@ -88,6 +88,10 @@ class StackIntoPicksScript(appionScript.AppionScript):
 			return False
 		# search for aligned image from source and specific ddstackrun
 		source_image = alignpairdata['source']
+		if not self.newddstackrun['params']['align']:
+			# use source image for unaligned ddstack
+			return source_image
+
 		self.dd.setImageData(source_image)
 		allpairs = self.dd.getAllAlignImagePairData(self.newddstackrun,query_source=True)
 		newalignedimagedata = self.chooseValidResultImageInDDAlignPairs(allpairs)
@@ -123,6 +127,8 @@ class StackIntoPicksScript(appionScript.AppionScript):
 			self.dd = apDDprocess.DDStackProcessing()
 			self.dd.setDDStackRun(self.params['ddstack'])
 			self.newddstackrun = self.dd.getDDStackRun(show_msg=True)
+			if not self.newddstackrun['params']['align']:
+				apDisplay.printMsg('ddstack is unaligned, picks will be transferred to the original sum image')
 		### stack data
 		stackdata = apStack.getOnlyStackData(self.params['stackid'])
 
