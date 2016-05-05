@@ -33,6 +33,7 @@ class AppionLoop(appionScript.AppionScript):
 		#self.specialCreateOutputDirs()
 		self._initializeDoneDict()
 		self.result_dirs={}
+		self.bad_images = []
 		self.sleep_minutes = 6
 		self.process_batch_count = 10
 
@@ -879,6 +880,12 @@ class AppionLoop(appionScript.AppionScript):
 		self.stats['imagecount'] = len(self.imgtree)
 		self.stats['imagesleft'] = self.stats['imagecount'] - self.stats['count']
 		return True
+
+	def setBadImage(self,imgdata):
+		# set current image as bad image
+		self.bad_images.append(imgdata.dbid)
+		apDisplay.printWarning("Program did not produce valid results. Should hide the image if the problem persists")
+		sys.stderr.write("Failed %s \n" % (imgdata['filename'],))
 
 	#=====================
 	def close(self):

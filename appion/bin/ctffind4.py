@@ -244,13 +244,21 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 		self.ctfvalues = {}
 		ctfproglog = apDisplay.short(imgdata['filename'])+"-pow.txt"		
 		apDisplay.printMsg("reading %s"%(ctfproglog))
-		logf = open(ctfproglog, "r")
-
+		try:
+			logf = open(ctfproglog, "r")
+		except:
+			apDisplay.printWarning("Error reading %s"%(ctfproglog))
+			self.setBadImage(imgdata)
+			return
 		for line in logf:
 			sline = line.strip()
 			if sline.startswith('#'):
 				continue
 			bits = sline.split()
+			if len(bits) < 7:
+				apDisplay.printWarning("Invalid content in %s"%(ctfproglog))
+				self.setBadImage(imgdata)
+				return
 			self.ctfvalues = {
 				'imagenum': int(float(bits[0])),
 				'defocus2':	float(bits[1])*1e-10,
@@ -268,8 +276,9 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 			}
 
 		if len(self.ctfvalues.keys()) == 0:
-			#
-			apDisplay.printError("CTFFIND4 program did not produce valid results in the log file")
+			apDisplay.printWarning("Invalid %s"%(ctfproglog))
+			self.setBadImage(imgdata)
+			return
 
 		#convert powerspectra to JPEG
 		outputjpgbase = apDisplay.short(imgdata['filename'])+"-pow.jpg"
