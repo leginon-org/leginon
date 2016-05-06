@@ -54,7 +54,6 @@ def runSpectralFindEM(imgdict, params, thread=False):
 			feed = findEMString(100+classavg, templatename, randlink, ccmapfile1, params)
 		else:
 			feed = findEMString(100+classavg, templatename, dwnimgname, ccmapfile1, params)
-		sys.exit()
 		execFindEM(feed)
 
 		#Second round: template x template
@@ -246,7 +245,7 @@ def getFindEMPath():
 	unames = os.uname()
 	if unames[-1].find('64') >= 0:
 #		For FindEM2
-#		exename = '/ami/sw/packages/FindEM2/FindEM2_V1.00.exe'
+#		exename = '/opt/applications/myami/trunk/bin/findem64.exe'
 		exename = 'findem64.exe'
 	else:
 		exename = 'findem32.exe'
