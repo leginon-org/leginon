@@ -18,8 +18,13 @@ from sklearn import decomposition
 
 ### TODO
 # rm import cfg
-# save/load particle data to file (prevent crash on refresh)
-# fix refresh seg fault
+# save/load particle data to file
+# - Color for probability
+# add button to clear decisions
+# create web launcher
+# work with larger stack
+# show discrepancies
+# prevent crash on change of clipping
 
 #=========================
 class PCA(object):
@@ -36,28 +41,30 @@ class PCA(object):
 		#self.pca = decomposition.RandomizedPCA(n_components=n_components, whiten=True)
 		#self.pca = decomposition.KernelPCA(n_components=n_components, kernel='rbf')
 		self.pca = decomposition.PCA(n_components=n_components, whiten=True)
-		print "performing pca"
+		print "performing principal component analysis (pca)"
 		try:
 			self.pca.fit(data)
 		except ValueError:
 			print data
 			raise ValueError
-		print "done"
+		print "pca complete"
 		#print "self.pca.components_.shape", self.pca.components_.shape
 		#print "(n_components, boxsize, boxsize)", n_components, boxsize, boxsize
 		#self.eigenrows = numpy.copy(self.pca.components_)
+		#print "data.shape", data.shape
 		self.eigenvalues = self.pca.transform(data)
-		print numpy.around(self.eigenvalues, 3)
+		#print numpy.around(self.eigenvalues, 3)
 		return
 
 	#---------------
 	def getEigenValue(self, imgStats):
 		try:
-			evals = self.pca.transform(imgStats)[0]
+			#print "getEigenValue: imgStats.reshape(1, -1).shape", imgStats.reshape(1, -1).shape
+			evals = self.pca.transform(imgStats.reshape(1, -1))[0]
 		except ValueError:
 			print imgStats
 			raise ValueError
-		print "evals=", numpy.around(evals, 3)
+		#print "evals=", numpy.around(evals, 3)
 		return evals
 
 #=========================
@@ -76,7 +83,7 @@ class DataClass(object):
 
 		self.imgproc = imageprocess.ImageFilter()
 		self.imgproc.normalizeType = '256'
-		self.imgproc.pixelLimitStDev = 4.5
+		self.imgproc.pixelLimitStDev = 6.0
 
 		self.imgproc.msg = False
 
@@ -106,24 +113,37 @@ class DataClass(object):
 		return self.particleTarget.get(partNum,0)
 
 	#---------------
-	def updateParticleTarget(self, partNum):
-		value = self.particleTarget.get(partNum,0)
-		print self.particleTarget
-		self.particleTarget[partNum] = (value + 1) % 3
+	def updateParticleTarget(self, partNum, newvalue=None):
+		if newvalue is None:
+			value = self.particleTarget.get(partNum,0)
+			newvalue = (value + 1) % 3
+		self.particleTarget[partNum] = newvalue
 
 	#---------------
 	def predictParticleTarget(self, partnum):
 		if self.classifier is None:
 			return 0
 		evals = self.getEigenValueFromPartNum(partnum)
-		assignedClass = self.classifier.predict(evals)[0]
-		probClass = self.classifier.predict_proba(evals)[0]
+		#print "evals.shape", evals.shape
+		assignedClass = self.classifier.predict(evals.reshape(1, -1))[0]
+		probClass = self.classifier.predict_proba(evals.reshape(1, -1))[0]
 		print "assignedClass: %.1f -- probClass1: %.3f -- probClass2: %.3f"%(assignedClass, probClass[0], probClass[1])
 		if probClass[0] > probClass[1]:
 			assignedClass = 1
 		else:
 			assignedClass = 2
 		return assignedClass
+
+	#---------------
+	def predictParticleTargetProbability(self, partnum):
+		if self.classifier is None:
+			return None
+		evals = self.getEigenValueFromPartNum(partnum)
+		#print "evals.shape", evals.shape
+		assignedClass = self.classifier.predict(evals.reshape(1, -1))[0]
+		probClass = self.classifier.predict_proba(evals.reshape(1, -1))[0]
+		print "assignedClass: %.1f -- probClass1: %.3f -- probClass2: %.3f"%(assignedClass, probClass[0], probClass[1])
+		return probClass
 
 	#---------------
 	def partnumToInputVector(self, partnum):
@@ -145,11 +165,52 @@ class DataClass(object):
 	def readRandomImage(self):
 		partnum = self.particleMap[self.lastImageRead]
 		imgarray = self.readAndProcessParticle(partnum)
-		assignedClass = self.predictParticleTarget(partnum)
 		self.lastImageRead += 1
 		if self.lastImageRead >= self.numpart:
 			self.lastImageRead = 0
-		return imgarray, partnum, assignedClass
+		return imgarray, partnum
+
+	#---------------
+	def getRandomImageSet(self, nimg):
+		probParticleDict = {}
+		count = 0
+		while len(probParticleDict) < nimg and count < self.numpart-1:
+			count += 1
+			partnum = self.particleMap[self.lastImageRead]
+			if self.particleTarget.get(partnum, 0) == 0:
+				#only use unselected partices
+				if self.classifier is None:
+					probParticleDict[partnum] = partnum
+				else:
+					probClass = self.predictParticleTargetProbability(partnum)
+					probParticleDict[partnum] = probClass[0]
+			self.lastImageRead += 1
+			if self.lastImageRead >= self.numpart:
+				self.lastImageRead = 0
+		particleNumberList = sorted(probParticleDict, key=lambda k: -probParticleDict[k])
+		return particleNumberList
+
+	#---------------
+	def getParticleDiscrepancyList(self, nimg):
+		if self.classifier is None:
+			return None
+		selectedParticleList = self.particleTarget.keys()
+		if len(selectedParticleList) < nimg:
+			return None
+		probParticleDict = {}
+		for partnum in selectedParticleList:
+			probClass = self.predictParticleTargetProbability(partnum)
+			setting = self.particleTarget[partnum]
+			if setting == 1:
+				probParticleDict[partnum] = probClass[0]
+			elif setting == 2:
+				probParticleDict[partnum] = probClass[1]
+		particleNumberList = sorted(probParticleDict, key=lambda k: probParticleDict[k])
+		newlist = particleNumberList[:nimg]
+		print "XXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+		for partnum in newlist:
+			probClass = self.predictParticleTargetProbability(partnum)
+		return particleNumberList[:nimg]
 
 	#---------------
 	def readTargetImageStats(self):
@@ -176,20 +237,21 @@ class DataClass(object):
 	#---------------
 	def particlePCA(self):
 		partdata = self.readGoodTargetImageData()
-		print "performing principal component analysis"
-		print "partdata.shape", partdata.shape
+		#print "performing principal component analysis (pca)"
+		#print "partdata.shape", partdata.shape
 		n_components = 20
 		if n_components > math.sqrt(partdata.shape[0]):
 			n_components = int(math.floor(math.sqrt(partdata.shape[0])))
 		self.pca = PCA(partdata, self.boxsize, n_components)
-		print "done"
-		particleIndexes = self.particleTarget.keys() 
+		#print "pca complete"
+		particleIndexes = self.particleTarget.keys()
 		particleIndexes.sort()
 		particleEigenValues = []
 		print "calculating eigen values"
 		for partnum in particleIndexes:
 			evals = self.getEigenValueFromPartNum(partnum)
 			particleEigenValues.append(evals)
+		print "eigen values complete"
 		return particleEigenValues
 
 	#---------------
@@ -199,13 +261,22 @@ class DataClass(object):
 		if len(numpy.unique(targetData)) < 2:
 			return
 		self.classifier = svm.SVC(gamma=0.001, kernel='rbf', probability=True)
+		"""
+		http://scikit-learn.org/stable/auto_examples/svm/plot_rbf_parameters.html
+
+		The behavior of the model is very sensitive to the gamma parameter.
+
+		If gamma is too large, the radius of the area of influence of the support
+		vectors only includes the support vector itself and no amount of regularization
+		with C will be able to prevent overfitting.
+
+		When gamma is very small, the model is too constrained and cannot capture the complexity
+		or "shape" of the data. The region of influence of any selected support vector would
+		include the whole training set. The resulting model will behave similarly to a linear
+		model with a set of hyperplanes that separate the centers of high density of any pair
+		of two classes.
+		"""
 		print "Training classifier... (please wait)"
-		"""
-		'cache_size', 'class_weight', 'coef0', 'coef_', 'decision_function', 'degree',
-		'epsilon', 'fit', 'gamma', 'get_params', 'kernel', 'label_', 'max_iter', 'nu',
-		'predict', 'predict_log_proba', 'predict_proba', 'probability', 'random_state',
-		'score', 'set_params', 'shrinking', 'tol', 'verbose'
-		"""
 		self.classifier.fit(particleEigenValues, targetData)
 		print "training complete"
 		#predicted = classifier.predict()
@@ -214,13 +285,7 @@ class DataClass(object):
 	def particleStats(self, partnum, powerspec=None):
 		"""
 		rather than passing raw pixels, lets pass some key particle stats
-
-		use cache to prevent double reading
 		"""
-		try:
-			return self.statCache[partnum]
-		except KeyError:
-			pass
 		imgarray = self.readAndProcessParticle(partnum)
 		statList = []
 		if self.edgemap.shape != imgarray.shape:
@@ -235,7 +300,6 @@ class DataClass(object):
 		statList.extend(self.imageStats(powerspec*self.edgemap))
 		statList.extend(self.imageStats(powerspec*(1-self.edgemap)))
 		statArray = numpy.array(statList)
-		self.statCache[partnum] = statArray
 		return statArray
 
 	#---------------
@@ -264,12 +328,6 @@ class DataClass(object):
 			return
 		self.classifier = svm.SVC(gamma=0.001, kernel='rbf', probability=True)
 		print "Training classifier... (please wait)"
-		"""
-		'cache_size', 'class_weight', 'coef0', 'coef_', 'decision_function', 'degree',
-		'epsilon', 'fit', 'gamma', 'get_params', 'kernel', 'label_', 'max_iter', 'nu',
-		'predict', 'predict_log_proba', 'predict_proba', 'probability', 'random_state',
-		'score', 'set_params', 'shrinking', 'tol', 'verbose'
-		"""
 		self.classifier.fit(partdata, targetData)
 		print "training complete"
 		#predicted = classifier.predict()
@@ -294,6 +352,7 @@ class MainWindow(wx.Frame):
 	def __init__(self, data):
 		wx.Frame.__init__(self, None)
 		self.data = data
+		self.main = self
 
 		# Initiate data class
 		self.config = cfg.DataClass()
@@ -321,9 +380,9 @@ class MainWindow(wx.Frame):
 		self.Bind(wx.EVT_MENU, self.EvtOnHelpAbout, helpabout)
 
 		# Create navigation and working panel
-		self.navigationPanel = NavPanel(self.scrolled_window)
+		self.navigationPanel = NavPanel(self.scrolled_window, self.main)
 		self.sizer_scroll.Add(self.navigationPanel, pos=(1, 1))
-		self.workPanel = WorkPanel(self.scrolled_window)
+		self.workPanel = WorkPanel(self.scrolled_window, self.main)
 		self.sizer_scroll.Add(self.workPanel, pos=(2, 1))
 
 		# Spacers
@@ -335,7 +394,7 @@ class MainWindow(wx.Frame):
 		self.Bind(wx.EVT_SIZE, self.OnSize)
 
 		# Set up Displays
-		self.SetSize((900, 500))
+		self.SetSize((900, 600))
 		self.CreateStatusBar()
 		self.SetTitle('Learning Stack Cleaner '+self.config.version)
 
@@ -357,9 +416,9 @@ class MainWindow(wx.Frame):
 #=========================
 class NavPanel(wx.Panel):
 	#---------------
-	def __init__(self, parentPanel):
+	def __init__(self, parentPanel, main):
 		wx.Panel.__init__(self, parentPanel, style=wx.SIMPLE_BORDER)
-
+		self.main = main
 		# Set up sizer
 		self.sizer_nav = wx.GridBagSizer(5, 5)
 
@@ -389,31 +448,38 @@ class NavPanel(wx.Panel):
 		for i in range(len(self.buttonsList)):
 				self.buttonsList[i].SetValue(0)
 				self.panelsList[i].Hide()
-		main.workPanel.sizer_work = wx.GridBagSizer(0, 0)
+		self.main.workPanel.sizer_work = wx.GridBagSizer(0, 0)
 		self.buttonsList[pan-1].SetValue(1)
-		main.workPanel.sizer_work.Add(self.panelsList[pan-1], (0, 0))
+		self.main.workPanel.sizer_work.Add(self.panelsList[pan-1], (0, 0))
 		self.panelsList[pan-1].Show()
-		main.workPanel.SetSizerAndFit(main.workPanel.sizer_work)
-		main.scrolled_window.SetSize(main.GetClientSize())
+		self.main.workPanel.SetSizerAndFit(self.main.workPanel.sizer_work)
+		self.main.scrolled_window.SetSize(self.main.GetClientSize())
 
 #=========================
 class WorkPanel(wx.Panel):
 	#---------------
-	def __init__(self, parentWindow):
+	def __init__(self, parentWindow, main):
 		wx.Panel.__init__(self, parentWindow)
-		self.MainWindow = parentWindow
+		self.scrolled_window = parentWindow
+		self.main = main
+		self.sizer_work = wx.GridBagSizer(1, 1)
 
 		# Make panels
-		self.trainingPanel = TrainPanel(self)
+		self.trainingPanel = TrainPanel(self, self.main)
 		self.trainingPanel.Hide()
-		self.classPanel = ClassPanel(self)
+		self.classPanel = ClassPanel(self, self.main)
 		self.classPanel.Hide()
 
 #=========================
 class TrainPanel(wx.Panel):
 	#---------------
-	def __init__(self, parentPanel):
+	def __init__(self, parentPanel, main):
 		wx.Panel.__init__(self, parentPanel)
+		self.main = main
+
+		displayRows = 2 #int(self.workPanel.MainWindow.GetClientSize()[0]/128.)
+		displayCols = 6 #int(self.workPanel.MainWindow.GetClientSize()[1]/128.)
+
 		self.workPanel = parentPanel
 		self.part_display = False
 
@@ -426,57 +492,114 @@ class TrainPanel(wx.Panel):
 		self.sizer_stats = wx.GridBagSizer(5, 5)
 		self.sizer_image = wx.GridBagSizer(5, 5)
 
-		self.sizer_stats.AddSpacer((2, 2), (0, 0))
-		self.sizer_stats.AddSpacer((2, 2), (0, 3))
-		self.sizer_stats.AddSpacer((2, 2), (0, 6))
-
 		itemrow = 0
+		itemcol = 1
+		self.sizer_stats.AddSpacer((2, 2), (0, 0))
+
 		# Image pretreatment options
 		itemrow += 1
+		self.medianfilter = wx.TextCtrl(self.panel_stats)
+		self.medianfilter.ChangeValue("2")
+		self.sizer_stats.Add(self.medianfilter, pos=(itemrow, itemcol))
+		self.sizer_stats.Add(wx.StaticText(self.panel_stats, label='Median filter (integer)'),
+			pos=(itemrow, itemcol+1), flag=wx.ALIGN_CENTER_VERTICAL)
+
+		itemrow += 1
 		self.lowpass = wx.TextCtrl(self.panel_stats)
-		self.lowpass.ChangeValue('15')
-		self.sizer_stats.Add(self.lowpass, pos=(itemrow, 1))
-		self.sizer_stats.Add(wx.StaticText(self.panel_stats, label='Low Pass (Angstroms)'), pos=(itemrow, 2), flag=wx.ALIGN_CENTER_VERTICAL)
+		self.lowpass.ChangeValue('10')
+		self.sizer_stats.Add(self.lowpass, pos=(itemrow, itemcol))
+		self.sizer_stats.Add(wx.StaticText(self.panel_stats, label='Low Pass (Angstroms)'),
+			pos=(itemrow, itemcol+1), flag=wx.ALIGN_CENTER_VERTICAL)
 
 		itemrow += 1
 		self.highpass = wx.TextCtrl(self.panel_stats)
-		self.highpass.ChangeValue('1000')
-		self.sizer_stats.Add(self.highpass, pos=(itemrow, 1))
-		self.sizer_stats.Add(wx.StaticText(self.panel_stats, label='High Pass (Angstroms)'), pos=(itemrow, 2), flag=wx.ALIGN_CENTER_VERTICAL)
+		self.highpass.ChangeValue('500')
+		self.sizer_stats.Add(self.highpass, pos=(itemrow, itemcol))
+		self.sizer_stats.Add(wx.StaticText(self.panel_stats, label='High Pass (Angstroms)'),
+			pos=(itemrow, itemcol+1), flag=wx.ALIGN_CENTER_VERTICAL)
+
+		itemrow = 0
+		itemcol += 1
+		self.sizer_stats.AddSpacer((2, 2), (0, itemcol))
+		itemcol += 1
+
+		itemrow += 1
+		self.pixelLimitStDev = wx.TextCtrl(self.panel_stats)
+		self.pixelLimitStDev.ChangeValue('-1')
+		self.sizer_stats.Add(self.pixelLimitStDev, pos=(itemrow, itemcol))
+		self.sizer_stats.Add(wx.StaticText(self.panel_stats, label='Pixel Limit (StdDevs)'),
+			pos=(itemrow, itemcol+1), flag=wx.ALIGN_CENTER_VERTICAL)
 
 		itemrow += 1
 		self.binning = wx.TextCtrl(self.panel_stats)
-		self.binning.ChangeValue('2')
-		self.sizer_stats.Add(self.binning, pos=(itemrow, 1))
-		self.sizer_stats.Add(wx.StaticText(self.panel_stats, label='Binning (integer)'), pos=(itemrow, 2), flag=wx.ALIGN_CENTER_VERTICAL)
+		self.binning.ChangeValue('1')
+		self.sizer_stats.Add(self.binning, pos=(itemrow, itemcol))
+		self.sizer_stats.Add(wx.StaticText(self.panel_stats, label='Binning (integer)'),
+			pos=(itemrow, itemcol+1), flag=wx.ALIGN_CENTER_VERTICAL)
 
 		itemrow += 1
 		self.clipping = wx.TextCtrl(self.panel_stats)
-		self.clipping.ChangeValue('0')
-		self.sizer_stats.Add(self.clipping, pos=(itemrow, 1))
-		self.sizer_stats.Add(wx.StaticText(self.panel_stats, label='Clipping (integer)'), pos=(itemrow, 2), flag=wx.ALIGN_CENTER_VERTICAL)
+		self.clipping.ChangeValue("%d"%(data.boxsize))
+		self.sizer_stats.Add(self.clipping, pos=(itemrow, itemcol))
+		self.sizer_stats.Add(wx.StaticText(self.panel_stats, label='Clipping (integer)'),
+			pos=(itemrow, itemcol+1), flag=wx.ALIGN_CENTER_VERTICAL)
+
+		itemrow = 0
+		itemcol += 1
+		self.sizer_stats.AddSpacer((2, 2), (0, itemcol))
+		itemcol += 1
+		self.sizer_stats.AddSpacer((2, 2), (0, itemcol))
+		itemcol += 1
 
 		# Display info
-		self.sizer_stats.Add(wx.StaticText(self.panel_stats, label='Particle image display:'), pos=(1, 4), span=(1, 2), flag=wx.ALIGN_BOTTOM)
+		itemrow += 1
+		self.sizer_stats.Add(wx.StaticText(self.panel_stats, label='Particle image display:'),
+			pos=(itemrow, itemcol), span=(1, 2), flag=wx.ALIGN_BOTTOM)
+
+		itemrow += 1
 		self.nrows = wx.TextCtrl(self.panel_stats)
-		displayRows = 2 #int(self.workPanel.MainWindow.GetClientSize()[0]/128.)
-		displayCols = 6 #int(self.workPanel.MainWindow.GetClientSize()[1]/128.)
 		self.nrows.ChangeValue(str(displayRows))
-		self.sizer_stats.Add(self.nrows, pos=(2, 4))
-		self.sizer_stats.Add(wx.StaticText(self.panel_stats, label='NRows'), pos=(2, 5), flag=wx.ALIGN_CENTER_VERTICAL)
+		self.sizer_stats.Add(self.nrows, pos=(itemrow, itemcol))
+		self.sizer_stats.Add(wx.StaticText(self.panel_stats, label='NRows'),
+			pos=(itemrow, itemcol+1), flag=wx.ALIGN_CENTER_VERTICAL)
+
+		itemrow += 1
 		self.ncols = wx.TextCtrl(self.panel_stats)
 		self.ncols.ChangeValue(str(displayCols))
-		self.sizer_stats.Add(self.ncols, pos=(3, 4))
-		self.sizer_stats.Add(wx.StaticText(self.panel_stats, label='NCols'), pos=(3, 5), flag=wx.ALIGN_CENTER_VERTICAL)
+		self.sizer_stats.Add(self.ncols, pos=(itemrow, itemcol))
+		self.sizer_stats.Add(wx.StaticText(self.panel_stats, label='NCols'),
+			pos=(itemrow, itemcol+1), flag=wx.ALIGN_CENTER_VERTICAL)
 
+		itemcol += 1
+		self.sizer_stats.AddSpacer((2, 2), (0, itemcol))
+		itemcol += 1
+		self.sizer_stats.AddSpacer((2, 2), (0, itemcol))
+		itemcol += 1
+
+		self.buttonShowDiscrepancies = wx.Button(self.panel_stats, label='&Show Discrepancies', size=(120, 30))
+		self.sizer_stats.Add(self.buttonShowDiscrepancies, pos=(1, itemcol), span=(2, 1), flag=wx.ALIGN_CENTER)
+		self.Bind(wx.EVT_BUTTON, self.EvtShowDiscrepancies, self.buttonShowDiscrepancies)
+
+		self.buttonAcceptPredict = wx.Button(self.panel_stats, label='&Accept Predictions', size=(120, 30))
+		self.sizer_stats.Add(self.buttonAcceptPredict, pos=(3, itemcol), span=(2, 1), flag=wx.ALIGN_CENTER)
+		self.Bind(wx.EVT_BUTTON, self.EvtAcceptPredict, self.buttonAcceptPredict)
+
+		itemcol += 1
+		self.sizer_stats.AddSpacer((2, 2), (0, itemcol))
+		itemcol += 1
+		
 		# New set
-		self.buttonNewSet = wx.Button(self.panel_stats, label='Refresh Set', size=(120, 40))
-		self.sizer_stats.Add(self.buttonNewSet, pos=(1, 7), span=(2, 1), flag=wx.ALIGN_CENTER)
+		self.buttonNewSet = wx.Button(self.panel_stats, label='&Refresh Set', size=(120, 30))
+		self.sizer_stats.Add(self.buttonNewSet, pos=(1, itemcol), span=(2, 1), flag=wx.ALIGN_CENTER)
 		self.Bind(wx.EVT_BUTTON, self.EvtRefreshSet, self.buttonNewSet)
 
-		self.buttonTrainClass = wx.Button(self.panel_stats, label='Train and Refresh', size=(120, 40))
-		self.sizer_stats.Add(self.buttonTrainClass, pos=(3, 7), span=(2, 1), flag=wx.ALIGN_CENTER)
+		self.buttonTrainClass = wx.Button(self.panel_stats, label='&Train and Refresh', size=(120, 30))
+		self.sizer_stats.Add(self.buttonTrainClass, pos=(3, itemcol), span=(2, 1), flag=wx.ALIGN_CENTER)
 		self.Bind(wx.EVT_BUTTON, self.EvtTrainClass, self.buttonTrainClass)
+
+		itemcol += 1
+		self.sizer_stats.AddSpacer((2, 2), (0, itemcol))
+		itemcol += 1
 
 		# Set sizers
 		self.sizer_train.Add(self.panel_stats, pos=(0, 0))
@@ -485,26 +608,61 @@ class TrainPanel(wx.Panel):
 		self.panel_stats.SetSizerAndFit(self.sizer_stats)
 		self.panel_image.SetSizerAndFit(self.sizer_image)
 		self.SetSizerAndFit(self.sizer_train)
+		self.workPanel.SetSizerAndFit(self.workPanel.sizer_work)
+		self.main.scrolled_window.SetSizerAndFit(self.main.sizer_scroll)
 
 	#---------------
 	def EvtRefreshSet(self, event):
-		self.MakeDisplay()
+		nrows = int(self.nrows.GetValue())
+		ncols = int(self.ncols.GetValue())
+		nimg = nrows*ncols
+		particleNumberList = main.data.getRandomImageSet(nimg)
+		self.MakeDisplay(particleNumberList)
 
 	#---------------
 	def EvtTrainClass(self, event):
-		main.data.trainSVM()
-		self.MakeDisplay()
+		self.main.data.trainSVM()
+		nrows = int(self.nrows.GetValue())
+		ncols = int(self.ncols.GetValue())
+		nimg = nrows*ncols
+		particleNumberList = main.data.getRandomImageSet(nimg)
+		self.MakeDisplay(particleNumberList)
 
 	#---------------
-	def MakeDisplay(self):
+	def EvtShowDiscrepancies(self, event):
+		nrows = int(self.nrows.GetValue())
+		ncols = int(self.ncols.GetValue())
+		nimg = nrows*ncols
+		discrepancyList = main.data.getParticleDiscrepancyList(nimg)
+		if discrepancyList is None:
+			return
+		self.MakeDisplay(discrepancyList)
+		
+	#---------------
+	def EvtAcceptPredict(self, event):
+		partList = []
+		for imgbutton in self.imgbuttonList:
+			setting = self.main.data.getParticleTarget(imgbutton.particleNum)
+			if setting == 0:
+				imgbutton.SetPredictedClass()
+				self.main.data.updateParticleTarget(imgbutton.particleNum, imgbutton.particleSetting)
+			partList.append(imgbutton.particleNum)
+		self.MakeDisplay(partList)
+
+	#---------------
+	def MakeDisplay(self, particleNumberList):
 		nrows = int(self.nrows.GetValue())
 		ncols = int(self.ncols.GetValue())
 		nimg = nrows*ncols
 
 		data.imgproc.lowPass = float(self.lowpass.GetValue())
 		data.imgproc.lowPassType = 'tanh'
+		data.imgproc.median = int(self.medianfilter.GetValue())
 		data.imgproc.highPass = float(self.highpass.GetValue())
-		#self.imgproc.clipping = float(self.clipping.GetValue())
+		data.imgproc.pixelLimitStDev = float(self.pixelLimitStDev.GetValue())
+		clipVal = int(self.clipping.GetValue())
+		if clipVal > 1 and clipVal < data.boxsize:
+			data.imgproc.clipping = clipVal
 		data.imgproc.bin = int(self.binning.GetValue())
 
 		# Delete previous objects
@@ -516,32 +674,37 @@ class TrainPanel(wx.Panel):
 		imagePanel = self.panel_image
 		imageSizer = self.sizer_image
 
-		imgbutton_list = []
-		for i in range(nimg):
+		self.imgbuttonList = []
+		for i, partnum in enumerate(particleNumberList):
 			row = int(i / ncols)
 			col = i % ncols
 			#print row, col
-			main.SetStatusText("Preparing image %d of %d for display..."%(i, nimg))
-			filepartnum = main.data.particleMap[i]+1
-			imgarray, partnum, assignedClass = main.data.readRandomImage()
-			imgbutton = ImageButton(imagePanel, imgarray, partnum)
-			imgbutton.SetPredictedClass(assignedClass)
+			self.main.SetStatusText("Preparing image %d of %d for display..."%(i, nimg))
+			imgarray = main.data.readAndProcessParticle(partnum)
+			imgbutton = ImageButton(imagePanel, self.main, imgarray, partnum)
 			imageSizer.Add(imgbutton, pos=(row, col))
-			imgbutton_list.append(imgbutton)
+			imgbutton.SetBackgroundColour(wx.NullColour)
+			self.imgbuttonList.append(imgbutton)
 
-		#imagePanel.SetSizerAndFit(imageSizer)
-		#self.panel_stats.SetSizerAndFit(self.sizer_stats)
+		### FIXME -- setsizer
+		imagePanel.SetSizerAndFit(imageSizer)
+		self.panel_stats.SetSizerAndFit(self.sizer_stats)
 		self.panel_image.SetSizerAndFit(self.sizer_image)
 		self.SetSizerAndFit(self.sizer_train)
 		self.workPanel.SetSizerAndFit(self.workPanel.sizer_work)
+		self.main.scrolled_window.SetSizerAndFit(self.main.sizer_scroll)
+		self.main.scrolled_window.SetSize(self.main.GetClientSize())
 
-		main.scrolled_window.SetSize(main.GetClientSize())
-		main.SetStatusText('Finished generating new image set.')
+		for imgbutton in self.imgbuttonList:
+			imgbutton.SetPredictedClass()
+
+		self.main.SetStatusText('Finished generating new image set.')
 
 #=========================
 class ImageButton(wx.Panel):
 	#---------------
-	def __init__(self, parentPanel, imgarray, particleNum):
+	def __init__(self, parentPanel, main, imgarray, particleNum):
+		self.main = main
 		self.particleNum = particleNum
 		self.imgpanel = wx.Panel.__init__(self, parentPanel)
 		self.imgsizer = wx.GridBagSizer(2, 2)
@@ -556,25 +719,60 @@ class ImageButton(wx.Panel):
 		return
 
 	#---------------
-	def SetPredictedClass(self, assignedClass):
-		if assignedClass == 1:
-			self.SetBackgroundColour('GREEN YELLOW')
-		elif assignedClass == 2:
-			self.SetBackgroundColour('PINK')
-		else:
-			self.SetBackgroundColour(wx.NullColor)
+	def SetPredictedClass(self):
+		partnum = 	self.particleNum
+		setting = self.main.data.getParticleTarget(partnum)
+		self.particleSetting = setting
+		if setting == 1:
+			self.SetBackgroundColour('FOREST GREEN')
+			return
+		elif setting == 2:
+			self.SetBackgroundColour('FIREBRICK')
+			return
+		classProbs = self.main.data.predictParticleTargetProbability(partnum)
+		if classProbs is None:
+			self.SetBackgroundColour(wx.NullColour)
+			return
+		elif classProbs[0] > 0.5:
+			classProb = classProbs[0]
+			#Good particles 0.5 -> 1; 1 -> 0
+			red = int( (255-107)*(2-2*classProb) + 107 )
+			green = int( (255-142)*(2-2*classProb) + 142 )
+			blue = int( (255-35)*(2-2*classProb) + 35 )
+			self.SetBackgroundColour((red, green, blue))
+			#rgb(173,255,47) #light lime green
+			#rgb(107,142,35) #dark olive green
+			self.particleSetting = 1 #good
+			return
+		elif classProbs[1] > 0.5:
+			classProb = classProbs[1]
+			#Bad particles 0.5 -> 1; 0 -> 0
+			red = int( (255-199)*(2-2*classProb) + 199 )
+			green = int( (255-21)*(2-2*classProb) + 21 )
+			blue = int( (255-133)*(2-2*classProb) + 133 )
+			self.SetBackgroundColour((red, green, blue))
+			self.particleSetting = 2 #bad
+			#rgb(199,21,133) #dark pink
+			#rgb(255,192,203) #light pink
+			return
+		self.SetBackgroundColour(wx.NullColour)
+		return
+
 
 	#---------------
 	def ImageClick(self, event):
 		# Set background colour of particle images based on class
-		main.data.updateParticleTarget(self.particleNum)
-		setting = main.data.getParticleTarget(self.particleNum)
+		self.main.data.updateParticleTarget(self.particleNum)
+		setting = self.main.data.getParticleTarget(self.particleNum)
 		if setting == 1:
 			self.SetBackgroundColour('FOREST GREEN')
+			self.imgbutton.SetBackgroundColour('FOREST GREEN')
 		elif setting == 2:
 			self.SetBackgroundColour('FIREBRICK')
+			self.imgbutton.SetBackgroundColour('FIREBRICK')
 		else:
-			self.SetBackgroundColour(wx.NullColor)
+			self.SetBackgroundColour(wx.NullColour)
+			self.imgbutton.SetBackgroundColour(wx.NullColour)
 		return
 
 	#---------------
@@ -590,8 +788,9 @@ class ImageButton(wx.Panel):
 #=========================
 class ClassPanel(wx.Panel):
 	#---------------
-	def __init__(self, parentPanel):
+	def __init__(self, parentPanel, main):
 		wx.Panel.__init__(self, parentPanel)
+		self.main = main
 
 		"""
 		# Set up panels
@@ -756,124 +955,68 @@ class ClassPanel(wx.Panel):
 		try:
 			with func.BrowseOpenFile(main) as dlg:
 				temp = pickle.load(open(dlg.path, 'rb'))
-				main.data.imdim = temp.imdim
-				main.data.bases = temp.bases
-				main.data.model = temp.model
-				main.data.nbas = temp.nbas
-				main.data.n_true = temp.n_true
-				main.data.n_false = temp.n_false
-				main.data.lowpass_class = temp.lowpass_class
-				main.data.highpass_class = temp.highpass_class
-				main.data.clipping_class = temp.clipping_class
-				main.data.maskrad_class = temp.maskrad_class
-				main.data.binning_class = temp.binning_class
-				main.data.score_class = temp.score_class
-				main.data.param = temp.param
+				self.main.data.imdim = temp.imdim
+				self.main.data.bases = temp.bases
+				self.main.data.model = temp.model
+				self.main.data.nbas = temp.nbas
+				self.main.data.n_true = temp.n_true
+				self.main.data.n_false = temp.n_false
+				self.main.data.lowpass_class = temp.lowpass_class
+				self.main.data.highpass_class = temp.highpass_class
+				self.main.data.clipping_class = temp.clipping_class
+				self.main.data.maskrad_class = temp.maskrad_class
+				self.main.data.binning_class = temp.binning_class
+				self.main.data.score_class = temp.score_class
+				self.main.data.param = temp.param
 
 				# Update classifier info
-				self.stext_npartim.SetLabel(str(main.data.n_true))
-				self.stext_nnonpartim.SetLabel(str(main.data.n_false))
-				self.stext_imdim.SetLabel(main.data.imdim)
-				self.stext_lowpass.SetLabel(main.data.lowpass_class)
-				self.stext_highpass.SetLabel(main.data.highpass_class)
-				self.stext_clipping.SetLabel(main.data.clipping_class)
-				self.stext_rmask.SetLabel(main.data.maskrad_class)
-				self.stext_binning.SetLabel(main.data.binning_class)
-				self.stext_nbasis.SetLabel(str(main.data.nbas))
+				self.stext_npartim.SetLabel(str(self.main.data.n_true))
+				self.stext_nnonpartim.SetLabel(str(self.main.data.n_false))
+				self.stext_imdim.SetLabel(self.main.data.imdim)
+				self.stext_lowpass.SetLabel(self.main.data.lowpass_class)
+				self.stext_highpass.SetLabel(self.main.data.highpass_class)
+				self.stext_clipping.SetLabel(self.main.data.clipping_class)
+				self.stext_rmask.SetLabel(self.main.data.maskrad_class)
+				self.stext_binning.SetLabel(self.main.data.binning_class)
+				self.stext_nbasis.SetLabel(str(self.main.data.nbas))
 		except:
-				main.SetStatusText("ERROR: could not load classifier")
+				self.main.SetStatusText("ERROR: could not load classifier")
 
 	#---------------
 	def EvtResetScore(self, event):
-		main.data.score_class = 0
+		self.main.data.score_class = 0
 	"""
 
 # Classify functions
 class TrainClass:
 	def __init__(self,optimize):
-		main.SetStatusText('Compiling new training set...')
+		self.main.SetStatusText('Compiling new training set...')
 
 		# Define variables
-		nfilms = len(main.data.fileList)
+		nfilms = len(self.main.data.fileList)
 		ind = main.data.imdim.find('x')
-		dim = int(main.data.imdim[:ind])
-		if optimize == 0:
-			psize = float(main.panel_work.panel_class.psize1.GetValue())
-			rmax1 = float(main.panel_work.panel_class.rmax1.GetValue())
-			rmax2 = float(main.panel_work.panel_class.rmax2.GetValue())
-			mask = float(main.panel_work.panel_class.maskrad.GetValue())
-			downsize = int(main.panel_work.panel_class.downsize.GetValue())
-			kwrds = [psize,rmax1,rmax2,mask,downsize]
-			main.SetStatusText('Training classifier...(see terminal for details)')
-		elif optimize == 1:
-			niter = int(main.panel_work.panel_class.niter.GetValue())
-			psize = float(main.panel_work.panel_class.psize2.GetValue())
-			rmax1_min = float(main.panel_work.panel_class.opt_rmax1_min.GetValue())
-			rmax1_max = float(main.panel_work.panel_class.opt_rmax1_max.GetValue())
-			rmax2_min = float(main.panel_work.panel_class.opt_rmax2_min.GetValue())
-			rmax2_max = float(main.panel_work.panel_class.opt_rmax2_max.GetValue())
-			mask_min = float(main.panel_work.panel_class.opt_rmask_min.GetValue())
-			mask_max = float(main.panel_work.panel_class.opt_rmask_max.GetValue())
-			downsize_min = float(main.panel_work.panel_class.opt_downsize_min.GetValue())
-			downsize_max = float(main.panel_work.panel_class.opt_downsize_max.GetValue())
-			kwrds = [niter,psize,rmax1_min,rmax1_max,rmax2_min,rmax2_max,mask_min,mask_max,downsize_min,downsize_max]
-			main.SetStatusText('Optimizing classifier...(see terminal for details)')
-
+		dim = int(self.main.data.imdim[:ind])
+		psize = float(self.main.panel_work.panel_class.psize1.GetValue())
+		rmax1 = float(self.main.panel_work.panel_class.rmax1.GetValue())
+		rmax2 = float(self.main.panel_work.panel_class.rmax2.GetValue())
+		mask = float(self.main.panel_work.panel_class.maskrad.GetValue())
+		downsize = int(self.main.panel_work.panel_class.downsize.GetValue())
+		niter = int(self.main.panel_work.panel_class.niter.GetValue())
 		# Train
 		new_class = func.TrainNewClass(optimize,nfilms,dim,kwrds,main.data.score_class,main.data.partsList,main.data.partclass,main.data.fileList)
-		if optimize == 0:
-			main.data.model = new_class.model
-			main.data.bases = new_class.bases
-			main.data.class_par = new_class.class_par
-			main.data.psize_class = main.panel_work.panel_class.psize1.GetValue()
-			main.data.rmax1_class = main.panel_work.panel_class.rmax1.GetValue()
-			main.data.rmax2_class = main.panel_work.panel_class.rmax2.GetValue()
-			main.data.maskrad_class = main.panel_work.panel_class.maskrad.GetValue()
-			main.data.downsize_class = main.panel_work.panel_class.downsize.GetValue()
-			main.panel_work.panel_class.stext_accuracy.SetLabel('N/A')
-			main.data.n_true = new_class.n_true
-			main.data.n_false = new_class.n_false
-			main.data.nbas = new_class.nbas
-		elif optimize == 1:
-			if new_class.score_class > main.data.score_class:
-				main.data.model = new_class.model
-				main.data.bases = new_class.bases
-				main.data.class_par = new_class.class_par
-				main.data.psize_class = main.panel_work.panel_class.psize2.GetValue()
-				main.data.rmax1_class = str(new_class.param[0])
-				main.data.rmax2_class = str(new_class.param[1])
-				main.data.maskrad_class = str(new_class.param[2])
-				main.data.downsize_class = str(new_class.param[3])
-				main.data.score_class = new_class.score_class
-				main.panel_work.panel_class.stext_accuracy.SetLabel(str(main.data.score_class))
-				main.data.n_true = new_class.n_true
-				main.data.n_false = new_class.n_false
-				main.data.nbas = new_class.nbas
+		self.main.data.model = new_class.model
+		self.main.data.bases = new_class.bases
+		self.main.data.class_par = new_class.class_par
+		self.main.panel_work.panel_class.stext_accuracy.SetLabel('N/A')
+		self.main.data.n_true = new_class.n_true
+		self.main.data.n_false = new_class.n_false
+		self.main.data.nbas = new_class.nbas
+		self.main.data.score_class = new_class.score_class
 
-		# Update classifier info
-		main.panel_work.panel_class.stext_npartim.SetLabel(str(main.data.n_true))
-		main.panel_work.panel_class.stext_nnonpartim.SetLabel(str(main.data.n_false))
-		main.panel_work.panel_class.stext_imdim.SetLabel(main.data.imdim)
-		main.panel_work.panel_class.stext_psize.SetLabel(main.data.psize_class)
-		main.panel_work.panel_class.stext_rmax1.SetLabel(main.data.rmax1_class)
-		main.panel_work.panel_class.stext_rmax2.SetLabel(main.data.rmax2_class)
-		main.panel_work.panel_class.stext_rmask.SetLabel(main.data.maskrad_class)
-		main.panel_work.panel_class.stext_downsize.SetLabel(main.data.downsize_class)
-		main.panel_work.panel_class.stext_nbasis.SetLabel(str(main.data.nbas))
-
-		main.SetStatusText('Training classifier...COMPLETE')
-		print 'Training classifier...COMPLETE'
-
-
-
-class TrainNewClass(object):
-	def __init__(self, data):
-
-		#optimize,nfilms,dim,kwrds,score_class,partsList,partclass,fileList):
 		self.score_class = score_class
 		self.n_true = n_true
 		self.n_false = n_false
-		self.nbas = nbas #size of basis / number of pixels
+		self.nbas = nbas #number of pixels
 
 		# Import images and create training sets
 		if optimize == 0:
