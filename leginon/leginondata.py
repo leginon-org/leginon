@@ -1455,6 +1455,8 @@ class HoleFinderSettingsData(TargetFinderSettingsData):
 			('focus max mean thickness', float),
 			('focus max stdev thickness', float),
 			('focus interval', int),
+			('focus offset row', int),
+			('focus offset col', int),
 		)
 	typemap = classmethod(typemap)
 

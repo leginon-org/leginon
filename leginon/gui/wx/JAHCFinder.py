@@ -393,6 +393,8 @@ class FinalScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		szice.Add(label, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		szice.Add(self.widgets['focus hole'], (3, 1), (1, 1),
 										wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		szice.Add(self.createFocusOffsetSizer(), (4,0), (1,2),
+										wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
 		szice.AddGrowableCol(1)
 
 		sbszice.Add(szice, 1, wx.EXPAND|wx.ALL, 5)
@@ -444,6 +446,18 @@ class FinalScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		self.growrows = [False, True, False,]
 
 		return [sbszice, sbsztt, szbutton]
+
+	def createFocusOffsetSizer(self):
+		# set widgets
+		self.widgets['focus offset row'] = IntEntry(self, -1, chars=4)
+		self.widgets['focus offset col'] = IntEntry(self, -1, chars=4)
+		# make sizer
+		sz_offset = wx.BoxSizer(wx.HORIZONTAL)
+		sz_offset.Add(wx.StaticText(self, -1, 'focus offset x:'))
+		sz_offset.Add(self.widgets['focus offset col'])
+		sz_offset.Add(wx.StaticText(self, -1, 'y:'))
+		sz_offset.Add(self.widgets['focus offset row'])
+		return sz_offset
 
 	def onTestButton(self, evt):
 		self.dialog.setNodeSettings()
