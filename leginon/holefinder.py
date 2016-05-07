@@ -62,6 +62,8 @@ class HoleFinder(targetfinder.TargetFinder):
 		'focus max mean thickness': 0.5,
 		'focus max stdev thickness': 0.5,
 		'focus interval': 1,
+		'focus offset row': 0,
+		'focus offset col': 0,
 	})
 	def __init__(self, id, session, managerlocation, **kwargs):
 		targetfinder.TargetFinder.__init__(self, id, session, managerlocation, **kwargs)
@@ -284,7 +286,7 @@ class HoleFinder(targetfinder.TargetFinder):
 					self.logger.info('need more than one hole if you want to focus on one of them')
 					centers = []
 				elif onehole == 'Any Hole':
-					fochole = self.focus_on_hole(centers, allcenters)
+					fochole = self.focus_on_hole(centers, allcenters, True)
 					focus_points.append(fochole)
 				elif onehole == 'Good Hole':
 					if len(centers) < 2:
@@ -292,7 +294,7 @@ class HoleFinder(targetfinder.TargetFinder):
 						centers = []
 					else:
 						## use only good centers
-						fochole = self.focus_on_hole(centers, centers)
+						fochole = self.focus_on_hole(centers, centers, True)
 						focus_points.append(fochole)
 
 		self.logger.info('Holes with good ice: %s' % (len(centers),))
@@ -326,7 +328,7 @@ class HoleFinder(targetfinder.TargetFinder):
 		cy /= len(points)
 		return cx,cy
 
-	def focus_on_hole(self, good, all):
+	def focus_on_hole(self, good, all, apply_offset=False):
 		cx,cy = self.centroid(all)
 		focpoint = None
 
@@ -346,6 +348,8 @@ class HoleFinder(targetfinder.TargetFinder):
 				if dist < closest_dist:
 					closest_dist = dist
 					closest_point = point
+			if apply_offset:
+				closest_point = self.offsetFocus(closest_point)
 			return closest_point
 
 		## now use a good hole for focus
@@ -358,7 +362,12 @@ class HoleFinder(targetfinder.TargetFinder):
 				closest_dist = dist
 				closest_point = point
 		good.remove(closest_point)
+		if apply_offset:
+			closest_point = self.offsetFocus(closest_point)
 		return closest_point
+
+	def offsetFocus(self, point):
+			return point[0]+self.settings['focus offset col'],point[1]+self.settings['focus offset row']
 
 	def bypass(self):
 		self.setTargets([], 'acquisition', block=True)
