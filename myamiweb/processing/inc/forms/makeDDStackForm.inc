@@ -12,7 +12,7 @@ require_once "basicLoopForm.inc";
 class MakeDDStackForm extends BasicLoopForm
 
 {
-	function __construct(  $expId, $errorHTML='', $infoHTML='',$align='', $defergpu='', $bin=1, $nokeepstack='', $ddstartframe=0, $ddnframe='',$alignoffset=7,$alignbfactor=1000,$alignccbox=96,$alignlabel='a' ) 
+	function __construct(  $expId, $errorHTML='', $infoHTML='',$align='', $defergpu='', $bin=1, $nokeepstack='', $ddstartframe=0, $ddnframe='',$alignoffset=7,$alignbfactor=1000,$alignccbox=96,$alignlabel='a', $flp=0, $nrw=1 ) 
 	{
 		parent::__construct($expId, $errorHTML, $infoHTML);
 		
@@ -48,6 +48,8 @@ class MakeDDStackForm extends BasicLoopForm
 		$params->addParam( "alignbfactor", $alignbfactor, "b factor in motioncorr" );
 		$params->addParam( "alignccbox", $alignccbox, "CC search boxsize in motioncorr" );
 		$params->addParam( "alignlabel", $alignlabel, "append label to aligned image" );
+		$params->addParam( "nrw", $nrw, "Number (1, 3, 5, ...) of frames in running average window");
+		$params->addParam( "flp", $flp, "Flip frames along Y axis.; 0 = no flip, 1 = flip");
 		// Validations
 		$params->addValidation( "bin", "num" );
 	}
@@ -64,7 +66,9 @@ class MakeDDStackForm extends BasicLoopForm
 		$html.= $params->insertCheckboxField( "align" );
 		$html.= $params->insertCheckboxField( "defergpu" );
 		$html.= $params->insertCheckboxField( "no_keepstack" );
-		$html.= "<br/><br/>\n";
+	
+		
+		$html.= "<br/>\n";
 		$html.= $params->insertTextFieldInRow( "bin", $fieldSize );
 		$html.= "<br/>\n";
 		$html.= $params->insertTextFieldInRow( "alignlabel", $fieldSize );
@@ -74,6 +78,10 @@ class MakeDDStackForm extends BasicLoopForm
 		$html.= $params->insertTextFieldInRow( "alignbfactor", $fieldSize );
 		$html.= "<br/>\n";
 		$html.= $params->insertTextFieldInRow( "alignccbox",$fieldSize );
+  		$html.= "<br/>\n";
+                $html.= $params->insertTextFieldinRow( "nrw", $fieldSize );
+                $html.= "<br/>\n";
+                $html.= $params->insertTextFieldinRow( "flp", $fieldSize );
 		$html.= "<br/><br/>Frames used for sum image after alignment: <br/>\n";
 		$html.= $params->insertTextFieldInRow( "ddstartframe", $fieldSize );
 		$html.= $params->insertTextFieldInRow( "ddnframe", $fieldSize );
