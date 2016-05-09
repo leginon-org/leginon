@@ -40,14 +40,25 @@ class MakeFrameStackLoop(apDDLoop.DDStackLoop):
 		# Integer
 		self.parser.add_option("--refimgid", dest="refimgid", type="int",
 			help="Specify a corrected image to do gain/dark correction with", metavar="INT")
+
 		self.parser.add_option("--trim", dest="trim", type="int", default=0,
 			help="Trim edge off after frame stack gain/dark correction", metavar="INT")
+
+		self.parser.add_option("--nrw", dest="nrw", type="int", default=1,
+			help="Number (1, 3, 5, ...) of frames in running average window", metavar="INT")
+
+		self.parser.add_option("--flp", dest="flp", type="int", default=0,
+			help="Flip frames along Y axis. (0 = no flip, 1 = flip", metavar="INT")
 
 	#=======================
 	def checkConflicts(self):
 		if self.params['align'] and not self.params['defergpu']:
 			exename = 'dosefgpu_driftcorr'
 			gpuexe = subprocess.Popen("which "+exename, shell=True, stdout=subprocess.PIPE).stdout.read().strip()
+
+	#		gpuexe = "/emg/sw/script/motioncorr-master/bin/"+exename
+
+			print 'gpuexe path is '+gpuexe
 			if not os.path.isfile(gpuexe):
 				apDisplay.printError('Correction program "%s" not available' % exename)
 			# We don't have gpu locking
@@ -60,7 +71,7 @@ class MakeFrameStackLoop(apDDLoop.DDStackLoop):
 					os.access(self.params['tempdir'],os.W_OK|os.X_OK)
 				except:
 					raise
-					apDisplay.printError('Local temp directory not writable')
+				apDisplay.printError('Local temp directory not writable')
 		else:
 			# makes no sense to save gain corrected ddstack in tempdir if no alignment
 			# will be done on the same machine
@@ -100,7 +111,9 @@ class MakeFrameStackLoop(apDDLoop.DDStackLoop):
 		# keepstack is resolved for various cases in conflict check.  There should be no ambiguity by now
 		self.dd.setKeepStack(self.params['keepstack'])
 		self.dd.setCycleReferenceChannels(self.params['cyclechannels'])
-		
+                self.dd.setNewNumRunningAverageFrames(self.params['nrw'])
+                self.dd.setNewFlipAlongYAxis(self.params['flp'])
+	
 		if self.params['refimgid']:
 			self.dd.setDefaultImageForReference(self.params['refimgid'])
 		self.imageids = []
