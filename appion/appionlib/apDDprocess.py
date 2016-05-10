@@ -267,6 +267,9 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		self.setUseAlternativeChannelReference(False)
 		self.setCycleReferenceChannels(False)
 		self.setDefaultImageForReference(0)
+		self.numRunningAverageFrames = 1
+		self.flipAlongYAxis = 0
+
 		if debug:
 			self.log = open('newref.log','w')
 			self.scalefile = open('darkscale.log','w')
@@ -1058,6 +1061,27 @@ class DDFrameProcessing(DirectDetectorProcessing):
 	def getNewBinning(self):
 		return self.stack_binning
 
+
+
+	def setNewNumRunningAverageFrames(self,numFrames):
+		'''
+		Number of frames to include in running average of dosef_driftcorr
+		'''
+		self.numRunningAverageFrames = numFrames
+
+	def setNewFlipAlongYAxis(self,logical_value):
+		'''
+		Flip frames along Y axis during drift correction
+		'''
+		self.flipAlongYAxis = logical_value
+
+
+	def getNewNumRunningAverageFrames(self):
+		return self.numRunningAverageFrames
+
+	def getNewFlipAlongYAxis(self):
+		return self.flipAlongYAxis
+
 	def setKeepStack(self,is_keepstack):
 			self.keep_stack = is_keepstack
 			if is_keepstack:
@@ -1171,9 +1195,16 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		temp_log = self.tempframestackpath[:-4]+'_Log.txt'
 
 		# Construct the command line with defaults
+
+
 		cmd = 'dosefgpu_driftcorr %s -gpu %d -fcs %s -dsp 0' % (self.tempframestackpath,self.gpuid,temp_aligned_sumpath)
+		cmd = '/emg/sw/script/motioncorr-master/bin/'+cmd
 		# Options
 		cmd += self.addDoseFDriftCorrOptions()
+
+		# moving average window and y-axis flip
+		cmd += ' -nrw %d -flp %d' % (self.getNewNumRunningAverageFrames(),self.getNewFlipAlongYAxis()) 
+
 		# binning
 		cmd += ' -bin %d' % (self.getNewBinning())
 		# gain dark references
