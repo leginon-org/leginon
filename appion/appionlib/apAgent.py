@@ -36,10 +36,11 @@ class Agent (basicAgent.BasicAgent):
 		self.statusCkInterval = 30
 	
 	def Main(self,command):
-				
-		self.processingHost = self.createProcessingHost()
-		
 		jobType = self.getJobType(command)
+                
+		self.processingHost = self.createProcessingHost( command, jobType)
+		
+		
 		
 		#Not sure if we want pedanticaly issue warning messages 
 		#if not jobType:
