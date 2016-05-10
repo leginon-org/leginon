@@ -1198,7 +1198,7 @@ class DDFrameProcessing(DirectDetectorProcessing):
 
 
 		cmd = 'dosefgpu_driftcorr %s -gpu %d -fcs %s -dsp 0' % (self.tempframestackpath,self.gpuid,temp_aligned_sumpath)
-		cmd = '/emg/sw/script/motioncorr-master/bin/'+cmd
+	#	cmd = '/emg/sw/script/motioncorr-master/bin/'+cmd
 		# Options
 		cmd += self.addDoseFDriftCorrOptions()
 
