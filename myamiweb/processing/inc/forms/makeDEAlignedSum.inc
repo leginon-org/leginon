@@ -25,7 +25,7 @@ class makeDEAlignedSum extends BasicLoopForm
 	
 	function __construct( $expId, $extraHTML='', $alignment_correct='1', $alignment_quanta='3', $radiationdamage_compensate='1', $border='70',
 	$hackcopy='', $usequeue='on', $queue_style='', $queue_scratch='', $njobs='4', $queue_ppn='2', $queue_name='', $queue_memory='4', $handlefiles='copy',
-	$defects_columns='', $defects_rows='', $darkreference_transform='', $gainreference_transform='', $output_transform='', $wrapper='', $alignlabel='a' ) 
+	$bad_cols='', $bad_rows='', $darkreference_transform='', $gainreference_transform='', $output_transform='', $wrapper='', $alignlabel='a' ) 
 	{
 		// You must first call the parent class(BasicLayoutForm) constructor. 
 		// Pass it the $expId and $extraHTML variables. Errors and test results are passed through $extraHTML.
@@ -90,8 +90,8 @@ class makeDEAlignedSum extends BasicLoopForm
 		$params->addParam( "queue_memory", $queue_memory, "Queue memory" );
 		$params->addParam( "queue_name", $queue_name, "Queue name" );
 		$params->addParam( "handlefiles", $handlefiles, "File handling" );
-		$params->addParam( "defects_columns", $defects_columns, "Defective column numbers" );
-		$params->addParam( "defects_rows", $defects_rows, "Defective row numbers" );
+		$params->addParam( "bad_cols", $bad_cols, "Bad column numbers" );
+		$params->addParam( "bad_rows", $bad_rows, "Bad row numbers" );
 		$params->addParam( "darkreference_transform", $darkreference_transform, "Transformation of dark reference to frames" );
 		$params->addParam( "gainreference_transform", $gainreference_transform, "Transformation of bright reference to frames" );
 		$params->addParam( "output_transform", $output_transform, "Transformation of final summed image" );
@@ -140,8 +140,8 @@ class makeDEAlignedSum extends BasicLoopForm
 			$html.= "Show Advanced Options</a><br/>\n";
 			$html.= "<div id='Advanced_DEAlign_Options' style='display: none'>\n";
 		}
-			$html.= $params->insertTextField( "defects_columns", $fieldSize );
-			$html.= $params->insertTextField( "defects_rows", $fieldSize );
+			$html.= $params->insertTextField( "bad_cols", $fieldSize );
+			$html.= $params->insertTextField( "bad_rows", $fieldSize );
 			$html.= $params->insertCheckboxField( "hackcopy" );
 			$html.= $params->insertTextField( "darkreference_transform", $fieldSize );
 			$html.= $params->insertTextField( "gainreference_transform", $fieldSize );

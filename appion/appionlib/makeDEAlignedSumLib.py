@@ -53,6 +53,9 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 					metavar = 'FLOAT'
 				self.parser.add_option('--%s_%s' % (section, option['name']), type=option['type'], metavar=metavar, help=option['help'], default=option['default'])
 
+		self.parser.add_option('--bad_cols', dest='bad_cols', default='', help= "Bad columns in Leginon orientation")
+		self.parser.add_option('--bad_rows', dest='bad_rows', default='', help= "Bad rows in Leginon orientation")
+		self.parser.add_option('--bad_pixels', dest='bad_pixels', default='', help= "Bad rows in Leginon orientation")
 		self.parser.add_option('--alignlabel', dest='alignlabel', default='a', help='label to be appended to the presetname, e.g. --label=a gives ed-a as the aligned preset for preset ed', metavar='CHAR')
 		self.parser.add_option("--refimgid", dest="refimgid", type="int", help="Specify a corrected image to do gain/dark correction with", metavar="INT")
 		self.parser.add_option('--border', dest='border', type='int', default=0, help='Clip border specified border pixels and pad back out with mean value')
@@ -253,7 +256,7 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 			leg_name = 'bad_%s' % namemap[axis][1]
 			exclude_list = []
 			# figure out the defects if not specified already
-			if not self.params[de_name]:
+			if leg_name not in self.params.keys() or not self.params[leg_name]:
 				if corrector_plan and corrector_plan[leg_name]:
 					# Do not include a location in defects for DE 
 					# process if in the border because large number
@@ -266,22 +269,26 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 					self.params[de_name] = formatBadList(bad)
 			else:
 				# overwrite corrector_plan
-				badlines[axis] = map((lambda x:int(x)),self.params[de_name].split(','))
+				badlines[axis] = map((lambda x:int(x)),self.params[leg_name].split(','))
+				self.params[de_name] = self.params[leg_name]
 
 		# Leginon sum image and DE frames flipping does not need to be handled
 		# because DE program handles that by default
 		# camera may be mounted with a rotation so that frames are rotated relative to the image known in Leginon
 		# Here we are transforming from image to frames
-		rotate = imgdata['camera']['frame rotate']
-
-		# image transforms
-		# camera frame rotation as key, de (reference,output) transform as value
-		image_transform_map = {0:(0,0),1:(2,3),2:(1,1),3:(3,2)}
-		# allow user to overwrite transforms
 		if self.params['darkreference_transform']+self.params['gainreference_transform']+self.params['output_transform'] == 0:
-				self.params['darkreference_transform'] = image_transform_map[rotate][0]
-				self.params['gainreference_transform'] = image_transform_map[rotate][0]
-				self.params['output_transform'] = image_transform_map[rotate][1]
+			rotate = imgdata['camera']['frame rotate']
+
+			# image transforms
+			# camera frame rotation as key, de (reference,output) transform as value
+			image_transform_map = {0:(0,0),1:(2,3),2:(1,1),3:(3,2)}
+			self.params['darkreference_transform'] = image_transform_map[rotate][0]
+			self.params['gainreference_transform'] = image_transform_map[rotate][0]
+			self.params['output_transform'] = image_transform_map[rotate][1]
+		else:
+			# allow user to overwrite transforms
+			de_rotate_map = {0:0,1:2,2:1,3:3}
+			rotate = de_rotate_map[self.params['gainreference_transform']]
 
 		# transform mapping
 		def identical(value,axis):
@@ -289,10 +296,10 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 		def reverse(value,axis):
 			return cam_size[axis]-value-1
 		# camera frame rotation as key, de (mapped axis, transform function) as value
-		defectx_transform_map = {0:('cols',identical),1:('rows',identical),2:('cols',reverse),3:('cols',reverse)}
-		defecty_transform_map = {0:('rows',identical),1:('cols',reverse),2:('rows',reverse),3:('rows',identical)}
+		defectx_transform_map = {0:('cols',identical),1:('rows',identical),2:('cols',reverse),3:('rows',reverse)}
+		defecty_transform_map = {0:('rows',identical),1:('cols',reverse),2:('rows',reverse),3:('cols',identical)}
 
-		# bad columns and rows
+		# bad columns and rows rotated based on camera rotation in Leginon
 		rotated_bad = {}
 		rotated_bad[defectx_transform_map[rotate][0]] = map((lambda x: defectx_transform_map[rotate][1](x,'x')),badlines['x'])
 		rotated_bad[defecty_transform_map[rotate][0]] = map((lambda x: defecty_transform_map[rotate][1](x,'y')),badlines['y'])
