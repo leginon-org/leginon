@@ -104,10 +104,16 @@ class ProcessingHost (object):
         
         headerArray = json.loads(r.text)
         
+        # scheduler options
         headerText = headerArray['customResponse']['header'] + "\n";
         for k, v in headerArray['customResponse']['options'].iteritems():
             headerText = headerText + headerArray['customResponse']['prefix'] + " " + k + " " + v + "\n"    
 
+        # custom execs to run in the script before command and after scheduler options
+        # export things=stuff for example.
+        for customExec in headerArray['customResponse']['executables']:
+            headerText = headerText + customExec + "\n"
+            
         self.execCommand=headerArray['customResponse']['execCommand']
 	self.statusCommand=headerArray['customResponse']['statusCommand']
         return headerText
