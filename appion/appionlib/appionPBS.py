@@ -137,6 +137,8 @@ class AppionPBS(appionLoop2.AppionLoop):
 							print "setting up only the first job and exiting"
 							sys.exit()
 						self.launchPBSJob(scratchdir, jobname)
+						# Give system time to start
+						time.sleep(2)
 						jobn+=1
 							
 					while len(jobs)>0:
