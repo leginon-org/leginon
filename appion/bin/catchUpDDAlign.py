@@ -114,6 +114,8 @@ class CatchUpFrameAlignmentLoop(appionScript.AppionScript):
 		self.dd.setAlignedSumFrameList(framelist)
 		self.dd.setGPUid(self.params['gpuid'])
 		self.dd.setAlignedCameraEMData()
+		self.dd.setNewNumRunningAverageFrames(self.ddstack_script_params['nrw'])
+		self.dd.setNewFlipAlongYAxis(self.ddstack_script_params['flp'])
 
 		if not self.dd.hasBadPixels():
 			# use GPU to do flat field correction if no bad pixel/col/rows

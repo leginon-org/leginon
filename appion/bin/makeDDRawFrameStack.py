@@ -111,8 +111,8 @@ class MakeFrameStackLoop(apDDLoop.DDStackLoop):
 		# keepstack is resolved for various cases in conflict check.  There should be no ambiguity by now
 		self.dd.setKeepStack(self.params['keepstack'])
 		self.dd.setCycleReferenceChannels(self.params['cyclechannels'])
-                self.dd.setNewNumRunningAverageFrames(self.params['nrw'])
-                self.dd.setNewFlipAlongYAxis(self.params['flp'])
+		self.dd.setNewNumRunningAverageFrames(self.params['nrw'])
+		self.dd.setNewFlipAlongYAxis(self.params['flp'])
 	
 		if self.params['refimgid']:
 			self.dd.setDefaultImageForReference(self.params['refimgid'])
