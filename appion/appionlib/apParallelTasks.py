@@ -101,7 +101,8 @@ class Agent (basicAgent.BasicAgent):
 
 	def Main(self,idtext,commands):
 		self.initiateTaskIdFile()
-		self.processingHost = self.createProcessingHost()
+		# pass the first command for now.  Should figure out processing host requirement to pass through
+		self.processingHost = self.createProcessingHost(command[0],'paralleltask')
 		self.idtext = idtext
 
 		for command in commands:	 

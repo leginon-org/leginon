@@ -27,7 +27,8 @@ class ParallelTaskMonitor(basicAgent.BasicAgent):
 	def Main(self):
 		if not os.path.isfile(self.taskid_file):
 			apDisplay.printError('Missing %s for parallel task monitoring' % self.taskid_file)
-		self.processingHost = self.createProcessingHost()
+		# no command is passed now
+		self.processingHost = self.createProcessingHost('','taskmonitor')
 		self.getTaskJobIds()
 		# wait until all done
 		while len(self.unfinished_task_status):
