@@ -192,6 +192,9 @@ class AppionPBS(appionLoop2.AppionLoop):
 		self.postLoopFunctions()
 		self.close()
 
+	def executeCommand(self, command):
+		raise NotImplementedError()
+
 	def rejectImage(self, imgdata):
 		'''
 		Skip processing imgdata based on defined condition.
@@ -252,8 +255,9 @@ class AppionPBS(appionLoop2.AppionLoop):
 # 					apDisplay.printMsg("New load average "+str(round(os.getloadavg()[0],2)))
 
 		self._printSummary()
+		self._advanceStatsCount()
 
-		if self.params['limit'] is not None and self.stats['count'] > self.params['limit']:
+		if self.params['limit'] is not None and self.stats['totalcount'] > self.params['limit']:
 			apDisplay.printWarning("reached image limit of "+str(self.params['limit'])+"; now stopping")
 	
 	def setupJob(self, scratchdir, imgdata, command):
