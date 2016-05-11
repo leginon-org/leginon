@@ -83,6 +83,7 @@ class BasicScript(object):
 	def createDefaultStats(self):
 		self.stats = {}
 		self.stats['starttime'] = time.time()
+		self.stats['totalcount'] = 1
 		self.stats['count'] = 1
 		self.stats['lastcount'] = 0
 		self.stats['startmem'] = mem.active()

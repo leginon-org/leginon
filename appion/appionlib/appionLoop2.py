@@ -59,7 +59,6 @@ class AppionLoop(appionScript.AppionScript):
 		if not self.params['parallel']:
 			self.cleanParallelLock()
 		### get images from database
-		self.stats['totalcount'] = 0
 		self._getAllImages()
 		os.chdir(self.params['rundir'])
 		self.preLoopFunctions()
@@ -119,6 +118,7 @@ class AppionLoop(appionScript.AppionScript):
 # 					apDisplay.printMsg("New load average "+str(round(os.getloadavg()[0],2)))
 
 				self._printSummary()
+				self._advanceStatsCount()
 
 				if self.params['limit'] is not None and self.stats['totalcount'] > self.params['limit']:
 					apDisplay.printWarning("reached image limit of "+str(self.params['limit'])+"; now stopping")
@@ -481,7 +481,7 @@ class AppionLoop(appionScript.AppionScript):
 	#=====================
 	def _getAllImages(self):
 		"""
-		get all images whether rejected or not.
+		get all images whether rejected or not and then remove rejected, done images and limited by number
 		"""
 		startt = time.time()
 		if self.params['mrcnames'] is not None:
@@ -526,6 +526,8 @@ class AppionLoop(appionScript.AppionScript):
 				self.imgtree = self.imgtree[:lim]
 		if len(self.imgtree) > 0:
 			self.params['apix'] = apDatabase.getPixelSize(self.imgtree[0])
+
+		# When all images are processed or rejected or done,		# self.imgtree becomes zero and the loop stops
 		self.stats['imagecount'] = len(self.imgtree)
 
 	#=====================
@@ -618,17 +620,20 @@ class AppionLoop(appionScript.AppionScript):
 
 		return True
 
+	def _advanceStatsCount(self):
+		# self.stats['count'] is reset when images are skipped or processed by the last waitForMoreImage.
+		# self.stats['totalcount'] advances for in every image processed in this instance,
+		self.stats['count'] += 1
+		self.stats['totalcount'] += 1
+
 	#=====================
 	def _printSummary(self):
 		"""
 		print summary statistics on last image
 		"""	
-		self.stats['totalcount'] = 0
 		### COP OUT
 		if self.params['background'] is True:
 			apDisplay.printDebug( 'printSummary backgroun adding to stats count and totalcount')
-			self.stats['count'] += 1
-			self.stats['totalcount'] += 1
 			return
 
 		### THIS NEEDS TO BECOME MUCH MORE GENERAL, e.g. Peaks
@@ -669,8 +674,6 @@ class AppionLoop(appionScript.AppionScript):
 						+str(self.stats['imagesleft']-1)+" images -)\n")
 			#print "\tMEM: ",(mem.active()-startmem)/1024,"M (",(mem.active()-startmem)/(1024*count),"M)"
 			apDisplay.printDebug( 'printSummary adding to stats count')
-			self.stats['count'] += 1
-			self.stats['totalcount'] += 1
 			self._printLine()
 
 	#=====================
