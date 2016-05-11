@@ -623,7 +623,6 @@ class AppionLoop(appionScript.AppionScript):
 		"""
 		print summary statistics on last image
 		"""	
-		self.stats['totalcount'] = 0
 		### COP OUT
 		if self.params['background'] is True:
 			apDisplay.printDebug( 'printSummary backgroun adding to stats count and totalcount')
