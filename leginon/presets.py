@@ -287,7 +287,8 @@ class PresetsManager(node.Node):
 		# HACK: fix me
 		self.last_value = None
 		self.old_time = None
-
+		self.no_preset_set = True
+		self.recover_beamtilt = threading.Event()
 		self.addEventInput(event.ChangePresetEvent, self.changePreset)
 		self.addEventInput(event.MeasureDoseEvent, self.measureDose)
 		self.addEventInput(event.UpdatePresetEvent, self.handleUpdatePresetEvent)
@@ -644,8 +645,11 @@ class PresetsManager(node.Node):
 			self.currentpreset = presetdata
 		self.logger.info(endmessage)
 		if final:
+			if self.no_preset_set:
+				self.checkBeamTiltChange()
 			self.blankOff()
 			self.outputEvent(event.PresetChangedEvent(name=name, preset=presetdata))
+			self.no_preset_set = False
 
 	def _fromScope(self, name, temname=None, camname=None, parameters=None, copybeam=False):
 		'''
@@ -1609,8 +1613,11 @@ class PresetsManager(node.Node):
 		self.currentpreset = newpreset
 		message = 'Preset (with target) changed to %s' % (name,)
 		self.logger.info(message)
+		if self.no_preset_set:
+			self.checkBeamTiltChange()
 		self.blankOff()
 		self.outputEvent(event.PresetChangedEvent(name=name, preset=newpreset))
+		self.no_preset_set = False
 
 	def getValue(self, instrument_type, instrument_name, parameter, event):
 		# HACK: fix me
@@ -2038,3 +2045,35 @@ class PresetsManager(node.Node):
 		return rotated_vect
 
 		return pixvect
+
+	def checkBeamTiltChange(self):
+		current_beamtilt = self.instrument.tem.BeamTilt
+		temdata = self.instrument.getTEMData()
+		r = leginondata.ScopeEMData(session=self.session,tem=temdata).query(results=1)
+		if not r:
+			return
+		else:
+			last_beamtilt = r[0]['beam tilt']
+			beamtilt_diff = math.hypot(current_beamtilt['x']-last_beamtilt['x'], current_beamtilt['y']-last_beamtilt['y'])
+			# Larger than 1 mrad is significant. 
+			if beamtilt_diff > 0.001:
+				self.last_beamtilt = last_beamtilt
+				self.guiRecoverBeamTilt(beamtilt_diff)
+			else:
+				self.last_beamtilt = current_beamtilt
+
+	def guiRecoverBeamTilt(self, beamtilt_diff):	
+		self.recover_beamtilt.clear()
+		self.onNeedRecoverBeamTilt(beamtilt_diff)
+		self.recover_beamtilt.wait()
+
+	def onNeedRecoverBeamTilt(self, beamtilt_diff):
+		evt = gui.wx.PresetsManager.NeedRecoverBeamTiltEvent(self.panel, beamtilt_diff)
+		self.panel.GetEventHandler().AddPendingEvent(evt)
+
+	def onNeedRecoverBeamTiltDone(self):
+		self.recover_beamtilt.set()
+
+	def onRecoverBeamTilt(self):
+		self.instrument.tem.BeamTilt = self.last_beamtilt
+		self.logger.info('Returned to last beam tilt at radians (x,y)= %.4f, %.4f)' % (self.last_beamtilt['x'], self.last_beamtilt['y']))
