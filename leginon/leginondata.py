@@ -43,7 +43,7 @@ class InstrumentData(Data):
 			('hostname', str),
 			('cs', float),
 			('pixelmax', int),
-			#('type', str),
+			('hidden', bool),
 		)
 	typemap = classmethod(typemap)
 

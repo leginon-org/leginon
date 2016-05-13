@@ -956,9 +956,24 @@ class Setup(object):
 			results = self.research(leginon.leginondata.ConnectToClientsData(), results=500)
 		except IndexError:
 			results = []
+		
+		try:
+			q = leginon.leginondata.InstrumentData()
+			# Hide instruments from client list
+			if 'hidden' in q.keys():
+				q['hidden']=False
+			instruments = q.query()
+			hosts = map((lambda x: x['hostname']),instruments)
+			hosts = set(hosts)
+		except IndexError:
+			hosts = []
+		
 		clients = {}
 		for result in results:
 			for client in result['clients']:
+				# hide mis-spelled client hosts that does not have an instrument
+				if str(client) not in hosts:
+					continue
 				clients[str(client)] = None
 		clients = clients.keys()
 		clients.sort()
