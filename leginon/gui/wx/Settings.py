@@ -176,11 +176,16 @@ class Dialog(wx.Dialog):
 	def Show(self, show):
 		if show:
 			self.getNodeSettings()
+			self.onShow()
 		return wx.Dialog.Show(self, show)
 
 	def ShowModal(self):
 		self.getNodeSettings()
+		self.onShow()
 		return wx.Dialog.ShowModal(self)
+
+	def onShow(self):
+		pass
 
 	def bindSettings(self, widgets):
 		for widget in widgets.values():

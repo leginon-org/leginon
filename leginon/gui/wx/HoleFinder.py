@@ -65,8 +65,8 @@ class Panel(leginon.gui.wx.AutoTargetFinder.Panel):
 		elif evt.name == 'focus':
 			dialog = FinalSettingsDialog(self)
 
-		dialog.ShowModal()
-		dialog.Destroy()
+		# modeless display
+		dialog.Show(True)
 
 class TemplateSettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
@@ -124,6 +124,8 @@ class TemplateScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def onTestButton(self, evt):
 		self.dialog.setNodeSettings()
 		self.node.correlateTemplate()
+		self.panel.imagepanel.hideTypeToolDisplays(['Edge'])
+		self.panel.imagepanel.showTypeToolDisplays(['Template'])
 
 class EdgeSettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
@@ -194,6 +196,7 @@ class EdgeScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def onTestButton(self, evt):
 		self.dialog.setNodeSettings()
 		self.node.findEdges()
+		self.panel.imagepanel.showTypeToolDisplays(['Edge'])
 
 class ThresholdSettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
@@ -228,6 +231,7 @@ class ThresholdScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def onTestButton(self, evt):
 		self.dialog.setNodeSettings()
 		self.node.threshold()
+		self.panel.imagepanel.showTypeToolDisplays(['Threshold'])
 
 class BlobsSettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
@@ -273,11 +277,16 @@ class BlobsScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def onTestButton(self, evt):
 		self.dialog.setNodeSettings()
 		self.node.findBlobs()
+		self.panel.imagepanel.hideTypeToolDisplays(['Lattice'])
+		self.panel.imagepanel.showTypeToolDisplays(['Blobs'])
 
 class LatticeSettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
 		return LatticeScrolledSettings(self,self.scrsize,False)
 
+	def onShow(self):
+		self.panel.imagepanel.showTypeToolDisplays(['Original'])
+		
 class LatticeScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def initialize(self):
 		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
@@ -330,6 +339,8 @@ class LatticeScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def onTestButton(self, evt):
 		self.dialog.setNodeSettings()
 		self.node.fitLattice()
+		self.panel.imagepanel.hideTypeToolDisplays(['Blobs','acquisition','focus'])
+		self.panel.imagepanel.showTypeToolDisplays(['Lattice','Original'])
 
 class FinalSettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
@@ -445,6 +456,8 @@ class FinalScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def onTestButton(self, evt):
 		self.dialog.setNodeSettings()
 		threading.Thread(target=self.node.ice).start()
+		self.panel.imagepanel.hideTypeToolDisplays(['Blobs'])
+		self.panel.imagepanel.showTypeToolDisplays(['Original','acquisition','focus'])
 
 	def onClearButton(self, evt):
 		self.dialog.setNodeSettings()
