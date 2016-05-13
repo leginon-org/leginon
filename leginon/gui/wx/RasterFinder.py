@@ -63,9 +63,8 @@ class Panel(leginon.gui.wx.AutoTargetFinder.Panel):
 			dialog = self._FinalSettingsDialog(self)
 		elif evt.name == 'focus':
 			dialog = self._FinalSettingsDialog(self)
-
-		dialog.ShowModal()
-		dialog.Destroy()
+		# modeless display
+		dialog.Show(True)
 
 	def _FinalSettingsDialog(self,parent):
 		# This "private call" allows the class in the module containing
@@ -218,6 +217,7 @@ class RasterScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def onTestButton(self, evt):
 		self.dialog.setNodeSettings()
 		self.node.createRaster()
+		self.panel.imagepanel.showTypeToolDisplays(['Raster'])
 
 class PolygonSettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
@@ -250,6 +250,7 @@ class PolygonScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def onTestButton(self, evt):
 		self.dialog.setNodeSettings()
 		self.node.setPolygon()
+		self.panel.imagepanel.showTypeToolDisplays(['Polygon Raster'])
 
 class PolygonRasterSettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
@@ -377,6 +378,7 @@ class FinalScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def onAnalyzeIceButton(self, evt):
 		self.dialog.setNodeSettings()
 		threading.Thread(target=self.node.ice).start()
+		self.panel.imagepanel.showTypeToolDisplays(['acquisition','focus'])
 
 	def onClearButton(self, evt):
 		self.dialog.setNodeSettings()

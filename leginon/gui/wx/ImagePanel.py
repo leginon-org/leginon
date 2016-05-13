@@ -804,6 +804,25 @@ class ImagePanel(wx.Panel):
 		self.sizer.SetItemMinSize(self.selectiontool, self.selectiontool.GetSize())
 		self.sizer.Layout()
 
+	#--------------------
+	def showTypeToolDisplays(self, names):
+		'''
+		Bring display to top in order of the names list
+		'''
+		for name in names:
+			if name in self.selectiontool.tools.keys():
+				self.selectiontool.setDisplayed(name,False,'display')
+				self.selectiontool.setDisplayed(name,True,'display')
+
+	#--------------------
+	def hideTypeToolDisplays(self, names):
+		'''
+		Remove display in order of the names list
+		'''
+		for name in names:
+			if name in self.selectiontool.tools.keys():
+				self.selectiontool.setDisplayed(name,False,'display')
+
 ##################################
 ##
 ##################################
