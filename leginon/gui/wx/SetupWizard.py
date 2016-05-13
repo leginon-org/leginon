@@ -105,7 +105,9 @@ class UserPage(WizardPage):
 		parent.sessionselectpage.setSessionNames(self.names)
 
 		#update projects
-		parent.projectpage.setProjectNames(self.projects.keys())
+		project_choices = self.projects.keys()
+		project_choices.sort()
+		parent.projectpage.setProjectNames(project_choices)
 
 		# update database values
 		session = parent.sessionselectpage.getSelectedSession()

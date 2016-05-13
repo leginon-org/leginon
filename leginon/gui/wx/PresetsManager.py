@@ -39,6 +39,7 @@ SetCalibrationsEventType = wx.NewEventType()
 EditPresetEventType = wx.NewEventType()
 UpdatePresetLabelsEventType = wx.NewEventType()
 AcquireAlignDoneEventType = wx.NewEventType()
+NeedRecoverBeamTiltEventType = wx.NewEventType()
 
 EVT_PRESETS = wx.PyEventBinder(PresetsEventType)
 EVT_SET_DOSE_VALUE = wx.PyEventBinder(SetDoseValueEventType)
@@ -47,6 +48,7 @@ EVT_SET_PARAMETERS = wx.PyEventBinder(SetParametersEventType)
 EVT_EDIT_PRESET = wx.PyEventBinder(EditPresetEventType)
 EVT_UPDATE_PRESET_LABELS = wx.PyEventBinder(UpdatePresetLabelsEventType)
 EVT_ACQUIRE_ALIGN_DONE = wx.PyEventBinder(AcquireAlignDoneEventType)
+EVT_NEED_RECOVER_BEAM_TILT = wx.PyEventBinder(NeedRecoverBeamTiltEventType)
 
 class PresetsEvent(wx.PyCommandEvent):
 	def __init__(self, source):
@@ -88,6 +90,12 @@ class AcquireAlignDoneEvent(wx.PyCommandEvent):
 	def __init__(self, source):
 		wx.PyCommandEvent.__init__(self, AcquireAlignDoneEventType, source.GetId())
 		self.SetEventObject(source)
+
+class NeedRecoverBeamTiltEvent(wx.PyCommandEvent):
+	def __init__(self, source, beamtilt_diff):
+		wx.PyCommandEvent.__init__(self, NeedRecoverBeamTiltEventType, source.GetId())
+		self.SetEventObject(source)
+		self.beamtilt_diff = beamtilt_diff
 
 class Calibrations(wx.StaticBoxSizer):
 	def __init__(self, parent):
@@ -859,6 +867,7 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 		self.Bind(EVT_EDIT_PRESET, self.onEditPreset)
 		self.Bind(EVT_UPDATE_PRESET_LABELS, self.onUpdatePresetLabels)
 		self.Bind(EVT_ACQUIRE_ALIGN_DONE, self.onAcquireAlignDone)
+		self.Bind(EVT_NEED_RECOVER_BEAM_TILT, self.onNeedRecoverBeamTilt)
 
 	def onNodeInitialized(self):
 		leginon.gui.wx.Instrument.SelectionMixin.onNodeInitialized(self)
@@ -1133,6 +1142,15 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 		if dialog.ShowModal() == wx.ID_OK:
 			self.node.updatePreset(evt.presetname, dialog.getParameters())
 		dialog.Destroy()
+
+	def onNeedRecoverBeamTilt(self, evt):
+		beamtilt_diff = evt.beamtilt_diff
+		dialog = RecoverBeamTiltDialog(self, beamtilt_diff)
+		if dialog.ShowModal() == wx.ID_OK:
+			self.node.onRecoverBeamTilt()
+		dialog.Destroy()
+		self.node.onNeedRecoverBeamTiltDone()
+
 
 class SettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
@@ -1992,6 +2010,36 @@ def bitmapButton(parent, name, tooltip=None):
 	if tooltip is not None:
 		button.SetToolTip(wx.ToolTip(tooltip))
 	return button
+
+class RecoverBeamTiltDialog(wx.Dialog):
+	def __init__(self, parent,beamtilt_diff):
+		self.preset = {}
+		wx.Dialog.__init__(self, parent, -1, 'Recover Beam Tilt',
+												style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
+
+		self.brecover = wx.Button(self, wx.ID_OK, 'Recover')
+		self.bcancel = wx.Button(self, wx.ID_CANCEL, 'Ignore')
+		self.bcancel.SetDefault()
+
+		szbutton = wx.GridBagSizer(5, 5)
+		szbutton.Add(self.brecover, (0, 0), (1, 1), wx.ALIGN_CENTER)
+		szbutton.Add(self.bcancel, (0, 1), (1, 1), wx.ALIGN_CENTER)
+
+		self.sz = wx.GridBagSizer(5, 5)
+		label = 'Do you want to recover previous Beam Tilt that is differ by %.1f mrad' % (beamtilt_diff*1e3)
+		stlabel = wx.StaticText(self, -1, label)
+		self.sz.Add(stlabel, (0, 0), (1, 1), wx.EXPAND|wx.ALL, 10)
+		self.sz.Add(szbutton, (1, 0), (1, 1),
+										wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.ALL, 5)
+
+		self.sz.AddGrowableRow(0)
+		self.sz.AddGrowableCol(0)
+
+		self.SetSizerAndFit(self.sz)
+		self.SetAutoLayout(True)
+
+		self.brecover.Enable(True)
+		self.bcancel.Enable(True)
 
 if __name__ == '__main__':
 	class App(wx.App):
