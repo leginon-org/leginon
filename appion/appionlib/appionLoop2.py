@@ -61,6 +61,7 @@ class AppionLoop(appionScript.AppionScript):
 		### get images from database
 		self._getAllImages()
 		os.chdir(self.params['rundir'])
+		self.stats['startimage'] = time.time()
 		self.preLoopFunctions()
 		### start the loop
 		self.notdone=True
@@ -102,33 +103,40 @@ class AppionLoop(appionScript.AppionScript):
 					apDisplay.printWarning("IMAGE FAILED; nothing inserted into database")
 					self.badprocess = False
 					self.stats['lastpeaks'] = 0
-
 				### FINISH with custom functions
 
-				self._writeDoneDict(imgdata['filename'])
-				if self.params['parallel']:
-					self.unlockParallel(imgdata.dbid)
-
-# 				loadavg = os.getloadavg()[0]
-# 				if loadavg > 2.0:
-# 					apDisplay.printMsg("Load average is high "+str(round(loadavg,2)))
-# 					loadsquared = loadavg*loadavg
-# 					apDisplay.printMsg("Sleeping %.1f seconds"%(loadavg))
-# 					time.sleep(loadavg)
-# 					apDisplay.printMsg("New load average "+str(round(os.getloadavg()[0],2)))
-
-				self._printSummary()
-				self._advanceStatsCount()
-
-				if self.params['limit'] is not None and self.stats['totalcount'] > self.params['limit']:
-					apDisplay.printWarning("reached image limit of "+str(self.params['limit'])+"; now stopping")
-
+				self.finishLoopOneImage(imgdata)
 				#END LOOP OVER IMAGES
 			if self.notdone is True:
 				self.notdone = self._waitForMoreImages()
 			#END NOTDONE LOOP
+
 		self.postLoopFunctions()
 		self.close()
+
+	#=====================
+	def finishLoopOneImage(self, imgdata):
+		'''
+		Things to do after an image is processed whether commit or not
+		'''
+		self._writeDoneDict(imgdata['filename'])
+		if self.params['parallel']:
+			self.unlockParallel(imgdata.dbid)
+
+	# 				loadavg = os.getloadavg()[0]
+	# 				if loadavg > 2.0:
+	# 					apDisplay.printMsg("Load average is high "+str(round(loadavg,2)))
+	# 					loadsquared = loadavg*loadavg
+	# 					apDisplay.printMsg("Sleeping %.1f seconds"%(loadavg))
+	# 					time.sleep(loadavg)
+	# 					apDisplay.printMsg("New load average "+str(round(os.getloadavg()[0],2)))
+
+		self._printSummary()
+		self._advanceStatsCount()
+
+		# This just print. It does not really do anything
+		if self.params['limit'] is not None and self.stats['totalcount'] > self.params['limit']:
+			apDisplay.printWarning("reached image limit of "+str(self.params['limit'])+"; now stopping")
 
 	#=====================
 	def loopProcessImage(self, imgdata):
@@ -687,7 +695,7 @@ class AppionLoop(appionScript.AppionScript):
 		memfree = mem.free()
 		minavailmem = 64*1024; # 64 MB, size of one image
 		if(memfree < minavailmem):
-			apDisplay.printWarning("Memory is low ("+str(int(memfree/1024))+"MB): there is probably a memory leak")
+			apDisplay.printDebug("Memory is low ("+str(int(memfree/1024))+"MB): there is probably a memory leak")
 
 		if(self.stats['count'] > 15):
 			memlist = self.stats['memlist'][-15:]
@@ -710,10 +718,10 @@ class AppionLoop(appionScript.AppionScript):
 			memleak = rho*slope
 			###
 			if(self.stats['memleak'] > 3 and slope > 20 and memleak > 512 and gain > 2048):
-				apDisplay.printWarning("Memory leak of "+str(round(memleak,2))+"MB")
+				apDisplay.printDebug("Memory leak of "+str(round(memleak,2))+"MB")
 			elif(memleak > 32):
 				self.stats['memleak'] += 1
-				apDisplay.printWarning("substantial memory leak "+str(round(memleak,2))+"MB")
+				apDisplay.printDebug("substantial memory leak "+str(round(memleak,2))+"MB")
 				print "(",str(n),round(slope,5),round(rho,5),round(gain,2),")"
 
 	#=====================
