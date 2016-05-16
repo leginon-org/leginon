@@ -7,8 +7,13 @@ import math
 import shutil
 import subprocess
 import time
+from matplotlib import pyplot
+import numpy
+import glob
 #pyami
 from pyami import fileutil
+from pyami import imagefun
+from pyami import mrc
 #leginon
 from leginon import ddinfo
 #appion
@@ -22,9 +27,48 @@ from appionlib import appiondata
 from appionlib import apBoxer
 from appionlib import proc2dLib
 import deProcessFrames
-import glob
-from pyami import mrc
 from appionlib import apDBImage
+
+def readDriftFiles(xshift_filename,yshift_filename):
+	
+	f=open(xshift_filename,'r')
+	xlines=f.readlines()
+	f.close
+	
+	f=open(yshift_filename,'r')
+	ylines=f.readlines()
+	f.close()
+	
+	particlelst=[]
+	#sanity check
+	if len(ylines)!=len(xlines):
+		return
+	
+	for n in range(len(xlines)):
+		xwords=xlines[n].split()
+		ywords=ylines[n].split()
+		#sanity check
+		if len(xwords)!=len(ywords) or xwords[0] != ywords[0]:
+			return
+		
+		ptcldict={}
+		ptcldict['coords']=[float(x) for x in xwords[0].split(',')]
+		ptcldict['x']=numpy.array([float(x) for x in xwords[1:]])
+		ptcldict['y']=numpy.array([float(x) for x in ywords[1:]])
+		
+		particlelst.append(ptcldict)
+	return particlelst
+def makePtclDriftImage(imagearray,particlelst,outname='particledrift.png',driftscalefactor=50,imagebinning=2):
+	imagearray=imagefun.bin2(imagearray,imagebinning)
+	ax=pyplot.axes(frameon=False)
+	ax.imshow(imagearray,cmap='gray')
+
+	for ptcl in particlelst:
+		ax.plot((ptcl['coords'][0]+(driftscalefactor*ptcl['x']))/imagebinning, (ptcl['coords'][1]+(driftscalefactor*ptcl['y']))/imagebinning, alpha=0.25)
+	ax.tick_params(axis='both',bottom='off', left='off',top='off',right='off',labelbottom='off',labeltop='off',labelright='off', labelleft='off')
+	pyplot.savefig(outname)
+	#pyplot.show()
+
 
 class MakeAlignedSumLoop(appionPBS.AppionPBS):
 	#=====================
@@ -63,6 +107,8 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 		self.parser.add_option('--skipgain', dest='skipgain', action='store_true', default=False, help='Skip flatfield correction')
 		self.parser.add_option('--siblingframes', dest='siblingframes', action='store_true', default=False, help='Use frames from sibling image', metavar='INT')
 		self.parser.add_option("--output_rotation", dest="output_rotation", type='int', default=0, help="Rotate output particles by the specified angle", metavar="INT")
+		self.parser.add_option("--skip_summary_image", dest="skip_summary_image", action='store_true', default=False, help="Skip making summary image with particle trajectories", metavar="INT")
+		self.parser.add_option("--override_bad_pixs", dest="override_bad_pixs", action='store_true', default=False, help="Override bad pixels from database", metavar="INT")
 
 	#=======================
 	def checkConflicts(self):
@@ -153,9 +199,16 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 			darkref=None
 			
 		apDisplay.printMsg('Finding frames for %s' % imgdata['filename'])
+
+		#this is super hacky. Should get name from sibling name
+		if self.params['siblingframes'] is True:
+			imgrootname = imgdata['filename'].split('-')[0]
+		else:
+			imgrootname = imgdata['filename']
+
 		framespath = imgdata['session']['frame path']
 		
-		framepattern = os.path.join(framespath, (imgdata['filename']+'*'))
+		framepattern = os.path.join(framespath, (imgrootname+'*'))
 		filelist = glob.glob(framepattern)
 		# frames might be ready even though the image is saved in the database
 		if self.params['wait']:
@@ -172,11 +225,6 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 		if len(filelist) < 1:
 			apDisplay.printError('frames not found with %s' % framepattern)
 
-		#this is super hacky. Should get name from sibling name
-		if self.params['siblingframes'] is True:
-			imgrootname = imgdata['filename'].split('-')[0]
-		else:
-			imgrootname = imgdata['filename']
 		print os.path.join(framespath, imgrootname + '*')
 		framesroot, framesextension = os.path.splitext(glob.glob(os.path.join(framespath, imgrootname + '*'))[0])
 		framespathname = framesroot + framesextension
@@ -356,7 +404,13 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 			self.params['darkreference_filename'] = targetdict['darkref']
 			darknframes = imgdata['dark']['camera']['nframes']
 			self.params['darkreference_framecount'] = darknframes
-		self.getCameraDefects(imgdata)
+		
+		if self.params['override_bad_pixs'] is False:
+			apDisplay.printMsg('Using bad pixels from database')
+			self.getCameraDefects(imgdata)
+		else:
+			apDisplay.printMsg('Using bad pixels from command line')
+			
 		self.params['input_framecount'] = nframes
 		self.params['output_invert'] = 0
 		self.params['radiationdamage_apix'] = apix
@@ -402,6 +456,23 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 		except IndexError:
 			apDisplay.printWarning('queued job for %s failed' % imgdata['filename'])
 			return None
+
+		#particlelst=readDriftFiles()
+		correctedpath=os.path.join(self.params['queue_scratch'],imgdata['filename'],imgdata['filename'])
+		print os.path.join(correctedpath,'*translations_x*')
+		print glob.glob(os.path.join(correctedpath,'*translations_x*'))
+		xtranslation=glob.glob(os.path.join(correctedpath,'*translations_x*'))[0]
+		ytranslation=glob.glob(os.path.join(correctedpath,'*translations_y*'))[0]
+		shutil.copy(xtranslation,self.params['rundir'])
+		shutil.copy(ytranslation,self.params['rundir'])
+		
+		if self.params['skip_summary_image'] is False:
+			apDisplay.printMsg('Creating motion correction summary image')
+			summaryimage=imgdata['filename']+'_summary.png'
+			particlelst=readDriftFiles(xtranslation,ytranslation)
+			makePtclDriftImage(imgdata['image'],particlelst,outname=os.path.join(self.params['rundir'],summaryimage))
+		
+		
 		if self.params['stackid'] is not None:
 			return None
 		outname = imgdata['filename'] + '-' + self.params['alignlabel'] + '.mrc'
