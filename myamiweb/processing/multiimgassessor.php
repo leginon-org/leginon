@@ -354,7 +354,9 @@ function displayImagePanel($files,$imgdir,$leginondata,$particle,$assessmentrid,
 	$lastindex = getPrevImage($files, $numfiles, $firstindex, $leginondata, $particle, $assessmentrid);
 	//echo "i$imgindex f$firstindex l$lastindex";
 
-	if ($maskAssessRunId) {
+	# make sure status does not get updated when switching runs
+	$same_run = ($_POST['imgrun'] && $_POST['imgrun']==$_POST['oldimgrun'] );
+	if ($same_run && $maskAssessRunId) {
 		updateMaskStatuses($files, $imgindex, $lastindex, $leginondata, $particle, $maskAssessRunId, $assessmentrid, $maskRunId );
 	}
 	
