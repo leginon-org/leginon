@@ -11,15 +11,13 @@ This script runs much faster if the log file provided is a list of images which 
 if len(sys.argv) != 3:
 	print 'usage: uploadstatus.py <inputlist> <filetype>'
 	print 'inputlist is a list of mrc file full path as known by leginon database'
-	print 'filetype is one the three: "exemplar", "hide", "trash" sets status as named; "reverse" sets other images of the same preset to "hidden"'
+	print 'filetype is one the four: "exemplar", "hide", "trash" sets status as named; "reverse" sets other images of the same preset to "hidden"'
 	sys.exit()
 
 ######################################
 # Variable section
 ######################################
-# If the file is a list of all known bad images with fullpath and mrc extension, make this variable to 'bad' which will hide them.
-# If the file is a list of better images, set to  'better' which will make them exemplars, and leave the status of the rest alone.
-# If the file is a reversed selection of bad image, set it to 'good' which will make images not in the list hidden.
+# The file may contain a list of all images with fullpath and mrc extension of the desired status.
 filetype = sys.argv[2]
 
 # set filename
@@ -27,6 +25,10 @@ infilename = sys.argv[1]
 
 #######################################################
 statusmapping = {'exemplar':('exemplar',None), 'reverse':(None,'hidden'), 'hide':('hidden',None), 'trash':('trash',None)}
+
+if filetype not in statusmapping:
+	print 'Valid status:', statusmapping.keys()
+	sys.exit(1)
 
 def setStatus(imagedata,status):
 	v_results = leginondata.ViewerImageStatus(image=imagedata,session=imagedata['session']).query()
