@@ -89,6 +89,47 @@ class MakeDDStackForm extends BasicLoopForm
 		return $html;
 	}	
 	
+	public function validate( $postArray )
+	{
+		$msg = parent::validate( $postArray );
+		$params = $this->getFormParams();
+		
+		$align = $params->getParamValue('align');
+		if (!$align) return $msq;
+		$nrw = $params->getParamValue('nrw');
+		if ( $nrw%2 == 0 )
+		{
+			$msg .= "<B>Error:</B> frames in running average window must be odd <br/>";
+		}
+		// Get recent image to check nframes against alignoffset and nrw.
+		$preset = $params->getParamValue('preset');
+		$testfilename = $params->getParamValue('testfilename');
+		$leginondata = new leginondata();
+		if ( $testfilename ) {
+			$images = $leginondata->getFilename($testfilename, $this->expId);
+			if ( !is_array($images ) || empty($images) ) {
+				$msg .= "<B>Error:</B> image ".$testfilename." not found <br/>";
+			} else {
+				$imageId = $images[0]['id'];
+			}
+		} else {
+			$images = $leginondata->getFilenames($this->expId, $preset);
+			if ( !is_array($images ) || empty($images) ) {
+				$msg .= "<B>Error:</B> image not found in preset";
+			} else {
+				$imageId = $images[0]['id'];
+			}
+		}
+
+		if ( $imageId ) {
+			$nframes = $leginondata->getNFrameSavedFromImage($imageId);
+			if ( $nframes === false ) $msg .= "<B>ErrorL</B> Last image does not have frames saved. Can not validate. Try again later";
+			$alignoffset = $params->getParamValue('alignoffset');
+			if ( $nframes / 2 < $alignoffset ) $msg .= "<B>ErrorL</B> Align offset frames must be less than half of the number of frames saved";
+			if ( $nrw > $nframes / 3 ) $msg .= "<B>ErrorL</B> Running average window should not be larger than 1/3 of number of frames saved.";
+		}
+		return $msg;
+	}
 	// Override the parent build Commnad function to accomodate the "-" in the no-keepstack flag. 
 	// Dashes are not parsed correctly in the help.js file, so I have replaced them with an "_" in this file.
 	public function buildCommand( $postArray )
