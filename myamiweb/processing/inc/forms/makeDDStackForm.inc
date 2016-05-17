@@ -122,7 +122,7 @@ class MakeDDStackForm extends BasicLoopForm
 		}
 
 		if ( $imageId ) {
-			$nframes = $leginondata->getNFrameSavedFromImage($imageId);
+			$nframes = $leginondata->getNFramesSavedFromImage($imageId);
 			if ( $nframes === false ) $msg .= "<B>ErrorL</B> Last image does not have frames saved. Can not validate. Try again later";
 			$alignoffset = $params->getParamValue('alignoffset');
 			if ( $nframes / 2 < $alignoffset ) $msg .= "<B>ErrorL</B> Align offset frames must be less than half of the number of frames saved";
