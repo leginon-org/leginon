@@ -58,6 +58,7 @@ def readDriftFiles(xshift_filename,yshift_filename):
 		
 		particlelst.append(ptcldict)
 	return particlelst
+
 def makePtclDriftImage(imagearray,particlelst,outname='particledrift.png',driftscalefactor=50,imagebinning=2):
 	imagearray=imagefun.bin2(imagearray,imagebinning)
 	ax=pyplot.axes(frameon=False)
@@ -65,7 +66,8 @@ def makePtclDriftImage(imagearray,particlelst,outname='particledrift.png',drifts
 
 	for ptcl in particlelst:
 		ax.plot((ptcl['coords'][0]+(driftscalefactor*ptcl['x']))/imagebinning, (ptcl['coords'][1]+(driftscalefactor*ptcl['y']))/imagebinning, alpha=0.25)
-	ax.tick_params(axis='both',bottom='off', left='off',top='off',right='off',labelbottom='off',labeltop='off',labelright='off', labelleft='off')
+	ax.axes.get_xaxis().set_visible(False)
+	ax.axes.get_yaxis().set_visible(False)
 	pyplot.savefig(outname)
 	#pyplot.show()
 
