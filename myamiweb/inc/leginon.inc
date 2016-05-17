@@ -3384,8 +3384,8 @@ class leginondata {
 					.'where a.`DEF_id` = '.$imageId.' '
 					.' ';
 		$results = $this->mysql->getSQLResult($sql);
-		if (is_array($results)) {
-			if ( $results[0]['save frames'] === 0 ) return false;
+		if (is_array($results) && count($results) > 0) {
+			if ( $results[0]['save frames'] != 1 ) return false;
 			return $results[0]['nframes'];
 		}
 		return false;

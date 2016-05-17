@@ -93,29 +93,30 @@ class MakeDDStackForm extends BasicLoopForm
 	{
 		$msg = parent::validate( $postArray );
 		$params = $this->getFormParams();
-		
 		$align = $params->getParamValue('align');
 		if (!$align) return $msq;
 		$nrw = $params->getParamValue('nrw');
 		if ( $nrw%2 == 0 )
 		{
-			$msg .= "<B>Error:</B> frames in running average window must be odd <br/>";
+			$msg .= "<B>Error:</B> Number of frames in running average window must be odd. <br/>";
 		}
 		// Get recent image to check nframes against alignoffset and nrw.
-		$preset = $params->getParamValue('preset');
-		$testfilename = $params->getParamValue('testfilename');
+		$preset = $postArray['preset'];
+		$testfilename = $postArray['testfilename'];
 		$leginondata = new leginondata();
 		if ( $testfilename ) {
+			// testing
 			$images = $leginondata->getFilename($testfilename, $this->expId);
 			if ( !is_array($images ) || empty($images) ) {
-				$msg .= "<B>Error:</B> image ".$testfilename." not found <br/>";
+				$msg .= "<B>Error:</B> image ".$testfilename." not found in the session <br/>";
 			} else {
 				$imageId = $images[0]['id'];
 			}
 		} else {
+			// preset
 			$images = $leginondata->getFilenames($this->expId, $preset);
 			if ( !is_array($images ) || empty($images) ) {
-				$msg .= "<B>Error:</B> image not found in preset";
+				$msg .= "<B>Error:</B> no image not found in preset";
 			} else {
 				$imageId = $images[0]['id'];
 			}
@@ -123,13 +124,21 @@ class MakeDDStackForm extends BasicLoopForm
 
 		if ( $imageId ) {
 			$nframes = $leginondata->getNFramesSavedFromImage($imageId);
-			if ( $nframes === false ) $msg .= "<B>ErrorL</B> Last image does not have frames saved. Can not validate. Try again later";
-			$alignoffset = $params->getParamValue('alignoffset');
-			if ( $nframes / 2 < $alignoffset ) $msg .= "<B>ErrorL</B> Align offset frames must be less than half of the number of frames saved";
-			if ( $nrw > $nframes / 3 ) $msg .= "<B>ErrorL</B> Running average window should not be larger than 1/3 of number of frames saved.";
+			if ( $nframes == false ) { 
+				if ( $testfilename ) {
+					$msg .= "<B>Error</B> Image does not have frames saved. Can not align";
+				}	else {
+					$msg .= "<B>Error</B> Last image of the specified preset does not have frames saved. Can not validate. Try again later.";
+				}
+			} else {
+				$alignoffset = $params->getParamValue('alignoffset');
+				if ( $nframes / 2 < $alignoffset ) $msg .= "<B>Error</B> Align frame offset must be less than half of the number of frames saved.<br/>";
+				if ( $nrw > $nframes / 3 ) $msg .= "<B>Error</B> Number of frames in running average window should not be larger than 1/3 of number of frames saved.<br/>";
+			}
 		}
 		return $msg;
 	}
+
 	// Override the parent build Commnad function to accomodate the "-" in the no-keepstack flag. 
 	// Dashes are not parsed correctly in the help.js file, so I have replaced them with an "_" in this file.
 	public function buildCommand( $postArray )
