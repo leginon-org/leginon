@@ -193,10 +193,11 @@ if (is_numeric($expId)) {
 	$result = ($prtlruns==0) ? "" :
 		"<a href='prtlreport.php?expId=$sessionId'>$prtlruns</a>\n";
 
+	$dogpickform = "DogPickerForm";
 	$nrun=array();
 
 	$nrun[] = array(
-		'name'=>"<a href='runDogPicker.php?expId=$sessionId'>DoG Picking</a>",
+		'name'=>"<a href='runAppionLoop.php?expId=$sessionId&form=$dogpickform'>Dog Picking</a>",
 		'result'=>$dresults,
 	);
 

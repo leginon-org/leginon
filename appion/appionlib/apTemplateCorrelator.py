@@ -60,19 +60,19 @@ class TemplateCorrelationLoop(particleLoop2.ParticleLoop):
 	### COMMON FUNCTIONS
 	##################################################
 	def setupParserOptions(self):
-		self.parser.add_option("--template-list", dest="templateliststr",
+		self.parser.add_option("--template-list", "--template_list", dest="templateliststr",
 			help="Template Ids", metavar="#,#" )
-		self.parser.add_option("--range-list", dest="rangeliststr",
+		self.parser.add_option("--range-list", "--range_list", dest="rangeliststr",
 			help="Start, end, and increment angles: e.g. 0,360,10x0,180,5", metavar="#,#,#x#,#,#")
 
 		### True / False options
-		self.parser.add_option("--thread-findem", dest="threadfindem", default=True,
+		self.parser.add_option("--thread-findem", "--thread_findem", dest="threadfindem", default=True,
 			action="store_true", help="Run findem crosscorrelation in threads")
-		self.parser.add_option("--no-thread-findem", dest="threadfindem", default=True,
+		self.parser.add_option("--no-thread-findem", "--no_thread_findem", dest="threadfindem", default=True,
 			action="store_false", help="Run findem crosscorrelation in threads")
 		self.parser.add_option("--spectral", dest="spectral", default=False,
 			action="store_true", help="Use spectral correlation instead of normal correlation")
-		self.parser.add_option("--use-mirrors", dest="templatemirrors", default=False,
+		self.parser.add_option("--use-mirrors", "--use_mirrors", dest="templatemirrors", default=False,
 			action="store_true", help="Use mirrors as additional templates")
 		return
 
