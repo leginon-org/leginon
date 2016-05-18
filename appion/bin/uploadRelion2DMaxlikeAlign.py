@@ -1,0 +1,628 @@
+#!/usr/bin/env python
+#
+import os
+import time
+import sys
+import random
+import math
+import shutil
+import re
+import glob
+import numpy
+import cPickle
+#appion
+from appionlib import basicScript
+from appionlib import apDisplay
+from appionlib import starFile
+from appionlib import apFile
+from appionlib import apParam
+from appionlib import apStack
+from appionlib import apImage
+from appionlib import apEMAN
+from appionlib import apImagicFile
+from appionlib.apSpider import operations
+from appionlib import appiondata
+from appionlib import apProject
+from appionlib import apFourier
+from pyami import spider
+
+#=====================
+#=====================
+#FIXME: appionScript.AppionScript
+class UploadRelionMaxLikeScript(basicScript.BasicScript):
+	#=====================
+	def setupParserOptions(self):
+		self.parser.set_usage("Usage: %prog --jobid=ID [ --commit ]")
+		self.parser.add_option("-j", "--jobid", dest="jobid", type="int",
+			help="Maximum likelihood jobid", metavar="#")
+		self.parser.add_option("-t", "--timestamp", dest="timestamp",
+			help="Timestamp of files, e.g. 08nov02b35", metavar="CODE")
+
+		self.parser.add_option("--no-sort", dest="sort", default=True,
+			action="store_false", help="Do not sort files into nice folders")
+
+	#=====================
+	def checkConflicts(self):
+		if self.params['timestamp'] is None:
+			self.params['timestamp'] = self.getTimestamp()
+		return
+
+	#=====================
+	def setRunDir(self):
+		if self.params["jobid"] is not None:
+			jobdata = appiondata.ApMaxLikeJobData.direct_query(self.params["jobid"])
+			self.params['rundir'] = jobdata['path']['path']
+		else:
+			self.params['rundir'] = os.path.abspath(".")
+
+	#=====================
+	def findLastIterNumber(self):
+		lastiter = 0
+		logfiles = glob.glob("*_it*_data.star")
+		for logfile in logfiles:
+			m = re.search("it([0-9]+)_data\.star$", logfile)
+			if not m: #handle a case when logfile is like blahmaskitonmaxlike7.appionsub.log
+			 	apDisplay.printWarning('No match for re.search("it0*([0-9]*).log$" in '+logfile)
+			 	continue
+			iternum = int(m.groups()[0])
+			if iternum > lastiter:
+				lastiter = iternum
+		apDisplay.printMsg("RELION ran "+str(lastiter)+" iterations")
+		return lastiter
+
+	#=====================
+	def getTimestamp(self):
+		timestamp = None
+		if self.params["jobid"] is not None:
+			jobdata = appiondata.ApMaxLikeJobData.direct_query(self.params["jobid"])
+			timestamp = jobdata['timestamp']
+		elif timestamp is None:
+			wildcard = "part*_*.*"
+			files = glob.glob(wildcard)
+			if len(files) == 0:
+				apDisplay.printError("Could not determine timestamp\n"
+					+"please provide it, e.g. -t 08nov27e54")
+			reg = re.match("part([0-9a-z]*)_", files[0])
+			if len(reg.groups()) == 0:
+				apDisplay.printError("Could not determine timestamp\n"
+					+"please provide it, e.g. -t 08nov27e54")
+			timestamp = reg.groups()[0]
+		apDisplay.printMsg("Found timestamp = '"+timestamp+"'")
+		return timestamp
+
+	#=====================
+	def sortFolder(self):
+		numsort = 0
+		apDisplay.printMsg("Sorting files into clean folders")
+		### move files for all particle iterations
+		files = []
+		for i in range(self.lastiter+1):
+			iterdir = "iter%03d"%(i)
+			apParam.createDirectory(iterdir, warning=False)
+			wildcard = "part*_it%03d_*.*"%(i)
+			files.extend(glob.glob(wildcard))
+			wildcard = "part*_it%03d.*"%(i)
+			files.extend(glob.glob(wildcard))
+			for filename in files:
+				if os.path.isfile(filename):
+					numsort += 1
+					shutil.move(filename,iterdir)
+		if numsort < 3:
+			apDisplay.printWarning("Problem in iteration file sorting, are they already sorted?")
+		apDisplay.printMsg("Sorted "+str(numsort)+" iteration files")
+		### move files for all reference iterations
+		refsort = 0
+		refdir = "refalign"
+		apParam.createDirectory(refdir, warning=False)
+		wildcard = "ref*_it*.*"
+		files = glob.glob(wildcard)
+		for filename in files:
+			refsort += 1
+			shutil.move(filename, refdir)
+		#if refsort < 5:
+		#	apDisplay.printError("Problem in reference file sorting")
+		apDisplay.printMsg("Sorted "+str(refsort)+" reference files")
+		return
+
+	#=====================
+	def readRefStarFile(self):
+		reflist = []
+		docfile = "ref"+self.params['timestamp']+".doc"
+		if not os.path.isfile(docfile):
+			apDisplay.printError("could not find doc file "+docfile+" to read reference angles")
+		f = open(docfile, "r")
+		mininplane = 360.0
+		for line in f:
+			if line[:2] == ' ;':
+				continue
+			spidict = operations.spiderInLine(line)
+			refdict = self.spidict2partdict(spidict)
+			if refdict['inplane'] < mininplane:
+				mininplane = refdict['inplane']
+			reflist.append(refdict)
+		for refdict in reflist:
+			refdict['inplane'] = refdict['inplane']-mininplane
+		apDisplay.printMsg("read rotation and shift parameters for "+str(len(reflist))+" references")
+		return reflist
+
+	#=====================
+	def readPartStarFile(self, reflist):
+		partlist = []
+		#part16may17u43_it030_data.star
+		inputfile = "part%s_final_data.star"%(self.params['timestamp'])
+		lastiterfile = "part%s_it%03d_data.star"%(self.params['timestamp'], self.lastiter)
+		if self.params['sort'] is True:
+			lastiterfile = os.path.join("iter%03d"%(self.lastiter), lastiterfile)
+		shutil.copy(lastiterfile, inputfile)
+
+		starData = starFile.StarFile(inputfile)
+		starData.read()
+		print starData.getHeader()
+		dataBlock = starData.getDataBlock('data_images')
+		particleTree = dataBlock.getLoopDict()
+		print particleTree[random.randint(0, len(particleTree))]
+		for relionpartdict in particleTree:
+			partdict = self.adjustPartDict(relionpartdict, reflist)
+			partlist.append(partdict)
+		apDisplay.printMsg("read rotation and shift parameters for "+str(len(partlist))+" particles")
+		if len(partlist) < 1:
+			apDisplay.printError("Did not find any particles in doc file: "+docfile)
+		return partlist
+
+	#=====================
+	def writePartDocFile(self, partlist):
+		docfile = "finalshifts_"+self.params['timestamp']+".doc"
+		f = open(docfile, "w")
+		dlist = ['inplane', 'xshift', 'yshift', 'refnum', 'mirror', 'spread']
+		f.write(" ; partnum ... "+str(dlist)+"\n")
+		for partdict in partlist:
+			floatlist = []
+			for key in dlist:
+				floatlist.append(partdict[key])
+			line = operations.spiderOutLine(partdict['partnum'], floatlist)
+			f.write(line)
+		f.write(" ; partnum ... "+str(dlist)+"\n")
+		f.close()
+		apDisplay.printMsg("wrote rotation and shift parameters to "+docfile+" for "+str(len(partlist))+" particles")
+		return
+
+	#=====================
+	def adjustPartDict(self, relionpartdict, reflist):
+		#refdict = reflist[origpartdict['refnum']-1]
+		particleNumber = int(re.sub("\@.*$", "", relionpartdict['_rlnImageName']))
+		newpartdict = {
+			'partnum': particleNumber,
+			#'inplane': self.wrap360(relionpartdict['inplane']+refdict['inplane']),
+			#'xshift': origpartdict['xshift']+refdict['xshift'],
+			#'yshift': origpartdict['yshift']+refdict['yshift'],
+			'inplane': self.wrap360(float(relionpartdict['_rlnAnglePsi'])),
+			'xshift': float(relionpartdict['_rlnOriginX']),
+			'yshift': float(relionpartdict['_rlnOriginY']),
+			'refnum': int(relionpartdict['_rlnClassNumber']),
+			'mirror': False, #not available
+			'spread': float(relionpartdict['_rlnMaxValueProbDistribution']), #check for better
+		}
+		return newpartdict
+
+	#=====================
+	def xor(self, a ,b):
+		xor = (a and not b) or (b and not a)
+		return bool(xor)
+
+	#=====================
+	def wrap360(self, theta):
+		f = theta % 360
+		if f > 180:
+			f = f - 360.0
+		return f
+
+	#=====================
+	def readRunParameters(self):
+		paramfile = "maxlike-"+self.params['timestamp']+"-params.pickle"
+		if not os.path.isfile(paramfile):
+			apDisplay.printError("Could not find run parameters file: "+paramfile)
+		f = open(paramfile, "r")
+		runparams = cPickle.load(f)
+		if not 'localstack' in runparams:
+			runparams['localstack'] = self.params['timestamp']+".hed"
+		if not 'student' in runparams:
+			runparams['student'] = 0
+		return runparams
+
+	#=====================
+	def getMaxLikeJob(self, runparams):
+		maxjobq = appiondata.ApMaxLikeJobData()
+		maxjobq['runname'] = runparams['runname']
+		maxjobq['path'] = appiondata.ApPathData(path=os.path.abspath(runparams['rundir']))
+		maxjobq['REF|projectdata|projects|project'] = apProject.getProjectIdFromStackId(runparams['stackid'])
+		maxjobq['timestamp'] = self.params['timestamp']
+		maxjobdata = maxjobq.query(results=1)
+		if not maxjobdata:
+			return None
+		return maxjobdata[0]
+
+	#=====================
+	def insertRunIntoDatabase(self, alignimagicfile, runparams):
+		apDisplay.printMsg("Inserting MaxLike Run into DB")
+
+		### setup alignment run
+		alignrunq = appiondata.ApAlignRunData()
+		alignrunq['runname'] = runparams['runname']
+		alignrunq['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
+		uniquerun = alignrunq.query(results=1)
+		if uniquerun:
+			apDisplay.printError("Run name '"+runparams['runname']+"' and path already exist in database")
+
+		### setup max like run
+		maxlikeq = appiondata.ApMaxLikeRunData()
+		maxlikeq['runname'] = runparams['runname']
+		maxlikeq['run_seconds'] = runparams['runtime']
+		#maxlikeq['mask_diam'] = 2.0*runparams['maskrad']
+		maxlikeq['fast'] = runparams['fast']
+		maxlikeq['fastmode'] = runparams['fastmode']
+		maxlikeq['mirror'] = runparams['mirror']
+		maxlikeq['student'] = bool(runparams['student'])
+		maxlikeq['init_method'] = "xmipp default"
+		maxlikeq['job'] = self.getMaxLikeJob(runparams)
+
+		### finish alignment run
+		alignrunq['maxlikerun'] = maxlikeq
+		alignrunq['hidden'] = False
+		alignrunq['runname'] = runparams['runname']
+		alignrunq['description'] = runparams['description']
+		alignrunq['lp_filt'] = runparams['lowpass']
+		alignrunq['hp_filt'] = runparams['highpass']
+		alignrunq['bin'] = runparams['bin']
+
+		### setup alignment stack
+		alignstackq = appiondata.ApAlignStackData()
+		alignstackq['imagicfile'] = alignimagicfile
+		alignstackq['avgmrcfile'] = "average.mrc"
+		alignstackq['refstackfile'] = "part"+self.params['timestamp']+"_average.hed"
+		alignstackq['iteration'] = self.lastiter
+		alignstackq['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
+		alignstackq['alignrun'] = alignrunq
+		### check to make sure files exist
+		alignimagicfilepath = os.path.join(self.params['rundir'], alignstackq['imagicfile'])
+		if not os.path.isfile(alignimagicfilepath):
+			apDisplay.printError("could not find stack file: "+alignimagicfilepath)
+		avgmrcfile = os.path.join(self.params['rundir'], alignstackq['avgmrcfile'])
+		if not os.path.isfile(avgmrcfile):
+			apDisplay.printError("could not find average mrc file: "+avgmrcfile)
+		refstackfile = os.path.join(self.params['rundir'], alignstackq['refstackfile'])
+		if not os.path.isfile(refstackfile):
+			apDisplay.printError("could not find reference stack file: "+refstackfile)
+		alignstackq['stack'] = apStack.getOnlyStackData(runparams['stackid'])
+		alignstackq['boxsize'] = apFile.getBoxSize(alignimagicfilepath)[0]
+		alignstackq['pixelsize'] = apStack.getStackPixelSizeFromStackId(runparams['stackid'])*runparams['bin']
+		alignstackq['description'] = runparams['description']
+		alignstackq['hidden'] =  False
+		alignstackq['num_particles'] =  runparams['numpart']
+
+		### insert
+		if self.params['commit'] is True:
+			alignstackq.insert()
+		self.alignstackdata = alignstackq
+
+		return
+
+	#=====================
+	def insertParticlesIntoDatabase(self, stackid, partlist):
+		count = 0
+		inserted = 0
+		t0 = time.time()
+		apDisplay.printColor("Inserting particle alignment data, please wait", "cyan")
+		for partdict in partlist:
+			count += 1
+			if count % 100 == 0:
+				sys.stderr.write(".")
+
+			### setup reference
+			refq = appiondata.ApAlignReferenceData()
+			refq['refnum'] = partdict['refnum']
+			refq['iteration'] = self.lastiter
+			refsearch = "part"+self.params['timestamp']+"_ref*"+str(partdict['refnum'])+"*"
+			refbase = os.path.splitext(glob.glob(refsearch)[0])[0]
+			refq['mrcfile'] = refbase+".mrc"
+			refq['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
+			refq['alignrun'] = self.alignstackdata['alignrun']
+			if partdict['refnum']  in self.resdict:
+				refq['ssnr_resolution'] = self.resdict[partdict['refnum']]
+			reffile = os.path.join(self.params['rundir'], refq['mrcfile'])
+			if not os.path.isfile(reffile):
+				emancmd = "proc2d "+refbase+".xmp "+refbase+".mrc"
+				apEMAN.executeEmanCmd(emancmd, verbose=False)
+			if not os.path.isfile(reffile):
+				apDisplay.printError("could not find reference file: "+reffile)
+
+			### setup particle
+			alignpartq = appiondata.ApAlignParticleData()
+			alignpartq['partnum'] = partdict['partnum']
+			alignpartq['alignstack'] = self.alignstackdata
+			stackpartdata = apStack.getStackParticle(stackid, partdict['partnum'])
+			alignpartq['stackpart'] = stackpartdata
+			alignpartq['xshift'] = partdict['xshift']
+			alignpartq['yshift'] = partdict['yshift']
+			alignpartq['rotation'] = partdict['inplane']
+			alignpartq['mirror'] = partdict['mirror']
+			alignpartq['ref'] = refq
+			alignpartq['spread'] = partdict['spread']
+
+			### insert
+			if self.params['commit'] is True:
+				inserted += 1
+				alignpartq.insert()
+
+		apDisplay.printColor("\ninserted "+str(inserted)+" of "+str(count)+" particles into the database in "
+			+apDisplay.timeString(time.time()-t0), "cyan")
+
+		return
+
+	#=====================
+	def convertStackToSpider(self, imagicstack, spiderstack):
+		"""
+		takes the stack file and creates a spider file ready for processing
+		"""
+		if not os.path.isfile(imagicstack):
+			apDisplay.printError("stackfile does not exist: "+imagicstack)
+
+		### convert imagic stack to spider
+		emancmd  = "proc2d "
+		emancmd += imagicstack+" "
+		apFile.removeFile(spiderstack, warn=True)
+		emancmd += spiderstack+" "
+		emancmd += "spiderswap"
+		starttime = time.time()
+		apDisplay.printColor("Running spider stack conversion this can take a while", "cyan")
+		apEMAN.executeEmanCmd(emancmd, verbose=True)
+		apDisplay.printColor("finished eman in "+apDisplay.timeString(time.time()-starttime), "cyan")
+		return
+
+	#=====================
+	def createAlignedStacks(self, partlist, origstackfile):
+		partperiter = min(4096,apImagicFile.getPartSegmentLimit(origstackfile))
+		numpart = len(partlist)
+		if numpart < partperiter:
+			partperiter = numpart
+
+		t0 = time.time()
+		imgnum = 0
+		stacklist = []
+		apDisplay.printMsg("rotating and shifting particles at "+time.asctime())
+		while imgnum < len(partlist):
+			index = imgnum % partperiter
+			if imgnum % 100 == 0:
+				sys.stderr.write(".")
+			if index == 0:
+				### deal with large stacks
+				if imgnum > 0:
+					sys.stderr.write("\n")
+					stackname = "alignstack%d.hed"%(imgnum)
+					apDisplay.printMsg("writing aligned particles to file "+stackname)
+					stacklist.append(stackname)
+					apFile.removeStack(stackname, warn=False)
+					apImagicFile.writeImagic(alignstack, stackname, msg=False)
+					perpart = (time.time()-t0)/imgnum
+					apDisplay.printColor("particle %d of %d :: %s per part :: %s remain"%
+						(imgnum+1, numpart, apDisplay.timeString(perpart),
+						apDisplay.timeString(perpart*(numpart-imgnum))), "blue")
+				alignstack = []
+				imagesdict = apImagicFile.readImagic(origstackfile, first=imgnum+1, last=imgnum+partperiter, msg=False)
+
+			### align particles
+			partimg = imagesdict['images'][index]
+			partdict = partlist[imgnum]
+			partnum = imgnum+1
+			if partdict['partnum'] != partnum:
+				apDisplay.printError("particle shifting "+str(partnum)+" != "+str(partdict))
+			xyshift = (partdict['xshift'], partdict['yshift'])
+			alignpartimg = apImage.xmippTransform(partimg, rot=partdict['inplane'],
+				shift=xyshift, mirror=partdict['mirror'])
+			alignstack.append(alignpartimg)
+			imgnum += 1
+
+		### write remaining particle to file
+		sys.stderr.write("\n")
+		stackname = "alignstack%d.hed"%(imgnum)
+		apDisplay.printMsg("writing aligned particles to file "+stackname)
+		stacklist.append(stackname)
+		apImagicFile.writeImagic(alignstack, stackname, msg=False)
+
+		### merge stacks
+		alignimagicfile = "alignstack.hed"
+		apFile.removeStack(alignimagicfile, warn=False)
+		apImagicFile.mergeStacks(stacklist, alignimagicfile)
+		#for stackname in stacklist:
+		#	emancmd = "proc2d %s %s"%(stackname, alignimagicfile)
+		#	apEMAN.executeEmanCmd(emancmd, verbose=False)
+		filepart = apFile.numImagesInStack(alignimagicfile)
+		if filepart != numpart:
+			apDisplay.printError("number aligned particles (%d) not equal number expected particles (%d)"%
+				(filepart, numpart))
+		for stackname in stacklist:
+			apFile.removeStack(stackname, warn=False)
+
+		### summarize
+		apDisplay.printMsg("rotated and shifted %d particles in %s"%(imgnum, apDisplay.timeString(time.time()-t0)))
+
+		return alignimagicfile
+
+	#=====================
+	def writeXmippLog(self, text):
+		f = open("xmipp.log", "a")
+		f.write(apParam.getLogHeader())
+		f.write(text+"\n")
+		f.close()
+
+	#=====================
+	def alignReferences(self, runparams):
+		### align references
+		xmippopts = ( " "
+			+" -i "+os.path.join(self.params['rundir'], "part"+self.params['timestamp']+".sel")
+			+" -nref 1 "
+			+" -iter 10 "
+			+" -o "+os.path.join(self.params['rundir'], "ref"+self.params['timestamp'])
+			+" -psi_step 1 "
+			#+" -fast -C 1e-18 "
+			+" -eps 5e-8 "
+		)
+		if runparams['mirror'] is True:
+			xmippopts += " -mirror "
+		xmippexe = apParam.getExecPath("xmipp_ml_align2d")
+		xmippcmd = xmippexe+" "+xmippopts
+		self.writeXmippLog(xmippcmd)
+		apEMAN.executeEmanCmd(xmippcmd, verbose=True, showcmd=True)
+
+	#=====================
+	def createAlignedReferenceStack(self):
+		searchstr = "part"+self.params['timestamp']+"_ref0*.xmp"
+		files = glob.glob(searchstr)
+		files.sort()
+		stack = []
+		reflist = self.readRefDocFile()
+		for i in range(len(files)):
+			fname = files[i]
+			refdict = reflist[i]
+			if refdict['partnum'] != i+1:
+				print i, refdict['partnum']
+				apDisplay.printError("sorting error in reflist, see neil")
+			refarray = spider.read(fname)
+			xyshift = (refdict['xshift'], refdict['yshift'])
+			alignrefarray = apImage.xmippTransform(refarray, rot=refdict['inplane'],
+				shift=xyshift, mirror=refdict['mirror'])
+			stack.append(alignrefarray)
+		stackarray = numpy.asarray(stack, dtype=numpy.float32)
+		#print stackarray.shape
+		avgstack = "part"+self.params['timestamp']+"_average.hed"
+		apFile.removeStack(avgstack, warn=False)
+		apImagicFile.writeImagic(stackarray, avgstack)
+		### create a average mrc
+		avgdata = stackarray.mean(0)
+		apImage.arrayToMrc(avgdata, "average.mrc")
+		return
+
+	def findMovingParticles(self):
+		"""
+		Script to find particles that change template often
+		"""
+
+		"""
+		#!/usr/bin/env csh
+
+		if ($#argv != 2) then
+		    echo "you must give two parameters:" 
+		    echo $0" <MLrootname> <maxiter>"
+		else
+		  set rootname=$1
+		  set max_iter=$2
+
+		  rm -f moving_particles.dat
+		  set i = 1
+		  while ($i < ${max_iter})
+		    set ii=`printf '%05d' $i`
+		    @ i++
+		    set jj=`printf '%05d' $i`
+		    echo -n $i" " >>moving_\particles.dat
+		    grep " 8 " ${rootname}_it${ii}.doc|awk '{print $1,$5,$6,$7,$8,$9}' >t1
+		    grep " 8 " ${rootname}_it${jj}.doc|awk '{print $1,$5,$6,$7,$8,$9}' >t2
+		    diff t1 t2|grep ">" |wc -l >>moving_particles.dat
+		  end
+		endif
+		"""
+
+	#=====================
+	def readRefDocFile(self):
+		reflist = []
+		docfile = "ref"+self.params['timestamp']+".doc"
+		if not os.path.isfile(docfile):
+			apDisplay.printError("could not find doc file "+docfile+" to read reference angles")
+		f = open(docfile, "r")
+		mininplane = 360.0
+		for line in f:
+			if line[:2] == ' ;':
+				continue
+			spidict = operations.spiderInLine(line)
+			refdict = self.spidict2partdict(spidict)
+			if refdict['inplane'] < mininplane:
+				mininplane = refdict['inplane']
+			reflist.append(refdict)
+		for refdict in reflist:
+			refdict['inplane'] = refdict['inplane']-mininplane
+		apDisplay.printMsg("read rotation and shift parameters for "+str(len(reflist))+" references")
+		return reflist
+
+	#=====================
+	def calcResolution(self, partlist, alignimagicfile, apix):
+		### group particles by refnum
+		reflistsdict = {}
+		for partdict in partlist:
+			refnum = partdict['refnum']
+			partnum = partdict['partnum']
+			if not refnum in reflistsdict:
+					reflistsdict[refnum] = []
+			reflistsdict[refnum].append(partnum)
+
+		### get resolution
+		self.resdict = {}
+		boxsizetuple = apFile.getBoxSize(alignimagicfile)
+		boxsize = boxsizetuple[0]
+		for refnum in reflistsdict.keys():
+			partlist = reflistsdict[refnum]
+			esttime = 3e-6 * len(partlist) * boxsize**2
+			apDisplay.printMsg("Ref num %d; %d parts; est time %s"
+				%(refnum, len(partlist), apDisplay.timeString(esttime)))
+
+			frcdata = apFourier.spectralSNRStack(alignimagicfile, apix, partlist, msg=False)
+			frcfile = "frcplot-%03d.dat"%(refnum)
+			apFourier.writeFrcPlot(frcfile, frcdata, apix, boxsize)
+			res = apFourier.getResolution(frcdata, apix, boxsize)
+
+			self.resdict[refnum] = res
+
+		return
+
+	#=====================
+	def start(self):
+		### load parameters
+		#runparams = self.readRunParameters()
+
+		### align references
+		#self.alignReferences(runparams)
+
+		### create an aligned stack
+		#self.createAlignedReferenceStack()
+
+		### read particles
+		self.lastiter = self.findLastIterNumber() #works
+		if self.params['sort'] is True:
+			self.sortFolder()
+		reflist = None
+		#reflist = self.readRefDocFile()
+		partlist = self.readPartStarFile(reflist)
+		#self.writePartDocFile(partlist)
+
+		### create aligned stacks
+		alignimagicfile = self.createAlignedStacks(partlist, runparams['localstack'])
+		apStack.averageStack(alignimagicfile)
+
+		### calculate resolution for each reference
+		apix = apStack.getStackPixelSizeFromStackId(runparams['stackid'])*runparams['bin']
+		self.calcResolution(partlist, alignimagicfile, apix)
+
+		### insert into databse
+		self.insertRunIntoDatabase(alignimagicfile, runparams)
+		self.insertParticlesIntoDatabase(runparams['stackid'], partlist)
+
+		apFile.removeStack(runparams['localstack'], warn=False)
+		rmcmd = "/bin/rm -fr partfiles/*"
+		apEMAN.executeEmanCmd(rmcmd, verbose=False, showcmd=False)
+		apFile.removeFilePattern("partfiles/*")
+
+#=====================
+if __name__ == "__main__":
+	maxLike = UploadRelionMaxLikeScript()
+	maxLike.start()
+	maxLike.close()
+
+
+

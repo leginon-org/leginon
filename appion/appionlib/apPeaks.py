@@ -33,8 +33,8 @@ def findPeaks(imgdict, maplist, params, maptype="ccmaxmap", pikfile=True):
 	pixdiam =   diam/apix/float(bin)
 	pixrad =    diam/apix/2.0/float(bin)
 
-	numpyVersion = float(numpy.version.version[:3])
-	if numpyVersion > 1.7:
+	numpyVersion = map(float,numpy.version.version.split('.'))
+	if numpyVersion[1] > 7:
 		peaktreelist = Parallel(n_jobs=params['nproc'])(delayed(runFindPeaks)(params,
 			maplist,maptype,pikfile,thresh,pixdiam,count,olapmult,maxpeaks,maxsizemult,
 			msg,bin,peaktype,pixrad,imgdict) for count in range(0,len(maplist)))

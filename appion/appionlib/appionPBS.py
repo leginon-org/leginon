@@ -291,7 +291,7 @@ class AppionPBS(appionLoop2.AppionLoop):
 		f.write('touch %s\n' % (donefile) )
 		f.write('%s \n' % s )
 		#HACK to remove frames
-		f.write ('rm -r *.mrc')
+		#f.write ('rm -r *.mrc')
 		f.close()
 		print jobpath
 		return(jobname,donefile)

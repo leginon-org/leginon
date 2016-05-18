@@ -3374,6 +3374,23 @@ class leginondata {
 			return false;
 		}
 	}
+
+	function getNFramesSavedFromImage($imageId) {
+		$sql = 'SELECT c.`nframes`, c.`save frames` '
+					.' from '
+					.'`CameraEMData` c '
+					.'left join `AcquisitionImageData` a '
+					.'on c.`DEF_id` = a.`REF|CameraEMData|camera` '
+					.'where a.`DEF_id` = '.$imageId.' '
+					.' ';
+		$results = $this->mysql->getSQLResult($sql);
+		if (is_array($results) && count($results) > 0) {
+			if ( $results[0]['save frames'] != 1 ) return false;
+			return $results[0]['nframes'];
+		}
+		return false;
+	}
+
 }
 
 function rsum($v, $w) {

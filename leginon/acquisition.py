@@ -434,10 +434,10 @@ class Acquisition(targetwatcher.TargetWatcher):
 
 	def preTargetSetup(self):
 		'''
-		Things to do before moving to target and set preset
+		Things to do before moving to each target and set preset
 		'''
 		zlp_preset_name = self.settings['preset order'][-1]
-		self.logger.info('Tuning before process a target')
+		self.logger.info('Tuning before processing a target')
 		self.tuneEnergyFilter(zlp_preset_name)
 		self.monitorScreenCurrent(zlp_preset_name)
 
@@ -457,6 +457,9 @@ class Acquisition(targetwatcher.TargetWatcher):
 				return 'aborted'
 			else:
 				raise
+		execept Exception, e:
+			self.logger.error(str(e))
+			return 'exception'
 
 		presetnames = self.settings['preset order']
 		ret = 'ok'
@@ -1312,7 +1315,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 			self.logger.error(e)
 		# Phase Plate stuff
 		preset_name = self.settings['preset order'][-1]
-		self.logger.info('Tuning before process a target')
+		self.logger.info('Condition fixing before processing a target')
 		self.tunePhasePlate(preset_name)
 
 	def getMoveTypes(self):
