@@ -60,7 +60,8 @@ class TemplatePickerForm extends MathParticleForm
 		// different defaults
 		$math_params = $this->mathTable->getFormParams();
 		$math_params->setParamValue('minthresh',0.5);
-		$math_params->setParamValue('maxthresh','');
+		// old default is '' (unset) but form wants a value for validation purpose
+		$math_params->setParamValue('maxthresh','5');
 	}
 
 	private function createTemplateTableForm() {		

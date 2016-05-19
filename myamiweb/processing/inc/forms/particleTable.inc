@@ -16,7 +16,7 @@ class FilterTable extends BasicForm
 {
 
 	function __construct( $lpv=15, $hpv=0, $medianv= 2, $pixlimitv=4, $binv=4,
-	$invertv='',$planeregv='on' )
+	$planeregv='on' )
 	{
 		parent::__construct();
 		
@@ -39,7 +39,6 @@ class FilterTable extends BasicForm
 		$params->addValidation("binval", "num");
 		$params->addParam( "planereg", $planeregv, "Plane regression" );
 
-		$params->addParam( "invert", $invertv, "Invert image density" );		
 		//keepall is not set in gui
 	}
 			
@@ -64,13 +63,11 @@ class FilterTable extends BasicForm
 		$html.= $params->insertTextField( "pixlimit", $fieldSize,"(in Standard Deviations; 0 = off)" );	
 		$html.= $params->insertCheckboxField( "planereg" );
 		$html.= "<br/>\n";
-		$html.= "<B>Image Contrast:</B><br />\n";
-		$html.= $params->insertCheckboxField( "invert" );
-		$html.= "<br/>\n";
 		$html.=  "<!-- END FilterLoop Param -->\n";
 
 		return $html;	
 	}	
+
 	// No need to override the buildCommand
 	
 	// Non need to override the validate function
@@ -362,4 +359,56 @@ class MathParticleTable extends BasicForm
 	}	
 	
 }
+
+// ImageContrast Table parameters for template and dogpickers
+class ImageContrastTable extends BasicForm
+{
+	
+	function __construct( $invertv='' )
+	{
+		parent::__construct();
+		
+		// Get the form parameters that have been created by the parent class
+		$params = $this->getFormParams();
+
+		// The help section corresponds to the array key for these parameters found in help.js for popup help.
+		$params->setHelpSection( "appion" );
+
+		$params->addParam( "invert", $invertv, "Invert contrast to match template" );		
+	}
+
+	public function generateForm()
+	{
+		$this->updateFormParams();
+		$params = $this->getFormParams();
+
+		$html.= "<B>Image Contrast:</B><br />\n";
+		$html.= $params->insertRadioField("invert", "", "Particles have same contrast as templates","");	
+		$html.= $params->insertRadioField("invert", "on", "Particles have opposite contrast as templates","");	
+		$html.= "<br/>\n";
+		return $html;	
+	}	
+}
+
+// DogPicker Image Contrast Table parameters
+class DogPickerImageContrastTable extends ImageContrastTable
+{
+	function __construct( $invertv='on' )
+	{
+		parent::__construct($invertv='on');
+	}
+
+	public function generateForm()
+	{
+		$this->updateFormParams();
+		$params = $this->getFormParams();
+
+		$html.= "<B>Image Contrast:</B><br />\n";
+		$html.= $params->insertRadioField("invert", "", "White Particles","(i.e. negatively stained)");	
+		$html.= $params->insertRadioField("invert", "on", "Black Particles","(i.e. ice embedded)");	
+		$html.= "<br/>\n";
+		return $html;	
+	}	
+}
+
 ?>

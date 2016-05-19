@@ -12,9 +12,10 @@ require_once "mathParticleForm.inc";
 class DogPickerForm extends MathParticleForm
 
 {
-	function __construct(  $expId, $errorHTML='', $infoHTML='', $kfactorv=1.2, $numslicesv='',$sizerangev='' ) 
+	function __construct(  $expId, $errorHTML='', $infoHTML='', $kfactorv=1.2, $numslicesv='',$sizerangev='',$invertv="on" ) 
 	{
 		parent::__construct($expId, $errorHTML, $infoHTML);
+		$this->imageContrastTable = new DogPickerImageContrastTable($invertv);
 		
 		//------ Set Parameters for the parent class, BasicLoopForm (general Appion params) -----//
 		
@@ -46,7 +47,7 @@ class DogPickerForm extends MathParticleForm
 		//Multiple slices
 		$params->addParam( "numslices", $numslicesv, "Number of Slices" );
 		$params->addParam( "sizerange", $sizerangev, "Size Range" );
-		
+
 		// Validations
 		//$params->addValidation( "numpart", "req" );
 	}
@@ -66,7 +67,7 @@ class DogPickerForm extends MathParticleForm
 		$html .="<br />\n";
 		return $html;
 	}
-	
+
 	// Override the validate function so that we can verify the DogPicker parameters
 	public function validate( $postArray )
 	{

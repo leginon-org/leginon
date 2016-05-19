@@ -201,8 +201,9 @@ if (is_numeric($expId)) {
 		'result'=>$dresults,
 	);
 
+	$templatepickform = "TemplatePickerForm";
 	$nrun[] = array(
-		'name'=>"<a href='runTemplateCorrelator.php?expId=$sessionId'>Template Picking</a>",
+		'name'=>"<a href='runAppionLoop.php?expId=$sessionId&form=$templatepickform'>Template Picking</a>",
 		'result'=>$tresults,
 	);
 
