@@ -457,9 +457,9 @@ class Acquisition(targetwatcher.TargetWatcher):
 				return 'aborted'
 			else:
 				raise
-		execept Exception, e:
+		except Exception, e:
 			self.logger.error(str(e))
-			return 'exception'
+			raise
 
 		presetnames = self.settings['preset order']
 		ret = 'ok'
