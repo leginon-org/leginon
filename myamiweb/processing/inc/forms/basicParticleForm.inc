@@ -22,6 +22,7 @@ class BasicParticleForm extends BasicLoopForm
 		parent::__construct($expId, $errorHTML, $infoHTML );
 		$this->particleTable = new SimpleParticleTable;	
 		$this->pDiameterTable = new ParticleDiameterTable();
+		$this->imageContrastTable = new ImageContrastTable();
 
 		// You can change the default of the parameters for the imbeded table in the child functions.
 
@@ -52,6 +53,7 @@ class BasicParticleForm extends BasicLoopForm
 		//$particleTable = SimpleParticleTable();
 		
 		$html .= $this->particleTable->generateForm();
+		$html .= $this->imageContrastTable->generateForm();
 	
 		return $html;
 	}
@@ -80,6 +82,7 @@ class BasicParticleForm extends BasicLoopForm
 		$msg .= $this->pDiameterTable->validate( $postArray );
 
 		$msg .= $this->particleTable->validate( $postArray );
+		$msg .= $this->imageContrastTable->validate( $postArray );
 		
 		return $msg;
 	}
@@ -92,6 +95,7 @@ class BasicParticleForm extends BasicLoopForm
 		// add params from forms
 		$command .= $this->pDiameterTable->buildCommand( $postArray );
 		$command .= $this->particleTable->buildCommand( $postArray );
+		$command .= $this->imageContrastTable->buildCommand( $postArray );
 		
 		return $command;		
 	}
