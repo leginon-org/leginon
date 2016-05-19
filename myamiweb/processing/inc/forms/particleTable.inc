@@ -120,20 +120,9 @@ class MathParticleAdvancedTable extends BasicForm
 
 		return $html;	
 	}	
-	// Override the buildCommand
-	public function buildCommand( $postArray )
-	{
-		$command = parent::buildCommand( $postArray );
-		$params = $this->getFormParams();
 
-		$maxsize = $params->getParamValue('maxsize');
-		if ($params->getParamValue('maxsize') && $maxsize > 0 && $maxsize != 1.0) $command.=" --maxsize=$maxsize";
-		if ($overlapmult && $overlapmult > 0 && $overlapmult != 1.5) $command.=" --overlapmult=$overlapmult";
-	
-		return $command." ";
-	}
-
-	// Non need to override the validate function
+	// No need to override the validate function
+	// No need to override the buildCommand function
 	
 }
 
