@@ -1203,7 +1203,12 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		cmd += self.addDoseFDriftCorrOptions()
 
 		# moving average window and y-axis flip
-		cmd += ' -nrw %d -flp %d' % (self.getNewNumRunningAverageFrames(),self.getNewFlipAlongYAxis()) 
+		if self.getNewNumRunningAverageFrames() != 0:
+			cmd += ' -nrw %d ' % (self.getNewNumRunningAverageFrames()) 
+		
+		if self.getNewFlipAlongYAxis() != 0:
+			cmd += ' -flp %d' % (self.getNewFlipAlongYAxis()) 
+
 
 		# binning
 		cmd += ' -bin %d' % (self.getNewBinning())
