@@ -109,7 +109,7 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 		self.parser.add_option('--skipgain', dest='skipgain', action='store_true', default=False, help='Skip flatfield correction')
 		self.parser.add_option('--siblingframes', dest='siblingframes', action='store_true', default=False, help='Use frames from sibling image', metavar='INT')
 		self.parser.add_option("--output_rotation", dest="output_rotation", type='int', default=0, help="Rotate output particles by the specified angle", metavar="INT")
-		self.parser.add_option("--make_summary_image", dest="make_summary_image", action='store_true', default=False, help="Skip making summary image with particle trajectories", metavar="INT")
+		self.parser.add_option("--make_summary_image", dest="make_summary_image", action='store_true', default=False, help="Make summary image with particle trajectories", metavar="INT")
 		self.parser.add_option("--override_bad_pixs", dest="override_bad_pixs", action='store_true', default=False, help="Override bad pixels from database", metavar="INT")
 
 	#=======================
