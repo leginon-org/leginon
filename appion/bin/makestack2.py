@@ -760,6 +760,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 
 			### step 2: filter particles
 			### high / low pass filtering
+			### no pixlimit on individual particles, just whole micrograph
 			#if self.params['pixlimit']:
 			#	particle = imagefilter.pixelLimitFilter(particle, self.params['pixlimit'])
 			if self.params['lowpass']:
