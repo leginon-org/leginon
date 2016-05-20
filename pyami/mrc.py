@@ -118,8 +118,9 @@ header_fields = (
 	('ispg', 'int32'),
 	('nsymbt', 'int32'),
 	('extra1', 'string', 8),
-	('exttype', 'string', 4),
-	('extra2', 'string', 88),
+	('exttyp', 'string', 4),
+	('nversion', 'int32'),
+	('extra2', 'string', 84),
 	('xorigin', 'float32'),
 	('yorigin', 'float32'),
 	('zorigin', 'float32'),
@@ -374,6 +375,8 @@ def updateHeaderDefaults(header):
 	header['amax'] = 0.0
 	header['amean'] = 0.0
 	header['rms'] = 0.0
+	header['nversion'] = 20140
+	header['exttyp'] = 'MRCO'
 
 def updateHeaderUsingArray(header, a, calc_stats=True, reset_origin=True, mz=None):
 	'''
@@ -568,7 +571,7 @@ def mainStackHeader(oneheader, z):
 	newheader['zlen'] = z
 	newheader['zorigin'] = z/2.0
 	newheader['nsymbt'] = z * 88
-	newheader['exttype'] = 'IMOD'
+	newheader['exttyp'] = 'IMOD'
 	newheader['nintegers'] = 0
 	newheader['nfloats'] = 22
 	return newheader
