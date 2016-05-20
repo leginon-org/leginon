@@ -336,17 +336,24 @@ class ReferenceCopier(object):
 		self.framedir = framedir
 		self.refdir = os.path.join(framedir,'references')
 		self.reflistpath = os.path.join(self.refdir,'reference_list.txt')
+		self.badreflistpath = os.path.join(self.refdir,'failed_reference_read.txt')
+		self.badrefs = []
 		self.setupRefDir()
 		self.corrector_plans = {}
 
 	def setupRefDir(self):
 		if not os.path.isdir(self.refdir):
 				pyami.fileutil.mkdirs(self.refdir)
-				if not os.path.isfile(self.reflistpath):
-					fileobj = open(self.reflistpath,'w')
-					header = 'image_name\tflip\trotate\tdark_scale\tnorm_image\tdark_image\tdefect_plan\n'
-					fileobj.write(header)
-					fileobj.close()
+		if not os.path.isfile(self.reflistpath):
+			fileobj = open(self.reflistpath,'w')
+			header = 'image_name\tflip\trotate\tdark_scale\tnorm_image\tdark_image\tdefect_plan\n'
+			fileobj.write(header)
+			fileobj.close()
+		if not os.path.isfile(self.badreflistpath):
+			fileobj = open(self.badreflistpath,'w')
+			header = 'unreadable references\n'
+			fileobj.write(header)
+			fileobj.close()
 
 	def getRefDir(self):
 		return self.refdir
@@ -380,7 +387,10 @@ class ReferenceCopier(object):
 				if not os.access(refdata_reffilepath, os.R_OK):
 					print('Error: %s reference for image %s not readable....' % (reftype,imagedata['filename']))
 					print('%s not readable' % (refdata_reffilepath+'.mrc'))
-					reffilename = refdata_reffilepath[:-4]
+					self.writeUniqueLineToFile(self.badreflistpath, refdata_reffilepath,refdata_reffilepath)
+					if geometry_modified or scale_modified:
+						# record modified reference any way
+						reffilename = reffilename+'_mod'
 				elif not os.path.isfile(reffilepath):
 					print('Copying %s reference for image %s ....' % (reftype, imagedata['filename']))
 					refimage = refdata['image']
@@ -420,18 +430,24 @@ class ReferenceCopier(object):
 					self.writePlanFile(planfilepath,bad_cols,bad_rows,bad_pixels)
 				linelist.append(planfilename+'.txt')
 					
-		# check if the image is already there
-		fileobj = open(self.reflistpath,'r')
-		if frame_dst_name in fileobj.read():
-			print('frame references recorded already')
+		linestr = '\t'.join(linelist)
+		linestr += '\n'
+		self.writeUniqueLineToFile(self.reflistpath, frame_dst_name,linestr)
+
+	def writeUniqueLineToFile(self,filepath, match_string,line_string):
+		# check if the match_string is already there
+		fileobj = open(filepath,'r')
+		if match_string in fileobj.read():
+			print('%s recorded already' % (match_string))
 			fileobj.close()
 			return
 		else:
 			fileobj.close()
 			# write in the list
-			fileobj2 = open(self.reflistpath,'a')
-			linestr = '\t'.join(linelist)
-			fileobj2.write(linestr+'\n')
+			fileobj2 = open(filepath,'a')
+			if '\n' != line_string[-1]:
+				line_string += '\n'
+			fileobj2.write(line_string)
 			fileobj2.close()
 
 	def writePlanFile(self, planfilepath, bad_cols, bad_rows, bad_pixels):
@@ -495,8 +511,8 @@ class ReferenceCopier(object):
 			a = numpy.rot90(a,frame_rotate)
 			for rotate in range(frame_rotate):
 				original_bad_rows = bad_rows
-				new_bad_rows = map((lambda x:shape[0]-x),bad_col)
-				new_bad_col = original_bad_rows
+				new_bad_rows = map((lambda x:shape[0]-x),bad_cols)
+				new_bad_cols = original_bad_rows
 				bad_rows = tuple(new_bad_rows)	
 				bad_cols = tuple(new_bad_cols)
 		# convert bad pixel arrays to list of coords
@@ -526,8 +542,8 @@ class ReferenceCopier(object):
 
 def testRefCopy():
 	app = ReferenceCopier()
-	imagedata = leginon.leginondata.AcquisitionImageData.direct_query(1871)
-	app.setFrameDir('/Users/acheng/testdata/frames/15dec04y/rawdata/')
+	imagedata = leginon.leginondata.AcquisitionImageData.direct_query(618664)
+	app.setFrameDir('/home/acheng/tests/test_copyref/')
 	app.run(imagedata,imagedata['filename']+'.frames.mrc')
 	app.setImage(imagedata)
 	print app.modifyCorrectorPlan(imagedata['image'].shape,[0,],[0,],[(1000,54),])
