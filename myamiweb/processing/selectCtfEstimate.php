@@ -70,7 +70,7 @@ echo "</td></tr>\n";
 ** GCTF
 */
 
-if (HIDE_GPU_FEATURE) {
+if (HIDE_GPU_FEATURE == false) {
 echo "<tr><td width='100' align='center'>\n";
 echo "  <img src='img/appionlogo.jpg' width='96'>\n";
 echo "</td><td>\n";
