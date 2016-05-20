@@ -760,8 +760,8 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 
 			### step 2: filter particles
 			### high / low pass filtering
-			if self.params['pixlimit']:
-				particle = imagefilter.pixelLimitFilter(particle, self.params['pixlimit'])
+			#if self.params['pixlimit']:
+			#	particle = imagefilter.pixelLimitFilter(particle, self.params['pixlimit'])
 			if self.params['lowpass']:
 				particle = imagefilter.lowPassFilter(particle, apix=apix, radius=self.params['lowpass'])
 			if self.params['highpass']:
