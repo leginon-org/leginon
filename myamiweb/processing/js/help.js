@@ -391,6 +391,7 @@ var help = {
 		
 		
 		/*** Additional Protomo popups ***/
+		'protomo_logging' : 'Enable Protomo\'s diagnostic terminal output (type: true/false).',		
 		'protomo_tiltseries': 'Select the tilt-series number in the current session that corresponds to the tomogram to be processed. Protomo supports CCP4, EM, FFF, IMAGIC, MRC, SPIDER, SUPRIM, and TIFF filetypes. Currently images recorded as individual .mrc files are fully supported.',
 		'protomo_tiltseries_manual': 'Input the tilt-series number corresponding to the .tlt file you have made, e.g. if the .tlt file is named series0013.tlt then put 13 here (type: int).',
 		'protomo_dimx': 'The x-dimension of the tilt images in your \'raw\' directory, in pixels (type: int).',
