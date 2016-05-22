@@ -543,7 +543,26 @@ class ProTomo2Reconstruction(basicScript.BasicScript):
 			os.system("chmod +x %s" % os.path.join(self.params['rundir'],'stack','stack_dose_compensate.py'))
 			
 			#Create a small python script that, when executed on a stack, will bin the stack
-			
+			f=open(os.path.join(self.params['rundir'],'stack','stack_binning.py'),'w')
+			f.write("#!/usr/bin/env python")
+			f.write("# Usage: ./stack_binning.py <stack.mrcs> <binning factor>")
+			f.write("import os, sys, numpy as np")
+			f.write("from pyami import mrc")
+			f.write("from appionlib.apImage import imagefilter")
+			f.write("stack = mrc.read(sys.argv[1])")
+			f.write("sampling = int(sys.argv[2])")
+			f.write("dimx = len(stack[0])")
+			f.write("dimy = len(stack[0][0])")
+			f.write("new_dimx = int(round(dimx/sampling))")
+			f.write("new_dimy = int(round(dimy/sampling))")
+			f.write("binned_stack = np.zeros((len(stack),new_dimx,new_dimy))")
+			f.write("for i in range(len(stack)):")
+			f.write("	binned_stack[i,:,:] = imagefilter.binImg(stack[i,:,:], bin=sampling)")
+			f.write("stack_file = '%s_bin%s.mrcs' % (os.path.splitext(sys.argv[1])[0], sampling)")
+			f.write("mrc.write(binned_stack, stack_file)")
+			f.close()
+			apDisplay.printMsg("Stack binning script created: stack_binning.py")
+			os.system("chmod +x %s" % os.path.join(self.params['rundir'],'stack','stack_binning.py'))
 		
 		#Create two python scripts for creating either per-article or per-tomogram data-based custom fourier wedges
 		os.system('mkdir %s 2>/dev/null' % os.path.join(self.params['rundir'],'SPT'))
