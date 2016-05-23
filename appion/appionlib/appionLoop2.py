@@ -672,14 +672,17 @@ class AppionLoop(appionScript.AppionScript):
 			timesum = self.stats['timesum']
 			timesumsq = self.stats['timesumsq']
 			if(count > 1):
-				timeavg = float(timesum)/float(count)
-				timestdev = math.sqrt(float(count*timesumsq - timesum**2) / float(count*(count-1)))
-				timeremain = (float(timeavg)+float(timestdev))*(self.stats['imagesleft']-1)
-				sys.stderr.write("\tAVG TIME: \t"+apDisplay.timeString(timeavg,timestdev)+"\n")
-				#print "\t(- TOTAL:",apDisplay.timeString(timesum)," -)"
-				if(self.stats['imagesleft']-1  > 0):
-					sys.stderr.write("\t(- REMAINING TIME: "+apDisplay.timeString(timeremain)+" for "
-						+str(self.stats['imagesleft']-1)+" images -)\n")
+				try:
+					timeavg = float(timesum)/float(count)
+					timestdev = math.sqrt(float(count*timesumsq - timesum**2) / float(count*(count-1)))
+					timeremain = (float(timeavg)+float(timestdev))*(self.stats['imagesleft']-1)
+					sys.stderr.write("\tAVG TIME: \t"+apDisplay.timeString(timeavg,timestdev)+"\n")
+					#print "\t(- TOTAL:",apDisplay.timeString(timesum)," -)"
+					if(self.stats['imagesleft']-1  > 0):
+						sys.stderr.write("\t(- REMAINING TIME: "+apDisplay.timeString(timeremain)+" for "
+							+str(self.stats['imagesleft']-1)+" images -)\n")
+				except ValueError:
+					apDisplay.printWarning('Value Error in printSummary at count=%d' % count)
 			#print "\tMEM: ",(mem.active()-startmem)/1024,"M (",(mem.active()-startmem)/(1024*count),"M)"
 			apDisplay.printDebug( 'printSummary adding to stats count')
 			self._printLine()
