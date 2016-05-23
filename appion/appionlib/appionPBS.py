@@ -242,23 +242,7 @@ class AppionPBS(appionLoop2.AppionLoop):
 
 		### FINISH with custom functions
 
-		self._writeDoneDict(imgdata['filename'])
-		if self.params['parallel']:
-			self.unlockParallel(imgdata.dbid)
-
-# 				loadavg = os.getloadavg()[0]
-# 				if loadavg > 2.0:
-# 					apDisplay.printMsg("Load average is high "+str(round(loadavg,2)))
-# 					loadsquared = loadavg*loadavg
-# 					apDisplay.printMsg("Sleeping %.1f seconds"%(loadavg))
-# 					time.sleep(loadavg)
-# 					apDisplay.printMsg("New load average "+str(round(os.getloadavg()[0],2)))
-
-		self._printSummary()
-		self._advanceStatsCount()
-
-		if self.params['limit'] is not None and self.stats['totalcount'] > self.params['limit']:
-			apDisplay.printWarning("reached image limit of "+str(self.params['limit'])+"; now stopping")
+		self.finishLoopOneImage(imgdata)
 	
 	def setupJob(self, scratchdir, imgdata, command):
 		jobname=imgdata['filename']+'.csh'
