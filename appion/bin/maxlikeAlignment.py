@@ -2,10 +2,7 @@
 #
 import os
 import time
-import sys
-import random
 import math
-import shutil
 import glob
 import cPickle
 import subprocess
@@ -15,7 +12,6 @@ from pyami import spider
 from appionlib import appionScript
 from appionlib import apDisplay
 from appionlib import apFile
-from appionlib import apTemplate
 from appionlib import apStack
 from appionlib import apParam
 from appionlib import apXmipp
@@ -30,11 +26,8 @@ import MySQLdb
 #=====================
 #=====================
 class MaximumLikelihoodScript(appionScript.AppionScript):
-
 	#=====================
 	def setupParserOptions(self):
-
-
 		self.parser.set_usage("Usage: %prog --stack=ID [ --num-part=# ]")
 		self.parser.add_option("-N", "--num-part", dest="numpart", type="int",
 			help="Number of particles to use", metavar="#")
@@ -100,6 +93,8 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 	def checkConflicts(self):
 		if self.params['stackid'] is None:
 			apDisplay.printError("stack id was not defined")
+		self.projectid = apProject.getProjectIdFromStackId(self.params['stackid'])
+
 		#if self.params['description'] is None:
 		#	apDisplay.printError("run description was not defined")
 		if self.params['numrefs'] is None:
@@ -167,7 +162,7 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 			alignrundata = alignrunq.query(results=1)
 			if maxjobdatas[0]['finished'] is True or alignrundata:
 				apDisplay.printError("This run name already exists as finished in the database, please change the runname")
-		maxjobq['REF|projectdata|projects|project'] = apProject.getProjectIdFromStackId(self.params['stackid'])
+		maxjobq['REF|projectdata|projects|project'] = self.projectid
 		maxjobq['timestamp'] = self.timestamp
 		maxjobq['finished'] = False
 		maxjobq['hidden'] = False
@@ -193,6 +188,19 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		cursor.execute(query)
 		cursor.close()
 		dbc.close()
+
+	#=====================
+	def runUploadScript(self):
+		if self.params['commit'] is False:
+			return
+		uploadcmd = "uploadMaxlikeAlignment.py "
+		uploadcmd += " -p %d "%(self.projectid)
+		uploadcmd += " -j %s "%(self.params['maxlikejobid'])
+		uploadcmd += " -R %s "%(self.params['rundir'])
+		uploadcmd += " -n %s "%(self.params['runname'])
+		print uploadcmd
+		proc = subprocess.Popen(uploadcmd, shell=True)
+		proc.communicate()
 
 	#=====================
 	def estimateIterTime(self):
@@ -233,6 +241,7 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 			return mpiexe
 
 	#=====================
+	"""
 	def writeClusterJobFile(self):
 		if self.params['nproc'] is None:
 			nproc = 128
@@ -334,6 +343,7 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		apDisplay.printMsg("rsync -vaP particles.tar cluster:"+rundir+"/")
 		apDisplay.printColor("ready to run job on cluster", "cyan")
 		sys.exit(1)
+	"""
 
 	#=====================
 	def writeXmippLog(self, text):
@@ -374,7 +384,7 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 			self.stack['file'] = self.params['virtualdata']['filename']
 		else:
 			self.stack['file'] = os.path.join(self.stackdata['path']['path'], self.stackdata['name'])
-	
+
 		self.estimateIterTime()
 		self.dumpParameters()
 
@@ -488,7 +498,8 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 
 		### minor post-processing
 		self.createReferenceStack()
-		self.readyUploadFlag()
+		#self.readyUploadFlag()
+		self.runUploadScript()
 		self.dumpParameters()
 
 #=====================
