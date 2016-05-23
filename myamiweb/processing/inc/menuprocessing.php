@@ -383,37 +383,10 @@ if (is_numeric($expId)) {
 			$aligndone = count($alignstackids);
 		}
 		$alignrun = count($subclusterjobs['partalign']['running']);
-		if ($maxlikejobs=$particle->getFinishedMaxLikeJobs($projectId)) {
-			$nmaxlikejobs = count($maxlikejobs);
-		}
-		
-		// ISAC runs
-		$isacJobs = new AlignJobs($expId);
-		// run isac stats
-		$isacQueue		= $isacJobs->countRunRefineQueue();
-		$isacRun		= $isacJobs->countRunRefineRun();
-		$isacReadyUpload  = $isacJobs->countRefinesReadyToUpload();
-		
-		$alignrun = $alignrun + $isacRun;
-		
-		// number of jobs to upload
-		$nalignupload = $isacReadyUpload + $nmaxlikejobs;
-		
-		if ($cl2djobs=$particle->getFinishedCL2DJobs($projectId)) {
-			$ncl2djobs = count($cl2djobs);
-		}	
-		if ($simplejobs=$particle->getFinishedSIMPLEClusteringJobs($projectId)) {
-			$nsimplejobs = count($simplejobs);
-		}	
-	
 		$alignqueue = count($subclusterjobs['partalign']['queued']);
-		$alignqueue = $alignqueue + $isacQueue;
 
 		$alignresults[] = ($aligndone==0) ? "" : "<a href='alignlist.php?expId=$sessionId'>$alignruns complete</a>";
 		$alignresults[] = ($alignrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=partalign'>$alignrun running</a>";
-		$alignresults[] = ($nalignupload==0) ? "" : "<a href='checkAlignJobs.php?expId=$sessionId'>$nalignupload ready to upload</a>";
-		$alignresults[] = ($nmaxlikejobs==0) ? "" : "<a href='runUploadMaxLike.php?expId=$sessionId'>$nmaxlikejobs maxlike ready to upload</a>";
-//		$alignresults[] = ($ncl2djobs==0) ? "" : "<a href='runUploadCL2D.php?expId=$sessionId'>$ncl2djobs ready to upload</a>";
 		$alignresults[] = ($alignqueue==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=partalign'>$alignqueue queued</a>";
 
 		$nruns=array();
@@ -422,7 +395,15 @@ if (is_numeric($expId)) {
 			'name'=>"<a href='selectParticleAlignment.php?expId=$sessionId'>Run Alignment</a>",
 			'result'=>$alignresults,
 		);
-	
+
+		if ($simplejobs=$particle->getFinishedSIMPLEClusteringJobs($projectId)) {
+			$nsimplejobs = count($simplejobs);
+		}
+
+		if ($cl2djobs=$particle->getFinishedCL2DJobs($projectId)) {
+			$ncl2djobs = count($cl2djobs);
+		}
+
 		// an exception is made to CL2D & SIMPLE, because it is treated as an alignment & clustering procedure
 		if ($aligndone > 0 || $ncl2djobs > 0 || $nsimplejobs > 0) {  
 			// alignment analysis
@@ -458,7 +439,7 @@ if (is_numeric($expId)) {
 //			}
 			// Fix Me: This should be move to after particle alignment
 			$nruns[] = "<a href='selectLocalClassificationType.php?expId=$sessionId'>Run MaskItOn</a>";
-	
+
 		}
 		// ===================================================================
 		// template stacks (class averages & forward projections)
