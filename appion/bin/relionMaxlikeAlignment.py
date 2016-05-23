@@ -35,7 +35,6 @@ class RelionMaxLikeScript(appionScript.AppionScript):
 	#=====================
 	def setupParserOptions(self):
 
-
 		self.parser.set_usage("Usage: %prog --stack=ID [ --num-part=# ]")
 		self.parser.add_option("-N", "--numpart", dest="numpart", type="int",
 			help="Number of particles to use", metavar="#")
@@ -71,19 +70,17 @@ class RelionMaxLikeScript(appionScript.AppionScript):
 		self.parser.add_option("--mem", dest="mem", type="int", default=4,
 			help="Maximum memory per node (in GB)", metavar="#")
 
+		self.parser.add_option("--mpinodes", dest="mpinodes", type=int, default=2,
+			help="Number of nodes used for the entire job.", metavar="#")
 
+		self.parser.add_option("--mpiprocs", dest="mpiprocs", type=int, default=4,
+			help="Number of processors allocated for a subjob. For memory intensive jobs, decrease this value.", metavar="#")
 
-                self.parser.add_option("--mpinodes", dest="mpinodes", type=int, default=2,
-                        help="Number of nodes used for the entire job.", metavar="#")
-
-                self.parser.add_option("--mpiprocs", dest="mpiprocs", type=int, default=4,
-                        help="Number of processors allocated for a subjob. For memory intensive jobs, decrease this value.", metavar="#")
-
-	 	self.parser.add_option("--mpithreads", dest="mpithreads", type=int, default=1,
+		self.parser.add_option("--mpithreads", dest="mpithreads", type=int, default=1,
 			help="Number of threads to generate per processor. For memory intensive jobs, increase this value.", metavar="#")
 
 		self.parser.add_option("--mpimem", dest="mpimem", type=int, default=4,
-                        help="Amount of memory (Gb) to allocate per thread. Increase this value for memory intensive jobs. ", metavar="#")
+			help="Amount of memory (Gb) to allocate per thread. Increase this value for memory intensive jobs. ", metavar="#")
 
 		self.parser.add_option("--walltime", dest="walltime", type="int", default=24,
 			help="Maximum walltime in hours", metavar="#")
@@ -95,8 +92,8 @@ class RelionMaxLikeScript(appionScript.AppionScript):
 		self.parser.add_option("--flat", "--flatten-solvent", dest='flattensolvent', default=False,
 			action="store_true", help="Flatten Solvent in References")
 
-                self.parser.add_option("--zero_mask", "--zero_mask", dest="zero_mask", default=False,
-                        action="store_true", help="Mask surrounding background in particles to zero (by default the solvent area is filled with random noise)", metavar="#")
+		self.parser.add_option("--zero_mask", "--zero_mask", dest="zero_mask", default=False,
+			action="store_true", help="Mask surrounding background in particles to zero (by default the solvent area is filled with random noise)", metavar="#")
 	#=====================
 	def checkConflicts(self):
 		if self.params['stackid'] is None:
@@ -132,14 +129,14 @@ class RelionMaxLikeScript(appionScript.AppionScript):
 		if self.params['numpart'] is None:
 			self.params['numpart'] = apFile.numImagesInStack(stackfile)
 
-                self.mpirun = self.checkMPI()
-                if self.mpirun is None:
-                        apDisplay.printError("There is no MPI installed")
+		self.mpirun = self.checkMPI()
+		if self.mpirun is None:
+			apDisplay.printError("There is no MPI installed")
 
-                if self.params['nproc'] is None:
-                        self.params['nproc'] = self.params['mpinodes']*self.params['mpiprocs']
-        #        if self.params['nproc'] < 2:
-        #                apDisplay.printError("Only the MPI version of CL2D is currently supported, must run with > 1 CPU")
+		if self.params['nproc'] is None:
+			self.params['nproc'] = self.params['mpinodes']*self.params['mpiprocs']
+	#	if self.params['nproc'] < 2:
+	#		apDisplay.printError("Only the MPI version of CL2D is currently supported, must run with > 1 CPU")
 
 	#=====================
 	def setRunDir(self):
@@ -150,21 +147,21 @@ class RelionMaxLikeScript(appionScript.AppionScript):
 
 
 
-        #=====================
-        def checkMPI(self):
-                mpiexe = apParam.getExecPath("mpirun", die=True)
-                if mpiexe is None:
-                        return None
-                relionexe = apParam.getExecPath(self.execFile, die=True)
-                if relionexe is None:
-                        return None
-                lddcmd = "ldd "+relionexe+" | grep mpi"
-                proc = subprocess.Popen(lddcmd, shell=True, stdout=subprocess.PIPE)
-                proc.wait()
-                lines = proc.stdout.readlines()
-                print "lines=", lines
-                if lines and len(lines) > 0:
-                        return mpiexe
+	#=====================
+	def checkMPI(self):
+		mpiexe = apParam.getExecPath("mpirun", die=True)
+		if mpiexe is None:
+			return None
+		relionexe = apParam.getExecPath(self.execFile, die=True)
+		if relionexe is None:
+			return None
+		lddcmd = "ldd "+relionexe+" | grep mpi"
+		proc = subprocess.Popen(lddcmd, shell=True, stdout=subprocess.PIPE)
+		proc.wait()
+		lines = proc.stdout.readlines()
+		print "lines=", lines
+		if lines and len(lines) > 0:
+			return mpiexe
 
 
 	#=====================
@@ -264,6 +261,7 @@ class RelionMaxLikeScript(appionScript.AppionScript):
 		self.insertMaxLikeJob()
 		self.stack = {}
 		self.stack['apix'] = apStack.getStackPixelSizeFromStackId(self.params['stackid'])
+		self.params['apix'] = self.stack['apix']
 		self.stack['boxsize'] = apStack.getStackBoxsize(self.params['stackid'])
 		self.stack['file'] = os.path.join(self.stackdata['path']['path'], self.stackdata['name'])
 		if self.params['virtualdata'] is not None:
@@ -336,7 +334,7 @@ class RelionMaxLikeScript(appionScript.AppionScript):
 
 		)
 
-		print 'mpinodes is equal to '+str(self.params['mpinodes'])	
+		print 'mpinodes is equal to '+str(self.params['mpinodes'])
 		### find number of processors
  		nproc = self.params['mpiprocs'] * self.params['mpinodes']
 		print 'mpiprocs = '+str(self.params['mpiprocs'])
@@ -348,17 +346,17 @@ class RelionMaxLikeScript(appionScript.AppionScript):
 		if self.params['zero_mask'] is True:
 			relionopts += " --zero_mask "
 
-                ### use multi-processor command
-#                apDisplay.printColor("Using "+str(self.params['nproc'])+" processors!", "green")
-                apDisplay.printColor("Using "+str(nproc)+" processors!", "green")
+		### use multi-processor command
+#		apDisplay.printColor("Using "+str(self.params['nproc'])+" processors!", "green")
+		apDisplay.printColor("Using "+str(nproc)+" processors!", "green")
 		self.estimateIterTime()
 		relionexe = apParam.getExecPath("relion_refine_mpi", die=True)
 
-#               mpiruncmd = self.mpirun+" -np "+str(self.params['nproc'])+" "+relionexe+" "+relionopts
-                mpiruncmd = self.mpirun+" -np "+str(nproc)+" "+relionexe+" "+relionopts
+#	       mpiruncmd = self.mpirun+" -np "+str(self.params['nproc'])+" "+relionexe+" "+relionopts
+		mpiruncmd = self.mpirun+" -np "+str(nproc)+" "+relionexe+" "+relionopts
 
 		self.writeRelionLog(mpiruncmd)
-		
+
 
 		apParam.runCmd(mpiruncmd, package="RELION", verbose=True, showcmd=True)
 		aligntime = time.time() - aligntime
