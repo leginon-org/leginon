@@ -277,16 +277,7 @@ class ImageLoader(appionLoop2.AppionLoop):
 
 			### FINISH with custom functions
 
-			self._writeDoneDict(imgdata['filename'])
-
-			load = os.getloadavg()[0]
-			if load > 2.0:
-				apDisplay.printMsg("Load average is high %.2f"%(load))
-				sleeptime = min(load, 60)
-				apDisplay.printMsg("Sleeping %.1f seconds"%(sleeptime))
-				time.sleep(load)
-
-			self._printSummary()
+			self.finishLoopOneImage(imgdata)
 		self.postLoopFunctions()
 		self.close()
 
