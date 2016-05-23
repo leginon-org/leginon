@@ -1203,10 +1203,10 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		cmd += self.addDoseFDriftCorrOptions()
 
 		# moving average window and y-axis flip
-		if self.getNewNumRunningAverageFrames() != 0:
+		if self.getNewNumRunningAverageFrames() > 1:
 			cmd += ' -nrw %d ' % (self.getNewNumRunningAverageFrames()) 
 		
-		if self.getNewFlipAlongYAxis() != 0:
+		if self.getNewFlipAlongYAxis() == 1:
 			cmd += ' -flp %d ' % (self.getNewFlipAlongYAxis()) 
 
 
@@ -1216,7 +1216,6 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		cmd += gain_dark_cmd
 		is_sum_with_dosefgpu =  self.isSumSubStackWithDosefgpu()
 		if is_sum_with_dosefgpu:
-			cmd += ' -nss %d -nes %d' % (min(self.sumframelist),max(self.sumframelist))
 			cmd += ' -nss %d -nes %d' % (min(self.sumframelist),max(self.sumframelist))
 		else:
 			# minimal sum since it needs to be redone by numpy
