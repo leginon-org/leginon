@@ -437,17 +437,24 @@ class UploadRelionMaxLikeScript(appionScript.AppionScript):
 		apEMAN.executeEmanCmd(relioncmd, verbose=True, showcmd=True)
 
 	#=====================
-	def createAlignedReferenceStack(self):
+	def createAlignedReferenceStack(self, runparams):
 		"""
 		must be run after calc resolution
 		"""
 		files = glob.glob("ref*-average.mrc")
-		files.sort()
-		stack = []
 		if len(files) < 1:
 			apDisplay.printError("reference images not found")
-		for fname in files:
-			refarray = mrc.read(fname)
+		refarray = mrc.read(files[0])
+		refshape = refarray.shape
+
+		stack = []
+		for i in range(runparams['numrefs']):
+			fname = ("ref%03d-average.mrc"%(i+1))
+			if os.path.isfile(fname):
+				refarray = mrc.read(fname)
+			else:
+				apDisplay.printWarning("no particles for reference %d"%(i+1))
+				refarray = numpy.zeros(refshape)
 			stack.append(refarray)
 		stackarray = numpy.asarray(stack, dtype=numpy.float32)
 		#print stackarray.shape
@@ -484,7 +491,6 @@ class UploadRelionMaxLikeScript(appionScript.AppionScript):
 			apDisplay.printMsg("* Ref num %d; %d parts; final resolution %.1f Angstroms"
 				%(refnum, len(partlist), res))
 			self.resdict[refnum] = res
-
 		return
 
 	#=====================
@@ -517,7 +523,7 @@ class UploadRelionMaxLikeScript(appionScript.AppionScript):
 		### calculate resolution for each reference
 		apix = apStack.getStackPixelSizeFromStackId(runparams['stackid'])*runparams['bin']
 		self.calcResolution(partlist, alignimagicfile, apix)
-		self.createAlignedReferenceStack()
+		self.createAlignedReferenceStack(runparams)
 
 		### insert into databse
 		self.insertRunIntoDatabase(alignimagicfile, runparams)
