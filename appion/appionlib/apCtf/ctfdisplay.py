@@ -1016,7 +1016,28 @@ class CtfDisplay(object):
 	#====================
 	#====================
 	def drawPowerSpecImage(self, origpowerspec, maxsize=1200):
-		origpowerspec = ctftools.trimPowerSpectraToOuterResolution(origpowerspec, self.plotlimit2DAngstrom, self.trimfreq)
+		## Adjust plotlimit2DAngstrom based on resolution and location of 25 peaks
+
+		### find Nyquist resolution
+		maxImageResolution = 2./(self.trimfreq*origpowerspec.shape[0])
+		apDisplay.printMsg("Resolution ring of the edge of the image %.2f"%(maxImageResolution))
+		
+		### find location of 25th peak
+		valleydefocus = min(self.defocus1, self.defocus2)
+		valley = ctftools.getCtfExtrema(valleydefocus, self.trimfreq*1e10, self.cs, self.volts,
+				self.ampcontrast, numzeros=25, zerotype="valley")
+		valleyradii = numpy.array(valley, dtype=numpy.float64)*self.trimfreq
+		maxValleyResolution = 1.0/valleyradii[-1]
+		apDisplay.printMsg("Resolution ring of 25th valley %.3f"%(maxValleyResolution))
+		maxValleyResolution = max(maxImageResolution, maxValleyResolution)
+
+		### merge information
+		plotlimit2DAngstrom = (self.plotlimit2DAngstrom * self.res80 * self.res50 * maxValleyResolution)**(1/4.)
+		print (self.plotlimit2DAngstrom, self.res80, self.res50, maxValleyResolution)
+		plotlimit2DAngstrom = max(plotlimit2DAngstrom, maxImageResolution)
+		apDisplay.printMsg("Final resolution ring of 2D Plot: %.3f"%(plotlimit2DAngstrom))
+
+		origpowerspec = ctftools.trimPowerSpectraToOuterResolution(origpowerspec, plotlimit2DAngstrom, self.trimfreq)
 
 		if self.debug is True:
 			print "origpowerspec shape", origpowerspec.shape
