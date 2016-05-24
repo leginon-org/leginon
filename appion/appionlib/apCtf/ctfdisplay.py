@@ -42,7 +42,7 @@ class CtfDisplay(object):
 		## num of sections to divide the 1D spectrum into
 		## initially it was 3 sections to 5 A (or 0.2 A-1)
 		## for going to 3 A (0.33 A-1) should be 5 sections
-		self.numSections = int(math.ceil(8.0/math.sqrt(self.outerAngstrom1D)))
+		self.numSections = int(math.ceil(9.0/math.sqrt(self.outerAngstrom1D)))
 		### the following variables control how the sections are divided up - do not change
 		self.sectionSize = 5
 		self.overlapSize = 2 #larger integer, more overlap
@@ -415,7 +415,7 @@ class CtfDisplay(object):
 		minval = -1
 		mindata = ndimage.maximum_filter(normexprotdata, 2)
 		count = 0
-		while minval < 3 and count < 4:
+		while minval < 3 and count < 5:
 			count += 1
 			mindata = ndimage.maximum_filter(mindata, 2)
 			minval = mindata.min()

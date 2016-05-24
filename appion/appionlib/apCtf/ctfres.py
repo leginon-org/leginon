@@ -145,7 +145,7 @@ def getCorrelationProfile(raddata, normPSD, ctfdata, peaks, freq):
 	#f.close()
 	if numpy.any(numpy.isnan(confsArray)):  #note does not work with 'is True'
 		apDisplay.printError("All values NaN, pre-filter")
-	confs = onedimfilter.reflectTanhLowPassFilter(confsArray, 3, fuzzyEdge=3)
+	confs = onedimfilter.reflectTanhLowPassFilter(confsArray, 4, fuzzyEdge=3)
 	if numpy.any(numpy.isnan(confsArray)):  #note does not work with 'is True'
 		apDisplay.printError("All values NaN, post-tanh")
 	confs = scipy.ndimage.gaussian_filter1d(confsArray, 2)
