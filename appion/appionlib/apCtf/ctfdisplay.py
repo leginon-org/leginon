@@ -415,14 +415,14 @@ class CtfDisplay(object):
 		minval = -1
 		mindata = ndimage.maximum_filter(normexprotdata, 2)
 		count = 0
-		while minval < 3 and count < 10:
+		while minval < 3 and count < 4:
 			count += 1
 			mindata = ndimage.maximum_filter(mindata, 2)
 			minval = mindata.min()
 			if self.debug is True:
 				apDisplay.printMsg("Minimum value for normalization: %.3f"%(minval))
-		if minval < 3:
-			minval = 3
+		if minval < 0.1:
+			minval = 0.1
 		absnormexprotdata = numpy.where(normexprotdata<minval, minval, normexprotdata)
 		normlogrotdata = numpy.log(absnormexprotdata)
 		if self.debug is True:
