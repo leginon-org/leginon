@@ -14,6 +14,7 @@ from appionlib import apDisplay
 from appionlib.apImage import imagefile
 from appionlib.apImage import imagefilter
 from appionlib.apImage import imagestat
+from appionlib.apImage import imagenorm
 from appionlib.apImage import onedimfilter
 from matplotlib import use
 use('Agg')
@@ -46,6 +47,7 @@ class CtfDisplay(object):
 		### the following variables control how the sections are divided up - do not change
 		self.sectionSize = 5
 		self.overlapSize = 2 #larger integer, more overlap
+		self.scount = 0 # for plot debugging output
 		return
 
 	#====================
@@ -404,7 +406,7 @@ class CtfDisplay(object):
 			mergedata = numpy.hstack((mergedata, noiseDataList[-1][startIndex:endIndex]))
 			if self.debug is True:
 				print "section %d mergedata"%(section+2), mergedata.shape
-			noisedata = mergedata
+			noisedata = mergedata.copy()
 
 		### DO THE SUBTRACTION
 
@@ -531,7 +533,7 @@ class CtfDisplay(object):
 			mergedata = numpy.hstack((mergedata, envelopDataList[-1][startIndex:endIndex]))
 			if self.debug is True:
 				print "section %d mergedata"%(section+2), mergedata.shape
-			envelopdata = mergedata
+			envelopdata = mergedata.copy()
 
 		try:
 			normnormexprotdata = normexprotdata / envelopdata
@@ -585,7 +587,14 @@ class CtfDisplay(object):
 			apDisplay.printWarning("Image is possibly over-focused")
 
 		ind5peak1 = numpy.searchsorted(raddata, peakradii[0])
-		ind5peak2 = numpy.searchsorted(raddata, peakradii[5])
+		try:
+			ind5peak2 = numpy.searchsorted(raddata, peakradii[5])
+		except IndexError:
+			if len(peakradii) > 2:
+				ind5peak2 = numpy.searchsorted(raddata, peakradii[-1])
+			else:
+				#give up and skip image
+				return None
 		self.conf5peak = scipy.stats.pearsonr(normpeakdata[ind5peak1:ind5peak2], ctffitdata[ind5peak1:ind5peak2])[0]
 		self.overconf5peak = scipy.stats.pearsonr(normpeakdata[ind5peak1:ind5peak2], overctffitdata[ind5peak1:ind5peak2])[0]
 		apDisplay.printColor("5 peak confidence is %.3f (overfocus %.3f)"%(self.conf5peak, self.overconf5peak), "green")
@@ -791,47 +800,101 @@ class CtfDisplay(object):
 			#plotspng.show()
 		pyplot.clf()
 
-		### FIXME
-		#if twod is False:
-		print "high pass filter"
-		zdata2d = imagefilter.tanhLowPassFilter(zdata2d, 2) ## FIX ME
-		zdata2d = imagefilter.tanhHighPassFilter(zdata2d, 200) ## FIX ME
-		return zdata2d
-
 		###
 		### PART 8: NORMALIZE THE 2D IMAGE
 		###
 		apDisplay.printColor("PART 8: NORMALIZE THE 2D IMAGE", "magenta")
 
-		"""
-		print zdata2d.shape
-		print pixelrdata.shape
-		print noisedata.shape
-		print envelopdata.shape
-		print valleydata.shape
-		print peakdata.shape
-		"""
-
 		### Convert 1D array into 2D array by un-elliptical average
-		noise2d = ctftools.unEllipticalAverage(pixelrdata, noisedata,
-			self.ellipratio, self.angle, zdata2d.shape)
-		envelop2d = ctftools.unEllipticalAverage(pixelrdata, envelopdata,
-			self.ellipratio, self.angle, zdata2d.shape)
-		valley2d = ctftools.unEllipticalAverage(pixelrdata, valleydata,
-			self.ellipratio, self.angle, zdata2d.shape)
-		peak2d = ctftools.unEllipticalAverage(pixelrdata, peakdata,
-			self.ellipratio, self.angle, zdata2d.shape)
+		apDisplay.printMsg("converting 1d arrays to 2d and normalizing")
 
 		### Do the normalization on the 2d data
 		#blur2d = ndimage.gaussian_filter(zdata2d, 2)
-		zdata2d = imagefilter.tanhLowPassFilter(zdata2d, 2) ## FIX ME
+		#zdata2d = imagefilter.tanhLowPassFilter(zdata2d, 4) ## FIXME
+		self.appendToGraceFile(numpy.exp(zdata2d), "raw")
+
+		#normexprotdata = numpy.exp(rotdata) - numpy.exp(noisedata)
+		noise2d = ctftools.unEllipticalAverage(pixelrdata, noisedata,
+			self.ellipratio, self.angle, zdata2d.shape)
+		sys.stderr.write(".")
 		normal2d = numpy.exp(zdata2d) - numpy.exp(noise2d)
-		normal2d = normal2d / numpy.exp(envelop2d)
-		normal2d = normal2d - valley2d
-		normal2d = normal2d / peak2d
-		normal2d = numpy.where(normal2d < -0.2, -0.2, normal2d)
-		normal2d = numpy.where(normal2d > 1.2, 1.2, normal2d)
-		return normal2d
+		#self.appendToGraceFile(numpy.exp(noise2d), "exp(noise2d)")
+		self.appendToGraceFile(numpy.exp(noisedata), "exp(noise1d)", pixelrdata)
+		self.appendToGraceFile(normal2d, "flattened")
+		del noise2d
+
+		#normnormexprotdata = normexprotdata / envelopdata
+		envelop2d = ctftools.unEllipticalAverage(pixelrdata, envelopdata,
+			self.ellipratio, self.angle, zdata2d.shape)
+		sys.stderr.write(".")
+		normal2d = normal2d / envelop2d
+		#self.appendToGraceFile(envelop2d, "envelop2d")
+		self.appendToGraceFile(envelopdata, "envelop1d", pixelrdata)
+		self.appendToGraceFile(normal2d, "scaled")
+		del envelop2d
+
+		normal2d = imagefilter.tanhHighPassFilter(normal2d, 200) ## FIXME
+		self.appendToGraceFile(normal2d, "high pass")
+		filter2d = imagefilter.tanhLowPassFilter(normal2d, 5) ## FIXME
+		self.appendToGraceFile(filter2d, "low pass")
+
+		valley2d = ctftools.unEllipticalAverage(pixelrdata, valleydata,
+			self.ellipratio, self.angle, zdata2d.shape)
+		sys.stderr.write(".")
+		valley2d = imagefilter.tanhLowPassFilter(valley2d, 5) ## FIXME
+		sys.stderr.write(".")
+		normal2d = filter2d - valley2d
+		#self.appendToGraceFile(valley2d, "valley2d fit")
+		self.appendToGraceFile(valleydata, "valley1d fit", pixelrdata)
+		self.appendToGraceFile(normal2d, "valley fix")
+		del valley2d
+
+		peak2d = ctftools.unEllipticalAverage(pixelrdata, peakdata,
+			self.ellipratio, self.angle, zdata2d.shape)
+		sys.stderr.write(".")
+		peak2d = imagefilter.tanhLowPassFilter(peak2d, 5) ## FIXME
+		sys.stderr.write(".")
+		normal2d = normal2d / (peak2d + 1e-6)
+		#self.appendToGraceFile(peak2d, "peak2d fit")
+		self.appendToGraceFile(peakdata, "peak1d fit", pixelrdata)
+		self.appendToGraceFile(normal2d, "peak fix")
+		del peak2d
+
+		normal2d = numpy.where(normal2d < -1.9, -1.9, normal2d)
+		normal2d = numpy.where(normal2d > 3.0, 3.0, normal2d)
+		self.appendToGraceFile(normal2d, "cropped")
+
+		final2d = numpy.copy(normal2d)
+		apDisplay.printMsg("2d image normalization complete")
+
+		return final2d
+
+	#====================
+	#====================
+	def appendToGraceFile(self, inputdata, legend=None, pixelrdata=None):
+		sys.stderr.write(".")
+		if self.debug is False:
+			return
+		if len(inputdata.shape) == 2:
+			xdata, ydata = ctftools.ellipticalAverage(inputdata, self.ellipratio, self.angle,
+				self.ringwidth, 3, full=False)
+		else:
+			xdata = pixelrdata
+			ydata = inputdata
+		datafile = "/emg/sw/myami/appion/twoddata.agr"
+		if self.scount == 0 and os.path.isfile(datafile):
+			os.remove(datafile)
+		f = open(datafile, "a")
+		if self.scount == 0:
+			f.write("# Grace project file\n")
+		if legend is not None:
+			apDisplay.printMsg("writing %s data to file"%(legend))
+			f.write("@    s%d legend  \"%s\"\n"%(self.scount, legend))
+		for i in range(len(ydata)):
+			f.write("%.8f\t%.8f\n"%(xdata[i], ydata[i]))
+		f.write("&\n")
+		f.close()
+		self.scount += 1
 
 	#====================
 	#====================
@@ -963,7 +1026,14 @@ class CtfDisplay(object):
 			self.ringwidth*3, 1, full=True)
 		ellipavgpowerspec = ctftools.unEllipticalAverage(pixelrdata, rotdata,
 			self.ellipratio, self.angle, origpowerspec.shape)
-		ellipavgpowerspec = imagefilter.tanhHighPassFilter(ellipavgpowerspec, 200) ## FIX ME
+
+		##filter and set pixel value range for both halves of the image independently
+		## Normalizes numpy to fit into an image format that is values between 0 (minlevel) and 255 (maxlevel).
+		ellipavgpowerspec = imagefilter.tanhHighPassFilter(ellipavgpowerspec, 200) ## FIXME
+		ellipavgpowerspec = imagenorm.normalizeImage(ellipavgpowerspec, stdevLimit=5.0)
+		origpowerspec = imagefilter.tanhHighPassFilter(origpowerspec, 200) ## FIXME
+		origpowerspec = imagenorm.normalizeImage(origpowerspec, stdevLimit=3.0)
+
 		halfshape = origpowerspec.shape[1]/2
 		halfpowerspec = numpy.hstack( (origpowerspec[:,:halfshape] , ellipavgpowerspec[:,halfshape:] ) )
 		if halfpowerspec.shape != origpowerspec.shape:
