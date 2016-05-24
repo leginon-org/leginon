@@ -90,7 +90,7 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 	#======================
 	def getCtfProgPath(self):
 		
-		exename = "Gctf-v0.39_sm_30_cu5.0_x86_64"
+		exename = "Gctf-v0.50_sm_30_cu5.0_x86_64"
 		ctfprgmexe = subprocess.Popen("which "+exename, shell=True, stdout=subprocess.PIPE).stdout.read().strip()
 		if not os.path.isfile(ctfprgmexe):
 			ctfprgmexe = os.path.join(apParam.getAppionDirectory(), 'bin', exename)
@@ -200,7 +200,7 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 			'resL': self.params['resmin'],
 			'resH': imageresmax,
 			'defS': self.params['defstep']*10000, #round(defocus/32.0, 1),
-			'astm': beststigdiff/10000,
+			'astm': beststigdiff,
 #			'phase': 'no', # this is a secondary amp contrast term for phase plates
 #			'newline': '\n',
 		}
@@ -275,7 +275,9 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 		### parse ctf estimation output
 		self.ctfvalues = {}
 		#ctfproglog = apDisplay.short(imgdata['filename'])+"-pow.txt"		
-		ctfproglog = apDisplay.short(imgdata['filename'])+"_ctffind3.log"		
+		ctfproglog = apDisplay.short(imgdata['filename'])+"_gctf.log"		
+
+		print 'ctfproglog = ',ctfproglog
 		apDisplay.printMsg("reading %s"%(ctfproglog))
 		logf = open(ctfproglog, "r")
 
@@ -310,8 +312,8 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 	
 			if sline.startswith('Resolution'):
 				bits = sline.split()
-				self.ctfvalues['ctffind4_resolution'] = bits[5]
-				print 'ctffind4_resolution = '+self.ctfvalues['ctffind4_resolution']
+				self.ctfvalues['ctffind4_resolution'] = float(bits[6])
+				#print 'ctffind4_resolution = '+self.ctfvalues['ctffind4_resolution']
 
 		if len(self.ctfvalues.keys()) == 0:
 			#
@@ -343,8 +345,16 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 
 	#======================
 	def commitToDatabase(self, imgdata):
+		import pprint
+
 		self.insertCtfRun(imgdata)
-		print 'ctfrun', self.ctfrun
+	
+		pprint.pprint((imgdata))
+		pprint.pprint((self.ctfvalues))
+		pprint.pprint((self.ctfrun))
+		pprint.pprint((self.params['rundir']))
+
+	
 		ctfinsert.validateAndInsertCTFData(imgdata, self.ctfvalues, self.ctfrun, self.params['rundir'])
 
 	#======================
@@ -354,7 +364,7 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 
 		# first create an aceparam object
 		paramq = appiondata.ApCtfFind4ParamsData()
-		copyparamlist = ('ampcontrast','fieldsize','cs','bestdb','resmin','defstep',)
+		copyparamlist = ('ampcontrast','fieldsize','cs','bestdb','resmin','defstep')
 		for p in copyparamlist:
 			if p in self.params:
 				paramq[p] = self.params[p]
