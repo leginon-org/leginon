@@ -117,8 +117,8 @@ def runCTFdisplayTools(imgdata, ctfvalues, opimagedir, fftpath=None, fftfreq=Non
 #====================
 def convertDefociToConvention(ctfvalues):
 	if debug is True:
-		apDisplay.printColor("Final params: def1: %.2e | def2: %.2e | angle: %.1f"%
-			(ctfvalues['defocus1'], ctfvalues['defocus2'], ctfvalues['angle_astigmatism']), "cyan")
+		apDisplay.printColor("Final params: def1: %.3f | def2: %.3f | angle: %.1f"%
+			(ctfvalues['defocus1']*1e6, ctfvalues['defocus2']*1e6, ctfvalues['angle_astigmatism']), "cyan")
 
 	# amplitude contrast must be btw 0.0 and 0.5
 	# sometimes we get a slightly negative number from ACE1, see bug #2003
@@ -151,8 +151,8 @@ def convertDefociToConvention(ctfvalues):
 		angle += 180
 
 	if debug is True:
-		apDisplay.printColor("Final params: def1: %.2e | def2: %.2e | angle: %.1f"%
-			(defocus1, defocus2, angle), "cyan")
+		apDisplay.printColor("Final params: def1: %.3f | def2: %.3f | angle: %.1f"%
+			(defocus1*1e6, defocus2*1e6, angle), "cyan")
 
 		perdiff = abs(defocus1-defocus2)/abs(defocus1+defocus2)
 		print ("Defocus Astig Percent Diff %.2f -- %.3e, %.3e"

@@ -1306,8 +1306,8 @@ class CtfDisplay(object):
 		while self.angle < -90:
 			self.angle += 180
 
-		apDisplay.printColor("Final params: def1: %.2e | def2: %.2e | angle: %.1f | defratio %.2f"%
-			(self.defocus1, self.defocus2, self.angle, self.defocusratio), "cyan")
+		apDisplay.printColor("Final params: def1: %.3f | def2: %.3f | angle: %.1f | defratio %.2f"%
+			(self.defocus1*1e6, self.defocus2*1e6, self.angle, self.defocusratio), "cyan")
 
 		perdiff = abs(self.defocus1-self.defocus2)/abs(self.defocus1+self.defocus2)
 		apDisplay.printMsg("Defocus Astig Percent Diff %.2f -- %.3e, %.3e"
