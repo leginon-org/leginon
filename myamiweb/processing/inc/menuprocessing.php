@@ -1085,9 +1085,10 @@ $menuprocessing="";
 	}
 
 	function addSubmenu($data, $expId, $projectId) {
-		if ($expId)
-			$allow_process = checkExptAdminPrivilege($expId,'data');
-		elseif ($projectId)
+		//	Deciding on the submenu from ExptAdmin privilege to data
+		if ($expId) {
+			$allow_process = hasExptAdminPrivilege($expId,'data');
+		} elseif ($projectId)
 			$allow_process = checkProjectExptAdminPrivilege($projectId,'data');
 		else
 			$allow_process = false;
@@ -1095,6 +1096,7 @@ $menuprocessing="";
 		// print out the title of the subfunction
 		foreach((array)$data as $submenu) {
 			if (is_array($submenu)) {
+				// Users not allowed to process will not get url links
 				$submenuname = ($allow_process) ? $submenu['name']:removeLink($submenu['name']);
 				$text.="<li>".$submenuname."</li>";
 				// if there are results for the

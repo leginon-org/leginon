@@ -592,7 +592,7 @@ function showOrSubmitCommand($command, $headinfo, $jobtype, $nproc, $testimg=Fal
 		// get required inputs
 		if (!is_numeric($expId) || $expId == 0) 
 			return "<B>ERROR:</B> undefined expId";
-		$allow_processing = checkExptAdminPrivilege($expId,'data');
+		$allow_processing = hasExptAdminPrivilege($expId,'data');
 		$runname=$_POST['runname'];
 		if (empty($runname))
 			return "<B>ERROR:</B> undefined runname";
@@ -621,7 +621,7 @@ function showOrSubmitCommand($command, $headinfo, $jobtype, $nproc, $testimg=Fal
 			$projectId = $_GET['projectId'];
 			$allow_processing = checkProjectExptAdminPrivilege($projectId);
 		} else {
-			$allow_processing = checkExptAdminPrivilege($expId,'data');
+			$allow_processing = hasExptAdminPrivilege($expId,'data');
 		}
 	}
 	if (!$allow_processing)
