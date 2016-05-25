@@ -3,6 +3,7 @@
 import time
 import math
 import numpy
+import random
 import scipy.stats
 import scipy.ndimage
 from appionlib import apDisplay
@@ -176,15 +177,22 @@ def getWeightsForXValues(raddata, newraddata, confs):
 
 #==================
 #==================
+def saveConfData(confs, msg):
+	filename = "confdata-%s-%06d.dat"%(msg, random.randint(1,1000000))
+	f = open(filename, "w")
+	for val in confs:
+		f.write("%.8f\n"%(val))
+	f.close()
+
+#==================
+#==================
 def getResolutionFromConf(raddata, confs, limit=0.5):
 	"""
 	should use more general apFourier.getResolution()
 	"""
 	if raddata is None or confs is None:
 		return None
-	lastx=0
-	lasty=0
-	x = 0
+
 	if debug is True:
 		apDisplay.printMsg("getResolutionFromConf: num points %d"%(len(confs)))
 		apDisplay.printMsg("getResolutionFromConf: overall max %.3f"%(confs.max()))
@@ -197,23 +205,36 @@ def getResolutionFromConf(raddata, confs, limit=0.5):
 	if confs.max() < limit:
 		apDisplay.printWarning("Res calc failed: All conf values below desired limit %.2f"
 			%(limit))
+		saveConfData(confs, "maxbelow")
 		return None
-	if numpy.median(confs[:3]) < limit:
+	if confs[:3].max() < limit:
 		apDisplay.printWarning("Res calc failed: Initial conf below desired limit %.2f"
 			%(limit))
+		saveConfData(confs, "median")
 		return None
+	if confs[:10].min() < 0.0:
+		print(numpy.around(confs[:15],3))
+		apDisplay.printWarning("Res calc: Negative values in first 10 values")
+		saveConfData(confs, "negative")
+		#return None
 	if numpy.any(numpy.isnan(confs)):  #note does not work with 'is True'
 		apDisplay.printWarning("Res calc failed: All values NaN")
 		return None
-	for i in range(1, raddata.shape[0]):
+	lastx=0
+	lasty=0
+	x = 0
+	for i in range(raddata.shape[0]):
 		x = raddata[i]
 		y = confs[i]
-		yminus = confs[i-1]
 		if y > limit:
 			#store values for later
 			lastx = x
 			lasty = y
-		elif yminus > limit:
+		elif lasty > limit:
+			#logically y is less than limit to get here, failed first if
+			if debug is True:
+				apDisplay.printWarning("Res calc success: %d: %.1f <> %.1f (res: %.2f)"
+					%(i, lasty, y, 1/x))
 			# get difference
 			diffy = lasty-y
 			# get distance from limit
@@ -223,9 +244,16 @@ def getResolutionFromConf(raddata, confs, limit=0.5):
 			# convert to Angstroms
 			res = 1.0/interpx
 			return res
-		else:
-			apDisplay.printError("Res calc failed: How did we get here? %d: %.1f <> %.1f"
-				%(i, yminus, y))
+		elif i > 2 and y < limit/2:
+			apDisplay.printWarning("Res calc failed: Y less than limit/2 %d: %.1f <> %.1f (res: %.2f)"
+				%(i, lasty, y, 1/x))
+			if lastx == 0:
+				return None
+			res = 1.0/lastx
+			return res
+		elif i > 3:
+			apDisplay.printError("Res calc failed: How did we get here? %d: %.1f <> %.1f (res: %.2f)"
+				%(i, lasty, y, 1/x))
 			return None
 	# confs did not fall below limit
 	res = 1.0/raddata.max()

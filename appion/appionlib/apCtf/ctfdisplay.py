@@ -67,6 +67,7 @@ class CtfDisplay(object):
 		if False and self.debug is True or fitError > 0.5:
 			print "searchSorted Debug"
 			print "... requestVal = %.8f"%(requestVal)
+			print "... len(data) = %d"%(len(data))
 			print "... return index = %d"%(index)
 			if index > 0:
 				print "... data[index-1] = %.8f"%(data[index-1])
@@ -77,7 +78,7 @@ class CtfDisplay(object):
 				pass
 			print "... error = %.8f"%(fitError)
 		if fitError > 0.5:
-			apDisplay.printError("point conversion error")
+			apDisplay.printWarning("very large error in point conversion")
 		return int(index)
 
 	#====================
@@ -1327,12 +1328,12 @@ class CtfDisplay(object):
 		while self.angle < -90:
 			self.angle += 180
 
-		apDisplay.printColor("Final params: def1: %.3f | def2: %.3f | angle: %.1f | defratio %.2f"%
+		apDisplay.printColor("Final params: def1: %.3f um | def2: %.3f um | angle: %.1f | defratio %.2f"%
 			(self.defocus1*1e6, self.defocus2*1e6, self.angle, self.defocusratio), "cyan")
 
 		perdiff = abs(self.defocus1-self.defocus2)/abs(self.defocus1+self.defocus2)
-		apDisplay.printMsg("Defocus Astig Percent Diff %.2f -- %.3e, %.3e"
-				%(perdiff*100,self.defocus1,self.defocus2))
+		apDisplay.printMsg("Defocus Astig Percent Diff %.2f -- %.3f, %.3f um"
+				%(perdiff*100,self.defocus1*1e6,self.defocus2*1e6))
 
 		return
 
