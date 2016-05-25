@@ -50,6 +50,7 @@ DIV.comment_subsection { text-indent: 2em;
 function init() {
 	this.focus();
 }
+
 </script>
 </head>
 
@@ -80,12 +81,58 @@ if (!empty($sessioninfo)) {
 	echo "<table border='0'>\n";
 	$i=0;
 	foreach($sessioninfo as $k=>$v) {
+		if (preg_match('%Purpose%i', $k))
+			continue;
 		if (preg_match('%timestamp%i', $k))
 			continue;
 		echo formatHtmlRow($k, $v);
 	}
 	echo "</table>\n";
 }
+
+function editSessionPurposeTable($expId, $purposev) {
+	// Edit and update Session description
+	global $leginondata;
+	if ( !empty($_POST['purpose']) && $purposev != $_POST['purpose'] ) {
+		$leginondata->updateSessionPurpose($expId, $_POST['purpose']);
+		$purposev = $_POST['purpose'];
+	}
+	$display .= '
+		<table border="0" cellpadding="0" >
+			<tr><td>
+			<form name="purposeform" method="POST" action="'.$_SERVER['REQUEST_URI'].'">
+				<table border="0" cellpadding="0" >
+					<tr valign="bottom" width=50>
+						<td>
+						<td rowspan="1" ><b>Purpose:</b><br>
+							<textarea class="textarea" name="purpose" rows="1" cols="40" wrap="virtual"
+									>'.$purposev.'</textarea>
+						</td><td>
+							<input class="bt1" type="button" name="save purpose" value="Save" onclick=\'javascript:document.purposeform.submit()\'/>
+						</td>
+					</tr>
+				</table>
+			</form>
+			</td></tr>
+		</table>
+		';
+	return $display;
+}
+
+function staticSessionPurposeTable($expId, $purposev) {
+	$display .= ' '
+			.'<table border="0"> '
+			.formatHtmlRow('Purpose', $purposev)
+		.'</table>';
+	return $display;
+}
+	
+if (hasExptAdminPrivilege($expId,$privilege_type='data')) {
+	echo editSessionPurposeTable($expId, $sessioninfo['Purpose']);
+} else {
+	echo staticSessionPurposeTable('Purpose',$sessioninfo['Purpose']);
+}
+
 echo "</td>";
 $summary = $leginondata->getSummary($expId);
 $timingstats2 = $leginondata->getPresetTiming($expId);

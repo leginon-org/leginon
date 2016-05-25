@@ -118,7 +118,8 @@ function checkProjectAdminPrivilege($projectId) {
 	return false;
 }
 
-function checkExptAccessPrivilege($sessionId,$privilege_type='data') {
+function checkExptAccessPrivilege($sessionId,$privilege_type='data',$min_privilege_level=1) {
+	// return true or redirect
 	$userId = getLoginUserId();
 	
 	if(!$userId || !$sessionId){
@@ -130,20 +131,37 @@ function checkExptAccessPrivilege($sessionId,$privilege_type='data') {
 		redirect(BASE_URL.'login.php?ln='.$redirect);
 	    exit;
 	}
-	
+	$r = hasExptAccessPrivilege($sessionId,$privilege_type, $min_privilege_level);
+	if ( !$r ) {
+		// arrives here if no view privilege
+		redirect(BASE_URL.'accessdeny.php');
+		exit;
+	}
+	return true;
+}
+
+function hasExptAccessPrivilege($sessionId,$privilege_type='data',$min_privilege_level=1) {	
+	// return true or false but not redirect
+	//Access privilege of data means data viewing/downloading and processing result viewing are allowed
+	$userId = getLoginUserId();
 	$privilege_level = privilege($privilege_type);
+
+	// administrators
 	if ($userId === true || $privilege_level >=3) return true;
-	if ($userId && $privilege_level > 0) {
+
+	if ($userId && $privilege_level >= $min_privilege_level) {
 		// check access privilege for users with owned/shared view privilege
 		global $dbemauth;
+		// experiment shared to the user
 		$q = "select sh.`DEF_id` as shareId "
 			."from shareexperiments sh "
 			."where sh.`REF|leginondata|SessionData|experiment` = ".$sessionId." "
 			."and sh.`REF|leginondata|UserData|user` = ".$userId;
 				$dbc=new mysql(DB_HOST, DB_USER, DB_PASS, DB_PROJECT);
 				$r = $dbc->getSQLResult($q);
-		if ((array)$r) return true;
 		if ($r != false && (array)$r) return true;
+
+		// project owner
 		$q = "select o.`DEF_id` as ownerId "
 			."from projectexperiments pe "
 			."left join ".DB_LEGINON.".`SessionData` s "
@@ -157,19 +175,28 @@ function checkExptAccessPrivilege($sessionId,$privilege_type='data') {
 		if (is_array($r) && !empty($r)) 
 			return true;
 	}
+	// arrives here if no privilege
+	return false;
+}
 	
-	// arrives here if no view privilege
+function checkExptAdminPrivilege($sessionId,$privilege_type='data') {
+	// Admin privilege of data means data processing and session.comment editing is allowed
+	// return true or redirect
+echo "checkingExptAdminPrivilege";
+	if ( hasExptAdminPrivilege($sessionId,$privilege_type) ) return true;
 	redirect(BASE_URL.'accessdeny.php');
 	exit;
 }
 
-function checkExptAdminPrivilege($sessionId,$privilege_type='data') {
+function hasExptAdminPrivilege($sessionId,$privilege_type='data') {
+	// Admin privilege of data means data processing and session.comment editing is allowed
+	// return true or false but not redirect
 	if (privilege($privilege_type) < 2 || !$sessionId) return false;
 	$userId = getLoginUserId();
 	if ($userId === true || privilege($privilege_type)>=4) return true;
 	if ($userId) {
-		// for other users,data processing is allowed if access is allowed.
-		return checkExptAccessPrivilege($sessionId,$privilege_type='data');
+		// for other users,data processing is allowed if access is allowed and allow to administrate privilege_type.
+		return hasExptAccessPrivilege($sessionId,$privilege_type='data', $min_privilege_level=2);
 	}
 	return false;
 }

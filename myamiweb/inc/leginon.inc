@@ -463,6 +463,19 @@ class leginondata {
 		return $this->mysql->getSQLResult($q);
 	}
 
+	function updateSessionPurpose($sessionId, $comment) {
+		// update Session description without changing timestamp
+		if ($sessionId ) {
+			$q = "select `DEF_timestamp` from SessionData "
+				." where `DEF_id`=".$sessionId." ";
+			$r = $this->mysql->getSQLResult($q);
+			if ($r && $comment) {
+				$data = array('DEF_timestamp'=>$r[0]['DEF_timestamp'],'comment'=>$comment);
+				$this->mysql->SQLUpdate('SessionData', $data, array('DEF_id'=>$sessionId));
+			}
+		}
+	}
+
 	function getImageComment($imageId, $type='rt') {
 		$q="select "
 			."comment "
