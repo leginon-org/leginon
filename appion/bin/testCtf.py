@@ -39,7 +39,7 @@ class CTFTest(appionScript.AppionScript):
 		return
 
 	#======================
-	def getImages(self, limit=10):
+	def getImages(self, limit=100):
 		query = (
 			"SELECT "
 			+"	img.`DEF_id` "
@@ -64,16 +64,27 @@ class CTFTest(appionScript.AppionScript):
 		for result in results:
 			#print result
 			dbid = int(result[0])
-			imgdata = leginon.leginondata.AcquisitionImageData.direct_query(dbid)
-			#print imgdata.keys()
-			if imgdata is None:
+			try:
+				imgdata = leginon.leginondata.AcquisitionImageData.direct_query(dbid)
+			except TypeError:
 				apDisplay.printWarning("data not found")
 				continue
-			filename = os.path.join(imgdata['session']['image path'], imgdata['filename']+".mrc")
-			if not os.path.isfile(filename):
-				apDisplay.printWarning("file not found: %s"%(filename))
+			#print imgdata.keys()
+			if imgdata is None or imgdata['session'] is None:
+				apDisplay.printWarning("data not found")
+				continue
+			try:
+				filename = os.path.join(imgdata['session']['image path'], imgdata['filename']+".mrc")
+				if not os.path.exists(filename):
+					apDisplay.printWarning("file not found: %s"%(filename))
+					continue
+			except TypeError:
+				apDisplay.printWarning("data not found")
 				continue
 			imgarray = imgdata['image']
+			if imgarray is None:
+				apDisplay.printWarning("data not found")
+				continue
 			if min(imgarray.shape) < 3000:
 				apDisplay.printWarning("image too small for CTF %d x %d"%(imgarray.shape[0], imgarray.shape[1]))
 				continue
@@ -88,9 +99,16 @@ class CTFTest(appionScript.AppionScript):
 
 	#======================
 	def randomDefocus(self, nominal=None):
-		microns = 25 * random.random()
-		if microns < 0.1:
-			microns += 0.1
+		randRangeSelect = random.random()
+		if randRangeSelect < 0.33:
+			#close to focus, 0.2 - 1.0 microns
+			microns = 0.2 + 0.8 * random.random()
+		elif randRangeSelect < 0.67:
+			#normal range, 1.0 - 3.0 microns
+			microns = 1.0 + 2.0 * random.random()
+		else:
+			#far from focus, 3.0 - 25.0 microns
+			microns = 3.0 + 22.0 * random.random()
 		defocus = microns * 1e-6
 		if nominal is None:
 			return defocus
@@ -112,13 +130,32 @@ class CTFTest(appionScript.AppionScript):
 		return ctfvalues
 
 	#======================
+	def setBestCtfValues(self, imgdata, bestdef):
+		if bestdef is None:
+			return self.setCtfValues(imgdata, bestdef)
+		ctfvalues = {
+			'cs': apInstrument.getCsValueFromSession(imgdata['session']),
+			'volts': imgdata['scope']['high tension'],
+			'defocus1': bestdef['defocus1'],
+			'defocus2': bestdef['defocus2'],
+			'angle_astigmatism': bestdef['angle_astigmatism'],
+			'amplitude_contrast': bestdef['amplitude_contrast'],
+		}
+		return ctfvalues
+
+	#======================
 	def start(self):
 		for imgrun in range(self.params['images']):
 			imgdata = self.selectImage()
 			bestdef = ctfdb.getBestCtfByResolution(imgdata, msg=True)
+			if self.params['bestonly'] is True and bestdef is None:
+				continue
 			for run in range(self.params['runs']):
 				### parse log file
-				ctfvalues = self.setCtfValues(imgdata, bestdef)
+				if self.params['bestonly'] is True:
+					ctfvalues = self.setBestCtfValues(imgdata, bestdef)
+				else:
+					ctfvalues = self.setCtfValues(imgdata, bestdef)
 				self.validateCTFData(imgdata, ctfvalues)
 		return
 
@@ -171,6 +208,9 @@ class CTFTest(appionScript.AppionScript):
 			help="Number of runs to perform for each image", metavar="#")
 		self.parser.add_option("--images", dest="images", type="int", default=1,
 			help="Number of images to test", metavar="#")
+		self.parser.add_option("--best-only", dest="bestonly", default=False,
+			action="store_true", help="Use only best CTF values not random")
+
 		#self.parser.add_option("--mindefocus", dest="mindefocus", type="float", default=0.1e-6,
 		#	help="Minimal acceptable defocus (in meters)", metavar="#")
 		#self.parser.add_option("--maxdefocus", dest="maxdefocus", type="float", default=15e-6,
