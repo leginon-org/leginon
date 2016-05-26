@@ -1028,7 +1028,7 @@ class CtfDisplay(object):
 		valley = ctftools.getCtfExtrema(valleydefocus, self.trimfreq*1e10, self.cs, self.volts,
 				self.ampcontrast, numzeros=25, zerotype="valley")
 		valleyradii = numpy.array(valley, dtype=numpy.float64)*self.trimfreq
-		maxValleyResolution = 1.0/valleyradii[-1]
+		maxValleyResolution = 1.0/valleyradii[-1]*math.sqrt(2)
 		apDisplay.printMsg("Resolution ring of 25th valley %.3f"%(maxValleyResolution))
 		maxValleyResolution = max(maxImageResolution, maxValleyResolution)
 
