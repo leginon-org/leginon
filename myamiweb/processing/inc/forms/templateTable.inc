@@ -273,9 +273,12 @@ class TemplateSelectionTable extends BasicForm
 	public function buildCommand($postArray) {
 		$params = $this->getFormParams();
 		$command .= parent::buildCommand($postArray);
+		
 		$numTemplates = count( $this->availableTemplates );
 		//remove unwanted commands
-		foreach (range(1,$numTemplates) as $i ) {
+		foreach (range(0,$numTemplates-1) as $j ) {
+			// remove in reverse order so that 10 comes before 1 Issue #4212
+			$i = $numTemplates - $j;
 			$command = $this->removeCommandFlag( $command, 'templateId'.$i);
 			$command = $this->removeCommandFlag( $command, 'template'.$i.'strt');
 			$command = $this->removeCommandFlag( $command, 'template'.$i.'end');
