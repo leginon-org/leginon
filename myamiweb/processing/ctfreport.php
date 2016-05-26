@@ -10,6 +10,7 @@ require_once "inc/appionloop.inc";
 $ctf = new particledata();
 
 $expId = $_GET['expId'];
+$runId = $_GET['runId'];
 $showmore = $_GET['showmore'] ? $_GET['showmore'] : '0';
 $projectId =getProjectId();
 $formAction=$_SERVER['PHP_SELF']."?expId=$expId&showmore=$showmore";
@@ -319,19 +320,19 @@ if ($ctfrundatas) {
 	echo "<hr>\n";
 
 	$ctfdownlink = "<h3>";
-	$ctfdownlink .= "<a href='downloadctfdata.php?expId=$expId&relion=True'>\n";
+	$ctfdownlink .= "<a href='downloadctfdata.php?expId=$expId&runId=$runId&relion=True'>\n";
 	$ctfdownlink .= "  <img style='vertical-align:middle' src='img/download_arrow.png' border='0' width='16' height='17' alt='download star file for RELION'>&nbsp;download star file for RELION\n";
 	$ctfdownlink .= "</a></h3>\n";
 	echo $ctfdownlink;
 
 	$ctfdownlink = "<h3>";
-	$ctfdownlink .= "<a href='downloadctfdata.php?expId=$expId'>\n";
+	$ctfdownlink .= "<a href='downloadctfdata.php?expId=$expId&runId=$runId'>\n";
 	$ctfdownlink .= "  <img style='vertical-align:middle' src='img/download_arrow.png' border='0' width='16' height='17' alt='download best ctf data'>&nbsp;download best ctf data\n";
 	$ctfdownlink .= "</a></h3>\n";
 	echo $ctfdownlink;
 
 	$ctfdownlink = "<h3>";
-	$ctfdownlink .= "<a href='downloadctfemxfile.php?expId=$expId'>\n";
+	$ctfdownlink .= "<a href='downloadctfemxfile.php?expId=$expId&runId=$runId'>\n";
 	$ctfdownlink .= "  <img style='vertical-align:middle' src='img/download_arrow.png' border='0' width='16' height='17' alt='download best ctf data'>&nbsp;download best ctf EMX file\n";
 	$ctfdownlink .= "</a></h3>\n";
 	echo $ctfdownlink;
