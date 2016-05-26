@@ -132,7 +132,7 @@ def stackSize(filename, msg=False):
 	return size
 
 #===============
-def getBoxSize(filename, msg=False):
+def getBoxSize(filename, msg=True):
 	"""
 	return boxsize of stack in pixels
 	"""
@@ -140,6 +140,20 @@ def getBoxSize(filename, msg=False):
 		if msg is True:
 			apDisplay.printWarning("file does not exist")
 		return (1,1,1)
+	if filename[-4:] == '.hed' or filename[-4:] == '.img':
+		root=os.path.splitext(filename)[0]
+		headerfilename=root + ".hed"
+		from appionlib import apImagicFile
+		headerdict = apImagicFile.readImagicHeader(headerfilename)
+		shape = (headerdict['rows'], headerdict['lines'], headerdict['nimg'])
+		return shape
+	if filename[-4:] == '.mrc':
+		headerdict = mrc.parseHeader(filename)
+		shape = headerdict['shape']
+		if len(shape) == 2:
+			return (shape[0], shape[1], 1)
+		elif len(shape) == 3:
+			return shape
 	proc = subprocess.Popen("iminfo %s"%(filename), shell=True, stdout=subprocess.PIPE)
 	proc.wait()
 	lines = ""
@@ -166,7 +180,6 @@ def getBoxSize(filename, msg=False):
 	if msg is True:
 		apDisplay.printWarning("failed to get boxsize: "+lines)
 	return (1,1,1)
-
 
 #===============
 def numImagesInStack(imgfile, boxsize=None):
