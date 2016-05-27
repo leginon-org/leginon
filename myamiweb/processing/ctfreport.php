@@ -6,10 +6,12 @@ require_once "inc/project.inc";
 require_once "inc/viewer.inc";
 require_once "inc/processing.inc";
 require_once "inc/appionloop.inc";
+require_once "inc/forms/ctfTable.inc";
 
 $ctf = new particledata();
 
 $expId = $_GET['expId'];
+$runId = $_GET['runId'];
 $showmore = $_GET['showmore'] ? $_GET['showmore'] : '0';
 $projectId =getProjectId();
 $formAction=$_SERVER['PHP_SELF']."?expId=$expId&showmore=$showmore";
@@ -290,7 +292,7 @@ if ($ctfrundatas) {
 	echo "</td><td>\n";
 	// very hacky
 		$sessiondata = getSessionList($projectId, $expId);
-		$preset = end($sessiondata['presets']);
+		$preset = (!empty($_POST['preset'])) ? $_POST['preset'] : end($sessiondata['presets']);
 		echo "<h3>Difference from Leginon for preset '$preset'</h3>\n";
 		echo "<a href='autofocacegraph.php?hg=0&expId=$expId&s=1&f=difference&preset=$preset'>\n";
 		echo "<img border='0' width='400' height='200' src='autofocacegraph.php?"
@@ -316,25 +318,48 @@ if ($ctfrundatas) {
 	echo "<input type='submit' name='applycutoff' value='Generate Histogram' onclick='submitCutoff()'>\n";
 	echo "</td></tr></table>\n";
 	echo "<img id='cutoffimg' name='cutoffimg' border='0'>\n";
+
 	echo "<hr>\n";
 
+	//Start Data Export
+	$sessiondata=getSessionList($projectId,$expId);
+	// Create a dictionary of preset value=>desc. Desc appears in the gui, value is returned in the code in a selection box.
+	$presetList = array_combine( $sessiondata['presets'], $sessiondata['presets'] );
+	$formhtml = '<form name="ctfform" method="POST" action="'.$_SERVER['REQUEST_URI'].'">';
+	$presetselection = new PresetTable($presetList,$preset);
+	$formhtml .= $presetselection->generateForm();
+
+	// Create a dictionary of ctf runs value=>desc. Desc appears in the gui, value is returned in the code in a selection box.
+	$empty_array=array(array('DEF_id'=> 0,'name' => 'all'));
+	$ctfruns = $ctf->getCtfRunIds($expId,$showHidden=False,$ctffind=False);
+	$ctfruns=array_merge ($empty_array,$ctfruns);
+	$ctfList = array();
+	foreach ($ctfruns as $r ) $ctfList[$r['DEF_id']] = $r['name'];
+	$runselection = new CtfRunTable($ctfList,$ctfruns[0]['DEF_id']);
+	$formhtml .= $runselection->generateForm();
+	$runId = $_POST['ctfrunID'];
+	$formhtml .=	"<input class='bt1' type='button' name='apply' value='Update Preset/Run Selection' onclick='javascript:document.ctfform.submit()'/>";
+	$formhtml .= '</form>'."\n";
+	echo $formhtml;
+
 	$ctfdownlink = "<h3>";
-	$ctfdownlink .= "<a href='downloadctfdata.php?expId=$expId&relion=True'>\n";
+	$ctfdownlink .= "<a href='downloadctfdata.php?expId=$expId&preset=$preset&runId=$runId&relion=True'>\n";
 	$ctfdownlink .= "  <img style='vertical-align:middle' src='img/download_arrow.png' border='0' width='16' height='17' alt='download star file for RELION'>&nbsp;download star file for RELION\n";
 	$ctfdownlink .= "</a></h3>\n";
 	echo $ctfdownlink;
 
 	$ctfdownlink = "<h3>";
-	$ctfdownlink .= "<a href='downloadctfdata.php?expId=$expId'>\n";
+	$ctfdownlink .= "<a href='downloadctfdata.php?expId=$expId&preset=$preset&runId=$runId'>\n";
 	$ctfdownlink .= "  <img style='vertical-align:middle' src='img/download_arrow.png' border='0' width='16' height='17' alt='download best ctf data'>&nbsp;download best ctf data\n";
 	$ctfdownlink .= "</a></h3>\n";
 	echo $ctfdownlink;
 
 	$ctfdownlink = "<h3>";
-	$ctfdownlink .= "<a href='downloadctfemxfile.php?expId=$expId'>\n";
+	$ctfdownlink .= "<a href='downloadctfemxfile.php?expId=$expId&preset=$preset&runId=$runId'>\n";
 	$ctfdownlink .= "  <img style='vertical-align:middle' src='img/download_arrow.png' border='0' width='16' height='17' alt='download best ctf data'>&nbsp;download best ctf EMX file\n";
 	$ctfdownlink .= "</a></h3>\n";
 	echo $ctfdownlink;
+	//End Data Export
 
 
 	echo "<hr/>\n";

@@ -11,6 +11,7 @@ require_once "inc/processing.inc";
 $expId = $_GET['expId'];
 $runId = $_GET['runId'];
 $relion = $_GET['relion'];
+$preset = $_GET['preset'];
 
 checkExptAccessPrivilege($expId,'data');
 $appiondb = new particledata();
@@ -53,8 +54,10 @@ else $data[] = "image #\tnominal_def\tdefocus_1\tdefocus_2\tangle_astig\tamp_con
 //echo "</br>\n";
 
 foreach ($ctfdatas as $ctfdata) {
-	$filename = $appiondb->getImageNameFromId($ctfdata['REF|leginondata|AcquisitionImageData|image']);
-
+	$imgid = $ctfdata['REF|leginondata|AcquisitionImageData|image'];
+	$filename = $appiondb->getImageNameFromId($imgid);
+	$p = $leginon->getPresetFromImageId($imgid);
+	if (!empty($preset) && $preset != $p['name'] ) continue;
 	if ($relion) {
 		$data[]=sprintf("micrographs/%s.mrc micrographs/%s.ctf:mrc %.6f %.6f %.6f %.6f %.6f %.6f %.6f %.6f %.6f\n",
 			$filename,
@@ -99,9 +102,13 @@ header("Content-Type: application/force-download");
 header("Content-Type: application/download");
 header("Content-Transfer-Encoding: binary");
 header("Content-Length: $size");
-if ($relion) $downname = sprintf("micrographs_ctf-%05d.star",$expId);
-else $downname = (empty($runId)) ? sprintf("ctfdata-session%04d.dat", $expId) : sprintf("ctfdata-run%04d.dat", $runId);
+$expt_runname = sprintf("%05d", $expId);
+$expt_runname .= (empty($runId) ) ? '' : sprintf("-run%04d", $runId);
+if ($relion) $downname = sprintf("micrographs_ctf-%s.star",$expt_runname);
+else $downname = sprintf("ctfdata-session%s.dat", $expt_runname);
 header("Content-Disposition: attachment; filename=$downname;");
 foreach ($data as $line) {
 	echo $line;
 }
+
+?>
