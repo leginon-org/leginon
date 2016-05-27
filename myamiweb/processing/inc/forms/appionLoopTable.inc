@@ -11,8 +11,51 @@ require_once "basicForm.inc";
 require_once "inc/particledata.inc";
 require_once "inc/processing.inc";
 
+class PresetTable extends BasicForm
+{
+	protected $presetList;
 
-class AppionLoopTable extends BasicForm
+	function __construct ($presetList='', $preset='' )
+	{
+		parent::__construct();
+		$this->presetList = $presetList;
+		// Get the form parameters that have been created by the parent class
+		$params = $this->getFormParams();
+		
+		// The help section corresponds to the array key for these parameters found in help.js for popup help.
+		$params->setHelpSection( "appion" );
+		
+		$params->addParam( "preset", $preset, "Preset" );
+	}
+
+	public function generateForm( $displayAdvanced=True )
+	{
+		$this->updateFormParams();
+		// Get the form parameters that have been created by the parent class
+		$params = $this->getFormParams();
+		
+		// Presets
+		$html.= "<!-- Start Preset Selector -->\n";
+		if ($this->presetList && count($this->presetList) > 1) {
+			$html.= $params->insertSelectField( "preset", $this->presetList );
+		} elseif ( !empty($this->presetList) ) {			
+			//only one preset
+			$preset = key( $this->presetList );
+			$html.= "<B>Preset:</B>&nbsp;&nbsp;".$preset."\n\n";
+			$html.= "<input type='hidden' name='preset' VALUE=".$preset."><br/>\n";
+		} else {
+			//no presets
+			$html.= "<input type='hidden' name='alldbimages' VALUE=1>\n";
+			$html.= "<I>No presets for this session<br/>\n"
+				."processing ALL images</I><br/>\n";
+		}
+		$html.= "<!-- END Preset Selector -->\n";
+			
+		return $html;
+	}
+}
+
+class AppionLoopTable extends PresetTable
 {
 	protected $presetList;
 	protected $maxtiltangle;
@@ -20,8 +63,7 @@ class AppionLoopTable extends BasicForm
 	function __construct( $checkimage='', $nowait='', $imgorder='', $limit='',$tiltangle='',$maxtiltangle='', $apcontinue='',
 		$commit='', $presetList='', $preset='', $testimage='', $testfilename='' ) 
 	{
-		parent::__construct();
-		$this->presetList = $presetList;
+		parent::__construct($presetList, $preset);
 		$this->maxtiltangle = $maxtiltangle;
 		
 		// Get the form parameters that have been created by the parent class
@@ -37,7 +79,6 @@ class AppionLoopTable extends BasicForm
 		$params->addParam( "tiltangle", $tiltangle, "Tilt Angle" );
 		$params->addParam( "apcontinue", $apcontinue, "apcontinue" );
 		$params->addParam( "commit", $commit, "Commit results to database" );
-		$params->addParam( "preset", $preset, "Preset" );
 		$params->addParam( "testimage", $testimage, "testimage" );
 		$params->addParam( "testfilename", $testfilename, "testfilename" );		
 	}
@@ -51,20 +92,7 @@ class AppionLoopTable extends BasicForm
 		
 		$html.=  "<!-- BEGIN Appion Loop Param -->\n";
 
-		// Presets
-		if ($this->presetList && count($this->presetList) > 1) {
-			$html.= $params->insertSelectField( "preset", $this->presetList );
-		} elseif ( !empty($this->presetList) ) {			
-			//only one preset
-			$preset = key( $this->presetList );
-			$html.= "<B>Preset:</B>&nbsp;&nbsp;".$preset."\n\n";
-			$html.= "<input type='hidden' name='preset' VALUE=".$preset."><br/>\n";
-		} else {
-			//no presets
-			$html.= "<input type='hidden' name='alldbimages' VALUE=1>\n";
-			$html.= "<I>No presets for this session<br/>\n"
-				."processing ALL images</I><br/>\n";
-		}
+		$html = parent::generateForm();
 		$html.= $params->insertCheckboxField( "nowait" );
 		$html.= "<hr/>\n";
 

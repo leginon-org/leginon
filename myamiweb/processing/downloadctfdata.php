@@ -11,6 +11,7 @@ require_once "inc/processing.inc";
 $expId = $_GET['expId'];
 $runId = $_GET['runId'];
 $relion = $_GET['relion'];
+$preset = $_GET['preset'];
 
 checkExptAccessPrivilege($expId,'data');
 $appiondb = new particledata();
@@ -53,8 +54,10 @@ else $data[] = "image #\tnominal_def\tdefocus_1\tdefocus_2\tangle_astig\tamp_con
 //echo "</br>\n";
 
 foreach ($ctfdatas as $ctfdata) {
-	$filename = $appiondb->getImageNameFromId($ctfdata['REF|leginondata|AcquisitionImageData|image']);
-
+	$imgid = $ctfdata['REF|leginondata|AcquisitionImageData|image'];
+	$filename = $appiondb->getImageNameFromId($imgid);
+	$p = $leginon->getPresetFromImageId($imgid);
+	if (!empty($preset) && $preset != $p['name'] ) continue;
 	if ($relion) {
 		$data[]=sprintf("micrographs/%s.mrc micrographs/%s.ctf:mrc %.6f %.6f %.6f %.6f %.6f %.6f %.6f %.6f %.6f\n",
 			$filename,
@@ -107,3 +110,5 @@ header("Content-Disposition: attachment; filename=$downname;");
 foreach ($data as $line) {
 	echo $line;
 }
+
+?>
