@@ -182,12 +182,11 @@ class DirectDetectorProcessing(object):
 		else:
 			return False
 
-	def getStillFrames(self,threshold):
+	def getShiftsBetweenFrames(self):
 		'''
-		Returns frames that shift less than threshold (in pixels) relative to either the frame before
-		or the frame after.
+		Return a list of shift distance by frames. item 0 is fake. item 1 is distance between
+		frame 0 and frame 1
 		'''
-		stills = []
 		logfile = self.framestackpath[:-4]+'_Log.txt'
 		if not os.path.isfile(logfile):
 			apDisplay.printWarning('No alignment log file %s found for thresholding drift' % logfile)
@@ -201,6 +200,16 @@ class DirectDetectorProcessing(object):
 		# duplicate first and last shift for the end points
 		shifts.append(shifts[-1])
 		shifts[0] = shifts[1]
+		return shifts
+
+	def getStillFrames(self,threshold):
+		'''
+		Returns frames that shift less than threshold (in pixels) relative to either the frame before
+		or the frame after.
+		'''
+		stills = []
+
+		shifts = self.getShiftsBetweenFrames()
 		# pick out passed frames
 		for i in range(len(shifts[:-1])):
 			# keep the frame if at least one shift around the frame is small enough
