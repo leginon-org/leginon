@@ -197,6 +197,7 @@ class DirectDetectorProcessing(object):
 		for p in range(len(positions)-1):
 			shift = math.hypot(positions[p][0]-positions[p+1][0],positions[p][1]-positions[p+1][1])
 			shifts.append(shift)
+		apDisplay.printDebug('Got %d shifts' % (len(shifts)-1))
 		# duplicate first and last shift for the end points
 		shifts.append(shifts[-1])
 		shifts[0] = shifts[1]
