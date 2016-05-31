@@ -422,6 +422,7 @@ function addAppionOverlays($leginondata,$img,$childinfo,$imginfo,$p) {
 				$thres2=$particlelabelparams['thres2'][$particle['label']];
 			}
 			//apply threshold
+			$threshold = (is_numeric($thres1) && is_numeric($thres2)) ? true : false;
 			if ($threshold && ($particle['correlation']<$thres1 || $particle['correlation']>$thres2)) {
 				continue;
 			}
