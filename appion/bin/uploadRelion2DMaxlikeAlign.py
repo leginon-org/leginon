@@ -474,23 +474,23 @@ class UploadRelionMaxLikeScript(basicScript.BasicScript):
 		apEMAN.executeEmanCmd(xmippcmd, verbose=True, showcmd=True)
 
 	#=====================
-	def createAlignedReferenceStack(self):
+	def createAlignedReferenceStack(self, runparams):
 		searchstr = "part"+self.params['timestamp']+"_ref0*.xmp"
 		files = glob.glob(searchstr)
-		files.sort()
+		if len(files) < 1:
+			apDisplay.printError("reference images not found")
+		refarray = mrc.read(files[0])
+		refshape = refarray.shape
+
 		stack = []
-		reflist = self.readRefDocFile()
-		for i in range(len(files)):
-			fname = files[i]
-			refdict = reflist[i]
-			if refdict['partnum'] != i+1:
-				print i, refdict['partnum']
-				apDisplay.printError("sorting error in reflist, see neil")
-			refarray = spider.read(fname)
-			xyshift = (refdict['xshift'], refdict['yshift'])
-			alignrefarray = apImage.xmippTransform(refarray, rot=refdict['inplane'],
-				shift=xyshift, mirror=refdict['mirror'])
-			stack.append(alignrefarray)
+		for i in range(runparams['numrefs']):
+			fname = ("ref%03d-average.mrc"%(i+1))
+			if os.path.isfile(fname):
+				refarray = mrc.read(fname)
+			else:
+				apDisplay.printWarning("no particles for reference %d"%(i+1))
+				refarray = numpy.zeros(refshape)
+			stack.append(refarray)
 		stackarray = numpy.asarray(stack, dtype=numpy.float32)
 		#print stackarray.shape
 		avgstack = "part"+self.params['timestamp']+"_average.hed"
@@ -578,7 +578,6 @@ class UploadRelionMaxLikeScript(basicScript.BasicScript):
 			res = apFourier.getResolution(frcdata, apix, boxsize)
 
 			self.resdict[refnum] = res
-
 		return
 
 	#=====================
@@ -608,6 +607,7 @@ class UploadRelionMaxLikeScript(basicScript.BasicScript):
 		### calculate resolution for each reference
 		apix = apStack.getStackPixelSizeFromStackId(runparams['stackid'])*runparams['bin']
 		self.calcResolution(partlist, alignimagicfile, apix)
+		self.createAlignedReferenceStack(runparams)
 
 		### insert into databse
 		self.insertRunIntoDatabase(alignimagicfile, runparams)
