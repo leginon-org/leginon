@@ -104,7 +104,13 @@ def readPositionsFromAlignLog(filename):
 	positions = []
 	for line in lines:
 		position_strings = line.split('shift:')[-1].split()
-		positions.append((float(position_strings[0]),float(position_strings[1])))
+		try:
+			position_x = float(position_strings[0])
+			position_y = float(position_strings[1])
+			positions.append((position_x,position_y))
+		except:
+			# Issue #4234
+			break
 	return positions
 
 def printDriftStats(filenamepattern, apix):
