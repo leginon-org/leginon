@@ -56,23 +56,23 @@ def imageToArray(im, convertType='uint8', dtype=None, msg=True):
 	copied and modified from http://mail.python.org/pipermail/image-sig/2005-September/003554.html
 	"""
 	if im.mode == "L":
-		a = numpy.fromstring(im.tostring(), numpy.uint8)
+		a = numpy.frombytes(im.tobytes(), numpy.uint8)
 		a = numpy.reshape(a, (im.size[1], im.size[0]))
 		#a.shape = (im.size[1], im.size[0], 1)  # alternate way
 	elif (im.mode=='RGB'):
 		apDisplay.printMsg("reading RGB and converting to L")
 		grey = im.convert('L')
-		a = numpy.fromstring(grey.tostring(), numpy.uint8)
+		a = numpy.frombytes(grey.tobytes(), numpy.uint8)
 		a = numpy.reshape(a, (grey.size[1], grey.size[0]))
 	elif (im.mode=='RGBA'):
 		apDisplay.printMsg("reading RGBA and converting to L")
 		grey = im.convert('L')
-		a = numpy.fromstring(grey.tostring(), numpy.uint8)
+		a = numpy.frombytes(grey.tobytes(), numpy.uint8)
 		a = numpy.reshape(a, (grey.size[1], grey.size[0]))
 	elif (im.mode=='LA'):
 		apDisplay.printMsg("reading LA and converting to L")
 		grey = im.convert('L')
-		a = numpy.fromstring(grey.tostring(), numpy.uint8)
+		a = numpy.frombytes(grey.tobytes(), numpy.uint8)
 		a = numpy.reshape(a, (grey.size[1], grey.size[0]))
 	else:
 		raise ValueError, im.mode+" mode not considered"
@@ -101,14 +101,14 @@ def _arrayToImage(a):
 
 	if len(a.shape)==3:
 		if a.shape[2]==3:  # a.shape == (y, x, 3)
-			r = Image.fromstring("L", (w, h), a[:,:,0].tostring())
-			g = Image.fromstring("L", (w, h), a[:,:,1].tostring())
-			b = Image.fromstring("L", (w, h), a[:,:,2].tostring())
+			r = Image.frombytes("L", (w, h), a[:,:,0].tobytes())
+			g = Image.frombytes("L", (w, h), a[:,:,1].tobytes())
+			b = Image.frombytes("L", (w, h), a[:,:,2].tobytes())
 			return Image.merge("RGB", (r,g,b))
 		elif a.shape[2]==1:  # a.shape == (y, x, 1)
-			return Image.fromstring("L", (w, h), a.tostring())
+			return Image.frombytes("L", (w, h), a.tobytes())
 	elif len(a.shape)==2:  # a.shape == (y, x)
-		return Image.fromstring("L", (w, h), a.tostring())
+		return Image.frombytes("L", (w, h), a.tobytes())
 	else:
 		raise ValueError, "unsupported image mode"
 
