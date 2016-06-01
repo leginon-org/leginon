@@ -11,6 +11,7 @@ require_once "inc/jpgraph.php";
 require_once "inc/jpgraph_line.php";
 require_once "inc/jpgraph_scatter.php";
 require_once "inc/jpgraph_bar.php";
+require_once "inc/jpgraph_log.php";
 require_once "inc/histogram.inc";
 require_once "inc/image.inc";
 
@@ -26,6 +27,7 @@ class dbemGraph {
 	var $baselineplot=false;
 	var $baselinevalue=0;
 	var $manualscale=false;
+	var $scaletype='linlin';
 
 	function dbemGraph($data, $xname, $yname) {
 		$this->data=&$data;
@@ -78,6 +80,10 @@ class dbemGraph {
 		$this->resample_height=$h;
 	}
 
+	function setScaleType($xtype='lin', $ytype='lin') {
+		$this->scaletype = $xtype.$ytype;
+	}
+
 	function dumpData($keys="") {
 		if (!$keys)
 			$keys=array($this->xname, $this->yname);
@@ -117,7 +123,8 @@ class dbemGraph {
 			$graph->img->SetMargin(50,30,30,60);
 			$graph->title->Set($this->title);
 			$graph->SetAlphaBlending();
-			$graph->SetScale("linlin"); 
+
+			$graph->SetScale($this->scaletype); 
 			$xname=$this->xaxistitle;
 			if ($this->xname=="unix_timestamp") {
 				$graph->xaxis->SetLabelFormatCallback('timeCallback');
@@ -134,7 +141,7 @@ class dbemGraph {
 				$graph->yaxis->SetLabelFormatCallback('sciCallback');
 
 			if ($this->manualscale)
-					$graph->SetScale("linlin",$this->ymin,$this->ymax,$this->xmin,$this->xmax); 
+					$graph->SetScale($this->scaletype,$this->ymin,$this->ymax,$this->xmin,$this->xmax); 
 			if ($this->scatterplot) {
 				$sp1 = new ScatterPlot($this->datay,$this->datax);
 				$sp1->mark->SetType(MARK_CIRCLE);

@@ -31,6 +31,41 @@ foreach ($data as $drift) {
 $sessioninfo = $leginondata->getSessionInfo($sessionId);
 $title = $sessioninfo['Name'];
 
+function getFrameDriftGraphs($expId) {
+	global $leginondata;
+	$align_source_presets = $leginondata->getFrameSavedPresets($expId);
+	if (!empty($align_source_presets)) {
+		foreach($align_source_presets as $preset) {
+			if ( strstr($preset['name'],'-') != false ) continue;
+			$html .= "<tr><td colspan='3'>";
+			$html .= divtitle("Frame Movement of Movies Acquire by ".$preset['name']." Preset");
+			$html .= "</td></tr>";
+			$html .= "<tr>";
+			$graph_prefix = 'driftstatsgraph.php?expId='.$expId.'&preset='.$preset['name'];
+			$html .= "<td>";
+			$html .= "<a href='".$graph_prefix."&vdata=1'>[data]</a>";
+			$html .= "</td>\n";
+			$html .= "</tr>\n";
+			$html .= "<tr>";
+			$html .= "<td>";
+			$html .= "<a href='".$graph_prefix."'>";
+			$html .= "<img border='0' src='".$graph_prefix."&w=512'>";
+			$html .= "</a>\n";
+			$html .= "</td>\n";
+			$html .= "</tr>\n";
+			$html .= "<tr>";
+			$html .= "<td>";
+			$html .= "<a href='".$graph_prefix."&hg=1'>";
+			$html .= "<img border='0' src='".$graph_prefix."&hg=1&w=512'>";
+			$html .= "</a>\n";
+			$html .= "</td>\n";
+			$html .= "</tr>\n";
+		}
+	} else $html .= "no Frame Movement information available";
+		$html .= "</td>";
+	return $html;
+}
+
 ?>
 <html>
 <head>
@@ -55,6 +90,9 @@ $title = $sessioninfo['Name'];
 	<?php echo divtitle("Drift Report $title Experiment"); ?>
 	</td>
 </tr>
+<?php
+echo getFrameDriftGraphs($sessionId);
+?>
 <?php
 echo "<tr>";
 echo "<td colspan='2'>";
