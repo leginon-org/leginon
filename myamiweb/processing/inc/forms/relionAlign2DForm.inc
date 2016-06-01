@@ -72,16 +72,16 @@ class RelionAlign2DForm extends BasicLayoutForm
 		$params = $this->getFormParams();
 
 		// The help section corresponds to the array key for these parameters found in help.js for popup help.
-		$params->setHelpSection( "appion" );
+		$params->setHelpSection( "relion2DMaxlike" );
 
 		// Add each of the parameters here.
 		// addParam( "key", default_value, "Label that appears in GUI")
 
-		$params->addParam( "mpinodes", $mpinodes, "Number of nodes allocated for entire job." );
-		$params->addParam( "mpiprocs", $mpiprocs, "Number of processors allocated for a subjob. For memory intensive jobs, decrease this value." );
-		$params->addParam( "mpithreads", $mpithreads, "Number of threads to generate per processor. For memory intensive jobs, increase this value." );
+		$params->addParam( "mpinodes", $mpinodes, "MPI Nodes" );
+		$params->addParam( "mpiprocs", $mpiprocs, "MPI Processors" );
+		$params->addParam( "mpithreads", $mpithreads, "MPI Threads" );
 
-		$params->addParam( "mpimem", $mpimem, "Amount of memory (Gb) to allocate per thread. Increase this value for memory intensive jobs." );
+		$params->addParam( "mpimem", $mpimem, "Memory per MPI Thread (Gb)" );
 
 		$params->addParam( "stack", $stackId, "Select a stack of particles to use" );
 		$params->addParam( "clip", $clip, "Unbinned Clip Diameter" );
@@ -97,7 +97,7 @@ class RelionAlign2DForm extends BasicLayoutForm
 		$params->addParam( "flat", $flat, "Flatten Solvent on References " );
 		$params->addParam( "zero_mask", $zero_mask, "Zero Masking");
 		$params->addParam( "commit", $commit, "Commit to Database" );
-
+		$params->addParam( "correctnorm",$correctnorm,"Perform normalization error correction");
 		// Validations
 		$params->addValidation( "numpart", "minval=4" );
 
@@ -120,11 +120,11 @@ class RelionAlign2DForm extends BasicLayoutForm
             <H4>MPI Configuration</H4>
             <hr />";
 		$html.= "<br />";
-		$html.= $params->insertTextField( "mpinodes", $fieldSize, '', 'appion.mpinodes' );
-                $html.= $params->insertTextField( "mpiprocs", $fieldSize, '', 'appion.mpiprocs' );
-                $html.= $params->insertTextField( "mpithreads", $fieldSize, '', 'appion.mpithreads' );
+		$html.= $params->insertTextField( "mpinodes", $fieldSize, '', 'relion2DMaxlike.mpinodes' );
+                $html.= $params->insertTextField( "mpiprocs", $fieldSize, '', 'relion2DMaxlike.mpiprocessors' );
+                $html.= $params->insertTextField( "mpithreads", $fieldSize, '', 'relion2DMaxlike.mpithreads' );
 
-		$html.= $params->insertTextField( "mpimem", $fieldSize, '', 'appion.mpimem' );
+		$html.= $params->insertTextField( "mpimem", $fieldSize, '', 'relion2DMaxlike.memoryperthread' );
 
 
 		$html .= "
@@ -132,31 +132,32 @@ class RelionAlign2DForm extends BasicLayoutForm
 	    <H4>Data limiting numbers</H4>
 	    <hr />";
 
-		$html.= $params->insertTextField( "clip", $fieldSize, "(pixels)", 'appion.clipdiam' );
-		$html.= $params->insertTextField( "bin", $fieldSize, '', 'appion.partbin' );
-		$html.= $params->insertTextField( "numpart", $fieldSize, '', 'appion.numpart' );
+		$html.= $params->insertTextField( "clip", $fieldSize, "(pixels)", 'relion2DMaxlike.unbinnedclipdiameter' );
+		$html.= $params->insertTextField( "bin", $fieldSize, '', 'relion2DMaxlike.particlebinning' );
+		$html.= $params->insertTextField( "numpart", $fieldSize, '', 'relion2DMaxlike.numberofparticles' );
 
 		$html .= "
 	    <br />
 	    <H4>Filters</H4>
 	    <hr />";
 
-		$html.= $params->insertTextField( "lowpass", $fieldSize, "(&Aring;ngstroms)",'appion.lpstackval' );
-		$html.= $params->insertTextField( "highpass", $fieldSize, "(&Aring;ngstroms)", 'appion.hpstackval' );
+		$html.= $params->insertTextField( "lowpass", $fieldSize, "(&Aring;ngstroms)",'relion2DMaxlike.lowpassfilterradius' );
+		$html.= $params->insertTextField( "highpass", $fieldSize, "(&Aring;ngstroms)", 'relion2DMaxlike.highpassfilterradius' );
 
 		$html .= "
 	    <br />
 	    <H4>Alignment Parameters</H4>
 	    <hr />";
 
-		$html.= $params->insertTextField( "partDiam", $fieldSize,"(&Aring;ngstroms)",'appion.diameter' );
+		$html.= $params->insertTextField( "partDiam", $fieldSize,"(&Aring;ngstroms)",'relion2DMaxlike.particlediameter' );
 
-		$html.= $params->insertTextField( "numRef", $fieldSize,'','appion.numref' );
-		$html.= $params->insertTextField( "maxIter", $fieldSize,'','appion.maxiter' );
-		$html.= $params->insertTextField( "angStep", $fieldSize,'(degrees)','appion.angleinc' );
+		$html.= $params->insertTextField( "numRef", $fieldSize,'','relion2DMaxlike.numberofreferences' );
+		$html.= $params->insertTextField( "maxIter", $fieldSize,'','relion2DMaxlike.maxnumberofiterations' );
+		$html.= $params->insertTextField( "angStep", $fieldSize,'(degrees)','relion2DMaxlike.angleinc' );
 		$html.= $params->insertTextField( "tau", $fieldSize,'','appion.tau2fudge' );
-		$html.= $params->insertCheckboxField("flat");
-		$html.= $params->insertCheckboxField("zero_mask");
+		$html.= $params->insertCheckboxField("flat",'','relion2DMaxlike.flattensolvent');
+		$html.= $params->insertCheckboxField("zero_mask",'','relion2DMaxlike.zeromasking');
+		$html.= $params->insertCheckboxField("correctnorm",'','relion2DMaxlike.correctnorm');
 
 		// When loading this page the first time, use the switchDefaults javascript function to set
 		// form parameters based on the currently selected stack.
