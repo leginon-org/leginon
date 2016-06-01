@@ -24,6 +24,9 @@ import MySQLdb
 #=====================
 #=====================
 class RelionMaxLikeScript(appionScript.AppionScript):
+
+
+	execFile = 'relion_refine_mpi'
 	#=====================
 	def setupParserOptions(self):
 
@@ -52,6 +55,8 @@ class RelionMaxLikeScript(appionScript.AppionScript):
 			help="In-plane rotation sampling step (degrees)", metavar="#")
 		self.parser.add_option("--tau", dest="tau", type="float", default=1,
 			help="Tau2 Fudge Factor (> 1)", metavar="#")
+		self.parser.add_option("--correctnorm",dest="correctnorm",default=False,
+			action="store_true", help="Perform normalisation error correction")
 
 		self.parser.add_option("--invert", dest='invert', default=False,
 			action="store_true", help="Invert before alignment")
@@ -342,6 +347,8 @@ class RelionMaxLikeScript(appionScript.AppionScript):
 			relionopts += " --flatten_solvent "
 		if self.params['zero_mask'] is True:
 			relionopts += " --zero_mask "
+		if self.params['correctnorm'] is True:
+			relionopts += " --norm "
 
 		if self.params['usempi'] is True:
 			relionexe = apParam.getExecPath("relion_refine_mpi", die=True)
