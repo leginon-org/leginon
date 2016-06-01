@@ -41,7 +41,7 @@ function getFrameDriftGraphs($expId) {
 			$html .= divtitle("Frame Movement of Movies Acquire by ".$preset['name']." Preset");
 			$html .= "</td></tr>";
 			$html .= "<tr>";
-			$graph_prefix = 'driftstatsgraph.php?expId='.$expId.'&preset='.$preset['name'];
+			$graph_prefix = 'dddriftstatsgraph.php?expId='.$expId.'&preset='.$preset['name'];
 			$html .= "<td>";
 			$html .= "<a href='".$graph_prefix."&vdata=1'>[data]</a>";
 			$html .= "</td>\n";
