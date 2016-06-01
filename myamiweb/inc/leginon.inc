@@ -2444,6 +2444,19 @@ class leginondata {
 		return $this->mysql->getSQLResult($q);
 	}
 
+	function getFrameSavedPresets($sessionId) {
+		$q="SELECT DISTINCT"
+			."`p`.`name`, `a`.`REF|SessionData|session` "
+			."FROM "
+			."`AcquisitionImageData` AS `a` "
+			."LEFT JOIN `PresetData` AS `p` "
+			."ON (`p`.`DEF_id`=`a`.`REF|PresetData|preset`) "
+			."WHERE "
+			."a.`REF|SessionData|session` = '$sessionId' "
+			."AND p.`save frames` = 1 ";
+		return $this->mysql->getSQLResult($q);
+	}
+
 	function getIceThicknessPresets($sessionId) {
 		$q="SELECT DISTINCT"
 			."`p`.`name`, `h`.`REF|SessionData|session` "

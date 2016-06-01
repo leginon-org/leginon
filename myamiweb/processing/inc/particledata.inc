@@ -2345,24 +2345,21 @@ class particledata {
 		return getRunData($partRunId, "ApDDStackRunData" );
 	}
 
+	function getRecentAlignedImage($imgid)
+	{
+		// check as result
+		$q = "SELECT pair.`REF|leginondata|AcquisitionImageData|result` result_imgid "
+			."FROM `ApDDAlignImagePairData` pair "
+			."WHERE pair.`REF|leginondata|AcquisitionImageData|source` = ".$imgid." "
+			."ORDER BY pair.`DEF_timestamp` DESC ";
+		$r = $this->mysql->getSQLResult($q);
+		if ( is_array($r) && $r ) return $r[0]['result_imgid'];
+	}
+
 	function getAlignLogShiftFromDDAlignedImageId($result_imgid,$apix=1)
 	{
 		// get Alignlog path
-		$q = "SELECT rundir.path as rundir, pair.`REF|leginondata|AcquisitionImageData|source` as source_imgid, params.bin as bin "
-			."FROM `ApDDAlignImagePairData` pair "
-			."LEFT JOIN `ApDDStackRunData` run "
-			."ON pair.`REF|ApDDStackRunData|ddstackrun`=run.`DEF_id` "
-			."LEFT JOIN	`ApPathData` rundir "
-			."ON run.`REF|ApPathData|path` = rundir.`DEF_id` "
-			."LEFT JOIN `ApDDStackParamsData` params "
-			."ON run.`REF|ApDDStackParamsData|params` = params.`DEF_id` "
-			."WHERE pair.`REF|leginondata|AcquisitionImageData|result` = ".$result_imgid;
-		list($r) = $this->mysql->getSQLResult($q);
-		// Log filename depends on the binning
-		$bin = ((int) $r['bin'] < 1) ? 1:(int) $r['bin'];
-		$bin_text = ($bin == 1) ? '':'_'.$bin.'x';
-		$source_image_name = $this->getImageNameFromId($r['source_imgid']);
-		$align_log = $r['rundir'].'/'.$source_image_name.'_st'.$bin_text.'_Log.txt';
+		$align_log = $this->getAlignLogPathFromDDAlignedImageId($result_imgid);
 		// get shift data
 		$data = array();
 		if (is_file($align_log)) {
@@ -2380,6 +2377,41 @@ class particledata {
 			}
 		} else {return $align_log;}
 		return $data;
+	}
+
+	function getShiftDistancesFromPositions($data)
+	{
+		$distances = array();
+		$i = 0;
+		while ( $i < count($data)-1 ) {
+			$p0 = $data[$i];
+			$p1 = $data[$i+1];
+			$distance = hypot($p0['x']-$p1['x'], $p0['y']-$p1['y']);
+			$distances[] = $distance;
+			$i += 1;
+		}
+		return $distances;
+	}
+
+	function getAlignLogPathFromDDAlignedImageId($result_imgid)
+	{
+		// get Alignlog path
+		$q = "SELECT rundir.path as rundir, pair.`REF|leginondata|AcquisitionImageData|source` as source_imgid, params.bin as bin "
+			."FROM `ApDDAlignImagePairData` pair "
+			."LEFT JOIN `ApDDStackRunData` run "
+			."ON pair.`REF|ApDDStackRunData|ddstackrun`=run.`DEF_id` "
+			."LEFT JOIN	`ApPathData` rundir "
+			."ON run.`REF|ApPathData|path` = rundir.`DEF_id` "
+			."LEFT JOIN `ApDDStackParamsData` params "
+			."ON run.`REF|ApDDStackParamsData|params` = params.`DEF_id` "
+			."WHERE pair.`REF|leginondata|AcquisitionImageData|result` = ".$result_imgid;
+		list($r) = $this->mysql->getSQLResult($q);
+		// Log filename depends on the binning
+		$bin = ((int) $r['bin'] < 1) ? 1:(int) $r['bin'];
+		$bin_text = ($bin == 1) ? '':'_'.$bin.'x';
+		$source_image_name = $this->getImageNameFromId($r['source_imgid']);
+		$align_log = $r['rundir'].'/'.$source_image_name.'_st'.$bin_text.'_Log.txt';
+		return $align_log;
 	}
 
 	function getRunData($runId, $table) 
