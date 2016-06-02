@@ -34,8 +34,8 @@ def compareHeader(hfile1, hfile2, numround=1):
 		print "round", n+1
 		data1 = f1.read(1024)
 		data2 = f2.read(1024)
-		ints1 = numpy.frombytes(data1, dtype=numpy.int32)
-		ints2 = numpy.frombytes(data2, dtype=numpy.int32)
+		ints1 = numpy.fromstrings(data1, dtype=numpy.int32)
+		ints2 = numpy.fromstrings(data2, dtype=numpy.int32)
 		for i in range(ints1.shape[0]):
 			int1 = ints1[i]
 			int2 = ints2[i]
@@ -182,8 +182,8 @@ def readImagicHeader(headerfilename):
 	headerbytes=headfile.read(1024)
 	headfile.close()
 	
-	i=numpy.frombytes(headerbytes, dtype=numpy.int32)
-	f=numpy.frombytes(headerbytes, dtype=numpy.float32)
+	i=numpy.fromstrings(headerbytes, dtype=numpy.int32)
+	f=numpy.fromstrings(headerbytes, dtype=numpy.float32)
 	
 	header={}
 	imgnum=i[0]
@@ -224,7 +224,7 @@ def readIndexFromHeader(headerfilename, indexnum, numparts=100):
 	headervals=[]
 	for particle in range(numparts+1):
 		headerbytes = headfile.read(1024)
-		headervals.append(numpy.frombytes(headerbytes,dtype=numpy.float32)[indexnum])
+		headervals.append(numpy.fromstrings(headerbytes,dtype=numpy.float32)[indexnum])
 	headfile.close()
 	return headervals
 
@@ -246,7 +246,7 @@ def readImagicData(datafilename, headerdict, firstpart=1, numpart=1):
 	f.close()
 
 	shape = (numpart, headerdict['rows'], headerdict['lines'])
-	rawarray = numpy.frombytes(data, dtype=numpy.float32)
+	rawarray = numpy.fromstrings(data, dtype=numpy.float32)
 	try:
 		images = rawarray.reshape(shape)
 		images = numpy.fliplr(images)
@@ -312,7 +312,7 @@ def writeImagic(array, filename, msg=True):
 		headerstr = makeHeaderStr(partnum, array.shape, avg1, stdev1, min1, max1)
 		headfile.write(headerstr)
 		# write to imagic file
-		datafile.write(partimg.tobytes())
+		datafile.write(partimg.tostrings())
 		i += 1
 	headfile.close()
 	datafile.close()
@@ -405,7 +405,7 @@ def makeHeaderStr(partnum, shape, avg, stdev, maxval, minval):
 
 #===============
 def intToFourByte(intnum):
-	fourbyte = numpy.array((intnum), dtype=numpy.int32).tobytes()
+	fourbyte = numpy.array((intnum), dtype=numpy.int32).tostrings()
 	return fourbyte
 	if abs(intnum) > 2130706432:
 		apDisplay.printError("integer overflow")
@@ -421,7 +421,7 @@ def intToFourByte(intnum):
 
 #===============
 def fourByteToInt(fourbyte):
-	intnum = numpy.frombytes(fourbyte, dtype=numpy.int32)
+	intnum = numpy.fromstrings(fourbyte, dtype=numpy.int32)
 	return intnum[0]
 	n1 = ord(fourbyte[0])
 	n2 = ord(fourbyte[1])
@@ -443,17 +443,17 @@ def fourByteToInt(fourbyte):
 def floatToFourByte(floatnum):
 	"""
 	convert float to a 4-byte string
-	numpy.frombytes("\x02\x00\x00\x00", dtype=numpy.float32)
+	numpy.fromstrings("\x02\x00\x00\x00", dtype=numpy.float32)
 
 	\x02\x00\x00\x00 => 2.80259693e-45
 	\x01\x00\x00\x00 => 1.40129846e-45
 	"""
-	fourbyte = numpy.array((floatnum), dtype=numpy.float32).tobytes()
+	fourbyte = numpy.array((floatnum), dtype=numpy.float32).tostrings()
 	return fourbyte
 
 #===============
 def fourByteToFloat(fourbyte):
-	floatnum = numpy.frombytes(fourbyte, dtype=numpy.float32)
+	floatnum = numpy.fromstrings(fourbyte, dtype=numpy.float32)
 	return floatnum[0]
 
 #===============	
@@ -516,7 +516,7 @@ def readSingleParticleFromStack(filename, partnum=1, boxsize=None, msg=True):
 	f.close()
 
 	shape = (boxsize, boxsize)
-	partimg = numpy.frombytes(data, dtype=numpy.float32)
+	partimg = numpy.fromstrings(data, dtype=numpy.float32)
 	try:
 		partimg = partimg.reshape(boxsize, boxsize)
 		partimg = numpy.fliplr(partimg)
@@ -545,11 +545,11 @@ def appendParticleToStackFile(partarray, mergestackfile, msg=True):
 	
 	mergedata = file(mergedatafile, 'ab')
 	part32bit = numpy.asarray(partarray, dtype=numpy.float32)
-	mergedata.write(part32bit.tobytes())
+	mergedata.write(part32bit.tostrings())
 	mergedata.close()
 
 	finalsize = apFile.fileSize(mergedatafile)
-	addsize = len(part32bit.tobytes())
+	addsize = len(part32bit.tostrings())
 	if finalsize != addsize + premergesize:
 		apDisplay.printError("size mismatch %s vs. %s + %s = %s"%(
 			apDisplay.bytes(finalsize), apDisplay.bytes(addsize),
@@ -595,11 +595,11 @@ def appendParticleListToStackFile(partlist, mergestackfile, msg=True):
 	mergedata = file(mergedatafile, 'ab')
 	for partarray in partlist:	
 		part32bit = numpy.asarray(partarray, dtype=numpy.float32)
-		mergedata.write(part32bit.tobytes())
+		mergedata.write(part32bit.tostrings())
 	mergedata.close()
 
 	finalsize = apFile.fileSize(mergedatafile)
-	addsize = len(part32bit.tobytes() * len(partlist))
+	addsize = len(part32bit.tostrings() * len(partlist))
 	if finalsize != addsize + premergesize:
 		apDisplay.printError("size mismatch %s vs. %s + %s = %s"%(
 			apDisplay.bytes(finalsize), apDisplay.bytes(addsize),
@@ -906,7 +906,7 @@ def readParticleListFromStack(filename, partlist, boxsize=None, msg=True):
 		data = f.read(partbytes)
 
 		shape = (boxsize, boxsize)
-		partimg = numpy.frombytes(data, dtype=numpy.float32)
+		partimg = numpy.fromstrings(data, dtype=numpy.float32)
 		try:
 			partimg = partimg.reshape(boxsize, boxsize)
 			partimg = numpy.fliplr(partimg)
