@@ -56,23 +56,23 @@ def imageToArray(im, convertType='uint8', dtype=None, msg=True):
 	copied and modified from http://mail.python.org/pipermail/image-sig/2005-September/003554.html
 	"""
 	if im.mode == "L":
-		a = numpy.fromstrings(im.tostrings(), numpy.uint8)
+		a = numpy.fromstring(im.tostring(), numpy.uint8)
 		a = numpy.reshape(a, (im.size[1], im.size[0]))
 		#a.shape = (im.size[1], im.size[0], 1)  # alternate way
 	elif (im.mode=='RGB'):
 		apDisplay.printMsg("reading RGB and converting to L")
 		grey = im.convert('L')
-		a = numpy.fromstrings(grey.tostrings(), numpy.uint8)
+		a = numpy.fromstring(grey.tostring(), numpy.uint8)
 		a = numpy.reshape(a, (grey.size[1], grey.size[0]))
 	elif (im.mode=='RGBA'):
 		apDisplay.printMsg("reading RGBA and converting to L")
 		grey = im.convert('L')
-		a = numpy.fromstrings(grey.tostrings(), numpy.uint8)
+		a = numpy.fromstring(grey.tostring(), numpy.uint8)
 		a = numpy.reshape(a, (grey.size[1], grey.size[0]))
 	elif (im.mode=='LA'):
 		apDisplay.printMsg("reading LA and converting to L")
 		grey = im.convert('L')
-		a = numpy.fromstrings(grey.tostrings(), numpy.uint8)
+		a = numpy.fromstring(grey.tostring(), numpy.uint8)
 		a = numpy.reshape(a, (grey.size[1], grey.size[0]))
 	else:
 		raise ValueError, im.mode+" mode not considered"
@@ -101,14 +101,14 @@ def _arrayToImage(a):
 
 	if len(a.shape)==3:
 		if a.shape[2]==3:  # a.shape == (y, x, 3)
-			r = Image.fromstrings("L", (w, h), a[:,:,0].tostrings())
-			g = Image.fromstrings("L", (w, h), a[:,:,1].tostrings())
-			b = Image.fromstrings("L", (w, h), a[:,:,2].tostrings())
+			r = Image.fromstring("L", (w, h), a[:,:,0].tostring())
+			g = Image.fromstring("L", (w, h), a[:,:,1].tostring())
+			b = Image.fromstring("L", (w, h), a[:,:,2].tostring())
 			return Image.merge("RGB", (r,g,b))
 		elif a.shape[2]==1:  # a.shape == (y, x, 1)
-			return Image.fromstrings("L", (w, h), a.tostrings())
+			return Image.fromstring("L", (w, h), a.tostring())
 	elif len(a.shape)==2:  # a.shape == (y, x)
-		return Image.fromstrings("L", (w, h), a.tostrings())
+		return Image.fromstring("L", (w, h), a.tostring())
 	else:
 		raise ValueError, "unsupported image mode"
 

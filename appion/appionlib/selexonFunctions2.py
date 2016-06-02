@@ -980,14 +980,14 @@ def array2image(a):
         a = a.astype(numarray.UInt8) # convert to 8-bit
     if len(a.shape)==3:
         if a.shape[2]==3:  # a.shape == (y, x, 3)
-            r = Image.fromstrings("L", (w, h), a[:,:,0].tostrings())
-            g = Image.fromstrings("L", (w, h), a[:,:,1].tostrings())
-            b = Image.fromstrings("L", (w, h), a[:,:,2].tostrings())
+            r = Image.fromstring("L", (w, h), a[:,:,0].tostring())
+            g = Image.fromstring("L", (w, h), a[:,:,1].tostring())
+            b = Image.fromstring("L", (w, h), a[:,:,2].tostring())
             return Image.merge("RGB", (r,g,b))
         elif a.shape[2]==1:  # a.shape == (y, x, 1)
-            return Image.fromstrings("L", (w, h), a.tostrings())
+            return Image.fromstring("L", (w, h), a.tostring())
     elif len(a.shape)==2:  # a.shape == (y, x)
-        return Image.fromstrings("L", (w, h), a.tostrings())
+        return Image.fromstring("L", (w, h), a.tostring())
     else:
         raise ValueError, "unsupported image mode"
 
