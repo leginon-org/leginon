@@ -169,6 +169,7 @@ function runDownloadModel() {
 	$apix=$_POST['apix'];
 	$symm=$_POST['symm'];
 	$lowpass=$_POST['lowpass'];
+	$rundir = $_POST['outdir'];
 
 	/* *******************
 	PART 2: Check for conflicts, if there is an error display the form again
@@ -203,6 +204,7 @@ function runDownloadModel() {
 	$command.="--apix=$apix ";
 	$command.="--res=$lowpass ";
 	$command.="--symm=$symm ";
+	$command.="--rundir=$rundir ";
 	if ($box)
 		$command.="--box=$box ";
 	if ($_POST['bunit']=='on')
