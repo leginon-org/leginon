@@ -265,7 +265,7 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 						os.symlink(brightref, os.path.join(scratchdir, brightrefname))
 					targetdict['brightref'] = os.path.join(scratchdir, brightrefname)
 				#####handle darks
-				if darkref is not None and post_counting_gain is not None:
+				if darkref is not None and self.params['post_counting_gain'] is not None:
 					if handlefiles == 'copy':
 						shutil.copy(darkref, scratchdir)
 					elif handlefiles == 'link':
