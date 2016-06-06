@@ -89,6 +89,11 @@ def _arrayToImage(a):
 	"""
 	Converts array object (numpy) to image object (PIL).
 	"""
+	if hasattr(Image,'frombytes'):
+		fromstring_func = getattr(Image, 'frombytes')
+	else:
+		fromstring_func = getattr(Image, 'fromstring')
+
 	h, w = a.shape[:2]
 	boolean = numpy.bool_
 	int32 = numpy.int32
@@ -101,14 +106,14 @@ def _arrayToImage(a):
 
 	if len(a.shape)==3:
 		if a.shape[2]==3:  # a.shape == (y, x, 3)
-			r = Image.fromstring("L", (w, h), a[:,:,0].tostring())
-			g = Image.fromstring("L", (w, h), a[:,:,1].tostring())
-			b = Image.fromstring("L", (w, h), a[:,:,2].tostring())
+			r = fromstring_func("L", (w, h), a[:,:,0].tostring())
+			g = fromstring_func("L", (w, h), a[:,:,1].tostring())
+			b = fromstring_func("L", (w, h), a[:,:,2].tostring())
 			return Image.merge("RGB", (r,g,b))
 		elif a.shape[2]==1:  # a.shape == (y, x, 1)
-			return Image.fromstring("L", (w, h), a.tostring())
+			return fromstring_func("L", (w, h), a.tostring())
 	elif len(a.shape)==2:  # a.shape == (y, x)
-		return Image.fromstring("L", (w, h), a.tostring())
+		return fromstring_func("L", (w, h), a.tostring())
 	else:
 		raise ValueError, "unsupported image mode"
 
