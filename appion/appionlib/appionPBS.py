@@ -132,7 +132,7 @@ class AppionPBS(appionLoop2.AppionLoop):
 						
 						jobs.append({'jobname':jobname, 'scratchdir': scratchdir,'imgdata':imgdata,'targetdict':targetdict,'donefile':donefile})
 						
-						print command
+						#print command
 						if self.params['dryrun'] is True:
 							print "setting up only the first job and exiting"
 							sys.exit()

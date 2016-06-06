@@ -78,16 +78,19 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 		configuration_options = deProcessFrames.ConfigurationOptions()
 		options_list = configuration_options.get_options_list()
 		sections = options_list.keys()
+		self.de_options=[]
 		for section in sections:
 			for option in options_list[section]:
+				fulloption='%s_%s' % (section, option['name'])
+				self.de_options.append(fulloption)
 				if section == 'gainreference' or section == 'darkreference':
 					if option['name'] in ('filename', 'framecount'):
 						continue
 				if section == 'boxes':
 					if option['name'] in ('fromlist', 'fromonefile', 'fromfiles', 'boxsize', 'minimum'):
 						continue
-				if section == 'input' and option['name'] == 'framecount':
-					continue
+				#if section == 'input' and option['name'] == 'framecount':
+				#	continue
 				if section == 'radiationdamage':
 					if option['name'] in ('voltage'):
 						continue
@@ -97,7 +100,7 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 					metavar = 'INT'
 				elif option['type'] == float:
 					metavar = 'FLOAT'
-				self.parser.add_option('--%s_%s' % (section, option['name']), type=option['type'], metavar=metavar, help=option['help'], default=option['default'])
+				self.parser.add_option(('--%s' % (fulloption)), type=option['type'], metavar=metavar, help=option['help'], default=option['default'])
 
 		self.parser.add_option('--bad_cols', dest='bad_cols', default='', help= "Bad columns in Leginon orientation")
 		self.parser.add_option('--bad_rows', dest='bad_rows', default='', help= "Bad rows in Leginon orientation")
@@ -111,6 +114,7 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 		self.parser.add_option("--output_rotation", dest="output_rotation", type='int', default=0, help="Rotate output particles by the specified angle", metavar="INT")
 		self.parser.add_option("--make_summary_image", dest="make_summary_image", action='store_true', default=False, help="Make summary image with particle trajectories", metavar="INT")
 		self.parser.add_option("--override_bad_pixs", dest="override_bad_pixs", action='store_true', default=False, help="Override bad pixels from database", metavar="INT")
+		self.parser.add_option("--post_counting_gain", dest="post_counting_gain", default=None , help="Skip normal gain correction and instead use post counting gain", metavar="INT")
 
 	#=======================
 	def checkConflicts(self):
@@ -182,6 +186,7 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 			apDisplay.printWarning("Reference is based on %s" % self.refdata['filename'])
 		else:
 			self.refdata = imgdata
+		
 		try: 
 			brightrefpath=self.refdata['bright']['session']['image path']
 			brightrefname=self.refdata['bright']['filename']+'.mrc'
@@ -199,6 +204,13 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 			apDisplay.printWarning("Warning, dark reference not found. Frames will not be gain corrected.")
 			darkrefname=None
 			darkref=None
+			
+		###Overwrite the above if counting was used
+		if self.params['post_counting_gain'] is not None:
+			brightref=self.params['post_counting_gain']
+			brightrefname=os.path.split(brightref)[-1]
+			darkref=None
+			darkrefname=None
 			
 		apDisplay.printMsg('Finding frames for %s' % imgdata['filename'])
 
@@ -242,31 +254,37 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 			targetdict['darkref'] = darkref
 			targetdict['framespathname'] = framespathname
 			targetdict['outpath'] = self.params['rundir']
-		elif handlefiles == 'copy':
-			if self.params['skipgain'] is False and brightref is not None and darkref is not None:
-				shutil.copy(brightref, scratchdir)
-				shutil.copy(darkref, scratchdir)
-				targetdict['brightref'] = os.path.join(scratchdir, brightrefname)
-				targetdict['darkref'] = os.path.join(scratchdir, darkrefname)
-			try:
-				if framesextension == '.frames':
-					shutil.copytree(framespathname, os.path.join(scratchdir, framesname))
-				elif framesextension == '.mrc':
-					newpath=os.path.join(scratchdir,framesname)
-					os.mkdir(newpath)
-					shutil.copy(framespathname, newpath)
-			except:
-				apDisplay.printWarning('there was a problem copying the frames for %s' % imgdata['filename'])
+		elif handlefiles == 'copy' or handlefiles == 'link':
+			####handle gains
+			if self.params['skipgain'] is False:
+				####handle brights
+				if brightref is not None:
+					if handlefiles == 'copy':
+						shutil.copy(brightref, scratchdir)
+					elif handlefiles == 'link':
+						os.symlink(brightref, os.path.join(scratchdir, brightrefname))
+					targetdict['brightref'] = os.path.join(scratchdir, brightrefname)
+				#####handle darks
+				if darkref is not None and post_counting_gain is not None:
+					if handlefiles == 'copy':
+						shutil.copy(darkref, scratchdir)
+					elif handlefiles == 'link':
+						os.symlink(darkref, os.path.join(scratchdir, darkrefname))
+					targetdict['darkref'] = os.path.join(scratchdir, darkrefname)
+			####handle frames
+			if handlefiles=='copy':
+				try:
+					if framesextension == '.frames':
+						shutil.copytree(framespathname, os.path.join(scratchdir, framesname))
+					elif framesextension == '.mrc':
+						newpath=os.path.join(scratchdir,framesname)
+						os.mkdir(newpath)
+						shutil.copy(framespathname, newpath)
+				except:
+					apDisplay.printWarning('there was a problem copying the frames for %s' % imgdata['filename'])
+			elif handlefiles=='link':
+				os.symlink(framespathname, os.path.join(scratchdir, framesname))
 
-			targetdict['framespathname'] = os.path.join(scratchdir, framesname)
-			targetdict['outpath'] = os.path.join(scratchdir, imgdata['filename'])
-		elif handlefiles == 'link':
-			if self.params['skipgain'] is False and brightref is not None and darkref is not None:
-				os.symlink(brightref, os.path.join(scratchdir, brightrefname))
-				os.symlink(darkref, os.path.join(scratchdir, darkrefname))
-				targetdict['brightref'] = os.path.join(scratchdir, brightrefname)
-				targetdict['darkref'] = os.path.join(scratchdir, darkrefname)
-			os.symlink(framespathname, os.path.join(scratchdir, framesname))
 			targetdict['framespathname'] = os.path.join(scratchdir, framesname)
 			targetdict['outpath'] = os.path.join(scratchdir, imgdata['filename'])
 			
@@ -399,13 +417,18 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 
 		#set appion specific options
 		#flatfield references
-		if self.params['skipgain'] is not True and targetdict['brightref'] is not None and targetdict['darkref'] is not None:
-			self.params['gainreference_filename'] = targetdict['brightref']
-			brightnframes = imgdata['bright']['camera']['nframes']
-			self.params['gainreference_framecount'] = brightnframes
-			self.params['darkreference_filename'] = targetdict['darkref']
-			darknframes = imgdata['dark']['camera']['nframes']
-			self.params['darkreference_framecount'] = darknframes
+		if self.params['skipgain'] is not True:
+			if 'brightref' in targetdict:
+				self.params['gainreference_filename'] = targetdict['brightref']
+				brightnframes = imgdata['bright']['camera']['nframes']
+				if self.params['post_counting_gain'] is not None:
+					self.params['gainreference_framecount'] = 1
+				else:
+					self.params['gainreference_framecount'] = brightnframes
+			if 'darkref' in targetdict:
+				self.params['darkreference_filename'] = targetdict['darkref']
+				darknframes = imgdata['dark']['camera']['nframes']
+				self.params['darkreference_framecount'] = darknframes
 		
 		if self.params['override_bad_pixs'] is False:
 			apDisplay.printMsg('Using bad pixels from database')
@@ -413,12 +436,18 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 		else:
 			apDisplay.printMsg('Using bad pixels from command line')
 			
-		self.params['input_framecount'] = nframes
+		#self.params['input_framecount'] = nframes
 		self.params['output_invert'] = 0
 		self.params['radiationdamage_apix'] = apix
 		self.params['radiationdamage_voltage'] = kev
 		if self.params['stackid'] is not None:
 			self.params['boxes_fromfiles']=1
+		else:
+			xstart=0+self.params['border']
+			ystart=0+self.params['border']
+			xend=imgdata['camera']['dimension']['y']-self.params['border']
+			yend=imgdata['camera']['dimension']['x']-self.params['border']
+			self.params['input_roi']='%d,%d,%d,%d' % (xstart,ystart,xend,yend)
 		if os.path.exists(targetdict['outpath']):
 			shutil.rmtree(targetdict['outpath'])
 		os.mkdir(targetdict['outpath'])
@@ -427,7 +456,10 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 		keys.sort()
 		for key in keys:
 			param = self.params[key]
-			if param == None or param == '' or key == 'description':
+			#print key, key in self.de_options
+			if param == None or param == '': 
+				pass
+			elif (key in self.de_options) is False:
 				pass
 			else:
 				option = '--%s=%s' % (key, param)
