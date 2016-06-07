@@ -103,14 +103,14 @@ def readPositionsFromAlignLog(filename):
 	lines = text[text.find('Sum Frame'):text.find('Save Sum')].split('\n')[1:-2]
 	positions = []
 	for line in lines:
-		position_strings = line.split('shift:')[-1].split()
-		try:
-			position_x = float(position_strings[0])
-			position_y = float(position_strings[1])
-			positions.append((position_x,position_y))
-		except:
-			# Issue #4234
-			break
+		shift_bits = line.split('shift:')
+		# Issue #4234
+		if len(shift_bits) <=1:
+			continue
+		position_strings = shift_bits[1].split()
+		position_x = float(position_strings[0])
+		position_y = float(position_strings[1])
+		positions.append((position_x,position_y))
 	return positions
 
 def printDriftStats(filenamepattern, apix):
