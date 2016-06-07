@@ -98,6 +98,7 @@ class RelionAlign2DForm extends BasicLayoutForm
 		$params->addParam( "zero_mask", $zero_mask, "Zero Masking");
 		$params->addParam( "commit", $commit, "Commit to Database" );
 		$params->addParam( "correctnorm",$correctnorm,"Perform normalization error correction");
+		$params->addPAram( "invert",$invert,"Invert contrast");
 		// Validations
 		$params->addValidation( "numpart", "minval=4" );
 
@@ -158,6 +159,7 @@ class RelionAlign2DForm extends BasicLayoutForm
 		$html.= $params->insertCheckboxField("flat",'','relion2DMaxlike.flattensolvent');
 		$html.= $params->insertCheckboxField("zero_mask",'','relion2DMaxlike.zeromasking');
 		$html.= $params->insertCheckboxField("correctnorm",'','relion2DMaxlike.correctnorm');
+		$html.= $params->insertCheckboxField("invert",'','relion2DMaxlike.invert');
 
 		// When loading this page the first time, use the switchDefaults javascript function to set
 		// form parameters based on the currently selected stack.
