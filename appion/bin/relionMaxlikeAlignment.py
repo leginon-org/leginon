@@ -303,7 +303,7 @@ class RelionMaxLikeScript(appionScript.AppionScript):
 		if self.params['highpass'] is not None and self.params['highpass'] > 1:
 			a.setValue('highpass',self.params['highpass'])
 		if self.params['invert'] is True:
-			a.setValue('invert') is True
+			a.setValue('inverted',True) is True
 
 		if self.params['virtualdata'] is not None:
 			vparts = self.params['virtualdata']['particles']
