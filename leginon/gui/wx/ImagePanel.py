@@ -215,10 +215,10 @@ class ImagePanel(wx.Panel):
 			fromstring_func = getattr(Image, 'frombytes')
 		else:
 			fromstring_func = getattr(Image, 'fromstring')
-		if hasattr(Image,'tobytes'):
-			tostring_func = getattr(Image, 'tobytes')
-		else:
-			tostring_func = getattr(Image, 'tostring')
+#		if hasattr(Image,'tobytes'):
+#			tostring_func = getattr(Image, 'tobytes')
+#		else:
+#			tostring_func = getattr(Image, 'tostring')
 
 		clip = self.contrasttool.getRange()
 		wximage = wx.EmptyImage(array.shape[1], array.shape[0])
@@ -229,7 +229,7 @@ class ImagePanel(wx.Panel):
 		if self.colormap is None:
 			normarray = normarray.astype(numpy.uint8)
 			h, w = normarray.shape[:2]
-			imagedata = Image.frombytes("L", (w, h), normarray.tostring_func())
+			imagedata = Image.frombytes("L", (w, h), normarray.tostring())
 		else:
 			valarray = normarray*6.0
 			valarray = valarray.astype(numpy.uint16)
@@ -237,9 +237,9 @@ class ImagePanel(wx.Panel):
 			rgbarray = remapColor[valarray].astype(numpy.uint8)
 			print rgbarray[:,:,0]
 			h, w = normarray.shape[:2]
-			r = Image.fromstring_func("L", (w, h), rgbarray[:,:,0].tostring_func())
-			g = Image.fromstring_func("L", (w, h), rgbarray[:,:,1].tostring_func())
-			b = Image.fromstring_func("L", (w, h), rgbarray[:,:,2].tostring_func())
+			r = fromstring_func("L", (w, h), rgbarray[:,:,0].tostring())
+			g = fromstring_func("L", (w, h), rgbarray[:,:,1].tostring())
+			b = fromstring_func("L", (w, h), rgbarray[:,:,2].tostring())
 			imagedata = Image.merge("RGB", (r,g,b))
 		wximage.SetData(imagedata.convert('RGB').tobytes())
 		return wximage
