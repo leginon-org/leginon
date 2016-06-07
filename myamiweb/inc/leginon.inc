@@ -97,7 +97,7 @@ class leginondata {
 		return $sessionId_exists;
 	}
 
-	function getSessions($comment="", $projectId=false, $like="") {
+	function getSessions($comment="", $projectId=false, $like="", $temId=false, $camId=false) {
 		if ($like)
 			$wherelike = "and s.`name` like '$like' ";
 		
@@ -116,13 +116,29 @@ class leginondata {
 		} else {
 			$whereproject = ' ';
 		}
+		if (is_numeric($temId)) {
+			$jointem = "left join ScopeEMData scope on (scope.`DEF_id` = a.`REF|ScopeEMData|scope`) ";
+			$wheretem = "and scope.`REF|InstrumentData|tem` = ".$temId." ";
+		} else {
+			$jointem = ' ';
+			$wheretem = ' ';
+		}
+		if (is_numeric($camId)) {
+			$joincam = "left join CameraEMData c on (c.`DEF_id` = a.`REF|CameraEMData|camera`) ";
+			$wherecam = "and c.`REF|InstrumentData|ccdcamera` = ".$camId." ";
+		} else {
+			$joincam = ' ';
+			$wherecam = ' ';
+		}
 		// exclude ones without images saved
 		$q="select s.DEF_id as `id`, ".$selectcomment." as `name`, s.comment as `comment`, "
 			."s.name as `name_org`, s.`DEF_timestamp` as `stimestamp` "
 			."from ".DB_LEGINON.".AcquisitionImageData a "
-			."left join SessionData s on (s.`DEF_id` = a.`REF|SessionData|Session`) ";
+			."left join SessionData s on (s.`DEF_id` = a.`REF|SessionData|session`) ";
 		$q .= $joinproject;
+		$q .= $jointem.$joincam;
 		$where = "where a.`REF|SessionData|Session` IS NOT NULL ".$whereproject;
+		$where .= $wheretem.$wherecam;
 		$grouporder = " "
 			."group by a.`REF|SessionData|session` "
 			."order by s.DEF_timestamp DESC ";
@@ -402,10 +418,19 @@ class leginondata {
 		return $this->mysql->getSQLResult($q);
 	}
 
-	function getScopes($hostname) {
-		$q="select `DEF_id` as id, name from `InstrumentData` "
-			." where (type='TEM' or name='SimTEM') and hostname='$hostname'";
+	function getScopes($hostname=false, $real_only=false) {
+		$q="select `DEF_id` as id, name, hostname from `InstrumentData` "
+			." where (cs is not null)";
+		if (!empty($hostname)) $q .= " and hostname='$hostname'";
+		if (!empty($real_only)) $q .= " and not name like 'Sim%' and not name like 'Appion%' and hidden != 1";
 		return $this->mysql->getSQLResult($q);
+	}
+
+	function getScopesForSelection() {
+		$scopes = $this->getScopes(false,true);
+		$allscopes = array('id'=>false,'name'=>'all scopes');
+		array_unshift( $scopes, $allscopes);
+		return $scopes;
 	}
 
 	function getSummary($expId, $presetname=false, $hidden=false) {

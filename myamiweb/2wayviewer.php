@@ -7,7 +7,7 @@ if (defined('PROCESSING')) {
 }
 
 // --- get Predefined Variables form GET or POST method --- //
-list($projectId, $sessionId, $imageId, $preset, $runId) = getPredefinedVars();
+list($projectId, $sessionId, $imageId, $preset, $runId, $scopeId) = getPredefinedVars();
 
 // --- set 2nd view's preset
 $presetv1 = ($_POST) ? $_POST['v1pre'] : $_GET['v1pre'];
@@ -16,11 +16,14 @@ $presetv1 = ($_POST) ? $_POST['v1pre'] : $_GET['v1pre'];
 $lastId = $leginondata->getLastSessionId();
 $sessionId = (empty($sessionId)) ? $lastId : $sessionId;
 
+$scopes = $leginondata->getScopesForSelection();
+$scopeId = (empty($scopeId)) ? false:$scopeId;
+
 $projectdata = new project();
 $projectdb = $projectdata->checkDBConnection();
 
 if(!$sessions) {
-	$sessions = $leginondata->getSessions('description', $projectId);
+	$sessions = $leginondata->getSessions('description', $projectId, '', $scopeId);
 }
 
 if($projectdb) {
@@ -68,6 +71,8 @@ if($projectdb) {
 $viewer->setSessionId($sessionId);
 $viewer->setImageId($imageId);
 $viewer->addSessionSelector($sessions);
+$viewer->setScopeId($scopeId);
+$viewer->addScopeSelector($scopes);
 $viewer->addFileSelector($filenames);
 $viewer->setNbViewPerRow('2');
 $viewer->addjs($jsdata);
