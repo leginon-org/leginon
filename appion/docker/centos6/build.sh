@@ -20,7 +20,7 @@ wget -nc -c 'http://emg.nysbc.org/redmine/attachments/download/4485/spidersmall.
 #wget -nc -c 'http://emg.nysbc.org/redmine/attachments/download/636/Xmipp-2.4-src.tar.gz'
 wget -nc -c 'http://emg.nysbc.org/redmine/attachments/download/4484/ctf_140609.tar.gz'
 wget -nc -c 'http://emg.nysbc.org/redmine/attachments/download/4483/ctffind-4.0.16-linux64.tar.gz'
-wget -nc -c 'http://emg.nysbc.org/redmine/attachments/download/5035/eman2_centos6_docker.tgz'
+wget -nc -c 'http://emg.nysbc.org/redmine/attachments/download/5600/eman2_centos6_docker.tgz'
 wget -nc -c 'http://emg.nysbc.org/redmine/attachments/download/5034/xmipp_centos6_docker.tgz'
 wget -nc -c 'http://emg.nysbc.org/redmine/attachments/download/5166/relion-1.4.tgz'
 cd ..
