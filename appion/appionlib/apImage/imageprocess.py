@@ -22,6 +22,7 @@ class ImageFilter(object):
 		self.msg = msg
 		self.apix = 1.0
 		self.bin = 1
+		self.clipping = None
 		self.invert = False
 		self.highPass = 0.0
 		self.highPassType = "tanh"
@@ -31,7 +32,7 @@ class ImageFilter(object):
 		self.lowPass = 0.0
 		self.lowPassType = "gauss"
 		self.lowPassOptions = ("gauss", "tanh")
-		self.normalizeType = "256"
+		self.normalizeType = "mean0"
 		self.normalizeOptions = ("256", "mean0")	
 		return
 
@@ -57,6 +58,8 @@ class ImageFilter(object):
 			self.highPass = params['highpass']
 		elif 'hp' in params and params['hp'] is not None:
 			self.highPass = params['hp']
+		if 'clipping' in params and params['clipping'] is not None:
+			self.clipping = params['clipping']
 		if 'pixlimit' in params and params['pixlimit'] is not None:
 			self.pixelLimitStDev = params['pixlimit']
 		return
@@ -70,7 +73,7 @@ class ImageFilter(object):
 		
 		### make a copy to avoid overwriting the original image
 		simgarray = imgarray.copy()
-		
+
 		if self.median > 0:
 			if self.msg is True:
 				apDisplay.printMsg("Median filter of size %d pixels"%(self.median))
@@ -96,11 +99,6 @@ class ImageFilter(object):
 				### default: tanh
 				simgarray = imagefilter.tanhHighPassFilter(simgarray, self.highPass, apix=self.apix, bin=self.bin)
 
-		if self.pixelLimitStDev > 0:
-			if self.msg is True:
-				apDisplay.printMsg("Applying pixel limit filter of +/- %.1f standard deviations"%(self.pixelLimitStDev))
-			simgarray = imagefilter.pixelLimitFilter(simgarray, self.pixelLimitStDev)
-
 		if self.lowPass > 0:
 			if self.msg is True:
 				apDisplay.printMsg("Applying a low pass filter of %s A (apix %.1fA) of type %s"
@@ -110,6 +108,25 @@ class ImageFilter(object):
 			else:
 				### default: gauss
 				simgarray = imagefilter.lowPassFilter(simgarray, radius=self.lowPass, apix=self.apix, bin=self.bin)
+		#if the lowpass filter comes after the pixel limit filter, it causes artifacts
+
+		if self.pixelLimitStDev > 0:
+			if self.msg is True:
+				apDisplay.printMsg("Applying pixel limit filter of +/- %.1f standard deviations"%(self.pixelLimitStDev))
+			simgarray = imagefilter.pixelLimitFilter(simgarray, self.pixelLimitStDev, msg=self.msg)
+		#if the lowpass filter comes after the pixel limit filter, it causes artifacts
+
+		if self.clipping is not None:
+			if isinstance(self.clipping, int):
+				newshape = (self.clipping,self.clipping)
+			elif isinstance(self.clipping, tuple):
+				newshape = self.clipping
+			else:
+				apDisplay.printError("Unknown value for clip: "+str(self.clipping))
+			if newshape[0] <= simgarray.shape[0] and  newshape[1] <= simgarray.shape[1]:
+				simgarray = imagefilter.frame_cut(simgarray, newshape)
+			else:
+				apDisplay.printError("Clipping is not setup to grow image from "+str(simgarray.shape)+" to "+str(self.clipping))
 
 		if self.invert is True:
 			if self.msg is True:
@@ -121,6 +138,7 @@ class ImageFilter(object):
 		else:
 			### default: mean0
 			simgarray = imagenorm.normStdev(simgarray)
+
 
 		if self.msg is True:
 			apDisplay.printMsg("filtered image in "+apDisplay.timeString(time.time()-startt))
