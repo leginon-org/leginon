@@ -1,16 +1,14 @@
 #!/usr/bin/env python
 #
-import os,sys,re
+import os
+import sys
 import time
 import math
 import shutil
 import glob
 import cPickle
 import tarfile
-import subprocess
 import string
-from EMAN2 import *
-from sparx import *
 #appion
 import sinedon.directq
 from appionlib import proc2dLib
@@ -24,9 +22,11 @@ from appionlib import appiondata
 from appionlib import apProject
 from appionlib.apSpider import operations
 from appionlib import apIMAGIC
-from appionlib import apImagicFile
 from appionlib.apImagic import imagicFilters
 from appionlib.apImagic import imagicAlignment
+
+import EMAN2
+import sparx
 
 #=====================
 #=====================
@@ -242,7 +242,6 @@ class TopologyRepScript(appionScript.AppionScript):
 	def insertParticlesIntoDatabase(self, partlist, partrefdict):
 		# insert particle alignment information into database
 		count = 0
-		inserted = 0
 		t0 = time.time()
 		apDisplay.printColor("\nPreparing to insert particle alignment data, please wait", "cyan")
 
@@ -730,7 +729,6 @@ class TopologyRepScript(appionScript.AppionScript):
 		bfile = "msaclassify.job"
 		outfile = "classes"
 		apFile.removeStack(outfile)
-		numIters = int(self.params['numpart']*self.params['itermult'])
 		decrement = self.params['start']-self.params['end']
 		if self.params['iter']>0:
 			decrement /= float(self.params['iter'])
@@ -993,7 +991,7 @@ class TopologyRepScript(appionScript.AppionScript):
 
 		out = "sortedcls.hed"
 		# read class averages
-		d = EMData.read_images(self.params['currentcls']+".hed")
+		d = EMAN2.EMData.read_images(self.params['currentcls']+".hed")
 		# set translational search range to tenth of box size
 		ts = int(self.workingboxsize*0.1)
 
@@ -1011,7 +1009,7 @@ class TopologyRepScript(appionScript.AppionScript):
 			maxcit = -111
 			# find average with highest CC to previous class
 			for i in range(len(d)):
-				p1 = peak_search(Util.window(ccf(d[i],temp),ts,ts))
+				p1 = sparx.peak_search(sparx.Util.window(sparx.ccf(d[i],temp),ts,ts))
 				peak = p1[0][0]
 				if (peak > maxcit):
 					maxcit = peak
@@ -1020,7 +1018,7 @@ class TopologyRepScript(appionScript.AppionScript):
 					qi = i
 					pnum = d[i].get_attr('IMAGIC.imgnum')
 			temp = d[qi].copy()
-			temp=rot_shift2D(temp, 0, sx, sy, 0)
+			temp = sparx.rot_shift2D(temp, 0, sx, sy, 0)
 			del d[qi]
 			temp.write_image(out,k)
 			k+=1
@@ -1041,7 +1039,7 @@ class TopologyRepScript(appionScript.AppionScript):
 		emancmd = "proc2d %s %s inplace"%(avgfile,avgfile)
 		apEMAN.executeEmanCmd(emancmd,verbose=False)
 
-		d = EMData.read_images(avgfile)
+		d = EMAN2.EMData.read_images(avgfile)
 
 		for avgn in self.sortedList:
 			d[avgn].write_image(out,-1)
