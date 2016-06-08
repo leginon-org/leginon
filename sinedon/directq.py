@@ -20,6 +20,8 @@ def getConnection(modulename='leginondata'):
 	return connections[modulename]
 
 def complexMysqlQuery(basedbmodule,query):
+	if len(query) > 10000:
+		print "Long MySQL query of %d characters"%(len(query))
 	cur = getConnection(basedbmodule)
 	results = cur.selectall(query)
 
