@@ -8,7 +8,7 @@ if (defined('PROCESSING')) {
 }
 
 // --- get Predefined Variables form GET or POST method --- //
-list($projectId, $sessionId, $imageId, $preset, $runId) = getPredefinedVars();
+list($projectId, $sessionId, $imageId, $preset, $runId, $scopeId) = getPredefinedVars();
 
 // --- Set sessionId
 $lastId = $leginondata->getLastSessionId();
@@ -17,11 +17,14 @@ $sessionId = (empty($sessionId)) ? $lastId : $sessionId;
 $sessioninfo=$leginondata->getSessionInfo($sessionId);
 $session=$sessioninfo['Name'];
 
+$scopes = $leginondata->getScopesForSelection();
+$scopeId = (empty($scopeId)) ? false:$scopeId;
+
 $projectdata = new project();
 $projectdb = $projectdata->checkDBConnection();
 
 if(!$sessions) {
-	$sessions = $leginondata->getSessions('description', $projectId);
+	$sessions = $leginondata->getSessions('description', $projectId, '', $scopeId);
 }
 
 if($projectdb) {
@@ -31,6 +34,7 @@ if($projectdb) {
 		$sessionId = $sessions[0]['id'];
 	}
 }
+
 
 $jsdata='';
 if ($ptcl) {
@@ -77,6 +81,8 @@ if($projectdb && !empty($sessions)) {
 $viewer->setSessionId($sessionId);
 $viewer->setImageId($imageId);
 $viewer->addSessionSelector($sessions);
+$viewer->setScopeId($scopeId);
+$viewer->addScopeSelector($scopes);
 $viewer->addFileSelector($filenames);
 $viewer->setNbViewPerRow('1');
 $viewer->addjs($jsdata);

@@ -54,6 +54,10 @@ class viewer {
 		$this->sessionId=$sessionId;
 	}
 
+	function setScopeId($scopeId) {
+		$this->scopeId=$scopeId;
+	}
+
 	function setProjectId($projectId) {
 		$this->projectId=$projectId;
 	}
@@ -121,6 +125,20 @@ class viewer {
 		$selector .= '</select>';
 		$selector .= '<input type="hidden" name="sessionIdmemo" value="'.$this->sessionId.'">';
 		$this->addsessionsel = $selector;
+	}
+
+	function addScopeSelector($scopes=array()) {
+		if (is_array($scopes) && count($scopes) > 2) {
+			$selector = '<select name="scopeId" onchange="newexp()">'.$this->crlf;
+			foreach ((array)$scopes as $scope) {
+				if ($scope[id]==$this->scopeId) $s='selected'; else $s='';
+				$selector .= '<option value='.$scope[id].' '.$s.' >'
+						.$scope[hostname].'-'.$scope[name].'</option>'.$this->crlf; 
+			}
+			$selector .= '</select>';
+			$selector .= '<input type="hidden" name="scopeIdmemo" value="'.$this->scopeId.'">';
+		}
+		$this->addscopesel = $selector;
 	}
 
 	function addLoiControl($refreshtime="") {
@@ -474,6 +492,11 @@ class viewer {
 			}
 			$display .= '<td colspan=2>';
 			$display .= $this->addsessionsel;
+				$display .= "<br>";
+				if ($this->addscopesel) {
+					$display .= $this->addscopesel;
+					$display .= "<br>";
+				}
 			$display .= '</td>';
 			$display .= '</tr>';
 		}
@@ -1519,6 +1542,7 @@ function getPredefinedVars() {
 	### used in xxviewer.php redirected from ,for example, project/report.php
 	$projectId = ($_POST['projectId']) ? $_POST['projectId'] : $_GET['projectId'];
 	$sessionId = ($_POST['sessionId']) ? $_POST['sessionId'] : $_GET['expId'];
+	$scopeId = ($_POST['scopeId']) ? $_POST['scopeId'] : $_GET['scopeId'];
 	$imageId = $_GET['imageId'];
 	$preset = ($_POST) ? $_POST[$_POST['controlpre']] : $_GET['pre'];
 	$runId = '';
@@ -1526,7 +1550,7 @@ function getPredefinedVars() {
 		$imageId = ($_POST['imageId']) ? $_POST['imageId'] : $imageId;
 		$runId = $_POST[$_POST['controlview'].'ptclrun'];
 	}
-	return array($projectId, $sessionId, $imageId, $preset, $runId);
+	return array($projectId, $sessionId, $imageId, $preset, $runId,$scopeId);
 }
 
 ?>
