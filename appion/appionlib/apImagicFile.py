@@ -4,7 +4,7 @@
 
 #python
 import os
-import sys 
+import sys
 import re
 import time
 import math
@@ -891,7 +891,7 @@ def readParticleListFromStack(filename, partlist, boxsize=None, msg=True):
 
 		### for 64 bit machines, skip to desired particles 
 		if unames[-1].find('64') >= 0:
-                        f.seek(seekpos)
+			f.seek(seekpos)
 		### for 32-bit machines, seek incrementally
 		else:
 			seekpos = int(seekpos)%2**32
