@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
-from PIL import Image
+from pyami import numpil
+Image = numpil.Image2
 import numpy
 import arraystats
 
