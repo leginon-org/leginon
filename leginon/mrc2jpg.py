@@ -9,7 +9,6 @@
 #
 
 from pyami import mrc
-from PIL import Image
 import NumericImage
 import re
 

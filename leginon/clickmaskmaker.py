@@ -14,7 +14,6 @@ import event
 import node
 import gui.wx.ClickMaskMaker
 import os
-from PIL import Image
 import numpy
 from pyami import imagefun, mrc
 from leginon import leginondata
