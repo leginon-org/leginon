@@ -303,6 +303,8 @@ class Jeol(tem.TEM):
 		return ['open', 'closed']
 
 	def getColumnValvePosition(self):
+		if not self.getJeolConfig('tem option','beam_valve'):
+			return 'open'
 		position, result = self.feg3.GetBeamValve()
 		if position:
 			return 'open'
@@ -310,6 +312,8 @@ class Jeol(tem.TEM):
 			return 'closed'
 
 	def setColumnValvePosition(self, position):
+		if not self.getJeolConfig('tem option','beam_valve'):
+			return
 		if position == 'open':
 			self.feg3.SetBeamValve(1)
 		elif position == 'closed':
@@ -1050,7 +1054,7 @@ class Jeol(tem.TEM):
 					break
 
 	def setStagePositionByAxis(self, position, axis):
-                keys = position.keys()
+		keys = position.keys()
 		if axis not in keys:
 			return
 		if axis in ('a','b'):

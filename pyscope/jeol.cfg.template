@@ -1,5 +1,8 @@
 # This configuration file is used on JEM-3200fsc at NYSBC
 [tem option]
+# beam valve. JEM1400 does not have it, for example
+BEAM_VALVE = True
+# image shift coil
 USE_PLA = True
 # true if the scope has an energy filter
 ENERGY_FILTER = True
