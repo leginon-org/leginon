@@ -941,5 +941,42 @@ var help = {
 		'radiationdamage_exposurerate' : 'Please edit help.js to add help info for this parameter.',
 		'radiationdamage_apix' : 'Please edit help.js to add help info for this parameter.',
 		'alignment_target' : 'Please edit help.js to add help info for this parameter.',
+	},
+	
+	'gctf' : {
+		
+		'kV' : 'Typically 300, 200 or 120',
+		'ac' : "Normal range 0.04~0.1; pure ice 0.04, carbon 0.1. A wrong value doesn't matter much.",
+		'dstep' : 'Use default if unknown',
+		'astm' : "Doesn't need to be accurate, within 0.1~10 times is OK",
+		'bfactor' : "Suggested range 50~300 except using 'REBS method'",
+		'boxsize' : '512 or 1024 highly recommended',
+		'do_basic_rotave' : 'Do rotational averaging, used for output CTF file. Only effects the output and is not used for CTF determination.',
+		'overlap' : 'Overlapping factor for grid boxes sampling. For boxsize=512, use 0.5',
+		'convsize' : 'Suggested 1/5 ~ 1/20 of bosize in pixels, e.g. a value of 99 for boxsize=512',
+		'mdef_fit' : 'Linear fitting defocus changes in Z-direction',
+	},	
+
+	'relion2DMaxlike' : {
+		'mpinodes' : 'Total number of nodes allocated for rmaxlike run. Set to equal the number of nodes in processing parameters.',
+		'mpiprocessors' : 'Number of processors used on each node. For memory intensive jobs, decrease this value and increase memory per thread.',
+		'mpithreads' : 'Number of threads per process. Default is 1, only adjust this value if you know what you\'re doing.',
+		'memoryperthread' : 'Amount of memory allocated per thread. For memory intensive jobs, increase this value and decrease the number of processors. Memory per thread * number of processors <= Total memory per node.',
+		'unbinnedclipdiameter' : 'Rescale the unbinned box size. Measured in pixels.',
+		'particlebinning' : 'Binning the particle images. This quickly shrinks the image to help make the processing faster.',
+		'numberofparticles' : 'Number of particles to use.',
+		'lowpassfilterradius' : 'Low pass filter applied to individual particles',
+		'highpassfilterradius' : 'High pass filter applied to individual particles',
+		'particlediameter' : 'Diameter of the circular mask that will be applied to the experimental images (in Angstroms)',
+		'numberofreferences' : 'Number of references to generate in an ab initio manner. This will depend on the amount of preferred orientation within your data. A good range to aim for could be ~100-1000 particles per reference, but because ML algorithms are computationally intense, this may not always be feasible, depending on the size of your dataset. Defaults to square root of number of particles',
+		'maxnumberofiterations' : 'Maximum number of iterations to perform without converging before giving up.',
+		'angleinc' : 'angular increment for alignment, the smaller the increment the longer it takes to run, default 5, rough run use 10 degrees',
+		'tau2fudge' : 'The regularisation parameter determines the relative weight between the experimental data and the prior. Bayes law dictates it should be 1, but sometimes better results are obtained using slightly higher values. 2D classifications seem to go better with values of 1-2.',
+		'flattensolvent' : 'Perform masking on references',
+		'zeromasking' : ' Mask surrounding background in particles to zero (by default the solvent area is filled with random noise)',
+		'correctnorm' : 'Perform normalisation error correction'
+
 	}
+		
 }
+
