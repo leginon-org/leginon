@@ -514,7 +514,7 @@ if __name__ == '__main__':
 		images1 = [getImageData(filename) for filename in filenames]
 		images = []
 		for image in images1:
-			if image['filename'][-2:] != 'gr':
+			if image['filename'][-2:] == 'gr':
 				images.append(image)
 			else:
 				print 'rejecting', image['filename']
