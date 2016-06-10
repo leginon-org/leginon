@@ -13,11 +13,13 @@ from appionlib import apImage
 from appionlib import apParam
 from appionlib import apDisplay
 from appionlib import apDatabase
+from appionlib import apDDprocess
 from appionlib import appionLoop2
 from appionlib import appiondata
 from appionlib import apInstrument
 from appionlib.apCtf import ctfdb
 from appionlib.apCtf import ctfinsert
+
 #from appionlib import ctffind4
 
 #class gctfEstimateLoop(ctffind4.ctfEstimateLoop):
@@ -54,6 +56,13 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 		## not actually necessary, since we are using GPU, but we keep it so we don't break things
 		self.parser.add_option("--ppn", dest="ppn", type="int", default=1,
 			help="number of processors", metavar="#")
+
+		self.parser.add_option("--ddstackid", dest="ddstackid",type="int",
+			help="DD stack ID", metavar="#")
+
+		self.parser.add_option("--mdef_aveN", dest="mdef_aveN", type="int",default=1,
+			help="Average number of moive frames for movie or particle stack CTF refinement")
+
 
 	#======================
 	def checkConflicts(self):
@@ -187,8 +196,12 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 		# dstep is the physical detector pixel size
 		apix = apDatabase.getPixelSize(imgdata)
 		# inputparams defocii and astig are in Angstroms
+
+		
+
+
 		inputparams = {
-			'orig': os.path.join(imgdata['session']['image path'], imgdata['filename']+".mrc"),
+	#		'orig': os.path.join(imgdata['session']['image path'], imgdata['filename']+".mrc"),
 			'input': apDisplay.short(imgdata['filename'])+".mrc",
 			'output': apDisplay.short(imgdata['filename'])+"-pow.mrc",
 
@@ -204,6 +217,32 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 #			'phase': 'no', # this is a secondary amp contrast term for phase plates
 #			'newline': '\n',
 		}
+
+
+		print '*******************'
+		print 'self.params[''dstackid''] is ',self.params['ddstackid']
+		print '*******************'
+
+	
+		if self.params['ddstackid'] is None:
+#		 self.params['ddstackid']
+#		 print 'self.params[''ddstackid''] is ',self.params['ddstackid']
+
+
+#		except NameError:
+                        origPath = os.path.join(imgdata['session']['image path'], imgdata['filename']+".mrc")
+                        inputparams['orig'] = origPath
+
+		else:
+                        self.dd = apDDprocess.DDStackProcessing()
+                        self.dd.setDDStackRun(self.params['ddstackid'])
+                        self.ddstackrun = self.dd.getDDStackRun()
+                        self.ddstackpath = self.ddstackrun['path']['path']
+                        print 'dd stack path',self.ddstackpath
+			print self.ddstackpath
+                        ddPath = os.path.join(self.ddstackpath,imgdata['filename']+"_st.mrc")
+			inputparams['orig'] = ddPath
+
 		defrange = self.params['defstep'] * self.params['numstep'] * 1e4 ## do 25 steps in either direction # in angstrum
 		inputparams['defmin']= round(bestdef-defrange, 1) #in angstrom 
 		if inputparams['defmin'] < 0:
