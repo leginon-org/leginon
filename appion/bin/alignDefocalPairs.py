@@ -13,9 +13,6 @@ from appionlib import apDatabase
 from appionlib import apPeaks
 from appionlib import apParticle
 from appionlib import apDefocalPairs
-#legacy
-#import apViewIt
-#import selexonFunctions  as sf1
 
 class AlignDefocLoop(appionLoop2.AppionLoop):
 
