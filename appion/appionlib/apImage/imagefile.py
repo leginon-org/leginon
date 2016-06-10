@@ -49,30 +49,40 @@ def convertPostscriptToPng(psfile, pngfile, size=1024):
 	if not os.path.isfile(pngfile):
 		apDisplay.printWarning("Postscript image conversion failed")
 
+def getPilImageToStringFuncName():
+	# PIL function name changes
+	im = Image.new('1', (1,1))
+	if hasattr(im,'tobytes'):
+		func_name = 'tobytes'
+	else:
+		func_name = 'tostring'
+	return func_name
+
 #=========================
 def imageToArray(im, convertType='uint8', dtype=None, msg=True):
 	"""
 	Convert PIL image to numpy array
 	copied and modified from http://mail.python.org/pipermail/image-sig/2005-September/003554.html
 	"""
+	tostring_funcname = getPilImageToStringFuncName()
 	if im.mode == "L":
-		a = numpy.fromstring(im.tostring(), numpy.uint8)
+		a = numpy.fromstring(getattr(im,tostring_funcname)(), numpy.uint8)
 		a = numpy.reshape(a, (im.size[1], im.size[0]))
 		#a.shape = (im.size[1], im.size[0], 1)  # alternate way
 	elif (im.mode=='RGB'):
 		apDisplay.printMsg("reading RGB and converting to L")
 		grey = im.convert('L')
-		a = numpy.fromstring(grey.tostring(), numpy.uint8)
+		a = numpy.fromstring(getattr(grey,tostring_funcname)(), numpy.uint8)
 		a = numpy.reshape(a, (grey.size[1], grey.size[0]))
 	elif (im.mode=='RGBA'):
 		apDisplay.printMsg("reading RGBA and converting to L")
 		grey = im.convert('L')
-		a = numpy.fromstring(grey.tostring(), numpy.uint8)
+		a = numpy.fromstring(getattr(grey,tostring_funcname)(), numpy.uint8)
 		a = numpy.reshape(a, (grey.size[1], grey.size[0]))
 	elif (im.mode=='LA'):
 		apDisplay.printMsg("reading LA and converting to L")
 		grey = im.convert('L')
-		a = numpy.fromstring(grey.tostring(), numpy.uint8)
+		a = numpy.fromstring(getattr(grey,tostring_funcname)(), numpy.uint8)
 		a = numpy.reshape(a, (grey.size[1], grey.size[0]))
 	else:
 		raise ValueError, im.mode+" mode not considered"
