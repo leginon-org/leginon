@@ -10,8 +10,11 @@ require_once "basicLoopForm.inc";
 
 class gctf extends BasicLoopForm
 {
-	function __construct( $expId, $extraHTML='', $ampcontrast='0.07', $bestdb=true, 
-		$apcontinue='1', $fieldsize='1024', $dast='0.1',  $bestdb=true,$parallel=true, $do_basic_rotave='0', $do_EPA='0', $overlap='0.5',$convsize='85', $do_Hres_ref='0', $defstep='0.1', $resmin='50',$resmax='4')
+	protected $alignedDDStackIds;
+
+
+	function __construct( $expId, $extraHTML='', $ampcontrast='0.07', $bestdb=true, $mdef_aveN='1', 	
+	$apcontinue='1', $fieldsize='1024', $dast='0.1',  $bestdb=true,$parallel=true, $do_basic_rotave='0', $do_EPA='0', $overlap='0.5',$convsize='85', $do_Hres_ref='0', $defstep='0.1', $resmin='50',$resmax='4',$useDDStack=false, $ddstackid=false)
 	{
 		parent::__construct($expId, $extraHTML);
 		
@@ -31,9 +34,13 @@ class gctf extends BasicLoopForm
 		$this->setUseLegOutDir( False ); // The output directory will be created in the Appion run directory rather than Leginon.
 		$this->setShowDesc( False ); // Flag to hide the description field of the run parameters.
 		//------ Set Parameters specific to the program that requires this new form -----//
+
+                $particle = new particledata();
+                $this->alignedDDStackIds = $particle->getDDStackRunIdsAlign($expId);
+
 		$params = $this->getFormParams();
 		
-		// The help section corresponds to the array key for these parameters found in help.js for popup help.
+		// The help section corresponds to the array key for these parameters found in help.js for popup help, $ddstackid=false.
 		$params->setHelpSection( "gctf" );
 				
 		$params->addParam( "ampcontrast", $ampcontrast, "Amplitude contrast" );
@@ -65,16 +72,12 @@ class gctf extends BasicLoopForm
 		$params->addParam( "local_resL", $local_resL, "Low resolution limit for local CTF");
 		$params->addParam( "local_resH", $local_resH, "High resolution limit for local CTF");
 		$params->addParam( "refine_local_astm", $refine_local_astm, "Local refinement astigmation");
-
-		$params->addParam( "refine_tilt", $refine_tilt, "Do tilt refinement");
+		$params->addParam( "refine_tilt", $refine_tilt, "Do tilt refinement. 0: no tilt refinement; 1: refine global tilt before local refinement
+");
 		$params->addParam( "init_tilt_ang", $init_tilt_ang, "Initial tilt angle");
 		$params->addParam( "init_tilt_err", $init_tilt_error, "Error of tilt angle");
-
-
 		$params->addParam( "do_phase_flip", $do_phase_flip, "Do phase flipping");
-
 		$params->addParam( "do_validation", $do_validation, "Do validation of CTF determination.");
-
 		$params->addParam( "boxsuffix", $boxsuffix, "Input suffix for local refinement");
 		$params->addParam( "ctfstar", $ctfstar, "Output star files to write all CTF parameters");
 		$params->addParam( "logsuffix", $logsuffix, "Output suffix for log files");
@@ -82,16 +85,44 @@ class gctf extends BasicLoopForm
 		$params->addParam( "plot_res_ring", $plot_res_ring, "Plot an estimated resolution ring on the final .ctf diagnosis file.");
 		$params->addParam( "output_time", $output_time, "Include process time measurements in output");
 		$params->addParam( "gid", $gid, "GPU ID");
-		
-		
-
-
-
+		$params->addParam( "useDDStack",$useDDStack,"Use DD Stack");	
+		$params->addParam( "ddstackid", $ddstackid, "Select an aligned framestack");
 		// Validations
 	}
 	
+        public function generateAdditionalFormLeft()
+        {
 
-	
+		
+                $this->updateFormParams();
+                $params = $this->getFormParams();
+
+		$html.=$params->insertCheckboxField("useDDStack");
+                if(!$this->alignedDDStackIds) {
+                        $html.= "<font color='red'><B>No aligned ddstacks for this session</B></FONT>\n";
+                } else{
+                        $onchange = "switchDefaults(this.value)";
+                        $particle = new particledata();
+//			$ddoptions[0] = 'Select DD stack';
+                        for($i=0;$i<count($this->alignedDDStackIds);$i++)
+                        {
+                                $ddoptions[$this->alignedDDStackIds[$i]['stackid']] = $this->alignedDDStackIds[$i]['runname'];
+                        //      echo $ddoptions[$i];
+                        }
+
+                        $html .= $params->insertStackedSelectField("ddstackid",$ddoptions,'','',$onchange);
+                }
+
+                $html .= "<br />";
+//                $html .= $params->insertCheckboxField("commit");
+
+		 $html.= parent::generateAdditionalFormLeft();
+                return $html;
+        }
+
+
+
+
 	// Generate a form for the parameters that are specific to this program (not Appion params)
 	public function generateAdditionalFormRight()
 	{
@@ -119,8 +150,7 @@ class gctf extends BasicLoopForm
 		$html.= $params->insertTextField( "resmax", $fieldSize );
 		$html.= $params->insertTextField( "fieldsize", $fieldSize );
                 $html.= $params->insertTextField( "dast", $fieldSize );
-
-
+		$html.= $params->insertTextField( "mdef_aveN",$fieldSize);
 /*
 	        $html .= "
             <br />
@@ -136,28 +166,23 @@ class gctf extends BasicLoopForm
 		$html.= $params->insertTextField( "Href_resL", $fieldSize );
 		$html.= $params->insertTextField( "Href_resH", $fieldSize );
 		$html.= $params->insertTextField( "refine_local_astm", $fieldSize );
-
+*/
                 $html .= "
             <br />
+
+
             <H4>Tilt Refinement Parameters</H4>
             <hr />";
-
-
-
 		$html.= $params->insertTextField( "refine_tilt", $fieldSize );
 		$html.= $params->insertTextField( "init_tilt_ang", $fieldSize );
 		$html.= $params->insertTextField( "init_tilt_err", $fieldSize );
-
-
+/*
                 $html .= "
             <br />
             <H4>Correction and Validation Parameters (Recommended)</H4>
             <hr />";
-
 		$html.= $params->insertTextField( "do_phase_flip", $fieldSize );
 		$html.= $params->insertTextField( "do_validation", $fieldSize );
-
-
 	                $html .= "
             <br />
             <H4>I/O Parameters</H4>
@@ -165,7 +190,7 @@ class gctf extends BasicLoopForm
 
 		$html.= $params->insertTextField( "boxsuffix", $fieldSize );
 		$html.= $params->insertTextField( "ctfstar", $fieldSize );
-		$html.= $params->insertTextField( "logsuffix", $fieldSize );
+ $msg = parent::validate( $postArray );		$html.= $params->insertTextField( "logsuffix", $fieldSize );
 		$html.= $params->insertTextField( "write_local_ctf", $fieldSize );
 		$html.= $params->insertTextField( "plot_res_ring", $fieldSize );
 		$html.= $params->insertTextField( "output_time", $fieldSize );
@@ -174,6 +199,64 @@ class gctf extends BasicLoopForm
 
 		return $html;
 	}	
+/*
+	public function validate($postArray )
+	{
+		echo 'this is a test<br><br>';
+		 $msg = parent::validate( $postArray );
+                $params = $this->getFormParams();
+		$useDDStackCheck = $params->getParamValue("useDDStack");
+		$ddstackid = $params->getParamValue("ddstackid");
+		 if($useDDStackCheck=='on')
+		{
+		$msg = var_dump($this->formParams);
+	//	($this->formParams->useDDStack['value']='off');
+		}
+		else{}
+		$this->updateFormParams();
+	return $msg;
+	}
+*/
 
-}
-?>
+
+	 public function buildCommand( $postArray )
+        {
+
+		$command = parent::buildCommand( $postArray );
+                $this->formParams->getPostedValues( $postArray );
+                $paramArray = $this->formParams->getParamArray();
+                // If the form does purely composite and does not define any params of its own,
+                // the param array will be null.
+		
+#		$command = 'gctf.py ';
+                if ( $paramArray ) {
+                        foreach ( $paramArray as $key=>$param ) {
+				
+				if(($param['name'] == 'ddstackid')&&($paramArray['useDDStack']['value']=='on'))
+				{
+				$particle = new particledata();
+				
+				$command = $this->removeCommandFlag($command,'useDDStack',$param['useDDStack']);
+				}
+				elseif(($param['name'] == 'ddstackid')&&($paramArray['useDDStack']['value']==null))
+				{
+				$command = $this->removeCommandFlag($command,'ddstackid',$param['ddstackid']);
+				$command = $this->removeCommandFlag($command,'useDDStack',$param['useDDStack']);
+				}
+				elseif(($param['name'] == 'useDDStack')&&($param['ddstackid']==''))
+				{$command = $this->removeCommandFlag($command,$param['ddstackid']);
+				 $command = $this->removeCommandFlag($command,$param['useDDStack']);	
+				}
+	
+
+				else
+				{
+       //                         $command = $this->addCommandFlag( $command, $param['name'] );
+				}
+				
+                        }
+                }
+                return $command;
+	}
+
+	}
