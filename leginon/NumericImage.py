@@ -9,12 +9,12 @@
 #
 
 from wx import EmptyImage
-from PIL import Image
 import numpy
 import math
 import sys
 import time
-from pyami import imagefun
+from pyami import imagefun, numpil
+Image = numpil.Image2
 
 ## (numpy dtype,size) => (PIL mode,  PIL rawmode)
 ntype_itype = {
@@ -44,7 +44,7 @@ def numpy2PILImage(numericarray, scale=False):
 def numpy2wxImage(numericarray):
 	image = numpy2PILImage(numericarray)
 	wximage = EmptyImage(image.size[0], image.size[1])
-	wximage.SetData(image.convert('RGB').tostring())
+	wximage.SetData(numpil.pil_image_tostring(imagedata.convert('RGB')))
 	return wximage
 
 # resize and rotate filters:  NEAREST, BILINEAR, BICUBIC
@@ -198,9 +198,8 @@ class NumericImage:
                 self.__use_numeric(n)
 
 if __name__ == '__main__':
-	from numpy import *
 
-	a = array([5,6,7,8,9], Float)
+	a = numpy.array([5,6,7,8,9], numpy.float)
 	print 'a', a
 	b = imagefun.linearscale(a, (None,None), (0,1))
 	print 'b', b
@@ -211,5 +210,5 @@ if __name__ == '__main__':
 	b = imagefun.linearscale(a, (6,8), (1.0,-1.0))
 	print 'b', b
 
-	#a1 = reshape(arrayrange(128**2), (128,128))
-	#n1 = NumericImage(a)
+	a1 = numpy.reshape(numpy.array(range(128**2)), (128,128))
+	n1 = NumericImage(a1)

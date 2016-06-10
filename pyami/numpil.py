@@ -26,15 +26,15 @@ def im2numpy(im):
 	width,height = im.size
 	shape = height,width
 	if im.mode == 'F':
-		s = im.tostring()
+		s = pil_image_tostring(im)
 		a = numpy.fromstring(s, numpy.float32)
 	elif im.mode == 'RGB':
-		s = im.tostring()
+		s = pil_image_tostring(im)
 		a = numpy.fromstring(s, numpy.uint8)
 		shape = shape + (3,)
 	else:
 		im = im.convert('L')
-		s = im.tostring()
+		s = pil_image_tostring(im)
 		a = numpy.fromstring(s, numpy.uint8)
 	a.shape = shape
 	return a
@@ -107,6 +107,38 @@ def write(a, imfile=None, format=None, limits=None, writefloat=False):
 	except KeyError:
 		## bad file format
 		sys.stderr.write('Bad PIL image format.  Try one of these: %s\n' % (pilformats,))
+
+def getPilImageToStringFuncName():
+	# PIL function name changes
+	im = Image.new('1', (1,1))
+	if hasattr(im,'tobytes'):
+		func_name = 'tobytes'
+	else:
+		func_name = 'tostring'
+	return func_name
+
+def getPilImageToStringFunc(obj):
+	# obj is an instance of image class in PIL Image module
+	func_name = getPilImageToStringFuncName()
+	return getattr(obj,func_name)
+
+def getPilFromStringFuncName():
+	# PIL function name changes
+	if hasattr(Image,'frombytes'):
+		func_name = 'frombytes'
+	else:
+		func_name = 'fromstring'
+	return func_name
+
+def pil_image_tostring(obj, encoder_name="raw", *args):
+	# obj is an instance of image class in PIL Image module
+	return getPilImageToStringFunc(obj)(encoder_name, *args)
+
+def fromstring(data, decoder_name="raw", *args):
+	return getattr(Image, getPilFromStringFuncName())(data,decoder_name, *args)
+
+Image2 = Image
+Image2.frombytes = fromstring
 
 if __name__ == '__main__':
 	a = textArray('Hello')

@@ -92,8 +92,9 @@ class Viewer(wx.Panel):
 						    contrastlimit = extrema
             else:
 						    contrastlimit = (imagemin,imagemax)
-        self.numarrayplugin.setValueRange(contrastlimit)
         self.numarrayplugin.setNumpy(array)
+				# Issue #4251 value range must be set after numpy is set since setNumpy set it to exterma
+        self.numarrayplugin.setValueRange(contrastlimit)
         self.tools.infotool.setStatistics(array)
         self.tools.valuescalebitmap.updateParameters(extrema=extrema,
                                                       fromrange=contrastlimit)

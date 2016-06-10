@@ -1,4 +1,5 @@
-from PIL import Image
+from pyami import numpil
+Image = numpil.Image2
 import math
 import numpy
 import wx
@@ -101,7 +102,7 @@ def numpy2RGBImage(array, x=0, y=0, width=None, height=None,
 def numpy2wxImage(*args, **kwargs):
     rgbimage = numpy2RGBImage(*args, **kwargs)
     wximage = wx.EmptyImage(*rgbimage.size)
-    wximage.SetData(rgbimage.tostring())
+    wximage.SetData(numpil.pil_image_tostring(rgbimage))
     return wximage
 
 def numpy2wxBitmap(*args, **kwargs):

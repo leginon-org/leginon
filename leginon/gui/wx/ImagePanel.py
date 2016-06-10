@@ -23,12 +23,14 @@
 #
 
 import cStringIO
-from pyami import mrc, arraystats
+from pyami import mrc, arraystats, numpil
 import numpy
+from pyami import numpil
+Image = numpil.Image2
+
 import wx
 import sys
 import math
-from PIL import Image
 import leginon.gui.wx.Stats
 import ImagePanelTools
 import SelectionTool
@@ -211,6 +213,7 @@ class ImagePanel(wx.Panel):
 
 	#--------------------
 	def numpyToWxImage(self, array):
+
 		clip = self.contrasttool.getRange()
 		wximage = wx.EmptyImage(array.shape[1], array.shape[0])
 		normarray = array.astype(numpy.float32)
@@ -226,13 +229,13 @@ class ImagePanel(wx.Panel):
 			valarray = valarray.astype(numpy.uint16)
 			remapColor = numpy.array(self.colormap)
 			rgbarray = remapColor[valarray].astype(numpy.uint8)
-			print rgbarray[:,:,0]
 			h, w = normarray.shape[:2]
 			r = Image.fromstring("L", (w, h), rgbarray[:,:,0].tostring())
 			g = Image.fromstring("L", (w, h), rgbarray[:,:,1].tostring())
 			b = Image.fromstring("L", (w, h), rgbarray[:,:,2].tostring())
 			imagedata = Image.merge("RGB", (r,g,b))
-		wximage.SetData(imagedata.convert('RGB').tostring())
+
+		wximage.SetData(numpil.pil_image_tostring(imagedata.convert('RGB')))
 		return wximage
 
 	#--------------------
