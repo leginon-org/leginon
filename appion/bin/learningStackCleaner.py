@@ -3,6 +3,7 @@
 import os
 import wx
 import sys
+import time
 import math
 import numpy
 import random
@@ -20,53 +21,51 @@ from sklearn import decomposition
 ### TODO
 # save/load particle data to file
 # add button to clear decisions
+# sort discrepancies
 # create web launcher
 # work with larger stack
+# horizontal of vertical sum
 # auto update particles on change of clipping
 # allow users to select what is input to dimension reducer:
 #	input options: convolution, phasespec, powerspec, raw image, rotational average, pixel statistics
 # allow users to choose system of dimension reducer (PCA, straight)
 # allow users to choose system of classifier (SVm, CNN)
 # add statistics to classifier page (# good/bad), amount of input data
+# add number of particles remaining to train page
 #=========================
 class PCA(object):
 	#---------------
-	def __init__( self, data, boxsize, n_components):
+	def __init__( self, data, n_components=20, pcaType='complete'):
 		"""
 		data = 2D array: rows of 1D images, columns of pixels
 		n_components = number of components to keep
 		"""
+		t0 = time.time()
 		self.n_components = n_components
 		# calculate the covariance matrix
-		#data -= data.mean()
-		#data /= data.std()
-		#self.pca = decomposition.RandomizedPCA(n_components=n_components, whiten=True)
-		#self.pca = decomposition.KernelPCA(n_components=n_components, kernel='rbf')
-		self.pca = decomposition.PCA(n_components=n_components, whiten=True)
+		#self.pca = decomposition.KernelPCA(n_components=n_components, kernel='rbf') #our data does not with this
+		if pcaType.lower().startswith('complete'):
+			print "using complete PCA"
+			self.pca = decomposition.PCA(n_components=n_components, whiten=True)
+		elif pcaType.lower().startswith('random'):
+			print "using randomized PCA"
+			self.pca = decomposition.RandomizedPCA(n_components=n_components, whiten=True)
 		print "performing principal component analysis (pca)"
 		try:
 			self.pca.fit(data)
 		except ValueError:
 			print data
 			raise ValueError
-		print "pca complete"
-		#print "self.pca.components_.shape", self.pca.components_.shape
-		#print "(n_components, boxsize, boxsize)", n_components, boxsize, boxsize
-		#self.eigenrows = numpy.copy(self.pca.components_)
-		#print "data.shape", data.shape
-		self.eigenvalues = self.pca.transform(data)
-		#print numpy.around(self.eigenvalues, 3)
+		print "pca finished in %.1f seconds"%(time.time()-t0)
 		return
 
 	#---------------
-	def getEigenValue(self, imgStats):
+	def getEigenValue(self, dataVec):
 		try:
-			#print "getEigenValue: imgStats.reshape(1, -1).shape", imgStats.reshape(1, -1).shape
-			evals = self.pca.transform(imgStats.reshape(1, -1))[0]
+			evals = self.pca.transform(dataVec.reshape(1, -1))[0]
 		except ValueError:
-			print imgStats
+			print dataVec
 			raise ValueError
-		#print "evals=", numpy.around(evals, 3)
 		return evals
 
 #=========================
@@ -81,13 +80,11 @@ class DataClass(object):
 				self.stackfile = tempfile
 		self.numpart = apFile.numImagesInStack(self.stackfile)
 		self.boxsize = apFile.getBoxSize(self.stackfile)[0]
-		print "Num Part %d, Box Size %d"%(self.numpart, self.boxsize)
+		#print "Num Part %d, Box Size %d"%(self.numpart, self.boxsize)
 		self.imgproc = imageprocess.ImageFilter()
 		self.imgproc.normalizeType = '256'
 		self.imgproc.pixelLimitStDev = 6.0
-
 		self.imgproc.msg = False
-
 		### create a map to random particles
 		self.particleMap = range(1, self.numpart+1)
 		random.shuffle(self.particleMap)
@@ -97,6 +94,29 @@ class DataClass(object):
 		self.count = 0
 		self.statCache = {}
 		self.pca = None
+
+	#---------------
+	def getSelectionStatistics(self):
+		goodParticles = 0
+		for key in self.particleTarget.keys():
+			if self.particleTarget[key] == 1:
+				goodParticles += 1
+		# goodParticles, assignedParticles, totalParticles
+		return (goodParticles, len(self.particleTarget), self.numpart)
+
+	#---------------
+	def getStatsText(self):
+		goodParticles, assignedParticles, totalParticles = self.getSelectionStatistics()
+		remaining = totalParticles-assignedParticles
+		badParticles = assignedParticles-goodParticles
+		mytxt = ("%d of %d remaining (%d assigned; %d good / %d bad). "
+			%(remaining, totalParticles, assignedParticles, goodParticles, badParticles, ))
+		apDisplay.printMsg(mytxt)
+		if self.classifier is None:
+			return mytxt
+		### add classifier stats
+		mytxt += "add classifier stats."
+		return mytxt
 
 	#---------------
 	def readAndProcessParticle(self, partnum):
@@ -125,7 +145,7 @@ class DataClass(object):
 		#print "evals.shape", evals.shape
 		assignedClass = self.classifier.predict(evals.reshape(1, -1))[0]
 		probClass = self.classifier.predict_proba(evals.reshape(1, -1))[0]
-		print "assignedClass: %.1f -- probClass1: %.3f -- probClass2: %.3f"%(assignedClass, probClass[0], probClass[1])
+		#print "%04d assign: %d -- p1: %.3f -- p2: %.3f"%(partnum, assignedClass, probClass[0], probClass[1])
 		if probClass[0] > probClass[1]:
 			assignedClass = 1
 		else:
@@ -140,7 +160,7 @@ class DataClass(object):
 		#print "evals.shape", evals.shape
 		assignedClass = self.classifier.predict(evals.reshape(1, -1))[0]
 		probClass = self.classifier.predict_proba(evals.reshape(1, -1))[0]
-		print "assignedClass: %.1f -- probClass1: %.3f -- probClass2: %.3f"%(assignedClass, probClass[0], probClass[1])
+		#print "%04d assign: %d -- p1: %.3f -- p2: %.3f"%(partnum, assignedClass, probClass[0], probClass[1])
 		return probClass
 
 	#---------------
@@ -154,11 +174,17 @@ class DataClass(object):
 		if (self.inputdict['phaseSpectra'] is True
 			 or self.inputdict['phaseStats'] is True
 			 or self.inputdict['rotPhaseAvg'] is True):
-			phasespec = imagefun.phase_spectrum(imgarray)
+			try:
+				phasespec = imagefun.phase_spectrum(imgarray)
+			except RuntimeWarning:
+				phasespec = numpy.ones(imgarray.shape)
 		if (self.inputdict['powerSpectra'] is True
 			 or self.inputdict['powerStats'] is True
 			 or self.inputdict['rotPowerAvg'] is True):
-			powerspec = imagefun.power(imgarray)
+			try:
+				powerspec = imagefun.power(imgarray)
+			except RuntimeWarning:
+				powerspec = numpy.ones(imgarray.shape)
 		if self.inputdict['imageStats'] is True:
 			stats = self.extendedImageStats(imgarray, edgemap)
 			datalist.append(stats)
@@ -268,9 +294,12 @@ class DataClass(object):
 		particleNumberList = sorted(probParticleDict, key=lambda k: probParticleDict[k])
 		newlist = particleNumberList[:nimg]
 		print "XXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+		probParticleDict2 = {}
 		for partnum in newlist:
 			probClass = self.predictParticleTargetProbability(partnum)
-		return particleNumberList[:nimg]
+			probParticleDict2[partnum] = probClass[0]
+		particleNumberList2 = sorted(probParticleDict2, key=lambda k: probParticleDict2[k])
+		return particleNumberList2
 
 	#---------------
 	def readTargetImageStats(self):
@@ -282,11 +311,18 @@ class DataClass(object):
 		return partdata
 
 	#---------------
-	def readGoodTargetImageData(self):
+	def readTargetImageData(self):
 		particleIndexes = []
-		for partnum, assignedClass in self.particleTarget.items():
-			if assignedClass == 1:
-				particleIndexes.append(partnum)
+		if self.inputdict['inputTypeChoice'].startswith('Good'):
+			for partnum, assignedClass in self.particleTarget.items():
+				if assignedClass == 1:
+					particleIndexes.append(partnum)
+		elif self.inputdict['inputTypeChoice'].startswith('Bad'):
+			for partnum, assignedClass in self.particleTarget.items():
+				if assignedClass == 2:
+					particleIndexes.append(partnum)
+		else:
+			particleIndexes = self.particleTarget.keys()
 		particleIndexes.sort()
 		partdata = []
 		for partnum in particleIndexes:
@@ -296,13 +332,14 @@ class DataClass(object):
 
 	#---------------
 	def particlePCA(self):
-		partdata = self.readGoodTargetImageData()
+		partdata = self.readTargetImageData()
 		#print "performing principal component analysis (pca)"
 		#print "partdata.shape", partdata.shape
-		n_components = 20
+		n_components = self.inputdict['numComponents']
 		if n_components > math.sqrt(partdata.shape[0]):
 			n_components = int(math.floor(math.sqrt(partdata.shape[0])))
-		self.pca = PCA(partdata, self.boxsize, n_components)
+		pcaType = self.inputdict['dimensionReduceChoice'].lower()
+		self.pca = PCA(partdata, n_components, pcaType)
 		#print "pca complete"
 		particleIndexes = self.particleTarget.keys()
 		particleIndexes.sort()
@@ -316,13 +353,30 @@ class DataClass(object):
 
 	#---------------
 	def trainSVM(self):
-		particleEigenValues = self.particlePCA()
-		targetData = self.targetDictToList()
+		particleEigenValues = numpy.array(self.particlePCA())
+		targetData = numpy.array(self.targetDictToList())
+		indices = range(len(targetData))
+		random.shuffle(indices)
+		percentTest = 0.2
+		testSize = int(math.ceil(percentTest*len(indices)))
+		print "selecting %d particles for test set"%(testSize)
+
+		trainSetIndex = indices[testSize:]
+		testSetIndex = indices[:testSize]
+
 		if len(numpy.unique(targetData)) < 2:
 			return
-		self.classifier = svm.SVC(gamma=0.001, kernel='rbf', probability=True)
+		t0 = time.time()
+		Cparameter = self.inputdict['Cparameter']
+		gammaParameter = self.inputdict['gammaParameter']
+		if gammaParameter <= 0:
+			gammaParameter = 'auto'
+		self.classifier = svm.SVC(C=Cparameter, gamma=gammaParameter, kernel='rbf', probability=True)
 		"""
 		http://scikit-learn.org/stable/auto_examples/svm/plot_rbf_parameters.html
+
+		C: Penalty parameter C of the error term. float, optional (default=1.0)
+		gamma: Kernel coefficient. If gamma is 'auto' then 1/n_features will be used instead. float, optional (default='auto')
 
 		The behavior of the model is very sensitive to the gamma parameter.
 
@@ -337,9 +391,30 @@ class DataClass(object):
 		of two classes.
 		"""
 		print "Training classifier... (please wait)"
-		self.classifier.fit(particleEigenValues, targetData)
-		print "training complete"
-		#predicted = classifier.predict()
+		#particleEigenValues = 2d array, rows are individual particles, cols are amount of each eigenvalue
+		#targetData = list of which class items are in, e.g., [2, 2, 2, 1, 2, 1, 1, 1, 1, 2, 1, 2, ]
+		self.classifier.fit(particleEigenValues[trainSetIndex], targetData[trainSetIndex])
+		print "training finished in %.1f seconds"%(time.time()-t0)
+		self.svmAccuracy(testSetIndex, particleEigenValues, targetData)
+
+	#---------------
+	def svmAccuracy(self, testSetIndex, particleEigenValues, targetData):
+		evals = particleEigenValues[testSetIndex]
+		probClasses = self.classifier.predict_proba(evals)
+		#probClass = self.classifier.predict_proba(evals.reshape(1, -1))[0]
+		prob1 = probClasses[:,0]
+		prob2 = probClasses[:,1]
+		predictClass = numpy.where(prob1 > prob2, 1, 2)
+		print probClasses
+
+		print targetData[testSetIndex]
+		print predictClass
+		match = numpy.where(targetData[testSetIndex] == predictClass, 1, 0)
+		print match
+		self.accuracy = match.mean()
+		print "accuracy", self.accuracy
+		return
+
 
 	#---------------
 	def targetDictToList(self):
@@ -358,7 +433,6 @@ class DataClass(object):
 		print "Training classifier... (please wait)"
 		self.classifier.fit(partdata, targetData)
 		print "training complete"
-		#predicted = classifier.predict()
 
 
 #=========================
@@ -407,12 +481,16 @@ class MainWindow(wx.Frame):
 		# Create navigation and working panel
 		self.navigationPanel = NavPanel(self.scrolled_window, self.main)
 		self.sizer_scroll.Add(self.navigationPanel, pos=(1, 1))
+		statsText = self.data.getStatsText()
+		self.mainStatsText = wx.StaticText(self.scrolled_window, label=statsText, style=wx.ALIGN_LEFT)
+		self.sizer_scroll.Add(self.mainStatsText, pos=(1, 2), flag=wx.ALIGN_CENTER_VERTICAL)
+
 		self.workPanel = WorkPanel(self.scrolled_window, self.main)
-		self.sizer_scroll.Add(self.workPanel, pos=(2, 1))
+		self.sizer_scroll.Add(self.workPanel, pos=(2, 1), span=(1, 2))
 
 		# Spacers
 		self.sizer_scroll.AddSpacer((10, 10), (0, 0))
-		self.sizer_scroll.AddSpacer((10, 10), (1, 2))
+		self.sizer_scroll.AddSpacer((10, 10), (1, 3))
 		self.sizer_scroll.AddSpacer((10, 10), (2, 4))
 
 		# Set up scrolling on window resize
@@ -448,20 +526,30 @@ class NavPanel(wx.Panel):
 		self.sizer_nav = wx.GridBagSizer(5, 5)
 
 		# Spacers
-		self.sizer_nav.AddSpacer((2, 2), (0, 0))
-		self.sizer_nav.AddSpacer((2, 2), (2, 3))
+		itemcol = 0
+		self.sizer_nav.AddSpacer((2, 2), (0, itemcol))
 
 		# Buttons for navigation
-		self.button1 = wx.ToggleButton(self, label='Step 1. Training')
-		self.sizer_nav.Add(self.button1, pos=(1, 1), flag=wx.EXPAND)
-		self.Bind(wx.EVT_TOGGLEBUTTON, self.EvtButton(1), self.button1)
+		itemcol += 1
+		self.button1 = wx.ToggleButton(self, label='Step %d. Training'%(itemcol))
+		self.sizer_nav.Add(self.button1, pos=(1, itemcol), flag=wx.EXPAND)
+		self.Bind(wx.EVT_TOGGLEBUTTON, self.EvtButton(itemcol), self.button1)
 
-		self.button2 = wx.ToggleButton(self, label='Step 2. Classify')
-		self.sizer_nav.Add(self.button2, pos=(1, 2), flag=wx.EXPAND)
-		self.Bind(wx.EVT_TOGGLEBUTTON, self.EvtButton(2), self.button2)
+		itemcol += 1
+		self.button2 = wx.ToggleButton(self, label='Step %d. Classify'%(itemcol))
+		self.sizer_nav.Add(self.button2, pos=(1, itemcol), flag=wx.EXPAND)
+		self.Bind(wx.EVT_TOGGLEBUTTON, self.EvtButton(itemcol), self.button2)
+
+		itemcol += 1
+		self.button3 = wx.ToggleButton(self, label='Step %d. Finish'%(itemcol))
+		self.sizer_nav.Add(self.button3, pos=(1, itemcol), flag=wx.EXPAND)
+		self.Bind(wx.EVT_TOGGLEBUTTON, self.EvtButton(itemcol), self.button3)
+
+		itemcol += 1
+		self.sizer_nav.AddSpacer((2, 2), (2, itemcol))
 
 		self.SetSizerAndFit(self.sizer_nav)
-		self.buttonsList = [self.button1, self.button2, ]
+		self.buttonsList = [self.button1, self.button2, self.button3, ]
 
 	#---------------
 	def EvtButton(self, pan):
@@ -469,7 +557,7 @@ class NavPanel(wx.Panel):
 
 	#---------------
 	def showpan(self, pan):
-		self.panelsList = [ main.workPanel.trainingPanel, main.workPanel.classPanel, ]
+		self.panelsList = [ main.workPanel.trainingPanel, main.workPanel.classPanel, main.workPanel.finishPanel, ]
 		for i in range(len(self.buttonsList)):
 				self.buttonsList[i].SetValue(0)
 				self.panelsList[i].Hide()
@@ -494,6 +582,8 @@ class WorkPanel(wx.Panel):
 		self.trainingPanel.Hide()
 		self.classPanel = ClassPanel(self, self.main)
 		self.classPanel.Hide()
+		self.finishPanel = FinishPanel(self, self.main)
+		self.finishPanel.Hide()
 
 #=========================
 class TrainPanel(wx.Panel):
@@ -523,21 +613,21 @@ class TrainPanel(wx.Panel):
 
 		# Image pretreatment options
 		itemrow += 1
-		self.medianfilter = wx.TextCtrl(self.panel_stats)
+		self.medianfilter = wx.TextCtrl(self.panel_stats, size=(40,-1), style=wx.TE_CENTRE)
 		self.medianfilter.ChangeValue("2")
 		self.sizer_stats.Add(self.medianfilter, pos=(itemrow, itemcol))
 		self.sizer_stats.Add(wx.StaticText(self.panel_stats, label='Median filter (integer)'),
 			pos=(itemrow, itemcol+1), flag=wx.ALIGN_CENTER_VERTICAL)
 
 		itemrow += 1
-		self.lowpass = wx.TextCtrl(self.panel_stats)
+		self.lowpass = wx.TextCtrl(self.panel_stats, size=(40,-1), style=wx.TE_CENTRE)
 		self.lowpass.ChangeValue('10')
 		self.sizer_stats.Add(self.lowpass, pos=(itemrow, itemcol))
 		self.sizer_stats.Add(wx.StaticText(self.panel_stats, label='Low Pass (Angstroms)'),
 			pos=(itemrow, itemcol+1), flag=wx.ALIGN_CENTER_VERTICAL)
 
 		itemrow += 1
-		self.highpass = wx.TextCtrl(self.panel_stats)
+		self.highpass = wx.TextCtrl(self.panel_stats, size=(40,-1), style=wx.TE_CENTRE)
 		self.highpass.ChangeValue('500')
 		self.sizer_stats.Add(self.highpass, pos=(itemrow, itemcol))
 		self.sizer_stats.Add(wx.StaticText(self.panel_stats, label='High Pass (Angstroms)'),
@@ -549,21 +639,21 @@ class TrainPanel(wx.Panel):
 		itemcol += 1
 
 		itemrow += 1
-		self.pixelLimitStDev = wx.TextCtrl(self.panel_stats)
+		self.pixelLimitStDev = wx.TextCtrl(self.panel_stats, size=(40,-1), style=wx.TE_CENTRE)
 		self.pixelLimitStDev.ChangeValue('-1')
 		self.sizer_stats.Add(self.pixelLimitStDev, pos=(itemrow, itemcol))
 		self.sizer_stats.Add(wx.StaticText(self.panel_stats, label='Pixel Limit (StdDevs)'),
 			pos=(itemrow, itemcol+1), flag=wx.ALIGN_CENTER_VERTICAL)
 
 		itemrow += 1
-		self.binning = wx.TextCtrl(self.panel_stats)
+		self.binning = wx.TextCtrl(self.panel_stats, size=(40,-1), style=wx.TE_CENTRE)
 		self.binning.ChangeValue('1')
 		self.sizer_stats.Add(self.binning, pos=(itemrow, itemcol))
 		self.sizer_stats.Add(wx.StaticText(self.panel_stats, label='Binning (integer)'),
 			pos=(itemrow, itemcol+1), flag=wx.ALIGN_CENTER_VERTICAL)
 
 		itemrow += 1
-		self.clipping = wx.TextCtrl(self.panel_stats)
+		self.clipping = wx.TextCtrl(self.panel_stats, size=(40,-1), style=wx.TE_CENTRE)
 		self.clipping.ChangeValue("%d"%(data.boxsize))
 		self.sizer_stats.Add(self.clipping, pos=(itemrow, itemcol))
 		self.sizer_stats.Add(wx.StaticText(self.panel_stats, label='Clipping (integer)'),
@@ -579,51 +669,66 @@ class TrainPanel(wx.Panel):
 		# Display info
 		itemrow += 1
 		self.sizer_stats.Add(wx.StaticText(self.panel_stats, label='Particle image display:'),
-			pos=(itemrow, itemcol), span=(1, 2), flag=wx.ALIGN_BOTTOM)
+			pos=(itemrow, itemcol), span=(1, 2), flag=wx.ALIGN_CENTER_VERTICAL)
 
 		itemrow += 1
-		self.nrows = wx.TextCtrl(self.panel_stats)
+		self.nrows = wx.TextCtrl(self.panel_stats, size=(40,-1), style=wx.TE_CENTRE)
 		self.nrows.ChangeValue(str(displayRows))
 		self.sizer_stats.Add(self.nrows, pos=(itemrow, itemcol))
 		self.sizer_stats.Add(wx.StaticText(self.panel_stats, label='NRows'),
 			pos=(itemrow, itemcol+1), flag=wx.ALIGN_CENTER_VERTICAL)
 
 		itemrow += 1
-		self.ncols = wx.TextCtrl(self.panel_stats)
+		self.ncols = wx.TextCtrl(self.panel_stats, size=(40,-1), style=wx.TE_CENTRE)
 		self.ncols.ChangeValue(str(displayCols))
 		self.sizer_stats.Add(self.ncols, pos=(itemrow, itemcol))
 		self.sizer_stats.Add(wx.StaticText(self.panel_stats, label='NCols'),
 			pos=(itemrow, itemcol+1), flag=wx.ALIGN_CENTER_VERTICAL)
 
+		itemrow = 0
 		itemcol += 1
 		self.sizer_stats.AddSpacer((2, 2), (0, itemcol))
 		itemcol += 1
 		self.sizer_stats.AddSpacer((2, 2), (0, itemcol))
 		itemcol += 1
 
-		self.buttonShowDiscrepancies = wx.Button(self.panel_stats, label='&Show Discrepancies', size=(-1, 30))
-		self.sizer_stats.Add(self.buttonShowDiscrepancies, pos=(1, itemcol), span=(2, 1), flag=wx.ALIGN_CENTER)
+		itemrow += 1
+		### add extra button here
+
+		itemrow += 1
+		self.buttonShowDiscrepancies = wx.Button(self.panel_stats, label='&Show Discrepancies', size=(-1, -1))
+		self.sizer_stats.Add(self.buttonShowDiscrepancies, pos=(itemrow, itemcol), span=(1, 1), flag=wx.ALIGN_CENTER)
 		self.Bind(wx.EVT_BUTTON, self.EvtShowDiscrepancies, self.buttonShowDiscrepancies)
 
-		self.buttonAcceptPredict = wx.Button(self.panel_stats, label='&Accept Predictions', size=(-1, 30))
-		self.sizer_stats.Add(self.buttonAcceptPredict, pos=(3, itemcol), span=(2, 1), flag=wx.ALIGN_CENTER)
+		itemrow += 1
+		self.buttonAcceptPredict = wx.Button(self.panel_stats, label='&Accept Predictions', size=(-1, -1))
+		self.sizer_stats.Add(self.buttonAcceptPredict, pos=(itemrow, itemcol), span=(1, 1), flag=wx.ALIGN_CENTER)
 		self.Bind(wx.EVT_BUTTON, self.EvtAcceptPredict, self.buttonAcceptPredict)
 
+		itemrow = 0
 		itemcol += 1
 		self.sizer_stats.AddSpacer((2, 2), (0, itemcol))
 		itemcol += 1
 
 		# New set
-		self.buttonNewSet = wx.Button(self.panel_stats, label='&Refresh Set', size=(-1, 30))
-		self.sizer_stats.Add(self.buttonNewSet, pos=(1, itemcol), span=(2, 1), flag=wx.ALIGN_CENTER)
+		itemrow += 1
+		self.autoFitParticles = wx.Button(self.panel_stats, label='Auto &Fit Window', size=(-1, -1))
+		self.sizer_stats.Add(self.autoFitParticles, pos=(itemrow, itemcol), span=(1, 1), flag=wx.ALIGN_CENTER)
+		self.Bind(wx.EVT_BUTTON, self.EvtAutoFitParticles, self.autoFitParticles)
+
+		itemrow += 1
+		self.buttonNewSet = wx.Button(self.panel_stats, label='&Refresh Set', size=(-1, -1))
+		self.sizer_stats.Add(self.buttonNewSet, pos=(itemrow, itemcol), span=(1, 1), flag=wx.ALIGN_CENTER)
 		self.Bind(wx.EVT_BUTTON, self.EvtRefreshSet, self.buttonNewSet)
 
-		self.buttonTrainClass = wx.Button(self.panel_stats, label='&Train and Refresh', size=(-1, 30))
-		self.sizer_stats.Add(self.buttonTrainClass, pos=(3, itemcol), span=(2, 1), flag=wx.ALIGN_CENTER)
+		itemrow += 1
+		self.buttonTrainClass = wx.Button(self.panel_stats, label='&Train and Refresh', size=(-1, -1))
+		self.sizer_stats.Add(self.buttonTrainClass, pos=(itemrow, itemcol), span=(1, 1), flag=wx.ALIGN_CENTER)
 		self.Bind(wx.EVT_BUTTON, self.EvtTrainClass, self.buttonTrainClass)
 
+		itemrow += 1
 		itemcol += 1
-		self.sizer_stats.AddSpacer((2, 2), (0, itemcol))
+		self.sizer_stats.AddSpacer((2, 2), (itemrow, itemcol))
 		itemcol += 1
 
 		# Set sizers
@@ -635,6 +740,23 @@ class TrainPanel(wx.Panel):
 		self.SetSizerAndFit(self.sizer_train)
 		self.workPanel.SetSizerAndFit(self.workPanel.sizer_work)
 		self.main.scrolled_window.SetSizerAndFit(self.main.sizer_scroll)
+
+	#---------------
+	def EvtAutoFitParticles(self, event):
+		(colPixels, rowPixels) = self.main.GetClientSize()
+		particleSize = int(self.clipping.GetValue())
+		if particleSize < 1:
+			particleSize = self.data.boxsize
+		binSize = int(self.binning.GetValue())
+		gapsize = 20
+		header = 140
+		particleWindow = particleSize/binSize + gapsize
+		nrows = int(math.floor((rowPixels-header)/particleWindow))
+		ncols = int(math.floor(colPixels/particleWindow))
+		self.nrows.SetValue(str(nrows))
+		self.ncols.SetValue(str(ncols))
+		### refresh window
+		self.EvtRefreshSet(event)
 
 	#---------------
 	def EvtRefreshSet(self, event):
@@ -724,9 +846,10 @@ class TrainPanel(wx.Panel):
 		for imgbutton in self.imgbuttonList:
 			imgbutton.SetPredictedClass()
 
-		print "GetClientSize", self.main.GetClientSize() ##use this for particle sizing
-
-		self.main.SetStatusText('Finished generating new image set.')
+		#print "GetClientSize", self.main.GetClientSize() ##use this for particle sizing
+		statsText = self.main.data.getStatsText()
+		self.main.mainStatsText.SetLabel(statsText)
+		self.main.SetStatusText('Finished generating new image set. '+statsText)
 
 #=========================
 class ImageButton(wx.Panel):
@@ -847,7 +970,7 @@ class ClassPanel(wx.Panel):
 		self.panel_input_select = wx.Panel(self, style=wx.SUNKEN_BORDER|wx.TAB_TRAVERSAL)
 		self.sizer_input_select = wx.GridBagSizer(5, 5)
 		self.sizer_input_select.Add(wx.StaticText(self.panel_input_select,
-				label='DATA TO INCLUDE IN CLASSIFICATION'), span=(1,3), pos=(0, 0))
+				label='SELECT DATA TO ANALYZE'), span=(1,3), pos=(0, 0))
 		self.sizer_input_select.AddSpacer((2, 2), (1, 0))
 
 		itemrow = 0
@@ -904,13 +1027,6 @@ class ClassPanel(wx.Panel):
 		self.rotPowerAvg.SetValue(False)
 		self.sizer_input_select.Add(self.rotPowerAvg, pos=(itemrow, itemcol))
 
-		itemcol = 1
-		itemrow += 1
-		input_types = ['Good: Particles only', 'All: Particles + Rejects', 'Bad: Rejects only', ]
-
-		self.inputTypeChoice = wx.ComboBox(self.panel_input_select, choices=input_types)
-		self.sizer_input_select.Add(self.inputTypeChoice, pos=(itemrow, itemcol), span=(1,3))
-
 		self.sizer_input_select.AddSpacer((2, 2), pos=(itemrow+1, itemcol+1))
 		return
 
@@ -926,7 +1042,15 @@ class ClassPanel(wx.Panel):
 			'powerSpectra': self.powerSpectra.GetValue(),
 			'powerStats': self.powerStats.GetValue(),
 			'rotPowerAvg': self.rotPowerAvg.GetValue(),
-			'inputTypeChoice': self.inputTypeChoice.GetValue(),
+
+			'inputTypeChoice': self.input_types[self.inputTypeChoice.GetSelection()],
+			'dimensionReduceChoice': self.dr_methods[self.dimensionReduceChoice.GetSelection()],
+			'numComponents': self.numComponents.GetValue(),
+
+			'classifierChoice': self.class_methods[self.classifierChoice.GetSelection()],
+			'Cparameter': float(self.Cparameter.GetValue()),
+			'gammaParameter': float(self.gammaParameter.GetValue()),
+
 		}
 		inputTotal = 0
 		for key in inputDict.keys():
@@ -943,19 +1067,35 @@ class ClassPanel(wx.Panel):
 		self.panel_dimension_reduce = wx.Panel(self, style=wx.SUNKEN_BORDER|wx.TAB_TRAVERSAL)
 		self.sizer_dimension_reduce = wx.GridBagSizer(5, 5)
 		self.sizer_dimension_reduce.Add(wx.StaticText(self.panel_dimension_reduce,
-				label='METHOD TO REDUCE DATA DIMENSIONALITY'), span=(1,3), pos=(0, 0))
+				label='REDUCE DATA DIMENSIONALITY'), span=(1,3), pos=(0, 0))
 		self.sizer_dimension_reduce.AddSpacer((2, 2), pos=(1, 0))
 
 		itemrow = 0
 		itemcol = 1
-		#dr_methods = ['Principal Components', 'Random Projection', 'Convolution Kernels', 'None / Everything', ]
-		dr_methods = ['Principal Components', ]
 
 		itemrow += 1
-		self.dimensionReduceChoice = wx.ComboBox(self.panel_dimension_reduce, choices=dr_methods)
-		self.sizer_dimension_reduce.Add(self.dimensionReduceChoice, pos=(itemrow, itemcol))
+		self.input_types = ['Good: Particles only', 'All: Particles + Rejects', 'Bad: Rejects only', ]
+		self.sizer_dimension_reduce.Add(wx.StaticText(self.panel_dimension_reduce, label='training data:'),
+			pos=(itemrow, itemcol), flag=wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		self.inputTypeChoice = wx.Choice(self.panel_dimension_reduce, choices=self.input_types, style=wx.CB_READONLY)
+		self.sizer_dimension_reduce.Add(self.inputTypeChoice, pos=(itemrow, itemcol+1), span=(1,3))
 
-		self.sizer_dimension_reduce.AddSpacer((2, 2), pos=(itemrow+1, itemcol+1))
+		itemrow += 1
+		#dr_methods = ['Principal Components', 'Random Projection', 'Convolution Kernels', 'None / Everything', ]
+		self.sizer_dimension_reduce.Add(wx.StaticText(self.panel_dimension_reduce, label='PCA type:'),
+			pos=(itemrow, itemcol), flag=wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		self.dr_methods = ['Complete Principal Components (more accurate)', 'Randomized Principal Components (faster)', ]
+		self.dimensionReduceChoice = wx.Choice(self.panel_dimension_reduce, choices=self.dr_methods, style=wx.CB_READONLY)
+		self.sizer_dimension_reduce.Add(self.dimensionReduceChoice, pos=(itemrow, itemcol+1))
+
+		itemrow += 1
+		self.numComponents = wx.TextCtrl(self.panel_dimension_reduce, size=(40,-1), style=wx.TE_CENTRE)
+		self.numComponents.ChangeValue(str(20))
+		self.sizer_dimension_reduce.Add(wx.StaticText(self.panel_dimension_reduce, label='number of components:'),
+			pos=(itemrow, itemcol), flag=wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		self.sizer_dimension_reduce.Add(self.numComponents, pos=(itemrow, itemcol+1))
+
+		self.sizer_dimension_reduce.AddSpacer((2, 2), pos=(itemrow+1, itemcol+2))
 		return
 
 	#---------------
@@ -963,20 +1103,47 @@ class ClassPanel(wx.Panel):
 		self.panel_classifier = wx.Panel(self, style=wx.SUNKEN_BORDER|wx.TAB_TRAVERSAL)
 		self.sizer_classifier = wx.GridBagSizer(5, 5)
 		self.sizer_classifier.Add(wx.StaticText(self.panel_classifier,
-				label='METHOD FOR CLASSIFICATION'), span=(1,3), pos=(0, 0))
+				label='CLASSIFICATION'), span=(1,3), pos=(0, 0))
 		self.sizer_classifier.AddSpacer((2, 2), pos=(1, 0))
 
 		itemrow = 0
 		itemcol = 1
 		#class_methods = ['Simple Vector Machine', 'TensorFlow Conv. Neural Network']
-		class_methods = ['Simple Vector Machine', ]
+		self.class_methods = ['Simple Vector Machine', ]
 
 		itemrow += 1
-		self.classifierChoice = wx.ComboBox(self.panel_classifier, choices=class_methods)
-		self.sizer_classifier.Add(self.classifierChoice, pos=(itemrow, itemcol))
+		self.sizer_classifier.Add(wx.StaticText(self.panel_classifier, label='Classifier method:'),
+			pos=(itemrow, itemcol), flag=wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		self.classifierChoice = wx.Choice(self.panel_classifier, choices=self.class_methods, style=wx.CB_READONLY)
+		self.sizer_classifier.Add(self.classifierChoice, pos=(itemrow, itemcol+1), span=(1,2), )
 
-		self.sizer_classifier.AddSpacer((2, 2), pos=(itemrow+1, itemcol+1))
+		itemrow += 1
+		self.Cparameter = wx.TextCtrl(self.panel_classifier, size=(60,-1), style=wx.TE_CENTRE)
+		self.Cparameter.ChangeValue(str(1.0))
+		self.sizer_classifier.Add(wx.StaticText(self.panel_classifier, label='Penalty parameter C:'),
+			pos=(itemrow, itemcol), flag=wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		self.sizer_classifier.Add(self.Cparameter, pos=(itemrow, itemcol+1))
+
+		itemrow += 1
+		self.gammaParameter = wx.TextCtrl(self.panel_classifier, size=(60,-1), style=wx.TE_CENTRE)
+		self.gammaParameter.ChangeValue(str("0.05"))
+		self.sizer_classifier.Add(wx.StaticText(self.panel_classifier, label='Kernel coefficient (gamma):'),
+			pos=(itemrow, itemcol), flag=wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		self.sizer_classifier.Add(self.gammaParameter, pos=(itemrow, itemcol+1))
+		self.sizer_classifier.Add(wx.StaticText(self.panel_classifier, label='(-1 for auto)'),
+			pos=(itemrow, itemcol+2), flag=wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_LEFT)
+
+		self.sizer_classifier.AddSpacer((2, 2), pos=(itemrow+1, itemcol+3))
 		return
+
+#=========================
+class FinishPanel(wx.Panel):
+	#---------------
+	def __init__(self, parentPanel, main):
+		wx.Panel.__init__(self, parentPanel)
+		self.main = main
+		self.workPanel = parentPanel
+
 
 #=========================
 #=========================
