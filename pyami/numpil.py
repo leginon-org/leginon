@@ -124,7 +124,12 @@ def getPilImageToStringFunc(obj):
 
 def getPilFromStringFuncName():
 	# PIL function name changes
-	if hasattr(Image,'frombytes'):
+	# Issue #4252 python gets confused sometimes with Image come
+	# from either PIL directly
+	# or from this extended module.  Checking attribute on an image object
+	# instead of the module avoids the recursive hasattr call.
+	im = Image.new('1', (1,1))
+	if hasattr(im,'tobytes'):
 		func_name = 'frombytes'
 	else:
 		func_name = 'fromstring'
