@@ -26,15 +26,15 @@ def im2numpy(im):
 	width,height = im.size
 	shape = height,width
 	if im.mode == 'F':
-		s = im.tostring()
+		s = pil_image_tostring(im)
 		a = numpy.fromstring(s, numpy.float32)
 	elif im.mode == 'RGB':
-		s = im.tostring()
+		s = pil_image_tostring(im)
 		a = numpy.fromstring(s, numpy.uint8)
 		shape = shape + (3,)
 	else:
 		im = im.convert('L')
-		s = im.tostring()
+		s = pil_image_tostring(im)
 		a = numpy.fromstring(s, numpy.uint8)
 	a.shape = shape
 	return a
