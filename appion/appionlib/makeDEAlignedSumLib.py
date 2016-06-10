@@ -61,6 +61,7 @@ def readDriftFiles(xshift_filename,yshift_filename):
 def makePtclDriftImage(imagearray,particlelst,outname='particledrift.png',driftscalefactor=50,imagebinning=2):
 	from matplotlib import pyplot
 	imagearray=imagefun.bin2(imagearray,imagebinning)
+	#need to add pyplot.hold(False)
 	ax=pyplot.axes(frameon=False)
 	ax.imshow(imagearray,cmap='gray')
 
@@ -508,6 +509,9 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 		
 		
 		if self.params['stackid'] is not None:
+			if self.params['handlefiles'] == 'copy':
+				apDisplay.printWarning('Erasing frames from scratch directory %s ' % (targetdict['framespathname']))
+				shutil.rmtree(targetdict['framespathname'])
 			return None
 		outname = imgdata['filename'] + '-' + self.params['alignlabel'] + '.mrc'
 		outnamepath = os.path.join(targetdict['outpath'], outname)
@@ -522,6 +526,9 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 			print command
 			subprocess.call(command)
 			command = ['proc2d', outnamepath, outnamepath]
+			if self.params['output_rotation'] !=0:
+				###TODO add rot to proc2dLib
+				command.append('rot=%d' % self.params['output_rotation'])
 			command.append('clip=%d,%d' % (origx, origy))
 			command.append('edgenorm')
 			print command
@@ -571,7 +578,9 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 				parentimage=particledict['key']
 				correctedpath=os.path.join(self.params['queue_scratch'],parentimage,parentimage)
 				if os.path.exists(correctedpath):				
-					correctedparticle=glob.glob(os.path.join(correctedpath,('%s.*.region_%03d.*' % (parentimage,particledict['index']))))
+					### sibling images are an issue. The below should work but haven't tested extensively 
+					#correctedparticle=glob.glob(os.path.join(correctedpath,('%s.*.region_%03d.*' % (parentimage,particledict['index']))))
+					correctedparticle=glob.glob(os.path.join(correctedpath,('*.region_%03d.*' % (particledict['index']))))
 					#proc2d.setValue('infile', correctedparticle[0])
 					###TODO proc2dLib reads files in opposite direction of proc2d. Need to add xflip to proc2dLib
 					command=['proc2d',correctedparticle[0], newstackname]
