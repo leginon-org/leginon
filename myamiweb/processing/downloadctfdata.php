@@ -56,8 +56,9 @@ else $data[] = "image #\tnominal_def\tdefocus_1\tdefocus_2\tangle_astig\tamp_con
 foreach ($ctfdatas as $ctfdata) {
 	$imgid = $ctfdata['REF|leginondata|AcquisitionImageData|image'];
 	$filename = $appiondb->getImageNameFromId($imgid);
-	$p = $leginon->getPresetFromImageId($imgid);
-	if (!empty($preset) && $preset != $p['name'] ) continue;
+	if (!empty($preset))
+		$p = $leginon->getPresetFromImageId($imgid);
+		if ($preset != $p['name'] ) continue;
 	if ($relion) {
 		$data[]=sprintf("micrographs/%s.mrc micrographs/%s.ctf:mrc %.6f %.6f %.6f %.6f %.6f %.6f %.6f %.6f %.6f\n",
 			$filename,
