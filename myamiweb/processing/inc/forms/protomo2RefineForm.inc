@@ -48,7 +48,7 @@ class Protomo2RefineForm extends BasicLayoutForm
 	$elevation_switch='', $rotation='true', $rotation_switch='', $scale='false', $scale_switch='', $logging='true', $loglevel='2', $slab='true',
 	$map_size_x='512', $map_size_y='512', $filename_prefix='', $image_file_type='', $cachedir='cache', $protomo_outdir='out', $tilt_clip='',
 	$create_reconstruction='true', $show_window_size='true', $create_tilt_video='true', $keep_recons='false', $video_type='', $restart_cycle='',
-	$parallel='', $negative='', $positive='')
+	$parallel='', $negative='', $positive='', $starting_tlt_file='')
 	{
 		parent::__construct($expId, $extraHTML);
 		//print "_POST:" . "<br>";
@@ -827,6 +827,7 @@ class Protomo2RefineForm extends BasicLayoutForm
 				
 		$params->addParam( "tiltseries", $tiltseries, "Tilt-Series #" );
 		$params->addParam( "parallel", $parallel, "Parallelize Non-Protomo Processes" );
+		$params->addParam( "starting_tlt_file", $starting_tlt_file, "Begin with Coarse Alignment Results or Initial Alignment?" );
 		$params->addParam( "negative", $negative, "<strong>–</strong> Angle Limit" );
 		$params->addParam( "positive", $positive, "<strong>+</strong> Angle Limit" );
 		$params->addParam( "r1_region_x", $r1_region_x, "R1" );
@@ -1267,6 +1268,10 @@ class Protomo2RefineForm extends BasicLayoutForm
 				//$html.= $params->insertTextField( "select_images", $fieldSize );
 				$html.= $params->insertTextFieldInRow( "negative", $fieldSize ).'│ ';
 				$html.= $params->insertTextField( "positive", $fieldSize );
+				$html.= '<select name="starting_tlt_file" style="width:66px">';
+				$html.= '<option selected value="Coarse">Coarse</option>';
+				$html.= '<option value="Initial">Initial</option>';
+				$html.= '</select>'; $html.= docpop('protomo_starting_tlt_file', ' Begin with Coarse Alignment Results or Initial Alignment?').'<br>';
 				$html.= $params->insertTextField( "exclude_images", $fieldSize );
 				$html.= '<select name="parallel" style="width:66px">';
 				$html.= '<option selected value="True">true</option>';

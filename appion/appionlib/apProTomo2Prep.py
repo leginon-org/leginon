@@ -228,6 +228,37 @@ def writeTiltFile2(tiltfile, seriesname, imagelist, origins, tilts, azimuth, ref
 
 
 #=====================
+def defocusEstimate(seriesname, rundir, projectid, sessionname, tiltseriesnumber, tiltfilename, frame_aligned_images, pixelsize, DefocusTol, iWidth, amp_contrast):
+	"""
+	Leginondb will be queried to get the nominal defocus for the tilt-series.
+	TomoCTFps and TomoCTFFind will be used to estimate the defocus of the untilted plane.
+	These functions will be run with varying defocus, tile size, and CTFmin values.
+	Three defocus values will be used as seeds: (nominal defocus) - 1 micron, nominal defocuss, and (nominal defocus) + 1 micron.
+	"""
+	try:
+		apDisplay.printMsg('Estimating the defocus of the untilted tilt-series plane with varying defocus, tile size, and CTFmin values.')
+		os.chdir(rundir)
+		raw_path=rundir+'/raw/'
+		defocusdir='%s/defocus_estimation/' % rundir
+		os.system("mkdir %s" % defocusdir)
+		tilt_file_full=defocusdir+seriesname+'_tilts.txt'
+		stack=defocusdir+'stack.mrc'
+		log_file_full=defocusdir+'defocus_estimation.log'
+		
+		project='ap'+projectid
+		sinedon.setConfig('appiondata', db=project)
+		sessiondata = apDatabase.getSessionDataFromSessionName(sessionname)
+		tiltseriesdata = apDatabase.getTiltSeriesDataFromTiltNumAndSessionId(tiltseriesnumber,sessiondata)
+		tiltdata = apTomo.getImageList([tiltseriesdata])
+		
+		frame_tiltdata, non_frame_tiltdata = frameOrNonFrameTiltdata(tiltdata)
+		tilts,ordered_imagelist,accumulated_dose_list,ordered_mrc_files,refimg = apTomo.orderImageList(frame_tiltdata, non_frame_tiltdata, frame_aligned=frame_aligned_images)
+		
+
+	except:
+		apDisplay.printError("Defocus estimation could not be completed. Make sure TomoCTF, numpy, and scipy are in your $PATH.\n")
+
+#=====================
 def ctfCorrect(seriesname, rundir, projectid, sessionname, tiltseriesnumber, tiltfilename, frame_aligned_images, pixelsize, DefocusTol, iWidth, amp_contrast):
 	"""
 	Leginondb will be queried to get the 'best' defocus estimate on a per-image basis.
@@ -237,7 +268,7 @@ def ctfCorrect(seriesname, rundir, projectid, sessionname, tiltseriesnumber, til
 	A CTF plot using the mean defocus is made.
 	"""
 	try:
-		apDisplay.printMsg('CTF correcting all tilt images using defocus values from Leginon database...')
+		apDisplay.printMsg('CTF correcting all tilt images using per-image defocus values from Leginon database...')
 		os.chdir(rundir)
 		raw_path=rundir+'/raw/'
 		ctfdir='%s/ctf_correction/' % rundir

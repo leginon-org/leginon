@@ -76,6 +76,9 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		self.parser.add_option("--positive_recon", dest="positive_recon", type="float",  default="90",
 			help="Tilt angle, in degrees, above which all images will be removed, e.g. --positive_recon=45", metavar="float")
 		
+		self.parser.add_option("--starting_tlt_file", dest="starting_tlt_file", default="Coarse",
+			help="Begin refinement with coarse alignment results or initial alignment (ie. from the microscope)?, e.g. --starting_tlt_file=Coarse",)
+		
 		self.parser.add_option("--region_x", dest="region_x", default=512, type="int",
 			help="Pixels in x to use for region matching, e.g. --region=1024", metavar="int")
 		
@@ -1276,6 +1279,9 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		else: #Refinement. Just get maxtilt for param file
 			rawimagecount, maxtilt=self.excludeImages(tiltfilename_full, f)  #Remove images from .tlt file if user requests
 			self.params['maxtilt'] = maxtilt
+			if starting_tlt_file == "Initial":
+				apDisplay.printMsg("Using Initial alignment from the microscope as starting .tlt file for Refinement by copying original.tlt to %s." % tiltfilename)
+				os.system("cp %s %s" % (originaltilt, tiltfilename_full))
 		
 		self.params['cos_alpha']=np.cos(self.params['maxtilt']*np.pi/180)
 		

@@ -397,6 +397,7 @@ var help = {
 		'protomo_tiltseries_manual': 'Input the tilt-series number corresponding to the .tlt file you have made, e.g. if the .tlt file is named series0013.tlt then put 13 here (type: int).',
 		'protomo_dimx': 'The x-dimension of the tilt images in your \'raw\' directory, in pixels (type: int).',
 		'protomo_dimy': 'The y-dimension of the tilt images in your \'raw\' directory, in pixels (type: int).',
+		'protomo_starting_tlt_file' : 'Use the alignment results after Coarse Alignment to begin Refinement or use the Initial image shifts and rotations as recorded at the microscope to begin Refinement. Initial may be useful if Coarse Alignment results were worse than the Initial values. Check the tilt-series videos on the Coarse Alignment Summary webpage to determine which to begin with (type: selection).',
 		'protomo_pixelsize' : 'Pixelsize, in angstroms/pixel, of the tilt images in your \'raw\' directory (type: float).',
 		'protomo_parallel' : 'Parallelize depiction image and video generation.<br><br>If you encounter memory errors, try switching this to False. If you encounter libgomp errors, try switching this to False (type: True/False).',
 		'protomo_frame_aligned' : 'Use frame-aligned images instead of naively summed images, if present. If True, the last frame aligned tilt image will be used (type: True/False).',
