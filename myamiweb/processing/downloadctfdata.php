@@ -15,6 +15,7 @@ $preset = $_GET['preset'];
 
 checkExptAccessPrivilege($expId,'data');
 $appiondb = new particledata();
+$leginon = new leginondata();
 
 $ctfrundatas = $appiondb->getCtfRunIds($expId, True);
 if (!$ctfrundatas) {
@@ -28,7 +29,6 @@ else
 	$ctfdatas = $appiondb->getCtfInfo($runId);
 
 if ($relion) {
-	$leginon = new leginondata();
 	$data[] = "\ndata_\n\nloop_\n";
 	$data[] = "_rlnMicrographName #1\n";
 	$data[] = "_rlnCtfImage #2\n";
