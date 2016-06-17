@@ -51,6 +51,29 @@ echo " <p> This is the <a href='https://github.com/hbradlow/em_hole_finder'>
 echo "</td></tr>\n";
 
 /*
+** DBSCAN Auto Masking
+*/
+
+echo "<tr><td width='100' align='center'>\n";
+echo "  <img src='img/appionlogo.jpg' width='64'>\n";
+echo "</td><td>\n";
+//echo "  <h3><a href='runDBMaskAutoMasker.php?expId=$expId'>DB Mask Auto Masking</a></h3>\n";
+$form = "DBMaskAutoMaskForm";
+echo "  <h3><a href='runAppionLoop.php?expId=$expId&form=$form'>DBSCAN Auto Masking</a></h3>\n";
+echo " <p> This is the DBSCAN automasker. "
+        ."</p>\n";
+//echo "  <img src='img/align-smr.png' width='250'><br/>\n";
+echo "</td></tr>\n";
+
+
+
+
+
+
+
+
+
+/*
 ** Crud Finding
 */
 echo "<tr><td width='100' align='center'>\n";
