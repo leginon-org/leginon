@@ -715,7 +715,7 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		self.parser.add_option("--my_tlt", dest="my_tlt",  default="False",
 			help="Allows for manual tilt-series setup")
 		
-		self.parser.add_option("--make_searchable", dest="make_searchable",  default="False",
+		self.parser.add_option("--make_searchable", dest="make_searchable",  default="True",
 			help="Hidden option. Places a .tiltseries.XXXX file in the rundir so that it will be found by Batch Summary webpages.")
 		
 		#File path returns and extra information for database
