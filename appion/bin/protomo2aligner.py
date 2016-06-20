@@ -1279,7 +1279,7 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		else: #Refinement. Just get maxtilt for param file
 			rawimagecount, maxtilt=self.excludeImages(tiltfilename_full, f)  #Remove images from .tlt file if user requests
 			self.params['maxtilt'] = maxtilt
-			if starting_tlt_file == "Initial":
+			if self.params['starting_tlt_file'] == "Initial":
 				apDisplay.printMsg("Using Initial alignment from the microscope as starting .tlt file for Refinement by copying original.tlt to %s." % tiltfilename)
 				os.system("cp %s %s" % (originaltilt, tiltfilename_full))
 		
