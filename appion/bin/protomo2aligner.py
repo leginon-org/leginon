@@ -1236,7 +1236,7 @@ class ProTomo2Aligner(basicScript.BasicScript):
 		originaltilt=rundir+'/original.tlt'
 		
 		if (self.params['make_searchable'] == "True"):
-			os.system('touch %s/.tiltseries.%04d' % (rundir, self.params['tiltseries']))  #Internal tracker for what has been batch processed through alignments
+			os.system('touch %s/.tiltseries.%04d' % (rundir, int(self.params['tiltseries'])))  #Internal tracker for what has been batch processed through alignments
 		
 		###Do queries, make tlt file, CTF correct (optional), dose compensate (optional), remove highly shifted images (optional), and remove high tilt images (optional) if first run from Appion/Leginon database
 		if (self.params['coarse'] == 'True' and self.params['my_tlt'] == 'False'):
