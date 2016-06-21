@@ -143,7 +143,11 @@ def fromstring(data, decoder_name="raw", *args):
 	return getattr(Image, getPilFromStringFuncName())(data,decoder_name, *args)
 
 Image2 = Image
-Image2.frombytes = fromstring
+###temporary hack for FSU
+import PIL
+if hasattr(PIL, 'PILLOW_VERSION'):
+	if int(PIL.PILLOW_VERSION[0]) > 3:
+		Image2.frombytes = fromstring
 
 if __name__ == '__main__':
 	a = textArray('Hello')
