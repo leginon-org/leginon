@@ -21,17 +21,15 @@ from sklearn import decomposition
 ### TODO
 # save/load particle data to file
 # add button to clear decisions
-# sort discrepancies
+# sort discrepancies, better sorting
 # create web launcher
 # work with larger stack
-# horizontal of vertical sum
 # auto update particles on change of clipping
 # allow users to select what is input to dimension reducer:
-#	input options: convolution, phasespec, powerspec, raw image, rotational average, pixel statistics
+#	input options: convolution filters
 # allow users to choose system of dimension reducer (PCA, straight)
 # allow users to choose system of classifier (SVm, CNN)
-# add statistics to classifier page (# good/bad), amount of input data
-# add number of particles remaining to train page
+
 #=========================
 class PCA(object):
 	#---------------
@@ -56,7 +54,7 @@ class PCA(object):
 		except ValueError:
 			print data
 			raise ValueError
-		print "pca finished in %.1f seconds"%(time.time()-t0)
+		print "pca finished in %.3f seconds"%(time.time()-t0)
 		return
 
 	#---------------
@@ -68,18 +66,34 @@ class PCA(object):
 			raise ValueError
 		return evals
 
+	#---------------
+	def getEigenValues(self, dataVecs):
+		try:
+			evals = self.pca.transform(dataVecs)
+		except ValueError:
+			print dataVecs
+			raise ValueError
+		return evals
+
 #=========================
 class DataClass(object):
 	#---------------
-	def __init__(self):
+	def __init__(self, stackfile=None):
 		self.inputdict = None
-		self.stackfile = "/emg/data/appion/06jul12a/stacks/stack1b/start.hed"
-		if len(sys.argv) >1:
+		if stackfile is not None and os.path.exists(stackfile):
+			self.stackfile = stackfile
+		elif len(sys.argv) > 1:
 			tempfile = sys.argv[1]
-			if os.path.isfile(tempfile):
+			if os.path.exists(tempfile):
 				self.stackfile = tempfile
+		print "stackfile: ", self.stackfile
+
 		self.numpart = apFile.numImagesInStack(self.stackfile)
 		self.boxsize = apFile.getBoxSize(self.stackfile)[0]
+
+		self.keepfile = "keepfile.lst"
+		self.rejectfile = "rejectfile.lst"
+
 		#print "Num Part %d, Box Size %d"%(self.numpart, self.boxsize)
 		self.imgproc = imageprocess.ImageFilter()
 		self.imgproc.normalizeType = '256'
@@ -92,6 +106,8 @@ class DataClass(object):
 		self.lastImageRead = 0
 		self.classifier = None
 		self.count = 0
+		self.accuracy = None
+		self.numdatapoints = None
 		self.statCache = {}
 		self.pca = None
 
@@ -115,7 +131,8 @@ class DataClass(object):
 		if self.classifier is None:
 			return mytxt
 		### add classifier stats
-		mytxt += "add classifier stats."
+		if self.accuracy is not None and self.numdatapoints is not None:
+			mytxt += "%.1f%s class accuracy (input %d pts)."%(self.accuracy*100, '%', self.numdatapoints)
 		return mytxt
 
 	#---------------
@@ -158,7 +175,7 @@ class DataClass(object):
 			return None
 		evals = self.getEigenValueFromPartNum(partnum)
 		#print "evals.shape", evals.shape
-		assignedClass = self.classifier.predict(evals.reshape(1, -1))[0]
+		#assignedClass = self.classifier.predict(evals.reshape(1, -1))[0]
 		probClass = self.classifier.predict_proba(evals.reshape(1, -1))[0]
 		#print "%04d assign: %d -- p1: %.3f -- p2: %.3f"%(partnum, assignedClass, probClass[0], probClass[1])
 		return probClass
@@ -173,14 +190,16 @@ class DataClass(object):
 		edgemap = imagefun.filled_circle((boxsize, boxsize), boxsize/2.0-1.0)
 		if (self.inputdict['phaseSpectra'] is True
 			 or self.inputdict['phaseStats'] is True
-			 or self.inputdict['rotPhaseAvg'] is True):
+			 or self.inputdict['rotPhaseAvg'] is True
+			 or self.inputdict['horizPhaseAvg'] is True):
 			try:
 				phasespec = imagefun.phase_spectrum(imgarray)
 			except RuntimeWarning:
 				phasespec = numpy.ones(imgarray.shape)
 		if (self.inputdict['powerSpectra'] is True
 			 or self.inputdict['powerStats'] is True
-			 or self.inputdict['rotPowerAvg'] is True):
+			 or self.inputdict['rotPowerAvg'] is True
+			 or self.inputdict['horizPowerAvg'] is True):
 			try:
 				powerspec = imagefun.power(imgarray)
 			except RuntimeWarning:
@@ -191,32 +210,45 @@ class DataClass(object):
 		if self.inputdict['particlePixels'] is True:
 			particlePixels = imgarray[edgemap == 1].ravel()
 			datalist.append(particlePixels)
+		if self.inputdict['rotAverage'] is True:
+			xdata, ydata = ctftools.rotationalAverage(imgarray, 2, full=False)
+			datalist.append(ydata)
+		if self.inputdict['horizontalAverage'] is True:
+			ydata = imgarray.mean(1)
+			datalist.append(ydata)
+
 		if self.inputdict['phaseSpectra'] is True:
 			phasespecPixels = phasespec[edgemap == 1].ravel()
 			datalist.append(phasespecPixels)
 		if self.inputdict['phaseStats'] is True:
 			stats = self.extendedImageStats(phasespec, edgemap)
 			datalist.append(stats)
+		if self.inputdict['rotPhaseAvg'] is True:
+			xdata, ydata = ctftools.rotationalAverage(phasespec, 2, full=False)
+			datalist.append(ydata)
+		if self.inputdict['horizPhaseAvg'] is True:
+			ydata = phasespec.mean(1)
+			datalist.append(ydata)
+
 		if self.inputdict['powerSpectra'] is True:
 			powerspecPixels = powerspec[edgemap == 1].ravel()
 			datalist.append(powerspecPixels)
 		if self.inputdict['powerStats'] is True:
 			stats = self.extendedImageStats(powerspec, edgemap)
 			datalist.append(stats)
-		if self.inputdict['rotAverage'] is True:
-			xdata, ydata = ctftools.rotationalAverage(imgarray, 2, full=False)
-			datalist.append(ydata)
-		if self.inputdict['rotPhaseAvg'] is True:
-			xdata, ydata = ctftools.rotationalAverage(phasespec, 2, full=False)
-			datalist.append(ydata)
 		if self.inputdict['rotPowerAvg'] is True:
 			xdata, ydata = ctftools.rotationalAverage(powerspec, 2, full=False)
 			datalist.append(ydata)
+		if self.inputdict['horizPowerAvg'] is True:
+			ydata = powerspec.mean(1)
+			datalist.append(ydata)
+
 		if len(datalist) == 0:
 			apDisplay.printError("major error: no input vector from particle")
 		statArray = numpy.hstack(datalist)
 		statArray[numpy.isinf(statArray)] = 0
 		statArray[numpy.isnan(statArray)] = 0
+		self.numdatapoints = len(statArray)
 		return statArray
 
 	#---------------
@@ -234,12 +266,13 @@ class DataClass(object):
 	#---------------
 	def imageStats(self, imgravel):
 		N, (minval, maxval), mean, var, skew, kurt = scipy.stats.describe(imgravel)
+		statsArray = [mean, var, minval, maxval, skew, kurt]
 		absravel = numpy.abs(imgravel) + 1e-6
-		meanabs = absravel.mean()
-		gmean = scipy.stats.gmean(imgravel)
-		hmean = scipy.stats.hmean(absravel)
-		trimmean = scipy.stats.trim_mean(imgravel, 0.1)
-		return [mean,meanabs,gmean,hmean,trimmean,var,minval,maxval,skew,kurt]
+		statsArray.append(absravel.mean())
+		statsArray.append(scipy.stats.gmean(imgravel))
+		statsArray.append(scipy.stats.hmean(absravel))
+		#statsArray.append(scipy.stats.trim_mean(imgravel, 0.1)) #creates error in CentOS6
+		return numpy.array(statsArray)
 
 	#---------------
 	def getEigenValueFromPartNum(self, partnum):
@@ -311,54 +344,86 @@ class DataClass(object):
 		return partdata
 
 	#---------------
-	def readTargetImageData(self):
+	def readTargetImageData(self, choice=None, readData=True):
+		t0 = time.time()
 		particleIndexes = []
-		if self.inputdict['inputTypeChoice'].startswith('Good'):
+		if choice is None:
+			choice = self.inputdict['inputTypeChoice']
+		if choice.startswith('Good'):
 			for partnum, assignedClass in self.particleTarget.items():
 				if assignedClass == 1:
 					particleIndexes.append(partnum)
-		elif self.inputdict['inputTypeChoice'].startswith('Bad'):
+		elif choice.startswith('Bad'):
 			for partnum, assignedClass in self.particleTarget.items():
 				if assignedClass == 2:
 					particleIndexes.append(partnum)
 		else:
 			particleIndexes = self.particleTarget.keys()
 		particleIndexes.sort()
+		if readData is False:
+			return particleIndexes
 		partdata = []
 		for partnum in particleIndexes:
 			statArray = self.partnumToInputVector(partnum)
 			partdata.append(statArray)
+		print ("read image data for %d partilces in %.3f seconds"
+			%(len(particleIndexes), time.time()-t0))
 		return numpy.array(partdata)
 
 	#---------------
+	def indexMapping(self, bigSortedList, subSortedList):
+		matchIndex = []
+		j = 0
+		for i in range(len(bigSortedList)):
+			index1 = bigSortedList[i]
+			index2 = subSortedList[j]
+			if index1 == index2:
+				matchIndex.append(i)
+				j += 1
+		if len(matchIndex) != len(subSortedList):
+			print bigSortedList
+			print subSortedList
+			raise ValueError
+		return matchIndex
+
+	#---------------
 	def particlePCA(self):
-		partdata = self.readTargetImageData()
-		#print "performing principal component analysis (pca)"
-		#print "partdata.shape", partdata.shape
+		## get the data
+		partdata = self.readTargetImageData('All', readData=True)
+		AllParticleIndexes = self.readTargetImageData(readData=False)
+		selectParticleIndexes = self.readTargetImageData(readData=False)
+		matchIndex = self.indexMapping(AllParticleIndexes, selectParticleIndexes)
+		pcaPartData = partdata[matchIndex, :]
+
+		## pca
 		n_components = self.inputdict['numComponents']
-		if n_components > math.sqrt(partdata.shape[0]):
-			n_components = int(math.floor(math.sqrt(partdata.shape[0])))
+		if n_components > math.sqrt(pcaPartData.shape[0]):
+			n_components = int(math.floor(math.sqrt(pcaPartData.shape[0])))
 		pcaType = self.inputdict['dimensionReduceChoice'].lower()
-		self.pca = PCA(partdata, n_components, pcaType)
-		#print "pca complete"
-		particleIndexes = self.particleTarget.keys()
-		particleIndexes.sort()
-		particleEigenValues = []
+		self.pca = PCA(pcaPartData, n_components, pcaType)
+
+		## eigen values
+		t1 = time.time()
 		print "calculating eigen values"
-		for partnum in particleIndexes:
-			evals = self.getEigenValueFromPartNum(partnum)
-			particleEigenValues.append(evals)
-		print "eigen values complete"
+		particleEigenValues = self.pca.getEigenValues(partdata)
+		print "eigen values created in %.3f seconds"%(time.time()-t1)
 		return particleEigenValues
 
 	#---------------
 	def trainSVM(self):
-		particleEigenValues = numpy.array(self.particlePCA())
+		t0 = time.time()
 		targetData = numpy.array(self.targetDictToList())
+		if len(targetData) < 3:
+			print "pick more particles..."
+			return
+		self.writeListFiles()
+		particleEigenValues = numpy.array(self.particlePCA())
+
 		indices = range(len(targetData))
 		random.shuffle(indices)
 		percentTest = 0.2
 		testSize = int(math.ceil(percentTest*len(indices)))
+
 		print "selecting %d particles for test set"%(testSize)
 
 		trainSetIndex = indices[testSize:]
@@ -366,7 +431,7 @@ class DataClass(object):
 
 		if len(numpy.unique(targetData)) < 2:
 			return
-		t0 = time.time()
+		t1 = time.time()
 		Cparameter = self.inputdict['Cparameter']
 		gammaParameter = self.inputdict['gammaParameter']
 		if gammaParameter <= 0:
@@ -394,27 +459,29 @@ class DataClass(object):
 		#particleEigenValues = 2d array, rows are individual particles, cols are amount of each eigenvalue
 		#targetData = list of which class items are in, e.g., [2, 2, 2, 1, 2, 1, 1, 1, 1, 2, 1, 2, ]
 		self.classifier.fit(particleEigenValues[trainSetIndex], targetData[trainSetIndex])
-		print "training finished in %.1f seconds"%(time.time()-t0)
-		self.svmAccuracy(testSetIndex, particleEigenValues, targetData)
+		print "training finished in %.3f seconds"%(time.time()-t1)
+		self.testAccuracy(testSetIndex, particleEigenValues, targetData)
+		print "complete training finished in %.3f seconds"%(time.time()-t0)
 
 	#---------------
-	def svmAccuracy(self, testSetIndex, particleEigenValues, targetData):
+	def testAccuracy(self, testSetIndex, particleEigenValues, targetData):
+		t0 = time.time()
 		evals = particleEigenValues[testSetIndex]
 		probClasses = self.classifier.predict_proba(evals)
 		#probClass = self.classifier.predict_proba(evals.reshape(1, -1))[0]
 		prob1 = probClasses[:,0]
 		prob2 = probClasses[:,1]
 		predictClass = numpy.where(prob1 > prob2, 1, 2)
-		print probClasses
+		#print probClasses
 
-		print targetData[testSetIndex]
-		print predictClass
+		#print targetData[testSetIndex]
+		#print predictClass
 		match = numpy.where(targetData[testSetIndex] == predictClass, 1, 0)
-		print match
+		#print match
 		self.accuracy = match.mean()
-		print "accuracy", self.accuracy
+		print "accuracy testing finished in %.3f seconds"%(time.time()-t0)
+		print "SVM accuracy %.4f"%(self.accuracy*100)
 		return
-
 
 	#---------------
 	def targetDictToList(self):
@@ -424,16 +491,95 @@ class DataClass(object):
 		return targetList
 
 	#---------------
-	def trainSVMOLD(self):
-		partdata = self.readTargetImageData()
-		targetData = self.targetDictToList()
-		if len(numpy.unique(targetData)) < 2:
-			return
-		self.classifier = svm.SVC(gamma=0.001, kernel='rbf', probability=True)
-		print "Training classifier... (please wait)"
-		self.classifier.fit(partdata, targetData)
-		print "training complete"
+	def writeListFiles(self):
+		keepf = open("keepfile.lst", "w")
+		rejectf = open("rejectfile.lst", "w")
+		for partNum in self.particleTarget.keys():
+			assignment = self.particleTarget[partNum]
+			#write eman numbering starting at zero
+			if assignment == 1:
+				keepf.write("%d\n"%(partNum-1))
+			elif assignment == 2:
+				rejectf.write("%d\n"%(partNum-1))
+		keepf.close()
+		rejectf.close()
 
+	#---------------
+	def assignRemainingTargets(self):
+		assignedSet = set(self.particleTarget.keys())
+		allSet = set(range(1, self.numpart+1))
+		print "assigned %d of %d particles"%(len(assignedSet), len(allSet))
+
+		## Get unassignedSet that are in allSet but not in assignedSet
+		unassignedSet = allSet.difference(assignedSet)
+		unassignedList = list(unassignedSet)
+		unassignedList.sort()
+		unassignedArray = numpy.array(unassignedList)
+		apDisplay.printMsg("assigning %d unassigned particles"%(len(unassignedSet)))
+
+		if len(unassignedArray) > 0:
+			## break up into chunks of nimg to save memory
+			nimg = max(self.inputdict['numDisplayImages'], 99)
+			#subSetSize = len(unassignedArray)/nimg
+			subSetsToCreate = numpy.arange(nimg, len(unassignedArray), nimg)
+			print subSetsToCreate
+			setsOfArrays = numpy.split(unassignedArray, subSetsToCreate)
+			for unassignedSubArray in setsOfArrays:
+				print "len(unassignedSubArray)", len(unassignedSubArray)
+				## Read image data
+				t0 = time.time()
+				print "reading particle data from file..."
+				unassignedPartData = []
+				for partnum in unassignedSubArray:
+					statArray = self.partnumToInputVector(partnum)
+					unassignedPartData.append(statArray)
+				print "particles read in %.3f seconds"%(time.time()-t0)
+				unassignedPartData = numpy.array(unassignedPartData)
+
+				## Eigen values
+				t1 = time.time()
+				print "calculating eigen values..."
+				particleEigenValues = self.pca.getEigenValues(unassignedPartData)
+				print "eigen values created in %.3f seconds"%(time.time()-t1)
+
+				probClasses = self.classifier.predict_proba(particleEigenValues)
+				prob1 = probClasses[:,0]
+				prob2 = probClasses[:,1]
+				predictedClassArray = numpy.where(prob1 > prob2, 1, 2)
+
+				for i in range(len(unassignedSubArray)):
+					partNum = unassignedSubArray[i]
+					predictedClass = predictedClassArray[i]
+					self.particleTarget[partNum] = predictedClass
+
+		self.writeListFiles()
+		print "finished assigning remaining particles"
+
+#======================
+#======================
+#======================
+#======================
+class AverageStack(apImagicFile.processStack):
+	#===============
+	def preLoop(self):
+		self.average = numpy.zeros((self.boxsize,self.boxsize))
+		#override self.partlist to get a subset
+		self.count = 0
+
+	#===============
+	def processStack(self, stackarray):
+		if isinstance(stackarray, list):
+			stackarray = numpy.array(stackarray)
+		self.index += stackarray.shape[0]
+		self.average += stackarray.sum(0)
+
+	#===============
+	def save(self, avgfile):
+		mrc.write(self.average/self.index, avgfile)
+
+	#===============
+	def getdata(self):
+		return self.average/self.index
 
 #=========================
 class HelpAbout(wx.MessageDialog):
@@ -553,11 +699,12 @@ class NavPanel(wx.Panel):
 
 	#---------------
 	def EvtButton(self, pan):
+		#panel_list = self.GetChildren()
 		return lambda event: self.showpan(pan)
 
 	#---------------
 	def showpan(self, pan):
-		self.panelsList = [ main.workPanel.trainingPanel, main.workPanel.classPanel, main.workPanel.finishPanel, ]
+		self.panelsList = [ self.main.workPanel.trainingPanel, self.main.workPanel.classPanel, self.main.workPanel.finishPanel, ]
 		for i in range(len(self.buttonsList)):
 				self.buttonsList[i].SetValue(0)
 				self.panelsList[i].Hide()
@@ -654,7 +801,7 @@ class TrainPanel(wx.Panel):
 
 		itemrow += 1
 		self.clipping = wx.TextCtrl(self.panel_stats, size=(40,-1), style=wx.TE_CENTRE)
-		self.clipping.ChangeValue("%d"%(data.boxsize))
+		self.clipping.ChangeValue("%d"%(self.main.data.boxsize))
 		self.sizer_stats.Add(self.clipping, pos=(itemrow, itemcol))
 		self.sizer_stats.Add(wx.StaticText(self.panel_stats, label='Clipping (integer)'),
 			pos=(itemrow, itemcol+1), flag=wx.ALIGN_CENTER_VERTICAL)
@@ -763,7 +910,7 @@ class TrainPanel(wx.Panel):
 		nrows = int(self.nrows.GetValue())
 		ncols = int(self.ncols.GetValue())
 		nimg = nrows*ncols
-		particleNumberList = main.data.getRandomImageSet(nimg)
+		particleNumberList = self.main.data.getRandomImageSet(nimg)
 		self.MakeDisplay(particleNumberList)
 
 	#---------------
@@ -773,7 +920,7 @@ class TrainPanel(wx.Panel):
 		nrows = int(self.nrows.GetValue())
 		ncols = int(self.ncols.GetValue())
 		nimg = nrows*ncols
-		particleNumberList = main.data.getRandomImageSet(nimg)
+		particleNumberList = self.main.data.getRandomImageSet(nimg)
 		self.MakeDisplay(particleNumberList)
 
 	#---------------
@@ -781,7 +928,7 @@ class TrainPanel(wx.Panel):
 		nrows = int(self.nrows.GetValue())
 		ncols = int(self.ncols.GetValue())
 		nimg = nrows*ncols
-		discrepancyList = main.data.getParticleDiscrepancyList(nimg)
+		discrepancyList = self.main.data.getParticleDiscrepancyList(nimg)
 		if discrepancyList is None:
 			return
 		self.MakeDisplay(discrepancyList)
@@ -803,15 +950,15 @@ class TrainPanel(wx.Panel):
 		ncols = int(self.ncols.GetValue())
 		nimg = nrows*ncols
 
-		data.imgproc.lowPass = float(self.lowpass.GetValue())
-		data.imgproc.lowPassType = 'tanh'
-		data.imgproc.median = int(self.medianfilter.GetValue())
-		data.imgproc.highPass = float(self.highpass.GetValue())
-		data.imgproc.pixelLimitStDev = float(self.pixelLimitStDev.GetValue())
+		self.main.data.imgproc.lowPass = float(self.lowpass.GetValue())
+		self.main.data.imgproc.lowPassType = 'tanh'
+		self.main.data.imgproc.median = int(self.medianfilter.GetValue())
+		self.main.data.imgproc.highPass = float(self.highpass.GetValue())
+		self.main.data.imgproc.pixelLimitStDev = float(self.pixelLimitStDev.GetValue())
 		clipVal = int(self.clipping.GetValue())
-		if clipVal > 1 and clipVal < data.boxsize:
-			data.imgproc.clipping = clipVal
-		data.imgproc.bin = int(self.binning.GetValue())
+		if clipVal > 1 and clipVal < self.main.data.boxsize:
+			self.main.data.imgproc.clipping = clipVal
+		self.main.data.imgproc.bin = int(self.binning.GetValue())
 
 		# Delete previous objects
 		#self.sizer_image.Destroy()
@@ -828,7 +975,7 @@ class TrainPanel(wx.Panel):
 			col = i % ncols
 			#print row, col
 			self.main.SetStatusText("Preparing image %d of %d for display..."%(i, nimg))
-			imgarray = main.data.readAndProcessParticle(partnum)
+			imgarray = self.main.data.readAndProcessParticle(partnum)
 			imgbutton = ImageButton(imagePanel, self.main, imgarray, partnum)
 			imageSizer.Add(imgbutton, pos=(row, col))
 			imgbutton.SetBackgroundColour(wx.NullColour)
@@ -942,28 +1089,81 @@ class ClassPanel(wx.Panel):
 		wx.Panel.__init__(self, parentPanel)
 		self.main = main
 		self.workPanel = parentPanel
+		self.inputdictcache = None
 
 		# Set up sizers
 		self.sizer_class_head = wx.GridBagSizer(5, 5)
 
+		self.statsPanel()
 		self.inputSelect()
 		self.dimensionReduce()
 		self.classifierMethod()
 
 		# Set sizers
-		self.sizer_class_head.Add(self.panel_input_select, pos=(0, 0))
-		self.sizer_class_head.AddSpacer((2, 2), (1, 0))
-		self.sizer_class_head.Add(self.panel_dimension_reduce, pos=(2, 0))
-		self.sizer_class_head.AddSpacer((2, 2), (3, 0))
-		self.sizer_class_head.Add(self.panel_classifier, pos=(4, 0))
+		itemrow = 0
+		self.sizer_class_head.Add(self.panel_stats, pos=(itemrow, 0))
+		self.buttonTrainClass = wx.Button(self, label='Train Classifier')
+		self.sizer_class_head.Add(self.buttonTrainClass, pos=(itemrow, 1), flag=wx.ALIGN_CENTER)
 
+		itemrow += 1
+		self.sizer_class_head.AddSpacer((2, 2), (itemrow, 0))
+		itemrow += 1
+		self.sizer_class_head.Add(self.panel_input_select, pos=(itemrow, 0), span=(1,2))
+		itemrow += 1
+		self.sizer_class_head.AddSpacer((2, 2), (itemrow, 0))
+		itemrow += 1
+		self.sizer_class_head.Add(self.panel_dimension_reduce, pos=(itemrow, 0), span=(1,2))
+		itemrow += 1
+		self.sizer_class_head.AddSpacer((2, 2), (itemrow, 0))
+		itemrow += 1
+		self.sizer_class_head.Add(self.panel_classifier, pos=(itemrow, 0), span=(1,2))
+
+		# Set up scrolling on window resize
+		self.Bind(wx.EVT_PAINT, self.OnRefresh)
+		self.Bind(wx.EVT_BUTTON, self.EvtTrainClass, self.buttonTrainClass)
+
+		self.panel_stats.SetSizerAndFit(self.sizer_stats)
 		self.panel_input_select.SetSizerAndFit(self.sizer_input_select)
 		self.panel_dimension_reduce.SetSizerAndFit(self.sizer_dimension_reduce)
 		self.panel_classifier.SetSizerAndFit(self.sizer_classifier)
 
+
 		self.SetSizerAndFit(self.sizer_class_head)
 		self.workPanel.SetSizerAndFit(self.workPanel.sizer_work)
 		self.main.scrolled_window.SetSizerAndFit(self.main.sizer_scroll)
+
+	#---------------
+	def EvtTrainClass(self, evt):
+		self.main.data.inputdict = self.getInputDict()
+		self.main.data.trainSVM()
+		self.OnRefresh(evt)
+
+	#---------------
+	def statsPanel(self):
+		self.panel_stats = wx.Panel(self, style=wx.SUNKEN_BORDER)
+		self.sizer_stats = wx.GridBagSizer(5, 5)
+		itemrow = 0
+		self.sizer_stats.Add(wx.StaticText(self.panel_stats, label='# Data Points'), pos=(itemrow, 0))
+		self.dataPointsDisplay = wx.StaticText(self.panel_stats, label='#####',
+			style=wx.ALIGN_LEFT)
+		self.sizer_stats.Add(self.dataPointsDisplay, pos=(itemrow, 1))
+		itemrow += 1
+		self.sizer_stats.Add(wx.StaticText(self.panel_stats, label='Accuracy'), pos=(itemrow, 0))
+		self.accuracyDisplay = wx.StaticText(self.panel_stats, label='???? %',
+			style=wx.ALIGN_LEFT)
+		self.sizer_stats.Add(self.accuracyDisplay, pos=(itemrow, 1))
+
+	#---------------
+	def OnRefresh(self, evt):
+		if self.main.data.accuracy is not None:
+			self.accuracyDisplay.SetLabel("%.1f %s"%(self.main.data.accuracy*100, '%'))
+
+		inputdict = self.getInputDict()
+		self.main.data.inputdict = inputdict
+		if self.inputdictcache is None or inputdict != self.inputdictcache:
+			self.main.data.numdatapoints = len(self.main.data.partnumToInputVector(1))
+			self.dataPointsDisplay.SetLabel("%d"%self.main.data.numdatapoints)
+		self.inputdictcache = inputdict
 
 	#---------------
 	def inputSelect(self):
@@ -978,7 +1178,7 @@ class ClassPanel(wx.Panel):
 
 		itemrow += 1
 		self.particlePixels = wx.CheckBox(self.panel_input_select, label='Particle Pixels')
-		self.particlePixels.SetValue(True)
+		self.particlePixels.SetValue(False)
 		self.sizer_input_select.Add(self.particlePixels, pos=(itemrow, itemcol))
 
 		itemrow += 1
@@ -988,8 +1188,13 @@ class ClassPanel(wx.Panel):
 
 		itemrow += 1
 		self.rotAverage = wx.CheckBox(self.panel_input_select, label='Rotational Average')
-		self.rotAverage.SetValue(False)
+		self.rotAverage.SetValue(True)
 		self.sizer_input_select.Add(self.rotAverage, pos=(itemrow, itemcol))
+
+		itemrow += 1
+		self.horizontalAverage = wx.CheckBox(self.panel_input_select, label='Horizontal Average')
+		self.horizontalAverage.SetValue(True)
+		self.sizer_input_select.Add(self.horizontalAverage, pos=(itemrow, itemcol))
 
 		itemcol += 1
 		itemrow = 0
@@ -1009,6 +1214,11 @@ class ClassPanel(wx.Panel):
 		self.rotPhaseAvg.SetValue(False)
 		self.sizer_input_select.Add(self.rotPhaseAvg, pos=(itemrow, itemcol))
 
+		itemrow += 1
+		self.horizPhaseAvg = wx.CheckBox(self.panel_input_select, label='Horizontal Phase Average')
+		self.horizPhaseAvg.SetValue(False)
+		self.sizer_input_select.Add(self.horizPhaseAvg, pos=(itemrow, itemcol))
+
 		itemcol += 1
 		itemrow = 0
 
@@ -1027,21 +1237,37 @@ class ClassPanel(wx.Panel):
 		self.rotPowerAvg.SetValue(False)
 		self.sizer_input_select.Add(self.rotPowerAvg, pos=(itemrow, itemcol))
 
+		itemrow += 1
+		self.horizPowerAvg = wx.CheckBox(self.panel_input_select, label='Horizontal Power Average')
+		self.horizPowerAvg.SetValue(False)
+		self.sizer_input_select.Add(self.horizPowerAvg, pos=(itemrow, itemcol))
+
 		self.sizer_input_select.AddSpacer((2, 2), pos=(itemrow+1, itemcol+1))
 		return
 
 	#---------------
 	def getInputDict(self):
+		nrows = int(self.main.workPanel.trainingPanel.nrows.GetValue())
+		ncols = int(self.main.workPanel.trainingPanel.ncols.GetValue())
+		nimg = nrows*ncols
+
 		inputDict = {
+			'numDisplayImages': nimg,
+
 			'imageStats': self.imageStats.GetValue(),
 			'particlePixels': self.particlePixels.GetValue(),
 			'rotAverage': self.rotAverage.GetValue(),
+			'horizontalAverage': self.horizontalAverage.GetValue(),
+
 			'phaseSpectra': self.phaseSpectra.GetValue(),
 			'phaseStats': self.phaseStats.GetValue(),
 			'rotPhaseAvg': self.rotPhaseAvg.GetValue(),
+			'horizPhaseAvg': self.horizPhaseAvg.GetValue(),
+
 			'powerSpectra': self.powerSpectra.GetValue(),
 			'powerStats': self.powerStats.GetValue(),
 			'rotPowerAvg': self.rotPowerAvg.GetValue(),
+			'horizPowerAvg': self.horizPowerAvg.GetValue(),
 
 			'inputTypeChoice': self.input_types[self.inputTypeChoice.GetSelection()],
 			'dimensionReduceChoice': self.dr_methods[self.dimensionReduceChoice.GetSelection()],
@@ -1143,7 +1369,6 @@ class FinishPanel(wx.Panel):
 		wx.Panel.__init__(self, parentPanel)
 		self.main = main
 		self.workPanel = parentPanel
-
 
 #=========================
 #=========================
