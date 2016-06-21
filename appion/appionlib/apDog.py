@@ -63,8 +63,8 @@ def diffOfGauss(imgarray0, pixrad, k=1.2):
 		+str(round(pixrange,1))+" pixels")
 	#do the blurring
 	print sigma1, sigmaprime
-	imgarray1 = ndimage.gaussian_filter(imgarray0, sigma=sigma1, mode='wrap')
-	imgarray2 = ndimage.gaussian_filter(imgarray1, sigma=sigmaprime, mode='wrap')
+	imgarray1 = ndimage.gaussian_filter(imgarray0, sigma=sigma1, mode='reflect')
+	imgarray2 = ndimage.gaussian_filter(imgarray1, sigma=sigmaprime, mode='reflect')
 	#imagefile.arrayToJpeg(imgarray1, "imgarray1.jpg")
 	#imagefile.arrayToJpeg(imgarray2, "imgarray2.jpg")
 	dogmap = imgarray1-imgarray2
@@ -75,9 +75,9 @@ def diffOfGaussLevels(imgarray, r0, N, dr, writeImg=False, apix=1):
 	if writeImg is True:
 		imagefile.arrayToJpeg(imgarray, "binned-image.jpg")
 
-	if dr > 2*r0 - 1:
-		apDisplay.printError("size range has be less than twice the diameter")
-
+	if dr >= 2*r0:
+		apDisplay.printError("size range %.2f has be less than twice the diameter %.2f"
+			%(dr, 2*r0))
 	# initial params
 	#print "r0=", r0*apix
 	#print "dr=", dr*apix
@@ -104,11 +104,13 @@ def diffOfGaussLevels(imgarray, r0, N, dr, writeImg=False, apix=1):
 
 	# calculate first image blur
 	sigma = sigma0
+	apDisplay.printMsg("gaussian blur map %d of %d"%(1, N+1))
 	gaussmap = ndimage.gaussian_filter(imgarray, sigma=sigma0)
 	sigmavals = [sigma0,]
 	sigprimes = []
 	gaussmaps = [gaussmap,]
 	for i in range(N):
+		apDisplay.printMsg("gaussian blur map %d of %d"%(i+2, N+1))
 		sigmaprime = sigma * math.sqrt(k**2 - 1.0)
 		sigprimes.append(sigmaprime)
 		#calculate new sigma

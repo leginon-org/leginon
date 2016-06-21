@@ -29,14 +29,13 @@ class dogPicker(particleLoop2.ParticleLoop):
 			apDisplay.printWarning("highpass filter value greater than zero; will ignore")
 		self.params['highpass'] = None
 		self.params['lowpass'] = None
-		#if self.params['kfactor'] is not None and self.params['numslices'] is not None:
-		#	apDisplay.printError("only one of 'kfactor' or 'numslices' can be defined")
 		if self.params['numslices'] is not None and self.params['numslices'] >= 15:
 			apDisplay.printError("too many slices defined by numslices, should be more like 2-6")
 		if self.params['diam'] < 1:
 			apDisplay.printError("difference of Gaussian; radius = 0")
-		if self.params['sizerange'] is not None and self.params['sizerange'] > 2*self.params['diam']-1:
-			apDisplay.printError("size range has be less than twice the diameter")
+		if self.params['sizerange'] is not None and self.params['sizerange'] > 2*self.params['diam']-3:
+			apDisplay.printError("size range %d has be less than twice the diameter %d"
+				%(self.params['sizerange'], 2*self.params['diam']-3))
 		### get number of processors:
 		nproc = apParam.getNumProcessors()
 		if not self.params['nproc']:
