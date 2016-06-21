@@ -88,6 +88,14 @@ def linearscale(input, boundfrom, boundto, extrema=None):
 
 	return output
 
+def phase_spectrum(a):
+	fft = ffteng.transform(a)
+	phase = numpy.angle(fft, deg=True)
+	### neil half pixel shift or powerspectra are not centered!
+	phase = scipy.ndimage.interpolation.shift(phase, (-1, -1), order=1, mode='wrap')
+	phase = swap_quadrants(phase)
+	return phase
+
 def power(a, mask_radius=1.0, thresh=3):
 	fft = ffteng.transform(a)
 	pow = numpy.absolute(fft)
@@ -104,6 +112,7 @@ def power(a, mask_radius=1.0, thresh=3):
 		center_mask(pow, mask_radius)
 
 	return clip_power(pow,thresh)
+
 
 def clip_power(pow,thresh=3):
 	m = arraystats.mean(pow)
@@ -132,7 +141,6 @@ def filled_sphere(shape, radius, center=None):
 		c = numpy.where(rr2<r2, 0.0, 1.0)
 		return c
 	return numpy.fromfunction(func, shape)
-
 
 def filled_circle(shape, radius=None, center=None):
 	"""
