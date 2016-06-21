@@ -20,7 +20,7 @@ RUN yum -y update && yum -y install \
  php-devel gd-devel re2c fftw3-devel php-gd \
  xorg-x11-server-Xvfb netpbm-progs qiv python-requests \
  libssh2-devel mlocate nano elinks file \
- python-configparser \
+ python-configparser opencv-python \
  numactl compat-libgfortran && yum -y clean all
 ### Trying to do VNC
 RUN yum -y update && yum -y install tigervnc-server xterm xsetroot fluxbox fbpanel && yum -y clean all
@@ -65,6 +65,7 @@ COPY docker.sql /emg/sw/docker.sql
 COPY particledata.dat /emg/sw/particledata.dat
 RUN mkdir -p /var/cache/myami/redux/ && chmod 777 /var/cache/myami/redux/
 RUN ln -sv /emg/sw/myami/appion/appionlib /usr/lib64/python2.6/site-packages/
+RUN ln -sv /emg/sw/myami/redux/bin/reduxd /usr/bin/ && chmod 755 /usr/bin/reduxd
 RUN for i in pyami imageviewer leginon pyscope sinedon redux; do ln -sv /emg/sw/myami/$i /usr/lib64/python2.6/site-packages/; done
 #TODO compile radermacher libcv and numextension
 WORKDIR /emg/sw/myami/modules/radermacher
@@ -72,6 +73,8 @@ RUN python ./setup.py install
 WORKDIR /emg/sw/myami/modules/libcv
 RUN python ./setup.py install
 WORKDIR /emg/sw/myami/modules/numextension
+RUN python ./setup.py install
+WORKDIR /emg/sw/myami/redux
 RUN python ./setup.py install
 #RUN ./pysetup.sh install #disabled, because does not allow overriding via docker run
 RUN mkdir /etc/fftw
