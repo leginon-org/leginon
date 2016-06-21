@@ -50,16 +50,14 @@ def getAllEvenPrimes(maxn=1028):
 
 #====================
 def getNextEvenPrime(num=400):
-	goodones = []
-	n = num
+	n = int(num)
 	while not isGoodStack(n) and n < 10000:
 		n += 1
 	return n
 
 #====================
 def getPrevEvenPrime(num=400):
-	goodones = []
-	n = num
+	n = int(num)
 	while not isGoodStack(n) and n > 1:
 		n -= 1
 	return n
