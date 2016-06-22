@@ -146,7 +146,7 @@ Image2 = Image
 ###temporary hack for FSU
 import PIL
 if hasattr(PIL, 'PILLOW_VERSION'):
-	if int(PIL.PILLOW_VERSION[0]) > 3:
+	if int(PIL.PILLOW_VERSION[0]) >= 3:
 		Image2.frombytes = fromstring
 
 if __name__ == '__main__':
