@@ -124,10 +124,12 @@ class Collection(object):
 			self.prediction.newTiltGroup()
 			self.loop(self.tilts[0], self.exposures[0], False)
 		elif n == 2:
+			# Loop through one set of tilts 
 			self.prediction.newTiltSeries()
 			self.prediction.newTiltGroup()
 			self.loop(self.tilts[0], self.exposures[0], False)
 			self.checkAbort()
+			# loop through the other set of tilts
 			self.node.initGoodPredictionInfo(tiltgroup=2)
 			self.prediction.newTiltGroup()
 			self.loop(self.tilts[1], self.exposures[1], True)
