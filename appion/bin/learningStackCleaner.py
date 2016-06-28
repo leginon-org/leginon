@@ -843,12 +843,12 @@ class TrainPanel(wx.Panel):
 		### add extra button here
 
 		itemrow += 1
-		self.buttonShowDiscrepancies = wx.Button(self.panel_stats, label='&Show Discrepancies', size=(-1, -1))
+		self.buttonShowDiscrepancies = wx.Button(self.panel_stats, wx.ID_REDO, label='&Show Discrepancies', size=(-1, -1))
 		self.sizer_stats.Add(self.buttonShowDiscrepancies, pos=(itemrow, itemcol), span=(1, 1), flag=wx.ALIGN_CENTER)
 		self.Bind(wx.EVT_BUTTON, self.EvtShowDiscrepancies, self.buttonShowDiscrepancies)
 
 		itemrow += 1
-		self.buttonAcceptPredict = wx.Button(self.panel_stats, label='&Accept Predictions', size=(-1, -1))
+		self.buttonAcceptPredict = wx.Button(self.panel_stats, wx.ID_APPLY, label='&Accept Predictions', size=(-1, -1))
 		self.sizer_stats.Add(self.buttonAcceptPredict, pos=(itemrow, itemcol), span=(1, 1), flag=wx.ALIGN_CENTER)
 		self.Bind(wx.EVT_BUTTON, self.EvtAcceptPredict, self.buttonAcceptPredict)
 
@@ -859,12 +859,12 @@ class TrainPanel(wx.Panel):
 
 		# New set
 		itemrow += 1
-		self.autoFitParticles = wx.Button(self.panel_stats, label='Auto &Fit Window', size=(-1, -1))
+		self.autoFitParticles = wx.Button(self.panel_stats, wx.ID_ZOOM_FIT, label='Auto &Fit Window', size=(-1, -1))
 		self.sizer_stats.Add(self.autoFitParticles, pos=(itemrow, itemcol), span=(1, 1), flag=wx.ALIGN_CENTER)
 		self.Bind(wx.EVT_BUTTON, self.EvtAutoFitParticles, self.autoFitParticles)
 
 		itemrow += 1
-		self.buttonNewSet = wx.Button(self.panel_stats, label='&Refresh Set', size=(-1, -1))
+		self.buttonNewSet = wx.Button(self.panel_stats, wx.ID_REFRESH, label='&Refresh Set', size=(-1, -1))
 		self.sizer_stats.Add(self.buttonNewSet, pos=(itemrow, itemcol), span=(1, 1), flag=wx.ALIGN_CENTER)
 		self.Bind(wx.EVT_BUTTON, self.EvtRefreshSet, self.buttonNewSet)
 
@@ -1369,6 +1369,42 @@ class FinishPanel(wx.Panel):
 		wx.Panel.__init__(self, parentPanel)
 		self.main = main
 		self.workPanel = parentPanel
+
+		self.sizer_finish = wx.GridBagSizer(5,1)
+
+		itemrow = 0
+		self.sizer_finish.AddSpacer((2, 2), pos=(itemrow, 0))
+
+		itemrow += 1
+		self.save = wx.Button(self, wx.ID_SAVE, '&Save Picks to File')
+		self.Bind(wx.EVT_BUTTON, self.onSave, self.save)
+		self.sizer_finish.Add(self.save, flag=wx.ALIGN_CENTER_VERTICAL|wx.ALL, pos=(itemrow, 0))
+
+		itemrow += 1
+		self.sizer_finish.AddSpacer((2, 2), pos=(itemrow, 0))
+
+		itemrow += 1
+		self.quit = wx.Button(self, wx.ID_EXIT, 'Save and &Quit')
+		self.Bind(wx.EVT_BUTTON, self.onQuit, self.quit)
+		self.sizer_finish.Add(self.quit, flag=wx.ALIGN_CENTER_VERTICAL|wx.ALL, pos=(itemrow, 0))
+
+		itemrow += 1
+		self.sizer_finish.AddSpacer((2, 2), pos=(itemrow, 0))
+
+		self.SetSizerAndFit(self.sizer_finish)
+		self.workPanel.SetSizerAndFit(self.workPanel.sizer_work)
+		self.main.scrolled_window.SetSizerAndFit(self.main.sizer_scroll)
+
+	#---------------
+	def onSave(self, evt):
+		self.main.data.writeListFiles()
+		return
+
+	#---------------
+	def onQuit(self, evt):
+		self.onSave(evt)
+		wx.Exit()
+
 
 #=========================
 #=========================
