@@ -21,6 +21,7 @@ use('Agg')
 from matplotlib import pyplot
 from appionlib.apCtf import ctfnoise
 from appionlib.apCtf import ctftools
+from appionlib.apCtf import ctfpower
 from appionlib.apCtf import ctfdb
 from appionlib.apCtf import genctf
 from appionlib.apCtf import ctfres
@@ -1054,7 +1055,7 @@ class CtfDisplay(object):
 		ellipavgpowerspec = imagefilter.tanhHighPassFilter(ellipavgpowerspec, 200) ## FIXME
 		ellipavgpowerspec = imagenorm.normalizeImage(ellipavgpowerspec, stdevLimit=5.0)
 		origpowerspec = imagefilter.tanhHighPassFilter(origpowerspec, 200) ## FIXME
-		origpowerspec = imagenorm.normalizeImage(origpowerspec, stdevLimit=3.0)
+		origpowerspec = imagenorm.normalizeImage(origpowerspec, stdevLimit=7.0)
 
 		halfshape = origpowerspec.shape[1]/2
 		halfpowerspec = numpy.hstack( (origpowerspec[:,:halfshape] , ellipavgpowerspec[:,halfshape:] ) )
@@ -1337,6 +1338,56 @@ class CtfDisplay(object):
 
 		return
 
+	#============
+	def powerSpectra(self, image, ctfdata):
+		"""
+		apix and outerresolution must have same units (e.g., Anstroms or meters)
+		"""
+		if self.debug is True:
+			print "Computing power spectra..."
+
+		fieldsize = ctfpower.getFieldSize(image.shape)
+		psdlist, freq = ctfpower.powerseries(image, self.apix, fieldsize)
+
+		adjusted_apix = 1.0/(freq * image.shape[0])
+		#print self.apix, "adjusted_apix", adjusted_apix
+		genctfspec = genctf.generateCTF2dFromCtfData(ctfdata, adjusted_apix, self.volts, fieldsize)
+		envelop = ctfpower.twodHann(fieldsize)
+		genctfspec = genctfspec*envelop
+		subgenctfspec = ctftools.trimPowerSpectraToOuterResolution(genctfspec, self.plotlimit2DAngstrom, freq)
+		
+		corlist = []
+		for psd in psdlist:
+			subpsd = ctftools.trimPowerSpectraToOuterResolution(psd, self.plotlimit2DAngstrom, freq)
+			correlation = scipy.stats.pearsonr(subpsd.ravel(), subgenctfspec.ravel())[0]
+			corlist.append(correlation)
+		corarray = numpy.array(corlist)
+		corarray = numpy.where(corarray < 1e-3, 1e-3, corarray)
+		corarray /= corarray.sum()
+		mincontribution = corarray.mean() - 1.5*corarray.std()
+		### NOTE: worried that this introduces too much confirmation bias
+		#if self.debug is True:
+		print "mincontribution: %.4f"%(mincontribution,)
+		goodpsdlist = []
+		for i in range(len(psdlist)):
+			#if self.debug is True:
+			if corarray[i] >= mincontribution:
+				print ("* correlation %d: %.5f -> contribution: %.4f"
+					%(i+1, corlist[i], corarray[i],))
+				goodpsdlist.append(psdlist[i]*corarray[i])
+			else:
+				print ("- correlation %d: %.5f -> contribution: %.4f"
+					%(i+1, corlist[i], corarray[i],))
+		apDisplay.printColor("Using %d of %d subfields in final power spectra"
+			%(len(goodpsdlist), len(psdlist)), "cyan")
+		fullpowerspec = numpy.mean(goodpsdlist, axis=0, dtype=numpy.float64)
+		#fullpowerspec = numpy.median(goodpsdlist, axis=0)
+
+		del psdlist, goodpsdlist
+
+		powerspec = ctftools.trimPowerSpectraToOuterResolution(fullpowerspec, self.outerAngstrom1D, freq)
+		return powerspec, freq
+
 	#====================
 	#====================
 	def CTFpowerspec(self, imgdata, ctfdata, fftpath=None, fftfreq=None, twod=True):
@@ -1360,11 +1411,13 @@ class CtfDisplay(object):
 
 		### get peak of CTF
 		self.cs = ctfdata['cs']*1e-3
+		#ctfdata['volts'] = 
 		self.volts = imgdata['scope']['high tension']
 		self.ampcontrast = ctfdata['amplitude_contrast']
 
 		### process power spectra
 		self.apix = apDatabase.getPixelSize(imgdata)
+		#ctfdata['apix'] = self.apix
 
 		if self.debug is True:
 			print "Pixelsize (A/pix)", self.apix
@@ -1386,8 +1439,7 @@ class CtfDisplay(object):
 			powerspec = mrc.read(fftpath).astype(numpy.float64)
 			self.trimfreq = fftfreq
 		else:
-			powerspec, self.trimfreq = ctftools.powerSpectraToOuterResolution(image,
-				self.outerAngstrom1D, self.apix)
+			powerspec, self.trimfreq = self.powerSpectra(image, ctfdata)
 		self.trimapix = 1.0/(self.trimfreq * powerspec.shape[0])
 
 		#print "Median filter image..."

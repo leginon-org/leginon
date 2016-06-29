@@ -6,6 +6,8 @@ import numpy
 from appionlib import apDisplay
 from appionlib.apCtf import ctftools
 
+###this file is not allowed to import any apCtf files, besides ctftools
+
 debug = False
 
 #===================
@@ -38,8 +40,8 @@ def generateCTF1d(radii=None, focus=1.0e-6, cs=2e-3, volts=120000, ampconst=0.07
 
 	gamma = -0.5*pi*cs*(lamb**3)*(s**4) + pi*focus*lamb*(s**2)
 
-	if overfocus is True:
-		gamma = -1.0*gamma
+	#if overfocus is True:
+	#	gamma = -1.0*gamma
 
 	A = ampconst
 	B = math.sqrt(1.0 - ampconst**2)
@@ -128,30 +130,23 @@ def generateCTF1dACE2(radii=None, focus=1.0e-6, cs=2e-3, volts=120000, ampconst=
 	return ctf**2
 
 #===================
-def generateCTF1dMakePoints(numpoints=256, focus=1.0e-6, 
-	pixelsize=1.5e-10, cs=2e-3, volts=120000, ampconst=0.07):
-	"""
-	calculates a CTF function based on the input details
-
-	Use SI units: meters, radians, volts
-	Underfocus is postive (defocused) 
-	"""
-	if debug is True:
-		print "generateCTF1d()"
-	checkParams(focus1=focus, focus2=focus, pixelsize=pixelsize, cs=cs, 
-		volts=volts, ampconst=ampconst)
-
-	radii = generateRadii1d(numpoints, pixelsize)
-
-	ctf = generateCTF1dFromRadii(radii, focus, cs, volts, ampconst)
-
-	return ctf
-
-#===================
 def generateRadii1d(numpoints=256, pixelsize=1e-10):
 	radfreq = 1.0/( numpoints*pixelsize )
 	radii = numpy.arange(numpoints) * radfreq
 	return radii
+
+#===================
+def generateCTF2dFromCtfData(ctfdata, apix, volts, fieldsize):
+	focus1 = ctfdata['defocus1']
+	focus2 = ctfdata['defocus2']
+	theta = ctfdata['angle_astigmatism']
+	mpix = apix*1e-10
+	cs = ctfdata['cs']*1e-3
+	volts = volts
+	ampconst = ctfdata['amplitude_contrast']
+	shape = (fieldsize, fieldsize)
+	checkParams(focus1=focus1, focus2=focus2, cs=cs, volts=volts, ampconst=ampconst, failParams=True)
+	return generateCTF2d(focus1, focus2, theta, shape, mpix, cs, volts, ampconst)
 
 #===================
 def generateCTF2d(focus1=-1.0e-6, focus2=-1.0e-6, theta=0.0, 
@@ -163,8 +158,10 @@ def generateCTF2d(focus1=-1.0e-6, focus2=-1.0e-6, theta=0.0,
 	Underfocus is postive (defocused) 
 	"""
 	t0 = time.time()
+	if debug is True:
+		from appionlib.apImage import imagestat
 
-	wavelength = getTEMLambda(volts)
+	wavelength = ctftools.getTEMLambda(volts)
 
 	xfreq = 1.0/( (shape[1]-1)*2.*pixelsize )
 	yfreq = 1.0/( (shape[0]-1)*2.*pixelsize )
@@ -174,26 +171,81 @@ def generateCTF2d(focus1=-1.0e-6, focus2=-1.0e-6, theta=0.0,
 	meanfocus = (focus1 + focus2) / 2.
 	focusdiff = (focus1 - focus2) / 2. 
 
-	t1 = math.pi * wavelength
-	t2 = wavelength**2 * cs / 2.0
-	t3 = -1.0*math.asin(ampconst)
+	#t1 = math.pi * wavelength
+	#t2 = wavelength**2 * cs / 2.0
+	#t3 = -1.0*math.asin(ampconst)
 
-	radiisq = circle.generateRadial1d(shape, xfreq, yfreq)
-	angles = -circle.generateAngular2d(shape, xfreq, yfreq)
+	radiisq = generateRadial2d(shape, xfreq, yfreq)
+	if debug is True:
+		print "\n RADII"
+		imagestat.printImageInfo(1.0/numpy.sqrt(radiisq))
+	if debug is True:
+		halfshape = shape[0]/2
+		apDisplay.printColor("generateCTF 2d radii: 1/%.2fA --> 1/%.2fA"
+			%(1/math.sqrt(radiisq[halfshape,halfshape])*1e10, 1/math.sqrt(radiisq[0,halfshape])*1e10), "cyan")
+
+	angles = -1*generateAngular2d(shape)
+	if debug is True:
+		print "\n ANGLES"
+		imagestat.printImageInfo(angles)
+
 	localfocus = meanfocus + focusdiff * numpy.cos(2.0*(angles-theta))
-	gamma = t1*radiisq * (-localfocus + t2*radiisq) + t3
-	ctf = numpy.sin(gamma)
+	if debug is True:
+		print "\n FOCUS"
+		imagestat.printImageInfo(localfocus*1e6)
 
-	gauss = circle.generateGaussion2d(shape)
-	imagefile.arrayToJpeg(gauss, "gauss2.jpg")
+	gamma = -0.5*math.pi*cs*(wavelength**3)*(radiisq**2) + math.pi*localfocus*wavelength*(radiisq)
+	if debug is True:
+		print "\n GAMMA"
+		imagestat.printImageInfo(gamma)
+
+	#gamma = t1*radiisq * (-localfocus + t2*radiisq) + t3
+	A = ampconst
+	B = math.sqrt(1.0 - ampconst**2)
+	prectf = A*numpy.cos(gamma) + B*numpy.sin(gamma)
+	ctf = prectf**2
+
+	if debug is True:
+		print "\n CTF"
+		imagestat.printImageInfo(ctf)
+
+	#gauss = generateGaussion2d(shape, xfreq, yfreq)
+	#imagestat.printImageInfo(gauss)
+	#ctf = ctf*gauss
 
 	if debug is True:
 		print "generate ctf 2d complete in %.4f sec"%(time.time()-t0)
 
-	return ctf*gauss
+	return ctf
 
 #===================
-def generateAngular2d(shape, xfreq, yfreq):
+class Angular(object):
+	def __init__(self, shape, center=True, flip=False):
+		# setup
+		if center is True:
+			### distance from center
+			self.center = numpy.array(shape, dtype=numpy.float64)/2.0 - 0.5
+		else:
+			### the upper-left edge
+			self.center = (-0.5, -0.5)
+		# function
+		self.flip = flip
+		self.angular = numpy.fromfunction(self.arctan, shape, dtype=numpy.float64)
+
+	def arctan(self, y, x):
+		dy = (y - self.center[0])
+		dx = (x - self.center[1])
+		if self.flip is True:
+			dy = -1.0*numpy.fliplr(dy)
+			dx = -1.0*dx
+			#print "flipping"
+		#print "dy", dy
+		#print "dx", dx
+		angle = numpy.arctan2(dy, dx)
+		return angle
+
+#===================
+def generateAngular2d(shape):
 	"""
 	this method is about 2x faster than method 1
 	"""
@@ -202,9 +254,9 @@ def generateAngular2d(shape, xfreq, yfreq):
 		apDisplay.printError("array shape for radial function must be even")
 
 	halfshape = numpy.array(shape)/2.0
-	a = Angular(halfshape, xfreq, yfreq, center=False, flip=False)
+	a = Angular(halfshape, center=False, flip=False)
 	angular1 = a.angular
-	b = Angular(halfshape, xfreq, yfreq, center=False, flip=True)
+	b = Angular(halfshape, center=False, flip=True)
 	angular2 = numpy.fliplr(b.angular)
 	circular = numpy.vstack( 
 		(numpy.hstack( 
@@ -215,20 +267,22 @@ def generateAngular2d(shape, xfreq, yfreq):
 
 	### raw radius from center
 	#print numpy.around(circular*180/math.pi,1)
-	print "angular 2 complete in %.4f sec"%(time.time()-t0)
+	if debug is True:
+		print "angular 2 complete in %.4f sec"%(time.time()-t0)
 	return circular
 
 #===================
-def generateGaussion2d(shape, sigma=None):
+def generateGaussion2d(shape, xfreq, yfreq, sigma=None):
 	"""
 	this method is about 4x faster than method 1
 	"""
 	t0 = time.time()
 	if sigma is None:
 		sigma = numpy.mean(shape)/4.0
-	circular = generateRadial2(shape)
+	circular = generateRadial2d(shape, xfreq, yfreq)
 	circular = numpy.exp(-circular/sigma**2)
-	print "gaussian 2 complete in %.4f sec"%(time.time()-t0)
+	if debug is True:
+		print "gaussian 2 complete in %.4f sec"%(time.time()-t0)
 	return circular
 
 #===================
@@ -274,7 +328,8 @@ def generateRadial2d(shape, xfreq, yfreq):
 		)))
 	### raw radius from center
 	#print circular
-	print "radial 2 complete in %.4f sec"%(time.time()-t0)
+	if debug is True:
+		print "radial 2 complete in %.4f sec"%(time.time()-t0)
 	return circular
 
 #===================

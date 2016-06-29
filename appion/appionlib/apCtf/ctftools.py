@@ -11,9 +11,7 @@ from pyami import primefactor
 from appionlib import apDisplay
 from appionlib.apCtf import ctfpower
 from appionlib.apImage import imagefile
-from appionlib.apImage import imagestat
 from appionlib.apImage import imagefilter
-#from appionlib import lowess
 
 ###this file is not allowed to import any apCtf files - other than ctfpower
 
@@ -117,7 +115,7 @@ def getFirstCTFzeroRadius(focus=-1.0e-6, pixelsize=1.0e-10, cs=2e-2,
 		print "High tension %.1f kV"%(volts*1e-3)
 
 	xfreq = 1.0/( (cols-1)*2.*pixelsize )
-	xorigin = cols/2. - 0.5
+	#xorigin = cols/2. - 0.5
 
 	wavelength = getTEMLambda(volts)
 
@@ -199,12 +197,12 @@ def powerSpectraToOuterResolution(image, outerresolution, apix):
 	if debug is True:
 		print "Computing power spectra..."
 	fieldsize = ctfpower.getFieldSize(image.shape)
-	binning = max(image.shape)/fieldsize
+	#binning = max(image.shape)/fieldsize
 	#data = imagefun.power(image)
-	data, freq = ctfpower.power(image, apix, fieldsize)
+	fullpowerspec, freq = ctfpower.power(image, apix, fieldsize)
 	#data = numpy.exp(data)
-	data = data.astype(numpy.float64)
-	powerspec = trimPowerSpectraToOuterResolution(data, outerresolution, freq)
+	fullpowerspec = fullpowerspec.astype(numpy.float64)
+	powerspec = trimPowerSpectraToOuterResolution(fullpowerspec, outerresolution, freq)
 
 	return powerspec, freq
 
@@ -328,7 +326,6 @@ def rotationalAverage(image, ringwidth=3.0, innercutradius=None, full=False, med
 	if shape[0] < 32:
 		print radial
 
-	count = 0
 	if debug is True:
 		print "computing rotational average xdata..."
 	xdataint = numpy.unique(radial)
@@ -401,7 +398,7 @@ def unEllipticalAverage(xdata, ydata, ellipratio, ellipangle, shape):
 	"""
 	radial = getEllipticalDistanceArray(ellipratio, ellipangle, shape)
 	radial = radial/math.sqrt(ellipratio)
-	image = imagefun.fromRadialFunction(funcrad, shape, xdata=xdata, ydata=ydata)
+	#image = imagefun.fromRadialFunction(funcrad, shape, xdata=xdata, ydata=ydata)
 	def funcrc(r, c, radial, **kwargs):
 		rr = numpy.array(numpy.floor(r), dtype=numpy.int)
 		cc = numpy.array(numpy.floor(c), dtype=numpy.int)
@@ -528,7 +525,7 @@ def ellipticalArray(image, ellipratio, ellipangle):
 	       True  -- rotational average out to corners of image
 	"""
 
-	bigshape = numpy.array(numpy.array(image.shape)*math.sqrt(2)/2., dtype=numpy.int)*2
+	#bigshape = numpy.array(numpy.array(image.shape)*math.sqrt(2)/2., dtype=numpy.int)*2
 	radial = getEllipticalDistanceArray(ellipratio, ellipangle, image.shape)
 	
 	xdata = numpy.ravel(radial)/math.sqrt(ellipratio)

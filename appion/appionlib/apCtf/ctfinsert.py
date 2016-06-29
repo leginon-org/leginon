@@ -2,12 +2,10 @@
 
 #pythonlib
 import os
-import re
-import sys
+import time
 import math
 import shutil
 #appion
-from appionlib import apFile
 from appionlib import apDisplay
 from appionlib import appiondata
 from appionlib.apCtf import ctfdisplay
@@ -77,7 +75,10 @@ def validateAndInsertCTFData(imgdata, ctfvalues, rundata, rundir, fftpath=None, 
 #====================
 def runCTFdisplayTools(imgdata, ctfvalues, opimagedir, fftpath=None, fftfreq=None):
 	### RUN CTF DISPLAY TOOLS
+	t0 = time.time()
 	ctfdisplaydict = ctfdisplay.makeCtfImages(imgdata, ctfvalues, fftpath, fftfreq)
+	apDisplay.printColor("Full CTF display makeCtfImages routine complete in %s"
+		%(apDisplay.timeString(time.time()-t0)), "purple")
 	if ctfdisplaydict is None:
 		return ctfvalues
 	### save the classic images as well
