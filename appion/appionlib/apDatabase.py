@@ -39,7 +39,7 @@ def getSpecificImagesFromDB(imglist, sessiondata=None):
 			imgquery = leginon.leginondata.AcquisitionImageData(filename=imgname, session=sessiondata)
 		else:
 			imgquery = leginon.leginondata.AcquisitionImageData(filename=imgname)
-		imgres   = imgquery.query(readimages=False, results=1)
+		imgres = imgquery.query(readimages=False, results=1)
 		if len(imgres) >= 1:
 			imgtree.append(imgres[0])
 		else:
@@ -114,7 +114,8 @@ def getImageDataFromSpecificImageId(imageid):
 	if imagedata:
 		return imagedata
 	else:
-		apDisplay.printError('Image (id=%d) does not exist' % (imageid))
+		apDisplay.printWarning('Image (id=%d) does not exist' % (imageid))
+		return None
 
 #================
 def getRefImageDataFromSpecificImageId(reftype,imageid):
