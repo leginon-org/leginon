@@ -69,7 +69,7 @@ class UploadCTF(appionScript.AppionScript):
 		if self.params['sessionname'] is not None:
 			self.sessiondata = apDatabase.getSessionDataFromSessionName(self.params['sessionname'])
 		elif self.params['expid'] is not None:
-			self.sessiondata = getSessionDataFromSessionId(self.params['expid'])
+			self.sessiondata = apDatabase.getSessionDataFromSessionId(self.params['expid'])
 		self.params['cs'] = apInstrument.getCsValueFromSession(self.sessiondata)
 		self.ctfrun = None
 		self.powerspecdir = os.path.join(self.params['rundir'], "opimages")
@@ -93,6 +93,11 @@ class UploadCTF(appionScript.AppionScript):
 				continue
 			imgid = int(imgid)
 			imgdata = apDatabase.getImageDataFromSpecificImageId(imgid)
+			if imgdata is None or imgdata['filename'] != imgname:
+				imgdata = apDatabase.getSpecificImagesFromDB([imgname,], self.sessiondata)[0]
+
+			if imgdata is None:
+				apDisplay.printError("Filename not found "+imgname)
 
 			if imgdata['session']['name'] != self.sessiondata['name']:
 				apDisplay.printError("Session and Image do not match "+imgdata['filename'])
