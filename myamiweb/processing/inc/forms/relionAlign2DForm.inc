@@ -234,12 +234,9 @@ class RelionAlign2DForm extends BasicLayoutForm
 		$msg = parent::validate( $postArray );
 		
 		global $PROCESSING_HOSTS;
-		echo "<br><br>processing hosts ".($PROCESSING_HOSTS[0]['host']->value);	
 
 		$maxmem = $PROCESSING_HOSTS[0]['memorymax'];
 //		$numnodes = $PROCESSING_HOSTS[0]['
-		echo "mem max = ".$maxmem."<br><br>";
-		var_dump($maxmem);
 		$params = $this->getFormParams();
 		$mpithreads = $params->getParamValue('mpithreads');
 		$mpimem = $params->getParamValue('mpimem');
