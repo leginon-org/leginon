@@ -24,6 +24,13 @@ class particledata {
 
 	var $crlf="\n";
 	var $baseurl=PROCESSING_BASE_URL;
+	var $ace_method_map=array(
+					'ace1'=>array('ApAceParamsData','aceparams'),
+					'ace2'=>array('ApAce2ParamsData','ace2_params'),
+					'ctffind'=>array('ApCtfTiltParamsData','ctftilt_params'),
+					'ctffind4'=>array('ApCtfFind4ParamsData','ctffind4_params'),
+					'xmipp'=>array('ApXmippCtfParamsData','xmipp_ctf_params'),
+					);
 
 	function particledata () {
 		$this->mysql = new mysql(
@@ -990,37 +997,49 @@ class particledata {
 	// Note, this method needs to be updated each time a new CTF method is added to the database.
 	function getCtfRunMethod( $acerunId )
 	{
-		$aceparams = $this->getAceParams($acerunId);
-		
-		if ( $aceparams['REF|ApAceParamsData|aceparams'] ) {
-			$method = "ace1";
-		} else if ( $aceparams['REF|ApAce2ParamsData|ace2_params'] ) {
-			$method = "ace2";
-		} else if ( $aceparams['REF|ApCtfTiltParamsData|ctftilt_params'] ) {
-			$method = "ctffind";
-		} else if ( $aceparams['REF|ApXmippCtfParamsData|xmipp_ctf_params'] ) {
-			$method = "xmipp";
-		} else {
-			$method = "unknown";
-		}
-		
-		return $method;
-	}
-	
-	function getAceParams($acerunId) {
 		$q = "SELECT *, path.`path` as path, acerun.`DEF_id` as acerun "
 			."FROM ApAceRunData AS acerun "
-			."LEFT JOIN ApAceParamsData AS aceparams "
-			."  ON (aceparams.`DEF_id` = acerun.`REF|ApAceParamsData|aceparams`) "
-			."LEFT JOIN ApCtfTiltParamsData AS ctftilt "
-			."  ON (ctftilt.`DEF_id` = acerun.`REF|ApCtfTiltParamsData|ctftilt_params`) "
-			."LEFT JOIN ApAce2ParamsData AS ace2params "
-			."  ON (ace2params.`DEF_id` = acerun.`REF|ApAce2ParamsData|ace2_params`) "
 			."LEFT JOIN ApPathData AS path "
 			."  ON (path.`DEF_id` = acerun.`REF|ApPathData|path`) "
 			."where acerun.`DEF_id` = '$acerunId'";
 		//echo $q."<br/><br/>\n";
 		$r = $this->mysql->getSQLResult($q);
+		if ($r) $result = end($r);
+		//print_r($r)."<br/><br/>\n";
+
+		foreach ($this->ace_method_map as $k=>$p ) {
+			$ref= "REF|$p[0]|$p[1]";
+			if (in_array($ref, array_keys($result)) && is_numeric($result[$ref])) {
+				$method = $k;
+				break;
+			}
+		}
+		if (empty($method)) {
+			$method = "unknown";
+		}
+		
+		//echo $method."<br/><br/>\n";
+		return $method;
+	}
+	
+	function getAceParams($acerunId) {
+		$method = $this->getCtfRunMethod( $acerunId );
+		if ($method == 'unknown') {
+			$j = '';
+		} else {
+			$p = $this->ace_method_map[$method];
+			$j = "LEFT JOIN $p[0] AS $method "
+						."  ON ($method.`DEF_id` = acerun.`REF|$p[0]|$p[1]`) ";
+		}
+		$q = "SELECT *, path.`path` as path, acerun.`DEF_id` as acerun "
+			."FROM ApAceRunData AS acerun "
+			.$j
+			."LEFT JOIN ApPathData AS path "
+			."  ON (path.`DEF_id` = acerun.`REF|ApPathData|path`) "
+			."where acerun.`DEF_id` = '$acerunId'";
+		//echo $q."<br/><br/>\n";
+		$r = $this->mysql->getSQLResult($q);
+
 		//echo print_r($r)."<br/><br/>\n";
 		if ($r) return end($r);
 	}
@@ -1139,9 +1158,10 @@ class particledata {
 		if (is_numeric($acerunId) && $acerunId > 0) {
 			$q .= "AND r.`DEF_id`=".$acerunId." ";
 		} else {
-			if ($method === 'ace1') $q .= "AND r.`REF|ApAceParamsData|aceparams` IS NOT NULL ";
-			elseif ($method === 'ace2') $q .= "AND r.`REF|ApAce2ParamsData|ace2_params` IS NOT NULL ";
-			elseif ($method === 'ctffind') $q .= "AND r.`REF|ApCtfTiltParamsData|ctftilt_params` IS NOT NULL ";
+			if (array_search($method, array_keys($this->ace_method_map))!== false) {
+				$p = $this->ace_method_map[$method];
+				$q .= "AND r. `REF|$p[0]|$p[1]` IS NOT NULL ";
+			}
 		}
 		// First order by res80. If some entries of res80 are null, they will be sorted as 999 and end up at the end of the list.
 		// Then sort by res50. If there was a tie from res80, the tie is broken with res50.
@@ -1245,17 +1265,11 @@ class particledata {
 	function getCTFParameterFields() {
 		$q = "SELECT *, path.`path` as path, acerun.`DEF_id` as acerun "
 			."FROM ApAceRunData AS acerun ";
-		if ($this->mysql->SQLTableExists("ApAceParamsData")) {
-			$q .= "LEFT JOIN ApAceParamsData AS aceparams "
-				."  ON (aceparams.`DEF_id` = acerun.`REF|ApAceParamsData|aceparams`) ";
-		}
-		if ($this->mysql->SQLTableExists("ApCtfTiltParamsData")) {
-			$q .= "LEFT JOIN ApCtfTiltParamsData AS ctftilt "
-			."  ON (ctftilt.`DEF_id` = acerun.`REF|ApCtfTiltParamsData|ctftilt_params`) ";
-		}
-		if ($this->mysql->SQLTableExists("ApAce2ParamsData")) {
-			$q .= "LEFT JOIN ApAce2ParamsData AS ace2params "
-			."  ON (ace2params.`DEF_id` = acerun.`REF|ApAce2ParamsData|ace2_params`) ";
+		foreach ($this->ace_method_map as $k=>$p) {
+			if ($this->mysql->SQLTableExists("$p[0]")) {
+				$q .= "LEFT JOIN $p[0] AS $p[1] "
+				."  ON ($p[1].`DEF_id` = acerun.`REF|$p[0]|$p[1]`) ";
+			}
 		}
 		$q .= "LEFT JOIN ApPathData AS path "
 			."  ON (path.`DEF_id` = acerun.`REF|ApPathData|path`) "
