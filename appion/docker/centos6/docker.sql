@@ -34,49 +34,49 @@ CREATE TABLE `AcquisitionImageData` (
   `DEF_id` int(16) NOT NULL AUTO_INCREMENT,
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `REF|SessionData|session` int(20) DEFAULT NULL,
+  `REF|ScopeEMData|scope` int(20) DEFAULT NULL,
+  `REF|CameraEMData|camera` int(20) DEFAULT NULL,
+  `REF|PresetData|preset` int(20) DEFAULT NULL,
   `MRC|image` text,
   `pixeltype` text,
   `pixels` int(20) DEFAULT NULL,
   `label` text,
   `filename` text,
-  `REF|ImageListData|list` int(20) DEFAULT NULL,
-  `REF|QueueData|queue` int(20) DEFAULT NULL,
-  `REF|ScopeEMData|scope` int(20) DEFAULT NULL,
-  `REF|CameraEMData|camera` int(20) DEFAULT NULL,
-  `REF|CorrectorPlanData|corrector plan` int(20) DEFAULT NULL,
   `correction channel` int(20) DEFAULT NULL,
   `channel` int(20) DEFAULT NULL,
+  `version` int(20) DEFAULT NULL,
+  `tiltnumber` int(20) DEFAULT NULL,
+  `REF|ImageListData|list` int(20) DEFAULT NULL,
+  `REF|QueueData|queue` int(20) DEFAULT NULL,
+  `REF|CorrectorPlanData|corrector plan` int(20) DEFAULT NULL,
   `REF|DarkImageData|dark` int(20) DEFAULT NULL,
   `REF|BrightImageData|bright` int(20) DEFAULT NULL,
   `REF|NormImageData|norm` int(20) DEFAULT NULL,
-  `REF|PresetData|preset` int(20) DEFAULT NULL,
   `REF|AcquisitionImageTargetData|target` int(20) DEFAULT NULL,
   `REF|EMTargetData|emtarget` int(20) DEFAULT NULL,
   `REF|GridData|grid` int(20) DEFAULT NULL,
   `REF|SpotWellMapData|spotmap` int(20) DEFAULT NULL,
   `REF|TiltSeriesData|tilt series` int(20) DEFAULT NULL,
-  `version` int(20) DEFAULT NULL,
-  `tiltnumber` int(20) DEFAULT NULL,
   `REF|MoverParamsData|mover` int(20) DEFAULT NULL,
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `REF|SessionData|session` (`REF|SessionData|session`),
-  KEY `REF|ImageListData|list` (`REF|ImageListData|list`),
-  KEY `REF|QueueData|queue` (`REF|QueueData|queue`),
   KEY `REF|ScopeEMData|scope` (`REF|ScopeEMData|scope`),
   KEY `REF|CameraEMData|camera` (`REF|CameraEMData|camera`),
+  KEY `REF|PresetData|preset` (`REF|PresetData|preset`),
+  KEY `REF|ImageListData|list` (`REF|ImageListData|list`),
+  KEY `REF|QueueData|queue` (`REF|QueueData|queue`),
   KEY `REF|CorrectorPlanData|corrector plan` (`REF|CorrectorPlanData|corrector plan`),
   KEY `REF|DarkImageData|dark` (`REF|DarkImageData|dark`),
   KEY `REF|BrightImageData|bright` (`REF|BrightImageData|bright`),
   KEY `REF|NormImageData|norm` (`REF|NormImageData|norm`),
-  KEY `REF|PresetData|preset` (`REF|PresetData|preset`),
   KEY `REF|AcquisitionImageTargetData|target` (`REF|AcquisitionImageTargetData|target`),
   KEY `REF|EMTargetData|emtarget` (`REF|EMTargetData|emtarget`),
   KEY `REF|GridData|grid` (`REF|GridData|grid`),
   KEY `REF|SpotWellMapData|spotmap` (`REF|SpotWellMapData|spotmap`),
   KEY `REF|TiltSeriesData|tilt series` (`REF|TiltSeriesData|tilt series`),
   KEY `REF|MoverParamsData|mover` (`REF|MoverParamsData|mover`)
-) ENGINE=MyISAM AUTO_INCREMENT=9 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=13 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -85,7 +85,31 @@ CREATE TABLE `AcquisitionImageData` (
 
 LOCK TABLES `AcquisitionImageData` WRITE;
 /*!40000 ALTER TABLE `AcquisitionImageData` DISABLE KEYS */;
-INSERT INTO `AcquisitionImageData` VALUES (1,'2015-10-05 17:02:51',2,'06jul12a_00015gr_00028sq_00004hl_00002en.mrc',NULL,NULL,'UploadImage','06jul12a_00015gr_00028sq_00004hl_00002en',NULL,NULL,1,1,NULL,NULL,NULL,NULL,NULL,NULL,1,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),(2,'2015-10-05 17:02:52',2,'06jul12a_00015gr_00028sq_00023hl_00002en.mrc',NULL,NULL,'UploadImage','06jul12a_00015gr_00028sq_00023hl_00002en',NULL,NULL,1,1,NULL,NULL,NULL,NULL,NULL,NULL,1,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),(3,'2015-10-05 17:02:53',2,'06jul12a_00015gr_00028sq_00023hl_00004en.mrc',NULL,NULL,'UploadImage','06jul12a_00015gr_00028sq_00023hl_00004en',NULL,NULL,1,1,NULL,NULL,NULL,NULL,NULL,NULL,1,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),(4,'2015-10-05 17:02:54',2,'06jul12a_00022gr_00013sq_00002hl_00004en.mrc',NULL,NULL,'UploadImage','06jul12a_00022gr_00013sq_00002hl_00004en',NULL,NULL,1,1,NULL,NULL,NULL,NULL,NULL,NULL,1,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),(5,'2015-10-05 17:02:55',2,'06jul12a_00022gr_00013sq_00003hl_00005en.mrc',NULL,NULL,'UploadImage','06jul12a_00022gr_00013sq_00003hl_00005en',NULL,NULL,1,1,NULL,NULL,NULL,NULL,NULL,NULL,1,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),(6,'2015-10-05 17:02:56',2,'06jul12a_00022gr_00037sq_00025hl_00004en.mrc',NULL,NULL,'UploadImage','06jul12a_00022gr_00037sq_00025hl_00004en',NULL,NULL,1,1,NULL,NULL,NULL,NULL,NULL,NULL,1,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),(7,'2015-10-05 17:02:57',2,'06jul12a_00022gr_00037sq_00025hl_00005en.mrc',NULL,NULL,'UploadImage','06jul12a_00022gr_00037sq_00025hl_00005en',NULL,NULL,1,1,NULL,NULL,NULL,NULL,NULL,NULL,1,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),(8,'2015-10-05 17:02:58',2,'06jul12a_00035gr_00063sq_00012hl_00004en.mrc',NULL,NULL,'UploadImage','06jul12a_00035gr_00063sq_00012hl_00004en',NULL,NULL,1,1,NULL,NULL,NULL,NULL,NULL,NULL,1,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO `AcquisitionImageData` VALUES
+( 1,'2016-06-30 15:08:31',1,1,1,1,'06jul12a_15gr_28sq_04hl_02em.mrc',NULL,NULL,'UploadImage','06jul12a_15gr_28sq_04hl_02em',
+NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
+( 2,'2016-06-30 15:08:32',1,1,1,1,'06jul12a_15gr_28sq_11hl_03em.mrc',NULL,NULL,'UploadImage','06jul12a_15gr_28sq_11hl_03em',
+NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
+( 3,'2016-06-30 15:08:33',1,1,1,1,'06jul12a_15gr_28sq_23hl_02em.mrc',NULL,NULL,'UploadImage','06jul12a_15gr_28sq_23hl_02em',
+NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
+( 4,'2016-06-30 15:08:34',1,1,1,1,'06jul12a_15gr_28sq_23hl_04em.mrc',NULL,NULL,'UploadImage','06jul12a_15gr_28sq_23hl_04em',
+NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
+( 5,'2016-06-30 15:08:35',1,1,1,1,'06jul12a_22gr_13sq_02hl_04em.mrc',NULL,NULL,'UploadImage','06jul12a_22gr_13sq_02hl_04em',
+NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
+( 6,'2016-06-30 15:08:36',1,1,1,1,'06jul12a_22gr_13sq_03hl_05em.mrc',NULL,NULL,'UploadImage','06jul12a_22gr_13sq_03hl_05em',
+NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
+( 7,'2016-06-30 15:08:37',1,1,1,1,'06jul12a_22gr_37sq_05hl_02em.mrc',NULL,NULL,'UploadImage','06jul12a_22gr_37sq_05hl_02em',
+NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
+( 8,'2016-06-30 15:08:38',1,1,1,1,'06jul12a_22gr_37sq_05hl_05em.mrc',NULL,NULL,'UploadImage','06jul12a_22gr_37sq_05hl_05em',
+NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
+( 9,'2016-06-30 15:08:39',1,1,1,1,'06jul12a_22gr_37sq_25hl_04em.mrc',NULL,NULL,'UploadImage','06jul12a_22gr_37sq_25hl_04em',
+NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
+(10,'2016-06-30 15:08:40',1,1,1,1,'06jul12a_22gr_37sq_25hl_05em.mrc',NULL,NULL,'UploadImage','06jul12a_22gr_37sq_25hl_05em',
+NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
+(11,'2016-06-30 15:08:41',1,1,1,1,'06jul12a_27gr_65sq_09hl_05em.mrc',NULL,NULL,'UploadImage','06jul12a_27gr_65sq_09hl_05em',
+NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
+(12,'2016-06-30 15:08:42',1,1,1,1,'06jul12a_35gr_63sq_12hl_04em.mrc',NULL,NULL,'UploadImage','06jul12a_35gr_63sq_12hl_04em',
+NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
 /*!40000 ALTER TABLE `AcquisitionImageData` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -143,18 +167,8 @@ CREATE TABLE `AcquisitionSettingsData` (
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `REF|SessionData|session` (`REF|SessionData|session`)
-) ENGINE=MyISAM AUTO_INCREMENT=21 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `AcquisitionSettingsData`
---
-
-LOCK TABLES `AcquisitionSettingsData` WRITE;
-/*!40000 ALTER TABLE `AcquisitionSettingsData` DISABLE KEYS */;
-INSERT INTO `AcquisitionSettingsData` VALUES (1,'2015-09-28 19:56:33',1,'[u\'gr\']',0,'stage position',1,1.5,1,NULL,0,NULL,1,'Grid',0,1,NULL,1,'presets manager',0,'acquisition',0,0,0,0.001,0,NULL,'no',0,0,NULL,0,0,'Continue',65536,50,0,0,0,0,NULL,0,0),(2,'2015-09-28 19:56:33',1,'[u\'sq\']',0,'stage position',1,1.5,1,NULL,1,NULL,1,'Square',0,1,NULL,1,'presets manager',0,'acquisition',0,0,0,0.001,0,NULL,'no',0,0,NULL,0,0,'Continue',65536,50,0,0,0,0,NULL,0,0),(3,'2015-09-28 19:56:33',1,'[u\'rsq\']',0,'stage position',1,1.5,1,NULL,1,NULL,1,'RCT Square',0,1,NULL,1,'presets manager',0,'acquisition',0,0,0,0.001,0,NULL,'no',0,0,NULL,0,0,'Continue',65536,50,0,0,0,0,NULL,0,0),(4,'2015-09-28 19:56:33',1,'[u\'hl\']',1,'stage position',1,1.5,1,NULL,1,NULL,1,'Hole',0,1,NULL,1,'presets manager',0,'acquisition',0,0,0,0.001,0,NULL,'one',0,0,NULL,0,0,'Continue',65536,50,0,0,0,0,NULL,0,0),(5,'2015-09-28 19:56:33',1,'[u\'hl\']',0,'stage position',1,2.5,1,NULL,0,NULL,1,'Preview',0,1,NULL,1,'presets manager',1e-06,'preview',0,0,0,0.001,0,NULL,'one',0,0,NULL,0,0,'Continue',65536,50,0,0,0,0,NULL,0,0),(6,'2015-09-28 19:56:33',1,'[u\'en\', u\'ef\']',1,'image shift',1,2.5,1,NULL,0,NULL,1,'Exposure',0,1,NULL,1,'presets manager',0,'acquisition',0,0,0,0.001,0,NULL,'one',0,0,1,0,0,'Continue',65536,50,0,0,0,0,0,0,0),(7,'2015-09-28 19:56:33',1,'[u\'sq\']',0,'stage position',1,2.5,1,NULL,0,NULL,1,'Square Q',0,1,NULL,1,'presets manager',0,'acquisition',0,0,0,0.001,0,NULL,'no',0,0,NULL,0,0,'Continue',65536,50,0,0,0,0,NULL,0,0),(8,'2015-09-28 19:56:33',1,'[u\'hl\']',1,'stage position',1,2.5,1,NULL,0,NULL,1,'Hole Q',0,1,NULL,1,'presets manager',0,'acquisition',0,0,0,0.001,0,NULL,'one',0,0,NULL,0,0,'Continue',65536,50,0,0,0,0,NULL,0,0),(9,'2015-09-28 19:56:33',1,'[u\'preview\']',0,'stage position',1,2.5,1,NULL,0,NULL,1,'Tomography Preview',0,1,NULL,1,'presets manager',0,'preview',0,0,0,0.001,0,NULL,'one',0,0,NULL,0,0,'Continue',65536,50,0,0,0,0,NULL,0,0),(10,'2015-09-28 19:56:33',1,'[u\'hl\']',1,'stage position',1,2.5,1,NULL,0,NULL,1,'Final Section',0,1,NULL,1,'presets manager',0,'acquisition',0,0,0,0.001,0,NULL,'no',1,0,NULL,0,0,'Continue',65536,50,0,0,0,0,NULL,0,0),(11,'2015-09-28 19:56:33',1,'[u\'hl\']',1,'stage position',1,2.5,1,NULL,1,NULL,1,'Subsquare',0,1,NULL,1,'presets manager',0,'acquisition',0,0,0,0.001,0,NULL,'one',0,0,NULL,0,0,'Continue',65536,50,0,0,0,0,NULL,0,0),(12,'2015-09-28 19:56:33',1,'[u\'sq\']',1,'stage position',1,2.5,1,NULL,0,NULL,1,'Centered Square',0,1,NULL,1,'presets manager',0,'acquisition',0,0,0,0.001,0,NULL,'one',0,0,NULL,0,0,'Continue',65536,50,0,0,0,0,NULL,0,0),(13,'2015-09-28 19:56:33',1,'[u\'sq\']',0,'stage position',1,2.5,1,NULL,1,NULL,1,'Rough Tissue',0,1,NULL,1,'presets manager',0,'acquisition',0,0,0,0.001,0,NULL,'no',0,0,NULL,0,0,'Continue',65536,50,0,0,0,0,NULL,0,0),(14,'2015-09-28 19:56:33',1,'[u\'hl\']',1,'stage position',1,2.5,1,NULL,0,NULL,1,'Final Raster',0,1,NULL,1,'presets manager',0,'acquisition',0,0,0,0.001,0,NULL,'one',1,1,NULL,0,1,'Continue',65536,50,0,0,0,0,NULL,0,0),(15,'2015-09-28 19:56:33',1,'[u\'gr\']',0,'stage position',1,2.5,1,NULL,1,NULL,1,'Grid Survey',0,1,NULL,1,'presets manager',0,'acquisition',0,0,0,0.001,0,NULL,'no',0,0,NULL,0,0,'Continue',65536,50,0,0,0,0,NULL,0,0),(16,'2015-09-28 19:56:33',1,'[u\'hl\']',0,'stage position',1,2.5,1,NULL,0,NULL,1,'Mid Mag Survey',0,1,NULL,1,'presets manager',0,'acquisition',0,0,0,0.001,0,NULL,'no',0,0,NULL,0,0,'Continue',65536,50,0,0,0,0,NULL,0,0),(17,'2015-09-28 19:56:33',1,'[u\'sq\']',0,'stage position',1,2.5,1,NULL,1,NULL,1,'Reacquisition',0,1,NULL,1,'presets manager',0,'acquisition',0,0,0,0.001,0,NULL,'no',0,0,NULL,0,0,'Continue',65536,50,0,0,0,0,NULL,0,0),(18,'2015-09-28 19:56:33',1,'[u\'en\']',1,'stage position',1,2.5,1,NULL,0,NULL,1,'High Mag Acquisition',0,1,NULL,1,'presets manager',0,'acquisition',0,0,0,0.001,0,NULL,'one',0,0,NULL,0,0,'Continue',65536,50,0,0,0,0,NULL,0,0),(19,'2015-09-28 19:56:33',1,'[u\'en\']',1,'stage position',1,2.5,1,NULL,0,NULL,1,'Exposure MultiMove',0,1,NULL,1,'navigator',1e-07,'acquisition',0,0,0,5e-07,1,NULL,'no',0,0,NULL,0,0,'Continue',65536,50,0,0,0,0,0,0,0),(20,'2015-09-28 19:56:33',1,'[u\'hl\']',0,'stage position',1,2.5,1,NULL,0,NULL,1,'Align Parent Image',0,1,NULL,1,'presets manager',0,'acquisition',0,0,0,0.001,0,NULL,'no',0,0,NULL,0,0,'Continue',65536,50,0,0,0,0,0,0,0);
-/*!40000 ALTER TABLE `AcquisitionSettingsData` ENABLE KEYS */;
-UNLOCK TABLES;
 
 --
 -- Table structure for table `AlignmentManagerSettingsData`
@@ -177,18 +191,8 @@ CREATE TABLE `AlignmentManagerSettingsData` (
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `REF|SessionData|session` (`REF|SessionData|session`)
-) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `AlignmentManagerSettingsData`
---
-
-LOCK TABLES `AlignmentManagerSettingsData` WRITE;
-/*!40000 ALTER TABLE `AlignmentManagerSettingsData` DISABLE KEYS */;
-INSERT INTO `AlignmentManagerSettingsData` VALUES (1,'2015-09-28 19:56:33',1,'Align Manager',1,0,0,0,0,3600);
-/*!40000 ALTER TABLE `AlignmentManagerSettingsData` ENABLE KEYS */;
-UNLOCK TABLES;
 
 --
 -- Table structure for table `ApplicationData`
@@ -246,18 +250,8 @@ CREATE TABLE `BeamFixerSettingsData` (
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `REF|SessionData|session` (`REF|SessionData|session`),
   KEY `REF|CameraSettingsData|camera settings` (`REF|CameraSettingsData|camera settings`)
-) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `BeamFixerSettingsData`
---
-
-LOCK TABLES `BeamFixerSettingsData` WRITE;
-/*!40000 ALTER TABLE `BeamFixerSettingsData` DISABLE KEYS */;
-INSERT INTO `BeamFixerSettingsData` VALUES (1,'2015-09-28 19:56:33',1,'Fix Beam',1,'stage position',3,3600,0,3,'None','None',0,0,0,'[u\'fc\', u\'fa\', u\'en\', u\'ef\']',25);
-/*!40000 ALTER TABLE `BeamFixerSettingsData` ENABLE KEYS */;
-UNLOCK TABLES;
 
 --
 -- Table structure for table `BeamTiltCalibratorSettingsData`
@@ -434,18 +428,8 @@ CREATE TABLE `BeamTiltImagerSettingsData` (
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `REF|SessionData|session` (`REF|SessionData|session`)
-) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `BeamTiltImagerSettingsData`
---
-
-LOCK TABLES `BeamTiltImagerSettingsData` WRITE;
-/*!40000 ALTER TABLE `BeamTiltImagerSettingsData` DISABLE KEYS */;
-INSERT INTO `BeamTiltImagerSettingsData` VALUES (1,'2015-09-28 19:56:33',1,'[u\'fc\']',0,'image shift',1,2.5,1,NULL,0,NULL,1,'Beam Tilt Image',0,1,NULL,1,'presets manager',0,'acquisition',0,0,NULL,0.001,0,NULL,'no',0,0,0,0,'Continue',65536,50,0,0,0,0,NULL,0,0,0.005,1,4,0,'beam tilt series-power',2,8,'phase');
-/*!40000 ALTER TABLE `BeamTiltImagerSettingsData` ENABLE KEYS */;
-UNLOCK TABLES;
 
 --
 -- Table structure for table `BindingSpecData`
@@ -501,18 +485,8 @@ CREATE TABLE `BlobFinderSettingsData` (
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `REF|SessionData|session` (`REF|SessionData|session`)
-) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `BlobFinderSettingsData`
---
-
-LOCK TABLES `BlobFinderSettingsData` WRITE;
-/*!40000 ALTER TABLE `BlobFinderSettingsData` DISABLE KEYS */;
-INSERT INTO `BlobFinderSettingsData` VALUES (1,'2015-09-28 19:56:33',NULL,100,10,10000,1000,10,0,20000,500,1,NULL,0);
-/*!40000 ALTER TABLE `BlobFinderSettingsData` ENABLE KEYS */;
-UNLOCK TABLES;
 
 --
 -- Table structure for table `CameraEMData`
@@ -525,6 +499,7 @@ CREATE TABLE `CameraEMData` (
   `DEF_id` int(16) NOT NULL AUTO_INCREMENT,
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `REF|SessionData|session` int(20) DEFAULT NULL,
+  `REF|InstrumentData|ccdcamera` int(20) DEFAULT NULL,
   `system time` double DEFAULT NULL,
   `SUBD|dimension|x` int(20) DEFAULT NULL,
   `SUBD|dimension|y` int(20) DEFAULT NULL,
@@ -552,7 +527,6 @@ CREATE TABLE `CameraEMData` (
   `readout delay` int(20) DEFAULT NULL,
   `gain index` int(20) DEFAULT NULL,
   `system corrected` tinyint(1) DEFAULT '0',
-  `REF|InstrumentData|ccdcamera` int(20) DEFAULT NULL,
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `REF|SessionData|session` (`REF|SessionData|session`),
@@ -566,7 +540,7 @@ CREATE TABLE `CameraEMData` (
 
 LOCK TABLES `CameraEMData` WRITE;
 /*!40000 ALTER TABLE `CameraEMData` DISABLE KEYS */;
-INSERT INTO `CameraEMData` VALUES (1,'2015-10-05 17:02:51',2,NULL,4096,4096,1,1,NULL,100,NULL,NULL,NULL,NULL,NULL,NULL,NULL,1,0,NULL,NULL,NULL,100,NULL,NULL,NULL,NULL,NULL,NULL,NULL,3);
+INSERT INTO `CameraEMData` VALUES (1,'2016-06-30 15:08:38',1,2,NULL,2048,2048,1,1,NULL,100,NULL,NULL,NULL,NULL,NULL,NULL,NULL,1,0,NULL,NULL,NULL,100,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
 /*!40000 ALTER TABLE `CameraEMData` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -621,18 +595,8 @@ CREATE TABLE `CenterTargetFilterSettingsData` (
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `REF|SessionData|session` (`REF|SessionData|session`)
-) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `CenterTargetFilterSettingsData`
---
-
-LOCK TABLES `CenterTargetFilterSettingsData` WRITE;
-/*!40000 ALTER TABLE `CenterTargetFilterSettingsData` DISABLE KEYS */;
-INSERT INTO `CenterTargetFilterSettingsData` VALUES (1,'2015-09-28 19:56:33',1,'Square Target Filtering',1,0,1,'acquisition',1);
-/*!40000 ALTER TABLE `CenterTargetFilterSettingsData` ENABLE KEYS */;
-UNLOCK TABLES;
 
 --
 -- Table structure for table `ClickTargetFinderSettingsData`
@@ -663,16 +627,6 @@ CREATE TABLE `ClickTargetFinderSettingsData` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Dumping data for table `ClickTargetFinderSettingsData`
---
-
-LOCK TABLES `ClickTargetFinderSettingsData` WRITE;
-/*!40000 ALTER TABLE `ClickTargetFinderSettingsData` DISABLE KEYS */;
-INSERT INTO `ClickTargetFinderSettingsData` VALUES (1,'2015-09-28 19:56:33',1,1,0,0,'Hole Targeting',1,1,1,1,0,0,0),(2,'2015-09-28 19:56:33',1,1,0,0,'Tomography Targeting',1,1,1,1,0,0,0);
-/*!40000 ALTER TABLE `ClickTargetFinderSettingsData` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
 -- Table structure for table `CorrectorSettingsData`
 --
 
@@ -700,18 +654,8 @@ CREATE TABLE `CorrectorSettingsData` (
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `REF|SessionData|session` (`REF|SessionData|session`),
   KEY `REF|CameraSettingsData|camera settings` (`REF|CameraSettingsData|camera settings`)
-) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `CorrectorSettingsData`
---
-
-LOCK TABLES `CorrectorSettingsData` WRITE;
-/*!40000 ALTER TABLE `CorrectorSettingsData` DISABLE KEYS */;
-INSERT INTO `CorrectorSettingsData` VALUES (1,'2015-09-28 19:56:33',1,'Correction',11,3.5,0,3,2,'None','None',1,'average',0,65536,NULL);
-/*!40000 ALTER TABLE `CorrectorSettingsData` ENABLE KEYS */;
-UNLOCK TABLES;
 
 --
 -- Table structure for table `DTFinderSettingsData`
@@ -778,18 +722,8 @@ CREATE TABLE `DTFinderSettingsData` (
   KEY `REF|SessionData|session` (`REF|SessionData|session`),
   KEY `REF|LowPassFilterSettingsData|edge lpf` (`REF|LowPassFilterSettingsData|edge lpf`),
   KEY `REF|LowPassFilterSettingsData|template lpf` (`REF|LowPassFilterSettingsData|template lpf`)
-) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `DTFinderSettingsData`
---
-
-LOCK TABLES `DTFinderSettingsData` WRITE;
-/*!40000 ALTER TABLE `DTFinderSettingsData` DISABLE KEYS */;
-INSERT INTO `DTFinderSettingsData` VALUES (1,'2015-09-28 19:56:33',1,'Tissue Centering',1,1,0,1,1,1,0,0,1,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,100,1.3,'phase',5,0,6);
-/*!40000 ALTER TABLE `DTFinderSettingsData` ENABLE KEYS */;
-UNLOCK TABLES;
 
 --
 -- Table structure for table `DoseCalibratorSettingsData`
@@ -857,18 +791,8 @@ CREATE TABLE `ExposureFixerSettingsData` (
   KEY `isdefault` (`isdefault`),
   KEY `override preset` (`override preset`),
   KEY `REF|CameraSettingsData|camera settings` (`REF|CameraSettingsData|camera settings`)
-) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `ExposureFixerSettingsData`
---
-
-LOCK TABLES `ExposureFixerSettingsData` WRITE;
-/*!40000 ALTER TABLE `ExposureFixerSettingsData` DISABLE KEYS */;
-INSERT INTO `ExposureFixerSettingsData` VALUES (1,'2015-09-28 19:56:33','[u\'en\', u\'fa\']',1,'Fix Exposure Time',1,'stage position',3,3600,0,1,20,1000,0,0,0);
-/*!40000 ALTER TABLE `ExposureFixerSettingsData` ENABLE KEYS */;
-UNLOCK TABLES;
 
 --
 -- Table structure for table `FocusSequenceData`
@@ -887,18 +811,8 @@ CREATE TABLE `FocusSequenceData` (
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `REF|SessionData|session` (`REF|SessionData|session`)
-) ENGINE=MyISAM AUTO_INCREMENT=11 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `FocusSequenceData`
---
-
-LOCK TABLES `FocusSequenceData` WRITE;
-/*!40000 ALTER TABLE `FocusSequenceData` DISABLE KEYS */;
-INSERT INTO `FocusSequenceData` VALUES (1,'2015-09-28 19:56:33',1,'Focus','[\'Defocus1\', \'Defocus2\', \'Manual_after\']',1),(2,'2015-09-28 19:56:33',1,'Z Focus','[u\'Stage_Tilt_Rough\', u\'Stage_Tilt_Fine\', \'Manual_after\']',1),(3,'2015-09-28 19:56:33',1,'Tomo Focus','[u\'Stage_Tilt_Fine1\', \'Stage_Tilt_Fine2\', \'Beam_Tilt_Fine\', \'Manual_after\']',1),(4,'2015-09-28 19:56:33',1,'Tomo Z Focus','[u\'Stage_Tilt_Rough\', \'Stage_Tilt_Fine\', \'Beam_Tilt_Auto\', \'Manual_after\']',1),(5,'2015-09-28 19:56:33',1,'RCT Focus','[u\'Z_to_Eucentric\', u\'Def_to_Eucentric\']',1),(6,'2015-09-28 19:56:33',1,'Section Z Focus','[u\'Stage_Tilt_Fine\', u\'Stage_Tilt_High\']',1),(7,'2015-09-28 19:56:33',1,'Grid Focus','[u\'Stage_Wobble_Rough\']',1),(8,'2015-09-28 19:56:33',1,'Section Focus','[u\'Stage_Wobble_Rough\', u\'Stage_Wobble_Fine\']',1),(9,'2015-09-28 19:56:33',1,'Screen Z Focus','[u\'Rough\', u\'Medium\', u\'Fine\']',1),(10,'2015-09-28 19:56:33',1,'Align Focus','[u\'Stage Tilt Fine\', u\'Beam Tilt 1\', u\'Beam Tilt 2\', u\'Manual after\']',1);
-/*!40000 ALTER TABLE `FocusSequenceData` ENABLE KEYS */;
-UNLOCK TABLES;
 
 --
 -- Table structure for table `FocusSettingData`
@@ -934,16 +848,6 @@ CREATE TABLE `FocusSettingData` (
   KEY `REF|SessionData|session` (`REF|SessionData|session`)
 ) ENGINE=MyISAM AUTO_INCREMENT=30 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `FocusSettingData`
---
-
-LOCK TABLES `FocusSettingData` WRITE;
-/*!40000 ALTER TABLE `FocusSettingData` DISABLE KEYS */;
-INSERT INTO `FocusSettingData` VALUES (1,'2015-09-28 19:56:33',1,'phase',1000,'Beam Tilt',2e-06,3e-10,0,'Stage Z',0,'fa','Z_to_Eucentric',4e-06,0.01,'Focus',0,0,2e-05,NULL,1),(2,'2015-09-28 19:56:33',1,'phase',5000,'Beam Tilt',2e-06,3e-10,0,'Defocus',1,'fa','Defocus1',4e-06,0.01,'Focus',1,0,2e-05,NULL,1),(3,'2015-09-28 19:56:33',1,'phase',5000,'Beam Tilt',2e-06,3e-10,0,'Defocus',0,'fa','Defocus2',4e-06,0.01,'Focus',0,0,2e-05,NULL,1),(4,'2015-09-28 19:56:33',1,'phase',5000,'Manual',2e-06,3e-10,0,'Defocus',0,'fc','Manual_after',4e-06,0.01,'Focus',1,0,0.001,NULL,1),(5,'2015-09-28 19:56:33',1,'phase',5000,'Stage Tilt',2e-06,3e-10,0,'Stage Z',0,'sq','Stage_Tilt_Rough',4e-06,0.0174532925199433,'Z Focus',0,0,0.0002,NULL,1),(6,'2015-09-28 19:56:33',1,'phase',5000,'Stage Tilt',2e-06,3e-10,0,'Stage Z',0,'hl','Stage_Tilt_Fine',4e-06,0.0174532925199433,'Z Focus',1,0,0.0002,NULL,1),(7,'2015-09-28 19:56:33',1,'phase',10000,'Manual',2e-06,3e-10,0,'Defocus',0,'fc','Manual_after',4e-06,0.01,'Z Focus',0,0,0.001,NULL,1),(8,'2015-09-28 19:56:33',1,'phase',1000,'Stage Tilt',2e-06,3e-10,0,'Stage Z',0,'hl','Stage_Tilt_Fine1',4e-06,0.0174532925199433,'Tomo Focus',1,0,0.0001,NULL,1),(9,'2015-09-28 19:56:33',1,'phase',1000,'Stage Tilt',2e-06,3e-10,0,'Stage Z',0,'hl','Stage_Tilt_Fine2',4e-06,0.0174532925199433,'Tomo Focus',1,0,5e-05,NULL,1),(10,'2015-09-28 19:56:33',1,'phase',5000,'Beam Tilt',2e-06,3e-10,0,'Defocus',1,'fa','Beam_Tilt_Fine',4e-06,0.01,'Tomo Focus',0,0,5e-05,NULL,1),(11,'2015-09-28 19:56:33',1,'phase',1000,'Manual',2e-06,3e-10,0,'Defocus',0,'fc','Manual_after',4e-06,0.01,'Tomo Focus',0,0,0.001,NULL,1),(12,'2015-09-28 19:56:33',1,'phase',1000,'Stage Tilt',2e-06,3e-10,0,'Stage Z',0,'sq','Stage_Tilt_Rough',4e-06,0.0174532925199433,'Tomo Z Focus',1,0,0.0002,NULL,1),(13,'2015-09-28 19:56:33',1,'phase',5000,'Stage Tilt',2e-06,3e-10,0,'Stage Z',0,'hl','Stage_Tilt_Fine',4e-06,0.0174532925199433,'Tomo Z Focus',1,0,0.0001,NULL,1),(14,'2015-09-28 19:56:33',1,'phase',5000,'Beam Tilt',2e-06,3e-10,0,'Stage Z',0,'hl','Beam_Tilt_Auto',4e-06,0.01,'Tomo Z Focus',0,0,5e-05,NULL,1),(15,'2015-09-28 19:56:33',1,'phase',1000,'Manual',2e-06,3e-10,0,'Defocus',0,'fc','Manual_after',4e-06,0.01,'Tomo Z Focus',0,0,0.001,NULL,1),(16,'2015-09-28 19:56:33',1,'phase',2000,'Beam Tilt',2e-06,3e-10,0,'Stage Z',0,'fa','Z_to_Eucentric',4e-06,0.01,'RCT Focus',1,0,2e-05,NULL,1),(17,'2015-09-28 19:56:33',1,'phase',2000,'Beam Tilt',2e-06,3e-10,0,'Defocus',0,'fa','Def_to_Eucentric',4e-06,0.01,'RCT Focus',1,0,2e-05,NULL,1),(18,'2015-09-28 19:56:33',1,'phase',1000,'Stage Tilt',2e-06,3e-10,0,'Stage Z',0,'hl','Stage_Tilt_Fine',4e-06,0.0174532925199433,'Section Z Focus',1,0,0.001,NULL,1),(19,'2015-09-28 19:56:33',1,'phase',1000,'Stage Tilt',2e-06,3e-10,0,'Stage Z',0,'hl','Stage_Tilt_High',4e-06,0.0349065850398866,'Section Z Focus',0,0,0.001,NULL,1),(20,'2015-09-28 19:56:33',1,'phase',1000,'Beam Tilt',2e-06,3e-10,0,'Defocus',0,'gr','Stage_Wobble_Rough',4e-06,0.01,'Grid Focus',1,0,0.001,NULL,1),(21,'2015-09-28 19:56:33',1,'phase',1000,'Stage Tilt',2e-06,3e-10,0,'Stage Z',0,'sq','Stage_Wobble_Rough',4e-06,0.0174532925199433,'Section Focus',1,0,0.001,NULL,1),(22,'2015-09-28 19:56:33',1,'phase',1000,'Stage Tilt',2e-06,3e-10,0,'Stage Z',0,'hl','Stage_Wobble_Fine',4e-06,0.0174532925199433,'Section Focus',1,0,0.0001,NULL,1),(23,'2015-09-28 19:56:33',1,'phase',1000,'Stage Tilt',2e-06,3e-10,0,'Stage Z',0,'sq','Rough',4e-06,0.0174532925199433,'Screen Z Focus',1,0,0.0002,NULL,1),(24,'2015-09-28 19:56:33',1,'phase',1000,'Stage Tilt',2e-06,3e-10,0,'Stage Z',0,'hl','Medium',4e-06,0.0174532925199433,'Screen Z Focus',0,0,0.0001,NULL,1),(25,'2015-09-28 19:56:33',1,'phase',2000,'Beam Tilt',2e-06,3e-10,0,'Stage Z',0,'fa','Fine',4e-06,0.01,'Screen Z Focus',1,0,2e-05,NULL,1),(26,'2015-09-28 19:56:33',1,'phase',1000,'Stage Tilt',2e-06,3e-10,0,'Stage Z',0,'hl','Stage Tilt Fine',4e-06,0.0174532925199433,'Align Focus',1,0,0.0001,NULL,1),(27,'2015-09-28 19:56:33',1,'phase',1000,'Beam Tilt',2e-06,3e-10,0,'Defocus',1,'fa','Beam Tilt 1',4e-06,0.01,'Align Focus',1,0,5e-05,NULL,1),(28,'2015-09-28 19:56:33',1,'phase',1000,'Beam Tilt',2e-06,3e-10,0,'Defocus',0,'fa','Beam Tilt 2',4e-06,0.01,'Align Focus',1,0,2e-05,NULL,1),(29,'2015-09-28 19:56:33',1,'phase',1000,'Manual',2e-06,3e-10,0,'Defocus',0,'fc','Manual after',4e-06,0.01,'Align Focus',1,0,0.001,NULL,1);
-/*!40000 ALTER TABLE `FocusSettingData` ENABLE KEYS */;
-UNLOCK TABLES;
 
 --
 -- Table structure for table `FocuserSettingsData`
@@ -1004,16 +908,6 @@ CREATE TABLE `FocuserSettingsData` (
   KEY `REF|SessionData|session` (`REF|SessionData|session`)
 ) ENGINE=MyISAM AUTO_INCREMENT=11 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `FocuserSettingsData`
---
-
-LOCK TABLES `FocuserSettingsData` WRITE;
-/*!40000 ALTER TABLE `FocuserSettingsData` DISABLE KEYS */;
-INSERT INTO `FocuserSettingsData` VALUES (1,'2015-09-28 19:56:33',1,1,'[u\'fc\']',1,1.5,NULL,0,'Focus',1,0,1,NULL,0,'image shift',NULL,0,1,1,'presets manager',0,'focus','fc','fc',0,0,0,0.001,0,NULL,'one',0,0,0,0,'Continue',65536,50,0,0,0,0,NULL,0,0),(2,'2015-09-28 19:56:33',0,1,'[u\'hl\']',1,2.5,NULL,0,'Z Focus',1,0,1,NULL,0,'stage position',NULL,0,1,1,'presets manager',0,'focus','hl','fc',0,0,0,0.001,0,NULL,'one',0,0,0,0,'Continue',65536,50,0,0,0,0,NULL,0,0),(3,'2015-09-28 19:56:33',0,1,'[u\'fc\']',1,2.5,NULL,0,'Tomo Focus',1,0,1,NULL,0,'stage position',NULL,0,1,1,'presets manager',0,'focus','fc','fc',0,0,0,0.001,0,NULL,'one',0,0,0,0,'Continue',65536,50,0,0,0,0,NULL,0,0),(4,'2015-09-28 19:56:33',0,1,'[u\'hl\']',1,2.5,NULL,0,'Tomo Z Focus',1,0,1,NULL,0,'stage position',NULL,0,1,1,'presets manager',0,'focus','fc','fc',0,0,0,0,0,NULL,'one',0,0,0,0,'Continue',65536,50,0,0,0,0,NULL,0,0),(5,'2015-09-28 19:56:33',1,1,'[u\'fc\']',1,2.5,NULL,0,'RCT Focus',1,0,1,NULL,0,'stage position',NULL,0,1,1,'presets manager',0,'focus','fc','fc',0,0,0,0.001,0,NULL,'no',0,0,0,0,'Continue',65536,50,0,0,0,0,NULL,0,0),(6,'2015-09-28 19:56:33',0,1,'[u\'hl\']',1,2.5,NULL,0,'Section Z Focus',1,0,1,NULL,0,'stage position',NULL,0,1,1,'presets manager',0,'focus','hl','fc',0,0,0,0.001,0,NULL,'no',0,0,0,0,'Continue',65536,50,0,0,0,0,NULL,0,0),(7,'2015-09-28 19:56:33',0,1,'[u\'gr\']',1,2.5,NULL,0,'Grid Focus',1,0,1,NULL,0,'stage position',NULL,0,1,1,'presets manager',0,'focus','gr','gr',0,0,0,0.001,0,NULL,'no',0,0,0,0,'Continue',65536,50,0,0,0,0,NULL,0,0),(8,'2015-09-28 19:56:33',0,1,'[u\'hl\']',1,2.5,NULL,0,'Section Focus',1,0,1,NULL,0,'stage position',NULL,0,1,1,'presets manager',0,'focus','hl','fc',0,0,0,0.001,0,NULL,'no',0,0,0,0,'Continue',65536,50,0,0,0,0,NULL,0,0),(9,'2015-09-28 19:56:33',0,1,'[u\'fc\']',1,2.5,NULL,0,'Screen Z Focus',1,0,1,NULL,0,'stage position',NULL,0,1,1,'presets manager',0,'focus','fc','fc',0,0,0,0.001,0,NULL,'one',0,0,0,0,'Continue',65536,50,0,0,0,0,NULL,0,0),(10,'2015-09-28 19:56:33',0,1,'[u\'fc\']',1,2.5,NULL,0,'Align Focus',1,0,1,NULL,0,'stage position',NULL,0,1,1,'presets manager',0,'acquisition','fc','fc',0,0,0,0.001,0,NULL,'no',0,0,0,0,'Continue',65536,50,0,0,0,0,0,0,0);
-/*!40000 ALTER TABLE `FocuserSettingsData` ENABLE KEYS */;
-UNLOCK TABLES;
 
 --
 -- Table structure for table `GonModelerSettingsData`
@@ -1112,7 +1006,12 @@ CREATE TABLE `GroupData` (
 
 LOCK TABLES `GroupData` WRITE;
 /*!40000 ALTER TABLE `GroupData` DISABLE KEYS */;
-INSERT INTO `GroupData` VALUES (1,'2015-09-28 19:56:33','administrators','Administrator Group - Have all the power on project and user management.',1),(2,'2015-09-28 19:56:33','power users','Power User Group - view, edit, all the projects.',2),(3,'2015-09-28 19:56:33','users','Normal User Group - view, edit all owned and shared projects.',3),(4,'2015-09-28 19:56:33','guests','Guest Group - view own and share projects',4),(5,'2015-09-28 19:56:33','disabled','Disabled Group - locked users',5);
+INSERT INTO `GroupData` VALUES
+(1,'2015-09-28 19:56:33','administrators','Administrator Group - Have all the power on project and user management.',1),
+(2,'2015-09-28 19:56:33','power users','Power User Group - view, edit, all the projects.',2),
+(3,'2015-09-28 19:56:33','users','Normal User Group - view, edit all owned and shared projects.',3),
+(4,'2015-09-28 19:56:33','guests','Guest Group - view own and share projects',4),
+(5,'2015-09-28 19:56:33','disabled','Disabled Group - locked users',5);
 /*!40000 ALTER TABLE `GroupData` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1175,18 +1074,8 @@ CREATE TABLE `HoleFinderSettingsData` (
   KEY `REF|SessionData|session` (`REF|SessionData|session`),
   KEY `REF|LowPassFilterSettingsData|template lpf` (`REF|LowPassFilterSettingsData|template lpf`),
   KEY `REF|LowPassFilterSettingsData|edge lpf` (`REF|LowPassFilterSettingsData|edge lpf`)
-) ENGINE=MyISAM AUTO_INCREMENT=3 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `HoleFinderSettingsData`
---
-
-LOCK TABLES `HoleFinderSettingsData` WRITE;
-/*!40000 ALTER TABLE `HoleFinderSettingsData` DISABLE KEYS */;
-INSERT INTO `HoleFinderSettingsData` VALUES (1,'2015-09-28 19:56:33',0.2,300,102,0,0,4000,240,1,'[(0, 0)]',1.4,0,0,4,0,0.28,9,1,'cross',15,10,'Good Hole','[(0, 0)]',1,'sobel',0.05,20,'[(35, 41)]',0.3,3,'Hole Targeting',0.5,NULL,0.2,52000,200,1,0.5,0,1,1,NULL,0,0,0),(2,'2015-09-28 19:56:33',0.1,1,150,1,0,6000,0.01,1,'[(220, 0), (150, 150), (0, 220), (-150, 150), (-220, 0), (-150, -150), (0, -220), (150, -150)]',1.4,1,0,NULL,0,0.01,9,1,'phase',15,100,'Off','[(0, 0)]',1,'sobel',0.05,20,'[(160, 170)]',0.2,NULL,'Exposure Targeting',0.5,NULL,0.2,26000,1000,1,0.5,0,1,1,NULL,0,0,0);
-/*!40000 ALTER TABLE `HoleFinderSettingsData` ENABLE KEYS */;
-UNLOCK TABLES;
 
 --
 -- Table structure for table `ImageCommentData`
@@ -1237,9 +1126,10 @@ CREATE TABLE `InstrumentData` (
   `camera pixel size` double DEFAULT NULL,
   `cs` double DEFAULT NULL,
   `pixelmax` int(20) DEFAULT NULL,
+  `hidden` tinyint(1) DEFAULT '0',
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`)
-) ENGINE=MyISAM AUTO_INCREMENT=4 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=6 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1248,7 +1138,9 @@ CREATE TABLE `InstrumentData` (
 
 LOCK TABLES `InstrumentData` WRITE;
 /*!40000 ALTER TABLE `InstrumentData` DISABLE KEYS */;
-INSERT INTO `InstrumentData` VALUES (1,'2015-09-28 19:56:33','AppionTEM','appion','TEM',NULL,NULL,NULL,NULL,NULL,NULL,NULL),(2,'2015-10-05 17:02:51','AppionTEM','appion',NULL,NULL,NULL,NULL,NULL,NULL,0.002,NULL),(3,'2015-10-05 17:02:51','AppionCamera','appion',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO `InstrumentData` VALUES
+(1,'2016-06-30 15:08:38','AppionTEM',   'appion',NULL,NULL,NULL,NULL,NULL,NULL,0.002,NULL,0),
+(2,'2016-06-30 15:08:38','AppionCamera','appion',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0);
 /*!40000 ALTER TABLE `InstrumentData` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1318,16 +1210,6 @@ CREATE TABLE `JAHCFinderSettingsData` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Dumping data for table `JAHCFinderSettingsData`
---
-
-LOCK TABLES `JAHCFinderSettingsData` WRITE;
-/*!40000 ALTER TABLE `JAHCFinderSettingsData` DISABLE KEYS */;
-INSERT INTO `JAHCFinderSettingsData` VALUES (1,'2015-09-28 19:56:33',0.2,300,20,77,0,0,100,3,1,'[(0, 0)]',1.4,0,1,0,NULL,0,0.05,9,1,1,'cross',15,10,'Any Hole','[(0, 0)]',45,1,'sobel',0.05,168,0.16,5,'Hole Targeting',0.5,NULL,0.15,140,1000,0,NULL,1,0.5,'Threshold = mean + A * stdev',0,10,0,NULL),(2,'2015-09-28 19:56:33',0.1,1,20,150,1,0,100,0.0009,1,'[(-12, -144), (-144, 12), (12, 144), (144, -12)]',1.4,1,1,0,6,0,0.05,9,1,1,'phase',35,50,'Off','[(0, 35), (0, -35)]',115,1,'sobel',0.05,168,5,6,'Exposure Targeting Q',4,NULL,0.5,115,10000,1,NULL,1,0.1,'Threshold = A',0,10,0,'off'),(3,'2015-09-28 19:56:33',0.1,1,20,150,1,0,100,0.0009,1,'[(-12, -144), (-144, 12), (12, 144), (144, -12)]',1.4,1,1,0,6,0,0.05,9,1,1,'phase',35,50,'Off','[(0, 35), (0, -35)]',115,1,'sobel',0.05,168,5,6,'Exposure Targeting',4,NULL,0.5,115,10000,0,NULL,1,0.1,'Threshold = A',0,10,0,'off'),(4,'2015-09-28 19:56:33',0.1,1,20,150,1,1,100,1.5,1,'[(22, 128), (128, -22), (-22, -128), (-128, 22)]',1.4,1,1,0,4,0,0.05,9,1,1,'cross',30,100,'Off','[(0, -35), (0, 35)]',140,1,'sobel',0.1,168,0.2,4,'RCT Targeting',0.3,NULL,0.2,110,1000,1,NULL,1,0.1,'Threshold = mean + A * stdev',0,10,0,'off'),(5,'2015-09-28 19:56:33',0.1,300,20,110,0,0,100,2,1,'[]',1.4,0,1,0,4,0,0.15,9,1,1,'cross',30,10,'Off','[]',90,1,'sobel',0.05,168,0.35,4,'Square Targeting',0.5,NULL,0.3,200,1000,0,NULL,1,0.5,'Threshold = mean + A * stdev',0,10,0,'off');
-/*!40000 ALTER TABLE `JAHCFinderSettingsData` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
 -- Table structure for table `LaunchedApplicationData`
 --
 
@@ -1373,16 +1255,6 @@ CREATE TABLE `LowPassFilterSettingsData` (
   KEY `DEF_timestamp` (`DEF_timestamp`)
 ) ENGINE=MyISAM AUTO_INCREMENT=7 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `LowPassFilterSettingsData`
---
-
-LOCK TABLES `LowPassFilterSettingsData` WRITE;
-/*!40000 ALTER TABLE `LowPassFilterSettingsData` DISABLE KEYS */;
-INSERT INTO `LowPassFilterSettingsData` VALUES (1,'2015-09-28 19:56:33',0,1.4,5),(2,'2015-09-28 19:56:33',1,1.4,5),(3,'2015-09-28 19:56:33',NULL,1,NULL),(4,'2015-09-28 19:56:33',0,1,0),(5,'2015-09-28 19:56:33',1,1,5),(6,'2015-09-28 19:56:33',0,1,0);
-/*!40000 ALTER TABLE `LowPassFilterSettingsData` ENABLE KEYS */;
-UNLOCK TABLES;
 
 --
 -- Table structure for table `MatrixCalibratorSettingsData`
@@ -1502,16 +1374,6 @@ CREATE TABLE `MosaicClickTargetFinderSettingsData` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Dumping data for table `MosaicClickTargetFinderSettingsData`
---
-
-LOCK TABLES `MosaicClickTargetFinderSettingsData` WRITE;
-/*!40000 ALTER TABLE `MosaicClickTargetFinderSettingsData` DISABLE KEYS */;
-INSERT INTO `MosaicClickTargetFinderSettingsData` VALUES (1,'2015-09-28 19:56:33',1,NULL,1,0,'Square Targeting',1,0,'stage position',512,100,1,0,0,0,0,1,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'all',NULL,0,0,0),(2,'2015-09-28 19:56:33',1,NULL,NULL,0,'Raster Center Targeting',1,0,'stage position',512,100,NULL,0,0,0,1,1,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'all',NULL,0,0,0),(3,'2015-09-28 19:56:33',1,NULL,NULL,0,'Rough Tissue Targeting',1,0,'stage position',512,100,2,0,0,0,1,1,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'all',NULL,0,0,0),(4,'2015-09-28 19:56:33',1,NULL,1,0,'Atlas View',1,0,'stage position',512,100,1,0,0,0,1,1,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'all',NULL,0,0,0);
-/*!40000 ALTER TABLE `MosaicClickTargetFinderSettingsData` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
 -- Table structure for table `MosaicTargetMakerSettingsData`
 --
 
@@ -1537,16 +1399,6 @@ CREATE TABLE `MosaicTargetMakerSettingsData` (
   KEY `REF|SessionData|session` (`REF|SessionData|session`)
 ) ENGINE=MyISAM AUTO_INCREMENT=4 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `MosaicTargetMakerSettingsData`
---
-
-LOCK TABLES `MosaicTargetMakerSettingsData` WRITE;
-/*!40000 ALTER TABLE `MosaicTargetMakerSettingsData` DISABLE KEYS */;
-INSERT INTO `MosaicTargetMakerSettingsData` VALUES (1,'2015-09-28 19:56:33',128,'Grid Targeting',16384,1,NULL,1,0.0009,'gr','stage center',1,0),(2,'2015-09-28 19:56:33',128,'Grid Targeting Robot',16384,1,NULL,1,0.0005,'gr','stage center',1,0),(3,'2015-09-28 19:56:33',128,'Grid Survey Targeting',16384,1,NULL,1,0.0005,'gr','stage center',1,0);
-/*!40000 ALTER TABLE `MosaicTargetMakerSettingsData` ENABLE KEYS */;
-UNLOCK TABLES;
 
 --
 -- Table structure for table `NavigatorSettingsData`
@@ -1653,7 +1505,7 @@ CREATE TABLE `PixelSizeCalibrationData` (
 
 LOCK TABLES `PixelSizeCalibrationData` WRITE;
 /*!40000 ALTER TABLE `PixelSizeCalibrationData` DISABLE KEYS */;
-INSERT INTO `PixelSizeCalibrationData` VALUES (1,'2015-10-05 17:02:51',2,2,3,100000,NULL,8.15e-11,'based on uploaded pixel size');
+INSERT INTO `PixelSizeCalibrationData` VALUES (1,'2016-06-30 15:08:01',1,1,2,50000,NULL,1.63e-10,'based on uploaded pixel size');
 /*!40000 ALTER TABLE `PixelSizeCalibrationData` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1709,6 +1561,8 @@ CREATE TABLE `PresetData` (
   `DEF_id` int(16) NOT NULL AUTO_INCREMENT,
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `REF|SessionData|session` int(20) DEFAULT NULL,
+  `REF|InstrumentData|tem` int(20) DEFAULT NULL,
+  `REF|InstrumentData|ccdcamera` int(20) DEFAULT NULL,
   `number` int(20) DEFAULT NULL,
   `name` text,
   `magnification` int(20) DEFAULT NULL,
@@ -1722,8 +1576,6 @@ CREATE TABLE `PresetData` (
   `hasref` tinyint(1) DEFAULT '0',
   `dose` double DEFAULT NULL,
   `film` tinyint(1) DEFAULT '0',
-  `REF|InstrumentData|tem` int(20) DEFAULT NULL,
-  `REF|InstrumentData|ccdcamera` int(20) DEFAULT NULL,
   `tem energy filter` tinyint(1) DEFAULT '0',
   `tem energy filter width` double DEFAULT NULL,
   `energy filter` tinyint(1) DEFAULT '0',
@@ -1751,7 +1603,7 @@ CREATE TABLE `PresetData` (
 
 LOCK TABLES `PresetData` WRITE;
 /*!40000 ALTER TABLE `PresetData` DISABLE KEYS */;
-INSERT INTO `PresetData` VALUES (1,'2015-10-05 17:02:51',2,NULL,'upload',100000,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,2,3,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO `PresetData` VALUES (1,'2016-06-30 15:08:38',1,1,2,NULL,'em',50000,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
 /*!40000 ALTER TABLE `PresetData` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1782,16 +1634,6 @@ CREATE TABLE `PresetsManagerSettingsData` (
   KEY `REF|SessionData|session` (`REF|SessionData|session`)
 ) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `PresetsManagerSettingsData`
---
-
-LOCK TABLES `PresetsManagerSettingsData` WRITE;
-/*!40000 ALTER TABLE `PresetsManagerSettingsData` DISABLE KEYS */;
-INSERT INTO `PresetsManagerSettingsData` VALUES (1,'2015-09-28 19:56:33',1,'Presets Manager',1,1,1,1,1,1,0,0,0,1024);
-/*!40000 ALTER TABLE `PresetsManagerSettingsData` ENABLE KEYS */;
-UNLOCK TABLES;
 
 --
 -- Table structure for table `RCTAcquisitionSettingsData`
@@ -1867,16 +1709,6 @@ CREATE TABLE `RCTAcquisitionSettingsData` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Dumping data for table `RCTAcquisitionSettingsData`
---
-
-LOCK TABLES `RCTAcquisitionSettingsData` WRITE;
-/*!40000 ALTER TABLE `RCTAcquisitionSettingsData` DISABLE KEYS */;
-INSERT INTO `RCTAcquisitionSettingsData` VALUES (1,'2015-09-28 19:56:33',0,'[u\'en\']',1,2.5,NULL,1,NULL,1,1,'RCT',1,1,NULL,1,NULL,NULL,0,'stage position',50,NULL,0.8,NULL,NULL,15,'(-45, 0)','acquisition','navigator',6e-08,NULL,NULL,6e-10,'fa',0,NULL,1,2,1,0,0,5e-07,0,NULL,'no',0,0,0,0,'Continue',65536,50,0,0,0,0,NULL,0,0);
-/*!40000 ALTER TABLE `RCTAcquisitionSettingsData` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
 -- Table structure for table `RasterFinderSettingsData`
 --
 
@@ -1931,16 +1763,6 @@ CREATE TABLE `RasterFinderSettingsData` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Dumping data for table `RasterFinderSettingsData`
---
-
-LOCK TABLES `RasterFinderSettingsData` WRITE;
-/*!40000 ALTER TABLE `RasterFinderSettingsData` DISABLE KEYS */;
-INSERT INTO `RasterFinderSettingsData` VALUES (1,'2015-09-28 19:56:33',9,'[]','[(550, 512)]',15,1,0,0.3,'Subsquare Targeting',1,0,1,NULL,140,0.2,'[]',0.05,NULL,1,50,'[(0, 0)]',0,1,1,1,-103.37793736856,0,0,0,0,50,0,1,0,'hl','stage position',0,0,0),(2,'2015-09-28 19:56:33',5,'[]','[(256, 200)]',15,1,0,0.2,'Exposure Targeting',1,0,1,NULL,110,0.2,'[]',0.05,0,1,100,'[(0, 0)]',0,1,1,1,0,0,0,0,0,0,0,1,0,'gr','stage position',0,0,0),(3,'2015-09-28 19:56:33',1,'[]','[]',15,1,1,0.2,'Square Centering',1,0,1,NULL,1000,0.2,'[(0, 0)]',0.05,NULL,1,100,'[(0, 0)]',0,1,1,1,0,0,0,0,0,0,0,1,0,'en','stage position',0,1,0),(4,'2015-09-28 19:56:33',5,'[]','[(256, 240)]',15,1,0,0.2,'RCT Targeting',1,0,1,NULL,110,0.2,'[]',0.05,0,1,100,'[(0, 0)]',1,1,1,1,0,0,0,0,0,0,0,1,0,'en','stage position',0,0,0),(5,'2015-09-28 19:56:33',2,'[]','[]',15,1,0,0.5,'Mid Mag Survey Targeting',1,0,0,NULL,100,0.2,'[]',0.05,0,1,100,'[]',0,1,1,1,0,0,0,0,0,0,0,1,0,'hl','stage position',0,0,0),(6,'2015-09-28 19:56:33',3,'[]','[(256, 256)]',15,1,0,0.2,'High Mag Raster Targeting',1,0,0,NULL,1000,0.2,'[]',0.05,0,1,100,'[]',0,1,1,1,0,0,0,0,0,0,0,1,0,'gr','stage position',0,0,0);
-/*!40000 ALTER TABLE `RasterFinderSettingsData` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
 -- Table structure for table `RasterTargetFilterSettingsData`
 --
 
@@ -1971,16 +1793,6 @@ CREATE TABLE `RasterTargetFilterSettingsData` (
   KEY `REF|SessionData|session` (`REF|SessionData|session`)
 ) ENGINE=MyISAM AUTO_INCREMENT=3 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `RasterTargetFilterSettingsData`
---
-
-LOCK TABLES `RasterTargetFilterSettingsData` WRITE;
-/*!40000 ALTER TABLE `RasterTargetFilterSettingsData` DISABLE KEYS */;
-INSERT INTO `RasterTargetFilterSettingsData` VALUES (1,'2015-09-28 19:56:33',1,'Raster Generation',1,0,20,0,'hl','stage position',0,NULL,'acquisition',0,2,2,1,0),(2,'2015-09-28 19:56:33',1,'Final Raster Targeting',1,0,50,0,'hl','stage position',0,NULL,'acquisition',0,2,2,1,0);
-/*!40000 ALTER TABLE `RasterTargetFilterSettingsData` ENABLE KEYS */;
-UNLOCK TABLES;
 
 --
 -- Table structure for table `RobotSettingsData`
@@ -2028,6 +1840,7 @@ CREATE TABLE `ScopeEMData` (
   `DEF_id` int(16) NOT NULL AUTO_INCREMENT,
   `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `REF|SessionData|session` int(20) DEFAULT NULL,
+  `REF|InstrumentData|tem` int(20) DEFAULT NULL,
   `system time` double DEFAULT NULL,
   `magnification` int(20) DEFAULT NULL,
   `spot size` int(20) DEFAULT NULL,
@@ -2073,7 +1886,6 @@ CREATE TABLE `ScopeEMData` (
   `tem energy filter` tinyint(1) DEFAULT '0',
   `tem energy filter width` double DEFAULT NULL,
   `probe mode` text,
-  `REF|InstrumentData|tem` int(20) DEFAULT NULL,
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `REF|SessionData|session` (`REF|SessionData|session`),
@@ -2087,7 +1899,7 @@ CREATE TABLE `ScopeEMData` (
 
 LOCK TABLES `ScopeEMData` WRITE;
 /*!40000 ALTER TABLE `ScopeEMData` DISABLE KEYS */;
-INSERT INTO `ScopeEMData` VALUES (1,'2015-10-05 17:02:51',2,NULL,100000,NULL,NULL,-1e-06,NULL,NULL,NULL,NULL,NULL,0,0,0,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,120000,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,2);
+INSERT INTO `ScopeEMData` VALUES (1,'2016-06-30 15:08:38',1,1,NULL,50000,NULL,NULL,-1.8e-06,NULL,NULL,NULL,NULL,NULL,0,0,0,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,120000,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
 /*!40000 ALTER TABLE `ScopeEMData` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -2114,7 +1926,7 @@ CREATE TABLE `SessionData` (
   KEY `REF|UserData|user` (`REF|UserData|user`),
   KEY `REF|GridHolderData|holder` (`REF|GridHolderData|holder`),
   FULLTEXT KEY `name` (`name`)
-) ENGINE=MyISAM AUTO_INCREMENT=3 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -2123,7 +1935,7 @@ CREATE TABLE `SessionData` (
 
 LOCK TABLES `SessionData` WRITE;
 /*!40000 ALTER TABLE `SessionData` DISABLE KEYS */;
-INSERT INTO `SessionData` VALUES (1,'2015-09-28 19:56:33','importsettings20150928195633',1,NULL,'import default',1,NULL,NULL,NULL),(2,'2015-10-05 17:02:51','06jul12a',NULL,'/emg/data/leginon/06jul12a/rawdata','First test session with GroEL',NULL,NULL,NULL,NULL);
+INSERT INTO `SessionData` VALUES (1,'2016-06-30 15:08:38','06jul12a',NULL,'/emg/data/leginon/06jul12a/rawdata','06jul12a groEL magic data set',0,1,NULL,'/emg/data/frames/06jul12a/rawdata');
 /*!40000 ALTER TABLE `SessionData` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -2290,7 +2102,6 @@ CREATE TABLE `TomographySettingsData` (
 
 LOCK TABLES `TomographySettingsData` WRITE;
 /*!40000 ALTER TABLE `TomographySettingsData` DISABLE KEYS */;
-INSERT INTO `TomographySettingsData` VALUES (1,'2015-09-28 19:56:33',1,NULL,0,'[u\'tomo\']',60,1,2.5,NULL,1,NULL,1,NULL,1,-60,NULL,0,1,'stage position',1,'Tomography',0,1,NULL,0,0,1,200,0.025,2,'acquisition','navigator',6e-08,0,8,1,100,90,1,0,1,1,NULL,0,'custom values',2e-06,0,0,1,0,0,0,1,1,NULL,2e-07,NULL,1,4,10,0,NULL,'one',0,0,0,0,'Continue',65536,50,0,0,0,0,NULL,0,0,0,0);
 /*!40000 ALTER TABLE `TomographySettingsData` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -2825,7 +2636,7 @@ CREATE TABLE `install` (
 
 LOCK TABLES `install` WRITE;
 /*!40000 ALTER TABLE `install` DISABLE KEYS */;
-INSERT INTO `install` VALUES ('settable','1'),('version','3.1.0'),('revision','18367');
+INSERT INTO `install` VALUES ('settable','1'),('version','3.3.0'),('revision','18367');
 /*!40000 ALTER TABLE `install` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -2907,7 +2718,7 @@ CREATE TABLE `projectexperiments` (
   KEY `project` (`REF|projects|project`),
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `session` (`REF|leginondata|SessionData|session`)
-) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=3 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -2916,7 +2727,7 @@ CREATE TABLE `projectexperiments` (
 
 LOCK TABLES `projectexperiments` WRITE;
 /*!40000 ALTER TABLE `projectexperiments` DISABLE KEYS */;
-INSERT INTO `projectexperiments` VALUES (1,'2015-10-05 17:02:51',1,2);
+INSERT INTO `projectexperiments` VALUES (1,'2016-06-30 15:08:38',1,1);
 /*!40000 ALTER TABLE `projectexperiments` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -2967,7 +2778,7 @@ CREATE TABLE `projects` (
   `hidden` tinyint(1) NOT NULL DEFAULT '0',
   PRIMARY KEY (`DEF_id`),
   KEY `hidden` (`hidden`)
-) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=4 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -2976,7 +2787,7 @@ CREATE TABLE `projects` (
 
 LOCK TABLES `projects` WRITE;
 /*!40000 ALTER TABLE `projects` DISABLE KEYS */;
-INSERT INTO `projects` VALUES (1,'2015-10-05 17:02:16','GroEL','Docker Test #1 GroEL','','','',NULL,0);
+INSERT INTO `projects` VALUES (1,'2015-10-05 17:02:16','GroEL','Docker Test #1 GroEL','','','',NULL,0),(2,'2015-10-05 17:02:16','CTF','Docker Test #2 CTF','','','',NULL,0),(3,'2015-10-05 17:02:16','Artemia','Docker Test #3 Artemia Ribosomes','','','',NULL,0);
 /*!40000 ALTER TABLE `projects` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -5446,7 +5257,7 @@ CREATE TABLE `ApParticleData` (
   KEY `REF|ApSelectionRunData|selectionrun` (`REF|ApSelectionRunData|selectionrun`),
   KEY `REF|leginondata|AcquisitionImageData|image` (`REF|leginondata|AcquisitionImageData|image`),
   KEY `REF|ApTemplateImageData|template` (`REF|ApTemplateImageData|template`)
-) ENGINE=MyISAM AUTO_INCREMENT=596 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=1326 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -5455,7 +5266,7 @@ CREATE TABLE `ApParticleData` (
 
 LOCK TABLES `ApParticleData` WRITE;
 /*!40000 ALTER TABLE `ApParticleData` DISABLE KEYS */;
-INSERT INTO `ApParticleData` VALUES (1,'2016-03-08 18:31:14',1,6,704,1628,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(2,'2016-03-08 18:31:14',1,6,488,1656,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(3,'2016-03-08 18:31:14',1,6,576,1304,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(4,'2016-03-08 18:31:14',1,6,788,1424,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(5,'2016-03-08 18:31:14',1,6,1008,1116,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(6,'2016-03-08 18:31:14',1,6,1020,548,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(7,'2016-03-08 18:31:14',1,6,848,420,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(8,'2016-03-08 18:31:14',1,6,1172,368,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(9,'2016-03-08 18:31:14',1,6,1968,572,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(10,'2016-03-08 18:31:14',1,6,2252,512,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(11,'2016-03-08 18:31:14',1,6,2180,684,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(12,'2016-03-08 18:31:14',1,6,2100,1116,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(13,'2016-03-08 18:31:14',1,6,2088,1292,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(14,'2016-03-08 18:31:14',1,6,1880,1256,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(15,'2016-03-08 18:31:14',1,6,1988,1500,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(16,'2016-03-08 18:31:14',1,6,2616,1200,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(17,'2016-03-08 18:31:14',1,6,2724,788,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(18,'2016-03-08 18:31:14',1,6,2832,564,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(19,'2016-03-08 18:31:14',1,6,2780,284,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(20,'2016-03-08 18:31:14',1,6,3020,404,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(21,'2016-03-08 18:31:14',1,6,3120,164,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(22,'2016-03-08 18:31:14',1,6,3324,440,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(23,'2016-03-08 18:31:14',1,6,3708,848,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(24,'2016-03-08 18:31:14',1,6,3524,1004,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(25,'2016-03-08 18:31:14',1,6,3252,944,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(26,'2016-03-08 18:31:14',1,6,3116,1064,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(27,'2016-03-08 18:31:14',1,6,2984,836,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(28,'2016-03-08 18:31:14',1,6,3128,1436,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(29,'2016-03-08 18:31:14',1,6,2972,1676,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(30,'2016-03-08 18:31:14',1,6,2820,1916,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(31,'2016-03-08 18:31:14',1,6,2412,1692,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(32,'2016-03-08 18:31:14',1,6,2676,2076,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(33,'2016-03-08 18:31:14',1,6,2952,2204,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(34,'2016-03-08 18:31:14',1,6,3164,2148,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(35,'2016-03-08 18:31:14',1,6,3264,1908,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(36,'2016-03-08 18:31:14',1,6,3188,1688,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(37,'2016-03-08 18:31:14',1,6,3516,1844,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(38,'2016-03-08 18:31:14',1,6,3372,2196,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(39,'2016-03-08 18:31:14',1,6,3624,2124,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(40,'2016-03-08 18:31:14',1,6,3524,2364,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(41,'2016-03-08 18:31:14',1,6,3236,2504,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(42,'2016-03-08 18:31:14',1,6,3012,2420,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(43,'2016-03-08 18:31:14',1,6,2784,2592,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(44,'2016-03-08 18:31:14',1,6,2948,2712,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(45,'2016-03-08 18:31:14',1,6,2856,3048,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(46,'2016-03-08 18:31:14',1,6,2664,3048,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(47,'2016-03-08 18:31:14',1,6,3164,2892,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(48,'2016-03-08 18:31:14',1,6,3248,3152,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(49,'2016-03-08 18:31:14',1,6,1980,2828,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(50,'2016-03-08 18:31:14',1,6,2124,2696,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(51,'2016-03-08 18:31:14',1,6,2004,2288,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(52,'2016-03-08 18:31:14',1,6,3404,3260,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(53,'2016-03-08 18:31:14',1,6,3336,3444,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(54,'2016-03-08 18:31:14',1,6,3252,3764,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(55,'2016-03-08 18:31:14',1,6,3456,3620,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(56,'2016-03-08 18:31:14',1,6,3612,3600,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(57,'2016-03-08 18:31:14',1,6,3600,3396,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(58,'2016-03-08 18:31:14',1,6,2328,3696,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(59,'2016-03-08 18:31:14',1,6,2108,3744,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(60,'2016-03-08 18:31:14',1,6,1808,3908,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(61,'2016-03-08 18:31:14',1,6,2160,3060,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(62,'2016-03-08 18:31:14',1,6,1172,3416,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(63,'2016-03-08 18:31:14',1,6,1068,3612,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(64,'2016-03-08 18:31:14',1,6,1292,3596,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(65,'2016-03-08 18:31:14',1,6,620,3704,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(66,'2016-03-08 18:31:14',1,6,876,2936,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(67,'2016-03-08 18:31:14',1,6,668,2924,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(68,'2016-03-08 18:31:14',1,6,384,2772,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(69,'2016-03-08 18:31:14',1,6,468,2592,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(70,'2016-03-08 18:31:14',1,6,612,2288,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(71,'2016-03-08 18:31:14',1,6,732,2504,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(72,'2016-03-08 18:31:14',1,6,1476,2492,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(73,'2016-03-08 18:31:14',1,6,1424,2048,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(74,'2016-03-08 18:31:14',1,6,1704,2088,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(75,'2016-03-08 18:31:14',1,6,3264,2780,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(76,'2016-03-08 18:31:14',1,6,3588,2664,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(77,'2016-03-08 18:31:14',1,8,176,2892,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(78,'2016-03-08 18:31:14',1,8,176,2672,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(79,'2016-03-08 18:31:14',1,8,956,320,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(80,'2016-03-08 18:31:14',1,8,836,464,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(81,'2016-03-08 18:31:14',1,8,320,908,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(82,'2016-03-08 18:31:14',1,8,1008,576,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(83,'2016-03-08 18:31:14',1,8,1104,800,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(84,'2016-03-08 18:31:14',1,8,972,1080,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(85,'2016-03-08 18:31:14',1,8,1112,1200,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(86,'2016-03-08 18:31:14',1,8,756,1116,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(87,'2016-03-08 18:31:14',1,8,668,1308,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(88,'2016-03-08 18:31:14',1,8,476,1176,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(89,'2016-03-08 18:31:14',1,8,348,1296,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(90,'2016-03-08 18:31:14',1,8,888,1436,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(91,'2016-03-08 18:31:14',1,8,924,1704,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(92,'2016-03-08 18:31:14',1,8,668,1848,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(93,'2016-03-08 18:31:14',1,8,800,2016,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(94,'2016-03-08 18:31:14',1,8,576,2000,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(95,'2016-03-08 18:31:14',1,8,872,1880,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(96,'2016-03-08 18:31:14',1,8,992,2052,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(97,'2016-03-08 18:31:14',1,8,968,2232,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(98,'2016-03-08 18:31:14',1,8,1104,2136,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(99,'2016-03-08 18:31:14',1,8,1296,2196,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(100,'2016-03-08 18:31:14',1,8,1548,1796,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(101,'2016-03-08 18:31:14',1,8,1388,1652,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(102,'2016-03-08 18:31:14',1,8,1284,1392,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(103,'2016-03-08 18:31:14',1,8,1512,1068,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(104,'2016-03-08 18:31:14',1,8,1260,560,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(105,'2016-03-08 18:31:14',1,8,2184,936,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(106,'2016-03-08 18:31:14',1,8,2336,996,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(107,'2016-03-08 18:31:14',1,8,2592,944,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(108,'2016-03-08 18:31:14',1,8,2720,1140,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(109,'2016-03-08 18:31:14',1,8,2984,984,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(110,'2016-03-08 18:31:14',1,8,3404,648,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(111,'2016-03-08 18:31:14',1,8,3548,828,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(112,'2016-03-08 18:31:14',1,8,3684,500,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(113,'2016-03-08 18:31:14',1,8,3456,480,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(114,'2016-03-08 18:31:14',1,8,2996,356,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(115,'2016-03-08 18:31:14',1,8,2756,216,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(116,'2016-03-08 18:31:14',1,8,3788,860,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(117,'2016-03-08 18:31:14',1,8,3776,1268,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(118,'2016-03-08 18:31:14',1,8,3476,1532,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(119,'2016-03-08 18:31:14',1,8,3308,1716,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(120,'2016-03-08 18:31:14',1,8,3600,1728,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(121,'2016-03-08 18:31:14',1,8,3020,1908,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(122,'2016-03-08 18:31:14',1,8,3036,1764,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(123,'2016-03-08 18:31:14',1,8,2832,1788,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(124,'2016-03-08 18:31:14',1,8,2760,1572,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(125,'2016-03-08 18:31:14',1,8,2672,1464,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(126,'2016-03-08 18:31:14',1,8,2820,1376,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(127,'2016-03-08 18:31:14',1,8,3372,2636,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(128,'2016-03-08 18:31:14',1,8,3320,2828,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(129,'2016-03-08 18:31:14',1,8,3356,2960,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(130,'2016-03-08 18:31:14',1,8,3176,2960,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(131,'2016-03-08 18:31:14',1,8,3276,3116,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(132,'2016-03-08 18:31:14',1,8,3368,3260,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(133,'2016-03-08 18:31:14',1,8,3668,2364,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(134,'2016-03-08 18:31:14',1,8,3840,2264,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(135,'2016-03-08 18:31:14',1,8,2468,2964,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(136,'2016-03-08 18:31:14',1,8,428,3260,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(137,'2016-03-08 18:31:14',1,8,240,3536,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(138,'2016-03-08 18:31:14',1,8,3440,3636,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(139,'2016-03-08 18:31:14',1,8,3260,3608,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(140,'2016-03-08 18:31:14',1,8,3060,3620,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(141,'2016-03-08 18:31:14',1,8,3180,3788,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(142,'2016-03-08 18:31:14',1,8,3236,3396,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(143,'2016-03-08 18:31:14',1,8,3828,3548,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(144,'2016-03-08 18:31:14',1,1,1820,2024,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(145,'2016-03-08 18:31:14',1,1,1432,2008,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(146,'2016-03-08 18:31:14',1,1,1532,1808,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(147,'2016-03-08 18:31:14',1,1,1320,1816,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(148,'2016-03-08 18:31:14',1,1,972,1864,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(149,'2016-03-08 18:31:14',1,1,612,2108,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(150,'2016-03-08 18:31:14',1,1,816,2356,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(151,'2016-03-08 18:31:14',1,1,1216,2556,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(152,'2016-03-08 18:31:14',1,1,968,2996,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(153,'2016-03-08 18:31:14',1,1,680,3016,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(154,'2016-03-08 18:31:14',1,1,512,2896,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(155,'2016-03-08 18:31:14',1,1,2024,2472,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(156,'2016-03-08 18:31:14',1,1,2092,1900,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(157,'2016-03-08 18:31:14',1,1,1416,1436,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(158,'2016-03-08 18:31:14',1,1,2404,1748,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(159,'2016-03-08 18:31:14',1,1,2620,1736,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(160,'2016-03-08 18:31:14',1,1,2884,1448,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(161,'2016-03-08 18:31:14',1,1,3012,1948,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(162,'2016-03-08 18:31:14',1,1,2736,2004,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(163,'2016-03-08 18:31:14',1,1,3192,2388,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(164,'2016-03-08 18:31:14',1,1,3328,2176,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(165,'2016-03-08 18:31:14',1,1,3532,2344,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(166,'2016-03-08 18:31:14',1,1,3440,2516,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(167,'2016-03-08 18:31:14',1,1,3360,2752,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(168,'2016-03-08 18:31:14',1,1,3560,2748,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(169,'2016-03-08 18:31:14',1,1,3504,2960,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(170,'2016-03-08 18:31:14',1,1,3812,2828,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(171,'2016-03-08 18:31:14',1,1,3848,2576,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(172,'2016-03-08 18:31:14',1,1,3832,2200,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(173,'2016-03-08 18:31:14',1,1,3652,3340,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(174,'2016-03-08 18:31:14',1,1,3400,3548,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(175,'2016-03-08 18:31:14',1,1,3080,3864,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(176,'2016-03-08 18:31:14',1,1,2752,3636,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(177,'2016-03-08 18:31:14',1,1,2772,3364,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(178,'2016-03-08 18:31:14',1,1,2460,3536,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(179,'2016-03-08 18:31:14',1,1,2300,3396,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(180,'2016-03-08 18:31:14',1,1,1852,3336,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(181,'2016-03-08 18:31:14',1,1,1960,3712,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(182,'2016-03-08 18:31:14',1,1,2160,3784,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(183,'2016-03-08 18:31:14',1,1,412,3804,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(184,'2016-03-08 18:31:14',1,1,288,2916,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(185,'2016-03-08 18:31:14',1,1,320,2180,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(186,'2016-03-08 18:31:14',1,1,420,1168,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(187,'2016-03-08 18:31:14',1,1,520,580,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(188,'2016-03-08 18:31:14',1,1,712,644,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(189,'2016-03-08 18:31:14',1,1,932,956,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(190,'2016-03-08 18:31:14',1,1,880,244,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(191,'2016-03-08 18:31:14',1,1,1388,432,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(192,'2016-03-08 18:31:14',1,1,1664,852,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(193,'2016-03-08 18:31:14',1,1,1932,648,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(194,'2016-03-08 18:31:14',1,1,1720,400,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(195,'2016-03-08 18:31:14',1,1,2008,288,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(196,'2016-03-08 18:31:14',1,1,2200,576,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(197,'2016-03-08 18:31:14',1,1,1936,900,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(198,'2016-03-08 18:31:14',1,1,2380,1060,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(199,'2016-03-08 18:31:14',1,1,3380,236,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(200,'2016-03-08 18:31:14',1,7,212,1464,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(201,'2016-03-08 18:31:14',1,7,740,1316,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(202,'2016-03-08 18:31:14',1,7,1248,464,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(203,'2016-03-08 18:31:14',1,7,1376,344,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(204,'2016-03-08 18:31:14',1,7,620,432,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(205,'2016-03-08 18:31:14',1,7,1568,332,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(206,'2016-03-08 18:31:14',1,7,1944,1344,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(207,'2016-03-08 18:31:14',1,7,1628,1808,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(208,'2016-03-08 18:31:14',1,7,1316,1884,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(209,'2016-03-08 18:31:14',1,7,1188,1704,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(210,'2016-03-08 18:31:14',1,7,1544,2204,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(211,'2016-03-08 18:31:14',1,7,552,2924,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(212,'2016-03-08 18:31:14',1,7,692,3024,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(213,'2016-03-08 18:31:14',1,7,656,3296,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(214,'2016-03-08 18:31:14',1,7,908,3420,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(215,'2016-03-08 18:31:14',1,7,792,3608,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(216,'2016-03-08 18:31:14',1,7,1820,192,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(217,'2016-03-08 18:31:14',1,7,2604,308,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(218,'2016-03-08 18:31:14',1,7,2432,428,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(219,'2016-03-08 18:31:14',1,7,2508,612,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(220,'2016-03-08 18:31:14',1,7,2660,516,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(221,'2016-03-08 18:31:14',1,7,2900,168,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(222,'2016-03-08 18:31:14',1,7,3564,176,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(223,'2016-03-08 18:31:14',1,7,2996,896,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(224,'2016-03-08 18:31:14',1,7,2672,972,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(225,'2016-03-08 18:31:14',1,7,3900,876,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(226,'2016-03-08 18:31:14',1,7,3248,1524,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(227,'2016-03-08 18:31:14',1,7,2592,1608,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(228,'2016-03-08 18:31:14',1,7,2372,1688,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(229,'2016-03-08 18:31:14',1,7,2172,1784,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(230,'2016-03-08 18:31:14',1,7,2756,2288,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(231,'2016-03-08 18:31:14',1,7,3164,2156,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(232,'2016-03-08 18:31:14',1,7,3324,2000,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(233,'2016-03-08 18:31:14',1,7,3764,1884,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(234,'2016-03-08 18:31:14',1,7,3800,1680,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(235,'2016-03-08 18:31:14',1,7,3912,1932,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(236,'2016-03-08 18:31:14',1,7,3900,2112,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(237,'2016-03-08 18:31:14',1,7,3368,2316,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(238,'2016-03-08 18:31:14',1,7,3020,2292,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(239,'2016-03-08 18:31:14',1,7,2972,2528,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(240,'2016-03-08 18:31:14',1,7,3168,2412,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(241,'2016-03-08 18:31:14',1,7,2888,2756,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(242,'2016-03-08 18:31:14',1,7,2888,3012,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(243,'2016-03-08 18:31:14',1,7,3680,2540,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(244,'2016-03-08 18:31:14',1,7,3812,3236,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(245,'2016-03-08 18:31:14',1,7,3828,3504,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(246,'2016-03-08 18:31:14',1,7,3608,3596,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(247,'2016-03-08 18:31:14',1,7,3108,3648,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(248,'2016-03-08 18:31:14',1,7,2652,3596,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(249,'2016-03-08 18:31:14',1,7,2432,3480,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(250,'2016-03-08 18:31:14',1,7,2160,3680,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(251,'2016-03-08 18:31:14',1,7,1604,3644,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(252,'2016-03-08 18:31:14',1,7,1004,3596,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(253,'2016-03-08 18:31:14',1,7,944,3740,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(254,'2016-03-08 18:31:14',1,7,644,3768,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(255,'2016-03-08 18:31:14',1,7,216,3708,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(256,'2016-03-08 18:31:14',1,7,1928,3080,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(257,'2016-03-08 18:31:14',1,7,1856,2904,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(258,'2016-03-08 18:31:14',1,7,2028,2832,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(259,'2016-03-08 18:31:14',1,7,3024,3884,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(260,'2016-03-08 18:31:14',1,7,3500,3848,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(261,'2016-03-08 18:31:14',1,3,1244,384,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(262,'2016-03-08 18:31:14',1,3,288,336,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(263,'2016-03-08 18:31:14',1,3,528,588,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(264,'2016-03-08 18:31:14',1,3,1188,876,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(265,'2016-03-08 18:31:14',1,3,1220,1076,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(266,'2016-03-08 18:31:14',1,3,936,1148,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(267,'2016-03-08 18:31:14',1,3,720,1248,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(268,'2016-03-08 18:31:14',1,3,524,1200,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(269,'2016-03-08 18:31:14',1,3,824,1440,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(270,'2016-03-08 18:31:14',1,3,552,1728,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(271,'2016-03-08 18:31:14',1,3,180,2064,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(272,'2016-03-08 18:31:14',1,3,468,1976,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(273,'2016-03-08 18:31:14',1,3,384,2144,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(274,'2016-03-08 18:31:14',1,3,404,2376,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(275,'2016-03-08 18:31:14',1,3,348,2640,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(276,'2016-03-08 18:31:14',1,3,396,2912,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(277,'2016-03-08 18:31:14',1,3,536,2684,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(278,'2016-03-08 18:31:14',1,3,588,2900,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(279,'2016-03-08 18:31:14',1,3,944,2780,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(280,'2016-03-08 18:31:14',1,3,960,2424,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(281,'2016-03-08 18:31:14',1,3,828,2120,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(282,'2016-03-08 18:31:14',1,3,1080,2076,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(283,'2016-03-08 18:31:14',1,3,1208,2256,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(284,'2016-03-08 18:31:14',1,3,1380,2396,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(285,'2016-03-08 18:31:14',1,3,1208,2864,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(286,'2016-03-08 18:31:14',1,3,1584,2660,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(287,'2016-03-08 18:31:14',1,3,1668,2832,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(288,'2016-03-08 18:31:14',1,3,1308,1752,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(289,'2016-03-08 18:31:14',1,3,1592,1580,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(290,'2016-03-08 18:31:14',1,3,1512,1352,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(291,'2016-03-08 18:31:14',1,3,1508,1140,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(292,'2016-03-08 18:31:14',1,3,1644,996,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(293,'2016-03-08 18:31:14',1,3,1920,1184,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(294,'2016-03-08 18:31:14',1,3,2364,1416,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(295,'2016-03-08 18:31:14',1,3,2256,1908,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(296,'2016-03-08 18:31:14',1,3,2040,1856,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(297,'2016-03-08 18:31:14',1,3,2076,2100,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(298,'2016-03-08 18:31:14',1,3,2024,2304,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(299,'2016-03-08 18:31:14',1,3,2240,2192,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(300,'2016-03-08 18:31:14',1,3,2492,2252,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(301,'2016-03-08 18:31:14',1,3,2628,1656,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(302,'2016-03-08 18:31:14',1,3,2820,1560,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(303,'2016-03-08 18:31:14',1,3,2828,1116,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(304,'2016-03-08 18:31:14',1,3,2996,1188,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(305,'2016-03-08 18:31:14',1,3,2484,828,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(306,'2016-03-08 18:31:14',1,3,2492,644,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(307,'2016-03-08 18:31:14',1,3,2268,332,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(308,'2016-03-08 18:31:14',1,3,2844,392,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(309,'2016-03-08 18:31:14',1,3,2996,356,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(310,'2016-03-08 18:31:14',1,3,2984,176,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(311,'2016-03-08 18:31:14',1,3,2940,636,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(312,'2016-03-08 18:31:14',1,3,2976,888,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(313,'2016-03-08 18:31:14',1,3,3224,600,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(314,'2016-03-08 18:31:14',1,3,3192,992,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(315,'2016-03-08 18:31:14',1,3,3272,1232,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(316,'2016-03-08 18:31:14',1,3,3276,1472,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(317,'2016-03-08 18:31:14',1,3,3072,1932,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(318,'2016-03-08 18:31:14',1,3,3380,1916,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(319,'2016-03-08 18:31:14',1,3,3320,2376,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(320,'2016-03-08 18:31:14',1,3,3140,2484,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(321,'2016-03-08 18:31:14',1,3,2924,2676,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(322,'2016-03-08 18:31:14',1,3,2676,2936,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(323,'2016-03-08 18:31:14',1,3,2528,3200,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(324,'2016-03-08 18:31:14',1,3,2832,3116,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(325,'2016-03-08 18:31:14',1,3,3072,3108,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(326,'2016-03-08 18:31:14',1,3,1248,3260,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(327,'2016-03-08 18:31:14',1,3,1724,3104,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(328,'2016-03-08 18:31:14',1,3,3596,2124,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(329,'2016-03-08 18:31:14',1,3,3732,1760,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(330,'2016-03-08 18:31:14',1,3,3536,1748,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(331,'2016-03-08 18:31:14',1,3,3608,1548,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(332,'2016-03-08 18:31:14',1,3,3536,1292,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(333,'2016-03-08 18:31:14',1,3,3548,1076,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(334,'2016-03-08 18:31:14',1,3,3408,948,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(335,'2016-03-08 18:31:14',1,3,3432,708,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(336,'2016-03-08 18:31:14',1,3,3456,320,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(337,'2016-03-08 18:31:14',1,3,3656,224,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(338,'2016-03-08 18:31:14',1,3,3792,2220,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(339,'2016-03-08 18:31:14',1,3,3828,2940,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(340,'2016-03-08 18:31:14',1,3,3648,3140,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(341,'2016-03-08 18:31:14',1,3,3780,3224,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(342,'2016-03-08 18:31:14',1,3,3536,3396,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(343,'2016-03-08 18:31:14',1,3,3240,308,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(344,'2016-03-08 18:31:14',1,3,2604,3576,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(345,'2016-03-08 18:31:14',1,3,2480,3828,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(346,'2016-03-08 18:31:14',1,3,2228,3836,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(347,'2016-03-08 18:31:14',1,3,2060,3884,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(348,'2016-03-08 18:31:14',1,3,1712,3704,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(349,'2016-03-08 18:31:14',1,3,1452,3564,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(350,'2016-03-08 18:31:14',1,3,636,3552,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(351,'2016-03-08 18:31:14',1,3,3476,3620,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(352,'2016-03-08 18:31:14',1,3,3048,3540,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(353,'2016-03-08 18:31:14',1,3,3812,3540,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(354,'2016-03-08 18:31:14',1,3,3672,3668,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(355,'2016-03-08 18:31:14',1,5,672,1340,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(356,'2016-03-08 18:31:14',1,5,432,1040,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(357,'2016-03-08 18:31:14',1,5,1116,1244,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(358,'2016-03-08 18:31:14',1,5,1280,1164,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(359,'2016-03-08 18:31:14',1,5,1436,1124,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(360,'2016-03-08 18:31:14',1,5,1532,1428,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(361,'2016-03-08 18:31:14',1,5,1692,1356,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(362,'2016-03-08 18:31:14',1,5,1296,1332,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(363,'2016-03-08 18:31:14',1,5,1124,1436,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(364,'2016-03-08 18:31:14',1,5,1004,1616,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(365,'2016-03-08 18:31:14',1,5,1136,1920,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(366,'2016-03-08 18:31:14',1,5,972,1776,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(367,'2016-03-08 18:31:14',1,5,1200,1644,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(368,'2016-03-08 18:31:14',1,5,1172,2108,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(369,'2016-03-08 18:31:14',1,5,972,2076,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(370,'2016-03-08 18:31:14',1,5,1016,2360,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(371,'2016-03-08 18:31:14',1,5,708,2364,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(372,'2016-03-08 18:31:14',1,5,572,2468,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(373,'2016-03-08 18:31:14',1,5,428,2592,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(374,'2016-03-08 18:31:14',1,5,348,2400,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(375,'2016-03-08 18:31:14',1,5,176,2420,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(376,'2016-03-08 18:31:14',1,5,3564,884,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(377,'2016-03-08 18:31:14',1,5,3908,368,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(378,'2016-03-08 18:31:14',1,5,3704,216,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(379,'2016-03-08 18:31:14',1,5,3828,876,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(380,'2016-03-08 18:31:14',1,5,3168,1176,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(381,'2016-03-08 18:31:14',1,5,3072,1056,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(382,'2016-03-08 18:31:14',1,5,2880,1424,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(383,'2016-03-08 18:31:14',1,5,3108,1380,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(384,'2016-03-08 18:31:14',1,5,3128,1556,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(385,'2016-03-08 18:31:14',1,5,3248,1700,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(386,'2016-03-08 18:31:14',1,5,3764,1524,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(387,'2016-03-08 18:31:14',1,5,3816,1328,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(388,'2016-03-08 18:31:14',1,5,3612,2148,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(389,'2016-03-08 18:31:14',1,5,3368,2112,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(390,'2016-03-08 18:31:14',1,5,3336,2624,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(391,'2016-03-08 18:31:14',1,5,3752,2360,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(392,'2016-03-08 18:31:14',1,5,3716,2684,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(393,'2016-03-08 18:31:14',1,5,3908,2876,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(394,'2016-03-08 18:31:14',1,5,3720,3348,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(395,'2016-03-08 18:31:14',1,5,3540,3372,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(396,'2016-03-08 18:31:14',1,5,3032,2708,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(397,'2016-03-08 18:31:14',1,5,2880,2652,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(398,'2016-03-08 18:31:14',1,5,2672,2556,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(399,'2016-03-08 18:31:14',1,5,2796,2436,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(400,'2016-03-08 18:31:14',1,5,2492,2472,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(401,'2016-03-08 18:31:14',1,5,2316,2336,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(402,'2016-03-08 18:31:14',1,5,2100,2376,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(403,'2016-03-08 18:31:14',1,5,2012,2160,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(404,'2016-03-08 18:31:14',1,5,1620,2084,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(405,'2016-03-08 18:31:14',1,5,1388,2156,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(406,'2016-03-08 18:31:14',1,5,476,2136,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(407,'2016-03-08 18:31:14',1,5,384,1860,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(408,'2016-03-08 18:31:14',1,5,180,1712,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(409,'2016-03-08 18:31:14',1,5,228,2252,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(410,'2016-03-08 18:31:14',1,5,1256,2892,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(411,'2016-03-08 18:31:14',1,5,1020,2852,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(412,'2016-03-08 18:31:14',1,5,732,2564,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(413,'2016-03-08 18:31:14',1,5,1424,2808,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(414,'2016-03-08 18:31:14',1,5,1836,2628,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(415,'2016-03-08 18:31:14',1,5,2760,3468,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(416,'2016-03-08 18:31:14',1,5,2744,3644,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(417,'2016-03-08 18:31:14',1,5,2592,3540,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(418,'2016-03-08 18:31:14',1,5,2436,3428,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(419,'2016-03-08 18:31:14',1,5,2568,3356,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(420,'2016-03-08 18:31:14',1,5,2328,3276,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(421,'2016-03-08 18:31:14',1,5,2792,3288,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(422,'2016-03-08 18:31:14',1,5,3080,3296,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(423,'2016-03-08 18:31:14',1,5,3192,3824,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(424,'2016-03-08 18:31:14',1,5,2088,3144,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(425,'2016-03-08 18:31:14',1,5,1964,2996,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(426,'2016-03-08 18:31:14',1,5,1860,3192,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(427,'2016-03-08 18:31:14',1,5,1908,3348,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(428,'2016-03-08 18:31:14',1,5,1640,3716,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(429,'2016-03-08 18:31:14',1,5,1436,3716,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(430,'2016-03-08 18:31:14',1,5,1368,3456,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(431,'2016-03-08 18:31:14',1,5,1268,3140,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(432,'2016-03-08 18:31:14',1,5,1172,3776,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(433,'2016-03-08 18:31:14',1,5,980,3776,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(434,'2016-03-08 18:31:14',1,5,812,3776,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(435,'2016-03-08 18:31:14',1,5,428,3888,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(436,'2016-03-08 18:31:14',1,5,320,3752,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(437,'2016-03-08 18:31:14',1,5,312,3552,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(438,'2016-03-08 18:31:14',1,5,216,3896,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(439,'2016-03-08 18:31:14',1,2,836,812,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(440,'2016-03-08 18:31:14',1,2,512,684,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(441,'2016-03-08 18:31:14',1,2,564,444,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(442,'2016-03-08 18:31:14',1,2,252,408,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(443,'2016-03-08 18:31:14',1,2,228,708,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(444,'2016-03-08 18:31:14',1,2,212,924,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(445,'2016-03-08 18:31:14',1,2,536,1080,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(446,'2016-03-08 18:31:14',1,2,756,1016,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(447,'2016-03-08 18:31:14',1,2,1536,960,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(448,'2016-03-08 18:31:14',1,2,1796,836,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(449,'2016-03-08 18:31:14',1,2,1580,288,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(450,'2016-03-08 18:31:14',1,2,888,288,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(451,'2016-03-08 18:31:14',1,2,612,164,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(452,'2016-03-08 18:31:14',1,2,3344,212,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(453,'2016-03-08 18:31:14',1,2,3644,368,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(454,'2016-03-08 18:31:14',1,2,3696,572,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(455,'2016-03-08 18:31:14',1,2,3152,396,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(456,'2016-03-08 18:31:14',1,2,2916,336,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(457,'2016-03-08 18:31:14',1,2,2772,684,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(458,'2016-03-08 18:31:14',1,2,2492,848,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(459,'2016-03-08 18:31:14',1,2,2160,1056,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(460,'2016-03-08 18:31:14',1,2,2000,1260,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(461,'2016-03-08 18:31:14',1,2,1880,1620,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(462,'2016-03-08 18:31:14',1,2,2088,1620,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(463,'2016-03-08 18:31:14',1,2,2264,1392,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(464,'2016-03-08 18:31:14',1,2,2556,1092,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(465,'2016-03-08 18:31:14',1,2,2868,980,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(466,'2016-03-08 18:31:14',1,2,3236,1076,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(467,'2016-03-08 18:31:14',1,2,3312,900,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(468,'2016-03-08 18:31:14',1,2,3456,1104,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(469,'2016-03-08 18:31:14',1,2,3672,1164,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(470,'2016-03-08 18:31:14',1,2,3752,1344,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(471,'2016-03-08 18:31:14',1,2,3464,1740,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(472,'2016-03-08 18:31:14',1,2,3380,1940,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(473,'2016-03-08 18:31:14',1,2,3108,1968,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(474,'2016-03-08 18:31:14',1,2,3572,2064,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(475,'2016-03-08 18:31:14',1,2,3600,2436,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(476,'2016-03-08 18:31:14',1,2,3740,2580,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(477,'2016-03-08 18:31:14',1,2,3396,2288,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(478,'2016-03-08 18:31:14',1,2,3336,2496,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(479,'2016-03-08 18:31:14',1,2,3128,2624,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(480,'2016-03-08 18:31:14',1,2,2868,2288,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(481,'2016-03-08 18:31:14',1,2,2628,2736,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(482,'2016-03-08 18:31:14',1,2,2396,2376,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(483,'2016-03-08 18:31:14',1,2,2180,2312,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(484,'2016-03-08 18:31:14',1,2,2060,2100,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(485,'2016-03-08 18:31:14',1,2,2148,1908,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(486,'2016-03-08 18:31:14',1,2,2328,1832,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(487,'2016-03-08 18:31:14',1,2,2312,1592,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(488,'2016-03-08 18:31:14',1,2,2520,1496,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(489,'2016-03-08 18:31:14',1,2,1164,2072,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(490,'2016-03-08 18:31:14',1,2,936,2280,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(491,'2016-03-08 18:31:14',1,2,684,1676,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(492,'2016-03-08 18:31:14',1,2,548,1440,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(493,'2016-03-08 18:31:14',1,2,180,1488,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(494,'2016-03-08 18:31:14',1,2,224,1800,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(495,'2016-03-08 18:31:14',1,2,296,2012,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(496,'2016-03-08 18:31:14',1,2,608,1908,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(497,'2016-03-08 18:31:14',1,2,372,2216,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(498,'2016-03-08 18:31:14',1,2,536,2468,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(499,'2016-03-08 18:31:14',1,2,236,2612,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(500,'2016-03-08 18:31:14',1,2,428,3476,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(501,'2016-03-08 18:31:14',1,2,3512,2748,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(502,'2016-03-08 18:31:14',1,2,3576,3056,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(503,'2016-03-08 18:31:14',1,2,3816,2916,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(504,'2016-03-08 18:31:14',1,2,3684,2772,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(505,'2016-03-08 18:31:14',1,2,3632,3396,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(506,'2016-03-08 18:31:14',1,2,3888,3648,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(507,'2016-03-08 18:31:14',1,2,3308,3620,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(508,'2016-03-08 18:31:14',1,2,3252,3888,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(509,'2016-03-08 18:31:14',1,2,3116,3536,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(510,'2016-03-08 18:31:14',1,2,3248,3396,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(511,'2016-03-08 18:31:14',1,2,3104,3200,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(512,'2016-03-08 18:31:14',1,2,2912,3456,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(513,'2016-03-08 18:31:14',1,2,2252,3024,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(514,'2016-03-08 18:31:14',1,2,2172,2556,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(515,'2016-03-08 18:31:14',1,2,1992,2484,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(516,'2016-03-08 18:31:14',1,2,1932,2748,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(517,'2016-03-08 18:31:14',1,2,1628,2796,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(518,'2016-03-08 18:31:14',1,2,1328,2676,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(519,'2016-03-08 18:31:14',1,2,1272,3104,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(520,'2016-03-08 18:31:14',1,2,864,3012,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(521,'2016-03-08 18:31:14',1,2,692,3216,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(522,'2016-03-08 18:31:14',1,2,1208,3368,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(523,'2016-03-08 18:31:14',1,2,552,3696,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(524,'2016-03-08 18:31:14',1,2,204,3732,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(525,'2016-03-08 18:31:14',1,2,1284,3848,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(526,'2016-03-08 18:31:14',1,2,1572,3864,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(527,'2016-03-08 18:31:14',1,2,1868,3824,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(528,'2016-03-08 18:31:14',1,4,488,932,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(529,'2016-03-08 18:31:14',1,4,1284,588,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(530,'2016-03-08 18:31:14',1,4,1416,716,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(531,'2016-03-08 18:31:14',1,4,1484,524,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(532,'2016-03-08 18:31:14',1,4,1668,560,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(533,'2016-03-08 18:31:14',1,4,1848,620,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(534,'2016-03-08 18:31:14',1,4,1584,336,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(535,'2016-03-08 18:31:14',1,4,1304,332,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(536,'2016-03-08 18:31:14',1,4,812,212,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(537,'2016-03-08 18:31:14',1,4,2300,260,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(538,'2016-03-08 18:31:14',1,4,2600,644,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(539,'2016-03-08 18:31:14',1,4,2724,824,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(540,'2016-03-08 18:31:14',1,4,3212,404,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(541,'2016-03-08 18:31:14',1,4,3648,780,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(542,'2016-03-08 18:31:14',1,4,3828,500,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(543,'2016-03-08 18:31:14',1,4,2268,1064,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(544,'2016-03-08 18:31:14',1,4,1944,860,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(545,'2016-03-08 18:31:14',1,4,1820,968,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(546,'2016-03-08 18:31:14',1,4,1964,1244,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(547,'2016-03-08 18:31:14',1,4,1716,1392,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(548,'2016-03-08 18:31:14',1,4,1788,1568,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(549,'2016-03-08 18:31:14',1,4,1764,1772,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(550,'2016-03-08 18:31:14',1,4,224,1592,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(551,'2016-03-08 18:31:14',1,4,276,1812,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(552,'2016-03-08 18:31:14',1,4,180,1952,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(553,'2016-03-08 18:31:14',1,4,564,2468,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(554,'2016-03-08 18:31:14',1,4,444,2640,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(555,'2016-03-08 18:31:14',1,4,956,2984,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(556,'2016-03-08 18:31:14',1,4,776,3212,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(557,'2016-03-08 18:31:14',1,4,924,3320,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(558,'2016-03-08 18:31:14',1,4,1152,3420,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(559,'2016-03-08 18:31:14',1,4,1172,3036,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(560,'2016-03-08 18:31:15',1,4,1308,2936,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(561,'2016-03-08 18:31:15',1,4,1640,2960,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(562,'2016-03-08 18:31:15',1,4,1668,3176,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(563,'2016-03-08 18:31:15',1,4,1824,3036,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(564,'2016-03-08 18:31:15',1,4,2016,3144,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(565,'2016-03-08 18:31:15',1,4,2760,2888,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(566,'2016-03-08 18:31:15',1,4,2780,2480,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(567,'2016-03-08 18:31:15',1,4,2588,2420,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(568,'2016-03-08 18:31:15',1,4,2540,1992,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(569,'2016-03-08 18:31:15',1,4,2736,1964,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(570,'2016-03-08 18:31:15',1,4,2876,1800,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(571,'2016-03-08 18:31:15',1,4,2856,1484,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(572,'2016-03-08 18:31:15',1,4,2660,1376,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(573,'2016-03-08 18:31:15',1,4,2876,1316,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(574,'2016-03-08 18:31:15',1,4,3380,1892,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(575,'2016-03-08 18:31:15',1,4,3192,2076,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(576,'2016-03-08 18:31:15',1,4,3104,2264,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(577,'2016-03-08 18:31:15',1,4,3356,2192,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(578,'2016-03-08 18:31:15',1,4,3336,2400,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(579,'2016-03-08 18:31:15',1,4,3180,2672,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(580,'2016-03-08 18:31:15',1,4,3584,1656,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(581,'2016-03-08 18:31:15',1,4,3768,1548,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(582,'2016-03-08 18:31:15',1,4,3576,3012,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(583,'2016-03-08 18:31:15',1,4,3792,2996,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(584,'2016-03-08 18:31:15',1,4,3696,3156,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(585,'2016-03-08 18:31:15',1,4,2904,3524,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(586,'2016-03-08 18:31:15',1,4,2256,1500,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(587,'2016-03-08 18:31:15',1,4,416,1628,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(588,'2016-03-08 18:31:15',1,4,600,1716,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(589,'2016-03-08 18:31:15',1,4,3464,3644,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(590,'2016-03-08 18:31:15',1,4,3548,3840,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(591,'2016-03-08 18:31:15',1,4,2760,3648,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(592,'2016-03-08 18:31:15',1,4,1452,3600,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(593,'2016-03-08 18:31:15',1,4,1200,3804,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(594,'2016-03-08 18:31:15',1,4,1032,3860,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(595,'2016-03-08 18:31:15',1,4,1032,3596,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL);
+INSERT INTO `ApParticleData` VALUES (596,'2016-06-30 19:45:30',2,1,1146,1704,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(597,'2016-06-30 19:45:30',2,1,1752,1482,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(598,'2016-06-30 19:45:30',2,1,1376,1822,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(599,'2016-06-30 19:45:30',2,1,444,126,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(600,'2016-06-30 19:45:30',2,1,310,1062,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(601,'2016-06-30 19:45:30',2,1,1678,1372,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(602,'2016-06-30 19:45:30',2,1,414,1178,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(603,'2016-06-30 19:45:30',2,1,1306,864,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(604,'2016-06-30 19:45:30',2,1,1766,1166,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(605,'2016-06-30 19:45:30',2,1,1188,520,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(606,'2016-06-30 19:45:30',2,1,982,1858,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(607,'2016-06-30 19:45:30',2,1,762,902,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(608,'2016-06-30 19:45:30',2,1,960,336,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(609,'2016-06-30 19:45:30',2,1,662,902,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(610,'2016-06-30 19:45:30',2,1,1508,978,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(611,'2016-06-30 19:45:30',2,1,1048,950,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(612,'2016-06-30 19:45:30',2,1,258,1454,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(613,'2016-06-30 19:45:30',2,1,610,1280,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(614,'2016-06-30 19:45:30',2,1,344,1510,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(615,'2016-06-30 19:45:30',2,1,1230,1782,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(616,'2016-06-30 19:45:30',2,1,1902,1410,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(617,'2016-06-30 19:45:30',2,1,932,1674,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(618,'2016-06-30 19:45:30',2,1,966,454,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(619,'2016-06-30 19:45:30',2,1,716,1006,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(620,'2016-06-30 19:45:30',2,1,862,200,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(621,'2016-06-30 19:45:30',2,1,1786,1374,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(622,'2016-06-30 19:45:30',2,1,210,584,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(623,'2016-06-30 19:45:30',2,1,1370,1002,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(624,'2016-06-30 19:45:30',2,1,1202,872,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(625,'2016-06-30 19:45:30',2,1,1010,1238,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(626,'2016-06-30 19:45:30',2,1,1924,1296,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(627,'2016-06-30 19:45:30',2,1,492,934,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(628,'2016-06-30 19:45:30',2,1,912,1012,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(629,'2016-06-30 19:45:30',2,1,1714,1258,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(630,'2016-06-30 19:45:30',2,1,1390,1694,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(631,'2016-06-30 19:45:30',2,1,1084,1890,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(632,'2016-06-30 19:45:30',2,1,712,716,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(633,'2016-06-30 19:45:30',2,1,264,292,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(634,'2016-06-30 19:45:30',2,1,1598,1192,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(635,'2016-06-30 19:45:30',2,1,834,420,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(636,'2016-06-30 19:45:30',2,1,1440,728,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(637,'2016-06-30 19:45:30',2,1,484,1496,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(638,'2016-06-30 19:45:30',2,1,464,478,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(639,'2016-06-30 19:45:30',2,1,1914,1104,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(640,'2016-06-30 19:45:30',2,1,162,1092,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(641,'2016-06-30 19:45:30',2,1,1006,144,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(642,'2016-06-30 19:45:30',2,1,356,324,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(643,'2016-06-30 19:45:30',2,1,1700,1778,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(644,'2016-06-30 19:45:30',2,1,692,208,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(645,'2016-06-30 19:45:30',2,1,202,1902,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(646,'2016-06-30 19:45:30',2,1,1098,288,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(647,'2016-06-30 19:45:30',2,10,1834,1272,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(648,'2016-06-30 19:45:30',2,10,1342,248,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(649,'2016-06-30 19:45:30',2,10,1014,1424,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(650,'2016-06-30 19:45:30',2,10,782,160,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(651,'2016-06-30 19:45:30',2,10,1912,1756,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(652,'2016-06-30 19:45:30',2,10,1588,1208,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(653,'2016-06-30 19:45:30',2,10,1214,1736,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(654,'2016-06-30 19:45:30',2,10,688,168,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(655,'2016-06-30 19:45:30',2,10,964,1546,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(656,'2016-06-30 19:45:30',2,10,1508,1154,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(657,'2016-06-30 19:45:30',2,10,466,1880,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(658,'2016-06-30 19:45:30',2,10,1192,846,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(659,'2016-06-30 19:45:30',2,10,1442,1498,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(660,'2016-06-30 19:45:30',2,10,398,1802,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(661,'2016-06-30 19:45:30',2,10,312,1882,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(662,'2016-06-30 19:45:30',2,10,1660,1000,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(663,'2016-06-30 19:45:30',2,10,1898,838,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(664,'2016-06-30 19:45:30',2,10,1304,150,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(665,'2016-06-30 19:45:30',2,10,1554,1824,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(666,'2016-06-30 19:45:30',2,10,1438,1374,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(667,'2016-06-30 19:45:30',2,10,1212,214,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(668,'2016-06-30 19:45:30',2,10,1374,1148,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(669,'2016-06-30 19:45:30',2,10,1868,932,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(670,'2016-06-30 19:45:30',2,10,1258,302,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(671,'2016-06-30 19:45:30',2,10,1288,798,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(672,'2016-06-30 19:45:30',2,10,348,1524,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(673,'2016-06-30 19:45:30',2,10,928,1454,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(674,'2016-06-30 19:45:30',2,10,1578,1078,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(675,'2016-06-30 19:45:30',2,10,814,908,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(676,'2016-06-30 19:45:30',2,10,376,652,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(677,'2016-06-30 19:45:30',2,10,966,676,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(678,'2016-06-30 19:45:30',2,10,452,1720,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(679,'2016-06-30 19:45:30',2,10,1910,1614,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(680,'2016-06-30 19:45:30',2,10,1488,452,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(681,'2016-06-30 19:45:30',2,10,660,936,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(682,'2016-06-30 19:45:30',2,10,1614,756,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(683,'2016-06-30 19:45:30',2,10,1804,1798,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(684,'2016-06-30 19:45:30',2,10,1480,1258,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(685,'2016-06-30 19:45:30',2,10,1078,890,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(686,'2016-06-30 19:45:30',2,10,322,1662,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(687,'2016-06-30 19:45:30',2,10,1324,1794,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(688,'2016-06-30 19:45:30',2,10,1334,482,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(689,'2016-06-30 19:45:30',2,10,1076,1836,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(690,'2016-06-30 19:45:30',2,10,522,1068,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(691,'2016-06-30 19:45:30',2,10,306,212,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(692,'2016-06-30 19:45:30',2,10,778,1104,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(693,'2016-06-30 19:45:30',2,10,506,1798,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(694,'2016-06-30 19:45:30',2,10,798,1822,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(695,'2016-06-30 19:45:30',2,10,1746,1928,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(696,'2016-06-30 19:45:30',2,10,1680,1162,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(697,'2016-06-30 19:45:30',2,10,270,1462,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(698,'2016-06-30 19:45:30',2,7,712,1410,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(699,'2016-06-30 19:45:30',2,7,558,1702,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(700,'2016-06-30 19:45:30',2,7,964,1464,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(701,'2016-06-30 19:45:30',2,7,1558,1800,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(702,'2016-06-30 19:45:30',2,7,786,136,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(703,'2016-06-30 19:45:30',2,7,676,1654,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(704,'2016-06-30 19:45:30',2,7,1398,560,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(705,'2016-06-30 19:45:30',2,7,1114,1422,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(706,'2016-06-30 19:45:30',2,7,426,1896,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(707,'2016-06-30 19:45:30',2,7,180,1068,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(708,'2016-06-30 19:45:30',2,7,614,672,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(709,'2016-06-30 19:45:30',2,7,548,1532,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(710,'2016-06-30 19:45:30',2,7,828,1462,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(711,'2016-06-30 19:45:30',2,7,814,788,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(712,'2016-06-30 19:45:30',2,7,1060,1002,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(713,'2016-06-30 19:45:30',2,7,1250,876,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(714,'2016-06-30 19:45:30',2,7,154,1500,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(715,'2016-06-30 19:45:31',2,7,1284,1198,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(716,'2016-06-30 19:45:31',2,7,942,1002,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(717,'2016-06-30 19:45:31',2,7,964,156,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(718,'2016-06-30 19:45:31',2,7,668,520,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(719,'2016-06-30 19:45:31',2,7,318,284,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(720,'2016-06-30 19:45:31',2,7,720,314,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(721,'2016-06-30 19:45:31',2,7,1738,1020,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(722,'2016-06-30 19:45:31',2,7,842,378,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(723,'2016-06-30 19:45:31',2,7,792,1248,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(724,'2016-06-30 19:45:31',2,7,598,1194,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(725,'2016-06-30 19:45:31',2,7,1826,770,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(726,'2016-06-30 19:45:31',2,7,888,1270,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(727,'2016-06-30 19:45:31',2,7,570,1850,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(728,'2016-06-30 19:45:31',2,7,1526,708,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(729,'2016-06-30 19:45:31',2,7,1586,276,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(730,'2016-06-30 19:45:31',2,7,926,536,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(731,'2016-06-30 19:45:31',2,7,428,1602,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(732,'2016-06-30 19:45:31',2,7,868,882,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(733,'2016-06-30 19:45:31',2,7,748,1068,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(734,'2016-06-30 19:45:31',2,7,212,190,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(735,'2016-06-30 19:45:31',2,7,1850,460,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(736,'2016-06-30 19:45:31',2,7,198,1792,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(737,'2016-06-30 19:45:31',2,7,350,176,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(738,'2016-06-30 19:45:31',2,7,382,692,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(739,'2016-06-30 19:45:31',2,7,472,908,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(740,'2016-06-30 19:45:31',2,7,988,400,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(741,'2016-06-30 19:45:31',2,7,1816,1450,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(742,'2016-06-30 19:45:31',2,7,504,1382,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(743,'2016-06-30 19:45:31',2,7,1922,1510,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(744,'2016-06-30 19:45:31',2,7,668,206,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(745,'2016-06-30 19:45:31',2,7,366,1242,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(746,'2016-06-30 19:45:31',2,7,868,636,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(747,'2016-06-30 19:45:31',2,7,1030,704,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(748,'2016-06-30 19:45:31',2,7,1750,1238,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(749,'2016-06-30 19:45:31',2,7,1470,1752,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(750,'2016-06-30 19:45:31',2,7,1240,1376,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(751,'2016-06-30 19:45:31',2,7,1176,786,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(752,'2016-06-30 19:45:31',2,7,1658,424,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(753,'2016-06-30 19:45:31',2,7,1794,620,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(754,'2016-06-30 19:45:31',2,7,1852,1916,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(755,'2016-06-30 19:45:31',2,7,1262,1696,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(756,'2016-06-30 19:45:31',2,7,578,452,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(757,'2016-06-30 19:45:31',2,7,532,584,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(758,'2016-06-30 19:45:31',2,7,1750,434,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(759,'2016-06-30 19:45:31',2,7,1230,1806,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(760,'2016-06-30 19:45:31',2,7,234,472,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(761,'2016-06-30 19:45:31',2,7,190,626,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(762,'2016-06-30 19:45:31',2,7,696,864,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(763,'2016-06-30 19:45:31',2,7,1322,376,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(764,'2016-06-30 19:45:31',2,7,1182,204,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(765,'2016-06-30 19:45:31',2,7,1392,762,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(766,'2016-06-30 19:45:31',2,7,1202,1544,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(767,'2016-06-30 19:45:31',2,7,684,398,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(768,'2016-06-30 19:45:31',2,7,1334,146,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(769,'2016-06-30 19:45:31',2,6,992,1498,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(770,'2016-06-30 19:45:31',2,6,344,1186,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(771,'2016-06-30 19:45:31',2,6,1222,1716,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(772,'2016-06-30 19:45:31',2,6,246,1062,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(773,'2016-06-30 19:45:31',2,6,600,826,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(774,'2016-06-30 19:45:31',2,6,482,1044,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(775,'2016-06-30 19:45:31',2,6,682,1742,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(776,'2016-06-30 19:45:31',2,6,148,1788,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(777,'2016-06-30 19:45:31',2,6,500,798,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(778,'2016-06-30 19:45:31',2,6,584,1884,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(779,'2016-06-30 19:45:31',2,6,1814,1080,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(780,'2016-06-30 19:45:31',2,6,842,676,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(781,'2016-06-30 19:45:31',2,6,1006,1080,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(782,'2016-06-30 19:45:31',2,6,488,1894,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(783,'2016-06-30 19:45:31',2,6,582,1058,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(784,'2016-06-30 19:45:31',2,6,1868,1192,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(785,'2016-06-30 19:45:31',2,6,1552,690,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(786,'2016-06-30 19:45:31',2,6,1596,1916,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(787,'2016-06-30 19:45:31',2,6,558,718,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(788,'2016-06-30 19:45:31',2,6,616,1448,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(789,'2016-06-30 19:45:31',2,6,818,1852,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(790,'2016-06-30 19:45:31',2,6,218,522,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(791,'2016-06-30 19:45:31',2,6,680,1082,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(792,'2016-06-30 19:45:31',2,6,1766,1694,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(793,'2016-06-30 19:45:31',2,6,1560,786,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(794,'2016-06-30 19:45:31',2,6,1678,1058,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(795,'2016-06-30 19:45:31',2,6,1396,1644,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(796,'2016-06-30 19:45:31',2,6,504,1196,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(797,'2016-06-30 19:45:31',2,6,1426,1324,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(798,'2016-06-30 19:45:31',2,6,764,724,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(799,'2016-06-30 19:45:31',2,6,364,1290,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(800,'2016-06-30 19:45:31',2,6,1048,1192,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(801,'2016-06-30 19:45:31',2,6,1884,762,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(802,'2016-06-30 19:45:31',2,6,1622,862,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(803,'2016-06-30 19:45:31',2,6,1160,1170,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(804,'2016-06-30 19:45:31',2,6,328,670,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(805,'2016-06-30 19:45:31',2,6,636,1584,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(806,'2016-06-30 19:45:31',2,6,918,1306,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(807,'2016-06-30 19:45:31',2,6,1538,1656,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(808,'2016-06-30 19:45:31',2,6,1438,712,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(809,'2016-06-30 19:45:31',2,6,956,1680,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(810,'2016-06-30 19:45:31',2,6,1516,1356,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(811,'2016-06-30 19:45:31',2,6,802,1048,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(812,'2016-06-30 19:45:31',2,6,1330,1282,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(813,'2016-06-30 19:45:31',2,6,1672,1300,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(814,'2016-06-30 19:45:31',2,6,1236,1236,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(815,'2016-06-30 19:45:31',2,6,1782,436,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(816,'2016-06-30 19:45:31',2,6,710,1856,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(817,'2016-06-30 19:45:31',2,6,646,674,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(818,'2016-06-30 19:45:31',2,6,1316,964,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(819,'2016-06-30 19:45:31',2,6,1342,524,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(820,'2016-06-30 19:45:31',2,6,1294,1768,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(821,'2016-06-30 19:45:31',2,6,1382,1734,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(822,'2016-06-30 19:45:31',2,6,162,1880,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(823,'2016-06-30 19:45:31',2,6,266,1240,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(824,'2016-06-30 19:45:31',2,6,1588,592,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(825,'2016-06-30 19:45:31',2,6,1368,892,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(826,'2016-06-30 19:45:31',2,6,176,1218,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(827,'2016-06-30 19:45:31',2,6,632,588,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(828,'2016-06-30 19:45:31',2,6,1366,1824,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(829,'2016-06-30 19:45:31',2,6,1174,1640,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(830,'2016-06-30 19:45:31',2,6,708,1408,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(831,'2016-06-30 19:45:31',2,6,1862,1340,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(832,'2016-06-30 19:45:31',2,6,714,556,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(833,'2016-06-30 19:45:31',2,6,552,616,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(834,'2016-06-30 19:45:31',2,6,1298,1672,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(835,'2016-06-30 19:45:31',2,6,394,1890,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(836,'2016-06-30 19:45:31',2,6,1852,1668,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(837,'2016-06-30 19:45:31',2,6,1038,1568,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(838,'2016-06-30 19:45:31',2,6,1912,436,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(839,'2016-06-30 19:45:31',2,6,560,962,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(840,'2016-06-30 19:45:31',2,6,506,1432,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(841,'2016-06-30 19:45:31',2,6,1904,662,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(842,'2016-06-30 19:45:31',2,12,1892,424,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(843,'2016-06-30 19:45:31',2,12,1408,692,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(844,'2016-06-30 19:45:31',2,12,644,1106,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(845,'2016-06-30 19:45:31',2,12,1730,238,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(846,'2016-06-30 19:45:31',2,12,1658,1412,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(847,'2016-06-30 19:45:31',2,12,480,1018,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(848,'2016-06-30 19:45:31',2,12,1582,1896,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(849,'2016-06-30 19:45:31',2,12,1418,894,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(850,'2016-06-30 19:45:31',2,12,464,844,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(851,'2016-06-30 19:45:31',2,12,380,1012,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(852,'2016-06-30 19:45:31',2,12,1744,406,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(853,'2016-06-30 19:45:31',2,12,1584,1478,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(854,'2016-06-30 19:45:31',2,12,1538,1808,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(855,'2016-06-30 19:45:31',2,12,410,226,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(856,'2016-06-30 19:45:31',2,12,1840,266,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(857,'2016-06-30 19:45:31',2,12,1498,964,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(858,'2016-06-30 19:45:31',2,12,478,1118,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(859,'2016-06-30 19:45:31',2,12,764,894,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(860,'2016-06-30 19:45:31',2,12,1682,1630,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(861,'2016-06-30 19:45:31',2,12,330,646,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(862,'2016-06-30 19:45:31',2,12,1650,862,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(863,'2016-06-30 19:45:31',2,12,546,392,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(864,'2016-06-30 19:45:31',2,12,434,704,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(865,'2016-06-30 19:45:31',2,12,126,1760,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(866,'2016-06-30 19:45:31',2,12,1386,804,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(867,'2016-06-30 19:45:31',2,12,494,294,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(868,'2016-06-30 19:45:31',2,12,1164,508,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(869,'2016-06-30 19:45:31',2,12,556,596,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(870,'2016-06-30 19:45:31',2,12,684,824,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(871,'2016-06-30 19:45:31',2,12,1684,326,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(872,'2016-06-30 19:45:31',2,12,1354,576,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(873,'2016-06-30 19:45:31',2,12,474,152,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(874,'2016-06-30 19:45:31',2,12,374,556,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(875,'2016-06-30 19:45:31',2,12,1734,766,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(876,'2016-06-30 19:45:31',2,12,1912,1760,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(877,'2016-06-30 19:45:31',2,12,1914,1136,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(878,'2016-06-30 19:45:31',2,12,1300,474,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(879,'2016-06-30 19:45:31',2,12,214,1890,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(880,'2016-06-30 19:45:31',2,12,216,1628,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(881,'2016-06-30 19:45:31',2,12,1230,1482,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(882,'2016-06-30 19:45:31',2,12,1632,1804,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(883,'2016-06-30 19:45:31',2,12,1680,1490,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(884,'2016-06-30 19:45:31',2,12,636,706,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(885,'2016-06-30 19:45:31',2,12,1488,494,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(886,'2016-06-30 19:45:31',2,12,1518,876,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(887,'2016-06-30 19:45:31',2,12,1628,1560,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(888,'2016-06-30 19:45:31',2,12,554,1082,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(889,'2016-06-30 19:45:31',2,12,626,274,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(890,'2016-06-30 19:45:31',2,12,1716,1824,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(891,'2016-06-30 19:45:31',2,12,240,596,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(892,'2016-06-30 19:45:31',2,12,1886,624,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(893,'2016-06-30 19:45:31',2,12,330,922,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(894,'2016-06-30 19:45:31',2,12,160,450,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(895,'2016-06-30 19:45:31',2,12,1496,184,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(896,'2016-06-30 19:45:31',2,12,1680,1322,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(897,'2016-06-30 19:45:31',2,12,476,530,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(898,'2016-06-30 19:45:31',2,12,1084,458,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(899,'2016-06-30 19:45:31',2,12,1322,736,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(900,'2016-06-30 19:45:31',2,5,1138,756,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(901,'2016-06-30 19:45:31',2,5,1292,1212,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(902,'2016-06-30 19:45:31',2,5,860,690,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(903,'2016-06-30 19:45:31',2,5,708,352,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(904,'2016-06-30 19:45:31',2,5,1900,1492,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(905,'2016-06-30 19:45:31',2,5,464,1656,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(906,'2016-06-30 19:45:31',2,5,1420,744,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(907,'2016-06-30 19:45:31',2,5,1430,902,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(908,'2016-06-30 19:45:31',2,5,1366,980,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(909,'2016-06-30 19:45:31',2,5,910,1526,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(910,'2016-06-30 19:45:31',2,5,226,1308,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(911,'2016-06-30 19:45:31',2,5,840,1586,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(912,'2016-06-30 19:45:31',2,5,1876,776,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(913,'2016-06-30 19:45:31',2,5,518,1928,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(914,'2016-06-30 19:45:31',2,5,1558,1128,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(915,'2016-06-30 19:45:31',2,5,1362,1452,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(916,'2016-06-30 19:45:31',2,5,1668,1094,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(917,'2016-06-30 19:45:31',2,5,288,1228,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(918,'2016-06-30 19:45:31',2,5,976,418,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(919,'2016-06-30 19:45:31',2,5,1292,324,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(920,'2016-06-30 19:45:31',2,5,1332,698,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(921,'2016-06-30 19:45:31',2,5,992,1578,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(922,'2016-06-30 19:45:31',2,5,922,310,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(923,'2016-06-30 19:45:31',2,5,1738,1830,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(924,'2016-06-30 19:45:31',2,5,904,480,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(925,'2016-06-30 19:45:31',2,5,788,166,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(926,'2016-06-30 19:45:31',2,5,1664,1210,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(927,'2016-06-30 19:45:31',2,5,890,788,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(928,'2016-06-30 19:45:31',2,5,1380,1242,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(929,'2016-06-30 19:45:31',2,5,652,1466,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(930,'2016-06-30 19:45:31',2,5,880,890,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(931,'2016-06-30 19:45:31',2,5,650,166,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(932,'2016-06-30 19:45:31',2,5,1372,1824,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(933,'2016-06-30 19:45:31',2,5,238,462,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(934,'2016-06-30 19:45:31',2,5,484,1486,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(935,'2016-06-30 19:45:31',2,5,974,624,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(936,'2016-06-30 19:45:31',2,5,634,294,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(937,'2016-06-30 19:45:31',2,5,1788,832,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(938,'2016-06-30 19:45:31',2,5,572,1710,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(939,'2016-06-30 19:45:31',2,5,1270,992,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(940,'2016-06-30 19:45:31',2,5,1356,414,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(941,'2016-06-30 19:45:31',2,5,1686,940,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(942,'2016-06-30 19:45:31',2,5,1610,200,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(943,'2016-06-30 19:45:31',2,5,1446,1760,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(944,'2016-06-30 19:45:31',2,5,1150,134,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(945,'2016-06-30 19:45:31',2,5,732,1804,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(946,'2016-06-30 19:45:31',2,5,518,1800,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(947,'2016-06-30 19:45:31',2,5,836,278,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(948,'2016-06-30 19:45:31',2,5,1436,654,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(949,'2016-06-30 19:45:31',2,5,584,1524,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(950,'2016-06-30 19:45:31',2,5,740,264,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(951,'2016-06-30 19:45:31',2,5,1796,1494,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(952,'2016-06-30 19:45:31',2,5,1596,1036,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(953,'2016-06-30 19:45:31',2,5,816,1492,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(954,'2016-06-30 19:45:31',2,5,604,1900,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(955,'2016-06-30 19:45:31',2,5,1820,394,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(956,'2016-06-30 19:45:31',2,5,390,1596,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(957,'2016-06-30 19:45:31',2,5,1588,1338,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(958,'2016-06-30 19:45:31',2,5,1128,532,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(959,'2016-06-30 19:45:31',2,9,1496,430,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(960,'2016-06-30 19:45:31',2,9,1270,1862,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(961,'2016-06-30 19:45:31',2,9,1356,382,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(962,'2016-06-30 19:45:31',2,9,1880,1756,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(963,'2016-06-30 19:45:31',2,9,1704,1630,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(964,'2016-06-30 19:45:31',2,9,1164,1844,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(965,'2016-06-30 19:45:31',2,9,1802,1056,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(966,'2016-06-30 19:45:31',2,9,1474,1098,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(967,'2016-06-30 19:45:31',2,9,1042,650,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(968,'2016-06-30 19:45:31',2,9,1662,228,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(969,'2016-06-30 19:45:31',2,9,712,1016,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(970,'2016-06-30 19:45:31',2,9,1686,1102,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(971,'2016-06-30 19:45:31',2,9,1054,558,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(972,'2016-06-30 19:45:31',2,9,242,828,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(973,'2016-06-30 19:45:31',2,9,1050,1872,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(974,'2016-06-30 19:45:31',2,9,1836,408,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(975,'2016-06-30 19:45:31',2,9,1412,282,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(976,'2016-06-30 19:45:31',2,9,1420,1514,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(977,'2016-06-30 19:45:31',2,9,1090,1528,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(978,'2016-06-30 19:45:31',2,9,334,1454,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(979,'2016-06-30 19:45:31',2,9,984,748,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(980,'2016-06-30 19:45:31',2,9,240,1298,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(981,'2016-06-30 19:45:31',2,9,1344,1044,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(982,'2016-06-30 19:45:31',2,9,300,1848,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(983,'2016-06-30 19:45:31',2,9,424,214,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(984,'2016-06-30 19:45:31',2,9,1632,962,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(985,'2016-06-30 19:45:31',2,9,1092,344,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(986,'2016-06-30 19:45:31',2,9,938,618,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(987,'2016-06-30 19:45:31',2,9,848,1036,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(988,'2016-06-30 19:45:31',2,9,348,814,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(989,'2016-06-30 19:45:31',2,9,1624,1256,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(990,'2016-06-30 19:45:31',2,9,734,1236,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(991,'2016-06-30 19:45:31',2,9,504,556,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(992,'2016-06-30 19:45:31',2,9,970,292,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(993,'2016-06-30 19:45:31',2,9,1308,586,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(994,'2016-06-30 19:45:31',2,9,284,642,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(995,'2016-06-30 19:45:31',2,9,998,1416,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(996,'2016-06-30 19:45:31',2,9,1416,944,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(997,'2016-06-30 19:45:31',2,9,998,1150,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(998,'2016-06-30 19:45:31',2,9,584,1704,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(999,'2016-06-30 19:45:31',2,9,582,188,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1000,'2016-06-30 19:45:31',2,9,440,1466,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1001,'2016-06-30 19:45:31',2,9,300,1140,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1002,'2016-06-30 19:45:31',2,9,1204,834,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1003,'2016-06-30 19:45:31',2,9,390,704,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1004,'2016-06-30 19:45:31',2,9,1726,1466,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1005,'2016-06-30 19:45:31',2,9,1664,630,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1006,'2016-06-30 19:45:31',2,9,1126,254,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1007,'2016-06-30 19:45:31',2,9,186,1384,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1008,'2016-06-30 19:45:31',2,9,1574,1072,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1009,'2016-06-30 19:45:31',2,9,1472,1364,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1010,'2016-06-30 19:45:31',2,9,504,264,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1011,'2016-06-30 19:45:31',2,9,1382,130,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1012,'2016-06-30 19:45:31',2,9,1510,1218,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1013,'2016-06-30 19:45:31',2,9,364,1250,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1014,'2016-06-30 19:45:31',2,9,534,1800,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1015,'2016-06-30 19:45:31',2,9,1066,1332,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1016,'2016-06-30 19:45:31',2,8,642,1604,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1017,'2016-06-30 19:45:31',2,8,562,438,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1018,'2016-06-30 19:45:31',2,8,764,1206,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1019,'2016-06-30 19:45:31',2,8,626,1400,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1020,'2016-06-30 19:45:31',2,8,1846,1858,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1021,'2016-06-30 19:45:31',2,8,1190,1848,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1022,'2016-06-30 19:45:31',2,8,768,1058,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1023,'2016-06-30 19:45:31',2,8,872,1014,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1024,'2016-06-30 19:45:31',2,8,1638,936,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1025,'2016-06-30 19:45:31',2,8,964,1780,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1026,'2016-06-30 19:45:31',2,8,428,1744,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1027,'2016-06-30 19:45:31',2,8,946,402,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1028,'2016-06-30 19:45:31',2,8,866,1264,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1029,'2016-06-30 19:45:31',2,8,1224,634,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1030,'2016-06-30 19:45:31',2,8,130,168,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1031,'2016-06-30 19:45:31',2,8,1432,1202,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1032,'2016-06-30 19:45:31',2,8,1332,1020,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1033,'2016-06-30 19:45:31',2,8,178,270,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1034,'2016-06-30 19:45:31',2,8,890,1670,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1035,'2016-06-30 19:45:31',2,8,168,822,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1036,'2016-06-30 19:45:31',2,8,1710,508,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1037,'2016-06-30 19:45:31',2,8,1700,1576,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1038,'2016-06-30 19:45:31',2,8,486,1316,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1039,'2016-06-30 19:45:31',2,8,1274,480,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1040,'2016-06-30 19:45:31',2,8,984,288,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1041,'2016-06-30 19:45:31',2,8,1080,1784,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1042,'2016-06-30 19:45:31',2,8,422,998,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1043,'2016-06-30 19:45:31',2,8,1528,388,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1044,'2016-06-30 19:45:31',2,8,176,650,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1045,'2016-06-30 19:45:31',2,8,1696,638,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1046,'2016-06-30 19:45:31',2,8,314,1102,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1047,'2016-06-30 19:45:31',2,8,1088,676,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1048,'2016-06-30 19:45:31',2,8,1566,520,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1049,'2016-06-30 19:45:31',2,8,980,1286,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1050,'2016-06-30 19:45:31',2,8,1844,1176,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1051,'2016-06-30 19:45:31',2,8,146,1132,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1052,'2016-06-30 19:45:31',2,8,1852,368,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1053,'2016-06-30 19:45:31',2,8,1316,390,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1054,'2016-06-30 19:45:31',2,8,368,754,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1055,'2016-06-30 19:45:31',2,8,1386,464,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1056,'2016-06-30 19:45:31',2,8,1574,632,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1057,'2016-06-30 19:45:31',2,8,242,1696,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1058,'2016-06-30 19:45:31',2,8,1896,820,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1059,'2016-06-30 19:45:31',2,8,644,1788,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1060,'2016-06-30 19:45:31',2,8,564,216,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1061,'2016-06-30 19:45:31',2,8,1776,834,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1062,'2016-06-30 19:45:31',2,8,1162,858,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1063,'2016-06-30 19:45:31',2,8,464,1850,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1064,'2016-06-30 19:45:31',2,8,1756,1358,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1065,'2016-06-30 19:45:31',2,8,1622,846,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1066,'2016-06-30 19:45:31',2,8,184,1592,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1067,'2016-06-30 19:45:31',2,8,720,1844,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1068,'2016-06-30 19:45:31',2,8,1082,792,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1069,'2016-06-30 19:45:31',2,8,1868,1388,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1070,'2016-06-30 19:45:31',2,8,804,1912,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1071,'2016-06-30 19:45:31',2,8,1204,1108,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1072,'2016-06-30 19:45:31',2,8,300,260,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1073,'2016-06-30 19:45:31',2,8,1198,972,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1074,'2016-06-30 19:45:31',2,8,616,622,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1075,'2016-06-30 19:45:31',2,3,1434,488,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1076,'2016-06-30 19:45:31',2,3,1132,694,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1077,'2016-06-30 19:45:31',2,3,1692,964,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1078,'2016-06-30 19:45:31',2,3,1262,750,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1079,'2016-06-30 19:45:31',2,3,998,1248,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1080,'2016-06-30 19:45:31',2,3,278,226,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1081,'2016-06-30 19:45:31',2,3,1458,166,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1082,'2016-06-30 19:45:31',2,3,1554,1762,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1083,'2016-06-30 19:45:31',2,3,938,810,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1084,'2016-06-30 19:45:31',2,3,1246,422,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1085,'2016-06-30 19:45:31',2,3,1078,958,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1086,'2016-06-30 19:45:31',2,3,268,720,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1087,'2016-06-30 19:45:31',2,3,1596,542,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1088,'2016-06-30 19:45:31',2,3,1090,1156,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1089,'2016-06-30 19:45:31',2,3,1832,578,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1090,'2016-06-30 19:45:32',2,3,772,482,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1091,'2016-06-30 19:45:32',2,3,1730,876,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1092,'2016-06-30 19:45:32',2,3,1278,542,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1093,'2016-06-30 19:45:32',2,3,1202,1194,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1094,'2016-06-30 19:45:32',2,3,264,1238,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1095,'2016-06-30 19:45:32',2,3,784,1928,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1096,'2016-06-30 19:45:32',2,3,1650,450,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1097,'2016-06-30 19:45:32',2,3,926,1916,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1098,'2016-06-30 19:45:32',2,3,374,512,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1099,'2016-06-30 19:45:32',2,3,270,1848,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1100,'2016-06-30 19:45:32',2,3,666,1342,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1101,'2016-06-30 19:45:32',2,3,1458,1716,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1102,'2016-06-30 19:45:32',2,3,1650,1812,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1103,'2016-06-30 19:45:32',2,3,1904,1456,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1104,'2016-06-30 19:45:32',2,3,1822,1706,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1105,'2016-06-30 19:45:32',2,3,1048,806,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1106,'2016-06-30 19:45:32',2,3,600,1688,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1107,'2016-06-30 19:45:32',2,3,1628,1698,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1108,'2016-06-30 19:45:32',2,3,638,1922,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1109,'2016-06-30 19:45:32',2,3,1314,1364,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1110,'2016-06-30 19:45:32',2,3,1796,1526,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1111,'2016-06-30 19:45:32',2,3,1662,1252,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1112,'2016-06-30 19:45:32',2,3,792,138,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1113,'2016-06-30 19:45:32',2,3,412,402,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1114,'2016-06-30 19:45:32',2,3,346,1608,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1115,'2016-06-30 19:45:32',2,3,1698,1144,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1116,'2016-06-30 19:45:32',2,3,1544,1606,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1117,'2016-06-30 19:45:32',2,3,1000,626,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1118,'2016-06-30 19:45:32',2,3,1032,1054,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1119,'2016-06-30 19:45:32',2,3,148,1006,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1120,'2016-06-30 19:45:32',2,3,206,1736,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1121,'2016-06-30 19:45:32',2,3,1086,528,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1122,'2016-06-30 19:45:32',2,3,262,540,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1123,'2016-06-30 19:45:32',2,3,896,414,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1124,'2016-06-30 19:45:32',2,3,1436,1152,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1125,'2016-06-30 19:45:32',2,3,1576,1314,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1126,'2016-06-30 19:45:32',2,3,584,1036,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1127,'2016-06-30 19:45:32',2,3,1384,340,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1128,'2016-06-30 19:45:32',2,3,634,1562,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1129,'2016-06-30 19:45:32',2,3,818,1394,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1130,'2016-06-30 19:45:32',2,3,182,1108,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1131,'2016-06-30 19:45:32',2,3,1548,986,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1132,'2016-06-30 19:45:32',2,3,968,1374,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1133,'2016-06-30 19:45:32',2,3,1780,1030,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1134,'2016-06-30 19:45:32',2,3,1816,180,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1135,'2016-06-30 19:45:32',2,3,438,144,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1136,'2016-06-30 19:45:32',2,3,1164,914,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1137,'2016-06-30 19:45:32',2,3,1750,1380,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1138,'2016-06-30 19:45:32',2,3,1850,286,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1139,'2016-06-30 19:45:32',2,3,1870,672,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1140,'2016-06-30 19:45:32',2,3,1084,1278,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1141,'2016-06-30 19:45:32',2,3,128,198,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1142,'2016-06-30 19:45:32',2,3,1140,1514,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1143,'2016-06-30 19:45:32',2,3,1568,198,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1144,'2016-06-30 19:45:32',2,3,430,1510,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1145,'2016-06-30 19:45:32',2,3,1864,1286,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1146,'2016-06-30 19:45:32',2,3,462,1140,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1147,'2016-06-30 19:45:32',2,3,342,832,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1148,'2016-06-30 19:45:32',2,4,1906,1002,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1149,'2016-06-30 19:45:32',2,4,1800,782,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1150,'2016-06-30 19:45:32',2,4,1718,156,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1151,'2016-06-30 19:45:32',2,4,1632,608,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1152,'2016-06-30 19:45:32',2,4,1434,202,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1153,'2016-06-30 19:45:32',2,4,602,1434,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1154,'2016-06-30 19:45:32',2,4,1120,1926,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1155,'2016-06-30 19:45:32',2,4,1686,956,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1156,'2016-06-30 19:45:32',2,4,1542,968,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1157,'2016-06-30 19:45:32',2,4,414,722,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1158,'2016-06-30 19:45:32',2,4,1610,300,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1159,'2016-06-30 19:45:32',2,4,1018,932,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1160,'2016-06-30 19:45:32',2,4,1404,774,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1161,'2016-06-30 19:45:32',2,4,1038,1044,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1162,'2016-06-30 19:45:32',2,4,1862,884,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1163,'2016-06-30 19:45:32',2,4,294,1458,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1164,'2016-06-30 19:45:32',2,4,650,878,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1165,'2016-06-30 19:45:32',2,4,266,604,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1166,'2016-06-30 19:45:32',2,4,1256,1134,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1167,'2016-06-30 19:45:32',2,4,1774,540,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1168,'2016-06-30 19:45:32',2,4,594,432,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1169,'2016-06-30 19:45:32',2,4,232,990,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1170,'2016-06-30 19:45:32',2,4,208,1192,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1171,'2016-06-30 19:45:32',2,4,1772,648,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1172,'2016-06-30 19:45:32',2,4,1244,1908,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1173,'2016-06-30 19:45:32',2,4,462,580,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1174,'2016-06-30 19:45:32',2,4,620,1624,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1175,'2016-06-30 19:45:32',2,4,468,1398,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1176,'2016-06-30 19:45:32',2,4,170,1326,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1177,'2016-06-30 19:45:32',2,4,1258,1598,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1178,'2016-06-30 19:45:32',2,4,1130,160,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1179,'2016-06-30 19:45:32',2,4,952,592,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1180,'2016-06-30 19:45:32',2,4,322,1774,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1181,'2016-06-30 19:45:32',2,4,476,1206,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1182,'2016-06-30 19:45:32',2,4,194,1458,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1183,'2016-06-30 19:45:32',2,4,1910,1472,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1184,'2016-06-30 19:45:32',2,4,1334,1470,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1185,'2016-06-30 19:45:32',2,4,1458,1344,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1186,'2016-06-30 19:45:32',2,4,1406,1556,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1187,'2016-06-30 19:45:32',2,4,850,1848,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1188,'2016-06-30 19:45:32',2,4,826,490,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1189,'2016-06-30 19:45:32',2,4,848,1552,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1190,'2016-06-30 19:45:32',2,4,1658,1184,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1191,'2016-06-30 19:45:32',2,4,832,1424,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1192,'2016-06-30 19:45:32',2,4,746,582,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1193,'2016-06-30 19:45:32',2,4,1600,490,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1194,'2016-06-30 19:45:32',2,4,1560,1254,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1195,'2016-06-30 19:45:32',2,4,196,1076,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1196,'2016-06-30 19:45:32',2,4,1296,1794,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1197,'2016-06-30 19:45:32',2,4,538,1036,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1198,'2016-06-30 19:45:32',2,4,620,188,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1199,'2016-06-30 19:45:32',2,4,1008,1150,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1200,'2016-06-30 19:45:32',2,4,598,1124,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1201,'2016-06-30 19:45:32',2,4,274,856,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1202,'2016-06-30 19:45:32',2,4,268,1358,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1203,'2016-06-30 19:45:32',2,4,684,1200,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1204,'2016-06-30 19:45:32',2,4,410,1062,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1205,'2016-06-30 19:45:32',2,4,1116,1106,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1206,'2016-06-30 19:45:32',2,4,1822,1576,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1207,'2016-06-30 19:45:32',2,4,1320,838,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1208,'2016-06-30 19:45:32',2,4,786,798,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1209,'2016-06-30 19:45:32',2,4,1738,1814,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1210,'2016-06-30 19:45:32',2,4,140,170,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1211,'2016-06-30 19:45:32',2,4,748,686,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1212,'2016-06-30 19:45:32',2,4,1896,1616,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1213,'2016-06-30 19:45:32',2,4,1246,322,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1214,'2016-06-30 19:45:32',2,4,1412,556,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1215,'2016-06-30 19:45:32',2,4,610,534,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1216,'2016-06-30 19:45:32',2,4,786,1332,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1217,'2016-06-30 19:45:32',2,4,1782,1056,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1218,'2016-06-30 19:45:32',2,4,1642,742,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1219,'2016-06-30 19:45:32',2,4,1240,410,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1220,'2016-06-30 19:45:32',2,4,362,624,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1221,'2016-06-30 19:45:32',2,4,258,296,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1222,'2016-06-30 19:45:32',2,4,716,1784,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1223,'2016-06-30 19:45:32',2,4,1130,960,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1224,'2016-06-30 19:45:32',2,4,1178,704,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1225,'2016-06-30 19:45:32',2,2,150,1576,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1226,'2016-06-30 19:45:32',2,2,1054,670,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1227,'2016-06-30 19:45:32',2,2,312,444,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1228,'2016-06-30 19:45:32',2,2,758,882,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1229,'2016-06-30 19:45:32',2,2,1662,1618,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1230,'2016-06-30 19:45:32',2,2,544,1880,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1231,'2016-06-30 19:45:32',2,2,1106,988,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1232,'2016-06-30 19:45:32',2,2,1522,740,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1233,'2016-06-30 19:45:32',2,2,194,1430,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1234,'2016-06-30 19:45:32',2,2,1374,1482,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1235,'2016-06-30 19:45:32',2,2,846,230,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1236,'2016-06-30 19:45:32',2,2,1134,550,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1237,'2016-06-30 19:45:32',2,2,798,414,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1238,'2016-06-30 19:45:32',2,2,780,1122,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1239,'2016-06-30 19:45:32',2,2,1832,1646,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1240,'2016-06-30 19:45:32',2,2,988,1646,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1241,'2016-06-30 19:45:32',2,2,1002,168,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1242,'2016-06-30 19:45:32',2,2,1302,1214,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1243,'2016-06-30 19:45:32',2,2,1534,1824,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1244,'2016-06-30 19:45:32',2,2,1680,820,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1245,'2016-06-30 19:45:32',2,2,1482,890,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1246,'2016-06-30 19:45:32',2,2,570,1288,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1247,'2016-06-30 19:45:32',2,2,136,554,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1248,'2016-06-30 19:45:32',2,2,1760,1516,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1249,'2016-06-30 19:45:32',2,2,1804,1066,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1250,'2016-06-30 19:45:32',2,2,1016,286,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1251,'2016-06-30 19:45:32',2,2,1158,762,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1252,'2016-06-30 19:45:32',2,2,1016,1870,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1253,'2016-06-30 19:45:32',2,2,1904,916,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1254,'2016-06-30 19:45:32',2,2,1084,1492,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1255,'2016-06-30 19:45:32',2,2,1358,904,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1256,'2016-06-30 19:45:32',2,2,552,1768,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1257,'2016-06-30 19:45:32',2,2,454,1690,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1258,'2016-06-30 19:45:32',2,2,1716,1246,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1259,'2016-06-30 19:45:32',2,2,616,1640,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1260,'2016-06-30 19:45:32',2,2,1438,1762,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1261,'2016-06-30 19:45:32',2,2,254,1350,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1262,'2016-06-30 19:45:32',2,2,1586,1482,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1263,'2016-06-30 19:45:32',2,2,1430,742,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1264,'2016-06-30 19:45:32',2,2,1410,830,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1265,'2016-06-30 19:45:32',2,2,320,1026,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1266,'2016-06-30 19:45:32',2,2,918,376,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1267,'2016-06-30 19:45:32',2,2,1006,386,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1268,'2016-06-30 19:45:32',2,2,1244,1644,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1269,'2016-06-30 19:45:32',2,2,1208,1512,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1270,'2016-06-30 19:45:32',2,2,1264,204,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1271,'2016-06-30 19:45:32',2,2,990,802,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1272,'2016-06-30 19:45:32',2,2,704,160,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1273,'2016-06-30 19:45:32',2,2,868,920,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1274,'2016-06-30 19:45:32',2,2,592,778,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1275,'2016-06-30 19:45:32',2,2,1896,1356,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1276,'2016-06-30 19:45:32',2,2,1308,1032,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1277,'2016-06-30 19:45:32',2,2,628,1174,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1278,'2016-06-30 19:45:32',2,2,608,1016,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1279,'2016-06-30 19:45:32',2,2,760,618,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1280,'2016-06-30 19:45:32',2,11,236,140,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1281,'2016-06-30 19:45:32',2,11,754,1678,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1282,'2016-06-30 19:45:32',2,11,154,1360,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1283,'2016-06-30 19:45:32',2,11,786,588,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1284,'2016-06-30 19:45:32',2,11,1876,1158,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1285,'2016-06-30 19:45:32',2,11,804,1204,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1286,'2016-06-30 19:45:32',2,11,160,202,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1287,'2016-06-30 19:45:32',2,11,1246,1890,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1288,'2016-06-30 19:45:32',2,11,1600,1152,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1289,'2016-06-30 19:45:32',2,11,1176,508,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1290,'2016-06-30 19:45:32',2,11,1532,1516,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1291,'2016-06-30 19:45:32',2,11,546,1186,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1292,'2016-06-30 19:45:32',2,11,1236,1770,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1293,'2016-06-30 19:45:32',2,11,932,446,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1294,'2016-06-30 19:45:32',2,11,1518,1046,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1295,'2016-06-30 19:45:32',2,11,1128,1496,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1296,'2016-06-30 19:45:32',2,11,448,1620,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1297,'2016-06-30 19:45:32',2,11,1340,898,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1298,'2016-06-30 19:45:32',2,11,1402,606,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1299,'2016-06-30 19:45:32',2,11,874,544,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1300,'2016-06-30 19:45:32',2,11,586,1406,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1301,'2016-06-30 19:45:32',2,11,360,662,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1302,'2016-06-30 19:45:32',2,11,326,806,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1303,'2016-06-30 19:45:32',2,11,1294,1114,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1304,'2016-06-30 19:45:32',2,11,1802,1380,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1305,'2016-06-30 19:45:32',2,11,1776,838,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1306,'2016-06-30 19:45:32',2,11,1528,1238,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1307,'2016-06-30 19:45:32',2,11,780,1102,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1308,'2016-06-30 19:45:32',2,11,278,1768,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1309,'2016-06-30 19:45:32',2,11,1132,1110,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1310,'2016-06-30 19:45:32',2,11,914,994,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1311,'2016-06-30 19:45:32',2,11,1708,994,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1312,'2016-06-30 19:45:32',2,11,492,724,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1313,'2016-06-30 19:45:32',2,11,1346,1838,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1314,'2016-06-30 19:45:32',2,11,1862,962,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1315,'2016-06-30 19:45:32',2,11,768,702,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1316,'2016-06-30 19:45:32',2,11,162,1868,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1317,'2016-06-30 19:45:32',2,11,1138,1224,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1318,'2016-06-30 19:45:32',2,11,1480,848,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1319,'2016-06-30 19:45:32',2,11,968,1768,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1320,'2016-06-30 19:45:32',2,11,542,620,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1321,'2016-06-30 19:45:32',2,11,1322,748,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1322,'2016-06-30 19:45:32',2,11,1084,1810,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1323,'2016-06-30 19:45:32',2,11,602,1506,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1324,'2016-06-30 19:45:32',2,11,1388,1162,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL),(1325,'2016-06-30 19:45:32',2,11,1262,450,NULL,NULL,NULL,NULL,NULL,10,NULL,NULL,NULL);
 /*!40000 ALTER TABLE `ApParticleData` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -5620,7 +5431,7 @@ CREATE TABLE `ApPathData` (
   PRIMARY KEY (`DEF_id`),
   KEY `DEF_timestamp` (`DEF_timestamp`),
   KEY `path_index32` (`path`(32))
-) ENGINE=MyISAM AUTO_INCREMENT=7 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -5629,7 +5440,7 @@ CREATE TABLE `ApPathData` (
 
 LOCK TABLES `ApPathData` WRITE;
 /*!40000 ALTER TABLE `ApPathData` DISABLE KEYS */;
-INSERT INTO `ApPathData` VALUES (5,'2016-04-28 21:15:18','/emg/data/leginon/06jul12a/templates'),(6,'2016-04-28 21:15:18','/usr/lib64/python2.6/site-packages');
+INSERT INTO `ApPathData` VALUES (1,'2016-06-30 15:08:38','/emg/data/leginon/06jul12a/templates');
 /*!40000 ALTER TABLE `ApPathData` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -6428,7 +6239,7 @@ CREATE TABLE `ApSelectionParamsData` (
 
 LOCK TABLES `ApSelectionParamsData` WRITE;
 /*!40000 ALTER TABLE `ApSelectionParamsData` DISABLE KEYS */;
-INSERT INTO `ApSelectionParamsData` VALUES (1,'2016-03-08 18:31:14',180,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO `ApSelectionParamsData` VALUES (1,'2016-06-30 19:45:30',180,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
 /*!40000 ALTER TABLE `ApSelectionParamsData` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -6460,7 +6271,7 @@ CREATE TABLE `ApSelectionRunData` (
   KEY `REF|ApDogParamsData|dogparams` (`REF|ApDogParamsData|dogparams`),
   KEY `REF|ApManualParamsData|manparams` (`REF|ApManualParamsData|manparams`),
   KEY `REF|ApTiltAlignParamsData|tiltparams` (`REF|ApTiltAlignParamsData|tiltparams`)
-) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=3 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -6469,7 +6280,7 @@ CREATE TABLE `ApSelectionRunData` (
 
 LOCK TABLES `ApSelectionRunData` WRITE;
 /*!40000 ALTER TABLE `ApSelectionRunData` DISABLE KEYS */;
-INSERT INTO `ApSelectionRunData` VALUES (1,'2016-03-08 18:31:14','manual1',NULL,3,2,1,NULL,NULL,NULL,NULL);
+INSERT INTO `ApSelectionRunData` VALUES (2,'2016-06-30 19:45:30','default1',NULL,NULL,1,1,NULL,NULL,NULL,NULL);
 /*!40000 ALTER TABLE `ApSelectionRunData` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -6984,7 +6795,9 @@ CREATE TABLE `ApTemplateImageData` (
 
 LOCK TABLES `ApTemplateImageData` WRITE;
 /*!40000 ALTER TABLE `ApTemplateImageData` DISABLE KEYS */;
-INSERT INTO `ApTemplateImageData` VALUES (1,'2016-04-28 21:15:22',5,1,'template1.mrc',3.26,180,'GroEL standard templates',0,'6050bd711d34714aa81c7c4da1146fb3',NULL,NULL,NULL,NULL),(2,'2016-04-28 21:15:24',5,1,'template2.mrc',3.26,180,'GroEL standard templates',0,'63103901516a56a4fe5349cdcbc470dc',NULL,NULL,NULL,NULL);
+INSERT INTO `ApTemplateImageData` VALUES
+(1,'2016-04-28 21:15:22',1,1,'groel_template1.mrc',3.26,180,'GroEL standard templates',0,'6050bd711d34714aa81c7c4da1146fb3',NULL,NULL,NULL,NULL),
+(2,'2016-04-28 21:15:24',1,1,'groel_template2.mrc',3.26,180,'GroEL standard templates',0,'63103901516a56a4fe5349cdcbc470dc',NULL,NULL,NULL,NULL);
 /*!40000 ALTER TABLE `ApTemplateImageData` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -7058,15 +6871,6 @@ CREATE TABLE `ApTemplateStackData` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Dumping data for table `ApTemplateStackData`
---
-
-LOCK TABLES `ApTemplateStackData` WRITE;
-/*!40000 ALTER TABLE `ApTemplateStackData` DISABLE KEYS */;
-/*!40000 ALTER TABLE `ApTemplateStackData` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
 -- Table structure for table `ApTestParamsData`
 --
 
@@ -7081,15 +6885,6 @@ CREATE TABLE `ApTestParamsData` (
   KEY `DEF_timestamp` (`DEF_timestamp`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `ApTestParamsData`
---
-
-LOCK TABLES `ApTestParamsData` WRITE;
-/*!40000 ALTER TABLE `ApTestParamsData` DISABLE KEYS */;
-/*!40000 ALTER TABLE `ApTestParamsData` ENABLE KEYS */;
-UNLOCK TABLES;
 
 --
 -- Table structure for table `ApTestResultData`
@@ -7113,15 +6908,6 @@ CREATE TABLE `ApTestResultData` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Dumping data for table `ApTestResultData`
---
-
-LOCK TABLES `ApTestResultData` WRITE;
-/*!40000 ALTER TABLE `ApTestResultData` DISABLE KEYS */;
-/*!40000 ALTER TABLE `ApTestResultData` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
 -- Table structure for table `ApTestRunData`
 --
 
@@ -7143,15 +6929,6 @@ CREATE TABLE `ApTestRunData` (
   KEY `REF|ApPathData|path` (`REF|ApPathData|path`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `ApTestRunData`
---
-
-LOCK TABLES `ApTestRunData` WRITE;
-/*!40000 ALTER TABLE `ApTestRunData` DISABLE KEYS */;
-/*!40000 ALTER TABLE `ApTestRunData` ENABLE KEYS */;
-UNLOCK TABLES;
 
 --
 -- Table structure for table `ApTiltAlignParamsData`
@@ -7179,15 +6956,6 @@ CREATE TABLE `ApTiltAlignParamsData` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Dumping data for table `ApTiltAlignParamsData`
---
-
-LOCK TABLES `ApTiltAlignParamsData` WRITE;
-/*!40000 ALTER TABLE `ApTiltAlignParamsData` DISABLE KEYS */;
-/*!40000 ALTER TABLE `ApTiltAlignParamsData` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
 -- Table structure for table `ApTiltParticlePairData`
 --
 
@@ -7208,15 +6976,6 @@ CREATE TABLE `ApTiltParticlePairData` (
   KEY `REF|ApImageTiltTransformData|transform` (`REF|ApImageTiltTransformData|transform`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `ApTiltParticlePairData`
---
-
-LOCK TABLES `ApTiltParticlePairData` WRITE;
-/*!40000 ALTER TABLE `ApTiltParticlePairData` DISABLE KEYS */;
-/*!40000 ALTER TABLE `ApTiltParticlePairData` ENABLE KEYS */;
-UNLOCK TABLES;
 
 --
 -- Table structure for table `ApTiltsInAlignRunData`
@@ -7240,15 +6999,6 @@ CREATE TABLE `ApTiltsInAlignRunData` (
   KEY `primary_tiltseries` (`primary_tiltseries`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `ApTiltsInAlignRunData`
---
-
-LOCK TABLES `ApTiltsInAlignRunData` WRITE;
-/*!40000 ALTER TABLE `ApTiltsInAlignRunData` DISABLE KEYS */;
-/*!40000 ALTER TABLE `ApTiltsInAlignRunData` ENABLE KEYS */;
-UNLOCK TABLES;
 
 --
 -- Table structure for table `ApTomoAlignerParamsData`
@@ -7277,15 +7027,6 @@ CREATE TABLE `ApTomoAlignerParamsData` (
   KEY `hidden` (`hidden`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `ApTomoAlignerParamsData`
---
-
-LOCK TABLES `ApTomoAlignerParamsData` WRITE;
-/*!40000 ALTER TABLE `ApTomoAlignerParamsData` DISABLE KEYS */;
-/*!40000 ALTER TABLE `ApTomoAlignerParamsData` ENABLE KEYS */;
-UNLOCK TABLES;
 
 --
 -- Table structure for table `ApTomoAlignmentRunData`
@@ -7324,15 +7065,6 @@ CREATE TABLE `ApTomoAlignmentRunData` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Dumping data for table `ApTomoAlignmentRunData`
---
-
-LOCK TABLES `ApTomoAlignmentRunData` WRITE;
-/*!40000 ALTER TABLE `ApTomoAlignmentRunData` DISABLE KEYS */;
-/*!40000 ALTER TABLE `ApTomoAlignmentRunData` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
 -- Table structure for table `ApTomoAverageRunData`
 --
 
@@ -7359,15 +7091,6 @@ CREATE TABLE `ApTomoAverageRunData` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Dumping data for table `ApTomoAverageRunData`
---
-
-LOCK TABLES `ApTomoAverageRunData` WRITE;
-/*!40000 ALTER TABLE `ApTomoAverageRunData` DISABLE KEYS */;
-/*!40000 ALTER TABLE `ApTomoAverageRunData` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
 -- Table structure for table `ApTomoAvgParticleData`
 --
 
@@ -7390,15 +7113,6 @@ CREATE TABLE `ApTomoAvgParticleData` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Dumping data for table `ApTomoAvgParticleData`
---
-
-LOCK TABLES `ApTomoAvgParticleData` WRITE;
-/*!40000 ALTER TABLE `ApTomoAvgParticleData` DISABLE KEYS */;
-/*!40000 ALTER TABLE `ApTomoAvgParticleData` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
 -- Table structure for table `ApTomoReconParamsData`
 --
 
@@ -7416,15 +7130,6 @@ CREATE TABLE `ApTomoReconParamsData` (
   KEY `DEF_timestamp` (`DEF_timestamp`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `ApTomoReconParamsData`
---
-
-LOCK TABLES `ApTomoReconParamsData` WRITE;
-/*!40000 ALTER TABLE `ApTomoReconParamsData` DISABLE KEYS */;
-/*!40000 ALTER TABLE `ApTomoReconParamsData` ENABLE KEYS */;
-UNLOCK TABLES;
 
 --
 -- Table structure for table `ApTomogramData`
@@ -7462,15 +7167,6 @@ CREATE TABLE `ApTomogramData` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Dumping data for table `ApTomogramData`
---
-
-LOCK TABLES `ApTomogramData` WRITE;
-/*!40000 ALTER TABLE `ApTomogramData` DISABLE KEYS */;
-/*!40000 ALTER TABLE `ApTomogramData` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
 -- Table structure for table `ApTopolRepJobData`
 --
 
@@ -7495,15 +7191,6 @@ CREATE TABLE `ApTopolRepJobData` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Dumping data for table `ApTopolRepJobData`
---
-
-LOCK TABLES `ApTopolRepJobData` WRITE;
-/*!40000 ALTER TABLE `ApTopolRepJobData` DISABLE KEYS */;
-/*!40000 ALTER TABLE `ApTopolRepJobData` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
 -- Table structure for table `ApTopolRepRunData`
 --
 
@@ -7526,15 +7213,6 @@ CREATE TABLE `ApTopolRepRunData` (
   KEY `REF|ApTopolRepJobData|job` (`REF|ApTopolRepJobData|job`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `ApTopolRepRunData`
---
-
-LOCK TABLES `ApTopolRepRunData` WRITE;
-/*!40000 ALTER TABLE `ApTopolRepRunData` DISABLE KEYS */;
-/*!40000 ALTER TABLE `ApTopolRepRunData` ENABLE KEYS */;
-UNLOCK TABLES;
 
 --
 -- Table structure for table `ApXmippML3DRefineIterData`
@@ -7592,15 +7270,6 @@ CREATE TABLE `ApXmippML3DRefineIterData` (
   KEY `RestartIter` (`RestartIter`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `ApXmippML3DRefineIterData`
---
-
-LOCK TABLES `ApXmippML3DRefineIterData` WRITE;
-/*!40000 ALTER TABLE `ApXmippML3DRefineIterData` DISABLE KEYS */;
-/*!40000 ALTER TABLE `ApXmippML3DRefineIterData` ENABLE KEYS */;
-UNLOCK TABLES;
 
 --
 -- Table structure for table `ApXmippRefineIterData`
@@ -7675,15 +7344,6 @@ CREATE TABLE `ApXmippRefineIterData` (
   KEY `DoAlign2D` (`DoAlign2D`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `ApXmippRefineIterData`
---
-
-LOCK TABLES `ApXmippRefineIterData` WRITE;
-/*!40000 ALTER TABLE `ApXmippRefineIterData` DISABLE KEYS */;
-/*!40000 ALTER TABLE `ApXmippRefineIterData` ENABLE KEYS */;
-UNLOCK TABLES;
 
 --
 -- Table structure for table `ScriptHostName`
@@ -7821,16 +7481,24 @@ CREATE TABLE `ScriptUserName` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2016-04-28 21:17:16
+-- Dump completed on 2016-06-30 15:16:21
 
 --
 -- Neil additions
 --
 -- mysqldump -u root --ext --databases leginondb projectdb ap1 > docker.sql
 
-CREATE USER usr_object@'localhost' IDENTIFIED BY 'Phys-554';
-GRANT ALTER, CREATE, INSERT, SELECT, UPDATE ON leginondb.* TO usr_object@'localhost';
-GRANT ALTER, CREATE, INSERT, SELECT, UPDATE ON projectdb.* TO usr_object@'localhost';
-GRANT ALTER, CREATE, INSERT, SELECT, UPDATE ON `ap%`.* to usr_object@localhost; 
+-- 
+-- CREATE USER usr_object@'%' IDENTIFIED BY 'Phys-554';
+-- GRANT ALTER, CREATE, INSERT, SELECT, UPDATE ON leginondb.* TO usr_object@'%';
+-- GRANT ALTER, CREATE, INSERT, SELECT, UPDATE ON projectdb.* TO usr_object@'%';
+-- GRANT ALTER, CREATE, INSERT, SELECT, UPDATE ON `ap%`.* to usr_object@'%'; 
+-- GRANT ALL ON *.* to usr_object@'%' IDENTIFIED BY 'Phys-554'; 
+
+CREATE USER usr_object@'%' IDENTIFIED BY 'Phys-554';
+GRANT ALTER, CREATE, INSERT, SELECT, UPDATE ON *.* to usr_object@'localhost' IDENTIFIED BY 'Phys-554';
+GRANT ALTER, CREATE, INSERT, SELECT, UPDATE ON *.* to usr_object@'%' IDENTIFIED BY 'Phys-554';
 
 flush privileges;
+
+

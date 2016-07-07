@@ -2,6 +2,8 @@ FROM centos:6
 MAINTAINER Neil Voss <vossman77@yahoo.com>
 #FIXME: CentOS 6.7 broken
 
+### TODO install phpMyAdmin, submit jobs from the web
+
 ### install epel
 RUN yum -y update && \
   yum -y install wget epel-release sudo passwd rsync tar openssh-clients && yum -y clean all
@@ -20,7 +22,7 @@ RUN yum -y update && yum -y install \
  php-devel gd-devel re2c fftw3-devel php-gd \
  xorg-x11-server-Xvfb netpbm-progs qiv python-requests \
  libssh2-devel mlocate nano elinks file \
- python-configparser opencv-python \
+ python-configparser \
  numactl compat-libgfortran && yum -y clean all
 ### Trying to do VNC
 RUN yum -y update && yum -y install tigervnc-server xterm xsetroot fluxbox fbpanel && yum -y clean all
@@ -49,8 +51,8 @@ EXPOSE 80
 RUN cp -fv /usr/share/mysql/my-huge.cnf /etc/my.cnf
 RUN sed -i.bak 's/max_allowed_packet = [0-9]*M/max_allowed_packet = 24M/' /etc/my.cnf
 #RUN svn checkout http://emg.nysbc.org/svn/myami/branches/myami-3.2/ /emg/sw/myami/
-#RUN svn checkout http://emg.nysbc.org/svn/myami/trunk/ /emg/sw/myami/
-RUN svn checkout -r 19651 http://emg.nysbc.org/svn/myami/trunk/ /emg/sw/myami/
+RUN svn checkout http://emg.nysbc.org/svn/myami/trunk/ /emg/sw/myami/
+#RUN svn checkout -r 19651 http://emg.nysbc.org/svn/myami/trunk/ /emg/sw/myami/
 RUN ln -sv /emg/sw/myami/myamiweb /var/www/html/ami
 RUN ln -sv /emg/sw/myami/myamiweb /var/www/html/myamiweb
 #EXPOSE 3306
@@ -83,16 +85,6 @@ RUN cp -v /emg/sw/myami/redux/init.d/reduxd /etc/init.d/reduxd
 COPY findem64.exe /emg/sw/myami/appion/bin/
 WORKDIR /emg/sw/myami/
 
-#ADD TGZ/Xmipp-2.4-src.tar.gz /emg/sw
-#RUN mv -v /emg/sw/Xmipp-2.4-src /emg/sw/xmipp 
-#WORKDIR /emg/sw/xmipp
-#RUN yum -y update && yum -y install openmpi-devel && yum -y clean all
-#ENV MPIPATH /usr/lib64/openmpi
-#ENV PATH /bin:/usr/bin:/sbin:/usr/sbin:/usr/lib64/openmpi/bin
-#RUN ./scons.configure MPI_LIBDIR=/usr/lib64/openmpi/lib  MPI_LIB=mpi  MPI_INCLUDE=/usr/include/openmpi-x86_64
-#ENV PATH /bin:/usr/bin:/sbin:/usr/sbin
-#RUN ./scons.configure
-#RUN ./scons.compile
 #FIXME: mpirun does not run as root
 ADD TGZ/xmipp_centos6_docker.tgz /emg/sw
 
@@ -120,18 +112,6 @@ RUN ln -sv /emg/sw/grigorieff/ctffind3/ctffind3_mp.exe /emg/sw/grigorieff/bin/ct
 RUN chmod 777 /emg/sw/grigorieff/ctffind3/ctffind3_mp.exe 
 RUN chmod 777 /emg/sw/grigorieff/bin/ctffind4
 
-### software
-COPY MRC/06jul12a/06jul12a_00015gr_00028sq_00004hl_00002en.mrc /emg/data/leginon/06jul12a/rawdata/
-COPY MRC/06jul12a/06jul12a_00015gr_00028sq_00023hl_00002en.mrc /emg/data/leginon/06jul12a/rawdata/
-COPY MRC/06jul12a/06jul12a_00015gr_00028sq_00023hl_00004en.mrc /emg/data/leginon/06jul12a/rawdata/
-COPY MRC/06jul12a/06jul12a_00022gr_00013sq_00002hl_00004en.mrc /emg/data/leginon/06jul12a/rawdata/
-COPY MRC/06jul12a/06jul12a_00022gr_00013sq_00003hl_00005en.mrc /emg/data/leginon/06jul12a/rawdata/
-COPY MRC/06jul12a/06jul12a_00022gr_00037sq_00025hl_00004en.mrc /emg/data/leginon/06jul12a/rawdata/
-COPY MRC/06jul12a/06jul12a_00022gr_00037sq_00025hl_00005en.mrc /emg/data/leginon/06jul12a/rawdata/
-COPY MRC/06jul12a/06jul12a_00035gr_00063sq_00012hl_00004en.mrc /emg/data/leginon/06jul12a/rawdata/
-COPY MRC/template1.mrc /emg/data/leginon/06jul12a/templates/
-COPY MRC/template2.mrc /emg/data/leginon/06jul12a/templates/
-
 ### Change to local user
 #RUN mkdir -p /home/appionuser
 RUN useradd -d /home/appionuser -g 100 -p 'Phys-554' -s /bin/bash appionuser && echo 'appionuser' && usermod -aG wheel appionuser
@@ -155,7 +135,6 @@ RUN chown -R appionuser:users /home/appionuser
 RUN chmod 700 .vnc/xstartup
 EXPOSE 5901
 
-#ADD TGZ/mysql.tgz /var/lib/mysql/
 COPY bashrc /etc/bashrc
 #RUN mkdir -p /home/appionuser/.mozilla/firefox/yvn3wpn8.default
 #COPY profiles.ini  /home/appionuser/.mozilla/firefox/
@@ -175,6 +154,25 @@ COPY startup.sh /emg/sw/startup.sh
 #RUN ln -sv /usr/lib64/libhdf5.so.6 /usr/lib64/libhdf5.so.7
 #RUN ln -sv /usr/lib64/libpng.so.3 /usr/lib64/libpng16.so.16
 #RUN pip install bsddb3 ipython PyOpenGL
+
+### copy the image data
+COPY MRC/06jul12a/groel_template1.mrc /emg/data/leginon/06jul12a/templates/
+COPY MRC/06jul12a/groel_template2.mrc /emg/data/leginon/06jul12a/templates/
+COPY MRC/06jul12a/06jul12a_15gr_28sq_04hl_02em.mrc /emg/data/leginon/06jul12a/rawdata/
+COPY MRC/06jul12a/06jul12a_15gr_28sq_11hl_03em.mrc /emg/data/leginon/06jul12a/rawdata/
+COPY MRC/06jul12a/06jul12a_15gr_28sq_23hl_02em.mrc /emg/data/leginon/06jul12a/rawdata/
+COPY MRC/06jul12a/06jul12a_15gr_28sq_23hl_04em.mrc /emg/data/leginon/06jul12a/rawdata/
+COPY MRC/06jul12a/06jul12a_22gr_13sq_02hl_04em.mrc /emg/data/leginon/06jul12a/rawdata/
+COPY MRC/06jul12a/06jul12a_22gr_13sq_03hl_05em.mrc /emg/data/leginon/06jul12a/rawdata/
+COPY MRC/06jul12a/06jul12a_22gr_37sq_05hl_02em.mrc /emg/data/leginon/06jul12a/rawdata/
+COPY MRC/06jul12a/06jul12a_22gr_37sq_05hl_05em.mrc /emg/data/leginon/06jul12a/rawdata/
+COPY MRC/06jul12a/06jul12a_22gr_37sq_25hl_04em.mrc /emg/data/leginon/06jul12a/rawdata/
+COPY MRC/06jul12a/06jul12a_22gr_37sq_25hl_05em.mrc /emg/data/leginon/06jul12a/rawdata/
+COPY MRC/06jul12a/06jul12a_27gr_65sq_09hl_05em.mrc /emg/data/leginon/06jul12a/rawdata/
+COPY MRC/06jul12a/06jul12a_35gr_63sq_12hl_04em.mrc /emg/data/leginon/06jul12a/rawdata/
+
+### just double check that this directory is missing
+RUN rm -fvr /emg/data/appion
 
 RUN updatedb
 
