@@ -370,14 +370,19 @@ class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 		## drift check or melting may have done this already
 		self.conditionalMoveAndPreset(presetname,emtarget)
 		target = emtarget['target']
+		orig_a = self.instrument.tem.StagePosition['a']
 		try:
 			z = self.stagetiltcalclient.measureZ(atilt, correlation_type=setting['correlation type'])
 			self.logger.info('Measured Z: %.4e' % z)
 			resultdata['defocus'] = z
 		except:
+			self.logger.error('Exception found during Stage tilt eucentric height measurement')
 			status = 'failed'
 		else:
 			status = 'ok'
+		# always set alpha back Issue #4294
+		self.logger.info('Return stage alpha to %.1f degrees' % (math.degrees(orig_a),))
+		self.instrument.tem.StagePosition = {'a':orig_a}
 
 		return status
 
