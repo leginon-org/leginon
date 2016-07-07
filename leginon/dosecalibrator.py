@@ -13,19 +13,19 @@ import gui.wx.DoseCalibrator
 import time
 from wx import CallAfter
 
-class DoseCalibrator(calibrator.Calibrator):
+class DoseCalibrator(calibrator.ScreenCalibrator):
 	'''
 	calibrate the camera sensitivity and other dose measurements
 	'''
 	panelclass = gui.wx.DoseCalibrator.Panel
 	settingsclass = leginondata.DoseCalibratorSettingsData
-	defaultsettings = calibrator.Calibrator.defaultsettings
+	defaultsettings = calibrator.ScreenCalibrator.defaultsettings
 	defaultsettings.update({
 		'beam diameter': 0.16,
 		'scale factor': 0.88,
 	})
 	def __init__(self, id, session, managerlocation, **kwargs):
-		calibrator.Calibrator.__init__(self, id, session, managerlocation, **kwargs)
+		calibrator.ScreenCalibrator.__init__(self, id, session, managerlocation, **kwargs)
 		self.calclient = calibrationclient.DoseCalibrationClient(self)
 		self.results = {}
 		self.sens = None
@@ -77,7 +77,7 @@ class DoseCalibrator(calibrator.Calibrator):
 			self.logger.info('screen up')
 		except:
 			self.logger.info('screen up failed (may be unsupported)')
-		return calibrator.Calibrator.acquireImage(self)
+		return calibrator.ScreenCalibrator.acquireImage(self)
 
 	def uiCalibrateCamera(self):
 		imdata = self.acquireImage()
@@ -112,14 +112,4 @@ class DoseCalibrator(calibrator.Calibrator):
 		return
 	def abortCalibration(self):
 		raise NotImplementedError
-
-	def screenDown(self):
-		# check if screen is down
-		self.instrument.MainScreenPosition = 'down'
-		time.sleep(1)
-
-	def screenUp(self):
-		# check if screen is down
-		self.instrument.MainScreenPosition = 'up'
-		time.sleep(1)
 
