@@ -1,35 +1,33 @@
 #!/usr/bin/env python
 #
 import os
-import time
-import sys
-import random
-import math
-import shutil
 import re
+import sys
+import time
 import glob
 import numpy
+import shutil
 import cPickle
 #appion
-from appionlib import basicScript
-from appionlib import apDisplay
-from appionlib import starFile
+from appionlib import appionScript
 from appionlib import apFile
+from appionlib import apEMAN
 from appionlib import apParam
 from appionlib import apStack
 from appionlib import apImage
-from appionlib import apEMAN
-from appionlib import apImagicFile
-from appionlib.apSpider import operations
-from appionlib import appiondata
+from appionlib import starFile
+from appionlib import apDisplay
 from appionlib import apProject
 from appionlib import apFourier
-from pyami import spider
+from appionlib import appiondata
+from appionlib import apImagicFile
+#pyami
+from pyami import mrc
 
 #=====================
 #=====================
 #FIXME: appionScript.AppionScript
-class UploadRelionMaxLikeScript(basicScript.BasicScript):
+class UploadRelionMaxLikeScript(appionScript.AppionScript):
 	#=====================
 	def setupParserOptions(self):
 		self.parser.set_usage("Usage: %prog --jobid=ID [ --commit ]")
@@ -127,22 +125,25 @@ class UploadRelionMaxLikeScript(basicScript.BasicScript):
 	#=====================
 	def readRefStarFile(self):
 		reflist = []
-		docfile = "ref"+self.params['timestamp']+".doc"
-		if not os.path.isfile(docfile):
-			apDisplay.printError("could not find doc file "+docfile+" to read reference angles")
-		f = open(docfile, "r")
-		mininplane = 360.0
-		for line in f:
-			if line[:2] == ' ;':
-				continue
-			spidict = operations.spiderInLine(line)
-			refdict = self.spidict2partdict(spidict)
-			if refdict['inplane'] < mininplane:
-				mininplane = refdict['inplane']
+		#ref16may17u43_it030_data.star
+		inputfile = "ref%s_final_data.star"%(self.params['timestamp'])
+		lastiterfile = "ref%s_it%03d_data.star"%(self.params['timestamp'], self.lastiter)
+		if not os.path.isfile(lastiterfile):
+			lastiterfile = os.path.join("refalign", lastiterfile)
+		shutil.copy(lastiterfile, inputfile)
+
+		starData = starFile.StarFile(inputfile)
+		starData.read()
+		dataBlock = starData.getDataBlock('data_images')
+		particleTree = dataBlock.getLoopDict()
+
+		fakereflist = [{ 'xshift': 0, 'yshift':0, 'inplane':0}]
+		for relionpartdict in particleTree:
+			refdict = self.adjustPartDict(relionpartdict, fakereflist)
 			reflist.append(refdict)
-		for refdict in reflist:
-			refdict['inplane'] = refdict['inplane']-mininplane
 		apDisplay.printMsg("read rotation and shift parameters for "+str(len(reflist))+" references")
+		if len(reflist) < 1:
+			apDisplay.printError("Did not find any particles in star file: "+inputfile)
 		return reflist
 
 	#=====================
@@ -157,57 +158,41 @@ class UploadRelionMaxLikeScript(basicScript.BasicScript):
 
 		starData = starFile.StarFile(inputfile)
 		starData.read()
-		print starData.getHeader()
+		#print starData.getHeader()
 		dataBlock = starData.getDataBlock('data_images')
 		particleTree = dataBlock.getLoopDict()
-		print particleTree[random.randint(0, len(particleTree))]
+		#for i in range(10):
+		#	print particleTree[i]
 		for relionpartdict in particleTree:
 			partdict = self.adjustPartDict(relionpartdict, reflist)
 			partlist.append(partdict)
 		apDisplay.printMsg("read rotation and shift parameters for "+str(len(partlist))+" particles")
 		if len(partlist) < 1:
-			apDisplay.printError("Did not find any particles in doc file: "+docfile)
+			apDisplay.printError("Did not find any particles in star file: "+inputfile)
 		return partlist
 
 	#=====================
-	def writePartDocFile(self, partlist):
-		docfile = "finalshifts_"+self.params['timestamp']+".doc"
-		f = open(docfile, "w")
-		dlist = ['inplane', 'xshift', 'yshift', 'refnum', 'mirror', 'spread']
-		f.write(" ; partnum ... "+str(dlist)+"\n")
-		for partdict in partlist:
-			floatlist = []
-			for key in dlist:
-				floatlist.append(partdict[key])
-			line = operations.spiderOutLine(partdict['partnum'], floatlist)
-			f.write(line)
-		f.write(" ; partnum ... "+str(dlist)+"\n")
-		f.close()
-		apDisplay.printMsg("wrote rotation and shift parameters to "+docfile+" for "+str(len(partlist))+" particles")
-		return
-
-	#=====================
 	def adjustPartDict(self, relionpartdict, reflist):
-		#refdict = reflist[origpartdict['refnum']-1]
+		refnum = int(relionpartdict['_rlnClassNumber'])
+		refdict = reflist[refnum-1]
+		#APPION uses shift, mirror, clockwise rotate system for 2D alignment
+		#In order for Appion to get the parameters right, we have to do the mirror operation first.
 		particleNumber = int(re.sub("\@.*$", "", relionpartdict['_rlnImageName']))
+		xshift = 1.0*float(relionpartdict['_rlnOriginX'])+refdict['xshift']
+		yshift = -1.0*float(relionpartdict['_rlnOriginY'])+refdict['yshift']
+		inplane = self.wrap360(float(relionpartdict['_rlnAnglePsi'])+refdict['inplane'])
 		newpartdict = {
 			'partnum': particleNumber,
-			#'inplane': self.wrap360(relionpartdict['inplane']+refdict['inplane']),
-			#'xshift': origpartdict['xshift']+refdict['xshift'],
-			#'yshift': origpartdict['yshift']+refdict['yshift'],
-			'inplane': self.wrap360(float(relionpartdict['_rlnAnglePsi'])),
-			'xshift': float(relionpartdict['_rlnOriginX']),
-			'yshift': float(relionpartdict['_rlnOriginY']),
-			'refnum': int(relionpartdict['_rlnClassNumber']),
-			'mirror': False, #not available
+			'xshift': xshift,
+			'yshift': yshift,
+			'inplane': inplane,
+			'refnum': refnum,
+			'mirror': True, #not available in RELION, but must be True to correct alignments
 			'spread': float(relionpartdict['_rlnMaxValueProbDistribution']), #check for better
 		}
+		if particleNumber < 10:
+			print "%03d -- %.1f -- %s"%(particleNumber, newpartdict['inplane'], relionpartdict['_rlnAnglePsi'])
 		return newpartdict
-
-	#=====================
-	def xor(self, a ,b):
-		xor = (a and not b) or (b and not a)
-		return bool(xor)
 
 	#=====================
 	def wrap360(self, theta):
@@ -221,12 +206,14 @@ class UploadRelionMaxLikeScript(basicScript.BasicScript):
 		paramfile = "maxlike-"+self.params['timestamp']+"-params.pickle"
 		if not os.path.isfile(paramfile):
 			apDisplay.printError("Could not find run parameters file: "+paramfile)
+		apDisplay.printMsg("Reading old parameter file: %s"%(paramfile))
 		f = open(paramfile, "r")
 		runparams = cPickle.load(f)
 		if not 'localstack' in runparams:
 			runparams['localstack'] = self.params['timestamp']+".hed"
 		if not 'student' in runparams:
 			runparams['student'] = 0
+		apDisplay.printMsg("Read %d old parameters"%(len(runparams)))
 		return runparams
 
 	#=====================
@@ -258,11 +245,6 @@ class UploadRelionMaxLikeScript(basicScript.BasicScript):
 		maxlikeq['runname'] = runparams['runname']
 		maxlikeq['run_seconds'] = runparams['runtime']
 		#maxlikeq['mask_diam'] = 2.0*runparams['maskrad']
-		maxlikeq['fast'] = runparams['fast']
-		maxlikeq['fastmode'] = runparams['fastmode']
-		maxlikeq['mirror'] = runparams['mirror']
-		maxlikeq['student'] = bool(runparams['student'])
-		maxlikeq['init_method'] = "xmipp default"
 		maxlikeq['job'] = self.getMaxLikeJob(runparams)
 
 		### finish alignment run
@@ -321,19 +303,13 @@ class UploadRelionMaxLikeScript(basicScript.BasicScript):
 			refq = appiondata.ApAlignReferenceData()
 			refq['refnum'] = partdict['refnum']
 			refq['iteration'] = self.lastiter
-			refsearch = "part"+self.params['timestamp']+"_ref*"+str(partdict['refnum'])+"*"
-			refbase = os.path.splitext(glob.glob(refsearch)[0])[0]
-			refq['mrcfile'] = refbase+".mrc"
+			refmrc = "ref%03d-average.mrc"%(partdict['refnum'])
+			if os.path.exists(refmrc):
+				refq['mrcfile'] = refmrc
 			refq['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
 			refq['alignrun'] = self.alignstackdata['alignrun']
 			if partdict['refnum']  in self.resdict:
 				refq['ssnr_resolution'] = self.resdict[partdict['refnum']]
-			reffile = os.path.join(self.params['rundir'], refq['mrcfile'])
-			if not os.path.isfile(reffile):
-				emancmd = "proc2d "+refbase+".xmp "+refbase+".mrc"
-				apEMAN.executeEmanCmd(emancmd, verbose=False)
-			if not os.path.isfile(reffile):
-				apDisplay.printError("could not find reference file: "+reffile)
 
 			### setup particle
 			alignpartq = appiondata.ApAlignParticleData()
@@ -356,26 +332,6 @@ class UploadRelionMaxLikeScript(basicScript.BasicScript):
 		apDisplay.printColor("\ninserted "+str(inserted)+" of "+str(count)+" particles into the database in "
 			+apDisplay.timeString(time.time()-t0), "cyan")
 
-		return
-
-	#=====================
-	def convertStackToSpider(self, imagicstack, spiderstack):
-		"""
-		takes the stack file and creates a spider file ready for processing
-		"""
-		if not os.path.isfile(imagicstack):
-			apDisplay.printError("stackfile does not exist: "+imagicstack)
-
-		### convert imagic stack to spider
-		emancmd  = "proc2d "
-		emancmd += imagicstack+" "
-		apFile.removeFile(spiderstack, warn=True)
-		emancmd += spiderstack+" "
-		emancmd += "spiderswap"
-		starttime = time.time()
-		apDisplay.printColor("Running spider stack conversion this can take a while", "cyan")
-		apEMAN.executeEmanCmd(emancmd, verbose=True)
-		apDisplay.printColor("finished eman in "+apDisplay.timeString(time.time()-starttime), "cyan")
 		return
 
 	#=====================
@@ -407,14 +363,15 @@ class UploadRelionMaxLikeScript(basicScript.BasicScript):
 						(imgnum+1, numpart, apDisplay.timeString(perpart),
 						apDisplay.timeString(perpart*(numpart-imgnum))), "blue")
 				alignstack = []
-				imagesdict = apImagicFile.readImagic(origstackfile, first=imgnum+1, last=imgnum+partperiter, msg=False)
+				imagesdict = apImagicFile.readImagic(origstackfile, first=imgnum+1,
+					last=imgnum+partperiter, msg=False)
 
 			### align particles
 			partimg = imagesdict['images'][index]
 			partdict = partlist[imgnum]
 			partnum = imgnum+1
 			if partdict['partnum'] != partnum:
-				apDisplay.printError("particle shifting "+str(partnum)+" != "+str(partdict))
+				apDisplay.printError("particle shifting "+str(partnum)+" != "+str(partdict['partnum']))
 			xyshift = (partdict['xshift'], partdict['yshift'])
 			alignpartimg = apImage.xmippTransform(partimg, rot=partdict['inplane'],
 				shift=xyshift, mirror=partdict['mirror'])
@@ -443,37 +400,44 @@ class UploadRelionMaxLikeScript(basicScript.BasicScript):
 			apFile.removeStack(stackname, warn=False)
 
 		### summarize
-		apDisplay.printMsg("rotated and shifted %d particles in %s"%(imgnum, apDisplay.timeString(time.time()-t0)))
+		apDisplay.printMsg("rotated and shifted %d particles in %s"
+			%(imgnum, apDisplay.timeString(time.time()-t0)))
 
 		return alignimagicfile
 
+
 	#=====================
-	def writeXmippLog(self, text):
-		f = open("xmipp.log", "a")
+	def writeRelionLog(self, text):
+		f = open("relion.log", "a")
 		f.write(apParam.getLogHeader())
-		f.write(text+"\n")
+		f.write(text+"\n\n")
 		f.close()
 
 	#=====================
 	def alignReferences(self, runparams):
 		### align references
-		xmippopts = ( " "
-			+" -i "+os.path.join(self.params['rundir'], "part"+self.params['timestamp']+".sel")
-			+" -nref 1 "
-			+" -iter 10 "
-			+" -o "+os.path.join(self.params['rundir'], "ref"+self.params['timestamp'])
-			+" -psi_step 1 "
-			#+" -fast -C 1e-18 "
-			+" -eps 5e-8 "
+		# ref16may19v36_it010_classes.mrcs
+		finalreffile = "part%s_it%03d_classes.mrcs"%(runparams['timestamp'], runparams['maxiter'])
+		apix = apStack.getStackPixelSizeFromStackId(runparams['stackid'])*runparams['bin']
+		relionopts = ( " "
+			+" --i %s "%(finalreffile)
+			+" --o %s "%(os.path.join(runparams['rundir'], "ref"+self.params['timestamp']))
+			+" --angpix %.4f "%(apix)
+			+" --iter %d "%(runparams['maxiter'])
+			+" --K %d "%(1)
+			+" --psi_step %d "%(runparams['psistep'])
+			+" --tau2_fudge %.1f "%(runparams['tau'])
+			+" --particle_diameter %.1f "%(runparams['partdiam'])
+			+" --j %d "%(1)
+			+" --dont_check_norm "
 		)
-		if runparams['mirror'] is True:
-			xmippopts += " -mirror "
-		xmippexe = apParam.getExecPath("xmipp_ml_align2d")
-		xmippcmd = xmippexe+" "+xmippopts
-		self.writeXmippLog(xmippcmd)
-		apEMAN.executeEmanCmd(xmippcmd, verbose=True, showcmd=True)
+		relionexe = apParam.getExecPath("relion_refine", die=True)
+		relioncmd = relionexe+" "+relionopts
+		self.writeRelionLog(relioncmd)
+		apEMAN.executeEmanCmd(relioncmd, verbose=True, showcmd=True)
 
 	#=====================
+<<<<<<< HEAD
 	def createAlignedReferenceStack(self, runparams):
 		searchstr = "part"+self.params['timestamp']+"_ref0*.xmp"
 		files = glob.glob(searchstr)
@@ -490,66 +454,26 @@ class UploadRelionMaxLikeScript(basicScript.BasicScript):
 			else:
 				apDisplay.printWarning("no particles for reference %d"%(i+1))
 				refarray = numpy.zeros(refshape)
+=======
+	def createAlignedReferenceStack(self):
+		"""
+		must be run after calc resolution
+		"""
+		files = glob.glob("ref*-average.mrc")
+		files.sort()
+		stack = []
+		if len(files) < 1:
+			apDisplay.printError("reference images not found")
+		for fname in files:
+			refarray = mrc.read(fname)
+>>>>>>> 314ffaf... final version of upload RELION 2D alignment, need to work on the webpage stuff, refs #3971
 			stack.append(refarray)
 		stackarray = numpy.asarray(stack, dtype=numpy.float32)
 		#print stackarray.shape
 		avgstack = "part"+self.params['timestamp']+"_average.hed"
 		apFile.removeStack(avgstack, warn=False)
 		apImagicFile.writeImagic(stackarray, avgstack)
-		### create a average mrc
-		avgdata = stackarray.mean(0)
-		apImage.arrayToMrc(avgdata, "average.mrc")
 		return
-
-	def findMovingParticles(self):
-		"""
-		Script to find particles that change template often
-		"""
-
-		"""
-		#!/usr/bin/env csh
-
-		if ($#argv != 2) then
-		    echo "you must give two parameters:" 
-		    echo $0" <MLrootname> <maxiter>"
-		else
-		  set rootname=$1
-		  set max_iter=$2
-
-		  rm -f moving_particles.dat
-		  set i = 1
-		  while ($i < ${max_iter})
-		    set ii=`printf '%05d' $i`
-		    @ i++
-		    set jj=`printf '%05d' $i`
-		    echo -n $i" " >>moving_\particles.dat
-		    grep " 8 " ${rootname}_it${ii}.doc|awk '{print $1,$5,$6,$7,$8,$9}' >t1
-		    grep " 8 " ${rootname}_it${jj}.doc|awk '{print $1,$5,$6,$7,$8,$9}' >t2
-		    diff t1 t2|grep ">" |wc -l >>moving_particles.dat
-		  end
-		endif
-		"""
-
-	#=====================
-	def readRefDocFile(self):
-		reflist = []
-		docfile = "ref"+self.params['timestamp']+".doc"
-		if not os.path.isfile(docfile):
-			apDisplay.printError("could not find doc file "+docfile+" to read reference angles")
-		f = open(docfile, "r")
-		mininplane = 360.0
-		for line in f:
-			if line[:2] == ' ;':
-				continue
-			spidict = operations.spiderInLine(line)
-			refdict = self.spidict2partdict(spidict)
-			if refdict['inplane'] < mininplane:
-				mininplane = refdict['inplane']
-			reflist.append(refdict)
-		for refdict in reflist:
-			refdict['inplane'] = refdict['inplane']-mininplane
-		apDisplay.printMsg("read rotation and shift parameters for "+str(len(reflist))+" references")
-		return reflist
 
 	#=====================
 	def calcResolution(self, partlist, alignimagicfile, apix):
@@ -561,7 +485,6 @@ class UploadRelionMaxLikeScript(basicScript.BasicScript):
 			if not refnum in reflistsdict:
 					reflistsdict[refnum] = []
 			reflistsdict[refnum].append(partnum)
-
 		### get resolution
 		self.resdict = {}
 		boxsizetuple = apFile.getBoxSize(alignimagicfile)
@@ -569,54 +492,60 @@ class UploadRelionMaxLikeScript(basicScript.BasicScript):
 		for refnum in reflistsdict.keys():
 			partlist = reflistsdict[refnum]
 			esttime = 3e-6 * len(partlist) * boxsize**2
-			apDisplay.printMsg("Ref num %d; %d parts; est time %s"
+			apDisplay.printMsg("? Ref num %d; %d parts; est time %s"
 				%(refnum, len(partlist), apDisplay.timeString(esttime)))
-
+			refavgfile = "ref%03d-average.mrc"%(refnum)
+			apStack.averageStack(stack=alignimagicfile, outfile=refavgfile, partlist=partlist, msg=False)
 			frcdata = apFourier.spectralSNRStack(alignimagicfile, apix, partlist, msg=False)
 			frcfile = "frcplot-%03d.dat"%(refnum)
 			apFourier.writeFrcPlot(frcfile, frcdata, apix, boxsize)
 			res = apFourier.getResolution(frcdata, apix, boxsize)
-
+			apDisplay.printMsg("* Ref num %d; %d parts; final resolution %.1f Angstroms"
+				%(refnum, len(partlist), res))
 			self.resdict[refnum] = res
 		return
 
 	#=====================
 	def start(self):
 		### load parameters
-		#runparams = self.readRunParameters()
+		runparams = self.readRunParameters()
+		apDisplay.printColor("going to directory %s"%(runparams['rundir']), "green")
+		os.chdir(runparams['rundir'])
+		self.lastiter = runparams['maxiter'] #self.findLastIterNumber()
+
+		#import pprint
+		#pprint.pprint( runparams)
 
 		### align references
-		#self.alignReferences(runparams)
-
-		### create an aligned stack
-		#self.createAlignedReferenceStack()
+		self.alignReferences(runparams)
 
 		### read particles
-		self.lastiter = self.findLastIterNumber() #works
 		if self.params['sort'] is True:
 			self.sortFolder()
-		reflist = None
-		#reflist = self.readRefDocFile()
+		reflist = self.readRefStarFile()
 		partlist = self.readPartStarFile(reflist)
 		#self.writePartDocFile(partlist)
 
 		### create aligned stacks
 		alignimagicfile = self.createAlignedStacks(partlist, runparams['localstack'])
-		apStack.averageStack(alignimagicfile)
+
+		#create average image for web
+		apStack.averageStack(alignimagicfile, msg=False)
 
 		### calculate resolution for each reference
 		apix = apStack.getStackPixelSizeFromStackId(runparams['stackid'])*runparams['bin']
 		self.calcResolution(partlist, alignimagicfile, apix)
+<<<<<<< HEAD
 		self.createAlignedReferenceStack(runparams)
+=======
+		self.createAlignedReferenceStack()
+>>>>>>> 314ffaf... final version of upload RELION 2D alignment, need to work on the webpage stuff, refs #3971
 
 		### insert into databse
 		self.insertRunIntoDatabase(alignimagicfile, runparams)
 		self.insertParticlesIntoDatabase(runparams['stackid'], partlist)
 
 		apFile.removeStack(runparams['localstack'], warn=False)
-		rmcmd = "/bin/rm -fr partfiles/*"
-		apEMAN.executeEmanCmd(rmcmd, verbose=False, showcmd=False)
-		apFile.removeFilePattern("partfiles/*")
 
 #=====================
 if __name__ == "__main__":
