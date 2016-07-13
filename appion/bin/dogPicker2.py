@@ -4,13 +4,14 @@
 import math
 import time
 import numpy
-#from scipy import signal
-from scipy import stats
 from scipy import ndimage
-try:
-	import scipy.signal as signal
-except ImportError:
-	from scipy.stsci import signal
+#try:
+#	import scipy.stsci.convolve as signal
+#	print "using faster, but sadly depricated scipy.stsci"
+#except ImportError:
+#	import scipy.signal as signal
+#	print "using slower scipy.signal"
+from pyami import correlator
 
 #appion
 from appionlib import apDog
@@ -19,7 +20,7 @@ from appionlib import apPeaks
 from appionlib import apDisplay
 from appionlib import appiondata
 from appionlib import particleLoop2
-from appionlib.apImage import imagefile
+#from appionlib.apImage import imagefile
 from appionlib.apImage import imagestat
 from appionlib.apImage import imagenorm
 from appionlib.apImage import imagefilter
@@ -77,15 +78,20 @@ class dogPicker(particleLoop2.ParticleLoop):
 		maskimg = ndimage.gaussian_filter(maskimg, sigma=5, mode='constant', cval=0)
 
 		t0 = time.time()
-		apDisplay.printMsg("correlating ...")
-		ccarray = signal.correlate2d(dogarray, maskimg)
+		apDisplay.printMsg("correlating ... (%dx%d) into (%dx%d)"
+			%(maskimg.shape[0], maskimg.shape[1],
+			  dogarray.shape[0], dogarray.shape[1],))
+		#ccarray = signal.correlate2d(dogarray, maskimg)
+		bigmask = imagefilter.frame_constant(maskimg, dogarray.shape)
+		ccarray = correlator.cross_correlate(dogarray, bigmask)
 
 		### normalized the cross correlation between -1 and 1
 		apDisplay.printMsg("normalizing ...")
-		bigmask = imagefilter.frame_constant(maskimg, dogarray.shape)
+		#bigmask = imagefilter.frame_constant(maskimg, dogarray.shape)
 		normval = math.sqrt( (dogarray**2).sum() * (bigmask**2).sum() )
 		ccarray /= normval
 		ccarray *= 25 ## FIXME: extra multiply factor to bring to scale closer to DoG picker 1
+		ccarray = numpy.fft.fftshift(ccarray)
 
 		#print "debugging info"
 		#imagefile.arrayToJpeg(maskimg, "1maskimg.jpg")
@@ -126,9 +132,16 @@ class dogPicker(particleLoop2.ParticleLoop):
 		if self.params['lowpass'] is not None and self.params['lowpass'] > 0:
 			lowpass = self.params['lowpass']
 		else:
-			lowpass = 15
-		self.filtarray = imagefilter.lowPassFilter(self.filtarray, lowpass)
-		self.filtarray = imagefilter.tanhLowPassFilter(self.filtarray, lowpass)
+			lowpass = 25
+		if self.params['highpass'] is not None and self.params['highpass'] > 0:
+			highpass = self.params['highpass']
+		else:
+			highpass = 2000
+		binapix = self.params['apix']*self.params['bin']
+		self.filtarray = imagefilter.lowPassFilter(self.filtarray, lowpass, binapix)
+		self.filtarray = imagefilter.tanhLowPassFilter(self.filtarray, lowpass, binapix)
+		self.filtarray = imagefilter.lowPassFilter(self.filtarray, lowpass, binapix)
+		self.filtarray = imagefilter.tanhHighPassFilter(self.filtarray, highpass, binapix)
 
 		peaktree  = apPeaks.findPeaks(imgdata, finalarrays, self.params, maptype="dogccmap")
 		return peaktree
