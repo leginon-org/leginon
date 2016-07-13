@@ -161,6 +161,8 @@ if (preg_match("%.spi$%", $filename)) {
 	$file_hed=$file_img=$filename;
 } else if (preg_match("%.mrc$%", $filename)) {
 	$file_hed=$file_img=$filename;
+} else if (preg_match("%.mrcs$%", $filename)) {
+	$file_hed=$file_img=$filename;
 } else {
 	list($file_hed, $file_img)=getimagicfilenames($filename);
 }
