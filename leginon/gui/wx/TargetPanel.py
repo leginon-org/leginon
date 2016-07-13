@@ -503,7 +503,7 @@ if __name__ == '__main__':
 		filename = raw_input('Enter file path: ')
 	if not filename:
 		array = None
-	elif filename[-4:] == '.mrc':
+	elif filename[-4:] == '.mrc' or filename[-5:] == '.mrcs':
 		h = mrc.readHeaderFromFile(filename)
 		if h['mz'] == 0:
 			print 'invalid mz, assumes 1'
