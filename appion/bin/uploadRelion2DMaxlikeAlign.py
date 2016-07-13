@@ -431,16 +431,17 @@ class UploadRelionMaxLikeScript(appionScript.AppionScript):
 			+" --j %d "%(1)
 			+" --dont_check_norm "
 		)
-		relionexe = apParam.getExecPath("relion_refine", die=True)
+		relionexe = apParam.getExecPath("relion_refine_mpi", die=True)
 		relioncmd = relionexe+" "+relionopts
 		self.writeRelionLog(relioncmd)
 		apEMAN.executeEmanCmd(relioncmd, verbose=True, showcmd=True)
 
 	#=====================
-<<<<<<< HEAD
 	def createAlignedReferenceStack(self, runparams):
-		searchstr = "part"+self.params['timestamp']+"_ref0*.xmp"
-		files = glob.glob(searchstr)
+		"""
+		must be run after calc resolution
+		"""
+		files = glob.glob("ref*-average.mrc")
 		if len(files) < 1:
 			apDisplay.printError("reference images not found")
 		refarray = mrc.read(files[0])
@@ -454,19 +455,6 @@ class UploadRelionMaxLikeScript(appionScript.AppionScript):
 			else:
 				apDisplay.printWarning("no particles for reference %d"%(i+1))
 				refarray = numpy.zeros(refshape)
-=======
-	def createAlignedReferenceStack(self):
-		"""
-		must be run after calc resolution
-		"""
-		files = glob.glob("ref*-average.mrc")
-		files.sort()
-		stack = []
-		if len(files) < 1:
-			apDisplay.printError("reference images not found")
-		for fname in files:
-			refarray = mrc.read(fname)
->>>>>>> 314ffaf... final version of upload RELION 2D alignment, need to work on the webpage stuff, refs #3971
 			stack.append(refarray)
 		stackarray = numpy.asarray(stack, dtype=numpy.float32)
 		#print stackarray.shape
@@ -535,11 +523,7 @@ class UploadRelionMaxLikeScript(appionScript.AppionScript):
 		### calculate resolution for each reference
 		apix = apStack.getStackPixelSizeFromStackId(runparams['stackid'])*runparams['bin']
 		self.calcResolution(partlist, alignimagicfile, apix)
-<<<<<<< HEAD
 		self.createAlignedReferenceStack(runparams)
-=======
-		self.createAlignedReferenceStack()
->>>>>>> 314ffaf... final version of upload RELION 2D alignment, need to work on the webpage stuff, refs #3971
 
 		### insert into databse
 		self.insertRunIntoDatabase(alignimagicfile, runparams)
