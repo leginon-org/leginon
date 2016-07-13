@@ -5,6 +5,8 @@
 #       For terms of the license agreement
 #       see  http://ami.scripps.edu/software/leginon-license
 #
+import time
+
 import node, event, leginondata
 import gui.wx.Calibrator
 import instrument
@@ -136,3 +138,18 @@ class Calibrator(node.Node):
 		acquisitionimagedata.attachPixelSize()
 		acquisitionimagedata.insert(force=True)
 		return acquisitionimagedata
+
+class ScreenCalibrator(Calibrator):
+
+	def screenDown(self):
+		# check if screen is down
+		self.instrument.MainScreenPosition = 'down'
+		time.sleep(1)
+		self.logger.info('Main scren lowered')
+
+	def screenUp(self):
+		# check if screen is down
+		self.instrument.MainScreenPosition = 'up'
+		time.sleep(1)
+		self.logger.info('Main scren lifted')
+
