@@ -14,7 +14,39 @@ from appionlib import basicScript
 from appionlib import apImagicFile
 from appionlib.apImage import imagenorm
 from appionlib.apImage import imagefilter
+from appionlib.apImage import imageprocess
 from optparse import OptionParser
+
+##TODO merge image processing with imageprocess code
+
+### Works
+# read from MRC image/stack
+# read from HED/IMG stack
+# write to MRC image
+# write to MRC stack		
+# write to HED/IMG stack
+# append to MRC stack
+# append to HED/IMG stack
+# filter images
+# implement binning
+# implement normalization
+
+### needs more testing
+# write pixelsize to new MRC file
+# get apix from MRC header
+# implement proc2d --average
+# implement proc2d --list feature
+
+### TODO
+# read from SPIDER stack
+# read from SPIDER image
+# read from EMAN2/HDF stack		
+# write to SPIDER image
+# write to SPIDER stack
+# write to EMAN2/HDF stack
+# get apix from HED/IMG header
+# implement proc2d --rotavg
+# implement proc2d --clip
 
 """
 Usage:
@@ -358,36 +390,6 @@ class ApProc2d(basicScript.BasicScript):
 	#=====================
 	#=====================
 	def start(self):
-
-		### Works
-		# read from MRC image/stack
-		# read from HED/IMG stack
-		# write to MRC image
-		# write to MRC stack		
-		# write to HED/IMG stack
-		# append to MRC stack
-		# append to HED/IMG stack
-		# filter images
-		# implement binning
-		# implement normalization
-
-		### needs more testing
-		# write pixelsize to new MRC file
-		# get apix from MRC header
-		# implement proc2d --average
-		# implement proc2d --list feature
-
-		### TODO
-		# read from SPIDER stack
-		# read from SPIDER image
-		# read from EMAN2/HDF stack		
-		# write to SPIDER image
-		# write to SPIDER stack
-		# write to EMAN2/HDF stack
-		# get apix from HED/IMG header
-		# implement proc2d --rotavg
-		# implement proc2d --clip
-
 		# determine numParticles to add
 		if self.params['last'] is None:
 			self.params['last'] = self.inputNumParticles - 1 #stacks start at 0
