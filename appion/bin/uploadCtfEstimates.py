@@ -52,7 +52,9 @@ class UploadCTF(appionScript.AppionScript):
 		runnames = runq.query(results=1)
 
 		if (runnames):
-			apDisplay.printError("Run name is already in use")
+			apDisplay.printWarning("Run name is already in use")
+			self.ctfrun = runnames[0]
+			return True
 
 		#create path
 		runq['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
