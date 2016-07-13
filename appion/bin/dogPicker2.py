@@ -7,7 +7,11 @@ import numpy
 #from scipy import signal
 from scipy import stats
 from scipy import ndimage
-from scipy.stsci import convolve
+try:
+	import scipy.signal as signal
+except ImportError:
+	from scipy.stsci import signal
+
 #appion
 from appionlib import apDog
 from appionlib import apParam
@@ -64,64 +68,35 @@ class dogPicker(particleLoop2.ParticleLoop):
 	#================
 	def correlate(self, dogarray, pixrad):
 		dogarray = imagenorm.normStdev(dogarray)
-		#primefactor.maxprime = 5
+
+		### create mask to correlate with
+		apDisplay.printMsg("creating mask ...")
 		masksize = primefactor.getNextEvenPrime(pixrad*4 + 2)
 		maskshape = (masksize, masksize)
-		#print maskshape, pixrad
 		maskimg = imagefun.filled_circle(maskshape, pixrad*1.25) - 2*imagefun.filled_circle(maskshape, pixrad) + 1
-		#maskimg = 1 - imagefun.filled_circle(dogarray.shape, pixrad*2)
-		#maskimg = imagefilter.tanhLowPassFilter(maskimg, 2)
-		imagestat.printImageInfo(maskimg)
 		maskimg = ndimage.gaussian_filter(maskimg, sigma=5, mode='constant', cval=0)
-		#maskimg = imagenorm.normStdev(maskimg)
 
 		t0 = time.time()
-		apDisplay.printMsg("correlating...")
-	
-		#ccarray = signal.correlate2d(dogarray, maskimg)
-		ccarray = convolve.correlate2d(dogarray, maskimg)
+		apDisplay.printMsg("correlating ...")
+		ccarray = signal.correlate2d(dogarray, maskimg)
 
-		#ccarray = convolve.correlate2d(maskimg, maskimg)
-		#ccarray = imagefilter.frame_constant(ccarray, dogarray.shape)
+		### normalized the cross correlation between -1 and 1
+		apDisplay.printMsg("normalizing ...")
 		bigmask = imagefilter.frame_constant(maskimg, dogarray.shape)
-
 		normval = math.sqrt( (dogarray**2).sum() * (bigmask**2).sum() )
 		ccarray /= normval
-		ccarray *= 30
-		#ccarray /= ccarray.max()
+		ccarray *= 25 ## FIXME: extra multiply factor to bring to scale closer to DoG picker 1
 
-		#normval = math.sqrt( (dogarray**2).sum() * (maskimg**2).sum() )/10
-		ccval = stats.pearsonr(numpy.ravel(dogarray), numpy.ravel(bigmask))
-		centerPixelValue = ccarray[ccarray.shape[0]/2, ccarray.shape[1]/2]
-		normval = centerPixelValue / ccval[0]
-		print "normval", normval, centerPixelValue, ccval[0]
-		#ccarray = 2*imagenorm.normRange(ccarray) - 1
-
-		print ccarray[ccarray.shape[0]/2, ccarray.shape[1]/2]
-
-		#ccarray = feature.match_template(dogarray, maskimg)
-
-		#import cv
-		### convert from numpy format to openCV format
-		#templateCv = cv.fromarray(numpy.float32(maskimg))
-		#imageCv = cv.fromarray(numpy.float32(dogarray))
-		### create array for storing result
-		#resultCv =numpy.zeros(dogarray.shape, dtype=numpy.float32 )
-		### perform normalized cross correlation
-		#cv.MatchTemplate(templateCv, imageCv, resultCv, cv.CV_TM_CCORR_NORMED)
-		### convert result back to numpy array
-		#ccarray = np.asarray(resultCv)
+		#print "debugging info"
+		#imagefile.arrayToJpeg(maskimg, "1maskimg.jpg")
+		#imagestat.printImageInfo(maskimg)
+		#imagefile.arrayToJpeg(dogarray, "2dogarray.jpg")
+		#imagestat.printImageInfo(dogarray)
+		#imagefile.arrayToJpeg(ccarray, "3ccarray.jpg")
+		#imagestat.printImageInfo(ccarray)
+		#print "\n\n"
 
 		apDisplay.printMsg("done in %d seconds"%(time.time()-t0))
-		#ccarray = numpy.fft.fftshift(ccarray)
-		imagefile.arrayToJpeg(maskimg, "1maskimg.jpg")
-		imagestat.printImageInfo(maskimg)
-		imagefile.arrayToJpeg(dogarray, "2dogarray.jpg")
-		imagestat.printImageInfo(dogarray)
-		imagefile.arrayToJpeg(ccarray, "3ccarray.jpg")
-		imagestat.printImageInfo(ccarray)
-		print "\n\n"
-
 		return ccarray
 
 	#================
@@ -146,7 +121,15 @@ class dogPicker(particleLoop2.ParticleLoop):
 			diamarray = numpy.asarray(pixradlist, dtype=numpy.float32) * self.params['apix'] * float(self.params['bin']) * 2.0
 			apDisplay.printColor("diameter list= "+str(numpy.around(diamarray,3)), "cyan")
 		imagestat.printImageInfo(finalarrays[0])
-		time.sleep(1)
+
+		## hack to make a viewable final image
+		if self.params['lowpass'] is not None and self.params['lowpass'] > 0:
+			lowpass = self.params['lowpass']
+		else:
+			lowpass = 15
+		self.filtarray = imagefilter.lowPassFilter(self.filtarray, lowpass)
+		self.filtarray = imagefilter.tanhLowPassFilter(self.filtarray, lowpass)
+
 		peaktree  = apPeaks.findPeaks(imgdata, finalarrays, self.params, maptype="dogccmap")
 		return peaktree
 
