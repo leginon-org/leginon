@@ -26,8 +26,9 @@ splitdb = True
 data.holdImages(False)
 
 #================
-def getSpecificImagesFromDB(imglist, sessiondata=None):
-	print "Querying database for "+str(len(imglist))+" specific images ... "
+def getSpecificImagesFromDB(imglist, sessiondata=None, msg=True):
+	if msg is True:
+		print "Querying database for "+str(len(imglist))+" specific images ... "
 	imgtree=[]
 	for imgname in imglist:
 		if imgname[-4:] == ".mrc" or imgname[-4:] == ".box" or imgname[-4:] == ".pos":
@@ -44,29 +45,13 @@ def getSpecificImagesFromDB(imglist, sessiondata=None):
 			imgtree.append(imgres[0])
 		else:
 			print imgres
-			apDisplay.printError("Could not find image: "+imgname)
+			apDisplay.printWarning("Could not find image: "+imgname)
 	return imgtree
 
 #================
-def getSpecificImagesFromSession(imglist, sessionname):
-	print "Querying database for "+str(len(imglist))+" specific images ... "
+def getSpecificImagesFromSession(imglist, sessionname, msg=True):
 	sessiondata = getSessionDataFromSessionName(sessionname)
-	imgtree=[]
-	for imgname in imglist:
-		if imgname[-4:] == ".mrc" or imgname[-4:] == ".box":
-			imgname = imgname[:-4]
-		if '/' in imgname:
-			imgname = os.path.basename(imgname)
-		imgquery = leginon.leginondata.AcquisitionImageData()
-		imgquery['filename'] = imgname
-		imgquery['session'] = sessiondata
-		imgres   = imgquery.query(readimages=False, results=1)
-		if len(imgres) >= 1:
-			imgtree.append(imgres[0])
-		else:
-			print imgres
-			apDisplay.printError("Could not find image: "+imgname)
-	return imgtree
+	return getSpecificImagesFromDB(imglist, sessiondata, msg)
 
 #================
 def getImagesFromDB(session, preset):
@@ -157,8 +142,9 @@ def getSessionDataFromSessionId(sessionid):
 	return sessioninfo
 
 #================
-def getSessionDataFromSessionName(sessionname):
-	apDisplay.printMsg("Looking up session, "+sessionname)
+def getSessionDataFromSessionName(sessionname, msg=True):
+	if msg is True:
+		apDisplay.printMsg("Looking up session, "+sessionname)
 	sessionq = leginon.leginondata.SessionData(name=sessionname)
 	sessioninfo = sessionq.query(readimages=False, results=1)
 	if sessioninfo:
