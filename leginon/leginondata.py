@@ -703,6 +703,7 @@ class MosaicTileData(InSessionData):
 		return InSessionData.typemap() + (
 			('list', ImageListData),
 			('image', AcquisitionImageData),
+			('node alias', str),
 		)
 	typemap = classmethod(typemap)
 
@@ -1399,6 +1400,15 @@ class MatlabTargetFinderSettingsData(TargetFinderSettingsData):
 			('test image', str),
 			('module path', str),
 			('parametergui path', str),
+		)
+	typemap = classmethod(typemap)
+
+class StitchTargetFinderSettingsData(TargetFinderSettingsData):
+	def typemap(cls):
+		return TargetFinderSettingsData.typemap() + (
+			('test image', str),
+			('overlap', float),
+			('coverage', float),
 		)
 	typemap = classmethod(typemap)
 

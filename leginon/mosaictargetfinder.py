@@ -426,7 +426,10 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		if list['targets'] is not None:
 			if list['targets']['label']:
 				label = list['targets']['label']
+			elif list['targets']['image'] and list['targets']['image']['preset'] and list['targets']['image']['target']:
+				label = '%d%s' % (list['targets']['image']['target']['number'],list['targets']['image']['preset']['name'])
 		key = '%s:  %s' % (list.dbid, label)
+
 		self.setMosaicName(key)
 
 	def getMosaicName(self):
