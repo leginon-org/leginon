@@ -412,7 +412,7 @@ def findBlobs(ccmap, thresh, maxsize=500, minsize=1, maxpeaks=1500, border=10,
 	ccthreshmap = imagefun.threshold(ccmap, thresh)
 	percentcov  =  round(100.0*float(ccthreshmap.sum())/float(totalarea),2)
 	#imagefun.find_blobs(image,mask,border,maxblobs,maxblobsize,minblobsize,maxmoment,method)
-	if percentcov > 15:
+	if percentcov > 25:
 		apDisplay.printWarning("too much coverage in threshold: "+str(percentcov))
 		return [],percentcov
 	#apImage.arrayToJpeg(ccmap, "dogmap2.jpg")
