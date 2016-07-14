@@ -295,7 +295,8 @@ class RelionMaxLikeScript(appionScript.AppionScript):
 		a.setValue('last',self.params['numpart']-1)
 		a.setValue('append',False)
 		### pixlimit and normalization are required parameters for RELION
-		a.setValue('pixlimit',4.49)
+		if self.params['correctnorm'] is True:
+			a.setValue('pixlimit',4.49)
 		a.setValue('normalizemethod','edgenorm')
 
 		if self.params['lowpass'] is not None and self.params['lowpass'] > 1:
@@ -340,7 +341,6 @@ class RelionMaxLikeScript(appionScript.AppionScript):
 			+" --psi_step %d "%(self.params['psistep'])
 			+" --tau2_fudge %.1f "%(self.params['tau'])
 			+" --particle_diameter %.1f "%(self.params['partdiam'])
-			+" --dont_check_norm "
 		)
 
 		if self.params['flattensolvent'] is True:
@@ -349,6 +349,9 @@ class RelionMaxLikeScript(appionScript.AppionScript):
 			relionopts += " --zero_mask "
 		if self.params['correctnorm'] is True:
 			relionopts += " --norm "
+		else:
+			relionopts += " --dont_check_norm "
+
 
 		if self.params['usempi'] is True:
 			relionexe = apParam.getExecPath("relion_refine_mpi", die=True)
