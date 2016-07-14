@@ -44,6 +44,13 @@ class StitchTargetFinder(targetfinder.TargetFinder):
 		else:
 			self.logger.error('Can not load image')
 
+	def newTargetList(self, label='', image=None, queue=False, sublist=False):
+		'''
+		StitchTargetFinder targets always feeds to mosaic target finder.after acquiring.
+		'''
+		self.logger.info('making new mosaic targetlist')
+		return super(StitchTargetFinder,self).newTargetList(label=label, mosaic=True, image=image, queue=queue, sublist=sublist)
+
 	def stitchFindTargets(self):
 		shape = self.currentimagedata['image'].shape
 		half = ( shape[0] / 2, shape[1] / 2 )
