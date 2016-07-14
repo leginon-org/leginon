@@ -182,7 +182,6 @@ function hasExptAccessPrivilege($sessionId,$privilege_type='data',$min_privilege
 function checkExptAdminPrivilege($sessionId,$privilege_type='data') {
 	// Admin privilege of data means data processing and session.comment editing is allowed
 	// return true or redirect
-echo "checkingExptAdminPrivilege";
 	if ( hasExptAdminPrivilege($sessionId,$privilege_type) ) return true;
 	redirect(BASE_URL.'accessdeny.php');
 	exit;

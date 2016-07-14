@@ -15,7 +15,7 @@ function getSessionByImage($imageId) {
 		.'a . `REF|SessionData|session` as session FROM `AcquisitionImageData` a '
 		.'WHERE a . `DEF_id` = '.$imageId.' ';
 	list($r) = $leginondata->mysql->getSQLResult($q);
-	return $r;
+	return $r['session'];
 }
 
 function getDeQueuedTargetListIdsByImage($imageId) {
