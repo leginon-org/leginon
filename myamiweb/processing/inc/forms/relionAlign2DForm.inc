@@ -77,10 +77,10 @@ class RelionAlign2DForm extends BasicLayoutForm
 		// Add each of the parameters here.
 		// addParam( "key", default_value, "Label that appears in GUI")
 
+		$params->addParam( "nompi", $nompi, "Disable MPI (single workstation mode)" );
 		$params->addParam( "mpinodes", $mpinodes, "MPI Nodes" );
 		$params->addParam( "mpiprocs", $mpiprocs, "MPI Processors" );
 		$params->addParam( "mpithreads", $mpithreads, "MPI Threads" );
-
 		$params->addParam( "mpimem", $mpimem, "Memory per MPI Thread (Gb)" );
 
 		$params->addParam( "stack", $stackId, "Select a stack of particles to use" );
@@ -114,55 +114,56 @@ class RelionAlign2DForm extends BasicLayoutForm
 
 		$fieldSize = 5;
 
+		$html = "";
 
-  $html .= "
-            <br />
-            <H4>MPI Configuration</H4>
-            <hr />";
-		$html.= "<br />";
-		$html.= $params->insertTextField( "mpinodes", $fieldSize, '', 'relion2DMaxlike.mpinodes' );
-                $html.= $params->insertTextField( "mpiprocs", $fieldSize, '', 'relion2DMaxlike.mpiprocessors' );
-                $html.= $params->insertTextField( "mpithreads", $fieldSize, '', 'relion2DMaxlike.mpithreads' );
+		$html .= "<br /><H4>Stack Selection</H4><hr />";
 
-		$html.= $params->insertTextField( "mpimem", $fieldSize, '', 'relion2DMaxlike.memoryperthread' );
+		if (!$this->stackIds) {
+			$html .=  "<font color='red'><B>No Stacks for this Session</B></FONT>\n";
+		} else {
+			$onchange 	= "switchDefaults(this.value)";
+			$particle 	= new particledata();
+			$options 	= $particle->getStackOptions($this->stackIds);
+			$html .= $params->insertStackedSelectField( "stack", $options,'', '', $onchange );
+		}
 
-
-		$html .= "
-	    <br />
-	    <H4>Data limiting numbers</H4>
-	    <hr />";
-
-		$html.= $params->insertTextField( "clip", $fieldSize, "(pixels)", 'relion2DMaxlike.unbinnedclipdiameter' );
-		$html.= $params->insertTextField( "bin", $fieldSize, '', 'relion2DMaxlike.particlebinning' );
-		$html.= $params->insertTextField( "numpart", $fieldSize, '', 'relion2DMaxlike.numberofparticles' );
 
 		$html .= "
-	    <br />
-	    <H4>Filters</H4>
-	    <hr />";
+		<br />
+		<H4>Data limiting numbers</H4>
+		<hr />";
 
-		$html.= $params->insertTextField( "lowpass", $fieldSize, "(&Aring;ngstroms)",'relion2DMaxlike.lowpassfilterradius' );
-		$html.= $params->insertTextField( "highpass", $fieldSize, "(&Aring;ngstroms)", 'relion2DMaxlike.highpassfilterradius' );
+		$html .= $params->insertTextField( "clip", $fieldSize, "(pixels)", 'relion2DMaxlike.unbinnedclipdiameter' );
+		$html .= $params->insertTextField( "bin", $fieldSize, '', 'relion2DMaxlike.particlebinning' );
+		$html .= $params->insertTextField( "numpart", $fieldSize, '', 'relion2DMaxlike.numberofparticles' );
 
 		$html .= "
-	    <br />
-	    <H4>Alignment Parameters</H4>
-	    <hr />";
+		<br />
+		<H4>Filters</H4>
+		<hr />";
 
-		$html.= $params->insertTextField( "partDiam", $fieldSize,"(&Aring;ngstroms)",'relion2DMaxlike.particlediameter' );
+		$html .= $params->insertTextField( "lowpass", $fieldSize, "(&Aring;ngstroms)",'relion2DMaxlike.lowpassfilterradius' );
+		$html .= $params->insertTextField( "highpass", $fieldSize, "(&Aring;ngstroms)", 'relion2DMaxlike.highpassfilterradius' );
 
-		$html.= $params->insertTextField( "numRef", $fieldSize,'','relion2DMaxlike.numberofreferences' );
-		$html.= $params->insertTextField( "maxIter", $fieldSize,'','relion2DMaxlike.maxnumberofiterations' );
-		$html.= $params->insertTextField( "angStep", $fieldSize,'(degrees)','relion2DMaxlike.angleinc' );
-		$html.= $params->insertTextField( "tau", $fieldSize,'','appion.tau2fudge' );
-		$html.= $params->insertCheckboxField("flat",'','relion2DMaxlike.flattensolvent');
-		$html.= $params->insertCheckboxField("zero_mask",'','relion2DMaxlike.zeromasking');
-		$html.= $params->insertCheckboxField("correctnorm",'','relion2DMaxlike.correctnorm');
+		$html .= "
+		<br />
+		<H4>Alignment Parameters</H4>
+		<hr />";
+
+		$html .= $params->insertTextField( "partDiam", $fieldSize,"(&Aring;ngstroms)",'relion2DMaxlike.particlediameter' );
+
+		$html .= $params->insertTextField( "numRef", $fieldSize,'','relion2DMaxlike.numberofreferences' );
+		$html .= $params->insertTextField( "maxIter", $fieldSize,'','relion2DMaxlike.maxnumberofiterations' );
+		$html .= $params->insertTextField( "angStep", $fieldSize,'(degrees)','relion2DMaxlike.angleinc' );
+		$html .= $params->insertTextField( "tau", $fieldSize,'','appion.tau2fudge' );
+		$html .= $params->insertCheckboxField("flat",'','relion2DMaxlike.flattensolvent');
+		$html .= $params->insertCheckboxField("zero_mask",'','relion2DMaxlike.zeromasking');
+		$html .= $params->insertCheckboxField("correctnorm",'','relion2DMaxlike.correctnorm');
 
 		// When loading this page the first time, use the switchDefaults javascript function to set
 		// form parameters based on the currently selected stack.
 		if (!$_POST['process']) {
-			$html.= "<script>switchDefaults(document.viewerform.stack.options[document.viewerform.stack.selectedIndex].value);</script>\n";
+			$html .= "<script>switchDefaults(document.viewerform.stack.options[document.viewerform.stack.selectedIndex].value);</script>\n";
 		}
 
 		return $html;
@@ -172,15 +173,17 @@ class RelionAlign2DForm extends BasicLayoutForm
 	{
 		$this->updateFormParams();
 		$params = $this->getFormParams();
+		$fieldSize = 5;
 
-		if (!$this->stackIds) {
-			$html =  "<font color='red'><B>No Stacks for this Session</B></FONT>\n";
-		} else {
-			$onchange 	= "switchDefaults(this.value)";
-			$particle 	= new particledata();
-			$options 	= $particle->getStackOptions($this->stackIds);
-			$html 		= $params->insertStackedSelectField( "stack", $options,'', '', $onchange );
-		}
+		$html .= "<H4>MPI Configuration</H4><hr />";
+
+		$html .= $params->insertTextField( "mpinodes", $fieldSize, '', 'relion2DMaxlike.mpinodes' );
+		$html .= $params->insertTextField( "mpiprocs", $fieldSize, '', 'relion2DMaxlike.mpiprocessors' );
+		$html .= $params->insertTextField( "mpithreads", $fieldSize, '', 'relion2DMaxlike.mpithreads' );
+		$html .= $params->insertTextField( "mpimem", $fieldSize, '', 'relion2DMaxlike.memoryperthread' );
+
+		$html .= "<br />";
+		$html .= $params->insertCheckboxField("nompi");
 
 		$html .= "<br />";
 		$html .= $params->insertCheckboxField("commit");
@@ -225,6 +228,16 @@ class RelionAlign2DForm extends BasicLayoutForm
 		if (!$commit) {
 			$command.= " --no-commit ";
 		}
+
+		$nompi  = ($params->getParamValue('nompi') == 'on' ) ? true : false;
+		if ($nompi) {
+			$command = $this->removeCommandFlag( $command, "mpithreads" );
+			$command = $this->removeCommandFlag( $command, "mpimem" );
+			$command = $this->removeCommandFlag( $command, "mpiprocs" );
+			$command = $this->removeCommandFlag( $command, "mpinodes" );
+			$command.= " --nompi ";
+		}
+
 		return $command;
 	}
 
@@ -232,35 +245,34 @@ class RelionAlign2DForm extends BasicLayoutForm
 	public function validate( $postArray )
 	{
 		$msg = parent::validate( $postArray );
-		
-		global $PROCESSING_HOSTS;
 
-		$maxmem = $PROCESSING_HOSTS[0]['memorymax'];
-//		$numnodes = $PROCESSING_HOSTS[0]['
 		$params = $this->getFormParams();
-		$mpithreads = $params->getParamValue('mpithreads');
-		$mpimem = $params->getParamValue('mpimem');
-		$mpiprocs = $params->getParamValue('mpiprocs');			
-		unset($PROCESSING_HOSTS);	
-		
+		$nompi  = ($params->getParamValue('nompi') == 'on' ) ? true : false;
+		if (!$nompi) {
+			global $PROCESSING_HOSTS;
+			$maxmem = $PROCESSING_HOSTS[0]['memorymax'];
+			//$numnodes = $PROCESSING_HOSTS[0]['
+			$mpithreads = $params->getParamValue('mpithreads');
+			$mpimem = $params->getParamValue('mpimem');
+			$mpiprocs = $params->getParamValue('mpiprocs');
+			unset($PROCESSING_HOSTS);
+			if ($mpiprocs*$mpithreads*$mpimem > $maxmem) {
+				$msg .= "<B>Error:</B> Total MPI threads per node * MPI memory/thread is greater than max memory per node. "
+					."<br>( $mpiprocs procs/node * $mpithreads threads/proc * $mpimem Gb/thread = "
+					.$mpiprocs*$mpithreads*$mpimem." Gb > $maxmem Gb )";
+				return $msg;
+			}
+		}
+
 		// Extract the stack id from the stack string
 		$stack = $params->getParamValue( "stack" );
 		list($stackid, $apix, $boxsz, $totpart) = preg_split('%\|--\|%',$stack);
-
 		$clip = $params->getParamValue('clip');
-
-		if ($mpiprocs*$mpithreads*$mpimem > $maxmem) {
-		$msg .= "<B>Error:</B> Total MPI threads per node * MPI memory/thread is greater than max memory per node. <br>( $mpiprocs procs/node * $mpithreads threads/proc * $mpimem Gb/thread = ".$mpiprocs*$mpithreads*$mpimem." Gb > $maxmem Gb )";
-	
-		return $msg;
-		}
-
 		if ($clip > $boxsz) {
 			// Clip size too big
 			$msg .= "<B>Error:</B> Clipping diameter ($clip pixels)"
 			." must be less than or equal to the stack boxsize ($boxsz pixels)";
 		}
-
 		return $msg;
 	}
 }
