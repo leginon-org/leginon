@@ -99,7 +99,7 @@ to <a class="header" href="<? echo BASE_URL.'user.php'; ?>">[user]</a> to update
 	$owners = $project->getProjectOwners($projectId);
 	echo "<br>";
 	echo "Project owned by: <br>";
-#	$bt_del = "<input class='bt1' type='submit' name='bt' value='del'>";
+	$bt_del = "<input class='bt1' type='submit' name='bt' value='del'>";
 	echo "<table>";
 	if ($owners) {
 		foreach ($owners as $v) {
@@ -109,17 +109,17 @@ to <a class="header" href="<? echo BASE_URL.'user.php'; ?>">[user]</a> to update
 			echo "<td>";
 			echo " - ".$cuser;
 			echo "</td>";
-			if ($is_admin) {
+			if ($is_admin && count($owners) > 1) {
 				echo "<td>";
-#				echo $ck;
+				echo $ck;
 				echo "</td>";
 			}
 			echo "</tr>";
 		}
 		echo "</table>";
 		echo "<br>";
-		if ($is_admin) {
-#			echo "delete selected: ".$bt_del;
+		if ($is_admin && count($owners) > 1) {
+			echo "delete selected: ".$bt_del;
 		}
 	}
 	echo "<pre>";
