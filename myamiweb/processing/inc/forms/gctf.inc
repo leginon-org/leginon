@@ -13,7 +13,7 @@ class gctf extends BasicLoopForm
 	protected $alignedDDStackIds;
 
 
-	function __construct( $expId, $extraHTML='', $ampcontrast='0.07', $bestdb=true, $mdef_aveN='1', $do_EPA=true,	
+	function __construct( $expId, $extraHTML='', $ampcontrast='0.07', $bestdb=true, $mdef_aveN='7', $do_EPA=true,	
 	$apcontinue='1', $fieldsize='1024', $dast='0.1',  $bestdb=true,$parallel=true, $do_basic_rotave='0', $overlap='0.5',$convsize='85', $do_Hres_ref='0', $defstep='0.1', $resmin='50',$resmax='4',$useDDStack=false, $ddstackid=false)
 	{
 		parent::__construct($expId, $extraHTML);
