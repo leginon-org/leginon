@@ -49,7 +49,10 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 			help="Number of steps to search in grid", metavar="#")
 		self.parser.add_option("--dast", dest="dast", type="float", default=1000.0,
 			help="dAst in microns is used to restrain the amount of astigmatism", metavar="#")
-		## true/false
+	
+		self.parser.add_option("--do_EPA", dest="do_EPA", type="int", default=1,
+			help="Do equiphase averaging", metavar="#")
+
 		self.parser.add_option("--bestdb", "--best-database", dest="bestdb", default=False,
 			action="store_true", help="Use best amplitude contrast and astig difference from database")
 
@@ -214,6 +217,7 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 			'resH': imageresmax,
 			'defS': self.params['defstep']*10000, #round(defocus/32.0, 1),
 			'astm': beststigdiff,
+			'do_EPA' : self.params['do_EPA'],
 #			'phase': 'no', # this is a secondary amp contrast term for phase plates
 #			'newline': '\n',
 		}

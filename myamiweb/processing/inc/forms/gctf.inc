@@ -14,7 +14,7 @@ class gctf extends BasicLoopForm
 
 
 	function __construct( $expId, $extraHTML='', $ampcontrast='0.07', $bestdb=true, $mdef_aveN='1', 	
-	$apcontinue='1', $fieldsize='1024', $dast='0.1',  $bestdb=true,$parallel=true, $do_basic_rotave='0', $do_EPA='0', $overlap='0.5',$convsize='85', $do_Hres_ref='0', $defstep='0.1', $resmin='50',$resmax='4',$useDDStack=false, $ddstackid=false)
+	$apcontinue='1', $fieldsize='1024', $dast='0.1',  $bestdb=true,$parallel=true, $do_basic_rotave='0', $do_EPA='1', $overlap='0.5',$convsize='85', $do_Hres_ref='0', $defstep='0.1', $resmin='50',$resmax='4',$useDDStack=false, $ddstackid=false)
 	{
 		parent::__construct($expId, $extraHTML);
 		
@@ -151,15 +151,15 @@ class gctf extends BasicLoopForm
 		$html.= $params->insertTextField( "fieldsize", $fieldSize );
                 $html.= $params->insertTextField( "dast", $fieldSize );
 		$html.= $params->insertTextField( "mdef_aveN",$fieldSize);
+		$html.= $params->insertTextField( "do_EPA",$fieldSize );
 /*
 	        $html .= "
             <br />
             <H4>Additional Advanced Parameters</H4>
             <hr />";
+/*
 
 		$html.= $params->insertTextField( "do_basic_rotave", $fieldSize );
-		
-		$html.= $params->insertTextField( "do_EPA", $fieldSize );
 		$html.= $params->insertTextField( "overlap", $fieldSize );
 		$html.= $params->insertTextField( "convsize", $fieldSize );
 		$html.= $params->insertTextField( "do_Hres_ref", $fieldSize );
