@@ -15,6 +15,7 @@ require_once "inc/processing.inc";
 $particle = new particledata();
 $expId = $_GET['expId'];
 $formAction=$_SERVER['PHP_SELF']."?expId=$expId";
+$javascript = "";
 
 processing_header("Select Particle Picker","Particle Picker Selection Page", $javascript, False);
 
@@ -36,44 +37,12 @@ echo "<br/>\n";
 echo "<table border='1' class='tableborder' width='640'>\n";
 
 /*
-
-
-	if ($loopruns > 0) {
-		$nrun[] = array(
-			'name'=>"<a href='runLoopAgain.php?expId=$sessionId'>Repeat from other session</a>",
-		);
-	}
-
-	$data[] = array(
-		'action' => array($action, $celloption),
-		'result' => array($result),
-		'newrun' => array($nrun, $celloption),
-	);
-
 	if (!HIDE_FEATURE)
 	{
-		$jobtype = 'contouranalysis';
-		$cadone = count($subclusterjobs[$jobtype]['done']);
-		$carun = count($subclusterjobs[$jobtype]['running']);
-		$caq = count($subclusterjobs[$jobtype]['queued']);
-		$caresults[] = ($cadone==0) ? "" : "<a href='sizingsummary.php?expId=$sessionId'>$cadone complete</a>";
-		$caresults[] = ($carun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=contouranalysis'>$carun running</a>";
-		$caresults[] = ($caq==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=contouranalysis'>$caq queued</a>";
-		$result = ($cadone==0) ? "" :
-			"<a href='sizingsummary.php?expId=$sessionId'>$cadone</a>\n";
-
 		if ($cdone || $cadone) {
 			$action = "Shape/Size Analysis";
-			$nrun=array();
 			$nrun[] = array(
-				'name'=>"<a href='analyzeTracedObject.php?expId=$sessionId'>Size analysis</a>",
-				'result'=>$caresults,
-			);
-			$data[] = array(
-				'action' => array($action, $celloption),
-				'result' => array($result),
-				'newrun' => array($nrun, $celloption),
-			);
+				'name'=>"<a href='analyzeTracedObject.php?expId=$sessionId'>Size analysis</a>",			);
 		}
 	}
 */
@@ -83,9 +52,9 @@ echo "<table border='1' class='tableborder' width='640'>\n";
 */
 
 echo "<tr><td width='100' align='center'>\n";
-echo "  <img src='img/dogpicker.jpg' width='128'>\n";
+echo "  <img src='img/dogpicker.jpg' height='100'>\n";
 echo "</td><td>\n";
-echo "  <h3><a href='runAppionLoop.php?expId=$expId&form=$dogpickform'>DoG Picker</a></h3>\n";
+echo "  <h3><a href='runAppionLoop.php?expId=$expId&form=DogPickerForm'>DoG Picker</a></h3>\n";
 echo " <p> This picker simply tries to pick circular objects with high contrast in the image"
 	." using the mathematical function called the "
 	."<a href='https://en.wikipedia.org/wiki/Difference_of_Gaussians'>Difference of "
@@ -100,9 +69,9 @@ echo "</td></tr>\n";
 */
 
 echo "<tr><td width='100' align='center'>\n";
-echo "  <img src='img/findem.png' width='128'>\n";
+echo "  <img src='img/findem.png' height='48'>\n";
 echo "</td><td>\n";
-echo "  <h3><a href='runTemplateCorrelator.php?expId=$expId'>FindEM Template Picking</a></h3>\n";
+echo "  <h3><a href='runAppionLoop.php?expId=$expId&form=TemplatePickerForm'>FindEM Template Picking</a></h3>\n";
 echo " <p> FindEM was largely considered the winner of the 2003 particle picking challenge. "
 	." It uses the fast local correlation function (FLCF), which has been re-implemented in many "
 	." other particle picking programs. (Note: Neil Voss has made some significant changes to the original "
@@ -117,7 +86,7 @@ echo "</td></tr>\n";
 */
 
 echo "<tr><td width='100' align='center'>\n";
-echo "  <img src='img/appionlogo.jpg' width='64'>\n";
+echo "  <img src='img/appionlogo.jpg' height='100'>\n";
 echo "</td><td>\n";
 echo "  <h3><a href='runManualPicker.php?expId=$expId'>Appion Manual Picker</a></h3>\n";
 echo " <p> A manual picker was create for editing existing picks or picking particles from scratch. "
@@ -127,7 +96,22 @@ echo " <p> A manual picker was create for editing existing picks or picking part
 	
 echo "</td></tr>\n";
 
+/*
+** DoG Picker 2
+*/
 
+echo "<tr><td width='100' align='center'>\n";
+echo "  <img src='img/dogpicker2.jpg' height='100'>\n";
+echo "</td><td>\n";
+echo "  <h3><a href='runAppionLoop.php?expId=$expId&form=DogPicker2Form'>DoG Picker 2</a></h3>\n";
+echo " <p> This is an updated version of DoG picker that runs the same dog picker, but instead of "
+	." thresholding the difference of Gaussians map it does an additional cross-correlation of the map "
+	." to a circle of the picking size. Neil found out that this provides more consistent picking "
+	." in data sets with a variety of situations, most commonly high density objects (e.g., crud, "
+	." ice chucks) appear in some micrographs but not others. "
+	."</p>\n";
+	
+echo "</td></tr>\n";
 
 /*
 ** Contour Picker
@@ -135,7 +119,7 @@ echo "</td></tr>\n";
 if (!HIDE_FEATURE)
 {
 	echo "<tr><td width='100' align='center'>\n";
-	echo "  <img src='img/appionlogo.jpg' width='64'>\n";
+	echo "  <img src='img/appionlogo.jpg' height='100'>\n";
 	echo "</td><td>\n";
 	echo "  <h3><a href='runContourPicker.php?expId=$expId'>Object Tracing</a></h3>\n";
 	echo " <p> "
@@ -149,7 +133,7 @@ if (!HIDE_FEATURE)
 if (!HIDE_FEATURE)
 {
 	echo "<tr><td width='100' align='center'>\n";
-	echo "  <img src='img/signature.jpg' width='128'>\n";
+	echo "  <img src='img/signature.jpg' height='50'>\n";
 	echo "</td><td>\n";
 	echo "  <h3><a href='runSignature.php?expId=$expId'>Signature</a></h3>\n";
 	echo " <p> Signature employs a hierarchical screening procedure to identify molecular particles "
@@ -164,7 +148,7 @@ if (!HIDE_FEATURE)
 $maxangle = $particle->getMaxTiltAngle($sessionId);
 if ($maxangle > 5) {
 	echo "<tr><td width='100' align='center'>\n";
-	echo "  <img src='img/appionlogo.jpg' width='64'>\n";
+	echo "  <img src='img/appionlogo.jpg' height='100'>\n";
 	echo "</td><td>\n";
 	echo "  <h3><a href='runTiltAligner.php?expId=$expId'>Tilt Picker</a></h3>\n";
 	echo " <p> Tilt Aligner is a manual tilt picker for RCT and OTR "
@@ -176,7 +160,7 @@ if ($maxangle > 5) {
 	
 	
 	echo "<tr><td width='100' align='center'>\n";
-	echo "  <img src='img/autotiltpicker.png' width='128'>\n";
+	echo "  <img src='img/autotiltpicker.png' height='100'>\n";
 	echo "</td><td>\n";
 	echo "  <h3><a href='runTiltAutoAligner.php?expId=$expId'>Auto Tilt Aligner</a></h3>\n";
 	echo " <p> Tilt Aligner is a automatic tilt picker for RCT and OTR "
@@ -193,7 +177,7 @@ if ($maxangle > 5) {
 */
 
 echo "<tr><td width='100' align='center'>\n";
-echo "  <img src='img/appionlogo.jpg' width='64'>\n";
+echo "  <img src='img/appionlogo.jpg' height='100'>\n";
 echo "</td><td>\n";
 echo "  <h3><a href='runLoopAgain.php?expId=$expId'>Repeat Picking from Another Session</a></h3>\n";
 echo " <p> This tool is for when you have some particle picker settings used in another session and want to "
