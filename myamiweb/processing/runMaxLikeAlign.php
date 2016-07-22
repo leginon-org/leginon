@@ -100,7 +100,6 @@ function createMaxLikeAlignForm($extra=false, $title='maxlikeAlignment.py Launch
 		echo "<font color='#cc3333' size='+2'>$extra</font>\n<hr/>\n";
 	}
 
-print_r($_SESSION);  
 	echo "<FORM NAME='viewerform' method='POST' ACTION='$formAction'>\n";
 	$sessiondata=getSessionList($projectId,$sessionId);
 	$sessioninfo=$sessiondata['info'];
