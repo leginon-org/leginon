@@ -431,7 +431,7 @@ class UploadRelionMaxLikeScript(appionScript.AppionScript):
 			+" --j %d "%(1)
 			+" --dont_check_norm "
 		)
-		relionexe = apParam.getExecPath("relion_refine_mpi", die=True)
+		relionexe = apParam.getExecPath("relion_refine", die=True)
 		relioncmd = relionexe+" "+relionopts
 		self.writeRelionLog(relioncmd)
 		apEMAN.executeEmanCmd(relioncmd, verbose=True, showcmd=True)

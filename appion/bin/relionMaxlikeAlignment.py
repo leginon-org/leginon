@@ -345,6 +345,8 @@ class RelionMaxLikeScript(appionScript.AppionScript):
 
 		if self.params['flattensolvent'] is True:
 			relionopts += " --flatten_solvent "
+		if self.params['zero_mask'] is True:
+			relionopts += " --zero_mask "
 		if self.params['correctnorm'] is True:
 			relionopts += " --norm "
 		else:

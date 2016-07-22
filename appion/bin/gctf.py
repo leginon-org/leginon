@@ -49,7 +49,10 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 			help="Number of steps to search in grid", metavar="#")
 		self.parser.add_option("--dast", dest="dast", type="float", default=1000.0,
 			help="dAst in microns is used to restrain the amount of astigmatism", metavar="#")
-		## true/false
+	
+		self.parser.add_option("--do_EPA", dest="do_EPA",action="store_true",
+			help="Do equiphase averaging",metavar="#")
+
 		self.parser.add_option("--bestdb", "--best-database", dest="bestdb", default=False,
 			action="store_true", help="Use best amplitude contrast and astig difference from database")
 
@@ -152,9 +155,11 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 		Expected (tolerated) astigmatism           [100.0] : 
 		Find additional phase shift?                  [no] : 
 		"""
-		paramInputOrder = [ 'output', 'apix', 'kv', 'cs', 'ac', 'boxsize',
+		paramInputOrder = [ 'output', 'apix', 'kv', 'cs', 'ac', 'boxsize', 'do_EPA','mdef_aveN',
 			'resL', 'resH', 'defS', 'astm','input']
 
+
+		
 		#get Defocus in Angstroms
 		self.ctfvalues = {}
 		if self.params['nominal'] is not None:
@@ -198,6 +203,13 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 		# inputparams defocii and astig are in Angstroms
 
 		
+                if self.params['do_EPA']  is True:
+                        self.params['do_EPA'] ='1'
+                        print 'do_EPA is ',self.params['do_EPA']
+                else:
+                        self.params['do_EPA'] = '0'
+                        print 'do_EPA is ',self.params['do_EPA']
+
 
 
 		inputparams = {
@@ -214,14 +226,12 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 			'resH': imageresmax,
 			'defS': self.params['defstep']*10000, #round(defocus/32.0, 1),
 			'astm': beststigdiff,
+			'do_EPA' : self.params['do_EPA'],
+			'mdef_aveN' : self.params['mdef_aveN']
 #			'phase': 'no', # this is a secondary amp contrast term for phase plates
 #			'newline': '\n',
 		}
 
-
-		print '*******************'
-		print 'self.params[''dstackid''] is ',self.params['ddstackid']
-		print '*******************'
 
 	
 		if self.params['ddstackid'] is None:
@@ -293,7 +303,7 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 		#		apDisplay.printColor((' --'+str(paramName)+' '+str(inputparams[paramName])).strip("\n"),"magenta")
 				gctfcommandstring = gctfcommandstring + (' --'+str(paramName)+' '+str(inputparams[paramName])+' ')
 			
-
+		print 'gctfcommandstring is ',gctfcommandstring
 #		ctfprogproc.stdin.write(gctfcommandstring)
 #		apDisplay.printColor(gctfcommandstring,"magenta")
 
@@ -337,6 +347,7 @@ class gctfEstimateLoop(appionLoop2.AppionLoop):
 					'angle_astigmatism' : float(bits[2]),
 					'amplitude_contrast' : inputparams['ac'],
 					'cross_correlation' : float(bits[3]),
+					'do_EPA' : inputparams['do_EPA'],
 				
 					'defocusinit' : bestdef*1e-10,
 					'cs' : self.params['cs'],
