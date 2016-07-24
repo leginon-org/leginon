@@ -102,6 +102,10 @@ class SelectionTool(wx.Panel):
 			return False
 
 	#--------------------
+	def getTypeNames(self):
+		return self.tools.keys()
+
+	#--------------------
 	def _getTypeTool(self, name):
 		try:
 			return self.tools[name]
