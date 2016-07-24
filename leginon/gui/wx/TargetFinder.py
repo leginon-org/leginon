@@ -79,6 +79,9 @@ class Panel(leginon.gui.wx.Node.Panel):
 	def initialize(self):
 		pass
 
+	def getSelectionToolNames(self):
+		return self.imagepanel.getSelectionToolNames()
+
 	def getTargetPositions(self, typename):
 		return self.imagepanel.getTargetPositions(typename)
 
