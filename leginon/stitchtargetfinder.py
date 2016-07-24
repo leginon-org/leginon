@@ -83,6 +83,7 @@ class StitchTargetFinder(targetfinder.TargetFinder):
 		
 		self.setImage(image, 'Image')
 
+		self.resetLastFocusedTargetList(targetlist)
 		self.stitchFindTargets()
 
 		if self.settings['user check']:
@@ -94,6 +95,9 @@ class StitchTargetFinder(targetfinder.TargetFinder):
 
 		self.setStatus('processing')
 
+		# set self.last_focused for target publishing	
+		self.setLastFocusedTargetList(targetlist)
+		### publish targets from goodholesimage
 		self.publishTargets(imdata, 'acquisition', targetlist)
 
 		self.logger.info('Targets have been submitted')

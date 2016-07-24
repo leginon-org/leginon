@@ -68,6 +68,9 @@ noderegistry.registerNodeClass(DTFinder,classtype)
 from mosaictargetfinder import MosaicClickTargetFinder
 noderegistry.registerNodeClass(MosaicClickTargetFinder,classtype)
 
+from mosaicquiltfinder import MosaicQuiltFinder
+noderegistry.registerNodeClass(MosaicQuiltFinder,classtype)
+
 from mosaicsectionfinder import MosaicSectionFinder
 noderegistry.registerNodeClass(MosaicSectionFinder,classtype)
 
@@ -101,6 +104,9 @@ noderegistry.registerNodeClass(Acquisition,classtype)
 
 from focuser import Focuser
 noderegistry.registerNodeClass(Focuser,classtype)
+
+from singlefocuser import SingleFocuser
+noderegistry.registerNodeClass(SingleFocuser,classtype)
 
 from rctacquisition import RCTAcquisition
 noderegistry.registerNodeClass(RCTAcquisition,classtype)
