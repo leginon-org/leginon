@@ -15,11 +15,15 @@ class TiltSeries(object):
 
 	def getCurrentTiltGroup(self):
 		if self.tilt_groups:
+			# use most recent tilt group as tilt group
 			return self.tilt_groups[-1]
 		else:
 			return TiltGroup()
 
 class TiltGroup(object):
+	'''
+	TiltGroup has a range of tilts.
+	'''
 	def __init__(self):
 		self.tilts = []
 		self.xs = []
@@ -33,6 +37,8 @@ class TiltGroup(object):
 		self.is_plus_tilt = self.getTiltDirection(self.tilts)
 
 	def getTiltDirection(self,tilts):
+		# last item of tilts is the current tilt
+		# for ocillation, it would be the index -2
 		if tilts[-1] > 0:
 			return True
 		else:

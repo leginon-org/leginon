@@ -54,6 +54,10 @@ class TargetHandler(object):
 		self.outputEvent(e)
 
 	def researchTargets(self, **kwargs):
+		'''
+		This gives back all targets matching kwargs. They are sorted
+		by list, number, version, status.
+		'''
 		targetquery = leginondata.AcquisitionImageTargetData(**kwargs)
 		targets = targetquery.query()
 		# organize by list, number, version, status
@@ -87,12 +91,12 @@ class TargetHandler(object):
 		for targetlist in tls:
 			numbers = organized[targetlist].keys()
 			numbers.sort()
-			for number in numbers:
-				statuses = organized[targetlist][number]['targets'].keys()
+			for n in numbers:
+				statuses = organized[targetlist][n]['targets'].keys()
 				## take only most recent status in this order:
 				for status in ('done', 'aborted', 'processing', 'new'):
-					if status in organized[targetlist][number]['targets']:
-						final.append(organized[targetlist][number]['targets'][status])
+					if status in organized[targetlist][n]['targets']:
+						final.append(organized[targetlist][n]['targets'][status])
 						break
 		return final
 

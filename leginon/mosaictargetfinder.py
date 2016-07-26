@@ -329,6 +329,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		if self.mosaicimagelist and self.mosaicimagelist['targets'] is targetlist:
 			### same targetlist we got before
 			self.logger.debug('same targets')
+			self.setMosaicName(targetlist)
 			return self.mosaicimagelist
 		self.logger.debug('new image list data')
 
@@ -402,12 +403,8 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		mosaictiles = self.research(datainstance=tilequery)
 		mosaiclists = ordereddict.OrderedDict()
 		for tile in mosaictiles:
-			list = tile['list']
-			label = '(no label)'
-			if list['targets'] is not None:
-				if list['targets']['label']:
-					label = list['targets']['label']
-			key = '%s:  %s' % (list.dbid, label)
+			imglist = tile['list']
+			key = self.makeMosaicNameFromImageList(imglist)
 			if key not in mosaiclists:
 				mosaiclists[key] = []
 			mosaiclists[key].append(tile)
@@ -422,12 +419,18 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder, imagehandler.Image
 		self.mosaicname = mosaicname
 
 	def setMosaicNameFromImageList(self,list):
-		label = '(no label)'
-		if list['targets'] is not None:
-			if list['targets']['label']:
-				label = list['targets']['label']
-		key = '%s:  %s' % (list.dbid, label)
+		key = self.makeMosaicNameFromImageList(list)
 		self.setMosaicName(key)
+
+	def makeMosaicNameFromImageList(self,imglist):
+		label = '(no label)'
+		if imglist['targets'] is not None:
+			if imglist['targets']['label']:
+				label = imglist['targets']['label']
+			elif imglist['targets']['image'] and imglist['targets']['image']['preset'] and imglist['targets']['image']['target']:
+				label = '%d%s' % (imglist['targets']['image']['target']['number'],imglist['targets']['image']['preset']['name'])
+		key = '%s:  %s' % (imglist.dbid, label)
+		return key
 
 	def getMosaicName(self):
 		return self.mosaicname
