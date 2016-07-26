@@ -23,7 +23,7 @@ DOUBLE_TILT_FOCUS = True
 
 class SingleFocuser(manualfocuschecker.ManualFocusChecker):
 	panelclass = gui.wx.Focuser.Panel
-	settingsclass = leginondata.FocuserSettingsData
+	settingsclass = leginondata.SingleFocuserSettingsData
 	defaultsettings = manualfocuschecker.ManualFocusChecker.defaultsettings
 	defaultsettings.update({
 		'process target type': 'focus',

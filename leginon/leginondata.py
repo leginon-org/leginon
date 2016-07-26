@@ -1828,7 +1828,7 @@ class FocusSettingData(InSessionData):
 		)
 	typemap = classmethod(typemap)
 
-class FocuserSettingsData(AcquisitionSettingsData):
+class SingleFocuserSettingsData(AcquisitionSettingsData):
 	def typemap(cls):
 		return AcquisitionSettingsData.typemap() + (
 			('melt preset', str),
@@ -1837,6 +1837,11 @@ class FocuserSettingsData(AcquisitionSettingsData):
 			('manual focus preset', str),
 			('beam tilt settle time', float),
 		)
+	typemap = classmethod(typemap)
+
+class FocuserSettingsData(SingleFocuserSettingsData):
+	def typemap(cls):
+		return SingleFocuserSettingsData.typemap()
 	typemap = classmethod(typemap)
 
 class AutoExposureSettingsData(AcquisitionSettingsData):
