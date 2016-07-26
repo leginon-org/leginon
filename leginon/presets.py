@@ -287,7 +287,8 @@ class PresetsManager(node.Node):
 		# HACK: fix me
 		self.last_value = None
 		self.old_time = None
-		self.no_preset_set = True
+		# FIX ME temporary disable checkBremTilt workaround for Issue #4335
+		self.no_preset_set = False
 		self.recover_beamtilt = threading.Event()
 		self.addEventInput(event.ChangePresetEvent, self.changePreset)
 		self.addEventInput(event.MeasureDoseEvent, self.measureDose)
