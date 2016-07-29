@@ -45,7 +45,7 @@ class EditDialog(wx.Dialog):
 
 		self.stmag = wx.StaticText(self, -1)
 		self.stmag.SetLabel(str(mag))
-		self.feps = FloatEntry(self, -1, min=0.0, chars=9)
+		self.feps = FloatEntry(self, -1, min=-360.0, chars=9)
 		self.feps.SetValue(ps)
 		self.tccomment = wx.TextCtrl(self, -1, 'Manual entry',
 																	style=wx.TE_MULTILINE)
