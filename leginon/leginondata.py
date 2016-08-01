@@ -2118,6 +2118,7 @@ class TomographySettingsData(AcquisitionSettingsData):
 			('tilt max', float),
 			('tilt start', float),
 			('tilt step', float),
+			('tilt order', str),
 			('equally sloped', bool),
 			('equally sloped n', int),
 			('xcf bin', int),
@@ -2186,6 +2187,7 @@ class TomographyPredictionData(InSessionData):
 			('image', AcquisitionImageData),
 			('measured defocus', float),
 			('measured fit', float),
+			('tilt group', int),
 		)
 	typemap = classmethod(typemap)
 
@@ -2196,6 +2198,7 @@ class TiltSeriesData(InSessionData):
 			('tilt max', float),
 			('tilt start', float),
 			('tilt step', float),
+			('tilt order', str),
 			('number', int),
 		)
 	typemap = classmethod(typemap)
