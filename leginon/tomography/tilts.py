@@ -83,13 +83,40 @@ class Tilts(object):
 		self.update(**kwargs)
 
 	def getTilts(self):
+		'''
+		Groups of tilts for prediction in radians.
+		If there are two, the first is tilting toward positive from start.
+		the second is tilting toward negative from start.
+		'''
 		return [list(tilts) for tilts in self.tilts]
+
+	def getTiltSequence(self):
+		'''
+		Collection sequence of tilts in radians. A single list based on IndexSequence.
+		'''
+		return self.tilt_sequence
+
+	def getIndexSequence(self):
+		'''
+		Collection sequence map indices in getTilts
+		'''
+		return self.index_sequence
+
+	def getTargetAdjustIndices(self):
+		'''
+		Target adjustment index in TiltSequence
+		'''
+		return self.target_adjust_indices
 
 	def addOnTilts(self,tilts):
 		'''
-		add custom tilts
+		add custom tilts, in radians. Will only add ones in the range
+		of the input tilts
 		'''
 		tilt_num = len(tilts)
+		if tilt_num < 2:
+			# can not judge whether the add_on is in range
+			return tilts
 		for add_on_tilt in self.add_on:
 			if add_on_tilt not in tilts and add_on_tilt < max(tilts) and add_on_tilt > min(tilts):
 				tilts.append(add_on_tilt)
@@ -102,7 +129,7 @@ class Tilts(object):
 		return tilts
 
 	def update(self, **kwargs):
-		attrs = ['min', 'max', 'start', 'step', 'n', 'equally_sloped', 'add_on']
+		attrs = ['min', 'max', 'start', 'step', 'n', 'equally_sloped', 'add_on', 'tilt_order']
 		for attr in attrs:
 			if attr not in kwargs:
 				continue
@@ -110,10 +137,11 @@ class Tilts(object):
 
 		for attr in attrs:
 			if not hasattr(self, attr) or getattr(self, attr) is None:
+				# first initialization has no kwargs, just initialize'
 				self.tilts = []
 				return
-
 		self.updateTilts()
+		self.updateTiltSequence()
 
 	def updateTilts(self):
 		self.tilts = []
@@ -123,6 +151,7 @@ class Tilts(object):
 				raise ValueError('start angle out of range')
 	
 			tilts = cosineSloped(max(abs(self.max),abs(self.min)),self.n)
+			# this sorts from negative tilts to positive tilts
 			tilts.sort()
 
 			tolerance = math.radians(0.01)
@@ -138,19 +167,30 @@ class Tilts(object):
 
 			d = [abs(tilt - self.start) for tilt in tilts]
 			index = d.index(min(d))
-	
-			tilt_half = tilts[index:]
-			if len(tilt_half) > 1:
-				tilt_half = self.addOnTilts(tilt_half)
-				self.tilts.append(tilt_half)
 
+			# group 0	
+			tilt_half = tilts[index:]
+			if len(tilt_half) > 2:
+				tilt_half = self.addOnTilts(tilt_half)
+			else:
+				tilt_half = []
+				# First group is positive tilts
+			self.tilts.append(tilt_half)
+
+			# group 1
 			if index < len(tilts) - 1:
+				if len(tilt_half) == 0:
+					index -= 1 # subtract one so that it does not repeat
+				index += 1
+			else:
 				index += 1
 			tilt_half = tilts[:index]
 			tilt_half.reverse()
-			if len(tilt_half) > 1:
+			if len(tilt_half) > 2:
 				tilt_half = self.addOnTilts(tilt_half)
-				self.tilts.append(tilt_half)
+			else:
+				tilt_half = []
+			self.tilts.append(tilt_half)
 			'''
 		# This is for symmetrical data collection not equally sloped
 		if self.equally_sloped:
@@ -167,37 +207,99 @@ class Tilts(object):
 				self.tilts.append(tilts)
 			'''
 		else:
+			# equal angled
+			# The first always move toward positive
 			parameters = [
-				(self.min, self.max, self.start, self.step),
-				(self.min, self.max, self.start, -self.step),
+				(self.min, self.max, self.start, abs(self.step)),
+				(self.min, self.max, self.start, -abs(self.step)),
 			]
 
 			for args in parameters:
 				tilts = equallyAngled(*args)
 				if len(tilts) < 2:
-					continue
+					# This means only the start angle is in this tilt group
+					tilts = []
 				tilts = self.addOnTilts(tilts)
 				self.tilts.append(tilts)
 
 			if not self.tilts:
 				raise ValueError('no angles from parameters specified')
 
+	def updateTiltSequence(self):
+		self.tilt_sequence = []
+		self.index_sequence = []
+		self.target_adjust_indices = []
+
+		# Handle one tilt group: always 'sequential'
+		if len(self.tilts) < 2:
+			self.tilt_order = 'sequential'
+			group_order = (0,)
+		else:
+			if self.step > 0:
+				group_order = (0,1)
+			else:
+				group_order = (1,0)
+		if self.tilt_order == 'sequential':
+			self.makeSequentialTiltOrder(group_order)
+		elif self.tilt_order == 'alternate':
+			self.makeAlternateTiltOrder(group_order)
+
+
+	def makeSequentialTiltOrder(self, group_order):
+		for i in group_order:
+			for j in range(len(self.tilts[i])):
+				self.index_sequence.append((i,j))
+				self.tilt_sequence.append(self.tilts[i][j])
+		if len(group_order) > 1:
+				# may need target_adjustment
+				g_index = group_order[1]
+				g = self.tilts[g_index]
+				if len(self.tilts[group_order[0]]) > 2 and len(g) > 0:
+					self.target_adjust_indices.append(self.index_sequence.index((g_index,0)))
+
+	def makeAlternateTiltOrder(self, group_order):
+			# assuming group[0][0] = group[1][0]
+			added_next_one = False
+			i = 0
+			group = group_order[0]
+			while i < len(self.tilts[group]):
+				self.index_sequence.append((group,i))
+				self.tilt_sequence.append(self.tilts[group][i])
+				if i+1 < len(self.tilts[group]):
+					self.index_sequence.append((group,i+1))
+					self.tilt_sequence.append(self.tilts[group][i+1])
+					added_next_one = True
+				else:
+					added_next_one = False
+				group = int(not bool(group))
+				i += 1
+			if added_next_one:
+				i += 1
+			for g in group_order:
+				# all the left over tilts
+				if i < len(self.tilts[g]):
+					for j in range(i,len(self.tilts[g])):
+						self.index_sequence.append((g,j))
+						self.tilt_sequence.append(self.tilts[g][j])
+
 if __name__ == '__main__':
 	kwargs = {
 		'equally_sloped': True,
 		'min': math.radians(-60),
-		'max': math.radians(50),
-		'start': math.radians(0),
-		'step': math.radians(1),
+		'max': math.radians(40),
+		'start': math.radians(10),
+		'step': math.radians(-5),
 		'n': 10,
+		'add_on': [],
+		'tilt_order': 'alternate',
 	}
 	tilts = Tilts(**kwargs)
-	print sum([len(t) for t in tilts.getTilts()])
 	for ts in tilts.getTilts():
-		print ' '
-		for t in ts:
-			print '%.1f' % math.degrees(t)
-	#tilts.update(equally_sloped=True)
-	#print sum([len(t) for t in tilts.getTilts()])
-	#print tilts.getTilts()
+		print 'getTilts', map((lambda x: math.degrees(x)), ts)
+
+	print tilts.index_sequence
+	print ' '
+	for t in tilts.getTiltSequence():
+		print '%.1f' % math.degrees(t)
+	print tilts.getTargetAdjustIndices()
 
