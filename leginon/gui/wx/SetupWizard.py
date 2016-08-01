@@ -737,7 +737,6 @@ class SetupWizard(wx.wizard.Wizard):
 		self.FitToPage(self.userpage)
 
 	def noProjectDialog(self, exception):
-		print dir(exception)
 		dlg = wx.MessageDialog(self,
 											'User does not own any project for data collection.',
 											'Set up project in myamiweb', wx.OK|wx.ICON_ERROR)
@@ -962,12 +961,19 @@ class Setup(object):
 			# Hide instruments from client list
 			if 'hidden' in q.keys():
 				q['hidden']=False
-			instruments = q.query()
+				instruments = q.query()
+				if len(instruments) == 0:
+					# hidden field is not made, fake an insert Issue #4176
+					# This updates the database with hidden field inserted and default to False
+					q = leginon.leginondata.InstrumentData(hostname='fake',name='fake',hidden=True).insert()
+					q2 = leginon.leginondata.InstrumentData(hidden=False)
+					instruments = q2.query()
 			hosts = map((lambda x: x['hostname']),instruments)
 			hosts = set(hosts)
 		except IndexError:
 			hosts = []
-		
+		except:
+			raise
 		clients = {}
 		for result in results:
 			for client in result['clients']:

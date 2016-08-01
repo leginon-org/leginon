@@ -419,6 +419,14 @@ class ImageRotationCalibrationData(BeamProbeDependentCalibrationData):
 		)
 	typemap = classmethod(typemap)
 
+class ImageScaleAdditionCalibrationData(BeamProbeDependentCalibrationData):
+	def typemap(cls):
+		return BeamProbeDependentCalibrationData.typemap() + (
+			('scale addition', float),   #fraction above 1 as positive
+			('comment', str),
+		)
+	typemap = classmethod(typemap)
+
 class MoveTestData(InSessionData):
 	def typemap(cls):
 		return InSessionData.typemap() + (
@@ -2110,6 +2118,7 @@ class TomographySettingsData(AcquisitionSettingsData):
 			('tilt max', float),
 			('tilt start', float),
 			('tilt step', float),
+			('tilt order', str),
 			('equally sloped', bool),
 			('equally sloped n', int),
 			('xcf bin', int),
@@ -2178,6 +2187,7 @@ class TomographyPredictionData(InSessionData):
 			('image', AcquisitionImageData),
 			('measured defocus', float),
 			('measured fit', float),
+			('tilt group', int),
 		)
 	typemap = classmethod(typemap)
 
@@ -2188,6 +2198,7 @@ class TiltSeriesData(InSessionData):
 			('tilt max', float),
 			('tilt start', float),
 			('tilt step', float),
+			('tilt order', str),
 			('number', int),
 		)
 	typemap = classmethod(typemap)
