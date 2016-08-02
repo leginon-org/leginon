@@ -465,7 +465,7 @@ class FinalScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sz_offset.Add(wx.StaticText(self, -1, 'Focus offset x:'),0,wx.ALIGN_CENTER_VERTICAL)
 		sz_offset.Add(self.widgets['focus offset col'])
 		sz_offset.AddSpacer(10)
-		sz_offset.Add(wx.StaticText(self, -1, ' y:'),0,wx.ALIGN_CENTER_VERTICAL)
+		sz_offset.Add(wx.StaticText(self, -1, 'y:'),0,wx.ALIGN_CENTER_VERTICAL)
 		sz_offset.Add(self.widgets['focus offset row'])
 		return sz_offset
 

@@ -447,11 +447,11 @@ class FinalScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		self.widgets['focus offset col'] = IntEntry(self, -1, chars=4)
 		# make sizer
 		sz_offset = wx.BoxSizer(wx.HORIZONTAL)
-		sz_offset.Add(wx.StaticText(self, -1, 'Focus offset x:'))
-		sz_offset.Add(self.widgets['focus offset col'],0,wx.ALIGN_CENTER_VERTICAL)
+		sz_offset.Add(wx.StaticText(self, -1, 'Focus offset x:'),0,wx.ALIGN_CENTER_VERTICAL)
+		sz_offset.Add(self.widgets['focus offset col'])
 		sz_offset.AddSpacer(10)
-		sz_offset.Add(wx.StaticText(self, -1, 'y:'))
-		_offset.Add(self.widgets['focus offset row'],0,wx.ALIGN_CENTER_VERTICAL)
+		sz_offset.Add(wx.StaticText(self, -1, 'y:'),0,wx.ALIGN_CENTER_VERTICAL)
+		sz_offset.Add(self.widgets['focus offset row'])
 		return sz_offset
 
 	def onTestButton(self, evt):
