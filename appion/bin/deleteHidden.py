@@ -17,6 +17,7 @@ class DeleteHidden(appionLoop2.AppionLoop):
 			action="store_true", help="Just show files that will be deleted, but do not delete them.")
 		self.parser.add_option("--leginondata", dest="leginondata", default=False, action="store_true", help="Delete hidden image data")
 		self.parser.add_option("--framesdata", dest="framesdata", default=False, action="store_true", help="Delete frames data from hidden images.")
+		self.parser.add_option("--propagate", default=False, action="store_true", help="Delete associated unaligned or aligned images/frames")
 
 	#=====================
 	def checkConflicts(self):
@@ -32,17 +33,22 @@ class DeleteHidden(appionLoop2.AppionLoop):
 		global delFrameList
 
 		checklistimgs = []
-		# if aligned frame, get original
-		if imgdata['filename'].endswith('-a'):
-			alignpairdata = appiondata.ApDDAlignImagePairData(result=imgdata).query()[0]
-			imgdata = alignpairdata['source']
 
-		checklistimgs.append(imgdata)
+		if self.params['propagate'] is True:
+			# if aligned frame, get original
+			if imgdata['filename'].endswith('-a'):
+				alignpairdata = appiondata.ApDDAlignImagePairData(result=imgdata).query()[0]
+				imgdata = alignpairdata['source']
 
-		# get any aligned frames associated with original
-		alignedimages = appiondata.ApDDAlignImagePairData(source=imgdata).query()
-		for alignimg in alignedimages:
-			checklistimgs.append(alignimg['result'])
+			checklistimgs.append(imgdata)
+
+			# get any aligned frames associated with original
+			alignedimages = appiondata.ApDDAlignImagePairData(source=imgdata).query()
+			for alignimg in alignedimages:
+				checklistimgs.append(alignimg['result'])
+
+		else:
+			checklistimgs=[imgdata]
 
 		# if any of the images are hidden/trashed, remove them all
 		for img in checklistimgs:
@@ -69,9 +75,10 @@ class DeleteHidden(appionLoop2.AppionLoop):
 				removefiles.extend(glob.glob(framefiles))
 
 				# delete ddstack frame files
-				for alignimg in alignedimages:
-					ddframes = os.path.join(alignimg['ddstackrun']['path']['path'],imgdata['filename']+'*')
-					removefiles.extend(glob.glob(ddframes))
+				if self.params['propagate'] is True:
+					for alignimg in alignedimages:
+						ddframes = os.path.join(alignimg['ddstackrun']['path']['path'],imgdata['filename']+'*')
+						removefiles.extend(glob.glob(ddframes))
 
 				for filename in removefiles:
 					if self.params['dryrun'] is False:
@@ -100,9 +107,10 @@ class DeleteHidden(appionLoop2.AppionLoop):
 		global delLeginonList
 		global delFrameList
 		drun = ""
-		if self.params['dryrun']: drun = " will be"
-		apDisplay.printMsg("%s images (and associated aligned images)%s deleted"%(delLeginonList,drun))
-		apDisplay.printMsg("%s frame stacks (and associated aligned frame stacks)%s deleted"%(delFrameList,drun))
+		if self.params['propagate'] is True: drun += " (and associated aligned images)"
+		if self.params['dryrun']: drun += " will be"
+		apDisplay.printMsg("%s images%s deleted"%(delLeginonList,drun))
+		apDisplay.printMsg("%s frame stacks%s deleted"%(delFrameList,drun))
 
 #=====================
 #=====================
