@@ -54,6 +54,8 @@ class protomoAligner(appionScript.AppionScript):
 			help="tilt series number in the session", metavar="int")
 		self.parser.add_option("--othertilt", dest="othertilt", type="int",
 			help="2nd tilt group series number if needed", metavar="int")
+		self.parser.add_option("--ddstack", dest="ddstack", type="int", default=0,
+			help="gain/dark corrected ddstack id used for dd frame integration")
 		self.alignmethods = ( "imod-shift", "protomo", "protomo2", "leginon" )
 		self.parser.add_option("--alignmethod", dest="alignmethod",
 			help="aligning method, e.g. --alignmethod=protomo or imod-shift", metavar="Method",
@@ -316,7 +318,8 @@ class protomoAligner(appionScript.AppionScript):
 		cycle = self.params['cycle']
 		alignmethod = self.params['alignmethod']
 		apDisplay.printMsg("getting imagelist")
-		imagelist = apTomo.getImageList(tiltdatalist)
+		ddstackrunid = self.params['ddstack']
+		imagelist = apTomo.getImageList(tiltdatalist, ddstackrunid)
 		tilts,ordered_imagelist,ordered_mrc_files,refimg = apTomo.orderImageList(imagelist)
 		
 		# This parameter is needed for protomo, but not protomo2
