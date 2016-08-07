@@ -2602,6 +2602,15 @@ class DDinfoValueData(Data):
 		)
 	typemap = classmethod(typemap)
 
+class DDTransferData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('image', AcquisitionImageData),
+			('framename', str),
+			('cameraparamsfile', str),
+		)
+	typemap = classmethod(typemap)
+
 class C2ApertureSizeData(InSessionData):
 	def typemap(cls):
 		return InSessionData.typemap() + (

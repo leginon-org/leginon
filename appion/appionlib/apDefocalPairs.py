@@ -35,6 +35,14 @@ def getDefocusPair(imgdata):
 		sibling = getManualDefocusPair(imgdata)
 	return sibling
 
+def getParticularSiblingByPreset(imgdata,presetname):
+	allsiblings=getAllSiblings(imgdata)
+	for sib in allsiblings:
+		if sib['preset']['name'] == presetname:
+			return sib
+	return None
+
+
 def getDefocusPairFromTarget(imgdata):
 	origid = imgdata.dbid
 	allsiblings = getAllSiblings(imgdata)
