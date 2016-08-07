@@ -1049,7 +1049,7 @@ function modelsummarytable($modelid, $mini=false) {
 	$objfile = $modeldata['path']."/".$modelroot.".obj";
 	if (file_exists($objfile)) {
 		$modeltable .=  "<div style='text-align:center;'><a target='popup' href='webglObjViewer.php?expId=$expId&filename=$objfile'";
-		$modeltable .=  " onclick=\"window.open('webglObjViewer.php?expId=$expId&filename=$objfile', 'WebGL Obj Viewer', 'width=700,height=410'); return false\">View in 3D - WebGL</a></div>\n";
+		$modeltable .=  " onclick=\"window.open('webglObjViewer.php?expId=$expId&filename=$objfile', 'WebGL Obj Viewer', 'width=700,height=420'); return false\">View in 3D - WebGL</a></div>\n";
 	}
 	$modeltable .= "</td></tr>\n";
 	// show data
