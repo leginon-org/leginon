@@ -47,7 +47,7 @@ def maskImageStats(mimage):
 	sumsq2=ma.sum(sumsq1)
 	avg=sum2/n
 	if (n > 1):
-		stdev=math.sqrt((sumsq2-sum2*sum2/n)/(n-1))
+		stdev=math.sqrt(math.fabs(sumsq2-sum2*sum2/n)/(n-1))
 	else:
 		stdev=2e20
 	return n,avg,stdev
