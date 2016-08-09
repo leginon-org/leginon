@@ -39,7 +39,7 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 	$map_size_y='512', $filename_prefix='', $image_file_type='', $cachedir='cache', $protomo_outdir='out', $grid_limit='2.0', $grid_step='0.1',
 	$create_reconstruction='true', $show_window_size='true', $create_tilt_video='true', $keep_recons='false', $region_x='512', $video_type='',
 	$shift_limit='30' , $angle_limit='40', $parallel='', $ctf_correct='', $amp_contrast='0.07', $iWidth='20', $DefocusTol='200',
-	$dose_presets='', $dose_a='', $dose_b='', $dose_c='', $frame_aligned='')
+	$dose_presets='', $dose_a='', $dose_b='', $dose_c='', $frame_aligned='', $negative='', $positive='')
 	{
 		parent::__construct($expId, $extraHTML);
 		//print "_POST:" . "<br>";
@@ -424,6 +424,8 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 		$params->setHelpSection( "protomo" );
 		
 		$params->addParam( "tiltseries", $tiltseries, "Tilt-Series #" );
+		$params->addParam( "negative", $negative, "<strong>–</strong> Angle Limit" );
+		$params->addParam( "positive", $positive, "<strong>+</strong> Angle Limit" );
 		$params->addParam( "dose_presets", $dose_presets, "Dose Compensation Type" );
 		$params->addParam( "dose_a", $dose_a, "a" );
 		$params->addParam( "dose_b", $dose_b, "b" );
@@ -717,6 +719,8 @@ class Protomo2CoarseAlignForm extends BasicLayoutForm
 						$html.= '</select>'; $html.= docpop('protomo_frame_aligned', ' Use Frame Aligned Images').'<br>';
 				}
 				//$html.= $params->insertTextField( "select_images", $fieldSize );
+				$html.= $params->insertTextFieldInRow( "negative", $fieldSize ).'│ ';
+				$html.= $params->insertTextField( "positive", $fieldSize );
 				$html.= $params->insertTextField( "exclude_images", $fieldSize );
 				$html.= $params->insertTextFieldInRow( "shift_limit", $fieldSize ).'│ ';
 				$html.= $params->insertTextField( "angle_limit", $fieldSize );
