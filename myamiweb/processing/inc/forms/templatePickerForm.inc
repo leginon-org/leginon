@@ -28,6 +28,7 @@ class TemplatePickerForm extends MathParticleForm
 		
 		$this->setShowPreForm(true);
 
+
 		// Set the publications to be references on the web pages
 		$pubList = array('roseman04');
 		$this->setLogoImagePath( 'img/findem.png' );
@@ -70,6 +71,9 @@ class TemplatePickerForm extends MathParticleForm
 		if (is_numeric($projectId)) {
 			$this->particle = new particledata();
 			$this->availableTemplates = $this->particle->getTemplatesFromProject($projectId);
+
+
+		
 		}
 
 		$this->TemplateTable = new TemplateSelectionTable($this->availableTemplates);
@@ -77,6 +81,8 @@ class TemplatePickerForm extends MathParticleForm
 
 	public function generatePreForm() {
 		// get parent pre-form elements
+		$html  .= '<input type="checkbox" id="selectall" onclick="checkAll(this)"></input>';
+		$html  .= '<label id="selectallLabel" for="selectall">Select all templates</label>';
 		$html  .= parent::generatePreForm();
 		// Select template in the pre-form
 		$html .= $this->TemplateTable->generateForm($enable=true);
@@ -90,7 +96,6 @@ class TemplatePickerForm extends MathParticleForm
 		$template_diam = (int) $this->TemplateTable->getTemplateDiameter();
 		if ( !$params->getParamValue('pdiam') && $template_diam )
 			$params->setParamValue('pdiam', 1.3* $template_diam );
-
 		// get parent form elements
 		$html  .= parent::generateForm();
 		return $html;
@@ -100,12 +105,13 @@ class TemplatePickerForm extends MathParticleForm
 
 	public function generateFormFooter() {
 		// show selected templates with the entry disabled
-	
 		$html .= $this->TemplateTable->generateForm($enable=false);
+
 		$used_templates = $this->TemplateTable->getUsedTemplateIds();
 		// set multi thread according to number of templates;
 		$params = $this->getFormParams();
 		if ( count($used_templates) > 1 )
+			
 			$params->setParamValue('thread_findem','on');
 		$html .= $params->insertHiddenField( "thread_findem" );
 		return $html;
@@ -163,3 +169,29 @@ class TemplatePickerForm extends MathParticleForm
 	}
 }
 ?>
+
+<script type="text/javascript">
+
+function checkAll(bx) {
+  var cbs = document.getElementsByTagName('input');
+  for(var i=0; i < cbs.length; i++) {
+    if(cbs[i].type == 'checkbox') {
+      cbs[i].checked = bx.checked;
+    }
+  }
+
+var selectallText = document.getElementById('selectallLabel');
+
+if (selectallText.innerHTML == 'Select all templates') {
+	selectallText.innerHTML = 'Deselect all templates';
+	}
+
+else {
+	selectallText.innerHTML = 'Select all templates';
+	}
+
+
+};
+
+
+</script>

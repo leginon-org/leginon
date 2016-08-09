@@ -57,18 +57,56 @@ def OLDgetVersion():
 
 	return version
 
-def getSVNInfo(module_path=''):
+def getShellResult(cmd):
+	svninfo = ''
+	svnerror = ''
+	try:
+		p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+		svninfo,svnerror = p.communicate()
+	except Exception,e: 
+		print str(e)
+	return svninfo,svnerror
+
+def changeToModulePath(module_path=''):
 	if not module_path:
 		module_path = getInstalledLocation()
 	module_path = os.path.abspath(module_path)
 	currentpath = os.getcwd()
 	os.chdir(module_path)
-	try:
-		p = subprocess.Popen('svn info', shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-		svninfo,svnerror = p.communicate()
-		os.chdir(currentpath)
-	except Exception,e: 
-		print str(e)
+	return currentpath
+
+def getGITBranch(module_path=''):
+	revertpath = changeToModulePath(module_path)
+	info, error = getShellResult('git branch')
+	os.chdir(revertpath)
+	for line in info.split('\n'):
+		if '* ' in line:
+			bits =  line.split('* ')
+			branch = bits[1]
+			return branch
+	branch = getTextVersion()
+		
+def getGITHash(module_path=''):
+	revertpath = changeToModulePath(module_path)
+	info, error = getShellResult('git rev-parse HEAD')
+	os.chdir(revertpath)
+	if len(info) > 8:
+		return info[:8]
+
+def getVersion(module_path=''):
+	# myami svn frozen before revision 20000
+	return 20000
+
+def getGITInfo(module_path):
+	info = {}
+	info['Branch'] = getGITBranch(module_path)
+	info['Hash'] = getGITHash(module_path)
+	info['Revision'] = 20000
+
+def getSVNInfo(module_path=''):
+	revertpath = changeToModulePath(module_path='')
+	svninfo, svnerror = getShellResult('svn info')
+	os.chdir(revertpath)
 	# releases have no svn info
 	if svnerror:
 		return {}
@@ -82,7 +120,7 @@ def getSVNInfo(module_path=''):
 def getTextVersion():
 	return 'pre3.3'
 
-def getVersion(module_path=''):
+def getSVNVersion(module_path=''):
 	svninfo = getSVNInfo(module_path)
 	if 'Revision' in svninfo.keys():
 		version = svninfo['Revision']
@@ -117,5 +155,5 @@ def getInstalledLocation():
 
 if __name__ == '__main__':
 	print getVersion()
-	print getSVNBranch()
+	print getGITBranch()
 	print getInstalledLocation()

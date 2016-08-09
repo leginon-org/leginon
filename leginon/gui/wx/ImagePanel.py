@@ -311,6 +311,12 @@ class ImagePanel(wx.Panel):
 		#self.setImage(imagedata, **kwargs)
 
 	#--------------------
+	def getSelectionToolNames(self):
+		if self.selectiontool is None:
+			return []
+		return self.selectiontool.getTypeNames()
+
+	#--------------------
 	def setImage(self, imagedata):
 		if isinstance(imagedata, numpy.ndarray):
 			self.setNumericImage(imagedata)

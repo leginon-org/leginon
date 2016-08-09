@@ -31,7 +31,7 @@ import itertools
 idcounter = itertools.cycle(range(100))
 
 ## submodetransform
-SPECIAL_TRANSFORM = True
+SPECIAL_TRANSFORM = False
 
 class PresetChangeError(Exception):
 	pass
@@ -287,7 +287,8 @@ class PresetsManager(node.Node):
 		# HACK: fix me
 		self.last_value = None
 		self.old_time = None
-		self.no_preset_set = True
+		# FIX ME temporary disable checkBremTilt workaround for Issue #4335
+		self.no_preset_set = False
 		self.recover_beamtilt = threading.Event()
 		self.addEventInput(event.ChangePresetEvent, self.changePreset)
 		self.addEventInput(event.MeasureDoseEvent, self.measureDose)
@@ -1503,14 +1504,14 @@ class PresetsManager(node.Node):
 				pixrow = pixelshift1['row'] * oldpreset['binning']['y']
 				pixcol = pixelshift1['col'] * oldpreset['binning']['x']
 				pixvect1 = numpy.array((pixrow, pixcol))
-				# image rotation
+				# image shift coil rotation
 				pixvect1 = self.imageRotationTransform(pixvect1,oldpreset,newpreset)
 				# extra rotation
 				if SPECIAL_TRANSFORM:
 					pixvect1 = self.specialTransform(pixvect1,new_tem,oldpreset['magnification'],newpreset['magnification'])
 				# magnification and camera (if camera is different)
 				# Transform pixelvect1 at magnification to new magnification according to image-shift matrix
-				# include a relative  image rotation to the transform
+				# include a relative  image rotation and scale addition to the transform
 				pixvect2 = self.calclients['image rotation'].pixelToPixel(old_tem,old_ccdcamera,new_tem, new_ccdcamera, ht,oldpreset['magnification'],newpreset['magnification'],pixvect1)
 				# transform to the binned pixelsift
 				pixelshift2 = {'row':pixvect2[0] / newpreset['binning']['y'],'col':pixvect2[1] / newpreset['binning']['x']}
@@ -2041,10 +2042,8 @@ class PresetsManager(node.Node):
 		a = stage_axis_rotation - imageshift_axis_rotation
 		m = numpy.matrix([[math.cos(a),math.sin(a)],[-math.sin(a),math.cos(a)]])
 		rotated_vect = numpy.dot(pixvect,numpy.asarray(m))
-		self.logger.info('Adjust for image rotation: rotate %s to %s' % (pixvect, rotated_vect))
+		self.logger.info('Adjust for coil rotation: rotate %s to %s' % (pixvect, rotated_vect))
 		return rotated_vect
-
-		return pixvect
 
 	def checkBeamTiltChange(self):
 		current_beamtilt = self.instrument.tem.BeamTilt
