@@ -1,0 +1,59 @@
+{
+	"CustomGroups": {
+		"UserName": "GroupName",
+		"anotheruser": "somegroup"
+	},
+
+	"GlobalJobParameters": {
+		"default": {
+			"header": "#!/usr/bin/sh",
+			"prefix": "#SBATCH",
+			"execCommand": "sbatch",
+			"statusCommand": "squeue",
+			"options": {
+				"-N": "1",
+				"-t": "48:00:00",
+				"--mem": "4GB",
+				"-p": "somequeue"
+			},
+			"executables": [
+				"export mine=stuff",
+				"export HOME=`getent passwd $USER | awk -F':' '{print $6}'`"
+			]
+
+		},
+		"ctfestimate.py": {
+			"header": "#!/usr/bin/sh",
+			"prefix": "#SBATCH",
+			"options": {
+				"-N": "1",
+				"-t": "48:00:00",
+				"--mem": "6GB",
+				"-p": "anotherqueue"
+			}
+		}
+	},
+
+	"UserJobParameters": {
+		"someguy": {
+			"default": {
+				"prefix": "#SBATCH",
+				"options": {
+					"-N": "1",
+					"-n": "8",
+					"-t": "01:00:00",
+					"--mem": "4GB",
+					"-p": "stagg_q"
+				}
+			},
+			"ctfestimate.py": {
+				"options": {
+					"-N": "1",
+					"-t": "01:00:00",
+					"--mem": "6GB",
+					"-p": "stagg_q"
+				}
+			}
+		}
+	}
+}
