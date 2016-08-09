@@ -1,5 +1,6 @@
 <?php
 
+// IF the web service needs to call a webservice...  
 class HttpRequest {
 
     public function sendRequest($method, $url, $content) {
