@@ -1,5 +1,8 @@
 <?php
 
+// A location for generic error codes... 400 is the only one used.  
+// The others are just examples
+
 class Error_codes {
 
 	public static function bad_method() {
