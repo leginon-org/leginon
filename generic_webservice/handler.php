@@ -8,11 +8,16 @@ include(__DIR__ . "/JobInfo.php");
 include(__DIR__ . "/HttpRequest.php");
 include(__DIR__ . "/Destinations.php");
 
+# this webservice listens for commands from both appion and myamiweb... this could be split between two webservers
+
 
 // an example of the json data that is sent by appion:
 //  { "session-data":{"processingdb":"ap461","expId":"9681","projectId":"461","advanced_user":"0","username":"dcshrum",
 //                     "password":"xyzzzzz","loggedin":"1","processinghost":"localhost" }, 
 //    "command":"mkdir -p /lustre/cryo/lustre/appiondata/15nov02z/ctf/ctffindrun9;" }
+
+
+
 
 $server = new Server;
 $server->serve();
@@ -79,6 +84,8 @@ class Server {
         }
     }
 
+    
+    # this function determines what group a user should belong to 
     private function returnGroup($user) {
         $s = file_get_contents('Settings.json');
         $s_array = json_decode($s, true);
@@ -87,15 +94,9 @@ class Server {
             return $s_array['CustomGroups'][$user];
         }
 
-        $url = "http://v1.webservices.rcc.fsu.edu/idmgmt/person?fsuid=" . $user;
-        $H = new HttpRequest();
-        $response = $H->sendRequest("GET", $url, null);
-        $ar = json_decode($response, true);
-        foreach ($ar['unixgroups'] as $gname => &$gid) {
-            if (preg_match('/^cryo_.*/', $gname)) {
-                return $gname;
-            }
-        }
+        
+        
+        # return the user name as the group if ntohing else...
         return $user;
     }
 
