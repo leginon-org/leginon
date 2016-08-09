@@ -2,6 +2,7 @@ from distutils.core import setup, Extension
 from distutils.sysconfig import get_python_lib
 import sys
 
+#NO LONGER USED
 pl = get_python_lib(True)
 
 numpysafearray = Extension(
