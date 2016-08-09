@@ -1,15 +1,13 @@
 <?php
 
 /* EXAMPLES 
-
 {"command": "destinations", "username":"dcshrum", "jobType": "ctfestimate","script": "ctfestimate.py"}
- 
  */
 
 /**
 Handler received text:{"username": "dcshrum", "command": "destinations", "jobType": "partalign", "script": ["runXmipp3CL2D.py", "--bin=3", "--lowpass=10", "--highpass=2000", "--max-iter=15", "--commit", "--nodes=1", "--ppn=2", "--mem=5", "--walltime=3", "--cput=4", "--description=testing stuff", "--runname=cl2d6", "--rundir=/lustre/cryo/lustre/appiondata/15nov02z/align/cl2d6", "--stack=1", "--num-ref=20", "--num-part=173", "--correlation", "--classical_multiref", "--nproc=2", "--projectid=461", "--expid=9681", "--jobtype=partalign", "--jobid=2911"]}
-
  */
+
 class Destinations {
 
     public function getParams($script, $username, $group) {
@@ -19,19 +17,6 @@ class Destinations {
         $s = file_get_contents('Settings.json');
         $s_array = json_decode($s, true);
 
-        # get defaults.... not doing anything right now...
-        /*$resultArray = $s_array['GlobalJobParameters']['default'];
-        if (array_key_exists($scriptName, $s_array['GlobalJobParameters'])) {
-            $resultArray = array_replace_recursive($resultArray,$s_array['GlobalJobParameters'][$scriptName]);
-        }
-        if (array_key_exists($username, $s_array['UserJobParameters'])) {
-            $resultArray = array_replace_recursive($resultArray,$s_array['UserJobParameters'][$username]['default']);
-        }
-        if (array_key_exists($scriptName, $s_array['UserJobParameters'][$username])) {
-            $resultArray = array_replace_recursive($resultArray,$s_array['UserJobParameters'][$username][$scriptName]);
-        }*/
-                
-        
         $resultArray = $s_array['GlobalJobParameters']['default'];
         # check to see if global app specific setting exist... 
         if (array_key_exists($scriptName, $s_array['GlobalJobParameters'])) {
@@ -109,6 +94,9 @@ class Destinations {
             }
         }
         
+        # some applications support user input for parameters via the website.
+        # This snippet looks for parameters we might like to keep and overwrites what came out of our 
+        # json file.
         foreach ($script as $item) {
             // --nproc=33 Number of Processors 
             if (preg_match('/^--template-list/', $item)) {
@@ -120,8 +108,6 @@ class Destinations {
                 $resultArray['options']['-n'] = (string)$numTemplates;
                 $resultArray['options']['-N'] = "1";
             }
-
-// --template-list=731,721,701
         }
         
         return $resultArray;
