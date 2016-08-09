@@ -66,8 +66,8 @@ class StitchTargetFinder(targetfinder.TargetFinder):
 		else:
 			goodindices = even_indices
 		rasterpoints = raster.createRaster3(spacing, anglerad, goodindices)
-		rasterpoints = map((lambda x: (x[0]+half[0],x[1]+half[0])),rasterpoints)
-		
+		# raster points and targets to set are in x, y, not row, col
+		rasterpoints = map((lambda x: (x[0]+half[1],x[1]+half[0])),rasterpoints)
 		self.setTargets(rasterpoints, 'acquisition')
 		# This sleep gives database time to save the targets
 		import time
@@ -83,6 +83,7 @@ class StitchTargetFinder(targetfinder.TargetFinder):
 		
 		self.setImage(image, 'Image')
 
+		self.resetLastFocusedTargetList(targetlist)
 		self.stitchFindTargets()
 
 		if self.settings['user check']:
@@ -94,6 +95,9 @@ class StitchTargetFinder(targetfinder.TargetFinder):
 
 		self.setStatus('processing')
 
+		# set self.last_focused for target publishing	
+		self.setLastFocusedTargetList(targetlist)
+		### publish targets from goodholesimage
 		self.publishTargets(imdata, 'acquisition', targetlist)
 
 		self.logger.info('Targets have been submitted')

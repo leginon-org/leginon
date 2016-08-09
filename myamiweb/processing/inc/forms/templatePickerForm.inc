@@ -28,6 +28,7 @@ class TemplatePickerForm extends MathParticleForm
 		
 		$this->setShowPreForm(true);
 
+
 		// Set the publications to be references on the web pages
 		$pubList = array('roseman04');
 		$this->setLogoImagePath( 'img/findem.png' );

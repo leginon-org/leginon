@@ -1045,7 +1045,12 @@ function modelsummarytable($modelid, $mini=false) {
 			$modeltable .= "<img src='loadimg.php?filename=$allpngs[0]&s=120' height='120' border='0'></a>\n";
 		}
 	}
-
+	$modelroot = substr($modeldata['name'], 0, -4);
+	$objfile = $modeldata['path']."/".$modelroot.".obj";
+	if (file_exists($objfile)) {
+		$modeltable .=  "<div style='text-align:center;'><a target='popup' href='webglObjViewer.php?expId=$expId&filename=$objfile'";
+		$modeltable .=  " onclick=\"window.open('webglObjViewer.php?expId=$expId&filename=$objfile', 'WebGL Obj Viewer', 'width=700,height=420'); return false\">View in 3D - WebGL</a></div>\n";
+	}
 	$modeltable .= "</td></tr>\n";
 	// show data
 	foreach($display_keys as $k=>$v) {

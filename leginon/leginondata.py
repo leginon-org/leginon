@@ -419,6 +419,14 @@ class ImageRotationCalibrationData(BeamProbeDependentCalibrationData):
 		)
 	typemap = classmethod(typemap)
 
+class ImageScaleAdditionCalibrationData(BeamProbeDependentCalibrationData):
+	def typemap(cls):
+		return BeamProbeDependentCalibrationData.typemap() + (
+			('scale addition', float),   #fraction above 1 as positive
+			('comment', str),
+		)
+	typemap = classmethod(typemap)
+
 class MoveTestData(InSessionData):
 	def typemap(cls):
 		return InSessionData.typemap() + (
@@ -1828,7 +1836,7 @@ class FocusSettingData(InSessionData):
 		)
 	typemap = classmethod(typemap)
 
-class FocuserSettingsData(AcquisitionSettingsData):
+class SingleFocuserSettingsData(AcquisitionSettingsData):
 	def typemap(cls):
 		return AcquisitionSettingsData.typemap() + (
 			('melt preset', str),
@@ -1837,6 +1845,11 @@ class FocuserSettingsData(AcquisitionSettingsData):
 			('manual focus preset', str),
 			('beam tilt settle time', float),
 		)
+	typemap = classmethod(typemap)
+
+class FocuserSettingsData(SingleFocuserSettingsData):
+	def typemap(cls):
+		return SingleFocuserSettingsData.typemap()
 	typemap = classmethod(typemap)
 
 class AutoExposureSettingsData(AcquisitionSettingsData):
@@ -2105,6 +2118,7 @@ class TomographySettingsData(AcquisitionSettingsData):
 			('tilt max', float),
 			('tilt start', float),
 			('tilt step', float),
+			('tilt order', str),
 			('equally sloped', bool),
 			('equally sloped n', int),
 			('xcf bin', int),
@@ -2173,6 +2187,7 @@ class TomographyPredictionData(InSessionData):
 			('image', AcquisitionImageData),
 			('measured defocus', float),
 			('measured fit', float),
+			('tilt group', int),
 		)
 	typemap = classmethod(typemap)
 
@@ -2183,6 +2198,7 @@ class TiltSeriesData(InSessionData):
 			('tilt max', float),
 			('tilt start', float),
 			('tilt step', float),
+			('tilt order', str),
 			('number', int),
 		)
 	typemap = classmethod(typemap)
@@ -2583,6 +2599,15 @@ class DDinfoValueData(Data):
 			('camera', CameraEMData),
 			('infokey', DDinfoKeyData),
 			('infovalue', str),
+		)
+	typemap = classmethod(typemap)
+
+class DDTransferData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('image', AcquisitionImageData),
+			('framename', str),
+			('cameraparamsfile', str),
 		)
 	typemap = classmethod(typemap)
 

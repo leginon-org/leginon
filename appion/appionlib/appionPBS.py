@@ -119,7 +119,8 @@ class AppionPBS(appionLoop2.AppionLoop):
 						apDisplay.printMsg('Copying %s data to %s' % (imgdata['filename'], scratchdir))
 						print self.params['handlefiles']
 						targetdict=self.getTargets(imgdata, scratchdir=scratchdir, handlefiles=self.params['handlefiles'])
-						
+						if len(targetdict) == 0:
+							continue
 						command=self.generateCommand(imgdata,targetdict)
 						# command is not returned if there is error
 						if command is None:
