@@ -228,6 +228,37 @@ def writeTiltFile2(tiltfile, seriesname, imagelist, origins, tilts, azimuth, ref
 
 
 #=====================
+def defocusEstimate(seriesname, rundir, projectid, sessionname, tiltseriesnumber, tiltfilename, frame_aligned_images, pixelsize, DefocusTol, iWidth, amp_contrast):
+	"""
+	Leginondb will be queried to get the nominal defocus for the tilt-series.
+	TomoCTFps and TomoCTFFind will be used to estimate the defocus of the untilted plane.
+	These functions will be run with varying defocus, tile size, and CTFmin values.
+	Three defocus values will be used as seeds: (nominal defocus) - 1 micron, nominal defocuss, and (nominal defocus) + 1 micron.
+	"""
+	try:
+		apDisplay.printMsg('Estimating the defocus of the untilted tilt-series plane with varying defocus, tile size, and CTFmin values.')
+		os.chdir(rundir)
+		raw_path=rundir+'/raw/'
+		defocusdir='%s/defocus_estimation/' % rundir
+		os.system("mkdir %s" % defocusdir)
+		tilt_file_full=defocusdir+seriesname+'_tilts.txt'
+		stack=defocusdir+'stack.mrc'
+		log_file_full=defocusdir+'defocus_estimation.log'
+		
+		project='ap'+projectid
+		sinedon.setConfig('appiondata', db=project)
+		sessiondata = apDatabase.getSessionDataFromSessionName(sessionname)
+		tiltseriesdata = apDatabase.getTiltSeriesDataFromTiltNumAndSessionId(tiltseriesnumber,sessiondata)
+		tiltdata = apTomo.getImageList([tiltseriesdata])
+		
+		frame_tiltdata, non_frame_tiltdata = frameOrNonFrameTiltdata(tiltdata)
+		tilts,ordered_imagelist,accumulated_dose_list,ordered_mrc_files,refimg = apTomo.orderImageList(frame_tiltdata, non_frame_tiltdata, frame_aligned=frame_aligned_images)
+		
+
+	except:
+		apDisplay.printError("Defocus estimation could not be completed. Make sure TomoCTF, numpy, and scipy are in your $PATH.\n")
+
+#=====================
 def ctfCorrect(seriesname, rundir, projectid, sessionname, tiltseriesnumber, tiltfilename, frame_aligned_images, pixelsize, DefocusTol, iWidth, amp_contrast):
 	"""
 	Leginondb will be queried to get the 'best' defocus estimate on a per-image basis.
@@ -237,7 +268,7 @@ def ctfCorrect(seriesname, rundir, projectid, sessionname, tiltseriesnumber, til
 	A CTF plot using the mean defocus is made.
 	"""
 	try:
-		apDisplay.printMsg('CTF correcting all tilt images using defocus values from Leginon database...')
+		apDisplay.printMsg('CTF correcting all tilt images using per-image defocus values from Leginon database...')
 		os.chdir(rundir)
 		raw_path=rundir+'/raw/'
 		ctfdir='%s/ctf_correction/' % rundir
@@ -409,7 +440,7 @@ def ctfCorrect(seriesname, rundir, projectid, sessionname, tiltseriesnumber, til
 
 
 #=====================
-def doseCompensate(seriesname, rundir, sessionname, tiltseriesnumber, frame_aligned_images, raw_path, pixelsize, dose_presets, dose_a, dose_b, dose_c):
+def doseCompensate(seriesname, rundir, sessionname, tiltseriesnumber, frame_aligned_images, raw_path, pixelsize, dose_presets, dose_a, dose_b, dose_c, dose_compensate="True"):
 	"""
 	Images will be lowpass filtered using equation (3) from Grant & Grigorieff, 2015.
 	No changes to the database are made. No backups are made.
@@ -435,22 +466,35 @@ def doseCompensate(seriesname, rundir, sessionname, tiltseriesnumber, frame_alig
 		dose_a = 0.245
 		dose_b = -1.4
 		dose_c = 2
-	
-	apDisplay.printMsg('Dose compensating all tilt images with a=%s, b=%s, and c=%s...' % (dose_a, dose_b, dose_c))
+	if dose_compensate == "True":
+		apDisplay.printMsg('Dose compensating all tilt images with a=%s, b=%s, and c=%s...' % (dose_a, dose_b, dose_c))
+	else:
+		apDisplay.printMsg('Creating dose compensation list with a=%s, b=%s, and c=%s...' % (dose_a, dose_b, dose_c))
+		stack_path=os.path.join(rundir,'stack')
+		os.system('mkdir %s 2>/dev/null' % stack_path)
+		dose_lp_file = open(os.path.join(stack_path,'full_dose_lp_list.txt'), 'w')
 	
 	for image, j in zip(new_ordered_imagelist, range(len(new_ordered_imagelist))):
 		lowpass = float(np.real(complex(dose_a/(accumulated_dose_list[j] - dose_c))**(1/dose_b)))  #equation (3) from Grant & Grigorieff, 2015
 		if lowpass < 0.0:
 			lowpass = 0.0
-		im = mrc.read(image)
-		im = imagefilter.lowPassFilter(im, apix=pixelsize, radius=lowpass, msg=False)
-		im=imagenorm.normStdev(im)
-		mrc.write(im, image)
+		if dose_compensate == "True":
+			im = mrc.read(image)
+			im = imagefilter.lowPassFilter(im, apix=pixelsize, radius=lowpass, msg=False)
+			im=imagenorm.normStdev(im)
+			mrc.write(im, image)
+		else:
+			dose_lp_file.write("%f %f %f\n" % (tilts[j], accumulated_dose_list[j], lowpass))
+	if dose_compensate == "True":
+		apProTomo2Aligner.makeDosePlots(rundir, seriesname, tilts, accumulated_dose_list, dose_a, dose_b, dose_c)
+	else:
+		dose_lp_file.close()
 	
-	#Make plots
-	apProTomo2Aligner.makeDosePlots(rundir, seriesname, tilts, accumulated_dose_list, dose_a, dose_b, dose_c)
 	
-	apDisplay.printMsg("Dose compensation finished for tilt-series #%s!" % tiltseriesnumber)
+	if dose_compensate == "True":
+		apDisplay.printMsg("Dose compensation finished for tilt-series #%s!" % tiltseriesnumber)
+	else:
+		apDisplay.printMsg("Dose compensation list created")
 	
 	return
 
