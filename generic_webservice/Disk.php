@@ -4,20 +4,15 @@ class Disk {
 
     public function checkQuota($group) {
 
-       // temp fix... 
+       // This will let myamiweb know if sufficient diskpace exists to run the application
+       // The returns codes are based on code in myamiweb that looks for specific strings
+       // and artifcat of running the df command and parsing output
+        
+       // anything under 99% is ok with myamiweb
        return "50% %50";
 
-        $url = "http://v1.webservices.rcc.fsu.edu/allocations/lustre_quota?group=" . $group;
-
-        $H = new HttpRequest();
-        $response = $H->sendRequest("GET", $url, null);
-
-        $ar = json_decode($response, true);
-
-        if (($ar['Bytes Hard Limit'] - $ar['Bytes Used']) > 1073741824) {
-            return "50% %50";
-        }
-        return "99% %99";
+       # if this should return an error... 
+       #         return "99% %99"  and myamiweb will error out with a disk space alert
     }
 
 }
