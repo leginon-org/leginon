@@ -4,10 +4,12 @@ from __future__ import division
 import matplotlib
 matplotlib.use('Agg')  #Removes the X11 requirement for pylab
 import os
+import cv2
 import sys
 import glob
 import time
 import scipy
+import scipy.misc
 import scipy.interpolate
 import pylab
 import subprocess
@@ -503,7 +505,7 @@ def removeHighTiltsFromTiltFile(tiltfile, negative=-90, positive=90):
 		tiltstart=int(tiltstart)
 		
 		removed_images=[]
-		for i in range(tiltstart,numimages+tiltstart):
+		for i in range(tiltstart,numimages+tiltstart+1):
 			try: #If the image isn't in the .tlt file, skip it
 				#Get information from tlt file. This needs to versatile for differently formatted .tlt files, so awk it is.
 				cmd="awk '/IMAGE %s /{print}' %s | awk '{for (j=1;j<=NF;j++) if($j ~/TILT/) print $(j+2)}'" % (i, tiltfile)
@@ -717,14 +719,15 @@ def makeCorrPeakVideos(seriesname, iteration, rundir, outdir, video_type, align_
 		pngff_full=vid_path+'/'+pngff
 		# Convert the corr peak *.img file to mrc for further processing
 		os.system("i3cut -fmt mrc %s %s" % (img_full, mrc_full))
-		
 		volume = mrc.read(mrc_full)
 		slices = len(volume) - 1
 		# Convert the *.mrc to a series of pngs
 		apDisplay.printMsg("Creating correlation peak video...")
+		import cv2
 		for i in range(0, slices+1):
 			slice = os.path.join(vid_path,"slice%04d.png" % (i))
-			scipy.misc.imsave(slice, volume[i])
+			scipy.misc.imsave(slice, volume[i])  #A PIL update broke this function somehow...
+			#cv2.imwrite(slice, volume[i])
 			#Add frame numbers
 			command = "convert -gravity South -background white -splice 0x18 -annotate 0 'Frame: %s/%s' %s %s" % (i+1, slices+1, slice, slice)
 			os.system(command)
@@ -830,7 +833,7 @@ def makeQualityAssessment(seriesname, iteration, rundir, corrfile):
 		apDisplay.printWarning("Quality assessment statistics could not be generated. Make sure numpy is in your $PYTHONPATH.\n")
 
 
-def makeQualityAssessmentImage(tiltseriesnumber, sessionname, seriesname, rundir, r1_iters, r1_sampling, r1_lp, r2_iters=0, r2_sampling=0, r2_lp=0, r3_iters=0, r3_sampling=0, r3_lp=0, r4_iters=0, r4_sampling=0, r4_lp=0, r5_iters=0, r5_sampling=0, r5_lp=0, r6_iters=0, r6_sampling=0, r6_lp=0, r7_iters=0, r7_sampling=0, r7_lp=0, r8_iters=0, r8_sampling=0, r8_lp=0, scaling="False", elevation="False"):
+def makeQualityAssessmentImage(tiltseriesnumber, sessionname, seriesname, rundir, thickness, r1_iters, r1_sampling, r1_lp, r2_iters=0, r2_sampling=0, r2_lp=0, r3_iters=0, r3_sampling=0, r3_lp=0, r4_iters=0, r4_sampling=0, r4_lp=0, r5_iters=0, r5_sampling=0, r5_lp=0, r6_iters=0, r6_sampling=0, r6_lp=0, r7_iters=0, r7_sampling=0, r7_lp=0, r8_iters=0, r8_sampling=0, r8_lp=0, scaling="False", elevation="False"):
 	'''
 	Creates Quality Assessment Plot Image for Depiction.
 	Adds best and worst iteration to qa text file.
@@ -847,27 +850,27 @@ def makeQualityAssessmentImage(tiltseriesnumber, sessionname, seriesname, rundir
 		figqa_full=rundir+'/media/quality_assessment/'+seriesname+'_quality_assessment.png'
 		txtqa_full=rundir+'/media/quality_assessment/'+seriesname+'_quality_assessment.txt'
 		if (r2_iters != 0 and r3_iters != 0 and r4_iters != 0 and r5_iters != 0 and r6_iters != 0 and r7_iters != 0 and r8_iters != 0): #R1-R8
-			title="Session %s, Tilt-Series #%s | R1: Iters 1-%s @ bin=%s, lp=%s $\AA$ | R2: Iters %s-%s @ bin=%s, lp=%s $\AA$\nR3: Iters %s-%s @ bin=%s, lp=%s $\AA$ | R4: Iters %s-%s @ bin=%s, lp=%s $\AA$ | R5: Iters %s-%s @ bin=%s, lp=%s $\AA$\nR6: Iters %s-%s @ bin=%s, lp=%s $\AA$ | R7: Iters %s-%s @ bin=%s, lp=%s $\AA$ | R8: Iters %s-%s @ bin=%s, lp=%s $\AA$" % (sessionname, tiltseriesnumber, r1_iters, r1_sampling, r1_lp, r1_iters+1, r1_iters+r2_iters, r2_sampling, r2_lp, r1_iters+r2_iters+1, r1_iters+r2_iters+r3_iters, r3_sampling, r3_lp, r1_iters+r2_iters+r3_iters+1, r1_iters+r2_iters+r3_iters+r4_iters, r4_sampling, r4_lp, r1_iters+r2_iters+r3_iters+r4_iters+1, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters, r5_sampling, r5_lp, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters+1, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters+r6_iters, r6_sampling, r6_lp, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters+r6_iters+1, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters+r6_iters+r7_iters, r7_sampling, r7_lp, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters+r6_iters+r7_iters+1, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters+r6_iters+r7_iters+r8_iters, r8_sampling, r8_lp)
+			title="Session %s, Tilt-Series #%s | R1: Iters 1-%s @ bin=%s, lp=%s $\AA$ | R2: Iters %s-%s @ bin=%s, lp=%s $\AA$\nR3: Iters %s-%s @ bin=%s, lp=%s $\AA$ | R4: Iters %s-%s @ bin=%s, lp=%s $\AA$ | R5: Iters %s-%s @ bin=%s, lp=%s $\AA$\nR6: Iters %s-%s @ bin=%s, lp=%s $\AA$ | R7: Iters %s-%s @ bin=%s, lp=%s $\AA$ | R8: Iters %s-%s @ bin=%s, lp=%s $\AA$ | thick=%s" % (sessionname, tiltseriesnumber, r1_iters, r1_sampling, r1_lp, r1_iters+1, r1_iters+r2_iters, r2_sampling, r2_lp, r1_iters+r2_iters+1, r1_iters+r2_iters+r3_iters, r3_sampling, r3_lp, r1_iters+r2_iters+r3_iters+1, r1_iters+r2_iters+r3_iters+r4_iters, r4_sampling, r4_lp, r1_iters+r2_iters+r3_iters+r4_iters+1, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters, r5_sampling, r5_lp, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters+1, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters+r6_iters, r6_sampling, r6_lp, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters+r6_iters+1, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters+r6_iters+r7_iters, r7_sampling, r7_lp, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters+r6_iters+r7_iters+1, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters+r6_iters+r7_iters+r8_iters, r8_sampling, r8_lp, thickness)
 			font="small"
 		elif (r2_iters != 0 and r3_iters != 0 and r4_iters != 0 and r5_iters != 0 and r6_iters != 0 and r7_iters != 0 and r8_iters == 0): #R1-R7
-			title="Session %s, Tilt-Series #%s | R1: Iters 1-%s @ bin=%s, lp=%s $\AA$ | R2: Iters %s-%s @ bin=%s, lp=%s $\AA$\nR3: Iters %s-%s @ bin=%s, lp=%s $\AA$ | R4: Iters %s-%s @ bin=%s, lp=%s $\AA$ | R5: Iters %s-%s @ bin=%s, lp=%s $\AA$\nR6: Iters %s-%s @ bin=%s, lp=%s $\AA$ | R7: Iters %s-%s @ bin=%s, lp=%s $\AA$" % (sessionname, tiltseriesnumber, r1_iters, r1_sampling, r1_lp, r1_iters+1, r1_iters+r2_iters, r2_sampling, r2_lp, r1_iters+r2_iters+1, r1_iters+r2_iters+r3_iters, r3_sampling, r3_lp, r1_iters+r2_iters+r3_iters+1, r1_iters+r2_iters+r3_iters+r4_iters, r4_sampling, r4_lp, r1_iters+r2_iters+r3_iters+r4_iters+1, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters, r5_sampling, r5_lp, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters+1, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters+r6_iters, r6_sampling, r6_lp, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters+r6_iters+1, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters+r6_iters+r7_iters, r7_sampling, r7_lp)
+			title="Session %s, Tilt-Series #%s | R1: Iters 1-%s @ bin=%s, lp=%s $\AA$ | R2: Iters %s-%s @ bin=%s, lp=%s $\AA$\nR3: Iters %s-%s @ bin=%s, lp=%s $\AA$ | R4: Iters %s-%s @ bin=%s, lp=%s $\AA$ | R5: Iters %s-%s @ bin=%s, lp=%s $\AA$\nR6: Iters %s-%s @ bin=%s, lp=%s $\AA$ | R7: Iters %s-%s @ bin=%s, lp=%s $\AA$ | thick=%s" % (sessionname, tiltseriesnumber, r1_iters, r1_sampling, r1_lp, r1_iters+1, r1_iters+r2_iters, r2_sampling, r2_lp, r1_iters+r2_iters+1, r1_iters+r2_iters+r3_iters, r3_sampling, r3_lp, r1_iters+r2_iters+r3_iters+1, r1_iters+r2_iters+r3_iters+r4_iters, r4_sampling, r4_lp, r1_iters+r2_iters+r3_iters+r4_iters+1, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters, r5_sampling, r5_lp, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters+1, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters+r6_iters, r6_sampling, r6_lp, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters+r6_iters+1, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters+r6_iters+r7_iters, r7_sampling, r7_lp, thickness)
 			font="small"
 		elif (r2_iters != 0 and r3_iters != 0 and r4_iters != 0 and r5_iters != 0 and r6_iters != 0 and r7_iters == 0 and r8_iters == 0): #R1-R6
-			title="Session %s, Tilt-Series #%s\nR1: Iters 1-%s @ bin=%s, lp=%s $\AA$ | R2: Iters %s-%s @ bin=%s, lp=%s $\AA$ | R3: Iters %s-%s @ bin=%s, lp=%s $\AA$\nR4: Iters %s-%s @ bin=%s, lp=%s $\AA$ | R5: Iters %s-%s @ bin=%s, lp=%s $\AA$ | R6: Iters %s-%s @ bin=%s, lp=%s $\AA$" % (sessionname, tiltseriesnumber, r1_iters, r1_sampling, r1_lp, r1_iters+1, r1_iters+r2_iters, r2_sampling, r2_lp, r1_iters+r2_iters+1, r1_iters+r2_iters+r3_iters, r3_sampling, r3_lp, r1_iters+r2_iters+r3_iters+1, r1_iters+r2_iters+r3_iters+r4_iters, r4_sampling, r4_lp, r1_iters+r2_iters+r3_iters+r4_iters+1, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters, r5_sampling, r5_lp, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters+1, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters+r6_iters, r6_sampling, r6_lp)
+			title="Session %s, Tilt-Series #%s\nR1: Iters 1-%s @ bin=%s, lp=%s $\AA$ | R2: Iters %s-%s @ bin=%s, lp=%s $\AA$ | R3: Iters %s-%s @ bin=%s, lp=%s $\AA$\nR4: Iters %s-%s @ bin=%s, lp=%s $\AA$ | R5: Iters %s-%s @ bin=%s, lp=%s $\AA$ | R6: Iters %s-%s @ bin=%s, lp=%s $\AA$ | thick=%s" % (sessionname, tiltseriesnumber, r1_iters, r1_sampling, r1_lp, r1_iters+1, r1_iters+r2_iters, r2_sampling, r2_lp, r1_iters+r2_iters+1, r1_iters+r2_iters+r3_iters, r3_sampling, r3_lp, r1_iters+r2_iters+r3_iters+1, r1_iters+r2_iters+r3_iters+r4_iters, r4_sampling, r4_lp, r1_iters+r2_iters+r3_iters+r4_iters+1, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters, r5_sampling, r5_lp, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters+1, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters+r6_iters, r6_sampling, r6_lp, thickness)
 			font="medium"
 		elif (r2_iters != 0 and r3_iters != 0 and r4_iters != 0 and r5_iters != 0 and r6_iters == 0 and r7_iters == 0 and r8_iters == 0): #R1-R5
-			title="Session %s, Tilt-Series #%s\nR1: Iters 1-%s @ bin=%s, lp=%s $\AA$ | R2: Iters %s-%s @ bin=%s, lp=%s $\AA$ | R3: Iters %s-%s @ bin=%s, lp=%s $\AA$\nR4: Iters %s-%s @ bin=%s, lp=%s $\AA$ | R5: Iters %s-%s @ bin=%s, lp=%s $\AA$" % (sessionname, tiltseriesnumber, r1_iters, r1_sampling, r1_lp, r1_iters+1, r1_iters+r2_iters, r2_sampling, r2_lp, r1_iters+r2_iters+1, r1_iters+r2_iters+r3_iters, r3_sampling, r3_lp, r1_iters+r2_iters+r3_iters+1, r1_iters+r2_iters+r3_iters+r4_iters, r4_sampling, r4_lp, r1_iters+r2_iters+r3_iters+r4_iters+1, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters, r5_sampling, r5_lp)
+			title="Session %s, Tilt-Series #%s\nR1: Iters 1-%s @ bin=%s, lp=%s $\AA$ | R2: Iters %s-%s @ bin=%s, lp=%s $\AA$ | R3: Iters %s-%s @ bin=%s, lp=%s $\AA$\nR4: Iters %s-%s @ bin=%s, lp=%s $\AA$ | R5: Iters %s-%s @ bin=%s, lp=%s $\AA$ | thick=%s" % (sessionname, tiltseriesnumber, r1_iters, r1_sampling, r1_lp, r1_iters+1, r1_iters+r2_iters, r2_sampling, r2_lp, r1_iters+r2_iters+1, r1_iters+r2_iters+r3_iters, r3_sampling, r3_lp, r1_iters+r2_iters+r3_iters+1, r1_iters+r2_iters+r3_iters+r4_iters, r4_sampling, r4_lp, r1_iters+r2_iters+r3_iters+r4_iters+1, r1_iters+r2_iters+r3_iters+r4_iters+r5_iters, r5_sampling, r5_lp, thickness)
 			font="medium"
 		elif (r2_iters != 0 and r3_iters != 0 and r4_iters != 0 and r5_iters == 0 and r6_iters == 0 and r7_iters == 0 and r8_iters == 0): #R1-R4
-			title="Session %s, Tilt-Series #%s\nR1: Iters 1-%s @ bin=%s, lp=%s $\AA$ | R2: Iters %s-%s @ bin=%s, lp=%s $\AA$\nR3: Iters %s-%s @ bin=%s, lp=%s $\AA$ | R4: Iters %s-%s @ bin=%s, lp=%s $\AA$" % (sessionname, tiltseriesnumber, r1_iters, r1_sampling, r1_lp, r1_iters+1, r1_iters+r2_iters, r2_sampling, r2_lp, r1_iters+r2_iters+1, r1_iters+r2_iters+r3_iters, r3_sampling, r3_lp, r1_iters+r2_iters+r3_iters+1, r1_iters+r2_iters+r3_iters+r4_iters, r4_sampling, r4_lp)
+			title="Session %s, Tilt-Series #%s\nR1: Iters 1-%s @ bin=%s, lp=%s $\AA$ | R2: Iters %s-%s @ bin=%s, lp=%s $\AA$\nR3: Iters %s-%s @ bin=%s, lp=%s $\AA$ | R4: Iters %s-%s @ bin=%s, lp=%s $\AA$ | thick=%s" % (sessionname, tiltseriesnumber, r1_iters, r1_sampling, r1_lp, r1_iters+1, r1_iters+r2_iters, r2_sampling, r2_lp, r1_iters+r2_iters+1, r1_iters+r2_iters+r3_iters, r3_sampling, r3_lp, r1_iters+r2_iters+r3_iters+1, r1_iters+r2_iters+r3_iters+r4_iters, r4_sampling, r4_lp, thickness)
 			font="large"
 		elif (r2_iters != 0 and r3_iters != 0 and r4_iters == 0 and r5_iters == 0 and r6_iters == 0 and r7_iters == 0 and r8_iters == 0): #R1-R3
-			title="Session %s, Tilt-Series #%s\nR1: Iters 1-%s @ bin=%s, lp=%s $\AA$ | R2: Iters %s-%s @ bin=%s, lp=%s $\AA$\nR3: Iters %s-%s @ bin=%s, lp=%s $\AA$" % (sessionname, tiltseriesnumber, r1_iters, r1_sampling, r1_lp, r1_iters+1, r1_iters+r2_iters, r2_sampling, r2_lp, r1_iters+r2_iters+1, r1_iters+r2_iters+r3_iters, r3_sampling, r3_lp)
+			title="Session %s, Tilt-Series #%s\nR1: Iters 1-%s @ bin=%s, lp=%s $\AA$ | R2: Iters %s-%s @ bin=%s, lp=%s $\AA$\nR3: Iters %s-%s @ bin=%s, lp=%s $\AA$ | thick=%s" % (sessionname, tiltseriesnumber, r1_iters, r1_sampling, r1_lp, r1_iters+1, r1_iters+r2_iters, r2_sampling, r2_lp, r1_iters+r2_iters+1, r1_iters+r2_iters+r3_iters, r3_sampling, r3_lp, thickness)
 			font="large"
 		elif (r2_iters != 0 and r3_iters == 0 and r4_iters == 0 and r5_iters == 0 and r6_iters == 0 and r7_iters == 0 and r8_iters == 0): #R1-R2
-			title="Session %s, Tilt-Series #%s\nR1: Iters 1-%s @ bin=%s, lp=%s $\AA$ | R2: Iters %s-%s @ bin=%s, lp=%s $\AA$" % (sessionname, tiltseriesnumber, r1_iters, r1_sampling, r1_lp, r1_iters+1, r1_iters+r2_iters, r2_sampling, r2_lp)
+			title="Session %s, Tilt-Series #%s\nR1: Iters 1-%s @ bin=%s, lp=%s $\AA$ | R2: Iters %s-%s @ bin=%s, lp=%s $\AA$ | thick=%s" % (sessionname, tiltseriesnumber, r1_iters, r1_sampling, r1_lp, r1_iters+1, r1_iters+r2_iters, r2_sampling, r2_lp, thickness)
 		elif (r2_iters == 0 and r3_iters == 0 and r4_iters == 0 and r5_iters == 0 and r6_iters == 0 and r7_iters == 0 and r8_iters == 0): #R1
-			title="Session %s, Tilt-Series #%s\nR1: Iters 1-%s @ bin=%s, lp=%s $\AA$" % (sessionname, tiltseriesnumber, r1_iters, r1_sampling, r1_lp)
+			title="Session %s, Tilt-Series #%s\nR1: Iters 1-%s @ bin=%s, lp=%s $\AA$ | thick=%s" % (sessionname, tiltseriesnumber, r1_iters, r1_sampling, r1_lp, thickness)
 		
 		f=open(txtqa_full,'r')
 		lines=f.readlines()
@@ -1299,6 +1302,7 @@ def makeTiltSeriesVideos(seriesname, iteration, tiltfilename, rawimagecount, run
 				tiltimage = os.path.join(vid_path,"tilt%04d.png" % (j))
 			os.system("mkdir -p %s 2>/dev/null" % (vid_path))
 			scipy.misc.imsave(tiltimage, image)
+			#cv2.imwrite(tiltimage, image)
 			
 			#Rotate
 			if (rotation != 0.000):
@@ -1417,6 +1421,8 @@ def makeReconstructionVideos(seriesname, iteraion, rundir, rx, ry, show_window_s
 		#Pixel density scaling
 		#scipy.misc.imsave(slice, volume[i])  #This command scales pixel values per-image
 		scipy.misc.toimage(volume[i], cmin=minval, cmax=maxval).save(slice)  #This command scales pixel values over the whole volume
+		#zslice = scipy.misc.toimage(volume[i], cmin=minval, cmax=maxval)
+		#cv2.imwrite(slice, volume[i])
 		
 		#Add rectangle showing the search area, but only to the sections that were aligned to
 		if (show_window_size == 'true' and (slices+1)/4 < i and slices+1-((slices+1)/4) > i):

@@ -48,7 +48,7 @@ class Protomo2RefineForm extends BasicLayoutForm
 	$elevation_switch='', $rotation='true', $rotation_switch='', $scale='false', $scale_switch='', $logging='true', $loglevel='2', $slab='true',
 	$map_size_x='512', $map_size_y='512', $filename_prefix='', $image_file_type='', $cachedir='cache', $protomo_outdir='out', $tilt_clip='',
 	$create_reconstruction='true', $show_window_size='true', $create_tilt_video='true', $keep_recons='false', $video_type='', $restart_cycle='',
-	$parallel='')
+	$parallel='', $negative='', $positive='', $starting_tlt_file='')
 	{
 		parent::__construct($expId, $extraHTML);
 		//print "_POST:" . "<br>";
@@ -89,7 +89,7 @@ class Protomo2RefineForm extends BasicLayoutForm
 		
 		//Preset pulldown menus
 		$size_presets=array("Generic", "10 nm objects(s) - Steep lowpass", "25 nm objects(s) - Steep lowpass", "50 nm objects(s) - Steep lowpass", "100 nm objects(s) - Steep lowpass", "250 nm objects(s) - Steep lowpass", "500 nm objects(s) - Steep lowpass", "1000 nm objects(s) - Steep lowpass", "------------------", "10 nm objects(s) - Decreasing lowpass", "25 nm objects(s) - Decreasing lowpass", "50 nm objects(s) - Decreasing lowpass", "100 nm objects(s) - Decreasing lowpass", "250 nm objects(s) - Decreasing lowpass", "500 nm objects(s) - Decreasing lowpass", "1000 nm objects(s) - Decreasing lowpass", "------------------", "10 nm objects(s) - Constant lowpass", "25 nm objects(s) - Constant lowpass", "50 nm objects(s) - Constant lowpass", "100 nm objects(s) - Constant lowpass", "250 nm objects(s) - Constant lowpass", "500 nm objects(s) - Constant lowpass", "1000 nm objects(s) - Constant lowpass");
-		$search_presets=array("Generic", "Tiny search (10%)", "Small search (25%)", "Medium search (50%)", "Large search (75%)", "Full search (90%)");
+		$search_presets=array("Generic", "Tiny search (10%)", "Small search (25%)", "Med-Sm search (40%)", "Medium search (50%)", "Med-Lg search (60%)", "Large search (75%)", "Full search (90%)");
 		$type_presets=array("Generic", "Quick refinement", "Modest refinement", "Full refinement", "Exhaustive refinement");
 		$html.= '<select name="preset_size" onchange=submit() style="width:150px">';
 		for ($i = 1; $i < count($size_presets)+1; $i++) {
@@ -247,7 +247,27 @@ class Protomo2RefineForm extends BasicLayoutForm
 				$_POST['r1_highpass_apod_y'] = $_POST['r2_highpass_apod_y'] = $_POST['r3_highpass_apod_y'] = $_POST['r4_highpass_apod_y'] = $_POST['r5_highpass_apod_y'] = $r1_hp_apod_y = $r2_hp_apod_y = $r3_hp_apod_y = $r4_hp_apod_y = $r5_hp_apod_y = round($r1_hp_diam_y/2);
 			}
 			
-			if ($_POST['preset_search'] == 4)  //Medium 50%
+			if ($_POST['preset_search'] == 4)  //Medium-Small 40%
+			{
+				$_POST['r1_region_x'] = $_POST['r2_region_x'] = $_POST['r3_region_x'] = $_POST['r4_region_x'] = $_POST['r5_region_x'] = $r1_region_x = $r2_region_x = $r3_region_x = $r4_region_x = $r5_region_x = intval($imageinfo['dimx']*0.4);
+				$_POST['r1_region_y'] = $_POST['r2_region_y'] = $_POST['r3_region_y'] = $_POST['r4_region_y'] = $_POST['r5_region_y'] = $r1_region_y = $r2_region_y = $r3_region_y = $r4_region_y = $r5_region_y = intval($imageinfo['dimy']*0.4);
+				$Nx1=$r1_region_x/$r1_sampling;$Ny1=$r1_region_y/$r1_sampling;
+				$Nx2=$r2_region_x/$r2_sampling;$Ny2=$r2_region_y/$r2_sampling;
+				$Nx3=$r3_region_x/$r3_sampling;$Ny3=$r3_region_y/$r3_sampling;
+				$Nx4=$r4_region_x/$r4_sampling;$Ny4=$r4_region_y/$r4_sampling;
+				$Nx5=$r5_region_x/$r5_sampling;$Ny5=$r5_region_y/$r5_sampling;
+				$_POST['r1_mask_width_x'] = $r1_mask_width_x = intval($Nx1-2.5*$r1_mask_apod_x);$_POST['r1_mask_width_y'] = $r1_mask_width_y = intval($Ny1-2.5*$r1_mask_apod_y);
+				$_POST['r2_mask_width_x'] = $r2_mask_width_x = intval($Nx2-2.5*$r2_mask_apod_x);$_POST['r2_mask_width_y'] = $r2_mask_width_y = intval($Ny2-2.5*$r2_mask_apod_y);
+				$_POST['r3_mask_width_x'] = $r3_mask_width_x = intval($Nx3-2.5*$r3_mask_apod_x);$_POST['r3_mask_width_y'] = $r3_mask_width_y = intval($Ny3-2.5*$r3_mask_apod_y);
+				$_POST['r4_mask_width_x'] = $r4_mask_width_x = intval($Nx4-2.5*$r4_mask_apod_x);$_POST['r4_mask_width_y'] = $r4_mask_width_y = intval($Ny4-2.5*$r4_mask_apod_y);
+				$_POST['r5_mask_width_x'] = $r5_mask_width_x = intval($Nx5-2.5*$r5_mask_apod_x);$_POST['r5_mask_width_y'] = $r5_mask_width_y = intval($Ny5-2.5*$r5_mask_apod_y);
+				$_POST['r1_highpass_diameter_x'] = $_POST['r2_highpass_diameter_x'] = $_POST['r3_highpass_diameter_x'] = $_POST['r4_highpass_diameter_x'] = $_POST['r5_highpass_diameter_x'] = $r1_hp_diam_x = $r2_hp_diam_x = $r3_hp_diam_x = $r4_hp_diam_x = $r5_hp_diam_x = round($imageinfo['pixelsize']*pow(10,10)*min($r1_region_x, $r1_region_y));
+				$_POST['r1_highpass_diameter_y'] = $_POST['r2_highpass_diameter_y'] = $_POST['r3_highpass_diameter_y'] = $_POST['r4_highpass_diameter_y'] = $_POST['r5_highpass_diameter_y'] = $r1_hp_diam_y = $r2_hp_diam_y = $r3_hp_diam_y = $r4_hp_diam_y = $r5_hp_diam_y = round($imageinfo['pixelsize']*pow(10,10)*min($r1_region_x, $r1_region_y));
+				$_POST['r1_highpass_apod_x'] = $_POST['r2_highpass_apod_x'] = $_POST['r3_highpass_apod_x'] = $_POST['r4_highpass_apod_x'] = $_POST['r5_highpass_apod_x'] = $r1_hp_apod_x = $r2_hp_apod_x = $r3_hp_apod_x = $r4_hp_apod_x = $r5_hp_apod_x = round($r1_hp_diam_x/2);
+				$_POST['r1_highpass_apod_y'] = $_POST['r2_highpass_apod_y'] = $_POST['r3_highpass_apod_y'] = $_POST['r4_highpass_apod_y'] = $_POST['r5_highpass_apod_y'] = $r1_hp_apod_y = $r2_hp_apod_y = $r3_hp_apod_y = $r4_hp_apod_y = $r5_hp_apod_y = round($r1_hp_diam_y/2);
+			}
+			
+			if ($_POST['preset_search'] == 5)  //Medium 50%
 			{
 				$_POST['r1_region_x'] = $_POST['r2_region_x'] = $_POST['r3_region_x'] = $_POST['r4_region_x'] = $_POST['r5_region_x'] = $r1_region_x = $r2_region_x = $r3_region_x = $r4_region_x = $r5_region_x = intval($imageinfo['dimx']*0.5);
 				$_POST['r1_region_y'] = $_POST['r2_region_y'] = $_POST['r3_region_y'] = $_POST['r4_region_y'] = $_POST['r5_region_y'] = $r1_region_y = $r2_region_y = $r3_region_y = $r4_region_y = $r5_region_y = intval($imageinfo['dimy']*0.5);
@@ -267,7 +287,27 @@ class Protomo2RefineForm extends BasicLayoutForm
 				$_POST['r1_highpass_apod_y'] = $_POST['r2_highpass_apod_y'] = $_POST['r3_highpass_apod_y'] = $_POST['r4_highpass_apod_y'] = $_POST['r5_highpass_apod_y'] = $r1_hp_apod_y = $r2_hp_apod_y = $r3_hp_apod_y = $r4_hp_apod_y = $r5_hp_apod_y = round($r1_hp_diam_y/2);
 			}
 			
-			if ($_POST['preset_search'] == 5)  //Large 75%
+			if ($_POST['preset_search'] == 6)  //Medium-Large 60%
+			{
+				$_POST['r1_region_x'] = $_POST['r2_region_x'] = $_POST['r3_region_x'] = $_POST['r4_region_x'] = $_POST['r5_region_x'] = $r1_region_x = $r2_region_x = $r3_region_x = $r4_region_x = $r5_region_x = intval($imageinfo['dimx']*0.6);
+				$_POST['r1_region_y'] = $_POST['r2_region_y'] = $_POST['r3_region_y'] = $_POST['r4_region_y'] = $_POST['r5_region_y'] = $r1_region_y = $r2_region_y = $r3_region_y = $r4_region_y = $r5_region_y = intval($imageinfo['dimy']*0.6);
+				$Nx1=$r1_region_x/$r1_sampling;$Ny1=$r1_region_y/$r1_sampling;
+				$Nx2=$r2_region_x/$r2_sampling;$Ny2=$r2_region_y/$r2_sampling;
+				$Nx3=$r3_region_x/$r3_sampling;$Ny3=$r3_region_y/$r3_sampling;
+				$Nx4=$r4_region_x/$r4_sampling;$Ny4=$r4_region_y/$r4_sampling;
+				$Nx5=$r5_region_x/$r5_sampling;$Ny5=$r5_region_y/$r5_sampling;
+				$_POST['r1_mask_width_x'] = $r1_mask_width_x = intval($Nx1-2.5*$r1_mask_apod_x);$_POST['r1_mask_width_y'] = $r1_mask_width_y = intval($Ny1-2.5*$r1_mask_apod_y);
+				$_POST['r2_mask_width_x'] = $r2_mask_width_x = intval($Nx2-2.5*$r2_mask_apod_x);$_POST['r2_mask_width_y'] = $r2_mask_width_y = intval($Ny2-2.5*$r2_mask_apod_y);
+				$_POST['r3_mask_width_x'] = $r3_mask_width_x = intval($Nx3-2.5*$r3_mask_apod_x);$_POST['r3_mask_width_y'] = $r3_mask_width_y = intval($Ny3-2.5*$r3_mask_apod_y);
+				$_POST['r4_mask_width_x'] = $r4_mask_width_x = intval($Nx4-2.5*$r4_mask_apod_x);$_POST['r4_mask_width_y'] = $r4_mask_width_y = intval($Ny4-2.5*$r4_mask_apod_y);
+				$_POST['r5_mask_width_x'] = $r5_mask_width_x = intval($Nx5-2.5*$r5_mask_apod_x);$_POST['r5_mask_width_y'] = $r5_mask_width_y = intval($Ny5-2.5*$r5_mask_apod_y);
+				$_POST['r1_highpass_diameter_x'] = $_POST['r2_highpass_diameter_x'] = $_POST['r3_highpass_diameter_x'] = $_POST['r4_highpass_diameter_x'] = $_POST['r5_highpass_diameter_x'] = $r1_hp_diam_x = $r2_hp_diam_x = $r3_hp_diam_x = $r4_hp_diam_x = $r5_hp_diam_x = round($imageinfo['pixelsize']*pow(10,10)*min($r1_region_x, $r1_region_y));
+				$_POST['r1_highpass_diameter_y'] = $_POST['r2_highpass_diameter_y'] = $_POST['r3_highpass_diameter_y'] = $_POST['r4_highpass_diameter_y'] = $_POST['r5_highpass_diameter_y'] = $r1_hp_diam_y = $r2_hp_diam_y = $r3_hp_diam_y = $r4_hp_diam_y = $r5_hp_diam_y = round($imageinfo['pixelsize']*pow(10,10)*min($r1_region_x, $r1_region_y));
+				$_POST['r1_highpass_apod_x'] = $_POST['r2_highpass_apod_x'] = $_POST['r3_highpass_apod_x'] = $_POST['r4_highpass_apod_x'] = $_POST['r5_highpass_apod_x'] = $r1_hp_apod_x = $r2_hp_apod_x = $r3_hp_apod_x = $r4_hp_apod_x = $r5_hp_apod_x = round($r1_hp_diam_x/2);
+				$_POST['r1_highpass_apod_y'] = $_POST['r2_highpass_apod_y'] = $_POST['r3_highpass_apod_y'] = $_POST['r4_highpass_apod_y'] = $_POST['r5_highpass_apod_y'] = $r1_hp_apod_y = $r2_hp_apod_y = $r3_hp_apod_y = $r4_hp_apod_y = $r5_hp_apod_y = round($r1_hp_diam_y/2);
+			}
+			
+			if ($_POST['preset_search'] == 7)  //Large 75%
 			{
 				$_POST['r1_region_x'] = $_POST['r2_region_x'] = $_POST['r3_region_x'] = $_POST['r4_region_x'] = $_POST['r5_region_x'] = $r1_region_x = $r2_region_x = $r3_region_x = $r4_region_x = $r5_region_x = intval($imageinfo['dimx']*0.75);
 				$_POST['r1_region_y'] = $_POST['r2_region_y'] = $_POST['r3_region_y'] = $_POST['r4_region_y'] = $_POST['r5_region_y'] = $r1_region_y = $r2_region_y = $r3_region_y = $r4_region_y = $r5_region_y = intval($imageinfo['dimy']*0.75);
@@ -287,7 +327,7 @@ class Protomo2RefineForm extends BasicLayoutForm
 				$_POST['r1_highpass_apod_y'] = $_POST['r2_highpass_apod_y'] = $_POST['r3_highpass_apod_y'] = $_POST['r4_highpass_apod_y'] = $_POST['r5_highpass_apod_y'] = $r1_hp_apod_y = $r2_hp_apod_y = $r3_hp_apod_y = $r4_hp_apod_y = $r5_hp_apod_y = round($r1_hp_diam_y/2);
 			}
 			
-			if ($_POST['preset_search'] == 6)  //Full 90%
+			if ($_POST['preset_search'] == 8)  //Full 90%
 			{
 				$_POST['r1_region_x'] = $_POST['r2_region_x'] = $_POST['r3_region_x'] = $_POST['r4_region_x'] = $_POST['r5_region_x'] = $r1_region_x = $r2_region_x = $r3_region_x = $r4_region_x = $r5_region_x = intval($imageinfo['dimx']*0.9);
 				$_POST['r1_region_y'] = $_POST['r2_region_y'] = $_POST['r3_region_y'] = $_POST['r4_region_y'] = $_POST['r5_region_y'] = $r1_region_y = $r2_region_y = $r3_region_y = $r4_region_y = $r5_region_y = intval($imageinfo['dimy']*0.9);
@@ -751,8 +791,8 @@ class Protomo2RefineForm extends BasicLayoutForm
 		
 		//These parameters don't change with Presets
 		
-		$map_size_x = $imageinfo['dimx']/$map_sampling;
-		$map_size_y = $imageinfo['dimy']/$map_sampling;
+		$map_size_x = intval($imageinfo['dimx']/$map_sampling);
+		$map_size_y = intval($imageinfo['dimy']/$map_sampling);
 		$r1_kernel_x = $r2_kernel_x = $r3_kernel_x = $r4_kernel_x = $r5_kernel_x = 5;
 		$r1_kernel_y = $r2_kernel_y = $r3_kernel_y = $r4_kernel_y = $r5_kernel_y = 5;
 		$r1_mask_apod_x = $r2_mask_apod_x = $r3_mask_apod_x = $r4_mask_apod_x = $r5_mask_apod_x = 10;
@@ -787,6 +827,9 @@ class Protomo2RefineForm extends BasicLayoutForm
 				
 		$params->addParam( "tiltseries", $tiltseries, "Tilt-Series #" );
 		$params->addParam( "parallel", $parallel, "Parallelize Non-Protomo Processes" );
+		$params->addParam( "starting_tlt_file", $starting_tlt_file, "Begin with Coarse Alignment Results or Initial Alignment?" );
+		$params->addParam( "negative", $negative, "<strong>–</strong> Angle Limit" );
+		$params->addParam( "positive", $positive, "<strong>+</strong> Angle Limit" );
 		$params->addParam( "r1_region_x", $r1_region_x, "R1" );
 		$params->addParam( "r2_region_x", $r2_region_x, "R2" );
 		$params->addParam( "r3_region_x", $r3_region_x, "R3" );
@@ -1223,6 +1266,12 @@ class Protomo2RefineForm extends BasicLayoutForm
 				$html.= $params->insertTextFieldInRow( "r4_sampling", $fieldSize2 ).'│ ';
 				$html.= $params->insertTextField( "r5_sampling", $fieldSize2 );
 				//$html.= $params->insertTextField( "select_images", $fieldSize );
+				$html.= $params->insertTextFieldInRow( "negative", $fieldSize ).'│ ';
+				$html.= $params->insertTextField( "positive", $fieldSize );
+				$html.= '<select name="starting_tlt_file" style="width:66px">';
+				$html.= '<option selected value="Coarse">Coarse</option>';
+				$html.= '<option value="Initial">Initial</option>';
+				$html.= '</select>'; $html.= docpop('protomo_starting_tlt_file', ' Begin with Coarse Alignment Results or Initial Alignment?').'<br>';
 				$html.= $params->insertTextField( "exclude_images", $fieldSize );
 				$html.= '<select name="parallel" style="width:66px">';
 				$html.= '<option selected value="True">true</option>';

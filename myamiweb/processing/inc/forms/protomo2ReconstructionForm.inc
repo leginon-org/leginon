@@ -62,10 +62,11 @@ if ($_SESSION['erase_refine'] == 1){  //Just using erase_refine as a token
 
 class Protomo2ReconstructionForm extends BasicLayoutForm
 {
-	function __construct( $expId, $extraHTML, $commit='false', $negative='', $positive='', $recon_iter='', $recon_map_sampling='2',
+	function __construct( $expId, $extraHTML, $commit='false', $negative_recon='', $positive_recon='', $recon_iter='', $recon_map_sampling='2',
 	$recon_map_size_x='2048', $recon_map_size_y='2048',	$recon_thickness='1500', $pixelsize='', $recon_lowpass='', $recon_lp_diam_x='15',
 	$recon_lp_diam_y='15', $ctf_correct='', $amp_contrast='0.07', $iWidth='20', $DefocusTol='200', $dose_presets='', $dose_a='',
-	$dose_b='', $dose_c='', $link_recon='', $frame_aligned='')
+	$dose_b='', $dose_c='', $link_recon='', $frame_aligned='', $reconstruction_method='', $tomo3d_procs='all', $tomo3d_options='',
+	$tomo3d_sirt_iters='30', $exclude_images='')
 	{
 		parent::__construct($expId, $extraHTML);
 		//print "_POST:" . "<br>";
@@ -74,6 +75,21 @@ class Protomo2ReconstructionForm extends BasicLayoutForm
 		//var_dump($_GET);
 		//print "_SESSION:" . "<br>";
 		//var_dump($_SESSION);
+		
+		global $html; //I can only get the selector form to pass variables properly by defining it globally in the constructor.
+		
+		if (!isset($_POST['reconstruction_method'])) {$_POST['reconstruction_method']=1;}
+		$settings=array("Protomo weighted back-projection", "Tomo3D weighted back-projection", "Tomo3D SIRT", "Stack only");
+
+		$html.= '<br><select name="reconstruction_method" onchange=submit() style="width:225px">';
+		for ($i = 1; $i < count($settings)+1; $i++) {
+			$html.= '<option ';
+			if ($i == $_POST['reconstruction_method']) {
+				$html.= 'selected ';
+			}
+			$html.= 'value="'.$i.'">'.$settings[$i-1].'</option>';
+		}
+		$html.= '</select>'; $html.= docpop('protomo_reconstruction_method', ' Reconstruction Method<br>');
 		
 		global $imageinfo;
 		global $protomo_outdir;
@@ -93,7 +109,13 @@ class Protomo2ReconstructionForm extends BasicLayoutForm
 		//------ Set Parameters for the parent class, BasicLoopForm (general Appion params) -----//
 		
 		// Set the publications to be references on the web pages
-		$pubList = array('appion-protomo', 'protomo', 'imodctf', 'dose_comp');
+		if ($_POST['reconstruction_method'] == 1) {
+			$pubList = array('appion-protomo', 'protomo', 'imodctf', 'dose_comp');
+		} elseif ($_POST['reconstruction_method'] == 2 or $_POST['reconstruction_method'] == 3) {
+			$pubList = array('appion-protomo', 'imodctf', 'dose_comp', 'tomo3d1', 'tomo3d2');
+		} else {
+			$pubList = array('appion-protomo', 'imodctf', 'dose_comp');
+		}
 		$this->setPublications( $pubList );
 		$this->setJobType( 'protomo' );
 		$this->setOutputDirectory( 'protomo_alignments' );
@@ -120,10 +142,15 @@ class Protomo2ReconstructionForm extends BasicLayoutForm
 		$params->addParam( "dose_a", $dose_a, "a" );
 		$params->addParam( "dose_b", $dose_b, "b" );
 		$params->addParam( "dose_c", $dose_c, "c" );
+		$params->addParam( "tomo3d_procs", $tomo3d_procs, "Tomo3D Processors" );
+		$params->addParam( "tomo3d_options", $tomo3d_options, "Additional Tomo3D Options" );
+		$params->addParam( "tomo3d_sirt_iters", $tomo3d_sirt_iters, "Number of SIRT Iterations" );
 		$params->addParam( "frame_aligned", $frame_aligned, "Use Frame Aligned Images" );
-		$params->addParam( "negative", $negative, "<strong>–</strong> Angle Limit" );
-		$params->addParam( "positive", $positive, "<strong>+</strong> Angle Limit" );
+		$params->addParam( "exclude_images", $exclude_images, "Exclude Specific Images" );
+		$params->addParam( "negative_recon", $negative_recon, "<strong>–</strong> Angle Limit" );
+		$params->addParam( "positive_recon", $positive_recon, "<strong>+</strong> Angle Limit" );
 		$params->addParam( "recon_iter", $recon_iter, "Refinement Iteration used to generate Reconstruction" );
+		$params->addParam( "reconstruction_method", $reconstruction_method, "Reconstruction Method" );
 		$params->addParam( "recon_map_sampling", $recon_map_sampling, "Reconstruction Sampling" );
 		$params->addParam( "recon_map_size_x", $recon_map_size_x, "Reconstruction Size (x)" );
 		$params->addParam( "recon_map_size_y", $recon_map_size_y, "Reconstruction Size (y)" );
@@ -136,6 +163,9 @@ class Protomo2ReconstructionForm extends BasicLayoutForm
 		// Validations
 		$params->addValidation( "recon_iter", "req" );
 		$params->addValidation( "recon_iter", "num" );
+		if ($_POST['reconstruction_method'] == 1 or $_POST['reconstruction_method'] == 2 or $_POST['reconstruction_method'] == 3){
+				$params->addValidation( "recon_thickness", "req" );
+		}
 		
 	}
 	
@@ -145,6 +175,7 @@ class Protomo2ReconstructionForm extends BasicLayoutForm
 		$this->updateFormParams();
 		$params = $this->getFormParams();
 		
+		global $html;
 		global $unselect;
 		global $outdir;
 		global $runname;
@@ -191,10 +222,17 @@ class Protomo2ReconstructionForm extends BasicLayoutForm
 		$html.= $params->insertTextFieldInRow( "dose_b", $fieldSize ).'│ ';
 		$html.= $params->insertTextField( "dose_c", $fieldSize );
 		
-		$html .= "
-	    <br />
-	    <H4>Reconstruction Parameters ".docpop('recon_info2', '(Info)')."</H4>
-	    <hr />";
+		if ($_POST['reconstruction_method'] == 4){
+				$html .= "
+				<br />
+				<H4>Stack Parameters ".docpop('stack_info', '(Info)')."</H4>
+				<hr />";
+		} else {
+				$html .= "
+				<br />
+				<H4>Reconstruction Parameters ".docpop('recon_info2', '(Info)')."</H4>
+				<hr />";
+		}
 		
 		$html.= '<select name="recon_iter" onchange=submit() style="width:66px">';
 		$html.= '<option value="'.$best.'">Best</option>';
@@ -214,18 +252,35 @@ class Protomo2ReconstructionForm extends BasicLayoutForm
 		}
 		$html.= '</select>'; $html.= docpop('protomo_recon_iter', ' Refinement Iteration used to generate Reconstruction<br>');
 	    $html.= $params->insertTextField( "recon_map_sampling", $fieldSize );
-		$html.= $params->insertTextField( "recon_map_size_x", $fieldSize );
-		$html.= $params->insertTextField( "recon_map_size_y", $fieldSize );
-		$html.= $params->insertTextField( "recon_thickness", $fieldSize );
-		$html.= $params->insertTextFieldInRow( "negative", $fieldSize ).'│ ';
-		$html.= $params->insertTextField( "positive", $fieldSize );
-		$html.= '<select name="recon_lowpass" style="width:66px">';
-		$html.= '<option value="True">True</option>';
-		$html.= '<option selected value="False">False</option>';
-		$html.= '</select>'; $html.= docpop('recon_lowpass', ' Lowpass Filter').'│ ';
-		$html.= $params->insertTextFieldInRow( "recon_lp_diam_x", $fieldSize ).'│ ';
-		$html.= $params->insertTextField( "recon_lp_diam_y", $fieldSize );
-		$html.= $params->insertTextField( "link_recon", $fieldSize2 );
+		if ($_POST['reconstruction_method'] == 1){
+				$html.= $params->insertTextField( "recon_map_size_x", $fieldSize );
+				$html.= $params->insertTextField( "recon_map_size_y", $fieldSize );
+				$html.= $params->insertTextField( "recon_thickness", $fieldSize );
+		}
+		if ($_POST['reconstruction_method'] == 2 or $_POST['reconstruction_method'] == 3){
+				$html.= $params->insertTextField( "recon_thickness", $fieldSize );
+				$html.= $params->insertTextField( "tomo3d_procs", $fieldSize );
+		}
+		$html.= $params->insertTextField( "exclude_images", $fieldSize );
+		$html.= $params->insertTextFieldInRow( "negative_recon", $fieldSize ).'│ ';
+		$html.= $params->insertTextField( "positive_recon", $fieldSize );
+		if ($_POST['reconstruction_method'] == 1){
+				$html.= '<select name="recon_lowpass" style="width:66px">';
+				$html.= '<option value="True">True</option>';
+				$html.= '<option selected value="False">False</option>';
+				$html.= '</select>'; $html.= docpop('recon_lowpass', ' Lowpass Filter').'│ ';
+				$html.= $params->insertTextFieldInRow( "recon_lp_diam_x", $fieldSize ).'│ ';
+				$html.= $params->insertTextField( "recon_lp_diam_y", $fieldSize );
+		}
+		if ($_POST['reconstruction_method'] == 3){
+				$html.= $params->insertTextField( "tomo3d_sirt_iters", $fieldSize );
+		}
+		if ($_POST['reconstruction_method'] == 2 or $_POST['reconstruction_method'] == 3){
+				$html.= $params->insertTextField( "tomo3d_options", $fieldSize2 );
+		}
+		if ($_POST['reconstruction_method'] == 1 or $_POST['reconstruction_method'] == 2 or $_POST['reconstruction_method'] == 3){
+				$html.= $params->insertTextField( "link_recon", $fieldSize2 );
+		}
 		
 		$html .= "<hr />";
 		
