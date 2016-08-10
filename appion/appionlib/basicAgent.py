@@ -23,7 +23,7 @@ class BasicAgent(object):
         try:
             processingHostType = configDict['ProcessingHostType'].upper()
             if 'TORQUE' == processingHostType or 'PBS' == processingHostType:
-                processingHost = torqueHost.TorqueHost(configDict)
+                processingHost = torqueHost.TorqueHost(command, jobType, configDict)
             elif 'MOABTORQUE' == processingHostType or 'MOAB' == processingHostType:
                 processingHost = torqueHost.MoabTorqueHost(configDict)
             elif 'SGE' == processingHostType.upper():
