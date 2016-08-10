@@ -84,7 +84,21 @@ class ProcessingHost (object):
 		
         #return what we get from stdout
         return process.communicate()[0]
-						
+				
+    def commandToWebservice (self, command):
+        
+        postArray = {   'command':command, 
+                        'username':pwd.getpwuid(os.getuid())[0],
+                        'jobType':self.jobType,
+                        'script':self.command
+        };
+         
+        r = requests.post(self.destinationsURL)
+        r = requests.post(self.destinationsURL, data=json.dumps(postArray))
+        
+        headerArray = json.loads(r.text)
+        return headerArray['customResponse']
+    
     def headersFromWebSevice (self, jobObject=None):
         if jobObject != None:
             currentJob=jobObject
