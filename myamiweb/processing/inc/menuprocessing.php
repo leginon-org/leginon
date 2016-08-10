@@ -742,6 +742,7 @@ if (is_numeric($expId)) {
 
 
 		$nruns=array();
+		// append (array_push) to nruns
 		$nruns[] = array(
 //			'name'=>"<a href='runMakeDDRawFrameStack.php?expId=$sessionId'>Create frame stack</a>",
 			'name'=>"<a href='runAppionLoop.php?expId=$sessionId&form=$ddStackform'>Create frame stack</a>",
@@ -758,9 +759,12 @@ if (is_numeric($expId)) {
 		$nruns[] = array(
 			'name'=>"<a href='runAppionLoop.php?expId=$sessionId&form=$rppform'>Launch Particle Polishing</a>",
 			'result'=>$rppresults,
-
 		);
-
+		
+		$nruns[] = array(
+			'name'=>"<a href='runAppionLoop.php?expId=$sessionId&form=launchFrameTransfer'>Launch Frame Transfer</a>",
+		);
+		
 		$data[] = array(
 			'action' => array($action, $celloption),
 			'newrun' => array($nruns, $celloption),
