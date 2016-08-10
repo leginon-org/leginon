@@ -13,9 +13,10 @@
 // --modelid=19 --mass=3800 --apix=2.74 --box=160 --numberOfReferences=1 --numiter=1 --timestamp=11jul18z 
 // --symid=25
 
-require_once "basicLoopForm.inc";
+require_once "makeDEAlignedSum.inc";
 
-class makeDEAlignedSum extends BasicLoopForm
+
+class makeDEPerParticle extends makeDEAlignedSum
 {
 	
 	// This is the constructor function. It is called as soon as this class is 
@@ -185,7 +186,4 @@ class makeDEAlignedSum extends BasicLoopForm
 
 	// not need to redefine buildCommand
 }
-
-
-
 ?>

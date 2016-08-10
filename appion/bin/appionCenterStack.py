@@ -2,12 +2,79 @@
 
 #python
 import os
-import shutil
+import sys
+import numpy
+import scipy.ndimage.interpolation
 #appion
-from appionlib import appionScript
+from appionlib import apFile
 from appionlib import apStack
 from appionlib import apDisplay
-from appionlib import apEMAN
+from appionlib import appionScript
+from appionlib import asymmetrical
+from appionlib import apImagicFile
+#pyami
+from pyami import correlator
+
+#======================
+#======================
+#======================
+#======================
+class CenterStackClass(apImagicFile.processStack):
+	#===============
+	def preLoop(self):
+		#apStack.averageStack(stack=centerstack)
+		#avgarray = XXXXXXX
+		#self.transformList = asymmetrical.getEightTransforms(self.boxsize, avgarray)
+		self.transformList = asymmetrical.getEightTransforms(self.boxsize)
+
+		self.sigmoidImage = asymmetrical.sigmoidImage(self.boxsize)
+		self.stacksToMerge = []
+
+	#===============
+	def processStack(self, stackarray):
+		tempstackfile = "temp.%03d.hed"%(self.index)
+		self.stacksToMerge.append(tempstackfile)
+		#flipping so particles are unchanged
+		centeredStack = []
+		for partarray in stackarray:
+			self.index += 1 #you must have this line in your loop
+			if self.index % 100 == 0:
+				sys.stderr.write(".")
+			newpart = self.processParticle(partarray)
+			centeredStack.append(newpart)
+		apFile.removeStack(tempstackfile, warn=self.msg)
+		apImagicFile.writeImagic(centeredStack, tempstackfile, msg=self.msg)
+
+	#===============
+	def processParticle(self, partarray):
+		correlations = []
+		for transarray in self.transformList:
+			rawcorr = correlator.cross_correlate(partarray, transarray)
+			rawcorr = numpy.fft.fftshift(rawcorr)
+			finalcorr = rawcorr*self.sigmoidImage
+			correlations.append(finalcorr)
+		corrarray = numpy.array(correlations)
+		peakindex = numpy.argmax(corrarray)
+		peakcoordinate = numpy.unravel_index(peakindex, corrarray.shape)  #rot, xshift, yshift
+		newpart = self.transformParticle(partarray, peakcoordinate)
+		return newpart
+
+	#===============
+	def transformParticle(self, partarray, peakcoordinate):
+		tnum = peakcoordinate[0]
+		xshift = self.boxsize/2 - peakcoordinate[1]
+		yshift = self.boxsize/2 - peakcoordinate[2]
+		newpart = asymmetrical.transformFromNumber(partarray, tnum)
+		newpart = scipy.ndimage.interpolation.shift(newpart, (xshift, yshift), order=0)
+		#newpart = numpy.roll(newpart, newpart.shape[0]*yshift)
+		return newpart
+
+	#===============
+	def writeStack(self, outfile):
+		apImagicFile.mergeStacks(self.stacksToMerge, outfile, self.msg)
+		for tempstackfile in self.stacksToMerge:
+			apFile.removeStack(tempstackfile, warn=self.msg)
+		return outfile
 
 class centerStackScript(appionScript.AppionScript):
 	#=====================
@@ -15,6 +82,8 @@ class centerStackScript(appionScript.AppionScript):
 		self.parser.set_usage("Usage: %prog --stack-id=ID [options]")
 		self.parser.add_option("-s", "--stack-id", dest="stackid", type="int",
 			help="Stack database id", metavar="ID")
+		self.parser.add_option("-i", "--num-iter", dest="numiter", type="int",
+			help="Number of iterations", default=2, metavar="#")
 		self.parser.add_option("--new-stack-name", dest="runname",
 			help="New stack name", metavar="STR")
 
@@ -26,7 +95,6 @@ class centerStackScript(appionScript.AppionScript):
 			apDisplay.printError("substack description was not defined")
 		if self.params['runname'] is None:
 			apDisplay.printError("new stack name was not defined")
-		
 
 	#=====================
 	def setRunDir(self):
@@ -37,41 +105,37 @@ class centerStackScript(appionScript.AppionScript):
 		self.params['rundir'] = os.path.join(uppath, self.params['runname'])
 
 	#=====================
-	def centerParticles(self, oldstack):
-		for part in particles:
-			pass
-
-
-	#=====================
 	def start(self):
 		#new stack path
 		stackdata = apStack.getOnlyStackData(self.params['stackid'])
-		oldstack = os.path.join(stackdata['path']['path'], stackdata['name'])
+		originalstackfile = os.path.join(stackdata['path']['path'], stackdata['name'])
+		newstackfilename = "center.hed"
+		centerstack = os.path.join(self.params['rundir'], newstackfilename)
 
-		centerstack = os.path.join(self.params['rundir'], 'center.img')
-		badstack = os.path.join(self.params['rundir'], 'bad.img')
+		laststackfile = originalstackfile
+		for i in range(self.params['numiter']):
+			centerstack = os.path.join(self.params['rundir'], "iter%d.hed"%(i))
+			centerClass = CenterStackClass()
+			centerClass.start(originalstackfile)
+			centerClass.writeStack(centerstack)
+			laststackfile = centerstack
 
-		#run centering algorithm
-		self.centerParticles(oldstack)
-		self.params['keepfile'] = os.path.join(self.params['rundir'],'keepfile.txt')
-		apEMAN.writeStackParticlesToFile(centerstack, self.params['keepfile'])
+		self.params['keepfile'] = "keepfile.lst"
+		f = open(self.params['keepfile'], "w")
+		for i in range(centerClass.numpart):
+			f.write("%d\n"%(i))
+		f.close()
+
 		if not os.path.isfile(centerstack):
 			apDisplay.printError("No stack was created")
 
-		#get number of particles
-		f = open(self.params['keepfile'], "r")
-		numparticles = len(f.readlines())
-		f.close()
-
 		self.params['description'] += (
-			(" ... %d appion centered substack id %d" 
-			% (numparticles, self.params['stackid']))
+			(" ... appion centered substack id %d"
+			% (self.params['stackid']))
 		)
 		
-		apStack.commitSubStack(self.params, newname='center.hed', centered=True)
+		apStack.commitSubStack(self.params, newname=newstackfilename, centered=True)
 		apStack.averageStack(stack=centerstack)
-		if (os.path.exists(badstack)):
-			apStack.averageStack(stack=badstack, outfile='badaverage.mrc')
 
 #=====================
 if __name__ == "__main__":
