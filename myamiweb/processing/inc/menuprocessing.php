@@ -760,6 +760,11 @@ if (is_numeric($expId)) {
 			'name'=>"<a href='runAppionLoop.php?expId=$sessionId&form=$rppform'>Launch Particle Polishing</a>",
 			'result'=>$rppresults,
 		);
+
+		$nruns[] = array(
+			'name'=>"<a href='runAppionLoop.php?expId=$sessionId&form=makeDEPerParticle'>Launch DE Per Particle Alignment</a>",
+			'result'=>$rppresults,
+		);
 		
 		$nruns[] = array(
 			'name'=>"<a href='runAppionLoop.php?expId=$sessionId&form=launchFrameTransfer'>Launch Frame Transfer</a>",
@@ -923,6 +928,18 @@ if (is_numeric($expId)) {
 			'newrun' => array($nruns, $celloption),
 		);
 	}
+
+	// Clean Data
+	$action = "Clean Up";
+	$nruns=array();
+	$nruns[] = array(
+		'name'=>"<a href='runAppionLoop.php?expId=$sessionId&form=deleteHidden'>Remove Hidden Images</a>",
+		);
+	
+	$data[] = array(
+		'action' => array($action, $celloption),
+		'newrun' => array($nruns, $celloption),
+	);
 
 	// Automated Software Testing
 
