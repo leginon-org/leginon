@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import os
 import sys
 import h5py
 import numpy
@@ -146,6 +147,9 @@ class HdfClass(object):
 	
 	#----------------------------
 	def readHeader(self, imagic=False):
+		if not os.path.isfile(self.filename):
+			print "file not found"
+			return
 		self.dset = h5py.File(self.filename, 'r')
 		images = self.dset['MDF']['images']
 		numpart = int(images.attrs['imageid_max'])+1
@@ -170,15 +174,19 @@ class HdfClass(object):
 	
 	#----------------------------
 	def read(self):
+		if not os.path.isfile(self.filename):
+			print "file not found"
+			return
 		self.dset = h5py.File(self.filename, 'r')
 		imageDict = self.dset['MDF']['images']
 		images = []
 		for partnum in imageDict.keys():
-			print "----------"
-			print partnum
+			#print "----------"
+			#print partnum
+			sys.stderr.write(".")
 			image = imageDict[partnum]['image']
 			imagedata = image[:]
-			print imagedata
+			#print imagedata
 			images.append(imagedata)
 		self.dset.close()
 		return numpy.array(images)
@@ -188,20 +196,22 @@ class HdfClass(object):
 #----------------------------
 
 if __name__ == '__main__':
-	a = numpy.array(numpy.random.random((10,128,128)), dtype=numpy.float32)
+	a = numpy.array(numpy.random.random((3,2,2)), dtype=numpy.float32)
 	print a
-
+	print a.shape
 	print "\nwriting random.hdf"
 	rhdf = HdfClass('random.hdf')
 	rhdf.write(a)
 
 	print "\nreading random.hdf"
 	rhdf = HdfClass('random.hdf')
-	b = rhdf.read()[0]
+	b = rhdf.read()
 	print b
+	print b.shape
+	print "\ndiff"
 	print a-b
 
-	#sys.exit(1)
+	sys.exit(1)
 	rhdf = HdfClass('random.hdf')
 	b = rhdf.readHeader()
 
