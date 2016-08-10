@@ -215,7 +215,7 @@ class ProcessingHost (object):
         jobID = None
         if (self.destinationsURL):
             # header = self.headersFromWebSevice(currentJob)
-            jobID = 1
+            jobID = None
         else: 
             try:
                 returnValue = self.executeCommand(commandString)
