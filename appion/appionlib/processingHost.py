@@ -196,14 +196,21 @@ class ProcessingHost (object):
         #Construct the command string to execute the job.		   
         commandString = "cd " + outputDir + ";"	 
         commandString = commandString + self.execCommand + " " + jobfileName
-        try:
-            returnValue = self.executeCommand(commandString)
-        except (OSError, ValueError), e:
-            sys.stderr.write("Failed to execute job " + jobObject.getName() + ": " + str(e))
-            return False
-	
-        #translate whatever is returned by executeCommand() to a JobID	   
-        jobID = self.translateOutput(returnValue)
+        
+        # dcshrum@fsu.edu
+        jobID = None
+        if (self.destinationsURL):
+            # header = self.headersFromWebSevice(currentJob)
+            jobID = 1
+        else: 
+            try:
+                returnValue = self.executeCommand(commandString)
+            except (OSError, ValueError), e:
+                sys.stderr.write("Failed to execute job " + jobObject.getName() + ": " + str(e))
+                return False
+            #translate whatever is returned by executeCommand() to a JobID	   
+            jobID = self.translateOutput(returnValue)
+            
         #return the translated output 
         return jobID
 	
