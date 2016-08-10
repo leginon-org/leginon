@@ -92,27 +92,7 @@ class makeDEAlignedSum extends BasicLoopForm
 	{
 		$msg = parent::validate( $postArray );
 		
-		$this->DEAlignTable->updateFormParams();	
-		$params = $this->DEAlignTable->getFormParams();
-
-		$usequeue = $params->getParamValue('usequeue');
-		$njobs = $params->getParamValue('njobs');
-		$handlefiles = $params->getParamValue('handlefiles');
-		$queue_scratch = $params->getParamValue('queue_scratch');
-		if ( $usequeue == "")
-		{
-			$msg .= "<B>Error:</B> Running without job queuing is not implemented";
-		}
-
-		if ( $usequeue != "" && empty($njobs) )
-		{
-			$msg .= "<B>Error:</B> Number of jobs must be specified when using queue";
-		}
-
-		if ( $handlefiles != "direct" && empty($queue_scratch) )
-		{
-			$msg .= "<B>Error:</B> Scratch directory must be specified when files are not used directly";
-		}
+		$msg .= $this->DEAlignTable->validate( $postArray );	
 		return $msg;
 	}
 
