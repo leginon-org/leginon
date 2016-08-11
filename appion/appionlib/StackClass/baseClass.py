@@ -2,35 +2,47 @@
 
 import os
 
-
 class StackClass(object):
 	################################################
 	# Must be implemented in new Stack subClass
 	################################################
 	def readHeader(self):
-		# read the header information
-		#  or initialize empty stack
-		# required variables to set are below
+		"""
+		read the header information
+		  or initialize new empty stack
+		required variables to set are below
+		"""
 		self.boxsize = None
 		self.apix = None
 		self.originalNumberOfParticles = None
 		raise NotImplementedError
 	def newFile(self):
-		# create new file to append to
+		"""
+		create new file to append to
+		"""
 		raise NotImplementedError
 	def updatePixelSize(self):
-		# create new file to append to
+		"""
+		just update pixel size in file
+		"""
 		raise NotImplementedError	
 	def readParticles(self, particleNumbers):
-		# read a list of particles into memory
+		"""
+		read a list of particles into memory
+		"""
 		raise NotImplementedError
 	def appendParticlesToFile(self, particleDataTree):
-		# takes a list of 2D numpy arrays
-		#  and wrtie them to a file
+		"""
+		takes a list of 2D numpy arrays
+		  and wrtie them to a file
+		"""
+		self.validateParticles(particleDataTree)
 		raise NotImplementedError
-	def close(self):
-		# close out file
-		# write total particles to header, etc.
+	def closeOut(self):
+		"""
+		close out file
+		write particle count, pixel size, ... to header, etc.
+		"""
 		raise NotImplementedError
 
 	################################################
@@ -48,13 +60,30 @@ class StackClass(object):
 		self.readonly = False
 	def setPixelSize(self, apix):
 		self.apix = apix
-	def fileSize(self):
+	def validateParticles(self, particleDataTree):
+		firstparticle = particleDataTree[0]
+		if firstparticle.shape[0] != firstparticle.shape[1]:
+			raise NotImplementedError("Particles are not square")
+		if self.boxsize is None:
+			self.boxsize = firstparticle.shape[0]
+		elif firstparticle.shape[0] != self.boxsize:
+			raise ValueError("Particles boxsize different from stack")
+
+	################################################
+	# Reporter functions for this class
+	################################################
+	def getFileSize(self):
 		return int(os.stat(self.filename)[6])
+	def getNumberOfParticles(self):
+		return self.currentParticles
+	def getBoxSize(self):
+		return self.boxsize
+	def getPixelSize(self):
+		return self.apix
+
 	################################################
 	# Unique functions for this class
 	################################################
-
-
 
 if __name__ == '__main__':
 	import numpy

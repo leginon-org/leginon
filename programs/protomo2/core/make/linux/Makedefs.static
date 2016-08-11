@@ -1,0 +1,10 @@
+#
+# Makedefs: definitions for linux static linking
+#
+# Copyright © 2012 Hanspeter Winkler
+#
+
+LD = ld
+LDOPT =
+LDLIBOPT =
+LDSYSOPT =

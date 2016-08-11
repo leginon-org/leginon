@@ -10,26 +10,45 @@ class MrcClass(baseClass.StackClass):
 	# Must be implemented in new Stack subClass
 	################################################
 	def readHeader(self):
-		# read the header information
-		#  or initialize empty stack
-		# required variables to set are below
-		if os.path.isfile(self.filename) and self.fileSize() > 1:
+		"""
+		read the header information
+		  or initialize new empty stack
+		required variables to set are below
+		"""
+		if os.path.isfile(self.filename) and self.getFileSize() > 1:
 			self.mrcheader = mrc.readHeaderFromFile(self.filename)
 			self.boxsize = self.mrcheader['nx']
 			self.apix = self.getPixelSize()
 			self.originalNumberOfParticles = self.mrcheader['nz']
+			self.currentParticles = self.mrcheader['nz'] #this number will increment
 	def newFile(self):
-		# create new file to append to
+		"""
+		create new file to append to
+		"""
 		raise NotImplementedError
 	def updatePixelSize(self):
-		# create new file to append to
+		"""
+		just update pixel size in file
+		"""
 		raise NotImplementedError	
 	def readParticles(self, particleNumbers):
-		# read a list of particles into memory
-		raise NotImplementedError
+		"""
+		read a list of particles into memory
+		"""
+		partdatalist = []
+		for partnum in particleNumbers:
+			a = mrc.read(self.filename, zslice=(partnum-1))
+			print partnum, a.shape
+			partdatalist.append(a)
+		return partdatalist
+		#raise NotImplementedError
 	def appendParticlesToFile(self, particleDataTree):
-		# takes a list of 2D numpy arrays
-		#  and wrtie them to a file
+		"""
+		takes a list of 2D numpy arrays
+		  and write them to a file
+		"""
+		self.currentParticles += len(particleDataTree)
+		self.validateParticles(particleDataTree)
 		if os.path.exists(self.filename):
 			partarray = numpy.array(particleDataTree)
 			mrc.append(partarray, self.filename)
@@ -41,9 +60,11 @@ class MrcClass(baseClass.StackClass):
 			apix = self.apix
 			pixeldict = {'x': apix, 'y': apix, 'z': apix, }
 			mrc.updateFilePixelSize(self.filename, pixeldict)
-	def close(self):
-		# close out file
-		# write total particles to header, etc.
+	def closeOut(self):
+		"""
+		close out file
+		write particle count, pixel size, ... to header, etc.
+		"""
 		return
 
 	################################################

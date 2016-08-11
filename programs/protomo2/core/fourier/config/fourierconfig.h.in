@@ -1,0 +1,41 @@
+/*----------------------------------------------------------------------------*
+*
+*  fourierconfig.h  -  configuration
+*
+*----------------------------------------------------------------------------*/
+
+#ifndef fourierconfig_h_
+#define fourierconfig_h_
+
+#include "modulebase.h"
+
+
+/* build identification */
+
+MODULE-PRFX FOURIER
+"i3fourier"
+"2.4"
+"Copyright © 2012 Hanspeter Winkler"
+
+
+/* module codes */
+
+#define FourierModuleCode  ( FourierModuleBase | 0x0100 )
+#define FFTpackModuleCode  ( FourierModuleBase | 0x0200 )
+#define FFTW2ModuleCode    ( FourierModuleBase | 0x0300 )
+#define GSLfftModuleCode   ( FourierModuleBase | 0x0400 )
+#define DJBfftModuleCode   ( FourierModuleBase | 0x0500 )
+#define DFTModuleCode      ( FourierModuleBase | 0x0f00 )
+
+
+/* debugging code */
+
+#define fourierdebug ( 0 )
+
+
+/* default transforms */
+
+#define FourierDefaultTransforms "djb,fftw2,fftpack"
+
+
+#endif

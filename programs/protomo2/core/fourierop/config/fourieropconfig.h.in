@@ -1,0 +1,28 @@
+/*----------------------------------------------------------------------------*
+*
+*  fourieropconfig.h  -  configuration
+*
+*----------------------------------------------------------------------------*/
+
+#ifndef fourieropconfig_h_
+#define fourieropconfig_h_
+
+#include "modulebase.h"
+
+
+/* build identification */
+
+MODULE-PRFX FOURIEROP
+"i3fourierop"
+"2.4"
+"Copyright © 2012 Hanspeter Winkler"
+
+
+/* module codes */
+
+#define ImageFourierModuleCode    ( FourieropModuleBase | 0x0100 )
+#define WindowFourierModuleCode   ( FourieropModuleBase | 0x0200 )
+#define WindowAlignModuleCode     ( FourieropModuleBase | 0x0300 )
+
+
+#endif

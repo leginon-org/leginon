@@ -1,0 +1,26 @@
+/*----------------------------------------------------------------------------*
+*
+*  tomofitconfig.h  -  configuration
+*
+*----------------------------------------------------------------------------*/
+
+#ifndef tomofitconfig_h_
+#define tomofitconfig_h_
+
+#include "tomomodulebase.h"
+
+
+/* build identification */
+
+MODULE-PRFX TOMOFIT
+"i3tomofit"
+"2.4"
+"Copyright © 2012 Hanspeter Winkler"
+
+
+/* module codes */
+
+#define TomotiltFitModuleCode     ( TomoFitModuleBase | 0x0100 )
+
+
+#endif

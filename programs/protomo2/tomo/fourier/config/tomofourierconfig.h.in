@@ -1,0 +1,26 @@
+/*----------------------------------------------------------------------------*
+*
+*  tomofourierconfig.h  -  configuration
+*
+*----------------------------------------------------------------------------*/
+
+#ifndef tomofourierconfig_h_
+#define tomofourierconfig_h_
+
+#include "tomomodulebase.h"
+
+
+/* build identification */
+
+MODULE-PRFX TOMOFOURIER
+"i3tomofourier"
+"2.4"
+"Copyright © 2012 Hanspeter Winkler"
+
+
+/* module codes */
+
+#define TomopatchModuleCode  ( TomoFourierModuleBase | 0x0100 )
+
+
+#endif

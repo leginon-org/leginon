@@ -12,18 +12,19 @@ RUN yum -y update && \
 ### install software
 RUN yum -y update && yum -y install \
  python-tools python-devel python-matplotlib \
- subversion ImageMagick grace gnuplot \
+ ImageMagick grace gnuplot \
  wxPython numpy scipy python-imaging python-pip \
  gcc-gfortran compat-gcc-34-g77 libgfortran.x86_64 \
  gcc-objc fftw3-devel gsl-devel boost148-python PyQt4 \
  mysql mysql-server MySQL-python mod_python ftgl \
- httpd php php-mysql phpMyAdmin mod_ssl php-pecl-ssh2 \
+ httpd php php-mysql  mod_ssl php-pecl-ssh2 \
  gcc-c++ libtiff-devel PyOpenGL python-argparse \
  php-devel gd-devel re2c fftw3-devel php-gd \
  xorg-x11-server-Xvfb netpbm-progs qiv python-requests \
  libssh2-devel mlocate nano elinks file \
- python-configparser \
+ python-configparser h5py git \
  numactl compat-libgfortran && yum -y clean all
+#removed phpMyAdmin
 ### Trying to do VNC
 RUN yum -y update && yum -y install tigervnc-server xterm xsetroot fluxbox fbpanel && yum -y clean all
 ### Firefox
@@ -51,8 +52,9 @@ EXPOSE 80
 RUN cp -fv /usr/share/mysql/my-huge.cnf /etc/my.cnf
 RUN sed -i.bak 's/max_allowed_packet = [0-9]*M/max_allowed_packet = 24M/' /etc/my.cnf
 #RUN svn checkout http://emg.nysbc.org/svn/myami/branches/myami-3.2/ /emg/sw/myami/
-RUN svn checkout http://emg.nysbc.org/svn/myami/trunk/ /emg/sw/myami/
+#RUN svn checkout http://emg.nysbc.org/svn/myami/trunk/ /emg/sw/myami/
 #RUN svn checkout -r 19651 http://emg.nysbc.org/svn/myami/trunk/ /emg/sw/myami/
+RUN git clone http://emg.nysbc.org/git/myami.git /emg/sw/myami/
 RUN ln -sv /emg/sw/myami/myamiweb /var/www/html/ami
 RUN ln -sv /emg/sw/myami/myamiweb /var/www/html/myamiweb
 #EXPOSE 3306
