@@ -3,6 +3,7 @@ import os
 import math
 import numpy
 import shutil
+import subprocess
 #pyami
 from pyami import mrc
 #appionlib
@@ -162,3 +163,53 @@ def sortRelionStarFileByParticleNumber(instarfile, outstarfile, datablock="data_
         for val in l:
                 loopDictNew.append(partdict[val])
         writeLoopDictToStarFile(loopDictNew, datablock, outstarfile)
+
+def writeRelionMicrographsStarHeader(outstarfile):
+	labels = ["_rlnMicrographName",
+		"_rlnCtfImage",
+		"_rlnDefocusU",
+		"_rlnDefocusV",
+		"_rlnDefocusAngle",
+		"_rlnVoltage",
+		"_rlnSphericalAberration",
+		"_rlnAmplitudeContrast",
+		"_rlnMagnification",
+		"_rlnDetectorPixelSize",
+		"_rlnCtfFigureOfMerit"]
+	ofile = open(outstarfile,'w')
+	ofile.write("\ndata_images\n\nloop_\n")
+	ofile.write("\n".join("%s #%i"%(label,index+1) for index,label in enumerate(labels)))
+	ofile.write("\n")
+	ofile.close()
+
+def generateCtfFile(imgname,cs,kev,amp,mag,dstep,defU,defV,defAngle,cc):
+	f = open(imgname,'w')
+	f.write(" CS[mm], HT[kV], AmpCnst, XMAG, DStep[um]\n")
+	f.write(" %4.1f   %6.1f    %4.2f  %8.1f  %7.3f\n"%(cs,kev,amp,mag,dstep))
+	f.write("      DFMID1      DFMID2      ANGAST          CC\n")
+	f.write("   %9.2f   %9.2f    %8.2f    %8.5f  Final Values\n"%(defU,defV,defAngle,cc))
+	f.close()
+
+def extractParticles(starfile,rootname,boxsize,bin,bgradius,pixlimit,invert,nproc=1,logfile=None):
+	relionexe = "`which relion_preprocess"
+	if nproc > 1:
+		relionexe = "mpirun %s_mpi"%relionexe
+	relionexe+= "`"
+
+	relioncmd = "%s --o %s --mic_star %s"%(relionexe,rootname,starfile)
+	relioncmd+= " --coord_suffix .box --extract"
+	relioncmd+= " --extract_size %i"%boxsize
+	if bin is not None:
+		relioncmd+=" --scale %i"%(int(boxsize/bin))
+	relioncmd+= " --norm --bg_radius %i"%(bgradius)
+	if pixlimit is not None:
+		pixlimit=abs(pixlimit)
+		relioncmd+= " --white_dust %.1f --black_dust %.1f"%(pixlimit,pixlimit)
+	if invert is True:
+		relioncmd+= " --invert_contrast"
+	if logfile:
+		logf = open(logfile,'w')
+		logf.write(relioncmd)
+		logf.close()
+	subprocess.Popen(relioncmd, shell=True).wait()
+
