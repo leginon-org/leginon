@@ -26,22 +26,28 @@ class StackClass(object):
 		just update pixel size in file
 		"""
 		raise NotImplementedError	
-	def readParticles(self, particleNumbers):
+	def readParticles(self, particleNumbers=None):
 		"""
 		read a list of particles into memory
 		"""
 		raise NotImplementedError
 	def appendParticlesToFile(self, particleDataTree):
 		"""
-		takes a list of 2D numpy arrays
-		  and wrtie them to a file
+		input:
+			* list of 2D numpy arrays
+			* 3D numpy array, shape (numpart, xdim, ydim)
+		and wrtie them to a file
 		"""
+		## always validate
 		self.validateParticles(particleDataTree)
+		## increment count
+		self.currentParticles += len(particleDataTree)
 		raise NotImplementedError
 	def closeOut(self):
 		"""
 		close out file
 		write particle count, pixel size, ... to header, etc.
+		mainly for IMAGIC files
 		"""
 		raise NotImplementedError
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import os
-from pyami import mrc
+from pyami import hdf
 from appionlib import apDisplay
 from appionlib.StackClass import baseClass
 
@@ -16,7 +16,8 @@ class MrcClass(baseClass.StackClass):
 		required variables to set are below
 		"""
 		if os.path.isfile(self.filename) and self.getFileSize() > 1:
-			self.mrcheader = mrc.readHeaderFromFile(self.filename)
+			self.hdfClass = hdf.HdfClass(self.filename)
+			self.hdfheader = self.hdfClass.readFirstParticleHeader()
 			self.boxsize = self.mrcheader['nx']
 			self.apix = self.getPixelSize()
 			self.originalNumberOfParticles = self.mrcheader['nz']
