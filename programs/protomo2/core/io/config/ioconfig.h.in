@@ -1,0 +1,50 @@
+/*----------------------------------------------------------------------------*
+*
+*  ioconfig.h  -  configuration
+*
+*----------------------------------------------------------------------------*/
+
+#ifndef ioconfig_h_
+#define ioconfig_h_
+
+#include "modulebase.h"
+
+
+/* build identification */
+
+MODULE-PRFX IO
+"i3io"
+"2.4"
+"Copyright © 2012 Hanspeter Winkler"
+
+
+/* module codes */
+
+#define IOModuleCode        ( IOModuleBase | 0x0000 )
+#define FileioModuleCode    ( IOModuleBase | 0x0100 )
+#define TextioModuleCode    ( IOModuleBase | 0x0200 )
+#define HeapModuleCode      ( IOModuleBase | 0x0300 )
+#define HeapProcModuleCode  ( IOModuleBase | 0x0400 )
+#define I3ioModuleCode      ( IOModuleBase | 0x0500 )
+#define I3dataModuleCode    ( IOModuleBase | 0x0600 )
+#define I3fileModuleCode    ( IOModuleBase | 0x0700 )
+
+
+/* options */
+
+#define HEAPDEBUG
+
+
+/* debugging code */
+
+#ifdef HEAPDEBUG
+  extern Bool HeapDebug;
+  #define HeapDebugSet( flag ) ( HeapDebug = flag )
+  #define heapdebug ( HeapDebug && Debug )
+#else
+  #define HeapDebugSet( flag ) ( flag )
+  #define heapdebug ( 0 )
+#endif
+
+
+#endif

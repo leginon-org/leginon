@@ -1,0 +1,39 @@
+#
+# Configuration
+#
+
+
+#
+# Build options:
+# opt:     compile with optimizations enabled
+# threads: enable multithreading
+#
+export OPTIONS = opt
+
+
+#
+# Installation directory
+#
+export INSTROOT = /usr/local/protomo
+
+
+#
+# External libraries
+#
+# Libraries are searched in "$(DEPLIBS)/lib/$(OS)/$(ARCH)", where OS is
+# the identifier for the operating system, and ARCH is an identifier for
+# the architecture. If the required libraries are installed elsewhere, 
+# a symbolic link should be created in $(DEPLIBS)/lib/$(OS)/$(ARCH) that
+# points to the actual location.
+# 
+#
+export DEPLIBS = /usr/local
+
+
+#
+# EMAN top directory
+#
+# Specify full path of EMAN top directory or auto for automatic assignment
+# in the directory tree at $(DEPLIBS).
+# 
+export EMAN2DIR = auto

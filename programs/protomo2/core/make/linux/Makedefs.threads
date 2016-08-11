@@ -1,0 +1,1 @@
+THRLIBS = -lpthread -lrt
