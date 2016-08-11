@@ -1,0 +1,30 @@
+/*----------------------------------------------------------------------------*
+*
+*  imageconfig.h  -  configuration
+*
+*----------------------------------------------------------------------------*/
+
+#ifndef imageconfig_h_
+#define imageconfig_h_
+
+#include "modulebase.h"
+
+
+/* build identification */
+
+MODULE-PRFX IMAGE
+"i3image"
+"2.4"
+"Copyright © 2012 Hanspeter Winkler"
+
+
+/* module codes */
+
+#define ImageModuleCode        ( ImageModuleBase | 0x0000 )
+#define ImageArrayModuleCode   ( ImageModuleBase | 0x0100 )
+#define ImageStatModuleCode    ( ImageModuleBase | 0x0200 )
+#define ImageMaskModuleCode    ( ImageModuleBase | 0x0300 )
+#define ImageCTFModuleCode     ( ImageModuleBase | 0x0400 )
+
+
+#endif

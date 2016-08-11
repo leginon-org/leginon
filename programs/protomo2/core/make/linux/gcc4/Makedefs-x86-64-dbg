@@ -1,0 +1,28 @@
+#
+# Makedefs: definitions for gcc4 and debugging
+#
+# Copyright © 2012 Hanspeter Winkler
+#
+
+CC = gcc
+COPT = -std=c99 -march=athlon64 -mmmx -msse -mfpmath=sse -ffast-math -fno-math-errno -g -Wall -Wextra -Wstrict-overflow -Wno-unused-parameter -pedantic -pipe
+CLIBOPT = $(COPT) -fPIC
+
+CXX = g++
+CXXOPT = -march=athlon64 -mmmx -msse -mfpmath=sse -ffast-math -fno-math-errno -g -Wabi -Wall -Wextra -Wstrict-overflow -Wno-unused-parameter -pedantic -pipe
+CXXLIBOPT = $(CXXOPT) -fPIC
+
+CPPOPT = 
+
+FC = gfortran
+FOPT = -std=f95 -march=athlon64 -mmmx -msse -mfpmath=sse -ffast-math -g -Wall -pedantic -pipe
+FLIBOPT = $(FOPT) -fPIC
+FORLIBS = -lgfortran
+
+ifdef THREADS
+  COPT += -pthread
+  FOPT += -pthread
+endif
+
+STRIP = true
+STRIPOPT =

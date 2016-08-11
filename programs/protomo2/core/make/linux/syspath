@@ -1,0 +1,4 @@
+
+# system path
+
+I3EXEPATH="${I3EXEPATH}:/usr/bin:/bin"

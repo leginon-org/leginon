@@ -1,0 +1,28 @@
+#
+# Makedefs: definitions for gcc4 optimized
+#
+# Copyright © 2012 Hanspeter Winkler
+#
+
+CC = gcc
+COPT = -std=c99 -march=i686 -mmmx -msse -mfpmath=sse -ffast-math -fno-math-errno -O3 -fomit-frame-pointer -fno-ident -pipe
+CLIBOPT = $(COPT) -fPIC
+
+CXX = g++
+CXXOPT = -march=i686 -mmmx -msse -mfpmath=sse -ffast-math -fno-math-errno -O3 -fomit-frame-pointer -fno-ident -pipe
+CXXLIBOPT = $(CXXOPT) -fPIC
+
+CPPOPT = 
+
+FC = gfortran
+FOPT = -std=f95 -march=i686 -mmmx -msse -mfpmath=sse -ffast-math -O3 -fomit-frame-pointer -fno-ident -pipe
+FLIBOPT = $(FOPT) -fPIC
+FORLIBS = -lgfortran
+
+ifdef THREADS
+  COPT += -pthread
+  FOPT += -pthread
+endif
+
+STRIP = strip
+STRIPOPT = -p --strip-unneeded
