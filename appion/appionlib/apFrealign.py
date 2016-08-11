@@ -595,10 +595,9 @@ def getStackParticleEulersForIteration(params,pnum):
 		if params['noClassification'] > (float(params['last'])*0.10):
 			apDisplay.printError('More than 10% of the particles have no classification, use a different reference reconstruction')
 		pclass={}
-		pclass['eulers']={}
-		pclass['eulers']['euler1']=0.0
-		pclass['eulers']['euler2']=0.0
-		pclass['inplane_rotation']=0.0
+		pclass['euler1']=0.0
+		pclass['euler2']=0.0
+		pclass['euler3']=0.0
 		pclass['mirror']=False
 		pclass['shiftx']=0.0
 		pclass['shifty']=0.0
