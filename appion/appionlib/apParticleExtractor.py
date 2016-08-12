@@ -340,6 +340,8 @@ class ParticleExtractLoop(appionLoop2.AppionLoop):
 			action="store_true", help="Do not delete CTF corrected MRC files when finishing")
 		self.parser.add_option("--usedownmrc", dest="usedownmrc", default=False,
 			action="store_true", help="Use existing *.down.mrc in processing")
+		self.parser.add_option("--no-ctf", dest="noctf", default=False,
+			action="store_true", help="Don't consider any CTF information")
 
 		### option based
 		self.parser.add_option("--ctfmethod", dest="ctfmethod",
@@ -447,9 +449,10 @@ class ParticleExtractLoop(appionLoop2.AppionLoop):
 		# check to see if image is rejected by other criteria
 		if self.rejectImage(imgdata) is False:
 			return False
-		# check CTF parameters for image and skip if criteria is not met
-		if self.checkCtfParams(imgdata) is False:
-			return False
+		if self.params['noctf'] is not True:
+			# check CTF parameters for image and skip if criteria is not met
+			if self.checkCtfParams(imgdata) is False:
+				return False
 		return None
 
 	#=======================
