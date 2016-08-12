@@ -6,6 +6,7 @@ import numpy
 from pyami import mrc
 from appionlib import apDisplay
 from appionlib.StackClass import ProcessStack
+from appionlib import apRelion
 
 ########################################
 ########################################
@@ -20,8 +21,6 @@ def numImagesInStack(filename):
 #===============
 def averageStack(stackfile="start.hed", outfile="average.mrc", partlist=None, msg=True):
 	"""
-	only works with IMAGIC
-	
 	partlist starts at 1
 	"""
 	if msg is True:
@@ -31,12 +30,30 @@ def averageStack(stackfile="start.hed", outfile="average.mrc", partlist=None, ms
 		apDisplay.printWarning("could not create stack average, average.mrc")
 		return False
 	avgStack = AverageStack(msg)
-	avgStack.start(stackfile, partlist)
-	if outfile is not None:
-		avgmrc = os.path.join(os.path.dirname(stackfile), outfile)
-		avgStack.save(avgmrc)
-	avgstack = avgStack.getdata()
-	return avgstack
+	# check if a star file
+	if os.path.splitext(stackfile)[1]==".star":
+		mrcfiles = apRelion.getMrcParticleFilesFromStar(stackfile)
+		count=0
+		for mrcfile in mrcfiles:
+			avgStack.start(mrcfile)
+			try:
+				sum += avgStack.summed
+			except:
+				sum = avgStack.summed
+			count += avgStack.index
+		average = sum / count
+		if outfile is not None:
+			avgmrc = os.path.join(os.path.dirname(stackfile), outfile)
+			mrc.write(average,avgmrc)
+		return average
+	# otherwise just one file to average
+	else:
+		avgStack.start(stackfile, partlist)
+		if outfile is not None:
+			avgmrc = os.path.join(os.path.dirname(stackfile), outfile)
+			avgStack.save(avgmrc)
+		avgstack = avgStack.getdata()
+		return avgstack
 
 #=======================
 class AverageStack(ProcessStack.ProcessStack):
