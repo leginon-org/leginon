@@ -129,7 +129,7 @@ def getPilFromStringFuncName():
 	# or from this extended module.  Checking attribute on an image object
 	# instead of the module avoids the recursive hasattr call.
 	im = Image.new('1', (1,1))
-	if hasattr(im,'tobytes'):
+	if hasattr(im,'frombytes'):
 		func_name = 'frombytes'
 	else:
 		func_name = 'fromstring'
@@ -147,7 +147,7 @@ Image2 = Image
 import PIL
 if hasattr(PIL, 'PILLOW_VERSION'):
 	if int(PIL.PILLOW_VERSION[0]) >= 3:
-		Image2.frombytes = fromstring
+		Image2.fromstring = Image.frombytes
 
 if __name__ == '__main__':
 	a = textArray('Hello')
