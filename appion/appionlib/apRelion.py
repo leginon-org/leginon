@@ -164,6 +164,35 @@ def sortRelionStarFileByParticleNumber(instarfile, outstarfile, datablock="data_
                 loopDictNew.append(partdict[val])
         writeLoopDictToStarFile(loopDictNew, datablock, outstarfile)
 
+def getStarFileColumnLabels(starfile):
+	# returns array of labels, assuming they are in order
+	# and correspond to the data
+	labels=[]
+	for line in open(starfile):
+		l = line.strip().split()
+		if line[:4]=="_rln":
+			labels.append(l[0])
+			continue
+		if len(l) > 2:
+			return labels
+
+def getMrcParticleFilesFromStar(starfile):
+	# returns array of mrc files containing particles
+	# first get header info
+	labels = getStarFileColumnLabels(starfile)
+	namecol = labels.index('_rlnImageName')
+	mrclist = []
+	for line in open(starfile):
+		l = line.strip().split()
+		if (len(l)<namecol or l[:4]=="_rln" or l[0] in ['data_','loop_']):
+			continue
+		micro = l[namecol].split('@')[1]
+		# Relion usually uses relative paths, check:
+		if micro[0]!="/":
+			micro = os.path.join(os.path.dirname(starfile),micro)
+		if micro not in mrclist: mrclist.append(micro)
+	return mrclist
+
 def writeRelionMicrographsStarHeader(outstarfile):
 	labels = ["_rlnMicrographName",
 		"_rlnCtfImage",
