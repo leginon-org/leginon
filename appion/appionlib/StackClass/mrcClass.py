@@ -38,13 +38,17 @@ class MrcClass(baseClass.StackClass):
 		"""
 		read a list of particles into memory
 		"""
-		if particleNumbers is None:
-			particleNumbers = range(1, self.currentParticles+1)
 		partdatalist = []
+		if particleNumbers is None:
+			self.mrcheader = mrc.readHeaderFromFile(self.filename)
+			self.currentParticles = self.mrcheader['nz']
+			particleNumbers = range(1,self.currentParticles+1)
 		for partnum in particleNumbers:
 			a = mrc.read(self.filename, zslice=(partnum-1))
 			#print partnum, a.shape
 			partdatalist.append(a)
+		if self.debug is True:
+			print "read %d particles"%(len(partdatalist))
 		return partdatalist
 
 	def appendParticlesToFile(self, particleDataTree):
@@ -106,7 +110,6 @@ if __name__ == '__main__':
 		f2 = MrcClass("temp.mrc")
 		# read particles in stack
 		b = f2.readParticles()
-		print b
 		# create new particles from old ones
 		# append and save new particles to stack
 		f2.appendParticlesToFile(b[-4:]*a)
