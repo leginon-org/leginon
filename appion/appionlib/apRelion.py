@@ -1,15 +1,7 @@
 #python
 import os
-import math
-import numpy
-import shutil
 import subprocess
-#pyami
-from pyami import mrc
 #appionlib
-from appionlib.apCtf import ctfdb
-from appionlib import apDisplay
-from appionlib import apParam
 from appionlib import starFile
 
 def readStarFileDataBlock(starfile, datablock):
@@ -176,22 +168,34 @@ def getStarFileColumnLabels(starfile):
 		if len(l) > 2:
 			return labels
 
+def getColumnFromRelionLine(line,col):
+	# return a specified column (starting with 0)
+	l = line.strip().split()
+	if (len(l)<col or l[:4]=="_rln" or l[0] in ['data_','loop_']):
+		return None
+	return l[col]
+	
 def getMrcParticleFilesFromStar(starfile):
 	# returns array of mrc files containing particles
 	# first get header info
-	labels = getStarFileColumnLabels(starfile)
-	namecol = labels.index('_rlnImageName')
 	mrclist = []
-	for line in open(starfile):
-		l = line.strip().split()
-		if (len(l)<namecol or l[:4]=="_rln" or l[0] in ['data_','loop_']):
-			continue
-		micro = l[namecol].split('@')[1]
+	for p in getPartsFromStar(starfile):
+		micro = p.split('@')[1]
 		# Relion usually uses relative paths, check:
 		if micro[0]!="/":
 			micro = os.path.join(os.path.dirname(starfile),micro)
 		if micro not in mrclist: mrclist.append(micro)
 	return mrclist
+
+def getPartsFromStar(starfile):
+	# returns array of particles
+	labels = getStarFileColumnLabels(starfile)
+	namecol = labels.index('_rlnImageName')
+	partlist = []
+	for line in open(starfile):
+		p=getColumnFromRelionLine(line,namecol)
+		if p: partlist.append(p)
+	return partlist
 
 def writeRelionMicrographsStarHeader(outstarfile,ctfinfo=False):
 	labels = ["_rlnMicrographName",
