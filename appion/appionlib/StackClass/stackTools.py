@@ -6,7 +6,6 @@ import numpy
 from pyami import mrc
 from appionlib import apDisplay
 from appionlib.StackClass import ProcessStack
-from appionlib import apRelion
 
 ########################################
 ########################################
@@ -19,8 +18,9 @@ def numImagesInStack(filename):
 ########################################
 ########################################
 #===============
-def averageStack(stackfile="start.hed", outfile="average.mrc", partlist=None, msg=True):
+def averageStack(stackfile="start.hdf", outfile="average.mrc", partlist=None, msg=True):
 	"""
+	does not work with IMAGIC, yet
 	partlist starts at 1
 	"""
 	if msg is True:
@@ -30,35 +30,45 @@ def averageStack(stackfile="start.hed", outfile="average.mrc", partlist=None, ms
 		apDisplay.printWarning("could not create stack average, average.mrc")
 		return False
 	avgStack = AverageStack(msg)
-	# check if a star file
-	if os.path.splitext(stackfile)[1]==".star":
-		mrcfiles = apRelion.getMrcParticleFilesFromStar(stackfile)
-		count=0
-		for mrcfile in mrcfiles:
-			avgStack.start(mrcfile)
-			try:
-				sum += avgStack.summed
-			except:
-				sum = avgStack.summed
-			count += avgStack.index
-		average = sum / count
-		if outfile is not None:
-			avgmrc = os.path.join(os.path.dirname(stackfile), outfile)
-			mrc.write(average,avgmrc)
-		return average
-	# otherwise just one file to average
-	else:
-		avgStack.start(stackfile, partlist)
-		if outfile is not None:
-			avgmrc = os.path.join(os.path.dirname(stackfile), outfile)
-			avgStack.save(avgmrc)
-		avgstack = avgStack.getdata()
-		return avgstack
+	avgStack.start(stackfile, partlist)
+	if outfile is not None:
+		avgmrc = os.path.join(os.path.dirname(stackfile), outfile)
+		avgStack.save(avgmrc)
+	avgstack = avgStack.getdata()
+	return avgstack
+
+#===============
+def averageStackList(stacklist, outfile="average.mrc", partlist=None, msg=True):
+	"""
+	does not work with IMAGIC, yet
+	partlist starts at 1
+	"""
+	if msg is True:
+		apDisplay.printMsg("averaging stack list for summary web page")
+	if not isinstance(stacklist, list):
+		apDisplay.printWarning("could not create stack average, average.mrc")
+		return False
+	totalsum = 0
+	totalindex = 0
+	avgStack = AverageStack(msg)
+	for stackfile in stacklist:
+		stackfile = os.path.abspath(stackfile)
+		if not os.path.isfile(stackfile):
+			apDisplay.printWarning("could not create stack average, average.mrc")
+			continue
+		avgStack.start(stackfile)
+		totalsum += avgStack.summed
+		totalindex += avgStack.index
+	average = totalsum / totalindex
+	if outfile is not None:
+		mrc.write(average, outfile)
+	return average
 
 #=======================
 class AverageStack(ProcessStack.ProcessStack):
 	#===============
-	def preLoop(self):
+	def preLoop(self, msg=True):
+		self.msg = msg
 		self.summed = numpy.zeros((self.boxsize,self.boxsize))
 		#override self.partlist to get a subset
 		self.count = 0
@@ -77,13 +87,19 @@ class AverageStack(ProcessStack.ProcessStack):
 		#report
 		mean = self.average.mean()
 		std = self.average.std()
-		apDisplay.printMsg("mean/std pixel value of average.mrc %.8f +/- %.8f"%(mean, std))
+		if self.msg is True:
+			apDisplay.printMsg("mean/std pixel value of average.mrc %.8f +/- %.8f"%(mean, std))
 		#save
 		mrc.write(self.average, avgfile)
 
 	#===============
 	def getdata(self):
-		return self.average/self.index
+		self.average = self.summed / self.index
+		mean = self.average.mean()
+		std = self.average.std()
+		if self.msg is True:
+			apDisplay.printMsg("mean/std pixel value of average.mrc %.8f +/- %.8f"%(mean, std))
+		return self.average
 
 ########################################
 ########################################
