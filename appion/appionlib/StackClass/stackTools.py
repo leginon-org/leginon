@@ -7,6 +7,11 @@ from pyami import mrc
 from appionlib import apDisplay
 from appionlib.StackClass import ProcessStack
 
+####
+# This is a low-level file with NO database connections
+# Please keep it this way
+####
+
 ########################################
 ########################################
 ########################################

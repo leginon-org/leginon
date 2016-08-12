@@ -8,6 +8,11 @@ from appionlib import apDisplay
 from appionlib.StackClass import mrcClass
 from appionlib.StackClass import hdfClass
 
+####
+# This is a low-level file with NO database connections
+# Please keep it this way
+####
+
 ########################################
 ########################################
 ########################################
@@ -16,9 +21,13 @@ def createStackClass(filename):
 	if extension == '.mrc' or extension == '.mrcs':
 		return mrcClass.MrcClass(filename)
 	elif extension == '.hed' or extension == '.img':
-		return imagicClass.ImagicClass(filename)
+		raise NotImplementedError
 	elif extension == '.hdf':
 		return hdfClass.HdfClass(filename)
+	elif extension == '.png':
+		raise NotImplementedError
+	elif extension == '.jpg' or extension == '.jpeg':
+		raise NotImplementedError
 	raise NotImplementedError("extension does not map to existing stack type %s"%(extension))
 
 ########################################
