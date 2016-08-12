@@ -13,7 +13,7 @@ from appionlib.StackClass import hdfClass
 ########################################
 def createStackClass(filename):
 	extension = os.path.splitext(filename)[-1]
-	if extension in ['.mrc','.mrcs']:
+	if extension == '.mrc' or extension == '.mrcs':
 		return mrcClass.MrcClass(filename)
 	elif extension == '.hed' or extension == '.img':
 		return imagicClass.ImagicClass(filename)
