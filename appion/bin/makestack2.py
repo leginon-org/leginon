@@ -32,6 +32,7 @@ from appionlib.apCtf import ctfdb
 from appionlib.apSpider import filters
 from appionlib.apImage import imagenorm
 from appionlib.apImage import imagefilter
+from appionlib.StackClass import stackTools
 from appionlib import apRelion
 
 class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
@@ -67,45 +68,48 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 		self.shortname = apDisplay.short(imgdata['filename'])
 
 		if self.params['filetype']=="relion":
-			# make sure there is CTF info
-			ctfdata = self.getBestCtfValue(imgdata)
-			if not ctfdata:
-				return
 			# create symbolic link to original micrograph
 			linkfile = os.path.join(self.params['rundir'],imgdata['filename'])+".mrc"
 			os.symlink(self.getOriginalImagePath(imgdata),linkfile)
 
-			# add the micrograph line to the micrograph star file
-			fout = open(self.mstarfile,'a')
-
 			# get original micrograph & ctfimage
-			fout.write("%s %s"%(imgdata['filename']+".mrc",imgdata['filename']+".ctf:mrc"))
-
-			# get CTF information
-			defU = ctfdata['defocus1']*1.0e10
-			defV = ctfdata['defocus2']*1.0e10
-			defAngle = ctfdata['angle_astigmatism']
-			fout.write("%13.6f%13.6f%13.6f"%(defU,defV,defAngle))
-
-			# get kev, CS, ampcontrast
-			kev = imgdata['scope']['high tension']/1000.0
-			cs = self.getCS(ctfdata)
-			amp = ctfdata['amplitude_contrast']
-			fout.write("%13.6f%13.6f%13.6f"%(kev,cs,amp))
+			rel_line = "%s %s"%(imgdata['filename']+".mrc",imgdata['filename']+".ctf:mrc")
 
 			# get magnification, pixel size
 			dstep = imgdata['camera']['pixel size']['x']*1e6
 			mag = dstep/self.params['apix']*1e4
-			fout.write("%13.6f%13.5f"%(mag,dstep))
+			rel_line+= "%13.6f%13.5f"%(mag,dstep)
 
-			# get ctfestimation fig of merit (CC)
-			cc = ctfdata['cross_correlation']
-			fout.write("%13.6f\n"%(cc))
+			# get CTF information
+			if self.params['noctf'] is not True:
+				ctfdata = self.getBestCtfValue(imgdata)
+				if ctfdata:
+					defU = ctfdata['defocus1']*1.0e10
+					defV = ctfdata['defocus2']*1.0e10
+					defAngle = ctfdata['angle_astigmatism']
+					rel_line+= "%13.6f%13.6f%13.6f"%(defU,defV,defAngle)
+
+					# get kev, CS, ampcontrast
+					kev = imgdata['scope']['high tension']/1000.0
+					cs = self.getCS(ctfdata)
+					amp = ctfdata['amplitude_contrast']
+					rel_line+= "%13.6f%13.6f%13.6f"%(kev,cs,amp)
+
+					# get ctfestimation fig of merit (CC)
+					cc = ctfdata['cross_correlation']
+					rel_line+= "%13.6f"%(cc)
+
+					# Relion requires the CTF log file as well
+					ctflog = os.path.join(self.params['rundir'],imgdata['filename']+"_ctffind3.log")
+					apRelion.generateCtfFile(ctflog,cs,kev,amp,mag,dstep,defU,defV,defAngle,cc)
+				else:
+					apDisplay.printMsg('No CTF information in database, skipping image')
+					return None
+
+			# add the micrograph line to the micrograph star file
+			fout = open(self.mstarfile,'a')
+			fout.write(rel_line+"\n")
 			fout.close()
-
-			# Relion requires the CTF log file as well
-			ctflog = os.path.join(self.params['rundir'],imgdata['filename']+"_ctffind3.log")
-			apRelion.generateCtfFile(ctflog,cs,kev,amp,mag,dstep,defU,defV,defAngle,cc)
 
 		### if only selected points along helix,
 		### fill in points with helical step
@@ -1215,14 +1219,18 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 			return
 
 		stackpath = os.path.join(self.params['rundir'], self.params['single'])
-		### delete this after testing
-		if self.params['filetype']!="relion":
-			apStack.averageStack(stack = stackpath)
-			### Create Stack Mean Plot
-			if self.params['commit'] is True and self.params['meanplot'] is True:
-				stackid = apStack.getStackIdFromPath(stackpath)
-				if stackid is not None:
-					apStackMeanPlot.makeStackMeanPlot(stackid)
+		averagefile = os.path.join(self.params['rundir'],'average.mrc')
+
+		if self.params['filetype']=='relion':
+			mrcfiles = apRelion.getMrcParticleFilesFromStar(stackpath)
+			stackTools.averageStackList(mrcfiles, averagefile)
+		else:
+			apStack.averageStack(stackpath)
+		### Create Stack Mean Plot
+		if self.params['commit'] is True and self.params['meanplot'] is True:
+			stackid = apStack.getStackIdFromPath(stackpath)
+			if stackid is not None:
+				apStackMeanPlot.makeStackMeanPlot(stackid)
 
 		apDisplay.printColor("Timing stats", "blue")
 		self.printTimeStats("Batch Boxer", self.batchboxertimes)
