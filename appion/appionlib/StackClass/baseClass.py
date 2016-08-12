@@ -55,7 +55,7 @@ class StackClass(object):
 	################################################
 	# These functions are general should not be copied to subClasses
 	################################################
-	def __init__(self, filename, msg=True):
+	def __init__(self, filename, msg=False):
 		self.filename = filename
 		self.msg = msg
 		self.debug = True

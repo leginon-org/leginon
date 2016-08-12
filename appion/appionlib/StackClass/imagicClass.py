@@ -48,11 +48,15 @@ class ImagicClass(baseClass.StackClass):
 		"""
 		partdatalist = []
 		if particleNumbers is None:
-			particleNumbers = range(1, self.currentParticles+1)
+			headerdict = apImagicFile.readImagicHeader(self.hedfile)
+			self.currentParticles = headerdict['nimg']
+			particleNumbers = range(1,self.currentParticles+1)
 		for partnum in particleNumbers:
-			a = apImagicFile.readSingleParticleFromStack(self.filename, partnum=partnum)
+			a = apImagicFile.readSingleParticleFromStack(self.filename, partnum=partnum, msg=self.msg)
 			partdatalist.append(a)
-		return partdatalist
+		if self.debug is True:
+			print "read %d particles"%(len(partdatalist))
+		return numpy.array(partdatalist)
 
 	def appendParticlesToFile(self, particleDataTree):
 		"""
@@ -95,14 +99,15 @@ if __name__ == '__main__':
 	# close stack
 	del f1
 	for i in range(10):
-		# create a random stack of 4 particles with 16x16 dimensions
-		a = numpy.random.random((4,128,128))
 		# open created stack
 		f2 = ImagicClass("temp.hed")
 		# read particles in stack
 		b = f2.readParticles()
 		# create new particles from old ones
 		# append and save new particles to stack
+		print b[0]
+		# create a random stack of 4 particles with 16x16 dimensions
+		a = numpy.random.random((4,128,128))
 		f2.appendParticlesToFile(b[-4:]*a)
 		# close new stack
 		del f2

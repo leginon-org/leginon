@@ -49,7 +49,7 @@ class MrcClass(baseClass.StackClass):
 			partdatalist.append(a)
 		if self.debug is True:
 			print "read %d particles"%(len(partdatalist))
-		return partdatalist
+		return numpy.array(partdatalist)
 
 	def appendParticlesToFile(self, particleDataTree):
 		"""
