@@ -443,10 +443,10 @@ function alignstacksummarytable($alignstackid, $mini=false, $showOptions=True) {
 		$stacktable.= "<table border='0'>\n";
 		$stacktable.= "<tr><td>\n";
 		if ($mini) {
-			$stacktable.= "<img src='loadimg.php?filename=$stackavg&h=60' height='60'><br/>\n";
+			$stacktable.= "<img src='loadimg.php?filename=$stackavg&s=60' height='60'><br/>\n";
 			$stacktable.= "<i>avg image</i>\n";
 		} else {
-			$stacktable.= "<img src='loadimg.php?filename=$stackavg&h=120' height='120'><br/>\n";
+			$stacktable.= "<img src='loadimg.php?filename=$stackavg&s=120' height='120'><br/>\n";
 			$stacktable.= "<i>averaged stack image</i>\n";
 		}
 		$stacktable.= "</td>\n";
@@ -456,7 +456,7 @@ function alignstacksummarytable($alignstackid, $mini=false, $showOptions=True) {
 			$stacktable.= "<a href='aligngraph.php?expId=$expId&alignid=$alignstackid&type=$type'>\n";
 			if ($mini && $numpart < 1000)
 				$stacktable.= "<img border='0' src='aligngraph.php?expId=$expId"
-					."&alignid=$alignstackid&h=60&type=$type' height='60'>\n";
+					."&alignid=$alignstackid&s=60&type=$type' height='60'>\n";
 			elseif ($numpart < 500)
 				$stacktable.= "<img border='0' src='aligngraph.php?expId=$expId"
 					."&alignid=$alignstackid&h=120&type=$type' height='120'>\n";
@@ -665,7 +665,7 @@ function stackInfoForRecipe($stackid) {
 	if (file_exists($stackavg)) {
 		$s.= "<tr>\n";
 		$s.= "<td rowspan='30' align='center' valign='top'>\n";
-		$s.= "<img src='loadimg.php?filename=$stackavg&h=60' height='60'>\n";
+		$s.= "<img src='loadimg.php?filename=$stackavg&s=60' height='60'>\n";
 		$s.= "</td>\n";
 	}
 	$s.= "<td>\n";
@@ -694,7 +694,7 @@ function alignInfoForRecipe($astackid) {
 	if (file_exists($stackavg)) {
 		$s.= "<tr>\n";
 		$s.= "<td rowspan='30' align='center' valign='top'>\n";
-		$s.= "<img src='loadimg.php?filename=$stackavg&h=60' height='60'>\n";
+		$s.= "<img src='loadimg.php?filename=$stackavg&s=60' height='60'>\n";
 		$s.= "</td>\n";
 	}
 	$s.= "<td>\n";
