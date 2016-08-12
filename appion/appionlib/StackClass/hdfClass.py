@@ -5,7 +5,7 @@ from pyami import hdf
 from appionlib import apDisplay
 from appionlib.StackClass import baseClass
 
-class MrcClass(baseClass.StackClass):
+class HdfClass(baseClass.StackClass):
 	################################################
 	# Must be implemented in new Stack subClass
 	################################################
@@ -15,13 +15,12 @@ class MrcClass(baseClass.StackClass):
 		  or initialize new empty stack
 		required variables to set are below
 		"""
-		if os.path.isfile(self.filename) and self.getFileSize() > 1:
-			self.hdfClass = hdf.HdfClass(self.filename)
-			self.hdfheader = self.hdfClass.readFirstParticleHeader()
-			self.boxsize = self.mrcheader['nx']
-			self.apix = self.getPixelSize()
-			self.originalNumberOfParticles = self.mrcheader['nz']
-			self.currentParticles = self.mrcheader['nz'] #this number will increment
+		if os.path.isfile(self.filename) and self.getFileSize() > 10:
+			self.hdfClass = hdf.HdfFile(self.filename)
+			self.apix = self.hdfClass.getPixelSize()
+			self.boxsize = self.hdfClass.getBoxSize()
+			self.originalNumberOfParticles = self.hdfClass.numpart
+			self.currentParticles = self.hdfClass.numpart #this number will increment
 
 	def newFile(self):
 		"""
@@ -33,17 +32,16 @@ class MrcClass(baseClass.StackClass):
 		"""
 		just update pixel size in file
 		"""
-		raise NotImplementedError	
+		raise NotImplementedError
 
 	def readParticles(self, particleNumbers=None):
 		"""
 		read a list of particles into memory
 		"""
-		partdatalist = []
-		for partnum in particleNumbers:
-			a = mrc.read(self.filename, zslice=(partnum-1))
-			#print partnum, a.shape
-			partdatalist.append(a)
+		self.apix = self.hdfClass.getPixelSize()
+		self.boxsize = self.hdfClass.getBoxSize()
+		self.currentParticles = self.hdfClass.numpart
+		partdatalist = self.hdfClass.read(particleNumbers)
 		return partdatalist
 
 	def appendParticlesToFile(self, particleDataTree):
@@ -57,17 +55,12 @@ class MrcClass(baseClass.StackClass):
 		self.validateParticles(particleDataTree)
 		## increment count
 		self.currentParticles += len(particleDataTree)
-		if os.path.exists(self.filename):
-			partarray = numpy.array(particleDataTree)
-			mrc.append(partarray, self.filename)
+		if os.path.isfile(self.filename) and self.getFileSize() > 10:
+			self.hdfClass.append(particleDataTree)
 		else:
-			f = open(self.filename, "wb+")
-			partarray = numpy.array(particleDataTree)
-			mrc.write(partarray, f)
-			f.close()
-			apix = self.apix
-			pixeldict = {'x': apix, 'y': apix, 'z': apix, }
-			mrc.updateFilePixelSize(self.filename, pixeldict)
+			self.hdfClass = hdf.HdfFile(self.filename)
+			#self.hdfClass.apix = self.apix
+			self.hdfClass.write(particleDataTree)
 
 	def closeOut(self):
 		"""
@@ -77,29 +70,19 @@ class MrcClass(baseClass.StackClass):
 		"""
 		return
 
-	################################################
-	# Unique functions for this class
-	################################################
-	def getPixelSize(self):
-			pixeldict = mrc.readFilePixelSize(self.filename)
-			if pixeldict['x'] == pixeldict['y'] and pixeldict['x'] == pixeldict['z']:
-				return pixeldict['x']
-			else:
-				apDisplay.printWarning("Image Stack has unknown pixel size, using 1.0 A/pixel")
-				return 1.0
-
 if __name__ == '__main__':
 	import numpy
 	# create a random stack of 4 particles with 16x16 dimensions
 	a = numpy.random.random((4,16,16))
 	# create new stack file
-	f1 = MrcClass("temp.mrc")
+
+	f1 = HdfClass("temp.hdf")
 	# save particles to file
 	f1.appendParticlesToFile(a)
 	# close stack
 	del f1
 	# open created stack
-	f2 = MrcClass("temp.mrc")
+	f2 = HdfClass("temp.hdf")
 	# read particles in stack
 	b = f2.readParticles()
 	# create new particles from old ones
