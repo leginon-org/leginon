@@ -384,6 +384,10 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		self.getFrameNamePattern(rawframedir)
 		return rawframedir
 
+	def getKVFromImage(self, imagedata):
+		kv = imagedata['scope']['high tension']/1000.0
+		return kv
+	
 	def setCycleReferenceChannels(self, value=False):
 		self.cycle_ref_channels = value
 
@@ -1166,6 +1170,8 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		This funciton decides whether dosefgpu_driftcorr will be used for
 		summing up ddstack.  Dosefgpu_driftcorr can only handle
 		consecutive frame sum.
+		
+		REDUNDANT FUNCTION, SWITCH TO ApDDFrameAligner
 		'''
 		framelist = self.getAlignedSumFrameList()
 		# To save time, only proceed if necessary
@@ -1213,8 +1219,8 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		cmd += self.addDoseFDriftCorrOptions()
 
 		# moving average window and y-axis flip
-		if self.getNewNumRunningAverageFrames() > 1:
-			cmd += ' -nrw %d ' % (self.getNewNumRunningAverageFrames()) 
+#		if self.getNewNumRunningAverageFrames() > 1:
+#			cmd += ' -nrw %d ' % (self.getNewNumRunningAverageFrames()) 
 		
 		if self.getNewFlipAlongYAxis() == 1:
 			cmd += ' -flp %d' % (self.getNewFlipAlongYAxis()) 
