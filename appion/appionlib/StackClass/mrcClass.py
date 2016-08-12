@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import os
+import numpy
 from pyami import mrc
 from appionlib import apDisplay
 from appionlib.StackClass import baseClass

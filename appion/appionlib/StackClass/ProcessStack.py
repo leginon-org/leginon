@@ -7,6 +7,7 @@ from pyami import mem
 from appionlib import apDisplay
 from appionlib.StackClass import mrcClass
 from appionlib.StackClass import hdfClass
+from appionlib.StackClass import imagicClass
 
 ####
 # This is a low-level file with NO database connections
@@ -21,7 +22,7 @@ def createStackClass(filename):
 	if extension == '.mrc' or extension == '.mrcs':
 		return mrcClass.MrcClass(filename)
 	elif extension == '.hed' or extension == '.img':
-		raise NotImplementedError
+		return imagicClass.ImagicClass(filename)
 	elif extension == '.hdf':
 		return hdfClass.HdfClass(filename)
 	elif extension == '.png':

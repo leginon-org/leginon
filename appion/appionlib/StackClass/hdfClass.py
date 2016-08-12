@@ -42,10 +42,11 @@ class HdfClass(baseClass.StackClass):
 	def readParticles(self, particleNumbers=None):
 		"""
 		read a list of particles into memory
+		particles numbers must start at 1
 		"""
-		self.apix = self.hdfClass.getPixelSize()
-		self.boxsize = self.hdfClass.getBoxSize()
-		self.currentParticles = self.hdfClass.numpart
+		if particleNumbers is None:
+			self.currentParticles = self.hdfClass.numpart
+			particleNumbers = range(0,self.currentParticles)
 		partdatalist = self.hdfClass.read(particleNumbers)
 		return partdatalist
 

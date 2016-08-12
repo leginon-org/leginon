@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import os
+import numpy
 from appionlib import apDisplay
 from appionlib import apImagicFile
 from appionlib.StackClass import baseClass
