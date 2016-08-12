@@ -1148,7 +1148,6 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		self.save_aligned_stack=True
 		return False
 
-<<<<<<< HEAD
 	def setDoseFDriftCorrOptions(self,params):
 		paramkeys = ['bft','fod','pbx']
 		for goodkey in paramkeys:
