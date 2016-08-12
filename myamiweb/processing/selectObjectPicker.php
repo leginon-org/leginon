@@ -97,6 +97,23 @@ echo " <p> A manual picker was create for editing existing picks or picking part
 echo "</td></tr>\n";
 
 /*
+** Gautomatch
+*/
+
+echo "<tr><td width='100' align='center'>\n";
+echo "  <img src='img/appionlogo.jpg' height='100'>\n";
+echo "</td><td>\n";
+echo "  <h3><a href='runAppionLoop.php?expId=$expId&form=gautomatchForm'>Gautomatch Picking</a></h3>\n";
+echo " <p>  Gautomatch is a GPU accelerated program for accurate, fast, flexible and fully "
+	."automatic particle picking from cryo‐EM micrographs with or without templates.</p>\n";
+
+echo "</td></tr>\n";
+
+
+
+
+
+/*
 ** DoG Picker 2
 */
 
