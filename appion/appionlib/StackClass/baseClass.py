@@ -8,6 +8,7 @@ class StackClass(object):
 	################################################
 	def readHeader(self):
 		"""
+		run during __init__ phase
 		read the header information
 		  or initialize new empty stack
 		required variables to set are below
@@ -54,13 +55,15 @@ class StackClass(object):
 	################################################
 	# These functions are general should not be copied to subClasses
 	################################################
-	def __init__(self, filename):
+	def __init__(self, filename, msg=False):
 		self.filename = filename
+		self.msg = msg
+		self.debug = True
 		self.readHeader()
 		self.particlesWritten = 0
 		self.particlesRead = 0
 		self.boxsize = None
-		self.apix = 1.0 # assume 1.0 apix unless specified
+		self.apix = None # assume 1.0 apix unless specified
 		self.originalNumberOfParticles = 0
 		self.currentParticles = 0
 		self.readonly = False

@@ -7,6 +7,12 @@ from pyami import mem
 from appionlib import apDisplay
 from appionlib.StackClass import mrcClass
 from appionlib.StackClass import hdfClass
+from appionlib.StackClass import imagicClass
+
+####
+# This is a low-level file with NO database connections
+# Please keep it this way
+####
 
 ########################################
 ########################################
@@ -19,6 +25,10 @@ def createStackClass(filename):
 		return imagicClass.ImagicClass(filename)
 	elif extension == '.hdf':
 		return hdfClass.HdfClass(filename)
+	elif extension == '.png':
+		raise NotImplementedError
+	elif extension == '.jpg' or extension == '.jpeg':
+		raise NotImplementedError
 	raise NotImplementedError("extension does not map to existing stack type %s"%(extension))
 
 ########################################

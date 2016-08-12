@@ -193,18 +193,19 @@ def getMrcParticleFilesFromStar(starfile):
 		if micro not in mrclist: mrclist.append(micro)
 	return mrclist
 
-def writeRelionMicrographsStarHeader(outstarfile):
+def writeRelionMicrographsStarHeader(outstarfile,ctfinfo=False):
 	labels = ["_rlnMicrographName",
-		"_rlnCtfImage",
+		"_rlnMagnification",
+		"_rlnDetectorPixelSize"]
+	if ctfinfo is True:
+		labels.extend(["_rlnCtfImage",
 		"_rlnDefocusU",
 		"_rlnDefocusV",
 		"_rlnDefocusAngle",
 		"_rlnVoltage",
 		"_rlnSphericalAberration",
 		"_rlnAmplitudeContrast",
-		"_rlnMagnification",
-		"_rlnDetectorPixelSize",
-		"_rlnCtfFigureOfMerit"]
+		"_rlnCtfFigureOfMerit"])
 	ofile = open(outstarfile,'w')
 	ofile.write("\ndata_images\n\nloop_\n")
 	ofile.write("\n".join("%s #%i"%(label,index+1) for index,label in enumerate(labels)))
