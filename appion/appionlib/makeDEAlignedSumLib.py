@@ -495,7 +495,6 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 			apDisplay.printWarning('queued job for %s failed' % imgdata['filename'])
 			return None
 
-		#particlelst=readDriftFiles()
 		correctedpath=os.path.join(self.params['queue_scratch'],imgdata['filename'],imgdata['filename'])
 		print os.path.join(correctedpath,'*translations_x*')
 		print glob.glob(os.path.join(correctedpath,'*translations_x*'))
@@ -542,7 +541,10 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 			print command
 			subprocess.call(command)
 		newimg_array = mrc.read(outnamepath)
+		particlelst=readDriftFiles(xtranslation, ytranslation)
 		self.commitAlignedImageToDatabase(imgdata, newimg_array, alignlabel=self.params['alignlabel'])
+		self.commitFrameTrajectoryToDatabase(imgdata,particlelst,particle=None)
+
 		# return None since everything is committed within this function.
 		if self.params['hackcopy'] is True:
 			origpath = imgdata['session']['image path']
@@ -637,6 +639,15 @@ class MakeAlignedSumLoop(appionPBS.AppionPBS):
 			newimagedata.insert()
 			q = appiondata.ApDDAlignImagePairData(source=imgdata, result=newimagedata, ddstackrun=self.rundata)
 			q.insert()
+	def commitFrameTrajectoryToDatabase(self, imgdata,particlelst,particle=None):
+	    for particle in particlelst:
+		q=appiondata.ApFrameAlignTrajectory()
+		q['image']=imgdata
+		q['particle']=particle
+		q['ddstackrun']=self.rundata
+		q['xshift']=particle['x']
+		q['yshift']=particle['y']
+		q.insert()
 
 	def commitToDatabase(self, imgdata):
 		"""
