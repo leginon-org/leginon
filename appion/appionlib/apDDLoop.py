@@ -24,8 +24,6 @@ class DDStackLoop(appionLoop2.AppionLoop):
 			help="ID for particle stack to restrict ddstack making(optional)", metavar="INT")
 		self.parser.add_option("--bin", dest="bin", type="int", default=1,
 			help="Binning factor relative to the dd stack (optional)", metavar="INT")
-		self.parser.add_option("--gpuid", dest="gpuid", type="int", default=0,
-			help="GPU device id used in gpu processing", metavar="INT")
 		self.parser.add_option("--ddstartframe", dest="startframe", type="int", default=0,
 			help="starting frame for summing the frames. The first frame is 0")
 		self.parser.add_option("--ddnframe", dest="nframe", type="int",

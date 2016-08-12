@@ -219,7 +219,7 @@ class DirectDetectorProcessing(object):
 				stills.append(i)
 		return stills
 
-	def getFrameList(self,params):
+	def getFrameListFromParams(self,params):
 		'''
 		Get list of frames
 		'''
@@ -267,7 +267,7 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		self.use_full_raw_area = False
 		self.use_bias = False
 		self.use_GS = False
-		self.use_gpu_flat = False
+		self.use_frame_aligner_flat = False
 		self.gpuid = 0
 		self.keep_stack = True
 		self.save_aligned_stack = True
@@ -293,9 +293,10 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		if debug:
 			apDisplay.printMsg('%s' % (self.image['filename']))
 			apDisplay.printMsg('%s' % ( self.framestackpath))
-		# These two are only used if alignment of the frames are made
+		# These are only used if alignment of the frames are made
 		self.aligned_sumpath = os.path.join(self.rundir,self.image['filename']+'_c.mrc')
 		self.aligned_stackpath = os.path.join(self.rundir,self.framestackpath[:-4]+'_c'+self.framestackpath[-4:])
+		self.aligned_log = self.framestackpath[:-4]+'_Log.txt'
 
 	def getDefaultDimension(self):
 		return self.dimension
@@ -309,11 +310,11 @@ class DDFrameProcessing(DirectDetectorProcessing):
 	def getScaledBrightArray(self,nframe):
 		return self.scaleRefImage('bright',nframe)
 
-	def setUseGPUFlat(self,use_gpu_flat):
-		self.use_gpu_flat = use_gpu_flat
+	def setUseFrameAlignerFlat(self,use_frame_aligner_flat):
+		self.use_frame_aligner_flat = use_frame_aligner_flat
 
-	def getUseGPUFlat(self):
-		return self.use_gpu_flat
+	def getUseFrameAlignerFlat(self):
+		return self.use_frame_aligner_flat
 
 	def setGPUid(self,gpuid):
 		self.gpuid = gpuid
@@ -329,10 +330,6 @@ class DDFrameProcessing(DirectDetectorProcessing):
 
 	def getFrameNameFromNumber(self,frame_number):
 		raise NotImplementedError()
-
-	def OldgetSingleFrameDarkArray(self):
-		# work around for the bug in DE server between 11sep07 and 11nov22
-		return self.getRefImageData('dark')['image']
 
 	def getRawFramesName(self):
 		return self.framesname
@@ -413,19 +410,6 @@ class DDFrameProcessing(DirectDetectorProcessing):
 			waitmin += sleep_time / 60.0
 			apDisplay.printMsg('Waited for %.1f min so far' % waitmin)
 		return True
-
-	def OldgetRawFrameDirFromImage(self,imagedata):
-		# works between 11sep07 and 11nov22
-		# strip off DOS path in rawframe directory name 
-		rawframename = imagedata['camera']['frames name'].split('\\')[-1]
-		if not rawframename:
-			apDisplay.printWarning('No Raw Frame Saved for %s' % imagedata['filename'])
-		# raw frames are saved in a subdirctory of image path
-		imagepath = imagedata['session']['image path']
-		rawframedir = os.path.join(imagepath,'rawframes',rawframename)
-		if not os.path.exists(rawframedir):
-			apDisplay.printError('Raw Frame Directory %s does not exist' % rawframedir)
-		return rawframedir
 
 	def getCorrectedImageData(self):
 		'''
@@ -991,14 +975,8 @@ class DDFrameProcessing(DirectDetectorProcessing):
 	def makeCorrectedFrameStack(self, use_full_raw_area=False):
 		return self.makeCorrectedFrameStack_cpu(use_full_raw_area)
 
-	def makeDosefgpuGainCorrectionParams(self):
+	def makeDarkNormMrcs(self):
 		self.setupDarkNormMrcs(False)
-		cmd = ''
-		if self.dark_path:
-			cmd += " -fdr %s" % self.dark_path
-		if self.norm_path:
-			cmd += " -fgr %s" % self.norm_path
-		return cmd
 
 	def setupDarkNormMrcs(self, use_full_raw_area=False):
 		'''
@@ -1030,12 +1008,18 @@ class DDFrameProcessing(DirectDetectorProcessing):
 			normdata = self.getRefImageData('norm')
 			if normdata['bright']:
 				apDisplay.printWarning('From Bright Reference %s' % (normdata['bright']['filename'],))
-			if self.use_gpu_flat:
+			if self.use_frame_aligner_flat:
 				normarray = normdata['image']
 				self.norm_path = os.path.join(frameprocess_dir,'norm-%s-%d.mrc' % (self.hostname,self.gpuid))
 				apDisplay.printWarning('Save Norm Reference %s to %s' % (normdata['filename'],self.norm_path))
 				mrc.write(normarray,self.norm_path)
 	
+	def getNormRefMrcPath(self):
+		return self.norm_path
+
+	def getDarkRefMrcPath(self):
+		return self.dark_path
+
 
 	def makeCorrectedFrameStack_cpu(self, use_full_raw_area=False):
 		'''
@@ -1075,31 +1059,13 @@ class DDFrameProcessing(DirectDetectorProcessing):
 	def getNewBinning(self):
 		return self.stack_binning
 
-
-
-	def setNewNumRunningAverageFrames(self,numFrames):
-		'''
-		Number of frames to include in running average of dosef_driftcorr
-		'''
-		self.numRunningAverageFrames = numFrames
-
-	def setNewFlipAlongYAxis(self,logical_value):
-		'''
-		Flip frames along Y axis during drift correction
-		'''
-		self.flipAlongYAxis = logical_value
-
-
-	def getNewNumRunningAverageFrames(self):
-		return self.numRunningAverageFrames
-
-	def getNewFlipAlongYAxis(self):
-		return self.flipAlongYAxis
-
 	def setKeepStack(self,is_keepstack):
 			self.keep_stack = is_keepstack
 			if is_keepstack:
 				self.save_aligned_stack = True
+
+	def getKeepAlignedStack(self):
+		self.save_aligned_stack
 
 	def getImageCameraEMData(self):
 		return leginondata.CameraEMData(initializer=self.image['camera'])
@@ -1144,7 +1110,7 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		
 	def getAlignedSumFrameList(self):
 		return self.sumframelist
-		
+	
 	def updateFrameStackHeaderImageStats(self,stackpath):
 		'''
 		This function update the header of dosefgpu_driftcorr corrected stack file without array stats.
@@ -1165,7 +1131,7 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		header['rms'] = stats['std']+0
 		mrc.update_file_header(stackpath, header)
 
-	def isSumSubStackWithDosefgpu(self):
+	def isSumSubStackWithFrameAligner(self):
 		'''
 		This funciton decides whether dosefgpu_driftcorr will be used for
 		summing up ddstack.  Dosefgpu_driftcorr can only handle
@@ -1182,6 +1148,7 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		self.save_aligned_stack=True
 		return False
 
+<<<<<<< HEAD
 	def setDoseFDriftCorrOptions(self,params):
 		paramkeys = ['bft','fod','pbx']
 		for goodkey in paramkeys:
@@ -1267,6 +1234,8 @@ class DDFrameProcessing(DirectDetectorProcessing):
 			#apDisplay.printError('If this happens consistently on an image, hide it in myamiweb viewer and continue with others' )
 		os.chdir(self.rundir)
 
+=======
+>>>>>>> 90d90273fad7529dbb9dd101b230caee4bd90a5b
 	def makeAlignedImageData(self,alignlabel='a'):
 		'''
 		Prepare ImageData to be uploaded after alignment

@@ -6,38 +6,36 @@ import re
 import subprocess
 
 class DDFrameAligner(object):
+	executable = 'cp'
 	def __init__(self):
-		self.executable = 'echo'
 		self.alignparams = {}
-		self.hostname = socket.gethostname().split('.')[0]
-		self.numRunningAverageFrames = 1
-		self.stack_binning = 1
-		self.bft = 0
+		self.gain_dark_cmd = ''
+		self.save_aligned_stack = True
+		self.is_use_frame_aligner_sum = True
 
 	def getExecutableName(self):
 		return self.executable
 
-	def setRunDir(self,rundir):
-		'''
-		Tempdir is best the same directory as the CPU gain dark correction
-		if done separately.
-		'''
-		self.tempdir = rundir
-		self.gpuid = 0
-		self.hostname = 'localhost'
-
-	def setGainDarkCmd(self,cmd):
+	def setGainDarkCmd(self,norm_path,dark_path=None):
 		'''
 		If the program runs its own gain/dark correction, put in here the option
 		string to add to the main command.
 		'''
-		self.gain_dark_cmd
+		cmd = ''
+		self.gain_dark_cmd = cmd
+
 
 	def isGainDarkCorrected(self):
 		'''
 		Determined by getGainDarkCmd or overwritten by subclass to be True or False.
 		'''
 		return bool(self.gain_dark_cmd)
+
+	def setIsUseFrameAlignerSum(self,value):
+		self.is_use_frame_aligner_sum = value
+
+	def setSaveAlignedStack(self, value):
+		self.save_aligned_stack
 
 	def setInputFrameStackPath(self, filepath):
 		'''
@@ -47,30 +45,31 @@ class DDFrameAligner(object):
 		'''
 		self.framestackpath = filepath
 
-	def setAlignedSumPath(self,**kwargs):
-		if 'gpuid' in kwargs.keys():
-			self.setGpuId(kwargs['gpuid'])
-		if 'hostname' in kwargs.keys():
-			self.setHostname(kwargs['hostname'])
-		# actual setting
-		# The alignment is done in tempdir (a local directory to reduce network traffic)
-		# include both hostname and gpu to identify the temp output
-		self.aligned_sumpath = 'temp%s.%d_sum.mrc' % (self.hostname,self.gpuid)
-		self.aligned_stackpath = 'temp%s.%d_aligned_st.mrc' % (self.hostname,self.gpuid)
-		self.log = self.framestackpath[:-4]+'_Log.txt'
+	def setAlignedSumPath(self, filepath):
+		self.aligned_sumpath = filepath
 
+	def setAlignedStackPath(self, filepath):
+		self.aligned_stackpath = filepath
+
+	def setLogPath(self, filepath):
+		self.logpath = filepath
+
+	def setAlignedSumFrameList(self,framelist):
+		self.sumframelist = framelist
+		
+	def getAlignedSumFrameList(self):
+		return self.sumframelist
+		
 	def makeFrameAlignmentCommand(self):
 		cmd = ' '.join([self.executable, self.framestackpath, self.aligned_sumpath])
 		cmd += self.joinFrameAlignOptions(glue='-')
-		cmd += ' > '+self.log
+		cmd += ' > '+self.logpath
 		return cmd
 
 	def alignFrameStack(self):
 		'''
 		Running alignment of frame
 		'''
-		os.chdir(self.tempdir)
-
 		# Construct the command line with defaults
 		cmd = self.makeFrameAlignmentCommand()
 
@@ -93,7 +92,7 @@ class DDFrameAligner(object):
 		get key-value pairs for options.  Keys are the keys in Appion params,
 		Values are the keys in the program.
 		'''
-		return {'gpuid':'gpuid','bin':'bin'}
+		return {'fakeparam':'option'}
 
 	def setFrameAlignOptions(self,params):
 		parammaps = self.getValidAlignOptionMappings()
@@ -101,6 +100,9 @@ class DDFrameAligner(object):
 			if goodkey in params.keys():
 #				print params, params[goodkey]
 				self.alignparams[parammaps[goodkey]] = params[goodkey]
+
+	def getFrameAlignOption(self,key):
+		return self.alignparams[key]
 
 	def joinFrameAlignOptions(self,glue='-'):
 		cmd = ''
@@ -113,19 +115,19 @@ class DDFrameAligner(object):
 
 	### modifying parameters
 
-	def setBinning(self,bin):
-		''' Camera binning of the stack '''
-		self.stack_binning = bin
+#	def setBinning(self,bin):
+#		''' Camera binning of the stack '''
+#		self.stack_binning = bin
 
-	def getBinning(self):
-		return self.stack_binning
+#	def getBinning(self):
+#		return self.stack_binning
 
-	def setBfactor(self,bft):
-		''' bfactor to apply to frames prior to alignment '''
-		self.bft = bft
+#	def setBfactor(self,bft):
+#		''' bfactor to apply to frames prior to alignment '''
+#		self.bft = bft
 
-	def getBfactor(self):
-		return self.bft
+#	def getBfactor(self):
+#		return self.bft
 
 	def writeLogFile(self, outbuffer):
 		f = open("tmp.log", "w")
@@ -133,27 +135,41 @@ class DDFrameAligner(object):
 		f.close()
 
 class MotionCorr1(DDFrameAligner):
+	executable = '/Users/acheng/dosefgpu_driftcorr'
 	def __init__(self):
-		self.executable = 'dosefgpu_driftcorr'
+		super(MotionCorr1,self).__init__()
+		self.gain_dark_cmd = ''
+
+	def setGainDarkCmd(self,norm_path,dark_path=None):
+		'''
+		If the program runs its own gain/dark correction, put in here the option
+		string to add to the main command.
+		'''
+		cmd = ''
+		if dark_path:
+			cmd += " -fdr %s" % dark_path
+		if norm_path:
+			cmd += " -fgr %s" % norm_path
+		gain_dark_cmd = cmd
+		apDisplay.printMsg('Gain Dark Command Option: %s' % cmd)
 
 	def makeFrameAlignmentCommand(self):
-		cmd = '%s %s -fcs %s -dsp 0' % (self.executable, self.tempframestackpath,temp_aligned_sumpath)
+		cmd = '%s %s -fcs %s -dsp 0' % (self.executable, self.framestackpath, self.aligned_sumpath)
 		self.modifyNumRunningAverageFrames()
 		# Options
 		cmd += self.joinFrameAlignOptions()
 
-		# binning
-		cmd += ' -bin %d' % (self.getBinning())
+		## binning
+		#cmd += ' -bin %d' % (self.getNewBinning())
 		# gain dark references
-		cmd += gain_dark_cmd
-		is_sum_with_dosefgpu =  self.isSumSubStackWithDosefgpu()
-		if is_sum_with_dosefgpu:
+		cmd += self.gain_dark_cmd
+		if self.is_use_frame_aligner_sum:
 			cmd += ' -nss %d -nes %d' % (min(self.sumframelist),max(self.sumframelist))
 		else:
 			# minimal sum since it needs to be redone by numpy
 			cmd += ' -nss %d -nes %d' % (0,1)
 		if self.save_aligned_stack:
-			cmd += ' -ssc 1 -fct %s' % (temp_aligned_stackpath)
+			cmd += ' -ssc 1 -fct %s' % (self.aligned_stackpath)
 		return cmd
 
 	def getValidAlignOptionMappings(self):
@@ -224,12 +240,12 @@ class MotionCorr2_UCSF(DDFrameAligner):
 		
 		# binning
 		if self.alignparams['FtBin'] > 1:
-			self.setBinning(self.alignparams['FtBin'])
+#			self.setBinning(self.alignparams['FtBin'])
 			cmd += ' -FtBin %d ' % self.stack_binning
 
 		# bfactor
 		if self.alignparams['Bft'] > 0:
-			self.setBfactor(self.alignparams['Bft']) 
+#			self.setBfactor(self.alignparams['Bft']) 
 			cmd += ' -Bft %d ' % self.bft
 
 		# frame truncation
