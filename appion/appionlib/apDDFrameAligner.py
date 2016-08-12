@@ -110,25 +110,6 @@ class DDFrameAligner(object):
 			cmd += ' %s%s %s' % (glue,key,str(self.alignparams[key]))
 		return cmd
 
-#	def getNewNumRunningAverageFrames(self):
-#		return self.numRunningAverageFrames
-
-	### modifying parameters
-
-#	def setBinning(self,bin):
-#		''' Camera binning of the stack '''
-#		self.stack_binning = bin
-
-#	def getBinning(self):
-#		return self.stack_binning
-
-#	def setBfactor(self,bft):
-#		''' bfactor to apply to frames prior to alignment '''
-#		self.bft = bft
-
-#	def getBfactor(self):
-#		return self.bft
-
 	def writeLogFile(self, outbuffer):
 		f = open("tmp.log", "w")
 		f.write(outbuffer)
@@ -191,27 +172,6 @@ class MotionCorr1(DDFrameAligner):
 			if self.getNewFlipAlongYAxis() == 0:
 				del self.alignparams['nrw']
 			
-	def setAlignedSumFrameList(self,framelist):
-		self.sumframelist = framelist
-		
-	def getAlignedSumFrameList(self):
-		return self.sumframelist
-
-	def isSumSubStackWithDosefgpu(self):
-		'''
-		This funciton decides whether dosefgpu_driftcorr will be used for
-		summing up ddstack.  Dosefgpu_driftcorr can only handle
-		consecutive frame sum.
-		'''
-		framelist = self.getAlignedSumFrameList()
-		# To save time, only proceed if necessary
-		if framelist and framelist == range(min(framelist),min(framelist)+len(framelist)):
-			self.save_aligned_stack = self.keep_stack
-			return True
-		# aligned_stack has to be saved to use Numpy to sum substack
-		self.save_aligned_stack=True
-		return False
-
 	def writeLogFile(self, outbuffer):
 		pass
 
