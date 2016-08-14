@@ -71,10 +71,27 @@ class GautomatchLoop(apTemplateCorrelator.TemplateCorrelationLoop):
 		self.parser.add_option("--range-list", "--range_list", dest="rangeliststr",
 			help="Start, end, and increment angles: e.g. 0,360,10x0,180,5", metavar="#,#,#x#,#,#")
 
+		self.parser.add_option("--lp", dest="lp",help="Low-pass filter to increase the contrast of raw micrographs, suggested range 20~50Å. This low-pass is after ice/aggregation detection.
+")
+		self.parser.add_option("--hp", dest="hp",help="High-pass filter to get rid of the global background of raw micrographs, suggested range 200~2000Å. This high-pass is after ice/aggregation detection.
+")
+		self.parser.add_option("--pre_lp", dest="pre_lp",help="The same as --lp, but before the ice/contamination detection, might be better in severely gradient ice. Does not matter to use both --lp and --pre_lp, but suggested to use much smaller --pre_lp for better ice/contamination detection.")
+		self.parser.add_option("--pre_hp", dest="pre_hp",help="The same as --hp, but before the ice/contamination detection, might be better in severely gradient ice. Otherwise, do not use --pre_hp or use a very big value")
+
+		self.parser.add_option("--speed",dest="speed",help="Speed level (0,1, 2, 3, 4), larger is faster but less accurate.")
+		self.parser.add_option("--lsigma_D",dest="lsigma_D",help="Diameter for estimation of local sigma, in Angstroms.")
+		self.parser.add_option("--lsigma_cutoff",dest="lsigma_cutoff",help="Local sigma cutoff (relative value), 1.2~1.5 should be a good range; normally a value >1.2 will be ice, protein aggregation or contamination")
+
+		self.parser.add_option("--boxsize",dest="boxsize",help="Box size, in pixel, NOT in angstrom; a suggested value will be automatically calculated by --diameter and --apixM")
+
+		self.parser.add_option("--min_dist",dest="min_dist",help="Maximum distance between particles in angstrom; 0.9~1.1X diameter; can be 0.3~0.5 for filament-like particle")
+		self.parser.add_option("--dont_invertT",dest="invert",help="Whether to invert template contrast. VERY IMPORTANT!!! By default, the program will invert the 'white' templates to 'black' before picking.")
+
 		### True / False options
-		self.parser.add_option("--ac",dest="ac",default=0.1,help="Amplitude contrast. Default = 0.1")
 		self.parser.add_option("--use-mirrors", "--use_mirrors", dest="templatemirrors", default=False,
 			action="store_true", help="Use mirrors as additional templates")
+		self.parser.add_option("--do_pre_filter",dest="do_pre_filter",default=False,
+			action="store_true", help="Do pre filtering (not recommended)")
 		return
 
 	##=======================
@@ -205,6 +222,9 @@ class GautomatchLoop(apTemplateCorrelator.TemplateCorrelationLoop):
 				gautocmd += ('--min_dist '+str(self.params['overlapmult']*templatedata['diam']) + ' ')
 					
 
+		else:
+			gautocmd += ('--diameter ' +str(self.params['pdiam']) + ' ')
+                        gautocmd += ('--min_dist '+str(self.params['overlapmult']*templatedata['pdiam']) + ' ')
 
 		if self.params['invert'] is True:
 			pass	
