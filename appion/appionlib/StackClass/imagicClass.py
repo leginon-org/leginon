@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 
 import os
-import numpy
-from appionlib import apDisplay
 from appionlib import apImagicFile
 from appionlib.StackClass import baseClass
 
@@ -13,80 +11,65 @@ from appionlib.StackClass import baseClass
 
 class ImagicClass(baseClass.StackClass):
 	################################################
+	# Custom functions
+	################################################
+	def getHedFile(self):
+		root = os.path.splitext(self.filename)[0]
+		return root + ".hed"
+	def getImgFile(self):
+		root = os.path.splitext(self.filename)[0]
+		return root + ".hed"
+
+	################################################
 	# Must be implemented in new Stack subClass
 	################################################
-	def readHeader(self):
-		"""
-		run during __init__ phase
-		read the header information
-		  or initialize new empty stack
-		required variables to set are below
-		"""
-		root = os.path.splitext(self.filename)[0]
-		self.hedfile = root + ".hed"
-		self.imgfile = root + ".img"
-		if os.path.isfile(self.hedfile) and self.getFileSize() > 10:
-			headerdict = apImagicFile.readImagicHeader(self.hedfile)
-			self.boxsize = headerdict['rows']
-			self.originalNumberOfParticles = headerdict['nimg']
-			self.currentParticles = headerdict['nimg'] #this number will increment
-
-	def newFile(self):
-		"""
-		create new file to append to
-		"""
+	def _getNumberOfParticles(self):
+		headerdict = apImagicFile.readImagicHeader(self.getHedFile())
+		return headerdict['nimg']
+	def _getBoxSize(self):
+		headerdict = apImagicFile.readImagicHeader(self.getHedFile())
+		return headerdict['rows']
+	def _getPixelSize(self):
 		raise NotImplementedError
 
-	def updatePixelSize(self):
+	def _readParticlesFromFile(self, particleNumbers):
 		"""
-		just update pixel size in file
-		"""
-		raise NotImplementedError
-
-	def readParticles(self, particleNumbers=None):
-		"""
-		read a list of particles into memory
+		read a list of particles numbers into memory
+		particles numbers MUST start at 1
 		"""
 		partdatalist = []
-		if particleNumbers is None:
-			headerdict = apImagicFile.readImagicHeader(self.hedfile)
-			self.currentParticles = headerdict['nimg']
-			particleNumbers = range(1,self.currentParticles+1)
 		for partnum in particleNumbers:
-			a = apImagicFile.readSingleParticleFromStack(self.filename, partnum=partnum, msg=self.msg)
+			a = apImagicFile.readSingleParticleFromStack(self.filename, partnum=partnum, msg=self.debug)
 			partdatalist.append(a)
-		if self.debug is True:
-			print "read %d particles"%(len(partdatalist))
-		return numpy.array(partdatalist)
+		return partdatalist
 
-	def appendParticlesToFile(self, particleDataTree):
+	def _writeParticlesToFile(self, particleDataTree):
 		"""
 		input:
-			* list of 2D numpy arrays
+			* list of 2D numpy arrays [(x,y), (x,y), ...]
 			* 3D numpy array, shape (numpart, xdim, ydim)
-		and wrtie them to a file
+		and write them to a new file
+		or overwrite them to an existing file
 		"""
-		## always validate
-		self.validateParticles(particleDataTree)
-		## increment count
-		self.currentParticles += len(particleDataTree)
-		if os.path.isfile(self.filename) and self.getFileSize() > 10:
-			apImagicFile.appendParticleListToStackFile(particleDataTree, self.filename, msg=self.msg)
-		else:
-			apImagicFile.writeImagic(particleDataTree, self.filename, msg=self.msg)
+		apImagicFile.writeImagic(particleDataTree, self.filename, msg=self.debug)
 		return
 
-	def closeOut(self):
+	def _appendParticlesToFile(self, particleDataTree):
 		"""
-		close out file
-		write particle count, pixel size, ... to header, etc.
-		mainly for IMAGIC files
+		input:
+			* list of 2D numpy arrays [(x,y), (x,y), ...]
+			* 3D numpy array, shape (numpart, xdim, ydim)
+		and append them to an existing file
+		function assumes file already exists
 		"""
-		apImagicFile.numberStackFile(self.hedfile)
+		apImagicFile.appendParticleListToStackFile(particleDataTree, self.filename, msg=self.debug)
 		return
 
-	def getPixelSize(self):
-		return self.apix
+	def _writePixelSizeToFile(self, apix):
+		"""
+		save a new pixel size to an existing file
+		"""
+		raise NotImplementedError
 
 
 if __name__ == '__main__':
@@ -103,7 +86,7 @@ if __name__ == '__main__':
 		# open created stack
 		f2 = ImagicClass("temp.hed")
 		# read particles in stack
-		b = f2.readParticles()
+		b = f2.readParticlesFromFile()
 		# create new particles from old ones
 		# append and save new particles to stack
 		print b[0]

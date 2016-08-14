@@ -159,7 +159,7 @@ class HdfFile(object):
 		shape = a.shape
 		self.dset = h5py.File(self.filename, 'r+')
 		self.images = self.dset['MDF']['images']
-		self.numpart = int(self.images.attrs['imageid_max'])+1 
+		self.numpart = int(self.images.attrs['imageid_max'])+1
 		if self.debug is True:
 			print "numpart", self.numpart
 		if len(shape) == 2:
@@ -226,6 +226,10 @@ class HdfFile(object):
 
 	#----------------------------
 	def read(self, particleNumbers=None):
+		"""
+		read a list of particles into memory
+		particles numbers start at 0
+		"""
 		if not os.path.isfile(self.filename) or self.getFileSize() < 10:
 			print "file not found"
 			return
@@ -262,7 +266,9 @@ class HdfFile(object):
 	def getNumberOfParticles(self):
 		if self.debug is True:
 			print "getNumberOfParticles %d"%(self.numpart)
-		return self.numpart
+		self.dset = h5py.File(self.filename, 'r')
+		self.images = self.dset['MDF']['images']
+		return int(self.images.attrs.get('imageid_max', -1))+1
 	def getBoxSize(self):
 		if self.boxsize is None:
 			self.hdfheader = self.readFirstParticleHeader()
@@ -301,7 +307,7 @@ if __name__ == '__main__':
 	rhdf.append(a)
 	#print b
 	print b.shape
-	
+
 	print "\ndiff"
 	c = a-b
 	print "%.8f +/- %.8f"%(c.mean(), c.std())

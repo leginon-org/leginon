@@ -60,7 +60,6 @@ class ProcessStack(object):
 		self.freememory = mem.free()*1024
 		self.message("Free memory: %s"%(apDisplay.bytes(self.freememory)))
 		### box size of particle
-		self.stackClass.readHeader()
 		self.boxsize = self.stackClass.getBoxSize()
 		self.message("Box size: %d"%(self.boxsize))
 		### amount of memory used per particles (4 bytes per pixel)
@@ -120,13 +119,13 @@ class ProcessStack(object):
 			### read images
 			if partlist is None:
 				localpartlist = range(first, last+1)
-				stackarray = self.stackClass.readParticles(localpartlist)
+				stackarray = self.stackClass.readParticlesFromFile(localpartlist)
 			else:
 				#print first, last
 				sublist = partlist[first-1:last]
 				#print sublist
 				self.message("actual partnum %d to %d"%(sublist[0], sublist[-1]))
-				stackarray = self.stackClass.readParticles(sublist)
+				stackarray = self.stackClass.readParticlesFromFile(sublist)
 
 			### process images
 			self.processStack(stackarray)
