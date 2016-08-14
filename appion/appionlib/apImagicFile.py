@@ -254,7 +254,7 @@ def readImagicData(datafilename, headerdict, firstpart=1, numpart=1):
 	rawarray = numpy.fromstring(data, dtype=numpy.float32)
 	try:
 		images = rawarray.reshape(shape)
-		images = numpy.fliplr(images)
+		images = numpy.fliplr(images)  #FIXME: should we continue to flip the array
 	except:
 		mult = numpart*headerdict['rows']*headerdict['lines']
 		print mult, shape, rawarray.shape, numpart, headerdict['nimg'], headerdict['rows'], headerdict['lines']
@@ -278,23 +278,19 @@ def writeImagic(array, filename, msg=True):
 	Outputs:
 		none
 	"""
-	if isinstance(array, list):
-		### python list of 2d numpy arrays (row x col)
-		if len(array) == 0:
-			apDisplay.printWarning("writeImagic: no particles to write")
-			return
-		try:
-			array = numpy.asarray(array, dtype=numpy.float32)
-			array = numpy.fliplr(array)
-		except:
-			boxsizes = []
-			for part in array:
-				shape = part.shape
-				if not shape in boxsizes:
-					boxsizes.append(shape)
-			if len(boxsizes) > 1:
-				apDisplay.printError("your particles have different boxsizes: "+str(boxsizes))
-			apDisplay.printError("unknown error in particle list to numpy array conversion")
+	if len(array) == 0:
+		apDisplay.printWarning("writeImagic: no particles to write")
+		return
+
+	boxsize2d = array[0].shape
+	for part in array:
+		if part.shape != boxsize2d:
+			apDisplay.printError("your particles have different boxsizes: "
+				+str(part.shape)+" and "+str(boxsize2d.shape))
+
+	#this is required, IMAGIC only support 32bit
+	array = numpy.asarray(array, dtype=numpy.float32)
+	array = numpy.fliplr(array) #FIXME: should we continue to flip the array
 
 	t0 = time.time()
 	if msg is True:
@@ -524,7 +520,7 @@ def readSingleParticleFromStack(filename, partnum=1, boxsize=None, msg=True):
 	partimg = numpy.fromstring(data, dtype=numpy.float32)
 	try:
 		partimg = partimg.reshape(boxsize, boxsize)
-		partimg = numpy.fliplr(partimg)
+		partimg = numpy.fliplr(partimg)  #FIXME: should we continue to flip the array
 	except:
 		print partimg
 		print boxsize, boxsize*boxsize, partimg.shape
@@ -549,7 +545,11 @@ def appendParticleToStackFile(partarray, mergestackfile, msg=True):
 	premergesize = apFile.fileSize(mergedatafile)
 
 	mergedata = file(mergedatafile, 'ab')
+	
+	#this is required, IMAGIC only support 32bit
 	part32bit = numpy.asarray(partarray, dtype=numpy.float32)
+	#part32bit = numpy.fliplr(part32bit) #FIXME: should we continue to flip the array
+
 	mergedata.write(part32bit.tostring())
 	mergedata.close()
 
@@ -914,7 +914,7 @@ def readParticleListFromStack(filename, partlist, boxsize=None, msg=True):
 		partimg = numpy.fromstring(data, dtype=numpy.float32)
 		try:
 			partimg = partimg.reshape(boxsize, boxsize)
-			partimg = numpy.fliplr(partimg)
+			partimg = numpy.fliplr(partimg)  #FIXME: should we continue to flip the array
 		except:
 			print partimg
 			print boxsize, boxsize*boxsize, partimg.shape
@@ -1084,8 +1084,8 @@ class splitStackEvenOddClass(processStack):
 		#flipping so particles are unchanged
 		flippedStack = []
 		for partarray in stackarray:
-			flippedpartarray = numpy.flipud(partarray)
-			flippedpartarray = numpy.fliplr(flippedpartarray)
+			flippedpartarray = numpy.flipud(partarray) 
+			flippedpartarray = numpy.fliplr(flippedpartarray)  #FIXME: should we continue to flip the array
 			flippedStack.append(flippedpartarray)
 		apFile.removeStack(tempstackfile, warn=self.msg)
 		writeImagic(flippedStack, tempstackfile, msg=self.msg)
