@@ -67,25 +67,3 @@ class MrcClass(baseClass.StackClass):
 		return
 
 
-if __name__ == '__main__':
-	# create a random stack of 4 particles with 16x16 dimensions
-	a = numpy.random.random((4,128,128))
-	# create new stack file
-	f1 = MrcClass("temp.mrc")
-	# save particles to file
-	f1.appendParticlesToFile(a)
-	# close stack
-	del f1
-	for i in range(10):
-		# create a random stack of 4 particles with 16x16 dimensions
-		a = numpy.random.random((4,128,128))
-		# open created stack
-		f2 = MrcClass("temp.mrc")
-		# read particles in stack
-		b = f2.readParticlesFromFile()
-		# create new particles from old ones
-		# append and save new particles to stack
-		f2.appendParticlesToFile(b[-4:]*a)
-		# close new stack
-		del f2
-

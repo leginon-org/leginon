@@ -17,17 +17,25 @@ from appionlib.StackClass import imagicClass
 ########################################
 ########################################
 ########################################
-def createStackClass(filename):
+def createStackClass(filename, msg=False):
 	extension = os.path.splitext(filename)[-1]
 	if extension == '.mrc' or extension == '.mrcs':
+		if msg is True: print "MrcClass"
 		return mrcClass.MrcClass(filename)
 	elif extension == '.hed' or extension == '.img':
+		if msg is True: print "ImagicClass"
 		return imagicClass.ImagicClass(filename)
 	elif extension == '.hdf':
+		if msg is True: print "HdfClass"
 		return hdfClass.HdfClass(filename)
+	elif extension == '.spi':
+		if msg is True: print "SpiderClass"
+		raise NotImplementedError
 	elif extension == '.png':
+		if msg is True: print "PngClass"
 		raise NotImplementedError
 	elif extension == '.jpg' or extension == '.jpeg':
+		if msg is True: print "JpegClass"
 		raise NotImplementedError
 	raise NotImplementedError("extension does not map to existing stack type %s"%(extension))
 

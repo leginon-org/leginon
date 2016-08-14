@@ -15,15 +15,23 @@ from appionlib.StackClass import ProcessStack
 ########################################
 ########################################
 ########################################
-def numImagesInStack(filename):
+def getNumberOfParticles(filename):
 	stackClass = ProcessStack.createStackClass(filename)
-	return stackClass.numpart
+	return stackClass.getNumberOfParticles()
+########################################
+def getBoxSize(filename):
+	stackClass = ProcessStack.createStackClass(filename)
+	return stackClass.getBoxSize()
+########################################
+def getPixelSize(filename):
+	stackClass = ProcessStack.createStackClass(filename)
+	return stackClass.getPixelSize()
 
 ########################################
 ########################################
 ########################################
 #===============
-def averageStack(stackfile="start.hdf", outfile="average.mrc", partlist=None, msg=True):
+def averageStack(stackfile="start.hdf", outfile="average.mrc", partlist=None, msg=False):
 	"""
 	does not work with IMAGIC, yet
 	partlist starts at 1
@@ -43,7 +51,7 @@ def averageStack(stackfile="start.hdf", outfile="average.mrc", partlist=None, ms
 	return avgstack
 
 #===============
-def averageStackList(stacklist, outfile="average.mrc", partlist=None, msg=True):
+def averageStackList(stacklist, outfile="average.mrc", partlist=None, msg=False):
 	"""
 	does not work with IMAGIC, yet
 	partlist starts at 1
@@ -72,8 +80,7 @@ def averageStackList(stacklist, outfile="average.mrc", partlist=None, msg=True):
 #=======================
 class AverageStack(ProcessStack.ProcessStack):
 	#===============
-	def preLoop(self, msg=True):
-		self.msg = msg
+	def preLoop(self):
 		self.summed = numpy.zeros((self.boxsize,self.boxsize))
 		#override self.partlist to get a subset
 		self.count = 0

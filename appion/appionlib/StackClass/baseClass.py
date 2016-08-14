@@ -74,7 +74,7 @@ class StackClass(object):
 	################################################
 	# These functions are general should NOT have overrides in subClasses
 	################################################
-	def __init__(self, filename, debug=True):
+	def __init__(self, filename, debug=False):
 		self.filename = filename
 		self.debug = debug
 		self.particlesWritten = 0
@@ -95,6 +95,26 @@ class StackClass(object):
 		elif firstparticle.shape[0] != self.boxsize:
 			raise ValueError("Particles boxsize different from stack")
 
+	def removeStack(self, warn=True):
+		"""
+		delete file, mostly for IMAGIC to override
+		"""
+		self._removeStack(self.filename, warn)
+	def _removeStack(self, filename, warn=True):
+		"""
+		delete file, mostly for IMAGIC to override
+		"""
+		if os.path.exists(filename):
+			if warn is True:
+				apDisplay.printWarning("removing stack file %s"%(filename))
+			time.sleep(0.01)
+			os.remove(filename)
+			time.sleep(0.01)
+		if os.path.exists(filename):
+			apDisplay.printError("stack file not removed %s"%(filename))
+		return
+
+
 	################################################
 	# Read / write functions called by apProc2d
 	# These functions are general should NOT have overrides in subClasses
@@ -111,7 +131,8 @@ class StackClass(object):
 				apDisplay.printWarning("tried to read from empty stack file")
 				return []
 			particleNumbers = range(1, numpart+1)
-		print "going to read %d particles from file"%(len(particleNumbers))
+		if self.debug is True:
+			apDisplay.printMsg("going to read %d particles from file"%(len(particleNumbers)))
 		partdatalist = self._readParticlesFromFile(particleNumbers)
 		#convert to numpy array of shape (numpart, box, box)
 		partdataarray = numpy.array(partdatalist)

@@ -190,7 +190,8 @@ class HdfFile(object):
 			print "numpart", self.numpart
 		headerTree = range(self.numpart) #will become list of dicts
 		for partnum in range(self.numpart):
-			sys.stderr.write(".")
+			if self.debug is True:
+				sys.stderr.write(".")
 			partnumstr = str(partnum)
 			imagegroup = images[partnumstr]
 			attrDict = dict(imagegroup.attrs)
@@ -247,7 +248,8 @@ class HdfFile(object):
 			#print "----------"
 			#print partnum
 			partnumstr = str(partnum)
-			sys.stderr.write(".")
+			if self.debug is True:
+				sys.stderr.write(".")
 			image = imageDict[partnumstr]['image']
 			imagedata = image[:]
 			#print imagedata

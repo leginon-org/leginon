@@ -18,7 +18,17 @@ class ImagicClass(baseClass.StackClass):
 		return root + ".hed"
 	def getImgFile(self):
 		root = os.path.splitext(self.filename)[0]
-		return root + ".hed"
+		return root + ".img"
+
+	################################################
+	# Override functions
+	################################################
+	def removeStack(self, warn=True):
+		"""
+		delete file, mostly for IMAGIC to override
+		"""
+		self._removeStack(self.getHedFile(), warn)
+		self._removeStack(self.getImgFile(), warn)
 
 	################################################
 	# Must be implemented in new Stack subClass
@@ -70,29 +80,4 @@ class ImagicClass(baseClass.StackClass):
 		save a new pixel size to an existing file
 		"""
 		raise NotImplementedError
-
-
-if __name__ == '__main__':
-	import numpy
-	# create a random stack of 4 particles with 16x16 dimensions
-	a = numpy.random.random((4,128,128))
-	# create new stack file
-	f1 = ImagicClass("temp.hed")
-	# save particles to file
-	f1.appendParticlesToFile(a)
-	# close stack
-	del f1
-	for i in range(10):
-		# open created stack
-		f2 = ImagicClass("temp.hed")
-		# read particles in stack
-		b = f2.readParticlesFromFile()
-		# create new particles from old ones
-		# append and save new particles to stack
-		print b[0]
-		# create a random stack of 4 particles with 16x16 dimensions
-		a = numpy.random.random((4,128,128))
-		f2.appendParticlesToFile(b[-4:]*a)
-		# close new stack
-		del f2
 

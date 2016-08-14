@@ -62,26 +62,3 @@ class HdfClass(baseClass.StackClass):
 		"""
 		raise NotImplementedError
 
-if __name__ == '__main__':
-	import numpy
-	# create a random stack of 4 particles with 16x16 dimensions
-	a = numpy.random.random((4,128,128))
-	# create new stack file
-	f1 = HdfClass("temp.hdf")
-	# save particles to file
-	f1.appendParticlesToFile(a)
-	# close stack
-	del f1
-	for i in range(10):
-		# create a random stack of 4 particles with 16x16 dimensions
-		a = numpy.random.random((4,128,128))
-		# open created stack
-		f2 = HdfClass("temp.hdf")
-		# read particles in stack
-		b = f2.readParticlesFromFile()
-		# create new particles from old ones
-		# append and save new particles to stack
-		f2.appendParticlesToFile(b[-4:]*a)
-		# close new stack
-		del f2
-
