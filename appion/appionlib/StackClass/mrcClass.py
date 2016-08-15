@@ -1,110 +1,69 @@
 #!/usr/bin/env python
 
-import os
+import numpy
 from pyami import mrc
-from appionlib import apDisplay
 from appionlib.StackClass import baseClass
+
+####
+# This is a low-level file with NO database connections
+# Please keep it this way
+####
 
 class MrcClass(baseClass.StackClass):
 	################################################
 	# Must be implemented in new Stack subClass
 	################################################
-	def readHeader(self):
-		"""
-		read the header information
-		  or initialize new empty stack
-		required variables to set are below
-		"""
-		if os.path.isfile(self.filename) and self.getFileSize() > 1:
-			self.mrcheader = mrc.readHeaderFromFile(self.filename)
-			self.boxsize = self.mrcheader['nx']
-			self.apix = self.getPixelSize()
-			self.originalNumberOfParticles = self.mrcheader['nz']
-			self.currentParticles = self.mrcheader['nz'] #this number will increment
+	def _getNumberOfParticles(self):
+		header = mrc.read_file_header(self.filename)
+		return header['nz']
+	def _getBoxSize(self):
+		header = mrc.read_file_header(self.filename)
+		return header['nx']
+	def _getPixelSize(self):
+		pixeldict = mrc.readFilePixelSize(self.filename)
+		return pixeldict['x']
 
-	def newFile(self):
-		"""
-		create new file to append to
-		"""
-		raise NotImplementedError
-
-	def updatePixelSize(self):
-		"""
-		just update pixel size in file
-		"""
-		raise NotImplementedError	
-
-	def readParticles(self, particleNumbers=None):
+	def _readParticlesFromFile(self, particleNumbers):
 		"""
 		read a list of particles into memory
+		particles numbers MUST start at 1
 		"""
 		partdatalist = []
 		for partnum in particleNumbers:
 			a = mrc.read(self.filename, zslice=(partnum-1))
-			#print partnum, a.shape
 			partdatalist.append(a)
 		return partdatalist
 
-	def appendParticlesToFile(self, particleDataTree):
+	def _writeParticlesToFile(self, particleDataTree):
 		"""
 		input:
-			* list of 2D numpy arrays
+			* list of 2D numpy arrays [(x,y), (x,y), ...]
 			* 3D numpy array, shape (numpart, xdim, ydim)
-		and wrtie them to a file
+		and write them to a new file
+		or overwrite them to an existing file
 		"""
-		## always validate
-		self.validateParticles(particleDataTree)
-		## increment count
-		self.currentParticles += len(particleDataTree)
-		if os.path.exists(self.filename):
-			partarray = numpy.array(particleDataTree)
-			mrc.append(partarray, self.filename)
-		else:
-			f = open(self.filename, "wb+")
-			partarray = numpy.array(particleDataTree)
-			mrc.write(partarray, f)
-			f.close()
-			apix = self.apix
-			pixeldict = {'x': apix, 'y': apix, 'z': apix, }
-			mrc.updateFilePixelSize(self.filename, pixeldict)
-
-	def closeOut(self):
-		"""
-		close out file
-		write particle count, pixel size, ... to header, etc.
-		mainly for IMAGIC files
-		"""
+		partarray = numpy.array(particleDataTree)
+		mrc.write(partarray, self.filename)
 		return
 
-	################################################
-	# Unique functions for this class
-	################################################
-	def getPixelSize(self):
-			pixeldict = mrc.readFilePixelSize(self.filename)
-			if pixeldict['x'] == pixeldict['y'] and pixeldict['x'] == pixeldict['z']:
-				return pixeldict['x']
-			else:
-				apDisplay.printWarning("Image Stack has unknown pixel size, using 1.0 A/pixel")
-				return 1.0
+	def _appendParticlesToFile(self, particleDataTree):
+		"""
+		input:
+			* list of 2D numpy arrays [(x,y), (x,y), ...]
+			* 3D numpy array, shape (numpart, xdim, ydim)
+		and append them to an existing file
+		function assumes file already exists
+		"""
+		partarray = numpy.array(particleDataTree)
+		mrc.append(partarray, self.filename)
+		return
 
-if __name__ == '__main__':
-	import numpy
-	# create a random stack of 4 particles with 16x16 dimensions
-	a = numpy.random.random((4,16,16))
-	# create new stack file
-	f1 = MrcClass("temp.mrc")
-	# save particles to file
-	f1.appendParticlesToFile(a)
-	# close stack
-	del f1
-	# open created stack
-	f2 = MrcClass("temp.mrc")
-	# read particles in stack
-	b = f2.readParticles()
-	# create new particles from old ones
-	a = b*a
-	# append and save new particles to stack
-	f2.appendParticlesToFile(a)
-	# close new stack
-	del f2
+	def _writePixelSizeToFile(self, apix):
+		"""
+		save a new pixel size to an existing file
+		"""
+		pixeldict = {'x': apix, 'y': apix, 'z': apix, }
+		mrc.updateFilePixelSize(self.filename, pixeldict)
+		return
+
 

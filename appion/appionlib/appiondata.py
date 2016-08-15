@@ -742,6 +742,16 @@ class ApDEAlignerParamsData(Data):
 		)
 	typemap = classmethod(typemap)
 
+class ApFrameAlignTrajectory(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('image', leginon.leginondata.AcquisitionImageData),
+			('particle', ApStackParticleData ),
+			('ddstackrun', ApDDStackRunData ),
+			('xshift', int),
+			('yshift', int)
+			
+		)
 ### END Stack tables ###
 ### START alignment tables  ###
 

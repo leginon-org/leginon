@@ -18,6 +18,11 @@ from pyami import mrc, mem
 import pyami.quietscipy
 from scipy import ndimage
 
+####
+# This is a low-level file with NO database connections
+# Please keep it this way
+####
+
 #maximum allowed stack size in gigabytes (GB)
 memorylimit = 3.9
 bytelimit = memorylimit*(1024**3)
@@ -52,7 +57,7 @@ def numberStackFile(oldheadfile, startnum=0, msg=True):
 	"""
 	Takes an Imagic Stack header file and numbers the particles
 
-	based on 
+	based on
 		http://www.imagescience.de/formats/formats.htm
 	"""
 	if msg is True:
@@ -115,7 +120,7 @@ def getPartSegmentLimit(filename):
 	maxnumpart = 2 ** int(math.log(maxnumpart)/math.log(2))
 	if maxnumpart < 1:
 		apDisplay.printError("Single image in the stack exceeds %d byte.  This can not be processed. Please bin it down first." % bytelimit)
-	return maxnumpart 
+	return maxnumpart
 
 #===============
 def readImagic(filename, first=1, last=None, msg=True):
@@ -138,7 +143,7 @@ def readImagic(filename, first=1, last=None, msg=True):
 	headerfilename=root + ".hed"
 	datafilename=root + ".img"
 
-	### check file size, no more than 2 GB is possible 
+	### check file size, no more than 2 GB is possible
 	### it takes double memory on machine to read stack
 	filesize = apFile.fileSize(datafilename)
 	if first is None and last is None and filesize > bytelimit:
@@ -168,23 +173,23 @@ def readImagic(filename, first=1, last=None, msg=True):
 
 	if msg is True:
 		apDisplay.printMsg("read %d particles equaling %s in size"%(numpart, apDisplay.bytes(partbytes*numpart)))
-		apDisplay.printMsg("finished in "+apDisplay.timeString(time.time()-t0))	
+		apDisplay.printMsg("finished in "+apDisplay.timeString(time.time()-t0))
 
 	return stack
 
-#===============	
+#===============
 def readImagicHeader(headerfilename):
 	headfile=open(headerfilename,'rb')
-	
+
 	# Header information for each image contained in 256 4-byte chunks
 	### actually its 1024 bytes, but 4 bytes (32 bits) per chuck (int32)
 	# First image header contains all necessary info to read entire stack
 	headerbytes=headfile.read(1024)
 	headfile.close()
-	
+
 	i=numpy.fromstring(headerbytes, dtype=numpy.int32)
 	f=numpy.fromstring(headerbytes, dtype=numpy.float32)
-	
+
 	header={}
 	imgnum=i[0]
 	imgfollow=i[1]
@@ -205,14 +210,14 @@ def readImagicHeader(headerfilename):
 
 	return header
 
-#===============	
+#===============
 def readIndexFromHeader(headerfilename, indexnum, numparts=100):
 	"""
 	returns the header values contained at the index
 	as an array of float values
 	Limited to the numparts if specified
 	"""
-	fname = pymagic.fileFilter(headerfilename)		
+	fname = pymagic.fileFilter(headerfilename)
 	headfile=open(fname+".hed",'rb')
 
 	# get number or particles in stack
@@ -228,7 +233,7 @@ def readIndexFromHeader(headerfilename, indexnum, numparts=100):
 	headfile.close()
 	return headervals
 
-#===============	
+#===============
 def readImagicData(datafilename, headerdict, firstpart=1, numpart=1):
 	### calculate number of bytes in particle image
 	partbytes = 4*headerdict['rows']*headerdict['lines']
@@ -249,7 +254,7 @@ def readImagicData(datafilename, headerdict, firstpart=1, numpart=1):
 	rawarray = numpy.fromstring(data, dtype=numpy.float32)
 	try:
 		images = rawarray.reshape(shape)
-		images = numpy.fliplr(images)
+		#images = numpy.fliplr(images)  #FIXME: should we continue to flip the array
 	except:
 		mult = numpart*headerdict['rows']*headerdict['lines']
 		print mult, shape, rawarray.shape, numpart, headerdict['nimg'], headerdict['rows'], headerdict['lines']
@@ -273,23 +278,19 @@ def writeImagic(array, filename, msg=True):
 	Outputs:
 		none
 	"""
-	if isinstance(array, list):
-		### python list of 2d numpy arrays (row x col)
-		if len(array) == 0:
-			apDisplay.printWarning("writeImagic: no particles to write")
-			return
-		try:
-			array = numpy.asarray(array, dtype=numpy.float32)
-			array = numpy.fliplr(array)
-		except:
-			boxsizes = []
-			for part in array:
-				shape = part.shape
-				if not shape in boxsizes:
-					boxsizes.append(shape)
-			if len(boxsizes) > 1:
-				apDisplay.printError("your particles have different boxsizes: "+str(boxsizes))
-			apDisplay.printError("unknown error in particle list to numpy array conversion")
+	if len(array) == 0:
+		apDisplay.printWarning("writeImagic: no particles to write")
+		return
+
+	boxsize2d = array[0].shape
+	for part in array:
+		if part.shape != boxsize2d:
+			apDisplay.printError("your particles have different boxsizes: "
+				+str(part.shape)+" and "+str(boxsize2d.shape))
+
+	#this is required, IMAGIC only support 32bit
+	array = numpy.asarray(array, dtype=numpy.float32)
+	#array = numpy.fliplr(array) #FIXME: should we continue to flip the array
 
 	t0 = time.time()
 	if msg is True:
@@ -320,7 +321,7 @@ def writeImagic(array, filename, msg=True):
 		apDisplay.printWarning("did not write any particles to file")
 	if msg is True:
 		apDisplay.printMsg("wrote "+str(partnum)+" particles to header file")
-		apDisplay.printMsg("finished in "+apDisplay.timeString(time.time()-t0))	
+		apDisplay.printMsg("finished in "+apDisplay.timeString(time.time()-t0))
 	return
 
 #=========================
@@ -347,7 +348,7 @@ def makeHeaderStrFromArray(partnum, partarray):
 #===============
 def makeHeaderStr(partnum, shape, avg, stdev, maxval, minval):
 	"""
-	based on 
+	based on
 		http://www.imagescience.de/formats/formats.htm
 	"""
 	headerstr = ""
@@ -396,7 +397,7 @@ def makeHeaderStr(partnum, shape, avg, stdev, maxval, minval):
 	### image number, EMAN does this, IMAGIC says num 3d in 4d
 	headerstr += intToFourByte(1)
 	for i in range(6):
-		headerstr += intToFourByte(0)	
+		headerstr += intToFourByte(0)
 	headerstr += intToFourByte(33686018)
 	while len(headerstr) < 1024:
 		### fill in the rest with garbage
@@ -456,7 +457,7 @@ def fourByteToFloat(fourbyte):
 	floatnum = numpy.fromstring(fourbyte, dtype=numpy.float32)
 	return floatnum[0]
 
-#===============	
+#===============
 def writeVarianceImage(imagicfile, varmrcfile):
 	imgdict = readImagic(imagicfile)
 	if imgdict is None:
@@ -519,7 +520,7 @@ def readSingleParticleFromStack(filename, partnum=1, boxsize=None, msg=True):
 	partimg = numpy.fromstring(data, dtype=numpy.float32)
 	try:
 		partimg = partimg.reshape(boxsize, boxsize)
-		partimg = numpy.fliplr(partimg)
+		#partimg = numpy.fliplr(partimg)  #FIXME: should we continue to flip the array
 	except:
 		print partimg
 		print boxsize, boxsize*boxsize, partimg.shape
@@ -531,7 +532,7 @@ def readSingleParticleFromStack(filename, partnum=1, boxsize=None, msg=True):
 def appendParticleToStackFile(partarray, mergestackfile, msg=True):
 	"""
 	takes a 2D numpy array and add to stack file
-	
+
 	due to hack, we must re-number the stack later
 	"""
 	### initialization
@@ -541,10 +542,14 @@ def appendParticleToStackFile(partarray, mergestackfile, msg=True):
 	mergedatafile   = root+".img"
 
 	### merge data files
-	premergesize = apFile.fileSize(mergedatafile)	
-	
+	premergesize = apFile.fileSize(mergedatafile)
+
 	mergedata = file(mergedatafile, 'ab')
+	
+	#this is required, IMAGIC only support 32bit
 	part32bit = numpy.asarray(partarray, dtype=numpy.float32)
+	#part32bit = numpy.fliplr(part32bit) #FIXME: should we continue to flip the array
+
 	mergedata.write(part32bit.tostring())
 	mergedata.close()
 
@@ -566,21 +571,21 @@ def appendParticleToStackFile(partarray, mergestackfile, msg=True):
 	headerstr = makeHeaderStrFromArray(premergenumpart+1, partarray)
 	mergehead.write(headerstr)
 	mergehead.close()
-	
+
 	finalnumpart = apFile.numImagesInStack(mergeheaderfile)
 	if finalnumpart != 1 + premergenumpart:
 		apDisplay.printError("size mismatch %d vs. %d + %d = %d"
-			%(finalnumpart, 1, premergenumpart, 1 + premergenumpart))	
+			%(finalnumpart, 1, premergenumpart, 1 + premergenumpart))
 	elif msg is True:
 		apDisplay.printMsg("size match %d vs. %d + %d = %d"
-			%(finalnumpart, 1, premergenumpart, 1 + premergenumpart))	
+			%(finalnumpart, 1, premergenumpart, 1 + premergenumpart))
 	return True
 
 #===============
 def appendParticleListToStackFile(partlist, mergestackfile, msg=True):
 	"""
 	takes a list of 2D numpy arrays and add to stack file
-	
+
 	due to hack, we must re-number the stack later
 	"""
 	### initialization
@@ -590,10 +595,10 @@ def appendParticleListToStackFile(partlist, mergestackfile, msg=True):
 	mergedatafile   = root+".img"
 
 	### merge data files
-	premergesize = apFile.fileSize(mergedatafile)	
-	
+	premergesize = apFile.fileSize(mergedatafile)
+
 	mergedata = file(mergedatafile, 'ab')
-	for partarray in partlist:	
+	for partarray in partlist:
 		part32bit = numpy.asarray(partarray, dtype=numpy.float32)
 		mergedata.write(part32bit.tostring())
 	mergedata.close()
@@ -620,15 +625,15 @@ def appendParticleListToStackFile(partlist, mergestackfile, msg=True):
 	mergehead.close()
 
 	numberStackFile(mergeheaderfile, msg=msg)
-	
+
 	finalnumpart = apFile.numImagesInStack(mergeheaderfile)
 	addpart = len(partlist)
 	if finalnumpart != addpart + premergenumpart:
 		apDisplay.printError("size mismatch %d vs. %d + %d = %d"
-			%(finalnumpart, addpart, premergenumpart, addpart+premergenumpart))	
+			%(finalnumpart, addpart, premergenumpart, addpart+premergenumpart))
 	elif msg is True:
 		apDisplay.printMsg("size match %d vs. %d + %d = %d"
-			%(finalnumpart, addpart, premergenumpart, addpart+premergenumpart))	
+			%(finalnumpart, addpart, premergenumpart, addpart+premergenumpart))
 	return True
 
 
@@ -650,8 +655,8 @@ def appendStackFileToStackFile(stackfile, mergestackfile, msg=True):
 	addnumpart = apFile.numImagesInStack(stackheaderfile)
 	addsize = apFile.fileSize(stackdatafile)
 	premergenumpart = apFile.numImagesInStack(mergeheaderfile)
-	premergesize = apFile.fileSize(mergedatafile)	
-	
+	premergesize = apFile.fileSize(mergedatafile)
+
 	fout = file(mergedatafile, 'ab')
 	fin = file(stackdatafile, 'rb')
 	shutil.copyfileobj(fin, fout, 65536)
@@ -675,9 +680,9 @@ def appendStackFileToStackFile(stackfile, mergestackfile, msg=True):
 	finalnumpart = apFile.numImagesInStack(mergeheaderfile)
 	if finalnumpart != addnumpart + premergenumpart:
 		apDisplay.printError("size mismatch %d vs. %d + %d = %d"
-			%(finalnumpart, addnumpart, premergenumpart, addnumpart + premergenumpart))	
-	
-	
+			%(finalnumpart, addnumpart, premergenumpart, addnumpart + premergenumpart))
+
+
 #===============
 def mergeStacks(stacklist, mergestack, msg=True):
 	### initialization
@@ -776,9 +781,9 @@ def mergeStacks(stacklist, mergestack, msg=True):
 		apDisplay.printMsg("size match %s vs. %s"
 			%(apDisplay.bytes(finalsize), apDisplay.bytes(totalsize)))
 		apDisplay.printMsg("finished stack merge of %s in %s"
-			%(mergestack, apDisplay.timeString(time.time()-t0)))	
+			%(mergestack, apDisplay.timeString(time.time()-t0)))
 
-#===============	
+#===============
 def checkImagic4DHeader(oldhedfile,machineonly=False):
 	### check IMAGIC header values:
 	### IDAT(61) - int - # sections in 3D volume (1)
@@ -789,7 +794,7 @@ def checkImagic4DHeader(oldhedfile,machineonly=False):
 
 	# number of particles in file based on hed size:
 	fnump = int(os.stat(oldhedfile)[6]/1024)
-	
+
 	of = open(oldhedfile, "rb")
 	data = of.read(1024)
 	of.close()
@@ -802,7 +807,7 @@ def checkImagic4DHeader(oldhedfile,machineonly=False):
 		return False
 	return True
 
-#===============	
+#===============
 def setImagic4DHeader(oldhedfile,machineonly=False):
 	### set IMAGIC header values for 2D stack:
 	### IDAT(61) - int - # sections in 3D volume (1)
@@ -820,7 +825,7 @@ def setImagic4DHeader(oldhedfile,machineonly=False):
 	of = open(oldhedfile, "rb")
 	nf = open(newhedfile, "wb")
 	for i in range(numimg):
-		data = of.read(1024)		
+		data = of.read(1024)
 		headerstr = data[0:60*4]
 		if machineonly is not True:
 			headerstr += intToFourByte(1)
@@ -889,7 +894,7 @@ def readParticleListFromStack(filename, partlist, boxsize=None, msg=True):
 
 		seekpos = partbytes*(partnum-prevpartnum-1)
 
-		### for 64 bit machines, skip to desired particles 
+		### for 64 bit machines, skip to desired particles
 		if unames[-1].find('64') >= 0:
 			f.seek(seekpos)
 		### for 32-bit machines, seek incrementally
@@ -909,7 +914,7 @@ def readParticleListFromStack(filename, partlist, boxsize=None, msg=True):
 		partimg = numpy.fromstring(data, dtype=numpy.float32)
 		try:
 			partimg = partimg.reshape(boxsize, boxsize)
-			partimg = numpy.fliplr(partimg)
+			#partimg = numpy.fliplr(partimg)  #FIXME: should we continue to flip the array
 		except:
 			print partimg
 			print boxsize, boxsize*boxsize, partimg.shape
@@ -1079,13 +1084,14 @@ class splitStackEvenOddClass(processStack):
 		#flipping so particles are unchanged
 		flippedStack = []
 		for partarray in stackarray:
-			flippedpartarray = numpy.flipud(partarray)
-			flippedpartarray = numpy.fliplr(flippedpartarray)
+			flippedpartarray = numpy.array(partarray) 
+			#flippedpartarray = numpy.flipud(partarray) 
+			#flippedpartarray = numpy.fliplr(flippedpartarray)  #FIXME: should we continue to flip the array
 			flippedStack.append(flippedpartarray)
 		apFile.removeStack(tempstackfile, warn=self.msg)
 		writeImagic(flippedStack, tempstackfile, msg=self.msg)
 		self.index += len(stackarray)
-		
+
 	#===============
 	def wrtieOddParticles(self, stackfile, outfile=None):
 		numpart = apFile.numImagesInStack(stackfile)
@@ -1093,13 +1099,13 @@ class splitStackEvenOddClass(processStack):
 		self.stacksToMerge = []
 		if outfile is None:
 			root=os.path.splitext(stackfile)[0]
-			outfile = root+".odd.hed"			
+			outfile = root+".odd.hed"
 		self.start(stackfile, partlist=oddPartList)
 		mergeStacks(self.stacksToMerge, outfile, self.msg)
 		for tempstackfile in self.stacksToMerge:
 			apFile.removeStack(tempstackfile, warn=self.msg)
-		return outfile	
-		
+		return outfile
+
 	#===============
 	def wrtieEvenParticles(self, stackfile, outfile=None):
 		numpart = apFile.numImagesInStack(stackfile)
@@ -1113,7 +1119,7 @@ class splitStackEvenOddClass(processStack):
 		for tempstackfile in self.stacksToMerge:
 			apFile.removeStack(tempstackfile, warn=self.msg)
 		return outfile
-		
+
 	#===============
 	def processParticle(self, partarray):
 		sys.exit(1)
@@ -1127,7 +1133,7 @@ def splitStackEvenOdd(stackfile, rundir=None, msg=False):
 		evenfile = os.path.join(rundir, root+".even.hed")
 	else:
 		oddfile = None
-		evenfile = None		
+		evenfile = None
 	splitClass = splitStackEvenOddClass(msg)
 	oddfile = splitClass.wrtieOddParticles(stackfile, oddfile)
 	evenfile = splitClass.wrtieEvenParticles(stackfile, evenfile)

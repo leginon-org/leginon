@@ -7,18 +7,36 @@ from pyami import mem
 from appionlib import apDisplay
 from appionlib.StackClass import mrcClass
 from appionlib.StackClass import hdfClass
+from appionlib.StackClass import imagicClass
+
+####
+# This is a low-level file with NO database connections
+# Please keep it this way
+####
 
 ########################################
 ########################################
 ########################################
-def createStackClass(filename):
+def createStackClass(filename, msg=False):
 	extension = os.path.splitext(filename)[-1]
 	if extension == '.mrc' or extension == '.mrcs':
+		if msg is True: print "MrcClass"
 		return mrcClass.MrcClass(filename)
 	elif extension == '.hed' or extension == '.img':
+		if msg is True: print "ImagicClass"
 		return imagicClass.ImagicClass(filename)
 	elif extension == '.hdf':
+		if msg is True: print "HdfClass"
 		return hdfClass.HdfClass(filename)
+	elif extension == '.spi':
+		if msg is True: print "SpiderClass"
+		raise NotImplementedError
+	elif extension == '.png':
+		if msg is True: print "PngClass"
+		raise NotImplementedError
+	elif extension == '.jpg' or extension == '.jpeg':
+		if msg is True: print "JpegClass"
+		raise NotImplementedError
 	raise NotImplementedError("extension does not map to existing stack type %s"%(extension))
 
 ########################################
@@ -50,7 +68,6 @@ class ProcessStack(object):
 		self.freememory = mem.free()*1024
 		self.message("Free memory: %s"%(apDisplay.bytes(self.freememory)))
 		### box size of particle
-		self.stackClass.readHeader()
 		self.boxsize = self.stackClass.getBoxSize()
 		self.message("Box size: %d"%(self.boxsize))
 		### amount of memory used per particles (4 bytes per pixel)
@@ -110,13 +127,13 @@ class ProcessStack(object):
 			### read images
 			if partlist is None:
 				localpartlist = range(first, last+1)
-				stackarray = self.stackClass.readParticles(localpartlist)
+				stackarray = self.stackClass.readParticlesFromFile(localpartlist)
 			else:
 				#print first, last
 				sublist = partlist[first-1:last]
 				#print sublist
 				self.message("actual partnum %d to %d"%(sublist[0], sublist[-1]))
-				stackarray = self.stackClass.readParticles(sublist)
+				stackarray = self.stackClass.readParticlesFromFile(sublist)
 
 			### process images
 			self.processStack(stackarray)

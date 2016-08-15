@@ -262,9 +262,11 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 		}
 	}, 100);
 	function showRelionOptions(ftype){
-		var shown = (ftype.value == 'imagic') ? 1 : 0;
+		var shown = (ftype.value == 'imagic') ? 1 : 0;";
+	if ($ctfdata) $javascript.= "
 		document.getElementById('ctfcorrectdiv').style.display = shown ? 'block' : 'none';
-		document.getElementById('ctfcorrectmethdiv').style.display = shown ? 'block' : 'none';
+		document.getElementById('ctfcorrectmethdiv').style.display = shown ? 'block' : 'none';";
+	$javascript.= "
 		document.getElementById('bindiv').style.display = shown ? 'block' : 'none';
 		document.getElementById('normdiv').style.display = shown ? 'block' : 'none';
 		document.getElementById('filtdiv').style.display = shown ? 'block' : 'none';
@@ -479,7 +481,7 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	echo "<input type='hidden' name='apix' value='$pixelsize'>\n";
 
 	echo "<div id='bindiv'>\n";
-	echo "<input type='text' name='bin' value='$binval' size='4'>\n";
+	echo "<input type='text' id='bin' name='bin' value='$binval' size='4'>\n";
 	echo docpop('stackbin','Binning');
 	echo "<br/>\n";
 	echo "</div>\n";
@@ -512,7 +514,6 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	
 	echo "<br/>\n";
 	echo "<br/>\n";
-
 
 	if ($ctfdata) {
 		echo "<table style='border: 1px solid black; padding:5px; background-color:#f9f9ff; ' ><tr ><td>\n\n";
@@ -653,6 +654,8 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 		
 	
 	}
+	# don't consider ctf for makestack if no ctf info
+	else echo "<input type='hidden' name='noctf' value='1'>\n";
 
 	//
 	// STARTING ADVANCED SECTION 2
@@ -837,6 +840,7 @@ function runMakestack() {
 	
 	$invert = ($_POST['stackinv']=='on') ? True : False;
 	$normalizemethod = $_POST['normalizemethod'];
+	$noctf = $_POST['noctf'];
 	$ctfcorrect = ($_POST['ctfcorrect']=='on') ? 'ctfcorrect' : '';
 	$ctfcorrecttype = $_POST['ctfcorrecttype'];
 	$ctfsorttype = $_POST['ctfsorttype'];
@@ -1033,6 +1037,8 @@ function runMakestack() {
 	if ($hp) $command.="--highpass=$hp ";
 	if ($pixlimit) $command.="--pixlimit=$pixlimit ";
 	$command.= ($invert) ? "--invert " : "--no-invert ";
+
+	if ($noctf) $command.="--no-ctf ";
 
 	# options not relevant to relion particle extraction
 	if ($filetype != 'relion') {

@@ -11,7 +11,7 @@ MRC I/O functions:
 		Read MRC file into a numpy ndarray object.
       filename - the MRC filename
 
-  mmap(filename)  
+  mmap(filename)
     Open MRC as a memory mapped file.  This is the most efficient way
     to read data if you only need to access part of a large MRC file.
     Only the parts you actually access are read from the disk into memory.
@@ -429,7 +429,7 @@ def updateHeaderUsingArray(header, a, calc_stats=True, reset_origin=True, mz=Non
 		header['nxstart'] = 0
 		header['nystart'] = 0
 		header['nzstart'] = 0
-	else:	
+	else:
 		header['nxstart'] = nx / -2
 		header['nystart'] = ny / -2
 		header['nzstart'] = nz / -2
@@ -636,8 +636,8 @@ def appendArray(a, f):
 		b[start:end].tofile(f)
 
 def substackFromMRCStack(mrcstack, outfile, listfile):
-	''' 
-	f=/path/to/stack.mrc, list=EMAN-style list, numbering starts with 0, writes output mrc stack 
+	'''
+	f=/path/to/stack.mrc, list=EMAN-style list, numbering starts with 0, writes output mrc stack
 	'''
 	# read list, EMAN-style, one line per integer, numbersing starts with 0
 	l = open(listfile, "r")
@@ -661,11 +661,11 @@ def substackFromMRCStack(mrcstack, outfile, listfile):
 			a = read(mrcstack, zslice=loc)
 			append(a, outfile)
 		if i % 1000 == 0:
-			print "written %d images to stack" % i 
+			print "written %d images to stack" % i
 		i+=1
 
 def invert(in_mrc, out_mrc):
-	''' 
+	'''
 	invert an mrc image, puts image into memory, so use wisely if image is a large stack
 	'''
 	a = read(in_mrc)
@@ -722,7 +722,7 @@ def append(a, filename, calc_stats=True):
 	if calc_stats:
 		for key in ('amin', 'amax', 'amean', 'rms'):
 			oldheader[key] = sliceheader[key]
-	
+
 	headerbytes = makeHeaderData(oldheader)
 	f.seek(0)
 	f.write(headerbytes)
@@ -737,15 +737,15 @@ Read the X,Y,Z coordinates for the origin
 	'''
 	h = readHeaderFromFile(filename)
 	origin = {
-		'xorigin': h['xorigin'], 
-		'yorigin': h['yorigin'], 
+		'xorigin': h['xorigin'],
+		'yorigin': h['yorigin'],
 		'zorigin': h['zorigin'],
 	}
 	return origin
 
 def read(filename, zslice=None):
 	'''
-Read the MRC file given by filename, return numpy ndarray object
+	Read the MRC file given by filename, return numpy ndarray object
 	'''
 	a = read_cache.get(filename)
 	if a is None:
