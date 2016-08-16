@@ -7,6 +7,9 @@ from appionlib.StackClass import ProcessStack
 
 extensions = ['.hed', '.hdf', '.mrc']
 
+numpart = 16
+boxsize = (128,128)
+
 filelist = []
 for ext in extensions:
 	filename = "testfile"+ext
@@ -14,19 +17,32 @@ for ext in extensions:
 	print "\nFILENAME: %s"%(filename)
 	stackClass = ProcessStack.createStackClass(filename, msg=True)
 	stackClass.removeStack(warn=False)
-	# 4 particles with box 128x128
-	a = numpy.random.random((4, 128, 128))
+
+	a = numpy.random.random((numpart, boxsize[0], boxsize[0]))
 	a = numpy.array(a, dtype=numpy.float64)
+
 	stackClass.writeParticlesToFile(a)
-	print "getNumberOfParticles", stackClass.getNumberOfParticles()
+	print "  getNumberOfParticles", stackClass.getNumberOfParticles()
+	print "  getBoxSize", stackClass.getBoxSize()
+
 	b = stackClass.readParticlesFromFile()
-	#print b.shape
-	#print b
 	squareError = ((a-b)**2).sum()
-	print "%s squareError: %.8f"%(ext, squareError)
+	print "+ %s squareError: %.8f"%(ext, squareError)
+
 	average = stackTools.averageStack(filename, msg=False)
 	averageError = ((average-0.5)**2).sum()
-	print "%s averageError: %.8f"%(ext, squareError)
+	print "+ %s averageError: %.8f"%(ext, squareError)
+
+	stackClass.appendParticlesToFile(a)
+	b = stackClass.readParticlesFromFile()
+	c = b[-numpart:] #only take appended particles
+	squareError = ((a-c)**2).sum()
+	print "+ %s append squareError: %.8f"%(ext, squareError)
+
+	average = stackTools.averageStack(filename, msg=False)
+	averageError = ((average-0.5)**2).sum()
+	print "+ %s append averageError: %.8f"%(ext, squareError)
+
 
 average = stackTools.averageStackList(filelist, msg=False)
 averageError = ((average-0.5)**2).sum()
