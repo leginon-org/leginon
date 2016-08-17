@@ -491,7 +491,7 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	echo "<input type='text' id='scaledbox' name='scaledbox' value='$scaledboxval' size='4'>\n";
 	echo docpop('scaledbox','Scaled Box Size');
 	echo "<br/>\n";
-	echo "scaled &Aring;/pix: <span id='sc_apix'>".$pixelsize*$binval."</span> Anstroms<br/>\n";
+	echo "scaled &Aring;/pix: <span id='sc_apix'>".$pixelsize*$binval."</span> Angstroms<br/>\n";
 	echo "</div>\n";
 	
 	$diameterval = ($_POST['diameter']) ? $_POST['diameter'] : $partdiam;

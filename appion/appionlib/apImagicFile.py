@@ -254,7 +254,7 @@ def readImagicData(datafilename, headerdict, firstpart=1, numpart=1):
 	rawarray = numpy.fromstring(data, dtype=numpy.float32)
 	try:
 		images = rawarray.reshape(shape)
-		#images = numpy.fliplr(images)  #FIXME: should we continue to flip the array
+		images = numpy.fliplr(images)  #FIXME: should we continue to flip the array
 	except:
 		mult = numpart*headerdict['rows']*headerdict['lines']
 		print mult, shape, rawarray.shape, numpart, headerdict['nimg'], headerdict['rows'], headerdict['lines']
@@ -290,7 +290,7 @@ def writeImagic(array, filename, msg=True):
 
 	#this is required, IMAGIC only support 32bit
 	array = numpy.asarray(array, dtype=numpy.float32)
-	#array = numpy.fliplr(array) #FIXME: should we continue to flip the array
+	array = numpy.fliplr(array) #FIXME: should we continue to flip the array
 
 	t0 = time.time()
 	if msg is True:
@@ -520,66 +520,24 @@ def readSingleParticleFromStack(filename, partnum=1, boxsize=None, msg=True):
 	partimg = numpy.fromstring(data, dtype=numpy.float32)
 	try:
 		partimg = partimg.reshape(boxsize, boxsize)
-		#partimg = numpy.fliplr(partimg)  #FIXME: should we continue to flip the array
+		partimg = numpy.fliplr(partimg)  #FIXME: should we continue to flip the array
 	except:
 		print partimg
 		print boxsize, boxsize*boxsize, partimg.shape
 		apDisplay.printError("could not read particle from stack")
+
+	### FIXME: flip data to be consistent with write function
+	partimg = numpy.fliplr(partimg)
+	partimg = numpy.flipud(partimg)
 	return partimg
 
 
 #===============
 def appendParticleToStackFile(partarray, mergestackfile, msg=True):
 	"""
-	takes a 2D numpy array and add to stack file
-
-	due to hack, we must re-number the stack later
+	takes a single 2D numpy array and add to stack file
 	"""
-	### initialization
-	t0 = time.time()
-	root=os.path.splitext(mergestackfile)[0]
-	mergeheaderfile = root+".hed"
-	mergedatafile   = root+".img"
-
-	### merge data files
-	premergesize = apFile.fileSize(mergedatafile)
-
-	mergedata = file(mergedatafile, 'ab')
-	
-	#this is required, IMAGIC only support 32bit
-	part32bit = numpy.asarray(partarray, dtype=numpy.float32)
-	#part32bit = numpy.fliplr(part32bit) #FIXME: should we continue to flip the array
-
-	mergedata.write(part32bit.tostring())
-	mergedata.close()
-
-	finalsize = apFile.fileSize(mergedatafile)
-	addsize = len(part32bit.tostring())
-	if finalsize != addsize + premergesize:
-		apDisplay.printError("size mismatch %s vs. %s + %s = %s"%(
-			apDisplay.bytes(finalsize), apDisplay.bytes(addsize),
-			apDisplay.bytes(premergesize), apDisplay.bytes(premergesize+addsize)))
-	elif msg is True:
-		apDisplay.printMsg("size match %s vs. %s + %s = %s"%(
-			apDisplay.bytes(finalsize), apDisplay.bytes(addsize),
-			apDisplay.bytes(premergesize), apDisplay.bytes(premergesize+addsize)))
-
-	### merge header files
-	premergenumpart = apFile.numImagesInStack(mergeheaderfile)
-	mergehead = open(mergeheaderfile, 'ab')
-	#print partarray.shape
-	headerstr = makeHeaderStrFromArray(premergenumpart+1, partarray)
-	mergehead.write(headerstr)
-	mergehead.close()
-
-	finalnumpart = apFile.numImagesInStack(mergeheaderfile)
-	if finalnumpart != 1 + premergenumpart:
-		apDisplay.printError("size mismatch %d vs. %d + %d = %d"
-			%(finalnumpart, 1, premergenumpart, 1 + premergenumpart))
-	elif msg is True:
-		apDisplay.printMsg("size match %d vs. %d + %d = %d"
-			%(finalnumpart, 1, premergenumpart, 1 + premergenumpart))
-	return True
+	return appendParticleListToStackFile([partarray,], mergestackfile, msg=True)
 
 #===============
 def appendParticleListToStackFile(partlist, mergestackfile, msg=True):
@@ -600,6 +558,7 @@ def appendParticleListToStackFile(partlist, mergestackfile, msg=True):
 	mergedata = file(mergedatafile, 'ab')
 	for partarray in partlist:
 		part32bit = numpy.asarray(partarray, dtype=numpy.float32)
+		part32bit = numpy.flipud(part32bit) #FIXME: should we continue to flip the array
 		mergedata.write(part32bit.tostring())
 	mergedata.close()
 
@@ -914,7 +873,7 @@ def readParticleListFromStack(filename, partlist, boxsize=None, msg=True):
 		partimg = numpy.fromstring(data, dtype=numpy.float32)
 		try:
 			partimg = partimg.reshape(boxsize, boxsize)
-			#partimg = numpy.fliplr(partimg)  #FIXME: should we continue to flip the array
+			partimg = numpy.fliplr(partimg)  #FIXME: should we continue to flip the array
 		except:
 			print partimg
 			print boxsize, boxsize*boxsize, partimg.shape
@@ -1084,9 +1043,9 @@ class splitStackEvenOddClass(processStack):
 		#flipping so particles are unchanged
 		flippedStack = []
 		for partarray in stackarray:
-			flippedpartarray = numpy.array(partarray) 
-			#flippedpartarray = numpy.flipud(partarray) 
-			#flippedpartarray = numpy.fliplr(flippedpartarray)  #FIXME: should we continue to flip the array
+			### not sure why we need two flips, which is a 180 degreee rotation
+			flippedpartarray = numpy.flipud(partarray) 
+			flippedpartarray = numpy.fliplr(flippedpartarray)  #FIXME: should we continue to flip the array
 			flippedStack.append(flippedpartarray)
 		apFile.removeStack(tempstackfile, warn=self.msg)
 		writeImagic(flippedStack, tempstackfile, msg=self.msg)
@@ -1141,3 +1100,12 @@ def splitStackEvenOdd(stackfile, rundir=None, msg=False):
 		apDisplay.printMsg("Created even/odd split stacks %s and %s from original stack %s"
 			%(oddfile, evenfile, stackfile))
 	return oddfile, evenfile
+
+if __name__ == '__main__':
+	a = numpy.random.random((4, 128, 128))
+	apImagicFile.writeImagic(a, filename) #flip and write images to file
+	partdata = []
+	for partnum in numpart:
+		 a = apImagicFile.readSingleParticleFromStack(filename, partnum=partnum)
+		 partdata.append(a)
+	b = numpy.array(partdata)
