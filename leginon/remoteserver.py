@@ -26,7 +26,8 @@ class RemoteServerMaster(object):
 		self.node = node
 		self.node_name = node.name.replace(' ','_')
 		self.remote_passcode = sessiondata['remote passcode']
-		self.remotedata_base = os.path.join('/Users/acheng/testdata/remote',sessiondata['name'],self.node_name)
+		
+		self.remotedata_base = os.path.join(os.path.dirname(sessiondata['image path']),'remote',self.node_name)
 		fileutil.mkdirs(self.remotedata_base)
 		self.toolbar = RemoteToolbar(logger, sessiondata, node, self.remotedata_base)
 		self.targets = RemoteTargetServer(logger, sessiondata, node, self.remotedata_base)
