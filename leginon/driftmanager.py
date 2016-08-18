@@ -34,7 +34,7 @@ class DriftManager(watcher.Watcher):
 		'camera settings': cameraclient.default_settings,
 	}
 	eventinputs = watcher.Watcher.eventinputs + [event.DriftMonitorRequestEvent, event.PresetChangedEvent]
-	eventoutputs = watcher.Watcher.eventoutputs + [event.DriftMonitorResultEvent, event.ChangePresetEvent, event.PresetLockEvent, event.PresetUnlockEvent, event.AcquisitionImagePublishEvent]
+	eventoutputs = watcher.Watcher.eventoutputs + [event.DriftMonitorResultEvent, event.ChangePresetEvent, event.PresetLockEvent, event.PresetUnlockEvent, event.AcquisitionImagePublishEvent, event.IdleTimerPauseEvent, event.IdleTimerRestartEvent]
 	def __init__(self, id, session, managerlocation, **kwargs):
 		watchfor = [event.DriftMonitorRequestEvent]
 		watcher.Watcher.__init__(self, id, session, managerlocation, watchfor, **kwargs)
@@ -57,10 +57,20 @@ class DriftManager(watcher.Watcher):
 		self.logger.info('processData')
 		if isinstance(newdata, leginondata.DriftMonitorRequestData):
 			self.logger.info('DriftMonitorRequest')
+			self.sendIdleTimerPauseEvent()
 			self.startTimer('monitorDrift')
 			self.monitorDrift(newdata)
+			self.sendIdleTimerRestartEvent()
 			self.stopTimer('monitorDrift')
 
+	def sendIdleTimerPauseEvent(self):
+			evt = event.IdleTimerPauseEvent()
+			self.outputEvent(evt, wait=False)
+		
+	def sendIdleTimerRestartEvent(self):
+			evt = event.IdleTimerRestartEvent()
+			self.outputEvent(evt, wait=False)
+		
 	def uiMeasureDrift(self):
 		t = threading.Thread(target=self.measureDrift)
 		t.setDaemon(1)

@@ -14,6 +14,7 @@
 from leginon import leginondata
 import remotecall
 import gui.wx.Events
+import time
 
 class InstrumentError(Exception):
 	pass
@@ -34,6 +35,7 @@ class Proxy(object):
 		self.camerabinmethod = None
 		self.camerabinmethods = {}
 		self.session = session
+		self.last_set = time.time()
 		self.wxeventhandler = wxeventhandler
 		self.objectservice = objectservice
 		self.objectservice._addDescriptionHandler(add=self.onAddDescription,
@@ -325,12 +327,27 @@ class Proxy(object):
 			attributes.append(attribute)
 			args.append((instance[key],))
 		results = proxy.multiCall(attributes, types, args)
+		self.updateLastSet()
 		for result in results:
 			try:
 				if isinstance(result, Exception):
 					raise result
 			except AttributeError:
 				pass
+
+	def updateLastSet(self):
+		'''
+		update last_set attribute time to indicate that the instrument
+		is active.
+		'''
+		t = time.time()
+		self.last_set = t
+
+	def getLastSet(self):
+		'''
+		get the time a method on the instrument was last set
+		'''
+		return self.last_set
 
 class TEM(remotecall.Locker):
 	def getDatabaseType(self):

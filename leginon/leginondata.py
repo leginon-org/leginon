@@ -1275,7 +1275,7 @@ class AtlasTargetMakerSettingsData(SettingsData):
 class PresetsManagerSettingsData(SettingsData):
 	def typemap(cls):
 		return SettingsData.typemap() + (
-			('pause time', float),
+			('pause time', float), # seconds
 			('xy only', bool),
 			('stage always', bool),
 			('cycle', bool),
@@ -1285,6 +1285,7 @@ class PresetsManagerSettingsData(SettingsData):
 			('disable stage for image shift', bool),
 			('blank', bool),
 			('smallsize', int),
+			('idle minute', float), # minutes
 		)
 	typemap = classmethod(typemap)
 
