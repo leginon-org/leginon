@@ -509,7 +509,7 @@ class HoleFinder(targetfinder.TargetFinder):
 		## user part
 		if self.settings['user check'] or autofailed:
 			while True:
-				self.waitForUserCheck()
+				self.waitForInteraction(imdata)
 				ptargets = self.processPreviewTargets(imdata, targetlist)
 				if not ptargets:
 					break

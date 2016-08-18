@@ -80,6 +80,7 @@ class SessionData(Data):
 			('comment', str),
 			('holder', GridHolderData),
 			('hidden', bool),
+			('remote passcode', str),
 		)
 	typemap = classmethod(typemap)
 
@@ -1388,6 +1389,7 @@ class TargetFinderSettingsData(SettingsData):
 			('ignore images', bool),
 			('queue', bool),
 			('user check', bool),
+			('check method', str),
 			('queue drift', bool),
 			('sort target', bool),
 			('allow append', bool),
