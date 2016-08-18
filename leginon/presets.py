@@ -316,8 +316,8 @@ class PresetsManager(node.Node):
 	def isAnyIdleTimerPaused(self):
 		'''
 		Find all nodes that sent IdleTimerPauseEvent but not yet sending
-		IdleTimerRestartEvent.  Some node classes such as AutoN2Filler does
-		not set instrument through PresetsManager but takes a long time.
+		IdleTimerRestartEvent.  Some node classes such as AutoN2Filler
+		takes a long time to return.
 		'''
 		any_paused = []
 		for key in self.idle_timer_paused.keys():
@@ -327,21 +327,21 @@ class PresetsManager(node.Node):
 
 	def usageTracker(self):
 		'''
-		this is run in a thread to watch for instrument last set time
+		this is run in a thread to watch for instrument last set or get time
 		'''
-		last_set_time = self.instrument.getLastSet()
+		last_set_get_time = self.instrument.getLastSetGetTime()
 		while self.idleactive:
 			paused_fromnode = self.isAnyIdleTimerPaused()
 			for node in paused_fromnode:
-				# Some node classes such as AutoN2Filler does not set instrument through
-				# presets manager and can take a long time.
+				# Some node classes such as AutoN2Filler do not set instrument
+				# but can take a long time to come back.
 				# These need to wait
 				self.idle_timer_pause_done[node].wait()
 				self.idle_timer_pause_done[node].clear()
 				self.idle_timer_paused[node] = False
 			## idletime before giving up
-			last_set_time = self.instrument.getLastSet()
-			if self.idleactive and time.time() - last_set_time > 60*self.settings['idle minute']:
+			last_set_get_time = self.instrument.getLastSetGetTime()
+			if self.idleactive and time.time() - last_set_get_time > 60*self.settings['idle minute']:
 				self.instrumentIdleFinish()
 				# close valves, stop doing everything or quit
 			time.sleep(10)
@@ -365,6 +365,8 @@ class PresetsManager(node.Node):
 			self.idleactive = False
 			self.logger.info('Instrument timeout deactivated')
 		else:
+			# update first then start tracking
+			self.instrument.updateLastSetGetTime()
 			self.idleactive = True
 			self.logger.info('Instrument timeout activated')
 			self.startInstrumentUsageTracker()
@@ -2090,7 +2092,7 @@ class PresetsManager(node.Node):
 	def handleIdleTimerRestartEvent(self, evt):
 		node = evt['node']
 		self.logger.info('%s requested idle timer restart' % (node,))
-		self.instrument.updateLastSet()
+		self.instrument.updateLastSetGetTime()
 		if node in self.isAnyIdleTimerPaused():
 			self.idle_timer_paused[node] = False
 			self.idle_timer_pause_done[node].set()

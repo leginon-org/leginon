@@ -16,6 +16,9 @@ import remotecall
 import gui.wx.Events
 import time
 
+# global variable to log last instrument setData or getData method call
+last_set_get = time.time()
+
 class InstrumentError(Exception):
 	pass
 
@@ -35,7 +38,6 @@ class Proxy(object):
 		self.camerabinmethod = None
 		self.camerabinmethods = {}
 		self.session = session
-		self.last_set = time.time()
 		self.wxeventhandler = wxeventhandler
 		self.objectservice = objectservice
 		self.objectservice._addDescriptionHandler(add=self.onAddDescription,
@@ -231,6 +233,7 @@ class Proxy(object):
 		raise ValueError
 
 	def getData(self, dataclass, temname=None, ccdcameraname=None):
+		self.updateLastSetGetTime()
 		if issubclass(dataclass, leginondata.ScopeEMData):
 			if temname is None:
 				proxy = self.tem
@@ -327,7 +330,7 @@ class Proxy(object):
 			attributes.append(attribute)
 			args.append((instance[key],))
 		results = proxy.multiCall(attributes, types, args)
-		self.updateLastSet()
+		self.updateLastSetGetTime()
 		for result in results:
 			try:
 				if isinstance(result, Exception):
@@ -335,19 +338,21 @@ class Proxy(object):
 			except AttributeError:
 				pass
 
-	def updateLastSet(self):
+	def updateLastSetGetTime(self):
 		'''
-		update last_set attribute time to indicate that the instrument
-		is active.
+		update global last_set_get attribute time to indicate that
+		the instrument is active.
 		'''
 		t = time.time()
-		self.last_set = t
+		global last_set_get
+		last_set_get = t
 
-	def getLastSet(self):
+	def getLastSetGetTime(self):
 		'''
-		get the time a method on the instrument was last set
+		get the time a method on the instrument was last set or get
 		'''
-		return self.last_set
+		global last_set_get
+		return last_set_get
 
 class TEM(remotecall.Locker):
 	def getDatabaseType(self):
