@@ -24,6 +24,7 @@ from appionlib.apSpider import operations
 from appionlib import apIMAGIC
 from appionlib.apImagic import imagicFilters
 from appionlib.apImagic import imagicAlignment
+from appionlib import apRelion
 
 import EMAN2
 import sparx
@@ -1061,43 +1062,52 @@ class TopologyRepScript(appionScript.AppionScript):
 		### process stack to local file
 		self.params['localstack'] = os.path.join(self.params['rundir'], self.timestamp+".hed")
 
-		a = proc2dLib.RunProc2d()
-		a.setValue('infile',self.stack['file'])
-		a.setValue('outfile',self.params['localstack'])
-		a.setValue('apix',self.stack['apix'])
-		a.setValue('bin',self.params['bin'])
-		a.setValue('last',self.params['numpart']-1)
-		a.setValue('append',False)
+		processImgList=[]
+		### check for Relion star file
+		if self.stack['file'].endswith('.star'):
+			processImgList = apRelion.getMrcParticleFilesFromStar(self.stack['file'])
+		else: processImgList.append(self.stack['file'])
 
-		if self.params['lowpass'] is not None and self.params['lowpass'] > 1:
-			a.setValue('lowpass',self.params['lowpass'])
-		if self.params['highpass'] is not None and self.params['highpass'] > 1:
-			a.setValue('highpass',self.params['highpass'])
-		if self.params['invert'] is True:
-			a.setValue('invert',True)
-		if self.params['premask'] is True and self.params['mramethod'] != 'imagic':
-			a.setValue('mask',self.params['mask'])
+		for pimg in processImgList:
+			a = proc2dLib.RunProc2d()
+			a.setValue('infile',pimg)
+			a.setValue('outfile',self.params['localstack'])
+			a.setValue('apix',self.stack['apix'])
+			a.setValue('bin',self.params['bin'])
+			a.setValue('last',self.params['numpart']-1)
+			a.setValue('append',True)
 
-		if self.params['virtualdata'] is not None:
-			vparts = self.params['virtualdata']['particles']
-			plist = [int(p['particleNumber'])-1 for p in vparts]
-			a.setValue('list',plist)
+			if self.params['lowpass'] is not None and self.params['lowpass'] > 1:
+				a.setValue('lowpass',self.params['lowpass'])
+			if self.params['highpass'] is not None and self.params['highpass'] > 1:
+				a.setValue('highpass',self.params['highpass'])
+			if self.params['invert'] is True:
+				a.setValue('invert',True)
+			if self.params['premask'] is True and self.params['mramethod'] != 'imagic':
+				a.setValue('mask',self.params['mask'])
 
-		if self.params['uploadonly'] is not True:
-			if os.path.isfile(os.path.join(self.params['rundir'],"stack.hed")):
-				self.params['localstack']=os.path.join(self.params['rundir'],"stack.hed")
-			else:
-				a.run()
-			if self.params['numpart'] != apFile.numImagesInStack(self.params['localstack']):
-				apDisplay.printError("Missing particles in stack")
+			if self.params['virtualdata'] is not None:
+				vparts = self.params['virtualdata']['particles']
+				plist = [int(p['particleNumber'])-1 for p in vparts]
+				a.setValue('list',plist)
 
-			### IMAGIC mask particles before alignment
-			if self.params['premask'] is True and self.params['mramethod'] == 'imagic':
-				# convert mask to fraction for imagic
-				maskfrac = self.workingmask*2/self.workingboxsize
-				maskstack = imagicFilters.softMask(self.params['localstack'],mask=maskfrac)
-				shutil.move(maskstack+".hed",os.path.splitext(self.params['localstack'])[0]+".hed")
-				shutil.move(maskstack+".img",os.path.splitext(self.params['localstack'])[0]+".img")
+			if self.params['uploadonly'] is not True:
+				if os.path.isfile(os.path.join(self.params['rundir'],"stack.hed")):
+					self.params['localstack']=os.path.join(self.params['rundir'],"stack.hed")
+					break
+				else:
+					a.run()
+
+		if self.params['numpart'] != apFile.numImagesInStack(self.params['localstack']):
+			apDisplay.printError("Missing particles in stack")
+
+		### IMAGIC mask particles before alignment
+		if self.params['premask'] is True and self.params['mramethod'] == 'imagic':
+			# convert mask to fraction for imagic
+			maskfrac = self.workingmask*2/self.workingboxsize
+			maskstack = imagicFilters.softMask(self.params['localstack'],mask=maskfrac)
+			shutil.move(maskstack+".hed",os.path.splitext(self.params['localstack'])[0]+".hed")
+			shutil.move(maskstack+".img",os.path.splitext(self.params['localstack'])[0]+".img")
 
 		origstack = self.params['localstack']
 		### find number of processors

@@ -6,6 +6,7 @@ import glob
 import subprocess
 import shutil
 from appionlib import apDisplay
+from appionlib import apRelion
 from pyami import mrc
 
 ####
@@ -184,8 +185,9 @@ def getBoxSize(filename, msg=True):
 #===============
 def numImagesInStack(imgfile, boxsize=None):
 	"""
-	Find the number of images in an 
-	IMAGIC stack based on the filesize
+	Find the number of images in a stack:
+	IMAGIC: based on the filesize
+	RELION: based on lines in star file
 	"""
 	if not os.path.isfile(imgfile):
 		return 0
@@ -201,8 +203,10 @@ def numImagesInStack(imgfile, boxsize=None):
 			apDisplay.printError("boxsize is required for SPIDER stacks")
 		imgmem = boxsize*(boxsize+2)*4
 		numimg = int('%d' % (os.stat(imgfile)[6]/imgmem))
+	elif imgfile.endswith(".star"):
+		return len(apRelion.getPartsFromStar(imgfile))
 	else:
-		apDisplay.printError("numImagesInStack() requires an IMAGIC or SPIDER stacks")
+		apDisplay.printError("numImagesInStack() requires an IMAGIC, SPIDER, or RELION stack")
 	return numimg
 
 def safeSymLink(source, destination):
