@@ -429,7 +429,7 @@ class leginondata {
 	function getScopesForSelection() {
 		$scopes = $this->getScopes(false,true);
 		if ( !is_array($scopes)) return false;
-		$allscopes = array('id'=>false,'name'=>'all scopes');
+		$allscopes = array('id'=>false,'name'=>'all microscopes');
 		array_unshift( $scopes, $allscopes);
 		return $scopes;
 	}
