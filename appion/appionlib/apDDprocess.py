@@ -127,6 +127,7 @@ class DirectDetectorProcessing(object):
 		return self.rundir
 
 	def getNumberOfFrameSaved(self):
+#		return 2
 		return self.getNumberOfFrameSavedFromImageData(self.image)
 
 	def getNumberOfFrameSavedFromImageData(self,imagedata):
@@ -295,6 +296,7 @@ class DDFrameProcessing(DirectDetectorProcessing):
 			apDisplay.printMsg('%s' % ( self.framestackpath))
 		# These are only used if alignment of the frames are made
 		self.aligned_sumpath = os.path.join(self.rundir,self.image['filename']+'_c.mrc')
+		self.aligned_dw_sumpath = os.path.join(self.rundir,self.image['filename']+'_c-DW.mrc')
 		self.aligned_stackpath = os.path.join(self.rundir,self.framestackpath[:-4]+'_c'+self.framestackpath[-4:])
 		self.aligned_log = self.framestackpath[:-4]+'_Log.txt'
 
@@ -1233,14 +1235,20 @@ class DDFrameProcessing(DirectDetectorProcessing):
 			#apDisplay.printError('If this happens consistently on an image, hide it in myamiweb viewer and continue with others' )
 		os.chdir(self.rundir)
 
-=======
->>>>>>> 90d90273fad7529dbb9dd101b230caee4bd90a5b
 	def makeAlignedImageData(self,alignlabel='a'):
 		'''
 		Prepare ImageData to be uploaded after alignment
 		'''
 		camdata = self.getAlignedCameraEMData()
 		new_array = mrc.read(self.aligned_sumpath)
+		return apDBImage.makeAlignedImageData(self.image,camdata,new_array,alignlabel)
+
+	def makeAlignedDWImageData(self,alignlabel='a-DW'):
+		'''
+		Prepare ImageData to be uploaded after alignment
+		'''
+		camdata = self.getAlignedCameraEMData()
+		new_array = mrc.read(self.aligned_dw_sumpath)
 		return apDBImage.makeAlignedImageData(self.image,camdata,new_array,alignlabel)
 
 	def isReadyForAlignment(self):

@@ -220,33 +220,35 @@ class MotionCorr2_UCSF(DDFrameAligner):
 		self.executable = 'motioncorr2_ucsf'
 		DDFrameAligner.__init__(self)
 
+	def setKV(self, kv):
+		self.alignparams['kV'] = kv
+
+	def setTotalFrames(self, totalframes):
+		self.alignparams['totalframes'] = totalframes
+
+	def setTotalDose(self, totaldose):
+		self.alignparams['totaldose'] = totaldose
+
 	def makeFrameAlignmentCommand(self, gain_dark_cmd=''):
 		'''
 		David Agard lab's gpu program for aligning frames using all defaults
 		Dark reference select is currently unavailable, therefore this version only works for images acquired from a K2 camera in counting mode
 		'''
-		os.chdir(self.tempdir)
-		# include both hostname and gpu to identify the temp output
-		temp_aligned_sumpath = 'temp%s.%d_sum.mrc' % (self.hostname,self.gpuid)
-		temp_aligned_stackpath = 'temp%s.%d_aligned_st.mrc' % (self.hostname,self.gpuid)
-		print self.__dict__.keys()
 
-		
+#		print self.alignparams
+#		print self.__dict__.keys()
+
 		# Construct the command line with defaults
 
-		cmd = 'motioncorr2_ucsf -InMrc %s -OutMrc %s' % (self.framestackpath, temp_aligned_sumpath)
+		cmd = 'motioncorr2_ucsf -InMrc %s -OutMrc %s' % (self.framestackpath, self.aligned_sumpath)
 
-		print self.alignparams
-		
 		# binning
 		if self.alignparams['FtBin'] > 1:
-#			self.setBinning(self.alignparams['FtBin'])
-			cmd += ' -FtBin %d ' % self.stack_binning
+			cmd += ' -FtBin %d ' % self.alignparams['FtBin']
 
 		# bfactor
 		if self.alignparams['Bft'] > 0:
-#			self.setBfactor(self.alignparams['Bft']) 
-			cmd += ' -Bft %d ' % self.bft
+			cmd += ' -Bft %d ' % self.alignparams['Bft']
 
 		# frame truncation
 		if self.alignparams['Throw'] > 0:
@@ -272,6 +274,10 @@ class MotionCorr2_UCSF(DDFrameAligner):
 		else: 
 			pass
 
+		# grouping
+		if self.alignparams['Group']:
+			cmd += ' -Group %d' % self.alignparams['Group']
+
 		# masking
 		maskcentx = int(self.alignparams['MaskCent'].split(",")[0])
 		maskcenty = int(self.alignparams['MaskCent'].split(",")[1])
@@ -295,47 +301,23 @@ class MotionCorr2_UCSF(DDFrameAligner):
 		else: 
 			pass
 
+		self.alignparams['FmDose'] = self.alignparams['totaldose'] / self.alignparams['totalframes']
 		# exposure filtering
 		if self.alignparams['doseweight'] is True:
 			cmd += ' -PixSize %.3f ' % (self.alignparams['PixSize'])
 			cmd += ' -kV %d ' % (self.alignparams['kV'])
 			cmd += ' -FmDose %.3f ' % (self.alignparams['FmDose'])
 		
+		# serial 1, defaulted
+#		cmd += ' Serial 1'
 		
 		# gain dark references
 		cmd += gain_dark_cmd
 
 		# GPU ID
-		cmd += ' Gpu %d' % self.gpuid
+		cmd += ' Gpu %d' % self.alignparams['Gpu']
 
 		return cmd
-
-		"""
-
-		if os.path.isfile(temp_aligned_sumpath):
-			# successful alignment
-			if self.tempdir != self.rundir:
-				if os.path.isfile(temp_log):
-					shutil.move(temp_log,self.framestackpath[:-4]+'_Log.txt')
-					apDisplay.printMsg('Copying result for %s from %s to %s' % (self.image['filename'],self.tempdir,self.rundir))
-			if not is_sum_with_dosefgpu:
-				self.sumSubStackWithNumpy(temp_aligned_stackpath,temp_aligned_sumpath)
-			shutil.move(temp_aligned_sumpath,self.aligned_sumpath)
-			if self.keep_stack:
-				shutil.move(temp_aligned_stackpath,self.aligned_stackpath)
-			else:
-				apFile.removeFile(temp_aligned_stackpath)
-				apFile.removeFile(self.aligned_stackpath)
-		else:
-			if self.tempdir != self.rundir:
-				# Move the Log to permanent location for future inspection
-				if os.path.isfile(temp_log):
-					shutil.move(self.tempframestackpath[:-4]+'_Log.txt',self.framestackpath[:-4]+'_Log.txt')
-			apDisplay.printWarning('dosefgpu_driftcorr FAILED: \n%s not created.' % os.path.basename(temp_aligned_sumpath))
-			#apDisplay.printError('If this happens consistently on an image, hide it in myamiweb viewer and continue with others' )
-		os.chdir(self.rundir)
-
-		"""
 
 	def getValidAlignOptionMappings(self):
 		return {
@@ -361,13 +343,13 @@ class MotionCorr2_UCSF(DDFrameAligner):
 			"totalframes":"totalframes"
 			}
 
-	def modifyFlipAlongYAxis(self):
-		'''
-		modification to make Purdue motioncorr compatible with the motioncorr 1
-		'''
-		if 'flp' in self.alignparams.keys():
-			if self.getNewFlipAlongYAxis() == 0:
-				del self.alignparams['nrw']
+#	def modifyFlipAlongYAxis(self):
+#		'''
+#		modification to make Purdue motioncorr compatible with the motioncorr 1
+#		'''
+#		if 'flp' in self.alignparams.keys():
+#			if self.getNewFlipAlongYAxis() == 0:
+#				del self.alignparams['nrw']
 			
 	def setAlignedSumFrameList(self,framelist):
 		self.sumframelist = framelist
@@ -408,7 +390,7 @@ class MotionCorr2_UCSF(DDFrameAligner):
 		midshy = shifts[midval][1]
 		for l in shifts:
 			shxa = l[0] - midshx
-			shya = l[0] - midshy
+			shya = l[1] - midshy
 			shifts_adjusted.append([shxa, shya])
 
 		### motioncorr1 format, needs conversion from motioncorr2 format

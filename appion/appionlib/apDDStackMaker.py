@@ -110,7 +110,7 @@ class FrameStackLoop(apDDLoop.DDStackLoop):
 		self.dd.setNewBinning(self.params['bin'])
 
 		# place holder for alignment result path setting
-		self.setOtherProcessImageResultPaths()
+		self.setOtherProcessImageResultParams()
 
 		### first remove any existing stack file
 		apFile.removeFile(self.dd.framestackpath)
@@ -136,7 +136,7 @@ class FrameStackLoop(apDDLoop.DDStackLoop):
 		self.dd.setUseFrameAlignerFlat(False)
 		return False
 
-	def setOtherProcessImageResultPaths(self):
+	def setOtherProcessImageResultParams(self):
 		pass
 
 	def otherProcessImage(self,imgdata):

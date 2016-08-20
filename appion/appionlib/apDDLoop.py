@@ -41,6 +41,16 @@ class DDStackLoop(appionLoop2.AppionLoop):
 		self.parser.add_option("--alignccbox", dest="pbx", type="int", default=128,
 			help="alignment CC search box size in dosefgpu_driftcorr")
 
+		# Dose weighting, based on Grant & Grigorieff eLife 2015
+		self.parser.add_option("--doseweight",dest="doseweight",metavar="bool", default=False,
+			action="store_true", help="dose weight the frame stack, according to Tim / Niko's curves")
+		self.parser.add_option("--totaldose",dest="totaldose",metavar="float",type=float,
+                        help="total dose for the full movie stack in e/A^2. If not specified, will get value from database")
+#		self.parser.add_option("--FmDose",dest="FmDose",metavar="float",type=float,
+#                        help="Frame dose in e/A^2. If not specified, will get value from database")
+
+
+
 	def getUnAlignedImageIds(self,imageids):
 		'''
 		Convert the input image id list to an unaligned image id list
@@ -65,9 +75,14 @@ class DDStackLoop(appionLoop2.AppionLoop):
 	def processImage(self, imgdata):
 		# initialize aligned_imagedata as if not aligned
 		self.aligned_imagedata = None
+		self.aligned_dw_imagedata = None
 
 	def commitToDatabase(self,imgdata):
 		if self.aligned_imagedata != None:
 			apDisplay.printMsg('Uploading aligned image as %s' % self.aligned_imagedata['filename'])
 			q = appiondata.ApDDAlignImagePairData(source=imgdata,result=self.aligned_imagedata,ddstackrun=self.rundata)
+			q.insert()
+		if self.aligned_dw_imagedata != None:
+			apDisplay.printMsg('Uploading aligned image as %s' % self.aligned_dw_imagedata['filename'])
+			q = appiondata.ApDDAlignImagePairData(source=imgdata,result=self.aligned_dw_imagedata,ddstackrun=self.rundata)
 			q.insert()

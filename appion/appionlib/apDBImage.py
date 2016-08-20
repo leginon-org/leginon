@@ -78,7 +78,7 @@ def makeAlignedImageData(old_imagedata,new_camdata,new_array,alignlabel='a'):
 		align_presetdata['binning'] = camdata['binning']
 		align_presetdata['offset'] = camdata['offset']
 		align_presetdata['exposure time'] = camdata['exposure time']
-		# make new imagedata with the align_preset amd aligned CameraEMData
+		# make new imagedata with the align_preset and aligned CameraEMData
 		imagedata = leginondata.AcquisitionImageData(initializer=old_imagedata)
 		imagedata['preset'] = align_presetdata
 		imagefilename = imagedata['filename']
