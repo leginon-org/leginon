@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 from appionlib import apDDAlignStackMaker
 from appionlib import apDDFrameAligner
+from appionlib import apDisplay
 
 class MotionCorrAlignStackLoop(apDDAlignStackMaker.AlignStackLoop):
 	#=======================

@@ -906,7 +906,7 @@ class DDFrameProcessing(DirectDetectorProcessing):
 			return array
 		cdata = self.getAlignedCameraEMData()
 		if not cdata:
-			# Only bin the image if not for alignment with dosefgpu_driftcorr program
+			# Only bin the image if not for alignment with framealigner program
 			additional_binning = self.getNewBinning()
 			return imagefun.bin(array,additional_binning)
 		else:
@@ -1135,11 +1135,9 @@ class DDFrameProcessing(DirectDetectorProcessing):
 
 	def isSumSubStackWithFrameAligner(self):
 		'''
-		This funciton decides whether dosefgpu_driftcorr will be used for
+		This funciton decides whether framealigner will be used for
 		summing up ddstack.  Dosefgpu_driftcorr can only handle
 		consecutive frame sum.
-		
-		REDUNDANT FUNCTION, SWITCH TO ApDDFrameAligner
 		'''
 		framelist = self.getAlignedSumFrameList()
 		# To save time, only proceed if necessary
@@ -1149,91 +1147,6 @@ class DDFrameProcessing(DirectDetectorProcessing):
 		# aligned_stack has to be saved to use Numpy to sum substack
 		self.save_aligned_stack=True
 		return False
-
-	def setDoseFDriftCorrOptions(self,params):
-		paramkeys = ['bft','fod','pbx']
-		for goodkey in paramkeys:
-			if goodkey in params.keys():
-				self.alignparams[goodkey] = params[goodkey]
-
-	def addDoseFDriftCorrOptions(self):
-		cmd = ''
-		for key in self.alignparams.keys():
-			cmd += ' -%s %s' % (key,str(self.alignparams[key]))
-		return cmd
-
-	def gainCorrectAndAlignFrameStack(self):
-		cmd = self.makeDosefgpuGainCorrectionParams()
-		self.alignCorrectedFrameStack(gain_dark_cmd=cmd)
-
-	def alignCorrectedFrameStack(self, gain_dark_cmd=''):
-		'''
-		Xueming Li's gpu program for aligning frames using all defaults
-		Valid square gain/dark corrected ddstack is the input.
-		'''
-		# The alignment is done in tempdir (a local directory to reduce network traffic)
-		os.chdir(self.tempdir)
-		# include both hostname and gpu to identify the temp output
-		temp_aligned_sumpath = 'temp%s.%d_sum.mrc' % (self.hostname,self.gpuid)
-		temp_aligned_stackpath = 'temp%s.%d_aligned_st.mrc' % (self.hostname,self.gpuid)
-		temp_log = self.tempframestackpath[:-4]+'_Log.txt'
-
-		# Construct the command line with defaults
-
-
-		cmd = 'dosefgpu_driftcorr %s -gpu %d -fcs %s -dsp 0' % (self.tempframestackpath,self.gpuid,temp_aligned_sumpath)
-		#cmd = '/emg/sw/script/motioncorr-master/bin/'+cmd
-		# Options
-		cmd += self.addDoseFDriftCorrOptions()
-
-		# moving average window and y-axis flip
-#		if self.getNewNumRunningAverageFrames() > 1:
-#			cmd += ' -nrw %d ' % (self.getNewNumRunningAverageFrames()) 
-		
-		if self.getNewFlipAlongYAxis() == 1:
-			cmd += ' -flp %d' % (self.getNewFlipAlongYAxis()) 
-
-
-		# binning
-		cmd += ' -bin %d' % (self.getNewBinning())
-		# gain dark references
-		cmd += gain_dark_cmd
-		is_sum_with_dosefgpu =  self.isSumSubStackWithDosefgpu()
-		if is_sum_with_dosefgpu:
-			cmd += ' -nss %d -nes %d' % (min(self.sumframelist),max(self.sumframelist))
-		else:
-			# minimal sum since it needs to be redone by numpy
-			cmd += ' -nss %d -nes %d' % (0,1)
-		if self.save_aligned_stack:
-			cmd += ' -ssc 1 -fct %s' % (temp_aligned_stackpath)
-		apDisplay.printMsg('Running: %s'% cmd)
-		self.proc = subprocess.Popen(cmd, shell=True)
-		self.proc.wait()
-
-		if os.path.isfile(temp_aligned_sumpath):
-			# successful alignment
-			if self.save_aligned_stack:
-				self.updateFrameStackHeaderImageStats(temp_aligned_stackpath)
-			if self.tempdir != self.rundir:
-				if os.path.isfile(temp_log):
-					shutil.move(temp_log,self.framestackpath[:-4]+'_Log.txt')
-					apDisplay.printMsg('Copying result for %s from %s to %s' % (self.image['filename'],self.tempdir,self.rundir))
-			if not is_sum_with_dosefgpu:
-				self.sumSubStackWithNumpy(temp_aligned_stackpath,temp_aligned_sumpath)
-			shutil.move(temp_aligned_sumpath,self.aligned_sumpath)
-			if self.keep_stack:
-				shutil.move(temp_aligned_stackpath,self.aligned_stackpath)
-			else:
-				apFile.removeFile(temp_aligned_stackpath)
-				apFile.removeFile(self.aligned_stackpath)
-		else:
-			if self.tempdir != self.rundir:
-				# Move the Log to permanent location for future inspection
-				if os.path.isfile(temp_log):
-					shutil.move(self.tempframestackpath[:-4]+'_Log.txt',self.framestackpath[:-4]+'_Log.txt')
-			apDisplay.printWarning('dosefgpu_driftcorr FAILED: \n%s not created.' % os.path.basename(temp_aligned_sumpath))
-			#apDisplay.printError('If this happens consistently on an image, hide it in myamiweb viewer and continue with others' )
-		os.chdir(self.rundir)
 
 	def makeAlignedImageData(self,alignlabel='a'):
 		'''

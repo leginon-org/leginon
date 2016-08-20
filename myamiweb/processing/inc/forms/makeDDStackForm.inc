@@ -24,9 +24,9 @@ class MakeDDStackForm extends BasicLoopForm
 		$this->setJobType( 'makeddrawframestack' );
 		$this->setOutputDirectory( 'ddstack' );
 		$this->setBaseRunName( 'ddstack' );
-		$this->setTitle( 'makeDDRawFrameStack.py Launcher' );
+		$this->setTitle( 'makeDDAlignMotionCorr.py Launcher' );
 		$this->setHeading( 'Create a Direct Detector Frame Stack' );
-		$this->setExeFile( 'makeDDRawFrameStack.py' );
+		$this->setExeFile( 'makeDDAlignMotionCorr.py' );
 		$this->setGuideURL( "http://emg.nysbc.org/redmine/projects/appion/wiki/Appion_Processing" );
 		$this->setTestable( True ); // True to activate "test single image".
 		$this->setUseLegOutDir( False ); // The output directory will be created in the Appion run directory rather than Leginon.
