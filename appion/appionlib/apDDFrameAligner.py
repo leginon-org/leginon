@@ -275,7 +275,7 @@ class MotionCorr2_UCSF(DDFrameAligner):
 		cmd += gain_dark_cmd
 
 		# GPU ID
-		cmd += ' Gpu %d' % self.alignparams['Gpu']
+		cmd += ' -Gpu %d' % self.alignparams['Gpu']
 
 		return cmd
 

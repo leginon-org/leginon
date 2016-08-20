@@ -69,11 +69,12 @@ class AlignStackLoop(apDDStackMaker.FrameStackLoop):
 		result path needed for alignment. This is run before alignment
 		'''
 		self.hostname = socket.gethostname()
+		self.gpuid = self.params['gpuid']
 		# The alignment is done in tempdir (a local directory to reduce network traffic)
 		# include both hostname and gpu to identify the temp output
-		self.temp_aligned_sumpath = 'temp%s_sum.mrc' % (self.hostname)
-		self.temp_aligned_dw_sumpath = 'temp%s_sum_DW.mrc' % (self.hostname)
-		self.temp_aligned_stackpath = 'temp%s_aligned_st.mrc' % (self.hostname)
+		self.temp_aligned_sumpath = 'temp%s.gpuid_%d_sum.mrc' % (self.hostname, self.gpuid)
+		self.temp_aligned_dw_sumpath = 'temp%s.gpuid_%d_sum_DW.mrc' % (self.hostname, self.gpuid)
+		self.temp_aligned_stackpath = 'temp%s.gpuid_%d_aligned_st.mrc' % (self.hostname, self.gpuid)
 		self.temp_logpath = self.dd.tempframestackpath[:-4]+'_Log.txt'
 
 		self.log = self.dd.framestackpath[:-4]+'_Log.txt'

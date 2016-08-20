@@ -3,6 +3,7 @@ from appionlib import apDDAlignStackMaker
 from appionlib import apDDFrameAligner
 from appionlib import apDDprocess
 from appionlib import apDatabase
+from appionlib import apDisplay
 
 class MotionCorrAlignStackLoop(apDDAlignStackMaker.AlignStackLoop):
 	#=======================
@@ -81,7 +82,7 @@ class MotionCorrAlignStackLoop(apDDAlignStackMaker.AlignStackLoop):
 			self.framealigner.setTotalDose(self.params['totaldose'])
 		else:
 			self.framealigner.setTotalDose(apDatabase.getDoseFromImageData(self.dd.image))
-		self.temp_aligned_dw_sumpath = 'temp%s_sum_DW.mrc' % (self.hostname)
+#		self.temp_aligned_dw_sumpath = 'temp%s.gpuid_%d_sum_DW.mrc' % (self.hostname, self.params['gpuid'])
 #		self.framealigner.setFmDose()
 
 
