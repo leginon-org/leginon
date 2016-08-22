@@ -13,7 +13,7 @@ class motioncorr2_ucsf extends MakeDDStackForm
 
 // Removed defergpu, alignoffset,alignccbox, nrw to make compatible with new motioncorr version
 {
-	function __construct(  $expId, $errorHTML='', $infoHTML='',$align=True,$bin=1, $nokeepstack='', $ddstartframe=0, $ddnframe='',$alignlabel='a',$Group=1, $MaskCentrows=0.0, $MaskCentcols=0.0, $MaskSizerows=1.0, $MaskSizecols=1.0, $Patchrows=0, $Patchcols=0, $Iter=7,$Tol=0.5,$Bft=100.0,$FmRef=0,$FmDose='' )
+	function __construct(  $expId, $errorHTML='', $infoHTML='',$align=True,$bin=1, $nokeepstack=True, $ddstartframe=0, $ddnframe='',$alignlabel='a',$Group=1, $MaskCentrows=0.0, $MaskCentcols=0.0, $MaskSizerows=1.0, $MaskSizecols=1.0, $Patchrows=0, $Patchcols=0, $Iter=7,$Tol=0.5,$Bft=100.0,$FmRef=0,$FmDose='' )
 	{
 		parent::__construct($expId, $errorHTML, $infoHTML);
 		
@@ -83,7 +83,7 @@ class motioncorr2_ucsf extends MakeDDStackForm
 		
 		$html.= $params->insertCheckboxField( "align" );
 //		$html.= $params->insertCheckboxField( "defergpu" );
-		$html.= $params->insertCheckboxField( "no_keepstack" );
+//		$html.= $params->insertCheckboxField( "no_keepstack" );
 	
 		
 		$html.= "<br/>\n";
