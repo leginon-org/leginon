@@ -804,6 +804,7 @@ class SetupWizard(wx.wizard.Wizard):
 			self.session = self.setup.createSession(user, name, description,
 																							directory)
 			self.session['holder'] = holderdata
+			self.session['remote passcode'] = self.generatePassCode()
 			self.publish(self.session, database=True)
 			projectid = self.projectpage.getSelectedProjectId()
 			project_experiment = self.setup.linkSessionProject(self.session['name'], projectid)
@@ -815,6 +816,11 @@ class SetupWizard(wx.wizard.Wizard):
 			if self.session:
 				c2size = self.c2sizepage.c2sizectrl.GetValue()
 				self.setup.setC2Size(self.session, self.clients,c2size)
+
+	def generatePassCode(self):
+		length = 8
+		import binascii
+		return binascii.hexlify(os.urandom(64))[:length]
 
 	def onPageChanged(self, evt):
 		page = evt.GetPage()

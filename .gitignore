@@ -5,7 +5,7 @@
 *.[oa]
 *~
 *.pyc
+*.pyo
 .DS_Store
 *.dat
 *.old
-
