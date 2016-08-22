@@ -25,9 +25,9 @@ class motioncorr2_ucsf extends MakeDDStackForm
 		$this->setJobType( 'makeddrawframestack' );
 		$this->setOutputDirectory( 'ddstack' );
 		$this->setBaseRunName( 'ddstack' );
-		$this->setTitle( 'makeDDRawFrameStackv2_ucsf.py Launcher' );
+		$this->setTitle( 'makeDDAlignMotionCorr2_UCSF Launcher' );
 		$this->setHeading( 'Create a Direct Detector Frame Stack with MotionCorrv2 - Official' );
-		$this->setExeFile( 'makeDDRawFrameStackv2_ucsf.py' );
+		$this->setExeFile( 'makeDDAlignMotionCorr2_UCSF.py' );
 		$this->setGuideURL( "http://emg.nysbc.org/redmine/projects/appion/wiki/Appion_Processing" );
 		$this->setTestable( True ); // True to activate "test single image".
 		$this->setUseLegOutDir( False ); // The output directory will be created in the Appion run directory rather than Leginon.
