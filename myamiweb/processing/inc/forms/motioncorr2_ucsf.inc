@@ -57,7 +57,7 @@ class motioncorr2_ucsf extends MakeDDStackForm
 		$params->addParam( "Iter", $Iter, "Number of iterations to perform for alignment");
 		$params->addParam( "Tol", $Tol, "Alignment error tolerance (pixels).");
 		$params->addParam( "FmRef", $FmRef, "Reference frame which other frames are aligned to");
-		$params->addParam( "FmDose", $FmDose,"Dose weighting in e/A^2");
+#		$params->addParam( "FmDose", $FmDose,"Dose weighting in e/A^2");
 
 		
 		
@@ -109,8 +109,8 @@ class motioncorr2_ucsf extends MakeDDStackForm
 	#	$html.= "<br/>\n";
 		$html.= $params->insertTextFieldInRow( "FmRef",$fieldSize );
 		$html.= "<br/>\n";
-		$html.= $params->insertTextFieldInRow( "FmDose",$fieldSize );
-		$html.= "<br/>\n";
+#		$html.= $params->insertTextFieldInRow( "FmDose",$fieldSize );
+#		$html.= "<br/>\n";
 		$html.= $params->insertTextFieldInRow( "Bft", $fieldSize );
 		$html.= "<br/>\n";
 	#	$html.= $params->insertTextFieldInRow( "alignccbox",$fieldSize );

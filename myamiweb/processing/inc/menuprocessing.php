@@ -744,7 +744,9 @@ if (is_numeric($expId)) {
 		$nruns=array();
 		$nruns[] = array(
 //			'name'=>"<a href='runMakeDDRawFrameStack.php?expId=$sessionId'>Create frame stack</a>",
-			'name'=>"<a href='runAppionLoop.php?expId=$sessionId&form=$ddStackform'>Create frame stack</a>",
+//			'name'=>"<a href='runAppionLoop.php?expId=$sessionId&form=$ddStackform'>Create frame stack</a>",
+                        'name'=>"<a href='selectFrameAlignment.php?expId=$sessionId'>Select Frame Alignment</a>",
+
 		'result'=>$ddresults,
 		);
 		$nruns[] = array(
