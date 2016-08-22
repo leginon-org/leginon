@@ -149,7 +149,7 @@ class MakeDDStackForm extends BasicLoopForm
 
 		// if we are not testing an image, add the parellel flag
 		if ( !($postArray['testimage']=="on") ) {
-			$command.= " --parallel";
+			$command = $this->addCommandFlag($command, "parallel", "parallel", "on" );
 		}
 		
 		// remove params not needed in command
