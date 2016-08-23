@@ -95,7 +95,7 @@ def getGITHash(module_path=''):
 
 def getVersion(module_path=''):
 	# myami svn frozen before revision 20000
-	return 20000
+	return '20000'
 
 def getGITInfo(module_path):
 	info = {}
@@ -118,7 +118,7 @@ def getSVNInfo(module_path=''):
 	return infodict
 
 def getTextVersion():
-	return 'beta'
+	return 'pre3.3'
 
 def getSVNVersion(module_path=''):
 	svninfo = getSVNInfo(module_path)

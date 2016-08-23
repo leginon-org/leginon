@@ -13,7 +13,7 @@ class InstallData(install_data):
 
 setup(
 	name='Leginon',
-	version=str(version.getVersion()),
+	version=version.getVersion(),
 	url='http://nramm.scripps.edu/',
 	description=
 		'Automated data acquisition for transmission electron microscopes',

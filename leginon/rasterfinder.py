@@ -365,7 +365,7 @@ class RasterFinder(targetfinder.TargetFinder):
 		## user part
 		if self.settings['user check']:
 			while True:
-				self.waitForUserCheck()
+				self.waitForInteraction(imdata)
 				if not self.processPreviewTargets(imdata, targetlist):
 					break
 			self.panel.targetsSubmitted()
