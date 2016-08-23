@@ -33,10 +33,18 @@ Optional argument 'newsize' is used for scaling the image.
 		std = arraystats.std(a)
 		max = mean + stdval * std
 
-	## scale to 8 bit
-	a = numpy.clip(a, min, max)
-	scale = 255.0 / (max - min)
-	a = scale * (a - min)
+	if min != max:
+		## scale to 8 bit
+		a = numpy.clip(a, min, max)
+		scale = 255.0 / (max - min)
+	else:
+		# scale to 8 bit if outside
+		if mean > 255.0 or mean < 0:
+			scale = 255.0 / mean
+		else:
+			# avoid scaling
+			scale = 1
+		a = scale * (a - min)
 	a = a.astype(numpy.uint8)
 
 	## use PIL to write JPEG
