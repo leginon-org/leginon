@@ -76,15 +76,11 @@ class DDFrameAligner(object):
 		# run as subprocess
 		apDisplay.printMsg('Running: %s'% cmd)
 		self.proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, close_fds=True)
-		self.proc.wait()
+		(stdoutdata, stderrdata) = self.proc.communicate()
 
+		print stderrdata
 		# write log file
-		output = self.proc.stdout.read()
-#		f = open(self.framestackpath[:-4]+'_Log.motioncorr2.txt', "r")
-#		lines = f.readlines()
-#		output = ""
-#		for l in lines:
-#			output += l
+		output = stdoutdata
 		self.writeLogFile(output)
 
 	def getValidAlignOptionMappings(self):
@@ -157,7 +153,10 @@ class MotionCorr1(DDFrameAligner):
 		return {'gpuid':'gpu', 'bin':'bin' }
 
 	def writeLogFile(self, outbuffer):
-		pass
+		'''
+		MotionCorr1 is set to write log file by default
+		'''
+		self.apDisplay.printMsg('Log written to %s' % self.log)
 
 class MotionCorr_Purdue(MotionCorr1):
 	executable = 'dosefgpu_driftcorr'
