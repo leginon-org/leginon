@@ -52,30 +52,31 @@ class AlignStackLoop(apDDStackMaker.FrameStackLoop):
 	def checkFrameAlignerExecutable(self):
 		self.framealigner = apDDFrameAligner.DDFrameAligner()
 		exename = self.framealigner.getExecutableName()
-		gpuexe = subprocess.Popen("which "+exename, shell=True, stdout=subprocess.PIPE).stdout.read().strip()
-	#		gpuexe = "/emg/sw/script/motioncorr-master/bin/"+exename
-		print 'gpuexe path is '+gpuexe
-		if not os.path.isfile(gpuexe):
+		alignexe = subprocess.Popen("which "+exename, shell=True, stdout=subprocess.PIPE).stdout.read().strip()
+	#		alignexe = "/emg/sw/script/motioncorr-master/bin/"+exename
+		print 'alignexe path is '+alignexe
+		if not os.path.isfile(alignexe):
 			apDisplay.printError('Correction program "%s" not available' % exename)
 
 	#=======================
 	def preLoopFunctions(self):
 		self.setFrameAligner()
 		self.framealigner.setFrameAlignOptions(self.params)
+		self.hostname = socket.gethostname()
 		super(AlignStackLoop,self).preLoopFunctions()
+
+	def setTempPaths(self):
+		# The alignment is done in tempdir (a local directory to reduce network traffic)
+		self.temp_logpath = self.dd.tempframestackpath[:-4]+'_Log.txt'
+		self.temp_aligned_sumpath = 'temp%s_sum.mrc' % (self.hostname)
+		self.temp_aligned_stackpath = 'temp%s_aligned_st.mrc' % (self.hostname)
 
 	def setOtherProcessImageResultParams(self):
 		'''
 		result path needed for alignment. This is run before alignment
 		'''
-		self.hostname = socket.gethostname()
-		self.gpuid = self.params['gpuid']
 		# The alignment is done in tempdir (a local directory to reduce network traffic)
-		# include both hostname and gpu to identify the temp output
-		self.temp_aligned_sumpath = 'temp%s.gpuid_%d_sum.mrc' % (self.hostname, self.gpuid)
-		self.temp_aligned_dw_sumpath = 'temp%s.gpuid_%d_sum_DW.mrc' % (self.hostname, self.gpuid)
-		self.temp_aligned_stackpath = 'temp%s.gpuid_%d_aligned_st.mrc' % (self.hostname, self.gpuid)
-		self.temp_logpath = self.dd.tempframestackpath[:-4]+'_Log.txt'
+		self.setTempPaths()
 
 		self.log = self.dd.framestackpath[:-4]+'_Log.txt'
 		self.framealigner.setInputFrameStackPath(self.dd.tempframestackpath)
@@ -139,7 +140,6 @@ class AlignStackLoop(apDDStackMaker.FrameStackLoop):
 		Move local temp results to rundir in the official names
 		'''
 		temp_aligned_sumpath = self.temp_aligned_sumpath
-		temp_aligned_dw_sumpath = self.temp_aligned_dw_sumpath
 		temp_aligned_stackpath = self.temp_aligned_stackpath
 		
 		if not os.path.isfile(temp_aligned_sumpath):
@@ -157,8 +157,6 @@ class AlignStackLoop(apDDStackMaker.FrameStackLoop):
 
 			# temp_aligned_sumpath should have the right number of frames at this point
 			shutil.move(temp_aligned_sumpath,self.dd.aligned_sumpath)
-			if self.params['doseweight'] is True:
-				shutil.move(temp_aligned_dw_sumpath,self.dd.aligned_dw_sumpath)
 			return self.dd.aligned_sumpath
 
 	def organizeAlignedStack(self):
@@ -170,13 +168,14 @@ class AlignStackLoop(apDDStackMaker.FrameStackLoop):
 		if os.path.isfile(self.dd.aligned_sumpath):
 			# Save the alignment result
 			self.aligned_imagedata = self.dd.makeAlignedImageData(alignlabel=self.params['alignlabel'])
-			if self.params['doseweight'] is True:
-				self.params['align_dw_label'] = self.params['alignlabel']+"-DW"
-				self.aligned_dw_imagedata = self.dd.makeAlignedDWImageData(alignlabel=self.params['align_dw_label'])
 			if self.params['keepstack']:
-				shutil.move(self.temp_aligned_stackpath,self.dd.aligned_stackpath)
+				if not os.path.isfile(self.temp_aligned_stackpath):
+					apDisplay.printWarning('No aligned stack generated as %s' % self.temp_aligned_stackpath)
+				else:
+					shutil.move(self.temp_aligned_stackpath,self.dd.aligned_stackpath)
 			else:
-				apFile.removeFile(self.temp_aligned_stackpath)
+				if os.path.isfile(self.temp_aligned_stackpath):
+					apFile.removeFile(self.temp_aligned_stackpath)
 
 			# replace the unaligned stack with aligned_stack
 			if os.path.isfile(self.dd.aligned_stackpath):
@@ -210,3 +209,7 @@ class AlignStackLoop(apDDStackMaker.FrameStackLoop):
 			# Doing the alignment
 			self.framealigner.alignFrameStack()
 
+
+if __name__ == '__main__':
+	makeStack = AlignStackLoop()
+	makeStack.run()

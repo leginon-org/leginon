@@ -116,7 +116,7 @@ class DDFrameAligner(object):
 		f.close()
 
 class MotionCorr1(DDFrameAligner):
-	executable = '/Users/acheng/dosefgpu_driftcorr'
+	executable = 'dosefgpu_driftcorr'
 	def __init__(self):
 		super(MotionCorr1,self).__init__()
 		self.gain_dark_cmd = ''
@@ -154,7 +154,17 @@ class MotionCorr1(DDFrameAligner):
 		return cmd
 
 	def getValidAlignOptionMappings(self):
-		return {'gpuid':'gpu', 'nrw':'nrw', 'flp':'flp', 'bin':'bin' }
+		return {'gpuid':'gpu', 'bin':'bin' }
+
+	def writeLogFile(self, outbuffer):
+		pass
+
+class MotionCorr_Purdue(MotionCorr1):
+	executable = 'dosefgpu_driftcorr'
+	def getValidAlignOptionMappings(self):
+		opts = super(MotionCorr_Purdue,self).getValidAlignOptionMappings()
+		opts.update({'nrw':'nrw', 'flp':'flp' })
+		return opts
 
 	def modifyNumRunningAverageFrames(self):
 		'''
@@ -172,9 +182,6 @@ class MotionCorr1(DDFrameAligner):
 			if self.getNewFlipAlongYAxis() == 0:
 				del self.alignparams['nrw']
 			
-	def writeLogFile(self, outbuffer):
-		pass
-
 class MotionCorr2_UCSF(DDFrameAligner):
 	def __init__(self):
 		self.executable = 'motioncorr2_ucsf'
