@@ -40,10 +40,20 @@ class MotionCorrAlignStackLoop(apDDAlignStackMaker.AlignStackLoop):
 		self.parser.add_option("--Trunc",dest="Trunc",metavar="#",type=int,default=0,
                         help="Truncate last number of frames")
 
-		### making these into general options
-#		self.parser.add_option("--doseweight",dest="doseweight",metavar="bool", default=False, 
-#			action="store_true", help="dose weight the frame stack, according to Tim / Niko's curves")
+		self.parser.add_option("--Bft",dest="Bft",metavar="#",type=float,default=100,
+                        help=" B-Factor for alignment, default 100.")
 
+
+
+
+
+		### making these into general options
+		self.parser.add_option("--do_doseweighting",dest="do_doseweighting",metavar="bool", default=True, 
+			action="store_true", help="do dose weighting on the frame stack, according to Tim / Niko's curves")
+
+
+		self.parser.add_option("--doseweight",dest="doseweight",metavar="float", 
+			help="Value for dose weighting the frame stack. Will use a specified doseweight value. If no value is specified, the value stored in the database will be used. If no value is stored in the database and do_doseweighting is checked, an error will be thrown.")
 #		self.parser.add_option("--FmDose",dest="FmDose",metavar="float",type=float,
 #                        help="Frame dose in e/A^2. If not specified, will get value from database")
 
