@@ -12,7 +12,7 @@ functionname = 'StagePosition'
 getfunc = getattr(c,'get'+functionname)
 setfunc = getattr(c,'set'+functionname)
 
-p0 = c.getBeamTilt()
+p0 = getfunc()
 
 for i in range(repeats):
 	for d in (distance, -distance):

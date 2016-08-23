@@ -327,6 +327,7 @@ class SimTEM(tem.TEM):
 		self.focus = value
 
 	def runBufferCycle(self):
+		time.sleep(5)
 		pass
 
 	def getTurboPump(self):
