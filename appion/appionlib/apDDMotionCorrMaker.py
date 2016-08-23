@@ -4,14 +4,14 @@ from appionlib import apDDFrameAligner
 from appionlib import apDisplay
 
 class MotionCorrAlignStackLoop(apDDAlignStackMaker.AlignStackLoop):
+	'''
+	Base class for MotionCorr implementation that uses gpu
+	'''
 	#=======================
 	def setupParserOptions(self):
 		super(MotionCorrAlignStackLoop,self).setupParserOptions()
 		self.parser.add_option("--gpuid", dest="gpuid", type="int", default=0,
 			help="GPU device id used in gpu processing", metavar="INT")
-		self.parser.add_option("--nrw", dest="nrw", type="int", default=1,
-			help="Number (1, 3, 5, ...) of frames in running average window. 0 = disabled", metavar="INT")
-		
 
 	#=======================
 	def checkConflicts(self):
@@ -30,6 +30,14 @@ class MotionCorrAlignStackLoop(apDDAlignStackMaker.AlignStackLoop):
 		self.framealigner.setFrameAlignOptions(self.params)
 		super(MotionCorrAlignStackLoop,self).preLoopFunctions()
 		self.dd.setGPUid(self.params['gpuid'])
+		self.gpuid = self.params['gpuid']
+
+	def setTempPaths(self):
+		# The alignment is done in tempdir (a local directory to reduce network traffic)
+		# logpth carries the name of the tempframestack
+		self.temp_logpath = self.dd.tempframestackpath[:-4]+'_Log.txt'
+		self.temp_aligned_sumpath = 'temp%s.gpuid_%d_sum.mrc' % (self.hostname, self.dd.gpuid)
+		self.temp_aligned_stackpath = 'temp%s.gpuid_%d_aligned_st.mrc' % (self.hostname, self.dd.gpuid)
 
 if __name__ == '__main__':
 	makeStack = MotionCorrAlignStackLoop()
