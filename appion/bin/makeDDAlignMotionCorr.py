@@ -22,7 +22,7 @@ class MotionCorrAlignStackLoop(apDDAlignStackMaker.AlignStackLoop):
 					apDisplay.printWarning('Make sure that you use different gpuid for each parallel process')
 
 	def setFrameAligner(self):
-		self.framealigner = apDDFrameAligner.MotionCorr2_UCSF()
+		self.framealigner = apDDFrameAligner.MotionCorr1()
 
 	#=======================
 	def preLoopFunctions(self):
