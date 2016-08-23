@@ -60,6 +60,7 @@ class AlignStackLoop(apDDStackMaker.FrameStackLoop):
 
 	#=======================
 	def preLoopFunctions(self):
+		self.is_ok = True
 		self.setFrameAligner()
 		self.framealigner.setFrameAlignOptions(self.params)
 		self.hostname = socket.gethostname()

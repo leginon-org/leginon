@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 from appionlib import apDDMotionCorrMaker
+from appionlib import apDDFrameAligner
 
 class MotionCorrPurdueLoop(apDDMotionCorrMaker.MotionCorrAlignStackLoop):
 	'''
